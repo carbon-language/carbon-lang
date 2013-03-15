@@ -797,7 +797,7 @@ namespace PR14342 {
   X<int, (signed char)-1> x = X<long, -1>();
   X<int, 3UL> y = X<int, 2>();
   // CHECK-ELIDE-NOTREE: error: no viable conversion from 'X<long, [...]>' to 'X<int, [...]>'
-  // CHECK-ELIDE-NOTREE: error: no viable conversion from 'X<[...], 2>' to 'X<[...], 3UL>'
+  // CHECK-ELIDE-NOTREE: error: no viable conversion from 'X<[...], 2>' to 'X<[...], 3>'
 }
 
 namespace PR14489 {

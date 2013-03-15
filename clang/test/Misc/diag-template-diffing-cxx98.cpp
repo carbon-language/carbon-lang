@@ -11,7 +11,23 @@ namespace PR15513 {
   class A {};
 
   void foo(A<0> &M) {
-    // CHECK: no viable conversion from 'A<[...], (default) x + 1>' to 'A<[...], 0>'
+    // CHECK: no viable conversion from 'A<[...], (default) x + 1 aka 1>' to 'A<[...], 0>'
     A<0, 0> N = M;
+   // CHECK: no viable conversion from 'A<0, [...]>' to 'A<1, [...]>'
+    A<1, 1> O = M;
   }
+}
+
+namespace default_args {
+  template <int x, int y = 1+1, int z = 2>
+  class A {};
+
+  void foo(A<0> &M) {
+    // CHECK: no viable conversion from 'A<[...], (default) 1 + 1 aka 2, (default) 2>' to 'A<[...], 0, 0>'
+    A<0, 0, 0> N = M;
+
+    // CHECK: no viable conversion from 'A<[2 * ...], (default) 2>' to 'A<[2 * ...], 0>'
+    A<0, 2, 0> N2 = M;
+  }
+
 }

@@ -689,6 +689,10 @@ class TemplateDiff {
     /// traverse over.
     const TemplateSpecializationType *TST;
 
+    /// DesugarTST - desugared template specialization used to extract
+    /// default argument information
+    const TemplateSpecializationType *DesugarTST;
+
     /// Index - the index of the template argument in TST.
     unsigned Index;
 
@@ -701,8 +705,10 @@ class TemplateDiff {
 
     /// TSTiterator - Constructs an iterator and sets it to the first template
     /// argument.
-    TSTiterator(const TemplateSpecializationType *TST)
-        : TST(TST), Index(0), CurrentTA(0), EndTA(0) {
+    TSTiterator(ASTContext &Context, const TemplateSpecializationType *TST)
+        : TST(TST),
+          DesugarTST(GetTemplateSpecializationType(Context, TST->desugar())),
+          Index(0), CurrentTA(0), EndTA(0) {
       if (isEnd()) return;
 
       // Set to first template argument.  If not a parameter pack, done.
@@ -723,12 +729,17 @@ class TemplateDiff {
 
     /// isEnd - Returns true if the iterator is one past the end.
     bool isEnd() const {
-      return Index == TST->getNumArgs();
+      return Index >= TST->getNumArgs();
     }
 
     /// &operator++ - Increment the iterator to the next template argument.
     TSTiterator &operator++() {
-      assert(!isEnd() && "Iterator incremented past end of arguments.");
+      // After the end, Index should be the default argument position in
+      // DesugarTST, if it exists.
+      if (isEnd()) {
+        ++Index;
+        return *this;
+      }
 
       // If in a parameter pack, advance in the parameter pack.
       if (CurrentTA != EndTA) {
@@ -769,6 +780,11 @@ class TemplateDiff {
     pointer operator->() const {
       return &operator*();
     }
+
+    /// getDesugar - Returns the deduced template argument from DesguarTST
+    reference getDesugar() const {
+      return DesugarTST->getArg(Index);
+    }
   };
 
   // These functions build up the template diff tree, including functions to
@@ -808,7 +824,7 @@ class TemplateDiff {
     TemplateParameterList *Params =
         FromTST->getTemplateName().getAsTemplateDecl()->getTemplateParameters();
     unsigned TotalArgs = 0;
-    for (TSTiterator FromIter(FromTST), ToIter(ToTST);
+    for (TSTiterator FromIter(Context, FromTST), ToIter(Context, ToTST);
          !FromIter.isEnd() || !ToIter.isEnd(); ++TotalArgs) {
       Tree.AddNode();
 
@@ -856,7 +872,7 @@ class TemplateDiff {
       // Handle Expressions
       if (NonTypeTemplateParmDecl *DefaultNTTPD =
               dyn_cast<NonTypeTemplateParmDecl>(ParamND)) {
-        Expr *FromExpr, *ToExpr;
+        Expr *FromExpr = 0, *ToExpr = 0;
         llvm::APSInt FromInt, ToInt;
         ValueDecl *FromValueDecl = 0, *ToValueDecl = 0;
         unsigned ParamWidth = 128; // Safe default
@@ -893,10 +909,57 @@ class TemplateDiff {
 
         if (!HasFromInt && !HasToInt && !HasFromValueDecl && !HasToValueDecl) {
           Tree.SetNode(FromExpr, ToExpr);
-          Tree.SetSame(IsEqualExpr(Context, ParamWidth, FromExpr, ToExpr));
           Tree.SetDefault(FromIter.isEnd() && FromExpr,
                           ToIter.isEnd() && ToExpr);
-          Tree.SetKind(DiffTree::Expression);
+          if ((FromExpr && FromExpr->getType()->isIntegerType()) ||
+              (ToExpr && ToExpr->getType()->isIntegerType())) {
+            HasFromInt = FromExpr;
+            HasToInt = ToExpr;
+            if (FromExpr) {
+              // Getting the integer value from the expression.
+              // Default, value-depenedent expressions require fetching
+              // from the desugared TemplateArgument
+              if (FromIter.isEnd() && FromExpr->isValueDependent())
+                switch (FromIter.getDesugar().getKind()) {
+                  case TemplateArgument::Integral:
+                    FromInt = FromIter.getDesugar().getAsIntegral();
+                    break;
+                  case TemplateArgument::Expression:
+                    FromExpr = FromIter.getDesugar().getAsExpr();
+                    FromInt = FromExpr->EvaluateKnownConstInt(Context);
+                    break;
+                  default:
+                    assert(0 && "Unexpected template argument kind");
+                }
+              else
+                FromInt = FromExpr->EvaluateKnownConstInt(Context);
+            }
+            if (ToExpr) {
+              // Getting the integer value from the expression.
+              // Default, value-depenedent expressions require fetching
+              // from the desugared TemplateArgument
+              if (ToIter.isEnd() && ToExpr->isValueDependent())
+                switch (ToIter.getDesugar().getKind()) {
+                  case TemplateArgument::Integral:
+                    ToInt = ToIter.getDesugar().getAsIntegral();
+                    break;
+                  case TemplateArgument::Expression:
+                    ToExpr = ToIter.getDesugar().getAsExpr();
+                    ToInt = ToExpr->EvaluateKnownConstInt(Context);
+                    break;
+                  default:
+                    assert(0 && "Unexpected template argument kind");
+                }
+              else
+                ToInt = ToExpr->EvaluateKnownConstInt(Context);
+            }
+            Tree.SetNode(FromInt, ToInt, HasFromInt, HasToInt);
+            Tree.SetSame(IsSameConvertedInt(ParamWidth, FromInt, ToInt));
+            Tree.SetKind(DiffTree::Integer);
+          } else {
+            Tree.SetSame(IsEqualExpr(Context, ParamWidth, FromExpr, ToExpr));
+            Tree.SetKind(DiffTree::Expression);
+          }
         } else if (HasFromInt || HasToInt) {
           if (!HasFromInt && FromExpr) {
             FromInt = FromExpr->EvaluateKnownConstInt(Context);
@@ -942,8 +1005,8 @@ class TemplateDiff {
         Tree.SetKind(DiffTree::TemplateTemplate);
       }
 
-      if (!FromIter.isEnd()) ++FromIter;
-      if (!ToIter.isEnd()) ++ToIter;
+      ++FromIter;
+      ++ToIter;
       Tree.Up();
     }
   }
@@ -1157,10 +1220,13 @@ class TemplateDiff {
       }
       case DiffTree::Integer: {
         llvm::APSInt FromInt, ToInt;
+        Expr *FromExpr, *ToExpr;
         bool IsValidFromInt, IsValidToInt;
+        Tree.GetNode(FromExpr, ToExpr);
         Tree.GetNode(FromInt, ToInt, IsValidFromInt, IsValidToInt);
         PrintAPSInt(FromInt, ToInt, IsValidFromInt, IsValidToInt,
-                    Tree.FromDefault(), Tree.ToDefault(), Tree.NodeIsSame());
+                    FromExpr, ToExpr, Tree.FromDefault(), Tree.ToDefault(),
+                    Tree.NodeIsSame());
         return;
       }
       case DiffTree::Declaration: {
@@ -1361,8 +1427,8 @@ class TemplateDiff {
   /// PrintAPSInt - Handles printing of integral arguments, highlighting
   /// argument differences.
   void PrintAPSInt(llvm::APSInt FromInt, llvm::APSInt ToInt,
-                   bool IsValidFromInt, bool IsValidToInt, bool FromDefault,
-                   bool ToDefault, bool Same) {
+                   bool IsValidFromInt, bool IsValidToInt, Expr *FromExpr,
+                   Expr *ToExpr, bool FromDefault, bool ToDefault, bool Same) {
     assert((IsValidFromInt || IsValidToInt) &&
            "Only one integral argument may be missing.");
 
@@ -1370,23 +1436,48 @@ class TemplateDiff {
       OS << FromInt.toString(10);
     } else if (!PrintTree) {
       OS << (FromDefault ? "(default) " : "");
-      Bold();
-      OS << (IsValidFromInt ? FromInt.toString(10) : "(no argument)");
-      Unbold();
+      PrintAPSInt(FromInt, FromExpr, IsValidFromInt);
     } else {
       OS << (FromDefault ? "[(default) " : "[");
-      Bold();
-      OS << (IsValidFromInt ? FromInt.toString(10) : "(no argument)");
-      Unbold();
+      PrintAPSInt(FromInt, FromExpr, IsValidFromInt);
       OS << " != " << (ToDefault ? "(default) " : "");
-      Bold();
-      OS << (IsValidToInt ? ToInt.toString(10) : "(no argument)");
-      Unbold();
+      PrintAPSInt(ToInt, ToExpr, IsValidToInt);
       OS << ']';
     }
   }
 
+  /// PrintAPSInt - If valid, print the APSInt.  If the expression is
+  /// gives more information, print it too.
+  void PrintAPSInt(llvm::APSInt Val, Expr *E, bool Valid) {
+    Bold();
+    if (Valid) {
+      if (HasExtraInfo(E)) {
+        PrintExpr(E);
+        Unbold();
+        OS << " aka ";
+        Bold();
+      }
+      OS << Val.toString(10);
+    } else {
+      OS << "(no argument)";
+    }
+    Unbold();
+  }
   
+  /// HasExtraInfo - Returns true if E is not an integer literal or the
+  /// negation of an integer literal
+  bool HasExtraInfo(Expr *E) {
+    if (!E) return false;
+    if (isa<IntegerLiteral>(E)) return false;
+
+    if (UnaryOperator *UO = dyn_cast<UnaryOperator>(E))
+      if (UO->getOpcode() == UO_Minus)
+        if (isa<IntegerLiteral>(UO->getSubExpr()))
+          return false;
+
+    return true;
+  }
+
   /// PrintDecl - Handles printing of Decl arguments, highlighting
   /// argument differences.
   void PrintValueDecl(ValueDecl *FromValueDecl, ValueDecl *ToValueDecl,
