@@ -177,6 +177,23 @@ unsigned ARMTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
+  // Single to/from double precision conversions.
+  static const CostTblEntry<MVT> NEONFltDblTbl[] = {
+    // Vector fptrunc/fpext conversions.
+    { ISD::FP_ROUND,   MVT::v2f64, 2 },
+    { ISD::FP_EXTEND,  MVT::v2f32, 2 },
+    { ISD::FP_EXTEND,  MVT::v4f32, 4 }
+  };
+
+  if (Src->isVectorTy() && ST->hasNEON() && (ISD == ISD::FP_ROUND ||
+                                          ISD == ISD::FP_EXTEND)) {
+    std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Src);
+    int Idx = CostTableLookup<MVT>(NEONFltDblTbl, array_lengthof(NEONFltDblTbl),
+                                ISD, LT.second);
+    if (Idx != -1)
+      return LT.first * NEONFltDblTbl[Idx].Cost;
+  }
+
   EVT SrcTy = TLI->getValueType(Src);
   EVT DstTy = TLI->getValueType(Dst);
 
@@ -255,7 +272,6 @@ unsigned ARMTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
         return NEONFloatConversionTbl[Idx].Cost;
   }
 
-
   // Scalar integer to float conversions.
   static const TypeConversionCostTblEntry<MVT> NEONIntegerConversionTbl[] = {
     { ISD::SINT_TO_FP,  MVT::f32, MVT::i1, 2 },
@@ -310,7 +326,6 @@ unsigned ARMTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
     if (Idx != -1)
       return ARMIntegerConversionTbl[Idx].Cost;
   }
-
 
   return TargetTransformInfo::getCastInstrCost(Opcode, Dst, Src);
 }

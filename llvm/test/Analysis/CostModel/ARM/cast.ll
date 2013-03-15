@@ -166,6 +166,30 @@ define i32 @casts() {
   ; CHECK: cost of 38 {{.*}} trunc
   %r75 = trunc <16 x i32> undef to <16 x i8>
 
+  ; Floating point truncation costs.
+  ; CHECK: cost of 1 {{.*}} fptrunc double
+  %r80 = fptrunc double undef to float
+  ; CHECK: cost of 2 {{.*}} fptrunc <2 x double
+  %r81 = fptrunc <2 x double> undef to <2 x float>
+  ; CHECK: cost of 4 {{.*}} fptrunc <4 x double
+  %r82 = fptrunc <4 x double> undef to <4 x float>
+  ; CHECK: cost of 8 {{.*}} fptrunc <8 x double
+  %r83 = fptrunc <8 x double> undef to <8 x float>
+  ; CHECK: cost of 16 {{.*}} fptrunc <16 x double
+  %r84 = fptrunc <16 x double> undef to <16 x float>
+
+  ; Floating point extension costs.
+  ; CHECK: cost of 1 {{.*}} fpext float
+  %r85 = fpext float undef to double
+  ; CHECK: cost of 2 {{.*}} fpext <2 x float
+  %r86 = fpext <2 x float> undef to <2 x double>
+  ; CHECK: cost of 4 {{.*}} fpext <4 x float
+  %r87 = fpext <4 x float> undef to <4 x double>
+  ; CHECK: cost of 8 {{.*}} fpext <8 x float
+  %r88 = fpext <8 x float> undef to <8 x double>
+  ; CHECK: cost of 16 {{.*}} fpext <16 x float
+  %r89 = fpext <16 x float> undef to <16 x double>
+
   ;CHECK: cost of 0 {{.*}} ret
   ret i32 undef
 }
