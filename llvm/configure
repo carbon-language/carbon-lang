@@ -766,7 +766,6 @@ CONVENIENCE_LTDL_FALSE
 LIBADD_DL
 NO_VARIADIC_MACROS
 NO_MISSING_FIELD_INITIALIZERS
-NO_NESTED_ANON_TYPES
 COVERED_SWITCH_DEFAULT
 NO_MAYBE_UNINITIALIZED
 NO_UNINITIALIZED
@@ -10498,7 +10497,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10501 "configure"
+#line 10500 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12265,8 +12264,6 @@ NO_VARIADIC_MACROS=`$CXX -Werror -Wvariadic-macros -fsyntax-only -xc /dev/null 2
 
 NO_MISSING_FIELD_INITIALIZERS=`$CXX -Werror -Wmissing-field-initializers -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-missing-field-initializers`
 
-NO_NESTED_ANON_TYPES=`$CXX -Werror -Wnested-anon-types -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-nested-anon-types`
-
 COVERED_SWITCH_DEFAULT=`$CXX -Werror -Wcovered-switch-default -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wcovered-switch-default`
 
 
@@ -12282,8 +12279,8 @@ then
 
   fi
 fi
-{ echo "$as_me:$LINENO: result: $NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $NO_NESTED_ANON_TYPES $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED" >&5
-echo "${ECHO_T}$NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $NO_NESTED_ANON_TYPES $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED" >&6; }
+{ echo "$as_me:$LINENO: result: $NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED" >&5
+echo "${ECHO_T}$NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED" >&6; }
 
 
 # Check whether --with-python was given.
@@ -22585,7 +22582,6 @@ CONVENIENCE_LTDL_FALSE!$CONVENIENCE_LTDL_FALSE$ac_delim
 LIBADD_DL!$LIBADD_DL$ac_delim
 NO_VARIADIC_MACROS!$NO_VARIADIC_MACROS$ac_delim
 NO_MISSING_FIELD_INITIALIZERS!$NO_MISSING_FIELD_INITIALIZERS$ac_delim
-NO_NESTED_ANON_TYPES!$NO_NESTED_ANON_TYPES$ac_delim
 COVERED_SWITCH_DEFAULT!$COVERED_SWITCH_DEFAULT$ac_delim
 NO_MAYBE_UNINITIALIZED!$NO_MAYBE_UNINITIALIZED$ac_delim
 NO_UNINITIALIZED!$NO_UNINITIALIZED$ac_delim
@@ -22615,6 +22611,7 @@ BINDINGS_TO_BUILD!$BINDINGS_TO_BUILD$ac_delim
 ALL_BINDINGS!$ALL_BINDINGS$ac_delim
 OCAML_LIBDIR!$OCAML_LIBDIR$ac_delim
 ENABLE_VISIBILITY_INLINES_HIDDEN!$ENABLE_VISIBILITY_INLINES_HIDDEN$ac_delim
+RPATH!$RPATH$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -22656,14 +22653,13 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
-RPATH!$RPATH$ac_delim
 RDYNAMIC!$RDYNAMIC$ac_delim
 program_prefix!$program_prefix$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 5; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 4; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

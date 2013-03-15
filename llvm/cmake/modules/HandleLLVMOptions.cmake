@@ -202,8 +202,6 @@ elseif( LLVM_COMPILER_IS_GCC_COMPATIBLE )
 
     if (LLVM_ENABLE_PEDANTIC)
       add_llvm_definitions( -pedantic -Wno-long-long )
-      check_cxx_compiler_flag("-Werror -Wnested-anon-types" CXX_SUPPORTS_NO_NESTED_ANON_TYPES_FLAG)
-      append_if(CMAKE_CXX_FLAGS "-Wno-nested-anon-types" CXX_SUPPORTS_NO_NESTED_ANON_TYPES_FLAG)
     endif (LLVM_ENABLE_PEDANTIC)
     check_cxx_compiler_flag("-Werror -Wcovered-switch-default" CXX_SUPPORTS_COVERED_SWITCH_DEFAULT_FLAG)
     append_if(CMAKE_CXX_FLAGS "-Wcovered-switch-default" CXX_SUPPORTS_COVERED_SWITCH_DEFAULT_FLAG)

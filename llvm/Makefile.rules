@@ -667,7 +667,7 @@ LD.Flags += $(EXTRA_LD_OPTIONS)
 endif
 
 ifndef NO_PEDANTIC
-CompileCommonOpts += -pedantic -Wno-long-long $(NO_NESTED_ANON_TYPES)
+CompileCommonOpts += -pedantic -Wno-long-long
 endif
 CompileCommonOpts += -Wall -W -Wno-unused-parameter -Wwrite-strings \
                      $(EXTRA_OPTIONS) $(COVERED_SWITCH_DEFAULT) \
