@@ -18,23 +18,25 @@
 
 namespace llvm {
 
-  /// StringSet - A wrapper for StringMap that provides set-like
-  /// functionality.  Only insert() and count() methods are used by my
-  /// code.
+  /// StringSet - A wrapper for StringMap that provides set-like functionality.
   template <class AllocatorTy = llvm::MallocAllocator>
   class StringSet : public llvm::StringMap<char, AllocatorTy> {
     typedef llvm::StringMap<char, AllocatorTy> base;
   public:
-    bool insert(StringRef InLang) {
-      assert(!InLang.empty());
-      const char *KeyStart = InLang.data();
-      const char *KeyEnd = KeyStart + InLang.size();
-      llvm::StringMapEntry<char> *Entry = llvm::StringMapEntry<char>::
-                            Create(KeyStart, KeyEnd, base::getAllocator(), '+');
-      if (!base::insert(Entry)) {
-        Entry->Destroy(base::getAllocator());
+
+    /// insert - Insert the specified key into the set.  If the key already
+    /// exists in the set, return false and ignore the request, otherwise insert
+    /// it and return true.
+    bool insert(StringRef Key) {
+      // Get or create the map entry for the key; if it doesn't exist the value
+      // type will be default constructed which we use to detect insert.
+      //
+      // We use '+' as the sentinel value in the map.
+      assert(!Key.empty());
+      StringMapEntry<char> &Entry = this->GetOrCreateValue(Key);
+      if (Entry.getValue() == '+')
         return false;
-      }
+      Entry.setValue('+');
       return true;
     }
   };
