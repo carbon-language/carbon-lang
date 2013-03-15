@@ -1793,6 +1793,22 @@ static int compareMacroDefinitions(const void *XPtr, const void *YPtr) {
   return X.first->getName().compare(Y.first->getName());
 }
 
+static bool shouldIgnoreMacro(MacroDirective *MD, bool IsModule,
+                              const Preprocessor &PP) {
+  if (MD->getInfo()->isBuiltinMacro())
+    return true;
+
+  if (IsModule) {
+    SourceLocation Loc = MD->getLocation();
+    if (Loc.isInvalid())
+      return true;
+    if (PP.getSourceManager().getFileID(Loc) == PP.getPredefinesFileID())
+      return true;
+  }
+
+  return false;
+}
+
 /// \brief Writes the block containing the serialized form of the
 /// preprocessor.
 ///
@@ -1851,6 +1867,9 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
 
     for (MacroDirective *MD = MacrosToEmit[I].second; MD;
          MD = MD->getPrevious()) {
+      if (shouldIgnoreMacro(MD, IsModule, PP))
+        continue;
+
       MacroID ID = getMacroRef(MD);
       if (!ID)
         continue;
@@ -2749,7 +2768,7 @@ class ASTIdentifierTableTrait {
       return false;
 
     if (Macro || (Macro = PP.getMacroDirectiveHistory(II)))
-      return !Macro->getInfo()->isBuiltinMacro() &&
+      return !shouldIgnoreMacro(Macro, IsModule, PP) &&
              (!IsModule || Macro->isPublic());
 
     return false;
@@ -2780,6 +2799,8 @@ public:
       DataLen += 2; // 2 bytes for flags
       if (hadMacroDefinition(II, Macro)) {
         for (MacroDirective *M = Macro; M; M = M->getPrevious()) {
+          if (shouldIgnoreMacro(M, IsModule, PP))
+            continue;
           if (Writer.getMacroRef(M) != 0)
             DataLen += 4;
         }
@@ -2832,6 +2853,8 @@ public:
     if (HadMacroDefinition) {
       // Write all of the macro IDs associated with this identifier.
       for (MacroDirective *M = Macro; M; M = M->getPrevious()) {
+        if (shouldIgnoreMacro(M, IsModule, PP))
+          continue;
         if (MacroID ID = Writer.getMacroRef(M))
           clang::io::Emit32(Out, ID);
       }
