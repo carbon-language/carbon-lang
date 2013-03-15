@@ -701,6 +701,14 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
 SuppressInlineDefensiveChecksVisitor::
 SuppressInlineDefensiveChecksVisitor(DefinedSVal Value, const ExplodedNode *N)
   : V(Value), IsSatisfied(false), IsTrackingTurnedOn(false) {
+
+    // Check if the visitor is disabled.
+    SubEngine *Eng = N->getState()->getStateManager().getOwningEngine();
+    assert(Eng && "Cannot file a bug report without an owning engine");
+    AnalyzerOptions &Options = Eng->getAnalysisManager().options;
+    if (!Options.shouldSuppressInlinedDefensiveChecks())
+      IsSatisfied = true;
+
     assert(N->getState()->isNull(V).isConstrainedTrue() &&
            "The visitor only tracks the cases where V is constrained to 0");
 }
@@ -728,11 +736,6 @@ SuppressInlineDefensiveChecksVisitor::VisitNode(const ExplodedNode *Succ,
     if (Succ->getState()->isNull(V).isConstrainedTrue())
       IsTrackingTurnedOn = true;
   if (!IsTrackingTurnedOn)
-    return 0;
-
-  AnalyzerOptions &Options =
-  BRC.getBugReporter().getEngine().getAnalysisManager().options;
-  if (!Options.shouldSuppressInlinedDefensiveChecks())
     return 0;
 
   // Check if in the previous state it was feasible for this value
