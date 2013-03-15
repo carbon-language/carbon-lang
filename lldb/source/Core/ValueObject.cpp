@@ -1899,10 +1899,13 @@ ValueObject::IsPossibleDynamicType ()
 bool
 ValueObject::IsObjCNil ()
 {
-    bool isObjCpointer = ClangASTContext::IsObjCObjectPointerType(GetClangType(), NULL);
+    const uint32_t mask = ClangASTContext::eTypeIsObjC | ClangASTContext::eTypeIsPointer;
+    bool isObjCpointer = ( ((ClangASTContext::GetTypeInfo(GetClangType(), GetClangAST(), NULL)) & mask) == mask);
+    if (!isObjCpointer)
+        return false;
     bool canReadValue = true;
     bool isZero = GetValueAsUnsigned(0,&canReadValue) == 0;
-    return canReadValue && isZero && isObjCpointer;
+    return canReadValue && isZero;
 }
 
 ValueObjectSP

@@ -2920,7 +2920,7 @@ ClangASTContext::GetTypeInfo
         case clang::BuiltinType::ObjCClass:
             if (ast && pointee_or_element_clang_type)
                 *pointee_or_element_clang_type = ast->ObjCBuiltinClassTy.getAsOpaquePtr();
-            return eTypeIsBuiltIn | eTypeIsPointer | eTypeHasValue;
+            return eTypeIsBuiltIn | eTypeIsPointer | eTypeHasValue | eTypeIsObjC;
                 break;
         case clang::BuiltinType::Bool:
         case clang::BuiltinType::Char_U:
