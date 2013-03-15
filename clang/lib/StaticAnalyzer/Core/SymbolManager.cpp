@@ -27,52 +27,33 @@ void SymExpr::dump() const {
   dumpToStream(llvm::errs());
 }
 
-static void print(raw_ostream &os, BinaryOperator::Opcode Op) {
-  switch (Op) {
-    default:
-      llvm_unreachable("operator printing not implemented");
-    case BO_Mul: os << '*'  ; break;
-    case BO_Div: os << '/'  ; break;
-    case BO_Rem: os << '%'  ; break;
-    case BO_Add: os << '+'  ; break;
-    case BO_Sub: os << '-'  ; break;
-    case BO_Shl: os << "<<" ; break;
-    case BO_Shr: os << ">>" ; break;
-    case BO_LT:  os << "<"  ; break;
-    case BO_GT:  os << '>'  ; break;
-    case BO_LE:  os << "<=" ; break;
-    case BO_GE:  os << ">=" ; break;
-    case BO_EQ:  os << "==" ; break;
-    case BO_NE:  os << "!=" ; break;
-    case BO_And: os << '&'  ; break;
-    case BO_Xor: os << '^'  ; break;
-    case BO_Or:  os << '|'  ; break;
-  }
-}
-
 void SymIntExpr::dumpToStream(raw_ostream &os) const {
   os << '(';
   getLHS()->dumpToStream(os);
-  os << ") ";
-  print(os, getOpcode());
-  os << ' ' << getRHS().getZExtValue();
-  if (getRHS().isUnsigned()) os << 'U';
+  os << ") "
+     << BinaryOperator::getOpcodeStr(getOpcode()) << ' '
+     << getRHS().getZExtValue();
+  if (getRHS().isUnsigned())
+    os << 'U';
 }
 
 void IntSymExpr::dumpToStream(raw_ostream &os) const {
-  os << ' ' << getLHS().getZExtValue();
-  if (getLHS().isUnsigned()) os << 'U';
-  print(os, getOpcode());
-  os << '(';
+  os << getLHS().getZExtValue();
+  if (getLHS().isUnsigned())
+    os << 'U';
+  os << ' '
+     << BinaryOperator::getOpcodeStr(getOpcode())
+     << " (";
   getRHS()->dumpToStream(os);
-  os << ") ";
+  os << ')';
 }
 
 void SymSymExpr::dumpToStream(raw_ostream &os) const {
   os << '(';
   getLHS()->dumpToStream(os);
-  os << ") ";
-  os << '(';
+  os << ") "
+     << BinaryOperator::getOpcodeStr(getOpcode())
+     << " (";
   getRHS()->dumpToStream(os);
   os << ')';
 }
