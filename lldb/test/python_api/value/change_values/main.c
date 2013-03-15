@@ -24,6 +24,7 @@ int main ()
           mine.first_val, mine.second_val, mine.third_val,
           ptr->first_val, ptr->second_val, ptr->third_val); 
 
+  // Stop here and check values
   printf ("This is just another call which we won't make it over %d.", val);
   return 0; // Set a breakpoint here at the end
 }

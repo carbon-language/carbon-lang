@@ -38,9 +38,9 @@ class ChangeValueAPITestCase(TestBase):
         self.exe_name = self.testMethodName
         # Find the line number to of function 'c'.
         self.line = line_number('main.c', '// Stop here and set values')
+        self.check_line = line_number('main.c', '// Stop here and check values')
         self.end_line = line_number ('main.c', '// Set a breakpoint here at the end')
 
-    @expectedFailureGcc # PR-15039: If GCC is the test compiler, stdout is not available via lldb.SBProcess.GetSTDOUT()
     def change_value_api(self, exe_name):
         """Exercise some SBValue APIs."""
         exe = os.path.join(os.getcwd(), exe_name)
@@ -52,6 +52,10 @@ class ChangeValueAPITestCase(TestBase):
         # Create the breakpoint inside function 'main'.
         breakpoint = target.BreakpointCreateByLocation('main.c', self.line)
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
+
+        # Create the breakpoint inside the function 'main'
+        check_breakpoint = target.BreakpointCreateByLocation('main.c', self.check_line)
+        self.assertTrue(check_breakpoint, VALID_BREAKPOINT)
 
         # Create the breakpoint inside function 'main'.
         end_breakpoint = target.BreakpointCreateByLocation('main.c', self.end_line)
@@ -116,8 +120,16 @@ class ChangeValueAPITestCase(TestBase):
         self.assertTrue (error.Success(), "Got a changed value from ptr->second_val")
         self.assertTrue (actual_value == 98765, "Got the right changed value from ptr->second_val")
         
-        # Now step, grab the stdout and make sure we changed the real values as well...
-        thread.StepOver()
+        # gcc may set multiple locations for breakpoint
+        breakpoint.SetEnabled(False)
+
+        # Now continue, grab the stdout and make sure we changed the real values as well...
+        process.Continue();
+
+        self.assertTrue(process.GetState() == lldb.eStateStopped)
+        thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+
         expected_value = "Val - 12345 Mine - 55, 98765, 55555555. Ptr - 66, 98765, 66666666"
         stdout = process.GetSTDOUT(1000)
         self.assertTrue (expected_value in stdout, "STDOUT showed changed values.")
