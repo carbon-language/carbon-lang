@@ -17,6 +17,7 @@
 namespace __sanitizer {
 
 const char *SanitizerToolName = "SanitizerTool";
+uptr SanitizerVerbosity = 0;
 
 uptr GetPageSizeCached() {
   static uptr PageSize;

@@ -33,6 +33,7 @@ const uptr kCacheLineSize = 64;
 #endif
 
 extern const char *SanitizerToolName;  // Can be changed by the tool.
+extern uptr SanitizerVerbosity;
 
 uptr GetPageSize();
 uptr GetPageSizeCached();
