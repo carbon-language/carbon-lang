@@ -80,7 +80,9 @@ CommandObjectRegexCommand::DoExecute
                 // Interpret the new command and return this as the result!
                 if (m_interpreter.GetExpandRegexAliases())
                     result.GetOutputStream().Printf("%s\n", new_command.c_str());
-                return m_interpreter.HandleCommand(new_command.c_str(), eLazyBoolCalculate, result);
+                // Pass in true for "no context switching".  The command that called us should have set up the context
+                // appropriately, we shouldn't have to redo that.
+                return m_interpreter.HandleCommand(new_command.c_str(), eLazyBoolCalculate, result, NULL, true, true);
             }
         }
         result.SetStatus(eReturnStatusFailed);
