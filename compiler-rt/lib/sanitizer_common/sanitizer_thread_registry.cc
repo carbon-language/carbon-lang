@@ -22,6 +22,8 @@ ThreadContextBase::ThreadContextBase(u32 tid)
   name[0] = '\0';
 }
 
+ThreadContextBase::~ThreadContextBase() {}
+
 void ThreadContextBase::SetName(const char *new_name) {
   name[0] = '\0';
   if (new_name) {
