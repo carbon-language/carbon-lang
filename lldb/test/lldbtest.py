@@ -440,6 +440,42 @@ def expectedFailureClang(bugnumber=None):
               return wrapper
         return expectedFailureClang_impl
 
+def expectedFailureIcc(bugnumber=None):
+     if callable(bugnumber):
+        @wraps(bugnumber)
+        def expectedFailureIcc_easy_wrapper(*args, **kwargs):
+            from unittest2 import case
+            self = args[0]
+            test_compiler = self.getCompiler()
+            try:
+                bugnumber(*args, **kwargs)
+            except Exception:
+                if "icc" in test_compiler:
+                    raise case._ExpectedFailure(sys.exc_info(),None)
+                else:
+                    raise
+            if "icc" in test_compiler:
+                raise case._UnexpectedSuccess(sys.exc_info(),None)
+        return expectedFailureIcc_easy_wrapper
+     else:
+        def expectedFailureIcc_impl(func):
+              @wraps(func)
+              def wrapper(*args, **kwargs):
+                from unittest2 import case
+                self = args[0]
+                test_compiler = self.getCompiler()
+                try:
+                    func(*args, **kwargs)
+                except Exception:
+                    if "icc" in test_compiler:
+                        raise case._ExpectedFailure(sys.exc_info(),bugnumber)
+                    else:
+                        raise
+                if "icc" in test_compiler:
+                    raise case._UnexpectedSuccess(sys.exc_info(),bugnumber)
+              return wrapper
+        return expectedFailureIcc_impl
+
 
 def expectedFailurei386(bugnumber=None):
      if callable(bugnumber):
@@ -539,6 +575,21 @@ def skipIfGcc(func):
         compiler = self.getCompiler()
         if "gcc" in compiler:
             self.skipTest("skipping because gcc is the test compiler")
+        else:
+            func(*args, **kwargs)
+    return wrapper
+
+def skipIfIcc(func):
+    """Decorate the item to skip tests that should be skipped if building with icc ."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@skipIfIcc can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        from unittest2 import case
+        self = args[0]
+        compiler = self.getCompiler()
+        if "icc" in compiler:
+            self.skipTest("skipping because icc is the test compiler")
         else:
             func(*args, **kwargs)
     return wrapper
