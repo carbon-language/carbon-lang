@@ -1,4 +1,4 @@
-; RUN: llc -mcpu=pwr7 -O0 -disable-fp-elim < %s | FileCheck %s
+; RUN: llc -mcpu=pwr7 -O0 -disable-fp-elim -disable-ppc-unaligned < %s | FileCheck %s
 
 ; FIXME: The code generation for packed structs is very poor because the
 ; PowerPC target wrongly rejects all unaligned loads.  This test case will

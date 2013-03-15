@@ -57,6 +57,9 @@ cl::desc("disable preincrement load/store generation on PPC"), cl::Hidden);
 static cl::opt<bool> DisableILPPref("disable-ppc-ilp-pref",
 cl::desc("disable setting the node scheduling preference to ILP on PPC"), cl::Hidden);
 
+static cl::opt<bool> DisablePPCUnaligned("disable-ppc-unaligned",
+cl::desc("disable unaligned load/store generation on PPC"), cl::Hidden);
+
 static TargetLoweringObjectFile *CreateTLOF(const PPCTargetMachine &TM) {
   if (TM.getSubtargetImpl()->isDarwin())
     return new TargetLoweringObjectFileMachO();
@@ -6849,6 +6852,32 @@ EVT PPCTargetLowering::getOptimalMemOpType(uint64_t Size,
   } else {
     return MVT::i32;
   }
+}
+
+bool PPCTargetLowering::allowsUnalignedMemoryAccesses(EVT VT,
+                                                      bool *Fast) const {
+  if (DisablePPCUnaligned)
+    return false;
+
+  // PowerPC supports unaligned memory access for simple non-vector types.
+  // Although accessing unaligned addresses is not as efficient as accessing
+  // aligned addresses, it is generally more efficient than manual expansion,
+  // and generally only traps for software emulation when crossing page
+  // boundaries.
+
+  if (!VT.isSimple())
+    return false;
+
+  if (VT.getSimpleVT().isVector())
+    return false;
+
+  if (VT == MVT::ppcf128)
+    return false;
+
+  if (Fast)
+    *Fast = true;
+
+  return true;
 }
 
 /// isFMAFasterThanMulAndAdd - Return true if an FMA operation is faster than
