@@ -191,3 +191,39 @@ void testAlwaysReturnNull(void *input) {
 #endif
 }
 
+int derefArg(int *p) {
+	return *p;
+#ifndef SUPPRESSED
+  // expected-warning@-2 {{Dereference of null pointer}}
+#endif
+}
+void ternaryArg(char cond) {
+	static int x;
+	derefArg(cond ? &x : getNull());
+}
+
+int derefAssignment(int *p) {
+	return *p;
+#ifndef SUPPRESSED
+  // expected-warning@-2 {{Dereference of null pointer}}
+#endif
+}
+void ternaryAssignment(char cond) {
+  static int x;
+  int *p = cond ? &x : getNull();
+  derefAssignment(p);
+}
+
+int *retNull(char cond) {
+  static int x;
+  return cond ? &x : getNull();
+}
+int ternaryRetNull(char cond) {
+  int *p = retNull(cond);
+  return *p;
+#ifndef SUPPRESSED
+  // expected-warning@-2 {{Dereference of null pointer}}
+#endif
+}
+
+

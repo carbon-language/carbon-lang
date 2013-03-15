@@ -772,16 +772,27 @@ static const MemRegion *getLocationRegionIfReference(const Expr *E,
   return 0;
 }
 
-bool bugreporter::trackNullOrUndefValue(const ExplodedNode *ErrorNode,
+bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
                                         const Stmt *S,
                                         BugReport &report, bool IsArg) {
-  if (!S || !ErrorNode)
+  if (!S || !N)
     return false;
 
+  // Peel off OpaqueValueExpr.
   if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(S))
     S = OVE->getSourceExpr();
 
-  const ExplodedNode *N = ErrorNode;
+  // Peel off the ternary operator.
+  if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(S)) {
+    ProgramStateRef State = N->getState();
+    SVal CondVal = State->getSVal(CO->getCond(), N->getLocationContext());
+    if (State->isNull(CondVal).isConstrainedTrue()) {
+      S = CO->getTrueExpr();
+    } else {
+      assert(State->isNull(CondVal).isConstrainedFalse());
+      S =  CO->getFalseExpr();
+    }
+  }
 
   const Expr *Inner = 0;
   if (const Expr *Ex = dyn_cast<Expr>(S)) {
