@@ -1357,7 +1357,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     OutStreamer.EmitInstruction(MCInstBuilder(ARM::MOVr)
       .addReg(ARM::PC)
-      .addImm(MI->getOperand(0).getReg())
+      .addReg(MI->getOperand(0).getReg())
       // Add predicate operands.
       .addImm(ARMCC::AL)
       .addReg(0)
