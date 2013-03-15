@@ -400,9 +400,8 @@ void StreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
     SymbolRef Sym = *I;
     ProgramStateRef state = C.getState();
     const StreamState *SS = state->get<StreamMap>(Sym);
-    // TODO: Shouldn't we have a continue here?
     if (!SS)
-      return;
+      continue;
 
     if (SS->isOpened()) {
       ExplodedNode *N = C.generateSink();
