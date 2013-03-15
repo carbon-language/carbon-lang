@@ -21,18 +21,18 @@ define void @casts() {
     ; Vector values
   ; CHECK: cost of 1 {{.*}} select
   %v7 = select <2 x i1> undef, <2 x i8> undef, <2 x i8> undef
-  ; CHECK: cost of 10 {{.*}} select
+  ; CHECK: cost of 1 {{.*}} select
   %v8 = select <4 x i1>  undef, <4 x i8> undef, <4 x i8> undef
-  ; CHECK: cost of 17 {{.*}} select
+  ; CHECK: cost of 1 {{.*}} select
   %v9 = select <8 x i1>  undef, <8 x i8> undef, <8 x i8> undef
-  ; CHECK: cost of 33 {{.*}} select
+  ; CHECK: cost of 1 {{.*}} select
   %v10 = select <16 x i1>  undef, <16 x i8> undef, <16 x i8> undef
 
   ; CHECK: cost of 1 {{.*}} select
   %v11 = select <2 x i1> undef, <2 x i16> undef, <2 x i16> undef
-  ; CHECK: cost of 9 {{.*}} select
+  ; CHECK: cost of 1 {{.*}} select
   %v12 = select <4 x i1>  undef, <4 x i16> undef, <4 x i16> undef
-  ; CHECK: cost of 17 {{.*}} select
+  ; CHECK: cost of 1 {{.*}} select
   %v13 = select <8 x i1>  undef, <8 x i16> undef, <8 x i16> undef
   ; CHECK: cost of 40 {{.*}} select
   %v13b = select <16 x i1>  undef, <16 x i16> undef, <16 x i16> undef
