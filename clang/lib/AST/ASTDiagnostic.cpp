@@ -1132,7 +1132,6 @@ class TemplateDiff {
     // Handle cases where the difference is not templates with different
     // arguments.
     switch (Tree.GetKind()) {
-      default:
       case DiffTree::Invalid:
         llvm_unreachable("Template diffing failed with bad DiffNode");
       case DiffTree::Type: {
