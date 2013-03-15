@@ -3038,7 +3038,8 @@ public:
             }
             else if (short_option == 'a')
             {
-                m_module_addr = Args::StringToAddress(NULL, option_arg, LLDB_INVALID_ADDRESS, &error);
+                ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
+                m_module_addr = Args::StringToAddress(&exe_ctx, option_arg, LLDB_INVALID_ADDRESS, &error);
             }
             else
             {
@@ -3713,10 +3714,11 @@ public:
             switch (short_option)
             {
                 case 'a':
-                    m_type = eLookupTypeAddress;
-                    m_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS);
-                    if (m_addr == LLDB_INVALID_ADDRESS)
-                        error.SetErrorStringWithFormat ("invalid address string '%s'", option_arg);
+                    {
+                        m_type = eLookupTypeAddress;
+                        ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
+                        m_addr = Args::StringToAddress(&exe_ctx, option_arg, LLDB_INVALID_ADDRESS, &error);
+                    }
                     break;
                     
                 case 'o':
@@ -4107,7 +4109,7 @@ protected:
 OptionDefinition
 CommandObjectTargetModulesLookup::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1,   true,  "address",    'a', required_argument, NULL, 0, eArgTypeAddress,          "Lookup an address in one or more target modules."},
+    { LLDB_OPT_SET_1,   true,  "address",    'a', required_argument, NULL, 0, eArgTypeAddressOrExpression, "Lookup an address in one or more target modules."},
     { LLDB_OPT_SET_1,   false, "offset",     'o', required_argument, NULL, 0, eArgTypeOffset,           "When looking up an address subtract <offset> from any addresses before doing the lookup."},
     { LLDB_OPT_SET_2| LLDB_OPT_SET_4 | LLDB_OPT_SET_5
       /* FIXME: re-enable this for types when the LookupTypeInModule actually uses the regex option: | LLDB_OPT_SET_6 */ ,
