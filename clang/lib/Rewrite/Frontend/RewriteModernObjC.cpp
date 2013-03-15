@@ -939,9 +939,8 @@ void RewriteModernObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
   // Generate the 'getter' function.
   ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCIvarDecl *OID = PID->getPropertyIvarDecl();
+  assert(IMD && OID && "Synthesized ivars must be attached to @implementation");
 
-  if (!OID)
-    return;
   unsigned Attributes = PD->getPropertyAttributes();
   if (mustSynthesizeSetterGetterMethod(IMD, PD, true /*getter*/)) {
     bool GenGetProperty = !(Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic) &&

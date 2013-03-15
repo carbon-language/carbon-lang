@@ -3807,6 +3807,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
 
       Arg = ArgE.takeAs<Expr>();
     } else {
+      assert(FDecl && "can't use default arguments without a known callee");
       Param = FDecl->getParamDecl(i);
 
       ExprResult ArgExpr =
