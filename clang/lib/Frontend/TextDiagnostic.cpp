@@ -958,7 +958,7 @@ static void highlightRange(const CharSourceRange &R,
     // Pick the last non-whitespace column.
     if (EndColNo > map.getSourceLine().size())
       EndColNo = map.getSourceLine().size();
-    while (EndColNo-1 &&
+    while (EndColNo &&
            (map.getSourceLine()[EndColNo-1] == ' ' ||
             map.getSourceLine()[EndColNo-1] == '\t'))
       EndColNo = map.startOfPreviousColumn(EndColNo);
