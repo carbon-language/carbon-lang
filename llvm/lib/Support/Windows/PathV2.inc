@@ -715,10 +715,10 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
   FileDescriptor = FD;
   // Make sure that the requested size fits within SIZE_T.
   if (Size > std::numeric_limits<SIZE_T>::max()) {
-    if (FileDescriptor)
+    if (FileDescriptor) {
       if (CloseFD)
         _close(FileDescriptor);
-    else
+    } else
       ::CloseHandle(FileHandle);
     return make_error_code(errc::invalid_argument);
   }
@@ -739,10 +739,10 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
                                           0);
   if (FileMappingHandle == NULL) {
     error_code ec = windows_error(GetLastError());
-    if (FileDescriptor)
+    if (FileDescriptor) {
       if (CloseFD)
         _close(FileDescriptor);
-    else
+    } else
       ::CloseHandle(FileHandle);
     return ec;
   }
@@ -762,10 +762,10 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
   if (Mapping == NULL) {
     error_code ec = windows_error(GetLastError());
     ::CloseHandle(FileMappingHandle);
-    if (FileDescriptor)
+    if (FileDescriptor) {
       if (CloseFD)
         _close(FileDescriptor);
-    else
+    } else
       ::CloseHandle(FileHandle);
     return ec;
   }
@@ -777,10 +777,10 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
       error_code ec = windows_error(GetLastError());
       ::UnmapViewOfFile(Mapping);
       ::CloseHandle(FileMappingHandle);
-      if (FileDescriptor)
+      if (FileDescriptor) {
         if (CloseFD)
           _close(FileDescriptor);
-      else
+      } else
         ::CloseHandle(FileHandle);
       return ec;
     }
@@ -790,10 +790,10 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
   // Close all the handles except for the view. It will keep the other handles
   // alive.
   ::CloseHandle(FileMappingHandle);
-  if (FileDescriptor)
+  if (FileDescriptor) {
     if (CloseFD)
       _close(FileDescriptor); // Also closes FileHandle.
-  else
+  } else
     ::CloseHandle(FileHandle);
   return error_code::success();
 }
