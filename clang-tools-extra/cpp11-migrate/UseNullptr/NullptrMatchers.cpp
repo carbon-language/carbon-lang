@@ -37,17 +37,40 @@ AST_MATCHER(CastExpr, isNullToPointer) {
     Node.getCastKind() == CK_NullToMemberPointer;
 }
 
+AST_MATCHER(Type, sugaredNullptrType) {
+  const Type *DesugaredType = Node.getUnqualifiedDesugaredType();
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(DesugaredType))
+    return BT->getKind() == BuiltinType::NullPtr;
+  return false;
+}
+
 } // end namespace ast_matchers
 } // end namespace clang
 
 StatementMatcher makeImplicitCastMatcher() {
-  return implicitCastExpr(allOf(unless(hasAncestor(explicitCastExpr())),
-                                isNullToPointer())).bind(ImplicitCastNode);
+  return implicitCastExpr(
+           isNullToPointer(),
+           unless(hasAncestor(explicitCastExpr())),
+           unless(
+             hasSourceExpression(
+               hasType(sugaredNullptrType())
+             )
+           )
+         ).bind(ImplicitCastNode);
 }
 
 StatementMatcher makeCastSequenceMatcher() {
   return explicitCastExpr(
-            allOf(unless(hasAncestor(explicitCastExpr())),
-                  hasDescendant(implicitCastExpr(isNullToPointer())))
-            ).bind(CastSequence);
+           unless(hasAncestor(explicitCastExpr())),
+           hasDescendant(
+             implicitCastExpr(
+               isNullToPointer(),
+               unless(
+                 hasSourceExpression(
+                   hasType(sugaredNullptrType())
+                 )
+               )
+             )
+           )
+         ).bind(CastSequence);
 }
