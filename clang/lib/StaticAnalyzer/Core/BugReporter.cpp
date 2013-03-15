@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "BugReporter"
+
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
@@ -29,11 +31,18 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/raw_ostream.h"
 #include <queue>
 
 using namespace clang;
 using namespace ento;
+
+STATISTIC(MaxBugClassSize,
+          "The maximum number of bug reports in the same equivalence class");
+STATISTIC(MaxValidBugClassSize,
+          "The maximum number of bug reports in the same equivalence class "
+          "where at least one report is valid (not suppressed)");
 
 BugReporterVisitor::~BugReporterVisitor() {}
 
@@ -2402,6 +2411,9 @@ void BugReporter::FlushReport(BugReport *exampleReport,
                          exampleReport->getUniqueingLocation(),
                          exampleReport->getUniqueingDecl()));
 
+  MaxBugClassSize = std::max(bugReports.size(),
+                             static_cast<size_t>(MaxBugClassSize));
+
   // Generate the full path diagnostic, using the generation scheme
   // specified by the PathDiagnosticConsumer. Note that we have to generate
   // path diagnostics even for consumers which do not support paths, because
@@ -2409,6 +2421,9 @@ void BugReporter::FlushReport(BugReport *exampleReport,
   if (!bugReports.empty())
     if (!generatePathDiagnostic(*D.get(), PD, bugReports))
       return;
+
+  MaxValidBugClassSize = std::max(bugReports.size(),
+                                  static_cast<size_t>(MaxValidBugClassSize));
 
   // If the path is empty, generate a single step path with the location
   // of the issue.
