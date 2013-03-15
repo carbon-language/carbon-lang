@@ -777,7 +777,7 @@ FormatManager::LoadObjCFormatters()
     AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCSELSummaryProvider<true>, "SEL summary provider", ConstString("objc_selector *"), objc_flags);
     AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCSELSummaryProvider<true>, "SEL summary provider", ConstString("SEL *"), objc_flags);
     
-    AddScriptSummary(objc_category_sp, "lldb.formatters.objc.Class.Class_Summary", ConstString("Class"), objc_flags);
+    AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCClassSummaryProvider, "Class summary provider", ConstString("Class"), objc_flags);
 #endif // LLDB_DISABLE_PYTHON
 
     objc_flags.SetSkipPointers(false);

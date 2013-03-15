@@ -558,6 +558,32 @@ lldb_private::formatters::LibcxxStringSummaryProvider (ValueObject& valobj, Stre
     return error.Success();
 }
 
+bool
+lldb_private::formatters::ObjCClassSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    ProcessSP process_sp = valobj.GetProcessSP();
+    if (!process_sp)
+        return false;
+    
+    ObjCLanguageRuntime* runtime = (ObjCLanguageRuntime*)process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+    
+    if (!runtime)
+        return false;
+    
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(valobj.GetValueAsUnsigned(0)));
+    
+    if (!descriptor.get() || !descriptor->IsValid())
+        return false;
+
+    const char* class_name = descriptor->GetClassName().GetCString();
+    
+    if (!class_name || !*class_name)
+        return false;
+    
+    stream.Printf("%s",class_name);
+    return true;
+}
+
 template<bool needs_at>
 bool
 lldb_private::formatters::NSDataSummaryProvider (ValueObject& valobj, Stream& stream)
