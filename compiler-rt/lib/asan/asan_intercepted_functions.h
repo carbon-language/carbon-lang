@@ -79,9 +79,9 @@ using __sanitizer::uptr;
 # define ASAN_INTERCEPT___CXA_THROW 0
 #endif
 
-// Windows threads.
 # if defined(_WIN32)
 extern "C" {
+// Windows threads.
 __declspec(dllimport)
 void* __stdcall CreateThread(void *sec, uptr st, void* start,
                              void *arg, DWORD fl, DWORD *id);
@@ -103,6 +103,7 @@ int atoi(const char *nptr);
 long atol(const char *nptr);  // NOLINT
 long strtol(const char *nptr, char **endptr, int base);  // NOLINT
 void longjmp(void *env, int value);
+double frexp(double x, int *expptr);
 }
 # endif
 

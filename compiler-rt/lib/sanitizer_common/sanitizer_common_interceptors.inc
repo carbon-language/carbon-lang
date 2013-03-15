@@ -37,6 +37,12 @@ INTERCEPTOR(double, frexp, double x, int *exp) {
   return res;
 }
 
+#define INIT_FREXP INTERCEPT_FUNCTION(frexp);
+#else
+#define INIT_FREXP
+#endif // SANITIZER_INTERCEPT_FREXP
+
+#if SANITIZER_INTERCEPT_FREXPF_FREXPL
 INTERCEPTOR(float, frexpf, float x, int *exp) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, frexpf, x, exp);
@@ -53,13 +59,12 @@ INTERCEPTOR(long double, frexpl, long double x, int *exp) {
   return res;
 }
 
-#define INIT_FREXP                               \
-  INTERCEPT_FUNCTION(frexp);                     \
+#define INIT_FREXPF_FREXPL                       \
   INTERCEPT_FUNCTION(frexpf);                    \
   INTERCEPT_FUNCTION(frexpl)
 #else
-#define INIT_FREXP
-#endif // SANITIZER_INTERCEPT_FREXP
+#define INIT_FREXPF_FREXPL
+#endif // SANITIZER_INTERCEPT_FREXPF_FREXPL
 
 #if SANITIZER_INTERCEPT_READ
 INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
@@ -370,4 +375,5 @@ SCANF_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
   INIT_PWRITE64;                                                               \
   INIT_LOCALTIME_AND_FRIENDS;                                                  \
   INIT_SCANF;                                                                  \
-  INIT_FREXP;
+  INIT_FREXP;                                                                  \
+  INIT_FREXPF_FREXPL;
