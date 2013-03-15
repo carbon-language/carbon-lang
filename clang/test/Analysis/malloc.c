@@ -1191,3 +1191,14 @@ void testOffsetPassedAsConst() {
   free(string); // expected-warning {{Argument to free() is offset by 1 byte from the start of memory allocated by malloc()}}
 }
 
+char **_vectorSegments;
+int _nVectorSegments;
+
+void poolFreeC(void* s) {
+  free(s); // no-warning
+}
+void freeMemory() {
+  while (_nVectorSegments) {
+    poolFreeC(_vectorSegments[_nVectorSegments++]);
+  }
+}

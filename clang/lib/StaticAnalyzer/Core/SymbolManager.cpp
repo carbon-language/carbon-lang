@@ -449,9 +449,7 @@ bool SymbolReaper::isLive(SymbolRef sym) {
   
   switch (sym->getKind()) {
   case SymExpr::RegionValueKind:
-    // FIXME: We should be able to use isLiveRegion here (this behavior
-    // predates isLiveRegion), but doing so causes test failures. Investigate.
-    KnownLive = true;
+    KnownLive = isLiveRegion(cast<SymbolRegionValue>(sym)->getRegion());
     break;
   case SymExpr::ConjuredKind:
     KnownLive = false;

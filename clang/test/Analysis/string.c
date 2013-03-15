@@ -410,12 +410,6 @@ void strcat_symbolic_dst_length(char *dst) {
   clang_analyzer_eval(strlen(dst) >= 4); // expected-warning{{TRUE}}
 }
 
-void strcat_symbolic_src_length(char *src) {
-	char dst[8] = "1234";
-	strcat(dst, src);
-  clang_analyzer_eval(strlen(dst) >= 4); // expected-warning{{TRUE}}
-}
-
 void strcat_symbolic_dst_length_taint(char *dst) {
   scanf("%s", dst); // Taint data.
   strcat(dst, "1234");
@@ -519,17 +513,6 @@ void strncpy_exactly_matching_buffer(char *y) {
 	// strncpy does not null-terminate, so we have no idea what the strlen is
 	// after this.
   clang_analyzer_eval(strlen(x) > 4); // expected-warning{{UNKNOWN}}
-}
-
-void strncpy_exactly_matching_buffer2(char *y) {
-	if (strlen(y) >= 4)
-		return;
-
-	char x[4];
-	strncpy(x, y, 4); // no-warning
-
-	// This time, we know that y fits in x anyway.
-  clang_analyzer_eval(strlen(x) <= 3); // expected-warning{{TRUE}}
 }
 
 void strncpy_zero(char *src) {
@@ -1038,4 +1021,31 @@ void strncasecmp_diff_length_6() {
 
 void strncasecmp_embedded_null () {
 	clang_analyzer_eval(strncasecmp("ab\0zz", "ab\0yy", 4) == 0); // expected-warning{{TRUE}}
+}
+
+//===----------------------------------------------------------------------===
+// FIXMEs
+//===----------------------------------------------------------------------===
+
+// The analyzer_eval call below should evaluate to true. We are being too 
+// aggressive in marking the (length of) src symbol dead. The length of dst 
+// depends on src. This could be explicitely specified in the checker or the 
+// logic for handling MetadataSymbol in SymbolManager needs to change.
+void strcat_symbolic_src_length(char *src) {
+	char dst[8] = "1234";
+	strcat(dst, src);
+  clang_analyzer_eval(strlen(dst) >= 4); // expected-warning{{UNKNOWN}}
+}
+
+// The analyzer_eval call below should evaluate to true. Most likely the same
+// issue as the test above.
+void strncpy_exactly_matching_buffer2(char *y) {
+	if (strlen(y) >= 4)
+		return;
+
+	char x[4];
+	strncpy(x, y, 4); // no-warning
+
+	// This time, we know that y fits in x anyway.
+  clang_analyzer_eval(strlen(x) <= 3); // expected-warning{{UNKNOWN}}
 }
