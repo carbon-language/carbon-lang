@@ -722,10 +722,6 @@ SuppressInlineDefensiveChecksVisitor::VisitNode(const ExplodedNode *Succ,
                                                 BugReport &BR) {
   if (IsSatisfied)
     return 0;
-  AnalyzerOptions &Options =
-  BRC.getBugReporter().getEngine().getAnalysisManager().options;
-  if (!Options.shouldSuppressInlinedDefensiveChecks())
-    return 0;
 
   // Start tracking after we see the first state in which the value is null.
   if (!IsTrackingTurnedOn)
@@ -734,13 +730,17 @@ SuppressInlineDefensiveChecksVisitor::VisitNode(const ExplodedNode *Succ,
   if (!IsTrackingTurnedOn)
     return 0;
 
+  AnalyzerOptions &Options =
+  BRC.getBugReporter().getEngine().getAnalysisManager().options;
+  if (!Options.shouldSuppressInlinedDefensiveChecks())
+    return 0;
 
   // Check if in the previous state it was feasible for this value
   // to *not* be null.
-  if (Pred->getState()->assume(V, true)) {
+  if (!Pred->getState()->isNull(V).isConstrainedTrue()) {
     IsSatisfied = true;
 
-    assert(!Succ->getState()->assume(V, true));
+    assert(Succ->getState()->isNull(V).isConstrainedTrue());
 
     // Check if this is inlined defensive checks.
     const LocationContext *CurLC =Succ->getLocationContext();
