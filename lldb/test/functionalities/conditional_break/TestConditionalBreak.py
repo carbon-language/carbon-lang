@@ -116,9 +116,14 @@ class ConditionalBreakTestCase(TestBase):
             self.HideStdout()
         self.runCmd("command source .lldb")
 
+        self.runCmd ("break list")
+
         if self.TraceOn():
             print "About to run."
         self.runCmd("run", RUN_SUCCEEDED)
+
+        self.runCmd ("break list")
+
         if self.TraceOn():
             print "Done running"
 
