@@ -160,44 +160,53 @@ private:
 
   SMLoc StartLoc, EndLoc;
 
+  struct ImmWithLSLOp {
+    const MCExpr *Val;
+    unsigned ShiftAmount;
+    bool ImplicitAmount;
+  };
+
+  struct CondCodeOp {
+    A64CC::CondCodes Code;
+  };
+
+  struct FPImmOp {
+    double Val;
+  };
+
+  struct ImmOp {
+    const MCExpr *Val;
+  };
+
+  struct RegOp {
+    unsigned RegNum;
+  };
+
+  struct ShiftExtendOp {
+    A64SE::ShiftExtSpecifiers ShiftType;
+    unsigned Amount;
+    bool ImplicitAmount;
+  };
+
+  struct SysRegOp {
+    const char *Data;
+    unsigned Length;
+  };
+
+  struct TokOp {
+    const char *Data;
+    unsigned Length;
+  };
+
   union {
-    struct {
-      const MCExpr *Val;
-      unsigned ShiftAmount;
-      bool ImplicitAmount;
-    } ImmWithLSL;
-
-    struct {
-      A64CC::CondCodes Code;
-    } CondCode;
-
-    struct {
-      double Val;
-    } FPImm;
-
-    struct {
-      const MCExpr *Val;
-    } Imm;
-
-    struct {
-      unsigned RegNum;
-    } Reg;
-
-    struct {
-      A64SE::ShiftExtSpecifiers ShiftType;
-      unsigned Amount;
-      bool ImplicitAmount;
-    } ShiftExtend;
-
-    struct {
-      const char *Data;
-      unsigned Length;
-    } SysReg;
-
-    struct {
-      const char *Data;
-      unsigned Length;
-    } Tok;
+    struct ImmWithLSLOp ImmWithLSL;
+    struct CondCodeOp CondCode;
+    struct FPImmOp FPImm;
+    struct ImmOp Imm;
+    struct RegOp Reg;
+    struct ShiftExtendOp ShiftExtend;
+    struct SysRegOp SysReg;
+    struct TokOp Tok;
   };
 
   AArch64Operand(KindTy K, SMLoc S, SMLoc E)

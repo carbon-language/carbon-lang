@@ -211,25 +211,30 @@ private:
 
   MipsOperand(KindTy K) : MCParsedAsmOperand(), Kind(K) {}
 
+  struct Token {
+    const char *Data;
+    unsigned Length;
+  };
+
+  struct RegOp {
+    unsigned RegNum;
+    RegisterKind Kind;
+  };
+
+  struct ImmOp {
+    const MCExpr *Val;
+  };
+
+  struct MemOp {
+    unsigned Base;
+    const MCExpr *Off;
+  };
+
   union {
-    struct {
-      const char *Data;
-      unsigned Length;
-    } Tok;
-
-    struct {
-      unsigned RegNum;
-      RegisterKind Kind;
-    } Reg;
-
-    struct {
-      const MCExpr *Val;
-    } Imm;
-
-    struct {
-      unsigned Base;
-      const MCExpr *Off;
-    } Mem;
+    struct Token Tok;
+    struct RegOp Reg;
+    struct ImmOp Imm;
+    struct MemOp Mem;
   };
 
   SMLoc StartLoc, EndLoc;

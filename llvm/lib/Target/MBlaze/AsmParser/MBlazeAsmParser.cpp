@@ -82,29 +82,35 @@ struct MBlazeOperand : public MCParsedAsmOperand {
 
   SMLoc StartLoc, EndLoc;
 
+  struct TokOp {
+    const char *Data;
+    unsigned Length;
+  };
+
+  struct RegOp {
+    unsigned RegNum;
+  };
+
+  struct ImmOp {
+    const MCExpr *Val;
+  };
+
+  struct MemOp {
+    unsigned Base;
+    unsigned OffReg;
+    const MCExpr *Off;
+  };
+
+  struct FslImmOp {
+    const MCExpr *Val;
+  };
+
   union {
-    struct {
-      const char *Data;
-      unsigned Length;
-    } Tok;
-
-    struct {
-      unsigned RegNum;
-    } Reg;
-
-    struct {
-      const MCExpr *Val;
-    } Imm;
-
-    struct {
-      unsigned Base;
-      unsigned OffReg;
-      const MCExpr *Off;
-    } Mem;
-
-    struct {
-      const MCExpr *Val;
-    } FslImm;
+    struct TokOp Tok;
+    struct RegOp Reg;
+    struct ImmOp Imm;
+    struct MemOp Mem;
+    struct FslImmOp FslImm;
   };
 
   MBlazeOperand(KindTy K) : MCParsedAsmOperand(), Kind(K) {}

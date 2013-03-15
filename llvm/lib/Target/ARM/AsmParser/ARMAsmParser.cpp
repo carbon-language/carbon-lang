@@ -316,103 +316,127 @@ class ARMOperand : public MCParsedAsmOperand {
   SMLoc StartLoc, EndLoc;
   SmallVector<unsigned, 8> Registers;
 
+  struct CCOp {
+    ARMCC::CondCodes Val;
+  };
+
+  struct CopOp {
+    unsigned Val;
+  };
+
+  struct CoprocOptionOp {
+    unsigned Val;
+  };
+
+  struct ITMaskOp {
+    unsigned Mask:4;
+  };
+
+  struct MBOptOp {
+    ARM_MB::MemBOpt Val;
+  };
+
+  struct IFlagsOp {
+    ARM_PROC::IFlags Val;
+  };
+
+  struct MMaskOp {
+    unsigned Val;
+  };
+
+  struct TokOp {
+    const char *Data;
+    unsigned Length;
+  };
+
+  struct RegOp {
+    unsigned RegNum;
+  };
+
+  // A vector register list is a sequential list of 1 to 4 registers.
+  struct VectorListOp {
+    unsigned RegNum;
+    unsigned Count;
+    unsigned LaneIndex;
+    bool isDoubleSpaced;
+  };
+
+  struct VectorIndexOp {
+    unsigned Val;
+  };
+
+  struct ImmOp {
+    const MCExpr *Val;
+  };
+
+  /// Combined record for all forms of ARM address expressions.
+  struct MemoryOp {
+    unsigned BaseRegNum;
+    // Offset is in OffsetReg or OffsetImm. If both are zero, no offset
+    // was specified.
+    const MCConstantExpr *OffsetImm;  // Offset immediate value
+    unsigned OffsetRegNum;    // Offset register num, when OffsetImm == NULL
+    ARM_AM::ShiftOpc ShiftType; // Shift type for OffsetReg
+    unsigned ShiftImm;        // shift for OffsetReg.
+    unsigned Alignment;       // 0 = no alignment specified
+    // n = alignment in bytes (2, 4, 8, 16, or 32)
+    unsigned isNegative : 1;  // Negated OffsetReg? (~'U' bit)
+  };
+
+  struct PostIdxRegOp {
+    unsigned RegNum;
+    bool isAdd;
+    ARM_AM::ShiftOpc ShiftTy;
+    unsigned ShiftImm;
+  };
+
+  struct ShifterImmOp {
+    bool isASR;
+    unsigned Imm;
+  };
+
+  struct RegShiftedRegOp {
+    ARM_AM::ShiftOpc ShiftTy;
+    unsigned SrcReg;
+    unsigned ShiftReg;
+    unsigned ShiftImm;
+  };
+
+  struct RegShiftedImmOp {
+    ARM_AM::ShiftOpc ShiftTy;
+    unsigned SrcReg;
+    unsigned ShiftImm;
+  };
+
+  struct RotImmOp {
+    unsigned Imm;
+  };
+
+  struct BitfieldOp {
+    unsigned LSB;
+    unsigned Width;
+  };
+
   union {
-    struct {
-      ARMCC::CondCodes Val;
-    } CC;
-
-    struct {
-      unsigned Val;
-    } Cop;
-
-    struct {
-      unsigned Val;
-    } CoprocOption;
-
-    struct {
-      unsigned Mask:4;
-    } ITMask;
-
-    struct {
-      ARM_MB::MemBOpt Val;
-    } MBOpt;
-
-    struct {
-      ARM_PROC::IFlags Val;
-    } IFlags;
-
-    struct {
-      unsigned Val;
-    } MMask;
-
-    struct {
-      const char *Data;
-      unsigned Length;
-    } Tok;
-
-    struct {
-      unsigned RegNum;
-    } Reg;
-
-    // A vector register list is a sequential list of 1 to 4 registers.
-    struct {
-      unsigned RegNum;
-      unsigned Count;
-      unsigned LaneIndex;
-      bool isDoubleSpaced;
-    } VectorList;
-
-    struct {
-      unsigned Val;
-    } VectorIndex;
-
-    struct {
-      const MCExpr *Val;
-    } Imm;
-
-    /// Combined record for all forms of ARM address expressions.
-    struct {
-      unsigned BaseRegNum;
-      // Offset is in OffsetReg or OffsetImm. If both are zero, no offset
-      // was specified.
-      const MCConstantExpr *OffsetImm;  // Offset immediate value
-      unsigned OffsetRegNum;    // Offset register num, when OffsetImm == NULL
-      ARM_AM::ShiftOpc ShiftType; // Shift type for OffsetReg
-      unsigned ShiftImm;        // shift for OffsetReg.
-      unsigned Alignment;       // 0 = no alignment specified
-                                // n = alignment in bytes (2, 4, 8, 16, or 32)
-      unsigned isNegative : 1;  // Negated OffsetReg? (~'U' bit)
-    } Memory;
-
-    struct {
-      unsigned RegNum;
-      bool isAdd;
-      ARM_AM::ShiftOpc ShiftTy;
-      unsigned ShiftImm;
-    } PostIdxReg;
-
-    struct {
-      bool isASR;
-      unsigned Imm;
-    } ShifterImm;
-    struct {
-      ARM_AM::ShiftOpc ShiftTy;
-      unsigned SrcReg;
-      unsigned ShiftReg;
-      unsigned ShiftImm;
-    } RegShiftedReg;
-    struct {
-      ARM_AM::ShiftOpc ShiftTy;
-      unsigned SrcReg;
-      unsigned ShiftImm;
-    } RegShiftedImm;
-    struct {
-      unsigned Imm;
-    } RotImm;
-    struct {
-      unsigned LSB;
-      unsigned Width;
-    } Bitfield;
+    struct CCOp CC;
+    struct CopOp Cop;
+    struct CoprocOptionOp CoprocOption;
+    struct MBOptOp MBOpt;
+    struct ITMaskOp ITMask;
+    struct IFlagsOp IFlags;
+    struct MMaskOp MMask;
+    struct TokOp Tok;
+    struct RegOp Reg;
+    struct VectorListOp VectorList;
+    struct VectorIndexOp VectorIndex;
+    struct ImmOp Imm;
+    struct MemoryOp Memory;
+    struct PostIdxRegOp PostIdxReg;
+    struct ShifterImmOp ShifterImm;
+    struct RegShiftedRegOp RegShiftedReg;
+    struct RegShiftedImmOp RegShiftedImm;
+    struct RotImmOp RotImm;
+    struct BitfieldOp Bitfield;
   };
 
   ARMOperand(KindTy K) : MCParsedAsmOperand(), Kind(K) {}

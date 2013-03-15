@@ -24,11 +24,15 @@ typedef void* PointerTy;
 class APInt;
 
 struct GenericValue {
+  struct IntPair {
+    unsigned int first;
+    unsigned int second;
+  };
   union {
     double          DoubleVal;
     float           FloatVal;
     PointerTy       PointerVal;
-    struct { unsigned int first; unsigned int second; } UIntPairVal;
+    struct IntPair  UIntPairVal;
     unsigned char   Untyped[8];
   };
   APInt IntVal;   // also used for long doubles
