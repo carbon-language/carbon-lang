@@ -2114,134 +2114,125 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
                                            ArrayRef<BugReport *> &bugReports) {
   assert(!bugReports.empty());
 
-  bool HasValid = false;
-  SmallVector<const ExplodedNode *, 10> errorNodes;
+  SmallVector<const ExplodedNode *, 32> errorNodes;
   for (ArrayRef<BugReport*>::iterator I = bugReports.begin(),
-                                      E = bugReports.end(); I != E; ++I) {
-    if ((*I)->isValid()) {
-      HasValid = true;
-      errorNodes.push_back((*I)->getErrorNode());
-    } else {
-      errorNodes.push_back(0);
-    }
+                                      E = bugReports.end();
+       I != E; ++I) {
+    errorNodes.push_back((*I)->getErrorNode());
   }
 
-  // If all the reports have been marked invalid, we're done.
-  if (!HasValid)
-    return false;
+  typedef PathDiagnosticConsumer::PathGenerationScheme PathGenerationScheme;
+  PathGenerationScheme ActiveScheme = PC.getGenerationScheme();
 
-  // Construct a new graph that contains only a single path from the error
-  // node to a root.
-  const std::pair<std::pair<ExplodedGraph*, NodeBackMap*>,
-  std::pair<ExplodedNode*, unsigned> >&
-    GPair = MakeReportGraph(&getGraph(), errorNodes);
+  for (size_t Remaining = bugReports.size(); Remaining > 0; --Remaining) {
+    // Construct a new graph that contains only a single path from the error
+    // node to a root.
+    // FIXME: It might be possible to reuse some of this work instead of
+    // redoing it every time we mark a report invalid.
+    const std::pair<std::pair<ExplodedGraph*, NodeBackMap*>,
+                    std::pair<ExplodedNode*, unsigned> >&
+      GPair = MakeReportGraph(&getGraph(), errorNodes);
 
-  // Find the BugReport with the original location.
-  assert(GPair.second.second < bugReports.size());
-  BugReport *R = bugReports[GPair.second.second];
-  assert(R && "No original report found for sliced graph.");
-  assert(R->isValid() && "Report selected from trimmed graph marked invalid.");
+    // Find the BugReport with the original location.
+    assert(GPair.second.second < bugReports.size());
+    BugReport *R = bugReports[GPair.second.second];
+    assert(R && "No original report found for sliced graph.");
+    assert(R->isValid() && "Report selected by trimmed graph marked invalid.");
 
-  OwningPtr<ExplodedGraph> ReportGraph(GPair.first.first);
-  OwningPtr<NodeBackMap> BackMap(GPair.first.second);
-  const ExplodedNode *N = GPair.second.first;
+    // Don't try to reuse this report if it ends up being suppressed.
+    errorNodes[GPair.second.second] = 0;
 
-  // Start building the path diagnostic...
-  PathDiagnosticBuilder PDB(*this, R, BackMap.get(), &PC);
+    OwningPtr<ExplodedGraph> ReportGraph(GPair.first.first);
+    OwningPtr<NodeBackMap> BackMap(GPair.first.second);
+    const ExplodedNode *N = GPair.second.first;
 
-  // Register additional node visitors.
-  R->addVisitor(new NilReceiverBRVisitor());
-  R->addVisitor(new ConditionBRVisitor());
-  R->addVisitor(new LikelyFalsePositiveSuppressionBRVisitor());
+    // Start building the path diagnostic...
+    PathDiagnosticBuilder PDB(*this, R, BackMap.get(), &PC);
 
-  BugReport::VisitorList visitors;
-  unsigned originalReportConfigToken, finalReportConfigToken;
+    // Register additional node visitors.
+    R->addVisitor(new NilReceiverBRVisitor());
+    R->addVisitor(new ConditionBRVisitor());
+    R->addVisitor(new LikelyFalsePositiveSuppressionBRVisitor());
 
-  // While generating diagnostics, it's possible the visitors will decide
-  // new symbols and regions are interesting, or add other visitors based on
-  // the information they find. If they do, we need to regenerate the path
-  // based on our new report configuration.
-  do {
-    // Get a clean copy of all the visitors.
-    for (BugReport::visitor_iterator I = R->visitor_begin(),
-                                     E = R->visitor_end(); I != E; ++I)
-       visitors.push_back((*I)->clone());
+    BugReport::VisitorList visitors;
+    unsigned origReportConfigToken, finalReportConfigToken;
 
-    // Clear out the active path from any previous work.
-    PD.resetPath();
-    originalReportConfigToken = R->getConfigurationChangeToken();
+    // While generating diagnostics, it's possible the visitors will decide
+    // new symbols and regions are interesting, or add other visitors based on
+    // the information they find. If they do, we need to regenerate the path
+    // based on our new report configuration.
+    do {
+      // Get a clean copy of all the visitors.
+      for (BugReport::visitor_iterator I = R->visitor_begin(),
+                                       E = R->visitor_end(); I != E; ++I)
+        visitors.push_back((*I)->clone());
 
-    // Generate the very last diagnostic piece - the piece is visible before 
-    // the trace is expanded.
-    PathDiagnosticPiece *LastPiece = 0;
-    for (BugReport::visitor_iterator I = visitors.begin(), E = visitors.end();
-        I != E; ++I) {
-      if (PathDiagnosticPiece *Piece = (*I)->getEndPath(PDB, N, *R)) {
-        assert (!LastPiece &&
-            "There can only be one final piece in a diagnostic.");
-        LastPiece = Piece;
+      // Clear out the active path from any previous work.
+      PD.resetPath();
+      origReportConfigToken = R->getConfigurationChangeToken();
+
+      // Generate the very last diagnostic piece - the piece is visible before 
+      // the trace is expanded.
+      PathDiagnosticPiece *LastPiece = 0;
+      for (BugReport::visitor_iterator I = visitors.begin(), E = visitors.end();
+          I != E; ++I) {
+        if (PathDiagnosticPiece *Piece = (*I)->getEndPath(PDB, N, *R)) {
+          assert (!LastPiece &&
+              "There can only be one final piece in a diagnostic.");
+          LastPiece = Piece;
+        }
       }
-    }
 
-    if (PDB.getGenerationScheme() != PathDiagnosticConsumer::None) {
-      if (!LastPiece)
-        LastPiece = BugReporterVisitor::getDefaultEndPath(PDB, N, *R);
-      if (LastPiece)
+      if (ActiveScheme != PathDiagnosticConsumer::None) {
+        if (!LastPiece)
+          LastPiece = BugReporterVisitor::getDefaultEndPath(PDB, N, *R);
+        assert(LastPiece);
         PD.setEndOfPath(LastPiece);
-      else
-        return false;
+      }
+
+      switch (ActiveScheme) {
+      case PathDiagnosticConsumer::Extensive:
+        GenerateExtensivePathDiagnostic(PD, PDB, N, visitors);
+        break;
+      case PathDiagnosticConsumer::Minimal:
+        GenerateMinimalPathDiagnostic(PD, PDB, N, visitors);
+        break;
+      case PathDiagnosticConsumer::None:
+        GenerateVisitorsOnlyPathDiagnostic(PD, PDB, N, visitors);
+        break;
+      }
+
+      // Clean up the visitors we used.
+      llvm::DeleteContainerPointers(visitors);
+
+      // Did anything change while generating this path?
+      finalReportConfigToken = R->getConfigurationChangeToken();
+    } while (finalReportConfigToken != origReportConfigToken);
+
+    if (!R->isValid())
+      continue;
+
+    // Finally, prune the diagnostic path of uninteresting stuff.
+    if (!PD.path.empty()) {
+      // Remove messages that are basically the same.
+      removeRedundantMsgs(PD.getMutablePieces());
+
+      if (R->shouldPrunePath() &&
+          getEngine().getAnalysisManager().options.shouldPrunePaths()) {
+        bool stillHasNotes = RemoveUnneededCalls(PD.getMutablePieces(), R);
+        assert(stillHasNotes);
+        (void)stillHasNotes;
+      }
+
+      adjustCallLocations(PD.getMutablePieces());
     }
 
-    switch (PDB.getGenerationScheme()) {
-    case PathDiagnosticConsumer::Extensive:
-      if (!GenerateExtensivePathDiagnostic(PD, PDB, N, visitors)) {
-        assert(!R->isValid() && "Failed on valid report");
-        // Try again. We'll filter out the bad report when we trim the graph.
-        // FIXME: It would be more efficient to use the same intermediate
-        // trimmed graph, and just repeat the shortest-path search.
-        return generatePathDiagnostic(PD, PC, bugReports);
-      }
-      break;
-    case PathDiagnosticConsumer::Minimal:
-      if (!GenerateMinimalPathDiagnostic(PD, PDB, N, visitors)) {
-        assert(!R->isValid() && "Failed on valid report");
-        // Try again. We'll filter out the bad report when we trim the graph.
-        return generatePathDiagnostic(PD, PC, bugReports);
-      }
-      break;
-    case PathDiagnosticConsumer::None:
-      if (!GenerateVisitorsOnlyPathDiagnostic(PD, PDB, N, visitors)) {
-        assert(!R->isValid() && "Failed on valid report");
-        // Try again. We'll filter out the bad report when we trim the graph.
-        return generatePathDiagnostic(PD, PC, bugReports);
-      }
-      break;
-    }
-
-    // Clean up the visitors we used.
-    llvm::DeleteContainerPointers(visitors);
-
-    // Did anything change while generating this path?
-    finalReportConfigToken = R->getConfigurationChangeToken();
-  } while(finalReportConfigToken != originalReportConfigToken);
-
-  // Finally, prune the diagnostic path of uninteresting stuff.
-  if (!PD.path.empty()) {
-    // Remove messages that are basically the same.
-    removeRedundantMsgs(PD.getMutablePieces());
-
-    if (R->shouldPrunePath() &&
-        getEngine().getAnalysisManager().options.shouldPrunePaths()) {
-      bool hasSomethingInteresting = RemoveUnneededCalls(PD.getMutablePieces(),
-                                                         R);
-      assert(hasSomethingInteresting);
-      (void) hasSomethingInteresting;
-    }
-
-    adjustCallLocations(PD.getMutablePieces());
+    // We found a report and didn't suppress it.
+    return true;
   }
 
-  return true;
+  // We suppressed all the reports in this equivalence class.
+  return false;
 }
 
 void BugReporter::Register(BugType *BT) {
