@@ -21,6 +21,18 @@ foreach(header ${SANITIZER_HEADERS})
   list(APPEND SANITIZER_TEST_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/../${header})
 endforeach()
 
+set(SANITIZER_TEST_CFLAGS_COMMON
+  ${COMPILER_RT_GTEST_INCLUDE_CFLAGS}
+  -I${COMPILER_RT_SOURCE_DIR}/include
+  -I${COMPILER_RT_SOURCE_DIR}/lib
+  -I${COMPILER_RT_SOURCE_DIR}/lib/sanitizer_common
+  -DGTEST_HAS_RTTI=0
+  -O2 -g -fno-rtti
+  -Wall -Werror -Werror=sign-compare)
+
+set(SANITIZER_TEST_LINK_FLAGS_COMMON
+  -lstdc++ -lpthread -ldl)
+
 include_directories(..)
 include_directories(../..)
 
@@ -52,20 +64,12 @@ macro(add_sanitizer_tests_for_arch arch)
   get_target_flags_for_arch(${arch} TARGET_FLAGS)
   set(SANITIZER_TEST_SOURCES ${SANITIZER_UNITTESTS}
                              ${COMPILER_RT_GTEST_SOURCE})
-  set(SANITIZER_TEST_CFLAGS ${COMPILER_RT_GTEST_INCLUDE_CFLAGS}
-                            -I${COMPILER_RT_SOURCE_DIR}/include
-                            -I${COMPILER_RT_SOURCE_DIR}/lib
-                            -I${COMPILER_RT_SOURCE_DIR}/lib/sanitizer_common
-                            -DGTEST_HAS_RTTI=0
-                            -O2 -g -fno-rtti
-                            -Wall -Werror -Werror=sign-compare ${TARGET_FLAGS})
-  set(SANITIZER_TEST_LINK_FLAGS -lstdc++ -lpthread -ldl ${TARGET_FLAGS})
   set(SANITIZER_TEST_OBJECTS)
   foreach(source ${SANITIZER_TEST_SOURCES})
     get_filename_component(basename ${source} NAME)
     set(output_obj "${basename}.${arch}.o")
     clang_compile(${output_obj} ${source}
-                  CFLAGS ${SANITIZER_TEST_CFLAGS}
+                  CFLAGS ${SANITIZER_TEST_CFLAGS_COMMON} ${TARGET_FLAGS}
                   DEPS gtest ${SANITIZER_RUNTIME_LIBRARIES}
                        ${SANITIZER_TEST_HEADERS})
     list(APPEND SANITIZER_TEST_OBJECTS ${output_obj})
@@ -78,7 +82,8 @@ macro(add_sanitizer_tests_for_arch arch)
                        OBJECTS ${SANITIZER_TEST_OBJECTS}
                                ${SANITIZER_COMMON_LIB_NAME}
                        DEPS ${SANITIZER_TEST_OBJECTS} ${SANITIZER_COMMON_LIB}
-                       LINK_FLAGS ${SANITIZER_TEST_LINK_FLAGS})
+                       LINK_FLAGS ${SANITIZER_TEST_LINK_FLAGS_COMMON}
+                                  ${TARGET_FLAGS})
 endmacro()
 
 if(COMPILER_RT_CAN_EXECUTE_TESTS)
@@ -123,20 +128,14 @@ if(ANDROID)
   add_executable(SanitizerTest
     ${SANITIZER_UNITTESTS}
     ${COMPILER_RT_GTEST_SOURCE}
-    $<TARGET_OBJECTS:RTSanitizerCommon.arm.android>
-    )
+    $<TARGET_OBJECTS:RTSanitizerCommon.arm.android>)
   set_target_compile_flags(SanitizerTest
     ${SANITIZER_COMMON_CFLAGS}
-    ${COMPILER_RT_GTEST_INCLUDE_CFLAGS}
-    -I${COMPILER_RT_SOURCE_DIR}/include
-    -I${COMPILER_RT_SOURCE_DIR}/lib
-    -I${COMPILER_RT_SOURCE_DIR}/lib/sanitizer_common
-    -O2 -g
-    )
+    ${SANITIZER_TEST_CFLAGS_COMMON})
   # Setup correct output directory and link flags.
   set_target_properties(SanitizerTest PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  set_target_link_flags(SanitizerTest ${SANITIZER_TEST_LINK_FLAGS})
+  set_target_link_flags(SanitizerTest ${SANITIZER_TEST_LINK_FLAGS_COMMON})
   # Add unit test to test suite.
   add_dependencies(SanitizerUnitTests SanitizerTest)
 endif()
