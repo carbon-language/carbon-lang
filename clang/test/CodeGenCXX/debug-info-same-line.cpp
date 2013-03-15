@@ -47,12 +47,15 @@ main(int argc, char const *argv[])
 {
 
     int array[3];
+    int n;
 
     array[0] = foo (1238, 78392);
     array[1] = foo (379265, 23674);
     array[2] = foo (872934, 234);
 
-    return 0;
+    n = strange_max(array[0], strange_max(array[1], array[2]));
+
+    return n & 0xf;
 }
 
 // CHECK: define {{.*}} @_Z3fooii
@@ -79,3 +82,17 @@ main(int argc, char const *argv[])
 // CHECK:     call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[B_MD]]), !dbg !{{.*}}
 // result
 // CHECK: call void @llvm.dbg.declare
+
+// CHECK: define {{.*}} @main
+// CHECK: call {{.*}} @_Z3fooii
+// CHECK: call {{.*}} @_Z3fooii
+// CHECK: call {{.*}} @_Z3fooii
+// CHECK: store
+// CHECK: getelementptr
+// We want to see the same !dbg node for non-inlined functions. 
+// Needed for GDB compatibility.
+// CHECK: load {{.*}} !dbg ![[DBG:.*]]
+// CHECK: load {{.*}} !dbg ![[DBG]]
+// CHECK: load {{.*}} !dbg ![[DBG]]
+// CHECK: call {{.*}} @_Z11strange_maxii(i32 %{{.*}}, i32 %{{.*}}), !dbg ![[DBG]]
+// CHECK: call {{.*}} @_Z11strange_maxii(i32 %{{.*}}, i32 %{{.*}}), !dbg ![[DBG]]
