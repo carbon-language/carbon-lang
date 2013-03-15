@@ -1125,7 +1125,7 @@ bool ARMBaseInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const{
   // copyPhysReg() calls.  Look for VMOVS instructions that can legally be
   // widened to VMOVD.  We prefer the VMOVD when possible because it may be
   // changed into a VORR that can go down the NEON pipeline.
-  if (!WidenVMOVS || !MI->isCopy())
+  if (!WidenVMOVS || !MI->isCopy() || Subtarget.isCortexA15())
     return false;
 
   // Look for a copy between even S-registers.  That is where we keep floats

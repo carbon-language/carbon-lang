@@ -35,6 +35,7 @@ FunctionPass *createARMISelDag(ARMBaseTargetMachine &TM,
 FunctionPass *createARMJITCodeEmitterPass(ARMBaseTargetMachine &TM,
                                           JITCodeEmitter &JCE);
 
+FunctionPass *createA15SDOptimizerPass();
 FunctionPass *createARMLoadStoreOptimizationPass(bool PreAlloc = false);
 FunctionPass *createARMExpandPseudoPass();
 FunctionPass *createARMGlobalBaseRegPass();
