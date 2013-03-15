@@ -5186,18 +5186,7 @@ void Sema::CheckImplicitConversions(Expr *E, SourceLocation CC) {
 /// Diagnose when expression is an integer constant expression and its evaluation
 /// results in integer overflow
 void Sema::CheckForIntOverflow (Expr *E) {
-  if (const BinaryOperator *BExpr = dyn_cast<BinaryOperator>(E->IgnoreParens())) {
-    unsigned Opc = BExpr->getOpcode();
-    switch (Opc) {
-      case BO_Add:
-      case BO_Sub:
-      case BO_Mul:
-      case BO_Div:
-      case BO_Rem:
-        break;
-      default:
-        return;
-    }
+  if (isa<BinaryOperator>(E->IgnoreParens())) {
     llvm::SmallVector<PartialDiagnosticAt, 4> Diags;
     E->EvaluateForOverflow(Context, &Diags);
   }
