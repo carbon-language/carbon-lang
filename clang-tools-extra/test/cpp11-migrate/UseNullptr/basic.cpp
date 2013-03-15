@@ -69,16 +69,16 @@ template <typename T>
 struct Bar {
   Bar(T *p) : m_p(p) {
     m_p = static_cast<T*>(NULL);
-    // CHECK: m_p = nullptr;
+    // CHECK: m_p = static_cast<T*>(nullptr);
 
     m_p = static_cast<T*>(reinterpret_cast<int*>((void*)NULL));
-    // CHECK: m_p = nullptr;
+    // CHECK: m_p = static_cast<T*>(nullptr);
 
     m_p = static_cast<T*>(p ? p : static_cast<void*>(g_null));
-    // CHECK: m_p = static_cast<T*>(p ? p : nullptr);
+    // CHECK: m_p = static_cast<T*>(p ? p : static_cast<void*>(nullptr));
 
     T *p2 = static_cast<T*>(reinterpret_cast<int*>((void*)NULL));
-    // CHECK: T *p2 = nullptr;
+    // CHECK: T *p2 = static_cast<T*>(nullptr);
 
     m_p = NULL;
     // CHECK: m_p = nullptr;
@@ -223,15 +223,56 @@ int *test_nested_parentheses_expression() {
 
 void *test_parentheses_explicit_cast() {
   return(static_cast<void*>(0));
-  // CHECK: return(nullptr);
+  // CHECK: return(static_cast<void*>(nullptr));
 }
 
 void *test_parentheses_explicit_cast_sequence1() {
   return(static_cast<void*>(static_cast<int*>((void*)NULL)));
-  // CHECK: return(nullptr);
+  // CHECK: return(static_cast<void*>(nullptr));
 }
 
 void *test_parentheses_explicit_cast_sequence2() {
   return(static_cast<void*>(reinterpret_cast<int*>((float*)int(0.f))));
-  // CHECK: return(nullptr);
+  // CHECK: return(static_cast<void*>(nullptr));
+}
+
+// Test explicit cast expressions resulting in nullptr
+struct Bam {
+  Bam(int *a) {}
+  Bam(float *a) {}
+  Bam operator=(int *a) { return Bam(a); }
+  Bam operator=(float *a) { return Bam(a); }
+};
+
+void ambiguous_function(int *a) {}
+void ambiguous_function(float *a) {}
+
+void test_explicit_cast_ambiguous1() {
+  ambiguous_function((int*)0);
+  // CHECK: ambiguous_function((int*)nullptr);
+}
+
+void test_explicit_cast_ambiguous2() {
+  ambiguous_function((int*)(0));
+  // CHECK: ambiguous_function((int*)nullptr);
+}
+
+void test_explicit_cast_ambiguous3() {
+  ambiguous_function(static_cast<int*>(reinterpret_cast<int*>((float*)0)));
+  // CHECK: ambiguous_function(static_cast<int*>(nullptr));
+}
+
+Bam test_explicit_cast_ambiguous4() {
+  return(((int*)(0)));
+  // CHECK: return(((int*)nullptr));
+}
+
+void test_explicit_cast_ambiguous5() {
+  // Test for ambiguous overloaded constructors
+  Bam k((int*)(0));
+  // CHECK: Bam k((int*)nullptr);
+
+  // Test for ambiguous overloaded operators
+  k = (int*)0;
+  // CHECK: k = (int*)nullptr;
 }

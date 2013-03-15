@@ -49,12 +49,13 @@ bool ReplaceWithNullptr(tooling::Replacements &Replace, SourceManager &SM,
 /// nested within. However, there is no guarantee that only explicit casts
 /// exist between the found top-most explicit cast and the possibly more than
 /// one nested implicit cast. This visitor finds all cast sequences with an
-/// implicit cast to null within and creates a replacement.
+/// implicit cast to null within and creates a replacement leaving the
+/// outermost explicit cast unchanged to avoid introducing ambiguities.
 class CastSequenceVisitor : public RecursiveASTVisitor<CastSequenceVisitor> {
 public:
   CastSequenceVisitor(tooling::Replacements &R, SourceManager &SM,
                       unsigned &AcceptedChanges)
-      : Replace(R), SM(SM), AcceptedChanges(AcceptedChanges), FirstCast(0) {}
+      : Replace(R), SM(SM), AcceptedChanges(AcceptedChanges), FirstSubExpr(0) {}
 
   // Only VisitStmt is overridden as we shouldn't find other base AST types
   // within a cast expression.
@@ -62,16 +63,18 @@ public:
     CastExpr *C = dyn_cast<CastExpr>(S);
 
     if (!C) {
-      ResetFirstCast();
+      ResetFirstSubExpr();
       return true;
-    } else if (!FirstCast) {
-      FirstCast = C;
+    } else if (!FirstSubExpr) {
+      // Get the subexpression of the outermost explicit cast
+      FirstSubExpr = C->getSubExpr();
     }
 
     if (C->getCastKind() == CK_NullToPointer ||
         C->getCastKind() == CK_NullToMemberPointer) {
-      SourceLocation StartLoc = FirstCast->getLocStart();
-      SourceLocation EndLoc = FirstCast->getLocEnd();
+
+      SourceLocation StartLoc = FirstSubExpr->getLocStart();
+      SourceLocation EndLoc = FirstSubExpr->getLocEnd();
 
       // If the start/end location is a macro, get the expansion location.
       StartLoc = SM.getFileLoc(StartLoc);
@@ -80,20 +83,20 @@ public:
       AcceptedChanges +=
           ReplaceWithNullptr(Replace, SM, StartLoc, EndLoc) ? 1 : 0;
 
-      ResetFirstCast();
+      ResetFirstSubExpr();
     }
 
     return true;
   }
 
 private:
-  void ResetFirstCast() { FirstCast = 0; }
+  void ResetFirstSubExpr() { FirstSubExpr = 0; }
 
 private:
   tooling::Replacements &Replace;
   SourceManager &SM;
   unsigned &AcceptedChanges;
-  CastExpr *FirstCast;
+  Expr *FirstSubExpr;
 };
 
 void NullptrFixer::run(const ast_matchers::MatchFinder::MatchResult &Result) {
