@@ -61,9 +61,26 @@ namespace PR10036 {
   }
 }
 
+namespace PR15290 {
+  template<typename T>
+  class A {
+    T v_;
+    friend int add_to_v(A &t) noexcept(noexcept(v_ + 42))
+    {
+      return t.v_ + 42;
+    }
+  };
+  void f()
+  {
+    A<int> t;
+    add_to_v(t);
+  }
+}
+
 namespace Static {
   struct X1 {
     int m;
+    // FIXME: This should be accepted.
     static auto f() -> decltype(m); // expected-error{{'this' cannot be implicitly used in a static member function declaration}}
     static auto g() -> decltype(this->m); // expected-error{{'this' cannot be used in a static member function declaration}}
 

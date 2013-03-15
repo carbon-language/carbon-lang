@@ -4833,12 +4833,14 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
       //   "pointer to cv-qualifier-seq X" between the optional cv-qualifer-seq
       //   and the end of the function-definition, member-declarator, or
       //   declarator.
+      // FIXME: currently, "static" case isn't handled correctly.
       bool IsCXX11MemberFunction =
         getLangOpts().CPlusPlus11 &&
-        (D.getContext() == Declarator::MemberContext ||
-         (D.getContext() == Declarator::FileContext &&
-          D.getCXXScopeSpec().isValid() &&
-          Actions.CurContext->isRecord()));
+        (D.getContext() == Declarator::MemberContext
+         ? !D.getDeclSpec().isFriendSpecified()
+         : D.getContext() == Declarator::FileContext &&
+           D.getCXXScopeSpec().isValid() &&
+           Actions.CurContext->isRecord());
       Sema::CXXThisScopeRAII ThisScope(Actions,
                                dyn_cast<CXXRecordDecl>(Actions.CurContext),
                                DS.getTypeQualifiers() |
