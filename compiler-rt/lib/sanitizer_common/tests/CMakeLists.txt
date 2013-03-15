@@ -31,7 +31,7 @@ set(SANITIZER_TEST_CFLAGS_COMMON
   -Wall -Werror -Werror=sign-compare)
 
 set(SANITIZER_TEST_LINK_FLAGS_COMMON
-  -lstdc++ -lpthread -ldl)
+  -lstdc++ -ldl)
 
 include_directories(..)
 include_directories(../..)
@@ -83,7 +83,7 @@ macro(add_sanitizer_tests_for_arch arch)
                                ${SANITIZER_COMMON_LIB_NAME}
                        DEPS ${SANITIZER_TEST_OBJECTS} ${SANITIZER_COMMON_LIB}
                        LINK_FLAGS ${SANITIZER_TEST_LINK_FLAGS_COMMON}
-                                  ${TARGET_FLAGS})
+                                  -lpthread ${TARGET_FLAGS})
 endmacro()
 
 if(COMPILER_RT_CAN_EXECUTE_TESTS)
