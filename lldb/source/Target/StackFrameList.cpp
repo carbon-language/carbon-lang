@@ -250,6 +250,10 @@ StackFrameList::SetCurrentInlinedDepth (uint32_t new_depth)
 void
 StackFrameList::GetFramesUpTo(uint32_t end_idx)
 {
+    // this makes sure we do not fetch frames for an invalid thread
+    if (m_thread.IsValid() == false)
+        return;
+
     // We've already gotten more frames than asked for, or we've already finished unwinding, return.
     if (m_frames.size() > end_idx || GetAllFramesFetched())
         return;

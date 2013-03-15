@@ -815,22 +815,20 @@ lldb::StackFrameSP
 ExecutionContextRef::GetFrameSP () const
 {
     lldb::StackFrameSP frame_sp (m_frame_wp.lock());
-    if (!frame_sp && m_stack_id.IsValid())
+    if (frame_sp)
     {
-        lldb::ThreadSP thread_sp (GetThreadSP());
-        if (thread_sp)
-        {
-            frame_sp = thread_sp->GetFrameWithStackID (m_stack_id);
-            m_frame_wp = frame_sp;
-        }
-        else
-        {
-            // If the thread that this frame was supposed to belong to is not valid, then
-            // return a NULL frame_sp.
-            frame_sp.reset();
-        }
+        lldb::ThreadSP frame_thread_sp(frame_sp->GetThread());
+        if (frame_thread_sp && frame_thread_sp->IsValid())
+            return frame_sp;
     }
-    return frame_sp;
+    lldb::ThreadSP thread_sp (GetThreadSP());
+    if (thread_sp && thread_sp->IsValid())
+    {
+        frame_sp = thread_sp->GetFrameWithStackID (m_stack_id);
+        m_frame_wp = frame_sp;
+        return frame_sp;
+    }
+    return lldb::StackFrameSP();
 }
 
 ExecutionContext
