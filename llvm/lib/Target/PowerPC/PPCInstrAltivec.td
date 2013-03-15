@@ -182,6 +182,9 @@ class VX2_Int<bits<11> xo, string opc, Intrinsic IntID>
 //===----------------------------------------------------------------------===//
 // Instruction Definitions.
 
+def HasAltivec : Predicate<"PPCSubTarget.hasAltivec()">;
+let Predicates = [HasAltivec] in {
+
 def DSS      : DSS_Form<822, (outs),
                         (ins u5imm:$ZERO0, u5imm:$STRM,u5imm:$ZERO1,u5imm:$ZERO2),
                         "dss $STRM", LdStLoad /*FIXME*/, []>;
@@ -733,3 +736,6 @@ def : Pat<(v4f32 (ftrunc (v4f32 VRRC:$vA))),
           (VRFIZ VRRC:$vA)>;
 def : Pat<(v4f32 (fnearbyint (v4f32 VRRC:$vA))),
           (VRFIN VRRC:$vA)>;
+
+} // end HasAltivec
+
