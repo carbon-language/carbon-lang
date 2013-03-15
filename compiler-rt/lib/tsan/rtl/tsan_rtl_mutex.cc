@@ -63,7 +63,7 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
       && s->owner_tid != SyncVar::kInvalidTid
       && !s->is_broken) {
     s->is_broken = true;
-    Lock l(&ctx->thread_mtx);
+    ThreadRegistryLock l(ctx->thread_registry);
     ScopedReport rep(ReportTypeMutexDestroyLocked);
     rep.AddMutex(s);
     StackTrace trace;
@@ -248,18 +248,19 @@ void Acquire(ThreadState *thr, uptr pc, uptr addr) {
   s->mtx.ReadUnlock();
 }
 
+static void UpdateClockCallback(ThreadContextBase *tctx_base, void *arg) {
+  ThreadState *thr = reinterpret_cast<ThreadState*>(arg);
+  ThreadContext *tctx = static_cast<ThreadContext*>(tctx_base);
+  if (tctx->status == ThreadStatusRunning)
+    thr->clock.set(tctx->tid, tctx->thr->fast_state.epoch());
+  else
+    thr->clock.set(tctx->tid, tctx->epoch1);
+}
+
 void AcquireGlobal(ThreadState *thr, uptr pc) {
-  Context *ctx = CTX();
-  Lock l(&ctx->thread_mtx);
-  for (unsigned i = 0; i < kMaxTid; i++) {
-    ThreadContext *tctx = ctx->threads[i];
-    if (tctx == 0)
-      continue;
-    if (tctx->status == ThreadStatusRunning)
-      thr->clock.set(i, tctx->thr->fast_state.epoch());
-    else
-      thr->clock.set(i, tctx->epoch1);
-  }
+  ThreadRegistryLock l(CTX()->thread_registry);
+  CTX()->thread_registry->RunCallbackForEachThreadLocked(
+      UpdateClockCallback, thr);
 }
 
 void Release(ThreadState *thr, uptr pc, uptr addr) {
@@ -283,19 +284,20 @@ void ReleaseStore(ThreadState *thr, uptr pc, uptr addr) {
 }
 
 #ifndef TSAN_GO
+static void UpdateSleepClockCallback(ThreadContextBase *tctx_base, void *arg) {
+  ThreadState *thr = reinterpret_cast<ThreadState*>(arg);
+  ThreadContext *tctx = static_cast<ThreadContext*>(tctx_base);
+  if (tctx->status == ThreadStatusRunning)
+    thr->last_sleep_clock.set(tctx->tid, tctx->thr->fast_state.epoch());
+  else
+    thr->last_sleep_clock.set(tctx->tid, tctx->epoch1);
+}
+
 void AfterSleep(ThreadState *thr, uptr pc) {
-  Context *ctx = CTX();
   thr->last_sleep_stack_id = CurrentStackId(thr, pc);
-  Lock l(&ctx->thread_mtx);
-  for (unsigned i = 0; i < kMaxTid; i++) {
-    ThreadContext *tctx = ctx->threads[i];
-    if (tctx == 0)
-      continue;
-    if (tctx->status == ThreadStatusRunning)
-      thr->last_sleep_clock.set(i, tctx->thr->fast_state.epoch());
-    else
-      thr->last_sleep_clock.set(i, tctx->epoch1);
-  }
+  ThreadRegistryLock l(CTX()->thread_registry);
+  CTX()->thread_registry->RunCallbackForEachThreadLocked(
+      UpdateSleepClockCallback, thr);
 }
 #endif
 

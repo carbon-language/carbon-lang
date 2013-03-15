@@ -138,7 +138,7 @@ static void PrintThread(const ReportThread *rt) {
   if (rt->id == 0)  // Little sense in describing the main thread.
     return;
   Printf("  Thread T%d", rt->id);
-  if (rt->name)
+  if (rt->name && rt->name[0] != '\0')
     Printf(" '%s'", rt->name);
   char thrbuf[kThreadBufSize];
   Printf(" (tid=%zu, %s) created by %s",

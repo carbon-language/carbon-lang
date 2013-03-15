@@ -26,8 +26,9 @@
 #ifndef TSAN_RTL_H
 #define TSAN_RTL_H
 
-#include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_allocator.h"
+#include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_thread_registry.h"
 #include "tsan_clock.h"
 #include "tsan_defs.h"
 #include "tsan_flags.h"
@@ -410,41 +411,31 @@ INLINE ThreadState *cur_thread() {
 }
 #endif
 
-enum ThreadStatus {
-  ThreadStatusInvalid,   // Non-existent thread, data is invalid.
-  ThreadStatusCreated,   // Created but not yet running.
-  ThreadStatusRunning,   // The thread is currently running.
-  ThreadStatusFinished,  // Joinable thread is finished but not yet joined.
-  ThreadStatusDead       // Joined, but some info (trace) is still alive.
-};
-
 // An info about a thread that is hold for some time after its termination.
 struct ThreadDeadInfo {
   Trace trace;
 };
 
-struct ThreadContext {
-  const int tid;
-  int unique_id;  // Non-rolling thread id.
-  uptr os_id;  // pid
-  uptr user_id;  // Some opaque user thread id (e.g. pthread_t).
+class ThreadContext : public ThreadContextBase {
+ public:
+  explicit ThreadContext(int tid);
   ThreadState *thr;
-  ThreadStatus status;
-  bool detached;
-  int reuse_count;
+  StackTrace creation_stack;
   SyncClock sync;
   // Epoch at which the thread had started.
   // If we see an event from the thread stamped by an older epoch,
   // the event is from a dead thread that shared tid with this thread.
   u64 epoch0;
   u64 epoch1;
-  StackTrace creation_stack;
-  int creation_tid;
   ThreadDeadInfo *dead_info;
-  ThreadContext *dead_next;  // In dead thread list.
-  char *name;  // As annotated by user.
 
-  explicit ThreadContext(int tid);
+  // Override superclass callbacks.
+  void OnDead();
+  void OnJoined(void *arg);
+  void OnFinished();
+  void OnStarted(void *arg);
+  void OnCreated(void *arg);
+  void OnReset(void *arg);
 };
 
 struct RacyStacks {
@@ -479,15 +470,7 @@ struct Context {
   int nreported;
   int nmissed_expected;
 
-  Mutex thread_mtx;
-  unsigned thread_seq;
-  unsigned unique_thread_seq;
-  int alive_threads;
-  int max_alive_threads;
-  ThreadContext *threads[kMaxTid];
-  int dead_list_size;
-  ThreadContext* dead_list_head;
-  ThreadContext* dead_list_tail;
+  ThreadRegistry *thread_registry;
 
   Vector<RacyStacks> racy_stacks;
   Vector<RacyAddress> racy_addresses;
@@ -542,6 +525,10 @@ void StatOutput(u64 *stat);
 void ALWAYS_INLINE INLINE StatInc(ThreadState *thr, StatType typ, u64 n = 1) {
   if (kCollectStats)
     thr->stat[typ] += n;
+}
+void ALWAYS_INLINE INLINE StatSet(ThreadState *thr, StatType typ, u64 n) {
+  if (kCollectStats)
+    thr->stat[typ] = n;
 }
 
 void MapShadow(uptr addr, uptr size);

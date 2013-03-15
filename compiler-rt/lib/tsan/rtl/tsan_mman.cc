@@ -56,7 +56,7 @@ static void SignalUnsafeCall(ThreadState *thr, uptr pc) {
   Context *ctx = CTX();
   StackTrace stack;
   stack.ObtainCurrent(thr, pc);
-  Lock l(&ctx->thread_mtx);
+  ThreadRegistryLock l(ctx->thread_registry);
   ScopedReport rep(ReportTypeSignalUnsafe);
   if (!IsFiredSuppression(ctx, rep, stack)) {
     rep.AddStack(&stack);

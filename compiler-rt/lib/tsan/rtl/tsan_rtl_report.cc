@@ -125,7 +125,7 @@ static ReportStack *SymbolizeStack(const StackTrace& trace) {
 
 ScopedReport::ScopedReport(ReportType typ) {
   ctx_ = CTX();
-  ctx_->thread_mtx.CheckLocked();
+  ctx_->thread_registry->CheckLocked();
   void *mem = internal_alloc(MBlockReport, sizeof(ReportDesc));
   rep_ = new(mem) ReportDesc;
   rep_->typ = typ;
@@ -177,7 +177,7 @@ void ScopedReport::AddMemoryAccess(uptr addr, Shadow s,
 
 void ScopedReport::AddThread(const ThreadContext *tctx) {
   for (uptr i = 0; i < rep_->threads.Size(); i++) {
-    if (rep_->threads[i]->id == tctx->tid)
+    if ((u32)rep_->threads[i]->id == tctx->tid)
       return;
   }
   void *mem = internal_alloc(MBlockReportThread, sizeof(ReportThread));
@@ -187,17 +187,18 @@ void ScopedReport::AddThread(const ThreadContext *tctx) {
   rt->pid = tctx->os_id;
   rt->running = (tctx->status == ThreadStatusRunning);
   rt->name = tctx->name ? internal_strdup(tctx->name) : 0;
-  rt->parent_tid = tctx->creation_tid;
+  rt->parent_tid = tctx->parent_tid;
   rt->stack = SymbolizeStack(tctx->creation_stack);
 }
 
 #ifndef TSAN_GO
-static ThreadContext *FindThread(int unique_id) {
+static ThreadContext *FindThreadLocked(int unique_id) {
   Context *ctx = CTX();
-  ctx->thread_mtx.CheckLocked();
+  ctx->thread_registry->CheckLocked();
   for (unsigned i = 0; i < kMaxTid; i++) {
-    ThreadContext *tctx = ctx->threads[i];
-    if (tctx && tctx->unique_id == unique_id) {
+    ThreadContext *tctx = static_cast<ThreadContext*>(
+        ctx->thread_registry->GetThreadLocked(i));
+    if (tctx && tctx->unique_id == (u32)unique_id) {
       return tctx;
     }
   }
@@ -206,9 +207,10 @@ static ThreadContext *FindThread(int unique_id) {
 
 ThreadContext *IsThreadStackOrTls(uptr addr, bool *is_stack) {
   Context *ctx = CTX();
-  ctx->thread_mtx.CheckLocked();
+  ctx->thread_registry->CheckLocked();
   for (unsigned i = 0; i < kMaxTid; i++) {
-    ThreadContext *tctx = ctx->threads[i];
+    ThreadContext *tctx = static_cast<ThreadContext*>(
+        ctx->thread_registry->GetThreadLocked(i));
     if (tctx == 0 || tctx->status != ThreadStatusRunning)
       continue;
     ThreadState *thr = tctx->thr;
@@ -274,14 +276,14 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
       trace.Init(stack, ssz);
       loc->stack = SymbolizeStack(trace);
     }
-    ThreadContext *tctx = FindThread(creat_tid);
+    ThreadContext *tctx = FindThreadLocked(creat_tid);
     if (tctx)
       AddThread(tctx);
     return;
   }
   if (allocator()->PointerIsMine((void*)addr)) {
     MBlock *b = user_mblock(0, (void*)addr);
-    ThreadContext *tctx = FindThread(b->alloc_tid);
+    ThreadContext *tctx = FindThreadLocked(b->alloc_tid);
     void *mem = internal_alloc(MBlockReportLoc, sizeof(ReportLocation));
     ReportLocation *loc = new(mem) ReportLocation();
     rep_->locs.PushBack(loc);
@@ -341,7 +343,10 @@ void RestoreStack(int tid, const u64 epoch, StackTrace *stk, MutexSet *mset) {
   // This function restores stack trace and mutex set for the thread/epoch.
   // It does so by getting stack trace and mutex set at the beginning of
   // trace part, and then replaying the trace till the given epoch.
-  ThreadContext *tctx = CTX()->threads[tid];
+  Context *ctx = CTX();
+  ctx->thread_registry->CheckLocked();
+  ThreadContext *tctx = static_cast<ThreadContext*>(
+      ctx->thread_registry->GetThreadLocked(tid));
   if (tctx == 0)
     return;
   Trace* trace = 0;
@@ -585,7 +590,7 @@ void ReportRace(ThreadState *thr) {
   }
 
   Context *ctx = CTX();
-  Lock l0(&ctx->thread_mtx);
+  ThreadRegistryLock l0(ctx->thread_registry);
 
   ScopedReport rep(freed ? ReportTypeUseAfterFree : ReportTypeRace);
   const uptr kMop = 2;
@@ -613,7 +618,8 @@ void ReportRace(ThreadState *thr) {
 
   for (uptr i = 0; i < kMop; i++) {
     FastState s(thr->racy_state[i]);
-    ThreadContext *tctx = ctx->threads[s.tid()];
+    ThreadContext *tctx = static_cast<ThreadContext*>(
+        ctx->thread_registry->GetThreadLocked(s.tid()));
     if (s.epoch() < tctx->epoch0 || s.epoch() > tctx->epoch1)
       continue;
     rep.AddThread(tctx);

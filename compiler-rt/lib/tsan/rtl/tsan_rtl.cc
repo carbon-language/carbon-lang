@@ -47,12 +47,29 @@ Context *CTX() {
   return ctx;
 }
 
+static char thread_registry_placeholder[sizeof(ThreadRegistry)];
+
+static ThreadContextBase *CreateThreadContext(u32 tid) {
+  StatInc(cur_thread(), StatThreadMaxTid);
+  // Map thread trace when context is created.
+  MapThreadTrace(GetThreadTrace(tid), TraceSize() * sizeof(Event));
+  void *mem = MmapOrDie(sizeof(ThreadContext), "ThreadContext");
+  return new(mem) ThreadContext(tid);
+}
+
+#ifndef TSAN_GO
+static const u32 kThreadQuarantineSize = 16;
+#else
+static const u32 kThreadQuarantineSize = 64;
+#endif
+
 Context::Context()
   : initialized()
   , report_mtx(MutexTypeReport, StatMtxReport)
   , nreported()
   , nmissed_expected()
-  , thread_mtx(MutexTypeThreads, StatMtxThreads)
+  , thread_registry(new(thread_registry_placeholder) ThreadRegistry(
+      CreateThreadContext, kMaxTid, kThreadQuarantineSize))
   , racy_stacks(MBlockRacyStacks)
   , racy_addresses(MBlockRacyAddresses)
   , fired_suppressions(MBlockRacyAddresses) {
@@ -77,43 +94,14 @@ ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
   , tls_size(tls_size) {
 }
 
-ThreadContext::ThreadContext(int tid)
-  : tid(tid)
-  , unique_id()
-  , os_id()
-  , user_id()
-  , thr()
-  , status(ThreadStatusInvalid)
-  , detached()
-  , reuse_count()
-  , epoch0()
-  , epoch1()
-  , dead_info()
-  , dead_next()
-  , name() {
-}
-
 static void WriteMemoryProfile(char *buf, uptr buf_size, int num) {
   uptr shadow = GetShadowMemoryConsumption();
 
-  int nthread = 0;
-  int nlivethread = 0;
-  uptr threadmem = 0;
-  {
-    Lock l(&ctx->thread_mtx);
-    for (unsigned i = 0; i < kMaxTid; i++) {
-      ThreadContext *tctx = ctx->threads[i];
-      if (tctx == 0)
-        continue;
-      nthread += 1;
-      threadmem += sizeof(ThreadContext);
-      if (tctx->status != ThreadStatusRunning)
-        continue;
-      nlivethread += 1;
-      threadmem += sizeof(ThreadState);
-    }
-  }
-
+  uptr n_threads;
+  uptr n_running_threads;
+  ctx->thread_registry->GetNumberOfThreads(&n_threads, &n_running_threads);
+  uptr threadmem = n_threads * sizeof(ThreadContext) +
+                   n_running_threads * sizeof(ThreadState);
   uptr nsync = 0;
   uptr syncmem = CTX()->synctab.GetMemoryConsumption(&nsync);
 
@@ -122,7 +110,7 @@ static void WriteMemoryProfile(char *buf, uptr buf_size, int num) {
                                    " sync=%zuMB(cnt=%zu)\n",
     num,
     shadow >> 20,
-    threadmem >> 20, nthread, nlivethread,
+    threadmem >> 20, n_threads, n_running_threads,
     syncmem >> 20, nsync);
 }
 
@@ -203,9 +191,6 @@ void Initialize(ThreadState *thr) {
 #ifndef TSAN_GO
   InitializeShadowMemory();
 #endif
-  ctx->dead_list_size = 0;
-  ctx->dead_list_head = 0;
-  ctx->dead_list_tail = 0;
   InitializeFlags(&ctx->flags, env);
   // Setup correct file descriptor for error reports.
   if (internal_strcmp(flags()->log_path, "stdout") == 0)
@@ -234,7 +219,6 @@ void Initialize(ThreadState *thr) {
                GetPid());
 
   // Initialize thread 0.
-  ctx->thread_seq = 0;
   int tid = ThreadCreate(thr, 0, 0, true);
   CHECK_EQ(tid, 0);
   ThreadStart(thr, tid, GetPid());
