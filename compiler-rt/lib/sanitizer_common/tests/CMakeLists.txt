@@ -56,7 +56,9 @@ macro(add_sanitizer_tests_for_arch arch)
                             -I${COMPILER_RT_SOURCE_DIR}/include
                             -I${COMPILER_RT_SOURCE_DIR}/lib
                             -I${COMPILER_RT_SOURCE_DIR}/lib/sanitizer_common
-                            -O2 -g -Wall -Werror -Werror=sign-compare ${TARGET_FLAGS})
+                            -DGTEST_HAS_RTTI=0
+                            -O2 -g -fno-rtti
+                            -Wall -Werror -Werror=sign-compare ${TARGET_FLAGS})
   set(SANITIZER_TEST_LINK_FLAGS -lstdc++ -lpthread -ldl ${TARGET_FLAGS})
   set(SANITIZER_TEST_OBJECTS)
   foreach(source ${SANITIZER_TEST_SOURCES})

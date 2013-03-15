@@ -73,24 +73,6 @@ class ThreadContextBase {
 typedef ThreadContextBase* (*ThreadContextFactory)(u32 tid);
 
 class ThreadRegistry {
- private:
-  const ThreadContextFactory context_factory_;
-  const u32 max_threads_;
-  const u32 thread_quarantine_size_;
-
-  BlockingMutex mtx_;
-
-  u32 n_contexts_;      // Number of created thread contexts,
-                        // at most max_threads_.
-  u64 total_threads_;   // Total number of created threads. May be greater than
-                        // max_threads_ if contexts were reused.
-  uptr alive_threads_;  // Created or running.
-  uptr max_alive_threads_;
-  uptr running_threads_;
-
-  ThreadContextBase **threads_;  // Array of thread contexts is leaked.
-  IntrusiveList<ThreadContextBase> dead_threads_;
-
  public:
   static const u32 kUnknownTid;
 
@@ -130,6 +112,24 @@ class ThreadRegistry {
   void JoinThread(u32 tid, void *arg);
   void FinishThread(u32 tid);
   void StartThread(u32 tid, uptr os_id, void *arg);
+
+ private:
+  const ThreadContextFactory context_factory_;
+  const u32 max_threads_;
+  const u32 thread_quarantine_size_;
+
+  BlockingMutex mtx_;
+
+  u32 n_contexts_;      // Number of created thread contexts,
+                        // at most max_threads_.
+  u64 total_threads_;   // Total number of created threads. May be greater than
+                        // max_threads_ if contexts were reused.
+  uptr alive_threads_;  // Created or running.
+  uptr max_alive_threads_;
+  uptr running_threads_;
+
+  ThreadContextBase **threads_;  // Array of thread contexts is leaked.
+  IntrusiveList<ThreadContextBase> dead_threads_;
 };
 
 typedef GenericScopedLock<ThreadRegistry> ThreadRegistryLock;
