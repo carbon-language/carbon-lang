@@ -1559,6 +1559,11 @@ public:
   ///
   Init *getValueInit(StringRef FieldName) const;
 
+  /// Return true if the named field is unset.
+  bool isValueUnset(StringRef FieldName) const {
+    return getValueInit(FieldName) == UnsetInit::get();
+  }
+
   /// getValueAsString - This method looks up the specified field and returns
   /// its value as a string, throwing an exception if the field does not exist
   /// or if the value is not a string.

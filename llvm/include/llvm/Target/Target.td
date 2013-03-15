@@ -397,6 +397,9 @@ class Instruction {
 
   InstrItinClass Itinerary = NoItinerary;// Execution steps used for scheduling.
 
+  // Scheduling information from TargetSchedule.td.
+  list<SchedReadWrite> SchedRW;
+
   string Constraints = "";  // OperandConstraint, e.g. $src = $dst.
 
   /// DisableEncoding - List of operand names (e.g. "$op1,$op2") that should not

@@ -217,7 +217,7 @@ void CodeGenSchedModels::collectSchedRW() {
   for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
          E = Target.inst_end(); I != E; ++I) {
     Record *SchedDef = (*I)->TheDef;
-    if (!SchedDef->isSubClassOf("Sched"))
+    if (SchedDef->isValueUnset("SchedRW"))
       continue;
     RecVec RWs = SchedDef->getValueAsListOfDefs("SchedRW");
     for (RecIter RWI = RWs.begin(), RWE = RWs.end(); RWI != RWE; ++RWI) {
@@ -529,7 +529,7 @@ void CodeGenSchedModels::collectSchedClasses() {
   // instruction definition that inherits from class Sched.
   for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
          E = Target.inst_end(); I != E; ++I) {
-    if (!(*I)->TheDef->isSubClassOf("Sched"))
+    if ((*I)->TheDef->isValueUnset("SchedRW"))
       continue;
     IdxVec Writes, Reads;
     findRWs((*I)->TheDef->getValueAsListOfDefs("SchedRW"), Writes, Reads);
@@ -553,7 +553,7 @@ void CodeGenSchedModels::collectSchedClasses() {
          E = Target.inst_end(); I != E; ++I) {
     Record *SchedDef = (*I)->TheDef;
     std::string InstName = (*I)->TheDef->getName();
-    if (SchedDef->isSubClassOf("Sched")) {
+    if (!SchedDef->isValueUnset("SchedRW")) {
       IdxVec Writes;
       IdxVec Reads;
       findRWs((*I)->TheDef->getValueAsListOfDefs("SchedRW"), Writes, Reads);
@@ -584,7 +584,7 @@ void CodeGenSchedModels::collectSchedClasses() {
       }
       continue;
     }
-    if (!SchedDef->isSubClassOf("Sched")
+    if (SchedDef->isValueUnset("SchedRW")
         && (SchedDef->getValueAsDef("Itinerary")->getName() == "NoItinerary")) {
       dbgs() << "No machine model for " << (*I)->TheDef->getName() << '\n';
     }
@@ -627,7 +627,7 @@ unsigned CodeGenSchedModels::getSchedClassIdx(
 
   // If this opcode isn't mapped by the subtarget fallback to the instruction
   // definition's SchedRW or ItinDef values.
-  if (Inst.TheDef->isSubClassOf("Sched")) {
+  if (!Inst.TheDef->isValueUnset("SchedRW")) {
     RecVec RWs = Inst.TheDef->getValueAsListOfDefs("SchedRW");
     return getSchedClassIdx(RWs);
   }
@@ -719,7 +719,7 @@ void CodeGenSchedModels::createInstRWClass(Record *InstRWDef) {
       // class because that is the fall-back class for other processors.
       Record *ItinDef = (*I)->getValueAsDef("Itinerary");
       SCIdx = SchedClassIdxMap.lookup(ItinDef->getName());
-      if (!SCIdx && (*I)->isSubClassOf("Sched"))
+      if (!SCIdx && !(*I)->isValueUnset("SchedRW"))
         SCIdx = getSchedClassIdx((*I)->getValueAsListOfDefs("SchedRW"));
     }
     unsigned CIdx = 0, CEnd = ClassInstrs.size();
