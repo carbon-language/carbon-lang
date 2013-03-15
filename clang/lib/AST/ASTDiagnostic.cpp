@@ -403,10 +403,31 @@ class TemplateDiff {
 
   /// DiffTree - A tree representation the differences between two types.
   class DiffTree {
+  public:
+    /// DiffKind - The difference in a DiffNode and which fields are used.
+    enum DiffKind {
+      /// Incomplete or invalid node.
+      Invalid,
+      /// Another level of templates, uses TemplateDecl and Qualifiers
+      Template,
+      /// Type difference, uses QualType
+      Type,
+      /// Expression difference, uses Expr
+      Expression,
+      /// Template argument difference, uses TemplateDecl
+      TemplateTemplate,
+      /// Integer difference, uses APSInt and Expr
+      Integer,
+      /// Declaration difference, uses ValueDecl
+      Declaration
+    };
+  private:
     /// DiffNode - The root node stores the original type.  Each child node
     /// stores template arguments of their parents.  For templated types, the
     /// template decl is also stored.
     struct DiffNode {
+      DiffKind Kind;
+
       /// NextNode - The index of the next sibling node or 0.
       unsigned NextNode;
 
@@ -445,7 +466,7 @@ class TemplateDiff {
       bool Same;
 
       DiffNode(unsigned ParentNode = 0)
-        : NextNode(0), ChildNode(0), ParentNode(ParentNode),
+        : Kind(Invalid), NextNode(0), ChildNode(0), ParentNode(ParentNode),
           FromType(), ToType(), FromExpr(0), ToExpr(0), FromTD(0), ToTD(0),
           IsValidFromInt(false), IsValidToInt(false), FromValueDecl(0),
           ToValueDecl(0), FromDefault(false), ToDefault(false), Same(false) { }
@@ -521,6 +542,11 @@ class TemplateDiff {
       FlatTree[CurrentNode].ToDefault = ToDefault;
     }
 
+    /// SetKind - Sets the current node's type.
+    void SetKind(DiffKind Kind) {
+      FlatTree[CurrentNode].Kind = Kind;
+    }
+
     /// Up - Changes the node to the parent of the current node.
     void Up() {
       CurrentNode = FlatTree[CurrentNode].ParentNode;
@@ -558,44 +584,6 @@ class TemplateDiff {
     /// Parent - Move the current read node to its parent.
     void Parent() {
       ReadNode = FlatTree[ReadNode].ParentNode;
-    }
-
-    /// NodeIsTemplate - Returns true if a template decl is set, and types are
-    /// set.
-    bool NodeIsTemplate() {
-      return (FlatTree[ReadNode].FromTD &&
-              !FlatTree[ReadNode].ToType.isNull()) ||
-             (FlatTree[ReadNode].ToTD && !FlatTree[ReadNode].ToType.isNull());
-    }
-
-    /// NodeIsQualType - Returns true if a Qualtype is set.
-    bool NodeIsQualType() {
-      return !FlatTree[ReadNode].FromType.isNull() ||
-             !FlatTree[ReadNode].ToType.isNull();
-    }
-
-    /// NodeIsExpr - Returns true if an expr is set.
-    bool NodeIsExpr() {
-      return FlatTree[ReadNode].FromExpr || FlatTree[ReadNode].ToExpr;
-    }
-
-    /// NodeIsTemplateTemplate - Returns true if the argument is a template
-    /// template type.
-    bool NodeIsTemplateTemplate() {
-      return FlatTree[ReadNode].FromType.isNull() &&
-             FlatTree[ReadNode].ToType.isNull() &&
-             (FlatTree[ReadNode].FromTD || FlatTree[ReadNode].ToTD);
-    }
-
-    /// NodeIsAPSInt - Returns true if the arugments are stored in APSInt's.
-    bool NodeIsAPSInt() {
-      return FlatTree[ReadNode].IsValidFromInt ||
-             FlatTree[ReadNode].IsValidToInt;
-    }
-
-    /// NodeIsDecl - Returns true if the arguments are stored as Decl's.
-    bool NodeIsValueDecl() {
-      return FlatTree[ReadNode].FromValueDecl || FlatTree[ReadNode].ToValueDecl;
     }
 
     /// GetNode - Gets the FromType and ToType.
@@ -679,9 +667,12 @@ class TemplateDiff {
 
     /// Empty - Returns true if the tree has no information.
     bool Empty() {
-      return !FlatTree[0].FromTD && !FlatTree[0].ToTD &&
-             !FlatTree[0].FromExpr && !FlatTree[0].ToExpr &&
-             FlatTree[0].FromType.isNull() && FlatTree[0].ToType.isNull();
+      return GetKind() == Invalid;
+    }
+
+    /// GetKind - Returns the current node's type.
+    DiffKind GetKind() {
+      return FlatTree[ReadNode].Kind;
     }
   };
 
@@ -836,6 +827,7 @@ class TemplateDiff {
         Tree.SetNode(FromType, ToType);
         Tree.SetDefault(FromIter.isEnd() && !FromType.isNull(),
                         ToIter.isEnd() && !ToType.isNull());
+        Tree.SetKind(DiffTree::Type);
         if (!FromType.isNull() && !ToType.isNull()) {
           if (Context.hasSameType(FromType, ToType)) {
             Tree.SetSame(true);
@@ -854,6 +846,7 @@ class TemplateDiff {
               Tree.SetNode(FromArgTST->getTemplateName().getAsTemplateDecl(),
                            ToArgTST->getTemplateName().getAsTemplateDecl());
               Tree.SetNode(FromQual, ToQual);
+              Tree.SetKind(DiffTree::Template);
               DiffTemplate(FromArgTST, ToArgTST);
             }
           }
@@ -903,6 +896,7 @@ class TemplateDiff {
           Tree.SetSame(IsEqualExpr(Context, ParamWidth, FromExpr, ToExpr));
           Tree.SetDefault(FromIter.isEnd() && FromExpr,
                           ToIter.isEnd() && ToExpr);
+          Tree.SetKind(DiffTree::Expression);
         } else if (HasFromInt || HasToInt) {
           if (!HasFromInt && FromExpr) {
             FromInt = FromExpr->EvaluateKnownConstInt(Context);
@@ -916,6 +910,7 @@ class TemplateDiff {
           Tree.SetSame(IsSameConvertedInt(ParamWidth, FromInt, ToInt));
           Tree.SetDefault(FromIter.isEnd() && HasFromInt,
                           ToIter.isEnd() && HasToInt);
+          Tree.SetKind(DiffTree::Integer);
         } else {
           if (!HasFromValueDecl && FromExpr) {
             DeclRefExpr *DRE = cast<DeclRefExpr>(FromExpr);
@@ -930,6 +925,7 @@ class TemplateDiff {
                        ToValueDecl->getCanonicalDecl());
           Tree.SetDefault(FromIter.isEnd() && FromValueDecl,
                           ToIter.isEnd() && ToValueDecl);
+          Tree.SetKind(DiffTree::Declaration);
         }
       }
 
@@ -943,6 +939,7 @@ class TemplateDiff {
         Tree.SetSame(
             FromDecl && ToDecl &&
             FromDecl->getCanonicalDecl() == ToDecl->getCanonicalDecl());
+        Tree.SetKind(DiffTree::TemplateTemplate);
       }
 
       if (!FromIter.isEnd()) ++FromIter;
@@ -1134,30 +1131,32 @@ class TemplateDiff {
 
     // Handle cases where the difference is not templates with different
     // arguments.
-    if (!Tree.NodeIsTemplate()) {
-      if (Tree.NodeIsQualType()) {
+    switch (Tree.GetKind()) {
+      default:
+      case DiffTree::Invalid:
+        llvm_unreachable("Template diffing failed with bad DiffNode");
+      case DiffTree::Type: {
         QualType FromType, ToType;
         Tree.GetNode(FromType, ToType);
         PrintTypeNames(FromType, ToType, Tree.FromDefault(), Tree.ToDefault(),
                        Tree.NodeIsSame());
         return;
       }
-      if (Tree.NodeIsExpr()) {
+      case DiffTree::Expression: {
         Expr *FromExpr, *ToExpr;
         Tree.GetNode(FromExpr, ToExpr);
         PrintExpr(FromExpr, ToExpr, Tree.FromDefault(), Tree.ToDefault(),
                   Tree.NodeIsSame());
         return;
       }
-      if (Tree.NodeIsTemplateTemplate()) {
+      case DiffTree::TemplateTemplate: {
         TemplateDecl *FromTD, *ToTD;
         Tree.GetNode(FromTD, ToTD);
         PrintTemplateTemplate(FromTD, ToTD, Tree.FromDefault(),
                               Tree.ToDefault(), Tree.NodeIsSame());
         return;
       }
-
-      if (Tree.NodeIsAPSInt()) {
+      case DiffTree::Integer: {
         llvm::APSInt FromInt, ToInt;
         bool IsValidFromInt, IsValidToInt;
         Tree.GetNode(FromInt, ToInt, IsValidFromInt, IsValidToInt);
@@ -1165,57 +1164,56 @@ class TemplateDiff {
                     Tree.FromDefault(), Tree.ToDefault(), Tree.NodeIsSame());
         return;
       }
-
-      if (Tree.NodeIsValueDecl()) {
+      case DiffTree::Declaration: {
         ValueDecl *FromValueDecl, *ToValueDecl;
         Tree.GetNode(FromValueDecl, ToValueDecl);
         PrintValueDecl(FromValueDecl, ToValueDecl, Tree.FromDefault(),
                        Tree.ToDefault(), Tree.NodeIsSame());
         return;
       }
+      case DiffTree::Template: {
+        // Node is root of template.  Recurse on children.
+        TemplateDecl *FromTD, *ToTD;
+        Tree.GetNode(FromTD, ToTD);
 
-      llvm_unreachable("Unable to deduce template difference.");
-    }
-
-    // Node is root of template.  Recurse on children.
-    TemplateDecl *FromTD, *ToTD;
-    Tree.GetNode(FromTD, ToTD);
-
-    if (!Tree.HasChildren()) {
-      // If we're dealing with a template specialization with zero
-      // arguments, there are no children; special-case this.
-      OS << FromTD->getNameAsString() << "<>";
-      return;
-    }
-
-    Qualifiers FromQual, ToQual;
-    Tree.GetNode(FromQual, ToQual);
-    PrintQualifiers(FromQual, ToQual);
-
-    OS << FromTD->getNameAsString() << '<'; 
-    Tree.MoveToChild();
-    unsigned NumElideArgs = 0;
-    do {
-      if (ElideType) {
-        if (Tree.NodeIsSame()) {
-          ++NumElideArgs;
-          continue;
+        if (!Tree.HasChildren()) {
+          // If we're dealing with a template specialization with zero
+          // arguments, there are no children; special-case this.
+          OS << FromTD->getNameAsString() << "<>";
+          return;
         }
-        if (NumElideArgs > 0) {
+
+        Qualifiers FromQual, ToQual;
+        Tree.GetNode(FromQual, ToQual);
+        PrintQualifiers(FromQual, ToQual);
+
+        OS << FromTD->getNameAsString() << '<'; 
+        Tree.MoveToChild();
+        unsigned NumElideArgs = 0;
+        do {
+          if (ElideType) {
+            if (Tree.NodeIsSame()) {
+              ++NumElideArgs;
+              continue;
+            }
+            if (NumElideArgs > 0) {
+              PrintElideArgs(NumElideArgs, Indent);
+              NumElideArgs = 0;
+              OS << ", ";
+            }
+          }
+          TreeToString(Indent);
+          if (Tree.HasNextSibling())
+            OS << ", ";
+        } while (Tree.AdvanceSibling());
+        if (NumElideArgs > 0)
           PrintElideArgs(NumElideArgs, Indent);
-          NumElideArgs = 0;
-          OS << ", ";
-        }
-      }
-      TreeToString(Indent);
-      if (Tree.HasNextSibling())
-        OS << ", ";
-    } while (Tree.AdvanceSibling());
-    if (NumElideArgs > 0)
-      PrintElideArgs(NumElideArgs, Indent);
 
-    Tree.Parent();
-    OS << ">";
+        Tree.Parent();
+        OS << ">";
+        return;
+      }
+    }
   }
 
   // To signal to the text printer that a certain text needs to be bolded,
@@ -1534,6 +1532,7 @@ public:
     ToQual -= QualType(ToOrigTST, 0).getQualifiers();
     Tree.SetNode(FromType, ToType);
     Tree.SetNode(FromQual, ToQual);
+    Tree.SetKind(DiffTree::Template);
 
     // Same base template, but different arguments.
     Tree.SetNode(FromOrigTST->getTemplateName().getAsTemplateDecl(),
