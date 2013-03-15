@@ -32,7 +32,9 @@ public:
       Subtarget(sti) {
   }
 
-  void determineFrameLayout(MachineFunction &MF) const;
+  unsigned determineFrameLayout(MachineFunction &MF,
+                                bool UpdateMF = true,
+                                bool UseEstimate = false) const;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
@@ -46,6 +48,7 @@ public:
                                             RegScavenger *RS = NULL) const;
   void processFunctionBeforeFrameFinalized(MachineFunction &MF,
                                        RegScavenger *RS = NULL) const;
+  void addScavengingSpillSlot(MachineFunction &MF, RegScavenger *RS) const;
 
   bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MI,

@@ -554,10 +554,11 @@ PPCInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   MachineFunction &MF = *MBB.getParent();
   SmallVector<MachineInstr*, 4> NewMIs;
 
-  if (StoreRegToStackSlot(MF, SrcReg, isKill, FrameIdx, RC, NewMIs)) {
-    PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
+  PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
+  FuncInfo->setHasSpills();
+
+  if (StoreRegToStackSlot(MF, SrcReg, isKill, FrameIdx, RC, NewMIs))
     FuncInfo->setSpillsCR();
-  }
 
   for (unsigned i = 0, e = NewMIs.size(); i != e; ++i)
     MBB.insert(MI, NewMIs[i]);

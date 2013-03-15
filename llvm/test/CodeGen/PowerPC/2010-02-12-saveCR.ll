@@ -9,12 +9,12 @@ entry:
 ;CHECK:  mfcr r0
 ;CHECK:  lis r2, 1
 ;CHECK:  rlwinm r0, r0, 8, 0, 31
-;CHECK:  ori r2, r2, 34524
+;CHECK:  ori r2, r2, 34540
 ;CHECK:  stwx r0, r1, r2
 ; Make sure that the register scavenger returns the same temporary register.
 ;CHECK:  lis r2, 1
 ;CHECK:  mfcr r0
-;CHECK:  ori r2, r2, 34520
+;CHECK:  ori r2, r2, 34536
 ;CHECK:  rlwinm r0, r0, 12, 0, 31
 ;CHECK:  stwx r0, r1, r2
   %x = alloca [100000 x i8]                       ; <[100000 x i8]*> [#uses=1]
@@ -26,7 +26,7 @@ entry:
 
 return:                                           ; preds = %entry
 ;CHECK:  lis r2, 1
-;CHECK:  ori r2, r2, 34524
+;CHECK:  ori r2, r2, 34540
 ;CHECK:  lwzx r0, r1, r2
 ;CHECK:  rlwinm r0, r0, 24, 0, 31
 ;CHECK:  mtcrf 32, r0

@@ -37,6 +37,9 @@ class PPCFunctionInfo : public MachineFunctionInfo {
   /// PEI.
   bool MustSaveLR;
 
+  /// Does this function have any stack spills.
+  bool HasSpills;
+
   /// SpillsCR - Indicates whether CR is spilled in the current function.
   bool SpillsCR;
 
@@ -78,6 +81,7 @@ public:
   explicit PPCFunctionInfo(MachineFunction &MF) 
     : FramePointerSaveIndex(0),
       ReturnAddrSaveIndex(0),
+      HasSpills(false),
       SpillsCR(false),
       LRStoreRequired(false),
       MinReservedArea(0),
@@ -108,6 +112,9 @@ public:
   /// referenced by builtin_return_address.
   void setMustSaveLR(bool U) { MustSaveLR = U; }
   bool mustSaveLR() const    { return MustSaveLR; }
+
+  void setHasSpills()      { HasSpills = true; }
+  bool hasSpills() const   { return HasSpills; }
 
   void setSpillsCR()       { SpillsCR = true; }
   bool isCRSpilled() const { return SpillsCR; }
