@@ -921,10 +921,10 @@ FormatManager::LoadObjCFormatters()
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSSetSyntheticFrontEndCreator, "NSSet synthetic children", ConstString("__NSSetM"), ScriptedSyntheticChildren::Flags());
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSSetSyntheticFrontEndCreator, "NSSet synthetic children", ConstString("NSMutableSet"), ScriptedSyntheticChildren::Flags());
 
-    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBag.CFBag_SummaryProvider", ConstString("CFBagRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBag.CFBag_SummaryProvider", ConstString("__CFBag"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBag.CFBag_SummaryProvider", ConstString("const struct __CFBag"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBag.CFBag_SummaryProvider", ConstString("CFMutableBagRef"), appkit_flags);
+    AddCXXSummary(appkit_category_sp,lldb_private::formatters::CFBagSummaryProvider, "CFBag summary provider", ConstString("CFBagRef"), appkit_flags);
+    AddCXXSummary(appkit_category_sp,lldb_private::formatters::CFBagSummaryProvider, "CFBag summary provider", ConstString("__CFBag"), appkit_flags);
+    AddCXXSummary(appkit_category_sp,lldb_private::formatters::CFBagSummaryProvider, "CFBag summary provider", ConstString("const struct __CFBag"), appkit_flags);
+    AddCXXSummary(appkit_category_sp,lldb_private::formatters::CFBagSummaryProvider, "CFBag summary provider", ConstString("CFMutableBagRef"), appkit_flags);
     
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBinaryHeap.CFBinaryHeap_SummaryProvider", ConstString("CFBinaryHeapRef"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBinaryHeap.CFBinaryHeap_SummaryProvider", ConstString("__CFBinaryHeap"), appkit_flags);
@@ -943,7 +943,7 @@ FormatManager::LoadObjCFormatters()
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSMutableAttributedStringSummaryProvider, "NSMutableAttributedString summary provider", ConstString("NSMutableAttributedString"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSMutableAttributedStringSummaryProvider, "NSMutableAttributedString summary provider", ConstString("NSConcreteMutableAttributedString"), appkit_flags);
 
-    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSBundle.NSBundle_SummaryProvider", ConstString("NSBundle"), appkit_flags);
+    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSBundleSummaryProvider, "NSBundle summary provider", ConstString("NSBundle"), appkit_flags);
 
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDataSummaryProvider<false>, "NSData summary provider", ConstString("NSData"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDataSummaryProvider<false>, "NSData summary provider", ConstString("NSConcreteData"), appkit_flags);

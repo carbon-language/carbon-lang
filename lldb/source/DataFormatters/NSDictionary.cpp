@@ -74,15 +74,15 @@ lldb_private::formatters::NSDictionarySummaryProvider (ValueObject& valobj, Stre
             return false;
         value &= (is_64bit ? ~0xFC00000000000000UL : ~0xFC000000U);
     }
-    else if (!strcmp(class_name,"__NSCFDictionary"))
+    /*else if (!strcmp(class_name,"__NSCFDictionary"))
     {
         Error error;
-        value = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr + (is_64bit ? 20 : 12), ptr_size, 0, error);
+        value = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr + (is_64bit ? 20 : 12), 4, 0, error);
         if (error.Fail())
             return false;
         if (is_64bit)
             value &= ~0x0f1f000000000000UL;
-    }
+    }*/
     else
     {
         if (!ExtractValueFromObjCExpression(valobj, "int", "count", value))

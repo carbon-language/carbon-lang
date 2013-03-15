@@ -92,6 +92,12 @@ namespace lldb_private {
         NSNumberSummaryProvider (ValueObject& valobj, Stream& stream);
 
         bool
+        CFBagSummaryProvider (ValueObject& valobj, Stream& stream);
+        
+        bool
+        NSBundleSummaryProvider (ValueObject& valobj, Stream& stream);
+        
+        bool
         NSStringSummaryProvider (ValueObject& valobj, Stream& stream);
         
         bool
