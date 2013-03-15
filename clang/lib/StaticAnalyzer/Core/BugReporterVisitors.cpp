@@ -787,14 +787,17 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
     S = OVE->getSourceExpr();
 
   // Peel off the ternary operator.
-  if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(S)) {
-    ProgramStateRef State = N->getState();
-    SVal CondVal = State->getSVal(CO->getCond(), N->getLocationContext());
-    if (State->isNull(CondVal).isConstrainedTrue()) {
-      S = CO->getTrueExpr();
-    } else {
-      assert(State->isNull(CondVal).isConstrainedFalse());
-      S =  CO->getFalseExpr();
+  if (const Expr *Ex = dyn_cast<Expr>(S)) {
+    Ex = Ex->IgnoreParenCasts();
+    if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(Ex)) {
+      ProgramStateRef State = N->getState();
+      SVal CondVal = State->getSVal(CO->getCond(), N->getLocationContext());
+      if (State->isNull(CondVal).isConstrainedTrue()) {
+        S = CO->getTrueExpr();
+      } else {
+        assert(State->isNull(CondVal).isConstrainedFalse());
+        S =  CO->getFalseExpr();
+      }
     }
   }
 

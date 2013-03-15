@@ -202,6 +202,17 @@ void ternaryArg(char cond) {
 	derefArg(cond ? &x : getNull());
 }
 
+int derefArgCast(char *p) {
+	return *p;
+#ifndef SUPPRESSED
+  // expected-warning@-2 {{Dereference of null pointer}}
+#endif
+}
+void ternaryArgCast(char cond) {
+	static int x;
+	derefArgCast((char*)((unsigned)cond ? &x : getNull()));
+}
+
 int derefAssignment(int *p) {
 	return *p;
 #ifndef SUPPRESSED
