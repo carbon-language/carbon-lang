@@ -249,10 +249,7 @@ static void GetRegionSizes(task_t task, mach_vm_size_t &rsize, mach_vm_size_t &d
             // Don't count malloc stack logging data in the TOTAL VM usage lines.
             if (info.user_tag == VM_MEMORY_ANALYSIS_TOOL)
                 should_count = false;
-            // Don't count system shared library region not used by this process.
-            if (address >= SHARED_REGION_BASE && address < (SHARED_REGION_BASE + SHARED_REGION_SIZE))
-                should_count = false;
-
+            
             address = address+size;
         }
         
