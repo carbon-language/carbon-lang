@@ -22,6 +22,7 @@
 #include <pthread.h>
 #include <algorithm>
 #include <vector>
+#include <set>
 
 // Too slow for debug build
 #if TSAN_DEBUG == 0
@@ -562,6 +563,96 @@ TEST(Allocator, ScopedBuffer) {
   internal_memset(char_buf.data(), 'c', kSize);
   for (int i = 0; i < kSize; i++) {
     EXPECT_EQ('c', char_buf[i]);
+  }
+}
+
+class IterationTestCallback {
+ public:
+  explicit IterationTestCallback(std::set<void *> *chunks)
+    : chunks_(chunks) {}
+  void operator()(void *chunk) const {
+    chunks_->insert(chunk);
+  }
+ private:
+  std::set<void *> *chunks_;
+};
+
+template <class Allocator>
+void TestSizeClassAllocatorIteration() {
+  Allocator *a = new Allocator;
+  a->Init();
+  SizeClassAllocatorLocalCache<Allocator> cache;
+  memset(&cache, 0, sizeof(cache));
+  cache.Init(0);
+
+  static const uptr sizes[] = {1, 16, 30, 40, 100, 1000, 10000,
+    50000, 60000, 100000, 120000, 300000, 500000, 1000000, 2000000};
+
+  std::vector<void *> allocated;
+
+  // Allocate a bunch of chunks.
+  for (uptr s = 0; s < ARRAY_SIZE(sizes); s++) {
+    uptr size = sizes[s];
+    if (!a->CanAllocate(size, 1)) continue;
+    // printf("s = %ld\n", size);
+    uptr n_iter = std::max((uptr)6, 80000 / size);
+    // fprintf(stderr, "size: %ld iter: %ld\n", size, n_iter);
+    for (uptr j = 0; j < n_iter; j++) {
+      uptr class_id0 = Allocator::SizeClassMapT::ClassID(size);
+      void *x = cache.Allocate(a, class_id0);
+      allocated.push_back(x);
+    }
+  }
+
+  std::set<void *> reported_chunks;
+  IterationTestCallback callback(&reported_chunks);
+  a->ForceLock();
+  a->template ForEachChunk<IterationTestCallback>(callback);
+  a->ForceUnlock();
+
+  for (uptr i = 0; i < allocated.size(); i++) {
+    // Don't use EXPECT_NE. Reporting the first mismatch is enough.
+    ASSERT_NE(reported_chunks.find(allocated[i]), reported_chunks.end());
+  }
+
+  a->TestOnlyUnmap();
+  delete a;
+}
+
+#if SANITIZER_WORDSIZE == 64
+TEST(SanitizerCommon, SizeClassAllocator64Iteration) {
+  TestSizeClassAllocatorIteration<Allocator64>();
+}
+#endif
+
+TEST(SanitizerCommon, SizeClassAllocator32Iteration) {
+  TestSizeClassAllocatorIteration<Allocator32Compact>();
+}
+
+
+TEST(SanitizerCommon, LargeMmapAllocatorIteration) {
+  LargeMmapAllocator<> a;
+  a.Init();
+  AllocatorStats stats;
+  stats.Init();
+
+  static const int kNumAllocs = 1000;
+  char *allocated[kNumAllocs];
+  static const uptr size = 40;
+  // Allocate some.
+  for (int i = 0; i < kNumAllocs; i++) {
+    allocated[i] = (char *)a.Allocate(&stats, size, 1);
+  }
+
+  std::set<void *> reported_chunks;
+  IterationTestCallback callback(&reported_chunks);
+  a.ForceLock();
+  a.ForEachChunk<IterationTestCallback>(callback);
+  a.ForceUnlock();
+
+  for (uptr i = 0; i < kNumAllocs; i++) {
+    // Don't use EXPECT_NE. Reporting the first mismatch is enough.
+    ASSERT_NE(reported_chunks.find(allocated[i]), reported_chunks.end());
   }
 }
 

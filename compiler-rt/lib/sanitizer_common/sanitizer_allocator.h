@@ -433,6 +433,24 @@ class SizeClassAllocator64 {
     }
   }
 
+  // Iterate over existing chunks. May include chunks that are not currently
+  // allocated to the user (e.g. freed).
+  // The caller is expected to call ForceLock() before calling this function.
+  template<typename Callable>
+  void ForEachChunk(const Callable &callback) {
+    for (uptr class_id = 1; class_id < kNumClasses; class_id++) {
+      RegionInfo *region = GetRegionInfo(class_id);
+      uptr chunk_size = SizeClassMap::Size(class_id);
+      uptr region_beg = kSpaceBeg + class_id * kRegionSize;
+      for (uptr p = region_beg;
+           p < region_beg + region->allocated_user;
+           p += chunk_size) {
+        // Too slow: CHECK_EQ((void *)p, GetBlockBegin((void *)p));
+        callback((void *)p);
+      }
+    }
+  }
+
   typedef SizeClassMap SizeClassMapT;
   static const uptr kNumClasses = SizeClassMap::kNumClasses;
   static const uptr kNumClassesRounded = SizeClassMap::kNumClassesRounded;
@@ -679,6 +697,25 @@ class SizeClassAllocator32 {
     for (int i = kNumClasses - 1; i >= 0; i--) {
       GetSizeClassInfo(i)->mutex.Unlock();
     }
+  }
+
+  // Iterate over existing chunks. May include chunks that are not currently
+  // allocated to the user (e.g. freed).
+  // The caller is expected to call ForceLock() before calling this function.
+  template<typename Callable>
+  void ForEachChunk(const Callable &callback) {
+    for (uptr region = 0; region < kNumPossibleRegions; region++)
+      if (state_->possible_regions[region]) {
+        uptr chunk_size = SizeClassMap::Size(state_->possible_regions[region]);
+        uptr max_chunks_in_region = kRegionSize / (chunk_size + kMetadataSize);
+        uptr region_beg = region * kRegionSize;
+        for (uptr p = region_beg;
+             p < region_beg + max_chunks_in_region * chunk_size;
+             p += chunk_size) {
+          // Too slow: CHECK_EQ((void *)p, GetBlockBegin((void *)p));
+          callback((void *)p);
+        }
+      }
   }
 
   void PrintStats() {
@@ -1005,6 +1042,15 @@ class LargeMmapAllocator {
     mutex_.Unlock();
   }
 
+  // Iterate over existing chunks. May include chunks that are not currently
+  // allocated to the user (e.g. freed).
+  // The caller is expected to call ForceLock() before calling this function.
+  template<typename Callable>
+  void ForEachChunk(const Callable &callback) {
+    for (uptr i = 0; i < n_chunks_; i++)
+      callback(GetUser(chunks_[i]));
+  }
+
  private:
   static const int kMaxNumChunks = 1 << FIRST_32_SECOND_64(15, 18);
   struct Header {
@@ -1166,6 +1212,15 @@ class CombinedAllocator {
   void ForceUnlock() {
     secondary_.ForceUnlock();
     primary_.ForceUnlock();
+  }
+
+  // Iterate over existing chunks. May include chunks that are not currently
+  // allocated to the user (e.g. freed).
+  // The caller is expected to call ForceLock() before calling this function.
+  template<typename Callable>
+  void ForEachChunk(const Callable &callback) {
+    primary_.ForEachChunk(callback);
+    secondary_.ForEachChunk(callback);
   }
 
  private:
