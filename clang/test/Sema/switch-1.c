@@ -12,6 +12,7 @@ int f(int i) {
     case (123456 *789012) + 1:  // expected-warning {{overflow in expression; result is -1375982336 with type 'int'}}
       return 3;
     case (2147483647*4)/4: 	// expected-warning {{overflow in expression; result is -4 with type 'int'}}
+    case (2147483647*4)%4: 	// expected-warning {{overflow in expression; result is -4 with type 'int'}}
       return 4;
     case 2147483647:
       return 0;
