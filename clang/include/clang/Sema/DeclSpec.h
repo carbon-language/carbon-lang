@@ -821,6 +821,20 @@ public:
     IK_ImplicitSelfParam
   } Kind;
 
+  struct OFI {
+    /// \brief The kind of overloaded operator.
+    OverloadedOperatorKind Operator;
+
+    /// \brief The source locations of the individual tokens that name
+    /// the operator, e.g., the "new", "[", and "]" tokens in 
+    /// operator new []. 
+    ///
+    /// Different operators have different numbers of tokens in their name,
+    /// up to three. Any remaining source locations in this array will be
+    /// set to an invalid value for operators with fewer than three tokens.
+    unsigned SymbolLocations[3];
+  };
+
   /// \brief Anonymous union that holds extra data associated with the
   /// parsed unqualified-id.
   union {
@@ -830,19 +844,7 @@ public:
     
     /// \brief When Kind == IK_OperatorFunctionId, the overloaded operator
     /// that we parsed.
-    struct {
-      /// \brief The kind of overloaded operator.
-      OverloadedOperatorKind Operator;
-      
-      /// \brief The source locations of the individual tokens that name
-      /// the operator, e.g., the "new", "[", and "]" tokens in 
-      /// operator new []. 
-      ///
-      /// Different operators have different numbers of tokens in their name,
-      /// up to three. Any remaining source locations in this array will be
-      /// set to an invalid value for operators with fewer than three tokens.
-      unsigned SymbolLocations[3];
-    } OperatorFunctionId;
+    struct OFI OperatorFunctionId;
     
     /// \brief When Kind == IK_ConversionFunctionId, the type that the 
     /// conversion function names.

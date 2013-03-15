@@ -199,21 +199,25 @@ public:
   }
   
 private:
-  union {
-    /// Deprecation.
-    struct {
-      const NamedDecl *Decl;
-      const ObjCInterfaceDecl *UnknownObjCClass;
-      const ObjCPropertyDecl  *ObjCProperty;
-      const char *Message;
-      size_t MessageLen;
-    } DeprecationData;
 
-    struct {
-      unsigned Diagnostic;
-      unsigned Argument;
-      void *OperandType;
-    } ForbiddenTypeData;
+  struct DD {
+    const NamedDecl *Decl;
+    const ObjCInterfaceDecl *UnknownObjCClass;
+    const ObjCPropertyDecl  *ObjCProperty;
+    const char *Message;
+    size_t MessageLen;
+  };
+
+  struct FTD {
+    unsigned Diagnostic;
+    unsigned Argument;
+    void *OperandType;
+  };
+
+  union {
+    /// Deprecation
+    struct DD DeprecationData;
+    struct FTD ForbiddenTypeData;
 
     /// Access control.
     char AccessData[sizeof(AccessedEntity)];

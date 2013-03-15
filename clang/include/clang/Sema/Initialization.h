@@ -88,7 +88,27 @@ private:
 
   /// \brief The type of the object or reference being initialized.
   QualType Type;
-  
+
+  struct LN {
+    /// \brief When Kind == EK_Result, EK_Exception, EK_New, the
+    /// location of the 'return', 'throw', or 'new' keyword,
+    /// respectively. When Kind == EK_Temporary, the location where
+    /// the temporary is being created.
+    unsigned Location;
+
+    /// \brief Whether the entity being initialized may end up using the
+    /// named return value optimization (NRVO).
+    bool NRVO;
+  };
+
+  struct C {
+    /// \brief The variable being captured by an EK_LambdaCapture.
+    VarDecl *Var;
+
+    /// \brief The source location at which the capture occurs.
+    unsigned Location;
+  };
+
   union {
     /// \brief When Kind == EK_Variable, or EK_Member, the VarDecl or
     /// FieldDecl, respectively.
@@ -101,18 +121,8 @@ private:
     /// \brief When Kind == EK_Temporary, the type source information for
     /// the temporary.
     TypeSourceInfo *TypeInfo;
-    
-    struct {
-      /// \brief When Kind == EK_Result, EK_Exception, EK_New, the
-      /// location of the 'return', 'throw', or 'new' keyword,
-      /// respectively. When Kind == EK_Temporary, the location where
-      /// the temporary is being created.
-      unsigned Location;
-      
-      /// \brief Whether the entity being initialized may end up using the
-      /// named return value optimization (NRVO).
-      bool NRVO;
-    } LocAndNRVO;
+
+    struct LN LocAndNRVO;
     
     /// \brief When Kind == EK_Base, the base specifier that provides the 
     /// base class. The lower bit specifies whether the base is an inherited
@@ -123,14 +133,8 @@ private:
     /// EK_ComplexElement, the index of the array or vector element being
     /// initialized. 
     unsigned Index;
-    
-    struct {
-      /// \brief The variable being captured by an EK_LambdaCapture.
-      VarDecl *Var;
-      
-      /// \brief The source location at which the capture occurs.
-      unsigned Location;
-    } Capture;
+
+    struct C Capture;
   };
 
   InitializedEntity() { }
@@ -639,7 +643,13 @@ public:
     
     // \brief The type that results from this initialization.
     QualType Type;
-    
+
+    struct F {
+      bool HadMultipleCandidates;
+      FunctionDecl *Function;
+      DeclAccessPair FoundDecl;
+    };
+
     union {
       /// \brief When Kind == SK_ResolvedOverloadedFunction or Kind ==
       /// SK_UserConversion, the function that the expression should be 
@@ -651,11 +661,7 @@ public:
       /// selected from an overloaded set having size greater than 1.
       /// For conversion decls, the naming class is the source type.
       /// For construct decls, the naming class is the target type.
-      struct {
-        bool HadMultipleCandidates;
-        FunctionDecl *Function;
-        DeclAccessPair FoundDecl;
-      } Function;
+      struct F Function;
 
       /// \brief When Kind = SK_ConversionSequence, the implicit conversion
       /// sequence.

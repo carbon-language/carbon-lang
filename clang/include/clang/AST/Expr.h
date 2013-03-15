@@ -60,18 +60,21 @@ struct SubobjectAdjustment {
     MemberPointerAdjustment
   } Kind;
 
-   union {
-    struct {
-      const CastExpr *BasePath;
-      const CXXRecordDecl *DerivedClass;
-    } DerivedToBase;
 
+  struct DTB {
+    const CastExpr *BasePath;
+    const CXXRecordDecl *DerivedClass;
+  };
+
+  struct P {
+    const MemberPointerType *MPT;
+    Expr *RHS;
+  };
+
+  union {
+    struct DTB DerivedToBase;
     FieldDecl *Field;
-
-    struct {
-      const MemberPointerType *MPT;
-      Expr *RHS;
-    } Ptr;
+    struct P Ptr;
   };
 
   SubobjectAdjustment(const CastExpr *BasePath,

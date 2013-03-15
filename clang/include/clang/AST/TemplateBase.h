@@ -72,32 +72,36 @@ private:
   /// \brief The kind of template argument we're storing.
   unsigned Kind;
 
+  struct DA {
+    ValueDecl *D;
+    bool ForRefParam;
+  };
+  struct I {
+    // We store a decomposed APSInt with the data allocated by ASTContext if
+    // BitWidth > 64. The memory may be shared between multiple
+    // TemplateArgument instances.
+    union {
+      uint64_t VAL;          ///< Used to store the <= 64 bits integer value.
+      const uint64_t *pVal;  ///< Used to store the >64 bits integer value.
+    };
+    unsigned BitWidth : 31;
+    unsigned IsUnsigned : 1;
+    void *Type;
+  };
+  struct A {
+    const TemplateArgument *Args;
+    unsigned NumArgs;
+  };
+  struct TA {
+    void *Name;
+    unsigned NumExpansions;
+  };
   union {
+    struct DA DeclArg;
+    struct I Integer;
+    struct A Args;
+    struct TA TemplateArg;
     uintptr_t TypeOrValue;
-    struct {
-      ValueDecl *D;
-      bool ForRefParam;
-    } DeclArg;
-    struct {
-      // We store a decomposed APSInt with the data allocated by ASTContext if
-      // BitWidth > 64. The memory may be shared between multiple
-      // TemplateArgument instances.
-      union {
-        uint64_t VAL;          ///< Used to store the <= 64 bits integer value.
-        const uint64_t *pVal;  ///< Used to store the >64 bits integer value.
-      };
-      unsigned BitWidth : 31;
-      unsigned IsUnsigned : 1;
-      void *Type;
-    } Integer;
-    struct {
-      const TemplateArgument *Args;
-      unsigned NumArgs;
-    } Args;
-    struct {
-      void *Name;
-      unsigned NumExpansions;
-    } TemplateArg;
   };
 
   TemplateArgument(TemplateName, bool) LLVM_DELETED_FUNCTION;
@@ -341,17 +345,20 @@ public:
 /// Location information for a TemplateArgument.
 struct TemplateArgumentLocInfo {
 private:
+
+  struct T {
+    // FIXME: We'd like to just use the qualifier in the TemplateName,
+    // but template arguments get canonicalized too quickly.
+    NestedNameSpecifier *Qualifier;
+    void *QualifierLocData;
+    unsigned TemplateNameLoc;
+    unsigned EllipsisLoc;
+  };
+
   union {
+    struct T Template;
     Expr *Expression;
     TypeSourceInfo *Declarator;
-    struct {
-      // FIXME: We'd like to just use the qualifier in the TemplateName,
-      // but template arguments get canonicalized too quickly.
-      NestedNameSpecifier *Qualifier;
-      void *QualifierLocData;
-      unsigned TemplateNameLoc;
-      unsigned EllipsisLoc;
-    } Template;
   };
 
 public:

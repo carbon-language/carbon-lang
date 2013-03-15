@@ -382,32 +382,35 @@ public:
 /// for a declaration name. Needs a DeclarationName in order
 /// to be interpreted correctly.
 struct DeclarationNameLoc {
+  // The source location for identifier stored elsewhere.
+  // struct {} Identifier;
+
+  // Type info for constructors, destructors and conversion functions.
+  // Locations (if any) for the tilde (destructor) or operator keyword
+  // (conversion) are stored elsewhere.
+  struct NT {
+    TypeSourceInfo* TInfo;
+  };
+
+  // The location (if any) of the operator keyword is stored elsewhere.
+  struct CXXOpName {
+    unsigned BeginOpNameLoc;
+    unsigned EndOpNameLoc;
+  };
+
+  // The location (if any) of the operator keyword is stored elsewhere.
+  struct CXXLitOpName {
+    unsigned OpNameLoc;
+  };
+
+  // struct {} CXXUsingDirective;
+  // struct {} ObjCZeroArgSelector;
+  // struct {} ObjCOneArgSelector;
+  // struct {} ObjCMultiArgSelector;
   union {
-    // The source location for identifier stored elsewhere.
-    // struct {} Identifier;
-
-    // Type info for constructors, destructors and conversion functions.
-    // Locations (if any) for the tilde (destructor) or operator keyword
-    // (conversion) are stored elsewhere.
-    struct {
-      TypeSourceInfo* TInfo;
-    } NamedType;
-
-    // The location (if any) of the operator keyword is stored elsewhere.
-    struct {
-      unsigned BeginOpNameLoc;
-      unsigned EndOpNameLoc;
-    } CXXOperatorName;
-
-    // The location (if any) of the operator keyword is stored elsewhere.
-    struct {
-      unsigned OpNameLoc;
-    } CXXLiteralOperatorName;
-
-    // struct {} CXXUsingDirective;
-    // struct {} ObjCZeroArgSelector;
-    // struct {} ObjCOneArgSelector;
-    // struct {} ObjCMultiArgSelector;
+    struct NT NamedType;
+    struct CXXOpName CXXOperatorName;
+    struct CXXLitOpName CXXLiteralOperatorName;
   };
 
   DeclarationNameLoc(DeclarationName Name);

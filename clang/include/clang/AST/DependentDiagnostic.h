@@ -108,16 +108,14 @@ private:
 
   PartialDiagnostic Diag;
 
-  union {
-    struct {
-      unsigned Loc;
-      unsigned Access : 2;
-      unsigned IsMember : 1;
-      NamedDecl *TargetDecl;
-      CXXRecordDecl *NamingClass;
-      void *BaseObjectType;
-    } AccessData;
-  };
+  struct {
+    unsigned Loc;
+    unsigned Access : 2;
+    unsigned IsMember : 1;
+    NamedDecl *TargetDecl;
+    CXXRecordDecl *NamingClass;
+    void *BaseObjectType;
+  } AccessData;
 };
 
 /// 

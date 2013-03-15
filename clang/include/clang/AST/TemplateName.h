@@ -46,16 +46,17 @@ protected:
     SubstTemplateTemplateParmPack
   };
 
-  union {
-    struct {
-      /// \brief A Kind.
-      unsigned Kind : 2;
-      
-      /// \brief The number of stored templates or template arguments,
-      /// depending on which subclass we have.
-      unsigned Size : 30;
-    } Bits;
+  struct BitsTag {
+    /// \brief A Kind.
+    unsigned Kind : 2;
     
+    /// \brief The number of stored templates or template arguments,
+    /// depending on which subclass we have.
+    unsigned Size : 30;
+  };
+
+  union {
+    struct BitsTag Bits;
     void *PointerAlignment;
   };
   

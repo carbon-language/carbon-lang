@@ -458,18 +458,19 @@ public:
 ///   };
 /// \endcode
 class DependentFunctionTemplateSpecializationInfo {
+  struct CA {
+    /// The number of potential template candidates.
+    unsigned NumTemplates;
+
+    /// The number of template arguments.
+    unsigned NumArgs;
+  };
+
   union {
     // Force sizeof to be a multiple of sizeof(void*) so that the
     // trailing data is aligned.
     void *Aligner;
-
-    struct {
-      /// The number of potential template candidates.
-      unsigned NumTemplates;
-
-      /// The number of template arguments.
-      unsigned NumArgs;
-    } d;
+    struct CA d;
   };
 
   /// The locations of the left and right angle brackets.
