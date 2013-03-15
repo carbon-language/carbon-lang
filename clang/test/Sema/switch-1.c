@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -triple x86_64-apple-darwin10 %s
 // RUN: %clang_cc1 -x c++ -fsyntax-only -verify -triple x86_64-apple-darwin10 %s
 // rdar://11577384
+// rdar://13423975
 
 int f(int i) {
   switch (i) {
@@ -10,6 +11,8 @@ int f(int i) {
       return 2;
     case (123456 *789012) + 1:  // expected-warning {{overflow in expression; result is -1375982336 with type 'int'}}
       return 3;
+    case (2147483647*4)/4: 	// expected-warning {{overflow in expression; result is -4 with type 'int'}}
+      return 4;
     case 2147483647:
       return 0;
   }

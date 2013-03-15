@@ -5188,7 +5188,7 @@ void Sema::CheckImplicitConversions(Expr *E, SourceLocation CC) {
 void Sema::CheckForIntOverflow (Expr *E) {
   if (const BinaryOperator *BExpr = dyn_cast<BinaryOperator>(E->IgnoreParens())) {
     unsigned Opc = BExpr->getOpcode();
-    if (Opc != BO_Add && Opc != BO_Sub && Opc != BO_Mul)
+    if (Opc != BO_Add && Opc != BO_Sub && Opc != BO_Mul && Opc != BO_Div)
       return;
     llvm::SmallVector<PartialDiagnosticAt, 4> Diags;
     E->EvaluateForOverflow(Context, &Diags);
