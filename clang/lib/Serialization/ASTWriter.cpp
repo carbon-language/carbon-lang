@@ -1213,11 +1213,24 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
     Stream.EmitRecordWithBlob(AbbrevCode, Record, origDir);
   }
 
-  WriteInputFiles(Context.SourceMgr, isysroot);
+  WriteInputFiles(Context.SourceMgr,
+                  PP.getHeaderSearchInfo().getHeaderSearchOpts(),
+                  isysroot);
   Stream.ExitBlock();
 }
 
-void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
+namespace  {
+  /// \brief An input file.
+  struct InputFileEntry {
+    const FileEntry *File;
+    bool IsSystemFile;
+    bool BufferOverridden;
+  };
+}
+
+void ASTWriter::WriteInputFiles(SourceManager &SourceMgr,
+                                HeaderSearchOptions &HSOpts,
+                                StringRef isysroot) {
   using namespace llvm;
   Stream.EnterSubblock(INPUT_FILES_BLOCK_ID, 4);
   RecordData Record;
@@ -1234,7 +1247,7 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
 
   // Get all ContentCache objects for files, sorted by whether the file is a
   // system one or not. System files go at the back, users files at the front.
-  std::deque<const SrcMgr::ContentCache *> SortedFiles;
+  std::deque<InputFileEntry> SortedFiles;
   for (unsigned I = 1, N = SourceMgr.local_sloc_entry_size(); I != N; ++I) {
     // Get this source location entry.
     const SrcMgr::SLocEntry *SLoc = &SourceMgr.getLocalSLocEntry(I);
@@ -1247,20 +1260,38 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
     if (!Cache->OrigEntry)
       continue;
 
+    InputFileEntry Entry;
+    Entry.File = Cache->OrigEntry;
+    Entry.IsSystemFile = Cache->IsSystemFile;
+    Entry.BufferOverridden = Cache->BufferOverridden;
     if (Cache->IsSystemFile)
-      SortedFiles.push_back(Cache);
+      SortedFiles.push_back(Entry);
     else
-      SortedFiles.push_front(Cache);
+      SortedFiles.push_front(Entry);
+  }
+
+  // If we have an isysroot for a Darwin SDK, include its SDKSettings.plist in
+  // the set of (non-system) input files. This is simple heuristic for
+  // detecting whether the system headers may have changed, because it is too
+  // expensive to stat() all of the system headers.
+  FileManager &FileMgr = SourceMgr.getFileManager();
+  if (!HSOpts.Sysroot.empty()) {
+    llvm::SmallString<128> SDKSettingsFileName(HSOpts.Sysroot);
+    llvm::sys::path::append(SDKSettingsFileName, "SDKSettings.plist");
+    if (const FileEntry *SDKSettingsFile = FileMgr.getFile(SDKSettingsFileName)) {
+      InputFileEntry Entry = { SDKSettingsFile, false, false };
+      SortedFiles.push_front(Entry);
+    }
   }
 
   unsigned UserFilesNum = 0;
   // Write out all of the input files.
   std::vector<uint32_t> InputFileOffsets;
-  for (std::deque<const SrcMgr::ContentCache *>::iterator
+  for (std::deque<InputFileEntry>::iterator
          I = SortedFiles.begin(), E = SortedFiles.end(); I != E; ++I) {
-    const SrcMgr::ContentCache *Cache = *I;
+    const InputFileEntry &Entry = *I;
 
-    uint32_t &InputFileID = InputFileIDs[Cache->OrigEntry];
+    uint32_t &InputFileID = InputFileIDs[Entry.File];
     if (InputFileID != 0)
       continue; // already recorded this file.
 
@@ -1269,7 +1300,7 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
 
     InputFileID = InputFileOffsets.size();
 
-    if (!Cache->IsSystemFile)
+    if (!Entry.IsSystemFile)
       ++UserFilesNum;
 
     Record.clear();
@@ -1277,19 +1308,19 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
     Record.push_back(InputFileOffsets.size());
 
     // Emit size/modification time for this file.
-    Record.push_back(Cache->OrigEntry->getSize());
-    Record.push_back(Cache->OrigEntry->getModificationTime());
+    Record.push_back(Entry.File->getSize());
+    Record.push_back(Entry.File->getModificationTime());
 
     // Whether this file was overridden.
-    Record.push_back(Cache->BufferOverridden);
+    Record.push_back(Entry.BufferOverridden);
 
     // Turn the file name into an absolute path, if it isn't already.
-    const char *Filename = Cache->OrigEntry->getName();
+    const char *Filename = Entry.File->getName();
     SmallString<128> FilePath(Filename);
     
     // Ask the file manager to fixup the relative path for us. This will 
     // honor the working directory.
-    SourceMgr.getFileManager().FixupRelativePath(FilePath);
+    FileMgr.FixupRelativePath(FilePath);
     
     // FIXME: This call to make_absolute shouldn't be necessary, the
     // call to FixupRelativePath should always return an absolute path.
@@ -1300,7 +1331,7 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
 
     Stream.EmitRecordWithBlob(IFAbbrevCode, Record, Filename);
   }  
-  
+
   Stream.ExitBlock();
 
   // Create input file offsets abbreviation.

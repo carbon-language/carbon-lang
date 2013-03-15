@@ -48,6 +48,7 @@ class CXXCtorInitializer;
 class FileEntry;
 class FPOptions;
 class HeaderSearch;
+class HeaderSearchOptions;
 class IdentifierResolver;
 class MacroDefinition;
 class OpaqueValueExpr;
@@ -416,7 +417,9 @@ private:
   void WriteBlockInfoBlock();
   void WriteControlBlock(Preprocessor &PP, ASTContext &Context,
                          StringRef isysroot, const std::string &OutputFile);
-  void WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot);
+  void WriteInputFiles(SourceManager &SourceMgr,
+                       HeaderSearchOptions &HSOpts,
+                       StringRef isysroot);
   void WriteSourceManagerBlock(SourceManager &SourceMgr,
                                const Preprocessor &PP,
                                StringRef isysroot);
