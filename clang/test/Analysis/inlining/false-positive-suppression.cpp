@@ -40,6 +40,11 @@ inline void* operator new(__typeof__(sizeof(int)), void* __p) throw()
 
 extern bool coin();
 
+class SomeClass {
+public:
+  void doSomething();
+};
+
 namespace References {
   class Map {
     int *&getNewBox();
@@ -82,11 +87,6 @@ namespace References {
     box = 0;
     *box = 1; // expected-warning {{Dereference of null pointer}}
   }
-
-  class SomeClass {
-  public:
-    void doSomething();
-  };
 
   SomeClass *&getSomeClass() {
     if (coin()) {
@@ -174,3 +174,39 @@ void test3() {
 }
 
 
+namespace Cleanups {
+  class NonTrivial {
+  public:
+    ~NonTrivial();
+
+    SomeClass *getNull() {
+      return 0;
+    }
+  };
+
+  void testImmediate() {
+    NonTrivial().getNull()->doSomething();
+#ifndef SUPPRESSED
+    // expected-warning@-2 {{Called C++ object pointer is null}}
+#endif
+  }
+
+  void testAssignment() {
+    SomeClass *ptr = NonTrivial().getNull();
+    ptr->doSomething();
+#ifndef SUPPRESSED
+    // expected-warning@-2 {{Called C++ object pointer is null}}
+#endif
+  }
+
+  void testArgumentHelper(SomeClass *arg) {
+    arg->doSomething();
+#ifndef SUPPRESSED
+    // expected-warning@-2 {{Called C++ object pointer is null}}
+#endif
+  }
+
+  void testArgument() {
+    testArgumentHelper(NonTrivial().getNull());
+  }
+}

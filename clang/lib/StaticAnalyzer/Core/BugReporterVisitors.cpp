@@ -778,7 +778,8 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
   if (!S || !N)
     return false;
 
-  // Peel off OpaqueValueExpr.
+  if (const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(S))
+    S = EWC->getSubExpr();
   if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(S))
     S = OVE->getSourceExpr();
 
