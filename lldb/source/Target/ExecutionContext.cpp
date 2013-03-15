@@ -524,8 +524,7 @@ ExecutionContextRef::ExecutionContextRef() :
     m_target_wp (),
     m_process_wp (),
     m_thread_wp (),
-    m_frame_wp (),
-    m_tid(LLDB_INVALID_THREAD_ID),  
+    m_tid(LLDB_INVALID_THREAD_ID),
     m_stack_id ()
 {
 }
@@ -534,8 +533,7 @@ ExecutionContextRef::ExecutionContextRef (const ExecutionContext *exe_ctx) :
     m_target_wp (),
     m_process_wp (),
     m_thread_wp (),
-    m_frame_wp (),
-    m_tid(LLDB_INVALID_THREAD_ID),  
+    m_tid(LLDB_INVALID_THREAD_ID),
     m_stack_id ()
 {
     if (exe_ctx)
@@ -546,8 +544,7 @@ ExecutionContextRef::ExecutionContextRef (const ExecutionContext &exe_ctx) :
     m_target_wp (),
     m_process_wp (),
     m_thread_wp (),
-    m_frame_wp (),
-    m_tid(LLDB_INVALID_THREAD_ID),  
+    m_tid(LLDB_INVALID_THREAD_ID),
     m_stack_id ()
 {
     *this = exe_ctx;
@@ -558,8 +555,7 @@ ExecutionContextRef::ExecutionContextRef (Target *target, bool adopt_selected) :
     m_target_wp(),
     m_process_wp(),
     m_thread_wp(),
-    m_frame_wp(),
-    m_tid(LLDB_INVALID_THREAD_ID),  
+    m_tid(LLDB_INVALID_THREAD_ID),
     m_stack_id ()
 {
     SetTargetPtr (target, adopt_selected);
@@ -572,7 +568,6 @@ ExecutionContextRef::ExecutionContextRef (const ExecutionContextRef &rhs) :
     m_target_wp (rhs.m_target_wp),
     m_process_wp(rhs.m_process_wp),
     m_thread_wp (rhs.m_thread_wp),
-    m_frame_wp  (rhs.m_frame_wp),
     m_tid       (rhs.m_tid),
     m_stack_id  (rhs.m_stack_id)
 {
@@ -586,7 +581,6 @@ ExecutionContextRef::operator =(const ExecutionContextRef &rhs)
         m_target_wp  = rhs.m_target_wp;
         m_process_wp = rhs.m_process_wp;
         m_thread_wp  = rhs.m_thread_wp;
-        m_frame_wp   = rhs.m_frame_wp;
         m_tid        = rhs.m_tid;
         m_stack_id   = rhs.m_stack_id;
     }
@@ -605,7 +599,6 @@ ExecutionContextRef::operator =(const ExecutionContext &exe_ctx)
     else
         m_tid = LLDB_INVALID_THREAD_ID;
     lldb::StackFrameSP frame_sp (exe_ctx.GetFrameSP());
-    m_frame_wp = frame_sp;
     if (frame_sp)
         m_stack_id = frame_sp->GetStackID();
     else
@@ -669,7 +662,6 @@ ExecutionContextRef::SetFrameSP (const lldb::StackFrameSP &frame_sp)
 {
     if (frame_sp)
     {
-        m_frame_wp = frame_sp;
         m_stack_id = frame_sp->GetStackID();
         SetThreadSP (frame_sp->GetThread());
     }
@@ -814,20 +806,9 @@ ExecutionContextRef::GetThreadSP () const
 lldb::StackFrameSP
 ExecutionContextRef::GetFrameSP () const
 {
-    lldb::StackFrameSP frame_sp (m_frame_wp.lock());
-    if (frame_sp)
-    {
-        lldb::ThreadSP frame_thread_sp(frame_sp->GetThread());
-        if (frame_thread_sp && frame_thread_sp->IsValid())
-            return frame_sp;
-    }
     lldb::ThreadSP thread_sp (GetThreadSP());
-    if (thread_sp && thread_sp->IsValid())
-    {
-        frame_sp = thread_sp->GetFrameWithStackID (m_stack_id);
-        m_frame_wp = frame_sp;
-        return frame_sp;
-    }
+    if (thread_sp)
+        return thread_sp->GetFrameWithStackID (m_stack_id);
     return lldb::StackFrameSP();
 }
 

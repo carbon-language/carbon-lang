@@ -335,7 +335,6 @@ public:
     ClearFrame ()
     {
         m_stack_id.Clear();
-        m_frame_wp.reset();
     }
 
 protected:
@@ -345,7 +344,6 @@ protected:
     lldb::TargetWP m_target_wp;             ///< A weak reference to a target
     lldb::ProcessWP m_process_wp;           ///< A weak reference to a process
     mutable lldb::ThreadWP m_thread_wp;     ///< A weak reference to a thread
-    mutable lldb::StackFrameWP m_frame_wp;  ///< A weak reference to a frame
     lldb::tid_t m_tid;                      ///< The thread ID that this object refers to in case the backing object changes
     StackID m_stack_id;                     ///< The stack ID that this object refers to in case the backing object changes
 };
