@@ -4505,7 +4505,7 @@ static void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E,
   SmallString<64> PrettySourceValue;
   llvm::raw_svector_ostream OS(PrettySourceValue);
   if (ED)
-    OS << '\'' << ED->getName() << "' (" << Value << ")";
+    OS << '\'' << *ED << "' (" << Value << ")";
   else
     OS << Value;
 
