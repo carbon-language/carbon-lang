@@ -82,10 +82,7 @@ PtraceWrapper(int req, ::pid_t pid, void *addr, int data,
     //PtraceDisplayBytes(req, data);
 
     errno = 0;
-    if (req == PTRACE_GETREGSET || req == PTRACE_SETREGSET)
-        result = ptrace(req, pid, *(unsigned int *)addr, data);
-    else
-        result = ptrace(req, pid, (caddr_t) addr, data);
+    result = ptrace(req, pid, (caddr_t) addr, data);
 
     //PtraceDisplayBytes(req, data);
 
@@ -124,10 +121,7 @@ PtraceWrapper(__ptrace_request req, pid_t pid, void *addr, void *data)
 {
     long result = 0;
     errno = 0;
-    if (req == PTRACE_GETREGSET || req == PTRACE_SETREGSET)
-        result = ptrace(req, pid, *(unsigned int *)addr, data);
-    else
-        result = ptrace(req, pid, addr, data);
+    result = ptrace(req, pid, addr, data);
     return result;
 }
 
@@ -402,35 +396,6 @@ ReadFPROperation::Execute(ProcessMonitor *monitor)
 }
 
 //------------------------------------------------------------------------------
-/// @class ReadRegisterSetOperation
-/// @brief Implements ProcessMonitor::ReadRegisterSet.
-class ReadRegisterSetOperation : public Operation
-{
-public:
-    ReadRegisterSetOperation(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset, bool &result)
-        : m_tid(tid), m_buf(buf), m_buf_size(buf_size), m_regset(regset), m_result(result)
-        { }
-
-    void Execute(ProcessMonitor *monitor);
-
-private:
-    lldb::tid_t m_tid;
-    void *m_buf;
-    size_t m_buf_size;
-    const unsigned int m_regset;
-    bool &m_result;
-};
-
-void
-ReadRegisterSetOperation::Execute(ProcessMonitor *monitor)
-{
-    if (PTRACE(PTRACE_GETREGSET, m_tid, (void *)&m_regset, m_buf) < 0)
-        m_result = false;
-    else
-        m_result = true;
-}
-
-//------------------------------------------------------------------------------
 /// @class WriteGPROperation
 /// @brief Implements ProcessMonitor::WriteGPR.
 class WriteGPROperation : public Operation
@@ -477,35 +442,6 @@ void
 WriteFPROperation::Execute(ProcessMonitor *monitor)
 {
     if (PTRACE(PT_SETFPREGS, monitor->GetPID(), (caddr_t)m_buf, 0) < 0)
-        m_result = false;
-    else
-        m_result = true;
-}
-
-//------------------------------------------------------------------------------
-/// @class WriteRegisterSetOperation
-/// @brief Implements ProcessMonitor::WriteRegisterSet.
-class WriteRegisterSetOperation : public Operation
-{
-public:
-    WriteRegisterSetOperation(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset, bool &result)
-        : m_tid(tid), m_buf(buf), m_buf_size(buf_size), m_regset(regset), m_result(result)
-        { }
-
-    void Execute(ProcessMonitor *monitor);
-
-private:
-    lldb::tid_t m_tid;
-    void *m_buf;
-    size_t m_buf_size;
-    const unsigned int m_regset;
-    bool &m_result;
-};
-
-void
-WriteRegisterSetOperation::Execute(ProcessMonitor *monitor)
-{
-    if (PTRACE(PTRACE_SETREGSET, m_tid, (void *)&m_regset, m_buf) < 0)
         m_result = false;
     else
         m_result = true;
@@ -1539,15 +1475,6 @@ ProcessMonitor::ReadFPR(lldb::tid_t tid, void *buf, size_t buf_size)
 }
 
 bool
-ProcessMonitor::ReadRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset)
-{
-    bool result;
-    ReadRegisterSetOperation op(tid, buf, buf_size, regset, result);
-    DoOperation(&op);
-    return result;
-}
-
-bool
 ProcessMonitor::WriteGPR(lldb::tid_t tid, void *buf, size_t buf_size)
 {
     bool result;
@@ -1561,15 +1488,6 @@ ProcessMonitor::WriteFPR(lldb::tid_t tid, void *buf, size_t buf_size)
 {
     bool result;
     WriteFPROperation op(buf, result);
-    DoOperation(&op);
-    return result;
-}
-
-bool
-ProcessMonitor::WriteRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset)
-{
-    bool result;
-    WriteRegisterSetOperation op(tid, buf, buf_size, regset, result);
     DoOperation(&op);
     return result;
 }

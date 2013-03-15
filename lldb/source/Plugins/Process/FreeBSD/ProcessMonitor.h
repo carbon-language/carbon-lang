@@ -126,16 +126,11 @@ public:
     bool
     ReadGPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
-    /// Reads generic floating point registers into the specified buffer.
+    /// Reads all floating point registers into the specified buffer.
     /// FIXME: The FreeBSD implementation of this function should use tid in order
     ///        to enable support for debugging threaded programs.
     bool
     ReadFPR(lldb::tid_t tid, void *buf, size_t buf_size);
-
-    /// Reads the specified register set into the specified buffer.
-    /// For instance, the extended floating-point register set.
-    bool
-    ReadRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset);
 
     /// Writes all general purpose registers into the specified buffer.
     /// FIXME: The FreeBSD implementation of this function should use tid in order
@@ -143,16 +138,11 @@ public:
     bool
     WriteGPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
-    /// Writes generic floating point registers into the specified buffer.
+    /// Writes all floating point registers into the specified buffer.
     /// FIXME: The FreeBSD implementation of this function should use tid in order
     ///        to enable support for debugging threaded programs.
     bool
-    WriteFPR(lldb::tid_t tid, void *buf, size_t buf_size);
-
-    /// Writes the specified register set into the specified buffer.
-    /// For instance, the extended floating-point register set.
-    bool
-    WriteRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset);
+    WriteFPR(lldb::tid_t tid, void *buf);
 
     /// Writes a siginfo_t structure corresponding to the given thread ID to the
     /// memory region pointed to by @p siginfo.
