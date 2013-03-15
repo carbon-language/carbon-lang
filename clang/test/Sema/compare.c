@@ -93,8 +93,8 @@ int ints(long a, unsigned long b) {
          // (C,b)
          (C == (unsigned long) b) +
          (C == (unsigned int) b) +
-         (C == (unsigned short) b) + // expected-warning {{comparison of constant 65536 with expression of type 'unsigned short' is always false}}
-         (C == (unsigned char) b) + // expected-warning {{comparison of constant 65536 with expression of type 'unsigned char' is always false}}
+         (C == (unsigned short) b) + // expected-warning {{comparison of constant 'C' (65536) with expression of type 'unsigned short' is always false}}
+         (C == (unsigned char) b) + // expected-warning {{comparison of constant 'C' (65536) with expression of type 'unsigned char' is always false}}
          ((long) C == b) +
          ((int) C == b) +
          ((short) C == b) +
@@ -105,8 +105,8 @@ int ints(long a, unsigned long b) {
          ((signed char) C == (unsigned char) b) +
          (C < (unsigned long) b) +
          (C < (unsigned int) b) +
-         (C < (unsigned short) b) + // expected-warning {{comparison of constant 65536 with expression of type 'unsigned short' is always false}}
-         (C < (unsigned char) b) + // expected-warning {{comparison of constant 65536 with expression of type 'unsigned char' is always false}}
+         (C < (unsigned short) b) + // expected-warning {{comparison of constant 'C' (65536) with expression of type 'unsigned short' is always false}}
+         (C < (unsigned char) b) + // expected-warning {{comparison of constant 'C' (65536) with expression of type 'unsigned char' is always false}}
          ((long) C < b) +
          ((int) C < b) +
          ((short) C < b) +
@@ -123,8 +123,8 @@ int ints(long a, unsigned long b) {
          (a == (unsigned char) C) +
          ((long) a == C) +
          ((int) a == C) +
-         ((short) a == C) + // expected-warning {{comparison of constant 65536 with expression of type 'short' is always false}}
-         ((signed char) a == C) + // expected-warning {{comparison of constant 65536 with expression of type 'signed char' is always false}}
+         ((short) a == C) + // expected-warning {{comparison of constant 'C' (65536) with expression of type 'short' is always false}}
+         ((signed char) a == C) + // expected-warning {{comparison of constant 'C' (65536) with expression of type 'signed char' is always false}}
          ((long) a == (unsigned long) C) +
          ((int) a == (unsigned int) C) +
          ((short) a == (unsigned short) C) +
@@ -135,8 +135,8 @@ int ints(long a, unsigned long b) {
          (a < (unsigned char) C) +
          ((long) a < C) +
          ((int) a < C) +
-         ((short) a < C) + // expected-warning {{comparison of constant 65536 with expression of type 'short' is always true}}
-         ((signed char) a < C) + // expected-warning {{comparison of constant 65536 with expression of type 'signed char' is always true}}
+         ((short) a < C) + // expected-warning {{comparison of constant 'C' (65536) with expression of type 'short' is always true}}
+         ((signed char) a < C) + // expected-warning {{comparison of constant 'C' (65536) with expression of type 'signed char' is always true}}
          ((long) a < (unsigned long) C) +  // expected-warning {{comparison of integers of different signs}}
          ((int) a < (unsigned int) C) +  // expected-warning {{comparison of integers of different signs}}
          ((short) a < (unsigned short) C) +

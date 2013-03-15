@@ -39,8 +39,8 @@ void test () {
   while (b == c);
   while (B1 == name1::B2);
   while (B2 == name2::B1);
-  while (x == AnonAA); // expected-warning {{comparison of constant 42 with expression of type 'Foo' is always false}}
-  while (AnonBB == y); // expected-warning {{comparison of constant 45 with expression of type 'Bar' is always false}}
+  while (x == AnonAA); // expected-warning {{comparison of constant 'AnonAA' (42) with expression of type 'Foo' is always false}}
+  while (AnonBB == y); // expected-warning {{comparison of constant 'AnonBB' (45) with expression of type 'Bar' is always false}}
   while (AnonAA == AnonAB);
   while (AnonAB == AnonBA);
   while (AnonBB == AnonAA);
