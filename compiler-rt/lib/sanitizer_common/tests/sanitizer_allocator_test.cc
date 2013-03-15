@@ -636,11 +636,11 @@ TEST(SanitizerCommon, LargeMmapAllocatorIteration) {
   AllocatorStats stats;
   stats.Init();
 
-  static const int kNumAllocs = 1000;
+  static const uptr kNumAllocs = 1000;
   char *allocated[kNumAllocs];
   static const uptr size = 40;
   // Allocate some.
-  for (int i = 0; i < kNumAllocs; i++) {
+  for (uptr i = 0; i < kNumAllocs; i++) {
     allocated[i] = (char *)a.Allocate(&stats, size, 1);
   }
 
