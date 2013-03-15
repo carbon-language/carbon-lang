@@ -619,14 +619,6 @@ TEST_F(FormatTest, AlignsMultiLineComments) {
                    "   * comment.\n"
                    "   */\n"
                    "  void f() {}"));
-  EXPECT_EQ("/*\n"
-            "   A comment.\n"
-            " */\n"
-            "void f() {}",
-            format("  /*\n"
-                   "           A comment.\n"
-                   "   */\n"
-                   "   void f() {}"));
   EXPECT_EQ("class C {\n"
             "  /*\n"
             "   * Another multi-line\n"
@@ -641,6 +633,22 @@ TEST_F(FormatTest, AlignsMultiLineComments) {
                    " */\n"
                    "void f() {}\n"
                    "};"));
+  EXPECT_EQ("/*\n"
+            "  1. This is a comment with non-trivial formatting.\n"
+            "     1.1. We have to indent/outdent all lines equally\n"
+            "         1.1.1. to keep the formatting.\n"
+            " */",
+            format("  /*\n"
+                   "    1. This is a comment with non-trivial formatting.\n"
+                   "       1.1. We have to indent/outdent all lines equally\n"
+                   "           1.1.1. to keep the formatting.\n"
+                   "   */"));
+  EXPECT_EQ("/*\n"
+            " Don't try to outdent if there's not enough inentation.\n"
+            " */",
+            format("  /*\n"
+                   " Don't try to outdent if there's not enough inentation.\n"
+                   " */"));
 }
 
 TEST_F(FormatTest, CommentsInStaticInitializers) {

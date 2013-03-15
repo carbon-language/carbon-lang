@@ -193,35 +193,33 @@ public:
   }
 
 private:
-  void indentBlockComment(const FormatToken &Tok, int BaseIndent) {
+  void indentBlockComment(const FormatToken &Tok, int Indent) {
     SourceLocation TokenLoc = Tok.Tok.getLocation();
+    int IndentDelta = Indent - SourceMgr.getSpellingColumnNumber(TokenLoc) + 1;
     const char *Start = SourceMgr.getCharacterData(TokenLoc);
     const char *Current = Start;
     const char *TokEnd = Current + Tok.TokenLength;
+    llvm::SmallVector<SourceLocation, 16> LineStarts;
     while (Current < TokEnd) {
       if (*Current == '\n') {
         ++Current;
-        SourceLocation Loc = TokenLoc.getLocWithOffset(Current - Start);
-        int Indent = BaseIndent;
-        int Spaces = 0;
-        while (Current < TokEnd && *Current == ' ') {
-          ++Spaces;
-          ++Current;
-        }
-        if (Current < TokEnd && *Current == '*')
-          ++Indent;
-        else
-          Indent += 3;
-
-        if (Spaces < Indent)
-          Replaces.insert(tooling::Replacement(
-              SourceMgr, Loc, 0, std::string(Indent - Spaces, ' ')));
-        else if (Spaces > Indent)
-          Replaces.insert(
-              tooling::Replacement(SourceMgr, Loc, Spaces - Indent, ""));
+        LineStarts.push_back(TokenLoc.getLocWithOffset(Current - Start));
+        // If we need to outdent the line, check that it's indented enough.
+        for (int i = 0; i < -IndentDelta; ++i, ++Current)
+          if (Current >= TokEnd || *Current != ' ')
+            return;
       } else {
         ++Current;
       }
+    }
+
+    for (size_t i = 0; i < LineStarts.size(); ++i) {
+      if (IndentDelta > 0)
+        Replaces.insert(tooling::Replacement(SourceMgr, LineStarts[i], 0,
+                                             std::string(IndentDelta, ' ')));
+      else if (IndentDelta < 0)
+        Replaces.insert(
+            tooling::Replacement(SourceMgr, LineStarts[i], -IndentDelta, ""));
     }
   }
 
