@@ -122,7 +122,15 @@ __shared_weak_count::__get_deleter(const type_info&) const _NOEXCEPT
 #if __has_feature(cxx_atomic)
 
 static const std::size_t __sp_mut_count = 16;
-static mutex mut_back[__sp_mut_count];
+static pthread_mutex_t mut_back_imp[__sp_mut_count] =
+{
+    PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER,
+    PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER,
+    PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER,
+    PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER
+};
+
+static mutex* mut_back = reinterpret_cast<std::mutex*>(mut_back_imp);
 
 _LIBCPP_CONSTEXPR __sp_mut::__sp_mut(void* p) _NOEXCEPT
    : __lx(p)
