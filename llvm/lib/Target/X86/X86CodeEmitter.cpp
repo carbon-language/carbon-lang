@@ -1047,9 +1047,15 @@ void Emitter<CodeEmitter>::emitVEXOpcodePrefix(uint64_t TSFlags,
       // MRMDestReg instructions forms:
       //  dst(ModR/M), src(ModR/M)
       //  dst(ModR/M), src(ModR/M), imm8
-      if (X86II::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
+      //  dst(ModR/M), src1(VEX_4V), src2(ModR/M)
+      if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
         VEX_B = 0x0;
-      if (X86II::isX86_64ExtendedReg(MI.getOperand(1).getReg()))
+      CurOp++;
+
+      if (HasVEX_4V)
+        VEX_4V = getVEXRegisterEncoding(MI, CurOp++);
+
+      if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
         VEX_R = 0x0;
       break;
     case X86II::MRM0r: case X86II::MRM1r:
@@ -1284,9 +1290,14 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
 
   case X86II::MRMDestReg: {
     MCE.emitByte(BaseOpcode);
+
+    unsigned SrcRegNum = CurOp+1;
+    if (HasVEX_4V) // Skip 1st src (which is encoded in VEX_VVVV)
+      SrcRegNum++;
+
     emitRegModRMByte(MI.getOperand(CurOp).getReg(),
-                     getX86RegNum(MI.getOperand(CurOp+1).getReg()));
-    CurOp += 2;
+                     getX86RegNum(MI.getOperand(SrcRegNum).getReg()));
+    CurOp = SrcRegNum + 1;
     break;
   }
   case X86II::MRMDestMem: {
