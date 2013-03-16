@@ -55,7 +55,7 @@ public:
 
   void EmitInstanceFunctionProlog(CodeGenFunction &CGF);
 
-  llvm::Value *EmitConstructorCall(CodeGenFunction &CGF,
+  void EmitConstructorCall(CodeGenFunction &CGF,
                            const CXXConstructorDecl *D,
                            CXXCtorType Type, bool ForVirtualBase,
                            bool Delegating,
@@ -238,7 +238,7 @@ void MicrosoftCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
   }
 }
 
-llvm::Value *MicrosoftCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
+void MicrosoftCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
                                           const CXXConstructorDecl *D,
                                           CXXCtorType Type, bool ForVirtualBase,
                                           bool Delegating,
@@ -259,7 +259,6 @@ llvm::Value *MicrosoftCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
   CGF.EmitCXXMemberCall(D, SourceLocation(), Callee, ReturnValueSlot(), This,
                         ImplicitParam, ImplicitParamTy,
                         ArgBeg, ArgEnd);
-  return Callee;
 }
 
 RValue MicrosoftCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
