@@ -224,6 +224,18 @@ TEST_F(FileSystemTest, TempFiles) {
   // Make sure Temp1 doesn't exist.
   ASSERT_NO_ERROR(fs::exists(Twine(TempPath), TempFileExists));
   EXPECT_FALSE(TempFileExists);
+
+#ifdef LLVM_ON_WIN32
+  // Path name > 260 chars should get an error.
+  const char *Path270 =
+    "abcdefghijklmnopqrstuvwxyz9abcdefghijklmnopqrstuvwxyz8"
+    "abcdefghijklmnopqrstuvwxyz7abcdefghijklmnopqrstuvwxyz6"
+    "abcdefghijklmnopqrstuvwxyz5abcdefghijklmnopqrstuvwxyz4"
+    "abcdefghijklmnopqrstuvwxyz3abcdefghijklmnopqrstuvwxyz2"
+    "abcdefghijklmnopqrstuvwxyz1abcdefghijklmnopqrstuvwxyz0";
+  EXPECT_EQ(fs::unique_file(Twine(Path270), FileDescriptor, TempPath),
+            windows_error::path_not_found);
+#endif
 }
 
 TEST_F(FileSystemTest, DirectoryIteration) {
