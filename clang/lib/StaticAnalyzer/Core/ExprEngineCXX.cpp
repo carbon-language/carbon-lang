@@ -48,13 +48,25 @@ void ExprEngine::CreateCXXTemporaryObject(const MaterializeTemporaryExpr *ME,
   Bldr.generateNode(ME, Pred, state);
 }
 
+// FIXME: This is the sort of code that should eventually live in a Core
+// checker rather than as a special case in ExprEngine.
 void ExprEngine::performTrivialCopy(NodeBuilder &Bldr, ExplodedNode *Pred,
-                                    const CXXConstructorCall &Call) {
-  const CXXConstructExpr *CtorExpr = Call.getOriginExpr();
-  assert(CtorExpr->getConstructor()->isCopyOrMoveConstructor());
-  assert(CtorExpr->getConstructor()->isTrivial());
+                                    const CallEvent &Call) {
+  SVal ThisVal;
+  bool AlwaysReturnsLValue;
+  if (const CXXConstructorCall *Ctor = dyn_cast<CXXConstructorCall>(&Call)) {
+    assert(Ctor->getDecl()->isTrivial());
+    assert(Ctor->getDecl()->isCopyOrMoveConstructor());
+    ThisVal = Ctor->getCXXThisVal();
+    AlwaysReturnsLValue = false;
+  } else {
+    assert(cast<CXXMethodDecl>(Call.getDecl())->isTrivial());
+    assert(cast<CXXMethodDecl>(Call.getDecl())->getOverloadedOperator() ==
+           OO_Equal);
+    ThisVal = cast<CXXInstanceCall>(Call).getCXXThisVal();
+    AlwaysReturnsLValue = true;
+  }
 
-  SVal ThisVal = Call.getCXXThisVal();
   const LocationContext *LCtx = Pred->getLocationContext();
 
   ExplodedNodeSet Dst;
@@ -62,17 +74,24 @@ void ExprEngine::performTrivialCopy(NodeBuilder &Bldr, ExplodedNode *Pred,
 
   SVal V = Call.getArgSVal(0);
 
-  // Make sure the value being copied is not unknown.
+  // If the value being copied is not unknown, load from its location to get
+  // an aggregate rvalue.
   if (Optional<Loc> L = V.getAs<Loc>())
     V = Pred->getState()->getSVal(*L);
+  else
+    assert(V.isUnknown());
 
-  evalBind(Dst, CtorExpr, Pred, ThisVal, V, true);
+  const Expr *CallExpr = Call.getOriginExpr();
+  evalBind(Dst, CallExpr, Pred, ThisVal, V, true);
 
-  PostStmt PS(CtorExpr, LCtx);
+  PostStmt PS(CallExpr, LCtx);
   for (ExplodedNodeSet::iterator I = Dst.begin(), E = Dst.end();
        I != E; ++I) {
     ProgramStateRef State = (*I)->getState();
-    State = bindReturnValue(Call, LCtx, State);
+    if (AlwaysReturnsLValue)
+      State = State->BindExpr(CallExpr, LCtx, ThisVal);
+    else
+      State = bindReturnValue(Call, LCtx, State);
     Bldr.generateNode(PS, State, *I);
   }
 }

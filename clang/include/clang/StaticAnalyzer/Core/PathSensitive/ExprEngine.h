@@ -553,9 +553,10 @@ private:
 
   bool replayWithoutInlining(ExplodedNode *P, const LocationContext *CalleeLC);
 
-  /// Models a trivial copy or move constructor call with a simple bind.
+  /// Models a trivial copy or move constructor or trivial assignment operator
+  /// call with a simple bind.
   void performTrivialCopy(NodeBuilder &Bldr, ExplodedNode *Pred,
-                          const CXXConstructorCall &Call);
+                          const CallEvent &Call);
 
   /// If the value of the given expression is a NonLoc, copy it into a new
   /// temporary object region, and replace the value of the expression with

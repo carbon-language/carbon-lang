@@ -750,11 +750,31 @@ bool ExprEngine::shouldInlineCall(const CallEvent &Call, const Decl *D,
   return true;
 }
 
+static bool isTrivialObjectAssignment(const CallEvent &Call) {
+  const CXXInstanceCall *ICall = dyn_cast<CXXInstanceCall>(&Call);
+  if (!ICall)
+    return false;
+
+  const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(ICall->getDecl());
+  if (!MD)
+    return false;
+  if (!(MD->isCopyAssignmentOperator() || MD->isMoveAssignmentOperator()))
+    return false;
+
+  return MD->isTrivial();
+}
+
 void ExprEngine::defaultEvalCall(NodeBuilder &Bldr, ExplodedNode *Pred,
                                  const CallEvent &CallTemplate) {
   // Make sure we have the most recent state attached to the call.
   ProgramStateRef State = Pred->getState();
   CallEventRef<> Call = CallTemplate.cloneWithState(State);
+
+  // Special-case trivial assignment operators.
+  if (isTrivialObjectAssignment(*Call)) {
+    performTrivialCopy(Bldr, Pred, *Call);
+    return;
+  }
 
   // Try to inline the call.
   // The origin expression here is just used as a kind of checksum;

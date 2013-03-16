@@ -149,6 +149,19 @@ namespace PODUninitialized {
     : x(Other.x), y(Other.y) // expected-warning {{undefined}}
     {
     }
+
+    NonPOD &operator=(const NonPOD &Other)
+    {
+      x = Other.x;
+      y = Other.y; // expected-warning {{undefined}}
+      return *this;
+    }
+    NonPOD &operator=(NonPOD &&Other)
+    {
+      x = Other.x;
+      y = Other.y; // expected-warning {{undefined}}
+      return *this;
+    }
   };
 
   class NonPODWrapper {
@@ -165,6 +178,19 @@ namespace PODUninitialized {
       Inner(Inner &&Other)
       : x(Other.x), y(Other.y) // expected-warning {{undefined}}
       {
+      }
+
+      Inner &operator=(const Inner &Other)
+      {
+        x = Other.x; // expected-warning {{undefined}}
+        y = Other.y;
+        return *this;
+      }
+      Inner &operator=(Inner &&Other)
+      {
+        x = Other.x; // expected-warning {{undefined}}
+        y = Other.y;
+        return *this;
       }
     };
 
@@ -215,5 +241,69 @@ namespace PODUninitialized {
     NonPODWrapper w;
     w.p.y = 1;
     NonPODWrapper w2 = move(w);
+  }
+
+  // Not strictly about constructors, but trivial assignment operators should
+  // essentially work the same way.
+  namespace AssignmentOperator {
+    void testPOD() {
+      POD p;
+      p.x = 1;
+      POD p2;
+      p2 = p; // no-warning
+      clang_analyzer_eval(p2.x == 1); // expected-warning{{TRUE}}
+      POD p3;
+      p3 = move(p); // no-warning
+      clang_analyzer_eval(p3.x == 1); // expected-warning{{TRUE}}
+
+      PODWrapper w;
+      w.p.y = 1;
+      PODWrapper w2;
+      w2 = w; // no-warning
+      clang_analyzer_eval(w2.p.y == 1); // expected-warning{{TRUE}}
+      PODWrapper w3;
+      w3 = move(w); // no-warning
+      clang_analyzer_eval(w3.p.y == 1); // expected-warning{{TRUE}}
+    }
+
+    void testReturnValue() {
+      POD p;
+      p.x = 1;
+      POD p2;
+      clang_analyzer_eval(&(p2 = p) == &p2); // expected-warning{{TRUE}}
+
+      PODWrapper w;
+      w.p.y = 1;
+      PODWrapper w2;
+      clang_analyzer_eval(&(w2 = w) == &w2); // expected-warning{{TRUE}}
+    }
+
+    void testNonPOD() {
+      NonPOD p;
+      p.x = 1;
+      NonPOD p2;
+      p2 = p;
+    }
+
+    void testNonPODMove() {
+      NonPOD p;
+      p.x = 1;
+      NonPOD p2;
+      p2 = move(p);
+    }
+
+    void testNonPODWrapper() {
+      NonPODWrapper w;
+      w.p.y = 1;
+      NonPODWrapper w2;
+      w2 = w;
+    }
+
+    void testNonPODWrapperMove() {
+      NonPODWrapper w;
+      w.p.y = 1;
+      NonPODWrapper w2;
+      w2 = move(w);
+    }
   }
 }
