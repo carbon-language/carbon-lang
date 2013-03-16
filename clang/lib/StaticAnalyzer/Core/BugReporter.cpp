@@ -1873,44 +1873,69 @@ void BugReporter::FlushReports() {
 // PathDiagnostics generation.
 //===----------------------------------------------------------------------===//
 
-static std::pair<std::pair<ExplodedGraph*, InterExplodedGraphMap*>,
-                 std::pair<ExplodedNode*, unsigned> >
-MakeReportGraph(const ExplodedGraph* G,
-                SmallVectorImpl<const ExplodedNode*> &nodes) {
+namespace {
+/// A wrapper around a report graph, which contains only a single path, and its
+/// node maps.
+class ReportGraph {
+public:
+  OwningPtr<ExplodedGraph> Graph;
+  InterExplodedGraphMap BackMap;
+  ExplodedNode *ErrorNode;
+  size_t Index;
+};
 
-  // Create the trimmed graph.  It will contain the shortest paths from the
-  // error nodes to the root.  In the new graph we should only have one
-  // error node unless there are two or more error nodes with the same minimum
-  // path length.
-  InterExplodedGraphMap NodeMap, InverseMap;
-  OwningPtr<ExplodedGraph> GTrim(G->trim(nodes, &NodeMap, &InverseMap));
+/// A wrapper around a trimmed graph and its node maps.
+class TrimmedGraph {
+  InterExplodedGraphMap ForwardMap;
+  InterExplodedGraphMap InverseMap;
+  OwningPtr<ExplodedGraph> G;
+public:
+  /// 
+  TrimmedGraph(const ExplodedGraph *OriginalGraph,
+               ArrayRef<const ExplodedNode *> Nodes) {
+    // The trimmed graph is created in the body of the constructor to ensure
+    // that the DenseMaps have been initialized already.
+    G.reset(OriginalGraph->trim(Nodes, &ForwardMap, &InverseMap));
+  }
+
+  void createBestReportGraph(ArrayRef<const ExplodedNode *> Nodes,
+                             ReportGraph &GraphWrapper) const;
+};
+
+}
+
+
+void TrimmedGraph::createBestReportGraph(ArrayRef<const ExplodedNode *> Nodes,
+                                         ReportGraph &GraphWrapper) const {
+  assert(!GraphWrapper.Graph && "ReportGraph is already in use");
+  assert(GraphWrapper.BackMap.empty() && "ReportGraph is already in use");
 
   // Find the (first) error node in the trimmed graph.  We just need to consult
-  // the node map (NMap) which maps from nodes in the original graph to nodes
+  // the node map which maps from nodes in the original graph to nodes
   // in the new graph.
-
-  std::queue<const ExplodedNode*> WS;
-  typedef llvm::DenseMap<const ExplodedNode*, unsigned> IndexMapTy;
+  std::queue<const ExplodedNode *> WS;
+  typedef llvm::SmallDenseMap<const ExplodedNode *, size_t, 32> IndexMapTy;
   IndexMapTy IndexMap;
 
-  for (unsigned nodeIndex = 0 ; nodeIndex < nodes.size(); ++nodeIndex) {
-    const ExplodedNode *originalNode = nodes[nodeIndex];
-    if (const ExplodedNode *N = NodeMap.lookup(originalNode)) {
+  for (unsigned i = 0, count = Nodes.size(); i < count; ++i) {
+    const ExplodedNode *OriginalNode = Nodes[i];
+    if (const ExplodedNode *N = ForwardMap.lookup(OriginalNode)) {
       WS.push(N);
-      IndexMap[originalNode] = nodeIndex;
+      IndexMap[OriginalNode] = i;
     }
   }
 
   assert(!WS.empty() && "No error node found in the trimmed graph.");
 
-  // Create a new (third!) graph with a single path.  This is the graph
+  // Create a new graph with a single path.  This is the graph
   // that will be returned to the caller.
   ExplodedGraph *GNew = new ExplodedGraph();
+  GraphWrapper.Graph.reset(GNew);
 
   // Sometimes the trimmed graph can contain a cycle.  Perform a reverse BFS
   // to the root node, and then construct a new graph that contains only
   // a single path.
-  llvm::DenseMap<const void*,unsigned> Visited;
+  llvm::DenseMap<const ExplodedNode *, unsigned> Visited;
 
   unsigned cnt = 0;
   const ExplodedNode *Root = 0;
@@ -1938,13 +1963,10 @@ MakeReportGraph(const ExplodedGraph* G,
 
   // Now walk from the root down the BFS path, always taking the successor
   // with the lowest number.
-  ExplodedNode *Last = 0, *First = 0;
-  InterExplodedGraphMap *BM = new InterExplodedGraphMap();
-  unsigned NodeIndex = 0;
-
+  ExplodedNode *Last = 0;
   for ( const ExplodedNode *N = Root ;;) {
     // Lookup the number associated with the current node.
-    llvm::DenseMap<const void*,unsigned>::iterator I = Visited.find(N);
+    llvm::DenseMap<const ExplodedNode *,unsigned>::iterator I = Visited.find(N);
     assert(I != Visited.end());
 
     // Create the equivalent node in the new graph with the same state
@@ -1952,9 +1974,9 @@ MakeReportGraph(const ExplodedGraph* G,
     ExplodedNode *NewN = GNew->getNode(N->getLocation(), N->getState());
 
     // Store the mapping to the original node.
-    InterExplodedGraphMap::iterator IMitr = InverseMap.find(N);
+    InterExplodedGraphMap::const_iterator IMitr = InverseMap.find(N);
     assert(IMitr != InverseMap.end() && "No mapping to original node.");
-    (*BM)[NewN] = (const ExplodedNode*) IMitr->second;
+    GraphWrapper.BackMap[NewN] = IMitr->second;
 
     // Link up the new node with the previous node.
     if (Last)
@@ -1963,40 +1985,32 @@ MakeReportGraph(const ExplodedGraph* G,
     Last = NewN;
 
     // Are we at the final node?
-    IndexMapTy::iterator IMI =
-      IndexMap.find((const ExplodedNode*)(IMitr->second));
+    IndexMapTy::iterator IMI = IndexMap.find(IMitr->second);
     if (IMI != IndexMap.end()) {
-      First = NewN;
-      NodeIndex = IMI->second;
+      GraphWrapper.ErrorNode = NewN;
+      GraphWrapper.Index = IMI->second;
       break;
     }
 
     // Find the next successor node.  We choose the node that is marked
     // with the lowest DFS number.
-    ExplodedNode::const_succ_iterator SI = N->succ_begin();
-    ExplodedNode::const_succ_iterator SE = N->succ_end();
-    N = 0;
-
-    for (unsigned MinVal = 0; SI != SE; ++SI) {
-
+    unsigned MinVal = -1U;
+    for (ExplodedNode::const_succ_iterator SI = N->succ_begin(),
+                                           SE = N->succ_end();
+         SI != SE; ++SI) {
       I = Visited.find(*SI);
 
       if (I == Visited.end())
         continue;
 
-      if (!N || I->second < MinVal) {
+      if (I->second < MinVal) {
         N = *SI;
         MinVal = I->second;
       }
     }
 
-    assert(N);
+    assert(MinVal != -1U);
   }
-
-  assert(First);
-
-  return std::make_pair(std::make_pair(GNew, BM),
-                        std::make_pair(First, NodeIndex));
 }
 
 /// CompactPathDiagnostic - This function postprocesses a PathDiagnostic object
@@ -2120,30 +2134,26 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
   typedef PathDiagnosticConsumer::PathGenerationScheme PathGenerationScheme;
   PathGenerationScheme ActiveScheme = PC.getGenerationScheme();
 
+  TrimmedGraph TrimG(&getGraph(), errorNodes);
+
   for (size_t Remaining = bugReports.size(); Remaining > 0; --Remaining) {
     // Construct a new graph that contains only a single path from the error
     // node to a root.
-    // FIXME: It might be possible to reuse some of this work instead of
-    // redoing it every time we mark a report invalid.
-    const std::pair<std::pair<ExplodedGraph*, InterExplodedGraphMap*>,
-                    std::pair<ExplodedNode*, unsigned> >&
-      GPair = MakeReportGraph(&getGraph(), errorNodes);
+    ReportGraph ErrorGraph;
+    TrimG.createBestReportGraph(errorNodes, ErrorGraph);
 
     // Find the BugReport with the original location.
-    assert(GPair.second.second < bugReports.size());
-    BugReport *R = bugReports[GPair.second.second];
+    assert(ErrorGraph.Index < bugReports.size());
+    BugReport *R = bugReports[ErrorGraph.Index];
     assert(R && "No original report found for sliced graph.");
     assert(R->isValid() && "Report selected by trimmed graph marked invalid.");
 
     // Don't try to reuse this report if it ends up being suppressed.
-    errorNodes[GPair.second.second] = 0;
-
-    OwningPtr<ExplodedGraph> ReportGraph(GPair.first.first);
-    OwningPtr<InterExplodedGraphMap> BackMap(GPair.first.second);
-    const ExplodedNode *N = GPair.second.first;
+    errorNodes[ErrorGraph.Index] = 0;
 
     // Start building the path diagnostic...
-    PathDiagnosticBuilder PDB(*this, R, *BackMap, &PC);
+    PathDiagnosticBuilder PDB(*this, R, ErrorGraph.BackMap, &PC);
+    const ExplodedNode *N = ErrorGraph.ErrorNode;
 
     // Register additional node visitors.
     R->addVisitor(new NilReceiverBRVisitor());
