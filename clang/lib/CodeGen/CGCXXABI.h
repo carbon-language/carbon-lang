@@ -91,6 +91,10 @@ public:
     return *MangleCtx;
   }
 
+  /// Returns true if the given instance method is one of the
+  /// kinds that the ABI says returns 'this'.
+  virtual bool HasThisReturn(GlobalDecl GD) const { return false; }
+
   /// Find the LLVM type used to represent the given member pointer
   /// type.
   virtual llvm::Type *
@@ -209,7 +213,8 @@ public:
   /// Emit the ABI-specific prolog for the function.
   virtual void EmitInstanceFunctionProlog(CodeGenFunction &CGF) = 0;
 
-  virtual void EmitConstructorCall(CodeGenFunction &CGF,
+  /// Emit the constructor call. Return the function that is called.
+  virtual llvm::Value *EmitConstructorCall(CodeGenFunction &CGF,
                                    const CXXConstructorDecl *D,
                                    CXXCtorType Type, bool ForVirtualBase,
                                    bool Delegating,
