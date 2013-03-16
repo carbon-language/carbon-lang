@@ -299,19 +299,14 @@ static void adjustCallLocations(PathPieces &Pieces,
 // PathDiagnosticBuilder and its associated routines and helper objects.
 //===----------------------------------------------------------------------===//
 
-typedef llvm::DenseMap<const ExplodedNode*,
-const ExplodedNode*> NodeBackMap;
-
 namespace {
 class NodeMapClosure : public BugReport::NodeResolver {
-  NodeBackMap& M;
+  InterExplodedGraphMap &M;
 public:
-  NodeMapClosure(NodeBackMap *m) : M(*m) {}
-  ~NodeMapClosure() {}
+  NodeMapClosure(InterExplodedGraphMap &m) : M(m) {}
 
   const ExplodedNode *getOriginalNode(const ExplodedNode *N) {
-    NodeBackMap::iterator I = M.find(N);
-    return I == M.end() ? 0 : I->second;
+    return M.lookup(N);
   }
 };
 
@@ -323,7 +318,7 @@ public:
   const LocationContext *LC;
   
   PathDiagnosticBuilder(GRBugReporter &br,
-                        BugReport *r, NodeBackMap *Backmap,
+                        BugReport *r, InterExplodedGraphMap &Backmap,
                         PathDiagnosticConsumer *pdc)
     : BugReporterContext(br),
       R(r), PDC(pdc), NMC(Backmap), LC(r->getErrorNode()->getLocationContext())
@@ -1878,7 +1873,7 @@ void BugReporter::FlushReports() {
 // PathDiagnostics generation.
 //===----------------------------------------------------------------------===//
 
-static std::pair<std::pair<ExplodedGraph*, NodeBackMap*>,
+static std::pair<std::pair<ExplodedGraph*, InterExplodedGraphMap*>,
                  std::pair<ExplodedNode*, unsigned> >
 MakeReportGraph(const ExplodedGraph* G,
                 SmallVectorImpl<const ExplodedNode*> &nodes) {
@@ -1887,17 +1882,8 @@ MakeReportGraph(const ExplodedGraph* G,
   // error nodes to the root.  In the new graph we should only have one
   // error node unless there are two or more error nodes with the same minimum
   // path length.
-  ExplodedGraph* GTrim;
-  InterExplodedGraphMap* NMap;
-
-  llvm::DenseMap<const void*, const void*> InverseMap;
-  llvm::tie(GTrim, NMap) = G->Trim(nodes.data(), nodes.data() + nodes.size(),
-                                   &InverseMap);
-
-  // Create owning pointers for GTrim and NMap just to ensure that they are
-  // released when this function exists.
-  OwningPtr<ExplodedGraph> AutoReleaseGTrim(GTrim);
-  OwningPtr<InterExplodedGraphMap> AutoReleaseNMap(NMap);
+  InterExplodedGraphMap NodeMap, InverseMap;
+  OwningPtr<ExplodedGraph> GTrim(G->trim(nodes, &NodeMap, &InverseMap));
 
   // Find the (first) error node in the trimmed graph.  We just need to consult
   // the node map (NMap) which maps from nodes in the original graph to nodes
@@ -1909,7 +1895,7 @@ MakeReportGraph(const ExplodedGraph* G,
 
   for (unsigned nodeIndex = 0 ; nodeIndex < nodes.size(); ++nodeIndex) {
     const ExplodedNode *originalNode = nodes[nodeIndex];
-    if (const ExplodedNode *N = NMap->getMappedNode(originalNode)) {
+    if (const ExplodedNode *N = NodeMap.lookup(originalNode)) {
       WS.push(N);
       IndexMap[originalNode] = nodeIndex;
     }
@@ -1953,7 +1939,7 @@ MakeReportGraph(const ExplodedGraph* G,
   // Now walk from the root down the BFS path, always taking the successor
   // with the lowest number.
   ExplodedNode *Last = 0, *First = 0;
-  NodeBackMap *BM = new NodeBackMap();
+  InterExplodedGraphMap *BM = new InterExplodedGraphMap();
   unsigned NodeIndex = 0;
 
   for ( const ExplodedNode *N = Root ;;) {
@@ -1966,7 +1952,7 @@ MakeReportGraph(const ExplodedGraph* G,
     ExplodedNode *NewN = GNew->getNode(N->getLocation(), N->getState());
 
     // Store the mapping to the original node.
-    llvm::DenseMap<const void*, const void*>::iterator IMitr=InverseMap.find(N);
+    InterExplodedGraphMap::iterator IMitr = InverseMap.find(N);
     assert(IMitr != InverseMap.end() && "No mapping to original node.");
     (*BM)[NewN] = (const ExplodedNode*) IMitr->second;
 
@@ -2139,7 +2125,7 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
     // node to a root.
     // FIXME: It might be possible to reuse some of this work instead of
     // redoing it every time we mark a report invalid.
-    const std::pair<std::pair<ExplodedGraph*, NodeBackMap*>,
+    const std::pair<std::pair<ExplodedGraph*, InterExplodedGraphMap*>,
                     std::pair<ExplodedNode*, unsigned> >&
       GPair = MakeReportGraph(&getGraph(), errorNodes);
 
@@ -2153,11 +2139,11 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
     errorNodes[GPair.second.second] = 0;
 
     OwningPtr<ExplodedGraph> ReportGraph(GPair.first.first);
-    OwningPtr<NodeBackMap> BackMap(GPair.first.second);
+    OwningPtr<InterExplodedGraphMap> BackMap(GPair.first.second);
     const ExplodedNode *N = GPair.second.first;
 
     // Start building the path diagnostic...
-    PathDiagnosticBuilder PDB(*this, R, BackMap.get(), &PC);
+    PathDiagnosticBuilder PDB(*this, R, *BackMap, &PC);
 
     // Register additional node visitors.
     R->addVisitor(new NilReceiverBRVisitor());

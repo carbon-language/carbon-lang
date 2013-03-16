@@ -2301,7 +2301,7 @@ GetGraphNode<llvm::DenseMap<ExplodedNode*, Expr*>::iterator>
 void ExprEngine::ViewGraph(bool trim) {
 #ifndef NDEBUG
   if (trim) {
-    std::vector<ExplodedNode*> Src;
+    std::vector<const ExplodedNode*> Src;
 
     // Flush any outstanding reports to make sure we cover all the nodes.
     // This does not cause them to get displayed.
@@ -2315,7 +2315,7 @@ void ExprEngine::ViewGraph(bool trim) {
       if (N) Src.push_back(N);
     }
 
-    ViewGraph(&Src[0], &Src[0]+Src.size());
+    ViewGraph(Src);
   }
   else {
     GraphPrintCheckerState = this;
@@ -2329,12 +2329,12 @@ void ExprEngine::ViewGraph(bool trim) {
 #endif
 }
 
-void ExprEngine::ViewGraph(ExplodedNode** Beg, ExplodedNode** End) {
+void ExprEngine::ViewGraph(ArrayRef<const ExplodedNode*> Nodes) {
 #ifndef NDEBUG
   GraphPrintCheckerState = this;
   GraphPrintSourceManager = &getContext().getSourceManager();
 
-  std::auto_ptr<ExplodedGraph> TrimmedG(G.Trim(Beg, End).first);
+  OwningPtr<ExplodedGraph> TrimmedG(G.trim(Nodes));
 
   if (!TrimmedG.get())
     llvm::errs() << "warning: Trimmed ExplodedGraph is empty.\n";

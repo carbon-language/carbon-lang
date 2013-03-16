@@ -239,18 +239,8 @@ private:
   void replacePredecessor(ExplodedNode *node) { Preds.replaceNode(node); }
 };
 
-// FIXME: Is this class necessary?
-class InterExplodedGraphMap {
-  virtual void anchor();
-  llvm::DenseMap<const ExplodedNode*, ExplodedNode*> M;
-  friend class ExplodedGraph;
-
-public:
-  ExplodedNode *getMappedNode(const ExplodedNode *N) const;
-
-  InterExplodedGraphMap() {}
-  virtual ~InterExplodedGraphMap() {}
-};
+typedef llvm::DenseMap<const ExplodedNode *, const ExplodedNode *>
+        InterExplodedGraphMap;
 
 class ExplodedGraph {
 protected:
@@ -368,14 +358,19 @@ public:
 
   typedef llvm::DenseMap<const ExplodedNode*, ExplodedNode*> NodeMap;
 
-  std::pair<ExplodedGraph*, InterExplodedGraphMap*>
-  Trim(const NodeTy* const* NBeg, const NodeTy* const* NEnd,
-       llvm::DenseMap<const void*, const void*> *InverseMap = 0) const;
-
-  ExplodedGraph* TrimInternal(const ExplodedNode* const * NBeg,
-                              const ExplodedNode* const * NEnd,
-                              InterExplodedGraphMap *M,
-                    llvm::DenseMap<const void*, const void*> *InverseMap) const;
+  /// Creates a trimmed version of the graph that only contains paths leading
+  /// to the given nodes.
+  ///
+  /// \param Nodes The nodes which must appear in the final graph. Presumably
+  ///              these are end-of-path nodes (i.e. they have no successors).
+  /// \param[out] ForwardMap A optional map from nodes in this graph to nodes in
+  ///                        the returned graph.
+  /// \param[out] InverseMap An optional map from nodes in the returned graph to
+  ///                        nodes in this graph.
+  /// \returns The trimmed graph
+  ExplodedGraph *trim(ArrayRef<const NodeTy *> Nodes,
+                      InterExplodedGraphMap *ForwardMap = 0,
+                      InterExplodedGraphMap *InverseMap = 0) const;
 
   /// Enable tracking of recently allocated nodes for potential reclamation
   /// when calling reclaimRecentlyAllocatedNodes().

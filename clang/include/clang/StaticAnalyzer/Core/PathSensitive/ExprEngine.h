@@ -146,11 +146,12 @@ public:
   void enqueueEndOfPath(ExplodedNodeSet &S);
   void GenerateCallExitNode(ExplodedNode *N);
 
-  /// ViewGraph - Visualize the ExplodedGraph created by executing the
-  ///  simulation.
+  /// Visualize the ExplodedGraph created by executing the simulation.
   void ViewGraph(bool trim = false);
 
-  void ViewGraph(ExplodedNode** Beg, ExplodedNode** End);
+  /// Visualize a trimmed ExplodedGraph that only contains paths to the given
+  /// nodes.
+  void ViewGraph(ArrayRef<const ExplodedNode*> Nodes);
 
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
