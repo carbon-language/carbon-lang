@@ -688,6 +688,51 @@ lldb_private::formatters::NSBundleSummaryProvider (ValueObject& valobj, Stream& 
 }
 
 bool
+lldb_private::formatters::NSTimeZoneSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    ProcessSP process_sp = valobj.GetProcessSP();
+    if (!process_sp)
+        return false;
+    
+    ObjCLanguageRuntime* runtime = (ObjCLanguageRuntime*)process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+    
+    if (!runtime)
+        return false;
+    
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(valobj));
+    
+    if (!descriptor.get() || !descriptor->IsValid())
+        return false;
+    
+    uint32_t ptr_size = process_sp->GetAddressByteSize();
+    
+    lldb::addr_t valobj_addr = valobj.GetValueAsUnsigned(0);
+    
+    if (!valobj_addr)
+        return false;
+    
+    const char* class_name = descriptor->GetClassName().GetCString();
+    
+    if (!class_name || !*class_name)
+        return false;
+    
+    if (!strcmp(class_name,"__NSTimeZone"))
+    {
+        uint64_t offset = ptr_size;
+        ClangASTType type(valobj.GetClangAST(),valobj.GetClangType());
+        ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset, type, true));
+        StreamString summary_stream;
+        bool was_nsstring_ok = NSStringSummaryProvider(*text.get(), summary_stream);
+        if (was_nsstring_ok && summary_stream.GetSize() > 0)
+        {
+            stream.Printf("%s",summary_stream.GetData());
+            return true;
+        }
+    }
+    return ExtractSummaryFromObjCExpression(valobj, "NSString*", "name", stream);
+}
+
+bool
 lldb_private::formatters::NSNotificationSummaryProvider (ValueObject& valobj, Stream& stream)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
@@ -844,6 +889,138 @@ lldb_private::formatters::CFBagSummaryProvider (ValueObject& valobj, Stream& str
     }
     stream.Printf("@\"%u value%s\"",
                   count,(count == 1 ? "" : "s"));
+    return true;
+}
+
+bool
+lldb_private::formatters::CFBitVectorSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    ProcessSP process_sp = valobj.GetProcessSP();
+    if (!process_sp)
+        return false;
+    
+    ObjCLanguageRuntime* runtime = (ObjCLanguageRuntime*)process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+    
+    if (!runtime)
+        return false;
+    
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(valobj));
+    
+    if (!descriptor.get() || !descriptor->IsValid())
+        return false;
+    
+    uint32_t ptr_size = process_sp->GetAddressByteSize();
+    
+    lldb::addr_t valobj_addr = valobj.GetValueAsUnsigned(0);
+    
+    if (!valobj_addr)
+        return false;
+    
+    uint32_t count = 0;
+    
+    bool is_type_ok = false; // check to see if this is a CFBag we know about
+    if (descriptor->IsCFType())
+    {
+        ConstString type_name(valobj.GetTypeName());
+        if (type_name == ConstString("__CFMutableBitVector") || type_name == ConstString("__CFBitVector") || type_name == ConstString("CFMutableBitVectorRef") || type_name == ConstString("CFBitVectorRef"))
+        {
+            if (valobj.IsPointerType())
+                is_type_ok = true;
+        }
+    }
+    
+    if (is_type_ok == false)
+        return false;
+    
+    Error error;
+    count = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr+2*ptr_size, ptr_size, 0, error);
+    if (error.Fail())
+        return false;
+    uint64_t num_bytes = count / 8 + ((count & 7) ? 1 : 0);
+    addr_t data_ptr = process_sp->ReadPointerFromMemory(valobj_addr+2*ptr_size+2*ptr_size, error);
+    if (error.Fail())
+        return false;
+    // make sure we do not try to read huge amounts of data
+    if (num_bytes > 1024)
+        num_bytes = 1024;
+    DataBufferSP buffer_sp(new DataBufferHeap(num_bytes,0));
+    num_bytes = process_sp->ReadMemory(data_ptr, buffer_sp->GetBytes(), num_bytes, error);
+    if (error.Fail())
+        return false;
+    for (int byte_idx = 0; byte_idx < num_bytes-1; byte_idx++)
+    {
+        uint8_t byte = buffer_sp->GetBytes()[byte_idx];
+        bool bit0 = (byte & 1) == 1;
+        bool bit1 = (byte & 2) == 2;
+        bool bit2 = (byte & 4) == 4;
+        bool bit3 = (byte & 8) == 8;
+        bool bit4 = (byte & 16) == 16;
+        bool bit5 = (byte & 32) == 32;
+        bool bit6 = (byte & 64) == 64;
+        bool bit7 = (byte & 128) == 128;
+        stream.Printf("%c%c%c%c %c%c%c%c ",
+                      (bit7 ? '1' : '0'),
+                      (bit6 ? '1' : '0'),
+                      (bit5 ? '1' : '0'),
+                      (bit4 ? '1' : '0'),
+                      (bit3 ? '1' : '0'),
+                      (bit2 ? '1' : '0'),
+                      (bit1 ? '1' : '0'),
+                      (bit0 ? '1' : '0'));
+        count -= 8;
+    }
+    {
+        // print the last byte ensuring we do not print spurious bits
+        uint8_t byte = buffer_sp->GetBytes()[num_bytes-1];
+        bool bit0 = (byte & 1) == 1;
+        bool bit1 = (byte & 2) == 2;
+        bool bit2 = (byte & 4) == 4;
+        bool bit3 = (byte & 8) == 8;
+        bool bit4 = (byte & 16) == 16;
+        bool bit5 = (byte & 32) == 32;
+        bool bit6 = (byte & 64) == 64;
+        bool bit7 = (byte & 128) == 128;
+        if (count)
+        {
+            stream.Printf("%c",bit7 ? '1' : '0');
+            count -= 1;
+        }
+        if (count)
+        {
+            stream.Printf("%c",bit6 ? '1' : '0');
+            count -= 1;
+        }
+        if (count)
+        {
+            stream.Printf("%c",bit5 ? '1' : '0');
+            count -= 1;
+        }
+        if (count)
+        {
+            stream.Printf("%c",bit4 ? '1' : '0');
+            count -= 1;
+        }
+        if (count)
+        {
+            stream.Printf("%c",bit3 ? '1' : '0');
+            count -= 1;
+        }
+        if (count)
+        {
+            stream.Printf("%c",bit2 ? '1' : '0');
+            count -= 1;
+        }
+        if (count)
+        {
+            stream.Printf("%c",bit1 ? '1' : '0');
+            count -= 1;
+        }
+        if (count)
+        {
+            stream.Printf("%c",bit0 ? '1' : '0');
+            count -= 1;
+        }
+    }
     return true;
 }
 

@@ -101,6 +101,9 @@ namespace lldb_private {
         NSNotificationSummaryProvider (ValueObject& valobj, Stream& stream);
         
         bool
+        NSTimeZoneSummaryProvider (ValueObject& valobj, Stream& stream);
+        
+        bool
         NSMachPortSummaryProvider (ValueObject& valobj, Stream& stream);
         
         bool
@@ -108,6 +111,9 @@ namespace lldb_private {
         
         bool
         CFBinaryHeapSummaryProvider (ValueObject& valobj, Stream& stream);
+        
+        bool
+        CFBitVectorSummaryProvider (ValueObject& valobj, Stream& stream);
         
         bool
         NSBundleSummaryProvider (ValueObject& valobj, Stream& stream);
