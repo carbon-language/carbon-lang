@@ -295,6 +295,78 @@ ordering right::
        | OtherSpecialSquare
      | Circle
 
+A Bug to be Aware Of
+--------------------
+
+The example just given opens the door to bugs where the ``classof``\s are
+not updated to match the ``Kind`` enum when adding (or removing) classes to
+(from) the hierarchy.
+
+Continuing the example above, suppose we add a ``SomewhatSpecialSquare`` as
+a subclass of ``Square``, and update the ``ShapeKind`` enum like so:
+
+.. code-block:: c++
+
+    enum ShapeKind {
+      SK_Square,
+      SK_SpecialSquare,
+      SK_OtherSpecialSquare,
+   +  SK_SomewhatSpecialSquare,
+      SK_Circle
+    }
+
+Now, suppose that we forget to update ``Square::classof()``, so it still
+looks like:
+
+.. code-block:: c++
+
+   static bool classof(const Shape *S) {
+     // BUG: Returns false when S->getKind() == SK_SomewhatSpecialSquare,
+     // even though SomewhatSpecialSquare "is a" Square.
+     return S->getKind() >= SK_Square &&
+            S->getKind() <= SK_OtherSpecialSquare;
+   }
+
+As the comment indicates, this code contains a bug. A straightforward and
+non-clever way to avoid this is to introduce an explicit ``SK_LastSquare``
+entry in the enum when adding the first subclass(es). For example, we could
+rewrite the example at the beginning of `Concrete Bases and Deeper
+Hierarchies`_ as:
+
+.. code-block:: c++
+
+    enum ShapeKind {
+      SK_Square,
+   +  SK_SpecialSquare,
+   +  SK_OtherSpecialSquare,
+   +  SK_LastSquare,
+      SK_Circle
+    }
+   ...
+   // Square::classof()
+   -  static bool classof(const Shape *S) {
+   -    return S->getKind() == SK_Square;
+   -  }
+   +  static bool classof(const Shape *S) {
+   +    return S->getKind() >= SK_Square &&
+   +           S->getKind() <= SK_LastSquare;
+   +  }
+
+Then, adding new subclasses is easy:
+
+.. code-block:: c++
+
+    enum ShapeKind {
+      SK_Square,
+      SK_SpecialSquare,
+      SK_OtherSpecialSquare,
+   +  SK_SomewhatSpecialSquare,
+      SK_LastSquare,
+      SK_Circle
+    }
+
+Notice that ``Square::classof`` does not need to be changed.
+
 .. _classof-contract:
 
 The Contract of ``classof``
