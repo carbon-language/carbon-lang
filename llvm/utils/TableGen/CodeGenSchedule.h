@@ -125,6 +125,7 @@ struct CodeGenSchedTransition {
 /// itinerary class. Each inherits the processor index from the ItinRW record
 /// that mapped the itinerary class to the variant Writes or Reads.
 struct CodeGenSchedClass {
+  unsigned Index;
   std::string Name;
   Record *ItinClassDef;
 
@@ -141,11 +142,15 @@ struct CodeGenSchedClass {
   // off to join another inferred class.
   RecVec InstRWs;
 
-  CodeGenSchedClass(): ItinClassDef(0) {}
-  CodeGenSchedClass(Record *rec): ItinClassDef(rec) {
-    Name = rec->getName();
-    ProcIndices.push_back(0);
+  CodeGenSchedClass(): Index(0), ItinClassDef(0) {}
+
+  bool isKeyEqual(Record *IC, const IdxVec &W, const IdxVec &R) {
+    return ItinClassDef == IC && Writes == W && Reads == R;
   }
+
+  // Is this class generated from a variants if existing classes? Instructions
+  // are never mapped directly to inferred scheduling classes.
+  bool isInferred() const { return !ItinClassDef; }
 
 #ifndef NDEBUG
   void dump(const CodeGenSchedModels *SchedModels) const;
@@ -189,10 +194,15 @@ struct CodeGenProcModel {
 
   // Per-operand machine model resources associated with this processor.
   RecVec ProcResourceDefs;
+  RecVec ProcResGroupDefs;
 
   CodeGenProcModel(unsigned Idx, const std::string &Name, Record *MDef,
                    Record *IDef) :
     Index(Idx), ModelName(Name), ModelDef(MDef), ItinsDef(IDef) {}
+
+  bool hasItineraries() const {
+    return !ItinsDef->getValueAsListOfDefs("IID").empty();
+  }
 
   bool hasInstrSchedModel() const {
     return !WriteResDefs.empty() || !ItinRWDefs.empty();
@@ -227,24 +237,11 @@ class CodeGenSchedModels {
   // List of unique SchedClasses.
   std::vector<CodeGenSchedClass> SchedClasses;
 
-  // Map SchedClass name to itinerary index.
-  // These are either explicit itinerary classes or classes implied by
-  // instruction definitions with SchedReadWrite lists.
-  StringMap<unsigned> SchedClassIdxMap;
-
-  // SchedClass indices 1 up to and including NumItineraryClasses identify
-  // itinerary classes that are explicitly used for this target's instruction
-  // definitions. NoItinerary always has index 0 regardless of whether it is
-  // explicitly referenced.
-  //
-  // Any implied SchedClass has an index greater than NumItineraryClasses.
-  unsigned NumItineraryClasses;
-
   // Any inferred SchedClass has an index greater than NumInstrSchedClassses.
   unsigned NumInstrSchedClasses;
 
-  // Map Instruction to SchedClass index. Only for Instructions mentioned in
-  // InstRW records.
+  // Map each instruction to its unique SchedClass index considering the
+  // combination of it's itinerary class, SchedRW list, and InstRW records.
   typedef DenseMap<Record*, unsigned> InstClassMapTy;
   InstClassMapTy InstrClassMap;
 
@@ -280,6 +277,9 @@ public:
   ProcIter procModelBegin() const { return ProcModels.begin(); }
   ProcIter procModelEnd() const { return ProcModels.end(); }
 
+  // Return true if any processors have itineraries.
+  bool hasItineraries() const;
+
   // Get a SchedWrite from its index.
   const CodeGenSchedRW &getSchedWrite(unsigned Idx) const {
     assert(Idx < SchedWrites.size() && "bad SchedWrite index");
@@ -311,16 +311,6 @@ public:
   // Return true if the given write record is referenced by a ReadAdvance.
   bool hasReadOfWrite(Record *WriteDef) const;
 
-  // Check if any instructions are assigned to an explicit itinerary class other
-  // than NoItinerary.
-  bool hasItineraryClasses() const { return NumItineraryClasses > 0; }
-
-  // Return the number of itinerary classes in use by this target's instruction
-  // descriptions, not including "NoItinerary".
-  unsigned numItineraryClasses() const {
-    return NumItineraryClasses;
-  }
-
   // Get a SchedClass from its index.
   CodeGenSchedClass &getSchedClass(unsigned Idx) {
     assert(Idx < SchedClasses.size() && "bad SchedClass index");
@@ -336,15 +326,11 @@ public:
   // for NoItinerary.
   unsigned getSchedClassIdx(const CodeGenInstruction &Inst) const;
 
-  unsigned getSchedClassIdx(const RecVec &RWDefs) const;
-
-  unsigned getSchedClassIdxForItin(const Record *ItinDef) {
-    return SchedClassIdxMap[ItinDef->getName()];
-  }
-
   typedef std::vector<CodeGenSchedClass>::const_iterator SchedClassIter;
   SchedClassIter schedClassBegin() const { return SchedClasses.begin(); }
   SchedClassIter schedClassEnd() const { return SchedClasses.end(); }
+
+  unsigned numInstrSchedClasses() const { return NumInstrSchedClasses; }
 
   void findRWs(const RecVec &RWDefs, IdxVec &Writes, IdxVec &Reads) const;
   void findRWs(const RecVec &RWDefs, IdxVec &RWs, bool IsRead) const;
@@ -352,12 +338,14 @@ public:
   void expandRWSeqForProc(unsigned RWIdx, IdxVec &RWSeq, bool IsRead,
                           const CodeGenProcModel &ProcModel) const;
 
-  unsigned addSchedClass(const IdxVec &OperWrites, const IdxVec &OperReads,
-                         const IdxVec &ProcIndices);
+  unsigned addSchedClass(Record *ItinDef, const IdxVec &OperWrites,
+                         const IdxVec &OperReads, const IdxVec &ProcIndices);
 
   unsigned findOrInsertRW(ArrayRef<unsigned> Seq, bool IsRead);
 
-  unsigned findSchedClassIdx(const IdxVec &Writes, const IdxVec &Reads) const;
+  unsigned findSchedClassIdx(Record *ItinClassDef,
+                             const IdxVec &Writes,
+                             const IdxVec &Reads) const;
 
   Record *findProcResUnits(Record *ProcResKind,
                            const CodeGenProcModel &PM) const;
@@ -375,7 +363,8 @@ private:
 
   void collectSchedClasses();
 
-  std::string createSchedClassName(const IdxVec &OperWrites,
+  std::string createSchedClassName(Record *ItinClassDef,
+                                   const IdxVec &OperWrites,
                                    const IdxVec &OperReads);
   std::string createSchedClassName(const RecVec &InstDefs);
   void createInstRWClass(Record *InstRWDef);

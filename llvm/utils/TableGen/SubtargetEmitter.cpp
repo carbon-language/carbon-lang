@@ -447,17 +447,15 @@ EmitStageAndOperandCycleData(raw_ostream &OS,
     // If this processor defines no itineraries, then leave the itinerary list
     // empty.
     std::vector<InstrItinerary> &ItinList = ProcItinLists.back();
-    if (ProcModel.ItinDefList.empty())
+    if (!ProcModel.hasItineraries())
       continue;
-
-    // Reserve index==0 for NoItinerary.
-    ItinList.resize(SchedModels.numItineraryClasses()+1);
 
     const std::string &Name = ProcModel.ItinsDef->getName();
 
-    // For each itinerary data
-    for (unsigned SchedClassIdx = 0,
-           SchedClassEnd = ProcModel.ItinDefList.size();
+    ItinList.resize(SchedModels.numInstrSchedClasses());
+    assert(ProcModel.ItinDefList.size() == ItinList.size() && "bad Itins");
+
+    for (unsigned SchedClassIdx = 0, SchedClassEnd = ItinList.size();
          SchedClassIdx < SchedClassEnd; ++SchedClassIdx) {
 
       // Next itinerary data
@@ -869,27 +867,8 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
     }
     IdxVec Writes = SCI->Writes;
     IdxVec Reads = SCI->Reads;
-    if (SCI->ItinClassDef) {
-      assert(SCI->InstRWs.empty() && "ItinClass should not have InstRWs");
-      // Check this processor's itinerary class resources.
-      for (RecIter II = ProcModel.ItinRWDefs.begin(),
-             IE = ProcModel.ItinRWDefs.end(); II != IE; ++II) {
-        RecVec Matched = (*II)->getValueAsListOfDefs("MatchedItinClasses");
-        if (std::find(Matched.begin(), Matched.end(), SCI->ItinClassDef)
-            != Matched.end()) {
-          SchedModels.findRWs((*II)->getValueAsListOfDefs("OperandReadWrites"),
-                              Writes, Reads);
-          break;
-        }
-      }
-      if (Writes.empty()) {
-        DEBUG(dbgs() << ProcModel.ModelName
-              << " does not have resources for itinerary class "
-              << SCI->ItinClassDef->getName() << '\n');
-      }
-    }
-    else if (!SCI->InstRWs.empty()) {
-      // This class may have a default ReadWrite list which can be overriden by
+    if (!SCI->InstRWs.empty()) {
+      // This class has a default ReadWrite list which can be overriden by
       // InstRW definitions.
       Record *RWDef = 0;
       for (RecIter RWI = SCI->InstRWs.begin(), RWE = SCI->InstRWs.end();
@@ -905,6 +884,23 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
         Reads.clear();
         SchedModels.findRWs(RWDef->getValueAsListOfDefs("OperandReadWrites"),
                             Writes, Reads);
+      }
+    }
+    if (Writes.empty()) {
+      // Check this processor's itinerary class resources.
+      for (RecIter II = ProcModel.ItinRWDefs.begin(),
+             IE = ProcModel.ItinRWDefs.end(); II != IE; ++II) {
+        RecVec Matched = (*II)->getValueAsListOfDefs("MatchedItinClasses");
+        if (std::find(Matched.begin(), Matched.end(), SCI->ItinClassDef)
+            != Matched.end()) {
+          SchedModels.findRWs((*II)->getValueAsListOfDefs("OperandReadWrites"),
+                              Writes, Reads);
+          break;
+        }
+      }
+      if (Writes.empty()) {
+        DEBUG(dbgs() << ProcModel.ModelName
+              << " does not have resources for class " << SCI->Name << '\n');
       }
     }
     // Sum resources across all operand writes.
@@ -924,7 +920,8 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
       WriterNames.push_back(SchedModels.getSchedWrite(WriteID).Name);
       // If this Write is not referenced by a ReadAdvance, don't distinguish it
       // from other WriteLatency entries.
-      if (!SchedModels.hasReadOfWrite(SchedModels.getSchedWrite(WriteID).TheDef)) {
+      if (!SchedModels.hasReadOfWrite(
+            SchedModels.getSchedWrite(WriteID).TheDef)) {
         WriteID = 0;
       }
       WLEntry.WriteResourceID = WriteID;
@@ -1140,7 +1137,7 @@ void SubtargetEmitter::EmitSchedClassTables(SchedClassTables &SchedTables,
 
     // The first class is always invalid. We no way to distinguish it except by
     // name and position.
-    assert(SchedModels.getSchedClass(0).Name == "NoItinerary"
+    assert(SchedModels.getSchedClass(0).Name == "NoInstrModel"
            && "invalid class not first");
     OS << "  {DBGFIELD(\"InvalidSchedClass\")  "
        << MCSchedClassDesc::InvalidNumMicroOps
@@ -1197,7 +1194,7 @@ void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
                      - SchedModels.schedClassBegin()) << ",\n";
     else
       OS << "  0, 0, 0, 0, // No instruction-level machine model.\n";
-    if (SchedModels.hasItineraryClasses())
+    if (SchedModels.hasItineraries())
       OS << "  " << PI->ItinsDef->getName() << ");\n";
     else
       OS << "  0); // No Itinerary\n";
@@ -1254,7 +1251,7 @@ void SubtargetEmitter::EmitSchedModel(raw_ostream &OS) {
      << "#define DBGFIELD(x)\n"
      << "#endif\n";
 
-  if (SchedModels.hasItineraryClasses()) {
+  if (SchedModels.hasItineraries()) {
     std::vector<std::vector<InstrItinerary> > ProcItinLists;
     // Emit the stage data
     EmitStageAndOperandCycleData(OS, ProcItinLists);
@@ -1295,7 +1292,7 @@ void SubtargetEmitter::EmitSchedModelHelpers(std::string ClassName,
          SCE = SchedModels.schedClassEnd(); SCI != SCE; ++SCI) {
     if (SCI->Transitions.empty())
       continue;
-    VariantClasses.push_back(SCI - SchedModels.schedClassBegin());
+    VariantClasses.push_back(SCI->Index);
   }
   if (!VariantClasses.empty()) {
     OS << "  switch (SchedClass) {\n";
@@ -1342,13 +1339,8 @@ void SubtargetEmitter::EmitSchedModelHelpers(std::string ClassName,
         if (*PI == 0)
           break;
       }
-      unsigned SCIdx = 0;
-      if (SC.ItinClassDef)
-        SCIdx = SchedModels.getSchedClassIdxForItin(SC.ItinClassDef);
-      else
-        SCIdx = SchedModels.findSchedClassIdx(SC.Writes, SC.Reads);
-      if (SCIdx != *VCI)
-        OS << "    return " << SCIdx << ";\n";
+      if (SC.isInferred())
+        OS << "    return " << SC.Index << ";\n";
       OS << "    break;\n";
     }
     OS << "  };\n";
@@ -1454,7 +1446,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
      << Target << "WriteProcResTable, "
      << Target << "WriteLatencyTable, "
      << Target << "ReadAdvanceTable, ";
-  if (SchedModels.hasItineraryClasses()) {
+  if (SchedModels.hasItineraries()) {
     OS << '\n'; OS.indent(22);
     OS << Target << "Stages, "
        << Target << "OperandCycles, "
@@ -1511,7 +1503,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   OS << "extern const llvm::MCReadAdvanceEntry "
      << Target << "ReadAdvanceTable[];\n";
 
-  if (SchedModels.hasItineraryClasses()) {
+  if (SchedModels.hasItineraries()) {
     OS << "extern const llvm::InstrStage " << Target << "Stages[];\n";
     OS << "extern const unsigned " << Target << "OperandCycles[];\n";
     OS << "extern const unsigned " << Target << "ForwardingPaths[];\n";
@@ -1535,7 +1527,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
      << Target << "WriteLatencyTable, "
      << Target << "ReadAdvanceTable, ";
   OS << '\n'; OS.indent(22);
-  if (SchedModels.hasItineraryClasses()) {
+  if (SchedModels.hasItineraries()) {
     OS << Target << "Stages, "
        << Target << "OperandCycles, "
        << Target << "ForwardingPaths, ";
