@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -verify -fsyntax-only -Wspellcheck
+// RUN: %clang_cc1 %s -verify -fsyntax-only -fwarn-on-spellcheck
 
 @interface B
 @property int x;

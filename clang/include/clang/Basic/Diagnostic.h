@@ -175,6 +175,7 @@ private:
   bool SuppressAllDiagnostics;   // Suppress all diagnostics.
   bool ElideType;                // Elide common types of templates.
   bool PrintTemplateTree;        // Print a tree when comparing templates.
+  bool WarnOnSpellCheck;         // Emit warning when spellcheck is initiated.
   bool ShowColors;               // Color printing is enabled.
   OverloadsShown ShowOverloads;  // Which overload candidates to show.
   unsigned ErrorLimit;           // Cap of # errors emitted, 0 -> no limit.
@@ -466,6 +467,10 @@ public:
   /// tree format.
   void setPrintTemplateTree(bool Val = false) { PrintTemplateTree = Val; }
   bool getPrintTemplateTree() { return PrintTemplateTree; }
+
+  /// \brief Warn when spellchecking is initated, for testing.
+  void setWarnOnSpellCheck(bool Val = false) { WarnOnSpellCheck = Val; }
+  bool getWarnOnSpellCheck() { return WarnOnSpellCheck; }
  
   /// \brief Set color printing, so the type diffing will inject color markers
   /// into the output.

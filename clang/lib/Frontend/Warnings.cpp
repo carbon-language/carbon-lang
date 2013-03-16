@@ -56,6 +56,7 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
 
   Diags.setElideType(Opts.ElideType);
   Diags.setPrintTemplateTree(Opts.ShowTemplateTree);
+  Diags.setWarnOnSpellCheck(Opts.WarnOnSpellCheck);
   Diags.setShowColors(Opts.ShowColors);
  
   // Handle -ferror-limit

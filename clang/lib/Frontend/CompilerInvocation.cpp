@@ -561,6 +561,7 @@ bool clang::ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.VerifyDiagnostics = Args.hasArg(OPT_verify);
   Opts.ElideType = !Args.hasArg(OPT_fno_elide_type);
   Opts.ShowTemplateTree = Args.hasArg(OPT_fdiagnostics_show_template_tree);
+  Opts.WarnOnSpellCheck = Args.hasArg(OPT_fwarn_on_spellcheck);
   Opts.ErrorLimit = Args.getLastArgIntValue(OPT_ferror_limit, 0, Diags);
   Opts.MacroBacktraceLimit
     = Args.getLastArgIntValue(OPT_fmacro_backtrace_limit,
