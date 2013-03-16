@@ -688,6 +688,102 @@ lldb_private::formatters::NSBundleSummaryProvider (ValueObject& valobj, Stream& 
 }
 
 bool
+lldb_private::formatters::NSNotificationSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    ProcessSP process_sp = valobj.GetProcessSP();
+    if (!process_sp)
+        return false;
+    
+    ObjCLanguageRuntime* runtime = (ObjCLanguageRuntime*)process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+    
+    if (!runtime)
+        return false;
+    
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(valobj));
+    
+    if (!descriptor.get() || !descriptor->IsValid())
+        return false;
+    
+    uint32_t ptr_size = process_sp->GetAddressByteSize();
+    
+    lldb::addr_t valobj_addr = valobj.GetValueAsUnsigned(0);
+    
+    if (!valobj_addr)
+        return false;
+    
+    const char* class_name = descriptor->GetClassName().GetCString();
+    
+    if (!class_name || !*class_name)
+        return false;
+    
+    if (!strcmp(class_name,"NSConcreteNotification"))
+    {
+        uint64_t offset = ptr_size;
+        ClangASTType type(valobj.GetClangAST(),valobj.GetClangType());
+        ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset, type, true));
+        StreamString summary_stream;
+        bool was_nsstring_ok = NSStringSummaryProvider(*text.get(), summary_stream);
+        if (was_nsstring_ok && summary_stream.GetSize() > 0)
+        {
+            stream.Printf("%s",summary_stream.GetData());
+            return true;
+        }
+    }
+    // this is either an unknown subclass or an NSBundle that comes from [NSBundle mainBundle]
+    // which is encoded differently and needs to be handled by running code
+    return ExtractSummaryFromObjCExpression(valobj, "NSString*", "name", stream);
+}
+
+bool
+lldb_private::formatters::NSMachPortSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    ProcessSP process_sp = valobj.GetProcessSP();
+    if (!process_sp)
+        return false;
+    
+    ObjCLanguageRuntime* runtime = (ObjCLanguageRuntime*)process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+    
+    if (!runtime)
+        return false;
+    
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(valobj));
+    
+    if (!descriptor.get() || !descriptor->IsValid())
+        return false;
+    
+    uint32_t ptr_size = process_sp->GetAddressByteSize();
+    
+    lldb::addr_t valobj_addr = valobj.GetValueAsUnsigned(0);
+    
+    if (!valobj_addr)
+        return false;
+    
+    const char* class_name = descriptor->GetClassName().GetCString();
+    
+    if (!class_name || !*class_name)
+        return false;
+    
+    uint64_t port_number = 0;
+    
+    do
+    {
+        if (!strcmp(class_name,"NSMachPort"))
+        {
+            uint64_t offset = (ptr_size == 4 ? 12 : 20);
+            Error error;
+            port_number = process_sp->ReadUnsignedIntegerFromMemory(offset+valobj_addr, 4, 0, error);
+            if (error.Success())
+                break;
+        }
+        if (!ExtractValueFromObjCExpression(valobj, "int", "machPort", port_number))
+            return false;
+    } while (false);
+    
+    stream.Printf("mach port: %u",(uint32_t)(port_number & 0x00000000FFFFFFFF));
+    return true;
+}
+
+bool
 lldb_private::formatters::CFBagSummaryProvider (ValueObject& valobj, Stream& stream)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
@@ -726,7 +822,6 @@ lldb_private::formatters::CFBagSummaryProvider (ValueObject& valobj, Stream& str
     
     if (is_type_ok == false)
     {
-//        num_children_vo = self.valobj.CreateValueFromExpression("count","(int)CFBagGetCount(" + stream.GetData() + " )")
         StackFrameSP frame_sp(valobj.GetFrameSP());
         if (!frame_sp)
             return false;
@@ -748,6 +843,70 @@ lldb_private::formatters::CFBagSummaryProvider (ValueObject& valobj, Stream& str
             return false;
     }
     stream.Printf("@\"%u value%s\"",
+                  count,(count == 1 ? "" : "s"));
+    return true;
+}
+
+bool
+lldb_private::formatters::CFBinaryHeapSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    ProcessSP process_sp = valobj.GetProcessSP();
+    if (!process_sp)
+        return false;
+    
+    ObjCLanguageRuntime* runtime = (ObjCLanguageRuntime*)process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+    
+    if (!runtime)
+        return false;
+    
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(valobj));
+    
+    if (!descriptor.get() || !descriptor->IsValid())
+        return false;
+    
+    uint32_t ptr_size = process_sp->GetAddressByteSize();
+    
+    lldb::addr_t valobj_addr = valobj.GetValueAsUnsigned(0);
+    
+    if (!valobj_addr)
+        return false;
+    
+    uint32_t count = 0;
+    
+    bool is_type_ok = false; // check to see if this is a CFBinaryHeap we know about
+    if (descriptor->IsCFType())
+    {
+        ConstString type_name(valobj.GetTypeName());
+        if (type_name == ConstString("__CFBinaryHeap") || type_name == ConstString("const struct __CFBinaryHeap"))
+        {
+            if (valobj.IsPointerType())
+                is_type_ok = true;
+        }
+    }
+    
+    if (is_type_ok == false)
+    {
+        StackFrameSP frame_sp(valobj.GetFrameSP());
+        if (!frame_sp)
+            return false;
+        ValueObjectSP count_sp;
+        StreamString expr;
+        expr.Printf("(int)CFBinaryHeapGetCount((void*)0x%" PRIx64 ")",valobj.GetPointerValue());
+        if (process_sp->GetTarget().EvaluateExpression(expr.GetData(), frame_sp.get(), count_sp) != eExecutionCompleted)
+            return false;
+        if (!count_sp)
+            return false;
+        count = count_sp->GetValueAsUnsigned(0);
+    }
+    else
+    {
+        uint32_t offset = 2*ptr_size;
+        Error error;
+        count = process_sp->ReadUnsignedIntegerFromMemory(offset, 4, 0, error);
+        if (error.Fail())
+            return false;
+    }
+    stream.Printf("@\"%u item%s\"",
                   count,(count == 1 ? "" : "s"));
     return true;
 }

@@ -95,7 +95,16 @@ namespace lldb_private {
         NSNumberSummaryProvider (ValueObject& valobj, Stream& stream);
 
         bool
+        NSNotificationSummaryProvider (ValueObject& valobj, Stream& stream);
+        
+        bool
+        NSMachPortSummaryProvider (ValueObject& valobj, Stream& stream);
+        
+        bool
         CFBagSummaryProvider (ValueObject& valobj, Stream& stream);
+        
+        bool
+        CFBinaryHeapSummaryProvider (ValueObject& valobj, Stream& stream);
         
         bool
         NSBundleSummaryProvider (ValueObject& valobj, Stream& stream);
