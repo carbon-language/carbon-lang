@@ -2114,12 +2114,22 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
                                            ArrayRef<BugReport *> &bugReports) {
   assert(!bugReports.empty());
 
+  bool HasValid = false;
   SmallVector<const ExplodedNode *, 32> errorNodes;
   for (ArrayRef<BugReport*>::iterator I = bugReports.begin(),
-                                      E = bugReports.end();
-       I != E; ++I) {
-    errorNodes.push_back((*I)->getErrorNode());
+                                      E = bugReports.end(); I != E; ++I) {
+    if ((*I)->isValid()) {
+      HasValid = true;
+      errorNodes.push_back((*I)->getErrorNode());
+    } else {
+      errorNodes.push_back(0);
+    }
   }
+
+  // If all the reports have been marked invalid by a previous path generation,
+  // we're done.
+  if (!HasValid)
+    return false;
 
   typedef PathDiagnosticConsumer::PathGenerationScheme PathGenerationScheme;
   PathGenerationScheme ActiveScheme = PC.getGenerationScheme();
