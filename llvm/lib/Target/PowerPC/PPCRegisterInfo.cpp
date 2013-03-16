@@ -163,20 +163,6 @@ PPCRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
   }
 }
 
-bool
-PPCRegisterInfo::avoidWriteAfterWrite(const TargetRegisterClass *RC) const {
-  switch (RC->getID()) {
-  case PPC::G8RCRegClassID:
-  case PPC::GPRCRegClassID:
-  case PPC::F8RCRegClassID:
-  case PPC::F4RCRegClassID:
-  case PPC::VRRCRegClassID:
-    return true;
-  default:
-    return false;
-  }
-}
-
 //===----------------------------------------------------------------------===//
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//

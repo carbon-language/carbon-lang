@@ -47,8 +47,6 @@ public:
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
-  virtual bool avoidWriteAfterWrite(const TargetRegisterClass *RC) const;
-
   /// We require the register scavenger.
   bool requiresRegisterScavenging(const MachineFunction &MF) const {
     return true;
