@@ -142,12 +142,16 @@ target_link_libraries(liblldb ${LLDB_SYSTEM_LIBS})
 if ( NOT CMAKE_SYSTEM_NAME MATCHES "Windows" )
   execute_process(COMMAND ${CMAKE_SOURCE_DIR}/utils/GetSourceVersion ${LLDB_SOURCE_DIR}
                   OUTPUT_VARIABLE LLDB_REVISION)
-  string(REGEX REPLACE "(\r?\n)+$" "" LLDB_REVISION ${LLDB_REVISION})
+  if ( LLDB_REVISION )
+    string(REGEX REPLACE "(\r?\n)+$" "" LLDB_REVISION ${LLDB_REVISION})
+  endif()
 
   execute_process(COMMAND ${CMAKE_SOURCE_DIR}/utils/GetRepositoryPath ${LLDB_SOURCE_DIR}
                   OUTPUT_VARIABLE LLDB_REPOSITORY)
-  string(REGEX REPLACE "(\r?\n)+$" "" LLDB_REPOSITORY ${LLDB_REPOSITORY})
-  string(REPLACE " " "" LLDB_REPOSITORY ${LLDB_REPOSITORY})
+  if ( LLDB_REPOSITORY )
+    string(REGEX REPLACE "(\r?\n)+$" "" LLDB_REPOSITORY ${LLDB_REPOSITORY})
+    string(REPLACE " " "" LLDB_REPOSITORY ${LLDB_REPOSITORY})
+  endif()
 
   set_property(
     SOURCE lldb.cpp
