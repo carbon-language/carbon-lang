@@ -81,6 +81,9 @@ namespace lldb_private {
         NSDictionarySummaryProvider (ValueObject& valobj, Stream& stream);
         
         bool
+        NSIndexSetSummaryProvider (ValueObject& valobj, Stream& stream);
+        
+        bool
         NSArraySummaryProvider (ValueObject& valobj, Stream& stream);
         
         template<bool cf_style>

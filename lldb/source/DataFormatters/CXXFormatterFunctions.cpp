@@ -912,6 +912,84 @@ lldb_private::formatters::CFBinaryHeapSummaryProvider (ValueObject& valobj, Stre
 }
 
 bool
+lldb_private::formatters::NSIndexSetSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    ProcessSP process_sp = valobj.GetProcessSP();
+    if (!process_sp)
+        return false;
+    
+    ObjCLanguageRuntime* runtime = (ObjCLanguageRuntime*)process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+    
+    if (!runtime)
+        return false;
+    
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(valobj));
+    
+    if (!descriptor.get() || !descriptor->IsValid())
+        return false;
+    
+    uint32_t ptr_size = process_sp->GetAddressByteSize();
+    
+    lldb::addr_t valobj_addr = valobj.GetValueAsUnsigned(0);
+    
+    if (!valobj_addr)
+        return false;
+    
+    const char* class_name = descriptor->GetClassName().GetCString();
+    
+    if (!class_name || !*class_name)
+        return false;
+    
+    uint64_t count = 0;
+    
+    do {
+        if (!strcmp(class_name,"NSIndexSet") || !strcmp(class_name,"NSMutableIndexSet"))
+        {
+            Error error;
+            uint32_t mode = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr+ptr_size, 4, 0, error);
+            if (error.Fail())
+                return false;
+            // this means the set is empty - count = 0
+            if ((mode & 1) == 1)
+            {
+                count = 0;
+                break;
+            }
+            if ((mode & 2) == 2)
+                mode = 1; // this means the set only has one range
+            else
+                mode = 2; // this means the set has multiple ranges
+            if (mode == 1)
+            {
+                count = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr+3*ptr_size, ptr_size, 0, error);
+                if (error.Fail())
+                    return false;
+            }
+            else
+            {
+                // read a pointer to the data at 2*ptr_size
+                count = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr+2*ptr_size, ptr_size, 0, error);
+                if (error.Fail())
+                    return false;
+                // read the data at 2*ptr_size from the first location
+                count = process_sp->ReadUnsignedIntegerFromMemory(count+2*ptr_size, ptr_size, 0, error);
+                if (error.Fail())
+                    return false;
+            }
+        }
+        else
+        {
+            if (!ExtractValueFromObjCExpression(valobj, "unsigned long long int", "count", count))
+                return false;
+        }
+    }  while (false);
+    stream.Printf("%llu index%s",
+                  count,
+                  (count == 1 ? "" : "es"));
+    return true;
+}
+
+bool
 lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& stream)
 {
     ProcessSP process_sp = valobj.GetProcessSP();

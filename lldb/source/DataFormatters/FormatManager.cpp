@@ -989,8 +989,8 @@ FormatManager::LoadObjCFormatters()
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.CFAbsoluteTime_SummaryProvider", ConstString("CFAbsoluteTime"), appkit_flags);
     appkit_flags.SetDontShowValue(false);
     
-    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSIndexSet.NSIndexSet_SummaryProvider", ConstString("NSIndexSet"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSIndexSet.NSIndexSet_SummaryProvider", ConstString("NSMutableIndexSet"), appkit_flags);
+    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSIndexSetSummaryProvider, "NSIndexSet summary provider", ConstString("NSIndexSet"), appkit_flags);
+    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSIndexSetSummaryProvider, "NSIndexSet summary provider", ConstString("NSMutableIndexSet"), appkit_flags);
 
     AddStringSummary(appkit_category_sp,
                      "@\"${var.month%d}/${var.day%d}/${var.year%d} ${var.hour%d}:${var.minute%d}:${var.second}\"",
