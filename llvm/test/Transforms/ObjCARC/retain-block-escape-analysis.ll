@@ -97,4 +97,31 @@ end:
   ret void
 }
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; This test makes sure that we do not hang clang when visiting a use ;
+; cycle caused by phi nodes during objc-arc analysis. *NOTE* This    ;
+; test case looks a little convoluted since it was produced by	     ;
+; bugpoint.							     ;
+; 								     ;
+; bugzilla://14551						     ;
+; rdar://12851911						     ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+define void @phinode_use_cycle(i8* %block) uwtable optsize ssp {
+; CHECK: define void @phinode_use_cycle(i8* %block)
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %if.then, %for.body, %entry
+  %block.05 = phi void (...)* [ null, %entry ], [ %1, %if.then ], [ %block.05, %for.body ]
+  br i1 undef, label %for.body, label %if.then
+
+if.then:                                          ; preds = %for.body
+  %0 = call i8* @objc_retainBlock(i8* %block), !clang.arc.copy_on_escape !0
+  %1 = bitcast i8* %0 to void (...)*
+  %2 = bitcast void (...)* %block.05 to i8*
+  call void @objc_release(i8* %2) nounwind, !clang.imprecise_release !0
+  br label %for.body
+}
+
 !0 = metadata !{}
