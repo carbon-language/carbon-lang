@@ -8,8 +8,10 @@ entry:
   %0 = alloca double                              ; <double*> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   call void @llvm.dbg.declare(metadata !{i32* %i_addr}, metadata !0), !dbg !8
-; CHECK: call void @llvm.dbg.value(metadata !{i32 %i}, i64 0, metadata !1)
-; CHECK: call void @llvm.dbg.value(metadata !{double %j}, i64 0, metadata !9)
+; CHECK: call void @llvm.dbg.value(metadata !{i32 %i}, i64 0, metadata ![[IVAR:[0-9]*]])
+; CHECK: call void @llvm.dbg.value(metadata !{double %j}, i64 0, metadata ![[JVAR:[0-9]*]])
+; CHECK: ![[IVAR]] = {{.*}} ; [ DW_TAG_arg_variable ] [i]
+; CHECK: ![[JVAR]] = {{.*}} ; [ DW_TAG_arg_variable ] [j]
   store i32 %i, i32* %i_addr
   call void @llvm.dbg.declare(metadata !{double* %j_addr}, metadata !9), !dbg !8
   store double %j, double* %j_addr
@@ -44,4 +46,3 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !9 = metadata !{i32 786689, metadata !1, metadata !"j", metadata !2, i32 2, metadata !6, i32 0, null} ; [ DW_TAG_arg_variable ]
 !10 = metadata !{i32 3, i32 0, metadata !11, null}
 !11 = metadata !{i32 786443, metadata !1, i32 2, i32 0} ; [ DW_TAG_lexical_block ]
-
