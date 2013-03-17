@@ -15,7 +15,7 @@ struct D { D(); D(const D&); int x; };
 int d(int x) { D y[10]; [x,y] { return y[x].x; }(); }
 
 // Randomness for file. -- 6
-// CHECK: [[FILE:.*]] = metadata !{i32 {{.*}}, metadata !{{.*}}debug-lambda-expressions.cpp{{.*}}; [ DW_TAG_file_type ]
+// CHECK: [[FILE:.*]] = {{.*}} [ DW_TAG_file_type ] [{{.*}}debug-lambda-expressions.cpp]
 
 // A: 10
 // CHECK: [[A_FUNC:.*]] = metadata !{i32 {{.*}}, i32 0, metadata [[FILE]], metadata !"a", metadata !"a", metadata !"_Z1av", metadata {{.*}}, i32 [[A_LINE:.*]], metadata {{.*}}, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 ()* @_Z1av, null, null, {{.*}} [ DW_TAG_subprogram ]

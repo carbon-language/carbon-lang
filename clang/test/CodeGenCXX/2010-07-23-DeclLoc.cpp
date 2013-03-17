@@ -3,7 +3,7 @@
 // First, locate the function decl in metadata, and pluck out the file handle:
 // CHECK: {{extract_dwarf_data_from_header.*extract_dwarf_data_from_header.*extract_dwarf_data_from_header.*[^ ]+", metadata !}}[[filehandle:[0-9]+]],
 // Second: Require that filehandle refer to the correct filename:
-// CHECK: {{^!}}[[filehandle]] = metadata {{![{].*}} metadata !"decl_should_be_here.hpp",
+// CHECK: {{^!}}[[filehandle]] = {{.*}} [ DW_TAG_file_type ] [{{.*}}/decl_should_be_here.hpp]
 typedef long unsigned int __darwin_size_t;
 typedef __darwin_size_t size_t;
 typedef unsigned char uint8_t;
