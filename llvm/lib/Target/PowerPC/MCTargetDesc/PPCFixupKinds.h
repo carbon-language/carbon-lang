@@ -12,6 +12,8 @@
 
 #include "llvm/MC/MCFixup.h"
 
+#undef PPC
+
 namespace llvm {
 namespace PPC {
 enum Fixups {

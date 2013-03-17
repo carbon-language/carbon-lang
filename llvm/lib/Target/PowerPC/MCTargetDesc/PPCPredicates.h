@@ -17,6 +17,10 @@
 // GCC #defines PPC on Linux but we use it as our namespace name
 #undef PPC
 
+// Generated files will use "namespace PPC". To avoid symbol clash,
+// undefine PPC here. PPC may be predefined on some hosts.
+#undef PPC
+
 namespace llvm {
 namespace PPC {
   /// Predicate - These are "(BI << 5) | BO"  for various predicates.
