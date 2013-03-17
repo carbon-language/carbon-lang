@@ -40,6 +40,10 @@ class PPCFunctionInfo : public MachineFunctionInfo {
   /// Does this function have any stack spills.
   bool HasSpills;
 
+  /// Does this function spill using instructions with only r+r (not r+i)
+  /// forms.
+  bool HasNonRISpills;
+
   /// SpillsCR - Indicates whether CR is spilled in the current function.
   bool SpillsCR;
 
@@ -82,6 +86,7 @@ public:
     : FramePointerSaveIndex(0),
       ReturnAddrSaveIndex(0),
       HasSpills(false),
+      HasNonRISpills(false),
       SpillsCR(false),
       LRStoreRequired(false),
       MinReservedArea(0),
@@ -115,6 +120,9 @@ public:
 
   void setHasSpills()      { HasSpills = true; }
   bool hasSpills() const   { return HasSpills; }
+
+  void setHasNonRISpills()    { HasNonRISpills = true; }
+  bool hasNonRISpills() const { return HasNonRISpills; }
 
   void setSpillsCR()       { SpillsCR = true; }
   bool isCRSpilled() const { return SpillsCR; }

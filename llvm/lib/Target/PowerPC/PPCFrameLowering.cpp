@@ -193,6 +193,11 @@ static bool hasSpills(const MachineFunction &MF) {
   return FuncInfo->hasSpills();
 }
 
+static bool hasNonRISpills(const MachineFunction &MF) {
+  const PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
+  return FuncInfo->hasNonRISpills();
+}
+
 /// determineFrameLayout - Determine the size of the frame and maximum call
 /// frame size.
 unsigned PPCFrameLowering::determineFrameLayout(MachineFunction &MF,
@@ -1048,7 +1053,7 @@ PPCFrameLowering::addScavengingSpillSlot(MachineFunction &MF,
   // needed alignment padding.
   unsigned StackSize = determineFrameLayout(MF, false, true);
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  if (MFI->hasVarSizedObjects() || spillsCR(MF) ||
+  if (MFI->hasVarSizedObjects() || spillsCR(MF) || hasNonRISpills(MF) ||
       (hasSpills(MF) && !isInt<16>(StackSize))) {
     const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
     const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;

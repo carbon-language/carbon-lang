@@ -442,7 +442,25 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     isIXAddr = true;
     break;
   }
-  
+
+  bool noImmForm = false;
+  switch (OpC) {
+  case PPC::LVEBX:
+  case PPC::LVEHX:
+  case PPC::LVEWX:
+  case PPC::LVX:
+  case PPC::LVXL:
+  case PPC::LVSL:
+  case PPC::LVSR:
+  case PPC::STVEBX:
+  case PPC::STVEHX:
+  case PPC::STVEWX:
+  case PPC::STVX:
+  case PPC::STVXL:
+    noImmForm = true;
+    break;
+  }
+
   // Now add the frame object offset to the offset from r1.
   int Offset = MFI->getObjectOffset(FrameIndex);
   if (!isIXAddr)
@@ -466,7 +484,8 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // only "std" to a stack slot that is at least 4-byte aligned, but it can
   // happen in invalid code.
   if (OpC == PPC::DBG_VALUE || // DBG_VALUE is always Reg+Imm
-      (isInt<16>(Offset) && (!isIXAddr || (Offset & 3) == 0))) {
+      (!noImmForm &&
+       isInt<16>(Offset) && (!isIXAddr || (Offset & 3) == 0))) {
     if (isIXAddr)
       Offset >>= 2;    // The actual encoded value has the low two bits zero.
     MI.getOperand(OffsetOperandNo).ChangeToImmediate(Offset);
@@ -493,7 +512,9 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   //   addi 0:rA 1:rB, 2, imm ==> add 0:rA, 1:rB, 2:r0
   unsigned OperandBase;
 
-  if (OpC != TargetOpcode::INLINEASM) {
+  if (noImmForm)
+    OperandBase = 1;
+  else if (OpC != TargetOpcode::INLINEASM) {
     assert(ImmToIdxMap.count(OpC) &&
            "No indexed form of load or store available!");
     unsigned NewOpcode = ImmToIdxMap.find(OpC)->second;

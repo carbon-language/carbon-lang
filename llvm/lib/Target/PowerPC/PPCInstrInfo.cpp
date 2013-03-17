@@ -439,7 +439,8 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                   unsigned SrcReg, bool isKill,
                                   int FrameIdx,
                                   const TargetRegisterClass *RC,
-                                  SmallVectorImpl<MachineInstr*> &NewMIs) const{
+                                  SmallVectorImpl<MachineInstr*> &NewMIs,
+                                  bool &NonRI) const{
   DebugLoc DL;
   if (PPC::GPRCRegClass.hasSubClassEq(RC)) {
     if (SrcReg != PPC::LR) {
@@ -521,23 +522,14 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
       Reg = PPC::CR7;
 
     return StoreRegToStackSlot(MF, Reg, isKill, FrameIdx,
-                               &PPC::CRRCRegClass, NewMIs);
+                               &PPC::CRRCRegClass, NewMIs, NonRI);
 
   } else if (PPC::VRRCRegClass.hasSubClassEq(RC)) {
-    // We don't have indexed addressing for vector loads.  Emit:
-    // R0 = ADDI FI#
-    // STVX VAL, 0, R0
-    //
-    // FIXME: We use R0 here, because it isn't available for RA.
-    bool Is64Bit = TM.getSubtargetImpl()->isPPC64();
-    unsigned Instr = Is64Bit ? PPC::ADDI8 : PPC::ADDI;
-    unsigned GPR0  = Is64Bit ? PPC::X0    : PPC::R0;
-    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(Instr), GPR0),
-                                       FrameIdx, 0, 0));
-    NewMIs.push_back(BuildMI(MF, DL, get(PPC::STVX))
-                     .addReg(SrcReg, getKillRegState(isKill))
-                     .addReg(GPR0)
-                     .addReg(GPR0));
+    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STVX))
+                                       .addReg(SrcReg,
+                                               getKillRegState(isKill)),
+                                       FrameIdx));
+    NonRI = true;
   } else {
     llvm_unreachable("Unknown regclass!");
   }
@@ -557,8 +549,12 @@ PPCInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
   FuncInfo->setHasSpills();
 
-  if (StoreRegToStackSlot(MF, SrcReg, isKill, FrameIdx, RC, NewMIs))
+  bool NonRI = false;
+  if (StoreRegToStackSlot(MF, SrcReg, isKill, FrameIdx, RC, NewMIs, NonRI))
     FuncInfo->setSpillsCR();
+
+  if (NonRI)
+    FuncInfo->setHasNonRISpills();
 
   for (unsigned i = 0, e = NewMIs.size(); i != e; ++i)
     MBB.insert(MI, NewMIs[i]);
@@ -576,7 +572,8 @@ bool
 PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                                    unsigned DestReg, int FrameIdx,
                                    const TargetRegisterClass *RC,
-                                   SmallVectorImpl<MachineInstr*> &NewMIs)const{
+                                   SmallVectorImpl<MachineInstr*> &NewMIs,
+                                   bool &NonRI) const{
   if (PPC::GPRCRegClass.hasSubClassEq(RC)) {
     if (DestReg != PPC::LR) {
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LWZ),
@@ -635,21 +632,12 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
       Reg = PPC::CR7;
 
     return LoadRegFromStackSlot(MF, DL, Reg, FrameIdx,
-                                &PPC::CRRCRegClass, NewMIs);
+                                &PPC::CRRCRegClass, NewMIs, NonRI);
 
   } else if (PPC::VRRCRegClass.hasSubClassEq(RC)) {
-    // We don't have indexed addressing for vector loads.  Emit:
-    // R0 = ADDI FI#
-    // Dest = LVX 0, R0
-    //
-    // FIXME: We use R0 here, because it isn't available for RA.
-    bool Is64Bit = TM.getSubtargetImpl()->isPPC64();
-    unsigned Instr = Is64Bit ? PPC::ADDI8 : PPC::ADDI;
-    unsigned GPR0  = Is64Bit ? PPC::X0    : PPC::R0;
-    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(Instr), GPR0),
-                                       FrameIdx, 0, 0));
-    NewMIs.push_back(BuildMI(MF, DL, get(PPC::LVX),DestReg).addReg(GPR0)
-                     .addReg(GPR0));
+    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LVX), DestReg),
+                                       FrameIdx));
+    NonRI = true;
   } else {
     llvm_unreachable("Unknown regclass!");
   }
@@ -667,10 +655,17 @@ PPCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   SmallVector<MachineInstr*, 4> NewMIs;
   DebugLoc DL;
   if (MI != MBB.end()) DL = MI->getDebugLoc();
-  if (LoadRegFromStackSlot(MF, DL, DestReg, FrameIdx, RC, NewMIs)) {
-    PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
+
+  PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
+  FuncInfo->setHasSpills();
+
+  bool NonRI = false;
+  if (LoadRegFromStackSlot(MF, DL, DestReg, FrameIdx, RC, NewMIs, NonRI))
     FuncInfo->setSpillsCR();
-  }
+
+  if (NonRI)
+    FuncInfo->setHasNonRISpills();
+
   for (unsigned i = 0, e = NewMIs.size(); i != e; ++i)
     MBB.insert(MI, NewMIs[i]);
 

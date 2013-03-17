@@ -13,7 +13,7 @@ entry:
   ret void
 }
 
-; CHECK: stvx 2, 0, 0
-; CHECK: lvx 2, 0, 0
+; CHECK: stvx 2, 1,
+; CHECK: lvx 2, 1,
 
 declare void @foo(i32*)

@@ -71,11 +71,13 @@ class PPCInstrInfo : public PPCGenInstrInfo {
   bool StoreRegToStackSlot(MachineFunction &MF,
                            unsigned SrcReg, bool isKill, int FrameIdx,
                            const TargetRegisterClass *RC,
-                           SmallVectorImpl<MachineInstr*> &NewMIs) const;
+                           SmallVectorImpl<MachineInstr*> &NewMIs,
+                           bool &NonRI) const;
   bool LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                             unsigned DestReg, int FrameIdx,
                             const TargetRegisterClass *RC,
-                            SmallVectorImpl<MachineInstr*> &NewMIs) const;
+                            SmallVectorImpl<MachineInstr*> &NewMIs,
+                            bool &NonRI) const;
 public:
   explicit PPCInstrInfo(PPCTargetMachine &TM);
 
