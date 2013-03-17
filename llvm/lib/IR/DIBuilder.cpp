@@ -117,7 +117,7 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
 /// for a file.
 DIFile DIBuilder::createFile(StringRef Filename, StringRef Directory) {
   assert(!Filename.empty() && "Unable to create file without name");
-  Value *Pair[] {
+  Value *Pair[] = {
     MDString::get(VMContext, Filename),
     MDString::get(VMContext, Directory),
   };
