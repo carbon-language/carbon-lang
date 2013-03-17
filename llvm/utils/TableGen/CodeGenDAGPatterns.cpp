@@ -57,7 +57,7 @@ EEVT::TypeSet::TypeSet(MVT::SimpleValueType VT, TreePattern &TP) {
 }
 
 
-EEVT::TypeSet::TypeSet(const std::vector<MVT::SimpleValueType> &VTList) {
+EEVT::TypeSet::TypeSet(ArrayRef<MVT::SimpleValueType> VTList) {
   assert(!VTList.empty() && "empty list?");
   TypeVec.append(VTList.begin(), VTList.end());
 
@@ -76,7 +76,7 @@ bool EEVT::TypeSet::FillWithPossibleTypes(TreePattern &TP,
                                           bool (*Pred)(MVT::SimpleValueType),
                                           const char *PredicateName) {
   assert(isCompletelyUnknown());
-  const std::vector<MVT::SimpleValueType> &LegalTypes =
+  ArrayRef<MVT::SimpleValueType> LegalTypes =
     TP.getDAGPatterns().getTargetInfo().getLegalValueTypes();
 
   if (TP.hasError())

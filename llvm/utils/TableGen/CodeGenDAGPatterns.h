@@ -59,7 +59,7 @@ namespace EEVT {
   public:
     TypeSet() {}
     TypeSet(MVT::SimpleValueType VT, TreePattern &TP);
-    TypeSet(const std::vector<MVT::SimpleValueType> &VTList);
+    TypeSet(ArrayRef<MVT::SimpleValueType> VTList);
 
     bool isCompletelyUnknown() const { return TypeVec.empty(); }
 

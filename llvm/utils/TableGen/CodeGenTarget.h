@@ -68,7 +68,7 @@ class CodeGenTarget {
   mutable DenseMap<const Record*, CodeGenInstruction*> Instructions;
   mutable CodeGenRegBank *RegBank;
   mutable std::vector<Record*> RegAltNameIndices;
-  mutable std::vector<MVT::SimpleValueType> LegalValueTypes;
+  mutable SmallVector<MVT::SimpleValueType, 8> LegalValueTypes;
   void ReadRegAltNameIndices() const;
   void ReadInstructions() const;
   void ReadLegalValueTypes() const;
@@ -129,7 +129,7 @@ public:
   /// specified physical register.
   std::vector<MVT::SimpleValueType> getRegisterVTs(Record *R) const;
 
-  const std::vector<MVT::SimpleValueType> &getLegalValueTypes() const {
+  ArrayRef<MVT::SimpleValueType> getLegalValueTypes() const {
     if (LegalValueTypes.empty()) ReadLegalValueTypes();
     return LegalValueTypes;
   }
@@ -137,7 +137,7 @@ public:
   /// isLegalValueType - Return true if the specified value type is natively
   /// supported by the target (i.e. there are registers that directly hold it).
   bool isLegalValueType(MVT::SimpleValueType VT) const {
-    const std::vector<MVT::SimpleValueType> &LegalVTs = getLegalValueTypes();
+    ArrayRef<MVT::SimpleValueType> LegalVTs = getLegalValueTypes();
     for (unsigned i = 0, e = LegalVTs.size(); i != e; ++i)
       if (LegalVTs[i] == VT) return true;
     return false;

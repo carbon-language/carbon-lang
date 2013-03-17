@@ -261,7 +261,7 @@ namespace llvm {
   public:
     unsigned EnumValue;
     std::string Namespace;
-    std::vector<MVT::SimpleValueType> VTs;
+    SmallVector<MVT::SimpleValueType, 4> VTs;
     unsigned SpillSize;
     unsigned SpillAlignment;
     int CopyCost;
@@ -274,7 +274,7 @@ namespace llvm {
 
     const std::string &getName() const { return Name; }
     std::string getQualifiedName() const;
-    const std::vector<MVT::SimpleValueType> &getValueTypes() const {return VTs;}
+    ArrayRef<MVT::SimpleValueType> getValueTypes() const {return VTs;}
     unsigned getNumValueTypes() const { return VTs.size(); }
 
     MVT::SimpleValueType getValueTypeNum(unsigned VTNum) const {

@@ -1031,7 +1031,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   }
 
   // Build a shared array of value types.
-  SequenceToOffsetTable<std::vector<MVT::SimpleValueType> > VTSeqs;
+  SequenceToOffsetTable<SmallVector<MVT::SimpleValueType, 4> > VTSeqs;
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc)
     VTSeqs.add(RegisterClasses[rc]->VTs);
   VTSeqs.layout();
