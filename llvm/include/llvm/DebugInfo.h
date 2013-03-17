@@ -172,7 +172,6 @@ namespace llvm {
   /// DIFile - This is a wrapper for a file.
   class DIFile : public DIScope {
     friend class DIDescriptor;
-    void printInternal(raw_ostream &OS) const {} // FIXME: Output something?
   public:
     explicit DIFile(const MDNode *N = 0) : DIScope(N) {
       if (DbgNode && !isFile())
