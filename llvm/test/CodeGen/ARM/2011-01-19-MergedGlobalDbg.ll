@@ -76,16 +76,9 @@ entry:
 }
 
 !llvm.dbg.cu = !{!2}
-!40 = metadata !{metadata !0, metadata !6, metadata !7, metadata !8, metadata !9}
-!41 = metadata !{metadata !13, metadata !14, metadata !15, metadata !16, metadata !17}
-!42 = metadata !{metadata !10, metadata !11}
-!43 = metadata !{metadata !18, metadata !19}
-!44 = metadata !{metadata !21, metadata !22}
-!45 = metadata !{metadata !24, metadata !25}
-!46 = metadata !{metadata !27, metadata !28}
 
 !0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"get1", metadata !"get1", metadata !"get1", metadata !1, i32 4, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i8 (i8)* @get1, null, null, metadata !42, i32 4} ; [ DW_TAG_subprogram ]
-!1 = metadata !{i32 786473, metadata !"foo.c", metadata !"/tmp/"} ; [ DW_TAG_file_type ]
+!1 = metadata !{i32 786473, metadata !47} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, i32 0, i32 1, metadata !1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build 2369.8)", i1 true, metadata !"", i32 0, null, null, metadata !40, metadata !41, metadata !""} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5, metadata !5}
@@ -124,3 +117,11 @@ entry:
 !37 = metadata !{i32 13, i32 0, metadata !26, null}
 !38 = metadata !{i32 16, i32 0, metadata !9, null}
 !39 = metadata !{i32 16, i32 0, metadata !29, null}
+!40 = metadata !{metadata !0, metadata !6, metadata !7, metadata !8, metadata !9}
+!41 = metadata !{metadata !13, metadata !14, metadata !15, metadata !16, metadata !17}
+!42 = metadata !{metadata !10, metadata !11}
+!43 = metadata !{metadata !18, metadata !19}
+!44 = metadata !{metadata !21, metadata !22}
+!45 = metadata !{metadata !24, metadata !25}
+!46 = metadata !{metadata !27, metadata !28}
+!47 = metadata !{metadata !"foo.c", metadata !"/tmp/"}

@@ -57,13 +57,9 @@ entry:
 declare i32 @puts(i8* nocapture) nounwind
 
 !llvm.dbg.cu = !{!2}
-!42 = metadata !{metadata !0, metadata !9, metadata !10}
-!43 = metadata !{metadata !16, metadata !17, metadata !18}
-!44 = metadata !{metadata !19, metadata !20, metadata !21}
-!45 = metadata !{metadata !22, metadata !23, metadata !24}
 
 !0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"printer", metadata !"printer", metadata !"printer", metadata !1, i32 12, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32 (i8*, double, i8)* @printer, null, null, metadata !43, i32 12} ; [ DW_TAG_subprogram ]
-!1 = metadata !{i32 786473, metadata !"a.c", metadata !"/tmp/"} ; [ DW_TAG_file_type ]
+!1 = metadata !{i32 786473, metadata !46} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, i32 0, i32 1, metadata !1, metadata !"(LLVM build 00)", i1 true, metadata !"", i32 0, null, null, metadata !42, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5, metadata !6, metadata !7, metadata !8}
@@ -104,3 +100,8 @@ declare i32 @puts(i8* nocapture) nounwind
 !39 = metadata !{i32 6, i32 0, metadata !28, metadata !37}
 !40 = metadata !{i32 22, i32 0, metadata !25, null}
 !41 = metadata !{i32 23, i32 0, metadata !25, null}
+!42 = metadata !{metadata !0, metadata !9, metadata !10}
+!43 = metadata !{metadata !16, metadata !17, metadata !18}
+!44 = metadata !{metadata !19, metadata !20, metadata !21}
+!45 = metadata !{metadata !22, metadata !23, metadata !24}
+!46 = metadata !{metadata !"a.c", metadata !"/tmp/"}

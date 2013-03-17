@@ -34,7 +34,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !0 = metadata !{i32 786449, i32 0, i32 4, metadata !961, metadata !"clang version 3.3 (trunk 174207)", i1 true, metadata !"", i32 0, metadata !1, metadata !955, metadata !956, metadata !1786, metadata !""} ; [ DW_TAG_compile_unit ] [/privite/tmp/student2.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !26}
 !4 = metadata !{i32 786489, null, metadata !"std", metadata !5, i32 48} ; [ DW_TAG_namespace ]
-!5 = metadata !{i32 786473, metadata !"os_base.h", metadata !"/privite/tmp"} ; [ DW_TAG_file_type ]
+!5 = metadata !{i32 786473, metadata !1801} ; [ DW_TAG_file_type ]
 !25 = metadata !{i32 786472, metadata !"_S_os_fmtflags_end", i64 65536} ; [ DW_TAG_enumerator ]
 !26 = metadata !{i32 786436, metadata !4, metadata !"_Ios_Iostate", metadata !5, i32 146, i64 32, i64 32, i32 0, i32 0, null, metadata !27, i32 0, i32 0} ; [ DW_TAG_enumeration_type ]
 !27 = metadata !{metadata !28, metadata !29, metadata !30, metadata !31, metadata !32}
@@ -54,6 +54,8 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !955 = metadata !{i32 0}
 !956 = metadata !{metadata !960}
 !960 = metadata !{i32 786478, i32 0, metadata !961, metadata !"main", metadata !"main", metadata !"", metadata !961, i32 73, metadata !54, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32 ()* @main, null, null, metadata !955, i32 73} ; [ DW_TAG_subprogram ]
-!961 = metadata !{i32 786473, metadata !"student2.cpp", metadata !"/privite/tmp"} ; [ DW_TAG_file_type ]
+!961 = metadata !{i32 786473, metadata !1802} ; [ DW_TAG_file_type ]
 !1786 = metadata !{metadata !1800}
 !1800 = metadata !{i32 786484, i32 0, metadata !5, metadata !"badbit", metadata !"badbit", metadata !"badbit", metadata !5, i32 331, metadata !78, i32 1, i32 1, i32 1, metadata !77} ; [ DW_TAG_variable ]
+!1801 = metadata !{metadata !"os_base.h", metadata !"/privite/tmp"}
+!1802 = metadata !{metadata !"student2.cpp", metadata !"/privite/tmp"}

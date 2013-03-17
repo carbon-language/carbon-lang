@@ -117,10 +117,13 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
 /// for a file.
 DIFile DIBuilder::createFile(StringRef Filename, StringRef Directory) {
   assert(!Filename.empty() && "Unable to create file without name");
-  Value *Elts[] = {
-    GetTagConstant(VMContext, dwarf::DW_TAG_file_type),
+  Value *Pair[] {
     MDString::get(VMContext, Filename),
     MDString::get(VMContext, Directory),
+  };
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_file_type),
+    MDNode::get(VMContext, Pair)
   };
   return DIFile(MDNode::get(VMContext, Elts));
 }

@@ -51,7 +51,7 @@ entry:
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5, metadata !10, metadata !20}
 !5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"foo", metadata !"foo", metadata !"_Z3fooi", metadata !6, i32 7, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @_Z3fooi, null, null, metadata !1, i32 7} ; [ DW_TAG_subprogram ] [line 7] [def] [foo]
-!6 = metadata !{i32 786473, metadata !"bar.cpp", metadata !"/Users/echristo/debug-tests"} ; [ DW_TAG_file_type ]
+!6 = metadata !{i32 786473, metadata !37} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
@@ -66,8 +66,6 @@ entry:
 !18 = metadata !{metadata !19}
 !19 = metadata !{i32 786468}                      ; [ DW_TAG_base_type ] [line 0, size 0, align 0, offset 0]
 !20 = metadata !{i32 786478, i32 0, null, metadata !"A", metadata !"A", metadata !"_ZN1AC2Ev", metadata !6, i32 3, metadata !11, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%class.A*)* @_ZN1AC2Ev, null, metadata !17, metadata !1, i32 3} ; [ DW_TAG_subprogram ] [line 3] [def] [A]
-!36 = metadata !{i32 786689, metadata !5, metadata !"", metadata !6, i32 16777223, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [line 7]
-!35 = metadata !{i32 7, i32 0, metadata !5, null}
 !21 = metadata !{i32 786688, metadata !22, metadata !"a", metadata !6, i32 8, metadata !14, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [a] [line 8]
 !22 = metadata !{i32 786443, metadata !5, i32 7, i32 11, metadata !6, i32 0} ; [ DW_TAG_lexical_block ] [/Users/echristo/debug-tests/bar.cpp]
 !23 = metadata !{i32 8, i32 5, metadata !22, null}
@@ -82,3 +80,6 @@ entry:
 !32 = metadata !{i32 3, i32 9, metadata !33, null}
 !33 = metadata !{i32 786443, metadata !20, i32 3, i32 7, metadata !6, i32 1} ; [ DW_TAG_lexical_block ] [/Users/echristo/debug-tests/bar.cpp]
 !34 = metadata !{i32 3, i32 18, metadata !33, null}
+!35 = metadata !{i32 7, i32 0, metadata !5, null}
+!36 = metadata !{i32 786689, metadata !5, metadata !"", metadata !6, i32 16777223, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [line 7]
+!37 = metadata !{metadata !"bar.cpp", metadata !"/Users/echristo/debug-tests"}

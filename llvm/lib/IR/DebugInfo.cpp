@@ -66,16 +66,26 @@ bool DIDescriptor::Verify() const {
           DITemplateValueParameter(DbgNode).Verify());
 }
 
-StringRef
-DIDescriptor::getStringField(unsigned Elt) const {
-  if (DbgNode == 0)
-    return StringRef();
+static Value *getField(const MDNode *DbgNode, unsigned Elt) {
+  if (DbgNode == 0 || Elt >= DbgNode->getNumOperands())
+    return 0;
+  return DbgNode->getOperand(Elt);
+}
 
-  if (Elt < DbgNode->getNumOperands())
-    if (MDString *MDS = dyn_cast_or_null<MDString>(DbgNode->getOperand(Elt)))
-      return MDS->getString();
+static const MDNode *getNodeField(const MDNode *DbgNode, unsigned Elt) {
+  if (const MDNode *R = dyn_cast_or_null<MDNode>(getField(DbgNode, Elt)))
+    return R;
+  return 0;
+}
 
+static StringRef getStringField(const MDNode *DbgNode, unsigned Elt) {
+  if (MDString *MDS = dyn_cast_or_null<MDString>(getField(DbgNode, Elt)))
+    return MDS->getString();
   return StringRef();
+}
+
+StringRef DIDescriptor::getStringField(unsigned Elt) const {
+  return ::getStringField(DbgNode, Elt);
 }
 
 uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
@@ -531,7 +541,7 @@ bool DINameSpace::Verify() const {
 
 /// \brief Verify that the file descriptor is well formed.
 bool DIFile::Verify() const {
-  return isFile() && DbgNode->getNumOperands() == 3;
+  return isFile() && DbgNode->getNumOperands() == 2;
 }
 
 /// \brief Verify that the enumerator descriptor is well formed.
@@ -661,9 +671,7 @@ StringRef DIScope::getFilename() const {
     return DINameSpace(DbgNode).getFilename();
   if (isType())
     return DIType(DbgNode).getFilename();
-  if (isFile())
-    return DIFile(DbgNode).getFilename();
-  llvm_unreachable("Invalid DIScope!");
+  return ::getStringField(getNodeField(DbgNode, 1), 0);
 }
 
 StringRef DIScope::getDirectory() const {
@@ -681,9 +689,7 @@ StringRef DIScope::getDirectory() const {
     return DINameSpace(DbgNode).getDirectory();
   if (isType())
     return DIType(DbgNode).getDirectory();
-  if (isFile())
-    return DIFile(DbgNode).getDirectory();
-  llvm_unreachable("Invalid DIScope!");
+  return ::getStringField(getNodeField(DbgNode, 1), 1);
 }
 
 DIArray DICompileUnit::getEnumTypes() const {

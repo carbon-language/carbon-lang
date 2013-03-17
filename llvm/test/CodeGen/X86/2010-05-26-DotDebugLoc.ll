@@ -22,14 +22,9 @@ declare void @foo(i32) nounwind optsize noinline ssp
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!2}
-!31 = metadata !{metadata !0}
-!32 = metadata !{metadata !5, metadata !9, metadata !19}
-!33 = metadata !{metadata !4}
-!34 = metadata !{metadata !8}
-!35 = metadata !{metadata !18, metadata !25, metadata !26}
 
 !0 = metadata !{i32 786484, i32 0, metadata !1, metadata !"ret", metadata !"ret", metadata !"", metadata !1, i32 7, metadata !3, i1 false, i1 true, null} ; [ DW_TAG_variable ]
-!1 = metadata !{i32 786473, metadata !"foo.c", metadata !"/tmp/"} ; [ DW_TAG_file_type ]
+!1 = metadata !{i32 786473, metadata !36} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, i32 0, i32 1, metadata !1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, null, null, metadata !32, metadata !31, metadata !""} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786468, metadata !1, metadata !"int", metadata !1, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !4 = metadata !{i32 786689, metadata !5, metadata !"x", metadata !1, i32 12, metadata !3, i32 0, null} ; [ DW_TAG_arg_variable ]
@@ -59,6 +54,12 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !28 = metadata !{i32 18, i32 0, metadata !29, null}
 !29 = metadata !{i32 786443, metadata !9, i32 17, i32 0, metadata !1, i32 1} ; [ DW_TAG_lexical_block ]
 !30 = metadata !{i32 19, i32 0, metadata !29, null}
+!31 = metadata !{metadata !0}
+!32 = metadata !{metadata !5, metadata !9, metadata !19}
+!33 = metadata !{metadata !4}
+!34 = metadata !{metadata !8}
+!35 = metadata !{metadata !18, metadata !25, metadata !26}
+!36 = metadata !{metadata !"foo.c", metadata !"/tmp/"}
 
 ; The variable bar:myvar changes registers after the first movq.
 ; It is cobbered by popq %rbx

@@ -63,7 +63,7 @@ declare void @llvm.stackrestore(i8*) nounwind
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"testVLAwithSize", metadata !"testVLAwithSize", metadata !"", metadata !6, i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i32)* @testVLAwithSize, null, null, metadata !1, i32 2} ; [ DW_TAG_subprogram ]
-!6 = metadata !{i32 786473, metadata !"bar.c", metadata !"/Users/echristo/tmp"} ; [ DW_TAG_file_type ]
+!6 = metadata !{i32 786473, metadata !28} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{null, metadata !9}
 !9 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
@@ -85,3 +85,4 @@ declare void @llvm.stackrestore(i8*) nounwind
 !25 = metadata !{i32 7, i32 3, metadata !24, null}
 !26 = metadata !{i32 5, i32 22, metadata !22, null}
 !27 = metadata !{i32 8, i32 1, metadata !13, null}
+!28 = metadata !{metadata !"bar.c", metadata !"/Users/echristo/tmp"}

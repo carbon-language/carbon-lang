@@ -26,12 +26,10 @@ bb2:
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
-!18 = metadata !{metadata !1}
-!19 = metadata !{metadata !6, metadata !7, metadata !10}
 
 !0 = metadata !{i32 786449, i32 0, i32 12, metadata !2, metadata !"Apple clang version 3.0 (tags/Apple/clang-211.10.1) (based on LLVM 3.0svn)", i1 true, metadata !"", i32 0, null, null, metadata !18, null, null} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 786478, i32 0, metadata !2, metadata !"foo", metadata !"foo", metadata !"", metadata !2, i32 2, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32, i32*)* @foo, null, null, metadata !19, i32 0} ; [ DW_TAG_subprogram ]
-!2 = metadata !{i32 786473, metadata !"a.c", metadata !"/private/tmp", metadata !0} ; [ DW_TAG_file_type ]
+!2 = metadata !{i32 786473, metadata !20} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 786453, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, metadata !0, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
@@ -47,3 +45,6 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !15 = metadata !{i32 4, i32 3, metadata !11, null}
 !16 = metadata !{i32 5, i32 5, metadata !11, null}
 !17 = metadata !{i32 7, i32 1, metadata !11, null}
+!18 = metadata !{metadata !1}
+!19 = metadata !{metadata !6, metadata !7, metadata !10}
+!20 = metadata !{metadata !"a.c", metadata !"/private/tmp"}

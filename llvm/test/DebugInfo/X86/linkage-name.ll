@@ -30,7 +30,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, i32 0, null, metadata !"a", metadata !"a", metadata !"_ZN1A1aEi", metadata !6, i32 5, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (%class.A*, i32)* @_ZN1A1aEi, null, metadata !13, metadata !16, i32 5} ; [ DW_TAG_subprogram ]
-!6 = metadata !{i32 786473, metadata !"foo.cpp", metadata !"/Users/echristo", null} ; [ DW_TAG_file_type ]
+!6 = metadata !{i32 786473, metadata !28} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{metadata !9, metadata !10, metadata !9}
 !9 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
@@ -51,3 +51,4 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !25 = metadata !{i32 5, i32 14, metadata !5, null}
 !26 = metadata !{i32 6, i32 4, metadata !27, null}
 !27 = metadata !{i32 786443, metadata !5, i32 5, i32 17, metadata !6, i32 0} ; [ DW_TAG_lexical_block ]
+!28 = metadata !{metadata !"foo.cpp", metadata !"/Users/echristo"}

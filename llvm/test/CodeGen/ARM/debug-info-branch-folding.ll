@@ -38,13 +38,8 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
-!50 = metadata !{metadata !0, metadata !10, metadata !14}
-!51 = metadata !{metadata !18}
-!52 = metadata !{metadata !19, metadata !20, metadata !24, metadata !26, metadata !27, metadata !28, metadata !29}
-!53 = metadata !{metadata !30}
-
 !0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"test0001", metadata !"test0001", metadata !"", metadata !1, i32 3, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, <4 x float> (float)* @test0001, null, null, metadata !51, i32 0} ; [ DW_TAG_subprogram ]
-!1 = metadata !{i32 786473, metadata !"build2.c", metadata !"/private/tmp", metadata !2} ; [ DW_TAG_file_type ]
+!1 = metadata !{i32 786473, metadata !54} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, i32 0, i32 12, metadata !1, metadata !"clang version 3.0 (trunk 129915)", i1 true, metadata !"", i32 0, null, null, metadata !50, null, null} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
@@ -58,7 +53,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !12 = metadata !{metadata !13}
 !13 = metadata !{i32 786468, metadata !2, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !14 = metadata !{i32 786478, i32 0, metadata !15, metadata !"printFV", metadata !"printFV", metadata !"", metadata !15, i32 41, metadata !16, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, null, null, null, metadata !53, i32 0} ; [ DW_TAG_subprogram ]
-!15 = metadata !{i32 786473, metadata !"/Volumes/Lalgate/work/llvm/projects/llvm-test/SingleSource/UnitTests/Vector/helpers.h", metadata !"/private/tmp", metadata !2} ; [ DW_TAG_file_type ]
+!15 = metadata !{i32 786473, metadata !55} ; [ DW_TAG_file_type ]
 !16 = metadata !{i32 786453, metadata !15, metadata !"", metadata !15, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !17, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !17 = metadata !{null}
 !18 = metadata !{i32 786689, metadata !0, metadata !"a", metadata !1, i32 16777219, metadata !7, i32 0, null} ; [ DW_TAG_arg_variable ]
@@ -93,3 +88,9 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !47 = metadata !{i32 786443, metadata !14, i32 41, i32 28, metadata !15, i32 19} ; [ DW_TAG_lexical_block ]
 !48 = metadata !{i32 95, i32 3, metadata !25, null}
 !49 = metadata !{i32 99, i32 3, metadata !25, null}
+!50 = metadata !{metadata !0, metadata !10, metadata !14}
+!51 = metadata !{metadata !18}
+!52 = metadata !{metadata !19, metadata !20, metadata !24, metadata !26, metadata !27, metadata !28, metadata !29}
+!53 = metadata !{metadata !30}
+!54 = metadata !{metadata !"build2.c", metadata !"/private/tmp"}
+!55 = metadata !{metadata !"/Volumes/Lalgate/work/llvm/projects/llvm-test/SingleSource/UnitTests/Vector/helpers.h", metadata !"/private/tmp"}

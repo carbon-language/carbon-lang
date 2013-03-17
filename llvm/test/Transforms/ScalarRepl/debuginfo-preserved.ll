@@ -40,11 +40,10 @@ entry:
 declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
-!17 = metadata !{metadata !1}
 
 !0 = metadata !{i32 786449, i32 0, i32 12, metadata !2, metadata !"clang version 3.0 (trunk 131941)", i1 false, metadata !"", i32 0, null, null, metadata !17, null, null} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 786478, i32 0, metadata !2, metadata !"f", metadata !"f", metadata !"", metadata !2, i32 1, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, i32 (i32, i32)* @f, null, null, null, i32 1} ; [ DW_TAG_subprogram ]
-!2 = metadata !{i32 786473, metadata !"/d/j/debug-test.c", metadata !"/Volumes/Data/b"} ; [ DW_TAG_file_type ]
+!2 = metadata !{i32 786473, metadata !18} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 786453, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, metadata !0, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
@@ -59,3 +58,5 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !14 = metadata !{i32 3, i32 5, metadata !11, null}
 !15 = metadata !{i32 4, i32 5, metadata !11, null}
 !16 = metadata !{i32 5, i32 5, metadata !11, null}
+!17 = metadata !{metadata !1}
+!18 = metadata !{metadata !"/d/j/debug-test.c", metadata !"/Volumes/Data/b"}

@@ -24,12 +24,11 @@ entry:
   ret void, !dbg !17
 }
 !llvm.dbg.cu = !{!2}
-!18 = metadata !{metadata !0}
 
 !0 = metadata !{i32 786478, i32 0, metadata !1, metadata
 !"__OpenCL_test_kernel", metadata !"__OpenCL_test_kernel", metadata
 !"__OpenCL_test_kernel", metadata !1, i32 2, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 0, i1 false, null} ; [ DW_TAG_subprogram ]
-!1 = metadata !{i32 786473, metadata !"OCL6368.tmp.cl", metadata !"E:\5CUsers\5Cmvillmow.AMD\5CAppData\5CLocal\5CTemp", metadata !2} ; [ DW_TAG_file_type ]
+!1 = metadata !{i32 786473, metadata !19} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, i32 0, i32 1, metadata !1, metadata !"clc", i1 false, metadata !"", i32 0, null, null, metadata !18, null, null} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{null, metadata !5}
@@ -46,4 +45,5 @@ entry:
 !15 = metadata !{i32 5, i32 15, metadata !10, null}
 !16 = metadata !{i32 6, i32 18, metadata !10, null}
 !17 = metadata !{i32 7, i32 1, metadata !0, null}
-
+!18 = metadata !{metadata !0}
+!19 = metadata !{metadata !"OCL6368.tmp.cl", metadata !"E:\5CUsers\5Cmvillmow.AMD\5CAppData\5CLocal\5CTemp"}

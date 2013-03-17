@@ -29,11 +29,10 @@ return:                                           ; preds = %entry
 declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!3}
-!17 = metadata !{metadata !1}
 
 !0 = metadata !{i32 786689, metadata !1, metadata !"x", metadata !2, i32 7, metadata !7, i32 0, null} ; [ DW_TAG_arg_variable ]
 !1 = metadata !{i32 786478, i32 0, metadata !2, metadata !"foo", metadata !"foo", metadata !"foo", metadata !2, i32 7, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, i32 (%struct.X*, %struct.Y*)* @foo, null, null, null, i32 7} ; [ DW_TAG_subprogram ]
-!2 = metadata !{i32 786473, metadata !"a.c", metadata !"/tmp/"} ; [ DW_TAG_file_type ]
+!2 = metadata !{i32 786473, metadata !18} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 786449, i32 0, i32 1, metadata !2, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 false, metadata !"", i32 0, null, null, metadata !17, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !4 = metadata !{i32 786453, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !5 = metadata !{metadata !6, metadata !7, metadata !9}
@@ -48,3 +47,5 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !14 = metadata !{i32 786689, metadata !1, metadata !"y", metadata !2, i32 7, metadata !9, i32 0, null} ; [ DW_TAG_arg_variable ]
 !15 = metadata !{i32 7, i32 0, metadata !16, null}
 !16 = metadata !{i32 786443, metadata !1, i32 7, i32 0} ; [ DW_TAG_lexical_block ]
+!17 = metadata !{metadata !1}
+!18 = metadata !{metadata !"a.c", metadata !"/tmp/"}

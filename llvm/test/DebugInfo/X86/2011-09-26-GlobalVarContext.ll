@@ -22,7 +22,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 720942, i32 0, metadata !6, metadata !"f", metadata !"f", metadata !"", metadata !6, i32 3, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 0, i1 false, i32 ()* @f, null, null, metadata !10} ; [ DW_TAG_subprogram ]
-!6 = metadata !{i32 720937, metadata !"test.c", metadata !"/work/llvm/vanilla/test/DebugInfo", null} ; [ DW_TAG_file_type ]
+!6 = metadata !{i32 720937, metadata !20} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 720932, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
@@ -35,6 +35,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !17 = metadata !{i32 4, i32 9, metadata !16, null}
 !18 = metadata !{i32 4, i32 23, metadata !16, null}
 !19 = metadata !{i32 5, i32 5, metadata !16, null}
+!20 = metadata !{metadata !"test.c", metadata !"/work/llvm/vanilla/test/DebugInfo"}
 
 ; CHECK: DW_TAG_variable [3]
 ; CHECK: DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000043] = "GLB")

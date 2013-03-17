@@ -73,17 +73,10 @@ define i32 @get5(i32 %a) nounwind optsize ssp {
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
-!40 = metadata !{metadata !1, metadata !6, metadata !7, metadata !8, metadata !9}
-!42 = metadata !{metadata !10, metadata !11}
-!43 = metadata !{metadata !13, metadata !14}
-!44 = metadata !{metadata !16, metadata !17}
-!45 = metadata !{metadata !19, metadata !20}
-!46 = metadata !{metadata !27, metadata !28}
-!41 = metadata !{metadata !22, metadata !23, metadata !24, metadata !25, metadata !26}
 
 !0 = metadata !{i32 786449, i32 0, i32 12, metadata !2, metadata !"clang", i1 true, metadata !"", i32 0, null, null, metadata !40, metadata !41, null} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 786478, i32 0, metadata !2, metadata !"get1", metadata !"get1", metadata !"", metadata !2, i32 5, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32)* @get1, null, null, metadata !42, i32 5} ; [ DW_TAG_subprogram ]
-!2 = metadata !{i32 786473, metadata !"ss3.c", metadata !"/private/tmp", metadata !0} ; [ DW_TAG_file_type ]
+!2 = metadata !{i32 786473, metadata !47} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 786453, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, metadata !0, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
@@ -121,3 +114,11 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !37 = metadata !{i32 14, i32 32, metadata !21, null}
 !38 = metadata !{i32 17, i32 16, metadata !9, null}
 !39 = metadata !{i32 17, i32 32, metadata !29, null}
+!40 = metadata !{metadata !1, metadata !6, metadata !7, metadata !8, metadata !9}
+!41 = metadata !{metadata !22, metadata !23, metadata !24, metadata !25, metadata !26}
+!42 = metadata !{metadata !10, metadata !11}
+!43 = metadata !{metadata !13, metadata !14}
+!44 = metadata !{metadata !16, metadata !17}
+!45 = metadata !{metadata !19, metadata !20}
+!46 = metadata !{metadata !27, metadata !28}
+!47 = metadata !{metadata !"ss3.c", metadata !"/private/tmp"}

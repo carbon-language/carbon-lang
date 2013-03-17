@@ -40,12 +40,10 @@ declare float @_Z2f3f(float) optsize
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
-!16 = metadata !{metadata !1}
-!17 = metadata !{metadata !5, metadata !8}
 
 !0 = metadata !{i32 786449, i32 0, i32 4, metadata !2, metadata !"clang version 3.0 (trunk 130845)", i1 true, metadata !"", i32 0, null, null, metadata !16, null, null} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 786478, i32 0, metadata !2, metadata !"foo", metadata !"foo", metadata !"_Z3foov", metadata !2, i32 5, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, void ()* @_Z3foov, null, null, metadata !17, i32 5} ; [ DW_TAG_subprogram ]
-!2 = metadata !{i32 786473, metadata !"k.cc", metadata !"/private/tmp", metadata !0} ; [ DW_TAG_file_type ]
+!2 = metadata !{i32 786473, metadata !18} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 786453, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{null}
 !5 = metadata !{i32 786688, metadata !6, metadata !"k", metadata !2, i32 6, metadata !7, i32 0, null} ; [ DW_TAG_auto_variable ]
@@ -59,3 +57,6 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !13 = metadata !{i32 8, i32 20, metadata !9, null}
 !14 = metadata !{i32 7, i32 20, metadata !10, null}
 !15 = metadata !{i32 10, i32 1, metadata !6, null}
+!16 = metadata !{metadata !1}
+!17 = metadata !{metadata !5, metadata !8}
+!18 = metadata !{metadata !"k.cc", metadata !"/private/tmp"}

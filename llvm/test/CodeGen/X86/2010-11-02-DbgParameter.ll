@@ -16,11 +16,9 @@ entry:
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!2}
-!15 = metadata !{metadata !0}
-!16 = metadata !{metadata !6}
 
 !0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"foo", metadata !"foo", metadata !"", metadata !1, i32 3, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32 (%struct.bar*)* @foo, null, null, metadata !16, i32 3} ; [ DW_TAG_subprogram ]
-!1 = metadata !{i32 786473, metadata !"one.c", metadata !"/private/tmp"} ; [ DW_TAG_file_type ]
+!1 = metadata !{i32 786473, metadata !17} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, i32 0, i32 12, metadata !1, metadata !"clang version 2.9 (trunk 117922)", i1 true, metadata !"", i32 0, null, null, metadata !15, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
@@ -34,3 +32,6 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !12 = metadata !{i32 3, i32 47, metadata !0, null}
 !13 = metadata !{i32 4, i32 2, metadata !14, null}
 !14 = metadata !{i32 786443, metadata !0, i32 3, i32 50, metadata !1, i32 0} ; [ DW_TAG_lexical_block ]
+!15 = metadata !{metadata !0}
+!16 = metadata !{metadata !6}
+!17 = metadata !{metadata !"one.c", metadata !"/private/tmp"}

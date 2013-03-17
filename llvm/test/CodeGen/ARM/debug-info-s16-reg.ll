@@ -62,13 +62,9 @@ declare i32 @puts(i8* nocapture) nounwind optsize
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!2}
-!47 = metadata !{metadata !0, metadata !6, metadata !7}
-!48 = metadata !{metadata !8, metadata !10, metadata !12}
-!49 = metadata !{metadata !14, metadata !15, metadata !16}
-!50 = metadata !{metadata !17, metadata !18, metadata !22}
 
 !0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"inlineprinter", metadata !"inlineprinter", metadata !"", metadata !1, i32 5, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i8*, float, i8)* @inlineprinter, null, null, metadata !48, i32 5} ; [ DW_TAG_subprogram ]
-!1 = metadata !{i32 786473, metadata !"a.c", metadata !"/private/tmp", metadata !2} ; [ DW_TAG_file_type ]
+!1 = metadata !{i32 786473, metadata !51} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, i32 0, i32 12, metadata !1, metadata !"clang version 3.0 (trunk 129915)", i1 true, metadata !"", i32 0, null, null, metadata !47, null, null} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
@@ -114,3 +110,8 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !44 = metadata !{i32 6, i32 3, metadata !28, metadata !40}
 !45 = metadata !{i32 22, i32 3, metadata !23, null}
 !46 = metadata !{i32 23, i32 1, metadata !23, null}
+!47 = metadata !{metadata !0, metadata !6, metadata !7}
+!48 = metadata !{metadata !8, metadata !10, metadata !12}
+!49 = metadata !{metadata !14, metadata !15, metadata !16}
+!50 = metadata !{metadata !17, metadata !18, metadata !22}
+!51 = metadata !{metadata !"a.c", metadata !"/private/tmp"}

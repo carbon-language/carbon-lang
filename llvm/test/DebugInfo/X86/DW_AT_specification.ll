@@ -20,7 +20,7 @@ entry:
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 720942, i32 0, null, metadata !"bar", metadata !"bar", metadata !"_ZN3foo3barEv", metadata !6, i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void ()* @_ZN3foo3barEv, null, metadata !11, metadata !16, i32 4} ; [ DW_TAG_subprogram ]
-!6 = metadata !{i32 720937, metadata !"nsNativeAppSupportBase.ii", metadata !"/Users/espindola/mozilla-central/obj-x86_64-apple-darwin11.2.0/toolkit/library", null} ; [ DW_TAG_file_type ]
+!6 = metadata !{i32 720937, metadata !27} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{null, metadata !9}
 !9 = metadata !{i32 786447, i32 0, metadata !"", i32 0, i32 0, i64 64, i64 64, i64 0, i32 64, metadata !10} ; [ DW_TAG_pointer_type ]
@@ -38,3 +38,4 @@ entry:
 !22 = metadata !{i32 720932, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !25 = metadata !{i32 6, i32 1, metadata !26, null}
 !26 = metadata !{i32 786443, metadata !5, i32 4, i32 17, metadata !6, i32 0} ; [ DW_TAG_lexical_block ]
+!27 = metadata !{metadata !"nsNativeAppSupportBase.ii", metadata !"/Users/espindola/mozilla-central/obj-x86_64-apple-darwin11.2.0/toolkit/library"}

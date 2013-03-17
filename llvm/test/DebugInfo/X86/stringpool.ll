@@ -9,8 +9,9 @@
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 720948, i32 0, null, metadata !"yyyy", metadata !"yyyy", metadata !"", metadata !6, i32 1, metadata !7, i32 0, i32 1, i32* @yyyy, null} ; [ DW_TAG_variable ]
-!6 = metadata !{i32 720937, metadata !"z.c", metadata !"/home/nicholas", null} ; [ DW_TAG_file_type ]
+!6 = metadata !{i32 720937, metadata !8} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720932, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!8 = metadata !{metadata !"z.c", metadata !"/home/nicholas"}
 
 ; Verify that we refer to 'yyyy' with a relocation.
 ; LINUX:      .long   .Linfo_string3          # DW_AT_name

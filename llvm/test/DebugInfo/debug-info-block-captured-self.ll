@@ -78,7 +78,7 @@ define internal void @"__24-[Main initWithContext:]_block_invoke_2"(i8* %.block_
 
 !llvm.dbg.cu = !{!0}
 !0 = metadata !{i32 786449, i32 0, i32 16, metadata !1, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 2, metadata !2, metadata !4, metadata !23, metadata !15, metadata !""} ; [ DW_TAG_compile_unit ] [llvm/tools/clang/test/CodeGenObjC/debug-info-block-captured-self.m] [DW_LANG_ObjC]
-!1 = metadata !{i32 786473, metadata !"llvm/tools/clang/test/CodeGenObjC/debug-info-block-captured-self.m", metadata !""} ; [ DW_TAG_file_type ]
+!1 = metadata !{i32 786473, metadata !107} ; [ DW_TAG_file_type ]
 !2 = metadata !{metadata !3}
 !3 = metadata !{i32 786436, null, metadata !"", metadata !1, i32 20, i64 32, i64 32, i32 0, i32 0, null, metadata !4, i32 0, i32 0} ; [ DW_TAG_enumeration_type ] [line 20, size 32, align 32, offset 0] [from ]
 !4 = metadata !{}
@@ -103,3 +103,4 @@ define internal void @"__24-[Main initWithContext:]_block_invoke_2"(i8* %.block_
 !103 = metadata !{i32 35, i32 0, metadata !42, null}
 !105 = metadata !{i32 786688, metadata !42, metadata !"self", metadata !1, i32 40, metadata !34, i32 0, i32 0, i64 1, i64 32} ; [ DW_TAG_auto_variable ] [self] [line 40]
 !106 = metadata !{i32 40, i32 0, metadata !42, null}
+!107 = metadata !{metadata !"llvm/tools/clang/test/CodeGenObjC/debug-info-block-captured-self.m", metadata !""}

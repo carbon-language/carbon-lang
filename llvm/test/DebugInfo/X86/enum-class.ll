@@ -10,7 +10,7 @@
 !0 = metadata !{i32 786449, i32 0, i32 4, metadata !4, metadata !"clang version 3.2 (trunk 157269) (llvm/trunk 157264)", i1 false, metadata !"", i32 0, metadata !1, metadata !15, metadata !15, metadata !17, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{metadata !3, metadata !8, metadata !12}
 !3 = metadata !{i32 786436, null, metadata !"A", metadata !4, i32 1, i64 32, i64 32, i32 0, i32 0, metadata !5, metadata !6, i32 0, i32 0} ; [ DW_TAG_enumeration_type ]
-!4 = metadata !{i32 786473, metadata !"foo.cpp", metadata !"/Users/echristo/tmp", null} ; [ DW_TAG_file_type ]
+!4 = metadata !{i32 786473, metadata !22} ; [ DW_TAG_file_type ]
 !5 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !6 = metadata !{metadata !7}
 !7 = metadata !{i32 786472, metadata !"A1", i64 1} ; [ DW_TAG_enumerator ]
@@ -26,6 +26,7 @@
 !19 = metadata !{i32 786484, i32 0, null, metadata !"a", metadata !"a", metadata !"", metadata !4, i32 4, metadata !3, i32 0, i32 1, i32* @a, null} ; [ DW_TAG_variable ]
 !20 = metadata !{i32 786484, i32 0, null, metadata !"b", metadata !"b", metadata !"", metadata !4, i32 5, metadata !8, i32 0, i32 1, i64* @b, null} ; [ DW_TAG_variable ]
 !21 = metadata !{i32 786484, i32 0, null, metadata !"c", metadata !"c", metadata !"", metadata !4, i32 6, metadata !12, i32 0, i32 1, i32* @c, null} ; [ DW_TAG_variable ]
+!22 = metadata !{metadata !"foo.cpp", metadata !"/Users/echristo/tmp"}
 
 ; CHECK: DW_TAG_enumeration_type [3]
 ; CHECK: DW_AT_type [DW_FORM_ref4]      (cu + 0x0026 => {0x00000026})

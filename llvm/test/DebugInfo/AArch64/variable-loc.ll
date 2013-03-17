@@ -73,7 +73,7 @@ declare i32 @printf(i8*, ...)
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5, metadata !11, metadata !14}
 !5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"populate_array", metadata !"populate_array", metadata !"", metadata !6, i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i32*, i32)* @populate_array, null, null, metadata !1, i32 4} ; [ DW_TAG_subprogram ] [line 4] [def] [populate_array]
-!6 = metadata !{i32 786473, metadata !"simple.c", metadata !"/home/timnor01/a64-trunk/build", null} ; [ DW_TAG_file_type ]
+!6 = metadata !{i32 786473, metadata !29} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{null, metadata !9, metadata !10}
 !9 = metadata !{i32 786447, null, metadata !"", null, i32 0, i64 64, i64 64, i64 0, i32 0, metadata !10} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from int]
@@ -95,3 +95,4 @@ declare i32 @printf(i8*, ...)
 !26 = metadata !{i32 23, i32 9, metadata !18, null}
 !27 = metadata !{i32 24, i32 3, metadata !18, null}
 !28 = metadata !{i32 26, i32 3, metadata !18, null}
+!29 = metadata !{metadata !"simple.c", metadata !"/home/timnor01/a64-trunk/build"}

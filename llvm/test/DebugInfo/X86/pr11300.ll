@@ -35,7 +35,7 @@ entry:
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5, metadata !20}
 !5 = metadata !{i32 720942, i32 0, metadata !6, metadata !"zed", metadata !"zed", metadata !"_Z3zedP3foo", metadata !6, i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void (%struct.foo*)* @_Z3zedP3foo, null, null, metadata !18, i32 4} ; [ DW_TAG_subprogram ]
-!6 = metadata !{i32 720937, metadata !"/home/espindola/llvm/test.cc", metadata !"/home/espindola/tmpfs/build"} ; [ DW_TAG_file_type ]
+!6 = metadata !{i32 720937, metadata !32} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{null, metadata !9}
 !9 = metadata !{i32 786447, null, metadata !"", null, i32 0, i64 64, i64 64, i64 0, i32 0, metadata !10} ; [ DW_TAG_pointer_type ]
@@ -61,3 +61,4 @@ entry:
 !29 = metadata !{i32 2, i32 8, metadata !20, null}
 !30 = metadata !{i32 2, i32 15, metadata !31, null}
 !31 = metadata !{i32 786443, metadata !20, i32 2, i32 14, metadata !6, i32 1} ; [ DW_TAG_lexical_block ]
+!32 = metadata !{metadata !"/home/espindola/llvm/test.cc", metadata !"/home/espindola/tmpfs/build"}

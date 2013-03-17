@@ -36,7 +36,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"foo", metadata !"foo", metadata !"", metadata !6, i32 5, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, void ()* @foo, null, null, metadata !1, i32 5} ; [ DW_TAG_subprogram ]
-!6 = metadata !{i32 786473, metadata !"foo.c", metadata !"/tmp", null} ; [ DW_TAG_file_type ]
+!6 = metadata !{i32 786473, metadata !32} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{null}
 !9 = metadata !{i32 786449, i32 0, i32 12, metadata !6, metadata !"clang version 3.2 (trunk 156513)", i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !10, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
@@ -61,6 +61,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !29 = metadata !{i32 786443, metadata !12, i32 11, i32 34, metadata !6, i32 0} ; [ DW_TAG_lexical_block ]
 !30 = metadata !{i32 13, i32 3, metadata !29, null}
 !31 = metadata !{i32 14, i32 3, metadata !29, null}
+!32 = metadata !{metadata !"foo.c", metadata !"/tmp"}
 
 ; This test is simple to be cross platform (many targets don't yet have
 ; sufficiently good DWARF emission and/or dumping)

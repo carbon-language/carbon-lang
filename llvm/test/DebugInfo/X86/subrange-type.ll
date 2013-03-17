@@ -24,7 +24,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"main", metadata !"main", metadata !"", metadata !6, i32 2, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 ()* @main, null, null, metadata !1, i32 3} ; [ DW_TAG_subprogram ] [line 2] [def] [scope 3] [main]
-!6 = metadata !{i32 786473, metadata !"foo.c", metadata !"/usr/local/google/home/echristo/tmp"} ; [ DW_TAG_file_type ]
+!6 = metadata !{i32 786473, metadata !17} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
@@ -35,3 +35,4 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !14 = metadata !{i32 786465, i64 0, i64 2}        ; [ DW_TAG_subrange_type ] [0, 1]
 !15 = metadata !{i32 4, i32 0, metadata !11, null}
 !16 = metadata !{i32 6, i32 0, metadata !11, null}
+!17 = metadata !{metadata !"foo.c", metadata !"/usr/local/google/home/echristo/tmp"}

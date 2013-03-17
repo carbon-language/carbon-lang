@@ -17,11 +17,9 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 declare i32 @bar() nounwind readnone
 
 !llvm.dbg.cu = !{!2}
-!13 = metadata !{metadata !0}
-!14 = metadata !{metadata !6}
 
 !0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"foobar", metadata !"foobar", metadata !"foobar", metadata !1, i32 12, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true, i32 ()* @foobar, null, null, metadata !14, i32 0}
-!1 = metadata !{i32 786473, metadata !"mu.c", metadata !"/private/tmp"} ; [ DW_TAG_file_type ]
+!1 = metadata !{i32 786473, metadata !15} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, i32 0, i32 12, metadata !1, metadata !"clang version 2.9 (trunk 114183)", i1 true, metadata !"", i32 0, null, null, metadata !13, null, metadata !""}
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null}
 !4 = metadata !{metadata !5}
@@ -33,3 +31,6 @@ declare i32 @bar() nounwind readnone
 !10 = metadata !{i32 23, i32 3, metadata !7, null}
 !11 = metadata !{i32 17, i32 3, metadata !7, null}
 !12 = metadata !{i32 18, i32 3, metadata !7, null}
+!13 = metadata !{metadata !0}
+!14 = metadata !{metadata !6}
+!15 = metadata !{metadata !"mu.c", metadata !"/private/tmp"}

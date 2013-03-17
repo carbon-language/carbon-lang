@@ -177,8 +177,6 @@ namespace llvm {
       if (DbgNode && !isFile())
         DbgNode = 0;
     }
-    StringRef getFilename() const  { return getStringField(1);   }
-    StringRef getDirectory() const { return getStringField(2);   }
     bool Verify() const;
   };
 

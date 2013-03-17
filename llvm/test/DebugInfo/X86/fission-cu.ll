@@ -9,8 +9,9 @@
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786484, i32 0, null, metadata !"a", metadata !"a", metadata !"", metadata !6, i32 1, metadata !7, i32 0, i32 1, i32* @a, null} ; [ DW_TAG_variable ] [a] [line 1] [def]
-!6 = metadata !{i32 786473, metadata !"baz.c", metadata !"/usr/local/google/home/echristo/tmp", null} ; [ DW_TAG_file_type ]
+!6 = metadata !{i32 786473, metadata !8} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!8 = metadata !{metadata !"baz.c", metadata !"/usr/local/google/home/echristo/tmp"}
 
 ; Check that the skeleton compile unit contains the proper attributes:
 ; This DIE has the following attributes: DW_AT_comp_dir, DW_AT_stmt_list,

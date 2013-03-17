@@ -13,10 +13,9 @@ entry:
 declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!2}
-!13 = metadata !{metadata !0}
 
 !0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"main", metadata !"main", metadata !"", metadata !1, i32 3, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 0, i1 false, i32 ()* @main, null, null, null, i32 3} ; [ DW_TAG_subprogram ]
-!1 = metadata !{i32 786473, metadata !"array.c", metadata !"/private/tmp", metadata !2} ; [ DW_TAG_file_type ]
+!1 = metadata !{i32 786473, metadata !14} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, i32 0, i32 12, metadata !1, metadata !"clang version 3.0 (trunk 129138)", i1 false, metadata !"", i32 0, null, null, metadata !13, null, null} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
@@ -33,3 +32,5 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !10 = metadata !{i32 786465, i64 0, i64 -1}        ; [ DW_TAG_subrange_type ]
 !11 = metadata !{i32 4, i32 7, metadata !7, null}
 !12 = metadata !{i32 5, i32 3, metadata !7, null}
+!13 = metadata !{metadata !0}
+!14 = metadata !{metadata !"array.c", metadata !"/private/tmp"}

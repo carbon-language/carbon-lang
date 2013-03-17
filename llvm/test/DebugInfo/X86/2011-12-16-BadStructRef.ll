@@ -92,7 +92,7 @@ entry:
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5, metadata !9}
 !5 = metadata !{i32 720898, null, metadata !"bar", metadata !6, i32 9, i64 128, i64 64, i32 0, i32 0, null, metadata !7, i32 0, null, null} ; [ DW_TAG_class_type ]
-!6 = metadata !{i32 720937, metadata !"main.cpp", metadata !"/Users/echristo/tmp/bad-struct-ref", null} ; [ DW_TAG_file_type ]
+!6 = metadata !{i32 720937, metadata !82} ; [ DW_TAG_file_type ]
 !7 = metadata !{metadata !8, metadata !19, metadata !21}
 !8 = metadata !{i32 720909, metadata !5, metadata !"b", metadata !6, i32 11, i64 32, i64 32, i64 0, i32 0, metadata !9} ; [ DW_TAG_member ]
 !9 = metadata !{i32 720898, null, metadata !"baz", metadata !6, i32 3, i64 32, i64 32, i32 0, i32 0, null, metadata !10, i32 0, null, null} ; [ DW_TAG_class_type ]
@@ -167,3 +167,4 @@ entry:
 !79 = metadata !{i32 6, i32 23, metadata !46, null}
 !80 = metadata !{i32 6, i32 24, metadata !81, null}
 !81 = metadata !{i32 720907, metadata !46, i32 6, i32 23, metadata !6, i32 2} ; [ DW_TAG_lexical_block ]
+!82 = metadata !{metadata !"main.cpp", metadata !"/Users/echristo/tmp/bad-struct-ref"}

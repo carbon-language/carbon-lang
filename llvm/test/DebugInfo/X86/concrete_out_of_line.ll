@@ -38,7 +38,7 @@ declare void @_Z8moz_freePv(i8*)
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5, metadata !23, metadata !27, metadata !31}
 !5 = metadata !{i32 720942, i32 0, null, metadata !"Release", metadata !"Release", metadata !"_ZN17nsAutoRefCnt7ReleaseEv", metadata !6, i32 14, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32* null, null, metadata !12, metadata !20, i32 14} ; [ DW_TAG_subprogram ]
-!6 = metadata !{i32 720937, metadata !"nsAutoRefCnt.ii", metadata !"/Users/espindola/mozilla-central/obj-x86_64-apple-darwin11.2.0/netwerk/base/src", null} ; [ DW_TAG_file_type ]
+!6 = metadata !{i32 720937, metadata !59} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{metadata !9, metadata !10}
 !9 = metadata !{i32 720932, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
@@ -85,3 +85,4 @@ declare void @_Z8moz_freePv(i8*)
 !56 = metadata !{i32 18, i32 41, metadata !23, metadata !52}
 !57 = metadata !{i32 19, i32 3, metadata !55, metadata !58}
 !58 = metadata !{i32 18, i32 41, metadata !23, null}
+!59 = metadata !{metadata !"nsAutoRefCnt.ii", metadata !"/Users/espindola/mozilla-central/obj-x86_64-apple-darwin11.2.0/netwerk/base/src"}
