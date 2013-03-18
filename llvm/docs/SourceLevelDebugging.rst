@@ -1811,11 +1811,11 @@ values, we can clarify the contents of the ``BUCKETS``, ``HASHES`` and
   |  HEADER.header_data_len | uint32_t
   |  HEADER_DATA            | HeaderData
   |-------------------------|
-  |  BUCKETS                | uint32_t[bucket_count] // 32 bit hash indexes
+  |  BUCKETS                | uint32_t[n_buckets] // 32 bit hash indexes
   |-------------------------|
-  |  HASHES                 | uint32_t[hashes_count] // 32 bit hash values
+  |  HASHES                 | uint32_t[n_hashes] // 32 bit hash values
   |-------------------------|
-  |  OFFSETS                | uint32_t[hashes_count] // 32 bit offsets to hash value data
+  |  OFFSETS                | uint32_t[n_hashes] // 32 bit offsets to hash value data
   |-------------------------|
   |  ALL HASH DATA          |
   `-------------------------'
