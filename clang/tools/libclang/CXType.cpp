@@ -155,6 +155,8 @@ CXType clang_getCursorType(CXCursor C) {
       return MakeCXType(PD->getType(), TU);
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
       return MakeCXType(FD->getType(), TU);
+    if (const FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(D))
+      return MakeCXType(FTD->getTemplatedDecl()->getType(), TU);
     return MakeCXType(QualType(), TU);
   }
   
