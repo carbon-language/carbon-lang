@@ -7834,7 +7834,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
                               Chain.getValue(1));
   }
 
-  if (Subtarget->isTargetWindows()) {
+  if (Subtarget->isTargetWindows() || Subtarget->isTargetMingw()) {
     // Just use the implicit TLS architecture
     // Need to generate someting similar to:
     //   mov     rdx, qword [gs:abs 58H]; Load pointer to ThreadLocalStorage
@@ -7854,18 +7854,19 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
     SDValue Chain = DAG.getEntryNode();
 
     // Get the Thread Pointer, which is %fs:__tls_array (32-bit) or
-    // %gs:0x58 (64-bit).
+    // %gs:0x58 (64-bit). On MinGW, __tls_array is not available, so directly
+    // use its literal value of 0x2C.
     Value *Ptr = Constant::getNullValue(Subtarget->is64Bit()
                                         ? Type::getInt8PtrTy(*DAG.getContext(),
                                                              256)
                                         : Type::getInt32PtrTy(*DAG.getContext(),
                                                               257));
 
-    SDValue ThreadPointer = DAG.getLoad(getPointerTy(), dl, Chain,
-                                        Subtarget->is64Bit()
-                                        ? DAG.getIntPtrConstant(0x58)
-                                        : DAG.getExternalSymbol("_tls_array",
-                                                                getPointerTy()),
+    SDValue TlsArray = Subtarget->is64Bit() ? DAG.getIntPtrConstant(0x58) :
+      (Subtarget->isTargetMingw() ? DAG.getIntPtrConstant(0x2C) :
+        DAG.getExternalSymbol("_tls_array", getPointerTy()));
+
+    SDValue ThreadPointer = DAG.getLoad(getPointerTy(), dl, Chain, TlsArray,
                                         MachinePointerInfo(Ptr),
                                         false, false, false, 0);
 
