@@ -380,13 +380,13 @@ CountValue *PPCCTRLoops::getTripCount(MachineLoop *L,
         assert(InitialValue->isReg() && "Expecting register for init value");
         unsigned InitialValueReg = InitialValue->getReg();
   
-        const MachineInstr *DefInstr = MRI->getVRegDef(InitialValueReg);
+        MachineInstr *DefInstr = MRI->getVRegDef(InitialValueReg);
   
         // Here we need to look for an immediate load (an li or lis/ori pair).
         if (DefInstr && (DefInstr->getOpcode() == PPC::ORI8 ||
                          DefInstr->getOpcode() == PPC::ORI)) {
           int64_t start = (short) DefInstr->getOperand(2).getImm();
-          const MachineInstr *DefInstr2 =
+          MachineInstr *DefInstr2 =
             MRI->getVRegDef(DefInstr->getOperand(0).getReg());
           if (DefInstr2 && (DefInstr2->getOpcode() == PPC::LIS8 ||
                             DefInstr2->getOpcode() == PPC::LIS)) {
@@ -399,6 +399,10 @@ CountValue *PPCCTRLoops::getTripCount(MachineLoop *L,
             if ((count % iv_value) != 0) {
               return 0;
             }
+
+            OldInsts.push_back(DefInstr);
+            OldInsts.push_back(DefInstr2);
+
             return new CountValue(count/iv_value);
           }
         } else if (DefInstr && (DefInstr->getOpcode() == PPC::LI8 ||
@@ -409,6 +413,9 @@ CountValue *PPCCTRLoops::getTripCount(MachineLoop *L,
           if ((count % iv_value) != 0) {
             return 0;
           }
+
+          OldInsts.push_back(DefInstr);
+
           return new CountValue(count/iv_value);
         } else if (iv_value == 1 || iv_value == -1) {
           // We can't determine a constant starting value.
