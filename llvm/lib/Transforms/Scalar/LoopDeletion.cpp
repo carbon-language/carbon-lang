@@ -34,13 +34,9 @@ namespace {
     }
 
     // Possibly eliminate loop L if it is dead.
-    bool runOnLoop(Loop* L, LPPassManager& LPM);
+    bool runOnLoop(Loop *L, LPPassManager &LPM);
 
-    bool IsLoopDead(Loop* L, SmallVector<BasicBlock*, 4>& exitingBlocks,
-                    SmallVector<BasicBlock*, 4>& exitBlocks,
-                    bool &Changed, BasicBlock *Preheader);
-
-    virtual void getAnalysisUsage(AnalysisUsage& AU) const {
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<DominatorTree>();
       AU.addRequired<LoopInfo>();
       AU.addRequired<ScalarEvolution>();
@@ -53,6 +49,12 @@ namespace {
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreservedID(LCSSAID);
     }
+
+  private:
+    bool isLoopDead(Loop *L, SmallVector<BasicBlock*, 4> &exitingBlocks,
+                    SmallVector<BasicBlock*, 4> &exitBlocks,
+                    bool &Changed, BasicBlock *Preheader);
+
   };
 }
 
@@ -67,18 +69,18 @@ INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_END(LoopDeletion, "loop-deletion",
                 "Delete dead loops", false, false)
 
-Pass* llvm::createLoopDeletionPass() {
+Pass *llvm::createLoopDeletionPass() {
   return new LoopDeletion();
 }
 
-/// IsLoopDead - Determined if a loop is dead.  This assumes that we've already
+/// isLoopDead - Determined if a loop is dead.  This assumes that we've already
 /// checked for unique exit and exiting blocks, and that the code is in LCSSA
 /// form.
-bool LoopDeletion::IsLoopDead(Loop* L,
-                              SmallVector<BasicBlock*, 4>& exitingBlocks,
-                              SmallVector<BasicBlock*, 4>& exitBlocks,
+bool LoopDeletion::isLoopDead(Loop *L,
+                              SmallVector<BasicBlock*, 4> &exitingBlocks,
+                              SmallVector<BasicBlock*, 4> &exitBlocks,
                               bool &Changed, BasicBlock *Preheader) {
-  BasicBlock* exitBlock = exitBlocks[0];
+  BasicBlock *exitBlock = exitBlocks[0];
 
   // Make sure that all PHI entries coming from the loop are loop invariant.
   // Because the code is in LCSSA form, any values used outside of the loop
@@ -86,19 +88,19 @@ bool LoopDeletion::IsLoopDead(Loop* L,
   // sufficient to guarantee that no loop-variant values are used outside
   // of the loop.
   BasicBlock::iterator BI = exitBlock->begin();
-  while (PHINode* P = dyn_cast<PHINode>(BI)) {
-    Value* incoming = P->getIncomingValueForBlock(exitingBlocks[0]);
+  while (PHINode *P = dyn_cast<PHINode>(BI)) {
+    Value *incoming = P->getIncomingValueForBlock(exitingBlocks[0]);
 
     // Make sure all exiting blocks produce the same incoming value for the exit
     // block.  If there are different incoming values for different exiting
     // blocks, then it is impossible to statically determine which value should
     // be used.
-    for (unsigned i = 1; i < exitingBlocks.size(); ++i) {
+    for (unsigned i = 1, e = exitingBlocks.size(); i < e; ++i) {
       if (incoming != P->getIncomingValueForBlock(exitingBlocks[i]))
         return false;
     }
 
-    if (Instruction* I = dyn_cast<Instruction>(incoming))
+    if (Instruction *I = dyn_cast<Instruction>(incoming))
       if (!L->makeLoopInvariant(I, Changed, Preheader->getTerminator()))
         return false;
 
@@ -127,10 +129,10 @@ bool LoopDeletion::IsLoopDead(Loop* L,
 /// so could change the halting/non-halting nature of a program.
 /// NOTE: This entire process relies pretty heavily on LoopSimplify and LCSSA
 /// in order to make various safety checks work.
-bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
+bool LoopDeletion::runOnLoop(Loop *L, LPPassManager &LPM) {
   // We can only remove the loop if there is a preheader that we can
   // branch from after removing it.
-  BasicBlock* preheader = L->getLoopPreheader();
+  BasicBlock *preheader = L->getLoopPreheader();
   if (!preheader)
     return false;
 
@@ -158,19 +160,19 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
 
   // Finally, we have to check that the loop really is dead.
   bool Changed = false;
-  if (!IsLoopDead(L, exitingBlocks, exitBlocks, Changed, preheader))
+  if (!isLoopDead(L, exitingBlocks, exitBlocks, Changed, preheader))
     return Changed;
 
   // Don't remove loops for which we can't solve the trip count.
   // They could be infinite, in which case we'd be changing program behavior.
-  ScalarEvolution& SE = getAnalysis<ScalarEvolution>();
+  ScalarEvolution &SE = getAnalysis<ScalarEvolution>();
   const SCEV *S = SE.getMaxBackedgeTakenCount(L);
   if (isa<SCEVCouldNotCompute>(S))
     return Changed;
 
   // Now that we know the removal is safe, remove the loop by changing the
   // branch from the preheader to go to the single exit block.
-  BasicBlock* exitBlock = exitBlocks[0];
+  BasicBlock *exitBlock = exitBlocks[0];
 
   // Because we're deleting a large chunk of code at once, the sequence in which
   // we remove things is very important to avoid invalidation issues.  Don't
@@ -182,14 +184,14 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   SE.forgetLoop(L);
 
   // Connect the preheader directly to the exit block.
-  TerminatorInst* TI = preheader->getTerminator();
+  TerminatorInst *TI = preheader->getTerminator();
   TI->replaceUsesOfWith(L->getHeader(), exitBlock);
 
   // Rewrite phis in the exit block to get their inputs from
   // the preheader instead of the exiting block.
-  BasicBlock* exitingBlock = exitingBlocks[0];
+  BasicBlock *exitingBlock = exitingBlocks[0];
   BasicBlock::iterator BI = exitBlock->begin();
-  while (PHINode* P = dyn_cast<PHINode>(BI)) {
+  while (PHINode *P = dyn_cast<PHINode>(BI)) {
     int j = P->getBasicBlockIndex(exitingBlock);
     assert(j >= 0 && "Can't find exiting block in exit block's phi node!");
     P->setIncomingBlock(j, preheader);
@@ -200,7 +202,7 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
 
   // Update the dominator tree and remove the instructions and blocks that will
   // be deleted from the reference counting scheme.
-  DominatorTree& DT = getAnalysis<DominatorTree>();
+  DominatorTree &DT = getAnalysis<DominatorTree>();
   SmallVector<DomTreeNode*, 8> ChildNodes;
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
        LI != LE; ++LI) {
@@ -230,7 +232,7 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
 
   // Finally, the blocks from loopinfo.  This has to happen late because
   // otherwise our loop iterators won't work.
-  LoopInfo& loopInfo = getAnalysis<LoopInfo>();
+  LoopInfo &loopInfo = getAnalysis<LoopInfo>();
   SmallPtrSet<BasicBlock*, 8> blocks;
   blocks.insert(L->block_begin(), L->block_end());
   for (SmallPtrSet<BasicBlock*,8>::iterator I = blocks.begin(),
