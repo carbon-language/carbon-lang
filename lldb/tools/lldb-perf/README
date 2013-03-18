@@ -11,9 +11,9 @@ Its main concepts are:
 
 Tests cases should be added as targets to the lldbperf.xcodeproj project.  It is probably easiest to duplicate one of the existing targets.
 
-In order to write a test based on lldb-perf, you need to subclass lldb::perf::TestCase, as in:
+In order to write a test based on lldb-perf, you need to subclass lldb_perf::TestCase, as in:
 
-using namespace lldb::perf;
+using namespace lldb_perf;
 
 class FormattersTest : public TestCase
 {
@@ -37,9 +37,9 @@ private:
 A TimeMeasurement is, obviously, a class that measures “how much time to run this block of code”. the block of code is passed as an std::function (you can construct with a lambda!) - you need however to give the prototype of your block of code. in this example, we run blocks of code that take an SBValue and return nothing. other things are possible.
 These blocks look like:
         m_dump_std_vector_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "std-vector", "time to dump an std::vector");
-Here we are saying: make me a measurement named “std-vector”, whose description is “time to dump an std::vector” and that takes the time required to call lldb::perf::Xcode::FetchVariable(value,1,false)
+Here we are saying: make me a measurement named “std-vector”, whose description is “time to dump an std::vector” and that takes the time required to call lldb_perf::Xcode::FetchVariable(value,1,false)
 
 The Xcode class is a collection of utility functions that replicate common Xcode patterns (FetchVariable unsurprisingly calls API functions that Xcode could use when populating a variables view entry - the 1 means “expand 1 level of depth” and the 
 false means “do not dump the data to stdout”)
@@ -48,40 +48,40 @@ A full constructor for a TestCase looks like:
     FormattersTest () : TestCase()
     {
         m_dump_std_vector_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "std-vector", "time to dump an std::vector");
         m_dump_std_list_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "std-list", "time to dump an std::list");
         m_dump_std_map_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "std-map", "time to dump an std::map");
         m_dump_std_string_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "std-string", "time to dump an std::string");
         
         m_dump_nsstring_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,0,false);
+            lldb_perf::Xcode::FetchVariable (value,0,false);
         }, "ns-string", "time to dump an NSString");
         
         m_dump_nsarray_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "ns-array", "time to dump an NSArray");
         
         m_dump_nsdictionary_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "ns-dictionary", "time to dump an NSDictionary");
         
         m_dump_nsset_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "ns-set", "time to dump an NSSet");
         
         m_dump_nsbundle_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "ns-bundle", "time to dump an NSBundle");
         
         m_dump_nsdate_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,0,false);
+            lldb_perf::Xcode::FetchVariable (value,0,false);
         }, "ns-date", "time to dump an NSDate");
     }
 
@@ -103,22 +103,17 @@ The last thing you want to do in setup is call Launch():
 	Launch (const char** args, const char* cwd);
 This ensures your target is now alive. Make sure to have a breakpoint created :)
 Once you launched, the event loop is entered. The event loop waits for stops, and when it gets one, it calls your test case’s 
-    virtual ActionWanted
-	TestStep (int counter)
+    virtual void
+	TestStep (int counter, ActionWanted &next_action)
 
 the counter is the step id (a monotonically increasing counter). In TestStep() you will essentially run your measurements and then return what you want the driver to do.
 Possible options are:
-- continue process
-- kill process
-- finish on a thread
-- step-over on a thread.
-Convenience macros for this:
-#define NEXT(s) return TestCase::ActionWanted{TestCase::ActionWanted::Type::eAWNext,SelectMyThread(s)}
-#define FINISH(s) return TestCase::ActionWanted{TestCase::ActionWanted::Type::eAWFinish,SelectMyThread(s)}
-#define CONT return TestCase::ActionWanted{TestCase::ActionWanted::Type::eAWContinue,SBThread()}
-#define KILL return TestCase::ActionWanted{TestCase::ActionWanted::Type::eAWKill,SBThread()}
+- continue process          ActionWanted::Continue()
+- kill process              ActionWanted::Kill()
+- finish on a thread        ActionWanted::Finish(SBThread)
+- step-over on a thread.    ActionWanted::Next(SBThread)
 
-If you use NEXT and FINISH, define a SelectMyThread() that gives you an SBThread. I usually use a filename as key:
+If you use ActionWanted::Next() or ActionWanted::Finish(), define a SelectMyThread() that gives you an SBThread. I usually use a filename as key:
     SBThread
 	SelectMyThread (const char* file_name)
 	{
@@ -140,30 +135,21 @@ you might want to use some other logic in your selection.
 For your convenience TestCase has m_debugger, m_target and m_process as member variables. There is also an m_thread, but that is for you to set if you need/want to use it!
 
 An example:
-    virtual ActionWanted
-	TestStep (int counter)
+    virtual void
+	TestStep (int counter, ActionWanted &next_action)
     {
-#define STEP(n) if (counter == n)
-#define NEXT(s) return TestCase::ActionWanted{TestCase::ActionWanted::Type::eAWNext,SelectMyThread(s)}
-#define FINISH(s) return TestCase::ActionWanted{TestCase::ActionWanted::Type::eAWFinish,SelectMyThread(s)}
-#define CONT return TestCase::ActionWanted{TestCase::ActionWanted::Type::eAWContinue,SBThread()}
-#define KILL return TestCase::ActionWanted{TestCase::ActionWanted::Type::eAWKill,SBThread()}
-        STEP (0)
-        {
+        case 0:
             m_target.BreakpointCreateByLocation("fmts_tester.mm", 68);
-            CONT;
-        }
-        
-        STEP (1)
-        {
+            next_action.Continue();
+            break;
+        case 1:
             DoTest ();
-            CONT;
-        }
-        STEP (2)
-        {
+            next_action.Continue();
+            break;
+        case 2:
             DoTest ();
-            CONT;
-        }
+            next_action.Continue();
+            break;
 
 DoTest() is a function I define in my own class that calls the measurements:
     void
@@ -212,17 +198,18 @@ The last step is usually to KILL the inferior and bail out:
     virtual ActionWanted
 	TestStep (int counter)
     {
-...     STEP (9)
-        {
+...     
+        case 9:
             DoTest ();
-            CONT;
-        }
-        STEP (10)
-        {
+            next_action.Continue();
+            break;
+        case 10:
             DoTest ();
-            CONT;
-        }
-        KILL;
+            next_action.Continue();
+            break;
+        default:
+            next_action.Kill();
+            break;
     }
 
 
@@ -263,4 +250,4 @@ int main(int argc, const char * argv[])
 If you are debugging your test, before Run() call
     test.SetVerbose(true);
 
-Feel free to send any questions and ideas for improvements
+Feel free to send any questions and ideas for improvements.
