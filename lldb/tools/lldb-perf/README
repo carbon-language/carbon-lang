@@ -9,6 +9,8 @@ Its main concepts are:
 - Measurements: a measurement is the thing that stores an action, a gauge and a metric. essentially, you define measurements as in “take the time to run this function”, “take the memory to run this block of code”, and then after you invoke it, your stats will be automagically there
 - Tests: a test is a sequence of steps and measurements
 
+Tests cases should be added as targets to the lldbperf.xcodeproj project.  It is probably easiest to duplicate one of the existing targets.
+
 In order to write a test based on lldb-perf, you need to subclass lldb::perf::TestCase, as in:
 
 using namespace lldb::perf;
