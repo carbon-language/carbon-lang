@@ -254,19 +254,20 @@ def note_using_decl_constructor_conflict_previous_ctor : Note<
   "previous constructor">;
 def note_using_decl_constructor_conflict_previous_using : Note<
   "previously inherited here">;
+def warn_using_decl_constructor_ellipsis : Warning<
+  "inheriting constructor does not inherit ellipsis">,
+  InGroup<DiagGroup<"inherited-variadic-ctor">>;
+def note_using_decl_constructor_ellipsis : Note<
+  "constructor declared with ellipsis here">;
 def err_using_decl_can_not_refer_to_class_member : Error<
   "using declaration can not refer to class member">;
 def err_using_decl_can_not_refer_to_namespace : Error<
   "using declaration can not refer to namespace">;
 def err_using_decl_constructor : Error<
   "using declaration can not refer to a constructor">;
-def err_using_decl_constructor_unsupported : Error<
-  "inheriting constructors are not supported">;
-// FIXME: Replace the above error with this warning if support for
-//        inheriting constructors is implemented.
-//def warn_cxx98_compat_using_decl_constructor : Warning<
-//  "inheriting constructors are incompatible with C++98">,
-//  InGroup<CXX98Compat>, DefaultIgnore;
+def warn_cxx98_compat_using_decl_constructor : Warning<
+  "inheriting constructors are incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_using_decl_destructor : Error<
   "using declaration can not refer to a destructor">;
 def err_using_decl_template_id : Error<
@@ -1104,9 +1105,11 @@ def note_member_synthesized_at : Note<
   "implicit default %select{constructor|copy constructor|move constructor|copy "
   "assignment operator|move assignment operator|destructor}0 for %1 first "
   "required here">;
+def note_inhctor_synthesized_at : Note<
+  "inheriting constructor for %0 first required here">;
 def err_missing_default_ctor : Error<
-  "%select{|implicit default }0constructor for %1 must explicitly initialize "
-  "the %select{base class|member}2 %3 which does not have a default "
+  "%select{|implicit default |inheriting }0constructor for %1 must explicitly "
+  "initialize the %select{base class|member}2 %3 which does not have a default "
   "constructor">;
 
 def err_illegal_union_or_anon_struct_member : Error<
@@ -2274,8 +2277,8 @@ def err_uninitialized_member_for_assign : Error<
   "non-static %select{reference|const}1 member %2 can't use default "
   "assignment operator">;
 def err_uninitialized_member_in_ctor : Error<
-  "%select{|implicit default }0constructor for %1 must explicitly initialize "
-  "the %select{reference|const}2 member %3">;
+  "%select{|implicit default |inheriting }0constructor for %1 must explicitly "
+  "initialize the %select{reference|const}2 member %3">;
 def err_default_arg_makes_ctor_special : Error<
   "addition of default argument on redeclaration makes this constructor a "
   "%select{default|copy|move}0 constructor">;

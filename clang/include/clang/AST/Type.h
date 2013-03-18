@@ -2863,6 +2863,9 @@ public:
     assert(i < NumArgs && "Invalid argument number!");
     return arg_type_begin()[i];
   }
+  ArrayRef<QualType> getArgTypes() const {
+    return ArrayRef<QualType>(arg_type_begin(), arg_type_end());
+  }
 
   ExtProtoInfo getExtProtoInfo() const {
     ExtProtoInfo EPI;

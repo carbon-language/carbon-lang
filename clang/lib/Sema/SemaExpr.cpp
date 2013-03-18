@@ -10501,6 +10501,9 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
         if (!Constructor->isUsed(false))
           DefineImplicitMoveConstructor(Loc, Constructor);
       }
+    } else if (Constructor->getInheritedConstructor()) {
+      if (!Constructor->isUsed(false))
+        DefineInheritingConstructor(Loc, Constructor);
     }
 
     MarkVTableUsed(Loc, Constructor->getParent());

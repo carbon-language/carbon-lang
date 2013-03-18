@@ -5825,7 +5825,8 @@ bool InitializationSequence::Diagnose(Sema &S,
             = cast<CXXConstructorDecl>(S.CurContext);
           if (Entity.getKind() == InitializedEntity::EK_Base) {
             S.Diag(Kind.getLocation(), diag::err_missing_default_ctor)
-              << Constructor->isImplicit()
+              << (Constructor->getInheritedConstructor() ? 2 :
+                  Constructor->isImplicit() ? 1 : 0)
               << S.Context.getTypeDeclType(Constructor->getParent())
               << /*base=*/0
               << Entity.getType();
@@ -5837,7 +5838,8 @@ bool InitializationSequence::Diagnose(Sema &S,
               << S.Context.getTagDeclType(BaseDecl);
           } else {
             S.Diag(Kind.getLocation(), diag::err_missing_default_ctor)
-              << Constructor->isImplicit()
+              << (Constructor->getInheritedConstructor() ? 2 :
+                  Constructor->isImplicit() ? 1 : 0)
               << S.Context.getTypeDeclType(Constructor->getParent())
               << /*member=*/1
               << Entity.getName();
@@ -5898,7 +5900,8 @@ bool InitializationSequence::Diagnose(Sema &S,
       // initialized.
       CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(S.CurContext);
       S.Diag(Kind.getLocation(), diag::err_uninitialized_member_in_ctor)
-        << Constructor->isImplicit()
+        << (Constructor->getInheritedConstructor() ? 2 :
+            Constructor->isImplicit() ? 1 : 0)
         << S.Context.getTypeDeclType(Constructor->getParent())
         << /*const=*/1
         << Entity.getName();

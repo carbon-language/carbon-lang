@@ -2642,9 +2642,10 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
 }
 
 // Create a static_cast\<T&&>(expr).
-static Expr *CastForMoving(Sema &SemaRef, Expr *E) {
-  QualType ExprType = E->getType();
-  QualType TargetType = SemaRef.Context.getRValueReferenceType(ExprType);
+static Expr *CastForMoving(Sema &SemaRef, Expr *E, QualType T = QualType()) {
+  if (T.isNull()) T = E->getType();
+  QualType TargetType = SemaRef.BuildReferenceType(
+      T, /*SpelledAsLValue*/false, SourceLocation(), DeclarationName());
   SourceLocation ExprLoc = E->getLocStart();
   TypeSourceInfo *TargetLoc = SemaRef.Context.getTrivialTypeSourceInfo(
       TargetType, ExprLoc);
@@ -2659,7 +2660,8 @@ static Expr *CastForMoving(Sema &SemaRef, Expr *E) {
 enum ImplicitInitializerKind {
   IIK_Default,
   IIK_Copy,
-  IIK_Move
+  IIK_Move,
+  IIK_Inherit
 };
 
 static bool
@@ -2675,6 +2677,35 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
   ExprResult BaseInit;
   
   switch (ImplicitInitKind) {
+  case IIK_Inherit: {
+    const CXXRecordDecl *Inherited =
+        Constructor->getInheritedConstructor()->getParent();
+    const CXXRecordDecl *Base = BaseSpec->getType()->getAsCXXRecordDecl();
+    if (Base && Inherited->getCanonicalDecl() == Base->getCanonicalDecl()) {
+      // C++11 [class.inhctor]p8:
+      //   Each expression in the expression-list is of the form
+      //   static_cast<T&&>(p), where p is the name of the corresponding
+      //   constructor parameter and T is the declared type of p.
+      SmallVector<Expr*, 16> Args;
+      for (unsigned I = 0, E = Constructor->getNumParams(); I != E; ++I) {
+        ParmVarDecl *PD = Constructor->getParamDecl(I);
+        ExprResult ArgExpr =
+            SemaRef.BuildDeclRefExpr(PD, PD->getType().getNonReferenceType(),
+                                     VK_LValue, SourceLocation());
+        if (ArgExpr.isInvalid())
+          return true;
+        Args.push_back(CastForMoving(SemaRef, ArgExpr.take(), PD->getType()));
+      }
+
+      InitializationKind InitKind = InitializationKind::CreateDirect(
+          Constructor->getLocation(), SourceLocation(), SourceLocation());
+      InitializationSequence InitSeq(SemaRef, InitEntity, InitKind,
+                                     Args.data(), Args.size());
+      BaseInit = InitSeq.Perform(SemaRef, InitEntity, InitKind, Args);
+      break;
+    }
+  }
+  // Fall through.
   case IIK_Default: {
     InitializationKind InitKind
       = InitializationKind::CreateDefault(Constructor->getLocation());
@@ -2897,7 +2928,8 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     return false;
   }
 
-  assert(ImplicitInitKind == IIK_Default && "Unhandled implicit init kind!");
+  assert((ImplicitInitKind == IIK_Default || ImplicitInitKind == IIK_Inherit) &&
+         "Unhandled implicit init kind!");
 
   QualType FieldBaseElementType = 
     SemaRef.Context.getBaseElementType(Field->getType());
@@ -2988,6 +3020,8 @@ struct BaseAndFieldInfo {
       IIK = IIK_Copy;
     else if (Generated && Ctor->isMoveConstructor())
       IIK = IIK_Move;
+    else if (Ctor->getInheritedConstructor())
+      IIK = IIK_Inherit;
     else
       IIK = IIK_Default;
   }
@@ -2999,6 +3033,7 @@ struct BaseAndFieldInfo {
       return true;
       
     case IIK_Default:
+    case IIK_Inherit:
       return false;
     }
 
@@ -3226,7 +3261,7 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor, bool AnyErrors,
       // If we're not generating the implicit copy/move constructor, then we'll
       // handle anonymous struct/union fields based on their individual
       // indirect fields.
-      if (F->isAnonymousStructOrUnion() && Info.IIK == IIK_Default)
+      if (F->isAnonymousStructOrUnion() && !Info.isImplicitCopyOrMove())
         continue;
           
       if (CollectFieldInitializer(*this, Info, F))
@@ -3235,7 +3270,7 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor, bool AnyErrors,
     }
     
     // Beyond this point, we only consider default initialization.
-    if (Info.IIK != IIK_Default)
+    if (Info.isImplicitCopyOrMove())
       continue;
     
     if (IndirectFieldDecl *F = dyn_cast<IndirectFieldDecl>(*Mem)) {
@@ -4062,14 +4097,14 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     }
   }
 
-  // Declare inherited constructors. We do this eagerly here because:
-  // - The standard requires an eager diagnostic for conflicting inherited
+  // Declare inheriting constructors. We do this eagerly here because:
+  // - The standard requires an eager diagnostic for conflicting inheriting
   //   constructors from different classes.
   // - The lazy declaration of the other implicit constructors is so as to not
   //   waste space and performance on classes that are not meant to be
   //   instantiated (e.g. meta-functions). This doesn't apply to classes that
-  //   have inherited constructors.
-  DeclareInheritedConstructors(Record);
+  //   have inheriting constructors.
+  DeclareInheritingConstructors(Record);
 }
 
 /// Is the special member function which would be selected to perform the
@@ -4185,7 +4220,9 @@ computeImplicitExceptionSpec(Sema &S, SourceLocation Loc, CXXMethodDecl *MD) {
   case Sema::CXXInvalid:
     break;
   }
-  llvm_unreachable("only special members have implicit exception specs");
+  assert(cast<CXXConstructorDecl>(MD)->getInheritedConstructor() &&
+         "only special members have implicit exception specs");
+  return S.ComputeInheritingCtorExceptionSpec(cast<CXXConstructorDecl>(MD));
 }
 
 static void
@@ -4194,10 +4231,7 @@ updateExceptionSpec(Sema &S, FunctionDecl *FD, const FunctionProtoType *FPT,
   FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
   ExceptSpec.getEPI(EPI);
   const FunctionProtoType *NewFPT = cast<FunctionProtoType>(
-    S.Context.getFunctionType(FPT->getResultType(),
-                              ArrayRef<QualType>(FPT->arg_type_begin(),
-                                                 FPT->getNumArgs()),
-                              EPI));
+      S.Context.getFunctionType(FPT->getResultType(), FPT->getArgTypes(), EPI));
   FD->setType(QualType(NewFPT, 0));
 }
 
@@ -5644,10 +5678,7 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
   EPI.TypeQuals = 0;
   EPI.RefQualifier = RQ_None;
   
-  return Context.getFunctionType(Context.VoidTy,
-                                 ArrayRef<QualType>(Proto->arg_type_begin(),
-                                                    Proto->getNumArgs()),
-                                 EPI);
+  return Context.getFunctionType(Context.VoidTy, Proto->getArgTypes(), EPI);
 }
 
 /// CheckConstructor - Checks a fully-formed constructor for
@@ -6519,9 +6550,7 @@ Decl *Sema::ActOnUsingDeclaration(Scope *S,
     // C++11 inheriting constructors.
     Diag(Name.getLocStart(),
          getLangOpts().CPlusPlus11 ?
-           // FIXME: Produce warn_cxx98_compat_using_decl_constructor
-           //        instead once inheriting constructors work.
-           diag::err_using_decl_constructor_unsupported :
+           diag::warn_cxx98_compat_using_decl_constructor :
            diag::err_using_decl_constructor)
       << SS.getRange();
 
@@ -6545,7 +6574,7 @@ Decl *Sema::ActOnUsingDeclaration(Scope *S,
   if (!TargetName)
     return 0;
 
-  // Warn about using declarations.
+  // Warn about access declarations.
   // TODO: store that the declaration was written without 'using' and
   // talk about access decls instead of using decls in the
   // diagnostics.
@@ -7471,6 +7500,13 @@ Sema::ComputeDefaultedDefaultCtorExceptionSpec(SourceLocation Loc,
   return ExceptSpec;
 }
 
+Sema::ImplicitExceptionSpecification
+Sema::ComputeInheritingCtorExceptionSpec(CXXMethodDecl *MD) {
+  ImplicitExceptionSpecification ExceptSpec(*this);
+  // FIXME: Compute the exception spec.
+  return ExceptSpec;
+}
+
 namespace {
 /// RAII object to register a special member as being currently declared.
 struct DeclaringSpecialMember {
@@ -7597,7 +7633,7 @@ void Sema::ActOnFinishDelayedMemberInitializers(Decl *D) {
   CheckDelayedExplicitlyDefaultedMemberExceptionSpecs();
 }
 
-void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
+void Sema::DeclareInheritingConstructors(CXXRecordDecl *ClassDecl) {
   // We start with an initial pass over the base classes to collect those that
   // inherit constructors from. If there are none, we can forgo all further
   // processing.
@@ -7612,6 +7648,8 @@ void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
         // If we inherit constructors from anything that is dependent, just
         // abort processing altogether. We'll get another chance for the
         // instantiations.
+        // FIXME: We need to ensure that any call to a constructor of this class
+        // is considered instantiation-dependent in this case.
         return;
       }
       BasesToInheritFrom.push_back(Base->castAs<RecordType>());
@@ -7620,18 +7658,19 @@ void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
   if (BasesToInheritFrom.empty())
     return;
 
+  // FIXME: Constructor templates.
+
   // Now collect the constructors that we already have in the current class.
   // Those take precedence over inherited constructors.
-  // C++0x [class.inhctor]p3: [...] a constructor is implicitly declared [...]
+  // C++11 [class.inhctor]p3: [...] a constructor is implicitly declared [...]
   //   unless there is a user-declared constructor with the same signature in
   //   the class where the using-declaration appears.
   llvm::SmallSet<const Type *, 8> ExistingConstructors;
   for (CXXRecordDecl::ctor_iterator CtorIt = ClassDecl->ctor_begin(),
                                     CtorE = ClassDecl->ctor_end();
-       CtorIt != CtorE; ++CtorIt) {
+       CtorIt != CtorE; ++CtorIt)
     ExistingConstructors.insert(
         Context.getCanonicalType(CtorIt->getType()).getTypePtr());
-  }
 
   DeclarationName CreatedCtorName =
       Context.DeclarationNames.getCXXConstructorName(
@@ -7663,62 +7702,71 @@ void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
       SourceLocation UsingLoc = UD ? UD->getLocation() :
                                      ClassDecl->getLocation();
 
-      // C++0x [class.inhctor]p1: The candidate set of inherited constructors
-      //   from the class X named in the using-declaration consists of actual
-      //   constructors and notional constructors that result from the
-      //   transformation of defaulted parameters as follows:
-      //   - all non-template default constructors of X, and
+      // C++11 [class.inhctor]p1:
+      //   The candidate set of inherited constructors from the class X named in
+      //   the using-declaration consists of actual constructors and notional
+      //   constructors that result from the transformation of defaulted
+      //   parameters as follows:
+      //   - all non-template constructors of X, and
       //   - for each non-template constructor of X that has at least one
       //     parameter with a default argument, the set of constructors that
       //     results from omitting any ellipsis parameter specification and
       //     successively omitting parameters with a default argument from the
-      //     end of the parameter-type-list.
+      //     end of the parameter-type-list, and
+      // FIXME: ...also constructor templates.
       CXXConstructorDecl *BaseCtor = *CtorIt;
       bool CanBeCopyOrMove = BaseCtor->isCopyOrMoveConstructor();
       const FunctionProtoType *BaseCtorType =
           BaseCtor->getType()->getAs<FunctionProtoType>();
 
-      for (unsigned params = BaseCtor->getMinRequiredArguments(),
-                    maxParams = BaseCtor->getNumParams();
-           params <= maxParams; ++params) {
+      // Determine whether this would be a copy or move constructor for the
+      // derived class.
+      if (BaseCtorType->getNumArgs() >= 1 &&
+          BaseCtorType->getArgType(0)->isReferenceType() &&
+          Context.hasSameUnqualifiedType(
+            BaseCtorType->getArgType(0)->getPointeeType(),
+            Context.getTagDeclType(ClassDecl)))
+        CanBeCopyOrMove = true;
+
+      ArrayRef<QualType> ArgTypes(BaseCtorType->getArgTypes());
+      FunctionProtoType::ExtProtoInfo EPI = BaseCtorType->getExtProtoInfo();
+      // Core issue (no number yet): the ellipsis is always discarded.
+      if (EPI.Variadic) {
+        Diag(UsingLoc, diag::warn_using_decl_constructor_ellipsis);
+        Diag(BaseCtor->getLocation(),
+             diag::note_using_decl_constructor_ellipsis);
+        EPI.Variadic = false;
+      }
+
+      for (unsigned Params = BaseCtor->getMinRequiredArguments(),
+                    MaxParams = BaseCtor->getNumParams();
+           Params <= MaxParams; ++Params) {
         // Skip default constructors. They're never inherited.
-        if (params == 0)
+        if (Params == 0)
           continue;
-        // Skip copy and move constructors for the same reason.
-        if (CanBeCopyOrMove && params == 1)
+
+        // Skip copy and move constructors for both base and derived class
+        // for the same reason.
+        if (CanBeCopyOrMove && Params == 1)
           continue;
 
         // Build up a function type for this particular constructor.
-        // FIXME: The working paper does not consider that the exception spec
-        // for the inheriting constructor might be larger than that of the
-        // source. This code doesn't yet, either. When it does, this code will
-        // need to be delayed until after exception specifications and in-class
-        // member initializers are attached.
-        const Type *NewCtorType;
-        if (params == maxParams)
-          NewCtorType = BaseCtorType;
-        else {
-          SmallVector<QualType, 16> Args;
-          for (unsigned i = 0; i < params; ++i) {
-            Args.push_back(BaseCtorType->getArgType(i));
-          }
-          FunctionProtoType::ExtProtoInfo ExtInfo =
-              BaseCtorType->getExtProtoInfo();
-          ExtInfo.Variadic = false;
-          NewCtorType = Context.getFunctionType(BaseCtorType->getResultType(),
-                                                Args, ExtInfo)
-                       .getTypePtr();
-        }
+        QualType NewCtorType =
+            Context.getFunctionType(Context.VoidTy, ArgTypes.slice(0, Params),
+                                    EPI);
         const Type *CanonicalNewCtorType =
-            Context.getCanonicalType(NewCtorType);
+            Context.getCanonicalType(NewCtorType).getTypePtr();
 
-        // Now that we have the type, first check if the class already has a
-        // constructor with this signature.
+        // C++11 [class.inhctor]p3:
+        //   ... a constructor is implicitly declared with the same constructor
+        //   characteristics unless there is a user-declared constructor with
+        //   the same signature in the class where the using-declaration appears
         if (ExistingConstructors.count(CanonicalNewCtorType))
           continue;
 
-        // Then we check if we have already declared an inherited constructor
-        // with this signature.
+        // C++11 [class.inhctor]p7:
+        //   If two using-declarations declare inheriting constructors with the
+        //   same signature, the program is ill-formed
         std::pair<ConstructorToSourceMap::iterator, bool> result =
             InheritedConstructors.insert(std::make_pair(
                 CanonicalNewCtorType,
@@ -7740,35 +7788,47 @@ void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
                  diag::note_using_decl_constructor_conflict_previous_ctor);
             Diag(PrevCtor->getLocation(),
                  diag::note_using_decl_constructor_conflict_previous_using);
+          } else {
+            // Core issue (no number): if the same inheriting constructor is
+            // produced by multiple base class constructors from the same base
+            // class, the inheriting constructor is defined as deleted.
+            result.first->second.second->setDeletedAsWritten();
           }
           continue;
         }
 
         // OK, we're there, now add the constructor.
-        // C++0x [class.inhctor]p8: [...] that would be performed by a
-        //   user-written inline constructor [...]
         DeclarationNameInfo DNI(CreatedCtorName, UsingLoc);
         CXXConstructorDecl *NewCtor = CXXConstructorDecl::Create(
-            Context, ClassDecl, UsingLoc, DNI, QualType(NewCtorType, 0),
+            Context, ClassDecl, UsingLoc, DNI, NewCtorType,
             /*TInfo=*/0, BaseCtor->isExplicit(), /*Inline=*/true,
-            /*ImplicitlyDeclared=*/true,
-            // FIXME: Due to a defect in the standard, we treat inherited
-            // constructors as constexpr even if that makes them ill-formed.
-            /*Constexpr=*/BaseCtor->isConstexpr());
+            /*ImplicitlyDeclared=*/true, /*Constexpr=*/BaseCtor->isConstexpr());
         NewCtor->setAccess(BaseCtor->getAccess());
+
+        // Build an unevaluated exception specification for this constructor.
+        EPI.ExceptionSpecType = EST_Unevaluated;
+        EPI.ExceptionSpecDecl = NewCtor;
+        NewCtor->setType(Context.getFunctionType(Context.VoidTy,
+                                                 ArgTypes.slice(0, Params),
+                                                 EPI));
 
         // Build up the parameter decls and add them.
         SmallVector<ParmVarDecl *, 16> ParamDecls;
-        for (unsigned i = 0; i < params; ++i) {
-          ParamDecls.push_back(ParmVarDecl::Create(Context, NewCtor,
-                                                   UsingLoc, UsingLoc,
-                                                   /*IdentifierInfo=*/0,
-                                                   BaseCtorType->getArgType(i),
-                                                   /*TInfo=*/0, SC_None,
-                                                   SC_None, /*DefaultArg=*/0));
+        for (unsigned i = 0; i < Params; ++i) {
+          ParmVarDecl *PD = ParmVarDecl::Create(Context, NewCtor,
+                                                UsingLoc, UsingLoc,
+                                                /*IdentifierInfo=*/0,
+                                                BaseCtorType->getArgType(i),
+                                                /*TInfo=*/0, SC_None,
+                                                SC_None, /*DefaultArg=*/0);
+          PD->setScopeInfo(0, i);
+          PD->setImplicit();
+          ParamDecls.push_back(PD);
         }
         NewCtor->setParams(ParamDecls);
         NewCtor->setInheritedConstructor(BaseCtor);
+        if (BaseCtor->isDeleted())
+          NewCtor->setDeletedAsWritten();
 
         ClassDecl->addDecl(NewCtor);
         result.first->second.second = NewCtor;
@@ -7776,6 +7836,35 @@ void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
     }
   }
 }
+
+void Sema::DefineInheritingConstructor(SourceLocation CurrentLocation,
+                                       CXXConstructorDecl *Constructor) {
+  CXXRecordDecl *ClassDecl = Constructor->getParent();
+  assert(Constructor->getInheritedConstructor() &&
+         !Constructor->doesThisDeclarationHaveABody() &&
+         !Constructor->isDeleted());
+
+  SynthesizedFunctionScope Scope(*this, Constructor);
+  DiagnosticErrorTrap Trap(Diags);
+  if (SetCtorInitializers(Constructor, /*AnyErrors=*/false) ||
+      Trap.hasErrorOccurred()) {
+    Diag(CurrentLocation, diag::note_inhctor_synthesized_at)
+      << Context.getTagDeclType(ClassDecl);
+    Constructor->setInvalidDecl();
+    return;
+  }
+
+  SourceLocation Loc = Constructor->getLocation();
+  Constructor->setBody(new (Context) CompoundStmt(Loc));
+
+  Constructor->setUsed();
+  MarkVTableUsed(CurrentLocation, ClassDecl);
+
+  if (ASTMutationListener *L = getASTMutationListener()) {
+    L->CompletedImplicitDefinition(Constructor);
+  }
+}
+
 
 Sema::ImplicitExceptionSpecification
 Sema::ComputeDefaultedDtorExceptionSpec(CXXMethodDecl *MD) {
