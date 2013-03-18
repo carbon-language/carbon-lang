@@ -53,6 +53,7 @@
 
 #define DEBUG_TYPE "global-merge"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Constants.h"
@@ -60,13 +61,21 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 using namespace llvm;
+
+static cl::opt<bool>
+EnableGlobalMergeOnConst("global-merge-on-const", cl::Hidden,
+                  	cl::desc("Enable global merge pass on constants"),
+                  	cl::init(false));
 
 STATISTIC(NumMerged      , "Number of globals merged");
 namespace {
@@ -77,6 +86,23 @@ namespace {
 
     bool doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
                  Module &M, bool isConst, unsigned AddrSpace) const;
+
+    /// \brief Check if the given variable has been identified as must keep
+    /// \pre setMustKeepGlobalVariables must have been called on the Module that
+    ///      contains GV
+    bool isMustKeepGlobalVariable(const GlobalVariable *GV) const {
+      return MustKeepGlobalVariables.count(GV);
+    }
+
+    /// Collect every variables marked as "used" or used in a landing pad
+    /// instruction for this Module.
+    void setMustKeepGlobalVariables(Module &M);
+
+    /// Collect every variables marked as "used"
+    void collectUsedGlobalVariables(Module &M);
+
+    /// Keep track of the GlobalVariable that are marked as "used"
+    SmallPtrSet<const GlobalVariable *, 16> MustKeepGlobalVariables;
 
   public:
     static char ID;             // Pass identification, replacement for typeid.
@@ -169,6 +195,46 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
   return true;
 }
 
+void GlobalMerge::collectUsedGlobalVariables(Module &M) {
+  // Extract global variables from llvm.used array
+  const GlobalVariable *GV = M.getGlobalVariable("llvm.used");
+  if (!GV || !GV->hasInitializer()) return;
+
+  // Should be an array of 'i8*'.
+  const ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
+  if (InitList == 0) return;
+ 
+  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
+    if (const GlobalVariable *G =
+        dyn_cast<GlobalVariable>(InitList->getOperand(i)->stripPointerCasts()))
+      MustKeepGlobalVariables.insert(G);
+}
+
+void GlobalMerge::setMustKeepGlobalVariables(Module &M) {
+  // If we already processed a Module, UsedGlobalVariables may have been
+  // populated. Reset the information for this module.
+  MustKeepGlobalVariables.clear();
+  collectUsedGlobalVariables(M);
+
+  for (Module::iterator IFn = M.begin(), IEndFn = M.end(); IFn != IEndFn;
+       ++IFn) {
+    for (Function::iterator IBB = IFn->begin(), IEndBB = IFn->end();
+         IBB != IEndBB; ++IBB) {
+      // Follow the inwoke link to find the landing pad instruction
+      const InvokeInst *II = dyn_cast<InvokeInst>(IBB->getTerminator());
+      if (!II) continue;
+
+      const LandingPadInst *LPInst = II->getUnwindDest()->getLandingPadInst();
+      // Look for globals in the clauses of the landing pad instruction
+      for (unsigned Idx = 0, NumClauses = LPInst->getNumClauses();
+           Idx != NumClauses; ++Idx)
+        if (const GlobalVariable *GV =
+            dyn_cast<GlobalVariable>(LPInst->getClause(Idx)
+                                     ->stripPointerCasts()))
+          MustKeepGlobalVariables.insert(GV);
+    }
+  }
+}
 
 bool GlobalMerge::doInitialization(Module &M) {
   DenseMap<unsigned, SmallVector<GlobalVariable*, 16> > Globals, ConstGlobals,
@@ -176,6 +242,7 @@ bool GlobalMerge::doInitialization(Module &M) {
   const DataLayout *TD = TLI->getDataLayout();
   unsigned MaxOffset = TLI->getMaximalGlobalOffset();
   bool Changed = false;
+  setMustKeepGlobalVariables(M);
 
   // Grab all non-const globals.
   for (Module::global_iterator I = M.global_begin(),
@@ -200,6 +267,12 @@ bool GlobalMerge::doInitialization(Module &M) {
         I->getName().startswith(".llvm."))
       continue;
 
+    // Ignore all "required" globals:
+    // - the ones used for EH
+    // - the ones marked with "used" attribute
+    if (isMustKeepGlobalVariable(I))
+      continue;
+
     if (TD->getTypeAllocSize(Ty) < MaxOffset) {
       if (TargetLoweringObjectFile::getKindForGlobal(I, TLI->getTargetMachine())
           .isBSSLocal())
@@ -221,11 +294,11 @@ bool GlobalMerge::doInitialization(Module &M) {
     if (I->second.size() > 1)
       Changed |= doMerge(I->second, M, false, I->first);
 
-  // FIXME: This currently breaks the EH processing due to way how the
-  // typeinfo detection works. We might want to detect the TIs and ignore
-  // them in the future.
-  // if (ConstGlobals.size() > 1)
-  //  Changed |= doMerge(ConstGlobals, M, true);
+  if (EnableGlobalMergeOnConst)
+    for (DenseMap<unsigned, SmallVector<GlobalVariable*, 16> >::iterator
+         I = ConstGlobals.begin(), E = ConstGlobals.end(); I != E; ++I)
+      if (I->second.size() > 1)
+        Changed |= doMerge(I->second, M, true, I->first);
 
   return Changed;
 }
