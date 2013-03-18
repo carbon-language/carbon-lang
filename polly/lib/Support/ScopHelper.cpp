@@ -68,25 +68,6 @@ Value *polly::getPointerOperand(Instruction &Inst) {
 
 //===----------------------------------------------------------------------===//
 // Helper functions
-bool polly::isIndVar(const SCEV *Var, Region &RefRegion, LoopInfo &LI,
-                     ScalarEvolution &SE) {
-  const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(Var);
-
-  // AddRecExprs are no induction variables.
-  if (!AddRec)
-    return false;
-
-  Loop *L = const_cast<Loop *>(AddRec->getLoop());
-
-  // Is the addrec an induction variable of a loop contained in the current
-  // region.
-  if (!RefRegion.contains(L))
-    return false;
-
-  DEBUG(dbgs() << "Find AddRec: " << *AddRec
-               << " at region: " << RefRegion.getNameStr() << " as indvar\n");
-  return true;
-}
 
 bool polly::isIndVar(const Instruction *I, const LoopInfo *LI) {
   Loop *L = LI->getLoopFor(I->getParent());

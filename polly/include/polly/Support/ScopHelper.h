@@ -41,10 +41,6 @@ namespace polly {
   ///         return the loop, otherwise, return null.
   llvm::Loop *castToLoop(const llvm::Region &R, llvm::LoopInfo &LI);
 
-  //===----------------------------------------------------------------------===//
-  // Functions for checking affine functions.
-  bool isIndVar(const llvm::SCEV *Var, llvm::Region &RefRegion,
-                llvm::LoopInfo &LI, llvm::ScalarEvolution &SE);
 
   /// @brief Check if the instruction I is the induction variable of a loop.
   ///
