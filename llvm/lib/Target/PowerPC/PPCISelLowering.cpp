@@ -1183,13 +1183,15 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
 
   SDValue Ptr;
   EVT VT;
+  unsigned Alignment;
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     Ptr = LD->getBasePtr();
     VT = LD->getMemoryVT();
-
+    Alignment = LD->getAlignment();
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
     Ptr = ST->getBasePtr();
     VT  = ST->getMemoryVT();
+    Alignment = ST->getAlignment();
   } else
     return false;
 
@@ -1208,6 +1210,10 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
     if (!SelectAddressRegImm(Ptr, Offset, Base, DAG))
       return false;
   } else {
+    // LDU/STU need an address with at least 4-byte alignment.
+    if (Alignment < 4)
+      return false;
+
     // reg + imm * 4.
     if (!SelectAddressRegImmShift(Ptr, Offset, Base, DAG))
       return false;

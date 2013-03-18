@@ -555,7 +555,8 @@ def LHA8: DForm_1<42, (outs G8RC:$rD), (ins memri:$src),
                   PPC970_DGroup_Cracked;
 def LWA  : DSForm_1<58, 2, (outs G8RC:$rD), (ins memrix:$src),
                     "lwa $rD, $src", LdStLWA,
-                    [(set G8RC:$rD, (sextloadi32 ixaddr:$src))]>, isPPC64,
+                    [(set G8RC:$rD,
+                          (aligned4sextloadi32 ixaddr:$src))]>, isPPC64,
                     PPC970_DGroup_Cracked;
 def LHAX8: XForm_1<31, 343, (outs G8RC:$rD), (ins memrr:$src),
                    "lhax $rD, $src", LdStLHA,
@@ -648,7 +649,7 @@ def LWZUX8 : XForm_1<31, 55, (outs G8RC:$rD, ptr_rc:$ea_result),
 let canFoldAsLoad = 1, PPC970_Unit = 2 in {
 def LD   : DSForm_1<58, 0, (outs G8RC:$rD), (ins memrix:$src),
                     "ld $rD, $src", LdStLD,
-                    [(set G8RC:$rD, (load ixaddr:$src))]>, isPPC64;
+                    [(set G8RC:$rD, (aligned4load ixaddr:$src))]>, isPPC64;
 def LDrs : DSForm_1<58, 0, (outs G8RC:$rD), (ins memrs:$src),
                     "ld $rD, $src", LdStLD,
                     []>, isPPC64;
@@ -682,6 +683,10 @@ def LDtoc_restore : DSForm_1a<58, 0, (outs), (ins),
 def LDX  : XForm_1<31,  21, (outs G8RC:$rD), (ins memrr:$src),
                    "ldx $rD, $src", LdStLD,
                    [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;
+let isCodeGenOnly = 1 in
+def LDXu  : XForm_1<31,  21, (outs G8RC:$rD), (ins memrr:$src),
+                    "ldx $rD, $src", LdStLD,
+                    [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;
                    
 let mayLoad = 1 in
 def LDU  : DSForm_1<58, 1, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memrix:$addr),
@@ -798,7 +803,7 @@ def STWX8 : XForm_8<31, 151, (outs), (ins G8RC:$rS, memrr:$dst),
 // Normal 8-byte stores.
 def STD  : DSForm_1<62, 0, (outs), (ins G8RC:$rS, memrix:$dst),
                     "std $rS, $dst", LdStSTD,
-                    [(store G8RC:$rS, ixaddr:$dst)]>, isPPC64;
+                    [(aligned4store G8RC:$rS, ixaddr:$dst)]>, isPPC64;
 def STDX  : XForm_8<31, 149, (outs), (ins G8RC:$rS, memrr:$dst),
                    "stdx $rS, $dst", LdStSTD,
                    [(store G8RC:$rS, xaddr:$dst)]>, isPPC64,
@@ -833,8 +838,9 @@ def STWU8 : DForm_1a<37, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
 def STDU : DSForm_1a<62, 1, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                                         s16immX4:$ptroff, ptr_rc:$ptrreg),
                     "stdu $rS, $ptroff($ptrreg)", LdStSTDU,
-                    [(set ptr_rc:$ea_res, (pre_store G8RC:$rS, ptr_rc:$ptrreg, 
-                                                     iaddroff:$ptroff))]>,
+                    [(set ptr_rc:$ea_res,
+                       (aligned4pre_store G8RC:$rS, ptr_rc:$ptrreg, 
+                                          iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     isPPC64;
 
@@ -979,3 +985,13 @@ def : Pat<(add G8RC:$in, (PPChi tjumptable:$g, 0)),
           (ADDIS8 G8RC:$in, tjumptable:$g)>;
 def : Pat<(add G8RC:$in, (PPChi tblockaddress:$g, 0)),
           (ADDIS8 G8RC:$in, tblockaddress:$g)>;
+
+// Patterns to match r+r indexed loads and stores for
+// addresses without at least 4-byte alignment.
+def : Pat<(i64 (unaligned4sextloadi32 xoaddr:$src)),
+          (LWAX xoaddr:$src)>;
+def : Pat<(i64 (unaligned4load xoaddr:$src)),
+          (LDX xoaddr:$src)>;
+def : Pat<(unaligned4store G8RC:$rS, xoaddr:$dst),
+          (STDX G8RC:$rS, xoaddr:$dst)>;
+

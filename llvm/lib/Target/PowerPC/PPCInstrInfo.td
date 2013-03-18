@@ -278,6 +278,38 @@ def imm16ShiftedSExt : PatLeaf<(imm), [{
   return N->getZExtValue() == (uint64_t)(int)N->getZExtValue();
 }], HI16>;
 
+// Some r+i load/store instructions (such as LD, STD, LDU, etc.) that require
+// restricted memrix (offset/4) constants are alignment sensitive. If these
+// offsets are hidden behind TOC entries than the values of the lower-order
+// bits cannot be checked directly. As a result, we need to also incorporate
+// an alignment check into the relevant patterns.
+
+def aligned4load : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAlignment() >= 4;
+}]>;
+def aligned4store : PatFrag<(ops node:$val, node:$ptr),
+                            (store node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getAlignment() >= 4;
+}]>;
+def aligned4sextloadi32 : PatFrag<(ops node:$ptr), (sextloadi32 node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAlignment() >= 4;
+}]>;
+def aligned4pre_store : PatFrag<
+                          (ops node:$val, node:$base, node:$offset),
+                          (pre_store node:$val, node:$base, node:$offset), [{
+  return cast<StoreSDNode>(N)->getAlignment() >= 4;
+}]>;
+
+def unaligned4load : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAlignment() < 4;
+}]>;
+def unaligned4store : PatFrag<(ops node:$val, node:$ptr),
+                              (store node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getAlignment() < 4;
+}]>;
+def unaligned4sextloadi32 : PatFrag<(ops node:$ptr), (sextloadi32 node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAlignment() < 4;
+}]>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Flag Definitions.
