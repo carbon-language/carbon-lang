@@ -425,7 +425,8 @@ CountValue *PPCCTRLoops::getTripCount(MachineLoop *L,
                                 DefInstr->getOpcode() == PPC::LI)) {
           DEBUG(dbgs() << "  initial constant: " << *DefInstr);
 
-          int64_t count = ImmVal - int64_t(short(DefInstr->getOperand(1).getImm()));
+          int64_t count = ImmVal -
+            int64_t(short(DefInstr->getOperand(1).getImm()));
           if ((count % iv_value) != 0) {
             return 0;
           }
@@ -443,8 +444,8 @@ CountValue *PPCCTRLoops::getTripCount(MachineLoop *L,
           }
           // FIXME: handle non-zero end value.
         }
-        // FIXME: handle non-unit increments (we might not want to introduce division
-        // but we can handle some 2^n cases with shifts).
+        // FIXME: handle non-unit increments (we might not want to introduce
+        // division but we can handle some 2^n cases with shifts).
   
       }
     }
@@ -515,9 +516,10 @@ bool PPCCTRLoops::isDead(const MachineInstr *MI,
     if (MO.isReg() && MO.isDef()) {
       unsigned Reg = MO.getReg();
       if (!MRI->use_nodbg_empty(Reg)) {
-        // This instruction has users, but if the only user is the phi node for the
-        // parent block, and the only use of that phi node is this instruction, then
-        // this instruction is dead: both it (and the phi node) can be removed.
+        // This instruction has users, but if the only user is the phi node for
+        // the parent block, and the only use of that phi node is this
+        // instruction, then this instruction is dead: both it (and the phi
+        // node) can be removed.
         MachineRegisterInfo::use_iterator I = MRI->use_begin(Reg);
         if (llvm::next(I) == MRI->use_end() &&
             I.getOperand().getParent()->isPHI()) {
