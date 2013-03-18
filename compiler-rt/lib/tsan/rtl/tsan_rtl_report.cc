@@ -216,6 +216,13 @@ static ThreadContext *FindThreadByUidLocked(int unique_id) {
   return 0;
 }
 
+static ThreadContext *FindThreadByTidLocked(int tid) {
+  Context *ctx = CTX();
+  ctx->thread_registry->CheckLocked();
+  return static_cast<ThreadContext*>(
+      ctx->thread_registry->GetThreadLocked(tid));
+}
+
 static bool IsInStackOrTls(ThreadContextBase *tctx_base, void *arg) {
   uptr addr = (uptr)arg;
   ThreadContext *tctx = static_cast<ThreadContext*>(tctx_base);
@@ -306,20 +313,20 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
   }
   if (allocator()->PointerIsMine((void*)addr)) {
     MBlock *b = user_mblock(0, (void*)addr);
-    ThreadContext *tctx = FindThreadByUidLocked(b->alloc_tid);
+    ThreadContext *tctx = FindThreadByTidLocked(b->Tid());
     void *mem = internal_alloc(MBlockReportLoc, sizeof(ReportLocation));
     ReportLocation *loc = new(mem) ReportLocation();
     rep_->locs.PushBack(loc);
     loc->type = ReportLocationHeap;
     loc->addr = (uptr)allocator()->GetBlockBegin((void*)addr);
-    loc->size = b->size;
-    loc->tid = tctx ? tctx->tid : b->alloc_tid;
+    loc->size = b->Size();
+    loc->tid = tctx ? tctx->tid : b->Tid();
     loc->name = 0;
     loc->file = 0;
     loc->line = 0;
     loc->stack = 0;
     uptr ssz = 0;
-    const uptr *stack = StackDepotGet(b->alloc_stack_id, &ssz);
+    const uptr *stack = StackDepotGet(b->StackId(), &ssz);
     if (stack) {
       StackTrace trace;
       trace.Init(stack, ssz);

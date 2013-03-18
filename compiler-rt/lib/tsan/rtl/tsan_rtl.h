@@ -47,15 +47,73 @@ namespace __tsan {
 
 // Descriptor of user's memory block.
 struct MBlock {
-  Mutex mtx;
-  uptr size;
-  u32 alloc_tid;
-  u32 alloc_stack_id;
-  SyncVar *head;
+  /*
+  u64 mtx : 1;  // must be first
+  u64 lst : 44;
+  u64 stk : 31;  // on word boundary
+  u64 tid : kTidBits;
+  u64 siz : 128 - 1 - 31 - 44 - kTidBits;  // 39
+  */
+  u64 raw[2];
 
-  MBlock()
-    : mtx(MutexTypeMBlock, StatMtxMBlock) {
+  void Init(uptr siz, u32 tid, u32 stk) {
+    raw[0] = raw[1] = 0;
+    raw[1] |= (u64)siz << ((1 + 44 + 31 + kTidBits) % 64);
+    raw[1] |= (u64)tid << ((1 + 44 + 31) % 64);
+    raw[0] |= (u64)stk << (1 + 44);
+    raw[1] |= (u64)stk >> (64 - 44 - 1);
+    DCHECK_EQ(Size(), siz);
+    DCHECK_EQ(Tid(), tid);
+    DCHECK_EQ(StackId(), stk);
   }
+
+  u32 Tid() const {
+    return GetLsb(raw[1] >> ((1 + 44 + 31) % 64), kTidBits);
+  }
+
+  uptr Size() const {
+    return raw[1] >> ((1 + 31 + 44 + kTidBits) % 64);
+  }
+
+  u32 StackId() const {
+    return (raw[0] >> (1 + 44)) | GetLsb(raw[1] << (64 - 44 - 1), 31);
+  }
+
+  SyncVar *ListHead() const {
+    return (SyncVar*)(GetLsb(raw[0] >> 1, 44) << 3);
+  }
+
+  void ListPush(SyncVar *v) {
+    SyncVar *lst = ListHead();
+    v->next = lst;
+    u64 x = (u64)v ^ (u64)lst;
+    x = (x >> 3) << 1;
+    raw[0] ^= x;
+    DCHECK_EQ(ListHead(), v);
+  }
+
+  SyncVar *ListPop() {
+    SyncVar *lst = ListHead();
+    SyncVar *nxt = lst->next;
+    lst->next = 0;
+    u64 x = (u64)lst ^ (u64)nxt;
+    x = (x >> 3) << 1;
+    raw[0] ^= x;
+    DCHECK_EQ(ListHead(), nxt);
+    return lst;
+  }
+
+  void ListReset() {
+    SyncVar *lst = ListHead();
+    u64 x = (u64)lst;
+    x = (x >> 3) << 1;
+    raw[0] ^= x;
+    DCHECK_EQ(ListHead(), 0);
+  }
+
+  void Lock();
+  void Unlock();
+  typedef GenericScopedLock<MBlock> ScopedLock;
 };
 
 #ifndef TSAN_GO

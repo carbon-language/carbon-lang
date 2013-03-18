@@ -29,6 +29,32 @@ extern "C" void WEAK __tsan_free_hook(void *ptr) {
 
 namespace __tsan {
 
+COMPILER_CHECK(sizeof(MBlock) == 16);
+
+void MBlock::Lock() {
+  atomic_uintptr_t *a = reinterpret_cast<atomic_uintptr_t*>(this);
+  uptr v = atomic_load(a, memory_order_relaxed);
+  for (int iter = 0;; iter++) {
+    if (v & 1) {
+      if (iter < 10)
+        proc_yield(20);
+      else
+        internal_sched_yield();
+      v = atomic_load(a, memory_order_relaxed);
+      continue;
+    }
+    if (atomic_compare_exchange_weak(a, &v, v | 1, memory_order_acquire))
+      break;
+  }
+}
+
+void MBlock::Unlock() {
+  atomic_uintptr_t *a = reinterpret_cast<atomic_uintptr_t*>(this);
+  uptr v = atomic_load(a, memory_order_relaxed);
+  DCHECK(v & 1);
+  atomic_store(a, v & ~1, memory_order_relaxed);
+}
+
 struct MapUnmapCallback {
   void OnMap(uptr p, uptr size) const { }
   void OnUnmap(uptr p, uptr size) const {
@@ -79,13 +105,9 @@ void *user_alloc(ThreadState *thr, uptr pc, uptr sz, uptr align) {
   if (p == 0)
     return 0;
   MBlock *b = new(allocator()->GetMetaData(p)) MBlock;
-  b->size = sz;
-  b->head = 0;
-  b->alloc_tid = thr->unique_id;
-  b->alloc_stack_id = CurrentStackId(thr, pc);
-  if (CTX() && CTX()->initialized) {
+  b->Init(sz, thr->tid, CurrentStackId(thr, pc));
+  if (CTX() && CTX()->initialized)
     MemoryRangeImitateWrite(thr, pc, (uptr)p, sz);
-  }
   DPrintf("#%d: alloc(%zu) = %p\n", thr->tid, sz, p);
   SignalUnsafeCall(thr, pc);
   return p;
@@ -96,9 +118,9 @@ void user_free(ThreadState *thr, uptr pc, void *p) {
   CHECK_NE(p, (void*)0);
   DPrintf("#%d: free(%p)\n", thr->tid, p);
   MBlock *b = (MBlock*)allocator()->GetMetaData(p);
-  if (b->head)   {
-    Lock l(&b->mtx);
-    for (SyncVar *s = b->head; s;) {
+  if (b->ListHead()) {
+    MBlock::ScopedLock l(b);
+    for (SyncVar *s = b->ListHead(); s;) {
       SyncVar *res = s;
       s = s->next;
       StatInc(thr, StatSyncDestroyed);
@@ -106,12 +128,10 @@ void user_free(ThreadState *thr, uptr pc, void *p) {
       res->mtx.Unlock();
       DestroyAndFree(res);
     }
-    b->head = 0;
+    b->ListReset();
   }
-  if (CTX() && CTX()->initialized && thr->in_rtl == 1) {
-    MemoryRangeFreed(thr, pc, (uptr)p, b->size);
-  }
-  b->~MBlock();
+  if (CTX() && CTX()->initialized && thr->in_rtl == 1)
+    MemoryRangeFreed(thr, pc, (uptr)p, b->Size());
   allocator()->Deallocate(&thr->alloc_cache, p);
   SignalUnsafeCall(thr, pc);
 }
@@ -127,12 +147,11 @@ void *user_realloc(ThreadState *thr, uptr pc, void *p, uptr sz) {
       return 0;
     if (p) {
       MBlock *b = user_mblock(thr, p);
-      internal_memcpy(p2, p, min(b->size, sz));
+      internal_memcpy(p2, p, min(b->Size(), sz));
     }
   }
-  if (p) {
+  if (p)
     user_free(thr, pc, p);
-  }
   return p2;
 }
 
@@ -141,7 +160,7 @@ uptr user_alloc_usable_size(ThreadState *thr, uptr pc, void *p) {
   if (p == 0)
     return 0;
   MBlock *b = (MBlock*)allocator()->GetMetaData(p);
-  return (b) ? b->size : 0;
+  return b ? b->Size() : 0;
 }
 
 MBlock *user_mblock(ThreadState *thr, void *p) {
@@ -232,7 +251,7 @@ uptr __tsan_get_allocated_size(void *p) {
   if (p == 0)
     return 0;
   MBlock *b = (MBlock*)allocator()->GetMetaData(p);
-  return b->size;
+  return b->Size();
 }
 
 void __tsan_on_thread_idle() {

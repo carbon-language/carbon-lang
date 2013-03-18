@@ -82,9 +82,9 @@ SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
   // the hashmap anyway.
   if (PrimaryAllocator::PointerIsMine((void*)addr)) {
     MBlock *b = user_mblock(thr, (void*)addr);
-    Lock l(&b->mtx);
+    MBlock::ScopedLock l(b);
     SyncVar *res = 0;
-    for (res = b->head; res; res = res->next) {
+    for (res = b->ListHead(); res; res = res->next) {
       if (res->addr == addr)
         break;
     }
@@ -92,8 +92,7 @@ SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
       if (!create)
         return 0;
       res = Create(thr, pc, addr);
-      res->next = b->head;
-      b->head = res;
+      b->ListPush(res);
     }
     if (write_lock)
       res->mtx.Lock();
@@ -149,24 +148,33 @@ SyncVar* SyncTab::GetAndRemove(ThreadState *thr, uptr pc, uptr addr) {
     MBlock *b = user_mblock(thr, (void*)addr);
     SyncVar *res = 0;
     {
-      Lock l(&b->mtx);
-      SyncVar **prev = &b->head;
-      res = *prev;
-      while (res) {
+      MBlock::ScopedLock l(b);
+      res = b->ListHead();
+      if (res) {
         if (res->addr == addr) {
           if (res->is_linker_init)
             return 0;
-          *prev = res->next;
-          break;
+          b->ListPop();
+        } else {
+          SyncVar **prev = &res->next;
+          res = *prev;
+          while (res) {
+            if (res->addr == addr) {
+              if (res->is_linker_init)
+                return 0;
+              *prev = res->next;
+              break;
+            }
+            prev = &res->next;
+            res = *prev;
+          }
         }
-        prev = &res->next;
-        res = *prev;
+        if (res) {
+          StatInc(thr, StatSyncDestroyed);
+          res->mtx.Lock();
+          res->mtx.Unlock();
+        }
       }
-    }
-    if (res) {
-      StatInc(thr, StatSyncDestroyed);
-      res->mtx.Lock();
-      res->mtx.Unlock();
     }
     return res;
   }

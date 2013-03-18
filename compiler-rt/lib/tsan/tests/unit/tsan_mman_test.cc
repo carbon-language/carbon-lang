@@ -55,10 +55,10 @@ TEST(Mman, User) {
   EXPECT_NE(p2, p);
   MBlock *b = user_mblock(thr, p);
   EXPECT_NE(b, (MBlock*)0);
-  EXPECT_EQ(b->size, (uptr)10);
+  EXPECT_EQ(b->Size(), (uptr)10);
   MBlock *b2 = user_mblock(thr, p2);
   EXPECT_NE(b2, (MBlock*)0);
-  EXPECT_EQ(b2->size, (uptr)20);
+  EXPECT_EQ(b2->Size(), (uptr)20);
   for (int i = 0; i < 10; i++) {
     p[i] = 42;
     EXPECT_EQ(b, user_mblock(thr, p + i));
