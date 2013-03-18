@@ -3940,16 +3940,17 @@ def err_atomic_specifier_bad_type : Error<
   "%1 %select{||||||which is not trivially copyable}0">;
 
 // Expressions.
-def ext_sizeof_function_type : Extension<
-  "invalid application of 'sizeof' to a function type">, InGroup<PointerArith>;
-def ext_sizeof_void_type : Extension<
-  "invalid application of '%select{sizeof|__alignof|vec_step}0' to a void "
+def ext_sizeof_alignof_function_type : Extension<
+  "invalid application of '%select{sizeof|alignof|vec_step}0' to a "
+  "function type">, InGroup<PointerArith>;
+def ext_sizeof_alignof_void_type : Extension<
+  "invalid application of '%select{sizeof|alignof|vec_step}0' to a void "
   "type">, InGroup<PointerArith>;
 def err_sizeof_alignof_incomplete_type : Error<
-  "invalid application of '%select{sizeof|__alignof|vec_step}0' to an "
+  "invalid application of '%select{sizeof|alignof|vec_step}0' to an "
   "incomplete type %1">;
 def err_sizeof_alignof_bitfield : Error<
-  "invalid application of '%select{sizeof|__alignof}0' to bit-field">;
+  "invalid application of '%select{sizeof|alignof}0' to bit-field">;
 def err_vecstep_non_scalar_vector_type : Error<
   "'vec_step' requires built-in scalar or vector type, %0 invalid">;
 def err_offsetof_incomplete_type : Error<

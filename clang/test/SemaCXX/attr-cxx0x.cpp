@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -verify -std=c++11 %s
+// RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -verify -pedantic -std=c++11 %s
 
 int align_illegal alignas(3); //expected-error {{requested alignment is not a power of 2}}
 char align_big alignas(int);
@@ -43,3 +43,5 @@ static_assert(alignof(align_class_template<16>) == 16, "template's alignment is 
 static_assert(alignof(align_class_temp_pack_type<short, int, long>) == alignof(long), "template's alignment is wrong");
 static_assert(alignof(align_class_temp_pack_expr<8, 16, 32>) == 32, "template's alignment is wrong");
 static_assert(alignof(outer<int,char>::inner<double,short>) == alignof(int) * alignof(double), "template's alignment is wrong");
+
+static_assert(alignof(int(int)) >= 1, "alignof(function) not positive"); // expected-warning{{invalid application of 'alignof' to a function type}}

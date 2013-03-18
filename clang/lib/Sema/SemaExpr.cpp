@@ -3012,16 +3012,17 @@ static bool CheckExtensionTraitOperandType(Sema &S, QualType T,
                                            SourceRange ArgRange,
                                            UnaryExprOrTypeTrait TraitKind) {
   // C99 6.5.3.4p1:
-  if (T->isFunctionType()) {
-    // alignof(function) is allowed as an extension.
-    if (TraitKind == UETT_SizeOf)
-      S.Diag(Loc, diag::ext_sizeof_function_type) << ArgRange;
+  if (T->isFunctionType() &&
+      (TraitKind == UETT_SizeOf || TraitKind == UETT_AlignOf)) {
+    // sizeof(function)/alignof(function) is allowed as an extension.
+    S.Diag(Loc, diag::ext_sizeof_alignof_function_type)
+      << TraitKind << ArgRange;
     return false;
   }
 
   // Allow sizeof(void)/alignof(void) as an extension.
   if (T->isVoidType()) {
-    S.Diag(Loc, diag::ext_sizeof_void_type) << TraitKind << ArgRange;
+    S.Diag(Loc, diag::ext_sizeof_alignof_void_type) << TraitKind << ArgRange;
     return false;
   }
 
