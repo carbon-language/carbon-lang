@@ -184,10 +184,6 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA) const {
     Key = Action::AnalyzeJobClass;
   }
 
-  bool UseIntegratedAs = C.getArgs().hasFlag(options::OPT_integrated_as,
-                                             options::OPT_no_integrated_as,
-                                             IsIntegratedAssemblerDefault());
-
   Tool *&T = Tools[Key];
   if (!T) {
     switch (Key) {
@@ -201,7 +197,7 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA) const {
     case Action::CompileJobClass:
       T = new tools::Clang(*this); break;
     case Action::AssembleJobClass: {
-      if (UseIntegratedAs)
+      if (useIntegratedAs(C.getArgs()))
         T = new tools::ClangAs(*this);
       else
         T = new tools::darwin::Assemble(*this);
@@ -1733,15 +1729,11 @@ Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   else
     Key = JA.getKind();
 
-  bool UseIntegratedAs = C.getArgs().hasFlag(options::OPT_integrated_as,
-                                             options::OPT_no_integrated_as,
-                                             IsIntegratedAssemblerDefault());
-
   Tool *&T = Tools[Key];
   if (!T) {
     switch (Key) {
     case Action::AssembleJobClass: {
-      if (UseIntegratedAs)
+      if (useIntegratedAs(C.getArgs()))
         T = new tools::ClangAs(*this);
       else
         T = new tools::openbsd::Assemble(*this);
@@ -1772,15 +1764,11 @@ Tool &Bitrig::SelectTool(const Compilation &C, const JobAction &JA) const {
   else
     Key = JA.getKind();
 
-  bool UseIntegratedAs = C.getArgs().hasFlag(options::OPT_integrated_as,
-                                             options::OPT_no_integrated_as,
-                                             IsIntegratedAssemblerDefault());
-
   Tool *&T = Tools[Key];
   if (!T) {
     switch (Key) {
     case Action::AssembleJobClass: {
-      if (UseIntegratedAs)
+      if (useIntegratedAs(C.getArgs()))
         T = new tools::ClangAs(*this);
       else
         T = new tools::bitrig::Assemble(*this);
@@ -1863,15 +1851,11 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   else
     Key = JA.getKind();
 
-  bool UseIntegratedAs = C.getArgs().hasFlag(options::OPT_integrated_as,
-                                             options::OPT_no_integrated_as,
-                                             IsIntegratedAssemblerDefault());
-
   Tool *&T = Tools[Key];
   if (!T) {
     switch (Key) {
     case Action::AssembleJobClass:
-      if (UseIntegratedAs)
+      if (useIntegratedAs(C.getArgs()))
         T = new tools::ClangAs(*this);
       else
         T = new tools::freebsd::Assemble(*this);
@@ -1924,15 +1908,11 @@ Tool &NetBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   else
     Key = JA.getKind();
 
-  bool UseIntegratedAs = C.getArgs().hasFlag(options::OPT_integrated_as,
-                                             options::OPT_no_integrated_as,
-                                             IsIntegratedAssemblerDefault());
-
   Tool *&T = Tools[Key];
   if (!T) {
     switch (Key) {
     case Action::AssembleJobClass:
-      if (UseIntegratedAs)
+      if (useIntegratedAs(C.getArgs()))
         T = new tools::ClangAs(*this);
       else
         T = new tools::netbsd::Assemble(*this);
@@ -2427,15 +2407,11 @@ Tool &Linux::SelectTool(const Compilation &C, const JobAction &JA) const {
   else
     Key = JA.getKind();
 
-  bool UseIntegratedAs = C.getArgs().hasFlag(options::OPT_integrated_as,
-                                             options::OPT_no_integrated_as,
-                                             IsIntegratedAssemblerDefault());
-
   Tool *&T = Tools[Key];
   if (!T) {
     switch (Key) {
     case Action::AssembleJobClass:
-      if (UseIntegratedAs)
+      if (useIntegratedAs(C.getArgs()))
         T = new tools::ClangAs(*this);
       else
         T = new tools::linuxtools::Assemble(*this);

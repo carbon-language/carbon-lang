@@ -1417,9 +1417,8 @@ static void addExceptionArgs(const ArgList &Args, types::ID InputType,
 /// \brief Check if the toolchain should use the integrated assembler.
 static bool ShouldUseIntegratedAssembler(const ArgList &Args,
                                          const ToolChain &TC) {
-  return Args.hasFlag(options::OPT_integrated_as,
-                      options::OPT_no_integrated_as,
-                      TC.IsIntegratedAssemblerDefault());
+  // FIXME: inline
+  return TC.useIntegratedAs(Args);
 }
 
 static bool ShouldDisableCFI(const ArgList &Args,

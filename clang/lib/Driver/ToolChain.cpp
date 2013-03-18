@@ -32,6 +32,12 @@ const Driver &ToolChain::getDriver() const {
  return D;
 }
 
+bool ToolChain::useIntegratedAs(const ArgList &Args) const {
+  return Args.hasFlag(options::OPT_integrated_as,
+                      options::OPT_no_integrated_as,
+                      IsIntegratedAssemblerDefault());
+}
+
 std::string ToolChain::getDefaultUniversalArchName() const {
   // In universal driver terms, the arch name accepted by -arch isn't exactly
   // the same as the ones that appear in the triple. Roughly speaking, this is
