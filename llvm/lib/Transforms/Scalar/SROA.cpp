@@ -69,6 +69,120 @@ static cl::opt<bool>
 ForceSSAUpdater("force-ssa-updater", cl::init(false), cl::Hidden);
 
 namespace {
+/// \brief A common base class for representing a half-open byte range.
+struct ByteRange {
+  /// \brief The beginning offset of the range.
+  uint64_t BeginOffset;
+
+  /// \brief The ending offset, not included in the range.
+  uint64_t EndOffset;
+
+  ByteRange() : BeginOffset(), EndOffset() {}
+  ByteRange(uint64_t BeginOffset, uint64_t EndOffset)
+      : BeginOffset(BeginOffset), EndOffset(EndOffset) {}
+
+  /// \brief Support for ordering ranges.
+  ///
+  /// This provides an ordering over ranges such that start offsets are
+  /// always increasing, and within equal start offsets, the end offsets are
+  /// decreasing. Thus the spanning range comes first in a cluster with the
+  /// same start position.
+  bool operator<(const ByteRange &RHS) const {
+    if (BeginOffset < RHS.BeginOffset) return true;
+    if (BeginOffset > RHS.BeginOffset) return false;
+    if (EndOffset > RHS.EndOffset) return true;
+    return false;
+  }
+
+  /// \brief Support comparison with a single offset to allow binary searches.
+  friend bool operator<(const ByteRange &LHS, uint64_t RHSOffset) {
+    return LHS.BeginOffset < RHSOffset;
+  }
+
+  friend LLVM_ATTRIBUTE_UNUSED bool operator<(uint64_t LHSOffset,
+                                              const ByteRange &RHS) {
+    return LHSOffset < RHS.BeginOffset;
+  }
+
+  bool operator==(const ByteRange &RHS) const {
+    return BeginOffset == RHS.BeginOffset && EndOffset == RHS.EndOffset;
+  }
+  bool operator!=(const ByteRange &RHS) const { return !operator==(RHS); }
+};
+
+/// \brief A partition of an alloca.
+///
+/// This structure represents a contiguous partition of the alloca. These are
+/// formed by examining the uses of the alloca. During formation, they may
+/// overlap but once an AllocaPartitioning is built, the Partitions within it
+/// are all disjoint.
+struct Partition : public ByteRange {
+  /// \brief Whether this partition is splittable into smaller partitions.
+  ///
+  /// We flag partitions as splittable when they are formed entirely due to
+  /// accesses by trivially splittable operations such as memset and memcpy.
+  bool IsSplittable;
+
+  /// \brief Test whether a partition has been marked as dead.
+  bool isDead() const {
+    if (BeginOffset == UINT64_MAX) {
+      assert(EndOffset == UINT64_MAX);
+      return true;
+    }
+    return false;
+  }
+
+  /// \brief Kill a partition.
+  /// This is accomplished by setting both its beginning and end offset to
+  /// the maximum possible value.
+  void kill() {
+    assert(!isDead() && "He's Dead, Jim!");
+    BeginOffset = EndOffset = UINT64_MAX;
+  }
+
+  Partition() : ByteRange(), IsSplittable() {}
+  Partition(uint64_t BeginOffset, uint64_t EndOffset, bool IsSplittable)
+      : ByteRange(BeginOffset, EndOffset), IsSplittable(IsSplittable) {}
+};
+
+/// \brief A particular use of a partition of the alloca.
+///
+/// This structure is used to associate uses of a partition with it. They
+/// mark the range of bytes which are referenced by a particular instruction,
+/// and includes a handle to the user itself and the pointer value in use.
+/// The bounds of these uses are determined by intersecting the bounds of the
+/// memory use itself with a particular partition. As a consequence there is
+/// intentionally overlap between various uses of the same partition.
+class PartitionUse : public ByteRange {
+  /// \brief Combined storage for both the Use* and split state.
+  PointerIntPair<Use*, 1, bool> UsePtrAndIsSplit;
+
+public:
+  PartitionUse() : ByteRange(), UsePtrAndIsSplit() {}
+  PartitionUse(uint64_t BeginOffset, uint64_t EndOffset, Use *U,
+               bool IsSplit)
+      : ByteRange(BeginOffset, EndOffset), UsePtrAndIsSplit(U, IsSplit) {}
+
+  /// \brief The use in question. Provides access to both user and used value.
+  ///
+  /// Note that this may be null if the partition use is *dead*, that is, it
+  /// should be ignored.
+  Use *getUse() const { return UsePtrAndIsSplit.getPointer(); }
+
+  /// \brief Set the use for this partition use range.
+  void setUse(Use *U) { UsePtrAndIsSplit.setPointer(U); }
+
+  /// \brief Whether this use is split across multiple partitions.
+  bool isSplit() const { return UsePtrAndIsSplit.getInt(); }
+};
+}
+
+namespace llvm {
+template <> struct isPodLike<Partition> : llvm::true_type {};
+template <> struct isPodLike<PartitionUse> : llvm::true_type {};
+}
+
+namespace {
 /// \brief Alloca partitioning representation.
 ///
 /// This class represents a partitioning of an alloca into slices, and
@@ -79,113 +193,6 @@ namespace {
 /// and to enact these transformations.
 class AllocaPartitioning {
 public:
-  /// \brief A common base class for representing a half-open byte range.
-  struct ByteRange {
-    /// \brief The beginning offset of the range.
-    uint64_t BeginOffset;
-
-    /// \brief The ending offset, not included in the range.
-    uint64_t EndOffset;
-
-    ByteRange() : BeginOffset(), EndOffset() {}
-    ByteRange(uint64_t BeginOffset, uint64_t EndOffset)
-        : BeginOffset(BeginOffset), EndOffset(EndOffset) {}
-
-    /// \brief Support for ordering ranges.
-    ///
-    /// This provides an ordering over ranges such that start offsets are
-    /// always increasing, and within equal start offsets, the end offsets are
-    /// decreasing. Thus the spanning range comes first in a cluster with the
-    /// same start position.
-    bool operator<(const ByteRange &RHS) const {
-      if (BeginOffset < RHS.BeginOffset) return true;
-      if (BeginOffset > RHS.BeginOffset) return false;
-      if (EndOffset > RHS.EndOffset) return true;
-      return false;
-    }
-
-    /// \brief Support comparison with a single offset to allow binary searches.
-    friend bool operator<(const ByteRange &LHS, uint64_t RHSOffset) {
-      return LHS.BeginOffset < RHSOffset;
-    }
-
-    friend LLVM_ATTRIBUTE_UNUSED bool operator<(uint64_t LHSOffset,
-                                                const ByteRange &RHS) {
-      return LHSOffset < RHS.BeginOffset;
-    }
-
-    bool operator==(const ByteRange &RHS) const {
-      return BeginOffset == RHS.BeginOffset && EndOffset == RHS.EndOffset;
-    }
-    bool operator!=(const ByteRange &RHS) const { return !operator==(RHS); }
-  };
-
-  /// \brief A partition of an alloca.
-  ///
-  /// This structure represents a contiguous partition of the alloca. These are
-  /// formed by examining the uses of the alloca. During formation, they may
-  /// overlap but once an AllocaPartitioning is built, the Partitions within it
-  /// are all disjoint.
-  struct Partition : public ByteRange {
-    /// \brief Whether this partition is splittable into smaller partitions.
-    ///
-    /// We flag partitions as splittable when they are formed entirely due to
-    /// accesses by trivially splittable operations such as memset and memcpy.
-    bool IsSplittable;
-
-    /// \brief Test whether a partition has been marked as dead.
-    bool isDead() const {
-      if (BeginOffset == UINT64_MAX) {
-        assert(EndOffset == UINT64_MAX);
-        return true;
-      }
-      return false;
-    }
-
-    /// \brief Kill a partition.
-    /// This is accomplished by setting both its beginning and end offset to
-    /// the maximum possible value.
-    void kill() {
-      assert(!isDead() && "He's Dead, Jim!");
-      BeginOffset = EndOffset = UINT64_MAX;
-    }
-
-    Partition() : ByteRange(), IsSplittable() {}
-    Partition(uint64_t BeginOffset, uint64_t EndOffset, bool IsSplittable)
-        : ByteRange(BeginOffset, EndOffset), IsSplittable(IsSplittable) {}
-  };
-
-  /// \brief A particular use of a partition of the alloca.
-  ///
-  /// This structure is used to associate uses of a partition with it. They
-  /// mark the range of bytes which are referenced by a particular instruction,
-  /// and includes a handle to the user itself and the pointer value in use.
-  /// The bounds of these uses are determined by intersecting the bounds of the
-  /// memory use itself with a particular partition. As a consequence there is
-  /// intentionally overlap between various uses of the same partition.
-  class PartitionUse : public ByteRange {
-    /// \brief Combined storage for both the Use* and split state.
-    PointerIntPair<Use*, 1, bool> UsePtrAndIsSplit;
-
-  public:
-    PartitionUse() : ByteRange(), UsePtrAndIsSplit() {}
-    PartitionUse(uint64_t BeginOffset, uint64_t EndOffset, Use *U,
-                 bool IsSplit)
-        : ByteRange(BeginOffset, EndOffset), UsePtrAndIsSplit(U, IsSplit) {}
-
-    /// \brief The use in question. Provides access to both user and used value.
-    ///
-    /// Note that this may be null if the partition use is *dead*, that is, it
-    /// should be ignored.
-    Use *getUse() const { return UsePtrAndIsSplit.getPointer(); }
-
-    /// \brief Set the use for this partition use range.
-    void setUse(Use *U) { UsePtrAndIsSplit.setPointer(U); }
-
-    /// \brief Whether this use is split across multiple partitions.
-    bool isSplit() const { return UsePtrAndIsSplit.getInt(); }
-  };
-
   /// \brief Construct a partitioning of a particular alloca.
   ///
   /// Construction does most of the work for partitioning the alloca. This
@@ -1389,7 +1396,7 @@ public:
     // may be grown during speculation. However, we never need to re-visit the
     // new uses, and so we can use the initial size bound.
     for (unsigned Idx = 0, Size = P.use_size(PI); Idx != Size; ++Idx) {
-      const AllocaPartitioning::PartitionUse &PU = P.getUse(PI, Idx);
+      const PartitionUse &PU = P.getUse(PI, Idx);
       if (!PU.getUse())
         continue; // Skip dead use.
 
@@ -1594,7 +1601,7 @@ private:
     IRBuilder<> IRB(&SI);
     Use *Ops[2] = { &SI.getOperandUse(1), &SI.getOperandUse(2) };
     AllocaPartitioning::iterator PIs[2];
-    AllocaPartitioning::PartitionUse PUs[2];
+    PartitionUse PUs[2];
     for (unsigned i = 0, e = 2; i != e; ++i) {
       PIs[i] = P.findPartitionForPHIOrSelectOperand(Ops[i]);
       if (PIs[i] != P.end()) {
