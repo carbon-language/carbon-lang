@@ -137,6 +137,7 @@ public:
   /// by default.
   virtual bool IsIntegratedAssemblerDefault() const { return false; }
 
+  /// \brief Check if the toolchain should use the integrated assembler.
   bool useIntegratedAs(const ArgList &Args) const;
 
   /// IsStrictAliasingDefault - Does this tool chain use -fstrict-aliasing by
