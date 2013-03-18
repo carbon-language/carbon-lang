@@ -1979,8 +1979,8 @@ def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 1, sub1>;
 def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 2, sub2>;
 def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 3, sub3>;
 
-def : Vector_Build <v4f32, R600_Reg128, f32, R600_Reg32>;
-def : Vector_Build <v4i32, R600_Reg128, i32, R600_Reg32>;
+def : Vector4_Build <v4f32, R600_Reg128, f32, R600_Reg32>;
+def : Vector4_Build <v4i32, R600_Reg128, i32, R600_Reg32>;
 
 // bitconvert patterns
 

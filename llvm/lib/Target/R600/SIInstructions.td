@@ -1257,22 +1257,83 @@ defm : SamplePatterns<VReg_128, v4i32>;
 defm : SamplePatterns<VReg_256, v8i32>;
 defm : SamplePatterns<VReg_512, v16i32>;
 
-def : Extract_Element <f32, v4f32, VReg_128, 0, sub0>;
-def : Extract_Element <f32, v4f32, VReg_128, 1, sub1>;
-def : Extract_Element <f32, v4f32, VReg_128, 2, sub2>;
-def : Extract_Element <f32, v4f32, VReg_128, 3, sub3>;
+/********** ============================================ **********/
+/********** Extraction, Insertion, Building and Casting  **********/
+/********** ============================================ **********/
 
-def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 4, sub0>;
-def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 5, sub1>;
-def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 6, sub2>;
-def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 7, sub3>;
+foreach Index = 0-2 in {
+  def Extract_Element_v2i32_#Index : Extract_Element <
+    i32, v2i32, VReg_64, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+  def Insert_Element_v2i32_#Index : Insert_Element <
+    i32, v2i32, VReg_32, VReg_64, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+
+  def Extract_Element_v2f32_#Index : Extract_Element <
+    f32, v2f32, VReg_64, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+  def Insert_Element_v2f32_#Index : Insert_Element <
+    f32, v2f32, VReg_32, VReg_64, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+}
+
+foreach Index = 0-3 in {
+  def Extract_Element_v4i32_#Index : Extract_Element <
+    i32, v4i32, VReg_128, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+  def Insert_Element_v4i32_#Index : Insert_Element <
+    i32, v4i32, VReg_32, VReg_128, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+
+  def Extract_Element_v4f32_#Index : Extract_Element <
+    f32, v4f32, VReg_128, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+  def Insert_Element_v4f32_#Index : Insert_Element <
+    f32, v4f32, VReg_32, VReg_128, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+}
+
+foreach Index = 0-7 in {
+  def Extract_Element_v8i32_#Index : Extract_Element <
+    i32, v8i32, VReg_256, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+  def Insert_Element_v8i32_#Index : Insert_Element <
+    i32, v8i32, VReg_32, VReg_256, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+
+  def Extract_Element_v8f32_#Index : Extract_Element <
+    f32, v8f32, VReg_256, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+  def Insert_Element_v8f32_#Index : Insert_Element <
+    f32, v8f32, VReg_32, VReg_256, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+}
+
+foreach Index = 0-15 in {
+  def Extract_Element_v16i32_#Index : Extract_Element <
+    i32, v16i32, VReg_512, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+  def Insert_Element_v16i32_#Index : Insert_Element <
+    i32, v16i32, VReg_32, VReg_512, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+
+  def Extract_Element_v16f32_#Index : Extract_Element <
+    f32, v16f32, VReg_512, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+  def Insert_Element_v16f32_#Index : Insert_Element <
+    f32, v16f32, VReg_32, VReg_512, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+}
 
 def : Vector1_Build <v1i32, VReg_32, i32, VReg_32>;
 def : Vector2_Build <v2i32, VReg_64, i32, VReg_32>;
-def : Vector_Build <v4f32, VReg_128, f32, VReg_32>;
-def : Vector_Build <v4i32, VReg_128, i32, VReg_32>;
+def : Vector2_Build <v2f32, VReg_64, f32, VReg_32>;
+def : Vector4_Build <v4i32, VReg_128, i32, VReg_32>;
+def : Vector4_Build <v4f32, VReg_128, f32, VReg_32>;
 def : Vector8_Build <v8i32, VReg_256, i32, VReg_32>;
+def : Vector8_Build <v8f32, VReg_256, f32, VReg_32>;
 def : Vector16_Build <v16i32, VReg_512, i32, VReg_32>;
+def : Vector16_Build <v16f32, VReg_512, f32, VReg_32>;
 
 def : BitConvert <i32, f32, SReg_32>;
 def : BitConvert <i32, f32, VReg_32>;
