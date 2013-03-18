@@ -117,13 +117,11 @@ protected:
 
   GCCInstallationDetector GCCInstallation;
 
-  mutable llvm::DenseMap<unsigned, Tool*> Tools;
-
 public:
   Generic_GCC(const Driver &D, const llvm::Triple& Triple, const ArgList &Args);
   ~Generic_GCC();
 
-  virtual Tool &SelectTool(const JobAction &JA) const;
+  virtual Tool *constructTool(Action::ActionClass AC) const;
 
   virtual bool IsUnwindTablesDefault() const;
   virtual bool isPICDefault() const;
@@ -149,8 +147,6 @@ public:
   unsigned DarwinVersion[3];
 
 private:
-  mutable llvm::DenseMap<unsigned, Tool*> Tools;
-
   /// Whether the information on the target has been initialized.
   //
   // FIXME: This should be eliminated. What we want to do is make this part of
@@ -268,7 +264,7 @@ public:
   virtual DerivedArgList *TranslateArgs(const DerivedArgList &Args,
                                         const char *BoundArch) const;
 
-  virtual Tool &SelectTool(const JobAction &JA) const;
+  virtual Tool *constructTool(Action::ActionClass AC) const;
 
   virtual bool IsBlocksDefault() const {
     // Always allow blocks on Darwin; users interested in versioning are
@@ -392,14 +388,14 @@ class LLVM_LIBRARY_VISIBILITY AuroraUX : public Generic_GCC {
 public:
   AuroraUX(const Driver &D, const llvm::Triple& Triple, const ArgList &Args);
 
-  virtual Tool &SelectTool(const JobAction &JA) const;
+  virtual Tool *constructTool(Action::ActionClass AC) const;
 };
 
 class LLVM_LIBRARY_VISIBILITY Solaris : public Generic_GCC {
 public:
   Solaris(const Driver &D, const llvm::Triple& Triple, const ArgList &Args);
 
-  virtual Tool &SelectTool( const JobAction &JA) const;
+  virtual Tool *constructTool(Action::ActionClass AC) const;
 
   virtual bool IsIntegratedAssemblerDefault() const { return true; }
 };
@@ -412,7 +408,7 @@ public:
   virtual bool IsMathErrnoDefault() const { return false; }
   virtual bool IsObjCNonFragileABIDefault() const { return true; }
 
-  virtual Tool &SelectTool(const JobAction &JA) const;
+  virtual Tool *constructTool(Action::ActionClass AC) const;
 };
 
 class LLVM_LIBRARY_VISIBILITY Bitrig : public Generic_ELF {
@@ -423,7 +419,7 @@ public:
   virtual bool IsObjCNonFragileABIDefault() const { return true; }
   virtual bool IsObjCLegacyDispatchDefault() const { return false; }
 
-  virtual Tool &SelectTool(const JobAction &JA) const;
+  virtual Tool *constructTool(Action::ActionClass AC) const;
 
   virtual void AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
                                             ArgStringList &CC1Args) const;
@@ -441,7 +437,7 @@ public:
   virtual bool IsMathErrnoDefault() const { return false; }
   virtual bool IsObjCNonFragileABIDefault() const { return true; }
 
-  virtual Tool &SelectTool(const JobAction &JA) const;
+  virtual Tool *constructTool(Action::ActionClass AC) const;
   virtual bool UseSjLjExceptions() const;
 };
 
@@ -452,14 +448,14 @@ public:
   virtual bool IsMathErrnoDefault() const { return false; }
   virtual bool IsObjCNonFragileABIDefault() const { return true; }
 
-  virtual Tool &SelectTool(const JobAction &JA) const;
+  virtual Tool *constructTool(Action::ActionClass AC) const;
 };
 
 class LLVM_LIBRARY_VISIBILITY Minix : public Generic_ELF {
 public:
   Minix(const Driver &D, const llvm::Triple& Triple, const ArgList &Args);
 
-  virtual Tool &SelectTool(const JobAction &JA) const;
+  virtual Tool *constructTool(Action::ActionClass AC) const;
 };
 
 class LLVM_LIBRARY_VISIBILITY DragonFly : public Generic_ELF {
@@ -468,7 +464,7 @@ public:
 
   virtual bool IsMathErrnoDefault() const { return false; }
 
-  virtual Tool &SelectTool(const JobAction &JA) const;
+  virtual Tool *constructTool(Action::ActionClass AC) const;
 };
 
 class LLVM_LIBRARY_VISIBILITY Linux : public Generic_ELF {
@@ -477,7 +473,7 @@ public:
 
   virtual bool HasNativeLLVMSupport() const;
 
-  virtual Tool &SelectTool(const JobAction &JA) const;
+  virtual Tool *constructTool(Action::ActionClass AC) const;
 
   virtual void AddClangSystemIncludeArgs(const ArgList &DriverArgs,
                                          ArgStringList &CC1Args) const;
@@ -509,7 +505,7 @@ public:
              const ArgList &Args);
   ~Hexagon_TC();
 
-  virtual Tool &SelectTool(const JobAction &JA) const;
+  virtual Tool *constructTool(Action::ActionClass AC) const;
 
   virtual void AddClangSystemIncludeArgs(const ArgList &DriverArgs,
                                          ArgStringList &CC1Args) const;
@@ -532,23 +528,17 @@ public:
                const ArgList &Args);
   ~TCEToolChain();
 
-  virtual Tool &SelectTool(const JobAction &JA) const;
+  virtual Tool *constructTool(Action::ActionClass AC) const;
   bool IsMathErrnoDefault() const;
   bool isPICDefault() const;
   bool isPICDefaultForced() const;
-
-private:
-  mutable llvm::DenseMap<unsigned, Tool*> Tools;
-
 };
 
 class LLVM_LIBRARY_VISIBILITY Windows : public ToolChain {
-  mutable llvm::DenseMap<unsigned, Tool*> Tools;
-
 public:
   Windows(const Driver &D, const llvm::Triple& Triple, const ArgList &Args);
 
-  virtual Tool &SelectTool(const JobAction &JA) const;
+  virtual Tool *constructTool(Action::ActionClass AC) const;
 
   virtual bool IsIntegratedAssemblerDefault() const;
   virtual bool IsUnwindTablesDefault() const;

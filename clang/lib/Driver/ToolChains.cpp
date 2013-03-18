@@ -151,10 +151,6 @@ StringRef Darwin::getDarwinArchName(const ArgList &Args) const {
 }
 
 Darwin::~Darwin() {
-  // Free tool implementations.
-  for (llvm::DenseMap<unsigned, Tool*>::iterator
-         it = Tools.begin(), ie = Tools.end(); it != ie; ++it)
-    delete it->second;
 }
 
 std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args,
@@ -176,19 +172,8 @@ std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args,
 
 void Generic_ELF::anchor() {}
 
-Tool &Darwin::SelectTool(const JobAction &JA) const {
-  Action::ActionClass Key = JA.getKind();
-
-  if (getDriver().ShouldUseClangCompiler(JA)) {
-    // FIXME: This seems like a hacky way to choose clang frontend.
-    Key = Action::AnalyzeJobClass;
-  }
-
-  Tool *&T = Tools[Key];
-  if (T)
-    return *T;
-
-  switch (Key) {
+Tool *Darwin::constructTool(Action::ActionClass AC) const {
+  switch (AC) {
   case Action::InputClass:
   case Action::BindArchClass:
     llvm_unreachable("Invalid tool kind.");
@@ -197,25 +182,23 @@ Tool &Darwin::SelectTool(const JobAction &JA) const {
   case Action::MigrateJobClass:
   case Action::PrecompileJobClass:
   case Action::CompileJobClass:
-    T = new tools::Clang(*this); break;
+    return new tools::Clang(*this);
   case Action::AssembleJobClass: {
     if (useIntegratedAs())
-      T = new tools::ClangAs(*this);
+      return new tools::ClangAs(*this);
     else
-      T = new tools::darwin::Assemble(*this);
+      return new tools::darwin::Assemble(*this);
     break;
   }
   case Action::LinkJobClass:
-    T = new tools::darwin::Link(*this); break;
+    return new tools::darwin::Link(*this);
   case Action::LipoJobClass:
-    T = new tools::darwin::Lipo(*this); break;
+    return new tools::darwin::Lipo(*this);
   case Action::DsymutilJobClass:
-    T = new tools::darwin::Dsymutil(*this); break;
+    return new tools::darwin::Dsymutil(*this);
   case Action::VerifyJobClass:
-    T = new tools::darwin::VerifyDebug(*this); break;
+    return new tools::darwin::VerifyDebug(*this);
   }
-
-  return *T;
 }
 
 
@@ -1377,52 +1360,36 @@ Generic_GCC::Generic_GCC(const Driver &D, const llvm::Triple& Triple,
 }
 
 Generic_GCC::~Generic_GCC() {
-  // Free tool implementations.
-  for (llvm::DenseMap<unsigned, Tool*>::iterator
-         it = Tools.begin(), ie = Tools.end(); it != ie; ++it)
-    delete it->second;
 }
 
-Tool &Generic_GCC::SelectTool(const JobAction &JA) const {
-  Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(JA))
-    Key = Action::AnalyzeJobClass;
-  else
-    Key = JA.getKind();
-
-  Tool *&T = Tools[Key];
-  if (T)
-    return *T;
-
-  switch (Key) {
+Tool *Generic_GCC::constructTool(Action::ActionClass AC) const {
+  switch (AC) {
   case Action::InputClass:
   case Action::BindArchClass:
     llvm_unreachable("Invalid tool kind.");
   case Action::PreprocessJobClass:
-    T = new tools::gcc::Preprocess(*this); break;
+    return new tools::gcc::Preprocess(*this);
   case Action::PrecompileJobClass:
-    T = new tools::gcc::Precompile(*this); break;
+    return new tools::gcc::Precompile(*this);
   case Action::AnalyzeJobClass:
   case Action::MigrateJobClass:
-    T = new tools::Clang(*this); break;
+    return new tools::Clang(*this);
   case Action::CompileJobClass:
-    T = new tools::gcc::Compile(*this); break;
+    return new tools::gcc::Compile(*this);
   case Action::AssembleJobClass:
-    T = new tools::gcc::Assemble(*this); break;
+    return new tools::gcc::Assemble(*this);
   case Action::LinkJobClass:
-    T = new tools::gcc::Link(*this); break;
+    return new tools::gcc::Link(*this);
 
     // This is a bit ungeneric, but the only platform using a driver
     // driver is Darwin.
   case Action::LipoJobClass:
-    T = new tools::darwin::Lipo(*this); break;
+    return new tools::darwin::Lipo(*this);
   case Action::DsymutilJobClass:
-    T = new tools::darwin::Dsymutil(*this); break;
+    return new tools::darwin::Dsymutil(*this);
   case Action::VerifyJobClass:
-    T = new tools::darwin::VerifyDebug(*this); break;
+    return new tools::darwin::VerifyDebug(*this);
   }
-
-  return *T;
 }
 
 bool Generic_GCC::IsUnwindTablesDefault() const {
@@ -1547,38 +1514,18 @@ Hexagon_TC::Hexagon_TC(const Driver &D, const llvm::Triple &Triple,
 }
 
 Hexagon_TC::~Hexagon_TC() {
-  // Free tool implementations.
-  for (llvm::DenseMap<unsigned, Tool*>::iterator
-         it = Tools.begin(), ie = Tools.end(); it != ie; ++it)
-    delete it->second;
 }
 
-Tool &Hexagon_TC::SelectTool(const JobAction &JA) const {
-  Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(JA))
-    Key = Action::AnalyzeJobClass;
-  else
-    Key = JA.getKind();
-
-  Tool *&T = Tools[Key];
-  if (T)
-    return *T;
-
-  switch (Key) {
-  case Action::InputClass:
-  case Action::BindArchClass:
-    assert(0 && "Invalid tool kind.");
-  case Action::AnalyzeJobClass:
-    T = new tools::Clang(*this); break;
+Tool *Hexagon_TC::constructTool(Action::ActionClass AC) const {
+  switch (AC) {
   case Action::AssembleJobClass:
-    T = new tools::hexagon::Assemble(*this); break;
+    return new tools::hexagon::Assemble(*this);
   case Action::LinkJobClass:
-    T = new tools::hexagon::Link(*this); break;
+    return new tools::hexagon::Link(*this);
   default:
     assert(false && "Unsupported action for Hexagon target.");
+    return Linux::constructTool(AC);
   }
-
-  return *T;
 }
 
 void Hexagon_TC::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
@@ -1681,9 +1628,6 @@ TCEToolChain::TCEToolChain(const Driver &D, const llvm::Triple& Triple,
 }
 
 TCEToolChain::~TCEToolChain() {
-  for (llvm::DenseMap<unsigned, Tool*>::iterator
-           it = Tools.begin(), ie = Tools.end(); it != ie; ++it)
-      delete it->second;
 }
 
 bool TCEToolChain::IsMathErrnoDefault() const {
@@ -1698,23 +1642,15 @@ bool TCEToolChain::isPICDefaultForced() const {
   return false;
 }
 
-Tool &TCEToolChain::SelectTool(const JobAction &JA) const {
-  Action::ActionClass Key;
-  Key = Action::AnalyzeJobClass;
-
-  Tool *&T = Tools[Key];
-  if (T)
-    return *T;
-
-  switch (Key) {
+Tool *TCEToolChain::constructTool(Action::ActionClass AC) const {
+  switch (AC) {
   case Action::PreprocessJobClass:
-    T = new tools::gcc::Preprocess(*this); break;
+    return new tools::gcc::Preprocess(*this);
   case Action::AnalyzeJobClass:
-    T = new tools::Clang(*this); break;
+    return new tools::Clang(*this);
   default:
     llvm_unreachable("Unsupported action for TCE target.");
   }
-  return *T;
 }
 
 /// OpenBSD - OpenBSD tool chain which can call as(1) and ld(1) directly.
@@ -1725,32 +1661,20 @@ OpenBSD::OpenBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Arg
   getFilePaths().push_back("/usr/lib");
 }
 
-Tool &OpenBSD::SelectTool(const JobAction &JA) const {
-  Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(JA))
-    Key = Action::AnalyzeJobClass;
-  else
-    Key = JA.getKind();
-
-  Tool *&T = Tools[Key];
-  if (T)
-    return *T;
-
-  switch (Key) {
+Tool *OpenBSD::constructTool(Action::ActionClass AC) const {
+  switch (AC) {
   case Action::AssembleJobClass: {
     if (useIntegratedAs())
-      T = new tools::ClangAs(*this);
+      return new tools::ClangAs(*this);
     else
-      T = new tools::openbsd::Assemble(*this);
+      return new tools::openbsd::Assemble(*this);
     break;
   }
   case Action::LinkJobClass:
-    T = new tools::openbsd::Link(*this); break;
+    return new tools::openbsd::Link(*this);
   default:
-    return Generic_GCC::SelectTool(JA);
+    return Generic_GCC::constructTool(AC);
   }
-
-  return *T;
 }
 
 /// Bitrig - Bitrig tool chain which can call as(1) and ld(1) directly.
@@ -1761,32 +1685,20 @@ Bitrig::Bitrig(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
   getFilePaths().push_back("/usr/lib");
 }
 
-Tool &Bitrig::SelectTool(const JobAction &JA) const {
-  Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(JA))
-    Key = Action::AnalyzeJobClass;
-  else
-    Key = JA.getKind();
-
-  Tool *&T = Tools[Key];
-  if (T)
-    return *T;
-
-  switch (Key) {
+Tool *Bitrig::constructTool(Action::ActionClass AC) const {
+  switch (AC) {
   case Action::AssembleJobClass: {
     if (useIntegratedAs())
-      T = new tools::ClangAs(*this);
+      return new tools::ClangAs(*this);
     else
-      T = new tools::bitrig::Assemble(*this);
+      return new tools::bitrig::Assemble(*this);
     break;
   }
   case Action::LinkJobClass:
-    T = new tools::bitrig::Link(*this); break;
+    return new tools::bitrig::Link(*this); break;
   default:
-    return Generic_GCC::SelectTool(JA);
+    return Generic_GCC::constructTool(AC);
   }
-
-  return *T;
 }
 
 void Bitrig::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
@@ -1849,31 +1761,19 @@ FreeBSD::FreeBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Arg
     getFilePaths().push_back(getDriver().SysRoot + "/usr/lib");
 }
 
-Tool &FreeBSD::SelectTool(const JobAction &JA) const {
-  Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(JA))
-    Key = Action::AnalyzeJobClass;
-  else
-    Key = JA.getKind();
-
-  Tool *&T = Tools[Key];
-  if (T)
-    return *T;
-
-  switch (Key) {
+Tool *FreeBSD::constructTool(Action::ActionClass AC) const {
+  switch (AC) {
   case Action::AssembleJobClass:
     if (useIntegratedAs())
-      T = new tools::ClangAs(*this);
+      return new tools::ClangAs(*this);
     else
-      T = new tools::freebsd::Assemble(*this);
+      return new tools::freebsd::Assemble(*this);
     break;
   case Action::LinkJobClass:
-    T = new tools::freebsd::Link(*this); break;
+    return  new tools::freebsd::Link(*this); break;
   default:
-    return Generic_GCC::SelectTool(JA);
+    return Generic_GCC::constructTool(AC);
   }
-
-  return *T;
 }
 
 bool FreeBSD::UseSjLjExceptions() const {
@@ -1907,32 +1807,20 @@ NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
   }
 }
 
-Tool &NetBSD::SelectTool( const JobAction &JA) const {
-  Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(JA))
-    Key = Action::AnalyzeJobClass;
-  else
-    Key = JA.getKind();
-
-  Tool *&T = Tools[Key];
-  if (T)
-    return *T;
-
-  switch (Key) {
+Tool *NetBSD::constructTool(Action::ActionClass AC) const {
+  switch (AC) {
   case Action::AssembleJobClass:
     if (useIntegratedAs())
-      T = new tools::ClangAs(*this);
+      return new tools::ClangAs(*this);
     else
-      T = new tools::netbsd::Assemble(*this);
+      return new tools::netbsd::Assemble(*this);
     break;
   case Action::LinkJobClass:
-    T = new tools::netbsd::Link(*this);
+    return new tools::netbsd::Link(*this);
     break;
   default:
-    return Generic_GCC::SelectTool(JA);
+    return Generic_GCC::constructTool(AC);
   }
-
-  return *T;
 }
 
 /// Minix - Minix tool chain which can call as(1) and ld(1) directly.
@@ -1943,27 +1831,15 @@ Minix::Minix(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
   getFilePaths().push_back("/usr/lib");
 }
 
-Tool &Minix::SelectTool(const JobAction &JA) const {
-  Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(JA))
-    Key = Action::AnalyzeJobClass;
-  else
-    Key = JA.getKind();
-
-  Tool *&T = Tools[Key];
-  if (T)
-    return *T;
-
-  switch (Key) {
+Tool *Minix::constructTool(Action::ActionClass AC) const {
+  switch (AC) {
   case Action::AssembleJobClass:
-    T = new tools::minix::Assemble(*this); break;
+    return new tools::minix::Assemble(*this);
   case Action::LinkJobClass:
-    T = new tools::minix::Link(*this); break;
+    return new tools::minix::Link(*this);
   default:
-    return Generic_GCC::SelectTool(JA);
+    return Generic_GCC::constructTool(AC);
   }
-
-  return *T;
 }
 
 /// AuroraUX - AuroraUX tool chain which can call as(1) and ld(1) directly.
@@ -1984,27 +1860,15 @@ AuroraUX::AuroraUX(const Driver &D, const llvm::Triple& Triple,
 
 }
 
-Tool &AuroraUX::SelectTool(const JobAction &JA) const {
-  Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(JA))
-    Key = Action::AnalyzeJobClass;
-  else
-    Key = JA.getKind();
-
-  Tool *&T = Tools[Key];
-  if (T)
-    return *T;
-
-  switch (Key) {
+Tool *AuroraUX::constructTool(Action::ActionClass AC) const {
+  switch (AC) {
   case Action::AssembleJobClass:
-    T = new tools::auroraux::Assemble(*this); break;
+    return new tools::auroraux::Assemble(*this);
   case Action::LinkJobClass:
-    T = new tools::auroraux::Link(*this); break;
+    return new tools::auroraux::Link(*this);
   default:
-    return Generic_GCC::SelectTool(JA);
+    return Generic_GCC::constructTool(AC);
   }
-
-  return *T;
 }
 
 /// Solaris - Solaris tool chain which can call as(1) and ld(1) directly.
@@ -2021,27 +1885,15 @@ Solaris::Solaris(const Driver &D, const llvm::Triple& Triple,
   getFilePaths().push_back("/usr/lib");
 }
 
-Tool &Solaris::SelectTool(const JobAction &JA) const {
-  Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(JA))
-    Key = Action::AnalyzeJobClass;
-  else
-    Key = JA.getKind();
-
-  Tool *&T = Tools[Key];
-  if (T)
-    return *T;
-
-  switch (Key) {
+Tool *Solaris::constructTool(Action::ActionClass AC) const {
+  switch (AC) {
   case Action::AssembleJobClass:
-    T = new tools::solaris::Assemble(*this); break;
+    return new tools::solaris::Assemble(*this);
   case Action::LinkJobClass:
-    T = new tools::solaris::Link(*this); break;
+    return new tools::solaris::Link(*this);
   default:
-    return Generic_GCC::SelectTool(JA);
+    return Generic_GCC::constructTool(AC);
   }
-
-  return *T;
 }
 
 /// Linux toolchain (very bare-bones at the moment).
@@ -2410,31 +2262,19 @@ bool Linux::HasNativeLLVMSupport() const {
   return true;
 }
 
-Tool &Linux::SelectTool( const JobAction &JA) const {
-  Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(JA))
-    Key = Action::AnalyzeJobClass;
-  else
-    Key = JA.getKind();
-
-  Tool *&T = Tools[Key];
-  if (T)
-    return *T;
-
-  switch (Key) {
+Tool *Linux::constructTool(Action::ActionClass AC) const {
+  switch (AC) {
   case Action::AssembleJobClass:
     if (useIntegratedAs())
-      T = new tools::ClangAs(*this);
+      return new tools::ClangAs(*this);
     else
-      T = new tools::linuxtools::Assemble(*this);
+      return new tools::linuxtools::Assemble(*this);
     break;
   case Action::LinkJobClass:
-    T = new tools::linuxtools::Link(*this); break;
+    return new tools::linuxtools::Link(*this); break;
   default:
-    return Generic_GCC::SelectTool(JA);
+    return Generic_GCC::constructTool(AC);
   }
-
-  return *T;
 }
 
 void Linux::addClangTargetOptions(const ArgList &DriverArgs,
@@ -2663,25 +2503,13 @@ DragonFly::DragonFly(const Driver &D, const llvm::Triple& Triple, const ArgList 
   getFilePaths().push_back("/usr/lib/gcc41");
 }
 
-Tool &DragonFly::SelectTool(const JobAction &JA) const {
-  Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(JA))
-    Key = Action::AnalyzeJobClass;
-  else
-    Key = JA.getKind();
-
-  Tool *&T = Tools[Key];
-  if (T)
-    return *T;
-
-  switch (Key) {
+Tool *DragonFly::constructTool(Action::ActionClass AC) const {
+  switch (AC) {
   case Action::AssembleJobClass:
-    T = new tools::dragonfly::Assemble(*this); break;
+    return new tools::dragonfly::Assemble(*this);
   case Action::LinkJobClass:
-    T = new tools::dragonfly::Link(*this); break;
+    return new tools::dragonfly::Link(*this);
   default:
-    return Generic_GCC::SelectTool(JA);
+    return Generic_GCC::constructTool(AC);
   }
-
-  return *T;
 }

@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Tools.h"
 #include "clang/Driver/ToolChain.h"
 #include "clang/Basic/ObjCRuntime.h"
 #include "clang/Driver/Action.h"
@@ -27,6 +28,10 @@ ToolChain::ToolChain(const Driver &D, const llvm::Triple &T,
 }
 
 ToolChain::~ToolChain() {
+  // Free tool implementations.
+  for (llvm::DenseMap<unsigned, Tool*>::iterator
+       it = Tools.begin(), ie = Tools.end(); it != ie; ++it)
+    delete it->second;
 }
 
 const Driver &ToolChain::getDriver() const {
@@ -56,6 +61,25 @@ std::string ToolChain::getDefaultUniversalArchName() const {
 
 bool ToolChain::IsUnwindTablesDefault() const {
   return false;
+}
+
+Tool &ToolChain::SelectTool(const JobAction &JA) const {
+  Action::ActionClass Key;
+  if (getDriver().ShouldUseClangCompiler(JA))
+    Key = Action::AnalyzeJobClass;
+  else
+    Key = JA.getKind();
+
+  Tool *&T = Tools[Key];
+  if (T)
+    return *T;
+
+  if (getDriver().ShouldUseClangCompiler(JA))
+    T = new tools::Clang(*this);
+  else
+    T = constructTool(Key);
+
+  return *T;
 }
 
 std::string ToolChain::GetFilePath(const char *Name) const {

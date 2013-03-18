@@ -36,18 +36,8 @@ Windows::Windows(const Driver &D, const llvm::Triple& Triple,
   : ToolChain(D, Triple, Args) {
 }
 
-Tool &Windows::SelectTool(const JobAction &JA) const {
-  Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(JA))
-    Key = Action::AnalyzeJobClass;
-  else
-    Key = JA.getKind();
-
-  Tool *&T = Tools[Key];
-  if (T)
-    return *T;
-
-  switch (Key) {
+Tool *Windows::constructTool(Action::ActionClass AC) const {
+  switch (AC) {
   case Action::InputClass:
   case Action::BindArchClass:
   case Action::LipoJobClass:
@@ -58,19 +48,17 @@ Tool &Windows::SelectTool(const JobAction &JA) const {
   case Action::AnalyzeJobClass:
   case Action::MigrateJobClass:
   case Action::CompileJobClass:
-    T = new tools::Clang(*this); break;
+    return new tools::Clang(*this);
   case Action::AssembleJobClass:
     if (!useIntegratedAs() &&
         getTriple().getEnvironment() == llvm::Triple::MachO)
-      T = new tools::darwin::Assemble(*this);
+      return new tools::darwin::Assemble(*this);
     else
-      T = new tools::ClangAs(*this);
+      return new tools::ClangAs(*this);
     break;
   case Action::LinkJobClass:
-    T = new tools::visualstudio::Link(*this); break;
+    return new tools::visualstudio::Link(*this);
   }
-
-  return *T;
 }
 
 bool Windows::IsIntegratedAssemblerDefault() const {
