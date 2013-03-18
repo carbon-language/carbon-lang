@@ -211,7 +211,13 @@ struct ObjCDictionaryElement {
   /// \brief Determines whether this dictionary element is a pack expansion.
   bool isPackExpansion() const { return EllipsisLoc.isValid(); }
 };
+} // end namespace clang
 
+namespace llvm {
+template <> struct isPodLike<clang::ObjCDictionaryElement> : llvm::true_type {};
+}
+
+namespace clang {
 /// ObjCDictionaryLiteral - AST node to represent objective-c dictionary 
 /// literals; as in:  @{@"name" : NSUserName(), @"date" : [NSDate date] };
 class ObjCDictionaryLiteral : public Expr {
