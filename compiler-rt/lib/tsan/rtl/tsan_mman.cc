@@ -234,4 +234,9 @@ uptr __tsan_get_allocated_size(void *p) {
   MBlock *b = (MBlock*)allocator()->GetMetaData(p);
   return b->size;
 }
+
+void __tsan_on_thread_idle() {
+  ThreadState *thr = cur_thread();
+  allocator()->SwallowCache(&thr->alloc_cache);
+}
 }  // extern "C"
