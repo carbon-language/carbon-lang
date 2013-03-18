@@ -1403,6 +1403,18 @@ def : Pat <
   (V_CNDMASK_B32_e64 (i32 0), (i32 -1), SReg_64:$src0)
 >;
 
+// 1. Offset as 8bit DWORD immediate
+def : Pat <
+  (int_SI_load_const SReg_128:$sbase, IMM8bitDWORD:$offset),
+  (S_BUFFER_LOAD_DWORD_IMM SReg_128:$sbase, IMM8bitDWORD:$offset)
+>;
+
+// 2. Offset loaded in an 32bit SGPR
+def : Pat <
+  (int_SI_load_const SReg_128:$sbase, imm:$offset),
+  (S_BUFFER_LOAD_DWORD_SGPR SReg_128:$sbase, (S_MOV_B32 imm:$offset))
+>;
+
 /********** ================== **********/
 /**********   VOP3 Patterns    **********/
 /********** ================== **********/
