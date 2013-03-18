@@ -123,6 +123,20 @@ typedef id OBJ;
 }
 @end
 
+// rdar://12379114
+// expected-warning@+4 {{'@methodgroup' command should be used in a comment attached to an Objective-C method declaration}}
+// expected-warning@+6 {{'@method' command should be used in a comment attached to an Objective-C method declaratio}}
+@interface rdar12379114
+/*!
+ @methodgroup Creating a request
+*/
+/*!
+ @method initWithTimeout is the 2nd method
+*/
+typedef unsigned int NSTimeInterval;
+- (id)initWithTimeout:(NSTimeInterval)timeout;
+@end
+
 // expected-warning@+2 {{'@protocol' command should not be used in a comment attached to a non-protocol declaration}}
 /*!
 @protocol PROTO

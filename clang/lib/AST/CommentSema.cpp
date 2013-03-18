@@ -101,11 +101,17 @@ void Sema::checkFunctionDeclVerbatimLine(const BlockCommandComment *Comment) {
     case CommandTraits::KCI_function:
       DiagSelect = !isAnyFunctionDecl() ? 1 : 0;
       break;
+    case CommandTraits::KCI_functiongroup:
+      DiagSelect = !isAnyFunctionDecl() ? 2 : 0;
+      break;
     case CommandTraits::KCI_method:
-      DiagSelect = !isObjCMethodDecl() ? 2 : 0;
+      DiagSelect = !isObjCMethodDecl() ? 3 : 0;
+      break;
+    case CommandTraits::KCI_methodgroup:
+      DiagSelect = !isObjCMethodDecl() ? 4 : 0;
       break;
     case CommandTraits::KCI_callback:
-      DiagSelect = !isFunctionPointerVarDecl() ? 3 : 0;
+      DiagSelect = !isFunctionPointerVarDecl() ? 5 : 0;
       break;
     default:
       DiagSelect = 0;

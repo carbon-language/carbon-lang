@@ -74,9 +74,10 @@ def warn_doc_param_not_attached_to_a_function_decl : Warning<
   InGroup<Documentation>, DefaultIgnore;
 
 def warn_doc_function_method_decl_mismatch : Warning<
-  "'%select{\\|@}0%select{function|method|callback}1' command should be "
-  "used in a comment attached to "
-  "%select{a function|an Objective-C method|a pointer to function}2 declaration">,
+  "'%select{\\|@}0%select{function|functiongroup|method|methodgroup|callback}1' "
+  "command should be used in a comment attached to "
+  "%select{a function|a function|an Objective-C method|an Objective-C method|"
+  "a pointer to function}2 declaration">,
   InGroup<Documentation>, DefaultIgnore;
   
 def warn_doc_api_container_decl_mismatch : Warning<
