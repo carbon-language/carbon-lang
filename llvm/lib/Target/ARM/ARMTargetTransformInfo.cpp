@@ -224,12 +224,20 @@ unsigned ARMTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
     { ISD::UINT_TO_FP,  MVT::v4f32, MVT::v4i32, 1 },
     { ISD::FP_TO_SINT,  MVT::v4i32, MVT::v4f32, 1 },
     { ISD::FP_TO_UINT,  MVT::v4i32, MVT::v4f32, 1 },
+    { ISD::FP_TO_SINT,  MVT::v4i8, MVT::v4f32, 3 },
+    { ISD::FP_TO_UINT,  MVT::v4i8, MVT::v4f32, 3 },
+    { ISD::FP_TO_SINT,  MVT::v4i16, MVT::v4f32, 2 },
+    { ISD::FP_TO_UINT,  MVT::v4i16, MVT::v4f32, 2 },
 
     // Vector double <-> i32 conversions.
     { ISD::SINT_TO_FP,  MVT::v2f64, MVT::v2i32, 2 },
     { ISD::UINT_TO_FP,  MVT::v2f64, MVT::v2i32, 2 },
     { ISD::FP_TO_SINT,  MVT::v2i32, MVT::v2f64, 2 },
-    { ISD::FP_TO_UINT,  MVT::v2i32, MVT::v2f64, 2 }
+    { ISD::FP_TO_UINT,  MVT::v2i32, MVT::v2f64, 2 },
+    { ISD::FP_TO_SINT,  MVT::v8i16, MVT::v8f32, 4 },
+    { ISD::FP_TO_UINT,  MVT::v8i16, MVT::v8f32, 4 },
+    { ISD::FP_TO_SINT,  MVT::v16i16, MVT::v16f32, 8 },
+    { ISD::FP_TO_UINT,  MVT::v16i16, MVT::v16f32, 8 }
   };
 
   if (SrcTy.isVector() && ST->hasNEON()) {
