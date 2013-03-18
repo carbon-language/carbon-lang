@@ -63,7 +63,7 @@ SyncVar* SyncTab::Create(ThreadState *thr, uptr pc, uptr addr) {
   const u64 uid = atomic_fetch_add(&uid_gen_, 1, memory_order_relaxed);
   SyncVar *res = new(mem) SyncVar(addr, uid);
 #ifndef TSAN_GO
-  res->creation_stack.ObtainCurrent(thr, pc);
+  res->creation_stack_id = CurrentStackId(thr, pc);
 #endif
   return res;
 }
@@ -195,26 +195,6 @@ SyncVar* SyncTab::GetAndRemove(ThreadState *thr, uptr pc, uptr addr) {
     res->mtx.Unlock();
   }
   return res;
-}
-
-uptr SyncVar::GetMemoryConsumption() {
-  return sizeof(*this)
-      + clock.size() * sizeof(u64)
-      + read_clock.size() * sizeof(u64)
-      + creation_stack.Size() * sizeof(uptr);
-}
-
-uptr SyncTab::GetMemoryConsumption(uptr *nsync) {
-  uptr mem = 0;
-  for (int i = 0; i < kPartCount; i++) {
-    Part *p = &tab_[i];
-    Lock l(&p->mtx);
-    for (SyncVar *s = p->val; s; s = s->next) {
-      *nsync += 1;
-      mem += s->GetMemoryConsumption();
-    }
-  }
-  return mem;
 }
 
 int SyncTab::PartIdx(uptr addr) {

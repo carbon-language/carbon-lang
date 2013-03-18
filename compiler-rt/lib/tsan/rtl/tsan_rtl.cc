@@ -95,23 +95,14 @@ ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
 }
 
 static void WriteMemoryProfile(char *buf, uptr buf_size, int num) {
-  uptr shadow = GetShadowMemoryConsumption();
-
   uptr n_threads;
   uptr n_running_threads;
   ctx->thread_registry->GetNumberOfThreads(&n_threads, &n_running_threads);
   uptr threadmem = n_threads * sizeof(ThreadContext) +
                    n_running_threads * sizeof(ThreadState);
-  uptr nsync = 0;
-  uptr syncmem = CTX()->synctab.GetMemoryConsumption(&nsync);
 
-  internal_snprintf(buf, buf_size, "%d: shadow=%zuMB"
-                                   " thread=%zuMB(total=%d/live=%d)"
-                                   " sync=%zuMB(cnt=%zu)\n",
-    num,
-    shadow >> 20,
-    threadmem >> 20, n_threads, n_running_threads,
-    syncmem >> 20, nsync);
+  internal_snprintf(buf, buf_size, "%d: thread=%zuMB(total=%d/live=%d)\n",
+    num, threadmem >> 20, n_threads, n_running_threads);
 }
 
 static void MemoryProfileThread(void *arg) {

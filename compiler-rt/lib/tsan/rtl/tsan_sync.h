@@ -59,7 +59,7 @@ struct SyncVar {
   const u64 uid;  // Globally unique id.
   SyncClock clock;
   SyncClock read_clock;  // Used for rw mutexes only.
-  StackTrace creation_stack;
+  u32 creation_stack_id;
   int owner_tid;  // Set only by exclusive owners.
   u64 last_lock;
   int recursion;

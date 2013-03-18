@@ -241,7 +241,13 @@ void ScopedReport::AddMutex(const SyncVar *s) {
   rep_->mutexes.PushBack(rm);
   rm->id = s->uid;
   rm->destroyed = false;
-  rm->stack = SymbolizeStack(s->creation_stack);
+  uptr ssz = 0;
+  const uptr *stack = StackDepotGet(s->creation_stack_id, &ssz);
+  if (stack) {
+    StackTrace trace;
+    trace.Init(stack, ssz);
+    rm->stack = SymbolizeStack(trace);
+  }
 }
 
 void ScopedReport::AddMutex(u64 id) {
