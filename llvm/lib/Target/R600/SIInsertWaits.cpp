@@ -302,21 +302,8 @@ static void increaseCounters(Counters &Dst, const Counters &Src) {
     Dst.Array[i] = std::max(Dst.Array[i], Src.Array[i]);
 }
 
-bool SIInsertWaits::unorderedDefines(MachineInstr &MI) {
-
-  uint64_t TSFlags = TII->get(MI.getOpcode()).TSFlags;
-  if (TSFlags & SIInstrFlags::LGKM_CNT)
-    return true;
-
-  if (TSFlags & SIInstrFlags::EXP_CNT)
-    return ExpInstrTypesSeen == 3;
-
-  return false;
-}
-
 Counters SIInsertWaits::handleOperands(MachineInstr &MI) {
 
-  bool UnorderedDefines = unorderedDefines(MI);
   Counters Result = ZeroCounts;
 
   // For each register affected by this
@@ -329,8 +316,7 @@ Counters SIInsertWaits::handleOperands(MachineInstr &MI) {
 
       if (Op.isDef()) {
         increaseCounters(Result, UsedRegs[j]);
-        if (UnorderedDefines)
-          increaseCounters(Result, DefinedRegs[j]);
+        increaseCounters(Result, DefinedRegs[j]);
       }
 
       if (Op.isUse())
