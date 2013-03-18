@@ -76,6 +76,8 @@ Tool &ToolChain::SelectTool(const JobAction &JA) const {
 
   if (getDriver().ShouldUseClangCompiler(JA))
     T = new tools::Clang(*this);
+  else if (Key == Action::AssembleJobClass && useIntegratedAs())
+    T = new tools::ClangAs(*this);
   else
     T = constructTool(Key);
 

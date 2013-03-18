@@ -183,13 +183,8 @@ Tool *Darwin::constructTool(Action::ActionClass AC) const {
   case Action::PrecompileJobClass:
   case Action::CompileJobClass:
     return new tools::Clang(*this);
-  case Action::AssembleJobClass: {
-    if (useIntegratedAs())
-      return new tools::ClangAs(*this);
-    else
-      return new tools::darwin::Assemble(*this);
-    break;
-  }
+  case Action::AssembleJobClass:
+    return new tools::darwin::Assemble(*this);
   case Action::LinkJobClass:
     return new tools::darwin::Link(*this);
   case Action::LipoJobClass:
@@ -1663,13 +1658,8 @@ OpenBSD::OpenBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Arg
 
 Tool *OpenBSD::constructTool(Action::ActionClass AC) const {
   switch (AC) {
-  case Action::AssembleJobClass: {
-    if (useIntegratedAs())
-      return new tools::ClangAs(*this);
-    else
-      return new tools::openbsd::Assemble(*this);
-    break;
-  }
+  case Action::AssembleJobClass:
+    return new tools::openbsd::Assemble(*this);
   case Action::LinkJobClass:
     return new tools::openbsd::Link(*this);
   default:
@@ -1687,13 +1677,8 @@ Bitrig::Bitrig(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
 
 Tool *Bitrig::constructTool(Action::ActionClass AC) const {
   switch (AC) {
-  case Action::AssembleJobClass: {
-    if (useIntegratedAs())
-      return new tools::ClangAs(*this);
-    else
-      return new tools::bitrig::Assemble(*this);
-    break;
-  }
+  case Action::AssembleJobClass:
+    return new tools::bitrig::Assemble(*this);
   case Action::LinkJobClass:
     return new tools::bitrig::Link(*this); break;
   default:
@@ -1764,11 +1749,7 @@ FreeBSD::FreeBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Arg
 Tool *FreeBSD::constructTool(Action::ActionClass AC) const {
   switch (AC) {
   case Action::AssembleJobClass:
-    if (useIntegratedAs())
-      return new tools::ClangAs(*this);
-    else
-      return new tools::freebsd::Assemble(*this);
-    break;
+    return new tools::freebsd::Assemble(*this);
   case Action::LinkJobClass:
     return  new tools::freebsd::Link(*this); break;
   default:
@@ -1810,14 +1791,9 @@ NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
 Tool *NetBSD::constructTool(Action::ActionClass AC) const {
   switch (AC) {
   case Action::AssembleJobClass:
-    if (useIntegratedAs())
-      return new tools::ClangAs(*this);
-    else
-      return new tools::netbsd::Assemble(*this);
-    break;
+    return new tools::netbsd::Assemble(*this);
   case Action::LinkJobClass:
     return new tools::netbsd::Link(*this);
-    break;
   default:
     return Generic_GCC::constructTool(AC);
   }
@@ -2265,11 +2241,7 @@ bool Linux::HasNativeLLVMSupport() const {
 Tool *Linux::constructTool(Action::ActionClass AC) const {
   switch (AC) {
   case Action::AssembleJobClass:
-    if (useIntegratedAs())
-      return new tools::ClangAs(*this);
-    else
-      return new tools::linuxtools::Assemble(*this);
-    break;
+    return new tools::linuxtools::Assemble(*this);
   case Action::LinkJobClass:
     return new tools::linuxtools::Link(*this); break;
   default:

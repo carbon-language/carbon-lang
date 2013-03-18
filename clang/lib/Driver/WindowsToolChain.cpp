@@ -50,11 +50,9 @@ Tool *Windows::constructTool(Action::ActionClass AC) const {
   case Action::CompileJobClass:
     return new tools::Clang(*this);
   case Action::AssembleJobClass:
-    if (!useIntegratedAs() &&
-        getTriple().getEnvironment() == llvm::Triple::MachO)
+    if (getTriple().getEnvironment() == llvm::Triple::MachO)
       return new tools::darwin::Assemble(*this);
-    else
-      return new tools::ClangAs(*this);
+    llvm_unreachable("We only have the integrated assembler on this TC");
     break;
   case Action::LinkJobClass:
     return new tools::visualstudio::Link(*this);
