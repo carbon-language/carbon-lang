@@ -31,8 +31,9 @@ using namespace clang::driver;
 using namespace clang::driver::toolchains;
 using namespace clang;
 
-Windows::Windows(const Driver &D, const llvm::Triple& Triple)
-  : ToolChain(D, Triple) {
+Windows::Windows(const Driver &D, const llvm::Triple& Triple,
+                 const ArgList &Args)
+  : ToolChain(D, Triple, Args) {
 }
 
 Tool &Windows::SelectTool(const Compilation &C, const JobAction &JA) const {
@@ -57,7 +58,7 @@ Tool &Windows::SelectTool(const Compilation &C, const JobAction &JA) const {
     case Action::CompileJobClass:
       T = new tools::Clang(*this); break;
     case Action::AssembleJobClass:
-      if (!useIntegratedAs(C.getArgs()) &&
+      if (!useIntegratedAs() &&
           getTriple().getEnvironment() == llvm::Triple::MachO)
         T = new tools::darwin::Assemble(*this);
       else

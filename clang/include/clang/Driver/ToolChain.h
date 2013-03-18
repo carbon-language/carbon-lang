@@ -47,6 +47,7 @@ public:
 private:
   const Driver &D;
   const llvm::Triple Triple;
+  const ArgList &Args;
 
   /// The list of toolchain specific path prefixes to search for
   /// files.
@@ -57,7 +58,7 @@ private:
   path_list ProgramPaths;
 
 protected:
-  ToolChain(const Driver &D, const llvm::Triple &T);
+  ToolChain(const Driver &D, const llvm::Triple &T, const ArgList &Args);
 
   /// \name Utilities for implementing subclasses.
   ///@{
@@ -138,7 +139,7 @@ public:
   virtual bool IsIntegratedAssemblerDefault() const { return false; }
 
   /// \brief Check if the toolchain should use the integrated assembler.
-  bool useIntegratedAs(const ArgList &Args) const;
+  bool useIntegratedAs() const;
 
   /// IsStrictAliasingDefault - Does this tool chain use -fstrict-aliasing by
   /// default.

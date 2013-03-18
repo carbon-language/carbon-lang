@@ -1420,7 +1420,7 @@ static bool ShouldDisableCFI(const ArgList &Args,
   if (TC.getTriple().isOSDarwin()) {
     // The native darwin assembler doesn't support cfi directives, so
     // we disable them if we think the .s file will be passed to it.
-    Default = TC.useIntegratedAs(Args);
+    Default = TC.useIntegratedAs();
   }
   return !Args.hasFlag(options::OPT_fdwarf2_cfi_asm,
                        options::OPT_fno_dwarf2_cfi_asm,
@@ -1431,7 +1431,7 @@ static bool ShouldDisableDwarfDirectory(const ArgList &Args,
                                         const ToolChain &TC) {
   bool UseDwarfDirectory = Args.hasFlag(options::OPT_fdwarf_directory_asm,
                                         options::OPT_fno_dwarf_directory_asm,
-                                        TC.useIntegratedAs(Args));
+                                        TC.useIntegratedAs());
   return !UseDwarfDirectory;
 }
 
@@ -2806,7 +2806,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -fmodules-autolink (on by default when modules is enabled) automatically
   // links against libraries for imported modules.  This requires the
   // integrated assembler.
-  if (HaveModules && getToolChain().useIntegratedAs(Args) &&
+  if (HaveModules && getToolChain().useIntegratedAs() &&
       Args.hasFlag(options::OPT_fmodules_autolink,
                    options::OPT_fno_modules_autolink,
                    true)) {

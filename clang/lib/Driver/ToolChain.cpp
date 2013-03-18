@@ -21,8 +21,9 @@
 using namespace clang::driver;
 using namespace clang;
 
-ToolChain::ToolChain(const Driver &D, const llvm::Triple &T)
-  : D(D), Triple(T) {
+ToolChain::ToolChain(const Driver &D, const llvm::Triple &T,
+                     const ArgList &A)
+  : D(D), Triple(T), Args(A) {
 }
 
 ToolChain::~ToolChain() {
@@ -32,7 +33,7 @@ const Driver &ToolChain::getDriver() const {
  return D;
 }
 
-bool ToolChain::useIntegratedAs(const ArgList &Args) const {
+bool ToolChain::useIntegratedAs() const {
   return Args.hasFlag(options::OPT_integrated_as,
                       options::OPT_no_integrated_as,
                       IsIntegratedAssemblerDefault());

@@ -42,8 +42,8 @@ using namespace clang;
 
 /// Darwin - Darwin tool chain for i386 and x86_64.
 
-Darwin::Darwin(const Driver &D, const llvm::Triple& Triple)
-  : ToolChain(D, Triple), TargetInitialized(false)
+Darwin::Darwin(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
+  : ToolChain(D, Triple, Args), TargetInitialized(false)
 {
   // Compute the initial Darwin version from the triple
   unsigned Major, Minor, Micro;
@@ -197,7 +197,7 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA) const {
     case Action::CompileJobClass:
       T = new tools::Clang(*this); break;
     case Action::AssembleJobClass: {
-      if (useIntegratedAs(C.getArgs()))
+      if (useIntegratedAs())
         T = new tools::ClangAs(*this);
       else
         T = new tools::darwin::Assemble(*this);
@@ -218,8 +218,9 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA) const {
 }
 
 
-DarwinClang::DarwinClang(const Driver &D, const llvm::Triple& Triple)
-  : Darwin(D, Triple)
+DarwinClang::DarwinClang(const Driver &D, const llvm::Triple& Triple,
+                         const ArgList &Args)
+  : Darwin(D, Triple, Args)
 {
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
@@ -1368,7 +1369,7 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
 
 Generic_GCC::Generic_GCC(const Driver &D, const llvm::Triple& Triple,
                          const ArgList &Args)
-  : ToolChain(D, Triple), GCCInstallation(getDriver(), Triple, Args) {
+  : ToolChain(D, Triple, Args), GCCInstallation(getDriver(), Triple, Args) {
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
     getProgramPaths().push_back(getDriver().Dir);
@@ -1668,8 +1669,9 @@ StringRef Hexagon_TC::GetTargetCPU(const ArgList &Args)
 /// all subcommands. See http://tce.cs.tut.fi for our peculiar target.
 /// Currently does not support anything else but compilation.
 
-TCEToolChain::TCEToolChain(const Driver &D, const llvm::Triple& Triple)
-  : ToolChain(D, Triple) {
+TCEToolChain::TCEToolChain(const Driver &D, const llvm::Triple& Triple,
+                           const ArgList &Args)
+  : ToolChain(D, Triple, Args) {
   // Path mangling to find libexec
   std::string Path(getDriver().Dir);
 
@@ -1733,7 +1735,7 @@ Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   if (!T) {
     switch (Key) {
     case Action::AssembleJobClass: {
-      if (useIntegratedAs(C.getArgs()))
+      if (useIntegratedAs())
         T = new tools::ClangAs(*this);
       else
         T = new tools::openbsd::Assemble(*this);
@@ -1768,7 +1770,7 @@ Tool &Bitrig::SelectTool(const Compilation &C, const JobAction &JA) const {
   if (!T) {
     switch (Key) {
     case Action::AssembleJobClass: {
-      if (useIntegratedAs(C.getArgs()))
+      if (useIntegratedAs())
         T = new tools::ClangAs(*this);
       else
         T = new tools::bitrig::Assemble(*this);
@@ -1855,7 +1857,7 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   if (!T) {
     switch (Key) {
     case Action::AssembleJobClass:
-      if (useIntegratedAs(C.getArgs()))
+      if (useIntegratedAs())
         T = new tools::ClangAs(*this);
       else
         T = new tools::freebsd::Assemble(*this);
@@ -1912,7 +1914,7 @@ Tool &NetBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   if (!T) {
     switch (Key) {
     case Action::AssembleJobClass:
-      if (useIntegratedAs(C.getArgs()))
+      if (useIntegratedAs())
         T = new tools::ClangAs(*this);
       else
         T = new tools::netbsd::Assemble(*this);
@@ -2411,7 +2413,7 @@ Tool &Linux::SelectTool(const Compilation &C, const JobAction &JA) const {
   if (!T) {
     switch (Key) {
     case Action::AssembleJobClass:
-      if (useIntegratedAs(C.getArgs()))
+      if (useIntegratedAs())
         T = new tools::ClangAs(*this);
       else
         T = new tools::linuxtools::Assemble(*this);

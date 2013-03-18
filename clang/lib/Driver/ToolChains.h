@@ -180,7 +180,7 @@ private:
   void AddDeploymentTarget(DerivedArgList &Args) const;
 
 public:
-  Darwin(const Driver &D, const llvm::Triple& Triple);
+  Darwin(const Driver &D, const llvm::Triple& Triple, const ArgList &Args);
   ~Darwin();
 
   std::string ComputeEffectiveClangTriple(const ArgList &Args,
@@ -340,7 +340,7 @@ public:
 /// DarwinClang - The Darwin toolchain used by Clang.
 class LLVM_LIBRARY_VISIBILITY DarwinClang : public Darwin {
 public:
-  DarwinClang(const Driver &D, const llvm::Triple& Triple);
+  DarwinClang(const Driver &D, const llvm::Triple& Triple, const ArgList &Args);
 
   /// @name Darwin ToolChain Implementation
   /// {
@@ -530,7 +530,8 @@ public:
 /// all subcommands. See http://tce.cs.tut.fi for our peculiar target.
 class LLVM_LIBRARY_VISIBILITY TCEToolChain : public ToolChain {
 public:
-  TCEToolChain(const Driver &D, const llvm::Triple& Triple);
+  TCEToolChain(const Driver &D, const llvm::Triple& Triple,
+               const ArgList &Args);
   ~TCEToolChain();
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
@@ -547,7 +548,7 @@ class LLVM_LIBRARY_VISIBILITY Windows : public ToolChain {
   mutable llvm::DenseMap<unsigned, Tool*> Tools;
 
 public:
-  Windows(const Driver &D, const llvm::Triple& Triple);
+  Windows(const Driver &D, const llvm::Triple& Triple, const ArgList &Args);
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 
