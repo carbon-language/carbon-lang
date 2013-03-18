@@ -28,6 +28,7 @@
 #include "sanitizer_libc.h"
 #include "sanitizer_linux.h"
 #include "sanitizer_mutex.h"
+#include "sanitizer_placement_new.h"
 
 // This module works by spawning a Linux task which then attaches to every
 // thread in the caller process with ptrace. This suspends the threads, and
@@ -140,24 +141,27 @@ void ThreadSuspender::KillAllThreads() {
 }
 
 bool ThreadSuspender::SuspendAllThreads() {
-  ThreadLister thread_lister(pid_);
+  void *mem = InternalAlloc(sizeof(ThreadLister));
+  ThreadLister *thread_lister = new(mem) ThreadLister(pid_);
   bool added_threads;
   do {
     // Run through the directory entries once.
     added_threads = false;
-    pid_t tid = thread_lister.GetNextTID();
+    pid_t tid = thread_lister->GetNextTID();
     while (tid >= 0) {
       if (SuspendThread(tid))
         added_threads = true;
-      tid = thread_lister.GetNextTID();
+      tid = thread_lister->GetNextTID();
     }
-    if (thread_lister.error()) {
+    if (thread_lister->error()) {
       // Detach threads and fail.
       ResumeAllThreads();
+      InternalFree(mem);
       return false;
     }
-    thread_lister.Reset();
+    thread_lister->Reset();
   } while (added_threads);
+  InternalFree(mem);
   return true;
 }
 
@@ -241,15 +245,17 @@ static int TracerThread(void* argument) {
   return exit_code;
 }
 
+static sigset_t blocked_sigset;
+static sigset_t old_sigset;
+static struct sigaction old_sigactions[ARRAY_SIZE(kUnblockedSignals)];
+
 void StopTheWorld(StopTheWorldCallback callback, void *argument) {
   // Block all signals that can be blocked safely, and install default handlers
   // for the remaining signals.
   // We cannot allow user-defined handlers to run while the ThreadSuspender
   // thread is active, because they could conceivably call some libc functions
   // which modify errno (which is shared between the two threads).
-  sigset_t blocked_sigset;
   sigfillset(&blocked_sigset);
-  struct sigaction old_sigactions[ARRAY_SIZE(kUnblockedSignals)];
   for (uptr signal_index = 0; signal_index < ARRAY_SIZE(kUnblockedSignals);
        signal_index++) {
     // Remove the signal from the set of blocked signals.
@@ -262,7 +268,6 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
     sigaction(kUnblockedSignals[signal_index], &new_sigaction,
                     &old_sigactions[signal_index]);
   }
-  sigset_t old_sigset;
   int sigprocmask_status = sigprocmask(SIG_BLOCK, &blocked_sigset, &old_sigset);
   CHECK_EQ(sigprocmask_status, 0); // sigprocmask should never fail
   // Make this process dumpable. Processes that are not dumpable cannot be
