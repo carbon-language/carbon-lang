@@ -192,7 +192,7 @@ void ScopedReport::AddThread(const ThreadContext *tctx) {
 }
 
 #ifndef TSAN_GO
-static ThreadContext *FindThreadLocked(int unique_id) {
+static ThreadContext *FindThreadByUidLocked(int unique_id) {
   Context *ctx = CTX();
   ctx->thread_registry->CheckLocked();
   for (unsigned i = 0; i < kMaxTid; i++) {
@@ -205,26 +205,29 @@ static ThreadContext *FindThreadLocked(int unique_id) {
   return 0;
 }
 
+static bool IsInStackOrTls(ThreadContextBase *tctx_base, void *arg) {
+  uptr addr = (uptr)arg;
+  ThreadContext *tctx = static_cast<ThreadContext*>(tctx_base);
+  if (tctx->status != ThreadStatusRunning)
+    return false;
+  ThreadState *thr = tctx->thr;
+  CHECK(thr);
+  return ((addr >= thr->stk_addr && addr < thr->stk_addr + thr->stk_size) ||
+          (addr >= thr->tls_addr && addr < thr->tls_addr + thr->tls_size));
+}
+
 ThreadContext *IsThreadStackOrTls(uptr addr, bool *is_stack) {
   Context *ctx = CTX();
   ctx->thread_registry->CheckLocked();
-  for (unsigned i = 0; i < kMaxTid; i++) {
-    ThreadContext *tctx = static_cast<ThreadContext*>(
-        ctx->thread_registry->GetThreadLocked(i));
-    if (tctx == 0 || tctx->status != ThreadStatusRunning)
-      continue;
-    ThreadState *thr = tctx->thr;
-    CHECK(thr);
-    if (addr >= thr->stk_addr && addr < thr->stk_addr + thr->stk_size) {
-      *is_stack = true;
-      return tctx;
-    }
-    if (addr >= thr->tls_addr && addr < thr->tls_addr + thr->tls_size) {
-      *is_stack = false;
-      return tctx;
-    }
-  }
-  return 0;
+  ThreadContext *tctx = static_cast<ThreadContext*>(
+      ctx->thread_registry->FindThreadContextLocked(IsInStackOrTls,
+                                                    (void*)addr));
+  if (!tctx)
+    return 0;
+  ThreadState *thr = tctx->thr;
+  CHECK(thr);
+  *is_stack = (addr >= thr->stk_addr && addr < thr->stk_addr + thr->stk_size);
+  return tctx;
 }
 #endif
 
@@ -276,14 +279,14 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
       trace.Init(stack, ssz);
       loc->stack = SymbolizeStack(trace);
     }
-    ThreadContext *tctx = FindThreadLocked(creat_tid);
+    ThreadContext *tctx = FindThreadByUidLocked(creat_tid);
     if (tctx)
       AddThread(tctx);
     return;
   }
   if (allocator()->PointerIsMine((void*)addr)) {
     MBlock *b = user_mblock(0, (void*)addr);
-    ThreadContext *tctx = FindThreadLocked(b->alloc_tid);
+    ThreadContext *tctx = FindThreadByUidLocked(b->alloc_tid);
     void *mem = internal_alloc(MBlockReportLoc, sizeof(ReportLocation));
     ReportLocation *loc = new(mem) ReportLocation();
     rep_->locs.PushBack(loc);
