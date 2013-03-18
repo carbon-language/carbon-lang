@@ -2082,7 +2082,6 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
 ///
 void Preprocessor::HandleIfDirective(Token &IfToken,
                                      bool ReadAnyTokensBeforeDirective) {
-  SaveAndRestore<bool> PPDir(ParsingIfOrElifDirective, true);
   ++NumIf;
 
   // Parse and evaluate the conditional expression.
@@ -2174,7 +2173,6 @@ void Preprocessor::HandleElseDirective(Token &Result) {
 /// HandleElifDirective - Implements the \#elif directive.
 ///
 void Preprocessor::HandleElifDirective(Token &ElifToken) {
-  SaveAndRestore<bool> PPDir(ParsingIfOrElifDirective, true);
   ++NumElse;
 
   // #elif directive in a non-skipping conditional... start skipping.

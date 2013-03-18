@@ -176,3 +176,12 @@ __has_include
 #else
   #error "__has_include failed (9)."
 #endif
+
+#if FOO
+#elif __has_include(<foo>)
+#endif
+
+// PR15539
+#ifdef FOO
+#elif __has_include(<foo>)
+#endif
