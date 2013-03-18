@@ -188,6 +188,10 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
     setCurrentInput(Input, AST);
 
+    // Inform the diagnostic client we are processing a source file.
+    CI.getDiagnosticClient().BeginSourceFile(CI.getLangOpts(), 0);
+    HasBegunSourceFile = true;
+
     // Set the shared objects, these are reset when we finish processing the
     // file, otherwise the CompilerInstance will happily destroy them.
     CI.setFileManager(&AST->getFileManager());
