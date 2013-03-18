@@ -210,7 +210,7 @@ public:
     bool InitiallySuppressed = false;
     if (Options.shouldSuppressNullReturnPaths())
       if (Optional<Loc> RetLoc = RetVal.getAs<Loc>())
-        InitiallySuppressed = !State->assume(*RetLoc, true);
+        InitiallySuppressed = State->isNull(*RetLoc).isConstrainedTrue();
 
     BR.markInteresting(CalleeContext);
     BR.addVisitor(new ReturnVisitor(CalleeContext, InitiallySuppressed));
@@ -270,7 +270,7 @@ public:
 
     // If we can't prove the return value is 0, just mark it interesting, and
     // make sure to track it into any further inner functions.
-    if (State->assume(V.castAs<DefinedSVal>(), true)) {
+    if (!State->isNull(V).isConstrainedTrue()) {
       BR.markInteresting(V);
       ReturnVisitor::addVisitorIfNecessary(N, RetE, BR);
       return 0;
@@ -357,7 +357,7 @@ public:
         continue;
 
       // Is it possible for this argument to be non-null?
-      if (State->assume(*ArgV, true))
+      if (!State->isNull(*ArgV).isConstrainedTrue())
         continue;
 
       if (bugreporter::trackNullOrUndefValue(N, ArgE, BR, /*IsArg=*/true))
@@ -650,30 +650,36 @@ const char *TrackConstraintBRVisitor::getTag() {
   return "TrackConstraintBRVisitor";
 }
 
+bool TrackConstraintBRVisitor::isUnderconstrained(const ExplodedNode *N) const {
+  if (IsZeroCheck)
+    return N->getState()->isNull(Constraint).isUnderconstrained();
+  return N->getState()->assume(Constraint, !Assumption);
+}
+
 PathDiagnosticPiece *
 TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
                                     const ExplodedNode *PrevN,
                                     BugReporterContext &BRC,
                                     BugReport &BR) {
-  if (isSatisfied)
+  if (IsSatisfied)
     return NULL;
 
   // Check if in the previous state it was feasible for this constraint
   // to *not* be true.
-  if (PrevN->getState()->assume(Constraint, !Assumption)) {
+  if (isUnderconstrained(PrevN)) {
 
-    isSatisfied = true;
+    IsSatisfied = true;
 
     // As a sanity check, make sure that the negation of the constraint
     // was infeasible in the current state.  If it is feasible, we somehow
     // missed the transition point.
-    if (N->getState()->assume(Constraint, !Assumption))
+    if (isUnderconstrained(N))
       return NULL;
 
     // We found the transition point for the constraint.  We now need to
     // pretty-print the constraint. (work-in-progress)
-    std::string sbuf;
-    llvm::raw_string_ostream os(sbuf);
+    SmallString<64> sbuf;
+    llvm::raw_svector_ostream os(sbuf);
 
     if (Constraint.getAs<Loc>()) {
       os << "Assuming pointer value is ";
@@ -976,13 +982,10 @@ PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
   const Expr *Receiver = ME->getInstanceReceiver();
   if (!Receiver)
     return 0;
+
   ProgramStateRef state = N->getState();
-  const SVal &V = state->getSVal(Receiver, N->getLocationContext());
-  Optional<DefinedOrUnknownSVal> DV = V.getAs<DefinedOrUnknownSVal>();
-  if (!DV)
-    return 0;
-  state = state->assume(*DV, true);
-  if (state)
+  SVal V = state->getSVal(Receiver, N->getLocationContext());
+  if (!state->isNull(V).isConstrainedTrue())
     return 0;
 
   // The receiver was nil, and hence the method was skipped.
