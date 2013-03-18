@@ -463,6 +463,11 @@ public:   // Higher level manipulation routines.
     return Types[ResNo].MergeInTypeInfo(EEVT::TypeSet(InTy, TP), TP);
   }
 
+  // Update node type with types inferred from an instruction operand or result
+  // def from the ins/outs lists.
+  // Return true if the type changed.
+  bool UpdateNodeTypeFromInst(unsigned ResNo, Record *Operand, TreePattern &TP);
+
   /// ContainsUnresolvedType - Return true if this tree contains any
   /// unresolved types.
   bool ContainsUnresolvedType() const {

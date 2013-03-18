@@ -956,6 +956,40 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
   llvm_unreachable("Invalid ConstraintType!");
 }
 
+// Update the node type to match an instruction operand or result as specified
+// in the ins or outs lists on the instruction definition. Return true if the
+// type was actually changed.
+bool TreePatternNode::UpdateNodeTypeFromInst(unsigned ResNo,
+                                             Record *Operand,
+                                             TreePattern &TP) {
+  // The 'unknown' operand indicates that types should be inferred from the
+  // context.
+  if (Operand->isSubClassOf("unknown_class"))
+    return false;
+
+  // The Operand class specifies a type directly.
+  if (Operand->isSubClassOf("Operand"))
+    return UpdateNodeType(ResNo, getValueType(Operand->getValueAsDef("Type")),
+                          TP);
+
+  // PointerLikeRegClass has a type that is determined at runtime.
+  if (Operand->isSubClassOf("PointerLikeRegClass"))
+    return UpdateNodeType(ResNo, MVT::iPTR, TP);
+
+  // Both RegisterClass and RegisterOperand operands derive their types from a
+  // register class def.
+  Record *RC = 0;
+  if (Operand->isSubClassOf("RegisterClass"))
+    RC = Operand;
+  else if (Operand->isSubClassOf("RegisterOperand"))
+    RC = Operand->getValueAsDef("RegClass");
+
+  assert(RC && "Unknown operand type");
+  CodeGenTarget &Tgt = TP.getDAGPatterns().getTargetInfo();
+  return UpdateNodeType(ResNo, Tgt.getRegisterClass(RC).getValueTypes(), TP);
+}
+
+
 //===----------------------------------------------------------------------===//
 // SDNodeInfo implementation
 //
@@ -1575,26 +1609,8 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     // (outs) list of the instruction.
     // FIXME: Cap at one result so far.
     unsigned NumResultsToAdd = InstInfo.Operands.NumDefs ? 1 : 0;
-    for (unsigned ResNo = 0; ResNo != NumResultsToAdd; ++ResNo) {
-      Record *ResultNode = Inst.getResult(ResNo);
-
-      if (ResultNode->isSubClassOf("PointerLikeRegClass")) {
-        MadeChange |= UpdateNodeType(ResNo, MVT::iPTR, TP);
-      } else if (ResultNode->isSubClassOf("RegisterOperand")) {
-        Record *RegClass = ResultNode->getValueAsDef("RegClass");
-        const CodeGenRegisterClass &RC =
-          CDP.getTargetInfo().getRegisterClass(RegClass);
-        MadeChange |= UpdateNodeType(ResNo, RC.getValueTypes(), TP);
-      } else if (ResultNode->isSubClassOf("unknown_class")) {
-        // Nothing to do.
-      } else {
-        assert(ResultNode->isSubClassOf("RegisterClass") &&
-               "Operands should be register classes!");
-        const CodeGenRegisterClass &RC =
-          CDP.getTargetInfo().getRegisterClass(ResultNode);
-        MadeChange |= UpdateNodeType(ResNo, RC.getValueTypes(), TP);
-      }
-    }
+    for (unsigned ResNo = 0; ResNo != NumResultsToAdd; ++ResNo)
+      MadeChange |= UpdateNodeTypeFromInst(ResNo, Inst.getResult(ResNo), TP);
 
     // If the instruction has implicit defs, we apply the first one as a result.
     // FIXME: This sucks, it should apply all implicit defs.
@@ -1636,29 +1652,9 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
         return false;
       }
 
-      MVT::SimpleValueType VT;
       TreePatternNode *Child = getChild(ChildNo++);
       unsigned ChildResNo = 0;  // Instructions always use res #0 of their op.
-
-      if (OperandNode->isSubClassOf("RegisterClass")) {
-        const CodeGenRegisterClass &RC =
-          CDP.getTargetInfo().getRegisterClass(OperandNode);
-        MadeChange |= Child->UpdateNodeType(ChildResNo, RC.getValueTypes(), TP);
-      } else if (OperandNode->isSubClassOf("RegisterOperand")) {
-        Record *RegClass = OperandNode->getValueAsDef("RegClass");
-        const CodeGenRegisterClass &RC =
-          CDP.getTargetInfo().getRegisterClass(RegClass);
-        MadeChange |= Child->UpdateNodeType(ChildResNo, RC.getValueTypes(), TP);
-      } else if (OperandNode->isSubClassOf("Operand")) {
-        VT = getValueType(OperandNode->getValueAsDef("Type"));
-        MadeChange |= Child->UpdateNodeType(ChildResNo, VT, TP);
-      } else if (OperandNode->isSubClassOf("PointerLikeRegClass")) {
-        MadeChange |= Child->UpdateNodeType(ChildResNo, MVT::iPTR, TP);
-      } else if (OperandNode->isSubClassOf("unknown_class")) {
-        // Nothing to do.
-      } else
-        llvm_unreachable("Unknown operand type!");
-
+      MadeChange |= Child->UpdateNodeTypeFromInst(ChildResNo, OperandNode, TP);
       MadeChange |= Child->ApplyTypeConstraints(TP, NotRegisters);
     }
 
