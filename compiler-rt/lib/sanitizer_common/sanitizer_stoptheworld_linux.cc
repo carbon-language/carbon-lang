@@ -173,6 +173,9 @@ static const int kUnblockedSignals[] = { SIGABRT, SIGILL, SIGFPE, SIGSEGV,
 struct TracerThreadArgument {
   StopTheWorldCallback callback;
   void *callback_argument;
+  // The tracer thread waits on this mutex while the parent finished its
+  // preparations.
+  BlockingMutex mutex;
 };
 
 // Signal handler to wake up suspended threads when the tracer thread dies.
@@ -186,21 +189,17 @@ void TracerThreadSignalHandler(int signum, siginfo_t *siginfo, void *) {
   internal__exit((signum == SIGABRT) ? 1 : 2);
 }
 
-// The tracer thread waits on this mutex while the parent finished its
-// preparations.
-static BlockingMutex tracer_init_mutex(LINKER_INITIALIZED);
-
 // Size of alternative stack for signal handlers in the tracer thread.
 static const int kHandlerStackSize = 4096;
 
 // This function will be run as a cloned task.
-int TracerThread(void* argument) {
+static int TracerThread(void* argument) {
   TracerThreadArgument *tracer_thread_argument =
       (TracerThreadArgument *)argument;
 
   // Wait for the parent thread to finish preparations.
-  tracer_init_mutex.Lock();
-  tracer_init_mutex.Unlock();
+  tracer_thread_argument->mutex.Lock();
+  tracer_thread_argument->mutex.Unlock();
 
   ThreadSuspender thread_suspender(internal_getppid());
   // Global pointer for the signal handler.
@@ -242,10 +241,7 @@ int TracerThread(void* argument) {
   return exit_code;
 }
 
-static BlockingMutex stoptheworld_mutex(LINKER_INITIALIZED);
-
 void StopTheWorld(StopTheWorldCallback callback, void *argument) {
-  BlockingMutexLock lock(&stoptheworld_mutex);
   // Block all signals that can be blocked safely, and install default handlers
   // for the remaining signals.
   // We cannot allow user-defined handlers to run while the ThreadSuspender
@@ -274,13 +270,13 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
   int process_was_dumpable = internal_prctl(PR_GET_DUMPABLE, 0, 0, 0, 0);
   if (!process_was_dumpable)
     internal_prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
-  // Block the execution of TracerThread until after we have set ptrace
-  // permissions.
-  tracer_init_mutex.Lock();
   // Prepare the arguments for TracerThread.
   struct TracerThreadArgument tracer_thread_argument;
   tracer_thread_argument.callback = callback;
   tracer_thread_argument.callback_argument = argument;
+  // Block the execution of TracerThread until after we have set ptrace
+  // permissions.
+  tracer_thread_argument.mutex.Lock();
   // The tracer thread will run on the same stack, so we must reserve some
   // stack space for the caller thread to run in as it waits on the tracer.
   const uptr kReservedStackSize = 4096;
@@ -292,7 +288,7 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
                           &tracer_thread_argument, 0, 0, 0);
   if (tracer_pid < 0) {
     Report("Failed spawning a tracer thread (errno %d).\n", errno);
-    tracer_init_mutex.Unlock();
+    tracer_thread_argument.mutex.Unlock();
   } else {
     // On some systems we have to explicitly declare that we want to be traced
     // by the tracer thread.
@@ -300,7 +296,7 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
     internal_prctl(PR_SET_PTRACER, tracer_pid, 0, 0, 0);
 #endif
     // Allow the tracer thread to start.
-    tracer_init_mutex.Unlock();
+    tracer_thread_argument.mutex.Unlock();
     // Since errno is shared between this thread and the tracer thread, we
     // must avoid using errno while the tracer thread is running.
     // At this point, any signal will either be blocked or kill us, so waitpid

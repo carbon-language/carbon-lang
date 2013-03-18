@@ -60,6 +60,7 @@ typedef void (*StopTheWorldCallback)(
 // Suspend all threads in the current process and run the callback on the list
 // of suspended threads. This function will resume the threads before returning.
 // The callback should not call any libc functions.
+// This function should NOT be called from multiple threads simultaneously.
 void StopTheWorld(StopTheWorldCallback callback, void *argument);
 
 }  // namespace __sanitizer
