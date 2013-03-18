@@ -188,7 +188,18 @@ void ScopedReport::AddThread(const ThreadContext *tctx) {
   rt->running = (tctx->status == ThreadStatusRunning);
   rt->name = tctx->name ? internal_strdup(tctx->name) : 0;
   rt->parent_tid = tctx->parent_tid;
+  rt->stack = 0;
+#ifdef TSAN_GO
   rt->stack = SymbolizeStack(tctx->creation_stack);
+#else
+  uptr ssz = 0;
+  const uptr *stack = StackDepotGet(tctx->creation_stack_id, &ssz);
+  if (stack) {
+    StackTrace trace;
+    trace.Init(stack, ssz);
+    rt->stack = SymbolizeStack(trace);
+  }
+#endif
 }
 
 #ifndef TSAN_GO

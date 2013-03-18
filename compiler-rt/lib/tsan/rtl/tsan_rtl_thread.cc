@@ -58,7 +58,11 @@ void ThreadContext::OnCreated(void *arg) {
   args->thr->fast_synch_epoch = args->thr->fast_state.epoch();
   args->thr->clock.release(&sync);
   StatInc(args->thr, StatSyncRelease);
+#ifdef TSAN_GO
   creation_stack.ObtainCurrent(args->thr, args->pc);
+#else
+  creation_stack_id = CurrentStackId(args->thr, args->pc);
+#endif
   if (reuse_count == 0)
     StatInc(args->thr, StatThreadMaxTid);
 }
