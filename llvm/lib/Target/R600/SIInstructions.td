@@ -854,7 +854,9 @@ defm V_LSHR_B32 : VOP2_32 <0x00000015, "V_LSHR_B32", []>;
 defm V_LSHRREV_B32 : VOP2_32 <0x00000016, "V_LSHRREV_B32", []>;
 defm V_ASHR_I32 : VOP2_32 <0x00000017, "V_ASHR_I32", []>;
 defm V_ASHRREV_I32 : VOP2_32 <0x00000018, "V_ASHRREV_I32", []>;
-defm V_LSHL_B32 : VOP2_32 <0x00000019, "V_LSHL_B32", []>;
+defm V_LSHL_B32 : VOP2_32 <0x00000019, "V_LSHL_B32",
+  [(set VReg_32:$dst, (shl VSrc_32:$src0, (i32 VReg_32:$src1)))]
+>;
 defm V_LSHLREV_B32 : VOP2_32 <0x0000001a, "V_LSHLREV_B32", []>;
 
 let isCommutable = 1 in {

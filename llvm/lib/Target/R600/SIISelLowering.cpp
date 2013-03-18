@@ -229,6 +229,10 @@ EVT SITargetLowering::getSetCCResultType(EVT VT) const {
   return MVT::i1;
 }
 
+MVT SITargetLowering::getScalarShiftAmountTy(EVT VT) const {
+  return MVT::i32;
+}
+
 //===----------------------------------------------------------------------===//
 // Custom DAG Lowering Operations
 //===----------------------------------------------------------------------===//
