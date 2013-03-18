@@ -110,8 +110,8 @@ struct AdvancedCallbackArgument {
 void *AdvancedIncrementerThread(void *argument) {
   AdvancedCallbackArgument *callback_argument =
       (AdvancedCallbackArgument *)argument;
-  uptr this_thread_index = __sync_fetch_and_add(&callback_argument->thread_index,
-                                               1);
+  uptr this_thread_index = __sync_fetch_and_add(
+      &callback_argument->thread_index, 1);
   // Spawn the next thread.
   int pthread_create_result;
   if (this_thread_index + 1 < kThreadCount) {
@@ -180,7 +180,7 @@ TEST(StopTheWorld, SuspendThreadsAdvanced) {
   // Wait for all threads to spawn before we start terminating them.
   while (__sync_fetch_and_add(&argument.thread_index, 0) < kThreadCount)
     sched_yield();
-  ASSERT_FALSE(argument.fatal_error); // a pthread_create has failed 
+  ASSERT_FALSE(argument.fatal_error); // a pthread_create has failed
   // Signal the threads to terminate.
   pthread_mutex_unlock(&advanced_incrementer_thread_exit_mutex);
   for (uptr i = 0; i < kThreadCount; i++)
