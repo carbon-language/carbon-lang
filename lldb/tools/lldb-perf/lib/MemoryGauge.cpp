@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <mach/task.h>
 
-using namespace lldb::perf;
+using namespace lldb_perf;
 
 MemoryGauge::SizeType
 MemoryGauge::now ()

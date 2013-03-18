@@ -13,7 +13,7 @@
 
 #include <mach/task_info.h>
 
-namespace lldb { namespace perf
+namespace lldb_perf
 {
 class MemoryGauge : public Gauge<mach_vm_size_t>
 {
@@ -48,6 +48,6 @@ public:
     SizeType
     value ();
 };
-} }
+}
 
 #endif /* defined(__PerfTestDriver__MemoryGauge__) */

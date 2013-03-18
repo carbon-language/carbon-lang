@@ -15,7 +15,7 @@
 
 #include "CFCMutableArray.h"
 
-namespace lldb { namespace perf
+namespace lldb_perf
 {
 class WriteToPList
 {
@@ -70,6 +70,6 @@ private:
     std::string m_description;
     std::vector<ValueType> m_dataset;
 };
-} }
+}
 
 #endif /* defined(__PerfTestDriver__Metric__) */

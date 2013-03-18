@@ -12,7 +12,7 @@
 #include "CFCMutableDictionary.h"
 #include "CFCString.h"
 
-using namespace lldb::perf;
+using namespace lldb_perf;
 
 template <class T>
 Metric<T>::Metric () : Metric ("")
@@ -90,5 +90,5 @@ void Metric<T>::WriteImpl (CFCMutableArray& parent, identity<mach_vm_size_t>)
     parent.AppendValue(dict.get(), true);
 }
 
-template class lldb::perf::Metric<double>;
-template class lldb::perf::Metric<mach_vm_size_t>;
+template class lldb_perf::Metric<double>;
+template class lldb_perf::Metric<mach_vm_size_t>;

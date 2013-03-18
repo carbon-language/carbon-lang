@@ -11,7 +11,7 @@
 
 #include <functional>
 
-namespace lldb { namespace perf
+namespace lldb_perf
 {
 template <class TASizeType>
 class Gauge
@@ -45,6 +45,6 @@ public:
     }
 
 };
-} }
+}
 
 #endif

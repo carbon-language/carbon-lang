@@ -9,7 +9,7 @@
 #include "Timer.h"
 #include <assert.h>
 
-using namespace lldb::perf;
+using namespace lldb_perf;
 
 TimeGauge::HPTime
 TimeGauge::now ()

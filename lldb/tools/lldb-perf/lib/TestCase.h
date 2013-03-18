@@ -12,9 +12,7 @@
 #include "lldb/API/LLDB.h"
 #include "Measurement.h"
 
-using namespace lldb;
-
-namespace lldb { namespace perf
+namespace lldb_perf
 {
 class TestCase
 {
@@ -25,12 +23,46 @@ public:
 	{
 		enum class Type
 		{
-			eAWNext,
-			eAWContinue,
-            eAWFinish,
-			eAWKill
+			eNext,
+			eContinue,
+            eFinish,
+			eKill
 		} type;
-		SBThread thread;
+		lldb::SBThread thread;
+        
+        ActionWanted () :
+            type (Type::eContinue),
+            thread ()
+        {
+        }
+        
+        void
+        Continue()
+        {
+            type = Type::eContinue;
+            thread = lldb::SBThread();
+        }
+        
+        void
+        Next (lldb::SBThread t)
+        {
+            type = Type::eNext;
+            thread = t;
+        }
+
+        void
+        Finish (lldb::SBThread t)
+        {
+            type = Type::eFinish;
+            thread = t;
+        }
+        
+        void
+        Kill ()
+        {
+            type = Type::eKill;
+            thread = lldb::SBThread();
+        }
 	};
     
     virtual
@@ -40,8 +72,8 @@ public:
 	virtual void
 	Setup (int argc, const char** argv);
     
-	virtual ActionWanted
-	TestStep (int counter) = 0;
+	virtual void
+	TestStep (int counter, ActionWanted &next_action) = 0;
 	
 	bool
 	Launch (const char** args, const char* cwd);
@@ -74,13 +106,13 @@ public:
     Run (TestCase& test, int argc, const char** argv);
     
 protected:
-	SBDebugger m_debugger;
-	SBTarget m_target;
-	SBProcess m_process;
-	SBThread m_thread;
-	SBListener m_listener;
+    lldb::SBDebugger m_debugger;
+	lldb::SBTarget m_target;
+	lldb::SBProcess m_process;
+	lldb::SBThread m_thread;
+	lldb::SBListener m_listener;
     bool m_verbose;
 };
-} }
+}
 
 #endif /* defined(__PerfTestDriver__TestCase__) */

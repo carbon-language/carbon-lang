@@ -15,7 +15,7 @@
 
 using namespace std::chrono;
 
-namespace lldb { namespace perf
+namespace lldb_perf
 {
 class TimeGauge : public Gauge<double>
 {
@@ -51,6 +51,6 @@ public:
     double
     value ();
 };
-} }
+}
 
 #endif /* defined(__PerfTestDriver__Timer__) */

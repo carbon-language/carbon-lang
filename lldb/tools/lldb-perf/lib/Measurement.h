@@ -13,7 +13,7 @@
 #include "Timer.h"
 #include "Metric.h"
 
-namespace lldb { namespace perf
+namespace lldb_perf
 {
 template <typename GaugeType, typename Action>
 class Measurement : public WriteToPList
@@ -90,6 +90,6 @@ public:
     }
 };
 
-} }
+}
 
 #endif /* defined(__PerfTestDriver__Measurement__) */

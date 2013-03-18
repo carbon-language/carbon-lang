@@ -3330,11 +3330,11 @@
 		26F5C22410F3D950009D5894 /* Tools */ = {
 			isa = PBXGroup;
 			children = (
-				940DB8C416EA64D400D3C2F1 /* lldb-perf */,
 				26579F55126A255E0007C5CB /* darwin-debug */,
 				265E9BE0115C2B8500D0DCCB /* debugserver */,
 				26F5C22510F3D956009D5894 /* Driver */,
 				2665CD0915080846002C8FAE /* install-headers */,
+				940DB8C416EA64D400D3C2F1 /* lldb-perf */,
 				26DC6A1B1337FEA400FF7998 /* lldb-platform */,
 			);
 			name = Tools;

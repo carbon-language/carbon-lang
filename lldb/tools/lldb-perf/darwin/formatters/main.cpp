@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <fstream>
 
-using namespace lldb::perf;
+using namespace lldb_perf;
 
 class FormattersTest : public TestCase
 {
@@ -26,40 +26,40 @@ public:
     FormattersTest () : TestCase()
     {
         m_dump_std_vector_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "std-vector", "time to dump an std::vector");
         m_dump_std_list_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "std-list", "time to dump an std::list");
         m_dump_std_map_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "std-map", "time to dump an std::map");
         m_dump_std_string_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "std-string", "time to dump an std::string");
         
         m_dump_nsstring_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,0,false);
+            lldb_perf::Xcode::FetchVariable (value,0,false);
         }, "ns-string", "time to dump an NSString");
         
         m_dump_nsarray_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "ns-array", "time to dump an NSArray");
         
         m_dump_nsdictionary_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "ns-dictionary", "time to dump an NSDictionary");
         
         m_dump_nsset_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "ns-set", "time to dump an NSSet");
         
         m_dump_nsbundle_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,1,false);
+            lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "ns-bundle", "time to dump an NSBundle");
         
         m_dump_nsdate_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb::perf::Xcode::FetchVariable (value,0,false);
+            lldb_perf::Xcode::FetchVariable (value,0,false);
         }, "ns-date", "time to dump an NSDate");
     }
 
@@ -138,71 +138,59 @@ public:
         m_dump_std_string_measurement(frame_zero.FindVariable("sstr4", lldb::eDynamicCanRunTarget));
     }
     
-    virtual ActionWanted
-	TestStep (int counter)
+	virtual void
+	TestStep (int counter, ActionWanted &next_action)
     {
-#define STEP(n) if (counter == n)
-#define NEXT(s) return TestCase::ActionWanted{TestCase::ActionWanted::Type::eAWNext,SelectMyThread(s)}
-#define FINISH(s) return TestCase::ActionWanted{TestCase::ActionWanted::Type::eAWFinish,SelectMyThread(s)}
-#define CONT return TestCase::ActionWanted{TestCase::ActionWanted::Type::eAWContinue,SBThread()}
-#define KILL return TestCase::ActionWanted{TestCase::ActionWanted::Type::eAWKill,SBThread()}
-        STEP (0)
+        switch (counter)
         {
-            m_target.BreakpointCreateByLocation("fmts_tester.mm", 68);
-            CONT;
+            case 0:
+                m_target.BreakpointCreateByLocation("fmts_tester.mm", 68);
+                next_action.Continue();
+                break;
+            case 1:
+                DoTest ();
+                next_action.Continue();
+                break;
+            case 2:
+                DoTest ();
+                next_action.Continue();
+                break;
+            case 3:
+                DoTest ();
+                next_action.Continue();
+                break;
+            case 4:
+                DoTest ();
+                next_action.Continue();
+                break;
+            case 5:
+                DoTest ();
+                next_action.Continue();
+                break;
+            case 6:
+                DoTest ();
+                next_action.Continue();
+                break;
+            case 7:
+                DoTest ();
+                next_action.Continue();
+                break;
+            case 8:
+                DoTest ();
+                next_action.Continue();
+                break;
+            case 9:
+                DoTest ();
+                next_action.Continue();
+                break;
+            case 10:
+                DoTest ();
+                next_action.Continue();
+                break;
+            default:
+                next_action.Kill();
+                break;
         }
-        
-        STEP (1)
-        {
-            DoTest ();
-            CONT;
-        }
-        STEP (2)
-        {
-            DoTest ();
-            CONT;
-        }
-        STEP (3)
-        {
-            DoTest ();
-            CONT;
-        }
-        STEP (4)
-        {
-            DoTest ();
-            CONT;
-        }
-        STEP (5)
-        {
-            DoTest ();
-            CONT;
-        }
-        STEP (6)
-        {
-            DoTest ();
-            CONT;
-        }
-        STEP (7)
-        {
-            DoTest ();
-            CONT;
-        }
-        STEP (8)
-        {
-            DoTest ();
-            CONT;
-        }
-        STEP (9)
-        {
-            DoTest ();
-            CONT;
-        }
-        STEP (10)
-        {
-            DoTest ();
-            CONT;
-        }
-        KILL;
     }
     
     void

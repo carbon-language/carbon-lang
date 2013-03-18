@@ -10,7 +10,7 @@
 #include <string>
 
 using namespace std;
-using namespace lldb::perf;
+using namespace lldb_perf;
 
 void
 Xcode::FetchVariable (SBValue value, uint32_t expand, bool verbose)

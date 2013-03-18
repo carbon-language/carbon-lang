@@ -9,7 +9,7 @@
 #include "TestCase.h"
 #include "Xcode.h"
 
-using namespace lldb::perf;
+using namespace lldb_perf;
 
 TestCase::TestCase () :
 m_debugger(),
@@ -131,14 +131,15 @@ TestCase::Loop ()
 				}
 				if (m_verbose)
 					printf("RUNNING STEP %d\n",step);
-				auto action = TestStep(step);
+                ActionWanted action;
+				TestStep(step, action);
 				step++;
 				switch (action.type)
 				{
-					case ActionWanted::Type::eAWContinue:
+					case ActionWanted::Type::eContinue:
 						m_debugger.HandleCommand("continue");
 						break;
-                    case ActionWanted::Type::eAWFinish:
+                    case ActionWanted::Type::eFinish:
                         if (action.thread.IsValid() == false)
                         {
                             if (m_verbose) Xcode::RunCommand(m_debugger,"bt all",true);
@@ -148,7 +149,7 @@ TestCase::Loop ()
                         m_process.SetSelectedThread(action.thread);
                         m_debugger.HandleCommand("finish");
 						break;
-					case ActionWanted::Type::eAWNext:
+					case ActionWanted::Type::eNext:
                         if (action.thread.IsValid() == false)
                         {
                             if (m_verbose) Xcode::RunCommand(m_debugger,"bt all",true);
@@ -158,7 +159,7 @@ TestCase::Loop ()
                         m_process.SetSelectedThread(action.thread);
                         m_debugger.HandleCommand("next");
 						break;
-					case ActionWanted::Type::eAWKill:
+					case ActionWanted::Type::eKill:
 						if (m_verbose) printf("I want to die\n");
 						m_process.Kill();
 						return;

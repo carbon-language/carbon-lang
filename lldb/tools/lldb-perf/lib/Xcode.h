@@ -23,7 +23,7 @@
 
 using namespace lldb;
 
-namespace lldb { namespace perf
+namespace lldb_perf
 {
 class Xcode
 {
@@ -58,6 +58,6 @@ public:
     static SBBreakpoint
     CreateFileLineBreakpoint (SBTarget target, const char* file, uint32_t line);
 };
-} }
+}
 
 #endif /* defined(__PerfTestDriver__Xcode__) */
