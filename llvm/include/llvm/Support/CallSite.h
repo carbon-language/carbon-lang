@@ -28,7 +28,6 @@
 
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/IR/Attributes.h"
-#include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Instructions.h"
 
