@@ -128,3 +128,15 @@ define void @i80test(i80* %a, i80* %b) nounwind uwtable sanitize_address {
 ; CHECK: __asan_report_store_n{{.*}}, i64 10)
 ; CHECK: __asan_report_store_n{{.*}}, i64 10)
 ; CHECK: ret void
+
+; asan should not instrument functions with available_externally linkage.
+define available_externally i32 @f_available_externally(i32* %a) sanitize_address  {
+entry:
+  %tmp1 = load i32* %a
+  ret i32 %tmp1
+}
+; CHECK: @f_available_externally
+; CHECK-NOT: __asan_report
+; CHECK: ret i32
+
+
