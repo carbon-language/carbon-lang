@@ -464,6 +464,7 @@ TEST(AddressSanitizerInterface, GetHeapSizeTest) {
   // The chunk should be greater than the quarantine size,
   // otherwise it will be stuck in quarantine instead of being unmaped.
   static const size_t kLargeMallocSize = (1 << 28) + 1;  // 256M
+  free(Ident(malloc(kLargeMallocSize)));  // Drain quarantine.
   uptr old_heap_size = __asan_get_heap_size();
   for (int i = 0; i < 3; i++) {
     // fprintf(stderr, "allocating %zu bytes:\n", kLargeMallocSize);
