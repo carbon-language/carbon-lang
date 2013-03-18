@@ -235,9 +235,10 @@ namespace llvm {
     ///
     static unsigned BestForm(bool IsSigned, uint64_t Int) {
       if (IsSigned) {
-        if ((char)Int == (signed)Int)   return dwarf::DW_FORM_data1;
-        if ((short)Int == (signed)Int)  return dwarf::DW_FORM_data2;
-        if ((int)Int == (signed)Int)    return dwarf::DW_FORM_data4;
+        const int64_t SignedInt = Int;
+        if ((char)Int == SignedInt)     return dwarf::DW_FORM_data1;
+        if ((short)Int == SignedInt)    return dwarf::DW_FORM_data2;
+        if ((int)Int == SignedInt)      return dwarf::DW_FORM_data4;
       } else {
         if ((unsigned char)Int == Int)  return dwarf::DW_FORM_data1;
         if ((unsigned short)Int == Int) return dwarf::DW_FORM_data2;
