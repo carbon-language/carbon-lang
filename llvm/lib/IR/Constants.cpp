@@ -47,6 +47,19 @@ bool Constant::isNegativeZeroValue() const {
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(this))
     return CFP->isZero() && CFP->isNegative();
 
+  // Equivalent for a vector of -0.0's.
+  if (const ConstantDataVector *CV = dyn_cast<ConstantDataVector>(this))
+    if (ConstantFP *SplatCFP = dyn_cast_or_null<ConstantFP>(CV->getSplatValue()))
+      if (SplatCFP && SplatCFP->isZero() && SplatCFP->isNegative())
+        return true;
+
+  // However, vectors of zeroes which are floating point represent +0.0's.
+  if (const ConstantAggregateZero *CAZ = dyn_cast<ConstantAggregateZero>(this))
+    if (const VectorType *VT = dyn_cast<VectorType>(CAZ->getType()))
+      if (VT->getElementType()->isFloatingPointTy())
+        // As it's a CAZ, we know it's the zero bit-pattern (ie, +0.0) in each element.
+        return false;
+
   // Otherwise, just use +0.0.
   return isNullValue();
 }
