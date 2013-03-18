@@ -607,7 +607,7 @@ void TestSizeClassAllocatorIteration() {
   std::set<void *> reported_chunks;
   IterationTestCallback callback(&reported_chunks);
   a->ForceLock();
-  a->template ForEachChunk<IterationTestCallback>(callback);
+  a->ForEachChunk(callback);
   a->ForceUnlock();
 
   for (uptr i = 0; i < allocated.size(); i++) {
@@ -647,7 +647,7 @@ TEST(SanitizerCommon, LargeMmapAllocatorIteration) {
   std::set<void *> reported_chunks;
   IterationTestCallback callback(&reported_chunks);
   a.ForceLock();
-  a.ForEachChunk<IterationTestCallback>(callback);
+  a.ForEachChunk(callback);
   a.ForceUnlock();
 
   for (uptr i = 0; i < kNumAllocs; i++) {
