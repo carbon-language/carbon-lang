@@ -253,6 +253,7 @@ void ASTDeclWriter::VisitEnumDecl(EnumDecl *D) {
       !D->isModulePrivate() &&
       !CXXRecordDecl::classofKind(D->getKind()) &&
       !D->getIntegerTypeSourceInfo() &&
+      !D->getMemberSpecializationInfo() &&
       D->getDeclName().getNameKind() == DeclarationName::Identifier)
     AbbrevToUse = Writer.getDeclEnumAbbrev();
 

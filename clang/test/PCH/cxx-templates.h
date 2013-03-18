@@ -246,3 +246,16 @@ struct __mt_alloc {
   }
 };
 }
+
+namespace PR13020 {
+template<typename T>
+void f() {
+ enum E {
+   enumerator
+ };
+
+ T t = enumerator;
+}
+
+template void f<int>();
+}
