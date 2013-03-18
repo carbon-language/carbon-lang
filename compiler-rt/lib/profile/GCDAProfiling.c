@@ -42,7 +42,23 @@ typedef unsigned int uint64_t;
  * --- GCOV file format I/O primitives ---
  */
 
+/*
+ * The current file we're outputting.
+ */ 
 static FILE *output_file = NULL;
+
+/*
+ *  A list of flush functions that our __gcov_flush() function should call.
+ */
+typedef void (*flush_fn)();
+
+struct flush_fn_node {
+  flush_fn fn;
+  struct flush_fn_node *next;
+};
+
+struct flush_fn_node *flush_fn_head = NULL;
+struct flush_fn_node *flush_fn_tail = NULL;
 
 static void write_int32(uint32_t i) {
   fwrite(&i, 4, 1, output_file);
@@ -287,4 +303,36 @@ void llvm_gcda_end_file() {
 #ifdef DEBUG_GCDAPROFILING
   fprintf(stderr, "llvmgcda: -----\n");
 #endif
+}
+
+void llvm_register_flush_function(flush_fn fn) {
+  struct flush_fn_node *new_node = malloc(sizeof(struct flush_fn_node));
+  new_node->fn = fn;
+  new_node->next = NULL;
+
+  if (!flush_fn_head) {
+    flush_fn_head = flush_fn_tail = new_node;
+  } else {
+    flush_fn_tail->next = new_node;
+    flush_fn_tail = new_node;
+  }
+}
+
+void __gcov_flush() {
+  struct flush_fn_node *curr = flush_fn_head;
+
+  while (curr) {
+    curr->fn();
+    curr = curr->next;
+  }
+}
+
+void llvm_delete_flush_function_list() {
+  while (flush_fn_head) {
+    struct flush_fn_node *node = flush_fn_head;
+    flush_fn_head = flush_fn_head->next;
+    free(node);
+  }
+
+  flush_fn_head = flush_fn_tail = NULL;
 }
