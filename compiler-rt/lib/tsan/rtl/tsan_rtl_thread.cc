@@ -112,7 +112,8 @@ void ThreadContext::OnStarted(void *arg) {
   StatInc(thr, StatSyncAcquire);
   DPrintf("#%d: ThreadStart epoch=%zu stk_addr=%zx stk_size=%zx "
           "tls_addr=%zx tls_size=%zx\n",
-          tid, (uptr)epoch0, stk_addr, stk_size, tls_addr, tls_size);
+          tid, (uptr)epoch0, args->stk_addr, args->stk_size,
+          args->tls_addr, args->tls_size);
   thr->is_alive = true;
 }
 
