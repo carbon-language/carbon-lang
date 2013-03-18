@@ -953,6 +953,8 @@ bool llvm::isKnownNonZero(Value *V, const DataLayout *TD, unsigned Depth) {
 
   // Check for pointer simplifications.
   if (V->getType()->isPointerTy()) {
+    if (isKnownNonNull(V))
+      return true; 
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V))
       if (isGEPKnownNonNull(GEP, TD, Depth))
         return true;

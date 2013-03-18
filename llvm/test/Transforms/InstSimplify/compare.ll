@@ -682,3 +682,14 @@ define zeroext i1 @external_compare(i32* noalias %x) {
   ; CHECK: external_compare
   ; CHECK: ret i1 %cmp
 }
+
+define i1 @alloca_gep(i64 %a, i64 %b) {
+; CHECK: @alloca_gep
+; We can prove this GEP is non-null because it is inbounds and the pointer
+; is non-null.
+  %strs = alloca [1000 x [1001 x i8]], align 16
+  %x = getelementptr inbounds [1000 x [1001 x i8]]* %strs, i64 0, i64 %a, i64 %b
+  %cmp = icmp eq i8* %x, null
+  ret i1 %cmp
+; CHECK-NEXT: ret i1 false
+}
