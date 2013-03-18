@@ -378,7 +378,7 @@ releases prior to version 3.2 in C++11 mode.</p>
     <tr>
       <td>Extended integral types</td>
       <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1988.pdf">N1988</a></td>
-      <td class="none" align="center">No</td>
+      <td class="na" align="center">N/A <a href="#n1988">(4)</a></td>
     </tr>
 </table>
 
@@ -389,6 +389,9 @@ has no effect.</span></br>
 strong compare-exchanges.</span><br />
 <span id="n2664">(3): <code>memory_order_consume</code> is lowered to
 <code>memory_order_acquire</code>.</span>
+<span id="n1988">(4): <code>__int128</code> is not treated as an extended
+integer type, because changing <code>intmax_t</code> would be an
+ABI-incompatible change.</span>
 </p>
 
 </div>
