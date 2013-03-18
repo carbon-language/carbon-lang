@@ -50,7 +50,6 @@ Context *CTX() {
 static char thread_registry_placeholder[sizeof(ThreadRegistry)];
 
 static ThreadContextBase *CreateThreadContext(u32 tid) {
-  StatInc(cur_thread(), StatThreadMaxTid);
   // Map thread trace when context is created.
   MapThreadTrace(GetThreadTrace(tid), TraceSize() * sizeof(Event));
   void *mem = MmapOrDie(sizeof(ThreadContext), "ThreadContext");

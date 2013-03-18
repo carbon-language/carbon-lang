@@ -48,17 +48,19 @@ struct OnCreatedArgs {
 
 void ThreadContext::OnCreated(void *arg) {
   thr = 0;
-  if (tid != 0) {
-    OnCreatedArgs *args = static_cast<OnCreatedArgs *>(arg);
-    args->thr->fast_state.IncrementEpoch();
-    // Can't increment epoch w/o writing to the trace as well.
-    TraceAddEvent(args->thr, args->thr->fast_state, EventTypeMop, 0);
-    args->thr->clock.set(args->thr->tid, args->thr->fast_state.epoch());
-    args->thr->fast_synch_epoch = args->thr->fast_state.epoch();
-    args->thr->clock.release(&sync);
-    StatInc(args->thr, StatSyncRelease);
-    creation_stack.ObtainCurrent(args->thr, args->pc);
-  }
+  if (tid == 0)
+    return;
+  OnCreatedArgs *args = static_cast<OnCreatedArgs *>(arg);
+  args->thr->fast_state.IncrementEpoch();
+  // Can't increment epoch w/o writing to the trace as well.
+  TraceAddEvent(args->thr, args->thr->fast_state, EventTypeMop, 0);
+  args->thr->clock.set(args->thr->tid, args->thr->fast_state.epoch());
+  args->thr->fast_synch_epoch = args->thr->fast_state.epoch();
+  args->thr->clock.release(&sync);
+  StatInc(args->thr, StatSyncRelease);
+  creation_stack.ObtainCurrent(args->thr, args->pc);
+  if (reuse_count == 0)
+    StatInc(args->thr, StatThreadMaxTid);
 }
 
 void ThreadContext::OnReset(void *arg) {
@@ -77,11 +79,12 @@ struct OnStartedArgs {
 
 void ThreadContext::OnStarted(void *arg) {
   OnStartedArgs *args = static_cast<OnStartedArgs*>(arg);
+  thr = args->thr;
   // RoundUp so that one trace part does not contain events
   // from different threads.
   epoch0 = RoundUp(epoch1 + 1, kTracePartSize);
   epoch1 = (u64)-1;
-  new(args->thr) ThreadState(CTX(), tid, unique_id,
+  new(thr) ThreadState(CTX(), tid, unique_id,
       epoch0, args->stk_addr, args->stk_size, args->tls_addr, args->tls_size);
 #ifdef TSAN_GO
   // Setup dynamic shadow stack.
@@ -104,8 +107,7 @@ void ThreadContext::OnStarted(void *arg) {
   StatInc(thr, StatSyncAcquire);
   DPrintf("#%d: ThreadStart epoch=%zu stk_addr=%zx stk_size=%zx "
           "tls_addr=%zx tls_size=%zx\n",
-          tid, (uptr)epoch0, args->stk_addr, args->stk_size,
-          args->tls_addr, args->tls_size);
+          tid, (uptr)epoch0, stk_addr, stk_size, tls_addr, tls_size);
   thr->is_alive = true;
 }
 

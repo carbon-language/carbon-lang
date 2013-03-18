@@ -241,6 +241,8 @@ void ScopedReport::AddMutex(const SyncVar *s) {
   rep_->mutexes.PushBack(rm);
   rm->id = s->uid;
   rm->destroyed = false;
+  rm->stack = 0;
+#ifndef TSAN_GO
   uptr ssz = 0;
   const uptr *stack = StackDepotGet(s->creation_stack_id, &ssz);
   if (stack) {
@@ -248,6 +250,7 @@ void ScopedReport::AddMutex(const SyncVar *s) {
     trace.Init(stack, ssz);
     rm->stack = SymbolizeStack(trace);
   }
+#endif
 }
 
 void ScopedReport::AddMutex(u64 id) {

@@ -34,7 +34,7 @@ enum ThreadStatus {
 class ThreadContextBase {
  public:
   explicit ThreadContextBase(u32 tid);
-  virtual ~ThreadContextBase();
+  ~ThreadContextBase();
 
   const u32 tid;  // Thread ID. Main thread should have tid = 0.
   u64 unique_id;  // Unique thread ID.
