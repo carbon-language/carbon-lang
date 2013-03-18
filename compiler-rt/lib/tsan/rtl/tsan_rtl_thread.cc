@@ -71,6 +71,7 @@ void ThreadContext::OnReset(void *arg) {
   OnCreatedArgs *args = static_cast<OnCreatedArgs *>(arg);
   StatInc(args->thr, StatThreadReuse);
   sync.Reset();
+  DestroyAndFree(dead_info);
 }
 
 struct OnStartedArgs {
