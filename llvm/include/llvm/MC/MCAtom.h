@@ -46,8 +46,8 @@ class MCAtom {
     : Type(T), Parent(P), Begin(B), End(E) { }
 
 public:
-  bool isTextAtom() { return Type == TextAtom; }
-  bool isDataAtom() { return Type == DataAtom; }
+  bool isTextAtom() const { return Type == TextAtom; }
+  bool isDataAtom() const { return Type == DataAtom; }
 
   void addInst(const MCInst &I, uint64_t Address, unsigned Size);
   void addData(const MCData &D);
