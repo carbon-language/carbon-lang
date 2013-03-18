@@ -1,13 +1,15 @@
 DEBUG=0
 LDFLAGS=-ldl -lpthread -pie
-CXXFLAGS = -fPIE -g -Wall -Werror -DTSAN_DEBUG=$(DEBUG) -DSANITIZER_DEBUG=$(DEBUG)
+CXXFLAGS = -fPIE -fno-rtti -g -Wall -Werror \
+					 -DGTEST_HAS_RTTI=0 -DTSAN_DEBUG=$(DEBUG) -DSANITIZER_DEBUG=$(DEBUG)
+CLANG=clang
 # Silence warnings that Clang produces for gtest code.
 # Use -Wno-attributes so that gcc doesn't complain about unknown warning types.
 CXXFLAGS += -Wno-attributes
 ifeq ($(DEBUG), 0)
 	CXXFLAGS += -O3
 endif
-ifeq ($(CXX), clang++)
+ifeq ($(CXX), $(CLANG)++)
   CXXFLAGS+= -Wno-unused-private-field -Wno-static-in-inline -Wgnu
 endif
 
@@ -54,16 +56,16 @@ test: libtsan tsan_test
 
 run: all
 	(ulimit -s 8192; ./tsan_test)
-	./lit_tests/test_output.sh
+	CC=$(CLANG) CXX=$(CLANG)++ ./lit_tests/test_output.sh
 
 presubmit:
 	../sanitizer_common/scripts/check_lint.sh
 	# Debug build with clang.
 	$(MAKE) -f Makefile.old clean
-	$(MAKE) -f Makefile.old run DEBUG=1 -j 16 CC=clang CXX=clang++
+	$(MAKE) -f Makefile.old run DEBUG=1 -j 16 CC=$(CLANG) CXX=$(CLANG)++
 	# Release build with clang.
 	$(MAKE) -f Makefile.old clean
-	$(MAKE) -f Makefile.old run DEBUG=0 -j 16 CC=clang CXX=clang++
+	$(MAKE) -f Makefile.old run DEBUG=0 -j 16 CC=$(CLANG) CXX=$(CLANG)++
 	# Debug build with gcc
 	$(MAKE) -f Makefile.old clean
 	$(MAKE) -f Makefile.old run DEBUG=1 -j 16 CC=gcc CXX=g++

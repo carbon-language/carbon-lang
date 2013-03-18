@@ -6,9 +6,10 @@ set -e # fail on any error
 ROOTDIR=$(dirname $0)/..
 BLACKLIST=$ROOTDIR/lit_tests/Helpers/blacklist.txt
 
-# Assuming clang is in path.
-CC=clang
-CXX=clang++
+# Assume clang and clang++ are in path.
+: ${CC:=clang}
+: ${CXX:=clang++}
+: ${FILECHECK:=FileCheck}
 
 # TODO: add testing for all of -O0...-O3
 CFLAGS="-fsanitize=thread -fsanitize-blacklist=$BLACKLIST -fPIE -O1 -g -fno-builtin -Wall"
@@ -23,7 +24,7 @@ test_file() {
   $COMPILER $SRC $CFLAGS -c -o $OBJ
   $COMPILER $OBJ $LDFLAGS -o $EXE
   RES=$($EXE 2>&1 || true)
-  printf "%s\n" "$RES" | FileCheck $SRC
+  printf "%s\n" "$RES" | $FILECHECK $SRC
   if [ "$3" == "" ]; then
     rm -f $EXE $OBJ
   fi

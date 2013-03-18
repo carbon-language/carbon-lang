@@ -10,7 +10,7 @@ endif
 INTERCEPTION=../../interception
 COMMON=../../sanitizer_common
 INCLUDES= -I../.. -I../../../include
-EXTRA_CXXFLAGS=-fno-exceptions
+EXTRA_CXXFLAGS=-fno-exceptions -fno-rtti
 NO_SYSROOT=--sysroot=.
 CXXFLAGS+=$(EXTRA_CXXFLAGS)
 CXXFLAGS+=$(CFLAGS)
