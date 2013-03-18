@@ -284,7 +284,8 @@ static void TestLargeMalloc(size_t size) {
 }
 
 TEST(AddressSanitizer, LargeMallocTest) {
-  for (int i = 113; i < (1 << 28); i = i * 2 + 13) {
+  const int max_size = (SANITIZER_WORDSIZE == 32) ? 1 << 26 : 1 << 28;
+  for (int i = 113; i < max_size; i = i * 2 + 13) {
     TestLargeMalloc(i);
   }
 }
