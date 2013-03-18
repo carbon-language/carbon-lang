@@ -208,8 +208,8 @@ bool DescribeAddressRelativeToGlobal(uptr addr, uptr size,
     // Can it happen?
     Printf("%p is located %zd bytes inside", (void*)addr, addr - g.beg);
   }
-  Printf(" of global variable '%s' (0x%zx) of size %zu\n",
-             g.name, g.beg, g.size);
+  Printf(" of global variable '%s' from '%s' (0x%zx) of size %zu\n",
+             g.name, g.module_name, g.beg, g.size);
   Printf("%s", d.EndLocation());
   PrintGlobalNameIfASCII(g);
   return true;

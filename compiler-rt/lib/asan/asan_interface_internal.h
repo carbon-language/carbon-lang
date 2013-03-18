@@ -25,8 +25,8 @@ extern "C" {
   // Everytime the asan ABI changes we also change the version number in this
   // name. Objects build with incompatible asan ABI version
   // will not link with run-time.
-  void __asan_init_v1() SANITIZER_INTERFACE_ATTRIBUTE;
-  #define __asan_init __asan_init_v1
+  void __asan_init_v2() SANITIZER_INTERFACE_ATTRIBUTE;
+  #define __asan_init __asan_init_v2
 
   // This structure describes an instrumented global variable.
   struct __asan_global {
@@ -34,6 +34,7 @@ extern "C" {
     uptr size;               // The original size of the global.
     uptr size_with_redzone;  // The size with the redzone.
     const char *name;        // Name as a C string.
+    const char *module_name; // Module name as a C string.
     uptr has_dynamic_init;   // Non-zero if the global has dynamic initializer.
   };
 
