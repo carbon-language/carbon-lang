@@ -35,8 +35,7 @@ Windows::Windows(const Driver &D, const llvm::Triple& Triple)
   : ToolChain(D, Triple) {
 }
 
-Tool &Windows::SelectTool(const Compilation &C, const JobAction &JA,
-                          const ActionList &Inputs) const {
+Tool &Windows::SelectTool(const Compilation &C, const JobAction &JA) const {
   Action::ActionClass Key;
   if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
