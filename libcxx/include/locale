@@ -204,7 +204,7 @@ template <class charT> class messages_byname;
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-#if defined(__APPLE__) || __FreeBSD__
+#if defined(__APPLE__) || defined(__FreeBSD__)
 #  define _LIBCPP_GET_C_LOCALE 0
 #else
 #  define _LIBCPP_GET_C_LOCALE __cloc()

@@ -272,7 +272,7 @@ typedef __char32_t char32_t;
 #define _LIBCPP_HAS_NO_CONSTEXPR
 #endif
 
-#if __FreeBSD__ && (__ISO_C_VISIBLE >= 2011 || __cplusplus >= 201103L)
+#if defined(__FreeBSD__) && (__ISO_C_VISIBLE >= 2011 || __cplusplus >= 201103L)
 #define _LIBCPP_HAS_QUICK_EXIT
 #define _LIBCPP_HAS_C11_FEATURES
 #endif
@@ -451,18 +451,18 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_EXTERN_TEMPLATE(...) extern template __VA_ARGS__;
 #endif
 
-#if defined(__APPLE__) || __FreeBSD__ || _WIN32 || __sun__
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(_WIN32) || defined(__sun__)
 #define _LIBCPP_LOCALE__L_EXTENSIONS 1
 #endif
-#if __FreeBSD__
+#ifdef __FreeBSD__
 #define _DECLARE_C99_LDBL_MATH 1
 #endif
 
-#if defined(__APPLE__) || __FreeBSD__
+#if defined(__APPLE__) || defined(__FreeBSD__)
 #define _LIBCPP_HAS_DEFAULTRUNELOCALE
 #endif
 
-#if defined(__APPLE__) || __FreeBSD__ || __sun__
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__sun__)
 #define _LIBCPP_WCTYPE_IS_MASK
 #endif
 
