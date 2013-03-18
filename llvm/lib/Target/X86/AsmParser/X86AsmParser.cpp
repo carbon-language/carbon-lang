@@ -1052,9 +1052,10 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
       unsigned tLength, tSize, tType;
       SemaCallback->LookupInlineAsmIdentifier(Sym.getName(), NULL, tLength,
                                               tSize, tType, IsVarDecl);
-      if (!Size)
+      if (!Size) {
         Size = tType * 8; // Size is in terms of bits in this context.
-      NeedSizeDir = Size > 0;
+        NeedSizeDir = Size > 0;
+      }
     }
   }
   if (!isParsingInlineAsm())
