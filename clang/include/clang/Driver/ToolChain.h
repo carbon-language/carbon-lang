@@ -114,7 +114,7 @@ public:
 
   /// SelectTool - Choose a tool to use to handle the action \p JA with the
   /// given \p Inputs.
-  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const = 0;
+  virtual Tool &SelectTool(const JobAction &JA) const = 0;
 
   // Helper methods
 

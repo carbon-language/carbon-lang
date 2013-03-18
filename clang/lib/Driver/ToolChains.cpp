@@ -176,7 +176,7 @@ std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args,
 
 void Generic_ELF::anchor() {}
 
-Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA) const {
+Tool &Darwin::SelectTool(const JobAction &JA) const {
   Action::ActionClass Key = JA.getKind();
 
   if (getDriver().ShouldUseClangCompiler(JA)) {
@@ -1382,8 +1382,7 @@ Generic_GCC::~Generic_GCC() {
     delete it->second;
 }
 
-Tool &Generic_GCC::SelectTool(const Compilation &C,
-                              const JobAction &JA) const {
+Tool &Generic_GCC::SelectTool(const JobAction &JA) const {
   Action::ActionClass Key;
   if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
@@ -1552,8 +1551,7 @@ Hexagon_TC::~Hexagon_TC() {
     delete it->second;
 }
 
-Tool &Hexagon_TC::SelectTool(const Compilation &C,
-                             const JobAction &JA) const {
+Tool &Hexagon_TC::SelectTool(const JobAction &JA) const {
   Action::ActionClass Key;
   if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
@@ -1697,8 +1695,7 @@ bool TCEToolChain::isPICDefaultForced() const {
   return false;
 }
 
-Tool &TCEToolChain::SelectTool(const Compilation &C,
-                               const JobAction &JA) const {
+Tool &TCEToolChain::SelectTool(const JobAction &JA) const {
   Action::ActionClass Key;
   Key = Action::AnalyzeJobClass;
 
@@ -1724,7 +1721,7 @@ OpenBSD::OpenBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Arg
   getFilePaths().push_back("/usr/lib");
 }
 
-Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
+Tool &OpenBSD::SelectTool(const JobAction &JA) const {
   Action::ActionClass Key;
   if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
@@ -1744,7 +1741,7 @@ Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
     case Action::LinkJobClass:
       T = new tools::openbsd::Link(*this); break;
     default:
-      T = &Generic_GCC::SelectTool(C, JA);
+      T = &Generic_GCC::SelectTool(JA);
     }
   }
 
@@ -1759,7 +1756,7 @@ Bitrig::Bitrig(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
   getFilePaths().push_back("/usr/lib");
 }
 
-Tool &Bitrig::SelectTool(const Compilation &C, const JobAction &JA) const {
+Tool &Bitrig::SelectTool(const JobAction &JA) const {
   Action::ActionClass Key;
   if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
@@ -1779,7 +1776,7 @@ Tool &Bitrig::SelectTool(const Compilation &C, const JobAction &JA) const {
     case Action::LinkJobClass:
       T = new tools::bitrig::Link(*this); break;
     default:
-      T = &Generic_GCC::SelectTool(C, JA);
+      T = &Generic_GCC::SelectTool(JA);
     }
   }
 
@@ -1846,7 +1843,7 @@ FreeBSD::FreeBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Arg
     getFilePaths().push_back(getDriver().SysRoot + "/usr/lib");
 }
 
-Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
+Tool &FreeBSD::SelectTool(const JobAction &JA) const {
   Action::ActionClass Key;
   if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
@@ -1865,7 +1862,7 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
     case Action::LinkJobClass:
       T = new tools::freebsd::Link(*this); break;
     default:
-      T = &Generic_GCC::SelectTool(C, JA);
+      T = &Generic_GCC::SelectTool(JA);
     }
   }
 
@@ -1903,7 +1900,7 @@ NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
   }
 }
 
-Tool &NetBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
+Tool &NetBSD::SelectTool( const JobAction &JA) const {
   Action::ActionClass Key;
   if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
@@ -1923,7 +1920,7 @@ Tool &NetBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
       T = new tools::netbsd::Link(*this);
       break;
     default:
-      T = &Generic_GCC::SelectTool(C, JA);
+      T = &Generic_GCC::SelectTool(JA);
     }
   }
 
@@ -1938,7 +1935,7 @@ Minix::Minix(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
   getFilePaths().push_back("/usr/lib");
 }
 
-Tool &Minix::SelectTool(const Compilation &C, const JobAction &JA) const {
+Tool &Minix::SelectTool(const JobAction &JA) const {
   Action::ActionClass Key;
   if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
@@ -1953,7 +1950,7 @@ Tool &Minix::SelectTool(const Compilation &C, const JobAction &JA) const {
     case Action::LinkJobClass:
       T = new tools::minix::Link(*this); break;
     default:
-      T = &Generic_GCC::SelectTool(C, JA);
+      T = &Generic_GCC::SelectTool(JA);
     }
   }
 
@@ -1978,7 +1975,7 @@ AuroraUX::AuroraUX(const Driver &D, const llvm::Triple& Triple,
 
 }
 
-Tool &AuroraUX::SelectTool(const Compilation &C, const JobAction &JA) const {
+Tool &AuroraUX::SelectTool(const JobAction &JA) const {
   Action::ActionClass Key;
   if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
@@ -1993,7 +1990,7 @@ Tool &AuroraUX::SelectTool(const Compilation &C, const JobAction &JA) const {
     case Action::LinkJobClass:
       T = new tools::auroraux::Link(*this); break;
     default:
-      T = &Generic_GCC::SelectTool(C, JA);
+      T = &Generic_GCC::SelectTool(JA);
     }
   }
 
@@ -2014,7 +2011,7 @@ Solaris::Solaris(const Driver &D, const llvm::Triple& Triple,
   getFilePaths().push_back("/usr/lib");
 }
 
-Tool &Solaris::SelectTool(const Compilation &C, const JobAction &JA) const {
+Tool &Solaris::SelectTool(const JobAction &JA) const {
   Action::ActionClass Key;
   if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
@@ -2029,7 +2026,7 @@ Tool &Solaris::SelectTool(const Compilation &C, const JobAction &JA) const {
     case Action::LinkJobClass:
       T = new tools::solaris::Link(*this); break;
     default:
-      T = &Generic_GCC::SelectTool(C, JA);
+      T = &Generic_GCC::SelectTool(JA);
     }
   }
 
@@ -2402,7 +2399,7 @@ bool Linux::HasNativeLLVMSupport() const {
   return true;
 }
 
-Tool &Linux::SelectTool(const Compilation &C, const JobAction &JA) const {
+Tool &Linux::SelectTool( const JobAction &JA) const {
   Action::ActionClass Key;
   if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
@@ -2421,7 +2418,7 @@ Tool &Linux::SelectTool(const Compilation &C, const JobAction &JA) const {
     case Action::LinkJobClass:
       T = new tools::linuxtools::Link(*this); break;
     default:
-      T = &Generic_GCC::SelectTool(C, JA);
+      T = &Generic_GCC::SelectTool(JA);
     }
   }
 
@@ -2654,7 +2651,7 @@ DragonFly::DragonFly(const Driver &D, const llvm::Triple& Triple, const ArgList 
   getFilePaths().push_back("/usr/lib/gcc41");
 }
 
-Tool &DragonFly::SelectTool(const Compilation &C, const JobAction &JA) const {
+Tool &DragonFly::SelectTool(const JobAction &JA) const {
   Action::ActionClass Key;
   if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
@@ -2669,7 +2666,7 @@ Tool &DragonFly::SelectTool(const Compilation &C, const JobAction &JA) const {
     case Action::LinkJobClass:
       T = new tools::dragonfly::Link(*this); break;
     default:
-      T = &Generic_GCC::SelectTool(C, JA);
+      T = &Generic_GCC::SelectTool(JA);
     }
   }
 

@@ -1301,7 +1301,7 @@ static const Tool &SelectToolForJob(Compilation &C, const ToolChain *TC,
       isa<AssembleJobAction>(JA) &&
       Inputs->size() == 1 && isa<CompileJobAction>(*Inputs->begin())) {
     const Tool &Compiler =
-      TC->SelectTool(C, cast<JobAction>(**Inputs->begin()));
+      TC->SelectTool(cast<JobAction>(**Inputs->begin()));
     if (Compiler.hasIntegratedAssembler()) {
       Inputs = &(*Inputs)[0]->getInputs();
       ToolForJob = &Compiler;
@@ -1310,7 +1310,7 @@ static const Tool &SelectToolForJob(Compilation &C, const ToolChain *TC,
 
   // Otherwise use the tool for the current job.
   if (!ToolForJob)
-    ToolForJob = &TC->SelectTool(C, *JA);
+    ToolForJob = &TC->SelectTool(*JA);
 
   // See if we should use an integrated preprocessor. We do so when we have
   // exactly one input, since this is the only use case we care about
