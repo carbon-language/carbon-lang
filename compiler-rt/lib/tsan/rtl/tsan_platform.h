@@ -132,8 +132,8 @@ static inline uptr AlternativeAddress(uptr addr) {
 #endif
 }
 
-uptr GetShadowMemoryConsumption();
 void FlushShadowMemory();
+void WriteMemoryProfile(char *buf, uptr buf_size);
 
 const char *InitializePlatform();
 void FinalizePlatform();

@@ -42,8 +42,10 @@
 #include <dlfcn.h>
 #define __need_res_state
 #include <resolv.h>
+#include <malloc.h>
 
 extern "C" int arch_prctl(int code, __sanitizer::uptr *addr);
+extern "C" struct mallinfo __libc_mallinfo();
 
 namespace __tsan {
 
@@ -68,8 +70,75 @@ ScopedInRtl::~ScopedInRtl() {
 }
 #endif
 
-uptr GetShadowMemoryConsumption() {
-  return 0;
+static bool ishex(char c) {
+  return (c >= '0' && c <= '9')
+      || (c >= 'a' && c <= 'f');
+}
+
+static uptr readhex(const char *p) {
+  uptr v = 0;
+  for (; ishex(p[0]); p++) {
+    if (p[0] >= '0' && p[0] <= '9')
+      v = v * 16 + p[0] - '0';
+    else
+      v = v * 16 + p[0] - 'a' + 10;
+  }
+  return v;
+}
+
+static uptr readdec(const char *p) {
+  uptr v = 0;
+  for (; p[0] >= '0' && p[0] <= '9' ; p++)
+    v = v * 10 + p[0] - '0';
+  return v;
+}
+
+void WriteMemoryProfile(char *buf, uptr buf_size) {
+  char *smaps = 0;
+  uptr smaps_cap = 0;
+  uptr smaps_len = ReadFileToBuffer("/proc/self/smaps",
+      &smaps, &smaps_cap, 64<<20);
+  uptr mem[6] = {};
+  uptr total = 0;
+  uptr start = 0;
+  bool file = false;
+  const char *pos = smaps;
+  while (pos < smaps + smaps_len) {
+    if (ishex(pos[0])) {
+      start = readhex(pos);
+      for (; *pos != '/' && *pos > '\n'; pos++) {}
+      file = *pos == '/';
+    } else if (internal_strncmp(pos, "Rss:", 4) == 0) {
+      for (; *pos < '0' || *pos > '9'; pos++) {}
+      uptr rss = readdec(pos) * 1024;
+      total += rss;
+      start >>= 40;
+      if (start < 0x10)  // shadow
+        mem[0] += rss;
+      else if (start >= 0x20 && start < 0x30)  // compat modules
+        mem[file ? 1 : 2] += rss;
+      else if (start >= 0x7e)  // modules
+        mem[file ? 1 : 2] += rss;
+      else if (start >= 0x60 && start < 0x62)  // traces
+        mem[3] += rss;
+      else if (start >= 0x7d && start < 0x7e)  // heap
+        mem[4] += rss;
+      else  // other
+        mem[5] += rss;
+    }
+    while (*pos++ != '\n') {}
+  }
+  UnmapOrDie(smaps, smaps_cap);
+  char *buf_pos = buf;
+  char *buf_end = buf + buf_size;
+  buf_pos += internal_snprintf(buf_pos, buf_end - buf_pos,
+      "RSS %zd MB: shadow:%zd file:%zd mmap:%zd trace:%zd heap:%zd other:%zd\n",
+      total >> 20, mem[0] >> 20, mem[1] >> 20, mem[2] >> 20,
+      mem[3] >> 20, mem[4] >> 20, mem[5] >> 20);
+  struct mallinfo mi = __libc_mallinfo();
+  buf_pos += internal_snprintf(buf_pos, buf_end - buf_pos,
+      "mallinfo: arena=%d mmap=%d fordblks=%d keepcost=%d\n",
+      mi.arena >> 20, mi.hblkhd >> 20, mi.fordblks >> 20, mi.keepcost >> 20);
 }
 
 void FlushShadowMemory() {
