@@ -105,5 +105,5 @@
 // RUN: %clang %s -### -o %t.o -target arm-gnueabi-freebsd10.0 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-ARM-EABI %s
 // CHECK-ARM-EABI-NOT: clang{{.*}}" "-cc1"{{.*}}" "-fsjlj-exceptions"
-// CHECK-ARM-EABI: as{{.*}}" "-mfpu=softvfp"
+// CHECK-ARM-EABI: as{{.*}}" "-mfpu=softvfp" "-meabi=5"
 // CHECK-ARM-EABI-NOT: as{{.*}}" "-matpcs"

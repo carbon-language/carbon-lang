@@ -5216,6 +5216,7 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     switch(getToolChain().getTriple().getEnvironment()) {
     case llvm::Triple::GNUEABI:
     case llvm::Triple::EABI:
+      CmdArgs.push_back("-meabi=5");
       break;
 
     default:
