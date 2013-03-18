@@ -1149,6 +1149,31 @@ def SI_KILL : InstSI <
 } // end mayLoad = 1, mayStore = 1, hasSideEffects = 1
   // Uses = [EXEC], Defs = [EXEC]
 
+let Uses = [EXEC], Defs = [EXEC,VCC,M0] in {
+
+def SI_INDIRECT_SRC : InstSI <
+  (outs VReg_32:$dst, SReg_64:$temp),
+  (ins unknown:$src, VSrc_32:$idx, i32imm:$off),
+  "SI_INDIRECT_SRC $dst, $temp, $src, $idx, $off",
+  []
+>;
+
+class SI_INDIRECT_DST<RegisterClass rc> : InstSI <
+  (outs rc:$dst, SReg_64:$temp),
+  (ins unknown:$src, VSrc_32:$idx, i32imm:$off, VReg_32:$val),
+  "SI_INDIRECT_DST $dst, $temp, $src, $idx, $off, $val",
+  []
+> {
+  let Constraints = "$src = $dst";
+}
+
+def SI_INDIRECT_DST_V2 : SI_INDIRECT_DST<VReg_64>;
+def SI_INDIRECT_DST_V4 : SI_INDIRECT_DST<VReg_128>;
+def SI_INDIRECT_DST_V8 : SI_INDIRECT_DST<VReg_256>;
+def SI_INDIRECT_DST_V16 : SI_INDIRECT_DST<VReg_512>;
+
+} // Uses = [EXEC,VCC,M0], Defs = [EXEC,VCC,M0]
+
 } // end IsCodeGenOnly, isPseudo
 
 def : Pat<
@@ -1520,5 +1545,49 @@ defm : SMRD_Pattern <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, f32>;
 defm : SMRD_Pattern <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, i32>;
 defm : SMRD_Pattern <S_LOAD_DWORDX4_IMM, S_LOAD_DWORDX4_SGPR, v16i8>;
 defm : SMRD_Pattern <S_LOAD_DWORDX8_IMM, S_LOAD_DWORDX8_SGPR, v32i8>;
+
+/********** ====================== **********/
+/**********   Indirect adressing   **********/
+/********** ====================== **********/
+
+multiclass SI_INDIRECT_Pattern <RegisterClass rc, ValueType vt,
+                                SI_INDIRECT_DST IndDst> {
+  // 1. Extract with offset
+  def : Pat<
+    (vector_extract (vt rc:$vec),
+      (i64 (zext (i32 (add VReg_32:$idx, imm:$off))))
+    ),
+    (f32 (SI_INDIRECT_SRC (IMPLICIT_DEF), rc:$vec, VReg_32:$idx, imm:$off))
+  >;
+
+  // 2. Extract without offset
+  def : Pat<
+    (vector_extract (vt rc:$vec),
+      (i64 (zext (i32 VReg_32:$idx)))
+    ),
+    (f32 (SI_INDIRECT_SRC (IMPLICIT_DEF), rc:$vec, VReg_32:$idx, 0))
+  >;
+
+  // 3. Insert with offset
+  def : Pat<
+    (vector_insert (vt rc:$vec), (f32 VReg_32:$val),
+      (i64 (zext (i32 (add VReg_32:$idx, imm:$off))))
+    ),
+    (vt (IndDst (IMPLICIT_DEF), rc:$vec, VReg_32:$idx, imm:$off, VReg_32:$val))
+  >;
+
+  // 4. Insert without offset
+  def : Pat<
+    (vector_insert (vt rc:$vec), (f32 VReg_32:$val),
+      (i64 (zext (i32 VReg_32:$idx)))
+    ),
+    (vt (IndDst (IMPLICIT_DEF), rc:$vec, VReg_32:$idx, 0, VReg_32:$val))
+  >;
+}
+
+defm : SI_INDIRECT_Pattern <VReg_64, v2f32, SI_INDIRECT_DST_V2>;
+defm : SI_INDIRECT_Pattern <VReg_128, v4f32, SI_INDIRECT_DST_V4>;
+defm : SI_INDIRECT_Pattern <VReg_256, v8f32, SI_INDIRECT_DST_V8>;
+defm : SI_INDIRECT_Pattern <VReg_512, v16f32, SI_INDIRECT_DST_V16>;
 
 } // End isSI predicate
