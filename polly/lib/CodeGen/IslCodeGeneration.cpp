@@ -891,21 +891,23 @@ void IslNodeBuilder::createSubstitutions(
   for (unsigned i = 0; i < isl_pw_multi_aff_dim(PMA, isl_dim_out); ++i) {
     isl_pw_aff *Aff;
     isl_ast_expr *Expr;
-    const Value *OldIV;
     Value *V;
 
     Aff = isl_pw_multi_aff_get_pw_aff(PMA, i);
     Expr = isl_ast_build_expr_from_pw_aff(Context, Aff);
-    OldIV = Stmt->getInductionVariableForDimension(i);
     V = ExprBuilder.create(Expr);
+
+    ScalarEvolution *SE = Stmt->getParent()->getSE();
+    LTS[Stmt->getLoopForDimension(i)] = SE->getUnknown(V);
 
     // CreateIntCast can introduce trunc expressions. This is correct, as the
     // result will always fit into the type of the original induction variable
     // (because we calculate a value of the original induction variable).
-    V = Builder.CreateIntCast(V, OldIV->getType(), true);
-    VMap[OldIV] = V;
-    ScalarEvolution *SE = Stmt->getParent()->getSE();
-    LTS[Stmt->getLoopForDimension(i)] = SE->getUnknown(V);
+    const Value *OldIV = Stmt->getInductionVariableForDimension(i);
+    if (OldIV) {
+      V = Builder.CreateIntCast(V, OldIV->getType(), true);
+      VMap[OldIV] = V;
+    }
   }
 
   isl_pw_multi_aff_free(PMA);

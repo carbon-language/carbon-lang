@@ -370,24 +370,26 @@ void ClastStmtCodeGen::codegen(const clast_assignment *A, ScopStmt *Stmt,
                                unsigned Dim, int VectorDim,
                                std::vector<ValueMapT> *VectorVMap,
                                std::vector<LoopToScevMapT> *VLTS) {
-  const PHINode *PN;
   Value *RHS;
 
   assert(!A->LHS && "Statement assignments do not have left hand side");
 
-  PN = Stmt->getInductionVariableForDimension(Dim);
   RHS = ExpGen.codegen(A->RHS, Builder.getInt64Ty());
-  RHS = Builder.CreateTruncOrBitCast(RHS, PN->getType());
-
-  if (VectorVMap)
-    (*VectorVMap)[VectorDim][PN] = RHS;
 
   const llvm::SCEV *URHS = S->getSE()->getUnknown(RHS);
   if (VLTS)
     (*VLTS)[VectorDim][Stmt->getLoopForDimension(Dim)] = URHS;
-
-  ValueMap[PN] = RHS;
   LoopToScev[Stmt->getLoopForDimension(Dim)] = URHS;
+
+  const PHINode *PN = Stmt->getInductionVariableForDimension(Dim);
+  if (PN) {
+    RHS = Builder.CreateTruncOrBitCast(RHS, PN->getType());
+
+    if (VectorVMap)
+      (*VectorVMap)[VectorDim][PN] = RHS;
+
+    ValueMap[PN] = RHS;
+  }
 }
 
 void ClastStmtCodeGen::codegenSubstitutions(
