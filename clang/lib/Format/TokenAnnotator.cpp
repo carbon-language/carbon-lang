@@ -319,6 +319,8 @@ private:
         Tok->Type = TT_ObjCMethodSpecifier;
       break;
     case tok::colon:
+      if (Tok->Parent == NULL)
+        return false;
       // Colons from ?: are handled in parseConditional().
       if (Tok->Parent->is(tok::r_paren) && Contexts.size() == 1) {
         Tok->Type = TT_CtorInitializerColon;
