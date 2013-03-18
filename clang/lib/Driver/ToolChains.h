@@ -502,8 +502,6 @@ private:
 
 class LLVM_LIBRARY_VISIBILITY Hexagon_TC : public Linux {
 protected:
-  mutable llvm::DenseMap<unsigned, Tool*> Tools;
-
   GCCVersion GCCLibAndIncVersion;
 
 public:

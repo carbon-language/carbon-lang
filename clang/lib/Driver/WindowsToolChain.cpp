@@ -44,29 +44,30 @@ Tool &Windows::SelectTool(const JobAction &JA) const {
     Key = JA.getKind();
 
   Tool *&T = Tools[Key];
-  if (!T) {
-    switch (Key) {
-    case Action::InputClass:
-    case Action::BindArchClass:
-    case Action::LipoJobClass:
-    case Action::DsymutilJobClass:
-    case Action::VerifyJobClass:
-    case Action::PreprocessJobClass:
-    case Action::PrecompileJobClass:
-    case Action::AnalyzeJobClass:
-    case Action::MigrateJobClass:
-    case Action::CompileJobClass:
-      T = new tools::Clang(*this); break;
-    case Action::AssembleJobClass:
-      if (!useIntegratedAs() &&
-          getTriple().getEnvironment() == llvm::Triple::MachO)
-        T = new tools::darwin::Assemble(*this);
-      else
-        T = new tools::ClangAs(*this);
-      break;
-    case Action::LinkJobClass:
-      T = new tools::visualstudio::Link(*this); break;
-    }
+  if (T)
+    return *T;
+
+  switch (Key) {
+  case Action::InputClass:
+  case Action::BindArchClass:
+  case Action::LipoJobClass:
+  case Action::DsymutilJobClass:
+  case Action::VerifyJobClass:
+  case Action::PreprocessJobClass:
+  case Action::PrecompileJobClass:
+  case Action::AnalyzeJobClass:
+  case Action::MigrateJobClass:
+  case Action::CompileJobClass:
+    T = new tools::Clang(*this); break;
+  case Action::AssembleJobClass:
+    if (!useIntegratedAs() &&
+        getTriple().getEnvironment() == llvm::Triple::MachO)
+      T = new tools::darwin::Assemble(*this);
+    else
+      T = new tools::ClangAs(*this);
+    break;
+  case Action::LinkJobClass:
+    T = new tools::visualstudio::Link(*this); break;
   }
 
   return *T;

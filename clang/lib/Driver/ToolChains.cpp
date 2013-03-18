@@ -185,33 +185,34 @@ Tool &Darwin::SelectTool(const JobAction &JA) const {
   }
 
   Tool *&T = Tools[Key];
-  if (!T) {
-    switch (Key) {
-    case Action::InputClass:
-    case Action::BindArchClass:
-      llvm_unreachable("Invalid tool kind.");
-    case Action::PreprocessJobClass:
-    case Action::AnalyzeJobClass:
-    case Action::MigrateJobClass:
-    case Action::PrecompileJobClass:
-    case Action::CompileJobClass:
-      T = new tools::Clang(*this); break;
-    case Action::AssembleJobClass: {
-      if (useIntegratedAs())
-        T = new tools::ClangAs(*this);
-      else
-        T = new tools::darwin::Assemble(*this);
-      break;
-    }
-    case Action::LinkJobClass:
-      T = new tools::darwin::Link(*this); break;
-    case Action::LipoJobClass:
-      T = new tools::darwin::Lipo(*this); break;
-    case Action::DsymutilJobClass:
-      T = new tools::darwin::Dsymutil(*this); break;
-    case Action::VerifyJobClass:
-      T = new tools::darwin::VerifyDebug(*this); break;
-    }
+  if (T)
+    return *T;
+
+  switch (Key) {
+  case Action::InputClass:
+  case Action::BindArchClass:
+    llvm_unreachable("Invalid tool kind.");
+  case Action::PreprocessJobClass:
+  case Action::AnalyzeJobClass:
+  case Action::MigrateJobClass:
+  case Action::PrecompileJobClass:
+  case Action::CompileJobClass:
+    T = new tools::Clang(*this); break;
+  case Action::AssembleJobClass: {
+    if (useIntegratedAs())
+      T = new tools::ClangAs(*this);
+    else
+      T = new tools::darwin::Assemble(*this);
+    break;
+  }
+  case Action::LinkJobClass:
+    T = new tools::darwin::Link(*this); break;
+  case Action::LipoJobClass:
+    T = new tools::darwin::Lipo(*this); break;
+  case Action::DsymutilJobClass:
+    T = new tools::darwin::Dsymutil(*this); break;
+  case Action::VerifyJobClass:
+    T = new tools::darwin::VerifyDebug(*this); break;
   }
 
   return *T;
@@ -1390,34 +1391,35 @@ Tool &Generic_GCC::SelectTool(const JobAction &JA) const {
     Key = JA.getKind();
 
   Tool *&T = Tools[Key];
-  if (!T) {
-    switch (Key) {
-    case Action::InputClass:
-    case Action::BindArchClass:
-      llvm_unreachable("Invalid tool kind.");
-    case Action::PreprocessJobClass:
-      T = new tools::gcc::Preprocess(*this); break;
-    case Action::PrecompileJobClass:
-      T = new tools::gcc::Precompile(*this); break;
-    case Action::AnalyzeJobClass:
-    case Action::MigrateJobClass:
-      T = new tools::Clang(*this); break;
-    case Action::CompileJobClass:
-      T = new tools::gcc::Compile(*this); break;
-    case Action::AssembleJobClass:
-      T = new tools::gcc::Assemble(*this); break;
-    case Action::LinkJobClass:
-      T = new tools::gcc::Link(*this); break;
+  if (T)
+    return *T;
 
-      // This is a bit ungeneric, but the only platform using a driver
-      // driver is Darwin.
-    case Action::LipoJobClass:
-      T = new tools::darwin::Lipo(*this); break;
-    case Action::DsymutilJobClass:
-      T = new tools::darwin::Dsymutil(*this); break;
-    case Action::VerifyJobClass:
-      T = new tools::darwin::VerifyDebug(*this); break;
-    }
+  switch (Key) {
+  case Action::InputClass:
+  case Action::BindArchClass:
+    llvm_unreachable("Invalid tool kind.");
+  case Action::PreprocessJobClass:
+    T = new tools::gcc::Preprocess(*this); break;
+  case Action::PrecompileJobClass:
+    T = new tools::gcc::Precompile(*this); break;
+  case Action::AnalyzeJobClass:
+  case Action::MigrateJobClass:
+    T = new tools::Clang(*this); break;
+  case Action::CompileJobClass:
+    T = new tools::gcc::Compile(*this); break;
+  case Action::AssembleJobClass:
+    T = new tools::gcc::Assemble(*this); break;
+  case Action::LinkJobClass:
+    T = new tools::gcc::Link(*this); break;
+
+    // This is a bit ungeneric, but the only platform using a driver
+    // driver is Darwin.
+  case Action::LipoJobClass:
+    T = new tools::darwin::Lipo(*this); break;
+  case Action::DsymutilJobClass:
+    T = new tools::darwin::Dsymutil(*this); break;
+  case Action::VerifyJobClass:
+    T = new tools::darwin::VerifyDebug(*this); break;
   }
 
   return *T;
@@ -1559,20 +1561,21 @@ Tool &Hexagon_TC::SelectTool(const JobAction &JA) const {
     Key = JA.getKind();
 
   Tool *&T = Tools[Key];
-  if (!T) {
-    switch (Key) {
-    case Action::InputClass:
-    case Action::BindArchClass:
-      assert(0 && "Invalid tool kind.");
-    case Action::AnalyzeJobClass:
-      T = new tools::Clang(*this); break;
-    case Action::AssembleJobClass:
-      T = new tools::hexagon::Assemble(*this); break;
-    case Action::LinkJobClass:
-      T = new tools::hexagon::Link(*this); break;
-    default:
-      assert(false && "Unsupported action for Hexagon target.");
-    }
+  if (T)
+    return *T;
+
+  switch (Key) {
+  case Action::InputClass:
+  case Action::BindArchClass:
+    assert(0 && "Invalid tool kind.");
+  case Action::AnalyzeJobClass:
+    T = new tools::Clang(*this); break;
+  case Action::AssembleJobClass:
+    T = new tools::hexagon::Assemble(*this); break;
+  case Action::LinkJobClass:
+    T = new tools::hexagon::Link(*this); break;
+  default:
+    assert(false && "Unsupported action for Hexagon target.");
   }
 
   return *T;
@@ -1700,15 +1703,16 @@ Tool &TCEToolChain::SelectTool(const JobAction &JA) const {
   Key = Action::AnalyzeJobClass;
 
   Tool *&T = Tools[Key];
-  if (!T) {
-    switch (Key) {
-    case Action::PreprocessJobClass:
-      T = new tools::gcc::Preprocess(*this); break;
-    case Action::AnalyzeJobClass:
-      T = new tools::Clang(*this); break;
-    default:
-     llvm_unreachable("Unsupported action for TCE target.");
-    }
+  if (T)
+    return *T;
+
+  switch (Key) {
+  case Action::PreprocessJobClass:
+    T = new tools::gcc::Preprocess(*this); break;
+  case Action::AnalyzeJobClass:
+    T = new tools::Clang(*this); break;
+  default:
+    llvm_unreachable("Unsupported action for TCE target.");
   }
   return *T;
 }
@@ -1729,20 +1733,21 @@ Tool &OpenBSD::SelectTool(const JobAction &JA) const {
     Key = JA.getKind();
 
   Tool *&T = Tools[Key];
-  if (!T) {
-    switch (Key) {
-    case Action::AssembleJobClass: {
-      if (useIntegratedAs())
-        T = new tools::ClangAs(*this);
-      else
-        T = new tools::openbsd::Assemble(*this);
-      break;
-    }
-    case Action::LinkJobClass:
-      T = new tools::openbsd::Link(*this); break;
-    default:
-      T = &Generic_GCC::SelectTool(JA);
-    }
+  if (T)
+    return *T;
+
+  switch (Key) {
+  case Action::AssembleJobClass: {
+    if (useIntegratedAs())
+      T = new tools::ClangAs(*this);
+    else
+      T = new tools::openbsd::Assemble(*this);
+    break;
+  }
+  case Action::LinkJobClass:
+    T = new tools::openbsd::Link(*this); break;
+  default:
+    return Generic_GCC::SelectTool(JA);
   }
 
   return *T;
@@ -1764,20 +1769,21 @@ Tool &Bitrig::SelectTool(const JobAction &JA) const {
     Key = JA.getKind();
 
   Tool *&T = Tools[Key];
-  if (!T) {
-    switch (Key) {
-    case Action::AssembleJobClass: {
-      if (useIntegratedAs())
-        T = new tools::ClangAs(*this);
-      else
-        T = new tools::bitrig::Assemble(*this);
-      break;
-    }
-    case Action::LinkJobClass:
-      T = new tools::bitrig::Link(*this); break;
-    default:
-      T = &Generic_GCC::SelectTool(JA);
-    }
+  if (T)
+    return *T;
+
+  switch (Key) {
+  case Action::AssembleJobClass: {
+    if (useIntegratedAs())
+      T = new tools::ClangAs(*this);
+    else
+      T = new tools::bitrig::Assemble(*this);
+    break;
+  }
+  case Action::LinkJobClass:
+    T = new tools::bitrig::Link(*this); break;
+  default:
+    return Generic_GCC::SelectTool(JA);
   }
 
   return *T;
@@ -1851,19 +1857,20 @@ Tool &FreeBSD::SelectTool(const JobAction &JA) const {
     Key = JA.getKind();
 
   Tool *&T = Tools[Key];
-  if (!T) {
-    switch (Key) {
-    case Action::AssembleJobClass:
-      if (useIntegratedAs())
-        T = new tools::ClangAs(*this);
-      else
-        T = new tools::freebsd::Assemble(*this);
-      break;
-    case Action::LinkJobClass:
-      T = new tools::freebsd::Link(*this); break;
-    default:
-      T = &Generic_GCC::SelectTool(JA);
-    }
+  if (T)
+    return *T;
+
+  switch (Key) {
+  case Action::AssembleJobClass:
+    if (useIntegratedAs())
+      T = new tools::ClangAs(*this);
+    else
+      T = new tools::freebsd::Assemble(*this);
+    break;
+  case Action::LinkJobClass:
+    T = new tools::freebsd::Link(*this); break;
+  default:
+    return Generic_GCC::SelectTool(JA);
   }
 
   return *T;
@@ -1908,20 +1915,21 @@ Tool &NetBSD::SelectTool( const JobAction &JA) const {
     Key = JA.getKind();
 
   Tool *&T = Tools[Key];
-  if (!T) {
-    switch (Key) {
-    case Action::AssembleJobClass:
-      if (useIntegratedAs())
-        T = new tools::ClangAs(*this);
-      else
-        T = new tools::netbsd::Assemble(*this);
-      break;
-    case Action::LinkJobClass:
-      T = new tools::netbsd::Link(*this);
-      break;
-    default:
-      T = &Generic_GCC::SelectTool(JA);
-    }
+  if (T)
+    return *T;
+
+  switch (Key) {
+  case Action::AssembleJobClass:
+    if (useIntegratedAs())
+      T = new tools::ClangAs(*this);
+    else
+      T = new tools::netbsd::Assemble(*this);
+    break;
+  case Action::LinkJobClass:
+    T = new tools::netbsd::Link(*this);
+    break;
+  default:
+    return Generic_GCC::SelectTool(JA);
   }
 
   return *T;
@@ -1943,15 +1951,16 @@ Tool &Minix::SelectTool(const JobAction &JA) const {
     Key = JA.getKind();
 
   Tool *&T = Tools[Key];
-  if (!T) {
-    switch (Key) {
-    case Action::AssembleJobClass:
-      T = new tools::minix::Assemble(*this); break;
-    case Action::LinkJobClass:
-      T = new tools::minix::Link(*this); break;
-    default:
-      T = &Generic_GCC::SelectTool(JA);
-    }
+  if (T)
+    return *T;
+
+  switch (Key) {
+  case Action::AssembleJobClass:
+    T = new tools::minix::Assemble(*this); break;
+  case Action::LinkJobClass:
+    T = new tools::minix::Link(*this); break;
+  default:
+    return Generic_GCC::SelectTool(JA);
   }
 
   return *T;
@@ -1983,15 +1992,16 @@ Tool &AuroraUX::SelectTool(const JobAction &JA) const {
     Key = JA.getKind();
 
   Tool *&T = Tools[Key];
-  if (!T) {
-    switch (Key) {
-    case Action::AssembleJobClass:
-      T = new tools::auroraux::Assemble(*this); break;
-    case Action::LinkJobClass:
-      T = new tools::auroraux::Link(*this); break;
-    default:
-      T = &Generic_GCC::SelectTool(JA);
-    }
+  if (T)
+    return *T;
+
+  switch (Key) {
+  case Action::AssembleJobClass:
+    T = new tools::auroraux::Assemble(*this); break;
+  case Action::LinkJobClass:
+    T = new tools::auroraux::Link(*this); break;
+  default:
+    return Generic_GCC::SelectTool(JA);
   }
 
   return *T;
@@ -2019,15 +2029,16 @@ Tool &Solaris::SelectTool(const JobAction &JA) const {
     Key = JA.getKind();
 
   Tool *&T = Tools[Key];
-  if (!T) {
-    switch (Key) {
-    case Action::AssembleJobClass:
-      T = new tools::solaris::Assemble(*this); break;
-    case Action::LinkJobClass:
-      T = new tools::solaris::Link(*this); break;
-    default:
-      T = &Generic_GCC::SelectTool(JA);
-    }
+  if (T)
+    return *T;
+
+  switch (Key) {
+  case Action::AssembleJobClass:
+    T = new tools::solaris::Assemble(*this); break;
+  case Action::LinkJobClass:
+    T = new tools::solaris::Link(*this); break;
+  default:
+    return Generic_GCC::SelectTool(JA);
   }
 
   return *T;
@@ -2407,19 +2418,20 @@ Tool &Linux::SelectTool( const JobAction &JA) const {
     Key = JA.getKind();
 
   Tool *&T = Tools[Key];
-  if (!T) {
-    switch (Key) {
-    case Action::AssembleJobClass:
-      if (useIntegratedAs())
-        T = new tools::ClangAs(*this);
-      else
-        T = new tools::linuxtools::Assemble(*this);
-      break;
-    case Action::LinkJobClass:
-      T = new tools::linuxtools::Link(*this); break;
-    default:
-      T = &Generic_GCC::SelectTool(JA);
-    }
+  if (T)
+    return *T;
+
+  switch (Key) {
+  case Action::AssembleJobClass:
+    if (useIntegratedAs())
+      T = new tools::ClangAs(*this);
+    else
+      T = new tools::linuxtools::Assemble(*this);
+    break;
+  case Action::LinkJobClass:
+    T = new tools::linuxtools::Link(*this); break;
+  default:
+    return Generic_GCC::SelectTool(JA);
   }
 
   return *T;
@@ -2659,15 +2671,16 @@ Tool &DragonFly::SelectTool(const JobAction &JA) const {
     Key = JA.getKind();
 
   Tool *&T = Tools[Key];
-  if (!T) {
-    switch (Key) {
-    case Action::AssembleJobClass:
-      T = new tools::dragonfly::Assemble(*this); break;
-    case Action::LinkJobClass:
-      T = new tools::dragonfly::Link(*this); break;
-    default:
-      T = &Generic_GCC::SelectTool(JA);
-    }
+  if (T)
+    return *T;
+
+  switch (Key) {
+  case Action::AssembleJobClass:
+    T = new tools::dragonfly::Assemble(*this); break;
+  case Action::LinkJobClass:
+    T = new tools::dragonfly::Link(*this); break;
+  default:
+    return Generic_GCC::SelectTool(JA);
   }
 
   return *T;
