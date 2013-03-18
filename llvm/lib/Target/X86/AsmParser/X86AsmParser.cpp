@@ -1801,6 +1801,12 @@ processInstruction(MCInst &Inst,
   case X86::SUB16i16: return convert16i16to16ri8(Inst, X86::SUB16ri8);
   case X86::SUB32i32: return convert32i32to32ri8(Inst, X86::SUB32ri8);
   case X86::SUB64i32: return convert64i32to64ri8(Inst, X86::SUB64ri8);
+  case X86::ADC16i16: return convert16i16to16ri8(Inst, X86::ADC16ri8);
+  case X86::ADC32i32: return convert32i32to32ri8(Inst, X86::ADC32ri8);
+  case X86::ADC64i32: return convert64i32to64ri8(Inst, X86::ADC64ri8);
+  case X86::SBB16i16: return convert16i16to16ri8(Inst, X86::SBB16ri8);
+  case X86::SBB32i32: return convert32i32to32ri8(Inst, X86::SBB32ri8);
+  case X86::SBB64i32: return convert64i32to64ri8(Inst, X86::SBB64ri8);
   }
 }
 
