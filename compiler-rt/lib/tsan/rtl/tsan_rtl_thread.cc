@@ -200,9 +200,8 @@ void ThreadStart(ThreadState *thr, int tid, uptr os_id) {
   GetThreadStackAndTls(tid == 0, &stk_addr, &stk_size, &tls_addr, &tls_size);
 
   if (tid) {
-    if (stk_addr && stk_size) {
+    if (stk_addr && stk_size)
       MemoryResetRange(thr, /*pc=*/ 1, stk_addr, stk_size);
-    }
 
     if (tls_addr && tls_size) {
       // Check that the thr object is in tls;
@@ -225,17 +224,10 @@ void ThreadStart(ThreadState *thr, int tid, uptr os_id) {
 void ThreadFinish(ThreadState *thr) {
   CHECK_GT(thr->in_rtl, 0);
   StatInc(thr, StatThreadFinish);
-  // FIXME: Treat it as write.
   if (thr->stk_addr && thr->stk_size)
-    MemoryResetRange(thr, /*pc=*/ 3, thr->stk_addr, thr->stk_size);
-  if (thr->tls_addr && thr->tls_size) {
-    const uptr thr_beg = (uptr)thr;
-    const uptr thr_end = (uptr)thr + sizeof(*thr);
-    // Since the thr object is huge, skip it.
-    MemoryResetRange(thr, /*pc=*/ 4, thr->tls_addr, thr_beg - thr->tls_addr);
-    MemoryResetRange(thr, /*pc=*/ 5,
-        thr_end, thr->tls_addr + thr->tls_size - thr_end);
-  }
+    DontNeedShadowFor(thr->stk_addr, thr->stk_size);
+  if (thr->tls_addr && thr->tls_size)
+    DontNeedShadowFor(thr->tls_addr, thr->tls_size);
   thr->is_alive = false;
   Context *ctx = CTX();
   ctx->thread_registry->FinishThread(thr->tid);

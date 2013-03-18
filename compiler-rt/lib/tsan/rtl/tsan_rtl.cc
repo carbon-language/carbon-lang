@@ -125,6 +125,12 @@ static void InitializeMemoryProfile() {
   internal_start_thread(&MemoryProfileThread, (void*)(uptr)fd);
 }
 
+void DontNeedShadowFor(uptr addr, uptr size) {
+  uptr shadow_beg = MemToShadow(addr);
+  uptr shadow_end = MemToShadow(addr + size);
+  FlushUnneededShadowMemory(shadow_beg, shadow_end - shadow_beg);
+}
+
 static void MemoryFlushThread(void *arg) {
   ScopedInRtl in_rtl;
   for (int i = 0; ; i++) {

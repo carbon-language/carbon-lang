@@ -34,10 +34,7 @@ struct MapUnmapCallback {
   void OnUnmap(uptr p, uptr size) const {
     // We are about to unmap a chunk of user memory.
     // Mark the corresponding shadow memory as not needed.
-    uptr shadow_beg = MemToShadow(p);
-    uptr shadow_end = MemToShadow(p + size);
-    CHECK(IsAligned(shadow_end|shadow_beg, GetPageSizeCached()));
-    FlushUnneededShadowMemory(shadow_beg, shadow_end - shadow_beg);
+    DontNeedShadowFor(p, size);
   }
 };
 

@@ -527,6 +527,7 @@ void ALWAYS_INLINE INLINE StatSet(ThreadState *thr, StatType typ, u64 n) {
 
 void MapShadow(uptr addr, uptr size);
 void MapThreadTrace(uptr addr, uptr size);
+void DontNeedShadowFor(uptr addr, uptr size);
 void InitializeShadowMemory();
 void InitializeInterceptors();
 void InitializeDynamicAnnotations();
