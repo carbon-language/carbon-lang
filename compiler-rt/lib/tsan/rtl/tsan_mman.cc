@@ -29,6 +29,18 @@ extern "C" void WEAK __tsan_free_hook(void *ptr) {
 
 namespace __tsan {
 
+struct MapUnmapCallback {
+  void OnMap(uptr p, uptr size) const { }
+  void OnUnmap(uptr p, uptr size) const {
+    // We are about to unmap a chunk of user memory.
+    // Mark the corresponding shadow memory as not needed.
+    uptr shadow_beg = MemToShadow(p);
+    uptr shadow_end = MemToShadow(p + size);
+    CHECK(IsAligned(shadow_end|shadow_beg, GetPageSizeCached()));
+    FlushUnneededShadowMemory(shadow_beg, shadow_end - shadow_beg);
+  }
+};
+
 static char allocator_placeholder[sizeof(Allocator)] ALIGNED(64);
 Allocator *allocator() {
   return reinterpret_cast<Allocator*>(&allocator_placeholder);
