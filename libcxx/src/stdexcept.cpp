@@ -20,7 +20,7 @@
 #define __has_include(inc) 0
 #endif
 
-#if __APPLE__
+#ifdef __APPLE__
 #include <cxxabi.h>
 #elif defined(LIBCXXRT) || __has_include(<cxxabi.h>)
 #include <cxxabi.h>

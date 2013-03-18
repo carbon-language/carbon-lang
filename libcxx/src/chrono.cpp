@@ -9,7 +9,7 @@
 
 #include "chrono"
 #include <sys/time.h>        //for gettimeofday and timeval
-#if __APPLE__
+#ifdef __APPLE__
 #include <mach/mach_time.h>  // mach_absolute_time, mach_timebase_info_data_t
 #else  /* !__APPLE__ */
 #include <cerrno>  // errno
@@ -50,7 +50,7 @@ system_clock::from_time_t(time_t t) _NOEXCEPT
 
 const bool steady_clock::is_steady;
 
-#if __APPLE__
+#ifdef __APPLE__
 //   mach_absolute_time() * MachInfo.numer / MachInfo.denom is the number of
 //   nanoseconds since the computer booted up.  MachInfo.numer and MachInfo.denom
 //   are run time constants supplied by the OS.  This clock has no relationship

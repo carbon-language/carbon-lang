@@ -181,7 +181,7 @@ template <class charT> class messages_byname;
 #include <streambuf>
 #include <iterator>
 #include <limits>
-#if !__APPLE__
+#ifndef __APPLE__
 #include <cstdarg>
 #endif
 #include <cstdlib>
@@ -192,7 +192,7 @@ template <class charT> class messages_byname;
 #include <nl_types.h>
 #endif  // !_WIN32
 
-#if __APPLE__
+#ifdef __APPLE__
 #include <Availability.h>
 #endif
 
@@ -204,7 +204,7 @@ template <class charT> class messages_byname;
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-#if __APPLE__ || __FreeBSD__
+#if defined(__APPLE__) || __FreeBSD__
 #  define _LIBCPP_GET_C_LOCALE 0
 #else
 #  define _LIBCPP_GET_C_LOCALE __cloc()

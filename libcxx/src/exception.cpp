@@ -14,7 +14,7 @@
 #define __has_include(inc) 0
 #endif
 
-#if __APPLE__
+#ifdef __APPLE__
   #include <cxxabi.h>
 
   using namespace __cxxabiv1;
@@ -102,7 +102,7 @@ terminate() _NOEXCEPT
 #if !defined(LIBCXXRT) && !defined(__GLIBCXX__)
 bool uncaught_exception() _NOEXCEPT
 {
-#if __APPLE__ || defined(_LIBCPPABI_VERSION)
+#if defined(__APPLE__) || defined(_LIBCPPABI_VERSION)
     // on Darwin, there is a helper function so __cxa_get_globals is private
     return __cxa_uncaught_exception();
 #else  // __APPLE__

@@ -317,7 +317,7 @@ template <class T, size_t N> T* end(T (&array)[N]);
 #include <type_traits>
 #include <cstddef>
 #include <iosfwd>
-#if __APPLE__
+#ifdef __APPLE__
 #include <Availability.h>
 #endif
 

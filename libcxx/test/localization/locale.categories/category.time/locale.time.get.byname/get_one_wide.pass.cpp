@@ -93,7 +93,7 @@ int main()
         assert(t.tm_hour == 23);
         assert(err == std::ios_base::eofbit);
     }
-#if __APPLE__
+#ifdef __APPLE__
     {
         const my_facet f("ru_RU", 1);
         const wchar_t in[] = L"\x441\x443\x431\x431\x43E\x442\x430"
@@ -128,7 +128,7 @@ int main()
         assert(t.tm_hour == 23);
         assert(err == std::ios_base::eofbit);
     }
-#if __APPLE__
+#ifdef __APPLE__
     {
         const my_facet f("zh_CN", 1);
         const wchar_t in[] = L"\x516D"
