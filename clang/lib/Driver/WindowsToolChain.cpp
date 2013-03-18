@@ -38,7 +38,7 @@ Windows::Windows(const Driver &D, const llvm::Triple& Triple)
 Tool &Windows::SelectTool(const Compilation &C, const JobAction &JA,
                           const ActionList &Inputs) const {
   Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();

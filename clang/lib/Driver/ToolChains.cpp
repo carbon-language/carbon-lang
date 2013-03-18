@@ -180,7 +180,7 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA,
                          const ActionList &Inputs) const {
   Action::ActionClass Key = JA.getKind();
 
-  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple())) {
+  if (getDriver().ShouldUseClangCompiler(JA)) {
     // FIXME: This seems like a hacky way to choose clang frontend.
     Key = Action::AnalyzeJobClass;
   }
@@ -1390,7 +1390,7 @@ Tool &Generic_GCC::SelectTool(const Compilation &C,
                               const JobAction &JA,
                               const ActionList &Inputs) const {
   Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -1565,7 +1565,7 @@ Tool &Hexagon_TC::SelectTool(const Compilation &C,
   //     Key = JA.getKind ();
   //     else
 
-  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -1741,7 +1741,7 @@ OpenBSD::OpenBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Arg
 Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA,
                           const ActionList &Inputs) const {
   Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -1781,7 +1781,7 @@ Bitrig::Bitrig(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
 Tool &Bitrig::SelectTool(const Compilation &C, const JobAction &JA,
                          const ActionList &Inputs) const {
   Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -1873,7 +1873,7 @@ FreeBSD::FreeBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Arg
 Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA,
                           const ActionList &Inputs) const {
   Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -1935,7 +1935,7 @@ NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
 Tool &NetBSD::SelectTool(const Compilation &C, const JobAction &JA,
                          const ActionList &Inputs) const {
   Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -1975,7 +1975,7 @@ Minix::Minix(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
 Tool &Minix::SelectTool(const Compilation &C, const JobAction &JA,
                         const ActionList &Inputs) const {
   Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -2016,7 +2016,7 @@ AuroraUX::AuroraUX(const Driver &D, const llvm::Triple& Triple,
 Tool &AuroraUX::SelectTool(const Compilation &C, const JobAction &JA,
                            const ActionList &Inputs) const {
   Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -2053,7 +2053,7 @@ Solaris::Solaris(const Driver &D, const llvm::Triple& Triple,
 Tool &Solaris::SelectTool(const Compilation &C, const JobAction &JA,
                            const ActionList &Inputs) const {
   Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -2442,7 +2442,7 @@ bool Linux::HasNativeLLVMSupport() const {
 Tool &Linux::SelectTool(const Compilation &C, const JobAction &JA,
                         const ActionList &Inputs) const {
   Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -2699,7 +2699,7 @@ DragonFly::DragonFly(const Driver &D, const llvm::Triple& Triple, const ArgList 
 Tool &DragonFly::SelectTool(const Compilation &C, const JobAction &JA,
                             const ActionList &Inputs) const {
   Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(JA))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
