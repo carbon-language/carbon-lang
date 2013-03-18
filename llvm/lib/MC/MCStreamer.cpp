@@ -24,7 +24,7 @@ using namespace llvm;
 MCStreamer::MCStreamer(StreamerKind Kind, MCContext &Ctx)
     : Kind(Kind), Context(Ctx), EmitEHFrame(true), EmitDebugFrame(false),
       CurrentW64UnwindInfo(0), LastSymbol(0), AutoInitSections(false) {
-  const MCSection *section = NULL;
+  const MCSection *section = 0;
   SectionStack.push_back(std::make_pair(section, section));
 }
 
@@ -40,7 +40,7 @@ void MCStreamer::reset() {
   EmitDebugFrame = false;
   CurrentW64UnwindInfo = 0;
   LastSymbol = 0;
-  const MCSection *section = NULL;
+  const MCSection *section = 0;
   SectionStack.clear();
   SectionStack.push_back(std::make_pair(section, section));
 }
@@ -172,7 +172,7 @@ void MCStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
 
 MCDwarfFrameInfo *MCStreamer::getCurrentFrameInfo() {
   if (FrameInfos.empty())
-    return NULL;
+    return 0;
   return &FrameInfos.back();
 }
 
@@ -473,7 +473,7 @@ void MCStreamer::EmitWin64EHSetFrame(unsigned Register, unsigned Offset) {
     report_fatal_error("Frame register and offset already specified!");
   if (Offset & 0x0F)
     report_fatal_error("Misaligned frame pointer offset!");
-  MCWin64EHInstruction Inst(Win64EH::UOP_SetFPReg, NULL, Register, Offset);
+  MCWin64EHInstruction Inst(Win64EH::UOP_SetFPReg, 0, Register, Offset);
   CurFrame->LastFrameInst = CurFrame->Instructions.size();
   CurFrame->Instructions.push_back(Inst);
 }
@@ -623,5 +623,5 @@ void MCStreamer::Finish() {
 
 MCSymbolData &MCStreamer::getOrCreateSymbolData(MCSymbol *Symbol) {
   report_fatal_error("Not supported!");
-  return *(static_cast<MCSymbolData*> (NULL));
+  return *(static_cast<MCSymbolData*>(0));
 }
