@@ -115,16 +115,17 @@ class SOPK_64 <bits<5> op, string opName, list<dag> pattern> : SOPK <
   opName#" $dst, $src0", pattern
 >;
 
-multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass> {
+multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass baseClass,
+                        RegisterClass dstClass> {
   def _IMM : SMRD <
     op, 1, (outs dstClass:$dst),
-    (ins SReg_64:$sbase, i32imm:$offset),
+    (ins baseClass:$sbase, i32imm:$offset),
     asm#" $dst, $sbase, $offset", []
   >;
 
   def _SGPR : SMRD <
     op, 0, (outs dstClass:$dst),
-    (ins SReg_64:$sbase, SReg_32:$soff),
+    (ins baseClass:$sbase, SReg_32:$soff),
     asm#" $dst, $sbase, $soff", []
   >;
 }
