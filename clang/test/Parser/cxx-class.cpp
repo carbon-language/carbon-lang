@@ -88,6 +88,17 @@ namespace ctor_error {
     // expected-error{{unknown type name 'UnknownType'}}
 }
 
+namespace nns_decl {
+  struct A {
+    struct B;
+  };
+  namespace N {
+    union C;
+  }
+  struct A::B; // expected-error {{forward declaration of struct cannot have a nested name specifier}}
+  union N::C; // expected-error {{forward declaration of union cannot have a nested name specifier}}
+}
+
 // PR13775: Don't assert here.
 namespace PR13775 {
   class bar

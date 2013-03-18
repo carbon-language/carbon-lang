@@ -10,7 +10,7 @@ int typedef validTypeDecl() { } // expected-error {{function definition declared
 struct _zend_module_entry { }    // expected-error {{expected ';' after struct}}
 int gv1;
 typedef struct _zend_function_entry { } // expected-error {{expected ';' after struct}} \
-                                        // expected-warning {{declaration does not declare anything}}
+                                        // expected-warning {{typedef requires a name}}
 int gv2;
 
 static void buggy(int *x) { }

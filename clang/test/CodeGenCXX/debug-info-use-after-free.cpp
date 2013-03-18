@@ -192,6 +192,7 @@ __gnu_cxx {
            public:
             typedef _EqualKey
                 key_equal;
+            typedef void key_type;
           };
   using
       std::equal_to;
@@ -217,7 +218,7 @@ __gnu_cxx {
         _Alloc >
             _Ht;
        public:
-        typename _Ht::key_type;
+        typedef typename _Ht::key_type key_type;
         typedef typename
             _Ht::key_equal
             key_equal;

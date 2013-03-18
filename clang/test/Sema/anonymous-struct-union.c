@@ -78,7 +78,7 @@ void g() {
 struct s0 { union { int f0; }; };
 
 // <rdar://problem/6481130>
-typedef struct { }; // expected-warning{{declaration does not declare anything}}
+typedef struct { }; // expected-warning{{typedef requires a name}}
 
 // PR3675
 struct s1 {

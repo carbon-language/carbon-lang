@@ -411,6 +411,8 @@ def err_main_arg_wrong : Error<"%select{first|second|third|fourth}0 "
     "platform-specific data}0) must be of type %1">;
 
 /// parser diagnostics
+def ext_no_declarators : ExtWarn<"declaration does not declare anything">,
+  InGroup<MissingDeclarations>;
 def ext_typedef_without_a_name : ExtWarn<"typedef requires a name">,
   InGroup<MissingDeclarations>;
 def err_typedef_not_identifier : Error<"typedef name must be an identifier">;
@@ -4180,7 +4182,13 @@ def err_typecheck_sclass_fscope : Error<
   "illegal storage class on file-scoped variable">;
 def err_unsupported_global_register : Error<
   "global register variables are not supported">;
-def warn_standalone_specifier : Warning<"'%0' ignored on this declaration">;
+def warn_standalone_specifier : Warning<"'%0' ignored on this declaration">,
+  InGroup<MissingDeclarations>;
+def ext_standalone_specifier : ExtWarn<"'%0' is not permitted on a declaration "
+  "of a type">, InGroup<MissingDeclarations>;
+def err_standalone_class_nested_name_specifier : Error<
+  "forward declaration of %select{class|struct|interface|union|enum}0 cannot "
+  "have a nested name specifier">;
 def err_typecheck_sclass_func : Error<"illegal storage class on function">;
 def err_static_block_func : Error<
   "function declared in block scope cannot have 'static' storage class">;

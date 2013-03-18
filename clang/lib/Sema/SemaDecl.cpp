@@ -2984,11 +2984,12 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
 }
 
 /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
-/// no declarator (e.g. "struct foo;") is parsed. It also accopts template
+/// no declarator (e.g. "struct foo;") is parsed. It also accepts template
 /// parameters to cope with template friend declarations.
 Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
                                        DeclSpec &DS,
-                                       MultiTemplateParamsArg TemplateParams) {
+                                       MultiTemplateParamsArg TemplateParams,
+                                       bool IsExplicitInstantiation) {
   Decl *TagD = 0;
   TagDecl *Tag = 0;
   if (DS.getTypeSpecType() == DeclSpec::TST_class ||
@@ -3041,6 +3042,8 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
     return TagD;
   }
 
+  DiagnoseFunctionSpecifiers(DS);
+
   if (DS.isFriendSpecified()) {
     // If we're dealing with a decl but not a TagDecl, assume that
     // whatever routines created it handled the friendship aspect.
@@ -3049,10 +3052,28 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
     return ActOnFriendTypeDecl(S, DS, TemplateParams);
   }
 
-  // Track whether we warned about the fact that there aren't any
-  // declarators.
-  bool emittedWarning = false;
-         
+  CXXScopeSpec &SS = DS.getTypeSpecScope();
+  bool IsExplicitSpecialization =
+    !TemplateParams.empty() && TemplateParams.back()->size() == 0;
+  if (Tag && SS.isNotEmpty() && !Tag->isCompleteDefinition() &&
+      !IsExplicitInstantiation && !IsExplicitSpecialization) {
+    // Per C++ [dcl.type.elab]p1, a class declaration cannot have a
+    // nested-name-specifier unless it is an explicit instantiation
+    // or an explicit specialization.
+    // Per C++ [dcl.enum]p1, an opaque-enum-declaration can't either.
+    Diag(SS.getBeginLoc(), diag::err_standalone_class_nested_name_specifier)
+      << (DS.getTypeSpecType() == DeclSpec::TST_class ? 0 :
+          DS.getTypeSpecType() == DeclSpec::TST_struct ? 1 :
+          DS.getTypeSpecType() == DeclSpec::TST_interface ? 2 :
+          DS.getTypeSpecType() == DeclSpec::TST_union ? 3 : 4)
+      << SS.getRange();
+    return 0;
+  }
+
+  // Track whether this decl-specifier declares anything.
+  bool DeclaresAnything = true;
+
+  // Handle anonymous struct definitions.
   if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag)) {
     if (!Record->getDeclName() && Record->isCompleteDefinition() &&
         DS.getStorageClassSpec() != DeclSpec::SCS_typedef) {
@@ -3060,13 +3081,11 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
           Record->getDeclContext()->isRecord())
         return BuildAnonymousStructOrUnion(S, DS, AS, Record);
 
-      Diag(DS.getLocStart(), diag::ext_no_declarators)
-        << DS.getSourceRange();
-      emittedWarning = true;
+      DeclaresAnything = false;
     }
   }
 
-  // Check for Microsoft C extension: anonymous struct.
+  // Check for Microsoft C extension: anonymous struct member.
   if (getLangOpts().MicrosoftExt && !getLangOpts().CPlusPlus &&
       CurContext->isRecord() &&
       DS.getStorageClassSpec() == DeclSpec::SCS_unspecified) {
@@ -3083,70 +3102,80 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
       return BuildMicrosoftCAnonymousStruct(S, DS, Record);
     }
   }
-  
-  if (getLangOpts().CPlusPlus && 
+
+  // Skip all the checks below if we have a type error.
+  if (DS.getTypeSpecType() == DeclSpec::TST_error ||
+      (TagD && TagD->isInvalidDecl()))
+    return TagD;
+
+  if (getLangOpts().CPlusPlus &&
       DS.getStorageClassSpec() != DeclSpec::SCS_typedef)
     if (EnumDecl *Enum = dyn_cast_or_null<EnumDecl>(Tag))
       if (Enum->enumerator_begin() == Enum->enumerator_end() &&
-          !Enum->getIdentifier() && !Enum->isInvalidDecl()) {
-        Diag(Enum->getLocation(), diag::ext_no_declarators)
-          << DS.getSourceRange();
-        emittedWarning = true;
-      }
+          !Enum->getIdentifier() && !Enum->isInvalidDecl())
+        DeclaresAnything = false;
 
-  // Skip all the checks below if we have a type error.
-  if (DS.getTypeSpecType() == DeclSpec::TST_error) return TagD;
-      
   if (!DS.isMissingDeclaratorOk()) {
-    // Warn about typedefs of enums without names, since this is an
-    // extension in both Microsoft and GNU.
-    if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef &&
-        Tag && isa<EnumDecl>(Tag)) {
+    // Customize diagnostic for a typedef missing a name.
+    if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef)
       Diag(DS.getLocStart(), diag::ext_typedef_without_a_name)
         << DS.getSourceRange();
-      return Tag;
-    }
-
-    Diag(DS.getLocStart(), diag::ext_no_declarators)
-      << DS.getSourceRange();
-    emittedWarning = true;
+    else
+      DeclaresAnything = false;
   }
 
-  // We're going to complain about a bunch of spurious specifiers;
-  // only do this if we're declaring a tag, because otherwise we
-  // should be getting diag::ext_no_declarators.
-  if (emittedWarning || (TagD && TagD->isInvalidDecl()))
-    return TagD;
-
-  // Note that a linkage-specification sets a storage class, but
-  // 'extern "C" struct foo;' is actually valid and not theoretically
-  // useless.
-  if (DeclSpec::SCS scs = DS.getStorageClassSpec())
-    if (!DS.isExternInLinkageSpec())
-      Diag(DS.getStorageClassSpecLoc(), diag::warn_standalone_specifier)
-        << DeclSpec::getSpecifierName(scs);
-
-  if (DS.isThreadSpecified())
-    Diag(DS.getThreadSpecLoc(), diag::warn_standalone_specifier) << "__thread";
-  if (DS.getTypeQualifiers()) {
-    if (DS.getTypeQualifiers() & DeclSpec::TQ_const)
-      Diag(DS.getConstSpecLoc(), diag::warn_standalone_specifier) << "const";
-    if (DS.getTypeQualifiers() & DeclSpec::TQ_volatile)
-      Diag(DS.getConstSpecLoc(), diag::warn_standalone_specifier) << "volatile";
-    // Restrict is covered above.
-  }
-  if (DS.isInlineSpecified())
-    Diag(DS.getInlineSpecLoc(), diag::warn_standalone_specifier) << "inline";
-  if (DS.isVirtualSpecified())
-    Diag(DS.getVirtualSpecLoc(), diag::warn_standalone_specifier) << "virtual";
-  if (DS.isExplicitSpecified())
-    Diag(DS.getExplicitSpecLoc(), diag::warn_standalone_specifier) <<"explicit";
-
-  if (DS.isModulePrivateSpecified() && 
+  if (DS.isModulePrivateSpecified() &&
       Tag && Tag->getDeclContext()->isFunctionOrMethod())
     Diag(DS.getModulePrivateSpecLoc(), diag::err_module_private_local_class)
       << Tag->getTagKind()
       << FixItHint::CreateRemoval(DS.getModulePrivateSpecLoc());
+
+  ActOnDocumentableDecl(TagD);
+
+  // C 6.7/2:
+  //   A declaration [...] shall declare at least a declarator [...], a tag,
+  //   or the members of an enumeration.
+  // C++ [dcl.dcl]p3:
+  //   [If there are no declarators], and except for the declaration of an
+  //   unnamed bit-field, the decl-specifier-seq shall introduce one or more
+  //   names into the program, or shall redeclare a name introduced by a
+  //   previous declaration.
+  if (!DeclaresAnything) {
+    // In C, we allow this as a (popular) extension / bug. Don't bother
+    // producing further diagnostics for redundant qualifiers after this.
+    Diag(DS.getLocStart(), diag::ext_no_declarators) << DS.getSourceRange();
+    return TagD;
+  }
+
+  // C++ [dcl.stc]p1:
+  //   If a storage-class-specifier appears in a decl-specifier-seq, [...] the
+  //   init-declarator-list of the declaration shall not be empty.
+  // C++ [dcl.fct.spec]p1:
+  //   If a cv-qualifier appears in a decl-specifier-seq, the
+  //   init-declarator-list of the declaration shall not be empty.
+  //
+  // Spurious qualifiers here appear to be valid in C.
+  unsigned DiagID = diag::warn_standalone_specifier;
+  if (getLangOpts().CPlusPlus)
+    DiagID = diag::ext_standalone_specifier;
+
+  // Note that a linkage-specification sets a storage class, but
+  // 'extern "C" struct foo;' is actually valid and not theoretically
+  // useless.
+  if (DeclSpec::SCS SCS = DS.getStorageClassSpec())
+    if (!DS.isExternInLinkageSpec() && SCS != DeclSpec::SCS_typedef)
+      Diag(DS.getStorageClassSpecLoc(), DiagID)
+        << DeclSpec::getSpecifierName(SCS);
+
+  if (DS.isThreadSpecified())
+    Diag(DS.getThreadSpecLoc(), DiagID) << "__thread";
+  if (DS.getTypeQualifiers()) {
+    if (DS.getTypeQualifiers() & DeclSpec::TQ_const)
+      Diag(DS.getConstSpecLoc(), DiagID) << "const";
+    if (DS.getTypeQualifiers() & DeclSpec::TQ_volatile)
+      Diag(DS.getConstSpecLoc(), DiagID) << "volatile";
+    // Restrict is covered above.
+  }
 
   // Warn about ignored type attributes, for example:
   // __attribute__((aligned)) struct A;
@@ -3170,8 +3199,6 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
       }
     }
   }
-
-  ActOnDocumentableDecl(TagD);
 
   return TagD;
 }
@@ -4349,23 +4376,23 @@ Sema::findLocallyScopedExternCDecl(DeclarationName Name) {
 
 /// \brief Diagnose function specifiers on a declaration of an identifier that
 /// does not identify a function.
-void Sema::DiagnoseFunctionSpecifiers(Declarator& D) {
+void Sema::DiagnoseFunctionSpecifiers(const DeclSpec &DS) {
   // FIXME: We should probably indicate the identifier in question to avoid
   // confusion for constructs like "inline int a(), b;"
-  if (D.getDeclSpec().isInlineSpecified())
-    Diag(D.getDeclSpec().getInlineSpecLoc(),
+  if (DS.isInlineSpecified())
+    Diag(DS.getInlineSpecLoc(),
          diag::err_inline_non_function);
 
-  if (D.getDeclSpec().isVirtualSpecified())
-    Diag(D.getDeclSpec().getVirtualSpecLoc(),
+  if (DS.isVirtualSpecified())
+    Diag(DS.getVirtualSpecLoc(),
          diag::err_virtual_non_function);
 
-  if (D.getDeclSpec().isExplicitSpecified())
-    Diag(D.getDeclSpec().getExplicitSpecLoc(),
+  if (DS.isExplicitSpecified())
+    Diag(DS.getExplicitSpecLoc(),
          diag::err_explicit_non_function);
 
-  if (D.getDeclSpec().isNoreturnSpecified())
-    Diag(D.getDeclSpec().getNoreturnSpecLoc(),
+  if (DS.isNoreturnSpecified())
+    Diag(DS.getNoreturnSpecLoc(),
          diag::err_noreturn_non_function);
 }
 
@@ -4382,7 +4409,7 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     Previous.clear();
   }
 
-  DiagnoseFunctionSpecifiers(D);
+  DiagnoseFunctionSpecifiers(D.getDeclSpec());
 
   if (D.getDeclSpec().isThreadSpecified())
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
@@ -4665,7 +4692,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     return 0;
   }
 
-  DiagnoseFunctionSpecifiers(D);
+  DiagnoseFunctionSpecifiers(D.getDeclSpec());
 
   if (!DC->isRecord() && S->getFnParent() == 0) {
     // C99 6.9p2: The storage-class specifiers auto and register shall not
@@ -8144,7 +8171,7 @@ Decl *Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
     Diag(D.getDeclSpec().getConstexprSpecLoc(), diag::err_invalid_constexpr)
       << 0;
 
-  DiagnoseFunctionSpecifiers(D);
+  DiagnoseFunctionSpecifiers(D.getDeclSpec());
 
   TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
   QualType parmDeclType = TInfo->getType();
@@ -10235,7 +10262,7 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
     D.setInvalidType();
   }
 
-  DiagnoseFunctionSpecifiers(D);
+  DiagnoseFunctionSpecifiers(D.getDeclSpec());
 
   if (D.getDeclSpec().isThreadSpecified())
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);

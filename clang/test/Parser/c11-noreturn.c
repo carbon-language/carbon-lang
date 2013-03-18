@@ -4,11 +4,15 @@
 _Noreturn int f();
 int _Noreturn f(); // expected-note {{previous}}
 int f _Noreturn(); // expected-error {{expected ';'}} expected-error 2{{}}
-int f() _Noreturn; // expected-error {{expected ';'}} expected-warning {{does not declare anything}}
+int f() _Noreturn; // expected-error {{expected ';'}} expected-warning {{does not declare anything}} expected-error {{'_Noreturn' can only appear on functions}}
 
 _Noreturn char c1; // expected-error {{'_Noreturn' can only appear on functions}}
 char _Noreturn c2; // expected-error {{'_Noreturn' can only appear on functions}}
 
 typedef _Noreturn int g(); // expected-error {{'_Noreturn' can only appear on functions}}
+
+_Noreturn int; // expected-error {{'_Noreturn' can only appear on functions}} expected-warning {{does not declare anything}}
+_Noreturn struct S; // expected-error {{'_Noreturn' can only appear on functions}}
+_Noreturn enum E { e }; // expected-error {{'_Noreturn' can only appear on functions}}
 
 // CHECK-EXT: _Noreturn functions are a C11-specific feature

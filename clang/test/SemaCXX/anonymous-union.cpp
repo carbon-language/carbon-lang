@@ -110,7 +110,7 @@ struct BadMembers {
 };
 
 // <rdar://problem/6481130>
-typedef union { }; // expected-warning{{declaration does not declare anything}}
+typedef union { }; // expected-warning{{typedef requires a name}}
 
 // <rdar://problem/7562438>
 typedef struct objc_module *Foo ;

@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 %s -fsyntax-only -verify
 
 // See Sema::ParsedFreeStandingDeclSpec about the double diagnostic
-typedef union <anonymous> __mbstate_t;  // expected-error {{declaration of anonymous union must be a definition}} expected-warning {{declaration does not declare anything}}
+typedef union <anonymous> __mbstate_t;  // expected-error {{declaration of anonymous union must be a definition}} expected-warning {{typedef requires a name}}
 
 
 // PR2017
@@ -14,7 +14,7 @@ int a() {
 }
 
 int; // expected-warning {{declaration does not declare anything}}
-typedef int; // expected-warning {{declaration does not declare anything}}
+typedef int; // expected-warning {{typedef requires a name}}
 const int; // expected-warning {{declaration does not declare anything}}
 struct; // expected-error {{declaration of anonymous struct must be a definition}} // expected-warning {{declaration does not declare anything}}
 typedef int I;

@@ -54,6 +54,6 @@ static struct test1 { // expected-warning {{'static' ignored on this declaration
 const struct test2 { // expected-warning {{'const' ignored on this declaration}}
   int x;
 };
-inline struct test3 { // expected-warning {{'inline' ignored on this declaration}}
+inline struct test3 { // expected-error {{'inline' can only appear on functions}}
   int x;
 };
