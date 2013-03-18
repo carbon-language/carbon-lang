@@ -189,12 +189,23 @@ INITIALIZE_PASS_END(PPCCTRLoops, "ppc-ctr-loops", "PowerPC CTR Loops",
 
 /// isCompareEquals - Returns true if the instruction is a compare equals
 /// instruction with an immediate operand.
-static bool isCompareEqualsImm(const MachineInstr *MI, bool &SignedCmp) {
-  if (MI->getOpcode() == PPC::CMPWI || MI->getOpcode() == PPC::CMPDI) {
+static bool isCompareEqualsImm(const MachineInstr *MI, bool &SignedCmp,
+                               bool &Int64Cmp) {
+  if (MI->getOpcode() == PPC::CMPWI) {
     SignedCmp = true;
+    Int64Cmp = false;
     return true;
-  } else if (MI->getOpcode() == PPC::CMPLWI || MI->getOpcode() == PPC::CMPLDI) {
+  } else if (MI->getOpcode() == PPC::CMPDI) {
+    SignedCmp = true;
+    Int64Cmp = true;
+    return true;
+  } else if (MI->getOpcode() == PPC::CMPLWI) {
     SignedCmp = false;
+    Int64Cmp = false;
+    return true;
+  } else if (MI->getOpcode() == PPC::CMPLDI) {
+    SignedCmp = false;
+    Int64Cmp = true;
     return true;
   }
 
@@ -353,9 +364,9 @@ CountValue *PPCCTRLoops::getTripCount(MachineLoop *L,
          RI = MRI->reg_begin(IV_Opnd->getReg()), RE = MRI->reg_end();
          RI != RE; ++RI) {
       IV_Opnd = &RI.getOperand();
-      bool SignedCmp;
+      bool SignedCmp, Int64Cmp;
       MachineInstr *MI = IV_Opnd->getParent();
-      if (L->contains(MI) && isCompareEqualsImm(MI, SignedCmp) &&
+      if (L->contains(MI) && isCompareEqualsImm(MI, SignedCmp, Int64Cmp) &&
           MI->getOperand(0).getReg() == PredReg) {
 
         OldInsts.push_back(MI);
@@ -387,7 +398,7 @@ CountValue *PPCCTRLoops::getTripCount(MachineLoop *L,
                          DefInstr->getOpcode() == PPC::ORI)) {
           int64_t start = (short) DefInstr->getOperand(2).getImm();
           MachineInstr *DefInstr2 =
-            MRI->getVRegDef(DefInstr->getOperand(0).getReg());
+            MRI->getVRegDef(DefInstr->getOperand(1).getReg());
           if (DefInstr2 && (DefInstr2->getOpcode() == PPC::LIS8 ||
                             DefInstr2->getOpcode() == PPC::LIS)) {
             DEBUG(dbgs() << "  initial constant: " << *DefInstr);
@@ -403,7 +414,12 @@ CountValue *PPCCTRLoops::getTripCount(MachineLoop *L,
             OldInsts.push_back(DefInstr);
             OldInsts.push_back(DefInstr2);
 
-            return new CountValue(count/iv_value);
+            // count/iv_value, the trip count, should be positive here. If it
+            // is negative, that indicates that the counter will wrap.
+            if (Int64Cmp)
+              return new CountValue(count/iv_value);
+            else
+              return new CountValue(uint32_t(count/iv_value));
           }
         } else if (DefInstr && (DefInstr->getOpcode() == PPC::LI8 ||
                                 DefInstr->getOpcode() == PPC::LI)) {
@@ -416,7 +432,10 @@ CountValue *PPCCTRLoops::getTripCount(MachineLoop *L,
 
           OldInsts.push_back(DefInstr);
 
-          return new CountValue(count/iv_value);
+          if (Int64Cmp)
+            return new CountValue(count/iv_value);
+          else
+            return new CountValue(uint32_t(count/iv_value));
         } else if (iv_value == 1 || iv_value == -1) {
           // We can't determine a constant starting value.
           if (ImmVal == 0) {
@@ -601,6 +620,16 @@ bool PPCCTRLoops::convertToCTRLoop(MachineLoop *L) {
     DEBUG(dbgs() << "failed to get trip count!\n");
     return false;
   }
+
+  if (TripCount->isImm()) {
+    DEBUG(dbgs() << "constant trip count: " << TripCount->getImm() << "\n");
+
+    // FIXME: We currently can't form 64-bit constants
+    // (including 32-bit unsigned constants)
+    if (!isInt<32>(TripCount->getImm()))
+      return false;
+  }
+
   // Does the loop contain any invalid instructions?
   if (containsInvalidInstruction(L)) {
     return false;
@@ -671,13 +700,14 @@ bool PPCCTRLoops::convertToCTRLoop(MachineLoop *L) {
     // Put the trip count in a register for transfer into the count register.
 
     int64_t CountImm = TripCount->getImm();
-    assert(!TripCount->isNeg() && "Constant trip count must be positive");
+    if (TripCount->isNeg())
+      CountImm = -CountImm;
 
     CountReg = MF->getRegInfo().createVirtualRegister(RC);
-    if (CountImm > 0xFFFF) {
+    if (abs64(CountImm) > 0x7FFF) {
       BuildMI(*Preheader, InsertPos, dl,
               TII->get(isPPC64 ? PPC::LIS8 : PPC::LIS),
-              CountReg).addImm(CountImm >> 16);
+              CountReg).addImm((CountImm >> 16) & 0xFFFF);
       unsigned CountReg1 = CountReg;
       CountReg = MF->getRegInfo().createVirtualRegister(RC);
       BuildMI(*Preheader, InsertPos, dl,
