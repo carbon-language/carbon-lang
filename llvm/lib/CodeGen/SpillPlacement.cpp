@@ -29,6 +29,7 @@
 
 #define DEBUG_TYPE "spillplacement"
 #include "SpillPlacement.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/CodeGen/EdgeBundles.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"

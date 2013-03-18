@@ -20,9 +20,7 @@
 #ifndef LLVM_CODEGEN_LIVEINTERVAL_ANALYSIS_H
 #define LLVM_CODEGEN_LIVEINTERVAL_ANALYSIS_H
 
-#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/IndexedMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -36,6 +34,7 @@
 namespace llvm {
 
   class AliasAnalysis;
+  class BitVector;
   class LiveRangeCalc;
   class LiveVariables;
   class MachineDominatorTree;
