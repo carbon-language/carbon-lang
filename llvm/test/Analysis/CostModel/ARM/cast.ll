@@ -359,6 +359,174 @@ define i32 @casts() {
   ; CHECK: cost of 192 {{.*}} fptosi
   %r169 = fptosi <16 x double> undef to <16 x i64>
 
+  ; CHECK: cost of 8 {{.*}} uitofp
+  %r170 = uitofp <2 x i1> undef to <2 x float>
+  ; CHECK: cost of 8 {{.*}} sitofp
+  %r171 = sitofp <2 x i1> undef to <2 x float>
+  ; CHECK: cost of 3 {{.*}} uitofp
+  %r172 = uitofp <2 x i8> undef to <2 x float>
+  ; CHECK: cost of 3 {{.*}} sitofp
+  %r173 = sitofp <2 x i8> undef to <2 x float>
+  ; CHECK: cost of 2 {{.*}} uitofp
+  %r174 = uitofp <2 x i16> undef to <2 x float>
+  ; CHECK: cost of 2 {{.*}} sitofp
+  %r175 = sitofp <2 x i16> undef to <2 x float>
+  ; CHECK: cost of 1 {{.*}} uitofp
+  %r176 = uitofp <2 x i32> undef to <2 x float>
+  ; CHECK: cost of 1 {{.*}} sitofp
+  %r177 = sitofp <2 x i32> undef to <2 x float>
+  ; CHECK: cost of 24 {{.*}} uitofp
+  %r178 = uitofp <2 x i64> undef to <2 x float>
+  ; CHECK: cost of 24 {{.*}} sitofp
+  %r179 = sitofp <2 x i64> undef to <2 x float>
+
+  ; CHECK: cost of 8 {{.*}} uitofp
+  %r180 = uitofp <2 x i1> undef to <2 x double>
+  ; CHECK: cost of 8 {{.*}} sitofp
+  %r181 = sitofp <2 x i1> undef to <2 x double>
+  ; CHECK: cost of 4 {{.*}} uitofp
+  %r182 = uitofp <2 x i8> undef to <2 x double>
+  ; CHECK: cost of 4 {{.*}} sitofp
+  %r183 = sitofp <2 x i8> undef to <2 x double>
+  ; CHECK: cost of 3 {{.*}} uitofp
+  %r184 = uitofp <2 x i16> undef to <2 x double>
+  ; CHECK: cost of 3 {{.*}} sitofp
+  %r185 = sitofp <2 x i16> undef to <2 x double>
+  ; CHECK: cost of 2 {{.*}} uitofp
+  %r186 = uitofp <2 x i32> undef to <2 x double>
+  ; CHECK: cost of 2 {{.*}} sitofp
+  %r187 = sitofp <2 x i32> undef to <2 x double>
+  ; CHECK: cost of 24 {{.*}} uitofp
+  %r188 = uitofp <2 x i64> undef to <2 x double>
+  ; CHECK: cost of 24 {{.*}} sitofp
+  %r189 = sitofp <2 x i64> undef to <2 x double>
+
+  ; CHECK: cost of 3 {{.*}} uitofp
+  %r190 = uitofp <4 x i1> undef to <4 x float>
+  ; CHECK: cost of 3 {{.*}} sitofp
+  %r191 = sitofp <4 x i1> undef to <4 x float>
+  ; CHECK: cost of 3 {{.*}} uitofp
+  %r192 = uitofp <4 x i8> undef to <4 x float>
+  ; CHECK: cost of 3 {{.*}} sitofp
+  %r193 = sitofp <4 x i8> undef to <4 x float>
+  ; CHECK: cost of 2 {{.*}} uitofp
+  %r194 = uitofp <4 x i16> undef to <4 x float>
+  ; CHECK: cost of 2 {{.*}} sitofp
+  %r195 = sitofp <4 x i16> undef to <4 x float>
+  ; CHECK: cost of 1 {{.*}} uitofp
+  %r196 = uitofp <4 x i32> undef to <4 x float>
+  ; CHECK: cost of 1 {{.*}} sitofp
+  %r197 = sitofp <4 x i32> undef to <4 x float>
+  ; CHECK: cost of 48 {{.*}} uitofp
+  %r198 = uitofp <4 x i64> undef to <4 x float>
+  ; CHECK: cost of 48 {{.*}} sitofp
+  %r199 = sitofp <4 x i64> undef to <4 x float>
+
+  ; CHECK: cost of 16 {{.*}} uitofp
+  %r200 = uitofp <4 x i1> undef to <4 x double>
+  ; CHECK: cost of 16 {{.*}} sitofp
+  %r201 = sitofp <4 x i1> undef to <4 x double>
+  ; CHECK: cost of 16 {{.*}} uitofp
+  %r202 = uitofp <4 x i8> undef to <4 x double>
+  ; CHECK: cost of 16 {{.*}} sitofp
+  %r203 = sitofp <4 x i8> undef to <4 x double>
+  ; CHECK: cost of 16 {{.*}} uitofp
+  %r204 = uitofp <4 x i16> undef to <4 x double>
+  ; CHECK: cost of 16 {{.*}} sitofp
+  %r205 = sitofp <4 x i16> undef to <4 x double>
+  ; CHECK: cost of 16 {{.*}} uitofp
+  %r206 = uitofp <4 x i32> undef to <4 x double>
+  ; CHECK: cost of 16 {{.*}} sitofp
+  %r207 = sitofp <4 x i32> undef to <4 x double>
+  ; CHECK: cost of 48 {{.*}} uitofp
+  %r208 = uitofp <4 x i64> undef to <4 x double>
+  ; CHECK: cost of 48 {{.*}} sitofp
+  %r209 = sitofp <4 x i64> undef to <4 x double>
+
+  ; CHECK: cost of 32 {{.*}} uitofp
+  %r210 = uitofp <8 x i1> undef to <8 x float>
+  ; CHECK: cost of 32 {{.*}} sitofp
+  %r211 = sitofp <8 x i1> undef to <8 x float>
+  ; CHECK: cost of 32 {{.*}} uitofp
+  %r212 = uitofp <8 x i8> undef to <8 x float>
+  ; CHECK: cost of 32 {{.*}} sitofp
+  %r213 = sitofp <8 x i8> undef to <8 x float>
+  ; CHECK: cost of 4 {{.*}} uitofp
+  %r214 = uitofp <8 x i16> undef to <8 x float>
+  ; CHECK: cost of 4 {{.*}} sitofp
+  %r215 = sitofp <8 x i16> undef to <8 x float>
+  ; CHECK: cost of 2 {{.*}} uitofp
+  %r216 = uitofp <8 x i32> undef to <8 x float>
+  ; CHECK: cost of 2 {{.*}} sitofp
+  %r217 = sitofp <8 x i32> undef to <8 x float>
+  ; CHECK: cost of 96 {{.*}} uitofp
+  %r218 = uitofp <8 x i64> undef to <8 x float>
+  ; CHECK: cost of 96 {{.*}} sitofp
+  %r219 = sitofp <8 x i64> undef to <8 x float>
+
+  ; CHECK: cost of 32 {{.*}} uitofp
+  %r220 = uitofp <8 x i1> undef to <8 x double>
+  ; CHECK: cost of 32 {{.*}} sitofp
+  %r221 = sitofp <8 x i1> undef to <8 x double>
+  ; CHECK: cost of 32 {{.*}} uitofp
+  %r222 = uitofp <8 x i8> undef to <8 x double>
+  ; CHECK: cost of 32 {{.*}} sitofp
+  %r223 = sitofp <8 x i8> undef to <8 x double>
+  ; CHECK: cost of 32 {{.*}} uitofp
+  %r224 = uitofp <8 x i16> undef to <8 x double>
+  ; CHECK: cost of 32 {{.*}} sitofp
+  %r225 = sitofp <8 x i16> undef to <8 x double>
+  ; CHECK: cost of 32 {{.*}} uitofp
+  %r226 = uitofp <8 x i16> undef to <8 x double>
+  ; CHECK: cost of 32 {{.*}} sitofp
+  %r227 = sitofp <8 x i16> undef to <8 x double>
+  ; CHECK: cost of 96 {{.*}} uitofp
+  %r228 = uitofp <8 x i64> undef to <8 x double>
+  ; CHECK: cost of 96 {{.*}} sitofp
+  %r229 = sitofp <8 x i64> undef to <8 x double>
+
+  ; CHECK: cost of 64 {{.*}} uitofp
+  %r230 = uitofp <16 x i1> undef to <16 x float>
+  ; CHECK: cost of 64 {{.*}} sitofp
+  %r231 = sitofp <16 x i1> undef to <16 x float>
+  ; CHECK: cost of 64 {{.*}} uitofp
+  %r232 = uitofp <16 x i8> undef to <16 x float>
+  ; CHECK: cost of 64 {{.*}} sitofp
+  %r233 = sitofp <16 x i8> undef to <16 x float>
+  ; CHECK: cost of 8 {{.*}} uitofp
+  %r234 = uitofp <16 x i16> undef to <16 x float>
+  ; CHECK: cost of 8 {{.*}} sitofp
+  %r235 = sitofp <16 x i16> undef to <16 x float>
+  ; CHECK: cost of 4 {{.*}} uitofp
+  %r236 = uitofp <16 x i32> undef to <16 x float>
+  ; CHECK: cost of 4 {{.*}} sitofp
+  %r237 = sitofp <16 x i32> undef to <16 x float>
+  ; CHECK: cost of 192 {{.*}} uitofp
+  %r238 = uitofp <16 x i64> undef to <16 x float>
+  ; CHECK: cost of 192 {{.*}} sitofp
+  %r239 = sitofp <16 x i64> undef to <16 x float>
+
+  ; CHECK: cost of 64 {{.*}} uitofp
+  %r240 = uitofp <16 x i1> undef to <16 x double>
+  ; CHECK: cost of 64 {{.*}} sitofp
+  %r241 = sitofp <16 x i1> undef to <16 x double>
+  ; CHECK: cost of 64 {{.*}} uitofp
+  %r242 = uitofp <16 x i8> undef to <16 x double>
+  ; CHECK: cost of 64 {{.*}} sitofp
+  %r243 = sitofp <16 x i8> undef to <16 x double>
+  ; C4ECK: cost of 64 {{.*}} uitofp
+  %r244 = uitofp <16 x i16> undef to <16 x double>
+  ; CHECK: cost of 64 {{.*}} sitofp
+  %r245 = sitofp <16 x i16> undef to <16 x double>
+  ; CHECK: cost of 64 {{.*}} uitofp
+  %r246 = uitofp <16 x i16> undef to <16 x double>
+  ; CHECK: cost of 64 {{.*}} sitofp
+  %r247 = sitofp <16 x i16> undef to <16 x double>
+  ; CHECK: cost of 192 {{.*}} uitofp
+  %r248 = uitofp <16 x i64> undef to <16 x double>
+  ; CHECK: cost of 192 {{.*}} sitofp
+  %r249 = sitofp <16 x i64> undef to <16 x double>
+
   ;CHECK: cost of 0 {{.*}} ret
   ret i32 undef
 }
