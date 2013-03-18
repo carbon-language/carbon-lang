@@ -742,8 +742,11 @@ static const char *getCOFFSectionPrefixForUniqueGlobal(SectionKind Kind) {
     return ".text$";
   if (Kind.isBSS ())
     return ".bss$";
-  if (Kind.isThreadLocal())
-    return ".tls$";
+  if (Kind.isThreadLocal()) {
+    // 'LLVM' is just an arbitary string to ensure that the section name gets
+    // sorted in between '.tls$AAA' and '.tls$ZZZ' by the linker.
+    return ".tls$LLVM";
+  }
   if (Kind.isWriteable())
     return ".data$";
   return ".rdata$";
