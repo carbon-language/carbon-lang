@@ -779,14 +779,16 @@ void CodeGenSchedModels::collectProcItins() {
     for (unsigned i = 0, N = ItinRecords.size(); i < N; i++) {
       Record *ItinData = ItinRecords[i];
       Record *ItinDef = ItinData->getValueAsDef("TheClass");
-      SchedClassIter SCI = schedClassBegin(), SCE = schedClassEnd();
-      for( ; SCI != SCE; ++SCI) {
+      bool FoundClass = false;
+      for (SchedClassIter SCI = schedClassBegin(), SCE = schedClassEnd();
+           SCI != SCE; ++SCI) {
+        // Multiple SchedClasses may share an itinerary. Update all of them.
         if (SCI->ItinClassDef == ItinDef) {
           ProcModel.ItinDefList[SCI->Index] = ItinData;
-          break;
+          FoundClass = true;
         }
       }
-      if (SCI == SCE) {
+      if (!FoundClass) {
         DEBUG(dbgs() << ProcModel.ItinsDef->getName()
               << " missing class for itinerary " << ItinDef->getName() << '\n');
       }
