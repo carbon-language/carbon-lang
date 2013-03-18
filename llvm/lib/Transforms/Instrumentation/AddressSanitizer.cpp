@@ -531,9 +531,12 @@ static size_t TypeSizeToSizeIndex(uint32_t TypeSize) {
 // Create a constant for Str so that we can pass it to the run-time lib.
 static GlobalVariable *createPrivateGlobalForString(Module &M, StringRef Str) {
   Constant *StrConst = ConstantDataArray::getString(M.getContext(), Str);
-  return new GlobalVariable(M, StrConst->getType(), true,
+  GlobalVariable *GV = new GlobalVariable(M, StrConst->getType(), true,
                             GlobalValue::PrivateLinkage, StrConst,
                             kAsanGenPrefix);
+  GV->setUnnamedAddr(true);  // Ok to merge these.
+  GV->setAlignment(1);  // Strings may not be merged w/o setting align 1.
+  return GV;
 }
 
 static bool GlobalWasGeneratedByAsan(GlobalVariable *G) {
