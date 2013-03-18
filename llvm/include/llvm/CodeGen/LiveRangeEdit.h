@@ -83,7 +83,7 @@ private:
   /// allUsesAvailableAt - Return true if all registers used by OrigMI at
   /// OrigIdx are also available with the same value at UseIdx.
   bool allUsesAvailableAt(const MachineInstr *OrigMI, SlotIndex OrigIdx,
-                          SlotIndex UseIdx);
+                          SlotIndex UseIdx) const;
 
   /// foldAsLoad - If LI has a single use and a single def that can be folded as
   /// a load, eliminate the register by folding the def into the use.

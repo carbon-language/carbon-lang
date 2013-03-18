@@ -77,7 +77,7 @@ bool LiveRangeEdit::anyRematerializable(AliasAnalysis *aa) {
 /// OrigIdx are also available with the same value at UseIdx.
 bool LiveRangeEdit::allUsesAvailableAt(const MachineInstr *OrigMI,
                                        SlotIndex OrigIdx,
-                                       SlotIndex UseIdx) {
+                                       SlotIndex UseIdx) const {
   OrigIdx = OrigIdx.getRegSlot(true);
   UseIdx = UseIdx.getRegSlot(true);
   for (unsigned i = 0, e = OrigMI->getNumOperands(); i != e; ++i) {

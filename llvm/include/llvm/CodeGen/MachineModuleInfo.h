@@ -295,7 +295,7 @@ public:
   /// isUsedFunction - Return true if the functions in the llvm.used list.  This
   /// does not return true for things in llvm.compiler.used unless they are also
   /// in llvm.used.
-  bool isUsedFunction(const Function *F) {
+  bool isUsedFunction(const Function *F) const {
     return UsedFunctions.count(F);
   }
 
