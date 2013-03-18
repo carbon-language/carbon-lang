@@ -101,6 +101,7 @@ namespace {
     Constant *getIncrementIndirectCounterFunc();
     Constant *getEmitFunctionFunc();
     Constant *getEmitArcsFunc();
+    Constant *getDeleteFlushFunctionListFunc();
     Constant *getEndFileFunc();
 
     // Create or retrieve an i32 state value that is used to represent the
@@ -116,9 +117,10 @@ namespace {
 
     // Add the function to write out all our counters to the global destructor
     // list.
-    void insertCounterWriteout(ArrayRef<std::pair<GlobalVariable*, MDNode*> >);
+    Function *insertCounterWriteout(ArrayRef<std::pair<GlobalVariable*,
+                                                       MDNode*> >);
+    Function *insertFlush(ArrayRef<std::pair<GlobalVariable*, MDNode*> >);
     void insertIndirectCounterIncrement();
-    void insertFlush(ArrayRef<std::pair<GlobalVariable*, MDNode*> >);
 
     std::string mangleName(DICompileUnit CU, const char *NewStem);
 
@@ -538,8 +540,42 @@ bool GCOVProfiler::emitProfileArcs() {
       }
     }
 
-    insertCounterWriteout(CountersBySP);
-    insertFlush(CountersBySP);
+    Function *WriteoutF = insertCounterWriteout(CountersBySP);
+    Function *FlushF = insertFlush(CountersBySP);
+
+    // Create a small bit of code that registers the "__llvm_gcov_writeout" to
+    //  be executed at exit and the "__llvm_gcov_flush" function to be executed
+    //  when "__gcov_flush" is called.
+    FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
+    Function *F = Function::Create(FTy, GlobalValue::InternalLinkage,
+                                   "__llvm_gcov_init", M);
+    F->setUnnamedAddr(true);
+    F->setLinkage(GlobalValue::InternalLinkage);
+    F->addFnAttr(Attribute::NoInline);
+    if (Options.NoRedZone)
+      F->addFnAttr(Attribute::NoRedZone);
+
+    BasicBlock *BB = BasicBlock::Create(*Ctx, "entry", F);
+    IRBuilder<> Builder(BB);
+
+    FTy = FunctionType::get(Builder.getInt32Ty(),
+                            PointerType::get(FTy, 0), false);
+    Constant *AtExitFn = M->getOrInsertFunction("atexit", FTy);
+    Builder.CreateCall(AtExitFn, WriteoutF);
+
+    // Register the local flush function.
+    FTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
+    FTy = FunctionType::get(Builder.getVoidTy(),
+                            PointerType::get(FTy, 0), false);
+    Constant *RegFlush =
+      M->getOrInsertFunction("llvm_register_flush_function", FTy);
+    Builder.CreateCall(RegFlush, FlushF);
+
+    // Make sure that all the flush function list is deleted.
+    Builder.CreateCall(AtExitFn, getDeleteFlushFunctionListFunc());
+    Builder.CreateRetVoid();
+
+    appendToGlobalCtors(*M, F, 0);
   }
 
   if (InsertIndCounterIncrCode)
@@ -635,6 +671,11 @@ Constant *GCOVProfiler::getEmitArcsFunc() {
   return M->getOrInsertFunction("llvm_gcda_emit_arcs", FTy);
 }
 
+Constant *GCOVProfiler::getDeleteFlushFunctionListFunc() {
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
+  return M->getOrInsertFunction("llvm_delete_flush_function_list", FTy);
+}
+
 Constant *GCOVProfiler::getEndFileFunc() {
   FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
   return M->getOrInsertFunction("llvm_gcda_end_file", FTy);
@@ -653,7 +694,7 @@ GlobalVariable *GCOVProfiler::getEdgeStateValue() {
   return GV;
 }
 
-void GCOVProfiler::insertCounterWriteout(
+Function *GCOVProfiler::insertCounterWriteout(
     ArrayRef<std::pair<GlobalVariable *, MDNode *> > CountersBySP) {
   FunctionType *WriteoutFTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
   Function *WriteoutF = M->getFunction("__llvm_gcov_writeout");
@@ -700,29 +741,9 @@ void GCOVProfiler::insertCounterWriteout(
       Builder.CreateCall(EndFile);
     }
   }
+
   Builder.CreateRetVoid();
-
-  // Create a small bit of code that registers the "__llvm_gcov_writeout"
-  // function to be executed at exit.
-  FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
-  Function *F = Function::Create(FTy, GlobalValue::InternalLinkage,
-                                 "__llvm_gcov_init", M);
-  F->setUnnamedAddr(true);
-  F->setLinkage(GlobalValue::InternalLinkage);
-  F->addFnAttr(Attribute::NoInline);
-  if (Options.NoRedZone)
-    F->addFnAttr(Attribute::NoRedZone);
-
-  BB = BasicBlock::Create(*Ctx, "entry", F);
-  Builder.SetInsertPoint(BB);
-
-  FTy = FunctionType::get(Builder.getInt32Ty(),
-                          PointerType::get(FTy, 0), false);
-  Constant *AtExitFn = M->getOrInsertFunction("atexit", FTy);
-  Builder.CreateCall(AtExitFn, WriteoutF);
-  Builder.CreateRetVoid();
-
-  appendToGlobalCtors(*M, F, 0);
+  return WriteoutF;
 }
 
 void GCOVProfiler::insertIndirectCounterIncrement() {
@@ -776,13 +797,13 @@ void GCOVProfiler::insertIndirectCounterIncrement() {
   Builder.CreateRetVoid();
 }
 
-void GCOVProfiler::
+Function *GCOVProfiler::
 insertFlush(ArrayRef<std::pair<GlobalVariable*, MDNode*> > CountersBySP) {
   FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
-  Function *FlushF = M->getFunction("__gcov_flush");
+  Function *FlushF = M->getFunction("__llvm_gcov_flush");
   if (!FlushF)
     FlushF = Function::Create(FTy, GlobalValue::InternalLinkage,
-                              "__gcov_flush", M);
+                              "__llvm_gcov_flush", M);
   else
     FlushF->setLinkage(GlobalValue::InternalLinkage);
   FlushF->setUnnamedAddr(true);
@@ -812,8 +833,10 @@ insertFlush(ArrayRef<std::pair<GlobalVariable*, MDNode*> > CountersBySP) {
   if (RetTy == Type::getVoidTy(*Ctx))
     Builder.CreateRetVoid();
   else if (RetTy->isIntegerTy())
-    // Used if __gcov_flush was implicitly declared.
+    // Used if __llvm_gcov_flush was implicitly declared.
     Builder.CreateRet(ConstantInt::get(RetTy, 0));
   else
-    report_fatal_error("invalid return type for __gcov_flush");
+    report_fatal_error("invalid return type for __llvm_gcov_flush");
+
+  return FlushF;
 }
