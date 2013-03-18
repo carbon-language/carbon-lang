@@ -127,8 +127,13 @@ void NilArgChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
   const ObjCInterfaceDecl *ID = msg.getReceiverInterface();
   if (!ID)
     return;
-  
-  if (findKnownClass(ID) == FC_NSString) {
+
+  FoundationClass Class = findKnownClass(ID);
+
+  static const unsigned InvalidArgIndex = UINT_MAX;
+  unsigned Arg = InvalidArgIndex;
+
+  if (Class == FC_NSString) {
     Selector S = msg.getSelector();
     
     if (S.isUnarySelector())
@@ -152,10 +157,34 @@ void NilArgChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
         Name == "compare:options:range:locale:" ||
         Name == "componentsSeparatedByCharactersInSet:" ||
         Name == "initWithFormat:") {
-      if (isNil(msg.getArgSVal(0)))
-        WarnNilArg(C, msg, 0);
+      Arg = 0;
+    }
+  } else if (Class == FC_NSArray) {
+    Selector S = msg.getSelector();
+
+    if (S.isUnarySelector())
+      return;
+
+    if (S.getNameForSlot(0).equals("addObject")) {
+      Arg = 0;
+    } else if (S.getNameForSlot(0).equals("insertObject") &&
+               S.getNameForSlot(1).equals("atIndex")) {
+      Arg = 0;
+    } else if (S.getNameForSlot(0).equals("replaceObjectAtIndex") &&
+               S.getNameForSlot(1).equals("withObject")) {
+      Arg = 1;
+    } else if (S.getNameForSlot(0).equals("setObject") &&
+               S.getNameForSlot(1).equals("atIndexedSubscript")) {
+      Arg = 0;
+    } else if (S.getNameForSlot(0).equals("arrayByAddingObject")) {
+      Arg = 0;
     }
   }
+
+  // If argument is '0', report a warning.
+  if ((Arg != InvalidArgIndex) && isNil(msg.getArgSVal(Arg)))
+    WarnNilArg(C, msg, Arg);
+
 }
 
 //===----------------------------------------------------------------------===//
