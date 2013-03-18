@@ -11,7 +11,7 @@
 #ifndef _LIBCPP_CONFIG
 #define _LIBCPP_CONFIG
 
-#if !_MSC_VER // explicit macro necessary because it is only defined below in this file
+#ifndef _MSC_VER // explicit macro necessary because it is only defined below in this file
 #pragma GCC system_header
 #endif
 
@@ -116,7 +116,7 @@
 #endif
 
 #ifndef _LIBCPP_INLINE_VISIBILITY
-# if _MSC_VER
+# ifdef _MSC_VER
 #  define _LIBCPP_INLINE_VISIBILITY __forceinline
 # else // MinGW GCC and Clang
 #  define _LIBCPP_INLINE_VISIBILITY __attribute__ ((__always_inline__))
@@ -128,7 +128,7 @@
 #endif
 
 #ifndef _LIBCPP_ALWAYS_INLINE
-# if _MSC_VER
+# ifdef _MSC_VER
 #  define _LIBCPP_ALWAYS_INLINE __forceinline
 # endif
 #endif
@@ -451,18 +451,18 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_EXTERN_TEMPLATE(...) extern template __VA_ARGS__;
 #endif
 
-#if __APPLE__ || __FreeBSD__ || _WIN32 || __sun__
+#if defined(__APPLE__) || __FreeBSD__ || _WIN32 || __sun__
 #define _LIBCPP_LOCALE__L_EXTENSIONS 1
 #endif
 #if __FreeBSD__
 #define _DECLARE_C99_LDBL_MATH 1
 #endif
 
-#if __APPLE__ || __FreeBSD__
+#if defined(__APPLE__) || __FreeBSD__
 #define _LIBCPP_HAS_DEFAULTRUNELOCALE
 #endif
 
-#if __APPLE__ || __FreeBSD__ || __sun__
+#if defined(__APPLE__) || __FreeBSD__ || __sun__
 #define _LIBCPP_WCTYPE_IS_MASK
 #endif
 
