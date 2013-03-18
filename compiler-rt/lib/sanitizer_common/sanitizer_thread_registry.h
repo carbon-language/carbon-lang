@@ -34,6 +34,9 @@ enum ThreadStatus {
 class ThreadContextBase {
  public:
   explicit ThreadContextBase(u32 tid);
+#ifndef SANITIZER_GO  // Go does not have libstdc++
+  virtual
+#endif
   ~ThreadContextBase();
 
   const u32 tid;  // Thread ID. Main thread should have tid = 0.

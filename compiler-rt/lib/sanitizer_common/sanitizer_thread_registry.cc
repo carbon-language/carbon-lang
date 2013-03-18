@@ -22,7 +22,11 @@ ThreadContextBase::ThreadContextBase(u32 tid)
   name[0] = '\0';
 }
 
-ThreadContextBase::~ThreadContextBase() {}
+#ifndef SANITIZER_GO
+ThreadContextBase::~ThreadContextBase() {
+  CHECK(0);
+}
+#endif
 
 void ThreadContextBase::SetName(const char *new_name) {
   name[0] = '\0';

@@ -31,6 +31,11 @@ ThreadContext::ThreadContext(int tid)
   , dead_info() {
 }
 
+#ifndef TSAN_GO
+ThreadContext::~ThreadContext() {
+}
+#endif
+
 void ThreadContext::OnDead() {
   sync.Reset();
 }

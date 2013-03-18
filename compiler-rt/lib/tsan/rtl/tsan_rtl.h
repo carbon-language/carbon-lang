@@ -419,6 +419,7 @@ struct ThreadDeadInfo {
 class ThreadContext : public ThreadContextBase {
  public:
   explicit ThreadContext(int tid);
+  ~ThreadContext();
   ThreadState *thr;
 #ifdef TSAN_GO
   StackTrace creation_stack;
