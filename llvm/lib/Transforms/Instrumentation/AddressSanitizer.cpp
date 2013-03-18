@@ -71,7 +71,7 @@ static const char *kAsanRegisterGlobalsName = "__asan_register_globals";
 static const char *kAsanUnregisterGlobalsName = "__asan_unregister_globals";
 static const char *kAsanPoisonGlobalsName = "__asan_before_dynamic_init";
 static const char *kAsanUnpoisonGlobalsName = "__asan_after_dynamic_init";
-static const char *kAsanInitName = "__asan_init_v1";
+static const char *kAsanInitName = "__asan_init_v2";
 static const char *kAsanHandleNoReturnName = "__asan_handle_no_return";
 static const char *kAsanMappingOffsetName = "__asan_mapping_offset";
 static const char *kAsanMappingScaleName = "__asan_mapping_scale";
@@ -885,11 +885,12 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   //   size_t size;
   //   size_t size_with_redzone;
   //   const char *name;
+  //   const char *module_name;
   //   size_t has_dynamic_init;
   // We initialize an array of such structures and pass it to a run-time call.
   StructType *GlobalStructTy = StructType::get(IntptrTy, IntptrTy,
                                                IntptrTy, IntptrTy,
-                                               IntptrTy, NULL);
+                                               IntptrTy, IntptrTy, NULL);
   SmallVector<Constant *, 16> Initializers(n), DynamicInit;
 
 
@@ -900,6 +901,9 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   // The addresses of the first and last dynamically initialized globals in
   // this TU.  Used in initialization order checking.
   Value *FirstDynamic = 0, *LastDynamic = 0;
+
+  GlobalVariable *ModuleName = createPrivateGlobalForString(
+      M, M.getModuleIdentifier());
 
   for (size_t i = 0; i < n; i++) {
     static const uint64_t kMaxGlobalRedzone = 1 << 18;
@@ -930,11 +934,7 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
         NewTy, G->getInitializer(),
         Constant::getNullValue(RightRedZoneTy), NULL);
 
-    SmallString<2048> DescriptionOfGlobal = G->getName();
-    DescriptionOfGlobal += " (";
-    DescriptionOfGlobal += M.getModuleIdentifier();
-    DescriptionOfGlobal += ")";
-    GlobalVariable *Name = createPrivateGlobalForString(M, DescriptionOfGlobal);
+    GlobalVariable *Name = createPrivateGlobalForString(M, G->getName());
 
     // Create a new global variable with enough space for a redzone.
     GlobalVariable *NewGlobal = new GlobalVariable(
@@ -958,6 +958,7 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
         ConstantInt::get(IntptrTy, SizeInBytes),
         ConstantInt::get(IntptrTy, SizeInBytes + RightRedzoneSize),
         ConstantExpr::getPointerCast(Name, IntptrTy),
+        ConstantExpr::getPointerCast(ModuleName, IntptrTy),
         ConstantInt::get(IntptrTy, GlobalHasDynamicInitializer),
         NULL);
 
