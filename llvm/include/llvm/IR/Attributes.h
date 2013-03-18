@@ -226,11 +226,6 @@ private:
   explicit AttributeSet(AttributeSetImpl *LI) : pImpl(LI) {}
 public:
   AttributeSet() : pImpl(0) {}
-  AttributeSet(const AttributeSet &P) : pImpl(P.pImpl) {}
-  const AttributeSet &operator=(const AttributeSet &RHS) {
-    pImpl = RHS.pImpl;
-    return *this;
-  }
 
   //===--------------------------------------------------------------------===//
   // AttributeSet Construction and Mutation
