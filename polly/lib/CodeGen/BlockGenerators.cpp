@@ -17,6 +17,7 @@
 #include "polly/CodeGen/CodeGeneration.h"
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/Support/GICHelper.h"
+#include "polly/Support/SCEVValidator.h"
 
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -147,15 +148,10 @@ BlockGenerator::BlockGenerator(IRBuilder<> &B, ScopStmt &Stmt, Pass *P)
 
 bool BlockGenerator::isSCEVIgnore(const Instruction *Inst) {
   if (SCEVCodegen && SE.isSCEVable(Inst->getType()))
-    if (const SCEV *Scev = SE.getSCEV(const_cast<Instruction*>(Inst)))
-      if (!isa<SCEVCouldNotCompute>(Scev)) {
-        if (const SCEVUnknown *Unknown = dyn_cast<SCEVUnknown>(Scev)) {
-          if (Unknown->getValue() != Inst)
-            return true;
-        } else {
-          return true;
-        }
-      }
+    if (const SCEV *Scev = SE.getSCEV(const_cast<Instruction *>(Inst)))
+      if (!isa<SCEVCouldNotCompute>(Scev))
+        return !hasScalarDepsInsideRegion(Scev,
+                                          &Statement.getParent()->getRegion());
 
   return false;
 }

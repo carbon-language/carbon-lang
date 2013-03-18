@@ -1,5 +1,6 @@
 
 #include "polly/Support/SCEVValidator.h"
+#include "polly/ScopInfo.h"
 
 #define DEBUG_TYPE "polly-scev-validator"
 #include "llvm/Support/Debug.h"
@@ -336,10 +337,113 @@ public:
   }
 };
 
+/// @brief Check whether a SCEV refers to an SSA name defined inside a region.
+///
+struct SCEVInRegionDependences :
+    public SCEVVisitor<SCEVInRegionDependences, bool> {
+public:
+
+  /// Returns true when the SCEV has SSA names defined in region R.
+  static bool hasDependences(const SCEV *S, const Region *R) {
+    SCEVInRegionDependences Ignore(R);
+    return Ignore.visit(S);
+  }
+
+  SCEVInRegionDependences(const Region *R) : R(R) {}
+
+  bool visit(const SCEV *Expr) {
+    return SCEVVisitor<SCEVInRegionDependences, bool>::visit(Expr);
+  }
+
+  bool visitConstant(const SCEVConstant *Constant) { return false; }
+
+  bool visitTruncateExpr(const SCEVTruncateExpr *Expr) {
+    return visit(Expr->getOperand());
+  }
+
+  bool visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
+    return visit(Expr->getOperand());
+  }
+
+  bool visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
+    return visit(Expr->getOperand());
+  }
+
+  bool visitAddExpr(const SCEVAddExpr *Expr) {
+    for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
+      if (visit(Expr->getOperand(i)))
+        return true;
+
+    return false;
+  }
+
+  bool visitMulExpr(const SCEVMulExpr *Expr) {
+    for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
+      if (visit(Expr->getOperand(i)))
+        return true;
+
+    return false;
+  }
+
+  bool visitUDivExpr(const SCEVUDivExpr *Expr) {
+    if (visit(Expr->getLHS()))
+      return true;
+
+    if (visit(Expr->getRHS()))
+      return true;
+
+    return false;
+  }
+
+  bool visitAddRecExpr(const SCEVAddRecExpr *Expr) {
+    if (visit(Expr->getStart()))
+      return true;
+
+    for (size_t i = 0; i < Expr->getNumOperands(); ++i)
+      if (visit(Expr->getOperand(i)))
+        return true;
+
+    return false;
+  }
+
+  bool visitSMaxExpr(const SCEVSMaxExpr *Expr) {
+    for (size_t i = 0; i < Expr->getNumOperands(); ++i)
+      if (visit(Expr->getOperand(i)))
+        return true;
+
+    return false;
+  }
+
+  bool visitUMaxExpr(const SCEVUMaxExpr *Expr) {
+    for (size_t i = 0; i < Expr->getNumOperands(); ++i)
+      if (visit(Expr->getOperand(i)))
+        return true;
+
+    return false;
+  }
+
+  bool visitUnknown(const SCEVUnknown *Expr) {
+    Instruction *Inst = dyn_cast<Instruction>(Expr->getValue());
+
+    // Return true when Inst is defined inside the region R.
+    if (Inst && R->contains(Inst))
+      return true;
+
+    return false;
+  }
+
+private:
+  const Region *R;
+};
+
 namespace polly {
-bool isAffineExpr(const Region *R, const SCEV *Expr, ScalarEvolution &SE,
-                  const Value *BaseAddress) {
-  if (isa<SCEVCouldNotCompute>(Expr))
+  bool hasScalarDepsInsideRegion(const SCEV *Expr, const Region *R) {
+    return SCEVInRegionDependences::hasDependences(Expr, R);
+  }
+
+  bool isAffineExpr(const Region *R, const SCEV *Expr, ScalarEvolution &SE,
+                    const Value *BaseAddress) {
+    if (isa<SCEVCouldNotCompute>(Expr))
     return false;
 
   SCEVValidator Validator(R, SE, BaseAddress);

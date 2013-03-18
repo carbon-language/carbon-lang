@@ -22,6 +22,12 @@ namespace llvm {
 }
 
 namespace polly {
+  /// Returns true when the SCEV contains references to instructions within the
+  /// region.
+  ///
+  /// @param S The SCEV to analyze.
+  /// @param R The region in which we look for dependences.
+  bool hasScalarDepsInsideRegion(const llvm::SCEV *S, const llvm::Region *R);
   bool isAffineExpr(const llvm::Region *R, const llvm::SCEV *Expression,
                     llvm::ScalarEvolution &SE,
                     const llvm::Value *BaseAddress = 0);
