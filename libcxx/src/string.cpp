@@ -11,7 +11,7 @@
 #include "cstdlib"
 #include "cwchar"
 #include "cerrno"
-#if _WIN32
+#ifdef _WIN32
 #include "support/win32/support.h"
 #endif // _WIN32
 

@@ -96,7 +96,7 @@
 # endif
 #endif  // !defined(_LIBCPP_LITTLE_ENDIAN) || !defined(_LIBCPP_BIG_ENDIAN)
 
-#if _WIN32
+#ifdef _WIN32
 
 // only really useful for a DLL
 #ifdef _LIBCPP_DLL // this should be a compiler builtin define ideally...

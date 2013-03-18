@@ -19,7 +19,7 @@
 #include <cstdint>
 #include <cctype>
 #include <locale.h>
-#if _WIN32
+#ifdef _WIN32
 # include <support/win32/locale_win32.h>
 #elif (__GLIBC__ || __APPLE__ || __FreeBSD__ || __sun__)
 # include <xlocale.h>
@@ -327,7 +327,7 @@ public:
     static const mask punct  = _ISpunct;
     static const mask xdigit = _ISxdigit;
     static const mask blank  = _ISblank;
-#elif _WIN32
+#elif defined(_WIN32)
     typedef unsigned short mask;
     static const mask space  = _SPACE;
     static const mask print  = _BLANK|_PUNCT|_ALPHA|_DIGIT;

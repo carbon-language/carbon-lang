@@ -16,7 +16,7 @@
 #define PLATFORM_SUPPORT_H
 
 // locale names
-#if _WIN32
+#ifdef _WIN32
 // WARNING: Windows does not support UTF-8 codepages.
 // Locales are "converted" using http://docs.moodle.org/dev/Table_of_locales
 #define LOCALE_en_US_UTF_8     "English_United States.1252"

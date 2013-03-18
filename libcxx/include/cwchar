@@ -106,7 +106,7 @@ size_t wcsrtombs(char* restrict dst, const wchar_t** restrict src, size_t len,
 #include <__config>
 #include <cwctype>
 #include <wchar.h>
-#if _WIN32
+#ifdef _WIN32
 #include <support/win32/support.h> // pull in *swprintf defines
 #endif // _WIN32
 

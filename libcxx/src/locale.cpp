@@ -25,7 +25,7 @@
 #include "cstring"
 #include "cwctype"
 #include "__sso_allocator"
-#if _WIN32
+#ifdef _WIN32
 #include <support/win32/locale_win32.h>
 #else // _WIN32
 #include <langinfo.h>
@@ -987,7 +987,7 @@ ctype<char>::classic_table()  _NOEXCEPT
     return __cloc()->__ctype_b;
 #elif __sun__
     return __ctype_mask;
-#elif _WIN32
+#elif defined(_WIN32)
     return _ctype+1; // internal ctype mask table defined in msvcrt.dll
 // This is assumed to be safe, which is a nonsense assumption because we're
 // going to end up dereferencing it later...
@@ -5779,7 +5779,7 @@ moneypunct_byname<char, true>::init(const char* nm)
         __frac_digits_ = lc->int_frac_digits;
     else
         __frac_digits_ = base::do_frac_digits();
-#if _WIN32
+#ifdef _WIN32
     if (lc->p_sign_posn == 0)
 #else // _WIN32
     if (lc->int_p_sign_posn == 0)
@@ -5787,7 +5787,7 @@ moneypunct_byname<char, true>::init(const char* nm)
         __positive_sign_ = "()";
     else
         __positive_sign_ = lc->positive_sign;
-#if _WIN32
+#ifdef _WIN32
     if(lc->n_sign_posn == 0)
 #else // _WIN32
     if (lc->int_n_sign_posn == 0)
@@ -5799,7 +5799,7 @@ moneypunct_byname<char, true>::init(const char* nm)
     // the same places in curr_symbol since there's no way to
     // represent anything else.
     string_type __dummy_curr_symbol = __curr_symbol_;
-#if _WIN32
+#ifdef _WIN32
     __init_pat(__pos_format_, __dummy_curr_symbol, true,
                lc->p_cs_precedes, lc->p_sep_by_space, lc->p_sign_posn, ' ');
     __init_pat(__neg_format_, __curr_symbol_, true,
@@ -5938,7 +5938,7 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
         __frac_digits_ = lc->int_frac_digits;
     else
         __frac_digits_ = base::do_frac_digits();
-#if _WIN32
+#ifdef _WIN32
     if (lc->p_sign_posn == 0)
 #else // _WIN32
     if (lc->int_p_sign_posn == 0)
@@ -5958,7 +5958,7 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
         wbe = wbuf + j;
         __positive_sign_.assign(wbuf, wbe);
     }
-#if _WIN32
+#ifdef _WIN32
     if (lc->n_sign_posn == 0)
 #else // _WIN32
     if (lc->int_n_sign_posn == 0)
@@ -5982,7 +5982,7 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
     // the same places in curr_symbol since there's no way to
     // represent anything else.
     string_type __dummy_curr_symbol = __curr_symbol_;
-#if _WIN32
+#ifdef _WIN32
     __init_pat(__pos_format_, __dummy_curr_symbol, true,
                lc->p_cs_precedes, lc->p_sep_by_space, lc->p_sign_posn, L' ');
     __init_pat(__neg_format_, __curr_symbol_, true,

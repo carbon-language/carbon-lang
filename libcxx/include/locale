@@ -186,7 +186,7 @@ template <class charT> class messages_byname;
 #endif
 #include <cstdlib>
 #include <ctime>
-#if _WIN32
+#ifdef _WIN32
 #include <support/win32/locale_win32.h>
 #else // _WIN32
 #include <nl_types.h>
@@ -3799,7 +3799,7 @@ template <class _CharT>
 typename messages<_CharT>::catalog
 messages<_CharT>::do_open(const basic_string<char>& __nm, const locale&) const
 {
-#if _WIN32
+#ifdef _WIN32
     return -1;
 #else // _WIN32
     catalog __cat = (catalog)catopen(__nm.c_str(), NL_CAT_LOCALE);
@@ -3814,7 +3814,7 @@ typename messages<_CharT>::string_type
 messages<_CharT>::do_get(catalog __c, int __set, int __msgid,
                          const string_type& __dflt) const
 {
-#if _WIN32
+#ifdef _WIN32
     return __dflt;
 #else // _WIN32
     string __ndflt;
@@ -3836,7 +3836,7 @@ template <class _CharT>
 void
 messages<_CharT>::do_close(catalog __c) const
 {
-#if !_WIN32
+#if !defined(_WIN32)
     if (__c != -1)
         __c <<= 1;
     nl_catd __cat = (nl_catd)__c;
