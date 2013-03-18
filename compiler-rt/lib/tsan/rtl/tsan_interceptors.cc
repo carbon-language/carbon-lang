@@ -598,7 +598,7 @@ TSAN_INTERCEPTOR(void*, mmap, void *addr, long_t sz, int prot,
   if (res != MAP_FAILED) {
     if (fd > 0)
       FdAccess(thr, pc, fd);
-    MemoryResetRange(thr, pc, (uptr)res, sz);
+    MemoryRangeImitateWrite(thr, pc, (uptr)res, sz);
   }
   return res;
 }
@@ -612,7 +612,7 @@ TSAN_INTERCEPTOR(void*, mmap64, void *addr, long_t sz, int prot,
   if (res != MAP_FAILED) {
     if (fd > 0)
       FdAccess(thr, pc, fd);
-    MemoryResetRange(thr, pc, (uptr)res, sz);
+    MemoryRangeImitateWrite(thr, pc, (uptr)res, sz);
   }
   return res;
 }

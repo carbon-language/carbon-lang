@@ -470,6 +470,8 @@ void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
 
 static void MemoryRangeSet(ThreadState *thr, uptr pc, uptr addr, uptr size,
                            u64 val) {
+  (void)thr;
+  (void)pc;
   if (size == 0)
     return;
   // FIXME: fix me.
@@ -486,23 +488,42 @@ static void MemoryRangeSet(ThreadState *thr, uptr pc, uptr addr, uptr size,
   // let it just crash as usual.
   if (!IsAppMem(addr) || !IsAppMem(addr + size - 1))
     return;
-  (void)thr;
-  (void)pc;
-  // Some programs mmap like hundreds of GBs but actually used a small part.
-  // So, it's better to report a false positive on the memory
-  // then to hang here senselessly.
-  const uptr kMaxResetSize = 4ull*1024*1024*1024;
-  if (size > kMaxResetSize)
-    size = kMaxResetSize;
+  // Don't want to touch lots of shadow memory.
+  // If a program maps 10MB stack, there is no need reset the whole range.
   size = (size + (kShadowCell - 1)) & ~(kShadowCell - 1);
-  u64 *p = (u64*)MemToShadow(addr);
-  CHECK(IsShadowMem((uptr)p));
-  CHECK(IsShadowMem((uptr)(p + size * kShadowCnt / kShadowCell - 1)));
-  // FIXME: may overwrite a part outside the region
-  for (uptr i = 0; i < size * kShadowCnt / kShadowCell;) {
-    p[i++] = val;
-    for (uptr j = 1; j < kShadowCnt; j++)
-      p[i++] = 0;
+  if (size < 64*1024) {
+    u64 *p = (u64*)MemToShadow(addr);
+    CHECK(IsShadowMem((uptr)p));
+    CHECK(IsShadowMem((uptr)(p + size * kShadowCnt / kShadowCell - 1)));
+    // FIXME: may overwrite a part outside the region
+    for (uptr i = 0; i < size / kShadowCell * kShadowCnt;) {
+      p[i++] = val;
+      for (uptr j = 1; j < kShadowCnt; j++)
+        p[i++] = 0;
+    }
+  } else {
+    // The region is big, reset only beginning and end.
+    const uptr kPageSize = 4096;
+    u64 *begin = (u64*)MemToShadow(addr);
+    u64 *end = begin + size / kShadowCell * kShadowCnt;
+    u64 *p = begin;
+    // Set at least first kPageSize/2 to page boundary.
+    while ((p < begin + kPageSize / kShadowSize / 2) || ((uptr)p % kPageSize)) {
+      *p++ = val;
+      for (uptr j = 1; j < kShadowCnt; j++)
+        *p++ = 0;
+    }
+    // Reset middle part.
+    u64 *p1 = p;
+    p = RoundDown(end, kPageSize);
+    UnmapOrDie((void*)p1, (uptr)p - (uptr)p1);
+    MmapFixedNoReserve((uptr)p1, (uptr)p - (uptr)p1);
+    // Set the ending.
+    while (p < end) {
+      *p++ = val;
+      for (uptr j = 1; j < kShadowCnt; j++)
+        *p++ = 0;
+    }
   }
 }
 
@@ -511,6 +532,11 @@ void MemoryResetRange(ThreadState *thr, uptr pc, uptr addr, uptr size) {
 }
 
 void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size) {
+  // Processing more than 1k (4k of shadow) is expensive,
+  // can cause excessive memory consumption (user does not necessary touch
+  // the whole range) and most likely unnecessary.
+  if (size > 1024)
+    size = 1024;
   CHECK_EQ(thr->is_freeing, false);
   thr->is_freeing = true;
   MemoryAccessRange(thr, pc, addr, size, true);

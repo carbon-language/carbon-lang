@@ -201,7 +201,7 @@ void ThreadStart(ThreadState *thr, int tid, uptr os_id) {
 
   if (tid) {
     if (stk_addr && stk_size)
-      MemoryResetRange(thr, /*pc=*/ 1, stk_addr, stk_size);
+      MemoryRangeImitateWrite(thr, /*pc=*/ 1, stk_addr, stk_size);
 
     if (tls_addr && tls_size) {
       // Check that the thr object is in tls;
@@ -212,8 +212,9 @@ void ThreadStart(ThreadState *thr, int tid, uptr os_id) {
       CHECK_GE(thr_end, tls_addr);
       CHECK_LE(thr_end, tls_addr + tls_size);
       // Since the thr object is huge, skip it.
-      MemoryResetRange(thr, /*pc=*/ 2, tls_addr, thr_beg - tls_addr);
-      MemoryResetRange(thr, /*pc=*/ 2, thr_end, tls_addr + tls_size - thr_end);
+      MemoryRangeImitateWrite(thr, /*pc=*/ 2, tls_addr, thr_beg - tls_addr);
+      MemoryRangeImitateWrite(thr, /*pc=*/ 2,
+          thr_end, tls_addr + tls_size - thr_end);
     }
   }
 
