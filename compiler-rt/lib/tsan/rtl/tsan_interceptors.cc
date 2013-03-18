@@ -619,6 +619,11 @@ TSAN_INTERCEPTOR(void*, mmap64, void *addr, long_t sz, int prot,
 
 TSAN_INTERCEPTOR(int, munmap, void *addr, long_t sz) {
   SCOPED_TSAN_INTERCEPTOR(munmap, addr, sz);
+  // We are about to unmap a chunk of user memory.
+  // Mark the corresponding shadow memory as not needed.
+  uptr shadow_beg = MemToShadow((uptr)addr);
+  uptr shadow_end = MemToShadow((uptr)addr + sz);
+  FlushUnneededShadowMemory(shadow_beg, shadow_end - shadow_beg);
   int res = REAL(munmap)(addr, sz);
   return res;
 }
