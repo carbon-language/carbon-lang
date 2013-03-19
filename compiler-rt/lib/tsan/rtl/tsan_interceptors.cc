@@ -61,6 +61,7 @@ extern "C" void *__libc_malloc(uptr size);
 extern "C" void *__libc_calloc(uptr size, uptr n);
 extern "C" void *__libc_realloc(void *ptr, uptr size);
 extern "C" void __libc_free(void *ptr);
+extern "C" int mallopt(int param, int value);
 const int PTHREAD_MUTEX_RECURSIVE = 1;
 const int PTHREAD_MUTEX_RECURSIVE_NP = 1;
 const int kPthreadAttrSize = 56;
@@ -1830,6 +1831,10 @@ void InitializeInterceptors() {
   REAL(memset) = internal_memset;
   REAL(memcpy) = internal_memcpy;
   REAL(memcmp) = internal_memcmp;
+
+  // Instruct libc malloc to consume less memory.
+  mallopt(1, 0);  // M_MXFAST
+  mallopt(-3, 32*1024);  // M_MMAP_THRESHOLD
 
   SANITIZER_COMMON_INTERCEPTORS_INIT;
 
