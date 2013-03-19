@@ -232,8 +232,9 @@ std::unique_ptr<Driver> Driver::create( Driver::Flavor flavor
   case Flavor::ld64:
   case Flavor::link:
   case Flavor::invalid:
-    llvm_unreachable("Unsupported flavor");
+    break;
   }
+  llvm_unreachable("Unsupported flavor");
 }
 
 std::unique_ptr<llvm::opt::ArgList>
