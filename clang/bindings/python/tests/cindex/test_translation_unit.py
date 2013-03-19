@@ -8,6 +8,7 @@ from clang.cindex import Index
 from clang.cindex import SourceLocation
 from clang.cindex import SourceRange
 from clang.cindex import TranslationUnitSaveError
+from clang.cindex import TranslationUnitLoadError
 from clang.cindex import TranslationUnit
 from .util import get_cursor
 from .util import get_tu
@@ -239,3 +240,19 @@ def test_get_tokens_gc():
     del tokens
     gc.collect()
     gc.collect() # Just in case.
+
+def test_fail_from_source():
+    path = os.path.join(kInputsDir, 'non-existent.cpp')
+    try:
+        tu = TranslationUnit.from_source(path)
+    except TranslationUnitLoadError:
+        tu = None
+    assert tu == None
+
+def test_fail_from_ast_file():
+    path = os.path.join(kInputsDir, 'non-existent.ast')
+    try:
+        tu = TranslationUnit.from_ast_file(path)
+    except TranslationUnitLoadError:
+        tu = None
+    assert tu == None
