@@ -17,6 +17,9 @@ vector.body.i:                                    ; preds = %vector.body.i, %if.
 if.end210:                                        ; preds = %entry
   ret void
 
+; This will generate two align-1 i64 stores. Make sure that they are
+; indexed stores and not in r+i form (which require the offset to be
+; a multiple of 4).
 ; CHECK: @copy_to_conceal
 ; CHECK: stdx {{[0-9]+}}, 0,
 }

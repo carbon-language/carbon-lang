@@ -683,10 +683,6 @@ def LDtoc_restore : DSForm_1a<58, 0, (outs), (ins),
 def LDX  : XForm_1<31,  21, (outs G8RC:$rD), (ins memrr:$src),
                    "ldx $rD, $src", LdStLD,
                    [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;
-let isCodeGenOnly = 1 in
-def LDXu  : XForm_1<31,  21, (outs G8RC:$rD), (ins memrr:$src),
-                    "ldx $rD, $src", LdStLD,
-                    [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;
                    
 let mayLoad = 1 in
 def LDU  : DSForm_1<58, 1, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memrix:$addr),
