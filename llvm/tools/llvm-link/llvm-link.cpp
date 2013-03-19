@@ -111,9 +111,6 @@ int main(int argc, char **argv) {
     }
   }
 
-  // TODO: Iterate over the -l list and link in any modules containing
-  // global symbols that have not been resolved so far.
-
   if (DumpAsm) errs() << "Here's the assembly:\n" << *Composite;
 
   std::string ErrorInfo;
