@@ -60,6 +60,55 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		264B3DE516F7E47600D1E7AB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C86C5C316F7A35000844407 /* lldb.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 26F5C26A10F3D9A4009D5894;
+			remoteInfo = "lldb-tool";
+		};
+		264B3DE716F7E47600D1E7AB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C86C5C316F7A35000844407 /* lldb.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 26680207115FD0ED008E1FE4;
+			remoteInfo = LLDB;
+		};
+		264B3DE916F7E47600D1E7AB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C86C5C316F7A35000844407 /* lldb.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 26579F68126A25920007C5CB;
+			remoteInfo = "darwin-debug";
+		};
+		264B3DEB16F7E47600D1E7AB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C86C5C316F7A35000844407 /* lldb.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 2689FFCA13353D7A00698AC0;
+			remoteInfo = "lldb-core";
+		};
+		264B3DED16F7E47600D1E7AB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C86C5C316F7A35000844407 /* lldb.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 26DC6A101337FE6900FF7998;
+			remoteInfo = "lldb-platform";
+		};
+		264B3DEF16F7E47600D1E7AB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C86C5C316F7A35000844407 /* lldb.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = EDC6D49914E5C19B001B75F8;
+			remoteInfo = launcherXPCService;
+		};
+		264B3DF116F7E47600D1E7AB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C86C5C316F7A35000844407 /* lldb.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = EDE274EC14EDCE1F005B0F75;
+			remoteInfo = launcherRootXPCService;
+		};
 		4C1E379016F40BCD00FF10BB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 4C1E373116F4035D00FF10BB /* Project object */;
@@ -130,12 +179,12 @@
 		4C1E377816F4089E00FF10BB /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		4C1E37B316F79E4600FF10BB /* fmts_tester.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = fmts_tester.mm; sourceTree = "<group>"; };
 		4C1E37B416F79E4600FF10BB /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		4C1E37BA16F79E9D00FF10BB /* formatters */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = formatters; sourceTree = BUILT_PRODUCTS_DIR; };
+		4C1E37BA16F79E9D00FF10BB /* lldb-perf-formatters */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-perf-formatters"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C1E37DB16F7A03900FF10BB /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
 		4C1E37DC16F7A03900FF10BB /* LLDB.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LLDB.framework; path = "tools/lldb-perf/../../build/Debug/LLDB.framework"; sourceTree = "<group>"; };
-		4C86C5C316F7A35000844407 /* lldb.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = file; name = lldb.xcodeproj; path = ../../lldb.xcodeproj; sourceTree = "<group>"; };
-		4C86C5C416F7A36A00844407 /* LLDB.framework */ = {isa = PBXFileReference; lastKnownFileType = file; name = LLDB.framework; path = build/Debug/LLDB.framework; sourceTree = "<group>"; };
-		4C86C5C616F7A37800844407 /* LLDB.framework */ = {isa = PBXFileReference; lastKnownFileType = file; name = LLDB.framework; path = build/Debug/LLDB.framework; sourceTree = "<group>"; };
+		4C86C5C316F7A35000844407 /* lldb.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = lldb.xcodeproj; path = ../../lldb.xcodeproj; sourceTree = "<group>"; };
+		4C86C5C416F7A36A00844407 /* LLDB.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LLDB.framework; path = build/Debug/LLDB.framework; sourceTree = "<group>"; };
+		4C86C5C616F7A37800844407 /* LLDB.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LLDB.framework; path = build/Debug/LLDB.framework; sourceTree = "<group>"; };
 		4C86C5D116F7CC8900844407 /* format-tester */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "format-tester"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -194,7 +243,7 @@
 			children = (
 				4C1E373916F4035D00FF10BB /* liblldbperf.a */,
 				4C1E376D16F4087A00FF10BB /* lldb-perf-sketch */,
-				4C1E37BA16F79E9D00FF10BB /* formatters */,
+				4C1E37BA16F79E9D00FF10BB /* lldb-perf-formatters */,
 				4C86C5D116F7CC8900844407 /* format-tester */,
 			);
 			name = Products;
@@ -284,6 +333,15 @@
 		};
 		4C86C5DE16F7D18F00844407 /* Products */ = {
 			isa = PBXGroup;
+			children = (
+				264B3DE616F7E47600D1E7AB /* lldb */,
+				264B3DE816F7E47600D1E7AB /* LLDB.framework */,
+				264B3DEA16F7E47600D1E7AB /* darwin-debug */,
+				264B3DEC16F7E47600D1E7AB /* liblldb-core.a */,
+				264B3DEE16F7E47600D1E7AB /* lldb-platform */,
+				264B3DF016F7E47600D1E7AB /* com.apple.lldb.launcherXPCService.xpc */,
+				264B3DF216F7E47600D1E7AB /* com.apple.lldb.launcherRootXPCService.xpc */,
+			);
 			name = Products;
 			sourceTree = "<group>";
 		};
@@ -364,7 +422,7 @@
 			);
 			name = "lldb-perf-formatters";
 			productName = formatters;
-			productReference = 4C1E37BA16F79E9D00FF10BB /* formatters */;
+			productReference = 4C1E37BA16F79E9D00FF10BB /* lldb-perf-formatters */;
 			productType = "com.apple.product-type.tool";
 		};
 		4C86C5D016F7CC8900844407 /* format-tester */ = {
@@ -418,6 +476,58 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		264B3DE616F7E47600D1E7AB /* lldb */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = lldb;
+			remoteRef = 264B3DE516F7E47600D1E7AB /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		264B3DE816F7E47600D1E7AB /* LLDB.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = LLDB.framework;
+			remoteRef = 264B3DE716F7E47600D1E7AB /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		264B3DEA16F7E47600D1E7AB /* darwin-debug */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = "darwin-debug";
+			remoteRef = 264B3DE916F7E47600D1E7AB /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		264B3DEC16F7E47600D1E7AB /* liblldb-core.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = "liblldb-core.a";
+			remoteRef = 264B3DEB16F7E47600D1E7AB /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		264B3DEE16F7E47600D1E7AB /* lldb-platform */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = "lldb-platform";
+			remoteRef = 264B3DED16F7E47600D1E7AB /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		264B3DF016F7E47600D1E7AB /* com.apple.lldb.launcherXPCService.xpc */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = com.apple.lldb.launcherXPCService.xpc;
+			remoteRef = 264B3DEF16F7E47600D1E7AB /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		264B3DF216F7E47600D1E7AB /* com.apple.lldb.launcherRootXPCService.xpc */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = com.apple.lldb.launcherRootXPCService.xpc;
+			remoteRef = 264B3DF116F7E47600D1E7AB /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXSourcesBuildPhase section */
 		4C1E373516F4035D00FF10BB /* Sources */ = {
@@ -720,6 +830,7 @@
 				4C86C5D916F7CC8900844407 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

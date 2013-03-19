@@ -27,22 +27,24 @@ namespace lldb_private
     class SourceManagerImpl
     {
     public:
-        SourceManagerImpl (const lldb::DebuggerSP &debugger_sp)
+        SourceManagerImpl (const lldb::DebuggerSP &debugger_sp) :
+            m_debugger_wp (debugger_sp),
+            m_target_wp ()
         {
-            m_debugger_sp = debugger_sp;
         }
         
-        SourceManagerImpl (const lldb::TargetSP &target_sp)
+        SourceManagerImpl (const lldb::TargetSP &target_sp) :
+            m_debugger_wp (),
+            m_target_wp (target_sp)
         {
-            m_target_sp = target_sp;
         }
         
         SourceManagerImpl (const SourceManagerImpl &rhs)
         {
             if (&rhs == this)
                 return;
-            m_debugger_sp = rhs.m_debugger_sp;
-            m_target_sp   = rhs.m_target_sp;
+            m_debugger_wp = rhs.m_debugger_wp;
+            m_target_wp   = rhs.m_target_wp;
         }
         
         size_t
@@ -56,27 +58,35 @@ namespace lldb_private
             if (!file)
                 return 0;
             
-            if (m_debugger_sp)
-                return m_debugger_sp->GetSourceManager().DisplaySourceLinesWithLineNumbers (file,
-                                                                                            line,
-                                                                                            context_before,
-                                                                                            context_after,
-                                                                                            current_line_cstr,
-                                                                                            s);
-            else if (m_target_sp)
-                return m_target_sp->GetSourceManager().DisplaySourceLinesWithLineNumbers (file,
-                                                                                          line,
-                                                                                          context_before,
-                                                                                          context_after,
-                                                                                          current_line_cstr,
-                                                                                          s);
+            lldb::TargetSP target_sp (m_target_wp.lock());
+            if (target_sp)
+            {
+                return target_sp->GetSourceManager().DisplaySourceLinesWithLineNumbers (file,
+                                                                                        line,
+                                                                                        context_before,
+                                                                                        context_after,
+                                                                                        current_line_cstr,
+                                                                                        s);
+            }
             else
-                return 0;
+            {
+                lldb::DebuggerSP debugger_sp (m_debugger_wp.lock());
+                if (debugger_sp)
+                {
+                    return debugger_sp->GetSourceManager().DisplaySourceLinesWithLineNumbers (file,
+                                                                                              line,
+                                                                                              context_before,
+                                                                                              context_after,
+                                                                                              current_line_cstr,
+                                                                                              s);
+                }
+            }
+            return 0;
         }
         
     private:
-        lldb::DebuggerSP m_debugger_sp;
-        lldb::TargetSP   m_target_sp;
+        lldb::DebuggerWP m_debugger_wp;
+        lldb::TargetWP   m_target_wp;
         
     };
 }

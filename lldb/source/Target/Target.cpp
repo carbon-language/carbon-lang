@@ -27,6 +27,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Core/SourceManager.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
@@ -79,7 +80,7 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_scratch_ast_source_ap (NULL),
     m_ast_importer_ap (NULL),
     m_persistent_variables (),
-    m_source_manager(*this),
+    m_source_manager_ap(),
     m_stop_hooks (),
     m_stop_hook_next_id (0),
     m_suppress_stop_hooks (false),
@@ -1907,6 +1908,15 @@ Target::GetOpcodeLoadAddress (lldb::addr_t load_addr, AddressClass addr_class) c
     }
     return opcode_addr;
 }
+
+SourceManager &
+Target::GetSourceManager ()
+{
+    if (m_source_manager_ap.get() == NULL)
+        m_source_manager_ap.reset (new SourceManager(shared_from_this()));
+    return *m_source_manager_ap;
+}
+
 
 lldb::user_id_t
 Target::AddStopHook (Target::StopHookSP &new_hook_sp)

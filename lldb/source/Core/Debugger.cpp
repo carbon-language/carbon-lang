@@ -554,7 +554,7 @@ Debugger::Debugger (lldb::LogOutputCallback log_callback, void *baton) :
     m_target_list (*this),
     m_platform_list (),
     m_listener ("lldb.Debugger"),
-    m_source_manager(*this),
+    m_source_manager_ap(),
     m_source_file_cache(),
     m_command_interpreter_ap (new CommandInterpreter (*this, eScriptLanguageDefault, false)),
     m_input_reader_stack (),
@@ -2650,4 +2650,13 @@ Debugger::EnableLog (const char *channel, const char **categories, const char *l
     }
     return false;
 }
+
+SourceManager &
+Debugger::GetSourceManager ()
+{
+    if (m_source_manager_ap.get() == NULL)
+        m_source_manager_ap.reset (new SourceManager (shared_from_this()));
+    return *m_source_manager_ap;
+}
+
 

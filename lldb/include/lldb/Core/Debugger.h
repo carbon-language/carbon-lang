@@ -159,10 +159,7 @@ public:
     // information, but it can look up files by absolute path and display them to you.
     // To get the target's source manager, call GetSourceManager on the target instead.
     SourceManager &
-    GetSourceManager ()
-    {
-        return m_source_manager;
-    }
+    GetSourceManager ();
 
 public:
     
@@ -362,7 +359,7 @@ protected:
     TargetList m_target_list;
     PlatformList m_platform_list;
     Listener m_listener;
-    SourceManager m_source_manager;    // This is a scratch source manager that we return if we have no targets.
+    std::auto_ptr<SourceManager> m_source_manager_ap;    // This is a scratch source manager that we return if we have no targets.
     SourceManager::SourceFileCache m_source_file_cache; // All the source managers for targets created in this debugger used this shared
                                                         // source file cache.
     std::auto_ptr<CommandInterpreter> m_command_interpreter_ap;

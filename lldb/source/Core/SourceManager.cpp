@@ -25,7 +25,9 @@
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/Target.h"
 
+using namespace lldb;
 using namespace lldb_private;
+
 
 static inline bool is_newline_char(char ch)
 {
@@ -36,24 +38,23 @@ static inline bool is_newline_char(char ch)
 //----------------------------------------------------------------------
 // SourceManager constructor
 //----------------------------------------------------------------------
-SourceManager::SourceManager(Target &target) :
+SourceManager::SourceManager(const TargetSP &target_sp) :
     m_last_file_sp (),
     m_last_line (0),
     m_last_count (0),
     m_default_set(false),
-    m_target (&target),
-    m_debugger(NULL)
+    m_target_wp (target_sp),
+    m_debugger_wp(target_sp->GetDebugger().shared_from_this())
 {
-    m_debugger = &(m_target->GetDebugger());
 }
 
-SourceManager::SourceManager(Debugger &debugger) :
+SourceManager::SourceManager(const DebuggerSP &debugger_sp) :
     m_last_file_sp (),
     m_last_line (0),
     m_last_count (0),
     m_default_set(false),
-    m_target (NULL),
-    m_debugger (&debugger)
+    m_target_wp (),
+    m_debugger_wp (debugger_sp)
 {
 }
 
@@ -69,23 +70,27 @@ SourceManager::GetFile (const FileSpec &file_spec)
 {
     bool same_as_previous = m_last_file_sp && m_last_file_sp->FileSpecMatches (file_spec);
 
+    DebuggerSP debugger_sp (m_debugger_wp.lock());
     FileSP file_sp;
     if (same_as_previous)
         file_sp = m_last_file_sp;
-    else
-        file_sp = m_debugger->GetSourceFileCache().FindSourceFile (file_spec);
+    else if (debugger_sp)
+        file_sp = debugger_sp->GetSourceFileCache().FindSourceFile (file_spec);
     
+    TargetSP target_sp (m_target_wp.lock());
+
     // It the target source path map has been updated, get this file again so we
     // can successfully remap the source file
-    if (file_sp && file_sp->GetSourceMapModificationID() != m_target->GetSourcePathMap().GetModificationID())
+    if (target_sp && file_sp && file_sp->GetSourceMapModificationID() != target_sp->GetSourcePathMap().GetModificationID())
         file_sp.reset();
 
     // If file_sp is no good or it points to a non-existent file, reset it.
     if (!file_sp || !file_sp->GetFileSpec().Exists())
     {
-        file_sp.reset (new File (file_spec, m_target));
+        file_sp.reset (new File (file_spec, target_sp.get()));
 
-        m_debugger->GetSourceFileCache().AddSourceFile(file_sp);
+        if (debugger_sp)
+            debugger_sp->GetSourceFileCache().AddSourceFile(file_sp);
     }
     return file_sp;
 }
@@ -195,6 +200,7 @@ SourceManager::DisplayMoreWithLineNumbers (Stream *s,
                                            const SymbolContextList *bp_locs)
 {
     // If we get called before anybody has set a default file and line, then try to figure it out here.
+    const bool have_default_file_line = m_last_file_sp && m_last_line > 0;
     if (!m_default_set)
     {
         FileSpec tmp_spec;
@@ -226,7 +232,7 @@ SourceManager::DisplayMoreWithLineNumbers (Stream *s,
                 else
                     m_last_line = 1;
             }
-            else
+            else if (have_default_file_line)
                 m_last_line += m_last_count;
         }
         else
@@ -267,38 +273,43 @@ SourceManager::GetDefaultFileAndLine (FileSpec &file_spec, uint32_t &line)
     }
     else if (!m_default_set)
     {
-        // If nobody has set the default file and line then try here.  If there's no executable, then we
-        // will try again later when there is one.  Otherwise, if we can't find it we won't look again,
-        // somebody will have to set it (for instance when we stop somewhere...)
-        Module *executable_ptr = m_target->GetExecutableModulePointer();
-        if (executable_ptr)
+        TargetSP target_sp (m_target_wp.lock());
+
+        if (target_sp)
         {
-            SymbolContextList sc_list;
-            ConstString main_name("main");
-            bool symbols_okay = false;  // Force it to be a debug symbol.
-            bool inlines_okay = true;
-            bool append = false;
-            size_t num_matches = executable_ptr->FindFunctions (main_name,
-                                                                NULL,
-                                                                lldb::eFunctionNameTypeBase,
-                                                                inlines_okay,
-                                                                symbols_okay,
-                                                                append,
-                                                                sc_list);
-            for (size_t idx = 0; idx < num_matches; idx++)
+            // If nobody has set the default file and line then try here.  If there's no executable, then we
+            // will try again later when there is one.  Otherwise, if we can't find it we won't look again,
+            // somebody will have to set it (for instance when we stop somewhere...)
+            Module *executable_ptr = target_sp->GetExecutableModulePointer();
+            if (executable_ptr)
             {
-                SymbolContext sc;
-                sc_list.GetContextAtIndex(idx, sc);
-                if (sc.function)
+                SymbolContextList sc_list;
+                ConstString main_name("main");
+                bool symbols_okay = false;  // Force it to be a debug symbol.
+                bool inlines_okay = true;
+                bool append = false;
+                size_t num_matches = executable_ptr->FindFunctions (main_name,
+                                                                    NULL,
+                                                                    lldb::eFunctionNameTypeBase,
+                                                                    inlines_okay,
+                                                                    symbols_okay,
+                                                                    append,
+                                                                    sc_list);
+                for (size_t idx = 0; idx < num_matches; idx++)
                 {
-                    lldb_private::LineEntry line_entry;
-                    if (sc.function->GetAddressRange().GetBaseAddress().CalculateSymbolContextLineEntry (line_entry))
+                    SymbolContext sc;
+                    sc_list.GetContextAtIndex(idx, sc);
+                    if (sc.function)
                     {
-                        SetDefaultFileAndLine (line_entry.file, 
-                                               line_entry.line);
-                        file_spec = m_last_file_sp->GetFileSpec();
-                        line = m_last_line;
-                        return true;
+                        lldb_private::LineEntry line_entry;
+                        if (sc.function->GetAddressRange().GetBaseAddress().CalculateSymbolContextLineEntry (line_entry))
+                        {
+                            SetDefaultFileAndLine (line_entry.file, 
+                                                   line_entry.line);
+                            file_spec = m_last_file_sp->GetFileSpec();
+                            line = m_last_line;
+                            return true;
+                        }
                     }
                 }
             }

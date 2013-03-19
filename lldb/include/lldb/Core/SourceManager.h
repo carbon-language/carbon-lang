@@ -113,8 +113,8 @@ public:
     //------------------------------------------------------------------
     // A source manager can be made with a non-null target, in which case it can use the path remappings to find 
     // source files that are not in their build locations.  With no target it won't be able to do this.
-    SourceManager (Debugger &debugger);
-    SourceManager (Target &target);
+    SourceManager (const lldb::DebuggerSP &debugger_sp);
+    SourceManager (const lldb::TargetSP &target_sp);
 
     ~SourceManager();
 
@@ -180,8 +180,8 @@ protected:
     uint32_t m_last_line;
     uint32_t m_last_count;
     bool     m_default_set;
-    Target *m_target;
-    Debugger *m_debugger;
+    lldb::TargetWP m_target_wp;
+    lldb::DebuggerWP m_debugger_wp;
     
 private:
     //------------------------------------------------------------------
