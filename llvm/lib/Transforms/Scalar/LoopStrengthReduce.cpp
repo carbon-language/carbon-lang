@@ -2716,11 +2716,11 @@ void LSRInstance::GenerateIVChain(const IVChain &Chain, SCEVExpander &Rewriter,
   // by LSR.
   const IVInc &Head = Chain.Incs[0];
   User::op_iterator IVOpEnd = Head.UserInst->op_end();
+  // findIVOperand returns IVOpEnd if it can no longer find a valid IV user.
   User::op_iterator IVOpIter = findIVOperand(Head.UserInst->op_begin(),
                                              IVOpEnd, L, SE);
-  assert(IVOpIter != IVOpEnd && "No IV operands found");
   Value *IVSrc = 0;
-  do {
+  while (IVOpIter != IVOpEnd) {
     IVSrc = getWideOperand(*IVOpIter);
 
     // If this operand computes the expression that the chain needs, we may use
@@ -2736,8 +2736,7 @@ void LSRInstance::GenerateIVChain(const IVChain &Chain, SCEVExpander &Rewriter,
       break;
     }
     IVOpIter = findIVOperand(llvm::next(IVOpIter), IVOpEnd, L, SE);
-  } while (IVOpIter != IVOpEnd);
-
+  }
   if (IVOpIter == IVOpEnd) {
     // Gracefully give up on this chain.
     DEBUG(dbgs() << "Concealed chain head: " << *Head.UserInst << "\n");
