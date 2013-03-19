@@ -104,8 +104,6 @@ ClangUtilityFunction::Install (Stream &error_stream,
     
     m_expr_decl_map.reset(new ClangExpressionDeclMap(keep_result_in_memory, exe_ctx));
     
-    m_data_allocator.reset(new ProcessDataAllocator(*process));
-    
     if (!m_expr_decl_map->WillParse(exe_ctx))
     {
         error_stream.PutCString ("error: current process state is unsuitable for expression parsing\n");
@@ -133,22 +131,12 @@ ClangUtilityFunction::Install (Stream &error_stream,
     
     bool evaluated_statically = false; // should stay that way
     
-    Error jit_error = parser.PrepareForExecution (m_jit_alloc, 
-                                                  m_jit_start_addr, 
+    Error jit_error = parser.PrepareForExecution (m_jit_start_addr, 
                                                   m_jit_end_addr, 
                                                   exe_ctx,
-                                                  m_data_allocator.get(),
                                                   evaluated_statically,
                                                   const_result,
                                                   eExecutionPolicyAlways);
-    
-    if (log)
-    {
-        StreamString dump_string;
-        m_data_allocator->Dump(dump_string);
-        
-        log->Printf("Data buffer contents:\n%s", dump_string.GetString().c_str());
-    }
     
     if (m_jit_start_addr != LLDB_INVALID_ADDRESS)
         m_jit_process_wp = lldb::ProcessWP(process->shared_from_this());

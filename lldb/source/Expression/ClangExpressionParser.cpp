@@ -20,8 +20,8 @@
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
+#include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Expression/IRDynamicChecks.h"
-#include "lldb/Expression/RecordingMemoryManager.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
@@ -188,8 +188,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
                                               ClangExpression &expr) :
     m_expr (expr),
     m_compiler (),
-    m_code_generator (NULL),
-    m_jitted_functions ()
+    m_code_generator (NULL)
 {
     // Initialize targets first, so that --version shows registered targets.
     static struct InitializeLLVM {
@@ -441,7 +440,7 @@ ClangExpressionParser::Parse (Stream &stream)
     return num_errors;
 }
 
-static bool FindFunctionInModule (std::string &mangled_name,
+static bool FindFunctionInModule (ConstString &mangled_name,
                                   llvm::Module *module,
                                   const char *orig_name)
 {
@@ -451,7 +450,7 @@ static bool FindFunctionInModule (std::string &mangled_name,
     {        
         if (fi->getName().str().find(orig_name) != std::string::npos)
         {
-            mangled_name = fi->getName().str();
+            mangled_name.SetCString(fi->getName().str().c_str());
             return true;
         }
     }
@@ -460,16 +459,13 @@ static bool FindFunctionInModule (std::string &mangled_name,
 }
 
 Error
-ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr, 
-                                            lldb::addr_t &func_addr, 
+ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr, 
                                             lldb::addr_t &func_end, 
                                             ExecutionContext &exe_ctx,
-                                            IRForTarget::StaticDataAllocator *data_allocator,
                                             bool &evaluated_statically,
                                             lldb::ClangExpressionVariableSP &const_result,
                                             ExecutionPolicy execution_policy)
 {
-    func_allocation_addr = LLDB_INVALID_ADDRESS;
 	func_addr = LLDB_INVALID_ADDRESS;
 	func_end = LLDB_INVALID_ADDRESS;
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
@@ -489,7 +485,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
     
     // Find the actual name of the function (it's often mangled somehow)
     
-    std::string function_name;
+    ConstString function_name;
     
     if (!FindFunctionInModule(function_name, module_ap.get(), m_expr.FunctionName()))
     {
@@ -500,9 +496,14 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
     else
     {
         if (log)
-            log->Printf("Found function %s for %s", function_name.c_str(), m_expr.FunctionName());
+            log->Printf("Found function %s for %s", function_name.AsCString(), m_expr.FunctionName());
     }
     
+    m_execution_unit.reset(new IRExecutionUnit(module_ap, // handed off here
+                                               function_name,
+                                               exe_ctx.GetProcessSP(),
+                                               m_compiler->getTargetOpts().Features));
+        
     ClangExpressionDeclMap *decl_map = m_expr.DeclMap(); // result can be NULL
     
     if (decl_map)
@@ -516,11 +517,11 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
                                   m_expr.NeedsVariableResolution(),
                                   execution_policy,
                                   const_result,
-                                  data_allocator,
+                                  *m_execution_unit,
                                   error_stream,
-                                  function_name.c_str());
+                                  function_name.AsCString());
         
-        bool ir_can_run = ir_for_target.runOnModule(*module_ap);
+        bool ir_can_run = ir_for_target.runOnModule(*m_execution_unit->GetModule());
         
         Error &interpreter_error(ir_for_target.getInterpreterError());
         
@@ -579,9 +580,9 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
                     log->Printf("== [ClangUserExpression::Evaluate] Finished installing dynamic checkers ==");
             }
             
-            IRDynamicChecks ir_dynamic_checks(*process->GetDynamicCheckers(), function_name.c_str());
+            IRDynamicChecks ir_dynamic_checks(*process->GetDynamicCheckers(), function_name.AsCString());
         
-            if (!ir_dynamic_checks.runOnModule(*module_ap))
+            if (!ir_dynamic_checks.runOnModule(*m_execution_unit->GetModule()))
             {
                 err.SetErrorToGenericError();
                 err.SetErrorString("Couldn't add dynamic checks to the expression");
@@ -590,264 +591,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
         }
     }
     
-    // llvm will own this pointer when llvm::ExecutionEngine::createJIT is called 
-    // below so we don't need to free it.
-    RecordingMemoryManager *jit_memory_manager = new RecordingMemoryManager();
-    
-    std::string error_string;
-
-    if (log)
-    {
-        std::string s;
-        raw_string_ostream oss(s);
+    m_execution_unit->GetRunnableInfo(err, func_addr, func_end);
         
-        module_ap->print(oss, NULL);
-        
-        oss.flush();
-        
-        log->Printf ("Module being sent to JIT: \n%s", s.c_str());
-    }
-    llvm::Triple triple(module_ap->getTargetTriple());
-    llvm::Function *function = module_ap->getFunction (function_name.c_str());
-    llvm::Reloc::Model relocModel;
-    llvm::CodeModel::Model codeModel;
-    if (triple.isOSBinFormatELF())
-    {
-        relocModel = llvm::Reloc::Static;
-        // This will be small for 32-bit and large for 64-bit.
-        codeModel = llvm::CodeModel::JITDefault;
-    }
-    else
-    {
-        relocModel = llvm::Reloc::PIC_;
-        codeModel = llvm::CodeModel::Small;
-    }
-    EngineBuilder builder(module_ap.release());
-    builder.setEngineKind(EngineKind::JIT)
-        .setErrorStr(&error_string)
-        .setRelocationModel(relocModel)
-        .setJITMemoryManager(jit_memory_manager)
-        .setOptLevel(CodeGenOpt::Less)
-        .setAllocateGVsWithCode(true)
-        .setCodeModel(codeModel)
-        .setUseMCJIT(true);
-    
-    StringRef mArch;
-    StringRef mCPU;
-    SmallVector<std::string, 0> mAttrs;
-    
-    for (std::string &feature : m_compiler->getTargetOpts().Features)
-        mAttrs.push_back(feature);
-    
-    TargetMachine *target_machine = builder.selectTarget(triple,
-                                                         mArch,
-                                                         mCPU,
-                                                         mAttrs);
-    
-    execution_engine_ap.reset(builder.create(target_machine));
-        
-    if (!execution_engine_ap.get())
-    {
-        err.SetErrorToGenericError();
-        err.SetErrorStringWithFormat("Couldn't JIT the function: %s", error_string.c_str());
-        return err;
-    }
-    
-    execution_engine_ap->DisableLazyCompilation();
-    
-    
-    // We don't actually need the function pointer here, this just forces it to get resolved.
-    
-    void *fun_ptr = execution_engine_ap->getPointerToFunction(function);
-        
-    // Errors usually cause failures in the JIT, but if we're lucky we get here.
-    
-    if (!function)
-    {
-        err.SetErrorToGenericError();
-        err.SetErrorStringWithFormat("Couldn't find '%s' in the JITted module", function_name.c_str());
-        return err;
-    }
-    
-    if (!fun_ptr)
-    {
-        err.SetErrorToGenericError();
-        err.SetErrorStringWithFormat("'%s' was in the JITted module but wasn't lowered", function_name.c_str());
-        return err;
-    }
-    
-    m_jitted_functions.push_back (ClangExpressionParser::JittedFunction(function_name.c_str(), (lldb::addr_t)fun_ptr));
-    
-
-    Process *process = exe_ctx.GetProcessPtr();
-    if (process == NULL)
-    {
-        err.SetErrorToGenericError();
-        err.SetErrorString("Couldn't write the JIT compiled code into the target because there is no target");
-        return err;
-    }
-        
-    jit_memory_manager->CommitAllocations(*process);
-    jit_memory_manager->ReportAllocations(*execution_engine_ap);
-    jit_memory_manager->WriteData(*process);
-    
-    std::vector<JittedFunction>::iterator pos, end = m_jitted_functions.end();
-    
-    for (pos = m_jitted_functions.begin(); pos != end; pos++)
-    {
-        (*pos).m_remote_addr = jit_memory_manager->GetRemoteAddressForLocal ((*pos).m_local_addr);
-    
-        if (!(*pos).m_name.compare(function_name.c_str()))
-        {
-            RecordingMemoryManager::AddrRange func_range = jit_memory_manager->GetRemoteRangeForLocal((*pos).m_local_addr);
-            func_end = func_range.first + func_range.second;
-            func_addr = (*pos).m_remote_addr;
-        }
-    }
-    
-    if (log)
-    {
-        log->Printf("Code can be run in the target.");
-        
-        StreamString disassembly_stream;
-        
-        Error err = DisassembleFunction(disassembly_stream, exe_ctx, jit_memory_manager);
-        
-        if (!err.Success())
-        {
-            log->Printf("Couldn't disassemble function : %s", err.AsCString("unknown error"));
-        }
-        else
-        {
-            log->Printf("Function disassembly:\n%s", disassembly_stream.GetData());
-        }
-    }
-    
-    err.Clear();
     return err;
-}
-
-Error
-ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &exe_ctx, RecordingMemoryManager *jit_memory_manager)
-{
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-    
-    const char *name = m_expr.FunctionName();
-    
-    Error ret;
-    
-    ret.Clear();
-    
-    lldb::addr_t func_local_addr = LLDB_INVALID_ADDRESS;
-    lldb::addr_t func_remote_addr = LLDB_INVALID_ADDRESS;
-    
-    std::vector<JittedFunction>::iterator pos, end = m_jitted_functions.end();
-    
-    for (pos = m_jitted_functions.begin(); pos < end; pos++)
-    {
-        if (strstr(pos->m_name.c_str(), name))
-        {
-            func_local_addr = pos->m_local_addr;
-            func_remote_addr = pos->m_remote_addr;
-        }
-    }
-    
-    if (func_local_addr == LLDB_INVALID_ADDRESS)
-    {
-        ret.SetErrorToGenericError();
-        ret.SetErrorStringWithFormat("Couldn't find function %s for disassembly", name);
-        return ret;
-    }
-    
-    if (log)
-        log->Printf("Found function, has local address 0x%" PRIx64 " and remote address 0x%" PRIx64, (uint64_t)func_local_addr, (uint64_t)func_remote_addr);
-    
-    std::pair <lldb::addr_t, lldb::addr_t> func_range;
-    
-    func_range = jit_memory_manager->GetRemoteRangeForLocal(func_local_addr);
-    
-    if (func_range.first == 0 && func_range.second == 0)
-    {
-        ret.SetErrorToGenericError();
-        ret.SetErrorStringWithFormat("Couldn't find code range for function %s", name);
-        return ret;
-    }
-    
-    if (log)
-        log->Printf("Function's code range is [0x%" PRIx64 "+0x%" PRIx64 "]", func_range.first, func_range.second);
-    
-    Target *target = exe_ctx.GetTargetPtr();
-    if (!target)
-    {
-        ret.SetErrorToGenericError();
-        ret.SetErrorString("Couldn't find the target");
-        return ret;
-    }
-    
-    lldb::DataBufferSP buffer_sp(new DataBufferHeap(func_range.second, 0));
-    
-    Process *process = exe_ctx.GetProcessPtr();
-    Error err;
-    process->ReadMemory(func_remote_addr, buffer_sp->GetBytes(), buffer_sp->GetByteSize(), err);
-    
-    if (!err.Success())
-    {
-        ret.SetErrorToGenericError();
-        ret.SetErrorStringWithFormat("Couldn't read from process: %s", err.AsCString("unknown error"));
-        return ret;
-    }
-    
-    ArchSpec arch(target->GetArchitecture());
-    
-    const char *plugin_name = NULL;
-    const char *flavor_string = NULL;
-    lldb::DisassemblerSP disassembler = Disassembler::FindPlugin(arch, flavor_string, plugin_name);
-    
-    if (!disassembler)
-    {
-        ret.SetErrorToGenericError();
-        ret.SetErrorStringWithFormat("Unable to find disassembler plug-in for %s architecture.", arch.GetArchitectureName());
-        return ret;
-    }
-    
-    if (!process)
-    {
-        ret.SetErrorToGenericError();
-        ret.SetErrorString("Couldn't find the process");
-        return ret;
-    }
-    
-    DataExtractor extractor(buffer_sp, 
-                            process->GetByteOrder(),
-                            target->GetArchitecture().GetAddressByteSize());
-    
-    if (log)
-    {
-        log->Printf("Function data has contents:");
-        extractor.PutToLog (log.get(),
-                            0,
-                            extractor.GetByteSize(),
-                            func_remote_addr,
-                            16,
-                            DataExtractor::TypeUInt8);
-    }
-    
-    disassembler->DecodeInstructions (Address (func_remote_addr), extractor, 0, UINT32_MAX, false);
-    
-    InstructionList &instruction_list = disassembler->GetInstructionList();
-    const uint32_t max_opcode_byte_size = instruction_list.GetMaxOpcocdeByteSize();
-    for (size_t instruction_index = 0, num_instructions = instruction_list.GetSize();
-         instruction_index < num_instructions; 
-         ++instruction_index)
-    {
-        Instruction *instruction = instruction_list.GetInstructionAtIndex(instruction_index).get();
-        instruction->Dump (&stream,
-                           max_opcode_byte_size,
-                           true,
-                           true,
-                           &exe_ctx);
-        stream.PutChar('\n');
-    }
-    
-    return ret;
 }

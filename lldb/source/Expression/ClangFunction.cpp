@@ -264,18 +264,17 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
     
     bool evaluated_statically = false; // should stay that way
     
-    Error jit_error (m_parser->PrepareForExecution (m_jit_alloc,
-                                                    m_jit_start_addr,
+    Error jit_error (m_parser->PrepareForExecution (m_jit_start_addr,
                                                     m_jit_end_addr,
                                                     exe_ctx, 
-                                                    NULL,
                                                     evaluated_statically,
                                                     const_result,
                                                     eExecutionPolicyAlways));
     
     if (!jit_error.Success())
         return false;
-    if (process && m_jit_alloc != LLDB_INVALID_ADDRESS)
+    
+    if (process && m_jit_start_addr)
         m_jit_process_wp = lldb::ProcessWP(process->shared_from_this());
     
     m_JITted = true;

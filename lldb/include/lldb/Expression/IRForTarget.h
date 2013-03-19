@@ -14,6 +14,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Symbol/TaggedASTType.h"
 #include "llvm/Pass.h"
 
@@ -35,6 +36,7 @@ namespace llvm {
 
 namespace lldb_private {
     class ClangExpressionDeclMap;
+    class IRExecutionUnit;
 }
 
 //----------------------------------------------------------------------
@@ -54,14 +56,6 @@ namespace lldb_private {
 class IRForTarget : public llvm::ModulePass
 {
 public:
-    class StaticDataAllocator {
-    public:
-        StaticDataAllocator();
-        virtual ~StaticDataAllocator();
-        virtual lldb_private::StreamString &GetStream() = 0;
-        virtual lldb::addr_t Allocate() = 0;
-    };
-    
     //------------------------------------------------------------------
     /// Constructor
     ///
@@ -84,8 +78,8 @@ public:
     ///     of the function, if it has no side-effects and the result can
     ///     be computed statically.
     ///
-    /// @param[in] data_allocator
-    ///     If non-NULL, the static data allocator to use for literal strings.
+    /// @param[in] execution_unit
+    ///     The holder for raw data associated with the expression.
     ///
     /// @param[in] error_stream
     ///     If non-NULL, a stream on which errors can be printed.
@@ -97,7 +91,7 @@ public:
                 bool resolve_vars,
                 lldb_private::ExecutionPolicy execution_policy,
                 lldb::ClangExpressionVariableSP &const_result,
-                StaticDataAllocator *data_allocator,
+                lldb_private::IRExecutionUnit &execution_unit,
                 lldb_private::Stream *error_stream,
                 const char* func_name = "$__lldb_expr");
     
@@ -653,6 +647,20 @@ private:
     bool
     StripAllGVs (llvm::Module &llvm_module);
     
+    class StaticDataAllocator {
+    public:
+        StaticDataAllocator(lldb_private::IRExecutionUnit &execution_unit);
+        lldb_private::StreamString &GetStream()
+        {
+            return m_stream_string;
+        }
+        lldb::addr_t Allocate();
+    private:
+        lldb_private::IRExecutionUnit  &m_execution_unit;
+        lldb_private::StreamString      m_stream_string;
+        lldb::addr_t                    m_allocation;
+    };
+    
     /// Flags
     bool                                    m_resolve_vars;             ///< True if external variable references and persistent variable references should be resolved
     lldb_private::ExecutionPolicy           m_execution_policy;         ///< True if the interpreter should be used to attempt to get a static result
@@ -663,7 +671,7 @@ private:
     llvm::Module                           *m_module;                   ///< The module being processed, or NULL if that has not been determined yet.
     std::auto_ptr<llvm::DataLayout>         m_target_data;              ///< The target data for the module being processed, or NULL if there is no module.
     lldb_private::ClangExpressionDeclMap   *m_decl_map;                 ///< The DeclMap containing the Decls 
-    StaticDataAllocator                    *m_data_allocator;           ///< If non-NULL, the allocator to use for constant strings
+    StaticDataAllocator                     m_data_allocator;           ///< The allocator to use for constant strings
     llvm::Constant                         *m_CFStringCreateWithBytes;  ///< The address of the function CFStringCreateWithBytes, cast to the appropriate function pointer type
     llvm::Constant                         *m_sel_registerName;         ///< The address of the function sel_registerName, cast to the appropriate function pointer type
     lldb::ClangExpressionVariableSP        &m_const_result;             ///< This value should be set to the return value of the expression if it is constant and the expression has no side effects
