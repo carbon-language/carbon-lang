@@ -706,6 +706,30 @@ uptr GetTlsSize() {
   return g_tls_size;
 }
 
+void AdjustStackSizeLinux(void *attr_, int verbosity) {
+  pthread_attr_t *attr = (pthread_attr_t *)attr_;
+  uintptr_t stackaddr = 0;
+  size_t stacksize = 0;
+  pthread_attr_getstack(attr, (void**)&stackaddr, &stacksize);
+  // GLibC will return (0 - stacksize) as the stack address in the case when
+  // stacksize is set, but stackaddr is not.
+  bool stack_set = (stackaddr != 0) && (stackaddr + stacksize != 0);
+  // We place a lot of tool data into TLS, account for that.
+  const uptr minstacksize = GetTlsSize() + 128*1024;
+  if (stacksize < minstacksize) {
+    if (!stack_set) {
+      if (verbosity && stacksize != 0)
+        Printf("Sanitizer: increasing stacksize %zu->%zu\n", stacksize,
+               minstacksize);
+      pthread_attr_setstacksize(attr, minstacksize);
+    } else {
+      Printf("Sanitizer: pre-allocated stack size is insufficient: "
+             "%zu < %zu\n", stacksize, minstacksize);
+      Printf("Sanitizer: pthread_create is likely to fail.\n");
+    }
+  }
+}
+
 }  // namespace __sanitizer
 
 #endif  // __linux__

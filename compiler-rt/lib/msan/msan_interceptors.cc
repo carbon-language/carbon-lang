@@ -22,6 +22,7 @@
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 #include "sanitizer_common/sanitizer_libc.h"
+#include "sanitizer_common/sanitizer_linux.h"
 
 #include <stdarg.h>
 // ACHTUNG! No other system header includes in this file.
@@ -826,7 +827,7 @@ INTERCEPTOR(int, getrusage, int who, void *usage) {
 extern "C" int pthread_attr_init(void *attr);
 extern "C" int pthread_attr_destroy(void *attr);
 extern "C" int pthread_attr_setstacksize(void *attr, uptr stacksize);
-extern "C" int pthread_attr_getstacksize(void *attr, uptr *stacksize);
+extern "C" int pthread_attr_getstack(void *attr, uptr *stack, uptr *stacksize);
 
 INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
             void * param) {
@@ -836,16 +837,8 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
     pthread_attr_init(&myattr);
     attr = &myattr;
   }
-  uptr stacksize = 0;
-  pthread_attr_getstacksize(attr, &stacksize);
-  // We place the huge ThreadState object into TLS, account for that.
-  const uptr minstacksize = GetTlsSize() + 128*1024;
-  if (stacksize < minstacksize) {
-    if (flags()->verbosity)
-      Printf("MemorySanitizer: increasing stacksize %zu->%zu\n", stacksize,
-             minstacksize);
-    pthread_attr_setstacksize(attr, minstacksize);
-  }
+
+  AdjustStackSizeLinux(attr, flags()->verbosity);
 
   int res = REAL(pthread_create)(th, attr, callback, param);
   if (attr == &myattr)

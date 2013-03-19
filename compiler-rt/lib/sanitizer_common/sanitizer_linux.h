@@ -48,6 +48,9 @@ class ThreadLister {
   struct linux_dirent* entry_;
   int bytes_read_;
 };
+
+void AdjustStackSizeLinux(void *attr, int verbosity);
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_LINUX_H

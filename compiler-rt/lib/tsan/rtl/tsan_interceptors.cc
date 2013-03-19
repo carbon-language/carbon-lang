@@ -15,6 +15,7 @@
 
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_libc.h"
+#include "sanitizer_common/sanitizer_linux.h"
 #include "sanitizer_common/sanitizer_platform_limits_posix.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
@@ -738,14 +739,14 @@ TSAN_INTERCEPTOR(int, pthread_create,
   }
   int detached = 0;
   pthread_attr_getdetachstate(attr, &detached);
-  uptr stacksize = 0;
-  pthread_attr_getstacksize(attr, &stacksize);
-  // We place the huge ThreadState object into TLS, account for that.
-  const uptr minstacksize = GetTlsSize() + 128*1024;
-  if (stacksize < minstacksize) {
-    DPrintf("ThreadSanitizer: stacksize %zu->%zu\n", stacksize, minstacksize);
-    pthread_attr_setstacksize(attr, minstacksize);
-  }
+
+#if defined(TSAN_DEBUG_OUTPUT)
+  int verbosity = (TSAN_DEBUG_OUTPUT);
+#else
+  int verbosity = 0;
+#endif
+  AdjustStackSizeLinux(attr, verbosity);
+
   ThreadParam p;
   p.callback = callback;
   p.param = param;

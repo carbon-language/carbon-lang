@@ -1413,13 +1413,13 @@ TEST(MemorySanitizer, scanf) {
   delete d;
 }
 
-static void* SimpleThread_threadfn(void* data) {
+static void *SimpleThread_threadfn(void* data) {
   return new int;
 }
 
 TEST(MemorySanitizer, SimpleThread) {
   pthread_t t;
-  void* p;
+  void *p;
   int res = pthread_create(&t, NULL, SimpleThread_threadfn, NULL);
   assert(!res);
   res = pthread_join(t, &p);
@@ -1429,23 +1429,43 @@ TEST(MemorySanitizer, SimpleThread) {
   delete (int*)p;
 }
 
-static void* SmallStackThread_threadfn(void* data) {
+static void *SmallStackThread_threadfn(void* data) {
   return 0;
 }
 
 TEST(MemorySanitizer, SmallStackThread) {
   pthread_attr_t attr;
   pthread_t t;
-  void* p;
+  void *p;
   int res;
   res = pthread_attr_init(&attr);
   ASSERT_EQ(0, res);
   res = pthread_attr_setstacksize(&attr, 64 * 1024);
   ASSERT_EQ(0, res);
-  res = pthread_create(&t, &attr, SimpleThread_threadfn, NULL);
+  res = pthread_create(&t, &attr, SmallStackThread_threadfn, NULL);
   ASSERT_EQ(0, res);
   res = pthread_join(t, &p);
   ASSERT_EQ(0, res);
+  res = pthread_attr_destroy(&attr);
+  ASSERT_EQ(0, res);
+}
+
+TEST(MemorySanitizer, PreAllocatedStackThread) {
+  pthread_attr_t attr;
+  pthread_t t;
+  int res;
+  res = pthread_attr_init(&attr);
+  ASSERT_EQ(0, res);
+  void *stack;
+  const size_t kStackSize = 64 * 1024;
+  res = posix_memalign(&stack, 4096, kStackSize);
+  ASSERT_EQ(0, res);
+  res = pthread_attr_setstack(&attr, stack, kStackSize);
+  ASSERT_EQ(0, res);
+  // A small self-allocated stack can not be extended by the tool.
+  // In this case pthread_create is expected to fail.
+  res = pthread_create(&t, &attr, SmallStackThread_threadfn, NULL);
+  EXPECT_NE(0, res);
   res = pthread_attr_destroy(&attr);
   ASSERT_EQ(0, res);
 }
