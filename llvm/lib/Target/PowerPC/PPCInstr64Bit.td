@@ -578,7 +578,7 @@ def LWAX : XForm_1<31, 341, (outs G8RC:$rD), (ins memrr:$src),
                    PPC970_DGroup_Cracked;
 
 // Update forms.
-let mayLoad = 1 in
+let mayLoad = 1 in {
 def LHAU8 : DForm_1<43, (outs G8RC:$rD, ptr_rc_nor0:$ea_result),
                     (ins memri:$addr),
                     "lhau $rD, $addr", LdStLHAU,
@@ -596,6 +596,7 @@ def LWAUX : XForm_1<31, 373, (outs G8RC:$rD, ptr_rc_nor0:$ea_result),
                     "lwaux $rD, $addr", LdStLHAU,
                     []>, RegConstraint<"$addr.offreg = $ea_result">,
                     NoEncode<"$ea_result">, isPPC64;
+}
 }
 
 // Zero extending loads.
