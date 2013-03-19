@@ -31,7 +31,7 @@
 #include <unistd.h>
 #include <unwind.h>
 
-#if !ASAN_ANDROID
+#if !SANITIZER_ANDROID
 // FIXME: where to get ucontext on Android?
 #include <sys/ucontext.h>
 #endif
@@ -50,7 +50,7 @@ void *AsanDoesNotSupportStaticLinkage() {
 }
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
-#if ASAN_ANDROID
+#if SANITIZER_ANDROID
   *pc = *sp = *bp = 0;
 #elif defined(__arm__)
   ucontext_t *ucontext = (ucontext_t*)context;
@@ -119,7 +119,7 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast) {
   }
 }
 
-#if !ASAN_ANDROID
+#if !SANITIZER_ANDROID
 void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
   ucontext_t *ucp = (ucontext_t*)context;
   *stack = (uptr)ucp->uc_stack.ss_sp;

@@ -169,7 +169,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->poison_heap = true;
   // Turn off alloc/dealloc mismatch checker on Mac for now.
   // TODO(glider): Fix known issues and enable this back.
-  f->alloc_dealloc_mismatch = (ASAN_MAC == 0);;
+  f->alloc_dealloc_mismatch = (SANITIZER_MAC == 0);;
   f->use_stack_depot = true;  // Only affects allocator2.
   f->strict_memcmp = true;
 
@@ -462,7 +462,7 @@ void __asan_init() {
   bool full_shadow_is_available =
       MemoryRangeIsAvailable(shadow_start, shadow_end);
 
-#if ASAN_LINUX && defined(__x86_64__) && !ASAN_FIXED_MAPPING
+#if SANITIZER_LINUX && defined(__x86_64__) && !ASAN_FIXED_MAPPING
   if (!full_shadow_is_available) {
     kMidMemBeg = kLowMemEnd < 0x3000000000ULL ? 0x3000000000ULL : 0;
     kMidMemEnd = kLowMemEnd < 0x3000000000ULL ? 0x4fffffffffULL : 0;

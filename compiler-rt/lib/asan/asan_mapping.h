@@ -56,7 +56,7 @@ extern SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_mapping_offset;
 # define SHADOW_SCALE (__asan_mapping_scale)
 # define SHADOW_OFFSET (__asan_mapping_offset)
 #else
-# if ASAN_ANDROID
+# if SANITIZER_ANDROID
 #  define SHADOW_SCALE (3)
 #  define SHADOW_OFFSET (0)
 # else
@@ -67,7 +67,7 @@ extern SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_mapping_offset;
 #   if defined(__powerpc64__)
 #    define SHADOW_OFFSET (1ULL << 41)
 #   else
-#    if ASAN_MAC
+#    if SANITIZER_MAC
 #     define SHADOW_OFFSET (1ULL << 44)
 #    else
 #     define SHADOW_OFFSET 0x7fff8000ULL
