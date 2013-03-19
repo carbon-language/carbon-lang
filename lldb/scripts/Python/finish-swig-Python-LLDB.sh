@@ -223,37 +223,10 @@ package_files="${SRC_ROOT}/examples/synthetic/gnu_libstdcpp.py
 ${SRC_ROOT}/examples/synthetic/libcxx.py"
 create_python_package "/formatters/cpp" "${package_files}"
 
-# lldb/formatters/objc
-package_files="${SRC_ROOT}/examples/summaries/cocoa/Selector.py
-${SRC_ROOT}/examples/summaries/objc.py
-${SRC_ROOT}/examples/summaries/cocoa/Class.py
-${SRC_ROOT}/examples/summaries/cocoa/CFArray.py
-${SRC_ROOT}/examples/summaries/cocoa/CFBag.py
-${SRC_ROOT}/examples/summaries/cocoa/CFBinaryHeap.py
-${SRC_ROOT}/examples/summaries/cocoa/CFBitVector.py
-${SRC_ROOT}/examples/summaries/cocoa/CFDictionary.py
-${SRC_ROOT}/examples/summaries/cocoa/CFString.py
-${SRC_ROOT}/examples/summaries/cocoa/NSBundle.py
-${SRC_ROOT}/examples/summaries/cocoa/NSData.py
-${SRC_ROOT}/examples/summaries/cocoa/NSDate.py
-${SRC_ROOT}/examples/summaries/cocoa/NSException.py
-${SRC_ROOT}/examples/summaries/cocoa/NSIndexSet.py
-${SRC_ROOT}/examples/summaries/cocoa/NSMachPort.py
-${SRC_ROOT}/examples/summaries/cocoa/NSNotification.py
-${SRC_ROOT}/examples/summaries/cocoa/NSNumber.py
-${SRC_ROOT}/examples/summaries/cocoa/NSSet.py
-${SRC_ROOT}/examples/summaries/cocoa/NSURL.py"
-create_python_package "/formatters/objc" "${package_files}"
-
-
 # make an empty __init__.py in lldb/runtime
 # this is required for Python to recognize lldb.runtime as a valid package
 # (and hence, lldb.runtime.objc as a valid contained package)
 create_python_package "/runtime" ""
-
-# lldb/runtime/objc
-package_files="${SRC_ROOT}/examples/summaries/cocoa/objc_runtime.py"
-create_python_package "/runtime/objc" "${package_files}"
 
 # lldb/formatters
 # having these files copied here ensures that lldb/formatters is a valid package itself

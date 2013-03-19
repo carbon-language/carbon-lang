@@ -974,10 +974,10 @@ FormatManager::LoadObjCFormatters()
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSURLSummaryProvider, "NSURL summary provider", ConstString("NSURL"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSURLSummaryProvider, "NSURL summary provider", ConstString("CFURLRef"), appkit_flags);
     
-    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.NSDate_SummaryProvider", ConstString("NSDate"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.NSDate_SummaryProvider", ConstString("__NSDate"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.NSDate_SummaryProvider", ConstString("__NSTaggedDate"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.NSDate_SummaryProvider", ConstString("NSCalendarDate"), appkit_flags);
+    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDateSummaryProvider, "NSDate summary provider", ConstString("NSDate"), appkit_flags);
+    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDateSummaryProvider, "NSDate summary provider", ConstString("__NSDate"), appkit_flags);
+    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDateSummaryProvider, "NSDate summary provider", ConstString("__NSTaggedDate"), appkit_flags);
+    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSDateSummaryProvider, "NSDate summary provider", ConstString("NSCalendarDate"), appkit_flags);
 
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSTimeZoneSummaryProvider, "NSTimeZone summary provider", ConstString("NSTimeZone"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSTimeZoneSummaryProvider, "NSTimeZone summary provider", ConstString("CFTimeZoneRef"), appkit_flags);
@@ -986,7 +986,7 @@ FormatManager::LoadObjCFormatters()
     // CFAbsoluteTime is actually a double rather than a pointer to an object
     // we do not care about the numeric value, since it is probably meaningless to users
     appkit_flags.SetDontShowValue(true);
-    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.CFAbsoluteTime_SummaryProvider", ConstString("CFAbsoluteTime"), appkit_flags);
+    AddCXXSummary(appkit_category_sp, lldb_private::formatters::CFAbsoluteTimeSummaryProvider, "CFAbsoluteTime summary provider", ConstString("CFAbsoluteTime"), appkit_flags);
     appkit_flags.SetDontShowValue(false);
     
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSIndexSetSummaryProvider, "NSIndexSet summary provider", ConstString("NSIndexSet"), appkit_flags);

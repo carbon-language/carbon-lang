@@ -9,6 +9,8 @@
 
 #include "lldb/lldb-python.h"
 
+#include <time.h>
+
 #include "lldb/DataFormatters/CXXFormatterFunctions.h"
 
 #include "llvm/Support/ConvertUTF.h"
@@ -1615,6 +1617,131 @@ lldb_private::formatters::ObjCSELSummaryProvider (ValueObject& valobj, Stream& s
         return false;
     
     stream.Printf("%s",valobj_sp->GetSummaryAsCString());
+    return true;
+}
+
+// POSIX has an epoch on Jan-1-1970, but Cocoa prefers Jan-1-2001
+// this call gives the POSIX equivalent of the Cocoa epoch
+time_t
+GetOSXEpoch ()
+{
+    static time_t epoch = 0;
+    if (!epoch)
+    {
+        tzset();
+        tm tm_epoch;
+        tm_epoch.tm_sec = 0;
+        tm_epoch.tm_hour = 0;
+        tm_epoch.tm_min = 0;
+        tm_epoch.tm_mon = 0;
+        tm_epoch.tm_mday = 1;
+        tm_epoch.tm_year = 2001-1900; // for some reason, we need to subtract 1900 from this field. not sure why.
+        tm_epoch.tm_isdst = -1;
+        tm_epoch.tm_gmtoff = 0;
+        tm_epoch.tm_zone = NULL;
+        epoch = timegm(&tm_epoch);
+    }
+    return epoch;
+}
+
+bool
+lldb_private::formatters::NSDateSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    ProcessSP process_sp = valobj.GetProcessSP();
+    if (!process_sp)
+        return false;
+    
+    ObjCLanguageRuntime* runtime = (ObjCLanguageRuntime*)process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+    
+    if (!runtime)
+        return false;
+    
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(valobj));
+    
+    if (!descriptor.get() || !descriptor->IsValid())
+        return false;
+    
+    uint32_t ptr_size = process_sp->GetAddressByteSize();
+    
+    lldb::addr_t valobj_addr = valobj.GetValueAsUnsigned(0);
+    
+    if (!valobj_addr)
+        return false;
+
+    uint64_t date_value_bits = 0;
+    double date_value = 0.0;
+    
+    const char* class_name = descriptor->GetClassName().GetCString();
+    
+    if (!class_name || !*class_name)
+        return false;
+    
+    if (strcmp(class_name,"NSDate") == 0 ||
+        strcmp(class_name,"__NSDate") == 0 ||
+        strcmp(class_name,"__NSTaggedDate") == 0)
+    {
+        if (descriptor->IsTagged())
+        {
+            uint64_t info_bits = (valobj_addr & 0xF0ULL) >> 4;
+            uint64_t value_bits = (valobj_addr & ~0x0000000000000000FFULL) >> 8;
+            date_value_bits = ((value_bits << 8) | (info_bits << 4));
+            date_value = *((double*)&date_value_bits);
+        }
+        else
+        {
+            Error error;
+            date_value_bits = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr+ptr_size, 8, 0, error);
+            date_value = *((double*)&date_value_bits);
+            if (error.Fail())
+                return false;
+        }
+    }
+    else if (!strcmp(class_name,"NSCalendarDate"))
+    {
+        Error error;
+        date_value_bits = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr+2*ptr_size, 8, 0, error);
+        date_value = *((double*)&date_value_bits);
+        if (error.Fail())
+            return false;
+    }
+    else
+    {
+        if (ExtractValueFromObjCExpression(valobj, "NSTimeInterval", "ExtractValueFromObjCExpression", date_value_bits) == false)
+            return false;
+        date_value = *((double*)&date_value_bits);
+    }
+    if (date_value == -63114076800)
+    {
+        stream.Printf("0001-12-30 00:00:00 +0000");
+        return true;
+    }
+    // this snippet of code assumes that time_t == seconds since Jan-1-1970
+    // this is generally true and POSIXly happy, but might break if a library
+    // vendor decides to get creative
+    time_t epoch = GetOSXEpoch();
+    epoch = epoch + (time_t)date_value;
+    tm *tm_date = localtime(&epoch);
+    if (!tm_date)
+        return false;
+    std::string buffer(1024,0);
+    if (strftime (&buffer[0], 1023, "%Z", tm_date) == 0)
+        return false;
+    stream.Printf("%04d-%02d-%02d %02d:%02d:%02d %s", tm_date->tm_year+1900, tm_date->tm_mon+1, tm_date->tm_mday, tm_date->tm_hour, tm_date->tm_min, tm_date->tm_sec, buffer.c_str());
+    return true;
+}
+
+bool
+lldb_private::formatters::CFAbsoluteTimeSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    time_t epoch = GetOSXEpoch();
+    epoch = epoch + (time_t)valobj.GetValueAsUnsigned(0);
+    tm *tm_date = localtime(&epoch);
+    if (!tm_date)
+        return false;
+    std::string buffer(1024,0);
+    if (strftime (&buffer[0], 1023, "%Z", tm_date) == 0)
+        return false;
+    stream.Printf("%04d-%02d-%02d %02d:%02d:%02d %s", tm_date->tm_year+1900, tm_date->tm_mon+1, tm_date->tm_mday, tm_date->tm_hour, tm_date->tm_min, tm_date->tm_sec, buffer.c_str());
     return true;
 }
 

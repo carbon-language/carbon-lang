@@ -116,6 +116,12 @@ namespace lldb_private {
         CFBitVectorSummaryProvider (ValueObject& valobj, Stream& stream);
         
         bool
+        NSDateSummaryProvider (ValueObject& valobj, Stream& stream);
+        
+        bool
+        CFAbsoluteTimeSummaryProvider (ValueObject& valobj, Stream& stream);
+        
+        bool
         NSBundleSummaryProvider (ValueObject& valobj, Stream& stream);
         
         bool
