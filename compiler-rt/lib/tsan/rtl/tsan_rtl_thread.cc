@@ -44,6 +44,7 @@ void ThreadContext::OnJoined(void *arg) {
   ThreadState *caller_thr = static_cast<ThreadState *>(arg);
   caller_thr->clock.acquire(&sync);
   StatInc(caller_thr, StatSyncAcquire);
+  sync.Reset();
 }
 
 struct OnCreatedArgs {
