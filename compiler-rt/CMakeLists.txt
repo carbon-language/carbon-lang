@@ -23,10 +23,10 @@ string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION
 # Setup the paths where compiler-rt runtimes and headers should be stored.
 set(LIBCLANG_INSTALL_PATH lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION})
 string(TOLOWER ${CMAKE_SYSTEM_NAME} LIBCLANG_OS_DIR)
-set(COMPILER_RT_LIBRARY_OUTPUT_DIR 
-  ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/lib/${LIBCLANG_OS_DIR})
+set(CLANG_RESOURCE_DIR ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION})
+set(COMPILER_RT_LIBRARY_OUTPUT_DIR ${CLANG_RESOURCE_DIR}/lib/${LIBCLANG_OS_DIR})
 set(COMPILER_RT_LIBRARY_INSTALL_DIR
- ${LIBCLANG_INSTALL_PATH}/lib/${LIBCLANG_OS_DIR}) 
+  ${LIBCLANG_INSTALL_PATH}/lib/${LIBCLANG_OS_DIR})
 
 # Add path for custom modules
 set(CMAKE_MODULE_PATH
@@ -36,6 +36,9 @@ set(CMAKE_MODULE_PATH
 include(AddCompilerRT)
 
 set(COMPILER_RT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+# Setup custom SDK sysroots.
+set(COMPILER_RT_DARWIN_SDK_SYSROOT ${COMPILER_RT_SOURCE_DIR}/SDKs/darwin)
+set(COMPILER_RT_LINUX_SDK_SYSROOT ${COMPILER_RT_SOURCE_DIR}/SDKs/linux)
 
 # Detect whether the current target platform is 32-bit or 64-bit, and setup
 # the correct commandline flags needed to attempt to target 32-bit and 64-bit.
