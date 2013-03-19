@@ -422,6 +422,15 @@ void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     Opc = PPC::VOR;
   else if (PPC::CRBITRCRegClass.contains(DestReg, SrcReg))
     Opc = PPC::CROR;
+
+  // Asymmetric copies:
+
+  else if (PPC::GPRCRegClass.contains(DestReg) &&
+           PPC::G8RCRegClass.contains(SrcReg))
+    Opc = PPC::OR_64;
+  else if (PPC::G8RCRegClass.contains(DestReg) &&
+           PPC::GPRCRegClass.contains(SrcReg))
+    Opc = PPC::OR8_32;
   else
     llvm_unreachable("Impossible reg-to-reg copy");
 

@@ -1031,8 +1031,7 @@ bool PPCTargetLowering::SelectAddressRegImm(SDValue N, SDValue &Disp,
     short Imm;
     if (isIntS16Immediate(CN, Imm)) {
       Disp = DAG.getTargetConstant(Imm, CN->getValueType(0));
-      Base = DAG.getRegister(PPCSubTarget.isPPC64() ? PPC::X0 : PPC::R0,
-                             CN->getValueType(0));
+      Base = DAG.getRegister(PPC::ZERO, CN->getValueType(0));
       return true;
     }
 
@@ -1080,8 +1079,7 @@ bool PPCTargetLowering::SelectAddressRegRegOnly(SDValue N, SDValue &Base,
   }
 
   // Otherwise, do it the hard way, using R0 as the base register.
-  Base = DAG.getRegister(PPCSubTarget.isPPC64() ? PPC::X0 : PPC::R0,
-                         N.getValueType());
+  Base = DAG.getRegister(PPC::ZERO, N.getValueType());
   Index = N;
   return true;
 }
@@ -1143,8 +1141,7 @@ bool PPCTargetLowering::SelectAddressRegImmShift(SDValue N, SDValue &Disp,
       short Imm;
       if (isIntS16Immediate(CN, Imm)) {
         Disp = DAG.getTargetConstant((unsigned short)Imm >> 2, getPointerTy());
-        Base = DAG.getRegister(PPCSubTarget.isPPC64() ? PPC::X0 : PPC::R0,
-                               CN->getValueType(0));
+        Base = DAG.getRegister(PPC::ZERO, CN->getValueType(0));
         return true;
       }
 
@@ -5753,7 +5750,7 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr *MI,
   // registers without caring whether they're 32 or 64, but here we're
   // doing actual arithmetic on the addresses.
   bool is64bit = PPCSubTarget.isPPC64();
-  unsigned ZeroReg = is64bit ? PPC::X0 : PPC::R0;
+  unsigned ZeroReg = PPC::ZERO;
 
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
   MachineFunction *F = BB->getParent();
@@ -6142,7 +6139,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     unsigned TmpDestReg = RegInfo.createVirtualRegister(RC);
     unsigned Ptr1Reg;
     unsigned TmpReg = RegInfo.createVirtualRegister(RC);
-    unsigned ZeroReg = is64bit ? PPC::X0 : PPC::R0;
+    unsigned ZeroReg = PPC::ZERO;
     //  thisMBB:
     //   ...
     //   fallthrough --> loopMBB
@@ -6631,6 +6628,9 @@ PPCTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     // GCC RS6000 Constraint Letters
     switch (Constraint[0]) {
     case 'b':   // R1-R31
+      if (VT == MVT::i64 && PPCSubTarget.isPPC64())
+        return std::make_pair(0U, &PPC::G8RC_NOX0RegClass);
+      return std::make_pair(0U, &PPC::GPRC_NOR0RegClass);
     case 'r':   // R0-R31
       if (VT == MVT::i64 && PPCSubTarget.isPPC64())
         return std::make_pair(0U, &PPC::G8RCRegClass);

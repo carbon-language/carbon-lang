@@ -86,6 +86,9 @@ foreach Index = 0-31 in {
                 DwarfRegNum<[!add(Index, 77), !add(Index, 77)]>;
 }
 
+// The reprsentation of r0 when treated as the constant 0.
+def ZERO : GPR<0, "r0">;
+
 // Condition register bits
 def CR0LT : CRBIT< 0, "0">;
 def CR0GT : CRBIT< 1, "1">;
@@ -169,6 +172,12 @@ def GPRC : RegisterClass<"PPC", [i32], 32, (add (sequence "R%u", 2, 12),
 def G8RC : RegisterClass<"PPC", [i64], 64, (add (sequence "X%u", 2, 12),
                                                 (sequence "X%u", 30, 14),
                                                 X31, X13, X0, X1, LR8)>;
+
+// For some instructions r0 is special (representing the value 0 instead of
+// the value in the r0 register), and we use these register subclasses to
+// prevent r0 from being allocated for use by those instructions.
+def GPRC_NOR0 : RegisterClass<"PPC", [i32], 32, (add (sub GPRC, R0), ZERO)>;
+def G8RC_NOX0 : RegisterClass<"PPC", [i64], 64, (add (sub G8RC, X0), ZERO)>;
 
 // Allocate volatiles first, then non-volatiles in reverse order. With the SVR4
 // ABI the size of the Floating-point register save area is determined by the

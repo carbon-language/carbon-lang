@@ -76,6 +76,12 @@ PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
 const TargetRegisterClass *
 PPCRegisterInfo::getPointerRegClass(const MachineFunction &MF, unsigned Kind)
                                                                        const {
+  if (Kind == 1) {
+    if (Subtarget.isPPC64())
+      return &PPC::G8RC_NOX0RegClass;
+    return &PPC::GPRC_NOR0RegClass;
+  }
+
   if (Subtarget.isPPC64())
     return &PPC::G8RCRegClass;
   return &PPC::GPRCRegClass;
@@ -103,6 +109,10 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   const PPCFrameLowering *PPCFI =
     static_cast<const PPCFrameLowering*>(MF.getTarget().getFrameLowering());
+
+  // The ZERO register is not really a register, but the representation of r0
+  // when used in instructions that treat r0 as the constant 0.
+  Reserved.set(PPC::ZERO);
 
   Reserved.set(PPC::R0);
   Reserved.set(PPC::R1);
@@ -148,6 +158,8 @@ PPCRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
   switch (RC->getID()) {
   default:
     return 0;
+  case PPC::G8RC_NOX0RegClassID:
+  case PPC::GPRC_NOR0RegClassID: 
   case PPC::G8RCRegClassID:
   case PPC::GPRCRegClassID: {
     unsigned FP = TFI->hasFP(MF) ? 1 : 0;
