@@ -58,7 +58,7 @@ class ExprDoesntDeadlockTestCase(TestBase):
         # Frame #0 should be on self.line1 and the break condition should hold.
         from lldbutil import get_stopped_thread
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint condition")
 
         frame0 = thread.GetFrameAtIndex(0)
 

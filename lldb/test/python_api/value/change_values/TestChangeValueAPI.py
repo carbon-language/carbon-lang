@@ -68,7 +68,7 @@ class ChangeValueAPITestCase(TestBase):
         # Get Frame #0.
         self.assertTrue(process.GetState() == lldb.eStateStopped)
         thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint condition")
         frame0 = thread.GetFrameAtIndex(0)
         self.assertTrue (frame0.IsValid(), "Got a valid frame.")
 
@@ -128,7 +128,7 @@ class ChangeValueAPITestCase(TestBase):
 
         self.assertTrue(process.GetState() == lldb.eStateStopped)
         thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint condition")
 
         expected_value = "Val - 12345 Mine - 55, 98765, 55555555. Ptr - 66, 98765, 66666666"
         stdout = process.GetSTDOUT(1000)

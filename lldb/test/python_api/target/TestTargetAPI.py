@@ -262,7 +262,7 @@ class TargetAPITestCase(TestBase):
         # Frame #0 should be on self.line1.
         self.assertTrue(process.GetState() == lldb.eStateStopped)
         thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint condition")
         #self.runCmd("process status")
         frame0 = thread.GetFrameAtIndex(0)
         lineEntry = frame0.GetLineEntry()
@@ -274,7 +274,7 @@ class TargetAPITestCase(TestBase):
         process.Continue()
         self.assertTrue(process.GetState() == lldb.eStateStopped)
         thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint condition")
         #self.runCmd("process status")
         frame0 = thread.GetFrameAtIndex(0)
         lineEntry = frame0.GetLineEntry()

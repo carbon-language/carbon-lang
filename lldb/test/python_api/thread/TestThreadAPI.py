@@ -133,7 +133,7 @@ class ThreadAPITestCase(TestBase):
         process = target.LaunchSimple(None, None, os.getcwd())
 
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint")
         self.runCmd("process status")
 
         proc_of_thread = thread.GetProcess()
@@ -155,7 +155,7 @@ class ThreadAPITestCase(TestBase):
         process = target.LaunchSimple(None, None, os.getcwd())
 
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint")
         #self.runCmd("process status")
 
         # Due to the typemap magic (see lldb.swig), we pass in an (int)length to GetStopDescription
@@ -181,7 +181,7 @@ class ThreadAPITestCase(TestBase):
 
         while True:
             thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-            self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+            self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint")
             caller_symbol = get_caller_symbol(thread)
             #print "caller symbol of malloc:", caller_symbol
             if not caller_symbol:
@@ -217,7 +217,7 @@ class ThreadAPITestCase(TestBase):
         # Frame #0 should be on self.step_out_of_malloc.
         self.assertTrue(process.GetState() == lldb.eStateStopped)
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint condition")
         self.runCmd("thread backtrace")
         frame0 = thread.GetFrameAtIndex(0)
         lineEntry = frame0.GetLineEntry()
@@ -258,7 +258,7 @@ class ThreadAPITestCase(TestBase):
         # Frame #0 should be on self.step_out_of_malloc.
         self.assertTrue(process.GetState() == lldb.eStateStopped)
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint condition")
         self.runCmd("thread backtrace")
         frame0 = thread.GetFrameAtIndex(0)
         lineEntry = frame0.GetLineEntry()

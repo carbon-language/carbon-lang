@@ -61,7 +61,7 @@ class SymbolAPITestCase(TestBase):
         # Frame #0 should be on self.line1.
         self.assertTrue(process.GetState() == lldb.eStateStopped)
         thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint condition")
         frame0 = thread.GetFrameAtIndex(0)
         symbol_line1 = frame0.GetSymbol()
         # We should have a symbol type of code.
@@ -74,7 +74,7 @@ class SymbolAPITestCase(TestBase):
         process.Continue()
         self.assertTrue(process.GetState() == lldb.eStateStopped)
         thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint condition")
         frame0 = thread.GetFrameAtIndex(0)
         symbol_line2 = frame0.GetSymbol()
         # We should have a symbol type of code.

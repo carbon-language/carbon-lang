@@ -59,7 +59,7 @@ class ValueAsLinkedListTestCase(TestBase):
         # Get Frame #0.
         self.assertTrue(process.GetState() == lldb.eStateStopped)
         thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint condition")
         frame0 = thread.GetFrameAtIndex(0)
 
         # Get variable 'task_head'.

@@ -90,7 +90,7 @@ class ProcessAPITestCase(TestBase):
         process = target.LaunchSimple(None, None, os.getcwd())
 
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint")
         frame = thread.GetFrameAtIndex(0)
 
         # Get the SBValue for the global variable 'my_char'.
@@ -172,7 +172,7 @@ class ProcessAPITestCase(TestBase):
         process = target.LaunchSimple(None, None, os.getcwd())
 
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint")
         frame = thread.GetFrameAtIndex(0)
 
         # Get the SBValue for the global variable 'my_char'.
@@ -223,7 +223,7 @@ class ProcessAPITestCase(TestBase):
         process = target.LaunchSimple(None, None, os.getcwd())
 
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint")
         frame = thread.GetFrameAtIndex(0)
 
         # Get the SBValue for the global variable 'my_int'.

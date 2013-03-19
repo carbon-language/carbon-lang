@@ -479,7 +479,7 @@ def get_stopped_thread(process, reason):
     ...
         from lldbutil import get_stopped_thread
         thread = get_stopped_thread(process, lldb.eStopReasonPlanComplete)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint condition")
     ...
 
     2. Get the thread stopped due to a breakpoint
@@ -487,7 +487,7 @@ def get_stopped_thread(process, reason):
     ...
         from lldbutil import get_stopped_thread
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+        self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint")
     ...
 
     """
