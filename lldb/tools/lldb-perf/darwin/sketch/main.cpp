@@ -24,29 +24,34 @@ class SketchTest : public TestCase
 {
 public:
     SketchTest () :
-    m_fetch_frames_measurement ([this] (SBProcess process) -> void {
-        Xcode::FetchFrames (process,false,false);
-    }, "fetch-frames", "time to dump backtrace for every frame in every thread"),
-    m_file_line_bp_measurement([] (SBTarget target,const char* file, uint32_t line) -> void {
-        Xcode::CreateFileLineBreakpoint(target, file, line);
-    }, "file-line-bkpt", "time to set a breakpoint given a file and line"),
-    m_fetch_modules_measurement ([] (SBTarget target) -> void {
-        Xcode::FetchModules(target);
-    }, "fetch-modules", "time to get info for all modules in the process"),
-    m_fetch_vars_measurement([this] (SBProcess process, int depth) -> void {
-        auto threads_count = process.GetNumThreads();
-        for (size_t thread_num = 0; thread_num < threads_count; thread_num++)
-        {
-            SBThread thread(process.GetThreadAtIndex(thread_num));
-            SBFrame frame(thread.GetFrameAtIndex(0));
-            Xcode::FetchVariables(frame,depth,GetVerbose());
-            
-        }
-    }, "fetch-vars", "time to dump variables for the topmost frame in every thread"),
-    m_run_expr_measurement([this] (SBFrame frame, const char* expr) -> void {
-        SBValue value(frame.EvaluateExpression(expr, lldb::eDynamicCanRunTarget));
-        Xcode::FetchVariable(value,0,GetVerbose());
-    }, "run-expr", "time to evaluate an expression and display the result")
+        m_fetch_frames_measurement ([this] () -> void
+            {
+                Xcode::FetchFrames (GetProcess(),false,false);
+            }, "fetch-frames", "time to dump backtrace for every frame in every thread"),
+        m_file_line_bp_measurement([this] (const char* file, uint32_t line) -> void
+            {
+                Xcode::CreateFileLineBreakpoint(GetTarget(), file, line);
+            }, "file-line-bkpt", "time to set a breakpoint given a file and line"),
+        m_fetch_modules_measurement ([this] () -> void
+            {
+                Xcode::FetchModules(GetTarget());
+            }, "fetch-modules", "time to get info for all modules in the process"),
+        m_fetch_vars_measurement([this] (int depth) -> void
+            {
+                SBProcess process (GetProcess());
+                auto threads_count = process.GetNumThreads();
+                for (size_t thread_num = 0; thread_num < threads_count; thread_num++)
+                {
+                    SBThread thread(process.GetThreadAtIndex(thread_num));
+                    SBFrame frame(thread.GetFrameAtIndex(0));
+                    Xcode::FetchVariables(frame,depth,GetVerbose());
+                }
+            }, "fetch-vars", "time to dump variables for the topmost frame in every thread"),
+        m_run_expr_measurement([this] (SBFrame frame, const char* expr) -> void
+            {
+                SBValue value(frame.EvaluateExpression(expr, lldb::eDynamicCanRunTarget));
+                Xcode::FetchVariable (value, 0, GetVerbose());
+            }, "run-expr", "time to evaluate an expression and display the result")
     {}
     
     virtual
@@ -57,7 +62,7 @@ public:
     virtual bool
 	Setup (int argc, const char** argv)
     {
-        SetVerbose(true);
+        //SetVerbose(true);
         m_app_path.assign(argv[1]);
         m_doc_path.assign(argv[2]);
         m_out_path.assign(argv[3]);
@@ -69,18 +74,18 @@ public:
         const char* empty = nullptr;
         const char* args[] = {file_arg,persist_arg,persist_skip,empty};
         SBLaunchInfo launch_info (args);
-        m_file_line_bp_measurement(m_target, "SKTDocument.m",245);
-        m_file_line_bp_measurement(m_target, "SKTDocument.m",283);
-        m_file_line_bp_measurement(m_target, "SKTText.m",326);
+        m_file_line_bp_measurement("SKTDocument.m",245);
+        m_file_line_bp_measurement("SKTDocument.m",283);
+        m_file_line_bp_measurement("SKTText.m",326);
         return Launch (launch_info);
     }
     
     void
     DoTest ()
     {
-        m_fetch_frames_measurement(m_process);
-        m_fetch_modules_measurement(m_target);
-        m_fetch_vars_measurement(m_process,1);
+        m_fetch_frames_measurement();
+        m_fetch_modules_measurement();
+        m_fetch_vars_measurement(1);
     }
     
 	virtual void
@@ -91,7 +96,7 @@ public:
         case 0:
             {
                 DoTest ();
-                m_file_line_bp_measurement(m_target, "SKTDocument.m",254);
+                m_file_line_bp_measurement("SKTDocument.m",254);
                 next_action.Continue();
             }
             break;
@@ -191,11 +196,11 @@ public:
     }
     
 private:
-    Measurement<lldb_perf::TimeGauge, std::function<void(SBProcess)>> m_fetch_frames_measurement;
-    Measurement<lldb_perf::TimeGauge, std::function<void(SBTarget, const char*, uint32_t)>> m_file_line_bp_measurement;
-    Measurement<lldb_perf::TimeGauge, std::function<void(SBTarget)>> m_fetch_modules_measurement;
-    Measurement<lldb_perf::TimeGauge, std::function<void(SBProcess,int)>> m_fetch_vars_measurement;
-    Measurement<lldb_perf::TimeGauge, std::function<void(SBFrame,const char*)>> m_run_expr_measurement;
+    Measurement<lldb_perf::TimeGauge, std::function<void()>> m_fetch_frames_measurement;
+    Measurement<lldb_perf::TimeGauge, std::function<void(const char*, uint32_t)>> m_file_line_bp_measurement;
+    Measurement<lldb_perf::TimeGauge, std::function<void()>> m_fetch_modules_measurement;
+    Measurement<lldb_perf::TimeGauge, std::function<void(int)>> m_fetch_vars_measurement;
+    Measurement<lldb_perf::TimeGauge, std::function<void(SBFrame, const char*)>> m_run_expr_measurement;
     
     std::string m_app_path;
     std::string m_doc_path;

@@ -105,6 +105,29 @@ public:
     static void
     Run (TestCase& test, int argc, const char** argv);
     
+    lldb::SBDebugger &
+    GetDebugger()
+    {
+        return m_debugger;
+    }
+
+    lldb::SBTarget &
+    GetTarget()
+    {
+        return m_target;
+    }
+    
+    lldb::SBProcess &
+    GetProcess ()
+    {
+        return m_process;
+    }
+    
+    lldb::SBThread &
+    GetThread ()
+    {
+        return m_thread;
+    }
 protected:
     lldb::SBDebugger m_debugger;
 	lldb::SBTarget m_target;
