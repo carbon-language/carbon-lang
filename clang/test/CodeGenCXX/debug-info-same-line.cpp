@@ -94,5 +94,5 @@ main(int argc, char const *argv[])
 // CHECK: load {{.*}} !dbg ![[DBG:.*]]
 // CHECK: load {{.*}} !dbg ![[DBG]]
 // CHECK: load {{.*}} !dbg ![[DBG]]
-// CHECK: call {{.*}} @_Z11strange_maxii(i32 %{{.*}}, i32 %{{.*}}), !dbg ![[DBG]]
-// CHECK: call {{.*}} @_Z11strange_maxii(i32 %{{.*}}, i32 %{{.*}}), !dbg ![[DBG]]
+// CHECK: call {{.*}} @_Z11strange_maxii(i32 {{.*}}, i32 {{.*}}), !dbg ![[DBG]]
+// CHECK: call {{.*}} @_Z11strange_maxii(i32 {{.*}}, i32 {{.*}}), !dbg ![[DBG]]
