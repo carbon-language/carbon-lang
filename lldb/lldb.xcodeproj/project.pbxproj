@@ -4476,7 +4476,6 @@
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
-				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
 				WARNING_CFLAGS = "-Wreorder";
@@ -4539,7 +4538,6 @@
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
-				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
 				WARNING_CFLAGS = "-Wreorder";
@@ -4907,7 +4905,6 @@
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
-				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
 				WARNING_CFLAGS = "-Wreorder";
@@ -5395,7 +5392,6 @@
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
-				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
 				WARNING_CFLAGS = "-Wreorder";

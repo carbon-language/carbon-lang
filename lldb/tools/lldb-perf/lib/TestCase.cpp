@@ -12,12 +12,12 @@
 using namespace lldb_perf;
 
 TestCase::TestCase () :
-m_debugger(),
-m_target(),
-m_process(),
-m_thread(),
-m_listener(),
-m_verbose(false)
+    m_debugger(),
+    m_target(),
+    m_process(),
+    m_thread(),
+    m_listener(),
+    m_verbose(false)
 {
     SBDebugger::Initialize();
 	SBHostOS::ThreadCreated ("<lldb-tester.app.main>");
@@ -25,16 +25,25 @@ m_verbose(false)
 	m_listener = m_debugger.GetListener();
 }
 
-void
+bool
 TestCase::Setup (int argc, const char** argv)
-{}
+{
+    return false;
+}
 
 bool
-TestCase::Launch (const char** args, const char* cwd)
+TestCase::Launch (lldb::SBLaunchInfo &launch_info)
 {
-	m_process = m_target.LaunchSimple(args,NULL,cwd);
-	m_process.GetBroadcaster().AddListener(m_listener, SBProcess::eBroadcastBitStateChanged | SBProcess::eBroadcastBitInterrupt);
-	return m_process.IsValid ();
+    lldb::SBError error;
+	m_process = m_target.Launch (launch_info, error);
+    if (!error.Success())
+        fprintf (stderr, "error: %s\n", error.GetCString());
+    if (m_process.IsValid())
+    {
+        m_process.GetBroadcaster().AddListener(m_listener, SBProcess::eBroadcastBitStateChanged | SBProcess::eBroadcastBitInterrupt);
+        return true;
+    }
+    return false;
 }
 
 void
@@ -81,10 +90,12 @@ TestCase::Loop ()
 			case eStateSuspended:
 			{
 				bool fatal = false;
+                bool selected_thread = false;
 				for (auto thread_index = 0; thread_index < m_process.GetNumThreads(); thread_index++)
 				{
 					SBThread thread(m_process.GetThreadAtIndex(thread_index));
 					SBFrame frame(thread.GetFrameAtIndex(0));
+                    bool select_thread = false;
 					StopReason stop_reason = thread.GetStopReason();
 					if (m_verbose) printf("tid = 0x%llx pc = 0x%llx ",thread.GetThreadID(),frame.GetPC());
 					switch (stop_reason)
@@ -94,10 +105,12 @@ TestCase::Loop ()
                             break;
                             
 				        case eStopReasonTrace:
+                            select_thread = true;
                             if (m_verbose) printf("trace\n");
                             break;
                             
 				        case eStopReasonPlanComplete:
+                            select_thread = true;
                             if (m_verbose) printf("plan complete\n");
                             break;
 				        case eStopReasonThreadExiting:
@@ -110,19 +123,28 @@ TestCase::Loop ()
                             if (m_verbose) printf("invalid\n");
                             break;
 			        	case eStopReasonException:
+                            select_thread = true;
                             if (m_verbose) printf("exception\n");
                             fatal = true;
                             break;
 				        case eStopReasonBreakpoint:
+                            select_thread = true;
                             if (m_verbose) printf("breakpoint id = %lld.%lld\n",thread.GetStopReasonDataAtIndex(0),thread.GetStopReasonDataAtIndex(1));
                             break;
 				        case eStopReasonWatchpoint:
+                            select_thread = true;
                             if (m_verbose) printf("watchpoint id = %lld\n",thread.GetStopReasonDataAtIndex(0));
                             break;
 				        case eStopReasonSignal:
+                            select_thread = true;
                             if (m_verbose) printf("signal %d\n",(int)thread.GetStopReasonDataAtIndex(0));
                             break;
 					}
+                    if (select_thread && !selected_thread)
+                    {
+                        m_thread = thread;
+                        selected_thread = m_process.SetSelectedThread(thread);
+                    }
 				}
 				if (fatal)
 				{
@@ -134,12 +156,13 @@ TestCase::Loop ()
                 ActionWanted action;
 				TestStep(step, action);
 				step++;
+                SBError err;
 				switch (action.type)
 				{
 					case ActionWanted::Type::eContinue:
-						m_debugger.HandleCommand("continue");
+                        err = m_process.Continue();
 						break;
-                    case ActionWanted::Type::eFinish:
+                    case ActionWanted::Type::eStepOut:
                         if (action.thread.IsValid() == false)
                         {
                             if (m_verbose) Xcode::RunCommand(m_debugger,"bt all",true);
@@ -147,7 +170,7 @@ TestCase::Loop ()
                             exit(501);
                         }
                         m_process.SetSelectedThread(action.thread);
-                        m_debugger.HandleCommand("finish");
+                        action.thread.StepOut();
 						break;
 					case ActionWanted::Type::eNext:
                         if (action.thread.IsValid() == false)
@@ -157,7 +180,7 @@ TestCase::Loop ()
                             exit(500);
                         }
                         m_process.SetSelectedThread(action.thread);
-                        m_debugger.HandleCommand("next");
+                        action.thread.StepOver();
 						break;
 					case ActionWanted::Type::eKill:
 						if (m_verbose) printf("I want to die\n");
@@ -173,7 +196,9 @@ TestCase::Loop ()
 void
 TestCase::Run (TestCase& test, int argc, const char** argv)
 {
-    test.Setup(argc, argv);
-    test.Loop();
-    test.Results();
+    if (test.Setup(argc, argv))
+    {
+        test.Loop();
+        test.Results();
+    }
 }

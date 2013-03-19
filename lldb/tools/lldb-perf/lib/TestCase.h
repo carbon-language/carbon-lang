@@ -25,7 +25,7 @@ public:
 		{
 			eNext,
 			eContinue,
-            eFinish,
+            eStepOut,
 			eKill
 		} type;
 		lldb::SBThread thread;
@@ -44,16 +44,16 @@ public:
         }
         
         void
-        Next (lldb::SBThread t)
+        StepOver (lldb::SBThread t)
         {
             type = Type::eNext;
             thread = t;
         }
 
         void
-        Finish (lldb::SBThread t)
+        StepOut (lldb::SBThread t)
         {
-            type = Type::eFinish;
+            type = Type::eStepOut;
             thread = t;
         }
         
@@ -69,14 +69,14 @@ public:
     ~TestCase ()
     {}
     
-	virtual void
+	virtual bool
 	Setup (int argc, const char** argv);
     
 	virtual void
 	TestStep (int counter, ActionWanted &next_action) = 0;
 	
 	bool
-	Launch (const char** args, const char* cwd);
+	Launch (lldb::SBLaunchInfo &launch_info);
 	
 	void
 	Loop();

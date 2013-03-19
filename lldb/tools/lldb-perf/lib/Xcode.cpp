@@ -26,7 +26,7 @@ Xcode::FetchVariable (SBValue value, uint32_t expand, bool verbose)
 	auto type_3 = value.GetType();
 	auto type_name_2 = value.GetTypeName();
 	if (verbose)
-		printf("%s %s = %llu %s\n",value.GetTypeName(),value.GetName(),num_value,summary);
+		printf("%s %s = 0x%llx (%llu) %s\n",value.GetTypeName(),value.GetName(),num_value, num_value,summary);
 	if (expand > 0)
 	{
 		auto count = value.GetNumChildren();

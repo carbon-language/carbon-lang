@@ -497,7 +497,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_BUILDER = "$(USER)";
@@ -524,7 +523,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = "";
 				STRIPFLAGS = "-x";
 				STRIP_STYLE = debugging;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -554,7 +552,6 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				SDKROOT = "";
 				STRIPFLAGS = "-x";
 				STRIP_STYLE = debugging;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -572,11 +569,11 @@
 				CURRENT_PROJECT_VERSION = 300.99.0;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
-				"FRAMEWORK_SEARCH_PATHS[arch=*][sdk=iphoneos*]" = (
+				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
 					"$(SDKROOT)/System/Library/PrivateFrameworks",
 					"$(SDKROOT)/Developer/Library/PrivateFrameworks",
 				);
-				"FRAMEWORK_SEARCH_PATHS[arch=*][sdk=macosx*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
+				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_BUILDANDINTEGRATION;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
@@ -585,20 +582,20 @@
 				"INSTALL_PATH[sdk=iphoneos*]" = /Developer/usr/bin/;
 				LLDB_DEBUGSERVER = 1;
 				OTHER_CFLAGS = "-Wparentheses";
-				"OTHER_CFLAGS[arch=*][sdk=iphoneos*]" = (
+				"OTHER_CFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
 					"-DWITH_SPRINGBOARD",
 					"-DOS_OBJECT_USE_OBJC=0",
 				);
-				"OTHER_CPLUSPLUSFLAGS[arch=*][sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
 					__info_plist,
 					"$(PROJECT_DIR)/resources/lldb-debugserver-Info.plist",
 				);
-				"OTHER_LDFLAGS[arch=*][sdk=iphoneos*]" = (
+				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-framework",
 					SpringBoardServices,
 					"-llockdown",
@@ -624,11 +621,11 @@
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 300.99.0;
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
-				"FRAMEWORK_SEARCH_PATHS[arch=*][sdk=iphoneos*]" = (
+				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
 					"$(SDKROOT)/System/Library/PrivateFrameworks",
 					"$(SDKROOT)/Developer/Library/PrivateFrameworks",
 				);
-				"FRAMEWORK_SEARCH_PATHS[arch=*][sdk=macosx*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
+				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -637,20 +634,20 @@
 				INSTALL_PATH = /usr/bin;
 				LLDB_DEBUGSERVER = 1;
 				OTHER_CFLAGS = "-Wparentheses";
-				"OTHER_CFLAGS[arch=*][sdk=iphoneos*]" = (
+				"OTHER_CFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
 					"-DWITH_SPRINGBOARD",
 					"-DOS_OBJECT_USE_OBJC=0",
 				);
-				"OTHER_CPLUSPLUSFLAGS[arch=*][sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
 					__info_plist,
 					"$(PROJECT_DIR)/resources/lldb-debugserver-Info.plist",
 				);
-				"OTHER_LDFLAGS[arch=*][sdk=iphoneos*]" = (
+				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-framework",
 					SpringBoardServices,
 					"-llockdown",
@@ -677,11 +674,11 @@
 				CURRENT_PROJECT_VERSION = 300.99.0;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
-				"FRAMEWORK_SEARCH_PATHS[arch=*][sdk=iphoneos*]" = (
+				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
 					"$(SDKROOT)/System/Library/PrivateFrameworks",
 					"$(SDKROOT)/Developer/Library/PrivateFrameworks",
 				);
-				"FRAMEWORK_SEARCH_PATHS[arch=*][sdk=macosx*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
+				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_RELEASE;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
@@ -689,20 +686,20 @@
 				INSTALL_PATH = /usr/bin;
 				LLDB_DEBUGSERVER = 1;
 				OTHER_CFLAGS = "-Wparentheses";
-				"OTHER_CFLAGS[arch=*][sdk=iphoneos*]" = (
+				"OTHER_CFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
 					"-DWITH_SPRINGBOARD",
 					"-DOS_OBJECT_USE_OBJC=0",
 				);
-				"OTHER_CPLUSPLUSFLAGS[arch=*][sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
 					__info_plist,
 					"$(PROJECT_DIR)/resources/lldb-debugserver-Info.plist",
 				);
-				"OTHER_LDFLAGS[arch=*][sdk=iphoneos*]" = (
+				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-framework",
 					SpringBoardServices,
 					"-llockdown",
@@ -740,7 +737,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_BUILDER = "$(USER)";
@@ -758,11 +754,11 @@
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 300.99.0;
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
-				"FRAMEWORK_SEARCH_PATHS[arch=*][sdk=iphoneos*]" = (
+				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
 					"$(SDKROOT)/System/Library/PrivateFrameworks",
 					"$(SDKROOT)/Developer/Library/PrivateFrameworks",
 				);
-				"FRAMEWORK_SEARCH_PATHS[arch=*][sdk=macosx*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
+				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -771,20 +767,20 @@
 				INSTALL_PATH = /usr/bin;
 				LLDB_DEBUGSERVER = 1;
 				OTHER_CFLAGS = "-Wparentheses";
-				"OTHER_CFLAGS[arch=*][sdk=iphoneos*]" = (
+				"OTHER_CFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
 					"-DWITH_SPRINGBOARD",
 					"-DOS_OBJECT_USE_OBJC=0",
 				);
-				"OTHER_CPLUSPLUSFLAGS[arch=*][sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
 					__info_plist,
 					"$(PROJECT_DIR)/resources/lldb-debugserver-Info.plist",
 				);
-				"OTHER_LDFLAGS[arch=*][sdk=iphoneos*]" = (
+				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-framework",
 					SpringBoardServices,
 					"-llockdown",

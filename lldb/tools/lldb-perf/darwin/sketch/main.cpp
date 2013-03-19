@@ -54,9 +54,10 @@ public:
     {
     }
     
-    virtual void
+    virtual bool
 	Setup (int argc, const char** argv)
     {
+        SetVerbose(true);
         m_app_path.assign(argv[1]);
         m_doc_path.assign(argv[2]);
         m_out_path.assign(argv[3]);
@@ -67,11 +68,11 @@ public:
         const char* persist_skip = "YES";
         const char* empty = nullptr;
         const char* args[] = {file_arg,persist_arg,persist_skip,empty};
+        SBLaunchInfo launch_info (args);
         m_file_line_bp_measurement(m_target, "SKTDocument.m",245);
         m_file_line_bp_measurement(m_target, "SKTDocument.m",283);
         m_file_line_bp_measurement(m_target, "SKTText.m",326);
-        
-        Launch (args,".");
+        return Launch (launch_info);
     }
     
     void
@@ -98,12 +99,11 @@ public:
         case 1:
             {
                 DoTest ();
-                SBThread thread(SelectMyThread("SKTDocument.m"));
-                m_run_expr_measurement(thread.GetFrameAtIndex(0),"properties");
-                m_run_expr_measurement(thread.GetFrameAtIndex(0),"[properties description]");
-                m_run_expr_measurement(thread.GetFrameAtIndex(0),"typeName");
-                m_run_expr_measurement(thread.GetFrameAtIndex(0),"data");
-                m_run_expr_measurement(thread.GetFrameAtIndex(0),"[data description]");
+                m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"properties");
+                m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"[properties description]");
+                m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"typeName");
+                m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"data");
+                m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"[data description]");
                 next_action.Continue();
             }
             break;
@@ -118,52 +118,49 @@ public:
         case 3:
             {
                 DoTest ();
-                next_action.Next(SelectMyThread ("SKTText.m"));
+                next_action.StepOver(m_thread);
             }
             break;
 
         case 4:
             {
                 DoTest ();
-                SBThread thread(SelectMyThread("SKTText.m"));
-                m_run_expr_measurement(thread.GetFrameAtIndex(0),"layoutManager");
-                m_run_expr_measurement(thread.GetFrameAtIndex(0),"contents");
-                next_action.Next(thread);
+                m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"layoutManager");
+                m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"contents");
+                next_action.StepOver(m_thread);
             }
             break;
         
         case 5:
             {
                 DoTest ();
-                next_action.Next(SelectMyThread ("SKTText.m"));
+                next_action.StepOver(m_thread);
             }
             break;
 
         case 6:
             {
                 DoTest ();
-                next_action.Next(SelectMyThread ("SKTText.m"));
+                next_action.StepOver(m_thread);
             }
             break;
 
         case 7:
             {
                 DoTest ();
-                SBThread thread(SelectMyThread("SKTText.m"));
-                m_run_expr_measurement(thread.GetFrameAtIndex(0),"@\"an NSString\"");
-                m_run_expr_measurement(thread.GetFrameAtIndex(0),"[(id)@\"an NSString\" description]");
-                m_run_expr_measurement(thread.GetFrameAtIndex(0),"@[@1,@2,@3]");
-                next_action.Finish(thread);
+                m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"@\"an NSString\"");
+                m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"[(id)@\"an NSString\" description]");
+                m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"@[@1,@2,@3]");
+                next_action.StepOut(m_thread);
             }
             break;
 
         case 8:
             {
                 DoTest ();
-                SBThread thread(SelectMyThread("SKTGraphicView.m"));
-                m_run_expr_measurement(thread.GetFrameAtIndex(0),"[graphics description]");
-                m_run_expr_measurement(thread.GetFrameAtIndex(0),"[selectionIndexes description]");
-                m_run_expr_measurement(thread.GetFrameAtIndex(0),"(BOOL)NSIntersectsRect(rect, graphicDrawingBounds)");
+                m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"[graphics description]");
+                m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"[selectionIndexes description]");
+                m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"(BOOL)NSIntersectsRect(rect, graphicDrawingBounds)");
                 next_action.Kill();
             }
             break;
@@ -200,23 +197,6 @@ private:
     Measurement<lldb_perf::TimeGauge, std::function<void(SBProcess,int)>> m_fetch_vars_measurement;
     Measurement<lldb_perf::TimeGauge, std::function<void(SBFrame,const char*)>> m_run_expr_measurement;
     
-    SBThread
-	SelectMyThread (const char* file_name)
-	{
-		auto threads_count = m_process.GetNumThreads();
-		for (auto thread_num = 0; thread_num < threads_count; thread_num++)
-		{
-			SBThread thread(m_process.GetThreadAtIndex(thread_num));
-			auto local_file_name = thread.GetFrameAtIndex(0).GetCompileUnit().GetFileSpec().GetFilename();
-			if (!local_file_name)
-				continue;
-			if (strcmp(local_file_name,file_name))
-				continue;
-			return thread;
-		}
-		Xcode::RunCommand(m_debugger,"bt all",true);
-		assert(false);
-	}
     std::string m_app_path;
     std::string m_doc_path;
     std::string m_out_path;

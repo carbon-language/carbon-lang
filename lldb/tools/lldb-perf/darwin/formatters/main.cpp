@@ -68,40 +68,21 @@ public:
     {
     }
     
-    virtual void
+    virtual bool
 	Setup (int argc, const char** argv)
     {
         m_app_path.assign(argv[1]);
         m_out_path.assign(argv[2]);
         m_target = m_debugger.CreateTarget(m_app_path.c_str());
         m_target.BreakpointCreateByName("main");
-        
-        Launch (NULL,".");
+        SBLaunchInfo launch_info(argv);
+        return Launch (launch_info);
     }
-    
-    SBThread
-	SelectMyThread (const char* file_name)
-	{
-		auto threads_count = m_process.GetNumThreads();
-		for (auto thread_num = 0; thread_num < threads_count; thread_num++)
-		{
-			SBThread thread(m_process.GetThreadAtIndex(thread_num));
-			auto local_file_name = thread.GetFrameAtIndex(0).GetCompileUnit().GetFileSpec().GetFilename();
-			if (!local_file_name)
-				continue;
-			if (strcmp(local_file_name,file_name))
-				continue;
-			return thread;
-		}
-		Xcode::RunCommand(m_debugger,"bt all",true);
-		assert(false);
-	}
     
     void
     DoTest ()
     {
-        SBThread thread_main(SelectMyThread("fmts_tester.mm"));
-        SBFrame frame_zero(thread_main.GetFrameAtIndex(0));
+        SBFrame frame_zero(m_thread.GetFrameAtIndex(0));
         
         m_dump_nsarray_measurement(frame_zero.FindVariable("nsarray", lldb::eDynamicCanRunTarget));
         m_dump_nsarray_measurement(frame_zero.FindVariable("nsmutablearray", lldb::eDynamicCanRunTarget));
