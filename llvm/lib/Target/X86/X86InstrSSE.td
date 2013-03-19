@@ -364,7 +364,7 @@ let Predicates = [HasAVX] in {
 // Alias instructions that map fld0 to xorps for sse or vxorps for avx.
 // This is expanded by ExpandPostRAPseudos.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isPseudo = 1 in {
+    isPseudo = 1, SchedRW = [WriteZero] in {
   def FsFLD0SS : I<0, Pseudo, (outs FR32:$dst), (ins), "",
                    [(set FR32:$dst, fp32imm0)]>, Requires<[HasSSE1]>;
   def FsFLD0SD : I<0, Pseudo, (outs FR64:$dst), (ins), "",
@@ -381,7 +381,7 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
 // We set canFoldAsLoad because this can be converted to a constant-pool
 // load of an all-zeros value if folding it would be beneficial.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isPseudo = 1 in {
+    isPseudo = 1, SchedRW = [WriteZero] in {
 def V_SET0 : I<0, Pseudo, (outs VR128:$dst), (ins), "",
                [(set VR128:$dst, (v4f32 immAllZerosV))]>;
 }
@@ -398,7 +398,7 @@ def : Pat<(v16i8 immAllZerosV), (V_SET0)>;
 // at the rename stage without using any execution unit, so SET0PSY
 // and SET0PDY can be used for vector int instructions without penalty
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isPseudo = 1, Predicates = [HasAVX] in {
+    isPseudo = 1, Predicates = [HasAVX], SchedRW = [WriteZero] in {
 def AVX_SET0 : I<0, Pseudo, (outs VR256:$dst), (ins), "",
                  [(set VR256:$dst, (v8f32 immAllZerosV))]>;
 }
@@ -436,7 +436,7 @@ def : Pat<(bc_v4i64 (v8f32 immAllZerosV)),
 // We set canFoldAsLoad because this can be converted to a constant-pool
 // load of an all-ones value if folding it would be beneficial.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isPseudo = 1 in {
+    isPseudo = 1, SchedRW = [WriteZero] in {
   def V_SETALLONES : I<0, Pseudo, (outs VR128:$dst), (ins), "",
                        [(set VR128:$dst, (v4i32 immAllOnesV))]>;
   let Predicates = [HasAVX2] in
