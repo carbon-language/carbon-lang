@@ -1265,6 +1265,17 @@ SVal RegionStoreManager::getBinding(RegionBindingsConstRef B, Loc L, QualType T)
   return svalBuilder.getRegionValueSymbolVal(R);
 }
 
+static QualType getUnderlyingType(const SubRegion *R) {
+  QualType RegionTy;
+  if (const TypedValueRegion *TVR = dyn_cast<TypedValueRegion>(R))
+    RegionTy = TVR->getValueType();
+
+  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R))
+    RegionTy = SR->getSymbol()->getType();
+
+  return RegionTy;
+}
+
 /// Checks to see if store \p B has a lazy binding for region \p R.
 ///
 /// If \p AllowSubregionBindings is \c false, a lazy binding will be rejected
@@ -1283,11 +1294,11 @@ getExistingLazyBinding(SValBuilder &SVB, RegionBindingsConstRef B,
   if (!LCV)
     return None;
 
-  // If the LCV is for a subregion, the types won't match, and we shouldn't
-  // reuse the binding. Unfortuately we can only check this if the destination
-  // region is a TypedValueRegion.
-  if (const TypedValueRegion *TVR = dyn_cast<TypedValueRegion>(R)) {
-    QualType RegionTy = TVR->getValueType();
+  // If the LCV is for a subregion, the types might not match, and we shouldn't
+  // reuse the binding.
+  QualType RegionTy = getUnderlyingType(R);
+  if (!RegionTy.isNull() &&
+      !RegionTy->isVoidPointerType()) {
     QualType SourceRegionTy = LCV->getRegion()->getValueType();
     if (!SVB.getContext().hasSameUnqualifiedType(RegionTy, SourceRegionTy))
       return None;

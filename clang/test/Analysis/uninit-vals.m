@@ -80,12 +80,8 @@ void PR14765_incorrectBehavior(Circle *testObj) {
 
   testObj->origin = makePoint(0.0, 0.0);
 
-  // FIXME: Assigning to 'testObj->origin' kills the default binding for the
-  // whole region, meaning that we've forgotten that testObj->size should also
-  // default to 0. Tracked by <rdar://problem/12701038>.
-  // This should be TRUE.
-  clang_analyzer_eval(testObj->size == oldSize); // expected-warning{{UNKNOWN}}
-
+  clang_analyzer_eval(testObj->size == oldSize); // expected-warning{{TRUE}}
+  
   free(testObj);
 }
 
