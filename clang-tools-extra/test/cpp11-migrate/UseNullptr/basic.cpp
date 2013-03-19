@@ -8,6 +8,7 @@
 
 const unsigned int g_null = 0;
 #define NULL 0
+// CHECK: #define NULL 0
 
 void test_assignment() {
   int *p1 = 0;
@@ -177,32 +178,6 @@ int test_function_return5() {
 int test_function_return6() {
   return g_null;
   // CHECK: return g_null;
-}
-
-// Test function-like macros where the parameter to the macro (expression)
-// results in a nullptr.
-void __dummy_assert_fail() {}
-
-void test_function_like_macro1() {
-  // This tests that the CastSequenceVisitor is working properly.
-#define my_assert(expr) \
-  ((expr) ? static_cast<void>(expr) : __dummy_assert_fail())
-
-  int *p;
-  my_assert(p != 0);
-  // CHECK: my_assert(p != nullptr);
-#undef my_assert
-}
-
-void test_function_like_macro2() {
-  // This tests that the implicit cast is working properly.
-#define my_macro(expr) \
-  (expr)
-
-  int *p;
-  my_macro(p != 0);
-  // CHECK: my_macro(p != nullptr);
-#undef my_macro
 }
 
 // Test parentheses expressions resulting in a nullptr.
