@@ -990,9 +990,6 @@ def : Pat<(i64 (X86Wrapper tglobaltlsaddr :$dst)),
 // This corresponds to add $foo@tpoff, %rax
 def : Pat<(add GR64:$src1, (X86Wrapper tglobaltlsaddr :$dst)),
           (ADD64ri32 GR64:$src1, tglobaltlsaddr :$dst)>;
-// This corresponds to mov foo@tpoff(%rbx), %eax
-def : Pat<(load (i64 (X86Wrapper tglobaltlsaddr :$dst))),
-          (MOV64rm tglobaltlsaddr :$dst)>;
 
 
 // Direct PC relative function call for small code model. 32-bit displacement
