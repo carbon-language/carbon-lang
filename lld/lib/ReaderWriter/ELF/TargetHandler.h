@@ -65,6 +65,8 @@ public:
   virtual int64_t getType(const Elf_Sym *sym) const {
     return llvm::ELF::STT_NOTYPE;
   }
+
+  virtual ~TargetAtomHandler() {}
 };
 
 template <class ELFT> class TargetRelocationHandler {
@@ -74,6 +76,8 @@ public:
                   const Reference &)const = 0;
 
   virtual int64_t relocAddend(const Reference &)const { return 0; }
+
+  virtual ~TargetRelocationHandler() {}
 };
 
 /// \brief An interface to override functions that are provided by the

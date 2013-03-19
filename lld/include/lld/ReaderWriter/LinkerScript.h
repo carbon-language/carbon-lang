@@ -82,6 +82,8 @@ public:
 
   virtual void dump(llvm::raw_ostream &os) const = 0;
 
+  virtual ~Command() {}
+
 protected:
   Command(Kind k) : _kind(k) {}
 
