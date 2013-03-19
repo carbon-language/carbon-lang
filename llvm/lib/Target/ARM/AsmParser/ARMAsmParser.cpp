@@ -4593,20 +4593,26 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
     Error(Parser.getTok().getLoc(), "unexpected token in operand");
     return true;
   case AsmToken::Identifier: {
-    if (!tryParseRegisterWithWriteBack(Operands))
-      return false;
-    int Res = tryParseShiftRegister(Operands);
-    if (Res == 0) // success
-      return false;
-    else if (Res == -1) // irrecoverable error
-      return true;
-    // If this is VMRS, check for the apsr_nzcv operand.
-    if (Mnemonic == "vmrs" &&
-        Parser.getTok().getString().equals_lower("apsr_nzcv")) {
-      S = Parser.getTok().getLoc();
-      Parser.Lex();
-      Operands.push_back(ARMOperand::CreateToken("APSR_nzcv", S));
-      return false;
+    // If we've seen a branch mnemonic, the next operand must be a label.  This
+    // is true even if the label is a register name.  So "br r1" means branch to
+    // label "r1".
+    bool ExpectLabel = Mnemonic == "b" || Mnemonic == "bl";
+    if (!ExpectLabel) {
+      if (!tryParseRegisterWithWriteBack(Operands))
+        return false;
+      int Res = tryParseShiftRegister(Operands);
+      if (Res == 0) // success
+        return false;
+      else if (Res == -1) // irrecoverable error
+        return true;
+      // If this is VMRS, check for the apsr_nzcv operand.
+      if (Mnemonic == "vmrs" &&
+          Parser.getTok().getString().equals_lower("apsr_nzcv")) {
+        S = Parser.getTok().getLoc();
+        Parser.Lex();
+        Operands.push_back(ARMOperand::CreateToken("APSR_nzcv", S));
+        return false;
+      }
     }
 
     // Fall though for the Identifier case that is not a register or a
