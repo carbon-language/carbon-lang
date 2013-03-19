@@ -370,4 +370,17 @@ void t32() {
 // CHECK: call void asm sideeffect inteldialect "mov al, byte ptr $0", "*m,~{al},~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) [[NUW]]
 }
 
+void t33() {
+  int i;
+  __asm mov eax, [i]
+  __asm mov eax, dword ptr [i]
+  __asm mov ax, word ptr [i]
+  __asm mov al, byte ptr [i]
+// CHECK: t33
+// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $0", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) [[NUW]]
+// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $0", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) [[NUW]]
+// CHECK: call void asm sideeffect inteldialect "mov ax, word ptr $0", "*m,~{ax},~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) [[NUW]]
+// CHECK: call void asm sideeffect inteldialect "mov al, byte ptr $0", "*m,~{al},~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) [[NUW]]
+}
+
 // CHECK: attributes [[NUW]] = { nounwind }
