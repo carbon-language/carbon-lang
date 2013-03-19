@@ -895,7 +895,7 @@ void Cost::RatePrimaryRegister(const SCEV *Reg,
   }
   if (Regs.insert(Reg)) {
     RateRegister(Reg, Regs, L, SE, DT);
-    if (isLoser())
+    if (LoserRegs && isLoser())
       LoserRegs->insert(Reg);
   }
 }
