@@ -624,6 +624,11 @@ public:
         // "this", "self", and "_cmd" are direct.
         bool variable_is_this = false;
         
+        // If the variable is a function pointer, we do not need to
+        // build an extra layer of indirection for it because it is
+        // accessed directly.
+        bool variable_is_function_address = false;
+        
         // Attempt to resolve the value using the program's data.
         // If it is, the values to be created are:
         //
@@ -647,12 +652,7 @@ public:
                     break;
                 
                 if (isa<clang::FunctionDecl>(decl))
-                {
-                    if (log)
-                        log->Printf("The interpreter does not handle function pointers at the moment");
-                    
-                    return Memory::Region();
-                }
+                    variable_is_function_address = true;
                 
                 resolved_value = m_decl_map.LookupDecl(decl, flags);
             }
@@ -786,17 +786,19 @@ public:
                 }
                 else
                 {
+                    bool no_extra_redirect = (variable_is_this || variable_is_function_address);
+                    
                     Memory::Region data_region = m_memory.Place(value->getType(), resolved_value.GetScalar().ULongLong(), resolved_value);
                     Memory::Region ref_region = m_memory.Malloc(value->getType());
                     Memory::Region pointer_region;
                     
-                    if (!variable_is_this)
+                    if (!no_extra_redirect)
                         pointer_region = m_memory.Malloc(value->getType());
                            
                     if (ref_region.IsInvalid())
                         return Memory::Region();
                     
-                    if (pointer_region.IsInvalid() && !variable_is_this)
+                    if (pointer_region.IsInvalid() && !no_extra_redirect)
                         return Memory::Region();
                     
                     DataEncoderSP ref_encoder = m_memory.GetEncoder(ref_region);
@@ -804,7 +806,7 @@ public:
                     if (ref_encoder->PutAddress(0, data_region.m_base) == UINT32_MAX)
                         return Memory::Region();
                     
-                    if (!variable_is_this)
+                    if (!no_extra_redirect)
                     {
                         DataEncoderSP pointer_encoder = m_memory.GetEncoder(pointer_region);
                     
@@ -824,7 +826,7 @@ public:
                             log->Printf("  Pointer region : %llx", (unsigned long long)pointer_region.m_base);
                     }
                     
-                    if (variable_is_this)
+                    if (no_extra_redirect)
                         return ref_region;
                     else
                         return pointer_region;

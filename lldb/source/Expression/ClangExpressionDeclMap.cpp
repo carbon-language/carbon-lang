@@ -1066,6 +1066,21 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl, ClangExpressionVaria
     ClangExpressionVariableSP expr_var_sp (m_found_entities.GetVariable(decl, GetParserID()));
     ClangExpressionVariableSP persistent_var_sp (m_parser_vars->m_persistent_vars->GetVariable(decl, GetParserID()));
     
+    if (isa<FunctionDecl>(decl))
+    {
+        ClangExpressionVariableSP entity_sp(m_found_entities.GetVariable(decl, GetParserID()));
+        
+        if (!entity_sp)
+            return Value();
+        
+        // We know m_parser_vars is valid since we searched for the variable by
+        // its NamedDecl
+        
+        ClangExpressionVariable::ParserVars *parser_vars = entity_sp->GetParserVars(GetParserID());
+        
+        return *parser_vars->m_lldb_value;
+    }
+    
     if (expr_var_sp)
     {
         flags = expr_var_sp->m_flags;
@@ -3690,8 +3705,21 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
     Target *target = m_parser_vars->m_exe_ctx.GetTargetPtr();
 
     lldb::addr_t load_addr = fun_address->GetCallableLoadAddress(target, is_indirect_function);
-    fun_location->SetValueType(Value::eValueTypeLoadAddress);
-    fun_location->GetScalar() = load_addr;
+    
+    if (load_addr != LLDB_INVALID_ADDRESS)
+    {
+        fun_location->SetValueType(Value::eValueTypeLoadAddress);
+        fun_location->GetScalar() = load_addr;
+    }
+    else
+    {
+        // We have to try finding a file address.
+        
+        lldb::addr_t file_addr = fun_address->GetFileAddress();
+        
+        fun_location->SetValueType(Value::eValueTypeFileAddress);
+        fun_location->GetScalar() = file_addr;
+    }
     
     ClangExpressionVariableSP entity(m_found_entities.CreateVariable (m_parser_vars->m_exe_ctx.GetBestExecutionContextScope (),
                                                                       m_parser_vars->m_target_info.byte_order,
