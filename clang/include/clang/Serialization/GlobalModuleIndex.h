@@ -36,7 +36,7 @@ class FileManager;
 
 namespace serialization {
   class ModuleFile;
-};
+}
 
 using llvm::SmallVector;
 using llvm::SmallVectorImpl;
