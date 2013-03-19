@@ -53,6 +53,10 @@ def WriteLoad  : SchedWrite;
 def WriteStore : SchedWrite;
 def WriteMove  : SchedWrite;
 
+// Idioms that clear a register, like xorps %xmm0, %xmm0.
+// These can often bypass execution ports completely.
+def WriteZero : SchedWrite;
+
 // Branches don't produce values, so they have no latency, but they still
 // consume resources. Indirect branches can fold loads.
 defm WriteJump : X86SchedWritePair;

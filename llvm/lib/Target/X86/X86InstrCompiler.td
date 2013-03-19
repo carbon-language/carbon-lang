@@ -153,7 +153,7 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
     hasCtrlDep = 1, isCodeGenOnly = 1 in {
 def EH_RETURN   : I<0xC3, RawFrm, (outs), (ins GR32:$addr),
                     "ret\t#eh_return, addr: $addr",
-                    [(X86ehret GR32:$addr)], IIC_RET>;
+                    [(X86ehret GR32:$addr)], IIC_RET>, Sched<[WriteJumpLd]>;
 
 }
 
@@ -161,7 +161,7 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
     hasCtrlDep = 1, isCodeGenOnly = 1 in {
 def EH_RETURN64   : I<0xC3, RawFrm, (outs), (ins GR64:$addr),
                      "ret\t#eh_return, addr: $addr",
-                     [(X86ehret GR64:$addr)], IIC_RET>;
+                     [(X86ehret GR64:$addr)], IIC_RET>, Sched<[WriteJumpLd]>;
 
 }
 
@@ -220,7 +220,7 @@ def MORESTACK_RET_RESTORE_R10 : I<0, Pseudo, (outs), (ins),
 let Defs = [EFLAGS], isReMaterializable = 1, isAsCheapAsAMove = 1,
     isCodeGenOnly = 1 in {
 def MOV8r0   : I<0x30, MRMInitReg, (outs GR8 :$dst), (ins), "",
-                 [(set GR8:$dst, 0)], IIC_ALU_NONMEM>;
+                 [(set GR8:$dst, 0)], IIC_ALU_NONMEM>, Sched<[WriteZero]>;
 
 // We want to rewrite MOV16r0 in terms of MOV32r0, because it's a smaller
 // encoding and avoids a partial-register update sometimes, but doing so
@@ -229,11 +229,12 @@ def MOV8r0   : I<0x30, MRMInitReg, (outs GR8 :$dst), (ins), "",
 // to an MCInst.
 def MOV16r0   : I<0x31, MRMInitReg, (outs GR16:$dst), (ins),
                  "",
-                 [(set GR16:$dst, 0)], IIC_ALU_NONMEM>, OpSize;
+                 [(set GR16:$dst, 0)], IIC_ALU_NONMEM>, OpSize,
+                 Sched<[WriteZero]>;
 
 // FIXME: Set encoding to pseudo.
 def MOV32r0  : I<0x31, MRMInitReg, (outs GR32:$dst), (ins), "",
-                 [(set GR32:$dst, 0)], IIC_ALU_NONMEM>;
+                 [(set GR32:$dst, 0)], IIC_ALU_NONMEM>, Sched<[WriteZero]>;
 }
 
 // We want to rewrite MOV64r0 in terms of MOV32r0, because it's sometimes a
@@ -245,7 +246,7 @@ def MOV32r0  : I<0x31, MRMInitReg, (outs GR32:$dst), (ins), "",
 let Defs = [EFLAGS], isCodeGenOnly=1,
     AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def MOV64r0   : I<0x31, MRMInitReg, (outs GR64:$dst), (ins), "",
-                 [(set GR64:$dst, 0)], IIC_ALU_NONMEM>;
+                 [(set GR64:$dst, 0)], IIC_ALU_NONMEM>, Sched<[WriteZero]>;
 
 // Materialize i64 constant where top 32-bits are zero. This could theoretically
 // use MOV32ri with a SUBREG_TO_REG to represent the zero-extension, however
@@ -254,10 +255,10 @@ let AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1,
     isCodeGenOnly = 1 in
 def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64i32imm:$src),
                         "", [(set GR64:$dst, i64immZExt32:$src)],
-                        IIC_ALU_NONMEM>;
+                        IIC_ALU_NONMEM>, Sched<[WriteALU]>;
 
 // Use sbb to materialize carry bit.
-let Uses = [EFLAGS], Defs = [EFLAGS], isPseudo = 1 in {
+let Uses = [EFLAGS], Defs = [EFLAGS], isPseudo = 1, SchedRW = [WriteALU] in {
 // FIXME: These are pseudo ops that should be replaced with Pat<> patterns.
 // However, Pat<> can't replicate the destination reg into the inputs of the
 // result.
