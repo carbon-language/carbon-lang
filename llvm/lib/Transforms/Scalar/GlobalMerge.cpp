@@ -61,10 +61,8 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
-#include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
@@ -101,7 +99,7 @@ namespace {
     /// Collect every variables marked as "used"
     void collectUsedGlobalVariables(Module &M);
 
-    /// Keep track of the GlobalVariable that are marked as "used"
+    /// Keep track of the GlobalVariable that must not be merged away
     SmallPtrSet<const GlobalVariable *, 16> MustKeepGlobalVariables;
 
   public:
@@ -113,6 +111,7 @@ namespace {
 
     virtual bool doInitialization(Module &M);
     virtual bool runOnFunction(Function &F);
+    virtual bool doFinalization(Module &M);
 
     const char *getPassName() const {
       return "Merge internal globals";
@@ -211,9 +210,6 @@ void GlobalMerge::collectUsedGlobalVariables(Module &M) {
 }
 
 void GlobalMerge::setMustKeepGlobalVariables(Module &M) {
-  // If we already processed a Module, UsedGlobalVariables may have been
-  // populated. Reset the information for this module.
-  MustKeepGlobalVariables.clear();
   collectUsedGlobalVariables(M);
 
   for (Module::iterator IFn = M.begin(), IEndFn = M.end(); IFn != IEndFn;
@@ -268,8 +264,6 @@ bool GlobalMerge::doInitialization(Module &M) {
       continue;
 
     // Ignore all "required" globals:
-    // - the ones used for EH
-    // - the ones marked with "used" attribute
     if (isMustKeepGlobalVariable(I))
       continue;
 
@@ -304,6 +298,11 @@ bool GlobalMerge::doInitialization(Module &M) {
 }
 
 bool GlobalMerge::runOnFunction(Function &F) {
+  return false;
+}
+
+bool GlobalMerge::doFinalization(Module &M) {
+  MustKeepGlobalVariables.clear();
   return false;
 }
 
