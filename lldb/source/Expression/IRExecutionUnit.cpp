@@ -30,16 +30,12 @@ IRExecutionUnit::IRExecutionUnit (std::auto_ptr<llvm::Module> &module_ap,
     m_process_wp(process_sp),
     m_module_ap(module_ap),
     m_module(m_module_ap.get()),
-    m_cpu_features(),
+    m_cpu_features(cpu_features),
     m_name(name),
     m_did_jit(false),
     m_function_load_addr(LLDB_INVALID_ADDRESS),
     m_function_end_load_addr(LLDB_INVALID_ADDRESS)
 {
-    for (std::string &feature : cpu_features)
-    {
-        m_cpu_features.push_back(std::string(feature.c_str()));
-    }
 }
 
 lldb::addr_t
@@ -49,10 +45,14 @@ IRExecutionUnit::WriteNow (const uint8_t *bytes,
 {    
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
-    Allocation allocation;
+    auto iter = m_allocations.insert(m_allocations.end(), Allocation());
+    
+    Allocation &allocation(*iter);
+    
     allocation.m_size = size;
     allocation.m_alignment = 8;
-    allocation.m_local_start = LLDB_INVALID_ADDRESS;
+    allocation.m_data.reset(new DataBufferHeap(bytes, size));
+    allocation.m_local_start = (uintptr_t)allocation.m_data->GetBytes();
     allocation.m_section_id = Allocation::eSectionIDNone;
         
     lldb_private::Error err;
@@ -68,6 +68,7 @@ IRExecutionUnit::WriteNow (const uint8_t *bytes,
     {
         err.SetErrorToGenericError();
         err.SetErrorString("Couldn't find the process");
+        return LLDB_INVALID_ADDRESS;
     }
     
     allocation.m_remote_allocation = process_sp->AllocateMemory(allocation_size,
@@ -97,9 +98,7 @@ IRExecutionUnit::WriteNow (const uint8_t *bytes,
         log->Printf("IRExecutionUnit::WriteNow() wrote to 0x%llx", allocation.m_remote_start);
         allocation.dump(log);
     }
-    
-    m_allocations.push_back(allocation);
-    
+        
     return allocation.m_remote_start;
 }
 
@@ -466,7 +465,10 @@ IRExecutionUnit::MemoryManager::allocateStub(const llvm::GlobalValue* F,
 
     uint8_t *return_value = m_default_mm_ap->allocateStub(F, StubSize, Alignment);
     
-    Allocation allocation;
+    auto iter = m_parent.m_allocations.insert(m_parent.m_allocations.end(), Allocation());
+    
+    Allocation &allocation(*iter);
+    
     allocation.m_size = StubSize;
     allocation.m_alignment = Alignment;
     allocation.m_local_start = (uintptr_t)return_value;
@@ -477,9 +479,7 @@ IRExecutionUnit::MemoryManager::allocateStub(const llvm::GlobalValue* F,
                     F, StubSize, Alignment, return_value);
         allocation.dump(log);
     }
-    
-    m_parent.m_allocations.push_back(allocation);
-    
+        
     return return_value;
 }
 
@@ -498,7 +498,10 @@ IRExecutionUnit::MemoryManager::allocateSpace(intptr_t Size, unsigned Alignment)
 
     uint8_t *return_value = m_default_mm_ap->allocateSpace(Size, Alignment);
     
-    Allocation allocation;
+    auto iter = m_parent.m_allocations.insert(m_parent.m_allocations.end(), Allocation());
+    
+    Allocation &allocation(*iter);
+    
     allocation.m_size = Size;
     allocation.m_alignment = Alignment;
     allocation.m_local_start = (uintptr_t)return_value;
@@ -509,9 +512,7 @@ IRExecutionUnit::MemoryManager::allocateSpace(intptr_t Size, unsigned Alignment)
                                (uint64_t)Size, Alignment, return_value);
         allocation.dump(log);
     }
-    
-    m_parent.m_allocations.push_back(allocation);
-    
+        
     return return_value;
 }
 
@@ -524,7 +525,10 @@ IRExecutionUnit::MemoryManager::allocateCodeSection(uintptr_t Size,
     
     uint8_t *return_value = m_default_mm_ap->allocateCodeSection(Size, Alignment, SectionID);
     
-    Allocation allocation;
+    auto iter = m_parent.m_allocations.insert(m_parent.m_allocations.end(), Allocation());
+    
+    Allocation &allocation(*iter);
+    
     allocation.m_size = Size;
     allocation.m_alignment = Alignment;
     allocation.m_local_start = (uintptr_t)return_value;
@@ -537,9 +541,7 @@ IRExecutionUnit::MemoryManager::allocateCodeSection(uintptr_t Size,
                     (uint64_t)Size, Alignment, SectionID, return_value);
         allocation.dump(log);
     }
-    
-    m_parent.m_allocations.push_back(allocation);
-    
+        
     return return_value;
 }
 
@@ -553,7 +555,10 @@ IRExecutionUnit::MemoryManager::allocateDataSection(uintptr_t Size,
 
     uint8_t *return_value = m_default_mm_ap->allocateDataSection(Size, Alignment, SectionID, IsReadOnly);
     
-    Allocation allocation;
+    auto iter = m_parent.m_allocations.insert(m_parent.m_allocations.end(), Allocation());
+    
+    Allocation &allocation(*iter);
+
     allocation.m_size = Size;
     allocation.m_alignment = Alignment;
     allocation.m_local_start = (uintptr_t)return_value;
@@ -565,9 +570,7 @@ IRExecutionUnit::MemoryManager::allocateDataSection(uintptr_t Size,
                     (uint64_t)Size, Alignment, SectionID, return_value);
         allocation.dump(log);
     }
-    
-    m_parent.m_allocations.push_back(allocation);
-    
+        
     return return_value; 
 }
 
@@ -579,7 +582,10 @@ IRExecutionUnit::MemoryManager::allocateGlobal(uintptr_t Size,
 
     uint8_t *return_value = m_default_mm_ap->allocateGlobal(Size, Alignment);
     
-    Allocation allocation;
+    auto iter = m_parent.m_allocations.insert(m_parent.m_allocations.end(), Allocation());
+    
+    Allocation &allocation(*iter);
+    
     allocation.m_size = Size;
     allocation.m_alignment = Alignment;
     allocation.m_local_start = (uintptr_t)return_value;
@@ -591,8 +597,6 @@ IRExecutionUnit::MemoryManager::allocateGlobal(uintptr_t Size,
         allocation.dump(log);
     }
     
-    m_parent.m_allocations.push_back(allocation);
-
     return return_value;
 }
 
@@ -714,7 +718,7 @@ IRExecutionUnit::ReportAllocations (llvm::ExecutionEngine &engine)
         if (!allocation.m_allocated)
             continue;
         
-        if (allocation.m_local_start == LLDB_INVALID_ADDRESS)
+        if (allocation.m_section_id == Allocation::eSectionIDNone)
             continue;
         
         engine.mapSectionAddress((void*)allocation.m_local_start, allocation.m_remote_start);

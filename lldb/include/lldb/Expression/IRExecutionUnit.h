@@ -22,6 +22,7 @@
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
+#include "lldb/Core/DataBufferHeap.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionParser.h"
@@ -424,13 +425,15 @@ private:
     {
         lldb::addr_t    m_remote_allocation;///< The (unaligned) base for the remote allocation
         lldb::addr_t    m_remote_start;     ///< The base address of the remote allocation
-        uintptr_t       m_local_start;      ///< The base address of the local allocation - LLDB_INVALID_ADDRESS means it was allocated with WriteNow
+        uintptr_t       m_local_start;      ///< The base address of the local allocation
         uintptr_t       m_size;             ///< The size of the allocation
         unsigned        m_section_id;       ///< The ID of the section
         unsigned        m_alignment;        ///< The required alignment for the allocation
         bool            m_executable;       ///< True <=> the allocation must be executable in the target
         bool            m_allocated;        ///< True <=> the allocation has been propagated to the target
 
+        std::unique_ptr<DataBufferHeap> m_data;   ///< If non-NULL, a local data buffer containing the written bytes.  Only populated by WriteNow.
+        
         static const unsigned eSectionIDNone = (unsigned)-1;
         
         //------------------------------------------------------------------
