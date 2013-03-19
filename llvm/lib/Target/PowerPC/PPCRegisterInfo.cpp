@@ -117,16 +117,15 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   }
   
   // On PPC64, r13 is the thread pointer. Never allocate this register.
-  // Note that this is over conservative, as it also prevents allocation of R31
-  // when the FP is not needed.
   if (Subtarget.isPPC64()) {
     Reserved.set(PPC::R13);
-    Reserved.set(PPC::R31);
 
     Reserved.set(PPC::X0);
     Reserved.set(PPC::X1);
     Reserved.set(PPC::X13);
-    Reserved.set(PPC::X31);
+
+    if (PPCFI->needsFP(MF))
+      Reserved.set(PPC::X31);
 
     // The 64-bit SVR4 ABI reserves r2 for the TOC pointer.
     if (Subtarget.isSVR4ABI()) {
