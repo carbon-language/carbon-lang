@@ -50,6 +50,7 @@ public:
   symbolizeCode(const std::string &ModuleName, uint64_t ModuleOffset);
   std::string
   symbolizeData(const std::string &ModuleName, uint64_t ModuleOffset);
+  void flush();
 private:
   ModuleInfo *getOrCreateModuleInfo(const std::string &ModuleName);
   std::string printDILineInfo(DILineInfo LineInfo) const;

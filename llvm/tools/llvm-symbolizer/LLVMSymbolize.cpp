@@ -186,6 +186,10 @@ std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
   return ss.str();
 }
 
+void LLVMSymbolizer::flush() {
+  Modules.clear();
+}
+
 // Returns true if the object endianness is known.
 static bool getObjectEndianness(const ObjectFile *Obj, bool &IsLittleEndian) {
   // FIXME: Implement this when libLLVMObject allows to do it easily.
