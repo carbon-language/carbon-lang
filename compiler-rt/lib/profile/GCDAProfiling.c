@@ -48,6 +48,19 @@ typedef unsigned int uint64_t;
 static FILE *output_file = NULL;
 
 /*
+ * A list of functions to write out the data.
+ */
+typedef void (*writeout_fn)();
+
+struct writeout_fn_node {
+  writeout_fn fn;
+  struct writeout_fn_node *next;
+};
+
+struct writeout_fn_node *writeout_fn_head = NULL;
+struct writeout_fn_node *writeout_fn_tail = NULL;
+
+/*
  *  A list of flush functions that our __gcov_flush() function should call.
  */
 typedef void (*flush_fn)();
@@ -303,6 +316,38 @@ void llvm_gcda_end_file() {
 #ifdef DEBUG_GCDAPROFILING
   fprintf(stderr, "llvmgcda: -----\n");
 #endif
+}
+
+void llvm_register_writeout_function(writeout_fn fn) {
+  struct writeout_fn_node *new_node = malloc(sizeof(struct writeout_fn_node));
+  new_node->fn = fn;
+  new_node->next = NULL;
+
+  if (!writeout_fn_head) {
+    writeout_fn_head = writeout_fn_tail = new_node;
+  } else {
+    writeout_fn_tail->next = new_node;
+    writeout_fn_tail = new_node;
+  }
+}
+
+void __llvm_writeout_files() {
+  struct writeout_fn_node *curr = writeout_fn_head;
+
+  while (curr) {
+    curr->fn();
+    curr = curr->next;
+  }
+}
+
+void llvm_delete_writeout_function_list() {
+  while (writeout_fn_head) {
+    struct writeout_fn_node *node = writeout_fn_head;
+    writeout_fn_head = writeout_fn_head->next;
+    free(node);
+  }
+  
+  writeout_fn_head = writeout_fn_tail = NULL;
 }
 
 void llvm_register_flush_function(flush_fn fn) {
