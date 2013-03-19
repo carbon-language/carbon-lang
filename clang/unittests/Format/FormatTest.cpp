@@ -432,6 +432,15 @@ TEST_F(FormatTest, FormatsSwitchStatement) {
                "case 1:\n"
                "  f();\n"
                "}");
+  verifyFormat("switch (x) {\n"
+               "case 1:\n"
+               "  // Do amazing stuff\n"
+               "  {\n"
+               "    f();\n"
+               "    g();\n"
+               "  }\n"
+               "  break;\n"
+               "}");
 
   verifyGoogleFormat("switch (x) {\n"
                      "  case 1:\n"

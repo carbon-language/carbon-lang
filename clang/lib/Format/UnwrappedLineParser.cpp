@@ -576,7 +576,7 @@ void UnwrappedLineParser::parseLabel() {
   unsigned OldLineLevel = Line->Level;
   if (Line->Level > 0)
     --Line->Level;
-  if (FormatTok.Tok.is(tok::l_brace)) {
+  if (CommentsBeforeNextToken.empty() && FormatTok.Tok.is(tok::l_brace)) {
     parseBlock(/*MustBeDeclaration=*/ false);
     if (FormatTok.Tok.is(tok::kw_break))
       parseStructuralElement(); // "break;" after "}" goes on the same line.
