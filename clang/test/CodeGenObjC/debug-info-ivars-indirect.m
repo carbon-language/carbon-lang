@@ -29,4 +29,4 @@ void gorf (struct S* s) {
     int _b = s->i->b;
 }
 
-// CHECK: metadata !{i32 {{[0-9]*}}, metadata !{{[0-9]*}}, metadata !"b", metadata !{{[0-9]*}}, i32 24, i64 32, i64 32, i64 0, i32 0, metadata !{{[0-9]*}}, null} ; [ DW_TAG_member ] [b] [line 24, size 32, align 32, offset 0] [from int]
+// CHECK: {{.*}} [ DW_TAG_member ] [b] [line 24, size 32, align 32, offset 0] [from int]

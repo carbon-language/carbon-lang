@@ -18,8 +18,7 @@ int main(int argc, char** argv) {
 
 // Make sure we have two DW_TAG_structure_types for baz and bar and no forward
 // references.
-// CHECK: metadata !{i32 {{.*}}, null, metadata !"bar", metadata ![[FILE:.*]], i32 8, i64 128, i64 64, i32 0, i32 0, null, metadata !{{.*}}, i32 0, null, null} ; [ DW_TAG_structure_type ]
-// CHECK: metadata !{i32 {{.*}}, null, metadata !"baz", metadata ![[FILE]], i32 3, i64 32, i64 32, i32 0, i32 0, null, metadata !{{.*}}, i32 0, null, null} ; [ DW_TAG_structure_type ]
-// CHECK-NOT: metadata !{i32 {{.*}}, null, metadata !"bar", metadata ![[FILE]], i32 8, i64 0, i64 0, i32 0, i32 4, i32 0, null, i32 0, i32 0} ; [ DW_TAG_structure_type ]
-// CHECK-NOT: metadata !{i32 {{.*}}, null, metadata !"baz", metadata ![[FILE]], i32 3, i64 0, i64 0, i32 0, i32 4, null, null, i32 0, null, null} ; [ DW_TAG_structure_type ]
-
+// CHECK-NOT: [fwd]
+// CHECK: [ DW_TAG_structure_type ] [bar]
+// CHECK: [ DW_TAG_structure_type ] [baz]
+// CHECK-NOT: [fwd]

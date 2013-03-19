@@ -6,8 +6,7 @@ class A {
 };
 A a;
 
-// CHECK: !{{.*}} = metadata !{i32 {{.*}}, metadata {{.*}}, metadata !"x", metadata {{.*}}, i32 5, i64 0, i64 0, i64 0, i32 1, metadata [[ARRAY_TYPE:.*]]} ; [ DW_TAG_member ]
-// CHECK: [[ARRAY_TYPE]] = metadata !{i32 {{.*}}, null, metadata !"", null, i32 0, i64 0, i64 32, i32 0, i32 0, metadata [[BASE_TYPE:.*]], metadata [[ELEM_TYPE:.*]], i32 0, i32 0} ; [ DW_TAG_array_type ]
-// CHECK: [[BASE_TYPE]] = metadata !{i32 {{.*}}, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+// CHECK: metadata [[ARRAY_TYPE:![0-9]*]]} ; [ DW_TAG_member ] [x]
+// CHECK: metadata [[ELEM_TYPE:![0-9]*]], i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 0, align 32, offset 0] [from int]
 // CHECK: [[ELEM_TYPE]] = metadata !{metadata [[SUBRANGE:.*]]}
 // CHECK: [[SUBRANGE]] = metadata !{i32 786465, i64 0, i64 -1} ; [ DW_TAG_subrange_type ] [unbounded]

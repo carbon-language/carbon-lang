@@ -12,4 +12,4 @@ int D::d(int x) {
   }();
 }
 
-// CHECK: metadata !{i32 {{.*}}, metadata !"this", metadata !{{.*}}, i32 11, i64 64, i64 64, i64 0, i32 1, metadata !{{.*}}} ; [ DW_TAG_member ] [this] [line 11, size 64, align 64, offset 0] [private] [from ]
+// CHECK: {{.*}} [ DW_TAG_member ] [this] [line 11, size 64, align 64, offset 0] [private] [from ]

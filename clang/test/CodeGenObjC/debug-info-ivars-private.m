@@ -32,5 +32,5 @@ __attribute((objc_root_class)) @interface NSObject {
 }
 @end
 
-// CHECK: metadata !{i32 {{[0-9]*}}, metadata !{{[0-9]*}}, metadata !"foo", metadata !{{[0-9]*}}, i32 14, i64 32, i64 32, i64 0, i32 2, metadata !{{[0-9]*}}, null} ; [ DW_TAG_member ] [foo] [line 14, size 32, align 32, offset 0] [protected] [from int]
-// CHECK: metadata !{i32 {{[0-9]*}}, metadata !{{[0-9]*}}, metadata !"bar", metadata !{{[0-9]*}}, i32 27, i64 32, i64 32, i64 0, i32 1, metadata !{{[0-9]*}}, null} ; [ DW_TAG_member ] [bar] [line 27, size 32, align 32, offset 0] [private] [from int]
+// CHECK: {{.*}} [ DW_TAG_member ] [foo] [line 14, size 32, align 32, offset 0] [protected] [from int]
+// CHECK: {{.*}} [ DW_TAG_member ] [bar] [line 27, size 32, align 32, offset 0] [private] [from int]

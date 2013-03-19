@@ -18,54 +18,54 @@ int d(int x) { D y[10]; [x,y] { return y[x].x; }(); }
 // CHECK: [[FILE:.*]] = {{.*}} [ DW_TAG_file_type ] [{{.*}}debug-lambda-expressions.cpp]
 
 // A: 10
-// CHECK: [[A_FUNC:.*]] = metadata !{i32 {{.*}}, i32 0, metadata [[FILE]], metadata !"a", metadata !"a", metadata !"_Z1av", metadata {{.*}}, i32 [[A_LINE:.*]], metadata {{.*}}, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 ()* @_Z1av, null, null, {{.*}} [ DW_TAG_subprogram ]
+// CHECK: [[A_FUNC:.*]] = {{.*}} [ DW_TAG_subprogram ] [line [[A_LINE:.*]]] [def] [a]
 
 // B: 14
-// CHECK: [[B_FUNC:.*]] = metadata !{i32 786478, i32 0, metadata [[FILE]], metadata !"b", metadata !"b", metadata !"_Z1bi", metadata [[FILE]], i32 [[B_LINE:.*]], metadata {{.*}}, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @_Z1bi, null, null, {{.*}} ; [ DW_TAG_subprogram ]
+// CHECK: [[B_FUNC:.*]] = {{.*}} [ DW_TAG_subprogram ] [line [[B_LINE:.*]]] [def] [b]
 
 // C: 17
-// CHECK: [[C_FUNC:.*]] = metadata !{i32 {{.*}}, i32 0, metadata [[FILE]], metadata !"c", metadata !"c", metadata !"_Z1ci", metadata [[FILE]], i32 [[C_LINE:.*]], metadata {{.*}}, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @_Z1ci, null, null, metadata {{.*}} ; [ DW_TAG_subprogram ]
+// CHECK: [[C_FUNC:.*]] = {{.*}} [ DW_TAG_subprogram ] [line [[C_LINE:.*]]] [def] [c]
 
 // D: 18
-// CHECK: [[D_FUNC:.*]] = metadata !{i32 {{.*}}, i32 0, metadata [[FILE]], metadata !"d", metadata !"d", metadata !"_Z1di", metadata [[FILE]], i32 [[D_LINE:.*]], metadata {{.*}}, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @_Z1di, null, null, metadata {{.*}} ; [ DW_TAG_subprogram ]
+// CHECK: [[D_FUNC:.*]] = {{.*}} [ DW_TAG_subprogram ] [line [[D_LINE:.*]]] [def] [d]
 
 // Back to D. -- 24
-// CHECK: [[LAM_D:.*]] = metadata !{i32 {{.*}}, metadata [[D_FUNC]], metadata !"", metadata [[FILE]], i32 [[D_LINE]], i64 352, i64 32, i32 0, i32 0, null, metadata [[LAM_D_ARGS:.*]], i32 0, null, null} ; [ DW_TAG_class_type ]
+// CHECK: [[LAM_D:.*]] = {{.*}}, metadata [[D_FUNC]], {{.*}}, metadata [[LAM_D_ARGS:.*]], i32 0, null, null} ; [ DW_TAG_class_type ] [line [[D_LINE]],
 // CHECK: [[LAM_D_ARGS]] = metadata !{metadata [[CAP_D_X:.*]], metadata [[CAP_D_Y:.*]], metadata [[CON_LAM_D:.*]], metadata [[DES_LAM_D:.*]]}
-// CHECK: [[CAP_D_X]] = metadata !{i32 {{.*}}, metadata [[LAM_D]], metadata !"x", metadata [[FILE]], i32 [[D_LINE]], i64 32, i64 32, i64 0, i32 1, metadata {{.*}} ; [ DW_TAG_member ]
-// CHECK: [[CAP_D_Y]] = metadata !{i32 {{.*}}, metadata [[LAM_D]], metadata !"y", metadata [[FILE]], i32 [[D_LINE]], i64 320, i64 32, i64 32, i32 1, metadata {{.*}} ; [ DW_TAG_member ]
-// CHECK: [[CON_LAM_D]] = metadata {{.*}}[[LAM_D]], metadata !"operator()", metadata !"operator()"{{.*}}[ DW_TAG_subprogram ]
-// CHECK: [[DES_LAM_D]] = metadata {{.*}}[[LAM_D]], metadata !"~", metadata !"~"{{.*}}[ DW_TAG_subprogram ]
+// CHECK: [[CAP_D_X]] = {{.*}}, metadata [[LAM_D]], {{.*}} [ DW_TAG_member ] [x] [line [[D_LINE]],
+// CHECK: [[CAP_D_Y]] = {{.*}}, metadata [[LAM_D]], {{.*}} [ DW_TAG_member ] [y] [line [[D_LINE]],
+// CHECK: [[CON_LAM_D]] = {{.*}}, metadata [[LAM_D]], {{.*}} [ DW_TAG_subprogram ] [line [[D_LINE]]] [operator()]
+// CHECK: [[DES_LAM_D]] = {{.*}}, metadata [[LAM_D]], {{.*}} [ DW_TAG_subprogram ] [line [[D_LINE]]] [~]
 
 
 // Back to C. -- 55
-// CHECK: [[LAM_C:.*]] = metadata !{i32 {{.*}}, metadata [[C_FUNC]], metadata !"", metadata [[FILE]], i32 [[C_LINE]], i64 64, i64 64, i32 0, i32 0, null, metadata [[LAM_C_ARGS:.*]], i32 0, null, null} ; [ DW_TAG_class_type ]
+// CHECK: [[LAM_C:.*]] = {{.*}}, metadata [[C_FUNC]], {{.*}}, metadata [[LAM_C_ARGS:.*]], i32 0, null, null} ; [ DW_TAG_class_type ] [line [[C_LINE]],
 // CHECK: [[LAM_C_ARGS]] = metadata !{metadata [[CAP_C:.*]], metadata [[CON_LAM_C:.*]], metadata [[DES_LAM_C:.*]]}
 // Ignoring the member type for now.
-// CHECK: [[CAP_C]] = metadata !{i32 {{.*}}, metadata [[LAM_C]], metadata !"x", metadata [[FILE]], i32 [[C_LINE]], i64 64, i64 64, i64 0, i32 1, metadata {{.*}}} ; [ DW_TAG_member ]
-// CHECK: [[CON_LAM_C]] = metadata {{.*}}[[LAM_C]], metadata !"operator()", metadata !"operator()"{{.*}}[ DW_TAG_subprogram ]
-// CHECK: [[DES_LAM_C]] = metadata {{.*}}[[LAM_C]], metadata !"~", metadata !"~"{{.*}}[ DW_TAG_subprogram ]
+// CHECK: [[CAP_C]] = {{.*}}, metadata [[LAM_C]], {{.*}}} ; [ DW_TAG_member ] [x] [line [[C_LINE]],
+// CHECK: [[CON_LAM_C]] = {{.*}}, metadata [[LAM_C]], {{.*}} [ DW_TAG_subprogram ] [line [[C_LINE]]] [operator()]
+// CHECK: [[DES_LAM_C]] = {{.*}}, metadata [[LAM_C]], {{.*}} [ DW_TAG_subprogram ] [line [[C_LINE]]] [~]
 
 
 // Back to B. -- 67
-// CHECK: [[LAM_B:.*]] = metadata !{i32 {{.*}}, metadata [[B_FUNC]], metadata !"", metadata [[FILE]], i32 [[B_LINE]], i64 32, i64 32, i32 0, i32 0, null, metadata [[LAM_B_ARGS:.*]], i32 0, null, null} ; [ DW_TAG_class_type ]
+// CHECK: [[LAM_B:.*]] = {{.*}}, metadata [[B_FUNC]], {{.*}}, metadata [[LAM_B_ARGS:.*]], i32 0, null, null} ; [ DW_TAG_class_type ] [line [[B_LINE]],
 // CHECK: [[LAM_B_ARGS]] = metadata !{metadata [[CAP_B:.*]], metadata [[CON_LAM_B:.*]], metadata [[DES_LAM_B:.*]]}
-// CHECK: [[CAP_B]] = metadata !{i32 {{.*}}, metadata [[LAM_B]], metadata !"x", metadata [[FILE]], i32 [[B_LINE]], i64 32, i64 32, i64 0, i32 1, metadata {{.*}}} ; [ DW_TAG_member ]
-// CHECK: [[CON_LAM_B]] = metadata {{.*}}[[LAM_B]], metadata !"operator()", metadata !"operator()"{{.*}}[ DW_TAG_subprogram ]
-// CHECK: [[DES_LAM_B]] = metadata {{.*}}[[LAM_B]], metadata !"~", metadata !"~"{{.*}}[ DW_TAG_subprogram ]
+// CHECK: [[CAP_B]] = {{.*}}, metadata [[LAM_B]], {{.*}}} ; [ DW_TAG_member ] [x] [line [[B_LINE]],
+// CHECK: [[CON_LAM_B]] = {{.*}}, metadata [[LAM_B]], {{.*}} [ DW_TAG_subprogram ] [line [[B_LINE]]] [operator()]
+// CHECK: [[DES_LAM_B]] = {{.*}}, metadata [[LAM_B]], {{.*}} [ DW_TAG_subprogram ] [line [[B_LINE]]] [~]
 
 // Back to A. -- 78
-// CHECK: [[LAM_A:.*]] = metadata !{i32 {{.*}}, metadata [[A_FUNC]], metadata !"", metadata [[FILE]], i32 [[A_LINE]], i64 8, i64 8, i32 0, i32 0, null, metadata [[LAM_A_ARGS:.*]], i32 0, null, null} ; [ DW_TAG_class_type ]
+// CHECK: [[LAM_A:.*]] = {{.*}}, metadata [[A_FUNC]], {{.*}}, metadata [[LAM_A_ARGS:.*]], i32 0, null, null} ; [ DW_TAG_class_type ] [line [[A_LINE]],
 // CHECK: [[LAM_A_ARGS]] = metadata !{metadata [[CON_LAM_A:.*]], metadata [[DES_LAM_A:.*]]}
-// CHECK: [[CON_LAM_A]] = metadata {{.*}}[[LAM_A]], metadata !"operator()", metadata !"operator()"{{.*}}[ DW_TAG_subprogram ]
-// CHECK: [[DES_LAM_A]] = metadata {{.*}}[[LAM_A]], metadata !"~", metadata !"~"{{.*}}[ DW_TAG_subprogram ]
+// CHECK: [[CON_LAM_A]] = {{.*}}, metadata [[LAM_A]], {{.*}} [ DW_TAG_subprogram ] [line [[A_LINE]]] [operator()]
+// CHECK: [[DES_LAM_A]] = {{.*}}, metadata [[LAM_A]], {{.*}} [ DW_TAG_subprogram ] [line [[A_LINE]]] [~]
 
 // CVAR:
-// CHECK: metadata !{i32 {{.*}}, i32 0, null, metadata !"cvar", metadata !"cvar", metadata !"", metadata [[FILE]], i32 [[CVAR_LINE:.*]], metadata ![[CVAR_T:.*]], i32 0, i32 1, %class.anon.0* @cvar, null} ; [ DW_TAG_variable ]
-// CHECK: [[CVAR_T]] = metadata !{i32 {{.*}}, null, metadata !"", metadata [[FILE]], i32 [[CVAR_LINE]], i64 8, i64 8, i32 0, i32 0, null, metadata ![[CVAR_ARGS:.*]], i32 0, null, null} ; [ DW_TAG_class_type ]
+// CHECK: {{.*}} metadata [[CVAR_T:![0-9]*]], {{.*}} ; [ DW_TAG_variable ] [cvar] [line [[CVAR_LINE:[0-9]*]]] 
+// CHECK: [[CVAR_T]] = {{.*}}, metadata ![[CVAR_ARGS:.*]], i32 0, null, null} ; [ DW_TAG_class_type ] [line [[CVAR_LINE]],
 // CHECK: [[CVAR_ARGS]] = metadata !{metadata !{{.*}}, metadata !{{.*}}, metadata !{{.*}}}
 
 // VAR:
-// CHECK: metadata !{i32 {{.*}}, i32 0, null, metadata !"var", metadata !"var", metadata !"", metadata [[FILE]], i32 [[VAR_LINE:.*]], metadata ![[VAR_T:.*]], i32 1, i32 1, %class.anon* @var, null} ; [ DW_TAG_variable ]
-// CHECK: [[VAR_T]] = metadata !{i32 {{.*}}, null, metadata !"", metadata [[FILE]], i32 [[VAR_LINE]], i64 8, i64 8, i32 0, i32 0, null, metadata ![[VAR_ARGS:.*]], i32 0, null, null} ; [ DW_TAG_class_type ]
+// CHECK: {{.*}} metadata [[VAR_T:![0-9]*]], {{.*}} ; [ DW_TAG_variable ] [var] [line [[VAR_LINE:[0-9]*]]]
+// CHECK: [[VAR_T]] = {{.*}}, metadata [[VAR_ARGS:![0-9]*]], i32 0, null, null} ; [ DW_TAG_class_type ] [line [[VAR_LINE]],
 // CHECK: [[VAR_ARGS]] = metadata !{metadata !{{.*}}, metadata !{{.*}}, metadata !{{.*}}}
