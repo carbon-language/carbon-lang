@@ -3673,6 +3673,31 @@ ClangASTContext::GetFieldAtIndex (clang::ASTContext *ast,
     return NULL;
 }
 
+size_t
+ClangASTContext::GetIndexOfFieldWithName (clang::ASTContext *ast,
+                                          lldb::clang_type_t clang_type,
+                                          const char* name,
+                                          lldb::clang_type_t* field_clang_type,
+                                          uint64_t *bit_offset_ptr,
+                                          uint32_t *bitfield_bit_size_ptr,
+                                          bool *is_bitfield_ptr)
+{
+    auto count = ClangASTContext::GetNumFields(ast, clang_type);
+    lldb::clang_type_t field_clang_type_internal;
+    std::string field_name;
+    for (auto index = 0; index < count; index++)
+    {
+        field_clang_type_internal = ClangASTContext::GetFieldAtIndex(ast, clang_type, index, field_name, bit_offset_ptr, bitfield_bit_size_ptr, is_bitfield_ptr);
+        if ( strcmp(field_name.c_str(), name) == 0 )
+        {
+            if (field_clang_type)
+                *field_clang_type = field_clang_type_internal;
+            return index;
+        }
+    }
+    return UINT32_MAX;
+}
+
 lldb::BasicType
 ClangASTContext::GetLLDBBasicTypeEnumeration (clang_type_t clang_type)
 {

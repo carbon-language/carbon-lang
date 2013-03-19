@@ -11,6 +11,8 @@
 #define liblldb_CXXFormatterFunctions_h_
 
 #include <stdint.h>
+#include <time.h>
+
 #include "lldb/lldb-forward.h"
 
 #include "lldb/Core/ConstString.h"
@@ -48,6 +50,9 @@ namespace lldb_private {
         
         size_t
         ExtractIndexFromString (const char* item_name);
+        
+        time_t
+        GetOSXEpoch ();
         
         bool
         Char16StringSummaryProvider (ValueObject& valobj, Stream& stream); // char16_t* and unichar*
@@ -683,6 +688,150 @@ namespace lldb_private {
         SyntheticChildrenFrontEnd* LibCxxVectorIteratorSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
         
         SyntheticChildrenFrontEnd* LibStdcppVectorIteratorSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
+        
+        class LibcxxSharedPtrSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            LibcxxSharedPtrSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~LibcxxSharedPtrSyntheticFrontEnd ();
+        private:
+            ValueObject* m_cntrl;
+            lldb::ValueObjectSP m_count_sp;
+            lldb::ValueObjectSP m_weak_count_sp;
+            uint8_t m_ptr_size;
+            lldb::ByteOrder m_byte_order;
+        };
+        
+        SyntheticChildrenFrontEnd* LibcxxSharedPtrSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
+        
+        class LibcxxStdVectorSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            LibcxxStdVectorSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~LibcxxStdVectorSyntheticFrontEnd ();
+        private:
+            ValueObject* m_start;
+            ValueObject* m_finish;
+            ClangASTType m_element_type;
+            uint32_t m_element_size;
+            std::map<size_t,lldb::ValueObjectSP> m_children;
+        };
+        
+        SyntheticChildrenFrontEnd* LibcxxStdVectorSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
+        
+        class LibcxxStdListSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            LibcxxStdListSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~LibcxxStdListSyntheticFrontEnd ();
+        private:
+            bool
+            HasLoop();
+            
+            static const size_t g_list_capping_size = 255;
+            static const bool g_use_loop_detect = true;
+            lldb::addr_t m_node_address;
+            ValueObject* m_head;
+            ValueObject* m_tail;
+            ClangASTType m_element_type;
+            uint32_t m_element_size;
+            size_t m_count;
+            std::map<size_t,lldb::ValueObjectSP> m_children;
+        };
+        
+        SyntheticChildrenFrontEnd* LibcxxStdListSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
+        
+        class LibcxxStdMapSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            LibcxxStdMapSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~LibcxxStdMapSyntheticFrontEnd ();
+        private:
+            bool
+            GetDataType();
+            
+            void
+            GetValueOffset (const lldb::ValueObjectSP& node);
+            
+            static const size_t g_map_capping_size = 255;
+            ValueObject* m_tree;
+            ValueObject* m_root_node;
+            ClangASTType m_element_type;
+            uint32_t m_element_size;
+            uint32_t m_skip_size;
+            size_t m_count;
+            std::map<size_t,lldb::ValueObjectSP> m_children;
+        };
+        
+        SyntheticChildrenFrontEnd* LibcxxStdMapSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
         
     } // namespace formatters
 } // namespace lldb_private

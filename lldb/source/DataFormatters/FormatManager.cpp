@@ -623,24 +623,16 @@ FormatManager::LoadLibcxxFormatters()
     SyntheticChildren::Flags stl_synth_flags;
     stl_synth_flags.SetCascades(true).SetSkipPointers(false).SetSkipReferences(false);
     
-    libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::vector<.+>(( )?&)?$")),
-                                                       SyntheticChildrenSP(new ScriptedSyntheticChildren(stl_synth_flags,
-                                                                                                 "lldb.formatters.cpp.libcxx.stdvector_SynthProvider")));
-    libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::list<.+>(( )?&)?$")),
-                                                       SyntheticChildrenSP(new ScriptedSyntheticChildren(stl_synth_flags,
-                                                                                                 "lldb.formatters.cpp.libcxx.stdlist_SynthProvider")));
-    libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::map<.+> >(( )?&)?$")),
-                                                       SyntheticChildrenSP(new ScriptedSyntheticChildren(stl_synth_flags,
-                                                                                                 "lldb.formatters.cpp.libcxx.stdmap_SynthProvider")));
+    AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxStdVectorSyntheticFrontEndCreator, "libc++ std::vector synthetic children", ConstString("^std::__1::vector<.+>(( )?&)?$"), stl_synth_flags, true);
+    AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxStdListSyntheticFrontEndCreator, "libc++ std::list synthetic children", ConstString("^std::__1::list<.+>(( )?&)?$"), stl_synth_flags, true);
+    AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxStdMapSyntheticFrontEndCreator, "libc++ std::map synthetic children", ConstString("^std::__1::map<.+> >(( )?&)?$"), stl_synth_flags, true);
+
     libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)deque<.+>(( )?&)?$")),
                                                           SyntheticChildrenSP(new ScriptedSyntheticChildren(stl_synth_flags,
                                                                                                     "lldb.formatters.cpp.libcxx.stddeque_SynthProvider")));
-    libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)shared_ptr<.+>(( )?&)?$")),
-                                                          SyntheticChildrenSP(new ScriptedSyntheticChildren(stl_synth_flags,
-                                                                                                    "lldb.formatters.cpp.libcxx.stdsharedptr_SynthProvider")));
-    libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)weak_ptr<.+>(( )?&)?$")),
-                                                          SyntheticChildrenSP(new ScriptedSyntheticChildren(stl_synth_flags,
-                                                                                                    "lldb.formatters.cpp.libcxx.stdsharedptr_SynthProvider")));
+    
+    AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxSharedPtrSyntheticFrontEndCreator, "shared_ptr synthetic children", ConstString("^(std::__1::)shared_ptr<.+>(( )?&)?$"), stl_synth_flags, true);
+    AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxSharedPtrSyntheticFrontEndCreator, "weak_ptr synthetic children", ConstString("^(std::__1::)weak_ptr<.+>(( )?&)?$"), stl_synth_flags, true);
     
     stl_summary_flags.SetDontShowChildren(false);stl_summary_flags.SetSkipPointers(true);
     libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::vector<.+>(( )?&)?$")),

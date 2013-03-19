@@ -549,6 +549,10 @@
 		94CB257116B0A4270059775D /* TypeSummary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CB256E16B0A4260059775D /* TypeSummary.cpp */; };
 		94CB257216B0A4270059775D /* TypeSynthetic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CB256F16B0A4270059775D /* TypeSynthetic.cpp */; };
 		94CB257416B1D3880059775D /* FormatCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CB257316B1D3870059775D /* FormatCache.cpp */; };
+		94CD704D16F8DDEA00CF1E42 /* CF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CD704B16F8DDEA00CF1E42 /* CF.cpp */; };
+		94CD704E16F8DDEA00CF1E42 /* Cocoa.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CD704C16F8DDEA00CF1E42 /* Cocoa.cpp */; };
+		94CD705016F8DF1C00CF1E42 /* LibCxxList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CD704F16F8DF1C00CF1E42 /* LibCxxList.cpp */; };
+		94CD705216F8F5BC00CF1E42 /* LibCxxMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CD705116F8F5BC00CF1E42 /* LibCxxMap.cpp */; };
 		94D0B10C16D5535900EA9C70 /* LibCxx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94D0B10A16D5535900EA9C70 /* LibCxx.cpp */; };
 		94D0B10D16D5535900EA9C70 /* LibStdcpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94D0B10B16D5535900EA9C70 /* LibStdcpp.cpp */; };
 		94D6A0AA16CEB55F00833B6E /* NSArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94D6A0A716CEB55F00833B6E /* NSArray.cpp */; };
@@ -1603,6 +1607,10 @@
 		94CB256F16B0A4270059775D /* TypeSynthetic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeSynthetic.cpp; path = source/DataFormatters/TypeSynthetic.cpp; sourceTree = "<group>"; };
 		94CB257316B1D3870059775D /* FormatCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FormatCache.cpp; path = source/DataFormatters/FormatCache.cpp; sourceTree = "<group>"; };
 		94CB257516B1D3910059775D /* FormatCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FormatCache.h; path = include/lldb/DataFormatters/FormatCache.h; sourceTree = "<group>"; };
+		94CD704B16F8DDEA00CF1E42 /* CF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CF.cpp; path = source/DataFormatters/CF.cpp; sourceTree = "<group>"; };
+		94CD704C16F8DDEA00CF1E42 /* Cocoa.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Cocoa.cpp; path = source/DataFormatters/Cocoa.cpp; sourceTree = "<group>"; };
+		94CD704F16F8DF1C00CF1E42 /* LibCxxList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LibCxxList.cpp; path = source/DataFormatters/LibCxxList.cpp; sourceTree = "<group>"; };
+		94CD705116F8F5BC00CF1E42 /* LibCxxMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LibCxxMap.cpp; path = source/DataFormatters/LibCxxMap.cpp; sourceTree = "<group>"; };
 		94D0B10A16D5535900EA9C70 /* LibCxx.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LibCxx.cpp; path = source/DataFormatters/LibCxx.cpp; sourceTree = "<group>"; };
 		94D0B10B16D5535900EA9C70 /* LibStdcpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LibStdcpp.cpp; path = source/DataFormatters/LibStdcpp.cpp; sourceTree = "<group>"; };
 		94D6A0A716CEB55F00833B6E /* NSArray.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NSArray.cpp; path = source/DataFormatters/NSArray.cpp; sourceTree = "<group>"; };
@@ -3422,6 +3430,8 @@
 		94CB255616B0683B0059775D /* DataFormatters */ = {
 			isa = PBXGroup;
 			children = (
+				94CD704B16F8DDEA00CF1E42 /* CF.cpp */,
+				94CD704C16F8DDEA00CF1E42 /* Cocoa.cpp */,
 				94CB255F16B069800059775D /* CXXFormatterFunctions.h */,
 				94CB255716B069770059775D /* CXXFormatterFunctions.cpp */,
 				94CB256016B069800059775D /* DataVisualization.h */,
@@ -3434,6 +3444,8 @@
 				94CB255A16B069770059775D /* FormatManager.cpp */,
 				94CB256316B069800059775D /* FormatNavigator.h */,
 				94D0B10A16D5535900EA9C70 /* LibCxx.cpp */,
+				94CD704F16F8DF1C00CF1E42 /* LibCxxList.cpp */,
+				94CD705116F8F5BC00CF1E42 /* LibCxxMap.cpp */,
 				94D0B10B16D5535900EA9C70 /* LibStdcpp.cpp */,
 				94D6A0A716CEB55F00833B6E /* NSArray.cpp */,
 				94D6A0A816CEB55F00833B6E /* NSDictionary.cpp */,
@@ -3939,6 +3951,7 @@
 				2689FFF113353DB600698AC0 /* BreakpointID.cpp in Sources */,
 				2689FFF313353DB600698AC0 /* BreakpointIDList.cpp in Sources */,
 				2689FFF513353DB600698AC0 /* BreakpointList.cpp in Sources */,
+				94CD704D16F8DDEA00CF1E42 /* CF.cpp in Sources */,
 				2689FFF713353DB600698AC0 /* BreakpointLocation.cpp in Sources */,
 				2689FFF913353DB600698AC0 /* BreakpointLocationCollection.cpp in Sources */,
 				2689FFFB13353DB600698AC0 /* BreakpointLocationList.cpp in Sources */,
@@ -3946,6 +3959,7 @@
 				2689FFFF13353DB600698AC0 /* BreakpointResolver.cpp in Sources */,
 				2689000113353DB600698AC0 /* BreakpointResolverAddress.cpp in Sources */,
 				2689000313353DB600698AC0 /* BreakpointResolverFileLine.cpp in Sources */,
+				94CD705216F8F5BC00CF1E42 /* LibCxxMap.cpp in Sources */,
 				2689000513353DB600698AC0 /* BreakpointResolverName.cpp in Sources */,
 				2689000713353DB600698AC0 /* BreakpointSite.cpp in Sources */,
 				2689000913353DB600698AC0 /* BreakpointSiteList.cpp in Sources */,
@@ -4292,12 +4306,14 @@
 				2697A39315E404B1003E682C /* OptionValueArch.cpp in Sources */,
 				94EA1D5C15E6C9B400D4171A /* PythonDataObjects.cpp in Sources */,
 				94D6A0AC16CEB55F00833B6E /* NSSet.cpp in Sources */,
+				94CD704E16F8DDEA00CF1E42 /* Cocoa.cpp in Sources */,
 				2698699B15E6CBD0002415FF /* OperatingSystemPython.cpp in Sources */,
 				947A1D641616476B0017C8D1 /* CommandObjectPlugin.cpp in Sources */,
 				262ED0081631FA3A00879631 /* OptionGroupString.cpp in Sources */,
 				94094C6B163B6F840083A547 /* ValueObjectCast.cpp in Sources */,
 				94CB255B16B069770059775D /* CXXFormatterFunctions.cpp in Sources */,
 				94CB255C16B069770059775D /* DataVisualization.cpp in Sources */,
+				94CD705016F8DF1C00CF1E42 /* LibCxxList.cpp in Sources */,
 				94CB255D16B069770059775D /* FormatClasses.cpp in Sources */,
 				94CB255E16B069770059775D /* FormatManager.cpp in Sources */,
 				94CB256616B096F10059775D /* TypeCategory.cpp in Sources */,
