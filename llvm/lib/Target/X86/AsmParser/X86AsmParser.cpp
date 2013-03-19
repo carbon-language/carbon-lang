@@ -62,6 +62,9 @@ private:
   X86Operand *ParseIntelBracExpression(unsigned SegReg, unsigned Size);
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
 
+  X86Operand *CreateMemForInlineAsm(const MCExpr *Disp, SMLoc Start, SMLoc End,
+                                    SMLoc SizeDirLoc, unsigned Size);
+
   bool ParseIntelDotOperator(const MCExpr *Disp, const MCExpr **NewDisp,
                              SmallString<64> &Err);
 
@@ -882,6 +885,45 @@ public:
   }
 };
 
+X86Operand *X86AsmParser::CreateMemForInlineAsm(const MCExpr *Disp, SMLoc Start,
+                                                SMLoc End, SMLoc SizeDirLoc,
+                                                unsigned Size) {
+  bool NeedSizeDir = false;
+  bool IsVarDecl = false;
+  if (const MCSymbolRefExpr *SymRef = dyn_cast<MCSymbolRefExpr>(Disp)) {
+    const MCSymbol &Sym = SymRef->getSymbol();
+    // FIXME: The SemaLookup will fail if the name is anything other then an
+    // identifier.
+    // FIXME: Pass a valid SMLoc.
+    unsigned tLength, tSize, tType;
+    SemaCallback->LookupInlineAsmIdentifier(Sym.getName(), NULL, tLength,
+                                            tSize, tType, IsVarDecl);
+    if (!Size) {
+      Size = tType * 8; // Size is in terms of bits in this context.
+      NeedSizeDir = Size > 0;
+    }
+  }
+
+  // If this is not a VarDecl then assume it is a FuncDecl or some other label
+  // reference.  We need an 'r' constraint here, so we need to create register
+  // operand to ensure proper matching.  Just pick a GPR based on the size of
+  // a pointer.
+  if (!IsVarDecl) {
+    unsigned RegNo = is64BitMode() ? X86::RBX : X86::EBX;
+    return X86Operand::CreateReg(RegNo, Start, End, /*AddressOf=*/true);
+  }
+
+  if (NeedSizeDir)
+    InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_SizeDirective, SizeDirLoc,
+                                                /*Len*/0, Size));  
+
+  // When parsing inline assembly we set the base register to a non-zero value
+  // as we don't know the actual value at this time.  This is necessary to
+  // get the matching correct in some cases.
+  return X86Operand::CreateMem(/*SegReg*/0, Disp, /*BaseReg*/1, /*IndexReg*/0,
+                               /*Scale*/1, Start, End, Size);
+}
+
 X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg, 
                                                    unsigned Size) {
   const AsmToken &Tok = Parser.getTok();
@@ -906,7 +948,12 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       // Adjust the EndLoc due to the ']'.
       End = SMLoc::getFromPointer(Parser.getTok().getEndLoc().getPointer()-1);
       Parser.Lex();
-      return X86Operand::CreateMem(Disp, Start, End, Size);
+      if (!isParsingInlineAsm())
+        return X86Operand::CreateMem(Disp, Start, End, Size);
+
+      // We want the size directive before the '['.
+      SMLoc SizeDirLoc = SMLoc::getFromPointer(Start.getPointer()-1);
+      return CreateMemForInlineAsm(Disp, Start, End, SizeDirLoc, Size);
     }
   }
 
@@ -1030,41 +1077,7 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
 
   if (!isParsingInlineAsm())
     return X86Operand::CreateMem(Disp, Start, End, Size);
-
-  bool NeedSizeDir = false;
-  bool IsVarDecl = false;
-  if (const MCSymbolRefExpr *SymRef = dyn_cast<MCSymbolRefExpr>(Disp)) {
-    const MCSymbol &Sym = SymRef->getSymbol();
-    // FIXME: The SemaLookup will fail if the name is anything other then an
-    // identifier.
-    // FIXME: Pass a valid SMLoc.
-    unsigned tLength, tSize, tType;
-    SemaCallback->LookupInlineAsmIdentifier(Sym.getName(), NULL, tLength,
-                                            tSize, tType, IsVarDecl);
-    if (!Size) {
-      Size = tType * 8; // Size is in terms of bits in this context.
-      NeedSizeDir = Size > 0;
-    }
-  }
-
-  // If this is not a VarDecl then assume it is a FuncDecl or some other label
-  // reference.  We need an 'r' constraint here, so we need to create register
-  // operand to ensure proper matching.  Just pick a GPR based on the size of
-  // a pointer.
-  if (!IsVarDecl) {
-    unsigned RegNo = is64BitMode() ? X86::RBX : X86::EBX;
-    return X86Operand::CreateReg(RegNo, Start, End, /*AddressOf=*/true);
-  }
-
-  if (NeedSizeDir)
-    InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_SizeDirective, Start,
-                                                /*Len*/0, Size));  
-
-  // When parsing inline assembly we set the base register to a non-zero value
-  // as we don't know the actual value at this time.  This is necessary to
-  // get the matching correct in some cases.
-  return X86Operand::CreateMem(/*SegReg*/0, Disp, /*BaseReg*/1, /*IndexReg*/0,
-                               /*Scale*/1, Start, End, Size);
+  return CreateMemForInlineAsm(Disp, Start, End, Start, Size);
 }
 
 /// Parse the '.' operator.
