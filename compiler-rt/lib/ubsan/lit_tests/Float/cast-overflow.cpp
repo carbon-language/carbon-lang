@@ -36,6 +36,9 @@ int main(int argc, char **argv) {
   (void)(float)FloatMaxAsUInt128; // ok
 #endif
 
+  float NearlyMinusOne = -0.99999;
+  unsigned Zero = NearlyMinusOne; // ok
+
   // Build a '+Inf'.
   char InfVal[] = { 0x00, 0x00, 0x80, 0x7f };
   float Inf;
@@ -59,8 +62,8 @@ int main(int argc, char **argv) {
     // CHECK-1: runtime error: value -2.14748{{.*}} is outside the range of representable values of type 'int'
     return MinFloatRepresentableAsInt - 0x100;
   case '2':
-    // CHECK-2: runtime error: value -0.001 is outside the range of representable values of type 'unsigned int'
-    return (unsigned)-0.001;
+    // CHECK-2: runtime error: value -1 is outside the range of representable values of type 'unsigned int'
+    return (unsigned)-1.0;
   case '3':
     // CHECK-3: runtime error: value 4.2949{{.*}} is outside the range of representable values of type 'unsigned int'
     return (unsigned)(MaxFloatRepresentableAsUInt + 0x100);
