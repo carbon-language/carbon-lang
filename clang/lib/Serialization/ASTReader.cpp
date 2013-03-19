@@ -1789,7 +1789,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
                            ClientLoadCapabilities)) {
         case Failure: return Failure;
           // If we have to ignore the dependency, we'll have to ignore this too.
-        case Missing: return Missing;
+        case Missing:
         case OutOfDate: return OutOfDate;
         case VersionMismatch: return VersionMismatch;
         case ConfigurationMismatch: return ConfigurationMismatch;
