@@ -4175,7 +4175,6 @@ AsmParser::parseMSInlineAsm(void *AsmLoc, std::string &AsmString,
 
   // Build the IR assembly string.
   std::string AsmStringIR;
-  AsmRewriteKind PrevKind = AOK_Imm;
   raw_string_ostream OS(AsmStringIR);
   const char *AsmStart = SrcMgr.getMemoryBuffer(0)->getBufferStart();
   const char *AsmEnd = SrcMgr.getMemoryBuffer(0)->getBufferEnd();
@@ -4197,7 +4196,6 @@ AsmParser::parseMSInlineAsm(void *AsmLoc, std::string &AsmString,
         --Len;
       OS << StringRef(AsmStart, Len);
     }
-    PrevKind = Kind;
 
     // Skip the original expression.
     if (Kind == AOK_Skip) {
