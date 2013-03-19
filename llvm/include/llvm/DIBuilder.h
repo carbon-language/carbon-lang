@@ -375,10 +375,6 @@ namespace llvm {
     /// flag set.
     DIType createObjectPointerType(DIType Ty);
 
-    /// createTemporaryType - Create a temporary forward-declared type.
-    DIType createTemporaryType();
-    DIType createTemporaryType(DIFile F);
-
     /// createForwardDecl - Create a temporary forward-declared type.
     DIType createForwardDecl(unsigned Tag, StringRef Name, DIDescriptor Scope,
                              DIFile F, unsigned Line, unsigned RuntimeLang = 0,

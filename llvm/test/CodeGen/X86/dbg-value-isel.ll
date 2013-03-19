@@ -83,11 +83,11 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"__OpenCL_nbt02_kernel", metadata !"__OpenCL_nbt02_kernel", metadata !"__OpenCL_nbt02_kernel", metadata !1, i32 2, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 0, i1 false, null} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 786473, metadata !20} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, i32 0, i32 1, metadata !1, metadata !"clc", i1 false, metadata !"", i32 0, null, null, metadata !19, null, null} ; [ DW_TAG_compile_unit ]
-!3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
+!3 = metadata !{i32 786453, metadata !1, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{null, metadata !5}
-!5 = metadata !{i32 786447, metadata !2, metadata !"", null, i32 0, i64 32, i64 32, i64 0, i32 0, metadata !6} ; [ DW_TAG_pointer_type ]
-!6 = metadata !{i32 589846, metadata !2, metadata !"uint", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !7} ; [ DW_TAG_typedef ]
-!7 = metadata !{i32 786468, metadata !2, metadata !"unsigned int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
+!5 = metadata !{i32 786447, null, metadata !2, metadata !"", i32 0, i64 32, i64 32, i64 0, i32 0, metadata !6} ; [ DW_TAG_pointer_type ]
+!6 = metadata !{i32 589846, metadata !1, metadata !2, metadata !"uint", i32 0, i64 0, i64 0, i64 0, i32 0, metadata !7} ; [ DW_TAG_typedef ]
+!7 = metadata !{i32 786468, null, metadata !2, metadata !"unsigned int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
 !8 = metadata !{i32 786689, metadata !0, metadata !"ip", metadata !1, i32 1, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
 !9 = metadata !{i32 1, i32 32, metadata !0, null}
 !10 = metadata !{i32 786688, metadata !11, metadata !"tid", metadata !1, i32 3, metadata !6, i32 0, null} ; [ DW_TAG_auto_variable ]

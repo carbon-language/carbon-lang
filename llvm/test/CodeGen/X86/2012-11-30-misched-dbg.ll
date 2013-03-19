@@ -79,8 +79,8 @@ declare i32 @__sprintf_chk(i8*, i32, i64, i8*, ...)
 !12 = metadata !{i32 786443, metadata !13, i32 249, i32 0, metadata !14, i32 23} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
 !13 = metadata !{i32 786443, metadata !3, i32 221, i32 0, metadata !14, i32 19} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
 !14 = metadata !{i32 786473, metadata !19} ; [ DW_TAG_file_type ]
-!15 = metadata !{i32 786433, null, metadata !"", null, i32 0, i64 160, i64 8, i32 0, i32 0, metadata !16, metadata !17, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 160, align 8, offset 0] [from char]
-!16 = metadata !{i32 786468, null, metadata !"char", null, i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ] [char] [line 0, size 8, align 8, offset 0, enc DW_ATE_signed_char]
+!15 = metadata !{i32 786433, null, null, metadata !"", i32 0, i64 160, i64 8, i32 0, i32 0, metadata !16, metadata !17, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 160, align 8, offset 0] [from char]
+!16 = metadata !{i32 786468, null, null, metadata !"char", i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ] [char] [line 0, size 8, align 8, offset 0, enc DW_ATE_signed_char]
 !17 = metadata !{metadata !18}
 !18 = metadata !{i32 786465, i64 0, i64 20}       ; [ DW_TAG_subrange_type ] [0, 19]
 !19 = metadata !{metadata !"MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c", metadata !"MultiSource/Benchmarks/MiBench/consumer-typeset"}
@@ -131,6 +131,6 @@ declare void @_Znwm()
 
 !30 = metadata !{i32 786449, i32 0, i32 4, metadata !"SingleSource/Benchmarks/Shootout-C++/hash.cpp", metadata !"SingleSource/Benchmarks/Shootout-C++", metadata !"clang version 3.3 (trunk 169129) (llvm/trunk 169135)", i1 true, i1 true, metadata !"", i32 0, null, null, null, null} ; [ DW_TAG_compile_unit ] [SingleSource/Benchmarks/Shootout-C++/hash.cpp] [DW_LANG_C_plus_plus]
 !31 = metadata !{i32 786688, null, metadata !"X", null, i32 29, metadata !32, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [X] [line 29]
-!32 = metadata !{i32 786454, null, metadata !"HM", metadata !33, i32 28, i64 0, i64 0, i64 0, i32 0, null} ; [ DW_TAG_typedef ] [HM] [line 28, size 0, align 0, offset 0] [from ]
+!32 = metadata !{i32 786454, metadata !33, null, metadata !"HM", i32 28, i64 0, i64 0, i64 0, i32 0, null} ; [ DW_TAG_typedef ] [HM] [line 28, size 0, align 0, offset 0] [from ]
 !33 = metadata !{i32 786473, metadata !34} ; [ DW_TAG_file_type ]
 !34 = metadata !{metadata !"SingleSource/Benchmarks/Shootout-C++/hash.cpp", metadata !"SingleSource/Benchmarks/Shootout-C++"}

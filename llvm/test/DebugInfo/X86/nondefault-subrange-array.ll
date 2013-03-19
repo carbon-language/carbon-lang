@@ -32,11 +32,11 @@
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786484, i32 0, null, metadata !"a", metadata !"a", metadata !"", metadata !6, i32 1, metadata !7, i32 0, i32 1, %class.A* @a, null} ; [ DW_TAG_variable ] [a] [line 1] [def]
 !6 = metadata !{i32 786473, metadata !20} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786434, null, metadata !"A", metadata !6, i32 1, i64 0, i64 32, i32 0, i32 0, null, metadata !8, i32 0, null, null} ; [ DW_TAG_class_type ] [A] [line 1, size 0, align 32, offset 0] [from ]
+!7 = metadata !{i32 786434, metadata !6, null, metadata !"A", i32 1, i64 0, i64 32, i32 0, i32 0, null, metadata !8, i32 0, null, null} ; [ DW_TAG_class_type ] [A] [line 1, size 0, align 32, offset 0] [from ]
 !8 = metadata !{metadata !9, metadata !14}
-!9 = metadata !{i32 786445, metadata !7, metadata !"x", metadata !6, i32 1, i64 0, i64 0, i64 0, i32 1, metadata !10} ; [ DW_TAG_member ] [x] [line 1, size 0, align 0, offset 0] [private] [from ]
-!10 = metadata !{i32 786433, null, metadata !"", null, i32 0, i64 0, i64 32, i32 0, i32 0, metadata !11, metadata !12, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 0, align 32, offset 0] [from int]
-!11 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!9 = metadata !{i32 786445, metadata !6, metadata !7, metadata !"x", i32 1, i64 0, i64 0, i64 0, i32 1, metadata !10} ; [ DW_TAG_member ] [x] [line 1, size 0, align 0, offset 0] [private] [from ]
+!10 = metadata !{i32 786433, null, null, metadata !"", i32 0, i64 0, i64 32, i32 0, i32 0, metadata !11, metadata !12, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 0, align 32, offset 0] [from int]
+!11 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !12 = metadata !{metadata !13}
 !13 = metadata !{i32 786465, i64 -3, i64 42} ; [ DW_TAG_subrange_type ] [-3, 39]
 !14 = metadata !{i32 786478, i32 0, metadata !7, metadata !"A", metadata !"A", metadata !"", metadata !6, i32 1, metadata !15, i1 false, i1 false, i32 0, i32 0, null, i32 320, i1 false, null, null, i32 0, metadata !18, i32 1} ; [ DW_TAG_subprogram ] [line 1] [A]

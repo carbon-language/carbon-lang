@@ -25,7 +25,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !6 = metadata !{i32 720937, metadata !20} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{metadata !9}
-!9 = metadata !{i32 720932, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!9 = metadata !{i32 720932, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !10 = metadata !{metadata !11}
 !11 = metadata !{i32 720932}                      ; [ DW_TAG_base_type ]
 !12 = metadata !{metadata !14}

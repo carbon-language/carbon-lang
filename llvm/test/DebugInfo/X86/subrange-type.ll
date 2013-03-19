@@ -27,10 +27,10 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !6 = metadata !{i32 786473, metadata !17} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9}
-!9 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !10 = metadata !{i32 786688, metadata !11, metadata !"i", metadata !6, i32 4, metadata !12, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [i] [line 4]
 !11 = metadata !{i32 786443, metadata !5, i32 3, i32 0, metadata !6, i32 0} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/tmp/foo.c]
-!12 = metadata !{i32 786433, null, metadata !"", null, i32 0, i64 64, i64 32, i32 0, i32 0, metadata !9, metadata !13, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 64, align 32, offset 0] [from int]
+!12 = metadata !{i32 786433, null, null, metadata !"", i32 0, i64 64, i64 32, i32 0, i32 0, metadata !9, metadata !13, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 64, align 32, offset 0] [from int]
 !13 = metadata !{metadata !14}
 !14 = metadata !{i32 786465, i64 0, i64 2}        ; [ DW_TAG_subrange_type ] [0, 1]
 !15 = metadata !{i32 4, i32 0, metadata !11, null}

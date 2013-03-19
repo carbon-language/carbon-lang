@@ -10,7 +10,7 @@
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786484, i32 0, null, metadata !"e", metadata !"e", metadata !"", metadata !6, i32 2, metadata !7, i32 0, i32 1, i16* @e, null} ; [ DW_TAG_variable ] [e] [line 2] [def]
 !6 = metadata !{i32 786473, metadata !"foo.cpp", metadata !"/tmp", null} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786436, null, metadata !"E", metadata !6, i32 1, i64 16, i64 16, i32 0, i32 4, null, null, i32 0} ; [ DW_TAG_enumeration_type ] [E] [line 1, size 16, align 16, offset 0] [fwd] [from ]
+!7 = metadata !{i32 786436, metadata !6, null, metadata !"E", i32 1, i64 16, i64 16, i32 0, i32 4, null, null, i32 0} ; [ DW_TAG_enumeration_type ] [E] [line 1, size 16, align 16, offset 0] [fwd] [from ]
 
 ; CHECK: DW_TAG_enumeration_type
 ; CHECK-NEXT: DW_AT_name

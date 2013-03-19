@@ -146,9 +146,9 @@ DIType DIBuilder::createNullPtrType(StringRef Name) {
   // ,size, alignment, offset and flags are always empty here.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_unspecified_type),
+    NULL, // Filename
     NULL, //TheCU,
     MDString::get(VMContext, Name),
-    NULL, // Filename
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Size
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Align
@@ -169,9 +169,9 @@ DIBuilder::createBasicType(StringRef Name, uint64_t SizeInBits,
   // offset and flags are always empty here.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_base_type),
+    NULL, // File/directory name
     NULL, //TheCU,
     MDString::get(VMContext, Name),
-    NULL, // Filename
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
@@ -188,9 +188,9 @@ DIDerivedType DIBuilder::createQualifiedType(unsigned Tag, DIType FromTy) {
   // Qualified types are encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, Tag),
+    NULL, // Filename
     NULL, //TheCU,
     MDString::get(VMContext, StringRef()), // Empty name.
-    NULL, // Filename
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Size
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Align
@@ -208,9 +208,9 @@ DIBuilder::createPointerType(DIType PointeeTy, uint64_t SizeInBits,
   // Pointer types are encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_pointer_type),
+    NULL, // Filename
     NULL, //TheCU,
     MDString::get(VMContext, Name),
-    NULL, // Filename
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
@@ -225,9 +225,9 @@ DIDerivedType DIBuilder::createMemberPointerType(DIType PointeeTy, DIType Base) 
   // Pointer types are encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_ptr_to_member_type),
+    NULL, // Filename
     NULL, //TheCU,
     NULL,
-    NULL, // Filename
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), 0),
     ConstantInt::get(Type::getInt64Ty(VMContext), 0),
@@ -246,9 +246,9 @@ DIDerivedType DIBuilder::createReferenceType(unsigned Tag, DIType RTy) {
   // References are encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, Tag),
+    NULL, // Filename
     NULL, // TheCU,
     NULL, // Name
-    NULL, // Filename
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Size
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Align
@@ -266,9 +266,9 @@ DIDerivedType DIBuilder::createTypedef(DIType Ty, StringRef Name, DIFile File,
   assert(Ty.Verify() && "Invalid typedef type!");
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_typedef),
+    File,
     getNonCompileUnitScope(Context),
     MDString::get(VMContext, Name),
-    File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Size
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Align
@@ -286,9 +286,9 @@ DIType DIBuilder::createFriend(DIType Ty, DIType FriendTy) {
   assert(FriendTy.Verify() && "Invalid friend type!");
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_friend),
+    NULL,
     Ty,
     NULL, // Name
-    Ty.getFile(),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Size
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Align
@@ -307,9 +307,9 @@ DIDerivedType DIBuilder::createInheritance(
   // TAG_inheritance is encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_inheritance),
+    NULL,
     Ty,
     NULL, // Name
-    Ty.getFile(),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Size
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Align
@@ -328,9 +328,9 @@ DIDerivedType DIBuilder::createMemberType(
   // TAG_member is encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_member),
+    File,
     getNonCompileUnitScope(Scope),
     MDString::get(VMContext, Name),
-    File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
@@ -351,9 +351,9 @@ DIType DIBuilder::createStaticMemberType(DIDescriptor Scope, StringRef Name,
   Flags |= DIDescriptor::FlagStaticMember;
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_member),
+    File,
     getNonCompileUnitScope(Scope),
     MDString::get(VMContext, Name),
-    File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     ConstantInt::get(Type::getInt64Ty(VMContext), 0/*SizeInBits*/),
     ConstantInt::get(Type::getInt64Ty(VMContext), 0/*AlignInBits*/),
@@ -377,9 +377,9 @@ DIType DIBuilder::createObjCIVar(StringRef Name,
   // TAG_member is encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_member),
+    File,
     getNonCompileUnitScope(File),
     MDString::get(VMContext, Name),
-    File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
@@ -404,9 +404,9 @@ DIType DIBuilder::createObjCIVar(StringRef Name,
   // TAG_member is encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_member),
+    File,
     getNonCompileUnitScope(File),
     MDString::get(VMContext, Name),
-    File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
@@ -490,9 +490,9 @@ DIType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
   // TAG_class_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_class_type),
+    File,
     getNonCompileUnitScope(Context),
     MDString::get(VMContext, Name),
-    File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
@@ -522,9 +522,9 @@ DICompositeType DIBuilder::createStructType(DIDescriptor Context,
  // TAG_structure_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_structure_type),
+    File,
     getNonCompileUnitScope(Context),
     MDString::get(VMContext, Name),
-    File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
@@ -549,9 +549,9 @@ DICompositeType DIBuilder::createUnionType(
   // TAG_union_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_union_type),
+    File,
     getNonCompileUnitScope(Scope),
     MDString::get(VMContext, Name),
-    File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
@@ -572,8 +572,8 @@ DIBuilder::createSubroutineType(DIFile File, DIArray ParameterTypes) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subroutine_type),
     Constant::getNullValue(Type::getInt32Ty(VMContext)),
-    MDString::get(VMContext, ""),
     Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    MDString::get(VMContext, ""),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     ConstantInt::get(Type::getInt64Ty(VMContext), 0),
     ConstantInt::get(Type::getInt64Ty(VMContext), 0),
@@ -596,9 +596,9 @@ DICompositeType DIBuilder::createEnumerationType(
   // TAG_enumeration_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_enumeration_type),
+    File,
     getNonCompileUnitScope(Scope),
     MDString::get(VMContext, Name),
-    File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
@@ -620,9 +620,9 @@ DICompositeType DIBuilder::createArrayType(uint64_t Size, uint64_t AlignInBits,
   // TAG_array_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_array_type),
+    NULL, // Filename/Directory,
     NULL, //TheCU,
     MDString::get(VMContext, ""),
-    NULL, //TheCU,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     ConstantInt::get(Type::getInt64Ty(VMContext), Size),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
@@ -643,9 +643,9 @@ DIType DIBuilder::createVectorType(uint64_t Size, uint64_t AlignInBits,
   // A vector is an array type with the FlagVector flag applied.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_array_type),
+    NULL, // Filename/Directory,
     NULL, //TheCU,
     MDString::get(VMContext, ""),
-    NULL, //TheCU,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     ConstantInt::get(Type::getInt64Ty(VMContext), Size),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
@@ -723,29 +723,6 @@ DIDescriptor DIBuilder::createUnspecifiedParameter() {
   return DIDescriptor(MDNode::get(VMContext, Elts));
 }
 
-/// createTemporaryType - Create a temporary forward-declared type.
-DIType DIBuilder::createTemporaryType() {
-  // Give the temporary MDNode a tag. It doesn't matter what tag we
-  // use here as long as DIType accepts it.
-  Value *Elts[] = { GetTagConstant(VMContext, DW_TAG_base_type) };
-  MDNode *Node = MDNode::getTemporary(VMContext, Elts);
-  return DIType(Node);
-}
-
-/// createTemporaryType - Create a temporary forward-declared type.
-DIType DIBuilder::createTemporaryType(DIFile F) {
-  // Give the temporary MDNode a tag. It doesn't matter what tag we
-  // use here as long as DIType accepts it.
-  Value *Elts[] = {
-    GetTagConstant(VMContext, DW_TAG_base_type),
-    TheCU,
-    NULL,
-    F
-  };
-  MDNode *Node = MDNode::getTemporary(VMContext, Elts);
-  return DIType(Node);
-}
-
 /// createForwardDecl - Create a temporary forward-declared type that
 /// can be RAUW'd if the full type is seen.
 DIType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name,
@@ -756,9 +733,9 @@ DIType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name,
   // Create a temporary MDNode.
   Value *Elts[] = {
     GetTagConstant(VMContext, Tag),
+    F,
     getNonCompileUnitScope(Scope),
     MDString::get(VMContext, Name),
-    F,
     ConstantInt::get(Type::getInt32Ty(VMContext), Line),
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),

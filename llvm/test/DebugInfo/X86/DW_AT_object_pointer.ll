@@ -54,14 +54,14 @@ entry:
 !6 = metadata !{i32 786473, metadata !37} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9}
-!9 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !10 = metadata !{i32 786478, i32 0, null, metadata !"A", metadata !"A", metadata !"_ZN1AC1Ev", metadata !6, i32 3, metadata !11, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%class.A*)* @_ZN1AC1Ev, null, metadata !17, metadata !1, i32 3} ; [ DW_TAG_subprogram ] [line 3] [def] [A]
 !11 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !12, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !12 = metadata !{null, metadata !13}
 !13 = metadata !{i32 786447, i32 0, metadata !"", i32 0, i32 0, i64 64, i64 64, i64 0, i32 1088, metadata !14} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from A]
-!14 = metadata !{i32 786434, null, metadata !"A", metadata !6, i32 1, i64 32, i64 32, i32 0, i32 0, null, metadata !15, i32 0, null, null} ; [ DW_TAG_class_type ] [A] [line 1, size 32, align 32, offset 0] [from ]
+!14 = metadata !{i32 786434, metadata !6, null, metadata !"A", i32 1, i64 32, i64 32, i32 0, i32 0, null, metadata !15, i32 0, null, null} ; [ DW_TAG_class_type ] [A] [line 1, size 32, align 32, offset 0] [from ]
 !15 = metadata !{metadata !16, metadata !17}
-!16 = metadata !{i32 786445, metadata !14, metadata !"m_a", metadata !6, i32 4, i64 32, i64 32, i64 0, i32 0, metadata !9} ; [ DW_TAG_member ] [m_a] [line 4, size 32, align 32, offset 0] [from int]
+!16 = metadata !{i32 786445, metadata !6, metadata !14, metadata !"m_a", i32 4, i64 32, i64 32, i64 0, i32 0, metadata !9} ; [ DW_TAG_member ] [m_a] [line 4, size 32, align 32, offset 0] [from int]
 !17 = metadata !{i32 786478, i32 0, metadata !14, metadata !"A", metadata !"A", metadata !"", metadata !6, i32 3, metadata !11, i1 false, i1 false, i32 0, i32 0, null, i32 256, i1 false, null, null, i32 0, metadata !18, i32 3} ; [ DW_TAG_subprogram ] [line 3] [A]
 !18 = metadata !{metadata !19}
 !19 = metadata !{i32 786468}                      ; [ DW_TAG_base_type ] [line 0, size 0, align 0, offset 0]
@@ -72,7 +72,7 @@ entry:
 !24 = metadata !{i32 8, i32 6, metadata !22, null}
 !25 = metadata !{i32 9, i32 3, metadata !22, null}
 !26 = metadata !{i32 786689, metadata !10, metadata !"this", metadata !6, i32 16777219, metadata !27, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [this] [line 3]
-!27 = metadata !{i32 786447, null, metadata !"", null, i32 0, i64 64, i64 64, i64 0, i32 0, metadata !14} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from A]
+!27 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !14} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from A]
 !28 = metadata !{i32 3, i32 3, metadata !10, null}
 !29 = metadata !{i32 3, i32 18, metadata !10, null}
 !30 = metadata !{i32 786689, metadata !20, metadata !"this", metadata !6, i32 16777219, metadata !27, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [this] [line 3]

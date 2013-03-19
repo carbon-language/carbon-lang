@@ -241,9 +241,8 @@ namespace llvm {
     explicit DIType(const MDNode *N);
     explicit DIType() {}
 
-    DIScope getContext() const          { return getFieldAs<DIScope>(1); }
-    StringRef getName() const           { return getStringField(2);     }
-    DIFile getFile() const              { return getFieldAs<DIFile>(3); }
+    DIScope getContext() const          { return getFieldAs<DIScope>(2); }
+    StringRef getName() const           { return getStringField(3);     }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     uint64_t getSizeInBits() const      { return getUInt64Field(5); }
     uint64_t getAlignInBits() const     { return getUInt64Field(6); }
@@ -289,10 +288,10 @@ namespace llvm {
       return DbgNode && (isBasicType() || isDerivedType() || isCompositeType());
     }
     StringRef getDirectory() const  {
-      return getFieldAs<DIFile>(3).getDirectory();
+      return getFieldAs<DIFile>(1).getDirectory();
     }
     StringRef getFilename() const  {
-      return getFieldAs<DIFile>(3).getFilename();
+      return getFieldAs<DIFile>(1).getFilename();
     }
 
     /// isUnsignedDIType - Return true if type encoding is unsigned.
