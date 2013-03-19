@@ -11,6 +11,8 @@
 // run-time libraries.
 // Mac-specific implementation of symbolizer parts.
 //===----------------------------------------------------------------------===//
+
+#include "sanitizer_platform.h"
 #ifdef __APPLE__
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_symbolizer.h"

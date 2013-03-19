@@ -19,7 +19,7 @@
 #include "sanitizer_internal_defs.h"
 
 namespace __sanitizer {
-#if (SANITIZER_WORDSIZE == 64) || defined(__APPLE__)
+#if (SANITIZER_WORDSIZE == 64) || SANITIZER_MAC
 typedef uptr operator_new_ptr_type;
 #else
 typedef u32 operator_new_ptr_type;

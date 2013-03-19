@@ -12,7 +12,8 @@
 // Linux-specific code.
 //===----------------------------------------------------------------------===//
 
-#ifdef __linux__
+#include "sanitizer_common/sanitizer_platform.h"
+#if SANITIZER_LINUX
 
 #include "msan.h"
 

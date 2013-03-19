@@ -170,7 +170,7 @@ void ReportErrorSummary(const char *error_type, const char *file,
                         int line, const char *function);
 
 // Math
-#if defined(_WIN32) && !defined(__clang__)
+#if SANITIZER_WINDOWS && !defined(__clang__)
 extern "C" {
 unsigned char _BitScanForward(unsigned long *index, unsigned long mask);  // NOLINT
 unsigned char _BitScanReverse(unsigned long *index, unsigned long mask);  // NOLINT
@@ -184,7 +184,7 @@ unsigned char _BitScanReverse64(unsigned long *index, unsigned __int64 mask);  /
 INLINE uptr MostSignificantSetBitIndex(uptr x) {
   CHECK_NE(x, 0U);
   unsigned long up;  // NOLINT
-#if !defined(_WIN32) || defined(__clang__)
+#if !SANITIZER_WINDOWS || defined(__clang__)
   up = SANITIZER_WORDSIZE - 1 - __builtin_clzl(x);
 #elif defined(_WIN64)
   _BitScanReverse64(&up, x);
@@ -223,7 +223,7 @@ INLINE bool IsAligned(uptr a, uptr alignment) {
 
 INLINE uptr Log2(uptr x) {
   CHECK(IsPowerOfTwo(x));
-#if !defined(_WIN32) || defined(__clang__)
+#if !SANITIZER_WINDOWS || defined(__clang__)
   return __builtin_ctzl(x);
 #elif defined(_WIN64)
   unsigned long ret;  // NOLINT

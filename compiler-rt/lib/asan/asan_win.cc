@@ -11,6 +11,8 @@
 //
 // Windows-specific details.
 //===----------------------------------------------------------------------===//
+
+#include "sanitizer_common/sanitizer_platform.h"
 #ifdef _WIN32
 #include <windows.h>
 

@@ -12,7 +12,9 @@
 // Linux-specific code.
 //===----------------------------------------------------------------------===//
 
-#ifdef __linux__
+
+#include "sanitizer_common/sanitizer_platform.h"
+#if SANITIZER_LINUX
 
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"

@@ -11,6 +11,8 @@
 // run-time libraries.
 // Windows-specific implementation of symbolizer parts.
 //===----------------------------------------------------------------------===//
+
+#include "sanitizer_platform.h"
 #ifdef _WIN32
 #include <windows.h>
 

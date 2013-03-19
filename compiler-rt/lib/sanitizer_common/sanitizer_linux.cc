@@ -11,7 +11,9 @@
 // run-time libraries and implements linux-specific functions from
 // sanitizer_libc.h.
 //===----------------------------------------------------------------------===//
-#ifdef __linux__
+
+#include "sanitizer_platform.h"
+#if SANITIZER_LINUX
 
 #include "sanitizer_common.h"
 #include "sanitizer_internal_defs.h"
@@ -38,7 +40,7 @@
 #include <unistd.h>
 #include <unwind.h>
 
-#if !defined(__ANDROID__) && !defined(ANDROID)
+#if !SANITIZER_ANDROID
 #include <sys/signal.h>
 #endif
 

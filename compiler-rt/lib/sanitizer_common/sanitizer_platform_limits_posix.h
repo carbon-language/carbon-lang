@@ -15,6 +15,8 @@
 #ifndef SANITIZER_PLATFORM_LIMITS_POSIX_H
 #define SANITIZER_PLATFORM_LIMITS_POSIX_H
 
+#include "sanitizer_platform.h"
+
 namespace __sanitizer {
   extern unsigned struct_utsname_sz;
   extern unsigned struct_stat_sz;
@@ -22,14 +24,14 @@ namespace __sanitizer {
   extern unsigned struct_rusage_sz;
   extern unsigned struct_tm_sz;
 
-#if defined(__linux__)
+#if SANITIZER_LINUX
   extern unsigned struct_rlimit_sz;
   extern unsigned struct_dirent_sz;
   extern unsigned struct_statfs_sz;
   extern unsigned struct_epoll_event_sz;
 #endif // __linux__
 
-#if defined(__linux__) && !defined(__ANDROID__)
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
   extern unsigned struct_dirent64_sz;
   extern unsigned struct_rlimit64_sz;
   extern unsigned struct_statfs64_sz;

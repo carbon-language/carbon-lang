@@ -14,20 +14,20 @@
 
 #include "sanitizer_internal_defs.h"
 
-#if !defined(_WIN32)
+#if !SANITIZER_WINDOWS
 # define SI_NOT_WINDOWS 1
 # include "sanitizer_platform_limits_posix.h"
 #else
 # define SI_NOT_WINDOWS 0
 #endif
 
-#if defined(__linux__) && !defined(ANDROID)
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 # define SI_LINUX_NOT_ANDROID 1
 #else
 # define SI_LINUX_NOT_ANDROID 0
 #endif
 
-#if defined(__linux__)
+#if SANITIZER_LINUX
 # define SI_LINUX 1
 #else
 # define SI_LINUX 0

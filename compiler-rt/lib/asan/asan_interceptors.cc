@@ -355,7 +355,7 @@ INTERCEPTOR(char*, strchr, const char *str, int c) {
 INTERCEPTOR(char*, index, const char *string, int c)
   ALIAS(WRAPPER_NAME(strchr));
 # else
-#  if defined(__APPLE__)
+#  if SANITIZER_MAC
 DECLARE_REAL(char*, index, const char *string, int c)
 OVERRIDE_FUNCTION(index, strchr);
 #  else
@@ -421,7 +421,7 @@ INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
 }
 
 INTERCEPTOR(char*, strcpy, char *to, const char *from) {  // NOLINT
-#if defined(__APPLE__)
+#if SANITIZER_MAC
   if (!asan_inited) return REAL(strcpy)(to, from);  // NOLINT
 #endif
   // strcpy is called from malloc_default_purgeable_zone()
@@ -441,7 +441,7 @@ INTERCEPTOR(char*, strcpy, char *to, const char *from) {  // NOLINT
 
 #if ASAN_INTERCEPT_STRDUP
 INTERCEPTOR(char*, strdup, const char *s) {
-#if defined(__APPLE__)
+#if SANITIZER_MAC
   // FIXME: because internal_strdup() uses InternalAlloc(), which currently
   // just calls malloc() on Mac, we can't use internal_strdup() with the
   // dynamic runtime. We can remove the call to REAL(strdup) once InternalAlloc
@@ -582,7 +582,7 @@ INTERCEPTOR(long, strtol, const char *nptr,  // NOLINT
 }
 
 INTERCEPTOR(int, atoi, const char *nptr) {
-#if defined(__APPLE__)
+#if SANITIZER_MAC
   if (!asan_inited) return REAL(atoi)(nptr);
 #endif
   ENSURE_ASAN_INITED();
@@ -601,7 +601,7 @@ INTERCEPTOR(int, atoi, const char *nptr) {
 }
 
 INTERCEPTOR(long, atol, const char *nptr) {  // NOLINT
-#if defined(__APPLE__)
+#if SANITIZER_MAC
   if (!asan_inited) return REAL(atol)(nptr);
 #endif
   ENSURE_ASAN_INITED();
@@ -655,7 +655,7 @@ INTERCEPTOR(long long, atoll, const char *nptr) {  // NOLINT
         Report("AddressSanitizer: failed to intercept '" #name "'\n"); \
     } while (0)
 
-#if defined(_WIN32)
+#if SANITIZER_WINDOWS
 INTERCEPTOR_WINAPI(DWORD, CreateThread,
                    void* security, uptr stack_size,
                    DWORD (__stdcall *start_routine)(void*), void* arg,
@@ -682,7 +682,7 @@ void InitializeAsanInterceptors() {
   static bool was_called_once;
   CHECK(was_called_once == false);
   was_called_once = true;
-#if defined(__APPLE__)
+#if SANITIZER_MAC
   return;
 #else
   SANITIZER_COMMON_INTERCEPTORS_INIT;
@@ -761,7 +761,7 @@ void InitializeAsanInterceptors() {
 #endif
 
   // Some Windows-specific interceptors.
-#if defined(_WIN32)
+#if SANITIZER_WINDOWS
   InitializeWindowsInterceptors();
 #endif
 

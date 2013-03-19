@@ -11,7 +11,9 @@
 //
 // Posix-specific details.
 //===----------------------------------------------------------------------===//
-#if defined(__linux__) || defined(__APPLE__)
+
+#include "sanitizer_common/sanitizer_platform.h"
+#if SANITIZER_LINUX || SANITIZER_MAC
 
 #include "asan_internal.h"
 #include "asan_interceptors.h"

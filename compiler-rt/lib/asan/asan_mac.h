@@ -11,8 +11,8 @@
 //
 // Mac-specific ASan definitions.
 //===----------------------------------------------------------------------===//
-#ifndef SANITIZER_MAC_H
-#define SANITIZER_MAC_H
+#ifndef ASAN_MAC_H
+#define ASAN__MAC_H
 
 // CF_RC_BITS, the layout of CFRuntimeBase and __CFStrIsConstant are internal
 // and subject to change in further CoreFoundation versions. Apple does not
@@ -54,4 +54,4 @@ void MaybeReplaceCFAllocator();
 
 }  // namespace __asan
 
-#endif  // SANITIZER_MAC_H
+#endif  // ASAN_MAC_H

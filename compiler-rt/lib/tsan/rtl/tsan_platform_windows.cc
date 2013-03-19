@@ -12,6 +12,7 @@
 // Windows-specific code.
 //===----------------------------------------------------------------------===//
 
+#include "sanitizer_common/sanitizer_platform.h"
 #ifdef _WIN32
 
 #include "tsan_platform.h"

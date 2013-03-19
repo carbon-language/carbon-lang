@@ -31,13 +31,13 @@ class MemoryMappingLayout {
 };
 
 #else  // _WIN32
-#if defined(__linux__)
+#if SANITIZER_LINUX
 struct ProcSelfMapsBuff {
   char *data;
   uptr mmaped_size;
   uptr len;
 };
-#endif  // defined(__linux__)
+#endif  // SANITIZER_LINUX
 
 class MemoryMappingLayout {
  public:

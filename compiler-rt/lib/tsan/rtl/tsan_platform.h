@@ -66,7 +66,7 @@ namespace __tsan {
 #if defined(TSAN_GO)
 static const uptr kLinuxAppMemBeg = 0x000000000000ULL;
 static const uptr kLinuxAppMemEnd = 0x00fcffffffffULL;
-# if defined(_WIN32)
+# if SANITIZER_WINDOWS
 static const uptr kLinuxShadowMsk = 0x010000000000ULL;
 # else
 static const uptr kLinuxShadowMsk = 0x100000000000ULL;
@@ -84,7 +84,7 @@ static const uptr kLinuxAppMemEnd = 0x7fffffffffffULL;
 
 static const uptr kLinuxAppMemMsk = 0x7c0000000000ULL;
 
-#if defined(_WIN32)
+#if SANITIZER_WINDOWS
 const uptr kTraceMemBegin = 0x056000000000ULL;
 #else
 const uptr kTraceMemBegin = 0x600000000000ULL;

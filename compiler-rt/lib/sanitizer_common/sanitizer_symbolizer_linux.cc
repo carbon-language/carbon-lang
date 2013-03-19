@@ -11,7 +11,9 @@
 // run-time libraries.
 // Linux-specific implementation of symbolizer parts.
 //===----------------------------------------------------------------------===//
-#ifdef __linux__
+
+#include "sanitizer_platform.h"
+#if SANITIZER_LINUX
 #include "sanitizer_common.h"
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
@@ -26,7 +28,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#if !defined(__ANDROID__) && !defined(ANDROID)
+#if !SANITIZER_ANDROID && !SANITIZER_ANDROID
 #include <link.h>
 #endif
 
@@ -121,7 +123,7 @@ bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
   return true;
 }
 
-#if defined(__ANDROID__) || defined(ANDROID)
+#if SANITIZER_ANDROID || SANITIZER_ANDROID
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules) {
   UNIMPLEMENTED();
 }

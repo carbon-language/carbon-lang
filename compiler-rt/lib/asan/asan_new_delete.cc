@@ -47,7 +47,7 @@ struct nothrow_t {};
 // delete.
 // To make sure that C++ allocation/deallocation operators are overridden on
 // OS X we need to intercept them using their mangled names.
-#if !defined(__APPLE__)
+#if !SANITIZER_MAC
 INTERCEPTOR_ATTRIBUTE
 void *operator new(size_t size) { OPERATOR_NEW_BODY(FROM_NEW); }
 INTERCEPTOR_ATTRIBUTE
@@ -78,7 +78,7 @@ INTERCEPTOR(void *, _ZnamRKSt9nothrow_t, size_t size, std::nothrow_t const&) {
   GET_STACK_TRACE_FREE;\
   asan_free(ptr, &stack, type);
 
-#if !defined(__APPLE__)
+#if !SANITIZER_MAC
 INTERCEPTOR_ATTRIBUTE
 void operator delete(void *ptr) { OPERATOR_DELETE_BODY(FROM_NEW); }
 INTERCEPTOR_ATTRIBUTE

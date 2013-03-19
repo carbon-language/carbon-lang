@@ -12,7 +12,9 @@
 // sanitizer_libc.h.
 //===----------------------------------------------------------------------===//
 
-#ifdef __APPLE__
+#include "sanitizer_platform.h"
+#if SANITIZER_MAC
+
 // Use 64-bit inodes in file operations. ASan does not support OS X 10.5, so
 // the clients will most certainly use 64-bit ones as well.
 #ifndef _DARWIN_USE_64_BIT_INODE

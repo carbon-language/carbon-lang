@@ -25,7 +25,7 @@ using __sanitizer::uptr;
 
 // Use macro to describe if specific function should be
 // intercepted on a given platform.
-#if !defined(_WIN32)
+#if !SANITIZER_WINDOWS
 # define ASAN_INTERCEPT_ATOLL_AND_STRTOLL 1
 # define ASAN_INTERCEPT__LONGJMP 1
 # define ASAN_INTERCEPT_STRDUP 1
@@ -43,43 +43,43 @@ using __sanitizer::uptr;
 # define ASAN_INTERCEPT_MLOCKX 0
 #endif
 
-#if defined(__linux__)
+#if SANITIZER_LINUX
 # define ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX 1
 #else
 # define ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX 0
 #endif
 
-#if !defined(__APPLE__)
+#if !SANITIZER_MAC
 # define ASAN_INTERCEPT_STRNLEN 1
 #else
 # define ASAN_INTERCEPT_STRNLEN 0
 #endif
 
-#if defined(__linux__) && !defined(ANDROID)
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 # define ASAN_INTERCEPT_SWAPCONTEXT 1
 #else
 # define ASAN_INTERCEPT_SWAPCONTEXT 0
 #endif
 
-#if !defined(ANDROID) && !defined(_WIN32)
+#if !SANITIZER_ANDROID && !SANITIZER_WINDOWS
 # define ASAN_INTERCEPT_SIGNAL_AND_SIGACTION 1
 #else
 # define ASAN_INTERCEPT_SIGNAL_AND_SIGACTION 0
 #endif
 
-#if !defined(_WIN32)
+#if !SANITIZER_WINDOWS
 # define ASAN_INTERCEPT_SIGLONGJMP 1
 #else
 # define ASAN_INTERCEPT_SIGLONGJMP 0
 #endif
 
-#if ASAN_HAS_EXCEPTIONS && !defined(_WIN32)
+#if ASAN_HAS_EXCEPTIONS && !SANITIZER_WINDOWS
 # define ASAN_INTERCEPT___CXA_THROW 1
 #else
 # define ASAN_INTERCEPT___CXA_THROW 0
 #endif
 
-# if defined(_WIN32)
+# if SANITIZER_WINDOWS
 extern "C" {
 // Windows threads.
 __declspec(dllimport)

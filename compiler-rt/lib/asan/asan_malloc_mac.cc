@@ -12,6 +12,7 @@
 // Mac-specific malloc interception.
 //===----------------------------------------------------------------------===//
 
+#include "sanitizer_common/sanitizer_platform.h"
 #ifdef __APPLE__
 
 #include <AvailabilityMacros.h>

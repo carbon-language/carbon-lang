@@ -11,7 +11,9 @@
 //
 // Linux-specific details.
 //===----------------------------------------------------------------------===//
-#ifdef __linux__
+
+#include "sanitizer_common/sanitizer_platform.h"
+#if SANITIZER_LINUX
 
 #include "asan_interceptors.h"
 #include "asan_internal.h"

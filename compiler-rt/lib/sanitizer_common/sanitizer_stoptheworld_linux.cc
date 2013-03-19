@@ -12,7 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifdef __linux__
+
+#include "sanitizer_platform.h"
+#if SANITIZER_LINUX
 
 #include "sanitizer_stoptheworld.h"
 

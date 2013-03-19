@@ -11,7 +11,10 @@
 // run-time libraries and implements windows-specific functions from
 // sanitizer_libc.h.
 //===----------------------------------------------------------------------===//
-#ifdef _WIN32
+
+#include "sanitizer_platform.h"
+#if SANITIZER_WINDOWS
+
 #define WIN32_LEAN_AND_MEAN
 #define NOGDI
 #include <stdlib.h>

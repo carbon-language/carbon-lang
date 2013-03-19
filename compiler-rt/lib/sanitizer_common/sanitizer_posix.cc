@@ -11,7 +11,9 @@
 // run-time libraries and implements POSIX-specific functions from
 // sanitizer_libc.h.
 //===----------------------------------------------------------------------===//
-#if defined(__linux__) || defined(__APPLE__)
+
+#include "sanitizer_platform.h"
+#if SANITIZER_LINUX || SANITIZER_MAC
 
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"

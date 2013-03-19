@@ -12,6 +12,7 @@
 // Mac-specific details.
 //===----------------------------------------------------------------------===//
 
+#include "sanitizer_common/sanitizer_platform.h"
 #ifdef __APPLE__
 
 #include "asan_interceptors.h"
