@@ -7,7 +7,6 @@ if(NOT APPLE)
   # FIXME: Add support for profile.rt on Mac.
   foreach(arch ${PROFILE_SUPPORTED_ARCH})
     add_compiler_rt_static_runtime(clang_rt.profile-${arch} ${arch}
-      SOURCES ${PROFILE_SOURCES}
-      CFLAGS --sysroot=${COMPILER_RT_LINUX_SDK_SYSROOT})
+      SOURCES ${PROFILE_SOURCES})
   endforeach()
 endif()
