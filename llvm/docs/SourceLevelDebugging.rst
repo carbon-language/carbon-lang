@@ -2080,23 +2080,23 @@ array to be:
   HeaderData.atoms[0].form = DW_FORM_data4;
 
 This defines the contents to be the DIE offset (eAtomTypeDIEOffset) that is
-  encoded as a 32 bit value (DW_FORM_data4).  This allows a single name to have
-  multiple matching DIEs in a single file, which could come up with an inlined
-  function for instance.  Future tables could include more information about the
-  DIE such as flags indicating if the DIE is a function, method, block,
-  or inlined.
+encoded as a 32 bit value (DW_FORM_data4).  This allows a single name to have
+multiple matching DIEs in a single file, which could come up with an inlined
+function for instance.  Future tables could include more information about the
+DIE such as flags indicating if the DIE is a function, method, block,
+or inlined.
 
 The KeyType for the DWARF table is a 32 bit string table offset into the
-  ".debug_str" table.  The ".debug_str" is the string table for the DWARF which
-  may already contain copies of all of the strings.  This helps make sure, with
-  help from the compiler, that we reuse the strings between all of the DWARF
-  sections and keeps the hash table size down.  Another benefit to having the
-  compiler generate all strings as DW_FORM_strp in the debug info, is that
-  DWARF parsing can be made much faster.
+".debug_str" table.  The ".debug_str" is the string table for the DWARF which
+may already contain copies of all of the strings.  This helps make sure, with
+help from the compiler, that we reuse the strings between all of the DWARF
+sections and keeps the hash table size down.  Another benefit to having the
+compiler generate all strings as DW_FORM_strp in the debug info, is that
+DWARF parsing can be made much faster.
 
 After a lookup is made, we get an offset into the hash data.  The hash data
-  needs to be able to deal with 32 bit hash collisions, so the chunk of data
-  at the offset in the hash data consists of a triple:
+needs to be able to deal with 32 bit hash collisions, so the chunk of data
+at the offset in the hash data consists of a triple:
 
 .. code-block:: c
 
@@ -2105,7 +2105,7 @@ After a lookup is made, we get an offset into the hash data.  The hash data
   HashData[hash_data_count]
 
 If "str_offset" is zero, then the bucket contents are done. 99.9% of the
-  hash data chunks contain a single item (no 32 bit hash collision):
+hash data chunks contain a single item (no 32 bit hash collision):
 
 .. code-block:: none
 
