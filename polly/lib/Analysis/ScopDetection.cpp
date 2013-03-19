@@ -109,7 +109,7 @@ STATISTIC(ValidRegion, "Number of regions that a valid part of Scop");
     if (!Context.Verifying)                                                    \
       ++Bad##NAME##ForScop;                                                    \
     return false;                                                              \
-  } while (0);
+  } while (0)
 
 #define INVALID_NOVERIFY(NAME, MESSAGE)                                        \
   do {                                                                         \
@@ -124,7 +124,7 @@ STATISTIC(ValidRegion, "Number of regions that a valid part of Scop");
     if (!Context.Verifying)                                                    \
       ++Bad##NAME##ForScop;                                                    \
     return false;                                                              \
-  } while (0);
+  } while (0)
 
 BADSCOP_STAT(CFG, "CFG too complex");
 BADSCOP_STAT(IndVar, "Non canonical induction variable in loop");
@@ -306,7 +306,7 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
         break;
     }
 
-    INVALID_NOVERIFY(Alias, OS.str())
+    INVALID_NOVERIFY(Alias, OS.str());
   }
 
   return true;
