@@ -111,7 +111,7 @@ void PoisonShadowPartialRightRedzone(uptr addr,
                                      u8 value);
 
 // Platfrom-specific options.
-#ifdef __APPLE__
+#if SANITIZER_MAC
 bool PlatformHasDifferentMemcpyAndMemmove();
 # define PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE \
     (PlatformHasDifferentMemcpyAndMemmove())

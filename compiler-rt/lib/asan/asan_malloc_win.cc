@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common/sanitizer_platform.h"
-#ifdef _WIN32
+#if SANITIZER_WINDOWS
 
 #include "asan_allocator.h"
 #include "asan_interceptors.h"

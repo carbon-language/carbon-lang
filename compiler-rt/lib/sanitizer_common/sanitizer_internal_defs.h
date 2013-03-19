@@ -15,7 +15,7 @@
 
 #include "sanitizer_platform.h"
 
-#if defined(_WIN32)
+#if SANITIZER_WINDOWS
 // FIXME find out what we need on Windows. __declspec(dllexport) ?
 # define SANITIZER_INTERFACE_ATTRIBUTE
 # define SANITIZER_WEAK_ATTRIBUTE
@@ -27,7 +27,7 @@
 # define SANITIZER_WEAK_ATTRIBUTE  __attribute__((weak))
 #endif
 
-#ifdef __linux__
+#if SANITIZER_LINUX
 # define SANITIZER_SUPPORTS_WEAK_HOOKS 1
 #else
 # define SANITIZER_SUPPORTS_WEAK_HOOKS 0
@@ -72,7 +72,7 @@ typedef int fd_t;
 // _FILE_OFFSET_BITS. This definition of OFF_T matches the ABI of system calls
 // like pread and mmap, as opposed to pread64 and mmap64.
 // Mac and Linux/x86-64 are special.
-#if defined(__APPLE__) || (defined(__linux__) && defined(__x86_64__))
+#if SANITIZER_MAC || (SANITIZER_LINUX && defined(__x86_64__))
 typedef u64 OFF_T;
 #else
 typedef uptr OFF_T;
@@ -150,7 +150,7 @@ using namespace __sanitizer;  // NOLINT
 # endif
 #endif  // _MSC_VER
 
-#if defined(_WIN32)
+#if SANITIZER_WINDOWS
 typedef unsigned long DWORD;  // NOLINT
 typedef DWORD thread_return_t;
 # define THREAD_CALLING_CONV __stdcall

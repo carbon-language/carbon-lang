@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common/sanitizer_platform.h"
-#ifdef __APPLE__
+#if SANITIZER_MAC
 
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
@@ -100,4 +100,4 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 
 }  // namespace __tsan
 
-#endif  // #ifdef __APPLE__
+#endif  // SANITIZER_MAC

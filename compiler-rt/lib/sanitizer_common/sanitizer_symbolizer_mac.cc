@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
-#ifdef __APPLE__
+#if SANITIZER_MAC
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_symbolizer.h"
 

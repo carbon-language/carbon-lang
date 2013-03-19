@@ -24,7 +24,7 @@
 
 #include <stdarg.h>
 
-#ifdef _WIN32
+#if SANITIZER_WINDOWS
 #define va_copy(dst, src) ((dst) = (src))
 #endif // _WIN32
 

@@ -184,7 +184,7 @@ void __tsan_finalizer_goroutine(ThreadState *thr) {
   AcquireGlobal(thr, 0);
 }
 
-#ifdef _WIN32
+#if SANITIZER_WINDOWS
 // MinGW gcc emits calls to the function.
 void ___chkstk_ms(void) {
 // The implementation must be along the lines of:

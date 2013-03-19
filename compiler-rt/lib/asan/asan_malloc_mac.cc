@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common/sanitizer_platform.h"
-#ifdef __APPLE__
+#if SANITIZER_MAC
 
 #include <AvailabilityMacros.h>
 #include <CoreFoundation/CFBase.h>

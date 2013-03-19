@@ -19,7 +19,7 @@
 
 namespace __sanitizer {
 
-#ifdef _WIN32
+#if SANITIZER_WINDOWS
 class MemoryMappingLayout {
  public:
   MemoryMappingLayout() {}

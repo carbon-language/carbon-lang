@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
-#ifdef _WIN32
+#if SANITIZER_WINDOWS
 #include <windows.h>
 
 #include "sanitizer_internal_defs.h"

@@ -350,4 +350,4 @@ int ExtractResolvFDs(void *state, int *fds, int nfd) {
 
 }  // namespace __tsan
 
-#endif  // #ifdef __linux__
+#endif  // SANITIZER_LINUX
