@@ -6,10 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines the interface to the module/file/archive linker.
-//
-//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_LINKER_H
 #define LLVM_LINKER_H
@@ -19,7 +15,6 @@
 #include <vector>
 
 namespace llvm {
-  namespace sys { class Path; }
 
 class Module;
 class LLVMContext;
@@ -31,8 +26,7 @@ class StringRef;
 /// In this case the Linker still retains ownership of the Module. If the
 /// releaseModule() method is used, the ownership of the Module is transferred
 /// to the caller and the Linker object is only suitable for destruction.
-/// The Linker can link Modules from memory.  It retains a set of search paths
-/// in which to find any libraries presented to it. By default, the linker
+/// The Linker can link Modules from memory. By default, the linker
 /// will generate error and warning messages to stderr but this capability can
 /// be turned off with the QuietWarnings and QuietErrors flags. It can also be
 /// instructed to verbosely print out the linking actions it is taking with
@@ -96,15 +90,9 @@ class Linker {
     /// must arrange for its destruct. After this method is called, the Linker
     /// terminates the linking session for the returned Module. It will no
     /// longer utilize the returned Module but instead resets itself for
-    /// subsequent linking as if the constructor had been called. The Linker's
-    /// LibPaths and flags to be reset, and memory will be released.
+    /// subsequent linking as if the constructor had been called.
     /// @brief Release the linked/composite module.
     Module* releaseModule();
-
-    /// This method gets the list of libraries that form the path that the
-    /// Linker will search when it is presented with a library name.
-    /// @brief Get the Linkers library path
-    const std::vector<sys::Path>& getLibPaths() const { return LibPaths; }
 
     /// This method returns an error string suitable for printing to the user.
     /// The return value will be empty unless an error occurred in one of the
@@ -120,31 +108,6 @@ class Linker {
   /// @name Mutators
   /// @{
   public:
-    /// Add a path to the list of paths that the Linker will search. The Linker
-    /// accumulates the set of libraries added
-    /// library paths for the target platform. The standard libraries will
-    /// always be searched last. The added libraries will be searched in the
-    /// order added.
-    /// @brief Add a path.
-    void addPath(const sys::Path& path);
-
-    /// Add a set of paths to the list of paths that the linker will search. The
-    /// Linker accumulates the set of libraries added. The \p paths will be
-    /// added to the end of the Linker's list. Order will be retained.
-    /// @brief Add a set of paths.
-    void addPaths(const std::vector<std::string>& paths);
-
-    /// This method augments the Linker's list of library paths with the system
-    /// paths of the host operating system, include LLVM_LIB_SEARCH_PATH.
-    /// @brief Add the system paths.
-    void addSystemPaths();
-
-    /// Control optional linker behavior by setting a group of flags. The flags
-    /// are defined in the ControlFlags enumeration.
-    /// @see ControlFlags
-    /// @brief Set control flags.
-    void setFlags(unsigned flags) { Flags = flags; }
-
     /// This method links the \p Src module into the Linker's Composite module
     /// by calling LinkModules.
     /// @see LinkModules
@@ -185,7 +148,6 @@ class Linker {
   private:
     LLVMContext& Context; ///< The context for global information
     Module* Composite; ///< The composite module linked together
-    std::vector<sys::Path> LibPaths; ///< The library search paths
     unsigned Flags;    ///< Flags to control optional behavior.
     std::string Error; ///< Text of error that occurred.
     std::string ProgramName; ///< Name of the program being linked

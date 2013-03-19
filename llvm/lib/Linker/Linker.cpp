@@ -15,7 +15,6 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 using namespace llvm;
@@ -24,7 +23,6 @@ Linker::Linker(StringRef progname, StringRef modname,
                LLVMContext& C, unsigned flags):
   Context(C),
   Composite(new Module(modname, C)),
-  LibPaths(),
   Flags(flags),
   Error(),
   ProgramName(progname) { }
@@ -32,7 +30,6 @@ Linker::Linker(StringRef progname, StringRef modname,
 Linker::Linker(StringRef progname, Module* aModule, unsigned flags) :
   Context(aModule->getContext()),
   Composite(aModule),
-  LibPaths(),
   Flags(flags),
   Error(),
   ProgramName(progname) { }
@@ -63,27 +60,9 @@ Linker::verbose(StringRef message) {
     errs() << "  " << message << "\n";
 }
 
-void
-Linker::addPath(const sys::Path& path) {
-  LibPaths.push_back(path);
-}
-
-void
-Linker::addPaths(const std::vector<std::string>& paths) {
-  for (unsigned i = 0, e = paths.size(); i != e; ++i)
-    LibPaths.push_back(sys::Path(paths[i]));
-}
-
-void
-Linker::addSystemPaths() {
-  sys::Path::GetBitcodeLibraryPaths(LibPaths);
-  LibPaths.insert(LibPaths.begin(),sys::Path("./"));
-}
-
 Module*
 Linker::releaseModule() {
   Module* result = Composite;
-  LibPaths.clear();
   Error.clear();
   Composite = 0;
   Flags = 0;
