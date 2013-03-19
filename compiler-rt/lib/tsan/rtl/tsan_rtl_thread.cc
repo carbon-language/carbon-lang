@@ -73,11 +73,10 @@ void ThreadContext::OnCreated(void *arg) {
     StatInc(args->thr, StatThreadMaxTid);
 }
 
-void ThreadContext::OnReset(void *arg) {
-  OnCreatedArgs *args = static_cast<OnCreatedArgs *>(arg);
-  StatInc(args->thr, StatThreadReuse);
+void ThreadContext::OnReset() {
   sync.Reset();
-  DestroyAndFree(dead_info);
+  if (dead_info)
+    DestroyAndFree(dead_info);
 }
 
 struct OnStartedArgs {

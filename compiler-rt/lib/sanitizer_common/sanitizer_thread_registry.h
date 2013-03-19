@@ -60,7 +60,7 @@ class ThreadContextBase {
   void SetStarted(uptr _os_id, void *arg);
   void SetCreated(uptr _user_id, u64 _unique_id, bool _detached,
                   u32 _parent_tid, void *arg);
-  void Reset(void *arg);
+  void Reset();
 
   // The following methods may be overriden by subclasses.
   // Some of them take opaque arg that may be optionally be used
@@ -70,7 +70,7 @@ class ThreadContextBase {
   virtual void OnFinished() {}
   virtual void OnStarted(void *arg) {}
   virtual void OnCreated(void *arg) {}
-  virtual void OnReset(void *arg) {}
+  virtual void OnReset() {}
 };
 
 typedef ThreadContextBase* (*ThreadContextFactory)(u32 tid);
@@ -133,6 +133,10 @@ class ThreadRegistry {
 
   ThreadContextBase **threads_;  // Array of thread contexts is leaked.
   IntrusiveList<ThreadContextBase> dead_threads_;
+  IntrusiveList<ThreadContextBase> invalid_threads_;
+
+  void QuarantinePush(ThreadContextBase *tctx);
+  ThreadContextBase *QuarantinePop();
 };
 
 typedef GenericScopedLock<ThreadRegistry> ThreadRegistryLock;

@@ -487,7 +487,7 @@ class ThreadContext : public ThreadContextBase {
   void OnFinished();
   void OnStarted(void *arg);
   void OnCreated(void *arg);
-  void OnReset(void *arg);
+  void OnReset();
 };
 
 struct RacyStacks {
