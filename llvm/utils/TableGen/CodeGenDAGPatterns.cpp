@@ -1654,8 +1654,42 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
 
       TreePatternNode *Child = getChild(ChildNo++);
       unsigned ChildResNo = 0;  // Instructions always use res #0 of their op.
+
+      // If the operand has sub-operands, they may be provided by distinct
+      // child patterns, so attempt to match each sub-operand separately.
+      if (OperandNode->isSubClassOf("Operand")) {
+        DagInit *MIOpInfo = OperandNode->getValueAsDag("MIOperandInfo");
+        if (unsigned NumArgs = MIOpInfo->getNumArgs()) {
+          // But don't do that if the whole operand is being provided by
+          // a single ComplexPattern.
+          const ComplexPattern *AM = Child->getComplexPatternInfo(CDP);
+          if (!AM || AM->getNumOperands() < NumArgs) {
+            // Match first sub-operand against the child we already have.
+            Record *SubRec = cast<DefInit>(MIOpInfo->getArg(0))->getDef();
+            MadeChange |=
+              Child->UpdateNodeTypeFromInst(ChildResNo, SubRec, TP);
+
+            // And the remaining sub-operands against subsequent children.
+            for (unsigned Arg = 1; Arg < NumArgs; ++Arg) {
+              if (ChildNo >= getNumChildren()) {
+                TP.error("Instruction '" + getOperator()->getName() +
+                         "' expects more operands than were provided.");
+                return false;
+              }
+              Child = getChild(ChildNo++);
+
+              SubRec = cast<DefInit>(MIOpInfo->getArg(Arg))->getDef();
+              MadeChange |=
+                Child->UpdateNodeTypeFromInst(ChildResNo, SubRec, TP);
+            }
+            continue;
+          }
+        }
+      }
+
+      // If we didn't match by pieces above, attempt to match the whole
+      // operand now.
       MadeChange |= Child->UpdateNodeTypeFromInst(ChildResNo, OperandNode, TP);
-      MadeChange |= Child->ApplyTypeConstraints(TP, NotRegisters);
     }
 
     if (ChildNo != getNumChildren()) {
@@ -1664,6 +1698,8 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       return false;
     }
 
+    for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
+      MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
     return MadeChange;
   }
 

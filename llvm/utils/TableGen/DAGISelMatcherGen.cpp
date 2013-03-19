@@ -734,20 +734,33 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
       continue;
     }
 
-    const TreePatternNode *Child = N->getChild(ChildNo);
-
     // Otherwise this is a normal operand or a predicate operand without
     // 'execute always'; emit it.
-    unsigned BeforeAddingNumOps = InstOps.size();
-    EmitResultOperand(Child, InstOps);
-    assert(InstOps.size() > BeforeAddingNumOps && "Didn't add any operands");
 
-    // If the operand is an instruction and it produced multiple results, just
-    // take the first one.
-    if (!Child->isLeaf() && Child->getOperator()->isSubClassOf("Instruction"))
-      InstOps.resize(BeforeAddingNumOps+1);
+    // For operands with multiple sub-operands we may need to emit
+    // multiple child patterns to cover them all.  However, ComplexPattern
+    // children may themselves emit multiple MI operands.
+    unsigned NumSubOps = 1;
+    if (OperandNode->isSubClassOf("Operand")) {
+      DagInit *MIOpInfo = OperandNode->getValueAsDag("MIOperandInfo");
+      if (unsigned NumArgs = MIOpInfo->getNumArgs())
+        NumSubOps = NumArgs;
+    }
 
-    ++ChildNo;
+    unsigned FinalNumOps = InstOps.size() + NumSubOps;
+    while (InstOps.size() < FinalNumOps) {
+      const TreePatternNode *Child = N->getChild(ChildNo);
+      unsigned BeforeAddingNumOps = InstOps.size();
+      EmitResultOperand(Child, InstOps);
+      assert(InstOps.size() > BeforeAddingNumOps && "Didn't add any operands");
+
+      // If the operand is an instruction and it produced multiple results, just
+      // take the first one.
+      if (!Child->isLeaf() && Child->getOperator()->isSubClassOf("Instruction"))
+        InstOps.resize(BeforeAddingNumOps+1);
+
+      ++ChildNo;
+    }
   }
 
   // If this node has input glue or explicitly specified input physregs, we
