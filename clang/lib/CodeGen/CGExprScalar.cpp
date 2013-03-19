@@ -585,7 +585,7 @@ void ScalarExprEmitter::EmitFloatConversionCheck(Value *OrigSrc,
   } else {
     // Floating-point to integer or floating-point to floating-point. This has
     // undefined behavior if the source is +-Inf, NaN, or doesn't fit into the
-    // destination type.
+    // destination type (after truncation to an integer for float-to-integer).
     const llvm::fltSemantics &SrcSema =
       CGF.getContext().getFloatTypeSemantics(OrigSrcType);
     APFloat MaxSrc(SrcSema, APFloat::uninitialized);
@@ -600,14 +600,22 @@ void ScalarExprEmitter::EmitFloatConversionCheck(Value *OrigSrc,
           APFloat::opOverflow)
         // Don't need an overflow check for lower bound. Just check for
         // -Inf/NaN.
-        MinSrc = APFloat::getLargest(SrcSema, true);
+        MinSrc = APFloat::getInf(SrcSema, true);
+      else
+        // Find the largest value which is too small to represent (before
+        // truncation toward zero).
+        MinSrc.subtract(APFloat(SrcSema, 1), APFloat::rmTowardNegative);
 
       APSInt Max = APSInt::getMaxValue(Width, Unsigned);
       if (MaxSrc.convertFromAPInt(Max, !Unsigned, APFloat::rmTowardZero) &
           APFloat::opOverflow)
         // Don't need an overflow check for upper bound. Just check for
         // +Inf/NaN.
-        MaxSrc = APFloat::getLargest(SrcSema, false);
+        MaxSrc = APFloat::getInf(SrcSema, false);
+      else
+        // Find the smallest value which is too large to represent (before
+        // truncation toward zero).
+        MaxSrc.add(APFloat(SrcSema, 1), APFloat::rmTowardPositive);
     } else {
       const llvm::fltSemantics &DstSema =
         CGF.getContext().getFloatTypeSemantics(DstType);
@@ -634,11 +642,19 @@ void ScalarExprEmitter::EmitFloatConversionCheck(Value *OrigSrc,
       MaxSrc.convert(Sema, APFloat::rmTowardZero, &IsInexact);
     }
 
-    llvm::Value *GE =
-      Builder.CreateFCmpOGE(Src, llvm::ConstantFP::get(VMContext, MinSrc));
-    llvm::Value *LE =
-      Builder.CreateFCmpOLE(Src, llvm::ConstantFP::get(VMContext, MaxSrc));
-    Check = Builder.CreateAnd(GE, LE);
+    if (isa<llvm::IntegerType>(DstTy)) {
+      llvm::Value *GE =
+        Builder.CreateFCmpOGT(Src, llvm::ConstantFP::get(VMContext, MinSrc));
+      llvm::Value *LE =
+        Builder.CreateFCmpOLT(Src, llvm::ConstantFP::get(VMContext, MaxSrc));
+      Check = Builder.CreateAnd(GE, LE);
+    } else {
+      llvm::Value *GE =
+        Builder.CreateFCmpOGE(Src, llvm::ConstantFP::get(VMContext, MinSrc));
+      llvm::Value *LE =
+        Builder.CreateFCmpOLE(Src, llvm::ConstantFP::get(VMContext, MaxSrc));
+      Check = Builder.CreateAnd(GE, LE);
+    }
   }
 
   // FIXME: Provide a SourceLocation.

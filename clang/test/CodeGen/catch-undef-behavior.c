@@ -285,13 +285,13 @@ void int_fp16_overflow(int n, __fp16 *p) {
 // CHECK: @float_int_overflow
 // CHECK-TRAP: @float_int_overflow
 int float_int_overflow(float f) {
-  // CHECK: %[[GE:.*]] = fcmp oge float %[[F:.*]], 0xC1E0000000000000
-  // CHECK: %[[LE:.*]] = fcmp ole float %[[F]], 0x41DFFFFFE0000000
+  // CHECK: %[[GE:.*]] = fcmp ogt float %[[F:.*]], 0xC1E0000020000000
+  // CHECK: %[[LE:.*]] = fcmp olt float %[[F]], 0x41E0000000000000
   // CHECK: and i1 %[[GE]], %[[LE]]
   // CHECK: call void @__ubsan_handle_float_cast_overflow(
 
-  // CHECK-TRAP: %[[GE:.*]] = fcmp oge float %[[F:.*]], 0xC1E0000000000000
-  // CHECK-TRAP: %[[LE:.*]] = fcmp ole float %[[F]], 0x41DFFFFFE0000000
+  // CHECK-TRAP: %[[GE:.*]] = fcmp ogt float %[[F:.*]], 0xC1E0000020000000
+  // CHECK-TRAP: %[[LE:.*]] = fcmp olt float %[[F]], 0x41E0000000000000
   // CHECK-TRAP: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-TRAP-NEXT: br i1 %[[INBOUNDS]]
 
@@ -303,13 +303,13 @@ int float_int_overflow(float f) {
 // CHECK: @float_uint_overflow
 // CHECK-TRAP: @float_uint_overflow
 unsigned float_uint_overflow(float f) {
-  // CHECK: %[[GE:.*]] = fcmp oge float %[[F:.*]], 0.{{0*}}e+00
-  // CHECK: %[[LE:.*]] = fcmp ole float %[[F]], 0x41EFFFFFE0000000
+  // CHECK: %[[GE:.*]] = fcmp ogt float %[[F:.*]], -1.{{0*}}e+00
+  // CHECK: %[[LE:.*]] = fcmp olt float %[[F]], 0x41F0000000000000
   // CHECK: and i1 %[[GE]], %[[LE]]
   // CHECK: call void @__ubsan_handle_float_cast_overflow(
 
-  // CHECK-TRAP: %[[GE:.*]] = fcmp oge float %[[F:.*]], 0.{{0*}}e+00
-  // CHECK-TRAP: %[[LE:.*]] = fcmp ole float %[[F]], 0x41EFFFFFE0000000
+  // CHECK-TRAP: %[[GE:.*]] = fcmp ogt float %[[F:.*]], -1.{{0*}}e+00
+  // CHECK-TRAP: %[[LE:.*]] = fcmp olt float %[[F]], 0x41F0000000000000
   // CHECK-TRAP: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-TRAP-NEXT: br i1 %[[INBOUNDS]]
 
@@ -321,13 +321,13 @@ unsigned float_uint_overflow(float f) {
 // CHECK: @fp16_char_overflow
 // CHECK-TRAP: @fp16_char_overflow
 signed char fp16_char_overflow(__fp16 *p) {
-  // CHECK: %[[GE:.*]] = fcmp oge float %[[F:.*]], -1.28{{0*}}e+02
-  // CHECK: %[[LE:.*]] = fcmp ole float %[[F]], 1.27{{0*}}e+02
+  // CHECK: %[[GE:.*]] = fcmp ogt float %[[F:.*]], -1.29{{0*}}e+02
+  // CHECK: %[[LE:.*]] = fcmp olt float %[[F]], 1.28{{0*}}e+02
   // CHECK: and i1 %[[GE]], %[[LE]]
   // CHECK: call void @__ubsan_handle_float_cast_overflow(
 
-  // CHECK-TRAP: %[[GE:.*]] = fcmp oge float %[[F:.*]], -1.28{{0*}}e+02
-  // CHECK-TRAP: %[[LE:.*]] = fcmp ole float %[[F]], 1.27{{0*}}e+02
+  // CHECK-TRAP: %[[GE:.*]] = fcmp ogt float %[[F:.*]], -1.29{{0*}}e+02
+  // CHECK-TRAP: %[[LE:.*]] = fcmp olt float %[[F]], 1.28{{0*}}e+02
   // CHECK-TRAP: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-TRAP-NEXT: br i1 %[[INBOUNDS]]
 
