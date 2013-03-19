@@ -1288,6 +1288,10 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
         visibility = Tok.getObjCKeywordID();
         ConsumeToken();
         continue;
+      case tok::objc_end:
+        Diag(Tok, diag::err_objc_unexpected_atend);
+        ConsumeToken();
+        continue;
       default:
         Diag(Tok, diag::err_objc_illegal_visibility_spec);
         continue;
