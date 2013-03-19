@@ -4131,11 +4131,6 @@ AsmParser::parseMSInlineAsm(void *AsmLoc, std::string &AsmString,
         continue;
 
       bool isOutput = (i == 1) && Desc.mayStore();
-      if (Operand->isMem() && Operand->needSizeDirective())
-        AsmStrRewrites.push_back(AsmRewrite(AOK_SizeDirective,
-                                            Operand->getStartLoc(), /*Len*/0,
-                                            Operand->getMemSize()));
-
       if (isOutput) {
         ++InputIdx;
         OutputDecls.push_back(OpDecl);
@@ -4192,15 +4187,13 @@ AsmParser::parseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                                              E = AsmStrRewrites.end();
        I != E; ++I) {
     const char *Loc = (*I).Loc.getPointer();
-    assert(Loc >= Start && "Expected Loc to be after Start!");
+    assert(Loc >= Start && "Expected Loc to be at or after Start!");
 
     unsigned AdditionalSkip = 0;
     AsmRewriteKind Kind = (*I).Kind;
 
-    // Emit everything up to the immediate/expression.  If the previous rewrite
-    // was a size directive, then this has already been done.
-    if (PrevKind != AOK_SizeDirective)
-      OS << StringRef(Start, Loc - Start);
+    // Emit everything up to the immediate/expression.
+    OS << StringRef(Start, Loc - Start);
     PrevKind = Kind;
 
     // Skip the original expression.
@@ -4254,8 +4247,7 @@ AsmParser::parseMSInlineAsm(void *AsmLoc, std::string &AsmString,
     }
 
     // Skip the original expression.
-    if (Kind != AOK_SizeDirective)
-      Start = Loc + (*I).Len + AdditionalSkip;
+    Start = Loc + (*I).Len + AdditionalSkip;
   }
 
   // Emit the remainder of the asm string.

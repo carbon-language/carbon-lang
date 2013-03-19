@@ -191,7 +191,6 @@ struct X86Operand : public MCParsedAsmOperand {
     unsigned IndexReg;
     unsigned Scale;
     unsigned Size;
-    bool NeedSizeDir;
   };
 
   union {
@@ -337,22 +336,12 @@ struct X86Operand : public MCParsedAsmOperand {
     return isImmSExti64i32Value(CE->getValue());
   }
 
-  unsigned getMemSize() const {
-    assert(Kind == Memory && "Invalid access!");
-    return Mem.Size;
-  }
-
   bool isOffsetOf() const {
     return OffsetOfLoc.getPointer();
   }
 
   bool needAddressOf() const {
     return AddressOf;
-  }
-
-  bool needSizeDirective() const {
-    assert(Kind == Memory && "Invalid access!");
-    return Mem.NeedSizeDir;
   }
 
   bool isMem() const { return Kind == Memory; }
@@ -500,7 +489,7 @@ struct X86Operand : public MCParsedAsmOperand {
 
   /// Create an absolute memory operand.
   static X86Operand *CreateMem(const MCExpr *Disp, SMLoc StartLoc, SMLoc EndLoc,
-                               unsigned Size = 0, bool NeedSizeDir = false) {
+                               unsigned Size = 0) {
     X86Operand *Res = new X86Operand(Memory, StartLoc, EndLoc);
     Res->Mem.SegReg   = 0;
     Res->Mem.Disp     = Disp;
@@ -508,7 +497,6 @@ struct X86Operand : public MCParsedAsmOperand {
     Res->Mem.IndexReg = 0;
     Res->Mem.Scale    = 1;
     Res->Mem.Size     = Size;
-    Res->Mem.NeedSizeDir = NeedSizeDir;
     Res->AddressOf = false;
     return Res;
   }
@@ -517,7 +505,7 @@ struct X86Operand : public MCParsedAsmOperand {
   static X86Operand *CreateMem(unsigned SegReg, const MCExpr *Disp,
                                unsigned BaseReg, unsigned IndexReg,
                                unsigned Scale, SMLoc StartLoc, SMLoc EndLoc,
-                               unsigned Size = 0, bool NeedSizeDir = false) {
+                               unsigned Size = 0) {
     // We should never just have a displacement, that should be parsed as an
     // absolute memory operand.
     assert((SegReg || BaseReg || IndexReg) && "Invalid memory operand!");
@@ -532,7 +520,6 @@ struct X86Operand : public MCParsedAsmOperand {
     Res->Mem.IndexReg = IndexReg;
     Res->Mem.Scale    = Scale;
     Res->Mem.Size     = Size;
-    Res->Mem.NeedSizeDir = NeedSizeDir;
     Res->AddressOf = false;
     return Res;
   }
@@ -1041,41 +1028,43 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
   if (getParser().parseExpression(Disp, End))
     return 0;
 
-  bool NeedSizeDir = false;
-  bool IsVarDecl = false;
-  if (isParsingInlineAsm()) {
-    if (const MCSymbolRefExpr *SymRef = dyn_cast<MCSymbolRefExpr>(Disp)) {
-      const MCSymbol &Sym = SymRef->getSymbol();
-      // FIXME: The SemaLookup will fail if the name is anything other then an
-      // identifier.
-      // FIXME: Pass a valid SMLoc.
-      unsigned tLength, tSize, tType;
-      SemaCallback->LookupInlineAsmIdentifier(Sym.getName(), NULL, tLength,
-                                              tSize, tType, IsVarDecl);
-      if (!Size) {
-        Size = tType * 8; // Size is in terms of bits in this context.
-        NeedSizeDir = Size > 0;
-      }
-    }
-  }
   if (!isParsingInlineAsm())
     return X86Operand::CreateMem(Disp, Start, End, Size);
-  else {
-    // If this is not a VarDecl then assume it is a FuncDecl or some other label
-    // reference.  We need an 'r' constraint here, so we need to create register
-    // operand to ensure proper matching.  Just pick a GPR based on the size of
-    // a pointer.
-    if (!IsVarDecl) {
-      unsigned RegNo = is64BitMode() ? X86::RBX : X86::EBX;
-      return X86Operand::CreateReg(RegNo, Start, End, /*AddressOf=*/true);
-    }
 
-    // When parsing inline assembly we set the base register to a non-zero value
-    // as we don't know the actual value at this time.  This is necessary to
-    // get the matching correct in some cases.
-    return X86Operand::CreateMem(/*SegReg*/0, Disp, /*BaseReg*/1, /*IndexReg*/0,
-                                 /*Scale*/1, Start, End, Size, NeedSizeDir);
+  bool NeedSizeDir = false;
+  bool IsVarDecl = false;
+  if (const MCSymbolRefExpr *SymRef = dyn_cast<MCSymbolRefExpr>(Disp)) {
+    const MCSymbol &Sym = SymRef->getSymbol();
+    // FIXME: The SemaLookup will fail if the name is anything other then an
+    // identifier.
+    // FIXME: Pass a valid SMLoc.
+    unsigned tLength, tSize, tType;
+    SemaCallback->LookupInlineAsmIdentifier(Sym.getName(), NULL, tLength,
+                                            tSize, tType, IsVarDecl);
+    if (!Size) {
+      Size = tType * 8; // Size is in terms of bits in this context.
+      NeedSizeDir = Size > 0;
+    }
   }
+
+  // If this is not a VarDecl then assume it is a FuncDecl or some other label
+  // reference.  We need an 'r' constraint here, so we need to create register
+  // operand to ensure proper matching.  Just pick a GPR based on the size of
+  // a pointer.
+  if (!IsVarDecl) {
+    unsigned RegNo = is64BitMode() ? X86::RBX : X86::EBX;
+    return X86Operand::CreateReg(RegNo, Start, End, /*AddressOf=*/true);
+  }
+
+  if (NeedSizeDir)
+    InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_SizeDirective, Start,
+                                                /*Len*/0, Size));  
+
+  // When parsing inline assembly we set the base register to a non-zero value
+  // as we don't know the actual value at this time.  This is necessary to
+  // get the matching correct in some cases.
+  return X86Operand::CreateMem(/*SegReg*/0, Disp, /*BaseReg*/1, /*IndexReg*/0,
+                               /*Scale*/1, Start, End, Size);
 }
 
 /// Parse the '.' operator.
