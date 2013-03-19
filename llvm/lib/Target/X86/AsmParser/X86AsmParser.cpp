@@ -184,7 +184,6 @@ struct X86Operand : public MCParsedAsmOperand {
 
   struct ImmOp {
     const MCExpr *Val;
-    bool NeedAsmRewrite;
   };
 
   struct MemOp {
@@ -236,11 +235,6 @@ struct X86Operand : public MCParsedAsmOperand {
   const MCExpr *getImm() const {
     assert(Kind == Immediate && "Invalid access!");
     return Imm.Val;
-  }
-
-  bool needAsmRewrite() const {
-    assert(Kind == Immediate && "Invalid access!");
-    return Imm.NeedAsmRewrite;
   }
 
   const MCExpr *getMemDisp() const {
@@ -482,11 +476,9 @@ struct X86Operand : public MCParsedAsmOperand {
     return Res;
   }
 
-  static X86Operand *CreateImm(const MCExpr *Val, SMLoc StartLoc, SMLoc EndLoc,
-                               bool NeedRewrite = true){
+  static X86Operand *CreateImm(const MCExpr *Val, SMLoc StartLoc, SMLoc EndLoc){
     X86Operand *Res = new X86Operand(Immediate, StartLoc, EndLoc);
     Res->Imm.Val = Val;
-    Res->Imm.NeedAsmRewrite = NeedRewrite;
     return Res;
   }
 
@@ -1205,7 +1197,7 @@ X86Operand *X86AsmParser::ParseIntelOperator(SMLoc Start, unsigned OpKind) {
   InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Imm, TypeLoc, Len, CVal));
 
   const MCExpr *Imm = MCConstantExpr::Create(CVal, getContext());
-  return X86Operand::CreateImm(Imm, Start, End, /*NeedAsmRewrite*/false);
+  return X86Operand::CreateImm(Imm, Start, End);
 }
 
 X86Operand *X86AsmParser::ParseIntelOperand() {
@@ -1229,6 +1221,8 @@ X86Operand *X86AsmParser::ParseIntelOperand() {
       getLexer().is(AsmToken::Minus)) {
     const MCExpr *Val;
     if (!getParser().parseExpression(Val, End)) {
+      if (isParsingInlineAsm())
+        InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_ImmPrefix, Start));
       return X86Operand::CreateImm(Val, Start, End);
     }
   }

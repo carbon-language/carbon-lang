@@ -4105,12 +4105,8 @@ AsmParser::parseMSInlineAsm(void *AsmLoc, std::string &AsmString,
       MCParsedAsmOperand *Operand = Info.ParsedOperands[i];
 
       // Immediate.
-      if (Operand->isImm()) {
-        if (Operand->needAsmRewrite())
-          AsmStrRewrites.push_back(AsmRewrite(AOK_ImmPrefix,
-                                              Operand->getStartLoc()));
+      if (Operand->isImm())
         continue;
-      }
 
       // Register operand.
       if (Operand->isReg() && !Operand->needAddressOf()) {
