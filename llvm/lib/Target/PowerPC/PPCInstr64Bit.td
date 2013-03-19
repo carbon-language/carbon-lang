@@ -814,78 +814,6 @@ def STDX  : XForm_8<31, 149, (outs), (ins G8RC:$rS, memrr:$dst),
                    "stdx $rS, $dst", LdStSTD,
                    [(store G8RC:$rS, xaddr:$dst)]>, isPPC64,
                    PPC970_DGroup_Cracked;
-}
-
-let PPC970_Unit = 2 in {
-
-def STBU8 : DForm_1a<39, (outs ptr_rc_nor0:$ea_res), (ins G8RC:$rS,
-                             symbolLo:$ptroff, ptr_rc_nor0:$ptrreg),
-                    "stbu $rS, $ptroff($ptrreg)", LdStStoreUpd,
-                    [(set ptr_rc_nor0:$ea_res,
-                          (pre_truncsti8 G8RC:$rS, ptr_rc_nor0:$ptrreg, 
-                                         iaddroff:$ptroff))]>,
-                    RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
-def STHU8 : DForm_1a<45, (outs ptr_rc_nor0:$ea_res), (ins G8RC:$rS,
-                             symbolLo:$ptroff, ptr_rc_nor0:$ptrreg),
-                    "sthu $rS, $ptroff($ptrreg)", LdStStoreUpd,
-                    [(set ptr_rc_nor0:$ea_res,
-                        (pre_truncsti16 G8RC:$rS, ptr_rc_nor0:$ptrreg, 
-                                        iaddroff:$ptroff))]>,
-                    RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
-
-def STWU8 : DForm_1a<37, (outs ptr_rc_nor0:$ea_res), (ins G8RC:$rS,
-                             symbolLo:$ptroff, ptr_rc_nor0:$ptrreg),
-                    "stwu $rS, $ptroff($ptrreg)", LdStStoreUpd,
-                    [(set ptr_rc_nor0:$ea_res,
-                          (pre_truncsti32 G8RC:$rS, ptr_rc_nor0:$ptrreg,
-                                          iaddroff:$ptroff))]>,
-                    RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
-
-def STDU : DSForm_1a<62, 1, (outs ptr_rc_nor0:$ea_res), (ins G8RC:$rS,
-                                        s16immX4:$ptroff, ptr_rc_nor0:$ptrreg),
-                    "stdu $rS, $ptroff($ptrreg)", LdStSTDU,
-                    [(set ptr_rc_nor0:$ea_res,
-                       (aligned4pre_store G8RC:$rS, ptr_rc_nor0:$ptrreg, 
-                                          iaddroff:$ptroff))]>,
-                    RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">,
-                    isPPC64;
-
-
-def STBUX8 : XForm_8<31, 247, (outs ptr_rc_nor0:$ea_res),
-                              (ins G8RC:$rS, ptr_rc_nor0:$ptroff, ptr_rc:$ptrreg),
-                    "stbux $rS, $ptroff, $ptrreg", LdStStoreUpd,
-                    [(set ptr_rc_nor0:$ea_res,
-                       (pre_truncsti8 G8RC:$rS,
-                                      ptr_rc:$ptrreg, xaddroff:$ptroff))]>,
-                    RegConstraint<"$ptroff = $ea_res">, NoEncode<"$ea_res">,
-                    PPC970_DGroup_Cracked;
-
-def STHUX8 : XForm_8<31, 439, (outs ptr_rc_nor0:$ea_res),
-                              (ins G8RC:$rS, ptr_rc_nor0:$ptroff, ptr_rc:$ptrreg),
-                    "sthux $rS, $ptroff, $ptrreg", LdStStoreUpd,
-                    [(set ptr_rc_nor0:$ea_res,
-                       (pre_truncsti16 G8RC:$rS,
-                                       ptr_rc:$ptrreg, xaddroff:$ptroff))]>,
-                    RegConstraint<"$ptroff = $ea_res">, NoEncode<"$ea_res">,
-                    PPC970_DGroup_Cracked;
-
-def STWUX8 : XForm_8<31, 183, (outs ptr_rc_nor0:$ea_res),
-                              (ins G8RC:$rS, ptr_rc_nor0:$ptroff, ptr_rc:$ptrreg),
-                    "stwux $rS, $ptroff, $ptrreg", LdStStoreUpd,
-                    [(set ptr_rc_nor0:$ea_res,
-                       (pre_truncsti32 G8RC:$rS,
-                                       ptr_rc:$ptrreg, xaddroff:$ptroff))]>,
-                    RegConstraint<"$ptroff = $ea_res">, NoEncode<"$ea_res">,
-                    PPC970_DGroup_Cracked;
-
-def STDUX : XForm_8<31, 181, (outs ptr_rc_nor0:$ea_res),
-                              (ins G8RC:$rS, ptr_rc_nor0:$ptroff, ptr_rc:$ptrreg),
-                    "stdux $rS, $ptroff, $ptrreg", LdStSTDU,
-                    [(set ptr_rc_nor0:$ea_res,
-                       (pre_store G8RC:$rS, ptr_rc:$ptrreg, xaddroff:$ptroff))]>,
-                    RegConstraint<"$ptroff = $ea_res">, NoEncode<"$ea_res">,
-                    PPC970_DGroup_Cracked, isPPC64;
-
 // STD_32/STDX_32 - Just like STD/STDX, but uses a '32-bit' input register.
 def STD_32  : DSForm_1<62, 0, (outs), (ins GPRC:$rT, memrix:$dst),
                        "std $rT, $dst", LdStSTD,
@@ -896,6 +824,60 @@ def STDX_32  : XForm_8<31, 149, (outs), (ins GPRC:$rT, memrr:$dst),
                        PPC970_DGroup_Cracked;
 }
 
+// Stores with Update (pre-inc).
+let PPC970_Unit = 2, mayStore = 1 in {
+def STBU8 : DForm_1<39, (outs ptr_rc_nor0:$ea_res), (ins G8RC:$rS, memri:$dst),
+                   "stbu $rS, $dst", LdStStoreUpd, []>,
+                   RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">;
+def STHU8 : DForm_1<45, (outs ptr_rc_nor0:$ea_res), (ins G8RC:$rS, memri:$dst),
+                   "sthu $rS, $dst", LdStStoreUpd, []>,
+                   RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">;
+def STWU8 : DForm_1<37, (outs ptr_rc_nor0:$ea_res), (ins G8RC:$rS, memri:$dst),
+                   "stwu $rS, $dst", LdStStoreUpd, []>,
+                   RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">;
+def STDU : DSForm_1<62, 1, (outs ptr_rc_nor0:$ea_res), (ins G8RC:$rS, memrix:$dst),
+                   "stdu $rS, $dst", LdStSTDU, []>,
+                   RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">,
+                   isPPC64;
+
+def STBUX8: XForm_8<31, 247, (outs ptr_rc_nor0:$ea_res), (ins G8RC:$rS, memrr:$dst),
+                    "stbux $rS, $dst", LdStStoreUpd, []>,
+                    RegConstraint<"$dst.offreg = $ea_res">, NoEncode<"$ea_res">,
+                    PPC970_DGroup_Cracked;
+def STHUX8: XForm_8<31, 439, (outs ptr_rc_nor0:$ea_res), (ins G8RC:$rS, memrr:$dst),
+                    "sthux $rS, $dst", LdStStoreUpd, []>,
+                    RegConstraint<"$dst.offreg = $ea_res">, NoEncode<"$ea_res">,
+                    PPC970_DGroup_Cracked;
+def STWUX8: XForm_8<31, 183, (outs ptr_rc_nor0:$ea_res), (ins G8RC:$rS, memrr:$dst),
+                    "stwux $rS, $dst", LdStStoreUpd, []>,
+                    RegConstraint<"$dst.offreg = $ea_res">, NoEncode<"$ea_res">,
+                    PPC970_DGroup_Cracked;
+def STDUX : XForm_8<31, 181, (outs ptr_rc_nor0:$ea_res), (ins G8RC:$rS, memrr:$dst),
+                    "stdux $rS, $dst", LdStSTDU, []>,
+                    RegConstraint<"$dst.offreg = $ea_res">, NoEncode<"$ea_res">,
+                    PPC970_DGroup_Cracked, isPPC64;
+}
+
+// Patterns to match the pre-inc stores.  We can't put the patterns on
+// the instruction definitions directly as ISel wants the address base
+// and offset to be separate operands, not a single complex operand.
+def : Pat<(pre_truncsti8 G8RC:$rS, ptr_rc_nor0:$ptrreg, iaddroff:$ptroff),
+          (STBU8 G8RC:$rS, iaddroff:$ptroff, ptr_rc_nor0:$ptrreg)>;
+def : Pat<(pre_truncsti16 G8RC:$rS, ptr_rc_nor0:$ptrreg, iaddroff:$ptroff),
+          (STHU8 G8RC:$rS, iaddroff:$ptroff, ptr_rc_nor0:$ptrreg)>;
+def : Pat<(pre_truncsti32 G8RC:$rS, ptr_rc_nor0:$ptrreg, iaddroff:$ptroff),
+          (STWU8 G8RC:$rS, iaddroff:$ptroff, ptr_rc_nor0:$ptrreg)>;
+def : Pat<(aligned4pre_store G8RC:$rS, ptr_rc_nor0:$ptrreg, iaddroff:$ptroff),
+          (STDU G8RC:$rS, iaddroff:$ptroff, ptr_rc_nor0:$ptrreg)>;
+
+def : Pat<(pre_truncsti8 G8RC:$rS, ptr_rc:$ptrreg, xaddroff:$ptroff),
+          (STBUX8 G8RC:$rS, xaddroff:$ptroff, ptr_rc:$ptrreg)>;
+def : Pat<(pre_truncsti16 G8RC:$rS, ptr_rc:$ptrreg, xaddroff:$ptroff),
+          (STHUX8 G8RC:$rS, xaddroff:$ptroff, ptr_rc:$ptrreg)>;
+def : Pat<(pre_truncsti32 G8RC:$rS, ptr_rc:$ptrreg, xaddroff:$ptroff),
+          (STWUX8 G8RC:$rS, xaddroff:$ptroff, ptr_rc:$ptrreg)>;
+def : Pat<(pre_store G8RC:$rS, ptr_rc:$ptrreg, xaddroff:$ptroff),
+          (STDUX G8RC:$rS, xaddroff:$ptroff, ptr_rc:$ptrreg)>;
 
 
 //===----------------------------------------------------------------------===//
