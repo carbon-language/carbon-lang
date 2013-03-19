@@ -73,17 +73,62 @@ void PR14765_test() {
   free(testObj);
 }
 
-void PR14765_incorrectBehavior(Circle *testObj) {
+void PR14765_argument(Circle *testObj) {
   int oldSize = testObj->size;
-
   clang_analyzer_eval(testObj->size == oldSize); // expected-warning{{TRUE}}
 
   testObj->origin = makePoint(0.0, 0.0);
-
   clang_analyzer_eval(testObj->size == oldSize); // expected-warning{{TRUE}}
-  
+}
+
+
+typedef struct {
+  int x;
+  int y;
+} IntPoint;
+typedef struct {
+  IntPoint origin;
+  int size;
+} IntCircle;
+
+IntPoint makeIntPoint(int x, int y) {
+  IntPoint result;
+  result.x = x;
+  result.y = y;
+  return result;
+}
+
+void PR14765_test_int() {
+  IntCircle *testObj = calloc(sizeof(IntCircle), 1);
+
+  clang_analyzer_eval(testObj->size == 0); // expected-warning{{TRUE}}
+  clang_analyzer_eval(testObj->origin.x == 0); // expected-warning{{TRUE}}
+  clang_analyzer_eval(testObj->origin.y == 0); // expected-warning{{TRUE}}
+
+  testObj->origin = makeIntPoint(1, 2);
+  if (testObj->size > 0) { ; } // warning occurs here
+
+  // FIXME: Assigning to 'testObj->origin' kills the default binding for the
+  // whole region, meaning that we've forgotten that testObj->size should also
+  // default to 0. Tracked by <rdar://problem/12701038>.
+  // This should be TRUE.
+  clang_analyzer_eval(testObj->size == 0); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(testObj->origin.x == 1); // expected-warning{{TRUE}}
+  clang_analyzer_eval(testObj->origin.y == 2); // expected-warning{{TRUE}}
+
   free(testObj);
 }
+
+void PR14765_argument_int(IntCircle *testObj) {
+  int oldSize = testObj->size;
+  clang_analyzer_eval(testObj->size == oldSize); // expected-warning{{TRUE}}
+
+  testObj->origin = makeIntPoint(1, 2);
+  clang_analyzer_eval(testObj->size == oldSize); // expected-warning{{TRUE}}
+  clang_analyzer_eval(testObj->origin.x == 1); // expected-warning{{TRUE}}
+  clang_analyzer_eval(testObj->origin.y == 2); // expected-warning{{TRUE}}
+}
+
 
 void rdar13292559(Circle input) {
   extern void useCircle(Circle);
