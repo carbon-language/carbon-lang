@@ -116,4 +116,11 @@ ReportLocation *SymbolizeData(uptr addr) {
   return ent;
 }
 
+void SymbolizeFlush() {
+  if (!IsSymbolizerAvailable())
+    return;
+  ScopedInSymbolizer in_symbolizer;
+  __sanitizer::FlushSymbolizer();
+}
+
 }  // namespace __tsan
