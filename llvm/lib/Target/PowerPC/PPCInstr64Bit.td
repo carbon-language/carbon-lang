@@ -579,10 +579,10 @@ def LWAX : XForm_1<31, 341, (outs G8RC:$rD), (ins memrr:$src),
 
 // Update forms.
 let mayLoad = 1 in
-def LHAU8 : DForm_1a<43, (outs G8RC:$rD, ptr_rc_nor0:$ea_result), (ins symbolLo:$disp,
-                            ptr_rc_nor0:$rA),
-                    "lhau $rD, $disp($rA)", LdStLHAU,
-                    []>, RegConstraint<"$rA = $ea_result">,
+def LHAU8 : DForm_1<43, (outs G8RC:$rD, ptr_rc_nor0:$ea_result),
+                    (ins memri:$addr),
+                    "lhau $rD, $addr", LdStLHAU,
+                    []>, RegConstraint<"$addr.reg = $ea_result">,
                     NoEncode<"$ea_result">;
 // NO LWAU!
 
