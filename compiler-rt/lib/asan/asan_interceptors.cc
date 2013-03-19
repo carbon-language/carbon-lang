@@ -145,7 +145,7 @@ INTERCEPTOR(int, sigaction, int signum, const struct sigaction *act,
   }
   return 0;
 }
-#elif ASAN_POSIX
+#elif SANITIZER_POSIX
 // We need to have defined REAL(sigaction) on posix systems.
 DEFINE_REAL(int, sigaction, int signum, const struct sigaction *act,
     struct sigaction *oldact);
