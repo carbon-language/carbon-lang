@@ -44,9 +44,9 @@ define i32 @zext_sext(<8 x i1> %in) {
   %B = zext <8 x i16> undef to <8 x i32>
   ;CHECK: cost of 1 {{.*}} sext
   %C = sext <4 x i32> undef to <4 x i64>
-  ;CHECK: cost of 8 {{.*}} sext
+  ;CHECK: cost of 6 {{.*}} sext
   %C1 = sext <4 x i8> undef to <4 x i64>
-  ;CHECK: cost of 8 {{.*}} sext
+  ;CHECK: cost of 6 {{.*}} sext
   %C2 = sext <4 x i16> undef to <4 x i64>
 
   ;CHECK: cost of 1 {{.*}} zext

@@ -11827,8 +11827,23 @@ SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
       // fall through
     case MVT::v4i32:
     case MVT::v8i16: {
-      SDValue Tmp1 = getTargetVShiftNode(X86ISD::VSHLI, dl, VT,
-                                         Op.getOperand(0), ShAmt, DAG);
+      // (sext (vzext x)) -> (vsext x)
+      SDValue Op0 = Op.getOperand(0);
+      SDValue Op00 = Op0.getOperand(0);
+      SDValue Tmp1;
+      // Hopefully, this VECTOR_SHUFFLE is just a VZEXT.
+      if (Op0.getOpcode() == ISD::BITCAST &&
+          Op00.getOpcode() == ISD::VECTOR_SHUFFLE)
+        Tmp1 = LowerVectorIntExtend(Op00, DAG);
+      if (Tmp1.getNode()) {
+        SDValue Tmp1Op0 = Tmp1.getOperand(0);
+        assert(Tmp1Op0.getOpcode() == X86ISD::VZEXT &&
+               "This optimization is invalid without a VZEXT.");
+        return DAG.getNode(X86ISD::VSEXT, dl, VT, Tmp1Op0.getOperand(0));
+      }
+
+      // If the above didn't work, then just use Shift-Left + Shift-Right.
+      Tmp1 = getTargetVShiftNode(X86ISD::VSHLI, dl, VT, Op0, ShAmt, DAG);
       return getTargetVShiftNode(X86ISD::VSRAI, dl, VT, Tmp1, ShAmt, DAG);
     }
   }
