@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LLVMSymbolize.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Path.h"
@@ -187,7 +188,7 @@ std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
 }
 
 void LLVMSymbolizer::flush() {
-  Modules.clear();
+  DeleteContainerSeconds(Modules);
 }
 
 // Returns true if the object endianness is known.
