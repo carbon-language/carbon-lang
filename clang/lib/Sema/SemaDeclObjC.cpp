@@ -151,7 +151,8 @@ void Sema::CheckObjCMethodOverride(ObjCMethodDecl *NewMethod,
     
     if (ObjCMethodFamily Family = Overridden->getMethodFamily())
       Diag(Overridden->getLocation(), 
-           diag::note_related_result_type_overridden_family)
+           diag::note_related_result_type_family)
+        << /*overridden method*/ 0
         << Family;
     else
       Diag(Overridden->getLocation(), 

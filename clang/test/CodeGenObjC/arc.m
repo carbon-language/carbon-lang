@@ -621,7 +621,9 @@ void test21(unsigned n) {
 // CHECK-NEXT: store i8* {{%.*}}, i8** [[CMD]]
 // CHECK-NEXT: [[T0:%.*]] = load [[TEST27]]** [[SELF]]
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST27]]* [[T0]] to i8*
-// CHECK-NEXT: [[RET:%.*]] = call i8* @objc_retain(i8* [[T1]])
+// CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retain(i8* [[T1]])
+// CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to [[TEST27]]*
+// CHECK-NEXT: [[RET:%.*]] = bitcast [[TEST27]]* [[T3]] to i8*
 // CHECK-NEXT: store i32 {{[0-9]+}}, i32* [[DEST]]
 // CHECK-NEXT: [[T0:%.*]] = load [[TEST27]]** [[SELF]]
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST27]]* [[T0]] to i8*
@@ -685,7 +687,9 @@ static id _test29_allocator = 0;
 // Return statement.
 // CHECK-NEXT: [[T2:%.*]] = bitcast i8* [[CALL]]
 // CHECK-NEXT: [[CALL:%.*]] = bitcast
-// CHECK-NEXT: [[RET:%.*]] = call i8* @objc_retain(i8* [[CALL]]) [[NUW]]
+// CHECK-NEXT: [[T0:%.*]] = call i8* @objc_retain(i8* [[CALL]]) [[NUW]]
+// CHECK-NEXT: [[T1:%.*]] = bitcast i8* [[T0]] to [[TEST29]]*
+// CHECK-NEXT: [[RET:%.*]] = bitcast [[TEST29]]* [[T1]] to i8*
 // CHECK-NEXT: store i32 1, i32* [[CLEANUP]]
 
 // Cleanup.
@@ -739,7 +743,9 @@ static id _test29_allocator = 0;
 // Return statement.
 // CHECK-NEXT: [[T0:%.*]] = load [[TEST29]]** [[SELF]]
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST29]]* [[T0]] to i8*
-// CHECK-NEXT: [[RET:%.*]] = call i8* @objc_retain(i8* [[T1]]) [[NUW]]
+// CHECK-NEXT: [[T0:%.*]] = call i8* @objc_retain(i8* [[T1]]) [[NUW]]
+// CHECK-NEXT: [[T1:%.*]] = bitcast i8* [[T0]] to [[TEST29]]*
+// CHECK-NEXT: [[RET:%.*]] = bitcast [[TEST29]]* [[T1]] to i8*
 // CHECK-NEXT: store i32 1, i32* [[CLEANUP]]
 
 // Cleanup.
@@ -794,7 +800,9 @@ char *helper;
 // Return.
 // CHECK-NEXT: [[T0:%.*]] = load [[TEST30]]** [[SELF]]
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST30]]* [[T0]] to i8*
-// CHECK-NEXT: [[RET:%.*]] = call i8* @objc_retain(i8* [[T1]])
+// CHECK-NEXT: [[T0:%.*]] = call i8* @objc_retain(i8* [[T1]])
+// CHECK-NEXT: [[T1:%.*]] = bitcast i8* [[T0]] to [[TEST30]]*
+// CHECK-NEXT: [[RET:%.*]] = bitcast [[TEST30]]* [[T1]] to i8*
 // CHECK-NEXT: store i32 1
 
 // Cleanup.

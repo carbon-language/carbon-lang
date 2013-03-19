@@ -7026,6 +7026,11 @@ public:
   /// with a related result type, emit a note describing what happened.
   void EmitRelatedResultTypeNote(const Expr *E);
 
+  /// \brief Given that we had incompatible pointer types in a return
+  /// statement, check whether we're in a method with a related result
+  /// type, and if so, emit a note describing what happened.
+  void EmitRelatedResultTypeNoteForReturn(QualType destType);
+
   /// CheckBooleanCondition - Diagnose problems involving the use of
   /// the given expression as a boolean condition (e.g. in an if
   /// statement).  Also performs the standard function and array

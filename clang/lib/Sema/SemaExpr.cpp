@@ -10039,6 +10039,9 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
 
   if (CheckInferredResultType)
     EmitRelatedResultTypeNote(SrcExpr);
+
+  if (Action == AA_Returning && ConvTy == IncompatiblePointer)
+    EmitRelatedResultTypeNoteForReturn(DstType);
   
   if (Complained)
     *Complained = true;

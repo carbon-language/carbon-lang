@@ -5590,6 +5590,26 @@ static bool DiagnoseUninitializedReference(Sema &S, SourceLocation Loc,
 //===----------------------------------------------------------------------===//
 // Diagnose initialization failures
 //===----------------------------------------------------------------------===//
+
+/// Emit notes associated with an initialization that failed due to a
+/// "simple" conversion failure.
+static void emitBadConversionNotes(Sema &S, const InitializedEntity &entity,
+                                   Expr *op) {
+  QualType destType = entity.getType();
+  if (destType.getNonReferenceType()->isObjCObjectPointerType() &&
+      op->getType()->isObjCObjectPointerType()) {
+
+    // Emit a possible note about the conversion failing because the
+    // operand is a message send with a related result type.
+    S.EmitRelatedResultTypeNote(op);
+
+    // Emit a possible note about a return failing because we're
+    // expecting a related result type.
+    if (entity.getKind() == InitializedEntity::EK_Result)
+      S.EmitRelatedResultTypeNoteForReturn(destType);
+  }
+}
+
 bool InitializationSequence::Diagnose(Sema &S,
                                       const InitializedEntity &Entity,
                                       const InitializationKind &Kind,
@@ -5734,9 +5754,7 @@ bool InitializationSequence::Diagnose(Sema &S,
       << Args[0]->isLValue()
       << Args[0]->getType()
       << Args[0]->getSourceRange();
-    if (DestType.getNonReferenceType()->isObjCObjectPointerType() &&
-        Args[0]->getType()->isObjCObjectPointerType())
-      S.EmitRelatedResultTypeNote(Args[0]);
+    emitBadConversionNotes(S, Entity, Args[0]);
     break;
 
   case FK_ConversionFailed: {
@@ -5749,9 +5767,7 @@ bool InitializationSequence::Diagnose(Sema &S,
       << Args[0]->getSourceRange();
     S.HandleFunctionTypeMismatch(PDiag, FromType, DestType);
     S.Diag(Kind.getLocation(), PDiag);
-    if (DestType.getNonReferenceType()->isObjCObjectPointerType() &&
-        Args[0]->getType()->isObjCObjectPointerType())
-      S.EmitRelatedResultTypeNote(Args[0]);
+    emitBadConversionNotes(S, Entity, Args[0]);
     break;
   }
 

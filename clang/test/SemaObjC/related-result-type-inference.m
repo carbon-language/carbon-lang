@@ -175,7 +175,7 @@ void test_inference() {
 @implementation Fail
 - (id<X>) initWithX
 {
-  return (id)self; // expected-warning {{returning 'Fail *' from a function with incompatible result type 'id<X>'}}
+  return (id)self; // expected-warning {{casting 'Fail *' to incompatible type 'id<X>'}}
 }
 @end
 

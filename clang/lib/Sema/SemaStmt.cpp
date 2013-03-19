@@ -2536,20 +2536,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     if (!FnRetType->isDependentType() && !RetValExp->isTypeDependent()) {
       // we have a non-void function with an expression, continue checking
 
-      if (!RelatedRetType.isNull()) {
-        // If we have a related result type, perform an extra conversion here.
-        // FIXME: The diagnostics here don't really describe what is happening.
-        InitializedEntity Entity =
-            InitializedEntity::InitializeTemporary(RelatedRetType);
-
-        ExprResult Res = PerformCopyInitialization(Entity, SourceLocation(),
-                                                   RetValExp);
-        if (Res.isInvalid()) {
-          // FIXME: Cleanup temporaries here, anyway?
-          return StmtError();
-        }
-        RetValExp = Res.takeAs<Expr>();
-      }
+      QualType RetType = (RelatedRetType.isNull() ? FnRetType : RelatedRetType);
 
       // C99 6.8.6.4p3(136): The return statement is not an assignment. The
       // overlap restriction of subclause 6.5.16.1 does not apply to the case of
@@ -2559,18 +2546,33 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       // the C version of which boils down to CheckSingleAssignmentConstraints.
       NRVOCandidate = getCopyElisionCandidate(FnRetType, RetValExp, false);
       InitializedEntity Entity = InitializedEntity::InitializeResult(ReturnLoc,
-                                                                     FnRetType,
+                                                                     RetType,
                                                             NRVOCandidate != 0);
       ExprResult Res = PerformMoveOrCopyInitialization(Entity, NRVOCandidate,
-                                                       FnRetType, RetValExp);
+                                                       RetType, RetValExp);
       if (Res.isInvalid()) {
-        // FIXME: Cleanup temporaries here, anyway?
+        // FIXME: Clean up temporaries here anyway?
         return StmtError();
       }
-
       RetValExp = Res.takeAs<Expr>();
-      if (RetValExp)
-        CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
+
+      // If we have a related result type, we need to implicitly
+      // convert back to the formal result type.  We can't pretend to
+      // initialize the result again --- we might end double-retaining
+      // --- so instead we initialize a notional temporary; this can
+      // lead to less-than-great diagnostics, but this stage is much
+      // less likely to fail than the previous stage.
+      if (!RelatedRetType.isNull()) {
+        Entity = InitializedEntity::InitializeTemporary(FnRetType);
+        Res = PerformCopyInitialization(Entity, ReturnLoc, RetValExp);
+        if (Res.isInvalid()) {
+          // FIXME: Clean up temporaries here anyway?
+          return StmtError();
+        }
+        RetValExp = Res.takeAs<Expr>();
+      }
+
+      CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
     }
 
     if (RetValExp) {

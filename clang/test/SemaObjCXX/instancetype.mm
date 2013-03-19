@@ -5,7 +5,7 @@
 #endif
 
 @interface Root
-+ (instancetype)alloc; // expected-note {{explicitly declared 'instancetype'}}
++ (instancetype)alloc;
 - (instancetype)init; // expected-note{{overridden method is part of the 'init' method family}}
 - (instancetype)self; // expected-note {{explicitly declared 'instancetype'}}
 - (Class)class;
@@ -143,7 +143,7 @@ void test_instancetype_narrow_method_search() {
 
 @implementation Subclass4
 + (id)alloc {
-  return self; // expected-warning{{incompatible pointer types returning 'Class' from a function with result type 'Subclass4 *'}}
+  return self; // FIXME: we accept this in ObjC++ but not ObjC?
 }
 
 - (Subclass3 *)init { return 0; } // don't complain: we lost the related return type
@@ -166,12 +166,12 @@ void test_instancetype_inherited() {
 @implementation Subclass2
 - (instancetype)initSubclass2 { // expected-note {{explicitly declared 'instancetype'}}
   Subclass1 *sc1 = [[Subclass1 alloc] init];
-  return sc1; // expected-warning{{incompatible pointer types returning 'Subclass1 *' from a function with result type 'Subclass2 *'}}
+  return sc1; // expected-error{{cannot initialize return object of type 'Subclass2 *' with an lvalue of type 'Subclass1 *'}}
 }
 - (void)methodOnSubclass2 {}
 - (id)self {
   Subclass1 *sc1 = [[Subclass1 alloc] init];
-  return sc1; // expected-warning{{incompatible pointer types returning 'Subclass1 *' from a function with result type 'Subclass2 *'}}
+  return sc1; // expected-error{{cannot initialize return object of type 'Subclass2 *' with an lvalue of type 'Subclass1 *'}}
 }
 @end
 
@@ -202,10 +202,10 @@ void test_instancetype_inherited() {
   B4 *_b;
 }
 - (id) foo {
-  return _b; // expected-warning {{incompatible pointer types returning 'B4 *' from a function with result type 'A4 *'}}
+  return _b; // expected-error {{cannot initialize return object of type 'A4 *' with an lvalue of type 'B4 *'}}
 }
 - (id) bar {
-  return _b; // expected-warning {{incompatible pointer types returning 'B4 *' from a function with result type 'A4 *'}}
+  return _b; // expected-error {{cannot initialize return object of type 'A4 *' with an lvalue of type 'B4 *'}}
 }
 
 // This is really just to ensure that we don't crash.
