@@ -4323,8 +4323,7 @@ public:
                            CodeGen::CodeGenModule &CGM) const {
     const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
     if (!FD) return;
-    llvm::Function *Fn = dyn_cast<llvm::Function>(GV);
-    if (!Fn) return; // should not happen
+    llvm::Function *Fn = cast<llvm::Function>(GV);
     if (FD->hasAttr<Mips16Attr>()) {
       Fn->addFnAttr("mips16");
     }
