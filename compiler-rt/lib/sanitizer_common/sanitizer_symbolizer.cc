@@ -231,6 +231,8 @@ class InternalSymbolizer {
   char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
     return 0;
   }
+  void Flush() {
+  }
 };
 
 #endif  // SANITIZER_SUPPORTS_WEAK_HOOKS
