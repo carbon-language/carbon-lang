@@ -128,6 +128,9 @@ class ExternalSymbolizer {
     return StartSymbolizerSubprocess(path_, &input_fd_, &output_fd_);
   }
 
+  void Flush() {
+  }
+
  private:
   bool readFromSymbolizer(char *buffer, uptr max_length) {
     if (max_length == 0)
@@ -184,11 +187,14 @@ bool __sanitizer_symbolize_code(const char *ModuleName, u64 ModuleOffset,
 SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
 bool __sanitizer_symbolize_data(const char *ModuleName, u64 ModuleOffset,
                                 char *Buffer, int MaxLength);
+SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+void __sanitizer_symbolize_flush();
 }  // extern "C"
 
 class InternalSymbolizer {
  public:
   typedef bool (*SanitizerSymbolizeFn)(const char*, u64, char*, int);
+
   static InternalSymbolizer *get() {
     if (__sanitizer_symbolize_code != 0 &&
         __sanitizer_symbolize_data != 0) {
@@ -197,12 +203,18 @@ class InternalSymbolizer {
     }
     return 0;
   }
+
   char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
     SanitizerSymbolizeFn symbolize_fn = is_data ? __sanitizer_symbolize_data
                                                 : __sanitizer_symbolize_code;
     if (symbolize_fn(module_name, module_offset, buffer_, kBufferSize))
       return buffer_;
     return 0;
+  }
+
+  void Flush() {
+    if (__sanitizer_symbolize_flush)
+      __sanitizer_symbolize_flush();
   }
 
  private:
@@ -321,6 +333,13 @@ class Symbolizer {
     return internal_symbolizer_ || external_symbolizer_;
   }
 
+  void Flush() {
+    if (internal_symbolizer_)
+      internal_symbolizer_->Flush();
+    if (external_symbolizer_)
+      external_symbolizer_->Flush();
+  }
+
  private:
   char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
     // First, try to use internal symbolizer.
@@ -406,6 +425,10 @@ bool InitializeExternalSymbolizer(const char *path_to_symbolizer) {
 
 bool IsSymbolizerAvailable() {
   return symbolizer.IsSymbolizerAvailable();
+}
+
+void FlushSymbolizer() {
+  symbolizer.Flush();
 }
 
 }  // namespace __sanitizer
