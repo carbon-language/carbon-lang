@@ -174,15 +174,6 @@ void Generic_ELF::anchor() {}
 
 Tool *Darwin::constructTool(Action::ActionClass AC) const {
   switch (AC) {
-  case Action::InputClass:
-  case Action::BindArchClass:
-    llvm_unreachable("Invalid tool kind.");
-  case Action::PreprocessJobClass:
-  case Action::AnalyzeJobClass:
-  case Action::MigrateJobClass:
-  case Action::PrecompileJobClass:
-  case Action::CompileJobClass:
-    return new tools::Clang(*this);
   case Action::AssembleJobClass:
     return new tools::darwin::Assemble(*this);
   case Action::LinkJobClass:
@@ -193,6 +184,8 @@ Tool *Darwin::constructTool(Action::ActionClass AC) const {
     return new tools::darwin::Dsymutil(*this);
   case Action::VerifyJobClass:
     return new tools::darwin::VerifyDebug(*this);
+  default:
+    return ToolChain::constructTool(AC);
   }
 }
 
@@ -1359,31 +1352,18 @@ Generic_GCC::~Generic_GCC() {
 
 Tool *Generic_GCC::constructTool(Action::ActionClass AC) const {
   switch (AC) {
-  case Action::InputClass:
-  case Action::BindArchClass:
-    llvm_unreachable("Invalid tool kind.");
   case Action::PreprocessJobClass:
     return new tools::gcc::Preprocess(*this);
   case Action::PrecompileJobClass:
     return new tools::gcc::Precompile(*this);
-  case Action::AnalyzeJobClass:
-  case Action::MigrateJobClass:
-    return new tools::Clang(*this);
   case Action::CompileJobClass:
     return new tools::gcc::Compile(*this);
   case Action::AssembleJobClass:
     return new tools::gcc::Assemble(*this);
   case Action::LinkJobClass:
     return new tools::gcc::Link(*this);
-
-    // This is a bit ungeneric, but the only platform using a driver
-    // driver is Darwin.
-  case Action::LipoJobClass:
-    return new tools::darwin::Lipo(*this);
-  case Action::DsymutilJobClass:
-    return new tools::darwin::Dsymutil(*this);
-  case Action::VerifyJobClass:
-    return new tools::darwin::VerifyDebug(*this);
+  default:
+    return ToolChain::constructTool(AC);
   }
 }
 
@@ -1518,7 +1498,6 @@ Tool *Hexagon_TC::constructTool(Action::ActionClass AC) const {
   case Action::LinkJobClass:
     return new tools::hexagon::Link(*this);
   default:
-    assert(false && "Unsupported action for Hexagon target.");
     return Linux::constructTool(AC);
   }
 }
@@ -1635,17 +1614,6 @@ bool TCEToolChain::isPICDefault() const {
 
 bool TCEToolChain::isPICDefaultForced() const {
   return false;
-}
-
-Tool *TCEToolChain::constructTool(Action::ActionClass AC) const {
-  switch (AC) {
-  case Action::PreprocessJobClass:
-    return new tools::gcc::Preprocess(*this);
-  case Action::AnalyzeJobClass:
-    return new tools::Clang(*this);
-  default:
-    llvm_unreachable("Unsupported action for TCE target.");
-  }
 }
 
 /// OpenBSD - OpenBSD tool chain which can call as(1) and ld(1) directly.

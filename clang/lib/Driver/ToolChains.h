@@ -528,7 +528,6 @@ public:
                const ArgList &Args);
   ~TCEToolChain();
 
-  virtual Tool *constructTool(Action::ActionClass AC) const;
   bool IsMathErrnoDefault() const;
   bool isPICDefault() const;
   bool isPICDefaultForced() const;

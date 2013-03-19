@@ -63,7 +63,7 @@ private:
 protected:
   ToolChain(const Driver &D, const llvm::Triple &T, const ArgList &Args);
 
-  virtual Tool *constructTool(Action::ActionClass AC) const = 0;
+  virtual Tool *constructTool(Action::ActionClass AC) const;
 
   /// \name Utilities for implementing subclasses.
   ///@{

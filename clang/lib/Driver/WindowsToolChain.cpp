@@ -38,17 +38,6 @@ Windows::Windows(const Driver &D, const llvm::Triple& Triple,
 
 Tool *Windows::constructTool(Action::ActionClass AC) const {
   switch (AC) {
-  case Action::InputClass:
-  case Action::BindArchClass:
-  case Action::LipoJobClass:
-  case Action::DsymutilJobClass:
-  case Action::VerifyJobClass:
-  case Action::PreprocessJobClass:
-  case Action::PrecompileJobClass:
-  case Action::AnalyzeJobClass:
-  case Action::MigrateJobClass:
-  case Action::CompileJobClass:
-    return new tools::Clang(*this);
   case Action::AssembleJobClass:
     if (getTriple().getEnvironment() == llvm::Triple::MachO)
       return new tools::darwin::Assemble(*this);
@@ -56,6 +45,8 @@ Tool *Windows::constructTool(Action::ActionClass AC) const {
     break;
   case Action::LinkJobClass:
     return new tools::visualstudio::Link(*this);
+  default:
+    return ToolChain::constructTool(AC);
   }
 }
 

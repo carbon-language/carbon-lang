@@ -63,6 +63,26 @@ bool ToolChain::IsUnwindTablesDefault() const {
   return false;
 }
 
+Tool *ToolChain::constructTool(Action::ActionClass AC) const {
+  switch (AC) {
+  case Action::InputClass:
+  case Action::BindArchClass:
+  case Action::AssembleJobClass:
+  case Action::LinkJobClass:
+  case Action::LipoJobClass:
+  case Action::DsymutilJobClass:
+  case Action::VerifyJobClass:
+    llvm_unreachable("Invalid tool kind.");
+
+  case Action::CompileJobClass:
+  case Action::PrecompileJobClass:
+  case Action::PreprocessJobClass:
+  case Action::AnalyzeJobClass:
+  case Action::MigrateJobClass:
+    return new tools::Clang(*this);
+  }
+}
+
 Tool &ToolChain::SelectTool(const JobAction &JA) const {
   Action::ActionClass Key;
   if (getDriver().ShouldUseClangCompiler(JA))
