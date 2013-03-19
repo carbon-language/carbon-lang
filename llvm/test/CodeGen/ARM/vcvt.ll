@@ -165,17 +165,12 @@ declare <4 x i16> @llvm.arm.neon.vcvtfp2hf(<4 x float>) nounwind readnone
 %T1_5 = type <8 x i32>
 ; CHECK: func_cvt5:
 define void @func_cvt5(%T0_5* %loadaddr, %T1_5* %storeaddr) {
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
+; CHECK: vmovl.s8
+; CHECK: vmovl.s16
+; CHECK: vmovl.s16
   %v0 = load %T0_5* %loadaddr
 ; COST: func_cvt5
-; COST: cost of 24 {{.*}} sext
+; COST: cost of 3 {{.*}} sext
   %r = sext %T0_5 %v0 to %T1_5
   store %T1_5 %r, %T1_5* %storeaddr
   ret void
@@ -186,17 +181,12 @@ define void @func_cvt5(%T0_5* %loadaddr, %T1_5* %storeaddr) {
 %TA1_5 = type <8 x i32>
 ; CHECK: func_cvt1:
 define void @func_cvt1(%TA0_5* %loadaddr, %TA1_5* %storeaddr) {
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
+; CHECK: vmovl.u8
+; CHECK: vmovl.u16
+; CHECK: vmovl.u16
   %v0 = load %TA0_5* %loadaddr
 ; COST: func_cvt1
-; COST: cost of 22 {{.*}} zext
+; COST: cost of 3 {{.*}} zext
   %r = zext %TA0_5 %v0 to %TA1_5
   store %TA1_5 %r, %TA1_5* %storeaddr
   ret void
@@ -228,25 +218,13 @@ define void @func_cvt51(%T0_51* %loadaddr, %T1_51* %storeaddr) {
 %TT1_5 = type <16 x i32>
 ; CHECK: func_cvt52:
 define void @func_cvt52(%TT0_5* %loadaddr, %TT1_5* %storeaddr) {
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
+; CHECK: vmovl.s16
+; CHECK: vmovl.s16
+; CHECK: vmovl.s16
+; CHECK: vmovl.s16
   %v0 = load %TT0_5* %loadaddr
 ; COST: func_cvt52
-; COST: cost of 48 {{.*}} sext
+; COST: cost of 6 {{.*}} sext
   %r = sext %TT0_5 %v0 to %TT1_5
   store %TT1_5 %r, %TT1_5* %storeaddr
   ret void
@@ -257,25 +235,13 @@ define void @func_cvt52(%TT0_5* %loadaddr, %TT1_5* %storeaddr) {
 %TTA1_5 = type <16 x i32>
 ; CHECK: func_cvt12:
 define void @func_cvt12(%TTA0_5* %loadaddr, %TTA1_5* %storeaddr) {
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
-; CHECK: strh
+; CHECK: vmovl.u16
+; CHECK: vmovl.u16
+; CHECK: vmovl.u16
+; CHECK: vmovl.u16
   %v0 = load %TTA0_5* %loadaddr
 ; COST: func_cvt12
-; COST: cost of 44 {{.*}} zext
+; COST: cost of 6 {{.*}} zext
   %r = zext %TTA0_5 %v0 to %TTA1_5
   store %TTA1_5 %r, %TTA1_5* %storeaddr
   ret void
@@ -309,3 +275,56 @@ define void @func_cvt512(%TT0_51* %loadaddr, %TT1_51* %storeaddr) {
   store %TT1_51 %r, %TT1_51* %storeaddr
   ret void
 }
+
+; CHECK: sext_v4i16_v4i64:
+define void @sext_v4i16_v4i64(<4 x i16>* %loadaddr, <4 x i64>* %storeaddr) {
+; CHECK: vmovl.s32
+; CHECK: vmovl.s32
+  %v0 = load <4 x i16>* %loadaddr
+; COST: sext_v4i16_v4i64
+; COST: cost of 3 {{.*}} sext
+  %r = sext <4 x i16> %v0 to <4 x i64>
+  store <4 x i64> %r, <4 x i64>* %storeaddr
+  ret void
+}
+
+; CHECK: zext_v4i16_v4i64:
+define void @zext_v4i16_v4i64(<4 x i16>* %loadaddr, <4 x i64>* %storeaddr) {
+; CHECK: vmovl.u32
+; CHECK: vmovl.u32
+  %v0 = load <4 x i16>* %loadaddr
+; COST: zext_v4i16_v4i64
+; COST: cost of 3 {{.*}} zext
+  %r = zext <4 x i16> %v0 to <4 x i64>
+  store <4 x i64> %r, <4 x i64>* %storeaddr
+  ret void
+}
+
+; CHECK: sext_v8i16_v8i64:
+define void @sext_v8i16_v8i64(<8 x i16>* %loadaddr, <8 x i64>* %storeaddr) {
+; CHECK: vmovl.s32
+; CHECK: vmovl.s32
+; CHECK: vmovl.s32
+; CHECK: vmovl.s32
+  %v0 = load <8 x i16>* %loadaddr
+; COST: sext_v8i16_v8i64
+; COST: cost of 6 {{.*}} sext
+  %r = sext <8 x i16> %v0 to <8 x i64>
+  store <8 x i64> %r, <8 x i64>* %storeaddr
+  ret void
+}
+
+; CHECK: zext_v8i16_v8i64:
+define void @zext_v8i16_v8i64(<8 x i16>* %loadaddr, <8 x i64>* %storeaddr) {
+; CHECK: vmovl.u32
+; CHECK: vmovl.u32
+; CHECK: vmovl.u32
+; CHECK: vmovl.u32
+  %v0 = load <8 x i16>* %loadaddr
+; COST: zext_v8i16_v8i64
+; COST: cost of 6 {{.*}} zext
+  %r = zext <8 x i16> %v0 to <8 x i64>
+  store <8 x i64> %r, <8 x i64>* %storeaddr
+  ret void
+}
+

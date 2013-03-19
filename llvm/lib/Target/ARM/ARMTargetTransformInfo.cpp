@@ -211,11 +211,19 @@ unsigned ARMTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
     { ISD::TRUNCATE,    MVT::v4i32, MVT::v4i64, 0 },
     { ISD::TRUNCATE,    MVT::v4i16, MVT::v4i32, 1 },
 
+    // The number of vmovl instructions for the extension.
+    { ISD::SIGN_EXTEND, MVT::v4i64, MVT::v4i16, 3 },
+    { ISD::ZERO_EXTEND, MVT::v4i64, MVT::v4i16, 3 },
+    { ISD::SIGN_EXTEND, MVT::v8i32, MVT::v8i8, 3 },
+    { ISD::ZERO_EXTEND, MVT::v8i32, MVT::v8i8, 3 },
+    { ISD::SIGN_EXTEND, MVT::v8i64, MVT::v8i8, 7 },
+    { ISD::ZERO_EXTEND, MVT::v8i64, MVT::v8i8, 7 },
+    { ISD::SIGN_EXTEND, MVT::v8i64, MVT::v8i16, 6 },
+    { ISD::ZERO_EXTEND, MVT::v8i64, MVT::v8i16, 6 },
+    { ISD::SIGN_EXTEND, MVT::v16i32, MVT::v16i8, 6 },
+    { ISD::ZERO_EXTEND, MVT::v16i32, MVT::v16i8, 6 },
+
     // Operations that we legalize using load/stores to the stack.
-    { ISD::SIGN_EXTEND, MVT::v16i32, MVT::v16i8, 16*2 + 4*4 },
-    { ISD::ZERO_EXTEND, MVT::v16i32, MVT::v16i8, 16*2 + 4*3 },
-    { ISD::SIGN_EXTEND, MVT::v8i32, MVT::v8i8, 8*2 + 2*4 },
-    { ISD::ZERO_EXTEND, MVT::v8i32, MVT::v8i8, 8*2 + 2*3 },
     { ISD::TRUNCATE,    MVT::v16i8, MVT::v16i32, 4*1 + 16*2 + 2*1 },
     { ISD::TRUNCATE,    MVT::v8i8, MVT::v8i32, 2*1 + 8*2 + 1 },
 

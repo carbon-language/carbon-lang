@@ -152,15 +152,29 @@ define i32 @casts() {
   ; CHECK: cost of 10 {{.*}} uitofp
   %r69 = uitofp i64 undef to double
 
-  ; Vector cast cost of instructions lowering the cast to the stack.
-  ; CHECK: cost of 24 {{.*}} sext
+  ; CHECK: cost of 3 {{.*}} sext
   %r70 = sext <8 x i8> undef to <8 x i32>
-  ; CHECK: cost of 48 {{.*}} sext
+  ; CHECK: cost of 6 {{.*}} sext
   %r71 = sext <16 x i8> undef to <16 x i32>
-  ; CHECK: cost of 22 {{.*}} zext
+  ; CHECK: cost of 3 {{.*}} zext
   %r72 = zext <8 x i8> undef to <8 x i32>
-  ; CHECK: cost of 44 {{.*}} zext
+  ; CHECK: cost of 6 {{.*}} zext
   %r73 = zext <16 x i8> undef to <16 x i32>
+
+  ; CHECK: cost of 7 {{.*}} sext
+  %rext_0 = sext <8 x i8> undef to <8 x i64>
+  ; CHECK: cost of 7 {{.*}} zext
+  %rext_1 = zext <8 x i8> undef to <8 x i64>
+  ; CHECK: cost of 6 {{.*}} sext
+  %rext_2 = sext <8 x i16> undef to <8 x i64>
+  ; CHECK: cost of 6 {{.*}} zext
+  %rext_3 = zext <8 x i16> undef to <8 x i64>
+  ; CHECK: cost of 3 {{.*}} sext
+  %rext_4 = sext <4 x i16> undef to <4 x i64>
+  ; CHECK: cost of 3 {{.*}} zext
+  %rext_5 = zext <4 x i16> undef to <4 x i64>
+
+  ; Vector cast cost of instructions lowering the cast to the stack.
   ; CHECK: cost of 19 {{.*}} trunc
   %r74 = trunc <8 x i32> undef to <8 x i8>
   ; CHECK: cost of 38 {{.*}} trunc
