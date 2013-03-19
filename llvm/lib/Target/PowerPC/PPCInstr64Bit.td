@@ -30,7 +30,7 @@ def symbolLo64 : Operand<i64> {
   let EncoderMethod = "getLO16Encoding";
 }
 def tocentry : Operand<iPTR> {
-  let MIOperandInfo = (ops i32imm:$imm);
+  let MIOperandInfo = (ops i64imm:$imm);
 }
 def memrs : Operand<iPTR> {   // memri where the immediate is a symbolLo64
   let PrintMethod = "printMemRegImm";
