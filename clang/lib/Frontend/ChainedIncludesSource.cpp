@@ -47,6 +47,7 @@ static ASTReader *createASTReader(CompilerInstance &CI,
     return Reader.take();
 
   case ASTReader::Failure:
+  case ASTReader::Missing:
   case ASTReader::OutOfDate:
   case ASTReader::VersionMismatch:
   case ASTReader::ConfigurationMismatch:

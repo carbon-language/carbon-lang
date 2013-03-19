@@ -1616,8 +1616,10 @@ InputFile ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
          || StoredTime != File->getModificationTime()
 #endif
          )) {
-      if (Complain)
+      if (Complain) {
         Error(diag::err_fe_pch_file_modified, Filename, F.FileName);
+      }
+
       IsOutOfDate = true;
     }
 
@@ -1774,6 +1776,8 @@ ASTReader::ReadControlBlock(ModuleFile &F,
         // location info are setup.
         SourceLocation ImportLoc =
             SourceLocation::getFromRawEncoding(Record[Idx++]);
+        off_t StoredSize = (off_t)Record[Idx++];
+        time_t StoredModTime = (time_t)Record[Idx++];
         unsigned Length = Record[Idx++];
         SmallString<128> ImportedFile(Record.begin() + Idx,
                                       Record.begin() + Idx + Length);
@@ -1781,9 +1785,11 @@ ASTReader::ReadControlBlock(ModuleFile &F,
 
         // Load the AST file.
         switch(ReadASTCore(ImportedFile, ImportedKind, ImportLoc, &F, Loaded,
+                           StoredSize, StoredModTime,
                            ClientLoadCapabilities)) {
         case Failure: return Failure;
           // If we have to ignore the dependency, we'll have to ignore this too.
+        case Missing: return Missing;
         case OutOfDate: return OutOfDate;
         case VersionMismatch: return VersionMismatch;
         case ConfigurationMismatch: return ConfigurationMismatch;
@@ -2774,7 +2780,7 @@ bool ASTReader::loadGlobalIndex() {
   StringRef ModuleCachePath
     = getPreprocessor().getHeaderSearchInfo().getModuleCachePath();
   std::pair<GlobalModuleIndex *, GlobalModuleIndex::ErrorCode> Result
-    = GlobalModuleIndex::readIndex(FileMgr, ModuleCachePath);
+    = GlobalModuleIndex::readIndex(ModuleCachePath);
   if (!Result.first)
     return true;
 
@@ -2799,13 +2805,18 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   SmallVector<ImportedModule, 4> Loaded;
   switch(ASTReadResult ReadResult = ReadASTCore(FileName, Type, ImportLoc,
                                                 /*ImportedBy=*/0, Loaded,
+                                                0, 0,
                                                 ClientLoadCapabilities)) {
   case Failure:
+  case Missing:
   case OutOfDate:
   case VersionMismatch:
   case ConfigurationMismatch:
   case HadErrors:
-    ModuleMgr.removeModules(ModuleMgr.begin() + NumModules, ModuleMgr.end());
+    ModuleMgr.removeModules(ModuleMgr.begin() + NumModules, ModuleMgr.end(),
+                            Context.getLangOpts().Modules
+                              ? &PP.getHeaderSearchInfo().getModuleMap()
+                              : 0);
 
     // If we find that any modules are unusable, the global index is going
     // to be out-of-date. Just remove it.
@@ -2923,26 +2934,53 @@ ASTReader::ReadASTCore(StringRef FileName,
                        SourceLocation ImportLoc,
                        ModuleFile *ImportedBy,
                        SmallVectorImpl<ImportedModule> &Loaded,
+                       off_t ExpectedSize, time_t ExpectedModTime,
                        unsigned ClientLoadCapabilities) {
   ModuleFile *M;
-  bool NewModule;
   std::string ErrorStr;
-  llvm::tie(M, NewModule) = ModuleMgr.addModule(FileName, Type, ImportLoc,
-                                                ImportedBy, CurrentGeneration,
-                                                ErrorStr);
+  ModuleManager::AddModuleResult AddResult
+    = ModuleMgr.addModule(FileName, Type, ImportLoc, ImportedBy,
+                          CurrentGeneration, ExpectedSize, ExpectedModTime,
+                          M, ErrorStr);
 
-  if (!M) {
-    // We couldn't load the module.
-    std::string Msg = "Unable to load module \"" + FileName.str() + "\": "
-      + ErrorStr;
-    Error(Msg);
+  switch (AddResult) {
+  case ModuleManager::AlreadyLoaded:
+    return Success;
+
+  case ModuleManager::NewlyLoaded:
+    // Load module file below.
+    break;
+
+  case ModuleManager::Missing:
+    // The module file was missing; if the client handle handle, that, return
+    // it.
+    if (ClientLoadCapabilities & ARR_Missing)
+      return Missing;
+
+    // Otherwise, return an error.
+    {
+      std::string Msg = "Unable to load module \"" + FileName.str() + "\": "
+                      + ErrorStr;
+      Error(Msg);
+    }
+    return Failure;
+
+  case ModuleManager::OutOfDate:
+    // We couldn't load the module file because it is out-of-date. If the
+    // client can handle out-of-date, return it.
+    if (ClientLoadCapabilities & ARR_OutOfDate)
+      return OutOfDate;
+
+    // Otherwise, return an error.
+    {
+      std::string Msg = "Unable to load module \"" + FileName.str() + "\": "
+                      + ErrorStr;
+      Error(Msg);
+    }
     return Failure;
   }
 
-  if (!NewModule) {
-    // We've already loaded this module.
-    return Success;
-  }
+  assert(M && "Missing module file");
 
   // FIXME: This seems rather a hack. Should CurrentDir be part of the
   // module?
@@ -2997,6 +3035,7 @@ ASTReader::ReadASTCore(StringRef FileName,
         break;
 
       case Failure: return Failure;
+      case Missing: return Missing;
       case OutOfDate: return OutOfDate;
       case VersionMismatch: return VersionMismatch;
       case ConfigurationMismatch: return ConfigurationMismatch;
@@ -3467,18 +3506,22 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         return true;
       }
 
-      if (const FileEntry *CurFile = CurrentModule->getASTFile()) {
-        if (CurFile != F.File) {
-          if (!Diags.isDiagnosticInFlight()) {
-            Diag(diag::err_module_file_conflict)
-              << CurrentModule->getTopLevelModuleName()
-              << CurFile->getName()
-              << F.File->getName();
+      if (!ParentModule) {
+        if (const FileEntry *CurFile = CurrentModule->getASTFile()) {
+          if (CurFile != F.File) {
+            if (!Diags.isDiagnosticInFlight()) {
+              Diag(diag::err_module_file_conflict)
+                << CurrentModule->getTopLevelModuleName()
+                << CurFile->getName()
+                << F.File->getName();
+            }
+            return true;
           }
-          return true;
         }
+
+        CurrentModule->setASTFile(F.File);
       }
-      CurrentModule->setASTFile(F.File);
+      
       CurrentModule->IsFromModuleFile = true;
       CurrentModule->IsSystem = IsSystem || CurrentModule->IsSystem;
       CurrentModule->InferSubmodules = InferSubmodules;

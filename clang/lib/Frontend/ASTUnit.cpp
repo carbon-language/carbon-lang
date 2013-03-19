@@ -801,6 +801,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
     break;
 
   case ASTReader::Failure:
+  case ASTReader::Missing:
   case ASTReader::OutOfDate:
   case ASTReader::VersionMismatch:
   case ASTReader::ConfigurationMismatch:

@@ -48,6 +48,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <sys/stat.h>
 
 namespace llvm {
   class MemoryBuffer;
@@ -236,6 +237,8 @@ public:
     Success,
     /// \brief The AST file itself appears corrupted.
     Failure,
+    /// \brief The AST file was missing.
+    Missing,
     /// \brief The AST file is out-of-date relative to its input files,
     /// and needs to be regenerated.
     OutOfDate,
@@ -949,6 +952,7 @@ private:
   ASTReadResult ReadASTCore(StringRef FileName, ModuleKind Type,
                             SourceLocation ImportLoc, ModuleFile *ImportedBy,
                             SmallVectorImpl<ImportedModule> &Loaded,
+                            off_t ExpectedSize, time_t ExpectedModTime,
                             unsigned ClientLoadCapabilities);
   ASTReadResult ReadControlBlock(ModuleFile &F,
                                  SmallVectorImpl<ImportedModule> &Loaded,
@@ -1146,15 +1150,18 @@ public:
     /// \brief The client can't handle any AST loading failures.
     ARR_None = 0,
     /// \brief The client can handle an AST file that cannot load because it
+    /// is missing.
+    ARR_Missing = 0x1,
+    /// \brief The client can handle an AST file that cannot load because it
     /// is out-of-date relative to its input files.
-    ARR_OutOfDate = 0x1,
+    ARR_OutOfDate = 0x2,
     /// \brief The client can handle an AST file that cannot load because it
     /// was built with a different version of Clang.
-    ARR_VersionMismatch = 0x2,
+    ARR_VersionMismatch = 0x4,
     /// \brief The client can handle an AST file that cannot load because it's
     /// compiled configuration doesn't match that of the context it was
     /// loaded into.
-    ARR_ConfigurationMismatch = 0x4
+    ARR_ConfigurationMismatch = 0x8
   };
 
   /// \brief Load the AST file designated by the given file name.

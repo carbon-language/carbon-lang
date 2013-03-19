@@ -1,2 +1,3 @@
-#include "A.h"
+@import A;
+
 int getB();

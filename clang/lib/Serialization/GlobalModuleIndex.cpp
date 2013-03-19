@@ -57,6 +57,8 @@ static const char * const IndexFileName = "modules.idx";
 /// \brief The global index file version.
 static const unsigned CurrentVersion = 1;
 
+ModuleFileNameResolver::~ModuleFileNameResolver() { }
+
 //----------------------------------------------------------------------------//
 // Global module index reader.
 //----------------------------------------------------------------------------//
@@ -115,29 +117,16 @@ public:
 
 typedef OnDiskChainedHashTable<IdentifierIndexReaderTrait> IdentifierIndexTable;
 
-/// \brief Module information as it was loaded from the index file.
-struct LoadedModuleInfo {
-  const FileEntry *File;
-  SmallVector<unsigned, 2> Dependencies;
-  SmallVector<unsigned, 2> ImportedBy;
-};
-
 }
 
-GlobalModuleIndex::GlobalModuleIndex(FileManager &FileMgr,
-                                     llvm::MemoryBuffer *Buffer,
+GlobalModuleIndex::GlobalModuleIndex(llvm::MemoryBuffer *Buffer,
                                      llvm::BitstreamCursor Cursor)
-  : Buffer(Buffer), IdentifierIndex(),
+  : Buffer(Buffer), Resolver(), IdentifierIndex(),
     NumIdentifierLookups(), NumIdentifierLookupHits()
 {
-  typedef llvm::DenseMap<unsigned, LoadedModuleInfo> LoadedModulesMap;
-  LoadedModulesMap LoadedModules;
-  
   // Read the global index.
-  unsigned LargestID = 0;
   bool InGlobalIndexBlock = false;
   bool Done = false;
-  bool AnyOutOfDate = false;
   while (!Done) {
     llvm::BitstreamEntry Entry = Cursor.advance();
 
@@ -185,41 +174,33 @@ GlobalModuleIndex::GlobalModuleIndex(FileManager &FileMgr,
     case MODULE: {
       unsigned Idx = 0;
       unsigned ID = Record[Idx++];
-      if (ID > LargestID)
-        LargestID = ID;
-      
-      off_t Size = Record[Idx++];
-      time_t ModTime = Record[Idx++];
+
+      // Make room for this module's information.
+      if (ID == Modules.size())
+        Modules.push_back(ModuleInfo());
+      else
+        Modules.resize(ID + 1);
+
+      // Size/modification time for this module file at the time the
+      // global index was built.
+      Modules[ID].Size = Record[Idx++];
+      Modules[ID].ModTime = Record[Idx++];
 
       // File name.
       unsigned NameLen = Record[Idx++];
-      llvm::SmallString<64> FileName(Record.begin() + Idx,
-                                     Record.begin() + Idx + NameLen);
+      Modules[ID].FileName.assign(Record.begin() + Idx,
+                                  Record.begin() + Idx + NameLen);
       Idx += NameLen;
 
       // Dependencies
       unsigned NumDeps = Record[Idx++];
-      llvm::SmallVector<unsigned, 2>
-        Dependencies(Record.begin() + Idx, Record.begin() + Idx + NumDeps);
+      Modules[ID].Dependencies.insert(Modules[ID].Dependencies.end(),
+                                      Record.begin() + Idx,
+                                      Record.begin() + Idx + NumDeps);
+      Idx += NumDeps;
 
-      // Find the file. If we can't find it, ignore it.
-      const FileEntry *File = FileMgr.getFile(FileName, /*openFile=*/false,
-                                              /*cacheFailure=*/false);
-      if (!File) {
-        AnyOutOfDate = true;
-        break;
-      }
-
-      // If the module file is newer than the index, ignore it.
-      if (File->getSize() != Size || File->getModificationTime() != ModTime) {
-        AnyOutOfDate = true;
-        break;
-      }
-
-      // Record this module. The dependencies will be resolved later.
-      LoadedModuleInfo &Info = LoadedModules[ID];
-      Info.File = File;
-      Info.Dependencies.swap(Dependencies);
+      // Make sure we're at the end of the record.
+      assert(Idx == Record.size() && "More module info?");
       break;
     }
 
@@ -235,74 +216,11 @@ GlobalModuleIndex::GlobalModuleIndex(FileManager &FileMgr,
     }
   }
 
-  // If there are any modules that have gone out-of-date, prune out any modules
-  // that depend on them.
-  if (AnyOutOfDate) {
-    // First, build back links in the module dependency graph.
-    SmallVector<unsigned, 4> Stack;
-    for (LoadedModulesMap::iterator LM = LoadedModules.begin(),
-                                    LMEnd = LoadedModules.end();
-         LM != LMEnd; ++LM) {
-      unsigned ID = LM->first;
-
-      // If this module is out-of-date, push it onto the stack.
-      if (LM->second.File == 0)
-        Stack.push_back(ID);
-
-      for (unsigned I = 0, N = LM->second.Dependencies.size(); I != N; ++I) {
-        unsigned DepID = LM->second.Dependencies[I];
-        LoadedModulesMap::iterator Known = LoadedModules.find(DepID);
-        if (Known == LoadedModules.end() || !Known->second.File) {
-          // The dependency was out-of-date, so mark us as out of date.
-          // This is just an optimization.
-          if (LM->second.File)
-            Stack.push_back(ID);
-
-          LM->second.File = 0;
-          continue;
-        }
-
-        // Record this reverse dependency.
-        Known->second.ImportedBy.push_back(ID);
-      }
-    }
-
-    // Second, walk the back links from out-of-date modules to those modules
-    // that depend on them, making those modules out-of-date as well.
-    while (!Stack.empty()) {
-      unsigned ID = Stack.back();
-      Stack.pop_back();
-
-      LoadedModuleInfo &Info = LoadedModules[ID];
-      for (unsigned I = 0, N = Info.ImportedBy.size(); I != N; ++I) {
-        unsigned FromID = Info.ImportedBy[I];
-        if (LoadedModules[FromID].File) {
-          LoadedModules[FromID].File = 0;
-          Stack.push_back(FromID);
-        }
-      }
-    }
-  }
-
-  // Allocate the vector containing information about all of the modules.
-  Modules.resize(LargestID + 1);
-  for (LoadedModulesMap::iterator LM = LoadedModules.begin(),
-                                  LMEnd = LoadedModules.end();
-       LM != LMEnd; ++LM) {
-    if (!LM->second.File)
-      continue;
-    
-    Modules[LM->first].File = LM->second.File;
-
-    // Resolve dependencies. Drop any we can't resolve due to out-of-date
-    // module files.
-    for (unsigned I = 0, N = LM->second.Dependencies.size(); I != N; ++I) {
-      unsigned DepID = LM->second.Dependencies[I];
-      LoadedModulesMap::iterator Known = LoadedModules.find(DepID);
-      if (Known == LoadedModules.end() || !Known->second.File)
-        continue;
-
-      Modules[LM->first].Dependencies.push_back(Known->second.File);
+  // Compute imported-by relation.
+  for (unsigned ID = 0, IDEnd = Modules.size(); ID != IDEnd; ++ID) {
+    for (unsigned D = 0, DEnd = Modules[ID].Dependencies.size();
+         D != DEnd; ++D) {
+      Modules[Modules[ID].Dependencies[D]].ImportedBy.push_back(ID);
     }
   }
 }
@@ -310,15 +228,14 @@ GlobalModuleIndex::GlobalModuleIndex(FileManager &FileMgr,
 GlobalModuleIndex::~GlobalModuleIndex() { }
 
 std::pair<GlobalModuleIndex *, GlobalModuleIndex::ErrorCode>
-GlobalModuleIndex::readIndex(FileManager &FileMgr, StringRef Path) {
+GlobalModuleIndex::readIndex(StringRef Path) {
   // Load the index file, if it's there.
   llvm::SmallString<128> IndexPath;
   IndexPath += Path;
   llvm::sys::path::append(IndexPath, IndexFileName);
 
-  llvm::OwningPtr<llvm::MemoryBuffer> Buffer(
-                                        FileMgr.getBufferForFile(IndexPath));
-  if (!Buffer)
+  llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
+  if (llvm::MemoryBuffer::getFile(IndexPath, Buffer) != llvm::errc::success)
     return std::make_pair((GlobalModuleIndex *)0, EC_NotFound);
 
   /// \brief The bitstream reader from which we'll read the AST file.
@@ -336,38 +253,41 @@ GlobalModuleIndex::readIndex(FileManager &FileMgr, StringRef Path) {
     return std::make_pair((GlobalModuleIndex *)0, EC_IOError);
   }
   
-  return std::make_pair(new GlobalModuleIndex(FileMgr, Buffer.take(), Cursor),
-                        EC_None);
+  return std::make_pair(new GlobalModuleIndex(Buffer.take(), Cursor), EC_None);
 }
 
-void GlobalModuleIndex::getKnownModules(
-       SmallVectorImpl<const FileEntry *> &ModuleFiles) {
+void
+GlobalModuleIndex::getKnownModules(SmallVectorImpl<ModuleFile *> &ModuleFiles) {
   ModuleFiles.clear();
   for (unsigned I = 0, N = Modules.size(); I != N; ++I) {
-    if (Modules[I].File)
-      ModuleFiles.push_back(Modules[I].File);
+    if (ModuleFile *File = resolveModuleFile(I))
+      ModuleFiles.push_back(File);
   }
 }
 
 void GlobalModuleIndex::getModuleDependencies(
-       const clang::FileEntry *ModuleFile,
-       SmallVectorImpl<const clang::FileEntry *> &Dependencies) {
+       ModuleFile *File,
+       SmallVectorImpl<ModuleFile *> &Dependencies) {
   // If the file -> index mapping is empty, populate it now.
   if (ModulesByFile.empty()) {
     for (unsigned I = 0, N = Modules.size(); I != N; ++I) {
-      if (Modules[I].File)
-        ModulesByFile[Modules[I].File] = I;
+      resolveModuleFile(I);
     }
   }
 
   // Look for information about this module file.
-  llvm::DenseMap<const FileEntry *, unsigned>::iterator Known
-    = ModulesByFile.find(ModuleFile);
+  llvm::DenseMap<ModuleFile *, unsigned>::iterator Known
+    = ModulesByFile.find(File);
   if (Known == ModulesByFile.end())
     return;
 
   // Record dependencies.
-  Dependencies = Modules[Known->second].Dependencies;
+  Dependencies.clear();
+  ArrayRef<unsigned> StoredDependencies = Modules[Known->second].Dependencies;
+  for (unsigned I = 0, N = StoredDependencies.size(); I != N; ++I) {
+    if (ModuleFile *MF = resolveModuleFile(I))
+      Dependencies.push_back(MF);
+  }
 }
 
 bool GlobalModuleIndex::lookupIdentifier(StringRef Name, HitSet &Hits) {
@@ -388,15 +308,60 @@ bool GlobalModuleIndex::lookupIdentifier(StringRef Name, HitSet &Hits) {
 
   SmallVector<unsigned, 2> ModuleIDs = *Known;
   for (unsigned I = 0, N = ModuleIDs.size(); I != N; ++I) {
-    unsigned ID = ModuleIDs[I];
-    if (ID >= Modules.size() || !Modules[ID].File)
-      continue;
-
-    Hits.insert(Modules[ID].File);
+    if (ModuleFile *File = resolveModuleFile(ModuleIDs[I]))
+      Hits.insert(File);
   }
 
   ++NumIdentifierLookupHits;
   return true;
+}
+
+ModuleFile *GlobalModuleIndex::resolveModuleFile(unsigned ID) {
+  assert(ID < Modules.size() && "Out-of-bounds module index");
+
+  // If we already have a module file, return it.
+  if (Modules[ID].File)
+    return Modules[ID].File;
+
+  // If we don't have a file name, or if there is no resolver, we can't
+  // resolve this.
+  if (Modules[ID].FileName.empty() || !Resolver)
+    return 0;
+
+  // Try to resolve this module file.
+  ModuleFile *File;
+  if (Resolver->resolveModuleFileName(Modules[ID].FileName, Modules[ID].Size,
+                                      Modules[ID].ModTime, File)) {
+    // Clear out the module files for anything that depends on this module.
+    llvm::SmallVector<unsigned, 8> Stack;
+
+    Stack.push_back(ID);
+    while (!Stack.empty()) {
+      unsigned Victim = Stack.back();
+      Stack.pop_back();
+
+      // Mark this file as ignored.
+      Modules[Victim].File = 0;
+      Modules[Victim].FileName.clear();
+
+      // Push any not-yet-ignored imported modules onto the stack.
+      for (unsigned I = 0, N = Modules[Victim].ImportedBy.size(); I != N; ++I) {
+        unsigned NextVictim = Modules[Victim].ImportedBy[I];
+        if (!Modules[NextVictim].FileName.empty())
+          Stack.push_back(NextVictim);
+      }
+    }
+
+    return 0;
+  }
+
+  // If we have a module file, record it.
+  if (File) {
+    Modules[ID].File = File;
+    ModulesByFile[File] = ID;
+  }
+
+  return File;
 }
 
 void GlobalModuleIndex::printStats() {
@@ -629,6 +594,10 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
         // Skip the import location
         ++Idx;
 
+        // Load stored size/modification time. 
+        off_t StoredSize = (off_t)Record[Idx++];
+        time_t StoredModTime = (time_t)Record[Idx++];
+
         // Retrieve the imported file name.
         unsigned Length = Record[Idx++];
         SmallString<128> ImportedFile(Record.begin() + Idx,
@@ -639,7 +608,9 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
         const FileEntry *DependsOnFile
           = FileMgr.getFile(ImportedFile, /*openFile=*/false,
                             /*cacheFailure=*/false);
-        if (!DependsOnFile)
+        if (!DependsOnFile ||
+            (StoredSize != DependsOnFile->getSize()) ||
+            (StoredModTime != DependsOnFile->getModificationTime()))
           return true;
 
         // Record the dependency.
