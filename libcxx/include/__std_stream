@@ -41,7 +41,7 @@ public:
     typedef typename traits_type::off_type   off_type;
     typedef typename traits_type::state_type state_type;
 
-    explicit __stdinbuf(FILE* __fp);
+    __stdinbuf(FILE* __fp, state_type* __st);
 
 protected:
     virtual int_type underflow();
@@ -53,7 +53,7 @@ private:
 
     FILE* __file_;
     const codecvt<char_type, char, state_type>* __cv_;
-    state_type __st_;
+    state_type* __st_;
     int __encoding_;
     bool __always_noconv_;
 
@@ -64,9 +64,9 @@ private:
 };
 
 template <class _CharT>
-__stdinbuf<_CharT>::__stdinbuf(FILE* __fp)
+__stdinbuf<_CharT>::__stdinbuf(FILE* __fp, state_type* __st)
     : __file_(__fp),
-      __st_()
+      __st_(__st)
 {
     imbue(this->getloc());
 }
@@ -119,15 +119,15 @@ __stdinbuf<_CharT>::__getchar(bool __consume)
         codecvt_base::result __r;
         do
         {
-            state_type __sv_st = __st_;
-            __r = __cv_->in(__st_, __extbuf, __extbuf + __nread, __enxt,
+            state_type __sv_st = *__st_;
+            __r = __cv_->in(*__st_, __extbuf, __extbuf + __nread, __enxt,
                                    &__1buf, &__1buf + 1, __inxt);
             switch (__r)
             {
             case _VSTD::codecvt_base::ok:
                 break;
             case codecvt_base::partial:
-                __st_ = __sv_st;
+                *__st_ = __sv_st;
                 if (__nread == sizeof(__extbuf))
                     return traits_type::eof();
                 {
@@ -167,7 +167,7 @@ __stdinbuf<_CharT>::pbackfail(int_type __c)
     char* __enxt;
     const char_type __ci = traits_type::to_char_type(__c);
     const char_type* __inxt;
-    switch (__cv_->out(__st_, &__ci, &__ci + 1, __inxt,
+    switch (__cv_->out(*__st_, &__ci, &__ci + 1, __inxt,
                               __extbuf, __extbuf + sizeof(__extbuf), __enxt))
     {
     case _VSTD::codecvt_base::ok:
@@ -200,7 +200,7 @@ public:
     typedef typename traits_type::off_type   off_type;
     typedef typename traits_type::state_type state_type;
 
-    explicit __stdoutbuf(FILE* __fp);
+    __stdoutbuf(FILE* __fp, state_type* __st);
 
 protected:
     virtual int_type overflow (int_type __c = traits_type::eof());
@@ -210,7 +210,7 @@ protected:
 private:
     FILE* __file_;
     const codecvt<char_type, char, state_type>* __cv_;
-    state_type __st_;
+    state_type* __st_;
     bool __always_noconv_;
 
     __stdoutbuf(const __stdoutbuf&);
@@ -218,10 +218,10 @@ private:
 };
 
 template <class _CharT>
-__stdoutbuf<_CharT>::__stdoutbuf(FILE* __fp)
+__stdoutbuf<_CharT>::__stdoutbuf(FILE* __fp, state_type* __st)
     : __file_(__fp),
       __cv_(&use_facet<codecvt<char_type, char, state_type> >(this->getloc())),
-      __st_(),
+      __st_(__st),
       __always_noconv_(__cv_->always_noconv())
 {
 }
@@ -249,7 +249,7 @@ __stdoutbuf<_CharT>::overflow(int_type __c)
             do
             {
                 const char_type* __e;
-                __r = __cv_->out(__st_, this->pbase(), this->pptr(), __e,
+                __r = __cv_->out(*__st_, this->pbase(), this->pptr(), __e,
                                         __extbuf,
                                         __extbuf + sizeof(__extbuf),
                                         __extbe);
@@ -289,7 +289,7 @@ __stdoutbuf<_CharT>::sync()
     do
     {
         char* __extbe;
-        __r = __cv_->unshift(__st_, __extbuf,
+        __r = __cv_->unshift(*__st_, __extbuf,
                                     __extbuf + sizeof(__extbuf),
                                     __extbe);
         size_t __nmemb = static_cast<size_t>(__extbe - __extbuf);
