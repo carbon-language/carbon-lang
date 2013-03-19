@@ -142,6 +142,12 @@ ModulePass *llvm::createGCOVProfilerPass(const GCOVOptions &Options) {
   return new GCOVProfiler(Options);
 }
 
+static std::string getFunctionName(DISubprogram SP) {
+  if (!SP.getLinkageName().empty())
+    return SP.getLinkageName();
+  return SP.getName();
+}
+
 namespace {
   class GCOVRecord {
    protected:
@@ -290,7 +296,7 @@ namespace {
       ReturnBlock = new GCOVBlock(i++, os);
 
       writeBytes(FunctionTag, 4);
-      uint32_t BlockLen = 1 + 1 + 1 + lengthOfGCOVString(SP.getName()) +
+      uint32_t BlockLen = 1 + 1 + 1 + lengthOfGCOVString(getFunctionName(SP)) +
           1 + lengthOfGCOVString(SP.getFilename()) + 1;
       if (UseCfgChecksum)
         ++BlockLen;
@@ -299,7 +305,7 @@ namespace {
       write(0);  // lineno checksum
       if (UseCfgChecksum)
         write(0);  // cfg checksum
-      writeGCOVString(SP.getName());
+      writeGCOVString(getFunctionName(SP));
       writeGCOVString(SP.getFilename());
       write(SP.getLineNumber());
     }
@@ -724,12 +730,12 @@ Function *GCOVProfiler::insertCounterWriteout(
                           Builder.CreateGlobalStringPtr(ReversedVersion));
       for (unsigned j = 0, e = CountersBySP.size(); j != e; ++j) {
         DISubprogram SP(CountersBySP[j].second);
-        Builder.CreateCall3(EmitFunction,
-                            Builder.getInt32(j),
-                            Options.FunctionNamesInData ?
-                              Builder.CreateGlobalStringPtr(SP.getName()) :
-                              Constant::getNullValue(Builder.getInt8PtrTy()),
-                            Builder.getInt8(Options.UseCfgChecksum));
+        Builder.CreateCall3(
+            EmitFunction, Builder.getInt32(j),
+            Options.FunctionNamesInData ?
+              Builder.CreateGlobalStringPtr(getFunctionName(SP)) :
+              Constant::getNullValue(Builder.getInt8PtrTy()),
+            Builder.getInt8(Options.UseCfgChecksum));
 
         GlobalVariable *GV = CountersBySP[j].first;
         unsigned Arcs =
