@@ -708,7 +708,7 @@ uptr GetTlsSize() {
 
 void AdjustStackSizeLinux(void *attr_, int verbosity) {
   pthread_attr_t *attr = (pthread_attr_t *)attr_;
-  uintptr_t stackaddr = 0;
+  uptr stackaddr = 0;
   size_t stacksize = 0;
   pthread_attr_getstack(attr, (void**)&stackaddr, &stacksize);
   // GLibC will return (0 - stacksize) as the stack address in the case when
