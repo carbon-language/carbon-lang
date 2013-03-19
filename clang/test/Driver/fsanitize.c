@@ -16,7 +16,7 @@
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=address-full %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-ASAN-FULL
 // CHECK-ASAN-FULL: "-fsanitize={{((address|init-order|use-after-return|use-after-scope),?){4}"}}
 
-// RUN: %clang -target x86_64-linux-gnu -fsanitize=address %s -### 2>&1 |  FileCheck %s --check-prefix=CHECK-ASAN-IMPLIED-INIT-ORDER
+// RUN: %clang -target x86_64-linux-gnu -fno-sanitize=init-order -fsanitize=address %s -### 2>&1 |  FileCheck %s --check-prefix=CHECK-ASAN-IMPLIED-INIT-ORDER
 // CHECK-ASAN-IMPLIED-INIT-ORDER: "-fsanitize={{((address|init-order),?){2}"}}
 
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=address -fno-sanitize=init-order %s -### 2>&1 |  FileCheck %s --check-prefix=CHECK-ASAN-NO-IMPLIED-INIT-ORDER

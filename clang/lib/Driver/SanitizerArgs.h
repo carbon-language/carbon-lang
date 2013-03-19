@@ -90,14 +90,20 @@ class SanitizerArgs {
 
  private:
   /// Parse a single value from a -fsanitize= or -fno-sanitize= value list.
-  /// Returns a member of the \c SanitizeKind enumeration, or \c 0 if \p Value
-  /// is not known.
+  /// Returns OR of members of the \c SanitizeKind enumeration, or \c 0
+  /// if \p Value is not known.
   static unsigned parse(const char *Value) {
-    return llvm::StringSwitch<SanitizeKind>(Value)
+    unsigned ParsedKind = llvm::StringSwitch<SanitizeKind>(Value)
 #define SANITIZER(NAME, ID) .Case(NAME, ID)
 #define SANITIZER_GROUP(NAME, ID, ALIAS) .Case(NAME, ID)
 #include "clang/Basic/Sanitizers.def"
       .Default(SanitizeKind());
+    // Assume -fsanitize=address implies -fsanitize=init-order.
+    // FIXME: This should be either specified in Sanitizers.def, or go away when
+    // we get rid of "-fsanitize=init-order" flag at all.
+    if (ParsedKind & Address)
+      ParsedKind |= InitOrder;
+    return ParsedKind;
   }
 
   /// Parse a -fsanitize= or -fno-sanitize= argument's values, diagnosing any

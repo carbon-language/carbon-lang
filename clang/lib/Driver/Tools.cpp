@@ -1475,8 +1475,6 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args)
       AsanZeroBaseShadow(false) {
   unsigned AllKinds = 0;  // All kinds of sanitizers that were turned on
                           // at least once (possibly, disabled further).
-  unsigned AllRemovedKinds = 0;  // All kinds of sanitizers that were explicitly
-                                 // removed at least once.
   for (ArgList::const_iterator I = Args.begin(), E = Args.end(); I != E; ++I) {
     unsigned Add, Remove;
     if (!parse(D, Args, *I, Add, Remove, true))
@@ -1485,12 +1483,6 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args)
     Kind |= Add;
     Kind &= ~Remove;
     AllKinds |= Add;
-    AllRemovedKinds |= Remove;
-  }
-  // Assume -fsanitize=address implies -fsanitize=init-order, if the latter is
-  // not disabled explicitly.
-  if ((Kind & Address) != 0 && (AllRemovedKinds & InitOrder) == 0) {
-    Kind |= InitOrder;
   }
 
   UbsanTrapOnError =
