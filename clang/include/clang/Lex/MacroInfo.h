@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines the MacroInfo interface.
-//
+///
+/// \file
+/// \brief Defines the clang::MacroInfo and clang::MacroDirective classes.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_MACROINFO_H
@@ -23,20 +24,26 @@ namespace clang {
   class Preprocessor;
 
 /// \brief Encapsulates the data about a macro definition (e.g. its tokens).
+///
 /// There's an instance of this class for every #define.
 class MacroInfo {
   //===--------------------------------------------------------------------===//
   // State set when the macro is defined.
 
-  /// Location - This is the place the macro is defined.
+  /// \brief The location the macro is defined.
   SourceLocation Location;
-  /// EndLocation - The location of the last token in the macro.
+  /// \brief The location of the last token in the macro.
   SourceLocation EndLocation;
 
-  /// Arguments - The list of arguments for a function-like macro.  This can be
-  /// empty, for, e.g. "#define X()".  In a C99-style variadic macro, this
+  /// \brief The list of arguments for a function-like macro.
+  ///
+  /// ArgumentList points to the first of NumArguments pointers.
+  ///
+  /// This can be empty, for, e.g. "#define X()".  In a C99-style variadic macro, this
   /// includes the \c __VA_ARGS__ identifier on the list.
   IdentifierInfo **ArgumentList;
+
+  /// \see ArgumentList
   unsigned NumArguments;
   
   /// \brief This is the list of tokens that the macro is defined to.
@@ -46,22 +53,27 @@ class MacroInfo {
   mutable unsigned DefinitionLength;
   mutable bool IsDefinitionLengthCached : 1;
 
-  /// \brief True if this macro is a function-like macro, false if it
-  /// is an object-like macro.
+  /// \brief True if this macro is function-like, false if it is object-like.
   bool IsFunctionLike : 1;
 
-  /// IsC99Varargs - True if this macro is of the form "#define X(...)" or
-  /// "#define X(Y,Z,...)".  The __VA_ARGS__ token should be replaced with the
-  /// contents of "..." in an invocation.
+  /// \brief True if this macro is of the form "#define X(...)" or
+  /// "#define X(Y,Z,...)".
+  ///
+  /// The __VA_ARGS__ token should be replaced with the contents of "..." in an
+  /// invocation.
   bool IsC99Varargs : 1;
 
-  /// IsGNUVarargs -  True if this macro is of the form "#define X(a...)".  The
-  /// "a" identifier in the replacement list will be replaced with all arguments
+  /// \brief True if this macro is of the form "#define X(a...)".
+  ///
+  /// The "a" identifier in the replacement list will be replaced with all arguments
   /// of the macro starting with the specified one.
   bool IsGNUVarargs : 1;
 
-  /// IsBuiltinMacro - True if this is a builtin macro, such as __LINE__, and if
-  /// it has not yet been redefined or undefined.
+  /// \brief True if this macro requires processing before expansion.
+  ///
+  /// This is the case for builtin macros such as __LINE__, so long as they have
+  /// not been redefined, but not for regular predefined macros from the "<built-in>"
+  /// memory buffer (see Preprocessing::getPredefinesFileID).
   bool IsBuiltinMacro : 1;
 
   /// \brief Whether this macro contains the sequence ", ## __VA_ARGS__"
@@ -71,53 +83,53 @@ private:
   //===--------------------------------------------------------------------===//
   // State that changes as the macro is used.
 
-  /// IsDisabled - True if we have started an expansion of this macro already.
+  /// \brief True if we have started an expansion of this macro already.
+  ///
   /// This disables recursive expansion, which would be quite bad for things
   /// like \#define A A.
   bool IsDisabled : 1;
 
-  /// IsUsed - True if this macro is either defined in the main file and has
-  /// been used, or if it is not defined in the main file.  This is used to
-  /// emit -Wunused-macros diagnostics.
+  /// \brief True if this macro is either defined in the main file and has
+  /// been used, or if it is not defined in the main file.
+  ///
+  /// This is used to emit -Wunused-macros diagnostics.
   bool IsUsed : 1;
 
-  /// AllowRedefinitionsWithoutWarning - True if this macro can be redefined
-  /// without emitting a warning.
+  /// \brief True if this macro can be redefined without emitting a warning.
   bool IsAllowRedefinitionsWithoutWarning : 1;
 
   /// \brief Must warn if the macro is unused at the end of translation unit.
   bool IsWarnIfUnused : 1;
 
-   ~MacroInfo() {
+  ~MacroInfo() {
     assert(ArgumentList == 0 && "Didn't call destroy before dtor!");
   }
 
 public:
   MacroInfo(SourceLocation DefLoc);
   
-  /// FreeArgumentList - Free the argument list of the macro, restoring it to a
-  /// state where it can be reused for other devious purposes.
+  /// \brief Free the argument list of the macro.
+  ///
+  /// This restores this MacroInfo to a state where it can be reused for other
+  /// devious purposes.
   void FreeArgumentList() {
     ArgumentList = 0;
     NumArguments = 0;
   }
 
-  /// Destroy - destroy this MacroInfo object.
+  /// \brief Destroy this MacroInfo object.
   void Destroy() {
     FreeArgumentList();
     this->~MacroInfo();
   }
 
-  /// getDefinitionLoc - Return the location that the macro was defined at.
-  ///
+  /// \brief Return the location that the macro was defined at.
   SourceLocation getDefinitionLoc() const { return Location; }
 
-  /// setDefinitionEndLoc - Set the location of the last token in the macro.
-  ///
+  /// \brief Set the location of the last token in the macro.
   void setDefinitionEndLoc(SourceLocation EndLoc) { EndLocation = EndLoc; }
 
-  /// getDefinitionEndLoc - Return the location of the last token in the macro.
-  ///
+  /// \brief Return the location of the last token in the macro.
   SourceLocation getDefinitionEndLoc() const { return EndLocation; }
 
   /// \brief Get length in characters of the macro definition.
@@ -127,25 +139,24 @@ public:
     return getDefinitionLengthSlow(SM);
   }
 
-  /// isIdenticalTo - Return true if the specified macro definition is equal to
-  /// this macro in spelling, arguments, and whitespace.  This is used to emit
-  /// duplicate definition warnings.  This implements the rules in C99 6.10.3.
+  /// \brief Return true if the specified macro definition is equal to
+  /// this macro in spelling, arguments, and whitespace.
+  ///
+  /// This is used to emit duplicate definition warnings.  This implements the rules
+  /// in C99 6.10.3.
   bool isIdenticalTo(const MacroInfo &Other, Preprocessor &PP) const;
 
-  /// setIsBuiltinMacro - Set or clear the isBuiltinMacro flag.
-  ///
+  /// \brief Set or clear the isBuiltinMacro flag.
   void setIsBuiltinMacro(bool Val = true) {
     IsBuiltinMacro = Val;
   }
 
-  /// setIsUsed - Set the value of the IsUsed flag.
-  ///
+  /// \brief Set the value of the IsUsed flag.
   void setIsUsed(bool Val) {
     IsUsed = Val;
   }
 
-  /// setIsAllowRedefinitionsWithoutWarning - Set the value of the 
-  /// IsAllowRedefinitionsWithoutWarning flag.
+  /// \brief Set the value of the IsAllowRedefinitionsWithoutWarning flag.
   void setIsAllowRedefinitionsWithoutWarning(bool Val) {
     IsAllowRedefinitionsWithoutWarning = Val;
   }
@@ -155,8 +166,8 @@ public:
     IsWarnIfUnused = val;
   }
 
-  /// setArgumentList - Set the specified list of identifiers as the argument
-  /// list for this macro.
+  /// \brief Set the specified list of identifiers as the argument list for
+  /// this macro.
   void setArgumentList(IdentifierInfo* const *List, unsigned NumArgs,
                        llvm::BumpPtrAllocator &PPAllocator) {
     assert(ArgumentList == 0 && NumArguments == 0 &&
@@ -177,7 +188,7 @@ public:
   arg_iterator arg_end() const { return ArgumentList+NumArguments; }
   unsigned getNumArgs() const { return NumArguments; }
 
-  /// getArgumentNum - Return the argument number of the specified identifier,
+  /// \brief Return the argument number of the specified identifier,
   /// or -1 if the identifier is not a formal argument identifier.
   int getArgumentNum(IdentifierInfo *Arg) const {
     for (arg_iterator I = arg_begin(), E = arg_end(); I != E; ++I)
@@ -198,19 +209,22 @@ public:
   bool isGNUVarargs() const { return IsGNUVarargs; }
   bool isVariadic() const { return IsC99Varargs | IsGNUVarargs; }
 
-  /// isBuiltinMacro - Return true if this macro is a builtin macro, such as
-  /// __LINE__, which requires processing before expansion.
+  /// \brief Return true if this macro requires processing before expansion.
+  ///
+  /// This is true only for builtin macro, such as \__LINE__, whose values
+  /// are not given by fixed textual expansions.  Regular predefined macros
+  /// from the "<built-in>" buffer are not reported as builtins by this
+  /// function.
   bool isBuiltinMacro() const { return IsBuiltinMacro; }
 
   bool hasCommaPasting() const { return HasCommaPasting; }
   void setHasCommaPasting() { HasCommaPasting = true; }
 
-  /// isUsed - Return false if this macro is defined in the main file and has
+  /// \brief Return false if this macro is defined in the main file and has
   /// not yet been used.
   bool isUsed() const { return IsUsed; }
 
-  /// isAllowRedefinitionsWithoutWarning - Return true if this macro can be
-  /// redefined without warning.
+  /// \brief Return true if this macro can be redefined without warning.
   bool isAllowRedefinitionsWithoutWarning() const {
     return IsAllowRedefinitionsWithoutWarning;
   }
@@ -220,7 +234,7 @@ public:
     return IsWarnIfUnused;
   }
 
-  /// getNumTokens - Return the number of tokens that this macro expands to.
+  /// \brief Return the number of tokens that this macro expands to.
   ///
   unsigned getNumTokens() const {
     return ReplacementTokens.size();
@@ -236,16 +250,16 @@ public:
   tokens_iterator tokens_end() const { return ReplacementTokens.end(); }
   bool tokens_empty() const { return ReplacementTokens.empty(); }
 
-  /// AddTokenToBody - Add the specified token to the replacement text for the
-  /// macro.
+  /// \brief Add the specified token to the replacement text for the macro.
   void AddTokenToBody(const Token &Tok) {
     assert(!IsDefinitionLengthCached &&
           "Changing replacement tokens after definition length got calculated");
     ReplacementTokens.push_back(Tok);
   }
 
-  /// isEnabled - Return true if this macro is enabled: in other words, that we
-  /// are not currently in an expansion of this macro.
+  /// \brief Return true if this macro is enabled.
+  ///
+  /// In other words, that we are not currently in an expansion of this macro.
   bool isEnabled() const { return !IsDisabled; }
 
   void EnableMacro() {
@@ -302,6 +316,7 @@ class MacroDirective {
   bool IsPublic : 1;
 
   /// \brief Whether the macro definition is currently "hidden".
+  ///
   /// Note that this is transient state that is never serialized to the AST
   /// file.
   bool IsHidden : 1;
