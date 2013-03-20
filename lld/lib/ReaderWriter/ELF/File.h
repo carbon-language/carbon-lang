@@ -150,6 +150,8 @@ public:
     // the contents to the RelocationReferences map.
     llvm::object::section_iterator sit(_objFile->begin_sections());
     llvm::object::section_iterator sie(_objFile->end_sections());
+    // Record the number of relocs to guess at preallocating the buffer.
+    uint64_t totalRelocs = 0;
     for (; sit != sie; sit.increment(EC)) {
       if (EC)
         return;
@@ -194,10 +196,8 @@ public:
         auto rai(_objFile->beginELFRela(section));
         auto rae(_objFile->endELFRela(section));
 
-        auto &Ref = _relocationAddendRefences[sectionName];
-        for (; rai != rae; ++rai) {
-          Ref.push_back(&*rai);
-        }
+        _relocationAddendRefences[sectionName] = make_range(rai, rae);
+        totalRelocs += std::distance(rai, rae);
       }
 
       if (section->sh_type == llvm::ELF::SHT_REL) {
@@ -211,12 +211,11 @@ public:
         auto ri(_objFile->beginELFRel(section));
         auto re(_objFile->endELFRel(section));
 
-        auto &Ref = _relocationReferences[sectionName];
-        for (; ri != re; ++ri) {
-          Ref.push_back(&*ri);
-        }
+        _relocationReferences[sectionName] = make_range(ri, re);
+        totalRelocs += std::distance(ri, re);
       }
     }
+    _references.reserve(totalRelocs);
 
     // Divide the section that contains mergeable strings into tokens
     // TODO
@@ -573,25 +572,25 @@ private:
     auto rri = _relocationReferences.find(sectionName);
     if (rari != _relocationAddendRefences.end())
       for (auto &rai : rari->second) {
-        if (!((rai->r_offset >= symbol->st_value) &&
-              (rai->r_offset < symbol->st_value + content.size())))
+        if (!((rai.r_offset >= symbol->st_value) &&
+              (rai.r_offset < symbol->st_value + content.size())))
           continue;
         auto *ERef = new (_readerStorage)
-            ELFReference<ELFT>(rai, rai->r_offset - symbol->st_value, nullptr);
+            ELFReference<ELFT>(&rai, rai.r_offset - symbol->st_value, nullptr);
         _references.push_back(ERef);
       }
 
     // Add Rel references.
     if (rri != _relocationReferences.end())
       for (auto &ri : rri->second) {
-        if ((ri->r_offset >= symbol->st_value) &&
-            (ri->r_offset < symbol->st_value + content.size())) {
+        if ((ri.r_offset >= symbol->st_value) &&
+            (ri.r_offset < symbol->st_value + content.size())) {
           auto *ERef = new (_readerStorage)
-              ELFReference<ELFT>(ri, ri->r_offset - symbol->st_value, nullptr);
+              ELFReference<ELFT>(&ri, ri.r_offset - symbol->st_value, nullptr);
           // Read the addend from the section contents
           // TODO : We should move the way lld reads relocations totally from
           // ELFObjectFile
-          int32_t addend = *(content.data() + ri->r_offset - symbol->st_value);
+          int32_t addend = *(content.data() + ri.r_offset - symbol->st_value);
           ERef->setAddend(addend);
           _references.push_back(ERef);
         }
@@ -603,6 +602,7 @@ private:
               referenceStart, _references.size(), _references);
   }
 
+  llvm::BumpPtrAllocator _readerStorage;
   std::unique_ptr<llvm::object::ELFObjectFile<ELFT> > _objFile;
   atom_collection_vector<DefinedAtom> _definedAtoms;
   atom_collection_vector<UndefinedAtom> _undefinedAtoms;
@@ -614,14 +614,17 @@ private:
   /// relocations will also have a section named ".rel.text" or ".rela.text"
   /// which will hold the entries. -- .rel or .rela is prepended to create
   /// the SHT_REL(A) section name.
-  std::unordered_map<StringRef,
-                     std::vector<const Elf_Rela *> > _relocationAddendRefences;
+  std::unordered_map<
+      StringRef,
+      range<typename llvm::object::ELFObjectFile<ELFT>::Elf_Rela_Iter>>
+    _relocationAddendRefences;
   MergedSectionMapT _mergedSectionMap;
-  std::unordered_map<StringRef,
-                     std::vector<const Elf_Rel *> > _relocationReferences;
+  std::unordered_map<
+      StringRef,
+      range<typename llvm::object::ELFObjectFile<ELFT>::Elf_Rel_Iter>>
+    _relocationReferences;
   std::vector<ELFReference<ELFT> *> _references;
   llvm::DenseMap<const Elf_Sym *, Atom *> _symbolToAtomMapping;
-  llvm::BumpPtrAllocator _readerStorage;
   const ELFTargetInfo &_elfTargetInfo;
   MergeAtomsT _mergeAtoms;
 };
