@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements an analysis that determines, for a given memory
-// operation, what preceding memory operations it depends on.  It builds on 
+// operation, what preceding memory operations it depends on.  It builds on
 // alias analysis information, and tries to provide a lazy, caching interface to
 // a common kind of alias information query.
 //
@@ -52,7 +52,7 @@ STATISTIC(NumCacheCompleteNonLocalPtr,
 static const int BlockScanLimit = 500;
 
 char MemoryDependenceAnalysis::ID = 0;
-  
+
 // Register this pass...
 INITIALIZE_PASS_BEGIN(MemoryDependenceAnalysis, "memdep",
                 "Memory Dependence Analysis", false, true)
@@ -99,7 +99,7 @@ bool MemoryDependenceAnalysis::runOnFunction(Function &) {
 /// RemoveFromReverseMap - This is a helper function that removes Val from
 /// 'Inst's set in ReverseMap.  If the set becomes empty, remove Inst's entry.
 template <typename KeyTy>
-static void RemoveFromReverseMap(DenseMap<Instruction*, 
+static void RemoveFromReverseMap(DenseMap<Instruction*,
                                  SmallPtrSet<KeyTy, 4> > &ReverseMap,
                                  Instruction *Inst, KeyTy Val) {
   typename DenseMap<Instruction*, SmallPtrSet<KeyTy, 4> >::iterator
@@ -196,13 +196,13 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
   // Walk backwards through the block, looking for dependencies
   while (ScanIt != BB->begin()) {
     // Limit the amount of scanning we do so we don't end up with quadratic
-    // running time on extreme testcases. 
+    // running time on extreme testcases.
     --Limit;
     if (!Limit)
       return MemDepResult::getUnknown();
 
     Instruction *Inst = --ScanIt;
-    
+
     // If this inst is a memory op, get the pointer it accessed
     AliasAnalysis::Location Loc;
     AliasAnalysis::ModRefResult MR = GetLocation(Inst, Loc, AA);
@@ -251,7 +251,7 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
 ///
 /// MemLocBase, MemLocOffset are lazily computed here the first time the
 /// base/offs of memloc is needed.
-static bool 
+static bool
 isLoadLoadClobberIfExtendedToFullWidth(const AliasAnalysis::Location &MemLoc,
                                        const Value *&MemLocBase,
                                        int64_t &MemLocOffs,
@@ -289,25 +289,25 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
   if (LI->getParent()->getParent()->getAttributes().
       hasAttribute(AttributeSet::FunctionIndex, Attribute::SanitizeThread))
     return 0;
-  
+
   // Get the base of this load.
   int64_t LIOffs = 0;
-  const Value *LIBase = 
+  const Value *LIBase =
     GetPointerBaseWithConstantOffset(LI->getPointerOperand(), LIOffs, &TD);
-  
+
   // If the two pointers are not based on the same pointer, we can't tell that
   // they are related.
   if (LIBase != MemLocBase) return 0;
-  
+
   // Okay, the two values are based on the same pointer, but returned as
   // no-alias.  This happens when we have things like two byte loads at "P+1"
   // and "P+3".  Check to see if increasing the size of the "LI" load up to its
   // alignment (or the largest native integer type) will allow us to load all
   // the bits required by MemLoc.
-  
+
   // If MemLoc is before LI, then no widening of LI will help us out.
   if (MemLocOffs < LIOffs) return 0;
-  
+
   // Get the alignment of the load in bytes.  We assume that it is safe to load
   // any legal integer up to this size without a problem.  For example, if we're
   // looking at an i8 load on x86-32 that is known 1024 byte aligned, we can
@@ -316,15 +316,15 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
   unsigned LoadAlign = LI->getAlignment();
 
   int64_t MemLocEnd = MemLocOffs+MemLocSize;
-  
+
   // If no amount of rounding up will let MemLoc fit into LI, then bail out.
   if (LIOffs+LoadAlign < MemLocEnd) return 0;
-  
+
   // This is the size of the load to try.  Start with the next larger power of
   // two.
   unsigned NewLoadByteSize = LI->getType()->getPrimitiveSizeInBits()/8U;
   NewLoadByteSize = NextPowerOf2(NewLoadByteSize);
-  
+
   while (1) {
     // If this load size is bigger than our known alignment or would not fit
     // into a native integer register, then we fail.
@@ -343,7 +343,7 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
     // If a load of this width would include all of MemLoc, then we succeed.
     if (LIOffs+NewLoadByteSize >= MemLocEnd)
       return NewLoadByteSize;
-    
+
     NewLoadByteSize <<= 1;
   }
 }
@@ -355,7 +355,7 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
 /// instruction as well; this function may take advantage of the metadata
 /// annotated to the query instruction to refine the result.
 MemDepResult MemoryDependenceAnalysis::
-getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad, 
+getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
                          BasicBlock::iterator ScanIt, BasicBlock *BB,
                          Instruction *QueryInst) {
 
@@ -382,7 +382,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
     if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
       // Debug intrinsics don't (and can't) cause dependences.
       if (isa<DbgInfoIntrinsic>(II)) continue;
-      
+
       // If we reach a lifetime begin or end marker, then the query ends here
       // because the value is undefined.
       if (II->getIntrinsicID() == Intrinsic::lifetime_start) {
@@ -406,10 +406,10 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
         return MemDepResult::getClobber(LI);
 
       AliasAnalysis::Location LoadLoc = AA->getLocation(LI);
-      
+
       // If we found a pointer, check if it could be the same as our pointer.
       AliasAnalysis::AliasResult R = AA->alias(LoadLoc, MemLoc);
-      
+
       if (isLoad) {
         if (R == AliasAnalysis::NoAlias) {
           // If this is an over-aligned integer load (for example,
@@ -423,10 +423,10 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
                 isLoadLoadClobberIfExtendedToFullWidth(MemLoc, MemLocBase,
                                                        MemLocOffset, LI, TD))
               return MemDepResult::getClobber(Inst);
-          
+
           continue;
         }
-        
+
         // Must aliased loads are defs of each other.
         if (R == AliasAnalysis::MustAlias)
           return MemDepResult::getDef(Inst);
@@ -441,7 +441,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
         if (R == AliasAnalysis::PartialAlias)
           return MemDepResult::getClobber(Inst);
 #endif
-        
+
         // Random may-alias loads don't depend on each other without a
         // dependence.
         continue;
@@ -458,7 +458,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
       // Stores depend on may/must aliased loads.
       return MemDepResult::getDef(Inst);
     }
-    
+
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       // Atomic stores have complications involved.
       // FIXME: This is overly conservative.
@@ -474,10 +474,10 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
       // Ok, this store might clobber the query pointer.  Check to see if it is
       // a must alias: in this case, we want to return this as a def.
       AliasAnalysis::Location StoreLoc = AA->getLocation(SI);
-      
+
       // If we found a pointer, check if it could be the same as our pointer.
       AliasAnalysis::AliasResult R = AA->alias(StoreLoc, MemLoc);
-      
+
       if (R == AliasAnalysis::NoAlias)
         continue;
       if (R == AliasAnalysis::MustAlias)
@@ -498,7 +498,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
     const TargetLibraryInfo *TLI = AA->getTargetLibraryInfo();
     if (isa<AllocaInst>(Inst) || isNoAliasFn(Inst, TLI)) {
       const Value *AccessPtr = GetUnderlyingObject(MemLoc.Ptr, TD);
-      
+
       if (AccessPtr == Inst || AA->isMustAlias(Inst, AccessPtr))
         return MemDepResult::getDef(Inst);
       // Be conservative if the accessed pointer may alias the allocation.
@@ -532,7 +532,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
       return MemDepResult::getClobber(Inst);
     }
   }
-  
+
   // No dependence found.  If this is the entry block of the function, it is
   // unknown, otherwise it is non-local.
   if (BB != &BB->getParent()->getEntryBlock())
@@ -544,25 +544,25 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
 /// depends.
 MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
   Instruction *ScanPos = QueryInst;
-  
+
   // Check for a cached result
   MemDepResult &LocalCache = LocalDeps[QueryInst];
-  
+
   // If the cached entry is non-dirty, just return it.  Note that this depends
   // on MemDepResult's default constructing to 'dirty'.
   if (!LocalCache.isDirty())
     return LocalCache;
-    
+
   // Otherwise, if we have a dirty entry, we know we can start the scan at that
   // instruction, which may save us some work.
   if (Instruction *Inst = LocalCache.getInst()) {
     ScanPos = Inst;
-   
+
     RemoveFromReverseMap(ReverseLocalDeps, Inst, QueryInst);
   }
-  
+
   BasicBlock *QueryParent = QueryInst->getParent();
-  
+
   // Do the scan.
   if (BasicBlock::iterator(QueryInst) == QueryParent->begin()) {
     // No dependence found.  If this is the entry block of the function, it is
@@ -591,11 +591,11 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
       // Non-memory instruction.
       LocalCache = MemDepResult::getUnknown();
   }
-  
+
   // Remember the result!
   if (Instruction *I = LocalCache.getInst())
     ReverseLocalDeps[I].insert(QueryInst);
-  
+
   return LocalCache;
 }
 
@@ -636,7 +636,7 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
   /// the uncached case, this starts out as the set of predecessors we care
   /// about.
   SmallVector<BasicBlock*, 32> DirtyBlocks;
-  
+
   if (!Cache.empty()) {
     // Okay, we have a cache entry.  If we know it is not dirty, just return it
     // with no computation.
@@ -644,17 +644,17 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
       ++NumCacheNonLocal;
       return Cache;
     }
-    
+
     // If we already have a partially computed set of results, scan them to
     // determine what is dirty, seeding our initial DirtyBlocks worklist.
     for (NonLocalDepInfo::iterator I = Cache.begin(), E = Cache.end();
        I != E; ++I)
       if (I->getResult().isDirty())
         DirtyBlocks.push_back(I->getBB());
-    
+
     // Sort the cache so that we can do fast binary search lookups below.
     std::sort(Cache.begin(), Cache.end());
-    
+
     ++NumCacheDirtyNonLocal;
     //cerr << "CACHED CASE: " << DirtyBlocks.size() << " dirty: "
     //     << Cache.size() << " cached: " << *QueryInst;
@@ -665,45 +665,45 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
       DirtyBlocks.push_back(*PI);
     ++NumUncacheNonLocal;
   }
-  
+
   // isReadonlyCall - If this is a read-only call, we can be more aggressive.
   bool isReadonlyCall = AA->onlyReadsMemory(QueryCS);
 
   SmallPtrSet<BasicBlock*, 64> Visited;
-  
+
   unsigned NumSortedEntries = Cache.size();
   DEBUG(AssertSorted(Cache));
-  
+
   // Iterate while we still have blocks to update.
   while (!DirtyBlocks.empty()) {
     BasicBlock *DirtyBB = DirtyBlocks.back();
     DirtyBlocks.pop_back();
-    
+
     // Already processed this block?
     if (!Visited.insert(DirtyBB))
       continue;
-    
+
     // Do a binary search to see if we already have an entry for this block in
     // the cache set.  If so, find it.
     DEBUG(AssertSorted(Cache, NumSortedEntries));
-    NonLocalDepInfo::iterator Entry = 
+    NonLocalDepInfo::iterator Entry =
       std::upper_bound(Cache.begin(), Cache.begin()+NumSortedEntries,
                        NonLocalDepEntry(DirtyBB));
     if (Entry != Cache.begin() && prior(Entry)->getBB() == DirtyBB)
       --Entry;
-    
+
     NonLocalDepEntry *ExistingResult = 0;
-    if (Entry != Cache.begin()+NumSortedEntries && 
+    if (Entry != Cache.begin()+NumSortedEntries &&
         Entry->getBB() == DirtyBB) {
       // If we already have an entry, and if it isn't already dirty, the block
       // is done.
       if (!Entry->getResult().isDirty())
         continue;
-      
+
       // Otherwise, remember this slot so we can update the value.
       ExistingResult = &*Entry;
     }
-    
+
     // If the dirty entry has a pointer, start scanning from it so we don't have
     // to rescan the entire block.
     BasicBlock::iterator ScanPos = DirtyBB->end();
@@ -715,10 +715,10 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
                              QueryCS.getInstruction());
       }
     }
-    
+
     // Find out if this block has a local dependency for QueryInst.
     MemDepResult Dep;
-    
+
     if (ScanPos != DirtyBB->begin()) {
       Dep = getCallSiteDependencyFrom(QueryCS, isReadonlyCall,ScanPos, DirtyBB);
     } else if (DirtyBB != &DirtyBB->getParent()->getEntryBlock()) {
@@ -728,14 +728,14 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
     } else {
       Dep = MemDepResult::getNonFuncLocal();
     }
-    
+
     // If we had a dirty entry for the block, update it.  Otherwise, just add
     // a new entry.
     if (ExistingResult)
       ExistingResult->setResult(Dep);
     else
       Cache.push_back(NonLocalDepEntry(DirtyBB, Dep));
-    
+
     // If the block has a dependency (i.e. it isn't completely transparent to
     // the value), remember the association!
     if (!Dep.isNonLocal()) {
@@ -744,14 +744,14 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
       if (Instruction *Inst = Dep.getInst())
         ReverseNonLocalDeps[Inst].insert(QueryCS.getInstruction());
     } else {
-    
+
       // If the block *is* completely transparent to the load, we need to check
       // the predecessors of this block.  Add them to our worklist.
       for (BasicBlock **PI = PredCache->GetPreds(DirtyBB); *PI; ++PI)
         DirtyBlocks.push_back(*PI);
     }
   }
-  
+
   return Cache;
 }
 
@@ -769,9 +769,9 @@ getNonLocalPointerDependency(const AliasAnalysis::Location &Loc, bool isLoad,
   assert(Loc.Ptr->getType()->isPointerTy() &&
          "Can't get pointer deps of a non-pointer!");
   Result.clear();
-  
+
   PHITransAddr Address(const_cast<Value *>(Loc.Ptr), TD);
-  
+
   // This is the set of blocks we've inspected, and the pointer we consider in
   // each block.  Because of critical edges, we currently bail out if querying
   // a block with multiple different pointers.  This can happen during PHI
@@ -794,7 +794,7 @@ MemDepResult MemoryDependenceAnalysis::
 GetNonLocalInfoForBlock(const AliasAnalysis::Location &Loc,
                         bool isLoad, BasicBlock *BB,
                         NonLocalDepInfo *Cache, unsigned NumSortedEntries) {
-  
+
   // Do a binary search to see if we already have an entry for this block in
   // the cache set.  If so, find it.
   NonLocalDepInfo::iterator Entry =
@@ -802,18 +802,18 @@ GetNonLocalInfoForBlock(const AliasAnalysis::Location &Loc,
                      NonLocalDepEntry(BB));
   if (Entry != Cache->begin() && (Entry-1)->getBB() == BB)
     --Entry;
-  
+
   NonLocalDepEntry *ExistingResult = 0;
   if (Entry != Cache->begin()+NumSortedEntries && Entry->getBB() == BB)
     ExistingResult = &*Entry;
-  
+
   // If we have a cached entry, and it is non-dirty, use it as the value for
   // this dependency.
   if (ExistingResult && !ExistingResult->getResult().isDirty()) {
     ++NumCacheNonLocalPtr;
     return ExistingResult->getResult();
-  }    
-  
+  }
+
   // Otherwise, we have to scan for the value.  If we have a dirty cache
   // entry, start scanning from its position, otherwise we scan from the end
   // of the block.
@@ -823,30 +823,30 @@ GetNonLocalInfoForBlock(const AliasAnalysis::Location &Loc,
            "Instruction invalidated?");
     ++NumCacheDirtyNonLocalPtr;
     ScanPos = ExistingResult->getResult().getInst();
-    
+
     // Eliminating the dirty entry from 'Cache', so update the reverse info.
     ValueIsLoadPair CacheKey(Loc.Ptr, isLoad);
     RemoveFromReverseMap(ReverseNonLocalPtrDeps, ScanPos, CacheKey);
   } else {
     ++NumUncacheNonLocalPtr;
   }
-  
+
   // Scan the block for the dependency.
   MemDepResult Dep = getPointerDependencyFrom(Loc, isLoad, ScanPos, BB);
-  
+
   // If we had a dirty entry for the block, update it.  Otherwise, just add
   // a new entry.
   if (ExistingResult)
     ExistingResult->setResult(Dep);
   else
     Cache->push_back(NonLocalDepEntry(BB, Dep));
-  
+
   // If the block has a dependency (i.e. it isn't completely transparent to
   // the value), remember the reverse association because we just added it
   // to Cache!
   if (!Dep.isDef() && !Dep.isClobber())
     return Dep;
-  
+
   // Keep the ReverseNonLocalPtrDeps map up to date so we can efficiently
   // update MemDep when we remove instructions.
   Instruction *Inst = Dep.getInst();
@@ -859,7 +859,7 @@ GetNonLocalInfoForBlock(const AliasAnalysis::Location &Loc,
 /// SortNonLocalDepInfoCache - Sort the a NonLocalDepInfo cache, given a certain
 /// number of elements in the array that are already properly ordered.  This is
 /// optimized for the case when only a few entries are added.
-static void 
+static void
 SortNonLocalDepInfoCache(MemoryDependenceAnalysis::NonLocalDepInfo &Cache,
                          unsigned NumSortedEntries) {
   switch (Cache.size() - NumSortedEntries) {
@@ -911,7 +911,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
                             SmallVectorImpl<NonLocalDepResult> &Result,
                             DenseMap<BasicBlock*, Value*> &Visited,
                             bool SkipFirstBlock) {
-  
+
   // Look up the cached info for Pointer.
   ValueIsLoadPair CacheKey(Pointer.getAddr(), isLoad);
 
@@ -925,7 +925,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
 
   // Get the NLPI for CacheKey, inserting one into the map if it doesn't
   // already have one.
-  std::pair<CachedNonLocalPointerInfo::iterator, bool> Pair = 
+  std::pair<CachedNonLocalPointerInfo::iterator, bool> Pair =
     NonLocalPointerDeps.insert(std::make_pair(CacheKey, InitialNLPI));
   NonLocalPointerInfo *CacheInfo = &Pair.first->second;
 
@@ -987,14 +987,14 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
         DenseMap<BasicBlock*, Value*>::iterator VI = Visited.find(I->getBB());
         if (VI == Visited.end() || VI->second == Pointer.getAddr())
           continue;
-        
+
         // We have a pointer mismatch in a block.  Just return clobber, saying
         // that something was clobbered in this result.  We could also do a
         // non-fully cached query, but there is little point in doing this.
         return true;
       }
     }
-    
+
     Value *Addr = Pointer.getAddr();
     for (NonLocalDepInfo::iterator I = Cache->begin(), E = Cache->end();
          I != E; ++I) {
@@ -1005,7 +1005,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     ++NumCacheCompleteNonLocalPtr;
     return false;
   }
-  
+
   // Otherwise, either this is a new block, a block with an invalid cache
   // pointer or one that we're about to invalidate by putting more info into it
   // than its valid cache info.  If empty, the result will be valid cache info,
@@ -1014,10 +1014,10 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     CacheInfo->Pair = BBSkipFirstBlockPair(StartBB, SkipFirstBlock);
   else
     CacheInfo->Pair = BBSkipFirstBlockPair();
-  
+
   SmallVector<BasicBlock*, 32> Worklist;
   Worklist.push_back(StartBB);
-  
+
   // PredList used inside loop.
   SmallVector<std::pair<BasicBlock*, PHITransAddr>, 16> PredList;
 
@@ -1028,10 +1028,10 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
   // revisit blocks after we insert info for them.
   unsigned NumSortedEntries = Cache->size();
   DEBUG(AssertSorted(*Cache));
-  
+
   while (!Worklist.empty()) {
     BasicBlock *BB = Worklist.pop_back_val();
-    
+
     // Skip the first block if we have it.
     if (!SkipFirstBlock) {
       // Analyze the dependency of *Pointer in FromBB.  See if we already have
@@ -1043,14 +1043,14 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
       DEBUG(AssertSorted(*Cache, NumSortedEntries));
       MemDepResult Dep = GetNonLocalInfoForBlock(Loc, isLoad, BB, Cache,
                                                  NumSortedEntries);
-      
+
       // If we got a Def or Clobber, add this to the list of results.
       if (!Dep.isNonLocal() && DT->isReachableFromEntry(BB)) {
         Result.push_back(NonLocalDepResult(BB, Dep, Pointer.getAddr()));
         continue;
       }
     }
-    
+
     // If 'Pointer' is an instruction defined in this block, then we need to do
     // phi translation to change it into a value live in the predecessor block.
     // If not, we just add the predecessors to the worklist and scan them with
@@ -1067,7 +1067,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
           NewBlocks.push_back(*PI);
           continue;
         }
-        
+
         // If we have seen this block before, but it was with a different
         // pointer then we have a phi translation failure and we have to treat
         // this as a clobber.
@@ -1082,12 +1082,12 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
       Worklist.append(NewBlocks.begin(), NewBlocks.end());
       continue;
     }
-    
+
     // We do need to do phi translation, if we know ahead of time we can't phi
     // translate this value, don't even try.
     if (!Pointer.IsPotentiallyPHITranslatable())
       goto PredTranslationFailure;
-    
+
     // We may have added values to the cache list before this PHI translation.
     // If so, we haven't done anything to ensure that the cache remains sorted.
     // Sort it now (if needed) so that recursive invocations of
@@ -1110,7 +1110,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
       PredPointer.PHITranslateValue(BB, Pred, 0);
 
       Value *PredPtrVal = PredPointer.getAddr();
-      
+
       // Check to see if we have already visited this pred block with another
       // pointer.  If so, we can't do this lookup.  This failure can occur
       // with PHI translation when a critical edge exists and the PHI node in
@@ -1127,7 +1127,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
         // the analysis and can ignore it.
         if (InsertRes.first->second == PredPtrVal)
           continue;
-        
+
         // Otherwise, the block was previously analyzed with a different
         // pointer.  We can't represent the result of this case, so we just
         // treat this as a phi translation failure.
@@ -1143,7 +1143,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
 
     // Actually process results here; this need to be a separate loop to avoid
     // calling getNonLocalPointerDepFromBB for blocks we don't want to return
-    // any results for.  (getNonLocalPointerDepFromBB will modify our 
+    // any results for.  (getNonLocalPointerDepFromBB will modify our
     // datastructures in ways the code after the PredTranslationFailure label
     // doesn't expect.)
     for (unsigned i = 0; i < PredList.size(); i++) {
@@ -1186,12 +1186,12 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
         continue;
       }
     }
-    
+
     // Refresh the CacheInfo/Cache pointer so that it isn't invalidated.
     CacheInfo = &NonLocalPointerDeps[CacheKey];
     Cache = &CacheInfo->NonLocalDeps;
     NumSortedEntries = Cache->size();
-    
+
     // Since we did phi translation, the "Cache" set won't contain all of the
     // results for the query.  This is ok (we can still use it to accelerate
     // specific block queries) but we can't do the fastpath "return all
@@ -1204,20 +1204,20 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     // The following code is "failure"; we can't produce a sane translation
     // for the given block.  It assumes that we haven't modified any of
     // our datastructures while processing the current block.
-    
+
     if (Cache == 0) {
       // Refresh the CacheInfo/Cache pointer if it got invalidated.
       CacheInfo = &NonLocalPointerDeps[CacheKey];
       Cache = &CacheInfo->NonLocalDeps;
       NumSortedEntries = Cache->size();
     }
-    
+
     // Since we failed phi translation, the "Cache" set won't contain all of the
     // results for the query.  This is ok (we can still use it to accelerate
     // specific block queries) but we can't do the fastpath "return all
     // results from the set".  Clear out the indicator for this.
     CacheInfo->Pair = BBSkipFirstBlockPair();
-    
+
     // If *nothing* works, mark the pointer as unknown.
     //
     // If this is the magic first block, return this as a clobber of the whole
@@ -1225,12 +1225,12 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     // we have to bail out.
     if (SkipFirstBlock)
       return true;
-    
+
     for (NonLocalDepInfo::reverse_iterator I = Cache->rbegin(); ; ++I) {
       assert(I != Cache->rend() && "Didn't find current block??");
       if (I->getBB() != BB)
         continue;
-      
+
       assert(I->getResult().isNonLocal() &&
              "Should only be here with transparent block");
       I->setResult(MemDepResult::getUnknown());
@@ -1250,23 +1250,23 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
 /// CachedNonLocalPointerInfo, remove it.
 void MemoryDependenceAnalysis::
 RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair P) {
-  CachedNonLocalPointerInfo::iterator It = 
+  CachedNonLocalPointerInfo::iterator It =
     NonLocalPointerDeps.find(P);
   if (It == NonLocalPointerDeps.end()) return;
-  
+
   // Remove all of the entries in the BB->val map.  This involves removing
   // instructions from the reverse map.
   NonLocalDepInfo &PInfo = It->second.NonLocalDeps;
-  
+
   for (unsigned i = 0, e = PInfo.size(); i != e; ++i) {
     Instruction *Target = PInfo[i].getResult().getInst();
     if (Target == 0) continue;  // Ignore non-local dep results.
     assert(Target->getParent() == PInfo[i].getBB());
-    
+
     // Eliminating the dirty entry from 'Cache', so update the reverse info.
     RemoveFromReverseMap(ReverseNonLocalPtrDeps, Target, P);
   }
-  
+
   // Remove P from NonLocalPointerDeps (which deletes NonLocalDepInfo).
   NonLocalPointerDeps.erase(It);
 }
@@ -1321,20 +1321,20 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
     // Remove this local dependency info.
     LocalDeps.erase(LocalDepEntry);
   }
-  
+
   // If we have any cached pointer dependencies on this instruction, remove
   // them.  If the instruction has non-pointer type, then it can't be a pointer
   // base.
-  
+
   // Remove it from both the load info and the store info.  The instruction
   // can't be in either of these maps if it is non-pointer.
   if (RemInst->getType()->isPointerTy()) {
     RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair(RemInst, false));
     RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair(RemInst, true));
   }
-  
+
   // Loop over all of the things that depend on the instruction we're removing.
-  // 
+  //
   SmallVector<std::pair<Instruction*, Instruction*>, 8> ReverseDepsToAdd;
 
   // If we find RemInst as a clobber or Def in any of the maps for other values,
@@ -1346,29 +1346,29 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   MemDepResult NewDirtyVal;
   if (!RemInst->isTerminator())
     NewDirtyVal = MemDepResult::getDirty(++BasicBlock::iterator(RemInst));
-  
+
   ReverseDepMapType::iterator ReverseDepIt = ReverseLocalDeps.find(RemInst);
   if (ReverseDepIt != ReverseLocalDeps.end()) {
     SmallPtrSet<Instruction*, 4> &ReverseDeps = ReverseDepIt->second;
     // RemInst can't be the terminator if it has local stuff depending on it.
     assert(!ReverseDeps.empty() && !isa<TerminatorInst>(RemInst) &&
            "Nothing can locally depend on a terminator");
-    
+
     for (SmallPtrSet<Instruction*, 4>::iterator I = ReverseDeps.begin(),
          E = ReverseDeps.end(); I != E; ++I) {
       Instruction *InstDependingOnRemInst = *I;
       assert(InstDependingOnRemInst != RemInst &&
              "Already removed our local dep info");
-                        
+
       LocalDeps[InstDependingOnRemInst] = NewDirtyVal;
-      
+
       // Make sure to remember that new things depend on NewDepInst.
       assert(NewDirtyVal.getInst() && "There is no way something else can have "
              "a local dep on this if it is a terminator!");
-      ReverseDepsToAdd.push_back(std::make_pair(NewDirtyVal.getInst(), 
+      ReverseDepsToAdd.push_back(std::make_pair(NewDirtyVal.getInst(),
                                                 InstDependingOnRemInst));
     }
-    
+
     ReverseLocalDeps.erase(ReverseDepIt);
 
     // Add new reverse deps after scanning the set, to avoid invalidating the
@@ -1379,25 +1379,25 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
       ReverseDepsToAdd.pop_back();
     }
   }
-  
+
   ReverseDepIt = ReverseNonLocalDeps.find(RemInst);
   if (ReverseDepIt != ReverseNonLocalDeps.end()) {
     SmallPtrSet<Instruction*, 4> &Set = ReverseDepIt->second;
     for (SmallPtrSet<Instruction*, 4>::iterator I = Set.begin(), E = Set.end();
          I != E; ++I) {
       assert(*I != RemInst && "Already removed NonLocalDep info for RemInst");
-      
+
       PerInstNLInfo &INLD = NonLocalDeps[*I];
       // The information is now dirty!
       INLD.second = true;
-      
-      for (NonLocalDepInfo::iterator DI = INLD.first.begin(), 
+
+      for (NonLocalDepInfo::iterator DI = INLD.first.begin(),
            DE = INLD.first.end(); DI != DE; ++DI) {
         if (DI->getResult().getInst() != RemInst) continue;
-        
+
         // Convert to a dirty entry for the subsequent instruction.
         DI->setResult(NewDirtyVal);
-        
+
         if (Instruction *NextI = NewDirtyVal.getInst())
           ReverseDepsToAdd.push_back(std::make_pair(NextI, *I));
       }
@@ -1412,7 +1412,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
       ReverseDepsToAdd.pop_back();
     }
   }
-  
+
   // If the instruction is in ReverseNonLocalPtrDeps then it appears as a
   // value in the NonLocalPointerDeps info.
   ReverseNonLocalPtrDepTy::iterator ReversePtrDepIt =
@@ -1420,45 +1420,45 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   if (ReversePtrDepIt != ReverseNonLocalPtrDeps.end()) {
     SmallPtrSet<ValueIsLoadPair, 4> &Set = ReversePtrDepIt->second;
     SmallVector<std::pair<Instruction*, ValueIsLoadPair>,8> ReversePtrDepsToAdd;
-    
+
     for (SmallPtrSet<ValueIsLoadPair, 4>::iterator I = Set.begin(),
          E = Set.end(); I != E; ++I) {
       ValueIsLoadPair P = *I;
       assert(P.getPointer() != RemInst &&
              "Already removed NonLocalPointerDeps info for RemInst");
-      
+
       NonLocalDepInfo &NLPDI = NonLocalPointerDeps[P].NonLocalDeps;
-      
+
       // The cache is not valid for any specific block anymore.
       NonLocalPointerDeps[P].Pair = BBSkipFirstBlockPair();
-      
+
       // Update any entries for RemInst to use the instruction after it.
       for (NonLocalDepInfo::iterator DI = NLPDI.begin(), DE = NLPDI.end();
            DI != DE; ++DI) {
         if (DI->getResult().getInst() != RemInst) continue;
-        
+
         // Convert to a dirty entry for the subsequent instruction.
         DI->setResult(NewDirtyVal);
-        
+
         if (Instruction *NewDirtyInst = NewDirtyVal.getInst())
           ReversePtrDepsToAdd.push_back(std::make_pair(NewDirtyInst, P));
       }
-      
+
       // Re-sort the NonLocalDepInfo.  Changing the dirty entry to its
       // subsequent value may invalidate the sortedness.
       std::sort(NLPDI.begin(), NLPDI.end());
     }
-    
+
     ReverseNonLocalPtrDeps.erase(ReversePtrDepIt);
-    
+
     while (!ReversePtrDepsToAdd.empty()) {
       ReverseNonLocalPtrDeps[ReversePtrDepsToAdd.back().first]
         .insert(ReversePtrDepsToAdd.back().second);
       ReversePtrDepsToAdd.pop_back();
     }
   }
-  
-  
+
+
   assert(!NonLocalDeps.count(RemInst) && "RemInst got reinserted?");
   AA->deleteValue(RemInst);
   DEBUG(verifyRemoved(RemInst));
@@ -1472,7 +1472,7 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
     assert(I->second.getInst() != D &&
            "Inst occurs in data structures");
   }
-  
+
   for (CachedNonLocalPointerInfo::const_iterator I =NonLocalPointerDeps.begin(),
        E = NonLocalPointerDeps.end(); I != E; ++I) {
     assert(I->first.getPointer() != D && "Inst occurs in NLPD map key");
@@ -1481,7 +1481,7 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
          II != E; ++II)
       assert(II->getResult().getInst() != D && "Inst occurs as NLPD value");
   }
-  
+
   for (NonLocalDepMapType::const_iterator I = NonLocalDeps.begin(),
        E = NonLocalDeps.end(); I != E; ++I) {
     assert(I->first != D && "Inst occurs in data structures");
@@ -1490,7 +1490,7 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
          EE = INLD.first.end(); II  != EE; ++II)
       assert(II->getResult().getInst() != D && "Inst occurs in data structures");
   }
-  
+
   for (ReverseDepMapType::const_iterator I = ReverseLocalDeps.begin(),
        E = ReverseLocalDeps.end(); I != E; ++I) {
     assert(I->first != D && "Inst occurs in data structures");
@@ -1498,7 +1498,7 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
          EE = I->second.end(); II != EE; ++II)
       assert(*II != D && "Inst occurs in data structures");
   }
-  
+
   for (ReverseDepMapType::const_iterator I = ReverseNonLocalDeps.begin(),
        E = ReverseNonLocalDeps.end();
        I != E; ++I) {
@@ -1507,17 +1507,17 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
          EE = I->second.end(); II != EE; ++II)
       assert(*II != D && "Inst occurs in data structures");
   }
-  
+
   for (ReverseNonLocalPtrDepTy::const_iterator
        I = ReverseNonLocalPtrDeps.begin(),
        E = ReverseNonLocalPtrDeps.end(); I != E; ++I) {
     assert(I->first != D && "Inst occurs in rev NLPD map");
-    
+
     for (SmallPtrSet<ValueIsLoadPair, 4>::const_iterator II = I->second.begin(),
          E = I->second.end(); II != E; ++II)
       assert(*II != ValueIsLoadPair(D, false) &&
              *II != ValueIsLoadPair(D, true) &&
              "Inst occurs in ReverseNonLocalPtrDeps map");
   }
-  
+
 }
