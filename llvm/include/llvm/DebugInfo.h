@@ -646,12 +646,6 @@ namespace llvm {
     explicit DINameSpace(const MDNode *N = 0) : DIScope(N) {}
     DIScope getContext() const     { return getFieldAs<DIScope>(2);      }
     StringRef getName() const      { return getStringField(3);           }
-    StringRef getDirectory() const  {
-      return getFieldAs<DIFile>(1).getDirectory();
-    }
-    StringRef getFilename() const  {
-      return getFieldAs<DIFile>(1).getFilename();
-    }
     unsigned getLineNumber() const { return getUnsignedField(4);         }
     bool Verify() const;
   };

@@ -1,13 +1,20 @@
 ; RUN: llc -O0 -filetype=obj < %s > %t
-; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
+; RUN: llvm-dwarfdump %t | FileCheck %s
+; CHECK: debug_info contents
 ; CHECK: DW_TAG_namespace
 ; CHECK-NEXT: DW_AT_name{{.*}} = "A"
+; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F1:[0-9]]])
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x03)
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_namespace
 ; CHECK-NEXT: DW_AT_name{{.*}} = "B"
+; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F2:[0-9]]])
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x01)
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name{{.*}}= "i"
+; CHECK: file_names[  [[F1]]]{{.*}}debug-info-namespace.cpp
+; CHECK: file_names[  [[F2]]]{{.*}}foo.cpp
 
 ; IR generated from clang/test/CodeGenCXX/debug-info-namespace.cpp, file paths
 ; changed to protect the guilty. The C++ source code is simply:
@@ -28,8 +35,8 @@
 !3 = metadata !{i32 0}
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786484, i32 0, metadata !6, metadata !"i", metadata !"i", metadata !"_ZN1A1B1iE", metadata !7, i32 2, metadata !10, i32 0, i32 1, i32* @_ZN1A1B1iE, null} ; [ DW_TAG_variable ] [i] [line 2] [def]
-!6 = metadata !{i32 786489, metadata !7, metadata !9, metadata !"B", i32 1} ; [ DW_TAG_namespace ] [B] [line 1]
+!6 = metadata !{i32 786489, metadata !8, metadata !9, metadata !"B", i32 1} ; [ DW_TAG_namespace ] [B] [line 1]
 !7 = metadata !{i32 786473, metadata !8}          ; [ DW_TAG_file_type ] [/home/foo/foo.cpp]
 !8 = metadata !{metadata !"foo.cpp", metadata !"/home/foo"}
-!9 = metadata !{i32 786489, metadata !1, null, metadata !"A", i32 3} ; [ DW_TAG_namespace ] [A] [line 3]
+!9 = metadata !{i32 786489, metadata !2, null, metadata !"A", i32 3} ; [ DW_TAG_namespace ] [A] [line 3]
 !10 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]

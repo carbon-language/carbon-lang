@@ -672,8 +672,6 @@ StringRef DIScope::getFilename() const {
     return DISubprogram(DbgNode).getFilename();
   if (isCompileUnit())
     return DICompileUnit(DbgNode).getFilename();
-  if (isNameSpace())
-    return DINameSpace(DbgNode).getFilename();
   return ::getStringField(getNodeField(DbgNode, 1), 0);
 }
 
@@ -688,8 +686,6 @@ StringRef DIScope::getDirectory() const {
     return DISubprogram(DbgNode).getDirectory();
   if (isCompileUnit())
     return DICompileUnit(DbgNode).getDirectory();
-  if (isNameSpace())
-    return DINameSpace(DbgNode).getDirectory();
   return ::getStringField(getNodeField(DbgNode, 1), 1);
 }
 
