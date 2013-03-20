@@ -203,7 +203,7 @@ void OMPGenerator::extractValuesFromStruct(
   for (unsigned i = 0; i < OldValues.size(); i++) {
     Value *Address = Builder.CreateStructGEP(Struct, i);
     Value *NewValue = Builder.CreateLoad(Address);
-    Map.insert(std::make_pair<Value *, Value *>(OldValues[i], NewValue));
+    Map.insert(std::make_pair(OldValues[i], NewValue));
   }
 }
 
