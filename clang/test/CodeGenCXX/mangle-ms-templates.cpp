@@ -78,3 +78,16 @@ namespace space {
 void use() {
   space::foo(42);
 }
+
+// PR13455
+typedef void (*FunctionPointer)(void);
+
+template <FunctionPointer function>
+void FunctionPointerTemplate() {
+  function();
+}
+
+void spam() {
+  FunctionPointerTemplate<spam>();
+// CHECK: "\01??$FunctionPointerTemplate@$1?spam@@YAXXZ@@YAXXZ"
+}

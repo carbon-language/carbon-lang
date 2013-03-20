@@ -827,6 +827,9 @@ MicrosoftCXXNameMangler::mangleTemplateArgs(const TemplateDecl *TD,
     case TemplateArgument::Type:
       mangleType(TA.getAsType(), SourceRange());
       break;
+    case TemplateArgument::Declaration:
+      mangle(cast<NamedDecl>(TA.getAsDecl()), "$1?");
+      break;
     case TemplateArgument::Integral:
       mangleIntegerLiteral(TA.getAsIntegral(),
                            TA.getIntegralType()->isBooleanType());
@@ -836,7 +839,6 @@ MicrosoftCXXNameMangler::mangleTemplateArgs(const TemplateDecl *TD,
       break;
     case TemplateArgument::Template:
     case TemplateArgument::TemplateExpansion:
-    case TemplateArgument::Declaration:
     case TemplateArgument::NullPtr:
     case TemplateArgument::Pack: {
       // Issue a diagnostic.
