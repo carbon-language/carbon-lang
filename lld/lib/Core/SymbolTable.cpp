@@ -22,6 +22,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMapInfo.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -255,22 +256,16 @@ void SymbolTable::addByName(const Atom & newAtom) {
   }
 }
 
-unsigned SymbolTable::AtomMappingInfo::getHashValue(const DefinedAtom * const atom) {
-  unsigned hash = atom->size();
-  if ( atom->contentType() != DefinedAtom::typeZeroFill ) {
-    ArrayRef<uint8_t> content = atom->rawContent();
-    for (unsigned int i=0; i < content.size(); ++i) {
-      hash = hash * 33 + content[i];
-    }
-  }
-  hash &= 0x00FFFFFF;
-  hash |= ((unsigned)atom->contentType()) << 24;
-  //fprintf(stderr, "atom=%p, hash=0x%08X\n", atom, hash);
-  return hash;
+unsigned SymbolTable::AtomMappingInfo::getHashValue(const DefinedAtom *atom) {
+  auto content = atom->rawContent();
+  return llvm::hash_combine(atom->size(),
+                            atom->contentType(),
+                            llvm::hash_combine_range(content.begin(),
+                                                     content.end()));
 }
 
 bool SymbolTable::AtomMappingInfo::isEqual(const DefinedAtom * const l,
-                                         const DefinedAtom * const r) {
+                                           const DefinedAtom * const r) {
   if ( l == r )
     return true;
   if ( l == getEmptyKey() )
@@ -288,7 +283,7 @@ bool SymbolTable::AtomMappingInfo::isEqual(const DefinedAtom * const l,
     return false;
   ArrayRef<uint8_t> lc = l->rawContent();
   ArrayRef<uint8_t> rc = r->rawContent();
-  return lc.equals(rc);
+  return memcmp(lc.data(), rc.data(), lc.size()) == 0;
 }
 
 void SymbolTable::addByContent(const DefinedAtom & newAtom) {
