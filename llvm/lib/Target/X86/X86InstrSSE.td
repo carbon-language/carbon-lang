@@ -35,6 +35,7 @@ class ShiftOpndItins<InstrItinClass arg_rr, InstrItinClass arg_rm,
 
 
 // scalar
+let Sched = WriteFAdd in {
 def SSE_ALU_F32S : OpndItins<
   IIC_SSE_ALU_F32S_RR, IIC_SSE_ALU_F32S_RM
 >;
@@ -42,6 +43,7 @@ def SSE_ALU_F32S : OpndItins<
 def SSE_ALU_F64S : OpndItins<
   IIC_SSE_ALU_F64S_RR, IIC_SSE_ALU_F64S_RM
 >;
+}
 
 def SSE_ALU_ITINS_S : SizeItins<
   SSE_ALU_F32S, SSE_ALU_F64S
@@ -76,6 +78,7 @@ def SSE_DIV_ITINS_S : SizeItins<
 >;
 
 // parallel
+let Sched = WriteFAdd in {
 def SSE_ALU_F32P : OpndItins<
   IIC_SSE_ALU_F32P_RR, IIC_SSE_ALU_F32P_RM
 >;
@@ -83,6 +86,7 @@ def SSE_ALU_F32P : OpndItins<
 def SSE_ALU_F64P : OpndItins<
   IIC_SSE_ALU_F64P_RR, IIC_SSE_ALU_F64P_RM
 >;
+}
 
 def SSE_ALU_ITINS_P : SizeItins<
   SSE_ALU_F32P, SSE_ALU_F64P
@@ -184,14 +188,16 @@ multiclass sse12_fp_scalar_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
            !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set RC:$dst, (!cast<Intrinsic>(
                  !strconcat("int_x86_sse", SSEVer, "_", OpcodeStr, FPSizeStr))
-             RC:$src1, RC:$src2))], itins.rr>;
+             RC:$src1, RC:$src2))], itins.rr>,
+       Sched<[itins.Sched]>;
   def rm_Int : SI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memopr:$src2),
        !if(Is2Addr,
            !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set RC:$dst, (!cast<Intrinsic>(!strconcat("int_x86_sse",
                                           SSEVer, "_", OpcodeStr, FPSizeStr))
-             RC:$src1, mem_cpat:$src2))], itins.rm>;
+             RC:$src1, mem_cpat:$src2))], itins.rm>,
+       Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
 /// sse12_fp_packed - SSE 1 & 2 packed instructions class
@@ -2265,11 +2271,12 @@ multiclass sse12_cmp_scalar<RegisterClass RC, X86MemOperand x86memop,
   let neverHasSideEffects = 1 in {
     def rr_alt : SIi8<0xC2, MRMSrcReg, (outs RC:$dst),
                       (ins RC:$src1, RC:$src2, i8imm:$cc), asm_alt, [],
-                      IIC_SSE_ALU_F32S_RR>;
+                      IIC_SSE_ALU_F32S_RR>, Sched<[itins.Sched]>;
     let mayLoad = 1 in
     def rm_alt : SIi8<0xC2, MRMSrcMem, (outs RC:$dst),
                       (ins RC:$src1, x86memop:$src2, i8imm:$cc), asm_alt, [],
-                      IIC_SSE_ALU_F32S_RM>;
+                      IIC_SSE_ALU_F32S_RM>,
+                      Sched<[itins.Sched.Folded, ReadAfterLd]>;
   }
 }
 
@@ -2415,10 +2422,11 @@ multiclass sse12_cmp_packed<RegisterClass RC, X86MemOperand x86memop,
   let neverHasSideEffects = 1 in {
     def rri_alt : PIi8<0xC2, MRMSrcReg,
                (outs RC:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
-               asm_alt, [], IIC_SSE_CMPP_RR, d>;
+               asm_alt, [], IIC_SSE_CMPP_RR, d>, Sched<[WriteFAdd]>;
     def rmi_alt : PIi8<0xC2, MRMSrcMem,
                (outs RC:$dst), (ins RC:$src1, x86memop:$src2, i8imm:$cc),
-               asm_alt, [], IIC_SSE_CMPP_RM, d>;
+               asm_alt, [], IIC_SSE_CMPP_RM, d>,
+               Sched<[WriteFAddLd, ReadAfterLd]>;
   }
 }
 
@@ -4916,13 +4924,15 @@ multiclass sse3_addsub<Intrinsic Int, string OpcodeStr, RegisterClass RC,
        !if(Is2Addr,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (Int RC:$src1, RC:$src2))], itins.rr>;
+       [(set RC:$dst, (Int RC:$src1, RC:$src2))], itins.rr>,
+       Sched<[itins.Sched]>;
   def rm : I<0xD0, MRMSrcMem,
        (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
        !if(Is2Addr,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (Int RC:$src1, (memop addr:$src2)))], itins.rr>;
+       [(set RC:$dst, (Int RC:$src1, (memop addr:$src2)))], itins.rr>,
+       Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
 let Predicates = [HasAVX] in {
