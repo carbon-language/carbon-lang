@@ -65,6 +65,7 @@ uint16_t ELFTargetInfo::getOutputMachine() const {
 }
 
 ErrorOr<Reader &> ELFTargetInfo::getReader(const LinkerInput &input) const {
+  DEBUG_WITH_TYPE("inputs", llvm::dbgs() << input.getPath() << "\n");
   auto buffer = input.getBuffer();
   if (!buffer)
     return error_code(buffer);
