@@ -99,13 +99,14 @@ TryCompile = \
 # We currently only try to generate runtime libraries on x86.
 ifeq ($(ARCH),x86)
 RuntimeLibrary.linux.Configs += \
-	full-i386.a profile-i386.a asan-i386.a ubsan-i386.a
+	full-i386.a profile-i386.a san-i386.a asan-i386.a ubsan-i386.a \
+	ubsan_cxx-i386.a
 endif
 
 ifeq ($(ARCH),x86_64)
 RuntimeLibrary.linux.Configs += \
-	full-x86_64.a profile-x86_64.a asan-x86_64.a tsan-x86_64.a msan-x86_64.a \
-	ubsan-x86_64.a
+	full-x86_64.a profile-x86_64.a san-x86_64.a asan-x86_64.a \
+	tsan-x86_64.a msan-x86_64.a ubsan-x86_64.a ubsan_cxx-x86_64.a
 # We need to build 32-bit ASan/UBsan libraries on 64-bit platform, and add them
 # to the list of runtime libraries to make
 # "clang -fsanitize=(address|undefined) -m32" work.
@@ -113,7 +114,8 @@ RuntimeLibrary.linux.Configs += \
 # executable.
 test_source = $(LLVM_SRC_ROOT)/tools/clang/runtime/compiler-rt/clang_linux_test_input.c
 ifeq ($(call TryCompile,$(ToolDir)/clang,$(test_source),-m32),0)
-RuntimeLibrary.linux.Configs += asan-i386.a ubsan-i386.a
+RuntimeLibrary.linux.Configs += san-i386.a asan-i386.a ubsan-i386.a \
+                                ubsan_cxx-i386.a
 endif
 ifneq ($(LLVM_ANDROID_TOOLCHAIN_DIR),)
 RuntimeLibrary.linux.Configs += asan-arm-android.so

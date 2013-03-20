@@ -1582,21 +1582,21 @@ static void addSanitizerRTLinkFlagsLinux(
   llvm::sys::path::append(
       LibSanitizer, "lib", "linux",
       (Twine("libclang_rt.") + Sanitizer + "-" + TC.getArchName() + ".a"));
+
   // Sanitizer runtime may need to come before -lstdc++ (or -lc++, libstdc++.a,
   // etc.) so that the linker picks custom versions of the global 'operator
   // new' and 'operator delete' symbols. We take the extreme (but simple)
   // strategy of inserting it at the front of the link command. It also
   // needs to be forced to end up in the executable, so wrap it in
   // whole-archive.
-  if (BeforeLibStdCXX) {
-    SmallVector<const char *, 3> PrefixArgs;
-    PrefixArgs.push_back("-whole-archive");
-    PrefixArgs.push_back(Args.MakeArgString(LibSanitizer));
-    PrefixArgs.push_back("-no-whole-archive");
-    CmdArgs.insert(CmdArgs.begin(), PrefixArgs.begin(), PrefixArgs.end());
-  } else {
-    CmdArgs.push_back(Args.MakeArgString(LibSanitizer));
-  }
+  SmallVector<const char *, 3> LibSanitizerArgs;
+  LibSanitizerArgs.push_back("-whole-archive");
+  LibSanitizerArgs.push_back(Args.MakeArgString(LibSanitizer));
+  LibSanitizerArgs.push_back("-no-whole-archive");
+
+  CmdArgs.insert(BeforeLibStdCXX ? CmdArgs.begin() : CmdArgs.end(),
+                 LibSanitizerArgs.begin(), LibSanitizerArgs.end());
+
   CmdArgs.push_back("-lpthread");
   CmdArgs.push_back("-ldl");
   CmdArgs.push_back("-export-dynamic");
@@ -1658,8 +1658,22 @@ static void addMsanRTLinux(const ToolChain &TC, const ArgList &Args,
 /// If UndefinedBehaviorSanitizer is enabled, add appropriate linker flags
 /// (Linux).
 static void addUbsanRTLinux(const ToolChain &TC, const ArgList &Args,
-                            ArgStringList &CmdArgs) {
+                            ArgStringList &CmdArgs, bool IsCXX,
+                            bool HasOtherSanitizerRt) {
+  if (Args.hasArg(options::OPT_shared))
+    return;
+
+  // Need a copy of sanitizer_common. This could come from another sanitizer
+  // runtime; if we're not including one, include our own copy.
+  if (!HasOtherSanitizerRt)
+    addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "san", true);
+
   addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "ubsan", false);
+
+  // Only include the bits of the runtime which need a C++ ABI library if
+  // we're linking in C++ mode.
+  if (IsCXX)
+    addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "ubsan_cxx", false);
 }
 
 static bool shouldUseFramePointer(const ArgList &Args,
@@ -5876,7 +5890,9 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Call these before we add the C++ ABI library.
   if (Sanitize.needsUbsanRt())
-    addUbsanRTLinux(getToolChain(), Args, CmdArgs);
+    addUbsanRTLinux(getToolChain(), Args, CmdArgs, D.CCCIsCXX,
+                    Sanitize.needsAsanRt() || Sanitize.needsTsanRt() ||
+                    Sanitize.needsMsanRt());
   if (Sanitize.needsAsanRt())
     addAsanRTLinux(getToolChain(), Args, CmdArgs);
   if (Sanitize.needsTsanRt())
