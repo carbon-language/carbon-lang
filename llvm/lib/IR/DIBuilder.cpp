@@ -71,6 +71,16 @@ static MDNode *getNonCompileUnitScope(MDNode *N) {
   return N;
 }
 
+static MDNode *createFilePathPair(LLVMContext &VMContext, StringRef Filename,
+                                  StringRef Directory) {
+  assert(!Filename.empty() && "Unable to create file without name");
+  Value *Pair[] = {
+    MDString::get(VMContext, Filename),
+    MDString::get(VMContext, Directory),
+  };
+  return MDNode::get(VMContext, Pair);
+}
+
 /// createCompileUnit - A CompileUnit provides an anchor for all debugging
 /// information generated during this instance of compilation.
 void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
@@ -93,7 +103,7 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
 
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_compile_unit),
-    createFile(Filename, Directory),
+    createFilePathPair(VMContext, Filename, Directory),
     ConstantInt::get(Type::getInt32Ty(VMContext), Lang),
     MDString::get(VMContext, Producer),
     ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
@@ -115,14 +125,9 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
 /// createFile - Create a file descriptor to hold debugging information
 /// for a file.
 DIFile DIBuilder::createFile(StringRef Filename, StringRef Directory) {
-  assert(!Filename.empty() && "Unable to create file without name");
-  Value *Pair[] = {
-    MDString::get(VMContext, Filename),
-    MDString::get(VMContext, Directory),
-  };
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_file_type),
-    MDNode::get(VMContext, Pair)
+    createFilePathPair(VMContext, Filename, Directory)
   };
   return DIFile(MDNode::get(VMContext, Elts));
 }

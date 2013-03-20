@@ -29,7 +29,7 @@
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 0, metadata !3, metadata !3, metadata !3, metadata !4, metadata !""} ; [ DW_TAG_compile_unit ] [/home/foo/debug-info-namespace.cpp] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, metadata !2, i32 4, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 0, metadata !3, metadata !3, metadata !3, metadata !4, metadata !""} ; [ DW_TAG_compile_unit ] [/home/foo/debug-info-namespace.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{i32 786473, metadata !2}          ; [ DW_TAG_file_type ] [/home/foo/debug-info-namespace.cpp]
 !2 = metadata !{metadata !"debug-info-namespace.cpp", metadata !"/home/foo"}
 !3 = metadata !{i32 0}
