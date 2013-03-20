@@ -1692,12 +1692,6 @@ ProgramStateRef ExprEngine::processPointerEscapedOnBind(ProgramStateRef State,
       if (StoredVal != Val)
         escapes = (State == (State->bindLoc(*regionLoc, Val)));
     }
-    if (!escapes) {
-      // Case 4: We do not currently model what happens when a symbol is
-      // assigned to a struct field, so be conservative here and let the symbol
-      // go. TODO: This could definitely be improved upon.
-      escapes = !isa<VarRegion>(regionLoc->getRegion());
-    }
   }
 
   // If our store can represent the binding and we aren't storing to something

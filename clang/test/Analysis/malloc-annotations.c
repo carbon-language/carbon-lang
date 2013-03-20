@@ -70,6 +70,11 @@ void af1_c() {
   myglobalpointer = my_malloc(12); // no-warning
 }
 
+void af1_d() {
+  struct stuff mystuff;
+  mystuff.somefield = my_malloc(12);
+} // expected-warning{{Memory is never released; potential leak}}
+
 // Test that we can pass out allocated memory via pointer-to-pointer.
 void af1_e(void **pp) {
   *pp = my_malloc(42); // no-warning
@@ -261,15 +266,4 @@ void testMultipleFreeAnnotations() {
   int *q = malloc(12);
   my_freeBoth(p, q);
 }
-
-// ----------------------------------------------------------------------------
-
-// False negatives.
-
-// Pending on removal of the escaping on assignment to struct fields.
-void af1_d() {
-  struct stuff mystuff;
-  mystuff.somefield = my_malloc(12);
-} // missing warning
-
 

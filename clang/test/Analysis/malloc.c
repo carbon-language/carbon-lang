@@ -531,6 +531,12 @@ int *testMalloc3() {
   return y; // no-warning
 }
 
+void testStructLeak() {
+  StructWithPtr St;
+  St.memP = malloc(12);
+  return; // expected-warning {{Memory is never released; potential leak of memory pointed to by 'St.memP'}}
+}
+
 void testElemRegion1() {
   char *x = (void*)malloc(2);
   int *ix = (int*)x;
@@ -929,6 +935,18 @@ int cmpHeapAllocationToUnknown() {
   return 0;
 }
 
+void localArrayTest() {
+  char *p = (char*)malloc(12);
+  char *ArrayL[12];
+  ArrayL[0] = p;
+} // expected-warning {{leak}}
+
+void localStructTest() {
+  StructWithPtr St;
+  StructWithPtr *pSt = &St;
+  pSt->memP = malloc(12);
+} // expected-warning{{Memory is never released; potential leak}}
+
 #ifdef __INTPTR_TYPE__
 // Test double assignment through integers.
 typedef __INTPTR_TYPE__ intptr_t;
@@ -1045,50 +1063,18 @@ void testPassToSystemHeaderFunctionIndirectly() {
   fakeSystemHeaderCallInt(p);
 } // expected-warning {{leak}}
 
-// ----------------------------------------------------------------------------
-// False negatives.
-
-// TODO: This is another false negative.
-void testMallocWithParam(int **p) {
-  *p = (int*) malloc(sizeof(int));
-  *p = 0;
-}
-
-void testMallocWithParam_2(int **p) {
-  *p = (int*) malloc(sizeof(int));
-}
-
-// Pending on removal of the escaping on assignment to struct fields.
-void testStructLeak() {
-  StructWithPtr St;
-  St.memP = malloc(12);
-  return; // missing warning
-}
-
-void localArrayTest() {
-  char *p = (char*)malloc(12);
-  char *ArrayL[12];
-  ArrayL[0] = p;
-} // missing warning
-
-void localStructTest() {
-  StructWithPtr St;
-  StructWithPtr *pSt = &St;
-  pSt->memP = malloc(12);
-} // missing warning
-
 void testPassConstPointerIndirectlyStruct() {
   struct HasPtr hp;
   hp.p = malloc(10);
   memcmp(&hp, &hp, sizeof(hp));
-  return; // missing leak
+  return; // expected-warning {{Memory is never released; potential leak of memory pointed to by 'hp.p'}}
 }
 
 void testPassToSystemHeaderFunctionIndirectlyStruct() {
   SomeStruct ss;
   ss.p = malloc(1);
   fakeSystemHeaderCall(&ss);
-} // missing leak
+} // expected-warning {{Memory is never released; potential leak of memory pointed to by 'ss.p'}}
 
 int *testOffsetAllocate(size_t size) {
   int *memoryBlock = (int *)malloc(size + sizeof(int));
@@ -1201,4 +1187,16 @@ void freeMemory() {
   while (_nVectorSegments) {
     poolFreeC(_vectorSegments[_nVectorSegments++]);
   }
+}
+
+// ----------------------------------------------------------------------------
+// False negatives.
+
+void testMallocWithParam(int **p) {
+  *p = (int*) malloc(sizeof(int));
+  *p = 0; // FIXME: should warn here
+}
+
+void testMallocWithParam_2(int **p) {
+  *p = (int*) malloc(sizeof(int)); // no-warning
 }

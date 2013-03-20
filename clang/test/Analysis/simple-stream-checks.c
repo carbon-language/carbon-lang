@@ -88,4 +88,4 @@ void testPassToSystemHeaderFunctionIndirectly() {
   FileStruct fs;
   fs.p = fopen("myfile.txt", "w");
   fakeSystemHeaderCall(&fs);
-} // expected leak warning
+}  // expected-warning {{Opened file is never closed; potential resource leak}}
