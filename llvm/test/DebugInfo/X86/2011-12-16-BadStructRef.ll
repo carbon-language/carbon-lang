@@ -88,7 +88,7 @@ entry:
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 720913, i32 0, i32 4, metadata !6, metadata !"clang version 3.1 (trunk 146596)", i1 false, metadata !"", i32 0, metadata !1, metadata !3, metadata !27, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 720913, i32 4, metadata !6, metadata !"clang version 3.1 (trunk 146596)", i1 false, metadata !"", i32 0, metadata !1, metadata !3, metadata !27, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5, metadata !9}
 !5 = metadata !{i32 720898, metadata !82, null, metadata !"bar", i32 9, i64 128, i64 64, i32 0, i32 0, null, metadata !7, i32 0, null, null} ; [ DW_TAG_class_type ]

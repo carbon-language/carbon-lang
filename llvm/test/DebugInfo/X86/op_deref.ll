@@ -59,7 +59,7 @@ declare void @llvm.stackrestore(i8*) nounwind
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 0, i32 12, metadata !6, metadata !"clang version 3.2 (trunk 156005) (llvm/trunk 156000)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, i32 12, metadata !6, metadata !"clang version 3.2 (trunk 156005) (llvm/trunk 156000)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"testVLAwithSize", metadata !"testVLAwithSize", metadata !"", metadata !6, i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i32)* @testVLAwithSize, null, null, metadata !1, i32 2} ; [ DW_TAG_subprogram ]

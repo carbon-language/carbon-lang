@@ -188,25 +188,25 @@ namespace llvm {
   public:
     explicit DICompileUnit(const MDNode *N = 0) : DIScope(N) {}
 
-    unsigned getLanguage() const { return getUnsignedField(2); }
+    unsigned getLanguage() const { return getUnsignedField(1); }
     StringRef getFilename() const {
-      return getFieldAs<DIFile>(3).getFilename();
+      return getFieldAs<DIFile>(2).getFilename();
     }
     StringRef getDirectory() const {
-      return getFieldAs<DIFile>(3).getDirectory();
+      return getFieldAs<DIFile>(2).getDirectory();
     }
-    StringRef getProducer() const { return getStringField(4); }
+    StringRef getProducer() const { return getStringField(3); }
 
-    bool isOptimized() const { return getUnsignedField(5) != 0; }
-    StringRef getFlags() const { return getStringField(6); }
-    unsigned getRunTimeVersion() const { return getUnsignedField(7); }
+    bool isOptimized() const { return getUnsignedField(4) != 0; }
+    StringRef getFlags() const { return getStringField(5); }
+    unsigned getRunTimeVersion() const { return getUnsignedField(6); }
 
     DIArray getEnumTypes() const;
     DIArray getRetainedTypes() const;
     DIArray getSubprograms() const;
     DIArray getGlobalVariables() const;
 
-    StringRef getSplitDebugFilename() const { return getStringField(12); }
+    StringRef getSplitDebugFilename() const { return getStringField(11); }
 
     /// Verify - Verify that a compile unit is well formed.
     bool Verify() const;

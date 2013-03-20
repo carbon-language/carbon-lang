@@ -19,7 +19,7 @@
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 0, i32 4, metadata !6, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !1, metadata !3, metadata !""} ; [ DW_TAG_compile_unit ] [/home/blaikie/Development/scratch/simple.cpp] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, i32 4, metadata !6, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !1, metadata !3, metadata !""} ; [ DW_TAG_compile_unit ] [/home/blaikie/Development/scratch/simple.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5, metadata !10}
 !5 = metadata !{i32 786484, i32 0, null, metadata !"x", metadata !"x", metadata !"", metadata !6, i32 4, metadata !7, i32 0, i32 1, i64* @x, null} ; [ DW_TAG_variable ] [x] [line 4] [def]

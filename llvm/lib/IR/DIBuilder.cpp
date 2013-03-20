@@ -93,7 +93,6 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
 
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_compile_unit),
-    Constant::getNullValue(Type::getInt32Ty(VMContext)),
     ConstantInt::get(Type::getInt32Ty(VMContext), Lang),
     createFile(Filename, Directory),
     MDString::get(VMContext, Producer),

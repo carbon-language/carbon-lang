@@ -34,7 +34,7 @@ return:
 !1 = metadata !{i32 786443, metadata !2, i32 2, i32 0} ; [ DW_TAG_lexical_block ]
 !2 = metadata !{i32 786478, i32 0, metadata !3, metadata !"foo", metadata !"foo", metadata !"foo", metadata !3, i32 2, metadata !5, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 false, i32 ()* @foo, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !3 = metadata !{i32 786473, metadata !"a.c", metadata !"/tmp/", metadata !4} ; [ DW_TAG_file_type ]
-!4 = metadata !{i32 786449, i32 0, i32 1, metadata !3, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 false, metadata !"", i32 0, null, null, metadata !16, null, metadata !""} ; [ DW_TAG_compile_unit ]
+!4 = metadata !{i32 786449, i32 1, metadata !3, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 false, metadata !"", i32 0, null, null, metadata !16, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !5 = metadata !{i32 786453, metadata !3, metadata !"", metadata !3, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !6, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !6 = metadata !{metadata !7}
 !7 = metadata !{i32 786468, metadata !3, metadata !"int", metadata !3, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
@@ -42,7 +42,7 @@ return:
 !9 = metadata !{i32 786443, metadata !10, i32 2, i32 0} ; [ DW_TAG_lexical_block ]
 !10 = metadata !{i32 786478, i32 0, metadata !11, metadata !"bar", metadata !"bar", metadata !"bar", metadata !11, i32 2, metadata !13, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 false, i32 ()* @bar, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !11 = metadata !{i32 786473, metadata !"b.c", metadata !"/tmp/", metadata !12} ; [ DW_TAG_file_type ]
-!12 = metadata !{i32 786449, i32 0, i32 1, metadata !11, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 false, metadata !"", i32 0, null, null, metadata !17, null, metadata !""} ; [ DW_TAG_compile_unit ]
+!12 = metadata !{i32 786449, i32 1, metadata !11, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 false, metadata !"", i32 0, null, null, metadata !17, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !13 = metadata !{i32 786453, metadata !11, metadata !"", metadata !11, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !14, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !14 = metadata !{metadata !15}
 !15 = metadata !{i32 786468, metadata !11, metadata !"int", metadata !11, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
