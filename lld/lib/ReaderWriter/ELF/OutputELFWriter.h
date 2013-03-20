@@ -109,7 +109,6 @@ protected:
   LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) _dynamicTable;
   LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>) _dynamicSymbolTable;
   LLD_UNIQUE_BUMP_PTR(StringTable<ELFT>) _dynamicStringTable;
-  LLD_UNIQUE_BUMP_PTR(InterpSection<ELFT>) _interpSection;
   LLD_UNIQUE_BUMP_PTR(HashSection<ELFT>) _hashTable;
   llvm::StringSet<> _soNeeded;
   /// @}
@@ -226,15 +225,11 @@ void OutputELFWriter<ELFT>::createDefaultSections() {
         true));
     _dynamicSymbolTable.reset(new (_alloc) DynamicSymbolTable<ELFT>(
         _targetInfo, ".dynsym", DefaultLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS));
-    _interpSection.reset(new (_alloc) InterpSection<ELFT>(
-        _targetInfo, ".interp", DefaultLayout<ELFT>::ORDER_INTERP,
-        _targetInfo.getInterpreter()));
     _hashTable.reset(new (_alloc) HashSection<ELFT>(
         _targetInfo, ".hash", DefaultLayout<ELFT>::ORDER_HASH));
     _layout->addSection(_dynamicTable.get());
     _layout->addSection(_dynamicStringTable.get());
     _layout->addSection(_dynamicSymbolTable.get());
-    _layout->addSection(_interpSection.get());
     _layout->addSection(_hashTable.get());
     _dynamicSymbolTable->setStringSection(_dynamicStringTable.get());
     if (_layout->hasDynamicRelocationTable())

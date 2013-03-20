@@ -31,9 +31,10 @@ public:
 
 private:
   virtual void addDefaultAtoms();
-  virtual void addFiles(InputFiles&);
+  virtual void addFiles(InputFiles &);
   virtual void finalizeDefaultAtomValues();
-
+  virtual void createDefaultSections();
+  LLD_UNIQUE_BUMP_PTR(InterpSection<ELFT>) _interpSection;
   CRuntimeFile<ELFT> _runtimeFile;
 };
 
@@ -69,10 +70,19 @@ void ExecutableWriter<ELFT>::addFiles(InputFiles &inputFiles) {
   this->_targetHandler.addFiles(inputFiles);
 }
 
+template <class ELFT> void ExecutableWriter<ELFT>::createDefaultSections() {
+  OutputELFWriter<ELFT>::createDefaultSections();
+  if (this->_targetInfo.isDynamic()) {
+    _interpSection.reset(new (this->_alloc) InterpSection<ELFT>(
+        this->_targetInfo, ".interp", DefaultLayout<ELFT>::ORDER_INTERP,
+        this->_targetInfo.getInterpreter()));
+    this->_layout->addSection(_interpSection.get());
+  }
+}
+
 /// Finalize the value of all the absolute symbols that we
 /// created
-template<class ELFT>
-void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
+template <class ELFT> void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
   auto bssStartAtomIter = this->_layout->findAbsoluteAtom("__bss_start");
   auto bssEndAtomIter = this->_layout->findAbsoluteAtom("__bss_end");
   auto underScoreEndAtomIter = this->_layout->findAbsoluteAtom("_end");
