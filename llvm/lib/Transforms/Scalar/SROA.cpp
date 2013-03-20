@@ -75,7 +75,7 @@ ForceSSAUpdater("force-ssa-updater", cl::init(false), cl::Hidden);
 namespace {
 /// \brief Provide a typedef for IRBuilder that drops names in release builds.
 #ifndef NDEBUG
-typedef llvm::IRBuilderTy IRBuilderTy;
+typedef llvm::IRBuilder<> IRBuilderTy;
 #else
 typedef llvm::IRBuilder<false> IRBuilderTy;
 #endif
