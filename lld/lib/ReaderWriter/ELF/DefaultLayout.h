@@ -334,7 +334,10 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
     return ORDER_BSS;
 
   case DefinedAtom::typeGOT:
-    return ORDER_GOT;
+    return llvm::StringSwitch<Reference::Kind>(name)
+      .StartsWith(".got.plt", ORDER_GOT_PLT)
+      .Default(ORDER_GOT);
+
   case DefinedAtom::typeStub:
     return ORDER_PLT;
 
