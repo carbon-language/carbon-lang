@@ -1045,6 +1045,7 @@ public:
     AU.addRequired<ScalarEvolution>();
     AU.addRequired<ScopDetection>();
     AU.addRequired<ScopInfo>();
+    AU.addRequired<LoopInfo>();
 
     AU.addPreserved<Dependences>();
 

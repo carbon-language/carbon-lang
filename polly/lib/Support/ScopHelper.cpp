@@ -66,15 +66,6 @@ Value *polly::getPointerOperand(Instruction &Inst) {
   return 0;
 }
 
-//===----------------------------------------------------------------------===//
-// Helper functions
-
-bool polly::isIndVar(const Instruction *I, const LoopInfo *LI) {
-  Loop *L = LI->getLoopFor(I->getParent());
-
-  return L && I == L->getCanonicalInductionVariable();
-}
-
 bool polly::hasInvokeEdge(const PHINode *PN) {
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i < e; ++i)
     if (InvokeInst *II = dyn_cast<InvokeInst>(PN->getIncomingValue(i)))

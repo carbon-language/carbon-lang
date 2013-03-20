@@ -1017,6 +1017,7 @@ public:
     AU.addRequired<ScopDetection>();
     AU.addRequired<ScopInfo>();
     AU.addRequired<DataLayout>();
+    AU.addRequired<LoopInfo>();
 
     AU.addPreserved<CloogInfo>();
     AU.addPreserved<Dependences>();

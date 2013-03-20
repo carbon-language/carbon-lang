@@ -39,15 +39,6 @@ namespace polly {
 ///         return the loop, otherwise, return null.
 llvm::Loop *castToLoop(const llvm::Region &R, llvm::LoopInfo &LI);
 
-/// @brief Check if the instruction I is the induction variable of a loop.
-///
-/// @param I The instruction to check.
-/// @param LI The LoopInfo analysis.
-///
-/// @return Return true if I is the induction variable of a loop, false
-///         otherwise.
-bool isIndVar(const llvm::Instruction *I, const llvm::LoopInfo *LI);
-
 /// @brief Check if the PHINode has any incoming Invoke edge.
 ///
 /// @param PN The PHINode to check.

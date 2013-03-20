@@ -44,9 +44,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "polly/ScopDetection.h"
-
+#include "polly/CodeGen/BlockGenerators.h"
 #include "polly/LinkAllPasses.h"
+#include "polly/ScopDetection.h"
 #include "polly/Support/ScopHelper.h"
 #include "polly/Support/SCEVValidator.h"
 
@@ -338,10 +338,14 @@ bool ScopDetection::hasScalarDependency(Instruction &Inst,
 
 bool ScopDetection::isValidInstruction(Instruction &Inst,
                                        DetectionContext &Context) const {
-  // Only canonical IVs are allowed.
   if (PHINode *PN = dyn_cast<PHINode>(&Inst))
-    if (!isIndVar(PN, LI))
-      INVALID(IndVar, "Non canonical PHI node: " << Inst);
+    if (!canSynthesize(PN, LI, SE, &Context.CurRegion)) {
+      if (SCEVCodegen)
+        INVALID(IndVar,
+                "SCEV of PHI node refers to SSA names in region: " << Inst);
+      else
+        INVALID(IndVar, "Non canonical PHI node: " << Inst);
+    }
 
   // Scalar dependencies are not allowed.
   if (hasScalarDependency(Inst, Context.CurRegion))

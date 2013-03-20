@@ -26,15 +26,35 @@
 
 namespace llvm {
   class Pass;
+  class Region;
   class ScalarEvolution;
 }
 
 namespace polly {
+extern bool SCEVCodegen;
+
 using namespace llvm;
 class ScopStmt;
 
 typedef DenseMap<const Value*, Value*> ValueMapT;
 typedef std::vector<ValueMapT> VectorValueMapT;
+
+/// @brief Check whether an instruction can be synthesized by the code
+///        generator.
+///
+/// Some instructions will be recalculated only from information that is code
+/// generated from the polyhedral representation. For such instructions we do
+/// not need to ensure that their operands are available during code generation.
+///
+/// @param I The instruction to check.
+/// @param LI The LoopInfo analysis.
+/// @param SE The scalar evolution database.
+/// @param R The region out of which SSA names are parameters.
+/// @return If the instruction I can be regenerated from its
+///         scalar evolution representation, return true,
+///         otherwise return false.
+bool canSynthesize(const llvm::Instruction *I, const llvm::LoopInfo *LI,
+                   llvm::ScalarEvolution *SE, const llvm::Region *R);
 
 /// @brief Generate a new basic block for a polyhedral statement.
 ///
@@ -63,12 +83,6 @@ protected:
   ScalarEvolution &SE;
 
   BlockGenerator(IRBuilder<> &B, ScopStmt &Stmt, Pass *P);
-
-  /// @brief Check if an instruction can be 'SCEV-ignored'
-  ///
-  /// An instruction can be ignored if we can recreate it from its scalar
-  /// evolution expression.
-  bool isSCEVIgnore(const Instruction *Inst);
 
   /// @brief Get the new version of a Value.
   ///

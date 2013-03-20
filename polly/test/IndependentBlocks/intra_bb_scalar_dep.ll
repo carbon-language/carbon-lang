@@ -1,4 +1,5 @@
 ; RUN: opt %loadPolly -basicaa -polly-independent -S < %s | FileCheck %s
+; RUN: opt %loadPolly -basicaa -polly-independent -polly-codegen-scev -S < %s | FileCheck %s
 
 ; void f(long A[], int N, int *init_ptr) {
 ;   long i, j;

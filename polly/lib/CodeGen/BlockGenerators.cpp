@@ -18,6 +18,7 @@
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/Support/GICHelper.h"
 #include "polly/Support/SCEVValidator.h"
+#include "polly/Support/ScopHelper.h"
 
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -36,9 +37,31 @@ Aligned("enable-polly-aligned", cl::desc("Assumed aligned memory accesses."),
         cl::Hidden, cl::value_desc("OpenMP code generation enabled if true"),
         cl::init(false), cl::ZeroOrMore);
 
-static cl::opt<bool>
-SCEVCodegen("polly-codegen-scev", cl::desc("Use SCEV based code generation."),
-            cl::Hidden, cl::init(false), cl::ZeroOrMore);
+static cl::opt<bool, true>
+SCEVCodegenF("polly-codegen-scev", cl::desc("Use SCEV based code generation."),
+             cl::Hidden, cl::location(SCEVCodegen), cl::init(false),
+             cl::ZeroOrMore);
+
+bool polly::SCEVCodegen;
+
+bool polly::canSynthesize(const Instruction *I, const llvm::LoopInfo *LI,
+                          ScalarEvolution *SE, const Region *R) {
+  if (SCEVCodegen) {
+    if (!I || !SE->isSCEVable(I->getType()))
+      return false;
+
+    if (const SCEV *Scev = SE->getSCEV(const_cast<Instruction *>(I)))
+      if (!isa<SCEVCouldNotCompute>(Scev))
+        if (!hasScalarDepsInsideRegion(Scev, R))
+          return true;
+
+    return false;
+  }
+
+  Loop *L = LI->getLoopFor(I->getParent());
+  return L && I == L->getCanonicalInductionVariable();
+}
+
 
 // Helper class to generate memory location.
 namespace {
@@ -146,16 +169,6 @@ BlockGenerator::BlockGenerator(IRBuilder<> &B, ScopStmt &Stmt, Pass *P)
     : Builder(B), Statement(Stmt), P(P), SE(P->getAnalysis<ScalarEvolution>()) {
 }
 
-bool BlockGenerator::isSCEVIgnore(const Instruction *Inst) {
-  if (SCEVCodegen && SE.isSCEVable(Inst->getType()))
-    if (const SCEV *Scev = SE.getSCEV(const_cast<Instruction *>(Inst)))
-      if (!isa<SCEVCouldNotCompute>(Scev))
-        return !hasScalarDepsInsideRegion(Scev,
-                                          &Statement.getParent()->getRegion());
-
-  return false;
-}
-
 Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
                                    ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
   // We assume constants never change.
@@ -193,14 +206,11 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
         return Expanded;
       }
 
-  // 'Old' is within the original SCoP, but was not rewritten.
-  //
-  // Such values appear, if they only calculate information already available in
-  // the polyhedral description (e.g.  an induction variable increment). They
-  // can be safely ignored.
-  if (const Instruction *Inst = dyn_cast<Instruction>(Old))
-    if (Statement.getParent()->getRegion().contains(Inst->getParent()))
-      return NULL;
+  if (const Instruction *Inst = dyn_cast<Instruction>(Old)) {
+    (void) Inst;
+    assert(!Statement.getParent()->getRegion().contains(Inst->getParent()) &&
+           "unexpected scalar dependence in region");
+  }
 
   // Everything else is probably a scop-constant value defined as global,
   // function parameter or an instruction not within the scop.
@@ -330,7 +340,8 @@ void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
   if (Inst->isTerminator())
     return;
 
-  if (isSCEVIgnore(Inst))
+  if (canSynthesize(Inst, &P->getAnalysis<LoopInfo>(), &SE,
+                    &Statement.getParent()->getRegion()))
     return;
 
   if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
@@ -619,7 +630,8 @@ void VectorBlockGenerator::copyInstruction(const Instruction *Inst,
   if (Inst->isTerminator())
     return;
 
-  if (isSCEVIgnore(Inst))
+  if (canSynthesize(Inst, &P->getAnalysis<LoopInfo>(), &SE,
+                    &Statement.getParent()->getRegion()))
     return;
 
   if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {

@@ -14,6 +14,7 @@
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopDetection.h"
 #include "polly/Support/ScopHelper.h"
+#include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/Cloog.h"
 
 #include "llvm/Analysis/LoopInfo.h"
@@ -191,8 +192,7 @@ void IndependentBlocks::moveOperandTree(Instruction *Inst, const Region *R,
         continue;
       }
 
-      // No need to move induction variable.
-      if (isIndVar(Operand, LI)) {
+      if (canSynthesize(Operand, LI, SE, R)) {
         DEBUG(dbgs() << "is IV.\n");
         continue;
       }
@@ -245,7 +245,7 @@ bool IndependentBlocks::createIndependentBlocks(BasicBlock *BB,
                                                 const Region *R) {
   std::vector<Instruction*> WorkList;
   for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE; ++II)
-    if (!isSafeToMove(II) && !isIndVar(II, LI))
+    if (!isSafeToMove(II) && !canSynthesize(II, LI, SE, R))
       WorkList.push_back(II);
 
   ReplacedMapType ReplacedMap;
@@ -307,7 +307,7 @@ bool IndependentBlocks::isEscapeOperand(const Value *Operand,
   if (OpInst == 0) return false;
 
   // Induction variables are valid operands.
-  if (isIndVar(OpInst, LI)) return false;
+  if (canSynthesize(OpInst, LI, SE, R)) return false;
 
   // A value from a different BB is used in the same region.
   return R->contains(OpInst) && (OpInst->getParent() != CurBB);
@@ -356,7 +356,7 @@ bool IndependentBlocks::translateScalarToArray(const Region *R) {
 
 bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
                                                const Region *R) {
-  if (isIndVar(Inst, LI))
+  if (canSynthesize(Inst, LI, SE, R))
     return false;
 
   SmallVector<Instruction*, 4> LoadInside, LoadOutside;
@@ -369,7 +369,7 @@ bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
       if (isEscapeUse(U, R))
         LoadOutside.push_back(U);
 
-      if (isIndVar(U, LI))
+      if (canSynthesize(U, LI, SE, R))
         continue;
 
       if (R->contains(UParent) && isEscapeOperand(Inst, UParent, R))
@@ -402,7 +402,7 @@ bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
 
   while (!LoadInside.empty()) {
     Instruction *U = LoadInside.pop_back_val();
-    assert(!isa<PHINode>(U) && "Can not handle PHI node outside!");
+    assert(!isa<PHINode>(U) && "Can not handle PHI node inside!");
     SE->forgetValue(U);
     LoadInst *L = new LoadInst(Slot, Inst->getName()+".loadarray",
                                false, U);
@@ -435,7 +435,7 @@ bool IndependentBlocks::isIndependentBlock(const Region *R,
        II != IE; ++II) {
     Instruction *Inst = &*II;
 
-    if (isIndVar(Inst, LI))
+    if (canSynthesize(Inst, LI, SE, R))
       continue;
 
     // A value inside the Scop is referenced outside.
