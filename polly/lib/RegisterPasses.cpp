@@ -68,7 +68,8 @@ enum CodeGenChoice {
 #ifdef CLOOG_FOUND
   CODEGEN_CLOOG,
 #endif
-  CODEGEN_ISL
+  CODEGEN_ISL,
+  CODEGEN_NONE
 };
 
 #ifdef CLOOG_FOUND
@@ -86,6 +87,7 @@ CodeGenerator("polly-code-generator",
                          clEnumValN(CODEGEN_CLOOG, "cloog", "CLooG"),
 #endif
                          clEnumValN(CODEGEN_ISL, "isl", "isl code generator"),
+                         clEnumValN(CODEGEN_NONE, "none", "no code generation"),
                          clEnumValEnd),
           cl::Hidden, cl::init(DefaultCodeGen), cl::ZeroOrMore);
 
@@ -278,6 +280,8 @@ static void registerPollyPasses(llvm::PassManagerBase &PM) {
 #endif
   case CODEGEN_ISL:
     PM.add(polly::createIslCodeGenerationPass());
+    break;
+  case CODEGEN_NONE:
     break;
   }
 
