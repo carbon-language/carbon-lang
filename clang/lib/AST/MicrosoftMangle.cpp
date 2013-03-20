@@ -95,7 +95,7 @@ private:
 
   void mangleUnscopedTemplateName(const TemplateDecl *ND);
   void mangleTemplateInstantiationName(const TemplateDecl *TD,
-                      const SmallVectorImpl<TemplateArgumentLoc> &TemplateArgs);
+                                      const TemplateArgumentList &TemplateArgs);
   void mangleObjCMethodName(const ObjCMethodDecl *MD);
   void mangleLocalName(const FunctionDecl *FD);
 
@@ -122,8 +122,8 @@ private:
   void mangleExpression(const Expr *E);
   void mangleThrowSpecification(const FunctionProtoType *T);
 
-  void mangleTemplateArgs(
-                      const SmallVectorImpl<TemplateArgumentLoc> &TemplateArgs);
+  void mangleTemplateArgs(const TemplateDecl *TD,
+                          const TemplateArgumentList &TemplateArgs);
 
 };
 
@@ -367,47 +367,19 @@ void MicrosoftCXXNameMangler::mangleNumber(const llvm::APSInt &Value) {
 }
 
 static const TemplateDecl *
-isTemplate(const NamedDecl *ND,
-           SmallVectorImpl<TemplateArgumentLoc> &TemplateArgs) {
+isTemplate(const NamedDecl *ND, const TemplateArgumentList *&TemplateArgs) {
   // Check if we have a function template.
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)){
     if (const TemplateDecl *TD = FD->getPrimaryTemplate()) {
-      if (FD->getTemplateSpecializationArgsAsWritten()) {
-        const ASTTemplateArgumentListInfo *ArgList =
-          FD->getTemplateSpecializationArgsAsWritten();
-        TemplateArgs.append(ArgList->getTemplateArgs(),
-                            ArgList->getTemplateArgs() +
-                              ArgList->NumTemplateArgs);
-      } else {
-        const TemplateArgumentList *ArgList =
-          FD->getTemplateSpecializationArgs();
-        TemplateArgumentListInfo LI;
-        for (unsigned i = 0, e = ArgList->size(); i != e; ++i)
-          TemplateArgs.push_back(TemplateArgumentLoc(ArgList->get(i),
-                                                     FD->getTypeSourceInfo()));
-      }
+      TemplateArgs = FD->getTemplateSpecializationArgs();
       return TD;
     }
   }
 
   // Check if we have a class template.
   if (const ClassTemplateSpecializationDecl *Spec =
-      dyn_cast<ClassTemplateSpecializationDecl>(ND)) {
-    TypeSourceInfo *TSI = Spec->getTypeAsWritten();
-    if (TSI) {
-      TemplateSpecializationTypeLoc TSTL =
-          TSI->getTypeLoc().castAs<TemplateSpecializationTypeLoc>();
-      TemplateArgumentListInfo LI(TSTL.getLAngleLoc(), TSTL.getRAngleLoc());
-      for (unsigned i = 0, e = TSTL.getNumArgs(); i != e; ++i)
-        TemplateArgs.push_back(TSTL.getArgLoc(i));
-    } else {
-      TemplateArgumentListInfo LI;
-      const TemplateArgumentList &ArgList =
-        Spec->getTemplateArgs();
-      for (unsigned i = 0, e = ArgList.size(); i != e; ++i)
-        TemplateArgs.push_back(TemplateArgumentLoc(ArgList[i],
-                                                   TemplateArgumentLocInfo()));
-    }
+        dyn_cast<ClassTemplateSpecializationDecl>(ND)) {
+    TemplateArgs = &Spec->getTemplateArgs();
     return Spec->getSpecializedTemplate();
   }
 
@@ -421,8 +393,9 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
   //                     ::= <ctor-dtor-name>
   //                     ::= <source-name>
   //                     ::= <template-name>
-  SmallVector<TemplateArgumentLoc, 2> TemplateArgs;
+
   // Check if we have a template.
+  const TemplateArgumentList *TemplateArgs = 0;
   if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) {
     // We have a template.
     // Here comes the tricky thing: if we need to mangle something like
@@ -452,7 +425,7 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       Found = NameBackReferences.find(BackReferenceKey);
     }
     if (!UseNameBackReferences || Found == NameBackReferences.end()) {
-      mangleTemplateInstantiationName(TD, TemplateArgs);
+      mangleTemplateInstantiationName(TD, *TemplateArgs);
       if (UseNameBackReferences && NameBackReferences.size() < 10) {
         size_t Size = NameBackReferences.size();
         NameBackReferences[BackReferenceKey] = Size;
@@ -786,7 +759,7 @@ void MicrosoftCXXNameMangler::mangleLocalName(const FunctionDecl *FD) {
 
 void MicrosoftCXXNameMangler::mangleTemplateInstantiationName(
                                                          const TemplateDecl *TD,
-                     const SmallVectorImpl<TemplateArgumentLoc> &TemplateArgs) {
+                     const TemplateArgumentList &TemplateArgs) {
   // <template-name> ::= <unscoped-template-name> <template-args>
   //                 ::= <substitution>
   // Always start with the unqualified name.
@@ -798,7 +771,7 @@ void MicrosoftCXXNameMangler::mangleTemplateInstantiationName(
   TypeBackReferences.swap(OuterArgsContext);
 
   mangleUnscopedTemplateName(TD);
-  mangleTemplateArgs(TemplateArgs);
+  mangleTemplateArgs(TD, TemplateArgs);
 
   // Restore the previous back reference contexts.
   NameBackReferences.swap(OuterTemplateContext);
@@ -842,18 +815,17 @@ MicrosoftCXXNameMangler::mangleExpression(const Expr *E) {
 }
 
 void
-MicrosoftCXXNameMangler::mangleTemplateArgs(
-                     const SmallVectorImpl<TemplateArgumentLoc> &TemplateArgs) {
+MicrosoftCXXNameMangler::mangleTemplateArgs(const TemplateDecl *TD,
+                                     const TemplateArgumentList &TemplateArgs) {
   // <template-args> ::= {<type> | <integer-literal>}+ @
   unsigned NumTemplateArgs = TemplateArgs.size();
   for (unsigned i = 0; i < NumTemplateArgs; ++i) {
-    const TemplateArgumentLoc &TAL = TemplateArgs[i];
-    const TemplateArgument &TA = TAL.getArgument();
+    const TemplateArgument &TA = TemplateArgs[i];
     switch (TA.getKind()) {
     case TemplateArgument::Null:
       llvm_unreachable("Can't mangle null template arguments!");
     case TemplateArgument::Type:
-      mangleType(TA.getAsType(), TAL.getSourceRange());
+      mangleType(TA.getAsType(), SourceRange());
       break;
     case TemplateArgument::Integral:
       mangleIntegerLiteral(TA.getAsIntegral(),
@@ -870,12 +842,13 @@ MicrosoftCXXNameMangler::mangleTemplateArgs(
       // Issue a diagnostic.
       DiagnosticsEngine &Diags = Context.getDiags();
       unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
-        "cannot mangle this %select{ERROR|ERROR|pointer/reference|nullptr|"
-        "integral|template|template pack expansion|ERROR|parameter pack}0 "
-        "template argument yet");
-      Diags.Report(TAL.getLocation(), DiagID)
+        "cannot mangle template argument %0 of kind %select{ERROR|ERROR|"
+        "pointer/reference|nullptr|integral|template|template pack expansion|"
+        "ERROR|parameter pack}1 yet");
+      Diags.Report(TD->getLocation(), DiagID)
+        << i + 1
         << TA.getKind()
-        << TAL.getSourceRange();
+        << TD->getSourceRange();
     }
     }
   }
