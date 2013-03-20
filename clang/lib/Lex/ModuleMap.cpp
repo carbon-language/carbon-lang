@@ -643,6 +643,7 @@ namespace clang {
   struct MMToken {
     enum TokenKind {
       Comma,
+      ConfigMacros,
       EndOfFile,
       HeaderKeyword,
       Identifier,
@@ -687,10 +688,13 @@ namespace clang {
 
   /// \brief The set of attributes that can be attached to a module.
   struct Attributes {
-    Attributes() : IsSystem() { }
+    Attributes() : IsSystem(), IsExhaustive() { }
 
     /// \brief Whether this is a system module.
     unsigned IsSystem : 1;
+
+    /// \brief Whether this is an exhaustive set of configuration macros.
+    unsigned IsExhaustive : 1;
   };
   
 
@@ -739,6 +743,7 @@ namespace clang {
     void parseUmbrellaDirDecl(SourceLocation UmbrellaLoc);
     void parseExportDecl();
     void parseLinkDecl();
+    void parseConfigMacros();
     void parseInferredModuleDecl(bool Framework, bool Explicit);
     bool parseOptionalAttributes(Attributes &Attrs);
 
@@ -776,11 +781,12 @@ retry:
     Tok.StringData = LToken.getRawIdentifierData();
     Tok.StringLength = LToken.getLength();
     Tok.Kind = llvm::StringSwitch<MMToken::TokenKind>(Tok.getString())
-                 .Case("header", MMToken::HeaderKeyword)
+                 .Case("config_macros", MMToken::ConfigMacros)
                  .Case("exclude", MMToken::ExcludeKeyword)
                  .Case("explicit", MMToken::ExplicitKeyword)
                  .Case("export", MMToken::ExportKeyword)
                  .Case("framework", MMToken::FrameworkKeyword)
+                 .Case("header", MMToken::HeaderKeyword)
                  .Case("link", MMToken::LinkKeyword)
                  .Case("module", MMToken::ModuleKeyword)
                  .Case("requires", MMToken::RequiresKeyword)
@@ -937,7 +943,9 @@ namespace {
     /// \brief An unknown attribute.
     AT_unknown,
     /// \brief The 'system' attribute.
-    AT_system
+    AT_system,
+    /// \brief The 'exhaustive' attribute.
+    AT_exhaustive
   };
 }
 
@@ -1094,7 +1102,11 @@ void ModuleMapParser::parseModuleDecl() {
     case MMToken::RBrace:
       Done = true;
       break;
-        
+
+    case MMToken::ConfigMacros:
+      parseConfigMacros();
+      break;
+
     case MMToken::ExplicitKeyword:
     case MMToken::FrameworkKeyword:
     case MMToken::ModuleKeyword:
@@ -1489,6 +1501,59 @@ void ModuleMapParser::parseLinkDecl() {
                                                             IsFramework));
 }
 
+/// \brief Parse a configuration macro declaration.
+///
+///   module-declaration:
+///     'config_macros' attributes[opt] config-macro-list?
+///
+///   config-macro-list:
+///     identifier (',' identifier)?
+void ModuleMapParser::parseConfigMacros() {
+  assert(Tok.is(MMToken::ConfigMacros));
+  SourceLocation ConfigMacrosLoc = consumeToken();
+
+  // Only top-level modules can have configuration macros.
+  if (ActiveModule->Parent) {
+    Diags.Report(ConfigMacrosLoc, diag::err_mmap_config_macro_submodule);
+  }
+
+  // Parse the optional attributes.
+  Attributes Attrs;
+  parseOptionalAttributes(Attrs);
+  if (Attrs.IsExhaustive && !ActiveModule->Parent) {
+    ActiveModule->ConfigMacrosExhaustive = true;
+  }
+
+  // If we don't have an identifier, we're done.
+  if (!Tok.is(MMToken::Identifier))
+    return;
+
+  // Consume the first identifier.
+  if (!ActiveModule->Parent) {
+    ActiveModule->ConfigMacros.push_back(Tok.getString().str());
+  }
+  consumeToken();
+
+  do {
+    // If there's a comma, consume it.
+    if (!Tok.is(MMToken::Comma))
+      break;
+    consumeToken();
+
+    // We expect to see a macro name here.
+    if (!Tok.is(MMToken::Identifier)) {
+      Diags.Report(Tok.getLocation(), diag::err_mmap_expected_config_macro);
+      break;
+    }
+
+    // Consume the macro name.
+    if (!ActiveModule->Parent) {
+      ActiveModule->ConfigMacros.push_back(Tok.getString().str());
+    }
+    consumeToken();
+  } while (true);
+}
+
 /// \brief Parse an inferred module declaration (wildcard modules).
 ///
 ///   module-declaration:
@@ -1668,6 +1733,7 @@ bool ModuleMapParser::parseOptionalAttributes(Attributes &Attrs) {
     // Decode the attribute name.
     AttributeKind Attribute
       = llvm::StringSwitch<AttributeKind>(Tok.getString())
+          .Case("exhaustive", AT_exhaustive)
           .Case("system", AT_system)
           .Default(AT_unknown);
     switch (Attribute) {
@@ -1678,6 +1744,10 @@ bool ModuleMapParser::parseOptionalAttributes(Attributes &Attrs) {
 
     case AT_system:
       Attrs.IsSystem = true;
+      break;
+
+    case AT_exhaustive:
+      Attrs.IsExhaustive = true;
       break;
     }
     consumeToken();
@@ -1730,6 +1800,7 @@ bool ModuleMapParser::parseModuleMapFile() {
       break;
 
     case MMToken::Comma:
+    case MMToken::ConfigMacros:
     case MMToken::ExcludeKeyword:
     case MMToken::ExportKeyword:
     case MMToken::HeaderKeyword:

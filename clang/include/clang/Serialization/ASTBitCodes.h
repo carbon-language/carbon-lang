@@ -609,7 +609,9 @@ namespace clang {
       /// from this submodule.
       SUBMODULE_EXCLUDED_HEADER = 9,
       /// \brief Specifies a library or framework to link against.
-      SUBMODULE_LINK_LIBRARY = 10
+      SUBMODULE_LINK_LIBRARY = 10,
+      /// \brief Specifies a configuration macro for this module.
+      SUBMODULE_CONFIG_MACRO = 11
     };
 
     /// \brief Record types used within a comments block.

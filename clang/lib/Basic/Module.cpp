@@ -279,7 +279,19 @@ void Module::print(raw_ostream &OS, unsigned Indent) const {
     OS.write_escaped(UmbrellaDir->getName());
     OS << "\"\n";    
   }
-  
+
+  if (!ConfigMacros.empty() || ConfigMacrosExhaustive) {
+    OS.indent(Indent + 2);
+    OS << "config_macros ";
+    if (ConfigMacrosExhaustive)
+      OS << "[exhausive]";
+    for (unsigned I = 0, N = ConfigMacros.size(); I != N; ++I) {
+      if (I)
+        OS << ", ";
+      OS << ConfigMacros[I];
+    }
+  }
+
   for (unsigned I = 0, N = Headers.size(); I != N; ++I) {
     OS.indent(Indent + 2);
     OS << "header \"";

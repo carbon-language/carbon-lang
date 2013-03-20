@@ -905,6 +905,96 @@ static void compileModule(CompilerInstance &ImportingInstance,
   }
 }
 
+/// \brief Diagnose differences between the current definition of the given
+/// configuration macro and the definition provided on the command line.
+static void checkConfigMacro(Preprocessor &PP, StringRef ConfigMacro,
+                             Module *Mod, SourceLocation ImportLoc) {
+  IdentifierInfo *Id = PP.getIdentifierInfo(ConfigMacro);
+  SourceManager &SourceMgr = PP.getSourceManager();
+  
+  // If this identifier has never had a macro definition, then it could
+  // not have changed.
+  if (!Id->hadMacroDefinition())
+    return;
+
+  // If this identifier does not currently have a macro definition,
+  // check whether it had one on the command line.
+  if (!Id->hasMacroDefinition()) {
+    MacroDirective *UndefMD = PP.getMacroDirectiveHistory(Id);
+    for (MacroDirective *MD = UndefMD; MD; MD = MD->getPrevious()) {
+
+      FileID FID = SourceMgr.getFileID(MD->getLocation());
+      if (FID.isInvalid())
+        continue;
+
+      const llvm::MemoryBuffer *Buffer = SourceMgr.getBuffer(FID);
+      if (!Buffer)
+        continue;
+
+      // We only care about the predefines buffer.
+      if (!StringRef(Buffer->getBufferIdentifier()).equals("<built-in>"))
+        continue;
+
+      // This macro was defined on the command line, then #undef'd later.
+      // Complain.
+      PP.Diag(ImportLoc, diag::warn_module_config_macro_undef)
+        << true << ConfigMacro << Mod->getFullModuleName();
+      if (UndefMD->getUndefLoc().isValid())
+        PP.Diag(UndefMD->getUndefLoc(), diag::note_module_def_undef_here)
+          << true;
+      return;
+    }
+
+    // Okay: no definition in the predefines buffer.
+    return;
+  }
+
+  // This identifier has a macro definition. Check whether we had a definition
+  // on the command line.
+  MacroDirective *DefMD = PP.getMacroDirective(Id);
+  MacroDirective *PredefinedMD = 0;
+  for (MacroDirective *MD = DefMD; MD; MD = MD->getPrevious()) {
+    FileID FID = SourceMgr.getFileID(MD->getLocation());
+    if (FID.isInvalid())
+      continue;
+
+    const llvm::MemoryBuffer *Buffer = SourceMgr.getBuffer(FID);
+    if (!Buffer)
+      continue;
+
+    // We only care about the predefines buffer.
+    if (!StringRef(Buffer->getBufferIdentifier()).equals("<built-in>"))
+      continue;
+
+    PredefinedMD = MD;
+    break;
+  }
+
+  // If there was no definition for this macro in the predefines buffer,
+  // complain.
+  if (!PredefinedMD ||
+      (!PredefinedMD->getLocation().isValid() &&
+       PredefinedMD->getUndefLoc().isValid())) {
+    PP.Diag(ImportLoc, diag::warn_module_config_macro_undef)
+      << false << ConfigMacro << Mod->getFullModuleName();
+    PP.Diag(DefMD->getLocation(), diag::note_module_def_undef_here)
+      << false;
+    return;
+  }
+
+  // If the current macro definition is the same as the predefined macro
+  // definition, it's okay.
+  if (DefMD == PredefinedMD ||
+      DefMD->getInfo()->isIdenticalTo(*PredefinedMD->getInfo(), PP))
+    return;
+
+  // The macro definitions differ.
+  PP.Diag(ImportLoc, diag::warn_module_config_macro_undef)
+    << false << ConfigMacro << Mod->getFullModuleName();
+  PP.Diag(DefMD->getLocation(), diag::note_module_def_undef_here)
+    << false;
+}
+
 ModuleLoadResult
 CompilerInstance::loadModule(SourceLocation ImportLoc,
                              ModuleIdPath Path,
@@ -1177,7 +1267,14 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
 
     ModuleManager->makeModuleVisible(Module, Visibility, ImportLoc);
   }
-  
+
+  // Check for any configuration macros that have changed.
+  clang::Module *TopModule = Module->getTopLevelModule();
+  for (unsigned I = 0, N = TopModule->ConfigMacros.size(); I != N; ++I) {
+    checkConfigMacro(getPreprocessor(), TopModule->ConfigMacros[I],
+                     Module, ImportLoc);
+  }
+
   // If this module import was due to an inclusion directive, create an 
   // implicit import declaration to capture it in the AST.
   if (IsInclusionDirective && hasASTContext()) {

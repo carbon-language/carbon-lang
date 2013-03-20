@@ -532,6 +532,10 @@ def err_mmap_export_module_id : Error<
   "expected an exported module name or '*'">;
 def err_mmap_expected_library_name : Error<
   "expected %select{library|framework}0 name as a string">;
+def err_mmap_config_macro_submodule : Error<
+  "configuration macros are only allowed on top-level modules">;
+def err_mmap_expected_config_macro : Error<
+  "expected configuration macro name after ','">;
 def err_mmap_missing_module_unqualified : Error<
   "no module named '%0' visible from '%1'">;
 def err_mmap_missing_module_qualified : Error<

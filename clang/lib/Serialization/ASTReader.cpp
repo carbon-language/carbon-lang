@@ -3718,6 +3718,18 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       CurrentModule->LinkLibraries.push_back(
                                          Module::LinkLibrary(Blob, Record[0]));
       break;
+
+    case SUBMODULE_CONFIG_MACRO:
+      if (First) {
+        Error("missing submodule metadata record at beginning of block");
+        return true;
+      }
+
+      if (!CurrentModule)
+        break;
+
+      CurrentModule->ConfigMacros.push_back(Blob.str());
+      break;
     }
   }
 }
