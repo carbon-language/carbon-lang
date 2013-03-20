@@ -5,6 +5,10 @@ Modules
 .. contents::
    :local:
 
+.. warning::
+   The functionality described on this page is still experimental! Please
+   try it out and send us bug reports!
+
 Introduction
 ============
 Most software is built using a number of software libraries, including libraries supplied by the platform, internal libraries built as part of the software itself to provide structure, and third-party libraries. For each library, one needs to access both its interface (API) and its implementation. In the C family of languages, the interface to a library is accessed by including the appropriate header files(s):
