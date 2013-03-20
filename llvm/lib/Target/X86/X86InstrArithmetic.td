@@ -932,7 +932,8 @@ class BinOpMI8<string mnemonic, X86TypeInfo typeinfo,
                Format f, list<dag> pattern>
   : ITy<0x82, f, typeinfo,
         (outs), (ins typeinfo.MemOperand:$dst, typeinfo.Imm8Operand:$src),
-        mnemonic, "{$src, $dst|$dst, $src}", pattern, IIC_BIN_MEM> {
+        mnemonic, "{$src, $dst|$dst, $src}", pattern, IIC_BIN_MEM>,
+    Sched<[WriteALULd, WriteRMW]> {
   let ImmT = Imm8; // Always 8-bit immediate.
 }
 
@@ -964,7 +965,7 @@ class BinOpAI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
               Register areg, string operands>
   : ITy<opcode, RawFrm, typeinfo,
         (outs), (ins typeinfo.ImmOperand:$src),
-        mnemonic, operands, []> {
+        mnemonic, operands, []>, Sched<[WriteALU]> {
   let ImmT = typeinfo.ImmEncoding;
   let Uses = [areg];
   let Defs = [areg];
@@ -1250,7 +1251,7 @@ let isCompare = 1, Defs = [EFLAGS] in {
   // register class is constrained to GR8_NOREX.
   let isPseudo = 1 in
   def TEST8ri_NOREX : I<0, Pseudo, (outs), (ins GR8_NOREX:$src, i8imm:$mask),
-                        "", [], IIC_BIN_NONMEM>;
+                        "", [], IIC_BIN_NONMEM>, Sched<[WriteALU]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1313,6 +1314,7 @@ let Predicates = [HasBMI2] in {
 // ADCX Instruction
 //
 let hasSideEffects = 0, Predicates = [HasADX], Defs = [EFLAGS] in {
+  let SchedRW = [WriteALU] in {
   def ADCX32rr : I<0xF6, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
              "adcx{l}\t{$src, $dst|$dst, $src}",
              [], IIC_BIN_NONMEM>, T8, OpSize;
@@ -1320,8 +1322,9 @@ let hasSideEffects = 0, Predicates = [HasADX], Defs = [EFLAGS] in {
   def ADCX64rr : I<0xF6, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
              "adcx{q}\t{$src, $dst|$dst, $src}",
              [], IIC_BIN_NONMEM>, T8, OpSize, REX_W, Requires<[In64BitMode]>;
+  } // SchedRW
 
-  let mayLoad = 1 in {
+  let mayLoad = 1, SchedRW = [WriteALULd] in {
   def ADCX32rm : I<0xF6, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
              "adcx{l}\t{$src, $dst|$dst, $src}",
              [], IIC_BIN_MEM>, T8, OpSize;
@@ -1336,6 +1339,7 @@ let hasSideEffects = 0, Predicates = [HasADX], Defs = [EFLAGS] in {
 // ADOX Instruction
 //
 let hasSideEffects = 0, Predicates = [HasADX], Defs = [EFLAGS] in {
+  let SchedRW = [WriteALU] in {
   def ADOX32rr : I<0xF6, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
              "adox{l}\t{$src, $dst|$dst, $src}",
              [], IIC_BIN_NONMEM>, T8XS;
@@ -1343,8 +1347,9 @@ let hasSideEffects = 0, Predicates = [HasADX], Defs = [EFLAGS] in {
   def ADOX64rr : I<0xF6, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
              "adox{q}\t{$src, $dst|$dst, $src}",
              [], IIC_BIN_NONMEM>, T8XS, REX_W, Requires<[In64BitMode]>;
+  } // SchedRW
 
-  let mayLoad = 1 in {
+  let mayLoad = 1, SchedRW = [WriteALULd] in {
   def ADOX32rm : I<0xF6, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
              "adox{l}\t{$src, $dst|$dst, $src}",
              [], IIC_BIN_MEM>, T8XS;
