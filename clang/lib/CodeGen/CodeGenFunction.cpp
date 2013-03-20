@@ -564,6 +564,10 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   SourceRange BodyRange;
   if (Stmt *Body = FD->getBody()) BodyRange = Body->getSourceRange();
 
+  // CalleeWithThisReturn keeps track of the last callee inside this function
+  // that returns 'this'. Before starting the function, we set it to null.
+  CalleeWithThisReturn = 0;
+
   // Emit the standard function prologue.
   StartFunction(GD, ResTy, Fn, FnInfo, Args, BodyRange.getBegin());
 
@@ -615,6 +619,9 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
 
   // Emit the standard function epilogue.
   FinishFunction(BodyRange.getEnd());
+  // CalleeWithThisReturn keeps track of the last callee inside this function
+  // that returns 'this'. After finishing the function, we set it to null.
+  CalleeWithThisReturn = 0;
 
   // If we haven't marked the function nothrow through other means, do
   // a quick pass now to see if we can.
