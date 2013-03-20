@@ -145,6 +145,10 @@ uptr internal_readlink(const char *path, char *buf, uptr bufsize) {
   return (uptr)syscall(__NR_readlink, path, buf, bufsize);
 }
 
+int internal_unlink(const char *path) {
+  return syscall(__NR_unlink, path);
+}
+
 int internal_sched_yield() {
   return syscall(__NR_sched_yield);
 }
