@@ -5,6 +5,7 @@ add_subdirectory(c-arcmt-test)
 add_subdirectory(diagtool)
 add_subdirectory(driver)
 add_subdirectory(clang-check)
+add_subdirectory(clang-format)
 
 # We support checking out the clang-tools-extra repository into the 'extra'
 # subdirectory. It contains tools developed as part of the Clang/LLVM project
