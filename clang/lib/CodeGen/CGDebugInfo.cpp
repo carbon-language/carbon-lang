@@ -2224,13 +2224,18 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
       }
     }
     Name = getFunctionName(FD);
-    // Use mangled name as linkage name for c/c++ functions.
+    // Use mangled name as linkage name for C/C++ functions.
     if (FD->hasPrototype()) {
       LinkageName = CGM.getMangledName(GD);
       Flags |= llvm::DIDescriptor::FlagPrototyped;
     }
+    // No need to replicate the linkage name if it isn't different from the
+    // subprogram name, no need to have it at all unless coverage is enabled or
+    // debug is set to more than just line tables.
     if (LinkageName == Name ||
-        CGM.getCodeGenOpts().getDebugInfo() <= CodeGenOptions::DebugLineTablesOnly)
+        (!CGM.getCodeGenOpts().EmitGcovArcs &&
+         !CGM.getCodeGenOpts().EmitGcovNotes &&
+         CGM.getCodeGenOpts().getDebugInfo() <= CodeGenOptions::DebugLineTablesOnly))
       LinkageName = StringRef();
 
     if (CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo) {

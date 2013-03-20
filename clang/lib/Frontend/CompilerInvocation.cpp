@@ -380,6 +380,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.VerifyModule = !Args.hasArg(OPT_disable_llvm_verifier);
   Opts.SanitizeRecover = !Args.hasArg(OPT_fno_sanitize_recover);
 
+  Opts.DisableGCov = Args.hasArg(OPT_test_coverage);
   Opts.EmitGcovArcs = Args.hasArg(OPT_femit_coverage_data);
   Opts.EmitGcovNotes = Args.hasArg(OPT_femit_coverage_notes);
   if (Opts.EmitGcovArcs || Opts.EmitGcovNotes) {

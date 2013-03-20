@@ -302,7 +302,8 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
   // Set up the per-module pass manager.
   PassManager *MPM = getPerModulePasses(TM);
 
-  if (CodeGenOpts.EmitGcovArcs || CodeGenOpts.EmitGcovNotes) {
+  if (!CodeGenOpts.DisableGCov &&
+      (CodeGenOpts.EmitGcovArcs || CodeGenOpts.EmitGcovNotes)) {
     // Not using 'GCOVOptions::getDefault' allows us to avoid exiting if
     // LLVM's -default-gcov-version flag is set to something invalid.
     GCOVOptions Options;

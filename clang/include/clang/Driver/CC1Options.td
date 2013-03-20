@@ -155,6 +155,8 @@ def coverage_function_names_in_data : Flag<["-"], "coverage-function-names-in-da
   HelpText<"Emit function names in .gcda files.">;
 def coverage_version_EQ : Joined<["-"], "coverage-version=">,
   HelpText<"Four-byte version string for gcov files.">;
+def test_coverage : Flag<["-"], "test-coverage">,
+  HelpText<"Do not generate coverage files or remove coverage changes from IR">;
 def fuse_register_sized_bitfield_access: Flag<["-"], "fuse-register-sized-bitfield-access">,
   HelpText<"Use register sized accesses to bit-fields, when possible.">;
 def relaxed_aliasing : Flag<["-"], "relaxed-aliasing">,
