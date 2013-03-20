@@ -33,7 +33,7 @@ int main()
         double b[] = {10, 14, 16, 17};
         double p[] = {25, 62.5, 12.5, 25};
         const size_t Np = sizeof(p) / sizeof(p[0]);
-        D d1(b, b+Np+1, p);
+        D d1(b, b+Np, p);
         std::ostringstream os;
         os << d1;
         std::istringstream is(os.str());
