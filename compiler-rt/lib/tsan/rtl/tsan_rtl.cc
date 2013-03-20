@@ -52,7 +52,9 @@ static char thread_registry_placeholder[sizeof(ThreadRegistry)];
 static ThreadContextBase *CreateThreadContext(u32 tid) {
   // Map thread trace when context is created.
   MapThreadTrace(GetThreadTrace(tid), TraceSize() * sizeof(Event));
-  void *mem = MmapOrDie(sizeof(ThreadContext), "ThreadContext");
+  MapThreadTrace(GetThreadTraceHeader(tid), sizeof(Trace));
+  new(ThreadTrace(tid)) Trace();
+  void *mem = internal_alloc(MBlockThreadContex, sizeof(ThreadContext));
   return new(mem) ThreadContext(tid);
 }
 
@@ -285,13 +287,18 @@ u32 CurrentStackId(ThreadState *thr, uptr pc) {
 void TraceSwitch(ThreadState *thr) {
   thr->nomalloc++;
   ScopedInRtl in_rtl;
-  Lock l(&thr->trace.mtx);
+  Trace *thr_trace = ThreadTrace(thr->tid);
+  Lock l(&thr_trace->mtx);
   unsigned trace = (thr->fast_state.epoch() / kTracePartSize) % TraceParts();
-  TraceHeader *hdr = &thr->trace.headers[trace];
+  TraceHeader *hdr = &thr_trace->headers[trace];
   hdr->epoch0 = thr->fast_state.epoch();
   hdr->stack0.ObtainCurrent(thr, 0);
   hdr->mset0 = thr->mset;
   thr->nomalloc--;
+}
+
+Trace *ThreadTrace(int tid) {
+  return (Trace*)GetThreadTraceHeader(tid);
 }
 
 uptr TraceTopPC(ThreadState *thr) {
@@ -377,7 +384,15 @@ void MemoryAccessImpl(ThreadState *thr, uptr addr,
   // 'candidates' with 'same' or 'replace', but I think
   // it's just not worth it (performance- and complexity-wise).
 
-  Shadow old(0);
+  Shadow old(LoadShadow(shadow_mem));
+Printf("MOP %p -> %p %llu\n", addr, shadow_mem, old.raw());
+  if (old.raw() == kShadowRodata) {
+    // Access to .rodata section, no races here.
+    // Measurements show that it can be 10-20% of all memory accesses.
+    StatInc(thr, StatMopRodata);
+    return;
+  }
+
   if (kShadowCnt == 1) {
     int idx = 0;
 #include "tsan_update_shadow_word_inl.h"

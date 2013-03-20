@@ -137,6 +137,8 @@ Allocator *allocator();
 void TsanCheckFailed(const char *file, int line, const char *cond,
                      u64 v1, u64 v2);
 
+const u64 kShadowRodata = (u64)-1;  // .rodata shadow marker
+
 // FastState (from most significant bit):
 //   ignore          : 1
 //   tid             : kTidBits
@@ -404,7 +406,6 @@ struct ThreadState {
   uptr *shadow_stack_pos;
   u64 *racy_shadow_addr;
   u64 racy_state[2];
-  Trace trace;
 #ifndef TSAN_GO
   // C/C++ uses embed shadow stack of fixed size.
   uptr shadow_stack[kShadowStackSize];
@@ -458,11 +459,6 @@ INLINE ThreadState *cur_thread() {
 }
 #endif
 
-// An info about a thread that is hold for some time after its termination.
-struct ThreadDeadInfo {
-  Trace trace;
-};
-
 class ThreadContext : public ThreadContextBase {
  public:
   explicit ThreadContext(int tid);
@@ -479,7 +475,6 @@ class ThreadContext : public ThreadContextBase {
   // the event is from a dead thread that shared tid with this thread.
   u64 epoch0;
   u64 epoch1;
-  ThreadDeadInfo *dead_info;
 
   // Override superclass callbacks.
   void OnDead();
@@ -719,6 +714,7 @@ void TraceSwitch(ThreadState *thr);
 uptr TraceTopPC(ThreadState *thr);
 uptr TraceSize();
 uptr TraceParts();
+Trace *ThreadTrace(int tid);
 
 extern "C" void __tsan_trace_switch();
 void ALWAYS_INLINE INLINE TraceAddEvent(ThreadState *thr, FastState fs,

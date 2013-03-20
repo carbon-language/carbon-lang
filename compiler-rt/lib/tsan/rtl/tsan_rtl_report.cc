@@ -379,18 +379,11 @@ void RestoreStack(int tid, const u64 epoch, StackTrace *stk, MutexSet *mset) {
       ctx->thread_registry->GetThreadLocked(tid));
   if (tctx == 0)
     return;
-  Trace* trace = 0;
-  if (tctx->status == ThreadStatusRunning) {
-    CHECK(tctx->thr);
-    trace = &tctx->thr->trace;
-  } else if (tctx->status == ThreadStatusFinished
-      || tctx->status == ThreadStatusDead) {
-    if (tctx->dead_info == 0)
-      return;
-    trace = &tctx->dead_info->trace;
-  } else {
+  if (tctx->status != ThreadStatusRunning
+      && tctx->status != ThreadStatusFinished
+      && tctx->status != ThreadStatusDead)
     return;
-  }
+  Trace* trace = ThreadTrace(tctx->tid);
   Lock l(&trace->mtx);
   const int partidx = (epoch / kTracePartSize) % TraceParts();
   TraceHeader* hdr = &trace->headers[partidx];

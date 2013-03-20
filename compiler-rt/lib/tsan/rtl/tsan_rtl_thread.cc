@@ -27,8 +27,7 @@ ThreadContext::ThreadContext(int tid)
   , thr()
   , sync()
   , epoch0()
-  , epoch1()
-  , dead_info() {
+  , epoch1() {
 }
 
 #ifndef TSAN_GO
@@ -75,8 +74,8 @@ void ThreadContext::OnCreated(void *arg) {
 
 void ThreadContext::OnReset() {
   sync.Reset();
-  if (dead_info)
-    DestroyAndFree(dead_info);
+  FlushUnneededShadowMemory(GetThreadTrace(tid), TraceSize() * sizeof(Event));
+  //!!! FlushUnneededShadowMemory(GetThreadTraceHeader(tid), sizeof(Trace));
 }
 
 struct OnStartedArgs {
@@ -113,8 +112,10 @@ void ThreadContext::OnStarted(void *arg) {
   thr->clock.acquire(&sync);
   thr->fast_state.SetHistorySize(flags()->history_size);
   const uptr trace = (epoch0 / kTracePartSize) % TraceParts();
-  thr->trace.headers[trace].epoch0 = epoch0;
+  Trace *thr_trace = ThreadTrace(thr->tid);
+  thr_trace->headers[trace].epoch0 = epoch0;
   StatInc(thr, StatSyncAcquire);
+  sync.Reset();
   DPrintf("#%d: ThreadStart epoch=%zu stk_addr=%zx stk_size=%zx "
           "tls_addr=%zx tls_size=%zx\n",
           tid, (uptr)epoch0, args->stk_addr, args->stk_size,
@@ -131,14 +132,6 @@ void ThreadContext::OnFinished() {
     thr->fast_synch_epoch = thr->fast_state.epoch();
     thr->clock.release(&sync);
     StatInc(thr, StatSyncRelease);
-  }
-  // Save from info about the thread.
-  dead_info = new(internal_alloc(MBlockDeadInfo, sizeof(ThreadDeadInfo)))
-      ThreadDeadInfo();
-  for (uptr i = 0; i < TraceParts(); i++) {
-    dead_info->trace.headers[i].epoch0 = thr->trace.headers[i].epoch0;
-    dead_info->trace.headers[i].stack0.CopyFrom(
-        thr->trace.headers[i].stack0);
   }
   epoch1 = thr->fast_state.epoch();
 
