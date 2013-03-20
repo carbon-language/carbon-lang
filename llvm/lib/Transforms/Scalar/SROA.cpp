@@ -73,6 +73,15 @@ static cl::opt<bool>
 ForceSSAUpdater("force-ssa-updater", cl::init(false), cl::Hidden);
 
 namespace {
+/// \brief Provide a typedef for IRBuilder that drops names in release builds.
+#ifndef NDEBUG
+typedef llvm::IRBuilderTy IRBuilderTy;
+#else
+typedef llvm::IRBuilder<false> IRBuilderTy;
+#endif
+}
+
+namespace {
 /// \brief A common base class for representing a half-open byte range.
 struct ByteRange {
   /// \brief The beginning offset of the range.
@@ -1510,7 +1519,7 @@ private:
     assert(!Loads.empty());
 
     Type *LoadTy = cast<PointerType>(PN.getType())->getElementType();
-    IRBuilder<> PHIBuilder(&PN);
+    IRBuilderTy PHIBuilder(&PN);
     PHINode *NewPN = PHIBuilder.CreatePHI(LoadTy, PN.getNumIncomingValues(),
                                           PN.getName() + ".sroa.speculated");
 
@@ -1533,7 +1542,7 @@ private:
       TerminatorInst *TI = Pred->getTerminator();
       Use *InUse = &PN.getOperandUse(PN.getOperandNumForIncomingValue(Idx));
       Value *InVal = PN.getIncomingValue(Idx);
-      IRBuilder<> PredBuilder(TI);
+      IRBuilderTy PredBuilder(TI);
 
       LoadInst *Load
         = PredBuilder.CreateLoad(InVal, (PN.getName() + ".sroa.speculate.load." +
@@ -1614,7 +1623,7 @@ private:
     if (!isSafeSelectToSpeculate(SI, Loads))
       return;
 
-    IRBuilder<> IRB(&SI);
+    IRBuilderTy IRB(&SI);
     Use *Ops[2] = { &SI.getOperandUse(1), &SI.getOperandUse(2) };
     AllocaPartitioning::iterator PIs[2];
     PartitionUse PUs[2];
@@ -1678,7 +1687,7 @@ private:
 ///
 /// This will return the BasePtr if that is valid, or build a new GEP
 /// instruction using the IRBuilder if GEP-ing is needed.
-static Value *buildGEP(IRBuilder<> &IRB, Value *BasePtr,
+static Value *buildGEP(IRBuilderTy &IRB, Value *BasePtr,
                        SmallVectorImpl<Value *> &Indices,
                        const Twine &Prefix) {
   if (Indices.empty())
@@ -1701,7 +1710,7 @@ static Value *buildGEP(IRBuilder<> &IRB, Value *BasePtr,
 /// TargetTy. If we can't find one with the same type, we at least try to use
 /// one with the same size. If none of that works, we just produce the GEP as
 /// indicated by Indices to have the correct offset.
-static Value *getNaturalGEPWithType(IRBuilder<> &IRB, const DataLayout &TD,
+static Value *getNaturalGEPWithType(IRBuilderTy &IRB, const DataLayout &TD,
                                     Value *BasePtr, Type *Ty, Type *TargetTy,
                                     SmallVectorImpl<Value *> &Indices,
                                     const Twine &Prefix) {
@@ -1740,7 +1749,7 @@ static Value *getNaturalGEPWithType(IRBuilder<> &IRB, const DataLayout &TD,
 ///
 /// This is the recursive step for getNaturalGEPWithOffset that walks down the
 /// element types adding appropriate indices for the GEP.
-static Value *getNaturalGEPRecursively(IRBuilder<> &IRB, const DataLayout &TD,
+static Value *getNaturalGEPRecursively(IRBuilderTy &IRB, const DataLayout &TD,
                                        Value *Ptr, Type *Ty, APInt &Offset,
                                        Type *TargetTy,
                                        SmallVectorImpl<Value *> &Indices,
@@ -1811,7 +1820,7 @@ static Value *getNaturalGEPRecursively(IRBuilder<> &IRB, const DataLayout &TD,
 /// Indices, and setting Ty to the result subtype.
 ///
 /// If no natural GEP can be constructed, this function returns null.
-static Value *getNaturalGEPWithOffset(IRBuilder<> &IRB, const DataLayout &TD,
+static Value *getNaturalGEPWithOffset(IRBuilderTy &IRB, const DataLayout &TD,
                                       Value *Ptr, APInt Offset, Type *TargetTy,
                                       SmallVectorImpl<Value *> &Indices,
                                       const Twine &Prefix) {
@@ -1851,7 +1860,7 @@ static Value *getNaturalGEPWithOffset(IRBuilder<> &IRB, const DataLayout &TD,
 /// properties. The algorithm tries to fold as many constant indices into
 /// a single GEP as possible, thus making each GEP more independent of the
 /// surrounding code.
-static Value *getAdjustedPtr(IRBuilder<> &IRB, const DataLayout &TD,
+static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &TD,
                              Value *Ptr, APInt Offset, Type *PointerTy,
                              const Twine &Prefix) {
   // Even though we don't look through PHI nodes, we could be called on an
@@ -1974,7 +1983,7 @@ static bool canConvertValue(const DataLayout &DL, Type *OldTy, Type *NewTy) {
 /// This will try various different casting techniques, such as bitcasts,
 /// inttoptr, and ptrtoint casts. Use the \c canConvertValue predicate to test
 /// two types for viability with this routine.
-static Value *convertValue(const DataLayout &DL, IRBuilder<> &IRB, Value *V,
+static Value *convertValue(const DataLayout &DL, IRBuilderTy &IRB, Value *V,
                            Type *Ty) {
   assert(canConvertValue(DL, V->getType(), Ty) &&
          "Value not convertable to type");
@@ -2172,7 +2181,7 @@ static bool isIntegerWideningViable(const DataLayout &TD,
   return WholeAllocaOp;
 }
 
-static Value *extractInteger(const DataLayout &DL, IRBuilder<> &IRB, Value *V,
+static Value *extractInteger(const DataLayout &DL, IRBuilderTy &IRB, Value *V,
                              IntegerType *Ty, uint64_t Offset,
                              const Twine &Name) {
   DEBUG(dbgs() << "       start: " << *V << "\n");
@@ -2195,7 +2204,7 @@ static Value *extractInteger(const DataLayout &DL, IRBuilder<> &IRB, Value *V,
   return V;
 }
 
-static Value *insertInteger(const DataLayout &DL, IRBuilder<> &IRB, Value *Old,
+static Value *insertInteger(const DataLayout &DL, IRBuilderTy &IRB, Value *Old,
                             Value *V, uint64_t Offset, const Twine &Name) {
   IntegerType *IntTy = cast<IntegerType>(Old->getType());
   IntegerType *Ty = cast<IntegerType>(V->getType());
@@ -2226,7 +2235,7 @@ static Value *insertInteger(const DataLayout &DL, IRBuilder<> &IRB, Value *Old,
   return V;
 }
 
-static Value *extractVector(IRBuilder<> &IRB, Value *V,
+static Value *extractVector(IRBuilderTy &IRB, Value *V,
                             unsigned BeginIndex, unsigned EndIndex,
                             const Twine &Name) {
   VectorType *VecTy = cast<VectorType>(V->getType());
@@ -2254,7 +2263,7 @@ static Value *extractVector(IRBuilder<> &IRB, Value *V,
   return V;
 }
 
-static Value *insertVector(IRBuilder<> &IRB, Value *Old, Value *V,
+static Value *insertVector(IRBuilderTy &IRB, Value *Old, Value *V,
                            unsigned BeginIndex, const Twine &Name) {
   VectorType *VecTy = cast<VectorType>(Old->getType());
   assert(VecTy && "Can only insert a vector into a vector");
@@ -2418,7 +2427,7 @@ private:
     return NamePrefix + Suffix;
   }
 
-  Value *getAdjustedAllocaPtr(IRBuilder<> &IRB, Type *PointerTy) {
+  Value *getAdjustedAllocaPtr(IRBuilderTy &IRB, Type *PointerTy) {
     assert(BeginOffset >= NewAllocaBeginOffset);
     APInt Offset(TD.getPointerSizeInBits(), BeginOffset - NewAllocaBeginOffset);
     return getAdjustedPtr(IRB, TD, &NewAI, Offset, PointerTy, getName(""));
@@ -2471,7 +2480,7 @@ private:
       Pass.DeadInsts.insert(I);
   }
 
-  Value *rewriteVectorizedLoadInst(IRBuilder<> &IRB) {
+  Value *rewriteVectorizedLoadInst(IRBuilderTy &IRB) {
     unsigned BeginIndex = getIndex(BeginOffset);
     unsigned EndIndex = getIndex(EndOffset);
     assert(EndIndex > BeginIndex && "Empty vector!");
@@ -2481,7 +2490,7 @@ private:
     return extractVector(IRB, V, BeginIndex, EndIndex, getName(".vec"));
   }
 
-  Value *rewriteIntegerLoad(IRBuilder<> &IRB, LoadInst &LI) {
+  Value *rewriteIntegerLoad(IRBuilderTy &IRB, LoadInst &LI) {
     assert(IntTy && "We cannot insert an integer to the alloca");
     assert(!LI.isVolatile());
     Value *V = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
@@ -2502,7 +2511,7 @@ private:
 
     uint64_t Size = EndOffset - BeginOffset;
 
-    IRBuilder<> IRB(&LI);
+    IRBuilderTy IRB(&LI);
     Type *TargetTy = IsSplit ? Type::getIntNTy(LI.getContext(), Size * 8)
                              : LI.getType();
     bool IsPtrAdjusted = false;
@@ -2556,7 +2565,7 @@ private:
     return !LI.isVolatile() && !IsPtrAdjusted;
   }
 
-  bool rewriteVectorizedStoreInst(IRBuilder<> &IRB, Value *V,
+  bool rewriteVectorizedStoreInst(IRBuilderTy &IRB, Value *V,
                                   StoreInst &SI, Value *OldOp) {
     unsigned BeginIndex = getIndex(BeginOffset);
     unsigned EndIndex = getIndex(EndOffset);
@@ -2582,7 +2591,7 @@ private:
     return true;
   }
 
-  bool rewriteIntegerStore(IRBuilder<> &IRB, Value *V, StoreInst &SI) {
+  bool rewriteIntegerStore(IRBuilderTy &IRB, Value *V, StoreInst &SI) {
     assert(IntTy && "We cannot extract an integer from the alloca");
     assert(!SI.isVolatile());
     if (TD.getTypeSizeInBits(V->getType()) != IntTy->getBitWidth()) {
@@ -2606,7 +2615,7 @@ private:
     DEBUG(dbgs() << "    original: " << SI << "\n");
     Value *OldOp = SI.getOperand(1);
     assert(OldOp == OldPtr);
-    IRBuilder<> IRB(&SI);
+    IRBuilderTy IRB(&SI);
 
     Value *V = SI.getValueOperand();
 
@@ -2664,7 +2673,7 @@ private:
   ///
   /// \param V The i8 value to splat.
   /// \param Size The number of bytes in the output (assuming i8 is one byte)
-  Value *getIntegerSplat(IRBuilder<> &IRB, Value *V, unsigned Size) {
+  Value *getIntegerSplat(IRBuilderTy &IRB, Value *V, unsigned Size) {
     assert(Size > 0 && "Expected a positive number of bytes.");
     IntegerType *VTy = cast<IntegerType>(V->getType());
     assert(VTy->getBitWidth() == 8 && "Expected an i8 value for the byte");
@@ -2683,7 +2692,7 @@ private:
   }
 
   /// \brief Compute a vector splat for a given element value.
-  Value *getVectorSplat(IRBuilder<> &IRB, Value *V, unsigned NumElements) {
+  Value *getVectorSplat(IRBuilderTy &IRB, Value *V, unsigned NumElements) {
     V = IRB.CreateVectorSplat(NumElements, V, NamePrefix);
     DEBUG(dbgs() << "       splat: " << *V << "\n");
     return V;
@@ -2691,7 +2700,7 @@ private:
 
   bool visitMemSetInst(MemSetInst &II) {
     DEBUG(dbgs() << "    original: " << II << "\n");
-    IRBuilder<> IRB(&II);
+    IRBuilderTy IRB(&II);
     assert(II.getRawDest() == OldPtr);
 
     // If the memset has a variable size, it cannot be split, just adjust the
@@ -2803,7 +2812,7 @@ private:
     // them into two categories: split intrinsics and unsplit intrinsics.
 
     DEBUG(dbgs() << "    original: " << II << "\n");
-    IRBuilder<> IRB(&II);
+    IRBuilderTy IRB(&II);
 
     assert(II.getRawSource() == OldPtr || II.getRawDest() == OldPtr);
     bool IsDest = II.getRawDest() == OldPtr;
@@ -2979,7 +2988,7 @@ private:
     assert(II.getIntrinsicID() == Intrinsic::lifetime_start ||
            II.getIntrinsicID() == Intrinsic::lifetime_end);
     DEBUG(dbgs() << "    original: " << II << "\n");
-    IRBuilder<> IRB(&II);
+    IRBuilderTy IRB(&II);
     assert(II.getArgOperand(1) == OldPtr);
 
     // Record this instruction for deletion.
@@ -3007,7 +3016,7 @@ private:
     // as local as possible to the PHI. To do that, we re-use the location of
     // the old pointer, which necessarily must be in the right position to
     // dominate the PHI.
-    IRBuilder<> PtrBuilder(cast<Instruction>(OldPtr));
+    IRBuilderTy PtrBuilder(cast<Instruction>(OldPtr));
 
     Value *NewPtr = getAdjustedAllocaPtr(PtrBuilder, OldPtr->getType());
     // Replace the operands which were using the old pointer.
@@ -3020,7 +3029,7 @@ private:
 
   bool visitSelectInst(SelectInst &SI) {
     DEBUG(dbgs() << "    original: " << SI << "\n");
-    IRBuilder<> IRB(&SI);
+    IRBuilderTy IRB(&SI);
 
     // Find the operand we need to rewrite here.
     bool IsTrueVal = SI.getTrueValue() == OldPtr;
@@ -3095,7 +3104,7 @@ private:
   class OpSplitter {
   protected:
     /// The builder used to form new instructions.
-    IRBuilder<> IRB;
+    IRBuilderTy IRB;
     /// The indices which to be used with insert- or extractvalue to select the
     /// appropriate value within the aggregate.
     SmallVector<unsigned, 4> Indices;
