@@ -72,3 +72,57 @@ define i32 @fmul(i32 %arg) {
   %B = fmul <8 x float> undef, undef
   ret i32 undef
 }
+
+; AVX: shift
+; AVX2: shift
+define void @shift() {
+  ; AVX: cost of 2 {{.*}} shl
+  ; AVX2: cost of 1 {{.*}} shl
+  %A0 = shl <4 x i32> undef, undef
+  ; AVX: cost of 2 {{.*}} shl
+  ; AVX2: cost of 1 {{.*}} shl
+  %A1 = shl <2 x i64> undef, undef
+
+  ; AVX: cost of 2 {{.*}} lshr
+  ; AVX2: cost of 1 {{.*}} lshr
+  %B0 = lshr <4 x i32> undef, undef
+  ; AVX: cost of 2 {{.*}} lshr
+  ; AVX2: cost of 1 {{.*}} lshr
+  %B1 = lshr <2 x i64> undef, undef
+
+  ; AVX: cost of 2 {{.*}} ashr
+  ; AVX2: cost of 1 {{.*}} ashr
+  %C0 = ashr <4 x i32> undef, undef
+  ; AVX: cost of 6 {{.*}} ashr
+  ; AVX2: cost of 6 {{.*}} ashr
+  %C1 = ashr <2 x i64> undef, undef
+
+  ret void
+}
+
+; AVX: avx2shift
+; AVX2: avx2shift
+define void @avx2shift() {
+  ; AVX: cost of 2 {{.*}} shl
+  ; AVX2: cost of 1 {{.*}} shl
+  %A0 = shl <8 x i32> undef, undef
+  ; AVX: cost of 2 {{.*}} shl
+  ; AVX2: cost of 1 {{.*}} shl
+  %A1 = shl <4 x i64> undef, undef
+
+  ; AVX: cost of 2 {{.*}} lshr
+  ; AVX2: cost of 1 {{.*}} lshr
+  %B0 = lshr <8 x i32> undef, undef
+  ; AVX: cost of 2 {{.*}} lshr
+  ; AVX2: cost of 1 {{.*}} lshr
+  %B1 = lshr <4 x i64> undef, undef
+
+  ; AVX: cost of 2 {{.*}} ashr
+  ; AVX2: cost of 1 {{.*}} ashr
+  %C0 = ashr <8 x i32> undef, undef
+  ; AVX: cost of 12 {{.*}} ashr
+  ; AVX2: cost of 12 {{.*}} ashr
+  %C1 = ashr <4 x i64> undef, undef
+
+  ret void
+}
