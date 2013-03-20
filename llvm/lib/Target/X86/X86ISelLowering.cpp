@@ -1053,23 +1053,16 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SRA,               MVT::v8i16, Custom);
     setOperationAction(ISD::SRA,               MVT::v16i8, Custom);
 
-    if (Subtarget->hasInt256()) {
-      setOperationAction(ISD::SRL,             MVT::v2i64, Legal);
-      setOperationAction(ISD::SRL,             MVT::v4i32, Legal);
+    // In the customized shift lowering, the legal cases in AVX2 will be
+    // recognized.
+    setOperationAction(ISD::SRL,               MVT::v2i64, Custom);
+    setOperationAction(ISD::SRL,               MVT::v4i32, Custom);
 
-      setOperationAction(ISD::SHL,             MVT::v2i64, Legal);
-      setOperationAction(ISD::SHL,             MVT::v4i32, Legal);
+    setOperationAction(ISD::SHL,               MVT::v2i64, Custom);
+    setOperationAction(ISD::SHL,               MVT::v4i32, Custom);
 
-      setOperationAction(ISD::SRA,             MVT::v4i32, Legal);
-    } else {
-      setOperationAction(ISD::SRL,             MVT::v2i64, Custom);
-      setOperationAction(ISD::SRL,             MVT::v4i32, Custom);
+    setOperationAction(ISD::SRA,               MVT::v4i32, Custom);
 
-      setOperationAction(ISD::SHL,             MVT::v2i64, Custom);
-      setOperationAction(ISD::SHL,             MVT::v4i32, Custom);
-
-      setOperationAction(ISD::SRA,             MVT::v4i32, Custom);
-    }
     setOperationAction(ISD::SDIV,              MVT::v8i16, Custom);
     setOperationAction(ISD::SDIV,              MVT::v4i32, Custom);
   }
@@ -1186,14 +1179,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
       setOperationAction(ISD::VSELECT,         MVT::v32i8, Legal);
 
-      setOperationAction(ISD::SRL,             MVT::v4i64, Legal);
-      setOperationAction(ISD::SRL,             MVT::v8i32, Legal);
-
-      setOperationAction(ISD::SHL,             MVT::v4i64, Legal);
-      setOperationAction(ISD::SHL,             MVT::v8i32, Legal);
-
-      setOperationAction(ISD::SRA,             MVT::v8i32, Legal);
-
       setOperationAction(ISD::SDIV,            MVT::v8i32, Custom);
     } else {
       setOperationAction(ISD::ADD,             MVT::v4i64, Custom);
@@ -1210,15 +1195,17 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::MUL,             MVT::v8i32, Custom);
       setOperationAction(ISD::MUL,             MVT::v16i16, Custom);
       // Don't lower v32i8 because there is no 128-bit byte mul
-
-      setOperationAction(ISD::SRL,             MVT::v4i64, Custom);
-      setOperationAction(ISD::SRL,             MVT::v8i32, Custom);
-
-      setOperationAction(ISD::SHL,             MVT::v4i64, Custom);
-      setOperationAction(ISD::SHL,             MVT::v8i32, Custom);
-
-      setOperationAction(ISD::SRA,             MVT::v8i32, Custom);
     }
+
+    // In the customized shift lowering, the legal cases in AVX2 will be
+    // recognized.
+    setOperationAction(ISD::SRL,               MVT::v4i64, Custom);
+    setOperationAction(ISD::SRL,               MVT::v8i32, Custom);
+
+    setOperationAction(ISD::SHL,               MVT::v4i64, Custom);
+    setOperationAction(ISD::SHL,               MVT::v8i32, Custom);
+
+    setOperationAction(ISD::SRA,               MVT::v8i32, Custom);
 
     // Custom lower several nodes for 256-bit types.
     for (int i = MVT::FIRST_VECTOR_VALUETYPE;
@@ -11625,6 +11612,20 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
   V = LowerScalarImmediateShift(Op, DAG, Subtarget);
   if (V.getNode())
     return V;
+
+  // AVX2 has VPSLLV/VPSRAV/VPSRLV.
+  if (Subtarget->hasInt256()) {
+    if (Op.getOpcode() == ISD::SRL &&
+        (VT == MVT::v2i64 || VT == MVT::v4i32 ||
+         VT == MVT::v4i64 || VT == MVT::v8i32))
+      return Op;
+    if (Op.getOpcode() == ISD::SHL &&
+        (VT == MVT::v2i64 || VT == MVT::v4i32 ||
+         VT == MVT::v4i64 || VT == MVT::v8i32))
+      return Op;
+    if (Op.getOpcode() == ISD::SRA && (VT == MVT::v4i32 || VT == MVT::v8i32))
+      return Op;
+  }
 
   // Lower SHL with variable shift amount.
   if (VT == MVT::v4i32 && Op->getOpcode() == ISD::SHL) {
