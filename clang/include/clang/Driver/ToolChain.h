@@ -13,6 +13,7 @@
 #include "clang/Driver/Action.h"
 #include "clang/Driver/Types.h"
 #include "clang/Driver/Util.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/Path.h"
@@ -58,12 +59,20 @@ private:
   /// programs.
   path_list ProgramPaths;
 
-  mutable llvm::DenseMap<unsigned, Tool*> Tools;
+  mutable OwningPtr<Tool> Clang;
+  mutable OwningPtr<Tool> Assemble;
+  mutable OwningPtr<Tool> Link;
+  Tool *getClang() const;
+  Tool *getAssemble() const;
+  Tool *getLink() const;
+  Tool *getClangAs() const;
 
 protected:
   ToolChain(const Driver &D, const llvm::Triple &T, const ArgList &Args);
 
-  virtual Tool *constructTool(Action::ActionClass AC) const;
+  virtual Tool *buildAssembler() const;
+  virtual Tool *buildLinker() const;
+  virtual Tool *getTool(Action::ActionClass AC) const;
 
   /// \name Utilities for implementing subclasses.
   ///@{

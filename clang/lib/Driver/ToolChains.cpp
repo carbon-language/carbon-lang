@@ -172,23 +172,32 @@ std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args,
 
 void Generic_ELF::anchor() {}
 
-Tool *Darwin::constructTool(Action::ActionClass AC) const {
+Tool *Darwin::getTool(Action::ActionClass AC) const {
   switch (AC) {
-  case Action::AssembleJobClass:
-    return new tools::darwin::Assemble(*this);
-  case Action::LinkJobClass:
-    return new tools::darwin::Link(*this);
   case Action::LipoJobClass:
-    return new tools::darwin::Lipo(*this);
+    if (!Lipo)
+      Lipo.reset(new tools::darwin::Lipo(*this));
+    return Lipo.get();
   case Action::DsymutilJobClass:
-    return new tools::darwin::Dsymutil(*this);
+    if (!Dsymutil)
+      Dsymutil.reset(new tools::darwin::Dsymutil(*this));
+    return Dsymutil.get();
   case Action::VerifyJobClass:
-    return new tools::darwin::VerifyDebug(*this);
+    if (!VerifyDebug)
+      VerifyDebug.reset(new tools::darwin::VerifyDebug(*this));
+    return VerifyDebug.get();
   default:
-    return ToolChain::constructTool(AC);
+    return ToolChain::getTool(AC);
   }
 }
 
+Tool *Darwin::buildLinker() const {
+  return new tools::darwin::Link(*this);
+}
+
+Tool *Darwin::buildAssembler() const {
+  return new tools::darwin::Assemble(*this);
+}
 
 DarwinClang::DarwinClang(const Driver &D, const llvm::Triple& Triple,
                          const ArgList &Args)
@@ -1350,21 +1359,31 @@ Generic_GCC::Generic_GCC(const Driver &D, const llvm::Triple& Triple,
 Generic_GCC::~Generic_GCC() {
 }
 
-Tool *Generic_GCC::constructTool(Action::ActionClass AC) const {
+Tool *Generic_GCC::getTool(Action::ActionClass AC) const {
   switch (AC) {
   case Action::PreprocessJobClass:
-    return new tools::gcc::Preprocess(*this);
+    if (!Preprocess)
+      Preprocess.reset(new tools::gcc::Preprocess(*this));
+    return Preprocess.get();
   case Action::PrecompileJobClass:
-    return new tools::gcc::Precompile(*this);
+    if (!Precompile)
+      Precompile.reset(new tools::gcc::Precompile(*this));
+    return Precompile.get();
   case Action::CompileJobClass:
-    return new tools::gcc::Compile(*this);
-  case Action::AssembleJobClass:
-    return new tools::gcc::Assemble(*this);
-  case Action::LinkJobClass:
-    return new tools::gcc::Link(*this);
+    if (!Compile)
+      Compile.reset(new tools::gcc::Compile(*this));
+    return Compile.get();
   default:
-    return ToolChain::constructTool(AC);
+    return ToolChain::getTool(AC);
   }
+}
+
+Tool *Generic_GCC::buildAssembler() const {
+  return new tools::gcc::Assemble(*this);
+}
+
+Tool *Generic_GCC::buildLinker() const {
+  return new tools::gcc::Link(*this);
 }
 
 bool Generic_GCC::IsUnwindTablesDefault() const {
@@ -1491,15 +1510,12 @@ Hexagon_TC::Hexagon_TC(const Driver &D, const llvm::Triple &Triple,
 Hexagon_TC::~Hexagon_TC() {
 }
 
-Tool *Hexagon_TC::constructTool(Action::ActionClass AC) const {
-  switch (AC) {
-  case Action::AssembleJobClass:
-    return new tools::hexagon::Assemble(*this);
-  case Action::LinkJobClass:
-    return new tools::hexagon::Link(*this);
-  default:
-    return Linux::constructTool(AC);
-  }
+Tool *Hexagon_TC::buildAssembler() const {
+  return new tools::hexagon::Assemble(*this);
+}
+
+Tool *Hexagon_TC::buildLinker() const {
+  return new tools::hexagon::Link(*this);
 }
 
 void Hexagon_TC::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
@@ -1624,15 +1640,12 @@ OpenBSD::OpenBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Arg
   getFilePaths().push_back("/usr/lib");
 }
 
-Tool *OpenBSD::constructTool(Action::ActionClass AC) const {
-  switch (AC) {
-  case Action::AssembleJobClass:
-    return new tools::openbsd::Assemble(*this);
-  case Action::LinkJobClass:
-    return new tools::openbsd::Link(*this);
-  default:
-    return Generic_GCC::constructTool(AC);
-  }
+Tool *OpenBSD::buildAssembler() const {
+  return new tools::openbsd::Assemble(*this);
+}
+
+Tool *OpenBSD::buildLinker() const {
+  return new tools::openbsd::Link(*this);
 }
 
 /// Bitrig - Bitrig tool chain which can call as(1) and ld(1) directly.
@@ -1643,15 +1656,12 @@ Bitrig::Bitrig(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
   getFilePaths().push_back("/usr/lib");
 }
 
-Tool *Bitrig::constructTool(Action::ActionClass AC) const {
-  switch (AC) {
-  case Action::AssembleJobClass:
-    return new tools::bitrig::Assemble(*this);
-  case Action::LinkJobClass:
-    return new tools::bitrig::Link(*this); break;
-  default:
-    return Generic_GCC::constructTool(AC);
-  }
+Tool *Bitrig::buildAssembler() const {
+  return new tools::bitrig::Assemble(*this);
+}
+
+Tool *Bitrig::buildLinker() const {
+  return new tools::bitrig::Link(*this);
 }
 
 void Bitrig::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
@@ -1714,15 +1724,12 @@ FreeBSD::FreeBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Arg
     getFilePaths().push_back(getDriver().SysRoot + "/usr/lib");
 }
 
-Tool *FreeBSD::constructTool(Action::ActionClass AC) const {
-  switch (AC) {
-  case Action::AssembleJobClass:
-    return new tools::freebsd::Assemble(*this);
-  case Action::LinkJobClass:
-    return  new tools::freebsd::Link(*this); break;
-  default:
-    return Generic_GCC::constructTool(AC);
-  }
+Tool *FreeBSD::buildAssembler() const {
+  return new tools::freebsd::Assemble(*this);
+}
+
+Tool *FreeBSD::buildLinker() const {
+  return new tools::freebsd::Link(*this);
 }
 
 bool FreeBSD::UseSjLjExceptions() const {
@@ -1756,15 +1763,12 @@ NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
   }
 }
 
-Tool *NetBSD::constructTool(Action::ActionClass AC) const {
-  switch (AC) {
-  case Action::AssembleJobClass:
-    return new tools::netbsd::Assemble(*this);
-  case Action::LinkJobClass:
-    return new tools::netbsd::Link(*this);
-  default:
-    return Generic_GCC::constructTool(AC);
-  }
+Tool *NetBSD::buildAssembler() const {
+  return new tools::netbsd::Assemble(*this);
+}
+
+Tool *NetBSD::buildLinker() const {
+  return new tools::netbsd::Link(*this);
 }
 
 /// Minix - Minix tool chain which can call as(1) and ld(1) directly.
@@ -1775,15 +1779,12 @@ Minix::Minix(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
   getFilePaths().push_back("/usr/lib");
 }
 
-Tool *Minix::constructTool(Action::ActionClass AC) const {
-  switch (AC) {
-  case Action::AssembleJobClass:
-    return new tools::minix::Assemble(*this);
-  case Action::LinkJobClass:
-    return new tools::minix::Link(*this);
-  default:
-    return Generic_GCC::constructTool(AC);
-  }
+Tool *Minix::buildAssembler() const {
+  return new tools::minix::Assemble(*this);
+}
+
+Tool *Minix::buildLinker() const {
+  return new tools::minix::Link(*this);
 }
 
 /// AuroraUX - AuroraUX tool chain which can call as(1) and ld(1) directly.
@@ -1804,15 +1805,12 @@ AuroraUX::AuroraUX(const Driver &D, const llvm::Triple& Triple,
 
 }
 
-Tool *AuroraUX::constructTool(Action::ActionClass AC) const {
-  switch (AC) {
-  case Action::AssembleJobClass:
-    return new tools::auroraux::Assemble(*this);
-  case Action::LinkJobClass:
-    return new tools::auroraux::Link(*this);
-  default:
-    return Generic_GCC::constructTool(AC);
-  }
+Tool *AuroraUX::buildAssembler() const {
+  return new tools::auroraux::Assemble(*this);
+}
+
+Tool *AuroraUX::buildLinker() const {
+  return new tools::auroraux::Link(*this);
 }
 
 /// Solaris - Solaris tool chain which can call as(1) and ld(1) directly.
@@ -1829,15 +1827,12 @@ Solaris::Solaris(const Driver &D, const llvm::Triple& Triple,
   getFilePaths().push_back("/usr/lib");
 }
 
-Tool *Solaris::constructTool(Action::ActionClass AC) const {
-  switch (AC) {
-  case Action::AssembleJobClass:
-    return new tools::solaris::Assemble(*this);
-  case Action::LinkJobClass:
-    return new tools::solaris::Link(*this);
-  default:
-    return Generic_GCC::constructTool(AC);
-  }
+Tool *Solaris::buildAssembler() const {
+  return new tools::solaris::Assemble(*this);
+}
+
+Tool *Solaris::buildLinker() const {
+  return new tools::solaris::Link(*this);
 }
 
 /// Linux toolchain (very bare-bones at the moment).
@@ -2206,15 +2201,12 @@ bool Linux::HasNativeLLVMSupport() const {
   return true;
 }
 
-Tool *Linux::constructTool(Action::ActionClass AC) const {
-  switch (AC) {
-  case Action::AssembleJobClass:
-    return new tools::linuxtools::Assemble(*this);
-  case Action::LinkJobClass:
-    return new tools::linuxtools::Link(*this); break;
-  default:
-    return Generic_GCC::constructTool(AC);
-  }
+Tool *Linux::buildLinker() const {
+  return new tools::linuxtools::Link(*this);
+}
+
+Tool *Linux::buildAssembler() const {
+  return new tools::linuxtools::Assemble(*this);
 }
 
 void Linux::addClangTargetOptions(const ArgList &DriverArgs,
@@ -2443,13 +2435,10 @@ DragonFly::DragonFly(const Driver &D, const llvm::Triple& Triple, const ArgList 
   getFilePaths().push_back("/usr/lib/gcc41");
 }
 
-Tool *DragonFly::constructTool(Action::ActionClass AC) const {
-  switch (AC) {
-  case Action::AssembleJobClass:
-    return new tools::dragonfly::Assemble(*this);
-  case Action::LinkJobClass:
-    return new tools::dragonfly::Link(*this);
-  default:
-    return Generic_GCC::constructTool(AC);
-  }
+Tool *DragonFly::buildAssembler() const {
+  return new tools::dragonfly::Assemble(*this);
+}
+
+Tool *DragonFly::buildLinker() const {
+  return new tools::dragonfly::Link(*this);
 }

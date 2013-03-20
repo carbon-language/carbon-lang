@@ -28,10 +28,6 @@ ToolChain::ToolChain(const Driver &D, const llvm::Triple &T,
 }
 
 ToolChain::~ToolChain() {
-  // Free tool implementations.
-  for (llvm::DenseMap<unsigned, Tool*>::iterator
-       it = Tools.begin(), ie = Tools.end(); it != ie; ++it)
-    delete it->second;
 }
 
 const Driver &ToolChain::getDriver() const {
@@ -63,12 +59,48 @@ bool ToolChain::IsUnwindTablesDefault() const {
   return false;
 }
 
-Tool *ToolChain::constructTool(Action::ActionClass AC) const {
+Tool *ToolChain::getClang() const {
+  if (!Clang)
+    Clang.reset(new tools::Clang(*this));
+  return Clang.get();
+}
+
+Tool *ToolChain::buildAssembler() const {
+  return new tools::ClangAs(*this);
+}
+
+Tool *ToolChain::buildLinker() const {
+  llvm_unreachable("Linking is not supported by this toolchain");
+}
+
+Tool *ToolChain::getAssemble() const {
+  if (!Assemble)
+    Assemble.reset(buildAssembler());
+  return Assemble.get();
+}
+
+Tool *ToolChain::getClangAs() const {
+  if (!Assemble)
+    Assemble.reset(new tools::ClangAs(*this));
+  return Assemble.get();
+}
+
+Tool *ToolChain::getLink() const {
+  if (!Link)
+    Link.reset(buildLinker());
+  return Link.get();
+}
+
+Tool *ToolChain::getTool(Action::ActionClass AC) const {
   switch (AC) {
+  case Action::AssembleJobClass:
+    return getAssemble();
+
+  case Action::LinkJobClass:
+    return getLink();
+
   case Action::InputClass:
   case Action::BindArchClass:
-  case Action::AssembleJobClass:
-  case Action::LinkJobClass:
   case Action::LipoJobClass:
   case Action::DsymutilJobClass:
   case Action::VerifyJobClass:
@@ -79,29 +111,17 @@ Tool *ToolChain::constructTool(Action::ActionClass AC) const {
   case Action::PreprocessJobClass:
   case Action::AnalyzeJobClass:
   case Action::MigrateJobClass:
-    return new tools::Clang(*this);
+    return getClang();
   }
 }
 
 Tool &ToolChain::SelectTool(const JobAction &JA) const {
-  Action::ActionClass Key;
   if (getDriver().ShouldUseClangCompiler(JA))
-    Key = Action::AnalyzeJobClass;
-  else
-    Key = JA.getKind();
-
-  Tool *&T = Tools[Key];
-  if (T)
-    return *T;
-
-  if (getDriver().ShouldUseClangCompiler(JA))
-    T = new tools::Clang(*this);
-  else if (Key == Action::AssembleJobClass && useIntegratedAs())
-    T = new tools::ClangAs(*this);
-  else
-    T = constructTool(Key);
-
-  return *T;
+    return *getClang();
+  Action::ActionClass AC = JA.getKind();
+  if (AC == Action::AssembleJobClass && useIntegratedAs())
+    return *getClangAs();
+  return *getTool(AC);
 }
 
 std::string ToolChain::GetFilePath(const char *Name) const {

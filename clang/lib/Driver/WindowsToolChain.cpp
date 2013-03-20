@@ -36,19 +36,17 @@ Windows::Windows(const Driver &D, const llvm::Triple& Triple,
   : ToolChain(D, Triple, Args) {
 }
 
-Tool *Windows::constructTool(Action::ActionClass AC) const {
-  switch (AC) {
-  case Action::AssembleJobClass:
-    if (getTriple().getEnvironment() == llvm::Triple::MachO)
-      return new tools::darwin::Assemble(*this);
+Tool *Windows::buildLinker() const {
+  return new tools::visualstudio::Link(*this);
+}
+
+Tool *Windows::buildAssembler() const {
+  if (getTriple().getEnvironment() == llvm::Triple::MachO)
+    return new tools::darwin::Assemble(*this);
+  else
     // There no assembler we can use on windows other than the integrated
     // assembler, so we ignore -no-integrated-as.
-    return new tools::ClangAs(*this);
-  case Action::LinkJobClass:
-    return new tools::visualstudio::Link(*this);
-  default:
-    return ToolChain::constructTool(AC);
-  }
+    return ToolChain::buildAssembler();
 }
 
 bool Windows::IsIntegratedAssemblerDefault() const {
