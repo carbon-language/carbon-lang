@@ -2000,7 +2000,18 @@ TEST_F(FormatTest, UnderstandsTemplateParameters) {
 
 TEST_F(FormatTest, UnderstandsBinaryOperators) {
   verifyFormat("COMPARE(a, ==, b);");
-  verifyFormat("(a->*f)()");
+}
+
+TEST_F(FormatTest, UnderstandsPointersToMembers) {
+  verifyFormat("int A::*x;");
+  // FIXME: Recognize pointers to member functions.
+  //verifyFormat("int (S::*func)(void *);");
+  verifyFormat("int(S::*func)(void *);");
+  verifyFormat("(a->*f)();");
+  verifyFormat("a->*x;");
+  verifyFormat("(a.*f)();");
+  verifyFormat("((*a).*f)();");
+  verifyFormat("a.*x;");
 }
 
 TEST_F(FormatTest, UnderstandsUnaryOperators) {

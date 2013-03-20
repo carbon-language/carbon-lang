@@ -1058,7 +1058,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   if (Tok.is(tok::l_paren) && !Tok.Children.empty() &&
       Tok.Children[0].Type == TT_PointerOrReference &&
       !Tok.Children[0].Children.empty() &&
-      Tok.Children[0].Children[0].isNot(tok::r_paren))
+      Tok.Children[0].Children[0].isNot(tok::r_paren) &&
+      Tok.Parent->isNot(tok::l_paren))
     return true;
   if (Tok.Parent->Type == TT_UnaryOperator || Tok.Parent->Type == TT_CastRParen)
     return false;
@@ -1071,7 +1072,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
            Tok.Parent->Type == TT_TemplateCloser &&
            Style.Standard != FormatStyle::LS_Cpp11;
   }
-  if (Tok.is(tok::arrowstar) || Tok.Parent->is(tok::arrowstar))
+  if (Tok.isOneOf(tok::arrowstar, tok::periodstar) ||
+      Tok.Parent->isOneOf(tok::arrowstar, tok::periodstar))
     return false;
   if (Tok.Type == TT_BinaryOperator || Tok.Parent->Type == TT_BinaryOperator)
     return true;
