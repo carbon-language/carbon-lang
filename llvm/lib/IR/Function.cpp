@@ -211,7 +211,7 @@ Function::~Function() {
   clearGC();
 
   // Remove the intrinsicID from the Cache.
-  if(getValueName() && isIntrinsic())
+  if (getValueName() && isIntrinsic())
     getContext().pImpl->IntrinsicIDCache.erase(this);
 }
 
@@ -352,7 +352,7 @@ unsigned Function::getIntrinsicID() const {
 
   LLVMContextImpl::IntrinsicIDCacheTy &IntrinsicIDCache =
     getContext().pImpl->IntrinsicIDCache;
-  if(!IntrinsicIDCache.count(this)) {
+  if (!IntrinsicIDCache.count(this)) {
     unsigned Id = lookupIntrinsicID();
     IntrinsicIDCache[this]=Id;
     return Id;
