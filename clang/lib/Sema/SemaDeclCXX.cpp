@@ -10822,17 +10822,6 @@ NamedDecl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
       DC = DC->getParent();
     }
 
-    // C++ [class.friend]p1: A friend of a class is a function or
-    //   class that is not a member of the class . . .
-    // C++11 changes this for both friend types and functions.
-    // Most C++ 98 compilers do seem to give an error here, so
-    // we do, too.
-    if (!Previous.empty() && DC->Equals(CurContext))
-      Diag(DS.getFriendSpecLoc(),
-           getLangOpts().CPlusPlus11 ?
-             diag::warn_cxx98_compat_friend_is_member :
-             diag::err_friend_is_member);
-
     DCScope = getScopeForDeclContext(S, DC);
     
     // C++ [class.friend]p6:
