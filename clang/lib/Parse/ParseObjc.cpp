@@ -1303,10 +1303,9 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
         visibility = Tok.getObjCKeywordID();
         ConsumeToken();
         continue;
-      default:
-        Diag(Tok, (Tok.getObjCKeywordID() == tok::objc_end) ?
-             diag::err_objc_unexpected_atend :
-             diag::err_objc_illegal_visibility_spec);
+
+      case tok::objc_end:
+        Diag(Tok, diag::err_objc_unexpected_atend);
         Tok.setLocation(Tok.getLocation().getLocWithOffset(-1));
         Tok.setKind(tok::at);
         Tok.setLength(1);
@@ -1314,6 +1313,10 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
         HelperActionsForIvarDeclarations(interfaceDecl, atLoc,
                                          T, AllIvarDecls, true);
         return;
+          
+      default:
+        Diag(Tok, diag::err_objc_illegal_visibility_spec);
+        continue;
       }
     }
 
