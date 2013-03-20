@@ -8,18 +8,69 @@
 
 #include "MemoryGauge.h"
 #include <assert.h>
+#include <mach/mach.h>
 #include <mach/task.h>
+#include <mach/mach_traps.h>
 
 using namespace lldb_perf;
+
+MemoryStats::MemoryStats () : MemoryStats(0,0,0) {}
+MemoryStats::MemoryStats (mach_vm_size_t vs,mach_vm_size_t rs, mach_vm_size_t mrs) :
+m_virtual_size(vs),
+m_resident_size(rs),
+m_max_resident_size(mrs)
+{}
+
+MemoryStats::MemoryStats (const MemoryStats& rhs) : MemoryStats(rhs.m_virtual_size,rhs.m_resident_size,rhs.m_max_resident_size)
+{}
+
+MemoryStats&
+MemoryStats::operator = (const MemoryStats& rhs)
+{
+    if (&rhs != this)
+    {
+        m_virtual_size = rhs.m_virtual_size;
+        m_resident_size = rhs.m_resident_size;
+        m_max_resident_size = rhs.m_max_resident_size;
+    }
+    return *this;
+}
+
+MemoryStats&
+MemoryStats::operator += (const MemoryStats& rhs)
+{
+    m_virtual_size += rhs.m_virtual_size;
+    m_resident_size += rhs.m_resident_size;
+    m_max_resident_size += rhs.m_max_resident_size;
+    return *this;
+}
+
+MemoryStats
+MemoryStats::operator - (const MemoryStats& rhs)
+{
+    return MemoryStats(m_virtual_size - rhs.m_virtual_size,
+                       m_resident_size - rhs.m_resident_size,
+                       m_max_resident_size - rhs.m_max_resident_size);
+}
+
+MemoryStats&
+MemoryStats::operator / (size_t rhs)
+{
+    m_virtual_size /= rhs;
+    m_resident_size /= rhs;
+    m_max_resident_size /= rhs;
+    return *this;
+}
 
 MemoryGauge::SizeType
 MemoryGauge::now ()
 {
-    task_t task = MACH_PORT_NULL;
+    task_t task = mach_task_self();
     mach_task_basic_info_data_t taskBasicInfo;
     mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
-    if (task_info(task, MACH_TASK_BASIC_INFO, (task_info_t) & taskBasicInfo, &count) == KERN_SUCCESS) {
-        return taskBasicInfo.virtual_size;
+    auto task_info_ret = task_info(task, MACH_TASK_BASIC_INFO, (task_info_t) & taskBasicInfo, &count);
+    if (task_info_ret == KERN_SUCCESS) {
+        return MemoryStats(taskBasicInfo.virtual_size, taskBasicInfo.resident_size, taskBasicInfo.resident_size_max);
     }
     return 0;
 }

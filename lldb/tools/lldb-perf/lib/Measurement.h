@@ -12,6 +12,7 @@
 #include "Gauge.h"
 #include "Timer.h"
 #include "Metric.h"
+#include "MemoryGauge.h"
 
 namespace lldb_perf
 {
@@ -90,6 +91,32 @@ public:
     }
 };
 
+template <typename Action>
+class MemoryMeasurement : public Measurement<MemoryGauge,Action>
+{
+public:
+    MemoryMeasurement () : Measurement<MemoryGauge,Action> ()
+    {}
+    
+    MemoryMeasurement (Action act, const char* name = NULL, const char* descr = NULL) : Measurement<MemoryGauge,Action> (act, name, descr)
+    {}
+    
+    template <typename Action_Rhs>
+    MemoryMeasurement (const MemoryMeasurement<Action_Rhs>& rhs) : Measurement<MemoryGauge,Action>(rhs)
+    {}
+    
+    template <typename GaugeType_Rhs, typename Action_Rhs>
+    MemoryMeasurement (const Measurement<GaugeType_Rhs, Action_Rhs>& rhs) : Measurement<GaugeType_Rhs,Action_Rhs>(rhs)
+    {}
+    
+    template <typename... Args>
+    void
+    operator () (Args... args)
+    {
+        Measurement<MemoryGauge,Action>::operator()(args...);
+    }
+};
+    
 }
 
 #endif /* defined(__PerfTestDriver__Measurement__) */

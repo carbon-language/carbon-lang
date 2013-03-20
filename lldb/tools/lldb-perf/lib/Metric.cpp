@@ -11,6 +11,7 @@
 #include "CFCMutableArray.h"
 #include "CFCMutableDictionary.h"
 #include "CFCString.h"
+#include "MemoryGauge.h"
 
 using namespace lldb_perf;
 
@@ -70,8 +71,8 @@ Metric<T>::description ()
     return m_description.c_str();
 }
 
-template <class T>
-void Metric<T>::WriteImpl (CFCMutableArray& parent, identity<double>)
+template <>
+void Metric<double>::WriteImpl (CFCMutableArray& parent, identity<double>)
 {
     CFCMutableDictionary dict;
     dict.AddValueCString(CFCString("name").get(),name(), true);
@@ -80,15 +81,24 @@ void Metric<T>::WriteImpl (CFCMutableArray& parent, identity<double>)
     parent.AppendValue(dict.get(), true);
 }
 
-template <class T>
-void Metric<T>::WriteImpl (CFCMutableArray& parent, identity<mach_vm_size_t>)
+template <>
+void Metric<MemoryStats>::WriteImpl (CFCMutableArray& parent, identity<MemoryStats>)
 {
     CFCMutableDictionary dict;
     dict.AddValueCString(CFCString("name").get(),name(), true);
     dict.AddValueCString(CFCString("description").get(),description(), true);
-    dict.AddValueUInt64(CFCString("value").get(),this->average(), true);
+    CFCMutableDictionary value;
+
+    auto avg = this->average();
+    
+    value.AddValueUInt64(CFCString("virtual").get(), avg.GetVirtualSize(), true);
+    value.AddValueUInt64(CFCString("resident").get(), avg.GetResidentSize(), true);
+    value.AddValueUInt64(CFCString("max_resident").get(), avg.GetMaxResidentSize(), true);
+    
+    dict.AddValue(CFCString("value").get(),value.get(), true);
+    
     parent.AppendValue(dict.get(), true);
 }
 
 template class lldb_perf::Metric<double>;
-template class lldb_perf::Metric<mach_vm_size_t>;
+template class lldb_perf::Metric<MemoryStats>;

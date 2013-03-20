@@ -17,6 +17,7 @@
 
 namespace lldb_perf
 {
+class MemoryStats;
 class WriteToPList
 {
 public:
@@ -64,7 +65,7 @@ private:
     
     void WriteImpl (CFCMutableArray& parent, identity<double>);
 
-    void WriteImpl (CFCMutableArray& parent, identity<mach_vm_size_t>);
+    void WriteImpl (CFCMutableArray& parent, identity<MemoryStats>);
     
     std::string m_name;
     std::string m_description;

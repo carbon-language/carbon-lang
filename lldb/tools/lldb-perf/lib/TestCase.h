@@ -102,6 +102,12 @@ public:
         return TimeMeasurement<A> (a,name, description);
     }
     
+    template <typename A>
+    MemoryMeasurement<A> CreateMemoryMeasurement (A a, const char* name = NULL, const char* description = NULL)
+    {
+        return MemoryMeasurement<A> (a,name, description);
+    }
+    
     static void
     Run (TestCase& test, int argc, const char** argv);
     
