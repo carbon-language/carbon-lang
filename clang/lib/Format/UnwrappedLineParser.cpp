@@ -574,7 +574,7 @@ void UnwrappedLineParser::parseLabel() {
     return;
   nextToken();
   unsigned OldLineLevel = Line->Level;
-  if (Line->Level > 0)
+  if (Line->Level > 1 || (!Line->InPPDirective && Line->Level > 0))
     --Line->Level;
   if (CommentsBeforeNextToken.empty() && FormatTok.Tok.is(tok::l_brace)) {
     parseBlock(/*MustBeDeclaration=*/ false);

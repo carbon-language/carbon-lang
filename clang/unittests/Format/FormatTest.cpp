@@ -441,6 +441,11 @@ TEST_F(FormatTest, FormatsSwitchStatement) {
                "  }\n"
                "  break;\n"
                "}");
+  verifyFormat("#define A          \\\n"
+               "  switch (x) {     \\\n"
+               "  case a:          \\\n"
+               "    foo = b;       \\\n"
+               "  }", getLLVMStyleWithColumns(20));
 
   verifyGoogleFormat("switch (x) {\n"
                      "  case 1:\n"
@@ -1209,7 +1214,7 @@ TEST_F(FormatTest, MacroDefinitionsWithIncompleteCode) {
 
   // FIXME: Improve formatting of case labels in macros.
   verifyFormat("#define SOMECASES  \\\n"
-               "case 1:            \\\n"
+               "  case 1:          \\\n"
                "  case 2\n",
                getLLVMStyleWithColumns(20));
 
