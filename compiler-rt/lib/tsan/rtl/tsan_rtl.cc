@@ -384,15 +384,7 @@ void MemoryAccessImpl(ThreadState *thr, uptr addr,
   // 'candidates' with 'same' or 'replace', but I think
   // it's just not worth it (performance- and complexity-wise).
 
-  Shadow old(LoadShadow(shadow_mem));
-Printf("MOP %p -> %p %llu\n", addr, shadow_mem, old.raw());
-  if (old.raw() == kShadowRodata) {
-    // Access to .rodata section, no races here.
-    // Measurements show that it can be 10-20% of all memory accesses.
-    StatInc(thr, StatMopRodata);
-    return;
-  }
-
+  Shadow old(0);
   if (kShadowCnt == 1) {
     int idx = 0;
 #include "tsan_update_shadow_word_inl.h"
