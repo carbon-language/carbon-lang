@@ -684,7 +684,7 @@ void UnwrappedLineParser::parseRecord() {
     // (this would still leave us with an ambiguity between template function
     // and class declarations).
     if (FormatTok.Tok.is(tok::colon) || FormatTok.Tok.is(tok::less)) {
-      while (FormatTok.Tok.isNot(tok::l_brace)) {
+      while (!eof() && FormatTok.Tok.isNot(tok::l_brace)) {
         if (FormatTok.Tok.is(tok::semi))
           return;
         nextToken();

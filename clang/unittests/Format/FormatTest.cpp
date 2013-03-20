@@ -2544,6 +2544,9 @@ TEST_F(FormatTest, UnderstandContextOfRecordTypeKeywords) {
                "  class X x;\n"
                "else\n"
                "  f();\n");
+
+  // This is simply incomplete. Formatting is not important, but must not crash.
+  verifyFormat("class A:"); 
 }
 
 TEST_F(FormatTest, DoNotInterfereWithErrorAndWarning) {
