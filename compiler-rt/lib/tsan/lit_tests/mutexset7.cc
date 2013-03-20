@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 int Global;
+__thread int huge[1024*1024];
 
 void *Thread1(void *x) {
   sleep(1);
