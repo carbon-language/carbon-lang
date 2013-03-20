@@ -566,35 +566,16 @@ bool GCOVProfiler::emitProfileArcs() {
     IRBuilder<> Builder(BB);
 
     FTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
-    FTy = FunctionType::get(Builder.getVoidTy(),
-                            PointerType::get(FTy, 0), false);
+    Type *Params[] = {
+      PointerType::get(FTy, 0),
+      PointerType::get(FTy, 0)
+    };
+    FTy = FunctionType::get(Builder.getVoidTy(), Params, false);
 
-    // Register the local writeout function.
-    Constant *RegWriteout =
-      M->getOrInsertFunction("llvm_register_writeout_function", FTy);
-    Builder.CreateCall(RegWriteout, WriteoutF);
-
-    // Register the local flush function.
-    Constant *RegFlush =
-      M->getOrInsertFunction("llvm_register_flush_function", FTy);
-    Builder.CreateCall(RegFlush, FlushF);
-
-    if (M->getFunction("main")) {
-      Constant *AtExitFn = M->getOrInsertFunction("atexit", FTy);
-
-      // In the module that has the 'main' function, make sure that the flush
-      // and writeout function lists are deleted. Also make sure that the
-      // writeout function list is deleted.
-      Builder.CreateCall(AtExitFn, getDeleteWriteoutFunctionListFunc());
-      Builder.CreateCall(AtExitFn, getDeleteFlushFunctionListFunc());
-
-      // Make sure we write out all files when exiting. Note: This is called
-      // first from atexit().
-      FTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
-      Builder.CreateCall(AtExitFn,
-                         M->getOrInsertFunction("__llvm_writeout_files", FTy));
-    }
-
+    // Inialize the environment and register the local writeout and flush
+    // functions.
+    Constant *GCOVInit = M->getOrInsertFunction("llvm_gcov_init", FTy);
+    Builder.CreateCall2(GCOVInit, WriteoutF, FlushF);
     Builder.CreateRetVoid();
 
     appendToGlobalCtors(*M, F, 0);
