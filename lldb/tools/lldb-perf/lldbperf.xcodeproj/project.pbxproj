@@ -34,7 +34,7 @@
 		4C1E375716F407C800FF10BB /* Timer.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C1E374B16F407C800FF10BB /* Timer.h */; };
 		4C1E375816F407C800FF10BB /* Xcode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1E374C16F407C800FF10BB /* Xcode.cpp */; };
 		4C1E375916F407C800FF10BB /* Xcode.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C1E374D16F407C800FF10BB /* Xcode.h */; };
-		4C1E377916F4089E00FF10BB /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1E377816F4089E00FF10BB /* main.cpp */; };
+		4C1E377916F4089E00FF10BB /* sketch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1E377816F4089E00FF10BB /* sketch.cpp */; };
 		4C1E377A16F4091700FF10BB /* liblldbperf.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1E373916F4035D00FF10BB /* liblldbperf.a */; };
 		4C1E378216F40B8900FF10BB /* CFCBundle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1E375B16F4081300FF10BB /* CFCBundle.cpp */; };
 		4C1E378316F40B8C00FF10BB /* CFCData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1E375D16F4081300FF10BB /* CFCData.cpp */; };
@@ -51,7 +51,7 @@
 		4C1E378E16F40BB700FF10BB /* CFCMutableDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C1E376216F4081300FF10BB /* CFCMutableDictionary.h */; };
 		4C1E378F16F40BBB00FF10BB /* CFCMutableSet.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C1E376416F4081300FF10BB /* CFCMutableSet.h */; };
 		4C1E37C716F79EC300FF10BB /* liblldbperf.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1E373916F4035D00FF10BB /* liblldbperf.a */; };
-		4C1E37CB16F79EFA00FF10BB /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1E37B416F79E4600FF10BB /* main.cpp */; };
+		4C1E37CB16F79EFA00FF10BB /* formatters.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1E37B416F79E4600FF10BB /* formatters.cpp */; };
 		4C1E37E016F7A05D00FF10BB /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1E37DB16F7A03900FF10BB /* CoreFoundation.framework */; };
 		4C1E37E216F7A07300FF10BB /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1E37DB16F7A03900FF10BB /* CoreFoundation.framework */; };
 		4C86C5CB16F7C1D300844407 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C86C5C616F7A37800844407 /* LLDB.framework */; };
@@ -176,9 +176,9 @@
 		4C1E376816F4081300FF10BB /* CoreFoundationCPP.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CoreFoundationCPP.h; sourceTree = "<group>"; };
 		4C1E376D16F4087A00FF10BB /* lldb-perf-sketch */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-perf-sketch"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C1E377716F4089E00FF10BB /* foobar.sketch2 */ = {isa = PBXFileReference; lastKnownFileType = file.bplist; path = foobar.sketch2; sourceTree = "<group>"; };
-		4C1E377816F4089E00FF10BB /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		4C1E377816F4089E00FF10BB /* sketch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sketch.cpp; sourceTree = "<group>"; };
 		4C1E37B316F79E4600FF10BB /* fmts_tester.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = fmts_tester.mm; sourceTree = "<group>"; };
-		4C1E37B416F79E4600FF10BB /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		4C1E37B416F79E4600FF10BB /* formatters.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = formatters.cpp; sourceTree = "<group>"; };
 		4C1E37BA16F79E9D00FF10BB /* lldb-perf-formatters */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-perf-formatters"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C1E37DB16F7A03900FF10BB /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
 		4C1E37DC16F7A03900FF10BB /* LLDB.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LLDB.framework; path = "tools/lldb-perf/../../build/Debug/LLDB.framework"; sourceTree = "<group>"; };
@@ -294,7 +294,7 @@
 			isa = PBXGroup;
 			children = (
 				4C1E377716F4089E00FF10BB /* foobar.sketch2 */,
-				4C1E377816F4089E00FF10BB /* main.cpp */,
+				4C1E377816F4089E00FF10BB /* sketch.cpp */,
 			);
 			name = sketch;
 			path = darwin/sketch;
@@ -304,7 +304,7 @@
 			isa = PBXGroup;
 			children = (
 				4C1E37B316F79E4600FF10BB /* fmts_tester.mm */,
-				4C1E37B416F79E4600FF10BB /* main.cpp */,
+				4C1E37B416F79E4600FF10BB /* formatters.cpp */,
 			);
 			name = formatters;
 			path = darwin/formatters;
@@ -552,7 +552,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4C1E377916F4089E00FF10BB /* main.cpp in Sources */,
+				4C1E377916F4089E00FF10BB /* sketch.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -560,7 +560,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4C1E37CB16F79EFA00FF10BB /* main.cpp in Sources */,
+				4C1E37CB16F79EFA00FF10BB /* formatters.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
