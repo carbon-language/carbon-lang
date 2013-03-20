@@ -2265,10 +2265,13 @@ TEST_F(FormatTest, FormatsFunctionTypes) {
   verifyFormat("A<bool()> a;");
   verifyFormat("A<SomeType()> a;");
   verifyFormat("A<void(*)(int, std::string)> a;");
+  verifyFormat("A<void *(int)>;");
 
   // FIXME: Inconsistent.
   verifyFormat("int (*func)(void *);");
   verifyFormat("void f() { int(*func)(void *); }");
+
+  verifyGoogleFormat("A<void*(int)>;");
 }
 
 TEST_F(FormatTest, BreaksLongDeclarations) {
