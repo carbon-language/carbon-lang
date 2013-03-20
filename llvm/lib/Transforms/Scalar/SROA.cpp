@@ -1117,8 +1117,8 @@ AllocaPartitioning::AllocaPartitioning(const DataLayout &TD, AllocaInst &AI)
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
   for (unsigned Idx = 0, Size = Uses.size(); Idx != Size; ++Idx)
     NumUses += Uses[Idx].size();
-  NumAllocaPartitionUses += NumUses;
 #endif
+  NumAllocaPartitionUses += NumUses;
   MaxPartitionUsesPerAlloca = std::max<unsigned>(NumUses, MaxPartitionUsesPerAlloca);
 }
 
