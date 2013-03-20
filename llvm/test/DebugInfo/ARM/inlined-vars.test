@@ -1,0 +1,1 @@
+RUN: llc -mtriple armv5 -O0 < %S/../inlined-vars.ll | FileCheck %S/../inlined-vars.ll -check-prefix ARGUMENT

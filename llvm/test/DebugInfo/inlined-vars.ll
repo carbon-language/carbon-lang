@@ -1,5 +1,4 @@
 ; RUN: llc -O0 < %s | FileCheck %s -check-prefix ARGUMENT
-; RUN: llc -mtriple armv5 -O0 < %s | FileCheck %s -check-prefix ARGUMENT
 ; RUN: llc -O0 < %s | FileCheck %s -check-prefix VARIABLE
 ; PR 13202
 
