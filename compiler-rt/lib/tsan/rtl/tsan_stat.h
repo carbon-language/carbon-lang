@@ -237,6 +237,7 @@ enum StatType {
   StatInt_fclose,
   StatInt_fread,
   StatInt_fwrite,
+  StatInt_fflush,
   StatInt_puts,
   StatInt_rmdir,
   StatInt_opendir,

@@ -293,15 +293,6 @@ class AtExitContext {
 
 static AtExitContext *atexit_ctx;
 
-static void finalize(void *arg) {
-  ThreadState * thr = cur_thread();
-  uptr pc = 0;
-  atexit_ctx->exit(thr, pc);
-  int status = Finalize(cur_thread());
-  if (status)
-    _exit(status);
-}
-
 TSAN_INTERCEPTOR(int, atexit, void (*f)()) {
   if (cur_thread()->in_symbolizer)
     return 0;
@@ -1521,6 +1512,11 @@ TSAN_INTERCEPTOR(uptr, fwrite, const void *p, uptr size, uptr nmemb, void *f) {
   return REAL(fwrite)(p, size, nmemb, f);
 }
 
+TSAN_INTERCEPTOR(int, fflush, void *stream) {
+  SCOPED_TSAN_INTERCEPTOR(fflush, stream);
+  return REAL(fflush)(stream);
+}
+
 TSAN_INTERCEPTOR(int, puts, const char *s) {
   SCOPED_TSAN_INTERCEPTOR(puts, s);
   MemoryAccessRange(thr, pc, (uptr)s, internal_strlen(s), false);
@@ -1819,6 +1815,16 @@ void ProcessPendingSignals(ThreadState *thr) {
   thr->in_signal_handler = false;
 }
 
+static void finalize(void *arg) {
+  ThreadState * thr = cur_thread();
+  uptr pc = 0;
+  atexit_ctx->exit(thr, pc);
+  int status = Finalize(cur_thread());
+  REAL(fflush)(0);
+  if (status)
+    _exit(status);
+}
+
 static void unreachable() {
   Printf("FATAL: ThreadSanitizer: unreachable called\n");
   Die();
@@ -1972,6 +1978,7 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(fclose);
   TSAN_INTERCEPT(fread);
   TSAN_INTERCEPT(fwrite);
+  TSAN_INTERCEPT(fflush);
   TSAN_INTERCEPT(puts);
   TSAN_INTERCEPT(rmdir);
   TSAN_INTERCEPT(opendir);
