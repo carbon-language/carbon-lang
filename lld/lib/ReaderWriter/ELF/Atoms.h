@@ -500,10 +500,7 @@ public:
                const Elf_Shdr *section, llvm::ArrayRef<uint8_t> contentData,
                uint64_t offset)
       : _owningFile(file), _sectionName(sectionName), _section(section),
-        _contentData(contentData), _offset(offset) {
-    static uint64_t orderNumber = 0;
-    _ordinal = ++orderNumber;
-  }
+        _contentData(contentData), _offset(offset) {}
 
   virtual const class ELFFile<ELFT> &file() const {
     return _owningFile;
