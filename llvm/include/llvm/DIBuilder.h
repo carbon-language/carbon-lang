@@ -407,6 +407,19 @@ namespace llvm {
     createGlobalVariable(StringRef Name, DIFile File, unsigned LineNo,
                          DIType Ty, bool isLocalToUnit, llvm::Value *Val);
 
+    /// \brief Create a new descriptor for the specified global.
+    /// @param Name        Name of the variable.
+    /// @param LinkageName Mangled variable name.
+    /// @param File        File where this variable is defined.
+    /// @param LineNo      Line number.
+    /// @param Ty          Variable Type.
+    /// @param isLocalToUnit Boolean flag indicate whether this variable is
+    ///                      externally visible or not.
+    /// @param Val         llvm::Value of the variable.
+    DIGlobalVariable
+    createGlobalVariable(StringRef Name, StringRef LinkageName, DIFile File,
+                         unsigned LineNo, DIType Ty, bool isLocalToUnit,
+                         llvm::Value *Val);
 
     /// createStaticVariable - Create a new descriptor for the specified 
     /// variable.

@@ -773,17 +773,18 @@ DISubrange DIBuilder::getOrCreateSubrange(int64_t Lo, int64_t Count) {
   return DISubrange(MDNode::get(VMContext, Elts));
 }
 
-/// createGlobalVariable - Create a new descriptor for the specified global.
+/// \brief Create a new descriptor for the specified global.
 DIGlobalVariable DIBuilder::
-createGlobalVariable(StringRef Name, DIFile F, unsigned LineNumber,
-                     DIType Ty, bool isLocalToUnit, Value *Val) {
+createGlobalVariable(StringRef Name, StringRef LinkageName, DIFile F,
+                     unsigned LineNumber, DIType Ty, bool isLocalToUnit,
+                     Value *Val) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_variable),
     Constant::getNullValue(Type::getInt32Ty(VMContext)),
     NULL, // TheCU,
     MDString::get(VMContext, Name),
     MDString::get(VMContext, Name),
-    MDString::get(VMContext, Name),
+    MDString::get(VMContext, LinkageName),
     F,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     Ty,
@@ -795,6 +796,14 @@ createGlobalVariable(StringRef Name, DIFile F, unsigned LineNumber,
   MDNode *Node = MDNode::get(VMContext, Elts);
   AllGVs.push_back(Node);
   return DIGlobalVariable(Node);
+}
+
+/// \brief Create a new descriptor for the specified global.
+DIGlobalVariable DIBuilder::
+createGlobalVariable(StringRef Name, DIFile F, unsigned LineNumber,
+                     DIType Ty, bool isLocalToUnit, Value *Val) {
+  return createGlobalVariable(Name, Name, F, LineNumber, Ty, isLocalToUnit,
+                              Val);
 }
 
 /// createStaticVariable - Create a new descriptor for the specified static
