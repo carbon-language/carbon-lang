@@ -1324,7 +1324,8 @@ public:
           unsigned LevelIndent = Indent;
           if (static_cast<int>(LevelIndent) - Offset >= 0)
             LevelIndent -= Offset;
-          IndentForLevel[TheLine.Level] = LevelIndent;
+          if (TheLine.First.isNot(tok::comment))
+            IndentForLevel[TheLine.Level] = LevelIndent;
 
           // Remove trailing whitespace of the previous line if it was touched.
           if (PreviousLineWasTouched || touchesEmptyLineBefore(TheLine))

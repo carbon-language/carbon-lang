@@ -3279,6 +3279,13 @@ TEST_F(FormatTest, ReformatRegionAdjustsIndent) {
             format("void f() {}\n"
                    "void g() {}",
                    13, 0, getLLVMStyle()));
+  EXPECT_EQ("int a; // comment\n"
+            "       // line 2\n"
+            "int b;",
+            format("int a; // comment\n"
+                   "       // line 2\n"
+                   "  int b;",
+                   35, 0, getLLVMStyle()));
 }
 
 TEST_F(FormatTest, BreakStringLiterals) {
