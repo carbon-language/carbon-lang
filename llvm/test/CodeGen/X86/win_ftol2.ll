@@ -63,9 +63,9 @@ define i64 @double_ui64_2(double %x, double %y, double %z) nounwind {
 
   %1 = fdiv double %x, %y
   %2 = fsub double %x, %z
-  %3 = fptoui double %1 to i64
-  %4 = fptoui double %2 to i64
-  %5 = sub i64 %3, %4
+  %3 = fptoui double %2 to i64
+  %4 = fptoui double %1 to i64
+  %5 = sub i64 %4, %3
   ret i64 %5
 }
 
@@ -121,9 +121,9 @@ define {double, i64} @double_ui64_4(double %x, double %y) nounwind {
 ; FTOL_2: calll __ftol2
 ;; stack is %x
 
-  %1 = fptoui double %x to i64
-  %2 = fptoui double %y to i64
-  %3 = sub i64 %1, %2
+  %1 = fptoui double %y to i64
+  %2 = fptoui double %x to i64
+  %3 = sub i64 %2, %1
   %4 = insertvalue {double, i64} undef, double %x, 0
   %5 = insertvalue {double, i64} %4, i64 %3, 1
   ret {double, i64} %5
