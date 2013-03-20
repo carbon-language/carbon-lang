@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -emit-llvm -disable-red-zone -femit-coverage-data %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -disable-red-zone -femit-coverage-data -coverage-no-function-names-in-data %s -o - | FileCheck %s --check-prefix WITHOUTNAMES
 
 // <rdar://problem/12843084>
 
@@ -15,7 +16,14 @@ int test1(int a) {
 // Check that the noredzone flag is set on the generated functions.
 
 // CHECK: void @__llvm_gcov_indirect_counter_increment(i32* %{{.*}}, i64** %{{.*}}) unnamed_addr [[NRZ:#[0-9]+]]
+
+// Inside llvm_gcov_writeout, check that -coverage-no-function-names-in-data
+// passes null as the function name.
 // CHECK: void @__llvm_gcov_writeout() unnamed_addr [[NRZ]]
+// CHECK: call void @llvm_gcda_emit_function({{.*}}, i8* getelementptr {{.*}}, {{.*}})
+// WITHOUTNAMES: void @__llvm_gcov_writeout() unnamed_addr
+// WITHOUTNAMES: call void @llvm_gcda_emit_function({{.*}}, i8* null, {{.*}})
+
 // CHECK: void @__llvm_gcov_flush() unnamed_addr [[NRZ]]
 // CHECK: void @__llvm_gcov_init() unnamed_addr [[NRZ]]
 

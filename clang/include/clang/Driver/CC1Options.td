@@ -151,7 +151,7 @@ def coverage_file : Separate<["-"], "coverage-file">,
 def coverage_file_EQ : Joined<["-"], "coverage-file=">, Alias<coverage_file>;
 def coverage_cfg_checksum : Flag<["-"], "coverage-cfg-checksum">,
   HelpText<"Emit CFG checksum for functions in .gcno files.">;
-def coverage_function_names_in_data : Flag<["-"], "coverage-function-names-in-data">,
+def coverage_no_function_names_in_data : Flag<["-"], "coverage-no-function-names-in-data">,
   HelpText<"Emit function names in .gcda files.">;
 def coverage_version_EQ : Joined<["-"], "coverage-version=">,
   HelpText<"Four-byte version string for gcov files.">;

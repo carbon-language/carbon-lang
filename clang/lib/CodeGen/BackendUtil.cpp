@@ -312,9 +312,8 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
     memcpy(Options.Version, CodeGenOpts.CoverageVersion, 4);
     Options.UseCfgChecksum = CodeGenOpts.CoverageExtraChecksum;
     Options.NoRedZone = CodeGenOpts.DisableRedZone;
-    // FIXME: the clang flag name is backwards.
     Options.FunctionNamesInData =
-        !CodeGenOpts.CoverageFunctionNamesInData;
+        !CodeGenOpts.CoverageNoFunctionNamesInData;
     MPM->add(createGCOVProfilerPass(Options));
     if (CodeGenOpts.getDebugInfo() == CodeGenOptions::NoDebugInfo)
       MPM->add(createStripSymbolsPass(true));
