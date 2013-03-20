@@ -331,8 +331,22 @@ ExplodedNode *ExplodedGraph::getNode(const ProgramPoint &L,
   return V;
 }
 
+static bool isDescendent(const ExplodedNode *Parent, const ExplodedNode *Child){
+  SmallVector<const ExplodedNode *, 16> WL;
+  WL.push_back(Parent);
+
+  while (!WL.empty()) {
+    const ExplodedNode *N = WL.pop_back_val();
+    if (N == Child)
+      return true;
+    WL.append(N->succ_begin(), N->succ_end());
+  }
+
+  return false;
+}
+
 ExplodedGraph *
-ExplodedGraph::trim(ArrayRef<const NodeTy *> Sinks,
+ExplodedGraph::trim(ArrayRef<const NodeTy *> Sinks, bool BreakCycles,
                     InterExplodedGraphMap *ForwardMap,
                     InterExplodedGraphMap *InverseMap) const{
 
@@ -429,7 +443,8 @@ ExplodedGraph::trim(ArrayRef<const NodeTy *> Sinks,
          I != E; ++I) {
       Pass2Ty::iterator PI = Pass2.find(*I);
       if (PI != Pass2.end()) {
-        const_cast<ExplodedNode *>(PI->second)->addPredecessor(NewN, *G);
+        if (!BreakCycles || !isDescendent(PI->second, NewN))
+          const_cast<ExplodedNode *>(PI->second)->addPredecessor(NewN, *G);
         continue;
       }
 

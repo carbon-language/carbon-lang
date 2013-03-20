@@ -1895,7 +1895,8 @@ public:
                ArrayRef<const ExplodedNode *> Nodes) {
     // The trimmed graph is created in the body of the constructor to ensure
     // that the DenseMaps have been initialized already.
-    G.reset(OriginalGraph->trim(Nodes, &ForwardMap, &InverseMap));
+    G.reset(OriginalGraph->trim(Nodes, /*BreakCycles=*/true,
+                                &ForwardMap, &InverseMap));
   }
 
   void createBestReportGraph(ArrayRef<const ExplodedNode *> Nodes,

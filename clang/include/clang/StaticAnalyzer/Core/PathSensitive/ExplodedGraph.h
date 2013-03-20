@@ -363,12 +363,16 @@ public:
   ///
   /// \param Nodes The nodes which must appear in the final graph. Presumably
   ///              these are end-of-path nodes (i.e. they have no successors).
+  /// \param BreakCycles Whether or not the trimmed graph should make an effort
+  ///                    to eliminate cycles. Note that this may result in some
+  ///                    unnecessary nodes being included in the final graph
+  ///                    (i.e. nodes that would have only appeared in a cycle).
   /// \param[out] ForwardMap A optional map from nodes in this graph to nodes in
   ///                        the returned graph.
   /// \param[out] InverseMap An optional map from nodes in the returned graph to
   ///                        nodes in this graph.
   /// \returns The trimmed graph
-  ExplodedGraph *trim(ArrayRef<const NodeTy *> Nodes,
+  ExplodedGraph *trim(ArrayRef<const NodeTy *> Nodes, bool BreakCycles = false,
                       InterExplodedGraphMap *ForwardMap = 0,
                       InterExplodedGraphMap *InverseMap = 0) const;
 
