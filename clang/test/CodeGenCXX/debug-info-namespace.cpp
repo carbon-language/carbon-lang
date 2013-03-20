@@ -1,12 +1,9 @@
-// RUN: %clang  -g -S -fverbose-asm %s -o - | FileCheck %s
+// RUN: %clang  -g -S -emit-llvm %s -o - | FileCheck %s
 
-// CHECK: TAG_namespace
 namespace A {
-  enum numbers {
-    ZERO,
-    ONE
-  };
+int i;
 }
 
-using namespace A;
-numbers n;
+// CHECK: [[FILE:![0-9]*]] = {{.*}} ; [ DW_TAG_file_type ] [{{.*}}/test/CodeGenCXX/debug-info-namespace.cpp]
+// CHECK: [[VAR:![0-9]*]] = {{.*}}, metadata [[NS:![0-9]*]], metadata !"i", {{.*}} ; [ DW_TAG_variable ] [i]
+// CHECK: [[NS]] = {{.*}}, metadata [[FILE]], {{.*}} ; [ DW_TAG_namespace ] [A] [line 3]
