@@ -201,6 +201,31 @@ public:
   /// (intentionally) change how this module is built.
   std::vector<std::string> ConfigMacros;
 
+  /// \brief An unresolved conflict with another module.
+  struct UnresolvedConflict {
+    /// \brief The (unresolved) module id.
+    ModuleId Id;
+
+    /// \brief The message provided to the user when there is a conflict.
+    std::string Message;
+  };
+
+  /// \brief The list of conflicts for which the module-id has not yet been
+  /// resolved.
+  std::vector<UnresolvedConflict> UnresolvedConflicts;
+
+  /// \brief A conflict between two modules.
+  struct Conflict {
+    /// \brief The module that this module conflicts with.
+    Module *Other;
+
+    /// \brief The message provided to the user when there is a conflict.
+    std::string Message;
+  };
+
+  /// \brief The list of conflicts.
+  std::vector<Conflict> Conflicts;
+
   /// \brief Construct a top-level module.
   explicit Module(StringRef Name, SourceLocation DefinitionLoc,
                   bool IsFramework)

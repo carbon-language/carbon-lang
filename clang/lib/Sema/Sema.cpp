@@ -634,11 +634,12 @@ void Sema::ActOnEndOfTranslationUnit() {
         Module *Mod = Stack.back();
         Stack.pop_back();
 
-        // Resolve the exported declarations.
+        // Resolve the exported declarations and conflicts.
         // FIXME: Actually complain, once we figure out how to teach the
-        // diagnostic client to deal with complains in the module map at this
+        // diagnostic client to deal with complaints in the module map at this
         // point.
         ModMap.resolveExports(Mod, /*Complain=*/false);
+        ModMap.resolveConflicts(Mod, /*Complain=*/false);
 
         // Queue the submodules, so their exports will also be resolved.
         for (Module::submodule_iterator Sub = Mod->submodule_begin(),

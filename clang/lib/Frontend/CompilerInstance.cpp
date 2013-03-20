@@ -1007,7 +1007,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
     // Make the named module visible.
     if (LastModuleImportResult)
       ModuleManager->makeModuleVisible(LastModuleImportResult, Visibility,
-                                       ImportLoc);
+                                       ImportLoc, /*Complain=*/false);
     return LastModuleImportResult;
   }
   
@@ -1265,7 +1265,8 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
       return ModuleLoadResult();
     }
 
-    ModuleManager->makeModuleVisible(Module, Visibility, ImportLoc);
+    ModuleManager->makeModuleVisible(Module, Visibility, ImportLoc,
+                                     /*Complain=*/true);
   }
 
   // Check for any configuration macros that have changed.
@@ -1294,7 +1295,8 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
 
 void CompilerInstance::makeModuleVisible(Module *Mod,
                                          Module::NameVisibilityKind Visibility,
-                                         SourceLocation ImportLoc){
-  ModuleManager->makeModuleVisible(Mod, Visibility, ImportLoc);
+                                         SourceLocation ImportLoc,
+                                         bool Complain){
+  ModuleManager->makeModuleVisible(Mod, Visibility, ImportLoc, Complain);
 }
 

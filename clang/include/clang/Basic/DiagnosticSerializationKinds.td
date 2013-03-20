@@ -44,7 +44,10 @@ def warn_pch_different_branch : Error<
 def err_pch_with_compiler_errors : Error<
     "PCH file contains compiler errors">;
     
-    
+def warn_module_conflict : Warning<
+    "module '%0' conflicts with already-imported module '%1': %2">, 
+    InGroup<ModuleConflict>;
+
 def err_pch_macro_def_undef : Error<
     "macro '%0' was %select{defined|undef'd}1 in the precompiled header but "
     "%select{undef'd|defined}1 on the command line">;

@@ -2180,6 +2180,12 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));    // Macro name
   unsigned ConfigMacroAbbrev = Stream.EmitAbbrev(Abbrev);
 
+  Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(SUBMODULE_CONFLICT));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));  // Other module
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));    // Message
+  unsigned ConflictAbbrev = Stream.EmitAbbrev(Abbrev);
+
   // Write the submodule metadata block.
   RecordData Record;
   Record.push_back(getNumberOfModules(WritingModule));
@@ -2293,6 +2299,17 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
       Record.push_back(Mod->LinkLibraries[I].IsFramework);
       Stream.EmitRecordWithBlob(LinkLibraryAbbrev, Record,
                                 Mod->LinkLibraries[I].Library);
+    }
+
+    // Emit the conflicts.
+    for (unsigned I = 0, N = Mod->Conflicts.size(); I != N; ++I) {
+      Record.clear();
+      Record.push_back(SUBMODULE_CONFLICT);
+      unsigned OtherID = getSubmoduleID(Mod->Conflicts[I].Other);
+      assert(OtherID && "Unknown submodule!");
+      Record.push_back(OtherID);
+      Stream.EmitRecordWithBlob(ConflictAbbrev, Record,
+                                Mod->Conflicts[I].Message);
     }
 
     // Emit the configuration macros.

@@ -520,27 +520,30 @@ private:
   HiddenNamesMapType HiddenNamesMap;
   
   
-  /// \brief A module import or export that hasn't yet been resolved.
-  struct UnresolvedModuleImportExport {
+  /// \brief A module import, export, or conflict that hasn't yet been resolved.
+  struct UnresolvedModuleRef {
     /// \brief The file in which this module resides.
     ModuleFile *File;
     
     /// \brief The module that is importing or exporting.
     Module *Mod;
-    
+
+    /// \brief The kind of module reference.
+    enum { Import, Export, Conflict } Kind;
+
     /// \brief The local ID of the module that is being exported.
     unsigned ID;
-    
-    /// \brief Whether this is an import (vs. an export).
-    unsigned IsImport : 1;
-    
+
     /// \brief Whether this is a wildcard export.
     unsigned IsWildcard : 1;
+
+    /// \brief String data.
+    StringRef String;
   };
   
   /// \brief The set of module imports and exports that still need to be 
   /// resolved.
-  SmallVector<UnresolvedModuleImportExport, 2> UnresolvedModuleImportExports;
+  SmallVector<UnresolvedModuleRef, 2> UnresolvedModuleRefs;
   
   /// \brief A vector containing selectors that have already been loaded.
   ///
@@ -1188,9 +1191,14 @@ public:
   ///
   /// \param NameVisibility The level of visibility to give the names in the
   /// module.  Visibility can only be increased over time.
+  ///
+  /// \param ImportLoc The location at which the import occurs.
+  ///
+  /// \param Complain Whether to complain about conflicting module imports.
   void makeModuleVisible(Module *Mod, 
                          Module::NameVisibilityKind NameVisibility,
-                         SourceLocation ImportLoc);
+                         SourceLocation ImportLoc,
+                         bool Complain);
   
   /// \brief Make the names within this set of hidden names visible.
   void makeNamesVisible(const HiddenNames &Names);

@@ -347,6 +347,24 @@ void Module::print(raw_ostream &OS, unsigned Indent) const {
     OS << "\"";
   }
 
+  for (unsigned I = 0, N = UnresolvedConflicts.size(); I != N; ++I) {
+    OS.indent(Indent + 2);
+    OS << "conflict ";
+    printModuleId(OS, UnresolvedConflicts[I].Id);
+    OS << ", \"";
+    OS.write_escaped(UnresolvedConflicts[I].Message);
+    OS << "\"\n";
+  }
+
+  for (unsigned I = 0, N = Conflicts.size(); I != N; ++I) {
+    OS.indent(Indent + 2);
+    OS << "conflict ";
+    OS << Conflicts[I].Other->getFullModuleName();
+    OS << ", \"";
+    OS.write_escaped(Conflicts[I].Message);
+    OS << "\"\n";
+  }
+
   if (InferSubmodules) {
     OS.indent(Indent + 2);
     if (InferExplicitSubmodules)

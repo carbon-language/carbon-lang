@@ -83,7 +83,8 @@ public:
   /// \brief Make the given module visible.
   virtual void makeModuleVisible(Module *Mod,
                                  Module::NameVisibilityKind Visibility,
-                                 SourceLocation ImportLoc) = 0;
+                                 SourceLocation ImportLoc,
+                                 bool Complain) = 0;
 };
   
 }

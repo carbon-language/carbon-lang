@@ -45,35 +45,42 @@ ModuleMap::resolveExport(Module *Mod,
     return Module::ExportDecl(0, true);
   }
   
+  // Resolve the module-id.
+  Module *Context = resolveModuleId(Unresolved.Id, Mod, Complain);
+  if (!Context)
+    return Module::ExportDecl();
+
+  return Module::ExportDecl(Context, Unresolved.Wildcard);
+}
+
+Module *ModuleMap::resolveModuleId(const ModuleId &Id, Module *Mod,
+                                   bool Complain) const {
   // Find the starting module.
-  Module *Context = lookupModuleUnqualified(Unresolved.Id[0].first, Mod);
+  Module *Context = lookupModuleUnqualified(Id[0].first, Mod);
   if (!Context) {
     if (Complain)
-      Diags->Report(Unresolved.Id[0].second, 
-                    diag::err_mmap_missing_module_unqualified)
-        << Unresolved.Id[0].first << Mod->getFullModuleName();
-    
-    return Module::ExportDecl();
+      Diags->Report(Id[0].second, diag::err_mmap_missing_module_unqualified)
+      << Id[0].first << Mod->getFullModuleName();
+
+    return 0;
   }
 
   // Dig into the module path.
-  for (unsigned I = 1, N = Unresolved.Id.size(); I != N; ++I) {
-    Module *Sub = lookupModuleQualified(Unresolved.Id[I].first,
-                                        Context);
+  for (unsigned I = 1, N = Id.size(); I != N; ++I) {
+    Module *Sub = lookupModuleQualified(Id[I].first, Context);
     if (!Sub) {
       if (Complain)
-        Diags->Report(Unresolved.Id[I].second, 
-                      diag::err_mmap_missing_module_qualified)
-          << Unresolved.Id[I].first << Context->getFullModuleName()
-          << SourceRange(Unresolved.Id[0].second, Unresolved.Id[I-1].second);
-      
-      return Module::ExportDecl();      
+        Diags->Report(Id[I].second, diag::err_mmap_missing_module_qualified)
+        << Id[I].first << Context->getFullModuleName()
+        << SourceRange(Id[0].second, Id[I-1].second);
+
+      return 0;
     }
-    
+
     Context = Sub;
   }
-  
-  return Module::ExportDecl(Context, Unresolved.Wildcard);
+
+  return Context;
 }
 
 ModuleMap::ModuleMap(FileManager &FileMgr, const DiagnosticConsumer &DC,
@@ -603,6 +610,25 @@ bool ModuleMap::resolveExports(Module *Mod, bool Complain) {
   return HadError;
 }
 
+bool ModuleMap::resolveConflicts(Module *Mod, bool Complain) {
+  bool HadError = false;
+  for (unsigned I = 0, N = Mod->UnresolvedConflicts.size(); I != N; ++I) {
+    Module *OtherMod = resolveModuleId(Mod->UnresolvedConflicts[I].Id,
+                                       Mod, Complain);
+    if (!OtherMod) {
+      HadError = true;
+      continue;
+    }
+
+    Module::Conflict Conflict;
+    Conflict.Other = OtherMod;
+    Conflict.Message = Mod->UnresolvedConflicts[I].Message;
+    Mod->Conflicts.push_back(Conflict);
+  }
+  Mod->UnresolvedConflicts.clear();
+  return HadError;
+}
+
 Module *ModuleMap::inferModuleFromLocation(FullSourceLoc Loc) {
   if (Loc.isInvalid())
     return 0;
@@ -644,6 +670,7 @@ namespace clang {
     enum TokenKind {
       Comma,
       ConfigMacros,
+      Conflict,
       EndOfFile,
       HeaderKeyword,
       Identifier,
@@ -744,6 +771,7 @@ namespace clang {
     void parseExportDecl();
     void parseLinkDecl();
     void parseConfigMacros();
+    void parseConflict();
     void parseInferredModuleDecl(bool Framework, bool Explicit);
     bool parseOptionalAttributes(Attributes &Attrs);
 
@@ -782,6 +810,7 @@ retry:
     Tok.StringLength = LToken.getLength();
     Tok.Kind = llvm::StringSwitch<MMToken::TokenKind>(Tok.getString())
                  .Case("config_macros", MMToken::ConfigMacros)
+                 .Case("conflict", MMToken::Conflict)
                  .Case("exclude", MMToken::ExcludeKeyword)
                  .Case("explicit", MMToken::ExplicitKeyword)
                  .Case("export", MMToken::ExportKeyword)
@@ -1105,6 +1134,10 @@ void ModuleMapParser::parseModuleDecl() {
 
     case MMToken::ConfigMacros:
       parseConfigMacros();
+      break;
+
+    case MMToken::Conflict:
+      parseConflict();
       break;
 
     case MMToken::ExplicitKeyword:
@@ -1554,6 +1587,56 @@ void ModuleMapParser::parseConfigMacros() {
   } while (true);
 }
 
+/// \brief Format a module-id into a string.
+static std::string formatModuleId(const ModuleId &Id) {
+  std::string result;
+  {
+    llvm::raw_string_ostream OS(result);
+
+    for (unsigned I = 0, N = Id.size(); I != N; ++I) {
+      if (I)
+        OS << ".";
+      OS << Id[I].first;
+    }
+  }
+
+  return result;
+}
+
+/// \brief Parse a conflict declaration.
+///
+///   module-declaration:
+///     'conflict' module-id ',' string-literal
+void ModuleMapParser::parseConflict() {
+  assert(Tok.is(MMToken::Conflict));
+  SourceLocation ConflictLoc = consumeToken();
+  Module::UnresolvedConflict Conflict;
+
+  // Parse the module-id.
+  if (parseModuleId(Conflict.Id))
+    return;
+
+  // Parse the ','.
+  if (!Tok.is(MMToken::Comma)) {
+    Diags.Report(Tok.getLocation(), diag::err_mmap_expected_conflicts_comma)
+      << SourceRange(ConflictLoc);
+    return;
+  }
+  consumeToken();
+
+  // Parse the message.
+  if (!Tok.is(MMToken::StringLiteral)) {
+    Diags.Report(Tok.getLocation(), diag::err_mmap_expected_conflicts_message)
+      << formatModuleId(Conflict.Id);
+    return;
+  }
+  Conflict.Message = Tok.getString().str();
+  consumeToken();
+
+  // Add this unresolved conflict.
+  ActiveModule->UnresolvedConflicts.push_back(Conflict);
+}
+
 /// \brief Parse an inferred module declaration (wildcard modules).
 ///
 ///   module-declaration:
@@ -1801,6 +1884,7 @@ bool ModuleMapParser::parseModuleMapFile() {
 
     case MMToken::Comma:
     case MMToken::ConfigMacros:
+    case MMToken::Conflict:
     case MMToken::ExcludeKeyword:
     case MMToken::ExportKeyword:
     case MMToken::HeaderKeyword:

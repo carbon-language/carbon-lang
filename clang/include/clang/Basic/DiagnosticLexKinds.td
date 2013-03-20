@@ -536,6 +536,10 @@ def err_mmap_config_macro_submodule : Error<
   "configuration macros are only allowed on top-level modules">;
 def err_mmap_expected_config_macro : Error<
   "expected configuration macro name after ','">;
+def err_mmap_expected_conflicts_comma : Error<
+  "expected ',' after conflicting module name">;
+def err_mmap_expected_conflicts_message : Error<
+  "expected a message describing the conflict with '%0'">;
 def err_mmap_missing_module_unqualified : Error<
   "no module named '%0' visible from '%1'">;
 def err_mmap_missing_module_qualified : Error<

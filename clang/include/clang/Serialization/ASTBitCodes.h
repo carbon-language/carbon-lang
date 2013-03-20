@@ -611,7 +611,9 @@ namespace clang {
       /// \brief Specifies a library or framework to link against.
       SUBMODULE_LINK_LIBRARY = 10,
       /// \brief Specifies a configuration macro for this module.
-      SUBMODULE_CONFIG_MACRO = 11
+      SUBMODULE_CONFIG_MACRO = 11,
+      /// \brief Specifies a conflict with another module.
+      SUBMODULE_CONFLICT = 12
     };
 
     /// \brief Record types used within a comments block.

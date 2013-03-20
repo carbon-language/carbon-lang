@@ -663,7 +663,8 @@ public:
 
   virtual void makeModuleVisible(Module *Mod,
                                  Module::NameVisibilityKind Visibility,
-                                 SourceLocation ImportLoc);
+                                 SourceLocation ImportLoc,
+                                 bool Complain);
 
 };
 
