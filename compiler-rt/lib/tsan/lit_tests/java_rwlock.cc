@@ -1,10 +1,12 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %t 2>&1 | FileCheck %s
 #include "java.h"
+#include <unistd.h>
 
 jptr varaddr;
 jptr lockaddr;
 
 void *Thread(void *p) {
+  sleep(1);
   __tsan_java_mutex_read_lock(lockaddr);
   *(int*)varaddr = 42;
   __tsan_java_mutex_read_unlock(lockaddr);
