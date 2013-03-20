@@ -57,11 +57,15 @@
 using namespace llvm;
 
 STATISTIC(NumAllocasAnalyzed, "Number of allocas analyzed for replacement");
-STATISTIC(NumNewAllocas,      "Number of new, smaller allocas introduced");
-STATISTIC(NumPromoted,        "Number of allocas promoted to SSA values");
+STATISTIC(NumAllocaPartitions, "Number of alloca partitions formed");
+STATISTIC(MaxPartitionsPerAlloca, "Maximum number of partitions");
+STATISTIC(NumAllocaPartitionUses, "Number of alloca partition uses found");
+STATISTIC(MaxPartitionUsesPerAlloca, "Maximum number of partition uses");
+STATISTIC(NumNewAllocas, "Number of new, smaller allocas introduced");
+STATISTIC(NumPromoted, "Number of allocas promoted to SSA values");
 STATISTIC(NumLoadsSpeculated, "Number of loads speculated to allow promotion");
-STATISTIC(NumDeleted,         "Number of instructions deleted");
-STATISTIC(NumVectorized,      "Number of vectorized aggregates");
+STATISTIC(NumDeleted, "Number of instructions deleted");
+STATISTIC(NumVectorized, "Number of vectorized aggregates");
 
 /// Hidden option to force the pass to not use DomTree and mem2reg, instead
 /// forming SSA values through the SSAUpdater infrastructure.
@@ -1097,6 +1101,10 @@ AllocaPartitioning::AllocaPartitioning(const DataLayout &TD, AllocaInst &AI)
     splitAndMergePartitions();
   }
 
+  // Record how many partitions we end up with.
+  NumAllocaPartitions += Partitions.size();
+  MaxPartitionsPerAlloca = std::max<unsigned>(Partitions.size(), MaxPartitionsPerAlloca);
+
   // Now build up the user lists for each of these disjoint partitions by
   // re-walking the recursive users of the alloca.
   Uses.resize(Partitions.size());
@@ -1104,6 +1112,14 @@ AllocaPartitioning::AllocaPartitioning(const DataLayout &TD, AllocaInst &AI)
   PtrI = UB.visitPtr(AI);
   assert(!PtrI.isEscaped() && "Previously analyzed pointer now escapes!");
   assert(!PtrI.isAborted() && "Early aborted the visit of the pointer.");
+
+  unsigned NumUses = 0;
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
+  for (unsigned Idx = 0, Size = Uses.size(); Idx != Size; ++Idx)
+    NumUses += Uses[Idx].size();
+  NumAllocaPartitionUses += NumUses;
+#endif
+  MaxPartitionUsesPerAlloca = std::max<unsigned>(NumUses, MaxPartitionUsesPerAlloca);
 }
 
 Type *AllocaPartitioning::getCommonType(iterator I) const {
