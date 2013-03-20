@@ -143,7 +143,6 @@ private:
   void ExpungeNode(SDNode *N);
   void PerformExpensiveChecks();
   void RemapValue(SDValue &N);
-  void PropagateOrdering(SDNode *Old, SDNode *New);
 
   // Common routines.
   SDValue BitConvertToInteger(SDValue Op);

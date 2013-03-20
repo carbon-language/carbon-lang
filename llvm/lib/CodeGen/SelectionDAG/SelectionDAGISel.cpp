@@ -786,7 +786,9 @@ void SelectionDAGISel::DoInstructionSelection() {
         continue;
       // Replace node.
       if (ResNode) {
+        // Propagate ordering
         CurDAG->AssignOrdering(ResNode, CurDAG->GetOrdering(Node));
+
         ReplaceUses(Node, ResNode);
       }
 
