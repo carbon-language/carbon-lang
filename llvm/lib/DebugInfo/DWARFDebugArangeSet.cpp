@@ -16,7 +16,7 @@ using namespace llvm;
 
 void DWARFDebugArangeSet::clear() {
   Offset = -1U;
-  std::memset(&Header, 0, sizeof(Header));
+  std::memset(&HeaderData, 0, sizeof(Header));
   ArangeDescriptors.clear();
 }
 
@@ -66,15 +66,15 @@ DWARFDebugArangeSet::extract(DataExtractor data, uint32_t *offset_ptr) {
     // descriptor on the target system. This header is followed by a series
     // of tuples. Each tuple consists of an address and a length, each in
     // the size appropriate for an address on the target architecture.
-    Header.Length = data.getU32(offset_ptr);
-    Header.Version = data.getU16(offset_ptr);
-    Header.CuOffset = data.getU32(offset_ptr);
-    Header.AddrSize = data.getU8(offset_ptr);
-    Header.SegSize = data.getU8(offset_ptr);
+    HeaderData.Length = data.getU32(offset_ptr);
+    HeaderData.Version = data.getU16(offset_ptr);
+    HeaderData.CuOffset = data.getU32(offset_ptr);
+    HeaderData.AddrSize = data.getU8(offset_ptr);
+    HeaderData.SegSize = data.getU8(offset_ptr);
 
     // Perform basic validation of the header fields.
-    if (!data.isValidOffsetForDataOfSize(Offset, Header.Length) ||
-        (Header.AddrSize != 4 && Header.AddrSize != 8)) {
+    if (!data.isValidOffsetForDataOfSize(Offset, HeaderData.Length) ||
+        (HeaderData.AddrSize != 4 && HeaderData.AddrSize != 8)) {
       clear();
       return false;
     }
@@ -84,7 +84,7 @@ DWARFDebugArangeSet::extract(DataExtractor data, uint32_t *offset_ptr) {
     // size of an address). The header is padded, if necessary, to the
     // appropriate boundary.
     const uint32_t header_size = *offset_ptr - Offset;
-    const uint32_t tuple_size = Header.AddrSize * 2;
+    const uint32_t tuple_size = HeaderData.AddrSize * 2;
     uint32_t first_tuple_offset = 0;
     while (first_tuple_offset < header_size)
       first_tuple_offset += tuple_size;
@@ -94,11 +94,11 @@ DWARFDebugArangeSet::extract(DataExtractor data, uint32_t *offset_ptr) {
     Descriptor arangeDescriptor;
 
     assert(sizeof(arangeDescriptor.Address) == sizeof(arangeDescriptor.Length));
-    assert(sizeof(arangeDescriptor.Address) >= Header.AddrSize);
+    assert(sizeof(arangeDescriptor.Address) >= HeaderData.AddrSize);
 
     while (data.isValidOffset(*offset_ptr)) {
-      arangeDescriptor.Address = data.getUnsigned(offset_ptr, Header.AddrSize);
-      arangeDescriptor.Length = data.getUnsigned(offset_ptr, Header.AddrSize);
+      arangeDescriptor.Address = data.getUnsigned(offset_ptr, HeaderData.AddrSize);
+      arangeDescriptor.Length = data.getUnsigned(offset_ptr, HeaderData.AddrSize);
 
       // Each set of tuples is terminated by a 0 for the address and 0
       // for the length.
@@ -115,11 +115,11 @@ DWARFDebugArangeSet::extract(DataExtractor data, uint32_t *offset_ptr) {
 
 void DWARFDebugArangeSet::dump(raw_ostream &OS) const {
   OS << format("Address Range Header: length = 0x%8.8x, version = 0x%4.4x, ",
-               Header.Length, Header.Version)
+               HeaderData.Length, HeaderData.Version)
      << format("cu_offset = 0x%8.8x, addr_size = 0x%2.2x, seg_size = 0x%2.2x\n",
-               Header.CuOffset, Header.AddrSize, Header.SegSize);
+               HeaderData.CuOffset, HeaderData.AddrSize, HeaderData.SegSize);
 
-  const uint32_t hex_width = Header.AddrSize * 2;
+  const uint32_t hex_width = HeaderData.AddrSize * 2;
   for (DescriptorConstIter pos = ArangeDescriptors.begin(),
        end = ArangeDescriptors.end(); pos != end; ++pos)
     OS << format("[0x%*.*" PRIx64 " -", hex_width, hex_width, pos->Address)
@@ -145,7 +145,7 @@ uint32_t DWARFDebugArangeSet::findAddress(uint64_t address) const {
     std::find_if(ArangeDescriptors.begin(), end, // Range
                  DescriptorContainsAddress(address)); // Predicate
   if (pos != end)
-    return Header.CuOffset;
+    return HeaderData.CuOffset;
 
   return -1U;
 }

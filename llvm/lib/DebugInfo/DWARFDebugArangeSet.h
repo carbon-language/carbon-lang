@@ -48,7 +48,7 @@ private:
   typedef DescriptorColl::const_iterator DescriptorConstIter;
 
   uint32_t Offset;
-  Header Header;
+  Header HeaderData;
   DescriptorColl ArangeDescriptors;
 
 public:
@@ -58,11 +58,11 @@ public:
   bool extract(DataExtractor data, uint32_t *offset_ptr);
   void dump(raw_ostream &OS) const;
 
-  uint32_t getCompileUnitDIEOffset() const { return Header.CuOffset; }
-  uint32_t getOffsetOfNextEntry() const { return Offset + Header.Length + 4; }
+  uint32_t getCompileUnitDIEOffset() const { return HeaderData.CuOffset; }
+  uint32_t getOffsetOfNextEntry() const { return Offset + HeaderData.Length + 4; }
   uint32_t findAddress(uint64_t address) const;
   uint32_t getNumDescriptors() const { return ArangeDescriptors.size(); }
-  const struct Header &getHeader() const { return Header; }
+  const struct Header &getHeader() const { return HeaderData; }
   const Descriptor *getDescriptor(uint32_t i) const {
     if (i < ArangeDescriptors.size())
       return &ArangeDescriptors[i];
