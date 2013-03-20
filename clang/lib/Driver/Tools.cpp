@@ -3631,7 +3631,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
   // here.
   if (Arch == llvm::Triple::x86 || Arch == llvm::Triple::ppc)
     CmdArgs.push_back("-m32");
-  else if (Arch == llvm::Triple::x86_64 || Arch == llvm::Triple::x86_64)
+  else if (Arch == llvm::Triple::x86_64 || Arch == llvm::Triple::ppc64)
     CmdArgs.push_back("-m64");
 
   if (Output.isFilename()) {
