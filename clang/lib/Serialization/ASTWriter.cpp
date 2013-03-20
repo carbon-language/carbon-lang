@@ -1277,7 +1277,7 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr,
   // detecting whether the system headers may have changed, because it is too
   // expensive to stat() all of the system headers.
   FileManager &FileMgr = SourceMgr.getFileManager();
-  if (!HSOpts.Sysroot.empty()) {
+  if (!HSOpts.Sysroot.empty() && !Chain) {
     llvm::SmallString<128> SDKSettingsFileName(HSOpts.Sysroot);
     llvm::sys::path::append(SDKSettingsFileName, "SDKSettings.plist");
     if (const FileEntry *SDKSettingsFile = FileMgr.getFile(SDKSettingsFileName)) {
