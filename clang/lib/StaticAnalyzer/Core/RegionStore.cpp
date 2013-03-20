@@ -1073,20 +1073,18 @@ RegionStoreManager::invalidateRegions(Store store,
   // Return the new bindings.
   B = W.getRegionBindings();
 
-  // For all globals which are not static nor immutable: determine which global
-  // regions should be invalidated and invalidate them.
+  // For calls, determine which global regions should be invalidated and
+  // invalidate them. (Note that function-static and immutable globals are never
+  // invalidated by this.)
   // TODO: This could possibly be more precise with modules.
-  //
-  // System calls invalidate only system globals.
-  if (Call && Call->isInSystemHeader()) {
+  if (Call) {
     B = invalidateGlobalRegion(MemRegion::GlobalSystemSpaceRegionKind,
                                Ex, Count, LCtx, B, Invalidated);
-  // Internal calls might invalidate both system and internal globals.
-  } else {
-    B = invalidateGlobalRegion(MemRegion::GlobalSystemSpaceRegionKind,
-                               Ex, Count, LCtx, B, Invalidated);
-    B = invalidateGlobalRegion(MemRegion::GlobalInternalSpaceRegionKind,
-                               Ex, Count, LCtx, B, Invalidated);
+
+    if (!Call->isInSystemHeader()) {
+      B = invalidateGlobalRegion(MemRegion::GlobalInternalSpaceRegionKind,
+                                 Ex, Count, LCtx, B, Invalidated);
+    }
   }
 
   return StoreRef(B.asStore(), *this);

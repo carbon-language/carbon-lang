@@ -279,12 +279,16 @@ void strcpy_fn_const(char *x) {
   strcpy(x, (const char*)&strcpy_fn); // expected-warning{{Argument to string copy function is the address of the function 'strcpy_fn', which is not a null-terminated string}}
 }
 
+extern int globalInt;
 void strcpy_effects(char *x, char *y) {
   char a = x[0];
+  if (globalInt != 42)
+    return;
 
   clang_analyzer_eval(strcpy(x, y) == x); // expected-warning{{TRUE}}
   clang_analyzer_eval(strlen(x) == strlen(y)); // expected-warning{{TRUE}}
   clang_analyzer_eval(a == x[0]); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(globalInt == 42); // expected-warning{{TRUE}}
 }
 
 void strcpy_overflow(char *y) {
