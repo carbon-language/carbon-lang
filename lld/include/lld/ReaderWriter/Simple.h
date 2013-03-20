@@ -75,13 +75,11 @@ class SimpleReference : public Reference {
 public:
   SimpleReference(Reference::Kind k, uint64_t off, const Atom *t,
                   Reference::Addend a)
-      : _target(t), _offsetInAtom(off), _addend(a), _kind(k) {}
+      : _target(t), _offsetInAtom(off), _addend(a) {
+    _kind = k;
+  }
 
   virtual uint64_t offsetInAtom() const { return _offsetInAtom; }
-
-  virtual Kind kind() const { return _kind; }
-
-  virtual void setKind(Kind k) { _kind = k; }
 
   virtual const Atom *target() const { return _target; }
 
@@ -94,7 +92,6 @@ private:
   const Atom *_target;
   uint64_t _offsetInAtom;
   Addend _addend;
-  Kind _kind;
 };
 
 class SimpleDefinedAtom : public DefinedAtom {

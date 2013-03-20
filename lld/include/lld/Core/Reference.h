@@ -45,11 +45,11 @@ public:
   typedef int64_t Addend;
 
   /// What sort of reference this is.
-  virtual Kind kind() const = 0;
+  Kind kind() const { return _kind; }
 
   /// During linking, some optimizations may change the code gen and
   /// hence the reference kind.
-  virtual void setKind(Kind) = 0;
+  void setKind(Kind kind) { _kind = kind; };
 
   virtual StringRef kindToString() const {
     switch (kind()) {
@@ -102,6 +102,8 @@ protected:
   /// delete on an Reference.  In fact, some File objects may bulk allocate
   /// an array of References, so they cannot be individually deleted by anyone.
   virtual ~Reference() {}
+
+  Kind _kind;
 };
 
 } // namespace lld

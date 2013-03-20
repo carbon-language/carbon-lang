@@ -203,19 +203,15 @@ private:
 //
 class NativeReferenceV1 : public Reference {
 public:
-       NativeReferenceV1(const File& f,
-                             const NativeReferenceIvarsV1* ivarData)
-        : _file(&f), _ivarData(ivarData) { }
+  NativeReferenceV1(const File& f, const NativeReferenceIvarsV1* ivarData)
+      : _file(&f), _ivarData(ivarData) {
+    setKind(ivarData->kind);
+  }
 
   virtual uint64_t offsetInAtom() const {
     return _ivarData->offsetInAtom;
   }
 
-  virtual Kind kind() const {
-    return _ivarData->kind;
-  }
-
-  virtual void setKind(Kind);
   virtual const Atom* target() const;
   virtual Addend addend() const;
   virtual void setTarget(const Atom* newAtom);
@@ -901,11 +897,6 @@ inline const Atom* NativeReferenceV1::target() const {
 
 inline Reference::Addend NativeReferenceV1::addend() const {
   return _file->addend(_ivarData->addendIndex);
-}
-
-inline void NativeReferenceV1::setKind(Kind k) {
-  this->cloneIvarData();
-  const_cast<NativeReferenceIvarsV1*>(_ivarData)->kind = k;
 }
 
 inline void NativeReferenceV1::setTarget(const Atom* newAtom) {

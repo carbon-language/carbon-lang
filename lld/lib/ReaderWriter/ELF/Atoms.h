@@ -35,27 +35,22 @@ public:
 
   ELFReference(const Elf_Rela *rela, uint64_t offset, const Atom *target)
       : _target(target), _targetSymbolIndex(rela->getSymbol()),
-        _offsetInAtom(offset), _addend(rela->r_addend),
-        _kind((Kind) rela->getType()) {
+        _offsetInAtom(offset), _addend(rela->r_addend) {
+    _kind = (Kind) rela->getType();
   }
 
   ELFReference(const Elf_Rel *rel, uint64_t offset, const Atom *target)
       : _target(target), _targetSymbolIndex(rel->getSymbol()),
-        _offsetInAtom(offset), _addend(0), _kind((Kind) rel->getType()) {
+        _offsetInAtom(offset), _addend(0) {
+    _kind = (Kind) rel->getType();
   }
 
   ELFReference(Kind kind)
-      : _target(nullptr), _targetSymbolIndex(0), _offsetInAtom(0), _addend(0),
-        _kind(kind) {
+      : _target(nullptr), _targetSymbolIndex(0), _offsetInAtom(0), _addend(0) {
+    _kind = kind;
   }
 
   virtual uint64_t offsetInAtom() const { return _offsetInAtom; }
-
-  virtual Kind kind() const { return _kind; }
-
-  virtual void setKind(Kind kind) {
-    _kind = kind;
-  }
 
   virtual const Atom *target() const {
     return _target;
@@ -81,7 +76,6 @@ private:
   uint64_t _targetSymbolIndex;
   uint64_t _offsetInAtom;
   Addend _addend;
-  Kind _kind;
 };
 
 /// \brief These atoms store symbols that are fixed to a particular address.

@@ -777,15 +777,16 @@ struct MappingTraits<const lld::Reference*> {
   class NormalizedReference : public lld::Reference {
   public:
     NormalizedReference(IO &io)
-      : _target(nullptr), _targetName(), _offset(0), _addend(0) , _kind(0) {
-    }
+      : _target(nullptr), _targetName(), _offset(0), _addend(0) {}
+
     NormalizedReference(IO &io, const lld::Reference *ref)
       : _target(nullptr),
         _targetName(targetName(io, ref)),
         _offset(ref->offsetInAtom()),
         _addend(ref->addend()),
-        _kind(ref->kind()) {
+        _mappedKind(ref->kind()) {
     }
+
     const lld::Reference *denormalize(IO &io) {
       ContextInfo *info = reinterpret_cast<ContextInfo*>(io.getContext());
       assert(info != nullptr);
@@ -797,16 +798,15 @@ struct MappingTraits<const lld::Reference*> {
                 << "created Reference to name: '" << _targetName
                 << "' (" << (void*)_targetName.data() << ", "
                 << _targetName.size() << ")\n");
+      setKind(_mappedKind);
       return this;
     }
     void bind(const RefNameResolver&);
     static StringRef targetName(IO &io, const lld::Reference *ref);
 
     virtual uint64_t         offsetInAtom() const { return _offset; }
-    virtual Kind             kind() const         { return _kind; }
     virtual const lld::Atom *target() const       { return _target; }
     virtual Addend           addend() const       { return _addend; }
-    virtual void             setKind(Kind k)      { _kind = k; }
     virtual void             setAddend(Addend a)  { _addend = a; }
     virtual void             setTarget(const lld::Atom *a) { _target = a; }
 
@@ -814,7 +814,7 @@ struct MappingTraits<const lld::Reference*> {
     StringRef           _targetName;
     uint32_t            _offset;
     Addend              _addend;
-    RefKind             _kind;
+    RefKind             _mappedKind;
   };
 
 
@@ -822,7 +822,7 @@ struct MappingTraits<const lld::Reference*> {
     MappingNormalizationHeap<NormalizedReference,
                                           const lld::Reference*> keys(io, ref);
 
-    io.mapRequired("kind",         keys->_kind);
+    io.mapRequired("kind",         keys->_mappedKind);
     io.mapOptional("offset",       keys->_offset);
     io.mapOptional("target",       keys->_targetName);
     io.mapOptional("addend",       keys->_addend,  (lld::Reference::Addend)0);
