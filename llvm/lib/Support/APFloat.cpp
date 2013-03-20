@@ -3311,10 +3311,8 @@ namespace {
 
     significand = significand.udiv(divisor);
 
-    // Truncate the significand down to its active bit count, but
-    // don't try to drop below 32.
-    unsigned newPrecision = std::max(32U, significand.getActiveBits());
-    significand = significand.trunc(newPrecision);
+    // Truncate the significand down to its active bit count.
+    significand = significand.trunc(significand.getActiveBits());
   }
 
 
