@@ -1917,7 +1917,8 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
   }
   case ISD::LOAD: {
     LoadSDNode *LD = cast<LoadSDNode>(Op);
-    if (ISD::isZEXTLoad(Op.getNode())) {
+    // If this is a ZEXTLoad and we are looking at the loaded value.
+    if (ISD::isZEXTLoad(Op.getNode()) && Op.getResNo() == 0) {
       EVT VT = LD->getMemoryVT();
       unsigned MemBits = VT.getScalarType().getSizeInBits();
       KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - MemBits);
@@ -2287,17 +2288,20 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
     break;
   }
 
-  // Handle LOADX separately here. EXTLOAD case will fallthrough.
-  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(Op)) {
-    unsigned ExtType = LD->getExtensionType();
-    switch (ExtType) {
-    default: break;
-    case ISD::SEXTLOAD:    // '17' bits known
-      Tmp = LD->getMemoryVT().getScalarType().getSizeInBits();
-      return VTBits-Tmp+1;
-    case ISD::ZEXTLOAD:    // '16' bits known
-      Tmp = LD->getMemoryVT().getScalarType().getSizeInBits();
-      return VTBits-Tmp;
+  // If we are looking at the loaded value of the SDNode.
+  if (Op.getResNo() == 0) {
+    // Handle LOADX separately here. EXTLOAD case will fallthrough.
+    if (LoadSDNode *LD = dyn_cast<LoadSDNode>(Op)) {
+      unsigned ExtType = LD->getExtensionType();
+      switch (ExtType) {
+        default: break;
+        case ISD::SEXTLOAD:    // '17' bits known
+          Tmp = LD->getMemoryVT().getScalarType().getSizeInBits();
+          return VTBits-Tmp+1;
+        case ISD::ZEXTLOAD:    // '16' bits known
+          Tmp = LD->getMemoryVT().getScalarType().getSizeInBits();
+          return VTBits-Tmp;
+      }
     }
   }
 
