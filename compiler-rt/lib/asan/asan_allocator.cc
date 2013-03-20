@@ -529,7 +529,7 @@ static u8 *Allocate(uptr alignment, uptr size, StackTrace *stack,
          alignment, size, size_class, size_to_allocate);
   }
 
-  AsanThread *t = asanThreadRegistry().GetCurrent();
+  AsanThread *t = GetCurrentThread();
   AsanStats &thread_stats = asanThreadRegistry().GetCurrentThreadStats();
   // Statistics
   thread_stats.mallocs++;
@@ -619,7 +619,7 @@ static void Deallocate(u8 *ptr, StackTrace *stack, AllocType alloc_type) {
   CHECK(REDZONE <= 16 || !m->next);
   CHECK(m->free_tid == kInvalidTid);
   CHECK(m->alloc_tid >= 0);
-  AsanThread *t = asanThreadRegistry().GetCurrent();
+  AsanThread *t = GetCurrentThread();
   m->free_tid = t ? t->tid() : 0;
   StackTrace::CompressStack(stack, m->compressed_free_stack(),
                                 m->compressed_free_stack_size());

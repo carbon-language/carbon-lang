@@ -38,7 +38,7 @@ void AsanThreadRegistry::Init() {
   main_thread_.set_summary(&main_thread_summary_);
   main_thread_summary_.set_thread(&main_thread_);
   RegisterThread(&main_thread_);
-  SetCurrent(&main_thread_);
+  SetCurrentThread(&main_thread_);
   // At this point only one thread exists.
   inited_ = true;
 }
@@ -67,40 +67,8 @@ AsanThread *AsanThreadRegistry::GetMain() {
   return &main_thread_;
 }
 
-AsanThread *AsanThreadRegistry::GetCurrent() {
-  AsanThreadSummary *summary = (AsanThreadSummary *)AsanTSDGet();
-  if (!summary) {
-#if SANITIZER_ANDROID
-    // On Android, libc constructor is called _after_ asan_init, and cleans up
-    // TSD. Try to figure out if this is still the main thread by the stack
-    // address. We are not entirely sure that we have correct main thread
-    // limits, so only do this magic on Android, and only if the found thread is
-    // the main thread.
-    AsanThread* thread = FindThreadByStackAddress((uptr)&summary);
-    if (thread && thread->tid() == 0) {
-      SetCurrent(thread);
-      return thread;
-    }
-#endif
-    return 0;
-  }
-  return summary->thread();
-}
-
-void AsanThreadRegistry::SetCurrent(AsanThread *t) {
-  CHECK(t->summary());
-  if (flags()->verbosity >= 2) {
-    Report("SetCurrent: %p for thread %p\n",
-           t->summary(), (void*)GetThreadSelf());
-  }
-  // Make sure we do not reset the current AsanThread.
-  CHECK(AsanTSDGet() == 0);
-  AsanTSDSet(t->summary());
-  CHECK(AsanTSDGet() == t->summary());
-}
-
 AsanStats &AsanThreadRegistry::GetCurrentThreadStats() {
-  AsanThread *t = GetCurrent();
+  AsanThread *t = GetCurrentThread();
   return (t) ? t->stats() : main_thread_.stats();
 }
 

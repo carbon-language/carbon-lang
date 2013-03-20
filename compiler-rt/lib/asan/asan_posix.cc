@@ -74,7 +74,7 @@ void SetAlternateSignalStack() {
   CHECK(0 == sigaltstack(&altstack, 0));
   if (flags()->verbosity > 0) {
     Report("Alternative stack for T%d set: [%p,%p)\n",
-           asanThreadRegistry().GetCurrentTidOrInvalid(),
+           GetCurrentTidOrInvalid(),
            altstack.ss_sp, (char*)altstack.ss_sp + altstack.ss_size);
   }
 }

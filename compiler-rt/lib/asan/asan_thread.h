@@ -109,6 +109,11 @@ class AsanThread {
   AsanStats stats_;
 };
 
+// Get the current thread. May return 0.
+AsanThread *GetCurrentThread();
+void SetCurrentThread(AsanThread *t);
+u32 GetCurrentTidOrInvalid();
+
 }  // namespace __asan
 
 #endif  // ASAN_THREAD_H

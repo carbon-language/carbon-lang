@@ -103,7 +103,7 @@ void FakeStack::AllocateOneSizeClass(uptr size_class) {
   uptr new_mem = (uptr)MmapOrDie(
       ClassMmapSize(size_class), __FUNCTION__);
   // Printf("T%d new_mem[%zu]: %p-%p mmap %zu\n",
-  //       asanThreadRegistry().GetCurrent()->tid(),
+  //       GetCurrentThread()->tid(),
   //       size_class, new_mem, new_mem + ClassMmapSize(size_class),
   //       ClassMmapSize(size_class));
   uptr i;
@@ -163,7 +163,7 @@ using namespace __asan;  // NOLINT
 
 uptr __asan_stack_malloc(uptr size, uptr real_stack) {
   if (!flags()->use_fake_stack) return real_stack;
-  AsanThread *t = asanThreadRegistry().GetCurrent();
+  AsanThread *t = GetCurrentThread();
   if (!t) {
     // TSD is gone, use the real stack.
     return real_stack;

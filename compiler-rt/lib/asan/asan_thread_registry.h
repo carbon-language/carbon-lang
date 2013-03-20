@@ -34,18 +34,9 @@ class AsanThreadRegistry {
   void UnregisterThread(AsanThread *thread);
 
   AsanThread *GetMain();
-  // Get the current thread. May return 0.
-  AsanThread *GetCurrent();
-  void SetCurrent(AsanThread *t);
 
-  u32 GetCurrentTidOrInvalid() {
-    if (!inited_) return 0;
-    AsanThread *t = GetCurrent();
-    return t ? t->tid() : kInvalidTid;
-  }
-
-  // Returns stats for GetCurrent(), or stats for
-  // T0 if GetCurrent() returns 0.
+  // Returns stats for GetCurrentThread(), or stats for
+  // T0 if GetCurrentThread() returns 0.
   AsanStats &GetCurrentThreadStats();
   // Flushes all thread-local stats to accumulated stats, and makes
   // a copy of accumulated stats.

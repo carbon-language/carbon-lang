@@ -336,7 +336,7 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
     return 0;
   }
 
-  AsanThread *t = asanThreadRegistry().GetCurrent();
+  AsanThread *t = GetCurrentThread();
   void *allocated;
   if (t) {
     AllocatorCache *cache = GetAllocatorCache(&t->malloc_storage());
@@ -438,7 +438,7 @@ static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
   CHECK_GE(m->alloc_tid, 0);
   if (SANITIZER_WORDSIZE == 64)  // On 32-bits this resides in user area.
     CHECK_EQ(m->free_tid, kInvalidTid);
-  AsanThread *t = asanThreadRegistry().GetCurrent();
+  AsanThread *t = GetCurrentThread();
   m->free_tid = t ? t->tid() : 0;
   if (flags()->use_stack_depot) {
     m->free_context_id = StackDepotPut(stack->trace, stack->size);

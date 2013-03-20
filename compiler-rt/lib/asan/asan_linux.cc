@@ -116,7 +116,7 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast) {
   if (max_s > 1) {
     stack->max_size = max_s;
     if (!asan_inited) return;
-    if (AsanThread *t = asanThreadRegistry().GetCurrent())
+    if (AsanThread *t = GetCurrentThread())
       stack->FastUnwindStack(pc, bp, t->stack_top(), t->stack_bottom());
   }
 }

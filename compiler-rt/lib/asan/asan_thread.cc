@@ -152,4 +152,42 @@ const char *AsanThread::GetFrameNameByAddr(uptr addr, uptr *offset) {
   return (const char*)ptr[1];
 }
 
+AsanThread *GetCurrentThread() {
+  AsanThreadSummary *summary = (AsanThreadSummary *)AsanTSDGet();
+  if (!summary) {
+#if SANITIZER_ANDROID
+    // On Android, libc constructor is called _after_ asan_init, and cleans up
+    // TSD. Try to figure out if this is still the main thread by the stack
+    // address. We are not entirely sure that we have correct main thread
+    // limits, so only do this magic on Android, and only if the found thread is
+    // the main thread.
+    AsanThread *thread =
+        asanThreadRegistry().FindThreadByStackAddress((uptr)&summary);
+    if (thread && thread->tid() == 0) {
+      SetCurrentThread(thread);
+      return thread;
+    }
+#endif
+    return 0;
+  }
+  return summary->thread();
+}
+
+void SetCurrentThread(AsanThread *t) {
+  CHECK(t->summary());
+  if (flags()->verbosity >= 2) {
+    Report("SetCurrentThread: %p for thread %p\n",
+           t->summary(), (void*)GetThreadSelf());
+  }
+  // Make sure we do not reset the current AsanThread.
+  CHECK(AsanTSDGet() == 0);
+  AsanTSDSet(t->summary());
+  CHECK(AsanTSDGet() == t->summary());
+}
+
+u32 GetCurrentTidOrInvalid() {
+  AsanThread *t = GetCurrentThread();
+  return t ? t->tid() : kInvalidTid;
+}
+
 }  // namespace __asan

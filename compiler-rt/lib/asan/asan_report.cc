@@ -342,7 +342,7 @@ void DescribeHeapAddress(uptr addr, uptr access_size) {
       asanThreadRegistry().FindByTid(chunk.AllocTid());
   StackTrace alloc_stack;
   chunk.GetAllocStack(&alloc_stack);
-  AsanThread *t = asanThreadRegistry().GetCurrent();
+  AsanThread *t = GetCurrentThread();
   CHECK(t);
   char tname[128];
   Decorator d;
@@ -428,7 +428,7 @@ class ScopedInErrorReport {
       // they are defined as no-return.
       Report("AddressSanitizer: while reporting a bug found another one."
                  "Ignoring.\n");
-      u32 current_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
+      u32 current_tid = GetCurrentTidOrInvalid();
       if (current_tid != reporting_thread_tid) {
         // ASan found two bugs in different threads simultaneously. Sleep
         // long enough to make sure that the thread which started to print
@@ -440,13 +440,13 @@ class ScopedInErrorReport {
       internal__exit(flags()->exitcode);
     }
     ASAN_ON_ERROR();
-    reporting_thread_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
+    reporting_thread_tid = GetCurrentTidOrInvalid();
     Printf("===================================================="
            "=============\n");
     if (reporting_thread_tid != kInvalidTid) {
       // We started reporting an error message. Stop using the fake stack
       // in case we call an instrumented function from a symbolizer.
-      AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
+      AsanThread *curr_thread = GetCurrentThread();
       CHECK(curr_thread);
       curr_thread->fake_stack().StopUsingFakeStack();
     }
@@ -454,7 +454,7 @@ class ScopedInErrorReport {
   // Destructor is NORETURN, as functions that report errors are.
   NORETURN ~ScopedInErrorReport() {
     // Make sure the current thread is announced.
-    AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
+    AsanThread *curr_thread = GetCurrentThread();
     if (curr_thread) {
       DescribeThread(curr_thread->summary());
     }
@@ -490,7 +490,7 @@ void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
   Report("ERROR: AddressSanitizer: SEGV on unknown address %p"
              " (pc %p sp %p bp %p T%d)\n",
              (void*)addr, (void*)pc, (void*)sp, (void*)bp,
-             asanThreadRegistry().GetCurrentTidOrInvalid());
+             GetCurrentTidOrInvalid());
   Printf("%s", d.EndWarning());
   Printf("AddressSanitizer can not provide additional info.\n");
   GET_STACK_TRACE_FATAL(pc, bp);
@@ -680,7 +680,7 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
              bug_descr, (void*)addr, pc, bp, sp);
   Printf("%s", d.EndWarning());
 
-  u32 curr_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
+  u32 curr_tid = GetCurrentTidOrInvalid();
   char tname[128];
   Printf("%s%s of size %zu at %p thread T%d%s%s\n",
          d.Access(),
