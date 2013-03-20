@@ -40,6 +40,13 @@ template <class Derived> class GOTPLTPass : public Pass {
     case R_HEX_PLT_B22_PCREL:
       static_cast<Derived *>(this)->handlePLT32(ref);
       break;
+    case R_HEX_GOT_LO16:
+    case R_HEX_GOT_HI16:
+    case R_HEX_GOT_32_6_X:
+    case R_HEX_GOT_16_X:
+    case R_HEX_GOT_11_X:
+      static_cast<Derived *>(this)->handleGOTREL(ref);
+      break;
     }
   }
 
@@ -124,20 +131,21 @@ protected:
 
 class DynamicGOTPLTPass LLVM_FINAL : public GOTPLTPass<DynamicGOTPLTPass> {
 public:
-  DynamicGOTPLTPass(const elf::HexagonTargetInfo &ti) : GOTPLTPass(ti) {}
+  DynamicGOTPLTPass(const elf::HexagonTargetInfo &ti) : GOTPLTPass(ti) {
+    // Fill in the null entry.
+    getNullGOT();
+    _got0 = new (_file._alloc) HexagonGOTAtom(_file, ".got.plt");
+#ifndef NDEBUG
+    _got0->_name = "__got0";
+#endif
+  }
 
   const PLT0Atom *getPLT0() {
     if (_PLT0)
       return _PLT0;
-    // Fill in the null entry.
-    getNullGOT();
     _PLT0 = new (_file._alloc) HexagonPLT0Atom(_file);
-    _got0 = new (_file._alloc) HexagonGOTAtom(_file, ".got.plt");
     _PLT0->addReference(R_HEX_B32_PCREL_X, 0, _got0, 0);
     _PLT0->addReference(R_HEX_6_PCREL_X, 4, _got0, 0);
-#ifndef NDEBUG
-    _got0->_name = "__got0";
-#endif
     DEBUG_WITH_TYPE("PLT", llvm::dbgs() << "[ PLT0/GOT0 ] "
                                         << "Adding plt0/got0 \n");
     return _PLT0;
@@ -169,6 +177,30 @@ public:
     _gotVector.push_back(ga);
     _pltVector.push_back(pa);
     return pa;
+  }
+
+  const GOTAtom *getGOTEntry(const Atom *a) {
+    auto got = _gotMap.find(a);
+    if (got != _gotMap.end())
+      return got->second;
+    auto ga = new (_file._alloc) HexagonGOTAtom(_file, ".got");
+    ga->addReference(R_HEX_GLOB_DAT, 0, a, 0);
+
+#ifndef NDEBUG
+    ga->_name = "__got_";
+    ga->_name += a->name();
+    DEBUG_WITH_TYPE("GOT", llvm::dbgs() << "[" << a->name() << "] "
+                                        << "Adding got: " << ga->_name << "\n");
+#endif
+    _gotMap[a] = ga;
+    _gotVector.push_back(ga);
+    return ga;
+  }
+
+  ErrorOr<void> handleGOTREL(const Reference &ref) {
+    // Turn this so that the target is set to the GOT entry 
+    const_cast<Reference &>(ref).setTarget(getGOTEntry(ref.target()));
+    return error_code::success();
   }
 
   ErrorOr<void> handlePLT32(const Reference &ref) {

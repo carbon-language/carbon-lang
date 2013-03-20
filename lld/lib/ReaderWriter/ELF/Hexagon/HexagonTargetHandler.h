@@ -170,6 +170,8 @@ public:
 
   void addDefaultAtoms() {
     _hexagonRuntimeFile.addAbsoluteAtom("_SDA_BASE_");
+    if (_targetInfo.isDynamic())
+      _hexagonRuntimeFile.addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
   }
 
   virtual void addFiles(InputFiles &inputFiles) {
@@ -180,14 +182,27 @@ public:
   void finalizeSymbolValues() {
     auto sdabaseAtomIter = _targetLayout.findAbsoluteAtom("_SDA_BASE_");
     (*sdabaseAtomIter)->_virtualAddr =
-      _targetLayout.getSDataSection()->virtualAddr();
+        _targetLayout.getSDataSection()->virtualAddr();
+    if (_targetInfo.isDynamic()) {
+      auto gotAtomIter =
+          _targetLayout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
+      _gotSymAtom = (*gotAtomIter);
+      auto gotpltSection = _targetLayout.findOutputSection(".got.plt");
+      if (gotpltSection)
+        _gotSymAtom->_virtualAddr = gotpltSection->virtualAddr();
+      else
+        _gotSymAtom->_virtualAddr = 0;
+    }
   }
+
+  uint64_t getGOTSymAddr() { return _gotSymAtom->_virtualAddr; }
 
 private:
   HexagonTargetLayout<HexagonELFType> _targetLayout;
   HexagonTargetRelocationHandler _relocationHandler;
   HexagonTargetAtomHandler<HexagonELFType> _targetAtomHandler;
   HexagonRuntimeFile<HexagonELFType> _hexagonRuntimeFile;
+  AtomLayout *_gotSymAtom;
 };
 } // end namespace elf
 } // end namespace lld
