@@ -28,7 +28,8 @@ Module::Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent,
     Umbrella(), ASTFile(0), IsAvailable(true), IsFromModuleFile(false),
     IsFramework(IsFramework), IsExplicit(IsExplicit), IsSystem(false),
     InferSubmodules(false), InferExplicitSubmodules(false), 
-    InferExportWildcard(false), NameVisibility(Hidden) 
+    InferExportWildcard(false), ConfigMacrosExhaustive(false),
+    NameVisibility(Hidden)
 { 
   if (Parent) {
     if (!Parent->isAvailable())
@@ -46,7 +47,6 @@ Module::~Module() {
        I != IEnd; ++I) {
     delete *I;
   }
-  
 }
 
 /// \brief Determine whether a translation unit built using the current
@@ -284,12 +284,13 @@ void Module::print(raw_ostream &OS, unsigned Indent) const {
     OS.indent(Indent + 2);
     OS << "config_macros ";
     if (ConfigMacrosExhaustive)
-      OS << "[exhausive]";
+      OS << "[exhaustive]";
     for (unsigned I = 0, N = ConfigMacros.size(); I != N; ++I) {
       if (I)
         OS << ", ";
       OS << ConfigMacros[I];
     }
+    OS << "\n";
   }
 
   for (unsigned I = 0, N = Headers.size(); I != N; ++I) {
