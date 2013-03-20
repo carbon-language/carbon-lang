@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "polly/LinkAllPasses.h"
+#include "polly/CodeGen/BlockGenerators.h"
 #include "polly/Support/ScopHelper.h"
 
 #include "llvm/IR/Instruction.h"
@@ -47,6 +48,7 @@ class CodePreparation : public FunctionPass {
 
   // LoopInfo to compute canonical induction variable.
   LoopInfo *LI;
+  ScalarEvolution *SE;
 
   // Clear the context.
   void clear();
@@ -92,11 +94,21 @@ bool CodePreparation::eliminatePHINodes(Function &F) {
     for (BasicBlock::iterator iib = ibb->begin(), iie = ibb->getFirstNonPHI();
         iib != iie; ++iib)
       if (PHINode *PN = cast<PHINode>(iib)) {
-        if (Loop *L = LI->getLoopFor(ibb)) {
-          // Induction variable will be preserved.
-          if (L->getCanonicalInductionVariable() == PN) {
-            PreservedPNs.push_back(PN);
-            continue;
+        if (SCEVCodegen) {
+          if (SE->isSCEVable(PN->getType())) {
+            const SCEV *S = SE->getSCEV(PN);
+            if (!isa<SCEVUnknown>(S) && !isa<SCEVCouldNotCompute>(S)) {
+              PreservedPNs.push_back(PN);
+              continue;
+            }
+          }
+        } else {
+          if (Loop *L = LI->getLoopFor(ibb)) {
+            // Induction variable will be preserved.
+            if (L->getCanonicalInductionVariable() == PN) {
+              PreservedPNs.push_back(PN);
+              continue;
+            }
           }
         }
 
@@ -136,6 +148,7 @@ bool CodePreparation::eliminatePHINodes(Function &F) {
 
 void CodePreparation::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfo>();
+  AU.addRequired<ScalarEvolution>();
 
   AU.addPreserved<LoopInfo>();
   AU.addPreserved<RegionInfo>();
@@ -145,6 +158,7 @@ void CodePreparation::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool CodePreparation::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfo>();
+  SE = &getAnalysis<ScalarEvolution>();
 
   splitEntryBlockForAlloca(&F.getEntryBlock(), this);
 
