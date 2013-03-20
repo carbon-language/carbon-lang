@@ -12,15 +12,16 @@
 
 #include <map>
 
-#include "lldb/lldb-private.h"
+#include "lldb/Core/AddressRange.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Flags.h"
-#include "lldb/Core/AddressRange.h"
+#include "lldb/Core/RangeMap.h"
 #include "lldb/Core/VMRange.h"
 #include "lldb/Core/dwarf.h"
 #include "lldb/Host/Mutex.h"
-#include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Symbol/UnwindPlan.h"
+#include "lldb/lldb-private.h"
 
 namespace lldb_private {
 
@@ -53,7 +54,6 @@ public:
     bool
     GetUnwindPlan (Address addr, UnwindPlan& unwind_plan);
 
-
 private:
     enum
     {
@@ -81,22 +81,10 @@ private:
 
     typedef STD_SHARED_PTR(CIE) CIESP;
 
-    struct FDEEntry
-    {
-        AddressRange bounds;   // function bounds
-        dw_offset_t offset;    // offset to this FDE within the Section
-
-        FDEEntry () : bounds (), offset (0) { }
-
-        inline bool
-        operator<(const DWARFCallFrameInfo::FDEEntry& b) const
-        {
-            if (bounds.GetBaseAddress().GetOffset() < b.bounds.GetBaseAddress().GetOffset())
-                return true;
-            else
-                return false;
-        }
-    };
+    // Start address, size, offset of FDE location
+    // used for finding an FDE for a given File address; the start address field is
+    // an offset into an individual Module.
+    typedef RangeDataVector<lldb::addr_t, uint32_t, dw_offset_t> FDEEntryMap;
 
     typedef std::map<off_t, CIESP> cie_map_t;
 
@@ -104,7 +92,7 @@ private:
     IsEHFrame() const;
 
     bool
-    GetFDEEntryByAddress (Address addr, FDEEntry& fde_entry);
+    GetFDEEntryByFileAddress (lldb::addr_t file_offset, FDEEntryMap::Entry& fde_entry);
 
     void
     GetFDEIndex ();
@@ -127,7 +115,7 @@ private:
     DataExtractor               m_cfi_data;
     bool                        m_cfi_data_initialized;   // only copy the section into the DE once
 
-    std::vector<FDEEntry>       m_fde_index;
+    FDEEntryMap                 m_fde_index;
     bool                        m_fde_index_initialized;  // only scan the section for FDEs once
     Mutex                       m_fde_index_mutex;        // and isolate the thread that does it
 
