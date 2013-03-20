@@ -2062,7 +2062,7 @@ public:
   // Called by ClusterAnalysis.
   void VisitAddedToCluster(const MemRegion *baseR, const ClusterBindings &C);
   void VisitCluster(const MemRegion *baseR, const ClusterBindings *C);
-  using ClusterAnalysis::VisitCluster;
+  using ClusterAnalysis<removeDeadBindingsWorker>::VisitCluster;
 
   bool UpdatePostponed();
   void VisitBinding(SVal V);
