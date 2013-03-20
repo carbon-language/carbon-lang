@@ -285,7 +285,7 @@ void mi_force_unlock(malloc_zone_t *zone) {
 
 void mi_statistics(malloc_zone_t *zone, malloc_statistics_t *stats) {
   AsanMallocStats malloc_stats;
-  asanThreadRegistry().FillMallocStatistics(&malloc_stats);
+  FillMallocStatistics(&malloc_stats);
   CHECK(sizeof(malloc_statistics_t) == sizeof(AsanMallocStats));
   internal_memcpy(stats, &malloc_stats, sizeof(malloc_statistics_t));
 }

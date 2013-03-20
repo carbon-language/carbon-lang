@@ -29,8 +29,6 @@ AsanThreadRegistry &asanThreadRegistry() {
 AsanThreadRegistry::AsanThreadRegistry(LinkerInitialized x)
     : main_thread_(x),
       main_thread_summary_(x),
-      accumulated_stats_(x),
-      max_malloced_memory_(x),
       mu_(x) { }
 
 void AsanThreadRegistry::Init() {
@@ -57,7 +55,7 @@ void AsanThreadRegistry::RegisterThread(AsanThread *thread) {
 
 void AsanThreadRegistry::UnregisterThread(AsanThread *thread) {
   BlockingMutexLock lock(&mu_);
-  FlushToAccumulatedStatsUnlocked(&thread->stats());
+  FlushToAccumulatedStats(&thread->stats());
   AsanThreadSummary *summary = thread->summary();
   CHECK(summary);
   summary->set_thread(0);
@@ -67,56 +65,14 @@ AsanThread *AsanThreadRegistry::GetMain() {
   return &main_thread_;
 }
 
-AsanStats &AsanThreadRegistry::GetCurrentThreadStats() {
-  AsanThread *t = GetCurrentThread();
-  return (t) ? t->stats() : main_thread_.stats();
-}
-
-void AsanThreadRegistry::GetAccumulatedStats(AsanStats *stats) {
+void AsanThreadRegistry::FlushAllStats() {
   BlockingMutexLock lock(&mu_);
-  UpdateAccumulatedStatsUnlocked();
-  internal_memcpy(stats, &accumulated_stats_, sizeof(accumulated_stats_));
-}
-
-uptr AsanThreadRegistry::GetCurrentAllocatedBytes() {
-  BlockingMutexLock lock(&mu_);
-  UpdateAccumulatedStatsUnlocked();
-  uptr malloced = accumulated_stats_.malloced;
-  uptr freed = accumulated_stats_.freed;
-  // Return sane value if malloced < freed due to racy
-  // way we update accumulated stats.
-  return (malloced > freed) ? malloced - freed : 1;
-}
-
-uptr AsanThreadRegistry::GetHeapSize() {
-  BlockingMutexLock lock(&mu_);
-  UpdateAccumulatedStatsUnlocked();
-  return accumulated_stats_.mmaped - accumulated_stats_.munmaped;
-}
-
-uptr AsanThreadRegistry::GetFreeBytes() {
-  BlockingMutexLock lock(&mu_);
-  UpdateAccumulatedStatsUnlocked();
-  uptr total_free = accumulated_stats_.mmaped
-                  - accumulated_stats_.munmaped
-                  + accumulated_stats_.really_freed
-                  + accumulated_stats_.really_freed_redzones;
-  uptr total_used = accumulated_stats_.malloced
-                  + accumulated_stats_.malloced_redzones;
-  // Return sane value if total_free < total_used due to racy
-  // way we update accumulated stats.
-  return (total_free > total_used) ? total_free - total_used : 1;
-}
-
-// Return several stats counters with a single call to
-// UpdateAccumulatedStatsUnlocked().
-void AsanThreadRegistry::FillMallocStatistics(AsanMallocStats *malloc_stats) {
-  BlockingMutexLock lock(&mu_);
-  UpdateAccumulatedStatsUnlocked();
-  malloc_stats->blocks_in_use = accumulated_stats_.mallocs;
-  malloc_stats->size_in_use = accumulated_stats_.malloced;
-  malloc_stats->max_size_in_use = max_malloced_memory_;
-  malloc_stats->size_allocated = accumulated_stats_.mmaped;
+  for (u32 tid = 0; tid < n_threads_; tid++) {
+    AsanThread *t = thread_summaries_[tid]->thread();
+    if (t != 0) {
+      FlushToAccumulatedStatsUnlocked(&t->stats());
+    }
+  }
 }
 
 AsanThreadSummary *AsanThreadRegistry::FindByTid(u32 tid) {
@@ -135,32 +91,6 @@ AsanThread *AsanThreadRegistry::FindThreadByStackAddress(uptr addr) {
     }
   }
   return 0;
-}
-
-void AsanThreadRegistry::UpdateAccumulatedStatsUnlocked() {
-  for (u32 tid = 0; tid < n_threads_; tid++) {
-    AsanThread *t = thread_summaries_[tid]->thread();
-    if (t != 0) {
-      FlushToAccumulatedStatsUnlocked(&t->stats());
-    }
-  }
-  // This is not very accurate: we may miss allocation peaks that happen
-  // between two updates of accumulated_stats_. For more accurate bookkeeping
-  // the maximum should be updated on every malloc(), which is unacceptable.
-  if (max_malloced_memory_ < accumulated_stats_.malloced) {
-    max_malloced_memory_ = accumulated_stats_.malloced;
-  }
-}
-
-void AsanThreadRegistry::FlushToAccumulatedStatsUnlocked(AsanStats *stats) {
-  // AsanStats consists of variables of type uptr only.
-  uptr *dst = (uptr*)&accumulated_stats_;
-  uptr *src = (uptr*)stats;
-  uptr num_fields = sizeof(AsanStats) / sizeof(uptr);
-  for (uptr i = 0; i < num_fields; i++) {
-    dst[i] += src[i];
-    src[i] = 0;
-  }
 }
 
 }  // namespace __asan

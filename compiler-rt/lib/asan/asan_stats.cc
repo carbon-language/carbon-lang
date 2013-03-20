@@ -15,6 +15,7 @@
 #include "asan_internal.h"
 #include "asan_stats.h"
 #include "asan_thread_registry.h"
+#include "sanitizer_common/sanitizer_mutex.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 
 namespace __asan {
@@ -57,7 +58,7 @@ static BlockingMutex print_lock(LINKER_INITIALIZED);
 
 static void PrintAccumulatedStats() {
   AsanStats stats;
-  asanThreadRegistry().GetAccumulatedStats(&stats);
+  GetAccumulatedStats(&stats);
   // Use lock to keep reports from mixing up.
   BlockingMutexLock lock(&print_lock);
   stats.Print();
@@ -67,21 +68,94 @@ static void PrintAccumulatedStats() {
   PrintInternalAllocatorStats();
 }
 
+static AsanStats unknown_thread_stats(LINKER_INITIALIZED);
+static AsanStats accumulated_stats(LINKER_INITIALIZED);
+// Required for malloc_zone_statistics() on OS X. This can't be stored in
+// per-thread AsanStats.
+static uptr max_malloced_memory;
+static BlockingMutex acc_stats_lock(LINKER_INITIALIZED);
+
+void FlushToAccumulatedStatsUnlocked(AsanStats *stats) {
+  acc_stats_lock.CheckLocked();
+  uptr *dst = (uptr*)&accumulated_stats;
+  uptr *src = (uptr*)stats;
+  uptr num_fields = sizeof(*stats) / sizeof(uptr);
+  for (uptr i = 0; i < num_fields; i++) {
+    dst[i] += src[i];
+    src[i] = 0;
+  }
+}
+
+static void UpdateAccumulatedStatsUnlocked() {
+  acc_stats_lock.CheckLocked();
+  asanThreadRegistry().FlushAllStats();
+  FlushToAccumulatedStatsUnlocked(&unknown_thread_stats);
+  // This is not very accurate: we may miss allocation peaks that happen
+  // between two updates of accumulated_stats_. For more accurate bookkeeping
+  // the maximum should be updated on every malloc(), which is unacceptable.
+  if (max_malloced_memory < accumulated_stats.malloced) {
+    max_malloced_memory = accumulated_stats.malloced;
+  }
+}
+
+void FlushToAccumulatedStats(AsanStats *stats) {
+  BlockingMutexLock lock(&acc_stats_lock);
+  FlushToAccumulatedStatsUnlocked(stats);
+}
+
+void GetAccumulatedStats(AsanStats *stats) {
+  BlockingMutexLock lock(&acc_stats_lock);
+  UpdateAccumulatedStatsUnlocked();
+  internal_memcpy(stats, &accumulated_stats, sizeof(accumulated_stats));
+}
+
+void FillMallocStatistics(AsanMallocStats *malloc_stats) {
+  BlockingMutexLock lock(&acc_stats_lock);
+  UpdateAccumulatedStatsUnlocked();
+  malloc_stats->blocks_in_use = accumulated_stats.mallocs;
+  malloc_stats->size_in_use = accumulated_stats.malloced;
+  malloc_stats->max_size_in_use = max_malloced_memory;
+  malloc_stats->size_allocated = accumulated_stats.mmaped;
+}
+
+AsanStats &GetCurrentThreadStats() {
+  AsanThread *t = GetCurrentThread();
+  return (t) ? t->stats() : unknown_thread_stats;
+}
+
 }  // namespace __asan
 
 // ---------------------- Interface ---------------- {{{1
 using namespace __asan;  // NOLINT
 
 uptr __asan_get_current_allocated_bytes() {
-  return asanThreadRegistry().GetCurrentAllocatedBytes();
+  BlockingMutexLock lock(&acc_stats_lock);
+  UpdateAccumulatedStatsUnlocked();
+  uptr malloced = accumulated_stats.malloced;
+  uptr freed = accumulated_stats.freed;
+  // Return sane value if malloced < freed due to racy
+  // way we update accumulated stats.
+  return (malloced > freed) ? malloced - freed : 1;
 }
 
 uptr __asan_get_heap_size() {
-  return asanThreadRegistry().GetHeapSize();
+  BlockingMutexLock lock(&acc_stats_lock);
+  UpdateAccumulatedStatsUnlocked();
+  return accumulated_stats.mmaped - accumulated_stats.munmaped;
 }
 
 uptr __asan_get_free_bytes() {
-  return asanThreadRegistry().GetFreeBytes();
+  BlockingMutexLock lock(&acc_stats_lock);
+  UpdateAccumulatedStatsUnlocked();
+  uptr total_free = accumulated_stats.mmaped
+                  - accumulated_stats.munmaped
+                  + accumulated_stats.really_freed
+                  + accumulated_stats.really_freed_redzones;
+  uptr total_used = accumulated_stats.malloced
+                  + accumulated_stats.malloced_redzones;
+  // Return sane value if total_free < total_used due to racy
+  // way we update accumulated stats.
+  return (total_free > total_used) ? total_free - total_used : 1;
 }
 
 uptr __asan_get_unmapped_bytes() {

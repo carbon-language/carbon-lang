@@ -237,7 +237,7 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast) {
   if ((max_s) > 1) {
     stack->max_size = max_s;
     if (!asan_inited) return;
-    if (AsanThread *t = asanThreadRegistry().GetCurrent())
+    if (AsanThread *t = GetCurrentThread())
       stack->FastUnwindStack(pc, bp, t->stack_top(), t->stack_bottom());
   }
 }
@@ -291,12 +291,12 @@ typedef struct {
 
 static ALWAYS_INLINE
 void asan_register_worker_thread(int parent_tid, StackTrace *stack) {
-  AsanThread *t = asanThreadRegistry().GetCurrent();
+  AsanThread *t = GetCurrentThread();
   if (!t) {
     t = AsanThread::Create(parent_tid, 0, 0, stack);
     asanThreadRegistry().RegisterThread(t);
     t->Init();
-    asanThreadRegistry().SetCurrent(t);
+    SetCurrentThread(t);
   }
 }
 
@@ -330,7 +330,7 @@ asan_block_context_t *alloc_asan_context(void *ctxt, dispatch_function_t func,
       (asan_block_context_t*) asan_malloc(sizeof(asan_block_context_t), stack);
   asan_ctxt->block = ctxt;
   asan_ctxt->func = func;
-  asan_ctxt->parent_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
+  asan_ctxt->parent_tid = GetCurrentTidOrInvalid();
   return asan_ctxt;
 }
 
@@ -396,7 +396,7 @@ void dispatch_source_set_event_handler(dispatch_source_t ds, void(^work)(void));
 
 #define GET_ASAN_BLOCK(work) \
   void (^asan_block)(void);  \
-  int parent_tid = asanThreadRegistry().GetCurrentTidOrInvalid(); \
+  int parent_tid = GetCurrentTidOrInvalid(); \
   asan_block = ^(void) { \
     GET_STACK_TRACE_THREAD; \
     asan_register_worker_thread(parent_tid, &stack); \
