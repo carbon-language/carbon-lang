@@ -161,11 +161,11 @@ public:
   }
 
   APSInt& operator++() {
-    static_cast<APInt&>(*this)++;
+    ++(static_cast<APInt&>(*this));
     return *this;
   }
   APSInt& operator--() {
-    static_cast<APInt&>(*this)--;
+    --(static_cast<APInt&>(*this));
     return *this;
   }
   APSInt operator++(int) {

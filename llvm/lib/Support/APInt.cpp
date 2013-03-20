@@ -559,12 +559,12 @@ bool APInt::slt(const APInt& RHS) const {
   if (lhsNeg) {
     // Sign bit is set so perform two's complement to make it positive
     lhs.flipAllBits();
-    lhs++;
+    ++lhs;
   }
   if (rhsNeg) {
     // Sign bit is set so perform two's complement to make it positive
     rhs.flipAllBits();
-    rhs++;
+    ++rhs;
   }
 
   // Now we have unsigned values to compare so do the comparison if necessary
@@ -2116,7 +2116,7 @@ void APInt::fromString(unsigned numbits, StringRef str, uint8_t radix) {
   }
   // If its negative, put it in two's complement form
   if (isNeg) {
-    (*this)--;
+    --(*this);
     this->flipAllBits();
   }
 }
@@ -2197,7 +2197,7 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
     // Flip the bits and add one to turn it into the equivalent positive
     // value and put a '-' in the result.
     Tmp.flipAllBits();
-    Tmp++;
+    ++Tmp;
     Str.push_back('-');
   }
 
