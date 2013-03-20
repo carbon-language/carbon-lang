@@ -17,7 +17,8 @@ TestCase::TestCase () :
     m_process(),
     m_thread(),
     m_listener(),
-    m_verbose(false)
+    m_verbose(false),
+    m_step(0)
 {
     SBDebugger::Initialize();
 	SBHostOS::ThreadCreated ("<lldb-tester.app.main>");
@@ -61,7 +62,6 @@ TestCase::GetVerbose ()
 void
 TestCase::Loop ()
 {
-	int step = 0;
 	SBEvent evt;
 	while (true)
 	{
@@ -152,10 +152,10 @@ TestCase::Loop ()
 					exit(1);
 				}
 				if (m_verbose)
-					printf("RUNNING STEP %d\n",step);
+					printf("RUNNING STEP %d\n",m_step);
                 ActionWanted action;
-				TestStep(step, action);
-				step++;
+				TestStep(m_step, action);
+				m_step++;
                 SBError err;
 				switch (action.type)
 				{
@@ -166,7 +166,7 @@ TestCase::Loop ()
                         if (action.thread.IsValid() == false)
                         {
                             if (m_verbose) Xcode::RunCommand(m_debugger,"bt all",true);
-                            if (m_verbose) printf("[finish invalid] I am gonna die at step %d\n",step);
+                            if (m_verbose) printf("[finish invalid] I am gonna die at step %d\n",m_step);
                             exit(501);
                         }
                         m_process.SetSelectedThread(action.thread);
@@ -176,7 +176,7 @@ TestCase::Loop ()
                         if (action.thread.IsValid() == false)
                         {
                             if (m_verbose) Xcode::RunCommand(m_debugger,"bt all",true);
-                            if (m_verbose) printf("[next invalid] I am gonna die at step %d\n",step);
+                            if (m_verbose) printf("[next invalid] I am gonna die at step %d\n",m_step);
                             exit(500);
                         }
                         m_process.SetSelectedThread(action.thread);
@@ -190,7 +190,7 @@ TestCase::Loop ()
 			}
 		}
 	}
-	if (GetVerbose()) printf("I am gonna die at step %d\n",step);
+	if (GetVerbose()) printf("I am gonna die at step %d\n",m_step);
 }
 
 void

@@ -134,6 +134,13 @@ public:
     {
         return m_thread;
     }
+    
+    int
+    GetStep ()
+    {
+        return m_step;
+    }
+    
 protected:
     lldb::SBDebugger m_debugger;
 	lldb::SBTarget m_target;
@@ -141,6 +148,7 @@ protected:
 	lldb::SBThread m_thread;
 	lldb::SBListener m_listener;
     bool m_verbose;
+    int m_step;
 };
 }
 
