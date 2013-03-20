@@ -372,8 +372,8 @@ private:
   void alignComments(comment_iterator I, comment_iterator E, unsigned Column) {
     while (I != E) {
       unsigned Spaces = I->Spaces + Column - I->MinColumn;
-      storeReplacement(I->Tok, std::string(I->NewLines, '\n') +
-                               std::string(Spaces, ' '));
+      storeReplacement(
+          I->Tok, std::string(I->NewLines, '\n') + std::string(Spaces, ' '));
       ++I;
     }
   }

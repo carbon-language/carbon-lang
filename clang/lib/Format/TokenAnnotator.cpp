@@ -937,7 +937,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 20;
 
   if (opensScope(Left))
-    return 20;
+    return Left.ParameterCount > 1 ? prec::Comma : 20;
 
   if (Right.is(tok::lessless)) {
     if (Left.is(tok::string_literal)) {
