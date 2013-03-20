@@ -151,6 +151,10 @@ Module Map Language
 ===================
 TBD
 
+In the meantime, you can look at ``clang/lib/Headers/module.map``, and all
+the ``module.map`` files in ``clang/test/``.
+In particular, ``clang/test/Modules/`` contains tests specifically related
+to the modules functionality.
 
 .. [#] Automatic linking against the libraries of modules requires specific linker support, which is not widely available.
 
