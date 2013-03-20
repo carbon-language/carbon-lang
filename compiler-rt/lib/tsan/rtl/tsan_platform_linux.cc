@@ -51,6 +51,8 @@ extern "C" struct mallinfo __libc_mallinfo();
 
 namespace __tsan {
 
+const uptr kPageSize = 4096;
+
 #ifndef TSAN_GO
 ScopedInRtl::ScopedInRtl()
     : thr_(cur_thread()) {
@@ -162,6 +164,62 @@ static void ProtectRange(uptr beg, uptr end) {
 #endif
 
 #ifndef TSAN_GO
+// Mark shadow for .rodata sections with the special kShadowRodata marker.
+// Accesses to .rodata can't race, so this saves time, memory and trace space.
+static void MapRodata() {
+  // First create temp file.
+  const char *tmpdir = GetEnv("TMPDIR");
+  if (tmpdir == 0)
+    tmpdir = GetEnv("TEST_TMPDIR");
+#ifdef P_tmpdir
+  if (tmpdir == 0)
+    tmpdir = P_tmpdir;
+#endif
+  if (tmpdir == 0)
+    return;
+  char filename[256];
+  internal_snprintf(filename, sizeof(filename), "%s/tsan.rodata.%u",
+                    tmpdir, GetPid());
+  fd_t fd = internal_open(filename, O_RDWR | O_CREAT | O_EXCL, 0600);
+  if (fd == kInvalidFd)
+    return;
+  // Fill the file with kShadowRodata.
+  const uptr kMarkerSize = 512 * 1024 / sizeof(u64);
+  InternalScopedBuffer<u64> marker(kMarkerSize);
+  for (u64 *p = marker.data(); p < marker.data() + kMarkerSize; p++)
+    *p = kShadowRodata;
+  internal_write(fd, marker.data(), marker.size());
+  // Map the file into memory.
+  void *page = internal_mmap(0, kPageSize, PROT_READ | PROT_WRITE,
+                             MAP_PRIVATE | MAP_ANONYMOUS, fd, 0);
+  if (page == MAP_FAILED) {
+    internal_close(fd);
+    internal_unlink(filename);
+    return;
+  }
+  // Map the file into shadow of .rodata sections.
+  MemoryMappingLayout proc_maps;
+  uptr start, end, offset, prot;
+  char name[128];
+  while (proc_maps.Next(&start, &end, &offset, name, ARRAY_SIZE(name), &prot)) {
+    if (name[0] != 0 && name[0] != '['
+        && (prot & MemoryMappingLayout::kProtectionRead)
+        && (prot & MemoryMappingLayout::kProtectionExecute)
+        && !(prot & MemoryMappingLayout::kProtectionWrite)
+        && IsAppMem(start)) {
+      // Assume it's .rodata
+      char *shadow_start = (char*)MemToShadow(start);
+      char *shadow_end = (char*)MemToShadow(end);
+      for (char *p = shadow_start; p < shadow_end; p += marker.size()) {
+        internal_mmap(p, Min<uptr>(marker.size(), shadow_end - p),
+                      PROT_READ, MAP_PRIVATE | MAP_FIXED, fd, 0);
+      }
+    }
+  }
+  internal_close(fd);
+  internal_unlink(filename);
+}
+
 void InitializeShadowMemory() {
   uptr shadow = (uptr)MmapFixedNoReserve(kLinuxShadowBeg,
     kLinuxShadowEnd - kLinuxShadowBeg);
@@ -188,6 +246,8 @@ void InitializeShadowMemory() {
       kLinuxAppMemBeg, kLinuxAppMemEnd,
       (kLinuxAppMemEnd - kLinuxAppMemBeg) >> 30);
   DPrintf("stack        %zx\n", (uptr)&shadow);
+
+  MapRodata();
 }
 #endif
 

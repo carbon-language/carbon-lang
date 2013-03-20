@@ -38,6 +38,8 @@ void StatOutput(u64 *stat) {
   name[StatMop8]                         = "            size 8                ";
   name[StatMopSame]                      = "  Including same                  ";
   name[StatMopRange]                     = "  Including range                 ";
+  name[StatMopRodata]                    = "  Including .rodata               ";
+  name[StatMopRangeRodata]               = "  Including .rodata range         ";
   name[StatShadowProcessed]              = "Shadow processed                  ";
   name[StatShadowZero]                   = "  Including empty                 ";
   name[StatShadowNonZero]                = "  Including non empty             ";

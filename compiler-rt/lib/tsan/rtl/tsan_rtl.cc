@@ -457,6 +457,16 @@ void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
   }
 #endif
 
+  if (*shadow_mem == kShadowRodata) {
+    // Access to .rodata section, no races here.
+    // Measurements show that it can be 10-20% of all memory accesses.
+    StatInc(thr, StatMop);
+    StatInc(thr, kAccessIsWrite ? StatMopWrite : StatMopRead);
+    StatInc(thr, (StatType)(StatMop1 + kAccessSizeLog));
+    StatInc(thr, StatMopRodata);
+    return;
+  }
+
   FastState fast_state = thr->fast_state;
   if (fast_state.GetIgnoreBit())
     return;

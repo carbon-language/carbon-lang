@@ -27,6 +27,8 @@ enum StatType {
   StatMop8,
   StatMopSame,
   StatMopRange,
+  StatMopRodata,
+  StatMopRangeRodata,
   StatShadowProcessed,
   StatShadowZero,
   StatShadowNonZero,  // Derived.
