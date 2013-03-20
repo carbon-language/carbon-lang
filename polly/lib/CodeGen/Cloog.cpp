@@ -330,6 +330,7 @@ bool CloogInfo::runOnScop(Scop &S) {
   C = new Cloog(&S);
 
   Function *F = S.getRegion().getEntry()->getParent();
+  (void)F;
 
   DEBUG(dbgs() << ":: " << F->getName());
   DEBUG(dbgs() << " : " << S.getRegion().getNameStr() << "\n");

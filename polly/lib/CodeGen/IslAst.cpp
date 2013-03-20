@@ -326,6 +326,7 @@ IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {
   isl_union_map *Schedule = getSchedule();
 
   Function *F = Scop->getRegion().getEntry()->getParent();
+  (void)F;
 
   DEBUG(dbgs() << ":: isl ast :: " << F->getName()
                << " :: " << Scop->getRegion().getNameStr() << "\n");

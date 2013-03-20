@@ -126,6 +126,7 @@ void RuntimeDebugBuilder::createStrPrinter(std::string String) {
 
 void RuntimeDebugBuilder::createIntPrinter(Value *V) {
   IntegerType *Ty = dyn_cast<IntegerType>(V->getType());
+  (void)Ty;
   assert(Ty && Ty->getBitWidth() == 64 &&
          "Cannot insert printer for this type.");
 
