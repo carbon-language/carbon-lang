@@ -3487,7 +3487,7 @@ def : Pat<(alignednontemporalstore (v2i64 VR128:$src), addr:$dst),
 //===----------------------------------------------------------------------===//
 
 // Prefetch intrinsic.
-let Predicates = [HasSSE1] in {
+let Predicates = [HasSSE1], SchedRW = [WriteLoad] in {
 def PREFETCHT0   : I<0x18, MRM1m, (outs), (ins i8mem:$src),
     "prefetcht0\t$src", [(prefetch addr:$src, imm, (i32 3), (i32 1))],
     IIC_SSE_PREFETCH>, TB;
@@ -3502,6 +3502,8 @@ def PREFETCHNTA  : I<0x18, MRM0m, (outs), (ins i8mem:$src),
     IIC_SSE_PREFETCH>, TB;
 }
 
+// FIXME: How should these memory instructions be modeled?
+let SchedRW = [WriteLoad] in {
 // Flush cache
 def CLFLUSH : I<0xAE, MRM7m, (outs), (ins i8mem:$src),
                "clflush\t$src", [(int_x86_sse2_clflush addr:$src)],
@@ -3521,6 +3523,7 @@ def LFENCE : I<0xAE, MRM_E8, (outs), (ins),
 def MFENCE : I<0xAE, MRM_F0, (outs), (ins),
                "mfence", [(int_x86_sse2_mfence)], IIC_SSE_MFENCE>,
                TB, Requires<[HasSSE2]>;
+} // SchedRW
 
 def : Pat<(X86SFence), (SFENCE)>;
 def : Pat<(X86LFence), (LFENCE)>;
