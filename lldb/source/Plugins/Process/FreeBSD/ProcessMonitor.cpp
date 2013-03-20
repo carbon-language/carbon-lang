@@ -61,7 +61,7 @@ Get_PT_IO_OP(int op)
 // Wrapper for ptrace to catch errors and log calls.
 // Note that ptrace sets errno on error because -1 is reserved as a valid result.
 extern long
-PtraceWrapper(int req, ::pid_t pid, void *addr, int data,
+PtraceWrapper(int req, lldb::pid_t pid, void *addr, int data,
               const char* reqName, const char* file, int line)
 {
     long int result;
@@ -117,7 +117,7 @@ PtraceWrapper(int req, ::pid_t pid, void *addr, int data,
 // Wrapper for ptrace when logging is not required.
 // Sets errno to 0 prior to calling ptrace.
 extern long
-PtraceWrapper(__ptrace_request req, pid_t pid, void *addr, void *data)
+PtraceWrapper(__ptrace_request req, lldb::pid_t pid, void *addr, int data)
 {
     long result = 0;
     errno = 0;

@@ -122,17 +122,27 @@ public:
     bool
     ReadGPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
-    /// Reads all floating point registers into the specified buffer.
+    /// Reads generic floating point registers into the specified buffer.
     bool
     ReadFPR(lldb::tid_t tid, void *buf, size_t buf_size);
+
+    /// Reads the specified register set into the specified buffer.
+    /// For instance, the extended floating-point register set.
+    bool
+    ReadRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset);
 
     /// Writes all general purpose registers into the specified buffer.
     bool
     WriteGPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
-    /// Writes all floating point registers into the specified buffer.
+    /// Writes generic floating point registers into the specified buffer.
     bool
     WriteFPR(lldb::tid_t tid, void *buf, size_t buf_size);
+
+    /// Writes the specified register set into the specified buffer.
+    /// For instance, the extended floating-point register set.
+    bool
+    WriteRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset);
 
     /// Writes a siginfo_t structure corresponding to the given thread ID to the
     /// memory region pointed to by @p siginfo.

@@ -39,6 +39,14 @@
 
 #define DEBUG_PTRACE_MAXBYTES 20
 
+// Support ptrace extensions even when compiled without required kernel support
+#ifndef PTRACE_GETREGSET
+  #define PTRACE_GETREGSET 0x4204
+#endif
+#ifndef PTRACE_SETREGSET
+  #define PTRACE_SETREGSET 0x4205
+#endif
+
 using namespace lldb_private;
 
 // FIXME: this code is host-dependent with respect to types and
@@ -63,7 +71,7 @@ DisplayBytes (lldb_private::StreamString &s, void *bytes, uint32_t count)
     }
 }
 
-static void PtraceDisplayBytes(__ptrace_request &req, void *data, size_t data_size)
+static void PtraceDisplayBytes(int &req, void *data, size_t data_size)
 {
     StreamString buf;
     LogSP verbose_log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (
@@ -109,6 +117,13 @@ static void PtraceDisplayBytes(__ptrace_request &req, void *data, size_t data_si
                 verbose_log->Printf("PTRACE_SETSIGINFO %s", buf.GetData());
                 break;
             }
+        case PTRACE_SETREGSET:
+            {
+                // Extract iov_base from data, which is a pointer to the struct IOVEC
+                DisplayBytes(buf, *(void **)data, data_size);
+                verbose_log->Printf("PTRACE_SETREGSET %s", buf.GetData());
+                break;
+            }
         default:
             {
             }
@@ -119,7 +134,7 @@ static void PtraceDisplayBytes(__ptrace_request &req, void *data, size_t data_si
 // Wrapper for ptrace to catch errors and log calls.
 // Note that ptrace sets errno on error because -1 is a valid result for PTRACE_PEEK*
 extern long
-PtraceWrapper(__ptrace_request req, pid_t pid, void *addr, void *data, size_t data_size,
+PtraceWrapper(int req, lldb::pid_t pid, void *addr, void *data, size_t data_size,
               const char* reqName, const char* file, int line)
 {
     long int result;
@@ -127,13 +142,16 @@ PtraceWrapper(__ptrace_request req, pid_t pid, void *addr, void *data, size_t da
     LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PTRACE));
 
     if (log)
-        log->Printf("ptrace(%s, %u, %p, %p, %zu) called from file %s line %d",
+        log->Printf("ptrace(%s, %lu, %p, %p, %zu) called from file %s line %d",
                     reqName, pid, addr, data, data_size, file, line);
 
     PtraceDisplayBytes(req, data, data_size);
 
     errno = 0;
-    result = ptrace(req, pid, addr, data);
+    if (req == PTRACE_GETREGSET || req == PTRACE_SETREGSET)
+        result = ptrace(static_cast<__ptrace_request>(req), pid, *(unsigned int *)addr, data);
+    else
+        result = ptrace(static_cast<__ptrace_request>(req), pid, addr, data);
 
     PtraceDisplayBytes(req, data, data_size);
 
@@ -157,10 +175,14 @@ PtraceWrapper(__ptrace_request req, pid_t pid, void *addr, void *data, size_t da
 // Wrapper for ptrace when logging is not required.
 // Sets errno to 0 prior to calling ptrace.
 extern long
-PtraceWrapper(__ptrace_request req, pid_t pid, void *addr, void *data, size_t data_size)
+PtraceWrapper(int req, pid_t pid, void *addr, void *data, size_t data_size)
 {
+    long result = 0;
     errno = 0;
-    long result = ptrace(req, pid, addr, data);
+    if (req == PTRACE_GETREGSET || req == PTRACE_SETREGSET)
+        result = ptrace(static_cast<__ptrace_request>(req), pid, *(unsigned int *)addr, data);
+    else
+        result = ptrace(static_cast<__ptrace_request>(req), pid, addr, data);
     return result;
 }
 
@@ -556,6 +578,35 @@ ReadFPROperation::Execute(ProcessMonitor *monitor)
 }
 
 //------------------------------------------------------------------------------
+/// @class ReadRegisterSetOperation
+/// @brief Implements ProcessMonitor::ReadRegisterSet.
+class ReadRegisterSetOperation : public Operation
+{
+public:
+    ReadRegisterSetOperation(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset, bool &result)
+        : m_tid(tid), m_buf(buf), m_buf_size(buf_size), m_regset(regset), m_result(result)
+        { }
+
+    void Execute(ProcessMonitor *monitor);
+
+private:
+    lldb::tid_t m_tid;
+    void *m_buf;
+    size_t m_buf_size;
+    const unsigned int m_regset;
+    bool &m_result;
+};
+
+void
+ReadRegisterSetOperation::Execute(ProcessMonitor *monitor)
+{
+    if (PTRACE(PTRACE_GETREGSET, m_tid, (void *)&m_regset, m_buf, m_buf_size) < 0)
+        m_result = false;
+    else
+        m_result = true;
+}
+
+//------------------------------------------------------------------------------
 /// @class WriteGPROperation
 /// @brief Implements ProcessMonitor::WriteGPR.
 class WriteGPROperation : public Operation
@@ -606,6 +657,35 @@ void
 WriteFPROperation::Execute(ProcessMonitor *monitor)
 {
     if (PTRACE(PTRACE_SETFPREGS, m_tid, NULL, m_buf, m_buf_size) < 0)
+        m_result = false;
+    else
+        m_result = true;
+}
+
+//------------------------------------------------------------------------------
+/// @class WriteRegisterSetOperation
+/// @brief Implements ProcessMonitor::WriteRegisterSet.
+class WriteRegisterSetOperation : public Operation
+{
+public:
+    WriteRegisterSetOperation(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset, bool &result)
+        : m_tid(tid), m_buf(buf), m_buf_size(buf_size), m_regset(regset), m_result(result)
+        { }
+
+    void Execute(ProcessMonitor *monitor);
+
+private:
+    lldb::tid_t m_tid;
+    void *m_buf;
+    size_t m_buf_size;
+    const unsigned int m_regset;
+    bool &m_result;
+};
+
+void
+WriteRegisterSetOperation::Execute(ProcessMonitor *monitor)
+{
+    if (PTRACE(PTRACE_SETREGSET, m_tid, (void *)&m_regset, m_buf, m_buf_size) < 0)
         m_result = false;
     else
         m_result = true;
@@ -1664,6 +1744,15 @@ ProcessMonitor::ReadFPR(lldb::tid_t tid, void *buf, size_t buf_size)
 }
 
 bool
+ProcessMonitor::ReadRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset)
+{
+    bool result;
+    ReadRegisterSetOperation op(tid, buf, buf_size, regset, result);
+    DoOperation(&op);
+    return result;
+}
+
+bool
 ProcessMonitor::WriteGPR(lldb::tid_t tid, void *buf, size_t buf_size)
 {
     bool result;
@@ -1677,6 +1766,15 @@ ProcessMonitor::WriteFPR(lldb::tid_t tid, void *buf, size_t buf_size)
 {
     bool result;
     WriteFPROperation op(tid, buf, buf_size, result);
+    DoOperation(&op);
+    return result;
+}
+
+bool
+ProcessMonitor::WriteRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset)
+{
+    bool result;
+    WriteRegisterSetOperation op(tid, buf, buf_size, regset, result);
     DoOperation(&op);
     return result;
 }
