@@ -20,9 +20,15 @@
 namespace llvm {
 
 SourceMgr SrcMgr;
+unsigned ErrorsPrinted = 0;
 
 static void PrintMessage(ArrayRef<SMLoc> Loc, SourceMgr::DiagKind Kind,
                          const Twine &Msg) {
+  // Count the total number of errors printed.
+  // This is used to exit with an error code if there were any errors.
+  if (Kind == SourceMgr::DK_Error)
+    ++ErrorsPrinted;
+
   SMLoc NullLoc;
   if (Loc.empty())
     Loc = NullLoc;
