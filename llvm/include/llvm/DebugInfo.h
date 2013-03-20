@@ -188,12 +188,12 @@ namespace llvm {
   public:
     explicit DICompileUnit(const MDNode *N = 0) : DIScope(N) {}
 
-    unsigned getLanguage() const { return getUnsignedField(1); }
+    unsigned getLanguage() const { return getUnsignedField(2); }
     StringRef getFilename() const {
-      return getFieldAs<DIFile>(2).getFilename();
+      return getFieldAs<DIFile>(1).getFilename();
     }
     StringRef getDirectory() const {
-      return getFieldAs<DIFile>(2).getDirectory();
+      return getFieldAs<DIFile>(1).getDirectory();
     }
     StringRef getProducer() const { return getStringField(3); }
 

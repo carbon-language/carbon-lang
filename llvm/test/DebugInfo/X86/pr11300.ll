@@ -31,7 +31,7 @@ entry:
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 4, metadata !6, metadata !"clang version 3.0 ()", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, metadata !6, i32 4, metadata !"clang version 3.0 ()", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5, metadata !20}
 !5 = metadata !{i32 720942, i32 0, metadata !6, metadata !"zed", metadata !"zed", metadata !"_Z3zedP3foo", metadata !6, i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void (%struct.foo*)* @_Z3zedP3foo, null, null, metadata !18, i32 4} ; [ DW_TAG_subprogram ]
