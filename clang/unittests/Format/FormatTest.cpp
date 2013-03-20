@@ -2413,7 +2413,10 @@ TEST_F(FormatTest, IncorrectAccessSpecifier) {
                "B { int x; }");
 }
 
-TEST_F(FormatTest, IncorrectCodeUnbalancedBraces) { verifyFormat("{"); }
+TEST_F(FormatTest, IncorrectCodeUnbalancedBraces) {
+  verifyFormat("{");
+  verifyFormat("#})");
+}
 
 TEST_F(FormatTest, IncorrectCodeDoNoWhile) {
   verifyFormat("do {\n}");

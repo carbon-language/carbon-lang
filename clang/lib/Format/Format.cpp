@@ -601,9 +601,8 @@ private:
   unsigned addTokenToState(bool Newline, bool DryRun, LineState &State) {
     const AnnotatedToken &Current = *State.NextToken;
     const AnnotatedToken &Previous = *State.NextToken->Parent;
-    assert(State.Stack.size());
 
-    if (Current.Type == TT_ImplicitStringLiteral) {
+    if (State.Stack.size() == 0 || Current.Type == TT_ImplicitStringLiteral) {
       State.Column += State.NextToken->FormatTok.WhiteSpaceLength +
                       State.NextToken->FormatTok.TokenLength;
       if (State.NextToken->Children.empty())
