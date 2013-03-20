@@ -213,7 +213,7 @@ class FileCOFF : public File {
 public:
   FileCOFF(const TargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> MB,
            llvm::error_code &EC)
-      : File(MB->getBufferIdentifier()), _targetInfo(ti) {
+      : File(MB->getBufferIdentifier(), kindObject), _targetInfo(ti) {
     llvm::OwningPtr<llvm::object::Binary> Bin;
     EC = llvm::object::createBinary(MB.release(), Bin);
     if (EC)

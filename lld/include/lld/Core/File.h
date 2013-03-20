@@ -48,8 +48,8 @@ public:
   };
 
   /// \brief Returns file kind.  Need for dyn_cast<> on File objects.
-  virtual Kind kind() const {
-    return kindObject;
+  Kind kind() const {
+    return _kind;
   }
 
   /// \brief For error messages and debugging, this returns the path to the file
@@ -158,7 +158,7 @@ public:
 
 protected:
   /// \brief only subclasses of File can be instantiated
-  File(StringRef p) : _path(p), _ordinal(UINT64_MAX) {}
+  File(StringRef p, Kind kind) : _path(p), _kind(kind), _ordinal(UINT64_MAX) {}
 
   /// \brief This is a convenience class for File subclasses which manage their
   /// atoms as a simple std::vector<>.
@@ -215,6 +215,7 @@ protected:
   static atom_collection_empty<AbsoluteAtom>      _noAbsoluteAtoms;
 
   StringRef         _path;
+  Kind              _kind;
   mutable uint64_t  _ordinal;
 };
 
@@ -232,7 +233,8 @@ public:
 
 protected:
   /// \brief only subclasses of MutableFile can be instantiated
-  MutableFile(const TargetInfo &ti, StringRef p) : File(p), _targetInfo(ti) {}
+  MutableFile(const TargetInfo &ti, StringRef p)
+      : File(p, kindObject), _targetInfo(ti) {}
 
 private:
   const TargetInfo &_targetInfo;

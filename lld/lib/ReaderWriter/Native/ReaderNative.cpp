@@ -732,7 +732,7 @@ private:
   // private constructor, only called by make()
   File(const TargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> mb,
        StringRef path)
-      : lld::File(path),
+      : lld::File(path, kindObject),
         _buffer(std::move(mb)), // Reader now takes ownership of buffer
         _header(nullptr), _targetsTable(nullptr), _targetsTableCount(0),
         _strings(nullptr), _stringsMaxOffset(0), _addends(nullptr),

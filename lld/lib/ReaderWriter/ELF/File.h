@@ -117,12 +117,11 @@ template <class ELFT> class ELFFile : public File {
 
 public:
   ELFFile(const ELFTargetInfo &ti, StringRef name)
-      : File(name), _elfTargetInfo(ti) {
-  }
+      : File(name, kindObject), _elfTargetInfo(ti) {}
 
   ELFFile(const ELFTargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> MB,
           llvm::error_code &EC)
-      : File(MB->getBufferIdentifier()), _elfTargetInfo(ti) {
+      : File(MB->getBufferIdentifier(), kindObject), _elfTargetInfo(ti) {
     llvm::OwningPtr<llvm::object::Binary> binaryFile;
     EC = createBinary(MB.release(), binaryFile);
     if (EC)

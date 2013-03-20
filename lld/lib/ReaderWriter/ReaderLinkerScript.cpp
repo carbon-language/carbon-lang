@@ -30,8 +30,6 @@ public:
     return std::move(file);
   }
 
-  virtual Kind kind() const { return kindLinkerScript; }
-
   static inline bool classof(const File *f) {
     return f->kind() == kindLinkerScript;
   }
@@ -64,7 +62,7 @@ public:
 
 private:
   LinkerScriptFile(const TargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> mb)
-      : File(mb->getBufferIdentifier()),
+      : File(mb->getBufferIdentifier(), kindLinkerScript),
         _targetInfo(ti),
         _lexer(std::move(mb)),
         _parser(_lexer),

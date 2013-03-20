@@ -668,9 +668,9 @@ struct MappingTraits<const lld::File*> {
 
     class NormalizedFile : public lld::File {
     public:
-      NormalizedFile(IO &io) : File(""), _IO(io), _rnb(nullptr) {}
+      NormalizedFile(IO &io) : File("", kindObject), _IO(io), _rnb(nullptr) {}
       NormalizedFile(IO &io, const lld::File *file)
-          : File(file->path()), _IO(io), _rnb(new RefNameBuilder(*file)),
+          : File(file->path(), kindObject), _IO(io), _rnb(new RefNameBuilder(*file)),
             _path(file->path()) {
         for (const lld::DefinedAtom *a : file->defined())
           _definedAtoms.push_back(a);

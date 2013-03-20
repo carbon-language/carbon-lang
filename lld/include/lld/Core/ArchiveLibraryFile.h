@@ -26,11 +26,6 @@ namespace lld {
 ///
 class ArchiveLibraryFile : public File {
 public:
-
-  virtual Kind kind() const {
-    return kindArchiveLibrary;
-  }
-
   static inline bool classof(const File *f) {
     return f->kind() == kindArchiveLibrary;
   }
@@ -44,7 +39,7 @@ public:
 protected:
   /// only subclasses of ArchiveLibraryFile can be instantiated
   ArchiveLibraryFile(const TargetInfo &ti, StringRef path)
-      : File(path), _targetInfo(ti) {
+      : File(path, kindArchiveLibrary), _targetInfo(ti) {
   }
 
 private:
