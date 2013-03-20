@@ -355,7 +355,7 @@ void AtomSection<ELFT>::write(ELFWriter *writer,
     if (contentSize == 0)
       continue;
     uint8_t *atomContent = chunkBuffer + ai->_fileOffset;
-    std::copy_n(content.data(), contentSize, atomContent);
+    std::memcpy(atomContent, content.data(), contentSize);
     const TargetRelocationHandler<ELFT> &relHandler =
         this->_targetInfo.template getTargetHandler<ELFT>()
         .getRelocationHandler();
