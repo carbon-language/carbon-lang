@@ -25,6 +25,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/system_error.h"
+#include "llvm/Support/Timer.h"
 
 namespace llvm {
 
@@ -69,6 +70,10 @@ namespace llvm {
     return getLazyIRModule(File.take(), Err, Context);
   }
 
+  extern const char *TimeIRParsingGroupName;
+  extern const char *TimeIRParsingName;
+  extern bool TimeIRParsingIsEnabled;
+
   /// If the given MemoryBuffer holds a bitcode image, return a Module
   /// for it.  Otherwise, attempt to parse it as LLVM Assembly and return
   /// a Module for it. This function *always* takes ownership of the given
@@ -76,6 +81,8 @@ namespace llvm {
   inline Module *ParseIR(MemoryBuffer *Buffer,
                          SMDiagnostic &Err,
                          LLVMContext &Context) {
+    NamedRegionTimer T(TimeIRParsingName, TimeIRParsingGroupName,
+                       TimeIRParsingIsEnabled);
     if (isBitcode((const unsigned char *)Buffer->getBufferStart(),
                   (const unsigned char *)Buffer->getBufferEnd())) {
       std::string ErrMsg;
