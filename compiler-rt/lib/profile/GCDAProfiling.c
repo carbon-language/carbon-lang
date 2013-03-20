@@ -331,7 +331,7 @@ void llvm_register_writeout_function(writeout_fn fn) {
   }
 }
 
-void __llvm_writeout_files() {
+void llvm_writeout_files() {
   struct writeout_fn_node *curr = writeout_fn_head;
 
   while (curr) {
@@ -380,4 +380,23 @@ void llvm_delete_flush_function_list() {
   }
 
   flush_fn_head = flush_fn_tail = NULL;
+}
+
+void llvm_gcov_init(writeout_fn wfn, flush_fn ffn) {
+  static int atexit_ran = 0;
+
+  if (wfn)
+    llvm_register_writeout_function(wfn);
+
+  if (ffn)
+    llvm_register_flush_function(ffn);
+
+  if (atexit_ran == 0) {
+    atexit_ran = 1;
+
+    /* Make sure we write out the data and delete the data structures. */
+    atexit(llvm_delete_flush_function_list);
+    atexit(llvm_delete_writeout_function_list);
+    atexit(llvm_writeout_files);
+  }
 }
