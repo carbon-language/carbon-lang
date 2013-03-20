@@ -277,7 +277,10 @@ def executeScript(test, litConfig, tmpBase, commands, cwd):
         script += '.bat'
 
     # Write script file
-    f = open(script,'w')
+    mode = 'w'
+    if litConfig.isWindows and not isWin32CMDEXE:
+      mode += 'b'  # Avoid CRLFs when writing bash scripts.
+    f = open(script, mode)
     if isWin32CMDEXE:
         f.write('\nif %ERRORLEVEL% NEQ 0 EXIT\n'.join(commands))
     else:
