@@ -83,6 +83,9 @@ defm WriteCvtF2I : X86SchedWritePair; // Float -> Integer.
 defm WriteCvtI2F : X86SchedWritePair; // Integer -> Float.
 defm WriteCvtF2F : X86SchedWritePair; // Float -> Float size conversion.
 
+// Catch-all for expensive system instructions.
+def WriteSystem : SchedWrite;
+
 //===----------------------------------------------------------------------===//
 // Instruction Itinerary classes used for X86
 def IIC_DEFAULT     : InstrItinClass;

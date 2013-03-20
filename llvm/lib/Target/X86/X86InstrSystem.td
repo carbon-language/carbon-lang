@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+let SchedRW = [WriteSystem] in {
 let Defs = [RAX, RDX] in
   def RDTSC : I<0x31, RawFrm, (outs), (ins), "rdtsc", [(X86rdtsc)], IIC_RDTSC>,
               TB;
@@ -35,6 +36,7 @@ let Uses = [EFLAGS] in
   def INTO : I<0xce, RawFrm, (outs), (ins), "into", []>;
 def INT3 : I<0xcc, RawFrm, (outs), (ins), "int3",
               [(int_x86_int (i8 3))], IIC_INT3>;
+} // SchedRW
 
 def : Pat<(debugtrap),
           (INT3)>;
@@ -43,6 +45,7 @@ def : Pat<(debugtrap),
 // FIXME: This doesn't work because InstAlias can't match immediate constants.
 //def : InstAlias<"int\t$3", (INT3)>;
 
+let SchedRW = [WriteSystem] in {
 
 def INT : Ii8<0xcd, RawFrm, (outs), (ins i8imm:$trap), "int\t$trap",
               [(int_x86_int imm:$trap)], IIC_INT>;
@@ -65,11 +68,13 @@ def IRET16 : I<0xcf, RawFrm, (outs), (ins), "iret{w}", [], IIC_IRET>, OpSize;
 def IRET32 : I<0xcf, RawFrm, (outs), (ins), "iret{l|d}", [], IIC_IRET>;
 def IRET64 : RI<0xcf, RawFrm, (outs), (ins), "iretq", [], IIC_IRET>,
              Requires<[In64BitMode]>;
+} // SchedRW
 
 
 //===----------------------------------------------------------------------===//
 //  Input/Output Instructions.
 //
+let SchedRW = [WriteSystem] in {
 let Defs = [AL], Uses = [DX] in
 def IN8rr  : I<0xEC, RawFrm, (outs), (ins),
                "in{b}\t{%dx, %al|AL, DX}", [], IIC_IN_RR>;
@@ -113,10 +118,12 @@ def OUT32ir : Ii8<0xE7, RawFrm, (outs), (ins i8imm:$port),
 def IN8  : I<0x6C, RawFrm, (outs), (ins), "ins{b}", [], IIC_INS>;
 def IN16 : I<0x6D, RawFrm, (outs), (ins), "ins{w}", [], IIC_INS>,  OpSize;
 def IN32 : I<0x6D, RawFrm, (outs), (ins), "ins{l}", [], IIC_INS>;
+} // SchedRW
 
 //===----------------------------------------------------------------------===//
 // Moves to and from debug registers
 
+let SchedRW = [WriteSystem] in {
 def MOV32rd : I<0x21, MRMDestReg, (outs GR32:$dst), (ins DEBUG_REG:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV_REG_DR>, TB;
 def MOV64rd : I<0x21, MRMDestReg, (outs GR64:$dst), (ins DEBUG_REG:$src),
@@ -126,10 +133,12 @@ def MOV32dr : I<0x23, MRMSrcReg, (outs DEBUG_REG:$dst), (ins GR32:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV_DR_REG>, TB;
 def MOV64dr : I<0x23, MRMSrcReg, (outs DEBUG_REG:$dst), (ins GR64:$src),
                 "mov{q}\t{$src, $dst|$dst, $src}", [], IIC_MOV_DR_REG>, TB;
+} // SchedRW
 
 //===----------------------------------------------------------------------===//
 // Moves to and from control registers
 
+let SchedRW = [WriteSystem] in {
 def MOV32rc : I<0x20, MRMDestReg, (outs GR32:$dst), (ins CONTROL_REG:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV_REG_CR>, TB;
 def MOV64rc : I<0x20, MRMDestReg, (outs GR64:$dst), (ins CONTROL_REG:$src),
@@ -139,6 +148,7 @@ def MOV32cr : I<0x22, MRMSrcReg, (outs CONTROL_REG:$dst), (ins GR32:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV_CR_REG>, TB;
 def MOV64cr : I<0x22, MRMSrcReg, (outs CONTROL_REG:$dst), (ins GR64:$src),
                 "mov{q}\t{$src, $dst|$dst, $src}", [], IIC_MOV_CR_REG>, TB;
+} // SchedRW
 
 //===----------------------------------------------------------------------===//
 // Segment override instruction prefixes
@@ -155,6 +165,7 @@ def GS_PREFIX : I<0x65, RawFrm, (outs), (ins), "gs", []>;
 // Moves to and from segment registers.
 //
 
+let SchedRW = [WriteMove] in {
 def MOV16rs : I<0x8C, MRMDestReg, (outs GR16:$dst), (ins SEGMENT_REG:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}", [], IIC_MOV_REG_SR>, OpSize;
 def MOV32rs : I<0x8C, MRMDestReg, (outs GR32:$dst), (ins SEGMENT_REG:$src),
@@ -182,10 +193,12 @@ def MOV32sm : I<0x8E, MRMSrcMem, (outs SEGMENT_REG:$dst), (ins i32mem:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV_SR_MEM>;
 def MOV64sm : RI<0x8E, MRMSrcMem, (outs SEGMENT_REG:$dst), (ins i64mem:$src),
                  "mov{q}\t{$src, $dst|$dst, $src}", [], IIC_MOV_SR_MEM>;
+} // SchedRW
 
 //===----------------------------------------------------------------------===//
 // Segmentation support instructions.
 
+let SchedRW = [WriteSystem] in {
 def SWAPGS : I<0x01, MRM_F8, (outs), (ins), "swapgs", [], IIC_SWAPGS>, TB;
 
 def LAR16rm : I<0x02, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src), 
@@ -347,10 +360,12 @@ def VERWr : I<0x00, MRM5r, (outs), (ins GR16:$seg),
               "verw\t$seg", [], IIC_VERW_MEM>, TB;
 def VERWm : I<0x00, MRM5m, (outs), (ins i16mem:$seg),
               "verw\t$seg", [], IIC_VERW_REG>, TB;
+} // SchedRW
 
 //===----------------------------------------------------------------------===//
 // Descriptor-table support instructions
 
+let SchedRW = [WriteSystem] in {
 def SGDT16m : I<0x01, MRM0m, (outs opaque48mem:$dst), (ins),
               "sgdt{w}\t$dst", [], IIC_SGDT>, TB, OpSize, Requires<[In32BitMode]>;
 def SGDTm : I<0x01, MRM0m, (outs opaque48mem:$dst), (ins),
@@ -385,9 +400,11 @@ def LLDT16r : I<0x00, MRM2r, (outs), (ins GR16:$src),
                 "lldt{w}\t$src", [], IIC_LLDT_REG>, TB;
 def LLDT16m : I<0x00, MRM2m, (outs), (ins i16mem:$src),
                 "lldt{w}\t$src", [], IIC_LLDT_MEM>, TB;
-                
+} // SchedRW
+
 //===----------------------------------------------------------------------===//
 // Specialized register support
+let SchedRW = [WriteSystem] in {
 def WRMSR : I<0x30, RawFrm, (outs), (ins), "wrmsr", [], IIC_WRMSR>, TB;
 def RDMSR : I<0x32, RawFrm, (outs), (ins), "rdmsr", [], IIC_RDMSR>, TB;
 def RDPMC : I<0x33, RawFrm, (outs), (ins), "rdpmc", [], IIC_RDPMC>, TB;
@@ -410,14 +427,18 @@ def LMSW16m : I<0x01, MRM6m, (outs), (ins i16mem:$src),
                 "lmsw{w}\t$src", [], IIC_LMSW_REG>, TB;
                 
 def CPUID : I<0xA2, RawFrm, (outs), (ins), "cpuid", [], IIC_CPUID>, TB;
+} // SchedRW
 
 //===----------------------------------------------------------------------===//
 // Cache instructions
+let SchedRW = [WriteSystem] in {
 def INVD : I<0x08, RawFrm, (outs), (ins), "invd", [], IIC_INVD>, TB;
 def WBINVD : I<0x09, RawFrm, (outs), (ins), "wbinvd", [], IIC_INVD>, TB;
+} // SchedRW
 
 //===----------------------------------------------------------------------===//
 // XSAVE instructions
+let SchedRW = [WriteSystem] in {
 let Defs = [RDX, RAX], Uses = [RCX] in
   def XGETBV : I<0x01, MRM_D0, (outs), (ins), "xgetbv", []>, TB;
 
@@ -438,6 +459,7 @@ let Uses = [RDX, RAX] in {
   def XSAVEOPT64 : I<0xAE, MRM6m, (outs opaque512mem:$dst), (ins),
                     "xsaveoptq\t$dst", []>, TB, REX_W, Requires<[In64BitMode]>;
 }
+} // SchedRW
 
 //===----------------------------------------------------------------------===//
 // VIA PadLock crypto instructions
