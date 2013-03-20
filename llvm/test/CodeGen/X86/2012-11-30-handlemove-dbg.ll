@@ -43,8 +43,8 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !3 = metadata !{null}
 !4 = metadata !{i32 786689, null, metadata !"hg", metadata !5, i32 67109589, metadata !6, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [hg] [line 725]
 !5 = metadata !{i32 786473, metadata !11} ; [ DW_TAG_file_type ]
-!6 = metadata !{i32 786454, metadata !5, null, metadata !"hgstruct", i32 492, i64 0, i64 0, i64 0, i32 0, metadata !7} ; [ DW_TAG_typedef ] [hgstruct] [line 492, size 0, align 0, offset 0] [from ]
-!7 = metadata !{i32 786451, metadata !5, null, metadata !"", i32 487, i64 512, i64 64, i32 0, i32 0, null, null, i32 0, i32 0, i32 0} ; [ DW_TAG_structure_type ] [line 487, size 512, align 64, offset 0] [from ]
+!6 = metadata !{i32 786454, metadata !11, null, metadata !"hgstruct", i32 492, i64 0, i64 0, i64 0, i32 0, metadata !7} ; [ DW_TAG_typedef ] [hgstruct] [line 492, size 0, align 0, offset 0] [from ]
+!7 = metadata !{i32 786451, metadata !11, null, metadata !"", i32 487, i64 512, i64 64, i32 0, i32 0, null, null, i32 0, i32 0, i32 0} ; [ DW_TAG_structure_type ] [line 487, size 512, align 64, offset 0] [from ]
 !8 = metadata !{metadata !"short", metadata !9}
 !9 = metadata !{metadata !"omnipotent char", metadata !10}
 !10 = metadata !{metadata !"Simple C/C++ TBAA"}

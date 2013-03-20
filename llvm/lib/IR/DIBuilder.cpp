@@ -266,7 +266,7 @@ DIDerivedType DIBuilder::createTypedef(DIType Ty, StringRef Name, DIFile File,
   assert(Ty.Verify() && "Invalid typedef type!");
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_typedef),
-    File,
+    File.getFileNode(),
     getNonCompileUnitScope(Context),
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
@@ -328,7 +328,7 @@ DIDerivedType DIBuilder::createMemberType(
   // TAG_member is encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_member),
-    File,
+    File.getFileNode(),
     getNonCompileUnitScope(Scope),
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
@@ -351,7 +351,7 @@ DIType DIBuilder::createStaticMemberType(DIDescriptor Scope, StringRef Name,
   Flags |= DIDescriptor::FlagStaticMember;
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_member),
-    File,
+    File.getFileNode(),
     getNonCompileUnitScope(Scope),
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
@@ -377,7 +377,7 @@ DIType DIBuilder::createObjCIVar(StringRef Name,
   // TAG_member is encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_member),
-    File,
+    File.getFileNode(),
     getNonCompileUnitScope(File),
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
@@ -404,7 +404,7 @@ DIType DIBuilder::createObjCIVar(StringRef Name,
   // TAG_member is encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_member),
-    File,
+    File.getFileNode(),
     getNonCompileUnitScope(File),
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
@@ -490,7 +490,7 @@ DIType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
   // TAG_class_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_class_type),
-    File,
+    File.getFileNode(),
     getNonCompileUnitScope(Context),
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
@@ -522,7 +522,7 @@ DICompositeType DIBuilder::createStructType(DIDescriptor Context,
  // TAG_structure_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_structure_type),
-    File,
+    File.getFileNode(),
     getNonCompileUnitScope(Context),
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
@@ -549,7 +549,7 @@ DICompositeType DIBuilder::createUnionType(
   // TAG_union_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_union_type),
-    File,
+    File.getFileNode(),
     getNonCompileUnitScope(Scope),
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
@@ -596,7 +596,7 @@ DICompositeType DIBuilder::createEnumerationType(
   // TAG_enumeration_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_enumeration_type),
-    File,
+    File.getFileNode(),
     getNonCompileUnitScope(Scope),
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
@@ -733,7 +733,7 @@ DIType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name,
   // Create a temporary MDNode.
   Value *Elts[] = {
     GetTagConstant(VMContext, Tag),
-    F,
+    F.getFileNode(),
     getNonCompileUnitScope(Scope),
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), Line),

@@ -26,7 +26,7 @@
 !6 = metadata !{i32 786473, metadata !15} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786463, null, null, null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !8, metadata !9} ; [ DW_TAG_ptr_to_member_type ] [line 0, size 0, align 0, offset 0] [from int]
 !8 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!9 = metadata !{i32 786451, metadata !6, null, metadata !"S", i32 1, i64 8, i64 8, i32 0, i32 0, null, metadata !1, i32 0, null, null} ; [ DW_TAG_structure_type ] [S] [line 1, size 8, align 8, offset 0] [from ]
+!9 = metadata !{i32 786451, metadata !15, null, metadata !"S", i32 1, i64 8, i64 8, i32 0, i32 0, null, metadata !1, i32 0, null, null} ; [ DW_TAG_structure_type ] [S] [line 1, size 8, align 8, offset 0] [from ]
 !10 = metadata !{i32 786484, i32 0, null, metadata !"y", metadata !"y", metadata !"", metadata !6, i32 5, metadata !11, i32 0, i32 1, { i64, i64 }* @y, null} ; [ DW_TAG_variable ] [y] [line 5] [def]
 !11 = metadata !{i32 786463, null, null, null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !12, metadata !9} ; [ DW_TAG_ptr_to_member_type ] [line 0, size 0, align 0, offset 0] [from ]
 !12 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !13, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]

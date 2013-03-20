@@ -177,6 +177,7 @@ namespace llvm {
       if (DbgNode && !isFile())
         DbgNode = 0;
     }
+    MDNode *getFileNode() const;
     bool Verify() const;
   };
 
@@ -286,12 +287,6 @@ namespace llvm {
     }
     bool isValid() const {
       return DbgNode && (isBasicType() || isDerivedType() || isCompositeType());
-    }
-    StringRef getDirectory() const  {
-      return getFieldAs<DIFile>(1).getDirectory();
-    }
-    StringRef getFilename() const  {
-      return getFieldAs<DIFile>(1).getFilename();
     }
 
     /// isUnsignedDIType - Return true if type encoding is unsigned.

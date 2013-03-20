@@ -33,9 +33,9 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !8 = metadata !{metadata !9, metadata !10}
 !9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !10 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !11} ; [ DW_TAG_pointer_type ]
-!11 = metadata !{i32 786434, metadata !6, null, metadata !"A", i32 1, i64 32, i64 32, i32 0, i32 0, null, metadata !12, i32 0, null, null} ; [ DW_TAG_class_type ]
+!11 = metadata !{i32 786434, metadata !20, null, metadata !"A", i32 1, i64 32, i64 32, i32 0, i32 0, null, metadata !12, i32 0, null, null} ; [ DW_TAG_class_type ]
 !12 = metadata !{metadata !13}
-!13 = metadata !{i32 786445, metadata !6, metadata !11, metadata !"b", i32 1, i64 32, i64 32, i64 0, i32 0, metadata !9} ; [ DW_TAG_member ]
+!13 = metadata !{i32 786445, metadata !20, metadata !11, metadata !"b", i32 1, i64 32, i64 32, i64 0, i32 0, metadata !9} ; [ DW_TAG_member ]
 !14 = metadata !{metadata !15}
 !15 = metadata !{i32 786468}                      ; [ DW_TAG_base_type ]
 !16 = metadata !{i32 786689, metadata !5, metadata !"a", metadata !6, i32 16777219, metadata !10, i32 0, i32 0} ; [ DW_TAG_arg_variable ]

@@ -539,6 +539,11 @@ bool DINameSpace::Verify() const {
   return DbgNode->getNumOperands() == 5;
 }
 
+/// \brief Retrieve the MDNode for the directory/file pair.
+MDNode *DIFile::getFileNode() const {
+  return const_cast<MDNode*>(getNodeField(DbgNode, 1));
+}
+
 /// \brief Verify that the file descriptor is well formed.
 bool DIFile::Verify() const {
   return isFile() && DbgNode->getNumOperands() == 2;
@@ -669,8 +674,6 @@ StringRef DIScope::getFilename() const {
     return DICompileUnit(DbgNode).getFilename();
   if (isNameSpace())
     return DINameSpace(DbgNode).getFilename();
-  if (isType())
-    return DIType(DbgNode).getFilename();
   return ::getStringField(getNodeField(DbgNode, 1), 0);
 }
 
@@ -687,8 +690,6 @@ StringRef DIScope::getDirectory() const {
     return DICompileUnit(DbgNode).getDirectory();
   if (isNameSpace())
     return DINameSpace(DbgNode).getDirectory();
-  if (isType())
-    return DIType(DbgNode).getDirectory();
   return ::getStringField(getNodeField(DbgNode, 1), 1);
 }
 
