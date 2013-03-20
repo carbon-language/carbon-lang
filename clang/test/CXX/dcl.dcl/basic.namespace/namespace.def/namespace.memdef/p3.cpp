@@ -91,3 +91,104 @@ namespace test5 {
   template void f<int>(int);
   template void f<long>(long); //expected-note {{instantiation}}
 }
+
+// rdar://13393749
+namespace test6 {
+  class A;
+  namespace ns {
+    class B {
+      static void foo(); // expected-note {{implicitly declared private here}}
+      friend union A;
+    };
+
+    union A {
+      void test() {
+        B::foo();
+      }
+    };
+  }
+
+  class A {
+    void test() {
+      ns::B::foo(); // expected-error {{'foo' is a private member of 'test6::ns::B'}}
+    }
+  };
+}
+
+// We seem to be following a correct interpretation with these, but
+// the standard could probably be a bit clearer.
+namespace test7a {
+  namespace ns {
+    class A;
+  }
+
+  using namespace ns;
+  class B {
+    static void foo();
+    friend class A;
+  };
+
+  class ns::A {
+    void test() {
+      B::foo();
+    }
+  };
+}
+namespace test7b {
+  namespace ns {
+    class A;
+  }
+
+  using ns::A;
+  class B {
+    static void foo();
+    friend class A;
+  };
+
+  class ns::A {
+    void test() {
+      B::foo();
+    }
+  };
+}
+namespace test7c {
+  namespace ns1 {
+    class A;
+  }
+
+  namespace ns2 {
+    // ns1::A appears as if declared in test7c according to [namespace.udir]p2.
+    // I think that means we aren't supposed to find it.
+    using namespace ns1;
+    class B {
+      static void foo(); // expected-note {{implicitly declared private here}}
+      friend class A;
+    };
+  }
+
+  class ns1::A {
+    void test() {
+      ns2::B::foo(); // expected-error {{'foo' is a private member of 'test7c::ns2::B'}}
+    }
+  };
+}
+namespace test7d {
+  namespace ns1 {
+    class A;
+  }
+
+  namespace ns2 {
+    // Honor the lexical context of a using-declaration, though.
+    using ns1::A;
+    class B {
+      static void foo();
+      friend class A;
+    };
+  }
+
+  class ns1::A {
+    void test() {
+      ns2::B::foo();
+    }
+  };
+}

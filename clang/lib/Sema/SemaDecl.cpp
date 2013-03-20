@@ -9467,12 +9467,35 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     // shouldn't be diagnosing.
     LookupName(Previous, S);
 
+    // When declaring or defining a tag, ignore ambiguities introduced
+    // by types using'ed into this scope.
     if (Previous.isAmbiguous() && 
         (TUK == TUK_Definition || TUK == TUK_Declaration)) {
       LookupResult::Filter F = Previous.makeFilter();
       while (F.hasNext()) {
         NamedDecl *ND = F.next();
         if (ND->getDeclContext()->getRedeclContext() != SearchDC)
+          F.erase();
+      }
+      F.done();
+    }
+
+    // C++11 [namespace.memdef]p3:
+    //   If the name in a friend declaration is neither qualified nor
+    //   a template-id and the declaration is a function or an
+    //   elaborated-type-specifier, the lookup to determine whether
+    //   the entity has been previously declared shall not consider
+    //   any scopes outside the innermost enclosing namespace.
+    //
+    // Does it matter that this should be by scope instead of by
+    // semantic context?
+    if (!Previous.empty() && TUK == TUK_Friend) {
+      DeclContext *EnclosingNS = SearchDC->getEnclosingNamespaceContext();
+      LookupResult::Filter F = Previous.makeFilter();
+      while (F.hasNext()) {
+        NamedDecl *ND = F.next();
+        DeclContext *DC = ND->getDeclContext()->getRedeclContext();
+        if (DC->isFileContext() && !EnclosingNS->Encloses(ND->getDeclContext()))
           F.erase();
       }
       F.done();
