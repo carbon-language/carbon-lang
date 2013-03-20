@@ -240,12 +240,15 @@ public:
   /// \param IS the set of invalidated symbols.
   /// \param Call if non-null, the invalidated regions represent parameters to
   ///        the call and should be considered directly invalidated.
-  ProgramStateRef invalidateRegions(ArrayRef<const MemRegion *> Regions,
-                                    const Expr *E, unsigned BlockCount,
-                                    const LocationContext *LCtx,
-                                    bool CausesPointerEscape,
-                                    InvalidatedSymbols *IS = 0,
-                                    const CallEvent *Call = 0) const;
+  /// \param ConstRegions the set of regions whose contents are accessible,
+  ///        even though the regions themselves should not be invalidated.
+  ProgramStateRef
+  invalidateRegions(ArrayRef<const MemRegion *> Regions, const Expr *E,
+                    unsigned BlockCount, const LocationContext *LCtx,
+                    bool CausesPointerEscape, InvalidatedSymbols *IS = 0,
+                    const CallEvent *Call = 0,
+                    ArrayRef<const MemRegion *> ConstRegions =
+                      ArrayRef<const MemRegion *>()) const;
 
   /// enterStackFrame - Returns the state for entry to the given stack frame,
   ///  preserving the current state.
@@ -415,14 +418,16 @@ public:
 private:
   friend void ProgramStateRetain(const ProgramState *state);
   friend void ProgramStateRelease(const ProgramState *state);
-  
-  ProgramStateRef 
+
+  /// \sa invalidateRegions()
+  ProgramStateRef
   invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
                         const Expr *E, unsigned BlockCount,
                         const LocationContext *LCtx,
                         bool ResultsInSymbolEscape,
                         InvalidatedSymbols &IS,
-                        const CallEvent *Call) const;
+                        const CallEvent *Call,
+                        ArrayRef<const MemRegion *> ConstRegions) const;
 };
 
 //===----------------------------------------------------------------------===//

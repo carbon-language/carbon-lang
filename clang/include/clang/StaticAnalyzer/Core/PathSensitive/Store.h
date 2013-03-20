@@ -197,6 +197,7 @@ public:
                                      const LocationContext *LCtx,
                                      InvalidatedSymbols &IS,
                                      const CallEvent *Call,
+                                     ArrayRef<const MemRegion *> ConstRegions,
                                      InvalidatedRegions *Invalidated) = 0;
 
   /// enterStackFrame - Let the StoreManager to do something when execution

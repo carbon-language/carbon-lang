@@ -370,6 +370,7 @@ public:
                              const LocationContext *LCtx,
                              InvalidatedSymbols &IS,
                              const CallEvent *Call,
+                             ArrayRef<const MemRegion *> ConstRegions,
                              InvalidatedRegions *Invalidated);
 
   bool scanReachableSymbols(Store S, const MemRegion *R,
@@ -595,7 +596,8 @@ template <typename DERIVED>
 class ClusterAnalysis  {
 protected:
   typedef llvm::DenseMap<const MemRegion *, const ClusterBindings *> ClusterMap;
-  typedef SmallVector<const MemRegion *, 10> WorkList;
+  typedef llvm::PointerIntPair<const MemRegion *, 1, bool> WorkListElement;
+  typedef SmallVector<WorkListElement, 10> WorkList;
 
   llvm::SmallPtrSet<const ClusterBindings *, 16> Visited;
 
@@ -642,35 +644,35 @@ public:
     }
   }
 
-  bool AddToWorkList(const MemRegion *R, const ClusterBindings *C) {
+  bool AddToWorkList(WorkListElement E, const ClusterBindings *C) {
     if (C && !Visited.insert(C))
       return false;
-    WL.push_back(R);
+    WL.push_back(E);
     return true;
   }
 
-  bool AddToWorkList(const MemRegion *R) {
-    const MemRegion *baseR = R->getBaseRegion();
-    return AddToWorkList(baseR, getCluster(baseR));
+  bool AddToWorkList(const MemRegion *R, bool Flag = false) {
+    const MemRegion *BaseR = R->getBaseRegion();
+    return AddToWorkList(WorkListElement(BaseR, Flag), getCluster(BaseR));
   }
 
   void RunWorkList() {
     while (!WL.empty()) {
-      const MemRegion *baseR = WL.pop_back_val();
+      WorkListElement E = WL.pop_back_val();
+      const MemRegion *BaseR = E.getPointer();
 
-      // First visit the cluster.
-      if (const ClusterBindings *Cluster = getCluster(baseR))
-        static_cast<DERIVED*>(this)->VisitCluster(baseR, *Cluster);
-
-      // Next, visit the base region.
-      static_cast<DERIVED*>(this)->VisitBaseRegion(baseR);
+      static_cast<DERIVED*>(this)->VisitCluster(BaseR, getCluster(BaseR),
+                                                E.getInt());
     }
   }
 
-public:
   void VisitAddedToCluster(const MemRegion *baseR, const ClusterBindings &C) {}
-  void VisitCluster(const MemRegion *baseR, const ClusterBindings &C) {}
-  void VisitBaseRegion(const MemRegion *baseR) {}
+  void VisitCluster(const MemRegion *baseR, const ClusterBindings *C) {}
+
+  void VisitCluster(const MemRegion *BaseR, const ClusterBindings *C,
+                    bool Flag) {
+    static_cast<DERIVED*>(this)->VisitCluster(BaseR, C);
+  }
 };
 }
 
@@ -884,10 +886,8 @@ public:
     : ClusterAnalysis<invalidateRegionsWorker>(rm, stateMgr, b, includeGlobals),
       Ex(ex), Count(count), LCtx(lctx), IS(is), Regions(r) {}
 
-  void VisitCluster(const MemRegion *baseR, const ClusterBindings &C);
-  void VisitBaseRegion(const MemRegion *baseR);
-
-private:
+  void VisitCluster(const MemRegion *baseR, const ClusterBindings *C,
+                    bool Flag);
   void VisitBinding(SVal V);
 };
 }
@@ -917,18 +917,16 @@ void invalidateRegionsWorker::VisitBinding(SVal V) {
   }
 }
 
-void invalidateRegionsWorker::VisitCluster(const MemRegion *BaseR,
-                                           const ClusterBindings &C) {
-  for (ClusterBindings::iterator I = C.begin(), E = C.end(); I != E; ++I)
-    VisitBinding(I.getData());
+void invalidateRegionsWorker::VisitCluster(const MemRegion *baseR,
+                                           const ClusterBindings *C,
+                                           bool IsConst) {
+  if (C) {
+    for (ClusterBindings::iterator I = C->begin(), E = C->end(); I != E; ++I)
+      VisitBinding(I.getData());
 
-  B = B.remove(BaseR);
-}
-
-void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
-  // Symbolic region?  Mark that symbol touched by the invalidation.
-  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(baseR))
-    IS.insert(SR->getSymbol());
+    if (!IsConst)
+      B = B.remove(baseR);
+  }
 
   // BlockDataRegion?  If so, invalidate captured variables that are passed
   // by reference.
@@ -956,6 +954,13 @@ void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
     }
     return;
   }
+
+  if (IsConst)
+    return;
+
+  // Symbolic region?  Mark that symbol touched by the invalidation.
+  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(baseR))
+    IS.insert(SR->getSymbol());
 
   // Otherwise, we have a normal data region. Record that we touched the region.
   if (Regions)
@@ -1043,10 +1048,11 @@ RegionStoreManager::invalidateRegions(Store store,
                                       const LocationContext *LCtx,
                                       InvalidatedSymbols &IS,
                                       const CallEvent *Call,
+                                      ArrayRef<const MemRegion *> ConstRegions,
                                       InvalidatedRegions *Invalidated) {
-  invalidateRegionsWorker W(*this, StateMgr,
-                            RegionStoreManager::getRegionBindings(store),
-                            Ex, Count, LCtx, IS, Invalidated, false);
+  RegionBindingsRef B = RegionStoreManager::getRegionBindings(store);
+  invalidateRegionsWorker W(*this, StateMgr, B, Ex, Count, LCtx, IS,
+                            Invalidated, false);
 
   // Scan the bindings and generate the clusters.
   W.GenerateClusters();
@@ -1054,12 +1060,18 @@ RegionStoreManager::invalidateRegions(Store store,
   // Add the regions to the worklist.
   for (ArrayRef<const MemRegion *>::iterator
        I = Regions.begin(), E = Regions.end(); I != E; ++I)
-    W.AddToWorkList(*I);
+    W.AddToWorkList(*I, /*IsConst=*/false);
+
+  for (ArrayRef<const MemRegion *>::iterator I = ConstRegions.begin(),
+                                             E = ConstRegions.end();
+       I != E; ++I) {
+    W.AddToWorkList(*I, /*IsConst=*/true);
+  }
 
   W.RunWorkList();
 
   // Return the new bindings.
-  RegionBindingsRef B = W.getRegionBindings();
+  B = W.getRegionBindings();
 
   // For all globals which are not static nor immutable: determine which global
   // regions should be invalidated and invalidate them.
@@ -2051,7 +2063,8 @@ public:
 
   // Called by ClusterAnalysis.
   void VisitAddedToCluster(const MemRegion *baseR, const ClusterBindings &C);
-  void VisitCluster(const MemRegion *baseR, const ClusterBindings &C);
+  void VisitCluster(const MemRegion *baseR, const ClusterBindings *C);
+  using ClusterAnalysis::VisitCluster;
 
   bool UpdatePostponed();
   void VisitBinding(SVal V);
@@ -2094,13 +2107,16 @@ void removeDeadBindingsWorker::VisitAddedToCluster(const MemRegion *baseR,
 }
 
 void removeDeadBindingsWorker::VisitCluster(const MemRegion *baseR,
-                                            const ClusterBindings &C) {
+                                            const ClusterBindings *C) {
+  if (!C)
+    return;
+
   // Mark the symbol for any SymbolicRegion with live bindings as live itself.
   // This means we should continue to track that symbol.
   if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(baseR))
     SymReaper.markLive(SymR->getSymbol());
 
-  for (ClusterBindings::iterator I = C.begin(), E = C.end(); I != E; ++I)
+  for (ClusterBindings::iterator I = C->begin(), E = C->end(); I != E; ++I)
     VisitBinding(I.getData());
 }
 

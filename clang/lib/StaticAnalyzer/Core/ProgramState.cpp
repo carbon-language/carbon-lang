@@ -140,30 +140,34 @@ ProgramStateRef ProgramState::bindDefault(SVal loc, SVal V) const {
            new_state;
 }
 
+typedef ArrayRef<const MemRegion *> RegionList;
+
 ProgramStateRef 
-ProgramState::invalidateRegions(ArrayRef<const MemRegion *> Regions,
+ProgramState::invalidateRegions(RegionList Regions,
                                 const Expr *E, unsigned Count,
                                 const LocationContext *LCtx,
                                 bool CausedByPointerEscape,
                                 InvalidatedSymbols *IS,
-                                const CallEvent *Call) const {
+                                const CallEvent *Call,
+                                RegionList ConstRegions) const {
   if (!IS) {
     InvalidatedSymbols invalidated;
     return invalidateRegionsImpl(Regions, E, Count, LCtx,
                                  CausedByPointerEscape,
-                                 invalidated, Call);
+                                 invalidated, Call, ConstRegions);
   }
   return invalidateRegionsImpl(Regions, E, Count, LCtx, CausedByPointerEscape,
-                               *IS, Call);
+                               *IS, Call, ConstRegions);
 }
 
 ProgramStateRef 
-ProgramState::invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
+ProgramState::invalidateRegionsImpl(RegionList Regions,
                                     const Expr *E, unsigned Count,
                                     const LocationContext *LCtx,
                                     bool CausedByPointerEscape,
                                     InvalidatedSymbols &IS,
-                                    const CallEvent *Call) const {
+                                    const CallEvent *Call,
+                                    RegionList ConstRegions) const {
   ProgramStateManager &Mgr = getStateManager();
   SubEngine* Eng = Mgr.getOwningEngine();
  
@@ -171,7 +175,7 @@ ProgramState::invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
     StoreManager::InvalidatedRegions Invalidated;
     const StoreRef &newStore
       = Mgr.StoreMgr->invalidateRegions(getStore(), Regions, E, Count, LCtx, IS,
-                                        Call, &Invalidated);
+                                        Call, ConstRegions, &Invalidated);
 
     ProgramStateRef newState = makeWithStore(newStore);
 
@@ -184,7 +188,7 @@ ProgramState::invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
 
   const StoreRef &newStore =
     Mgr.StoreMgr->invalidateRegions(getStore(), Regions, E, Count, LCtx, IS,
-                                    Call, NULL);
+                                    Call, ConstRegions, NULL);
   return makeWithStore(newStore);
 }
 
