@@ -107,6 +107,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_realloc]                  = "  realloc                         ";
   name[StatInt_free]                     = "  free                            ";
   name[StatInt_cfree]                    = "  cfree                           ";
+  name[StatInt_malloc_usable_size]       = "  malloc_usable_size              ";
   name[StatInt_mmap]                     = "  mmap                            ";
   name[StatInt_mmap64]                   = "  mmap64                          ";
   name[StatInt_munmap]                   = "  munmap                          ";
@@ -249,6 +250,10 @@ void StatOutput(u64 *stat) {
   name[StatInt_epoll_wait]               = "  epoll_wait                      ";
   name[StatInt_poll]                     = "  poll                            ";
   name[StatInt_sigaction]                = "  sigaction                       ";
+  name[StatInt_signal]                   = "  signal                          ";
+  name[StatInt_raise]                    = "  raise                           ";
+  name[StatInt_kill]                     = "  kill                            ";
+  name[StatInt_pthread_kill]             = "  pthread_kill                    ";
   name[StatInt_sleep]                    = "  sleep                           ";
   name[StatInt_usleep]                   = "  usleep                          ";
   name[StatInt_nanosleep]                = "  nanosleep                       ";
@@ -288,6 +293,7 @@ void StatOutput(u64 *stat) {
   name[StatAnnotateMutexIsNotPHB]        = "  MutexIsNotPHB                   ";
   name[StatAnnotateCondVarWait]          = "  CondVarWait                     ";
   name[StatAnnotateRWLockCreate]         = "  RWLockCreate                    ";
+  name[StatAnnotateRWLockCreateStatic]   = "  StatAnnotateRWLockCreateStatic  ";
   name[StatAnnotateRWLockDestroy]        = "  RWLockDestroy                   ";
   name[StatAnnotateRWLockAcquired]       = "  RWLockAcquired                  ";
   name[StatAnnotateRWLockReleased]       = "  RWLockReleased                  ";
