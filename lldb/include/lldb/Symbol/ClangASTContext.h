@@ -201,6 +201,9 @@ public:
 
     lldb::clang_type_t
     GetBuiltInType_objc_id();
+    
+    static lldb::clang_type_t
+    GetBuiltInType_objc_id(clang::ASTContext *ast);
 
     lldb::clang_type_t
     GetBuiltInType_objc_Class();

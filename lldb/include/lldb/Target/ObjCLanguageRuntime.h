@@ -249,41 +249,6 @@ public:
         lldb::TypeWP m_type_wp;
     };
     
-    // a convenience subclass of ClassDescriptor meant to represent invalid objects
-    class ClassDescriptor_Invalid : public ClassDescriptor
-    {
-    public:
-        ClassDescriptor_Invalid() {}
-        
-        virtual
-        ~ClassDescriptor_Invalid ()
-        {}
-        
-        virtual ConstString
-        GetClassName () { return ConstString(""); }
-        
-        virtual ClassDescriptorSP
-        GetSuperclass () { return ClassDescriptorSP(new ClassDescriptor_Invalid()); }
-        
-        virtual bool
-        IsValid () { return false; }
-        
-        virtual bool
-        IsTagged () { return false; }
-        
-        virtual uint64_t
-        GetInstanceSize () { return 0; }
-        
-        virtual ObjCISA
-        GetISA () { return 0; }
-        
-        virtual bool
-        CheckPointer (lldb::addr_t value, uint32_t ptr_size) const
-        {
-            return false;
-        }
-    };
-    
     virtual ClassDescriptorSP
     GetClassDescriptor (ValueObject& in_value);
     

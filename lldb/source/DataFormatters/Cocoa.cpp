@@ -55,8 +55,9 @@ lldb_private::formatters::NSBundleSummaryProvider (ValueObject& valobj, Stream& 
     if (!strcmp(class_name,"NSBundle"))
     {
         uint64_t offset = 5 * ptr_size;
-        ClangASTType type(valobj.GetClangAST(),valobj.GetClangType());
+        ClangASTType type(valobj.GetClangAST(),ClangASTContext::GetBuiltInType_objc_id(valobj.GetClangAST()));
         ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset, type, true));
+        valobj_addr = text->GetValueAsUnsigned(0);
         StreamString summary_stream;
         bool was_nsstring_ok = NSStringSummaryProvider(*text.get(), summary_stream);
         if (was_nsstring_ok && summary_stream.GetSize() > 0)

@@ -1508,7 +1508,7 @@ public:
         // tagged pointers can represent a class that has a superclass, but since that information is not
         // stored in the object itself, we would have to query the runtime to discover the hierarchy
         // for the time being, we skip this step in the interest of static discovery
-        return ObjCLanguageRuntime::ClassDescriptorSP(new ObjCLanguageRuntime::ClassDescriptor_Invalid());
+        return ObjCLanguageRuntime::ClassDescriptorSP();
     }
     
     virtual bool

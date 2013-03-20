@@ -944,6 +944,12 @@ ClangASTContext::GetBuiltInType_objc_id()
     return getASTContext()->getObjCIdType().getAsOpaquePtr();
 }
 
+lldb::clang_type_t
+ClangASTContext::GetBuiltInType_objc_id(clang::ASTContext *ast)
+{
+    return ast->getObjCIdType().getAsOpaquePtr();
+}
+
 clang_type_t
 ClangASTContext::GetBuiltInType_objc_Class()
 {
