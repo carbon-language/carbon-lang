@@ -640,6 +640,8 @@ namespace llvm {
 
   /// DINameSpace - A wrapper for a C++ style name space.
   class DINameSpace : public DIScope {
+    friend class DIDescriptor;
+    void printInternal(raw_ostream &OS) const;
   public:
     explicit DINameSpace(const MDNode *N = 0) : DIScope(N) {}
     DIScope getContext() const     { return getFieldAs<DIScope>(1);      }

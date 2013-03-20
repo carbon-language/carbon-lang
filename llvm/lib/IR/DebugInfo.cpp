@@ -1033,6 +1033,8 @@ void DIDescriptor::print(raw_ostream &OS) const {
     DIVariable(DbgNode).printInternal(OS);
   } else if (this->isObjCProperty()) {
     DIObjCProperty(DbgNode).printInternal(OS);
+  } else if (this->isNameSpace()) {
+    DINameSpace(DbgNode).printInternal(OS);
   } else if (this->isScope()) {
     DIScope(DbgNode).printInternal(OS);
   }
@@ -1104,6 +1106,14 @@ void DICompositeType::printInternal(raw_ostream &OS) const {
   DIType::printInternal(OS);
   DIArray A = getTypeArray();
   OS << " [" << A.getNumElements() << " elements]";
+}
+
+void DINameSpace::printInternal(raw_ostream &OS) const {
+  StringRef Name = getName();
+  if (!Name.empty())
+    OS << " [" << Name << ']';
+
+  OS << " [line " << getLineNumber() << ']';
 }
 
 void DISubprogram::printInternal(raw_ostream &OS) const {
