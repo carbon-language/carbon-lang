@@ -23,12 +23,14 @@ public:
     Measurement () {}
     
     Measurement (Action act, const char* name = NULL, const char* descr = NULL)  :
+    m_gauge (),
     m_action (act),
     m_metric (Metric<typename GaugeType::SizeType>(name,descr))
     {}
     
     template <typename GaugeType_Rhs, typename Action_Rhs>
     Measurement (const Measurement<GaugeType_Rhs, Action_Rhs>& rhs) :
+    m_gauge(rhs.gauge()),
     m_action(rhs.action()),
     m_metric(rhs.metric())
     {
@@ -38,14 +40,33 @@ public:
     void
     operator () (Args... args)
     {
-        GaugeType gauge;
-        m_metric.append (gauge.gauge(m_action,args...));
+        m_metric.append (m_gauge.gauge(m_action,args...));
     }
     
     virtual const Metric<typename GaugeType::SizeType>&
     metric () const
     {
         return m_metric;
+    }
+    
+    void
+    start ()
+    {
+        m_gauge.start();
+    }
+    
+    typename GaugeType::SizeType
+    stop ()
+    {
+        auto value = m_gauge.stop();
+        m_metric.append(value);
+        return value;
+    }
+    
+    virtual const GaugeType&
+    gauge () const
+    {
+        return m_gauge;
     }
     
     virtual const Action&
@@ -61,6 +82,7 @@ public:
     }
 
 protected:
+    GaugeType m_gauge;
     Action m_action;
     Metric<typename GaugeType::SizeType> m_metric;
 };

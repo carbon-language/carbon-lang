@@ -34,8 +34,9 @@ public:
         m_dump_std_map_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
             lldb_perf::Xcode::FetchVariable (value,1,false);
         }, "std-map", "time to dump an std::map");
-        m_dump_std_string_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
-            lldb_perf::Xcode::FetchVariable (value,1,false);
+        
+        // use this in manual mode
+        m_dump_std_string_measurement = CreateTimeMeasurement([] () -> void {
         }, "std-string", "time to dump an std::string");
         
         m_dump_nsstring_measurement = CreateTimeMeasurement([] (SBValue value) -> void {
@@ -112,11 +113,32 @@ public:
         m_dump_std_list_measurement(frame_zero.FindVariable("list", lldb::eDynamicCanRunTarget));
         m_dump_std_map_measurement(frame_zero.FindVariable("map", lldb::eDynamicCanRunTarget));
 
-        m_dump_std_string_measurement(frame_zero.FindVariable("sstr0", lldb::eDynamicCanRunTarget));
-        m_dump_std_string_measurement(frame_zero.FindVariable("sstr1", lldb::eDynamicCanRunTarget));
-        m_dump_std_string_measurement(frame_zero.FindVariable("sstr2", lldb::eDynamicCanRunTarget));
-        m_dump_std_string_measurement(frame_zero.FindVariable("sstr3", lldb::eDynamicCanRunTarget));
-        m_dump_std_string_measurement(frame_zero.FindVariable("sstr4", lldb::eDynamicCanRunTarget));
+        auto sstr0 = frame_zero.FindVariable("sstr0", lldb::eDynamicCanRunTarget);
+        auto sstr1 = frame_zero.FindVariable("sstr1", lldb::eDynamicCanRunTarget);
+        auto sstr2 = frame_zero.FindVariable("sstr2", lldb::eDynamicCanRunTarget);
+        auto sstr3 = frame_zero.FindVariable("sstr3", lldb::eDynamicCanRunTarget);
+        auto sstr4 = frame_zero.FindVariable("sstr4", lldb::eDynamicCanRunTarget);
+        
+        m_dump_std_string_measurement.start();
+        Xcode::FetchVariable(sstr0,0,false);
+        m_dump_std_string_measurement.stop();
+        
+        m_dump_std_string_measurement.start();
+        Xcode::FetchVariable(sstr1,0,false);
+        m_dump_std_string_measurement.stop();
+
+        m_dump_std_string_measurement.start();
+        Xcode::FetchVariable(sstr2,0,false);
+        m_dump_std_string_measurement.stop();
+
+        m_dump_std_string_measurement.start();
+        Xcode::FetchVariable(sstr3,0,false);
+        m_dump_std_string_measurement.stop();
+
+        m_dump_std_string_measurement.start();
+        Xcode::FetchVariable(sstr4,0,false);
+        m_dump_std_string_measurement.stop();
+        
     }
     
 	virtual void
@@ -202,7 +224,7 @@ private:
     TimeMeasurement<std::function<void(SBValue)>> m_dump_std_vector_measurement;
     TimeMeasurement<std::function<void(SBValue)>> m_dump_std_list_measurement;
     TimeMeasurement<std::function<void(SBValue)>> m_dump_std_map_measurement;
-    TimeMeasurement<std::function<void(SBValue)>> m_dump_std_string_measurement;
+    TimeMeasurement<std::function<void()>> m_dump_std_string_measurement;
 
     // Cocoa formatters
     TimeMeasurement<std::function<void(SBValue)>> m_dump_nsstring_measurement;
