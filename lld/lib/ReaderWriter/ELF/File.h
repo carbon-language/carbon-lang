@@ -516,7 +516,8 @@ public:
           int64_t relocAddend = relHandler.relocAddend(*ri);
           uint64_t addend = ri->addend() + relocAddend;
           const MergeSectionKey ms(shdr, addend);
-          if (_mergedSectionMap.find(ms) == _mergedSectionMap.end()) {
+          auto msec = _mergedSectionMap.find(ms);
+          if (msec == _mergedSectionMap.end()) {
             if (Symbol->getType() != llvm::ELF::STT_SECTION)
               addend = Symbol->st_value + addend;
             MergeAtomsIter mai = findMergeAtom(shdr, addend);
@@ -529,7 +530,7 @@ public:
               llvm_unreachable("unable to find a merge atom");
           } // find
               else
-            ri->setTarget(_mergedSectionMap[ms]);
+            ri->setTarget(msec->second);
         } else
           ri->setTarget(findAtom(Symbol));
       }
