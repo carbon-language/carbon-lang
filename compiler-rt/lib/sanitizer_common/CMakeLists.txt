@@ -74,6 +74,8 @@ else()
   foreach(arch ${SANITIZER_COMMON_SUPPORTED_ARCH})
     add_compiler_rt_object_library(RTSanitizerCommon ${arch}
       SOURCES ${SANITIZER_SOURCES} CFLAGS ${SANITIZER_CFLAGS})
+    add_compiler_rt_static_runtime(clang_rt.san-${arch} ${arch}
+      SOURCES ${SANITIZER_SOURCES} CFLAGS ${SANITIZER_CFLAGS})
     list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.${arch})
   endforeach()
 endif()
