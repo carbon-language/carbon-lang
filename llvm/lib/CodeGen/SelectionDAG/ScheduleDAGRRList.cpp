@@ -1894,12 +1894,15 @@ unsigned RegReductionPQBase::getNodePriority(const SUnit *SU) const {
     // CopyToReg should be close to its uses to facilitate coalescing and
     // avoid spilling.
     return 0;
-  if (Opc == TargetOpcode::EXTRACT_SUBREG ||
-      Opc == TargetOpcode::SUBREG_TO_REG ||
-      Opc == TargetOpcode::INSERT_SUBREG)
-    // EXTRACT_SUBREG, INSERT_SUBREG, and SUBREG_TO_REG nodes should be
-    // close to their uses to facilitate coalescing.
-    return 0;
+  if (SU->getNode() && SU->getNode()->isMachineOpcode()) {
+    Opc = SU->getNode()->getMachineOpcode();
+    if (Opc == TargetOpcode::EXTRACT_SUBREG ||
+        Opc == TargetOpcode::SUBREG_TO_REG ||
+        Opc == TargetOpcode::INSERT_SUBREG)
+      // EXTRACT_SUBREG, INSERT_SUBREG, and SUBREG_TO_REG nodes should be
+      // close to their uses to facilitate coalescing.
+      return 0;
+  }
   if (SU->NumSuccs == 0 && SU->NumPreds != 0)
     // If SU does not have a register use, i.e. it doesn't produce a value
     // that would be consumed (e.g. store), then it terminates a chain of
@@ -2585,12 +2588,15 @@ static bool canEnableCoalescing(SUnit *SU) {
     // avoid spilling.
     return true;
 
-  if (Opc == TargetOpcode::EXTRACT_SUBREG ||
-      Opc == TargetOpcode::SUBREG_TO_REG ||
-      Opc == TargetOpcode::INSERT_SUBREG)
-    // EXTRACT_SUBREG, INSERT_SUBREG, and SUBREG_TO_REG nodes should be
-    // close to their uses to facilitate coalescing.
-    return true;
+  if (SU->getNode() && SU->getNode()->isMachineOpcode()) {
+    Opc = SU->getNode()->getMachineOpcode();
+    if (Opc == TargetOpcode::EXTRACT_SUBREG ||
+        Opc == TargetOpcode::SUBREG_TO_REG ||
+        Opc == TargetOpcode::INSERT_SUBREG)
+      // EXTRACT_SUBREG, INSERT_SUBREG, and SUBREG_TO_REG nodes should be
+      // close to their uses to facilitate coalescing.
+      return true;
+  }
 
   if (SU->NumPreds == 0 && SU->NumSuccs != 0)
     // If SU does not have a register def, schedule it close to its uses
