@@ -264,8 +264,16 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
   } else if (ObjectTypePtr)
     Diag(NameLoc, diag::err_ident_in_dtor_not_a_type)
       << &II;
-  else
-    Diag(NameLoc, diag::err_destructor_class_name);
+  else {
+    SemaDiagnosticBuilder DtorDiag = Diag(NameLoc,
+                                          diag::err_destructor_class_name);
+    if (S) {
+      const DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity());
+      if (const CXXRecordDecl *Class = dyn_cast_or_null<CXXRecordDecl>(Ctx))
+        DtorDiag << FixItHint::CreateReplacement(SourceRange(NameLoc),
+                                                 Class->getNameAsString());
+    }
+  }
 
   return ParsedType();
 }
