@@ -74,6 +74,7 @@ void LinkerInvocation::operator()() {
     }
     inputs.appendFiles(files);
   }
+  inputs.assignFileOrdinals();
 
   auto writer = targetInfo->getWriter();
 

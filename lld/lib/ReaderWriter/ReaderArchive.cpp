@@ -52,7 +52,7 @@ public:
 
     assert(result.size() == 1);
 
-    // TO DO: set ordinal of child just loaded
+    result[0]->setOrdinalAndIncrement(_curChildOrd);
 
     // give up the pointer so that this object no longer manages it
     return result[0].release();
@@ -60,6 +60,7 @@ public:
 
   virtual void setOrdinalAndIncrement(uint64_t &ordinal) const {
     _ordinal = ordinal++;
+    _curChildOrd = _ordinal;
     // Leave space in ordinal range for all children
     for (auto mf = _archive->begin_children(),
               me = _archive->end_children(); mf != me; ++mf) {
@@ -126,6 +127,7 @@ private:
   atom_collection_vector<UndefinedAtom>     _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom>      _absoluteAtoms;
+  mutable uint64_t _curChildOrd;
 
 public:
   /// only subclasses of ArchiveLibraryFile can be instantiated

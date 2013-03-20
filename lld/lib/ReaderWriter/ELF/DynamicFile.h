@@ -26,10 +26,6 @@ public:
       const ELFTargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> mb) {
     std::unique_ptr<DynamicFile> file(
         new DynamicFile(ti, mb->getBufferIdentifier()));
-
-    static uint32_t lastOrdinal = 0;
-    file->_ordinal = lastOrdinal++;
-
     llvm::OwningPtr<llvm::object::Binary> binaryFile;
     if (error_code ec = createBinary(mb.release(), binaryFile))
       return ec;
