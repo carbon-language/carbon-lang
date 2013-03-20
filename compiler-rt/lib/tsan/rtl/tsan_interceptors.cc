@@ -28,18 +28,18 @@
 
 using namespace __tsan;  // NOLINT
 
-const int kSigCount = 128;
+const int kSigCount = 64;
 
 struct my_siginfo_t {
-  int opaque[128];
+  u64 opaque[128 / sizeof(u64)];
 };
 
 struct sigset_t {
-  u64 val[1024 / 8 / sizeof(u64)];
+  u64 val[128 / sizeof(u64)];
 };
 
 struct ucontext_t {
-  uptr opaque[117];
+  u64 opaque[936 / sizeof(u64) + 1];
 };
 
 extern "C" int pthread_attr_init(void *attr);
