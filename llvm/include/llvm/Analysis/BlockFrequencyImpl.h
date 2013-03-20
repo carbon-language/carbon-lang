@@ -271,7 +271,7 @@ class BlockFrequencyImpl {
 
     BlockT *EntryBlock = fn->begin();
 
-    copy(po_begin(EntryBlock), po_end(EntryBlock), back_inserter(POT));
+    std::copy(po_begin(EntryBlock), po_end(EntryBlock), std::back_inserter(POT));
 
     unsigned RPOidx = 0;
     for (rpot_iterator I = rpot_begin(), E = rpot_end(); I != E; ++I) {

@@ -260,7 +260,7 @@ class ReversePostOrderTraversal {
   typedef typename GT::NodeType NodeType;
   std::vector<NodeType*> Blocks;       // Block list in normal PO order
   inline void Initialize(NodeType *BB) {
-    copy(po_begin(BB), po_end(BB), back_inserter(Blocks));
+    std::copy(po_begin(BB), po_end(BB), std::back_inserter(Blocks));
   }
 public:
   typedef typename std::vector<NodeType*>::reverse_iterator rpo_iterator;
