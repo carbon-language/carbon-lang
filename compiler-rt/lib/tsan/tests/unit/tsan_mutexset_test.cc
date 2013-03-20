@@ -115,7 +115,8 @@ TEST(MutexSet, Overflow) {
   EXPECT_EQ(mset.Size(), MutexSet::kMaxSize);
   for (uptr i = 0; i < MutexSet::kMaxSize; i++) {
     if (i == 0)
-      Expect(mset, i, 63, true, 64, 2);
+      Expect(mset, i, MutexSet::kMaxSize - 1,
+             true, MutexSet::kMaxSize, 2);
     else if (i == MutexSet::kMaxSize - 1)
       Expect(mset, i, 100, true, 200, 1);
     else
