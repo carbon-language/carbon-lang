@@ -1115,6 +1115,10 @@ private:
   DeclGroupPtrTy ParseObjCAtClassDeclaration(SourceLocation atLoc);
   Decl *ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
                                         ParsedAttributes &prefixAttrs);
+  void HelperActionsForIvarDeclarations(Decl *interfaceDecl, SourceLocation atLoc,
+                                        BalancedDelimiterTracker &T,
+                                        SmallVectorImpl<Decl *> &AllIvarDecls,
+                                        bool RBraceMissing);
   void ParseObjCClassInstanceVariables(Decl *interfaceDecl,
                                        tok::ObjCKeywordKind visibility,
                                        SourceLocation atLoc);

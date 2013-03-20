@@ -1228,6 +1228,22 @@ bool Parser::ParseObjCProtocolQualifiers(DeclSpec &DS) {
   return Result;
 }
 
+void Parser::HelperActionsForIvarDeclarations(Decl *interfaceDecl, SourceLocation atLoc,
+                                 BalancedDelimiterTracker &T,
+                                 SmallVectorImpl<Decl *> &AllIvarDecls,
+                                 bool RBraceMissing) {
+  if (!RBraceMissing)
+    T.consumeClose();
+  
+  Actions.ActOnObjCContainerStartDefinition(interfaceDecl);
+  Actions.ActOnLastBitfield(T.getCloseLocation(), AllIvarDecls);
+  Actions.ActOnObjCContainerFinishDefinition();
+  // Call ActOnFields() even if we don't have any decls. This is useful
+  // for code rewriting tools that need to be aware of the empty list.
+  Actions.ActOnFields(getCurScope(), atLoc, interfaceDecl,
+                      AllIvarDecls,
+                      T.getOpenLocation(), T.getCloseLocation(), 0);
+}
 
 ///   objc-class-instance-variables:
 ///     '{' objc-instance-variable-decl-list[opt] '}'
@@ -1260,7 +1276,6 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
 
   BalancedDelimiterTracker T(*this, tok::l_brace);
   T.consumeOpen();
-
   // While we still have something to read, read the instance variables.
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
     // Each iteration of this loop reads one objc-instance-variable-decl.
@@ -1288,13 +1303,17 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
         visibility = Tok.getObjCKeywordID();
         ConsumeToken();
         continue;
-      case tok::objc_end:
-        Diag(Tok, diag::err_objc_unexpected_atend);
-        ConsumeToken();
-        continue;
       default:
-        Diag(Tok, diag::err_objc_illegal_visibility_spec);
-        continue;
+        Diag(Tok, (Tok.getObjCKeywordID() == tok::objc_end) ?
+             diag::err_objc_unexpected_atend :
+             diag::err_objc_illegal_visibility_spec);
+        Tok.setLocation(Tok.getLocation().getLocWithOffset(-1));
+        Tok.setKind(tok::at);
+        Tok.setLength(1);
+        PP.EnterToken(Tok);
+        HelperActionsForIvarDeclarations(interfaceDecl, atLoc,
+                                         T, AllIvarDecls, true);
+        return;
       }
     }
 
@@ -1341,16 +1360,8 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
       SkipUntil(tok::r_brace, true, true);
     }
   }
-  T.consumeClose();
-
-  Actions.ActOnObjCContainerStartDefinition(interfaceDecl);
-  Actions.ActOnLastBitfield(T.getCloseLocation(), AllIvarDecls);
-  Actions.ActOnObjCContainerFinishDefinition();
-  // Call ActOnFields() even if we don't have any decls. This is useful
-  // for code rewriting tools that need to be aware of the empty list.
-  Actions.ActOnFields(getCurScope(), atLoc, interfaceDecl,
-                      AllIvarDecls,
-                      T.getOpenLocation(), T.getCloseLocation(), 0);
+  HelperActionsForIvarDeclarations(interfaceDecl, atLoc,
+                                   T, AllIvarDecls, false);
   return;
 }
 
