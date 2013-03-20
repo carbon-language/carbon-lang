@@ -123,7 +123,8 @@ AliasAnalysis::ModRefResult GetLocation(const Instruction *Inst,
     if (LI->isUnordered()) {
       Loc = AA->getLocation(LI);
       return AliasAnalysis::Ref;
-    } else if (LI->getOrdering() == Monotonic) {
+    }
+    if (LI->getOrdering() == Monotonic) {
       Loc = AA->getLocation(LI);
       return AliasAnalysis::ModRef;
     }
@@ -135,7 +136,8 @@ AliasAnalysis::ModRefResult GetLocation(const Instruction *Inst,
     if (SI->isUnordered()) {
       Loc = AA->getLocation(SI);
       return AliasAnalysis::Mod;
-    } else if (SI->getOrdering() == Monotonic) {
+    }
+    if (SI->getOrdering() == Monotonic) {
       Loc = AA->getLocation(SI);
       return AliasAnalysis::ModRef;
     }
