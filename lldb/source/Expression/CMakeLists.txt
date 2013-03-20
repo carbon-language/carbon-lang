@@ -15,8 +15,7 @@ add_lldb_library(lldbExpression
   DWARFExpression.cpp
   ExpressionSourceCode.cpp
   IRDynamicChecks.cpp
+  IRExecutionUnit.cpp
   IRForTarget.cpp
   IRInterpreter.cpp
-  ProcessDataAllocator.cpp
-  RecordingMemoryManager.cpp
   )
