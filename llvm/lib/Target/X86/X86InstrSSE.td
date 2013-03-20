@@ -4969,14 +4969,15 @@ multiclass S3D_Int<bits<8> o, string OpcodeStr, ValueType vt, RegisterClass RC,
        !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-      [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))], IIC_SSE_HADDSUB_RR>;
+      [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))], IIC_SSE_HADDSUB_RR>,
+      Sched<[WriteFAdd]>;
 
   def rm : S3DI<o, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
        !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
       [(set RC:$dst, (vt (OpNode RC:$src1, (memop addr:$src2))))],
-        IIC_SSE_HADDSUB_RM>;
+        IIC_SSE_HADDSUB_RM>, Sched<[WriteFAddLd, ReadAfterLd]>;
 }
 multiclass S3_Int<bits<8> o, string OpcodeStr, ValueType vt, RegisterClass RC,
                   X86MemOperand x86memop, SDNode OpNode, bit Is2Addr = 1> {
@@ -4984,14 +4985,15 @@ multiclass S3_Int<bits<8> o, string OpcodeStr, ValueType vt, RegisterClass RC,
        !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-      [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))], IIC_SSE_HADDSUB_RR>;
+      [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))], IIC_SSE_HADDSUB_RR>,
+      Sched<[WriteFAdd]>;
 
   def rm : S3I<o, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
        !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
       [(set RC:$dst, (vt (OpNode RC:$src1, (memop addr:$src2))))],
-        IIC_SSE_HADDSUB_RM>;
+        IIC_SSE_HADDSUB_RM>, Sched<[WriteFAddLd, ReadAfterLd]>;
 }
 
 let Predicates = [HasAVX] in {
@@ -5040,7 +5042,7 @@ multiclass SS3I_unop_rm_int<bits<8> opc, string OpcodeStr,
                     (ins VR128:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                     [(set VR128:$dst, (IntId128 VR128:$src))], IIC_SSE_PABS_RR>,
-                    OpSize;
+                    OpSize, Sched<[WriteVecALU]>;
 
   def rm128 : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
                     (ins i128mem:$src),
@@ -5048,7 +5050,7 @@ multiclass SS3I_unop_rm_int<bits<8> opc, string OpcodeStr,
                     [(set VR128:$dst,
                       (IntId128
                        (bitconvert (memopv2i64 addr:$src))))], IIC_SSE_PABS_RM>,
-                    OpSize;
+                    OpSize, Sched<[WriteVecALULd]>;
 }
 
 /// SS3I_unop_rm_int_y - Simple SSSE3 unary op whose type can be v*{i8,i16,i32}.
@@ -5058,14 +5060,15 @@ multiclass SS3I_unop_rm_int_y<bits<8> opc, string OpcodeStr,
                     (ins VR256:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                     [(set VR256:$dst, (IntId256 VR256:$src))]>,
-                    OpSize;
+                    OpSize, Sched<[WriteVecALU]>;
 
   def rm256 : SS38I<opc, MRMSrcMem, (outs VR256:$dst),
                     (ins i256mem:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                     [(set VR256:$dst,
                       (IntId256
-                       (bitconvert (memopv4i64 addr:$src))))]>, OpSize;
+                       (bitconvert (memopv4i64 addr:$src))))]>, OpSize,
+                    Sched<[WriteVecALULd]>;
 }
 
 let Predicates = [HasAVX] in {
@@ -5097,6 +5100,7 @@ defm PABSD : SS3I_unop_rm_int<0x1E, "pabsd",
 // SSSE3 - Packed Binary Operator Instructions
 //===---------------------------------------------------------------------===//
 
+let Sched = WriteVecALU in {
 def SSE_PHADDSUBD : OpndItins<
   IIC_SSE_PHADDSUBD_RR, IIC_SSE_PHADDSUBD_RM
 >;
@@ -5106,12 +5110,16 @@ def SSE_PHADDSUBSW : OpndItins<
 def SSE_PHADDSUBW : OpndItins<
   IIC_SSE_PHADDSUBW_RR, IIC_SSE_PHADDSUBW_RM
 >;
+}
+let Sched = WriteShuffle in
 def SSE_PSHUFB : OpndItins<
   IIC_SSE_PSHUFB_RR, IIC_SSE_PSHUFB_RM
 >;
+let Sched = WriteVecALU in
 def SSE_PSIGN : OpndItins<
   IIC_SSE_PSIGN_RR, IIC_SSE_PSIGN_RM
 >;
+let Sched = WriteVecIMul in
 def SSE_PMULHRSW : OpndItins<
   IIC_SSE_PMULHRSW, IIC_SSE_PMULHRSW
 >;
@@ -5128,7 +5136,7 @@ multiclass SS3I_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set RC:$dst, (OpVT (OpNode RC:$src1, RC:$src2)))], itins.rr>,
-       OpSize;
+       OpSize, Sched<[itins.Sched]>;
   def rm : SS38I<opc, MRMSrcMem, (outs RC:$dst),
        (ins RC:$src1, x86memop:$src2),
        !if(Is2Addr,
@@ -5136,7 +5144,8 @@ multiclass SS3I_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set RC:$dst,
          (OpVT (OpNode RC:$src1,
-          (bitconvert (memop_frag addr:$src2)))))], itins.rm>, OpSize;
+          (bitconvert (memop_frag addr:$src2)))))], itins.rm>, OpSize,
+       Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
 /// SS3I_binop_rm_int - Simple SSSE3 bin op whose type can be v*{i8,i16,i32}.
@@ -5150,7 +5159,7 @@ multiclass SS3I_binop_rm_int<bits<8> opc, string OpcodeStr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))]>,
-       OpSize;
+       OpSize, Sched<[itins.Sched]>;
   def rm128 : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
        (ins VR128:$src1, i128mem:$src2),
        !if(Is2Addr,
@@ -5158,7 +5167,8 @@ multiclass SS3I_binop_rm_int<bits<8> opc, string OpcodeStr,
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set VR128:$dst,
          (IntId128 VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))))]>, OpSize;
+          (bitconvert (memopv2i64 addr:$src2))))]>, OpSize,
+       Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
 multiclass SS3I_binop_rm_int_y<bits<8> opc, string OpcodeStr,
@@ -5300,7 +5310,7 @@ multiclass ssse3_palignr<string asm, bit Is2Addr = 1> {
         !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
         !strconcat(asm,
                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
-      [], IIC_SSE_PALIGNR>, OpSize;
+      [], IIC_SSE_PALIGNR>, OpSize, Sched<[WriteShuffle]>;
   let mayLoad = 1 in
   def R128rm : SS3AI<0x0F, MRMSrcMem, (outs VR128:$dst),
       (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
@@ -5308,7 +5318,7 @@ multiclass ssse3_palignr<string asm, bit Is2Addr = 1> {
         !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
         !strconcat(asm,
                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
-      [], IIC_SSE_PALIGNR>, OpSize;
+      [], IIC_SSE_PALIGNR>, OpSize, Sched<[WriteShuffleLd, ReadAfterLd]>;
   }
 }
 
@@ -5318,13 +5328,13 @@ multiclass ssse3_palignr_y<string asm, bit Is2Addr = 1> {
       (ins VR256:$src1, VR256:$src2, i8imm:$src3),
       !strconcat(asm,
                  "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-      []>, OpSize;
+      []>, OpSize, Sched<[WriteShuffle]>;
   let mayLoad = 1 in
   def R256rm : SS3AI<0x0F, MRMSrcMem, (outs VR256:$dst),
       (ins VR256:$src1, i256mem:$src2, i8imm:$src3),
       !strconcat(asm,
                  "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-      []>, OpSize;
+      []>, OpSize, Sched<[WriteShuffleLd, ReadAfterLd]>;
   }
 }
 
