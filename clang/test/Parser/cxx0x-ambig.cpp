@@ -133,3 +133,19 @@ namespace ellipsis {
     void l(int(S<int>::*...)(T)); // expected-warning {{ISO C++11 requires a parenthesized pack declaration to have a name}}
   };
 }
+
+namespace braced_init_list {
+  struct X {
+    void foo() {}
+  };
+
+  void (*pf1)() {};
+  void (X::*pmf1)() {&X::foo};
+  void (X::*pmf2)() = {&X::foo};
+
+  void test() {
+    void (*pf2)() {};
+    void (X::*pmf3)() {&X::foo};
+    void (X::*pmf4)() = {&X::foo};
+  }
+}

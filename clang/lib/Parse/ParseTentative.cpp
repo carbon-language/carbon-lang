@@ -184,6 +184,9 @@ Parser::TPResult Parser::TryParseSimpleDeclaration(bool AllowForRangeDecl) {
   return TPResult::Ambiguous();
 }
 
+/// Tentatively parse an init-declarator-list in order to disambiguate it from
+/// an expression.
+///
 ///       init-declarator-list:
 ///         init-declarator
 ///         init-declarator-list ',' init-declarator
@@ -192,14 +195,21 @@ Parser::TPResult Parser::TryParseSimpleDeclaration(bool AllowForRangeDecl) {
 ///         declarator initializer[opt]
 /// [GNU]   declarator simple-asm-expr[opt] attributes[opt] initializer[opt]
 ///
-/// initializer:
-///   '=' initializer-clause
-///   '(' expression-list ')'
+///       initializer:
+///         brace-or-equal-initializer
+///         '(' expression-list ')'
 ///
-/// initializer-clause:
-///   assignment-expression
-///   '{' initializer-list ','[opt] '}'
-///   '{' '}'
+///       brace-or-equal-initializer:
+///         '=' initializer-clause
+/// [C++11] braced-init-list
+///
+///       initializer-clause:
+///         assignment-expression
+///         braced-init-list
+///
+///       braced-init-list:
+///         '{' initializer-list ','[opt] '}'
+///         '{' '}'
 ///
 Parser::TPResult Parser::TryParseInitDeclaratorList() {
   while (1) {
@@ -218,6 +228,10 @@ Parser::TPResult Parser::TryParseInitDeclaratorList() {
       ConsumeParen();
       if (!SkipUntil(tok::r_paren))
         return TPResult::Error();
+    } else if (Tok.is(tok::l_brace)) {
+      // A left-brace here is sufficient to disambiguate the parse; an
+      // expression can never be followed directly by a braced-init-list.
+      return TPResult::True();
     } else if (Tok.is(tok::equal) || isTokIdentifier_in()) {
       // MSVC and g++ won't examine the rest of declarators if '=' is 
       // encountered; they just conclude that we have a declaration.
