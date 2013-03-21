@@ -1,5 +1,5 @@
-module A { header "A.h" }
-module B { 
+module ModA { header "A.h" }
+module ModB { 
   header "B.h" 
   export *
 }

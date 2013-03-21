@@ -181,8 +181,22 @@ Module *HeaderSearch::lookupModule(StringRef ModuleName, bool AllowSearch) {
       if (Module)
         break;
     }
+
+    // If we've already performed the exhaustive search for module maps in this
+    // search directory, don't do it again.
+    if (SearchDirs[Idx].haveSearchedAllModuleMaps())
+      continue;
+
+    // Load all module maps in the immediate subdirectories of this search
+    // directory.
+    loadSubdirectoryModuleMaps(SearchDirs[Idx]);
+
+    // Look again for the module.
+    Module = ModMap.findModule(ModuleName);
+    if (Module)
+      break;
   }
-  
+
   return Module;
 }
 
@@ -1126,13 +1140,7 @@ void HeaderSearch::collectAllModules(SmallVectorImpl<Module *> &Modules) {
     
     // Try to load module map files for immediate subdirectories of this search
     // directory.
-    llvm::error_code EC;
-    SmallString<128> DirNative;
-    llvm::sys::path::native(SearchDirs[Idx].getDir()->getName(), DirNative);
-    for (llvm::sys::fs::directory_iterator Dir(DirNative.str(), EC), DirEnd;
-         Dir != DirEnd && !EC; Dir.increment(EC)) {
-      loadModuleMapFile(Dir->path());
-    }
+    loadSubdirectoryModuleMaps(SearchDirs[Idx]);
   }
   
   // Populate the list of modules.
@@ -1141,4 +1149,19 @@ void HeaderSearch::collectAllModules(SmallVectorImpl<Module *> &Modules) {
        M != MEnd; ++M) {
     Modules.push_back(M->getValue());
   }
+}
+
+void HeaderSearch::loadSubdirectoryModuleMaps(DirectoryLookup &SearchDir) {
+  if (SearchDir.haveSearchedAllModuleMaps())
+    return;
+  
+  llvm::error_code EC;
+  SmallString<128> DirNative;
+  llvm::sys::path::native(SearchDir.getDir()->getName(), DirNative);
+  for (llvm::sys::fs::directory_iterator Dir(DirNative.str(), EC), DirEnd;
+       Dir != DirEnd && !EC; Dir.increment(EC)) {
+    loadModuleMapFile(Dir->path());
+  }
+
+  SearchDir.setSearchedAllModuleMaps(true);
 }

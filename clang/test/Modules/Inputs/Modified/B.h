@@ -1,3 +1,3 @@
-@import A;
+@import ModA;
 
 int getB();

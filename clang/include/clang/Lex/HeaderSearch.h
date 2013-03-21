@@ -505,7 +505,11 @@ private:
   Module *loadFrameworkModule(StringRef Name, 
                               const DirectoryEntry *Dir,
                               bool IsSystem);
-  
+
+  /// \brief Load all of the module maps within the immediate subdirectories
+  /// of the given search directory.
+  void loadSubdirectoryModuleMaps(DirectoryLookup &SearchDir);
+
 public:
   /// \brief Retrieve the module map.
   ModuleMap &getModuleMap() { return ModMap; }

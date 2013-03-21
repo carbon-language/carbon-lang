@@ -56,6 +56,10 @@ private:
   
   /// \brief Whether this is a header map used when building a framework.
   unsigned IsIndexHeaderMap : 1;
+
+  /// \brief Whether we've performed an exhaustive search for module maps
+  /// within the subdirectories of this directory.
+  unsigned SearchedAllModuleMaps : 1;
   
 public:
   /// DirectoryLookup ctor - Note that this ctor *does not take ownership* of
@@ -64,7 +68,7 @@ public:
                   bool isFramework)
     : DirCharacteristic(DT),
       LookupType(isFramework ? LT_Framework : LT_NormalDir),
-      IsIndexHeaderMap(false) {
+      IsIndexHeaderMap(false), SearchedAllModuleMaps(false) {
     u.Dir = dir;
   }
 
@@ -73,7 +77,7 @@ public:
   DirectoryLookup(const HeaderMap *map, SrcMgr::CharacteristicKind DT,
                   bool isIndexHeaderMap)
     : DirCharacteristic(DT), LookupType(LT_HeaderMap),
-      IsIndexHeaderMap(isIndexHeaderMap) {
+      IsIndexHeaderMap(isIndexHeaderMap), SearchedAllModuleMaps(false) {
     u.Map = map;
   }
 
@@ -108,6 +112,16 @@ public:
 
   /// isHeaderMap - Return true if this is a header map, not a normal directory.
   bool isHeaderMap() const { return getLookupType() == LT_HeaderMap; }
+
+  /// \brief Determine whether we have already searched this entire
+  /// directory for module maps.
+  bool haveSearchedAllModuleMaps() const { return SearchedAllModuleMaps; }
+
+  /// \brief Specify whether we have already searched all of the subdirectories
+  /// for module maps.
+  void setSearchedAllModuleMaps(bool SAMM) {
+    SearchedAllModuleMaps = SAMM;
+  }
 
   /// DirCharacteristic - The type of directory this is, one of the DirType enum
   /// values.
