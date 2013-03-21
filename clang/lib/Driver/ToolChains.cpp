@@ -312,17 +312,19 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   // Add ASAN runtime library, if required. Dynamic libraries and bundles
   // should not be linked with the runtime library.
   if (Sanitize.needsAsanRt()) {
-    if (Args.hasArg(options::OPT_dynamiclib) ||
-        Args.hasArg(options::OPT_bundle)) {
-      // Assume the binary will provide the ASan runtime.
-    } else if (isTargetIPhoneOS()) {
+    if (isTargetIPhoneOS() && !isTargetIOSSimulator()) {
       getDriver().Diag(diag::err_drv_clang_unsupported_per_platform)
         << "-fsanitize=address";
     } else {
-      AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.asan_osx_dynamic.dylib", true);
-
-      // The ASAN runtime library requires C++.
-      AddCXXStdlibLibArgs(Args, CmdArgs);
+      if (Args.hasArg(options::OPT_dynamiclib) ||
+          Args.hasArg(options::OPT_bundle)) {
+        // Assume the binary will provide the ASan runtime.
+      } else {
+        AddLinkRuntimeLib(Args, CmdArgs,
+                          "libclang_rt.asan_osx_dynamic.dylib", true);
+        // The ASAN runtime library requires C++.
+        AddCXXStdlibLibArgs(Args, CmdArgs);
+      }
     }
   }
 
