@@ -1,8 +1,9 @@
 ; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s -check-prefix=VFP2
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s -check-prefix=NEON
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s -check-prefix=A8
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 --enable-unsafe-fp-math | FileCheck %s -check-prefix=A8U
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 -regalloc=basic | FileCheck %s -check-prefix=A8
+; RUN: llc < %s -mtriple=arm-eabi -mcpu=cortex-a8 | FileCheck %s -check-prefix=A8
+; RUN: llc < %s -mtriple=arm-eabi -mcpu=cortex-a8 -regalloc=basic | FileCheck %s -check-prefix=A8
+; RUN: llc < %s -mtriple=arm-eabi -mcpu=cortex-a8 --enable-unsafe-fp-math | FileCheck %s -check-prefix=A8U
+; RUN: llc < %s -mtriple=arm-darwin -mcpu=cortex-a8 | FileCheck %s -check-prefix=A8U
 
 define float @t1(float %acc, float %a, float %b) nounwind {
 entry:
