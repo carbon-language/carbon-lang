@@ -256,6 +256,13 @@ void LandingPadInst::addClause(Value *Val) {
   OperandList[OpNo] = Val;
 }
 
+bool LandingPadInst::hasCatchAll() const {
+  for (unsigned I = 0, E = getNumClauses(); I != E; ++I)
+    if (isCatch(I) && isa<ConstantPointerNull>(getClause(I)))
+      return true;
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 //                        CallInst Implementation
 //===----------------------------------------------------------------------===//

@@ -2230,6 +2230,9 @@ public:
   /// to determine what type of clause this is.
   Value *getClause(unsigned Idx) const { return OperandList[Idx + 1]; }
 
+  /// hasCatchAll - Return 'true' if this landing pad has a catch-all.
+  bool hasCatchAll() const;
+
   /// isCatch - Return 'true' if the clause and index Idx is a catch clause.
   bool isCatch(unsigned Idx) const {
     return !isa<ArrayType>(OperandList[Idx + 1]->getType());
