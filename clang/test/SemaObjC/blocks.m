@@ -196,8 +196,8 @@ typedef short (^short_block_t)();
 void testAnonymousEnumTypes(int arg) {
   int_block_t IB;
   IB = ^{ return AnonymousValue; };
-  IB = ^{ if (arg) return TDE_Value; else return getTDE(); }; // expected-error {{incompatible block pointer}}
-  IB = ^{ if (arg) return getTDE(); else return TDE_Value; }; // expected-error {{incompatible block pointer}}
+  IB = ^{ if (arg) return TDE_Value; else return getTDE(); };
+  IB = ^{ if (arg) return getTDE(); else return TDE_Value; };
 
   // Since we fixed the underlying type of the enum, these are considered
   // compatible block types anyway.

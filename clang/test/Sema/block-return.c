@@ -134,3 +134,14 @@ void foo7()
 void (^blk)(void) = ^{
     return (void)0; // expected-warning {{void block literal should not return void expression}}
 };
+
+// rdar://13463504
+enum Test8 { T8_a, T8_b, T8_c };
+void test8(void) {
+  extern void test8_helper(int (^)(int));
+  test8_helper(^(int flag) { if (flag) return T8_a; return T8_b; });
+}
+void test8b(void) {
+  extern void test8_helper2(char (^)(int)); // expected-note {{here}}
+  test8_helper2(^(int flag) { if (flag) return T8_a; return T8_b; }); // expected-error {{passing 'enum Test8 (^)(int)' to parameter of type 'char (^)(int)'}}
+}
