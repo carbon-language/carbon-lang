@@ -470,14 +470,6 @@ namespace llvm {
 
     unsigned isOptimized() const;
 
-    StringRef getFilename() const    {
-      return getFieldAs<DIFile>(1).getFilename();
-    }
-
-    StringRef getDirectory() const   {
-      return getFieldAs<DIFile>(1).getDirectory();
-    }
-
     /// getScopeLineNumber - Get the beginning of the scope of the
     /// function, not necessarily where the name of the program
     /// starts.
