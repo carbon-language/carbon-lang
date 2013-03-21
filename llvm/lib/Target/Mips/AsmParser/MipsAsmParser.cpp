@@ -101,6 +101,9 @@ class MipsAsmParser : public MCTargetAsmParser {
   MipsAsmParser::OperandMatchResultTy
   parseCCRRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
+  bool searchSymbolAlias(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                         unsigned RegisterClass);
+
   bool ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &,
                     StringRef Mnemonic);
 
@@ -132,6 +135,8 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseSetNoMacroDirective();
   bool parseSetReorderDirective();
   bool parseSetNoReorderDirective();
+
+  bool parseSetAssignment();
 
   bool parseDirectiveWord(unsigned Size, SMLoc L);
 
@@ -817,6 +822,11 @@ bool MipsAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*>&Operands,
     return false;
   }
   case AsmToken::Identifier:
+    // Look for the existing symbol, we should check if
+    // we need to assigne the propper RegisterKind
+   if (searchSymbolAlias(Operands,MipsOperand::Kind_None))
+     return false;
+    //else drop to expression parsing
   case AsmToken::LParen:
   case AsmToken::Minus:
   case AsmToken::Plus:
@@ -1009,6 +1019,11 @@ MipsAsmParser::parseCPU64Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   if (!isMips64())
     return MatchOperand_NoMatch;
+  if (getLexer().getKind() == AsmToken::Identifier) {
+    if (searchSymbolAlias(Operands,MipsOperand::Kind_CPU64Regs))
+      return MatchOperand_Success;
+    return MatchOperand_NoMatch;
+  }
   // if the first token is not '$' we have an error
   if (Parser.getTok().isNot(AsmToken::Dollar))
     return MatchOperand_NoMatch;
@@ -1023,9 +1038,52 @@ MipsAsmParser::parseCPU64Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return MatchOperand_NoMatch;
 }
 
+bool MipsAsmParser::
+searchSymbolAlias(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                  unsigned RegisterKind) {
+
+  MCSymbol *Sym = getContext().LookupSymbol(Parser.getTok().getIdentifier());
+  if (Sym) {
+    SMLoc S = Parser.getTok().getLoc();
+    const MCExpr *Expr;
+    if (Sym->isVariable())
+      Expr = Sym->getVariableValue();
+    else
+      return false;
+    if (Expr->getKind() == MCExpr::SymbolRef) {
+      const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Expr);
+      const StringRef DefSymbol = Ref->getSymbol().getName();
+      if (DefSymbol.startswith("$")) {
+        // Lookup for the register with corresponding name
+        int RegNum = matchRegisterName(DefSymbol.substr(1),isMips64());
+        if (RegNum > -1) {
+          Parser.Lex();
+          MipsOperand *op = MipsOperand::CreateReg(RegNum,S,
+                                         Parser.getTok().getLoc());
+          op->setRegKind((MipsOperand::RegisterKind)RegisterKind);
+          Operands.push_back(op);
+          return true;
+        }
+      }
+    } else if (Expr->getKind() == MCExpr::Constant) {
+      Parser.Lex();
+      const MCConstantExpr *Const = static_cast<const MCConstantExpr*>(Expr);
+      MipsOperand *op = MipsOperand::CreateImm(Const,S,
+                                     Parser.getTok().getLoc());
+      Operands.push_back(op);
+      return true;
+    }
+  }
+  return false;
+}
 MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseCPURegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
+  if (getLexer().getKind() == AsmToken::Identifier) {
+    if (searchSymbolAlias(Operands,MipsOperand::Kind_CPURegs))
+      return MatchOperand_Success;
+    return MatchOperand_NoMatch;
+  }
   // if the first token is not '$' we have an error
   if (Parser.getTok().isNot(AsmToken::Dollar))
     return MatchOperand_NoMatch;
@@ -1321,13 +1379,13 @@ bool MipsAsmParser::reportParseError(StringRef ErrorMsg) {
 }
 
 bool MipsAsmParser::parseSetNoAtDirective() {
-  // line should look like:
+  // Line should look like:
   //  .set noat
   // set at reg to 0
   Options.setATReg(0);
   // eat noat
   Parser.Lex();
-  // if this is not the end of the statement, report error
+  // If this is not the end of the statement, report error
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     reportParseError("unexpected token in statement");
     return false;
@@ -1346,12 +1404,12 @@ bool MipsAsmParser::parseSetAtDirective() {
     Parser.Lex(); // Consume the EndOfStatement
     return false;
   } else if (getLexer().is(AsmToken::Equal)) {
-    getParser().Lex(); //eat '='
+    getParser().Lex(); // eat '='
     if (getLexer().isNot(AsmToken::Dollar)) {
       reportParseError("unexpected token in statement");
       return false;
     }
-    Parser.Lex(); // eat '$'
+    Parser.Lex(); // Eat '$'
     const AsmToken &Reg = Parser.getTok();
     if (Reg.is(AsmToken::Identifier)) {
       AtRegNo = matchCPURegisterName(Reg.getIdentifier());
@@ -1371,7 +1429,7 @@ bool MipsAsmParser::parseSetAtDirective() {
       reportParseError("unexpected token in statement");
       return false;
     }
-    getParser().Lex(); //eat reg
+    getParser().Lex(); // Eat reg
 
     if (getLexer().isNot(AsmToken::EndOfStatement)) {
       reportParseError("unexpected token in statement");
@@ -1387,7 +1445,7 @@ bool MipsAsmParser::parseSetAtDirective() {
 
 bool MipsAsmParser::parseSetReorderDirective() {
   Parser.Lex();
-  // if this is not the end of the statement, report error
+  // If this is not the end of the statement, report error
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     reportParseError("unexpected token in statement");
     return false;
@@ -1436,6 +1494,31 @@ bool MipsAsmParser::parseSetNoMacroDirective() {
   Parser.Lex(); // Consume the EndOfStatement
   return false;
 }
+
+bool MipsAsmParser::parseSetAssignment() {
+  StringRef Name;
+  const MCExpr *Value;
+
+  if (Parser.parseIdentifier(Name))
+    reportParseError("expected identifier after .set");
+
+  if (getLexer().isNot(AsmToken::Comma))
+    return reportParseError("unexpected token in .set directive");
+  Lex(); //eat comma
+
+  if (Parser.parseExpression(Value))
+    reportParseError("expected valid expression after comma");
+
+  // check if the Name already exists as a symbol
+  MCSymbol *Sym = getContext().LookupSymbol(Name);
+  if (Sym) {
+    return reportParseError("symbol already defined");
+  }
+  Sym = getContext().GetOrCreateSymbol(Name);
+  Sym->setVariableValue(Value);
+
+  return false;
+}
 bool MipsAsmParser::parseDirectiveSet() {
 
   // get next token
@@ -1460,6 +1543,10 @@ bool MipsAsmParser::parseDirectiveSet() {
   } else if (Tok.getString() == "nomicromips") {
     // ignore this directive for now
     Parser.eatToEndOfStatement();
+    return false;
+  } else {
+    // it is just an identifier, look for assignment
+    parseSetAssignment();
     return false;
   }
 
