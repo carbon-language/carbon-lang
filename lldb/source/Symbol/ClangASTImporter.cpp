@@ -302,6 +302,35 @@ ClangASTImporter::CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface
     return true;
 }
 
+bool
+ClangASTImporter::RequireCompleteType (clang::QualType type)
+{
+    if (type.isNull())
+        return false;
+    
+    if (const TagType *tag_type = type->getAs<TagType>())
+    {
+        return CompleteTagDecl(tag_type->getDecl());
+    }
+    if (const ObjCObjectType *objc_object_type = type->getAs<ObjCObjectType>())
+    {
+        if (ObjCInterfaceDecl *objc_interface_decl = objc_object_type->getInterface())
+            return CompleteObjCInterfaceDecl(objc_interface_decl);
+        else
+            return false;
+    }
+    if (const ArrayType *array_type = type->getAsArrayTypeUnsafe())
+    {
+        return RequireCompleteType(array_type->getElementType());
+    }
+    if (const AtomicType *atomic_type = type->getAs<AtomicType>())
+    {
+        return RequireCompleteType(atomic_type->getPointeeType());
+    }
+    
+    return true;
+}
+
 ClangASTMetadata *
 ClangASTImporter::GetDeclMetadata (const clang::Decl *decl)
 {

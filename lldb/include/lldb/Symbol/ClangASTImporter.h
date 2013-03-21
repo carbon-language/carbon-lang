@@ -129,6 +129,9 @@ public:
     CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface_decl);
     
     bool
+    RequireCompleteType (clang::QualType type);
+    
+    bool
     ResolveDeclOrigin (const clang::Decl *decl, clang::Decl **original_decl, clang::ASTContext **original_ctx)
     {
         DeclOrigin origin = GetDeclOrigin(decl);

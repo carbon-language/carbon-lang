@@ -468,11 +468,7 @@ ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
             {
                 QualType copied_field_type = copied_field->getType();
                 
-                if (const TagType *copied_field_tag_type = copied_field_type->getAs<TagType>())
-                    m_ast_importer->CompleteTagDecl(copied_field_tag_type->getDecl());
-                if (const ObjCObjectType *copied_field_object_type = copied_field_type->getAs<ObjCObjectType>())
-                    if (ObjCInterfaceDecl *copied_field_objc_interface_decl = copied_field_object_type->getInterface())
-                        m_ast_importer->CompleteObjCInterfaceDecl(copied_field_objc_interface_decl);
+                m_ast_importer->RequireCompleteType(copied_field_type);
             }
             
             decls.push_back(copied_decl);
