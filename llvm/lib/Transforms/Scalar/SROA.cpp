@@ -73,11 +73,39 @@ static cl::opt<bool>
 ForceSSAUpdater("force-ssa-updater", cl::init(false), cl::Hidden);
 
 namespace {
+/// \brief A custom IRBuilder inserter which prefixes all names if they are
+/// preserved.
+template <bool preserveNames = true>
+class IRBuilderPrefixedInserter :
+    public IRBuilderDefaultInserter<preserveNames> {
+  std::string Prefix;
+
+public:
+  void SetNamePrefix(const Twine &P) { Prefix = P.str(); }
+
+protected:
+  void InsertHelper(Instruction *I, const Twine &Name, BasicBlock *BB,
+                    BasicBlock::iterator InsertPt) const {
+    IRBuilderDefaultInserter<preserveNames>::InsertHelper(
+        I, Name.isTriviallyEmpty() ? Name : Prefix + Name, BB, InsertPt);
+  }
+};
+
+// Specialization for not preserving the name is trivial.
+template <>
+class IRBuilderPrefixedInserter<false> :
+    public IRBuilderDefaultInserter<false> {
+public:
+  void SetNamePrefix(const Twine &P) {}
+};
+
 /// \brief Provide a typedef for IRBuilder that drops names in release builds.
 #ifndef NDEBUG
-typedef llvm::IRBuilder<> IRBuilderTy;
+typedef llvm::IRBuilder<true, ConstantFolder,
+                        IRBuilderPrefixedInserter<true> > IRBuilderTy;
 #else
-typedef llvm::IRBuilder<false> IRBuilderTy;
+typedef llvm::IRBuilder<false, ConstantFolder,
+                        IRBuilderPrefixedInserter<false> > IRBuilderTy;
 #endif
 }
 
@@ -1688,8 +1716,7 @@ private:
 /// This will return the BasePtr if that is valid, or build a new GEP
 /// instruction using the IRBuilder if GEP-ing is needed.
 static Value *buildGEP(IRBuilderTy &IRB, Value *BasePtr,
-                       SmallVectorImpl<Value *> &Indices,
-                       const Twine &Prefix) {
+                       SmallVectorImpl<Value *> &Indices) {
   if (Indices.empty())
     return BasePtr;
 
@@ -1698,7 +1725,7 @@ static Value *buildGEP(IRBuilderTy &IRB, Value *BasePtr,
   if (Indices.size() == 1 && cast<ConstantInt>(Indices.back())->isZero())
     return BasePtr;
 
-  return IRB.CreateInBoundsGEP(BasePtr, Indices, Prefix + ".idx");
+  return IRB.CreateInBoundsGEP(BasePtr, Indices, "idx");
 }
 
 /// \brief Get a natural GEP off of the BasePtr walking through Ty toward
@@ -1712,10 +1739,9 @@ static Value *buildGEP(IRBuilderTy &IRB, Value *BasePtr,
 /// indicated by Indices to have the correct offset.
 static Value *getNaturalGEPWithType(IRBuilderTy &IRB, const DataLayout &TD,
                                     Value *BasePtr, Type *Ty, Type *TargetTy,
-                                    SmallVectorImpl<Value *> &Indices,
-                                    const Twine &Prefix) {
+                                    SmallVectorImpl<Value *> &Indices) {
   if (Ty == TargetTy)
-    return buildGEP(IRB, BasePtr, Indices, Prefix);
+    return buildGEP(IRB, BasePtr, Indices);
 
   // See if we can descend into a struct and locate a field with the correct
   // type.
@@ -1742,7 +1768,7 @@ static Value *getNaturalGEPWithType(IRBuilderTy &IRB, const DataLayout &TD,
   if (ElementTy != TargetTy)
     Indices.erase(Indices.end() - NumLayers, Indices.end());
 
-  return buildGEP(IRB, BasePtr, Indices, Prefix);
+  return buildGEP(IRB, BasePtr, Indices);
 }
 
 /// \brief Recursively compute indices for a natural GEP.
@@ -1752,10 +1778,9 @@ static Value *getNaturalGEPWithType(IRBuilderTy &IRB, const DataLayout &TD,
 static Value *getNaturalGEPRecursively(IRBuilderTy &IRB, const DataLayout &TD,
                                        Value *Ptr, Type *Ty, APInt &Offset,
                                        Type *TargetTy,
-                                       SmallVectorImpl<Value *> &Indices,
-                                       const Twine &Prefix) {
+                                       SmallVectorImpl<Value *> &Indices) {
   if (Offset == 0)
-    return getNaturalGEPWithType(IRB, TD, Ptr, Ty, TargetTy, Indices, Prefix);
+    return getNaturalGEPWithType(IRB, TD, Ptr, Ty, TargetTy, Indices);
 
   // We can't recurse through pointer types.
   if (Ty->isPointerTy())
@@ -1775,7 +1800,7 @@ static Value *getNaturalGEPRecursively(IRBuilderTy &IRB, const DataLayout &TD,
     Offset -= NumSkippedElements * ElementSize;
     Indices.push_back(IRB.getInt(NumSkippedElements));
     return getNaturalGEPRecursively(IRB, TD, Ptr, VecTy->getElementType(),
-                                    Offset, TargetTy, Indices, Prefix);
+                                    Offset, TargetTy, Indices);
   }
 
   if (ArrayType *ArrTy = dyn_cast<ArrayType>(Ty)) {
@@ -1788,7 +1813,7 @@ static Value *getNaturalGEPRecursively(IRBuilderTy &IRB, const DataLayout &TD,
     Offset -= NumSkippedElements * ElementSize;
     Indices.push_back(IRB.getInt(NumSkippedElements));
     return getNaturalGEPRecursively(IRB, TD, Ptr, ElementTy, Offset, TargetTy,
-                                    Indices, Prefix);
+                                    Indices);
   }
 
   StructType *STy = dyn_cast<StructType>(Ty);
@@ -1807,7 +1832,7 @@ static Value *getNaturalGEPRecursively(IRBuilderTy &IRB, const DataLayout &TD,
 
   Indices.push_back(IRB.getInt32(Index));
   return getNaturalGEPRecursively(IRB, TD, Ptr, ElementTy, Offset, TargetTy,
-                                  Indices, Prefix);
+                                  Indices);
 }
 
 /// \brief Get a natural GEP from a base pointer to a particular offset and
@@ -1822,8 +1847,7 @@ static Value *getNaturalGEPRecursively(IRBuilderTy &IRB, const DataLayout &TD,
 /// If no natural GEP can be constructed, this function returns null.
 static Value *getNaturalGEPWithOffset(IRBuilderTy &IRB, const DataLayout &TD,
                                       Value *Ptr, APInt Offset, Type *TargetTy,
-                                      SmallVectorImpl<Value *> &Indices,
-                                      const Twine &Prefix) {
+                                      SmallVectorImpl<Value *> &Indices) {
   PointerType *Ty = cast<PointerType>(Ptr->getType());
 
   // Don't consider any GEPs through an i8* as natural unless the TargetTy is
@@ -1842,7 +1866,7 @@ static Value *getNaturalGEPWithOffset(IRBuilderTy &IRB, const DataLayout &TD,
   Offset -= NumSkippedElements * ElementSize;
   Indices.push_back(IRB.getInt(NumSkippedElements));
   return getNaturalGEPRecursively(IRB, TD, Ptr, ElementTy, Offset, TargetTy,
-                                  Indices, Prefix);
+                                  Indices);
 }
 
 /// \brief Compute an adjusted pointer from Ptr by Offset bytes where the
@@ -1861,8 +1885,7 @@ static Value *getNaturalGEPWithOffset(IRBuilderTy &IRB, const DataLayout &TD,
 /// a single GEP as possible, thus making each GEP more independent of the
 /// surrounding code.
 static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &TD,
-                             Value *Ptr, APInt Offset, Type *PointerTy,
-                             const Twine &Prefix) {
+                             Value *Ptr, APInt Offset, Type *PointerTy) {
   // Even though we don't look through PHI nodes, we could be called on an
   // instruction in an unreachable block, which may be on a cycle.
   SmallPtrSet<Value *, 4> Visited;
@@ -1896,7 +1919,7 @@ static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &TD,
     // See if we can perform a natural GEP here.
     Indices.clear();
     if (Value *P = getNaturalGEPWithOffset(IRB, TD, Ptr, Offset, TargetTy,
-                                           Indices, Prefix)) {
+                                           Indices)) {
       if (P->getType() == PointerTy) {
         // Zap any offset pointer that we ended up computing in previous rounds.
         if (OffsetPtr && OffsetPtr->use_empty())
@@ -1931,19 +1954,19 @@ static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &TD,
   if (!OffsetPtr) {
     if (!Int8Ptr) {
       Int8Ptr = IRB.CreateBitCast(Ptr, IRB.getInt8PtrTy(),
-                                  Prefix + ".raw_cast");
+                                  "raw_cast");
       Int8PtrOffset = Offset;
     }
 
     OffsetPtr = Int8PtrOffset == 0 ? Int8Ptr :
       IRB.CreateInBoundsGEP(Int8Ptr, IRB.getInt(Int8PtrOffset),
-                            Prefix + ".raw_idx");
+                            "raw_idx");
   }
   Ptr = OffsetPtr;
 
   // On the off chance we were targeting i8*, guard the bitcast here.
   if (Ptr->getType() != PointerTy)
-    Ptr = IRB.CreateBitCast(Ptr, PointerTy, Prefix + ".cast");
+    Ptr = IRB.CreateBitCast(Ptr, PointerTy, "cast");
 
   return Ptr;
 }
@@ -2357,8 +2380,9 @@ class AllocaPartitionRewriter : public InstVisitor<AllocaPartitionRewriter,
   Use *OldUse;
   Instruction *OldPtr;
 
-  // The name prefix to use when rewriting instructions for this alloca.
-  std::string NamePrefix;
+  // Utility IR builder, whose name prefix is setup for each visited use, and
+  // the insertion point is set to point to the user.
+  IRBuilderTy IRB;
 
 public:
   AllocaPartitionRewriter(const DataLayout &TD, AllocaPartitioning &P,
@@ -2371,7 +2395,8 @@ public:
       NewAllocaEndOffset(NewEndOffset),
       NewAllocaTy(NewAI.getAllocatedType()),
       VecTy(), ElementTy(), ElementSize(), IntTy(),
-      BeginOffset(), EndOffset(), IsSplit(), OldUse(), OldPtr() {
+      BeginOffset(), EndOffset(), IsSplit(), OldUse(), OldPtr(),
+      IRB(NewAI.getContext(), ConstantFolder()) {
   }
 
   /// \brief Visit the users of the alloca partition and rewrite them.
@@ -2400,7 +2425,13 @@ public:
       IsSplit = I->isSplit();
       OldUse = I->getUse();
       OldPtr = cast<Instruction>(OldUse->get());
-      NamePrefix = (Twine(NewAI.getName()) + "." + Twine(BeginOffset)).str();
+
+      Instruction *OldUserI = cast<Instruction>(OldUse->getUser());
+      IRB.SetInsertPoint(OldUserI);
+      IRB.SetCurrentDebugLocation(OldUserI->getDebugLoc());
+      IRB.SetNamePrefix(Twine(NewAI.getName()) + "." + Twine(BeginOffset) +
+                        ".");
+
       CanSROA &= visit(cast<Instruction>(OldUse->getUser()));
     }
     if (VecTy) {
@@ -2423,14 +2454,10 @@ private:
     llvm_unreachable("No rewrite rule for this instruction!");
   }
 
-  Twine getName(const Twine &Suffix) {
-    return NamePrefix + Suffix;
-  }
-
   Value *getAdjustedAllocaPtr(IRBuilderTy &IRB, Type *PointerTy) {
     assert(BeginOffset >= NewAllocaBeginOffset);
     APInt Offset(TD.getPointerSizeInBits(), BeginOffset - NewAllocaBeginOffset);
-    return getAdjustedPtr(IRB, TD, &NewAI, Offset, PointerTy, getName(""));
+    return getAdjustedPtr(IRB, TD, &NewAI, Offset, PointerTy);
   }
 
   /// \brief Compute suitable alignment to access an offset into the new alloca.
@@ -2480,27 +2507,27 @@ private:
       Pass.DeadInsts.insert(I);
   }
 
-  Value *rewriteVectorizedLoadInst(IRBuilderTy &IRB) {
+  Value *rewriteVectorizedLoadInst() {
     unsigned BeginIndex = getIndex(BeginOffset);
     unsigned EndIndex = getIndex(EndOffset);
     assert(EndIndex > BeginIndex && "Empty vector!");
 
     Value *V = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                     getName(".load"));
-    return extractVector(IRB, V, BeginIndex, EndIndex, getName(".vec"));
+                                     "load");
+    return extractVector(IRB, V, BeginIndex, EndIndex, "vec");
   }
 
-  Value *rewriteIntegerLoad(IRBuilderTy &IRB, LoadInst &LI) {
+  Value *rewriteIntegerLoad(LoadInst &LI) {
     assert(IntTy && "We cannot insert an integer to the alloca");
     assert(!LI.isVolatile());
     Value *V = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                     getName(".load"));
+                                     "load");
     V = convertValue(TD, IRB, V, IntTy);
     assert(BeginOffset >= NewAllocaBeginOffset && "Out of bounds offset");
     uint64_t Offset = BeginOffset - NewAllocaBeginOffset;
     if (Offset > 0 || EndOffset < NewAllocaEndOffset)
       V = extractInteger(TD, IRB, V, cast<IntegerType>(LI.getType()), Offset,
-                         getName(".extract"));
+                         "extract");
     return V;
   }
 
@@ -2511,24 +2538,23 @@ private:
 
     uint64_t Size = EndOffset - BeginOffset;
 
-    IRBuilderTy IRB(&LI);
     Type *TargetTy = IsSplit ? Type::getIntNTy(LI.getContext(), Size * 8)
                              : LI.getType();
     bool IsPtrAdjusted = false;
     Value *V;
     if (VecTy) {
-      V = rewriteVectorizedLoadInst(IRB);
+      V = rewriteVectorizedLoadInst();
     } else if (IntTy && LI.getType()->isIntegerTy()) {
-      V = rewriteIntegerLoad(IRB, LI);
+      V = rewriteIntegerLoad(LI);
     } else if (BeginOffset == NewAllocaBeginOffset &&
                canConvertValue(TD, NewAllocaTy, LI.getType())) {
       V = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                LI.isVolatile(), getName(".load"));
+                                LI.isVolatile(), "load");
     } else {
       Type *LTy = TargetTy->getPointerTo();
       V = IRB.CreateAlignedLoad(getAdjustedAllocaPtr(IRB, LTy),
                                 getPartitionTypeAlign(TargetTy),
-                                LI.isVolatile(), getName(".load"));
+                                LI.isVolatile(), "load");
       IsPtrAdjusted = true;
     }
     V = convertValue(TD, IRB, V, TargetTy);
@@ -2551,7 +2577,7 @@ private:
       Value *Placeholder
         = new LoadInst(UndefValue::get(LI.getType()->getPointerTo()));
       V = insertInteger(TD, IRB, Placeholder, V, BeginOffset,
-                        getName(".insert"));
+                        "insert");
       LI.replaceAllUsesWith(V);
       Placeholder->replaceAllUsesWith(&LI);
       delete Placeholder;
@@ -2565,7 +2591,7 @@ private:
     return !LI.isVolatile() && !IsPtrAdjusted;
   }
 
-  bool rewriteVectorizedStoreInst(IRBuilderTy &IRB, Value *V,
+  bool rewriteVectorizedStoreInst(Value *V,
                                   StoreInst &SI, Value *OldOp) {
     unsigned BeginIndex = getIndex(BeginOffset);
     unsigned EndIndex = getIndex(EndOffset);
@@ -2580,8 +2606,8 @@ private:
 
     // Mix in the existing elements.
     Value *Old = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                       getName(".load"));
-    V = insertVector(IRB, Old, V, BeginIndex, getName(".vec"));
+                                       "load");
+    V = insertVector(IRB, Old, V, BeginIndex, "vec");
 
     StoreInst *Store = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment());
     Pass.DeadInsts.insert(&SI);
@@ -2591,17 +2617,17 @@ private:
     return true;
   }
 
-  bool rewriteIntegerStore(IRBuilderTy &IRB, Value *V, StoreInst &SI) {
+  bool rewriteIntegerStore(Value *V, StoreInst &SI) {
     assert(IntTy && "We cannot extract an integer from the alloca");
     assert(!SI.isVolatile());
     if (TD.getTypeSizeInBits(V->getType()) != IntTy->getBitWidth()) {
       Value *Old = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                         getName(".oldload"));
+                                         "oldload");
       Old = convertValue(TD, IRB, Old, IntTy);
       assert(BeginOffset >= NewAllocaBeginOffset && "Out of bounds offset");
       uint64_t Offset = BeginOffset - NewAllocaBeginOffset;
       V = insertInteger(TD, IRB, Old, SI.getValueOperand(), Offset,
-                        getName(".insert"));
+                        "insert");
     }
     V = convertValue(TD, IRB, V, NewAllocaTy);
     StoreInst *Store = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment());
@@ -2615,7 +2641,6 @@ private:
     DEBUG(dbgs() << "    original: " << SI << "\n");
     Value *OldOp = SI.getOperand(1);
     assert(OldOp == OldPtr);
-    IRBuilderTy IRB(&SI);
 
     Value *V = SI.getValueOperand();
 
@@ -2636,13 +2661,13 @@ private:
              "Non-byte-multiple bit width");
       IntegerType *NarrowTy = Type::getIntNTy(SI.getContext(), Size * 8);
       V = extractInteger(TD, IRB, V, NarrowTy, BeginOffset,
-                         getName(".extract"));
+                         "extract");
     }
 
     if (VecTy)
-      return rewriteVectorizedStoreInst(IRB, V, SI, OldOp);
+      return rewriteVectorizedStoreInst(V, SI, OldOp);
     if (IntTy && V->getType()->isIntegerTy())
-      return rewriteIntegerStore(IRB, V, SI);
+      return rewriteIntegerStore(V, SI);
 
     StoreInst *NewSI;
     if (BeginOffset == NewAllocaBeginOffset &&
@@ -2673,7 +2698,7 @@ private:
   ///
   /// \param V The i8 value to splat.
   /// \param Size The number of bytes in the output (assuming i8 is one byte)
-  Value *getIntegerSplat(IRBuilderTy &IRB, Value *V, unsigned Size) {
+  Value *getIntegerSplat(Value *V, unsigned Size) {
     assert(Size > 0 && "Expected a positive number of bytes.");
     IntegerType *VTy = cast<IntegerType>(V->getType());
     assert(VTy->getBitWidth() == 8 && "Expected an i8 value for the byte");
@@ -2681,26 +2706,25 @@ private:
       return V;
 
     Type *SplatIntTy = Type::getIntNTy(VTy->getContext(), Size*8);
-    V = IRB.CreateMul(IRB.CreateZExt(V, SplatIntTy, getName(".zext")),
+    V = IRB.CreateMul(IRB.CreateZExt(V, SplatIntTy, "zext"),
                       ConstantExpr::getUDiv(
                         Constant::getAllOnesValue(SplatIntTy),
                         ConstantExpr::getZExt(
                           Constant::getAllOnesValue(V->getType()),
                           SplatIntTy)),
-                      getName(".isplat"));
+                      "isplat");
     return V;
   }
 
   /// \brief Compute a vector splat for a given element value.
-  Value *getVectorSplat(IRBuilderTy &IRB, Value *V, unsigned NumElements) {
-    V = IRB.CreateVectorSplat(NumElements, V, NamePrefix);
+  Value *getVectorSplat(Value *V, unsigned NumElements) {
+    V = IRB.CreateVectorSplat(NumElements, V, "vsplat");
     DEBUG(dbgs() << "       splat: " << *V << "\n");
     return V;
   }
 
   bool visitMemSetInst(MemSetInst &II) {
     DEBUG(dbgs() << "    original: " << II << "\n");
-    IRBuilderTy IRB(&II);
     assert(II.getRawDest() == OldPtr);
 
     // If the memset has a variable size, it cannot be split, just adjust the
@@ -2757,31 +2781,31 @@ private:
       unsigned NumElements = EndIndex - BeginIndex;
       assert(NumElements <= VecTy->getNumElements() && "Too many elements!");
 
-      Value *Splat = getIntegerSplat(IRB, II.getValue(),
-                                     TD.getTypeSizeInBits(ElementTy)/8);
+      Value *Splat =
+          getIntegerSplat(II.getValue(), TD.getTypeSizeInBits(ElementTy) / 8);
       Splat = convertValue(TD, IRB, Splat, ElementTy);
       if (NumElements > 1)
-        Splat = getVectorSplat(IRB, Splat, NumElements);
+        Splat = getVectorSplat(Splat, NumElements);
 
       Value *Old = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                         getName(".oldload"));
-      V = insertVector(IRB, Old, Splat, BeginIndex, getName(".vec"));
+                                         "oldload");
+      V = insertVector(IRB, Old, Splat, BeginIndex, "vec");
     } else if (IntTy) {
       // If this is a memset on an alloca where we can widen stores, insert the
       // set integer.
       assert(!II.isVolatile());
 
       uint64_t Size = EndOffset - BeginOffset;
-      V = getIntegerSplat(IRB, II.getValue(), Size);
+      V = getIntegerSplat(II.getValue(), Size);
 
       if (IntTy && (BeginOffset != NewAllocaBeginOffset ||
                     EndOffset != NewAllocaBeginOffset)) {
         Value *Old = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                           getName(".oldload"));
+                                           "oldload");
         Old = convertValue(TD, IRB, Old, IntTy);
         assert(BeginOffset >= NewAllocaBeginOffset && "Out of bounds offset");
         uint64_t Offset = BeginOffset - NewAllocaBeginOffset;
-        V = insertInteger(TD, IRB, Old, V, Offset, getName(".insert"));
+        V = insertInteger(TD, IRB, Old, V, Offset, "insert");
       } else {
         assert(V->getType() == IntTy &&
                "Wrong type for an alloca wide integer!");
@@ -2792,10 +2816,9 @@ private:
       assert(BeginOffset == NewAllocaBeginOffset);
       assert(EndOffset == NewAllocaEndOffset);
 
-      V = getIntegerSplat(IRB, II.getValue(),
-                          TD.getTypeSizeInBits(ScalarTy)/8);
+      V = getIntegerSplat(II.getValue(), TD.getTypeSizeInBits(ScalarTy) / 8);
       if (VectorType *AllocaVecTy = dyn_cast<VectorType>(AllocaTy))
-        V = getVectorSplat(IRB, V, AllocaVecTy->getNumElements());
+        V = getVectorSplat(V, AllocaVecTy->getNumElements());
 
       V = convertValue(TD, IRB, V, AllocaTy);
     }
@@ -2812,7 +2835,6 @@ private:
     // them into two categories: split intrinsics and unsplit intrinsics.
 
     DEBUG(dbgs() << "    original: " << II << "\n");
-    IRBuilderTy IRB(&II);
 
     assert(II.getRawSource() == OldPtr || II.getRawDest() == OldPtr);
     bool IsDest = II.getRawDest() == OldPtr;
@@ -2896,8 +2918,7 @@ private:
 
       // Compute the other pointer, folding as much as possible to produce
       // a single, simple GEP in most cases.
-      OtherPtr = getAdjustedPtr(IRB, TD, OtherPtr, RelOffset, OtherPtrTy,
-                                getName("." + OtherPtr->getName()));
+      OtherPtr = getAdjustedPtr(IRB, TD, OtherPtr, RelOffset, OtherPtrTy);
 
       Value *OurPtr
         = getAdjustedAllocaPtr(IRB, IsDest ? II.getRawDest()->getType()
@@ -2940,8 +2961,7 @@ private:
       OtherPtrTy = SubIntTy->getPointerTo();
     }
 
-    Value *SrcPtr = getAdjustedPtr(IRB, TD, OtherPtr, RelOffset, OtherPtrTy,
-                                   getName("." + OtherPtr->getName()));
+    Value *SrcPtr = getAdjustedPtr(IRB, TD, OtherPtr, RelOffset, OtherPtrTy);
     Value *DstPtr = &NewAI;
     if (!IsDest)
       std::swap(SrcPtr, DstPtr);
@@ -2949,31 +2969,31 @@ private:
     Value *Src;
     if (VecTy && !IsWholeAlloca && !IsDest) {
       Src = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                  getName(".load"));
-      Src = extractVector(IRB, Src, BeginIndex, EndIndex, getName(".vec"));
+                                  "load");
+      Src = extractVector(IRB, Src, BeginIndex, EndIndex, "vec");
     } else if (IntTy && !IsWholeAlloca && !IsDest) {
       Src = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                  getName(".load"));
+                                  "load");
       Src = convertValue(TD, IRB, Src, IntTy);
       assert(BeginOffset >= NewAllocaBeginOffset && "Out of bounds offset");
       uint64_t Offset = BeginOffset - NewAllocaBeginOffset;
-      Src = extractInteger(TD, IRB, Src, SubIntTy, Offset, getName(".extract"));
+      Src = extractInteger(TD, IRB, Src, SubIntTy, Offset, "extract");
     } else {
       Src = IRB.CreateAlignedLoad(SrcPtr, Align, II.isVolatile(),
-                                  getName(".copyload"));
+                                  "copyload");
     }
 
     if (VecTy && !IsWholeAlloca && IsDest) {
       Value *Old = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                         getName(".oldload"));
-      Src = insertVector(IRB, Old, Src, BeginIndex, getName(".vec"));
+                                         "oldload");
+      Src = insertVector(IRB, Old, Src, BeginIndex, "vec");
     } else if (IntTy && !IsWholeAlloca && IsDest) {
       Value *Old = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                         getName(".oldload"));
+                                         "oldload");
       Old = convertValue(TD, IRB, Old, IntTy);
       assert(BeginOffset >= NewAllocaBeginOffset && "Out of bounds offset");
       uint64_t Offset = BeginOffset - NewAllocaBeginOffset;
-      Src = insertInteger(TD, IRB, Old, Src, Offset, getName(".insert"));
+      Src = insertInteger(TD, IRB, Old, Src, Offset, "insert");
       Src = convertValue(TD, IRB, Src, NewAllocaTy);
     }
 
@@ -2988,7 +3008,6 @@ private:
     assert(II.getIntrinsicID() == Intrinsic::lifetime_start ||
            II.getIntrinsicID() == Intrinsic::lifetime_end);
     DEBUG(dbgs() << "    original: " << II << "\n");
-    IRBuilderTy IRB(&II);
     assert(II.getArgOperand(1) == OldPtr);
 
     // Record this instruction for deletion.
@@ -3017,6 +3036,8 @@ private:
     // the old pointer, which necessarily must be in the right position to
     // dominate the PHI.
     IRBuilderTy PtrBuilder(cast<Instruction>(OldPtr));
+    PtrBuilder.SetNamePrefix(Twine(NewAI.getName()) + "." + Twine(BeginOffset) +
+                             ".");
 
     Value *NewPtr = getAdjustedAllocaPtr(PtrBuilder, OldPtr->getType());
     // Replace the operands which were using the old pointer.
@@ -3029,7 +3050,6 @@ private:
 
   bool visitSelectInst(SelectInst &SI) {
     DEBUG(dbgs() << "    original: " << SI << "\n");
-    IRBuilderTy IRB(&SI);
 
     // Find the operand we need to rewrite here.
     bool IsTrueVal = SI.getTrueValue() == OldPtr;
