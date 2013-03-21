@@ -158,6 +158,14 @@ def retflag       : SDNode<"PPCISD::RET_FLAG", SDTNone,
 def PPCtc_return : SDNode<"PPCISD::TC_RETURN", SDT_PPCTC_ret,
                         [SDNPHasChain,  SDNPOptInGlue, SDNPVariadic]>;
 
+def PPCeh_sjlj_setjmp  : SDNode<"PPCISD::EH_SJLJ_SETJMP",
+                                SDTypeProfile<1, 1, [SDTCisInt<0>,
+                                                     SDTCisPtrTy<1>]>,
+                                [SDNPHasChain, SDNPSideEffect]>;
+def PPCeh_sjlj_longjmp : SDNode<"PPCISD::EH_SJLJ_LONGJMP",
+                                SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>,
+                                [SDNPHasChain, SDNPSideEffect]>;
+
 def PPCvcmp       : SDNode<"PPCISD::VCMP" , SDT_PPCvcmp, []>;
 def PPCvcmp_o     : SDNode<"PPCISD::VCMPo", SDT_PPCvcmp, [SDNPOutGlue]>;
 
@@ -391,6 +399,12 @@ def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
   let EncoderMethod = "getMemRIXEncoding";
 }
 
+// A single-register address. This is used with the SjLj
+// pseudo-instructions.
+def memr : Operand<iPTR> {
+  let MIOperandInfo = (ops ptr_rc:$ptrreg);
+}
+
 // PowerPC Predicate operand.  20 = (0<<5)|20 = always, CR0 is a dummy reg
 // that doesn't matter.
 def pred : PredicateOperand<OtherVT, (ops imm, CRRC),
@@ -403,6 +417,10 @@ def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrImm",    [], []>;
 def xaddr  : ComplexPattern<iPTR, 2, "SelectAddrIdx",    [], []>;
 def xoaddr : ComplexPattern<iPTR, 2, "SelectAddrIdxOnly",[], []>;
 def ixaddr : ComplexPattern<iPTR, 2, "SelectAddrImmShift", [], []>; // "std"
+
+// The address in a single register. This is used with the SjLj
+// pseudo-instructions.
+def addr   : ComplexPattern<iPTR, 1, "SelectAddr",[], []>;
 
 /// This is just the offset part of iaddr, used for preinc.
 def iaddroff : ComplexPattern<iPTR, 1, "SelectAddrImmOffs", [], []>;
@@ -505,6 +523,14 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
   }
 }
 
+// The direct BCL used by the SjLj setjmp code.
+let isCall = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
+  let Defs = [LR], Uses = [RM] in {
+    def BCL  : BForm_2<16, 20, 31, 0, 1, (outs), (ins condbrtarget:$dst),
+                       "bcl 20, 31, $dst">;
+  }
+}
+
 // Darwin ABI Calls.
 let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
   // Convenient aliases for call instructions
@@ -583,6 +609,23 @@ def TAILBA   : IForm<18, 0, 0, (outs), (ins aaddr:$dst),
                   "ba $dst", BrB,
                   []>;
 
+let hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1,
+    usesCustomInserter = 1 in {
+  def EH_SjLj_SetJmp32  : Pseudo<(outs GPRC:$dst), (ins memr:$buf),
+                            "#EH_SJLJ_SETJMP32",
+                            [(set GPRC:$dst, (PPCeh_sjlj_setjmp addr:$buf))]>,
+                          Requires<[In32BitMode]>;
+  let isTerminator = 1 in
+  def EH_SjLj_LongJmp32 : Pseudo<(outs), (ins memr:$buf),
+                            "#EH_SJLJ_LONGJMP32",
+                            [(PPCeh_sjlj_longjmp addr:$buf)]>,
+                          Requires<[In32BitMode]>;
+}
+
+let isBranch = 1, isTerminator = 1, isCodeGenOnly = 1 in {
+  def EH_SjLj_Setup : Pseudo<(outs), (ins directbrtarget:$dst),
+                        "#EH_SjLj_Setup\t$dst", []>;
+}
 
 // DCB* instructions.
 def DCBA   : DCB_Form<758, 0, (outs), (ins memrr:$dst),

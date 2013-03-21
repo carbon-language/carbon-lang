@@ -105,6 +105,18 @@ PPCRegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
   return Subtarget.isPPC64() ? CSR_SVR464_RegMask : CSR_SVR432_RegMask;
 }
 
+const uint32_t*
+PPCRegisterInfo::getNoPreservedMask() const {
+  // The naming here is inverted: The CSR_NoRegs_Altivec has the
+  // Altivec registers masked so that they're not saved and restored around
+  // instructions with this preserved mask.
+
+  if (!Subtarget.hasAltivec())
+    return CSR_NoRegs_Altivec_RegMask;
+
+  return CSR_NoRegs_RegMask;
+}
+
 BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   const PPCFrameLowering *PPCFI =

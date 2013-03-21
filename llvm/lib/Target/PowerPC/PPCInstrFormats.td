@@ -120,6 +120,18 @@ class BForm_1<bits<6> opcode, bits<5> bo, bit aa, bit lk, dag OOL, dag IOL,
   let CR = 0;
 }
 
+class BForm_2<bits<6> opcode, bits<5> bo, bits<5> bi, bit aa, bit lk,
+              dag OOL, dag IOL, string asmstr>
+  : I<opcode, OOL, IOL, asmstr, BrB> {
+  bits<14> BD;
+
+  let Inst{6-10}  = bo;
+  let Inst{11-15} = bi;
+  let Inst{16-29} = BD;
+  let Inst{30}    = aa;
+  let Inst{31}    = lk;
+}
+
 // 1.7.4 D-Form
 class DForm_base<bits<6> opcode, dag OOL, dag IOL, string asmstr,
                  InstrItinClass itin, list<dag> pattern> 

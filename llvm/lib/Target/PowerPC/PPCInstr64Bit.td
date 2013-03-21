@@ -273,6 +273,19 @@ def MFCR8 : XFXForm_3<31, 19, (outs G8RC:$rT), (ins),
                      "mfcr $rT", SprMFCR>,
                      PPC970_MicroCode, PPC970_Unit_CRU;
 
+let hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1,
+    usesCustomInserter = 1 in {
+  def EH_SjLj_SetJmp64  : Pseudo<(outs GPRC:$dst), (ins memr:$buf),
+                            "#EH_SJLJ_SETJMP64",
+                            [(set GPRC:$dst, (PPCeh_sjlj_setjmp addr:$buf))]>,
+                          Requires<[In64BitMode]>;
+  let isTerminator = 1 in
+  def EH_SjLj_LongJmp64 : Pseudo<(outs), (ins memr:$buf),
+                            "#EH_SJLJ_LONGJMP64",
+                            [(PPCeh_sjlj_longjmp addr:$buf)]>,
+                          Requires<[In64BitMode]>;
+}
+
 //===----------------------------------------------------------------------===//
 // 64-bit SPR manipulation instrs.
 

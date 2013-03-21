@@ -16,6 +16,7 @@
 #define LLVM_TARGET_POWERPC_PPC32ISELLOWERING_H
 
 #include "PPC.h"
+#include "PPCRegisterInfo.h"
 #include "PPCSubtarget.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
@@ -118,6 +119,12 @@ namespace llvm {
       /// CRREG into the resultant GPR.  Bits corresponding to other CR regs
       /// are undefined.
       MFCR,
+
+      // EH_SJLJ_SETJMP - SjLj exception handling setjmp.
+      EH_SJLJ_SETJMP,
+
+      // EH_SJLJ_LONGJMP - SjLj exception handling longjmp.
+      EH_SJLJ_LONGJMP,
 
       /// RESVEC = VCMP(LHS, RHS, OPC) - Represents one of the altivec VCMP*
       /// instructions.  For lack of better number, we use the opcode number
@@ -321,6 +328,7 @@ namespace llvm {
 
   class PPCTargetLowering : public TargetLowering {
     const PPCSubtarget &PPCSubTarget;
+    const PPCRegisterInfo *PPCRegInfo;
 
   public:
     explicit PPCTargetLowering(PPCTargetMachine &TM);
@@ -394,6 +402,12 @@ namespace llvm {
     MachineBasicBlock *EmitPartwordAtomicBinary(MachineInstr *MI,
                                                 MachineBasicBlock *MBB,
                                             bool is8bit, unsigned Opcode) const;
+
+    MachineBasicBlock *emitEHSjLjSetJmp(MachineInstr *MI,
+                                        MachineBasicBlock *MBB) const;
+
+    MachineBasicBlock *emitEHSjLjLongJmp(MachineInstr *MI,
+                                         MachineBasicBlock *MBB) const;
 
     ConstraintType getConstraintType(const std::string &Constraint) const;
 
@@ -608,6 +622,9 @@ namespace llvm {
                      const SmallVectorImpl<ISD::InputArg> &Ins,
                      DebugLoc dl, SelectionDAG &DAG,
                      SmallVectorImpl<SDValue> &InVals) const;
+
+    SDValue lowerEH_SJLJ_SETJMP(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerEH_SJLJ_LONGJMP(SDValue Op, SelectionDAG &DAG) const;
   };
 }
 

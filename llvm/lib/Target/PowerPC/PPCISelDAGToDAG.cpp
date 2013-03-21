@@ -164,6 +164,12 @@ namespace {
       return PPCLowering.SelectAddressRegImmShift(N, Disp, Base, *CurDAG);
     }
 
+    // Select an address into a single register.
+    bool SelectAddr(SDValue N, SDValue &Base) {
+      Base = N;
+      return true;
+    }
+
     /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
     /// inline asm expressions.  It is always correct to compute the value into
     /// a register.  The case of adding a (possibly relocatable) constant to a
