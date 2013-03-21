@@ -59,7 +59,6 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
   }
 
   // Check whether we already loaded this module, before
-  AddModuleResult Result = AlreadyLoaded;
   ModuleFile *&ModuleEntry = Modules[Entry];
   bool NewModule = false;
   if (!ModuleEntry) {
@@ -95,8 +94,6 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
     // Initialize the stream
     New->StreamFile.init((const unsigned char *)New->Buffer->getBufferStart(),
                          (const unsigned char *)New->Buffer->getBufferEnd());
-
-    Result = NewlyLoaded;
   }
   
   if (ImportedBy) {
