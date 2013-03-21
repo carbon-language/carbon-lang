@@ -155,7 +155,7 @@ public:
   ///
   const SCEV *getLoopBound(const Loop *L) const {
     LoopBoundMapType::const_iterator at = LoopBounds.find(L);
-    assert(at != LoopBounds.end() && "Only valid loop is allow!");
+    assert(at != LoopBounds.end() && "Bound for loop not available!");
     return at->second;
   }
 
