@@ -47,13 +47,13 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!2}
 
-!0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"foo", metadata !"foo", metadata !"", metadata !1, i32 8, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (%struct.S1*, i32)* @foo, null, null, metadata !41, i32 8} ; [ DW_TAG_subprogram ]
+!0 = metadata !{i32 786478, metadata !1, metadata !"foo", metadata !"foo", metadata !"", metadata !1, i32 8, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (%struct.S1*, i32)* @foo, null, null, metadata !41, i32 8} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 786473, metadata !42} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, metadata !42, i32 12, metadata !"clang version 2.9 (trunk 125693)", i1 true, metadata !"", i32 0, null, null, metadata !39, metadata !40, null} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !42, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, null, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
-!6 = metadata !{i32 786478, i32 0, metadata !1, metadata !"foobar", metadata !"foobar", metadata !"", metadata !1, i32 15, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 0, i1 true, void ()* @foobar} ; [ DW_TAG_subprogram ]
+!6 = metadata !{i32 786478, metadata !1, metadata !"foobar", metadata !"foobar", metadata !"", metadata !1, i32 15, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 0, i1 true, void ()* @foobar} ; [ DW_TAG_subprogram ]
 !7 = metadata !{i32 786453, metadata !42, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{null}
 !9 = metadata !{i32 786689, metadata !0, metadata !"sp", metadata !1, i32 7, metadata !10, i32 0, metadata !32} ; [ DW_TAG_arg_variable ]

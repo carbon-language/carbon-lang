@@ -410,78 +410,78 @@ namespace llvm {
   public:
     explicit DISubprogram(const MDNode *N = 0) : DIScope(N) {}
 
-    DIScope getContext() const          { return getFieldAs<DIScope>(2); }
-    StringRef getName() const         { return getStringField(3); }
-    StringRef getDisplayName() const  { return getStringField(4); }
-    StringRef getLinkageName() const  { return getStringField(5); }
-    unsigned getLineNumber() const      { return getUnsignedField(7); }
-    DICompositeType getType() const { return getFieldAs<DICompositeType>(8); }
+    DIScope getContext() const          { return getFieldAs<DIScope>(1); }
+    StringRef getName() const         { return getStringField(2); }
+    StringRef getDisplayName() const  { return getStringField(3); }
+    StringRef getLinkageName() const  { return getStringField(4); }
+    unsigned getLineNumber() const      { return getUnsignedField(6); }
+    DICompositeType getType() const { return getFieldAs<DICompositeType>(7); }
 
     /// getReturnTypeName - Subprogram return types are encoded either as
     /// DIType or as DICompositeType.
     StringRef getReturnTypeName() const {
-      DICompositeType DCT(getFieldAs<DICompositeType>(8));
+      DICompositeType DCT(getFieldAs<DICompositeType>(7));
       if (DCT.Verify()) {
         DIArray A = DCT.getTypeArray();
         DIType T(A.getElement(0));
         return T.getName();
       }
-      DIType T(getFieldAs<DIType>(8));
+      DIType T(getFieldAs<DIType>(7));
       return T.getName();
     }
 
     /// isLocalToUnit - Return true if this subprogram is local to the current
     /// compile unit, like 'static' in C.
-    unsigned isLocalToUnit() const     { return getUnsignedField(9); }
-    unsigned isDefinition() const      { return getUnsignedField(10); }
+    unsigned isLocalToUnit() const     { return getUnsignedField(8); }
+    unsigned isDefinition() const      { return getUnsignedField(9); }
 
-    unsigned getVirtuality() const { return getUnsignedField(11); }
-    unsigned getVirtualIndex() const { return getUnsignedField(12); }
+    unsigned getVirtuality() const { return getUnsignedField(10); }
+    unsigned getVirtualIndex() const { return getUnsignedField(11); }
 
     DICompositeType getContainingType() const {
-      return getFieldAs<DICompositeType>(13);
+      return getFieldAs<DICompositeType>(12);
     }
 
     unsigned getFlags() const {
-      return getUnsignedField(14);
+      return getUnsignedField(13);
     }
 
     unsigned isArtificial() const    {
-      return (getUnsignedField(14) & FlagArtificial) != 0;
+      return (getUnsignedField(13) & FlagArtificial) != 0;
     }
     /// isPrivate - Return true if this subprogram has "private"
     /// access specifier.
     bool isPrivate() const    {
-      return (getUnsignedField(14) & FlagPrivate) != 0;
+      return (getUnsignedField(13) & FlagPrivate) != 0;
     }
     /// isProtected - Return true if this subprogram has "protected"
     /// access specifier.
     bool isProtected() const    {
-      return (getUnsignedField(14) & FlagProtected) != 0;
+      return (getUnsignedField(13) & FlagProtected) != 0;
     }
     /// isExplicit - Return true if this subprogram is marked as explicit.
     bool isExplicit() const    {
-      return (getUnsignedField(14) & FlagExplicit) != 0;
+      return (getUnsignedField(13) & FlagExplicit) != 0;
     }
     /// isPrototyped - Return true if this subprogram is prototyped.
     bool isPrototyped() const    {
-      return (getUnsignedField(14) & FlagPrototyped) != 0;
+      return (getUnsignedField(13) & FlagPrototyped) != 0;
     }
 
     unsigned isOptimized() const;
 
     StringRef getFilename() const    {
-      return getFieldAs<DIFile>(6).getFilename();
+      return getFieldAs<DIFile>(5).getFilename();
     }
 
     StringRef getDirectory() const   {
-      return getFieldAs<DIFile>(6).getDirectory();
+      return getFieldAs<DIFile>(5).getDirectory();
     }
 
     /// getScopeLineNumber - Get the beginning of the scope of the
     /// function, not necessarily where the name of the program
     /// starts.
-    unsigned getScopeLineNumber() const { return getUnsignedField(20); }
+    unsigned getScopeLineNumber() const { return getUnsignedField(19); }
 
     /// Verify - Verify that a subprogram descriptor is well formed.
     bool Verify() const;
@@ -490,11 +490,11 @@ namespace llvm {
     /// information for the function F.
     bool describes(const Function *F);
 
-    Function *getFunction() const { return getFunctionField(16); }
-    void replaceFunction(Function *F) { replaceFunctionField(16, F); }
-    DIArray getTemplateParams() const { return getFieldAs<DIArray>(17); }
+    Function *getFunction() const { return getFunctionField(15); }
+    void replaceFunction(Function *F) { replaceFunctionField(15, F); }
+    DIArray getTemplateParams() const { return getFieldAs<DIArray>(16); }
     DISubprogram getFunctionDeclaration() const {
-      return getFieldAs<DISubprogram>(18);
+      return getFieldAs<DISubprogram>(17);
     }
     MDNode *getVariablesNodes() const;
     DIArray getVariables() const;

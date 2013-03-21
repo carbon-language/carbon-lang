@@ -908,7 +908,6 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context,
   Value *TElts[] = { GetTagConstant(VMContext, DW_TAG_base_type) };
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subprogram),
-    Constant::getNullValue(Type::getInt32Ty(VMContext)),
     getNonCompileUnitScope(Context),
     MDString::get(VMContext, Name),
     MDString::get(VMContext, Name),
@@ -934,7 +933,9 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context,
   // Create a named metadata so that we do not lose this mdnode.
   if (isDefinition)
     AllSubprograms.push_back(Node);
-  return DISubprogram(Node);
+  DISubprogram S(Node);
+  assert(S.Verify() && "createFunction should return a valid DISubprogram");
+  return S;
 }
 
 /// createMethod - Create a new descriptor for the specified C++ method.
@@ -954,7 +955,6 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context,
   Value *TElts[] = { GetTagConstant(VMContext, DW_TAG_base_type) };
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subprogram),
-    Constant::getNullValue(Type::getInt32Ty(VMContext)),
     getNonCompileUnitScope(Context),
     MDString::get(VMContext, Name),
     MDString::get(VMContext, Name),
@@ -979,7 +979,9 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context,
   MDNode *Node = MDNode::get(VMContext, Elts);
   if (isDefinition)
     AllSubprograms.push_back(Node);
-  return DISubprogram(Node);
+  DISubprogram S(Node);
+  assert(S.Verify() && "createMethod should return a valid DISubprogram");
+  return S;
 }
 
 /// createNameSpace - This creates new descriptor for a namespace

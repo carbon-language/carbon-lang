@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llvm-dis | FileCheck %s
 
 !dbg = !{!0}
-!0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"bar", metadata !"bar", metadata !"_ZN3foo3barEv", metadata !1, i32 3, metadata !2, i1 false, i1 false, i32 0, i32 0, null, i32 258, i1 false, null, null, i32 0, metadata !1, i32 3} 
+!0 = metadata !{i32 786478, metadata !1, metadata !"bar", metadata !"bar", metadata !"_ZN3foo3barEv", metadata !1, i32 3, metadata !2, i1 false, i1 false, i32 0, i32 0, null, i32 258, i1 false, null, null, i32 0, metadata !1, i32 3} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 41, metadata !4} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 21, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !3, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !3 = metadata !{null}

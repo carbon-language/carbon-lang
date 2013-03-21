@@ -29,7 +29,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !0 = metadata !{i32 786449, i32 4, metadata !6, metadata !"clang version 3.2 (trunk 155696:155697) (llvm/trunk 155696)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
-!5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"run", metadata !"run", metadata !"_Z3runv", metadata !6, i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void ()* @_Z3runv, null, null, metadata !1, i32 1} ; [ DW_TAG_subprogram ]
+!5 = metadata !{i32 786478, metadata !6, metadata !"run", metadata !"run", metadata !"_Z3runv", metadata !6, i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void ()* @_Z3runv, null, null, metadata !1, i32 1} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 786473, metadata !"test.cc", metadata !"/home/samsonov/debuginfo", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{null}

@@ -485,7 +485,7 @@ bool DISubprogram::Verify() const {
   DICompositeType Ty = getType();
   if (!Ty.Verify())
     return false;
-  return DbgNode->getNumOperands() == 21;
+  return DbgNode->getNumOperands() == 20;
 }
 
 /// Verify - Verify that a global variable descriptor is well formed.
@@ -642,21 +642,21 @@ bool DISubprogram::describes(const Function *F) {
 
 unsigned DISubprogram::isOptimized() const {
   assert (DbgNode && "Invalid subprogram descriptor!");
-  if (DbgNode->getNumOperands() == 16)
-    return getUnsignedField(15);
+  if (DbgNode->getNumOperands() == 15)
+    return getUnsignedField(14);
   return 0;
 }
 
 MDNode *DISubprogram::getVariablesNodes() const {
-  if (!DbgNode || DbgNode->getNumOperands() <= 19)
+  if (!DbgNode || DbgNode->getNumOperands() <= 18)
     return NULL;
-  return dyn_cast_or_null<MDNode>(DbgNode->getOperand(19));
+  return dyn_cast_or_null<MDNode>(DbgNode->getOperand(18));
 }
 
 DIArray DISubprogram::getVariables() const {
-  if (!DbgNode || DbgNode->getNumOperands() <= 19)
+  if (!DbgNode || DbgNode->getNumOperands() <= 18)
     return DIArray();
-  if (MDNode *T = dyn_cast_or_null<MDNode>(DbgNode->getOperand(19)))
+  if (MDNode *T = dyn_cast_or_null<MDNode>(DbgNode->getOperand(18)))
     return DIArray(T);
   return DIArray();
 }

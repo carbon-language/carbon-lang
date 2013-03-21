@@ -37,7 +37,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!2}
 
-!0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"test0001", metadata !"test0001", metadata !"", metadata !1, i32 3, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, <4 x float> (float)* @test0001, null, null, metadata !51, i32 3} ; [ DW_TAG_subprogram ]
+!0 = metadata !{i32 786478, metadata !1, metadata !"test0001", metadata !"test0001", metadata !"", metadata !1, i32 3, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, <4 x float> (float)* @test0001, null, null, metadata !51, i32 3} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 786473, metadata !54} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, metadata !54, i32 12, metadata !"clang version 3.0 (trunk 129915)", i1 true, metadata !"", i32 0, null, null, metadata !50, null, null} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !54, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
@@ -47,11 +47,11 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !7 = metadata !{i32 786468, null, metadata !2, metadata !"float", i32 0, i64 32, i64 32, i64 0, i32 0, i32 4} ; [ DW_TAG_base_type ]
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 786465, i64 0, i64 4}         ; [ DW_TAG_subrange_type ]
-!10 = metadata !{i32 786478, i32 0, metadata !1, metadata !"main", metadata !"main", metadata !"", metadata !1, i32 59, metadata !11, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32, i8**)* @main, null, null, metadata !52, i32 59} ; [ DW_TAG_subprogram ]
+!10 = metadata !{i32 786478, metadata !1, metadata !"main", metadata !"main", metadata !"", metadata !1, i32 59, metadata !11, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32, i8**)* @main, null, null, metadata !52, i32 59} ; [ DW_TAG_subprogram ]
 !11 = metadata !{i32 786453, metadata !54, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !12, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !12 = metadata !{metadata !13}
 !13 = metadata !{i32 786468, null, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
-!14 = metadata !{i32 786478, i32 0, metadata !15, metadata !"printFV", metadata !"printFV", metadata !"", metadata !15, i32 41, metadata !16, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, null, null, null, metadata !53, i32 41} ; [ DW_TAG_subprogram ]
+!14 = metadata !{i32 786478, metadata !15, metadata !"printFV", metadata !"printFV", metadata !"", metadata !15, i32 41, metadata !16, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, null, null, null, metadata !53, i32 41} ; [ DW_TAG_subprogram ]
 !15 = metadata !{i32 786473, metadata !55} ; [ DW_TAG_file_type ]
 !16 = metadata !{i32 786453, metadata !55, metadata !15, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !17, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !17 = metadata !{null}

@@ -15,7 +15,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !0 = metadata !{i32 720913, i32 12, metadata !6, metadata !"clang version 3.0 (trunk 139632)", i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
-!5 = metadata !{i32 720942, i32 0, metadata !6, metadata !"bar", metadata !"bar", metadata !"", metadata !6, i32 3, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, void (i32)* @bar, null, null, metadata !9} ; [ DW_TAG_subprogram ]
+!5 = metadata !{i32 720942, metadata !6, metadata !"bar", metadata !"bar", metadata !"", metadata !6, i32 3, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, void (i32)* @bar, null, null, metadata !9} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 720937, metadata !"cf.c", metadata !"/private/tmp", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{null}

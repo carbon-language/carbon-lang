@@ -45,7 +45,7 @@ declare %0 @llvm.uadd.with.overflow.i64(i64, i64) nounwind readnone
 
 !llvm.dbg.cu = !{!2}
 
-!0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"__udivmodti4", metadata !"__udivmodti4", metadata !"", metadata !1, i32 879, metadata !3, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 true, null, null, null, null, i32 879} ; [ DW_TAG_subprogram ]
+!0 = metadata !{i32 786478, metadata !1, metadata !"__udivmodti4", metadata !"__udivmodti4", metadata !"", metadata !1, i32 879, metadata !3, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 true, null, null, null, null, i32 879} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 786473, metadata !29} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, i32 1, metadata !1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, null, null, metadata !28, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !29, metadata !1, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null} ; [ DW_TAG_subroutine_type ]
@@ -54,7 +54,7 @@ declare %0 @llvm.uadd.with.overflow.i64(i64, i64) nounwind readnone
 !6 = metadata !{i32 786473, metadata !30} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786468, metadata !29, metadata !1, metadata !"", i32 0, i64 128, i64 128, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
 !8 = metadata !{i32 786447, metadata !29, metadata !1, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !5} ; [ DW_TAG_pointer_type ]
-!9 = metadata !{i32 786478, i32 0, metadata !1, metadata !"__divti3", metadata !"__divti3", metadata !"__divti3", metadata !1, i32 1094, metadata !10, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i128 (i128, i128)* @__divti3, null, null, null, i32 1094} ; [ DW_TAG_subprogram ]
+!9 = metadata !{i32 786478, metadata !1, metadata !"__divti3", metadata !"__divti3", metadata !"__divti3", metadata !1, i32 1094, metadata !10, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i128 (i128, i128)* @__divti3, null, null, null, i32 1094} ; [ DW_TAG_subprogram ]
 !10 = metadata !{i32 786453, metadata !29, metadata !1, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !11, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !11 = metadata !{metadata !12, metadata !12, metadata !12}
 !12 = metadata !{i32 786454, metadata !30, metadata !6, metadata !"TItype", i32 160, i64 0, i64 0, i64 0, i32 0, metadata !13} ; [ DW_TAG_typedef ]

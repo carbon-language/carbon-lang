@@ -75,15 +75,15 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 
 !0 = metadata !{i32 786449, metadata !47, i32 12, metadata !"clang", i1 true, metadata !"", i32 0, null, null, metadata !40, metadata !41, null} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{i32 786478, i32 0, metadata !2, metadata !"get1", metadata !"get1", metadata !"", metadata !2, i32 5, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32)* @get1, null, null, metadata !42, i32 5} ; [ DW_TAG_subprogram ]
+!1 = metadata !{i32 786478, metadata !2, metadata !"get1", metadata !"get1", metadata !"", metadata !2, i32 5, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32)* @get1, null, null, metadata !42, i32 5} ; [ DW_TAG_subprogram ]
 !2 = metadata !{i32 786473, metadata !47} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 786453, metadata !2, metadata !2, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, null, metadata !0, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
-!6 = metadata !{i32 786478, i32 0, metadata !2, metadata !"get2", metadata !"get2", metadata !"", metadata !2, i32 8, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32)* @get2, null, null, metadata !43, i32 8} ; [ DW_TAG_subprogram ]
-!7 = metadata !{i32 786478, i32 0, metadata !2, metadata !"get3", metadata !"get3", metadata !"", metadata !2, i32 11, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32)* @get3, null, null, metadata !44, i32 11} ; [ DW_TAG_subprogram ]
-!8 = metadata !{i32 786478, i32 0, metadata !2, metadata !"get4", metadata !"get4", metadata !"", metadata !2, i32 14, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32)* @get4, null, null, metadata !45, i32 14} ; [ DW_TAG_subprogram ]
-!9 = metadata !{i32 786478, i32 0, metadata !2, metadata !"get5", metadata !"get5", metadata !"", metadata !2, i32 17, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32)* @get5, null, null, metadata !46, i32 17} ; [ DW_TAG_subprogram ]
+!6 = metadata !{i32 786478, metadata !2, metadata !"get2", metadata !"get2", metadata !"", metadata !2, i32 8, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32)* @get2, null, null, metadata !43, i32 8} ; [ DW_TAG_subprogram ]
+!7 = metadata !{i32 786478, metadata !2, metadata !"get3", metadata !"get3", metadata !"", metadata !2, i32 11, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32)* @get3, null, null, metadata !44, i32 11} ; [ DW_TAG_subprogram ]
+!8 = metadata !{i32 786478, metadata !2, metadata !"get4", metadata !"get4", metadata !"", metadata !2, i32 14, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32)* @get4, null, null, metadata !45, i32 14} ; [ DW_TAG_subprogram ]
+!9 = metadata !{i32 786478, metadata !2, metadata !"get5", metadata !"get5", metadata !"", metadata !2, i32 17, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32)* @get5, null, null, metadata !46, i32 17} ; [ DW_TAG_subprogram ]
 !10 = metadata !{i32 786689, metadata !1, metadata !"a", metadata !2, i32 16777221, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
 !11 = metadata !{i32 786688, metadata !12, metadata !"b", metadata !2, i32 5, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
 !12 = metadata !{i32 786443, metadata !1, i32 5, i32 19, metadata !2, i32 0} ; [ DW_TAG_lexical_block ]
