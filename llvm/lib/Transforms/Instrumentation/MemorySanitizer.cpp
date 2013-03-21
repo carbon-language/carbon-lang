@@ -122,6 +122,9 @@ static cl::opt<bool> ClPoisonStackWithCall("msan-poison-stack-with-call",
 static cl::opt<int> ClPoisonStackPattern("msan-poison-stack-pattern",
        cl::desc("poison uninitialized stack variables with the given patter"),
        cl::Hidden, cl::init(0xff));
+static cl::opt<bool> ClPoisonUndef("msan-poison-undef",
+       cl::desc("poison undef temps"),
+       cl::Hidden, cl::init(true));
 
 static cl::opt<bool> ClHandleICmp("msan-handle-icmp",
        cl::desc("propagate shadow through ICmpEQ and ICmpNE"),
@@ -690,7 +693,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   ///
   /// Clean shadow (all zeroes) means all bits of the value are defined
   /// (initialized).
-  Value *getCleanShadow(Value *V) {
+  Constant *getCleanShadow(Value *V) {
     Type *ShadowTy = getShadowTy(V);
     if (!ShadowTy)
       return 0;
@@ -707,6 +710,14 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     for (unsigned i = 0, n = ST->getNumElements(); i < n; i++)
       Vals.push_back(getPoisonedShadow(ST->getElementType(i)));
     return ConstantStruct::get(ST, Vals);
+  }
+
+  /// \brief Create a dirty shadow for a given value.
+  Constant *getPoisonedShadow(Value *V) {
+    Type *ShadowTy = getShadowTy(V);
+    if (!ShadowTy)
+      return 0;
+    return getPoisonedShadow(ShadowTy);
   }
 
   /// \brief Create a clean (zero) origin.
@@ -730,7 +741,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       return Shadow;
     }
     if (UndefValue *U = dyn_cast<UndefValue>(V)) {
-      Value *AllOnes = getPoisonedShadow(getShadowTy(V));
+      Value *AllOnes = ClPoisonUndef ? getPoisonedShadow(V) : getCleanShadow(V);
       DEBUG(dbgs() << "Undef: " << *U << " ==> " << *AllOnes << "\n");
       (void)U;
       return AllOnes;
