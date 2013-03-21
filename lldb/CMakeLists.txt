@@ -82,7 +82,16 @@ endmacro(add_lldb_definitions)
 include_directories(/usr/include/python2.7)
 include_directories(../clang/include)
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/../clang/include")
-set(CMAKE_CXX_FLAGS "-std=c++11")
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.7")
+    set(CMAKE_CXX_FLAGS "-std=c++0x")
+  else()
+    set(CMAKE_CXX_FLAGS "-std=c++11")
+  endif()
+else()
+  set(CMAKE_CXX_FLAGS "-std=c++11")
+endif()
 
 # Disable MSVC warnings
 if( MSVC )
