@@ -18,6 +18,7 @@
 #include "polly/ScopDetection.h"
 #include "polly/ScopInfo.h"
 #include "polly/TempScopInfo.h"
+#include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/CodeGeneration.h"
 
 #include "llvm/Analysis/Passes.h"
@@ -202,7 +203,9 @@ static void registerPollyPreoptPasses(llvm::PassManagerBase &PM) {
   PM.add(llvm::createReassociatePass());           // Reassociate expressions
   PM.add(llvm::createLoopRotatePass());            // Rotate Loop
   PM.add(llvm::createInstructionCombiningPass());
-  PM.add(polly::createIndVarSimplifyPass());        // Canonicalize indvars
+
+  if (!SCEVCodegen)
+    PM.add(polly::createIndVarSimplifyPass());
 
   PM.add(polly::createCodePreparationPass());
   PM.add(polly::createRegionSimplifyPass());
