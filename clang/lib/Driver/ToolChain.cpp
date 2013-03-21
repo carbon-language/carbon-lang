@@ -113,6 +113,8 @@ Tool *ToolChain::getTool(Action::ActionClass AC) const {
   case Action::MigrateJobClass:
     return getClang();
   }
+
+  llvm_unreachable("Invalid tool kind.");
 }
 
 Tool &ToolChain::SelectTool(const JobAction &JA) const {
