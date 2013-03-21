@@ -1,6 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s -check-prefix=VFP2
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s -check-prefix=NFP0
 ; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s -check-prefix=CORTEXA8
+; RUN: llc < %s -march=arm -mcpu=cortex-a8 --enable-unsafe-fp-math | FileCheck %s -check-prefix=CORTEXA8U
 ; RUN: llc < %s -march=arm -mcpu=cortex-a9 | FileCheck %s -check-prefix=CORTEXA9
 
 define float @test1(float* %a) {
@@ -22,7 +23,10 @@ entry:
 ; NFP0: 	vneg.f32	s{{.*}}, s{{.*}}
 
 ; CORTEXA8: test1:
-; CORTEXA8: 	vneg.f32	d{{.*}}, d{{.*}}
+; CORTEXA8: 	vneg.f32	s{{.*}}, s{{.*}}
+
+; CORTEXA8U: test1:
+; CORTEXA8U: 	vneg.f32	d{{.*}}, d{{.*}}
 
 ; CORTEXA9: test1:
 ; CORTEXA9: 	vneg.f32	s{{.*}}, s{{.*}}
@@ -46,7 +50,10 @@ entry:
 ; NFP0: 	vneg.f32	s{{.*}}, s{{.*}}
 
 ; CORTEXA8: test2:
-; CORTEXA8: 	vneg.f32	d{{.*}}, d{{.*}}
+; CORTEXA8: 	vneg.f32	s{{.*}}, s{{.*}}
+
+; CORTEXA8U: test2:
+; CORTEXA8U: 	vneg.f32	d{{.*}}, d{{.*}}
 
 ; CORTEXA9: test2:
 ; CORTEXA9: 	vneg.f32	s{{.*}}, s{{.*}}

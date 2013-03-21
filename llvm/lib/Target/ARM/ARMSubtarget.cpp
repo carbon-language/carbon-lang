@@ -19,6 +19,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetOptions.h"
 
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
@@ -42,12 +43,13 @@ StrictAlign("arm-strict-align", cl::Hidden,
             cl::desc("Disallow all unaligned memory accesses"));
 
 ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
-                           const std::string &FS)
+                           const std::string &FS, const TargetOptions &Options)
   : ARMGenSubtargetInfo(TT, CPU, FS)
   , ARMProcFamily(Others)
   , stackAlignment(4)
   , CPUString(CPU)
   , TargetTriple(TT)
+  , Options(Options)
   , TargetABI(ARM_ABI_APCS) {
   initializeEnvironment();
   resetSubtargetFeatures(CPU, FS);
@@ -92,6 +94,7 @@ void ARMSubtarget::initializeEnvironment() {
   AllowsUnalignedMem = false;
   Thumb2DSP = false;
   UseNaClTrap = false;
+  UnsafeFPMath = false;
 }
 
 void ARMSubtarget::resetSubtargetFeatures(const MachineFunction *MF) {
@@ -162,6 +165,12 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   // configuration.
   if (!StrictAlign && hasV6Ops() && isTargetDarwin())
     AllowsUnalignedMem = true;
+
+  // NEON f32 ops are non-IEEE 754 compliant. Darwin is ok with it by default.
+  uint64_t Bits = getFeatureBits();
+  if ((Bits & ARM::ProcA5 || Bits & ARM::ProcA8) && // Where this matters
+      (Options.UnsafeFPMath || isTargetDarwin()))
+    UseNEONForSinglePrecisionFP = true;
 }
 
 /// GVIsIndirectSymbol - true if the GV will be accessed via an indirect symbol.

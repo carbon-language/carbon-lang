@@ -48,7 +48,7 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
                                            Reloc::Model RM, CodeModel::Model CM,
                                            CodeGenOpt::Level OL)
   : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    Subtarget(TT, CPU, FS),
+    Subtarget(TT, CPU, FS, Options),
     JITInfo(),
     InstrItins(Subtarget.getInstrItineraryData()) {
   // Default to soft float ABI

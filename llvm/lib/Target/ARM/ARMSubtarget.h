@@ -26,6 +26,7 @@
 namespace llvm {
 class GlobalValue;
 class StringRef;
+class TargetOptions;
 
 class ARMSubtarget : public ARMGenSubtargetInfo {
 protected:
@@ -159,6 +160,9 @@ protected:
   /// NaCl TRAP instruction is generated instead of the regular TRAP.
   bool UseNaClTrap;
 
+  /// Target machine allowed unsafe FP math (such as use of NEON fp)
+  bool UnsafeFPMath;
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
@@ -175,6 +179,9 @@ protected:
   /// Selected instruction itineraries (one entry per itinerary class.)
   InstrItineraryData InstrItins;
 
+  /// Options passed via command line that could influence the target
+  const TargetOptions &Options;
+
  public:
   enum {
     isELF, isDarwin
@@ -189,7 +196,7 @@ protected:
   /// of the specified triple.
   ///
   ARMSubtarget(const std::string &TT, const std::string &CPU,
-               const std::string &FS);
+               const std::string &FS, const TargetOptions &Options);
 
   /// getMaxInlineSizeThreshold - Returns the maximum memset / memcpy size
   /// that still makes it profitable to inline the call.

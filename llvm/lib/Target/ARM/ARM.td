@@ -143,14 +143,12 @@ include "ARMSchedule.td"
 // ARM processor families.
 def ProcA5      : SubtargetFeature<"a5", "ARMProcFamily", "CortexA5",
                                    "Cortex-A5 ARM processors",
-                                   [FeatureSlowFPBrcc, FeatureNEONForFP,
-                                    FeatureHasSlowFPVMLx, FeatureVMLxForwarding,
-                                    FeatureT2XtPk]>;
+                                   [FeatureSlowFPBrcc, FeatureHasSlowFPVMLx,
+                                    FeatureVMLxForwarding, FeatureT2XtPk]>;
 def ProcA8      : SubtargetFeature<"a8", "ARMProcFamily", "CortexA8",
                                    "Cortex-A8 ARM processors",
-                                   [FeatureSlowFPBrcc, FeatureNEONForFP,
-                                    FeatureHasSlowFPVMLx, FeatureVMLxForwarding,
-                                    FeatureT2XtPk]>;
+                                   [FeatureSlowFPBrcc, FeatureHasSlowFPVMLx,
+                                    FeatureVMLxForwarding, FeatureT2XtPk]>;
 def ProcA9      : SubtargetFeature<"a9", "ARMProcFamily", "CortexA9",
                                    "Cortex-A9 ARM processors",
                                    [FeatureVMLxForwarding,

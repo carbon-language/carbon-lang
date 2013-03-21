@@ -1,6 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s -check-prefix=VFP2
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s -check-prefix=VFP2
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s -check-prefix=NEON
+; RUN: llc < %s -march=arm -mcpu=cortex-a8 --enable-unsafe-fp-math | FileCheck %s -check-prefix=NEON
+; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s -check-prefix=VFP2
 ; RUN: llc < %s -march=arm -mcpu=cortex-a9 | FileCheck %s -check-prefix=VFP2
 
 define i32 @test1(float %a, float %b) {
