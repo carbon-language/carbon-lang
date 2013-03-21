@@ -125,6 +125,7 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   // The ZERO register is not really a register, but the representation of r0
   // when used in instructions that treat r0 as the constant 0.
   Reserved.set(PPC::ZERO);
+  Reserved.set(PPC::ZERO8);
 
   // The FP register is also not really a register, but is the representation
   // of the frame pointer register used by ISD::FRAMEADDR.

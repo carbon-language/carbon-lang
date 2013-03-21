@@ -87,7 +87,8 @@ foreach Index = 0-31 in {
 }
 
 // The reprsentation of r0 when treated as the constant 0.
-def ZERO : GPR<0, "r0">;
+def ZERO  : GPR<0, "r0">;
+def ZERO8 : GP8<ZERO, "r0">;
 
 // Representations of the frame pointer used by ISD::FRAMEADDR.
 def FP   : GPR<0 /* arbitrary */, "**FRAME POINTER**">;
@@ -181,7 +182,7 @@ def G8RC : RegisterClass<"PPC", [i64], 64, (add (sequence "X%u", 2, 12),
 // the value in the r0 register), and we use these register subclasses to
 // prevent r0 from being allocated for use by those instructions.
 def GPRC_NOR0 : RegisterClass<"PPC", [i32], 32, (add (sub GPRC, R0), ZERO)>;
-def G8RC_NOX0 : RegisterClass<"PPC", [i64], 64, (add (sub G8RC, X0), ZERO)>;
+def G8RC_NOX0 : RegisterClass<"PPC", [i64], 64, (add (sub G8RC, X0), ZERO8)>;
 
 // Allocate volatiles first, then non-volatiles in reverse order. With the SVR4
 // ABI the size of the Floating-point register save area is determined by the
