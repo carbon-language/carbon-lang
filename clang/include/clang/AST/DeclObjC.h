@@ -544,6 +544,7 @@ public:
   ObjCMethodDecl *getClassMethod(Selector Sel) const {
     return getMethod(Sel, false/*isInstance*/);
   }
+  bool HasUserDeclaredSetterMethod(const ObjCPropertyDecl *P) const;
   ObjCIvarDecl *getIvarDecl(IdentifierInfo *Id) const;
 
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;

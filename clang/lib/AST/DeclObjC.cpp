@@ -92,6 +92,72 @@ ObjCContainerDecl::getMethod(Selector Sel, bool isInstance) const {
   return 0;
 }
 
+/// HasUserDeclaredSetterMethod - This routine returns 'true' if a user declared setter
+/// method was found in the class, its protocols, its super classes or categories.
+/// It also returns 'true' if one of its categories has declared a 'readwrite' property.
+/// This is because, user must provide a setter method for the category's 'readwrite'
+/// property.
+bool
+ObjCContainerDecl::HasUserDeclaredSetterMethod(const ObjCPropertyDecl *Property) const {
+  Selector Sel = Property->getSetterName();
+  lookup_const_result R = lookup(Sel);
+  for (lookup_const_iterator Meth = R.begin(), MethEnd = R.end();
+       Meth != MethEnd; ++Meth) {
+    ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(*Meth);
+    if (MD && MD->isInstanceMethod() && !MD->isImplicit())
+      return true;
+  }
+
+  if (const ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(this)) {
+    // Also look into categories, including class extensions, looking
+    // for a user declared instance method.
+    for (ObjCInterfaceDecl::visible_categories_iterator
+         Cat = ID->visible_categories_begin(),
+         CatEnd = ID->visible_categories_end();
+         Cat != CatEnd;
+         ++Cat) {
+      if (ObjCMethodDecl *MD = Cat->getInstanceMethod(Sel))
+        if (!MD->isImplicit())
+          return true;
+      if (Cat->IsClassExtension())
+        continue;
+      // Also search through the categories looking for a 'readwrite' declaration
+      // of this property. If one found, presumably a setter will be provided
+      // (properties declared in categories will not get auto-synthesized).
+      for (ObjCContainerDecl::prop_iterator P = Cat->prop_begin(),
+           E = Cat->prop_end(); P != E; ++P)
+        if (P->getIdentifier() == Property->getIdentifier()) {
+          if (P->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_readwrite)
+            return true;
+          break;
+        }
+    }
+    
+    // Also look into protocols, for a user declared instance method.
+    for (ObjCInterfaceDecl::all_protocol_iterator P =
+         ID->all_referenced_protocol_begin(),
+         PE = ID->all_referenced_protocol_end(); P != PE; ++P) {
+      ObjCProtocolDecl *Proto = (*P);
+      if (Proto->HasUserDeclaredSetterMethod(Property))
+        return true;
+    }
+    // And in its super class.
+    ObjCInterfaceDecl *OSC = ID->getSuperClass();
+    while (OSC) {
+      if (OSC->HasUserDeclaredSetterMethod(Property))
+        return true;
+      OSC = OSC->getSuperClass();
+    }
+  }
+  if (const ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(this))
+    for (ObjCProtocolDecl::protocol_iterator PI = PD->protocol_begin(),
+         E = PD->protocol_end(); PI != E; ++PI) {
+      if ((*PI)->HasUserDeclaredSetterMethod(Property))
+        return true;
+    }
+  return false;
+}
+
 ObjCPropertyDecl *
 ObjCPropertyDecl::findPropertyDecl(const DeclContext *DC,
                                    IdentifierInfo *propertyID) {
