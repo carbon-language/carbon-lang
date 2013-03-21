@@ -56,8 +56,22 @@ public:
                         m_swap = false;
                     }
 
-    bool            ValidOffset(offset_t offset) const { return (m_start < m_end) && ((uint32_t)(m_end - m_start) > offset); }
-    bool            ValidOffsetForDataOfSize(offset_t offset, uint32_t num_bytes) const { return (m_start < m_end) && ((uint32_t)(m_end - m_start) > (offset + ((num_bytes > 0) ? (num_bytes - 1) : 0))); }
+    offset_t        BytesLeft (offset_t offset) const
+                    {
+                        const offset_t size = GetSize();
+                        if (size > offset)
+                            return size - offset;
+                        return 0;
+                    }
+
+    bool            ValidOffset(offset_t offset) const
+                    {
+                        return BytesLeft(offset) > 0;
+                    }
+    bool            ValidOffsetForDataOfSize(offset_t offset, uint32_t num_bytes) const
+                    {
+                        return num_bytes <= BytesLeft (offset);
+                    }
     size_t          GetSize() const { return m_end - m_start; }
     const uint8_t * GetDataStart() const { return m_start; }
     const uint8_t * GetDataEnd() const { return m_end; }
