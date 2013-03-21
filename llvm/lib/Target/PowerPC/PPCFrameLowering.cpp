@@ -299,6 +299,31 @@ bool PPCFrameLowering::needsFP(const MachineFunction &MF) const {
      MF.getInfo<PPCFunctionInfo>()->hasFastCall());
 }
 
+void PPCFrameLowering::replaceFPWithRealFP(MachineFunction &MF) const {
+  bool is31 = needsFP(MF);
+  unsigned FPReg  = is31 ? PPC::R31 : PPC::R1;
+  unsigned FP8Reg = is31 ? PPC::X31 : PPC::X1;
+
+  for (MachineFunction::iterator BI = MF.begin(), BE = MF.end();
+       BI != BE; ++BI)
+    for (MachineBasicBlock::iterator MBBI = BI->end(); MBBI != BI->begin(); ) {
+      --MBBI;
+      for (unsigned I = 0, E = MBBI->getNumOperands(); I != E; ++I) {
+        MachineOperand &MO = MBBI->getOperand(I);
+        if (!MO.isReg())
+          continue;
+
+        switch (MO.getReg()) {
+        case PPC::FP:
+          MO.setReg(FPReg);
+          break;
+        case PPC::FP8:
+          MO.setReg(FP8Reg);
+          break;
+        }
+      }
+    }
+}
 
 void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
@@ -331,6 +356,9 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
   // Work out frame sizes.
   unsigned FrameSize = determineFrameLayout(MF);
   int NegFrameSize = -FrameSize;
+
+  if (MFI->isFrameAddressTaken())
+    replaceFPWithRealFP(MF);
 
   // Get processor type.
   bool isPPC64 = Subtarget.isPPC64();

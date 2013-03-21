@@ -114,6 +114,11 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   // when used in instructions that treat r0 as the constant 0.
   Reserved.set(PPC::ZERO);
 
+  // The FP register is also not really a register, but is the representation
+  // of the frame pointer register used by ISD::FRAMEADDR.
+  Reserved.set(PPC::FP);
+  Reserved.set(PPC::FP8);
+
   Reserved.set(PPC::R0);
   Reserved.set(PPC::R1);
   Reserved.set(PPC::LR);

@@ -89,6 +89,10 @@ foreach Index = 0-31 in {
 // The reprsentation of r0 when treated as the constant 0.
 def ZERO : GPR<0, "r0">;
 
+// Representations of the frame pointer used by ISD::FRAMEADDR.
+def FP   : GPR<0 /* arbitrary */, "**FRAME POINTER**">;
+def FP8  : GP8<FP, "**FRAME POINTER**">;
+
 // Condition register bits
 def CR0LT : CRBIT< 0, "0">;
 def CR0GT : CRBIT< 1, "1">;
@@ -167,11 +171,11 @@ def RM: SPR<512, "**ROUNDING MODE**">;
 // then nonvolatiles in reverse order since stmw/lmw save from rN to r31
 def GPRC : RegisterClass<"PPC", [i32], 32, (add (sequence "R%u", 2, 12),
                                                 (sequence "R%u", 30, 13),
-                                                R31, R0, R1, LR)>;
+                                                R31, R0, R1, LR, FP)>;
 
 def G8RC : RegisterClass<"PPC", [i64], 64, (add (sequence "X%u", 2, 12),
                                                 (sequence "X%u", 30, 14),
-                                                X31, X13, X0, X1, LR8)>;
+                                                X31, X13, X0, X1, LR8, FP8)>;
 
 // For some instructions r0 is special (representing the value 0 instead of
 // the value in the r0 register), and we use these register subclasses to

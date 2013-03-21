@@ -6815,13 +6815,16 @@ SDValue PPCTargetLowering::LowerFRAMEADDR(SDValue Op,
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MFI->setFrameAddressIsTaken(true);
-  bool is31 = (getTargetMachine().Options.DisableFramePointerElim(MF) ||
-               MFI->hasVarSizedObjects()) &&
-                  MFI->getStackSize() &&
-                  !MF.getFunction()->getAttributes().
-                    hasAttribute(AttributeSet::FunctionIndex, Attribute::Naked);
-  unsigned FrameReg = isPPC64 ? (is31 ? PPC::X31 : PPC::X1) :
-                                (is31 ? PPC::R31 : PPC::R1);
+
+  // Naked functions never have a frame pointer, and so we use r1. For all
+  // other functions, this decision must be delayed until during PEI.
+  unsigned FrameReg;
+  if (MF.getFunction()->getAttributes().hasAttribute(
+        AttributeSet::FunctionIndex, Attribute::Naked))
+    FrameReg = isPPC64 ? PPC::X1 : PPC::R1;
+  else
+    FrameReg = isPPC64 ? PPC::FP8 : PPC::FP;
+
   SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, FrameReg,
                                          PtrVT);
   while (Depth--)
