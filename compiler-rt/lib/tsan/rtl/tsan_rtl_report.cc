@@ -495,6 +495,7 @@ bool OutputReport(Context *ctx,
                   const ScopedReport &srep,
                   const ReportStack *suppress_stack1,
                   const ReportStack *suppress_stack2) {
+  atomic_store(&ctx->last_symbolize_time_ns, NanoTime(), memory_order_relaxed);
   const ReportDesc *rep = srep.GetReport();
   uptr suppress_pc = IsSuppressed(rep->typ, suppress_stack1);
   if (suppress_pc == 0)

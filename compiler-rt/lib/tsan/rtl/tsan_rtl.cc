@@ -23,6 +23,7 @@
 #include "tsan_rtl.h"
 #include "tsan_mman.h"
 #include "tsan_suppressions.h"
+#include "tsan_symbolize.h"
 
 volatile int __tsan_resumed = 0;
 
@@ -95,12 +96,11 @@ ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
   , tls_size(tls_size) {
 }
 
-static void MemoryProfiler(int i, fd_t fd) {
-  Context *ctx = CTX();
-  InternalScopedBuffer<char> buf(4096);
+static void MemoryProfiler(Context *ctx, fd_t fd, int i) {
   uptr n_threads;
   uptr n_running_threads;
   ctx->thread_registry->GetNumberOfThreads(&n_threads, &n_running_threads);
+  InternalScopedBuffer<char> buf(4096);
   internal_snprintf(buf.data(), buf.size(), "%d: nthr=%d nlive=%d\n",
       i, n_threads, n_running_threads);
   internal_write(fd, buf.data(), internal_strlen(buf.data()));
@@ -110,6 +110,7 @@ static void MemoryProfiler(int i, fd_t fd) {
 
 static void BackgroundThread(void *arg) {
   ScopedInRtl in_rtl;
+  Context *ctx = CTX();
 
   fd_t mprof_fd = kInvalidFd;
   if (flags()->profile_memory && flags()->profile_memory[0]) {
@@ -128,6 +129,7 @@ static void BackgroundThread(void *arg) {
     SleepForSeconds(1);
     u64 now = NanoTime();
 
+    // Flush memory if requested.
     if (flags()->flush_memory_ms) {
       if (last_flush + flags()->flush_memory_ms * 1000*1000 > now) {
         FlushShadowMemory();
@@ -135,8 +137,19 @@ static void BackgroundThread(void *arg) {
       }
     }
 
+    // Write memory profile if requested.
     if (mprof_fd != kInvalidFd)
-      MemoryProfiler(i, mprof_fd);
+      MemoryProfiler(ctx, mprof_fd, i);
+
+#ifndef TSAN_GO
+    // Flush symbolizer cache if not symbolized for more than 5 seconds.
+    u64 last = atomic_load(&ctx->last_symbolize_time_ns, memory_order_relaxed);
+    if (last != 0 && last + 5*1000*1000 > now) {
+      Lock l(&ctx->report_mtx);
+      SymbolizeFlush();
+      atomic_store(&ctx->last_symbolize_time_ns, 0, memory_order_relaxed);
+    }
+#endif
   }
 }
 
