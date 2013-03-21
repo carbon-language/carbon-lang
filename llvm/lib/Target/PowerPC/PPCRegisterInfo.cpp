@@ -369,6 +369,65 @@ void PPCRegisterInfo::lowerCRRestore(MachineBasicBlock::iterator II,
   MBB.erase(II);
 }
 
+void PPCRegisterInfo::lowerVRSAVESpilling(MachineBasicBlock::iterator II,
+                                      unsigned FrameIndex, int SPAdj,
+                                      RegScavenger *RS) const {
+  // Get the instruction.
+  MachineInstr &MI = *II;       // ; SPILL_VRSAVE <SrcReg>, <offset>
+  // Get the instruction's basic block.
+  MachineBasicBlock &MBB = *MI.getParent();
+  DebugLoc dl = MI.getDebugLoc();
+
+  // FIXME: Once LLVM supports creating virtual registers here, or the register
+  // scavenger can return multiple registers, stop using reserved registers
+  // here.
+  (void) SPAdj;
+  (void) RS;
+
+  unsigned Reg = PPC::R0;
+  unsigned SrcReg = MI.getOperand(0).getReg();
+
+  BuildMI(MBB, II, dl, TII.get(PPC::MFVRSAVEv), Reg)
+          .addReg(SrcReg, getKillRegState(MI.getOperand(0).isKill()));
+    
+  addFrameReference(BuildMI(MBB, II, dl, TII.get(PPC::STW))
+                    .addReg(Reg, getKillRegState(MI.getOperand(1).getImm())),
+                    FrameIndex);
+
+  // Discard the pseudo instruction.
+  MBB.erase(II);
+}
+
+void PPCRegisterInfo::lowerVRSAVERestore(MachineBasicBlock::iterator II,
+                                      unsigned FrameIndex, int SPAdj,
+                                      RegScavenger *RS) const {
+  // Get the instruction.
+  MachineInstr &MI = *II;       // ; <DestReg> = RESTORE_VRSAVE <offset>
+  // Get the instruction's basic block.
+  MachineBasicBlock &MBB = *MI.getParent();
+  DebugLoc dl = MI.getDebugLoc();
+
+  // FIXME: Once LLVM supports creating virtual registers here, or the register
+  // scavenger can return multiple registers, stop using reserved registers
+  // here.
+  (void) SPAdj;
+  (void) RS;
+
+  unsigned Reg = PPC::R0;
+  unsigned DestReg = MI.getOperand(0).getReg();
+  assert(MI.definesRegister(DestReg) &&
+    "RESTORE_VRSAVE does not define its destination");
+
+  addFrameReference(BuildMI(MBB, II, dl, TII.get(PPC::LWZ),
+                              Reg), FrameIndex);
+
+  BuildMI(MBB, II, dl, TII.get(PPC::MTVRSAVEv), DestReg)
+             .addReg(Reg);
+
+  // Discard the pseudo instruction.
+  MBB.erase(II);
+}
+
 bool
 PPCRegisterInfo::hasReservedSpillSlot(const MachineFunction &MF,
 				      unsigned Reg, int &FrameIdx) const {
@@ -429,12 +488,18 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     return;
   }
 
-  // Special case for pseudo-ops SPILL_CR and RESTORE_CR.
+  // Special case for pseudo-ops SPILL_CR and RESTORE_CR, etc.
   if (OpC == PPC::SPILL_CR) {
     lowerCRSpilling(II, FrameIndex, SPAdj, RS);
     return;
   } else if (OpC == PPC::RESTORE_CR) {
     lowerCRRestore(II, FrameIndex, SPAdj, RS);
+    return;
+  } else if (OpC == PPC::SPILL_VRSAVE) {
+    lowerVRSAVESpilling(II, FrameIndex, SPAdj, RS);
+    return;
+  } else if (OpC == PPC::RESTORE_VRSAVE) {
+    lowerVRSAVERestore(II, FrameIndex, SPAdj, RS);
     return;
   }
 

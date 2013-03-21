@@ -66,6 +66,11 @@ public:
                        int SPAdj, RegScavenger *RS) const;
   void lowerCRRestore(MachineBasicBlock::iterator II, unsigned FrameIndex,
                        int SPAdj, RegScavenger *RS) const;
+  void lowerVRSAVESpilling(MachineBasicBlock::iterator II, unsigned FrameIndex,
+                       int SPAdj, RegScavenger *RS) const;
+  void lowerVRSAVERestore(MachineBasicBlock::iterator II, unsigned FrameIndex,
+                       int SPAdj, RegScavenger *RS) const;
+
   bool hasReservedSpillSlot(const MachineFunction &MF, unsigned Reg,
 			    int &FrameIdx) const;
   void eliminateFrameIndex(MachineBasicBlock::iterator II,

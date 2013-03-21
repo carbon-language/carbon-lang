@@ -539,6 +539,12 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                                getKillRegState(isKill)),
                                        FrameIdx));
     NonRI = true;
+  } else if (PPC::VRSAVERCRegClass.hasSubClassEq(RC)) {
+    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::SPILL_VRSAVE))
+                                       .addReg(SrcReg,
+                                               getKillRegState(isKill)),
+                                       FrameIdx));
+    NonRI = true;
   } else {
     llvm_unreachable("Unknown regclass!");
   }
@@ -645,6 +651,12 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
 
   } else if (PPC::VRRCRegClass.hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LVX), DestReg),
+                                       FrameIdx));
+    NonRI = true;
+  } else if (PPC::VRSAVERCRegClass.hasSubClassEq(RC)) {
+    NewMIs.push_back(addFrameReference(BuildMI(MF, DL,
+                                               get(PPC::RESTORE_VRSAVE),
+                                               DestReg),
                                        FrameIdx));
     NonRI = true;
   } else {

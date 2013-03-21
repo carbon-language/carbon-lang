@@ -1237,6 +1237,29 @@ def MFVRSAVE : XFXForm_1_ext<31, 339, 256, (outs GPRC:$rT), (ins),
                              "mfspr $rT, 256", IntGeneral>,
                PPC970_DGroup_First, PPC970_Unit_FXU;
 
+let isCodeGenOnly = 1 in {
+  def MTVRSAVEv : XFXForm_7_ext<31, 467, 256,
+                                (outs VRSAVERC:$reg), (ins GPRC:$rS),
+                                "mtspr 256, $rS", IntGeneral>,
+                  PPC970_DGroup_Single, PPC970_Unit_FXU;
+  def MFVRSAVEv : XFXForm_1_ext<31, 339, 256, (outs GPRC:$rT),
+                                (ins VRSAVERC:$reg),
+                                "mfspr $rT, 256", IntGeneral>,
+                  PPC970_DGroup_First, PPC970_Unit_FXU;
+}
+
+// SPILL_VRSAVE - Indicate that we're dumping the VRSAVE register,
+// so we'll need to scavenge a register for it.
+let mayStore = 1 in
+def SPILL_VRSAVE : Pseudo<(outs), (ins VRSAVERC:$vrsave, memri:$F),
+                     "#SPILL_VRSAVE", []>;
+
+// RESTORE_VRSAVE - Indicate that we're restoring the VRSAVE register (previously
+// spilled), so we'll need to scavenge a register for it.
+let mayLoad = 1 in
+def RESTORE_VRSAVE : Pseudo<(outs VRSAVERC:$vrsave), (ins memri:$F),
+                     "#RESTORE_VRSAVE", []>;
+
 def MTCRF : XFXForm_5<31, 144, (outs crbitm:$FXM), (ins GPRC:$rS),
                       "mtcrf $FXM, $rS", BrMCRX>,
             PPC970_MicroCode, PPC970_Unit_CRU;
