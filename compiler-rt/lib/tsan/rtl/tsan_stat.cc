@@ -243,6 +243,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_fread]                    = "  fread                           ";
   name[StatInt_fwrite]                   = "  fwrite                          ";
   name[StatInt_fflush]                   = "  fflush                          ";
+  name[StatInt_abort]                    = "  abort                           ";
   name[StatInt_puts]                     = "  puts                            ";
   name[StatInt_rmdir]                    = "  rmdir                           ";
   name[StatInt_opendir]                  = "  opendir                         ";

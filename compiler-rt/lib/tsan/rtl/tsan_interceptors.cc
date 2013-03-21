@@ -1520,6 +1520,12 @@ TSAN_INTERCEPTOR(int, fflush, void *stream) {
   return REAL(fflush)(stream);
 }
 
+TSAN_INTERCEPTOR(void, abort, int fake) {
+  SCOPED_TSAN_INTERCEPTOR(abort, fake);
+  REAL(fflush)(0);
+  REAL(abort)(fake);
+}
+
 TSAN_INTERCEPTOR(int, puts, const char *s) {
   SCOPED_TSAN_INTERCEPTOR(puts, s);
   MemoryAccessRange(thr, pc, (uptr)s, internal_strlen(s), false);
@@ -1981,6 +1987,7 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(fread);
   TSAN_INTERCEPT(fwrite);
   TSAN_INTERCEPT(fflush);
+  TSAN_INTERCEPT(abort);
   TSAN_INTERCEPT(puts);
   TSAN_INTERCEPT(rmdir);
   TSAN_INTERCEPT(opendir);
