@@ -40,7 +40,8 @@ enum ActionType {
   GenTgtIntrinsic,
   PrintEnums,
   PrintSets,
-  GenOptParserDefs
+  GenOptParserDefs,
+  GenCTags
 };
 
 namespace {
@@ -82,6 +83,8 @@ namespace {
                                "Print expanded sets for testing DAG exprs"),
                     clEnumValN(GenOptParserDefs, "gen-opt-parser-defs",
                                "Generate option definitions"),
+                    clEnumValN(GenCTags, "gen-ctags",
+                               "Generate ctags-compatible index"),
                     clEnumValEnd));
 
   cl::opt<std::string>
@@ -161,6 +164,9 @@ bool LLVMTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
     }
     break;
   }
+  case GenCTags:
+    EmitCTags(Records, OS);
+    break;
   }
 
   return false;
