@@ -510,47 +510,6 @@ std::string DataLayout::getStringRepresentation() const {
 }
 
 
-uint64_t DataLayout::getTypeSizeInBits(Type *Ty) const {
-  assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
-  switch (Ty->getTypeID()) {
-  case Type::LabelTyID:
-    return getPointerSizeInBits(0);
-  case Type::PointerTyID: {
-    unsigned AS = dyn_cast<PointerType>(Ty)->getAddressSpace();
-    return getPointerSizeInBits(AS);
-  }
-  case Type::ArrayTyID: {
-    ArrayType *ATy = cast<ArrayType>(Ty);
-    return getTypeAllocSizeInBits(ATy->getElementType())*ATy->getNumElements();
-  }
-  case Type::StructTyID:
-    // Get the layout annotation... which is lazily created on demand.
-    return getStructLayout(cast<StructType>(Ty))->getSizeInBits();
-  case Type::IntegerTyID:
-    return cast<IntegerType>(Ty)->getBitWidth();
-  case Type::HalfTyID:
-    return 16;
-  case Type::FloatTyID:
-    return 32;
-  case Type::DoubleTyID:
-  case Type::X86_MMXTyID:
-    return 64;
-  case Type::PPC_FP128TyID:
-  case Type::FP128TyID:
-    return 128;
-  // In memory objects this is always aligned to a higher boundary, but
-  // only 80 bits contain information.
-  case Type::X86_FP80TyID:
-    return 80;
-  case Type::VectorTyID: {
-    VectorType *VTy = cast<VectorType>(Ty);
-    return VTy->getNumElements()*getTypeSizeInBits(VTy->getElementType());
-  }
-  default:
-    llvm_unreachable("DataLayout::getTypeSizeInBits(): Unsupported type");
-  }
-}
-
 /*!
   \param abi_or_pref Flag that determines which alignment is returned. true
   returns the ABI alignment, false returns the preferred alignment.
