@@ -186,7 +186,7 @@ uint32_t DWARFDebugAranges::findAddress(uint64_t address) const {
     Range range(address);
     RangeCollIterator begin = Aranges.begin();
     RangeCollIterator end = Aranges.end();
-    RangeCollIterator pos = lower_bound(begin, end, range, RangeLessThan);
+    RangeCollIterator pos = std::lower_bound(begin, end, range, RangeLessThan);
 
     if (pos != end && pos->LoPC <= address && address < pos->HiPC()) {
       return pos->Offset;
