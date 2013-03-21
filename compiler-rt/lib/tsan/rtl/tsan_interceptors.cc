@@ -1580,7 +1580,6 @@ static void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
       // (but check if we are in a recursive interceptor,
       // i.e. pthread_join()->munmap()).
       (sctx && sctx->in_blocking_func == 1 && thr->in_rtl == 1)) {
-    CHECK(thr->in_rtl == 0 || thr->in_rtl == 1);
     int in_rtl = thr->in_rtl;
     thr->in_rtl = 0;
     CHECK_EQ(thr->in_signal_handler, false);
