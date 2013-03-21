@@ -410,10 +410,10 @@ namespace llvm {
   public:
     explicit DISubprogram(const MDNode *N = 0) : DIScope(N) {}
 
-    DIScope getContext() const          { return getFieldAs<DIScope>(1); }
-    StringRef getName() const         { return getStringField(2); }
-    StringRef getDisplayName() const  { return getStringField(3); }
-    StringRef getLinkageName() const  { return getStringField(4); }
+    DIScope getContext() const          { return getFieldAs<DIScope>(2); }
+    StringRef getName() const         { return getStringField(3); }
+    StringRef getDisplayName() const  { return getStringField(4); }
+    StringRef getLinkageName() const  { return getStringField(5); }
     unsigned getLineNumber() const      { return getUnsignedField(6); }
     DICompositeType getType() const { return getFieldAs<DICompositeType>(7); }
 
@@ -471,11 +471,11 @@ namespace llvm {
     unsigned isOptimized() const;
 
     StringRef getFilename() const    {
-      return getFieldAs<DIFile>(5).getFilename();
+      return getFieldAs<DIFile>(1).getFilename();
     }
 
     StringRef getDirectory() const   {
-      return getFieldAs<DIFile>(5).getDirectory();
+      return getFieldAs<DIFile>(1).getDirectory();
     }
 
     /// getScopeLineNumber - Get the beginning of the scope of the

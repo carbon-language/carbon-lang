@@ -31,12 +31,12 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !31 = metadata !{metadata !12}
 
 !0 = metadata !{i32 786449, i32 4, metadata !2, metadata !"clang version 3.0 (trunk 135593)", i1 true, metadata !"", i32 0, null, null, metadata !29, null, metadata !""} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{i32 786478, i32 0, metadata !2, metadata !"ise", metadata !"ise", metadata !"_Z3iseRKxS0_", metadata !2, i32 2, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i1 (i64*, i64*)* @_Z3iseRKxS0_, null, null, metadata !30, i32 2} ; [ DW_TAG_subprogram ]
+!1 = metadata !{i32 786478, metadata !"_Z3iseRKxS0_", i32 0, metadata !2, metadata !"ise", metadata !"ise", metadata !2, i32 2, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i1 (i64*, i64*)* @_Z3iseRKxS0_, null, null, metadata !30, i32 2} ; [ DW_TAG_subprogram ]
 !2 = metadata !{i32 786473, metadata !"lli.cc", metadata !"/private/tmp", metadata !0} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 786453, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, metadata !0, metadata !"bool", null, i32 0, i64 8, i64 8, i64 0, i32 0, i32 2} ; [ DW_TAG_base_type ]
-!6 = metadata !{i32 786478, i32 0, metadata !2, metadata !"fn", metadata !"fn", metadata !"_Z2fnx", metadata !2, i32 6, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i1 (i64)* @_Z2fnx, null, null, metadata !31, i32 6} ; [ DW_TAG_subprogram ]
+!6 = metadata !{i32 786478, metadata !"_Z2fnx", i32 0, metadata !2, metadata !"fn", metadata !"fn", metadata !2, i32 6, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i1 (i64)* @_Z2fnx, null, null, metadata !31, i32 6} ; [ DW_TAG_subprogram ]
 !7 = metadata !{i32 786689, metadata !1, metadata !"LHS", metadata !2, i32 16777218, metadata !8, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
 !8 = metadata !{i32 786448, metadata !0, null, null, i32 0, i64 32, i64 32, i64 0, i32 0, metadata !9} ; [ DW_TAG_reference_type ]
 !9 = metadata !{i32 786470, metadata !0, metadata !"", null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !10} ; [ DW_TAG_const_type ]

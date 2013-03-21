@@ -19,13 +19,13 @@ entry:
 !0 = metadata !{i32 786449, metadata !27, i32 4, metadata !"clang version 3.0 ()", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !18, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
-!5 = metadata !{i32 720942, null, metadata !"bar", metadata !"bar", metadata !"_ZN3foo3barEv", metadata !6, i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void ()* @_ZN3foo3barEv, null, metadata !11, metadata !16, i32 4} ; [ DW_TAG_subprogram ]
+!5 = metadata !{i32 720942, metadata !6, null, metadata !"bar", metadata !"bar", metadata !"_ZN3foo3barEv", i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void ()* @_ZN3foo3barEv, null, metadata !11, metadata !16, i32 4} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 720937, metadata !27} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{null, metadata !9}
 !9 = metadata !{i32 786447, i32 0, metadata !"", i32 0, i32 0, i64 64, i64 64, i64 0, i32 64, metadata !10} ; [ DW_TAG_pointer_type ]
 !10 = metadata !{i32 786451, metadata !27, null, metadata !"foo", i32 1, i64 0, i64 0, i32 0, i32 4, i32 0, null, i32 0, i32 0} ; [ DW_TAG_structure_type ]
-!11 = metadata !{i32 720942, metadata !12, metadata !"bar", metadata !"bar", metadata !"_ZN3foo3barEv", metadata !6, i32 2, metadata !7, i1 false, i1 false, i32 0, i32 0, null, i32 256, i1 false, null, null, i32 0, metadata !14, i32 2} ; [ DW_TAG_subprogram ]
+!11 = metadata !{i32 720942, metadata !6, metadata !12, metadata !"bar", metadata !"bar", metadata !"_ZN3foo3barEv", i32 2, metadata !7, i1 false, i1 false, i32 0, i32 0, null, i32 256, i1 false, null, null, i32 0, metadata !14, i32 2} ; [ DW_TAG_subprogram ]
 !12 = metadata !{i32 720898, metadata !27, null, metadata !"foo", i32 1, i64 8, i64 8, i32 0, i32 0, null, metadata !13, i32 0, null, null} ; [ DW_TAG_class_type ]
 !13 = metadata !{metadata !11}
 !14 = metadata !{metadata !15}

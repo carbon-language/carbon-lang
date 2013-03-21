@@ -71,7 +71,7 @@ entry:
 
 !llvm.dbg.cu = !{!2}
 
-!0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"~A", metadata !"~A", metadata !"", metadata !3, i32 2, metadata !11, i1 false, i1 false, i32 0, i32 0, null, i32 256, i1 false, null, null} ; [ DW_TAG_subprogram ]
+!0 = metadata !{i32 786478, metadata !"", i32 0, metadata !1, metadata !"~A", metadata !"~A", metadata !3, i32 2, metadata !11, i1 false, i1 false, i32 0, i32 0, null, i32 256, i1 false, null, null} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 589826, metadata !2, metadata !"A", metadata !3, i32 2, i64 128, i64 32, i32 0, i32 0, null, metadata !4, i32 0, null, null} ; [ DW_TAG_class_type ]
 !2 = metadata !{i32 786449, i32 4, metadata !3, metadata !"clang version 3.0 (trunk 130127)", i1 false, metadata !"", i32 0, null, null, metadata !50, null, null} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786473, metadata !51} ; [ DW_TAG_file_type ]
@@ -81,22 +81,22 @@ entry:
 !7 = metadata !{i32 786445, metadata !3, metadata !"y", metadata !3, i32 2, i64 32, i64 32, i64 32, i32 0, metadata !6} ; [ DW_TAG_member ]
 !8 = metadata !{i32 786445, metadata !3, metadata !"z", metadata !3, i32 2, i64 32, i64 32, i64 64, i32 0, metadata !6} ; [ DW_TAG_member ]
 !9 = metadata !{i32 786445, metadata !3, metadata !"o", metadata !3, i32 2, i64 32, i64 32, i64 96, i32 0, metadata !6} ; [ DW_TAG_member ]
-!10 = metadata !{i32 786478, i32 0, metadata !1, metadata !"A", metadata !"A", metadata !"", metadata !3, i32 2, metadata !11, i1 false, i1 false, i32 0, i32 0, null, i32 320, i1 false, null, null} ; [ DW_TAG_subprogram ]
+!10 = metadata !{i32 786478, metadata !"", i32 0, metadata !1, metadata !"A", metadata !"A", metadata !3, i32 2, metadata !11, i1 false, i1 false, i32 0, i32 0, null, i32 320, i1 false, null, null} ; [ DW_TAG_subprogram ]
 !11 = metadata !{i32 786453, metadata !3, metadata !"", metadata !3, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !12, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !12 = metadata !{null, metadata !13}
 !13 = metadata !{i32 786447, metadata !2, metadata !"", i32 0, i32 0, i64 64, i64 64, i64 0, i32 64, metadata !1} ; [ DW_TAG_pointer_type ]
-!14 = metadata !{i32 786478, i32 0, metadata !1, metadata !"A", metadata !"A", metadata !"", metadata !3, i32 2, metadata !15, i1 false, i1 false, i32 0, i32 0, null, i32 320, i1 false, null, null} ; [ DW_TAG_subprogram ]
+!14 = metadata !{i32 786478, metadata !"", i32 0, metadata !1, metadata !"A", metadata !"A", metadata !3, i32 2, metadata !15, i1 false, i1 false, i32 0, i32 0, null, i32 320, i1 false, null, null} ; [ DW_TAG_subprogram ]
 !15 = metadata !{i32 786453, metadata !3, metadata !"", metadata !3, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !16, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !16 = metadata !{null, metadata !13, metadata !17}
 !17 = metadata !{i32 589840, metadata !2, null, null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !18} ; [ DW_TAG_reference_type ]
 !18 = metadata !{i32 786470, metadata !2, metadata !"", null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !1} ; [ DW_TAG_const_type ]
-!19 = metadata !{i32 786478, i32 0, metadata !3, metadata !"foo", metadata !"foo", metadata !"_Z3fooi", metadata !3, i32 4, metadata !20, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void (%class.A*, i32)* @_Z3fooi, null, null} ; [ DW_TAG_subprogram ]
+!19 = metadata !{i32 786478, metadata !"_Z3fooi", i32 0, metadata !3, metadata !"foo", metadata !"foo", metadata !3, i32 4, metadata !20, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void (%class.A*, i32)* @_Z3fooi, null, null} ; [ DW_TAG_subprogram ]
 !20 = metadata !{i32 786453, metadata !3, metadata !"", metadata !3, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !21, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !21 = metadata !{metadata !1}
-!22 = metadata !{i32 786478, i32 0, metadata !3, metadata !"~A", metadata !"~A", metadata !"_ZN1AD1Ev", metadata !3, i32 2, metadata !23, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void (%class.A*)* @_ZN1AD1Ev, null, null} ; [ DW_TAG_subprogram ]
+!22 = metadata !{i32 786478, metadata !"_ZN1AD1Ev", i32 0, metadata !3, metadata !"~A", metadata !"~A", metadata !3, i32 2, metadata !23, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void (%class.A*)* @_ZN1AD1Ev, null, null} ; [ DW_TAG_subprogram ]
 !23 = metadata !{i32 786453, metadata !3, metadata !"", metadata !3, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !24, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !24 = metadata !{null}
-!25 = metadata !{i32 786478, i32 0, metadata !3, metadata !"~A", metadata !"~A", metadata !"_ZN1AD2Ev", metadata !3, i32 2, metadata !23, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void (%class.A*)* @_ZN1AD2Ev, null, null} ; [ DW_TAG_subprogram ]
+!25 = metadata !{i32 786478, metadata !"_ZN1AD2Ev", i32 0, metadata !3, metadata !"~A", metadata !"~A", metadata !3, i32 2, metadata !23, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void (%class.A*)* @_ZN1AD2Ev, null, null} ; [ DW_TAG_subprogram ]
 !26 = metadata !{i32 786689, metadata !19, metadata !"i", metadata !3, i32 16777220, metadata !6, i32 0, null} ; [ DW_TAG_arg_variable ]
 !27 = metadata !{i32 4, i32 11, metadata !19, null}
 !28 = metadata !{i32 786688, metadata !29, metadata !"j", metadata !3, i32 5, metadata !6, i32 0, null} ; [ DW_TAG_auto_variable ]
