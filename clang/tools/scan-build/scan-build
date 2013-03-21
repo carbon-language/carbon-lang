@@ -58,6 +58,16 @@ sub Diag {
   }  
 }
 
+sub ErrorDiag {
+  if ($UseColor) {
+    print STDERR BOLD, RED "$Prog: ";
+    print STDERR RESET, RED @_;
+    print STDERR RESET;
+  } else {
+    print STDERR "$Prog: @_";
+  }  
+}
+
 sub DiagCrashes {
   my $Dir = shift;
   Diag ("The analyzer encountered problems on some source files.\n");
@@ -68,14 +78,14 @@ sub DiagCrashes {
 
 sub DieDiag {
   if ($UseColor) {
-    print BOLD, RED "$Prog: ";
-    print RESET, RED @_;
-    print RESET;
+    print STDERR BOLD, RED "$Prog: ";
+    print STDERR RESET, RED @_;
+    print STDERR RESET;
   }
   else {
-    print "$Prog: ", @_;
+    print STDERR "$Prog: ", @_;
   }
-  exit(0);
+  exit 1;
 }
 
 ##----------------------------------------------------------------------------##
@@ -90,7 +100,7 @@ if (grep /^--help-checkers$/, @ARGV) {
 	my ($sign, $name, @text) = split ' ', $_;
 	print $name, $/ if $sign eq '+';
     }
-    exit 1;
+    exit 0;
 }
 
 ##----------------------------------------------------------------------------##
@@ -1310,15 +1320,13 @@ my $InternalStats;
 my $OutputFormat = "html";
 my $AnalyzerStats = 0;
 my $MaxLoop = 0;
+my $RequestDisplayHelp = 0;
+my $ForceDisplayHelp = 0;
+my $AnalyzerDiscoveryMethod;
 
 if (!@ARGV) {
-  DisplayHelp();
-  exit 1;
+  $ForceDisplayHelp = 1
 }
-
-
-my $displayHelp = 0;
-my $AnalyzerDiscoveryMethod;
 
 while (@ARGV) {
   
@@ -1327,7 +1335,7 @@ while (@ARGV) {
   my $arg = $ARGV[0];
 
   if ($arg eq "-h" or $arg eq "--help") {
-    $displayHelp = 1;
+    $RequestDisplayHelp = 1;
     shift @ARGV;
     next;
   }
@@ -1507,9 +1515,9 @@ while (@ARGV) {
   last;
 }
 
-if (!@ARGV and $displayHelp == 0) {
-  Diag("No build command specified.\n\n");
-  $displayHelp = 1;
+if (!@ARGV and !$RequestDisplayHelp) {
+  ErrorDiag("No build command specified.\n\n");
+  $ForceDisplayHelp = 1;
 }
 
 # Find 'clang'
@@ -1519,7 +1527,7 @@ if (!defined $AnalyzerDiscoveryMethod) {
     $Clang = Cwd::realpath("$RealBin/clang");
   }
   if (!defined $Clang || ! -x $Clang) {
-    if (!$displayHelp) {
+    if (!$RequestDisplayHelp && !$ForceDisplayHelp) {
       DieDiag("error: Cannot find an executable 'clang' relative to scan-build." .
    	          "  Consider using --use-analyzer to pick a version of 'clang' to use for static analysis.\n");
     }
@@ -1546,9 +1554,9 @@ else {
   }
 }
 
-if ($displayHelp) {
+if ($ForceDisplayHelp || $RequestDisplayHelp) {
   DisplayHelp();
-  exit 1;
+  exit $ForceDisplayHelp;
 }
 
 $ClangCXX = $Clang;
