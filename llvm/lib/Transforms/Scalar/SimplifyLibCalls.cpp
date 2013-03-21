@@ -89,8 +89,6 @@ namespace {
     TargetLibraryInfo *TLI;
 
     StringMap<LibCallOptimization*> Optimizations;
-
-    bool Modified;  // This is only used by doInitialization.
   public:
     static char ID; // Pass identification
     SimplifyLibCalls() : FunctionPass(ID) {
