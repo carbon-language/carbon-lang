@@ -366,15 +366,6 @@ def XOR8 : XForm_6<31, 316, (outs G8RC:$rA), (ins G8RC:$rS, G8RC:$rB),
                    "xor $rA, $rS, $rB", IntSimple,
                    [(set G8RC:$rA, (xor G8RC:$rS, G8RC:$rB))]>;
 
-// Moves between 32-bit and 64-bit registers (used for copy resolution
-// after register allocation).
-let isCodeGenOnly = 1 in {
-def OR8_32  : XForm_6<31, 444, (outs G8RC:$rA), (ins GPRC:$rS, GPRC:$rB),
-                      "or $rA, $rS, $rB", IntSimple, []>;
-def OR_64   : XForm_6<31, 444, (outs GPRC:$rA), (ins G8RC:$rS, G8RC:$rB),
-                      "or $rA, $rS, $rB", IntSimple, []>;
-}
-
 // Logical ops with immediate.
 def ANDIo8  : DForm_4<28, (outs G8RC:$dst), (ins G8RC:$src1, u16imm:$src2),
                       "andi. $dst, $src1, $src2", IntGeneral,

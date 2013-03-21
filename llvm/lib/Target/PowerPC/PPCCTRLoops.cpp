@@ -685,7 +685,7 @@ bool PPCCTRLoops::convertToCTRLoop(MachineLoop *L) {
     const TargetRegisterClass *SrcRC =
       MF->getRegInfo().getRegClass(TripCount->getReg());
     CountReg = MF->getRegInfo().createVirtualRegister(RC);
-    unsigned CopyOp = (isPPC64 && SrcRC == GPRC) ?
+    unsigned CopyOp = (isPPC64 && GPRC->hasSubClassEq(SrcRC)) ?
                         (unsigned) PPC::EXTSW_32_64 :
                         (unsigned) TargetOpcode::COPY;
     BuildMI(*Preheader, InsertPos, dl,
