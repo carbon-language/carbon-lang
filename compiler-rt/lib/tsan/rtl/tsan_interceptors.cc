@@ -31,14 +31,17 @@ using namespace __tsan;  // NOLINT
 const int kSigCount = 64;
 
 struct my_siginfo_t {
+  // The size is determined by looking at sizeof of real siginfo_t on linux.
   u64 opaque[128 / sizeof(u64)];
 };
 
 struct sigset_t {
+  // The size is determined by looking at sizeof of real sigset_t on linux.
   u64 val[128 / sizeof(u64)];
 };
 
 struct ucontext_t {
+  // The size is determined by looking at sizeof of real ucontext_t on linux.
   u64 opaque[936 / sizeof(u64) + 1];
 };
 
