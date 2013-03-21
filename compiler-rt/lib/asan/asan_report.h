@@ -29,7 +29,7 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size);
 // Determines memory type on its own.
 void DescribeAddress(uptr addr, uptr access_size);
 
-void DescribeThread(AsanThreadSummary *summary);
+void DescribeThread(AsanThreadContext *context);
 
 // Different kinds of error reports.
 void NORETURN ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr);

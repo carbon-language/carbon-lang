@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 #include "asan_allocator.h"
 #include "asan_thread.h"
-#include "asan_thread_registry.h"
 
 namespace __asan {
 

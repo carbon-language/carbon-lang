@@ -17,7 +17,6 @@
 #include "asan_report.h"
 #include "asan_stack.h"
 #include "asan_thread.h"
-#include "asan_thread_registry.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_report_decorator.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
@@ -237,7 +236,7 @@ bool DescribeAddressIfShadow(uptr addr) {
 }
 
 bool DescribeAddressIfStack(uptr addr, uptr access_size) {
-  AsanThread *t = asanThreadRegistry().FindThreadByStackAddress(addr);
+  AsanThread *t = FindThreadByStackAddress(addr);
   if (!t) return false;
   const sptr kBufSize = 4095;
   char buf[kBufSize];
@@ -286,7 +285,7 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   Printf("HINT: this may be a false positive if your program uses "
              "some custom stack unwind mechanism or swapcontext\n"
              "      (longjmp and C++ exceptions *are* supported)\n");
-  DescribeThread(t->summary());
+  DescribeThread(t->context());
   return true;
 }
 
@@ -315,10 +314,10 @@ static void DescribeAccessToHeapChunk(AsanChunkView chunk, uptr addr,
 }
 
 // Return " (thread_name) " or an empty string if the name is empty.
-const char *ThreadNameWithParenthesis(AsanThreadSummary *t, char buff[],
+const char *ThreadNameWithParenthesis(AsanThreadContext *t, char buff[],
                                       uptr buff_len) {
-  const char *name = t->name();
-  if (*name == 0) return "";
+  const char *name = t->name;
+  if (name[0] == '\0') return "";
   buff[0] = 0;
   internal_strncat(buff, " (", 3);
   internal_strncat(buff, name, buff_len - 4);
@@ -329,7 +328,8 @@ const char *ThreadNameWithParenthesis(AsanThreadSummary *t, char buff[],
 const char *ThreadNameWithParenthesis(u32 tid, char buff[],
                                       uptr buff_len) {
   if (tid == kInvalidTid) return "";
-  AsanThreadSummary *t = asanThreadRegistry().FindByTid(tid);
+  asanThreadRegistry().CheckLocked();
+  AsanThreadContext *t = GetThreadContextByTidLocked(tid);
   return ThreadNameWithParenthesis(t, buff, buff_len);
 }
 
@@ -338,8 +338,9 @@ void DescribeHeapAddress(uptr addr, uptr access_size) {
   if (!chunk.IsValid()) return;
   DescribeAccessToHeapChunk(chunk, addr, access_size);
   CHECK(chunk.AllocTid() != kInvalidTid);
-  AsanThreadSummary *alloc_thread =
-      asanThreadRegistry().FindByTid(chunk.AllocTid());
+  asanThreadRegistry().CheckLocked();
+  AsanThreadContext *alloc_thread =
+      GetThreadContextByTidLocked(chunk.AllocTid());
   StackTrace alloc_stack;
   chunk.GetAllocStack(&alloc_stack);
   AsanThread *t = GetCurrentThread();
@@ -347,30 +348,30 @@ void DescribeHeapAddress(uptr addr, uptr access_size) {
   char tname[128];
   Decorator d;
   if (chunk.FreeTid() != kInvalidTid) {
-    AsanThreadSummary *free_thread =
-        asanThreadRegistry().FindByTid(chunk.FreeTid());
+    AsanThreadContext *free_thread =
+        GetThreadContextByTidLocked(chunk.FreeTid());
     Printf("%sfreed by thread T%d%s here:%s\n", d.Allocation(),
-           free_thread->tid(),
+           free_thread->tid,
            ThreadNameWithParenthesis(free_thread, tname, sizeof(tname)),
            d.EndAllocation());
     StackTrace free_stack;
     chunk.GetFreeStack(&free_stack);
     PrintStack(&free_stack);
     Printf("%spreviously allocated by thread T%d%s here:%s\n",
-           d.Allocation(), alloc_thread->tid(),
+           d.Allocation(), alloc_thread->tid,
            ThreadNameWithParenthesis(alloc_thread, tname, sizeof(tname)),
            d.EndAllocation());
     PrintStack(&alloc_stack);
-    DescribeThread(t->summary());
+    DescribeThread(t->context());
     DescribeThread(free_thread);
     DescribeThread(alloc_thread);
   } else {
     Printf("%sallocated by thread T%d%s here:%s\n", d.Allocation(),
-           alloc_thread->tid(),
+           alloc_thread->tid,
            ThreadNameWithParenthesis(alloc_thread, tname, sizeof(tname)),
            d.EndAllocation());
     PrintStack(&alloc_stack);
-    DescribeThread(t->summary());
+    DescribeThread(t->context());
     DescribeThread(alloc_thread);
   }
 }
@@ -390,26 +391,27 @@ void DescribeAddress(uptr addr, uptr access_size) {
 
 // ------------------- Thread description -------------------- {{{1
 
-void DescribeThread(AsanThreadSummary *summary) {
-  CHECK(summary);
+void DescribeThread(AsanThreadContext *context) {
+  CHECK(context);
+  asanThreadRegistry().CheckLocked();
   // No need to announce the main thread.
-  if (summary->tid() == 0 || summary->announced()) {
+  if (context->tid == 0 || context->announced) {
     return;
   }
-  summary->set_announced(true);
+  context->announced = true;
   char tname[128];
-  Printf("Thread T%d%s", summary->tid(),
-         ThreadNameWithParenthesis(summary->tid(), tname, sizeof(tname)));
+  Printf("Thread T%d%s", context->tid,
+         ThreadNameWithParenthesis(context->tid, tname, sizeof(tname)));
   Printf(" created by T%d%s here:\n",
-         summary->parent_tid(),
-         ThreadNameWithParenthesis(summary->parent_tid(),
+         context->parent_tid,
+         ThreadNameWithParenthesis(context->parent_tid,
                                    tname, sizeof(tname)));
-  PrintStack(summary->stack());
+  PrintStack(&context->stack);
   // Recursively described parent thread if needed.
   if (flags()->print_full_thread_history) {
-    AsanThreadSummary *parent_summary =
-        asanThreadRegistry().FindByTid(summary->parent_tid());
-    DescribeThread(parent_summary);
+    AsanThreadContext *parent_context =
+        GetThreadContextByTidLocked(context->parent_tid);
+    DescribeThread(parent_context);
   }
 }
 
@@ -440,6 +442,10 @@ class ScopedInErrorReport {
       internal__exit(flags()->exitcode);
     }
     ASAN_ON_ERROR();
+    // Make sure the registry is locked while we're printing an error report.
+    // We can lock the registry only here to avoid self-deadlock in case of
+    // recursive reports.
+    asanThreadRegistry().Lock();
     reporting_thread_tid = GetCurrentTidOrInvalid();
     Printf("===================================================="
            "=============\n");
@@ -456,7 +462,7 @@ class ScopedInErrorReport {
     // Make sure the current thread is announced.
     AsanThread *curr_thread = GetCurrentThread();
     if (curr_thread) {
-      DescribeThread(curr_thread->summary());
+      DescribeThread(curr_thread->context());
     }
     // Print memory stats.
     if (flags()->print_stats)

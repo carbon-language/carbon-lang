@@ -20,7 +20,6 @@
 #include "asan_report.h"
 #include "asan_stack.h"
 #include "asan_stats.h"
-#include "asan_thread_registry.h"
 #include "interception/interception.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
@@ -91,7 +90,7 @@ static inline uptr MaybeRealStrnlen(const char *s, uptr maxlen) {
 void SetThreadName(const char *name) {
   AsanThread *t = GetCurrentThread();
   if (t)
-    t->summary()->set_name(name);
+    asanThreadRegistry().SetThreadName(t->tid(), name);
 }
 
 }  // namespace __asan
@@ -116,16 +115,23 @@ using namespace __asan;  // NOLINT
 static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
   AsanThread *t = (AsanThread*)arg;
   SetCurrentThread(t);
-  return t->ThreadStart();
+  return t->ThreadStart(GetTid());
 }
 
 #if ASAN_INTERCEPT_PTHREAD_CREATE
+extern "C" int pthread_attr_getdetachstate(void *attr, int *v);
+
 INTERCEPTOR(int, pthread_create, void *thread,
     void *attr, void *(*start_routine)(void*), void *arg) {
   GET_STACK_TRACE_THREAD;
+  int detached = 0;
+  if (attr != 0)
+    pthread_attr_getdetachstate(attr, &detached);
+
   u32 current_tid = GetCurrentTidOrInvalid();
-  AsanThread *t = AsanThread::Create(current_tid, start_routine, arg, &stack);
-  asanThreadRegistry().RegisterThread(t);
+  AsanThread *t = AsanThread::Create(start_routine, arg);
+  CreateThreadContextArgs args = { t, &stack };
+  asanThreadRegistry().CreateThread(*(uptr*)t, detached, current_tid, &args);
   return REAL(pthread_create)(thread, attr, asan_thread_start, t);
 }
 #endif  // ASAN_INTERCEPT_PTHREAD_CREATE

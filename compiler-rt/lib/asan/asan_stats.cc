@@ -14,7 +14,7 @@
 #include "asan_interceptors.h"
 #include "asan_internal.h"
 #include "asan_stats.h"
-#include "asan_thread_registry.h"
+#include "asan_thread.h"
 #include "sanitizer_common/sanitizer_mutex.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 
@@ -75,7 +75,7 @@ static AsanStats accumulated_stats(LINKER_INITIALIZED);
 static uptr max_malloced_memory;
 static BlockingMutex acc_stats_lock(LINKER_INITIALIZED);
 
-void FlushToAccumulatedStatsUnlocked(AsanStats *stats) {
+static void FlushToAccumulatedStatsUnlocked(AsanStats *stats) {
   acc_stats_lock.CheckLocked();
   uptr *dst = (uptr*)&accumulated_stats;
   uptr *src = (uptr*)stats;
@@ -86,9 +86,18 @@ void FlushToAccumulatedStatsUnlocked(AsanStats *stats) {
   }
 }
 
+static void FlushThreadStats(ThreadContextBase *tctx_base, void *arg) {
+  AsanThreadContext *tctx = static_cast<AsanThreadContext*>(tctx_base);
+  if (AsanThread *t = tctx->thread)
+    FlushToAccumulatedStatsUnlocked(&t->stats());
+}
+
 static void UpdateAccumulatedStatsUnlocked() {
   acc_stats_lock.CheckLocked();
-  asanThreadRegistry().FlushAllStats();
+  {
+    ThreadRegistryLock l(&asanThreadRegistry());
+    asanThreadRegistry().RunCallbackForEachThreadLocked(FlushThreadStats, 0);
+  }
   FlushToAccumulatedStatsUnlocked(&unknown_thread_stats);
   // This is not very accurate: we may miss allocation peaks that happen
   // between two updates of accumulated_stats_. For more accurate bookkeeping

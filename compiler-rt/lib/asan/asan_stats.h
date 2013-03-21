@@ -64,8 +64,6 @@ AsanStats &GetCurrentThreadStats();
 void GetAccumulatedStats(AsanStats *stats);
 // Flushes a given stats into accumulated stats.
 void FlushToAccumulatedStats(AsanStats *stats);
-// FIXME: Hide this method when AsanThreadRegistry is removed.
-void FlushToAccumulatedStatsUnlocked(AsanStats *stats);
 
 // A cross-platform equivalent of malloc_statistics_t on Mac OS.
 struct AsanMallocStats {

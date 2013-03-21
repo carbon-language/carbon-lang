@@ -20,7 +20,6 @@ set(ASAN_SOURCES
   asan_stack.cc
   asan_stats.cc
   asan_thread.cc
-  asan_thread_registry.cc
   asan_win.cc
   )
 

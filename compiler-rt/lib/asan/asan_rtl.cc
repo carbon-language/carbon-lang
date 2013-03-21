@@ -19,7 +19,6 @@
 #include "asan_stack.h"
 #include "asan_stats.h"
 #include "asan_thread.h"
-#include "asan_thread_registry.h"
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_libc.h"
@@ -517,8 +516,15 @@ void __asan_init() {
   asan_inited = 1;
   asan_init_is_running = false;
 
-  asanThreadRegistry().Init();
-  asanThreadRegistry().GetMain()->ThreadStart();
+  // Create main thread.
+  AsanTSDInit(AsanThread::TSDDtor);
+  AsanThread *main_thread = AsanThread::Create(0, 0);
+  CreateThreadContextArgs create_main_args = { main_thread, 0 };
+  u32 main_tid = asanThreadRegistry().CreateThread(
+      0, true, 0, &create_main_args);
+  CHECK_EQ(0, main_tid);
+  SetCurrentThread(main_thread);
+  main_thread->ThreadStart(GetPid());
   force_interface_symbols();  // no-op.
 
   InitializeAllocator();

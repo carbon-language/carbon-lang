@@ -15,44 +15,77 @@
 #include "asan_interceptors.h"
 #include "asan_stack.h"
 #include "asan_thread.h"
-#include "asan_thread_registry.h"
 #include "asan_mapping.h"
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_placement_new.h"
 
 namespace __asan {
 
-AsanThread::AsanThread(LinkerInitialized x)
-    : fake_stack_(x),
-      malloc_storage_(x),
-      stats_(x) { }
+// AsanThreadContext implementation.
 
-AsanThread *AsanThread::Create(u32 parent_tid, thread_callback_t start_routine,
-                               void *arg, StackTrace *stack) {
+void AsanThreadContext::OnCreated(void *arg) {
+  CreateThreadContextArgs *args = static_cast<CreateThreadContextArgs*>(arg);
+  if (args->stack) {
+    internal_memcpy(&stack, args->stack, sizeof(stack));
+  }
+  thread = args->thread;
+  thread->set_context(this);
+}
+
+void AsanThreadContext::OnFinished() {
+  // Drop the link to the AsanThread object.
+  thread = 0;
+}
+
+static char thread_registry_placeholder[sizeof(ThreadRegistry)];
+static ThreadRegistry *asan_thread_registry;
+
+static ThreadContextBase *GetAsanThreadContext(u32 tid) {
+  void *mem = MmapOrDie(sizeof(AsanThreadContext), "AsanThreadContext");
+  return new(mem) AsanThreadContext(tid);
+}
+
+ThreadRegistry &asanThreadRegistry() {
+  static bool initialized;
+  // Don't worry about thread_safety - this should be called when there is
+  // a single thread.
+  if (!initialized) {
+    // Never reuse ASan threads: we store pointer to AsanThreadContext
+    // in TSD and can't reliably tell when no more TSD destructors will
+    // be called. It would be wrong to reuse AsanThreadContext for another
+    // thread before all TSD destructors will be called for it.
+    asan_thread_registry = new(thread_registry_placeholder) ThreadRegistry(
+        GetAsanThreadContext, kMaxNumberOfThreads, kMaxNumberOfThreads);
+    initialized = true;
+  }
+  return *asan_thread_registry;
+}
+
+AsanThreadContext *GetThreadContextByTidLocked(u32 tid) {
+  return static_cast<AsanThreadContext *>(
+      asanThreadRegistry().GetThreadLocked(tid));
+}
+
+// AsanThread implementation.
+
+AsanThread *AsanThread::Create(thread_callback_t start_routine,
+                               void *arg) {
   uptr PageSize = GetPageSizeCached();
   uptr size = RoundUpTo(sizeof(AsanThread), PageSize);
   AsanThread *thread = (AsanThread*)MmapOrDie(size, __FUNCTION__);
   thread->start_routine_ = start_routine;
   thread->arg_ = arg;
-
-  const uptr kSummaryAllocSize = PageSize;
-  CHECK_LE(sizeof(AsanThreadSummary), kSummaryAllocSize);
-  AsanThreadSummary *summary =
-      (AsanThreadSummary*)MmapOrDie(PageSize, "AsanThreadSummary");
-  summary->Init(parent_tid, stack);
-  summary->set_thread(thread);
-  thread->set_summary(summary);
+  thread->context_ = 0;
 
   return thread;
 }
 
-void AsanThreadSummary::TSDDtor(void *tsd) {
-  AsanThreadSummary *summary = (AsanThreadSummary*)tsd;
-  if (flags()->verbosity >= 1) {
-    Report("T%d TSDDtor\n", summary->tid());
-  }
-  if (summary->thread()) {
-    summary->thread()->Destroy();
-  }
+void AsanThread::TSDDtor(void *tsd) {
+  AsanThreadContext *context = (AsanThreadContext*)tsd;
+  if (flags()->verbosity >= 1)
+    Report("T%d TSDDtor\n", context->tid);
+  if (context->thread)
+    context->thread->Destroy();
 }
 
 void AsanThread::Destroy() {
@@ -60,8 +93,8 @@ void AsanThread::Destroy() {
     Report("T%d exited\n", tid());
   }
 
-  asanThreadRegistry().UnregisterThread(this);
-  CHECK(summary()->thread() == 0);
+  asanThreadRegistry().FinishThread(tid());
+  FlushToAccumulatedStats(&stats_);
   // We also clear the shadow on thread destruction because
   // some code may still be executing in later TSD destructors
   // and we don't want it to have any poisoned stack.
@@ -86,8 +119,9 @@ void AsanThread::Init() {
   AsanPlatformThreadInit();
 }
 
-thread_return_t AsanThread::ThreadStart() {
+thread_return_t AsanThread::ThreadStart(uptr os_id) {
   Init();
+  asanThreadRegistry().StartThread(tid(), os_id, 0);
   if (flags()->use_sigaltstack) SetAlternateSignalStack();
 
   if (!start_routine_) {
@@ -152,42 +186,58 @@ const char *AsanThread::GetFrameNameByAddr(uptr addr, uptr *offset) {
   return (const char*)ptr[1];
 }
 
+static bool ThreadStackContainsAddress(ThreadContextBase *tctx_base,
+                                       void *addr) {
+  AsanThreadContext *tctx = static_cast<AsanThreadContext*>(tctx_base);
+  AsanThread *t = tctx->thread;
+  return (t && t->fake_stack().StackSize() &&
+          (t->fake_stack().AddrIsInFakeStack((uptr)addr) ||
+           t->AddrIsInStack((uptr)addr)));
+}
+
 AsanThread *GetCurrentThread() {
-  AsanThreadSummary *summary = (AsanThreadSummary *)AsanTSDGet();
-  if (!summary) {
-#if SANITIZER_ANDROID
-    // On Android, libc constructor is called _after_ asan_init, and cleans up
-    // TSD. Try to figure out if this is still the main thread by the stack
-    // address. We are not entirely sure that we have correct main thread
-    // limits, so only do this magic on Android, and only if the found thread is
-    // the main thread.
-    AsanThread *thread =
-        asanThreadRegistry().FindThreadByStackAddress((uptr)&summary);
-    if (thread && thread->tid() == 0) {
-      SetCurrentThread(thread);
-      return thread;
+  AsanThreadContext *context = (AsanThreadContext*)AsanTSDGet();
+  if (!context) {
+    if (SANITIZER_ANDROID) {
+      // On Android, libc constructor is called _after_ asan_init, and cleans up
+      // TSD. Try to figure out if this is still the main thread by the stack
+      // address. We are not entirely sure that we have correct main thread
+      // limits, so only do this magic on Android, and only if the found thread is
+      // the main thread.
+      AsanThreadContext *tctx = GetThreadContextByTidLocked(0);
+      if (ThreadStackContainsAddress(tctx, &context)) {
+        SetCurrentThread(tctx->thread);
+        return tctx->thread;
+      }
     }
-#endif
     return 0;
   }
-  return summary->thread();
+  return context->thread;
 }
 
 void SetCurrentThread(AsanThread *t) {
-  CHECK(t->summary());
+  CHECK(t->context());
   if (flags()->verbosity >= 2) {
     Report("SetCurrentThread: %p for thread %p\n",
-           t->summary(), (void*)GetThreadSelf());
+           t->context(), (void*)GetThreadSelf());
   }
   // Make sure we do not reset the current AsanThread.
-  CHECK(AsanTSDGet() == 0);
-  AsanTSDSet(t->summary());
-  CHECK(AsanTSDGet() == t->summary());
+  CHECK_EQ(0, AsanTSDGet());
+  AsanTSDSet(t->context());
+  CHECK_EQ(t->context(), AsanTSDGet());
 }
 
 u32 GetCurrentTidOrInvalid() {
   AsanThread *t = GetCurrentThread();
   return t ? t->tid() : kInvalidTid;
+}
+
+AsanThread *FindThreadByStackAddress(uptr addr) {
+  asanThreadRegistry().CheckLocked();
+  AsanThreadContext *tctx = static_cast<AsanThreadContext *>(
+      asanThreadRegistry().FindThreadContextLocked(ThreadStackContainsAddress,
+                                                   (void *)addr));
+  return tctx ? tctx->thread : 0;
 }
 
 }  // namespace __asan

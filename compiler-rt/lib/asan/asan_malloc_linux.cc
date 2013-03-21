@@ -21,7 +21,6 @@
 #include "asan_interceptors.h"
 #include "asan_internal.h"
 #include "asan_stack.h"
-#include "asan_thread_registry.h"
 
 #if SANITIZER_ANDROID
 DECLARE_REAL_AND_INTERCEPTOR(void*, malloc, uptr size)
