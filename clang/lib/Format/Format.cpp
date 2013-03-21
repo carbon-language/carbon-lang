@@ -152,7 +152,7 @@ public:
       alignComments();
 
     if (Tok.Type == TT_BlockComment)
-      indentBlockComment(Tok, Spaces, false);
+      indentBlockComment(Tok, Spaces, WhitespaceStartColumn, NewLines, false);
 
     storeReplacement(Tok.FormatTok, getNewLineText(NewLines, Spaces));
   }
@@ -165,7 +165,7 @@ public:
   void replacePPWhitespace(const AnnotatedToken &Tok, unsigned NewLines,
                            unsigned Spaces, unsigned WhitespaceStartColumn) {
     if (Tok.Type == TT_BlockComment)
-      indentBlockComment(Tok, Spaces, true);
+      indentBlockComment(Tok, Spaces, WhitespaceStartColumn, NewLines, true);
 
     storeReplacement(Tok.FormatTok,
                      getNewLineText(NewLines, Spaces, WhitespaceStartColumn));
@@ -203,13 +203,11 @@ private:
   /// \brief Finds a common prefix of lines of a block comment to properly
   /// indent (and possibly decorate with '*'s) added lines.
   ///
-  /// The first line is ignored (it's special and starts with /*).
-  /// When there are less than three lines, we don't have enough information, so
-  /// better use no prefix.
+  /// The first line is ignored (it's special and starts with /*). The number of
+  /// lines should be more than one.
   static StringRef findCommentLinesPrefix(ArrayRef<StringRef> Lines,
                                           const char *PrefixChars = " *") {
-    if (Lines.size() < 3)
-      return "";
+    assert(Lines.size() > 1);
     StringRef Prefix(Lines[1].data(), Lines[1].find_first_not_of(PrefixChars));
     for (size_t i = 2; i < Lines.size(); ++i) {
       for (size_t j = 0; j < Prefix.size() && j < Lines[i].size(); ++j) {
@@ -226,16 +224,12 @@ private:
                           size_t StartColumn, StringRef LinePrefix,
                           bool InPPDirective, bool CommentHasMoreLines,
                           const char *WhiteSpaceChars = " ") {
-    size_t ColumnLimit =
-        Style.ColumnLimit - LinePrefix.size() - (InPPDirective ? 2 : 0);
-
-    if (Line.size() <= ColumnLimit)
-      return;
-
+    size_t ColumnLimit = Style.ColumnLimit - (InPPDirective ? 2 : 0);
     const char *TokenStart = SourceMgr.getCharacterData(Tok.Tok.getLocation());
-    while (Line.rtrim().size() > ColumnLimit) {
+    while (Line.rtrim().size() + StartColumn > ColumnLimit) {
       // Try to break at the last whitespace before the column limit.
-      size_t SpacePos = Line.find_last_of(WhiteSpaceChars, ColumnLimit + 1);
+      size_t SpacePos =
+          Line.find_last_of(WhiteSpaceChars, ColumnLimit - StartColumn + 1);
       if (SpacePos == StringRef::npos) {
         // Try to find any whitespace in the line.
         SpacePos = Line.find_first_of(WhiteSpaceChars);
@@ -247,13 +241,17 @@ private:
       StringRef RemainingLine = Line.substr(SpacePos).ltrim();
       if (RemainingLine.empty())
         break;
+
+      if (RemainingLine == "*/" && LinePrefix.endswith("* "))
+        LinePrefix = LinePrefix.substr(0, LinePrefix.size() - 2);
+
       Line = RemainingLine;
 
       size_t ReplaceChars = Line.begin() - NextCut.end();
       breakToken(Tok, NextCut.end() - TokenStart, ReplaceChars, "", LinePrefix,
                  InPPDirective, 0,
-                 NextCut.size() + LinePrefix.size() + StartColumn);
-      StartColumn = 0;
+                 NextCut.size() + StartColumn);
+      StartColumn = LinePrefix.size();
     }
 
     StringRef TrimmedLine = Line.rtrim();
@@ -261,12 +259,14 @@ private:
       // Remove trailing whitespace/insert backslash.
       breakToken(Tok, TrimmedLine.end() - TokenStart,
                  Line.size() - TrimmedLine.size() + 1, "", "", InPPDirective, 0,
-                 TrimmedLine.size() + LinePrefix.size());
+                 TrimmedLine.size() + StartColumn);
     }
   }
 
   void indentBlockComment(const AnnotatedToken &Tok, int Indent,
+                          int WhitespaceStartColumn, int NewLines,
                           bool InPPDirective) {
+    int StartColumn = NewLines > 0 ? Indent : WhitespaceStartColumn + Indent;
     const SourceLocation TokenLoc = Tok.FormatTok.Tok.getLocation();
     const int CurrentIndent = SourceMgr.getSpellingColumnNumber(TokenLoc) - 1;
     const int IndentDelta = Indent - CurrentIndent;
@@ -299,22 +299,28 @@ private:
     }
 
     // Split long lines in comments.
-    const StringRef CurrentPrefix = findCommentLinesPrefix(Lines);
-    size_t PrefixSize = CurrentPrefix.size();
-    std::string NewPrefix =
-        (IndentDelta < 0) ? CurrentPrefix.substr(-IndentDelta).str()
-                          : std::string(IndentDelta, ' ') + CurrentPrefix.str();
-
-    if (CurrentPrefix.endswith("*")) {
-      NewPrefix += " ";
-      ++PrefixSize;
+    size_t PrefixSize = 0;
+    std::string NewPrefix;
+    if (Lines.size() > 1) {
+      StringRef CurrentPrefix = findCommentLinesPrefix(Lines);
+      PrefixSize = CurrentPrefix.size();
+      NewPrefix = (IndentDelta < 0)
+                  ? CurrentPrefix.substr(-IndentDelta).str()
+                  : std::string(IndentDelta, ' ') + CurrentPrefix.str();
+      if (CurrentPrefix.endswith("*")) {
+        NewPrefix += " ";
+        ++PrefixSize;
+      }
+    } else if (Tok.Parent == 0) {
+      NewPrefix = std::string(StartColumn, ' ') + " * ";
     }
 
+    StartColumn += 2;
     for (size_t i = 0; i < Lines.size(); ++i) {
-      StringRef Line = (i == 0) ? Lines[i] : Lines[i].substr(PrefixSize);
-      size_t StartColumn = (i == 0) ? CurrentIndent : 0;
+      StringRef Line = Lines[i].substr(i == 0 ? 2 : PrefixSize);
       splitLineInComment(Tok.FormatTok, Line, StartColumn, NewPrefix,
                          InPPDirective, i != Lines.size() - 1);
+      StartColumn = NewPrefix.size();
     }
   }
 

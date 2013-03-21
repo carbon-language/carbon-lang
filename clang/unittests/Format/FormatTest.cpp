@@ -667,11 +667,14 @@ TEST_F(FormatTest, AlignsMultiLineComments) {
 
 TEST_F(FormatTest, SplitsLongLinesInComments) {
   EXPECT_EQ("/* This is a long\n"
-            "comment that doesn't\n"
-            "fit on one line.  */",
+            " * comment that\n"
+            " * doesn't\n"
+            " * fit on one line.\n"
+            " */",
             format("/* "
                    "This is a long                                         "
-                   "comment that doesn't                                    "
+                   "comment that "
+                   "doesn't                                    "
                    "fit on one line.  */",
                    getLLVMStyleWithColumns(20)));
   EXPECT_EQ("/*\n"
@@ -690,7 +693,7 @@ TEST_F(FormatTest, SplitsLongLinesInComments) {
             " * doesn't fit on\n"
             " * one line.\n"
             " */",
-            format("/*\n"
+            format("/*      \n"
                    " * This is a long "
                    "   comment that     "
                    "   doesn't fit on   "
@@ -757,12 +760,22 @@ TEST_F(FormatTest, SplitsLongLinesInComments) {
             format("   /*\n"
                    "    * This is a long comment that doesn't fit on one line\n"
                    "    */", getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("{\n"
+            "  if (something) /* This is a\n"
+            "long comment */\n"
+            "    ;\n"
+            "}",
+            format("{\n"
+                   "  if (something) /* This is a long comment */\n"
+                   "    ;\n"
+                   "}",
+                   getLLVMStyleWithColumns(30)));
 }
 
 TEST_F(FormatTest, SplitsLongLinesInCommentsInPreprocessor) {
   EXPECT_EQ("#define X          \\\n"
-            // FIXME: Backslash should be added here.
-            "  /*\n"
+            "  /*               \\\n"
+            "   Test            \\\n"
             "   Macro comment   \\\n"
             "   with a long     \\\n"
             "   line            \\\n"
@@ -773,19 +786,31 @@ TEST_F(FormatTest, SplitsLongLinesInCommentsInPreprocessor) {
             "  A + B",
             format("#define X \\\n"
                    "  /*\n"
+                   "   Test\n"
                    "   Macro comment with a long  line\n"
                    "   */ \\\n"
                    "  A + B",
                    getLLVMStyleWithColumns(20)));
   EXPECT_EQ("#define X          \\\n"
             "  /* Macro comment \\\n"
-            // FIXME: Indent comment continuations when the comment is a first
-            // token in a line.
-            "with a long  line  \\\n"
+            "     with a long   \\\n"
             // FIXME: We should look at the length of the last line of the token
             // instead of the full token's length.
-            //"*/                 \\\n"
-            "*/\\\n"
+            //"   line */         \\\n"
+            "     line */\\\n"
+            "  A + B",
+            format("#define X \\\n"
+                   "  /* Macro comment with a long\n"
+                   "     line */ \\\n"
+                   "  A + B",
+                   getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("#define X          \\\n"
+            "  /* Macro comment \\\n"
+            "   * with a long   \\\n"
+            // FIXME: We should look at the length of the last line of the token
+            // instead of the full token's length.
+            //"   * line */       \\\n"
+            "   * line */\\\n"
             "  A + B",
             format("#define X \\\n"
                    "  /* Macro comment with a long  line */ \\\n"
@@ -2627,12 +2652,12 @@ TEST_F(FormatTest, BlockComments) {
   EXPECT_EQ("/* */ /* */ /* */\n/* */ /* */ /* */",
             format("/* *//* */  /* */\n/* *//* */  /* */"));
   EXPECT_EQ("/* */ a /* */ b;", format("  /* */  a/* */  b;"));
-  EXPECT_EQ("#define A /*   */\\\n"
+  EXPECT_EQ("#define A /*123*/\\\n"
             "  b\n"
             "/* */\n"
             "someCall(\n"
             "    parameter);",
-            format("#define A /*   */ b\n"
+            format("#define A /*123*/ b\n"
                    "/* */\n"
                    "someCall(parameter);",
                    getLLVMStyleWithColumns(15)));
