@@ -111,6 +111,7 @@ static void MemoryProfiler(Context *ctx, fd_t fd, int i) {
 static void BackgroundThread(void *arg) {
   ScopedInRtl in_rtl;
   Context *ctx = CTX();
+  const u64 kMs2Ns = 1000 * 1000;
 
   fd_t mprof_fd = kInvalidFd;
   if (flags()->profile_memory && flags()->profile_memory[0]) {
@@ -131,7 +132,7 @@ static void BackgroundThread(void *arg) {
 
     // Flush memory if requested.
     if (flags()->flush_memory_ms) {
-      if (last_flush + flags()->flush_memory_ms * 1000*1000 > now) {
+      if (last_flush + flags()->flush_memory_ms * kMs2Ns < now) {
         FlushShadowMemory();
         last_flush = NanoTime();
       }
@@ -142,12 +143,15 @@ static void BackgroundThread(void *arg) {
       MemoryProfiler(ctx, mprof_fd, i);
 
 #ifndef TSAN_GO
-    // Flush symbolizer cache if not symbolized for more than 5 seconds.
-    u64 last = atomic_load(&ctx->last_symbolize_time_ns, memory_order_relaxed);
-    if (last != 0 && last + 5*1000*1000 > now) {
-      Lock l(&ctx->report_mtx);
-      SymbolizeFlush();
-      atomic_store(&ctx->last_symbolize_time_ns, 0, memory_order_relaxed);
+    // Flush symbolizer cache if requested.
+    if (flags()->flush_symbolizer_ms > 0) {
+      u64 last = atomic_load(&ctx->last_symbolize_time_ns,
+                             memory_order_relaxed);
+      if (last != 0 && last + flags()->flush_symbolizer_ms * kMs2Ns < now) {
+        Lock l(&ctx->report_mtx);
+        SymbolizeFlush();
+        atomic_store(&ctx->last_symbolize_time_ns, 0, memory_order_relaxed);
+      }
     }
 #endif
   }
