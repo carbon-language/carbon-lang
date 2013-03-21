@@ -1,10 +1,11 @@
+//===-- Metric.h ------------------------------------------------*- C++ -*-===//
 //
-//  Metric.h
-//  PerfTestDriver
+//                     The LLVM Compiler Infrastructure
 //
-//  Created by Enrico Granata on 3/7/13.
-//  Copyright (c) 2013 Apple Inc. All rights reserved.
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
+//===----------------------------------------------------------------------===//
 
 #ifndef __PerfTestDriver__Metric__
 #define __PerfTestDriver__Metric__

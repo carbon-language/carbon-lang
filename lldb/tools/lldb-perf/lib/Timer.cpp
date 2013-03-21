@@ -1,10 +1,11 @@
+//===-- Timer.cpp -----------------------------------------------*- C++ -*-===//
 //
-//  Timer.cpp
-//  PerfTestDriver
+//                     The LLVM Compiler Infrastructure
 //
-//  Created by Enrico Granata on 3/6/13.
-//  Copyright (c) 2013 Apple Inc. All rights reserved.
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
+//===----------------------------------------------------------------------===//
 
 #include "Timer.h"
 #include <assert.h>
