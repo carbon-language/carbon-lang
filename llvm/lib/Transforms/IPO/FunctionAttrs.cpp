@@ -1,4 +1,4 @@
-//===- FunctionAttrs.cpp - Pass which marks functions readnone or readonly ===//
+//===- FunctionAttrs.cpp - Pass which marks functions attributes ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,6 +14,8 @@
 // to the function does not create any copies of the pointer value that
 // outlive the call.  This more or less means that the pointer is only
 // dereferenced, and not returned from the function or stored in a global.
+// Finally, well-known library call declarations are marked with all
+// attributes that are consistent with the function's standard definition.
 // This pass is implemented as a bottom-up traversal of the call-graph.
 //
 //===----------------------------------------------------------------------===//
@@ -32,12 +34,14 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/InstIterator.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 using namespace llvm;
 
 STATISTIC(NumReadNone, "Number of functions marked readnone");
 STATISTIC(NumReadOnly, "Number of functions marked readonly");
 STATISTIC(NumNoCapture, "Number of arguments marked nocapture");
 STATISTIC(NumNoAlias, "Number of function returns marked noalias");
+STATISTIC(NumAnnotated, "Number of attributes added to library functions");
 
 namespace {
   struct FunctionAttrs : public CallGraphSCCPass {
@@ -62,14 +66,63 @@ namespace {
     // AddNoAliasAttrs - Deduce noalias attributes for the SCC.
     bool AddNoAliasAttrs(const CallGraphSCC &SCC);
 
+    // Utility methods used by inferPrototypeAttributes to add attributes
+    // and maintain annotation statistics.
+
+    void setDoesNotAccessMemory(Function &F) {
+      if (!F.doesNotAccessMemory()) {
+	F.setDoesNotAccessMemory();
+	++NumAnnotated;
+      }
+    }
+
+    void setOnlyReadsMemory(Function &F) {
+      if (!F.onlyReadsMemory()) {
+	F.setOnlyReadsMemory();
+	++NumAnnotated;
+      }
+    }
+
+    void setDoesNotThrow(Function &F) {
+      if (!F.doesNotThrow()) {
+	F.setDoesNotThrow();
+	++NumAnnotated;
+      }
+    }
+
+    void setDoesNotCapture(Function &F, unsigned n) {
+      if (!F.doesNotCapture(n)) {
+	F.setDoesNotCapture(n);
+	++NumAnnotated;
+      }
+    }
+
+    void setDoesNotAlias(Function &F, unsigned n) {
+      if (!F.doesNotAlias(n)) {
+	F.setDoesNotAlias(n);
+	++NumAnnotated;
+      }
+    }
+
+    // inferPrototypeAttributes - Analyze the name and prototype of the
+    // given function and set any applicable attributes.  Returns true
+    // if any attributes were set and false otherwise.
+    bool inferPrototypeAttributes(Function &F);
+
+    // annotateLibraryCalls - Adds attributes to well-known standard library
+    // call declarations.
+    bool annotateLibraryCalls(const CallGraphSCC &SCC);
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       AU.addRequired<AliasAnalysis>();
+      AU.addRequired<TargetLibraryInfo>();
       CallGraphSCCPass::getAnalysisUsage(AU);
     }
 
   private:
     AliasAnalysis *AA;
+    TargetLibraryInfo *TLI;
   };
 }
 
@@ -77,6 +130,7 @@ char FunctionAttrs::ID = 0;
 INITIALIZE_PASS_BEGIN(FunctionAttrs, "functionattrs",
                 "Deduce function attributes", false, false)
 INITIALIZE_AG_DEPENDENCY(CallGraph)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_PASS_END(FunctionAttrs, "functionattrs",
                 "Deduce function attributes", false, false)
 
@@ -598,10 +652,693 @@ bool FunctionAttrs::AddNoAliasAttrs(const CallGraphSCC &SCC) {
   return MadeChange;
 }
 
+/// inferPrototypeAttributes - Analyze the name and prototype of the
+/// given function and set any applicable attributes.  Returns true
+/// if any attributes were set and false otherwise.
+bool FunctionAttrs::inferPrototypeAttributes(Function &F) {
+  FunctionType *FTy = F.getFunctionType();
+  LibFunc::Func TheLibFunc;
+  if (!(TLI->getLibFunc(F.getName(), TheLibFunc) && TLI->has(TheLibFunc)))
+    return false;
+
+  switch (TheLibFunc) {
+  case LibFunc::strlen:
+    if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setOnlyReadsMemory(F);
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::strchr:
+  case LibFunc::strrchr:
+    if (FTy->getNumParams() != 2 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isIntegerTy())
+      return false;
+    setOnlyReadsMemory(F);
+    setDoesNotThrow(F);
+    break;
+  case LibFunc::strcpy:
+  case LibFunc::stpcpy:
+  case LibFunc::strcat:
+  case LibFunc::strtol:
+  case LibFunc::strtod:
+  case LibFunc::strtof:
+  case LibFunc::strtoul:
+  case LibFunc::strtoll:
+  case LibFunc::strtold:
+  case LibFunc::strncat:
+  case LibFunc::strncpy:
+  case LibFunc::stpncpy:
+  case LibFunc::strtoull:
+    if (FTy->getNumParams() < 2 ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::strxfrm:
+    if (FTy->getNumParams() != 3 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::strcmp:
+  case LibFunc::strspn:
+  case LibFunc::strncmp:
+  case LibFunc::strcspn:
+  case LibFunc::strcoll:
+  case LibFunc::strcasecmp:
+  case LibFunc::strncasecmp:
+    if (FTy->getNumParams() < 2 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setOnlyReadsMemory(F);
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::strstr:
+  case LibFunc::strpbrk:
+    if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setOnlyReadsMemory(F);
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::strtok:
+  case LibFunc::strtok_r:
+    if (FTy->getNumParams() < 2 || !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::scanf:
+  case LibFunc::setbuf:
+  case LibFunc::setvbuf:
+    if (FTy->getNumParams() < 1 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::strdup:
+  case LibFunc::strndup:
+    if (FTy->getNumParams() < 1 || !FTy->getReturnType()->isPointerTy() ||
+        !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotAlias(F, 0);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::stat:
+  case LibFunc::sscanf:
+  case LibFunc::sprintf:
+  case LibFunc::statvfs:
+    if (FTy->getNumParams() < 2 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::snprintf:
+    if (FTy->getNumParams() != 3 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(2)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 3);
+    break;
+  case LibFunc::setitimer:
+    if (FTy->getNumParams() != 3 ||
+        !FTy->getParamType(1)->isPointerTy() ||
+        !FTy->getParamType(2)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 2);
+    setDoesNotCapture(F, 3);
+    break;
+  case LibFunc::system:
+    if (FTy->getNumParams() != 1 ||
+        !FTy->getParamType(0)->isPointerTy())
+      return false;
+    // May throw; "system" is a valid pthread cancellation point.
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::malloc:
+    if (FTy->getNumParams() != 1 ||
+        !FTy->getReturnType()->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotAlias(F, 0);
+    break;
+  case LibFunc::memcmp:
+    if (FTy->getNumParams() != 3 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setOnlyReadsMemory(F);
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::memchr:
+  case LibFunc::memrchr:
+    if (FTy->getNumParams() != 3)
+      return false;
+    setOnlyReadsMemory(F);
+    setDoesNotThrow(F);
+    break;
+  case LibFunc::modf:
+  case LibFunc::modff:
+  case LibFunc::modfl:
+  case LibFunc::memcpy:
+  case LibFunc::memccpy:
+  case LibFunc::memmove:
+    if (FTy->getNumParams() < 2 ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::memalign:
+    if (!FTy->getReturnType()->isPointerTy())
+      return false;
+    setDoesNotAlias(F, 0);
+    break;
+  case LibFunc::mkdir:
+  case LibFunc::mktime:
+    if (FTy->getNumParams() == 0 ||
+        !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::realloc:
+    if (FTy->getNumParams() != 2 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getReturnType()->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotAlias(F, 0);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::read:
+    if (FTy->getNumParams() != 3 ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    // May throw; "read" is a valid pthread cancellation point.
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::rmdir:
+  case LibFunc::rewind:
+  case LibFunc::remove:
+  case LibFunc::realpath:
+    if (FTy->getNumParams() < 1 ||
+        !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::rename:
+  case LibFunc::readlink:
+    if (FTy->getNumParams() < 2 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::write:
+    if (FTy->getNumParams() != 3 || !FTy->getParamType(1)->isPointerTy())
+      return false;
+    // May throw; "write" is a valid pthread cancellation point.
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::bcopy:
+    if (FTy->getNumParams() != 3 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::bcmp:
+    if (FTy->getNumParams() != 3 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setOnlyReadsMemory(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::bzero:
+    if (FTy->getNumParams() != 2 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::calloc:
+    if (FTy->getNumParams() != 2 ||
+        !FTy->getReturnType()->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotAlias(F, 0);
+    break;
+  case LibFunc::chmod:
+  case LibFunc::chown:
+  case LibFunc::ctermid:
+  case LibFunc::clearerr:
+  case LibFunc::closedir:
+    if (FTy->getNumParams() == 0 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::atoi:
+  case LibFunc::atol:
+  case LibFunc::atof:
+  case LibFunc::atoll:
+    if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setOnlyReadsMemory(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::access:
+    if (FTy->getNumParams() != 2 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::fopen:
+    if (FTy->getNumParams() != 2 ||
+        !FTy->getReturnType()->isPointerTy() ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotAlias(F, 0);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::fdopen:
+    if (FTy->getNumParams() != 2 ||
+        !FTy->getReturnType()->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotAlias(F, 0);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::feof:
+  case LibFunc::free:
+  case LibFunc::fseek:
+  case LibFunc::ftell:
+  case LibFunc::fgetc:
+  case LibFunc::fseeko:
+  case LibFunc::ftello:
+  case LibFunc::fileno:
+  case LibFunc::fflush:
+  case LibFunc::fclose:
+  case LibFunc::fsetpos:
+  case LibFunc::flockfile:
+  case LibFunc::funlockfile:
+  case LibFunc::ftrylockfile:
+    if (FTy->getNumParams() == 0 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::ferror:
+    if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setOnlyReadsMemory(F);
+    break;
+  case LibFunc::fputc:
+  case LibFunc::fstat:
+  case LibFunc::frexp:
+  case LibFunc::frexpf:
+  case LibFunc::frexpl:
+  case LibFunc::fstatvfs:
+    if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::fgets:
+    if (FTy->getNumParams() != 3 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(2)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 3);
+  case LibFunc::fread:
+  case LibFunc::fwrite:
+    if (FTy->getNumParams() != 4 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(3)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 4);
+  case LibFunc::fputs:
+  case LibFunc::fscanf:
+  case LibFunc::fprintf:
+  case LibFunc::fgetpos:
+    if (FTy->getNumParams() < 2 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::getc:
+  case LibFunc::getlogin_r:
+  case LibFunc::getc_unlocked:
+    if (FTy->getNumParams() == 0 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::getenv:
+    if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setOnlyReadsMemory(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::gets:
+  case LibFunc::getchar:
+    setDoesNotThrow(F);
+    break;
+  case LibFunc::getitimer:
+    if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::getpwnam:
+    if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::ungetc:
+    if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::uname:
+  case LibFunc::unlink:
+  case LibFunc::unsetenv:
+    if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::utime:
+  case LibFunc::utimes:
+    if (FTy->getNumParams() != 2 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::putc:
+    if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::puts:
+  case LibFunc::printf:
+  case LibFunc::perror:
+    if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::pread:
+  case LibFunc::pwrite:
+    if (FTy->getNumParams() != 4 || !FTy->getParamType(1)->isPointerTy())
+      return false;
+    // May throw; these are valid pthread cancellation points.
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::putchar:
+    setDoesNotThrow(F);
+    break;
+  case LibFunc::popen:
+    if (FTy->getNumParams() != 2 ||
+        !FTy->getReturnType()->isPointerTy() ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotAlias(F, 0);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::pclose:
+    if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::vscanf:
+    if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::vsscanf:
+  case LibFunc::vfscanf:
+    if (FTy->getNumParams() != 3 ||
+        !FTy->getParamType(1)->isPointerTy() ||
+        !FTy->getParamType(2)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::valloc:
+    if (!FTy->getReturnType()->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotAlias(F, 0);
+    break;
+  case LibFunc::vprintf:
+    if (FTy->getNumParams() != 2 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::vfprintf:
+  case LibFunc::vsprintf:
+    if (FTy->getNumParams() != 3 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::vsnprintf:
+    if (FTy->getNumParams() != 4 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(2)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 3);
+    break;
+  case LibFunc::open:
+    if (FTy->getNumParams() < 2 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    // May throw; "open" is a valid pthread cancellation point.
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::opendir:
+    if (FTy->getNumParams() != 1 ||
+        !FTy->getReturnType()->isPointerTy() ||
+        !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotAlias(F, 0);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::tmpfile:
+    if (!FTy->getReturnType()->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotAlias(F, 0);
+    break;
+  case LibFunc::times:
+    if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::htonl:
+  case LibFunc::htons:
+  case LibFunc::ntohl:
+  case LibFunc::ntohs:
+    setDoesNotThrow(F);
+    setDoesNotAccessMemory(F);
+    break;
+  case LibFunc::lstat:
+    if (FTy->getNumParams() != 2 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::lchown:
+    if (FTy->getNumParams() != 3 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::qsort:
+    if (FTy->getNumParams() != 4 || !FTy->getParamType(3)->isPointerTy())
+      return false;
+    // May throw; places call through function pointer.
+    setDoesNotCapture(F, 4);
+    break;
+  case LibFunc::dunder_strdup:
+  case LibFunc::dunder_strndup:
+    if (FTy->getNumParams() < 1 ||
+        !FTy->getReturnType()->isPointerTy() ||
+        !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotAlias(F, 0);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::dunder_strtok_r:
+    if (FTy->getNumParams() != 3 ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::under_IO_getc:
+    if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::under_IO_putc:
+    if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::dunder_isoc99_scanf:
+    if (FTy->getNumParams() < 1 ||
+        !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::stat64:
+  case LibFunc::lstat64:
+  case LibFunc::statvfs64:
+  case LibFunc::dunder_isoc99_sscanf:
+    if (FTy->getNumParams() < 1 ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::fopen64:
+    if (FTy->getNumParams() != 2 ||
+        !FTy->getReturnType()->isPointerTy() ||
+        !FTy->getParamType(0)->isPointerTy() ||
+        !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotAlias(F, 0);
+    setDoesNotCapture(F, 1);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::fseeko64:
+  case LibFunc::ftello64:
+    if (FTy->getNumParams() == 0 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 1);
+    break;
+  case LibFunc::tmpfile64:
+    if (!FTy->getReturnType()->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotAlias(F, 0);
+    break;
+  case LibFunc::fstat64:
+  case LibFunc::fstatvfs64:
+    if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+      return false;
+    setDoesNotThrow(F);
+    setDoesNotCapture(F, 2);
+    break;
+  case LibFunc::open64:
+    if (FTy->getNumParams() < 2 || !FTy->getParamType(0)->isPointerTy())
+      return false;
+    // May throw; "open" is a valid pthread cancellation point.
+    setDoesNotCapture(F, 1);
+    break;
+  default:
+    // Didn't mark any attributes.
+    return false;
+  }
+
+  return true;
+}
+
+/// annotateLibraryCalls - Adds attributes to well-known standard library
+/// call declarations.
+bool FunctionAttrs::annotateLibraryCalls(const CallGraphSCC &SCC) {
+  bool MadeChange = false;
+
+  // Check each function in turn annotating well-known library function
+  // declarations with attributes.
+  for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
+    Function *F = (*I)->getFunction();
+
+    if (F != 0 && F->isDeclaration())
+      MadeChange |= inferPrototypeAttributes(*F);
+  }
+
+  return MadeChange;
+}
+
 bool FunctionAttrs::runOnSCC(CallGraphSCC &SCC) {
   AA = &getAnalysis<AliasAnalysis>();
+  TLI = &getAnalysis<TargetLibraryInfo>();
 
-  bool Changed = AddReadAttrs(SCC);
+  bool Changed = annotateLibraryCalls(SCC);
+  Changed |= AddReadAttrs(SCC);
   Changed |= AddNoCaptureAttrs(SCC);
   Changed |= AddNoAliasAttrs(SCC);
   return Changed;

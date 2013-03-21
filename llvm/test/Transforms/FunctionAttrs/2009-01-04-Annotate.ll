@@ -1,4 +1,4 @@
-; RUN: opt < %s -simplify-libcalls -S | FileCheck %s
+; RUN: opt < %s -functionattrs -S | FileCheck %s
 
 ; CHECK: declare noalias i8* @fopen(i8* nocapture, i8* nocapture) #0
 declare i8* @fopen(i8*, i8*)
