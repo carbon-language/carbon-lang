@@ -95,58 +95,55 @@ ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
   , tls_size(tls_size) {
 }
 
-static void MemoryProfileThread(void *arg) {
-  ScopedInRtl in_rtl;
-  fd_t fd = (fd_t)(uptr)arg;
+static void MemoryProfiler(int i, fd_t fd) {
   Context *ctx = CTX();
-  for (int i = 0; ; i++) {
-    InternalScopedBuffer<char> buf(4096);
-    uptr n_threads;
-    uptr n_running_threads;
-    ctx->thread_registry->GetNumberOfThreads(&n_threads, &n_running_threads);
-    internal_snprintf(buf.data(), buf.size(), "%d: nthr=%d nlive=%d\n",
-        i, n_threads, n_running_threads);
-    internal_write(fd, buf.data(), internal_strlen(buf.data()));
-    WriteMemoryProfile(buf.data(), buf.size());
-    internal_write(fd, buf.data(), internal_strlen(buf.data()));
-    SleepForSeconds(1);
-  }
+  InternalScopedBuffer<char> buf(4096);
+  uptr n_threads;
+  uptr n_running_threads;
+  ctx->thread_registry->GetNumberOfThreads(&n_threads, &n_running_threads);
+  internal_snprintf(buf.data(), buf.size(), "%d: nthr=%d nlive=%d\n",
+      i, n_threads, n_running_threads);
+  internal_write(fd, buf.data(), internal_strlen(buf.data()));
+  WriteMemoryProfile(buf.data(), buf.size());
+  internal_write(fd, buf.data(), internal_strlen(buf.data()));
 }
 
-static void InitializeMemoryProfile() {
-  if (flags()->profile_memory == 0 || flags()->profile_memory[0] == 0)
-    return;
-  InternalScopedBuffer<char> filename(4096);
-  internal_snprintf(filename.data(), filename.size(), "%s.%d",
-      flags()->profile_memory, GetPid());
-  fd_t fd = OpenFile(filename.data(), true);
-  if (fd == kInvalidFd) {
-    Printf("Failed to open memory profile file '%s'\n", &filename[0]);
-    Die();
+static void BackgroundThread(void *arg) {
+  ScopedInRtl in_rtl;
+
+  fd_t mprof_fd = kInvalidFd;
+  if (flags()->profile_memory && flags()->profile_memory[0]) {
+    InternalScopedBuffer<char> filename(4096);
+    internal_snprintf(filename.data(), filename.size(), "%s.%d",
+        flags()->profile_memory, GetPid());
+    mprof_fd = OpenFile(filename.data(), true);
+    if (mprof_fd == kInvalidFd) {
+      Printf("ThreadSanitizer: failed to open memory profile file '%s'\n",
+          &filename[0]);
+    }
   }
-  internal_start_thread(&MemoryProfileThread, (void*)(uptr)fd);
+
+  u64 last_flush = NanoTime();
+  for (int i = 0; ; i++) {
+    SleepForSeconds(1);
+    u64 now = NanoTime();
+
+    if (flags()->flush_memory_ms) {
+      if (last_flush + flags()->flush_memory_ms * 1000*1000 > now) {
+        FlushShadowMemory();
+        last_flush = NanoTime();
+      }
+    }
+
+    if (mprof_fd != kInvalidFd)
+      MemoryProfiler(i, mprof_fd);
+  }
 }
 
 void DontNeedShadowFor(uptr addr, uptr size) {
   uptr shadow_beg = MemToShadow(addr);
   uptr shadow_end = MemToShadow(addr + size);
   FlushUnneededShadowMemory(shadow_beg, shadow_end - shadow_beg);
-}
-
-static void MemoryFlushThread(void *arg) {
-  ScopedInRtl in_rtl;
-  for (int i = 0; ; i++) {
-    SleepForMillis(flags()->flush_memory_ms);
-    FlushShadowMemory();
-  }
-}
-
-static void InitializeMemoryFlush() {
-  if (flags()->flush_memory_ms == 0)
-    return;
-  if (flags()->flush_memory_ms < 100)
-    flags()->flush_memory_ms = 100;
-  internal_start_thread(&MemoryFlushThread, 0);
 }
 
 void MapShadow(uptr addr, uptr size) {
@@ -205,8 +202,7 @@ void Initialize(ThreadState *thr) {
     }
   }
 #endif
-  InitializeMemoryProfile();
-  InitializeMemoryFlush();
+  internal_start_thread(&BackgroundThread, 0);
 
   if (ctx->flags.verbosity)
     Printf("***** Running under ThreadSanitizer v2 (pid %d) *****\n",

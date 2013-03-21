@@ -140,6 +140,7 @@ uptr GetTlsSize();
 // Other
 void SleepForSeconds(int seconds);
 void SleepForMillis(int millis);
+u64 NanoTime();
 int Atexit(void (*function)(void));
 void SortArray(uptr *array, uptr size);
 

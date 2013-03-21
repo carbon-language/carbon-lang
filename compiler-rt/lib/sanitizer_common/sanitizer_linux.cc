@@ -44,6 +44,12 @@
 #include <sys/signal.h>
 #endif
 
+// <linux/time.h>
+struct kernel_timeval {
+  long tv_sec;
+  long tv_usec;
+};
+
 // <linux/futex.h> is broken on some linux distributions.
 const int FUTEX_WAIT = 0;
 const int FUTEX_WAKE = 1;
@@ -175,6 +181,12 @@ bool FileExists(const char *filename) {
 
 uptr GetTid() {
   return syscall(__NR_gettid);
+}
+
+u64 NanoTime() {
+  kernel_timeval tv;
+  syscall(__NR_gettimeofday, &tv, 0);
+  return (u64)tv.tv_sec * 1000*1000*1000 + tv.tv_usec * 1000;
 }
 
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
