@@ -18,6 +18,9 @@
 #include <cctype>
 #include <cstdio>
 #include <cstring>
+#ifdef __APPLE__
+#include <unistd.h>
+#endif
 
 namespace {
   using llvm::StringRef;
@@ -492,6 +495,27 @@ bool is_separator(char value) {
 
 void system_temp_directory(bool erasedOnReboot, SmallVectorImpl<char> &result) {
   result.clear();
+
+#ifdef __APPLE__
+  // On Darwin, use DARWIN_USER_TEMP_DIR or DARWIN_USER_CACHE_DIR.
+  int ConfName = erasedOnReboot? _CS_DARWIN_USER_TEMP_DIR
+                               : _CS_DARWIN_USER_CACHE_DIR;
+  size_t ConfLen = confstr(ConfName, 0, 0);
+  if (ConfLen > 0) {
+    do {
+      result.resize(ConfLen);
+      ConfLen = confstr(ConfName, result.data(), result.size());
+    } while (ConfLen > 0 && ConfLen != result.size());
+
+    if (ConfLen > 0) {
+      assert(result.back() == 0);
+      result.pop_back();
+      return;
+    }
+
+    result.clear();
+  }
+#endif
 
   // Check whether the temporary directory is specified by an environment
   // variable.
