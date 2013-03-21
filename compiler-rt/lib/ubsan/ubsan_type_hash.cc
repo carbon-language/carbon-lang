@@ -116,7 +116,7 @@ __ubsan::__ubsan_vptr_type_cache[__ubsan::VptrTypeCacheSize] = { 1 };
 static bool isDerivedFromAtOffset(const abi::__class_type_info *Derived,
                                   const abi::__class_type_info *Base,
                                   sptr Offset) {
-  if (Derived == Base)
+  if (Derived->__type_name == Base->__type_name)
     return Offset == 0;
 
   if (const abi::__si_class_type_info *SI =
