@@ -2,7 +2,7 @@
 // RUN: %clang_cc1 -emit-llvm -fblocks -g -triple x86_64-apple-darwin10 -fobjc-runtime=macosx-fragile-10.5 %s -o - | FileCheck %s
 extern void foo(void(^)(void));
 
-// CHECK: metadata !{i32 786478, i32 0, metadata ![[FILE:.*]], metadata !"__destroy_helper_block_", metadata !"__destroy_helper_block_", metadata !"", metadata ![[FILE]], i32 24, metadata !{{.*}}, i1 true, i1 true, i32 0, i32 0, null, i32 0, i1 false, void (i8*)* @__destroy_helper_block_, null, null, metadata !{{.*}}, i32 24} ; [ DW_TAG_subprogram ]
+// CHECK: [ DW_TAG_subprogram ] {{.*}} [__destroy_helper_block_]
 
 @interface NSObject {
   struct objc_object *isa;
