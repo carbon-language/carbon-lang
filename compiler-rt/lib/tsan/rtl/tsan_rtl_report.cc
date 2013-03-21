@@ -616,7 +616,12 @@ void ReportRace(ThreadState *thr) {
   Context *ctx = CTX();
   ThreadRegistryLock l0(ctx->thread_registry);
 
-  ScopedReport rep(freed ? ReportTypeUseAfterFree : ReportTypeRace);
+  ReportType typ = ReportTypeRace;
+  if (thr->is_vptr_access)
+    typ = ReportTypeVptrRace;
+  else if (freed)
+    typ = ReportTypeUseAfterFree;
+  ScopedReport rep(typ);
   const uptr kMop = 2;
   StackTrace traces[kMop];
   const uptr toppc = TraceTopPC(thr);

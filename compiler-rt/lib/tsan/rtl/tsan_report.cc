@@ -46,6 +46,8 @@ const char *thread_name(char *buf, int tid) {
 static const char *ReportTypeString(ReportType typ) {
   if (typ == ReportTypeRace)
     return "data race";
+  if (typ == ReportTypeVptrRace)
+    return "data race on vptr (ctor/dtor vs virtual call)";
   if (typ == ReportTypeUseAfterFree)
     return "heap-use-after-free";
   if (typ == ReportTypeThreadLeak)

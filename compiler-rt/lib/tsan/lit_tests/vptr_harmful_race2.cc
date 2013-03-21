@@ -29,13 +29,13 @@ struct B : A {
 static A *obj = new B;
 
 void *Thread1(void *x) {
+  sleep(1);
   obj->F();
   obj->Done();
   return NULL;
 }
 
 void *Thread2(void *x) {
-  sleep(1);
   delete obj;
   return NULL;
 }
@@ -48,4 +48,4 @@ int main() {
   pthread_join(t[1], NULL);
 }
 
-// CHECK: WARNING: ThreadSanitizer: data race on vptr
+// CHECK: WARNING: ThreadSanitizer: data race

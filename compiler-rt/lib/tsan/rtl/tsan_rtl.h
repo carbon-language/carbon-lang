@@ -426,6 +426,7 @@ struct ThreadState {
   bool in_symbolizer;
   bool is_alive;
   bool is_freeing;
+  bool is_vptr_access;
   const uptr stk_addr;
   const uptr stk_size;
   const uptr tls_addr;

@@ -41,6 +41,7 @@ void __tsan_write4(void *addr) SANITIZER_INTERFACE_ATTRIBUTE;
 void __tsan_write8(void *addr) SANITIZER_INTERFACE_ATTRIBUTE;
 void __tsan_write16(void *addr) SANITIZER_INTERFACE_ATTRIBUTE;
 
+void __tsan_vptr_read(void **vptr_p) SANITIZER_INTERFACE_ATTRIBUTE;
 void __tsan_vptr_update(void **vptr_p, void *new_val)
     SANITIZER_INTERFACE_ATTRIBUTE;
 
