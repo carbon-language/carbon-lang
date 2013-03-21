@@ -424,7 +424,19 @@ public:
     ///     length bytes available at that offset, \b false otherwise.
     //------------------------------------------------------------------
     bool
-    ValidOffsetForDataOfSize (uint32_t offset, uint32_t length) const;
+    ValidOffsetForDataOfSize (uint32_t offset, uint32_t length) const
+    {
+        return length <= BytesLeft (offset);
+    }
+
+    uint32_t
+    BytesLeft (uint32_t offset) const
+    {
+        const uint32_t size = GetByteSize();
+        if (size > offset)
+            return size - offset;
+        return 0;
+    }
 
 protected:
     //------------------------------------------------------------------

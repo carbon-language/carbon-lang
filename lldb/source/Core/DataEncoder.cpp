@@ -142,32 +142,6 @@ DataEncoder::GetSharedDataOffset () const
     return 0;
 }
 
-//------------------------------------------------------------------
-// Returns true if there are LENGTH bytes availabe starting OFFSET
-// into the data that is in this object.
-//------------------------------------------------------------------
-bool
-DataEncoder::ValidOffsetForDataOfSize (uint32_t offset, uint32_t length) const
-{
-    size_t size = GetByteSize();
-    if (offset >= size)
-        return false;   // offset isn't valid
-
-    if (length == 0)
-        return true;    // No bytes requested at this offset, return true
-
-    // If we flip the bits in offset we can figure out how
-    // many bytes we have left before "offset + length"
-    // could overflow when doing unsigned arithmetic.
-    if (length > ~offset)
-        return false;   // unsigned overflow
-
-    // Make sure "offset + length" is a valid offset as well.
-    // length must be greater than zero for this to be a
-    // valid expression, and we have already checked for this.
-    return ((offset + length) <= size);
-}
-
 //----------------------------------------------------------------------
 // Set the data with which this object will extract from to data
 // starting at BYTES and set the length of the data to LENGTH bytes

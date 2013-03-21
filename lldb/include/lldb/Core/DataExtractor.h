@@ -1234,8 +1234,7 @@ public:
     bool
     ValidOffsetForDataOfSize (lldb::offset_t offset, lldb::offset_t length) const
     {
-        lldb::offset_t bytes_left = BytesLeft (offset);
-        return length <= bytes_left;
+        return length <= BytesLeft (offset);
     }
 
     size_t
@@ -1253,9 +1252,9 @@ protected:
     BytesLeft (lldb::offset_t offset) const
     {
         const lldb::offset_t size = GetByteSize();
-        if (offset >= size)
-            return 0;
-        return offset - size;
+        if (size > offset)
+            return size - offset;
+        return 0;
     }
     
     //------------------------------------------------------------------
