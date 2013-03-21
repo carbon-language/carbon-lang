@@ -198,7 +198,6 @@ ThreadList::FindThreadByIndexID (uint32_t index_id, bool can_update)
 bool
 ThreadList::ShouldStop (Event *event_ptr)
 {
-    bool should_stop = false;    
     // Running events should never stop, obviously...
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
@@ -228,15 +227,31 @@ ThreadList::ShouldStop (Event *event_ptr)
         log->Printf ("ThreadList::%s: %" PRIu64 " threads", __FUNCTION__, (uint64_t)m_threads.size());
     }
 
+    bool did_anybody_stop_for_a_reason = false;
+    bool should_stop = false;    
+    
     for (pos = threads_copy.begin(); pos != end; ++pos)
     {
         ThreadSP thread_sp(*pos);
+        
+        did_anybody_stop_for_a_reason |= thread_sp->ThreadStoppedForAReason();
         
         const bool thread_should_stop = thread_sp->ShouldStop(event_ptr);
         if (thread_should_stop)
             should_stop |= true;
     }
 
+    // We should never get a stop for which no thread had a stop reason, but sometimes we do see this -
+    // for instance when we first connect to a remote stub.  In that case we should stop, since we can't figure out
+    // the right thing to do and stopping gives the user control over what to do in this instance.
+    
+    if (!should_stop && !did_anybody_stop_for_a_reason)
+    {
+        should_stop = true;
+        if (log)
+            log->Printf ("ThreadList::%s we stopped but no threads had a stop reason, overriding should_stop and stopping.", __FUNCTION__);
+    }
+    
     if (log)
         log->Printf ("ThreadList::%s overall should_stop = %i", __FUNCTION__, should_stop);
 
