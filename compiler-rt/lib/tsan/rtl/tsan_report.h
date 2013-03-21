@@ -102,6 +102,7 @@ class ReportDesc {
   Vector<ReportMutex*> mutexes;
   Vector<ReportThread*> threads;
   ReportStack *sleep;
+  int count;
 
   ReportDesc();
   ~ReportDesc();

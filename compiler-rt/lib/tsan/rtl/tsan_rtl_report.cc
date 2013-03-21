@@ -365,6 +365,10 @@ void ScopedReport::AddSleep(u32 stack_id) {
 }
 #endif
 
+void ScopedReport::SetCount(int count) {
+  rep_->count = count;
+}
+
 const ReportDesc *ScopedReport::GetReport() const {
   return rep_;
 }

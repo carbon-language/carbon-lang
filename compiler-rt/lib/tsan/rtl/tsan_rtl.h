@@ -554,6 +554,7 @@ class ScopedReport {
   void AddMutex(const SyncVar *s);
   void AddLocation(uptr addr, uptr size);
   void AddSleep(u32 stack_id);
+  void SetCount(int count);
 
   const ReportDesc *GetReport() const;
 

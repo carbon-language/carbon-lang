@@ -3,15 +3,14 @@
 #include <unistd.h>
 
 void *Thread(void *x) {
+  sleep(10);
   return 0;
 }
 
 int main() {
   pthread_t t;
   pthread_create(&t, 0, Thread, 0);
-  sleep(1);
   return 0;
 }
 
-// CHECK: WARNING: ThreadSanitizer: thread leak
-// CHECK: SUMMARY: ThreadSanitizer: thread leak{{.*}}main
+// CHECK-NOT: WARNING: ThreadSanitizer: thread leak

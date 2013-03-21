@@ -7,11 +7,13 @@ void *Thread(void *x) {
 }
 
 int main() {
-  pthread_t t;
-  pthread_create(&t, 0, Thread, 0);
+  for (int i = 0; i < 5; i++) {
+    pthread_t t;
+    pthread_create(&t, 0, Thread, 0);
+  }
   sleep(1);
   return 0;
 }
 
 // CHECK: WARNING: ThreadSanitizer: thread leak
-// CHECK: SUMMARY: ThreadSanitizer: thread leak{{.*}}main
+// CHECK:   And 4 more similar thread leaks
