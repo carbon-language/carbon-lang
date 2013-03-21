@@ -577,10 +577,6 @@ Thread::ShouldStop (Event* event_ptr)
             log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 ", should_stop = 0 (ignore since thread was suspended)",
                          __FUNCTION__, 
                          GetID ());
-//            log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 ", pc = 0x%16.16" PRIx64 ", should_stop = 0 (ignore since thread was suspended)",
-//                         __FUNCTION__, 
-//                         GetID (), 
-//                         GetRegisterContext()->GetPC());
         return false;
     }
     
@@ -590,10 +586,6 @@ Thread::ShouldStop (Event* event_ptr)
             log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 ", should_stop = 0 (ignore since thread was suspended)",
                          __FUNCTION__, 
                          GetID ());
-//            log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 ", pc = 0x%16.16" PRIx64 ", should_stop = 0 (ignore since thread was suspended)",
-//                         __FUNCTION__, 
-//                         GetID (), 
-//                         GetRegisterContext()->GetPC());
         return false;
     }
     
