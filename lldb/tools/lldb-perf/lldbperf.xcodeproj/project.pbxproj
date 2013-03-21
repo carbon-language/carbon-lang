@@ -22,6 +22,10 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		26DBAD6216FA63F0008243D2 /* lldb_perf_clang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DBAD4916FA637D008243D2 /* lldb_perf_clang.cpp */; };
+		26DBAD6316FA66DC008243D2 /* liblldbperf.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1E373916F4035D00FF10BB /* liblldbperf.a */; };
+		26DBAD6416FA66E0008243D2 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 264B3DE816F7E47600D1E7AB /* LLDB.framework */; };
+		26DBAD6516FA66EA008243D2 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1E37DB16F7A03900FF10BB /* CoreFoundation.framework */; };
 		4C1E374E16F407C800FF10BB /* Gauge.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C1E374216F407C800FF10BB /* Gauge.h */; };
 		4C1E374F16F407C800FF10BB /* Measurement.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C1E374316F407C800FF10BB /* Measurement.h */; };
 		4C1E375016F407C800FF10BB /* MemoryGauge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1E374416F407C800FF10BB /* MemoryGauge.cpp */; };
@@ -146,7 +150,22 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		26DBAD5716FA63B1008243D2 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		26DBAD4816FA637D008243D2 /* build-clang.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-clang.sh"; sourceTree = "<group>"; };
+		26DBAD4916FA637D008243D2 /* lldb_perf_clang.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = lldb_perf_clang.cpp; sourceTree = "<group>"; };
+		26DBAD5916FA63B1008243D2 /* lldb-perf-clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-perf-clang"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C1E373916F4035D00FF10BB /* liblldbperf.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = liblldbperf.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C1E374216F407C800FF10BB /* Gauge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Gauge.h; sourceTree = "<group>"; };
 		4C1E374316F407C800FF10BB /* Measurement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Measurement.h; sourceTree = "<group>"; };
@@ -189,6 +208,16 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		26DBAD5616FA63B1008243D2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				26DBAD6516FA66EA008243D2 /* CoreFoundation.framework in Frameworks */,
+				26DBAD6416FA66E0008243D2 /* LLDB.framework in Frameworks */,
+				26DBAD6316FA66DC008243D2 /* liblldbperf.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4C1E373616F4035D00FF10BB /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -226,11 +255,29 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		26DBAD4616FA637D008243D2 /* common */ = {
+			isa = PBXGroup;
+			children = (
+				26DBAD4716FA637D008243D2 /* clang */,
+			);
+			path = common;
+			sourceTree = "<group>";
+		};
+		26DBAD4716FA637D008243D2 /* clang */ = {
+			isa = PBXGroup;
+			children = (
+				26DBAD4816FA637D008243D2 /* build-clang.sh */,
+				26DBAD4916FA637D008243D2 /* lldb_perf_clang.cpp */,
+			);
+			path = clang;
+			sourceTree = "<group>";
+		};
 		4C1E373016F4035D00FF10BB = {
 			isa = PBXGroup;
 			children = (
 				4C86C5C316F7A35000844407 /* lldb.xcodeproj */,
 				4C1E37B516F79E6600FF10BB /* Darwin */,
+				26DBAD4616FA637D008243D2 /* common */,
 				4C1E375A16F4081300FF10BB /* cfcpp */,
 				4C1E374116F407C800FF10BB /* lib */,
 				4C1E373A16F4035D00FF10BB /* Products */,
@@ -245,6 +292,7 @@
 				4C1E376D16F4087A00FF10BB /* lldb-perf-sketch */,
 				4C1E37BA16F79E9D00FF10BB /* lldb-perf-formatters */,
 				4C86C5D116F7CC8900844407 /* format-tester */,
+				26DBAD5916FA63B1008243D2 /* lldb-perf-clang */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -373,6 +421,23 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		26DBAD5816FA63B1008243D2 /* lldb-perf-clang */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 26DBAD5F16FA63B1008243D2 /* Build configuration list for PBXNativeTarget "lldb-perf-clang" */;
+			buildPhases = (
+				26DBAD5516FA63B1008243D2 /* Sources */,
+				26DBAD5616FA63B1008243D2 /* Frameworks */,
+				26DBAD5716FA63B1008243D2 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "lldb-perf-clang";
+			productName = lldb_perf_clang;
+			productReference = 26DBAD5916FA63B1008243D2 /* lldb-perf-clang */;
+			productType = "com.apple.product-type.tool";
+		};
 		4C1E373816F4035D00FF10BB /* lldbperf */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4C1E373D16F4035D00FF10BB /* Build configuration list for PBXNativeTarget "lldbperf" */;
@@ -471,6 +536,7 @@
 				4C1E373816F4035D00FF10BB /* lldbperf */,
 				4C1E376C16F4087A00FF10BB /* lldb-perf-sketch */,
 				4C1E37B916F79E9D00FF10BB /* lldb-perf-formatters */,
+				26DBAD5816FA63B1008243D2 /* lldb-perf-clang */,
 				4C86C5D016F7CC8900844407 /* format-tester */,
 				4C1E37E316F7A0A500FF10BB /* All Perf Tests */,
 			);
@@ -530,6 +596,14 @@
 /* End PBXReferenceProxy section */
 
 /* Begin PBXSourcesBuildPhase section */
+		26DBAD5516FA63B1008243D2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				26DBAD6216FA63F0008243D2 /* lldb_perf_clang.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4C1E373516F4035D00FF10BB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -603,6 +677,42 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		26DBAD6016FA63B1008243D2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/../../build/Debug",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				OTHER_LDFLAGS = "-Wl,-rpath,@loader_path/../../../../build/Debug";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/../ $(SRCROOT)/../../include/";
+			};
+			name = Debug;
+		};
+		26DBAD6116FA63B1008243D2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/../../build/Debug",
+				);
+				OTHER_LDFLAGS = "-Wl,-rpath,@loader_path/../../../../build/Debug";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/../ $(SRCROOT)/../../include/";
+			};
+			name = Release;
+		};
 		4C1E373B16F4035D00FF10BB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -776,6 +886,14 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		26DBAD5F16FA63B1008243D2 /* Build configuration list for PBXNativeTarget "lldb-perf-clang" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				26DBAD6016FA63B1008243D2 /* Debug */,
+				26DBAD6116FA63B1008243D2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		4C1E373416F4035D00FF10BB /* Build configuration list for PBXProject "lldbperf" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
