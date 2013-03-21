@@ -392,11 +392,14 @@ bool ScopDetection::isValidBasicBlock(BasicBlock &BB,
 }
 
 bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
-  PHINode *IndVar = L->getCanonicalInductionVariable();
-  // No canonical induction variable.
-  if (!IndVar)
-    INVALID(IndVar, "No canonical IV at loop header: "
-                    << L->getHeader()->getName());
+  if (!SCEVCodegen) {
+    // If code generation is not in scev based mode, we need to ensure that
+    // each loop has a canonical induction variable.
+    PHINode *IndVar = L->getCanonicalInductionVariable();
+    if (!IndVar)
+      INVALID(IndVar,
+              "No canonical IV at loop header: " << L->getHeader()->getName());
+  }
 
   // Is the loop count affine?
   const SCEV *LoopCount = SE->getBackedgeTakenCount(L);

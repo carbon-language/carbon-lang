@@ -1,4 +1,5 @@
 ; RUN: opt %loadPolly -polly-detect -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect -polly-codegen-scev -analyze < %s | FileCheck %s
 
 ; void f(long **A_ptr, long N) {
 ;   long i;

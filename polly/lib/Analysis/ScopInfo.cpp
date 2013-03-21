@@ -592,8 +592,8 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
   // Setup the induction variables.
   for (unsigned i = 0, e = Nest.size(); i < e; ++i) {
     PHINode *PN = Nest[i]->getCanonicalInductionVariable();
-    assert(PN && "Non canonical IV in Scop!");
-    IVS[i] = PN;
+    if (PN)
+      IVS[i] = PN;
     NestLoops[i] = Nest[i];
   }
 

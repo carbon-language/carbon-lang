@@ -1,4 +1,5 @@
 ; RUN: opt %loadPolly -polly-detect -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect -polly-codegen-scev -analyze < %s | FileCheck %s -check-prefix=CHECK-SCEV
 
 ; void f(long A[], long N) {
 ;   long i;
@@ -32,3 +33,4 @@ return:
 }
 
 ; CHECK-NOT: Valid Region for Scop
+; CHECK-SCEV: Valid Region for Scop: for.i => return
