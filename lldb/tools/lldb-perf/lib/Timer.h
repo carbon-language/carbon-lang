@@ -22,34 +22,35 @@ class TimeGauge : public Gauge<double>
 private:
     enum class State
     {
-        eTSNeverUsed,
-        eTSCounting,
-        eTSStopped
+        eNeverUsed,
+        eCounting,
+        eStopped
     };
     
-    typedef high_resolution_clock::time_point HPTime;
-    HPTime m_start;
+    typedef high_resolution_clock::time_point TimeType;
+    TimeType m_start;
     double m_value;
     State m_state;
     
-    HPTime
-    now ();
+    TimeType
+    Now ();
     
 public:
     TimeGauge ();
     
     virtual
     ~TimeGauge ()
-    {}
+    {
+    }
     
     void
-    start ();
+    Start ();
     
     double
-    stop ();
+    Stop ();
     
     double
-    value ();
+    GetValue ();
 };
 }
 

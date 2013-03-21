@@ -11,8 +11,8 @@
 
 #include <functional>
 
-namespace lldb_perf
-{
+namespace lldb_perf {
+
 template <class TASizeType>
 class Gauge
 {
@@ -27,21 +27,21 @@ public:
     {}
     
     virtual void
-    start () = 0;
+    Start () = 0;
     
     virtual SizeType
-    stop () = 0;
+    Stop () = 0;
     
     virtual  SizeType
-    value () = 0;
+    GetValue () = 0;
     
     template <typename F, typename... Args>
     SizeType
-    gauge (F f,Args... args)
+    Measure (F f,Args... args)
     {
-        start();
+        Start();
         f(args...);
-        return stop();
+        return Stop();
     }
 
 };

@@ -11,37 +11,37 @@
 
 using namespace lldb_perf;
 
-TimeGauge::HPTime
-TimeGauge::now ()
+TimeGauge::TimeType
+TimeGauge::Now ()
 {
 	return high_resolution_clock::now();
 }
 
 TimeGauge::TimeGauge () :
 m_start(),
-m_state(TimeGauge::State::eTSNeverUsed)
+    m_state(TimeGauge::State::eNeverUsed)
 {
 }
 
 void
-TimeGauge::start ()
+TimeGauge::Start ()
 {
-	m_state = TimeGauge::State::eTSCounting;
-	m_start = now();
+	m_state = TimeGauge::State::eCounting;
+	m_start = Now();
 }
 
 double
-TimeGauge::stop ()
+TimeGauge::Stop ()
 {
-	auto stop = now();
-	assert(m_state == TimeGauge::State::eTSCounting && "cannot stop a non-started clock");
-	m_state = TimeGauge::State::eTSStopped;
+	auto stop = Now();
+	assert(m_state == TimeGauge::State::eCounting && "cannot stop a non-started clock");
+	m_state = TimeGauge::State::eStopped;
 	return (m_value = duration_cast<duration<double>>(stop-m_start).count());
 }
 
 double
-TimeGauge::value ()
+TimeGauge::GetValue ()
 {
-	assert(m_state == TimeGauge::State::eTSStopped && "clock must be used before you can evaluate it");
+	assert(m_state == TimeGauge::State::eStopped && "clock must be used before you can evaluate it");
 	return m_value;
 }

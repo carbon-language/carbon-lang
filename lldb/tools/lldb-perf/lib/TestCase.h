@@ -67,7 +67,8 @@ public:
     
     virtual
     ~TestCase ()
-    {}
+    {
+    }
     
 	virtual bool
 	Setup (int argc, const char** argv);

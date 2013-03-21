@@ -20,19 +20,25 @@ template <typename GaugeType, typename Action>
 class Measurement : public WriteToPList
 {
 public:
-    Measurement () {}
+    Measurement () :
+        m_gauge (),
+        m_action (),
+        m_metric ()
+    {
+    }
     
-    Measurement (Action act, const char* name = NULL, const char* descr = NULL)  :
-    m_gauge (),
-    m_action (act),
-    m_metric (Metric<typename GaugeType::SizeType>(name,descr))
-    {}
+    Measurement (Action act, const char* name = NULL, const char* desc = NULL)  :
+        m_gauge (),
+        m_action (act),
+        m_metric (Metric<typename GaugeType::SizeType>(name, desc))
+    {
+    }
     
     template <typename GaugeType_Rhs, typename Action_Rhs>
     Measurement (const Measurement<GaugeType_Rhs, Action_Rhs>& rhs) :
-    m_gauge(rhs.gauge()),
-    m_action(rhs.action()),
-    m_metric(rhs.metric())
+        m_gauge(rhs.GetGauge()),
+        m_action(rhs.GetAction()),
+        m_metric(rhs.GetMetric())
     {
     }
 
@@ -40,41 +46,41 @@ public:
     void
     operator () (Args... args)
     {
-        m_metric.append (m_gauge.gauge(m_action,args...));
+        m_metric.Append (m_gauge.Measure(m_action, args...));
+    }
+    
+    virtual const Action&
+    GetAction () const
+    {
+        return m_action;
+    }
+    
+    virtual const GaugeType&
+    GetGauge () const
+    {
+        return m_gauge;
     }
     
     virtual const Metric<typename GaugeType::SizeType>&
-    metric () const
+    GetMetric () const
     {
         return m_metric;
     }
     
     void
-    start ()
+    Start ()
     {
-        m_gauge.start();
+        m_gauge.Start();
     }
     
     typename GaugeType::SizeType
-    stop ()
+    Stop ()
     {
-        auto value = m_gauge.stop();
-        m_metric.append(value);
+        auto value = m_gauge.Stop();
+        m_metric.Append(value);
         return value;
     }
-    
-    virtual const GaugeType&
-    gauge () const
-    {
-        return m_gauge;
-    }
-    
-    virtual const Action&
-    action () const
-    {
-        return m_action;
-    }
-    
+        
     virtual void
     Write (CFCMutableArray& parent)
     {
@@ -91,19 +97,29 @@ template <typename Action>
 class TimeMeasurement : public Measurement<TimeGauge,Action>
 {
 public:
-    TimeMeasurement () : Measurement<TimeGauge,Action> ()
-    {}
+    TimeMeasurement () :
+        Measurement<TimeGauge,Action> ()
+    {
+    }
     
-    TimeMeasurement (Action act, const char* name = NULL, const char* descr = NULL) : Measurement<TimeGauge,Action> (act, name, descr)
-    {}
+    TimeMeasurement (Action act,
+                     const char* name = NULL,
+                     const char* descr = NULL) :
+        Measurement<TimeGauge,Action> (act, name, descr)
+    {
+    }
     
     template <typename Action_Rhs>
-    TimeMeasurement (const TimeMeasurement<Action_Rhs>& rhs) : Measurement<TimeGauge,Action>(rhs)
-    {}
+    TimeMeasurement (const TimeMeasurement<Action_Rhs>& rhs) :
+        Measurement<TimeGauge,Action>(rhs)
+    {
+    }
     
     template <typename GaugeType_Rhs, typename Action_Rhs>
-    TimeMeasurement (const Measurement<GaugeType_Rhs, Action_Rhs>& rhs) : Measurement<GaugeType_Rhs,Action_Rhs>(rhs)
-    {}
+    TimeMeasurement (const Measurement<GaugeType_Rhs, Action_Rhs>& rhs) :
+        Measurement<GaugeType_Rhs,Action_Rhs>(rhs)
+    {
+    }
     
     template <typename... Args>
     void
@@ -118,18 +134,22 @@ class MemoryMeasurement : public Measurement<MemoryGauge,Action>
 {
 public:
     MemoryMeasurement () : Measurement<MemoryGauge,Action> ()
-    {}
+    {
+    }
     
     MemoryMeasurement (Action act, const char* name = NULL, const char* descr = NULL) : Measurement<MemoryGauge,Action> (act, name, descr)
-    {}
+    {
+    }
     
     template <typename Action_Rhs>
     MemoryMeasurement (const MemoryMeasurement<Action_Rhs>& rhs) : Measurement<MemoryGauge,Action>(rhs)
-    {}
+    {
+    }
     
     template <typename GaugeType_Rhs, typename Action_Rhs>
     MemoryMeasurement (const Measurement<GaugeType_Rhs, Action_Rhs>& rhs) : Measurement<GaugeType_Rhs,Action_Rhs>(rhs)
-    {}
+    {
+    }
     
     template <typename... Args>
     void

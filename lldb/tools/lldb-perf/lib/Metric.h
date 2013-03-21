@@ -15,9 +15,10 @@
 
 #include "CFCMutableArray.h"
 
-namespace lldb_perf
-{
+namespace lldb_perf {
+
 class MemoryStats;
+
 class WriteToPList
 {
 public:
@@ -29,28 +30,35 @@ public:
 };
 
 template <class ValueType>
-class Metric : public WriteToPList {
+class Metric : public WriteToPList
+{
 public:
     Metric ();
     Metric (const char*, const char* = NULL);
     
     void
-    append (ValueType v);
+    Append (ValueType v);
+    
+    ValueType
+    GetAverage () const;
     
     size_t
-    count ();
+    GetCount () const;
     
     ValueType
-    sum ();
-    
-    ValueType
-    average ();
+    GetSum () const;
     
     const char*
-    name ();
-    
+    GetName ()
+    {
+        return m_name.c_str();
+    }
+
     const char*
-    description ();
+    GetDescription ()
+    {
+        return m_description.c_str();
+    }
     
     virtual void
     Write (CFCMutableArray& parent)

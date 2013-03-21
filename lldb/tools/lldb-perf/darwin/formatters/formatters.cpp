@@ -119,25 +119,25 @@ public:
         auto sstr3 = frame_zero.FindVariable("sstr3", lldb::eDynamicCanRunTarget);
         auto sstr4 = frame_zero.FindVariable("sstr4", lldb::eDynamicCanRunTarget);
         
-        m_dump_std_string_measurement.start();
+        m_dump_std_string_measurement.Start();
         Xcode::FetchVariable(sstr0,0,false);
-        m_dump_std_string_measurement.stop();
+        m_dump_std_string_measurement.Stop();
         
-        m_dump_std_string_measurement.start();
+        m_dump_std_string_measurement.Start();
         Xcode::FetchVariable(sstr1,0,false);
-        m_dump_std_string_measurement.stop();
+        m_dump_std_string_measurement.Stop();
 
-        m_dump_std_string_measurement.start();
+        m_dump_std_string_measurement.Start();
         Xcode::FetchVariable(sstr2,0,false);
-        m_dump_std_string_measurement.stop();
+        m_dump_std_string_measurement.Stop();
 
-        m_dump_std_string_measurement.start();
+        m_dump_std_string_measurement.Start();
         Xcode::FetchVariable(sstr3,0,false);
-        m_dump_std_string_measurement.stop();
+        m_dump_std_string_measurement.Stop();
 
-        m_dump_std_string_measurement.start();
+        m_dump_std_string_measurement.Start();
         Xcode::FetchVariable(sstr4,0,false);
-        m_dump_std_string_measurement.stop();
+        m_dump_std_string_measurement.Stop();
         
     }
     

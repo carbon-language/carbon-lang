@@ -14,20 +14,27 @@
 
 using namespace lldb_perf;
 
-MemoryStats::MemoryStats () : MemoryStats(0,0,0) {}
-MemoryStats::MemoryStats (mach_vm_size_t vs,mach_vm_size_t rs, mach_vm_size_t mrs) :
-m_virtual_size(vs),
-m_resident_size(rs),
-m_max_resident_size(mrs)
-{}
+MemoryStats::MemoryStats (mach_vm_size_t virtual_size,
+                          mach_vm_size_t resident_size,
+                          mach_vm_size_t max_resident_size) :
+    m_virtual_size (virtual_size),
+    m_resident_size (resident_size),
+    m_max_resident_size (max_resident_size)
+{
+}
 
-MemoryStats::MemoryStats (const MemoryStats& rhs) : MemoryStats(rhs.m_virtual_size,rhs.m_resident_size,rhs.m_max_resident_size)
-{}
+MemoryStats::MemoryStats (const MemoryStats& rhs) :
+    m_virtual_size (rhs.m_virtual_size),
+    m_resident_size (rhs.m_resident_size),
+    m_max_resident_size (rhs.m_max_resident_size)
+{
+}
+
 
 MemoryStats&
 MemoryStats::operator = (const MemoryStats& rhs)
 {
-    if (&rhs != this)
+    if (this != &rhs)
     {
         m_virtual_size = rhs.m_virtual_size;
         m_resident_size = rhs.m_resident_size;
@@ -54,16 +61,16 @@ MemoryStats::operator - (const MemoryStats& rhs)
 }
 
 MemoryStats&
-MemoryStats::operator / (size_t rhs)
+MemoryStats::operator / (size_t n)
 {
-    m_virtual_size /= rhs;
-    m_resident_size /= rhs;
-    m_max_resident_size /= rhs;
+    m_virtual_size /= n;
+    m_resident_size /= n;
+    m_max_resident_size /= n;
     return *this;
 }
 
 MemoryGauge::SizeType
-MemoryGauge::now ()
+MemoryGauge::Now ()
 {
     task_t task = mach_task_self();
     mach_task_basic_info_data_t taskBasicInfo;
@@ -76,30 +83,30 @@ MemoryGauge::now ()
 }
 
 MemoryGauge::MemoryGauge () :
-m_start(),
-m_state(MemoryGauge::State::eMSNeverUsed)
+    m_start(),
+    m_state(MemoryGauge::State::eNeverUsed)
 {
 }
 
 void
-MemoryGauge::start ()
+MemoryGauge::Start ()
 {
-	m_state = MemoryGauge::State::eMSCounting;
-	m_start = now();
+	m_state = MemoryGauge::State::eCounting;
+	m_start = Now();
 }
 
 MemoryGauge::SizeType
-MemoryGauge::stop ()
+MemoryGauge::Stop ()
 {
-	auto stop = now();
-	assert(m_state == MemoryGauge::State::eMSCounting && "cannot stop a non-started gauge");
-	m_state = MemoryGauge::State::eMSStopped;
+	auto stop = Now();
+	assert(m_state == MemoryGauge::State::eCounting && "cannot stop a non-started gauge");
+	m_state = MemoryGauge::State::eStopped;
 	return (m_value = stop-m_start);
 }
 
 MemoryGauge::SizeType
-MemoryGauge::value ()
+MemoryGauge::GetValue ()
 {
-	assert(m_state == MemoryGauge::State::eMSStopped && "gauge must be used before you can evaluate it");
+	assert(m_state == MemoryGauge::State::eStopped && "gauge must be used before you can evaluate it");
 	return m_value;
 }

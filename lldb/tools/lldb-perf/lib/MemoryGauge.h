@@ -18,8 +18,9 @@ namespace lldb_perf
 class MemoryStats
 {
 public:
-    MemoryStats ();
-    MemoryStats (mach_vm_size_t,mach_vm_size_t = 0, mach_vm_size_t = 0);
+    MemoryStats (mach_vm_size_t virtual_size = 0,
+                 mach_vm_size_t resident_size = 0,
+                 mach_vm_size_t max_resident_size = 0);
     MemoryStats (const MemoryStats& rhs);
     
     MemoryStats&
@@ -78,36 +79,38 @@ private:
 
 class MemoryGauge : public Gauge<MemoryStats>
 {
-private:
-    enum class State
-    {
-        eMSNeverUsed,
-        eMSCounting,
-        eMSStopped
-    };
-    
-    SizeType
-    now ();
-    
-    SizeType m_start;
-    State m_state;
-    SizeType m_value;
-
 public:
     MemoryGauge ();
     
     virtual
     ~MemoryGauge ()
-    {}
+    {
+    }
     
     void
-    start ();
+    Start ();
     
     SizeType
-    stop ();
+    Stop ();
     
     SizeType
-    value ();
+    GetValue ();
+
+private:
+    enum class State
+    {
+        eNeverUsed,
+        eCounting,
+        eStopped
+    };
+    
+    SizeType
+    Now ();
+    
+    SizeType m_start;
+    State m_state;
+    SizeType m_value;
+    
 };
 }
 
