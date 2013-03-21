@@ -1513,6 +1513,7 @@ def CLTS : I<0x06, RawFrm, (outs), (ins), "clts", [], IIC_CLTS>, TB;
 // Table lookup instructions
 def XLAT : I<0xD7, RawFrm, (outs), (ins), "xlatb", [], IIC_XLAT>;
 
+let SchedRW = [WriteMicrocoded] in {
 // ASCII Adjust After Addition
 // sets AL, AH and CF and AF of EFLAGS and uses AL and AF of EFLAGS
 def AAA : I<0x37, RawFrm, (outs), (ins), "aaa", [], IIC_AAA>,
@@ -1542,7 +1543,9 @@ def DAA : I<0x27, RawFrm, (outs), (ins), "daa", [], IIC_DAA>,
 // sets AL, CF and AF of EFLAGS and uses AL, CF and AF of EFLAGS
 def DAS : I<0x2F, RawFrm, (outs), (ins), "das", [], IIC_DAS>,
             Requires<[In32BitMode]>;
+} // SchedRW
 
+let SchedRW = [WriteSystem] in {
 // Check Array Index Against Bounds
 def BOUNDS16rm : I<0x62, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
                    "bound\t{$src, $dst|$dst, $src}", [], IIC_BOUND>, OpSize,
@@ -1558,6 +1561,7 @@ def ARPL16rr : I<0x63, MRMDestReg, (outs GR16:$dst), (ins GR16:$src),
 def ARPL16mr : I<0x63, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src),
                  "arpl\t{$src, $dst|$dst, $src}", [], IIC_ARPL_MEM>,
                  Requires<[In32BitMode]>;
+} // SchedRW
 
 //===----------------------------------------------------------------------===//
 // MOVBE Instructions

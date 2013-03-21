@@ -86,6 +86,9 @@ defm WriteCvtF2F : X86SchedWritePair; // Float -> Float size conversion.
 // Catch-all for expensive system instructions.
 def WriteSystem : SchedWrite;
 
+// Old microcoded instructions that nobody use.
+def WriteMicrocoded : SchedWrite;
+
 //===----------------------------------------------------------------------===//
 // Instruction Itinerary classes used for X86
 def IIC_DEFAULT     : InstrItinClass;
