@@ -104,6 +104,22 @@ DWARFCallFrameInfo::GetFDEEntryByFileAddress (addr_t file_addr, FDEEntryMap::Ent
     return true;
 }
 
+void
+DWARFCallFrameInfo::GetFunctionAddressAndSizeVector (FunctionAddressAndSizeVector &function_info)
+{
+    GetFDEIndex();
+    const size_t count = m_fde_index.GetSize();
+    for (size_t i = 0; i < count; ++i)
+    {
+        const FDEEntryMap::Entry *func_offset_data_entry = m_fde_index.GetEntryAtIndex (i);
+        if (func_offset_data_entry)
+        {
+            FunctionAddressAndSizeVector::Entry function_offset_entry (func_offset_data_entry->base, func_offset_data_entry->size);
+            function_info.Append (function_offset_entry);
+        }
+    }
+}
+
 const DWARFCallFrameInfo::CIE*
 DWARFCallFrameInfo::GetCIE(dw_offset_t cie_offset)
 {

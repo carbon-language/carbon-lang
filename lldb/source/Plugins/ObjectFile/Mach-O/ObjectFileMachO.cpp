@@ -28,6 +28,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
+#include "lldb/Symbol/DWARFCallFrameInfo.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
@@ -1449,6 +1450,17 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             eh_frame_section_sp = section_list->FindSectionByName (g_section_name_eh_frame);
 
         const bool is_arm = (m_header.cputype == llvm::MachO::CPUTypeARM);
+
+        // lldb works best if it knows the start addresss of all functions in a module.
+        // Linker symbols or debug info are normally the best source of information for start addr / size but
+        // they may be stripped in a released binary.
+        // Two additional sources of information exist in Mach-O binaries:  
+        //    LC_FUNCTION_STARTS - a list of ULEB128 encoded offsets of each function's start address in the
+        //                         binary, relative to the text section.
+        //    eh_frame           - the eh_frame FDEs have the start addr & size of each function
+        //  LC_FUNCTION_STARTS is the fastest source to read in, and is present on all modern binaries.
+        //  Binaries built to run on older releases may need to use eh_frame information.
+
         if (text_section_sp && function_starts_data.GetByteSize())
         {
             FunctionStarts::Entry function_start_entry;
@@ -1461,6 +1473,27 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 // Now append the current entry
                 function_start_entry.addr += delta;
                 function_starts.Append(function_start_entry);
+            }
+        } 
+        else
+        {
+            if (text_section_sp.get() && eh_frame_section_sp.get())
+            {
+                DWARFCallFrameInfo eh_frame(*this, eh_frame_section_sp, eRegisterKindGCC, true);
+                DWARFCallFrameInfo::FunctionAddressAndSizeVector functions;
+                eh_frame.GetFunctionAddressAndSizeVector (functions);
+                addr_t text_base_addr = text_section_sp->GetFileAddress();
+                size_t count = functions.GetSize();
+                for (size_t i = 0; i < count; ++i)
+                {
+                    const DWARFCallFrameInfo::FunctionAddressAndSizeVector::Entry *func = functions.GetEntryAtIndex (i);
+                    if (func)
+                    {
+                        FunctionStarts::Entry function_start_entry;
+                        function_start_entry.addr = func->base - text_base_addr;
+                        function_starts.Append(function_start_entry);
+                    }
+                }
             }
         }
 

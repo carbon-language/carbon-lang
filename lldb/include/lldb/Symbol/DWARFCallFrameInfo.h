@@ -54,6 +54,25 @@ public:
     bool
     GetUnwindPlan (Address addr, UnwindPlan& unwind_plan);
 
+    typedef RangeVector<lldb::addr_t, uint32_t> FunctionAddressAndSizeVector;
+
+    //------------------------------------------------------------------
+    // Build a vector of file address and size for all functions in this Module
+    // based on the eh_frame FDE entries.
+    //
+    // The eh_frame information can be a useful source of file address and size of
+    // the functions in a Module.  Often a binary's non-exported symbols are stripped
+    // before shipping so lldb won't know the start addr / size of many functions
+    // in the Module.  But the eh_frame can help to give the addresses of these 
+    // stripped symbols, at least.
+    //
+    // @param[out] function_info
+    //      A vector provided by the caller is filled out.  May be empty if no FDEs/no eh_frame
+    //      is present in this Module.
+
+    void
+    GetFunctionAddressAndSizeVector (FunctionAddressAndSizeVector &function_info);
+
 private:
     enum
     {
@@ -81,12 +100,12 @@ private:
 
     typedef STD_SHARED_PTR(CIE) CIESP;
 
-    // Start address, size, offset of FDE location
+    typedef std::map<off_t, CIESP> cie_map_t;
+
+    // Start address (file address), size, offset of FDE location
     // used for finding an FDE for a given File address; the start address field is
     // an offset into an individual Module.
     typedef RangeDataVector<lldb::addr_t, uint32_t, dw_offset_t> FDEEntryMap;
-
-    typedef std::map<off_t, CIESP> cie_map_t;
 
     bool
     IsEHFrame() const;
