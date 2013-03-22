@@ -234,7 +234,7 @@ everything enclosed as one value.
 
 In general, you should strive to keep your RUN lines as simple as possible,
 using them only to run tools that generate textual output you can then examine.
-The recommended way to examine output to figure out if the test passes it using
+The recommended way to examine output to figure out if the test passes is using
 the :doc:`FileCheck tool <CommandGuide/FileCheck>`. *[The usage of grep in RUN
 lines is deprecated - please do not send or commit patches that use it.]*
 
