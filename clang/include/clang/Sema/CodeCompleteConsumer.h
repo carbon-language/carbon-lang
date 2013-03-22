@@ -632,6 +632,7 @@ public:
   /// \brief Add the parent context information to this code completion.
   void addParentContext(const DeclContext *DC);
 
+  const char *getBriefComment() const { return BriefComment; }
   void addBriefComment(StringRef Comment);
   
   StringRef getParentName() const { return ParentName; }

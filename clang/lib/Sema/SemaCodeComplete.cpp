@@ -2541,6 +2541,20 @@ CodeCompletionResult::CreateCodeCompletionString(ASTContext &Ctx,
     if (Declaration) {
       Result.addParentContext(Declaration->getDeclContext());
       Pattern->ParentName = Result.getParentName();
+      // Provide code completion comment for self.GetterName where
+      // GetterName is the getter method for a property with name
+      // different from the property name (declared via a property
+      // getter attribute.
+      const NamedDecl *ND = Declaration;
+      if (const ObjCMethodDecl *M = dyn_cast<ObjCMethodDecl>(ND))
+        if (M->isPropertyAccessor())
+          if (const ObjCPropertyDecl *PDecl = M->findPropertyDecl())
+            if (PDecl->getGetterName() == M->getSelector() &&
+                PDecl->getIdentifier() != M->getIdentifier())
+              if (const RawComment *RC = Ctx.getRawCommentForAnyRedecl(PDecl)) {
+                Result.addBriefComment(RC->getBriefText(Ctx));
+                Pattern->BriefComment = Result.getBriefComment();
+              }
     }
     
     return Pattern;

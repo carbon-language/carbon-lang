@@ -49,6 +49,7 @@
   p = [self PropertyInPrimaryClass];
   p = [self Record];
   [self setThisRecord : (id)0 ];
+  p = self.GetterInClassExtension;
   return 0; 
 }
 @end
@@ -66,3 +67,6 @@
 
 // RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:51:9 %s | FileCheck -check-prefix=CC5 %s
 // CHECK-CC5: {TypedText setThisRecord:}{Placeholder (id)}{{.*}}(brief comment: This is Record)
+
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:52:12 %s | FileCheck -check-prefix=CC6 %s
+// CHECK-CC6: {TypedText GetterInClassExtension}{{.*}}(brief comment: This is PropertyInClassExtension) 
