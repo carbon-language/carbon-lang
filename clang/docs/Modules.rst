@@ -21,7 +21,7 @@ The implementation is handled separately by linking against the appropriate libr
 
 Modules provide an alternative, simpler way to use software libraries that provides better compile-time scalability and eliminates many of the problems inherent to using the C preprocessor to access the API of a library.
 
-Problems with the Current Model
+Problems with the current model
 -------------------------------
 The ``#include`` mechanism provided by the C preprocessor is a very poor way to access the API of a library, for a number of reasons:
 
@@ -73,7 +73,7 @@ The ``#include`` mechanism provided by the C preprocessor is a very poor way to 
   API, and what declarations are present only because they had to be
   written as part of the header file?
 
-Semantic Import
+Semantic import
 ---------------
 Modules improve access to the API of software libraries by replacing the textual preprocessor inclusion model with a more robust, more efficient semantic model. From the user's perspective, the code looks only slightly different, because one uses an ``import`` declaration rather than a ``#include`` preprocessor directive:
 
@@ -90,7 +90,7 @@ This semantic import model addresses many of the problems of the preprocessor in
 
 * **Tool confusion**: Modules describe the API of software libraries, and tools can reason about and present a module as a representation of that API. Because modules can only be built standalone, tools can rely on the module definition to ensure that they get the complete API for the library. Moreover, modules can specify which languages they work with, so, e.g., one can not accidentally attempt to load a C++ module into a C program.
 
-Problems Modules Do Not Solve
+Problems modules do not solve
 -----------------------------
 Many programming languages have a module or package system, and because of the variety of features provided by these languages it is important to define what modules do *not* do. In particular, all of the following are considered out-of-scope for modules:
 
@@ -104,11 +104,30 @@ Many programming languages have a module or package system, and because of the v
 
 Using Modules
 =============
-To enable modules, pass the command-line flag ``-fmodules`` [#]_. This will make any modules-enabled software libraries available as modules as well as introducing any modules-specific syntax. Additional command-line parameters are described later.
+To enable modules, pass the command-line flag ``-fmodules`` [#]_. This will make any modules-enabled software libraries available as modules as well as introducing any modules-specific syntax. Additional `command-line parameters`_ are described in a separate section later.
 
-Includes as Imports
+Import declaration
+------------------
+The most direct way to import a module is with an *import declaration*, which imports the named module:
+
+.. parsed-literal::
+
+  import std;
+
+The import declaration above imports the entire contents of the ``std`` module (which would contain, e.g., the entire C or C++ standard library) and make its API available within the current translation unit. To import only part of a module, one may use dot syntax to specific a particular submodule, e.g.,
+
+.. parsed-literal::
+
+  import std.io;
+
+Redundant import declarations are ignored, and one is free to import modules at any point within the translation unit, so long as the import declaration is at global scope.
+
+.. warning::
+  The import declaration syntax described here does not actually exist. Rather, it is a straw man proposal that may very well change when modules are discussed in the C and C++ committees. See the section `Includes as imports`_ to see how modules get imported today.
+
+Includes as imports
 -------------------
-The primary user-level feature of modules is the import operation, which provides access to the API of software libraries. However, Clang does not provide a specific syntax for importing modules within the language itself [#]_. Instead, Clang translates ``#include`` directives into the corresponding module import. For example, the include directive
+The primary user-level feature of modules is the import operation, which provides access to the API of software libraries. However, today's programs make extensive use of ``#include``, and it is unrealistic to assume that all of this code will change overnight. Instead, modules automatically translate ``#include`` directives into the corresponding module import. For example, the include directive
 
 .. code-block:: c
 
@@ -116,15 +135,23 @@ The primary user-level feature of modules is the import operation, which provide
 
 will be automatically mapped to an import of the module ``std.io``. Even with specific ``import`` syntax in the language, this particular feature is important for both adoption and backward compatibility: automatic translation of ``#include`` to ``import`` allows an application to get the benefits of modules (for all modules-enabled libraries) without any changes to the application itself. Thus, users can easily use modules with one compiler while falling back to the preprocessor-inclusion mechanism with other compilers.
 
-Module Maps
+.. note::
+
+  The automatic mapping of ``#include`` to ``import`` also solves an implementation problem: importing a module with a definition of some entity (say, a ``struct Point``) and then parsing a header containing another definition of ``struct Point`` would cause a redefinition error, even if it is the same ``struct Point``. By mapping ``#include`` to ``import``, the compiler can guarantee that it always sees just the already-parsed definition from the module.
+
+Module maps
 -----------
 The crucial link between modules and headers is described by a *module map*, which describes how a collection of existing headers maps on to the (logical) structure of a module. For example, one could imagine a module ``std`` covering the C standard library. Each of the C standard library headers (``<stdio.h>``, ``<stdlib.h>``, ``<math.h>``, etc.) would contribute to the ``std`` module, by placing their respective APIs into the corresponding submodule (``std.io``, ``std.lib``, ``std.math``, etc.). Having a list of the headers that are part of the ``std`` module allows the compiler to build the ``std`` module as a standalone entity, and having the mapping from header names to (sub)modules allows the automatic translation of ``#include`` directives to module imports.
 
-Module maps are specified as separate files (each named ``module.map``) alongside the headers they describe, which allows them to be added to existing software libraries without having to change the library headers themselves (in most cases [#]_). The actual `Module Map Language`_ is described in a later section.
+Module maps are specified as separate files (each named ``module.map``) alongside the headers they describe, which allows them to be added to existing software libraries without having to change the library headers themselves (in most cases [#]_). The actual `Module map language`_ is described in a later section.
 
-Compilation Model
+.. note::
+
+  To actually see any benefits from modules, one first has to introduce module maps for the underlying C standard library and the libraries and headers on which it depends. The section `Modularizing a Platform`_ describes the steps one must take to write these module maps.
+
+Compilation model
 -----------------
-The binary representation of modules is automatically generated by the compiler on an as-needed basis. When a module is imported (e.g., by an ``#include`` of one of the module's headers), the compiler will spawn a second instance of itself, with a fresh preprocessing context [#]_, to parse just the headers in that module. The resulting Abstract Syntax Tree (AST) is then persisted into the binary representation of the module that is then loaded into translation unit where the module import was encountered.
+The binary representation of modules is automatically generated by the compiler on an as-needed basis. When a module is imported (e.g., by an ``#include`` of one of the module's headers), the compiler will spawn a second instance of itself [#]_, with a fresh preprocessing context [#]_, to parse just the headers in that module. The resulting Abstract Syntax Tree (AST) is then persisted into the binary representation of the module that is then loaded into translation unit where the module import was encountered.
 
 The binary representation of modules is persisted in the *module cache*. Imports of a module will first query the module cache and, if a binary representation of the required module is already available, will load that representation directly. Thus, a module's headers will only be parsed once per language configuration, rather than once per translation unit that uses the module.
 
@@ -187,7 +214,7 @@ As an example, the module map file for the C standard library might look a bit l
 
 Here, the top-level module ``std`` encompasses the whole C standard library. It has a number of submodules containing different parts of the standard library: ``complex`` for complex numbers, ``ctype`` for character types, etc. Each submodule lists one of more headers that provide the contents for that submodule. Finally, the ``export *`` command specifies that anything included by that submodule will be automatically re-exported. 
 
-Lexical Structure
+Lexical structure
 -----------------
 Module map files use a simplified form of the C99 lexer, with the same rules for identifiers, tokens, string literals, ``/* */`` and ``//`` comments. The module map language has the following reserved words; all other C identifiers are valid identifiers.
 
@@ -198,8 +225,8 @@ Module map files use a simplified form of the C99 lexer, with the same rules for
   ``exclude``       ``header``     ``umbrella``
   ``explicit``      ``link``
 
-Module Map Files
-----------------
+Module map file
+---------------
 A module map file consists of a series of module declarations:
 
 .. parsed-literal::
@@ -214,8 +241,8 @@ Within a module map file, modules are referred to by a *module-id*, which uses p
   *module-id*:
     *identifier* (',' *identifier*)*
 
-Module Declarations
--------------------
+Module declaration
+------------------
 A module declaration describes a module, including the headers that contribute to that module, its submodules, and other aspects of the module.
 
 .. parsed-literal::
@@ -254,7 +281,7 @@ Modules can have a number of different kinds of members, each of which is descri
     *config-macros-declaration*
     *conflict-declaration*
 
-Requires Declaration
+Requires declaration
 ~~~~~~~~~~~~~~~~~~~~
 A *requires-declaration* specifies the requirements that an importing translation unit must satisfy to use the module.
 
@@ -316,7 +343,7 @@ tls
     }
   }
 
-Header Declaration
+Header declaration
 ~~~~~~~~~~~~~~~~~~
 A header declaration specifies that a particular header is associated with the enclosing module.
 
@@ -348,7 +375,7 @@ A header with the ``exclude`` specifier is excluded from the module. It will not
 
 A given header shall not be referenced by more than one *header-declaration*.
 
-Umbrella Directory Declaration
+Umbrella directory declaration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 An umbrella directory declaration specifies that all of the headers in the specified directory should be included within the module.
 
@@ -366,7 +393,7 @@ An *umbrella-dir-declaration* shall not refer to the same directory as the locat
     Umbrella directories are useful for libraries that have a large number of headers but do not have an umbrella header.
 
 
-Submodule Declaration
+Submodule declaration
 ~~~~~~~~~~~~~~~~~~~~~
 Submodule declarations describe modules that are nested within their enclosing module.
 
@@ -427,7 +454,7 @@ is equivalent to the (more verbose) module map:
     }
   }
 
-Export Declaration
+Export declaration
 ~~~~~~~~~~~~~~~~~~
 An *export-declaration* specifies which imported modules will automatically be re-exported as part of a given module's API.
 
@@ -485,7 +512,7 @@ Note that, if ``Derived.h`` includes ``Base.h``, one can simply use a wildcard e
   compatibility for programs that rely on transitive inclusion (i.e.,
   all of them).
 
-Link Declaration
+Link declaration
 ~~~~~~~~~~~~~~~~
 A *link-declaration* specifies a library or framework against which a program should be linked if the enclosing module is imported in any translation unit in that program.
 
@@ -505,8 +532,8 @@ A *link-declaration* with the ``framework`` specifies that the linker should lin
   format and the linker. The notion is similar to Microsoft Visual
   Studio's ``#pragma comment(lib...)``.
 
-Configation Macros Declaration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Configuration macros declaration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The *config-macros-declaration* specifies the set of configuration macros that have an effect on the the API of the enclosing module.
 
 .. parsed-literal::
@@ -551,7 +578,7 @@ A translation unit shall not import the same module under different definitions 
     config_macros [exhaustive] NDEBUG
   }
 
-Conflict Declarations
+Conflict declarations
 ~~~~~~~~~~~~~~~~~~~~~
 A *conflict-declaration* describes a case where the presence of two different modules in the same translation unit is likely to cause a problem. For example, two modules may provide similar-but-incompatible functionality.
 
@@ -599,6 +626,35 @@ Attributes are used in a number of places in the grammar to describe specific be
 
 Any *identifier* can be used as an attribute, and each declaration specifies what attributes can be applied to it.
 
+Modularizing a Platform
+=======================
+To get any benefit out of modules, one needs to introduce module maps for software libraries starting at the bottom of the stack. This typically means introducing a module map covering the operating system's headers and the C standard library headers (in ``/usr/include``, for a Unix system). 
+
+The module maps will be written using the `module map language`_, which provides the tools necessary to describe the mapping between headers and modules. Because the set of headers differs from one system to the next, the module map will likely have to be somewhat customized for, e.g., a particular distribution and version of the operating system. Moreover, the system headers themselves may require some modification, if they exhibit any anti-patterns that break modules. Such common patterns are described below.
+
+**Macro-guarded copy-and-pasted definitions**
+  System headers vend core types such as ``size_t`` for users. These types are often needed in a number of system headers, and are almost trivial to write. Hence, it is fairly common to see a definition such as the following copy-and-pasted throughout the headers:
+
+  .. parsed-literal::
+
+    #ifndef _SIZE_T
+    #define _SIZE_T
+    typedef __SIZE_TYPE__ size_t;
+    #endif
+
+  Unfortunately, when modules compiles all of the C library headers together into a single module, only the first actual type definition of ``size_t`` will be visible, and then only in the submodule corresponding to the lucky first header. Any other headers that have copy-and-pasted versions of this pattern will *not* have a definition of ``size_t``. Importing the submodule corresponding to one of those headers will therefore not yield ``size_t`` as part of the API, because it wasn't there when the header was parsed. The fix for this problem is either to pull the copied declarations into a common header that gets included everywhere ``size_t`` is part of the API, or to eliminate the ``#ifndef`` and redefine the ``size_t`` type. The latter works for C++ headers and C11, but will cause an error for non-modules C90/C99, where redefinition of ``typedefs`` is not permitted.
+
+**Conflicting definitions**
+  Different system headers may provide conflicting definitions for various macros, functions, or types. These conflicting definitions don't tend to cause problems in a pre-modules world unless someone happens to include both headers in one translation unit. Since the fix is often simply "don't do that", such problems persist. Modules requires that the conflicting definitions be eliminated or that they be placed in separate modules (the former is generally the better answer).
+
+**Missing includes**
+  Headers are often missing ``#include`` directives for headers that they actually depend on. As with the problem of conflicting definitions, this only affects unlucky users who don't happen to include headers in the right order. With modules, the headers of a particular module will be parsed in isolation, so the module may fail to build if there are missing includes.
+
+**Headers that vend multiple APIs at different times**
+  Some systems have headers that contain a number of different kinds of API definitions, only some of which are made available with a given include. For example, the header may vend ``size_t`` only when the macro ``__need_size_t`` is defined before that header is included, and also vend ``wchar_t`` only when the macro ``__need_wchar_t`` is defined. Such headers are often included many times in a single translation unit, and will have no include guards. There is no sane way to map this header to a submodule. One can either eliminate the header (e.g., by splitting it into separate headers, one per actual API) or simply ``exclude`` it in the module map.
+
+To detect and help address some of these problems, the ``clang-tools-extra`` repository contains a ``modularize`` tool that parses a set of given headers and attempts to detect these problems and produce a report. See the tool's in-source documentation for information on how to check your system or library headers.
+
 Where To Learn More About Modules
 =================================
 The Clang source code provides additional information about modules:
@@ -609,18 +665,24 @@ The Clang source code provides additional information about modules:
 ``clang/test/Modules/``
   Tests specifically related to modules functionality.
 
+``clang/include/clang/Basic/Module.h``
+  The ``Module`` class in this header describes a module, and is used throughout the compiler to implement modules.
+
+``clang/include/clang/Lex/ModuleMap.h``
+  The ``ModuleMap`` class in this header describes the full module map, consisting of all of the module map files that have been parsed, and providing facilities for looking up module maps and mapping between modules and headers (in both directions).
+
 PCHInternals_
-  Information about the serialized AST format used for precompiled headers and modules.
+  Information about the serialized AST format used for precompiled headers and modules. The actual implementation is in the ``clangSerialization`` library.
 
 .. [#] Automatic linking against the libraries of modules requires specific linker support, which is not widely available.
 
 .. [#] Modules are only available in C and Objective-C; a separate flag ``-fcxx-modules`` enables modules support for C++, which is even more experimental and broken.
 
-.. [#] The ``import modulename;`` syntax described earlier in the document is a straw man proposal. Actual syntax will be pursued within the C++ committee and implemented in Clang.
+.. [#] There are certain anti-patterns that occur in headers, particularly system headers, that cause problems for modules. The section `Modularizing a Platform`_ describes some of them.
 
-.. [#] There are certain anti-patterns that occur in headers, particularly system headers, that cause problems for modules.
+.. [#] The second instance is actually a new thread within the current process, not a separate process. However, the original compiler instance is blocked on the execution of this thread.
 
-.. [#] The preprocessing context in which the modules are parsed is actually dependent on the command-line options provided to the compiler, including the language dialect and any ``-D`` options. However, the compiled modules for different command-line options are kept distinct, and any preprocessor directives that occur within the translation unit are ignored. 
+.. [#] The preprocessing context in which the modules are parsed is actually dependent on the command-line options provided to the compiler, including the language dialect and any ``-D`` options. However, the compiled modules for different command-line options are kept distinct, and any preprocessor directives that occur within the translation unit are ignored. See the section on the `Configuration macros declaration`_ for more information.
 
 .. _PCHInternals: PCHInternals.html
  
