@@ -110,7 +110,8 @@ DWARFCallFrameInfo::GetFunctionAddressAndSizeVector (FunctionAddressAndSizeVecto
     GetFDEIndex();
     const size_t count = m_fde_index.GetSize();
     function_info.Clear();
-    function_info.Reserve(count);
+    if (count > 0)
+        function_info.Reserve(count);
     for (size_t i = 0; i < count; ++i)
     {
         const FDEEntryMap::Entry *func_offset_data_entry = m_fde_index.GetEntryAtIndex (i);
