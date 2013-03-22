@@ -48,4 +48,4 @@ int main() {
   pthread_join(t[1], NULL);
 }
 
-// CHECK: WARNING: ThreadSanitizer: data race
+// CHECK: WARNING: ThreadSanitizer: data race on vptr
