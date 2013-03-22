@@ -162,4 +162,15 @@ return:                                           ; preds = %if.then, %entry
   ret i8* %retval
 }
 
+; Kill calls to @clang.arc.use(...)
+; CHECK: define void @test9(
+; CHECK-NOT: clang.arc.use
+; CHECK: }
+define void @test9(i8* %a, i8* %b) {
+  call void (...)* @clang.arc.use(i8* %a, i8* %b) nounwind
+  ret void
+}
+
+declare void @clang.arc.use(...) nounwind
+
 ; CHECK: attributes [[NUW]] = { nounwind }

@@ -38,6 +38,7 @@ llvm::objcarc::CanAlterRefCount(const Instruction *Inst, const Value *Ptr,
   switch (Class) {
   case IC_Autorelease:
   case IC_AutoreleaseRV:
+  case IC_IntrinsicUser:
   case IC_User:
     // These operations never directly modify a reference count.
     return false;

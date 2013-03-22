@@ -89,6 +89,7 @@ enum InstructionClass {
   IC_CopyWeak,            ///< objc_copyWeak (derived)
   IC_DestroyWeak,         ///< objc_destroyWeak (derived)
   IC_StoreStrong,         ///< objc_storeStrong (derived)
+  IC_IntrinsicUser,       ///< clang.arc.use
   IC_CallOrUser,          ///< could call objc_release and/or "use" pointers
   IC_Call,                ///< could call objc_release
   IC_User,                ///< could "use" a pointer
@@ -96,6 +97,13 @@ enum InstructionClass {
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const InstructionClass Class);
+
+/// \brief Test if the given class is a kind of user.
+inline static bool IsUser(InstructionClass Class) {
+  return Class == IC_User ||
+         Class == IC_CallOrUser ||
+         Class == IC_IntrinsicUser;
+}
 
 /// \brief Test if the given class is objc_retain or equivalent.
 static inline bool IsRetain(InstructionClass Class) {

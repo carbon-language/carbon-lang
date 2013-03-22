@@ -211,6 +211,9 @@ static bool DoesRetainableObjPtrEscape(const User *Ptr) {
         // These special functions make copies of their pointer arguments.
         return true;
       }
+      case IC_IntrinsicUser:
+        // Use by the use intrinsic is not an escape.
+        continue;
       case IC_User:
       case IC_None:
         // Use by an instruction which copies the value is an escape if the
@@ -1601,8 +1604,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
         else
           S.RRI.ReverseInsertPts.insert(llvm::next(BasicBlock::iterator(Inst)));
         S.SetSeq(S_Use);
-      } else if (Seq == S_Release &&
-                 (Class == IC_User || Class == IC_CallOrUser)) {
+      } else if (Seq == S_Release && IsUser(Class)) {
         // Non-movable releases depend on any possible objc pointer use.
         S.SetSeq(S_Stop);
         assert(S.RRI.ReverseInsertPts.empty());
@@ -2392,6 +2394,7 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
         goto clobbered;
       case IC_AutoreleasepoolPush:
       case IC_None:
+      case IC_IntrinsicUser:
       case IC_User:
         // Weak pointers are only modified through the weak entry points
         // (and arbitrary calls, which could call the weak entry points).

@@ -72,6 +72,8 @@ raw_ostream &llvm::objcarc::operator<<(raw_ostream &OS,
     return OS << "IC_Call";
   case IC_User:
     return OS << "IC_User";
+  case IC_IntrinsicUser:
+    return OS << "IC_IntrinsicUser";
   case IC_None:
     return OS << "IC_None";
   }
@@ -81,10 +83,11 @@ raw_ostream &llvm::objcarc::operator<<(raw_ostream &OS,
 InstructionClass llvm::objcarc::GetFunctionClass(const Function *F) {
   Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
 
-  // No arguments.
+  // No (mandatory) arguments.
   if (AI == AE)
     return StringSwitch<InstructionClass>(F->getName())
       .Case("objc_autoreleasePoolPush",  IC_AutoreleasepoolPush)
+      .Case("clang.arc.use", IC_IntrinsicUser)
       .Default(IC_CallOrUser);
 
   // One argument.

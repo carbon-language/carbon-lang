@@ -453,6 +453,10 @@ bool ObjCARCContract::runOnFunction(Function &F) {
       if (isa<AllocaInst>(Inst))
         TailOkForStoreStrongs = false;
       continue;
+    case IC_IntrinsicUser:
+      // Remove calls to @clang.arc.use(...).
+      Inst->eraseFromParent();
+      continue;
     default:
       continue;
     }
