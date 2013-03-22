@@ -62,7 +62,8 @@ void CompilerInstance::setInvocation(CompilerInvocation *Value) {
 
 bool CompilerInstance::shouldBuildGlobalModuleIndex() const {
   return (BuildGlobalModuleIndex ||
-          (ModuleManager && ModuleManager->isGlobalIndexUnavailable())) &&
+          (ModuleManager && ModuleManager->isGlobalIndexUnavailable() &&
+           getFrontendOpts().GenerateGlobalModuleIndex)) &&
          !ModuleBuildFailed;
 }
 
