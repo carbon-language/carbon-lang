@@ -1477,7 +1477,11 @@ ObjectFileMachO::ParseSymtab (bool minimize)
         } 
         else
         {
-            if (text_section_sp.get() && eh_frame_section_sp.get())
+            // If m_type is eTypeDebugInfo, then this is a dSYM - it will have the load command claiming an eh_frame
+            // but it doesn't actually have the eh_frame content.  And if we have a dSYM, we don't need to do any
+            // of this fill-in-the-missing-symbols works anyway - the debug info should give us all the functions in
+            // the module.
+            if (text_section_sp.get() && eh_frame_section_sp.get() && m_type != eTypeDebugInfo)
             {
                 DWARFCallFrameInfo eh_frame(*this, eh_frame_section_sp, eRegisterKindGCC, true);
                 DWARFCallFrameInfo::FunctionAddressAndSizeVector functions;
