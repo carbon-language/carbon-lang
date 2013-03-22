@@ -46,7 +46,6 @@ bool RegScavenger::isAliasUsed(unsigned Reg) const {
 
 void RegScavenger::initRegState() {
   ScavengedReg = 0;
-  ScavengedRC = NULL;
   ScavengeRestore = NULL;
 
   // All registers started out unused.
@@ -123,7 +122,6 @@ void RegScavenger::forward() {
 
   if (MI == ScavengeRestore) {
     ScavengedReg = 0;
-    ScavengedRC = NULL;
     ScavengeRestore = NULL;
   }
 
@@ -390,7 +388,6 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
 
   // Doing this here leads to infinite regress.
   // ScavengedReg = SReg;
-  ScavengedRC = RC;
 
   DEBUG(dbgs() << "Scavenged register (with spill): " << TRI->getName(SReg) <<
         "\n");

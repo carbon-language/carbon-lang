@@ -48,10 +48,6 @@ class RegScavenger {
   /// scavenged. That is, it is spilled to the special scavenging stack slot.
   unsigned ScavengedReg;
 
-  /// ScavengedRC - Register class of the scavenged register.
-  ///
-  const TargetRegisterClass *ScavengedRC;
-
   /// ScavengeRestore - Instruction that restores the scavenged register from
   /// stack.
   const MachineInstr *ScavengeRestore;
@@ -72,7 +68,7 @@ class RegScavenger {
 public:
   RegScavenger()
     : MBB(NULL), NumPhysRegs(0), Tracking(false),
-      ScavengingFrameIndex(-1), ScavengedReg(0), ScavengedRC(NULL) {}
+      ScavengingFrameIndex(-1), ScavengedReg(0) {}
 
   /// enterBasicBlock - Start tracking liveness from the begin of the specific
   /// basic block.
