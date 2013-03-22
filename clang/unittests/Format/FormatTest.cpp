@@ -490,6 +490,7 @@ TEST_F(FormatTest, FormatsLabels) {
 //===----------------------------------------------------------------------===//
 
 TEST_F(FormatTest, UnderstandsSingleLineComments) {
+  verifyFormat("//* */");
   verifyFormat("// line 1\n"
                "// line 2\n"
                "void f() {}\n");

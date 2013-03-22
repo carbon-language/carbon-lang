@@ -1643,6 +1643,7 @@ LangOptions getFormattingLangOpts() {
   LangOptions LangOpts;
   LangOpts.CPlusPlus = 1;
   LangOpts.CPlusPlus11 = 1;
+  LangOpts.LineComment = 1;
   LangOpts.Bool = 1;
   LangOpts.ObjC1 = 1;
   LangOpts.ObjC2 = 1;
