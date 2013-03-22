@@ -21,6 +21,7 @@ Using Clang as a Compiler
    AddressSanitizer
    ThreadSanitizer
    MemorySanitizer
+   Modules
    FAQ
 
 Using Clang as a Library

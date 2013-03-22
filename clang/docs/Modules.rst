@@ -149,12 +149,468 @@ Command-line parameters
 
 Module Map Language
 ===================
-TBD
 
-In the meantime, you can look at ``clang/lib/Headers/module.map``, and all
-the ``module.map`` files in ``clang/test/``.
-In particular, ``clang/test/Modules/`` contains tests specifically related
-to the modules functionality.
+The module map language describes the mapping from header files to the
+logical structure of modules. To enable support for using a library as
+a module, one must write a ``module.map`` file for that library. The
+``module.map`` file is placed alongside the header files themselves,
+and is written in the module map language described below.
+
+As an example, the module map file for the C standard library might look a bit like this:
+
+.. parsed-literal::
+
+  module std [system] {
+    module complex {
+      header "complex.h"
+      export *
+    }
+
+    module ctype {
+      header "ctype.h"
+      export *
+    }
+
+    module errno {
+      header "errno.h"
+      header "sys/errno.h"
+      export *
+    }
+
+    module fenv {
+      header "fenv.h"
+      export *
+    }
+
+    // ...more headers follow...
+  }
+
+Here, the top-level module ``std`` encompasses the whole C standard library. It has a number of submodules containing different parts of the standard library: ``complex`` for complex numbers, ``ctype`` for character types, etc. Each submodule lists one of more headers that provide the contents for that submodule. Finally, the ``export *`` command specifies that anything included by that submodule will be automatically re-exported. 
+
+Lexical Structure
+-----------------
+Module map files use a simplified form of the C99 lexer, with the same rules for identifiers, tokens, string literals, ``/* */`` and ``//`` comments. The module map language has the following reserved words; all other C identifiers are valid identifiers.
+
+.. parsed-literal::
+
+  ``config_macros`` ``export``     ``module``
+  ``conflict``      ``framework``  ``requires``
+  ``exclude``       ``header``     ``umbrella``
+  ``explicit``      ``link``
+
+Module Map Files
+----------------
+A module map file consists of a series of module declarations:
+
+.. parsed-literal::
+
+  *module-map-file*:
+    *module-declaration**
+
+Within a module map file, modules are referred to by a *module-id*, which uses periods to separate each part of a module's name:
+
+.. parsed-literal::
+
+  *module-id*:
+    *identifier* (',' *identifier*)*
+
+Module Declarations
+-------------------
+A module declaration describes a module, including the headers that contribute to that module, its submodules, and other aspects of the module.
+
+.. parsed-literal::
+
+  *module-declaration*:
+    ``explicit``:sub:`opt` ``framework``:sub:`opt` ``module`` *module-id* *attributes*:sub:`opt` '{' *module-member** '}'
+
+The *module-id* should consist of only a single *identifier*, which provides the name of the module being defined. Each module shall have a single definition. 
+
+The ``explicit`` qualifier can only be applied to a submodule, i.e., a module that is nested within another module. The contents of explicit submodules are only made available when the submodule itself was explicitly named in an import declaration or was re-exported from an imported module.
+
+The ``framework`` qualifier specifies that this module corresponds to a Darwin-style framework. A Darwin-style framework (used primarily on Mac OS X and iOS) is contained entirely in directory ``Name.framework``, where ``Name`` is the name of the framework (and, therefore, the name of the module). That directory has the following layout:
+
+.. parsed-literal::
+
+  Name.framework/
+    module.map                Module map for the framework
+    Headers/                  Subdirectory containing framework headers
+    Frameworks/               Subdirectory containing embedded frameworks
+    Resources/                Subdirectory containing additional resources
+    Name                      Symbolic link to the shared library for the framework
+
+The ``system`` attribute specifies that the module is a system module. When a system module is rebuilt, all of the module's header will be considered system headers, which suppresses warnings. This is equivalent to placing ``#pragma GCC system_header`` in each of the module's headers. The form of attributes is described in the section Attributes_, below.
+
+Modules can have a number of different kinds of members, each of which is described below:
+
+.. parsed-literal:
+
+  *module-member*:
+    *requires-declaration*
+    *header-declaration*
+    *umbrella-dir-declaration*
+    *submodule-declaration*
+    *export-declaration*
+    *link-declaration*
+    *config-macros-declaration*
+    *conflict-declaration*
+
+Requires Declaration
+~~~~~~~~~~~~~~~~~~~~
+A *requires-declaration* specifies the requirements that an importing translation unit must satisfy to use the module.
+
+.. parsed-literal::
+
+  *requires-declaration*:
+    ``requires`` *feature-list*
+
+  *feature-list*:
+    *identifier* (',' *identifier*)*
+
+The requirements clause allows specific modules or submodules to specify that they are only accessible with certain language dialects or on certain platforms. The feature list is a set of identifiers, defined below. If any of the features is not available in a given translation unit, that translation unit shall not import the module.
+
+The following features are defined:
+
+altivec
+  The target supports AltiVec.
+
+blocks
+  The "blocks" language feature is available.
+
+cplusplus
+  C++ support is available.
+
+cplusplus11
+  C++11 support is available.
+
+objc
+  Objective-C support is available.
+
+objc_arc
+  Objective-C Automatic Reference Counting (ARC) is available
+
+opencl
+  OpenCL is available
+
+tls
+  Thread local storage is available.
+
+*target feature*
+  A specific target feature (e.g., ``sse4``, ``avx``, ``neon``) is available.
+
+
+**Example**: The ``std`` module can be extended to also include C++ and C++11 headers using a *requires-declaration*:
+
+.. parsed-literal::
+
+ module std {
+    // C standard library...
+
+    module vector {
+      requires cplusplus
+      header "vector"
+    }
+
+    module type_traits {
+      requires cplusplus11
+      header "type_traits"
+    }
+  }
+
+Header Declaration
+~~~~~~~~~~~~~~~~~~
+A header declaration specifies that a particular header is associated with the enclosing module.
+
+.. parsed-literal::
+
+  *header-declaration*:
+    ``umbrella``:sub:`opt` ``header`` *string-literal*
+    ``exclude`` ``header`` *string-literal*
+
+A header declaration that does not contain ``exclude`` specifies a header that contributes to the enclosing module. Specifically, when the module is built, the named header will be parsed and its declarations will be (logically) placed into the enclosing submodule.
+
+A header with the ``umbrella`` specifier is called an umbrella header. An umbrella header includes all of the headers within its directory (and any subdirectories), and is typically used (in the ``#include`` world) to easily access the full API provided by a particular library. With modules, an umbrella header is a convenient shortcut that eliminates the need to write out ``header`` declarations for every library header. A given directory can only contain a single umbrella header.
+
+.. note::
+    Any headers not included by the umbrella header should have
+    explicit ``header`` declarations. Use the   
+    ``-Wincomplete-umbrella`` warning option to ask Clang to complain
+    about headers not covered by the umbrella header or the module map.
+
+A header with the ``exclude`` specifier is excluded from the module. It will not be included when the module is built, nor will it be considered to be part of the module.
+
+**Example**: The C header ``assert.h`` is an excellent candidate for an excluded header, because it is meant to be included multiple times (possibly with different ``NDEBUG`` settings).
+
+.. parsed-literal::
+
+  module std [system] {
+    exclude header "assert.h"
+  }
+
+A given header shall not be referenced by more than one *header-declaration*.
+
+Umbrella Directory Declaration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+An umbrella directory declaration specifies that all of the headers in the specified directory should be included within the module.
+
+.. parsed-literal::
+
+  *umbrella-dir-declaration*:
+    ``umbrella`` *string-literal*
+  
+The *string-literal* refers to a directory. When the module is built, all of the header files in that directory (and its subdirectories) are included in the module.
+
+An *umbrella-dir-declaration* shall not refer to the same directory as the location of an umbrella *header-declaration*. In other words, only a single kind of umbrella can be specified for a given directory.
+
+.. note::
+
+    Umbrella directories are useful for libraries that have a large number of headers but do not have an umbrella header.
+
+
+Submodule Declaration
+~~~~~~~~~~~~~~~~~~~~~
+Submodule declarations describe modules that are nested within their enclosing module.
+
+.. parsed-literal::
+
+  *submodule-declaration*:
+    *module-declaration*
+    *inferred-submodule-declaration*
+
+A *submodule-declaration* that is a *module-declaration* is a nested module. If the *module-declaration* has a ``framework`` specifier, the enclosing module shall have a ``framework`` specifier; the submodule's contents shall be contained within the subdirectory ``Frameworks/SubName.framework``, where ``SubName`` is the name of the submodule.
+
+A *submodule-declaration* that is an *inferred-submodule-declaration* describes a set of submodules that correspond to any headers that are part of the module but are not explicitly described by a *header-declaration*.
+
+.. parsed-literal::
+
+  *inferred-submodule-declaration*:
+    ``explicit``:sub:`opt` ``framework``:sub:`opt` ``module`` '*' *attributes*:sub:`opt` '{' *inferred-submodule-member** '}'
+  
+  *inferred-submodule-member*:
+    ``export`` '*'
+
+A module containing an *inferred-submodule-declaration* shall have either an umbrella header or an umbrella directory. The headers to which the *inferred-submodule-declaration* applies are exactly those headers included by the umbrella header (transitively) or included in the module because they reside within the umbrella directory (or its subdirectories).
+
+For each header included by the umbrella header or in the umbrella directory that is not named by a *header-declaration*, a module declaration is implicitly generated from the *inferred-submodule-declaration*. The module will:
+
+* Have the same name as the header (without the file extension)
+* Have the ``explicit`` specifier, if the *inferred-submodule-declaration* has the ``explicit`` specifier
+* Have the ``framework`` specifier, if the    
+  *inferred-submodule-declaration* has the ``framework`` specifier
+* Have the attributes specified by the \ *inferred-submodule-declaration* 
+* Contain a single *header-declaration* naming that header
+* Contain a single *export-declaration* ``export *``, if the \ *inferred-submodule-declaration* contains the \ *inferred-submodule-member* ``export *``
+
+**Example**: If the subdirectory "MyLib" contains the headers ``A.h`` and ``B.h``, then the following module map:
+
+.. parsed-literal::
+
+  module MyLib {
+    umbrella "MyLib"
+    explicit module * {
+      export *
+    }
+  }
+
+is equivalent to the (more verbose) module map:
+
+.. parsed-literal::
+
+  module MyLib {
+    explicit module A {
+      header "A.h"
+      export *
+    }
+
+    explicit module B {
+      header "B.h"
+      export *
+    }
+  }
+
+Export Declaration
+~~~~~~~~~~~~~~~~~~
+An *export-declaration* specifies which imported modules will automatically be re-exported as part of a given module's API.
+
+.. parsed-literal::
+
+  *export-declaration*:
+    ``export`` *wildcard-module-id*
+
+  *wildcard-module-id*:
+    *identifier*
+    '*'
+    *identifier* '.' *wildcard-module-id*
+
+The *export-declaration* names a module or a set of modules that will be re-exported to any translation unit that imports the enclosing module. Each imported module that matches the *wildcard-module-id* up to, but not including, the first ``*`` will be re-exported.
+
+**Example**:: In the following example, importing ``MyLib.Derived`` also provides the API for ``MyLib.Base``:
+
+.. parsed-literal::
+
+  module MyLib {
+    module Base {
+      header "Base.h"
+    }
+
+    module Derived {
+      header "Derived.h"
+      export Base
+    }
+  }
+
+Note that, if ``Derived.h`` includes ``Base.h``, one can simply use a wildcard export to re-export everything ``Derived.h`` includes:
+
+.. parsed-literal::
+
+  module MyLib {
+    module Base {
+      header "Base.h"
+    }
+
+    module Derived {
+      header "Derived.h"
+      export *
+    }
+  }
+
+.. note::
+
+  The wildcard export syntax ``export *`` re-exports all of the
+  modules that were imported in the actual header file. Because
+  ``#include`` directives are automatically mapped to module imports,
+  ``export *`` provides the same transitive-inclusion behavior
+  provided by the C preprocessor, e.g., importing a given module
+  implicitly imports all of the modules on which it depends.
+  Therefore, liberal use of ``export *`` provides excellent backward
+  compatibility for programs that rely on transitive inclusion (i.e.,
+  all of them).
+
+Link Declaration
+~~~~~~~~~~~~~~~~
+A *link-declaration* specifies a library or framework against which a program should be linked if the enclosing module is imported in any translation unit in that program.
+
+.. parsed-literal::
+
+  *link-declaration*:
+    ``link`` ``framework``:sub:`opt` *string-literal*
+
+The *string-literal* specifies the name of the library or framework against which the program should be linked. For example, specifying "clangBasic" would instruct the linker to link with ``-lclangBasic`` for a Unix-style linker.
+
+A *link-declaration* with the ``framework`` specifies that the linker should link against the named framework, e.g., with ``-framework MyFramework``.
+
+.. note::
+
+  Automatic linking with the ``link`` directive is not yet widely
+  implemented, because it requires support from both the object file
+  format and the linker. The notion is similar to Microsoft Visual
+  Studio's ``#pragma comment(lib...)``.
+
+Configation Macros Declaration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The *config-macros-declaration* specifies the set of configuration macros that have an effect on the the API of the enclosing module.
+
+.. parsed-literal::
+
+  *config-macros-declaration*:
+    ``config_macros`` *attributes*:sub:`opt` *config-macro-list*:sub:`opt`
+
+  *config-macro-list*:
+    *identifier* (',' *identifier*)*
+
+Each *identifier* in the *config-macro-list* specifies the name of a macro. The compiler is required to maintain different variants of the given module for differing definitions of any of the named macros.
+
+A *config-macros-declaration* shall only be present on a top-level module, i.e., a module that is not nested within an enclosing module.
+
+The ``exhaustive`` attribute specifies that the list of macros in the *config-macros-declaration* is exhaustive, meaning that no other macro definition is intended to have an effect on the API of that module. 
+
+.. note::
+
+  The ``exhaustive`` attribute implies that any macro definitions 
+  for macros not listed as configuration macros should be ignored
+  completely when building the module. As an optimization, the
+  compiler could reduce the number of unique module variants by not
+  considering these non-configuration macros. This optimization is not
+  yet implemented in Clang.
+
+A translation unit shall not import the same module under different definitions of the configuration macros.
+
+.. note::
+
+  Clang implements a weak form of this requirement: the definitions
+  used for configuration macros are fixed based on the definitions
+  provided by the command line. If an import occurs and the definition
+  of any configuration macro has changed, the compiler will produce a
+  warning (under the control of ``-Wconfig-macros``).
+
+**Example:** A logging library might provide different API (e.g., in the form of different definitions for a logging macro) based on the ``NDEBUG`` macro setting:
+
+.. parsed-literal::
+
+  module MyLogger {
+    umbrella header "MyLogger.h"
+    config_macros [exhaustive] NDEBUG
+  }
+
+Conflict Declarations
+~~~~~~~~~~~~~~~~~~~~~
+A *conflict-declaration* describes a case where the presence of two different modules in the same translation unit is likely to cause a problem. For example, two modules may provide similar-but-incompatible functionality.
+
+.. parsed-literal::
+
+  *conflict-declaration*:
+    ``conflict`` *module-id* ',' *string-literal*
+
+The *module-id* of the *conflict-declaration* specifies the module with which the enclosing module conflicts. The specified module shall not have been imported in the translation unit when the enclosing module is imported.
+
+The *string-literal* provides a message to be provided as part of the compiler diagnostic when two modules conflict.
+
+.. note::
+
+  Clang emits a warning (under the control of ``-Wmodule-conflict``)
+  when a module conflict is discovered.
+
+**Example:**
+
+.. parsed-literal::
+
+  module Conflicts {
+    explicit module A {
+      header "conflict_a.h"
+      conflict B, "we just don't like B"
+    }
+
+    module B {
+      header "conflict_b.h"
+    }
+  }
+
+
+Attributes
+----------
+Attributes are used in a number of places in the grammar to describe specific behavior of other declarations. The format of attributes is fairly simple.
+
+.. parsed-literal::
+
+  *attributes*:
+    *attribute* *attributes*:sub:`opt`
+
+  *attribute*:
+    '[' *identifier* ']'
+
+Any *identifier* can be used as an attribute, and each declaration specifies what attributes can be applied to it.
+
+Where To Learn More About Modules
+=================================
+The Clang source code provides additional information about modules:
+
+``clang/lib/Headers/module.map``
+  Module map for Clang's compiler-specific header files.
+
+``clang/test/Modules/``
+  Tests specifically related to modules functionality.
+
+PCHInternals_
+  Information about the serialized AST format used for precompiled headers and modules.
 
 .. [#] Automatic linking against the libraries of modules requires specific linker support, which is not widely available.
 
@@ -165,3 +621,6 @@ to the modules functionality.
 .. [#] There are certain anti-patterns that occur in headers, particularly system headers, that cause problems for modules.
 
 .. [#] The preprocessing context in which the modules are parsed is actually dependent on the command-line options provided to the compiler, including the language dialect and any ``-D`` options. However, the compiled modules for different command-line options are kept distinct, and any preprocessor directives that occur within the translation unit are ignored. 
+
+.. _PCHInternals: PCHInternals.html
+ 
