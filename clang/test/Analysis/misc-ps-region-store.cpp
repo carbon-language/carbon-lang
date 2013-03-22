@@ -721,3 +721,22 @@ void rdar12964481_b(_ComplexT *y) {
    *y *= x; // no-warning
 }
 
+// Test case for PR 12921.  This previously produced
+// a bogus warning.
+static const int pr12921_arr[] = { 0, 1 };
+static const int pr12921_arrcount = sizeof(pr12921_arr)/sizeof(int);
+
+int pr12921(int argc, char **argv) {
+  int i, retval;
+  for (i = 0; i < pr12921_arrcount; i++) {
+    if (argc == i) {
+      retval = i;
+      break;
+    }
+  }
+
+  // No match
+  if (i == pr12921_arrcount) return 66;
+  return pr12921_arr[retval];
+}
+
