@@ -84,8 +84,8 @@ namespace References {
     *box = 1; // no-warning
 
     int *&box2 = m.getValue(i);
-    box = 0;
-    *box = 1; // expected-warning {{Dereference of null pointer}}
+    box2 = 0;
+    *box2 = 1; // expected-warning {{Dereference of null pointer}}
   }
 
   SomeClass *&getSomeClass() {
