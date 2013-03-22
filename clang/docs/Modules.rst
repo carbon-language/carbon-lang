@@ -239,7 +239,7 @@ Within a module map file, modules are referred to by a *module-id*, which uses p
 .. parsed-literal::
 
   *module-id*:
-    *identifier* (',' *identifier*)*
+    *identifier* ('.' *identifier*)*
 
 Module declaration
 ------------------
@@ -269,7 +269,7 @@ The ``system`` attribute specifies that the module is a system module. When a sy
 
 Modules can have a number of different kinds of members, each of which is described below:
 
-.. parsed-literal:
+.. parsed-literal::
 
   *module-member*:
     *requires-declaration*
