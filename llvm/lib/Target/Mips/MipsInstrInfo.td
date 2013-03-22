@@ -256,6 +256,7 @@ def mem : Operand<i32> {
   let MIOperandInfo = (ops CPURegs, simm16);
   let EncoderMethod = "getMemEncoding";
   let ParserMatchClass = MipsMemAsmOperand;
+  let OperandType = "OPERAND_MEMORY";
 }
 
 def mem64 : Operand<i64> {
@@ -263,18 +264,21 @@ def mem64 : Operand<i64> {
   let MIOperandInfo = (ops CPU64Regs, simm16_64);
   let EncoderMethod = "getMemEncoding";
   let ParserMatchClass = MipsMemAsmOperand;
+  let OperandType = "OPERAND_MEMORY";
 }
 
 def mem_ea : Operand<i32> {
   let PrintMethod = "printMemOperandEA";
   let MIOperandInfo = (ops CPURegs, simm16);
   let EncoderMethod = "getMemEncoding";
+  let OperandType = "OPERAND_MEMORY";
 }
 
 def mem_ea_64 : Operand<i64> {
   let PrintMethod = "printMemOperandEA";
   let MIOperandInfo = (ops CPU64Regs, simm16_64);
   let EncoderMethod = "getMemEncoding";
+  let OperandType = "OPERAND_MEMORY";
 }
 
 // size operand of ext instruction

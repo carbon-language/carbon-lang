@@ -122,6 +122,9 @@ class MipsAsmParser : public MCTargetAsmParser {
                             SmallVectorImpl<MCInst> &Instructions);
   void expandLoadAddressReg(MCInst &Inst, SMLoc IDLoc,
                             SmallVectorImpl<MCInst> &Instructions);
+  void expandMemInst(MCInst &Inst, SMLoc IDLoc,
+                     SmallVectorImpl<MCInst> &Instructions,
+                     bool isLoad,bool isImmOpnd);
   bool reportParseError(StringRef ErrorMsg);
 
   bool parseMemOffset(const MCExpr *&Res);
@@ -171,6 +174,9 @@ class MipsAsmParser : public MCTargetAsmParser {
   unsigned getReg(int RC,int RegNo);
 
   int getATReg();
+
+  bool processInstruction(MCInst &Inst, SMLoc IDLoc,
+                        SmallVectorImpl<MCInst> &Instructions);
 public:
   MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser)
     : MCTargetAsmParser(), STI(sti), Parser(parser) {
@@ -395,6 +401,56 @@ public:
 };
 }
 
+namespace llvm {
+extern const MCInstrDesc MipsInsts[];
+}
+static const MCInstrDesc &getInstDesc(unsigned Opcode) {
+  return MipsInsts[Opcode];
+}
+
+bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
+                        SmallVectorImpl<MCInst> &Instructions) {
+  const MCInstrDesc &MCID = getInstDesc(Inst.getOpcode());
+  Inst.setLoc(IDLoc);
+  if (MCID.mayLoad() || MCID.mayStore()) {
+    // Check the offset of memory operand, if it is a symbol
+    // reference or immediate we may have to expand instructions
+    for (unsigned i=0;i<MCID.getNumOperands();i++) {
+      const MCOperandInfo &OpInfo = MCID.OpInfo[i];
+      if ((OpInfo.OperandType == MCOI::OPERAND_MEMORY) ||
+          (OpInfo.OperandType == MCOI::OPERAND_UNKNOWN)) {
+        MCOperand &Op = Inst.getOperand(i);
+        if (Op.isImm()) {
+          int MemOffset = Op.getImm();
+          if (MemOffset < -32768 || MemOffset > 32767) {
+            // Offset can't exceed 16bit value
+            expandMemInst(Inst,IDLoc,Instructions,MCID.mayLoad(),true);
+            return false;
+          }
+        } else if (Op.isExpr()) {
+          const MCExpr *Expr = Op.getExpr();
+          if (Expr->getKind() == MCExpr::SymbolRef){
+            const MCSymbolRefExpr *SR =
+                    static_cast<const MCSymbolRefExpr*>(Expr);
+            if (SR->getKind() == MCSymbolRefExpr::VK_None) {
+              // Expand symbol
+              expandMemInst(Inst,IDLoc,Instructions,MCID.mayLoad(),false);
+              return false;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (needsExpansion(Inst))
+    expandInstruction(Inst, IDLoc, Instructions);
+  else
+    Instructions.push_back(Inst);
+
+  return false;
+}
+
 bool MipsAsmParser::needsExpansion(MCInst &Inst) {
 
   switch(Inst.getOpcode()) {
@@ -541,28 +597,103 @@ void MipsAsmParser::expandLoadAddressImm(MCInst &Inst, SMLoc IDLoc,
   }
 }
 
+void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
+                     SmallVectorImpl<MCInst> &Instructions,
+                     bool isLoad,bool isImmOpnd) {
+  const MCSymbolRefExpr *SR;
+  MCInst TempInst;
+  unsigned ImmOffset,HiOffset,LoOffset;
+  const MCExpr *ExprOffset;
+  unsigned TmpRegNum;
+  unsigned AtRegNum = getReg((isMips64()) ? Mips::CPU64RegsRegClassID:
+                                            Mips::CPURegsRegClassID,
+                                            getATReg());
+  // 1st operand is either source or dst register
+  assert(Inst.getOperand(0).isReg() && "expected register operand kind");
+  unsigned RegOpNum = Inst.getOperand(0).getReg();
+  // 2nd operand is base register
+  assert(Inst.getOperand(1).isReg() && "expected register operand kind");
+  unsigned BaseRegNum = Inst.getOperand(1).getReg();
+  // 3rd operand is either immediate or expression
+  if (isImmOpnd) {
+    assert(Inst.getOperand(2).isImm() && "expected immediate operand kind");
+    ImmOffset = Inst.getOperand(2).getImm();
+    LoOffset = ImmOffset & 0x0000ffff;
+    HiOffset = (ImmOffset & 0xffff0000) >> 16;
+    // If msb of LoOffset is 1(negative number) we must increment HiOffset
+    if (LoOffset & 0x8000)
+      HiOffset++;
+  }
+  else
+    ExprOffset = Inst.getOperand(2).getExpr();
+  // All instructions will have the same location
+  TempInst.setLoc(IDLoc);
+  // 1st instruction in expansion is LUi. For load instruction we can use
+  // the dst register as a temporary if base and dst are different,
+  // but for stores we must use $at
+  TmpRegNum = (isLoad && (BaseRegNum != RegOpNum))?RegOpNum:AtRegNum;
+  TempInst.setOpcode(Mips::LUi);
+  TempInst.addOperand(MCOperand::CreateReg(TmpRegNum));
+  if (isImmOpnd)
+    TempInst.addOperand(MCOperand::CreateImm(HiOffset));
+  else {
+    if (ExprOffset->getKind() == MCExpr::SymbolRef) {
+      SR = static_cast<const MCSymbolRefExpr*>(ExprOffset);
+      const MCSymbolRefExpr *HiExpr = MCSymbolRefExpr::
+                                        Create(SR->getSymbol().getName(),
+                                        MCSymbolRefExpr::VK_Mips_ABS_HI,
+                                        getContext());
+      TempInst.addOperand(MCOperand::CreateExpr(HiExpr));
+    }
+  }
+  // Add the instruction to the list
+  Instructions.push_back(TempInst);
+  // and prepare TempInst for next instruction
+  TempInst.clear();
+  // which is add temp register to base
+  TempInst.setOpcode(Mips::ADDu);
+  TempInst.addOperand(MCOperand::CreateReg(TmpRegNum));
+  TempInst.addOperand(MCOperand::CreateReg(TmpRegNum));
+  TempInst.addOperand(MCOperand::CreateReg(BaseRegNum));
+  Instructions.push_back(TempInst);
+  TempInst.clear();
+  // and finaly, create original instruction with low part
+  // of offset and new base
+  TempInst.setOpcode(Inst.getOpcode());
+  TempInst.addOperand(MCOperand::CreateReg(RegOpNum));
+  TempInst.addOperand(MCOperand::CreateReg(TmpRegNum));
+  if (isImmOpnd)
+    TempInst.addOperand(MCOperand::CreateImm(LoOffset));
+  else {
+    if (ExprOffset->getKind() == MCExpr::SymbolRef) {
+      const MCSymbolRefExpr *LoExpr = MCSymbolRefExpr::
+                                      Create(SR->getSymbol().getName(),
+                                      MCSymbolRefExpr::VK_Mips_ABS_LO,
+                                      getContext());
+      TempInst.addOperand(MCOperand::CreateExpr(LoExpr));
+    }
+  }
+  Instructions.push_back(TempInst);
+  TempInst.clear();
+}
+
 bool MipsAsmParser::
 MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCStreamer &Out, unsigned &ErrorInfo,
                         bool MatchingInlineAsm) {
   MCInst Inst;
+  SmallVector<MCInst, 8> Instructions;
   unsigned MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo,
                                               MatchingInlineAsm);
 
   switch (MatchResult) {
   default: break;
   case Match_Success: {
-    if (needsExpansion(Inst)) {
-      SmallVector<MCInst, 4> Instructions;
-      expandInstruction(Inst, IDLoc, Instructions);
-      for(unsigned i =0; i < Instructions.size(); i++){
-        Out.EmitInstruction(Instructions[i]);
-      }
-    } else {
-        Inst.setLoc(IDLoc);
-        Out.EmitInstruction(Inst);
-      }
+    if (processInstruction(Inst,IDLoc,Instructions))
+      return true;
+    for(unsigned i =0; i < Instructions.size(); i++)
+      Out.EmitInstruction(Instructions[i]);
     return false;
   }
   case Match_MissingFeature:
@@ -898,24 +1029,25 @@ bool MipsAsmParser::parseRelocOperand(const MCExpr *&Res) {
 
   // Check the type of the expression
   if (const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(IdVal)) {
-    // it's a constant, evaluate lo or hi value
-    int Val = MCE->getValue();
+    // It's a constant, evaluate lo or hi value
     if (Str == "lo") {
-      Val = Val & 0xffff;
+      short Val = MCE->getValue();
+      Res = MCConstantExpr::Create(Val, getContext());
     } else if (Str == "hi") {
+      int Val = MCE->getValue();
       int LoSign = Val & 0x8000;
       Val = (Val & 0xffff0000) >> 16;
-      //lower part is treated as signed int, so if it is negative
-      //we must add 1 to hi part to compensate
+      // Lower part is treated as a signed int, so if it is negative
+      // we must add 1 to the hi part to compensate
       if (LoSign)
         Val++;
+      Res = MCConstantExpr::Create(Val, getContext());
     }
-    Res = MCConstantExpr::Create(Val, getContext());
     return false;
   }
 
   if (const MCSymbolRefExpr *MSRE = dyn_cast<MCSymbolRefExpr>(IdVal)) {
-    // it's a symbol, create symbolic expression from symbol
+    // It's a symbol, create symbolic expression from symbol
     StringRef Symbol = MSRE->getSymbol().getName();
     MCSymbolRefExpr::VariantKind VK = getVariantKind(Str);
     Res = MCSymbolRefExpr::Create(Symbol,VK,getContext());
@@ -940,6 +1072,7 @@ bool MipsAsmParser::parseMemOffset(const MCExpr *&Res) {
   switch(getLexer().getKind()) {
   default:
     return true;
+  case AsmToken::Identifier:
   case AsmToken::Integer:
   case AsmToken::Minus:
   case AsmToken::Plus:
