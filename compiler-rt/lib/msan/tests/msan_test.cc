@@ -1345,6 +1345,7 @@ TEST(MemorySanitizer, dladdr) {
   EXPECT_NOT_POISONED((unsigned long)info.dli_saddr);
 }
 
+namespace {
 #ifdef __GLIBC__
 extern "C" {
   extern void *__libc_stack_end;
@@ -1393,6 +1394,7 @@ TEST(MemorySanitizer, dlopen) {
 
   delete[] path;
 }
+} // namespace
 
 TEST(MemorySanitizer, scanf) {
   const char *input = "42 hello";
