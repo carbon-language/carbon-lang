@@ -16,15 +16,15 @@
 
 #include <fstream>
 #include <cassert>
+#include "platform_support.h"
 
 int main()
 {
-    char temp1[L_tmpnam], temp2[L_tmpnam];
-    tmpnam(temp1);
-    tmpnam(temp2);
+    std::string temp1 = get_temp_file_name();
+    std::string temp2 = get_temp_file_name();
     {
-        std::ofstream fs1(temp1);
-        std::ofstream fs2(temp2);
+        std::ofstream fs1(temp1.c_str());
+        std::ofstream fs2(temp2.c_str());
         fs1 << 3.25;
         fs2 << 4.5;
         fs1.swap(fs2);
@@ -32,26 +32,26 @@ int main()
         fs2 << ' ' << 4.5;
     }
     {
-        std::ifstream fs(temp1);
+        std::ifstream fs(temp1.c_str());
         double x = 0;
         fs >> x;
         assert(x == 3.25);
         fs >> x;
         assert(x == 4.5);
     }
-    remove(temp1);
+    std::remove(temp1.c_str());
     {
-        std::ifstream fs(temp2);
+        std::ifstream fs(temp2.c_str());
         double x = 0;
         fs >> x;
         assert(x == 4.5);
         fs >> x;
         assert(x == 3.25);
     }
-    remove(temp2);
+    std::remove(temp2.c_str());
     {
-        std::wofstream fs1(temp1);
-        std::wofstream fs2(temp2);
+        std::wofstream fs1(temp1.c_str());
+        std::wofstream fs2(temp2.c_str());
         fs1 << 3.25;
         fs2 << 4.5;
         fs1.swap(fs2);
@@ -59,21 +59,21 @@ int main()
         fs2 << ' ' << 4.5;
     }
     {
-        std::wifstream fs(temp1);
+        std::wifstream fs(temp1.c_str());
         double x = 0;
         fs >> x;
         assert(x == 3.25);
         fs >> x;
         assert(x == 4.5);
     }
-    remove(temp1);
+    std::remove(temp1.c_str());
     {
-        std::wifstream fs(temp2);
+        std::wifstream fs(temp2.c_str());
         double x = 0;
         fs >> x;
         assert(x == 4.5);
         fs >> x;
         assert(x == 3.25);
     }
-    remove(temp2);
+    std::remove(temp2.c_str());
 }

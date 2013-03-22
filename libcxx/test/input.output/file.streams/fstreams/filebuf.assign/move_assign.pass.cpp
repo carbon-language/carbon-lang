@@ -16,15 +16,15 @@
 
 #include <fstream>
 #include <cassert>
+#include "platform_support.h"
 
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    char temp[L_tmpnam];
-    tmpnam(temp);
+    std::string temp = get_temp_file_name();
     {
         std::filebuf f;
-        assert(f.open(temp, std::ios_base::out | std::ios_base::in
+        assert(f.open(temp.c_str(), std::ios_base::out | std::ios_base::in
                                                | std::ios_base::trunc) != 0);
         assert(f.is_open());
         assert(f.sputn("123", 3) == 3);
@@ -36,10 +36,10 @@ int main()
         assert(f2.is_open());
         assert(f2.sgetc() == '2');
     }
-    remove(temp);
+    std::remove(temp.c_str());
     {
         std::wfilebuf f;
-        assert(f.open(temp, std::ios_base::out | std::ios_base::in
+        assert(f.open(temp.c_str(), std::ios_base::out | std::ios_base::in
                                                | std::ios_base::trunc) != 0);
         assert(f.is_open());
         assert(f.sputn(L"123", 3) == 3);
@@ -51,6 +51,6 @@ int main()
         assert(f2.is_open());
         assert(f2.sgetc() == L'2');
     }
-    remove(temp);
+    std::remove(temp.c_str());
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

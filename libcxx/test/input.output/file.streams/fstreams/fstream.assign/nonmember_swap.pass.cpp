@@ -17,16 +17,16 @@
 
 #include <fstream>
 #include <cassert>
+#include "platform_support.h"
 
 int main()
 {
-    char temp1[L_tmpnam], temp2[L_tmpnam];
-    tmpnam(temp1);
-    tmpnam(temp2);
+    std::string temp1 = get_temp_file_name();
+    std::string temp2 = get_temp_file_name();
     {
-        std::fstream fs1(temp1, std::ios_base::in | std::ios_base::out
+        std::fstream fs1(temp1.c_str(), std::ios_base::in | std::ios_base::out
                                                   | std::ios_base::trunc);
-        std::fstream fs2(temp2, std::ios_base::in | std::ios_base::out
+        std::fstream fs2(temp2.c_str(), std::ios_base::in | std::ios_base::out
                                                   | std::ios_base::trunc);
         fs1 << 1 << ' ' << 2;
         fs2 << 2 << ' ' << 1;
@@ -44,12 +44,12 @@ int main()
         fs2 >> i;
         assert(i == 2);
     }
-    std::remove(temp1);
-    std::remove(temp2);
+    std::remove(temp1.c_str());
+    std::remove(temp2.c_str());
     {
-        std::wfstream fs1(temp1, std::ios_base::in | std::ios_base::out
+        std::wfstream fs1(temp1.c_str(), std::ios_base::in | std::ios_base::out
                                                    | std::ios_base::trunc);
-        std::wfstream fs2(temp2, std::ios_base::in | std::ios_base::out
+        std::wfstream fs2(temp2.c_str(), std::ios_base::in | std::ios_base::out
                                                    | std::ios_base::trunc);
         fs1 << 1 << ' ' << 2;
         fs2 << 2 << ' ' << 1;
@@ -67,6 +67,6 @@ int main()
         fs2 >> i;
         assert(i == 2);
     }
-    std::remove(temp1);
-    std::remove(temp2);
+    std::remove(temp1.c_str());
+    std::remove(temp2.c_str());
 }

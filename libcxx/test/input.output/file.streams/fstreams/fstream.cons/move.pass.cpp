@@ -16,12 +16,12 @@
 
 #include <fstream>
 #include <cassert>
+#include "platform_support.h"
 
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    char temp[L_tmpnam];
-    tmpnam(temp);
+    std::string temp = get_temp_file_name();
     {
         std::fstream fso(temp, std::ios_base::in | std::ios_base::out
                                                  | std::ios_base::trunc);
@@ -32,7 +32,7 @@ int main()
         fs >> x;
         assert(x == 3.25);
     }
-    std::remove("test.dat");
+    std::remove(temp.c_str());
     {
         std::wfstream fso(temp, std::ios_base::in | std::ios_base::out
                                                   | std::ios_base::trunc);
@@ -43,6 +43,6 @@ int main()
         fs >> x;
         assert(x == 3.25);
     }
-    std::remove(temp);
+    std::remove(temp.c_str());
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

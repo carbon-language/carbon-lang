@@ -16,13 +16,13 @@
 
 #include <fstream>
 #include <cassert>
+#include "platform_support.h"
 
 int main()
 {
-    char temp[L_tmpnam];
-    tmpnam(temp);
+    std::string temp = get_temp_file_name();
     {
-        std::fstream fs(temp, std::ios_base::in | std::ios_base::out
+        std::fstream fs(temp.c_str(), std::ios_base::in | std::ios_base::out
                                                 | std::ios_base::trunc);
         double x = 0;
         fs << 3.25;
@@ -30,9 +30,9 @@ int main()
         fs >> x;
         assert(x == 3.25);
     }
-    std::remove(temp);
+    std::remove(temp.c_str());
     {
-        std::wfstream fs(temp, std::ios_base::in | std::ios_base::out
+        std::wfstream fs(temp.c_str(), std::ios_base::in | std::ios_base::out
                                                  | std::ios_base::trunc);
         double x = 0;
         fs << 3.25;
@@ -40,5 +40,5 @@ int main()
         fs >> x;
         assert(x == 3.25);
     }
-    std::remove(temp);
+    std::remove(temp.c_str());
 }

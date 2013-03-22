@@ -16,31 +16,31 @@
 
 #include <fstream>
 #include <cassert>
+#include "platform_support.h"
 
 int main()
 {
-    char temp[L_tmpnam];
-    tmpnam(temp);
+    std::string temp = get_temp_file_name();
     {
-        std::ofstream fs((std::string(temp)));
+        std::ofstream fs(temp);
         fs << 3.25;
     }
     {
-        std::ifstream fs((std::string(temp)));
+        std::ifstream fs(temp);
         double x = 0;
         fs >> x;
         assert(x == 3.25);
     }
-    remove(temp);
+    std::remove(temp.c_str());
     {
-        std::wofstream fs((std::string(temp)));
+        std::wofstream fs(temp);
         fs << 3.25;
     }
     {
-        std::wifstream fs((std::string(temp)));
+        std::wifstream fs(temp);
         double x = 0;
         fs >> x;
         assert(x == 3.25);
     }
-    remove(temp);
+    std::remove(temp.c_str());
 }

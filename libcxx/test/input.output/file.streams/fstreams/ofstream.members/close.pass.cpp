@@ -16,27 +16,27 @@
 
 #include <fstream>
 #include <cassert>
+#include "platform_support.h"
 
 int main()
 {
-    char temp[L_tmpnam];
-    tmpnam(temp);
+    std::string temp = get_temp_file_name();
     {
         std::ofstream fs;
         assert(!fs.is_open());
-        fs.open(temp);
+        fs.open(temp.c_str());
         assert(fs.is_open());
         fs.close();
         assert(!fs.is_open());
     }
-    remove(temp);
+    std::remove(temp.c_str());
     {
         std::wofstream fs;
         assert(!fs.is_open());
-        fs.open(temp);
+        fs.open(temp.c_str());
         assert(fs.is_open());
         fs.close();
         assert(!fs.is_open());
     }
-    remove(temp);
+    std::remove(temp.c_str());
 }

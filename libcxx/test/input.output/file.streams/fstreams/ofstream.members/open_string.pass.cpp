@@ -16,43 +16,43 @@
 
 #include <fstream>
 #include <cassert>
+#include "platform_support.h"
 
 int main()
 {
-    char temp[L_tmpnam];
-    tmpnam(temp);
+    std::string temp = get_temp_file_name();
     {
         std::ofstream fs;
         assert(!fs.is_open());
         char c = 'a';
         fs << c;
         assert(fs.fail());
-        fs.open(std::string(temp));
+        fs.open(temp);
         assert(fs.is_open());
         fs << c;
     }
     {
-        std::ifstream fs(temp);
+        std::ifstream fs(temp.c_str());
         char c = 0;
         fs >> c;
         assert(c == 'a');
     }
-    remove(temp);
+    std::remove(temp.c_str());
     {
         std::wofstream fs;
         assert(!fs.is_open());
         wchar_t c = L'a';
         fs << c;
         assert(fs.fail());
-        fs.open(std::string(temp));
+        fs.open(temp);
         assert(fs.is_open());
         fs << c;
     }
     {
-        std::wifstream fs(temp);
+        std::wifstream fs(temp.c_str());
         wchar_t c = 0;
         fs >> c;
         assert(c == L'a');
     }
-    remove(temp);
+    std::remove(temp.c_str());
 }

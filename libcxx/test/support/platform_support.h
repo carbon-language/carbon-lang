@@ -39,4 +39,25 @@
 #define LOCALE_zh_CN_UTF_8     "zh_CN.UTF-8"
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+
+inline
+std::string
+get_temp_file_name()
+{
+#ifdef _WIN32
+   char* p = _tempnam( NULL, NULL );
+   if (p == nullptr)
+       abort();
+    std::string s(p);
+    free( p );
+#else
+   std::string s("temp.XXXX");
+   mktemp(&s[0]);
+#endif
+   return s;
+}
+
 #endif // PLATFORM_SUPPORT_H
