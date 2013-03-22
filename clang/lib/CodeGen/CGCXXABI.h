@@ -54,6 +54,12 @@ protected:
     return CGF.CXXABIThisValue;
   }
 
+  /// Issue a diagnostic about unsupported features in the ABI.
+  void ErrorUnsupportedABI(CodeGenFunction &CGF, StringRef S);
+
+  /// Get a null value for unsupported member pointers.
+  llvm::Constant *GetBogusMemberPointer(QualType T);
+
   // FIXME: Every place that calls getVTT{Decl,Value} is something
   // that needs to be abstracted properly.
   ImplicitParamDecl *&getVTTDecl(CodeGenFunction &CGF) {

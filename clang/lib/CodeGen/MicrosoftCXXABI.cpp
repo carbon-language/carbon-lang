@@ -109,6 +109,33 @@ public:
                                    llvm::Value *allocPtr,
                                    CharUnits cookieSize);
   static bool needThisReturn(GlobalDecl GD);
+
+private:
+  llvm::Constant *getSimpleNullMemberPointer(const MemberPointerType *MPT);
+
+  llvm::Constant *getZeroPtrDiff() {
+    return llvm::ConstantInt::get(CGM.PtrDiffTy, 0);
+  }
+
+  llvm::Constant *getAllOnesPtrDiff() {
+    return  llvm::Constant::getAllOnesValue(CGM.PtrDiffTy);
+  }
+
+public:
+  virtual llvm::Constant *EmitNullMemberPointer(const MemberPointerType *MPT);
+
+  virtual llvm::Constant *EmitMemberDataPointer(const MemberPointerType *MPT,
+                                                CharUnits offset);
+
+  virtual llvm::Value *EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
+                                                  llvm::Value *MemPtr,
+                                                  const MemberPointerType *MPT);
+
+  virtual llvm::Value *EmitMemberDataPointerAddress(CodeGenFunction &CGF,
+                                                    llvm::Value *Base,
+                                                    llvm::Value *MemPtr,
+                                                  const MemberPointerType *MPT);
+
 };
 
 }
@@ -350,6 +377,95 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
 
   // Emit the initializer and add a global destructor if appropriate.
   CGF.EmitCXXGlobalVarDeclInit(D, DeclPtr, PerformInit);
+}
+
+// Returns true for member pointer types that we know how to represent with a
+// simple ptrdiff_t.  Currently we only know how to emit, test, and load member
+// data pointers for complete single inheritance classes.
+static bool isSimpleMemberPointer(const MemberPointerType *MPT) {
+  const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
+  return (MPT->isMemberDataPointer() &&
+          !MPT->getClass()->isIncompleteType() &&
+          RD->getNumVBases() == 0);
+}
+
+llvm::Constant *
+MicrosoftCXXABI::getSimpleNullMemberPointer(const MemberPointerType *MPT) {
+  if (isSimpleMemberPointer(MPT)) {
+    const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
+    // A null member data pointer is represented as -1 if the class is not
+    // polymorphic, and 0 otherwise.
+    if (RD->isPolymorphic())
+      return getZeroPtrDiff();
+    return getAllOnesPtrDiff();
+  }
+  return GetBogusMemberPointer(QualType(MPT, 0));
+}
+
+llvm::Constant *
+MicrosoftCXXABI::EmitNullMemberPointer(const MemberPointerType *MPT) {
+  if (isSimpleMemberPointer(MPT))
+    return getSimpleNullMemberPointer(MPT);
+  // FIXME: Implement function member pointers.
+  return GetBogusMemberPointer(QualType(MPT, 0));
+}
+
+llvm::Constant *
+MicrosoftCXXABI::EmitMemberDataPointer(const MemberPointerType *MPT,
+                                       CharUnits offset) {
+  // Member data pointers are plain offsets when no virtual bases are involved.
+  if (isSimpleMemberPointer(MPT))
+    return llvm::ConstantInt::get(CGM.PtrDiffTy, offset.getQuantity());
+  // FIXME: Implement member pointers other inheritance models.
+  return GetBogusMemberPointer(QualType(MPT, 0));
+}
+
+llvm::Value *
+MicrosoftCXXABI::EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
+                                            llvm::Value *MemPtr,
+                                            const MemberPointerType *MPT) {
+  CGBuilderTy &Builder = CGF.Builder;
+
+  // For member data pointers, this is just a check against -1 or 0.
+  if (isSimpleMemberPointer(MPT)) {
+    llvm::Constant *Val = getSimpleNullMemberPointer(MPT);
+    return Builder.CreateICmpNE(MemPtr, Val, "memptr.tobool");
+  }
+
+  // FIXME: Implement member pointers other inheritance models.
+  ErrorUnsupportedABI(CGF, "function member pointer tests");
+  return GetBogusMemberPointer(QualType(MPT, 0));
+}
+
+llvm::Value *
+MicrosoftCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF,
+                                              llvm::Value *Base,
+                                              llvm::Value *MemPtr,
+                                              const MemberPointerType *MPT) {
+  unsigned AS = Base->getType()->getPointerAddressSpace();
+  llvm::Type *PType =
+      CGF.ConvertTypeForMem(MPT->getPointeeType())->getPointerTo(AS);
+  CGBuilderTy &Builder = CGF.Builder;
+
+  if (MPT->isMemberFunctionPointer()) {
+    ErrorUnsupportedABI(CGF, "function member pointer address");
+    return llvm::Constant::getNullValue(PType);
+  }
+
+  llvm::Value *Addr;
+  if (isSimpleMemberPointer(MPT)) {
+    // Add the offset with GEP and i8*.
+    assert(MemPtr->getType() == CGM.PtrDiffTy);
+    Base = Builder.CreateBitCast(Base, Builder.getInt8Ty()->getPointerTo(AS));
+    Addr = Builder.CreateInBoundsGEP(Base, MemPtr, "memptr.offset");
+  } else {
+    ErrorUnsupportedABI(CGF, "non-scalar member pointers");
+    return llvm::Constant::getNullValue(PType);
+  }
+
+  // Cast the address to the appropriate pointer type, adopting the address
+  // space of the base pointer.
+  return Builder.CreateBitCast(Addr, PType);
 }
 
 CGCXXABI *clang::CodeGen::CreateMicrosoftCXXABI(CodeGenModule &CGM) {

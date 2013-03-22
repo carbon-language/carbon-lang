@@ -19,8 +19,7 @@ using namespace CodeGen;
 
 CGCXXABI::~CGCXXABI() { }
 
-static void ErrorUnsupportedABI(CodeGenFunction &CGF,
-                                StringRef S) {
+void CGCXXABI::ErrorUnsupportedABI(CodeGenFunction &CGF, StringRef S) {
   DiagnosticsEngine &Diags = CGF.CGM.getDiags();
   unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
                                           "cannot yet compile %0 in this ABI");
@@ -29,8 +28,7 @@ static void ErrorUnsupportedABI(CodeGenFunction &CGF,
     << S;
 }
 
-static llvm::Constant *GetBogusMemberPointer(CodeGenModule &CGM,
-                                             QualType T) {
+llvm::Constant *CGCXXABI::GetBogusMemberPointer(QualType T) {
   return llvm::Constant::getNullValue(CGM.getTypes().ConvertType(T));
 }
 
@@ -67,12 +65,12 @@ llvm::Value *CGCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
                                                    const CastExpr *E,
                                                    llvm::Value *Src) {
   ErrorUnsupportedABI(CGF, "member function pointer conversions");
-  return GetBogusMemberPointer(CGM, E->getType());
+  return GetBogusMemberPointer(E->getType());
 }
 
 llvm::Constant *CGCXXABI::EmitMemberPointerConversion(const CastExpr *E,
                                                       llvm::Constant *Src) {
-  return GetBogusMemberPointer(CGM, E->getType());
+  return GetBogusMemberPointer(E->getType());
 }
 
 llvm::Value *
@@ -95,22 +93,22 @@ CGCXXABI::EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
 
 llvm::Constant *
 CGCXXABI::EmitNullMemberPointer(const MemberPointerType *MPT) {
-  return GetBogusMemberPointer(CGM, QualType(MPT, 0));
+  return GetBogusMemberPointer(QualType(MPT, 0));
 }
 
 llvm::Constant *CGCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
-  return GetBogusMemberPointer(CGM,
+  return GetBogusMemberPointer(
                          CGM.getContext().getMemberPointerType(MD->getType(),
                                          MD->getParent()->getTypeForDecl()));
 }
 
 llvm::Constant *CGCXXABI::EmitMemberDataPointer(const MemberPointerType *MPT,
                                                 CharUnits offset) {
-  return GetBogusMemberPointer(CGM, QualType(MPT, 0));
+  return GetBogusMemberPointer(QualType(MPT, 0));
 }
 
 llvm::Constant *CGCXXABI::EmitMemberPointer(const APValue &MP, QualType MPT) {
-  return GetBogusMemberPointer(CGM, MPT);
+  return GetBogusMemberPointer(MPT);
 }
 
 bool CGCXXABI::isZeroInitializable(const MemberPointerType *MPT) {
