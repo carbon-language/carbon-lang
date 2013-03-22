@@ -421,15 +421,17 @@ static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
   uptr chunk_beg = p - kChunkHeaderSize;
   AsanChunk *m = reinterpret_cast<AsanChunk *>(chunk_beg);
 
+  u8 old_chunk_state = CHUNK_ALLOCATED;
   // Flip the chunk_state atomically to avoid race on double-free.
-  u8 old_chunk_state = atomic_exchange((atomic_uint8_t*)m, CHUNK_QUARANTINE,
-                                       memory_order_relaxed);
+  if (!atomic_compare_exchange_strong((atomic_uint8_t*)m, &old_chunk_state,
+                                      CHUNK_QUARANTINE, memory_order_relaxed)) {
+    if (old_chunk_state == CHUNK_QUARANTINE)
+      ReportDoubleFree((uptr)ptr, stack);
+    else
+      ReportFreeNotMalloced((uptr)ptr, stack);
+  }
+  CHECK_EQ(CHUNK_ALLOCATED, old_chunk_state);
 
-  if (old_chunk_state == CHUNK_QUARANTINE)
-    ReportDoubleFree((uptr)ptr, stack);
-  else if (old_chunk_state != CHUNK_ALLOCATED)
-    ReportFreeNotMalloced((uptr)ptr, stack);
-  CHECK(old_chunk_state == CHUNK_ALLOCATED);
   if (m->alloc_type != alloc_type && flags()->alloc_dealloc_mismatch)
     ReportAllocTypeMismatch((uptr)ptr, stack,
                             (AllocType)m->alloc_type, (AllocType)alloc_type);

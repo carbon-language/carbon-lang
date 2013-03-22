@@ -400,8 +400,10 @@ void WrongFree() {
 }
 
 TEST(AddressSanitizer, WrongFreeTest) {
-  EXPECT_DEATH(WrongFree(),
-               "ERROR: AddressSanitizer: attempting free.*not malloc");
+  EXPECT_DEATH(WrongFree(), ASAN_PCRE_DOTALL
+               "ERROR: AddressSanitizer: attempting free.*not malloc"
+               ".*is located 4 bytes inside of 400-byte region"
+               ".*allocated by thread");
 }
 
 void DoubleFree() {
