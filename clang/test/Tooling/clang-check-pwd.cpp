@@ -9,3 +9,4 @@
 invalid;
 
 // REQUIRES: shell
+// XFAIL: win64
