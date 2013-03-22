@@ -1991,46 +1991,28 @@ isValidOffset(const int Opcode, const int Offset) const {
     return (Offset >= Hexagon_ADDI_OFFSET_MIN) &&
       (Offset <= Hexagon_ADDI_OFFSET_MAX);
 
-  case Hexagon::MEMw_ADDi_indexed_MEM_V4 :
-  case Hexagon::MEMw_SUBi_indexed_MEM_V4 :
-  case Hexagon::MEMw_ADDr_indexed_MEM_V4 :
-  case Hexagon::MEMw_SUBr_indexed_MEM_V4 :
-  case Hexagon::MEMw_ANDr_indexed_MEM_V4 :
-  case Hexagon::MEMw_ORr_indexed_MEM_V4 :
-  case Hexagon::MEMw_ADDi_MEM_V4 :
-  case Hexagon::MEMw_SUBi_MEM_V4 :
-  case Hexagon::MEMw_ADDr_MEM_V4 :
-  case Hexagon::MEMw_SUBr_MEM_V4 :
-  case Hexagon::MEMw_ANDr_MEM_V4 :
-  case Hexagon::MEMw_ORr_MEM_V4 :
+  case Hexagon::MemOPw_ADDi_V4 :
+  case Hexagon::MemOPw_SUBi_V4 :
+  case Hexagon::MemOPw_ADDr_V4 :
+  case Hexagon::MemOPw_SUBr_V4 :
+  case Hexagon::MemOPw_ANDr_V4 :
+  case Hexagon::MemOPw_ORr_V4 :
     return (0 <= Offset && Offset <= 255);
 
-  case Hexagon::MEMh_ADDi_indexed_MEM_V4 :
-  case Hexagon::MEMh_SUBi_indexed_MEM_V4 :
-  case Hexagon::MEMh_ADDr_indexed_MEM_V4 :
-  case Hexagon::MEMh_SUBr_indexed_MEM_V4 :
-  case Hexagon::MEMh_ANDr_indexed_MEM_V4 :
-  case Hexagon::MEMh_ORr_indexed_MEM_V4 :
-  case Hexagon::MEMh_ADDi_MEM_V4 :
-  case Hexagon::MEMh_SUBi_MEM_V4 :
-  case Hexagon::MEMh_ADDr_MEM_V4 :
-  case Hexagon::MEMh_SUBr_MEM_V4 :
-  case Hexagon::MEMh_ANDr_MEM_V4 :
-  case Hexagon::MEMh_ORr_MEM_V4 :
+  case Hexagon::MemOPh_ADDi_V4 :
+  case Hexagon::MemOPh_SUBi_V4 :
+  case Hexagon::MemOPh_ADDr_V4 :
+  case Hexagon::MemOPh_SUBr_V4 :
+  case Hexagon::MemOPh_ANDr_V4 :
+  case Hexagon::MemOPh_ORr_V4 :
     return (0 <= Offset && Offset <= 127);
 
-  case Hexagon::MEMb_ADDi_indexed_MEM_V4 :
-  case Hexagon::MEMb_SUBi_indexed_MEM_V4 :
-  case Hexagon::MEMb_ADDr_indexed_MEM_V4 :
-  case Hexagon::MEMb_SUBr_indexed_MEM_V4 :
-  case Hexagon::MEMb_ANDr_indexed_MEM_V4 :
-  case Hexagon::MEMb_ORr_indexed_MEM_V4 :
-  case Hexagon::MEMb_ADDi_MEM_V4 :
-  case Hexagon::MEMb_SUBi_MEM_V4 :
-  case Hexagon::MEMb_ADDr_MEM_V4 :
-  case Hexagon::MEMb_SUBr_MEM_V4 :
-  case Hexagon::MEMb_ANDr_MEM_V4 :
-  case Hexagon::MEMb_ORr_MEM_V4 :
+  case Hexagon::MemOPb_ADDi_V4 :
+  case Hexagon::MemOPb_SUBi_V4 :
+  case Hexagon::MemOPb_ADDr_V4 :
+  case Hexagon::MemOPb_SUBr_V4 :
+  case Hexagon::MemOPb_ANDr_V4 :
+  case Hexagon::MemOPb_ORr_V4 :
     return (0 <= Offset && Offset <= 63);
 
   // LDri_pred and STriw_pred are pseudo operations, so it has to take offset of
@@ -2086,44 +2068,33 @@ isMemOp(const MachineInstr *MI) const {
   switch (MI->getOpcode())
   {
     default: return false;
-    case Hexagon::MEMw_ADDi_indexed_MEM_V4 :
-    case Hexagon::MEMw_SUBi_indexed_MEM_V4 :
-    case Hexagon::MEMw_ADDr_indexed_MEM_V4 :
-    case Hexagon::MEMw_SUBr_indexed_MEM_V4 :
-    case Hexagon::MEMw_ANDr_indexed_MEM_V4 :
-    case Hexagon::MEMw_ORr_indexed_MEM_V4 :
-    case Hexagon::MEMw_ADDi_MEM_V4 :
-    case Hexagon::MEMw_SUBi_MEM_V4 :
-    case Hexagon::MEMw_ADDr_MEM_V4 :
-    case Hexagon::MEMw_SUBr_MEM_V4 :
-    case Hexagon::MEMw_ANDr_MEM_V4 :
-    case Hexagon::MEMw_ORr_MEM_V4 :
-    case Hexagon::MEMh_ADDi_indexed_MEM_V4 :
-    case Hexagon::MEMh_SUBi_indexed_MEM_V4 :
-    case Hexagon::MEMh_ADDr_indexed_MEM_V4 :
-    case Hexagon::MEMh_SUBr_indexed_MEM_V4 :
-    case Hexagon::MEMh_ANDr_indexed_MEM_V4 :
-    case Hexagon::MEMh_ORr_indexed_MEM_V4 :
-    case Hexagon::MEMh_ADDi_MEM_V4 :
-    case Hexagon::MEMh_SUBi_MEM_V4 :
-    case Hexagon::MEMh_ADDr_MEM_V4 :
-    case Hexagon::MEMh_SUBr_MEM_V4 :
-    case Hexagon::MEMh_ANDr_MEM_V4 :
-    case Hexagon::MEMh_ORr_MEM_V4 :
-    case Hexagon::MEMb_ADDi_indexed_MEM_V4 :
-    case Hexagon::MEMb_SUBi_indexed_MEM_V4 :
-    case Hexagon::MEMb_ADDr_indexed_MEM_V4 :
-    case Hexagon::MEMb_SUBr_indexed_MEM_V4 :
-    case Hexagon::MEMb_ANDr_indexed_MEM_V4 :
-    case Hexagon::MEMb_ORr_indexed_MEM_V4 :
-    case Hexagon::MEMb_ADDi_MEM_V4 :
-    case Hexagon::MEMb_SUBi_MEM_V4 :
-    case Hexagon::MEMb_ADDr_MEM_V4 :
-    case Hexagon::MEMb_SUBr_MEM_V4 :
-    case Hexagon::MEMb_ANDr_MEM_V4 :
-    case Hexagon::MEMb_ORr_MEM_V4 :
-      return true;
+    case Hexagon::MemOPw_ADDi_V4 :
+    case Hexagon::MemOPw_SUBi_V4 :
+    case Hexagon::MemOPw_ADDr_V4 :
+    case Hexagon::MemOPw_SUBr_V4 :
+    case Hexagon::MemOPw_ANDr_V4 :
+    case Hexagon::MemOPw_ORr_V4 :
+    case Hexagon::MemOPh_ADDi_V4 :
+    case Hexagon::MemOPh_SUBi_V4 :
+    case Hexagon::MemOPh_ADDr_V4 :
+    case Hexagon::MemOPh_SUBr_V4 :
+    case Hexagon::MemOPh_ANDr_V4 :
+    case Hexagon::MemOPh_ORr_V4 :
+    case Hexagon::MemOPb_ADDi_V4 :
+    case Hexagon::MemOPb_SUBi_V4 :
+    case Hexagon::MemOPb_ADDr_V4 :
+    case Hexagon::MemOPb_SUBr_V4 :
+    case Hexagon::MemOPb_ANDr_V4 :
+    case Hexagon::MemOPb_ORr_V4 :
+    case Hexagon::MemOPb_SETBITi_V4:
+    case Hexagon::MemOPh_SETBITi_V4:
+    case Hexagon::MemOPw_SETBITi_V4:
+    case Hexagon::MemOPb_CLRBITi_V4:
+    case Hexagon::MemOPh_CLRBITi_V4:
+    case Hexagon::MemOPw_CLRBITi_V4:
+    return true;
   }
+  return false;
 }
 
 

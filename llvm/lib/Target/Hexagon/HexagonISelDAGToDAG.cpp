@@ -113,6 +113,46 @@ public:
   SDNode *SelectAdd(SDNode *N);
   bool isConstExtProfitable(SDNode *N) const;
 
+// XformMskToBitPosU5Imm - Returns the bit position which
+// the single bit 32 bit mask represents.
+// Used in Clr and Set bit immediate memops.
+SDValue XformMskToBitPosU5Imm(uint32_t Imm) {
+  int32_t bitPos;
+  bitPos = Log2_32(Imm);
+  assert(bitPos >= 0 && bitPos < 32 &&
+         "Constant out of range for 32 BitPos Memops");
+  return CurDAG->getTargetConstant(bitPos, MVT::i32);
+}
+
+// XformMskToBitPosU4Imm - Returns the bit position which the single bit 16 bit
+// mask represents. Used in Clr and Set bit immediate memops.
+SDValue XformMskToBitPosU4Imm(uint16_t Imm) {
+  return XformMskToBitPosU5Imm(Imm);
+}
+
+// XformMskToBitPosU3Imm - Returns the bit position which the single bit 8 bit
+// mask represents. Used in Clr and Set bit immediate memops.
+SDValue XformMskToBitPosU3Imm(uint8_t Imm) {
+  return XformMskToBitPosU5Imm(Imm);
+}
+
+// Return true if there is exactly one bit set in V, i.e., if V is one of the
+// following integers: 2^0, 2^1, ..., 2^31.
+bool ImmIsSingleBit(uint32_t v) const {
+  uint32_t c = CountPopulation_64(v);
+  // Only return true if we counted 1 bit.
+  return c == 1;
+}
+
+// XformM5ToU5Imm - Return a target constant with the specified value, of type
+// i32 where the negative literal is transformed into a positive literal for
+// use in -= memops.
+inline SDValue XformM5ToU5Imm(signed Imm) {
+   assert( (Imm >= -31 && Imm <= -1)  && "Constant out of range for Memops");
+   return CurDAG->getTargetConstant( - Imm, MVT::i32);
+}
+
+
 // XformU7ToU7M1Imm - Return a target constant decremented by 1, in range
 // [1..128], used in cmpb.gtu instructions.
 inline SDValue XformU7ToU7M1Imm(signed Imm) {

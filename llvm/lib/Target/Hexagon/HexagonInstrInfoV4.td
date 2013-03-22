@@ -2658,414 +2658,367 @@ def LSRd_rr_xor_V4 : MInst_acc<(outs DoubleRegs:$dst),
 // MEMOP: Word, Half, Byte
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-// MEMOP: Word
-//
-//  Implemented:
-//     MEMw_ADDi_indexed_V4  : memw(Rs+#u6:2)+=#U5
-//     MEMw_SUBi_indexed_V4  : memw(Rs+#u6:2)-=#U5
-//     MEMw_ADDr_indexed_V4  : memw(Rs+#u6:2)+=Rt
-//     MEMw_SUBr_indexed_V4  : memw(Rs+#u6:2)-=Rt
-//     MEMw_CLRr_indexed_V4  : memw(Rs+#u6:2)&=Rt
-//     MEMw_SETr_indexed_V4  : memw(Rs+#u6:2)|=Rt
-//     MEMw_ADDi_V4          : memw(Rs+#u6:2)+=#U5
-//     MEMw_SUBi_V4          : memw(Rs+#u6:2)-=#U5
-//     MEMw_ADDr_V4          : memw(Rs+#u6:2)+=Rt
-//     MEMw_SUBr_V4          : memw(Rs+#u6:2)-=Rt
-//     MEMw_CLRr_V4          : memw(Rs+#u6:2)&=Rt
-//     MEMw_SETr_V4          : memw(Rs+#u6:2)|=Rt
-//
-//   Not implemented:
-//     MEMw_CLRi_indexed_V4  : memw(Rs+#u6:2)=clrbit(#U5)
-//     MEMw_SETi_indexed_V4  : memw(Rs+#u6:2)=setbit(#U5)
-//     MEMw_CLRi_V4          : memw(Rs+#u6:2)=clrbit(#U5)
-//     MEMw_SETi_V4          : memw(Rs+#u6:2)=setbit(#U5)
-//===----------------------------------------------------------------------===//
+def MEMOPIMM : SDNodeXForm<imm, [{
+  // Call the transformation function XformM5ToU5Imm to get the negative
+  // immediate's positive counterpart.
+  int32_t imm = N->getSExtValue();
+  return XformM5ToU5Imm(imm);
+}]>;
 
+def MEMOPIMM_HALF : SDNodeXForm<imm, [{
+  // -1 .. -31 represented as 65535..65515
+  // assigning to a short restores our desired signed value.
+  // Call the transformation function XformM5ToU5Imm to get the negative
+  // immediate's positive counterpart.
+  int16_t imm = N->getSExtValue();
+  return XformM5ToU5Imm(imm);
+}]>;
 
+def MEMOPIMM_BYTE : SDNodeXForm<imm, [{
+  // -1 .. -31 represented as 255..235
+  // assigning to a char restores our desired signed value.
+  // Call the transformation function XformM5ToU5Imm to get the negative
+  // immediate's positive counterpart.
+  int8_t imm = N->getSExtValue();
+  return XformM5ToU5Imm(imm);
+}]>;
 
-// memw(Rs+#u6:2) += #U5
-let AddedComplexity = 30 in
-def MEMw_ADDi_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_2Imm:$offset, u5Imm:$addend),
-            "memw($base+#$offset) += #$addend",
-            []>,
-            Requires<[HasV4T, UseMEMOP]>;
+def SETMEMIMM : SDNodeXForm<imm, [{
+   // Return the bit position we will set [0-31].
+   // As an SDNode.
+   int32_t imm = N->getSExtValue();
+   return XformMskToBitPosU5Imm(imm);
+}]>;
 
-// memw(Rs+#u6:2) -= #U5
-let AddedComplexity = 30 in
-def MEMw_SUBi_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_2Imm:$offset, u5Imm:$subend),
-            "memw($base+#$offset) -= #$subend",
-            []>,
-            Requires<[HasV4T, UseMEMOP]>;
+def CLRMEMIMM : SDNodeXForm<imm, [{
+   // Return the bit position we will clear [0-31].
+   // As an SDNode.
+   // we bit negate the value first
+   int32_t imm = ~(N->getSExtValue());
+   return XformMskToBitPosU5Imm(imm);
+}]>;
 
-// memw(Rs+#u6:2) += Rt
-let AddedComplexity = 30 in
-def MEMw_ADDr_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_2Imm:$offset, IntRegs:$addend),
-            "memw($base+#$offset) += $addend",
-            [(store (add (load (add (i32 IntRegs:$base), u6_2ImmPred:$offset)),
-                         (i32 IntRegs:$addend)),
-                    (add (i32 IntRegs:$base), u6_2ImmPred:$offset))]>,
-            Requires<[HasV4T, UseMEMOP]>;
+def SETMEMIMM_SHORT : SDNodeXForm<imm, [{
+   // Return the bit position we will set [0-15].
+   // As an SDNode.
+   int16_t imm = N->getSExtValue();
+   return XformMskToBitPosU4Imm(imm);
+}]>;
 
-// memw(Rs+#u6:2) -= Rt
-let AddedComplexity = 30 in
-def MEMw_SUBr_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_2Imm:$offset, IntRegs:$subend),
-            "memw($base+#$offset) -= $subend",
-            [(store (sub (load (add (i32 IntRegs:$base), u6_2ImmPred:$offset)),
-                         (i32 IntRegs:$subend)),
-                    (add (i32 IntRegs:$base), u6_2ImmPred:$offset))]>,
-            Requires<[HasV4T, UseMEMOP]>;
+def CLRMEMIMM_SHORT : SDNodeXForm<imm, [{
+   // Return the bit position we will clear [0-15].
+   // As an SDNode.
+   // we bit negate the value first
+   int16_t imm = ~(N->getSExtValue());
+   return XformMskToBitPosU4Imm(imm);
+}]>;
 
-// memw(Rs+#u6:2) &= Rt
-let AddedComplexity = 30 in
-def MEMw_ANDr_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_2Imm:$offset, IntRegs:$andend),
-            "memw($base+#$offset) &= $andend",
-            [(store (and (load (add (i32 IntRegs:$base), u6_2ImmPred:$offset)),
-                         (i32 IntRegs:$andend)),
-                    (add (i32 IntRegs:$base), u6_2ImmPred:$offset))]>,
-            Requires<[HasV4T, UseMEMOP]>;
+def SETMEMIMM_BYTE : SDNodeXForm<imm, [{
+   // Return the bit position we will set [0-7].
+   // As an SDNode.
+   int8_t imm =  N->getSExtValue();
+   return XformMskToBitPosU3Imm(imm);
+}]>;
 
-// memw(Rs+#u6:2) |= Rt
-let AddedComplexity = 30 in
-def MEMw_ORr_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_2Imm:$offset, IntRegs:$orend),
-            "memw($base+#$offset) |= $orend",
-            [(store (or (load (add (i32 IntRegs:$base), u6_2ImmPred:$offset)),
-                        (i32 IntRegs:$orend)),
-                    (add (i32 IntRegs:$base), u6_2ImmPred:$offset))]>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memw(Rs+#u6:2) += #U5
-let AddedComplexity = 30 in
-def MEMw_ADDi_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, u5Imm:$addend),
-            "memw($addr) += $addend",
-            []>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memw(Rs+#u6:2) -= #U5
-let AddedComplexity = 30 in
-def MEMw_SUBi_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, u5Imm:$subend),
-            "memw($addr) -= $subend",
-            []>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memw(Rs+#u6:2) += Rt
-let AddedComplexity = 30 in
-def MEMw_ADDr_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, IntRegs:$addend),
-            "memw($addr) += $addend",
-            [(store (add (load ADDRriU6_2:$addr), (i32 IntRegs:$addend)),
-                    ADDRriU6_2:$addr)]>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memw(Rs+#u6:2) -= Rt
-let AddedComplexity = 30 in
-def MEMw_SUBr_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, IntRegs:$subend),
-            "memw($addr) -= $subend",
-            [(store (sub (load ADDRriU6_2:$addr), (i32 IntRegs:$subend)),
-                    ADDRriU6_2:$addr)]>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memw(Rs+#u6:2) &= Rt
-let AddedComplexity = 30 in
-def MEMw_ANDr_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, IntRegs:$andend),
-            "memw($addr) &= $andend",
-            [(store (and (load ADDRriU6_2:$addr), (i32 IntRegs:$andend)),
-                    ADDRriU6_2:$addr)]>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memw(Rs+#u6:2) |= Rt
-let AddedComplexity = 30 in
-def MEMw_ORr_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, IntRegs:$orend),
-            "memw($addr) |= $orend",
-            [(store (or (load ADDRriU6_2:$addr), (i32 IntRegs:$orend)),
-                    ADDRriU6_2:$addr)]>,
-            Requires<[HasV4T, UseMEMOP]>;
+def CLRMEMIMM_BYTE : SDNodeXForm<imm, [{
+   // Return the bit position we will clear [0-7].
+   // As an SDNode.
+   // we bit negate the value first
+   int8_t imm = ~(N->getSExtValue());
+   return XformMskToBitPosU3Imm(imm);
+}]>;
 
 //===----------------------------------------------------------------------===//
-// MEMOP: Halfword
-//
-//  Implemented:
-//     MEMh_ADDi_indexed_V4  : memw(Rs+#u6:2)+=#U5
-//     MEMh_SUBi_indexed_V4  : memw(Rs+#u6:2)-=#U5
-//     MEMh_ADDr_indexed_V4  : memw(Rs+#u6:2)+=Rt
-//     MEMh_SUBr_indexed_V4  : memw(Rs+#u6:2)-=Rt
-//     MEMh_CLRr_indexed_V4  : memw(Rs+#u6:2)&=Rt
-//     MEMh_SETr_indexed_V4  : memw(Rs+#u6:2)|=Rt
-//     MEMh_ADDi_V4          : memw(Rs+#u6:2)+=#U5
-//     MEMh_SUBi_V4          : memw(Rs+#u6:2)-=#U5
-//     MEMh_ADDr_V4          : memw(Rs+#u6:2)+=Rt
-//     MEMh_SUBr_V4          : memw(Rs+#u6:2)-=Rt
-//     MEMh_CLRr_V4          : memw(Rs+#u6:2)&=Rt
-//     MEMh_SETr_V4          : memw(Rs+#u6:2)|=Rt
-//
-//   Not implemented:
-//     MEMh_CLRi_indexed_V4  : memw(Rs+#u6:2)=clrbit(#U5)
-//     MEMh_SETi_indexed_V4  : memw(Rs+#u6:2)=setbit(#U5)
-//     MEMh_CLRi_V4          : memw(Rs+#u6:2)=clrbit(#U5)
-//     MEMh_SETi_V4          : memw(Rs+#u6:2)=setbit(#U5)
+// Template class for MemOp instructions with the register value.
 //===----------------------------------------------------------------------===//
+class MemOp_rr_base <string opc, bits<2> opcBits, Operand ImmOp,
+                     string memOp, bits<2> memOpBits> :
+      MEMInst_V4<(outs),
+                 (ins IntRegs:$base, ImmOp:$offset, IntRegs:$delta),
+                 opc#"($base+#$offset)"#memOp#"$delta",
+                 []>,
+                 Requires<[HasV4T, UseMEMOP]> {
 
+    bits<5> base;
+    bits<5> delta;
+    bits<32> offset;
+    bits<6> offsetBits; // memb - u6:0 , memh - u6:1, memw - u6:2
 
-// memh(Rs+#u6:1) += #U5
-let AddedComplexity = 30 in
-def MEMh_ADDi_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_1Imm:$offset, u5Imm:$addend),
-            "memh($base+#$offset) += $addend",
-            []>,
-            Requires<[HasV4T, UseMEMOP]>;
+    let offsetBits = !if (!eq(opcBits, 0b00), offset{5-0},
+                     !if (!eq(opcBits, 0b01), offset{6-1},
+                     !if (!eq(opcBits, 0b10), offset{7-2},0)));
 
-// memh(Rs+#u6:1) -= #U5
-let AddedComplexity = 30 in
-def MEMh_SUBi_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_1Imm:$offset, u5Imm:$subend),
-            "memh($base+#$offset) -= $subend",
-            []>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memh(Rs+#u6:1) += Rt
-let AddedComplexity = 30 in
-def MEMh_ADDr_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_1Imm:$offset, IntRegs:$addend),
-            "memh($base+#$offset) += $addend",
-            [(truncstorei16 (add (sextloadi16 (add (i32 IntRegs:$base),
-                                                   u6_1ImmPred:$offset)),
-                                 (i32 IntRegs:$addend)),
-                            (add (i32 IntRegs:$base), u6_1ImmPred:$offset))]>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memh(Rs+#u6:1) -= Rt
-let AddedComplexity = 30 in
-def MEMh_SUBr_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_1Imm:$offset, IntRegs:$subend),
-            "memh($base+#$offset) -= $subend",
-            [(truncstorei16 (sub (sextloadi16 (add (i32 IntRegs:$base),
-                                                   u6_1ImmPred:$offset)),
-                                 (i32 IntRegs:$subend)),
-                            (add (i32 IntRegs:$base), u6_1ImmPred:$offset))]>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memh(Rs+#u6:1) &= Rt
-let AddedComplexity = 30 in
-def MEMh_ANDr_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_1Imm:$offset, IntRegs:$andend),
-            "memh($base+#$offset) += $andend",
-            [(truncstorei16 (and (sextloadi16 (add (i32 IntRegs:$base),
-                                                   u6_1ImmPred:$offset)),
-                                 (i32 IntRegs:$andend)),
-                            (add (i32 IntRegs:$base), u6_1ImmPred:$offset))]>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memh(Rs+#u6:1) |= Rt
-let AddedComplexity = 30 in
-def MEMh_ORr_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_1Imm:$offset, IntRegs:$orend),
-            "memh($base+#$offset) |= $orend",
-            [(truncstorei16 (or (sextloadi16 (add (i32 IntRegs:$base),
-                                              u6_1ImmPred:$offset)),
-                             (i32 IntRegs:$orend)),
-                            (add (i32 IntRegs:$base), u6_1ImmPred:$offset))]>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memh(Rs+#u6:1) += #U5
-let AddedComplexity = 30 in
-def MEMh_ADDi_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, u5Imm:$addend),
-            "memh($addr) += $addend",
-            []>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memh(Rs+#u6:1) -= #U5
-let AddedComplexity = 30 in
-def MEMh_SUBi_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, u5Imm:$subend),
-            "memh($addr) -= $subend",
-            []>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memh(Rs+#u6:1) += Rt
-let AddedComplexity = 30 in
-def MEMh_ADDr_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, IntRegs:$addend),
-            "memh($addr) += $addend",
-            [(truncstorei16 (add (sextloadi16 ADDRriU6_1:$addr),
-                                 (i32 IntRegs:$addend)), ADDRriU6_1:$addr)]>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memh(Rs+#u6:1) -= Rt
-let AddedComplexity = 30 in
-def MEMh_SUBr_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, IntRegs:$subend),
-            "memh($addr) -= $subend",
-            [(truncstorei16 (sub (sextloadi16 ADDRriU6_1:$addr),
-                                 (i32 IntRegs:$subend)), ADDRriU6_1:$addr)]>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memh(Rs+#u6:1) &= Rt
-let AddedComplexity = 30 in
-def MEMh_ANDr_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, IntRegs:$andend),
-            "memh($addr) &= $andend",
-            [(truncstorei16 (and (sextloadi16 ADDRriU6_1:$addr),
-                                 (i32 IntRegs:$andend)), ADDRriU6_1:$addr)]>,
-            Requires<[HasV4T, UseMEMOP]>;
-
-// memh(Rs+#u6:1) |= Rt
-let AddedComplexity = 30 in
-def MEMh_ORr_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, IntRegs:$orend),
-            "memh($addr) |= $orend",
-            [(truncstorei16 (or (sextloadi16 ADDRriU6_1:$addr),
-                                (i32 IntRegs:$orend)), ADDRriU6_1:$addr)]>,
-            Requires<[HasV4T, UseMEMOP]>;
-
+    let IClass = 0b0011;
+    let Inst{27-24} = 0b1110;
+    let Inst{22-21} = opcBits;
+    let Inst{20-16} = base;
+    let Inst{13} = 0b0;
+    let Inst{12-7} = offsetBits;
+    let Inst{6-5} = memOpBits;
+    let Inst{4-0} = delta;
+}
 
 //===----------------------------------------------------------------------===//
-// MEMOP: Byte
-//
-//  Implemented:
-//     MEMb_ADDi_indexed_V4  : memb(Rs+#u6:0)+=#U5
-//     MEMb_SUBi_indexed_V4  : memb(Rs+#u6:0)-=#U5
-//     MEMb_ADDr_indexed_V4  : memb(Rs+#u6:0)+=Rt
-//     MEMb_SUBr_indexed_V4  : memb(Rs+#u6:0)-=Rt
-//     MEMb_CLRr_indexed_V4  : memb(Rs+#u6:0)&=Rt
-//     MEMb_SETr_indexed_V4  : memb(Rs+#u6:0)|=Rt
-//     MEMb_ADDi_V4          : memb(Rs+#u6:0)+=#U5
-//     MEMb_SUBi_V4          : memb(Rs+#u6:0)-=#U5
-//     MEMb_ADDr_V4          : memb(Rs+#u6:0)+=Rt
-//     MEMb_SUBr_V4          : memb(Rs+#u6:0)-=Rt
-//     MEMb_CLRr_V4          : memb(Rs+#u6:0)&=Rt
-//     MEMb_SETr_V4          : memb(Rs+#u6:0)|=Rt
-//
-//   Not implemented:
-//     MEMb_CLRi_indexed_V4  : memb(Rs+#u6:0)=clrbit(#U5)
-//     MEMb_SETi_indexed_V4  : memb(Rs+#u6:0)=setbit(#U5)
-//     MEMb_CLRi_V4          : memb(Rs+#u6:0)=clrbit(#U5)
-//     MEMb_SETi_V4          : memb(Rs+#u6:0)=setbit(#U5)
+// Template class for MemOp instructions with the immediate value.
+//===----------------------------------------------------------------------===//
+class MemOp_ri_base <string opc, bits<2> opcBits, Operand ImmOp,
+                     string memOp, bits<2> memOpBits> :
+      MEMInst_V4 <(outs),
+                  (ins IntRegs:$base, ImmOp:$offset, u5Imm:$delta),
+                  opc#"($base+#$offset)"#memOp#"#$delta"
+                  #!if(memOpBits{1},")", ""), // clrbit, setbit - include ')'
+                  []>,
+                  Requires<[HasV4T, UseMEMOP]> {
+
+    bits<5> base;
+    bits<5> delta;
+    bits<32> offset;
+    bits<6> offsetBits; // memb - u6:0 , memh - u6:1, memw - u6:2
+
+    let offsetBits = !if (!eq(opcBits, 0b00), offset{5-0},
+                     !if (!eq(opcBits, 0b01), offset{6-1},
+                     !if (!eq(opcBits, 0b10), offset{7-2},0)));
+
+    let IClass = 0b0011;
+    let Inst{27-24} = 0b1111;
+    let Inst{22-21} = opcBits;
+    let Inst{20-16} = base;
+    let Inst{13} = 0b0;
+    let Inst{12-7} = offsetBits;
+    let Inst{6-5} = memOpBits;
+    let Inst{4-0} = delta;
+}
+
+// multiclass to define MemOp instructions with register operand.
+multiclass MemOp_rr<string opc, bits<2> opcBits, Operand ImmOp> {
+  def _ADD#NAME#_V4 : MemOp_rr_base <opc, opcBits, ImmOp, " += ", 0b00>; // add
+  def _SUB#NAME#_V4 : MemOp_rr_base <opc, opcBits, ImmOp, " -= ", 0b01>; // sub
+  def _AND#NAME#_V4 : MemOp_rr_base <opc, opcBits, ImmOp, " &= ", 0b10>; // and
+  def _OR#NAME#_V4  : MemOp_rr_base <opc, opcBits, ImmOp, " |= ", 0b11>; // or
+}
+
+// multiclass to define MemOp instructions with immediate Operand.
+multiclass MemOp_ri<string opc, bits<2> opcBits, Operand ImmOp> {
+  def _ADD#NAME#_V4 : MemOp_ri_base <opc, opcBits, ImmOp, " += ", 0b00 >;
+  def _SUB#NAME#_V4 : MemOp_ri_base <opc, opcBits, ImmOp, " -= ", 0b01 >;
+  def _CLRBIT#NAME#_V4 : MemOp_ri_base<opc, opcBits, ImmOp, " =clrbit(", 0b10>;
+  def _SETBIT#NAME#_V4 : MemOp_ri_base<opc, opcBits, ImmOp, " =setbit(", 0b11>;
+}
+
+multiclass MemOp_base <string opc, bits<2> opcBits, Operand ImmOp> {
+  defm r : MemOp_rr <opc, opcBits, ImmOp>;
+  defm i : MemOp_ri <opc, opcBits, ImmOp>;
+}
+
+// Define MemOp instructions.
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 0,
+validSubTargets =HasV4SubT in {
+  let opExtentBits = 6, accessSize = ByteAccess in
+  defm MemOPb : MemOp_base <"memb", 0b00, u6_0Ext>;
+
+  let opExtentBits = 7, accessSize = HalfWordAccess in
+  defm MemOPh : MemOp_base <"memh", 0b01, u6_1Ext>;
+
+  let opExtentBits = 8, accessSize = WordAccess in
+  defm MemOPw : MemOp_base <"memw", 0b10, u6_2Ext>;
+}
+
+//===----------------------------------------------------------------------===//
+// Multiclass to define 'Def Pats' for ALU operations on the memory
+// Here value used for the ALU operation is an immediate value.
+// mem[bh](Rs+#0) += #U5
+// mem[bh](Rs+#u6) += #U5
 //===----------------------------------------------------------------------===//
 
-// memb(Rs+#u6:0) += #U5
-let AddedComplexity = 30 in
-def MEMb_ADDi_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_0Imm:$offset, u5Imm:$addend),
-            "memb($base+#$offset) += $addend",
-            []>,
-            Requires<[HasV4T, UseMEMOP]>;
+multiclass MemOpi_u5Pats <PatFrag ldOp, PatFrag stOp, PatLeaf ExtPred,
+                          InstHexagon MI, SDNode OpNode> {
+  let AddedComplexity = 180 in
+  def : Pat < (stOp (OpNode (ldOp IntRegs:$addr), u5ImmPred:$addend),
+                    IntRegs:$addr),
+              (MI IntRegs:$addr, #0, u5ImmPred:$addend )>;
 
-// memb(Rs+#u6:0) -= #U5
-let AddedComplexity = 30 in
-def MEMb_SUBi_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_0Imm:$offset, u5Imm:$subend),
-            "memb($base+#$offset) -= $subend",
-            []>,
-            Requires<[HasV4T, UseMEMOP]>;
+  let AddedComplexity = 190 in
+  def : Pat <(stOp (OpNode (ldOp (add IntRegs:$base, ExtPred:$offset)),
+                     u5ImmPred:$addend),
+             (add IntRegs:$base, ExtPred:$offset)),
+       (MI IntRegs:$base, ExtPred:$offset, u5ImmPred:$addend)>;
+}
 
-// memb(Rs+#u6:0) += Rt
-let AddedComplexity = 30 in
-def MEMb_ADDr_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_0Imm:$offset, IntRegs:$addend),
-            "memb($base+#$offset) += $addend",
-            [(truncstorei8 (add (sextloadi8 (add (i32 IntRegs:$base),
-                                                 u6_0ImmPred:$offset)),
-                                (i32 IntRegs:$addend)),
-                           (add (i32 IntRegs:$base), u6_0ImmPred:$offset))]>,
-            Requires<[HasV4T, UseMEMOP]>;
+multiclass MemOpi_u5ALUOp<PatFrag ldOp, PatFrag stOp, PatLeaf ExtPred,
+                          InstHexagon addMI, InstHexagon subMI> {
+  defm : MemOpi_u5Pats<ldOp, stOp, ExtPred, addMI, add>;
+  defm : MemOpi_u5Pats<ldOp, stOp, ExtPred, subMI, sub>;
+}
 
-// memb(Rs+#u6:0) -= Rt
-let AddedComplexity = 30 in
-def MEMb_SUBr_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_0Imm:$offset, IntRegs:$subend),
-            "memb($base+#$offset) -= $subend",
-            [(truncstorei8 (sub (sextloadi8 (add (i32 IntRegs:$base),
-                                                 u6_0ImmPred:$offset)),
-                                (i32 IntRegs:$subend)),
-                           (add (i32 IntRegs:$base), u6_0ImmPred:$offset))]>,
-            Requires<[HasV4T, UseMEMOP]>;
+multiclass MemOpi_u5ExtType<PatFrag ldOpByte, PatFrag ldOpHalf > {
+  // Half Word
+  defm : MemOpi_u5ALUOp <ldOpHalf, truncstorei16, u6_1ExtPred,
+                         MemOPh_ADDi_V4, MemOPh_SUBi_V4>;
+  // Byte
+  defm : MemOpi_u5ALUOp <ldOpByte, truncstorei8, u6ExtPred,
+                         MemOPb_ADDi_V4, MemOPb_SUBi_V4>;
+}
 
-// memb(Rs+#u6:0) &= Rt
-let AddedComplexity = 30 in
-def MEMb_ANDr_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_0Imm:$offset, IntRegs:$andend),
-            "memb($base+#$offset) += $andend",
-            [(truncstorei8 (and (sextloadi8 (add (i32 IntRegs:$base),
-                                                 u6_0ImmPred:$offset)),
-                                (i32 IntRegs:$andend)),
-                           (add (i32 IntRegs:$base), u6_0ImmPred:$offset))]>,
-            Requires<[HasV4T, UseMEMOP]>;
+let Predicates = [HasV4T, UseMEMOP] in {
+  defm : MemOpi_u5ExtType<zextloadi8, zextloadi16>; // zero extend
+  defm : MemOpi_u5ExtType<sextloadi8, sextloadi16>; // sign extend
+  defm : MemOpi_u5ExtType<extloadi8,  extloadi16>;  // any extend
 
-// memb(Rs+#u6:0) |= Rt
-let AddedComplexity = 30 in
-def MEMb_ORr_indexed_MEM_V4 : MEMInst_V4<(outs),
-            (ins IntRegs:$base, u6_0Imm:$offset, IntRegs:$orend),
-            "memb($base+#$offset) |= $orend",
-            [(truncstorei8 (or (sextloadi8 (add (i32 IntRegs:$base),
-                                                u6_0ImmPred:$offset)),
-                               (i32 IntRegs:$orend)),
-                           (add (i32 IntRegs:$base), u6_0ImmPred:$offset))]>,
-            Requires<[HasV4T, UseMEMOP]>;
+  // Word
+  defm : MemOpi_u5ALUOp <load, store, u6_2ExtPred, MemOPw_ADDi_V4,
+                         MemOPw_SUBi_V4>;
+}
 
-// memb(Rs+#u6:0) += #U5
-let AddedComplexity = 30 in
-def MEMb_ADDi_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, u5Imm:$addend),
-            "memb($addr) += $addend",
-            []>,
-            Requires<[HasV4T, UseMEMOP]>;
+//===----------------------------------------------------------------------===//
+// multiclass to define 'Def Pats' for ALU operations on the memory.
+// Here value used for the ALU operation is a negative value.
+// mem[bh](Rs+#0) += #m5
+// mem[bh](Rs+#u6) += #m5
+//===----------------------------------------------------------------------===//
 
-// memb(Rs+#u6:0) -= #U5
-let AddedComplexity = 30 in
-def MEMb_SUBi_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, u5Imm:$subend),
-            "memb($addr) -= $subend",
-            []>,
-            Requires<[HasV4T, UseMEMOP]>;
+multiclass MemOpi_m5Pats <PatFrag ldOp, PatFrag stOp, PatLeaf extPred,
+                          PatLeaf immPred, ComplexPattern addrPred,
+                          SDNodeXForm xformFunc, InstHexagon MI> {
+  let AddedComplexity = 190 in
+  def : Pat <(stOp (add (ldOp IntRegs:$addr), immPred:$subend),
+                   IntRegs:$addr),
+             (MI IntRegs:$addr, #0, (xformFunc immPred:$subend) )>;
 
-// memb(Rs+#u6:0) += Rt
-let AddedComplexity = 30 in
-def MEMb_ADDr_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, IntRegs:$addend),
-            "memb($addr) += $addend",
-            [(truncstorei8 (add (sextloadi8 ADDRriU6_0:$addr),
-                                (i32 IntRegs:$addend)), ADDRriU6_0:$addr)]>,
-            Requires<[HasV4T, UseMEMOP]>;
+  let AddedComplexity = 195 in
+  def : Pat<(stOp (add (ldOp (add IntRegs:$base, extPred:$offset)),
+                       immPred:$subend),
+                  (add IntRegs:$base, extPred:$offset)),
+            (MI IntRegs:$base, extPred:$offset, (xformFunc immPred:$subend))>;
+}
 
-// memb(Rs+#u6:0) -= Rt
-let AddedComplexity = 30 in
-def MEMb_SUBr_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, IntRegs:$subend),
-            "memb($addr) -= $subend",
-            [(truncstorei8 (sub (sextloadi8 ADDRriU6_0:$addr),
-                                (i32 IntRegs:$subend)), ADDRriU6_0:$addr)]>,
-            Requires<[HasV4T, UseMEMOP]>;
+multiclass MemOpi_m5ExtType<PatFrag ldOpByte, PatFrag ldOpHalf > {
+  // Half Word
+  defm : MemOpi_m5Pats <ldOpHalf, truncstorei16, u6_1ExtPred, m5HImmPred,
+                        ADDRriU6_1, MEMOPIMM_HALF, MemOPh_SUBi_V4>;
+  // Byte
+  defm : MemOpi_m5Pats <ldOpByte, truncstorei8, u6ExtPred, m5BImmPred,
+                        ADDRriU6_0, MEMOPIMM_BYTE, MemOPb_SUBi_V4>;
+}
 
-// memb(Rs+#u6:0) &= Rt
-let AddedComplexity = 30 in
-def MEMb_ANDr_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, IntRegs:$andend),
-            "memb($addr) &= $andend",
-            [(truncstorei8 (and (sextloadi8 ADDRriU6_0:$addr),
-                                (i32 IntRegs:$andend)), ADDRriU6_0:$addr)]>,
-            Requires<[HasV4T, UseMEMOP]>;
+let Predicates = [HasV4T, UseMEMOP] in {
+  defm : MemOpi_m5ExtType<zextloadi8, zextloadi16>; // zero extend
+  defm : MemOpi_m5ExtType<sextloadi8, sextloadi16>; // sign extend
+  defm : MemOpi_m5ExtType<extloadi8,  extloadi16>;  // any extend
 
-// memb(Rs+#u6:0) |= Rt
-let AddedComplexity = 30 in
-def MEMb_ORr_MEM_V4 : MEMInst_V4<(outs),
-            (ins MEMri:$addr, IntRegs:$orend),
-            "memb($addr) |= $orend",
-            [(truncstorei8 (or (sextloadi8 ADDRriU6_0:$addr),
-                               (i32 IntRegs:$orend)), ADDRriU6_0:$addr)]>,
-            Requires<[HasV4T, UseMEMOP]>;
+  // Word
+  defm : MemOpi_m5Pats <load, store, u6_2ExtPred, m5ImmPred,
+                          ADDRriU6_2, MEMOPIMM, MemOPw_SUBi_V4>;
+}
 
+//===----------------------------------------------------------------------===//
+// Multiclass to define 'def Pats' for bit operations on the memory.
+// mem[bhw](Rs+#0) = [clrbit|setbit](#U5)
+// mem[bhw](Rs+#u6) = [clrbit|setbit](#U5)
+//===----------------------------------------------------------------------===//
+
+multiclass MemOpi_bitPats <PatFrag ldOp, PatFrag stOp, PatLeaf immPred,
+                     PatLeaf extPred, ComplexPattern addrPred,
+                     SDNodeXForm xformFunc, InstHexagon MI, SDNode OpNode> {
+
+  // mem[bhw](Rs+#u6:[012]) = [clrbit|setbit](#U5)
+  let AddedComplexity = 250 in
+  def : Pat<(stOp (OpNode (ldOp (add IntRegs:$base, extPred:$offset)),
+                          immPred:$bitend),
+                  (add IntRegs:$base, extPred:$offset)),
+            (MI IntRegs:$base, extPred:$offset, (xformFunc immPred:$bitend))>;
+
+  // mem[bhw](Rs+#0) = [clrbit|setbit](#U5)
+  let AddedComplexity = 225 in
+  def : Pat <(stOp (OpNode (ldOp addrPred:$addr), immPred:$bitend),
+                   addrPred:$addr),
+             (MI IntRegs:$addr, #0, (xformFunc immPred:$bitend))>;
+}
+
+multiclass MemOpi_bitExtType<PatFrag ldOpByte, PatFrag ldOpHalf > {
+  // Byte - clrbit
+  defm : MemOpi_bitPats<ldOpByte, truncstorei8, Clr3ImmPred, u6ExtPred,
+                       ADDRriU6_0, CLRMEMIMM_BYTE, MemOPb_CLRBITi_V4, and>;
+  // Byte - setbit
+  defm : MemOpi_bitPats<ldOpByte, truncstorei8, Set3ImmPred,  u6ExtPred,
+                       ADDRriU6_0, SETMEMIMM_BYTE, MemOPb_SETBITi_V4, or>;
+  // Half Word - clrbit
+  defm : MemOpi_bitPats<ldOpHalf, truncstorei16, Clr4ImmPred, u6_1ExtPred,
+                       ADDRriU6_1, CLRMEMIMM_SHORT, MemOPh_CLRBITi_V4, and>;
+  // Half Word - setbit
+  defm : MemOpi_bitPats<ldOpHalf, truncstorei16, Set4ImmPred, u6_1ExtPred,
+                       ADDRriU6_1, SETMEMIMM_SHORT, MemOPh_SETBITi_V4, or>;
+}
+
+let Predicates = [HasV4T, UseMEMOP] in {
+  // mem[bh](Rs+#0) = [clrbit|setbit](#U5)
+  // mem[bh](Rs+#u6:[01]) = [clrbit|setbit](#U5)
+  defm : MemOpi_bitExtType<zextloadi8, zextloadi16>; // zero extend
+  defm : MemOpi_bitExtType<sextloadi8, sextloadi16>; // sign extend
+  defm : MemOpi_bitExtType<extloadi8,  extloadi16>;  // any extend
+
+  // memw(Rs+#0) = [clrbit|setbit](#U5)
+  // memw(Rs+#u6:2) = [clrbit|setbit](#U5)
+  defm : MemOpi_bitPats<load, store, Clr5ImmPred, u6_2ExtPred, ADDRriU6_2,
+                       CLRMEMIMM, MemOPw_CLRBITi_V4, and>;
+  defm : MemOpi_bitPats<load, store, Set5ImmPred, u6_2ExtPred, ADDRriU6_2,
+                       SETMEMIMM, MemOPw_SETBITi_V4, or>;
+}
+
+//===----------------------------------------------------------------------===//
+// Multiclass to define 'def Pats' for ALU operations on the memory
+// where addend is a register.
+// mem[bhw](Rs+#0) [+-&|]= Rt
+// mem[bhw](Rs+#U6:[012]) [+-&|]= Rt
+//===----------------------------------------------------------------------===//
+
+multiclass MemOpr_Pats <PatFrag ldOp, PatFrag stOp, ComplexPattern addrPred,
+                     PatLeaf extPred, InstHexagon MI, SDNode OpNode> {
+  let AddedComplexity = 141 in
+  // mem[bhw](Rs+#0) [+-&|]= Rt
+  def : Pat <(stOp (OpNode (ldOp addrPred:$addr), (i32 IntRegs:$addend)),
+                   addrPred:$addr),
+             (MI IntRegs:$addr, #0, (i32 IntRegs:$addend) )>;
+
+  // mem[bhw](Rs+#U6:[012]) [+-&|]= Rt
+  let AddedComplexity = 150 in
+  def : Pat <(stOp (OpNode (ldOp (add IntRegs:$base, extPred:$offset)),
+                           (i32 IntRegs:$orend)),
+                   (add IntRegs:$base, extPred:$offset)),
+             (MI IntRegs:$base, extPred:$offset, (i32 IntRegs:$orend) )>;
+}
+
+multiclass MemOPr_ALUOp<PatFrag ldOp, PatFrag stOp,
+                        ComplexPattern addrPred, PatLeaf extPred,
+                        InstHexagon addMI, InstHexagon subMI,
+                        InstHexagon andMI, InstHexagon orMI > {
+
+  defm : MemOpr_Pats <ldOp, stOp, addrPred, extPred, addMI, add>;
+  defm : MemOpr_Pats <ldOp, stOp, addrPred, extPred, subMI, sub>;
+  defm : MemOpr_Pats <ldOp, stOp, addrPred, extPred, andMI, and>;
+  defm : MemOpr_Pats <ldOp, stOp, addrPred, extPred, orMI,  or>;
+}
+
+multiclass MemOPr_ExtType<PatFrag ldOpByte, PatFrag ldOpHalf > {
+  // Half Word
+  defm : MemOPr_ALUOp <ldOpHalf, truncstorei16, ADDRriU6_1, u6_1ExtPred,
+                       MemOPh_ADDr_V4, MemOPh_SUBr_V4,
+                       MemOPh_ANDr_V4, MemOPh_ORr_V4>;
+  // Byte
+  defm : MemOPr_ALUOp <ldOpByte, truncstorei8, ADDRriU6_0, u6ExtPred,
+                       MemOPb_ADDr_V4, MemOPb_SUBr_V4,
+                       MemOPb_ANDr_V4, MemOPb_ORr_V4>;
+}
+
+// Define 'def Pats' for MemOps with register addend.
+let Predicates = [HasV4T, UseMEMOP] in {
+  // Byte, Half Word
+  defm : MemOPr_ExtType<zextloadi8, zextloadi16>; // zero extend
+  defm : MemOPr_ExtType<sextloadi8, sextloadi16>; // sign extend
+  defm : MemOPr_ExtType<extloadi8,  extloadi16>;  // any extend
+  // Word
+  defm : MemOPr_ALUOp <load, store, ADDRriU6_2, u6_2ExtPred, MemOPw_ADDr_V4,
+                       MemOPw_SUBr_V4, MemOPw_ANDr_V4, MemOPw_ORr_V4 >;
+}
 
 //===----------------------------------------------------------------------===//
 // XTYPE/PRED +

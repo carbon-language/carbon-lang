@@ -29,8 +29,16 @@ EnableV3("enable-hexagon-v3", cl::Hidden,
 static cl::opt<bool>
 EnableMemOps(
     "enable-hexagon-memops",
-    cl::Hidden, cl::ZeroOrMore, cl::ValueDisallowed,
-    cl::desc("Generate V4 memop instructions."));
+    cl::Hidden, cl::ZeroOrMore, cl::ValueDisallowed, cl::init(true),
+    cl::desc(
+      "Generate V4 MEMOP in code generation for Hexagon target"));
+
+static cl::opt<bool>
+DisableMemOps(
+    "disable-hexagon-memops",
+    cl::Hidden, cl::ZeroOrMore, cl::ValueDisallowed, cl::init(false),
+    cl::desc(
+      "Do not generate V4 MEMOP in code generation for Hexagon target"));
 
 static cl::opt<bool>
 EnableIEEERndNear(
@@ -64,7 +72,10 @@ HexagonSubtarget::HexagonSubtarget(StringRef TT, StringRef CPU, StringRef FS):
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUString);
 
-  if (EnableMemOps)
+  // UseMemOps on by default unless disabled explicitly
+  if (DisableMemOps)
+    UseMemOps = false;
+  else if (EnableMemOps)
     UseMemOps = true;
   else
     UseMemOps = false;
