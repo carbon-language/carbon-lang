@@ -391,7 +391,7 @@ def memri : Operand<iPTR> {
 }
 def memrr : Operand<iPTR> {
   let PrintMethod = "printMemRegReg";
-  let MIOperandInfo = (ops ptr_rc_nor0:$offreg, ptr_rc:$ptrreg);
+  let MIOperandInfo = (ops ptr_rc_nor0:$ptrreg, ptr_rc:$offreg);
 }
 def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
   let PrintMethod = "printMemRegImmShifted";
@@ -817,37 +817,37 @@ def LFDU : DForm_1<51, (outs F8RC:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr
 def LBZUX : XForm_1<31, 119, (outs GPRC:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
                    "lbzux $rD, $addr", LdStLoadUpd,
-                   []>, RegConstraint<"$addr.offreg = $ea_result">,
+                   []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
 def LHAUX : XForm_1<31, 375, (outs GPRC:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
                    "lhaux $rD, $addr", LdStLHAU,
-                   []>, RegConstraint<"$addr.offreg = $ea_result">,
+                   []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
 def LHZUX : XForm_1<31, 311, (outs GPRC:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
                    "lhzux $rD, $addr", LdStLoadUpd,
-                   []>, RegConstraint<"$addr.offreg = $ea_result">,
+                   []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
 def LWZUX : XForm_1<31, 55, (outs GPRC:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
                    "lwzux $rD, $addr", LdStLoadUpd,
-                   []>, RegConstraint<"$addr.offreg = $ea_result">,
+                   []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
 def LFSUX : XForm_1<31, 567, (outs F4RC:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
                    "lfsux $rD, $addr", LdStLFDU,
-                   []>, RegConstraint<"$addr.offreg = $ea_result">,
+                   []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
 def LFDUX : XForm_1<31, 631, (outs F8RC:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
                    "lfdux $rD, $addr", LdStLFDU,
-                   []>, RegConstraint<"$addr.offreg = $ea_result">,
+                   []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 }
 }
@@ -981,23 +981,23 @@ def STFDX : XForm_28<31, 727, (outs), (ins F8RC:$frS, memrr:$dst),
 let PPC970_Unit = 2, mayStore = 1 in {
 def STBUX : XForm_8<31, 247, (outs ptr_rc_nor0:$ea_res), (ins GPRC:$rS, memrr:$dst),
                     "stbux $rS, $dst", LdStStoreUpd, []>,
-                    RegConstraint<"$dst.offreg = $ea_res">, NoEncode<"$ea_res">,
+                    RegConstraint<"$dst.ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     PPC970_DGroup_Cracked;
 def STHUX : XForm_8<31, 439, (outs ptr_rc_nor0:$ea_res), (ins GPRC:$rS, memrr:$dst),
                     "sthux $rS, $dst", LdStStoreUpd, []>,
-                    RegConstraint<"$dst.offreg = $ea_res">, NoEncode<"$ea_res">,
+                    RegConstraint<"$dst.ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     PPC970_DGroup_Cracked;
 def STWUX : XForm_8<31, 183, (outs ptr_rc_nor0:$ea_res), (ins GPRC:$rS, memrr:$dst),
                     "stwux $rS, $dst", LdStStoreUpd, []>,
-                    RegConstraint<"$dst.offreg = $ea_res">, NoEncode<"$ea_res">,
+                    RegConstraint<"$dst.ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     PPC970_DGroup_Cracked;
 def STFSUX: XForm_8<31, 695, (outs ptr_rc_nor0:$ea_res), (ins F4RC:$rS, memrr:$dst),
                     "stfsux $rS, $dst", LdStSTFDU, []>,
-                    RegConstraint<"$dst.offreg = $ea_res">, NoEncode<"$ea_res">,
+                    RegConstraint<"$dst.ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     PPC970_DGroup_Cracked;
 def STFDUX: XForm_8<31, 759, (outs ptr_rc_nor0:$ea_res), (ins F8RC:$rS, memrr:$dst),
                     "stfdux $rS, $dst", LdStSTFDU, []>,
-                    RegConstraint<"$dst.offreg = $ea_res">, NoEncode<"$ea_res">,
+                    RegConstraint<"$dst.ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     PPC970_DGroup_Cracked;
 }
 
