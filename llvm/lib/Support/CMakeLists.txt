@@ -27,7 +27,6 @@ add_llvm_library(LLVMSupport
   IntEqClasses.cpp
   IntervalMap.cpp
   IntrusiveRefCntPtr.cpp
-  IRReader.cpp
   IsInf.cpp
   IsNAN.cpp
   Locale.cpp
