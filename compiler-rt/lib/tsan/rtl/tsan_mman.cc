@@ -101,6 +101,8 @@ static void SignalUnsafeCall(ThreadState *thr, uptr pc) {
 
 void *user_alloc(ThreadState *thr, uptr pc, uptr sz, uptr align) {
   CHECK_GT(thr->in_rtl, 0);
+  if ((sz >= (1ull << 40)) || (align >= (1ull << 40)))
+    return 0;
   void *p = allocator()->Allocate(&thr->alloc_cache, sz, align);
   if (p == 0)
     return 0;

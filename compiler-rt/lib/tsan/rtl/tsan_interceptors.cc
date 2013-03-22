@@ -356,7 +356,8 @@ TSAN_INTERCEPTOR(void*, calloc, uptr size, uptr n) {
   {
     SCOPED_INTERCEPTOR_RAW(calloc, size, n);
     p = user_alloc(thr, pc, n * size);
-    if (p) internal_memset(p, 0, n * size);
+    if (p)
+      internal_memset(p, 0, n * size);
   }
   invoke_malloc_hook(p, n * size);
   return p;
