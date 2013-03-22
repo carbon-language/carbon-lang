@@ -10288,6 +10288,9 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S,
 
   if (!Invalid && !ExDeclType->isDependentType()) {
     if (const RecordType *recordType = ExDeclType->getAs<RecordType>()) {
+      // Insulate this from anything else we might currently be parsing.
+      EnterExpressionEvaluationContext scope(*this, PotentiallyEvaluated);
+
       // C++ [except.handle]p16:
       //   The object declared in an exception-declaration or, if the 
       //   exception-declaration does not specify a name, a temporary (12.2) is 

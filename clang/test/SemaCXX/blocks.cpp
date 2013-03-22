@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s -fblocks
-// expected-no-diagnostics
 
 void tovoid(void*);
 
@@ -82,3 +81,22 @@ void move_block() {
   __block MoveOnly mo;
 }
 
+// Don't crash after failing to build a block due to a capture of an
+// invalid declaration.
+namespace test5 {
+  struct B { // expected-note 2 {{candidate constructor}}
+    void *p;
+    B(int); // expected-note {{candidate constructor}}
+  };
+
+  void use_block(void (^)());
+  void use_block_2(void (^)(), const B &a);
+
+  void test() {
+    B x; // expected-error {{no matching constructor for initialization}}
+    use_block(^{
+        int y;
+        use_block_2(^{ (void) y; }, x);
+      });
+  }
+}

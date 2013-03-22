@@ -7916,6 +7916,7 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
     // Regardless, we don't want to ignore array nesting when
     // constructing this copy.
     if (type->isStructureOrClassType()) {
+      EnterExpressionEvaluationContext scope(*this, PotentiallyEvaluated);
       SourceLocation poi = var->getLocation();
       Expr *varRef =new (Context) DeclRefExpr(var, false, type, VK_LValue, poi);
       ExprResult result

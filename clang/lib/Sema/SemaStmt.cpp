@@ -54,6 +54,11 @@ StmtResult Sema::ActOnExprStmt(ExprResult FE) {
 }
 
 
+StmtResult Sema::ActOnExprStmtError() {
+  DiscardCleanupsInEvaluationContext();
+  return StmtError();
+}
+
 StmtResult Sema::ActOnNullStmt(SourceLocation SemiLoc,
                                bool HasLeadingEmptyMacro) {
   return Owned(new (Context) NullStmt(SemiLoc, HasLeadingEmptyMacro));

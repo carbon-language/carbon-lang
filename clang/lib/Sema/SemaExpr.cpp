@@ -10698,7 +10698,7 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
   // Introduce a new evaluation context for the initialization, so
   // that temporaries introduced as part of the capture are retained
   // to be re-"exported" from the lambda expression itself.
-  S.PushExpressionEvaluationContext(Sema::PotentiallyEvaluated);
+  EnterExpressionEvaluationContext scope(S, Sema::PotentiallyEvaluated);
 
   // C++ [expr.prim.labda]p12:
   //   An entity captured by a lambda-expression is odr-used (3.2) in
@@ -10749,7 +10749,6 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
     if (Subscript.isInvalid()) {
       S.CleanupVarDeclMarking();
       S.DiscardCleanupsInEvaluationContext();
-      S.PopExpressionEvaluationContext();
       return ExprError();
     }
 
@@ -10785,7 +10784,6 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
   // Exit the expression evaluation context used for the capture.
   S.CleanupVarDeclMarking();
   S.DiscardCleanupsInEvaluationContext();
-  S.PopExpressionEvaluationContext();
   return Result;
 }
 
@@ -10971,6 +10969,10 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
             // actually requires the destructor.
             if (isa<ParmVarDecl>(Var))
               FinalizeVarWithDestructor(Var, Record);
+
+            // Enter a new evaluation context to insulate the copy
+            // full-expression.
+            EnterExpressionEvaluationContext scope(*this, PotentiallyEvaluated);
 
             // According to the blocks spec, the capture of a variable from
             // the stack requires a const copy constructor.  This is not true

@@ -319,7 +319,7 @@ StmtResult Parser::ParseExprStatement() {
     SkipUntil(tok::r_brace, /*StopAtSemi=*/true, /*DontConsume=*/true);
     if (Tok.is(tok::semi))
       ConsumeToken();
-    return StmtError();
+    return Actions.ActOnExprStmtError();
   }
 
   if (Tok.is(tok::colon) && getCurScope()->isSwitchScope() &&

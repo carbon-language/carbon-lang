@@ -228,3 +228,28 @@ namespace test8 {
 
   template int X::foo<int>();
 }
+
+// rdar://13459289
+namespace test9 {
+  struct B {
+    void *p;
+    B();
+    B(const B&);
+    ~B();
+  };
+
+  void use_block(void (^)());
+  void use_block_2(void (^)(), const B &a);
+
+  // Ensuring that creating a non-trivial capture copy expression
+  // doesn't end up stealing the block registration for the block we
+  // just parsed.  That block must have captures or else it won't
+  // force registration.  Must occur within a block for some reason.
+  void test() {
+    B x;
+    use_block(^{
+        int y;
+        use_block_2(^{ (void)y; }, x);
+    });
+  }
+}

@@ -2637,6 +2637,7 @@ public:
   }
 
   StmtResult ActOnExprStmt(ExprResult Arg);
+  StmtResult ActOnExprStmtError();
 
   StmtResult ActOnNullStmt(SourceLocation SemiLoc,
                            bool HasLeadingEmptyMacro = false);
