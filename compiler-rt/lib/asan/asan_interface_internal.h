@@ -25,8 +25,13 @@ extern "C" {
   // Everytime the asan ABI changes we also change the version number in this
   // name. Objects build with incompatible asan ABI version
   // will not link with run-time.
-  void __asan_init_v2() SANITIZER_INTERFACE_ATTRIBUTE;
-  #define __asan_init __asan_init_v2
+  // Changes between ABI versions:
+  // v1=>v2: added 'module_name' to __asan_global
+  // v2=>v3: stack frame description (created by the compiler)
+  //         contains the function PC as the 3-rd field (see
+  //         DescribeAddressIfStack).
+  void __asan_init_v3() SANITIZER_INTERFACE_ATTRIBUTE;
+  #define __asan_init __asan_init_v3
 
   // This structure describes an instrumented global variable.
   struct __asan_global {

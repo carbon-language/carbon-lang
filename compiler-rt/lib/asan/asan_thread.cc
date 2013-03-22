@@ -151,7 +151,8 @@ void AsanThread::ClearShadowForThreadStack() {
   PoisonShadow(stack_bottom_, stack_top_ - stack_bottom_, 0);
 }
 
-const char *AsanThread::GetFrameNameByAddr(uptr addr, uptr *offset) {
+const char *AsanThread::GetFrameNameByAddr(uptr addr, uptr *offset,
+                                           uptr *frame_pc) {
   uptr bottom = 0;
   if (AddrIsInStack(addr)) {
     bottom = stack_bottom();
@@ -159,6 +160,7 @@ const char *AsanThread::GetFrameNameByAddr(uptr addr, uptr *offset) {
     bottom = fake_stack().AddrIsInFakeStack(addr);
     CHECK(bottom);
     *offset = addr - bottom;
+    *frame_pc = ((uptr*)bottom)[2];
     return  (const char *)((uptr*)bottom)[1];
   }
   uptr aligned_addr = addr & ~(SANITIZER_WORDSIZE/8 - 1);  // align addr.
@@ -183,6 +185,7 @@ const char *AsanThread::GetFrameNameByAddr(uptr addr, uptr *offset) {
   uptr* ptr = (uptr*)SHADOW_TO_MEM((uptr)(shadow_ptr + 1));
   CHECK(ptr[0] == kCurrentStackFrameMagic);
   *offset = addr - (uptr)ptr;
+  *frame_pc = ptr[2];
   return (const char*)ptr[1];
 }
 

@@ -235,33 +235,61 @@ bool DescribeAddressIfShadow(uptr addr) {
   return false;
 }
 
+// Return " (thread_name) " or an empty string if the name is empty.
+const char *ThreadNameWithParenthesis(AsanThreadContext *t, char buff[],
+                                      uptr buff_len) {
+  const char *name = t->name;
+  if (name[0] == '\0') return "";
+  buff[0] = 0;
+  internal_strncat(buff, " (", 3);
+  internal_strncat(buff, name, buff_len - 4);
+  internal_strncat(buff, ")", 2);
+  return buff;
+}
+
+const char *ThreadNameWithParenthesis(u32 tid, char buff[],
+                                      uptr buff_len) {
+  if (tid == kInvalidTid) return "";
+  asanThreadRegistry().CheckLocked();
+  AsanThreadContext *t = GetThreadContextByTidLocked(tid);
+  return ThreadNameWithParenthesis(t, buff, buff_len);
+}
+
 bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   AsanThread *t = FindThreadByStackAddress(addr);
   if (!t) return false;
   const sptr kBufSize = 4095;
   char buf[kBufSize];
   uptr offset = 0;
-  const char *frame_descr = t->GetFrameNameByAddr(addr, &offset);
+  uptr frame_pc = 0;
+  char tname[128];
+  const char *frame_descr = t->GetFrameNameByAddr(addr, &offset, &frame_pc);
   // This string is created by the compiler and has the following form:
-  // "FunctioName n alloc_1 alloc_2 ... alloc_n"
+  // "n alloc_1 alloc_2 ... alloc_n"
   // where alloc_i looks like "offset size len ObjectName ".
   CHECK(frame_descr);
-  // Report the function name and the offset.
-  const char *name_end = internal_strchr(frame_descr, ' ');
-  CHECK(name_end);
-  buf[0] = 0;
-  internal_strncat(buf, frame_descr,
-                   Min(kBufSize,
-                       static_cast<sptr>(name_end - frame_descr)));
   Decorator d;
   Printf("%s", d.Location());
-  Printf("Address %p is located at offset %zu "
-             "in frame <%s> of T%d's stack:\n",
-             (void*)addr, offset, Demangle(buf), t->tid());
+  Printf("Address %p is located in stack of thread T%d%s "
+         "at offset %zu in frame\n",
+         addr, t->tid(),
+         ThreadNameWithParenthesis(t->tid(), tname, sizeof(tname)),
+         offset);
+  // Now we print the frame where the alloca has happened.
+  // We print this frame as a stack trace with one element.
+  // The symbolizer may print more than one frame if inlining was involved.
+  // The frame numbers may be different than those in the stack trace printed
+  // previously. That's unfortunate, but I have no better solution,
+  // especially given that the alloca may be from entirely different place
+  // (e.g. use-after-scope, or different thread's stack).
+  StackTrace alloca_stack;
+  alloca_stack.trace[0] = frame_pc + 16;
+  alloca_stack.size = 1;
   Printf("%s", d.EndLocation());
+  PrintStack(&alloca_stack);
   // Report the number of stack objects.
   char *p;
-  uptr n_objects = internal_simple_strtoll(name_end, &p, 10);
+  uptr n_objects = internal_simple_strtoll(frame_descr, &p, 10);
   CHECK(n_objects > 0);
   Printf("  This frame has %zu object(s):\n", n_objects);
   // Report all objects in this frame.
@@ -311,26 +339,6 @@ static void DescribeAccessToHeapChunk(AsanChunkView chunk, uptr addr,
   Printf(" %zu-byte region [%p,%p)\n", chunk.UsedSize(),
          (void*)(chunk.Beg()), (void*)(chunk.End()));
   Printf("%s", d.EndLocation());
-}
-
-// Return " (thread_name) " or an empty string if the name is empty.
-const char *ThreadNameWithParenthesis(AsanThreadContext *t, char buff[],
-                                      uptr buff_len) {
-  const char *name = t->name;
-  if (name[0] == '\0') return "";
-  buff[0] = 0;
-  internal_strncat(buff, " (", 3);
-  internal_strncat(buff, name, buff_len - 4);
-  internal_strncat(buff, ")", 2);
-  return buff;
-}
-
-const char *ThreadNameWithParenthesis(u32 tid, char buff[],
-                                      uptr buff_len) {
-  if (tid == kInvalidTid) return "";
-  asanThreadRegistry().CheckLocked();
-  AsanThreadContext *t = GetThreadContextByTidLocked(tid);
-  return ThreadNameWithParenthesis(t, buff, buff_len);
 }
 
 void DescribeHeapAddress(uptr addr, uptr access_size) {

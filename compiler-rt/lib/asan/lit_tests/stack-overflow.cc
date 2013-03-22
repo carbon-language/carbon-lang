@@ -14,6 +14,7 @@ int main(int argc, char **argv) {
   int res = x[argc * 10];  // BOOOM
   // CHECK: {{READ of size 1 at 0x.* thread T0}}
   // CHECK: {{    #0 0x.* in _?main .*stack-overflow.cc:}}[[@LINE-2]]
-  // CHECK: {{Address 0x.* is .* frame <main>}}
+  // CHECK: {{Address 0x.* is located in stack of thread T0 at offset}}
+  // CHECK: main
   return res;
 }

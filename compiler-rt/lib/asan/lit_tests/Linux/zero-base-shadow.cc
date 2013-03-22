@@ -18,7 +18,8 @@ int main(int argc, char **argv) {
   int res = x[argc * 10];  // BOOOM
   // CHECK: {{READ of size 1 at 0x.* thread T0}}
   // CHECK: {{    #0 0x.* in _?main .*zero-base-shadow.cc:}}[[@LINE-2]]
-  // CHECK: {{Address 0x.* is .* frame <main>}}
+  // CHECK: {{Address 0x.* is .* frame}}
+  // CHECK: main
 
   // Check that shadow for stack memory occupies lower part of address space.
   // CHECK-64: =>0x0f{{.*}}
