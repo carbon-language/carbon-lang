@@ -192,7 +192,8 @@ FUNCTIONS.asan_osx_dynamic := $(AsanFunctions) $(InterceptionFunctions) \
                               $(SanitizerCommonFunctions) \
 	                      $(AsanDynamicFunctions)
 
-FUNCTIONS.ubsan_osx := $(UbsanFunctions) $(SanitizerCommonFunctions)
+FUNCTIONS.ubsan_osx := $(UbsanFunctions) $(UbsanCXXFunctions) \
+                       $(SanitizerCommonFunctions)
 
 CCKEXT_COMMON_FUNCTIONS := \
 	absvdi2 \
