@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "ubsan_value.h"
+#include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_libc.h"
 
 using namespace __ubsan;
 
@@ -66,16 +68,34 @@ UIntMax Value::getPositiveIntValue() const {
 /// them to be passed in floating-point registers, so this has little cost).
 FloatMax Value::getFloatValue() const {
   CHECK(getType().isFloatTy());
-  switch (getType().getFloatBitWidth()) {
+  if (isInlineFloat()) {
+    switch (getType().getFloatBitWidth()) {
 #if 0
-  // FIXME: OpenCL / NEON 'half' type. LLVM can't lower the conversion
-  //        from this to 'long double'.
-  case 16: return *reinterpret_cast<__fp16*>(Val);
+      // FIXME: OpenCL / NEON 'half' type. LLVM can't lower the conversion
+      //        from '__fp16' to 'long double'.
+      case 16: {
+        __fp16 Value;
+        internal_memcpy(&Value, &Val, 4);
+        return Value;
+      }
 #endif
-  case 32: return *reinterpret_cast<float*>(Val);
-  case 64: return *reinterpret_cast<double*>(Val);
-  case 80: return *reinterpret_cast<long double*>(Val);
-  case 128: return *reinterpret_cast<long double*>(Val);
+      case 32: {
+        float Value;
+        internal_memcpy(&Value, &Val, 4);
+        return Value;
+      }
+      case 64: {
+        double Value;
+        internal_memcpy(&Value, &Val, 8);
+        return Value;
+      }
+    }
+  } else {
+    switch (getType().getFloatBitWidth()) {
+    case 64: return *reinterpret_cast<double*>(Val);
+    case 80: return *reinterpret_cast<long double*>(Val);
+    case 128: return *reinterpret_cast<long double*>(Val);
+    }
   }
   UNREACHABLE("unexpected floating point bit width");
 }

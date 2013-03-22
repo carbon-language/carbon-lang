@@ -108,7 +108,8 @@ public:
     /// integer otherwise.
     TK_Integer = 0x0000,
     /// A floating-point type. Low 16 bits are bit width. The value
-    /// representation is a pointer to the floating-point value.
+    /// representation is that of bitcasting the floating-point value to an
+    /// integer type.
     TK_Float = 0x0001,
     /// Any other type. The value representation is unspecified.
     TK_Unknown = 0xffff
@@ -159,6 +160,14 @@ class Value {
     CHECK(getType().isIntegerTy());
     const unsigned InlineBits = sizeof(ValueHandle) * 8;
     const unsigned Bits = getType().getIntegerBitWidth();
+    return Bits <= InlineBits;
+  }
+
+  /// Is \c Val a (zero-extended) integer representation of a float?
+  bool isInlineFloat() const {
+    CHECK(getType().isFloatTy());
+    const unsigned InlineBits = sizeof(ValueHandle) * 8;
+    const unsigned Bits = getType().getFloatBitWidth();
     return Bits <= InlineBits;
   }
 
