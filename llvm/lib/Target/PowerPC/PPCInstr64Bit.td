@@ -875,14 +875,14 @@ def : Pat<(pre_truncsti32 G8RC:$rS, ptr_rc_nor0:$ptrreg, iaddroff:$ptroff),
 def : Pat<(aligned4pre_store G8RC:$rS, ptr_rc_nor0:$ptrreg, iaddroff:$ptroff),
           (STDU G8RC:$rS, iaddroff:$ptroff, ptr_rc_nor0:$ptrreg)>;
 
-def : Pat<(pre_truncsti8 G8RC:$rS, ptr_rc:$ptrreg, xaddroff:$ptroff),
-          (STBUX8 G8RC:$rS, xaddroff:$ptroff, ptr_rc:$ptrreg)>;
-def : Pat<(pre_truncsti16 G8RC:$rS, ptr_rc:$ptrreg, xaddroff:$ptroff),
-          (STHUX8 G8RC:$rS, xaddroff:$ptroff, ptr_rc:$ptrreg)>;
-def : Pat<(pre_truncsti32 G8RC:$rS, ptr_rc:$ptrreg, xaddroff:$ptroff),
-          (STWUX8 G8RC:$rS, xaddroff:$ptroff, ptr_rc:$ptrreg)>;
-def : Pat<(pre_store G8RC:$rS, ptr_rc:$ptrreg, xaddroff:$ptroff),
-          (STDUX G8RC:$rS, xaddroff:$ptroff, ptr_rc:$ptrreg)>;
+def : Pat<(pre_truncsti8 G8RC:$rS, ptr_rc:$ptrreg, ptr_rc_nor0:$ptroff),
+          (STBUX8 G8RC:$rS, ptr_rc_nor0:$ptroff, ptr_rc:$ptrreg)>;
+def : Pat<(pre_truncsti16 G8RC:$rS, ptr_rc:$ptrreg, ptr_rc_nor0:$ptroff),
+          (STHUX8 G8RC:$rS, ptr_rc_nor0:$ptroff, ptr_rc:$ptrreg)>;
+def : Pat<(pre_truncsti32 G8RC:$rS, ptr_rc:$ptrreg, ptr_rc_nor0:$ptroff),
+          (STWUX8 G8RC:$rS, ptr_rc_nor0:$ptroff, ptr_rc:$ptrreg)>;
+def : Pat<(pre_store G8RC:$rS, ptr_rc:$ptrreg, ptr_rc_nor0:$ptroff),
+          (STDUX G8RC:$rS, ptr_rc_nor0:$ptroff, ptr_rc:$ptrreg)>;
 
 
 //===----------------------------------------------------------------------===//

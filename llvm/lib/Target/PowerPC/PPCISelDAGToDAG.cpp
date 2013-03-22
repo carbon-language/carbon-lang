@@ -132,18 +132,6 @@ namespace {
       return false;
     }
 
-    /// SelectAddrIdxOffs - Return true if the operand is valid for a preinc
-    /// index field.  Because preinc imms have already been validated, just
-    /// accept it.
-    bool SelectAddrIdxOffs(SDValue N, SDValue &Out) const {
-      if (isa<ConstantSDNode>(N) || N.getOpcode() == PPCISD::Lo ||
-          N.getOpcode() == ISD::TargetGlobalAddress)
-        return false;
-
-      Out = N;
-      return true;
-    }
-
     /// SelectAddrIdx - Given the specified addressed, check to see if it can be
     /// represented as an indexed [r+r] operation.  Returns false if it can
     /// be represented by [r+imm], which are preferred.
