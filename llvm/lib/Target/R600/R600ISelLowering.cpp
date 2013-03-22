@@ -58,7 +58,6 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::i1, Custom);
-  setOperationAction(ISD::FPOW, MVT::f32, Custom);
 
   setOperationAction(ISD::ROTL, MVT::i32, Custom);
 
@@ -316,7 +315,6 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
   case ISD::SELECT: return LowerSELECT(Op, DAG);
   case ISD::STORE: return LowerSTORE(Op, DAG);
   case ISD::LOAD: return LowerLOAD(Op, DAG);
-  case ISD::FPOW: return LowerFPOW(Op, DAG);
   case ISD::FrameIndex: return LowerFrameIndex(Op, DAG);
   case ISD::INTRINSIC_VOID: {
     SDValue Chain = Op.getOperand(0);
@@ -916,15 +914,6 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
   Ops[1] = Chain;
 
   return DAG.getMergeValues(Ops, 2, DL);
-}
-
-SDValue R600TargetLowering::LowerFPOW(SDValue Op,
-    SelectionDAG &DAG) const {
-  DebugLoc DL = Op.getDebugLoc();
-  EVT VT = Op.getValueType();
-  SDValue LogBase = DAG.getNode(ISD::FLOG2, DL, VT, Op.getOperand(0));
-  SDValue MulLogBase = DAG.getNode(ISD::FMUL, DL, VT, Op.getOperand(1), LogBase);
-  return DAG.getNode(ISD::FEXP2, DL, VT, MulLogBase);
 }
 
 /// XXX Only kernel functions are supported, so we can assume for now that

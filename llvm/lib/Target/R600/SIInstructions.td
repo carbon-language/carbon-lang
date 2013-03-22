@@ -1442,8 +1442,7 @@ def : Pat <
 /********** ================== **********/
 
 /* llvm.AMDGPU.pow */
-/* XXX: We are using IEEE MUL, not the 0 * anything = 0 MUL, is this correct? */
-def : POW_Common <V_LOG_F32_e32, V_EXP_F32_e32, V_MUL_F32_e32, VReg_32>;
+def : POW_Common <V_LOG_F32_e32, V_EXP_F32_e32, V_MUL_LEGACY_F32_e32, VReg_32>;
 
 def : Pat <
   (int_AMDGPU_div VSrc_32:$src0, VSrc_32:$src1),

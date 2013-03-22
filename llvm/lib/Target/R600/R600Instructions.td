@@ -1141,6 +1141,7 @@ let Predicates = [isR600] in {
   def RECIP_UINT_r600 : RECIP_UINT_Common <0x78>;
 
   defm DIV_r600 : DIV_Common<RECIP_IEEE_r600>;
+  def : POW_Common <LOG_IEEE_r600, EXP_IEEE_r600, MUL, R600_Reg32>;
   def TGSI_LIT_Z_r600 : TGSI_LIT_Z_Common<MUL_LIT_r600, LOG_CLAMPED_r600, EXP_IEEE_r600>;
 
   def : Pat<(fsqrt R600_Reg32:$src),
@@ -1212,6 +1213,7 @@ def RECIPSQRT_IEEE_eg : RECIPSQRT_IEEE_Common<0x89>;
 def SIN_eg : SIN_Common<0x8D>;
 def COS_eg : COS_Common<0x8E>;
 
+def : POW_Common <LOG_IEEE_eg, EXP_IEEE_eg, MUL, R600_Reg32>;
 def : SIN_PAT <SIN_eg>;
 def : COS_PAT <COS_eg>;
 def : Pat<(fsqrt R600_Reg32:$src),
@@ -1540,13 +1542,14 @@ def MULLO_UINT_cm : MULLO_UINT_Common<0x91>;
 def MULHI_UINT_cm : MULHI_UINT_Common<0x92>;
 def RECIPSQRT_CLAMPED_cm : RECIPSQRT_CLAMPED_Common<0x87>;
 def EXP_IEEE_cm : EXP_IEEE_Common<0x81>;
-def LOG_IEEE_ : LOG_IEEE_Common<0x83>;
+def LOG_IEEE_cm : LOG_IEEE_Common<0x83>;
 def RECIP_CLAMPED_cm : RECIP_CLAMPED_Common<0x84>;
 def RECIPSQRT_IEEE_cm : RECIPSQRT_IEEE_Common<0x89>;
 def SIN_cm : SIN_Common<0x8D>;
 def COS_cm : COS_Common<0x8E>;
 } // End isVector = 1
 
+def : POW_Common <LOG_IEEE_cm, EXP_IEEE_cm, MUL, R600_Reg32>;
 def : SIN_PAT <SIN_cm>;
 def : COS_PAT <COS_cm>;
 

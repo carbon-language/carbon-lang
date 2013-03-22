@@ -59,7 +59,6 @@ private:
   SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFPTOUINT(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerFPOW(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFrameIndex(SDValue Op, SelectionDAG &DAG) const;
 
