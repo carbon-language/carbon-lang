@@ -628,7 +628,7 @@ SmallVector also provides a nice portable and efficient replacement for
 
 .. note::
 
-   Prefer to use ``SmallVectorImpl<T>`` in interfaces.
+   Prefer to use ``SmallVectorImpl<T>`` as a parameter type.
 
    In APIs that don't care about the "small size" (most?), prefer to use
    the ``SmallVectorImpl<T>`` class, which is basically just the "vector
