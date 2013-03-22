@@ -1023,7 +1023,7 @@ DILexicalBlock DIBuilder::createLexicalBlock(DIDescriptor Scope, DIFile File,
   static unsigned int unique_id = 0;
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_lexical_block),
-    File,
+    File.getFileNode(),
     getNonCompileUnitScope(Scope),
     ConstantInt::get(Type::getInt32Ty(VMContext), Line),
     ConstantInt::get(Type::getInt32Ty(VMContext), Col),

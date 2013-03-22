@@ -50,9 +50,9 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !24 = metadata !{i32 786468, metadata !1, metadata !"char", metadata !1, i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ]
 !25 = metadata !{i32 786689, metadata !19, metadata !"argv", metadata !1, i32 22, metadata !22, i32 0, null} ; [ DW_TAG_arg_variable ]
 !26 = metadata !{i32 786688, metadata !27, metadata !"e", metadata !1, i32 23, metadata !14, i32 0, null} ; [ DW_TAG_auto_variable ]
-!27 = metadata !{i32 786443, metadata !1, metadata !19, i32 22, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
+!27 = metadata !{i32 786443, metadata !36, metadata !19, i32 22, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !28 = metadata !{i32 18, i32 0, metadata !29, null}
-!29 = metadata !{i32 786443, metadata !1, metadata !9, i32 17, i32 0, i32 1} ; [ DW_TAG_lexical_block ]
+!29 = metadata !{i32 786443, metadata !36, metadata !9, i32 17, i32 0, i32 1} ; [ DW_TAG_lexical_block ]
 !30 = metadata !{i32 19, i32 0, metadata !29, null}
 !31 = metadata !{metadata !0}
 !32 = metadata !{metadata !5, metadata !9, metadata !19}

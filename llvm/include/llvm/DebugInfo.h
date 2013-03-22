@@ -593,12 +593,6 @@ namespace llvm {
     DIScope getContext() const       { return getFieldAs<DIScope>(2);      }
     unsigned getLineNumber() const   { return getUnsignedField(3);         }
     unsigned getColumnNumber() const { return getUnsignedField(4);         }
-    StringRef getDirectory() const {
-      return getFieldAs<DIFile>(1).getDirectory();
-    }
-    StringRef getFilename() const {
-      return getFieldAs<DIFile>(1).getFilename();
-    }
     bool Verify() const;
   };
 

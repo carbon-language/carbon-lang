@@ -58,10 +58,10 @@ entry:
 !15 = metadata !{i32 786689, metadata !5, metadata !"a", metadata !6, i32 16777218, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [a] [line 2]
 !16 = metadata !{i32 2, i32 0, metadata !5, null}
 !17 = metadata !{i32 4, i32 0, metadata !18, null}
-!18 = metadata !{i32 786443, metadata !6, metadata !5, i32 3, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
+!18 = metadata !{i32 786443, metadata !23, metadata !5, i32 3, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !19 = metadata !{i32 786689, metadata !13, metadata !"a", metadata !14, i32 16777217, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [a] [line 1]
 !20 = metadata !{i32 1, i32 0, metadata !13, null}
 !21 = metadata !{i32 2, i32 0, metadata !22, null}
-!22 = metadata !{i32 786443, metadata !14, metadata !13, i32 1, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
+!22 = metadata !{i32 786443, metadata !24, metadata !13, i32 1, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !23 = metadata !{metadata !"simple.c", metadata !"/private/tmp"}
 !24 = metadata !{metadata !"simple2.c", metadata !"/private/tmp"}
