@@ -1431,7 +1431,7 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
 ExprResult
 Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
                        const DeclarationNameInfo &NameInfo,
-                       const CXXScopeSpec *SS) {
+                       const CXXScopeSpec *SS, NamedDecl *FoundD) {
   if (getLangOpts().CUDA)
     if (const FunctionDecl *Caller = dyn_cast<FunctionDecl>(CurContext))
       if (const FunctionDecl *Callee = dyn_cast<FunctionDecl>(D)) {
@@ -1455,7 +1455,7 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
                                               : NestedNameSpecifierLoc(),
                                        SourceLocation(),
                                        D, refersToEnclosingScope,
-                                       NameInfo, Ty, VK);
+                                       NameInfo, Ty, VK, FoundD);
 
   MarkDeclRefReferenced(E);
 
@@ -2360,8 +2360,8 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
   // If this is a single, fully-resolved result and we don't need ADL,
   // just build an ordinary singleton decl ref.
   if (!NeedsADL && R.isSingleResult() && !R.getAsSingle<FunctionTemplateDecl>())
-    return BuildDeclarationNameExpr(SS, R.getLookupNameInfo(),
-                                    R.getFoundDecl());
+    return BuildDeclarationNameExpr(SS, R.getLookupNameInfo(), R.getFoundDecl(),
+                                    R.getRepresentativeDecl());
 
   // We only need to check the declaration if there's exactly one
   // result, because in the overloaded case the results can only be
@@ -2389,7 +2389,7 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
 ExprResult
 Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
                                const DeclarationNameInfo &NameInfo,
-                               NamedDecl *D) {
+                               NamedDecl *D, NamedDecl *FoundD) {
   assert(D && "Cannot refer to a NULL declaration");
   assert(!isa<FunctionTemplateDecl>(D) &&
          "Cannot refer unambiguously to a function template");
@@ -2585,7 +2585,7 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
       break;
     }
 
-    return BuildDeclRefExpr(VD, type, valueKind, NameInfo, &SS);
+    return BuildDeclRefExpr(VD, type, valueKind, NameInfo, &SS, FoundD);
   }
 }
 
