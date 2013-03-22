@@ -44,6 +44,8 @@ static cl::opt<bool> PrintMod("print-mod", cl::ReallyHidden);
 static cl::opt<bool> PrintRef("print-ref", cl::ReallyHidden);
 static cl::opt<bool> PrintModRef("print-modref", cl::ReallyHidden);
 
+static cl::opt<bool> EvalTBAA("evaluate-tbaa", cl::ReallyHidden);
+
 namespace {
   class AAEval : public FunctionPass {
     unsigned NoAlias, MayAlias, PartialAlias, MustAlias;
@@ -123,6 +125,15 @@ PrintModRefResults(const char *Msg, bool P, CallSite CSA, CallSite CSB,
   }
 }
 
+static inline void
+PrintLoadStoreResults(const char *Msg, bool P, const Value *V1,
+                      const Value *V2, const Module *M) {
+  if (P) {
+    errs() << "  " << Msg << ": " << *V1
+           << " <-> " << *V2 << '\n';
+  }
+}
+
 static inline bool isInterestingPointer(Value *V) {
   return V->getType()->isPointerTy()
       && !isa<ConstantPointerNull>(V);
@@ -133,6 +144,8 @@ bool AAEval::runOnFunction(Function &F) {
 
   SetVector<Value *> Pointers;
   SetVector<CallSite> CallSites;
+  SetVector<Value *> Loads;
+  SetVector<Value *> Stores;
 
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
     if (I->getType()->isPointerTy())    // Add all pointer arguments.
@@ -141,6 +154,10 @@ bool AAEval::runOnFunction(Function &F) {
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     if (I->getType()->isPointerTy()) // Add all pointer instructions.
       Pointers.insert(&*I);
+    if (EvalTBAA && isa<LoadInst>(&*I))
+      Loads.insert(&*I);
+    if (EvalTBAA && isa<StoreInst>(&*I))
+      Stores.insert(&*I);
     Instruction &Inst = *I;
     if (CallSite CS = cast<Value>(&Inst)) {
       Value *Callee = CS.getCalledValue();
@@ -193,6 +210,61 @@ bool AAEval::runOnFunction(Function &F) {
       case AliasAnalysis::MustAlias:
         PrintResults("MustAlias", PrintMustAlias, *I1, *I2, F.getParent());
         ++MustAlias; break;
+      }
+    }
+  }
+
+  if (EvalTBAA) {
+    // iterate over all pairs of load, store
+    for (SetVector<Value *>::iterator I1 = Loads.begin(), E = Loads.end();
+         I1 != E; ++I1) {
+      for (SetVector<Value *>::iterator I2 = Stores.begin(), E2 = Stores.end();
+           I2 != E2; ++I2) {
+        switch (AA.alias(AA.getLocation(cast<LoadInst>(*I1)),
+                         AA.getLocation(cast<StoreInst>(*I2)))) {
+        case AliasAnalysis::NoAlias:
+          PrintLoadStoreResults("NoAlias", PrintNoAlias, *I1, *I2,
+                                F.getParent());
+          ++NoAlias; break;
+        case AliasAnalysis::MayAlias:
+          PrintLoadStoreResults("MayAlias", PrintMayAlias, *I1, *I2,
+                                F.getParent());
+          ++MayAlias; break;
+        case AliasAnalysis::PartialAlias:
+          PrintLoadStoreResults("PartialAlias", PrintPartialAlias, *I1, *I2,
+                                F.getParent());
+          ++PartialAlias; break;
+        case AliasAnalysis::MustAlias:
+          PrintLoadStoreResults("MustAlias", PrintMustAlias, *I1, *I2,
+                                F.getParent());
+          ++MustAlias; break;
+        }
+      }
+    }
+
+    // iterate over all pairs of store, store
+    for (SetVector<Value *>::iterator I1 = Stores.begin(), E = Stores.end();
+         I1 != E; ++I1) {
+      for (SetVector<Value *>::iterator I2 = Stores.begin(); I2 != I1; ++I2) {
+        switch (AA.alias(AA.getLocation(cast<StoreInst>(*I1)),
+                         AA.getLocation(cast<StoreInst>(*I2)))) {
+        case AliasAnalysis::NoAlias:
+          PrintLoadStoreResults("NoAlias", PrintNoAlias, *I1, *I2,
+                                F.getParent());
+          ++NoAlias; break;
+        case AliasAnalysis::MayAlias:
+          PrintLoadStoreResults("MayAlias", PrintMayAlias, *I1, *I2,
+                                F.getParent());
+          ++MayAlias; break;
+        case AliasAnalysis::PartialAlias:
+          PrintLoadStoreResults("PartialAlias", PrintPartialAlias, *I1, *I2,
+                                F.getParent());
+          ++PartialAlias; break;
+        case AliasAnalysis::MustAlias:
+          PrintLoadStoreResults("MustAlias", PrintMustAlias, *I1, *I2,
+                                F.getParent());
+          ++MustAlias; break;
+        }
       }
     }
   }
