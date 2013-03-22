@@ -17,13 +17,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "polly/ScopInfo.h"
-
-#include "polly/TempScopInfo.h"
+#include "polly/CodeGen/BlockGenerators.h"
 #include "polly/LinkAllPasses.h"
+#include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
 #include "polly/Support/ScopHelper.h"
 #include "polly/Support/SCEVValidator.h"
+#include "polly/TempScopInfo.h"
 
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
@@ -591,9 +591,11 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
   : Parent(parent), BB(&bb), IVS(Nest.size()), NestLoops(Nest.size()) {
   // Setup the induction variables.
   for (unsigned i = 0, e = Nest.size(); i < e; ++i) {
-    PHINode *PN = Nest[i]->getCanonicalInductionVariable();
-    if (PN)
+    if (!SCEVCodegen) {
+      PHINode *PN = Nest[i]->getCanonicalInductionVariable();
+      assert(PN && "Non canonical IV in Scop!");
       IVS[i] = PN;
+    }
     NestLoops[i] = Nest[i];
   }
 
