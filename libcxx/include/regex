@@ -764,7 +764,7 @@ _LIBCPP_CONSTEXPR
 syntax_option_type
 operator~(syntax_option_type __x)
 {
-    return syntax_option_type(~int(__x));
+    return syntax_option_type(~int(__x) & 0x1FF);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
@@ -840,7 +840,7 @@ _LIBCPP_CONSTEXPR
 match_flag_type
 operator~(match_flag_type __x)
 {
-    return match_flag_type(~int(__x));
+    return match_flag_type(~int(__x) & 0x0FFF);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
