@@ -7,7 +7,7 @@
 #error "No _OPENMP macro is defined with -fopenmp option"
 #elsif _OPENMP != 201107
 #error "_OPENMP has incorrect value"
-#endif //_OPENMP
+#endif // _OPENMP
 #else
 // No -fopenmp option is specified
 #ifdef _OPENMP
