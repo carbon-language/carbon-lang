@@ -313,11 +313,7 @@ private:
     switch (Tok->FormatTok.Tok.getKind()) {
     case tok::plus:
     case tok::minus:
-      // At the start of the line, +/- specify ObjectiveC method declarations.
-      if (Tok->Children.empty() || Tok->Children[0].Children.empty())
-        break; // Can't be an ObjectiveC method declaration.
-      if (Tok->Parent == NULL && (Tok->Children[0].is(tok::l_paren) ||
-                                  Tok->Children[0].Children[0].is(tok::colon)))
+      if (Tok->Parent == NULL && Line.MustBeDeclaration)
         Tok->Type = TT_ObjCMethodSpecifier;
       break;
     case tok::colon:

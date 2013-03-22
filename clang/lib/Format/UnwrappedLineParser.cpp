@@ -144,8 +144,9 @@ bool UnwrappedLineParser::parse() {
 }
 
 bool UnwrappedLineParser::parseFile() {
-  ScopedDeclarationState DeclarationState(*Line, DeclarationScopeStack,
-                                          /*MustBeDeclaration=*/ true);
+  ScopedDeclarationState DeclarationState(
+      *Line, DeclarationScopeStack,
+      /*MustBeDeclaration=*/ !Line->InPPDirective);
   bool Error = parseLevel(/*HasOpeningBrace=*/ false);
   // Make sure to format the remaining tokens.
   flushComments(true);
