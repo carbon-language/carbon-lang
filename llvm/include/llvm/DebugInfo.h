@@ -605,12 +605,12 @@ namespace llvm {
     unsigned getLineNumber() const { return getScope().getLineNumber(); }
     unsigned getColumnNumber() const { return getScope().getColumnNumber(); }
     StringRef getDirectory() const {
-      return getFieldAs<DIFile>(2).getDirectory();
+      return getFieldAs<DIFile>(1).getDirectory();
     }
     StringRef getFilename() const {
-      return getFieldAs<DIFile>(2).getFilename();
+      return getFieldAs<DIFile>(1).getFilename();
     }
-    DILexicalBlock getScope() const { return getFieldAs<DILexicalBlock>(1); }
+    DILexicalBlock getScope() const { return getFieldAs<DILexicalBlock>(2); }
     bool Verify() const;
   };
 
