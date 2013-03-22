@@ -141,6 +141,7 @@ public:
           Comment.MinColumn =
               NewLines > 0 ? Spaces : WhitespaceStartColumn + Spaces;
           Comment.MaxColumn = Style.ColumnLimit - Tok.FormatTok.TokenLength;
+          Comment.Untouchable = false;
           Comments.push_back(Comment);
           return;
         }
@@ -197,6 +198,14 @@ public:
   const tooling::Replacements &generateReplacements() {
     alignComments();
     return Replaces;
+  }
+
+  void addUntouchableComment(unsigned Column) {
+    StoredComment Comment;
+    Comment.MinColumn = Column;
+    Comment.MaxColumn = Column;
+    Comment.Untouchable = true;
+    Comments.push_back(Comment);
   }
 
 private:
@@ -350,6 +359,7 @@ private:
     unsigned MaxColumn;
     unsigned NewLines;
     unsigned Spaces;
+    bool Untouchable;
   };
   SmallVector<StoredComment, 16> Comments;
   typedef SmallVector<StoredComment, 16>::iterator comment_iterator;
@@ -377,9 +387,11 @@ private:
   /// \brief Put all the comments between \p I and \p E into \p Column.
   void alignComments(comment_iterator I, comment_iterator E, unsigned Column) {
     while (I != E) {
-      unsigned Spaces = I->Spaces + Column - I->MinColumn;
-      storeReplacement(
-          I->Tok, std::string(I->NewLines, '\n') + std::string(Spaces, ' '));
+      if (!I->Untouchable) {
+        unsigned Spaces = I->Spaces + Column - I->MinColumn;
+        storeReplacement(
+            I->Tok, std::string(I->NewLines, '\n') + std::string(Spaces, ' '));
+      }
       ++I;
     }
   }
@@ -1345,6 +1357,9 @@ public:
             SourceMgr.getSpellingColumnNumber(LastLoc) +
             Lex.MeasureTokenLength(LastLoc, SourceMgr, Lex.getLangOpts()) - 1;
         PreviousLineWasTouched = false;
+        if (TheLine.Last->is(tok::comment))
+          Whitespaces.addUntouchableComment(SourceMgr.getSpellingColumnNumber(
+              TheLine.Last->FormatTok.Tok.getLocation()) - 1);
       }
     }
     return Whitespaces.generateReplacements();
