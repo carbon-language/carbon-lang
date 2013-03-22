@@ -1106,12 +1106,16 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                 flag_value.GetScalar() = 0;  // FIXME - Set to 0 when debugging is done.
             dispatch_values.PushValue (flag_value);
             
+            
+            // The step through code might have to fill in the cache, so it is not safe to run only one thread.
+            // So we override the stop_others value passed in to us here:
+            const bool trampoline_stop_others = false;
             ret_plan_sp.reset (new AppleThreadPlanStepThroughObjCTrampoline (thread,
                                                                              this,
                                                                              dispatch_values,
                                                                              isa_addr,
                                                                              sel_addr,
-                                                                             stop_others));
+                                                                             trampoline_stop_others));
             if (log)
             {
                 StreamString s;
