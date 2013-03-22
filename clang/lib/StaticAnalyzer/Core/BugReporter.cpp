@@ -1878,220 +1878,167 @@ namespace {
 /// node maps.
 class ReportGraph {
 public:
-  OwningPtr<ExplodedGraph> Graph;
   InterExplodedGraphMap BackMap;
-  ExplodedNode *ErrorNode;
+  OwningPtr<ExplodedGraph> Graph;
+  const ExplodedNode *ErrorNode;
   size_t Index;
 };
 
 /// A wrapper around a trimmed graph and its node maps.
 class TrimmedGraph {
-  InterExplodedGraphMap ForwardMap;
   InterExplodedGraphMap InverseMap;
 
   typedef llvm::DenseMap<const ExplodedNode *, unsigned> PriorityMapTy;
   PriorityMapTy PriorityMap;
 
+  typedef std::pair<const ExplodedNode *, size_t> NodeIndexPair;
+  SmallVector<NodeIndexPair, 32> ReportNodes;
+
   OwningPtr<ExplodedGraph> G;
-  const ExplodedNode *Root;
+
+  /// A helper class for sorting ExplodedNodes by priority.
+  template <bool Descending>
+  class PriorityCompare {
+    const PriorityMapTy &PriorityMap;
+
+  public:
+    PriorityCompare(const PriorityMapTy &M) : PriorityMap(M) {}
+
+    bool operator()(const ExplodedNode *LHS, const ExplodedNode *RHS) const {
+      PriorityMapTy::const_iterator LI = PriorityMap.find(LHS);
+      PriorityMapTy::const_iterator RI = PriorityMap.find(RHS);
+      PriorityMapTy::const_iterator E = PriorityMap.end();
+
+      if (LI == E)
+        return Descending;
+      if (RI == E)
+        return !Descending;
+
+      return Descending ? LI->second > RI->second
+                        : LI->second < RI->second;
+    }
+
+    bool operator()(const NodeIndexPair &LHS, const NodeIndexPair &RHS) const {
+      return (*this)(LHS.first, RHS.first);
+    }
+  };
+
 public:
   TrimmedGraph(const ExplodedGraph *OriginalGraph,
                ArrayRef<const ExplodedNode *> Nodes);
 
-  void createBestReportGraph(ArrayRef<const ExplodedNode *> Nodes,
-                             ReportGraph &GraphWrapper) const;
-
-  void removeErrorNode(const ExplodedNode *Node);
+  bool popNextReportGraph(ReportGraph &GraphWrapper);
 };
-
 }
 
 TrimmedGraph::TrimmedGraph(const ExplodedGraph *OriginalGraph,
                            ArrayRef<const ExplodedNode *> Nodes) {
   // The trimmed graph is created in the body of the constructor to ensure
   // that the DenseMaps have been initialized already.
-  G.reset(OriginalGraph->trim(Nodes, /*BreakCycles=*/true,
+  InterExplodedGraphMap ForwardMap;
+  G.reset(OriginalGraph->trim(Nodes, /*BreakCycles=*/false,
                               &ForwardMap, &InverseMap));
 
   // Find the (first) error node in the trimmed graph.  We just need to consult
   // the node map which maps from nodes in the original graph to nodes
   // in the new graph.
-  std::queue<std::pair<const ExplodedNode *, unsigned> > WS;
-  typedef llvm::SmallDenseMap<const ExplodedNode *, size_t, 32> IndexMapTy;
-  IndexMapTy IndexMap(llvm::NextPowerOf2(Nodes.size() + 1));
+  llvm::SmallPtrSet<const ExplodedNode *, 32> RemainingNodes;
 
   for (unsigned i = 0, count = Nodes.size(); i < count; ++i) {
-    const ExplodedNode *OriginalNode = Nodes[i];
-    if (const ExplodedNode *N = ForwardMap.lookup(OriginalNode)) {
-      WS.push(std::make_pair(N, 0));
-      IndexMap[OriginalNode] = i;
+    if (const ExplodedNode *NewNode = ForwardMap.lookup(Nodes[i])) {
+      ReportNodes.push_back(std::make_pair(NewNode, i));
+      RemainingNodes.insert(NewNode);
     }
   }
 
-  assert(!WS.empty() && "No error node found in the trimmed graph.");
+  assert(!RemainingNodes.empty() && "No error node found in the trimmed graph");
 
-  // Perform a reverse BFS to find all the shortest paths.
-  Root = 0;
+  // Perform a forward BFS to find all the shortest paths.
+  std::queue<const ExplodedNode *> WS;
+
+  assert(G->num_roots() == 1);
+  WS.push(*G->roots_begin());
+  unsigned Priority = 0;
+
   while (!WS.empty()) {
-    const ExplodedNode *Node;
-    unsigned Priority;
-    llvm::tie(Node, Priority) = WS.front();
+    const ExplodedNode *Node = WS.front();
     WS.pop();
 
     PriorityMapTy::iterator PriorityEntry;
     bool IsNew;
     llvm::tie(PriorityEntry, IsNew) =
       PriorityMap.insert(std::make_pair(Node, Priority));
+    ++Priority;
 
     if (!IsNew) {
       assert(PriorityEntry->second <= Priority);
       continue;
     }
 
-    if (Node->pred_empty()) {
-      assert(!Root && "more than one root");
-      Root = Node;
-    }
+    if (RemainingNodes.erase(Node))
+      if (RemainingNodes.empty())
+        break;
 
-    for (ExplodedNode::const_pred_iterator I = Node->pred_begin(),
-                                           E = Node->pred_end();
+    for (ExplodedNode::const_pred_iterator I = Node->succ_begin(),
+                                           E = Node->succ_end();
          I != E; ++I)
-      WS.push(std::make_pair(*I, Priority + 1));
+      WS.push(*I);
   }
-  
-  assert(Root);
+
+  // Sort the error paths from longest to shortest.
+  std::sort(ReportNodes.begin(), ReportNodes.end(),
+            PriorityCompare<true>(PriorityMap));
 }
 
-void TrimmedGraph::createBestReportGraph(ArrayRef<const ExplodedNode *> Nodes,
-                                         ReportGraph &GraphWrapper) const {
-  assert(!GraphWrapper.Graph && "ReportGraph is already in use");
-  assert(GraphWrapper.BackMap.empty() && "ReportGraph is already in use");
+bool TrimmedGraph::popNextReportGraph(ReportGraph &GraphWrapper) {
+  if (ReportNodes.empty())
+    return false;
 
-  // Find the (first) error node in the trimmed graph.  We just need to consult
-  // the node map which maps from nodes in the original graph to nodes
-  // in the new graph.
-  std::queue<std::pair<const ExplodedNode *, unsigned> > WS;
-  typedef llvm::SmallDenseMap<const ExplodedNode *, size_t, 32> IndexMapTy;
-  IndexMapTy IndexMap(llvm::NextPowerOf2(Nodes.size() + 1));
-
-  for (unsigned i = 0, count = Nodes.size(); i < count; ++i) {
-    const ExplodedNode *OriginalNode = Nodes[i];
-    if (const ExplodedNode *N = ForwardMap.lookup(OriginalNode)) {
-      WS.push(std::make_pair(N, 0));
-      IndexMap[OriginalNode] = i;
-    }
-  }
-
-  assert(!WS.empty() && "No error node found in the trimmed graph.");
+  const ExplodedNode *OrigN;
+  llvm::tie(OrigN, GraphWrapper.Index) = ReportNodes.pop_back_val();
+  assert(PriorityMap.find(OrigN) != PriorityMap.end() &&
+         "error node not accessible from root");
 
   // Create a new graph with a single path.  This is the graph
   // that will be returned to the caller.
   ExplodedGraph *GNew = new ExplodedGraph();
   GraphWrapper.Graph.reset(GNew);
+  GraphWrapper.BackMap.clear();
 
-  // Now walk from the root down the BFS path, always taking the successor
-  // with the lowest number.
-  ExplodedNode *Last = 0;
-  for ( const ExplodedNode *N = Root ;;) {
-    // Lookup the number associated with the current node.
-    PriorityMapTy::const_iterator I = PriorityMap.find(N);
-    assert(I != PriorityMap.end());
-
+  // Now walk from the error node up the BFS path, always taking the
+  // predeccessor with the lowest number.
+  ExplodedNode *Succ = 0;
+  while (true) {
     // Create the equivalent node in the new graph with the same state
     // and location.
-    ExplodedNode *NewN = GNew->getNode(N->getLocation(), N->getState());
+    ExplodedNode *NewN = GNew->getNode(OrigN->getLocation(), OrigN->getState());
 
     // Store the mapping to the original node.
-    InterExplodedGraphMap::const_iterator IMitr = InverseMap.find(N);
+    InterExplodedGraphMap::const_iterator IMitr = InverseMap.find(OrigN);
     assert(IMitr != InverseMap.end() && "No mapping to original node.");
     GraphWrapper.BackMap[NewN] = IMitr->second;
 
     // Link up the new node with the previous node.
-    if (Last)
-      NewN->addPredecessor(Last, *GNew);
+    if (Succ)
+      Succ->addPredecessor(NewN, *GNew);
+    else
+      GraphWrapper.ErrorNode = NewN;
 
-    Last = NewN;
+    Succ = NewN;
 
     // Are we at the final node?
-    IndexMapTy::iterator IMI = IndexMap.find(IMitr->second);
-    if (IMI != IndexMap.end()) {
-      GraphWrapper.ErrorNode = NewN;
-      GraphWrapper.Index = IMI->second;
+    if (OrigN->pred_empty()) {
+      GNew->addRoot(NewN);
       break;
     }
 
-    // Find the next successor node.  We choose the node that is marked
+    // Find the next predeccessor node.  We choose the node that is marked
     // with the lowest BFS number.
-    unsigned MinVal = -1U;
-    for (ExplodedNode::const_succ_iterator SI = N->succ_begin(),
-                                           SE = N->succ_end();
-         SI != SE; ++SI) {
-      I = PriorityMap.find(*SI);
-
-      if (I == PriorityMap.end())
-        continue;
-
-      if (I->second < MinVal) {
-        N = *SI;
-        MinVal = I->second;
-      }
-    }
-
-    assert(MinVal != -1U);
-  }
-}
-
-void TrimmedGraph::removeErrorNode(const ExplodedNode *ErrorNode) {
-  ErrorNode = ForwardMap[ErrorNode];
-  assert(ErrorNode && "not an error node");
-
-  PriorityMapTy::iterator PriorityEntry = PriorityMap.find(ErrorNode);
-  assert(PriorityEntry != PriorityMap.end() && "error node already removed");
-  PriorityMap.erase(PriorityEntry);
-
-  std::queue<const ExplodedNode *> WS;
-  for (ExplodedNode::const_pred_iterator PI = ErrorNode->pred_begin(),
-                                         PE = ErrorNode->pred_end();
-       PI != PE; ++PI) {
-    assert(PriorityMap.find(*PI) != PriorityMap.end() && "predecessor removed");
-    WS.push(*PI);
+    OrigN = *std::min_element(OrigN->pred_begin(), OrigN->pred_end(),
+                          PriorityCompare<false>(PriorityMap));
   }
 
-  // Update all nodes possibly affected by this change.
-  while (!WS.empty()) {
-    const ExplodedNode *N = WS.front();
-    WS.pop();
-
-    PriorityEntry = PriorityMap.find(N);
-
-    // Did we process this node already and find it unreachable?
-    if (PriorityEntry == PriorityMap.end())
-      continue;
-
-    unsigned MinPriority = -1U;
-    for (ExplodedNode::const_succ_iterator SI = N->succ_begin(),
-                                           SE = N->succ_end();
-         SI != SE; ++SI) {
-      PriorityMapTy::iterator SuccEntry = PriorityMap.find(*SI);
-      if (SuccEntry == PriorityMap.end())
-        continue;
-      MinPriority = std::min(SuccEntry->second, MinPriority);
-    }
-
-    if (MinPriority == -1U)
-      PriorityMap.erase(N);
-    else if (PriorityMap[N] == MinPriority + 1)
-      continue;
-    else
-      PriorityMap[N] = MinPriority + 1;
-
-    for (ExplodedNode::const_pred_iterator PI = N->pred_begin(),
-                                           PE = N->pred_end();
-         PI != PE; ++PI) {
-      assert(PriorityMap.find(*PI) != PriorityMap.end() && "premature removal");
-      WS.push(*PI);
-    }
-  }
+  return true;
 }
 
 
@@ -2197,6 +2144,7 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
   assert(!bugReports.empty());
 
   bool HasValid = false;
+  bool HasInvalid = false;
   SmallVector<const ExplodedNode *, 32> errorNodes;
   for (ArrayRef<BugReport*>::iterator I = bugReports.begin(),
                                       E = bugReports.end(); I != E; ++I) {
@@ -2204,6 +2152,8 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
       HasValid = true;
       errorNodes.push_back((*I)->getErrorNode());
     } else {
+      // Keep the errorNodes list in sync with the bugReports list.
+      HasInvalid = true;
       errorNodes.push_back(0);
     }
   }
@@ -2217,21 +2167,14 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
   PathGenerationScheme ActiveScheme = PC.getGenerationScheme();
 
   TrimmedGraph TrimG(&getGraph(), errorNodes);
+  ReportGraph ErrorGraph;
 
-  for (size_t Remaining = bugReports.size(); Remaining > 0; --Remaining) {
-    // Construct a new graph that contains only a single path from the error
-    // node to a root.
-    ReportGraph ErrorGraph;
-    TrimG.createBestReportGraph(errorNodes, ErrorGraph);
-
+  while (TrimG.popNextReportGraph(ErrorGraph)) {
     // Find the BugReport with the original location.
     assert(ErrorGraph.Index < bugReports.size());
     BugReport *R = bugReports[ErrorGraph.Index];
     assert(R && "No original report found for sliced graph.");
     assert(R->isValid() && "Report selected by trimmed graph marked invalid.");
-
-    // Don't try to reuse this report if it ends up being suppressed.
-    errorNodes[ErrorGraph.Index] = 0;
 
     // Start building the path diagnostic...
     PathDiagnosticBuilder PDB(*this, R, ErrorGraph.BackMap, &PC);
@@ -2297,10 +2240,8 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
       finalReportConfigToken = R->getConfigurationChangeToken();
     } while (finalReportConfigToken != origReportConfigToken);
 
-    if (!R->isValid()) {
-      TrimG.removeErrorNode(R->getErrorNode());
+    if (!R->isValid())
       continue;
-    }
 
     // Finally, prune the diagnostic path of uninteresting stuff.
     if (!PD.path.empty()) {
@@ -2322,6 +2263,8 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
   }
 
   // We suppressed all the reports in this equivalence class.
+  assert(!HasInvalid && "Inconsistent suppression");
+  (void)HasInvalid;
   return false;
 }
 
