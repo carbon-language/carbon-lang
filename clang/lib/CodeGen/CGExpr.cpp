@@ -2078,6 +2078,15 @@ llvm::Constant *CodeGenFunction::EmitCheckTypeDescriptor(QualType T) {
 llvm::Value *CodeGenFunction::EmitCheckValue(llvm::Value *V) {
   llvm::Type *TargetTy = IntPtrTy;
 
+  // Floating-point types which fit into intptr_t are bitcast to integers
+  // and then passed directly (after zero-extension, if necessary).
+  if (V->getType()->isFloatingPointTy()) {
+    unsigned Bits = V->getType()->getPrimitiveSizeInBits();
+    if (Bits <= TargetTy->getIntegerBitWidth())
+      V = Builder.CreateBitCast(V, llvm::Type::getIntNTy(getLLVMContext(),
+                                                         Bits));
+  }
+
   // Integers which fit in intptr_t are zero-extended and passed directly.
   if (V->getType()->isIntegerTy() &&
       V->getType()->getIntegerBitWidth() <= TargetTy->getIntegerBitWidth())
@@ -2085,7 +2094,7 @@ llvm::Value *CodeGenFunction::EmitCheckValue(llvm::Value *V) {
 
   // Pointers are passed directly, everything else is passed by address.
   if (!V->getType()->isPointerTy()) {
-    llvm::Value *Ptr = Builder.CreateAlloca(V->getType());
+    llvm::Value *Ptr = CreateTempAlloca(V->getType());
     Builder.CreateStore(V, Ptr);
     V = Ptr;
   }
