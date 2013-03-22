@@ -655,6 +655,22 @@ The module maps will be written using the `module map language`_, which provides
 
 To detect and help address some of these problems, the ``clang-tools-extra`` repository contains a ``modularize`` tool that parses a set of given headers and attempts to detect these problems and produce a report. See the tool's in-source documentation for information on how to check your system or library headers.
 
+Future Directions
+=================
+Modules is an experimental feature, and there is much work left to do to make it both real and useful. Here are a few ideas:
+
+**Detect unused module imports**
+  Unlike with ``#include`` directives, it should be fairly simple to track whether a directly-imported module has ever been used. By doing so, Clang can emit ``unused import`` or ``unused #include`` diagnostics, including Fix-Its to remove the useless imports/includes.
+
+**Fix-Its for missing imports**
+  It's fairly common for one to make use of some API while writing code, only to get a compiler error about "unknown type" or "no function named" because the corresponding header has not been included. Clang should detect such cases and auto-import the required module (with a Fix-It!).
+
+**Improve modularize**
+  The modularize tool is both extremely important (for deployment) and extremely crude. It needs better UI, better detection of problems (especially for C++), and perhaps an assistant mode to help write module maps for you.
+
+**C++ Support**
+  Modules clearly has to work for C++, or we'll never get to use it for the Clang code base.
+
 Where To Learn More About Modules
 =================================
 The Clang source code provides additional information about modules:
