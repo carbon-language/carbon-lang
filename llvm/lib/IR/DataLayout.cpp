@@ -621,6 +621,13 @@ Type *DataLayout::getIntPtrType(Type *Ty) const {
   return IntTy;
 }
 
+Type *DataLayout::getSmallestLegalIntType(LLVMContext &C, unsigned Width) const {
+  for (unsigned i = 0, e = (unsigned)LegalIntWidths.size(); i != e; ++i)
+    if (Width <= LegalIntWidths[i])
+      return Type::getIntNTy(C, LegalIntWidths[i]);
+  return 0;
+}
+
 uint64_t DataLayout::getIndexedOffset(Type *ptrTy,
                                       ArrayRef<Value *> Indices) const {
   Type *Ty = ptrTy;

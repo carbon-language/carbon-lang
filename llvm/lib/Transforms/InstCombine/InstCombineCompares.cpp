@@ -443,20 +443,29 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   }
 
 
-  // If a 32-bit or 64-bit magic bitvector captures the entire comparison state
+  // If a magic bitvector captures the entire comparison state
   // of this load, replace it with computation that does:
   //   ((magic_cst >> i) & 1) != 0
-  if (ArrayElementCount <= 32 ||
-      (TD && ArrayElementCount <= 64 && TD->isLegalInteger(64))) {
-    Type *Ty;
-    if (ArrayElementCount <= 32)
+  {
+    Type *Ty = 0;
+
+    // Look for an appropriate type:
+    // - The type of Idx if the magic fits
+    // - The smallest fitting legal type if we have a DataLayout
+    // - Default to i32
+    if (ArrayElementCount <= Idx->getType()->getIntegerBitWidth())
+      Ty = Idx->getType();
+    else if (TD)
+      Ty = TD->getSmallestLegalIntType(Init->getContext(), ArrayElementCount);
+    else if (ArrayElementCount <= 32)
       Ty = Type::getInt32Ty(Init->getContext());
-    else
-      Ty = Type::getInt64Ty(Init->getContext());
-    Value *V = Builder->CreateIntCast(Idx, Ty, false);
-    V = Builder->CreateLShr(ConstantInt::get(Ty, MagicBitvector), V);
-    V = Builder->CreateAnd(ConstantInt::get(Ty, 1), V);
-    return new ICmpInst(ICmpInst::ICMP_NE, V, ConstantInt::get(Ty, 0));
+
+    if (Ty != 0) {
+      Value *V = Builder->CreateIntCast(Idx, Ty, false);
+      V = Builder->CreateLShr(ConstantInt::get(Ty, MagicBitvector), V);
+      V = Builder->CreateAnd(ConstantInt::get(Ty, 1), V);
+      return new ICmpInst(ICmpInst::ICMP_NE, V, ConstantInt::get(Ty, 0));
+    }
   }
 
   return 0;

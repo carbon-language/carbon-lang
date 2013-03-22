@@ -352,6 +352,10 @@ public:
   /// type.
   Type *getIntPtrType(Type *) const;
 
+  /// getSmallestLegalIntType - Return the smallest integer type with size at
+  /// least as big as Width bits.
+  Type *getSmallestLegalIntType(LLVMContext &C, unsigned Width = 0) const;
+
   /// getIndexedOffset - return the offset from the beginning of the type for
   /// the specified indices.  This is used to implement getelementptr.
   uint64_t getIndexedOffset(Type *Ty, ArrayRef<Value *> Indices) const;
