@@ -16,6 +16,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <fstream>
+#include <getopt.h>
 
 using namespace lldb_perf;
 
@@ -27,9 +28,13 @@ public:
         m_set_bp_main_by_name(CreateTimeMeasurement([this] () -> void
             {
                 m_target.BreakpointCreateByName("main");
-                m_target.BreakpointCreateByName("malloc");
             }, "breakpoint1-relative-time", "Elapsed time to set a breakpoint at main by name, run and hit the breakpoint.")),
-        m_delta_memory("breakpoint1-memory-delta", "Memory increase that occurs due to setting a breakpoint at main by name.")
+        m_delta_memory("breakpoint1-memory-delta", "Memory increase that occurs due to setting a breakpoint at main by name."),
+        m_total_memory(),
+        m_exe_path(),
+        m_out_path(),
+        m_launch_info (NULL),
+        m_use_dsym (false)
     {
     }
 
@@ -41,9 +46,11 @@ public:
     virtual bool
 	Setup (int argc, const char** argv)
     {
-        SetVerbose(true);
-        m_app_path.assign(argv[1]);
-        m_out_path.assign(argv[2]);
+        if (m_exe_path.empty())
+            return false;
+        if (m_out_path.empty())
+            return false;
+        m_launch_info.SetArguments(argv, false);
         return true;
     }
     
@@ -60,7 +67,7 @@ public:
             case 0:
                 {
                     m_total_memory.Start();
-                    m_target = m_debugger.CreateTarget(m_app_path.c_str());
+                    m_target = m_debugger.CreateTarget(m_exe_path.c_str());
                     const char *clang_argv[] = { "clang --version", NULL };
                     m_delta_memory.Start();
                     m_set_bp_main_by_name();
@@ -100,21 +107,230 @@ public:
         results.Write(m_out_path.c_str());
     }
     
+    
+    
+    const char *
+    GetExecutablePath () const
+    {
+        if (m_exe_path.empty())
+            return NULL;
+        return m_exe_path.c_str();
+    }
+
+    const char *
+    GetResultFilePath () const
+    {
+        if (m_out_path.empty())
+            return NULL;
+        return m_out_path.c_str();
+    }
+
+    void
+    SetExecutablePath (const char *path)
+    {
+        if (path && path[0])
+            m_exe_path = path;
+        else
+            m_exe_path.clear();
+    }
+    
+    void
+    SetResultFilePath (const char *path)
+    {
+        if (path && path[0])
+            m_out_path = path;
+        else
+            m_out_path.clear();
+    }
+
+    void
+    SetUseDSYM (bool b)
+    {
+        m_use_dsym = b;
+    }
+
+
+    
 private:
     // C++ formatters
     TimeMeasurement<std::function<void()>> m_set_bp_main_by_name;
     MemoryMeasurement<std::function<void()>> m_delta_memory;
     MemoryGauge m_total_memory;
-    std::string m_app_path;
+    std::string m_exe_path;
     std::string m_out_path;
+    SBLaunchInfo m_launch_info;
+    bool m_use_dsym;
 
 };
 
-// argv[1] == path to app
-// argv[2] == path to result
+
+struct Options
+{
+    std::string clang_path;
+    std::string out_file;
+    bool verbose;
+    bool use_dsym;
+    bool error;
+    bool print_help;
+    
+    Options() :
+        verbose (false),
+        error (false),
+        print_help (false)
+    {
+    }
+};
+
+static struct option g_long_options[] = {
+    { "verbose",    no_argument,            NULL, 'v' },
+    { "clang",      required_argument,      NULL, 'c' },
+    { "out-file",   required_argument,      NULL, 'o' },
+    { "dsym",       no_argument,            NULL, 'd' },
+    { NULL,         0,                      NULL,  0  }
+};
+
+
+std::string
+GetShortOptionString (struct option *long_options)
+{
+    std::string option_string;
+    for (int i = 0; long_options[i].name != NULL; ++i)
+    {
+        if (long_options[i].flag == NULL)
+        {
+            option_string.push_back ((char) long_options[i].val);
+            switch (long_options[i].has_arg)
+            {
+                default:
+                case no_argument:
+                    break;
+                case required_argument:
+                    option_string.push_back (':');
+                    break;
+                case optional_argument:
+                    option_string.append (2, ':');
+                    break;
+            }
+        }
+    }
+    return option_string;
+}
+
 int main(int argc, const char * argv[])
 {
+
+    // Prepare for & make calls to getopt_long.
+    
+    std::string short_option_string (GetShortOptionString(g_long_options));
+    
     ClangTest test;
+
+    Options option_data;
+    bool done = false;
+
+#if __GLIBC__
+    optind = 0;
+#else
+    optreset = 1;
+    optind = 1;
+#endif
+    while (!done)
+    {
+        int long_options_index = -1;
+        const int short_option = ::getopt_long_only (argc,
+                                                     const_cast<char **>(argv),
+                                                     short_option_string.c_str(),
+                                                     g_long_options,
+                                                     &long_options_index);
+        
+        switch (short_option)
+        {
+            case 0:
+                // Already handled
+                break;
+
+            case -1:
+                done = true;
+                break;
+
+            case '?':
+                option_data.print_help = true;
+                break;
+
+            case 'h':
+                option_data.print_help = true;
+                break;
+                
+            case 'v':
+                option_data.verbose = true;
+                break;
+                
+            case 'c':
+                {
+                    SBFileSpec file(optarg);
+                    if (file.Exists())
+                        test.SetExecutablePath(optarg);
+                    else
+                        fprintf(stderr, "error: file specified in --clang (-c) option doesn't exist: '%s'\n", optarg);
+                }
+                break;
+                
+            case 'o':
+                test.SetResultFilePath(optarg);
+                break;
+                
+            case 'd':
+                test.SetUseDSYM(true);
+                break;
+                
+            default:
+                option_data.error = true;
+                option_data.print_help = true;
+                fprintf (stderr, "error: unrecognized option %c\n", short_option);
+                break;
+        }
+    }
+
+
+    if (test.GetExecutablePath() == NULL)
+    {
+        // --clang is mandatory
+        option_data.print_help = true;
+        option_data.error = true;
+        fprintf (stderr, "error: the '--clang=PATH' option is mandatory\n");
+    }
+
+    if (test.GetResultFilePath() == NULL)
+    {
+        // --out-file is mandatory
+        option_data.print_help = true;
+        option_data.error = true;
+        fprintf (stderr, "error: the '--out-file=PATH' option is mandatory\n");
+    }
+
+    if (option_data.print_help)
+    {
+        puts(R"(
+NAME
+    lldb_perf_clang -- a tool that measures LLDB peformance while debugging clang.
+
+SYNOPSIS
+    lldb_perf_clang --clang=PATH --out-file=PATH [--verbose --dsym] -- [clang options]
+             
+DESCRIPTION
+    Runs a set of static timing and memory tasks against clang and outputs results
+    to a plist file.
+)");
+    }
+    if (option_data.error)
+    {
+        exit(1);
+    }
+
+    // Update argc and argv after parsing options
+    argc -= optind;
+    argv += optind;
+
     test.SetVerbose(true);
     TestCase::Run(test, argc, argv);
     return 0;
