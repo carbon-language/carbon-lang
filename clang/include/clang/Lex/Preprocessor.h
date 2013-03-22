@@ -1208,6 +1208,10 @@ public:
   /// \brief Allocate a new MacroInfo object with the provided SourceLocation.
   MacroInfo *AllocateMacroInfo(SourceLocation L);
 
+  /// \brief Allocate a new MacroInfo object loaded from an AST file.
+  MacroInfo *AllocateDeserializedMacroInfo(SourceLocation L,
+                                           unsigned SubModuleID);
+
   /// \brief Turn the specified lexer token into a fully checked and spelled
   /// filename, e.g. as an operand of \#include. 
   ///

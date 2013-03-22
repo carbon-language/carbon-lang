@@ -1151,7 +1151,7 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
       SubmoduleID GlobalSubmoduleID = getGlobalSubmoduleID(F, Record[2]);
       unsigned NextIndex = 3;
       SourceLocation Loc = ReadSourceLocation(F, Record, NextIndex);
-      MacroInfo *MI = PP.AllocateMacroInfo(Loc);
+      MacroInfo *MI = PP.AllocateDeserializedMacroInfo(Loc, GlobalSubmoduleID);
       // FIXME: Location should be import location in case of module.
       MacroDirective *MD = PP.AllocateMacroDirective(MI, Loc,
                                                      /*isImported=*/true);

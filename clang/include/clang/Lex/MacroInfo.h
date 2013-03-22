@@ -101,6 +101,9 @@ private:
   /// \brief Must warn if the macro is unused at the end of translation unit.
   bool IsWarnIfUnused : 1;
 
+  /// \brief Whether this macro info was loaded from an AST file.
+  unsigned FromASTFile : 1;
+
   ~MacroInfo() {
     assert(ArgumentList == 0 && "Didn't call destroy before dtor!");
   }
@@ -272,8 +275,28 @@ public:
     IsDisabled = true;
   }
 
+  /// \brief Determine whether this macro info came from an AST file (such as
+  /// a precompiled header or module) rather than having been parsed.
+  bool isFromASTFile() const { return FromASTFile; }
+
+  /// \brief Retrieve the global ID of the module that owns this particular
+  /// macro info.
+  unsigned getOwningModuleID() const {
+    if (isFromASTFile())
+      return *(const unsigned*)(this+1);
+
+    return 0;
+  }
+
 private:
   unsigned getDefinitionLengthSlow(SourceManager &SM) const;
+
+  void setOwningModuleID(unsigned ID) {
+    assert(isFromASTFile());
+    *(unsigned*)(this+1) = ID;
+  }
+
+  friend class Preprocessor;
 };
 
 /// \brief Encapsulates changes to the "macros namespace" (the location where
