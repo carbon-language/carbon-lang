@@ -14,24 +14,12 @@
 #include <string>
 #include <mach/task_info.h>
 
-#include "CFCMutableDictionary.h"
-
 namespace lldb_perf {
 
 class MemoryStats;
 
-class WriteResults
-{
-public:
-    virtual void
-    Write (CFCMutableDictionary& parent) = 0;
-    
-    virtual
-    ~WriteResults () {}
-};
-
 template <class ValueType>
-class Metric : public WriteResults
+class Metric
 {
 public:
     Metric ();
@@ -64,15 +52,6 @@ public:
             return NULL;
         return m_description.c_str();
     }
-    
-    virtual void
-    Write (CFCMutableDictionary& parent)
-    {
-        WriteImpl(parent, GetName(), GetDescription(), GetAverage());
-    }
-
-    static void WriteImpl (CFCMutableDictionary& parent, const char *name, const char *description, double);
-    static void WriteImpl (CFCMutableDictionary& parent, const char *name, const char *description, MemoryStats);
 
 private:
     std::string m_name;

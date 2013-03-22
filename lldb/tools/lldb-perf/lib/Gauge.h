@@ -15,8 +15,6 @@
 
 #include "Results.h"
 
-class CFCMutableDictionary;
-
 namespace lldb_perf {
 
 template <class T>

@@ -10,9 +10,6 @@
 #include "Timer.h"
 #include <assert.h>
 
-#include "CFCMutableDictionary.h"
-#include "CFCString.h"
-
 using namespace lldb_perf;
 
 TimeGauge::TimeType

@@ -18,7 +18,7 @@
 namespace lldb_perf
 {
 template <typename GaugeType, typename Callable>
-class Measurement : public WriteResults
+class Measurement
 {
 public:
     Measurement () :
@@ -89,12 +89,6 @@ public:
         auto value = m_gauge.Stop();
         m_metric.Append(value);
         return value;
-    }
-        
-    virtual void
-    Write (CFCMutableDictionary& parent)
-    {
-        m_metric.Write(parent);
     }
 
     void
