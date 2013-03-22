@@ -45,11 +45,11 @@ entry:
 !7 = metadata !{i32 786689, metadata !1, metadata !"i", metadata !2, i32 16777217, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
 !8 = metadata !{i32 1, i32 13, metadata !1, null}
 !9 = metadata !{i32 786688, metadata !10, metadata !"j", metadata !2, i32 2, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
-!10 = metadata !{i32 786443, metadata !1, i32 1, i32 16, metadata !2, i32 0} ; [ DW_TAG_lexical_block ]
+!10 = metadata !{i32 786443, metadata !2, metadata !1, i32 1, i32 16, i32 0} ; [ DW_TAG_lexical_block ]
 !11 = metadata !{i32 2, i32 6, metadata !10, null}
 !12 = metadata !{i32 2, i32 11, metadata !10, null}
 !13 = metadata !{i32 3, i32 2, metadata !10, null}
 !14 = metadata !{i32 4, i32 2, metadata !10, null}
 !15 = metadata !{i32 5, i32 2, metadata !10, null}
 !16 = metadata !{i32 8, i32 2, metadata !17, null}
-!17 = metadata !{i32 786443, metadata !6, i32 7, i32 12, metadata !2, i32 1} ; [ DW_TAG_lexical_block ]
+!17 = metadata !{i32 786443, metadata !2, metadata !6, i32 7, i32 12, i32 1} ; [ DW_TAG_lexical_block ]

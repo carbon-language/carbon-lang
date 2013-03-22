@@ -46,14 +46,14 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !13 = metadata !{i32 2, i32 27, metadata !1, null}
 !14 = metadata !{i32 2, i32 49, metadata !1, null}
 !15 = metadata !{i32 3, i32 3, metadata !16, null}
-!16 = metadata !{i32 786443, metadata !1, i32 2, i32 54, metadata !2, i32 0} ; [ DW_TAG_lexical_block ]
+!16 = metadata !{i32 786443, metadata !2, metadata !1, i32 2, i32 54, i32 0} ; [ DW_TAG_lexical_block ]
 !17 = metadata !{metadata !"long long", metadata !18}
 !18 = metadata !{metadata !"omnipotent char", metadata !19}
 !19 = metadata !{metadata !"Simple C/C++ TBAA", null}
 !20 = metadata !{i32 6, i32 19, metadata !6, null}
 !21 = metadata !{i32 786689, metadata !1, metadata !"LHS", metadata !2, i32 16777218, metadata !8, i32 0, metadata !22} ; [ DW_TAG_arg_variable ]
 !22 = metadata !{i32 7, i32 10, metadata !23, null}
-!23 = metadata !{i32 786443, metadata !6, i32 6, i32 22, metadata !2, i32 1} ; [ DW_TAG_lexical_block ]
+!23 = metadata !{i32 786443, metadata !2, metadata !6, i32 6, i32 22, i32 1} ; [ DW_TAG_lexical_block ]
 !24 = metadata !{i32 2, i32 27, metadata !1, metadata !22}
 !25 = metadata !{i64 9223372036854775807}         
 !26 = metadata !{i32 786689, metadata !1, metadata !"RHS", metadata !2, i32 33554434, metadata !8, i32 0, metadata !22} ; [ DW_TAG_arg_variable ]

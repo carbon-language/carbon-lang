@@ -44,6 +44,6 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !14 = metadata !{i32 786445, metadata !19, metadata !7, metadata !"P2", i32 8, i64 128, i64 64, i64 128, i32 0, metadata !10} ; [ DW_TAG_member ]
 !15 = metadata !{i32 11, i32 0, metadata !1, null}
 !16 = metadata !{i32 12, i32 0, metadata !17, null}
-!17 = metadata !{i32 786443, metadata !1, i32 11, i32 0} ; [ DW_TAG_lexical_block ]
+!17 = metadata !{i32 786443, metadata !2, metadata !1, i32 11, i32 0} ; [ DW_TAG_lexical_block ]
 !18 = metadata !{metadata !1}
 !19 = metadata !{metadata !"b2.c", metadata !"/tmp/"}

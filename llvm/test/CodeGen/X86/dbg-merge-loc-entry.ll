@@ -63,14 +63,14 @@ declare %0 @llvm.uadd.with.overflow.i64(i64, i64) nounwind readnone
 !15 = metadata !{i32 1093, i32 0, metadata !9, null}
 !16 = metadata !{i64 0}
 !17 = metadata !{i32 786688, metadata !18, metadata !"c", metadata !1, i32 1095, metadata !19, i32 0, null} ; [ DW_TAG_auto_variable ]
-!18 = metadata !{i32 786443, metadata !9, i32 1094, i32 0, metadata !1, i32 13} ; [ DW_TAG_lexical_block ]
+!18 = metadata !{i32 786443, metadata !1, metadata !9, i32 1094, i32 0, i32 13} ; [ DW_TAG_lexical_block ]
 !19 = metadata !{i32 786454, metadata !30, metadata !6, metadata !"word_type", i32 424, i64 0, i64 0, i64 0, i32 0, metadata !20} ; [ DW_TAG_typedef ]
 !20 = metadata !{i32 786468, metadata !29, metadata !1, metadata !"long int", i32 0, i64 64, i64 64, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !21 = metadata !{i32 1095, i32 0, metadata !18, null}
 !22 = metadata !{i32 1103, i32 0, metadata !18, null}
 !23 = metadata !{i32 1104, i32 0, metadata !18, null}
 !24 = metadata !{i32 1003, i32 0, metadata !25, metadata !26}
-!25 = metadata !{i32 786443, metadata !0, i32 879, i32 0, metadata !1, i32 0} ; [ DW_TAG_lexical_block ]
+!25 = metadata !{i32 786443, metadata !1, metadata !0, i32 879, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !26 = metadata !{i32 1107, i32 0, metadata !18, null}
 !27 = metadata !{i32 1111, i32 0, metadata !18, null}
 !28 = metadata !{metadata !0, metadata !9}

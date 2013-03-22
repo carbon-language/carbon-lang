@@ -23,4 +23,4 @@ entry:
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !10 = metadata !{i32 1, i32 14, metadata !11, null}
-!11 = metadata !{i32 786443, metadata !5, i32 1, i32 12, metadata !6, i32 0} ; [ DW_TAG_lexical_block ] [/home/probinson/PR13303.c]
+!11 = metadata !{i32 786443, metadata !6, metadata !5, i32 1, i32 12, i32 0} ; [ DW_TAG_lexical_block ] [/home/probinson/PR13303.c]

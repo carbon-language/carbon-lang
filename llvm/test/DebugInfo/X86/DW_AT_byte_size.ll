@@ -41,5 +41,5 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !16 = metadata !{i32 786689, metadata !5, metadata !"a", metadata !6, i32 16777219, metadata !10, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
 !17 = metadata !{i32 3, i32 13, metadata !5, null}
 !18 = metadata !{i32 4, i32 3, metadata !19, null}
-!19 = metadata !{i32 786443, metadata !5, i32 3, i32 16, metadata !6, i32 0} ; [ DW_TAG_lexical_block ]
+!19 = metadata !{i32 786443, metadata !6, metadata !5, i32 3, i32 16, i32 0} ; [ DW_TAG_lexical_block ]
 !20 = metadata !{metadata !"foo.cpp", metadata !"/Users/echristo"}

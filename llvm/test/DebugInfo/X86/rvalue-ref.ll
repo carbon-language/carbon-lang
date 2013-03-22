@@ -34,6 +34,6 @@ declare i32 @printf(i8*, ...)
 !11 = metadata !{i32 786689, metadata !5, metadata !"i", metadata !6, i32 16777220, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
 !12 = metadata !{i32 4, i32 17, metadata !5, null}
 !13 = metadata !{i32 6, i32 3, metadata !14, null}
-!14 = metadata !{i32 786443, metadata !5, i32 5, i32 1, metadata !6, i32 0} ; [ DW_TAG_lexical_block ]
+!14 = metadata !{i32 786443, metadata !6, metadata !5, i32 5, i32 1, i32 0} ; [ DW_TAG_lexical_block ]
 !15 = metadata !{i32 7, i32 1, metadata !14, null}
 !16 = metadata !{metadata !"foo.cpp", metadata !"/Users/echristo/tmp"}

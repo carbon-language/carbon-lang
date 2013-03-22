@@ -55,10 +55,10 @@ entry:
 !23 = metadata !{i32 786689, metadata !5, metadata !"x", metadata !6, i32 16777220, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
 !24 = metadata !{i32 4, i32 15, metadata !5, null}
 !25 = metadata !{i32 4, i32 20, metadata !26, null}
-!26 = metadata !{i32 786443, metadata !5, i32 4, i32 18, metadata !6, i32 0} ; [ DW_TAG_lexical_block ]
+!26 = metadata !{i32 786443, metadata !6, metadata !5, i32 4, i32 18, i32 0} ; [ DW_TAG_lexical_block ]
 !27 = metadata !{i32 4, i32 30, metadata !26, null}
 !28 = metadata !{i32 786689, metadata !20, metadata !"this", metadata !6, i32 16777218, metadata !15, i32 64, i32 0} ; [ DW_TAG_arg_variable ]
 !29 = metadata !{i32 2, i32 8, metadata !20, null}
 !30 = metadata !{i32 2, i32 15, metadata !31, null}
-!31 = metadata !{i32 786443, metadata !20, i32 2, i32 14, metadata !6, i32 1} ; [ DW_TAG_lexical_block ]
+!31 = metadata !{i32 786443, metadata !6, metadata !20, i32 2, i32 14, i32 1} ; [ DW_TAG_lexical_block ]
 !32 = metadata !{metadata !"/home/espindola/llvm/test.cc", metadata !"/home/espindola/tmpfs/build"}

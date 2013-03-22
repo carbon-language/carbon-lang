@@ -34,11 +34,11 @@ entry:
 !7 = metadata !{i32 786689, metadata !8, metadata !"x", metadata !2, i32 6, metadata !6, i32 0, null} ; [ DW_TAG_arg_variable ]
 !8 = metadata !{i32 786478, metadata !2, metadata !"bar", metadata !"bar", metadata !"bar", metadata !2, i32 6, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true, i32 (i32)* @bar, null, null, metadata !16, i32 6} ; [ DW_TAG_subprogram ]
 !9 = metadata !{i32 3, i32 0, metadata !10, null}
-!10 = metadata !{i32 786443, metadata !1, i32 2, i32 0} ; [ DW_TAG_lexical_block ]
+!10 = metadata !{i32 786443, metadata !2, metadata !1, i32 2, i32 0} ; [ DW_TAG_lexical_block ]
 !11 = metadata !{i32 1}
 !12 = metadata !{i32 3, i32 0, metadata !10, metadata !13}
 !13 = metadata !{i32 7, i32 0, metadata !14, null}
-!14 = metadata !{i32 786443, metadata !8, i32 6, i32 0} ; [ DW_TAG_lexical_block ]
+!14 = metadata !{i32 786443, metadata !2, metadata !8, i32 6, i32 0} ; [ DW_TAG_lexical_block ]
 !15 = metadata !{metadata !0}
 !16 = metadata !{metadata !7}
 !17 = metadata !{metadata !1, metadata !8}

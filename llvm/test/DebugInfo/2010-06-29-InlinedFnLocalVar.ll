@@ -34,14 +34,14 @@ entry:
 !8 = metadata !{metadata !5}
 !9 = metadata !{i32 786689, metadata !0, metadata !"j", metadata !1, i32 9, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
 !10 = metadata !{i32 786688, metadata !11, metadata !"xyz", metadata !1, i32 10, metadata !12, i32 0, null} ; [ DW_TAG_auto_variable ]
-!11 = metadata !{i32 786443, metadata !0, i32 9, i32 0, metadata !1, i32 0} ; [ DW_TAG_lexical_block ]
+!11 = metadata !{i32 786443, metadata !1, metadata !0, i32 9, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !12 = metadata !{i32 786451, metadata !27, metadata !0, metadata !"X", i32 10, i64 64, i64 32, i64 0, i32 0, null, metadata !13, i32 0, null} ; [ DW_TAG_structure_type ]
 !13 = metadata !{metadata !14, metadata !15}
 !14 = metadata !{i32 786445, metadata !27, metadata !12, metadata !"a", i32 10, i64 32, i64 32, i64 0, i32 0, metadata !5} ; [ DW_TAG_member ]
 !15 = metadata !{i32 786445, metadata !27, metadata !12, metadata !"b", i32 10, i64 32, i64 32, i64 32, i32 0, metadata !5} ; [ DW_TAG_member ]
 !16 = metadata !{i32 786484, i32 0, metadata !1, metadata !"i", metadata !"i", metadata !"", metadata !1, i32 5, metadata !5, i1 false, i1 true, i32* @i} ; [ DW_TAG_variable ]
 !17 = metadata !{i32 15, i32 0, metadata !18, null}
-!18 = metadata !{i32 786443, metadata !6, i32 14, i32 0, metadata !1, i32 1} ; [ DW_TAG_lexical_block ]
+!18 = metadata !{i32 786443, metadata !1, metadata !6, i32 14, i32 0, i32 1} ; [ DW_TAG_lexical_block ]
 !19 = metadata !{i32 9, i32 0, metadata !0, metadata !17}
 !20 = metadata !{null}
 !21 = metadata !{i32 9, i32 0, metadata !11, metadata !17}

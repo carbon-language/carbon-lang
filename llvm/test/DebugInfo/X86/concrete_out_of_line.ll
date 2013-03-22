@@ -77,11 +77,11 @@ declare void @_Z8moz_freePv(i8*)
 !47 = metadata !{metadata !49}
 !49 = metadata !{i32 720948, i32 0, null, metadata !"mRefCnt", metadata !"mRefCnt", metadata !"", metadata !6, i32 9, metadata !37, i32 0, i32 1, i32* null, null} ; [ DW_TAG_variable ]
 !50 = metadata !{i32 5, i32 5, metadata !51, metadata !52}
-!51 = metadata !{i32 786443, metadata !31, i32 4, i32 29, metadata !6, i32 2} ; [ DW_TAG_lexical_block ]
+!51 = metadata !{i32 786443, metadata !6, metadata !31, i32 4, i32 29, i32 2} ; [ DW_TAG_lexical_block ]
 !52 = metadata !{i32 15, i32 0, metadata !53, null}
-!53 = metadata !{i32 786443, metadata !5, i32 14, i32 34, metadata !6, i32 0} ; [ DW_TAG_lexical_block ]
+!53 = metadata !{i32 786443, metadata !6, metadata !5, i32 14, i32 34, i32 0} ; [ DW_TAG_lexical_block ]
 !54 = metadata !{i32 19, i32 3, metadata !55, metadata !56}
-!55 = metadata !{i32 786443, metadata !27, i32 18, i32 41, metadata !6, i32 1} ; [ DW_TAG_lexical_block ]
+!55 = metadata !{i32 786443, metadata !6, metadata !27, i32 18, i32 41, i32 1} ; [ DW_TAG_lexical_block ]
 !56 = metadata !{i32 18, i32 41, metadata !23, metadata !52}
 !57 = metadata !{i32 19, i32 3, metadata !55, metadata !58}
 !58 = metadata !{i32 18, i32 41, metadata !23, null}

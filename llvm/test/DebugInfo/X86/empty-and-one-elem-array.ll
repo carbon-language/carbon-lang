@@ -68,7 +68,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !10 = metadata !{i32 786688, metadata !11, metadata !"my_foo", metadata !6, i32 12, metadata !12, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [my_foo] [line 12]
-!11 = metadata !{i32 786443, metadata !5, i32 11, i32 0, metadata !6, i32 0} ; [ DW_TAG_lexical_block ] [/Volumes/Sandbox/llvm/test.c]
+!11 = metadata !{i32 786443, metadata !6, metadata !5, i32 11, i32 0, i32 0} ; [ DW_TAG_lexical_block ] [/Volumes/Sandbox/llvm/test.c]
 !12 = metadata !{i32 786451, metadata !32, null, metadata !"foo", i32 1, i64 64, i64 32, i32 0, i32 0, null, metadata !13, i32 0, i32 0, i32 0} ; [ DW_TAG_structure_type ] [foo] [line 1, size 64, align 32, offset 0] [from ]
 !13 = metadata !{metadata !14, metadata !15}
 !14 = metadata !{i32 786445, metadata !32, metadata !12, metadata !"a", i32 2, i64 32, i64 32, i64 0, i32 0, metadata !9} ; [ DW_TAG_member ] [a] [line 2, size 32, align 32, offset 0] [from int]

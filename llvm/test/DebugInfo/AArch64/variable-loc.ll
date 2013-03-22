@@ -85,7 +85,7 @@ declare i32 @printf(i8*, ...)
 !15 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !16, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !16 = metadata !{metadata !10}
 !17 = metadata !{i32 786688, metadata !18, metadata !"main_arr", metadata !6, i32 19, metadata !19, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [main_arr] [line 19]
-!18 = metadata !{i32 786443, metadata !14, i32 18, i32 16, metadata !6, i32 4} ; [ DW_TAG_lexical_block ] [/home/timnor01/a64-trunk/build/simple.c]
+!18 = metadata !{i32 786443, metadata !6, metadata !14, i32 18, i32 16, i32 4} ; [ DW_TAG_lexical_block ] [/home/timnor01/a64-trunk/build/simple.c]
 !19 = metadata !{i32 786433, null, null, metadata !"", i32 0, i64 3200, i64 32, i32 0, i32 0, metadata !10, metadata !20, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 3200, align 32, offset 0] [from int]
 !20 = metadata !{i32 786465, i64 0, i64 99}       ; [ DW_TAG_subrange_type ] [0, 99]
 !22 = metadata !{i32 19, i32 7, metadata !18, null}

@@ -83,14 +83,14 @@ declare i32 @puts(i8* nocapture) nounwind
 !22 = metadata !{i32 786689, metadata !10, metadata !"argc", metadata !1, i32 17, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
 !23 = metadata !{i32 786689, metadata !10, metadata !"argv", metadata !1, i32 17, metadata !13, i32 0, null} ; [ DW_TAG_arg_variable ]
 !24 = metadata !{i32 786688, metadata !25, metadata !"dval", metadata !1, i32 19, metadata !7, i32 0, null} ; [ DW_TAG_auto_variable ]
-!25 = metadata !{i32 786443, metadata !10, i32 18, i32 0, metadata !1, i32 2} ; [ DW_TAG_lexical_block ]
+!25 = metadata !{i32 786443, metadata !1, metadata !10, i32 18, i32 0, i32 2} ; [ DW_TAG_lexical_block ]
 !26 = metadata !{i32 4, i32 0, metadata !9, null}
 !27 = metadata !{i32 6, i32 0, metadata !28, null}
-!28 = metadata !{i32 786443, metadata !9, i32 5, i32 0, metadata !1, i32 1} ; [ DW_TAG_lexical_block ]
+!28 = metadata !{i32 786443, metadata !1, metadata !9, i32 5, i32 0, i32 1} ; [ DW_TAG_lexical_block ]
 !29 = metadata !{i32 7, i32 0, metadata !28, null}
 !30 = metadata !{i32 11, i32 0, metadata !0, null}
 !31 = metadata !{i32 13, i32 0, metadata !32, null}
-!32 = metadata !{i32 786443, metadata !0, i32 12, i32 0, metadata !1, i32 0} ; [ DW_TAG_lexical_block ]
+!32 = metadata !{i32 786443, metadata !1, metadata !0, i32 12, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !33 = metadata !{i32 14, i32 0, metadata !32, null}
 !34 = metadata !{i32 17, i32 0, metadata !10, null}
 !35 = metadata !{i32 19, i32 0, metadata !25, null}

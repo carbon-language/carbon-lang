@@ -70,7 +70,7 @@ declare void @llvm.stackrestore(i8*) nounwind
 !10 = metadata !{i32 786689, metadata !5, metadata !"s", metadata !6, i32 16777217, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
 !11 = metadata !{i32 1, i32 26, metadata !5, null}
 !12 = metadata !{i32 3, i32 13, metadata !13, null}
-!13 = metadata !{i32 786443, metadata !5, i32 2, i32 1, metadata !6, i32 0} ; [ DW_TAG_lexical_block ]
+!13 = metadata !{i32 786443, metadata !6, metadata !5, i32 2, i32 1, i32 0} ; [ DW_TAG_lexical_block ]
 !14 = metadata !{i32 786688, metadata !13, metadata !"vla", metadata !6, i32 3, metadata !15, i32 0, i32 0, i64 2} ; [ DW_TAG_auto_variable ]
 !15 = metadata !{i32 786433, null, null, metadata !"", i32 0, i64 0, i64 32, i32 0, i32 0, metadata !9, metadata !16, i32 0, i32 0} ; [ DW_TAG_array_type ]
 !16 = metadata !{metadata !17}
@@ -79,9 +79,9 @@ declare void @llvm.stackrestore(i8*) nounwind
 !19 = metadata !{i32 786688, metadata !13, metadata !"i", metadata !6, i32 4, metadata !9, i32 0, i32 0} ; [ DW_TAG_auto_variable ]
 !20 = metadata !{i32 4, i32 7, metadata !13, null}
 !21 = metadata !{i32 5, i32 8, metadata !22, null}
-!22 = metadata !{i32 786443, metadata !13, i32 5, i32 3, metadata !6, i32 1} ; [ DW_TAG_lexical_block ]
+!22 = metadata !{i32 786443, metadata !6, metadata !13, i32 5, i32 3, i32 1} ; [ DW_TAG_lexical_block ]
 !23 = metadata !{i32 6, i32 5, metadata !24, null}
-!24 = metadata !{i32 786443, metadata !22, i32 5, i32 27, metadata !6, i32 2} ; [ DW_TAG_lexical_block ]
+!24 = metadata !{i32 786443, metadata !6, metadata !22, i32 5, i32 27, i32 2} ; [ DW_TAG_lexical_block ]
 !25 = metadata !{i32 7, i32 3, metadata !24, null}
 !26 = metadata !{i32 5, i32 22, metadata !22, null}
 !27 = metadata !{i32 8, i32 1, metadata !13, null}

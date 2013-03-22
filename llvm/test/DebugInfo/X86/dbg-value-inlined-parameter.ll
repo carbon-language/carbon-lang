@@ -70,7 +70,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !20 = metadata !{i32 7, i32 13, metadata !0, null}
 !21 = metadata !{i32 7, i32 21, metadata !0, null}
 !22 = metadata !{i32 9, i32 3, metadata !23, null}
-!23 = metadata !{i32 786443, metadata !0, i32 8, i32 1, metadata !1, i32 0} ; [ DW_TAG_lexical_block ]
+!23 = metadata !{i32 786443, metadata !1, metadata !0, i32 8, i32 1, i32 0} ; [ DW_TAG_lexical_block ]
 !24 = metadata !{metadata !"int", metadata !25}
 !25 = metadata !{metadata !"omnipotent char", metadata !26}
 !26 = metadata !{metadata !"Simple C/C++ TBAA", null}
@@ -80,7 +80,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !30 = metadata !{%struct.S1* @p}
 !31 = metadata !{i32 7, i32 13, metadata !0, metadata !32}
 !32 = metadata !{i32 16, i32 3, metadata !33, null}
-!33 = metadata !{i32 786443, metadata !6, i32 15, i32 15, metadata !1, i32 1} ; [ DW_TAG_lexical_block ]
+!33 = metadata !{i32 786443, metadata !1, metadata !6, i32 15, i32 15, i32 1} ; [ DW_TAG_lexical_block ]
 !34 = metadata !{i32 1}
 !35 = metadata !{i32 7, i32 21, metadata !0, metadata !32}
 !36 = metadata !{i32 9, i32 3, metadata !23, metadata !32}

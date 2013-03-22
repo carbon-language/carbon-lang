@@ -590,14 +590,14 @@ namespace llvm {
   class DILexicalBlock : public DIScope {
   public:
     explicit DILexicalBlock(const MDNode *N = 0) : DIScope(N) {}
-    DIScope getContext() const       { return getFieldAs<DIScope>(1);      }
-    unsigned getLineNumber() const   { return getUnsignedField(2);         }
-    unsigned getColumnNumber() const { return getUnsignedField(3);         }
+    DIScope getContext() const       { return getFieldAs<DIScope>(2);      }
+    unsigned getLineNumber() const   { return getUnsignedField(3);         }
+    unsigned getColumnNumber() const { return getUnsignedField(4);         }
     StringRef getDirectory() const {
-      return getFieldAs<DIFile>(4).getDirectory();
+      return getFieldAs<DIFile>(1).getDirectory();
     }
     StringRef getFilename() const {
-      return getFieldAs<DIFile>(4).getFilename();
+      return getFieldAs<DIFile>(1).getFilename();
     }
     bool Verify() const;
   };

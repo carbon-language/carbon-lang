@@ -25,7 +25,7 @@ declare i32 @bar() nounwind readnone
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, metadata !1, metadata !"int", metadata !1, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5}
 !6 = metadata !{i32 786688, metadata !7, metadata !"j", metadata !1, i32 15, metadata !5, i32 0, null}
-!7 = metadata !{i32 786443, metadata !0, i32 12, i32 52, metadata !1, i32 0}
+!7 = metadata !{i32 786443, metadata !1, metadata !0, i32 12, i32 52, i32 0} ; [ DW_TAG_lexical_block ]
 !8 = metadata !{i32 42}
 !9 = metadata !{i32 15, i32 12, metadata !7, null}
 !10 = metadata !{i32 23, i32 3, metadata !7, null}
