@@ -120,10 +120,10 @@ namespace {
     }
 
     /// SelectAddrImmOffs - Return true if the operand is valid for a preinc
-    /// immediate field.  Because preinc imms have already been validated, just
-    /// accept it.
+    /// immediate field.  Note that the operand at this point is already the
+    /// result of a prior SelectAddressRegImm call.
     bool SelectAddrImmOffs(SDValue N, SDValue &Out) const {
-      if (isa<ConstantSDNode>(N) || N.getOpcode() == PPCISD::Lo ||
+      if (N.getOpcode() == ISD::TargetConstant ||
           N.getOpcode() == ISD::TargetGlobalAddress) {
         Out = N;
         return true;
@@ -1044,7 +1044,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
       break;
 
     SDValue Offset = LD->getOffset();
-    if (isa<ConstantSDNode>(Offset) ||
+    if (Offset.getOpcode() == ISD::TargetConstant ||
         Offset.getOpcode() == ISD::TargetGlobalAddress) {
 
       unsigned Opcode;
