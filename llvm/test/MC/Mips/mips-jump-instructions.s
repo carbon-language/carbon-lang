@@ -5,25 +5,25 @@
 #------------------------------------------------------------------------------
 # Branch instructions
 #------------------------------------------------------------------------------
-# CHECK:   b 1332                 # encoding: [0x34,0x05,0x00,0x10]
+# CHECK:   b 1332                 # encoding: [0x4d,0x01,0x00,0x10]
 # CHECK:   nop                    # encoding: [0x00,0x00,0x00,0x00]
-# CHECK:   bc1f 1332              # encoding: [0x34,0x05,0x00,0x45]
+# CHECK:   bc1f 1332              # encoding: [0x4d,0x01,0x00,0x45]
 # CHECK:   nop                    # encoding: [0x00,0x00,0x00,0x00]
-# CHECK:   bc1t 1332              # encoding: [0x34,0x05,0x01,0x45]
+# CHECK:   bc1t 1332              # encoding: [0x4d,0x01,0x01,0x45]
 # CHECK:   nop                    # encoding: [0x00,0x00,0x00,0x00]
-# CHECK:   beq $9, $6, 1332       # encoding: [0x34,0x05,0x26,0x11]
+# CHECK:   beq $9, $6, 1332       # encoding: [0x4d,0x01,0x26,0x11]
 # CHECK:   nop                    # encoding: [0x00,0x00,0x00,0x00]
-# CHECK:   bgez $6, 1332          # encoding: [0x34,0x05,0xc1,0x04]
+# CHECK:   bgez $6, 1332          # encoding: [0x4d,0x01,0xc1,0x04]
 # CHECK:   nop                    # encoding: [0x00,0x00,0x00,0x00]
-# CHECK:   bgezal $6, 1332        # encoding: [0x34,0x05,0xd1,0x04]
+# CHECK:   bgezal $6, 1332        # encoding: [0x4d,0x01,0xd1,0x04]
 # CHECK:   nop                    # encoding: [0x00,0x00,0x00,0x00]
-# CHECK:   bgtz $6, 1332          # encoding: [0x34,0x05,0xc0,0x1c]
+# CHECK:   bgtz $6, 1332          # encoding: [0x4d,0x01,0xc0,0x1c]
 # CHECK:   nop                    # encoding: [0x00,0x00,0x00,0x00]
-# CHECK:   blez $6, 1332          # encoding: [0x34,0x05,0xc0,0x18]
+# CHECK:   blez $6, 1332          # encoding: [0x4d,0x01,0xc0,0x18]
 # CHECK:   nop                    # encoding: [0x00,0x00,0x00,0x00]
-# CHECK:   bne $9, $6, 1332       # encoding: [0x34,0x05,0x26,0x15]
+# CHECK:   bne $9, $6, 1332       # encoding: [0x4d,0x01,0x26,0x15]
 # CHECK:   nop                    # encoding: [0x00,0x00,0x00,0x00]
-# CHECK:   bal     1332           # encoding: [0x34,0x05,0x11,0x04]
+# CHECK:   bal     1332           # encoding: [0x4d,0x01,0x11,0x04]
 # CHECK:   nop                    # encoding: [0x00,0x00,0x00,0x00]
          b 1332
          nop
@@ -50,9 +50,9 @@ end_of_code:
 #------------------------------------------------------------------------------
 # Jump instructions
 #------------------------------------------------------------------------------
-# CHECK:   j 1328               # encoding: [0x30,0x05,0x00,0x08]
+# CHECK:   j 1328               # encoding: [0x4c,0x01,0x00,0x08]
 # CHECK:   nop                  # encoding: [0x00,0x00,0x00,0x00]
-# CHECK:   jal 1328             # encoding: [0x30,0x05,0x00,0x0c]
+# CHECK:   jal 1328             # encoding: [0x4c,0x01,0x00,0x0c]
 # CHECK:   nop                  # encoding: [0x00,0x00,0x00,0x00]
 # CHECK:   jalr $6              # encoding: [0x09,0xf8,0xc0,0x00]
 # CHECK:   nop                  # encoding: [0x00,0x00,0x00,0x00]
