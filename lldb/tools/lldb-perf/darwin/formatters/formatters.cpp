@@ -197,27 +197,21 @@ public:
         }
     }
     
-    void
-    Results ()
+    virtual void
+    WriteResults (Results &results)
     {
-        CFCMutableArray array;
-        m_dump_std_vector_measurement.Write(array);
-        m_dump_std_list_measurement.Write(array);
-        m_dump_std_map_measurement.Write(array);
-        m_dump_std_string_measurement.Write(array);
-
-        m_dump_nsstring_measurement.Write(array);
-        m_dump_nsarray_measurement.Write(array);
-        m_dump_nsdictionary_measurement.Write(array);
-        m_dump_nsset_measurement.Write(array);
-        m_dump_nsbundle_measurement.Write(array);
-        m_dump_nsdate_measurement.Write(array);
-
-        CFDataRef xmlData = CFPropertyListCreateData(kCFAllocatorDefault, array.get(), kCFPropertyListXMLFormat_v1_0, 0, NULL);
+        m_dump_std_vector_measurement.WriteAverageValue(results);
+        m_dump_std_list_measurement.WriteAverageValue(results);
+        m_dump_std_map_measurement.WriteAverageValue(results);
+        m_dump_std_string_measurement.WriteAverageValue(results);
         
-        CFURLRef file = CFURLCreateFromFileSystemRepresentation(NULL, (const UInt8*)m_out_path.c_str(), m_out_path.size(), FALSE);
-        
-        CFURLWriteDataAndPropertiesToResource(file,xmlData,NULL,NULL);
+        m_dump_nsstring_measurement.WriteAverageValue(results);
+        m_dump_nsarray_measurement.WriteAverageValue(results);
+        m_dump_nsdictionary_measurement.WriteAverageValue(results);
+        m_dump_nsset_measurement.WriteAverageValue(results);
+        m_dump_nsbundle_measurement.WriteAverageValue(results);
+        m_dump_nsdate_measurement.WriteAverageValue(results);
+        results.Write(m_out_path.c_str());
     }
     
 private:

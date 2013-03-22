@@ -22,7 +22,7 @@ public:
     virtual
     ~StepTest() {}
     
-    virtual void
+    virtual bool
     Setup (int argc, const char **argv)
     {
         m_app_path.assign(argv[1]);
@@ -33,13 +33,28 @@ public:
         const char* file_arg = m_app_path.c_str();
         const char* empty = nullptr;
         const char* args[] = {file_arg, empty};
+        SBLaunchInfo launch_info (args);
         
-        Launch (args,".");
+        return Launch (launch_info);
     }
 
-private:
     void
     DoOneStep (int sequence)
+    {
+        
+    }
+    
+
+    void
+    WriteResults (Results &results)
+    {
+//        results.Write(m_out_path.c_str());
+    }
+    
+
+private:
+    virtual void
+	TestStep (int counter, ActionWanted &next_action)
     {
     
     }
@@ -61,7 +76,7 @@ int main(int argc, const char * argv[])
         return -1;
     }
     
-    StepTest skt;
-    TestCase::Run(skt,argc,argv);
+    StepTest test;
+    TestCase::Run(test,argc,argv);
     return 0;
 }

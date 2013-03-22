@@ -179,21 +179,15 @@ public:
         }
     }
     
-    void
-    Results ()
+    virtual void
+    WriteResults (Results &results)
     {
-        CFCMutableArray array;
-        m_fetch_frames_measurement.Write(array);
-        m_file_line_bp_measurement.Write(array);
-        m_fetch_modules_measurement.Write(array);
-        m_fetch_vars_measurement.Write(array);
-        m_run_expr_measurement.Write(array);
-
-        CFDataRef xmlData = CFPropertyListCreateData(kCFAllocatorDefault, array.get(), kCFPropertyListXMLFormat_v1_0, 0, NULL);
-        
-        CFURLRef file = CFURLCreateFromFileSystemRepresentation(NULL, (const UInt8*)m_out_path.c_str(), m_out_path.size(), FALSE);
-        
-        CFURLWriteDataAndPropertiesToResource(file,xmlData,NULL,NULL);
+        m_fetch_frames_measurement.WriteAverageValue(results);
+        m_file_line_bp_measurement.WriteAverageValue(results);
+        m_fetch_modules_measurement.WriteAverageValue(results);
+        m_fetch_vars_measurement.WriteAverageValue(results);
+        m_run_expr_measurement.WriteAverageValue(results);
+        results.Write(m_out_path.c_str());
     }
     
 private:

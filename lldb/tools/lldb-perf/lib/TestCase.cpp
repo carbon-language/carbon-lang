@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "TestCase.h"
+#include "Results.h"
 #include "Xcode.h"
 
 using namespace lldb_perf;
@@ -63,134 +64,167 @@ TestCase::GetVerbose ()
 void
 TestCase::Loop ()
 {
-	SBEvent evt;
 	while (true)
 	{
-		m_listener.WaitForEvent (UINT32_MAX,evt);
-		StateType state = SBProcess::GetStateFromEvent (evt);
-		if (m_verbose)
-			printf("event = %s\n",SBDebugger::StateAsCString(state));
-		if (SBProcess::GetRestartedFromEvent(evt))
-			continue;
-		switch (state)
-		{
-			case eStateInvalid:
-			case eStateDetached:
-			case eStateCrashed:
-			case eStateUnloaded:
-				break;
-			case eStateExited:
-				return;
-			case eStateConnected:
-			case eStateAttaching:
-			case eStateLaunching:
-			case eStateRunning:
-			case eStateStepping:
-				continue;
-			case eStateStopped:
-			case eStateSuspended:
-			{
-				bool fatal = false;
-                bool selected_thread = false;
-				for (auto thread_index = 0; thread_index < m_process.GetNumThreads(); thread_index++)
-				{
-					SBThread thread(m_process.GetThreadAtIndex(thread_index));
-					SBFrame frame(thread.GetFrameAtIndex(0));
-                    bool select_thread = false;
-					StopReason stop_reason = thread.GetStopReason();
-					if (m_verbose) printf("tid = 0x%llx pc = 0x%llx ",thread.GetThreadID(),frame.GetPC());
-					switch (stop_reason)
-					{
-				        case eStopReasonNone:
-                            if (m_verbose) printf("none\n");
-                            break;
-                            
-				        case eStopReasonTrace:
-                            select_thread = true;
-                            if (m_verbose) printf("trace\n");
-                            break;
-                            
-				        case eStopReasonPlanComplete:
-                            select_thread = true;
-                            if (m_verbose) printf("plan complete\n");
-                            break;
-				        case eStopReasonThreadExiting:
-                            if (m_verbose) printf("thread exiting\n");
-                            break;
-				        case eStopReasonExec:
-                            if (m_verbose) printf("exec\n");
-                            break;
-						case eStopReasonInvalid:
-                            if (m_verbose) printf("invalid\n");
-                            break;
-			        	case eStopReasonException:
-                            select_thread = true;
-                            if (m_verbose) printf("exception\n");
-                            fatal = true;
-                            break;
-				        case eStopReasonBreakpoint:
-                            select_thread = true;
-                            if (m_verbose) printf("breakpoint id = %lld.%lld\n",thread.GetStopReasonDataAtIndex(0),thread.GetStopReasonDataAtIndex(1));
-                            break;
-				        case eStopReasonWatchpoint:
-                            select_thread = true;
-                            if (m_verbose) printf("watchpoint id = %lld\n",thread.GetStopReasonDataAtIndex(0));
-                            break;
-				        case eStopReasonSignal:
-                            select_thread = true;
-                            if (m_verbose) printf("signal %d\n",(int)thread.GetStopReasonDataAtIndex(0));
-                            break;
-					}
-                    if (select_thread && !selected_thread)
+        bool call_test_step = false;
+        if (m_process.IsValid())
+        {
+            SBEvent evt;
+            m_listener.WaitForEvent (UINT32_MAX, evt);
+            StateType state = SBProcess::GetStateFromEvent (evt);
+            if (m_verbose)
+                printf("event = %s\n",SBDebugger::StateAsCString(state));
+            if (SBProcess::GetRestartedFromEvent(evt))
+                continue;
+            switch (state)
+            {
+            case eStateInvalid:
+            case eStateDetached:
+            case eStateCrashed:
+            case eStateUnloaded:
+                break;
+            case eStateExited:
+                return;
+            case eStateConnected:
+            case eStateAttaching:
+            case eStateLaunching:
+            case eStateRunning:
+            case eStateStepping:
+                continue;
+            case eStateStopped:
+            case eStateSuspended:
+                {
+                    call_test_step = true;
+                    bool fatal = false;
+                    bool selected_thread = false;
+                    for (auto thread_index = 0; thread_index < m_process.GetNumThreads(); thread_index++)
                     {
-                        m_thread = thread;
-                        selected_thread = m_process.SetSelectedThread(thread);
+                        SBThread thread(m_process.GetThreadAtIndex(thread_index));
+                        SBFrame frame(thread.GetFrameAtIndex(0));
+                        bool select_thread = false;
+                        StopReason stop_reason = thread.GetStopReason();
+                        if (m_verbose) printf("tid = 0x%llx pc = 0x%llx ",thread.GetThreadID(),frame.GetPC());
+                        switch (stop_reason)
+                        {
+                            case eStopReasonNone:
+                                if (m_verbose)
+                                    printf("none\n");
+                                break;
+                                
+                            case eStopReasonTrace:
+                                select_thread = true;
+                                if (m_verbose)
+                                    printf("trace\n");
+                                break;
+                                
+                            case eStopReasonPlanComplete:
+                                select_thread = true;
+                                if (m_verbose)
+                                    printf("plan complete\n");
+                                break;
+                            case eStopReasonThreadExiting:
+                                if (m_verbose)
+                                    printf("thread exiting\n");
+                                break;
+                            case eStopReasonExec:
+                                if (m_verbose)
+                                    printf("exec\n");
+                                break;
+                            case eStopReasonInvalid:
+                                if (m_verbose)
+                                    printf("invalid\n");
+                                break;
+                            case eStopReasonException:
+                                select_thread = true;
+                                if (m_verbose)
+                                    printf("exception\n");
+                                fatal = true;
+                                break;
+                            case eStopReasonBreakpoint:
+                                select_thread = true;
+                                if (m_verbose)
+                                    printf("breakpoint id = %lld.%lld\n",thread.GetStopReasonDataAtIndex(0),thread.GetStopReasonDataAtIndex(1));
+                                break;
+                            case eStopReasonWatchpoint:
+                                select_thread = true;
+                                if (m_verbose)
+                                    printf("watchpoint id = %lld\n",thread.GetStopReasonDataAtIndex(0));
+                                break;
+                            case eStopReasonSignal:
+                                select_thread = true;
+                                if (m_verbose)
+                                    printf("signal %d\n",(int)thread.GetStopReasonDataAtIndex(0));
+                                break;
+                        }
+                        if (select_thread && !selected_thread)
+                        {
+                            m_thread = thread;
+                            selected_thread = m_process.SetSelectedThread(thread);
+                        }
                     }
-				}
-				if (fatal)
-				{
-					if (m_verbose) Xcode::RunCommand(m_debugger,"bt all",true);
-					exit(1);
-				}
-				if (m_verbose)
-					printf("RUNNING STEP %d\n",m_step);
-                ActionWanted action;
-				TestStep(m_step, action);
-				m_step++;
-                SBError err;
-				switch (action.type)
-				{
-					case ActionWanted::Type::eContinue:
-                        err = m_process.Continue();
-						break;
-                    case ActionWanted::Type::eStepOut:
-                        if (action.thread.IsValid() == false)
-                        {
-                            if (m_verbose) Xcode::RunCommand(m_debugger,"bt all",true);
-                            if (m_verbose) printf("[finish invalid] I am gonna die at step %d\n",m_step);
-                            exit(501);
-                        }
-                        m_process.SetSelectedThread(action.thread);
-                        action.thread.StepOut();
-						break;
-					case ActionWanted::Type::eNext:
-                        if (action.thread.IsValid() == false)
-                        {
-                            if (m_verbose) Xcode::RunCommand(m_debugger,"bt all",true);
-                            if (m_verbose) printf("[next invalid] I am gonna die at step %d\n",m_step);
-                            exit(500);
-                        }
-                        m_process.SetSelectedThread(action.thread);
-                        action.thread.StepOver();
-						break;
-					case ActionWanted::Type::eKill:
-						if (m_verbose) printf("I want to die\n");
-						m_process.Kill();
-						return;
-				}
+                    if (fatal)
+                    {
+                        if (m_verbose) Xcode::RunCommand(m_debugger,"bt all",true);
+                        exit(1);
+                    }
+                }
+                break;
 			}
 		}
+        else
+        {
+            call_test_step = true;
+        }
+
+        if (call_test_step)
+        {
+            if (m_verbose)
+                printf("RUNNING STEP %d\n",m_step);
+            ActionWanted action;
+            TestStep(m_step, action);
+            m_step++;
+            SBError err;
+            switch (action.type)
+            {
+            case ActionWanted::Type::eContinue:
+                err = m_process.Continue();
+                break;
+            case ActionWanted::Type::eStepOut:
+                if (action.thread.IsValid() == false)
+                {
+                    if (m_verbose)
+                    {
+                        Xcode::RunCommand(m_debugger,"bt all",true);
+                        printf("error: invalid thread for step out on step %d\n", m_step);
+                    }
+                    exit(501);
+                }
+                m_process.SetSelectedThread(action.thread);
+                action.thread.StepOut();
+                break;
+            case ActionWanted::Type::eStepOver:
+                if (action.thread.IsValid() == false)
+                {
+                    if (m_verbose)
+                    {
+                        Xcode::RunCommand(m_debugger,"bt all",true);
+                        printf("error: invalid thread for step over %d\n",m_step);
+                    }
+                    exit(500);
+                }
+                m_process.SetSelectedThread(action.thread);
+                action.thread.StepOver();
+                break;
+            case ActionWanted::Type::eKill:
+                if (m_verbose)
+                    printf("kill\n");
+                m_process.Kill();
+                return;
+            }
+        }
+
 	}
+    
 	if (GetVerbose()) printf("I am gonna die at step %d\n",m_step);
 }
 
@@ -200,6 +234,8 @@ TestCase::Run (TestCase& test, int argc, const char** argv)
     if (test.Setup(argc, argv))
     {
         test.Loop();
-        test.Results();
+        Results results;
+        test.WriteResults(results);
     }
 }
+

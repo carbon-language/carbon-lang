@@ -7,14 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <CoreFoundation/CoreFoundation.h>
-
 #include "lldb-perf/lib/Timer.h"
 #include "lldb-perf/lib/Metric.h"
 #include "lldb-perf/lib/Measurement.h"
+#include "lldb-perf/lib/Results.h"
 #include "lldb-perf/lib/TestCase.h"
 #include "lldb-perf/lib/Xcode.h"
-
 #include <iostream>
 #include <unistd.h>
 #include <fstream>
@@ -24,11 +22,15 @@ using namespace lldb_perf;
 class ClangTest : public TestCase
 {
 public:
-    ClangTest () : TestCase()
+    ClangTest () :
+        TestCase(),
+        m_set_bp_main_by_name(CreateTimeMeasurement([this] () -> void
+            {
+                m_target.BreakpointCreateByName("main");
+                m_target.BreakpointCreateByName("malloc");
+            }, "breakpoint1-relative-time", "Elapsed time to set a breakpoint at main by name, run and hit the breakpoint.")),
+        m_delta_memory("breakpoint1-memory-delta", "Memory increase that occurs due to setting a breakpoint at main by name.")
     {
-        m_set_bp_main_by_name = CreateTimeMeasurement([this] () -> void {
-            m_target.BreakpointCreateByName("main");
-        }, "break at \"main\"", "time set a breakpoint at main by name, run and hit the breakpoint");
     }
 
     virtual
@@ -39,13 +41,10 @@ public:
     virtual bool
 	Setup (int argc, const char** argv)
     {
+        SetVerbose(true);
         m_app_path.assign(argv[1]);
         m_out_path.assign(argv[2]);
-        m_target = m_debugger.CreateTarget(m_app_path.c_str());
-        m_set_bp_main_by_name();
-        const char *clang_argv[] = { "clang --version", NULL };
-        SBLaunchInfo launch_info(clang_argv);
-        return Launch (launch_info);
+        return true;
     }
     
     void
@@ -59,71 +58,53 @@ public:
         switch (counter)
         {
             case 0:
-                m_target.BreakpointCreateByLocation("fmts_tester.mm", 68);
-                next_action.Continue();
+                {
+                    m_total_memory.Start();
+                    m_target = m_debugger.CreateTarget(m_app_path.c_str());
+                    const char *clang_argv[] = { "clang --version", NULL };
+                    m_delta_memory.Start();
+                    m_set_bp_main_by_name();
+                    m_delta_memory.Stop();
+                    SBLaunchInfo launch_info(clang_argv);
+                    Launch (launch_info);
+                }
                 break;
             case 1:
-                DoTest ();
-                next_action.Continue();
+                next_action.StepOver(m_thread);
                 break;
             case 2:
-                DoTest ();
-                next_action.Continue();
+                next_action.StepOver(m_thread);
                 break;
             case 3:
-                DoTest ();
-                next_action.Continue();
-                break;
-            case 4:
-                DoTest ();
-                next_action.Continue();
-                break;
-            case 5:
-                DoTest ();
-                next_action.Continue();
-                break;
-            case 6:
-                DoTest ();
-                next_action.Continue();
-                break;
-            case 7:
-                DoTest ();
-                next_action.Continue();
-                break;
-            case 8:
-                DoTest ();
-                next_action.Continue();
-                break;
-            case 9:
-                DoTest ();
-                next_action.Continue();
-                break;
-            case 10:
-                DoTest ();
-                next_action.Continue();
+                next_action.StepOver(m_thread);
                 break;
             default:
+                m_total_memory.Stop();
                 next_action.Kill();
                 break;
         }
     }
     
     void
-    Results ()
+    WriteResults (Results &results)
     {
-        CFCMutableArray array;
-        m_set_bp_main_by_name.Write(array);
+        Results::Dictionary& results_dict = results.GetDictionary();
+        
+        m_set_bp_main_by_name.WriteAverageValue(results);
+        m_delta_memory.WriteAverageValue(results);
 
-        CFDataRef xmlData = CFPropertyListCreateData(kCFAllocatorDefault, array.get(), kCFPropertyListXMLFormat_v1_0, 0, NULL);
+        results_dict.Add ("breakpoint1-memory-total",
+                          "The total memory that the current process is using after setting the first breakpoint.",
+                          m_total_memory.GetStopValue().GetResult(NULL, NULL));
         
-        CFURLRef file = CFURLCreateFromFileSystemRepresentation(NULL, (const UInt8*)m_out_path.c_str(), m_out_path.size(), FALSE);
-        
-        CFURLWriteDataAndPropertiesToResource(file,xmlData,NULL,NULL);
+        results.Write(m_out_path.c_str());
     }
     
 private:
     // C++ formatters
     TimeMeasurement<std::function<void()>> m_set_bp_main_by_name;
+    MemoryMeasurement<std::function<void()>> m_delta_memory;
+    MemoryGauge m_total_memory;
     std::string m_app_path;
     std::string m_out_path;
 

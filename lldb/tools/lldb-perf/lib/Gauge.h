@@ -11,15 +11,20 @@
 #define PerfTestDriver_Gauge_h
 
 #include <functional>
+#include <string>
+
+#include "Results.h"
+
+class CFCMutableDictionary;
 
 namespace lldb_perf {
 
-template <class TASizeType>
+template <class T>
 class Gauge
 {
 public:
-    typedef TASizeType SizeType;
-public:
+    typedef T ValueType;
+
     Gauge ()
     {}
     
@@ -30,22 +35,32 @@ public:
     virtual void
     Start () = 0;
     
-    virtual SizeType
+    virtual ValueType
     Stop () = 0;
-    
-    virtual  SizeType
-    GetValue () = 0;
-    
-    template <typename F, typename... Args>
-    SizeType
-    Measure (F f,Args... args)
-    {
-        Start();
-        f(args...);
-        return Stop();
-    }
+
+    virtual ValueType
+    GetStartValue () const = 0;
+
+    virtual ValueType
+    GetStopValue () const = 0;
+
+    virtual ValueType
+    GetDeltaValue () const = 0;
 
 };
+
+template <class T>
+Results::ResultSP GetResult (const char *description, T value);
+
+template <>
+Results::ResultSP GetResult (const char *description, double value);
+
+template <>
+Results::ResultSP GetResult (const char *description, uint64_t value);
+
+template <>
+Results::ResultSP GetResult (const char *description, std::string value);
+
 }
 
 #endif

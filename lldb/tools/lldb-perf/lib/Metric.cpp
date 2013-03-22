@@ -18,14 +18,16 @@ using namespace lldb_perf;
 
 template <class T>
 Metric<T>::Metric () : Metric ("")
-{}
+{
+}
 
 template <class T>
 Metric<T>::Metric (const char* n, const char* d) :
-m_name(n ? n : ""),
-m_description(d ? d : ""),
-m_dataset ()
-{}
+    m_name(n ? n : ""),
+    m_description(d ? d : ""),
+    m_dataset ()
+{
+}
 
 template <class T>
 void
@@ -59,32 +61,32 @@ Metric<T>::GetAverage () const
 }
 
 template <>
-void Metric<double>::WriteImpl (CFCMutableArray& parent, identity<double>)
+void Metric<double>::WriteImpl (CFCMutableDictionary& parent_dict, const char *name, const char *description, double value)
 {
+    assert(name && name[0]);
     CFCMutableDictionary dict;
-    dict.AddValueCString(CFCString("name").get(), GetName(), true);
-    dict.AddValueCString(CFCString("description").get(),GetDescription(), true);
-    dict.AddValueDouble(CFCString("value").get(),this->GetAverage(), true);
-    parent.AppendValue(dict.get(), true);
+    if (description && description[0])
+        dict.AddValueCString(CFCString("description").get(),description, true);
+    dict.AddValueDouble(CFCString("value").get(),value, true);
+    parent_dict.AddValue(CFCString(name).get(), dict.get(), true);
 }
 
 template <>
-void Metric<MemoryStats>::WriteImpl (CFCMutableArray& parent, identity<MemoryStats>)
+void Metric<MemoryStats>::WriteImpl (CFCMutableDictionary& parent_dict, const char *name, const char *description, MemoryStats value)
 {
     CFCMutableDictionary dict;
-    dict.AddValueCString(CFCString("name").get(), GetName(), true);
-    dict.AddValueCString(CFCString("description").get(), GetDescription(), true);
-    CFCMutableDictionary value;
+    if (description && description[0])
+        dict.AddValueCString(CFCString("description").get(),description, true);
+    CFCMutableDictionary value_dict;
+    // don't write out the "virtual size", it doesn't mean anything useful as it includes
+    // all of the shared cache and many other things that make it way too big to be useful
+    //value_dict.AddValueUInt64(CFCString("virtual").get(), value.GetVirtualSize(), true);
+    value_dict.AddValueUInt64(CFCString("resident").get(), value.GetResidentSize(), true);
+    value_dict.AddValueUInt64(CFCString("max_resident").get(), value.GetMaxResidentSize(), true);
+    
+    dict.AddValue(CFCString("value").get(),value_dict.get(), true);
 
-    auto avg = this->GetAverage();
-    
-    value.AddValueUInt64(CFCString("virtual").get(), avg.GetVirtualSize(), true);
-    value.AddValueUInt64(CFCString("resident").get(), avg.GetResidentSize(), true);
-    value.AddValueUInt64(CFCString("max_resident").get(), avg.GetMaxResidentSize(), true);
-    
-    dict.AddValue(CFCString("value").get(), value.get(), true);
-    
-    parent.AppendValue(dict.get(), true);
+    parent_dict.AddValue(CFCString(name).get(), dict.get(), true);
 }
 
 template class lldb_perf::Metric<double>;

@@ -70,7 +70,16 @@ MemoryStats::operator / (size_t n)
     return *this;
 }
 
-MemoryGauge::SizeType
+Results::ResultSP
+MemoryStats::GetResult (const char *name, const char *description) const
+{
+    std::unique_ptr<Results::Dictionary> dict_ap (new Results::Dictionary (name, NULL));
+    dict_ap->AddUnsigned("resident", NULL, GetResidentSize());
+    dict_ap->AddUnsigned("max_resident", NULL, GetMaxResidentSize());
+    return Results::ResultSP(dict_ap.release());
+}
+
+MemoryGauge::ValueType
 MemoryGauge::Now ()
 {
     task_t task = mach_task_self();
@@ -84,8 +93,9 @@ MemoryGauge::Now ()
 }
 
 MemoryGauge::MemoryGauge () :
+    m_state(MemoryGauge::State::eNeverUsed),
     m_start(),
-    m_state(MemoryGauge::State::eNeverUsed)
+    m_delta()
 {
 }
 
@@ -96,18 +106,27 @@ MemoryGauge::Start ()
 	m_start = Now();
 }
 
-MemoryGauge::SizeType
+MemoryGauge::ValueType
 MemoryGauge::Stop ()
 {
-	auto stop = Now();
+	m_stop = Now();
 	assert(m_state == MemoryGauge::State::eCounting && "cannot stop a non-started gauge");
 	m_state = MemoryGauge::State::eStopped;
-	return (m_value = stop-m_start);
+    m_delta = m_stop - m_start;
+	return m_delta;
 }
 
-MemoryGauge::SizeType
-MemoryGauge::GetValue ()
+
+MemoryGauge::ValueType
+MemoryGauge::GetDeltaValue () const
 {
 	assert(m_state == MemoryGauge::State::eStopped && "gauge must be used before you can evaluate it");
-	return m_value;
+	return m_delta;
+}
+
+template <>
+Results::ResultSP
+lldb_perf::GetResult (const char *description, MemoryStats value)
+{
+    return value.GetResult (NULL, description);
 }

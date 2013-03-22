@@ -13,8 +13,10 @@
 #include "lldb/API/LLDB.h"
 #include "Measurement.h"
 
-namespace lldb_perf
-{
+namespace lldb_perf {
+
+class Results;
+    
 class TestCase
 {
 public:
@@ -24,7 +26,7 @@ public:
 	{
 		enum class Type
 		{
-			eNext,
+			eStepOver,
 			eContinue,
             eStepOut,
 			eKill
@@ -47,7 +49,7 @@ public:
         void
         StepOver (lldb::SBThread t)
         {
-            type = Type::eNext;
+            type = Type::eStepOver;
             thread = t;
         }
 
@@ -90,7 +92,7 @@ public:
     GetVerbose ();
     
     virtual void
-    Results () = 0;
+    WriteResults (Results &results) = 0;
     
     template <typename G,typename A>
     Measurement<G,A> CreateMeasurement (A a, const char* name = NULL, const char* description = NULL)

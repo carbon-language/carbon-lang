@@ -10,6 +10,9 @@
 #include "Timer.h"
 #include <assert.h>
 
+#include "CFCMutableDictionary.h"
+#include "CFCString.h"
+
 using namespace lldb_perf;
 
 TimeGauge::TimeType
@@ -19,7 +22,7 @@ TimeGauge::Now ()
 }
 
 TimeGauge::TimeGauge () :
-m_start(),
+    m_start(),
     m_state(TimeGauge::State::eNeverUsed)
 {
 }
@@ -34,15 +37,28 @@ TimeGauge::Start ()
 double
 TimeGauge::Stop ()
 {
-	auto stop = Now();
+	m_stop = Now();
 	assert(m_state == TimeGauge::State::eCounting && "cannot stop a non-started clock");
 	m_state = TimeGauge::State::eStopped;
-	return (m_value = duration_cast<duration<double>>(stop-m_start).count());
+    m_delta = duration_cast<duration<double>>(m_stop-m_start).count();
+	return m_delta;
 }
 
 double
-TimeGauge::GetValue ()
+TimeGauge::GetStartValue () const
+{
+    return (double)m_start.time_since_epoch().count() * (double)system_clock::period::num / (double)system_clock::period::den;
+}
+
+double
+TimeGauge::GetStopValue () const
+{
+    return (double)m_stop.time_since_epoch().count() * (double)system_clock::period::num / (double)system_clock::period::den;
+}
+
+double
+TimeGauge::GetDeltaValue () const
 {
 	assert(m_state == TimeGauge::State::eStopped && "clock must be used before you can evaluate it");
-	return m_value;
+	return m_delta;
 }

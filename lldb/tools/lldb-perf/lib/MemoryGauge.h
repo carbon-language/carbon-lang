@@ -11,11 +11,12 @@
 #define __PerfTestDriver__MemoryGauge__
 
 #include "Gauge.h"
+#include "Results.h"
 
 #include <mach/task_info.h>
 
-namespace lldb_perf
-{
+namespace lldb_perf {
+
 class MemoryStats
 {
 public:
@@ -37,19 +38,19 @@ public:
     operator / (size_t rhs);
     
     mach_vm_size_t
-    GetVirtualSize ()
+    GetVirtualSize () const
     {
         return m_virtual_size;
     }
     
     mach_vm_size_t
-    GetResidentSize ()
+    GetResidentSize () const
     {
         return m_resident_size;
     }
     
     mach_vm_size_t
-    GetMaxResidentSize ()
+    GetMaxResidentSize () const
     {
         return m_max_resident_size;
     }
@@ -72,6 +73,8 @@ public:
         m_max_resident_size = mrs;
     }
     
+    Results::ResultSP
+    GetResult (const char *name, const char *description) const;
 private:
     mach_vm_size_t m_virtual_size;
     mach_vm_size_t m_resident_size;
@@ -91,11 +94,23 @@ public:
     void
     Start ();
     
-    SizeType
+    ValueType
     Stop ();
     
-    SizeType
-    GetValue ();
+    virtual ValueType
+    GetStartValue() const
+    {
+        return m_start;
+    }
+
+    virtual ValueType
+    GetStopValue() const
+    {
+        return m_stop;
+    }
+
+    virtual ValueType
+    GetDeltaValue() const;
 
 private:
     enum class State
@@ -105,14 +120,19 @@ private:
         eStopped
     };
     
-    SizeType
+    ValueType
     Now ();
     
-    SizeType m_start;
     State m_state;
-    SizeType m_value;
-    
+    ValueType m_start;
+    ValueType m_stop;
+    ValueType m_delta;
 };
-}
 
-#endif /* defined(__PerfTestDriver__MemoryGauge__) */
+template <>
+Results::ResultSP
+GetResult (const char *description, MemoryStats value);
+    
+} // namespace lldb_perf
+
+#endif // #ifndef __PerfTestDriver__MemoryGauge__

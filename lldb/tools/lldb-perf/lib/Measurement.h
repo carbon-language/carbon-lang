@@ -17,28 +17,35 @@
 
 namespace lldb_perf
 {
-template <typename GaugeType, typename Action>
-class Measurement : public WriteToPList
+template <typename GaugeType, typename Callable>
+class Measurement : public WriteResults
 {
 public:
     Measurement () :
         m_gauge (),
-        m_action (),
+        m_callable (),
         m_metric ()
     {
     }
     
-    Measurement (Action act, const char* name = NULL, const char* desc = NULL)  :
+    Measurement (Callable callable, const char* name, const char* desc)  :
         m_gauge (),
-        m_action (act),
-        m_metric (Metric<typename GaugeType::SizeType>(name, desc))
+        m_callable (callable),
+        m_metric (Metric<typename GaugeType::ValueType>(name, desc))
     {
     }
-    
-    template <typename GaugeType_Rhs, typename Action_Rhs>
-    Measurement (const Measurement<GaugeType_Rhs, Action_Rhs>& rhs) :
+
+    Measurement (const char* name, const char* desc)  :
+        m_gauge (),
+        m_callable (),
+        m_metric (Metric<typename GaugeType::ValueType>(name, desc))
+    {
+    }
+
+    template <typename GaugeType_Rhs, typename Callable_Rhs>
+    Measurement (const Measurement<GaugeType_Rhs, Callable_Rhs>& rhs) :
         m_gauge(rhs.GetGauge()),
-        m_action(rhs.GetAction()),
+        m_callable(rhs.GetCallable()),
         m_metric(rhs.GetMetric())
     {
     }
@@ -47,13 +54,15 @@ public:
     void
     operator () (Args... args)
     {
-        m_metric.Append (m_gauge.Measure(m_action, args...));
+        m_gauge.Start();
+        m_callable(args...);
+        m_metric.Append (m_gauge.Stop());
     }
     
-    virtual const Action&
-    GetAction () const
+    virtual const Callable&
+    GetCallable () const
     {
-        return m_action;
+        return m_callable;
     }
     
     virtual const GaugeType&
@@ -62,7 +71,7 @@ public:
         return m_gauge;
     }
     
-    virtual const Metric<typename GaugeType::SizeType>&
+    virtual const Metric<typename GaugeType::ValueType>&
     GetMetric () const
     {
         return m_metric;
@@ -74,7 +83,7 @@ public:
         m_gauge.Start();
     }
     
-    typename GaugeType::SizeType
+    typename GaugeType::ValueType
     Stop ()
     {
         auto value = m_gauge.Stop();
@@ -83,42 +92,63 @@ public:
     }
         
     virtual void
-    Write (CFCMutableArray& parent)
+    Write (CFCMutableDictionary& parent)
     {
         m_metric.Write(parent);
     }
 
+    void
+    WriteStartValue (Results &results)
+    {
+        auto metric = GetMetric ();
+        results.GetDictionary().Add(metric.GetName(), metric.GetDescription(), lldb_perf::GetResult<typename GaugeType::ValueType> (NULL, metric.GetStartValue()));
+    }
+    
+    void
+    WriteStopValue (Results &results)
+    {
+        auto metric = GetMetric ();
+        results.GetDictionary().Add(metric.GetName(), metric.GetDescription(), lldb_perf::GetResult<typename GaugeType::ValueType> (NULL, metric.GetStopValue()));
+    }
+
+    void
+    WriteAverageValue (Results &results)
+    {
+        auto metric = GetMetric ();
+        results.GetDictionary().Add(metric.GetName(), metric.GetDescription(), lldb_perf::GetResult<typename GaugeType::ValueType> (NULL, metric.GetAverage()));
+    }
+
 protected:
     GaugeType m_gauge;
-    Action m_action;
-    Metric<typename GaugeType::SizeType> m_metric;
+    Callable m_callable;
+    Metric<typename GaugeType::ValueType> m_metric;
 };
     
-template <typename Action>
-class TimeMeasurement : public Measurement<TimeGauge,Action>
+template <typename Callable>
+class TimeMeasurement : public Measurement<TimeGauge,Callable>
 {
 public:
     TimeMeasurement () :
-        Measurement<TimeGauge,Action> ()
+        Measurement<TimeGauge,Callable> ()
     {
     }
     
-    TimeMeasurement (Action act,
+    TimeMeasurement (Callable callable,
                      const char* name = NULL,
                      const char* descr = NULL) :
-        Measurement<TimeGauge,Action> (act, name, descr)
+        Measurement<TimeGauge,Callable> (callable, name, descr)
     {
     }
     
-    template <typename Action_Rhs>
-    TimeMeasurement (const TimeMeasurement<Action_Rhs>& rhs) :
-        Measurement<TimeGauge,Action>(rhs)
+    template <typename Callable_Rhs>
+    TimeMeasurement (const TimeMeasurement<Callable_Rhs>& rhs) :
+        Measurement<TimeGauge,Callable>(rhs)
     {
     }
     
-    template <typename GaugeType_Rhs, typename Action_Rhs>
-    TimeMeasurement (const Measurement<GaugeType_Rhs, Action_Rhs>& rhs) :
-        Measurement<GaugeType_Rhs,Action_Rhs>(rhs)
+    template <typename GaugeType_Rhs, typename Callable_Rhs>
+    TimeMeasurement (const Measurement<GaugeType_Rhs, Callable_Rhs>& rhs) :
+        Measurement<GaugeType_Rhs,Callable_Rhs>(rhs)
     {
     }
     
@@ -126,29 +156,39 @@ public:
     void
     operator () (Args... args)
     {
-        Measurement<TimeGauge,Action>::operator()(args...);
+        Measurement<TimeGauge,Callable>::operator()(args...);
     }
 };
 
-template <typename Action>
-class MemoryMeasurement : public Measurement<MemoryGauge,Action>
+template <typename Callable>
+class MemoryMeasurement : public Measurement<MemoryGauge,Callable>
 {
 public:
-    MemoryMeasurement () : Measurement<MemoryGauge,Action> ()
+    MemoryMeasurement () : Measurement<MemoryGauge,Callable> ()
     {
     }
     
-    MemoryMeasurement (Action act, const char* name = NULL, const char* descr = NULL) : Measurement<MemoryGauge,Action> (act, name, descr)
+    MemoryMeasurement (Callable callable,
+                       const char* name,
+                       const char* descr) :
+        Measurement<MemoryGauge,Callable> (callable, name, descr)
+    {
+    }
+
+    MemoryMeasurement (const char* name, const char* descr) :
+        Measurement<MemoryGauge,Callable> (name, descr)
+    {
+    }
+
+    template <typename Callable_Rhs>
+    MemoryMeasurement (const MemoryMeasurement<Callable_Rhs>& rhs) :
+        Measurement<MemoryGauge,Callable>(rhs)
     {
     }
     
-    template <typename Action_Rhs>
-    MemoryMeasurement (const MemoryMeasurement<Action_Rhs>& rhs) : Measurement<MemoryGauge,Action>(rhs)
-    {
-    }
-    
-    template <typename GaugeType_Rhs, typename Action_Rhs>
-    MemoryMeasurement (const Measurement<GaugeType_Rhs, Action_Rhs>& rhs) : Measurement<GaugeType_Rhs,Action_Rhs>(rhs)
+    template <typename GaugeType_Rhs, typename Callable_Rhs>
+    MemoryMeasurement (const Measurement<GaugeType_Rhs, Callable_Rhs>& rhs) :
+        Measurement<GaugeType_Rhs,Callable_Rhs>(rhs)
     {
     }
     
@@ -156,7 +196,7 @@ public:
     void
     operator () (Args... args)
     {
-        Measurement<MemoryGauge,Action>::operator()(args...);
+        Measurement<MemoryGauge,Callable>::operator()(args...);
     }
 };
     

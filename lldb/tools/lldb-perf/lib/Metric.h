@@ -14,24 +14,24 @@
 #include <string>
 #include <mach/task_info.h>
 
-#include "CFCMutableArray.h"
+#include "CFCMutableDictionary.h"
 
 namespace lldb_perf {
 
 class MemoryStats;
 
-class WriteToPList
+class WriteResults
 {
 public:
     virtual void
-    Write (CFCMutableArray& parent) = 0;
+    Write (CFCMutableDictionary& parent) = 0;
     
     virtual
-    ~WriteToPList () {}
+    ~WriteResults () {}
 };
 
 template <class ValueType>
-class Metric : public WriteToPList
+class Metric : public WriteResults
 {
 public:
     Metric ();
@@ -50,32 +50,31 @@ public:
     GetSum () const;
     
     const char*
-    GetName ()
+    GetName () const
     {
+        if (m_name.empty())
+            return NULL;
         return m_name.c_str();
     }
 
     const char*
-    GetDescription ()
+    GetDescription () const
     {
+        if (m_description.empty())
+            return NULL;
         return m_description.c_str();
     }
     
     virtual void
-    Write (CFCMutableArray& parent)
+    Write (CFCMutableDictionary& parent)
     {
-        WriteImpl(parent, identity<ValueType>());
+        WriteImpl(parent, GetName(), GetDescription(), GetAverage());
     }
-    
+
+    static void WriteImpl (CFCMutableDictionary& parent, const char *name, const char *description, double);
+    static void WriteImpl (CFCMutableDictionary& parent, const char *name, const char *description, MemoryStats);
+
 private:
-
-    template<typename T>
-    struct identity { typedef T type; };
-    
-    void WriteImpl (CFCMutableArray& parent, identity<double>);
-
-    void WriteImpl (CFCMutableArray& parent, identity<MemoryStats>);
-    
     std::string m_name;
     std::string m_description;
     std::vector<ValueType> m_dataset;

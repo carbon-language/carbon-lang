@@ -20,22 +20,6 @@ namespace lldb_perf
 {
 class TimeGauge : public Gauge<double>
 {
-private:
-    enum class State
-    {
-        eNeverUsed,
-        eCounting,
-        eStopped
-    };
-    
-    typedef high_resolution_clock::time_point TimeType;
-    TimeType m_start;
-    double m_value;
-    State m_state;
-    
-    TimeType
-    Now ();
-    
 public:
     TimeGauge ();
     
@@ -50,8 +34,32 @@ public:
     double
     Stop ();
     
-    double
-    GetValue ();
+    virtual double
+    GetStartValue () const;
+    
+    virtual double
+    GetStopValue () const;
+
+    virtual double
+    GetDeltaValue () const;
+
+private:
+    enum class State
+    {
+        eNeverUsed,
+        eCounting,
+        eStopped
+    };
+    
+    typedef high_resolution_clock::time_point TimeType;
+    TimeType m_start;
+    TimeType m_stop;
+    double m_delta;
+    State m_state;
+    
+    TimeType
+    Now ();
+    
 };
 }
 

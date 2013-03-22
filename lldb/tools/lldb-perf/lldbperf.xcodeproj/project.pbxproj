@@ -28,6 +28,9 @@
 		26DBAD6316FA66DC008243D2 /* liblldbperf.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1E373916F4035D00FF10BB /* liblldbperf.a */; };
 		26DBAD6416FA66E0008243D2 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 264B3DE816F7E47600D1E7AB /* LLDB.framework */; };
 		26DBAD6516FA66EA008243D2 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1E37DB16F7A03900FF10BB /* CoreFoundation.framework */; };
+		26DF762916FBCE7100B4CC2E /* Results.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DF762716FBCE7100B4CC2E /* Results.cpp */; };
+		26DF762A16FBCE7100B4CC2E /* Results.h in Headers */ = {isa = PBXBuildFile; fileRef = 26DF762816FBCE7100B4CC2E /* Results.h */; };
+		26DF764316FBF30E00B4CC2E /* Gauge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DF764216FBF30E00B4CC2E /* Gauge.cpp */; };
 		4C1E374E16F407C800FF10BB /* Gauge.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C1E374216F407C800FF10BB /* Gauge.h */; };
 		4C1E374F16F407C800FF10BB /* Measurement.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C1E374316F407C800FF10BB /* Measurement.h */; };
 		4C1E375016F407C800FF10BB /* MemoryGauge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1E374416F407C800FF10BB /* MemoryGauge.cpp */; };
@@ -67,7 +70,6 @@
 		4CE3707516FB703B00BFD501 /* liblldbperf.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1E373916F4035D00FF10BB /* liblldbperf.a */; };
 		4CE3707616FB704300BFD501 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 264B3DE816F7E47600D1E7AB /* LLDB.framework */; };
 		4CE3707716FB704B00BFD501 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1E37DB16F7A03900FF10BB /* CoreFoundation.framework */; };
-		4CE3708816FB70EB00BFD501 /* stepping-testcase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CE3708716FB70E100BFD501 /* stepping-testcase.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -201,6 +203,9 @@
 		26DBAD4816FA637D008243D2 /* build-clang.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-clang.sh"; sourceTree = "<group>"; };
 		26DBAD4916FA637D008243D2 /* lldb_perf_clang.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = lldb_perf_clang.cpp; sourceTree = "<group>"; };
 		26DBAD5916FA63B1008243D2 /* lldb-perf-clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-perf-clang"; sourceTree = BUILT_PRODUCTS_DIR; };
+		26DF762716FBCE7100B4CC2E /* Results.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Results.cpp; sourceTree = "<group>"; };
+		26DF762816FBCE7100B4CC2E /* Results.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Results.h; sourceTree = "<group>"; };
+		26DF764216FBF30E00B4CC2E /* Gauge.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Gauge.cpp; sourceTree = "<group>"; };
 		4C1E373916F4035D00FF10BB /* liblldbperf.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = liblldbperf.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C1E374216F407C800FF10BB /* Gauge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Gauge.h; sourceTree = "<group>"; };
 		4C1E374316F407C800FF10BB /* Measurement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Measurement.h; sourceTree = "<group>"; };
@@ -240,7 +245,7 @@
 		4C86C5C416F7A36A00844407 /* LLDB.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LLDB.framework; path = build/Debug/LLDB.framework; sourceTree = "<group>"; };
 		4C86C5C616F7A37800844407 /* LLDB.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LLDB.framework; path = build/Debug/LLDB.framework; sourceTree = "<group>"; };
 		4C86C5D116F7CC8900844407 /* format-tester */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "format-tester"; sourceTree = BUILT_PRODUCTS_DIR; };
-		4CE3705416FB6FA100BFD501 /* lldb-step-test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-step-test"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4CE3705416FB6FA100BFD501 /* lldb-perf-step */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-perf-step"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4CE3705616FB6FA100BFD501 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		4CE3705816FB6FA100BFD501 /* lldb_step_test.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = lldb_step_test.1; sourceTree = "<group>"; };
 		4CE3707216FB701000BFD501 /* lldb-perf-stepping.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "lldb-perf-stepping.cpp"; path = "stepping/lldb-perf-stepping.cpp"; sourceTree = "<group>"; };
@@ -356,7 +361,7 @@
 				4C1E37BA16F79E9D00FF10BB /* lldb-perf-formatters */,
 				4C86C5D116F7CC8900844407 /* format-tester */,
 				26DBAD5916FA63B1008243D2 /* lldb-perf-clang */,
-				4CE3705416FB6FA100BFD501 /* lldb-step-test */,
+				4CE3705416FB6FA100BFD501 /* lldb-perf-step */,
 				4CE3707C16FB70AD00BFD501 /* stepping-testcase */,
 			);
 			name = Products;
@@ -366,11 +371,14 @@
 			isa = PBXGroup;
 			children = (
 				4C1E374216F407C800FF10BB /* Gauge.h */,
+				26DF764216FBF30E00B4CC2E /* Gauge.cpp */,
 				4C1E374316F407C800FF10BB /* Measurement.h */,
 				4C1E374416F407C800FF10BB /* MemoryGauge.cpp */,
 				4C1E374516F407C800FF10BB /* MemoryGauge.h */,
 				4C1E374616F407C800FF10BB /* Metric.cpp */,
 				4C1E374716F407C800FF10BB /* Metric.h */,
+				26DF762716FBCE7100B4CC2E /* Results.cpp */,
+				26DF762816FBCE7100B4CC2E /* Results.h */,
 				4C1E374816F407C800FF10BB /* TestCase.cpp */,
 				4C1E374916F407C800FF10BB /* TestCase.h */,
 				4C1E374A16F407C800FF10BB /* Timer.cpp */,
@@ -493,6 +501,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4C1E375716F407C800FF10BB /* Timer.h in Headers */,
+				26DF762A16FBCE7100B4CC2E /* Results.h in Headers */,
 				4C1E378D16F40BB300FF10BB /* CFCMutableArray.h in Headers */,
 				4C1E374E16F407C800FF10BB /* Gauge.h in Headers */,
 				4C1E378716F40B9C00FF10BB /* CFCReleaser.h in Headers */,
@@ -613,7 +622,7 @@
 			);
 			name = "lldb-perf-step";
 			productName = "lldb-step-test";
-			productReference = 4CE3705416FB6FA100BFD501 /* lldb-step-test */;
+			productReference = 4CE3705416FB6FA100BFD501 /* lldb-perf-step */;
 			productType = "com.apple.product-type.tool";
 		};
 		4CE3707B16FB70AD00BFD501 /* stepping-testcase */ = {
@@ -742,11 +751,13 @@
 				4C1E375016F407C800FF10BB /* MemoryGauge.cpp in Sources */,
 				4C1E375416F407C800FF10BB /* TestCase.cpp in Sources */,
 				4C1E375816F407C800FF10BB /* Xcode.cpp in Sources */,
+				26DF762916FBCE7100B4CC2E /* Results.cpp in Sources */,
 				4C1E375216F407C800FF10BB /* Metric.cpp in Sources */,
 				4C1E375616F407C800FF10BB /* Timer.cpp in Sources */,
 				4C1E378616F40B9600FF10BB /* CFCMutableSet.cpp in Sources */,
 				4C1E378516F40B9200FF10BB /* CFCMutableDictionary.cpp in Sources */,
 				4C1E378816F40B9F00FF10BB /* CFCString.cpp in Sources */,
+				26DF764316FBF30E00B4CC2E /* Gauge.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -786,7 +797,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4CE3708816FB70EB00BFD501 /* stepping-testcase.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -850,6 +860,7 @@
 					"$(inherited)",
 					"$(SRCROOT)/../../build/Debug",
 				);
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -870,6 +881,7 @@
 					"$(inherited)",
 					"$(SRCROOT)/../../build/Debug",
 				);
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				OTHER_LDFLAGS = "-Wl,-rpath,@loader_path/../../../../build/Debug";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -962,6 +974,7 @@
 					"$(inherited)",
 					"$(SRCROOT)/../../build/Debug",
 				);
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -979,6 +992,7 @@
 					"$(inherited)",
 					"$(SRCROOT)/../../build/Debug",
 				);
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				OTHER_LDFLAGS = "-Wl,-rpath,@loader_path/../../../../build/Debug";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../include $(SRCROOT)/../../source/Host/macosx/cfcpp $(SRCROOT)/../";
@@ -992,6 +1006,7 @@
 					"$(inherited)",
 					"$(SRCROOT)/../../build/Debug",
 				);
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -1009,6 +1024,7 @@
 					"$(inherited)",
 					"$(SRCROOT)/../../build/Debug",
 				);
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				OTHER_LDFLAGS = "-Wl,-rpath,@loader_path/../../../../build/Debug";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/../ $(SRCROOT)/../../include/";
@@ -1032,6 +1048,7 @@
 		4C86C5D816F7CC8900844407 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -1043,6 +1060,7 @@
 		4C86C5D916F7CC8900844407 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1051,6 +1069,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -1058,6 +1077,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/../ $(SRCROOT)/../../include/";
 			};
 			name = Debug;
 		};
@@ -1065,9 +1085,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/../ $(SRCROOT)/../../include/";
 			};
 			name = Release;
 		};
@@ -1168,6 +1190,7 @@
 				4CE3705B16FB6FA100BFD501 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		4CE3708216FB70AD00BFD501 /* Build configuration list for PBXNativeTarget "stepping-testcase" */ = {
 			isa = XCConfigurationList;
@@ -1176,6 +1199,7 @@
 				4CE3708416FB70AD00BFD501 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
