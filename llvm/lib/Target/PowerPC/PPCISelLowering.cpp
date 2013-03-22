@@ -1192,6 +1192,7 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
                                                   SelectionDAG &DAG) const {
   if (DisablePPCPreinc) return false;
 
+  bool isLoad = true;
   SDValue Ptr;
   EVT VT;
   unsigned Alignment;
@@ -1203,6 +1204,7 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
     Ptr = ST->getBasePtr();
     VT  = ST->getMemoryVT();
     Alignment = ST->getAlignment();
+    isLoad = false;
   } else
     return false;
 
@@ -1210,7 +1212,25 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
   if (VT.isVector())
     return false;
 
-  if (SelectAddressRegReg(Ptr, Offset, Base, DAG)) {
+  if (SelectAddressRegReg(Ptr, Base, Offset, DAG)) {
+
+    // Common code will reject creating a pre-inc form if the base pointer
+    // is a frame index, or if N is a store and the base pointer is either
+    // the same as or a predecessor of the value being stored.  Check for
+    // those situations here, and try with swapped Base/Offset instead.
+    bool Swap = false;
+
+    if (isa<FrameIndexSDNode>(Base) || isa<RegisterSDNode>(Base))
+      Swap = true;
+    else if (!isLoad) {
+      SDValue Val = cast<StoreSDNode>(N)->getValue();
+      if (Val == Base || Base.getNode()->isPredecessorOf(Val.getNode()))
+        Swap = true;
+    }
+
+    if (Swap)
+      std::swap(Base, Offset);
+
     AM = ISD::PRE_INC;
     return true;
   }

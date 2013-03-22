@@ -1111,7 +1111,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
 
       SDValue Chain = LD->getChain();
       SDValue Base = LD->getBasePtr();
-      SDValue Ops[] = { Offset, Base, Chain };
+      SDValue Ops[] = { Base, Offset, Chain };
       return CurDAG->getMachineNode(Opcode, dl, LD->getValueType(0),
                                     PPCLowering.getPointerTy(),
                                     MVT::Other, Ops, 3);

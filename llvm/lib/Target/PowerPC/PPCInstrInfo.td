@@ -1004,16 +1004,16 @@ def STFDUX: XForm_8<31, 759, (outs ptr_rc_nor0:$ea_res), (ins F8RC:$rS, memrr:$d
 // Patterns to match the pre-inc stores.  We can't put the patterns on
 // the instruction definitions directly as ISel wants the address base
 // and offset to be separate operands, not a single complex operand.
-def : Pat<(pre_truncsti8 GPRC:$rS, ptr_rc:$ptrreg, ptr_rc_nor0:$ptroff),
-          (STBUX GPRC:$rS, ptr_rc_nor0:$ptroff, ptr_rc:$ptrreg)>;
-def : Pat<(pre_truncsti16 GPRC:$rS, ptr_rc:$ptrreg, ptr_rc_nor0:$ptroff),
-          (STHUX GPRC:$rS, ptr_rc_nor0:$ptroff, ptr_rc:$ptrreg)>;
-def : Pat<(pre_store GPRC:$rS, ptr_rc:$ptrreg, ptr_rc_nor0:$ptroff),
-          (STWUX GPRC:$rS, ptr_rc_nor0:$ptroff, ptr_rc:$ptrreg)>;
-def : Pat<(pre_store F4RC:$rS, ptr_rc:$ptrreg, ptr_rc_nor0:$ptroff),
-          (STFSUX F4RC:$rS, ptr_rc_nor0:$ptroff, ptr_rc:$ptrreg)>;
-def : Pat<(pre_store F8RC:$rS, ptr_rc:$ptrreg, ptr_rc_nor0:$ptroff),
-          (STFDUX F8RC:$rS, ptr_rc_nor0:$ptroff, ptr_rc:$ptrreg)>;
+def : Pat<(pre_truncsti8 GPRC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff),
+          (STBUX GPRC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff)>;
+def : Pat<(pre_truncsti16 GPRC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff),
+          (STHUX GPRC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff)>;
+def : Pat<(pre_store GPRC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff),
+          (STWUX GPRC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff)>;
+def : Pat<(pre_store F4RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff),
+          (STFSUX F4RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff)>;
+def : Pat<(pre_store F8RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff),
+          (STFDUX F8RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff)>;
 
 def SYNC : XForm_24_sync<31, 598, (outs), (ins),
                         "sync", LdStSync,
