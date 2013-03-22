@@ -19,6 +19,7 @@
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/RecordLayout.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Sema/Initialization.h"
 #include "llvm/ADT/SmallVector.h"
@@ -682,6 +683,88 @@ void CastOperation::CheckConstCast() {
       << SrcExpr.get()->getType() << DestType << OpRange;
 }
 
+/// Check that a reinterpret_cast\<DestType\>(SrcExpr) is not used as upcast
+/// or downcast between respective pointers or references.
+static void DiagnoseReinterpretUpDownCast(Sema &Self, const Expr *SrcExpr,
+                                          QualType DestType,
+                                          SourceRange OpRange) {
+  QualType SrcType = SrcExpr->getType();
+  // When casting from pointer or reference, get pointee type; use original
+  // type otherwise.
+  const CXXRecordDecl *SrcPointeeRD = SrcType->getPointeeCXXRecordDecl();
+  const CXXRecordDecl *SrcRD =
+    SrcPointeeRD ? SrcPointeeRD : SrcType->getAsCXXRecordDecl();
+
+  // Examining subobjects for records is only possible if the complete
+  // definition is available.  Also, template instantiation is not allowed here.
+  if(!SrcRD || !SrcRD->isCompleteDefinition())
+    return;
+
+  const CXXRecordDecl *DestRD = DestType->getPointeeCXXRecordDecl();
+
+  if(!DestRD || !DestRD->isCompleteDefinition())
+    return;
+
+  enum {
+    ReinterpretUpcast,
+    ReinterpretDowncast
+  } ReinterpretKind;
+
+  CXXBasePaths BasePaths;
+
+  if (SrcRD->isDerivedFrom(DestRD, BasePaths))
+    ReinterpretKind = ReinterpretUpcast;
+  else if (DestRD->isDerivedFrom(SrcRD, BasePaths))
+    ReinterpretKind = ReinterpretDowncast;
+  else
+    return;
+
+  bool VirtualBase = true;
+  bool NonZeroOffset = false;
+  for (CXXBasePaths::const_paths_iterator I = BasePaths.begin(), 
+                                          E = BasePaths.end();
+       I != E; ++I) {
+    const CXXBasePath &Path = *I;
+    CharUnits Offset = CharUnits::Zero();
+    bool IsVirtual = false;
+    for (CXXBasePath::const_iterator IElem = Path.begin(), EElem = Path.end();
+         IElem != EElem; ++IElem) {
+      IsVirtual = IElem->Base->isVirtual();
+      if (IsVirtual)
+        break;
+      const CXXRecordDecl *BaseRD = IElem->Base->getType()->getAsCXXRecordDecl();
+      assert(BaseRD && "Base type should be a valid unqualified class type");
+      const ASTRecordLayout &DerivedLayout =
+          Self.Context.getASTRecordLayout(IElem->Class);
+      Offset += DerivedLayout.getBaseClassOffset(BaseRD);
+    }
+    if (!IsVirtual) {
+      // Don't warn if any path is a non-virtually derived base at offset zero.
+      if (Offset.isZero())
+        return;
+      // Offset makes sense only for non-virtual bases.
+      else
+        NonZeroOffset = true;
+    }
+    VirtualBase = VirtualBase && IsVirtual;
+  }
+
+  assert((VirtualBase || NonZeroOffset) &&
+         "Should have returned if has non-virtual base with zero offset");
+
+  QualType BaseType =
+      ReinterpretKind == ReinterpretUpcast? DestType : SrcType;
+  QualType DerivedType =
+      ReinterpretKind == ReinterpretUpcast? SrcType : DestType;
+
+  Self.Diag(OpRange.getBegin(), diag::warn_reinterpret_different_from_static)
+    << DerivedType << BaseType << !VirtualBase << ReinterpretKind;
+  Self.Diag(OpRange.getBegin(), diag::note_reinterpret_updowncast_use_static)
+    << ReinterpretKind;
+
+  // TODO: emit fixits. This requires passing operator SourceRange from Parser.
+}
+
 /// CheckReinterpretCast - Check that a reinterpret_cast\<DestType\>(SrcExpr) is
 /// valid.
 /// Refer to C++ 5.2.10 for details. reinterpret_cast is typically used in code
@@ -714,8 +797,10 @@ void CastOperation::CheckReinterpretCast() {
       diagnoseBadCast(Self, msg, CT_Reinterpret, OpRange, SrcExpr.get(),
                       DestType, /*listInitialization=*/false);
     }
-  } else if (tcr == TC_Success && Self.getLangOpts().ObjCAutoRefCount) {
-    checkObjCARCConversion(Sema::CCK_OtherCast);
+  } else if (tcr == TC_Success) {
+    if (Self.getLangOpts().ObjCAutoRefCount)
+      checkObjCARCConversion(Sema::CCK_OtherCast);
+    DiagnoseReinterpretUpDownCast(Self, SrcExpr.get(), DestType, OpRange);
   }
 }
 
