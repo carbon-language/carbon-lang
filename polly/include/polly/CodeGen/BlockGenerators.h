@@ -96,27 +96,43 @@ protected:
   ///                  variable to their new values
   ///                  (for values recalculated in the new ScoP, but not
   ///                   within this basic block).
+  /// @param L         The loop that surrounded the instruction that referenced
+  ///                  this value in the original code. This loop is used to
+  ///                  evaluate the scalar evolution at the right scope.
   ///
   /// @returns  o The old value, if it is still valid.
   ///           o The new value, if available.
   ///           o NULL, if no value is found.
   Value *getNewValue(const Value *Old, ValueMapT &BBMap, ValueMapT &GlobalMap,
-                     LoopToScevMapT &LTS);
+                     LoopToScevMapT &LTS, Loop *L);
 
   void copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
                       ValueMapT &GlobalMap, LoopToScevMapT &LTS);
 
+  /// @brief Get the innermost loop that surrounds an instruction.
+  ///
+  /// @param Inst The instruction for which we get the loop.
+  /// @return The innermost loop that surrounds the instruction.
+  Loop *getLoopForInst(const Instruction *Inst);
+
   /// @brief Get the memory access offset to be added to the base address
+  ///
+  /// @param L The loop that surrounded the instruction that referenced this
+  ///          memory subscript in the original code.
   std::vector<Value*> getMemoryAccessIndex(__isl_keep isl_map *AccessRelation,
                                            Value *BaseAddress, ValueMapT &BBMap,
                                            ValueMapT &GlobalMap,
-                                           LoopToScevMapT &LTS);
+                                           LoopToScevMapT &LTS, Loop *L);
 
   /// @brief Get the new operand address according to the changed access in
   ///        JSCOP file.
+  ///
+  /// @param L The loop that surrounded the instruction that used this operand
+  ///          in the original code.
   Value *getNewAccessOperand(__isl_keep isl_map *NewAccessRelation,
                              Value *BaseAddress, ValueMapT &BBMap,
-                             ValueMapT &GlobalMap, LoopToScevMapT &LTS);
+                             ValueMapT &GlobalMap, LoopToScevMapT &LTS,
+                             Loop *L);
 
   /// @brief Generate the operand address
   Value *generateLocationAccessed(const Instruction *Inst,
@@ -225,7 +241,7 @@ private:
   int getVectorWidth();
 
   Value *getVectorValue(const Value *Old, ValueMapT &VectorMap,
-                        VectorValueMapT &ScalarMaps);
+                        VectorValueMapT &ScalarMaps, Loop *L);
 
   Type *getVectorPtrTy(const Value *V, int Width);
 
