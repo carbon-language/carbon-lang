@@ -604,12 +604,6 @@ namespace llvm {
     DIScope getContext() const { if (getScope().isSubprogram()) return getScope(); return getScope().getContext(); }
     unsigned getLineNumber() const { return getScope().getLineNumber(); }
     unsigned getColumnNumber() const { return getScope().getColumnNumber(); }
-    StringRef getDirectory() const {
-      return getFieldAs<DIFile>(1).getDirectory();
-    }
-    StringRef getFilename() const {
-      return getFieldAs<DIFile>(1).getFilename();
-    }
     DILexicalBlock getScope() const { return getFieldAs<DILexicalBlock>(2); }
     bool Verify() const;
   };

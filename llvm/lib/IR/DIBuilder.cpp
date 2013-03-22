@@ -1007,7 +1007,7 @@ DILexicalBlockFile DIBuilder::createLexicalBlockFile(DIDescriptor Scope,
                                                      DIFile File) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_lexical_block),
-    File,
+    File.getFileNode(),
     Scope
   };
   DILexicalBlockFile R(MDNode::get(VMContext, Elts));
