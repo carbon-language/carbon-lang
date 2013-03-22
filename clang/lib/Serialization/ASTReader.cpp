@@ -2872,11 +2872,16 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
     }
   }
 
-  // Setup the import locations.
+  // Setup the import locations and notify the module manager that we've
+  // committed to these module files.
   for (SmallVectorImpl<ImportedModule>::iterator M = Loaded.begin(),
                                               MEnd = Loaded.end();
        M != MEnd; ++M) {
     ModuleFile &F = *M->Mod;
+
+    ModuleMgr.moduleFileAccepted(&F);
+
+    // Set the import location.
     F.DirectImportLoc = ImportLoc;
     if (!M->ImportedBy)
       F.ImportLoc = M->ImportLoc;

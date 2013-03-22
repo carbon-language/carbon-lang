@@ -16,6 +16,7 @@
 #include "clang/Basic/OnDiskHashTable.h"
 #include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Serialization/GlobalModuleIndex.h"
+#include "clang/Serialization/Module.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallString.h"
@@ -56,8 +57,6 @@ static const char * const IndexFileName = "modules.idx";
 
 /// \brief The global index file version.
 static const unsigned CurrentVersion = 1;
-
-ModuleFileNameResolver::~ModuleFileNameResolver() { }
 
 //----------------------------------------------------------------------------//
 // Global module index reader.
@@ -121,7 +120,7 @@ typedef OnDiskChainedHashTable<IdentifierIndexReaderTrait> IdentifierIndexTable;
 
 GlobalModuleIndex::GlobalModuleIndex(llvm::MemoryBuffer *Buffer,
                                      llvm::BitstreamCursor Cursor)
-  : Buffer(Buffer), Resolver(), IdentifierIndex(),
+  : Buffer(Buffer), IdentifierIndex(),
     NumIdentifierLookups(), NumIdentifierLookupHits()
 {
   // Read the global index.
@@ -201,6 +200,9 @@ GlobalModuleIndex::GlobalModuleIndex(llvm::MemoryBuffer *Buffer,
 
       // Make sure we're at the end of the record.
       assert(Idx == Record.size() && "More module info?");
+
+      // Record this module as an unresolved module.
+      UnresolvedModules[llvm::sys::path::stem(Modules[ID].FileName)] = ID;
       break;
     }
 
@@ -213,14 +215,6 @@ GlobalModuleIndex::GlobalModuleIndex(llvm::MemoryBuffer *Buffer,
                             IdentifierIndexReaderTrait());
       }
       break;
-    }
-  }
-
-  // Compute imported-by relation.
-  for (unsigned ID = 0, IDEnd = Modules.size(); ID != IDEnd; ++ID) {
-    for (unsigned D = 0, DEnd = Modules[ID].Dependencies.size();
-         D != DEnd; ++D) {
-      Modules[Modules[ID].Dependencies[D]].ImportedBy.push_back(ID);
     }
   }
 }
@@ -260,21 +254,14 @@ void
 GlobalModuleIndex::getKnownModules(SmallVectorImpl<ModuleFile *> &ModuleFiles) {
   ModuleFiles.clear();
   for (unsigned I = 0, N = Modules.size(); I != N; ++I) {
-    if (ModuleFile *File = resolveModuleFile(I))
-      ModuleFiles.push_back(File);
+    if (ModuleFile *MF = Modules[I].File)
+      ModuleFiles.push_back(MF);
   }
 }
 
 void GlobalModuleIndex::getModuleDependencies(
        ModuleFile *File,
        SmallVectorImpl<ModuleFile *> &Dependencies) {
-  // If the file -> index mapping is empty, populate it now.
-  if (ModulesByFile.empty()) {
-    for (unsigned I = 0, N = Modules.size(); I != N; ++I) {
-      resolveModuleFile(I);
-    }
-  }
-
   // Look for information about this module file.
   llvm::DenseMap<ModuleFile *, unsigned>::iterator Known
     = ModulesByFile.find(File);
@@ -285,7 +272,7 @@ void GlobalModuleIndex::getModuleDependencies(
   Dependencies.clear();
   ArrayRef<unsigned> StoredDependencies = Modules[Known->second].Dependencies;
   for (unsigned I = 0, N = StoredDependencies.size(); I != N; ++I) {
-    if (ModuleFile *MF = resolveModuleFile(I))
+    if (ModuleFile *MF = Modules[I].File)
       Dependencies.push_back(MF);
   }
 }
@@ -308,60 +295,39 @@ bool GlobalModuleIndex::lookupIdentifier(StringRef Name, HitSet &Hits) {
 
   SmallVector<unsigned, 2> ModuleIDs = *Known;
   for (unsigned I = 0, N = ModuleIDs.size(); I != N; ++I) {
-    if (ModuleFile *File = resolveModuleFile(ModuleIDs[I]))
-      Hits.insert(File);
+    if (ModuleFile *MF = Modules[ModuleIDs[I]].File)
+      Hits.insert(MF);
   }
 
   ++NumIdentifierLookupHits;
   return true;
 }
 
-ModuleFile *GlobalModuleIndex::resolveModuleFile(unsigned ID) {
-  assert(ID < Modules.size() && "Out-of-bounds module index");
-
-  // If we already have a module file, return it.
-  if (Modules[ID].File)
-    return Modules[ID].File;
-
-  // If we don't have a file name, or if there is no resolver, we can't
-  // resolve this.
-  if (Modules[ID].FileName.empty() || !Resolver)
-    return 0;
-
-  // Try to resolve this module file.
-  ModuleFile *File;
-  if (Resolver->resolveModuleFileName(Modules[ID].FileName, Modules[ID].Size,
-                                      Modules[ID].ModTime, File)) {
-    // Clear out the module files for anything that depends on this module.
-    llvm::SmallVector<unsigned, 8> Stack;
-
-    Stack.push_back(ID);
-    while (!Stack.empty()) {
-      unsigned Victim = Stack.back();
-      Stack.pop_back();
-
-      // Mark this file as ignored.
-      Modules[Victim].File = 0;
-      Modules[Victim].FileName.clear();
-
-      // Push any not-yet-ignored imported modules onto the stack.
-      for (unsigned I = 0, N = Modules[Victim].ImportedBy.size(); I != N; ++I) {
-        unsigned NextVictim = Modules[Victim].ImportedBy[I];
-        if (!Modules[NextVictim].FileName.empty())
-          Stack.push_back(NextVictim);
-      }
-    }
-
-    return 0;
+bool GlobalModuleIndex::loadedModuleFile(ModuleFile *File) {
+  // Look for the module in the global module index based on the module name.
+  StringRef Name = llvm::sys::path::stem(File->FileName);
+  llvm::StringMap<unsigned>::iterator Known = UnresolvedModules.find(Name);
+  if (Known == UnresolvedModules.end()) {
+    return true;
   }
 
-  // If we have a module file, record it.
-  if (File) {
-    Modules[ID].File = File;
-    ModulesByFile[File] = ID;
+  // Rectify this module with the global module index.
+  ModuleInfo &Info = Modules[Known->second];
+
+  //  If the size and modification time match what we expected, record this
+  // module file.
+  bool Failed = true;
+  if (File->File->getSize() == Info.Size &&
+      File->File->getModificationTime() == Info.ModTime) {
+    Info.File = File;
+    ModulesByFile[File] = Known->second;
+
+    Failed = false;
   }
 
-  return File;
+  // One way or another, we have resolved this module file.
+  UnresolvedModules.erase(Known);
+  return Failed;
 }
 
 void GlobalModuleIndex::printStats() {

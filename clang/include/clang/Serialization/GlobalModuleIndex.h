@@ -20,6 +20,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include <utility>
 
@@ -43,36 +44,6 @@ using llvm::SmallVectorImpl;
 using llvm::StringRef;
 using serialization::ModuleFile;
 
-/// \brief Abstract class that resolves a module file name to a ModuleFile
-/// pointer, which is used to uniquely describe a module file.
-class ModuleFileNameResolver {
-public:
-  virtual ~ModuleFileNameResolver();
-
-  /// \brief Attempt to resolve the given module file name to a specific,
-  /// already-loaded module.
-  ///
-  /// \param FileName The name of the module file.
-  ///
-  /// \param ExpectedSize The size that the module file is expected to have.
-  /// If the actual size differs, the resolver should return \c true.
-  ///
-  /// \param ExpectedModTime The modification time that the module file is
-  /// expected to have. If the actual modification time differs, the resolver
-  /// should return \c true.
-  ///
-  /// \param File Will be set to the module file if there is one, or null
-  /// otherwise.
-  ///
-  /// \returns True if a module file exists but does not meet the size/
-  /// modification time criteria, false if the module file is available or has
-  /// not yet been loaded.
-  virtual bool resolveModuleFileName(StringRef FileName,
-                                     off_t ExpectedSize,
-                                     time_t ExpectedModTime,
-                                     ModuleFile *&File) = 0;
-};
-
 /// \brief A global index for a set of module files, providing information about
 /// the identifiers within those module files.
 ///
@@ -89,9 +60,6 @@ class GlobalModuleIndex {
   /// as the global module index is live.
   llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
 
-  /// \brief The module file name resolver.
-  ModuleFileNameResolver *Resolver;
-
   /// \brief The hash table.
   ///
   /// This pointer actually points to a IdentifierIndexTable object,
@@ -103,7 +71,7 @@ class GlobalModuleIndex {
   struct ModuleInfo {
     ModuleInfo() : File(), Size(), ModTime() { }
 
-    /// \brief The module file, if it is known.
+    /// \brief The module file, once it has been resolved.
     ModuleFile *File;
 
     /// \brief The module file name.
@@ -119,9 +87,6 @@ class GlobalModuleIndex {
     /// \brief The module IDs on which this module directly depends.
     /// FIXME: We don't really need a vector here.
     llvm::SmallVector<unsigned, 4> Dependencies;
-
-    /// \brief The module IDs that directly depend on this module.
-    llvm::SmallVector<unsigned, 4> ImportedBy;
   };
 
   /// \brief A mapping from module IDs to information about each module.
@@ -135,13 +100,19 @@ class GlobalModuleIndex {
   /// corresponding index into the \c Modules vector.
   llvm::DenseMap<ModuleFile *, unsigned> ModulesByFile;
 
+  /// \brief The set of modules that have not yet been resolved.
+  ///
+  /// The string is just the name of the module itself, which maps to the
+  /// module ID.
+  llvm::StringMap<unsigned> UnresolvedModules;
+
   /// \brief The number of identifier lookups we performed.
   unsigned NumIdentifierLookups;
 
   /// \brief The number of identifier lookup hits, where we recognize the
   /// identifier.
   unsigned NumIdentifierLookupHits;
-
+  
   /// \brief Internal constructor. Use \c readIndex() to read an index.
   explicit GlobalModuleIndex(llvm::MemoryBuffer *Buffer,
                              llvm::BitstreamCursor Cursor);
@@ -200,19 +171,11 @@ public:
   /// \returns true if the identifier is known to the index, false otherwise.
   bool lookupIdentifier(StringRef Name, HitSet &Hits);
 
-  /// \brief Set the module file name resolver.
-  void setResolver(ModuleFileNameResolver *Resolver) {
-    this->Resolver = Resolver;
-  }
-
-  /// \brief Note that additional modules have been loaded, which invalidates
-  /// the module file -> module cache.
-  void noteAdditionalModulesLoaded() {
-    ModulesByFile.clear();
-  }
-
-  /// \brief Resolve the module file for the module with the given ID.
-  ModuleFile *resolveModuleFile(unsigned ID);
+  /// \brief Note that the given module file has been loaded.
+  ///
+  /// \returns false if the global module index has information about this
+  /// module file, and true otherwise.
+  bool loadedModuleFile(ModuleFile *File);
 
   /// \brief Print statistics to standard error.
   void printStats();

@@ -166,17 +166,6 @@ void ModuleManager::addInMemoryBuffer(StringRef FileName,
   InMemoryBuffers[Entry] = Buffer;
 }
 
-void ModuleManager::updateModulesInCommonWithGlobalIndex() {
-  ModulesInCommonWithGlobalIndex.clear();
-
-  if (!GlobalIndex)
-    return;
-
-  // Collect the set of modules known to the global index.
-  GlobalIndex->noteAdditionalModulesLoaded();
-  GlobalIndex->getKnownModules(ModulesInCommonWithGlobalIndex);
-}
-
 ModuleManager::VisitState *ModuleManager::allocateVisitState() {
   // Fast path: if we have a cached state, use it.
   if (FirstVisitState) {
@@ -198,10 +187,25 @@ void ModuleManager::returnVisitState(VisitState *State) {
 
 void ModuleManager::setGlobalIndex(GlobalModuleIndex *Index) {
   GlobalIndex = Index;
-  if (GlobalIndex) {
-    GlobalIndex->setResolver(this);
+  if (!GlobalIndex) {
+    ModulesInCommonWithGlobalIndex.clear();
+    return;
   }
-  updateModulesInCommonWithGlobalIndex();
+
+  // Notify the global module index about all of the modules we've already
+  // loaded.
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    if (!GlobalIndex->loadedModuleFile(Chain[I])) {
+      ModulesInCommonWithGlobalIndex.push_back(Chain[I]);
+    }
+  }
+}
+
+void ModuleManager::moduleFileAccepted(ModuleFile *MF) {
+  if (!GlobalIndex || GlobalIndex->loadedModuleFile(MF))
+    return;
+
+  ModulesInCommonWithGlobalIndex.push_back(MF);
 }
 
 ModuleManager::ModuleManager(FileManager &FileMgr)
@@ -263,11 +267,6 @@ ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
     }
 
     assert(VisitOrder.size() == N && "Visitation order is wrong?");
-
-    // We may need to update the set of modules we have in common with the
-    // global module index, since modules could have been added to the module
-    // manager since we loaded the global module index.
-    updateModulesInCommonWithGlobalIndex();
 
     delete FirstVisitState;
     FirstVisitState = 0;
@@ -384,34 +383,6 @@ bool ModuleManager::lookupModuleFile(StringRef FileName,
     return true;
   }
 
-  return false;
-}
-
-bool ModuleManager::resolveModuleFileName(StringRef FileName,
-                                          off_t ExpectedSize,
-                                          time_t ExpectedModTime,
-                                          ModuleFile *&File) {
-  File = 0;
-  
-  // Look for the file entry corresponding to this name.
-  const FileEntry *F;
-  if (lookupModuleFile(FileName, ExpectedSize, ExpectedModTime, F))
-    return true;
-
-  // If there is no file, we've succeeded (trivially).
-  if (!F)
-    return false;
-
-  // Determine whether we have a module file associated with this file entry.
-  llvm::DenseMap<const FileEntry *, ModuleFile *>::iterator Known
-    = Modules.find(F);
-  if (Known == Modules.end()) {
-    // We don't know about this module file; invalidate the cache.
-    FileMgr.invalidateCache(F);
-    return false;
-  }
-
-  File = Known->second;
   return false;
 }
 
