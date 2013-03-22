@@ -475,6 +475,10 @@ public:
                   const LocationContext *L)
     : ProgramPoint(I, PostInitializerKind, L) {}
 
+  const CXXCtorInitializer *getInitializer() const {
+    return static_cast<const CXXCtorInitializer *>(getData1());
+  }
+
 private:
   friend class ProgramPoint;
   PostInitializer() {}
