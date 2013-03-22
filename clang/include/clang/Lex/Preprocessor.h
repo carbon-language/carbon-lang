@@ -560,11 +560,18 @@ public:
   MacroDirective *getMacroDirectiveHistory(const IdentifierInfo *II) const;
 
   /// \brief Specify a macro for this identifier.
+  void setMacroDirective(IdentifierInfo *II, MacroDirective *MD);
   MacroDirective *setMacroDirective(IdentifierInfo *II, MacroInfo *MI,
-                                    SourceLocation Loc, bool isImported);
+                                    SourceLocation Loc, bool isImported) {
+    MacroDirective *MD = AllocateMacroDirective(MI, Loc, isImported);
+    setMacroDirective(II, MD);
+    return MD;
+  }
   MacroDirective *setMacroDirective(IdentifierInfo *II, MacroInfo *MI) {
     return setMacroDirective(II, MI, MI->getDefinitionLoc(), false);
   }
+  /// \brief Set a MacroDirective that was loaded from a PCH file.
+  void setLoadedMacroDirective(IdentifierInfo *II, MacroDirective *MD);
   /// \brief Add a MacroInfo that was loaded from an AST file.
   void addLoadedMacroInfo(IdentifierInfo *II, MacroDirective *MD,
                           MacroDirective *Hint = 0);

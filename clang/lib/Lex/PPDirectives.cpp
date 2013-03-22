@@ -1119,23 +1119,26 @@ void Preprocessor::HandleMacroPublicDirective(Token &Tok) {
   // Check to see if this is the last token on the #__public_macro line.
   CheckEndOfDirective("__public_macro");
 
+  IdentifierInfo *II = MacroNameTok.getIdentifierInfo();
   // Okay, we finally have a valid identifier to undef.
-  MacroDirective *MD = getMacroDirective(MacroNameTok.getIdentifierInfo());
+  MacroDirective *MD = getMacroDirective(II);
   
   // If the macro is not defined, this is an error.
   if (MD == 0) {
-    Diag(MacroNameTok, diag::err_pp_visibility_non_macro)
-      << MacroNameTok.getIdentifierInfo();
+    Diag(MacroNameTok, diag::err_pp_visibility_non_macro) << II;
     return;
   }
   
   // Note that this macro has now been exported.
   MD->setVisibility(/*IsPublic=*/true, MacroNameTok.getLocation());
 
-  // If this macro definition came from a PCH file, mark it
-  // as having changed since serialization.
-  if (MD->isImported())
+  // If this macro directive came from a PCH file, mark it as having changed
+  // since serialization.
+  if (MD->isFromPCH()) {
     MD->setChangedAfterLoad();
+    assert(II->isFromAST());
+    II->setChangedSinceDeserialization();
+  }
 }
 
 /// \brief Handle a #private directive.
@@ -1150,23 +1153,26 @@ void Preprocessor::HandleMacroPrivateDirective(Token &Tok) {
   // Check to see if this is the last token on the #__private_macro line.
   CheckEndOfDirective("__private_macro");
   
+  IdentifierInfo *II = MacroNameTok.getIdentifierInfo();
   // Okay, we finally have a valid identifier to undef.
-  MacroDirective *MD = getMacroDirective(MacroNameTok.getIdentifierInfo());
+  MacroDirective *MD = getMacroDirective(II);
   
   // If the macro is not defined, this is an error.
   if (MD == 0) {
-    Diag(MacroNameTok, diag::err_pp_visibility_non_macro)
-      << MacroNameTok.getIdentifierInfo();
+    Diag(MacroNameTok, diag::err_pp_visibility_non_macro) << II;
     return;
   }
   
   // Note that this macro has now been marked private.
   MD->setVisibility(/*IsPublic=*/false, MacroNameTok.getLocation());
 
-  // If this macro definition came from a PCH file, mark it
-  // as having changed since serialization.
-  if (MD->isImported())
+  // If this macro directive came from a PCH file, mark it as having changed
+  // since serialization.
+  if (MD->isFromPCH()) {
     MD->setChangedAfterLoad();
+    assert(II->isFromAST());
+    II->setChangedSinceDeserialization();
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -2011,7 +2017,7 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
 void Preprocessor::UndefineMacro(IdentifierInfo *II, MacroDirective *MD,
                                  SourceLocation UndefLoc) {
   MD->setUndefLoc(UndefLoc);
-  if (MD->isImported()) {
+  if (MD->isFromPCH()) {
     MD->setChangedAfterLoad();
     if (Listener)
       Listener->UndefinedMacro(MD);

@@ -516,6 +516,8 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
   Bits >>= 1;
   bool ExtensionToken = Bits & 0x01;
   Bits >>= 1;
+  bool hasSubmoduleMacros = Bits & 0x01;
+  Bits >>= 1;
   bool hadMacroDefinition = Bits & 0x01;
   Bits >>= 1;
 
@@ -554,13 +556,26 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
   // If this identifier is a macro, deserialize the macro
   // definition.
   if (hadMacroDefinition) {
-    SmallVector<MacroID, 4> MacroIDs;
-    while (uint32_t LocalID = ReadUnalignedLE32(d)) {
-      MacroIDs.push_back(Reader.getGlobalMacroID(F, LocalID));
+    uint32_t MacroDirectivesOffset = ReadUnalignedLE32(d);
+    DataLen -= 4;
+    SmallVector<uint32_t, 8> LocalMacroIDs;
+    if (hasSubmoduleMacros) {
+      while (uint32_t LocalMacroID = ReadUnalignedLE32(d)) {
+        DataLen -= 4;
+        LocalMacroIDs.push_back(LocalMacroID);
+      }
       DataLen -= 4;
     }
-    DataLen -= 4;
-    Reader.setIdentifierIsMacro(II, MacroIDs);
+
+    if (F.Kind == MK_Module) {
+      for (SmallVectorImpl<uint32_t>::iterator
+             I = LocalMacroIDs.begin(), E = LocalMacroIDs.end(); I != E; ++I) {
+        MacroID MacID = Reader.getGlobalMacroID(F, *I);
+        Reader.addPendingMacroFromModule(II, &F, MacID, F.DirectImportLoc);
+      }
+    } else {
+      Reader.addPendingMacroFromPCH(II, &F, MacroDirectivesOffset);
+    }
   }
 
   Reader.SetIdentifierInfo(ID, II);
@@ -1073,8 +1088,7 @@ bool ASTReader::ReadBlockAbbrevs(BitstreamCursor &Cursor, unsigned BlockID) {
   }
 }
 
-void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
-                                MacroDirective *Hint) {
+MacroInfo *ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
   BitstreamCursor &Stream = F.MacroCursor;
 
   // Keep track of where we are in the stream, then jump back there
@@ -1085,24 +1099,6 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
   RecordData Record;
   SmallVector<IdentifierInfo*, 16> MacroArgs;
   MacroInfo *Macro = 0;
-
-  // RAII object to add the loaded macro information once we're done
-  // adding tokens.
-  struct AddLoadedMacroInfoRAII {
-    Preprocessor &PP;
-    MacroDirective *Hint;
-    MacroDirective *MD;
-    IdentifierInfo *II;
-
-    AddLoadedMacroInfoRAII(Preprocessor &PP, MacroDirective *Hint)
-      : PP(PP), Hint(Hint), MD(), II() { }
-    ~AddLoadedMacroInfoRAII( ) {
-      if (MD) {
-        // Finally, install the macro.
-        PP.addLoadedMacroInfo(II, MD, Hint);
-      }
-    }
-  } AddLoadedMacroInfo(PP, Hint);
 
   while (true) {
     // Advance to the next record, but if we get to the end of the block, don't
@@ -1115,9 +1111,9 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
     case llvm::BitstreamEntry::SubBlock: // Handled for us already.
     case llvm::BitstreamEntry::Error:
       Error("malformed block record in AST file");
-      return;
+      return Macro;
     case llvm::BitstreamEntry::EndBlock:
-      return;
+      return Macro;
     case llvm::BitstreamEntry::Record:
       // The interesting case.
       break;
@@ -1128,46 +1124,23 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
     PreprocessorRecordTypes RecType =
       (PreprocessorRecordTypes)Stream.readRecord(Entry.ID, Record);
     switch (RecType) {
+    case PP_MACRO_DIRECTIVE_HISTORY:
+      return Macro;
+
     case PP_MACRO_OBJECT_LIKE:
     case PP_MACRO_FUNCTION_LIKE: {
       // If we already have a macro, that means that we've hit the end
       // of the definition of the macro we were looking for. We're
       // done.
       if (Macro)
-        return;
+        return Macro;
 
-      IdentifierInfo *II = getLocalIdentifier(F, Record[0]);
-      if (II == 0) {
-        Error("macro must have a name in AST file");
-        return;
-      }
-
-      unsigned GlobalID = getGlobalMacroID(F, Record[1]);
-
-      // If this macro has already been loaded, don't do so again.
-      if (MacrosLoaded[GlobalID - NUM_PREDEF_MACRO_IDS])
-        return;
-
-      SubmoduleID GlobalSubmoduleID = getGlobalSubmoduleID(F, Record[2]);
-      unsigned NextIndex = 3;
+      unsigned NextIndex = 1; // Skip identifier ID.
+      SubmoduleID SubModID = getGlobalSubmoduleID(F, Record[NextIndex++]);
       SourceLocation Loc = ReadSourceLocation(F, Record, NextIndex);
-      MacroInfo *MI = PP.AllocateDeserializedMacroInfo(Loc, GlobalSubmoduleID);
-      // FIXME: Location should be import location in case of module.
-      MacroDirective *MD = PP.AllocateMacroDirective(MI, Loc,
-                                                     /*isImported=*/true);
+      MacroInfo *MI = PP.AllocateDeserializedMacroInfo(Loc, SubModID);
       MI->setDefinitionEndLoc(ReadSourceLocation(F, Record, NextIndex));
-
-      // Record this macro.
-      MacrosLoaded[GlobalID - NUM_PREDEF_MACRO_IDS] = MD;
-
-      SourceLocation UndefLoc = ReadSourceLocation(F, Record, NextIndex);
-      if (UndefLoc.isValid())
-        MD->setUndefLoc(UndefLoc);
-
       MI->setIsUsed(Record[NextIndex++]);
-
-      bool IsPublic = Record[NextIndex++];
-      MD->setVisibility(IsPublic, ReadSourceLocation(F, Record, NextIndex));
 
       if (RecType == PP_MACRO_FUNCTION_LIKE) {
         // Decode function-like macro info.
@@ -1187,61 +1160,6 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
         MI->setArgumentList(MacroArgs.data(), MacroArgs.size(),
                             PP.getPreprocessorAllocator());
       }
-
-      if (DeserializationListener)
-        DeserializationListener->MacroRead(GlobalID, MD);
-
-      // If an update record marked this as undefined, do so now.
-      // FIXME: Only if the submodule this update came from is visible?
-      MacroUpdatesMap::iterator Update = MacroUpdates.find(GlobalID);
-      if (Update != MacroUpdates.end()) {
-        if (MD->getUndefLoc().isInvalid()) {
-          for (unsigned I = 0, N = Update->second.size(); I != N; ++I) {
-            bool Hidden = false;
-            if (unsigned SubmoduleID = Update->second[I].first) {
-              if (Module *Owner = getSubmodule(SubmoduleID)) {
-                if (Owner->NameVisibility == Module::Hidden) {
-                  // Note that this #undef is hidden.
-                  Hidden = true;
-
-                  // Record this hiding for later.
-                  HiddenNamesMap[Owner].push_back(
-                    HiddenName(II, MD, Update->second[I].second.UndefLoc));
-                }
-              }
-            }
-
-            if (!Hidden) {
-              MD->setUndefLoc(Update->second[I].second.UndefLoc);
-              if (PPMutationListener *Listener = PP.getPPMutationListener())
-                Listener->UndefinedMacro(MD);
-              break;
-            }
-          }
-        }
-        MacroUpdates.erase(Update);
-      }
-
-      // Determine whether this macro definition is visible.
-      bool Hidden = !MD->isPublic();
-      if (!Hidden && GlobalSubmoduleID) {
-        if (Module *Owner = getSubmodule(GlobalSubmoduleID)) {
-          if (Owner->NameVisibility == Module::Hidden) {
-            // The owning module is not visible, and this macro definition
-            // should not be, either.
-            Hidden = true;
-
-            // Note that this macro definition was hidden because its owning
-            // module is not yet visible.
-            HiddenNamesMap[Owner].push_back(HiddenName(II, MD));
-          }
-        }
-      }
-      MD->setHidden(Hidden);
-
-      // Make sure we install the macro once we're done.
-      AddLoadedMacroInfo.MD = MD;
-      AddLoadedMacroInfo.II = II;
 
       // Remember that we saw this macro last so that we add the tokens that
       // form its body to it.
@@ -1381,10 +1299,19 @@ HeaderFileInfoTrait::ReadData(internal_key_ref key, const unsigned char *d,
   return HFI;
 }
 
-void ASTReader::setIdentifierIsMacro(IdentifierInfo *II, ArrayRef<MacroID> IDs){
-  II->setHadMacroDefinition(true);
+void ASTReader::addPendingMacroFromModule(IdentifierInfo *II,
+                                          ModuleFile *M,
+                                          GlobalMacroID GMacID,
+                                          SourceLocation ImportLoc) {
   assert(NumCurrentElementsDeserializing > 0 &&"Missing deserialization guard");
-  PendingMacroIDs[II].append(IDs.begin(), IDs.end());
+  PendingMacroIDs[II].push_back(PendingMacroInfo(M, GMacID, ImportLoc));
+}
+
+void ASTReader::addPendingMacroFromPCH(IdentifierInfo *II,
+                                       ModuleFile *M,
+                                       uint64_t MacroDirectivesOffset) {
+  assert(NumCurrentElementsDeserializing > 0 &&"Missing deserialization guard");
+  PendingMacroIDs[II].push_back(PendingMacroInfo(M, MacroDirectivesOffset));
 }
 
 void ASTReader::ReadDefinedMacros() {
@@ -1524,6 +1451,119 @@ void ASTReader::markIdentifierUpToDate(IdentifierInfo *II) {
   // Update the generation for this identifier.
   if (getContext().getLangOpts().Modules)
     IdentifierGeneration[II] = CurrentGeneration;
+}
+
+void ASTReader::resolvePendingMacro(IdentifierInfo *II,
+                                    const PendingMacroInfo &PMInfo) {
+  assert(II);
+
+  if (PMInfo.M->Kind != MK_Module) {
+    installPCHMacroDirectives(II, *PMInfo.M,
+                              PMInfo.PCHMacroData.MacroDirectivesOffset);
+    return;
+  }
+  
+  // Module Macro.
+
+  GlobalMacroID GMacID = PMInfo.ModuleMacroData.GMacID;
+  SourceLocation ImportLoc =
+      SourceLocation::getFromRawEncoding(PMInfo.ModuleMacroData.ImportLoc);
+
+  assert(GMacID);
+  // If this macro has already been loaded, don't do so again.
+  if (MacrosLoaded[GMacID - NUM_PREDEF_MACRO_IDS])
+    return;
+
+  MacroInfo *MI = getMacro(GMacID);
+  SubmoduleID SubModID = MI->getOwningModuleID();
+  MacroDirective *MD = PP.AllocateMacroDirective(MI, ImportLoc,
+                                                 /*isImported=*/true);
+
+  // Determine whether this macro definition is visible.
+  bool Hidden = false;
+  if (SubModID) {
+    if (Module *Owner = getSubmodule(SubModID)) {
+      if (Owner->NameVisibility == Module::Hidden) {
+        // The owning module is not visible, and this macro definition
+        // should not be, either.
+        Hidden = true;
+
+        // Note that this macro definition was hidden because its owning
+        // module is not yet visible.
+        HiddenNamesMap[Owner].push_back(HiddenName(II, MD));
+      }
+    }
+  }
+  MD->setHidden(Hidden);
+
+  if (!Hidden)
+    installImportedMacro(II, MD);
+}
+
+void ASTReader::installPCHMacroDirectives(IdentifierInfo *II,
+                                          ModuleFile &M, uint64_t Offset) {
+  assert(M.Kind != MK_Module);
+
+  BitstreamCursor &Cursor = M.MacroCursor;
+  SavedStreamPosition SavedPosition(Cursor);
+  Cursor.JumpToBit(Offset);
+
+  llvm::BitstreamEntry Entry =
+      Cursor.advance(BitstreamCursor::AF_DontPopBlockAtEnd);
+  if (Entry.Kind != llvm::BitstreamEntry::Record) {
+    Error("malformed block record in AST file");
+    return;
+  }
+
+  RecordData Record;
+  PreprocessorRecordTypes RecType =
+    (PreprocessorRecordTypes)Cursor.readRecord(Entry.ID, Record);
+  if (RecType != PP_MACRO_DIRECTIVE_HISTORY) {
+    Error("malformed block record in AST file");
+    return;
+  }
+
+  // Deserialize the macro directives history in reverse source-order.
+  MacroDirective *Latest = 0, *Earliest = 0;
+  unsigned Idx = 0, N = Record.size();
+  while (Idx < N) {
+    GlobalMacroID GMacID = getGlobalMacroID(M, Record[Idx++]);
+    MacroInfo *MI = getMacro(GMacID);
+    SourceLocation Loc = ReadSourceLocation(M, Record, Idx);
+    SourceLocation UndefLoc = ReadSourceLocation(M, Record, Idx);
+    SourceLocation VisibilityLoc = ReadSourceLocation(M, Record, Idx);
+    bool isImported = Record[Idx++];
+    bool isPublic = Record[Idx++];
+    bool isAmbiguous = Record[Idx++];
+
+    MacroDirective *MD = PP.AllocateMacroDirective(MI, Loc, isImported);
+    if (UndefLoc.isValid())
+      MD->setUndefLoc(UndefLoc);
+    if (VisibilityLoc.isValid())
+      MD->setVisibility(isPublic, VisibilityLoc);
+    MD->setAmbiguous(isAmbiguous);
+    MD->setIsFromPCH();
+
+    if (!Latest)
+      Latest = MD;
+    if (Earliest)
+      Earliest->setPrevious(MD);
+    Earliest = MD;
+  }
+
+  PP.setLoadedMacroDirective(II, Latest);
+}
+
+void ASTReader::installImportedMacro(IdentifierInfo *II, MacroDirective *MD) {
+  assert(II && MD);
+
+  MacroDirective *Prev = PP.getMacroDirective(II);
+  if (Prev && !Prev->getInfo()->isIdenticalTo(*MD->getInfo(), PP)) {
+    Prev->setAmbiguous(true);
+    MD->setAmbiguous(true);
+  }
+  
+  PP.setMacroDirective(II, MD);
 }
 
 InputFile ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
@@ -2629,18 +2669,8 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       break;
     }
 
-    case MACRO_UPDATES: {
-      for (unsigned I = 0, N = Record.size(); I != N; /* in loop */) {
-        MacroID ID = getGlobalMacroID(F, Record[I++]);
-        if (I == N)
-          break;
-
-        SourceLocation UndefLoc = ReadSourceLocation(F, Record, I);
-        SubmoduleID SubmoduleID = getGlobalSubmoduleID(F, Record[I++]);;
-        MacroUpdate Update;
-        Update.UndefLoc = UndefLoc;
-        MacroUpdates[ID].push_back(std::make_pair(SubmoduleID, Update));
-      }
+    case MACRO_TABLE: {
+      // FIXME: Not used yet.
       break;
     }
     }
@@ -2695,7 +2725,7 @@ void ASTReader::makeNamesVisible(const HiddenNames &Names) {
       std::pair<IdentifierInfo *, MacroDirective *> Macro = Names[I].getMacro();
       Macro.second->setHidden(!Macro.second->isPublic());
       if (Macro.second->isDefined()) {
-        PP.makeLoadedMacroInfoVisible(Macro.first, Macro.second);
+        installImportedMacro(Macro.first, Macro.second);
       }
       break;
     }
@@ -5789,7 +5819,7 @@ void ASTReader::PrintStats() {
   unsigned NumMacrosLoaded
     = MacrosLoaded.size() - std::count(MacrosLoaded.begin(),
                                        MacrosLoaded.end(),
-                                       (MacroDirective *)0);
+                                       (MacroInfo *)0);
   unsigned NumSelectorsLoaded
     = SelectorsLoaded.size() - std::count(SelectorsLoaded.begin(),
                                           SelectorsLoaded.end(),
@@ -6398,7 +6428,7 @@ IdentifierID ASTReader::getGlobalIdentifierID(ModuleFile &M, unsigned LocalID) {
   return LocalID + I->second;
 }
 
-MacroDirective *ASTReader::getMacro(MacroID ID, MacroDirective *Hint) {
+MacroInfo *ASTReader::getMacro(MacroID ID) {
   if (ID == 0)
     return 0;
 
@@ -6414,7 +6444,11 @@ MacroDirective *ASTReader::getMacro(MacroID ID, MacroDirective *Hint) {
     assert(I != GlobalMacroMap.end() && "Corrupted global macro map");
     ModuleFile *M = I->second;
     unsigned Index = ID - M->BaseMacroID;
-    ReadMacroRecord(*M, M->MacroOffsets[Index], Hint);
+    MacrosLoaded[ID] = ReadMacroRecord(*M, M->MacroOffsets[Index]);
+    
+    if (DeserializationListener)
+      DeserializationListener->MacroRead(ID + NUM_PREDEF_MACRO_IDS,
+                                         MacrosLoaded[ID]);
   }
 
   return MacrosLoaded[ID];
@@ -7128,12 +7162,22 @@ void ASTReader::finishPendingActions() {
 
     // Load any pending macro definitions.
     for (unsigned I = 0; I != PendingMacroIDs.size(); ++I) {
-      // FIXME: std::move here
-      SmallVector<MacroID, 2> GlobalIDs = PendingMacroIDs.begin()[I].second;
-      MacroDirective *Hint = 0;
+      IdentifierInfo *II = PendingMacroIDs.begin()[I].first;
+      SmallVector<PendingMacroInfo, 2> GlobalIDs;
+      GlobalIDs.swap(PendingMacroIDs.begin()[I].second);
+      // Initialize the macro history from chained-PCHs ahead of module imports.
       for (unsigned IDIdx = 0, NumIDs = GlobalIDs.size(); IDIdx !=  NumIDs;
            ++IDIdx) {
-        Hint = getMacro(GlobalIDs[IDIdx], Hint);
+        const PendingMacroInfo &Info = GlobalIDs[IDIdx];
+        if (Info.M->Kind != MK_Module)
+          resolvePendingMacro(II, Info);
+      }
+      // Handle module imports.
+      for (unsigned IDIdx = 0, NumIDs = GlobalIDs.size(); IDIdx !=  NumIDs;
+           ++IDIdx) {
+        const PendingMacroInfo &Info = GlobalIDs[IDIdx];
+        if (Info.M->Kind == MK_Module)
+          resolvePendingMacro(II, Info);
       }
     }
     PendingMacroIDs.clear();

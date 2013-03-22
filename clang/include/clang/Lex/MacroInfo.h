@@ -332,7 +332,10 @@ class MacroDirective {
   /// If invalid, this macro has not been explicitly given any visibility.
   SourceLocation VisibilityLocation;
 
-  /// \brief True if this macro was loaded from an AST file.
+  /// \brief True if the macro directive was loaded from a PCH file.
+  bool IsFromPCH : 1;
+
+  /// \brief True if this macro was imported from a module.
   bool IsImported : 1;
 
   /// \brief Whether the macro has public (when described in a module).
@@ -354,14 +357,14 @@ class MacroDirective {
 public:
   explicit MacroDirective(MacroInfo *MI)
     : Info(MI), Previous(0), Loc(MI->getDefinitionLoc()),
-      IsImported(false), IsPublic(true), IsHidden(false), IsAmbiguous(false),
-      ChangedAfterLoad(false) {
+      IsFromPCH(false), IsImported(false), IsPublic(true), IsHidden(false),
+      IsAmbiguous(false), ChangedAfterLoad(false) {
     assert(MI && "MacroInfo is null");
   }
 
   MacroDirective(MacroInfo *MI, SourceLocation Loc, bool isImported)
     : Info(MI), Previous(0), Loc(Loc),
-      IsImported(isImported), IsPublic(true), IsHidden(false),
+      IsFromPCH(false), IsImported(isImported), IsPublic(true), IsHidden(false),
       IsAmbiguous(false), ChangedAfterLoad(false) {
     assert(MI && "MacroInfo is null");
   }
@@ -412,7 +415,12 @@ public:
   /// public or private within its module.
   SourceLocation getVisibilityLocation() const { return VisibilityLocation; }
 
-  /// \brief True if this macro was loaded from an AST file.
+  /// \brief Return true if the macro directive was loaded from a PCH file.
+  bool isFromPCH() const { return IsFromPCH; }
+
+  void setIsFromPCH() { IsFromPCH = true; }
+
+  /// \brief True if this macro was imported from a module.
   bool isImported() const { return IsImported; }
 
   /// \brief Determine whether this macro is currently defined (and has not

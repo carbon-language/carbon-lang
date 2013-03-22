@@ -42,20 +42,28 @@ Preprocessor::getMacroDirectiveHistory(const IdentifierInfo *II) const {
 }
 
 /// \brief Specify a macro for this identifier.
-MacroDirective *
-Preprocessor::setMacroDirective(IdentifierInfo *II, MacroInfo *MI,
-                                SourceLocation Loc, bool isImported) {
-  assert(MI && "MacroInfo should be non-zero!");
+void Preprocessor::setMacroDirective(IdentifierInfo *II, MacroDirective *MD) {
+  assert(MD && "MacroDirective should be non-zero!");
 
-  MacroDirective *MD = AllocateMacroDirective(MI, Loc, isImported);
   MacroDirective *&StoredMD = Macros[II];
   MD->setPrevious(StoredMD);
   StoredMD = MD;
   II->setHasMacroDefinition(true);
   if (II->isFromAST())
     II->setChangedSinceDeserialization();
+}
 
-  return MD;
+void Preprocessor::setLoadedMacroDirective(IdentifierInfo *II,
+                                           MacroDirective *MD) {
+  assert(II && MD);
+  MacroDirective *&StoredMD = Macros[II];
+  assert(!StoredMD &&
+         "the macro history was modified before initializing it from a pch");
+  StoredMD = MD;
+  // Setup the identifier as having associated macro history.
+  II->setHasMacroDefinition(true);
+  if (!MD->isDefined())
+    II->setHasMacroDefinition(false);
 }
 
 void Preprocessor::addLoadedMacroInfo(IdentifierInfo *II, MacroDirective *MD,

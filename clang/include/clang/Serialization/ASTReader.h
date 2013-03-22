@@ -430,7 +430,7 @@ private:
   /// If the pointer at index I is non-NULL, then it refers to the
   /// MacroInfo for the identifier with ID=I+1 that has already
   /// been loaded.
-  std::vector<MacroDirective *> MacrosLoaded;
+  std::vector<MacroInfo *> MacrosLoaded;
 
   typedef ContinuousRangeMap<serialization::MacroID, ModuleFile *, 4>
     GlobalMacroMapType;
@@ -564,8 +564,35 @@ private:
   /// global method pool for this selector.
   llvm::DenseMap<Selector, unsigned> SelectorGeneration;
 
-  typedef llvm::MapVector<IdentifierInfo *,
-                          SmallVector<serialization::MacroID, 2> >
+  struct PendingMacroInfo {
+    ModuleFile *M;
+
+    struct ModuleMacroDataTy {
+      serialization::GlobalMacroID GMacID;
+      unsigned ImportLoc;
+    };
+    struct PCHMacroDataTy {
+      uint64_t MacroDirectivesOffset;
+    };
+
+    union {
+      ModuleMacroDataTy ModuleMacroData;
+      PCHMacroDataTy PCHMacroData;
+    };
+
+    PendingMacroInfo(ModuleFile *M,
+                     serialization::GlobalMacroID GMacID,
+                     SourceLocation ImportLoc) : M(M) {
+      ModuleMacroData.GMacID = GMacID;
+      ModuleMacroData.ImportLoc = ImportLoc.getRawEncoding();
+    }
+
+    PendingMacroInfo(ModuleFile *M, uint64_t MacroDirectivesOffset) : M(M) {
+      PCHMacroData.MacroDirectivesOffset = MacroDirectivesOffset;
+    }
+  };
+
+  typedef llvm::MapVector<IdentifierInfo *, SmallVector<PendingMacroInfo, 2> >
     PendingMacroIDsMap;
 
   /// \brief Mapping from identifiers that have a macro history to the global
@@ -1619,8 +1646,15 @@ public:
   serialization::IdentifierID getGlobalIdentifierID(ModuleFile &M,
                                                     unsigned LocalID);
 
+  void resolvePendingMacro(IdentifierInfo *II, const PendingMacroInfo &PMInfo);
+
+  void installPCHMacroDirectives(IdentifierInfo *II,
+                                 ModuleFile &M, uint64_t Offset);
+
+  void installImportedMacro(IdentifierInfo *II, MacroDirective *MD);
+
   /// \brief Retrieve the macro with the given ID.
-  MacroDirective *getMacro(serialization::MacroID ID, MacroDirective *Hint = 0);
+  MacroInfo *getMacro(serialization::MacroID ID);
 
   /// \brief Retrieve the global macro ID corresponding to the given local
   /// ID within the given module file.
@@ -1779,20 +1813,32 @@ public:
   Expr *ReadSubExpr();
 
   /// \brief Reads the macro record located at the given offset.
-  void ReadMacroRecord(ModuleFile &F, uint64_t Offset, MacroDirective *Hint = 0);
+  MacroInfo *ReadMacroRecord(ModuleFile &F, uint64_t Offset);
 
   /// \brief Determine the global preprocessed entity ID that corresponds to
   /// the given local ID within the given module.
   serialization::PreprocessedEntityID
   getGlobalPreprocessedEntityID(ModuleFile &M, unsigned LocalID) const;
 
-  /// \brief Note that the identifier has a macro history.
+  /// \brief Add a macro to resolve imported from a module.
   ///
   /// \param II The name of the macro.
+  /// \param M The module file.
+  /// \param GMacID The global macro ID that is associated with this identifier.
+  /// \param ImportLoc The location where the module is imported.
+  void addPendingMacroFromModule(IdentifierInfo *II,
+                                 ModuleFile *M,
+                                 serialization::GlobalMacroID GMacID,
+                                 SourceLocation ImportLoc);
+
+  /// \brief Add a macro to deserialize its macro directive history from a PCH.
   ///
-  /// \param IDs The global macro IDs that are associated with this identifier.
-  void setIdentifierIsMacro(IdentifierInfo *II,
-                            ArrayRef<serialization::MacroID> IDs);
+  /// \param II The name of the macro.
+  /// \param M The module file.
+  /// \param MacroDirectivesOffset Offset of the serialized macro directive
+  /// history.
+  void addPendingMacroFromPCH(IdentifierInfo *II,
+                              ModuleFile *M, uint64_t MacroDirectivesOffset);
 
   /// \brief Read the set of macros defined by this external macro source.
   virtual void ReadDefinedMacros();
