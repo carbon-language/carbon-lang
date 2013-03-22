@@ -45,8 +45,6 @@
 #include <vector>
 #include <string.h>
 
-using std::string;
-
 #define TESTALL(mask, var) (((mask) & (var)) == (mask))
 #define TESTANY(mask, var) (((mask) & (var)) != 0)
 
@@ -74,13 +72,13 @@ public:
   app_pc start_;
   app_pc end_;
   // Full path to the module.
-  string path_;
+  std::string path_;
   module_handle_t handle_;
   bool should_instrument_;
   bool executed_;
 };
 
-string g_app_path;
+std::string g_app_path;
 
 int msan_retval_tls_offset;
 int msan_param_tls_offset;
@@ -399,7 +397,7 @@ dr_emit_flags_t event_basic_block(void *drcontext, void *tag, instrlist_t *bb,
   if (VERBOSITY > 1)
     dr_printf("============================================================\n");
   if (VERBOSITY > 0) {
-    string mod_path = (mod_data ? mod_data->path_ : "<no module, JITed?>");
+    std::string mod_path = (mod_data ? mod_data->path_ : "<no module, JITed?>");
     if (mod_data && !mod_data->executed_) {
       mod_data->executed_ = true; // Nevermind this race.
       dr_printf("Executing from new module: %s\n", mod_path.c_str());
@@ -666,7 +664,7 @@ DR_EXPORT void dr_init(client_id_t id) {
   drmgr_init();
   drutil_init();
 
-  string app_name = dr_get_application_name();
+  std::string app_name = dr_get_application_name();
   // This blacklist will still run these apps through DR's code cache.  On the
   // other hand, we are able to follow children of these apps.
   // FIXME: Once DR has detach, we could just detach here.  Alternatively,
