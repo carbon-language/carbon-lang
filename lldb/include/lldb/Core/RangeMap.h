@@ -588,7 +588,13 @@ namespace lldb_private {
         {
             m_entries.clear();
         }
-        
+
+        void
+        Reserve (typename Collection::size_type size)
+        {
+            m_entries.resize (size);
+        }
+
         bool
         IsEmpty () const
         {
@@ -1137,7 +1143,13 @@ namespace lldb_private {
         {
             m_entries.clear();
         }
-        
+
+        void
+        Reserve (typename Collection::size_type size)
+        {
+            m_entries.resize (size);
+        }
+
         bool
         IsEmpty () const
         {
