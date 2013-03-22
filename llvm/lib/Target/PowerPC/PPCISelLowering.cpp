@@ -568,13 +568,10 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::SHL:             return "PPCISD::SHL";
   case PPCISD::EXTSW_32:        return "PPCISD::EXTSW_32";
   case PPCISD::STD_32:          return "PPCISD::STD_32";
-  case PPCISD::CALL_SVR4:       return "PPCISD::CALL_SVR4";
-  case PPCISD::CALL_NOP_SVR4:   return "PPCISD::CALL_NOP_SVR4";
-  case PPCISD::CALL_Darwin:     return "PPCISD::CALL_Darwin";
-  case PPCISD::NOP:             return "PPCISD::NOP";
+  case PPCISD::CALL:            return "PPCISD::CALL";
+  case PPCISD::CALL_NOP:        return "PPCISD::CALL_NOP";
   case PPCISD::MTCTR:           return "PPCISD::MTCTR";
-  case PPCISD::BCTRL_Darwin:    return "PPCISD::BCTRL_Darwin";
-  case PPCISD::BCTRL_SVR4:      return "PPCISD::BCTRL_SVR4";
+  case PPCISD::BCTRL:           return "PPCISD::BCTRL";
   case PPCISD::RET_FLAG:        return "PPCISD::RET_FLAG";
   case PPCISD::EH_SJLJ_SETJMP:  return "PPCISD::EH_SJLJ_SETJMP";
   case PPCISD::EH_SJLJ_LONGJMP: return "PPCISD::EH_SJLJ_LONGJMP";
@@ -3136,7 +3133,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Glue);    // Returns a flag for retval copy to use.
 
-  unsigned CallOpc = isSVR4ABI ? PPCISD::CALL_SVR4 : PPCISD::CALL_Darwin;
+  unsigned CallOpc = PPCISD::CALL;
 
   bool needIndirectCall = true;
   if (SDNode *Dest = isBLACompatibleAddress(Callee, DAG)) {
@@ -3269,8 +3266,11 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
     NodeTys.push_back(MVT::Other);
     NodeTys.push_back(MVT::Glue);
     Ops.push_back(Chain);
-    CallOpc = isSVR4ABI ? PPCISD::BCTRL_SVR4 : PPCISD::BCTRL_Darwin;
+    CallOpc = PPCISD::BCTRL;
     Callee.setNode(0);
+    // Add use of X11 (holding environment pointer)
+    if (isSVR4ABI && isPPC64)
+      Ops.push_back(DAG.getRegister(PPC::X11, PtrVT));
     // Add CTR register as callee so a bctr can be emitted later.
     if (isTailCall)
       Ops.push_back(DAG.getRegister(isPPC64 ? PPC::CTR8 : PPC::CTR, PtrVT));
@@ -3409,7 +3409,7 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, DebugLoc dl,
 
   bool needsTOCRestore = false;
   if (!isTailCall && PPCSubTarget.isSVR4ABI()&& PPCSubTarget.isPPC64()) {
-    if (CallOpc == PPCISD::BCTRL_SVR4) {
+    if (CallOpc == PPCISD::BCTRL) {
       // This is a call through a function pointer.
       // Restore the caller TOC from the save area into R2.
       // See PrepareCall() for more information about calls through function
@@ -3420,9 +3420,9 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, DebugLoc dl,
       // from allocating it), resulting in an additional register being
       // allocated and an unnecessary move instruction being generated.
       needsTOCRestore = true;
-    } else if ((CallOpc == PPCISD::CALL_SVR4) && !isLocalCall(Callee)) {
+    } else if ((CallOpc == PPCISD::CALL) && !isLocalCall(Callee)) {
       // Otherwise insert NOP for non-local calls.
-      CallOpc = PPCISD::CALL_NOP_SVR4;
+      CallOpc = PPCISD::CALL_NOP;
     }
   }
 

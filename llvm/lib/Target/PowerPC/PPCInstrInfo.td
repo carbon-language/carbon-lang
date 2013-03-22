@@ -53,7 +53,6 @@ def SDT_PPCTC_ret : SDTypeProfile<0, 2, [
   SDTCisPtrTy<0>, SDTCisVT<1, i32>
 ]>;
 
-def SDT_PPCnop : SDTypeProfile<0, 0, []>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC specific DAG Nodes.
@@ -124,16 +123,12 @@ def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeqEnd,
                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 def SDT_PPCCall   : SDTypeProfile<0, -1, [SDTCisInt<0>]>;
-def PPCcall_Darwin : SDNode<"PPCISD::CALL_Darwin", SDT_PPCCall,
-                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
-                             SDNPVariadic]>;
-def PPCcall_SVR4  : SDNode<"PPCISD::CALL_SVR4", SDT_PPCCall,
-                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
-                            SDNPVariadic]>;
-def PPCcall_nop_SVR4  : SDNode<"PPCISD::CALL_NOP_SVR4", SDT_PPCCall,
-                               [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
-                                SDNPVariadic]>;
-def PPCnop : SDNode<"PPCISD::NOP", SDT_PPCnop, [SDNPInGlue, SDNPOutGlue]>;
+def PPCcall  : SDNode<"PPCISD::CALL", SDT_PPCCall,
+                      [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
+                       SDNPVariadic]>;
+def PPCcall_nop  : SDNode<"PPCISD::CALL_NOP", SDT_PPCCall,
+                          [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
+                           SDNPVariadic]>;
 def PPCload   : SDNode<"PPCISD::LOAD", SDTypeProfile<1, 1, []>,
                        [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 def PPCload_toc : SDNode<"PPCISD::LOAD_TOC", SDTypeProfile<0, 1, []>,
@@ -144,13 +139,9 @@ def PPCtoc_restore : SDNode<"PPCISD::TOC_RESTORE", SDTypeProfile<0, 0, []>,
                              SDNPInGlue, SDNPOutGlue]>;
 def PPCmtctr      : SDNode<"PPCISD::MTCTR", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
-def PPCbctrl_Darwin  : SDNode<"PPCISD::BCTRL_Darwin", SDTNone,
-                              [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
-                               SDNPVariadic]>;
-
-def PPCbctrl_SVR4  : SDNode<"PPCISD::BCTRL_SVR4", SDTNone,
-                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
-                             SDNPVariadic]>;
+def PPCbctrl : SDNode<"PPCISD::BCTRL", SDTNone,
+                      [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
+                       SDNPVariadic]>;
 
 def retflag       : SDNode<"PPCISD::RET_FLAG", SDTNone,
                            [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
@@ -530,45 +521,20 @@ let isCall = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
   }
 }
 
-// Darwin ABI Calls.
 let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
   // Convenient aliases for call instructions
   let Uses = [RM] in {
-    def BL_Darwin  : IForm<18, 0, 1,
-                           (outs), (ins calltarget:$func), 
-                           "bl $func", BrB, []>;  // See Pat patterns below.
-    def BLA_Darwin : IForm<18, 1, 1, 
-                          (outs), (ins aaddr:$func),
-                          "bla $func", BrB, [(PPCcall_Darwin (i32 imm:$func))]>;
+    def BL  : IForm<18, 0, 1, (outs), (ins calltarget:$func),
+                    "bl $func", BrB, []>;  // See Pat patterns below.
+    def BLA : IForm<18, 1, 1, (outs), (ins aaddr:$func),
+                    "bla $func", BrB, [(PPCcall (i32 imm:$func))]>;
   }
   let Uses = [CTR, RM] in {
-    def BCTRL_Darwin : XLForm_2_ext<19, 528, 20, 0, 1, 
-                                  (outs), (ins),
-                                  "bctrl", BrB,
-                                  [(PPCbctrl_Darwin)]>, Requires<[In32BitMode]>;
+    def BCTRL : XLForm_2_ext<19, 528, 20, 0, 1, (outs), (ins),
+                             "bctrl", BrB, [(PPCbctrl)]>,
+                Requires<[In32BitMode]>;
   }
 }
-
-// SVR4 ABI Calls.
-let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
-  // Convenient aliases for call instructions
-  let Uses = [RM] in {
-    def BL_SVR4  : IForm<18, 0, 1,
-                        (outs), (ins calltarget:$func), 
-                        "bl $func", BrB, []>;  // See Pat patterns below.
-    def BLA_SVR4 : IForm<18, 1, 1,
-                        (outs), (ins aaddr:$func),
-                        "bla $func", BrB,
-                        [(PPCcall_SVR4 (i32 imm:$func))]>;
-  }
-  let Uses = [CTR, RM] in {
-    def BCTRL_SVR4 : XLForm_2_ext<19, 528, 20, 0, 1,
-                                (outs), (ins),
-                                "bctrl", BrB,
-                                [(PPCbctrl_SVR4)]>, Requires<[In32BitMode]>;
-  }
-}
-
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [RM] in
 def TCRETURNdi :Pseudo< (outs),
@@ -1597,14 +1563,10 @@ def : Pat<(and (rotl GPRC:$in, GPRC:$sh), maskimm32:$imm),
           (RLWNM GPRC:$in, GPRC:$sh, (MB maskimm32:$imm), (ME maskimm32:$imm))>;
 
 // Calls
-def : Pat<(PPCcall_Darwin (i32 tglobaladdr:$dst)),
-          (BL_Darwin tglobaladdr:$dst)>;
-def : Pat<(PPCcall_Darwin (i32 texternalsym:$dst)),
-          (BL_Darwin texternalsym:$dst)>;
-def : Pat<(PPCcall_SVR4 (i32 tglobaladdr:$dst)),
-          (BL_SVR4 tglobaladdr:$dst)>;
-def : Pat<(PPCcall_SVR4 (i32 texternalsym:$dst)),
-          (BL_SVR4 texternalsym:$dst)>;
+def : Pat<(PPCcall (i32 tglobaladdr:$dst)),
+          (BL tglobaladdr:$dst)>;
+def : Pat<(PPCcall (i32 texternalsym:$dst)),
+          (BL texternalsym:$dst)>;
 
 
 def : Pat<(PPCtc_return (i32 tglobaladdr:$dst),  imm:$imm),

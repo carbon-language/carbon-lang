@@ -726,8 +726,8 @@ unsigned PPCInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   case PPC::GC_LABEL:
   case PPC::DBG_VALUE:
     return 0;
-  case PPC::BL8_NOP_ELF:
-  case PPC::BLA8_NOP_ELF:
+  case PPC::BL8_NOP:
+  case PPC::BLA8_NOP:
     return 8;
   default:
     return 4; // PowerPC instructions are all 4 bytes

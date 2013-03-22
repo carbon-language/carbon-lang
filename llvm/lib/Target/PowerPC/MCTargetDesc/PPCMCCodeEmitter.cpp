@@ -81,12 +81,11 @@ public:
                          SmallVectorImpl<MCFixup> &Fixups) const {
     uint64_t Bits = getBinaryCodeForInstr(MI, Fixups);
 
-    // BL8_NOP_ELF, BLA8_NOP_ELF, etc., all have a size of 8 because of the
-    // following 'nop'.
+    // BL8_NOP etc. all have a size of 8 because of the following 'nop'.
     unsigned Size = 4; // FIXME: Have Desc.getSize() return the correct value!
     unsigned Opcode = MI.getOpcode();
-    if (Opcode == PPC::BL8_NOP_ELF || Opcode == PPC::BLA8_NOP_ELF ||
-        Opcode == PPC::BL8_NOP_ELF_TLSGD || Opcode == PPC::BL8_NOP_ELF_TLSLD)
+    if (Opcode == PPC::BL8_NOP || Opcode == PPC::BLA8_NOP ||
+        Opcode == PPC::BL8_NOP_TLSGD || Opcode == PPC::BL8_NOP_TLSLD)
       Size = 8;
     
     // Output the constant in big endian byte order.
@@ -121,11 +120,11 @@ getDirectBrEncoding(const MCInst &MI, unsigned OpNo,
                                    (MCFixupKind)PPC::fixup_ppc_br24));
 
   // For special TLS calls, add another fixup for the symbol.  Apparently
-  // BL8_NOP_ELF, BL8_NOP_ELF_TLSGD, and BL8_NOP_ELF_TLSLD are sufficiently
+  // BL8_NOP, BL8_NOP_TLSGD, and BL8_NOP_TLSLD are sufficiently
   // similar that TblGen will not generate a separate case for the latter
   // two, so this is the only way to get the extra fixup generated.
   unsigned Opcode = MI.getOpcode();
-  if (Opcode == PPC::BL8_NOP_ELF_TLSGD || Opcode == PPC::BL8_NOP_ELF_TLSLD) {
+  if (Opcode == PPC::BL8_NOP_TLSGD || Opcode == PPC::BL8_NOP_TLSLD) {
     const MCOperand &MO2 = MI.getOperand(OpNo+1);
     Fixups.push_back(MCFixup::Create(0, MO2.getExpr(),
                                      (MCFixupKind)PPC::fixup_ppc_nofixup));

@@ -75,86 +75,51 @@ let Defs = [LR8] in
   def MovePCtoLR8 : Pseudo<(outs), (ins), "#MovePCtoLR8", []>,
                     PPC970_Unit_BRU;
 
-// Darwin ABI Calls.
 let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
   // Convenient aliases for call instructions
   let Uses = [RM] in {
-    def BL8_Darwin  : IForm<18, 0, 1,
-                            (outs), (ins calltarget:$func),
-                            "bl $func", BrB, []>;  // See Pat patterns below.
-    def BLA8_Darwin : IForm<18, 1, 1,
-                          (outs), (ins aaddr:$func),
-                          "bla $func", BrB, [(PPCcall_Darwin (i64 imm:$func))]>;
-  }
-  let Uses = [CTR8, RM] in {
-    def BCTRL8_Darwin : XLForm_2_ext<19, 528, 20, 0, 1, 
-                                  (outs), (ins),
-                                  "bctrl", BrB,
-                                  [(PPCbctrl_Darwin)]>, Requires<[In64BitMode]>;
-  }
-}
+    def BL8  : IForm<18, 0, 1, (outs), (ins calltarget:$func),
+                     "bl $func", BrB, []>;  // See Pat patterns below.
 
-// ELF 64 ABI Calls = Darwin ABI Calls
-// Used to define BL8_ELF and BLA8_ELF
-let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
-  // Convenient aliases for call instructions
-  let Uses = [RM] in {
-    def BL8_ELF  : IForm<18, 0, 1,
-                         (outs), (ins calltarget:$func),
-                         "bl $func", BrB, []>;  // See Pat patterns below.
-
-    let isCodeGenOnly = 1 in
-    def BL8_NOP_ELF  : IForm_and_DForm_4_zero<18, 0, 1, 24,
+    def BLA8 : IForm<18, 1, 1, (outs), (ins aaddr:$func),
+                     "bla $func", BrB, [(PPCcall (i64 imm:$func))]>;
+  }
+  let Uses = [RM], isCodeGenOnly = 1 in {
+    def BL8_NOP  : IForm_and_DForm_4_zero<18, 0, 1, 24,
                              (outs), (ins calltarget:$func),
                              "bl $func\n\tnop", BrB, []>;
 
-    let isCodeGenOnly = 1 in
-    def BL8_NOP_ELF_TLSGD : IForm_and_DForm_4_zero<18, 0, 1, 24,
+    def BL8_NOP_TLSGD : IForm_and_DForm_4_zero<18, 0, 1, 24,
                                   (outs), (ins calltarget:$func, tlsgd:$sym),
                                   "bl $func($sym)\n\tnop", BrB, []>;
 
-    let isCodeGenOnly = 1 in
-    def BL8_NOP_ELF_TLSLD : IForm_and_DForm_4_zero<18, 0, 1, 24,
+    def BL8_NOP_TLSLD : IForm_and_DForm_4_zero<18, 0, 1, 24,
                                   (outs), (ins calltarget:$func, tlsgd:$sym),
                                   "bl $func($sym)\n\tnop", BrB, []>;
 
-    def BLA8_ELF : IForm<18, 1, 1,
-                         (outs), (ins aaddr:$func),
-                         "bla $func", BrB, [(PPCcall_SVR4 (i64 imm:$func))]>;
-
-    let isCodeGenOnly = 1 in
-    def BLA8_NOP_ELF : IForm_and_DForm_4_zero<18, 1, 1, 24,
+    def BLA8_NOP : IForm_and_DForm_4_zero<18, 1, 1, 24,
                              (outs), (ins aaddr:$func),
                              "bla $func\n\tnop", BrB,
-                             [(PPCcall_nop_SVR4 (i64 imm:$func))]>;
+                             [(PPCcall_nop (i64 imm:$func))]>;
   }
-  let Uses = [X11, CTR8, RM] in {
-    def BCTRL8_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
-                               (outs), (ins),
-                               "bctrl", BrB,
-                               [(PPCbctrl_SVR4)]>, Requires<[In64BitMode]>;
+  let Uses = [CTR8, RM] in {
+    def BCTRL8 : XLForm_2_ext<19, 528, 20, 0, 1, (outs), (ins),
+                              "bctrl", BrB, [(PPCbctrl)]>,
+                 Requires<[In64BitMode]>;
   }
 }
 
 
 // Calls
-def : Pat<(PPCcall_Darwin (i64 tglobaladdr:$dst)),
-          (BL8_Darwin tglobaladdr:$dst)>;
-def : Pat<(PPCcall_Darwin (i64 texternalsym:$dst)),
-          (BL8_Darwin texternalsym:$dst)>;
+def : Pat<(PPCcall (i64 tglobaladdr:$dst)),
+          (BL8 tglobaladdr:$dst)>;
+def : Pat<(PPCcall_nop (i64 tglobaladdr:$dst)),
+          (BL8_NOP tglobaladdr:$dst)>;
 
-def : Pat<(PPCcall_SVR4 (i64 tglobaladdr:$dst)),
-          (BL8_ELF tglobaladdr:$dst)>;
-def : Pat<(PPCcall_nop_SVR4 (i64 tglobaladdr:$dst)),
-          (BL8_NOP_ELF tglobaladdr:$dst)>;
-
-def : Pat<(PPCcall_SVR4 (i64 texternalsym:$dst)),
-          (BL8_ELF texternalsym:$dst)>;
-def : Pat<(PPCcall_nop_SVR4 (i64 texternalsym:$dst)),
-          (BL8_NOP_ELF texternalsym:$dst)>;
-
-def : Pat<(PPCnop),
-          (NOP)>;
+def : Pat<(PPCcall (i64 texternalsym:$dst)),
+          (BL8 texternalsym:$dst)>;
+def : Pat<(PPCcall_nop (i64 texternalsym:$dst)),
+          (BL8_NOP texternalsym:$dst)>;
 
 // Atomic operations
 let usesCustomInserter = 1 in {
