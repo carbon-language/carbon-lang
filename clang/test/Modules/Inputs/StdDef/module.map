@@ -1,0 +1,11 @@
+module StdDef {
+  module SizeT {
+    header "size_t.h"
+    export *
+  }
+
+  module Other {
+    header "other.h"
+    export *
+  }
+}

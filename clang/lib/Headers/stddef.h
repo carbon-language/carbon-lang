@@ -26,17 +26,28 @@
 #ifndef __STDDEF_H
 #define __STDDEF_H
 
-#ifndef _PTRDIFF_T
+#if !defined(_PTRDIFF_T) || __has_feature(modules)
+/* Always define ptrdiff_t when modules are available. */
+#if !__has_feature(modules)
 #define _PTRDIFF_T
+#endif
 typedef __PTRDIFF_TYPE__ ptrdiff_t;
 #endif
-#ifndef _SIZE_T
+
+#if !defined(_SIZE_T) || __has_feature(modules)
+/* Always define size_t when modules are available. */
+#if !__has_feature(modules)
 #define _SIZE_T
+#endif
 typedef __SIZE_TYPE__ size_t;
 #endif
+
 #ifndef __cplusplus
-#ifndef _WCHAR_T
+/* Always define wchar_t when modules are available. */
+#if !defined(_WCHAR_T) || __has_feature(modules)
+#if !__has_feature(modules)
 #define _WCHAR_T
+#endif
 typedef __WCHAR_TYPE__ wchar_t;
 #endif
 #endif
@@ -66,9 +77,12 @@ using ::std::nullptr_t;
 /* Some C libraries expect to see a wint_t here. Others (notably MinGW) will use
 __WINT_TYPE__ directly; accommodate both by requiring __need_wint_t */
 #if defined(__need_wint_t)
-#if !defined(_WINT_T)
+/* Always define wint_t when modules are available. */
+#if !defined(_WINT_T) || __has_feature(modules)
+#if !__has_feature(modules)
 #define _WINT_T
+#endif
 typedef __WINT_TYPE__ wint_t;
-#endif /* _WINT_T */
+#endif
 #undef __need_wint_t
 #endif /* __need_wint_t */
