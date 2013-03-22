@@ -985,22 +985,17 @@ bool llvm::removeUnreachableBlocks(Function &F) {
     if (Reachable.count(I))
       continue;
 
-    // Remove the block as predecessor of all its reachable successors.
-    // Unreachable successors don't matter as they'll soon be removed, too.
     for (succ_iterator SI = succ_begin(I), SE = succ_end(I); SI != SE; ++SI)
       if (Reachable.count(*SI))
         (*SI)->removePredecessor(I);
-
-    // Zap all instructions in this basic block.
-    while (!I->empty()) {
-      Instruction &Inst = I->back();
-      if (!Inst.use_empty())
-        Inst.replaceAllUsesWith(UndefValue::get(Inst.getType()));
-      I->getInstList().pop_back();
-    }
-
-    --I;
-    llvm::next(I)->eraseFromParent();
+    I->dropAllReferences();
   }
+
+  for (Function::iterator I = llvm::next(F.begin()), E=F.end(); I != E;)
+    if (!Reachable.count(I))
+      I = F.getBasicBlockList().erase(I);
+    else
+      ++I;
+
   return true;
 }

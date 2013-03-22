@@ -21,3 +21,19 @@ exit:
 ; CHECK: @Func
 ; CHECK: store i32 0, {{.*}} @__msan_retval_tls
 ; CHECK: ret i32 42
+
+
+define i32 @UnreachableLoop() nounwind uwtable {
+entry:
+  ret i32 0
+
+zzz:
+  br label %xxx
+
+xxx:
+  br label %zzz
+}
+
+; CHECK: @UnreachableLoop
+; CHECK: store i32 0, {{.*}} @__msan_retval_tls
+; CHECK: ret i32 0
