@@ -48,7 +48,7 @@ entry:
 }
 
 ; CHECK: define void @call_virtual_func
-; CHECK: __tsan_read
+; CHECK: __tsan_vptr_read
 ; CHECK: = load
 ; CHECK-NOT: __tsan_read
 ; CHECK: = load
