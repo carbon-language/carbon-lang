@@ -159,11 +159,8 @@ void InvokeInliningInfo::forwardResume(ResumeInst *RI,
   SmallPtrSet<LandingPadInst*, 16> InlinedLPads;
   Function *Caller = FirstNewBlock->getParent();
   for (Function::iterator I = FirstNewBlock, E = Caller->end(); I != E; ++I)
-    if (InvokeInst *II = dyn_cast<InvokeInst>(I->getTerminator())) {
-      LandingPadInst *LPI = II->getLandingPadInst();
-      if (!LPI->hasCatchAll())
-        InlinedLPads.insert(LPI);
-    }
+    if (InvokeInst *II = dyn_cast<InvokeInst>(I->getTerminator()))
+      InlinedLPads.insert(II->getLandingPadInst());
 
   // Merge the catch clauses from the outer landing pad instruction into the
   // inlined landing pad instructions.
