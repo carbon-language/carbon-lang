@@ -31,9 +31,10 @@ set(MSAN_LIBCXX_LINK_FLAGS
   -fsanitize=memory)
 
 # Unittest sources and build flags.
-set(MSAN_UNITTEST_SOURCE msan_test.cc)
+set(MSAN_UNITTEST_SOURCES msan_test.cc msan_test_main.cc)
 set(MSAN_LOADABLE_SOURCE msan_loadable.cc)
 set(MSAN_UNITTEST_HEADERS
+  msan_test_config.h
   msandr_test_so.h
   ../../../include/sanitizer/msan_interface.h
 )
@@ -133,8 +134,10 @@ macro(add_msan_tests_for_arch arch)
 
   # Instrumented tests.
   set(MSAN_INST_TEST_OBJECTS)
-  msan_compile(MSAN_INST_TEST_OBJECTS ${MSAN_UNITTEST_SOURCE} ${arch}
-               ${MSAN_UNITTEST_INSTRUMENTED_CFLAGS})
+  foreach (SOURCE ${MSAN_UNITTEST_SOURCES})
+    msan_compile(MSAN_INST_TEST_OBJECTS ${SOURCE} ${arch}
+                 ${MSAN_UNITTEST_INSTRUMENTED_CFLAGS})
+  endforeach(SOURCE)
 
   # Instrumented loadable module objects.
   set(MSAN_INST_LOADABLE_OBJECTS)

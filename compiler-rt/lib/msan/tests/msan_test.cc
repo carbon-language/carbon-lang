@@ -12,9 +12,12 @@
 // MemorySanitizer unit tests.
 //===----------------------------------------------------------------------===//
 
+#ifndef MSAN_EXTERNAL_TEST_CONFIG
+#include "msan_test_config.h"
+#endif // MSAN_EXTERNAL_TEST_CONFIG
+
 #include "sanitizer/msan_interface.h"
 #include "msandr_test_so.h"
-#include "gtest/gtest.h"
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -1942,10 +1945,4 @@ TEST(MemorySanitizer, CallocOverflow) {
 
 TEST(MemorySanitizerStress, DISABLED_MallocStackTrace) {
   RecursiveMalloc(22);
-}
-
-int main(int argc, char **argv) {
-  testing::InitGoogleTest(&argc, argv);
-  int res = RUN_ALL_TESTS();
-  return res;
 }
