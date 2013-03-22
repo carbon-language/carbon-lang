@@ -204,6 +204,7 @@ bool serialization::isRedeclarableDeclKind(unsigned Kind) {
   case Decl::Block:
   case Decl::ClassScopeFunctionSpecialization:
   case Decl::Import:
+  case Decl::OMPThreadPrivate:
     return false;
   }
 

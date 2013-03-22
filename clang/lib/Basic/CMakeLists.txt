@@ -11,6 +11,7 @@ add_clang_library(clangBasic
   LangOptions.cpp
   Module.cpp
   ObjCRuntime.cpp
+  OpenMPKinds.cpp
   OperatorPrecedence.cpp
   SourceLocation.cpp
   SourceManager.cpp

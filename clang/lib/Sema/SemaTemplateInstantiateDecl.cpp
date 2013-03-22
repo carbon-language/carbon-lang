@@ -2183,6 +2183,23 @@ Decl *TemplateDeclInstantiator::VisitClassScopeFunctionSpecializationDecl(
   return NewFD;
 }
 
+Decl *TemplateDeclInstantiator::VisitOMPThreadPrivateDecl(
+                                     OMPThreadPrivateDecl *D) {
+  SmallVector<DeclRefExpr *, 5> Vars;
+  for (ArrayRef<DeclRefExpr *>::iterator I = D->varlist_begin(),
+                                         E = D->varlist_end();
+       I != E; ++I) {
+    Expr *Var = SemaRef.SubstExpr(*I, TemplateArgs).take();
+    assert(isa<DeclRefExpr>(Var) && "threadprivate arg is not a DeclRefExpr");
+    Vars.push_back(cast<DeclRefExpr>(Var));
+  }
+
+  OMPThreadPrivateDecl *TD =
+    SemaRef.CheckOMPThreadPrivateDecl(D->getLocation(), Vars);
+
+  return TD;
+}
+
 Decl *Sema::SubstDecl(Decl *D, DeclContext *Owner,
                       const MultiLevelTemplateArgumentList &TemplateArgs) {
   TemplateDeclInstantiator Instantiator(*this, Owner, TemplateArgs);

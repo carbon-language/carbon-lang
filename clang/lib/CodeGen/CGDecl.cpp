@@ -83,6 +83,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::StaticAssert: // static_assert(X, ""); [C++0x]
   case Decl::Label:        // __label__ x;
   case Decl::Import:
+  case Decl::OMPThreadPrivate:
   case Decl::Empty:
     // None of these decls require codegen support.
     return;

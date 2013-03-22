@@ -463,6 +463,10 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
       Out << "<class template> " << *CTD << '\n';
       break;
     }
+    case Decl::OMPThreadPrivate: {
+      Out << "<omp threadprivate> " << '"' << *I << "\"\n";
+      break;
+    }
     default:
       Out << "DeclKind: " << DK << '"' << *I << "\"\n";
       llvm_unreachable("decl unhandled");

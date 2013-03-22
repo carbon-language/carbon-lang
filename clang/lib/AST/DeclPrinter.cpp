@@ -82,6 +82,7 @@ namespace {
     void VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D);
     void VisitUsingDecl(UsingDecl *D);
     void VisitUsingShadowDecl(UsingShadowDecl *D);
+    void VisitOMPThreadPrivateDecl(OMPThreadPrivateDecl *D);
 
     void PrintTemplateParameters(const TemplateParameterList *Params,
                                  const TemplateArgumentList *Args = 0);
@@ -291,8 +292,10 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
 
     // FIXME: Need to be able to tell the DeclPrinter when
     const char *Terminator = 0;
-    if (isa<FunctionDecl>(*D) &&
-        cast<FunctionDecl>(*D)->isThisDeclarationADefinition())
+    if (isa<OMPThreadPrivateDecl>(*D))
+      Terminator = 0;
+    else if (isa<FunctionDecl>(*D) &&
+             cast<FunctionDecl>(*D)->isThisDeclarationADefinition())
       Terminator = 0;
     else if (isa<ObjCMethodDecl>(*D) && cast<ObjCMethodDecl>(*D)->getBody())
       Terminator = 0;
@@ -1150,3 +1153,17 @@ void DeclPrinter::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
 void DeclPrinter::VisitUsingShadowDecl(UsingShadowDecl *D) {
   // ignore
 }
+
+void DeclPrinter::VisitOMPThreadPrivateDecl(OMPThreadPrivateDecl *D) {
+  Out << "#pragma omp threadprivate";
+  if (!D->varlist_empty()) {
+    for (OMPThreadPrivateDecl::varlist_iterator I = D->varlist_begin(),
+                                                E = D->varlist_end();
+         I != E; ++I) {
+      Out << (I == D->varlist_begin() ? '(' : ',')
+          << *cast<NamedDecl>((*I)->getDecl());
+    }
+    Out << ")";
+  }
+}
+

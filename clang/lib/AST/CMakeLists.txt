@@ -22,6 +22,7 @@ add_clang_library(clangAST
   DeclFriend.cpp
   DeclGroup.cpp
   DeclObjC.cpp
+  DeclOpenMP.cpp
   DeclPrinter.cpp
   DeclTemplate.cpp
   DumpXML.cpp

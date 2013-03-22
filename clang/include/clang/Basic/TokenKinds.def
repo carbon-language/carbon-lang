@@ -646,6 +646,12 @@ ANNOTATION(pragma_fp_contract)
 // handles them.
 ANNOTATION(pragma_opencl_extension)
 
+// Annotations for OpenMP pragma directives - #pragma omp ...
+// The lexer produces these so that they only take effect when the parser
+// handles #pragma omp ... directives.
+ANNOTATION(pragma_openmp)
+ANNOTATION(pragma_openmp_end)
+
 #undef ANNOTATION
 #undef TESTING_KEYWORD
 #undef OBJC2_AT_KEYWORD

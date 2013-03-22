@@ -123,6 +123,7 @@ namespace clang {
     void VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *D);
     void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
     void VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D);
+    void VisitOMPThreadPrivateDecl(OMPThreadPrivateDecl *D);
   };
 }
 
@@ -1312,6 +1313,16 @@ void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
     Record.push_back(0);
   }
   
+}
+
+void ASTDeclWriter::VisitOMPThreadPrivateDecl(OMPThreadPrivateDecl *D) {
+  Record.push_back(D->varlist_size());
+  VisitDecl(D);
+  for (OMPThreadPrivateDecl::varlist_iterator I = D->varlist_begin(),
+                                              E = D->varlist_end();
+       I != E; ++I)
+    Writer.AddStmt(*I);
+  Code = serialization::DECL_OMP_THREADPRIVATE;
 }
 
 //===----------------------------------------------------------------------===//

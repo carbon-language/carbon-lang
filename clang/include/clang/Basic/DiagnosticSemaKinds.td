@@ -6195,6 +6195,22 @@ def err_sampler_argument_required : Error<
 def err_wrong_sampler_addressspace: Error<
   "sampler type cannot be used with the __local and __global address space qualifiers">;
 
+// OpenMP support.
+def err_omp_expected_var_arg_suggest : Error<
+  "%0 is not a global variable, static local variable or static data member%select{|; did you mean %2?}1">;
+def err_omp_global_var_arg : Error<
+  "arguments of '#pragma omp %0' must have %select{global storage|static storage duration}1">;
+def err_omp_ref_type_arg : Error<
+  "arguments of '#pragma omp %0' cannot be of reference type %1">;
+def err_omp_var_scope : Error<
+  "'#pragma omp %0' must appear in the scope of the %1 variable declaration">;
+def err_omp_var_used : Error<
+  "'#pragma omp %0' must precede all references to variable %1">;
+def err_omp_var_thread_local : Error<
+  "variable %0 cannot be threadprivate because it is thread-local">;
+def err_omp_incomplete_type : Error<
+  "a threadprivate variable must not have incomplete type %0">;
+
 } // end of sema category
 
 let CategoryName = "Related Result Type Issue" in {

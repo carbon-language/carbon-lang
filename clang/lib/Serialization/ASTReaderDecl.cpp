@@ -289,6 +289,7 @@ namespace clang {
     void VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *D);
     void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
     void VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D);
+    void VisitOMPThreadPrivateDecl(OMPThreadPrivateDecl *D);
   };
 }
 
@@ -1626,6 +1627,17 @@ void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *D,
   }
 }
 
+void ASTDeclReader::VisitOMPThreadPrivateDecl(OMPThreadPrivateDecl *D) {
+  VisitDecl(D);
+  unsigned NumVars = D->varlist_size();
+  SmallVector<DeclRefExpr *, 16> Vars;
+  Vars.reserve(NumVars);
+  for (unsigned i = 0; i != NumVars; ++i) {
+    Vars.push_back(cast<DeclRefExpr>(Reader.ReadExpr(F)));
+  }
+  D->setVars(Vars);
+}
+
 //===----------------------------------------------------------------------===//
 // Attribute Reading
 //===----------------------------------------------------------------------===//
@@ -2133,6 +2145,9 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
     // Note: last entry of the ImportDecl record is the number of stored source 
     // locations.
     D = ImportDecl::CreateDeserialized(Context, ID, Record.back());
+    break;
+  case DECL_OMP_THREADPRIVATE:
+    D = OMPThreadPrivateDecl::CreateDeserialized(Context, ID, Record[Idx++]);
     break;
   case DECL_EMPTY:
     D = EmptyDecl::CreateDeserialized(Context, ID);

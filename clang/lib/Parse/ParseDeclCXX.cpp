@@ -2525,6 +2525,11 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
         continue;
       }
 
+      if (Tok.is(tok::annot_pragma_openmp)) {
+        ParseOpenMPDeclarativeDirective();
+        continue;
+      }
+
       AccessSpecifier AS = getAccessSpecifierIfPresent();
       if (AS != AS_none) {
         // Current token is a C++ access specifier.

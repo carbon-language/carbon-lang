@@ -718,3 +718,47 @@ PragmaOpenCLExtensionHandler::HandlePragma(Preprocessor &PP,
                       /*OwnsTokens=*/false);
 }
 
+/// \brief Handle '#pragma omp ...' when OpenMP is disabled.
+///
+void
+PragmaNoOpenMPHandler::HandlePragma(Preprocessor &PP,
+                                    PragmaIntroducerKind Introducer,
+                                    Token &FirstTok) {
+  if (PP.getDiagnostics().getDiagnosticLevel(diag::warn_pragma_omp_ignored,
+                                             FirstTok.getLocation()) !=
+      DiagnosticsEngine::Ignored) {
+    PP.Diag(FirstTok, diag::warn_pragma_omp_ignored);
+    PP.getDiagnostics().setDiagnosticMapping(diag::warn_pragma_omp_ignored,
+                                             diag::MAP_IGNORE,
+                                             SourceLocation());
+  }
+  PP.DiscardUntilEndOfDirective();
+}
+
+/// \brief Handle '#pragma omp ...' when OpenMP is enabled.
+///
+void
+PragmaOpenMPHandler::HandlePragma(Preprocessor &PP,
+                                  PragmaIntroducerKind Introducer,
+                                  Token &FirstTok) {
+  SmallVector<Token, 16> Pragma;
+  Token Tok;
+  Tok.startToken();
+  Tok.setKind(tok::annot_pragma_openmp);
+  Tok.setLocation(FirstTok.getLocation());
+
+  while (Tok.isNot(tok::eod)) {
+    Pragma.push_back(Tok);
+    PP.Lex(Tok);
+  }
+  SourceLocation EodLoc = Tok.getLocation();
+  Tok.startToken();
+  Tok.setKind(tok::annot_pragma_openmp_end);
+  Tok.setLocation(EodLoc);
+  Pragma.push_back(Tok);
+
+  Token *Toks = new Token[Pragma.size()];
+  std::copy(Pragma.begin(), Pragma.end(), Toks);
+  PP.EnterTokenStream(Toks, Pragma.size(),
+                      /*DisableMacroExpansion=*/true, /*OwnsTokens=*/true);
+}

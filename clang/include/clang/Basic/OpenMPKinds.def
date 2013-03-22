@@ -1,0 +1,23 @@
+//===--- OpenMPKinds.def - OpenMP directives and clauses list ---*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+/// \file
+/// \brief This file defines the list of supported OpenMP directives and 
+/// clauses.
+///
+//===----------------------------------------------------------------------===//
+
+#ifndef OPENMP_DIRECTIVE
+#  define OPENMP_DIRECTIVE(Name)
+#endif
+
+// OpenMP directives.
+OPENMP_DIRECTIVE(threadprivate)
+OPENMP_DIRECTIVE(parallel)
+
+#undef OPENMP_DIRECTIVE

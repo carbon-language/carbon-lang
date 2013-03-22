@@ -98,7 +98,20 @@ public:
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
                             Token &FirstToken);
 };
-  
+
+class PragmaNoOpenMPHandler : public PragmaHandler {
+public:
+  PragmaNoOpenMPHandler() : PragmaHandler("omp") { }
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
+class PragmaOpenMPHandler : public PragmaHandler {
+public:
+  PragmaOpenMPHandler() : PragmaHandler("omp") { }
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
 
 }  // end namespace clang
 

@@ -74,5 +74,6 @@ def StaticAssert : Decl;
 def Block : Decl, DeclContext;
 def ClassScopeFunctionSpecialization : Decl;
 def Import : Decl;
+def OMPThreadPrivate : Decl;
 def Empty : Decl;
 

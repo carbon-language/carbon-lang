@@ -20,6 +20,7 @@
 #include "clang/AST/DeclContextInternals.h"
 #include "clang/AST/DeclFriend.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclOpenMP.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/DependentDiagnostic.h"
 #include "clang/AST/ExternalASTSource.h"
@@ -561,6 +562,7 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case ObjCCategory:
     case ObjCCategoryImpl:
     case Import:
+    case OMPThreadPrivate:
     case Empty:
       // Never looked up by name.
       return 0;

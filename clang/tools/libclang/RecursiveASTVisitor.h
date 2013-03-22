@@ -18,6 +18,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclFriend.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclOpenMP.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
@@ -1324,6 +1325,14 @@ DEF_TRAVERSE_DECL(UsingDirectiveDecl, {
   })
 
 DEF_TRAVERSE_DECL(UsingShadowDecl, { })
+
+DEF_TRAVERSE_DECL(OMPThreadPrivateDecl, {
+    for (OMPThreadPrivateDecl::varlist_iterator I = D->varlist_begin(),
+                                                E = D->varlist_end();
+         I != E; ++I) {
+      TRY_TO(TraverseStmt(*I));
+    }
+  })
 
 // A helper method for TemplateDecl's children.
 template<typename Derived>

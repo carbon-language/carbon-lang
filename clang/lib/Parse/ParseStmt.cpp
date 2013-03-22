@@ -288,6 +288,11 @@ Retry:
     ProhibitAttributes(Attrs);
     HandlePragmaOpenCLExtension();
     return StmtEmpty();
+
+  case tok::annot_pragma_openmp:
+    SourceLocation DeclStart = Tok.getLocation();
+    DeclGroupPtrTy Res = ParseOpenMPDeclarativeDirective();
+    return Actions.ActOnDeclStmt(Res, DeclStart, Tok.getLocation());
   }
 
   // If we reached this code, the statement must end in a semicolon.

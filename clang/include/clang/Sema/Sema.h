@@ -132,6 +132,7 @@ namespace clang {
   class ObjCMethodDecl;
   class ObjCPropertyDecl;
   class ObjCProtocolDecl;
+  class OMPThreadPrivateDecl;
   class OverloadCandidateSet;
   class OverloadExpr;
   class ParenListExpr;
@@ -6591,6 +6592,18 @@ public:
                       unsigned SpellingListIndex, bool IsPackExpansion);
   void AddAlignedAttr(SourceRange AttrRange, Decl *D, TypeSourceInfo *T,
                       unsigned SpellingListIndex, bool IsPackExpansion);
+
+  // OpenMP directives and clauses.
+
+  /// \brief Called on well-formed '#pragma omp threadprivate'.
+  DeclGroupPtrTy ActOnOpenMPThreadprivateDirective(
+                        SourceLocation Loc,
+                        Scope *CurScope,
+                        ArrayRef<DeclarationNameInfo> IdList);
+  /// \brief Build a new OpenMPThreadPrivateDecl and check its correctness.
+  OMPThreadPrivateDecl *CheckOMPThreadPrivateDecl(
+                        SourceLocation Loc,
+                        ArrayRef<DeclRefExpr *> VarList);
 
   /// \brief The kind of conversion being performed.
   enum CheckedConversionKind {
