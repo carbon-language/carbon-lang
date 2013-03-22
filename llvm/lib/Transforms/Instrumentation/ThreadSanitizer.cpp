@@ -63,6 +63,7 @@ STATISTIC(NumOmittedReadsBeforeWrite,
           "Number of reads ignored due to following writes");
 STATISTIC(NumAccessesWithBadSize, "Number of accesses with bad size");
 STATISTIC(NumInstrumentedVtableWrites, "Number of vtable ptr writes");
+STATISTIC(NumInstrumentedVtableReads, "Number of vtable ptr reads");
 STATISTIC(NumOmittedReadsFromConstantGlobals,
           "Number of reads from constant globals");
 STATISTIC(NumOmittedReadsFromVtable, "Number of vtable reads");
@@ -108,6 +109,7 @@ struct ThreadSanitizer : public FunctionPass {
   Function *TsanAtomicThreadFence;
   Function *TsanAtomicSignalFence;
   Function *TsanVptrUpdate;
+  Function *TsanVptrLoad;
 };
 }  // namespace
 
@@ -196,6 +198,8 @@ void ThreadSanitizer::initializeCallbacks(Module &M) {
   TsanVptrUpdate = checkInterfaceFunction(M.getOrInsertFunction(
       "__tsan_vptr_update", IRB.getVoidTy(), IRB.getInt8PtrTy(),
       IRB.getInt8PtrTy(), NULL));
+  TsanVptrLoad = checkInterfaceFunction(M.getOrInsertFunction(
+      "__tsan_vptr_read", IRB.getVoidTy(), IRB.getInt8PtrTy(), NULL));
   TsanAtomicThreadFence = checkInterfaceFunction(M.getOrInsertFunction(
       "__tsan_atomic_thread_fence", IRB.getVoidTy(), OrdTy, NULL));
   TsanAtomicSignalFence = checkInterfaceFunction(M.getOrInsertFunction(
@@ -384,6 +388,12 @@ bool ThreadSanitizer::instrumentLoadOrStore(Instruction *I) {
                     IRB.CreatePointerCast(Addr, IRB.getInt8PtrTy()),
                     IRB.CreatePointerCast(StoredValue, IRB.getInt8PtrTy()));
     NumInstrumentedVtableWrites++;
+    return true;
+  }
+  if (!IsWrite && isVtableAccess(I)) {
+    IRB.CreateCall(TsanVptrLoad,
+                   IRB.CreatePointerCast(Addr, IRB.getInt8PtrTy()));
+    NumInstrumentedVtableReads++;
     return true;
   }
   Value *OnAccessFunc = IsWrite ? TsanWrite[Idx] : TsanRead[Idx];
