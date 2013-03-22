@@ -807,7 +807,7 @@ INTERCEPTOR(void *, dlopen, const char *filename, int flag) {
   EnterLoader();
   link_map *map = (link_map *)REAL(dlopen)(filename, flag);
   ExitLoader();
-  if (!__msan_has_dynamic_component()) {
+  if (!__msan_has_dynamic_component() && map) {
     // If msandr didn't clear the shadow before the initializers ran, we do it
     // ourselves afterwards.
     UnpoisonMappedDSO(map);

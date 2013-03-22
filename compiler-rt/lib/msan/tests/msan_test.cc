@@ -1397,6 +1397,13 @@ TEST(MemorySanitizer, dlopen) {
 
   delete[] path;
 }
+
+// Regression test for a crash in dlopen() interceptor.
+TEST(MemorySanitizer, dlopenFailed) {
+  const char *path = "/libmsan_loadable_does_not_exist.x86_64.so";
+  void *lib = dlopen(path, RTLD_LAZY);
+  ASSERT_EQ(0, lib);
+}
 } // namespace
 
 TEST(MemorySanitizer, scanf) {
