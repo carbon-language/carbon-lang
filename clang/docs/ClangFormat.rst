@@ -10,9 +10,8 @@ standalone tool and editor integrations.
 Standalone Tool
 ===============
 
-:program:`clang-format` is part of the `clang/tools/extra` (see
-:doc:`ClangTools <ClangTools>`) repository and can be used to format
-C/C++/Obj-C code.
+:program:`clang-format` is located in `clang/tools/clang-format` and can be used
+to format C/C++/Obj-C code.
 
 .. code-block:: console
 
@@ -35,7 +34,7 @@ C/C++/Obj-C code.
     -length=<int>             - Format a range of this length, -1 for end of file.
     -offset=<int>             - Format a range starting at this file offset.
     -stats                    - Enable statistics output from program
-    -style=<string>           - Coding style, currently supports: LLVM, Google.
+    -style=<string>           - Coding style, currently supports: LLVM, Google, Chromium.
     -version                  - Display the version of this program
 
 
@@ -45,18 +44,18 @@ Vim Integration
 There is an integration for :program:`vim` which lets you run the
 :program:`clang-format` standalone tool on your current buffer, optionally
 selecting regions to reformat. The integration has the form of a `python`-file
-which can be found under `clang/tools/extra/clang-format/clang-format.py`.
+which can be found under `clang/tools/clang-format/clang-format.py`.
 
 This can be integrated by adding the following to your `.vimrc`:
 
 .. code-block:: vim
 
-  map <C-I> :pyf <path-to-this-file>/clang-format.py<CR>
-  imap <C-I> <ESC>:pyf <path-to-this-file>/clang-format.py<CR>i
+  map <C-K> :pyf <path-to-this-file>/clang-format.py<CR>
+  imap <C-K> <ESC>:pyf <path-to-this-file>/clang-format.py<CR>i
 
 The first line enables :program:`clang-format` for NORMAL and VISUAL mode, the
-second line adds support for INSERT mode. Change "C-I" to another binding if
-you need :program:`clang-format` on a different key (C-I stands for Ctrl+i).
+second line adds support for INSERT mode. Change "C-K" to another binding if
+you need :program:`clang-format` on a different key (C-K stands for Ctrl+k).
 
 With this integration you can press the bound key and clang-format will
 format the current line in NORMAL and INSERT mode or the selected region in
@@ -70,7 +69,7 @@ or save any files. To revert a formatting, just undo.
 Script for patch reformatting
 =============================
 
-The python script `clang/tools/extra/clang-format-diff.py` parses the output of
+The python script `clang/tools/clang-format-diff.py` parses the output of
 a unified diff and reformats all contained lines with :program:`clang-format`.
 
 .. code-block:: console
