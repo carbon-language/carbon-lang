@@ -40,17 +40,23 @@ class RegScavenger {
   /// registers.
   bool Tracking;
 
-  /// ScavengingFrameIndex - Special spill slot used for scavenging a register
-  /// post register allocation.
-  int ScavengingFrameIndex;
+  /// Information on scavenged registers (held in a spill slot).
+  struct ScavengedInfo {
+    ScavengedInfo(int FI) : FrameIndex(FI), Reg(0), Restore(NULL) {}
 
-  /// ScavengedReg - If none zero, the specific register is currently being
-  /// scavenged. That is, it is spilled to the special scavenging stack slot.
-  unsigned ScavengedReg;
+    /// A spill slot used for scavenging a register post register allocation.
+    int FrameIndex;
 
-  /// ScavengeRestore - Instruction that restores the scavenged register from
-  /// stack.
-  const MachineInstr *ScavengeRestore;
+    /// If non-zero, the specific register is currently being
+    /// scavenged. That is, it is spilled to this scavenging stack slot.
+    unsigned Reg;
+
+    /// The instruction that restores the scavenged register from stack.
+    const MachineInstr *Restore;
+  };
+
+  /// A vector of information on scavenged registers.
+  SmallVector<ScavengedInfo, 2> Scavenged;
 
   /// CalleeSavedrRegs - A bitvector of callee saved registers for the target.
   ///
@@ -67,8 +73,7 @@ class RegScavenger {
 
 public:
   RegScavenger()
-    : MBB(NULL), NumPhysRegs(0), Tracking(false),
-      ScavengingFrameIndex(-1), ScavengedReg(0) {}
+    : MBB(NULL), NumPhysRegs(0), Tracking(false) {}
 
   /// enterBasicBlock - Start tracking liveness from the begin of the specific
   /// basic block.
@@ -103,10 +108,27 @@ public:
   /// Return 0 if none is found.
   unsigned FindUnusedReg(const TargetRegisterClass *RegClass) const;
 
-  /// setScavengingFrameIndex / getScavengingFrameIndex - accessor and setter of
-  /// ScavengingFrameIndex.
-  void setScavengingFrameIndex(int FI) { ScavengingFrameIndex = FI; }
-  int getScavengingFrameIndex() const { return ScavengingFrameIndex; }
+  /// Add a scavenging frame index.
+  void addScavengingFrameIndex(int FI) {
+    Scavenged.push_back(ScavengedInfo(FI));
+  }
+
+  /// Query whether a frame index is a scavenging frame index.
+  bool isScavengingFrameIndex(int FI) const {
+    for (SmallVector<ScavengedInfo, 2>::const_iterator I = Scavenged.begin(),
+         IE = Scavenged.end(); I != IE; ++I)
+      if (I->FrameIndex == FI)
+        return true;
+
+    return false;
+  }
+
+  /// Get an array of scavenging frame indices.
+  void getScavengingFrameIndices(SmallVectorImpl<int> &A) const {
+    for (SmallVector<ScavengedInfo, 2>::const_iterator I = Scavenged.begin(),
+         IE = Scavenged.end(); I != IE; ++I)
+      A.push_back(I->FrameIndex);
+  }
 
   /// scavengeRegister - Make a register of the specific register class
   /// available and do the appropriate bookkeeping. SPAdj is the stack

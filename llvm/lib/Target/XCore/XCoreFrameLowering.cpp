@@ -409,7 +409,7 @@ XCoreFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   }
   if (RegInfo->requiresRegisterScavenging(MF)) {
     // Reserve a slot close to SP or frame pointer.
-    RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
+    RS->addScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
                                                        RC->getAlignment(),
                                                        false));
   }

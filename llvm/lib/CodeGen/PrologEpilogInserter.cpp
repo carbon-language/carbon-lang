@@ -548,9 +548,11 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   const TargetRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
   if (RS && TFI.hasFP(Fn) && RegInfo->useFPForScavengingIndex(Fn) &&
       !RegInfo->needsStackRealignment(Fn)) {
-    int SFI = RS->getScavengingFrameIndex();
-    if (SFI >= 0)
-      AdjustStackOffset(MFI, SFI, StackGrowsDown, Offset, MaxAlign);
+    SmallVector<int, 2> SFIs;
+    RS->getScavengingFrameIndices(SFIs);
+    for (SmallVector<int, 2>::iterator I = SFIs.begin(),
+         IE = SFIs.end(); I != IE; ++I)
+      AdjustStackOffset(MFI, *I, StackGrowsDown, Offset, MaxAlign);
   }
 
   // FIXME: Once this is working, then enable flag will change to a target
@@ -593,7 +595,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
         continue;
       if (i >= MinCSFrameIndex && i <= MaxCSFrameIndex)
         continue;
-      if (RS && (int)i == RS->getScavengingFrameIndex())
+      if (RS && RS->isScavengingFrameIndex((int)i))
         continue;
       if (MFI->isDeadObjectIndex(i))
         continue;
@@ -615,7 +617,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       continue;
     if (i >= MinCSFrameIndex && i <= MaxCSFrameIndex)
       continue;
-    if (RS && (int)i == RS->getScavengingFrameIndex())
+    if (RS && RS->isScavengingFrameIndex((int)i))
       continue;
     if (MFI->isDeadObjectIndex(i))
       continue;
@@ -631,9 +633,11 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // stack pointer.
   if (RS && (!TFI.hasFP(Fn) || RegInfo->needsStackRealignment(Fn) ||
              !RegInfo->useFPForScavengingIndex(Fn))) {
-    int SFI = RS->getScavengingFrameIndex();
-    if (SFI >= 0)
-      AdjustStackOffset(MFI, SFI, StackGrowsDown, Offset, MaxAlign);
+    SmallVector<int, 2> SFIs;
+    RS->getScavengingFrameIndices(SFIs);
+    for (SmallVector<int, 2>::iterator I = SFIs.begin(),
+         IE = SFIs.end(); I != IE; ++I)
+      AdjustStackOffset(MFI, *I, StackGrowsDown, Offset, MaxAlign);
   }
 
   if (!TFI.targetHandlesStackFrameRounding()) {

@@ -1368,7 +1368,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
         // note: Thumb1 functions spill to R12, not the stack.  Reserve a slot
         // closest to SP or frame pointer.
         const TargetRegisterClass *RC = &ARM::GPRRegClass;
-        RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
+        RS->addScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
                                                            RC->getAlignment(),
                                                            false));
       }

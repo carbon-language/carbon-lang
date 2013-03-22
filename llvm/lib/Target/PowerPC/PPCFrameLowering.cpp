@@ -1086,7 +1086,7 @@ PPCFrameLowering::addScavengingSpillSlot(MachineFunction &MF,
     const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
     const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
     const TargetRegisterClass *RC = Subtarget.isPPC64() ? G8RC : GPRC;
-    RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
+    RS->addScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
                                                        RC->getAlignment(),
                                                        false));
   }

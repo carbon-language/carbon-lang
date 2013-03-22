@@ -45,8 +45,11 @@ bool RegScavenger::isAliasUsed(unsigned Reg) const {
 }
 
 void RegScavenger::initRegState() {
-  ScavengedReg = 0;
-  ScavengeRestore = NULL;
+  for (SmallVector<ScavengedInfo, 2>::iterator I = Scavenged.begin(),
+       IE = Scavenged.end(); I != IE; ++I) {
+    I->Reg = 0;
+    I->Restore = NULL;
+  }
 
   // All registers started out unused.
   RegsAvailable.set();
@@ -120,9 +123,13 @@ void RegScavenger::forward() {
 
   MachineInstr *MI = MBBI;
 
-  if (MI == ScavengeRestore) {
-    ScavengedReg = 0;
-    ScavengeRestore = NULL;
+  for (SmallVector<ScavengedInfo, 2>::iterator I = Scavenged.begin(),
+       IE = Scavenged.end(); I != IE; ++I) {
+    if (I->Restore != MI)
+      continue;
+
+    I->Reg = 0;
+    I->Restore = NULL;
   }
 
   if (MI->isDebugValue())
@@ -358,36 +365,44 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
     return SReg;
   }
 
-  assert(ScavengedReg == 0 &&
-         "Scavenger slot is live, unable to scavenge another register!");
+  // Find an available scavenging slot.
+  int SI;
+  for (SI = 0; SI < Scavenged.size(); ++SI)
+    if (Scavenged[SI].Reg == 0)
+      break;
+
+  assert(SI < Scavenged.size() &&
+         "Scavenger slots are live, unable to scavenge another register!");
 
   // Avoid infinite regress
-  ScavengedReg = SReg;
+  Scavenged[SI].Reg = SReg;
 
   // If the target knows how to save/restore the register, let it do so;
   // otherwise, use the emergency stack spill slot.
   if (!TRI->saveScavengerRegister(*MBB, I, UseMI, RC, SReg)) {
     // Spill the scavenged register before I.
-    assert(ScavengingFrameIndex >= 0 &&
+    assert(Scavenged[SI].FrameIndex >= 0 &&
            "Cannot scavenge register without an emergency spill slot!");
-    TII->storeRegToStackSlot(*MBB, I, SReg, true, ScavengingFrameIndex, RC,TRI);
+    TII->storeRegToStackSlot(*MBB, I, SReg, true, Scavenged[SI].FrameIndex,
+                             RC, TRI);
     MachineBasicBlock::iterator II = prior(I);
 
     unsigned FIOperandNum = getFrameIndexOperandNum(II);
     TRI->eliminateFrameIndex(II, SPAdj, FIOperandNum, this);
 
     // Restore the scavenged register before its use (or first terminator).
-    TII->loadRegFromStackSlot(*MBB, UseMI, SReg, ScavengingFrameIndex, RC, TRI);
+    TII->loadRegFromStackSlot(*MBB, UseMI, SReg, Scavenged[SI].FrameIndex,
+                              RC, TRI);
     II = prior(UseMI);
 
     FIOperandNum = getFrameIndexOperandNum(II);
     TRI->eliminateFrameIndex(II, SPAdj, FIOperandNum, this);
   }
 
-  ScavengeRestore = prior(UseMI);
+  Scavenged[SI].Restore = prior(UseMI);
 
   // Doing this here leads to infinite regress.
-  // ScavengedReg = SReg;
+  // Scavenged[SI].Reg = SReg;
 
   DEBUG(dbgs() << "Scavenged register (with spill): " << TRI->getName(SReg) <<
         "\n");

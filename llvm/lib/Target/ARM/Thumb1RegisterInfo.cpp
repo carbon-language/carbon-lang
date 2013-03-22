@@ -588,7 +588,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // means the stack pointer cannot be used to access the emergency spill slot
   // when !hasReservedCallFrame().
 #ifndef NDEBUG
-  if (RS && FrameReg == ARM::SP && FrameIndex == RS->getScavengingFrameIndex()){
+  if (RS && FrameReg == ARM::SP && RS->isScavengingFrameIndex(FrameIndex)){
     assert(MF.getTarget().getFrameLowering()->hasReservedCallFrame(MF) &&
            "Cannot use SP to access the emergency spill slot in "
            "functions without a reserved call frame");

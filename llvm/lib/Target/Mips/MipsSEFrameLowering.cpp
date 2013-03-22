@@ -295,7 +295,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     &Mips::CPU64RegsRegClass : &Mips::CPURegsRegClass;
   int FI = MF.getFrameInfo()->CreateStackObject(RC->getSize(),
                                                 RC->getAlignment(), false);
-  RS->setScavengingFrameIndex(FI);
+  RS->addScavengingFrameIndex(FI);
 }
 
 const MipsFrameLowering *

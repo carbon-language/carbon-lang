@@ -396,7 +396,7 @@ AArch64FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // helpfully places it near either SP or FP for us to avoid
     // infinitely-regression during scavenging.
     const TargetRegisterClass *RC = &AArch64::GPR64RegClass;
-    RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
+    RS->addScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
                                                        RC->getAlignment(),
                                                        false));
   }
