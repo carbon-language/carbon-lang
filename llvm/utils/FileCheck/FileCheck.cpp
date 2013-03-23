@@ -639,11 +639,11 @@ static bool ReadCheckFile(SourceMgr &SM,
            << ec.message() << '\n';
     return true;
   }
-  MemoryBuffer *F = File.take();
 
   // If we want to canonicalize whitespace, strip excess whitespace from the
   // buffer containing the CHECK lines. Remove DOS style line endings.
-  F = CanonicalizeInputFile(F, NoCanonicalizeWhiteSpace);
+  MemoryBuffer *F =
+    CanonicalizeInputFile(File.take(), NoCanonicalizeWhiteSpace);
 
   SM.AddNewSourceBuffer(F, SMLoc());
 
@@ -803,16 +803,16 @@ int main(int argc, char **argv) {
            << ec.message() << '\n';
     return 2;
   }
-  MemoryBuffer *F = File.take();
 
-  if (F->getBufferSize() == 0) {
+  if (File->getBufferSize() == 0) {
     errs() << "FileCheck error: '" << InputFilename << "' is empty.\n";
     return 2;
   }
-  
+
   // Remove duplicate spaces in the input file if requested.
   // Remove DOS style line endings.
-  F = CanonicalizeInputFile(F, NoCanonicalizeWhiteSpace);
+  MemoryBuffer *F =
+    CanonicalizeInputFile(File.take(), NoCanonicalizeWhiteSpace);
 
   SM.AddNewSourceBuffer(F, SMLoc());
 
