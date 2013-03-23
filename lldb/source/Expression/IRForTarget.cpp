@@ -1814,17 +1814,17 @@ IRForTarget::HandleObjCClass(Value *classlist_reference)
     if (global_variable->use_begin() == global_variable->use_end())
         return false;
     
-    LoadInst *load_instruction = NULL;
-    
+    SmallVector<LoadInst *, 2> load_instructions;
+        
     for (Value::use_iterator i = global_variable->use_begin(), e = global_variable->use_end();
          i != e;
          ++i)
     {
-        if ((load_instruction = dyn_cast<LoadInst>(*i)))
-            break;
+        if (LoadInst *load_instruction = dyn_cast<LoadInst>(*i))
+            load_instructions.push_back(load_instruction);
     }
     
-    if (!load_instruction)
+    if (load_instructions.empty())
         return false;
     
     IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
@@ -1832,11 +1832,15 @@ IRForTarget::HandleObjCClass(Value *classlist_reference)
                                               == Module::Pointer64) ? 64 : 32);
     
     Constant *class_addr = ConstantInt::get(intptr_ty, (uint64_t)class_ptr);
-    Constant *class_bitcast = ConstantExpr::getIntToPtr(class_addr, load_instruction->getType());
     
-    load_instruction->replaceAllUsesWith(class_bitcast);
+    for (LoadInst *load_instruction : load_instructions)
+    {
+        Constant *class_bitcast = ConstantExpr::getIntToPtr(class_addr, load_instruction->getType());
     
-    load_instruction->eraseFromParent();
+        load_instruction->replaceAllUsesWith(class_bitcast);
+    
+        load_instruction->eraseFromParent();
+    }
     
     return true;
 }
