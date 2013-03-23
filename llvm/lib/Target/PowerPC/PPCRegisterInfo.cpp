@@ -203,8 +203,7 @@ PPCRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
 ///   stwxu  R0, SP, Rnegsize   ; add and update the SP with the negated size
 ///   addi   Rnew, SP, \#maxCalFrameSize ; get the top of the allocation
 ///
-void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
-                                        int SPAdj, RegScavenger *RS) const {
+void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
   // Get the instruction.
   MachineInstr &MI = *II;
   // Get the instruction's basic block.
@@ -300,8 +299,7 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
 ///   stw rA, FI               ; Store rA to the frame.
 ///
 void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
-                                      unsigned FrameIndex, int SPAdj,
-                                      RegScavenger *RS) const {
+                                      unsigned FrameIndex) const {
   // Get the instruction.
   MachineInstr &MI = *II;       // ; SPILL_CR <SrcReg>, <offset>
   // Get the instruction's basic block.
@@ -311,8 +309,6 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   // FIXME: Once LLVM supports creating virtual registers here, or the register
   // scavenger can return multiple registers, stop using reserved registers
   // here.
-  (void) SPAdj;
-  (void) RS;
 
   bool LP64 = Subtarget.isPPC64();
   unsigned Reg = LP64 ? PPC::X0 : PPC::R0;
@@ -342,8 +338,7 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
 }
 
 void PPCRegisterInfo::lowerCRRestore(MachineBasicBlock::iterator II,
-                                      unsigned FrameIndex, int SPAdj,
-                                      RegScavenger *RS) const {
+                                      unsigned FrameIndex) const {
   // Get the instruction.
   MachineInstr &MI = *II;       // ; <DestReg> = RESTORE_CR <offset>
   // Get the instruction's basic block.
@@ -353,8 +348,6 @@ void PPCRegisterInfo::lowerCRRestore(MachineBasicBlock::iterator II,
   // FIXME: Once LLVM supports creating virtual registers here, or the register
   // scavenger can return multiple registers, stop using reserved registers
   // here.
-  (void) SPAdj;
-  (void) RS;
 
   bool LP64 = Subtarget.isPPC64();
   unsigned Reg = LP64 ? PPC::X0 : PPC::R0;
@@ -383,8 +376,7 @@ void PPCRegisterInfo::lowerCRRestore(MachineBasicBlock::iterator II,
 }
 
 void PPCRegisterInfo::lowerVRSAVESpilling(MachineBasicBlock::iterator II,
-                                      unsigned FrameIndex, int SPAdj,
-                                      RegScavenger *RS) const {
+                                          unsigned FrameIndex) const {
   // Get the instruction.
   MachineInstr &MI = *II;       // ; SPILL_VRSAVE <SrcReg>, <offset>
   // Get the instruction's basic block.
@@ -394,8 +386,6 @@ void PPCRegisterInfo::lowerVRSAVESpilling(MachineBasicBlock::iterator II,
   // FIXME: Once LLVM supports creating virtual registers here, or the register
   // scavenger can return multiple registers, stop using reserved registers
   // here.
-  (void) SPAdj;
-  (void) RS;
 
   unsigned Reg = PPC::R0;
   unsigned SrcReg = MI.getOperand(0).getReg();
@@ -412,8 +402,7 @@ void PPCRegisterInfo::lowerVRSAVESpilling(MachineBasicBlock::iterator II,
 }
 
 void PPCRegisterInfo::lowerVRSAVERestore(MachineBasicBlock::iterator II,
-                                      unsigned FrameIndex, int SPAdj,
-                                      RegScavenger *RS) const {
+                                         unsigned FrameIndex) const {
   // Get the instruction.
   MachineInstr &MI = *II;       // ; <DestReg> = RESTORE_VRSAVE <offset>
   // Get the instruction's basic block.
@@ -423,8 +412,6 @@ void PPCRegisterInfo::lowerVRSAVERestore(MachineBasicBlock::iterator II,
   // FIXME: Once LLVM supports creating virtual registers here, or the register
   // scavenger can return multiple registers, stop using reserved registers
   // here.
-  (void) SPAdj;
-  (void) RS;
 
   unsigned Reg = PPC::R0;
   unsigned DestReg = MI.getOperand(0).getReg();
@@ -497,22 +484,22 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // Special case for dynamic alloca.
   if (FPSI && FrameIndex == FPSI &&
       (OpC == PPC::DYNALLOC || OpC == PPC::DYNALLOC8)) {
-    lowerDynamicAlloc(II, SPAdj, RS);
+    lowerDynamicAlloc(II);
     return;
   }
 
   // Special case for pseudo-ops SPILL_CR and RESTORE_CR, etc.
   if (OpC == PPC::SPILL_CR) {
-    lowerCRSpilling(II, FrameIndex, SPAdj, RS);
+    lowerCRSpilling(II, FrameIndex);
     return;
   } else if (OpC == PPC::RESTORE_CR) {
-    lowerCRRestore(II, FrameIndex, SPAdj, RS);
+    lowerCRRestore(II, FrameIndex);
     return;
   } else if (OpC == PPC::SPILL_VRSAVE) {
-    lowerVRSAVESpilling(II, FrameIndex, SPAdj, RS);
+    lowerVRSAVESpilling(II, FrameIndex);
     return;
   } else if (OpC == PPC::RESTORE_VRSAVE) {
-    lowerVRSAVERestore(II, FrameIndex, SPAdj, RS);
+    lowerVRSAVERestore(II, FrameIndex);
     return;
   }
 

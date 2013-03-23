@@ -61,16 +61,15 @@ public:
     return true;
   }
 
-  void lowerDynamicAlloc(MachineBasicBlock::iterator II,
-                         int SPAdj, RegScavenger *RS) const;
-  void lowerCRSpilling(MachineBasicBlock::iterator II, unsigned FrameIndex,
-                       int SPAdj, RegScavenger *RS) const;
-  void lowerCRRestore(MachineBasicBlock::iterator II, unsigned FrameIndex,
-                       int SPAdj, RegScavenger *RS) const;
-  void lowerVRSAVESpilling(MachineBasicBlock::iterator II, unsigned FrameIndex,
-                       int SPAdj, RegScavenger *RS) const;
-  void lowerVRSAVERestore(MachineBasicBlock::iterator II, unsigned FrameIndex,
-                       int SPAdj, RegScavenger *RS) const;
+  void lowerDynamicAlloc(MachineBasicBlock::iterator II) const;
+  void lowerCRSpilling(MachineBasicBlock::iterator II,
+                       unsigned FrameIndex) const;
+  void lowerCRRestore(MachineBasicBlock::iterator II,
+                      unsigned FrameIndex) const;
+  void lowerVRSAVESpilling(MachineBasicBlock::iterator II,
+                           unsigned FrameIndex) const;
+  void lowerVRSAVERestore(MachineBasicBlock::iterator II,
+                          unsigned FrameIndex) const;
 
   bool hasReservedSpillSlot(const MachineFunction &MF, unsigned Reg,
 			    int &FrameIdx) const;
