@@ -49,6 +49,11 @@ bool SimpleConstraintManager::canReasonAbout(SVal X) const {
       }
     }
 
+    if (const SymSymExpr *SSE = dyn_cast<SymSymExpr>(SE)) {
+      if (SSE->getOpcode() == BO_EQ || SSE->getOpcode() == BO_NE)
+        return true;
+    }
+
     return false;
   }
 
@@ -164,8 +169,6 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
     return assumeAuxForSymbol(state, sym, Assumption);
   }
 
-  BasicValueFactory &BasicVals = getBasicVals();
-
   switch (Cond.getSubKind()) {
   default:
     llvm_unreachable("'Assume' not implemented for this NonLoc");
@@ -180,26 +183,43 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
       return assumeAuxForSymbol(state, sym, Assumption);
 
     // Handle symbolic expression.
-    } else {
+    } else if (const SymIntExpr *SE = dyn_cast<SymIntExpr>(sym)) {
       // We can only simplify expressions whose RHS is an integer.
-      const SymIntExpr *SE = dyn_cast<SymIntExpr>(sym);
-      if (!SE)
-        return assumeAuxForSymbol(state, sym, Assumption);
 
       BinaryOperator::Opcode op = SE->getOpcode();
-      // Implicitly compare non-comparison expressions to 0.
-      if (!BinaryOperator::isComparisonOp(op)) {
-        QualType T = SE->getType();
-        const llvm::APSInt &zero = BasicVals.getValue(0, T);
-        op = (Assumption ? BO_NE : BO_EQ);
-        return assumeSymRel(state, SE, op, zero);
-      }
-      // From here on out, op is the real comparison we'll be testing.
-      if (!Assumption)
-        op = NegateComparison(op);
+      if (BinaryOperator::isComparisonOp(op)) {
+        if (!Assumption)
+          op = NegateComparison(op);
 
-      return assumeSymRel(state, SE->getLHS(), op, SE->getRHS());
+        return assumeSymRel(state, SE->getLHS(), op, SE->getRHS());
+      }
+
+    } else if (const SymSymExpr *SSE = dyn_cast<SymSymExpr>(sym)) {
+      BinaryOperator::Opcode Op = SSE->getOpcode();
+
+      // Translate "a != b" to "(b - a) != 0".
+      // We invert the order of the operands as a heuristic for how loop
+      // conditions are usually written ("begin != end") as compared to length
+      // calculations ("end - begin"). The more correct thing to do would be to
+      // canonicalize "a - b" and "b - a", which would allow us to treat
+      // "a != b" and "b != a" the same.
+      if (BinaryOperator::isEqualityOp(Op)) {
+        SymbolManager &SymMgr = getSymbolManager();
+
+        assert(Loc::isLocType(SSE->getLHS()->getType()));
+        assert(Loc::isLocType(SSE->getRHS()->getType()));
+        QualType DiffTy = SymMgr.getContext().getPointerDiffType();
+        SymbolRef Subtraction = SymMgr.getSymSymExpr(SSE->getRHS(), BO_Sub,
+                                                     SSE->getLHS(), DiffTy);
+
+        Assumption ^= (SSE->getOpcode() == BO_EQ);
+        return assumeAuxForSymbol(state, Subtraction, Assumption);
+      }
     }
+
+    // If we get here, there's nothing else we can do but treat the symbol as
+    // opaque.
+    return assumeAuxForSymbol(state, sym, Assumption);
   }
 
   case nonloc::ConcreteIntKind: {

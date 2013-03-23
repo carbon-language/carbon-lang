@@ -285,8 +285,8 @@ namespace {
 class RangeConstraintManager : public SimpleConstraintManager{
   RangeSet GetRange(ProgramStateRef state, SymbolRef sym);
 public:
-  RangeConstraintManager(SubEngine *subengine, BasicValueFactory &BVF)
-    : SimpleConstraintManager(subengine, BVF) {}
+  RangeConstraintManager(SubEngine *subengine, SValBuilder &SVB)
+    : SimpleConstraintManager(subengine, SVB) {}
 
   ProgramStateRef assumeSymNE(ProgramStateRef state, SymbolRef sym,
                              const llvm::APSInt& Int,
@@ -328,7 +328,7 @@ private:
 
 ConstraintManager *
 ento::CreateRangeConstraintManager(ProgramStateManager &StMgr, SubEngine *Eng) {
-  return new RangeConstraintManager(Eng, StMgr.getBasicVals());
+  return new RangeConstraintManager(Eng, StMgr.getSValBuilder());
 }
 
 const llvm::APSInt* RangeConstraintManager::getSymVal(ProgramStateRef St,

@@ -179,3 +179,60 @@ void use_symbols(int *lhs, int *rhs) {
     return;
   clang_analyzer_eval((lhs - rhs) == 5); // expected-warning{{TRUE}}
 }
+
+void equal_implies_zero(int *lhs, int *rhs) {
+  clang_analyzer_eval(lhs == rhs); // expected-warning{{UNKNOWN}}
+  if (lhs == rhs) {
+    clang_analyzer_eval(lhs != rhs); // expected-warning{{FALSE}}
+    clang_analyzer_eval((rhs - lhs) == 0); // expected-warning{{TRUE}}
+    return;
+  }
+  clang_analyzer_eval(lhs == rhs); // expected-warning{{FALSE}}
+  clang_analyzer_eval(lhs != rhs); // expected-warning{{TRUE}}
+  clang_analyzer_eval((rhs - lhs) == 0); // expected-warning{{FALSE}}
+}
+
+void zero_implies_equal(int *lhs, int *rhs) {
+  clang_analyzer_eval((rhs - lhs) == 0); // expected-warning{{UNKNOWN}}
+  if ((rhs - lhs) == 0) {
+    clang_analyzer_eval(lhs != rhs); // expected-warning{{FALSE}}
+    clang_analyzer_eval(lhs == rhs); // expected-warning{{TRUE}}
+    return;
+  }
+  clang_analyzer_eval((rhs - lhs) == 0); // expected-warning{{FALSE}}
+  clang_analyzer_eval(lhs == rhs); // expected-warning{{FALSE}}
+  clang_analyzer_eval(lhs != rhs); // expected-warning{{TRUE}}
+}
+
+//-------------------------------
+// False positives
+//-------------------------------
+
+void zero_implies_reversed_equal(int *lhs, int *rhs) {
+  clang_analyzer_eval((rhs - lhs) == 0); // expected-warning{{UNKNOWN}}
+  if ((rhs - lhs) == 0) {
+    // FIXME: Should be FALSE.
+    clang_analyzer_eval(rhs != lhs); // expected-warning{{UNKNOWN}}
+    // FIXME: Should be TRUE.
+    clang_analyzer_eval(rhs == lhs); // expected-warning{{UNKNOWN}}
+    return;
+  }
+  clang_analyzer_eval((rhs - lhs) == 0); // expected-warning{{FALSE}}
+  // FIXME: Should be FALSE.
+  clang_analyzer_eval(rhs == lhs); // expected-warning{{UNKNOWN}}
+  // FIXME: Should be TRUE.
+  clang_analyzer_eval(rhs != lhs); // expected-warning{{UNKNOWN}}
+}
+
+void canonical_equal(int *lhs, int *rhs) {
+  clang_analyzer_eval(lhs == rhs); // expected-warning{{UNKNOWN}}
+  if (lhs == rhs) {
+    // FIXME: Should be TRUE.
+    clang_analyzer_eval(rhs == lhs); // expected-warning{{UNKNOWN}}
+    return;
+  }
+  clang_analyzer_eval(lhs == rhs); // expected-warning{{FALSE}}
+
+  // FIXME: Should be FALSE.
+  clang_analyzer_eval(rhs == lhs); // expected-warning{{UNKNOWN}}
+}
