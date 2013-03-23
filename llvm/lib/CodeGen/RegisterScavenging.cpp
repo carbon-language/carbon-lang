@@ -366,7 +366,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   }
 
   // Find an available scavenging slot.
-  int SI;
+  unsigned SI;
   for (SI = 0; SI < Scavenged.size(); ++SI)
     if (Scavenged[SI].Reg == 0)
       break;
