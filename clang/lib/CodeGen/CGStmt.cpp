@@ -319,6 +319,12 @@ CodeGenFunction::getJumpDestForLabel(const LabelDecl *D) {
 }
 
 void CodeGenFunction::EmitLabel(const LabelDecl *D) {
+  // Add this label to the current lexical scope if we're within any
+  // normal cleanups.  Jumps "in" to this label --- when permitted by
+  // the language --- may need to be routed around such cleanups.
+  if (EHStack.hasNormalCleanups() && CurLexicalScope)
+    CurLexicalScope->addLabel(D);
+
   JumpDest &Dest = LabelMap[D];
 
   // If we didn't need a forward reference to this label, just go
@@ -330,14 +336,34 @@ void CodeGenFunction::EmitLabel(const LabelDecl *D) {
   // it from the branch-fixups list.
   } else {
     assert(!Dest.getScopeDepth().isValid() && "already emitted label!");
-    Dest = JumpDest(Dest.getBlock(),
-                    EHStack.stable_begin(),
-                    Dest.getDestIndex());
-
+    Dest.setScopeDepth(EHStack.stable_begin());
     ResolveBranchFixups(Dest.getBlock());
   }
 
   EmitBlock(Dest.getBlock());
+}
+
+/// Change the cleanup scope of the labels in this lexical scope to
+/// match the scope of the enclosing context.
+void CodeGenFunction::LexicalScope::rescopeLabels() {
+  assert(!Labels.empty());
+  EHScopeStack::stable_iterator innermostScope
+    = CGF.EHStack.getInnermostNormalCleanup();
+
+  // Change the scope depth of all the labels.
+  for (SmallVectorImpl<const LabelDecl*>::const_iterator
+         i = Labels.begin(), e = Labels.end(); i != e; ++i) {
+    assert(CGF.LabelMap.count(*i));
+    JumpDest &dest = CGF.LabelMap.find(*i)->second;
+    assert(dest.getScopeDepth().isValid());
+    assert(innermostScope.encloses(dest.getScopeDepth()));
+    dest.setScopeDepth(innermostScope);
+  }
+
+  // Reparent the labels if the new scope also has cleanups.
+  if (innermostScope != EHScopeStack::stable_end() && ParentScope) {
+    ParentScope->Labels.append(Labels.begin(), Labels.end());
+  }
 }
 
 

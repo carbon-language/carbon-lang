@@ -452,6 +452,22 @@ namespace {
       CGF.EmitCall(FnInfo, CleanupFn, ReturnValueSlot(), Args);
     }
   };
+
+  /// A cleanup to call @llvm.lifetime.end.
+  class CallLifetimeEnd : public EHScopeStack::Cleanup {
+    llvm::Value *Addr;
+    llvm::Value *Size;
+  public:
+    CallLifetimeEnd(llvm::Value *addr, llvm::Value *size)
+      : Addr(addr), Size(size) {}
+
+    void Emit(CodeGenFunction &CGF, Flags flags) {
+      llvm::Value *castAddr = CGF.Builder.CreateBitCast(Addr, CGF.Int8PtrTy);
+      CGF.Builder.CreateCall2(CGF.CGM.getLLVMLifetimeEndFn(),
+                              Size, castAddr)
+        ->setDoesNotThrow();
+    }
+  };
 }
 
 /// EmitAutoVarWithLifetime - Does the setup required for an automatic
@@ -756,7 +772,6 @@ static bool shouldUseMemSetPlusStoresToInitialize(llvm::Constant *Init,
   // If a global is all zeros, always use a memset.
   if (isa<llvm::ConstantAggregateZero>(Init)) return true;
 
-
   // If a non-zero global is <= 32 bytes, always use a memcpy.  If it is large,
   // do it if it will require 6 or fewer scalar stores.
   // TODO: Should budget depends on the size?  Avoiding a large global warrants
@@ -766,6 +781,20 @@ static bool shouldUseMemSetPlusStoresToInitialize(llvm::Constant *Init,
 
   return GlobalSize > SizeLimit &&
          canEmitInitWithFewStoresAfterMemset(Init, StoreBudget);
+}
+
+/// Should we use the LLVM lifetime intrinsics for the given local variable?
+static bool shouldUseLifetimeMarkers(CodeGenFunction &CGF, const VarDecl &D,
+                                     unsigned Size) {
+  // For now, only in optimized builds.
+  if (CGF.CGM.getCodeGenOpts().OptimizationLevel == 0)
+    return false;
+
+  // Limit the size of marked objects to 32 bytes. We don't want to increase
+  // compile time by marking tiny objects.
+  unsigned SizeThreshold = 32;
+
+  return Size > SizeThreshold;
 }
 
 
@@ -870,6 +899,20 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
               getContext().toCharUnitsFromBits(Target.getPointerAlign(0)));
         Alloc->setAlignment(allocaAlignment.getQuantity());
         DeclPtr = Alloc;
+
+        // Emit a lifetime intrinsic if meaningful.  There's no point
+        // in doing this if we don't have a valid insertion point (?).
+        uint64_t size = CGM.getDataLayout().getTypeAllocSize(LTy);
+        if (HaveInsertPoint() && shouldUseLifetimeMarkers(*this, D, size)) {
+          llvm::Value *sizeV = llvm::ConstantInt::get(Int64Ty, size);
+
+          emission.SizeForLifetimeMarkers = sizeV;
+          llvm::Value *castAddr = Builder.CreateBitCast(Alloc, Int8PtrTy);
+          Builder.CreateCall2(CGM.getLLVMLifetimeStartFn(), sizeV, castAddr)
+            ->setDoesNotThrow();
+        } else {
+          assert(!emission.useLifetimeMarkers());
+        }
       }
     } else {
       // Targets that don't support recursion emit locals as globals.
@@ -1215,6 +1258,14 @@ void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
 
   const VarDecl &D = *emission.Variable;
 
+  // Make sure we call @llvm.lifetime.end.  This needs to happen
+  // *last*, so the cleanup needs to be pushed *first*.
+  if (emission.useLifetimeMarkers()) {
+    EHStack.pushCleanup<CallLifetimeEnd>(NormalCleanup,
+                                         emission.getAllocatedAddress(),
+                                         emission.getSizeForLifetimeMarkers());
+  }
+
   // Check the type for a cleanup.
   if (QualType::DestructionKind dtorKind = D.getType().isDestructedType())
     emitAutoVarTypeCleanup(emission, dtorKind);
@@ -1483,6 +1534,22 @@ void CodeGenFunction::pushRegularPartialArrayCleanup(llvm::Value *arrayBegin,
   pushFullExprCleanup<RegularPartialArrayDestroy>(EHCleanup,
                                                   arrayBegin, arrayEnd,
                                                   elementType, destroyer);
+}
+
+/// Lazily declare the @llvm.lifetime.start intrinsic.
+llvm::Constant *CodeGenModule::getLLVMLifetimeStartFn() {
+  if (LifetimeStartFn) return LifetimeStartFn;
+  LifetimeStartFn = llvm::Intrinsic::getDeclaration(&getModule(),
+                                            llvm::Intrinsic::lifetime_start);
+  return LifetimeStartFn;
+}
+
+/// Lazily declare the @llvm.lifetime.end intrinsic.
+llvm::Constant *CodeGenModule::getLLVMLifetimeEndFn() {
+  if (LifetimeEndFn) return LifetimeEndFn;
+  LifetimeEndFn = llvm::Intrinsic::getDeclaration(&getModule(),
+                                              llvm::Intrinsic::lifetime_end);
+  return LifetimeEndFn;
 }
 
 namespace {

@@ -86,6 +86,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     NSConcreteGlobalBlock(0), NSConcreteStackBlock(0),
     BlockObjectAssign(0), BlockObjectDispose(0),
     BlockDescriptorType(0), GenericBlockLiteralType(0),
+    LifetimeStartFn(0), LifetimeEndFn(0),
     SanitizerBlacklist(CGO.SanitizerBlacklistFile),
     SanOpts(SanitizerBlacklist.isIn(M) ?
             SanitizerOptions::Disabled : LangOpts.Sanitize) {

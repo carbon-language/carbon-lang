@@ -562,6 +562,11 @@ public:
     EHScopeStack::stable_iterator getScopeDepth() const { return ScopeDepth; }
     unsigned getDestIndex() const { return Index; }
 
+    // This should be used cautiously.
+    void setScopeDepth(EHScopeStack::stable_iterator depth) {
+      ScopeDepth = depth;
+    }
+
   private:
     llvm::BasicBlock *Block;
     EHScopeStack::stable_iterator ScopeDepth;
@@ -853,6 +858,8 @@ public:
 
   class LexicalScope: protected RunCleanupsScope {
     SourceRange Range;
+    SmallVector<const LabelDecl*, 4> Labels;
+    LexicalScope *ParentScope;
 
     LexicalScope(const LexicalScope &) LLVM_DELETED_FUNCTION;
     void operator=(const LexicalScope &) LLVM_DELETED_FUNCTION;
@@ -860,15 +867,23 @@ public:
   public:
     /// \brief Enter a new cleanup scope.
     explicit LexicalScope(CodeGenFunction &CGF, SourceRange Range)
-      : RunCleanupsScope(CGF), Range(Range) {
+      : RunCleanupsScope(CGF), Range(Range), ParentScope(CGF.CurLexicalScope) {
+      CGF.CurLexicalScope = this;
       if (CGDebugInfo *DI = CGF.getDebugInfo())
         DI->EmitLexicalBlockStart(CGF.Builder, Range.getBegin());
+    }
+
+    void addLabel(const LabelDecl *label) {
+      assert(PerformCleanup && "adding label to dead scope?");
+      Labels.push_back(label);
     }
 
     /// \brief Exit this cleanup scope, emitting any accumulated
     /// cleanups.
     ~LexicalScope() {
-      if (PerformCleanup) endLexicalScope();
+      // If we should perform a cleanup, force them now.  Note that
+      // this ends the cleanup scope before rescoping any labels.
+      if (PerformCleanup) ForceCleanup();
     }
 
     /// \brief Force the emission of cleanups now, instead of waiting
@@ -880,9 +895,14 @@ public:
 
   private:
     void endLexicalScope() {
+      CGF.CurLexicalScope = ParentScope;
       if (CGDebugInfo *DI = CGF.getDebugInfo())
         DI->EmitLexicalBlockEnd(CGF.Builder, Range.getEnd());
+      if (!Labels.empty())
+        rescopeLabels();
     }
+
+    void rescopeLabels();
   };
 
 
@@ -1205,6 +1225,8 @@ private:
   /// temporary should be destroyed conditionally.
   ConditionalEvaluation *OutermostConditional;
 
+  /// The current lexical scope.
+  LexicalScope *CurLexicalScope;
 
   /// ByrefValueInfoMap - For each __block variable, contains a pair of the LLVM
   /// type as well as the field number that contains the actual data.
@@ -2001,17 +2023,33 @@ public:
     /// initializer.
     bool IsConstantAggregate;
 
+    /// Non-null if we should use lifetime annotations.
+    llvm::Value *SizeForLifetimeMarkers;
+
     struct Invalid {};
     AutoVarEmission(Invalid) : Variable(0) {}
 
     AutoVarEmission(const VarDecl &variable)
       : Variable(&variable), Address(0), NRVOFlag(0),
-        IsByRef(false), IsConstantAggregate(false) {}
+        IsByRef(false), IsConstantAggregate(false),
+        SizeForLifetimeMarkers(0) {}
 
     bool wasEmittedAsGlobal() const { return Address == 0; }
 
   public:
     static AutoVarEmission invalid() { return AutoVarEmission(Invalid()); }
+
+    bool useLifetimeMarkers() const { return SizeForLifetimeMarkers != 0; }
+    llvm::Value *getSizeForLifetimeMarkers() const {
+      assert(useLifetimeMarkers());
+      return SizeForLifetimeMarkers;
+    }
+
+    /// Returns the raw, allocated address, which is not necessarily
+    /// the address of the object itself.
+    llvm::Value *getAllocatedAddress() const {
+      return Address;
+    }
 
     /// Returns the address of the object within this declaration.
     /// Note that this does not chase the forwarding pointer for

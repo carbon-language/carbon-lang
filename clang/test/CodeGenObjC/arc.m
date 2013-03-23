@@ -353,7 +353,7 @@ void test12(void) {
   // CHECK-NEXT: [[T4:%.*]] = load i8** [[Y]]
   // CHECK-NEXT: call void @objc_release(i8* [[T4]]) [[NUW]], !clang.imprecise_release
   // CHECK-NEXT: call void @objc_destroyWeak(i8** [[X]])
-  // CHECK-NEXT: ret void
+  // CHECK: ret void
 }
 
 // Indirect consuming calls.
@@ -460,8 +460,9 @@ void test13(void) {
 void test19() {
   // CHECK: define void @test19()
   // CHECK:      [[X:%.*]] = alloca [5 x i8*], align 16
+  // CHECK: call void @llvm.lifetime.start
   // CHECK-NEXT: [[T0:%.*]] = bitcast [5 x i8*]* [[X]] to i8*
-  // CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 40, i32 16, i1 false)
+  // CHECK: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 40, i32 16, i1 false)
   id x[5];
 
   extern id test19_helper(void);

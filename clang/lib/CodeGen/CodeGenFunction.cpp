@@ -45,7 +45,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
     IndirectBranch(0), SwitchInsn(0), CaseRangeBlock(0), UnreachableBlock(0),
     CXXABIThisDecl(0), CXXABIThisValue(0), CXXThisValue(0),
     CXXStructorImplicitParamDecl(0), CXXStructorImplicitParamValue(0),
-    OutermostConditional(0), TerminateLandingPad(0),
+    OutermostConditional(0), CurLexicalScope(0), TerminateLandingPad(0),
     TerminateHandler(0), TrapBB(0) {
   if (!suppressNewContext)
     CGM.getCXXABI().getMangleContext().startNewFunction();
