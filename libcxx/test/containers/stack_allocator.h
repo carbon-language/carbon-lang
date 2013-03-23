@@ -29,8 +29,13 @@ private:
 public:
     pointer allocate(size_type n, const void* = 0)
     {
-        if (n > N - (ptr_ - buf_) / sizeof(value_type))
+        if (n > N - (ptr_ - buf_) / sizeof(value_type)) {
+#ifndef _LIBCPP_NO_EXCEPTIONS
             throw std::bad_alloc();
+#else
+            std::terminate();
+#endif
+        }
         pointer r = (T*)ptr_;
         ptr_ += n * sizeof(T);
         return r;

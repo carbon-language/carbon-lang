@@ -54,8 +54,13 @@ public:
     pointer allocate(size_type n, const void* = 0)
         {
             assert(data_ >= 0);
-            if (time_to_throw >= throw_after)
+            if (time_to_throw >= throw_after) {
+#ifndef _LIBCPP_NO_EXCEPTIONS
                 throw std::bad_alloc();
+#else
+                std::terminate();
+#endif
+            }
             ++time_to_throw;
             ++alloc_count;
             return (pointer)std::malloc(n * sizeof(T));

@@ -48,8 +48,13 @@ public:
     const_pointer address(const_reference x) const {return &x;}
     pointer allocate(size_type n, const void* = 0)
         {
-            if (count >= throw_after)
+            if (count >= throw_after) {
+#ifndef _LIBCPP_NO_EXCEPTIONS
                 throw std::bad_alloc();
+#else
+                std::terminate();
+#endif
+            }
             ++count;
             return (pointer)std::malloc(n * sizeof(T));
         }
