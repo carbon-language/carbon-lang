@@ -1258,9 +1258,9 @@ ValueObject::GetValueAsCString (lldb::Format format,
                      // put custom bytes to display in this DataExtractor to override the default value logic
                     lldb_private::DataExtractor special_format_data;
                     clang::ASTContext* ast = GetClangAST();
-                    Flags type_flags(ClangASTContext::GetTypeInfo(clang_type, ast, NULL));
                     if (format == eFormatCString)
                     {
+                        Flags type_flags(ClangASTContext::GetTypeInfo(clang_type, ast, NULL));
                         if (type_flags.Test(ClangASTContext::eTypeIsPointer) && !type_flags.Test(ClangASTContext::eTypeIsObjC))
                         {
                             // if we are dumping a pointer as a c-string, get the pointee data as a string
