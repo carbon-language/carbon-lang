@@ -443,37 +443,15 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                   bool &NonRI) const{
   DebugLoc DL;
   if (PPC::GPRCRegClass.hasSubClassEq(RC)) {
-    if (SrcReg != PPC::LR) {
-      NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STW))
-                                         .addReg(SrcReg,
-                                                 getKillRegState(isKill)),
-                                         FrameIdx));
-    } else {
-      // FIXME: this spills LR immediately to memory in one step.  To do this,
-      // we use R11, which we know cannot be used in the prolog/epilog.  This is
-      // a hack.
-      NewMIs.push_back(BuildMI(MF, DL, get(PPC::MFLR), PPC::R11));
-      NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STW))
-                                         .addReg(PPC::R11,
-                                                 getKillRegState(isKill)),
-                                         FrameIdx));
-    }
+    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STW))
+                                       .addReg(SrcReg,
+                                               getKillRegState(isKill)),
+                                       FrameIdx));
   } else if (PPC::G8RCRegClass.hasSubClassEq(RC)) {
-    if (SrcReg != PPC::LR8) {
-      NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STD))
-                                         .addReg(SrcReg,
-                                                 getKillRegState(isKill)),
-                                         FrameIdx));
-    } else {
-      // FIXME: this spills LR immediately to memory in one step.  To do this,
-      // we use X11, which we know cannot be used in the prolog/epilog.  This is
-      // a hack.
-      NewMIs.push_back(BuildMI(MF, DL, get(PPC::MFLR8), PPC::X11));
-      NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STD))
-                                         .addReg(PPC::X11,
-                                                 getKillRegState(isKill)),
-                                         FrameIdx));
-    }
+    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STD))
+                                       .addReg(SrcReg,
+                                               getKillRegState(isKill)),
+                                       FrameIdx));
   } else if (PPC::F8RCRegClass.hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STFD))
                                        .addReg(SrcReg,
