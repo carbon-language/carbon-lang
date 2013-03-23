@@ -1196,15 +1196,15 @@ Module::LoadScriptingResourceInTarget (Target *target, Error& error)
             return false;
         }
 
-        ScriptInterpreter *script_interpreter = debugger.GetCommandInterpreter().GetScriptInterpreter();
-        if (script_interpreter)
+        FileSpecList file_specs = platform_sp->LocateExecutableScriptingResources (target,
+                                                                                   *this);
+        
+        
+        const uint32_t num_specs = file_specs.GetSize();
+        if (num_specs)
         {
-            FileSpecList file_specs = platform_sp->LocateExecutableScriptingResources (target,
-                                                                                       *this);
-            
-            
-            const uint32_t num_specs = file_specs.GetSize();
-            if (num_specs)
+            ScriptInterpreter *script_interpreter = debugger.GetCommandInterpreter().GetScriptInterpreter();
+            if (script_interpreter)
             {
                 for (uint32_t i=0; i<num_specs; ++i)
                 {
@@ -1222,11 +1222,11 @@ Module::LoadScriptingResourceInTarget (Target *target, Error& error)
                     }
                 }
             }
-        }
-        else
-        {
-            error.SetErrorString("invalid ScriptInterpreter");
-            return false;
+            else
+            {
+                error.SetErrorString("invalid ScriptInterpreter");
+                return false;
+            }
         }
     }
     return true;
