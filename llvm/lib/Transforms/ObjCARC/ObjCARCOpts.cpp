@@ -458,7 +458,7 @@ namespace {
       KnownPositiveRefCount = false;
     }
 
-    bool IsKnownIncremented() const {
+    bool HasKnownPositiveRefCount() const {
       return KnownPositiveRefCount;
     }
 
@@ -1507,7 +1507,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     MDNode *ReleaseMetadata = Inst->getMetadata(ImpreciseReleaseMDKind);
     S.ResetSequenceProgress(ReleaseMetadata ? S_MovableRelease : S_Release);
     S.RRI.ReleaseMetadata = ReleaseMetadata;
-    S.RRI.KnownSafe = S.IsKnownIncremented();
+    S.RRI.KnownSafe = S.HasKnownPositiveRefCount();
     S.RRI.IsTailCallRelease = cast<CallInst>(Inst)->isTailCall();
     S.RRI.Calls.insert(Inst);
 
@@ -1718,7 +1718,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
 
       S.ResetSequenceProgress(S_Retain);
       S.RRI.IsRetainBlock = Class == IC_RetainBlock;
-      S.RRI.KnownSafe = S.IsKnownIncremented();
+      S.RRI.KnownSafe = S.HasKnownPositiveRefCount();
       S.RRI.Calls.insert(Inst);
     }
 
