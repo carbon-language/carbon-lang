@@ -282,8 +282,6 @@ def plugin_arg : JoinedAndSeparate<["-"], "plugin-arg-">,
     HelpText<"Pass <arg> to plugin <name>">;
 def add_plugin : Separate<["-"], "add-plugin">, MetaVarName<"<name>">,
   HelpText<"Use the named plugin action in addition to the default action">;
-def resource_dir : Separate<["-"], "resource-dir">,
-  HelpText<"The directory which holds the compiler resource files">;
 def version : Flag<["-"], "version">,
   HelpText<"Print the compiler version">;
 def ast_dump_filter : Separate<["-"], "ast-dump-filter">,

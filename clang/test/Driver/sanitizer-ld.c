@@ -2,6 +2,7 @@
 
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target i386-unknown-linux -fsanitize=address \
+// RUN:     -resource-dir=%S/Inputs/resource_dir \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-ASAN-LINUX %s
 //
@@ -10,10 +11,12 @@
 // CHECK-ASAN-LINUX: libclang_rt.asan-i386.a"
 // CHECK-ASAN-LINUX: "-lpthread"
 // CHECK-ASAN-LINUX: "-ldl"
-// CHECK-ASAN-LINUX: "-export-dynamic"
+// CHECK-ASAN-LINUX-NOT: "-export-dynamic"
+// CHECK-ASAN-LINUX: "--dynamic-list={{.*}}libclang_rt.asan-i386.a.syms"
 
 // RUN: %clangxx -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target i386-unknown-linux -fsanitize=address \
+// RUN:     -resource-dir=%S/Inputs/empty_resource_dir \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-ASAN-LINUX-CXX %s
 //
@@ -23,6 +26,7 @@
 // CHECK-ASAN-LINUX-CXX: "-lpthread"
 // CHECK-ASAN-LINUX-CXX: "-ldl"
 // CHECK-ASAN-LINUX-CXX: "-export-dynamic"
+// CHECK-ASAN-LINUX-CXX-NOT: "--dynamic-list"
 // CHECK-ASAN-LINUX-CXX: stdc++
 
 // RUN: %clang -no-canonical-prefixes %s -### -o /dev/null -fsanitize=address \
@@ -58,6 +62,7 @@
 
 // RUN: %clangxx -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target x86_64-unknown-linux -lstdc++ -fsanitize=thread \
+// RUN:     -resource-dir=%S/Inputs/resource_dir \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-TSAN-LINUX-CXX %s
 //
@@ -66,11 +71,13 @@
 // CHECK-TSAN-LINUX-CXX: "-whole-archive" "{{.*}}libclang_rt.tsan-x86_64.a" "-no-whole-archive"
 // CHECK-TSAN-LINUX-CXX: "-lpthread"
 // CHECK-TSAN-LINUX-CXX: "-ldl"
-// CHECK-TSAN-LINUX-CXX: "-export-dynamic"
+// CHECK-TSAN-LINUX-CXX-NOT: "-export-dynamic"
+// CHECK-TSAN-LINUX-CXX: "--dynamic-list={{.*}}libclang_rt.tsan-x86_64.a.syms"
 // CHECK-TSAN-LINUX-CXX: stdc++
 
 // RUN: %clangxx -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target x86_64-unknown-linux -lstdc++ -fsanitize=memory \
+// RUN:     -resource-dir=%S/Inputs/resource_dir \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-MSAN-LINUX-CXX %s
 //
@@ -79,7 +86,8 @@
 // CHECK-MSAN-LINUX-CXX: "-whole-archive" "{{.*}}libclang_rt.msan-x86_64.a" "-no-whole-archive"
 // CHECK-MSAN-LINUX-CXX: "-lpthread"
 // CHECK-MSAN-LINUX-CXX: "-ldl"
-// CHECK-MSAN-LINUX-CXX: "-export-dynamic"
+// CHECK-MSAN-LINUX-CXX-NOT: "-export-dynamic"
+// CHECK-MSAN-LINUX-CXX: "--dynamic-list={{.*}}libclang_rt.msan-x86_64.a.syms"
 // CHECK-MSAN-LINUX-CXX: stdc++
 
 // RUN: %clang -fsanitize=undefined %s -### -o %t.o 2>&1 \

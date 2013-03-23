@@ -287,7 +287,9 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   // ccc-install-dir) can change 'Dir'.
   StringRef ClangResourceDir(CLANG_RESOURCE_DIR);
   SmallString<128> P(Dir);
-  if (!ClangResourceDir.empty())
+  if (const Arg *A = Args->getLastArg(options::OPT_resource_dir))
+    P = A->getValue();
+  else if (!ClangResourceDir.empty())
     llvm::sys::path::append(P, ClangResourceDir);
   else
     llvm::sys::path::append(P, "..", "lib", "clang", CLANG_VERSION_STRING);

@@ -1575,7 +1575,8 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args)
 
 static void addSanitizerRTLinkFlagsLinux(
     const ToolChain &TC, const ArgList &Args, ArgStringList &CmdArgs,
-    const StringRef Sanitizer, bool BeforeLibStdCXX) {
+    const StringRef Sanitizer, bool BeforeLibStdCXX,
+    bool ExportSymbols = true) {
   // Sanitizer runtime is located in the Linux library directory and
   // has name "libclang_rt.<Sanitizer>-<ArchName>.a".
   SmallString<128> LibSanitizer(TC.getDriver().ResourceDir);
@@ -1599,7 +1600,17 @@ static void addSanitizerRTLinkFlagsLinux(
 
   CmdArgs.push_back("-lpthread");
   CmdArgs.push_back("-ldl");
-  CmdArgs.push_back("-export-dynamic");
+
+  // If possible, use a dynamic symbols file to export the symbols from the
+  // runtime library. If we can't do so, use -export-dynamic instead to export
+  // all symbols from the binary.
+  if (ExportSymbols) {
+    if (llvm::sys::fs::exists(LibSanitizer + ".syms"))
+      CmdArgs.push_back(
+          Args.MakeArgString("--dynamic-list=" + LibSanitizer + ".syms"));
+    else
+      CmdArgs.push_back("-export-dynamic");
+  }
 }
 
 /// If AddressSanitizer is enabled, add appropriate linker flags (Linux).
@@ -1666,7 +1677,7 @@ static void addUbsanRTLinux(const ToolChain &TC, const ArgList &Args,
   // Need a copy of sanitizer_common. This could come from another sanitizer
   // runtime; if we're not including one, include our own copy.
   if (!HasOtherSanitizerRt)
-    addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "san", true);
+    addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "san", true, false);
 
   addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "ubsan", false);
 
