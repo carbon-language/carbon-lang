@@ -854,7 +854,8 @@ RegionStoreManager::removeSubRegionBindings(RegionBindingsConstRef B,
 
   // If we're invalidating a region with a symbolic offset, we need to make sure
   // we don't treat the base region as uninitialized anymore.
-  // FIXME: This isn't very precise; see the example in the loop.
+  // FIXME: This isn't very precise; see the example in
+  // collectSubRegionBindings.
   if (TopKey.hasSymbolicOffset()) {
     const SubRegion *Concrete = TopKey.getConcreteOffsetRegion();
     Result = Result.add(BindingKey::Make(Concrete, BindingKey::Default),
@@ -1445,8 +1446,7 @@ SVal RegionStoreManager::getBindingForElement(RegionBindingsConstRef B,
       }
     }
   }
-  return getBindingForFieldOrElementCommon(B, R, R->getElementType(),
-                                           superR);
+  return getBindingForFieldOrElementCommon(B, R, R->getElementType(),superR);
 }
 
 SVal RegionStoreManager::getBindingForField(RegionBindingsConstRef B,
