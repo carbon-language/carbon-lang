@@ -7,38 +7,50 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implement the code preparation for Scop detect, which will:
-//    1. Translate all PHINodes that not induction variable to memory access,
-//       this will easier parameter and scalar dependencies checking.
+// The Polly code preparation pass is executed before SCoP detection. Its only
+// use is to translate all PHI nodes that can not be expressed by the code
+// generator into explicit memory dependences. Depending of the code generation
+// strategy different PHI nodes are translated:
+//
+// - indvars based code generation:
+//
+// The indvars based code generation requires explicit canonical induction
+// variables. Such variables are generated before scop detection and
+// also before the code preparation pass. All PHI nodes that are not canonical
+// induction variables are not supported by the indvars based code generation
+// and are consequently translated into explict memory accesses.
+//
+// - scev based code generation:
+//
+// The scev based code generation can code generate all PHI nodes that do not
+// reference parameters within the scop. As the code preparation pass is run
+// before scop detection, we can not check this condition, because without
+// a detected scop, we do not know SCEVUnknowns that appear in the SCEV of
+// a PHI node may later be within or outside of the SCoP. Hence, we follow a
+// heuristic and translate all PHI nodes that are either directly SCEVUnknown
+// or SCEVCouldNotCompute. This will hopefully get most of the PHI nodes that
+// are introduced due to conditional control flow, but not the ones that are
+// referencing loop counters.
+//
+// XXX: In the future, we should remove the need for this pass entirely and
+// instead add support for scalar dependences to ScopInfo and code generation.
 //
 //===----------------------------------------------------------------------===//
+
 #include "polly/LinkAllPasses.h"
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/Support/ScopHelper.h"
 
-#include "llvm/IR/Instruction.h"
-#include "llvm/Pass.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionInfo.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/PointerIntPair.h"
-#include "llvm/Support/InstIterator.h"
 #include "llvm/Transforms/Utils/Local.h"
-
-#define DEBUG_TYPE "polly-code-prep"
-#include "llvm/Support/Debug.h"
-
 
 using namespace llvm;
 using namespace polly;
 
 namespace {
-//===----------------------------------------------------------------------===//
-/// @brief Scop Code Preparation - Perform some transforms to make scop detect
-/// easier.
+/// @brief Prepare the IR for the scop detection.
 ///
 class CodePreparation : public FunctionPass {
   // DO NOT IMPLEMENT.
@@ -46,11 +58,9 @@ class CodePreparation : public FunctionPass {
   // DO NOT IMPLEMENT.
   const CodePreparation &operator=(const CodePreparation &);
 
-  // LoopInfo to compute canonical induction variable.
   LoopInfo *LI;
   ScalarEvolution *SE;
 
-  // Clear the context.
   void clear();
 
   bool eliminatePHINodes(Function &F);
@@ -72,66 +82,58 @@ public:
 };
 }
 
-//===----------------------------------------------------------------------===//
-/// CodePreparation implement.
+void CodePreparation::clear() {}
 
-void CodePreparation::clear() {
-}
-
-CodePreparation::~CodePreparation() {
-  clear();
-}
+CodePreparation::~CodePreparation() { clear(); }
 
 bool CodePreparation::eliminatePHINodes(Function &F) {
   // The PHINodes that will be deleted.
-  std::vector<PHINode*> PNtoDel;
+  std::vector<PHINode *> PNtoDelete;
   // The PHINodes that will be preserved.
-  std::vector<PHINode*> PreservedPNs;
+  std::vector<PHINode *> PreservedPNs;
 
   // Scan the PHINodes in this function.
-  for (Function::iterator ibb = F.begin(), ibe = F.end();
-      ibb != ibe; ++ibb)
-    for (BasicBlock::iterator iib = ibb->begin(), iie = ibb->getFirstNonPHI();
-        iib != iie; ++iib)
-      if (PHINode *PN = cast<PHINode>(iib)) {
-        if (SCEVCodegen) {
-          if (SE->isSCEVable(PN->getType())) {
-            const SCEV *S = SE->getSCEV(PN);
-            if (!isa<SCEVUnknown>(S) && !isa<SCEVCouldNotCompute>(S)) {
-              PreservedPNs.push_back(PN);
-              continue;
-            }
-          }
-        } else {
-          if (Loop *L = LI->getLoopFor(ibb)) {
-            // Induction variable will be preserved.
-            if (L->getCanonicalInductionVariable() == PN) {
-              PreservedPNs.push_back(PN);
-              continue;
-            }
+  for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI)
+    for (BasicBlock::iterator II = BI->begin(), IE = BI->getFirstNonPHI();
+         II != IE; ++II) {
+      PHINode *PN = cast<PHINode>(II);
+      if (SCEVCodegen) {
+        if (SE->isSCEVable(PN->getType())) {
+          const SCEV *S = SE->getSCEV(PN);
+          if (!isa<SCEVUnknown>(S) && !isa<SCEVCouldNotCompute>(S)) {
+            PreservedPNs.push_back(PN);
+            continue;
           }
         }
-
-        // As DemotePHIToStack does not support invoke edges, we preserve
-        // PHINodes that have invoke edges.
-        if (hasInvokeEdge(PN))
-          PreservedPNs.push_back(PN);
-        else
-          PNtoDel.push_back(PN);
+      } else {
+        if (Loop *L = LI->getLoopFor(BI)) {
+          // Induction variables will be preserved.
+          if (L->getCanonicalInductionVariable() == PN) {
+            PreservedPNs.push_back(PN);
+            continue;
+          }
+        }
       }
 
-  if (PNtoDel.empty())
+      // As DemotePHIToStack does not support invoke edges, we preserve
+      // PHINodes that have invoke edges.
+      if (hasInvokeEdge(PN))
+        PreservedPNs.push_back(PN);
+      else
+        PNtoDelete.push_back(PN);
+    }
+
+  if (PNtoDelete.empty())
     return false;
 
-  // Eliminate the PHINodes that not an Induction variable.
-  while (!PNtoDel.empty()) {
-    PHINode *PN = PNtoDel.back();
-    PNtoDel.pop_back();
+  while (!PNtoDelete.empty()) {
+    PHINode *PN = PNtoDelete.back();
+    PNtoDelete.pop_back();
 
     DemotePHIToStack(PN);
   }
 
-  // Move all preserved PHINodes to the beginning of the BasicBlock.
+  // Move preserved PHINodes to the beginning of the BasicBlock.
   while (!PreservedPNs.empty()) {
     PHINode *PN = PreservedPNs.back();
     PreservedPNs.pop_back();
@@ -167,22 +169,18 @@ bool CodePreparation::runOnFunction(Function &F) {
   return false;
 }
 
-void CodePreparation::releaseMemory() {
-  clear();
-}
+void CodePreparation::releaseMemory() { clear(); }
 
-void CodePreparation::print(raw_ostream &OS, const Module *) const {
-}
+void CodePreparation::print(raw_ostream &OS, const Module *) const {}
 
 char CodePreparation::ID = 0;
 char &polly::CodePreparationID = CodePreparation::ID;
 
-INITIALIZE_PASS_BEGIN(CodePreparation, "polly-prepare",
-                      "Polly - Prepare code for polly", false, false)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
-INITIALIZE_PASS_END(CodePreparation, "polly-prepare",
-                      "Polly - Prepare code for polly", false, false)
+Pass *polly::createCodePreparationPass() { return new CodePreparation(); }
 
-Pass *polly::createCodePreparationPass() {
-  return new CodePreparation();
-}
+INITIALIZE_PASS_BEGIN(CodePreparation, "polly-prepare",
+                      "Polly - Prepare code for polly", false, false);
+INITIALIZE_PASS_DEPENDENCY(LoopInfo);
+INITIALIZE_PASS_END(CodePreparation, "polly-prepare",
+                    "Polly - Prepare code for polly", false, false)
+
