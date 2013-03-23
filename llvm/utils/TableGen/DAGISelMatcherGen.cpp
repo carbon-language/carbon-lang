@@ -218,6 +218,17 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
   }
 
   Record *LeafRec = DI->getDef();
+
+  // A ValueType leaf node can represent a register when named, or itself when
+  // unnamed.
+  if (LeafRec->isSubClassOf("ValueType")) {
+    // A named ValueType leaf always matches: (add i32:$a, i32:$b).
+    if (N->hasName())
+      return;
+    // An unnamed ValueType as in (sext_inreg GPR:$foo, i8).
+    return AddMatcher(new CheckValueTypeMatcher(LeafRec->getName()));
+  }
+
   if (// Handle register references.  Nothing to do here, they always match.
       LeafRec->isSubClassOf("RegisterClass") ||
       LeafRec->isSubClassOf("RegisterOperand") ||
@@ -235,9 +246,6 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
     PhysRegInputs.push_back(std::make_pair(LeafRec, NextRecordedOperandNo++));
     return;
   }
-
-  if (LeafRec->isSubClassOf("ValueType"))
-    return AddMatcher(new CheckValueTypeMatcher(LeafRec->getName()));
 
   if (LeafRec->isSubClassOf("CondCode"))
     return AddMatcher(new CheckCondCodeMatcher(LeafRec->getName()));

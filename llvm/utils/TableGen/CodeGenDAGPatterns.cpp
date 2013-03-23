@@ -1378,9 +1378,25 @@ static EEVT::TypeSet getImplicitType(Record *R, unsigned ResNo,
     return EEVT::TypeSet();
   }
 
-  if (R->isSubClassOf("ValueType") || R->isSubClassOf("CondCode")) {
+  if (R->isSubClassOf("ValueType")) {
     assert(ResNo == 0 && "This node only has one result!");
-    // Using a VTSDNode or CondCodeSDNode.
+    // An unnamed VTSDNode represents itself as an MVT::Other immediate.
+    //
+    //   (sext_inreg GPR:$src, i16)
+    //                         ~~~
+    if (Unnamed)
+      return EEVT::TypeSet(MVT::Other, TP);
+    // With a name, the ValueType simply provides the type of the named
+    // variable.
+    //
+    //   (sext_inreg i32:$src, i16)
+    //               ~~~~~~~~
+    return EEVT::TypeSet(getValueType(R), TP);
+  }
+
+  if (R->isSubClassOf("CondCode")) {
+    assert(ResNo == 0 && "This node only has one result!");
+    // Using a CondCodeSDNode.
     return EEVT::TypeSet(MVT::Other, TP);
   }
 
