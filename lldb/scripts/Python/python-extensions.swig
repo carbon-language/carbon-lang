@@ -68,6 +68,13 @@
                 else
                     return PyString_FromString("");
         }
+        void lldb::SBCommandReturnObject::write (const char* str)
+        {
+            if (str)
+                $self->Printf("%s",str);
+        }
+        void lldb::SBCommandReturnObject::flush ()
+        {}
 }
 %extend lldb::SBCompileUnit {
         PyObject *lldb::SBCompileUnit::__str__ (){
