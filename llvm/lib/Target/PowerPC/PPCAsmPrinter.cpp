@@ -911,18 +911,19 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
       OutStreamer.EmitLabel(Stub);
       OutStreamer.EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
 
+      const MCExpr *Anon = MCSymbolRefExpr::Create(AnonSymbol, OutContext);
+
       // mflr r0
       OutStreamer.EmitInstruction(MCInstBuilder(PPC::MFLR).addReg(PPC::R0));
-      // FIXME: MCize this.
-      OutStreamer.EmitRawText("\tbcl 20, 31, " + Twine(AnonSymbol->getName()));
+      // bcl 20, 31, AnonSymbol
+      OutStreamer.EmitInstruction(MCInstBuilder(PPC::BCL).addExpr(Anon));
       OutStreamer.EmitLabel(AnonSymbol);
       // mflr r11
       OutStreamer.EmitInstruction(MCInstBuilder(PPC::MFLR).addReg(PPC::R11));
       // addis r11, r11, ha16(LazyPtr - AnonSymbol)
       const MCExpr *Sub =
         MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(LazyPtr, OutContext),
-                                MCSymbolRefExpr::Create(AnonSymbol, OutContext),
-                                OutContext);
+                                Anon, OutContext);
       OutStreamer.EmitInstruction(MCInstBuilder(PPC::ADDIS)
         .addReg(PPC::R11)
         .addReg(PPC::R11)
