@@ -811,7 +811,7 @@ class TemplateDiff {
              TemplateName(CTSD->getSpecializedTemplate()),
              CTSD->getTemplateArgs().data(),
              CTSD->getTemplateArgs().size(),
-             Ty.getCanonicalType());
+             Ty.getLocalUnqualifiedType().getCanonicalType());
 
     return Ty->getAs<TemplateSpecializationType>();
   }

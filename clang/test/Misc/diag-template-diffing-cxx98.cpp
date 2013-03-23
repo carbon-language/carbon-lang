@@ -31,3 +31,19 @@ namespace default_args {
   }
 
 }
+
+namespace qualifiers {
+  template <class T>
+  void foo(void (func(T*)), T*) {}
+
+  template <class T>
+  class vector{};
+
+  void bar(const vector<int>*) {}
+
+  void test(volatile vector<int>* V) {
+    foo(bar, V);
+  }
+
+  // CHECK: candidate template ignored: deduced conflicting types for parameter 'T' ('const vector<[...]>' vs. 'volatile vector<[...]>')
+}
