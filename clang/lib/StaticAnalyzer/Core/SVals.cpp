@@ -214,13 +214,12 @@ SVal loc::ConcreteInt::evalBinOp(BasicValueFactory& BasicVals,
                                  BinaryOperator::Opcode Op,
                                  const loc::ConcreteInt& R) const {
 
-  assert (Op == BO_Add || Op == BO_Sub ||
-          (Op >= BO_LT && Op <= BO_NE));
+  assert(BinaryOperator::isComparisonOp(Op) || Op == BO_Sub);
 
-  const llvm::APSInt* X = BasicVals.evalAPSInt(Op, getValue(), R.getValue());
+  const llvm::APSInt *X = BasicVals.evalAPSInt(Op, getValue(), R.getValue());
 
   if (X)
-    return loc::ConcreteInt(*X);
+    return nonloc::ConcreteInt(*X);
   else
     return UndefinedVal();
 }

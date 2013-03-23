@@ -582,10 +582,11 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
     if (Optional<loc::ConcreteInt> rInt = rhs.getAs<loc::ConcreteInt>()) {
       SVal ResultVal =
           lhs.castAs<loc::ConcreteInt>().evalBinOp(BasicVals, op, *rInt);
-      if (Optional<Loc> Result = ResultVal.getAs<Loc>())
-        return evalCastFromLoc(*Result, resultTy);
-      else
-        return UnknownVal();
+      if (Optional<NonLoc> Result = ResultVal.getAs<NonLoc>())
+        return evalCastFromNonLoc(*Result, resultTy);
+
+      assert(!ResultVal.getAs<Loc>() && "Loc-Loc ops should not produce Locs");
+      return UnknownVal();
     }
 
     // Special case comparisons against NULL.
