@@ -19,13 +19,8 @@
 
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionInfo.h"
-#include "llvm/Analysis/RegionPass.h"
-#include "llvm/Analysis/RegionIterator.h"
-#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Assembly/Writer.h"
 
 #define DEBUG_TYPE "polly-independent"
@@ -107,10 +102,10 @@ struct IndependentBlocks : public FunctionPass {
   /// @param Inst The instruction.
   ///
   /// @return Return true if the instruction can be moved safely, false
-  ///         otherwise. 
+  ///         otherwise.
   static bool isSafeToMove(Instruction *Inst);
 
-  typedef std::map<Instruction*, Instruction*> ReplacedMapType;
+  typedef std::map<Instruction *, Instruction *> ReplacedMapType;
 
   /// @brief Move all safe to move instructions in the Operand Tree (DAG) to
   ///        eliminate trivial scalar dependences.
@@ -121,8 +116,7 @@ struct IndependentBlocks : public FunctionPass {
   ///                     instruction.
   /// @param InsertPos    The insert position of the moved instructions.
   void moveOperandTree(Instruction *Inst, const Region *R,
-                       ReplacedMapType &ReplacedMap,
-                       Instruction *InsertPos);
+                       ReplacedMapType &ReplacedMap, Instruction *InsertPos);
 
   bool isIndependentBlock(const Region *R, BasicBlock *BB) const;
   bool areAllBlocksIndependent(const Region *R) const;
@@ -142,8 +136,7 @@ struct IndependentBlocks : public FunctionPass {
 }
 
 bool IndependentBlocks::isSafeToMove(Instruction *Inst) {
-  if (Inst->mayReadFromMemory() ||
-      Inst->mayWriteToMemory())
+  if (Inst->mayReadFromMemory() || Inst->mayWriteToMemory())
     return false;
 
   return isSafeToSpeculativelyExecute(Inst);
@@ -157,10 +150,10 @@ void IndependentBlocks::moveOperandTree(Instruction *Inst, const Region *R,
   // Depth first traverse the operand tree (or operand dag, because we will
   // stop at PHINodes, so there are no cycle).
   typedef Instruction::op_iterator ChildIt;
-  std::vector<std::pair<Instruction*, ChildIt> > WorkStack;
+  std::vector<std::pair<Instruction *, ChildIt> > WorkStack;
 
   WorkStack.push_back(std::make_pair(Inst, Inst->op_begin()));
-  DenseSet<Instruction*> VisitedSet;
+  DenseSet<Instruction *> VisitedSet;
 
   while (!WorkStack.empty()) {
     Instruction *CurInst = WorkStack.back().first;
@@ -178,7 +171,8 @@ void IndependentBlocks::moveOperandTree(Instruction *Inst, const Region *R,
       ++WorkStack.back().second;
 
       // Can not move no instruction value.
-      if (Operand == 0) continue;
+      if (Operand == 0)
+        continue;
 
       DEBUG(dbgs() << "For Operand:\n" << *Operand << "\n--->");
 
@@ -243,7 +237,7 @@ void IndependentBlocks::moveOperandTree(Instruction *Inst, const Region *R,
 
 bool IndependentBlocks::createIndependentBlocks(BasicBlock *BB,
                                                 const Region *R) {
-  std::vector<Instruction*> WorkList;
+  std::vector<Instruction *> WorkList;
   for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE; ++II)
     if (!isSafeToMove(II) && !canSynthesize(II, LI, SE, R))
       WorkList.push_back(II);
@@ -251,8 +245,9 @@ bool IndependentBlocks::createIndependentBlocks(BasicBlock *BB,
   ReplacedMapType ReplacedMap;
   Instruction *InsertPos = BB->getFirstNonPHIOrDbg();
 
-  for (std::vector<Instruction*>::iterator I = WorkList.begin(),
-      E = WorkList.end(); I != E; ++I)
+  for (std::vector<Instruction *>::iterator I = WorkList.begin(),
+                                            E = WorkList.end();
+       I != E; ++I)
     moveOperandTree(*I, R, ReplacedMap, InsertPos);
 
   // The BB was changed if we replaced any operand.
@@ -270,16 +265,17 @@ bool IndependentBlocks::createIndependentBlocks(const Region *R) {
 }
 
 bool IndependentBlocks::eliminateDeadCode(const Region *R) {
-  std::vector<Instruction*> WorkList;
+  std::vector<Instruction *> WorkList;
 
   // Find all trivially dead instructions.
   for (Region::const_block_iterator SI = R->block_begin(), SE = R->block_end();
-      SI != SE; ++SI)
+       SI != SE; ++SI)
     for (BasicBlock::iterator I = (*SI)->begin(), E = (*SI)->end(); I != E; ++I)
       if (isInstructionTriviallyDead(I))
         WorkList.push_back(I);
 
-  if (WorkList.empty()) return false;
+  if (WorkList.empty())
+    return false;
 
   // Delete them so the cross BB scalar dependences come with them will
   // also be eliminated.
@@ -293,21 +289,23 @@ bool IndependentBlocks::eliminateDeadCode(const Region *R) {
 
 bool IndependentBlocks::isEscapeUse(const Value *Use, const Region *R) {
   // Non-instruction user will never escape.
-  if (!isa<Instruction>(Use)) return false;
+  if (!isa<Instruction>(Use))
+    return false;
 
   return !R->contains(cast<Instruction>(Use));
 }
 
-bool IndependentBlocks::isEscapeOperand(const Value *Operand,
-                                        const BasicBlock *CurBB,
-                                        const Region *R) const {
+bool IndependentBlocks::isEscapeOperand(
+    const Value *Operand, const BasicBlock *CurBB, const Region *R) const {
   const Instruction *OpInst = dyn_cast<Instruction>(Operand);
 
   // Non-instruction operand will never escape.
-  if (OpInst == 0) return false;
+  if (OpInst == 0)
+    return false;
 
   // Induction variables are valid operands.
-  if (canSynthesize(OpInst, LI, SE, R)) return false;
+  if (canSynthesize(OpInst, LI, SE, R))
+    return false;
 
   // A value from a different BB is used in the same region.
   return R->contains(OpInst) && (OpInst->getParent() != CurBB);
@@ -323,7 +321,7 @@ bool IndependentBlocks::splitExitBlock(Region *R) {
 
   BasicBlock *NewExit = createSingleExitEdge(R, this);
 
-  std::vector<Region*> toUpdate;
+  std::vector<Region *> toUpdate;
   toUpdate.push_back(R);
 
   while (!toUpdate.empty()) {
@@ -359,9 +357,9 @@ bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
   if (canSynthesize(Inst, LI, SE, R))
     return false;
 
-  SmallVector<Instruction*, 4> LoadInside, LoadOutside;
-  for (Instruction::use_iterator UI = Inst->use_begin(),
-       UE = Inst->use_end(); UI != UE; ++UI)
+  SmallVector<Instruction *, 4> LoadInside, LoadOutside;
+  for (Instruction::use_iterator UI = Inst->use_begin(), UE = Inst->use_end();
+       UI != UE; ++UI)
     // Inst is referenced outside or referenced as an escaped operand.
     if (Instruction *U = dyn_cast<Instruction>(*UI)) {
       BasicBlock *UParent = U->getParent();
@@ -380,16 +378,15 @@ bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
     return false;
 
   // Create the alloca.
-  AllocaInst *Slot = new AllocaInst(Inst->getType(), 0,
-                                    Inst->getName() + ".s2a",
-                                    AllocaBlock->begin());
+  AllocaInst *Slot = new AllocaInst(
+      Inst->getType(), 0, Inst->getName() + ".s2a", AllocaBlock->begin());
   assert(!isa<InvokeInst>(Inst) && "Unexpect Invoke in Scop!");
   // Store right after Inst.
   BasicBlock::iterator StorePos = Inst;
   (void) new StoreInst(Inst, Slot, ++StorePos);
 
   if (!LoadOutside.empty()) {
-    LoadInst *ExitLoad = new LoadInst(Slot, Inst->getName()+".loadoutside",
+    LoadInst *ExitLoad = new LoadInst(Slot, Inst->getName() + ".loadoutside",
                                       false, R->getExit()->getFirstNonPHI());
 
     while (!LoadOutside.empty()) {
@@ -404,8 +401,7 @@ bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
     Instruction *U = LoadInside.pop_back_val();
     assert(!isa<PHINode>(U) && "Can not handle PHI node inside!");
     SE->forgetValue(U);
-    LoadInst *L = new LoadInst(Slot, Inst->getName()+".loadarray",
-                               false, U);
+    LoadInst *L = new LoadInst(Slot, Inst->getName() + ".loadarray", false, U);
     U->replaceUsesOfWith(Inst, L);
   }
 
@@ -416,9 +412,8 @@ bool IndependentBlocks::translateScalarToArray(BasicBlock *BB,
                                                const Region *R) {
   bool changed = false;
 
-  SmallVector<Instruction*, 32> Insts;
-  for (BasicBlock::iterator II = BB->begin(), IE = --BB->end();
-       II != IE; ++II)
+  SmallVector<Instruction *, 32> Insts;
+  for (BasicBlock::iterator II = BB->begin(), IE = --BB->end(); II != IE; ++II)
     Insts.push_back(II);
 
   while (!Insts.empty()) {
@@ -431,16 +426,16 @@ bool IndependentBlocks::translateScalarToArray(BasicBlock *BB,
 
 bool IndependentBlocks::isIndependentBlock(const Region *R,
                                            BasicBlock *BB) const {
-  for (BasicBlock::iterator II = BB->begin(), IE = --BB->end();
-       II != IE; ++II) {
+  for (BasicBlock::iterator II = BB->begin(), IE = --BB->end(); II != IE;
+       ++II) {
     Instruction *Inst = &*II;
 
     if (canSynthesize(Inst, LI, SE, R))
       continue;
 
     // A value inside the Scop is referenced outside.
-    for (Instruction::use_iterator UI = Inst->use_begin(),
-         UE = Inst->use_end(); UI != UE; ++UI) {
+    for (Instruction::use_iterator UI = Inst->use_begin(), UE = Inst->use_end();
+         UI != UE; ++UI) {
       if (isEscapeUse(*UI, R)) {
         DEBUG(dbgs() << "Instruction not independent:\n");
         DEBUG(dbgs() << "Instruction used outside the Scop!\n");
@@ -450,8 +445,8 @@ bool IndependentBlocks::isIndependentBlock(const Region *R,
       }
     }
 
-    for (Instruction::op_iterator OI = Inst->op_begin(),
-         OE = Inst->op_end(); OI != OE; ++OI) {
+    for (Instruction::op_iterator OI = Inst->op_begin(), OE = Inst->op_end();
+         OI != OE; ++OI) {
       if (isEscapeOperand(*OI, BB, R)) {
         DEBUG(dbgs() << "Instruction in function '";
               WriteAsOperand(dbgs(), BB->getParent(), false);
@@ -460,8 +455,7 @@ bool IndependentBlocks::isIndependentBlock(const Region *R,
         DEBUG(Inst->print(dbgs()));
         DEBUG(dbgs() << "\n");
         DEBUG(dbgs() << "Invalid operator is: ";
-              WriteAsOperand(dbgs(), *OI, false);
-              dbgs() << "\n");
+              WriteAsOperand(dbgs(), *OI, false); dbgs() << "\n");
         return false;
       }
     }
@@ -515,7 +509,7 @@ bool IndependentBlocks::runOnFunction(llvm::Function &F) {
     Changed |= createIndependentBlocks(R);
     Changed |= eliminateDeadCode(R);
     // This may change the RegionTree.
-    Changed |= splitExitBlock(const_cast<Region*>(R));
+    Changed |= splitExitBlock(const_cast<Region *>(R));
   }
 
   DEBUG(dbgs() << "Before Scalar to Array------->\n");
@@ -533,26 +527,25 @@ bool IndependentBlocks::runOnFunction(llvm::Function &F) {
 }
 
 void IndependentBlocks::verifyAnalysis() const {
-  for (ScopDetection::const_iterator I = SD->begin(), E = SD->end();I != E;++I)
+  for (ScopDetection::const_iterator I = SD->begin(), E = SD->end(); I != E;
+       ++I)
     verifyScop(*I);
 }
 
 void IndependentBlocks::verifyScop(const Region *R) const {
-  assert (areAllBlocksIndependent(R) && "Cannot generate independent blocks");
+  assert(areAllBlocksIndependent(R) && "Cannot generate independent blocks");
 }
 
 char IndependentBlocks::ID = 0;
 char &polly::IndependentBlocksID = IndependentBlocks::ID;
 
+Pass *polly::createIndependentBlocksPass() { return new IndependentBlocks(); }
+
 INITIALIZE_PASS_BEGIN(IndependentBlocks, "polly-independent",
-                      "Polly - Create independent blocks", false, false)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
-INITIALIZE_PASS_DEPENDENCY(RegionInfo)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
-INITIALIZE_PASS_DEPENDENCY(ScopDetection)
+                      "Polly - Create independent blocks", false, false);
+INITIALIZE_PASS_DEPENDENCY(LoopInfo);
+INITIALIZE_PASS_DEPENDENCY(RegionInfo);
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
+INITIALIZE_PASS_DEPENDENCY(ScopDetection);
 INITIALIZE_PASS_END(IndependentBlocks, "polly-independent",
                     "Polly - Create independent blocks", false, false)
-
-Pass *polly::createIndependentBlocksPass() {
-  return new IndependentBlocks();
-}
