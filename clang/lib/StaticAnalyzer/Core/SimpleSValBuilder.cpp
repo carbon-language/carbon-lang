@@ -508,21 +508,20 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
           // Otherwise, make a SymIntExpr out of the expression.
           return MakeSymIntVal(symIntExpr, op, *RHSValue, resultTy);
         }
-
-
-      } else if (isa<SymbolData>(Sym)) {
-        // Does the symbol simplify to a constant?  If so, "fold" the constant
-        // by setting 'lhs' to a ConcreteInt and try again.
-        if (const llvm::APSInt *Constant = state->getConstraintManager()
-                                                  .getSymVal(state, Sym)) {
-          lhs = nonloc::ConcreteInt(*Constant);
-          continue;
-        }
-
-        // Is the RHS a constant?
-        if (const llvm::APSInt *RHSValue = getKnownValue(state, rhs))
-          return MakeSymIntVal(Sym, op, *RHSValue, resultTy);
       }
+
+      // Does the symbolic expression simplify to a constant?
+      // If so, "fold" the constant by setting 'lhs' to a ConcreteInt
+      // and try again.
+      ConstraintManager &CMgr = state->getConstraintManager();
+      if (const llvm::APSInt *Constant = CMgr.getSymVal(state, Sym)) {
+        lhs = nonloc::ConcreteInt(*Constant);
+        continue;
+      }
+
+      // Is the RHS a constant?
+      if (const llvm::APSInt *RHSValue = getKnownValue(state, rhs))
+        return MakeSymIntVal(Sym, op, *RHSValue, resultTy);
 
       // Give up -- this is not a symbolic expression we can handle.
       return makeSymExprValNN(state, op, InputLHS, InputRHS, resultTy);
@@ -682,11 +681,11 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
       // regions, though.
       return UnknownVal();
 
-    const MemSpaceRegion *LeftMS = LeftMR->getMemorySpace();
-    const MemSpaceRegion *RightMS = RightMR->getMemorySpace();
-    const MemSpaceRegion *UnknownMS = MemMgr.getUnknownRegion();
     const MemRegion *LeftBase = LeftMR->getBaseRegion();
     const MemRegion *RightBase = RightMR->getBaseRegion();
+    const MemSpaceRegion *LeftMS = LeftBase->getMemorySpace();
+    const MemSpaceRegion *RightMS = RightBase->getMemorySpace();
+    const MemSpaceRegion *UnknownMS = MemMgr.getUnknownRegion();
 
     // If the two regions are from different known memory spaces they cannot be
     // equal. Also, assume that no symbolic region (whose memory space is
@@ -789,7 +788,6 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
       }
 
       // If we get here, we have no way of comparing the ElementRegions.
-      return UnknownVal();
     }
 
     // See if both regions are fields of the same structure.
@@ -841,6 +839,13 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
 
       llvm_unreachable("Fields not found in parent record's definition");
     }
+
+    // At this point we're not going to get a good answer, but we can try
+    // conjuring an expression instead.
+    SymbolRef LHSSym = lhs.getAsLocSymbol();
+    SymbolRef RHSSym = rhs.getAsLocSymbol();
+    if (LHSSym && RHSSym)
+      return makeNonLoc(LHSSym, op, RHSSym, resultTy);
 
     // If we get here, we have no way of comparing the regions.
     return UnknownVal();

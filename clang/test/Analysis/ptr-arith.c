@@ -167,3 +167,15 @@ void PR7527 (int *p) {
   if (((int) p) & 1) // not crash
     return;
 }
+
+void use_symbols(int *lhs, int *rhs) {
+  clang_analyzer_eval(lhs < rhs); // expected-warning{{UNKNOWN}}
+  if (lhs < rhs)
+    return;
+  clang_analyzer_eval(lhs < rhs); // expected-warning{{FALSE}}
+
+  clang_analyzer_eval(lhs - rhs); // expected-warning{{UNKNOWN}}
+  if ((lhs - rhs) != 5)
+    return;
+  clang_analyzer_eval((lhs - rhs) == 5); // expected-warning{{TRUE}}
+}
