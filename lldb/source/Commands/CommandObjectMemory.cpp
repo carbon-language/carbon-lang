@@ -221,6 +221,14 @@ public:
                 if (!count_option_set)
                     format_options.GetCountValue() = 8;
                 break;
+            case eFormatComplexInteger:
+                if (!byte_size_option_set)
+                    byte_size_value = 8;
+                if (!num_per_line_option_set)
+                    m_num_per_line = 1;
+                if (!count_option_set)
+                    format_options.GetCountValue() = 8;
+                break;
             case eFormatHex:
                 if (!byte_size_option_set)
                     byte_size_value = 4;
