@@ -32,37 +32,34 @@ using namespace llvm;
 using namespace polly;
 
 namespace {
-  static cl::opt<std::string>
-    ImportDir("polly-import-scoplib-dir",
-              cl::desc("The directory to import the .scoplib files from."),
-              cl::Hidden, cl::value_desc("Directory path"), cl::ValueRequired,
-              cl::init("."));
-  static cl::opt<std::string>
-    ImportPostfix("polly-import-scoplib-postfix",
-                  cl::desc("Postfix to append to the import .scoplib files."),
-                  cl::Hidden, cl::value_desc("File postfix"), cl::ValueRequired,
-                  cl::init(""));
+static cl::opt<std::string> ImportDir(
+    "polly-import-scoplib-dir",
+    cl::desc("The directory to import the .scoplib files from."), cl::Hidden,
+    cl::value_desc("Directory path"), cl::ValueRequired, cl::init("."));
+static cl::opt<std::string> ImportPostfix(
+    "polly-import-scoplib-postfix",
+    cl::desc("Postfix to append to the import .scoplib files."), cl::Hidden,
+    cl::value_desc("File postfix"), cl::ValueRequired, cl::init(""));
 
-  struct ScopLibImporter : public RegionPass {
-    static char ID;
-    Scop *S;
-    Dependences *D;
-    explicit ScopLibImporter() : RegionPass(ID) {}
+struct ScopLibImporter : public RegionPass {
+  static char ID;
+  Scop *S;
+  Dependences *D;
+  explicit ScopLibImporter() : RegionPass(ID) {}
 
-    bool updateScattering(Scop *S, scoplib_scop_p OScop);
-    std::string getFileName(Scop *S) const;
-    virtual bool runOnRegion(Region *R, RGPassManager &RGM);
-    virtual void print(raw_ostream &OS, const Module *) const;
-    void getAnalysisUsage(AnalysisUsage &AU) const;
-    };
+  bool updateScattering(Scop *S, scoplib_scop_p OScop);
+  std::string getFileName(Scop *S) const;
+  virtual bool runOnRegion(Region *R, RGPassManager &RGM);
+  virtual void print(raw_ostream &OS, const Module *) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const;
+};
 }
 
 char ScopLibImporter::ID = 0;
 
 namespace {
 std::string ScopLibImporter::getFileName(Scop *S) const {
-  std::string FunctionName =
-    S->getRegion().getEntry()->getParent()->getName();
+  std::string FunctionName = S->getRegion().getEntry()->getParent()->getName();
   std::string FileName = FunctionName + "___" + S->getNameStr() + ".scoplib";
   return FileName;
 }
@@ -87,14 +84,15 @@ bool ScopLibImporter::runOnRegion(Region *R, RGPassManager &RGM) {
 
   std::string FunctionName = R->getEntry()->getParent()->getName();
   errs() << "Reading Scop '" << R->getNameStr() << "' in function '"
-    << FunctionName << "' from '" << FileName << "'.\n";
+         << FunctionName << "' from '" << FileName << "'.\n";
 
   ScopLib scoplib(S, F, D);
   bool UpdateSuccessfull = scoplib.updateScattering();
   fclose(F);
 
   if (!UpdateSuccessfull) {
-    errs() << "Update failed" << "\n";
+    errs() << "Update failed"
+           << "\n";
   }
 
   return false;
@@ -108,13 +106,10 @@ void ScopLibImporter::getAnalysisUsage(AnalysisUsage &AU) const {
 
 }
 
-static RegisterPass<ScopLibImporter> A("polly-import-scoplib",
-                                    "Polly - Import Scops with ScopLib library"
-                                    " (Reads a .scoplib file for each Scop)"
-                                    );
+static RegisterPass<ScopLibImporter>
+A("polly-import-scoplib", "Polly - Import Scops with ScopLib library"
+                          " (Reads a .scoplib file for each Scop)");
 
-Pass *polly::createScopLibImporterPass() {
-  return new ScopLibImporter();
-}
+Pass *polly::createScopLibImporterPass() { return new ScopLibImporter(); }
 
 #endif

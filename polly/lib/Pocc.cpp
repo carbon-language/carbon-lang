@@ -39,35 +39,32 @@
 #include "isl/map.h"
 #include "isl/constraint.h"
 
-
 using namespace llvm;
 using namespace polly;
 
 static cl::opt<std::string>
-PlutoFuse("pluto-fuse",
-           cl::desc(""), cl::Hidden,
-           cl::value_desc("Set fuse mode of Pluto"),
-           cl::init("maxfuse"));
+PlutoFuse("pluto-fuse", cl::desc(""), cl::Hidden,
+          cl::value_desc("Set fuse mode of Pluto"), cl::init("maxfuse"));
 
 namespace {
 
-  class Pocc : public ScopPass {
-    sys::Path plutoStderr;
-    sys::Path plutoStdout;
-    std::vector<const char*> arguments;
+class Pocc : public ScopPass {
+  sys::Path plutoStderr;
+  sys::Path plutoStdout;
+  std::vector<const char *> arguments;
 
-  public:
-    static char ID;
-    explicit Pocc() : ScopPass(ID) {}
+public:
+  static char ID;
+  explicit Pocc() : ScopPass(ID) {}
 
-    std::string getFileName(Region *R) const;
-    virtual bool runOnScop(Scop &S);
-    void printScop(llvm::raw_ostream &OS) const;
-    void getAnalysisUsage(AnalysisUsage &AU) const;
+  std::string getFileName(Region *R) const;
+  virtual bool runOnScop(Scop &S);
+  void printScop(llvm::raw_ostream &OS) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const;
 
-  private:
-    bool runTransform(Scop &S);
-  };
+private:
+  bool runTransform(Scop &S);
+};
 
 }
 
@@ -127,13 +124,13 @@ bool Pocc::runTransform(Scop &S) {
   plutoStderr = tempDir;
   plutoStderr.appendComponent("pluto.stderr");
 
-  std::vector<sys::Path*> redirect;
+  std::vector<sys::Path *> redirect;
   redirect.push_back(0);
   redirect.push_back(&plutoStdout);
   redirect.push_back(&plutoStderr);
 
   program.ExecuteAndWait(pocc, &arguments[0], 0,
-                         (sys::Path const **) &redirect[0]);
+                         (sys::Path const **)&redirect[0]);
 
   // Read the created scop file
   sys::Path newScopFile = tempDir;
@@ -145,8 +142,9 @@ bool Pocc::runTransform(Scop &S) {
   if (!newScoplib.updateScattering()) {
     errs() << "Failure when calculating the optimization with "
               "the following command: ";
-    for (std::vector<const char*>::const_iterator AI = arguments.begin(),
-         AE = arguments.end(); AI != AE; ++AI)
+    for (std::vector<const char *>::const_iterator AI = arguments.begin(),
+                                                   AE = arguments.end();
+         AI != AE; ++AI)
       if (*AI)
         errs() << " " << *AI;
     errs() << "\n";
@@ -246,8 +244,9 @@ void Pocc::printScop(raw_ostream &OS) const {
 
   OS << "Command line: ";
 
-  for (std::vector<const char*>::const_iterator AI = arguments.begin(),
-       AE = arguments.end(); AI != AE; ++AI)
+  for (std::vector<const char *>::const_iterator AI = arguments.begin(),
+                                                 AE = arguments.end();
+       AI != AE; ++AI)
     if (*AI)
       OS << " " << *AI;
 
@@ -273,14 +272,12 @@ void Pocc::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<Dependences>();
 }
 
+Pass *polly::createPoccPass() { return new Pocc(); }
+
 INITIALIZE_PASS_BEGIN(Pocc, "polly-opt-pocc",
-                      "Polly - Optimize the scop using pocc", false, false)
-INITIALIZE_PASS_DEPENDENCY(Dependences)
-INITIALIZE_PASS_DEPENDENCY(ScopInfo)
+                      "Polly - Optimize the scop using pocc", false, false);
+INITIALIZE_PASS_DEPENDENCY(Dependences);
+INITIALIZE_PASS_DEPENDENCY(ScopInfo);
 INITIALIZE_PASS_END(Pocc, "polly-opt-pocc",
                     "Polly - Optimize the scop using pocc", false, false)
-
-Pass* polly::createPoccPass() {
-  return new Pocc();
-}
 #endif /* SCOPLIB_FOUND */

@@ -27,51 +27,45 @@
 #include "pluto/libpluto.h"
 #include "isl/map.h"
 
-
 using namespace llvm;
 using namespace polly;
 
-static cl::opt<bool>
-EnableTiling("polly-pluto-tile",
-             cl::desc("Enable tiling"),
-             cl::Hidden, cl::init(false));
+static cl::opt<bool> EnableTiling("polly-pluto-tile", cl::desc("Enable tiling"),
+                                  cl::Hidden, cl::init(false));
 
 namespace {
 /// Convert an int into a string.
-static std::string convertInt(int number)
-{
+static std::string convertInt(int number) {
   if (number == 0)
     return "0";
   std::string temp = "";
   std::string returnvalue = "";
-  while (number > 0)
-  {
+  while (number > 0) {
     temp += number % 10 + 48;
     number /= 10;
   }
   for (unsigned i = 0; i < temp.length(); i++)
-    returnvalue+=temp[temp.length() - i - 1];
+    returnvalue += temp[temp.length() - i - 1];
   return returnvalue;
 }
 
+class PlutoOptimizer : public ScopPass {
 
-  class PlutoOptimizer : public ScopPass {
+public:
+  static char ID;
+  explicit PlutoOptimizer() : ScopPass(ID) {}
 
-  public:
-    static char ID;
-    explicit PlutoOptimizer() : ScopPass(ID) {}
-
-    virtual bool runOnScop(Scop &S);
-    void printScop(llvm::raw_ostream &OS) const;
-    void getAnalysisUsage(AnalysisUsage &AU) const;
-    static void extendScattering(Scop &S, unsigned NewDimensions);
-  };
+  virtual bool runOnScop(Scop &S);
+  void printScop(llvm::raw_ostream &OS) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const;
+  static void extendScattering(Scop &S, unsigned NewDimensions);
+};
 }
 
 char PlutoOptimizer::ID = 0;
 
 static int getSingleMap(__isl_take isl_map *map, void *user) {
-  isl_map **singleMap = (isl_map **) user;
+  isl_map **singleMap = (isl_map **)user;
   *singleMap = map;
 
   return 0;
@@ -93,7 +87,6 @@ void PlutoOptimizer::extendScattering(Scop &S, unsigned NewDimensions) {
     for (unsigned i = OldDimensions; i < NewDimensions; i++)
       Map = isl_map_fix_si(Map, isl_dim_out, i, 0);
 
-
     Map = isl_map_align_params(Map, S.getParamSpace());
     New = isl_map_apply_range(Stmt->getScattering(), Map);
     Stmt->setScattering(New);
@@ -107,8 +100,8 @@ bool PlutoOptimizer::runOnScop(Scop &S) {
 
   Dependences *D = &getAnalysis<Dependences>();
 
-  int DependencesKinds = Dependences::TYPE_RAW | Dependences::TYPE_WAR
-                     | Dependences::TYPE_WAW;
+  int DependencesKinds =
+      Dependences::TYPE_RAW | Dependences::TYPE_WAR | Dependences::TYPE_WAW;
 
   Deps = D->getDependences(DependencesKinds);
   Domain = S.getDomains();
@@ -119,7 +112,7 @@ bool PlutoOptimizer::runOnScop(Scop &S) {
     ScopStmt *Stmt = *SI;
     std::string Name = "S_" + convertInt(counter);
     isl_map *Identity = isl_map_identity(isl_space_map_from_domain_and_range(
-                          Stmt->getDomainSpace(), Stmt->getDomainSpace()));
+        Stmt->getDomainSpace(), Stmt->getDomainSpace()));
     Identity = isl_map_set_tuple_name(Identity, isl_dim_out, Name.c_str());
     ToPlutoNames = isl_union_map_add_map(ToPlutoNames, Identity);
     counter++;
@@ -133,10 +126,8 @@ bool PlutoOptimizer::runOnScop(Scop &S) {
   Options->fuse = 0;
   Options->tile = EnableTiling;
 
-  DEBUG(
-    dbgs() << "Domain: " << stringFromIslObj(Domain) << "\n";
-    dbgs() << "Dependences: " << stringFromIslObj(Deps) << "\n";
-    );
+  DEBUG(dbgs() << "Domain: " << stringFromIslObj(Domain) << "\n";
+        dbgs() << "Dependences: " << stringFromIslObj(Deps) << "\n";);
   Schedule = pluto_schedule(Domain, Deps, Options);
   pluto_options_free(Options);
 
@@ -146,15 +137,15 @@ bool PlutoOptimizer::runOnScop(Scop &S) {
   if (!Schedule)
     return false;
 
-  Schedule = isl_union_map_apply_domain(Schedule,
-                                        isl_union_map_reverse(ToPlutoNames));
+  Schedule =
+      isl_union_map_apply_domain(Schedule, isl_union_map_reverse(ToPlutoNames));
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
     isl_set *Domain = Stmt->getDomain();
     isl_union_map *StmtBand;
     StmtBand = isl_union_map_intersect_domain(isl_union_map_copy(Schedule),
-					      isl_union_set_from_set(Domain));
+                                              isl_union_set_from_set(Domain));
     isl_map *StmtSchedule;
     isl_union_map_foreach_map(StmtBand, getSingleMap, &StmtSchedule);
     Stmt->setScattering(StmtSchedule);
@@ -172,23 +163,21 @@ bool PlutoOptimizer::runOnScop(Scop &S) {
   return false;
 }
 
-void PlutoOptimizer::printScop(raw_ostream &OS) const {
-}
+void PlutoOptimizer::printScop(raw_ostream &OS) const {}
 
 void PlutoOptimizer::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);
   AU.addRequired<Dependences>();
 }
 
-INITIALIZE_PASS_BEGIN(PlutoOptimizer, "polly-opt-pluto",
-                      "Polly - Optimize schedule of SCoP (Pluto)", false, false)
-INITIALIZE_PASS_DEPENDENCY(Dependences)
-INITIALIZE_PASS_DEPENDENCY(ScopInfo)
-INITIALIZE_PASS_END(PlutoOptimizer, "polly-opt-pluto",
-                      "Polly - Optimize schedule of SCoP (Pluto)", false, false)
+Pass *polly::createPlutoOptimizerPass() { return new PlutoOptimizer(); }
 
-Pass* polly::createPlutoOptimizerPass() {
-  return new PlutoOptimizer();
-}
+INITIALIZE_PASS_BEGIN(PlutoOptimizer, "polly-opt-pluto",
+                      "Polly - Optimize schedule of SCoP (Pluto)", false,
+                      false);
+INITIALIZE_PASS_DEPENDENCY(Dependences);
+INITIALIZE_PASS_DEPENDENCY(ScopInfo);
+INITIALIZE_PASS_END(PlutoOptimizer, "polly-opt-pluto",
+                    "Polly - Optimize schedule of SCoP (Pluto)", false, false)
 
 #endif // PLUTO_FOUND

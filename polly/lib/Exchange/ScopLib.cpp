@@ -46,10 +46,11 @@ ScopLib::ScopLib(Scop *S, FILE *F, Dependences *dep) : PollyScop(S), D(dep) {
 
 void ScopLib::initializeParameters() {
   scoplib->nb_parameters = PollyScop->getNumParams();
-  scoplib->parameters = (char**) malloc(sizeof(char*) * scoplib->nb_parameters);
+  scoplib->parameters =
+      (char **)malloc(sizeof(char *) * scoplib->nb_parameters);
 
   for (int i = 0; i < scoplib->nb_parameters; ++i) {
-    scoplib->parameters[i] = (char *) malloc(sizeof(char*) * 20);
+    scoplib->parameters[i] = (char *)malloc(sizeof(char *) * 20);
     sprintf(scoplib->parameters[i], "p_%d", i);
   }
 }
@@ -60,7 +61,8 @@ void ScopLib::initializeArrays() {
   for (Scop::iterator SI = PollyScop->begin(), SE = PollyScop->end(); SI != SE;
        ++SI)
     for (ScopStmt::memacc_iterator MI = (*SI)->memacc_begin(),
-         ME = (*SI)->memacc_end(); MI != ME; ++MI) {
+                                   ME = (*SI)->memacc_end();
+         MI != ME; ++MI) {
       const Value *BaseAddr = (*MI)->getBaseAddr();
       if (ArrayMap.find(BaseAddr) == ArrayMap.end()) {
         ArrayMap.insert(std::make_pair(BaseAddr, nb_arrays));
@@ -69,21 +71,21 @@ void ScopLib::initializeArrays() {
     }
 
   scoplib->nb_arrays = nb_arrays;
-  scoplib->arrays = (char**)malloc(sizeof(char*) * nb_arrays);
+  scoplib->arrays = (char **)malloc(sizeof(char *) * nb_arrays);
 
   for (int i = 0; i < nb_arrays; ++i)
-    for (std::map<const Value*, int>::iterator VI = ArrayMap.begin(),
-         VE = ArrayMap.end(); VI != VE; ++VI)
+    for (std::map<const Value *, int>::iterator VI = ArrayMap.begin(),
+                                                VE = ArrayMap.end();
+         VI != VE; ++VI)
       if ((*VI).second == i) {
         const Value *V = (*VI).first;
         std::string name = V->getName();
-        scoplib->arrays[i] = (char*) malloc(sizeof(char*) * (name.size() + 1));
+        scoplib->arrays[i] = (char *)malloc(sizeof(char *) * (name.size() + 1));
         strcpy(scoplib->arrays[i], name.c_str());
       }
 }
 
-void ScopLib::initializeScattering() {
-}
+void ScopLib::initializeScattering() {}
 
 scoplib_statement_p ScopLib::initializeStatement(ScopStmt *stmt) {
   scoplib_statement_p Stmt = scoplib_statement_malloc();
@@ -98,15 +100,15 @@ scoplib_statement_p ScopLib::initializeStatement(ScopStmt *stmt) {
   raw_string_ostream OS(entryName);
   WriteAsOperand(OS, stmt->getBasicBlock(), false);
   entryName = OS.str();
-  Stmt->body = (char*)malloc(sizeof(char) * (entryName.size() + 1));
+  Stmt->body = (char *)malloc(sizeof(char) * (entryName.size() + 1));
   strcpy(Stmt->body, entryName.c_str());
 
   // Iterator names
   Stmt->nb_iterators = stmt->getNumIterators();
-  Stmt->iterators = (char**) malloc(sizeof(char*) * Stmt->nb_iterators);
+  Stmt->iterators = (char **)malloc(sizeof(char *) * Stmt->nb_iterators);
 
   for (int i = 0; i < Stmt->nb_iterators; ++i) {
-    Stmt->iterators[i] = (char*) malloc(sizeof(char*) * 20);
+    Stmt->iterators[i] = (char *)malloc(sizeof(char *) * 20);
     sprintf(Stmt->iterators[i], "i_%d", i);
   }
 
@@ -161,9 +163,7 @@ void ScopLib::freeStatement(scoplib_statement_p stmt) {
   scoplib_statement_free(stmt);
 }
 
-void ScopLib::print(FILE *F) {
-  scoplib_scop_print_dot_scop(F, scoplib);
-}
+void ScopLib::print(FILE *F) { scoplib_scop_print_dot_scop(F, scoplib); }
 
 /// Add an isl constraint to an ScopLib matrix.
 ///
@@ -179,7 +179,6 @@ int ScopLib::domainToMatrix_constraint(isl_constraint *c, void *user) {
   assert(!nb_div && "Existentially quantified variables not yet supported");
 
   scoplib_vector_p vec = scoplib_vector_malloc(nb_params + nb_vars + 2);
-
 
   // Assign type
   if (isl_constraint_is_equality(c))
@@ -237,8 +236,8 @@ int ScopLib::domainToMatrix_basic_set(isl_basic_set *bset, void *user) {
 /// @param PS The set to be translated
 /// @return A ScopLib Matrix
 scoplib_matrix_p ScopLib::domainToMatrix(__isl_take isl_set *set) {
-  set = isl_set_compute_divs (set);
-  set = isl_set_align_divs (set);
+  set = isl_set_compute_divs(set);
+  set = isl_set_align_divs(set);
 
   // Initialize the matrix.
   unsigned NbRows, NbColumns;
@@ -267,8 +266,7 @@ int ScopLib::scatteringToMatrix_constraint(isl_constraint *c, void *user) {
 
   assert(!nb_div && "Existentially quantified variables not yet supported");
 
-  scoplib_vector_p vec =
-    scoplib_vector_malloc(nb_params + nb_in + 2);
+  scoplib_vector_p vec = scoplib_vector_malloc(nb_params + nb_in + 2);
 
   // Assign type
   if (isl_constraint_is_equality(c))
@@ -295,8 +293,7 @@ int ScopLib::scatteringToMatrix_constraint(isl_constraint *c, void *user) {
   isl_constraint_get_constant(c, &v);
   isl_int_set(vec->p[nb_in + nb_params + 1], v);
 
-  scoplib_vector_p null =
-    scoplib_vector_malloc(nb_params + nb_in + 2);
+  scoplib_vector_p null = scoplib_vector_malloc(nb_params + nb_in + 2);
 
   vec = scoplib_vector_sub(null, vec);
   scoplib_matrix_insert_vector(m, vec, 0);
@@ -329,8 +326,8 @@ int ScopLib::scatteringToMatrix_basic_map(isl_basic_map *bmap, void *user) {
 /// @param map The map to be translated
 /// @return A ScopLib Matrix
 scoplib_matrix_p ScopLib::scatteringToMatrix(__isl_take isl_map *map) {
-  map = isl_map_compute_divs (map);
-  map = isl_map_align_divs (map);
+  map = isl_map_compute_divs(map);
+  map = isl_map_align_divs(map);
 
   // Initialize the matrix.
   unsigned NbRows, NbColumns;
@@ -342,10 +339,10 @@ scoplib_matrix_p ScopLib::scatteringToMatrix(__isl_take isl_map *map) {
   isl_map_foreach_basic_map(map, &scatteringToMatrix_basic_map, matrix);
 
   // Only keep the relevant rows.
-  scoplib_matrix_p reduced = scoplib_matrix_ncopy(matrix,
-                                                  isl_map_n_in(map) * 2 + 1);
+  scoplib_matrix_p reduced =
+      scoplib_matrix_ncopy(matrix, isl_map_n_in(map) * 2 + 1);
 
-  scoplib_matrix_free (matrix);
+  scoplib_matrix_free(matrix);
   isl_map_free(map);
 
   return reduced;
@@ -364,23 +361,23 @@ int ScopLib::accessToMatrix_constraint(isl_constraint *c, void *user) {
 
   assert(!nb_div && "Existentially quantified variables not yet supported");
 
-  scoplib_vector_p vec =
-    scoplib_vector_malloc(nb_params + nb_in + 2);
+  scoplib_vector_p vec = scoplib_vector_malloc(nb_params + nb_in + 2);
 
   isl_int v;
   isl_int_init(v);
 
   // The access dimension has to be one.
   isl_constraint_get_coefficient(c, isl_dim_out, 0, &v);
-  assert((isl_int_is_one(v) || isl_int_is_negone(v))
-         && "Access relations not supported in scoplib");
+  assert((isl_int_is_one(v) || isl_int_is_negone(v)) &&
+         "Access relations not supported in scoplib");
   bool inverse = isl_int_is_one(v);
 
   // Assign variables
   for (int i = 0; i < nb_in; ++i) {
     isl_constraint_get_coefficient(c, isl_dim_in, i, &v);
 
-    if (inverse) isl_int_neg(v,v);
+    if (inverse)
+      isl_int_neg(v, v);
 
     isl_int_set(vec->p[i + 1], v);
   }
@@ -389,7 +386,8 @@ int ScopLib::accessToMatrix_constraint(isl_constraint *c, void *user) {
   for (int i = 0; i < nb_params; ++i) {
     isl_constraint_get_coefficient(c, isl_dim_param, i, &v);
 
-    if (inverse) isl_int_neg(v,v);
+    if (inverse)
+      isl_int_neg(v, v);
 
     isl_int_set(vec->p[nb_in + i + 1], v);
   }
@@ -397,7 +395,8 @@ int ScopLib::accessToMatrix_constraint(isl_constraint *c, void *user) {
   // Assign constant
   isl_constraint_get_constant(c, &v);
 
-  if (inverse) isl_int_neg(v,v);
+  if (inverse)
+    isl_int_neg(v, v);
 
   isl_int_set(vec->p[nb_in + nb_params + 1], v);
 
@@ -408,7 +407,6 @@ int ScopLib::accessToMatrix_constraint(isl_constraint *c, void *user) {
 
   return 0;
 }
-
 
 /// Add an isl basic map to a ScopLib matrix_list
 ///
@@ -442,13 +440,12 @@ scoplib_matrix_p ScopLib::createAccessMatrix(ScopStmt *S, bool isRead) {
     if ((*MI)->isRead() == isRead) {
       // Extract the access function.
       isl_map *AccessRelation = (*MI)->getAccessRelation();
-      isl_map_foreach_basic_map(AccessRelation,
-                                &accessToMatrix_basic_map, m);
+      isl_map_foreach_basic_map(AccessRelation, &accessToMatrix_basic_map, m);
       isl_map_free(AccessRelation);
 
       // Set the index of the memory access base element.
-      std::map<const Value*, int>::iterator BA =
-        ArrayMap.find((*MI)->getBaseAddr());
+      std::map<const Value *, int>::iterator BA =
+          ArrayMap.find((*MI)->getBaseAddr());
       isl_int_set_si(m->p[m->NbRows - 1][0], (*BA).second + 1);
     }
 
@@ -495,8 +492,8 @@ ScopLib::~ScopLib() {
 /// @param Space An isl space object, describing how to spilt the dimensions.
 ///
 /// @return An isl constraint representing this integer array.
-isl_constraint *constraintFromMatrixRow(isl_int *row,
-                                        __isl_take isl_space *Space) {
+isl_constraint *
+constraintFromMatrixRow(isl_int *row, __isl_take isl_space *Space) {
   isl_constraint *c;
 
   unsigned NbIn = isl_space_dim(Space, isl_dim_in);
@@ -566,8 +563,8 @@ isl_map *mapFromMatrix(scoplib_matrix_p m, __isl_take isl_space *Space,
 /// @param Space An isl space object, describing how to spilt the dimensions.
 ///
 /// @return An isl constraint representing this integer array.
-isl_constraint *constraintFromMatrixRowFull(isl_int *row,
-                                            __isl_take isl_space *Space) {
+isl_constraint *
+constraintFromMatrixRowFull(isl_int *row, __isl_take isl_space *Space) {
   isl_constraint *c;
 
   unsigned NbOut = isl_space_dim(Space, isl_dim_out);
@@ -624,8 +621,8 @@ isl_map *mapFromMatrix(scoplib_matrix_p m, __isl_take isl_space *Space) {
 /// @param PollyStmt The statement to create the scattering for.
 ///
 /// @return An isl_map describing the scattering.
-isl_map *scatteringForStmt(scoplib_matrix_p m, ScopStmt *PollyStmt,
-                           int scatteringDims) {
+isl_map *
+scatteringForStmt(scoplib_matrix_p m, ScopStmt *PollyStmt, int scatteringDims) {
 
   unsigned NbParam = PollyStmt->getNumParams();
   unsigned NbIterators = PollyStmt->getNumIterators();
@@ -644,8 +641,7 @@ isl_map *scatteringForStmt(scoplib_matrix_p m, ScopStmt *PollyStmt,
   // We need to copy the isl_ids for the parameter dimensions to the new
   // map. Without doing this the current map would have different
   // ids then the new one, even though both are named identically.
-  for (unsigned i = 0; i < isl_space_dim(Space, isl_dim_param);
-       i++) {
+  for (unsigned i = 0; i < isl_space_dim(Space, isl_dim_param); i++) {
     isl_id *id = isl_space_get_dim_id(ParamSpace, isl_dim_param, i);
     Space = isl_space_set_dim_id(Space, isl_dim_param, i, id);
   }
@@ -697,8 +693,8 @@ StatementToIslMapTy *readScattering(Scop *S, scoplib_scop_p OScop) {
   int numScatteringDims = -1;
   ScopStmt *pollyStmt = *S->begin();
 
-  if (stmt->schedule->NbColumns
-      == 2 + pollyStmt->getNumParams() + pollyStmt->getNumIterators()) {
+  if (stmt->schedule->NbColumns ==
+          2 + pollyStmt->getNumParams() + pollyStmt->getNumIterators()) {
     numScatteringDims = maxScattering(stmt);
   }
 
@@ -709,8 +705,8 @@ StatementToIslMapTy *readScattering(Scop *S, scoplib_scop_p OScop) {
       return NULL;
     }
 
-    NewScattering[*SI] = scatteringForStmt(stmt->schedule, *SI,
-                                           numScatteringDims);
+    NewScattering[*SI] =
+        scatteringForStmt(stmt->schedule, *SI, numScatteringDims);
     stmt = stmt->next;
   }
 
@@ -737,7 +733,7 @@ bool ScopLib::updateScattering() {
   if (!D->isValidScattering(NewScattering)) {
     freeStmtToIslMap(NewScattering);
     errs() << "OpenScop file contains a scattering that changes the "
-      << "dependences. Use -disable-polly-legality to continue anyways\n";
+           << "dependences. Use -disable-polly-legality to continue anyways\n";
     return false;
   }
 

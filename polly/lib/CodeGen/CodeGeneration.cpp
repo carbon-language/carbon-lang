@@ -193,7 +193,7 @@ Value *ClastExpCodeGen::codegen(const clast_reduction *r, Type *Ty) {
 }
 
 ClastExpCodeGen::ClastExpCodeGen(IRBuilder<> &B, CharMapT &IVMap)
-  : Builder(B), IVS(IVMap) {}
+    : Builder(B), IVS(IVMap) {}
 
 Value *ClastExpCodeGen::codegen(const clast_expr *e, Type *Ty) {
   switch (e->type) {
@@ -366,10 +366,9 @@ void ClastStmtCodeGen::codegen(const clast_assignment *a) {
   ClastVars[a->LHS] = V;
 }
 
-void ClastStmtCodeGen::codegen(const clast_assignment *A, ScopStmt *Stmt,
-                               unsigned Dim, int VectorDim,
-                               std::vector<ValueMapT> *VectorVMap,
-                               std::vector<LoopToScevMapT> *VLTS) {
+void ClastStmtCodeGen::codegen(
+    const clast_assignment *A, ScopStmt *Stmt, unsigned Dim, int VectorDim,
+    std::vector<ValueMapT> *VectorVMap, std::vector<LoopToScevMapT> *VLTS) {
   Value *RHS;
 
   assert(!A->LHS && "Statement assignments do not have left hand side");
@@ -970,8 +969,7 @@ void ClastStmtCodeGen::codegen(const clast_root *r) {
 }
 
 ClastStmtCodeGen::ClastStmtCodeGen(Scop *scop, IRBuilder<> &B, Pass *P)
-    : S(scop), P(P), Builder(B), ExpGen(Builder, ClastVars) {
-}
+    : S(scop), P(P), Builder(B), ExpGen(Builder, ClastVars) {}
 
 namespace {
 class CodeGeneration : public ScopPass {
@@ -1040,9 +1038,7 @@ public:
 
 char CodeGeneration::ID = 1;
 
-Pass *polly::createCodeGenerationPass() {
-  return new CodeGeneration();
-}
+Pass *polly::createCodeGenerationPass() { return new CodeGeneration(); }
 
 INITIALIZE_PASS_BEGIN(CodeGeneration, "polly-codegen",
                       "Polly - Create LLVM-IR from SCoPs", false, false);
@@ -1054,6 +1050,6 @@ INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
 INITIALIZE_PASS_DEPENDENCY(ScopDetection);
 INITIALIZE_PASS_DEPENDENCY(DataLayout);
 INITIALIZE_PASS_END(CodeGeneration, "polly-codegen",
-                      "Polly - Create LLVM-IR from SCoPs", false, false)
+                    "Polly - Create LLVM-IR from SCoPs", false, false)
 
 #endif // CLOOG_FOUND

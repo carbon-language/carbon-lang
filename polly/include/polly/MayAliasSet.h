@@ -37,7 +37,7 @@
 // a -> A
 // b -> B
 // ptr0 -> A, B
-// 
+//
 // After that, SCoPInfo pass will build a access function for each MayAliasSet,
 // so "%2 = load i32* %ptr0, align 4" will be translated to "read A" and
 // "read B", while "%3 = load i32* %a, align 4" will be translated to "read A",
@@ -55,9 +55,9 @@
 #include <map>
 
 namespace llvm {
-  class Value;
-  class AliasAnalysis;
-  class raw_ostream;
+class Value;
+class AliasAnalysis;
+class raw_ostream;
 }
 
 using namespace llvm;
@@ -78,7 +78,7 @@ class MayAliasSet {
 
   // TODO: Use CallbackVH to update the set when some base pointers are deleted
   // by some pass.
-  SmallPtrSet<const Value*, 8> MustAliasPtrs;
+  SmallPtrSet<const Value *, 8> MustAliasPtrs;
 
   MayAliasSet() {}
 
@@ -89,15 +89,15 @@ public:
   ///
   /// These iterators iterate over all must alias pointers in the set.
   //@{
-  typedef SmallPtrSetIterator<const Value*> const_iterator;
+  typedef SmallPtrSetIterator<const Value *> const_iterator;
   const_iterator mustalias_begin() const { return MustAliasPtrs.begin(); }
-  const_iterator mustalias_end() const {  return MustAliasPtrs.end(); }
+  const_iterator mustalias_end() const { return MustAliasPtrs.end(); }
   //@}
 
   /// @brief Add a must alias pointer to this set.
   ///
   /// @param V The pointer to add.
-  void addMustAliasPtr(const Value* V) { MustAliasPtrs.insert(V); }
+  void addMustAliasPtr(const Value *V) { MustAliasPtrs.insert(V); }
 
   void print(raw_ostream &OS) const;
   void dump() const;
@@ -114,7 +114,7 @@ class MayAliasSetInfo {
   SpecificBumpPtrAllocator<MayAliasSet> MayASAllocator;
 
   // Mapping the pointers to their may-alias sets.
-  typedef std::multimap<const Value*, MayAliasSet*> MayAliasSetMapType;
+  typedef std::multimap<const Value *, MayAliasSet *> MayAliasSetMapType;
   MayAliasSetMapType BasePtrMap;
 
 public:
@@ -127,7 +127,7 @@ public:
   //@{
   typedef MayAliasSetMapType::iterator alias_iterator;
   typedef MayAliasSetMapType::const_iterator const_alias_iterator;
-  
+
   alias_iterator alias_begin(const Value *BasePtr) {
     return BasePtrMap.lower_bound(BasePtr);
   }
@@ -144,7 +144,6 @@ public:
     return BasePtrMap.upper_bound(BasePtr);
   }
   //@}
-
 
   /// @brief Build MayAliasSets in a SCoP.
   ///

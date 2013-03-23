@@ -29,7 +29,7 @@ using namespace polly;
 
 void MayAliasSet::print(raw_ostream &OS) const {
   OS << "Must alias {";
-  
+
   for (const_iterator I = mustalias_begin(), E = mustalias_end(); I != E; ++I) {
     WriteAsOperand(OS, *I, false);
     OS << ", ";
@@ -39,9 +39,6 @@ void MayAliasSet::print(raw_ostream &OS) const {
   OS << '}';
 }
 
-void MayAliasSet::dump() const {
-  print(dbgs());
-}
+void MayAliasSet::dump() const { print(dbgs()); }
 
-void MayAliasSetInfo::buildMayAliasSets(TempScop &Scop, AliasAnalysis &AA) {
-}
+void MayAliasSetInfo::buildMayAliasSets(TempScop &Scop, AliasAnalysis &AA) {}

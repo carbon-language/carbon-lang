@@ -25,9 +25,9 @@
 #include <vector>
 
 namespace llvm {
-  class Pass;
-  class Region;
-  class ScalarEvolution;
+class Pass;
+class Region;
+class ScalarEvolution;
 }
 
 namespace polly {
@@ -36,7 +36,7 @@ extern bool SCEVCodegen;
 using namespace llvm;
 class ScopStmt;
 
-typedef DenseMap<const Value*, Value*> ValueMapT;
+typedef DenseMap<const Value *, Value *> ValueMapT;
 typedef std::vector<ValueMapT> VectorValueMapT;
 
 /// @brief Check whether an instruction can be synthesized by the code
@@ -119,25 +119,23 @@ protected:
   ///
   /// @param L The loop that surrounded the instruction that referenced this
   ///          memory subscript in the original code.
-  std::vector<Value*> getMemoryAccessIndex(__isl_keep isl_map *AccessRelation,
-                                           Value *BaseAddress, ValueMapT &BBMap,
-                                           ValueMapT &GlobalMap,
-                                           LoopToScevMapT &LTS, Loop *L);
+  std::vector<Value *> getMemoryAccessIndex(
+      __isl_keep isl_map *AccessRelation, Value *BaseAddress, ValueMapT &BBMap,
+      ValueMapT &GlobalMap, LoopToScevMapT &LTS, Loop *L);
 
   /// @brief Get the new operand address according to the changed access in
   ///        JSCOP file.
   ///
   /// @param L The loop that surrounded the instruction that used this operand
   ///          in the original code.
-  Value *getNewAccessOperand(__isl_keep isl_map *NewAccessRelation,
-                             Value *BaseAddress, ValueMapT &BBMap,
-                             ValueMapT &GlobalMap, LoopToScevMapT &LTS,
-                             Loop *L);
+  Value *getNewAccessOperand(
+      __isl_keep isl_map *NewAccessRelation, Value *BaseAddress,
+      ValueMapT &BBMap, ValueMapT &GlobalMap, LoopToScevMapT &LTS, Loop *L);
 
   /// @brief Generate the operand address
-  Value *generateLocationAccessed(const Instruction *Inst,
-                                  const Value *Pointer, ValueMapT &BBMap,
-                                  ValueMapT &GlobalMap, LoopToScevMapT &LTS);
+  Value *generateLocationAccessed(const Instruction *Inst, const Value *Pointer,
+                                  ValueMapT &BBMap, ValueMapT &GlobalMap,
+                                  LoopToScevMapT &LTS);
 
   Value *generateScalarLoad(const LoadInst *load, ValueMapT &BBMap,
                             ValueMapT &GlobalMap, LoopToScevMapT &LTS);
@@ -194,11 +192,10 @@ public:
   ///                   loop containing the statemenet.
   /// @param P          A reference to the pass this function is called from.
   ///                   The pass is needed to update other analysis.
-  static void generate(IRBuilder<> &B, ScopStmt &Stmt,
-                       VectorValueMapT &GlobalMaps,
-                       std::vector<LoopToScevMapT> &VLTS,
-                       __isl_keep isl_map *Schedule,
-                       Pass *P) {
+  static void generate(
+      IRBuilder<> &B, ScopStmt &Stmt, VectorValueMapT &GlobalMaps,
+      std::vector<LoopToScevMapT> &VLTS, __isl_keep isl_map *Schedule,
+      Pass *P) {
     VectorBlockGenerator Generator(B, GlobalMaps, VLTS, Stmt, Schedule, P);
     Generator.copyBB();
   }
@@ -234,9 +231,8 @@ private:
   isl_map *Schedule;
 
   VectorBlockGenerator(IRBuilder<> &B, VectorValueMapT &GlobalMaps,
-                       std::vector<LoopToScevMapT> &VLTS,
-                       ScopStmt &Stmt, __isl_keep isl_map *Schedule,
-                       Pass *P);
+                       std::vector<LoopToScevMapT> &VLTS, ScopStmt &Stmt,
+                       __isl_keep isl_map *Schedule, Pass *P);
 
   int getVectorWidth();
 
@@ -278,8 +274,8 @@ private:
   /// %scalar 2 = load double* %p_2
   /// %vec_2 = insertelement <2 x double> %vec_1, double %scalar_1, i32 1
   ///
-  Value *generateUnknownStrideLoad(const LoadInst *Load,
-                                   VectorValueMapT &ScalarMaps);
+  Value *
+  generateUnknownStrideLoad(const LoadInst *Load, VectorValueMapT &ScalarMaps);
 
   void generateLoad(const LoadInst *Load, ValueMapT &VectorMap,
                     VectorValueMapT &ScalarMaps);
@@ -309,4 +305,3 @@ private:
 
 }
 #endif
-

@@ -14,13 +14,13 @@
 #define POLLY_CODEGEN_UTILS_H
 
 namespace llvm {
-  class Pass;
-  class BasicBlock;
+class Pass;
+class BasicBlock;
 }
 
 namespace polly {
 
-  class Scop;
+class Scop;
 
 /// @brief Execute a Scop conditionally.
 ///
@@ -60,4 +60,3 @@ llvm::BasicBlock *executeScopConditionally(Scop &S, llvm::Pass *PassInfo);
 
 }
 #endif
-

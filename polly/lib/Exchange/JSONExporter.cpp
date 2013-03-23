@@ -39,20 +39,18 @@
 using namespace llvm;
 using namespace polly;
 
-STATISTIC(NewAccessMapFound,  "Number of updated access functions");
+STATISTIC(NewAccessMapFound, "Number of updated access functions");
 
 namespace {
-static cl::opt<std::string>
-ImportDir("polly-import-jscop-dir",
-          cl::desc("The directory to import the .jscop files from."),
-          cl::Hidden, cl::value_desc("Directory path"), cl::ValueRequired,
-          cl::init("."));
+static cl::opt<std::string> ImportDir(
+    "polly-import-jscop-dir",
+    cl::desc("The directory to import the .jscop files from."), cl::Hidden,
+    cl::value_desc("Directory path"), cl::ValueRequired, cl::init("."));
 
-static cl::opt<std::string>
-ImportPostfix("polly-import-jscop-postfix",
-              cl::desc("Postfix to append to the import .jsop files."),
-              cl::Hidden, cl::value_desc("File postfix"), cl::ValueRequired,
-              cl::init(""));
+static cl::opt<std::string> ImportPostfix(
+    "polly-import-jscop-postfix",
+    cl::desc("Postfix to append to the import .jsop files."), cl::Hidden,
+    cl::value_desc("File postfix"), cl::ValueRequired, cl::init(""));
 
 struct JSONExporter : public ScopPass {
   static char ID;
@@ -82,15 +80,12 @@ struct JSONImporter : public ScopPass {
 
 char JSONExporter::ID = 0;
 std::string JSONExporter::getFileName(Scop *S) const {
-  std::string FunctionName =
-    S->getRegion().getEntry()->getParent()->getName();
+  std::string FunctionName = S->getRegion().getEntry()->getParent()->getName();
   std::string FileName = FunctionName + "___" + S->getNameStr() + ".jscop";
   return FileName;
 }
 
-void JSONExporter::printScop(raw_ostream &OS) const {
-  S->print(OS);
-}
+void JSONExporter::printScop(raw_ostream &OS) const { S->print(OS); }
 
 Json::Value JSONExporter::getJSON(Scop &scop) const {
   Json::Value root;
@@ -110,7 +105,8 @@ Json::Value JSONExporter::getJSON(Scop &scop) const {
     statement["accesses"];
 
     for (ScopStmt::memacc_iterator MI = Stmt->memacc_begin(),
-         ME = Stmt->memacc_end(); MI != ME; ++MI) {
+                                   ME = Stmt->memacc_end();
+         MI != ME; ++MI) {
       Json::Value access;
 
       access["kind"] = (*MI)->isRead() ? "read" : "write";
@@ -141,7 +137,7 @@ bool JSONExporter::runOnScop(Scop &scop) {
 
   std::string FunctionName = R.getEntry()->getParent()->getName();
   errs() << "Writing JScop '" << R.getNameStr() << "' in function '"
-    << FunctionName << "' to '" << FileName << "'.\n";
+         << FunctionName << "' to '" << FileName << "'.\n";
 
   if (ErrInfo.empty()) {
     F.os() << fileContent;
@@ -164,22 +160,11 @@ void JSONExporter::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<ScopInfo>();
 }
 
-INITIALIZE_PASS_BEGIN(JSONExporter, "polly-export-jscop",
-                      "Polly - Export Scops as JSON"
-                      " (Writes a .jscop file for each Scop)", false, false)
-INITIALIZE_PASS_DEPENDENCY(Dependences)
-INITIALIZE_PASS_END(JSONExporter, "polly-export-jscop",
-                    "Polly - Export Scops as JSON"
-                    " (Writes a .jscop file for each Scop)", false, false)
-
-Pass *polly::createJSONExporterPass() {
-  return new JSONExporter();
-}
+Pass *polly::createJSONExporterPass() { return new JSONExporter(); }
 
 char JSONImporter::ID = 0;
 std::string JSONImporter::getFileName(Scop *S) const {
-  std::string FunctionName =
-    S->getRegion().getEntry()->getParent()->getName();
+  std::string FunctionName = S->getRegion().getEntry()->getParent()->getName();
   std::string FileName = FunctionName + "___" + S->getNameStr() + ".jscop";
 
   if (ImportPostfix != "")
@@ -191,7 +176,8 @@ std::string JSONImporter::getFileName(Scop *S) const {
 void JSONImporter::printScop(raw_ostream &OS) const {
   S->print(OS);
   for (std::vector<std::string>::const_iterator I = newAccessStrings.begin(),
-       E = newAccessStrings.end(); I != E; I++)
+                                                E = newAccessStrings.end();
+       I != E; I++)
     OS << "New access function '" << *I << "'detected in JSCOP file\n";
 }
 
@@ -206,7 +192,7 @@ bool JSONImporter::runOnScop(Scop &scop) {
 
   std::string FunctionName = R.getEntry()->getParent()->getName();
   errs() << "Reading JScop '" << R.getNameStr() << "' in function '"
-    << FunctionName << "' from '" << FileName << "'.\n";
+         << FunctionName << "' from '" << FileName << "'.\n";
   OwningPtr<MemoryBuffer> result;
   error_code ec = MemoryBuffer::getFile(FileName, result);
 
@@ -226,8 +212,8 @@ bool JSONImporter::runOnScop(Scop &scop) {
   }
 
   isl_set *OldContext = S->getContext();
-  isl_set *NewContext = isl_set_read_from_str(S->getIslCtx(),
-                                              jscop["context"].asCString());
+  isl_set *NewContext =
+      isl_set_read_from_str(S->getIslCtx(), jscop["context"].asCString());
 
   for (unsigned i = 0; i < isl_set_dim(OldContext, isl_dim_param); i++) {
     isl_id *id = isl_set_get_dim_id(OldContext, isl_dim_param, i);
@@ -275,15 +261,16 @@ bool JSONImporter::runOnScop(Scop &scop) {
 
     int memoryAccessIdx = 0;
     for (ScopStmt::memacc_iterator MI = Stmt->memacc_begin(),
-         ME = Stmt->memacc_end(); MI != ME; ++MI) {
-      Json::Value accesses = jscop["statements"][statementIdx]
-                                  ["accesses"][memoryAccessIdx]["relation"];
-      isl_map *newAccessMap = isl_map_read_from_str(S->getIslCtx(),
-                                                    accesses.asCString());
+                                   ME = Stmt->memacc_end();
+         MI != ME; ++MI) {
+      Json::Value accesses = jscop["statements"][statementIdx]["accesses"][
+          memoryAccessIdx]["relation"];
+      isl_map *newAccessMap =
+          isl_map_read_from_str(S->getIslCtx(), accesses.asCString());
       isl_map *currentAccessMap = (*MI)->getAccessRelation();
 
       if (isl_map_dim(newAccessMap, isl_dim_param) !=
-          isl_map_dim(currentAccessMap, isl_dim_param)) {
+              isl_map_dim(currentAccessMap, isl_dim_param)) {
         errs() << "JScop file changes the number of parameter dimensions\n";
         isl_map_free(currentAccessMap);
         isl_map_free(newAccessMap);
@@ -339,15 +326,27 @@ void JSONImporter::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);
   AU.addRequired<Dependences>();
 }
+Pass *polly::createJSONImporterPass() { return new JSONImporter(); }
+
+INITIALIZE_PASS_BEGIN(JSONExporter, "polly-export-jscop",
+                      "Polly - Export Scops as JSON"
+                      " (Writes a .jscop file for each Scop)",
+                      false, false);
+INITIALIZE_PASS_DEPENDENCY(Dependences);
+INITIALIZE_PASS_END(JSONExporter, "polly-export-jscop",
+                    "Polly - Export Scops as JSON"
+                    " (Writes a .jscop file for each Scop)",
+                    false, false)
+
+    // typedef to make clang-format introduce a linebreak
+    typedef int clangformatdef;
 
 INITIALIZE_PASS_BEGIN(JSONImporter, "polly-import-jscop",
                       "Polly - Import Scops from JSON"
-                      " (Reads a .jscop file for each Scop)", false, false)
-INITIALIZE_PASS_DEPENDENCY(Dependences)
+                      " (Reads a .jscop file for each Scop)",
+                      false, false);
+INITIALIZE_PASS_DEPENDENCY(Dependences);
 INITIALIZE_PASS_END(JSONImporter, "polly-import-jscop",
                     "Polly - Import Scops from JSON"
-                    " (Reads a .jscop file for each Scop)", false, false)
-
-Pass *polly::createJSONImporterPass() {
-  return new JSONImporter();
-}
+                    " (Reads a .jscop file for each Scop)",
+                    false, false)

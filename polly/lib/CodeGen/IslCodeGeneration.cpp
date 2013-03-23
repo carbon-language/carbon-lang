@@ -126,7 +126,7 @@ void RuntimeDebugBuilder::createStrPrinter(std::string String) {
 
 void RuntimeDebugBuilder::createIntPrinter(Value *V) {
   IntegerType *Ty = dyn_cast<IntegerType>(V->getType());
-  (void)Ty;
+  (void) Ty;
   assert(Ty && Ty->getBitWidth() == 64 &&
          "Cannot insert printer for this type.");
 
@@ -1080,4 +1080,3 @@ INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
 INITIALIZE_PASS_DEPENDENCY(ScopDetection);
 INITIALIZE_PASS_END(IslCodeGeneration, "polly-codegen-isl",
                     "Polly - Create LLVM-IR from SCoPs", false, false)
-

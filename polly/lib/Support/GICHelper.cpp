@@ -121,4 +121,3 @@ std::string polly::stringFromIslObj(__isl_keep isl_pw_aff *pwaff) {
   return stringFromIslObjInternal(pwaff, isl_pw_aff_get_ctx,
                                   isl_printer_print_pw_aff);
 }
-

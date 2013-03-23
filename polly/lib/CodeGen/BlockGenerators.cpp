@@ -37,10 +37,9 @@ Aligned("enable-polly-aligned", cl::desc("Assumed aligned memory accesses."),
         cl::Hidden, cl::value_desc("OpenMP code generation enabled if true"),
         cl::init(false), cl::ZeroOrMore);
 
-static cl::opt<bool, true>
-SCEVCodegenF("polly-codegen-scev", cl::desc("Use SCEV based code generation."),
-             cl::Hidden, cl::location(SCEVCodegen), cl::init(false),
-             cl::ZeroOrMore);
+static cl::opt<bool, true> SCEVCodegenF(
+    "polly-codegen-scev", cl::desc("Use SCEV based code generation."),
+    cl::Hidden, cl::location(SCEVCodegen), cl::init(false), cl::ZeroOrMore);
 
 bool polly::SCEVCodegen;
 
@@ -61,7 +60,6 @@ bool polly::canSynthesize(const Instruction *I, const llvm::LoopInfo *LI,
   Loop *L = LI->getLoopFor(I->getParent());
   return L && I == L->getCanonicalInductionVariable();
 }
-
 
 // Helper class to generate memory location.
 namespace {
@@ -181,7 +179,7 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
     Value *New = GlobalMap[Old];
 
     if (Old->getType()->getScalarSizeInBits() <
-        New->getType()->getScalarSizeInBits())
+            New->getType()->getScalarSizeInBits())
       New = Builder.CreateTruncOrBitCast(New, Old->getType());
 
     return New;
@@ -312,8 +310,7 @@ Value *BlockGenerator::generateLocationAccessed(
   return NewPointer;
 }
 
-Loop *
-BlockGenerator::getLoopForInst(const llvm::Instruction *Inst) {
+Loop *BlockGenerator::getLoopForInst(const llvm::Instruction *Inst) {
   return P->getAnalysis<LoopInfo>().getLoopFor(Inst->getParent());
 }
 
@@ -390,9 +387,9 @@ VectorBlockGenerator::VectorBlockGenerator(
   assert(Schedule && "No statement domain provided");
 }
 
-Value *VectorBlockGenerator::getVectorValue(
-    const Value *Old, ValueMapT &VectorMap, VectorValueMapT &ScalarMaps,
-    Loop *L) {
+Value *
+VectorBlockGenerator::getVectorValue(const Value *Old, ValueMapT &VectorMap,
+                                     VectorValueMapT &ScalarMaps, Loop *L) {
   if (VectorMap.count(Old))
     return VectorMap[Old];
 

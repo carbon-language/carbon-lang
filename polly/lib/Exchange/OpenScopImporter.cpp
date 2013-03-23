@@ -34,29 +34,27 @@ using namespace llvm;
 using namespace polly;
 
 namespace {
-  static cl::opt<std::string>
-    ImportDir("polly-import-dir",
-              cl::desc("The directory to import the .scop files from."),
-              cl::Hidden, cl::value_desc("Directory path"), cl::ValueRequired,
-              cl::init("."));
-  static cl::opt<std::string>
-    ImportPostfix("polly-import-postfix",
-                  cl::desc("Postfix to append to the import .scop files."),
-                  cl::Hidden, cl::value_desc("File postfix"), cl::ValueRequired,
-                  cl::init(""));
+static cl::opt<std::string>
+ImportDir("polly-import-dir",
+          cl::desc("The directory to import the .scop files from."), cl::Hidden,
+          cl::value_desc("Directory path"), cl::ValueRequired, cl::init("."));
+static cl::opt<std::string> ImportPostfix(
+    "polly-import-postfix",
+    cl::desc("Postfix to append to the import .scop files."), cl::Hidden,
+    cl::value_desc("File postfix"), cl::ValueRequired, cl::init(""));
 
-  struct ScopImporter : public ScopPass {
-    static char ID;
-    Scop *S;
-    Dependences *D;
-    explicit ScopImporter() : ScopPass(ID) {}
-    bool updateScattering(Scop *S, openscop_scop_p OScop);
+struct ScopImporter : public ScopPass {
+  static char ID;
+  Scop *S;
+  Dependences *D;
+  explicit ScopImporter() : ScopPass(ID) {}
+  bool updateScattering(Scop *S, openscop_scop_p OScop);
 
-    std::string getFileName(Scop *S) const;
-    virtual bool runOnScop(Scop &S);
-    virtual void printScop(raw_ostream &OS) const;
-    void getAnalysisUsage(AnalysisUsage &AU) const;
-  };
+  std::string getFileName(Scop *S) const;
+  virtual bool runOnScop(Scop &S);
+  virtual void printScop(raw_ostream &OS) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const;
+};
 }
 
 char ScopImporter::ID = 0;
@@ -88,7 +86,8 @@ isl_constraint *constraintFromMatrixRow(isl_int *row, isl_space *Space) {
     isl_constraint_set_coefficient(c, isl_space_in, j, row[current_column++]);
 
   for (unsigned j = 0; j < NbParam; ++j)
-    isl_constraint_set_coefficient(c, isl_space_param, j, row[current_column++]);
+    isl_constraint_set_coefficient(c, isl_space_param, j,
+                                   row[current_column++]);
 
   isl_constraint_set_constant(c, row[current_column]);
 
@@ -181,7 +180,7 @@ bool ScopImporter::updateScattering(Scop *S, openscop_scop_p OScop) {
 
   if (!D->isValidScattering(NewScattering)) {
     errs() << "OpenScop file contains a scattering that changes the "
-      << "dependences. Use -disable-polly-legality to continue anyways\n";
+           << "dependences. Use -disable-polly-legality to continue anyways\n";
     return false;
   }
 
@@ -195,15 +194,12 @@ bool ScopImporter::updateScattering(Scop *S, openscop_scop_p OScop) {
   return true;
 }
 std::string ScopImporter::getFileName(Scop *S) const {
-  std::string FunctionName =
-    S->getRegion().getEntry()->getParent()->getName();
+  std::string FunctionName = S->getRegion().getEntry()->getParent()->getName();
   std::string FileName = FunctionName + "___" + S->getNameStr() + ".scop";
   return FileName;
 }
 
-void ScopImporter::printScop(raw_ostream &OS) const {
-  S->print(OS);
-}
+void ScopImporter::printScop(raw_ostream &OS) const { S->print(OS); }
 
 bool ScopImporter::runOnScop(Scop &scop) {
   S = &scop;
@@ -224,12 +220,13 @@ bool ScopImporter::runOnScop(Scop &scop) {
 
   std::string FunctionName = R.getEntry()->getParent()->getName();
   errs() << "Reading Scop '" << R.getNameStr() << "' in function '"
-    << FunctionName << "' from '" << FileName << "'.\n";
+         << FunctionName << "' from '" << FileName << "'.\n";
 
   bool UpdateSuccessfull = updateScattering(S, openscop);
 
   if (!UpdateSuccessfull) {
-    errs() << "Update failed" << "\n";
+    errs() << "Update failed"
+           << "\n";
   }
 
   return false;
@@ -240,13 +237,10 @@ void ScopImporter::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<Dependences>();
 }
 
-static RegisterPass<ScopImporter> A("polly-import",
-                                    "Polly - Import Scops with OpenScop library"
-                                    " (Reads a .scop file for each Scop)"
-                                    );
+static RegisterPass<ScopImporter>
+A("polly-import", "Polly - Import Scops with OpenScop library"
+                  " (Reads a .scop file for each Scop)");
 
-Pass *polly::createScopImporterPass() {
-  return new ScopImporter();
-}
+Pass *polly::createScopImporterPass() { return new ScopImporter(); }
 
 #endif

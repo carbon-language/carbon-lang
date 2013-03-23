@@ -1,4 +1,5 @@
-/******************** GPUJIT.cpp - GPUJIT Execution Engine ********************/
+/******************** GPUJIT.cpp - GPUJIT Execution Engine                     \
+ * ********************/
 /*                                                                            */
 /*                     The LLVM Compiler Infrastructure                       */
 /*                                                                            */
@@ -53,8 +54,8 @@ static CuMemAllocFcnTy *CuMemAllocFcnPtr;
 typedef CUresult CUDAAPI CuFuncSetBlockShapeFcnTy(CUfunction, int, int, int);
 static CuFuncSetBlockShapeFcnTy *CuFuncSetBlockShapeFcnPtr;
 
-typedef CUresult CUDAAPI CuParamSetvFcnTy(CUfunction, int, void *,
-                                          unsigned int);
+typedef CUresult CUDAAPI
+CuParamSetvFcnTy(CUfunction, int, void *, unsigned int);
 static CuParamSetvFcnTy *CuParamSetvFcnPtr;
 
 typedef CUresult CUDAAPI CuParamSetSizeFcnTy(CUfunction, unsigned int);
@@ -90,13 +91,12 @@ static CuCtxCreateFcnTy *CuCtxCreateFcnPtr;
 typedef CUresult CUDAAPI CuDeviceGetFcnTy(CUdevice *, int);
 static CuDeviceGetFcnTy *CuDeviceGetFcnPtr;
 
-typedef CUresult CUDAAPI CuModuleLoadDataExFcnTy(CUmodule *, const void *,
-                                                 unsigned int, CUjit_option *,
-                                                 void **);
+typedef CUresult CUDAAPI CuModuleLoadDataExFcnTy(
+    CUmodule *, const void *, unsigned int, CUjit_option *, void **);
 static CuModuleLoadDataExFcnTy *CuModuleLoadDataExFcnPtr;
 
-typedef CUresult CUDAAPI CuModuleGetFunctionFcnTy(CUfunction *, CUmodule,
-                                                  const char *);
+typedef CUresult CUDAAPI
+CuModuleGetFunctionFcnTy(CUfunction *, CUmodule, const char *);
 static CuModuleGetFunctionFcnTy *CuModuleGetFunctionFcnPtr;
 
 typedef CUresult CUDAAPI CuDeviceComputeCapabilityFcnTy(int *, int *, CUdevice);
@@ -109,15 +109,14 @@ static CuDeviceGetNameFcnTy *CuDeviceGetNameFcnPtr;
 typedef cudaError_t CUDARTAPI CudaEventCreateFcnTy(cudaEvent_t *);
 static CudaEventCreateFcnTy *CudaEventCreateFcnPtr;
 
-typedef cudaError_t CUDARTAPI CudaEventRecordFcnTy(cudaEvent_t,
-                                                   cudaStream_t);
+typedef cudaError_t CUDARTAPI CudaEventRecordFcnTy(cudaEvent_t, cudaStream_t);
 static CudaEventRecordFcnTy *CudaEventRecordFcnPtr;
 
 typedef cudaError_t CUDARTAPI CudaEventSynchronizeFcnTy(cudaEvent_t);
 static CudaEventSynchronizeFcnTy *CudaEventSynchronizeFcnPtr;
 
-typedef cudaError_t CUDARTAPI CudaEventElapsedTimeFcnTy(float *, cudaEvent_t,
-                                                        cudaEvent_t);
+typedef cudaError_t CUDARTAPI
+CudaEventElapsedTimeFcnTy(float *, cudaEvent_t, cudaEvent_t);
 static CudaEventElapsedTimeFcnTy *CudaEventElapsedTimeFcnPtr;
 
 typedef cudaError_t CUDARTAPI CudaEventDestroyFcnTy(cudaEvent_t);
@@ -166,81 +165,77 @@ static int initialDeviceAPIs() {
    * of this kind of cast may not be emitted by clang and new versions of gcc
    * as it is valid on POSIX 2008.
    */
-  CuFuncSetBlockShapeFcnPtr =
-    (CuFuncSetBlockShapeFcnTy *) getAPIHandle(HandleCuda,
-                                              "cuFuncSetBlockShape");
+  CuFuncSetBlockShapeFcnPtr = (CuFuncSetBlockShapeFcnTy *)getAPIHandle(
+      HandleCuda, "cuFuncSetBlockShape");
 
-  CuParamSetvFcnPtr = (CuParamSetvFcnTy *) getAPIHandle(HandleCuda,
-                                                        "cuParamSetv");
+  CuParamSetvFcnPtr =
+      (CuParamSetvFcnTy *)getAPIHandle(HandleCuda, "cuParamSetv");
 
-  CuParamSetSizeFcnPtr = (CuParamSetSizeFcnTy *) getAPIHandle(HandleCuda,
-                                                              "cuParamSetSize");
+  CuParamSetSizeFcnPtr =
+      (CuParamSetSizeFcnTy *)getAPIHandle(HandleCuda, "cuParamSetSize");
 
-  CuLaunchGridFcnPtr = (CuLaunchGridFcnTy *) getAPIHandle(HandleCuda,
-                                                          "cuLaunchGrid");
+  CuLaunchGridFcnPtr =
+      (CuLaunchGridFcnTy *)getAPIHandle(HandleCuda, "cuLaunchGrid");
 
-  CuMemAllocFcnPtr = (CuMemAllocFcnTy *) getAPIHandle(HandleCuda,
-                                                      "cuMemAlloc_v2");
+  CuMemAllocFcnPtr =
+      (CuMemAllocFcnTy *)getAPIHandle(HandleCuda, "cuMemAlloc_v2");
 
-  CuMemFreeFcnPtr = (CuMemFreeFcnTy *) getAPIHandle(HandleCuda, "cuMemFree_v2");
+  CuMemFreeFcnPtr = (CuMemFreeFcnTy *)getAPIHandle(HandleCuda, "cuMemFree_v2");
 
-  CuMemcpyDtoHFcnPtr = (CuMemcpyDtoHFcnTy *) getAPIHandle(HandleCuda,
-                                                          "cuMemcpyDtoH_v2");
+  CuMemcpyDtoHFcnPtr =
+      (CuMemcpyDtoHFcnTy *)getAPIHandle(HandleCuda, "cuMemcpyDtoH_v2");
 
-  CuMemcpyHtoDFcnPtr = (CuMemcpyHtoDFcnTy *) getAPIHandle(HandleCuda,
-                                                          "cuMemcpyHtoD_v2");
+  CuMemcpyHtoDFcnPtr =
+      (CuMemcpyHtoDFcnTy *)getAPIHandle(HandleCuda, "cuMemcpyHtoD_v2");
 
-  CuModuleUnloadFcnPtr = (CuModuleUnloadFcnTy *) getAPIHandle(HandleCuda,
-                                                              "cuModuleUnload");
+  CuModuleUnloadFcnPtr =
+      (CuModuleUnloadFcnTy *)getAPIHandle(HandleCuda, "cuModuleUnload");
 
-  CuCtxDestroyFcnPtr = (CuCtxDestroyFcnTy *) getAPIHandle(HandleCuda,
-                                                          "cuCtxDestroy");
+  CuCtxDestroyFcnPtr =
+      (CuCtxDestroyFcnTy *)getAPIHandle(HandleCuda, "cuCtxDestroy");
 
-  CuInitFcnPtr = (CuInitFcnTy *) getAPIHandle(HandleCuda, "cuInit");
+  CuInitFcnPtr = (CuInitFcnTy *)getAPIHandle(HandleCuda, "cuInit");
 
-  CuDeviceGetCountFcnPtr = (CuDeviceGetCountFcnTy *) getAPIHandle(HandleCuda,
-                                                            "cuDeviceGetCount");
+  CuDeviceGetCountFcnPtr =
+      (CuDeviceGetCountFcnTy *)getAPIHandle(HandleCuda, "cuDeviceGetCount");
 
-  CuDeviceGetFcnPtr = (CuDeviceGetFcnTy *) getAPIHandle(HandleCuda,
-                                                        "cuDeviceGet");
+  CuDeviceGetFcnPtr =
+      (CuDeviceGetFcnTy *)getAPIHandle(HandleCuda, "cuDeviceGet");
 
-  CuCtxCreateFcnPtr = (CuCtxCreateFcnTy *) getAPIHandle(HandleCuda,
-                                                        "cuCtxCreate_v2");
+  CuCtxCreateFcnPtr =
+      (CuCtxCreateFcnTy *)getAPIHandle(HandleCuda, "cuCtxCreate_v2");
 
   CuModuleLoadDataExFcnPtr =
-    (CuModuleLoadDataExFcnTy *) getAPIHandle(HandleCuda, "cuModuleLoadDataEx");
+      (CuModuleLoadDataExFcnTy *)getAPIHandle(HandleCuda, "cuModuleLoadDataEx");
 
-  CuModuleGetFunctionFcnPtr =
-    (CuModuleGetFunctionFcnTy *)getAPIHandle(HandleCuda, "cuModuleGetFunction");
+  CuModuleGetFunctionFcnPtr = (CuModuleGetFunctionFcnTy *)getAPIHandle(
+      HandleCuda, "cuModuleGetFunction");
 
   CuDeviceComputeCapabilityFcnPtr =
-    (CuDeviceComputeCapabilityFcnTy *)getAPIHandle(HandleCuda,
-                                                   "cuDeviceComputeCapability");
+      (CuDeviceComputeCapabilityFcnTy *)getAPIHandle(
+          HandleCuda, "cuDeviceComputeCapability");
 
   CuDeviceGetNameFcnPtr =
-    (CuDeviceGetNameFcnTy *) getAPIHandle(HandleCuda, "cuDeviceGetName");
+      (CuDeviceGetNameFcnTy *)getAPIHandle(HandleCuda, "cuDeviceGetName");
 
   /* Get function pointer to CUDA Runtime APIs. */
   CudaEventCreateFcnPtr =
-    (CudaEventCreateFcnTy *) getAPIHandle(HandleCudaRT, "cudaEventCreate");
+      (CudaEventCreateFcnTy *)getAPIHandle(HandleCudaRT, "cudaEventCreate");
 
   CudaEventRecordFcnPtr =
-    (CudaEventRecordFcnTy *) getAPIHandle(HandleCudaRT, "cudaEventRecord");
+      (CudaEventRecordFcnTy *)getAPIHandle(HandleCudaRT, "cudaEventRecord");
 
-  CudaEventSynchronizeFcnPtr =
-    (CudaEventSynchronizeFcnTy *) getAPIHandle(HandleCudaRT,
-                                               "cudaEventSynchronize");
+  CudaEventSynchronizeFcnPtr = (CudaEventSynchronizeFcnTy *)getAPIHandle(
+      HandleCudaRT, "cudaEventSynchronize");
 
-  CudaEventElapsedTimeFcnPtr =
-    (CudaEventElapsedTimeFcnTy *) getAPIHandle(HandleCudaRT,
-                                               "cudaEventElapsedTime");
+  CudaEventElapsedTimeFcnPtr = (CudaEventElapsedTimeFcnTy *)getAPIHandle(
+      HandleCudaRT, "cudaEventElapsedTime");
 
   CudaEventDestroyFcnPtr =
-    (CudaEventDestroyFcnTy *) getAPIHandle(HandleCudaRT, "cudaEventDestroy");
+      (CudaEventDestroyFcnTy *)getAPIHandle(HandleCudaRT, "cudaEventDestroy");
 
-  CudaThreadSynchronizeFcnPtr =
-    (CudaThreadSynchronizeFcnTy *) getAPIHandle(HandleCudaRT,
-                                                "cudaThreadSynchronize");
+  CudaThreadSynchronizeFcnPtr = (CudaThreadSynchronizeFcnTy *)getAPIHandle(
+      HandleCudaRT, "cudaThreadSynchronize");
 
   return 1;
 }
@@ -269,7 +264,7 @@ void polly_initDevice(PollyGPUContext **Context, PollyGPUDevice **Device) {
   }
 
   /* We select the 1st device as default. */
-  *Device =  malloc(sizeof(PollyGPUDevice));
+  *Device = malloc(sizeof(PollyGPUDevice));
   if (*Device == 0) {
     fprintf(stdout, "Allocate memory for Polly GPU device failed.\n");
     exit(-1);
@@ -297,8 +292,8 @@ void polly_getPTXModule(void *PTXBuffer, PollyGPUModule **Module) {
     exit(-1);
   }
 
-  if (CuModuleLoadDataExFcnPtr(&((*Module)->Cuda), PTXBuffer, 0, 0, 0)
-      != CUDA_SUCCESS) {
+  if (CuModuleLoadDataExFcnPtr(&((*Module)->Cuda), PTXBuffer, 0, 0, 0) !=
+          CUDA_SUCCESS) {
     fprintf(stdout, "Loading ptx assembly text failed.\n");
     exit(-1);
   }
@@ -313,8 +308,8 @@ void polly_getPTXKernelEntry(const char *KernelName, PollyGPUModule *Module,
   }
 
   /* Locate the kernel entry point. */
-  if(CuModuleGetFunctionFcnPtr(&((*Kernel)->Cuda), Module->Cuda, KernelName)
-     !=  CUDA_SUCCESS) {
+  if (CuModuleGetFunctionFcnPtr(&((*Kernel)->Cuda), Module->Cuda, KernelName) !=
+          CUDA_SUCCESS) {
     fprintf(stdout, "Loading kernel function failed.\n");
     exit(-1);
   }
@@ -354,9 +349,8 @@ void polly_stopTimerByCudaEvent(PollyGPUEvent *Start, PollyGPUEvent *Stop,
   free(Stop);
 }
 
-void polly_allocateMemoryForHostAndDevice(void **HostData,
-                                          PollyGPUDevicePtr **DevData,
-                                          int MemSize) {
+void polly_allocateMemoryForHostAndDevice(
+    void **HostData, PollyGPUDevicePtr **DevData, int MemSize) {
   if ((*HostData = (int *)malloc(MemSize)) == 0) {
     fprintf(stdout, "Could not allocate host memory.\n");
     exit(-1);
@@ -378,7 +372,7 @@ void polly_copyFromHostToDevice(PollyGPUDevicePtr *DevData, void *HostData,
 
 void polly_copyFromDeviceToHost(void *HostData, PollyGPUDevicePtr *DevData,
                                 int MemSize) {
-  if(CuMemcpyDtoHFcnPtr(HostData, DevData->Cuda, MemSize) != CUDA_SUCCESS) {
+  if (CuMemcpyDtoHFcnPtr(HostData, DevData->Cuda, MemSize) != CUDA_SUCCESS) {
     fprintf(stdout, "Copying results from device to host memory failed.\n");
     exit(-1);
   }
@@ -405,10 +399,9 @@ void polly_launchKernel(PollyGPUFunction *Kernel, int GridWidth,
   fprintf(stdout, "CUDA kernel launched.\n");
 }
 
-void polly_cleanupGPGPUResources(void *HostData, PollyGPUDevicePtr *DevData,
-                                 PollyGPUModule *Module,
-                                 PollyGPUContext *Context,
-                                 PollyGPUFunction *Kernel) {
+void polly_cleanupGPGPUResources(
+    void *HostData, PollyGPUDevicePtr *DevData, PollyGPUModule *Module,
+    PollyGPUContext *Context, PollyGPUFunction *Kernel) {
   if (HostData) {
     free(HostData);
     HostData = 0;

@@ -19,9 +19,9 @@
 #include <map>
 
 namespace llvm {
-  class Value;
-  class Pass;
-  class BasicBlock;
+class Value;
+class Pass;
+class BasicBlock;
 }
 
 namespace polly {
@@ -44,9 +44,9 @@ Value *createLoop(Value *LowerBound, Value *UpperBound, Value *Stride,
 
 class OMPGenerator {
 public:
-  typedef std::map<Value*, Value*> ValueToValueMapTy;
+  typedef std::map<Value *, Value *> ValueToValueMapTy;
 
-  OMPGenerator(IRBuilder<> &Builder, Pass *P): Builder(Builder), P(P) {}
+  OMPGenerator(IRBuilder<> &Builder, Pass *P) : Builder(Builder), P(P) {}
 
   /// @brief Create an OpenMP parallel loop.
   ///
@@ -66,10 +66,10 @@ public:
   ///                    instructions that form the actual loop body.
   ///
   /// @return Value*     The newly created induction variable for this loop.
-  Value *createParallelLoop(Value *LowerBound, Value *UpperBound, Value *Stride,
-                            SetVector<Value*> &UsedValues,
-                            ValueToValueMapTy &VMap,
-                            BasicBlock::iterator *LoopBody);
+  Value *
+  createParallelLoop(Value *LowerBound, Value *UpperBound, Value *Stride,
+                     SetVector<Value *> &UsedValues, ValueToValueMapTy &VMap,
+                     BasicBlock::iterator *LoopBody);
 
 private:
   IRBuilder<> &Builder;
@@ -85,9 +85,9 @@ private:
   void createCallParallelEnd();
   void createCallLoopEndNowait();
 
-  Value *loadValuesIntoStruct(SetVector<Value*> &Values);
-  void extractValuesFromStruct(SetVector<Value*> OldValues,
-                               Value *Struct, ValueToValueMapTy &Map);
+  Value *loadValuesIntoStruct(SetVector<Value *> &Values);
+  void extractValuesFromStruct(SetVector<Value *> OldValues, Value *Struct,
+                               ValueToValueMapTy &Map);
 
   /// @brief Create the OpenMP subfunction.
   ///
@@ -103,14 +103,12 @@ private:
   /// @param SubFunction  The newly created SubFunction is returned here.
   ///
   /// @return Value*      The newly created induction variable.
-  Value *createSubfunction(Value *Stride, Value *Struct,
-                           SetVector<Value*> UsedValues,
-                           ValueToValueMapTy &VMap,
-                           Function **SubFunction);
+  Value *
+  createSubfunction(Value *Stride, Value *Struct, SetVector<Value *> UsedValues,
+                    ValueToValueMapTy &VMap, Function **SubFunction);
 
   /// @brief Create the definition of the OpenMP subfunction.
   Function *createSubfunctionDefinition();
 };
 } // end namespace polly
 #endif
-

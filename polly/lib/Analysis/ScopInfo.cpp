@@ -95,8 +95,7 @@ public:
 
   SCEVAffinator(const ScopStmt *Stmt)
       : Ctx(Stmt->getIslCtx()), NbLoopSpaces(Stmt->getNumIterators()),
-        S(Stmt->getParent()) {
-  }
+        S(Stmt->getParent()) {}
 
   __isl_give isl_pw_aff *visitConstant(const SCEVConstant *Constant) {
     ConstantInt *Value = Constant->getValue();
@@ -588,7 +587,7 @@ ScopStmt::buildDomain(TempScop &tempScop, const Region &CurRegion) {
 ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
                    BasicBlock &bb, SmallVectorImpl<Loop *> &Nest,
                    SmallVectorImpl<unsigned> &Scatter)
-  : Parent(parent), BB(&bb), IVS(Nest.size()), NestLoops(Nest.size()) {
+    : Parent(parent), BB(&bb), IVS(Nest.size()), NestLoops(Nest.size()) {
   // Setup the induction variables.
   for (unsigned i = 0, e = Nest.size(); i < e; ++i) {
     if (!SCEVCodegen) {
@@ -980,17 +979,15 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
 
 char ScopInfo::ID = 0;
 
+Pass *polly::createScopInfoPass() { return new ScopInfo(); }
+
 INITIALIZE_PASS_BEGIN(ScopInfo, "polly-scops",
                       "Polly - Create polyhedral description of Scops", false,
-                      false)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
-INITIALIZE_PASS_DEPENDENCY(RegionInfo)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
-INITIALIZE_PASS_DEPENDENCY(TempScopInfo)
+                      false);
+INITIALIZE_PASS_DEPENDENCY(LoopInfo);
+INITIALIZE_PASS_DEPENDENCY(RegionInfo);
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
+INITIALIZE_PASS_DEPENDENCY(TempScopInfo);
 INITIALIZE_PASS_END(ScopInfo, "polly-scops",
                     "Polly - Create polyhedral description of Scops", false,
                     false)
-
-Pass *polly::createScopInfoPass() {
-  return new ScopInfo();
-}

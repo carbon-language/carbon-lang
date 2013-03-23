@@ -12,8 +12,6 @@
 #ifndef POLLY_SCEDULE_OPTIMIZER_H
 #define POLLY_SCHEDULE_OPTIMZER_H
 
-namespace polly {
-  extern bool DisablePollyTiling;
-}
+namespace polly { extern bool DisablePollyTiling; }
 
 #endif

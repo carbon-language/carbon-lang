@@ -13,7 +13,5 @@
 
 #ifndef POLLY_REGISTER_PASSES_H
 #define POLLY_REGISTER_PASSES_H
-namespace llvm {
-  class PassManagerBase;
-}
+namespace llvm { class PassManagerBase; }
 #endif

@@ -286,12 +286,10 @@ void Dependences::getAnalysisUsage(AnalysisUsage &AU) const {
 
 char Dependences::ID = 0;
 
+Pass *polly::createDependencesPass() { return new Dependences(); }
+
 INITIALIZE_PASS_BEGIN(Dependences, "polly-dependences",
-                      "Polly - Calculate dependences", false, false)
-INITIALIZE_PASS_DEPENDENCY(ScopInfo)
+                      "Polly - Calculate dependences", false, false);
+INITIALIZE_PASS_DEPENDENCY(ScopInfo);
 INITIALIZE_PASS_END(Dependences, "polly-dependences",
                     "Polly - Calculate dependences", false, false)
-
-Pass *polly::createDependencesPass() {
-  return new Dependences();
-}

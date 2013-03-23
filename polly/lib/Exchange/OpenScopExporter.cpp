@@ -58,7 +58,7 @@ class OpenScop {
   Scop *PollyScop;
   openscop_scop_p openscop;
 
-  std::map<const Value*, int> ArrayMap;
+  std::map<const Value *, int> ArrayMap;
 
   void initializeArrays();
   void initializeParameters();
@@ -94,7 +94,7 @@ OpenScop::OpenScop(Scop *S) : PollyScop(S) {
 
 void OpenScop::initializeParameters() {
   openscop->nb_parameters = PollyScop->getNumParams();
-  openscop->parameters = new char*[openscop->nb_parameters];
+  openscop->parameters = new char *[openscop->nb_parameters];
 
   for (int i = 0; i < openscop->nb_parameters; ++i) {
     openscop->parameters[i] = new char[20];
@@ -108,7 +108,8 @@ void OpenScop::initializeArrays() {
   for (Scop::iterator SI = PollyScop->begin(), SE = PollyScop->end(); SI != SE;
        ++SI)
     for (ScopStmt::memacc_iterator MI = (*SI)->memacc_begin(),
-         ME = (*SI)->memacc_end(); MI != ME; ++MI) {
+                                   ME = (*SI)->memacc_end();
+         MI != ME; ++MI) {
       const Value *BaseAddr = (*MI)->getBaseAddr();
       if (ArrayMap.find(BaseAddr) == ArrayMap.end()) {
         ArrayMap.insert(std::make_pair(BaseAddr, nb_arrays));
@@ -117,11 +118,12 @@ void OpenScop::initializeArrays() {
     }
 
   openscop->nb_arrays = nb_arrays;
-  openscop->arrays = new char*[nb_arrays];
+  openscop->arrays = new char *[nb_arrays];
 
   for (int i = 0; i < nb_arrays; ++i)
-    for (std::map<const Value*, int>::iterator VI = ArrayMap.begin(),
-         VE = ArrayMap.end(); VI != VE; ++VI)
+    for (std::map<const Value *, int>::iterator VI = ArrayMap.begin(),
+                                                VE = ArrayMap.end();
+         VI != VE; ++VI)
       if ((*VI).second == i) {
         const Value *V = (*VI).first;
         std::string name = V->getName();
@@ -132,7 +134,7 @@ void OpenScop::initializeArrays() {
 
 void OpenScop::initializeScattering() {
   openscop->nb_scattdims = PollyScop->getScatterDim();
-  openscop->scattdims = new char*[openscop->nb_scattdims];
+  openscop->scattdims = new char *[openscop->nb_scattdims];
 
   for (int i = 0; i < openscop->nb_scattdims; ++i) {
     openscop->scattdims[i] = new char[20];
@@ -151,15 +153,14 @@ openscop_statement_p OpenScop::initializeStatement(ScopStmt *stmt) {
   isl_set_free(domain);
   isl_map_free(Scattering);
 
-
   // Statement name
   const char *entryName = stmt->getBaseName();
-  Stmt->body = (char*)malloc(sizeof(char) * (strlen(entryName) + 1));
+  Stmt->body = (char *)malloc(sizeof(char) * (strlen(entryName) + 1));
   strcpy(Stmt->body, entryName);
 
   // Iterator names
   Stmt->nb_iterators = isl_set_n_dim(stmt->getDomain());
-  Stmt->iterators = new char*[Stmt->nb_iterators];
+  Stmt->iterators = new char *[Stmt->nb_iterators];
 
   for (int i = 0; i < Stmt->nb_iterators; ++i) {
     Stmt->iterators[i] = new char[20];
@@ -213,9 +214,7 @@ void OpenScop::freeStatement(openscop_statement_p stmt) {
   openscop_statement_free(stmt);
 }
 
-void OpenScop::print(FILE *F) {
-  openscop_scop_print_dot_scop(F, openscop);
-}
+void OpenScop::print(FILE *F) { openscop_scop_print_dot_scop(F, openscop); }
 
 /// Add an isl constraint to an OpenScop matrix.
 ///
@@ -286,8 +285,8 @@ openscop_matrix_p OpenScop::domainToMatrix(isl_set *PS) {
 
   // Create a canonical copy of this set.
   isl_set *set = isl_set_copy(PS);
-  set = isl_set_compute_divs (set);
-  set = isl_set_align_divs (set);
+  set = isl_set_compute_divs(set);
+  set = isl_set_align_divs(set);
 
   // Initialize the matrix.
   unsigned NbRows, NbColumns;
@@ -318,7 +317,7 @@ int OpenScop::scatteringToMatrix_constraint(isl_constraint *c, void *user) {
   assert(!nb_div && "Existentially quantified variables not yet supported");
 
   openscop_vector_p vec =
-    openscop_vector_malloc(nb_params + nb_in + nb_out + 2);
+      openscop_vector_malloc(nb_params + nb_in + nb_out + 2);
 
   // Assign type
   if (isl_constraint_is_equality(c))
@@ -380,14 +379,14 @@ openscop_matrix_p OpenScop::scatteringToMatrix(isl_map *pmap) {
 
   // Create a canonical copy of this set.
   isl_map *map = isl_map_copy(pmap);
-  map = isl_map_compute_divs (map);
-  map = isl_map_align_divs (map);
+  map = isl_map_compute_divs(map);
+  map = isl_map_align_divs(map);
 
   // Initialize the matrix.
   unsigned NbRows, NbColumns;
   NbRows = 0;
-  NbColumns = isl_map_n_in(pmap) + isl_map_n_out(pmap) + isl_map_n_param(pmap)
-    + 2;
+  NbColumns =
+      isl_map_n_in(pmap) + isl_map_n_out(pmap) + isl_map_n_param(pmap) + 2;
   openscop_matrix_p matrix = openscop_matrix_malloc(NbRows, NbColumns);
 
   // Copy the content into the matrix.
@@ -411,8 +410,7 @@ int OpenScop::accessToMatrix_constraint(isl_constraint *c, void *user) {
 
   assert(!nb_div && "Existentially quantified variables not yet supported");
 
-  openscop_vector_p vec =
-    openscop_vector_malloc(nb_params + nb_in + 2);
+  openscop_vector_p vec = openscop_vector_malloc(nb_params + nb_in + 2);
 
   isl_int v;
   isl_int_init(v);
@@ -420,13 +418,14 @@ int OpenScop::accessToMatrix_constraint(isl_constraint *c, void *user) {
   // The access dimension has to be one.
   isl_constraint_get_coefficient(c, isl_space_out, 0, &v);
   assert(isl_int_is_one(v));
-  bool inverse = true ;
+  bool inverse = true;
 
   // Assign variables
   for (int i = 0; i < nb_in; ++i) {
     isl_constraint_get_coefficient(c, isl_space_in, i, &v);
 
-    if (inverse) isl_int_neg(v,v);
+    if (inverse)
+      isl_int_neg(v, v);
 
     isl_int_set(vec->p[i + 1], v);
   }
@@ -435,7 +434,8 @@ int OpenScop::accessToMatrix_constraint(isl_constraint *c, void *user) {
   for (int i = 0; i < nb_params; ++i) {
     isl_constraint_get_coefficient(c, isl_space_param, i, &v);
 
-    if (inverse) isl_int_neg(v,v);
+    if (inverse)
+      isl_int_neg(v, v);
 
     isl_int_set(vec->p[nb_in + i + 1], v);
   }
@@ -443,7 +443,8 @@ int OpenScop::accessToMatrix_constraint(isl_constraint *c, void *user) {
   // Assign constant
   isl_constraint_get_constant(c, &v);
 
-  if (inverse) isl_int_neg(v,v);
+  if (inverse)
+    isl_int_neg(v, v);
 
   isl_int_set(vec->p[nb_in + nb_params + 1], v);
 
@@ -451,7 +452,6 @@ int OpenScop::accessToMatrix_constraint(isl_constraint *c, void *user) {
 
   return 0;
 }
-
 
 /// Add an isl basic map to a OpenScop matrix_list
 ///
@@ -487,8 +487,8 @@ openscop_matrix_p OpenScop::createAccessMatrix(ScopStmt *S, bool isRead) {
                                 &accessToMatrix_basic_map, m);
 
       // Set the index of the memory access base element.
-      std::map<const Value*, int>::iterator BA =
-        ArrayMap.find((*MI)->getBaseAddr());
+      std::map<const Value *, int>::iterator BA =
+          ArrayMap.find((*MI)->getBaseAddr());
       isl_int_set_si(m->p[m->NbRows - 1][0], (*BA).second + 1);
     }
 
@@ -536,15 +536,12 @@ OpenScop::~OpenScop() {
 }
 
 std::string ScopExporter::getFileName(Scop *S) const {
-  std::string FunctionName =
-    S->getRegion().getEntry()->getParent()->getName();
+  std::string FunctionName = S->getRegion().getEntry()->getParent()->getName();
   std::string FileName = FunctionName + "___" + S->getNameStr() + ".scop";
   return FileName;
 }
 
-void ScopExporter::printScop(raw_ostream &OS) const {
-  S->print(OS);
-}
+void ScopExporter::printScop(raw_ostream &OS) const { S->print(OS); }
 
 bool ScopExporter::runOnScop(Scop &scop) {
   S = &scop;
@@ -565,7 +562,7 @@ bool ScopExporter::runOnScop(Scop &scop) {
 
   std::string FunctionName = R.getEntry()->getParent()->getName();
   errs() << "Writing Scop '" << R.getNameStr() << "' in function '"
-    << FunctionName << "' to '" << FileName << "'.\n";
+         << FunctionName << "' to '" << FileName << "'.\n";
 
   return false;
 }
@@ -574,14 +571,10 @@ void ScopExporter::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);
 }
 
-static RegisterPass<ScopExporter> A("polly-export",
-                                    "Polly - Export Scops with OpenScop library"
-                                    " (Writes a .scop file for each Scop)"
-                                    );
+static RegisterPass<ScopExporter>
+A("polly-export", "Polly - Export Scops with OpenScop library"
+                  " (Writes a .scop file for each Scop)");
 
-Pass *polly::createScopExporterPass() {
-  return new ScopExporter();
-}
+Pass *polly::createScopExporterPass() { return new ScopExporter(); }
 
 #endif
-

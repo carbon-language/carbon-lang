@@ -22,9 +22,9 @@
 #include <map>
 
 namespace llvm {
-  class Value;
-  class Pass;
-  class BasicBlock;
+class Value;
+class Pass;
+class BasicBlock;
 }
 
 namespace polly {
@@ -32,7 +32,7 @@ using namespace llvm;
 
 class PTXGenerator {
 public:
-  typedef std::map<Value*, Value*> ValueToValueMapTy;
+  typedef std::map<Value *, Value *> ValueToValueMapTy;
 
   PTXGenerator(IRBuilder<> &Builder, Pass *P, const std::string &Triple);
 
@@ -47,8 +47,8 @@ public:
   /// @param LoopBody     A pointer to an iterator that is set to point to the
   ///                     body of the created loop. It should be used to insert
   ///                     instructions that form the actual loop body.
-  void startGeneration(SetVector<Value*> &UsedValues,
-                       SetVector<Value*> &OriginalIVS, ValueToValueMapTy &VMap,
+  void startGeneration(SetVector<Value *> &UsedValues,
+                       SetVector<Value *> &OriginalIVS, ValueToValueMapTy &VMap,
                        BasicBlock::iterator *LoopBody);
 
   /// @brief Execute the post-operations to build a GPGPU parallel loop.
@@ -73,9 +73,7 @@ public:
   /// This size is used to allocate memory on the device and the host.
   ///
   /// @param Bytes        Output array size in bytes.
-  void setOutputBytes(unsigned Bytes) {
-    OutputBytes = Bytes;
-  }
+  void setOutputBytes(unsigned Bytes) { OutputBytes = Bytes; }
 
 private:
   IRBuilder<> &Builder;
@@ -94,16 +92,16 @@ private:
   StructType *ContextTy, *ModuleTy, *KernelTy, *DeviceTy, *DevDataTy, *EventTy;
 
   void InitializeGPUDataTypes();
-  IntegerType *getInt64Type();            // i64
-  PointerType *getI8PtrType();            // char *
-  PointerType *getPtrI8PtrType();         // char **
-  PointerType *getFloatPtrType();         // float *
-  PointerType *getGPUContextPtrType();    // %struct.PollyGPUContextT *
-  PointerType *getGPUModulePtrType();     // %struct.PollyGPUModuleT *
-  PointerType *getGPUDevicePtrType();     // %struct.PollyGPUDeviceT *
-  PointerType *getPtrGPUDevicePtrType();  // %struct.PollyGPUDevicePtrT *
-  PointerType *getGPUFunctionPtrType();   // %struct.PollyGPUFunctionT *
-  PointerType *getGPUEventPtrType();      // %struct.PollyGPUEventT *
+  IntegerType *getInt64Type();           // i64
+  PointerType *getI8PtrType();           // char *
+  PointerType *getPtrI8PtrType();        // char **
+  PointerType *getFloatPtrType();        // float *
+  PointerType *getGPUContextPtrType();   // %struct.PollyGPUContextT *
+  PointerType *getGPUModulePtrType();    // %struct.PollyGPUModuleT *
+  PointerType *getGPUDevicePtrType();    // %struct.PollyGPUDeviceT *
+  PointerType *getPtrGPUDevicePtrType(); // %struct.PollyGPUDevicePtrT *
+  PointerType *getGPUFunctionPtrType();  // %struct.PollyGPUFunctionT *
+  PointerType *getGPUEventPtrType();     // %struct.PollyGPUEventT *
 
   Module *getModule();
 
@@ -123,11 +121,9 @@ private:
 
   void createCallInitDevice(Value *Context, Value *Device);
   void createCallGetPTXModule(Value *Buffer, Value *Module);
-  void createCallGetPTXKernelEntry(Value *Entry, Value *Module,
-                                   Value *Kernel);
+  void createCallGetPTXKernelEntry(Value *Entry, Value *Module, Value *Kernel);
   void createCallAllocateMemoryForHostAndDevice(Value *HostData,
-                                                Value *DeviceData,
-                                                Value *Size);
+                                                Value *DeviceData, Value *Size);
   void createCallCopyFromHostToDevice(Value *DeviceData, Value *HostData,
                                       Value *Size);
   void createCallCopyFromDeviceToHost(Value *HostData, Value *DeviceData,
@@ -136,8 +132,7 @@ private:
                                      Value *BlockHeight, Value *DeviceData);
   void createCallLaunchKernel(Value *Kernel, Value *GridWidth,
                               Value *GridHeight);
-  void createCallStartTimerByCudaEvent(Value *StartEvent,
-                                       Value *StopEvent);
+  void createCallStartTimerByCudaEvent(Value *StartEvent, Value *StopEvent);
   void createCallStopTimerByCudaEvent(Value *StartEvent, Value *StopEvent,
                                       Value *Timer);
   void createCallCleanupGPGPUResources(Value *HostData, Value *DeviceData,
@@ -153,10 +148,9 @@ private:
   ///                     their content is available within the loop body.
   /// @param OriginalIVS  The new values of the original induction variables.
   /// @param SubFunction  The newly created SubFunction is returned here.
-  void createSubfunction(SetVector<Value*> &UsedValues,
-                         SetVector<Value*> &OriginalIVS,
-                         ValueToValueMapTy &VMap,
-                         Function **SubFunction);
+  void createSubfunction(SetVector<Value *> &UsedValues,
+                         SetVector<Value *> &OriginalIVS,
+                         ValueToValueMapTy &VMap, Function **SubFunction);
 
   /// @brief Create the definition of the CUDA subfunction.
   ///
@@ -192,6 +186,6 @@ private:
   /// @param SubFunction  A pointer to the device code function.
   void eraseUnusedFunctions(Function *SubFunction);
 };
-} // end namespace polly
+}      // end namespace polly
 #endif /* GPU_CODEGEN */
 #endif /* POLLY_CODEGEN_PTXGENERATOR_H */

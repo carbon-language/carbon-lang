@@ -92,15 +92,13 @@ void polly_copyFromHostToDevice(PollyGPUDevicePtr *DevData, void *HostData,
                                 int MemSize);
 void polly_copyFromDeviceToHost(void *HostData, PollyGPUDevicePtr *DevData,
                                 int MemSize);
-void polly_allocateMemoryForHostAndDevice(void **HostData,
-                                          PollyGPUDevicePtr **DevData,
-                                          int MemSize);
+void polly_allocateMemoryForHostAndDevice(
+    void **HostData, PollyGPUDevicePtr **DevData, int MemSize);
 void polly_setKernelParameters(PollyGPUFunction *Kernel, int BlockWidth,
                                int BlockHeight, PollyGPUDevicePtr *DevData);
 void polly_launchKernel(PollyGPUFunction *Kernel, int GridWidth,
                         int GridHeight);
-void polly_cleanupGPGPUResources(void *HostData, PollyGPUDevicePtr *DevData,
-                                 PollyGPUModule *Module,
-                                 PollyGPUContext *Context,
-                                 PollyGPUFunction *Kernel);
+void polly_cleanupGPGPUResources(
+    void *HostData, PollyGPUDevicePtr *DevData, PollyGPUModule *Module,
+    PollyGPUContext *Context, PollyGPUFunction *Kernel);
 #endif /* GPUJIT_H_ */

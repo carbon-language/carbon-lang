@@ -56,21 +56,21 @@
 using namespace llvm;
 
 namespace llvm {
-  class RegionInfo;
-  class Region;
-  class LoopInfo;
-  class Loop;
-  class ScalarEvolution;
-  class SCEV;
-  class SCEVAddRecExpr;
-  class CallInst;
-  class Instruction;
-  class AliasAnalysis;
-  class Value;
+class RegionInfo;
+class Region;
+class LoopInfo;
+class Loop;
+class ScalarEvolution;
+class SCEV;
+class SCEVAddRecExpr;
+class CallInst;
+class Instruction;
+class AliasAnalysis;
+class Value;
 }
 
 namespace polly {
-typedef std::set<const SCEV*> ParamSetType;
+typedef std::set<const SCEV *> ParamSetType;
 
 //===----------------------------------------------------------------------===//
 /// @brief Pass to detect the maximal static control parts (Scops) of a
@@ -84,7 +84,7 @@ class ScopDetection : public FunctionPass {
 
   /// @brief Analysis passes used.
   //@{
-  ScalarEvolution* SE;
+  ScalarEvolution *SE;
   LoopInfo *LI;
   RegionInfo *RI;
   AliasAnalysis *AA;
@@ -92,22 +92,22 @@ class ScopDetection : public FunctionPass {
 
   /// @brief Context variables for SCoP detection.
   struct DetectionContext {
-    Region &CurRegion;    // The region to check.
-    AliasSetTracker AST;  // The AliasSetTracker to hold the alias information.
-    bool Verifying;       // If we are in the verification phase?
+    Region &CurRegion;   // The region to check.
+    AliasSetTracker AST; // The AliasSetTracker to hold the alias information.
+    bool Verifying;      // If we are in the verification phase?
     DetectionContext(Region &R, AliasAnalysis &AA, bool Verify)
-      : CurRegion(R), AST(AA), Verifying(Verify) {}
+        : CurRegion(R), AST(AA), Verifying(Verify) {}
   };
 
   // Remember the valid regions
-  typedef std::set<const Region*> RegionSet;
+  typedef std::set<const Region *> RegionSet;
   RegionSet ValidRegions;
 
   // Invalid regions and the reason they fail.
-  std::map<const Region*, std::string> InvalidRegions;
+  std::map<const Region *, std::string> InvalidRegions;
 
   // Remember the invalid functions producted by backends;
-  typedef std::set<const Function*> FunctionSet;
+  typedef std::set<const Function *> FunctionSet;
   FunctionSet InvalidFunctions;
   mutable std::string LastFailure;
 
@@ -247,20 +247,18 @@ public:
   typedef RegionSet::iterator iterator;
   typedef RegionSet::const_iterator const_iterator;
 
-  iterator begin()  { return ValidRegions.begin(); }
-  iterator end()    { return ValidRegions.end();   }
+  iterator begin() { return ValidRegions.begin(); }
+  iterator end() { return ValidRegions.end(); }
 
   const_iterator begin() const { return ValidRegions.begin(); }
-  const_iterator end()   const { return ValidRegions.end();   }
+  const_iterator end() const { return ValidRegions.end(); }
   //@}
 
   /// @brief Mark the function as invalid so we will not extract any scop from
   ///        the function.
   ///
   /// @param F The function to mark as invalid.
-  void markFunctionAsInvalid(const Function *F) {
-    InvalidFunctions.insert(F);
-  }
+  void markFunctionAsInvalid(const Function *F) { InvalidFunctions.insert(F); }
 
   /// @brief Verify if all valid Regions in this Function are still valid
   /// after some transformations.
@@ -284,8 +282,8 @@ public:
 } //end namespace polly
 
 namespace llvm {
-  class PassRegistry;
-  void initializeScopDetectionPass(llvm::PassRegistry&);
+class PassRegistry;
+void initializeScopDetectionPass(llvm::PassRegistry &);
 }
 
 #endif

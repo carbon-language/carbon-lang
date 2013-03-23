@@ -33,12 +33,12 @@ namespace polly {
 ///
 /// @param v      The mpz_t object your want to hold the result.
 /// @param apint  The APInt you want to convert.
-void MPZ_from_APInt (mpz_t v, const llvm::APInt apint, bool is_signed = true);
+void MPZ_from_APInt(mpz_t v, const llvm::APInt apint, bool is_signed = true);
 
 /// @brief Convert mpz to APInt.
 ///
 /// @param mpz    The mpz_t you want to convert.
-llvm::APInt APInt_from_MPZ (const mpz_t mpz);
+llvm::APInt APInt_from_MPZ(const mpz_t mpz);
 
 /// @brief Get c++ string from Isl objects.
 //@{

@@ -25,25 +25,23 @@ using namespace polly;
 using namespace llvm;
 
 namespace llvm {
-  template <> struct GraphTraits<ScopDetection*>
-    : public GraphTraits<RegionInfo*> {
+template <>
+struct GraphTraits<ScopDetection *> : public GraphTraits<RegionInfo *> {
 
-    static NodeType *getEntryNode(ScopDetection *SD) {
-      return GraphTraits<RegionInfo*>::getEntryNode(SD->getRI());
-    }
-    static nodes_iterator nodes_begin(ScopDetection *SD) {
-      return nodes_iterator::begin(getEntryNode(SD));
-    }
-    static nodes_iterator nodes_end(ScopDetection *SD) {
-      return nodes_iterator::end(getEntryNode(SD));
-    }
-  };
+  static NodeType *getEntryNode(ScopDetection *SD) {
+    return GraphTraits<RegionInfo *>::getEntryNode(SD->getRI());
+  }
+  static nodes_iterator nodes_begin(ScopDetection *SD) {
+    return nodes_iterator::begin(getEntryNode(SD));
+  }
+  static nodes_iterator nodes_end(ScopDetection *SD) {
+    return nodes_iterator::end(getEntryNode(SD));
+  }
+};
 
-template<>
-struct DOTGraphTraits<RegionNode*> : public DefaultDOTGraphTraits {
+template <> struct DOTGraphTraits<RegionNode *> : public DefaultDOTGraphTraits {
 
-  DOTGraphTraits (bool isSimple=false)
-    : DefaultDOTGraphTraits(isSimple) {}
+  DOTGraphTraits(bool isSimple = false) : DefaultDOTGraphTraits(isSimple) {}
 
   std::string getNodeLabel(RegionNode *Node, RegionNode *Graph) {
 
@@ -51,27 +49,26 @@ struct DOTGraphTraits<RegionNode*> : public DefaultDOTGraphTraits {
       BasicBlock *BB = Node->getNodeAs<BasicBlock>();
 
       if (isSimple())
-        return DOTGraphTraits<const Function*>
-          ::getSimpleNodeLabel(BB, BB->getParent());
+        return DOTGraphTraits<const Function *>::getSimpleNodeLabel(
+            BB, BB->getParent());
       else
-        return DOTGraphTraits<const Function*>
-          ::getCompleteNodeLabel(BB, BB->getParent());
+        return DOTGraphTraits<const Function *>::getCompleteNodeLabel(
+            BB, BB->getParent());
     }
 
     return "Not implemented";
   }
 };
 
-template<>
-struct DOTGraphTraits<ScopDetection*> : public DOTGraphTraits<RegionNode*> {
-  DOTGraphTraits (bool isSimple=false)
-    : DOTGraphTraits<RegionNode*>(isSimple) {}
-  static std::string getGraphName(ScopDetection *SD) {
-    return "Scop Graph";
-  }
+template <>
+struct DOTGraphTraits<ScopDetection *> : public DOTGraphTraits<RegionNode *> {
+  DOTGraphTraits(bool isSimple = false)
+      : DOTGraphTraits<RegionNode *>(isSimple) {}
+  static std::string getGraphName(ScopDetection *SD) { return "Scop Graph"; }
 
   std::string getEdgeAttributes(RegionNode *srcNode,
-    GraphTraits<RegionInfo*>::ChildIteratorType CI, ScopDetection *SD) {
+                                GraphTraits<RegionInfo *>::ChildIteratorType CI,
+                                ScopDetection *SD) {
 
     RegionNode *destNode = *CI;
 
@@ -98,15 +95,15 @@ struct DOTGraphTraits<ScopDetection*> : public DOTGraphTraits<RegionNode*> {
   }
 
   std::string getNodeLabel(RegionNode *Node, ScopDetection *SD) {
-    return DOTGraphTraits<RegionNode*>
-      ::getNodeLabel(Node, SD->getRI()->getTopLevelRegion());
+    return DOTGraphTraits<RegionNode *>::getNodeLabel(
+        Node, SD->getRI()->getTopLevelRegion());
   }
 
   static std::string escapeString(std::string String) {
     std::string Escaped;
 
-    for (std::string::iterator SI = String.begin(), SE = String.end();
-         SI != SE; ++SI) {
+    for (std::string::iterator SI = String.begin(), SE = String.end(); SI != SE;
+         ++SI) {
 
       if (*SI == '"')
         Escaped += '\\';
@@ -120,8 +117,8 @@ struct DOTGraphTraits<ScopDetection*> : public DOTGraphTraits<RegionNode*> {
   // and adds a different background color for each group.
   static void printRegionCluster(const ScopDetection *SD, const Region *R,
                                  raw_ostream &O, unsigned depth = 0) {
-    O.indent(2 * depth) << "subgraph cluster_" << static_cast<const void*>(R)
-      << " {\n";
+    O.indent(2 * depth) << "subgraph cluster_" << static_cast<const void *>(R)
+                        << " {\n";
     std::string ErrorMessage = SD->regionIsInvalidBecause(R);
     ErrorMessage = escapeString(ErrorMessage);
     O.indent(2 * (depth + 1)) << "label = \"" << ErrorMessage << "\";\n";
@@ -140,8 +137,7 @@ struct DOTGraphTraits<ScopDetection*> : public DOTGraphTraits<RegionNode*> {
       if (color == 3)
         color = 6;
 
-      O.indent(2 * (depth + 1)) << "color = "
-      << color << "\n";
+      O.indent(2 * (depth + 1)) << "color = " << color << "\n";
     }
 
     for (Region::const_iterator RI = R->begin(), RE = R->end(); RI != RE; ++RI)
@@ -150,57 +146,53 @@ struct DOTGraphTraits<ScopDetection*> : public DOTGraphTraits<RegionNode*> {
     RegionInfo *RI = R->getRegionInfo();
 
     for (Region::const_block_iterator BI = R->block_begin(),
-         BE = R->block_end(); BI != BE; ++BI)
+                                      BE = R->block_end();
+         BI != BE; ++BI)
       if (RI->getRegionFor(*BI) == R)
-        O.indent(2 * (depth + 1)) << "Node"
-          << static_cast<const void*>(RI->getTopLevelRegion()->getBBNode(*BI))
-          << ";\n";
+        O.indent(2 * (depth + 1))
+            << "Node" << static_cast<const void *>(
+                             RI->getTopLevelRegion()->getBBNode(*BI)) << ";\n";
 
     O.indent(2 * depth) << "}\n";
   }
   static void addCustomGraphFeatures(const ScopDetection *SD,
-                                     GraphWriter<ScopDetection*> &GW) {
+                                     GraphWriter<ScopDetection *> &GW) {
     raw_ostream &O = GW.getOStream();
     O << "\tcolorscheme = \"paired12\"\n";
     printRegionCluster(SD, SD->getRI()->getTopLevelRegion(), O, 4);
   }
 };
 
-}  //end namespace llvm
+} //end namespace llvm
 
-struct ScopViewer
-  : public DOTGraphTraitsViewer<ScopDetection, false> {
+struct ScopViewer : public DOTGraphTraitsViewer<ScopDetection, false> {
   static char ID;
-  ScopViewer() : DOTGraphTraitsViewer<ScopDetection, false>("scops", ID){}
+  ScopViewer() : DOTGraphTraitsViewer<ScopDetection, false>("scops", ID) {}
 };
 char ScopViewer::ID = 0;
 
-struct ScopOnlyViewer
-  : public DOTGraphTraitsViewer<ScopDetection, true> {
+struct ScopOnlyViewer : public DOTGraphTraitsViewer<ScopDetection, true> {
   static char ID;
   ScopOnlyViewer()
-    : DOTGraphTraitsViewer<ScopDetection, true>("scopsonly", ID){}
+      : DOTGraphTraitsViewer<ScopDetection, true>("scopsonly", ID) {}
 };
 char ScopOnlyViewer::ID = 0;
 
-struct ScopPrinter
-  : public DOTGraphTraitsPrinter<ScopDetection, false> {
+struct ScopPrinter : public DOTGraphTraitsPrinter<ScopDetection, false> {
   static char ID;
-  ScopPrinter() :
-    DOTGraphTraitsPrinter<ScopDetection, false>("scops", ID) {}
+  ScopPrinter() : DOTGraphTraitsPrinter<ScopDetection, false>("scops", ID) {}
 };
 char ScopPrinter::ID = 0;
 
-struct ScopOnlyPrinter
-  : public DOTGraphTraitsPrinter<ScopDetection, true> {
+struct ScopOnlyPrinter : public DOTGraphTraitsPrinter<ScopDetection, true> {
   static char ID;
-  ScopOnlyPrinter() :
-    DOTGraphTraitsPrinter<ScopDetection, true>("scopsonly", ID) {}
+  ScopOnlyPrinter()
+      : DOTGraphTraitsPrinter<ScopDetection, true>("scopsonly", ID) {}
 };
 char ScopOnlyPrinter::ID = 0;
 
 static RegisterPass<ScopViewer>
-X("view-scops","Polly - View Scops of function");
+X("view-scops", "Polly - View Scops of function");
 
 static RegisterPass<ScopOnlyViewer>
 Y("view-scops-only",
@@ -213,18 +205,10 @@ static RegisterPass<ScopOnlyPrinter>
 N("dot-scops-only",
   "Polly - Print Scops of function (with no function bodies)");
 
-Pass *polly::createDOTViewerPass() {
-  return new ScopViewer();
-}
+Pass *polly::createDOTViewerPass() { return new ScopViewer(); }
 
-Pass *polly::createDOTOnlyViewerPass() {
-  return new ScopOnlyViewer();
-}
+Pass *polly::createDOTOnlyViewerPass() { return new ScopOnlyViewer(); }
 
-Pass *polly::createDOTPrinterPass() {
-  return new ScopPrinter();
-}
+Pass *polly::createDOTPrinterPass() { return new ScopPrinter(); }
 
-Pass *polly::createDOTOnlyPrinterPass() {
-  return new ScopOnlyPrinter();
-}
+Pass *polly::createDOTOnlyPrinterPass() { return new ScopOnlyPrinter(); }

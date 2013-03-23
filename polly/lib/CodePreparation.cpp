@@ -183,4 +183,3 @@ INITIALIZE_PASS_BEGIN(CodePreparation, "polly-prepare",
 INITIALIZE_PASS_DEPENDENCY(LoopInfo);
 INITIALIZE_PASS_END(CodePreparation, "polly-prepare",
                     "Polly - Prepare code for polly", false, false)
-

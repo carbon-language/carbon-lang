@@ -34,56 +34,54 @@
 #include "cloog/cloog.h"
 
 struct clast_name;
-namespace llvm {
-  class raw_ostream;
-}
+namespace llvm { class raw_ostream; }
 
 namespace polly {
-  class Scop;
-  class Cloog;
+class Scop;
+class Cloog;
 
-  class CloogInfo : public ScopPass {
-    Cloog *C;
-    Scop *scop;
+class CloogInfo : public ScopPass {
+  Cloog *C;
+  Scop *scop;
 
-  public:
-    static char ID;
-    CloogInfo() : ScopPass(ID), C(0) {}
+public:
+  static char ID;
+  CloogInfo() : ScopPass(ID), C(0) {}
 
-    /// Write a .cloog input file
-    void dump(FILE *F);
+  /// Write a .cloog input file
+  void dump(FILE *F);
 
-    /// Print a source code representation of the program.
-    void pprint(llvm::raw_ostream &OS);
+  /// Print a source code representation of the program.
+  void pprint(llvm::raw_ostream &OS);
 
-    /// Create the CLooG AST from this program.
-    const struct clast_root *getClast();
+  /// Create the CLooG AST from this program.
+  const struct clast_root *getClast();
 
-    bool runOnScop(Scop &S);
-    void printScop(llvm::raw_ostream &OS) const;
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    virtual void releaseMemory();
-  };
+  bool runOnScop(Scop &S);
+  void printScop(llvm::raw_ostream &OS) const;
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  virtual void releaseMemory();
+};
 
-  // Visitor class for clasts.
-  // Only 'visitUser' has to be implemented by subclasses; the default
-  // implementations of the other methods traverse the clast recursively.
-  class ClastVisitor {
-  public:
-    virtual void visit(const clast_stmt *stmt);
+// Visitor class for clasts.
+// Only 'visitUser' has to be implemented by subclasses; the default
+// implementations of the other methods traverse the clast recursively.
+class ClastVisitor {
+public:
+  virtual void visit(const clast_stmt *stmt);
 
-    virtual void visitAssignment(const clast_assignment *stmt);
-    virtual void visitBlock(const clast_block *stmt);
-    virtual void visitFor(const clast_for *stmt);
-    virtual void visitGuard(const clast_guard *stmt);
+  virtual void visitAssignment(const clast_assignment *stmt);
+  virtual void visitBlock(const clast_block *stmt);
+  virtual void visitFor(const clast_for *stmt);
+  virtual void visitGuard(const clast_guard *stmt);
 
-    virtual void visitUser(const clast_user_stmt *stmt) = 0;
-  };
+  virtual void visitUser(const clast_user_stmt *stmt) = 0;
+};
 }
 
 namespace llvm {
-  class PassRegistry;
-  void initializeCloogInfoPass(llvm::PassRegistry&);
+class PassRegistry;
+void initializeCloogInfoPass(llvm::PassRegistry &);
 }
 
 #endif /* CLOOG_FOUND */

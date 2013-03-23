@@ -71,4 +71,3 @@ static inline int getNumberOfIterations(__isl_take isl_set *Domain) {
 }
 
 #endif // POLLY_CODEGENERATION_H
-

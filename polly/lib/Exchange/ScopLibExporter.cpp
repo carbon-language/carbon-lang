@@ -30,31 +30,29 @@ using namespace llvm;
 using namespace polly;
 
 namespace {
-  static cl::opt<std::string>
-    ExportDir("polly-export-scoplib-dir",
-              cl::desc("The directory to export the .scoplib files to."),
-              cl::Hidden, cl::value_desc("Directory path"), cl::ValueRequired,
-              cl::init("."));
+static cl::opt<std::string> ExportDir(
+    "polly-export-scoplib-dir",
+    cl::desc("The directory to export the .scoplib files to."), cl::Hidden,
+    cl::value_desc("Directory path"), cl::ValueRequired, cl::init("."));
 
-  class ScopLibExporter : public ScopPass {
-    Scop *S;
+class ScopLibExporter : public ScopPass {
+  Scop *S;
 
-    std::string getFileName(Scop *S) const;
-  public:
-    static char ID;
-    explicit ScopLibExporter() : ScopPass(ID) {}
+  std::string getFileName(Scop *S) const;
+public:
+  static char ID;
+  explicit ScopLibExporter() : ScopPass(ID) {}
 
-    virtual bool runOnScop(Scop &scop);
-    void getAnalysisUsage(AnalysisUsage &AU) const;
-  };
+  virtual bool runOnScop(Scop &scop);
+  void getAnalysisUsage(AnalysisUsage &AU) const;
+};
 
 }
 
 char ScopLibExporter::ID = 0;
 
 std::string ScopLibExporter::getFileName(Scop *S) const {
-  std::string FunctionName =
-    S->getRegion().getEntry()->getParent()->getName();
+  std::string FunctionName = S->getRegion().getEntry()->getParent()->getName();
   std::string FileName = FunctionName + "___" + S->getNameStr() + ".scoplib";
   return FileName;
 }
@@ -78,7 +76,7 @@ bool ScopLibExporter::runOnScop(Scop &scop) {
 
   std::string FunctionName = R->getEntry()->getParent()->getName();
   errs() << "Writing Scop '" << R->getNameStr() << "' in function '"
-    << FunctionName << "' to '" << FileName << "'.\n";
+         << FunctionName << "' to '" << FileName << "'.\n";
 
   return false;
 }
@@ -87,13 +85,10 @@ void ScopLibExporter::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);
 }
 
-static RegisterPass<ScopLibExporter> A("polly-export-scoplib",
-                                    "Polly - Export Scops with ScopLib library"
-                                    " (Writes a .scoplib file for each Scop)"
-                                    );
+static RegisterPass<ScopLibExporter>
+A("polly-export-scoplib", "Polly - Export Scops with ScopLib library"
+                          " (Writes a .scoplib file for each Scop)");
 
-Pass *polly::createScopLibExporterPass() {
-  return new ScopLibExporter();
-}
+Pass *polly::createScopLibExporterPass() { return new ScopLibExporter(); }
 
 #endif
