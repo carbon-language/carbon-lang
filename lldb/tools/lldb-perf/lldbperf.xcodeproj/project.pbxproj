@@ -882,7 +882,7 @@
 					"$(SRCROOT)/../../build/Debug",
 				);
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				OTHER_LDFLAGS = "-Wl,-rpath,@loader_path/../../../../build/Debug";
+				OTHER_LDFLAGS = "-Wl,-rpath,@loader_path/../../../../build/Release";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/../ $(SRCROOT)/../../include/";

@@ -167,6 +167,9 @@ Results::Write (const char *out_path)
                       });
     CFDataRef xmlData = CFPropertyListCreateData(kCFAllocatorDefault, dict.get(), kCFPropertyListXMLFormat_v1_0, 0, NULL);
     
+    if (out_path == NULL)
+        out_path = "/dev/stdout";
+
     CFURLRef file = CFURLCreateFromFileSystemRepresentation(NULL, (const UInt8*)out_path, strlen(out_path), FALSE);
     
     CFURLWriteDataAndPropertiesToResource(file, xmlData, NULL, NULL);

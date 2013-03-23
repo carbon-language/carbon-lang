@@ -48,8 +48,6 @@ public:
     {
         if (m_exe_path.empty())
             return false;
-        if (m_out_path.empty())
-            return false;
         m_launch_info.SetArguments(argv, false);
         return true;
     }
@@ -67,24 +65,32 @@ public:
             case 0:
                 {
                     m_total_memory.Start();
+                    printf("creating target...\n");
+                    m_time_total.Start();
+                    m_time_to_create_target.Start();
                     m_target = m_debugger.CreateTarget(m_exe_path.c_str());
+                    printf("creating target...done\n");
                     const char *clang_argv[] = { "clang --version", NULL };
                     m_delta_memory.Start();
                     m_set_bp_main_by_name();
+                    m_time_to_create_target.Stop();
                     m_delta_memory.Stop();
                     SBLaunchInfo launch_info(clang_argv);
+                    printf("start\n");
                     Launch (launch_info);
                 }
                 break;
             case 1:
-                next_action.StepOver(m_thread);
-                break;
-            case 2:
-                next_action.StepOver(m_thread);
-                break;
-            case 3:
-                next_action.StepOver(m_thread);
-                break;
+                puts("stop");
+                m_time_total.Stop();
+//                next_action.StepOver(m_thread);
+//                break;
+//            case 2:
+//                next_action.StepOver(m_thread);
+//                break;
+//            case 3:
+//                next_action.StepOver(m_thread);
+//                break;
             default:
                 m_total_memory.Stop();
                 next_action.Kill();
@@ -104,7 +110,13 @@ public:
                           "The total memory that the current process is using after setting the first breakpoint.",
                           m_total_memory.GetStopValue().GetResult(NULL, NULL));
         
-        results.Write(m_out_path.c_str());
+        results_dict.AddDouble("time-total",
+                               "The time it takes to create the target, set breakpoint at main, launch clang and hit the breakpoint at main.",
+                               m_time_total.GetDeltaValue());
+        results_dict.AddDouble("time-to-create-target",
+                               "The time it takes to create the clang target.",
+                               m_time_to_create_target.GetDeltaValue());
+        results.Write(GetResultFilePath());
     }
     
     
@@ -156,6 +168,8 @@ private:
     TimeMeasurement<std::function<void()>> m_set_bp_main_by_name;
     MemoryMeasurement<std::function<void()>> m_delta_memory;
     MemoryGauge m_total_memory;
+    TimeGauge m_time_to_create_target;
+    TimeGauge m_time_total;
     std::string m_exe_path;
     std::string m_out_path;
     SBLaunchInfo m_launch_info;
@@ -300,14 +314,6 @@ int main(int argc, const char * argv[])
         fprintf (stderr, "error: the '--clang=PATH' option is mandatory\n");
     }
 
-    if (test.GetResultFilePath() == NULL)
-    {
-        // --out-file is mandatory
-        option_data.print_help = true;
-        option_data.error = true;
-        fprintf (stderr, "error: the '--out-file=PATH' option is mandatory\n");
-    }
-
     if (option_data.print_help)
     {
         puts(R"(
@@ -315,7 +321,7 @@ NAME
     lldb_perf_clang -- a tool that measures LLDB peformance while debugging clang.
 
 SYNOPSIS
-    lldb_perf_clang --clang=PATH --out-file=PATH [--verbose --dsym] -- [clang options]
+    lldb_perf_clang --clang=PATH [--out-file=PATH --verbose --dsym] -- [clang options]
              
 DESCRIPTION
     Runs a set of static timing and memory tasks against clang and outputs results
