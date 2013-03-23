@@ -83,10 +83,6 @@ static FoundationClass findKnownClass(const ObjCInterfaceDecl *ID) {
   return result;
 }
 
-static inline bool isNil(SVal X) {
-  return X.getAs<loc::ConcreteInt>().hasValue();
-}
-
 //===----------------------------------------------------------------------===//
 // NilArgChecker - Check for prohibited nil arguments to ObjC method calls.
 //===----------------------------------------------------------------------===//
@@ -95,26 +91,51 @@ namespace {
   class NilArgChecker : public Checker<check::PreObjCMessage> {
     mutable OwningPtr<APIMisuse> BT;
 
-    void WarnNilArg(CheckerContext &C,
-                    const ObjCMethodCall &msg, unsigned Arg) const;
+    void WarnIfNilArg(CheckerContext &C,
+                    const ObjCMethodCall &msg, unsigned Arg,
+                    FoundationClass Class,
+                    bool CanBeSubscript = false) const;
 
   public:
     void checkPreObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const;
   };
 }
 
-void NilArgChecker::WarnNilArg(CheckerContext &C,
-                               const ObjCMethodCall &msg,
-                               unsigned int Arg) const
-{
+void NilArgChecker::WarnIfNilArg(CheckerContext &C,
+                                 const ObjCMethodCall &msg,
+                                 unsigned int Arg,
+                                 FoundationClass Class,
+                                 bool CanBeSubscript) const {
+  // Check if the argument is nil.
+  ProgramStateRef State = C.getState();
+  if (!State->isNull(msg.getArgSVal(Arg)).isConstrainedTrue())
+      return;
+      
   if (!BT)
     BT.reset(new APIMisuse("nil argument"));
-  
+
   if (ExplodedNode *N = C.generateSink()) {
     SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
-    os << "Argument to '" << GetReceiverInterfaceName(msg) << "' method '"
-       << msg.getSelector().getAsString() << "' cannot be nil";
+
+    if (CanBeSubscript && msg.getMessageKind() == OCM_Subscript) {
+
+      if (Class == FC_NSArray) {
+        os << "Array element cannot be nil";
+      } else if (Class == FC_NSDictionary) {
+        if (Arg == 0)
+          os << "Dictionary object cannot be nil";
+        else {
+          assert(Arg == 1);
+          os << "Dictionary key cannot be nil";
+        }
+      } else
+        llvm_unreachable("Missing foundation class for the subscript expr");
+
+    } else {
+      os << "Argument to '" << GetReceiverInterfaceName(msg) << "' method '"
+      << msg.getSelector().getAsString() << "' cannot be nil";
+    }
 
     BugReport *R = new BugReport(*BT, os.str(), N);
     R->addRange(msg.getArgSourceRange(Arg));
@@ -132,7 +153,8 @@ void NilArgChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
 
   static const unsigned InvalidArgIndex = UINT_MAX;
   unsigned Arg = InvalidArgIndex;
-
+  bool CanBeSubscript = false;
+  
   if (Class == FC_NSString) {
     Selector S = msg.getSelector();
     
@@ -176,14 +198,38 @@ void NilArgChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
     } else if (S.getNameForSlot(0).equals("setObject") &&
                S.getNameForSlot(1).equals("atIndexedSubscript")) {
       Arg = 0;
+      CanBeSubscript = true;
     } else if (S.getNameForSlot(0).equals("arrayByAddingObject")) {
+      Arg = 0;
+    }
+  } else if (Class == FC_NSDictionary) {
+    Selector S = msg.getSelector();
+
+    if (S.isUnarySelector())
+      return;
+
+    if (S.getNameForSlot(0).equals("dictionaryWithObject") &&
+        S.getNameForSlot(1).equals("forKey")) {
+      Arg = 0;
+      WarnIfNilArg(C, msg, /* Arg */1, Class);
+    } else if (S.getNameForSlot(0).equals("setObject") &&
+               S.getNameForSlot(1).equals("forKey")) {
+      Arg = 0;
+      WarnIfNilArg(C, msg, /* Arg */1, Class);
+    } else if (S.getNameForSlot(0).equals("setObject") &&
+               S.getNameForSlot(1).equals("forKeyedSubscript")) {
+      CanBeSubscript = true;
+      Arg = 0;
+      WarnIfNilArg(C, msg, /* Arg */1, Class, CanBeSubscript);
+    } else if (S.getNameForSlot(0).equals("removeObjectForKey")) {
       Arg = 0;
     }
   }
 
+
   // If argument is '0', report a warning.
-  if ((Arg != InvalidArgIndex) && isNil(msg.getArgSVal(Arg)))
-    WarnNilArg(C, msg, Arg);
+  if ((Arg != InvalidArgIndex))
+    WarnIfNilArg(C, msg, Arg, Class, CanBeSubscript);
 
 }
 

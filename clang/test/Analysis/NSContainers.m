@@ -24,7 +24,6 @@ typedef struct _NSZone NSZone;
 - (id)init;
 + (id)alloc;
 @end
-
 @interface NSArray : NSObject <NSCopying, NSMutableCopying, NSSecureCoding, NSFastEnumeration>
 
 - (NSUInteger)count;
@@ -47,30 +46,99 @@ typedef struct _NSZone NSZone;
 
 @end
 
+@interface NSDictionary : NSObject <NSCopying, NSMutableCopying, NSSecureCoding, NSFastEnumeration>
+
+- (NSUInteger)count;
+- (id)objectForKey:(id)aKey;
+- (NSEnumerator *)keyEnumerator;
+
+@end
+
+@interface NSDictionary (NSDictionaryCreation)
+
++ (id)dictionary;
++ (id)dictionaryWithObject:(id)object forKey:(id <NSCopying>)key;
+@end
+
+@interface NSMutableDictionary : NSDictionary
+
+- (void)removeObjectForKey:(id)aKey;
+- (void)setObject:(id)anObject forKey:(id <NSCopying>)aKey;
+
+@end
+
+@interface NSMutableDictionary (NSExtendedMutableDictionary)
+
+- (void)addEntriesFromDictionary:(NSDictionary *)otherDictionary;
+- (void)removeAllObjects;
+- (void)removeObjectsForKeys:(NSArray *)keyArray;
+- (void)setDictionary:(NSDictionary *)otherDictionary;
+- (void)setObject:(id)obj forKeyedSubscript:(id <NSCopying>)key __attribute__((availability(macosx,introduced=10.8)));
+
+@end
+
+@interface NSString : NSObject <NSCopying, NSMutableCopying, NSSecureCoding>
+
+@end
+
 // NSMutableArray API
-void testNilArg1() {
+void testNilArgNSMutableArray1() {
   NSMutableArray *marray = [[NSMutableArray alloc] init];
   [marray addObject:0]; // expected-warning {{Argument to 'NSMutableArray' method 'addObject:' cannot be nil}}
 }
 
-void testNilArg2() {
+void testNilArgNSMutableArray2() {
   NSMutableArray *marray = [[NSMutableArray alloc] init];
   [marray insertObject:0 atIndex:1]; // expected-warning {{Argument to 'NSMutableArray' method 'insertObject:atIndex:' cannot be nil}}
 }
 
-void testNilArg3() {
+void testNilArgNSMutableArray3() {
   NSMutableArray *marray = [[NSMutableArray alloc] init];
   [marray replaceObjectAtIndex:1 withObject:0]; // expected-warning {{Argument to 'NSMutableArray' method 'replaceObjectAtIndex:withObject:' cannot be nil}}
 }
 
-void testNilArg4() {
+void testNilArgNSMutableArray4() {
   NSMutableArray *marray = [[NSMutableArray alloc] init];
   [marray setObject:0 atIndexedSubscript:1]; // expected-warning {{Argument to 'NSMutableArray' method 'setObject:atIndexedSubscript:' cannot be nil}}
 }
 
+void testNilArgNSMutableArray5() {
+  NSMutableArray *marray = [[NSMutableArray alloc] init];
+  marray[1] = 0; // expected-warning {{Array element cannot be nil}}
+}
+
 // NSArray API
-void testNilArg5() {
+void testNilArgNSArray1() {
   NSArray *array = [[NSArray alloc] init];
   NSArray *copyArray = [array arrayByAddingObject:0]; // expected-warning {{Argument to 'NSArray' method 'arrayByAddingObject:' cannot be nil}}
 }
 
+// NSMutableDictionary and NSDictionary APIs.
+void testNilArgNSMutableDictionary1(NSMutableDictionary *d, NSString* key) {
+  [d setObject:0 forKey:key]; // expected-warning {{Argument to 'NSMutableDictionary' method 'setObject:forKey:' cannot be nil}}
+}
+
+void testNilArgNSMutableDictionary2(NSMutableDictionary *d, NSObject *obj) {
+  [d setObject:obj forKey:0]; // expected-warning {{Argument to 'NSMutableDictionary' method 'setObject:forKey:' cannot be nil}}
+}
+
+void testNilArgNSMutableDictionary3(NSMutableDictionary *d) {
+  [d removeObjectForKey:0]; // expected-warning {{Argument to 'NSMutableDictionary' method 'removeObjectForKey:' cannot be nil}}
+}
+
+void testNilArgNSMutableDictionary5(NSMutableDictionary *d, NSString* key) {
+  d[key] = 0; // expected-warning {{Dictionary object cannot be nil}}
+}
+void testNilArgNSMutableDictionary6(NSMutableDictionary *d, NSString *key) {
+  if (key)
+    ;
+  d[key] = 0; // expected-warning {{Dictionary key cannot be nil}}
+  // expected-warning@-1 {{Dictionary object cannot be nil}}
+}
+
+NSDictionary *testNilArgNSDictionary1(NSString* key) {
+  return [NSDictionary dictionaryWithObject:0 forKey:key]; // expected-warning {{Argument to 'NSDictionary' method 'dictionaryWithObject:forKey:' cannot be nil}}
+}
+NSDictionary *testNilArgNSDictionary2(NSObject *obj) {
+  return [NSDictionary dictionaryWithObject:obj forKey:0]; // expected-warning {{Argument to 'NSDictionary' method 'dictionaryWithObject:forKey:' cannot be nil}}
+}
