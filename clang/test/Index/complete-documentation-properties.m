@@ -70,3 +70,23 @@
 
 // RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:52:12 %s | FileCheck -check-prefix=CC6 %s
 // CHECK-CC6: {TypedText GetterInClassExtension}{{.*}}(brief comment: This is PropertyInClassExtension) 
+
+@interface AnotherAppDelegate
+/**
+  \brief This is ReadonlyProperty
+*/
+@property (getter = ReadonlyGetter) int MyProperty;
+/**
+  \brief This is getter = ReadonlyGetter
+*/
+- (int) ReadonlyGetter;
+@end
+
+@implementation AnotherAppDelegate
+- (int) PropertyInPrimaryClass { 
+self.ReadonlyGetter;
+}
+@end
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:87:6 %s | FileCheck -check-prefix=CC7 %s
+// CHECK-CC7: {TypedText ReadonlyGetter}{{.*}}(brief comment: This is getter = ReadonlyGetter) 
+

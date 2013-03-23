@@ -2550,11 +2550,18 @@ CodeCompletionResult::CreateCodeCompletionString(ASTContext &Ctx,
         if (M->isPropertyAccessor())
           if (const ObjCPropertyDecl *PDecl = M->findPropertyDecl())
             if (PDecl->getGetterName() == M->getSelector() &&
-                PDecl->getIdentifier() != M->getIdentifier())
-              if (const RawComment *RC = Ctx.getRawCommentForAnyRedecl(PDecl)) {
+                PDecl->getIdentifier() != M->getIdentifier()) {
+              if (const RawComment *RC = 
+                    Ctx.getRawCommentForAnyRedecl(M)) {
                 Result.addBriefComment(RC->getBriefText(Ctx));
                 Pattern->BriefComment = Result.getBriefComment();
               }
+              else if (const RawComment *RC = 
+                         Ctx.getRawCommentForAnyRedecl(PDecl)) {
+                Result.addBriefComment(RC->getBriefText(Ctx));
+                Pattern->BriefComment = Result.getBriefComment();
+              }
+            }
     }
     
     return Pattern;
