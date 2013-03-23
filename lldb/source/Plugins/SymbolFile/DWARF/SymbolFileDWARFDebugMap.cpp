@@ -443,7 +443,7 @@ SymbolFileDWARFDebugMap::GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_inf
             comp_unit_info->oso_sp.reset (new OSOInfo());
             m_oso_map[comp_unit_info->oso_path] = comp_unit_info->oso_sp;
             const char *oso_path = comp_unit_info->oso_path.GetCString();
-            FileSpec oso_file (oso_path, true);
+            FileSpec oso_file (oso_path, false);
             ConstString oso_object;
             if (!oso_file.Exists())
             {
