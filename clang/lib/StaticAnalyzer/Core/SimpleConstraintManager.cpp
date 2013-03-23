@@ -124,21 +124,6 @@ ProgramStateRef SimpleConstraintManager::assume(ProgramStateRef state,
   return state;
 }
 
-static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
-  // FIXME: This should probably be part of BinaryOperator, since this isn't
-  // the only place it's used. (This code was copied from SimpleSValBuilder.cpp.)
-  switch (op) {
-  default:
-    llvm_unreachable("Invalid opcode.");
-  case BO_LT: return BO_GE;
-  case BO_GT: return BO_LE;
-  case BO_LE: return BO_GT;
-  case BO_GE: return BO_LT;
-  case BO_EQ: return BO_NE;
-  case BO_NE: return BO_EQ;
-  }
-}
-
 
 ProgramStateRef
 SimpleConstraintManager::assumeAuxForSymbol(ProgramStateRef State,
@@ -189,7 +174,7 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
       BinaryOperator::Opcode op = SE->getOpcode();
       if (BinaryOperator::isComparisonOp(op)) {
         if (!Assumption)
-          op = NegateComparison(op);
+          op = BinaryOperator::negateComparisonOp(op);
 
         return assumeSymRel(state, SE->getLHS(), op, SE->getRHS());
       }

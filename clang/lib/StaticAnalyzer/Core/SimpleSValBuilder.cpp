@@ -180,33 +180,6 @@ SVal SimpleSValBuilder::evalComplement(NonLoc X) {
 // Transfer function for binary operators.
 //===----------------------------------------------------------------------===//
 
-static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
-  switch (op) {
-  default:
-    llvm_unreachable("Invalid opcode.");
-  case BO_LT: return BO_GE;
-  case BO_GT: return BO_LE;
-  case BO_LE: return BO_GT;
-  case BO_GE: return BO_LT;
-  case BO_EQ: return BO_NE;
-  case BO_NE: return BO_EQ;
-  }
-}
-
-static BinaryOperator::Opcode ReverseComparison(BinaryOperator::Opcode op) {
-  switch (op) {
-  default:
-    llvm_unreachable("Invalid opcode.");
-  case BO_LT: return BO_GT;
-  case BO_GT: return BO_LT;
-  case BO_LE: return BO_GE;
-  case BO_GE: return BO_LE;
-  case BO_EQ:
-  case BO_NE:
-    return op;
-  }
-}
-
 SVal SimpleSValBuilder::MakeSymIntVal(const SymExpr *LHS,
                                     BinaryOperator::Opcode op,
                                     const llvm::APSInt &RHS,
@@ -398,7 +371,7 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
       case BO_GT:
       case BO_LE:
       case BO_GE:
-        op = ReverseComparison(op);
+        op = BinaryOperator::reverseComparisonOp(op);
         // FALL-THROUGH
       case BO_EQ:
       case BO_NE:
@@ -466,7 +439,7 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
           case BO_EQ:
           case BO_NE:
             // Negate the comparison and make a value.
-            opc = NegateComparison(opc);
+            opc = BinaryOperator::negateComparisonOp(opc);
             assert(symIntExpr->getType() == resultTy);
             return makeNonLoc(symIntExpr->getLHS(), opc,
                 symIntExpr->getRHS(), resultTy);
@@ -601,7 +574,8 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
         return UnknownVal();
 
       const llvm::APSInt &lVal = lhs.castAs<loc::ConcreteInt>().getValue();
-      return makeNonLoc(rSym, ReverseComparison(op), lVal, resultTy);
+      op = BinaryOperator::reverseComparisonOp(op);
+      return makeNonLoc(rSym, op, lVal, resultTy);
     }
 
     // If both operands are constants, just perform the operation.
