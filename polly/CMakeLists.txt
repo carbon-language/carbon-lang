@@ -160,6 +160,8 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/include/polly/Config/config.h.cmake
 
 # Add target to check formatting of polly files
 file( GLOB_RECURSE files *.h *.cpp)
+file( GLOB_RECURSE jsonfiles lib/JSON/*.h lib/JSON/*.cpp)
+list( REMOVE_ITEM files ${jsonfiles} )
 add_custom_command( OUTPUT formatting COMMAND
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/check_format.sh ${files})
 add_custom_target(polly-check-format DEPENDS formatting)
