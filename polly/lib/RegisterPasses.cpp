@@ -7,31 +7,35 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Add the Polly passes to the optimization passes executed at -O3.
+// This file composes the individual LLVM-IR passes provided by Polly to a
+// functional polyhedral optimizer. The polyhedral optimizer is automatically
+// made available to LLVM based compilers by loading the Polly shared library
+// into such a compiler.
 //
+// The Polly optimizer is made available by executing a static constructor that
+// registers the individual Polly passes in the LLVM pass manager builder. The
+// passes are registered such that the default behaviour of the compiler is not
+// changed, but that the flag '-polly' provided at optimization level '-O3'
+// enables additional polyhedral optimizations.
 //===----------------------------------------------------------------------===//
+
 #include "polly/RegisterPasses.h"
 #include "polly/LinkAllPasses.h"
 
+#include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/Cloog.h"
+#include "polly/CodeGen/CodeGeneration.h"
 #include "polly/Dependences.h"
 #include "polly/ScopDetection.h"
 #include "polly/ScopInfo.h"
 #include "polly/TempScopInfo.h"
-#include "polly/CodeGen/BlockGenerators.h"
-#include "polly/CodeGen/CodeGeneration.h"
 
-#include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/CFGPrinter.h"
-#include "llvm/InitializePasses.h"
 #include "llvm/PassManager.h"
-#include "llvm/PassRegistry.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Vectorize.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Support/CommandLine.h"
-
-#include <string>
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/Transforms/Vectorize.h"
 
 using namespace llvm;
 
@@ -41,11 +45,11 @@ PollyEnabled("polly", cl::desc("Enable the default passes of Polly in -O3"),
 
 enum OptimizerChoice {
   OPTIMIZER_NONE,
-#ifdef SCOPLIB_FOUND
-  OPTIMIZER_POCC,
-#endif
 #ifdef PLUTO_FOUND
   OPTIMIZER_PLUTO,
+#endif
+#ifdef SCOPLIB_FOUND
+  OPTIMIZER_POCC,
 #endif
   OPTIMIZER_ISL
 };
@@ -88,6 +92,7 @@ static cl::opt<CodeGenChoice> CodeGenerator(
         clEnumValN(CODEGEN_NONE, "none", "no code generation"), clEnumValEnd),
     cl::Hidden, cl::init(DefaultCodeGen), cl::ZeroOrMore);
 
+VectorizerChoice polly::PollyVectorizerChoice;
 static cl::opt<polly::VectorizerChoice, true> Vectorizer(
     "polly-vectorizer", cl::desc("Select the scheduling optimizer"),
     cl::values(clEnumValN(polly::VECTORIZER_NONE, "none", "No Vectorization"),
@@ -111,14 +116,13 @@ ExportJScop("polly-export",
             cl::Hidden, cl::init(false), cl::ZeroOrMore);
 
 static cl::opt<bool>
-PollyViewer("polly-show", cl::desc("Enable the Polly DOT viewer in -O3"),
-            cl::Hidden, cl::value_desc("Run the Polly DOT viewer at -O3"),
-            cl::init(false), cl::ZeroOrMore);
-
-static cl::opt<bool>
 DeadCodeElim("polly-run-dce", cl::desc("Run the dead code elimination"),
              cl::Hidden, cl::init(false), cl::ZeroOrMore);
 
+static cl::opt<bool>
+PollyViewer("polly-show", cl::desc("Enable the Polly DOT viewer in -O3"),
+            cl::Hidden, cl::value_desc("Run the Polly DOT viewer at -O3"),
+            cl::init(false), cl::ZeroOrMore);
 static cl::opt<bool> PollyOnlyViewer(
     "polly-show-only",
     cl::desc("Enable the Polly DOT viewer in -O3 (no BB content)"), cl::Hidden,
@@ -132,12 +136,12 @@ static cl::opt<bool> PollyOnlyPrinter(
     cl::desc("Enable the Polly DOT printer in -O3 (no BB content)"), cl::Hidden,
     cl::value_desc("Run the Polly DOT printer at -O3 (no BB content"),
     cl::init(false));
-
 static cl::opt<bool>
 CFGPrinter("polly-view-cfg",
            cl::desc("Show the Polly CFG right after code generation"),
            cl::Hidden, cl::init(false));
 
+namespace {
 static void initializePollyPasses(PassRegistry &Registry) {
 #ifdef CLOOG_FOUND
   initializeCloogInfoPass(Registry);
@@ -162,33 +166,35 @@ static void initializePollyPasses(PassRegistry &Registry) {
   initializeTempScopInfoPass(Registry);
 }
 
-namespace {
-// Statically register all Polly passes such that they are available after
-// loading Polly.
+/// @brief Initialize Polly passes when library is loaded.
+///
+/// We use the constructor of a statically declared object to initialize the
+/// different Polly passes right after the Polly library is loaded. This ensures
+/// that the Polly passes are available e.g. in the 'opt' tool.
 class StaticInitializer {
-
 public:
   StaticInitializer() {
     PassRegistry &Registry = *PassRegistry::getPassRegistry();
     initializePollyPasses(Registry);
   }
 };
-} // end of anonymous namespace.
-
 static StaticInitializer InitializeEverything;
 
-static void registerPollyPreoptPasses(llvm::PassManagerBase &PM) {
-  // A standard set of optimization passes partially taken/copied from the
-  // set of default optimization passes. It is used to bring the code into
-  // a canonical form that can than be analyzed by Polly. This set of passes is
-  // most probably not yet optimal. TODO: Investigate optimal set of passes.
+/// @brief Schedule a set of canonicalization passes to prepare for Polly
+///
+/// The set of optimization passes was partially taken/copied from the
+/// set of default optimization passes in LLVM. It is used to bring the code
+/// into a canonical form that simplifies the analysis and optimization passes
+/// of Polly. The set of optimization passes scheduled here is probably not yet
+/// optimal. TODO: Optimize the set of canonicalization passes.
+static void registerCanonicalicationPasses(llvm::PassManagerBase &PM) {
   PM.add(llvm::createPromoteMemoryToRegisterPass());
-  PM.add(llvm::createInstructionCombiningPass()); // Clean up after IPCP & DAE
-  PM.add(llvm::createCFGSimplificationPass());    // Clean up after IPCP & DAE
-  PM.add(llvm::createTailCallEliminationPass());  // Eliminate tail calls
-  PM.add(llvm::createCFGSimplificationPass());    // Merge & remove BBs
-  PM.add(llvm::createReassociatePass());          // Reassociate expressions
-  PM.add(llvm::createLoopRotatePass());           // Rotate Loop
+  PM.add(llvm::createInstructionCombiningPass());
+  PM.add(llvm::createCFGSimplificationPass());
+  PM.add(llvm::createTailCallEliminationPass());
+  PM.add(llvm::createCFGSimplificationPass());
+  PM.add(llvm::createReassociatePass());
+  PM.add(llvm::createLoopRotatePass());
   PM.add(llvm::createInstructionCombiningPass());
 
   if (!SCEVCodegen)
@@ -211,10 +217,38 @@ static void registerPollyPreoptPasses(llvm::PassManagerBase &PM) {
   PM.add(polly::createRegionSimplifyPass());
 }
 
-VectorizerChoice polly::PollyVectorizerChoice;
-
+/// @brief Register Polly passes such that they form a polyhedral optimizer.
+///
+/// The individual Polly passes are registered in the pass manager such that
+/// they form a full polyhedral optimizer. The flow of the optimizer starts with
+/// a set of preparing transformations that canonicalize the LLVM-IR such that
+/// the LLVM-IR is easier for us to understand and to optimizes. On the
+/// canonicalized LLVM-IR we first run the ScopDetection pass, which detects
+/// static control flow regions. Those regions are then translated by the
+/// ScopInfo pass into a polyhedral representation. As a next step, a scheduling
+/// optimizer is run on the polyhedral representation and finally the optimized
+/// polyhedral representation is code generated back to LLVM-IR.
+///
+/// Besides this core functionality, we optionally schedule passes that provide
+/// a graphical view of the scops (Polly[Only]Viewer, Polly[Only]Printer), that
+/// allow the export/import of the polyhedral representation
+/// (JSCON[Exporter|Importer]) or that show the cfg after code generation.
+///
+/// For certain parts of the Polly optimizer, several alternatives are provided:
+///
+/// As scheduling optimizer we support PoCC (http://pocc.sourceforge.net), PLUTO
+/// (http://pluto-compiler.sourceforge.net) as well as the isl scheduling
+/// optimizer (http://freecode.com/projects/isl). The isl optimizer is the
+/// default optimizer.
+/// It is also possible to run Polly with no optimizer. This mode is mainly
+/// provided to analyze the run and compile time changes caused by the
+/// scheduling optimizer.
+///
+/// Polly supports both CLooG (http://www.cloog.org) as well as the isl internal
+/// code generator. For the moment, the CLooG code generator is enabled by
+/// default.
 static void registerPollyPasses(llvm::PassManagerBase &PM) {
-  registerPollyPreoptPasses(PM);
+  registerCanonicalicationPasses(PM);
 
   PM.add(polly::createScopInfoPass());
 
@@ -292,7 +326,11 @@ static void registerPollyEarlyAsPossiblePasses(
   if (!PollyEnabled)
     return;
 
-  // Polly is only enabled at -O3
+  // We only run Polly at optimization level '-O3'.
+  //
+  // This is to ensure that scalar overhead that may be introduced by Polly is
+  // properly cleaned up by LLVM later on. We may reinvestigate this decision
+  // later on.
   if (Builder.OptLevel != 3) {
     errs() << "Polly should only be run with -O3. Disabling Polly.\n";
     return;
@@ -303,18 +341,46 @@ static void registerPollyEarlyAsPossiblePasses(
 
 static void registerPollyOptLevel0Passes(const llvm::PassManagerBuilder &,
                                          llvm::PassManagerBase &PM) {
-  registerPollyPreoptPasses(PM);
+  registerCanonicalicationPasses(PM);
 }
 
-// Execute Polly together with a set of preparing passes.
-//
-// We run Polly that early to run before loop optimizer passes like LICM or
-// the LoopIdomPass. Both transform the code in a way that Polly will recognize
-// less scops.
+/// @brief Register Polly canonicalization passes at opt level '0'
+///
+/// At '-O0' we schedule the Polly canonicalization passes. This allows us
+/// to easily get the canonicalized IR of a program which can then be used
+/// with the Polly passes of the 'opt' optimizer.
+static llvm::RegisterStandardPasses
+RegisterPollyCanonicalizer(llvm::PassManagerBuilder::EP_EnabledOnOptLevel0,
+                           registerPollyOptLevel0Passes);
 
+/// @brief Register Polly to be available as an optimizer
+///
+/// We currently register Polly such that it runs as early as possible. This has
+/// several implications:
+///
+///   1) We need to schedule more canonicalization passes
+///
+///   As nothing is run before Polly, it is necessary to run a set of preparing
+///   transformations before Polly to canonicalize the LLVM-IR and to allow
+///   Polly to detect and understand the code.
+///
+///   2) LICM and LoopIdiom pass have not yet been run
+///
+///   Loop invariant code motion as well as the loop idiom recognition pass make
+///   it more difficult for Polly to transform code. LICM may introduce
+///   additional data dependences that are hard to eliminate and the loop idiom
+///   recognition pass may introduce calls to memset that we currently do not
+///   understand. By running Polly early enough (meaning before these passes) we
+///   avoid difficulties that may be introduced by these passes.
+///
+///   3) We get the full -O3 optimization sequence after Polly
+///
+///   The LLVM-IR that is generated by Polly has been optimized on a high level,
+///   but it may be rather inefficient on the lower/scalar level. By scheduling
+///   Polly before all other passes, we have the full sequence of -O3
+///   optimizations behind us, such that inefficiencies on the low level can
+///   be optimized away.
 static llvm::RegisterStandardPasses
-PassRegister(llvm::PassManagerBuilder::EP_EarlyAsPossible,
-             registerPollyEarlyAsPossiblePasses);
-static llvm::RegisterStandardPasses
-PassRegisterPreopt(llvm::PassManagerBuilder::EP_EnabledOnOptLevel0,
-                   registerPollyOptLevel0Passes);
+RegisterPollyOptimizer(llvm::PassManagerBuilder::EP_EarlyAsPossible,
+                       registerPollyEarlyAsPossiblePasses);
+} // end of anonymous namespace.
