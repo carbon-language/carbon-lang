@@ -454,7 +454,7 @@ namespace {
       KnownPositiveRefCount = true;
     }
 
-    void ClearRefCount() {
+    void ClearKnownPositiveRefCount() {
       KnownPositiveRefCount = false;
     }
 
@@ -1574,7 +1574,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
 
     // Check for possible releases.
     if (CanAlterRefCount(Inst, Ptr, PA, Class)) {
-      S.ClearRefCount();
+      S.ClearKnownPositiveRefCount();
       switch (Seq) {
       case S_Use:
         S.SetSeq(S_CanRelease);
@@ -1732,7 +1732,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
     Arg = GetObjCArg(Inst);
 
     PtrState &S = MyStates.getPtrTopDownState(Arg);
-    S.ClearRefCount();
+    S.ClearKnownPositiveRefCount();
 
     switch (S.GetSeq()) {
     case S_Retain:
@@ -1778,7 +1778,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
 
     // Check for possible releases.
     if (CanAlterRefCount(Inst, Ptr, PA, Class)) {
-      S.ClearRefCount();
+      S.ClearKnownPositiveRefCount();
       switch (Seq) {
       case S_Retain:
         S.SetSeq(S_CanRelease);
