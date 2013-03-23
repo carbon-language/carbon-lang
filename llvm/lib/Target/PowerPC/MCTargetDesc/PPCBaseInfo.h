@@ -28,6 +28,7 @@ inline static unsigned getPPCRegisterNumbering(unsigned RegEnum) {
   using namespace PPC;
   switch (RegEnum) {
   case 0: return 0;
+  case ZERO : case ZERO8 :
   case R0 :  case X0 :  case F0 :  case V0 : case CR0:  case CR0LT: return  0;
   case R1 :  case X1 :  case F1 :  case V1 : case CR1:  case CR0GT: return  1;
   case R2 :  case X2 :  case F2 :  case V2 : case CR2:  case CR0EQ: return  2;
