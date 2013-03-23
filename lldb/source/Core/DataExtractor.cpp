@@ -740,9 +740,6 @@ DataExtractor::GetFloat (offset_t *offset_ptr) const
         {
             val = *src;
         }
-
-        // Advance the offset
-        *offset_ptr += sizeof(val);
     }
     return val;
 }
@@ -767,9 +764,6 @@ DataExtractor::GetDouble (offset_t *offset_ptr) const
         {
             val = *src;
         }
-        
-        // Advance the offset
-        *offset_ptr += sizeof(val);
     }
     return val;
 }
@@ -795,9 +789,6 @@ DataExtractor::GetLongDouble (offset_t *offset_ptr) const
         {
             val = *src;
         }
-        
-        // Advance the offset
-        *offset_ptr += sizeof(val);
     }
     return val;
 }
