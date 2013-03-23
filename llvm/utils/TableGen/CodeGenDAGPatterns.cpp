@@ -1321,8 +1321,18 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
 /// type which should be applied to it.  This will infer the type of register
 /// references from the register file information, for example.
 ///
+/// When Unnamed is set, return the type of a DAG operand with no name, such as
+/// the F8RC register class argument in:
+///
+///   (COPY_TO_REGCLASS GPR:$src, F8RC)
+///
+/// When Unnamed is false, return the type of a named DAG operand such as the
+/// GPR:$src operand above.
+///
 static EEVT::TypeSet getImplicitType(Record *R, unsigned ResNo,
-                                     bool NotRegisters, TreePattern &TP) {
+                                     bool NotRegisters,
+                                     bool Unnamed,
+                                     TreePattern &TP) {
   // Check to see if this is a register operand.
   if (R->isSubClassOf("RegisterOperand")) {
     assert(ResNo == 0 && "Regoperand ref only has one result!");
@@ -1336,6 +1346,13 @@ static EEVT::TypeSet getImplicitType(Record *R, unsigned ResNo,
   // Check to see if this is a register or a register class.
   if (R->isSubClassOf("RegisterClass")) {
     assert(ResNo == 0 && "Regclass ref only has one result!");
+    // An unnamed register class represents itself as an i32 immediate, for
+    // example on a COPY_TO_REGCLASS instruction.
+    if (Unnamed)
+      return EEVT::TypeSet(MVT::i32, TP);
+
+    // In a named operand, the register class provides the possible set of
+    // types.
     if (NotRegisters)
       return EEVT::TypeSet(); // Unknown.
     const CodeGenTarget &T = TP.getDAGPatterns().getTargetInfo();
@@ -1469,7 +1486,8 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       bool MadeChange = false;
       for (unsigned i = 0, e = Types.size(); i != e; ++i)
         MadeChange |= UpdateNodeType(i, getImplicitType(DI->getDef(), i,
-                                                        NotRegisters, TP), TP);
+                                                        NotRegisters,
+                                                        !hasName(), TP), TP);
       return MadeChange;
     }
 
@@ -1529,25 +1547,6 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     bool MadeChange = false;
     for (unsigned i = 0; i < getNumChildren(); ++i)
       MadeChange = getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
-    return MadeChange;
-  }
-
-  if (getOperator()->getName() == "COPY_TO_REGCLASS") {
-    bool MadeChange = false;
-    MadeChange |= getChild(0)->ApplyTypeConstraints(TP, NotRegisters);
-    MadeChange |= getChild(1)->ApplyTypeConstraints(TP, NotRegisters);
-
-    assert(getChild(0)->getNumTypes() == 1 &&
-           getChild(1)->getNumTypes() == 1 && "Unhandled case");
-
-    // child #1 of COPY_TO_REGCLASS should be a register class.  We don't care
-    // what type it gets, so if it didn't get a concrete type just give it the
-    // first viable type from the reg class.
-    if (!getChild(1)->hasTypeSet(0) &&
-        !getChild(1)->getExtType(0).isCompletelyUnknown()) {
-      MVT::SimpleValueType RCVT = getChild(1)->getExtType(0).getTypeList()[0];
-      MadeChange |= getChild(1)->UpdateNodeType(0, RCVT, TP);
-    }
     return MadeChange;
   }
 

@@ -334,6 +334,7 @@ public:
   }
   ~TreePatternNode();
 
+  bool hasName() const { return !Name.empty(); }
   const std::string &getName() const { return Name; }
   void setName(StringRef N) { Name.assign(N.begin(), N.end()); }
 
