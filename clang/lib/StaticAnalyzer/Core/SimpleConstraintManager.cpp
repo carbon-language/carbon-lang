@@ -50,7 +50,7 @@ bool SimpleConstraintManager::canReasonAbout(SVal X) const {
     }
 
     if (const SymSymExpr *SSE = dyn_cast<SymSymExpr>(SE)) {
-      if (SSE->getOpcode() == BO_EQ || SSE->getOpcode() == BO_NE)
+      if (BinaryOperator::isComparisonOp(SSE->getOpcode()))
         return true;
     }
 
@@ -180,26 +180,28 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
       }
 
     } else if (const SymSymExpr *SSE = dyn_cast<SymSymExpr>(sym)) {
-      BinaryOperator::Opcode Op = SSE->getOpcode();
-
       // Translate "a != b" to "(b - a) != 0".
       // We invert the order of the operands as a heuristic for how loop
       // conditions are usually written ("begin != end") as compared to length
       // calculations ("end - begin"). The more correct thing to do would be to
       // canonicalize "a - b" and "b - a", which would allow us to treat
       // "a != b" and "b != a" the same.
-      if (BinaryOperator::isEqualityOp(Op)) {
-        SymbolManager &SymMgr = getSymbolManager();
+      SymbolManager &SymMgr = getSymbolManager();
+      BinaryOperator::Opcode Op = SSE->getOpcode();
+      assert(BinaryOperator::isComparisonOp(Op));
 
-        assert(Loc::isLocType(SSE->getLHS()->getType()));
-        assert(Loc::isLocType(SSE->getRHS()->getType()));
-        QualType DiffTy = SymMgr.getContext().getPointerDiffType();
-        SymbolRef Subtraction = SymMgr.getSymSymExpr(SSE->getRHS(), BO_Sub,
-                                                     SSE->getLHS(), DiffTy);
+      // For now, we only support comparing pointers.
+      assert(Loc::isLocType(SSE->getLHS()->getType()));
+      assert(Loc::isLocType(SSE->getRHS()->getType()));
+      QualType DiffTy = SymMgr.getContext().getPointerDiffType();
+      SymbolRef Subtraction = SymMgr.getSymSymExpr(SSE->getRHS(), BO_Sub,
+                                                   SSE->getLHS(), DiffTy);
 
-        Assumption ^= (SSE->getOpcode() == BO_EQ);
-        return assumeAuxForSymbol(state, Subtraction, Assumption);
-      }
+      const llvm::APSInt &Zero = getBasicVals().getValue(0, DiffTy);
+      Op = BinaryOperator::reverseComparisonOp(Op);
+      if (!Assumption)
+        Op = BinaryOperator::negateComparisonOp(Op);
+      return assumeSymRel(state, Subtraction, Op, Zero);
     }
 
     // If we get here, there's nothing else we can do but treat the symbol as

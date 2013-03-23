@@ -204,6 +204,50 @@ void zero_implies_equal(int *lhs, int *rhs) {
   clang_analyzer_eval(lhs != rhs); // expected-warning{{TRUE}}
 }
 
+void comparisons_imply_size(int *lhs, int *rhs) {
+  clang_analyzer_eval(lhs <= rhs); // expected-warning{{UNKNOWN}}
+
+  if (lhs > rhs) {
+    clang_analyzer_eval((rhs - lhs) == 0); // expected-warning{{FALSE}}
+    return;
+  }
+
+  clang_analyzer_eval(lhs <= rhs); // expected-warning{{TRUE}}
+  clang_analyzer_eval((rhs - lhs) >= 0); // expected-warning{{TRUE}}
+  clang_analyzer_eval((rhs - lhs) > 0); // expected-warning{{UNKNOWN}}
+
+  if (lhs >= rhs) {
+    clang_analyzer_eval((rhs - lhs) == 0); // expected-warning{{TRUE}}
+    return;
+  }
+
+  clang_analyzer_eval(lhs == rhs); // expected-warning{{FALSE}}
+  clang_analyzer_eval(lhs < rhs); // expected-warning{{TRUE}}
+  clang_analyzer_eval((rhs - lhs) > 0); // expected-warning{{TRUE}}
+}
+
+void size_implies_comparison(int *lhs, int *rhs) {
+  clang_analyzer_eval(lhs <= rhs); // expected-warning{{UNKNOWN}}
+
+  if ((rhs - lhs) < 0) {
+    clang_analyzer_eval(lhs == rhs); // expected-warning{{FALSE}}
+    return;
+  }
+
+  clang_analyzer_eval(lhs <= rhs); // expected-warning{{TRUE}}
+  clang_analyzer_eval((rhs - lhs) >= 0); // expected-warning{{TRUE}}
+  clang_analyzer_eval((rhs - lhs) > 0); // expected-warning{{UNKNOWN}}
+
+  if ((rhs - lhs) <= 0) {
+    clang_analyzer_eval(lhs == rhs); // expected-warning{{TRUE}}
+    return;
+  }
+
+  clang_analyzer_eval(lhs == rhs); // expected-warning{{FALSE}}
+  clang_analyzer_eval(lhs < rhs); // expected-warning{{TRUE}}
+  clang_analyzer_eval((rhs - lhs) > 0); // expected-warning{{TRUE}}
+}
+
 //-------------------------------
 // False positives
 //-------------------------------
