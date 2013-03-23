@@ -684,13 +684,13 @@ PortWasBoundCallback (const void *baton, in_port_t port)
 }
 
 static int
-StartListening (RNBRemote *remote, int listen_port, const char *unix_socket_name)
+StartListening (RNBRemote *remote, int listen_port, const char *unix_socket_name, bool localhost_only)
 {
     if (!remote->Comm().IsConnected())
     {
         if (listen_port != 0)
             RNBLogSTDOUT ("Listening to port %i...\n", listen_port);
-        if (remote->Comm().Listen(listen_port, PortWasBoundCallback, unix_socket_name) != rnb_success)
+        if (remote->Comm().Listen(listen_port, PortWasBoundCallback, unix_socket_name, localhost_only) != rnb_success)
         {
             RNBLogSTDERR ("Failed to get connection from a remote gdb process.\n");
             return 0;
@@ -786,6 +786,7 @@ static struct option g_long_options[] =
     { "working-dir",        required_argument,  NULL,               'W' },  // The working directory that the inferior process should have (only if debugserver launches the process)
     { "platform",           required_argument,  NULL,               'p' },  // Put this executable into a remote platform mode
     { "unix-socket",        required_argument,  NULL,               'u' },  // If we need to handshake with our parent process, an option will be passed down that specifies a unix socket name to use
+    { "open-connection",    no_argument,        NULL,               'H' },  // If debugserver is listening to a TCP port, allow connections from any host (as opposed to just "localhost" connections)
     { NULL,                 0,                  NULL,               0   }
 };
 
@@ -841,6 +842,7 @@ main (int argc, char *argv[])
     useconds_t waitfor_interval = 1000;     // Time in usecs between process lists polls when waiting for a process by name, default 1 msec.
     useconds_t waitfor_duration = 0;        // Time in seconds to wait for a process by name, 0 means wait forever.
     bool no_stdio = false;
+    bool localhost_only = true;
 
 #if !defined (DNBLOG_ENABLED)
     compile_options += "(no-logging) ";
@@ -1080,7 +1082,10 @@ main (int argc, char *argv[])
             case 'u':
                 unix_socket_name.assign (optarg);
                 break;
-                
+
+            case 'H':
+                localhost_only = false;
+                break;
         }
     }
     
@@ -1286,7 +1291,7 @@ main (int argc, char *argv[])
 #endif
                 if (listen_port != INT32_MAX)
                 {
-                    if (!StartListening (remote, listen_port, unix_socket_name.c_str()))
+                    if (!StartListening (remote, listen_port, unix_socket_name.c_str(), localhost_only))
                         mode = eRNBRunLoopModeExit;
                 }
                 else if (str[0] == '/')
@@ -1399,7 +1404,7 @@ main (int argc, char *argv[])
                 {
                     if (listen_port != INT32_MAX)
                     {
-                        if (!StartListening (remote, listen_port, unix_socket_name.c_str()))
+                        if (!StartListening (remote, listen_port, unix_socket_name.c_str(), localhost_only))
                             mode = eRNBRunLoopModeExit;
                     }
                     else if (str[0] == '/')
@@ -1424,7 +1429,7 @@ main (int argc, char *argv[])
                     {
                         if (listen_port != INT32_MAX)
                         {
-                            if (!StartListening (remote, listen_port, unix_socket_name.c_str()))
+                            if (!StartListening (remote, listen_port, unix_socket_name.c_str(), localhost_only))
                                 mode = eRNBRunLoopModeExit;
                         }
                         else if (str[0] == '/')
@@ -1451,7 +1456,7 @@ main (int argc, char *argv[])
             case eRNBRunLoopModePlatformMode:
                 if (listen_port != INT32_MAX)
                 {
-                    if (!StartListening (remote, listen_port, unix_socket_name.c_str()))
+                    if (!StartListening (remote, listen_port, unix_socket_name.c_str(), localhost_only))
                         mode = eRNBRunLoopModeExit;
                 }
                 else if (str[0] == '/')

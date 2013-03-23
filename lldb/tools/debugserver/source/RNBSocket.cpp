@@ -31,7 +31,7 @@
    This function blocks while waiting for that connection.  */
 
 rnb_err_t
-RNBSocket::Listen (in_port_t port, PortBoundCallback callback, const void *callback_baton)
+RNBSocket::Listen (in_port_t port, PortBoundCallback callback, const void *callback_baton, bool localhost_only)
 {
     //DNBLogThreadedIf(LOG_RNB_COMM, "%8u RNBSocket::%s called", (uint32_t)m_timer.ElapsedMicroSeconds(true), __FUNCTION__);
     // Disconnect without saving errno
@@ -56,7 +56,14 @@ RNBSocket::Listen (in_port_t port, PortBoundCallback callback, const void *callb
     sa.sin_len = sizeof sa;
     sa.sin_family = AF_INET;
     sa.sin_port = htons (port);
-    sa.sin_addr.s_addr = htonl (INADDR_ANY);
+    if (localhost_only)
+    {
+        sa.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
+    }
+    else
+    {
+        sa.sin_addr.s_addr = htonl (INADDR_ANY);
+    }
 
     int error = ::bind (listen_fd, (struct sockaddr *) &sa, sizeof(sa));
     if (error == -1)
