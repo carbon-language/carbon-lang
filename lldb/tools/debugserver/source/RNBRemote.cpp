@@ -3836,6 +3836,7 @@ RNBRemote::HandlePacket_D (const char *p)
 rnb_err_t
 RNBRemote::HandlePacket_k (const char *p)
 {
+    DNBLog ("Got a 'k' packet, killing the inferior process.");
     // No response to should be sent to the kill packet
     if (m_ctx.HasValidProcessID())
         DNBProcessKill (m_ctx.ProcessID());

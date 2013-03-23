@@ -571,6 +571,7 @@ RNBRunLoopInferiorExecuting (RNBRemote *remote)
                     // in its current state and listen for another connection...
                     if (ctx.ProcessStateRunning())
                     {
+                        DNBLog ("debugserver's event read thread is exiting, killing the inferior process.");
                         DNBProcessKill (ctx.ProcessID());
                     }
                 }
