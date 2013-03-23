@@ -76,11 +76,13 @@ void test34(int cond) {
   // CHECK:      [[T0:%.*]] = load i8** [[ARG]]
   // CHECK-NEXT: store i8* [[T0]], i8** [[TEMP1]]
   // CHECK-NEXT: br label
+  // CHECK:      [[W0:%.*]] = phi i8* [ [[T0]], {{%.*}} ], [ undef, {{%.*}} ]
   // CHECK:      call void @_Z11test34_sinkPU15__autoreleasingP11objc_object(i8** [[T1]])
   // CHECK-NEXT: [[T0:%.*]] = icmp eq i8** [[ARG]], null
   // CHECK-NEXT: br i1 [[T0]],
   // CHECK:      [[T0:%.*]] = load i8** [[TEMP1]]
   // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]])
+  // CHECK-NEXT: call void (...)* @clang.arc.use(i8* [[W0]])
   // CHECK-NEXT: [[T2:%.*]] = load i8** [[ARG]]
   // CHECK-NEXT: store i8* [[T1]], i8** [[ARG]]
   // CHECK-NEXT: call void @objc_release(i8* [[T2]])

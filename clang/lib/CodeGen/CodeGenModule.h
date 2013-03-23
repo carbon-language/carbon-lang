@@ -217,6 +217,9 @@ struct ARCEntrypoints {
   /// A void(void) inline asm to use to mark that the return value of
   /// a call will be immediately retain.
   llvm::InlineAsm *retainAutoreleasedReturnValueMarker;
+
+  /// void clang.arc.use(...);
+  llvm::Constant *clang_arc_use;
 };
 
 /// CodeGenModule - This class organizes the cross-function state that is used

@@ -80,13 +80,14 @@ void test3(void (^sink)(id*)) {
   // CHECK-NEXT: bitcast
   // CHECK-NEXT: getelementptr
   // CHECK-NEXT: [[BLOCK:%.*]] = bitcast
-  // CHECK-NEXT: [[T0:%.*]] = load i8** [[STRONG]]
-  // CHECK-NEXT: store i8* [[T0]], i8** [[TEMP]]
+  // CHECK-NEXT: [[V:%.*]] = load i8** [[STRONG]]
+  // CHECK-NEXT: store i8* [[V]], i8** [[TEMP]]
   // CHECK-NEXT: [[F0:%.*]] = load i8**
   // CHECK-NEXT: [[F1:%.*]] = bitcast i8* [[F0]] to void (i8*, i8**)*
   // CHECK-NEXT: call void [[F1]](i8* [[BLOCK]], i8** [[TEMP]])
   // CHECK-NEXT: [[T0:%.*]] = load i8** [[TEMP]]
   // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]])
+  // CHECK-NEXT: call void (...)* @clang.arc.use(i8* [[V]]) [[NUW]]
   // CHECK-NEXT: [[T2:%.*]] = load i8** [[STRONG]]
   // CHECK-NEXT: store i8* [[T1]], i8** [[STRONG]]
   // CHECK-NEXT: call void @objc_release(i8* [[T2]])

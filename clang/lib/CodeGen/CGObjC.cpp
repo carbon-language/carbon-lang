@@ -1707,6 +1707,21 @@ llvm::Value *CodeGenFunction::EmitObjCExtendObjectLifetime(QualType type,
   return EmitARCRetainAutorelease(type, value);
 }
 
+/// Given a number of pointers, inform the optimizer that they're
+/// being intrinsically used up until this point in the program.
+void CodeGenFunction::EmitARCIntrinsicUse(ArrayRef<llvm::Value*> values) {
+  llvm::Constant *&fn = CGM.getARCEntrypoints().clang_arc_use;
+  if (!fn) {
+    llvm::FunctionType *fnType =
+      llvm::FunctionType::get(CGM.VoidTy, ArrayRef<llvm::Type*>(), true);
+    fn = CGM.CreateRuntimeFunction(fnType, "clang.arc.use");
+  }
+
+  // This isn't really a "runtime" function, but as an intrinsic it
+  // doesn't really matter as long as we align things up.
+  EmitNounwindRuntimeCall(fn, values);
+}
+
 
 static llvm::Constant *createARCRuntimeFunction(CodeGenModule &CGM,
                                                 llvm::FunctionType *type,

@@ -61,11 +61,13 @@ void test1(int cond) {
   // CHECK:      [[T0:%.*]] = load i8** [[ARG]]
   // CHECK-NEXT: store i8* [[T0]], i8** [[TEMP1]]
   // CHECK-NEXT: br label
-  // CHECK:      call void @test1_sink(i8** [[T1]])
+  // CHECK:      [[W:%.*]] = phi i8* [ [[T0]], {{%.*}} ], [ undef, {{%.*}} ]
+  // CHECK-NEXT: call void @test1_sink(i8** [[T1]])
   // CHECK-NEXT: [[T0:%.*]] = icmp eq i8** [[ARG]], null
   // CHECK-NEXT: br i1 [[T0]],
   // CHECK:      [[T0:%.*]] = load i8** [[TEMP1]]
   // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]])
+  // CHECK-NEXT: call void (...)* @clang.arc.use(i8* [[W]]) [[NUW]]
   // CHECK-NEXT: [[T2:%.*]] = load i8** [[ARG]]
   // CHECK-NEXT: store i8* [[T1]], i8** [[ARG]]
   // CHECK-NEXT: call void @objc_release(i8* [[T2]])
