@@ -36,10 +36,11 @@ endmacro()
 # add_compiler_rt_static_runtime(<name> <arch>
 #                                SOURCES <source files>
 #                                CFLAGS <compile flags>
-#                                DEFS <compile definitions>)
+#                                DEFS <compile definitions>
+#                                SYMS <symbols file>)
 macro(add_compiler_rt_static_runtime name arch)
   if(CAN_TARGET_${arch})
-    parse_arguments(LIB "SOURCES;CFLAGS;DEFS" "" ${ARGN})
+    parse_arguments(LIB "SOURCES;CFLAGS;DEFS;SYMS" "" ${ARGN})
     add_library(${name} STATIC ${LIB_SOURCES})
     # Setup compile flags and definitions.
     set_target_compile_flags(${name}
@@ -52,6 +53,13 @@ macro(add_compiler_rt_static_runtime name arch)
     # Add installation command.
     install(TARGETS ${name}
       ARCHIVE DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
+    # Generate the .syms file if possible.
+    if(LIB_SYMS)
+      get_target_property(libfile ${name} LOCATION)
+      configure_file(${LIB_SYMS} ${libfile}.syms)
+      install(FILES ${libfile}.syms
+        DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
+    endif(LIB_SYMS)
   else()
     message(FATAL_ERROR "Archtecture ${arch} can't be targeted")
   endif()

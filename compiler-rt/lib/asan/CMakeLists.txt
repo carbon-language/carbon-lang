@@ -86,7 +86,8 @@ else()
               $<TARGET_OBJECTS:RTInterception.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
       CFLAGS ${ASAN_CFLAGS}
-      DEFS ${ASAN_COMMON_DEFINITIONS})
+      DEFS ${ASAN_COMMON_DEFINITIONS}
+      SYMS asan.syms)
     list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-${arch})
   endforeach()
 endif()

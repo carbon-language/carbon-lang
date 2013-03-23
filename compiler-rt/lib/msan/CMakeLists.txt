@@ -24,7 +24,8 @@ if(CAN_TARGET_${arch})
     SOURCES ${MSAN_RTL_SOURCES}
             $<TARGET_OBJECTS:RTInterception.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
-    CFLAGS ${MSAN_RTL_CFLAGS})
+    CFLAGS ${MSAN_RTL_CFLAGS}
+    SYMS msan.syms)
   list(APPEND MSAN_RUNTIME_LIBRARIES clang_rt.msan-${arch})
 endif()
 

@@ -34,11 +34,13 @@ else()
     # Main UBSan runtime.
     add_compiler_rt_static_runtime(clang_rt.ubsan-${arch} ${arch}
       SOURCES ${UBSAN_SOURCES}
-      CFLAGS ${UBSAN_CFLAGS})
+      CFLAGS ${UBSAN_CFLAGS}
+      SYMS ubsan.syms)
     # C++-specific parts of UBSan runtime. Requires a C++ ABI library.
     add_compiler_rt_static_runtime(clang_rt.ubsan_cxx-${arch} ${arch}
       SOURCES ${UBSAN_CXX_SOURCES}
-      CFLAGS ${UBSAN_CFLAGS})
+      CFLAGS ${UBSAN_CFLAGS}
+      SYMS ubsan.syms)
     list(APPEND UBSAN_RUNTIME_LIBRARIES
            clang_rt.san-${arch}
            clang_rt.ubsan-${arch}
