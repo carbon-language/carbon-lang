@@ -188,6 +188,11 @@ static bool spillsCR(const MachineFunction &MF) {
   return FuncInfo->isCRSpilled();
 }
 
+static bool spillsVRSAVE(const MachineFunction &MF) {
+  const PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
+  return FuncInfo->isVRSAVESpilled();
+}
+
 static bool hasSpills(const MachineFunction &MF) {
   const PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
   return FuncInfo->hasSpills();
@@ -1081,8 +1086,8 @@ PPCFrameLowering::addScavengingSpillSlot(MachineFunction &MF,
   // needed alignment padding.
   unsigned StackSize = determineFrameLayout(MF, false, true);
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  if (MFI->hasVarSizedObjects() || spillsCR(MF) || hasNonRISpills(MF) ||
-      (hasSpills(MF) && !isInt<16>(StackSize))) {
+  if (MFI->hasVarSizedObjects() || spillsCR(MF) || spillsVRSAVE(MF) ||
+      hasNonRISpills(MF) || (hasSpills(MF) && !isInt<16>(StackSize))) {
     const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
     const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
     const TargetRegisterClass *RC = Subtarget.isPPC64() ? G8RC : GPRC;

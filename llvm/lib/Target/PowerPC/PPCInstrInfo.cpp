@@ -440,7 +440,7 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                   int FrameIdx,
                                   const TargetRegisterClass *RC,
                                   SmallVectorImpl<MachineInstr*> &NewMIs,
-                                  bool &NonRI) const{
+                                  bool &NonRI, bool &SpillsVRS) const{
   DebugLoc DL;
   if (PPC::GPRCRegClass.hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STW))
@@ -500,7 +500,7 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
       Reg = PPC::CR7;
 
     return StoreRegToStackSlot(MF, Reg, isKill, FrameIdx,
-                               &PPC::CRRCRegClass, NewMIs, NonRI);
+                               &PPC::CRRCRegClass, NewMIs, NonRI, SpillsVRS);
 
   } else if (PPC::VRRCRegClass.hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STVX))
@@ -513,7 +513,7 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                        .addReg(SrcReg,
                                                getKillRegState(isKill)),
                                        FrameIdx));
-    NonRI = true;
+    SpillsVRS = true;
   } else {
     llvm_unreachable("Unknown regclass!");
   }
@@ -533,9 +533,13 @@ PPCInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
   FuncInfo->setHasSpills();
 
-  bool NonRI = false;
-  if (StoreRegToStackSlot(MF, SrcReg, isKill, FrameIdx, RC, NewMIs, NonRI))
+  bool NonRI = false, SpillsVRS = false;
+  if (StoreRegToStackSlot(MF, SrcReg, isKill, FrameIdx, RC, NewMIs,
+                          NonRI, SpillsVRS))
     FuncInfo->setSpillsCR();
+
+  if (SpillsVRS)
+    FuncInfo->setSpillsVRSAVE();
 
   if (NonRI)
     FuncInfo->setHasNonRISpills();
@@ -557,7 +561,7 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                                    unsigned DestReg, int FrameIdx,
                                    const TargetRegisterClass *RC,
                                    SmallVectorImpl<MachineInstr*> &NewMIs,
-                                   bool &NonRI) const{
+                                   bool &NonRI, bool &SpillsVRS) const{
   if (PPC::GPRCRegClass.hasSubClassEq(RC)) {
     if (DestReg != PPC::LR) {
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LWZ),
@@ -616,7 +620,7 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
       Reg = PPC::CR7;
 
     return LoadRegFromStackSlot(MF, DL, Reg, FrameIdx,
-                                &PPC::CRRCRegClass, NewMIs, NonRI);
+                                &PPC::CRRCRegClass, NewMIs, NonRI, SpillsVRS);
 
   } else if (PPC::VRRCRegClass.hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LVX), DestReg),
@@ -627,7 +631,7 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                                                get(PPC::RESTORE_VRSAVE),
                                                DestReg),
                                        FrameIdx));
-    NonRI = true;
+    SpillsVRS = true;
   } else {
     llvm_unreachable("Unknown regclass!");
   }
@@ -649,9 +653,13 @@ PPCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
   FuncInfo->setHasSpills();
 
-  bool NonRI = false;
-  if (LoadRegFromStackSlot(MF, DL, DestReg, FrameIdx, RC, NewMIs, NonRI))
+  bool NonRI = false, SpillsVRS = false;
+  if (LoadRegFromStackSlot(MF, DL, DestReg, FrameIdx, RC, NewMIs,
+                           NonRI, SpillsVRS))
     FuncInfo->setSpillsCR();
+
+  if (SpillsVRS)
+    FuncInfo->setSpillsVRSAVE();
 
   if (NonRI)
     FuncInfo->setHasNonRISpills();
