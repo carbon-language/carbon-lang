@@ -264,10 +264,14 @@ ProgramStateRef SimpleConstraintManager::assumeSymRel(ProgramStateRef state,
   APSIntType ComparisonType = std::max(WraparoundType, APSIntType(Int));
   llvm::APSInt ConvertedInt = ComparisonType.convert(Int);
 
+  // Prefer unsigned comparisons.
+  if (ComparisonType.getBitWidth() == WraparoundType.getBitWidth() &&
+      ComparisonType.isUnsigned() && !WraparoundType.isUnsigned())
+    Adjustment.setIsSigned(false);
+
   switch (op) {
   default:
-    // No logic yet for other operators.  assume the constraint is feasible.
-    return state;
+    llvm_unreachable("invalid operation not caught by assertion above");
 
   case BO_EQ:
     return assumeSymEQ(state, Sym, ConvertedInt, Adjustment);

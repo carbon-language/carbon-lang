@@ -184,6 +184,18 @@ void mixedSignedness(int a, unsigned b) {
   clang_analyzer_eval(b == uMin && b != sMin); // expected-warning{{FALSE}}
 }
 
+void mixedSignedness2(int a) {
+  if (a != -1)
+    return;
+  clang_analyzer_eval(a == UINT_MAX); // expected-warning{{TRUE}}
+}
+
+void mixedSignedness3(unsigned a) {
+  if (a != UINT_MAX)
+    return;
+  clang_analyzer_eval(a == -1); // expected-warning{{TRUE}}
+}
+
 
 void multiplicativeSanityTest(int x) {
   // At one point we were ignoring the *4 completely -- the constraint manager

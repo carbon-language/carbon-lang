@@ -170,3 +170,135 @@ void mixedComparisons9(signed char a) {
   clang_analyzer_eval(a == 0x7F); // expected-warning{{UNKNOWN}}
   clang_analyzer_eval(a == -0x80); // expected-warning{{UNKNOWN}}
 }
+
+
+void mixedSignedness1(int a) {
+  unsigned max = UINT_MAX;
+  clang_analyzer_eval(a < max); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2) < max); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2U) < max); // expected-warning{{UNKNOWN}}
+}
+
+void mixedSignedness2(int a) {
+  unsigned max = UINT_MAX;
+  clang_analyzer_eval(a <= max); // expected-warning{{TRUE}}
+  clang_analyzer_eval((a + 2) <= max); // expected-warning{{TRUE}}
+  clang_analyzer_eval((a + 2U) <= max); // expected-warning{{TRUE}}
+}
+
+void mixedSignedness3(unsigned a) {
+  int max = INT_MAX;
+  clang_analyzer_eval(a < max); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2) < max); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2U) < max); // expected-warning{{UNKNOWN}}
+}
+
+void mixedSignedness4(unsigned a) {
+  int max = INT_MAX;
+  clang_analyzer_eval(a <= max); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2) <= max); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2U) <= max); // expected-warning{{UNKNOWN}}
+}
+
+void mixedSignedness5(unsigned a) {
+  int min = INT_MIN;
+  clang_analyzer_eval(a < min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2) < min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2U) < min); // expected-warning{{UNKNOWN}}
+}
+
+void mixedSignedness6(unsigned a) {
+  int min = INT_MIN;
+  clang_analyzer_eval(a <= min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2) <= min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2U) <= min); // expected-warning{{UNKNOWN}}
+}
+
+void mixedSignedness7(unsigned a) {
+  unsigned min = 0;
+  clang_analyzer_eval(a < min); // expected-warning{{FALSE}}
+  clang_analyzer_eval((a + 2) < min); // expected-warning{{FALSE}}
+  clang_analyzer_eval((a + 2U) < min); // expected-warning{{FALSE}}
+}
+
+void mixedSignedness8(unsigned a) {
+  unsigned min = 0;
+  clang_analyzer_eval(a <= min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2) <= min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2U) <= min); // expected-warning{{UNKNOWN}}
+}
+
+void mixedSignedness9(unsigned a) {
+  int min = 0;
+  clang_analyzer_eval(a < min); // expected-warning{{FALSE}}
+  clang_analyzer_eval((a + 2) < min); // expected-warning{{FALSE}}
+  clang_analyzer_eval((a + 2U) < min); // expected-warning{{FALSE}}
+}
+
+void mixedSignedness10(unsigned a) {
+  int min = 0;
+  clang_analyzer_eval(a <= min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2) <= min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2U) <= min); // expected-warning{{UNKNOWN}}
+}
+
+void mixedSignedness11(int a) {
+  int min = 0;
+  clang_analyzer_eval(a < min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2) < min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2U) < min); // expected-warning{{FALSE}}
+}
+
+void mixedSignedness12(int a) {
+  int min = 0;
+  clang_analyzer_eval(a <= min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2) <= min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2U) <= min); // expected-warning{{UNKNOWN}}
+}
+
+void mixedSignedness13(int a) {
+  unsigned max = INT_MAX;
+  clang_analyzer_eval(a < max); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2) < max); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2U) < max); // expected-warning{{UNKNOWN}}
+}
+
+void mixedSignedness14(int a) {
+  unsigned max = INT_MAX;
+  clang_analyzer_eval(a <= max); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2) <= max); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2U) <= max); // expected-warning{{UNKNOWN}}
+}
+
+void mixedSignedness15(int a) {
+  unsigned min = INT_MIN;
+  clang_analyzer_eval(a < min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2) < min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2U) < min); // expected-warning{{UNKNOWN}}
+}
+
+void mixedSignedness16(int a) {
+  unsigned min = INT_MIN;
+  clang_analyzer_eval(a <= min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2) <= min); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a + 2U) <= min); // expected-warning{{UNKNOWN}}
+}
+
+void mixedSignedness17(int a) {
+  unsigned max = INT_MAX;
+  if (a < max)
+    return;
+
+  clang_analyzer_eval(a < 0); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(a == 0); // expected-warning{{FALSE}}
+  clang_analyzer_eval(a == INT_MAX); // expected-warning{{UNKNOWN}}
+}
+
+void mixedSignedness18(int a) {
+  if (a >= 0)
+    return;
+
+  clang_analyzer_eval(a < 0); // expected-warning{{TRUE}}
+  clang_analyzer_eval(a == (unsigned)INT_MIN); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(a == UINT_MAX); // expected-warning{{UNKNOWN}}
+}
