@@ -76,6 +76,7 @@ public:
   virtual void visitGuard(const clast_guard *stmt);
 
   virtual void visitUser(const clast_user_stmt *stmt) = 0;
+  virtual ~ClastVisitor() {}
 };
 }
 
