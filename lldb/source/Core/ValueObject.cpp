@@ -1255,17 +1255,40 @@ ValueObject::GetValueAsCString (lldb::Format format,
                 clang_type_t clang_type = GetClangType ();
                 if (clang_type)
                 {
+                     // put custom bytes to display in this DataExtractor to override the default value logic
+                    lldb_private::DataExtractor special_format_data;
+                    clang::ASTContext* ast = GetClangAST();
+                    Flags type_flags(ClangASTContext::GetTypeInfo(clang_type, ast, NULL));
+                    if (type_flags.Test(ClangASTContext::eTypeIsPointer) && !type_flags.Test(ClangASTContext::eTypeIsObjC))
+                    {
+                        if (format == eFormatCString)
+                        {
+                            // if we are dumping a pointer as a c-string, get the pointee data as a string
+                            TargetSP target_sp(GetTargetSP());
+                            if (target_sp)
+                            {
+                                size_t max_len = target_sp->GetMaximumSizeOfStringSummary();
+                                Error error;
+                                DataBufferSP buffer_sp(new DataBufferHeap(max_len+1,0));
+                                Address address(GetPointerValue());
+                                if (target_sp->ReadCStringFromMemory(address, (char*)buffer_sp->GetBytes(), max_len, error) && error.Success())
+                                    special_format_data.SetData(buffer_sp);
+                            }
+                        }
+                    }
+                    
                     StreamString sstr;
                     ExecutionContext exe_ctx (GetExecutionContextRef());
-                    ClangASTType::DumpTypeValue (GetClangAST(),             // The clang AST
-                                                 clang_type,                // The clang type to display
-                                                 &sstr,
-                                                 format,                    // Format to display this type with
-                                                 m_data,                    // Data to extract from
-                                                 0,                         // Byte offset into "m_data"
-                                                 GetByteSize(),             // Byte size of item in "m_data"
-                                                 GetBitfieldBitSize(),      // Bitfield bit size
-                                                 GetBitfieldBitOffset(),    // Bitfield bit offset
+                    ClangASTType::DumpTypeValue (ast,                           // The clang AST
+                                                 clang_type,                    // The clang type to display
+                                                 &sstr,                         // The stream to use for display
+                                                 format,                        // Format to display this type with
+                                                 special_format_data.GetByteSize() ?
+                                                 special_format_data: m_data,   // Data to extract from
+                                                 0,                             // Byte offset into "m_data"
+                                                 GetByteSize(),                 // Byte size of item in "m_data"
+                                                 GetBitfieldBitSize(),          // Bitfield bit size
+                                                 GetBitfieldBitOffset(),        // Bitfield bit offset
                                                  exe_ctx.GetBestExecutionContextScope()); 
                     // Don't set the m_error to anything here otherwise
                     // we won't be able to re-format as anything else. The
