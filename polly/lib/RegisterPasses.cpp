@@ -50,20 +50,19 @@ enum OptimizerChoice {
   OPTIMIZER_ISL
 };
 
-static cl::opt<OptimizerChoice>
-Optimizer("polly-optimizer",
-          cl::desc("Select the scheduling optimizer"),
-          cl::values(
-            clEnumValN(OPTIMIZER_NONE, "none", "No optimizer"),
+static cl::opt<OptimizerChoice> Optimizer(
+    "polly-optimizer", cl::desc("Select the scheduling optimizer"),
+    cl::values(
+        clEnumValN(OPTIMIZER_NONE, "none", "No optimizer"),
 #ifdef PLUTO_FOUND
-            clEnumValN(OPTIMIZER_PLUTO, "pluto", "The Pluto scheduling optimizer"),
+        clEnumValN(OPTIMIZER_PLUTO, "pluto", "The Pluto scheduling optimizer"),
 #endif
 #ifdef SCOPLIB_FOUND
-            clEnumValN(OPTIMIZER_POCC, "pocc", "The PoCC scheduling optimizer"),
+        clEnumValN(OPTIMIZER_POCC, "pocc", "The PoCC scheduling optimizer"),
 #endif
-            clEnumValN(OPTIMIZER_ISL, "isl", "The isl scheduling optimizer"),
-            clEnumValEnd),
-          cl::Hidden, cl::init(OPTIMIZER_ISL), cl::ZeroOrMore);
+        clEnumValN(OPTIMIZER_ISL, "isl", "The isl scheduling optimizer"),
+        clEnumValEnd),
+    cl::Hidden, cl::init(OPTIMIZER_ISL), cl::ZeroOrMore);
 
 enum CodeGenChoice {
 #ifdef CLOOG_FOUND
@@ -79,33 +78,28 @@ enum CodeGenChoice DefaultCodeGen = CODEGEN_CLOOG;
 enum CodeGenChoice DefaultCodeGen = CODEGEN_ISL;
 #endif
 
-
-static cl::opt<CodeGenChoice>
-CodeGenerator("polly-code-generator",
-              cl::desc("Select the code generator"),
-              cl::values(
+static cl::opt<CodeGenChoice> CodeGenerator(
+    "polly-code-generator", cl::desc("Select the code generator"),
+    cl::values(
 #ifdef CLOOG_FOUND
-                         clEnumValN(CODEGEN_CLOOG, "cloog", "CLooG"),
+        clEnumValN(CODEGEN_CLOOG, "cloog", "CLooG"),
 #endif
-                         clEnumValN(CODEGEN_ISL, "isl", "isl code generator"),
-                         clEnumValN(CODEGEN_NONE, "none", "no code generation"),
-                         clEnumValEnd),
-          cl::Hidden, cl::init(DefaultCodeGen), cl::ZeroOrMore);
+        clEnumValN(CODEGEN_ISL, "isl", "isl code generator"),
+        clEnumValN(CODEGEN_NONE, "none", "no code generation"), clEnumValEnd),
+    cl::Hidden, cl::init(DefaultCodeGen), cl::ZeroOrMore);
 
-static cl::opt<polly::VectorizerChoice, true>
-Vectorizer("polly-vectorizer",
-          cl::desc("Select the scheduling optimizer"),
-          cl::values(
-            clEnumValN(polly::VECTORIZER_NONE, "none", "No Vectorization"),
-            clEnumValN(polly::VECTORIZER_POLLY, "polly",
-                       "Polly internal vectorizer"),
-            clEnumValN(polly::VECTORIZER_UNROLL_ONLY, "unroll-only",
-                       "Only grouped unroll the vectorize candidate loops"),
-            clEnumValN(polly::VECTORIZER_BB, "bb",
-                       "The Basic Block vectorizer driven by Polly"),
-            clEnumValEnd),
-          cl::Hidden, cl::location(PollyVectorizerChoice),
-          cl::init(polly::VECTORIZER_NONE), cl::ZeroOrMore);
+static cl::opt<polly::VectorizerChoice, true> Vectorizer(
+    "polly-vectorizer", cl::desc("Select the scheduling optimizer"),
+    cl::values(clEnumValN(polly::VECTORIZER_NONE, "none", "No Vectorization"),
+               clEnumValN(polly::VECTORIZER_POLLY, "polly",
+                          "Polly internal vectorizer"),
+               clEnumValN(polly::VECTORIZER_UNROLL_ONLY, "unroll-only",
+                          "Only grouped unroll the vectorize candidate loops"),
+               clEnumValN(polly::VECTORIZER_BB, "bb",
+                          "The Basic Block vectorizer driven by Polly"),
+               clEnumValEnd),
+    cl::Hidden, cl::location(PollyVectorizerChoice),
+    cl::init(polly::VECTORIZER_NONE), cl::ZeroOrMore);
 
 static cl::opt<bool>
 ImportJScop("polly-import",
@@ -117,39 +111,32 @@ ExportJScop("polly-export",
             cl::Hidden, cl::init(false), cl::ZeroOrMore);
 
 static cl::opt<bool>
-PollyViewer("polly-show",
-       cl::desc("Enable the Polly DOT viewer in -O3"), cl::Hidden,
-       cl::value_desc("Run the Polly DOT viewer at -O3"),
-       cl::init(false), cl::ZeroOrMore);
+PollyViewer("polly-show", cl::desc("Enable the Polly DOT viewer in -O3"),
+            cl::Hidden, cl::value_desc("Run the Polly DOT viewer at -O3"),
+            cl::init(false), cl::ZeroOrMore);
 
 static cl::opt<bool>
-DeadCodeElim("polly-run-dce",
-             cl::desc("Run the dead code elimination"),
+DeadCodeElim("polly-run-dce", cl::desc("Run the dead code elimination"),
              cl::Hidden, cl::init(false), cl::ZeroOrMore);
 
-static cl::opt<bool>
-PollyOnlyViewer("polly-show-only",
-       cl::desc("Enable the Polly DOT viewer in -O3 (no BB content)"),
-       cl::Hidden,
-       cl::value_desc("Run the Polly DOT viewer at -O3 (no BB content"),
-       cl::init(false));
-static cl::opt<bool>
-PollyPrinter("polly-dot",
-       cl::desc("Enable the Polly DOT printer in -O3"), cl::Hidden,
-       cl::value_desc("Run the Polly DOT printer at -O3"),
-       cl::init(false));
-static cl::opt<bool>
-PollyOnlyPrinter("polly-dot-only",
-       cl::desc("Enable the Polly DOT printer in -O3 (no BB content)"),
-       cl::Hidden,
-       cl::value_desc("Run the Polly DOT printer at -O3 (no BB content"),
-       cl::init(false));
+static cl::opt<bool> PollyOnlyViewer(
+    "polly-show-only",
+    cl::desc("Enable the Polly DOT viewer in -O3 (no BB content)"), cl::Hidden,
+    cl::value_desc("Run the Polly DOT viewer at -O3 (no BB content"),
+    cl::init(false));
+static cl::opt<bool> PollyPrinter(
+    "polly-dot", cl::desc("Enable the Polly DOT printer in -O3"), cl::Hidden,
+    cl::value_desc("Run the Polly DOT printer at -O3"), cl::init(false));
+static cl::opt<bool> PollyOnlyPrinter(
+    "polly-dot-only",
+    cl::desc("Enable the Polly DOT printer in -O3 (no BB content)"), cl::Hidden,
+    cl::value_desc("Run the Polly DOT printer at -O3 (no BB content"),
+    cl::init(false));
 
 static cl::opt<bool>
 CFGPrinter("polly-view-cfg",
-       cl::desc("Show the Polly CFG right after code generation"),
-       cl::Hidden,
-       cl::init(false));
+           cl::desc("Show the Polly CFG right after code generation"),
+           cl::Hidden, cl::init(false));
 
 static void initializePollyPasses(PassRegistry &Registry) {
 #ifdef CLOOG_FOUND
@@ -181,10 +168,10 @@ namespace {
 class StaticInitializer {
 
 public:
-    StaticInitializer() {
-      PassRegistry &Registry = *PassRegistry::getPassRegistry();
-      initializePollyPasses(Registry);
-    }
+  StaticInitializer() {
+    PassRegistry &Registry = *PassRegistry::getPassRegistry();
+    initializePollyPasses(Registry);
+  }
 };
 } // end of anonymous namespace.
 
@@ -196,12 +183,12 @@ static void registerPollyPreoptPasses(llvm::PassManagerBase &PM) {
   // a canonical form that can than be analyzed by Polly. This set of passes is
   // most probably not yet optimal. TODO: Investigate optimal set of passes.
   PM.add(llvm::createPromoteMemoryToRegisterPass());
-  PM.add(llvm::createInstructionCombiningPass());  // Clean up after IPCP & DAE
-  PM.add(llvm::createCFGSimplificationPass());     // Clean up after IPCP & DAE
-  PM.add(llvm::createTailCallEliminationPass());   // Eliminate tail calls
-  PM.add(llvm::createCFGSimplificationPass());     // Merge & remove BBs
-  PM.add(llvm::createReassociatePass());           // Reassociate expressions
-  PM.add(llvm::createLoopRotatePass());            // Rotate Loop
+  PM.add(llvm::createInstructionCombiningPass()); // Clean up after IPCP & DAE
+  PM.add(llvm::createCFGSimplificationPass());    // Clean up after IPCP & DAE
+  PM.add(llvm::createTailCallEliminationPass());  // Eliminate tail calls
+  PM.add(llvm::createCFGSimplificationPass());    // Merge & remove BBs
+  PM.add(llvm::createReassociatePass());          // Reassociate expressions
+  PM.add(llvm::createLoopRotatePass());           // Rotate Loop
   PM.add(llvm::createInstructionCombiningPass());
 
   if (!SCEVCodegen)
@@ -292,9 +279,8 @@ static void registerPollyPasses(llvm::PassManagerBase &PM) {
     PM.add(llvm::createCFGPrinterPass());
 }
 
-static
-void registerPollyEarlyAsPossiblePasses(const llvm::PassManagerBuilder &Builder,
-                                        llvm::PassManagerBase &PM) {
+static void registerPollyEarlyAsPossiblePasses(
+    const llvm::PassManagerBuilder &Builder, llvm::PassManagerBase &PM) {
 
   if (Builder.OptLevel == 0)
     return;
@@ -320,7 +306,6 @@ static void registerPollyOptLevel0Passes(const llvm::PassManagerBuilder &,
   registerPollyPreoptPasses(PM);
 }
 
-
 // Execute Polly together with a set of preparing passes.
 //
 // We run Polly that early to run before loop optimizer passes like LICM or
@@ -332,4 +317,4 @@ PassRegister(llvm::PassManagerBuilder::EP_EarlyAsPossible,
              registerPollyEarlyAsPossiblePasses);
 static llvm::RegisterStandardPasses
 PassRegisterPreopt(llvm::PassManagerBuilder::EP_EnabledOnOptLevel0,
-                  registerPollyOptLevel0Passes);
+                   registerPollyOptLevel0Passes);
