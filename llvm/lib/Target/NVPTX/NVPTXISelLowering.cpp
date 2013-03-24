@@ -1058,15 +1058,15 @@ NVPTXTargetLowering::LowerFormalArguments(SDValue Chain,
     theArgs.push_back(I);
     argTypes.push_back(I->getType());
   }
-  assert(argTypes.size() == Ins.size() &&
-         "Ins types and function types did not match");
+  //assert(argTypes.size() == Ins.size() &&
+  //       "Ins types and function types did not match");
 
   int idx = 0;
-  for (unsigned i=0, e=Ins.size(); i!=e; ++i, ++idx) {
+  for (unsigned i=0, e=argTypes.size(); i!=e; ++i, ++idx) {
     Type *Ty = argTypes[i];
     EVT ObjectVT = getValueType(Ty);
-    assert(ObjectVT == Ins[i].VT &&
-           "Ins type did not match function type");
+    //assert(ObjectVT == Ins[i].VT &&
+    //       "Ins type did not match function type");
 
     // If the kernel argument is image*_t or sampler_t, convert it to
     // a i32 constant holding the parameter position. This can later
@@ -1081,7 +1081,15 @@ NVPTXTargetLowering::LowerFormalArguments(SDValue Chain,
 
     if (theArgs[i]->use_empty()) {
       // argument is dead
-      InVals.push_back(DAG.getNode(ISD::UNDEF, dl, ObjectVT));
+      if (ObjectVT.isVector()) {
+        EVT EltVT = ObjectVT.getVectorElementType();
+        unsigned NumElts = ObjectVT.getVectorNumElements();
+        for (unsigned vi = 0; vi < NumElts; ++vi) {
+          InVals.push_back(DAG.getNode(ISD::UNDEF, dl, EltVT));
+        }
+      } else {
+        InVals.push_back(DAG.getNode(ISD::UNDEF, dl, ObjectVT));
+      }
       continue;
     }
 
@@ -1090,6 +1098,31 @@ NVPTXTargetLowering::LowerFormalArguments(SDValue Chain,
     // appear in the same order as their order of appearance
     // in the original function. "idx+1" holds that order.
     if (PAL.hasAttribute(i+1, Attribute::ByVal) == false) {
+      if (ObjectVT.isVector()) {
+        unsigned NumElts = ObjectVT.getVectorNumElements();
+        EVT EltVT = ObjectVT.getVectorElementType();
+        unsigned Offset = 0;
+        for (unsigned vi = 0; vi < NumElts; ++vi) {
+          SDValue A = getParamSymbol(DAG, idx, getPointerTy());
+          SDValue B = DAG.getIntPtrConstant(Offset);
+          SDValue Addr = DAG.getNode(ISD::ADD, dl, getPointerTy(),
+                                     //getParamSymbol(DAG, idx, EltVT),
+                                     //DAG.getConstant(Offset, getPointerTy()));
+                                     A, B);
+          Value *SrcValue = Constant::getNullValue(PointerType::get(
+                                            EltVT.getTypeForEVT(F->getContext()),
+                                            llvm::ADDRESS_SPACE_PARAM));
+          SDValue Ld = DAG.getLoad(EltVT, dl, Root, Addr,
+                                   MachinePointerInfo(SrcValue),
+                                   false, false, false,
+                                   TD->getABITypeAlignment(EltVT.getTypeForEVT(
+                                     F->getContext())));
+          Offset += EltVT.getStoreSizeInBits()/8;
+          InVals.push_back(Ld);
+        }
+        continue;
+      }
+
       // A plain scalar.
       if (isABI || isKernel) {
         // If ABI, load from the param symbol

@@ -1481,7 +1481,7 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F,
   O << "(\n";
 
   for (I = F->arg_begin(), E = F->arg_end(); I != E; ++I, paramIndex++) {
-    const Type *Ty = I->getType();
+    Type *Ty = I->getType();
 
     if (!first)
       O << ",\n";
@@ -1504,6 +1504,22 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F,
     }
 
     if (PAL.hasAttribute(paramIndex+1, Attribute::ByVal) == false) {
+      if (Ty->isVectorTy()) {
+        // Just print .param .b8 .align <a> .param[size];
+        // <a> = PAL.getparamalignment
+        // size = typeallocsize of element type
+        unsigned align = PAL.getParamAlignment(paramIndex+1);
+        if (align == 0)
+          align = TD->getABITypeAlignment(Ty);
+
+        unsigned sz = TD->getTypeAllocSize(Ty);
+        O << "\t.param .align " << align
+          << " .b8 ";
+        printParamName(I, paramIndex, O);
+        O << "[" << sz << "]";
+
+        continue;
+      }
       // Just a scalar
       const PointerType *PTy = dyn_cast<PointerType>(Ty);
       if (isKernelFunc) {
