@@ -212,3 +212,14 @@ int SymSymExprWithDiffTypes(void* p) {
   return 5/j; // expected-warning {{Division by a tainted value, possibly zero}}
 }
 
+
+void constraintManagerShouldTreatAsOpaque(int rhs) {
+  int i;
+  scanf("%d", &i);
+  // This comparison used to hit an assertion in the constraint manager,
+  // which didn't handle NonLoc sym-sym comparisons.
+  if (i < rhs)
+    return;
+  if (i < rhs)
+    *(volatile int *) 0; // no-warning
+}

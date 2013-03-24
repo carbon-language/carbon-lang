@@ -50,8 +50,13 @@ bool SimpleConstraintManager::canReasonAbout(SVal X) const {
     }
 
     if (const SymSymExpr *SSE = dyn_cast<SymSymExpr>(SE)) {
-      if (BinaryOperator::isComparisonOp(SSE->getOpcode()))
-        return true;
+      if (BinaryOperator::isComparisonOp(SSE->getOpcode())) {
+        // We handle Loc <> Loc comparisons, but not (yet) NonLoc <> NonLoc.
+        if (Loc::isLocType(SSE->getLHS()->getType())) {
+          assert(Loc::isLocType(SSE->getRHS()->getType()));
+          return true;
+        }
+      }
     }
 
     return false;
