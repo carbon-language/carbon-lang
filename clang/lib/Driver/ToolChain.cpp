@@ -117,13 +117,13 @@ Tool *ToolChain::getTool(Action::ActionClass AC) const {
   llvm_unreachable("Invalid tool kind.");
 }
 
-Tool &ToolChain::SelectTool(const JobAction &JA) const {
+Tool *ToolChain::SelectTool(const JobAction &JA) const {
   if (getDriver().ShouldUseClangCompiler(JA))
-    return *getClang();
+    return getClang();
   Action::ActionClass AC = JA.getKind();
   if (AC == Action::AssembleJobClass && useIntegratedAs())
-    return *getClangAs();
-  return *getTool(AC);
+    return getClangAs();
+  return getTool(AC);
 }
 
 std::string ToolChain::GetFilePath(const char *Name) const {
