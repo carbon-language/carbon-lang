@@ -286,7 +286,7 @@ given values.
 .. productionlist::
    SimpleValue: "(" `DagArg` `DagArgList` ")"
    DagArgList: `DagArg` ("," `DagArg`)*
-   DagArg: `Value` [":" `TokVarName`]
+   DagArg: `Value` [":" `TokVarName`] | `TokVarName`
 
 The initial :token:`DagArg` is called the "operator" of the dag.
 

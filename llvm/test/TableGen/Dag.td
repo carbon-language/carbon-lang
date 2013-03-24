@@ -70,3 +70,15 @@ def VAL4 : bar<foo2, somedef2>;
 // CHECK-NEXT:  dag Dag3 = (somedef2 2);
 // CHECK-NEXT:  NAME = ?
 // CHECK-NEXT: }
+
+def VAL5 : bar<foo2, somedef2> {
+  // Named operands.
+  let Dag1 = (somedef1 1:$name1);
+
+  // Name, no node.
+  let Dag2 = (somedef2 $name2, $name3);
+}
+
+// CHECK:      def VAL5 {
+// CHECK-NEXT:  dag Dag1 = (somedef1 1:$name1);
+// CHECK-NEXT:  dag Dag2 = (somedef2 ?:$name2, ?:$name3);
