@@ -1391,6 +1391,8 @@ static EEVT::TypeSet getImplicitType(Record *R, unsigned ResNo,
     //
     //   (sext_inreg i32:$src, i16)
     //               ~~~~~~~~
+    if (NotRegisters)
+      return EEVT::TypeSet(); // Unknown.
     return EEVT::TypeSet(getValueType(R), TP);
   }
 
@@ -2430,6 +2432,7 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
       I->error("set destination should be a register!");
 
     if (Val->getDef()->isSubClassOf("RegisterClass") ||
+        Val->getDef()->isSubClassOf("ValueType") ||
         Val->getDef()->isSubClassOf("RegisterOperand") ||
         Val->getDef()->isSubClassOf("PointerLikeRegClass")) {
       if (Dest->getName().empty())
@@ -2646,6 +2649,25 @@ getInstructionsInTree(TreePatternNode *Tree, SmallVectorImpl<Record*> &Instrs) {
     getInstructionsInTree(Tree->getChild(i), Instrs);
 }
 
+/// Check the class of a pattern leaf node against the instruction operand it
+/// represents.
+static bool checkOperandClass(CGIOperandList::OperandInfo &OI,
+                              Record *Leaf) {
+  if (OI.Rec == Leaf)
+    return true;
+
+  // Allow direct value types to be used in instruction set patterns.
+  // The type will be checked later.
+  if (Leaf->isSubClassOf("ValueType"))
+    return true;
+
+  // Patterns can also be ComplexPattern instances.
+  if (Leaf->isSubClassOf("ComplexPattern"))
+    return true;
+
+  return false;
+}
+
 /// ParseInstructions - Parse all of the instructions, inlining and resolving
 /// any fragments involved.  This populates the Instructions list with fully
 /// resolved instructions.
@@ -2755,7 +2777,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
         I->error("Operand $" + OpName + " should be a set destination: all "
                  "outputs must occur before inputs in operand list!");
 
-      if (CGI.Operands[i].Rec != R)
+      if (!checkOperandClass(CGI.Operands[i], R))
         I->error("Operand $" + OpName + " class mismatch!");
 
       // Remember the return type.
@@ -2794,7 +2816,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
 
       if (InVal->isLeaf() && isa<DefInit>(InVal->getLeafValue())) {
         Record *InRec = static_cast<DefInit*>(InVal->getLeafValue())->getDef();
-        if (Op.Rec != InRec && !InRec->isSubClassOf("ComplexPattern"))
+        if (!checkOperandClass(Op, InRec))
           I->error("Operand $" + OpName + "'s register class disagrees"
                    " between the operand and pattern");
       }
