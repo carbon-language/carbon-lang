@@ -929,7 +929,7 @@ private:
     uint64_t Size = Length ? Length->getLimitedValue()
                            : AllocSize - Offset.getLimitedValue();
 
-    MemTransferOffsets &Offsets = P.MemTransferInstData[&II];
+    const MemTransferOffsets &Offsets = P.MemTransferInstData[&II];
     if (!II.isVolatile() && Offsets.DestEnd && Offsets.SourceEnd &&
         Offsets.DestBegin == Offsets.SourceBegin)
       return markAsDead(II); // Skip identity transfers without side-effects.
@@ -1318,12 +1318,12 @@ public:
         // may be zapped by an optimization pass in future.
         if (ZExtInst *ZExt = dyn_cast<ZExtInst>(SI->getOperand(0)))
           Arg = dyn_cast<Argument>(ZExt->getOperand(0));
-        if (SExtInst *SExt = dyn_cast<SExtInst>(SI->getOperand(0)))
+        else if (SExtInst *SExt = dyn_cast<SExtInst>(SI->getOperand(0)))
           Arg = dyn_cast<Argument>(SExt->getOperand(0));
         if (!Arg)
-          Arg = SI->getOperand(0);
+          Arg = SI->getValueOperand();
       } else if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
-        Arg = LI->getOperand(0);
+        Arg = LI->getPointerOperand();
       } else {
         continue;
       }
@@ -3336,12 +3336,13 @@ static Type *getTypePartition(const DataLayout &TD, Type *Ty,
     Type *ElementTy = SeqTy->getElementType();
     uint64_t ElementSize = TD.getTypeAllocSize(ElementTy);
     uint64_t NumSkippedElements = Offset / ElementSize;
-    if (ArrayType *ArrTy = dyn_cast<ArrayType>(SeqTy))
+    if (ArrayType *ArrTy = dyn_cast<ArrayType>(SeqTy)) {
       if (NumSkippedElements >= ArrTy->getNumElements())
         return 0;
-    if (VectorType *VecTy = dyn_cast<VectorType>(SeqTy))
+    } else if (VectorType *VecTy = dyn_cast<VectorType>(SeqTy)) {
       if (NumSkippedElements >= VecTy->getNumElements())
         return 0;
+    }
     Offset -= NumSkippedElements * ElementSize;
 
     // First check if we need to recurse.
