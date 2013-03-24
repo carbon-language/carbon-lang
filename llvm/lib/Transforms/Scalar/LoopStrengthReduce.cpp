@@ -1895,15 +1895,13 @@ ICmpInst *LSRInstance::OptimizeMax(ICmpInst *Cond, IVStrideUse* &CondUse) {
   if (ICmpInst::isTrueWhenEqual(Pred)) {
     // Look for n+1, and grab n.
     if (AddOperator *BO = dyn_cast<AddOperator>(Sel->getOperand(1)))
-      if (isa<ConstantInt>(BO->getOperand(1)) &&
-          cast<ConstantInt>(BO->getOperand(1))->isOne() &&
-          SE.getSCEV(BO->getOperand(0)) == MaxRHS)
-        NewRHS = BO->getOperand(0);
+      if (ConstantInt *BO1 = dyn_cast<ConstantInt>(BO->getOperand(1)))
+         if (BO1->isOne() && SE.getSCEV(BO->getOperand(0)) == MaxRHS)
+           NewRHS = BO->getOperand(0);
     if (AddOperator *BO = dyn_cast<AddOperator>(Sel->getOperand(2)))
-      if (isa<ConstantInt>(BO->getOperand(1)) &&
-          cast<ConstantInt>(BO->getOperand(1))->isOne() &&
-          SE.getSCEV(BO->getOperand(0)) == MaxRHS)
-        NewRHS = BO->getOperand(0);
+      if (ConstantInt *BO1 = dyn_cast<ConstantInt>(BO->getOperand(1)))
+        if (BO1->isOne() && SE.getSCEV(BO->getOperand(0)) == MaxRHS)
+          NewRHS = BO->getOperand(0);
     if (!NewRHS)
       return Cond;
   } else if (SE.getSCEV(Sel->getOperand(1)) == MaxRHS)
