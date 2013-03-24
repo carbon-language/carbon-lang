@@ -538,9 +538,22 @@ If you want to check out clang too, run:
 
 .. code-block:: console
 
-  % git clone http://llvm.org/git/llvm.git
   % cd llvm/tools
   % git clone http://llvm.org/git/clang.git
+
+If you want to check out compiler-rt too, run:
+
+.. code-block:: console
+
+  % cd llvm/projects
+  % git clone http://llvm.org/git/compiler-rt.git
+
+If you want to check out the Test Suite Source Code (optional), run:
+
+.. code-block:: console
+
+  % cd llvm/projects
+  % git clone http://llvm.org/git/test-suite.git
 
 Since the upstream repository is in Subversion, you should use ``git
 pull --rebase`` instead of ``git pull`` to avoid generating a non-linear history
@@ -626,6 +639,8 @@ To set up clone from which you can submit code using ``git-svn``, run:
   % git config svn-remote.svn.fetch :refs/remotes/origin/master
   % git svn rebase -l
 
+Likewise for compiler-rt and test-suite.
+
 To update this clone without generating git-svn tags that conflict with the
 upstream git repo, run:
 
@@ -637,6 +652,8 @@ upstream git repo, run:
   % (cd tools/clang &&
      git checkout master &&
      git svn rebase -l)
+
+Likewise for compiler-rt and test-suite.
 
 This leaves your working directories on their master branches, so you'll need to
 ``checkout`` each working branch individually and ``rebase`` it on top of its
