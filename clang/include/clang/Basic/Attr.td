@@ -333,7 +333,6 @@ def OpenCLKernel : Attr {
 def OpenCLImageAccess : Attr {
   let Spellings = [GNU<"opencl_image_access">];
   let Args = [IntArgument<"Access">];
-  let ASTNode = 0;
 }
 
 def Deprecated : InheritableAttr {

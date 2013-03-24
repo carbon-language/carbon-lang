@@ -20,6 +20,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/Basic/OpenCL.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/IR/DataLayout.h"
@@ -285,14 +286,29 @@ void CodeGenFunction::EmitMCountInstrumentation() {
 // OpenCL v1.2 s5.6.4.6 allows the compiler to store kernel argument
 // information in the program executable. The argument information stored
 // includes the argument name, its type, the address and access qualifiers used.
-// FIXME: Add type, address, and access qualifiers.
 static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
                                  CodeGenModule &CGM,llvm::LLVMContext &Context,
-                                 SmallVector <llvm::Value*, 5> &kernelMDArgs) {
-
-  // Create MDNodes that represents the kernel arg metadata.
+                                 SmallVector <llvm::Value*, 5> &kernelMDArgs,
+                                 CGBuilderTy& Builder, ASTContext &ASTCtx) {
+  // Create MDNodes that represent the kernel arg metadata.
   // Each MDNode is a list in the form of "key", N number of values which is
   // the same number of values as their are kernel arguments.
+
+  // MDNode for the kernel argument address space qualifiers.
+  SmallVector<llvm::Value*, 8> addressQuals;
+  addressQuals.push_back(llvm::MDString::get(Context, "kernel_arg_addr_space"));
+
+  // MDNode for the kernel argument access qualifiers (images only).
+  SmallVector<llvm::Value*, 8> accessQuals;
+  accessQuals.push_back(llvm::MDString::get(Context, "kernel_arg_access_qual"));
+
+  // MDNode for the kernel argument type names.
+  SmallVector<llvm::Value*, 8> argTypeNames;
+  argTypeNames.push_back(llvm::MDString::get(Context, "kernel_arg_type"));
+
+  // MDNode for the kernel argument type qualifiers.
+  SmallVector<llvm::Value*, 8> argTypeQuals;
+  argTypeQuals.push_back(llvm::MDString::get(Context, "kernel_arg_type_qual"));
 
   // MDNode for the kernel argument names.
   SmallVector<llvm::Value*, 8> argNames;
@@ -300,12 +316,87 @@ static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
 
   for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
     const ParmVarDecl *parm = FD->getParamDecl(i);
+    QualType ty = parm->getType();
+    std::string typeQuals;
+
+    if (ty->isPointerType()) {
+      QualType pointeeTy = ty->getPointeeType();
+
+      // Get address qualifier.
+      addressQuals.push_back(Builder.getInt32(ASTCtx.getTargetAddressSpace(
+        pointeeTy.getAddressSpace())));
+
+      // Get argument type name.
+      std::string typeName = pointeeTy.getUnqualifiedType().getAsString() + "*";
+
+      // Turn "unsigned type" to "utype"
+      std::string::size_type pos = typeName.find("unsigned");
+      if(pos != std::string::npos) {
+        typeName = typeName.substr(0, pos+1) +
+                   typeName.substr(pos+9, typeName.size());
+      }
+
+      argTypeNames.push_back(llvm::MDString::get(Context, typeName));
+
+      // Get argument type qualifiers:
+      if (ty.isRestrictQualified())
+        typeQuals = "restrict";
+      if (pointeeTy.isConstQualified() ||
+          (pointeeTy.getAddressSpace() == LangAS::opencl_constant))
+        if (typeQuals != "")
+          typeQuals += " const";
+        else
+          typeQuals += "const";
+      if (pointeeTy.isVolatileQualified())
+        if (typeQuals != "")
+          typeQuals += " volatile";
+        else
+          typeQuals += "volatile";
+    } else {
+      addressQuals.push_back(Builder.getInt32(0));
+
+      // Get argument type name.
+      std::string typeName = ty.getUnqualifiedType().getAsString();
+
+      // Turn "unsigned type" to "utype"
+      std::string::size_type pos = typeName.find("unsigned");
+      if(pos != std::string::npos) {
+        typeName = typeName.substr(0, pos+1) +
+                   typeName.substr(pos+9, typeName.size());
+      }
+
+      argTypeNames.push_back(llvm::MDString::get(Context, typeName));
+
+      // Get argument type qualifiers:
+      if (ty.isConstQualified())
+        typeQuals = "const";
+      if (ty.isVolatileQualified())
+        if (typeQuals != "")
+          typeQuals += " volatile";
+        else
+          typeQuals += "volatile";
+    }
+    
+    argTypeQuals.push_back(llvm::MDString::get(Context, typeQuals));
+
+    // Get image access qualifier:
+    if (ty->isImageType()) {
+      if (parm->hasAttr<OpenCLImageAccessAttr>() &&
+          parm->getAttr<OpenCLImageAccessAttr>()->getAccess() == CLIA_write_only)
+        accessQuals.push_back(llvm::MDString::get(Context, "write_only"));
+      else
+        accessQuals.push_back(llvm::MDString::get(Context, "read_only"));
+    } else
+      accessQuals.push_back(llvm::MDString::get(Context, "none"));
 
     // Get argument name.
     argNames.push_back(llvm::MDString::get(Context, parm->getName()));
-
   }
-  // Add MDNode to the list of all metadata.
+
+  kernelMDArgs.push_back(llvm::MDNode::get(Context, addressQuals));
+  kernelMDArgs.push_back(llvm::MDNode::get(Context, accessQuals));
+  kernelMDArgs.push_back(llvm::MDNode::get(Context, argTypeNames));
+  kernelMDArgs.push_back(llvm::MDNode::get(Context, argTypeQuals));
   kernelMDArgs.push_back(llvm::MDNode::get(Context, argNames));
 }
 
@@ -321,7 +412,8 @@ void CodeGenFunction::EmitOpenCLKernelMetadata(const FunctionDecl *FD,
   kernelMDArgs.push_back(Fn);
 
   if (CGM.getCodeGenOpts().EmitOpenCLArgMetadata)
-    GenOpenCLArgMetadata(FD, Fn, CGM, Context, kernelMDArgs);
+    GenOpenCLArgMetadata(FD, Fn, CGM, Context, kernelMDArgs,
+                         Builder, getContext());
 
   if (FD->hasAttr<VecTypeHintAttr>()) {
     VecTypeHintAttr *attr = FD->getAttr<VecTypeHintAttr>();
