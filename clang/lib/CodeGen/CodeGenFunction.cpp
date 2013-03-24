@@ -331,10 +331,8 @@ static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
 
       // Turn "unsigned type" to "utype"
       std::string::size_type pos = typeName.find("unsigned");
-      if(pos != std::string::npos) {
-        typeName = typeName.substr(0, pos+1) +
-                   typeName.substr(pos+9, typeName.size());
-      }
+      if (pos != std::string::npos)
+        typeName.erase(pos+1, 8);
 
       argTypeNames.push_back(llvm::MDString::get(Context, typeName));
 
@@ -343,15 +341,9 @@ static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
         typeQuals = "restrict";
       if (pointeeTy.isConstQualified() ||
           (pointeeTy.getAddressSpace() == LangAS::opencl_constant))
-        if (typeQuals != "")
-          typeQuals += " const";
-        else
-          typeQuals += "const";
+        typeQuals += typeQuals.empty() ? "const" : " const";
       if (pointeeTy.isVolatileQualified())
-        if (typeQuals != "")
-          typeQuals += " volatile";
-        else
-          typeQuals += "volatile";
+        typeQuals += typeQuals.empty() ? "volatile" : " volatile";
     } else {
       addressQuals.push_back(Builder.getInt32(0));
 
@@ -360,10 +352,8 @@ static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
 
       // Turn "unsigned type" to "utype"
       std::string::size_type pos = typeName.find("unsigned");
-      if(pos != std::string::npos) {
-        typeName = typeName.substr(0, pos+1) +
-                   typeName.substr(pos+9, typeName.size());
-      }
+      if (pos != std::string::npos)
+        typeName.erase(pos+1, 8);
 
       argTypeNames.push_back(llvm::MDString::get(Context, typeName));
 
@@ -371,10 +361,7 @@ static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
       if (ty.isConstQualified())
         typeQuals = "const";
       if (ty.isVolatileQualified())
-        if (typeQuals != "")
-          typeQuals += " volatile";
-        else
-          typeQuals += "volatile";
+        typeQuals += typeQuals.empty() ? "volatile" : " volatile";
     }
     
     argTypeQuals.push_back(llvm::MDString::get(Context, typeQuals));
