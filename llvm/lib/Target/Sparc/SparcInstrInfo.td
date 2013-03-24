@@ -762,7 +762,7 @@ def POPCrr : F3_1<2, 0b101110,
                   (outs IntRegs:$dst), (ins IntRegs:$src),
                   "popc $src, $dst", []>, Requires<[HasV9]>;
 def : Pat<(ctpop i32:$src),
-          (POPCrr (SLLri i32:$src, 0))>;
+          (POPCrr (SLLri $src, 0))>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
@@ -777,9 +777,9 @@ def : Pat<(i32 imm:$val),
 
 // subc
 def : Pat<(subc i32:$b, i32:$c),
-          (SUBCCrr i32:$b, i32:$c)>;
+          (SUBCCrr $b, $c)>;
 def : Pat<(subc i32:$b, simm13:$val),
-          (SUBCCri i32:$b, imm:$val)>;
+          (SUBCCri $b, imm:$val)>;
 
 // Global addresses, constant pool entries
 def : Pat<(SPhi tglobaladdr:$in), (SETHIi tglobaladdr:$in)>;
@@ -789,9 +789,9 @@ def : Pat<(SPlo tconstpool:$in), (ORri G0, tconstpool:$in)>;
 
 // Add reg, lo.  This is used when taking the addr of a global/constpool entry.
 def : Pat<(add i32:$r, (SPlo tglobaladdr:$in)),
-          (ADDri i32:$r, tglobaladdr:$in)>;
+          (ADDri $r, tglobaladdr:$in)>;
 def : Pat<(add i32:$r, (SPlo tconstpool:$in)),
-          (ADDri i32:$r, tconstpool:$in)>;
+          (ADDri $r, tconstpool:$in)>;
 
 // Calls: 
 def : Pat<(call tglobaladdr:$dst),
