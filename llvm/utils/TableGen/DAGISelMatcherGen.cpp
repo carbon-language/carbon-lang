@@ -211,6 +211,12 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
     return AddMatcher(new CheckIntegerMatcher(II->getValue()));
   }
 
+  // An UnsetInit represents a named node without any constraints.
+  if (N->getLeafValue() == UnsetInit::get()) {
+    assert(N->hasName() && "Unnamed ? leaf");
+    return;
+  }
+
   DefInit *DI = dyn_cast<DefInit>(N->getLeafValue());
   if (DI == 0) {
     errs() << "Unknown leaf kind: " << *N << "\n";

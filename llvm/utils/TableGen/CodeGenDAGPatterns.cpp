@@ -1866,6 +1866,16 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
     return Res;
   }
 
+  // ?:$name or just $name.
+  if (TheInit == UnsetInit::get()) {
+    if (OpName.empty())
+      error("'?' argument requires a name to match with operand list");
+    TreePatternNode *Res = new TreePatternNode(TheInit, 1);
+    Args.push_back(OpName);
+    Res->setName(OpName);
+    return Res;
+  }
+
   if (IntInit *II = dyn_cast<IntInit>(TheInit)) {
     if (!OpName.empty())
       error("Constant int argument should not have a name!");
