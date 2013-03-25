@@ -174,11 +174,11 @@ multiclass sse12_cvt_pint_3addr<bits<8> opc, RegisterClass SrcRC,
                     PatFrag ld_frag, string asm, Domain d> {
   def irr : PI<opc, MRMSrcReg, (outs DstRC:$dst),(ins DstRC:$src1, SrcRC:$src2),
               asm, [(set DstRC:$dst, (Int DstRC:$src1, SrcRC:$src2))], 
-              IIC_DEFAULT, d>;
+              NoItinerary, d>;
   def irm : PI<opc, MRMSrcMem, (outs DstRC:$dst),
                    (ins DstRC:$src1, x86memop:$src2), asm,
               [(set DstRC:$dst, (Int DstRC:$src1, (ld_frag addr:$src2)))], 
-              IIC_DEFAULT, d>;
+              NoItinerary, d>;
 }
 
 //===----------------------------------------------------------------------===//

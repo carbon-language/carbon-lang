@@ -33,7 +33,6 @@ def AtomItineraries : ProcessorItineraries<
   // InstrItinData<class, [InstrStage<N, [P0], 0>,  InstrStage<N, [P1]>] >,
   //
   // Default is 1 cycle, port0 or port1
-  InstrItinData<IIC_DEFAULT, [InstrStage<1, [Port0, Port1]>] >,
   InstrItinData<IIC_ALU_MEM, [InstrStage<1, [Port0]>] >,
   InstrItinData<IIC_ALU_NONMEM, [InstrStage<1, [Port0, Port1]>] >,
   InstrItinData<IIC_LEA, [InstrStage<1, [Port1]>] >,

@@ -91,7 +91,6 @@ def WriteMicrocoded : SchedWrite;
 
 //===----------------------------------------------------------------------===//
 // Instruction Itinerary classes used for X86
-def IIC_DEFAULT     : InstrItinClass;
 def IIC_ALU_MEM     : InstrItinClass;
 def IIC_ALU_NONMEM  : InstrItinClass;
 def IIC_LEA         : InstrItinClass;
