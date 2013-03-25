@@ -553,6 +553,24 @@ class declaration(object):
         self.line = line
         self.col = col
 
+class value_iter(object):
+    def __iter__(self):
+        return self
+    
+    def next(self):
+        if self.index >= self.length:
+            raise StopIteration()
+        child_sbvalue = self.sbvalue.GetChildAtIndex(self.index)
+        self.index += 1
+        return value(child_sbvalue)
+        
+    def __init__(self,value):
+        self.index = 0
+        self.sbvalue = value
+        if type(self.sbvalue) is value:
+            self.sbvalue = self.sbvalue.sbvalue
+        self.length = self.sbvalue.GetNumChildren()
+
 class value(object):
     '''A class designed to wrap lldb.SBValue() objects so the resulting object
     can be used as a variable would be in code. So if you have a Point structure
@@ -578,15 +596,21 @@ class value(object):
 
     def __getitem__(self, key):
         # Allow array access if this value has children...
-        if type(key) is int:
-            return value(self.sbvalue.GetValueForExpressionPath("[%i]" % key))
         if type(key) is value:
-            return value(self.sbvalue.GetValueForExpressionPath("[%i]" % int(key)))
+            key = int(key)
+        if type(key) is int:
+            child_sbvalue = (self.sbvalue.GetValueForExpressionPath("[%i]" % key))
+            if child_sbvalue and child_sbvalue.IsValid():
+                return value(child_sbvalue)
+            raise IndexError("Index '%d' is out of range" % key)
         raise TypeError("No array item of type %s" % str(type(key)))
+
+    def __iter__(self):
+        return value_iter(self.sbvalue)
 
     def __getattr__(self, name):
         child_sbvalue = self.sbvalue.GetChildMemberWithName (name)
-        if child_sbvalue:
+        if child_sbvalue and child_sbvalue.IsValid():
             return value(child_sbvalue)
         raise AttributeError("Attribute '%s' is not defined" % name)
 
@@ -731,6 +755,9 @@ class value(object):
         
     def __hex__(self):
         return '0x%x' % self.sbvalue.GetValueAsUnsigned()
+
+    def __len__(self):
+        return self.sbvalue.GetNumChildren()
 
     def __eq__(self, other):
         if type(other) is int:
