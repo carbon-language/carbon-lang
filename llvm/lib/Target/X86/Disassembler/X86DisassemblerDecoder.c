@@ -318,14 +318,27 @@ static int readPrefixes(struct InternalInstruction* insn) {
       return -1;
 
     /*
-     * If the first byte is a LOCK prefix break and let it be disassembled
-     * as a lock "instruction", by creating an <MCInst #xxxx LOCK_PREFIX>.
-     * FIXME there is currently no way to get the disassembler to print the
-     * lock prefix if it is not the first byte.
+     * If the byte is a LOCK/REP/REPNE prefix and not a part of the opcode, then
+     * break and let it be disassembled as a normal "instruction".
      */
-    if (insn->readerCursor - 1 == insn->startLocation && byte == 0xf0)
-      break;
-    
+    if (insn->readerCursor - 1 == insn->startLocation
+        && (byte == 0xf0 || byte == 0xf2 || byte == 0xf3)) {
+      if (byte == 0xf0)
+        break;
+      uint8_t nextByte;
+      if (lookAtByte(insn, &nextByte))
+        return -1;
+      if (insn->mode == MODE_64BIT && (nextByte & 0xf0) == 0x40) {
+        if (consumeByte(insn, &nextByte))
+          return -1;
+        if (lookAtByte(insn, &nextByte))
+          return -1;
+        unconsumeByte(insn);
+      }
+      if (nextByte != 0x0f && nextByte != 0x90)
+        break;
+    }
+
     switch (byte) {
     case 0xf0:  /* LOCK */
     case 0xf2:  /* REPNE/REPNZ */

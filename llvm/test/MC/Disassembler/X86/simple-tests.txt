@@ -753,3 +753,18 @@
 # CHECK: lock
 # CHECK-NEXT: xaddq	%rcx, %rbx
 0xf0 0x48 0x0f 0xc1 0xcb
+
+# rdar://13493622 lldb doesn't print the x86 rep/repne prefix when disassembling
+# CHECK: repne
+# CHECK-NEXT: movsd
+0xf2 0xa5
+# CHECK: repne
+# CHECK-NEXT: movsq
+0xf2 0x48 0xa5
+# CHECK: repne
+# CHECK-NEXT: movb  $0, (%rax)
+0xf2 0xc6 0x0 0x0
+# CHECK: rep
+# CHECK-NEXT: lock
+# CHECK-NEXT: incl   (%rax)
+0xf3 0xf0 0xff 0x00
