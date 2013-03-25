@@ -8,6 +8,7 @@
 ; CHECK: DW_TAG_ptr_to_member_type
 ; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]       (cu + {{.*}} => {[[TYPE]]})
 ; IR generated from clang -g with the following source:
+; XFAIL: hexagon
 ; struct S {
 ; };
 ;

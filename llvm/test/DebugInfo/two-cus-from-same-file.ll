@@ -6,6 +6,7 @@
 ; RUN: llc %s -o %t -filetype=obj -O0
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
+; XFAIL: hexagon
 ; ModuleID = 'test.bc'
 
 @str = private unnamed_addr constant [4 x i8] c"FOO\00"
