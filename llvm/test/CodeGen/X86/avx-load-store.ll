@@ -81,7 +81,7 @@ define void @storev32i8_01(<32 x i8> %a) nounwind {
 ; CHECK: _double_save
 ; CHECK-NOT: vinsertf128 $1
 ; CHECK-NOT: vinsertf128 $0
-; CHECK: vmovups %xmm
+; CHECK: vmovaps %xmm
 ; CHECK: vmovaps %xmm
 define void @double_save(<4 x i32> %A, <4 x i32> %B, <8 x i32>* %P) nounwind ssp {
 entry:
@@ -125,5 +125,27 @@ define void @add8i32(<8 x i32>* %ret, <8 x i32>* %bp) nounwind {
   %b = load <8 x i32>* %bp, align 1
   %x = add <8 x i32> zeroinitializer, %b
   store <8 x i32> %x, <8 x i32>* %ret, align 1
+  ret void
+}
+
+; CHECK: add4i64a64
+; CHECK: vmovaps ({{.*}}), %ymm{{.*}}
+; CHECK: vmovaps %ymm{{.*}}, ({{.*}})
+define void @add4i64a64(<4 x i64>* %ret, <4 x i64>* %bp) nounwind {
+  %b = load <4 x i64>* %bp, align 64
+  %x = add <4 x i64> zeroinitializer, %b
+  store <4 x i64> %x, <4 x i64>* %ret, align 64
+  ret void
+}
+
+; CHECK: add4i64a16
+; CHECK: vmovaps {{.*}}({{.*}}), %xmm{{.*}}
+; CHECK: vmovaps {{.*}}({{.*}}), %xmm{{.*}}
+; CHECK: vmovaps %xmm{{.*}}, {{.*}}({{.*}})
+; CHECK: vmovaps %xmm{{.*}}, {{.*}}({{.*}})
+define void @add4i64a16(<4 x i64>* %ret, <4 x i64>* %bp) nounwind {
+  %b = load <4 x i64>* %bp, align 16
+  %x = add <4 x i64> zeroinitializer, %b
+  store <4 x i64> %x, <4 x i64>* %ret, align 16
   ret void
 }

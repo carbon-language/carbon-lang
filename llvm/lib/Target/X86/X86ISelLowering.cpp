@@ -16639,11 +16639,10 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   unsigned RegSz = RegVT.getSizeInBits();
 
+  // On Sandybridge unaligned 256bit loads are inefficient.
   ISD::LoadExtType Ext = Ld->getExtensionType();
   unsigned Alignment = Ld->getAlignment();
-  bool IsAligned = Alignment == 0 || Alignment == MemVT.getSizeInBits()/8;
-
-  // On Sandybridge unaligned 256bit loads are inefficient.
+  bool IsAligned = Alignment == 0 || Alignment >= MemVT.getSizeInBits()/8;
   if (RegVT.is256BitVector() && !Subtarget->hasInt256() &&
       !DCI.isBeforeLegalizeOps() && !IsAligned && Ext == ISD::NON_EXTLOAD) {
     unsigned NumElems = RegVT.getVectorNumElements();
@@ -16663,7 +16662,7 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
     SDValue Load2 = DAG.getLoad(HalfVT, dl, Ld->getChain(), Ptr,
                                 Ld->getPointerInfo(), Ld->isVolatile(),
                                 Ld->isNonTemporal(), Ld->isInvariant(),
-                                std::max(Alignment/2U, 1U));
+                                std::min(16U, Alignment));
     SDValue TF = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                              Load1.getValue(1),
                              Load2.getValue(1));
@@ -16834,13 +16833,13 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
   DebugLoc dl = St->getDebugLoc();
   SDValue StoredVal = St->getOperand(1);
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  unsigned Alignment = St->getAlignment();
-  bool IsAligned = Alignment == 0 || Alignment == VT.getSizeInBits()/8;
 
   // If we are saving a concatenation of two XMM registers, perform two stores.
   // On Sandy Bridge, 256-bit memory operations are executed by two
   // 128-bit ports. However, on Haswell it is better to issue a single 256-bit
   // memory  operation.
+  unsigned Alignment = St->getAlignment();
+  bool IsAligned = Alignment == 0 || Alignment >= VT.getSizeInBits()/8;
   if (VT.is256BitVector() && !Subtarget->hasInt256() &&
       StVT == VT && !IsAligned) {
     unsigned NumElems = VT.getVectorNumElements();
@@ -16860,7 +16859,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
     SDValue Ch1 = DAG.getStore(St->getChain(), dl, Value1, Ptr1,
                                 St->getPointerInfo(), St->isVolatile(),
                                 St->isNonTemporal(),
-                                std::max(Alignment/2U, 1U));
+                                std::min(16U, Alignment));
     return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Ch0, Ch1);
   }
 
