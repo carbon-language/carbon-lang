@@ -130,6 +130,16 @@ define double @fail2(double %f1, double %f2) {
 ; CHECK: ret
 }
 
+; c1 * x - x => (c1 - 1.0) * x
+define float @fold13(float %x) {
+  %mul = fmul fast float %x, 7.000000e+00
+  %sub = fsub fast float %mul, %x
+  ret float %sub
+; CHECK: fold13
+; CHECK: fmul fast float %x, 6.000000e+00
+; CHECK: ret
+}
+
 ; =========================================================================
 ;
 ;   Testing-cases about fmul begin

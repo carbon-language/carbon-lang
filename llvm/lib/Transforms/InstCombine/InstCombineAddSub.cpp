@@ -44,7 +44,7 @@ namespace {
     }
   
     void set(const APFloat& C);
-  
+
     void negate();
   
     bool isZero() const { return isInt() ? !IntVal : getFpVal().isZero(); }
@@ -79,6 +79,14 @@ namespace {
   
     bool isInt() const { return !IsFp; }
 
+    // If the coefficient is represented by an integer, promote it to a
+    // floating point. 
+    void convertToFpType(const fltSemantics &Sem);
+
+    // Construct an APFloat from a signed integer.
+    // TODO: We should get rid of this function when APFloat can be constructed
+    //       from an *SIGNED* integer. 
+    APFloat createAPFloatFromInt(const fltSemantics &Sem, int Val);
   private:
 
     bool IsFp;
@@ -206,7 +214,31 @@ void FAddendCoef::set(const APFloat& C) {
   IsFp = BufHasFpVal = true; 
 }
 
-void FAddendCoef::operator=(const FAddendCoef& That) {
+void FAddendCoef::convertToFpType(const fltSemantics &Sem) {
+  if (!isInt())
+    return;
+
+  APFloat *P = getFpValPtr();
+  if (IntVal > 0)
+    new(P) APFloat(Sem, IntVal);
+  else {
+    new(P) APFloat(Sem, 0 - IntVal);
+    P->changeSign();
+  }
+  IsFp = BufHasFpVal = true; 
+}
+
+APFloat FAddendCoef::createAPFloatFromInt(const fltSemantics &Sem, int Val) {
+  if (Val >= 0)
+    return APFloat(Sem, Val);
+
+  APFloat T(Sem, 0 - Val);
+  T.changeSign();
+
+  return T;
+}
+
+void FAddendCoef::operator=(const FAddendCoef &That) {
   if (That.isInt())
     set(That.IntVal);
   else
@@ -225,13 +257,13 @@ void FAddendCoef::operator+=(const FAddendCoef &That) {
   
   if (isInt()) {
     const APFloat &T = That.getFpVal();
-    set(T);
-    getFpVal().add(APFloat(T.getSemantics(), IntVal), RndMode);
+    convertToFpType(T.getSemantics());
+    getFpVal().add(T, RndMode);
     return;
   }
   
   APFloat &T = getFpVal();
-  T.add(APFloat(T.getSemantics(), That.IntVal), RndMode);
+  T.add(createAPFloatFromInt(T.getSemantics(), That.IntVal), RndMode);
 }
 
 void FAddendCoef::operator-=(const FAddendCoef &That) {
@@ -246,13 +278,13 @@ void FAddendCoef::operator-=(const FAddendCoef &That) {
   
   if (isInt()) {
     const APFloat &T = That.getFpVal();
-    set(T);
-    getFpVal().subtract(APFloat(T.getSemantics(), IntVal), RndMode);
+    convertToFpType(T.getSemantics());
+    getFpVal().subtract(T, RndMode);
     return;
   }
 
   APFloat &T = getFpVal();
-  T.subtract(APFloat(T.getSemantics(), IntVal), RndMode);
+  T.subtract(createAPFloatFromInt(T.getSemantics(), IntVal), RndMode);
 }
 
 void FAddendCoef::operator*=(const FAddendCoef &That) {
@@ -275,11 +307,12 @@ void FAddendCoef::operator*=(const FAddendCoef &That) {
     isInt() ? That.getFpVal().getSemantics() : getFpVal().getSemantics();
 
   if (isInt())
-    set(APFloat(Semantic, IntVal));
+    convertToFpType(Semantic);
   APFloat &F0 = getFpVal();
 
   if (That.isInt())
-    F0.multiply(APFloat(Semantic, That.IntVal), APFloat::rmNearestTiesToEven);
+    F0.multiply(createAPFloatFromInt(Semantic, That.IntVal),
+                APFloat::rmNearestTiesToEven);
   else
     F0.multiply(That.getFpVal(), APFloat::rmNearestTiesToEven);
 
