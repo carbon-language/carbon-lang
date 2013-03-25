@@ -389,6 +389,26 @@ public:
     
     lldb::SBProcess
     Launch (lldb::SBLaunchInfo &launch_info, lldb::SBError& error);
+
+    %feature("docstring", "
+    //------------------------------------------------------------------
+    /// Load a core file
+    ///
+    /// @param[in] core_file
+    ///     File path of the core dump.
+    ///
+    /// @return
+    ///      A process object for the newly created core file.
+    //------------------------------------------------------------------
+
+    For example,
+
+        process = target.LoadCore('./a.out.core')
+
+    loads a new core file and returns the process object.
+    ") LoadCore;
+    lldb::SBProcess
+    LoadCore(const char *core_file);
     
     lldb::SBProcess
     Attach (lldb::SBAttachInfo &attach_info, lldb::SBError& error);

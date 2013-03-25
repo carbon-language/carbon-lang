@@ -557,6 +557,26 @@ SBTarget::GetDebugger () const
 }
 
 SBProcess
+SBTarget::LoadCore (const char *core_file)
+{
+    SBProcess sb_process;
+    TargetSP target_sp(GetSP());
+    if (target_sp)
+    {
+        FileSpec filespec(core_file, true);
+        ProcessSP process_sp (target_sp->CreateProcess(target_sp->GetDebugger().GetListener(),
+                                                       NULL,
+                                                       &filespec));
+        if (process_sp)
+        {
+            process_sp->LoadCore();
+            sb_process.SetSP (process_sp);
+        }
+    }
+    return sb_process;
+}
+
+SBProcess
 SBTarget::LaunchSimple
 (
     char const **argv,

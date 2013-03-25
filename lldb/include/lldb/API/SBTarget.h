@@ -366,6 +366,9 @@ public:
     
     SBProcess
     Launch (SBLaunchInfo &launch_info, SBError& error);
+    
+    SBProcess
+    LoadCore (const char *core_file);
 
     SBProcess
     Attach (SBAttachInfo &attach_info, SBError& error);
