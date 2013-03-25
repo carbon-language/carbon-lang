@@ -149,6 +149,7 @@ let Defs = [EAX, EDX, EFLAGS], FPForm = SpecialFP in {
 //===----------------------------------------------------------------------===//
 // EH Pseudo Instructions
 //
+let SchedRW = [WriteSystem] in {
 let isTerminator = 1, isReturn = 1, isBarrier = 1,
     hasCtrlDep = 1, isCodeGenOnly = 1 in {
 def EH_RETURN   : I<0xC3, RawFrm, (outs), (ins GR32:$addr),
@@ -186,6 +187,7 @@ let hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1,
                           Requires<[In64BitMode]>;
   }
 }
+} // SchedRW
 
 let isBranch = 1, isTerminator = 1, isCodeGenOnly = 1 in {
   def EH_SjLj_Setup : I<0, Pseudo, (outs), (ins brtarget:$dst),
@@ -321,6 +323,7 @@ def : Pat<(sub GR64:$op, (i64 (X86setcc_c X86_COND_B, EFLAGS))),
 //===----------------------------------------------------------------------===//
 // String Pseudo Instructions
 //
+let SchedRW = [WriteMicrocoded] in {
 let Defs = [ECX,EDI,ESI], Uses = [ECX,EDI,ESI], isCodeGenOnly = 1 in {
 def REP_MOVSB_32 : I<0xA4, RawFrm, (outs), (ins), "{rep;movsb|rep movsb}",
                     [(X86rep_movs i8)], IIC_REP_MOVS>, REP,
@@ -383,6 +386,7 @@ let Defs = [RCX,RDI], isCodeGenOnly = 1 in {
                       [(X86rep_stos i64)], IIC_REP_STOS>, REP,
                      Requires<[In64BitMode]>;
 }
+} // SchedRW
 
 //===----------------------------------------------------------------------===//
 // Thread Local Storage Instructions
@@ -595,12 +599,13 @@ defm ATOMSWAP : PSEUDO_ATOMIC_LOAD_BINOP6432<"#ATOMSWAP">;
 let isCodeGenOnly = 1, Defs = [EFLAGS] in
 def OR32mrLocked  : I<0x09, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$zero),
                       "or{l}\t{$zero, $dst|$dst, $zero}",
-                      [], IIC_ALU_MEM>, Requires<[In32BitMode]>, LOCK;
+                      [], IIC_ALU_MEM>, Requires<[In32BitMode]>, LOCK,
+                    Sched<[WriteALULd, WriteRMW]>;
 
 let hasSideEffects = 1 in
 def Int_MemBarrier : I<0, Pseudo, (outs), (ins),
                      "#MEMBARRIER",
-                     [(X86MemBarrier)]>;
+                     [(X86MemBarrier)]>, Sched<[WriteLoad]>;
 
 // RegOpc corresponds to the mr version of the instruction
 // ImmOpc corresponds to the mi version of the instruction
@@ -608,7 +613,8 @@ def Int_MemBarrier : I<0, Pseudo, (outs), (ins),
 // ImmMod corresponds to the instruction format of the mi and mi8 versions
 multiclass LOCK_ArithBinOp<bits<8> RegOpc, bits<8> ImmOpc, bits<8> ImmOpc8,
                            Format ImmMod, string mnemonic> {
-let Defs = [EFLAGS], mayLoad = 1, mayStore = 1, isCodeGenOnly = 1 in {
+let Defs = [EFLAGS], mayLoad = 1, mayStore = 1, isCodeGenOnly = 1,
+    SchedRW = [WriteALULd, WriteRMW] in {
 
 def NAME#8mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
                   RegOpc{3}, RegOpc{2}, RegOpc{1}, 0 },
@@ -695,7 +701,8 @@ defm LOCK_XOR : LOCK_ArithBinOp<0x30, 0x80, 0x83, MRM6m, "xor">;
 // Optimized codegen when the non-memory output is not used.
 multiclass LOCK_ArithUnOp<bits<8> Opc8, bits<8> Opc, Format Form,
                           string mnemonic> {
-let Defs = [EFLAGS], mayLoad = 1, mayStore = 1, isCodeGenOnly = 1 in {
+let Defs = [EFLAGS], mayLoad = 1, mayStore = 1, isCodeGenOnly = 1,
+    SchedRW = [WriteALULd, WriteRMW] in {
 
 def NAME#8m  : I<Opc8, Form, (outs), (ins i8mem :$dst),
                  !strconcat(mnemonic, "{b}\t$dst"),
@@ -729,7 +736,7 @@ let isCodeGenOnly = 1 in {
 multiclass LCMPXCHG_BinOp<bits<8> Opc8, bits<8> Opc, Format Form,
                           string mnemonic, SDPatternOperator frag,
                           InstrItinClass itin8, InstrItinClass itin> {
-let isCodeGenOnly = 1 in {
+let isCodeGenOnly = 1, SchedRW = [WriteALULd, WriteRMW] in {
   let Defs = [AL, EFLAGS], Uses = [AL] in
   def NAME#8  : I<Opc8, Form, (outs), (ins i8mem:$ptr, GR8:$swap),
                   !strconcat(mnemonic, "{b}\t{$swap, $ptr|$ptr, $swap}"),
@@ -749,14 +756,15 @@ let isCodeGenOnly = 1 in {
 }
 }
 
-let Defs = [EAX, EDX, EFLAGS], Uses = [EAX, EBX, ECX, EDX] in {
+let Defs = [EAX, EDX, EFLAGS], Uses = [EAX, EBX, ECX, EDX],
+    SchedRW = [WriteALULd, WriteRMW] in {
 defm LCMPXCHG8B : LCMPXCHG_UnOp<0xC7, MRM1m, "cmpxchg8b",
                                 X86cas8, i64mem,
                                 IIC_CMPX_LOCK_8B>;
 }
 
 let Defs = [RAX, RDX, EFLAGS], Uses = [RAX, RBX, RCX, RDX],
-    Predicates = [HasCmpxchg16b] in {
+    Predicates = [HasCmpxchg16b], SchedRW = [WriteALULd, WriteRMW] in {
 defm LCMPXCHG16B : LCMPXCHG_UnOp<0xC7, MRM1m, "cmpxchg16b",
                                  X86cas16, i128mem,
                                  IIC_CMPX_LOCK_16B>, REX_W;
@@ -769,7 +777,8 @@ defm LCMPXCHG : LCMPXCHG_BinOp<0xB0, 0xB1, MRMDestMem, "cmpxchg",
 multiclass ATOMIC_LOAD_BINOP<bits<8> opc8, bits<8> opc, string mnemonic,
                              string frag,
                              InstrItinClass itin8, InstrItinClass itin> {
-  let Constraints = "$val = $dst", Defs = [EFLAGS], isCodeGenOnly = 1 in {
+  let Constraints = "$val = $dst", Defs = [EFLAGS], isCodeGenOnly = 1,
+      SchedRW = [WriteALULd, WriteRMW] in {
     def NAME#8  : I<opc8, MRMSrcMem, (outs GR8:$dst),
                     (ins GR8:$val, i8mem:$ptr),
                     !strconcat(mnemonic, "{b}\t{$val, $ptr|$ptr, $val}"),
@@ -1190,7 +1199,8 @@ def or_is_add : PatFrag<(ops node:$lhs, node:$rhs), (or node:$lhs, node:$rhs),[{
 
 
 // (or x1, x2) -> (add x1, x2) if two operands are known not to share bits.
-let AddedComplexity = 5 in { // Try this before the selecting to OR
+// Try this before the selecting to OR.
+let AddedComplexity = 5, SchedRW = [WriteALU] in {
 
 let isConvertibleToThreeAddress = 1,
     Constraints = "$src1 = $dst", Defs = [EFLAGS] in {
@@ -1237,7 +1247,7 @@ def ADD64ri32_DB : I<0, Pseudo,
                       [(set GR64:$dst, (or_is_add GR64:$src1,
                                                   i64immSExt32:$src2))]>;
 }
-} // AddedComplexity
+} // AddedComplexity, SchedRW
 
 
 //===----------------------------------------------------------------------===//
