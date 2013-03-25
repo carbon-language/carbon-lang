@@ -139,38 +139,27 @@ static bool isSignBitCheck(ICmpInst::Predicate pred, ConstantInt *RHS,
   }
 }
 
-/// Returns true if the exploded icmp can be expressed as a comparison to zero
-/// and update the predicate accordingly. The signedness of the comparison is
+/// Returns true if the exploded icmp can be expressed as a signed comparison
+/// to zero and updates the predicate accordingly.
+/// The signedness of the comparison is preserved.
 static bool isSignTest(ICmpInst::Predicate &pred, const ConstantInt *RHS) {
   if (!ICmpInst::isSigned(pred))
     return false;
 
   if (RHS->isZero())
-    return true;
+    return ICmpInst::isRelational(pred);
 
-  if (RHS->isOne())
-    switch (pred) {
-    case ICmpInst::ICMP_SGE:
-      pred = ICmpInst::ICMP_SGT;
-      return true;
-    case ICmpInst::ICMP_SLT:
+  if (RHS->isOne()) {
+    if (pred == ICmpInst::ICMP_SLT) {
       pred = ICmpInst::ICMP_SLE;
       return true;
-    default:
-      return false;
     }
-
-  if (RHS->isAllOnesValue())
-    switch (pred) {
-    case ICmpInst::ICMP_SLE:
-      pred = ICmpInst::ICMP_SLT;
-      return true;
-    case ICmpInst::ICMP_SGT:
+  } else if (RHS->isAllOnesValue()) {
+    if (pred == ICmpInst::ICMP_SGT) {
       pred = ICmpInst::ICMP_SGE;
       return true;
-    default:
-      return false;
     }
+  }
 
   return false;
 }
@@ -1322,17 +1311,15 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
     ConstantInt *Val = dyn_cast<ConstantInt>(LHSI->getOperand(1));
     if (!Val) break;
 
-    if (!ICI.isEquality()) {
-      // If this is a signed comparison to 0 and the mul is sign preserving,
-      // use the mul LHS operand instead.
-      ICmpInst::Predicate pred = ICI.getPredicate();
-      if (isSignTest(pred, RHS) && !Val->isZero() &&
-          cast<BinaryOperator>(LHSI)->hasNoSignedWrap())
-          return new ICmpInst(Val->isNegative() ?
-                                  ICmpInst::getSwappedPredicate(pred) : pred,
-                              LHSI->getOperand(0),
-                              Constant::getNullValue(RHS->getType()));
-    }
+    // If this is a signed comparison to 0 and the mul is sign preserving,
+    // use the mul LHS operand instead.
+    ICmpInst::Predicate pred = ICI.getPredicate();
+    if (isSignTest(pred, RHS) && !Val->isZero() &&
+        cast<BinaryOperator>(LHSI)->hasNoSignedWrap())
+      return new ICmpInst(Val->isNegative() ?
+                          ICmpInst::getSwappedPredicate(pred) : pred,
+                          LHSI->getOperand(0),
+                          Constant::getNullValue(RHS->getType()));
 
     break;
   }
@@ -1613,7 +1600,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         }
         break;
       case Instruction::Mul:
-        if (RHSV == 0) {
+        if (RHSV == 0 && BO->hasNoSignedWrap()) {
           if (ConstantInt *BOC = dyn_cast<ConstantInt>(BO->getOperand(1))) {
             // The trivial case (mul X, 0) is handled by InstSimplify
             // General case : (mul X, C) != 0 iff X != 0

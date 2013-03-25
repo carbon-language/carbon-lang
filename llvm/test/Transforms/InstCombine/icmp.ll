@@ -858,7 +858,7 @@ define i1 @icmp_mul(i32 %x) {
 ; CHECK: @icmp_mul_neq0
 ; CHECK-NEXT: icmp ne i32 %x, 0
 define i1 @icmp_mul_neq0(i32 %x) {
-  %mul = mul i32 %x, -12
+  %mul = mul nsw i32 %x, -12
   %cmp = icmp ne i32 %mul, 0
   ret i1 %cmp
 }
@@ -866,7 +866,7 @@ define i1 @icmp_mul_neq0(i32 %x) {
 ; CHECK: @icmp_mul_eq0
 ; CHECK-NEXT: icmp eq i32 %x, 0
 define i1 @icmp_mul_eq0(i32 %x) {
-  %mul = mul i32 %x, 12
+  %mul = mul nsw i32 %x, 12
   %cmp = icmp eq i32 %mul, 0
   ret i1 %cmp
 }
