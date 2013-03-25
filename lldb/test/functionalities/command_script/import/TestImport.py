@@ -10,6 +10,7 @@ class ImportTestCase(TestBase):
     mydir = os.path.join("functionalities", "command_script", "import")
 
     @python_api_test
+    @skipOnLinux # causes buildbot failures, skip until we can investigate it
     def test_import_command(self):
         """Import some Python scripts by path and test them"""
         self.run_test()

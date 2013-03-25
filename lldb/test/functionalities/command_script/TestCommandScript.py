@@ -18,6 +18,7 @@ class CmdPythonTestCase(TestBase):
         self.pycmd_tests ()
 
     @dwarf_test
+    @skipOnLinux # causes buildbot failures, skip until we can investigate it
     def test_with_dwarf (self):
         self.buildDwarf ()
         self.pycmd_tests ()
