@@ -13,8 +13,6 @@
 
 #if _LIBCPP_DEBUG2 >= 1
 
-struct X {};
-
 #define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::terminate())
 
 #include <vector>
