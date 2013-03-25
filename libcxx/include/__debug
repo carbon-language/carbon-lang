@@ -16,7 +16,9 @@
 #   include <cstdlib>
 #   include <cstdio>
 #   include <cstddef>
-#   define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : (_VSTD::printf("%s\n", m), _VSTD::abort()))
+#   ifndef _LIBCPP_ASSERT
+#      define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : (_VSTD::printf("%s\n", m), _VSTD::abort()))
+#   endif
 
 #endif
 
