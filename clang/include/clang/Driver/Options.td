@@ -499,6 +499,12 @@ def fdelayed_template_parsing : Flag<["-"], "fdelayed-template-parsing">, Group<
 def fmodules_cache_path : Joined<["-"], "fmodules-cache-path=">, Group<i_Group>,
   Flags<[NoForward,CC1Option]>, MetaVarName<"<directory>">,
   HelpText<"Specify the module cache path">;
+def fmodules_prune_interval : Joined<["-"], "fmodules-prune-interval=">, Group<i_Group>,
+  Flags<[CC1Option]>, MetaVarName<"<seconds>">,
+  HelpText<"Specify the interval (in seconds) between attempts to prune the module cache">;
+def fmodules_prune_after : Joined<["-"], "fmodules-prune-after=">, Group<i_Group>,
+  Flags<[CC1Option]>, MetaVarName<"<seconds>">,
+  HelpText<"Specify the interval (in seconds) after which a module file will be considered unused">;
 def fmodules : Flag <["-"], "fmodules">, Group<f_Group>, Flags<[NoForward,CC1Option]>,
   HelpText<"Enable the 'modules' language feature">;
 def fmodules_autolink : Flag <["-"], "fmodules-autolink">, Group<f_Group>, Flags<[NoForward,CC1Option]>,

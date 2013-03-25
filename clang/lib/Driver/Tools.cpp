@@ -2827,6 +2827,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Pass through all -fmodules-ignore-macro arguments.
   Args.AddAllArgs(CmdArgs, options::OPT_fmodules_ignore_macro);
+  Args.AddLastArg(CmdArgs, options::OPT_fmodules_prune_interval);
+  Args.AddLastArg(CmdArgs, options::OPT_fmodules_prune_after);
 
   // -fmodules-autolink (on by default when modules is enabled) automatically
   // links against libraries for imported modules.  This requires the

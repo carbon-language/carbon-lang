@@ -174,6 +174,12 @@ Command-line parameters
 ``-fmodules-ignore-macro=macroname``
   Instruct modules to ignore the named macro when selecting an appropriate module variant. Use this for macros defined on the command line that don't affect how modules are built, to improve sharing of compiled module files.
 
+``-fmodules-prune-interval=seconds``
+  Specify the minimum delay (in seconds) between attempts to prune the module cache. Module cache pruning attempts to clear out old, unused module files so that the module cache itself does not grow without bound. The default delay is large (604,800 seconds, or 7 days) because this is an expensive operation. Set this value to 0 to turn off pruning.
+
+``-fmodules-prune-after=seconds``
+  Specify the minimum time (in seconds) for which a file in the module cache must be unused (according to access time) before module pruning will remove it. The default delay is large (2,678,400 seconds, or 31 days) to avoid excessive module rebuilding.
+
 Module Map Language
 ===================
 

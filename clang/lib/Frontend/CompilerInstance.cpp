@@ -44,6 +44,8 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
+#include <sys/stat.h>
+#include <sys/time.h>
 
 using namespace clang;
 
@@ -996,6 +998,97 @@ static void checkConfigMacro(Preprocessor &PP, StringRef ConfigMacro,
     << false;
 }
 
+/// \brief Write a new timestamp file with the given path.
+static void writeTimestampFile(StringRef TimestampFile) {
+  std::string ErrorInfo;
+  llvm::raw_fd_ostream Out(TimestampFile.str().c_str(), ErrorInfo,
+                           llvm::raw_fd_ostream::F_Binary);
+}
+
+/// \brief Prune the module cache of modules that haven't been accessed in
+/// a long time.
+static void pruneModuleCache(const HeaderSearchOptions &HSOpts) {
+  struct stat StatBuf;
+  llvm::SmallString<128> TimestampFile;
+  TimestampFile = HSOpts.ModuleCachePath;
+  llvm::sys::path::append(TimestampFile, "modules.timestamp");
+
+  // Try to stat() the timestamp file.
+  if (::stat(TimestampFile.c_str(), &StatBuf)) {
+    // If the timestamp file wasn't there, create one now.
+    if (errno == ENOENT) {
+      writeTimestampFile(TimestampFile);
+    }
+    return;
+  }
+
+  // Check whether the time stamp is older than our pruning interval.
+  // If not, do nothing.
+  time_t TimeStampModTime = StatBuf.st_mtime;
+  time_t CurrentTime = time(0);
+  if (CurrentTime - TimeStampModTime <= HSOpts.ModuleCachePruneInterval) {
+    return;
+  }
+
+  // Write a new timestamp file so that nobody else attempts to prune.
+  // There is a benign race condition here, if two Clang instances happen to
+  // notice at the same time that the timestamp is out-of-date.
+  writeTimestampFile(TimestampFile);
+
+  // Walk the entire module cache, looking for unused module files and module
+  // indices.
+  llvm::error_code EC;
+  SmallString<128> ModuleCachePathNative;
+  llvm::sys::path::native(HSOpts.ModuleCachePath, ModuleCachePathNative);
+  for (llvm::sys::fs::directory_iterator
+         Dir(ModuleCachePathNative.str(), EC), DirEnd;
+       Dir != DirEnd && !EC; Dir.increment(EC)) {
+    // If we don't have a directory, there's nothing to look into.
+    bool IsDirectory;
+    if (llvm::sys::fs::is_directory(Dir->path(), IsDirectory) || !IsDirectory)
+      continue;
+
+    // Walk all of the files within this directory.
+    bool RemovedAllFiles = true;
+    for (llvm::sys::fs::directory_iterator File(Dir->path(), EC), FileEnd;
+         File != FileEnd && !EC; File.increment(EC)) {
+      // We only care about module and global module index files.
+      if (llvm::sys::path::extension(File->path()) != ".pcm" &&
+          llvm::sys::path::filename(File->path()) != "modules.idx") {
+        RemovedAllFiles = false;
+        continue;
+      }
+
+      // Look at this file. If we can't stat it, there's nothing interesting
+      // there.
+      if (::stat(File->path().c_str(), &StatBuf)) {
+        RemovedAllFiles = false;
+        continue;
+      }
+
+      // If the file has been used recently enough, leave it there.
+      time_t FileAccessTime = StatBuf.st_atime;
+      if (CurrentTime - FileAccessTime <= HSOpts.ModuleCachePruneAfter) {
+        RemovedAllFiles = false;;
+        continue;
+      }
+
+      // Remove the file.
+      bool Existed;
+      if (llvm::sys::fs::remove(File->path(), Existed) || !Existed) {
+        RemovedAllFiles = false;
+      }
+    }
+
+    // If we removed all of the files in the directory, remove the directory
+    // itself.
+    if (RemovedAllFiles) {
+      bool Existed;
+      llvm::sys::fs::remove(Dir->path(), Existed);
+    }
+  }
+}
+
 ModuleLoadResult
 CompilerInstance::loadModule(SourceLocation ImportLoc,
                              ModuleIdPath Path,
@@ -1041,6 +1134,14 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
     if (!ModuleManager) {
       if (!hasASTContext())
         createASTContext();
+
+      // If we're not recursively building a module, check whether we
+      // need to prune the module cache.
+      if (getSourceManager().getModuleBuildStack().empty() &&
+          getHeaderSearchOpts().ModuleCachePruneInterval > 0 &&
+          getHeaderSearchOpts().ModuleCachePruneAfter > 0) {
+        pruneModuleCache(getHeaderSearchOpts());
+      }
 
       std::string Sysroot = getHeaderSearchOpts().Sysroot;
       const PreprocessorOptions &PPOpts = getPreprocessorOpts();

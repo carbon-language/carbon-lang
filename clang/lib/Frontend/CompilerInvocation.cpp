@@ -836,7 +836,10 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   Opts.ResourceDir = Args.getLastArgValue(OPT_resource_dir);
   Opts.ModuleCachePath = Args.getLastArgValue(OPT_fmodules_cache_path);
   Opts.DisableModuleHash = Args.hasArg(OPT_fdisable_module_hash);
-
+  Opts.ModuleCachePruneInterval
+    = Args.getLastArgIntValue(OPT_fmodules_prune_interval, 7*24*60*60);
+  Opts.ModuleCachePruneAfter
+    = Args.getLastArgIntValue(OPT_fmodules_prune_after, 31*24*60*60);
   for (arg_iterator it = Args.filtered_begin(OPT_fmodules_ignore_macro),
        ie = Args.filtered_end(); it != ie; ++it) {
     StringRef MacroDef = (*it)->getValue();
