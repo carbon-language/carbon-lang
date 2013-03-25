@@ -288,6 +288,7 @@ namespace OperatorNew {
     IntWrapper *obj = new IntWrapper(42);
     // should be TRUE
     clang_analyzer_eval(obj->value == 42); // expected-warning{{UNKNOWN}}
+    delete obj;
   }
 
   void testPlacement() {
