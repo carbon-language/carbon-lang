@@ -220,9 +220,9 @@ namespace {
     /// that can be moved to the delay slot. Returns true on success.
     bool searchForward(MachineBasicBlock &MBB, Iter Slot) const;
 
-    /// This function searches MBB's successor blocks for an instruction that
-    /// can be moved to the delay slot and inserts clones of the instruction
-    /// into the successor blocks.
+    /// This function searches one of MBB's successor blocks for an instruction
+    /// that can be moved to the delay slot and inserts clones of the
+    /// instruction into the successor's predecessor blocks.
     bool searchSuccBBs(MachineBasicBlock &MBB, Iter Slot) const;
 
     /// Pick a successor block of MBB. Return NULL if MBB doesn't have a
