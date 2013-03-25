@@ -68,6 +68,12 @@
                 else
                     return PyString_FromString("");
         }
+        
+        /* the write() and flush() calls are not part of the SB API proper, and are solely for Python usage
+        they are meant to make an SBCommandReturnObject into a file-like object so that instructions of the sort
+        print >>sb_command_return_object, "something"
+        will work correctly */
+
         void lldb::SBCommandReturnObject::write (const char* str)
         {
             if (str)
@@ -271,6 +277,20 @@
                 else
                     return PyString_FromString("");
         }
+}
+%extend lldb::SBStream {
+        /* the write() and flush() calls are not part of the SB API proper, and are solely for Python usage
+        they are meant to make an SBStream into a file-like object so that instructions of the sort
+        print >>sb_stream, "something"
+        will work correctly */
+
+        void lldb::SBStream::write (const char* str)
+        {
+            if (str)
+                $self->Printf("%s",str);
+        }
+        void lldb::SBStream::flush ()
+        {}
 }
 %extend lldb::SBSymbol {
         PyObject *lldb::SBSymbol::__str__ (){

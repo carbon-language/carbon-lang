@@ -368,10 +368,9 @@ Enter your Python command(s). Type 'DONE' to end.
                 <b>lldb.SBCommandReturnObject</b>
             </td>
             <td class="content">
-                A return object where you can indicate the success or failure of your command. You can also
-                provide information for the command result by printing data into it. You can also just print
-                data as you normally would in a python script and the output will show up; this is useful for
-                logging, but the real output for your command should go in the result object.
+                A return object which encapsulates success/failure information for the command and output text
+                that needs to be printed as a result of the command. The plain Python "print" command also works but
+                text won't go in the result by default (it is useful as a temporary logging facility).
             </td>
         </tr>
         <tr>
@@ -387,6 +386,9 @@ Enter your Python command(s). Type 'DONE' to end.
             </td>
         </tr>
         </table>
+        <p>As a convenience, you can treat the result object as a Python file object, and say
+        print >>result, "my command does lots of cool stuff". SBCommandReturnObject and SBStream
+        both support this file-like behavior by providing write() and flush() calls at the Python layer.</p>
         <p>One other handy convenience when defining lldb command-line commands is the command
           <b>command script import</b> which will import a module specified by file path - so you
           don't have to change your PYTHONPATH for temporary scripts.  It also has another convenience

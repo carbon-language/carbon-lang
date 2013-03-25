@@ -86,8 +86,14 @@ public:
 	void
 	PutCString(const char* string, int len = -1);
 
-	size_t
-	Printf(const char* format, ...);
+    // wrapping the variadic Printf() with a plain Print()
+    // because it is hard to support varargs in SWIG bridgings
+    %extend {
+        void Print (const char* str)
+        {
+            self->Printf("%s", str);
+        }
+    }
 
 };
 
