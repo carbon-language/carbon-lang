@@ -1550,6 +1550,8 @@ vector<_Tp, _Allocator>::erase(const_iterator __position)
         "vector::erase(iterator) called with an iterator not"
         " referring to this vector");
 #endif
+    _LIBCPP_ASSERT(__position != end(),
+        "vector::erase(iterator) called with a non-dereferenceable iterator");
     pointer __p = const_cast<pointer>(&*__position);
     iterator __r = __make_iter(__p);
     this->__destruct_at_end(_VSTD::move(__p + 1, this->__end_, __p));
