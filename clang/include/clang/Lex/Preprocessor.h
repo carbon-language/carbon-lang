@@ -967,8 +967,8 @@ public:
   ///   "cleaning", e.g. if it contains trigraphs or escaped newlines
   /// \param invalid If non-null, will be set \c true if an error occurs.
   StringRef getSpelling(SourceLocation loc,
-                              SmallVectorImpl<char> &buffer,
-                              bool *invalid = 0) const {
+                        SmallVectorImpl<char> &buffer,
+                        bool *invalid = 0) const {
     return Lexer::getSpelling(loc, buffer, SourceMgr, LangOpts, invalid);
   }
 
