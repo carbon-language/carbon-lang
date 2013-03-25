@@ -2,7 +2,7 @@
 ; RUN: llc < %s -O0 -march=x86 -mcpu=corei7 -verify-machineinstrs | FileCheck %s --check-prefix X32
 ; RUN: llc < %s -O0 -march=x86 -mcpu=corei7 -mattr=-cmov -verify-machineinstrs | FileCheck %s --check-prefix NOCMOV
 
-; XFAIL: cygwin,mingw32,win32
+; XFAIL: cygwin,mingw32
 
 @sc32 = external global i32
 
