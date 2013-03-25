@@ -7,6 +7,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux")
   add_subdirectory(interception)
   add_subdirectory(sanitizer_common)
   if(NOT ANDROID)
+    add_subdirectory(profile)
     add_subdirectory(ubsan)
   endif()
 endif()
@@ -15,8 +16,6 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID)
   add_subdirectory(tsan)
   add_subdirectory(msan)
   add_subdirectory(msandr)
-  # FIXME: Add support for the profile library on OS X.
-  add_subdirectory(profile)
 endif()
 
 # The top-level lib directory contains a large amount of C code which provides
