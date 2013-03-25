@@ -480,11 +480,9 @@ ABIArgInfo PNaClABIInfo::classifyReturnType(QualType RetTy) const {
           ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
 }
 
-/// UseX86_MMXType - Return true if this is an MMX type that should use the
-/// special x86_mmx type.
-bool UseX86_MMXType(llvm::Type *IRType) {
-  // If the type is an MMX type <2 x i32>, <4 x i16>, or <8 x i8>, use the
-  // special x86_mmx type.
+/// IsX86_MMXType - Return true if this is an MMX type.
+bool IsX86_MMXType(llvm::Type *IRType) {
+  // Return true if the type is an MMX type <2 x i32>, <4 x i16>, or <8 x i8>.
   return IRType->isVectorTy() && IRType->getPrimitiveSizeInBits() == 64 &&
     cast<llvm::VectorType>(IRType)->getElementType()->isIntegerTy() &&
     IRType->getScalarSizeInBits() != 64;
@@ -513,7 +511,6 @@ class X86_32ABIInfo : public ABIInfo {
 
   bool IsDarwinVectorABI;
   bool IsSmallStructInRegABI;
-  bool IsMMXDisabled;
   bool IsWin32FloatStructABI;
   unsigned DefaultNumRegisterParameters;
 
@@ -546,18 +543,17 @@ public:
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
 
-  X86_32ABIInfo(CodeGen::CodeGenTypes &CGT, bool d, bool p, bool m, bool w,
+  X86_32ABIInfo(CodeGen::CodeGenTypes &CGT, bool d, bool p, bool w,
                 unsigned r)
     : ABIInfo(CGT), IsDarwinVectorABI(d), IsSmallStructInRegABI(p),
-      IsMMXDisabled(m), IsWin32FloatStructABI(w),
-      DefaultNumRegisterParameters(r) {}
+      IsWin32FloatStructABI(w), DefaultNumRegisterParameters(r) {}
 };
 
 class X86_32TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   X86_32TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT,
-      bool d, bool p, bool m, bool w, unsigned r)
-    :TargetCodeGenInfo(new X86_32ABIInfo(CGT, d, p, m, w, r)) {}
+      bool d, bool p, bool w, unsigned r)
+    :TargetCodeGenInfo(new X86_32ABIInfo(CGT, d, p, w, r)) {}
 
   void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &CGM) const;
@@ -910,15 +906,8 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
                                                             Size));
     }
 
-    llvm::Type *IRType = CGT.ConvertType(Ty);
-    if (UseX86_MMXType(IRType)) {
-      if (IsMMXDisabled)
-        return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
-                                                            64));
-      ABIArgInfo AAI = ABIArgInfo::getDirect(IRType);
-      AAI.setCoerceToType(llvm::Type::getX86_MMXTy(getVMContext()));
-      return AAI;
-    }
+    if (IsX86_MMXType(CGT.ConvertType(Ty)))
+      return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(), 64));
 
     return ABIArgInfo::getDirect();
   }
@@ -4881,11 +4870,9 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     return *(TheTargetCodeGenInfo = new TCETargetCodeGenInfo(Types));
 
   case llvm::Triple::x86: {
-    bool DisableMMX = strcmp(getContext().getTargetInfo().getABI(), "no-mmx") == 0;
-
     if (Triple.isOSDarwin())
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Types, true, true, DisableMMX, false,
+               new X86_32TargetCodeGenInfo(Types, true, true, false,
                                            CodeGenOpts.NumRegisterParameters));
 
     switch (Triple.getOS()) {
@@ -4897,19 +4884,17 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     case llvm::Triple::OpenBSD:
     case llvm::Triple::Bitrig:
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Types, false, true, DisableMMX,
-                                           false,
+               new X86_32TargetCodeGenInfo(Types, false, true, false,
                                            CodeGenOpts.NumRegisterParameters));
 
     case llvm::Triple::Win32:
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Types, false, true, DisableMMX, true,
+               new X86_32TargetCodeGenInfo(Types, false, true, true,
                                            CodeGenOpts.NumRegisterParameters));
 
     default:
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Types, false, false, DisableMMX,
-                                           false,
+               new X86_32TargetCodeGenInfo(Types, false, false, false,
                                            CodeGenOpts.NumRegisterParameters));
     }
   }
