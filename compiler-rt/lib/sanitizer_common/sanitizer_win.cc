@@ -45,8 +45,14 @@ int GetPid() {
   return GetProcessId(GetCurrentProcess());
 }
 
-uptr GetThreadSelf() {
+// In contrast to POSIX, on Windows GetCurrentThreadId()
+// returns a system-unique identifier.
+uptr GetTid() {
   return GetCurrentThreadId();
+}
+
+uptr GetThreadSelf() {
+  return GetTid();
 }
 
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
