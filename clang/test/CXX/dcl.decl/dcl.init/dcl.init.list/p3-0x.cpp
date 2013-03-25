@@ -110,3 +110,13 @@ namespace bullet8 {
   int j { 1 };
   int k { };
 }
+
+namespace rdar13395022 {
+  struct MoveOnly {
+    MoveOnly(MoveOnly&&); // expected-note{{copy constructor is implicitly deleted because 'MoveOnly' has a user-declared move constructor}}
+  };
+
+  void test(MoveOnly mo) {
+    auto &&list = {mo}; // expected-error{{call to implicitly-deleted copy constructor of 'rdar13395022::MoveOnly'}}
+  }
+}

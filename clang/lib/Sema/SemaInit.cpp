@@ -5464,7 +5464,7 @@ InitializationSequence::Perform(Sema &S,
     case SK_StdInitializerList: {
       QualType Dest = Step->Type;
       QualType E;
-      bool Success = S.isStdInitializerList(Dest, &E);
+      bool Success = S.isStdInitializerList(Dest.getNonReferenceType(), &E);
       (void)Success;
       assert(Success && "Destination type changed?");
 
@@ -5958,7 +5958,7 @@ bool InitializationSequence::Diagnose(Sema &S,
     unsigned NumInits = InitList->getNumInits();
     QualType DestType = Entity.getType();
     QualType E;
-    bool Success = S.isStdInitializerList(DestType, &E);
+    bool Success = S.isStdInitializerList(DestType.getNonReferenceType(), &E);
     (void)Success;
     assert(Success && "Where did the std::initializer_list go?");
     InitializedEntity HiddenArray = InitializedEntity::InitializeTemporary(
