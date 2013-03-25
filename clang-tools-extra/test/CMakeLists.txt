@@ -22,7 +22,7 @@ set(CLANG_TOOLS_TEST_DEPS
   clang clang-headers FileCheck count not
 
   # Individual tools we test.
-  remove-cstr-calls cpp11-migrate clang-format
+  remove-cstr-calls cpp11-migrate
   )
 
 add_lit_testsuite(check-clang-tools "Running the Clang extra tools' regression tests"
