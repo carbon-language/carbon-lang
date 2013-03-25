@@ -55,10 +55,21 @@ void PrettyStackTraceParserEntry::print(raw_ostream &OS) const {
 
   const Preprocessor &PP = P.getPreprocessor();
   Tok.getLocation().print(OS, PP.getSourceManager());
-  if (Tok.isAnnotation())
-    OS << ": at annotation token \n";
-  else
-    OS << ": current parser token '" << PP.getSpelling(Tok) << "'\n";
+  if (Tok.isAnnotation()) {
+    OS << ": at annotation token\n";
+  } else {
+    // Do the equivalent of PP.getSpelling(Tok) except for the parts that would
+    // allocate memory.
+    bool Invalid = false;
+    const SourceManager &SM = P.getPreprocessor().getSourceManager();
+    unsigned Length = Tok.getLength();
+    const char *Spelling = SM.getCharacterData(Tok.getLocation(), &Invalid);
+    if (Invalid) {
+      OS << ": unknown current parser token\n";
+      return;
+    }
+    OS << ": current parser token '" << StringRef(Spelling, Length) << "'\n";
+  }
 }
 
 }  // namespace
