@@ -4,6 +4,8 @@
 ; RUN: grep _Z3foov %T/linkagename.gcno
 ; RUN: rm %T/linkagename.gcno
 
+; REQUIRES: shell
+
 define void @_Z3foov() {
 entry:
   ret void, !dbg !8

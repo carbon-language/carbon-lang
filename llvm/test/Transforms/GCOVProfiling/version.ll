@@ -12,6 +12,8 @@ define void @test() {
   ret void, !dbg !8
 }
 
+; REQUIRES: shell
+
 !llvm.gcov = !{!9}
 !llvm.dbg.cu = !{!0}
 
