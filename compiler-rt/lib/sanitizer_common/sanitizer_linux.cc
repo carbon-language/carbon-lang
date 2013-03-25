@@ -264,6 +264,20 @@ const char *GetEnv(const char *name) {
   return 0;  // Not found.
 }
 
+// Does not compile for Go because dlsym() requires -ldl
+#ifndef SANITIZER_GO
+bool SetEnv(const char *name, const char *value) {
+  void *f = dlsym(RTLD_NEXT, "setenv");
+  if (f == 0)
+    return false;
+  typedef int(*setenv_ft)(const char *name, const char *value, int overwrite);
+  setenv_ft setenv_f;
+  CHECK_EQ(sizeof(setenv_f), sizeof(f));
+  internal_memcpy(&setenv_f, &f, sizeof(f));
+  return setenv_f(name, value, 1) == 0;
+}
+#endif
+
 #ifdef __GLIBC__
 
 extern "C" {
