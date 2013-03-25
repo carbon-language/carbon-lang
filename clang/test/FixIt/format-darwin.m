@@ -23,6 +23,8 @@ typedef long SInt32;
 typedef unsigned long UInt32;
 #endif
 
+typedef SInt32 OSStatus;
+
 NSInteger getNSInteger();
 NSUInteger getNSUInteger();
 SInt32 getSInt32();
@@ -210,3 +212,9 @@ void testCapitals() {
   // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:13-[[@LINE-3]]:14}:"d"
   // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:11-[[@LINE-4]]:14}:"%D"
 }
+
+void testLayeredTypedefs(OSStatus i) {
+  printf("%s", i); // expected-warning {{values of type 'OSStatus' should not be used as format arguments}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"d"
+}
+

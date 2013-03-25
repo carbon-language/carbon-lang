@@ -2803,7 +2803,9 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
   // casts to primitive types that are known to be large enough.
   bool ShouldNotPrintDirectly = false;
   if (S.Context.getTargetInfo().getTriple().isOSDarwin()) {
-    if (const TypedefType *UserTy = IntendedTy->getAs<TypedefType>()) {
+    // Use a 'while' to peel off layers of typedefs.
+    QualType TyTy = IntendedTy;
+    while (const TypedefType *UserTy = TyTy->getAs<TypedefType>()) {
       StringRef Name = UserTy->getDecl()->getName();
       QualType CastTy = llvm::StringSwitch<QualType>(Name)
         .Case("NSInteger", S.Context.LongTy)
@@ -2815,7 +2817,9 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
       if (!CastTy.isNull()) {
         ShouldNotPrintDirectly = true;
         IntendedTy = CastTy;
+        break;
       }
+      TyTy = UserTy->desugar();
     }
   }
 
