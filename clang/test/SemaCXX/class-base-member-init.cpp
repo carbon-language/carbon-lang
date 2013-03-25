@@ -90,3 +90,11 @@ namespace test5 {
     }
   };
 }
+
+namespace rdar13185264 {
+  class X {
+    X() : a(), // expected-note{{previous initialization is here}}
+          a()  { } // expected-error{{multiple initializations given for non-static member 'a'}}
+    union { void *a; };
+  };
+}

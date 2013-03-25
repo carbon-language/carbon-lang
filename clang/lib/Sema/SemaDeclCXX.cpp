@@ -3436,7 +3436,7 @@ bool CheckRedundantInit(Sema &S,
     return false;
   }
 
-  if (FieldDecl *Field = Init->getMember())
+  if (FieldDecl *Field = Init->getAnyMember())
     S.Diag(Init->getSourceLocation(),
            diag::err_multiple_mem_initialization)
       << Field->getDeclName()
