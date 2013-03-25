@@ -5,7 +5,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 @glbl = extern_weak constant i8
 
-declare i64 @llvm.expect.i64(i64, i64) #0
+declare i64 @llvm.expect.i64(i64, i64)
 
 define void @test() {
 ; CHECK: movl $glbl
@@ -19,5 +19,3 @@ bb1:
 bb2:
   unreachable
 }
-
-attributes #0 = { nounwind readnone }
