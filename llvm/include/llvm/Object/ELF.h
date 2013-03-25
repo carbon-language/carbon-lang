@@ -2704,6 +2704,21 @@ static inline error_code GetELFSymbolVersion(const ObjectFile *Obj,
   llvm_unreachable("Object passed to GetELFSymbolVersion() is not ELF");
 }
 
+/// This function returns the hash value for a symbol in the .dynsym section
+/// Name of the API remains consistent as specified in the libelf
+/// REF : http://eternallyconfuzzled.com/tuts/algorithms/jsw_tut_hashing.aspx
+static inline unsigned elf_hash(StringRef &symbolName) {
+  unsigned h = 0, g;
+  for (unsigned i = 0; i < symbolName.size(); i++) {
+    h = (h << 4) + symbolName[i];
+    g = h & 0xf0000000L;
+    if (g != 0)
+      h ^= g >> 24;
+    h &= ~g;
+  }
+  return h;
+}
+
 }
 }
 
