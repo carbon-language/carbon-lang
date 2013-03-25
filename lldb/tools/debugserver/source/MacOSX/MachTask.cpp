@@ -417,12 +417,20 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
         
         if (scanType & eProfileMemory)
         {
-            profile_data_stream << "wired:" << vm_stats.wire_count * vm_page_size << ';';
-            profile_data_stream << "active:" << vm_stats.active_count * vm_page_size << ';';
-            profile_data_stream << "inactive:" << vm_stats.inactive_count * vm_page_size << ';';
+            static vm_size_t pagesize;
+            static bool calculated = false;
+            if (!calculated)
+            {
+                calculated = true;
+                host_page_size(mach_host_self(), &pagesize);
+            }
+            
+            profile_data_stream << "wired:" << vm_stats.wire_count * pagesize << ';';
+            profile_data_stream << "active:" << vm_stats.active_count * pagesize << ';';
+            profile_data_stream << "inactive:" << vm_stats.inactive_count * pagesize << ';';
             uint64_t total_used_count = vm_stats.wire_count + vm_stats.inactive_count + vm_stats.active_count;
-            profile_data_stream << "used:" << total_used_count * vm_page_size << ';';
-            profile_data_stream << "free:" << vm_stats.free_count * vm_page_size << ';';
+            profile_data_stream << "used:" << total_used_count * pagesize << ';';
+            profile_data_stream << "free:" << vm_stats.free_count * pagesize << ';';
             
             profile_data_stream << "rprvt:" << rprvt << ';';
             profile_data_stream << "rsize:" << rsize << ';';
