@@ -1,5 +1,5 @@
 ; RUN: llc < %s
-
+; XFAIL: hexagon
 declare { i64, double } @wild()
 
 define void @foo(i64* %p, double* %q) nounwind {
