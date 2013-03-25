@@ -67,14 +67,14 @@ DisableColoring("no-stack-coloring",
 /// code. If this flag is enabled, we try to save the user.
 static cl::opt<bool>
 ProtectFromEscapedAllocas("protect-from-escaped-allocas",
-        cl::init(false), cl::Hidden,
-        cl::desc("Do not optimize lifetime zones that are broken"));
+                          cl::init(false), cl::Hidden,
+                          cl::desc("Do not optimize lifetime zones that "
+                                   "are broken"));
 
 STATISTIC(NumMarkerSeen,  "Number of lifetime markers found.");
 STATISTIC(StackSpaceSaved, "Number of bytes saved due to merging slots.");
 STATISTIC(StackSlotMerged, "Number of stack slot merged.");
-STATISTIC(EscapedAllocas,
-          "Number of allocas that escaped the lifetime region");
+STATISTIC(EscapedAllocas, "Number of allocas that escaped the lifetime region");
 
 //===----------------------------------------------------------------------===//
 //                           StackColoring Pass
