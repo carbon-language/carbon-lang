@@ -323,9 +323,9 @@ static int readPrefixes(struct InternalInstruction* insn) {
      */
     if (insn->readerCursor - 1 == insn->startLocation
         && (byte == 0xf0 || byte == 0xf2 || byte == 0xf3)) {
+      uint8_t nextByte;
       if (byte == 0xf0)
         break;
-      uint8_t nextByte;
       if (lookAtByte(insn, &nextByte))
         return -1;
       if (insn->mode == MODE_64BIT && (nextByte & 0xf0) == 0x40) {
