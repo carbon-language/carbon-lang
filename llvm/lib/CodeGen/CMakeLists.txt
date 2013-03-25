@@ -14,6 +14,7 @@ add_llvm_library(LLVMCodeGen
   DwarfEHPrepare.cpp
   EarlyIfConversion.cpp
   EdgeBundles.cpp
+  ErlangGC.cpp
   ExecutionDepsFix.cpp
   ExpandISelPseudos.cpp
   ExpandPostRAPseudos.cpp
