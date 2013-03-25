@@ -78,6 +78,14 @@
 /* Define to 1 if you have the <ctype.h> header file. */
 #undef HAVE_CTYPE_H
 
+/* Define to 1 if you have the declaration of `FE_ALL_EXCEPT', and to 0 if you
+   don't. */
+#undef HAVE_DECL_FE_ALL_EXCEPT
+
+/* Define to 1 if you have the declaration of `FE_INEXACT', and to 0 if you
+   don't. */
+#undef HAVE_DECL_FE_INEXACT
+
 /* Define to 1 if you have the declaration of `strerror_s', and to 0 if you
    don't. */
 #undef HAVE_DECL_STRERROR_S

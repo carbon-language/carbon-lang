@@ -80,6 +80,9 @@ check_include_file(utime.h HAVE_UTIME_H)
 check_include_file(valgrind/valgrind.h HAVE_VALGRIND_VALGRIND_H)
 check_include_file(windows.h HAVE_WINDOWS_H)
 check_include_file(fenv.h HAVE_FENV_H)
+check_symbol_exists(FE_ALL_EXCEPT "fenv.h" HAVE_DECL_FE_ALL_EXCEPT)
+check_symbol_exists(FE_INEXACT "fenv.h" HAVE_DECL_FE_INEXACT)
+
 check_include_file(mach/mach.h HAVE_MACH_MACH_H)
 check_include_file(mach-o/dyld.h HAVE_MACH_O_DYLD_H)
 

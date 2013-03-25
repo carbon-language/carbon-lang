@@ -32,7 +32,7 @@ namespace sys {
 
 /// llvm_fenv_clearexcept - Clear the floating-point exception state.
 static inline void llvm_fenv_clearexcept() {
-#ifdef HAVE_FENV_H
+#if defined(HAVE_FENV_H) && HAVE_DECL_FE_ALL_EXCEPT
   feclearexcept(FE_ALL_EXCEPT);
 #endif
   errno = 0;
@@ -43,7 +43,7 @@ static inline bool llvm_fenv_testexcept() {
   int errno_val = errno;
   if (errno_val == ERANGE || errno_val == EDOM)
     return true;
-#ifdef HAVE_FENV_H
+#if defined(HAVE_FENV_H) && HAVE_DECL_FE_ALL_EXCEPT && HAVE_DECL_FE_INEXACT
   if (fetestexcept(FE_ALL_EXCEPT & ~FE_INEXACT))
     return true;
 #endif
