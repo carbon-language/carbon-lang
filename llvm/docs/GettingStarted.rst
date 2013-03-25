@@ -1008,7 +1008,7 @@ Optional Configuration Items
 ----------------------------
 
 If you're running on a Linux system that supports the `binfmt_misc
-<http://www.tat.physik.uni-tuebingen.de/~rguenth/linux/binfmt_misc.html>`_
+<http://en.wikipedia.org/wiki/binfmt_misc>`_
 module, and you have root access on the system, you can set your system up to
 execute LLVM bitcode files directly. To do this, use commands like this (the
 first command may not be required if you are already using the module):
