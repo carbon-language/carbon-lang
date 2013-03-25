@@ -744,3 +744,145 @@ define i1 @icmp_shl24(i32 %x) {
   %cmp = icmp slt i32 %shl, 603979776
   ret i1 %cmp
 }
+
+; If the (shl x, C) preserved the sign and this is a sign test,
+; compare the LHS operand instead
+; CHECK: @icmp_shl_nsw_sgt
+; CHECK-NEXT: icmp sgt i32 %x, 0
+define i1 @icmp_shl_nsw_sgt(i32 %x) {
+  %shl = shl nsw i32 %x, 21
+  %cmp = icmp sgt i32 %shl, 0
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_nsw_sge0
+; CHECK-NEXT: icmp sgt i32 %x, -1
+define i1 @icmp_shl_nsw_sge0(i32 %x) {
+  %shl = shl nsw i32 %x, 21
+  %cmp = icmp sge i32 %shl, 0
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_nsw_sge1
+; CHECK-NEXT: icmp sgt i32 %x, 0
+define i1 @icmp_shl_nsw_sge1(i32 %x) {
+  %shl = shl nsw i32 %x, 21
+  %cmp = icmp sge i32 %shl, 1
+  ret i1 %cmp
+}
+
+; Checks for icmp (eq|ne) (shl x, C), 0
+; CHECK: @icmp_shl_nsw_eq
+; CHECK-NEXT: icmp eq i32 %x, 0
+define i1 @icmp_shl_nsw_eq(i32 %x) {
+  %mul = shl nsw i32 %x, 5
+  %cmp = icmp eq i32 %mul, 0
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_eq
+; CHECK-NOT: icmp eq i32 %mul, 0
+define i1 @icmp_shl_eq(i32 %x) {
+  %mul = shl i32 %x, 5
+  %cmp = icmp eq i32 %mul, 0
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_nsw_ne
+; CHECK-NEXT: icmp ne i32 %x, 0
+define i1 @icmp_shl_nsw_ne(i32 %x) {
+  %mul = shl nsw i32 %x, 7
+  %cmp = icmp ne i32 %mul, 0
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_ne
+; CHECK-NOT: icmp ne i32 %x, 0
+define i1 @icmp_shl_ne(i32 %x) {
+  %mul = shl i32 %x, 7
+  %cmp = icmp ne i32 %mul, 0
+  ret i1 %cmp
+}
+
+; If the (mul x, C) preserved the sign and this is sign test,
+; compare the LHS operand instead
+; CHECK: @icmp_mul_nsw
+; CHECK-NEXT: icmp sgt i32 %x, 0
+define i1 @icmp_mul_nsw(i32 %x) {
+  %mul = mul nsw i32 %x, 12
+  %cmp = icmp sgt i32 %mul, 0
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_mul_nsw1
+; CHECK-NEXT: icmp slt i32 %x, 0
+define i1 @icmp_mul_nsw1(i32 %x) {
+  %mul = mul nsw i32 %x, 12
+  %cmp = icmp sle i32 %mul, -1
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_mul_nsw_neg
+; CHECK-NEXT: icmp slt i32 %x, 1
+define i1 @icmp_mul_nsw_neg(i32 %x) {
+  %mul = mul nsw i32 %x, -12
+  %cmp = icmp sge i32 %mul, 0
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_mul_nsw_neg1
+; CHECK-NEXT: icmp slt i32 %x, 0
+define i1 @icmp_mul_nsw_neg1(i32 %x) {
+  %mul = mul nsw i32 %x, -12
+  %cmp = icmp sge i32 %mul, 1
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_mul_nsw_0
+; CHECK-NOT: icmp sgt i32 %x, 0
+define i1 @icmp_mul_nsw_0(i32 %x) {
+  %mul = mul nsw i32 %x, 0
+  %cmp = icmp sgt i32 %mul, 0
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_mul
+; CHECK-NEXT: %mul = mul i32 %x, -12
+define i1 @icmp_mul(i32 %x) {
+  %mul = mul i32 %x, -12
+  %cmp = icmp sge i32 %mul, 0
+  ret i1 %cmp
+}
+
+; Checks for icmp (eq|ne) (mul x, C), 0
+; CHECK: @icmp_mul_neq0
+; CHECK-NEXT: icmp ne i32 %x, 0
+define i1 @icmp_mul_neq0(i32 %x) {
+  %mul = mul i32 %x, -12
+  %cmp = icmp ne i32 %mul, 0
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_mul_eq0
+; CHECK-NEXT: icmp eq i32 %x, 0
+define i1 @icmp_mul_eq0(i32 %x) {
+  %mul = mul i32 %x, 12
+  %cmp = icmp eq i32 %mul, 0
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_mul0_eq0
+; CHECK-NEXT: ret i1 true
+define i1 @icmp_mul0_eq0(i32 %x) {
+  %mul = mul i32 %x, 0
+  %cmp = icmp eq i32 %mul, 0
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_mul0_ne0
+; CHECK-NEXT: ret i1 false
+define i1 @icmp_mul0_ne0(i32 %x) {
+  %mul = mul i32 %x, 0
+  %cmp = icmp ne i32 %mul, 0
+  ret i1 %cmp
+}
