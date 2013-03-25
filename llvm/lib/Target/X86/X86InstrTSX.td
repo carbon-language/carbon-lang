@@ -27,6 +27,9 @@ def XBEGIN_4 : Ii32PCRel<0xc7, MRM_F8, (outs), (ins brtarget:$dst),
 def XEND : I<0x01, MRM_D5, (outs), (ins),
              "xend", [(int_x86_xend)]>, TB, Requires<[HasRTM]>;
 
+let Defs = [EFLAGS] in
+def XTEST : I<0x01, MRM_D6, (outs), (ins), "xtest", []>, TB, Requires<[HasRTM]>;
+
 def XABORT : Ii8<0xc6, MRM_F8, (outs), (ins i8imm:$imm),
                  "xabort\t$imm",
                  [(int_x86_xabort imm:$imm)]>, Requires<[HasRTM]>;

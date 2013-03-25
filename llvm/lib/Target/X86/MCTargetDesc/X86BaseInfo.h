@@ -276,9 +276,9 @@ namespace X86II {
     MRM_C1 = 33, MRM_C2 = 34, MRM_C3 = 35, MRM_C4 = 36,
     MRM_C8 = 37, MRM_C9 = 38, MRM_E8 = 39, MRM_F0 = 40,
     MRM_F8 = 41, MRM_F9 = 42, MRM_D0 = 45, MRM_D1 = 46,
-    MRM_D4 = 47, MRM_D5 = 48, MRM_D8 = 49, MRM_D9 = 50,
-    MRM_DA = 51, MRM_DB = 52, MRM_DC = 53, MRM_DD = 54,
-    MRM_DE = 55, MRM_DF = 56,
+    MRM_D4 = 47, MRM_D5 = 48, MRM_D6 = 49, MRM_D8 = 50,
+    MRM_D9 = 51, MRM_DA = 52, MRM_DB = 53, MRM_DC = 54,
+    MRM_DD = 55, MRM_DE = 56, MRM_DF = 57,
 
     /// RawFrmImm8 - This is used for the ENTER instruction, which has two
     /// immediates, the first of which is a 16-bit immediate (specified by
@@ -574,16 +574,13 @@ namespace X86II {
         ++FirstMemOp;// Skip the register dest (which is encoded in VEX_VVVV).
       return FirstMemOp;
     }
-    case X86II::MRM_C1: case X86II::MRM_C2:
-    case X86II::MRM_C3: case X86II::MRM_C4:
-    case X86II::MRM_C8: case X86II::MRM_C9:
-    case X86II::MRM_E8: case X86II::MRM_F0:
-    case X86II::MRM_F8: case X86II::MRM_F9:
-    case X86II::MRM_D0: case X86II::MRM_D1:
-    case X86II::MRM_D4: case X86II::MRM_D5:
-    case X86II::MRM_D8: case X86II::MRM_D9:
-    case X86II::MRM_DA: case X86II::MRM_DB:
-    case X86II::MRM_DC: case X86II::MRM_DD:
+    case X86II::MRM_C1: case X86II::MRM_C2: case X86II::MRM_C3:
+    case X86II::MRM_C4: case X86II::MRM_C8: case X86II::MRM_C9:
+    case X86II::MRM_E8: case X86II::MRM_F0: case X86II::MRM_F8:
+    case X86II::MRM_F9: case X86II::MRM_D0: case X86II::MRM_D1:
+    case X86II::MRM_D4: case X86II::MRM_D5: case X86II::MRM_D6:
+    case X86II::MRM_D8: case X86II::MRM_D9: case X86II::MRM_DA:
+    case X86II::MRM_DB: case X86II::MRM_DC: case X86II::MRM_DD:
     case X86II::MRM_DE: case X86II::MRM_DF:
       return -1;
     }

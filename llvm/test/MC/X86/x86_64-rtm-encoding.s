@@ -8,6 +8,10 @@
 // CHECK: encoding: [0x0f,0x01,0xd5]
 	xend
 
+// CHECK: xtest
+// CHECK: encoding: [0x0f,0x01,0xd6]
+	xtest
+
 // CHECK: xabort
 // CHECK: encoding: [0xc6,0xf8,0x0d]
 	xabort $13
