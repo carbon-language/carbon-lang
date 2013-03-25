@@ -63,6 +63,7 @@ enum MBlockType {
   MBlockExpectRace,
   MBlockSignal,
   MBlockFD,
+  MBlockJmpBuf,
 
   // This must be the last.
   MBlockTypeCount

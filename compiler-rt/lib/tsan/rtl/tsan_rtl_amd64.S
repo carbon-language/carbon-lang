@@ -160,6 +160,143 @@ __tsan_report_race_thunk:
   ret
   .cfi_endproc
 
+.hidden __tsan_setjmp
+.comm _ZN14__interception11real_setjmpE,8,8
+.globl setjmp
+.type setjmp, @function
+setjmp:
+  .cfi_startproc
+  // save env parameter
+  push %rdi
+  .cfi_adjust_cfa_offset 8
+  .cfi_rel_offset %rdi, 0
+  // obtain %rsp
+  lea 16(%rsp), %rdi
+  mov %rdi, %rsi
+  xor %fs:0x30, %rsi  // magic mangling of rsp (see libc setjmp)
+  rol $0x11, %rsi
+  // call tsan interceptor
+  call __tsan_setjmp
+  // restore env parameter
+  pop %rdi
+  .cfi_adjust_cfa_offset -8
+  .cfi_restore %rdi
+  // tail jump to libc setjmp
+  movl $0, %eax
+  movq _ZN14__interception11real_setjmpE@GOTPCREL(%rip), %rdx
+  jmp *(%rdx)
+  .cfi_endproc
+.size setjmp, .-setjmp
+
+.comm _ZN14__interception12real__setjmpE,8,8
+.globl _setjmp
+.type _setjmp, @function
+_setjmp:
+  .cfi_startproc
+  // save env parameter
+  push %rdi
+  .cfi_adjust_cfa_offset 8
+  .cfi_rel_offset %rdi, 0
+  // obtain %rsp
+  lea 16(%rsp), %rdi
+  mov %rdi, %rsi
+  xor %fs:0x30, %rsi  // magic mangling of rsp (see libc setjmp)
+  rol $0x11, %rsi
+  // call tsan interceptor
+  call __tsan_setjmp
+  // restore env parameter
+  pop %rdi
+  .cfi_adjust_cfa_offset -8
+  .cfi_restore %rdi
+  // tail jump to libc setjmp
+  movl $0, %eax
+  movq _ZN14__interception12real__setjmpE@GOTPCREL(%rip), %rdx
+  jmp *(%rdx)
+  .cfi_endproc
+.size _setjmp, .-_setjmp
+
+.comm _ZN14__interception14real_sigsetjmpE,8,8
+.globl sigsetjmp
+.type sigsetjmp, @function
+sigsetjmp:
+  .cfi_startproc
+  // save env parameter
+  push %rdi
+  .cfi_adjust_cfa_offset 8
+  .cfi_rel_offset %rdi, 0
+  // save savesigs parameter
+  push %rsi
+  .cfi_adjust_cfa_offset 8
+  .cfi_rel_offset %rsi, 0
+  // align stack frame
+  sub $8, %rsp
+  .cfi_adjust_cfa_offset 8
+  // obtain %rsp
+  lea 32(%rsp), %rdi
+  mov %rdi, %rsi
+  xor %fs:0x30, %rsi  // magic mangling of rsp (see libc setjmp)
+  rol $0x11, %rsi
+  // call tsan interceptor
+  call __tsan_setjmp
+  // unalign stack frame
+  add $8, %rsp
+  .cfi_adjust_cfa_offset -8
+  // restore savesigs parameter
+  pop %rsi
+  .cfi_adjust_cfa_offset -8
+  .cfi_restore %rsi
+  // restore env parameter
+  pop %rdi
+  .cfi_adjust_cfa_offset -8
+  .cfi_restore %rdi
+  // tail jump to libc sigsetjmp
+  movl $0, %eax
+  movq _ZN14__interception14real_sigsetjmpE@GOTPCREL(%rip), %rdx
+  jmp *(%rdx)
+  .cfi_endproc
+.size sigsetjmp, .-sigsetjmp
+
+.comm _ZN14__interception16real___sigsetjmpE,8,8
+.globl __sigsetjmp
+.type __sigsetjmp, @function
+__sigsetjmp:
+  .cfi_startproc
+  // save env parameter
+  push %rdi
+  .cfi_adjust_cfa_offset 8
+  .cfi_rel_offset %rdi, 0
+  // save savesigs parameter
+  push %rsi
+  .cfi_adjust_cfa_offset 8
+  .cfi_rel_offset %rsi, 0
+  // align stack frame
+  sub $8, %rsp
+  .cfi_adjust_cfa_offset 8
+  // obtain %rsp
+  lea 32(%rsp), %rdi
+  mov %rdi, %rsi
+  xor %fs:0x30, %rsi  // magic mangling of rsp (see libc setjmp)
+  rol $0x11, %rsi
+  // call tsan interceptor
+  call __tsan_setjmp
+  // unalign stack frame
+  add $8, %rsp
+  .cfi_adjust_cfa_offset -8
+  // restore savesigs parameter
+  pop %rsi
+  .cfi_adjust_cfa_offset -8
+  .cfi_restore %rsi
+  // restore env parameter
+  pop %rdi
+  .cfi_adjust_cfa_offset -8
+  .cfi_restore %rdi
+  // tail jump to libc sigsetjmp
+  movl $0, %eax
+  movq _ZN14__interception16real___sigsetjmpE@GOTPCREL(%rip), %rdx
+  jmp *(%rdx)
+  .cfi_endproc
+.size __sigsetjmp, .-__sigsetjmp
+
 #ifdef __linux__
 /* We do not need executable stack.  */
 .section        .note.GNU-stack,"",@progbits

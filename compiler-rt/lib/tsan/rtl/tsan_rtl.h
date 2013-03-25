@@ -384,6 +384,12 @@ class Shadow : public FastState {
 
 struct SignalContext;
 
+struct JmpBuf {
+  uptr sp;
+  uptr mangled_sp;
+  uptr *shadow_stack_pos;
+};
+
 // This struct is stored in TLS.
 struct ThreadState {
   FastState fast_state;
@@ -418,6 +424,7 @@ struct ThreadState {
   ThreadClock clock;
 #ifndef TSAN_GO
   AllocatorCache alloc_cache;
+  Vector<JmpBuf> jmp_bufs;
 #endif
   u64 stat[StatCnt];
   const int tid;

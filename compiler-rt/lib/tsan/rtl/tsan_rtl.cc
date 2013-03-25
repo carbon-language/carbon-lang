@@ -88,6 +88,9 @@ ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
   // , fast_ignore_writes()
   // , in_rtl()
   , shadow_stack_pos(&shadow_stack[0])
+#ifndef TSAN_GO
+  , jmp_bufs(MBlockJmpBuf)
+#endif
   , tid(tid)
   , unique_id(unique_id)
   , stk_addr(stk_addr)
