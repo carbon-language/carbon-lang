@@ -240,12 +240,6 @@ class SmartArrayDataFormatterTestCase(TestBase):
 # using [] is required here
         self.runCmd("type summary add --summary-string \"arr = ${var%x}\" \"int [5]\"")
         
-        self.expect("frame variable intarr",
-                    substrs = ['<invalid usage of pointer value as object>'])
-        
-        self.expect("frame variable other.intarr",
-                    substrs = ['<invalid usage of pointer value as object>'])
-
         self.runCmd("type summary add --summary-string \"arr = ${var[]%x}\" \"int [5]\"")
         
         self.expect("frame variable intarr",
