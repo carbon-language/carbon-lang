@@ -22,6 +22,10 @@ add_clang_executable(cpp11-migrate
   ${Cpp11MigrateSources}
   )
 
+add_dependencies(cpp11-migrate
+  clang-headers
+  )
+
 target_link_libraries(cpp11-migrate
   clangTooling
   clangBasic
