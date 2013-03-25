@@ -1557,8 +1557,7 @@ Debugger::FormatPrompt
                                     if (log)
                                         log->Printf("[Debugger::FormatPrompt] I am into array || pointer && !range");
                                     
-                                    if (target->HasSpecialPrintableRepresentation(val_obj_display,
-                                                                                  custom_format))
+                                    if (target->HasSpecialPrintableRepresentation(val_obj_display, custom_format))
                                     {
                                         // try to use the special cases
                                         var_success = target->DumpPrintableRepresentation(str_temp,
@@ -1568,9 +1567,7 @@ Debugger::FormatPrompt
                                             log->Printf("[Debugger::FormatPrompt] special cases did%s match", var_success ? "" : "n't");
                                         
                                         // should not happen
-                                        if (!var_success)
-                                            s << "<invalid usage of pointer value as object>";
-                                        else
+                                        if (var_success)
                                             s << str_temp.GetData();
                                         var_success = true;
                                         break;
@@ -1587,10 +1584,6 @@ Debugger::FormatPrompt
                                                                                  val_obj_display,
                                                                                  custom_format,
                                                                                  ValueObject::ePrintableRepresentationSpecialCasesDisable);
-                                        }
-                                        else
-                                        {
-                                            s << "<invalid usage of pointer value as object>";
                                         }
                                         var_success = true;
                                         break;
