@@ -2,6 +2,7 @@ include(CompilerRTCompile)
 
 set(SANITIZER_UNITTESTS
   sanitizer_allocator_test.cc
+  sanitizer_atomic_test.cc
   sanitizer_common_test.cc
   sanitizer_flags_test.cc
   sanitizer_libc_test.cc

@@ -113,9 +113,9 @@ INLINE bool atomic_compare_exchange_strong(volatile T *a,
 
 template<typename T>
 INLINE bool atomic_compare_exchange_weak(volatile T *a,
-                                           typename T::Type *cmp,
-                                           typename T::Type xchg,
-                                           memory_order mo) {
+                                         typename T::Type *cmp,
+                                         typename T::Type xchg,
+                                         memory_order mo) {
   return atomic_compare_exchange_strong(a, cmp, xchg, mo);
 }
 
