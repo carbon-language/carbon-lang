@@ -8,4 +8,7 @@
 //
 // REQUIRES: crash-recovery
 
+// FIXME: Please investigate abnormal path in MemoryBuffer.
+// XFAIL: mingw32,win32
+
 #warning parsing original file
