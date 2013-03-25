@@ -215,6 +215,6 @@ void testCapitals() {
 
 void testLayeredTypedefs(OSStatus i) {
   printf("%s", i); // expected-warning {{values of type 'OSStatus' should not be used as format arguments}}
-  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"d"
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%d"
 }
 
