@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_BASIC_OPENMPKINDS_H
 #define LLVM_CLANG_BASIC_OPENMPKINDS_H
 
-#include "clang/Lex/Token.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace clang {
 
@@ -28,7 +28,7 @@ enum OpenMPDirectiveKind {
   NUM_OPENMP_DIRECTIVES
 };
 
-OpenMPDirectiveKind getOpenMPDirectiveKind(StringRef Str);
+OpenMPDirectiveKind getOpenMPDirectiveKind(llvm::StringRef Str);
 const char *getOpenMPDirectiveName(OpenMPDirectiveKind Kind);
 
 }
