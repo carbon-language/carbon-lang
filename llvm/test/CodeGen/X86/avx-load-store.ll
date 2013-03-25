@@ -114,3 +114,16 @@ cif_mixed_test_any_check:                         ; preds = %cif_mask_mixed
   unreachable
 }
 
+; CHECK: add8i32
+; CHECK: vmovups
+; CHECK: vmovups
+; CHECK-NOT: vinsertf128
+; CHECK-NOT: vextractf128
+; CHECK: vmovups
+; CHECK: vmovups
+define void @add8i32(<8 x i32>* %ret, <8 x i32>* %bp) nounwind {
+  %b = load <8 x i32>* %bp, align 1
+  %x = add <8 x i32> zeroinitializer, %b
+  store <8 x i32> %x, <8 x i32>* %ret, align 1
+  ret void
+}
