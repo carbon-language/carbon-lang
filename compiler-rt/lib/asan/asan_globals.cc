@@ -34,7 +34,7 @@ static LowLevelAllocator allocator_for_globals;
 static ListOfGlobals *list_of_all_globals;
 static ListOfGlobals *list_of_dynamic_init_globals;
 
-void PoisonRedZones(const Global &g)  {
+static void PoisonRedZones(const Global &g) {
   uptr aligned_size = RoundUpTo(g.size, SHADOW_GRANULARITY);
   PoisonShadow(g.beg + aligned_size, g.size_with_redzone - aligned_size,
                kAsanGlobalRedzoneMagic);
