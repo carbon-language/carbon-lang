@@ -26,6 +26,12 @@ namespace llvm {
   
   /// Creates an ocaml-compatible metadata printer.
   void linkOcamlGCPrinter();
+
+  /// Creates an erlang-compatible garbage collector.
+  void linkErlangGC();
+
+  /// Creates an erlang-compatible metadata printer.
+  void linkErlangGCPrinter();
   
   /// Creates a shadow stack garbage collector. This collector requires no code
   /// generator support.

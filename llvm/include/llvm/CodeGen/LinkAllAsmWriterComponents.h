@@ -29,6 +29,7 @@ namespace {
         return;
 
       llvm::linkOcamlGCPrinter();
+      llvm::linkErlangGCPrinter();
 
     }
   } ForceAsmWriterLinking; // Force link by creating a global definition.
