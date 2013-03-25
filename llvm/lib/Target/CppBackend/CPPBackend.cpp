@@ -518,7 +518,6 @@ void CppWriter::printAttributes(const AttributeSet &PAL,
         attrs.removeAttribute(Attribute::StackAlignment);
       }
 
-      assert(!attrs.hasAttributes() && "Unhandled attribute!");
       Out << "PAS = AttributeSet::get(mod->getContext(), ";
       if (index == ~0U)
         Out << "~0U,";
