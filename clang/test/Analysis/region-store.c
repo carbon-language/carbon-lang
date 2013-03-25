@@ -1,5 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix -verify %s
-// expected-no-diagnostics
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix,debug.ExprInspection -verify %s
 
 int printf(const char *restrict,...);
 
@@ -21,4 +20,37 @@ int compoundLiteralTest2() {
         printf("thing: %i\n", thing);
     }
     return 0;
+}
+
+int concreteOffsetBindingIsInvalidatedBySymbolicOffsetAssignment(int length,
+                                                                 int i) {
+  int values[length];
+  values[i] = 4;
+  return values[0]; // no-warning
+}
+
+struct X{
+  int mem;
+};
+int initStruct(struct X *st);
+int structOffsetBindingIsInvalidated(int length, int i){
+  struct X l;
+  initStruct(&l);
+  return l.mem; // no-warning
+}
+
+void clang_analyzer_eval(int);
+void testConstraintOnRegionOffset(int *values, int length, int i){
+  if (values[1] == 4) {
+    values[i] = 5;
+    clang_analyzer_eval(values[1] == 4);// expected-warning {{UNKNOWN}}
+  }
+}
+
+int initArray(int *values);
+void testConstraintOnRegionOffsetStack(int *values, int length, int i) {
+  if (values[0] == 4) {
+    initArray(values);
+    clang_analyzer_eval(values[0] == 4);// expected-warning {{UNKNOWN}}
+  }
 }

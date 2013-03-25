@@ -833,14 +833,22 @@ RegionStoreManager::removeSubRegionBindings(RegionBindingsConstRef B,
                                             const SubRegion *Top) {
   BindingKey TopKey = BindingKey::Make(Top, BindingKey::Default);
   const MemRegion *ClusterHead = TopKey.getBaseRegion();
+  const ClusterBindings *Cluster = B.lookup(ClusterHead);
+
   if (Top == ClusterHead) {
     // We can remove an entire cluster's bindings all in one go.
     return B.remove(Top);
   }
 
-  const ClusterBindings *Cluster = B.lookup(ClusterHead);
-  if (!Cluster)
+  if (!Cluster) {
+    // If we're invalidating a region with a symbolic offset, we need to make
+    // sure we don't treat the base region as uninitialized anymore.
+    if (TopKey.hasSymbolicOffset()) {
+      const SubRegion *Concrete = TopKey.getConcreteOffsetRegion();
+      return B.addBinding(Concrete, BindingKey::Default, UnknownVal());
+    }
     return B;
+  }
 
   SmallVector<BindingPair, 32> Bindings;
   collectSubRegionBindings(Bindings, svalBuilder, *Cluster, Top, TopKey,
