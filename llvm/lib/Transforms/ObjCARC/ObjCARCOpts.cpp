@@ -961,7 +961,7 @@ ObjCARCOpt::OptimizeRetainCall(Function &F, Instruction *Retain) {
   // Check that the call is next to the retain.
   BasicBlock::const_iterator I = Call;
   ++I;
-  while (isNoopInstruction(I)) ++I;
+  while (IsNoopInstruction(I)) ++I;
   if (&*I != Retain)
     return;
 
@@ -993,14 +993,14 @@ ObjCARCOpt::OptimizeRetainRVCall(Function &F, Instruction *RetainRV) {
     if (Call->getParent() == RetainRV->getParent()) {
       BasicBlock::const_iterator I = Call;
       ++I;
-      while (isNoopInstruction(I)) ++I;
+      while (IsNoopInstruction(I)) ++I;
       if (&*I == RetainRV)
         return false;
     } else if (const InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
       BasicBlock *RetainRVParent = RetainRV->getParent();
       if (II->getNormalDest() == RetainRVParent) {
         BasicBlock::const_iterator I = RetainRVParent->begin();
-        while (isNoopInstruction(I)) ++I;
+        while (IsNoopInstruction(I)) ++I;
         if (&*I == RetainRV)
           return false;
       }
@@ -1011,7 +1011,7 @@ ObjCARCOpt::OptimizeRetainRVCall(Function &F, Instruction *RetainRV) {
   // pointer. In this case, we can delete the pair.
   BasicBlock::iterator I = RetainRV, Begin = RetainRV->getParent()->begin();
   if (I != Begin) {
-    do --I; while (I != Begin && isNoopInstruction(I));
+    do --I; while (I != Begin && IsNoopInstruction(I));
     if (GetBasicInstructionClass(I) == IC_AutoreleaseRV &&
         GetObjCArg(I) == Arg) {
       Changed = true;
@@ -1128,7 +1128,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
     case IC_InitWeak:
     case IC_DestroyWeak: {
       CallInst *CI = cast<CallInst>(Inst);
-      if (isNullOrUndef(CI->getArgOperand(0))) {
+      if (IsNullOrUndef(CI->getArgOperand(0))) {
         Changed = true;
         Type *Ty = CI->getArgOperand(0)->getType();
         new StoreInst(UndefValue::get(cast<PointerType>(Ty)->getElementType()),
@@ -1149,8 +1149,8 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
     case IC_CopyWeak:
     case IC_MoveWeak: {
       CallInst *CI = cast<CallInst>(Inst);
-      if (isNullOrUndef(CI->getArgOperand(0)) ||
-          isNullOrUndef(CI->getArgOperand(1))) {
+      if (IsNullOrUndef(CI->getArgOperand(0)) ||
+          IsNullOrUndef(CI->getArgOperand(1))) {
         Changed = true;
         Type *Ty = CI->getArgOperand(0)->getType();
         new StoreInst(UndefValue::get(cast<PointerType>(Ty)->getElementType()),
@@ -1248,7 +1248,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
     const Value *Arg = GetObjCArg(Inst);
 
     // ARC calls with null are no-ops. Delete them.
-    if (isNullOrUndef(Arg)) {
+    if (IsNullOrUndef(Arg)) {
       Changed = true;
       ++NumNoops;
       DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: ARC calls with "
@@ -1283,7 +1283,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
         Value *Incoming =
           StripPointerCastsAndObjCCalls(PN->getIncomingValue(i));
-        if (isNullOrUndef(Incoming))
+        if (IsNullOrUndef(Incoming))
           HasNull = true;
         else if (cast<TerminatorInst>(PN->getIncomingBlock(i)->back())
                    .getNumSuccessors() != 1) {
@@ -1337,7 +1337,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
           for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
             Value *Incoming =
               StripPointerCastsAndObjCCalls(PN->getIncomingValue(i));
-            if (!isNullOrUndef(Incoming)) {
+            if (!IsNullOrUndef(Incoming)) {
               CallInst *Clone = cast<CallInst>(CInst->clone());
               Value *Op = PN->getIncomingValue(i);
               Instruction *InsertPos = &PN->getIncomingBlock(i)->back();

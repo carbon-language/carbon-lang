@@ -410,7 +410,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
           break;
         }
         --BBI;
-      } while (isNoopInstruction(BBI));
+      } while (IsNoopInstruction(BBI));
 
       if (&*BBI == GetObjCArg(Inst)) {
         DEBUG(dbgs() << "ObjCARCContract: Adding inline asm marker for "
@@ -429,7 +429,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
     case IC_InitWeak: {
       // objc_initWeak(p, null) => *p = null
       CallInst *CI = cast<CallInst>(Inst);
-      if (isNullOrUndef(CI->getArgOperand(1))) {
+      if (IsNullOrUndef(CI->getArgOperand(1))) {
         Value *Null =
           ConstantPointerNull::get(cast<PointerType>(CI->getType()));
         Changed = true;
