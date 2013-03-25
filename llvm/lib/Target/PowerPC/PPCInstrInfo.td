@@ -896,16 +896,16 @@ def STFDU : DForm_1<37, (outs ptr_rc_nor0:$ea_res), (ins F8RC:$rS, memri:$dst),
 // Patterns to match the pre-inc stores.  We can't put the patterns on
 // the instruction definitions directly as ISel wants the address base
 // and offset to be separate operands, not a single complex operand.
-def : Pat<(pre_truncsti8 GPRC:$rS, ptr_rc_nor0:$ptrreg, iaddroff:$ptroff),
-          (STBU GPRC:$rS, iaddroff:$ptroff, ptr_rc_nor0:$ptrreg)>;
-def : Pat<(pre_truncsti16 GPRC:$rS, ptr_rc_nor0:$ptrreg, iaddroff:$ptroff),
-          (STHU GPRC:$rS, iaddroff:$ptroff, ptr_rc_nor0:$ptrreg)>;
-def : Pat<(pre_store GPRC:$rS, ptr_rc_nor0:$ptrreg, iaddroff:$ptroff),
-          (STWU GPRC:$rS, iaddroff:$ptroff, ptr_rc_nor0:$ptrreg)>;
-def : Pat<(pre_store F4RC:$rS, ptr_rc_nor0:$ptrreg, iaddroff:$ptroff),
-          (STFSU F4RC:$rS, iaddroff:$ptroff, ptr_rc_nor0:$ptrreg)>;
-def : Pat<(pre_store F8RC:$rS, ptr_rc_nor0:$ptrreg, iaddroff:$ptroff),
-          (STFDU F8RC:$rS, iaddroff:$ptroff, ptr_rc_nor0:$ptrreg)>;
+def : Pat<(pre_truncsti8 i32:$rS, iPTR:$ptrreg, iaddroff:$ptroff),
+          (STBU $rS, iaddroff:$ptroff, $ptrreg)>;
+def : Pat<(pre_truncsti16 i32:$rS, iPTR:$ptrreg, iaddroff:$ptroff),
+          (STHU $rS, iaddroff:$ptroff, $ptrreg)>;
+def : Pat<(pre_store i32:$rS, iPTR:$ptrreg, iaddroff:$ptroff),
+          (STWU $rS, iaddroff:$ptroff, $ptrreg)>;
+def : Pat<(pre_store f32:$rS, iPTR:$ptrreg, iaddroff:$ptroff),
+          (STFSU $rS, iaddroff:$ptroff, $ptrreg)>;
+def : Pat<(pre_store f64:$rS, iPTR:$ptrreg, iaddroff:$ptroff),
+          (STFDU $rS, iaddroff:$ptroff, $ptrreg)>;
 
 // Indexed (r+r) Stores.
 let PPC970_Unit = 2 in {
@@ -970,16 +970,16 @@ def STFDUX: XForm_8<31, 759, (outs ptr_rc_nor0:$ea_res), (ins F8RC:$rS, memrr:$d
 // Patterns to match the pre-inc stores.  We can't put the patterns on
 // the instruction definitions directly as ISel wants the address base
 // and offset to be separate operands, not a single complex operand.
-def : Pat<(pre_truncsti8 GPRC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff),
-          (STBUX GPRC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff)>;
-def : Pat<(pre_truncsti16 GPRC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff),
-          (STHUX GPRC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff)>;
-def : Pat<(pre_store GPRC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff),
-          (STWUX GPRC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff)>;
-def : Pat<(pre_store F4RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff),
-          (STFSUX F4RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff)>;
-def : Pat<(pre_store F8RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff),
-          (STFDUX F8RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff)>;
+def : Pat<(pre_truncsti8 i32:$rS, iPTR:$ptrreg, iPTR:$ptroff),
+          (STBUX $rS, $ptrreg, $ptroff)>;
+def : Pat<(pre_truncsti16 i32:$rS, iPTR:$ptrreg, iPTR:$ptroff),
+          (STHUX $rS, $ptrreg, $ptroff)>;
+def : Pat<(pre_store i32:$rS, iPTR:$ptrreg, iPTR:$ptroff),
+          (STWUX $rS, $ptrreg, $ptroff)>;
+def : Pat<(pre_store f32:$rS, iPTR:$ptrreg, iPTR:$ptroff),
+          (STFSUX $rS, $ptrreg, $ptroff)>;
+def : Pat<(pre_store f64:$rS, iPTR:$ptrreg, iPTR:$ptroff),
+          (STFDUX $rS, $ptrreg, $ptroff)>;
 
 def SYNC : XForm_24_sync<31, 598, (outs), (ins),
                         "sync", LdStSync,
@@ -1530,37 +1530,37 @@ def : Pat<(i32 imm:$imm),
           (ORI (LIS (HI16 imm:$imm)), (LO16 imm:$imm))>;
 
 // Implement the 'not' operation with the NOR instruction.
-def NOT : Pat<(not GPRC:$in),
-              (NOR GPRC:$in, GPRC:$in)>;
+def NOT : Pat<(not i32:$in),
+              (NOR $in, $in)>;
 
 // ADD an arbitrary immediate.
-def : Pat<(add GPRC:$in, imm:$imm),
-          (ADDIS (ADDI GPRC:$in, (LO16 imm:$imm)), (HA16 imm:$imm))>;
+def : Pat<(add i32:$in, imm:$imm),
+          (ADDIS (ADDI $in, (LO16 imm:$imm)), (HA16 imm:$imm))>;
 // OR an arbitrary immediate.
-def : Pat<(or GPRC:$in, imm:$imm),
-          (ORIS (ORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
+def : Pat<(or i32:$in, imm:$imm),
+          (ORIS (ORI $in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
 // XOR an arbitrary immediate.
-def : Pat<(xor GPRC:$in, imm:$imm),
-          (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
+def : Pat<(xor i32:$in, imm:$imm),
+          (XORIS (XORI $in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
 // SUBFIC
-def : Pat<(sub  immSExt16:$imm, GPRC:$in),
-          (SUBFIC GPRC:$in, imm:$imm)>;
+def : Pat<(sub immSExt16:$imm, i32:$in),
+          (SUBFIC $in, imm:$imm)>;
 
 // SHL/SRL
-def : Pat<(shl GPRC:$in, (i32 imm:$imm)),
-          (RLWINM GPRC:$in, imm:$imm, 0, (SHL32 imm:$imm))>;
-def : Pat<(srl GPRC:$in, (i32 imm:$imm)),
-          (RLWINM GPRC:$in, (SRL32 imm:$imm), imm:$imm, 31)>;
+def : Pat<(shl i32:$in, (i32 imm:$imm)),
+          (RLWINM $in, imm:$imm, 0, (SHL32 imm:$imm))>;
+def : Pat<(srl i32:$in, (i32 imm:$imm)),
+          (RLWINM $in, (SRL32 imm:$imm), imm:$imm, 31)>;
 
 // ROTL
-def : Pat<(rotl GPRC:$in, GPRC:$sh),
-          (RLWNM GPRC:$in, GPRC:$sh, 0, 31)>;
-def : Pat<(rotl GPRC:$in, (i32 imm:$imm)),
-          (RLWINM GPRC:$in, imm:$imm, 0, 31)>;
+def : Pat<(rotl i32:$in, i32:$sh),
+          (RLWNM $in, $sh, 0, 31)>;
+def : Pat<(rotl i32:$in, (i32 imm:$imm)),
+          (RLWINM $in, imm:$imm, 0, 31)>;
 
 // RLWNM
-def : Pat<(and (rotl GPRC:$in, GPRC:$sh), maskimm32:$imm),
-          (RLWNM GPRC:$in, GPRC:$sh, (MB maskimm32:$imm), (ME maskimm32:$imm))>;
+def : Pat<(and (rotl i32:$in, i32:$sh), maskimm32:$imm),
+          (RLWNM $in, $sh, (MB maskimm32:$imm), (ME maskimm32:$imm))>;
 
 // Calls
 def : Pat<(PPCcall (i32 tglobaladdr:$dst)),
@@ -1589,28 +1589,28 @@ def : Pat<(PPChi tjumptable:$in, 0), (LIS tjumptable:$in)>;
 def : Pat<(PPClo tjumptable:$in, 0), (LI tjumptable:$in)>;
 def : Pat<(PPChi tblockaddress:$in, 0), (LIS tblockaddress:$in)>;
 def : Pat<(PPClo tblockaddress:$in, 0), (LI tblockaddress:$in)>;
-def : Pat<(PPChi tglobaltlsaddr:$g, GPRC:$in),
-          (ADDIS GPRC:$in, tglobaltlsaddr:$g)>;
-def : Pat<(PPClo tglobaltlsaddr:$g, GPRC:$in),
-          (ADDIL GPRC:$in, tglobaltlsaddr:$g)>;
-def : Pat<(add GPRC:$in, (PPChi tglobaladdr:$g, 0)),
-          (ADDIS GPRC:$in, tglobaladdr:$g)>;
-def : Pat<(add GPRC:$in, (PPChi tconstpool:$g, 0)),
-          (ADDIS GPRC:$in, tconstpool:$g)>;
-def : Pat<(add GPRC:$in, (PPChi tjumptable:$g, 0)),
-          (ADDIS GPRC:$in, tjumptable:$g)>;
-def : Pat<(add GPRC:$in, (PPChi tblockaddress:$g, 0)),
-          (ADDIS GPRC:$in, tblockaddress:$g)>;
+def : Pat<(PPChi tglobaltlsaddr:$g, i32:$in),
+          (ADDIS $in, tglobaltlsaddr:$g)>;
+def : Pat<(PPClo tglobaltlsaddr:$g, i32:$in),
+          (ADDIL $in, tglobaltlsaddr:$g)>;
+def : Pat<(add i32:$in, (PPChi tglobaladdr:$g, 0)),
+          (ADDIS $in, tglobaladdr:$g)>;
+def : Pat<(add i32:$in, (PPChi tconstpool:$g, 0)),
+          (ADDIS $in, tconstpool:$g)>;
+def : Pat<(add i32:$in, (PPChi tjumptable:$g, 0)),
+          (ADDIS $in, tjumptable:$g)>;
+def : Pat<(add i32:$in, (PPChi tblockaddress:$g, 0)),
+          (ADDIS $in, tblockaddress:$g)>;
 
 // Standard shifts.  These are represented separately from the real shifts above
 // so that we can distinguish between shifts that allow 5-bit and 6-bit shift
 // amounts.
-def : Pat<(sra GPRC:$rS, GPRC:$rB),
-          (SRAW GPRC:$rS, GPRC:$rB)>;
-def : Pat<(srl GPRC:$rS, GPRC:$rB),
-          (SRW GPRC:$rS, GPRC:$rB)>;
-def : Pat<(shl GPRC:$rS, GPRC:$rB),
-          (SLW GPRC:$rS, GPRC:$rB)>;
+def : Pat<(sra i32:$rS, i32:$rB),
+          (SRAW $rS, $rB)>;
+def : Pat<(srl i32:$rS, i32:$rB),
+          (SRW $rS, $rB)>;
+def : Pat<(shl i32:$rS, i32:$rB),
+          (SLW $rS, $rB)>;
 
 def : Pat<(zextloadi1 iaddr:$src),
           (LBZ iaddr:$src)>;
@@ -1633,8 +1633,8 @@ def : Pat<(f64 (extloadf32 iaddr:$src)),
 def : Pat<(f64 (extloadf32 xaddr:$src)),
           (COPY_TO_REGCLASS (LFSX xaddr:$src), F8RC)>;
 
-def : Pat<(f64 (fextend F4RC:$src)),
-          (COPY_TO_REGCLASS F4RC:$src, F8RC)>;
+def : Pat<(f64 (fextend f32:$src)),
+          (COPY_TO_REGCLASS $src, F8RC)>;
 
 // Memory barriers
 def : Pat<(membarrier (i32 imm /*ll*/),

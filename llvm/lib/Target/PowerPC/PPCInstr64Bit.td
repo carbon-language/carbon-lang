@@ -709,8 +709,8 @@ def LDgotTprelL: Pseudo<(outs G8RC:$rD), (ins symbolLo64:$disp, G8RC:$reg),
                         [(set G8RC:$rD,
                           (PPCldGotTprelL tglobaltlsaddr:$disp, G8RC:$reg))]>,
                  isPPC64;
-def : Pat<(PPCaddTls G8RC:$in, tglobaltlsaddr:$g),
-          (ADD8TLS G8RC:$in, tglobaltlsaddr:$g)>;
+def : Pat<(PPCaddTls i64:$in, tglobaltlsaddr:$g),
+          (ADD8TLS $in, tglobaltlsaddr:$g)>;
 def ADDIStlsgdHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolHi64:$disp),
                          "#ADDIStlsgdHA",
                          [(set G8RC:$rD,
@@ -831,23 +831,23 @@ def STDUX : XForm_8<31, 181, (outs ptr_rc_nor0:$ea_res), (ins G8RC:$rS, memrr:$d
 // Patterns to match the pre-inc stores.  We can't put the patterns on
 // the instruction definitions directly as ISel wants the address base
 // and offset to be separate operands, not a single complex operand.
-def : Pat<(pre_truncsti8 G8RC:$rS, ptr_rc_nor0:$ptrreg, iaddroff:$ptroff),
-          (STBU8 G8RC:$rS, iaddroff:$ptroff, ptr_rc_nor0:$ptrreg)>;
-def : Pat<(pre_truncsti16 G8RC:$rS, ptr_rc_nor0:$ptrreg, iaddroff:$ptroff),
-          (STHU8 G8RC:$rS, iaddroff:$ptroff, ptr_rc_nor0:$ptrreg)>;
-def : Pat<(pre_truncsti32 G8RC:$rS, ptr_rc_nor0:$ptrreg, iaddroff:$ptroff),
-          (STWU8 G8RC:$rS, iaddroff:$ptroff, ptr_rc_nor0:$ptrreg)>;
-def : Pat<(aligned4pre_store G8RC:$rS, ptr_rc_nor0:$ptrreg, iaddroff:$ptroff),
-          (STDU G8RC:$rS, iaddroff:$ptroff, ptr_rc_nor0:$ptrreg)>;
+def : Pat<(pre_truncsti8 i64:$rS, iPTR:$ptrreg, iaddroff:$ptroff),
+          (STBU8 $rS, iaddroff:$ptroff, $ptrreg)>;
+def : Pat<(pre_truncsti16 i64:$rS, iPTR:$ptrreg, iaddroff:$ptroff),
+          (STHU8 $rS, iaddroff:$ptroff, $ptrreg)>;
+def : Pat<(pre_truncsti32 i64:$rS, iPTR:$ptrreg, iaddroff:$ptroff),
+          (STWU8 $rS, iaddroff:$ptroff, $ptrreg)>;
+def : Pat<(aligned4pre_store i64:$rS, iPTR:$ptrreg, iaddroff:$ptroff),
+          (STDU $rS, iaddroff:$ptroff, $ptrreg)>;
 
-def : Pat<(pre_truncsti8 G8RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff),
-          (STBUX8 G8RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff)>;
-def : Pat<(pre_truncsti16 G8RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff),
-          (STHUX8 G8RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff)>;
-def : Pat<(pre_truncsti32 G8RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff),
-          (STWUX8 G8RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff)>;
-def : Pat<(pre_store G8RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff),
-          (STDUX G8RC:$rS, ptr_rc_nor0:$ptrreg, ptr_rc:$ptroff)>;
+def : Pat<(pre_truncsti8 i64:$rS, iPTR:$ptrreg, iPTR:$ptroff),
+          (STBUX8 $rS, $ptrreg, $ptroff)>;
+def : Pat<(pre_truncsti16 i64:$rS, iPTR:$ptrreg, iPTR:$ptroff),
+          (STHUX8 $rS, $ptrreg, $ptroff)>;
+def : Pat<(pre_truncsti32 i64:$rS, iPTR:$ptrreg, iPTR:$ptroff),
+          (STWUX8 $rS, $ptrreg, $ptroff)>;
+def : Pat<(pre_store i64:$rS, iPTR:$ptrreg, iPTR:$ptroff),
+          (STDUX $rS, $ptrreg, $ptroff)>;
 
 
 //===----------------------------------------------------------------------===//
@@ -870,13 +870,13 @@ def FCTIDZ : XForm_26<63, 815, (outs F8RC:$frD), (ins F8RC:$frB),
 //
 
 // Extensions and truncates to/from 32-bit regs.
-def : Pat<(i64 (zext GPRC:$in)),
-          (RLDICL (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GPRC:$in, sub_32),
+def : Pat<(i64 (zext i32:$in)),
+          (RLDICL (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $in, sub_32),
                   0, 32)>;
-def : Pat<(i64 (anyext GPRC:$in)),
-          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GPRC:$in, sub_32)>;
-def : Pat<(i32 (trunc G8RC:$in)),
-          (EXTRACT_SUBREG G8RC:$in, sub_32)>;
+def : Pat<(i64 (anyext i32:$in)),
+          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $in, sub_32)>;
+def : Pat<(i32 (trunc i64:$in)),
+          (EXTRACT_SUBREG $in, sub_32)>;
 
 // Extending loads with i64 targets.
 def : Pat<(zextloadi1 iaddr:$src),
@@ -903,24 +903,24 @@ def : Pat<(extloadi32 xaddr:$src),
 // Standard shifts.  These are represented separately from the real shifts above
 // so that we can distinguish between shifts that allow 6-bit and 7-bit shift
 // amounts.
-def : Pat<(sra G8RC:$rS, GPRC:$rB),
-          (SRAD G8RC:$rS, GPRC:$rB)>;
-def : Pat<(srl G8RC:$rS, GPRC:$rB),
-          (SRD G8RC:$rS, GPRC:$rB)>;
-def : Pat<(shl G8RC:$rS, GPRC:$rB),
-          (SLD G8RC:$rS, GPRC:$rB)>;
+def : Pat<(sra i64:$rS, i32:$rB),
+          (SRAD $rS, $rB)>;
+def : Pat<(srl i64:$rS, i32:$rB),
+          (SRD $rS, $rB)>;
+def : Pat<(shl i64:$rS, i32:$rB),
+          (SLD $rS, $rB)>;
 
 // SHL/SRL
-def : Pat<(shl G8RC:$in, (i32 imm:$imm)),
-          (RLDICR G8RC:$in, imm:$imm, (SHL64 imm:$imm))>;
-def : Pat<(srl G8RC:$in, (i32 imm:$imm)),
-          (RLDICL G8RC:$in, (SRL64 imm:$imm), imm:$imm)>;
+def : Pat<(shl i64:$in, (i32 imm:$imm)),
+          (RLDICR $in, imm:$imm, (SHL64 imm:$imm))>;
+def : Pat<(srl i64:$in, (i32 imm:$imm)),
+          (RLDICL $in, (SRL64 imm:$imm), imm:$imm)>;
 
 // ROTL
-def : Pat<(rotl G8RC:$in, GPRC:$sh),
-          (RLDCL G8RC:$in, GPRC:$sh, 0)>;
-def : Pat<(rotl G8RC:$in, (i32 imm:$imm)),
-          (RLDICL G8RC:$in, imm:$imm, 0)>;
+def : Pat<(rotl i64:$in, i32:$sh),
+          (RLDCL $in, $sh, 0)>;
+def : Pat<(rotl i64:$in, (i32 imm:$imm)),
+          (RLDICL $in, imm:$imm, 0)>;
 
 // Hi and Lo for Darwin Global Addresses.
 def : Pat<(PPChi tglobaladdr:$in, 0), (LIS8 tglobaladdr:$in)>;
@@ -931,18 +931,18 @@ def : Pat<(PPChi tjumptable:$in , 0), (LIS8 tjumptable:$in)>;
 def : Pat<(PPClo tjumptable:$in , 0), (LI8  tjumptable:$in)>;
 def : Pat<(PPChi tblockaddress:$in, 0), (LIS8 tblockaddress:$in)>;
 def : Pat<(PPClo tblockaddress:$in, 0), (LI8  tblockaddress:$in)>;
-def : Pat<(PPChi tglobaltlsaddr:$g, G8RC:$in),
-          (ADDIS8 G8RC:$in, tglobaltlsaddr:$g)>;
-def : Pat<(PPClo tglobaltlsaddr:$g, G8RC:$in),
-          (ADDI8L G8RC:$in, tglobaltlsaddr:$g)>;
-def : Pat<(add G8RC:$in, (PPChi tglobaladdr:$g, 0)),
-          (ADDIS8 G8RC:$in, tglobaladdr:$g)>;
-def : Pat<(add G8RC:$in, (PPChi tconstpool:$g, 0)),
-          (ADDIS8 G8RC:$in, tconstpool:$g)>;
-def : Pat<(add G8RC:$in, (PPChi tjumptable:$g, 0)),
-          (ADDIS8 G8RC:$in, tjumptable:$g)>;
-def : Pat<(add G8RC:$in, (PPChi tblockaddress:$g, 0)),
-          (ADDIS8 G8RC:$in, tblockaddress:$g)>;
+def : Pat<(PPChi tglobaltlsaddr:$g, i64:$in),
+          (ADDIS8 $in, tglobaltlsaddr:$g)>;
+def : Pat<(PPClo tglobaltlsaddr:$g, i64:$in),
+          (ADDI8L $in, tglobaltlsaddr:$g)>;
+def : Pat<(add i64:$in, (PPChi tglobaladdr:$g, 0)),
+          (ADDIS8 $in, tglobaladdr:$g)>;
+def : Pat<(add i64:$in, (PPChi tconstpool:$g, 0)),
+          (ADDIS8 $in, tconstpool:$g)>;
+def : Pat<(add i64:$in, (PPChi tjumptable:$g, 0)),
+          (ADDIS8 $in, tjumptable:$g)>;
+def : Pat<(add i64:$in, (PPChi tblockaddress:$g, 0)),
+          (ADDIS8 $in, tblockaddress:$g)>;
 
 // Patterns to match r+r indexed loads and stores for
 // addresses without at least 4-byte alignment.
@@ -950,6 +950,6 @@ def : Pat<(i64 (unaligned4sextloadi32 xoaddr:$src)),
           (LWAX xoaddr:$src)>;
 def : Pat<(i64 (unaligned4load xoaddr:$src)),
           (LDX xoaddr:$src)>;
-def : Pat<(unaligned4store G8RC:$rS, xoaddr:$dst),
-          (STDX G8RC:$rS, xoaddr:$dst)>;
+def : Pat<(unaligned4store i64:$rS, xoaddr:$dst),
+          (STDX $rS, xoaddr:$dst)>;
 
