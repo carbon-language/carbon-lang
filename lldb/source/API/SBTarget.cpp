@@ -865,13 +865,13 @@ SBTarget::Attach (SBAttachInfo &sb_attach_info, SBError& error)
         if (process_sp)
         {
             ProcessAttachInfo &attach_info = sb_attach_info.ref();
-            lldb::pid_t attach_pid = attach_info.GetProcessID();
-            if (attach_pid != LLDB_INVALID_PROCESS_ID)
+            if (attach_info.ProcessIDIsValid() && !attach_info.UserIDIsValid())
             {
                 PlatformSP platform_sp = target_sp->GetPlatform();
                 // See if we can pre-verify if a process exists or not
                 if (platform_sp && platform_sp->IsConnected())
                 {
+                    lldb::pid_t attach_pid = attach_info.GetProcessID();
                     ProcessInstanceInfo instance_info;
                     if (platform_sp->GetProcessInfo(attach_pid, instance_info))
                     {
