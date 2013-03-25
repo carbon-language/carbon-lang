@@ -147,6 +147,12 @@ check_cxx_compiler_flag(-Wno-c99-extensions SUPPORTS_NO_C99_EXTENSIONS_FLAG)
 if(SUPPORTS_NO_C99_EXTENSIONS_FLAG)
   list(APPEND SANITIZER_COMMON_CFLAGS -Wno-c99-extensions)
 endif()
+# Sanitizer may not have libstdc++, so we can have problems with virtual
+# destructors.
+check_cxx_compiler_flag(-Wno-non-virtual-dtor SUPPORTS_NO_NON_VIRTUAL_DTOR_FLAG)
+if (SUPPORTS_NO_NON_VIRTUAL_DTOR_FLAG)
+  list(APPEND SANITIZER_COMMON_CFLAGS -Wno-non-virtual-dtor)
+endif()
 
 # Setup min Mac OS X version.
 if(APPLE)

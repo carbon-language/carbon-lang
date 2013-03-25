@@ -22,11 +22,10 @@ ThreadContextBase::ThreadContextBase(u32 tid)
   name[0] = '\0';
 }
 
-#ifndef SANITIZER_GO
 ThreadContextBase::~ThreadContextBase() {
+  // ThreadContextBase should never be deleted.
   CHECK(0);
 }
-#endif
 
 void ThreadContextBase::SetName(const char *new_name) {
   name[0] = '\0';
