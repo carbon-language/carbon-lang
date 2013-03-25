@@ -12,9 +12,9 @@ function(add_tsan_unittest testname)
     add_unittest(TsanUnitTests ${testname} ${ARGN})
     # Link with TSan runtime.
     target_link_libraries(${testname} clang_rt.tsan-x86_64)
-    # Build tests with PIE and debug info.
-    set_property(TARGET ${testname} APPEND_STRING
-      PROPERTY COMPILE_FLAGS " -fPIE -g")
+    # Compile tests with the same flags as TSan runtime.
+    set_target_compile_flags(${testname} ${TSAN_CFLAGS})
+    # Link tests with -pie.
     set_property(TARGET ${testname} APPEND_STRING
       PROPERTY LINK_FLAGS " -pie")
   endif()
