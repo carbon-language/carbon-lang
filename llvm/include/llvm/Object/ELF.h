@@ -2709,7 +2709,7 @@ static inline error_code GetELFSymbolVersion(const ObjectFile *Obj,
 /// REF : http://www.sco.com/developers/gabi/latest/ch5.dynamic.html#hash
 static inline unsigned elf_hash(StringRef &symbolName) {
   unsigned h = 0, g;
-  for (unsigned i = 0; i < symbolName.size(); i++) {
+  for (unsigned i = 0, j = symbolName.size(); i < j; i++) {
     h = (h << 4) + symbolName[i];
     g = h & 0xf0000000L;
     if (g != 0)
