@@ -134,6 +134,27 @@ INLINE u16 atomic_exchange(volatile atomic_uint16_t *a,
   return v;
 }
 
+INLINE bool atomic_compare_exchange_strong(volatile atomic_uint8_t *a,
+                                           u8 *cmp,
+                                           u8 xchg,
+                                           memory_order mo) {
+  (void)mo;
+  DCHECK(!((uptr)a % sizeof(*a)));
+  u8 cmpv = *cmp;
+  u8 prev;
+  __asm {
+    mov al, cmpv
+    mov ecx, a
+    mov dl, xchg
+    lock cmpxchg [ecx], dl
+    mov prev, al
+  }
+  if (prev == cmpv)
+    return true;
+  *cmp = prev;
+  return false;
+}
+
 INLINE bool atomic_compare_exchange_strong(volatile atomic_uintptr_t *a,
                                            uptr *cmp,
                                            uptr xchg,
@@ -149,9 +170,9 @@ INLINE bool atomic_compare_exchange_strong(volatile atomic_uintptr_t *a,
 
 template<typename T>
 INLINE bool atomic_compare_exchange_weak(volatile T *a,
-                                           typename T::Type *cmp,
-                                           typename T::Type xchg,
-                                           memory_order mo) {
+                                         typename T::Type *cmp,
+                                         typename T::Type xchg,
+                                         memory_order mo) {
   return atomic_compare_exchange_strong(a, cmp, xchg, mo);
 }
 
