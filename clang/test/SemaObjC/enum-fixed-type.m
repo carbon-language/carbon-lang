@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -pedantic -verify %s
 
 #if !__has_feature(objc_fixed_enum)
 #  error Enumerations with a fixed underlying type are not supported
@@ -28,9 +28,9 @@ void test() {
 
 // <rdar://10381507>
 typedef enum : long { Foo } IntegerEnum;
-int arr[(sizeof(typeof(Foo)) == sizeof(typeof(IntegerEnum))) - 1];
-int arr1[(sizeof(typeof(Foo)) == sizeof(typeof(long))) - 1];
-int arr2[(sizeof(typeof(IntegerEnum)) == sizeof(typeof(long))) - 1];
+int arr[(sizeof(__typeof__(Foo)) == sizeof(__typeof__(IntegerEnum)))? 1 : -1];
+int arr1[(sizeof(__typeof__(Foo)) == sizeof(__typeof__(long)))? 1 : -1];
+int arr2[(sizeof(__typeof__(IntegerEnum)) == sizeof(__typeof__(long)))? 1 : -1];
 
 // <rdar://problem/10760113>
 typedef enum : long long { Bar = -1 } LongLongEnum;
