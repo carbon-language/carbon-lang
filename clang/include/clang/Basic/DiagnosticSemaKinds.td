@@ -4057,6 +4057,8 @@ def err_subscript_function_type : Error<
   "subscript of pointer to function type %0">;
 def err_subscript_incomplete_type : Error<
   "subscript of pointer to incomplete type %0">;
+def err_dereference_incomplete_type : Error<
+  "dereference of pointer to incomplete type %0">;
 def ext_gnu_subscript_void_type : Extension<
   "subscript of a pointer to void is a GNU extension">, InGroup<PointerArith>;
 def err_typecheck_member_reference_struct_union : Error<

@@ -123,3 +123,10 @@ void test13(void) {
   void *esp;
   __asm__ volatile ("mov %%esp, %o" : "=r"(esp) : : ); // expected-error {{invalid % escape in inline assembly string}}
 }
+
+// <rdar://problem/12700799>
+struct S;
+void test14(struct S *s) {
+  __asm("": : "a"(*s)); // expected-error {{dereference of pointer to incomplete type 'struct S'}}
+  __asm("": "=a" (*s) :); // expected-error {{dereference of pointer to incomplete type 'struct S'}}
+}

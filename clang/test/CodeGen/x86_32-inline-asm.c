@@ -22,10 +22,3 @@ int func1() {
   unsigned int port;
   __asm__ volatile("outb %0, %w1" : : "a" (data), "Nd" (port)); // No error expected.
 }
-
-struct S;
-void func2(struct S *s) {
-  __asm__ volatile(""
-                   :
-                   : "a" (*s));
-}
