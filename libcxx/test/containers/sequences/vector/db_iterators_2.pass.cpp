@@ -9,7 +9,7 @@
 
 // <vector>
 
-// Compare iterators from different containers with == or !=.
+// Compare iterators from different containers with <.
 
 #if _LIBCPP_DEBUG2 >= 1
 
@@ -35,7 +35,7 @@ int main()
     typedef std::vector<T> C;
     C c1;
     C c2;
-    bool b = c1.begin() != c2.begin();
+    bool b = c1.begin() < c2.begin();
     assert(false);
 }
 

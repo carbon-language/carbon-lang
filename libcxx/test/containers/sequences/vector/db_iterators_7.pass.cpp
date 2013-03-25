@@ -9,7 +9,7 @@
 
 // <vector>
 
-// Compare iterators from different containers with == or !=.
+// Increment iterator past end.
 
 #if _LIBCPP_DEBUG2 >= 1
 
@@ -33,9 +33,11 @@ int main()
     std::set_terminate(f1);
     typedef int T;
     typedef std::vector<T> C;
-    C c1;
-    C c2;
-    bool b = c1.begin() != c2.begin();
+    C c(1);
+    C::iterator i = c.begin();
+    ++i;
+    assert(i == c.end());
+    ++i;
     assert(false);
 }
 
