@@ -1,7 +1,7 @@
 // Check the presense of interface symbols in compiled file.
 
 // RUN: %clang -fsanitize=address -O2 %s -o %t.exe
-// RUN: nm %t.exe | grep " T " | sed "s/.* T //" \
+// RUN: nm -D %t.exe | grep " T " | sed "s/.* T //" \
 // RUN:    | grep "__asan_" | sed "s/___asan_/__asan_/" \
 // RUN:    | grep -v "__asan_malloc_hook" \
 // RUN:    | grep -v "__asan_free_hook" \
