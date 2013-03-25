@@ -45,7 +45,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 #include <sys/stat.h>
-#include <sys/time.h>
+#include <time.h>
 
 using namespace clang;
 
