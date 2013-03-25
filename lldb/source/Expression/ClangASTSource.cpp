@@ -1469,12 +1469,15 @@ ClangASTSource::layoutRecordType(const RecordDecl *record,
     
     const ASTRecordLayout &record_layout(origin_record->getASTContext().getASTRecordLayout(origin_record.decl));
     
-    int field_idx = 0;
+    int field_idx = 0, field_count = record_layout.getFieldCount();
     
     for (RecordDecl::field_iterator fi = origin_record->field_begin(), fe = origin_record->field_end();
          fi != fe;
          ++fi)
     {
+        if (field_idx >= field_count)
+            return false; // Layout didn't go well.  Bail out.
+        
         uint64_t field_offset = record_layout.getFieldOffset(field_idx);
         
         origin_field_offsets.insert(std::pair<const FieldDecl *, uint64_t>(*fi, field_offset));
