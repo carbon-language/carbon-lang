@@ -248,21 +248,23 @@ template <class ELFT>
 error_code OutputELFWriter<ELFT>::buildOutput(const File &file) {
   buildChunks(file);
 
-  // Call the preFlight callbacks to modify the sections and the atoms
-  // contained in them, in anyway the targets may want
-  _layout->doPreFlight();
-
   // Create the default sections like the symbol table, string table, and the
   // section string table
   createDefaultSections();
 
+  // Set the Layout
+  _layout->assignSectionsToSegments();
+
+  // Create the dynamic table entries
   if (_targetInfo.isDynamic()) {
     _dynamicTable->createDefaultEntries();
     buildDynamicSymbolTable(file);
   }
 
-  // Set the Layout
-  _layout->assignSectionsToSegments();
+  // Call the preFlight callbacks to modify the sections and the atoms
+  // contained in them, in anyway the targets may want
+  _layout->doPreFlight();
+
   _layout->assignFileOffsets();
   _layout->assignVirtualAddress();
 

@@ -4,8 +4,8 @@ RUN: llvm-readobj %t1 > %t2
 RUN: FileCheck -check-prefix=DYNSYMS %s < %t2
 
 DYNSYMS: Dynamic Symbols:
-DYNSYMS: Name Type Address Size FileOffset Flags                     
-DYNSYMS: fn2 FUNC {{[0-9a-f]+}} {{[0-9a-f]+}} {{[0-9a-f]+}} global
-DYNSYMS: fn1 FUNC {{[0-9a-f]+}} {{[0-9a-f]+}} {{[0-9a-f]+}} global
-DYNSYMS: fn3 FUNC {{[0-9a-f]+}} {{[0-9a-f]+}} {{[0-9a-f]+}} global
+DYNSYMS: Name Type Section Address Size FileOffset Flags                     
+DYNSYMS: fn2 FUNC .text {{[0-9a-f]+}} {{[0-9a-f]+}} {{[0-9a-f]+}} global
+DYNSYMS: fn1 FUNC .text {{[0-9a-f]+}} {{[0-9a-f]+}} {{[0-9a-f]+}} global
+DYNSYMS: fn3 FUNC .text {{[0-9a-f]+}} {{[0-9a-f]+}} {{[0-9a-f]+}} global
 DYNSYMS: Total: 3

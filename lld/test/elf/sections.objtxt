@@ -17,8 +17,8 @@ READOBJ: File Format : ELF32-i386
 READOBJ: Arch        : i386
 READOBJ: Address Size: 32 bits
 READOBJ: Symbols
-READOBJ: baz FUNC   74 a   e8 global
-READOBJ: y   DATA 1004 4 2008 global
+READOBJ: baz FUNC .text   74 a   e8 global
+READOBJ: y   DATA .special 1004 4 2008 global
 
 ED: 'e_indent[EI_DATA]', 0x01
 ED: 'e_machine', 0x0003
