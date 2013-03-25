@@ -18,6 +18,10 @@
 #include <cstdlib>
 #include <cstring>
 
+#ifdef HAVE_SVN_VERSION_INC
+#  include "SVNVersion.inc"
+#endif
+
 namespace clang {
 
 std::string getClangRepositoryPath() {
