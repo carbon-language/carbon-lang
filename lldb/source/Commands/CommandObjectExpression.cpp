@@ -387,22 +387,23 @@ CommandObjectExpression::EvaluateExpression
                         result_valobj_sp->SetFormat (format);
 
                     ValueObject::DumpValueObjectOptions options;
-                    options.SetMaximumPointerDepth(m_varobj_options.ptr_depth)
-                    .SetMaximumDepth(m_varobj_options.max_depth)
-                    .SetShowTypes(m_varobj_options.show_types)
-                    .SetShowLocation(m_varobj_options.show_location)
-                    .SetUseObjectiveC(m_varobj_options.use_objc)
-                    .SetUseDynamicType(m_varobj_options.use_dynamic)
-                    .SetUseSyntheticValue(m_varobj_options.use_synth)
-                    .SetFlatOutput(m_varobj_options.flat_output)
-                    .SetOmitSummaryDepth(m_varobj_options.no_summary_depth)
-                    .SetIgnoreCap(m_varobj_options.ignore_cap)
-                    .SetFormat(format)
-                    .SetSummary()
-                    .SetShowSummary(!m_varobj_options.use_objc)
-                    .SetHideRootType(m_varobj_options.use_objc)
-                    .SetHideName(m_varobj_options.use_objc)
-                    .SetHideValue(m_varobj_options.use_objc);
+                    options.SetMaximumPointerDepth(m_varobj_options.ptr_depth);
+                    if (m_varobj_options.use_objc)
+                        options.SetShowSummary(false);
+                    else
+                        options.SetOmitSummaryDepth(m_varobj_options.no_summary_depth);
+                    options.SetMaximumDepth(m_varobj_options.max_depth)
+                           .SetShowTypes(m_varobj_options.show_types)
+                           .SetShowLocation(m_varobj_options.show_location)
+                           .SetUseObjectiveC(m_varobj_options.use_objc)
+                           .SetUseDynamicType(m_varobj_options.use_dynamic)
+                           .SetUseSyntheticValue(m_varobj_options.use_synth)
+                           .SetFlatOutput(m_varobj_options.flat_output)
+                           .SetIgnoreCap(m_varobj_options.ignore_cap)
+                           .SetFormat(format)
+                           .SetHideRootType(m_varobj_options.use_objc)
+                           .SetHideName(m_varobj_options.use_objc)
+                           .SetHideValue(m_varobj_options.use_objc);
                     
                     if (m_varobj_options.be_raw)
                         options.SetRawDisplay(true);
