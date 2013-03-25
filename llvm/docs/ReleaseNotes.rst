@@ -64,6 +64,12 @@ Non-comprehensive list of changes in this release
   attributes, which are useful for passing information to code generation. See
   :doc:`HowToUseAttributes` for more details.
 
+* TableGen's syntax for instruction selection patterns has been simplified.
+  Instead of specifying types indirectly with register classes, you should now
+  specify types directly in the input patterns. See ``SparcInstrInfo.td`` for
+  examples of the new syntax. The old syntax using register classes still
+  works, but it will be removed in a future LLVM release.
+
 * ... next change ...
 
 .. NOTE
