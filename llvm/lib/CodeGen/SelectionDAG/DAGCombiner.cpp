@@ -5835,14 +5835,25 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
                        DAG.getNode(ISD::FADD, N->getDebugLoc(), VT,
                                    N0.getOperand(1), N1));
 
+  // No FP constant should be created after legalization as Instruction
+  // Selection pass has hard time in dealing with FP constant.
+  //
+  // We don't need test this condition for transformation like following, as
+  // the DAG being transformed implies it is legal to take FP constant as
+  // operand.
+  // 
+  //  (fadd (fmul c, x), x) -> (fmul c+1, x)
+  // 
+  bool AllowNewFpConst = (Level < AfterLegalizeDAG);
+
   // If allow, fold (fadd (fneg x), x) -> 0.0
-  if (DAG.getTarget().Options.UnsafeFPMath &&
+  if (AllowNewFpConst && DAG.getTarget().Options.UnsafeFPMath &&
       N0.getOpcode() == ISD::FNEG && N0.getOperand(0) == N1) {
     return DAG.getConstantFP(0.0, VT);
   }
 
     // If allow, fold (fadd x, (fneg x)) -> 0.0
-  if (DAG.getTarget().Options.UnsafeFPMath &&
+  if (AllowNewFpConst && DAG.getTarget().Options.UnsafeFPMath &&
       N1.getOpcode() == ISD::FNEG && N1.getOperand(0) == N0) {
     return DAG.getConstantFP(0.0, VT);
   }
@@ -5944,7 +5955,7 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
       }
     }
 
-    if (N0.getOpcode() == ISD::FADD) {
+    if (N0.getOpcode() == ISD::FADD && AllowNewFpConst) {
       ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N0.getOperand(0));
       // (fadd (fadd x, x), x) -> (fmul 3.0, x)
       if (!CFP && N0.getOperand(0) == N0.getOperand(1) &&
@@ -5954,7 +5965,7 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
       }
     }
 
-    if (N1.getOpcode() == ISD::FADD) {
+    if (N1.getOpcode() == ISD::FADD && AllowNewFpConst) {
       ConstantFPSDNode *CFP10 = dyn_cast<ConstantFPSDNode>(N1.getOperand(0));
       // (fadd x, (fadd x, x)) -> (fmul 3.0, x)
       if (!CFP10 && N1.getOperand(0) == N1.getOperand(1) &&
@@ -5965,7 +5976,8 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
     }
 
     // (fadd (fadd x, x), (fadd x, x)) -> (fmul 4.0, x)
-    if (N0.getOpcode() == ISD::FADD && N1.getOpcode() == ISD::FADD &&
+    if (AllowNewFpConst &&
+        N0.getOpcode() == ISD::FADD && N1.getOpcode() == ISD::FADD &&
         N0.getOperand(0) == N0.getOperand(1) &&
         N1.getOperand(0) == N1.getOperand(1) &&
         N0.getOperand(0) == N1.getOperand(0)) {
