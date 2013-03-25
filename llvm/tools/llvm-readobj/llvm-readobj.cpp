@@ -39,13 +39,13 @@ static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input object>"), cl::init(""));
 
 static void dumpSymbolHeader() {
-  outs() << format("  %-32s", (const char*)"Name")
-         << format("  %-4s", (const char*)"Type")
-         << format("  %-16s", (const char*)"Address")
-         << format("  %-16s", (const char*)"Size")
-         << format("  %-16s", (const char*)"FileOffset")
-         << format("  %-26s", (const char*)"Flags")
-         << "\n";
+  outs() << format("  %-32s", (const char *)"Name")
+         << format("  %-4s", (const char *)"Type")
+         << format("  %-4s", (const char *)"Section")
+         << format("  %-16s", (const char *)"Address")
+         << format("  %-16s", (const char *)"Size")
+         << format("  %-16s", (const char *)"FileOffset")
+         << format("  %-26s", (const char *)"Flags") << "\n";
 }
 
 static void dumpSectionHeader() {
@@ -145,6 +145,14 @@ dumpSymbol(const SymbolRef &Sym, const ObjectFile *obj, bool IsDynamic) {
   checkError(Sym.getFlags(Flags), "SymbolRef.getFlags() failed");
   std::string FullName = Name;
 
+  llvm::object::section_iterator symSection(obj->begin_sections());
+  Sym.getSection(symSection);
+  StringRef sectionName;
+
+  if (symSection != obj->end_sections())
+    checkError(symSection->getName(sectionName),
+               "SectionRef::getName() failed");
+
   // If this is a dynamic symbol from an ELF object, append
   // the symbol's version to the name.
   if (IsDynamic && obj->isELF()) {
@@ -160,11 +168,10 @@ dumpSymbol(const SymbolRef &Sym, const ObjectFile *obj, bool IsDynamic) {
   // format() can't handle StringRefs
   outs() << format("  %-32s", FullName.c_str())
          << format("  %-4s", getTypeStr(Type))
-         << format("  %16" PRIx64, Address)
-         << format("  %16" PRIx64, Size)
-         << format("  %16" PRIx64, FileOffset)
-         << "  " << getSymbolFlagStr(Flags)
-         << "\n";
+         << format("  %-32s", std::string(sectionName).c_str())
+         << format("  %16" PRIx64, Address) << format("  %16" PRIx64, Size)
+         << format("  %16" PRIx64, FileOffset) << "  "
+         << getSymbolFlagStr(Flags) << "\n";
 }
 
 static void dumpStaticSymbol(const SymbolRef &Sym, const ObjectFile *obj) {

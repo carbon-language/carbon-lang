@@ -19,37 +19,37 @@ ELF32:Address Size: 32 bits
 ELF32:Load Name   : libfoo.so
 
 ELF:Symbols:
-ELF:  Name                   Type            Address        Size           FileOffset     Flags
-ELF:  .dynsym                DBG             {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
-ELF:  .dynstr                DBG             {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
-ELF:  .text                  DBG             {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
-ELF:  .eh_frame              DBG             {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
-ELF:  .tdata                 DBG             {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
-ELF:  .dynamic               DBG             {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
-ELF:  .got.plt               DBG             {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
-ELF:  .data                  DBG             {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
-ELF:  .bss                   DBG             {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
-ELF:  shared.ll              FILE            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  absolute,formatspecific
-ELF:  local_func             FUNC            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}
-ELF:  _GLOBAL_OFFSET_TABLE_  DATA            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  absolute
-ELF:  _DYNAMIC               DATA            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  absolute
-ELF:  common_sym             DATA            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global
-ELF:  tls_sym                DATA            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global,threadlocal
-ELF:  defined_sym            DATA            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global
-ELF:  __bss_start            ?               {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global,absolute
-ELF:  _end                   ?               {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global,absolute
-ELF:  global_func            FUNC            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global
-ELF:  _edata                 ?               {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global,absolute
+ELF:  Name                   Type    Section          Address        Size           FileOffset     Flags
+ELF:  .dynsym                DBG     .dynsym          {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
+ELF:  .dynstr                DBG     .dynstr          {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
+ELF:  .text                  DBG     .text            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
+ELF:  .eh_frame              DBG     .eh_frame        {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
+ELF:  .tdata                 DBG     .tdata           {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
+ELF:  .dynamic               DBG     .dynamic         {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
+ELF:  .got.plt               DBG     .got.plt         {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
+ELF:  .data                  DBG     .data            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
+ELF:  .bss                   DBG     .bss             {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
+ELF:  shared.ll              FILE                     {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  absolute,formatspecific
+ELF:  local_func             FUNC    .text            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}
+ELF:  _GLOBAL_OFFSET_TABLE_  DATA                     {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  absolute
+ELF:  _DYNAMIC               DATA                     {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  absolute
+ELF:  common_sym             DATA    .bss             {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global
+ELF:  tls_sym                DATA    .tdata           {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global,threadlocal
+ELF:  defined_sym            DATA    .data            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global
+ELF:  __bss_start            ?                        {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global,absolute
+ELF:  _end                   ?                        {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global,absolute
+ELF:  global_func            FUNC    .text            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global
+ELF:  _edata                 ?                        {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global,absolute
 ELF:  Total: 21
 
 ELF:Dynamic Symbols:
-ELF:  Name                   Type            Address        Size           FileOffset     Flags
-ELF:  common_sym             DATA            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global
-ELF:  tls_sym                DATA            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global,threadlocal
-ELF:  defined_sym            DATA            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global
+ELF:  Name                   Type   Section  Address        Size           FileOffset     Flags
+ELF:  common_sym             DATA   .bss     {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global
+ELF:  tls_sym                DATA   .tdata   {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global,threadlocal
+ELF:  defined_sym            DATA   .data    {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global
 ELF:  __bss_start            ?               {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global,absolute
 ELF:  _end                   ?               {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global,absolute
-ELF:  global_func            FUNC            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global
+ELF:  global_func            FUNC   .text    {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global
 ELF:  _edata                 ?               {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global,absolute
 ELF:  Total: {{[0-9a-f]+}}
 
