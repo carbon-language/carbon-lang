@@ -2706,7 +2706,7 @@ static inline error_code GetELFSymbolVersion(const ObjectFile *Obj,
 
 /// This function returns the hash value for a symbol in the .dynsym section
 /// Name of the API remains consistent as specified in the libelf
-/// REF : http://eternallyconfuzzled.com/tuts/algorithms/jsw_tut_hashing.aspx
+/// REF : http://www.sco.com/developers/gabi/latest/ch5.dynamic.html#hash
 static inline unsigned elf_hash(StringRef &symbolName) {
   unsigned h = 0, g;
   for (unsigned i = 0; i < symbolName.size(); i++) {
