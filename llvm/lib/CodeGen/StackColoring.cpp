@@ -577,7 +577,7 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
           SlotIndex Index = Indexes->getInstructionIndex(I);
           LiveInterval *Interval = Intervals[FromSlot];
           assert(Interval->find(Index) != Interval->end() &&
-               "Found instruction usage outside of live range.");
+                 "Found instruction usage outside of live range.");
         }
 #endif
 
@@ -741,9 +741,9 @@ bool StackColoring::runOnMachineFunction(MachineFunction &Func) {
   std::stable_sort(SortedSlots.begin(), SortedSlots.end(),
                    SlotSizeSorter(MFI));
 
-  bool Chanded = true;
-  while (Chanded) {
-    Chanded = false;
+  bool Changed = true;
+  while (Changed) {
+    Changed = false;
     for (unsigned I = 0; I < NumSlots; ++I) {
       if (SortedSlots[I] == -1)
         continue;
@@ -760,7 +760,7 @@ bool StackColoring::runOnMachineFunction(MachineFunction &Func) {
 
         // Merge disjoint slots.
         if (!First->overlaps(*Second)) {
-          Chanded = true;
+          Changed = true;
           First->MergeRangesInAsValue(*Second, First->getValNumInfo(0));
           SlotRemap[SecondSlot] = FirstSlot;
           SortedSlots[J] = -1;
