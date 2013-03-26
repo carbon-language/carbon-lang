@@ -228,6 +228,12 @@ protected:
                 const char *arg_cstr;
                 for (int arg_idx = 0; (arg_cstr = command.GetArgumentAtIndex(arg_idx)) != NULL; ++arg_idx)
                 {
+                    // in most LLDB commands we accept $rbx as the name for register RBX - and here we would
+                    // reject it and non-existant. we should be more consistent towards the user and allow them
+                    // to say reg read $rbx - internally, however, we should be strict and not allow ourselves
+                    // to call our registers $rbx in our own API
+                    if (*arg_cstr == '$')
+                        arg_cstr = arg_cstr+1;
                     reg_info = reg_ctx->GetRegisterInfoByName(arg_cstr);
 
                     if (reg_info)
@@ -410,6 +416,15 @@ protected:
         {
             const char *reg_name = command.GetArgumentAtIndex(0);
             const char *value_str = command.GetArgumentAtIndex(1);
+            
+            
+            // in most LLDB commands we accept $rbx as the name for register RBX - and here we would
+            // reject it and non-existant. we should be more consistent towards the user and allow them
+            // to say reg write $rbx - internally, however, we should be strict and not allow ourselves
+            // to call our registers $rbx in our own API
+            if (reg_name && *reg_name == '$')
+                reg_name = reg_name+1;
+            
             const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoByName(reg_name);
 
             if (reg_info)
