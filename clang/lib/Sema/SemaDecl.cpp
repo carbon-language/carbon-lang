@@ -7097,6 +7097,14 @@ namespace {
       Visit(Base);
     }
 
+    void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
+      if (E->getNumArgs() > 0)
+        if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E->getArg(0)))
+          HandleDeclRefExpr(DRE);
+
+      Inherited::VisitCXXOperatorCallExpr(E);
+    }
+
     void VisitUnaryOperator(UnaryOperator *E) {
       // For POD record types, addresses of its own members are well-defined.
       if (E->getOpcode() == UO_AddrOf && isRecordType &&
