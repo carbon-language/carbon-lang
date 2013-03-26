@@ -24,9 +24,10 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		26B902E51700FA8D00EFDCE2 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C86C5C616F7A37800844407 /* LLDB.framework */; };
+		26B902E61700FAE800EFDCE2 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C86C5C616F7A37800844407 /* LLDB.framework */; };
 		26DBAD6216FA63F0008243D2 /* lldb_perf_clang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DBAD4916FA637D008243D2 /* lldb_perf_clang.cpp */; };
 		26DBAD6316FA66DC008243D2 /* liblldbperf.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1E373916F4035D00FF10BB /* liblldbperf.a */; };
-		26DBAD6416FA66E0008243D2 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 264B3DE816F7E47600D1E7AB /* LLDB.framework */; };
 		26DBAD6516FA66EA008243D2 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1E37DB16F7A03900FF10BB /* CoreFoundation.framework */; };
 		26DF762916FBCE7100B4CC2E /* Results.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DF762716FBCE7100B4CC2E /* Results.cpp */; };
 		26DF762A16FBCE7100B4CC2E /* Results.h in Headers */ = {isa = PBXBuildFile; fileRef = 26DF762816FBCE7100B4CC2E /* Results.h */; };
@@ -122,6 +123,20 @@
 			proxyType = 2;
 			remoteGlobalIDString = EDE274EC14EDCE1F005B0F75;
 			remoteInfo = launcherRootXPCService;
+		};
+		26B902D61700F9BD00EFDCE2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C86C5C316F7A35000844407 /* lldb.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 26680206115FD0ED008E1FE4;
+			remoteInfo = LLDB;
+		};
+		26B902E21700F9CC00EFDCE2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C1E373116F4035D00FF10BB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4C1E373816F4035D00FF10BB;
+			remoteInfo = lldbperf;
 		};
 		4C1E379016F40BCD00FF10BB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -241,9 +256,7 @@
 		4C1E37B416F79E4600FF10BB /* formatters.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = formatters.cpp; sourceTree = "<group>"; };
 		4C1E37BA16F79E9D00FF10BB /* lldb-perf-formatters */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-perf-formatters"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C1E37DB16F7A03900FF10BB /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
-		4C1E37DC16F7A03900FF10BB /* LLDB.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LLDB.framework; path = "tools/lldb-perf/../../build/Debug/LLDB.framework"; sourceTree = "<group>"; };
 		4C86C5C316F7A35000844407 /* lldb.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = lldb.xcodeproj; path = ../../lldb.xcodeproj; sourceTree = "<group>"; };
-		4C86C5C416F7A36A00844407 /* LLDB.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LLDB.framework; path = build/Debug/LLDB.framework; sourceTree = "<group>"; };
 		4C86C5C616F7A37800844407 /* LLDB.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LLDB.framework; path = build/Debug/LLDB.framework; sourceTree = "<group>"; };
 		4C86C5D116F7CC8900844407 /* format-tester */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "format-tester"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4CE3705416FB6FA100BFD501 /* lldb-perf-step */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-perf-step"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -257,8 +270,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26B902E61700FAE800EFDCE2 /* LLDB.framework in Frameworks */,
 				26DBAD6516FA66EA008243D2 /* CoreFoundation.framework in Frameworks */,
-				26DBAD6416FA66E0008243D2 /* LLDB.framework in Frameworks */,
 				26DBAD6316FA66DC008243D2 /* liblldbperf.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -301,6 +314,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26B902E51700FA8D00EFDCE2 /* LLDB.framework in Frameworks */,
 				4CE3707716FB704B00BFD501 /* CoreFoundation.framework in Frameworks */,
 				4CE3707616FB704300BFD501 /* LLDB.framework in Frameworks */,
 				4CE3707516FB703B00BFD501 /* liblldbperf.a in Frameworks */,
@@ -439,9 +453,7 @@
 			isa = PBXGroup;
 			children = (
 				4C86C5C616F7A37800844407 /* LLDB.framework */,
-				4C86C5C416F7A36A00844407 /* LLDB.framework */,
 				4C1E37DB16F7A03900FF10BB /* CoreFoundation.framework */,
-				4C1E37DC16F7A03900FF10BB /* LLDB.framework */,
 			);
 			name = Frameworks;
 			path = ../..;
@@ -510,6 +522,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				26B902E31700F9CC00EFDCE2 /* PBXTargetDependency */,
 			);
 			name = "lldb-perf-clang";
 			productName = lldb_perf_clang;
@@ -527,6 +540,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				26B902D71700F9BD00EFDCE2 /* PBXTargetDependency */,
 			);
 			name = lldbperf;
 			productName = lldbperf;
@@ -781,6 +795,16 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		26B902D71700F9BD00EFDCE2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = LLDB;
+			targetProxy = 26B902D61700F9BD00EFDCE2 /* PBXContainerItemProxy */;
+		};
+		26B902E31700F9CC00EFDCE2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4C1E373816F4035D00FF10BB /* lldbperf */;
+			targetProxy = 26B902E21700F9CC00EFDCE2 /* PBXContainerItemProxy */;
+		};
 		4C1E379116F40BCD00FF10BB /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 4C1E373816F4035D00FF10BB /* lldbperf */;
@@ -1047,6 +1071,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/../../build/Debug",
+				);
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -1064,6 +1092,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/../../build/Debug",
+				);
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_LDFLAGS = "-Wl,-rpath,@loader_path/../../../../build/Debug";
