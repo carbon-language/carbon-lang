@@ -446,38 +446,58 @@ def MUX_ii : ALU32_ii<(outs IntRegs:$dst), (ins PredRegs:$src1, s8Ext:$src2,
                                                     s8ExtPred:$src2,
                                                     s8ImmPred:$src3)))]>;
 
-// Shift halfword.
-let isPredicable = 1 in
-def ASLH : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1),
-           "$dst = aslh($src1)",
-           [(set (i32 IntRegs:$dst), (shl 16, (i32 IntRegs:$src1)))]>;
+// ALU32 - aslh, asrh, sxtb, sxth, zxtb, zxth
+multiclass ALU32_2op_Pbase<string mnemonic, bit isNot, bit isPredNew> {
+  let isPredicatedNew = isPredNew in
+  def NAME : ALU32Inst<(outs IntRegs:$dst),
+                       (ins PredRegs:$src1, IntRegs:$src2),
+            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew,".new) $dst = ",
+            ") $dst = ")#mnemonic#"($src2)">,
+            Requires<[HasV4T]>;
+}
 
-let isPredicable = 1 in
-def ASRH : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1),
-           "$dst = asrh($src1)",
-           [(set (i32 IntRegs:$dst), (sra 16, (i32 IntRegs:$src1)))]>;
+multiclass ALU32_2op_Pred<string mnemonic, bit PredNot> {
+  let isPredicatedFalse = PredNot in {
+    defm _c#NAME : ALU32_2op_Pbase<mnemonic, PredNot, 0>;
+    // Predicate new
+    defm _cdn#NAME : ALU32_2op_Pbase<mnemonic, PredNot, 1>;
+  }
+}
 
-// Sign extend.
-let isPredicable = 1 in
-def SXTB : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1),
-           "$dst = sxtb($src1)",
-           [(set (i32 IntRegs:$dst), (sext_inreg (i32 IntRegs:$src1), i8))]>;
+multiclass ALU32_2op_base<string mnemonic> {
+  let BaseOpcode = mnemonic in {
+    let isPredicable = 1, neverHasSideEffects = 1 in
+    def NAME : ALU32Inst<(outs IntRegs:$dst),
+                         (ins IntRegs:$src1),
+            "$dst = "#mnemonic#"($src1)">;
 
-let isPredicable = 1 in
-def SXTH : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1),
-           "$dst = sxth($src1)",
-           [(set (i32 IntRegs:$dst), (sext_inreg (i32 IntRegs:$src1), i16))]>;
+    let Predicates = [HasV4T], validSubTargets = HasV4SubT, isPredicated = 1,
+    neverHasSideEffects = 1 in {
+      defm Pt_V4    : ALU32_2op_Pred<mnemonic, 0>;
+      defm NotPt_V4 : ALU32_2op_Pred<mnemonic, 1>;
+    }
+  }
+}
 
-// Zero extend.
-let isPredicable = 1, neverHasSideEffects = 1 in
-def ZXTB : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1),
-           "$dst = zxtb($src1)",
-           []>;
+defm ASLH : ALU32_2op_base<"aslh">, PredNewRel;
+defm ASRH : ALU32_2op_base<"asrh">, PredNewRel;
+defm SXTB : ALU32_2op_base<"sxtb">, PredNewRel;
+defm SXTH : ALU32_2op_base<"sxth">,  PredNewRel;
+defm ZXTB : ALU32_2op_base<"zxtb">, PredNewRel;
+defm ZXTH : ALU32_2op_base<"zxth">,  PredNewRel;
 
-let isPredicable = 1, neverHasSideEffects = 1 in
-def ZXTH : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1),
-                    "$dst = zxth($src1)",
-                    []>;
+def : Pat <(shl (i32 IntRegs:$src1), (i32 16)),
+           (ASLH IntRegs:$src1)>;
+
+def : Pat <(sra (i32 IntRegs:$src1), (i32 16)),
+           (ASRH IntRegs:$src1)>;
+
+def : Pat <(sext_inreg (i32 IntRegs:$src1), i8),
+           (SXTB IntRegs:$src1)>;
+
+def : Pat <(sext_inreg (i32 IntRegs:$src1), i16),
+           (SXTH IntRegs:$src1)>;
+
 //===----------------------------------------------------------------------===//
 // ALU32/PERM -
 //===----------------------------------------------------------------------===//
