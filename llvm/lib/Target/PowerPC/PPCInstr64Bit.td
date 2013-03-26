@@ -71,9 +71,24 @@ def HI48_64 : SDNodeXForm<imm, [{
 // Calls.
 //
 
+let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
+  let isBranch = 1, isIndirectBranch = 1, Uses = [CTR8] in
+    def BCTR8 : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>,
+        Requires<[In64BitMode]>;
+}
+
 let Defs = [LR8] in
   def MovePCtoLR8 : Pseudo<(outs), (ins), "#MovePCtoLR8", []>,
                     PPC970_Unit_BRU;
+
+let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
+  let Defs = [CTR8], Uses = [CTR8] in {
+    def BDZ8  : BForm_1<16, 18, 0, 0, (outs), (ins condbrtarget:$dst),
+                        "bdz $dst">;
+    def BDNZ8 : BForm_1<16, 16, 0, 0, (outs), (ins condbrtarget:$dst),
+                        "bdnz $dst">;
+  }
+}
 
 let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
   // Convenient aliases for call instructions
@@ -182,15 +197,9 @@ def TCRETURNri8 : Pseudo<(outs), (ins CTRRC8:$dst, i32imm:$offset),
 
 
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7, isBranch = 1,
-    isIndirectBranch = 1, isCall = 1, Uses = [CTR8, RM] in {
-  let isReturn = 1 in {
-    def TAILBCTR8 : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>,
-        Requires<[In64BitMode]>;
-  }
-
-  def BCTR8 : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>,
-      Requires<[In64BitMode]>;
-}
+    isIndirectBranch = 1, isCall = 1, isReturn = 1, Uses = [CTR8, RM] in
+def TAILBCTR8 : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>,
+    Requires<[In64BitMode]>;
 
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7,
@@ -215,14 +224,6 @@ def : Pat<(PPCtc_return (i64 texternalsym:$dst), imm:$imm),
 def : Pat<(PPCtc_return CTRRC8:$dst, imm:$imm),
           (TCRETURNri8 CTRRC8:$dst, imm:$imm)>;
 
-let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
-  let Defs = [CTR8], Uses = [CTR8] in {
-    def BDZ8  : BForm_1<16, 18, 0, 0, (outs), (ins condbrtarget:$dst),
-                        "bdz $dst">;
-    def BDNZ8 : BForm_1<16, 16, 0, 0, (outs), (ins condbrtarget:$dst),
-                        "bdnz $dst">;
-  }
-}
 
 // 64-but CR instructions
 def MTCRF8 : XFXForm_5<31, 144, (outs crbitm:$FXM), (ins G8RC:$rS),
