@@ -1195,10 +1195,9 @@ def : Pat <
 
 /* int_SI_sample for simple 1D texture lookup */
 def : Pat <
-  (int_SI_sample imm:$writemask, (v1i32 VReg_32:$addr),
+  (int_SI_sample imm:$writemask, VReg_32:$addr,
                  SReg_256:$rsrc, SReg_128:$sampler, imm),
-  (IMAGE_SAMPLE imm:$writemask, 0, 0, 0, 0, 0, 0, 0,
-                (i32 (COPY_TO_REGCLASS VReg_32:$addr, VReg_32)),
+  (IMAGE_SAMPLE imm:$writemask, 0, 0, 0, 0, 0, 0, 0, VReg_32:$addr,
                 SReg_256:$rsrc, SReg_128:$sampler)
 >;
 
@@ -1206,8 +1205,7 @@ class SamplePattern<Intrinsic name, MIMG opcode, RegisterClass addr_class,
                     ValueType addr_type> : Pat <
     (name imm:$writemask, (addr_type addr_class:$addr),
           SReg_256:$rsrc, SReg_128:$sampler, imm),
-    (opcode imm:$writemask, 0, 0, 0, 0, 0, 0, 0,
-          (EXTRACT_SUBREG addr_class:$addr, sub0),
+    (opcode imm:$writemask, 0, 0, 0, 0, 0, 0, 0, addr_class:$addr,
           SReg_256:$rsrc, SReg_128:$sampler)
 >;
 
@@ -1215,8 +1213,7 @@ class SampleRectPattern<Intrinsic name, MIMG opcode, RegisterClass addr_class,
                         ValueType addr_type> : Pat <
     (name imm:$writemask, (addr_type addr_class:$addr),
           SReg_256:$rsrc, SReg_128:$sampler, TEX_RECT),
-    (opcode imm:$writemask, 1, 0, 0, 0, 0, 0, 0,
-          (EXTRACT_SUBREG addr_class:$addr, sub0),
+    (opcode imm:$writemask, 1, 0, 0, 0, 0, 0, 0, addr_class:$addr,
           SReg_256:$rsrc, SReg_128:$sampler)
 >;
 
@@ -1224,8 +1221,7 @@ class SampleArrayPattern<Intrinsic name, MIMG opcode, RegisterClass addr_class,
                          ValueType addr_type> : Pat <
     (name imm:$writemask, (addr_type addr_class:$addr),
           SReg_256:$rsrc, SReg_128:$sampler, TEX_ARRAY),
-    (opcode imm:$writemask, 0, 0, 1, 0, 0, 0, 0,
-          (EXTRACT_SUBREG addr_class:$addr, sub0),
+    (opcode imm:$writemask, 0, 0, 1, 0, 0, 0, 0, addr_class:$addr,
           SReg_256:$rsrc, SReg_128:$sampler)
 >;
 
@@ -1233,8 +1229,7 @@ class SampleShadowPattern<Intrinsic name, MIMG opcode,
                           RegisterClass addr_class, ValueType addr_type> : Pat <
     (name imm:$writemask, (addr_type addr_class:$addr),
           SReg_256:$rsrc, SReg_128:$sampler, TEX_SHADOW),
-    (opcode imm:$writemask, 0, 0, 0, 0, 0, 0, 0,
-          (EXTRACT_SUBREG addr_class:$addr, sub0),
+    (opcode imm:$writemask, 0, 0, 0, 0, 0, 0, 0, addr_class:$addr,
           SReg_256:$rsrc, SReg_128:$sampler)
 >;
 
@@ -1242,8 +1237,7 @@ class SampleShadowArrayPattern<Intrinsic name, MIMG opcode,
                                RegisterClass addr_class, ValueType addr_type> : Pat <
     (name imm:$writemask, (addr_type addr_class:$addr),
           SReg_256:$rsrc, SReg_128:$sampler, TEX_SHADOW_ARRAY),
-    (opcode imm:$writemask, 0, 0, 1, 0, 0, 0, 0,
-          (EXTRACT_SUBREG addr_class:$addr, sub0),
+    (opcode imm:$writemask, 0, 0, 1, 0, 0, 0, 0, addr_class:$addr,
           SReg_256:$rsrc, SReg_128:$sampler)
 >;
 
