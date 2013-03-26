@@ -13,10 +13,10 @@
 
 #define DEBUG_TYPE "mccodeemitter"
 #include "MCTargetDesc/PPCMCTargetDesc.h"
-#include "MCTargetDesc/PPCBaseInfo.h"
 #include "MCTargetDesc/PPCFixupKinds.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -33,12 +33,13 @@ class PPCMCCodeEmitter : public MCCodeEmitter {
   void operator=(const PPCMCCodeEmitter &) LLVM_DELETED_FUNCTION;
 
   const MCSubtargetInfo &STI;
+  const MCContext &CTX;
   Triple TT;
 
 public:
   PPCMCCodeEmitter(const MCInstrInfo &mcii, const MCSubtargetInfo &sti,
                    MCContext &ctx)
-    : STI(sti), TT(STI.getTargetTriple()) {
+    : STI(sti), CTX(ctx), TT(STI.getTargetTriple()) {
   }
   
   ~PPCMCCodeEmitter() {}
@@ -203,7 +204,7 @@ unsigned PPCMCCodeEmitter::getTLSRegEncoding(const MCInst &MI, unsigned OpNo,
   // Return the thread-pointer register's encoding.
   Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_tlsreg));
-  return getPPCRegisterNumbering(PPC::X13);
+  return CTX.getRegisterInfo().getEncodingValue(PPC::X13);
 }
 
 unsigned PPCMCCodeEmitter::
@@ -214,7 +215,7 @@ get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
           MI.getOpcode() == PPC::MFOCRF ||
           MI.getOpcode() == PPC::MTCRF8) &&
          (MO.getReg() >= PPC::CR0 && MO.getReg() <= PPC::CR7));
-  return 0x80 >> getPPCRegisterNumbering(MO.getReg());
+  return 0x80 >> CTX.getRegisterInfo().getEncodingValue(MO.getReg());
 }
 
 
@@ -226,7 +227,7 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
     // The GPR operand should come through here though.
     assert((MI.getOpcode() != PPC::MTCRF && MI.getOpcode() != PPC::MFOCRF) ||
            MO.getReg() < PPC::CR0 || MO.getReg() > PPC::CR7);
-    return getPPCRegisterNumbering(MO.getReg());
+    return CTX.getRegisterInfo().getEncodingValue(MO.getReg());
   }
   
   assert(MO.isImm() &&

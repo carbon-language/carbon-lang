@@ -103,6 +103,7 @@ static void RemoveVRSaveCode(MachineInstr *MI) {
 // transform this into the appropriate ORI instruction.
 static void HandleVRSaveUpdate(MachineInstr *MI, const TargetInstrInfo &TII) {
   MachineFunction *MF = MI->getParent()->getParent();
+  const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
   DebugLoc dl = MI->getDebugLoc();
 
   unsigned UsedRegMask = 0;
@@ -115,7 +116,7 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const TargetInstrInfo &TII) {
   for (MachineRegisterInfo::livein_iterator
        I = MF->getRegInfo().livein_begin(),
        E = MF->getRegInfo().livein_end(); I != E; ++I) {
-    unsigned RegNo = getPPCRegisterNumbering(I->first);
+    unsigned RegNo = TRI->getEncodingValue(I->first);
     if (VRRegNo[RegNo] == I->first)        // If this really is a vector reg.
       UsedRegMask &= ~(1 << (31-RegNo));   // Doesn't need to be marked.
   }
@@ -131,7 +132,7 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const TargetInstrInfo &TII) {
       const MachineOperand &MO = Ret.getOperand(I);
       if (!MO.isReg() || !PPC::VRRCRegClass.contains(MO.getReg()))
         continue;
-      unsigned RegNo = getPPCRegisterNumbering(MO.getReg());
+      unsigned RegNo = TRI->getEncodingValue(MO.getReg());
       UsedRegMask &= ~(1 << (31-RegNo));
     }
   }
@@ -950,6 +951,7 @@ void PPCFrameLowering::processFunctionBeforeFrameFinalized(MachineFunction &MF,
   }
 
   PPCFunctionInfo *PFI = MF.getInfo<PPCFunctionInfo>();
+  const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
 
   int64_t LowerBound = 0;
 
@@ -969,7 +971,7 @@ void PPCFrameLowering::processFunctionBeforeFrameFinalized(MachineFunction &MF,
       FFI->setObjectOffset(FI, LowerBound + FFI->getObjectOffset(FI));
     }
 
-    LowerBound -= (31 - getPPCRegisterNumbering(MinFPR) + 1) * 8;
+    LowerBound -= (31 - TRI->getEncodingValue(MinFPR) + 1) * 8;
   }
 
   // Check whether the frame pointer register is allocated. If so, make sure it
@@ -1003,8 +1005,8 @@ void PPCFrameLowering::processFunctionBeforeFrameFinalized(MachineFunction &MF,
     }
 
     unsigned MinReg =
-      std::min<unsigned>(getPPCRegisterNumbering(MinGPR),
-                         getPPCRegisterNumbering(MinG8R));
+      std::min<unsigned>(TRI->getEncodingValue(MinGPR),
+                         TRI->getEncodingValue(MinG8R));
 
     if (Subtarget.isPPC64()) {
       LowerBound -= (31 - MinReg + 1) * 8;

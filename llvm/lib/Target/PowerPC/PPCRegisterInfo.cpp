@@ -328,7 +328,7 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
     // rlwinm rA, rA, ShiftBits, 0, 31.
     BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::RLWINM8 : PPC::RLWINM), Reg)
       .addReg(Reg1, RegState::Kill)
-      .addImm(getPPCRegisterNumbering(SrcReg) * 4)
+      .addImm(getEncodingValue(SrcReg) * 4)
       .addImm(0)
       .addImm(31);
   }
@@ -368,7 +368,7 @@ void PPCRegisterInfo::lowerCRRestore(MachineBasicBlock::iterator II,
     unsigned Reg1 = Reg;
     Reg = MF.getRegInfo().createVirtualRegister(LP64 ? G8RC : GPRC);
 
-    unsigned ShiftBits = getPPCRegisterNumbering(DestReg)*4;
+    unsigned ShiftBits = getEncodingValue(DestReg)*4;
     // rlwinm r11, r11, 32-ShiftBits, 0, 31.
     BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::RLWINM8 : PPC::RLWINM), Reg)
              .addReg(Reg1, RegState::Kill).addImm(32-ShiftBits).addImm(0)

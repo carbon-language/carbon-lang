@@ -15,7 +15,6 @@
 #ifndef LLVM_TARGET_POWERPC_H
 #define LLVM_TARGET_POWERPC_H
 
-#include "MCTargetDesc/PPCBaseInfo.h"
 #include "MCTargetDesc/PPCMCTargetDesc.h"
 #include <string>
 

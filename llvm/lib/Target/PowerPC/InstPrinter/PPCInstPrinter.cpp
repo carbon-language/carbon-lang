@@ -13,7 +13,7 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "PPCInstPrinter.h"
-#include "MCTargetDesc/PPCBaseInfo.h"
+#include "MCTargetDesc/PPCMCTargetDesc.h"
 #include "MCTargetDesc/PPCPredicates.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
