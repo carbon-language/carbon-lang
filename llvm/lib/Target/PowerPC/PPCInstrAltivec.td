@@ -185,6 +185,7 @@ class VX2_Int<bits<11> xo, string opc, Intrinsic IntID>
 def HasAltivec : Predicate<"PPCSubTarget.hasAltivec()">;
 let Predicates = [HasAltivec] in {
 
+let isCodeGenOnly = 1 in {
 def DSS      : DSS_Form<822, (outs),
                         (ins u5imm:$ZERO0, u5imm:$STRM,u5imm:$ZERO1,u5imm:$ZERO2),
                         "dss $STRM", LdStLoad /*FIXME*/, []>;
@@ -216,6 +217,7 @@ def DSTST64  : DSS_Form<374, (outs),
 def DSTSTT64 : DSS_Form<374, (outs),
                         (ins u5imm:$ONE, u5imm:$STRM, G8RC:$rA, GPRC:$rB),
                         "dststt $rA, $rB, $STRM", LdStLoad /*FIXME*/, []>;
+}
 
 def MFVSCR : VXForm_4<1540, (outs VRRC:$vD), (ins),
                       "mfvscr $vD", LdStStore,
@@ -581,6 +583,7 @@ def VCMPGTSWo : VCMPo<902, "vcmpgtsw. $vD, $vA, $vB", v4i32>;
 def VCMPGTUW  : VCMP <646, "vcmpgtuw $vD, $vA, $vB" , v4i32>;
 def VCMPGTUWo : VCMPo<646, "vcmpgtuw. $vD, $vA, $vB", v4i32>;
                       
+let isCodeGenOnly = 1 in
 def V_SET0 : VXForm_setzero<1220, (outs VRRC:$vD), (ins),
                       "vxor $vD, $vD, $vD", VecFP,
                       [(set VRRC:$vD, (v4i32 immAllZerosV))]>;

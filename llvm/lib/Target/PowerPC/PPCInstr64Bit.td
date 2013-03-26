@@ -190,6 +190,7 @@ def TCRETURNri8 : Pseudo<(outs), (ins CTRRC8:$dst, i32imm:$offset),
                  "#TC_RETURNr8 $dst $offset",
                  []>;
 
+let isCodeGenOnly = 1 in {
 
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7, isBranch = 1,
     isIndirectBranch = 1, isCall = 1, isReturn = 1, Uses = [CTR8, RM] in
@@ -210,6 +211,8 @@ def TAILBA8   : IForm<18, 0, 0, (outs), (ins aaddr:$dst),
                   "ba $dst", BrB,
                   []>;
 
+}
+
 def : Pat<(PPCtc_return (i64 tglobaladdr:$dst),  imm:$imm),
           (TCRETURNdi8 tglobaladdr:$dst, imm:$imm)>;
 
@@ -225,6 +228,7 @@ def MTCRF8 : XFXForm_5<31, 144, (outs crbitm:$FXM), (ins G8RC:$rS),
                       "mtcrf $FXM, $rS", BrMCRX>,
             PPC970_MicroCode, PPC970_Unit_CRU;
 
+let isCodeGenOnly = 1 in
 def MFCR8pseud: XFXForm_3<31, 19, (outs G8RC:$rT), (ins crbitm:$FXM),
                        "#MFCR8pseud", SprMFCR>,
             PPC970_MicroCode, PPC970_Unit_CRU;
@@ -233,8 +237,7 @@ def MFCR8 : XFXForm_3<31, 19, (outs G8RC:$rT), (ins),
                      "mfcr $rT", SprMFCR>,
                      PPC970_MicroCode, PPC970_Unit_CRU;
 
-let hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1,
-    usesCustomInserter = 1 in {
+let hasSideEffects = 1, isBarrier = 1, usesCustomInserter = 1 in {
   def EH_SjLj_SetJmp64  : Pseudo<(outs GPRC:$dst), (ins memr:$buf),
                             "#EH_SJLJ_SETJMP64",
                             [(set i32:$dst, (PPCeh_sjlj_setjmp addr:$buf))]>,
@@ -353,6 +356,7 @@ def ADD8  : XOForm_1<31, 266, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
                      [(set i64:$rT, (add i64:$rA, i64:$rB))]>;
 // ADD8 has a special form: reg = ADD8(reg, sym@tls) for use by the
 // initial-exec thread-local storage model.
+let isCodeGenOnly = 1 in
 def ADD8TLS  : XOForm_1<31, 266, 0, (outs G8RC:$rT), (ins G8RC:$rA, tlsreg:$rB),
                         "add $rT, $rA, $rB@tls", IntSimple,
                         [(set i64:$rT, (add i64:$rA, tglobaltlsaddr:$rB))]>;
@@ -637,7 +641,7 @@ def LDtocCPT: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
                   [(set i64:$rD,
                      (PPCtoc_entry tconstpool:$disp, i64:$reg))]>, isPPC64;
 
-let hasSideEffects = 1 in { 
+let hasSideEffects = 1, isCodeGenOnly = 1 in {
 let RST = 2, DS = 2 in
 def LDinto_toc: DSForm_1a<58, 0, (outs), (ins G8RC:$reg),
                     "ld 2, 8($reg)", LdStLD,

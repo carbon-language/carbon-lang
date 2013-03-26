@@ -508,7 +508,7 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
 }
 
 // The direct BCL used by the SjLj setjmp code.
-let isCall = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
+let isCall = 1, hasCtrlDep = 1, isCodeGenOnly = 1, PPC970_Unit = 7 in {
   let Defs = [LR], Uses = [RM] in {
     def BCL  : BForm_2<16, 20, 31, 0, 1, (outs), (ins condbrtarget:$dst),
                        "bcl 20, 31, $dst">;
@@ -548,6 +548,8 @@ def TCRETURNri : Pseudo<(outs), (ins CTRRC:$dst, i32imm:$offset),
                  []>;
 
 
+let isCodeGenOnly = 1 in {
+
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7, isBranch = 1,
     isIndirectBranch = 1, isCall = 1, isReturn = 1, Uses = [CTR, RM]  in
 def TAILBCTR : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>,
@@ -561,6 +563,7 @@ def TAILB   : IForm<18, 0, 0, (outs), (ins calltarget:$dst),
                   "b $dst", BrB,
                   []>;
 
+}
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7,
     isBarrier = 1, isCall = 1, isReturn = 1, Uses = [RM] in
@@ -568,8 +571,7 @@ def TAILBA   : IForm<18, 0, 0, (outs), (ins aaddr:$dst),
                   "ba $dst", BrB,
                   []>;
 
-let hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1,
-    usesCustomInserter = 1 in {
+let hasSideEffects = 1, isBarrier = 1, usesCustomInserter = 1 in {
   def EH_SjLj_SetJmp32  : Pseudo<(outs GPRC:$dst), (ins memr:$buf),
                             "#EH_SJLJ_SETJMP32",
                             [(set i32:$dst, (PPCeh_sjlj_setjmp addr:$buf))]>,
@@ -581,7 +583,7 @@ let hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1,
                           Requires<[In32BitMode]>;
 }
 
-let isBranch = 1, isTerminator = 1, isCodeGenOnly = 1 in {
+let isBranch = 1, isTerminator = 1 in {
   def EH_SjLj_Setup : Pseudo<(outs), (ins directbrtarget:$dst),
                         "#EH_SjLj_Setup\t$dst", []>;
 }
@@ -996,6 +998,7 @@ def ADDICo : DForm_2<13, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
 def ADDIS  : DForm_2<15, (outs GPRC:$rD), (ins GPRC_NOR0:$rA, symbolHi:$imm),
                      "addis $rD, $rA, $imm", IntSimple,
                      [(set i32:$rD, (add i32:$rA, imm16ShiftedSExt:$imm))]>;
+let isCodeGenOnly = 1 in
 def LA     : DForm_2<14, (outs GPRC:$rD), (ins GPRC_NOR0:$rA, symbolLo:$sym),
                      "la $rD, $sym($rA)", IntGeneral,
                      [(set i32:$rD, (add i32:$rA,
@@ -1180,6 +1183,7 @@ def CROR  : XLForm_1<19, 449, (outs CRBITRC:$CRD),
                       "cror $CRD, $CRA, $CRB", BrCR,
                       []>;
 
+let isCodeGenOnly = 1 in {
 def CRSET  : XLForm_1_ext<19, 289, (outs CRBITRC:$dst), (ins),
               "creqv $dst, $dst, $dst", BrCR,
               []>;
@@ -1196,6 +1200,7 @@ def CR6SET  : XLForm_1_ext<19, 289, (outs), (ins),
 def CR6UNSET: XLForm_1_ext<19, 193, (outs), (ins),
               "crxor 6, 6, 6", BrCR,
               [(PPCcr6unset)]>;
+}
 }
 
 // XFX-Form instructions.  Instructions that deal with SPRs.
@@ -1269,6 +1274,7 @@ def MTCRF : XFXForm_5<31, 144, (outs crbitm:$FXM), (ins GPRC:$rS),
 // instruction to keep the register allocator from becoming confused.
 //
 // FIXME: Make this a real Pseudo instruction when the JIT switches to MC.
+let isCodeGenOnly = 1 in
 def MFCRpseud: XFXForm_3<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
                        "#MFCRpseud", SprMFCR>,
             PPC970_MicroCode, PPC970_Unit_CRU;
