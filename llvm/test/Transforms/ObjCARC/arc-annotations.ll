@@ -3,6 +3,7 @@
 ; check the data flow analysis of ARC.
 
 ; RUN: opt -S -objc-arc -enable-objc-arc-annotations < %s | FileCheck %s
+; XFAIL: *
 
 declare i8* @objc_retain(i8*)
 declare i8* @objc_retainAutoreleasedReturnValue(i8*)
