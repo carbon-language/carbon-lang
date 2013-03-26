@@ -1310,6 +1310,13 @@ ClangASTType::IsConst (lldb::clang_type_t clang_type)
 }
 
 void
+ClangASTType::DumpTypeDescription ()
+{
+    StreamFile s (stdout, false);
+    DumpTypeDescription (&s);
+}
+
+void
 ClangASTType::DumpTypeDescription (Stream *s)
 {
     return DumpTypeDescription (m_ast, m_type, s);

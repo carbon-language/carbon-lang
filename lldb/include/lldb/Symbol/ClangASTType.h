@@ -204,6 +204,9 @@ public:
                  size_t data_byte_size);
     
     void
+    DumpTypeDescription (); // Dump to stdout
+
+    void
     DumpTypeDescription (Stream *s);
     
     static void
