@@ -578,13 +578,15 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
   const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
-  unsigned SReg = MF.getRegInfo().createVirtualRegister(is64Bit ? G8RC : GPRC);
+  const TargetRegisterClass *RC = is64Bit ? G8RC : GPRC;
+  unsigned SRegHi = MF.getRegInfo().createVirtualRegister(RC),
+           SReg = MF.getRegInfo().createVirtualRegister(RC);
 
   // Insert a set of rA with the full offset value before the ld, st, or add
-  BuildMI(MBB, II, dl, TII.get(is64Bit ? PPC::LIS8 : PPC::LIS), SReg)
+  BuildMI(MBB, II, dl, TII.get(is64Bit ? PPC::LIS8 : PPC::LIS), SRegHi)
     .addImm(Offset >> 16);
   BuildMI(MBB, II, dl, TII.get(is64Bit ? PPC::ORI8 : PPC::ORI), SReg)
-    .addReg(SReg, RegState::Kill)
+    .addReg(SRegHi, RegState::Kill)
     .addImm(Offset);
 
   // Convert into indexed form of the instruction:
