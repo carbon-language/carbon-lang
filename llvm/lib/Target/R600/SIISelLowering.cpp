@@ -208,26 +208,13 @@ SDValue SITargetLowering::LowerFormalArguments(
 
 MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MachineInstr * MI, MachineBasicBlock * BB) const {
-  MachineRegisterInfo & MRI = BB->getParent()->getRegInfo();
-  MachineBasicBlock::iterator I = MI;
 
   switch (MI->getOpcode()) {
   default:
     return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
   case AMDGPU::BRANCH: return BB;
-  case AMDGPU::SI_WQM:
-    LowerSI_WQM(MI, *BB, I, MRI);
-    break;
   }
   return BB;
-}
-
-void SITargetLowering::LowerSI_WQM(MachineInstr *MI, MachineBasicBlock &BB,
-    MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const {
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::S_WQM_B64), AMDGPU::EXEC)
-          .addReg(AMDGPU::EXEC);
-
-  MI->eraseFromParent();
 }
 
 EVT SITargetLowering::getSetCCResultType(EVT VT) const {

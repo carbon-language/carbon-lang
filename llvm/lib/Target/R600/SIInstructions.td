@@ -1067,17 +1067,6 @@ def LOAD_CONST : AMDGPUShaderInst <
   [(set GPRF32:$dst, (int_AMDGPU_load_const imm:$src))]
 >;
 
-let usesCustomInserter = 1 in {
-
-def SI_WQM : InstSI <
-  (outs),
-  (ins),
-  "SI_WQM",
-  [(int_SI_wqm)]
->;
-
-} // end usesCustomInserter 
-
 // SI Psuedo instructions. These are used by the CFG structurizer pass
 // and should be lowered to ISA instructions prior to codegen.
 

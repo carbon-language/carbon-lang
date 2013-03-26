@@ -24,9 +24,6 @@ class SITargetLowering : public AMDGPUTargetLowering {
   const SIInstrInfo * TII;
   const TargetRegisterInfo * TRI;
 
-  void LowerSI_WQM(MachineInstr *MI, MachineBasicBlock &BB,
-              MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const;
-
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
 

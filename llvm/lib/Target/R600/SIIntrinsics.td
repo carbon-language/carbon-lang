@@ -18,7 +18,6 @@ let TargetPrefix = "SI", isTarget = 1 in {
   def int_SI_export : Intrinsic <[], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], []>;
   def int_SI_load_const : Intrinsic <[llvm_float_ty], [llvm_v16i8_ty, llvm_i32_ty], [IntrReadMem]>;
   def int_SI_vs_load_input : Intrinsic <[llvm_v4f32_ty], [llvm_v16i8_ty, llvm_i16_ty, llvm_i32_ty], [IntrReadMem]> ;
-  def int_SI_wqm : Intrinsic <[], [], []>;
 
   class Sample : Intrinsic <[llvm_v4f32_ty], [llvm_i32_ty, llvm_anyvector_ty, llvm_v32i8_ty, llvm_v16i8_ty, llvm_i32_ty], [IntrReadMem]>;
 

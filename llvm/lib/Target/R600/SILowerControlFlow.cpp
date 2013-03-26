@@ -410,6 +410,7 @@ void SILowerControlFlowPass::IndirectDst(MachineInstr &MI) {
 bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
 
   bool HaveKill = false;
+  bool NeedWQM = false;
   unsigned Depth = 0;
 
   for (MachineFunction::iterator BI = MF.begin(), BE = MF.end();
@@ -479,8 +480,21 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
         case AMDGPU::SI_INDIRECT_DST_V16:
           IndirectDst(MI);
           break;
+
+        case AMDGPU::V_INTERP_P1_F32:
+        case AMDGPU::V_INTERP_P2_F32:
+        case AMDGPU::V_INTERP_MOV_F32:
+          NeedWQM = true;
+          break;
+
       }
     }
+  }
+
+  if (NeedWQM) {
+    MachineBasicBlock &MBB = MF.front();
+    BuildMI(MBB, MBB.getFirstNonPHI(), DebugLoc(), TII->get(AMDGPU::S_WQM_B64),
+            AMDGPU::EXEC).addReg(AMDGPU::EXEC);
   }
 
   return true;
