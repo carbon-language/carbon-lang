@@ -64,6 +64,13 @@ def WriteALUsr : SchedWrite; // Shift by register.
 def WriteALUSsr : SchedWrite; // Shift by register (flag setting).
 def ReadAdvanceALUsr : SchedRead; // Some operands are read later.
 
+// Define TII for use in SchedVariant Predicates.
+def : PredicateProlog<[{
+  const ARMBaseInstrInfo *TII =
+    static_cast<const ARMBaseInstrInfo*>(SchedModel->getInstrInfo());
+  (void)TII;
+}]>;
+
 //===----------------------------------------------------------------------===//
 // Instruction Itinerary classes used for ARM
 //
