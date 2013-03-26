@@ -304,14 +304,14 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;       // ; SPILL_CR <SrcReg>, <offset>
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
+  MachineFunction &MF = *MBB.getParent();
   DebugLoc dl = MI.getDebugLoc();
 
-  // FIXME: Once LLVM supports creating virtual registers here, or the register
-  // scavenger can return multiple registers, stop using reserved registers
-  // here.
-
   bool LP64 = Subtarget.isPPC64();
-  unsigned Reg = LP64 ? PPC::X0 : PPC::R0;
+  const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
+  const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
+
+  unsigned Reg = MF.getRegInfo().createVirtualRegister(LP64 ? G8RC : GPRC);
   unsigned SrcReg = MI.getOperand(0).getReg();
 
   // We need to store the CR in the low 4-bits of the saved value. First, issue
@@ -321,13 +321,17 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
     
   // If the saved register wasn't CR0, shift the bits left so that they are in
   // CR0's slot.
-  if (SrcReg != PPC::CR0)
+  if (SrcReg != PPC::CR0) {
+    unsigned Reg1 = Reg;
+    Reg = MF.getRegInfo().createVirtualRegister(LP64 ? G8RC : GPRC);
+
     // rlwinm rA, rA, ShiftBits, 0, 31.
     BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::RLWINM8 : PPC::RLWINM), Reg)
-      .addReg(Reg, RegState::Kill)
+      .addReg(Reg1, RegState::Kill)
       .addImm(getPPCRegisterNumbering(SrcReg) * 4)
       .addImm(0)
       .addImm(31);
+  }
 
   addFrameReference(BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::STW8 : PPC::STW))
                     .addReg(Reg, getKillRegState(MI.getOperand(1).getImm())),
@@ -343,14 +347,14 @@ void PPCRegisterInfo::lowerCRRestore(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;       // ; <DestReg> = RESTORE_CR <offset>
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
+  MachineFunction &MF = *MBB.getParent();
   DebugLoc dl = MI.getDebugLoc();
 
-  // FIXME: Once LLVM supports creating virtual registers here, or the register
-  // scavenger can return multiple registers, stop using reserved registers
-  // here.
-
   bool LP64 = Subtarget.isPPC64();
-  unsigned Reg = LP64 ? PPC::X0 : PPC::R0;
+  const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
+  const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
+
+  unsigned Reg = MF.getRegInfo().createVirtualRegister(LP64 ? G8RC : GPRC);
   unsigned DestReg = MI.getOperand(0).getReg();
   assert(MI.definesRegister(DestReg) &&
     "RESTORE_CR does not define its destination");
@@ -361,15 +365,18 @@ void PPCRegisterInfo::lowerCRRestore(MachineBasicBlock::iterator II,
   // If the reloaded register isn't CR0, shift the bits right so that they are
   // in the right CR's slot.
   if (DestReg != PPC::CR0) {
+    unsigned Reg1 = Reg;
+    Reg = MF.getRegInfo().createVirtualRegister(LP64 ? G8RC : GPRC);
+
     unsigned ShiftBits = getPPCRegisterNumbering(DestReg)*4;
     // rlwinm r11, r11, 32-ShiftBits, 0, 31.
     BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::RLWINM8 : PPC::RLWINM), Reg)
-             .addReg(Reg).addImm(32-ShiftBits).addImm(0)
+             .addReg(Reg1, RegState::Kill).addImm(32-ShiftBits).addImm(0)
              .addImm(31);
   }
 
   BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::MTCRF8 : PPC::MTCRF), DestReg)
-             .addReg(Reg);
+             .addReg(Reg, RegState::Kill);
 
   // Discard the pseudo instruction.
   MBB.erase(II);
@@ -381,13 +388,11 @@ void PPCRegisterInfo::lowerVRSAVESpilling(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;       // ; SPILL_VRSAVE <SrcReg>, <offset>
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
+  MachineFunction &MF = *MBB.getParent();
   DebugLoc dl = MI.getDebugLoc();
 
-  // FIXME: Once LLVM supports creating virtual registers here, or the register
-  // scavenger can return multiple registers, stop using reserved registers
-  // here.
-
-  unsigned Reg = PPC::R0;
+  const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
+  unsigned Reg = MF.getRegInfo().createVirtualRegister(GPRC);
   unsigned SrcReg = MI.getOperand(0).getReg();
 
   BuildMI(MBB, II, dl, TII.get(PPC::MFVRSAVEv), Reg)
@@ -407,13 +412,11 @@ void PPCRegisterInfo::lowerVRSAVERestore(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;       // ; <DestReg> = RESTORE_VRSAVE <offset>
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
+  MachineFunction &MF = *MBB.getParent();
   DebugLoc dl = MI.getDebugLoc();
 
-  // FIXME: Once LLVM supports creating virtual registers here, or the register
-  // scavenger can return multiple registers, stop using reserved registers
-  // here.
-
-  unsigned Reg = PPC::R0;
+  const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
+  unsigned Reg = MF.getRegInfo().createVirtualRegister(GPRC);
   unsigned DestReg = MI.getOperand(0).getReg();
   assert(MI.definesRegister(DestReg) &&
     "RESTORE_VRSAVE does not define its destination");
@@ -422,7 +425,7 @@ void PPCRegisterInfo::lowerVRSAVERestore(MachineBasicBlock::iterator II,
                               Reg), FrameIndex);
 
   BuildMI(MBB, II, dl, TII.get(PPC::MTVRSAVEv), DestReg)
-             .addReg(Reg);
+             .addReg(Reg, RegState::Kill);
 
   // Discard the pseudo instruction.
   MBB.erase(II);

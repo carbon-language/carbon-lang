@@ -1094,6 +1094,13 @@ PPCFrameLowering::addScavengingSpillSlot(MachineFunction &MF,
     RS->addScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
                                                        RC->getAlignment(),
                                                        false));
+
+    // These kinds of spills might need two registers.
+    if (spillsCR(MF) || spillsVRSAVE(MF))
+      RS->addScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
+                                                         RC->getAlignment(),
+                                                         false));
+
   }
 }
 
