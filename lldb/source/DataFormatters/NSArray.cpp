@@ -121,7 +121,11 @@ lldb_private::formatters::NSArrayMSyntheticFrontEnd::GetChildAtIndex (size_t idx
     if (idx >= CalculateNumChildren())
         return lldb::ValueObjectSP();
     lldb::addr_t object_at_idx = (m_data_32 ? m_data_32->_data : m_data_64->_data);
-    object_at_idx += (idx * m_ptr_size);
+    size_t pyhs_idx = idx;
+    pyhs_idx += (m_data_32 ? m_data_32->offset : m_data_64->offset);
+    if ((m_data_32 ? m_data_32->_size : m_data_64->_size) <= pyhs_idx)
+        pyhs_idx -= (m_data_32 ? m_data_32->_size : m_data_64->_size);
+    object_at_idx += (pyhs_idx * m_ptr_size);
     StreamString idx_name;
     idx_name.Printf("[%zu]",idx);
     lldb::ValueObjectSP retval_sp = ValueObject::CreateValueObjectFromAddress(idx_name.GetData(),
