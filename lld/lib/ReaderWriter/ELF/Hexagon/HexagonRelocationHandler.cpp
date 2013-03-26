@@ -19,15 +19,19 @@ using namespace elf;
 using namespace llvm::ELF;
 
 namespace {
+
+#define APPLY_RELOC(result)                                                    \
+  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =                  \
+      result |                                                                 \
+      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+
 int relocBNPCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
                  int32_t nBits) {
   int32_t result = (uint32_t)(((S + A) - P) >> 2);
   int32_t range = 1 << nBits;
   if (result < range && result > -range) {
     result = lld::scatterBits<int32_t>(result, FINDV4BITMASK(location));
-    *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-        result |
-        (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+    APPLY_RELOC(result);
     return 0;
   }
   return 1;
@@ -37,26 +41,22 @@ int relocBNPCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
 int relocLO16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)(S + A);
   result = lld::scatterBits<int32_t>(result, 0x00c03fff);
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
-            (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  APPLY_RELOC(result);
   return 0;
 }
 
 /// \brief Word32_LO: 0x00c03fff : (S + A) >> 16 : Truncate
 int relocHI16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
-  uint32_t result = (uint32_t)((S + A)>>16);
+  uint32_t result = (uint32_t)((S + A) >> 16);
   result = lld::scatterBits<int32_t>(result, 0x00c03fff);
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
-            (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  APPLY_RELOC(result);
   return 0;
 }
 
 /// \brief Word32: 0xffffffff : (S + A) : Truncate
 int reloc32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)(S + A);
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result |
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  APPLY_RELOC(result);
   return 0;
 }
 
@@ -66,9 +66,7 @@ int reloc32_6_X(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   if (result > range)
     return 1;
   result = lld::scatterBits<int32_t>(result, 0xfff3fff);
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result |
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  APPLY_RELOC(result);
   return 0;
 }
 
@@ -76,9 +74,7 @@ int reloc32_6_X(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 int relocHexB32PCRELX(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   int64_t result = ((S + A - P) >> 6);
   result = lld::scatterBits<int32_t>(result, 0xfff3fff);
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result |
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  APPLY_RELOC(result);
   return 0;
 }
 
@@ -89,9 +85,7 @@ int relocHexBNPCRELX(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
   int32_t range = 1 << nbits;
   if (result < range && result > -range) {
     result = lld::scatterBits<int32_t>(result, FINDV4BITMASK(location));
-    *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-        result |
-        (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+    APPLY_RELOC(result);
     return 0;
   }
   return 1;
@@ -101,9 +95,7 @@ int relocHexBNPCRELX(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
 int relocHex6PCRELX(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   int32_t result = (S + A - P);
   result = lld::scatterBits<int32_t>(result, FINDV4BITMASK(location));
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result |
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  APPLY_RELOC(result);
   return 0;
 }
 
@@ -111,9 +103,7 @@ int relocHex6PCRELX(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 int relocHex_N_X(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (S + A);
   result = lld::scatterBits<uint32_t>(result, FINDV4BITMASK(location));
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result |
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  APPLY_RELOC(result);
   return 0;
 }
 
@@ -124,9 +114,7 @@ int relocHexGPRELN(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
   int32_t range = 1L << 16;
   if (result <= range) {
     result = lld::scatterBits<uint32_t>(result, FINDV4BITMASK(location));
-    *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-        result |
-        (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+    APPLY_RELOC(result);
     return 0;
   }
   return 1;
@@ -136,9 +124,7 @@ int relocHexGPRELN(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
 int relocHexGOTLO16(uint8_t *location, uint64_t G) {
   uint32_t result = (uint32_t)(G);
   result = lld::scatterBits<int32_t>(result, 0x00c03fff);
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result |
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  APPLY_RELOC(result);
   return 0;
 }
 
@@ -146,18 +132,14 @@ int relocHexGOTLO16(uint8_t *location, uint64_t G) {
 int relocHexGOTHI16(uint8_t *location, uint64_t G) {
   uint32_t result = (uint32_t)(G >> 16);
   result = lld::scatterBits<int32_t>(result, 0x00c03fff);
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result |
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  APPLY_RELOC(result);
   return 0;
 }
 
 /// \brief Word32: 0xffffffff : (G) : Truncate
 int relocHexGOT32(uint8_t *location, uint64_t G) {
   uint32_t result = (uint32_t)(G);
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result |
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  APPLY_RELOC(result);
   return 0;
 }
 
@@ -167,9 +149,7 @@ int relocHexGOT16(uint8_t *location, uint64_t G) {
   uint32_t range = 1L << 16;
   if (result <= range) {
     result = lld::scatterBits<uint32_t>(result, FINDV4BITMASK(location));
-    *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-        result |
-        (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+    APPLY_RELOC(result);
     return 0;
   }
   return 1;
@@ -178,9 +158,7 @@ int relocHexGOT16(uint8_t *location, uint64_t G) {
 int relocHexGOT32_6_X(uint8_t *location, uint64_t G) {
   uint32_t result = (uint32_t)(G >> 6);
   result = lld::scatterBits<uint32_t>(result, FINDV4BITMASK(location));
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result |
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  APPLY_RELOC(result);
   return 0;
 }
 
@@ -189,9 +167,7 @@ int relocHexGOT16_X(uint8_t *location, uint64_t G) {
   uint32_t range = 1L << 6;
   if (result <= range) {
     result = lld::scatterBits<uint32_t>(result, FINDV4BITMASK(location));
-    *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-        result |
-        (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+    APPLY_RELOC(result);
     return 0;
   }
   return 1;
@@ -200,9 +176,7 @@ int relocHexGOT16_X(uint8_t *location, uint64_t G) {
 int relocHexGOT11_X(uint8_t *location, uint64_t G) {
   uint32_t result = (uint32_t)(G);
   result = lld::scatterBits<uint32_t>(result, FINDV4BITMASK(location));
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result |
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  APPLY_RELOC(result);
   return 0;
 }
 
@@ -210,9 +184,7 @@ int relocHexGOTREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
                    uint64_t GOT, int shiftBits = 0) {
   uint32_t result = (uint32_t)((S + A - GOT) >> shiftBits);
   result = lld::scatterBits<uint32_t>(result, FINDV4BITMASK(location));
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result |
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  APPLY_RELOC(result);
   return 0;
 }
 
@@ -220,18 +192,14 @@ int relocHexGOTREL_HILO16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
                           uint64_t GOT, int shiftBits = 0) {
   uint32_t result = (uint32_t)((S + A - GOT) >> shiftBits);
   result = lld::scatterBits<uint32_t>(result, 0x00c03fff);
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result |
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  APPLY_RELOC(result);
   return 0;
 }
 
 int relocHexGOTREL_32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
                       uint64_t GOT) {
   uint32_t result = (uint32_t)(S + A - GOT);
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result |
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  APPLY_RELOC(result);
   return 0;
 }
 
