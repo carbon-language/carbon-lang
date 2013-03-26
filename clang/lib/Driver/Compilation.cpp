@@ -290,11 +290,12 @@ int Compilation::ExecuteCommand(const Command &C,
   }
 
   std::string Error;
+  bool ExecutionFailed;
   int Res =
     llvm::sys::Program::ExecuteAndWait(Prog, Argv,
                                        /*env*/0, Redirects,
                                        /*secondsToWait*/0, /*memoryLimit*/0,
-                                       &Error);
+                                       &Error, &ExecutionFailed);
   if (!Error.empty()) {
     assert(Res && "Error string set with 0 result code!");
     getDriver().Diag(clang::diag::err_drv_command_failure) << Error;
@@ -304,7 +305,7 @@ int Compilation::ExecuteCommand(const Command &C,
     FailingCommand = &C;
 
   delete[] Argv;
-  return Res;
+  return ExecutionFailed ? 1 : Res;
 }
 
 typedef SmallVectorImpl< std::pair<int, const Command *> > FailingCommandList;
