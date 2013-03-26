@@ -115,7 +115,6 @@ void PPCInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNo,
 
   if (StringRef(Modifier) == "cc") {
     switch ((PPC::Predicate)Code) {
-    case PPC::PRED_ALWAYS: return; // Don't print anything for always.
     case PPC::PRED_LT: O << "lt"; return;
     case PPC::PRED_LE: O << "le"; return;
     case PPC::PRED_EQ: O << "eq"; return;
@@ -129,8 +128,6 @@ void PPCInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNo,
   
   assert(StringRef(Modifier) == "reg" &&
          "Need to specify 'cc' or 'reg' as predicate op modifier!");
-  // Don't print the register for 'always'.
-  if (Code == PPC::PRED_ALWAYS) return;
   printOperand(MI, OpNo+1, O);
 }
 

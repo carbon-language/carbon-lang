@@ -396,11 +396,10 @@ def memr : Operand<iPTR> {
   let MIOperandInfo = (ops ptr_rc:$ptrreg);
 }
 
-// PowerPC Predicate operand.  20 = (0<<5)|20 = always, CR0 is a dummy reg
-// that doesn't matter.
-def pred : PredicateOperand<OtherVT, (ops imm, CRRC),
-                                     (ops (i32 20), (i32 zero_reg))> {
+// PowerPC Predicate operand.
+def pred : Operand<OtherVT> {
   let PrintMethod = "printPredicateOperand";
+  let MIOperandInfo = (ops i32imm:$bibo, CRRC:$reg);
 }
 
 // Define PowerPC specific addressing mode.
@@ -478,10 +477,9 @@ def RESTORE_CR : Pseudo<(outs CRRC:$cond), (ins memri:$F),
                      "#RESTORE_CR", []>;
 
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
-  let isCodeGenOnly = 1, isReturn = 1, Uses = [LR, RM] in
-    def BLR : XLForm_2_br<19, 16, 0, (outs), (ins pred:$p),
-                          "b${p:cc}lr ${p:reg}", BrB, 
-                          [(retflag)]>;
+  let isReturn = 1, Uses = [LR, RM] in
+    def BLR : XLForm_2_ext<19, 16, 20, 0, 0, (outs), (ins), "blr", BrB,
+                           [(retflag)]>;
   let isBranch = 1, isIndirectBranch = 1, Uses = [CTR] in
     def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>;
 }
