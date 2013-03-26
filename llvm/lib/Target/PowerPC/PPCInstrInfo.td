@@ -375,9 +375,12 @@ def crbitm: Operand<i8> {
 // A version of ptr_rc which excludes R0 (or X0 in 64-bit mode).
 def ptr_rc_nor0 : PointerLikeRegClass<1>;
 
+def dispRI : Operand<iPTR>;
+def dispRIX : Operand<iPTR>;
+
 def memri : Operand<iPTR> {
   let PrintMethod = "printMemRegImm";
-  let MIOperandInfo = (ops symbolLo:$imm, ptr_rc_nor0:$reg);
+  let MIOperandInfo = (ops dispRI:$imm, ptr_rc_nor0:$reg);
   let EncoderMethod = "getMemRIEncoding";
 }
 def memrr : Operand<iPTR> {
@@ -386,7 +389,7 @@ def memrr : Operand<iPTR> {
 }
 def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
   let PrintMethod = "printMemRegImmShifted";
-  let MIOperandInfo = (ops symbolLo:$imm, ptr_rc_nor0:$reg);
+  let MIOperandInfo = (ops dispRIX:$imm, ptr_rc_nor0:$reg);
   let EncoderMethod = "getMemRIXEncoding";
 }
 

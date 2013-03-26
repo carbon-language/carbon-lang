@@ -32,11 +32,6 @@ def symbolLo64 : Operand<i64> {
 def tocentry : Operand<iPTR> {
   let MIOperandInfo = (ops i64imm:$imm);
 }
-def memrs : Operand<iPTR> {   // memri where the immediate is a symbolLo64
-  let PrintMethod = "printMemRegImm";
-  let EncoderMethod = "getMemRIXEncoding";
-  let MIOperandInfo = (ops symbolLo64:$off, ptr_rc_nor0:$reg);
-}
 def tlsreg : Operand<i64> {
   let EncoderMethod = "getTLSRegEncoding";
 }
@@ -626,9 +621,6 @@ let canFoldAsLoad = 1, PPC970_Unit = 2 in {
 def LD   : DSForm_1<58, 0, (outs G8RC:$rD), (ins memrix:$src),
                     "ld $rD, $src", LdStLD,
                     [(set i64:$rD, (aligned4load ixaddr:$src))]>, isPPC64;
-def LDrs : DSForm_1<58, 0, (outs G8RC:$rD), (ins memrs:$src),
-                    "ld $rD, $src", LdStLD,
-                    []>, isPPC64;
 // The following three definitions are selected for small code model only.
 // Otherwise, we need to create two instructions to form a 32-bit offset,
 // so we have a custom matcher for TOC_ENTRY in PPCDAGToDAGIsel::Select().

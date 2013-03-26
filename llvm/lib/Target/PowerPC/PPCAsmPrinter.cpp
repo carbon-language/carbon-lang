@@ -458,11 +458,10 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Transform %Xd = LDtocL <ga:@sym>, %Xs
     LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
 
-    // Change the opcode to LDrs, which is a form of LD with the offset
-    // specified by a SymbolLo.  If the global address is external, has
+    // Change the opcode to LD.  If the global address is external, has
     // common linkage, or is a jump table address, then reference the
     // associated TOC entry.  Otherwise reference the symbol directly.
-    TmpInst.setOpcode(PPC::LDrs);
+    TmpInst.setOpcode(PPC::LD);
     const MachineOperand &MO = MI->getOperand(1);
     assert((MO.isGlobal() || MO.isJTI() || MO.isCPI()) &&
            "Invalid operand for LDtocL!");
@@ -548,9 +547,8 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Transform %Xd = LDgotTprelL <ga:@sym>, %Xs
     LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
 
-    // Change the opcode to LDrs, which is a form of LD with the offset
-    // specified by a SymbolLo.
-    TmpInst.setOpcode(PPC::LDrs);
+    // Change the opcode to LD.
+    TmpInst.setOpcode(PPC::LD);
     const MachineOperand &MO = MI->getOperand(1);
     const GlobalValue *GValue = MO.getGlobal();
     MCSymbol *MOSymbol = Mang->getSymbol(GValue);
