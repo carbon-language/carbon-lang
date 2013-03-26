@@ -9,7 +9,7 @@
 
 LEVEL := ../..
 TOOLNAME := llvm-link
-LINK_COMPONENTS := linker bitreader bitwriter asmparser
+LINK_COMPONENTS := linker bitreader bitwriter asmparser irreader
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS := 1

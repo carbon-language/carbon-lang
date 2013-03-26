@@ -9,7 +9,7 @@
 
 LEVEL := ../..
 TOOLNAME := llvm-diff
-LINK_COMPONENTS := asmparser bitreader
+LINK_COMPONENTS := asmparser bitreader irreader
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS := 1

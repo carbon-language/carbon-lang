@@ -12,7 +12,7 @@ TOOLNAME := llvm-jitlistener
 
 include $(LEVEL)/Makefile.config
 
-LINK_COMPONENTS := mcjit jit interpreter nativecodegen bitreader asmparser selectiondag Object
+LINK_COMPONENTS := mcjit jit interpreter nativecodegen bitreader asmparser irreader selectiondag Object
 
 # If Intel JIT Events support is configured, link against the LLVM Intel JIT
 # Events interface library.  If not, this tool will do nothing useful, but it
