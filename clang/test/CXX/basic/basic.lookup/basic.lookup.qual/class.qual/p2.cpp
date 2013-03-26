@@ -88,12 +88,10 @@ namespace InhCtor {
       };
     };
     struct Z : A {
-      // FIXME: Core wording says this is invalid, but we and g++ accept.
       using A::A::A;
     };
     template<typename T>
     struct ZT : T::T {
-      // FIXME: Core wording says this is invalid, but we and g++ accept.
       using T::T::T;
     };
   }
