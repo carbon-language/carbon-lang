@@ -516,7 +516,13 @@ void ReportDoubleFree(uptr addr, StackTrace *stack) {
   ScopedInErrorReport in_report;
   Decorator d;
   Printf("%s", d.Warning());
-  Report("ERROR: AddressSanitizer: attempting double-free on %p:\n", addr);
+  char tname[128];
+  u32 curr_tid = GetCurrentTidOrInvalid();
+  Report("ERROR: AddressSanitizer: attempting double-free on %p in "
+         "thread T%d%s:\n",
+         addr, curr_tid,
+         ThreadNameWithParenthesis(curr_tid, tname, sizeof(tname)));
+
   Printf("%s", d.EndWarning());
   PrintStack(stack);
   DescribeHeapAddress(addr, 1);
@@ -527,8 +533,11 @@ void ReportFreeNotMalloced(uptr addr, StackTrace *stack) {
   ScopedInErrorReport in_report;
   Decorator d;
   Printf("%s", d.Warning());
+  char tname[128];
+  u32 curr_tid = GetCurrentTidOrInvalid();
   Report("ERROR: AddressSanitizer: attempting free on address "
-             "which was not malloc()-ed: %p\n", addr);
+             "which was not malloc()-ed: %p in thread T%d%s\n", addr,
+         curr_tid, ThreadNameWithParenthesis(curr_tid, tname, sizeof(tname)));
   Printf("%s", d.EndWarning());
   PrintStack(stack);
   DescribeHeapAddress(addr, 1);
