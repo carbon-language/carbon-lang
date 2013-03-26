@@ -17,6 +17,7 @@
 
 #include "AMDGPU.h"
 #include "llvm/ADT/SCCIterator.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/RegionPass.h"
@@ -40,13 +41,14 @@ typedef SmallVector<BBValuePair, 2> BBValueVector;
 
 typedef SmallPtrSet<BasicBlock *, 8> BBSet;
 
-typedef DenseMap<PHINode *, BBValueVector> PhiMap;
+typedef MapVector<PHINode *, BBValueVector> PhiMap;
+typedef MapVector<BasicBlock *, BBVector> BB2BBVecMap;
+
 typedef DenseMap<DomTreeNode *, unsigned> DTN2UnsignedMap;
 typedef DenseMap<BasicBlock *, PhiMap> BBPhiMap;
 typedef DenseMap<BasicBlock *, Value *> BBPredicates;
 typedef DenseMap<BasicBlock *, BBPredicates> PredMap;
 typedef DenseMap<BasicBlock *, BasicBlock*> BB2BBMap;
-typedef DenseMap<BasicBlock *, BBVector> BB2BBVecMap;
 
 // The name for newly created blocks.
 
