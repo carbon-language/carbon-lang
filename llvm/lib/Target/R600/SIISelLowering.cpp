@@ -484,22 +484,23 @@ bool SITargetLowering::fitsRegClass(SelectionDAG &DAG, SDValue &Op,
   MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo(); 
   SDNode *Node = Op.getNode();
 
-  int OpClass;
+  const TargetRegisterClass *OpClass;
   if (MachineSDNode *MN = dyn_cast<MachineSDNode>(Node)) {
     const MCInstrDesc &Desc = TII->get(MN->getMachineOpcode());
-    OpClass = Desc.OpInfo[Op.getResNo()].RegClass;
+    int OpClassID = Desc.OpInfo[Op.getResNo()].RegClass;
+    if (OpClassID == -1)
+      OpClass = getRegClassFor(Op.getSimpleValueType());
+    else
+      OpClass = TRI->getRegClass(OpClassID);
 
   } else if (Node->getOpcode() == ISD::CopyFromReg) {
     RegisterSDNode *Reg = cast<RegisterSDNode>(Node->getOperand(1).getNode());
-    OpClass = MRI.getRegClass(Reg->getReg())->getID();
+    OpClass = MRI.getRegClass(Reg->getReg());
 
   } else
     return false;
 
-  if (OpClass == -1)
-    return false;
-
-  return TRI->getRegClass(RegClass)->hasSubClassEq(TRI->getRegClass(OpClass));
+  return TRI->getRegClass(RegClass)->hasSubClassEq(OpClass);
 }
 
 /// \brief Make sure that we don't exeed the number of allowed scalars
@@ -595,41 +596,52 @@ SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
 
     // Is this a VSrc or SSrc operand ?
     unsigned RegClass = Desc->OpInfo[Op].RegClass;
-    if (!isVSrc(RegClass) && !isSSrc(RegClass)) {
+    if (isVSrc(RegClass) || isSSrc(RegClass)) {
+      // Try to fold the immediates
+      if (!foldImm(Ops[i], Immediate, ScalarSlotUsed)) {
+        // Folding didn't worked, make sure we don't hit the SReg limit
+        ensureSRegLimit(DAG, Ops[i], RegClass, ScalarSlotUsed);
+      }
+      continue;
+    }
 
-      if (i == 1 && Desc->isCommutable() &&
-          fitsRegClass(DAG, Ops[0], RegClass) &&
-          foldImm(Ops[1], Immediate, ScalarSlotUsed)) {
+    if (i == 1 && Desc->isCommutable() &&
+        fitsRegClass(DAG, Ops[0], RegClass)) {
 
-        assert(isVSrc(Desc->OpInfo[NumDefs].RegClass) ||
-               isSSrc(Desc->OpInfo[NumDefs].RegClass));
+      unsigned OtherRegClass = Desc->OpInfo[NumDefs].RegClass;
+      assert(isVSrc(OtherRegClass) || isSSrc(OtherRegClass));
+
+      // Test if it makes sense to swap operands
+      if (foldImm(Ops[1], Immediate, ScalarSlotUsed) ||
+          (!fitsRegClass(DAG, Ops[1], RegClass) &&
+           fitsRegClass(DAG, Ops[1], OtherRegClass))) {
 
         // Swap commutable operands
         SDValue Tmp = Ops[1];
         Ops[1] = Ops[0];
         Ops[0] = Tmp;
-
-      } else if (DescE64 && !Immediate) {
-        // Test if it makes sense to switch to e64 encoding
-
-        RegClass = DescE64->OpInfo[Op].RegClass;
-        int32_t TmpImm = -1;
-        if ((isVSrc(RegClass) || isSSrc(RegClass)) &&
-            foldImm(Ops[i], TmpImm, ScalarSlotUsed)) {
-
-          Immediate = -1;
-          Promote2e64 = true;
-          Desc = DescE64;
-          DescE64 = 0;
-        }
+        continue;
       }
-      continue;
     }
 
-    // Try to fold the immediates
-    if (!foldImm(Ops[i], Immediate, ScalarSlotUsed)) {
-      // Folding didn't worked, make sure we don't hit the SReg limit
-      ensureSRegLimit(DAG, Ops[i], RegClass, ScalarSlotUsed);
+    if (DescE64 && !Immediate) {
+
+      // Test if it makes sense to switch to e64 encoding
+      unsigned OtherRegClass = DescE64->OpInfo[Op].RegClass;
+      if (!isVSrc(OtherRegClass) && !isSSrc(OtherRegClass))
+        continue;
+
+      int32_t TmpImm = -1;
+      if (foldImm(Ops[i], TmpImm, ScalarSlotUsed) ||
+          (!fitsRegClass(DAG, Ops[i], RegClass) &&
+           fitsRegClass(DAG, Ops[1], OtherRegClass))) {
+
+        // Switch to e64 encoding
+        Immediate = -1;
+        Promote2e64 = true;
+        Desc = DescE64;
+        DescE64 = 0;
+      }
     }
   }
 
