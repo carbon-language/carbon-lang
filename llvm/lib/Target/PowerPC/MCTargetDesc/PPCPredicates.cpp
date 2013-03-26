@@ -18,7 +18,6 @@ using namespace llvm;
 
 PPC::Predicate PPC::InvertPredicate(PPC::Predicate Opcode) {
   switch (Opcode) {
-  default: llvm_unreachable("Unknown PPC branch opcode!");
   case PPC::PRED_EQ: return PPC::PRED_NE;
   case PPC::PRED_NE: return PPC::PRED_EQ;
   case PPC::PRED_LT: return PPC::PRED_GE;
@@ -28,4 +27,5 @@ PPC::Predicate PPC::InvertPredicate(PPC::Predicate Opcode) {
   case PPC::PRED_NU: return PPC::PRED_UN;
   case PPC::PRED_UN: return PPC::PRED_NU;
   }
+  llvm_unreachable("Unknown PPC branch opcode!");
 }
