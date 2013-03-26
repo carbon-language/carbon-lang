@@ -13,7 +13,7 @@
 
 #if _LIBCPP_DEBUG2 >= 1
 
-#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::terminate())
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
 
 #include <vector>
 #include <cassert>
@@ -21,14 +21,8 @@
 #include <exception>
 #include <cstdlib>
 
-void f1()
-{
-    std::exit(0);
-}
-
 int main()
 {
-    std::set_terminate(f1);
     typedef int T;
     typedef std::vector<T> C;
     C c(1);

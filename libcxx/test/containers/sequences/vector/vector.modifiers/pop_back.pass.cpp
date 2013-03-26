@@ -12,7 +12,7 @@
 // void pop_back();
 
 #if _LIBCPP_DEBUG2 >= 1
-#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::terminate())
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
 #endif
 
 #include <vector>
@@ -23,17 +23,10 @@
 #include <cstdlib>
 #include <exception>
 
-void f1()
-{
-    std::exit(0);
-}
 #endif
 
 int main()
 {
-#if _LIBCPP_DEBUG2 >= 1
-    std::set_terminate(f1);
-#endif
     {
         std::vector<int> c;
         c.push_back(1);

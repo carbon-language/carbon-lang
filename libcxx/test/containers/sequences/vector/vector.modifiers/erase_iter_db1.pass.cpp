@@ -13,21 +13,15 @@
 
 #if _LIBCPP_DEBUG2 >= 1
 
-#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::terminate())
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
 
 #include <vector>
 #include <cassert>
 #include <cstdlib>
 #include <exception>
 
-void f1()
-{
-    std::exit(0);
-}
-
 int main()
 {
-    std::set_terminate(f1);
     int a1[] = {1, 2, 3};
     std::vector<int> l1(a1, a1+3);
     std::vector<int>::const_iterator i = l1.end();
