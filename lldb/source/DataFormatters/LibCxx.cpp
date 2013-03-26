@@ -1,4 +1,4 @@
-//===-- LibCxx.cpp ------------------------------------------------*- C++ -*-===//
+//===-- LibCxx.cpp ----------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -402,12 +402,12 @@ lldb_private::formatters::LibcxxSharedPtrSyntheticFrontEndCreator (CXXSyntheticC
 }
 
 lldb_private::formatters::LibcxxStdVectorSyntheticFrontEnd::LibcxxStdVectorSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
-SyntheticChildrenFrontEnd(*valobj_sp.get()),
-m_start(NULL),
-m_finish(NULL),
-m_element_type(),
-m_element_size(0),
-m_children()
+    SyntheticChildrenFrontEnd(*valobj_sp.get()),
+    m_start(NULL),
+    m_finish(NULL),
+    m_element_type(),
+    m_element_size(0),
+    m_children()
 {
     if (valobj_sp)
         Update();
@@ -466,9 +466,13 @@ lldb_private::formatters::LibcxxStdVectorSyntheticFrontEnd::Update()
     m_element_type = ClangASTType(data_type_finder_sp->GetClangAST(),data_type_finder_sp->GetClangType());
     m_element_type.SetClangType(m_element_type.GetASTContext(), m_element_type.GetPointeeType());
     m_element_size = m_element_type.GetTypeByteSize();
-    // store raw pointers or end up with a circular dependency
-    m_start = m_backend.GetChildMemberWithName(ConstString("__begin_"),true).get();
-    m_finish = m_backend.GetChildMemberWithName(ConstString("__end_"),true).get();
+    
+    if (m_element_size > 0)
+    {
+        // store raw pointers or end up with a circular dependency
+        m_start = m_backend.GetChildMemberWithName(ConstString("__begin_"),true).get();
+        m_finish = m_backend.GetChildMemberWithName(ConstString("__end_"),true).get();
+    }
     return false;
 }
 
