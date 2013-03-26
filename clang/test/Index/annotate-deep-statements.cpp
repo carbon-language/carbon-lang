@@ -3,6 +3,9 @@
 // rdar://11979525
 // Check that we don't get stack overflow trying to annotate an extremely deep AST.
 
+// AddressSanitizer increases stack usage.
+// XFAIL: asan
+
 struct S {
   S &operator()();
 };
