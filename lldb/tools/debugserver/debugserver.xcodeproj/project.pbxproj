@@ -65,8 +65,6 @@
 		2695DD9B0D3EC160007E4CA2 /* CFString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CFString.cpp; sourceTree = "<group>"; };
 		2695DE2D0D3EE55B007E4CA2 /* CFData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CFData.h; sourceTree = "<group>"; };
 		2695DE2E0D3EE55B007E4CA2 /* CFData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CFData.cpp; sourceTree = "<group>"; };
-		269DE5C50CB5B723008989F0 /* ProfileObjectiveC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileObjectiveC.h; sourceTree = "<group>"; };
-		269DE5C60CB5B723008989F0 /* ProfileObjectiveC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProfileObjectiveC.cpp; sourceTree = "<group>"; };
 		269E8DF8164B2ED200AD65F6 /* com.apple.debugserver.posix.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = com.apple.debugserver.posix.plist; sourceTree = "<group>"; };
 		26A02918114AB9240029C479 /* debugserver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = debugserver.cpp; sourceTree = "<group>"; };
 		26A4BAED0D498B7D00A9BEAB /* com.apple.debugserver.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = com.apple.debugserver.plist; sourceTree = "<group>"; };
@@ -77,8 +75,6 @@
 		26A68FD50D10574500665A9E /* RNBRemote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNBRemote.h; sourceTree = "<group>"; };
 		26A68FD60D10574500665A9E /* RNBRemote.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RNBRemote.cpp; sourceTree = "<group>"; };
 		26A8FE1E0D11A77B00203048 /* DNBTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DNBTimer.h; sourceTree = "<group>"; };
-		26A901EA0EA3F46B00F7C71E /* FunctionProfiler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FunctionProfiler.cpp; sourceTree = "<group>"; };
-		26A901EB0EA3F46B00F7C71E /* FunctionProfiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FunctionProfiler.h; sourceTree = "<group>"; };
 		26ACA3340D3E956300A2120B /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		26B67DE00EE9BC30006C8BC0 /* MachTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachTask.h; sourceTree = "<group>"; };
 		26B67DE10EE9BC30006C8BC0 /* MachTask.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachTask.cpp; sourceTree = "<group>"; };
@@ -235,17 +231,6 @@
 			name = libdebugnub;
 			sourceTree = "<group>";
 		};
-		26A02900114AB6DB0029C479 /* Utility */ = {
-			isa = PBXGroup;
-			children = (
-				26A901EB0EA3F46B00F7C71E /* FunctionProfiler.h */,
-				26A901EA0EA3F46B00F7C71E /* FunctionProfiler.cpp */,
-				269DE5C50CB5B723008989F0 /* ProfileObjectiveC.h */,
-				269DE5C60CB5B723008989F0 /* ProfileObjectiveC.cpp */,
-			);
-			name = Utility;
-			sourceTree = "<group>";
-		};
 		26ACA3330D3E94F200A2120B /* Framework */ = {
 			isa = PBXGroup;
 			children = (
@@ -268,7 +253,6 @@
 				26593A060D4931CC001C9FE3 /* ChangeLog */,
 				26DEFD6C0D104C23008A5A07 /* debugserver */,
 				26A028FF114AB6BB0029C479 /* libdebugnub */,
-				26A02900114AB6DB0029C479 /* Utility */,
 			);
 			indentWidth = 4;
 			path = source;
