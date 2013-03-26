@@ -11,6 +11,10 @@
 
 // template <class... Args> iterator emplace(const_iterator pos, Args&&... args);
 
+#if _LIBCPP_DEBUG2 >= 1
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <vector>
 #include <cassert>
 #include "../../../stack_allocator.h"
@@ -102,5 +106,13 @@ int main()
         assert(c.back().geti() == 3);
         assert(c.back().getd() == 4.5);
     }
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        std::vector<A> c1;
+        std::vector<A> c2;
+        std::vector<A>::iterator i = c1.emplace(c2.cbegin(), 2, 3.5);
+        assert(false);
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }
