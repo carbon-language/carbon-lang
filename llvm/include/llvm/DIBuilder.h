@@ -265,12 +265,13 @@ namespace llvm {
     ///                     DW_AT_containing_type. See DWARF documentation
     ///                     for more info.
     /// @param TemplateParms Template type parameters.
-    DIType createClassType(DIDescriptor Scope, StringRef Name, DIFile File,
-                           unsigned LineNumber, uint64_t SizeInBits,
-                           uint64_t AlignInBits, uint64_t OffsetInBits,
-                           unsigned Flags, DIType DerivedFrom, 
-                           DIArray Elements, MDNode *VTableHolder = 0,
-                           MDNode *TemplateParms = 0);
+    DICompositeType createClassType(DIDescriptor Scope, StringRef Name,
+                                    DIFile File, unsigned LineNumber,
+                                    uint64_t SizeInBits, uint64_t AlignInBits,
+                                    uint64_t OffsetInBits, unsigned Flags,
+                                    DIType DerivedFrom, DIArray Elements,
+                                    MDNode *VTableHolder = 0,
+                                    MDNode *TemplateParms = 0);
 
     /// createStructType - Create debugging information entry for a struct.
     /// @param Scope        Scope in which this struct is defined.
