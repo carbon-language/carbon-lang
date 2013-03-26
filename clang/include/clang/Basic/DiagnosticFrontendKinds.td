@@ -42,8 +42,6 @@ def err_fe_unable_to_load_pch : Error<
     "unable to load PCH file">;
 def err_fe_unable_to_load_plugin : Error<
     "unable to load plugin '%0': '%1'">;
-def err_fe_unable_to_create_target : Error<
-    "unable to create target: '%0'">;
 def err_fe_unable_to_interface_with_target : Error<
     "unable to interface with target machine">;
 def err_fe_unable_to_open_output : Error<

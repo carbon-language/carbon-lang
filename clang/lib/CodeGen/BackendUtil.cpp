@@ -329,7 +329,7 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   const llvm::Target *TheTarget = TargetRegistry::lookupTarget(Triple, Error);
   if (!TheTarget) {
     if (MustCreateTM)
-      Diags.Report(diag::err_fe_unable_to_create_target) << Error;
+      llvm::report_fatal_error ("Unable to create target: " + Error);
     return 0;
   }
 
