@@ -48,6 +48,12 @@ static void PoisonRedZones(const Global &g) {
   }
 }
 
+static void ReportGlobal(const Global &g, const char *prefix) {
+  Report("%s Global: beg=%p size=%zu/%zu name=%s module=%s dyn_init=%zu\n",
+         prefix, (void*)g.beg, g.size, g.size_with_redzone, g.name,
+         g.module_name, g.has_dynamic_init);
+}
+
 bool DescribeAddressIfGlobal(uptr addr, uptr size) {
   if (!flags()->report_globals) return false;
   BlockingMutexLock lock(&mu_for_globals);
@@ -55,8 +61,7 @@ bool DescribeAddressIfGlobal(uptr addr, uptr size) {
   for (ListOfGlobals *l = list_of_all_globals; l; l = l->next) {
     const Global &g = *l->g;
     if (flags()->report_globals >= 2)
-      Report("Search Global: beg=%p size=%zu name=%s\n",
-             (void*)g.beg, g.size, (char*)g.name);
+      ReportGlobal(g, "Search");
     res |= DescribeAddressRelativeToGlobal(addr, size, g);
   }
   return res;
@@ -68,9 +73,7 @@ bool DescribeAddressIfGlobal(uptr addr, uptr size) {
 static void RegisterGlobal(const Global *g) {
   CHECK(asan_inited);
   if (flags()->report_globals >= 2)
-    Report("Added Global: beg=%p size=%zu/%zu name=%s dyn.init=%zu\n",
-           (void*)g->beg, g->size, g->size_with_redzone, g->name,
-           g->has_dynamic_init);
+    ReportGlobal(*g, "Added");
   CHECK(flags()->report_globals);
   CHECK(AddrIsInMem(g->beg));
   CHECK(AddrIsAlignedByGranularity(g->beg));
@@ -153,23 +156,15 @@ void __asan_unregister_globals(__asan_global *globals, uptr n) {
 // when all dynamically initialized globals are unpoisoned.  This method
 // poisons all global variables not defined in this TU, so that a dynamic
 // initializer can only touch global variables in the same TU.
-void __asan_before_dynamic_init(uptr first_addr, uptr last_addr) {
+void __asan_before_dynamic_init(const char *module_name) {
   if (!flags()->check_initialization_order) return;
   CHECK(list_of_dynamic_init_globals);
+  CHECK(module_name);
   BlockingMutexLock lock(&mu_for_globals);
-  bool from_current_tu = false;
-  // The list looks like:
-  // a => ... => b => last_addr => ... => first_addr => c => ...
-  // The globals of the current TU reside between last_addr and first_addr.
   for (ListOfGlobals *l = list_of_dynamic_init_globals; l; l = l->next) {
-    if (l->g->beg == last_addr)
-      from_current_tu = true;
-    if (!from_current_tu)
+    if (l->g->module_name != module_name)
       PoisonGlobalAndRedzones(l->g);
-    if (l->g->beg == first_addr)
-      from_current_tu = false;
   }
-  CHECK(!from_current_tu);
 }
 
 // This method runs immediately after dynamic initialization in each TU, when
