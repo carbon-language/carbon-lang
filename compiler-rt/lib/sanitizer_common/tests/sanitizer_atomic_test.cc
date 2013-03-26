@@ -15,6 +15,9 @@
 
 namespace __sanitizer {
 
+// Clang crashes while compiling this test for Android:
+// http://llvm.org/bugs/show_bug.cgi?id=15587
+#if !SANITIZER_ANDROID
 template<typename T>
 void CheckAtomicCompareExchange() {
   typedef typename T::Type Type;
@@ -47,5 +50,6 @@ TEST(SanitizerCommon, AtomicCompareExchangeTest) {
   CheckAtomicCompareExchange<atomic_uint64_t>();
   CheckAtomicCompareExchange<atomic_uintptr_t>();
 }
+#endif  //!SANITIZER_ANDROID
 
 }  // namespace __sanitizer
