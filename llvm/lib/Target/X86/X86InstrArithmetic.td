@@ -1294,12 +1294,12 @@ let neverHasSideEffects = 1 in {
   let isCommutable = 1 in
   def rr : I<0xF6, MRMSrcReg, (outs RC:$dst1, RC:$dst2), (ins RC:$src),
              !strconcat(mnemonic, "\t{$src, $dst2, $dst1|$dst1, $dst2, $src}"),
-             [], IIC_MUL8>, T8XD, VEX_4V;
+             [], IIC_MUL8>, T8XD, VEX_4V, Sched<[WriteIMul]>;
 
   let mayLoad = 1 in
   def rm : I<0xF6, MRMSrcMem, (outs RC:$dst1, RC:$dst2), (ins x86memop:$src),
              !strconcat(mnemonic, "\t{$src, $dst2, $dst1|$dst1, $dst2, $src}"),
-             [], IIC_MUL8>, T8XD, VEX_4V;
+             [], IIC_MUL8>, T8XD, VEX_4V, Sched<[WriteIMulLd]>;
 }
 }
 

@@ -138,16 +138,16 @@ def MOVSX64rm32: RI<0x63, MRMSrcMem, (outs GR64:$dst), (ins i32mem:$src),
 // movzbq and movzwq encodings for the disassembler
 def MOVZX64rr8_Q : RI<0xB6, MRMSrcReg, (outs GR64:$dst), (ins GR8:$src),
                        "movz{bq|x}\t{$src, $dst|$dst, $src}", [], IIC_MOVZX>,
-                       TB;
+                       TB, Sched<[WriteALU]>;
 def MOVZX64rm8_Q : RI<0xB6, MRMSrcMem, (outs GR64:$dst), (ins i8mem:$src),
                        "movz{bq|x}\t{$src, $dst|$dst, $src}", [], IIC_MOVZX>,
-                       TB;
+                       TB, Sched<[WriteALULd]>;
 def MOVZX64rr16_Q : RI<0xB7, MRMSrcReg, (outs GR64:$dst), (ins GR16:$src),
                        "movz{wq|x}\t{$src, $dst|$dst, $src}", [], IIC_MOVZX>,
-                       TB;
+                       TB, Sched<[WriteALU]>;
 def MOVZX64rm16_Q : RI<0xB7, MRMSrcMem, (outs GR64:$dst), (ins i16mem:$src),
                        "movz{wq|x}\t{$src, $dst|$dst, $src}", [], IIC_MOVZX>,
-                       TB;
+                       TB, Sched<[WriteALULd]>;
 
 // FIXME: These should be Pat patterns.
 let isCodeGenOnly = 1 in {
