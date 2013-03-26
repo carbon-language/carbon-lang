@@ -39,7 +39,10 @@ DWARFDeclContext::GetQualifiedName () const
                 {
                     if (pos != begin)
                         m_qualified_name.append("::");
-                    m_qualified_name.append(pos->name);
+                    if (pos->name == NULL)
+                        m_qualified_name.append ("(anonymous namespace)");
+                    else
+                        m_qualified_name.append(pos->name);
                 }
             }
         }

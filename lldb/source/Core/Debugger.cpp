@@ -2242,7 +2242,16 @@ Debugger::FormatPrompt
                                                     const char *open_paren = strchr (cstr, '(');
                                                     const char *close_paren = NULL;
                                                     if (open_paren)
-                                                        close_paren = strchr (open_paren, ')');
+                                                    {
+                                                        if (strncmp(open_paren, "(anonymous namespace)", strlen("(anonymous namespace)")) == 0)
+                                                        {
+                                                            open_paren = strchr (open_paren + strlen("(anonymous namespace)"), '(');
+                                                            if (open_paren)
+                                                                close_paren = strchr (open_paren, ')');
+                                                        }
+                                                        else
+                                                            close_paren = strchr (open_paren, ')');
+                                                    }
                                                     
                                                     if (open_paren)
                                                         s.Write(cstr, open_paren - cstr + 1);
