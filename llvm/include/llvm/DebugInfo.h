@@ -359,6 +359,7 @@ namespace llvm {
     DICompositeType getContainingType() const {
       return getFieldAs<DICompositeType>(12);
     }
+    void setContainingType(DICompositeType ContainingType);
     DIArray getTemplateParams() const { return getFieldAs<DIArray>(13); }
 
     /// Verify - Verify that a composite type descriptor is well formed.

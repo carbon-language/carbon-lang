@@ -616,13 +616,20 @@ MDNode *DIDerivedType::getObjCProperty() const {
   return dyn_cast_or_null<MDNode>(DbgNode->getOperand(10));
 }
 
-/// \brief Set the array of member DITypes
+/// \brief Set the array of member DITypes.
 void DICompositeType::setTypeArray(DIArray Elements, DIArray TParams) {
   assert(!TParams || DbgNode->getNumOperands() == 14 && "If you're setting the template parameters this should include a slot for that");
   TrackingVH<MDNode> N(*this);
   N->replaceOperandWith(10, Elements);
   if (TParams)
     N->replaceOperandWith(13, TParams);
+  DbgNode = N;
+}
+
+/// \brief Set the containing type.
+void DICompositeType::setContainingType(DICompositeType ContainingType) {
+  TrackingVH<MDNode> N(*this);
+  N->replaceOperandWith(12, ContainingType);
   DbgNode = N;
 }
 
