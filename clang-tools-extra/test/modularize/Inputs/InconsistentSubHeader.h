@@ -1,4 +1,4 @@
-// Set up so TypeInt only defined during Header1.h include.
+// Set up so TypeInt only defined during InconsistentHeader1.h include.
 #ifdef SYMBOL1
 #define SYMBOL 1
 #endif
