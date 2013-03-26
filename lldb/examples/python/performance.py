@@ -12,6 +12,7 @@ import commands
 import optparse
 import os
 import platform
+import re
 import resource
 import sys
 import time
@@ -161,37 +162,77 @@ class TestCase:
                             sys.exit(1);
         return event
     
+class Measurement:
+    '''A class that encapsulates a measurement'''
+    def Measure(self):
+        assert False, "performance.Measurement.Measure() must be subclassed"
+        
+class MemoryMeasurement(Measurement):
+    '''A class that can measure memory statistics for a process.'''
+    def __init__(self, pid):
+        self.pid = pid
+        self.stats = ["rprvt","rshrd","rsize","vsize","vprvt","kprvt","kshrd","faults","cow","pageins"]
+        self.command = "top -l 1 -pid %u -stats %s" % (self.pid, ",".join(self.stats))
+        self.value = dict()
+    
+    def Measure(self):
+        output = commands.getoutput(self.command).split("\n")[-1]
+        values = re.split('[-+\s]+', output)
+        for (idx, stat) in enumerate(values):
+            multiplier = 1
+            if stat:
+                if stat[-1] == 'K':
+                    multiplier = 1024;
+                    stat = stat[:-1]
+                elif stat[-1] == 'M':
+                    multiplier = 1024*1024;
+                    stat = stat[:-1]
+                elif stat[-1] == 'G':
+                    multiplier = 1024*1024*1024;
+                elif stat[-1] == 'T':
+                    multiplier = 1024*1024*1024*1024;
+                    stat = stat[:-1]
+                self.value[self.stats[idx]] = int (stat) * multiplier
+
+    def __str__(self):
+        '''Dump the MemoryMeasurement current value'''
+        s = ''
+        for key in self.value.keys():
+            if s:
+                s += "\n"
+            s += "%8s = %s" % (key, self.value[key])
+        return s
+
 
 class TesterTestCase(TestCase):
     
     def Run (self, args):
         self.Setup(args)
         self.verbose = True
-        self.target = self.debugger.CreateTarget(args[0])
-        if self.target:
-            if self.Launch():
-                print resource.getrusage (resource.RUSAGE_SELF)
+        #self.breakpoints = { 'name' : { 'main' } : , 'malloc' {}
+        with Timer() as total_time:
+            self.target = self.debugger.CreateTarget(args[0])
+            if self.target:
                 with Timer() as breakpoint_timer:
                     self.target.BreakpointCreateByName("main")
-                    self.target.BreakpointCreateByName("malloc")
-                print('Breakpoint took %.03f sec.' % breakpoint_timer.interval)
-                print resource.getrusage (resource.RUSAGE_SELF)
-                event = self.WaitForNextProcessEvent()
-                self.process.Continue()
-                event = self.WaitForNextProcessEvent()
-                self.process.Continue()
-                event = self.WaitForNextProcessEvent()
-                self.process.Continue()
-                event = self.WaitForNextProcessEvent()
-                self.process.Continue()
+                print('Breakpoint time = %.03f sec.' % breakpoint_timer.interval)
+                if self.Launch():
+                    self.WaitForNextProcessEvent();
+                    self.process.Kill()
+                else:
+                    print "error: failed to launch process"
             else:
-                print "error: failed to launch process"
-        else:
-            print "error: failed to create target with '%s'" % (args[0])
+                print "error: failed to create target with '%s'" % (args[0])
+        print('Total time = %.03f sec.' % total_time.interval)
+        
 
 if __name__ == '__main__':
     lldb.SBDebugger.Initialize()
     test = TesterTestCase()
     test.Run (sys.argv[1:])
+    mem = MemoryMeasurement(os.getpid())
+    mem.Measure()
+    print str(mem)
     lldb.SBDebugger.Terminate()
-    
+    # print "sleeeping for 100 seconds"
+    # time.sleep(100)
