@@ -55,7 +55,6 @@ INITIALIZE_PASS_END(PEI, "prologepilog",
                     "Prologue/Epilogue Insertion & Frame Finalization",
                     false, false)
 
-STATISTIC(NumVirtualFrameRegs, "Number of virtual frame regs encountered");
 STATISTIC(NumScavengedRegs, "Number of frame index regs scavenged");
 STATISTIC(NumBytesStackSpace,
           "Number of bytes used for stack in all functions");
@@ -820,14 +819,20 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
        E = Fn.end(); BB != E; ++BB) {
     RS->enterBasicBlock(BB);
 
-    unsigned VirtReg = 0;
-    unsigned ScratchReg = 0;
     int SPAdj = 0;
 
     // The instruction stream may change in the loop, so check BB->end()
     // directly.
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
       MachineInstr *MI = I;
+      MachineBasicBlock::iterator J = llvm::next(I);
+
+      // RS should process this instruction before we might scavenge at this
+      // location. This is because we might be replacing a virtual register
+      // defined by this instruction, and if so, registers killed by this
+      // instruction are available, and defined registers are not.
+      RS->forward(I);
+
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         if (MI->getOperand(i).isReg()) {
           MachineOperand &MO = MI->getOperand(i);
@@ -837,29 +842,37 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
           if (!TargetRegisterInfo::isVirtualRegister(Reg))
             continue;
 
-          ++NumVirtualFrameRegs;
+          // When we first encounter a new virtual register, it
+          // must be a definition.
+          assert(MI->getOperand(i).isDef() &&
+                 "frame index virtual missing def!");
+          // Scavenge a new scratch register
+          const TargetRegisterClass *RC = Fn.getRegInfo().getRegClass(Reg);
+          unsigned ScratchReg = RS->scavengeRegister(RC, J, SPAdj);
 
-          // Have we already allocated a scratch register for this virtual?
-          if (Reg != VirtReg) {
-            // When we first encounter a new virtual register, it
-            // must be a definition.
-            assert(MI->getOperand(i).isDef() &&
-                   "frame index virtual missing def!");
-            // Scavenge a new scratch register
-            VirtReg = Reg;
-            const TargetRegisterClass *RC = Fn.getRegInfo().getRegClass(Reg);
-            ScratchReg = RS->scavengeRegister(RC, I, SPAdj);
-            ++NumScavengedRegs;
-          }
+          ++NumScavengedRegs;
+
           // Replace this reference to the virtual register with the
           // scratch register.
           assert (ScratchReg && "Missing scratch register!");
-          MI->getOperand(i).setReg(ScratchReg);
+          Fn.getRegInfo().replaceRegWith(Reg, ScratchReg);
 
+          // Because this instruction was processed by the RS before this
+          // register was allocated, make sure that the RS now records the
+          // register as being used.
+          RS->setUsed(ScratchReg);
         }
       }
-      RS->forward(I);
-      ++I;
+
+      // If the scavenger needed to use one of its spill slots, the
+      // spill code will have been inserted in between I and J. This is a
+      // problem because we need the spill code before I: Move I to just
+      // prior to J.
+      if (I != llvm::prior(J)) {
+        BB->splice(J, BB, I++);
+        RS->skipTo(I == BB->begin() ? NULL : llvm::prior(I));
+      } else
+        ++I;
     }
   }
 }

@@ -94,8 +94,11 @@ public:
   }
 
   /// skipTo - Move the internal MBB iterator but do not update register states.
-  ///
-  void skipTo(MachineBasicBlock::iterator I) { MBBI = I; }
+  void skipTo(MachineBasicBlock::iterator I) {
+    if (I == MachineBasicBlock::iterator(NULL))
+      Tracking = false;
+    MBBI = I;
+  }
 
   /// getRegsUsed - return all registers currently in use in used.
   void getRegsUsed(BitVector &used, bool includeReserved);

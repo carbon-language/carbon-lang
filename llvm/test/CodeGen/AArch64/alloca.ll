@@ -71,8 +71,8 @@ define void @test_variadic_alloca(i64 %n, ...) {
 ; CHECK: sub     sp, sp, #208
 ; CHECK: stp     x29, x30, [sp, #192]
 ; CHECK: add     x29, sp, #192
-; CHECK: sub     x9, x29, #192
-; CHECK: add     x8, x9, #0
+; CHECK: sub     [[TMP:x[0-9]+]], x29, #192
+; CHECK: add     x8, [[TMP]], #0
 ; CHECK: str     q7, [x8, #112]
 ; [...]
 ; CHECK: str     q1, [x8, #16]
