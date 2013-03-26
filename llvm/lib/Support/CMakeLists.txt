@@ -83,6 +83,7 @@ add_llvm_library(LLVMSupport
   Threading.cpp
   TimeValue.cpp
   Valgrind.cpp
+  Watchdog.cpp
   Unix/Host.inc
   Unix/Memory.inc
   Unix/Mutex.inc
