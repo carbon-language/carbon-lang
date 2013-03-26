@@ -827,99 +827,91 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
 
   llvm::Value *DeclPtr;
   if (Ty->isConstantSizeType()) {
-    if (!Target.useGlobalsForAutomaticVariables()) {
-      bool NRVO = getLangOpts().ElideConstructors &&
-                  D.isNRVOVariable();
+    bool NRVO = getLangOpts().ElideConstructors &&
+      D.isNRVOVariable();
 
-      // If this value is a POD array or struct with a statically
-      // determinable constant initializer, there are optimizations we can do.
-      //
-      // TODO: We should constant-evaluate the initializer of any variable,
-      // as long as it is initialized by a constant expression. Currently,
-      // isConstantInitializer produces wrong answers for structs with
-      // reference or bitfield members, and a few other cases, and checking
-      // for POD-ness protects us from some of these.
-      if (D.getInit() &&
-          (Ty->isArrayType() || Ty->isRecordType()) &&
-          (Ty.isPODType(getContext()) ||
-           getContext().getBaseElementType(Ty)->isObjCObjectPointerType()) &&
-          D.getInit()->isConstantInitializer(getContext(), false)) {
+    // If this value is a POD array or struct with a statically
+    // determinable constant initializer, there are optimizations we can do.
+    //
+    // TODO: We should constant-evaluate the initializer of any variable,
+    // as long as it is initialized by a constant expression. Currently,
+    // isConstantInitializer produces wrong answers for structs with
+    // reference or bitfield members, and a few other cases, and checking
+    // for POD-ness protects us from some of these.
+    if (D.getInit() &&
+        (Ty->isArrayType() || Ty->isRecordType()) &&
+        (Ty.isPODType(getContext()) ||
+         getContext().getBaseElementType(Ty)->isObjCObjectPointerType()) &&
+        D.getInit()->isConstantInitializer(getContext(), false)) {
 
-        // If the variable's a const type, and it's neither an NRVO
-        // candidate nor a __block variable and has no mutable members,
-        // emit it as a global instead.
-        if (CGM.getCodeGenOpts().MergeAllConstants && !NRVO && !isByRef &&
-            CGM.isTypeConstant(Ty, true)) {
-          EmitStaticVarDecl(D, llvm::GlobalValue::InternalLinkage);
+      // If the variable's a const type, and it's neither an NRVO
+      // candidate nor a __block variable and has no mutable members,
+      // emit it as a global instead.
+      if (CGM.getCodeGenOpts().MergeAllConstants && !NRVO && !isByRef &&
+          CGM.isTypeConstant(Ty, true)) {
+        EmitStaticVarDecl(D, llvm::GlobalValue::InternalLinkage);
 
-          emission.Address = 0; // signal this condition to later callbacks
-          assert(emission.wasEmittedAsGlobal());
-          return emission;
-        }
-
-        // Otherwise, tell the initialization code that we're in this case.
-        emission.IsConstantAggregate = true;
+        emission.Address = 0; // signal this condition to later callbacks
+        assert(emission.wasEmittedAsGlobal());
+        return emission;
       }
 
-      // A normal fixed sized variable becomes an alloca in the entry block,
-      // unless it's an NRVO variable.
-      llvm::Type *LTy = ConvertTypeForMem(Ty);
+      // Otherwise, tell the initialization code that we're in this case.
+      emission.IsConstantAggregate = true;
+    }
 
-      if (NRVO) {
-        // The named return value optimization: allocate this variable in the
-        // return slot, so that we can elide the copy when returning this
-        // variable (C++0x [class.copy]p34).
-        DeclPtr = ReturnValue;
+    // A normal fixed sized variable becomes an alloca in the entry block,
+    // unless it's an NRVO variable.
+    llvm::Type *LTy = ConvertTypeForMem(Ty);
 
-        if (const RecordType *RecordTy = Ty->getAs<RecordType>()) {
-          if (!cast<CXXRecordDecl>(RecordTy->getDecl())->hasTrivialDestructor()) {
-            // Create a flag that is used to indicate when the NRVO was applied
-            // to this variable. Set it to zero to indicate that NRVO was not
-            // applied.
-            llvm::Value *Zero = Builder.getFalse();
-            llvm::Value *NRVOFlag = CreateTempAlloca(Zero->getType(), "nrvo");
-            EnsureInsertPoint();
-            Builder.CreateStore(Zero, NRVOFlag);
+    if (NRVO) {
+      // The named return value optimization: allocate this variable in the
+      // return slot, so that we can elide the copy when returning this
+      // variable (C++0x [class.copy]p34).
+      DeclPtr = ReturnValue;
 
-            // Record the NRVO flag for this variable.
-            NRVOFlags[&D] = NRVOFlag;
-            emission.NRVOFlag = NRVOFlag;
-          }
-        }
-      } else {
-        if (isByRef)
-          LTy = BuildByRefType(&D);
+      if (const RecordType *RecordTy = Ty->getAs<RecordType>()) {
+        if (!cast<CXXRecordDecl>(RecordTy->getDecl())->hasTrivialDestructor()) {
+          // Create a flag that is used to indicate when the NRVO was applied
+          // to this variable. Set it to zero to indicate that NRVO was not
+          // applied.
+          llvm::Value *Zero = Builder.getFalse();
+          llvm::Value *NRVOFlag = CreateTempAlloca(Zero->getType(), "nrvo");
+          EnsureInsertPoint();
+          Builder.CreateStore(Zero, NRVOFlag);
 
-        llvm::AllocaInst *Alloc = CreateTempAlloca(LTy);
-        Alloc->setName(D.getName());
-
-        CharUnits allocaAlignment = alignment;
-        if (isByRef)
-          allocaAlignment = std::max(allocaAlignment,
-              getContext().toCharUnitsFromBits(Target.getPointerAlign(0)));
-        Alloc->setAlignment(allocaAlignment.getQuantity());
-        DeclPtr = Alloc;
-
-        // Emit a lifetime intrinsic if meaningful.  There's no point
-        // in doing this if we don't have a valid insertion point (?).
-        uint64_t size = CGM.getDataLayout().getTypeAllocSize(LTy);
-        if (HaveInsertPoint() && shouldUseLifetimeMarkers(*this, D, size)) {
-          llvm::Value *sizeV = llvm::ConstantInt::get(Int64Ty, size);
-
-          emission.SizeForLifetimeMarkers = sizeV;
-          llvm::Value *castAddr = Builder.CreateBitCast(Alloc, Int8PtrTy);
-          Builder.CreateCall2(CGM.getLLVMLifetimeStartFn(), sizeV, castAddr)
-            ->setDoesNotThrow();
-        } else {
-          assert(!emission.useLifetimeMarkers());
+          // Record the NRVO flag for this variable.
+          NRVOFlags[&D] = NRVOFlag;
+          emission.NRVOFlag = NRVOFlag;
         }
       }
     } else {
-      // Targets that don't support recursion emit locals as globals.
-      const char *Class =
-        D.getStorageClass() == SC_Register ? ".reg." : ".auto.";
-      DeclPtr = CreateStaticVarDecl(D, Class,
-                                    llvm::GlobalValue::InternalLinkage);
+      if (isByRef)
+        LTy = BuildByRefType(&D);
+
+      llvm::AllocaInst *Alloc = CreateTempAlloca(LTy);
+      Alloc->setName(D.getName());
+
+      CharUnits allocaAlignment = alignment;
+      if (isByRef)
+        allocaAlignment = std::max(allocaAlignment,
+            getContext().toCharUnitsFromBits(Target.getPointerAlign(0)));
+      Alloc->setAlignment(allocaAlignment.getQuantity());
+      DeclPtr = Alloc;
+
+      // Emit a lifetime intrinsic if meaningful.  There's no point
+      // in doing this if we don't have a valid insertion point (?).
+      uint64_t size = CGM.getDataLayout().getTypeAllocSize(LTy);
+      if (HaveInsertPoint() && shouldUseLifetimeMarkers(*this, D, size)) {
+        llvm::Value *sizeV = llvm::ConstantInt::get(Int64Ty, size);
+
+        emission.SizeForLifetimeMarkers = sizeV;
+        llvm::Value *castAddr = Builder.CreateBitCast(Alloc, Int8PtrTy);
+        Builder.CreateCall2(CGM.getLLVMLifetimeStartFn(), sizeV, castAddr)
+          ->setDoesNotThrow();
+      } else {
+        assert(!emission.useLifetimeMarkers());
+      }
     }
   } else {
     EnsureInsertPoint();
@@ -964,11 +956,7 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
       if (CGM.getCodeGenOpts().getDebugInfo()
             >= CodeGenOptions::LimitedDebugInfo) {
         DI->setLocation(D.getLocation());
-        if (Target.useGlobalsForAutomaticVariables()) {
-          DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(DeclPtr),
-                                 &D);
-        } else
-          DI->EmitDeclareOfAutoVariable(&D, DeclPtr, Builder);
+        DI->EmitDeclareOfAutoVariable(&D, DeclPtr, Builder);
       }
     }
 

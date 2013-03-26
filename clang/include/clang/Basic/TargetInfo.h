@@ -571,8 +571,6 @@ public:
   /// either; the entire thing is pretty badly mangled.
   virtual bool hasProtectedVisibility() const { return true; }
 
-  virtual bool useGlobalsForAutomaticVariables() const { return false; }
-
   /// \brief Return the section to use for CFString literals, or 0 if no
   /// special section is used.
   virtual const char *getCFStringSection() const {
