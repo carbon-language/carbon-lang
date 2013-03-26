@@ -87,31 +87,6 @@ void PPCInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNo,
                                            raw_ostream &O, 
                                            const char *Modifier) {
   unsigned Code = MI->getOperand(OpNo).getImm();
-  if (!Modifier) {
-    unsigned CCReg = MI->getOperand(OpNo+1).getReg();
-    unsigned RegNo;
-    switch (CCReg) {
-    default: llvm_unreachable("Unknown CR register");
-    case PPC::CR0: RegNo = 0; break;
-    case PPC::CR1: RegNo = 1; break;
-    case PPC::CR2: RegNo = 2; break;
-    case PPC::CR3: RegNo = 3; break;
-    case PPC::CR4: RegNo = 4; break;
-    case PPC::CR5: RegNo = 5; break;
-    case PPC::CR6: RegNo = 6; break;
-    case PPC::CR7: RegNo = 7; break;
-    }
-
-    // Print the CR bit number. The Code is ((BI << 5) | BO) for a
-    // BCC, but we must have the positive form here (BO == 12)
-    unsigned BI = Code >> 5;
-    assert((Code & 0xF) == 12 &&
-           "BO in predicate bit must have the positive form");
-
-    unsigned Value = 4*RegNo + BI;
-    O << Value;
-    return;
-  }
 
   if (StringRef(Modifier) == "cc") {
     switch ((PPC::Predicate)Code) {

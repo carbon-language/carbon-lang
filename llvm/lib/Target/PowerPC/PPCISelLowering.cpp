@@ -6170,24 +6170,24 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     unsigned SelectPred = MI->getOperand(4).getImm();
     DebugLoc dl = MI->getDebugLoc();
 
-    // The SelectPred is ((BI << 5) | BO) for a BCC
-    unsigned BO = SelectPred & 0xF;
-    assert((BO == 12 || BO == 4) && "invalid predicate BO field for isel");
-
-    unsigned TrueOpNo, FalseOpNo;
-    if (BO == 12) {
-      TrueOpNo = 2;
-      FalseOpNo = 3;
-    } else {
-      TrueOpNo = 3;
-      FalseOpNo = 2;
-      SelectPred = PPC::InvertPredicate((PPC::Predicate)SelectPred);
+    unsigned SubIdx;
+    bool SwapOps;
+    switch (SelectPred) {
+    default: llvm_unreachable("invalid predicate for isel");
+    case PPC::PRED_EQ: SubIdx = PPC::sub_eq; SwapOps = false; break;
+    case PPC::PRED_NE: SubIdx = PPC::sub_eq; SwapOps = true; break;
+    case PPC::PRED_LT: SubIdx = PPC::sub_lt; SwapOps = false; break;
+    case PPC::PRED_GE: SubIdx = PPC::sub_lt; SwapOps = true; break;
+    case PPC::PRED_GT: SubIdx = PPC::sub_gt; SwapOps = false; break;
+    case PPC::PRED_LE: SubIdx = PPC::sub_gt; SwapOps = true; break;
+    case PPC::PRED_UN: SubIdx = PPC::sub_un; SwapOps = false; break;
+    case PPC::PRED_NU: SubIdx = PPC::sub_un; SwapOps = true; break;
     }
 
     BuildMI(*BB, MI, dl, TII->get(OpCode), MI->getOperand(0).getReg())
-      .addReg(MI->getOperand(TrueOpNo).getReg())
-      .addReg(MI->getOperand(FalseOpNo).getReg())
-      .addImm(SelectPred).addReg(MI->getOperand(1).getReg());
+      .addReg(MI->getOperand(SwapOps? 3 : 2).getReg())
+      .addReg(MI->getOperand(SwapOps? 2 : 3).getReg())
+      .addReg(MI->getOperand(1).getReg(), 0, SubIdx);
   } else if (MI->getOpcode() == PPC::SELECT_CC_I4 ||
              MI->getOpcode() == PPC::SELECT_CC_I8 ||
              MI->getOpcode() == PPC::SELECT_CC_F4 ||

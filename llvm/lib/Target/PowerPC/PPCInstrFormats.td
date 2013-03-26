@@ -777,16 +777,14 @@ class AForm_4<bits<6> opcode, bits<5> xo, dag OOL, dag IOL, string asmstr,
   bits<5> RT;
   bits<5> RA;
   bits<5> RB;
-  bits<7> BIBO;  // 2 bits of BI and 5 bits of BO (must be 12).
-  bits<3> CR;
+  bits<5> COND;
 
   let Pattern = pattern;
 
   let Inst{6-10}  = RT;
   let Inst{11-15} = RA;
   let Inst{16-20} = RB;
-  let Inst{21-23} = CR;
-  let Inst{24-25} = BIBO{6-5};
+  let Inst{21-25} = COND;
   let Inst{26-30} = xo;
   let Inst{31}    = 0;
 }

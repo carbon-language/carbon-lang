@@ -514,7 +514,7 @@ def RLWINM8 : MForm_2<21,
                      []>;
 
 def ISEL8   : AForm_4<31, 15,
-                     (outs G8RC:$rT), (ins G8RC_NOX0:$rA, G8RC:$rB, pred:$cond),
+                     (outs G8RC:$rT), (ins G8RC_NOX0:$rA, G8RC:$rB, CRBITRC:$cond),
                      "isel $rT, $rA, $rB, $cond", IntGeneral,
                      []>;
 }  // End FXU Operations.
