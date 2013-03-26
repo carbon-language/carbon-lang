@@ -10931,6 +10931,18 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::MERGE_VALUES, dl, Op->getVTList(), Result, isValid,
                        SDValue(Result.getNode(), 2));
   }
+
+  // XTEST intrinsics.
+  case Intrinsic::x86_xtest: {
+    SDVTList VTs = DAG.getVTList(Op->getValueType(0), MVT::Other);
+    SDValue InTrans = DAG.getNode(X86ISD::XTEST, dl, VTs, Op.getOperand(0));
+    SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
+                                DAG.getConstant(X86::COND_NE, MVT::i8),
+                                InTrans);
+    SDValue Ret = DAG.getNode(ISD::ZERO_EXTEND, dl, Op->getValueType(0), SetCC);
+    return DAG.getNode(ISD::MERGE_VALUES, dl, Op->getVTList(),
+                       Ret, SDValue(InTrans.getNode(), 1));
+  }
   }
 }
 
@@ -12772,6 +12784,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FMSUBADD:           return "X86ISD::FMSUBADD";
   case X86ISD::PCMPESTRI:          return "X86ISD::PCMPESTRI";
   case X86ISD::PCMPISTRI:          return "X86ISD::PCMPISTRI";
+  case X86ISD::XTEST:              return "X86ISD::XTEST";
   }
 }
 

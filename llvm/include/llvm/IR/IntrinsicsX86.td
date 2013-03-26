@@ -2570,4 +2570,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[], [], []>;
   def int_x86_xabort : GCCBuiltin<"__builtin_ia32_xabort">,
               Intrinsic<[], [llvm_i8_ty], [IntrNoReturn]>;
+  def int_x86_xtest : GCCBuiltin<"__builtin_ia32_xtest">,
+              Intrinsic<[llvm_i32_ty], [], []>;
 }

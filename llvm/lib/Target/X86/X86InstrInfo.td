@@ -604,6 +604,7 @@ def HasBMI       : Predicate<"Subtarget->hasBMI()">;
 def HasBMI2      : Predicate<"Subtarget->hasBMI2()">;
 def HasRTM       : Predicate<"Subtarget->hasRTM()">;
 def HasHLE       : Predicate<"Subtarget->hasHLE()">;
+def HasTSX       : Predicate<"Subtarget->hasRTM() || Subtarget->hasHLE()">;
 def HasADX       : Predicate<"Subtarget->hasADX()">;
 def HasPRFCHW    : Predicate<"Subtarget->hasPRFCHW()">;
 def HasPrefetchW : Predicate<"Subtarget->has3DNow() || Subtarget->hasPRFCHW()">;
