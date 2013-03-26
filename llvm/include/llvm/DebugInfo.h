@@ -354,6 +354,7 @@ namespace llvm {
     }
 
     DIArray getTypeArray() const { return getFieldAs<DIArray>(10); }
+    void setTypeArray(DIArray Elements, DIArray TParams = DIArray());
     unsigned getRunTimeLang() const { return getUnsignedField(11); }
     DICompositeType getContainingType() const {
       return getFieldAs<DICompositeType>(12);

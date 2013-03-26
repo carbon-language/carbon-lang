@@ -25,6 +25,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace llvm::dwarf;
@@ -613,6 +614,16 @@ MDNode *DIDerivedType::getObjCProperty() const {
   if (DbgNode->getNumOperands() <= 10)
     return NULL;
   return dyn_cast_or_null<MDNode>(DbgNode->getOperand(10));
+}
+
+/// \brief Set the array of member DITypes
+void DICompositeType::setTypeArray(DIArray Elements, DIArray TParams) {
+  assert(!TParams || DbgNode->getNumOperands() == 14 && "If you're setting the template parameters this should include a slot for that");
+  TrackingVH<MDNode> N(*this);
+  N->replaceOperandWith(10, Elements);
+  if (TParams)
+    N->replaceOperandWith(13, TParams);
+  DbgNode = N;
 }
 
 /// isInlinedFnArgument - Return true if this variable provides debugging
