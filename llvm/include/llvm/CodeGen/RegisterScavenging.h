@@ -42,7 +42,7 @@ class RegScavenger {
 
   /// Information on scavenged registers (held in a spill slot).
   struct ScavengedInfo {
-    ScavengedInfo(int FI) : FrameIndex(FI), Reg(0), Restore(NULL) {}
+    ScavengedInfo(int FI = -1) : FrameIndex(FI), Reg(0), Restore(NULL) {}
 
     /// A spill slot used for scavenging a register post register allocation.
     int FrameIndex;
@@ -130,7 +130,8 @@ public:
   void getScavengingFrameIndices(SmallVectorImpl<int> &A) const {
     for (SmallVector<ScavengedInfo, 2>::const_iterator I = Scavenged.begin(),
          IE = Scavenged.end(); I != IE; ++I)
-      A.push_back(I->FrameIndex);
+      if (I->FrameIndex >= 0)
+        A.push_back(I->FrameIndex);
   }
 
   /// scavengeRegister - Make a register of the specific register class
