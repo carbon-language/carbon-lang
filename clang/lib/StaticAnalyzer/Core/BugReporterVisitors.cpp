@@ -781,30 +781,38 @@ static const MemRegion *getLocationRegionIfReference(const Expr *E,
   return 0;
 }
 
+static const Expr *peelOffOuterExpr(const Stmt *S,
+                                    const ExplodedNode *N) {
+  if (const Expr *Ex = dyn_cast<Expr>(S)) {
+    Ex = Ex->IgnoreParenCasts();
+    if (const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(Ex))
+      return EWC->getSubExpr();
+    if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(Ex))
+      return OVE->getSourceExpr();
+
+    // Peel off the ternary operator.
+    if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(Ex)) {
+      ProgramStateRef State = N->getState();
+      SVal CondVal = State->getSVal(CO->getCond(), N->getLocationContext());
+      if (State->isNull(CondVal).isConstrainedTrue()) {
+        return CO->getTrueExpr();
+      } else {
+        assert(State->isNull(CondVal).isConstrainedFalse());
+        return CO->getFalseExpr();
+      }
+    }
+  }
+  return 0;
+}
+
 bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
                                         const Stmt *S,
                                         BugReport &report, bool IsArg) {
   if (!S || !N)
     return false;
 
-  if (const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(S))
-    S = EWC->getSubExpr();
-  if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(S))
-    S = OVE->getSourceExpr();
-
-  // Peel off the ternary operator.
-  if (const Expr *Ex = dyn_cast<Expr>(S)) {
-    Ex = Ex->IgnoreParenCasts();
-    if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(Ex)) {
-      ProgramStateRef State = N->getState();
-      SVal CondVal = State->getSVal(CO->getCond(), N->getLocationContext());
-      if (State->isNull(CondVal).isConstrainedTrue()) {
-        S = CO->getTrueExpr();
-      } else {
-        assert(State->isNull(CondVal).isConstrainedFalse());
-        S =  CO->getFalseExpr();
-      }
-    }
+  if (const Expr *Ex = peelOffOuterExpr(S, N)) {
+    S = Ex;
   }
 
   const Expr *Inner = 0;

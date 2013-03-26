@@ -139,6 +139,7 @@ void NilArgChecker::WarnIfNilArg(CheckerContext &C,
 
     BugReport *R = new BugReport(*BT, os.str(), N);
     R->addRange(msg.getArgSourceRange(Arg));
+    bugreporter::trackNullOrUndefValue(N, msg.getArgExpr(Arg), *R);
     C.emitReport(R);
   }
 }

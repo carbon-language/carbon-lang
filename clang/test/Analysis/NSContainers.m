@@ -142,3 +142,34 @@ NSDictionary *testNilArgNSDictionary1(NSString* key) {
 NSDictionary *testNilArgNSDictionary2(NSObject *obj) {
   return [NSDictionary dictionaryWithObject:obj forKey:0]; // expected-warning {{Argument to 'NSDictionary' method 'dictionaryWithObject:forKey:' cannot be nil}}
 }
+
+// Test inline defensive checks suppression.
+void idc(id x) {
+  if (x)
+    ;
+}
+void testIDC(NSMutableDictionary *d, NSString *key) {
+  idc(key);
+  d[key] = @"abc"; // no-warning
+}
+
+@interface Foo
+- (int *)getPtr;
+- (int)getInt;
+@end
+
+void idc2(id x) {
+	if (!x)
+		return;
+}
+
+void testIDC2(Foo *obj) {
+	idc2(obj);
+	*[obj getPtr] = 1; // no-warning
+}
+
+int testIDC3(Foo *obj) {
+	idc2(obj);
+  return 1/[obj getInt];
+}
+
