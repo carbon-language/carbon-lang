@@ -19,7 +19,13 @@
 // newline-separated list of headers to check with respect to each other.
 // Modularize also accepts regular front-end arguments.
 //
-// Usage:   modularize (include-files_list) [(front-end-options) ...]
+// Usage:   modularize [-prefix (optional header path prefix)] \
+//   (include-files_list) [(front-end-options) ...]
+//
+// Note that unless a "-prefex (header path)" option is specified,
+// non-absolute file paths in the header list file will be relative
+// to the header list file directory.  Use -prefix to specify a different
+// directory.
 //
 // Modularize will do normal parsing, reporting normal errors and warnings,
 // but will also report special error messages like the following:
@@ -60,7 +66,9 @@
 //===----------------------------------------------------------------------===//
  
 #include "llvm/Config/config.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Path.h"
 #include "llvm/ADT/StringRef.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Preprocessor.h"
@@ -79,7 +87,7 @@
 
 using namespace clang::tooling;
 using namespace clang;
-using llvm::StringRef;
+using namespace llvm;
 
 // FIXME: The Location class seems to be something that we might
 // want to design to be applicable to a wider range of tools, and stick it
@@ -331,43 +339,68 @@ private:
   EntityMap &Entities;  
 };
 
+// Option to specify a file name for a list of header files to check.
+cl::opt<std::string> ListFileName(cl::Positional,
+  cl::desc("<name of file containing list of headers to check>"));
+
+// Collect all other arguments, which will be passed to the front end.
+cl::list<std::string>  CC1Arguments(cl::ConsumeAfter,
+  cl::desc("<arguments to be passed to front end>..."));
+
+// Option to specify a prefix to be prepended to the header names.
+cl::opt<std::string> HeaderPrefix("prefix", cl::init(""),
+  cl::desc("Prepend header file paths with this prefix."
+    " If not specified,"
+    " the files are considered to be relative to the header list file."));
+
 int main(int argc, const char **argv) {
-  // Figure out command-line arguments.
-  if (argc < 2) {
-    llvm::errs() << "Usage: modularize <file containing header names> <arguments>\n";
-    return 1;
+
+  // This causes options to be parsed.
+  cl::ParseCommandLineOptions(argc, argv, "modularize.\n");
+
+  // No go if we have no header list file.
+  if (ListFileName.size() == 0) {
+    cl::PrintHelpMessage();
+    return -1;
   }
+
+  // By default, use the path component of the list file name.
+  SmallString<256> HeaderDirectory(ListFileName.c_str());
+  sys::path::remove_filename(HeaderDirectory);
   
+  // Get the prefix if we have one.
+  if (HeaderPrefix.size() != 0)
+    HeaderDirectory = HeaderPrefix;
+
   // Load the list of headers.
-  std::string File = argv[1];
   llvm::SmallVector<std::string, 8> Headers;
   {
-    std::ifstream In(File.c_str());
+    std::ifstream In(ListFileName.c_str());
     if (!In) {
-      llvm::errs() << "Unable to open header list file \"" << File.c_str() << "\"\n";
+      llvm::errs() << "Unable to open header list file \"" << ListFileName.c_str() << "\"\n";
       return 2;
     }
-    
     std::string Line;
     while (std::getline(In, Line)) {
       if (Line.empty() || Line[0] == '#')
         continue;
-      
-      Headers.push_back(Line);
+      SmallString<256> headerFileName;
+      if (sys::path::is_absolute(Line))
+        headerFileName = Line;
+      else {
+        headerFileName = HeaderDirectory;
+        sys::path::append(headerFileName, Line);
+      }
+      Headers.push_back(headerFileName.c_str());
     }
   }
-  
+
   // Create the compilation database.
+  SmallString<256> PathBuf;
+  llvm::sys::fs::current_path(PathBuf);
   llvm::OwningPtr<CompilationDatabase> Compilations;
-  {
-    std::vector<std::string> Arguments;
-    for (int I = 2; I < argc; ++I)
-      Arguments.push_back(argv[I]);
-    SmallString<256> PathBuf;
-    llvm::sys::fs::current_path(PathBuf);
-    Compilations.reset(new FixedCompilationDatabase(Twine(PathBuf), Arguments));
-  }
-  
+  Compilations.reset(new FixedCompilationDatabase(Twine(PathBuf), CC1Arguments));
+
   // Parse all of the headers, detecting duplicates.
   EntityMap Entities;
   ClangTool Tool(*Compilations, Headers);
