@@ -8342,6 +8342,46 @@ strings. This can be useful for special purpose optimizations that want
 to look for these annotations. These have no other defined use; they are
 ignored by code generation and optimization.
 
+'``llvm.ptr.annotation.*``' Intrinsic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+This is an overloaded intrinsic. You can use '``llvm.ptr.annotation``' on a
+pointer to an integer of any width. *NOTE* you must specify an address space for
+the pointer. The identifier for the default address space is the integer
+'``0``'.
+
+::
+
+      declare i8*   @llvm.ptr.annotation.p<address space>i8(i8* <val>, i8* <str>, i8* <str>, i32  <int>)
+      declare i16*  @llvm.ptr.annotation.p<address space>i16(i16* <val>, i8* <str>, i8* <str>, i32  <int>)
+      declare i32*  @llvm.ptr.annotation.p<address space>i32(i32* <val>, i8* <str>, i8* <str>, i32  <int>)
+      declare i64*  @llvm.ptr.annotation.p<address space>i64(i64* <val>, i8* <str>, i8* <str>, i32  <int>)
+      declare i256* @llvm.ptr.annotation.p<address space>i256(i256* <val>, i8* <str>, i8* <str>, i32  <int>)
+
+Overview:
+"""""""""
+
+The '``llvm.ptr.annotation``' intrinsic.
+
+Arguments:
+""""""""""
+
+The first argument is a pointer to an integer value of arbitrary bitwidth
+(result of some expression), the second is a pointer to a global string, the
+third is a pointer to a global string which is the source file name, and the
+last argument is the line number. It returns the value of the first argument.
+
+Semantics:
+""""""""""
+
+This intrinsic allows annotation of a pointer to an integer with arbitrary
+strings. This can be useful for special purpose optimizations that want to look
+for these annotations. These have no other defined use; they are ignored by code
+generation and optimization.
+
 '``llvm.annotation.*``' Intrinsic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
