@@ -130,7 +130,7 @@ ConnectionFileDescriptor::OpenCommandPipe ()
 {
     CloseCommandPipe();
     
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     // Make the command file descriptor here:
     int filedes[2];
     int result = pipe (filedes);
