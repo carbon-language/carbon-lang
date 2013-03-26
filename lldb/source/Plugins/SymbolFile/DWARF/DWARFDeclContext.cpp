@@ -40,7 +40,18 @@ DWARFDeclContext::GetQualifiedName () const
                     if (pos != begin)
                         m_qualified_name.append("::");
                     if (pos->name == NULL)
-                        m_qualified_name.append ("(anonymous namespace)");
+                    {
+                        if (pos->tag == DW_TAG_namespace)
+                            m_qualified_name.append ("(anonymous namespace)");
+                        else if (pos->tag == DW_TAG_class_type)
+                            m_qualified_name.append ("(anonymous class)");
+                        else if (pos->tag == DW_TAG_structure_type)
+                            m_qualified_name.append ("(anonymous struct)");
+                        else if (pos->tag == DW_TAG_union_type)
+                            m_qualified_name.append ("(anonymous union)");
+                        else
+                            m_qualified_name.append ("(anonymous)");
+                    }
                     else
                         m_qualified_name.append(pos->name);
                 }
