@@ -1052,10 +1052,20 @@ void EmitClangAttrList(RecordKeeper &Records, raw_ostream &OS) {
         " INHERITABLE_PARAM_ATTR(NAME)\n";
   OS << "#endif\n\n";
 
+  OS << "#ifndef MS_INHERITABLE_ATTR\n";
+  OS << "#define MS_INHERITABLE_ATTR(NAME) INHERITABLE_ATTR(NAME)\n";
+  OS << "#endif\n\n";
+
+  OS << "#ifndef LAST_MS_INHERITABLE_ATTR\n";
+  OS << "#define LAST_MS_INHERITABLE_ATTR(NAME)"
+        " MS_INHERITABLE_ATTR(NAME)\n";
+  OS << "#endif\n\n";
+
   Record *InhClass = Records.getClass("InheritableAttr");
   Record *InhParamClass = Records.getClass("InheritableParamAttr");
+  Record *MSInheritanceClass = Records.getClass("MSInheritanceAttr");
   std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr"),
-                       NonInhAttrs, InhAttrs, InhParamAttrs;
+                       NonInhAttrs, InhAttrs, InhParamAttrs, MSInhAttrs;
   for (std::vector<Record*>::iterator i = Attrs.begin(), e = Attrs.end();
        i != e; ++i) {
     if (!(*i)->getValueAsBit("ASTNode"))
@@ -1063,6 +1073,8 @@ void EmitClangAttrList(RecordKeeper &Records, raw_ostream &OS) {
     
     if ((*i)->isSubClassOf(InhParamClass))
       InhParamAttrs.push_back(*i);
+    else if ((*i)->isSubClassOf(MSInheritanceClass))
+      MSInhAttrs.push_back(*i);
     else if ((*i)->isSubClassOf(InhClass))
       InhAttrs.push_back(*i);
     else
@@ -1070,13 +1082,16 @@ void EmitClangAttrList(RecordKeeper &Records, raw_ostream &OS) {
   }
 
   EmitAttrList(OS, "INHERITABLE_PARAM_ATTR", InhParamAttrs);
+  EmitAttrList(OS, "MS_INHERITABLE_ATTR", MSInhAttrs);
   EmitAttrList(OS, "INHERITABLE_ATTR", InhAttrs);
   EmitAttrList(OS, "ATTR", NonInhAttrs);
 
   OS << "#undef LAST_ATTR\n";
   OS << "#undef INHERITABLE_ATTR\n";
+  OS << "#undef MS_INHERITABLE_ATTR\n";
   OS << "#undef LAST_INHERITABLE_ATTR\n";
   OS << "#undef LAST_INHERITABLE_PARAM_ATTR\n";
+  OS << "#undef LAST_MS_INHERITABLE_ATTR\n";
   OS << "#undef ATTR\n";
 }
 
