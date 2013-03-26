@@ -195,7 +195,7 @@ public:
     }
   }
 
-  uint64_t getGOTSymAddr() { return _gotSymAtom->_virtualAddr; }
+  uint64_t getGOTSymAddr() const { return _gotSymAtom->_virtualAddr; }
 
 private:
   HexagonTargetLayout<HexagonELFType> _targetLayout;

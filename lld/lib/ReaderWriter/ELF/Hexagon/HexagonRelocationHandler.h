@@ -25,15 +25,16 @@ class HexagonTargetRelocationHandler LLVM_FINAL :
     public TargetRelocationHandler<HexagonELFType> {
 public:
   HexagonTargetRelocationHandler(
-      const HexagonTargetInfo &ti,
+      const HexagonTargetInfo &ti, const HexagonTargetHandler &tH,
       const HexagonTargetLayout<HexagonELFType> &layout)
-      : _targetInfo(ti), _targetLayout(layout) {}
+      : _targetInfo(ti), _targetHandler(tH), _targetLayout(layout) {}
 
   virtual ErrorOr<void>
   applyRelocation(ELFWriter &, llvm::FileOutputBuffer &, const AtomLayout &,
                   const Reference &) const;
 private:
   const HexagonTargetInfo &_targetInfo;
+  const HexagonTargetHandler &_targetHandler;
   const HexagonTargetLayout<HexagonELFType> &_targetLayout;
 };
 } // elf

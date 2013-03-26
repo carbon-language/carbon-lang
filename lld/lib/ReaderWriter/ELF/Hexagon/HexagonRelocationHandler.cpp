@@ -206,6 +206,35 @@ int relocHexGOT11_X(uint8_t *location, uint64_t G) {
   return 0;
 }
 
+int relocHexGOTREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
+                   uint64_t GOT, int shiftBits = 0) {
+  uint32_t result = (uint32_t)((S + A - GOT) >> shiftBits);
+  result = lld::scatterBits<uint32_t>(result, FINDV4BITMASK(location));
+  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
+      result |
+      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  return 0;
+}
+
+int relocHexGOTREL_HILO16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
+                          uint64_t GOT, int shiftBits = 0) {
+  uint32_t result = (uint32_t)((S + A - GOT) >> shiftBits);
+  result = lld::scatterBits<uint32_t>(result, 0x00c03fff);
+  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
+      result |
+      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  return 0;
+}
+
+int relocHexGOTREL_32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
+                      uint64_t GOT) {
+  uint32_t result = (uint32_t)(S + A - GOT);
+  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
+      result |
+      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  return 0;
+}
+
 } // end anon namespace
 
 ErrorOr<void> HexagonTargetRelocationHandler::applyRelocation(
@@ -288,6 +317,18 @@ ErrorOr<void> HexagonTargetRelocationHandler::applyRelocation(
   case R_HEX_JMP_SLOT:
   case R_HEX_GLOB_DAT:
     break;
+  case R_HEX_GOTREL_32:
+    relocHexGOTREL_32(location, relocVAddress, targetVAddress, ref.addend(),
+                      _targetHandler.getGOTSymAddr());
+    break;
+  case R_HEX_GOTREL_LO16:
+    relocHexGOTREL_HILO16(location, relocVAddress, targetVAddress, ref.addend(),
+                          _targetHandler.getGOTSymAddr());
+    break;
+  case R_HEX_GOTREL_HI16:
+    relocHexGOTREL_HILO16(location, relocVAddress, targetVAddress, ref.addend(),
+                          _targetHandler.getGOTSymAddr(), 16);
+    break;
   case R_HEX_GOT_LO16:
     relocHexGOTLO16(location, targetVAddress);
     break;
@@ -309,6 +350,16 @@ ErrorOr<void> HexagonTargetRelocationHandler::applyRelocation(
   case R_HEX_GOT_11_X:
     relocHexGOT11_X(location, targetVAddress);
     break;
+  case R_HEX_GOTREL_32_6_X:
+    relocHexGOTREL(location, relocVAddress, targetVAddress, ref.addend(),
+                   _targetHandler.getGOTSymAddr(), 6);
+    break;
+  case R_HEX_GOTREL_16_X:
+  case R_HEX_GOTREL_11_X:
+    relocHexGOTREL(location, relocVAddress, targetVAddress, ref.addend(),
+                   _targetHandler.getGOTSymAddr());
+    break;
+
   case lld::Reference::kindLayoutAfter:
   case lld::Reference::kindLayoutBefore:
   case lld::Reference::kindInGroup:
