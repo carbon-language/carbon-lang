@@ -125,7 +125,8 @@ namespace sys {
                               const sys::Path** redirects = 0,
                               unsigned secondsToWait = 0,
                               unsigned memoryLimit = 0,
-                              std::string* ErrMsg = 0);
+                              std::string* ErrMsg = 0,
+                              bool *ExecutionFailed = 0);
 
     /// A convenience function equivalent to Program prg; prg.Execute(..);
     /// @see Execute

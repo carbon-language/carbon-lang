@@ -29,12 +29,15 @@ Program::ExecuteAndWait(const Path& path,
                         const Path** redirects,
                         unsigned secondsToWait,
                         unsigned memoryLimit,
-                        std::string* ErrMsg) {
+                        std::string* ErrMsg,
+                        bool *ExecutionFailed) {
   Program prg;
-  if (prg.Execute(path, args, envp, redirects, memoryLimit, ErrMsg))
+  if (prg.Execute(path, args, envp, redirects, memoryLimit, ErrMsg)) {
+    if (ExecutionFailed) *ExecutionFailed = false;
     return prg.Wait(path, secondsToWait, ErrMsg);
-  else
-    return -1;
+  }
+  if (ExecutionFailed) *ExecutionFailed = true;
+  return -1;
 }
 
 void
