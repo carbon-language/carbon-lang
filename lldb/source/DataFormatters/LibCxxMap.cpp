@@ -215,7 +215,6 @@ SyntheticChildrenFrontEnd(*valobj_sp.get()),
 m_tree(NULL),
 m_root_node(NULL),
 m_element_type(),
-m_element_size(0),
 m_skip_size(UINT32_MAX),
 m_count(UINT32_MAX),
 m_children()
@@ -256,7 +255,6 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetDataType()
     if (!deref)
         return false;
     m_element_type.SetClangType(deref->GetClangAST(), deref->GetClangType());
-    m_element_size = m_element_type.GetTypeByteSize();
     return true;
 }
 

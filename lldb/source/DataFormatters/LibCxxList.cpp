@@ -142,11 +142,11 @@ private:
 
 lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::LibcxxStdListSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
 SyntheticChildrenFrontEnd(*valobj_sp.get()),
+m_list_capping_size(0),
 m_node_address(),
 m_head(NULL),
 m_tail(NULL),
 m_element_type(),
-m_element_size(0),
 m_count(UINT32_MAX),
 m_children()
 {
@@ -197,7 +197,7 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::CalculateNumChildren (
     {
         size++;
         current.SetEntry(current.next());
-        if (size > g_list_capping_size)
+        if (size > m_list_capping_size)
             break;
     }
     return m_count = (size-1);
@@ -239,6 +239,11 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::Update()
     m_count = UINT32_MAX;
     Error err;
     ValueObjectSP backend_addr(m_backend.AddressOf(err));
+    m_list_capping_size = 0;
+    if (m_backend.GetTargetSP())
+        m_list_capping_size = m_backend.GetTargetSP()->GetMaximumNumberOfChildrenToDisplay();
+    if (m_list_capping_size == 0)
+        m_list_capping_size = 255;
     if (err.Fail() || backend_addr.get() == NULL)
         return false;
     m_node_address = backend_addr->GetValueAsUnsigned(0);
@@ -257,7 +262,6 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::Update()
         return false;
     lldb::TemplateArgumentKind kind;
     m_element_type = ClangASTType(m_backend.GetClangAST(), ClangASTContext::GetTemplateArgument(m_backend.GetClangAST(), list_type, 0, kind));
-    m_element_size = m_element_type.GetTypeByteSize();
     m_head = impl_sp->GetChildMemberWithName(ConstString("__next_"), true).get();
     m_tail = impl_sp->GetChildMemberWithName(ConstString("__prev_"), true).get();
     return false;

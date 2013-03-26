@@ -779,13 +779,12 @@ namespace lldb_private {
             bool
             HasLoop();
             
-            static const size_t g_list_capping_size = 255;
+            size_t m_list_capping_size;
             static const bool g_use_loop_detect = true;
             lldb::addr_t m_node_address;
             ValueObject* m_head;
             ValueObject* m_tail;
             ClangASTType m_element_type;
-            uint32_t m_element_size;
             size_t m_count;
             std::map<size_t,lldb::ValueObjectSP> m_children;
         };
@@ -821,11 +820,9 @@ namespace lldb_private {
             void
             GetValueOffset (const lldb::ValueObjectSP& node);
             
-            static const size_t g_map_capping_size = 255;
             ValueObject* m_tree;
             ValueObject* m_root_node;
             ClangASTType m_element_type;
-            uint32_t m_element_size;
             uint32_t m_skip_size;
             size_t m_count;
             std::map<size_t,lldb::ValueObjectSP> m_children;

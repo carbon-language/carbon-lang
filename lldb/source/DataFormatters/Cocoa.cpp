@@ -402,7 +402,7 @@ lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& 
                     break;
                 }
                 default:
-                    stream.Printf("absurd: dt=%d",data_type);
+                    stream.Printf("unexpected value: dt=%d",data_type);
                     break;
             }
             return true;
