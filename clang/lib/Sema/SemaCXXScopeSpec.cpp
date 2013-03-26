@@ -78,8 +78,7 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
   if (!SS.isSet() || SS.isInvalid())
     return 0;
 
-  NestedNameSpecifier *NNS
-    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+  NestedNameSpecifier *NNS = SS.getScopeRep();
   if (NNS->isDependent()) {
     // If this nested-name-specifier refers to the current
     // instantiation, return its DeclContext.
@@ -158,9 +157,7 @@ bool Sema::isDependentScopeSpecifier(const CXXScopeSpec &SS) {
   if (!SS.isSet() || SS.isInvalid())
     return false;
 
-  NestedNameSpecifier *NNS
-    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
-  return NNS->isDependent();
+  return SS.getScopeRep()->isDependent();
 }
 
 // \brief Determine whether this C++ scope specifier refers to an
@@ -170,9 +167,7 @@ bool Sema::isUnknownSpecialization(const CXXScopeSpec &SS) {
   if (!isDependentScopeSpecifier(SS))
     return false;
 
-  NestedNameSpecifier *NNS
-    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
-  return getCurrentInstantiationOf(NNS) == 0;
+  return getCurrentInstantiationOf(SS.getScopeRep()) == 0;
 }
 
 /// \brief If the given nested name specifier refers to the current
@@ -769,8 +764,7 @@ bool Sema::ActOnCXXNestedNameSpecifier(Scope *S,
   if (DependentTemplateName *DTN = Template.get().getAsDependentTemplateName()){
     // Handle a dependent template specialization for which we cannot resolve
     // the template name.
-    assert(DTN->getQualifier()
-             == static_cast<NestedNameSpecifier*>(SS.getScopeRep()));
+    assert(DTN->getQualifier() == SS.getScopeRep());
     QualType T = Context.getDependentTemplateSpecializationType(ETK_None,
                                                           DTN->getQualifier(),
                                                           DTN->getIdentifier(),
@@ -877,8 +871,7 @@ void Sema::RestoreNestedNameSpecifierAnnotation(void *AnnotationPtr,
 bool Sema::ShouldEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
 
-  NestedNameSpecifier *Qualifier =
-    static_cast<NestedNameSpecifier*>(SS.getScopeRep());
+  NestedNameSpecifier *Qualifier = SS.getScopeRep();
 
   // There are only two places a well-formed program may qualify a
   // declarator: first, when defining a namespace or class member
