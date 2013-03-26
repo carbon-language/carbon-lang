@@ -256,12 +256,6 @@ static inline int CharCmp(unsigned char c1, unsigned char c2) {
   return (c1 == c2) ? 0 : (c1 < c2) ? -1 : 1;
 }
 
-static inline int CharCaseCmp(unsigned char c1, unsigned char c2) {
-  int c1_low = ToLower(c1);
-  int c2_low = ToLower(c2);
-  return c1_low - c2_low;
-}
-
 INTERCEPTOR(int, memcmp, const void *a1, const void *a2, uptr size) {
   if (!asan_inited) return internal_memcmp(a1, a2, size);
   ENSURE_ASAN_INITED();
@@ -480,36 +474,6 @@ INTERCEPTOR(uptr, strlen, const char *s) {
   return length;
 }
 
-#if ASAN_INTERCEPT_STRCASECMP_AND_STRNCASECMP
-INTERCEPTOR(int, strcasecmp, const char *s1, const char *s2) {
-  ENSURE_ASAN_INITED();
-  unsigned char c1, c2;
-  uptr i;
-  for (i = 0; ; i++) {
-    c1 = (unsigned char)s1[i];
-    c2 = (unsigned char)s2[i];
-    if (CharCaseCmp(c1, c2) != 0 || c1 == '\0') break;
-  }
-  ASAN_READ_RANGE(s1, i + 1);
-  ASAN_READ_RANGE(s2, i + 1);
-  return CharCaseCmp(c1, c2);
-}
-
-INTERCEPTOR(int, strncasecmp, const char *s1, const char *s2, uptr n) {
-  ENSURE_ASAN_INITED();
-  unsigned char c1 = 0, c2 = 0;
-  uptr i;
-  for (i = 0; i < n; i++) {
-    c1 = (unsigned char)s1[i];
-    c2 = (unsigned char)s2[i];
-    if (CharCaseCmp(c1, c2) != 0 || c1 == '\0') break;
-  }
-  ASAN_READ_RANGE(s1, Min(i + 1, n));
-  ASAN_READ_RANGE(s2, Min(i + 1, n));
-  return CharCaseCmp(c1, c2);
-}
-#endif  // ASAN_INTERCEPT_STRCASECMP_AND_STRNCASECMP
-
 INTERCEPTOR(int, strncmp, const char *s1, const char *s2, uptr size) {
   if (!asan_inited) return internal_strncmp(s1, s2, size);
   // strncmp is called from malloc_default_purgeable_zone()
@@ -712,10 +676,6 @@ void InitializeAsanInterceptors() {
   ASAN_INTERCEPT_FUNC(strncat);
   ASAN_INTERCEPT_FUNC(strncmp);
   ASAN_INTERCEPT_FUNC(strncpy);
-#if ASAN_INTERCEPT_STRCASECMP_AND_STRNCASECMP
-  ASAN_INTERCEPT_FUNC(strcasecmp);
-  ASAN_INTERCEPT_FUNC(strncasecmp);
-#endif
 #if ASAN_INTERCEPT_STRDUP
   ASAN_INTERCEPT_FUNC(strdup);
 #endif

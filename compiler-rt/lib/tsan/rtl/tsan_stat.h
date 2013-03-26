@@ -134,6 +134,8 @@ enum StatType {
   StatInt_strncmp,
   StatInt_strcpy,
   StatInt_strncpy,
+  StatInt_strcasecmp,
+  StatInt_strncasecmp,
   StatInt_strstr,
   StatInt_atexit,
   StatInt___cxa_guard_acquire,

@@ -28,6 +28,52 @@
 #define va_copy(dst, src) ((dst) = (src))
 #endif // _WIN32
 
+#if SANITIZER_INTERCEPT_STRCASECMP
+static inline int CharCaseCmp(unsigned char c1, unsigned char c2) {
+  int c1_low = ToLower(c1);
+  int c2_low = ToLower(c2);
+  return c1_low - c2_low;
+}
+
+INTERCEPTOR(int, strcasecmp, const char *s1, const char *s2) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strcasecmp, s1, s2);
+  unsigned char c1 = 0, c2 = 0;
+  uptr i;
+  for (i = 0; ; i++) {
+    c1 = (unsigned char)s1[i];
+    c2 = (unsigned char)s2[i];
+    if (CharCaseCmp(c1, c2) != 0 || c1 == '\0')
+      break;
+  }
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, s1, i + 1);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, s2, i + 1);
+  return CharCaseCmp(c1, c2);
+}
+
+INTERCEPTOR(int, strncasecmp, const char *s1, const char *s2, SIZE_T n) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strncasecmp, s1, s2, n);
+  unsigned char c1 = 0, c2 = 0;
+  uptr i;
+  for (i = 0; i < n; i++) {
+    c1 = (unsigned char)s1[i];
+    c2 = (unsigned char)s2[i];
+    if (CharCaseCmp(c1, c2) != 0 || c1 == '\0')
+      break;
+  }
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, s1, Min(i + 1, n));
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, s2, Min(i + 1, n));
+  return CharCaseCmp(c1, c2);
+}
+
+#define INIT_STRCASECMP INTERCEPT_FUNCTION(strcasecmp)
+#define INIT_STRNCASECMP INTERCEPT_FUNCTION(strncasecmp)
+#else
+#define INIT_STRCASECMP
+#define INIT_STRNCASECMP
+#endif
+
 #if SANITIZER_INTERCEPT_FREXP
 INTERCEPTOR(double, frexp, double x, int *exp) {
   void *ctx;
@@ -366,6 +412,8 @@ SCANF_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
 #endif
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT                                     \
+  INIT_STRCASECMP;                                                             \
+  INIT_STRNCASECMP;                                                            \
   INIT_READ;                                                                   \
   INIT_PREAD;                                                                  \
   INIT_PREAD64;                                                                \
