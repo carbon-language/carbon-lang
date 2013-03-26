@@ -33,6 +33,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
@@ -763,14 +764,18 @@ static MDString *AppendMDNodeToSourcePtr(unsigned NodeId,
   return Hash;
 }
 
+static std::string SequenceToString(Sequence A) {
+  std::string str;
+  raw_string_ostream os(str);
+  os << A;
+  return os.str();
+}
+
 /// Helper function to change a Sequence into a String object using our overload
 /// for raw_ostream so we only have printing code in one location.
 static MDString *SequenceToMDString(LLVMContext &Context,
                                     Sequence A) {
-  std::string str;
-  raw_string_ostream os(str);
-  os << A;
-  return MDString::get(Context, os.str());
+  return MDString::get(Context, SequenceToString(A));
 }
 
 /// A simple function to generate a MDNode which describes the change in state
@@ -791,6 +796,79 @@ static void AppendMDNodeToInstForPtr(unsigned NodeId,
                      ArrayRef<Value*>(tmp, 3));
 
   Inst->setMetadata(NodeId, Node);
+}
+
+/// Add to the beginning of the basic block llvm.ptr.annotations which show the
+/// state of a pointer at the entrance to a basic block.
+static void GenerateARCBBEntranceAnnotation(const char *Name, BasicBlock *BB,
+                                            Value *Ptr, Sequence Seq) {
+  Module *M = BB->getParent()->getParent();
+  LLVMContext &C = M->getContext();
+  Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
+  Type *I8XX = PointerType::getUnqual(I8X);
+  Type *Params[] = {I8XX, I8XX};
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(C),
+                                        ArrayRef<Type*>(Params, 2),
+                                        /*isVarArg=*/false);
+  Constant *Callee = M->getOrInsertFunction(Name, FTy);
+  
+  IRBuilder<> Builder(BB, BB->getFirstInsertionPt());  
+  
+  Value *PtrName;
+  StringRef Tmp = Ptr->getName();
+  if (0 == (PtrName = M->getGlobalVariable(Tmp, true))) {
+    Value *ActualPtrName = Builder.CreateGlobalStringPtr(Tmp,
+                                                         Tmp + "_STR");
+    PtrName = new GlobalVariable(*M, I8X, true, GlobalVariable::InternalLinkage,
+                                 cast<Constant>(ActualPtrName), Tmp); 
+  }
+
+  Value *S;
+  std::string SeqStr = SequenceToString(Seq);
+  if (0 == (S = M->getGlobalVariable(SeqStr, true))) {
+    Value *ActualPtrName = Builder.CreateGlobalStringPtr(SeqStr,
+                                                         SeqStr + "_STR");
+    S = new GlobalVariable(*M, I8X, true, GlobalVariable::InternalLinkage,
+                           cast<Constant>(ActualPtrName), SeqStr);
+  }
+
+  Builder.CreateCall2(Callee, PtrName, S);
+}
+
+/// Add to the end of the basic block llvm.ptr.annotations which show the state
+/// of the pointer at the bottom of the basic block.
+static void GenerateARCBBTerminatorAnnotation(const char *Name, BasicBlock *BB,
+                                              Value *Ptr, Sequence Seq) {
+  Module *M = BB->getParent()->getParent();
+  LLVMContext &C = M->getContext();
+  Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
+  Type *I8XX = PointerType::getUnqual(I8X);
+  Type *Params[] = {I8XX, I8XX};
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(C),
+                                        ArrayRef<Type*>(Params, 2),
+                                        /*isVarArg=*/false);
+  Constant *Callee = M->getOrInsertFunction(Name, FTy);
+  
+  IRBuilder<> Builder(BB, llvm::prior(BB->end()));  
+  
+  Value *PtrName;
+  StringRef Tmp = Ptr->getName();
+  if (0 == (PtrName = M->getGlobalVariable(Tmp, true))) {
+    Value *ActualPtrName = Builder.CreateGlobalStringPtr(Tmp,
+                                                         Tmp + "_STR");
+    PtrName = new GlobalVariable(*M, I8X, true, GlobalVariable::InternalLinkage,
+                                 cast<Constant>(ActualPtrName), Tmp); 
+  }
+
+  Value *S;
+  std::string SeqStr = SequenceToString(Seq);
+  if (0 == (S = M->getGlobalVariable(SeqStr, true))) {
+    Value *ActualPtrName = Builder.CreateGlobalStringPtr(SeqStr,
+                                                         SeqStr + "_STR");
+    S = new GlobalVariable(*M, I8X, true, GlobalVariable::InternalLinkage,
+                           cast<Constant>(ActualPtrName), SeqStr);
+  }
+  Builder.CreateCall2(Callee, PtrName, S);  
 }
 
 /// Adds a source annotation to pointer and a state change annotation to Inst
@@ -1816,7 +1894,22 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
       assert(I != BBStates.end());
       MyStates.MergeSucc(I->second);
     }
+  }  
+
+#ifdef ARC_ANNOTATIONS
+  if (EnableARCAnnotations) {
+    // If ARC Annotations are enabled, output the current state of pointers at the
+    // bottom of the basic block.
+    for(BBState::ptr_const_iterator I = MyStates.bottom_up_ptr_begin(),
+          E = MyStates.bottom_up_ptr_end(); I != E; ++I) {
+      Value *Ptr = const_cast<Value*>(I->first);
+      Sequence Seq = I->second.GetSeq();
+      GenerateARCBBTerminatorAnnotation("llvm.arc.annotation.bottomup.bbend",
+                                        BB, Ptr, Seq);
+    }
   }
+#endif
+
 
   // Visit all the instructions, bottom-up.
   for (BasicBlock::iterator I = BB->end(), E = BB->begin(); I != E; --I) {
@@ -1840,6 +1933,20 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
     if (InvokeInst *II = dyn_cast<InvokeInst>(&Pred->back()))
       NestingDetected |= VisitInstructionBottomUp(II, BB, Retains, MyStates);
   }
+
+#ifdef ARC_ANNOTATIONS
+  if (EnableARCAnnotations) {
+    // If ARC Annotations are enabled, output the current state of pointers at the
+    // top of the basic block.
+    for(BBState::ptr_const_iterator I = MyStates.bottom_up_ptr_begin(),
+          E = MyStates.bottom_up_ptr_end(); I != E; ++I) {
+      Value *Ptr = const_cast<Value*>(I->first);
+      Sequence Seq = I->second.GetSeq();
+      GenerateARCBBEntranceAnnotation("llvm.arc.annotation.bottomup.bbstart",
+                                      BB, Ptr, Seq);
+    }
+  }
+#endif
 
   return NestingDetected;
 }
@@ -2012,6 +2119,20 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
     }
   }
 
+#ifdef ARC_ANNOTATIONS
+  if (EnableARCAnnotations) {
+    // If ARC Annotations are enabled, output the current state of pointers at the
+    // top of the basic block.
+    for(BBState::ptr_const_iterator I = MyStates.top_down_ptr_begin(),
+          E = MyStates.top_down_ptr_end(); I != E; ++I) {
+      Value *Ptr = const_cast<Value*>(I->first);
+      Sequence Seq = I->second.GetSeq();
+      GenerateARCBBEntranceAnnotation("llvm.arc.annotation.topdown.bbstart",
+                                      BB, Ptr, Seq);
+    }
+  }
+#endif
+
   // Visit all the instructions, top-down.
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
     Instruction *Inst = I;
@@ -2020,6 +2141,20 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
 
     NestingDetected |= VisitInstructionTopDown(Inst, Releases, MyStates);
   }
+
+#ifdef ARC_ANNOTATIONS
+  if (EnableARCAnnotations) {
+    // If ARC Annotations are enabled, output the current state of pointers at the
+    // bottom of the basic block.
+    for(BBState::ptr_const_iterator I = MyStates.top_down_ptr_begin(),
+          E = MyStates.top_down_ptr_end(); I != E; ++I) {
+      Value *Ptr = const_cast<Value*>(I->first);
+      Sequence Seq = I->second.GetSeq();
+      GenerateARCBBTerminatorAnnotation("llvm.arc.annotation.topdown.bbend",
+                                        BB, Ptr, Seq);
+    }
+  }
+#endif
 
   CheckForCFGHazards(BB, BBStates, MyStates);
   return NestingDetected;
