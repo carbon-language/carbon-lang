@@ -121,6 +121,9 @@ protected:
   /// HasRTM - Processor has RTM instructions.
   bool HasRTM;
 
+  /// HasHLE - Processor has HLE.
+  bool HasHLE;
+
   /// HasADX - Processor has ADX instructions.
   bool HasADX;
 
@@ -256,6 +259,7 @@ public:
   bool hasBMI() const { return HasBMI; }
   bool hasBMI2() const { return HasBMI2; }
   bool hasRTM() const { return HasRTM; }
+  bool hasHLE() const { return HasHLE; }
   bool hasADX() const { return HasADX; }
   bool hasPRFCHW() const { return HasPRFCHW; }
   bool isBTMemSlow() const { return IsBTMemSlow; }

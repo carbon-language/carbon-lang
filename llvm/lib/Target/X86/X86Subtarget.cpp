@@ -314,6 +314,10 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
         HasBMI = true;
         ToggleFeature(X86::FeatureBMI);
       }
+      if ((EBX >> 4) & 0x1) {
+        HasHLE = true;
+        ToggleFeature(X86::FeatureHLE);
+      }
       if (IsIntel && ((EBX >> 5) & 0x1)) {
         X86SSELevel = AVX2;
         ToggleFeature(X86::FeatureAVX2);
@@ -443,6 +447,7 @@ void X86Subtarget::initializeEnvironment() {
   HasBMI = false;
   HasBMI2 = false;
   HasRTM = false;
+  HasHLE = false;
   HasADX = false;
   HasPRFCHW = false;
   IsBTMemSlow = false;
