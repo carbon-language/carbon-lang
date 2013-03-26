@@ -240,6 +240,12 @@ class SmartArrayDataFormatterTestCase(TestBase):
 # using [] is required here
         self.runCmd("type summary add --summary-string \"arr = ${var%x}\" \"int [5]\"")
         
+        self.expect("frame variable intarr",matching=False,
+                    substrs = ['0x00000001,0x00000001,0x00000002,0x00000003,0x00000005'])
+        
+        self.expect("frame variable other.intarr", matching=False,
+                    substrs = ['0x00000009,0x00000008,0x00000007,0x00000006,0x00000005'])
+
         self.runCmd("type summary add --summary-string \"arr = ${var[]%x}\" \"int [5]\"")
         
         self.expect("frame variable intarr",
