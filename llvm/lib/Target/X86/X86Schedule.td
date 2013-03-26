@@ -565,3 +565,4 @@ def GenericModel : SchedMachineModel {
 }
 
 include "X86ScheduleAtom.td"
+include "X86SchedSandyBridge.td"

@@ -145,9 +145,6 @@ def ProcIntelAtom : SubtargetFeature<"atom", "X86ProcFamily", "IntelAtom",
 class Proc<string Name, list<SubtargetFeature> Features>
  : ProcessorModel<Name, GenericModel, Features>;
 
-class AtomProc<string Name, list<SubtargetFeature> Features>
- : ProcessorModel<Name, AtomModel, Features>;
-
 def : Proc<"generic",         []>;
 def : Proc<"i386",            []>;
 def : Proc<"i486",            []>;
@@ -164,46 +161,58 @@ def : Proc<"pentium4",        [FeatureSSE2]>;
 def : Proc<"pentium4m",       [FeatureSSE2, FeatureSlowBTMem]>;
 def : Proc<"x86-64",          [FeatureSSE2, Feature64Bit, FeatureSlowBTMem,
                                FeatureFastUAMem]>;
-def : Proc<"yonah",           [FeatureSSE3, FeatureSlowBTMem]>;
-def : Proc<"prescott",        [FeatureSSE3, FeatureSlowBTMem]>;
-def : Proc<"nocona",          [FeatureSSE3, FeatureCMPXCHG16B,
-                               FeatureSlowBTMem]>;
-def : Proc<"core2",           [FeatureSSSE3, FeatureCMPXCHG16B,
-                               FeatureSlowBTMem]>;
-def : Proc<"penryn",          [FeatureSSE41, FeatureCMPXCHG16B,
-                               FeatureSlowBTMem]>;
-def : AtomProc<"atom",        [ProcIntelAtom, FeatureSSSE3, FeatureCMPXCHG16B,
-                               FeatureMOVBE, FeatureSlowBTMem, FeatureLeaForSP,
-                               FeatureSlowDivide, FeaturePadShortFunctions]>;
+// Intel Core Duo.
+def : ProcessorModel<"yonah", SandyBridgeModel,
+                     [FeatureSSE3, FeatureSlowBTMem]>;
+
+// NetBurst.
+def : Proc<"prescott", [FeatureSSE3, FeatureSlowBTMem]>;
+def : Proc<"nocona",   [FeatureSSE3, FeatureCMPXCHG16B, FeatureSlowBTMem]>;
+
+// Intel Core 2 Solo/Duo.
+def : ProcessorModel<"core2", SandyBridgeModel,
+                     [FeatureSSSE3, FeatureCMPXCHG16B, FeatureSlowBTMem]>;
+def : ProcessorModel<"penryn", SandyBridgeModel,
+                     [FeatureSSE41, FeatureCMPXCHG16B, FeatureSlowBTMem]>;
+
+// Atom.
+def : ProcessorModel<"atom", AtomModel,
+                     [ProcIntelAtom, FeatureSSSE3, FeatureCMPXCHG16B,
+                      FeatureMOVBE, FeatureSlowBTMem, FeatureLeaForSP,
+                      FeatureSlowDivide, FeaturePadShortFunctions]>;
+
 // "Arrandale" along with corei3 and corei5
-def : Proc<"corei7",          [FeatureSSE42, FeatureCMPXCHG16B,
-                               FeatureSlowBTMem, FeatureFastUAMem,
-                               FeaturePOPCNT, FeatureAES]>;
-def : Proc<"nehalem",         [FeatureSSE42,  FeatureCMPXCHG16B,
-                               FeatureSlowBTMem, FeatureFastUAMem,
-                               FeaturePOPCNT]>;
+def : ProcessorModel<"corei7", SandyBridgeModel,
+                     [FeatureSSE42, FeatureCMPXCHG16B, FeatureSlowBTMem,
+                      FeatureFastUAMem, FeaturePOPCNT, FeatureAES]>;
+
+def : ProcessorModel<"nehalem", SandyBridgeModel,
+                     [FeatureSSE42,  FeatureCMPXCHG16B, FeatureSlowBTMem,
+                      FeatureFastUAMem, FeaturePOPCNT]>;
 // Westmere is a similar machine to nehalem with some additional features.
 // Westmere is the corei3/i5/i7 path from nehalem to sandybridge
-def : Proc<"westmere",        [FeatureSSE42, FeatureCMPXCHG16B,
-                               FeatureSlowBTMem, FeatureFastUAMem,
-                               FeaturePOPCNT, FeatureAES, FeaturePCLMUL]>;
+def : ProcessorModel<"westmere", SandyBridgeModel,
+                     [FeatureSSE42, FeatureCMPXCHG16B, FeatureSlowBTMem,
+                      FeatureFastUAMem, FeaturePOPCNT, FeatureAES,
+                      FeaturePCLMUL]>;
 // Sandy Bridge
 // SSE is not listed here since llvm treats AVX as a reimplementation of SSE,
 // rather than a superset.
-def : Proc<"corei7-avx",      [FeatureAVX, FeatureCMPXCHG16B, FeatureFastUAMem,
-                               FeaturePOPCNT, FeatureAES, FeaturePCLMUL]>;
+def : ProcessorModel<"corei7-avx", SandyBridgeModel,
+                     [FeatureAVX, FeatureCMPXCHG16B, FeatureFastUAMem,
+                      FeaturePOPCNT, FeatureAES, FeaturePCLMUL]>;
 // Ivy Bridge
-def : Proc<"core-avx-i",      [FeatureAVX, FeatureCMPXCHG16B, FeatureFastUAMem,
-                               FeaturePOPCNT, FeatureAES, FeaturePCLMUL,
-                               FeatureRDRAND, FeatureF16C, FeatureFSGSBase]>;
+def : ProcessorModel<"core-avx-i", SandyBridgeModel,
+                     [FeatureAVX, FeatureCMPXCHG16B, FeatureFastUAMem,
+                      FeaturePOPCNT, FeatureAES, FeaturePCLMUL, FeatureRDRAND,
+                      FeatureF16C, FeatureFSGSBase]>;
 
 // Haswell
-def : Proc<"core-avx2",       [FeatureAVX2, FeatureCMPXCHG16B, FeatureFastUAMem,
-                               FeaturePOPCNT, FeatureAES, FeaturePCLMUL,
-                               FeatureRDRAND, FeatureF16C, FeatureFSGSBase,
-                               FeatureMOVBE, FeatureLZCNT, FeatureBMI,
-                               FeatureBMI2, FeatureFMA,
-                               FeatureRTM]>;
+def : ProcessorModel<"core-avx2", SandyBridgeModel,
+                     [FeatureAVX2, FeatureCMPXCHG16B, FeatureFastUAMem,
+                      FeaturePOPCNT, FeatureAES, FeaturePCLMUL, FeatureRDRAND,
+                      FeatureF16C, FeatureFSGSBase, FeatureMOVBE, FeatureLZCNT,
+                      FeatureBMI, FeatureBMI2, FeatureFMA, FeatureRTM]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [Feature3DNow]>;
