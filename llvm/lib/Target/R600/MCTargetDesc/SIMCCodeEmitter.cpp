@@ -39,8 +39,6 @@ class SIMCCodeEmitter : public  AMDGPUMCCodeEmitter {
   void operator=(const SIMCCodeEmitter &) LLVM_DELETED_FUNCTION;
   const MCInstrInfo &MCII;
   const MCRegisterInfo &MRI;
-  const MCSubtargetInfo &STI;
-  MCContext &Ctx;
 
   /// \brief Can this operand also contain immediate values?
   bool isSrcOperand(const MCInstrDesc &Desc, unsigned OpNo) const;
@@ -51,7 +49,7 @@ class SIMCCodeEmitter : public  AMDGPUMCCodeEmitter {
 public:
   SIMCCodeEmitter(const MCInstrInfo &mcii, const MCRegisterInfo &mri,
                   const MCSubtargetInfo &sti, MCContext &ctx)
-    : MCII(mcii), MRI(mri), STI(sti), Ctx(ctx) { }
+    : MCII(mcii), MRI(mri) { }
 
   ~SIMCCodeEmitter() { }
 
