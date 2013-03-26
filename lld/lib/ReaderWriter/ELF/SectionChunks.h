@@ -612,6 +612,16 @@ public:
     return std::distance(_symbolTable.begin(), se);
   }
 
+  virtual void addAbsoluteAtom(Elf_Sym &sym, const AbsoluteAtom *aa,
+                               int64_t addr);
+
+  virtual void addDefinedAtom(Elf_Sym &sym, const DefinedAtom *da,
+                              int64_t addr);
+
+  virtual void addUndefinedAtom(Elf_Sym &sym, const UndefinedAtom *ua);
+
+  virtual void addSharedLibAtom(Elf_Sym &sym, const SharedLibraryAtom *sla);
+
   virtual void finalize();
 
   virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
@@ -641,6 +651,98 @@ SymbolTable<ELFT>::SymbolTable(const ELFTargetInfo &ti, const char *str,
   this->_type = SHT_SYMTAB;
 }
 
+template <class ELFT>
+void SymbolTable<ELFT>::addDefinedAtom(Elf_Sym &sym, const DefinedAtom *da,
+                                       int64_t addr) {
+  unsigned char binding = 0, type = 0;
+  sym.st_size = da->size();
+  DefinedAtom::ContentType ct;
+  switch (ct = da->contentType()) {
+  case DefinedAtom::typeCode:
+  case DefinedAtom::typeStub:
+    sym.st_value = addr;
+    type = llvm::ELF::STT_FUNC;
+    break;
+  case DefinedAtom::typeResolver:
+    sym.st_value = addr;
+    type = llvm::ELF::STT_GNU_IFUNC;
+    break;
+  case DefinedAtom::typeDataFast:
+  case DefinedAtom::typeData:
+  case DefinedAtom::typeConstant:
+    sym.st_value = addr;
+    type = llvm::ELF::STT_OBJECT;
+    break;
+  case DefinedAtom::typeGOT:
+    sym.st_value = addr;
+    type = llvm::ELF::STT_NOTYPE;
+    break;
+  case DefinedAtom::typeZeroFill:
+  case DefinedAtom::typeZeroFillFast:
+    type = llvm::ELF::STT_OBJECT;
+    sym.st_value = addr;
+    break;
+  case DefinedAtom::typeTLVInitialData:
+  case DefinedAtom::typeTLVInitialZeroFill:
+    type = llvm::ELF::STT_TLS;
+    sym.st_value = addr;
+    break;
+  default:
+    type = llvm::ELF::STT_NOTYPE;
+  }
+  if (da->customSectionName() == da->name())
+    type = llvm::ELF::STT_SECTION;
+
+  if (da->scope() == DefinedAtom::scopeTranslationUnit)
+    binding = llvm::ELF::STB_LOCAL;
+  else
+    binding = llvm::ELF::STB_GLOBAL;
+
+  sym.setBindingAndType(binding, type);
+}
+
+template <class ELFT>
+void SymbolTable<ELFT>::addAbsoluteAtom(Elf_Sym &sym, const AbsoluteAtom *aa,
+                                        int64_t addr) {
+  unsigned char binding = 0, type = 0;
+  type = llvm::ELF::STT_OBJECT;
+  sym.st_shndx = llvm::ELF::SHN_ABS;
+  switch (aa->scope()) {
+  case AbsoluteAtom::scopeLinkageUnit:
+    sym.st_other = llvm::ELF::STV_HIDDEN;
+    binding = llvm::ELF::STB_LOCAL;
+    break;
+  case AbsoluteAtom::scopeTranslationUnit:
+    binding = llvm::ELF::STB_LOCAL;
+    break;
+  case AbsoluteAtom::scopeGlobal:
+    binding = llvm::ELF::STB_GLOBAL;
+    break;
+  }
+  sym.st_value = addr;
+  sym.setBindingAndType(binding, type);
+}
+
+template <class ELFT>
+void SymbolTable<ELFT>::addSharedLibAtom(Elf_Sym &sym,
+                                         const SharedLibraryAtom *aa) {
+  unsigned char binding = 0, type = 0;
+  type = llvm::ELF::STT_FUNC;
+  sym.st_shndx = llvm::ELF::SHN_UNDEF;
+  binding = llvm::ELF::STB_GLOBAL;
+  sym.setBindingAndType(binding, type);
+}
+
+template <class ELFT>
+void SymbolTable<ELFT>::addUndefinedAtom(Elf_Sym &sym,
+                                         const UndefinedAtom *ua) {
+  unsigned char binding = 0, type = 0;
+  sym.st_value = 0;
+  type = llvm::ELF::STT_NOTYPE;
+  binding = llvm::ELF::STB_WEAK;
+  sym.setBindingAndType(binding, type);
+}
+
 /// Add a symbol to the symbol Table, definedAtoms which get added to the symbol
 /// section dont have their virtual addresses set at the time of adding the
 /// symbol to the symbol table(Example: dynamic symbols), the addresses needs
@@ -650,81 +752,22 @@ template <class ELFT>
 void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
                                   uint64_t addr, const AtomLayout *atomLayout) {
   Elf_Sym symbol;
-  unsigned char binding = 0, type = 0;
   symbol.st_name = _stringSection->addString(atom->name());
   symbol.st_size = 0;
   symbol.st_shndx = sectionIndex;
   symbol.st_value = 0;
   symbol.st_other = llvm::ELF::STV_DEFAULT;
-  if (const DefinedAtom *da = dyn_cast<const DefinedAtom>(atom)){
-    symbol.st_size = da->size();
-    DefinedAtom::ContentType ct;
-    switch (ct = da->contentType()){
-    case DefinedAtom::typeCode:
-    case DefinedAtom::typeStub:
-      symbol.st_value = addr;
-      type = llvm::ELF::STT_FUNC;
-      break;
-    case DefinedAtom::typeResolver:
-      symbol.st_value = addr;
-      type = llvm::ELF::STT_GNU_IFUNC;
-      break;
-    case DefinedAtom::typeDataFast:
-    case DefinedAtom::typeData:
-    case DefinedAtom::typeConstant:
-      symbol.st_value = addr;
-      type = llvm::ELF::STT_OBJECT;
-      break;
-    case DefinedAtom::typeGOT:
-      symbol.st_value = addr;
-      type = llvm::ELF::STT_NOTYPE;
-      break;
-    case DefinedAtom::typeZeroFill:
-    case DefinedAtom::typeZeroFillFast:
-      type = llvm::ELF::STT_OBJECT;
-      symbol.st_value = addr;
-      break;
-    case DefinedAtom::typeTLVInitialData:
-    case DefinedAtom::typeTLVInitialZeroFill:
-      type = llvm::ELF::STT_TLS;
-      symbol.st_value = addr;
-      break;
-    default:
-      type = llvm::ELF::STT_NOTYPE;
-    }
-    if (da->customSectionName() == da->name())
-      type = llvm::ELF::STT_SECTION;
 
-    if (da->scope() == DefinedAtom::scopeTranslationUnit)
-      binding = llvm::ELF::STB_LOCAL;
-    else
-      binding = llvm::ELF::STB_GLOBAL;
-  } else if (const AbsoluteAtom *aa = dyn_cast<const AbsoluteAtom>(atom)){
-    type = llvm::ELF::STT_OBJECT;
-    symbol.st_shndx = llvm::ELF::SHN_ABS;
-    switch (aa->scope()) {
-    case AbsoluteAtom::scopeLinkageUnit:
-      symbol.st_other = llvm::ELF::STV_HIDDEN;
-      binding = llvm::ELF::STB_LOCAL;
-      break;
-    case AbsoluteAtom::scopeTranslationUnit:
-      binding = llvm::ELF::STB_LOCAL;
-      break;
-    case AbsoluteAtom::scopeGlobal:
-      binding = llvm::ELF::STB_GLOBAL;
-      break;
-    }
-    symbol.st_value = addr;
-  } else if (isa<const SharedLibraryAtom>(atom)) {
-    type = llvm::ELF::STT_FUNC;
-    symbol.st_shndx = llvm::ELF::SHN_UNDEF;
-    binding = llvm::ELF::STB_GLOBAL;
-  } else {
-    symbol.st_value = 0;
-    type = llvm::ELF::STT_NOTYPE;
-    binding = llvm::ELF::STB_WEAK;
-  }
-  symbol.setBindingAndType(binding, type);
+  // Add all the atoms
+  if (const DefinedAtom *da = dyn_cast<const DefinedAtom>(atom))
+    addDefinedAtom(symbol, da, addr);
+  else if (const AbsoluteAtom *aa = dyn_cast<const AbsoluteAtom>(atom))
+    addAbsoluteAtom(symbol, aa, addr);
+  else if (isa<const SharedLibraryAtom>(atom))
+    addSharedLibAtom(symbol, llvm::dyn_cast<SharedLibraryAtom>(atom));
+  else
+    addUndefinedAtom(symbol, llvm::dyn_cast<UndefinedAtom>(atom));
+
   _symbolTable.push_back(SymbolEntry(atom, symbol, atomLayout));
   this->_fsize += sizeof(Elf_Sym);
   if (this->_flags & SHF_ALLOC)
