@@ -30,6 +30,11 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
+unsigned SIRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
+                                             MachineFunction &MF) const {
+  return RC->getNumRegs();
+}
+
 const TargetRegisterClass *
 SIRegisterInfo::getISARegClass(const TargetRegisterClass * rc) const {
   switch (rc->getID()) {

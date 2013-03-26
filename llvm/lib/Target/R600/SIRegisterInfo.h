@@ -31,6 +31,9 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
 
   virtual BitVector getReservedRegs(const MachineFunction &MF) const;
 
+  virtual unsigned getRegPressureLimit(const TargetRegisterClass *RC,
+                                       MachineFunction &MF) const;
+
   /// \param RC is an AMDIL reg class.
   ///
   /// \returns the SI register class that is equivalent to \p RC.
