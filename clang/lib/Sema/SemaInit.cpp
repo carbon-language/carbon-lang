@@ -3518,6 +3518,14 @@ static void TryReferenceInitializationCore(Sema &S,
       return;
     }
 
+    if ((RefRelationship == Sema::Ref_Compatible ||
+         RefRelationship == Sema::Ref_Compatible_With_Added_Qualification) &&
+        isRValueRef && InitCategory.isLValue()) {
+      Sequence.SetFailed(
+        InitializationSequence::FK_RValueReferenceBindingToLValue);
+      return;
+    }
+
     Sequence.SetFailed(InitializationSequence::FK_ReferenceInitDropsQualifiers);
     return;
   }

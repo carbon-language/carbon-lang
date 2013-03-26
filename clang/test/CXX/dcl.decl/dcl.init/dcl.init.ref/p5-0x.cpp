@@ -192,3 +192,11 @@ namespace PR11003 {
     Value y(Move(0));
   }
 }
+
+namespace rdar13278115 {
+  struct X { };
+  struct Y : X { };
+  X &&f0(X &x) { return x; } // expected-error{{rvalue reference to type 'rdar13278115::X' cannot bind to lvalue of type 'rdar13278115::X'}}
+  X &&f1(Y &y) { return y; } // expected-error{{rvalue reference to type 'rdar13278115::X' cannot bind to lvalue of type 'rdar13278115::Y'}}
+  const X &&f2(Y &y) { return y; } // expected-error{{rvalue reference to type 'const rdar13278115::X' cannot bind to lvalue of type 'rdar13278115::Y'}}
+}
