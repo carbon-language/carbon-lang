@@ -48,13 +48,13 @@ class CXXConstructorCall;
 
 class ExprEngine : public SubEngine {
 public:
-  /// The modes of inlining.
+  /// The modes of inlining, which override the default analysis-wide settings.
   enum InliningModes {
-    /// Do not inline any of the callees.
-    Inline_None = 0,
-    /// Inline all callees.
-    Inline_All = 0x1
-  } ;
+    /// Follow the default settings for inlining callees.
+    Inline_Regular = 0,
+    /// Do minimal inlining of callees.
+    Inline_Minimal = 0x1
+  };
 
 private:
   AnalysisManager &AMgr;

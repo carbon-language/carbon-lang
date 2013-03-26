@@ -234,11 +234,11 @@ public:
       else if (Mode == AM_Path) {
         llvm::errs() << " (Path, ";
         switch (IMode) {
-          case ExprEngine::Inline_None:
-            llvm::errs() << " Inline_None";
+          case ExprEngine::Inline_Minimal:
+            llvm::errs() << " Inline_Minimal";
             break;
-          case ExprEngine::Inline_All:
-            llvm::errs() << " Inline_All";
+          case ExprEngine::Inline_Regular:
+            llvm::errs() << " Inline_Regular";
             break;
         }
         llvm::errs() << ")";
@@ -284,7 +284,8 @@ public:
   virtual void HandleTranslationUnit(ASTContext &C);
 
   /// \brief Determine which inlining mode should be used when this function is
-  /// analyzed. For example, determines if the callees should be inlined.
+  /// analyzed. This allows to redefine the default inlining policies when
+  /// analyzing a given function.
   ExprEngine::InliningModes
   getInliningModeForFunction(const Decl *D, SetOfConstDecls Visited);
 
@@ -299,7 +300,7 @@ public:
   /// set of functions which should be considered analyzed after analyzing the
   /// given root function.
   void HandleCode(Decl *D, AnalysisMode Mode,
-                  ExprEngine::InliningModes IMode = ExprEngine::Inline_None,
+                  ExprEngine::InliningModes IMode = ExprEngine::Inline_Minimal,
                   SetOfConstDecls *VisitedCallees = 0);
 
   void RunPathSensitiveChecks(Decl *D,
@@ -410,22 +411,18 @@ static bool shouldSkipFunction(const Decl *D,
 ExprEngine::InliningModes
 AnalysisConsumer::getInliningModeForFunction(const Decl *D,
                                              SetOfConstDecls Visited) {
-  ExprEngine::InliningModes HowToInline =
-      (Mgr->shouldInlineCall()) ? ExprEngine::Inline_All :
-                                  ExprEngine::Inline_None;
-
   // We want to reanalyze all ObjC methods as top level to report Retain
-  // Count naming convention errors more aggressively. But we can turn off
+  // Count naming convention errors more aggressively. But we should tune down
   // inlining when reanalyzing an already inlined function.
   if (Visited.count(D)) {
     assert(isa<ObjCMethodDecl>(D) &&
            "We are only reanalyzing ObjCMethods.");
     const ObjCMethodDecl *ObjCM = cast<ObjCMethodDecl>(D);
     if (ObjCM->getMethodFamily() != OMF_init)
-      HowToInline = ExprEngine::Inline_None;
+      return ExprEngine::Inline_Minimal;
   }
 
-  return HowToInline;
+  return ExprEngine::Inline_Regular;
 }
 
 void AnalysisConsumer::HandleDeclsCallGraph(const unsigned LocalTUDeclsSize) {
@@ -595,7 +592,7 @@ void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
     checkerMgr->runCheckersOnASTBody(D, *Mgr, BR);
   if ((Mode & AM_Path) && checkerMgr->hasPathSensitiveCheckers()) {
     RunPathSensitiveChecks(D, IMode, VisitedCallees);
-    if (IMode != ExprEngine::Inline_None)
+    if (IMode != ExprEngine::Inline_Minimal)
       NumFunctionsAnalyzed++;
   }
 }

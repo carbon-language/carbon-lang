@@ -683,7 +683,7 @@ bool ExprEngine::shouldInlineCall(const CallEvent &Call, const Decl *D,
   if (CalleeADC->isBodyAutosynthesized())
     return true;
 
-  if (HowToInline == Inline_None)
+  if (!AMgr.shouldInlineCall())
     return false;
 
   // Check if we should inline a call based on its kind.
@@ -745,6 +745,12 @@ bool ExprEngine::shouldInlineCall(const CallEvent &Call, const Decl *D,
     NumReachedInlineCountMax++;
     return false;
   }
+
+  if (HowToInline == Inline_Minimal &&
+      (CalleeCFG->getNumBlockIDs() > Opts.getAlwaysInlineSize()
+      || IsRecursive))
+    return false;
+
   Engine.FunctionSummaries->bumpNumTimesInlined(D);
 
   return true;
