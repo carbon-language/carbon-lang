@@ -28,6 +28,10 @@ test(Iterator first, Iterator last)
         assert(*i == *first);
 }
 
+struct X
+{
+};
+
 int main()
 {
     int a[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 8, 7, 6, 5, 4, 3, 1, 0};
@@ -43,4 +47,7 @@ int main()
     test<std::vector<int, stack_allocator<int, 18> > >(bidirectional_iterator<const int*>(a), bidirectional_iterator<const int*>(an));
     test<std::vector<int, stack_allocator<int, 18> > >(random_access_iterator<const int*>(a), random_access_iterator<const int*>(an));
     test<std::vector<int, stack_allocator<int, 18> > >(a, an);
+
+    X x[2];
+    static_assert(!(std::is_constructible<std::vector<int>, X*, X*>::value), "");
 }

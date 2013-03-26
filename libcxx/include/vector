@@ -526,17 +526,29 @@ public:
     template <class _InputIterator>
         vector(_InputIterator __first, _InputIterator __last,
                typename enable_if<__is_input_iterator  <_InputIterator>::value &&
-                                 !__is_forward_iterator<_InputIterator>::value>::type* = 0);
+                                 !__is_forward_iterator<_InputIterator>::value &&
+                                 is_constructible<
+                                    value_type,
+                                    typename iterator_traits<_InputIterator>::reference>::value>::type* = 0);
     template <class _InputIterator>
         vector(_InputIterator __first, _InputIterator __last, const allocator_type& __a,
                typename enable_if<__is_input_iterator  <_InputIterator>::value &&
-                                 !__is_forward_iterator<_InputIterator>::value>::type* = 0);
+                                 !__is_forward_iterator<_InputIterator>::value &&
+                                 is_constructible<
+                                    value_type,
+                                    typename iterator_traits<_InputIterator>::reference>::value>::type* = 0);
     template <class _ForwardIterator>
         vector(_ForwardIterator __first, _ForwardIterator __last,
-               typename enable_if<__is_forward_iterator<_ForwardIterator>::value>::type* = 0);
+               typename enable_if<__is_forward_iterator<_ForwardIterator>::value &&
+                                 is_constructible<
+                                    value_type,
+                                    typename iterator_traits<_ForwardIterator>::reference>::value>::type* = 0);
     template <class _ForwardIterator>
         vector(_ForwardIterator __first, _ForwardIterator __last, const allocator_type& __a,
-               typename enable_if<__is_forward_iterator<_ForwardIterator>::value>::type* = 0);
+               typename enable_if<__is_forward_iterator<_ForwardIterator>::value &&
+                                 is_constructible<
+                                    value_type,
+                                    typename iterator_traits<_ForwardIterator>::reference>::value>::type* = 0);
 #ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     vector(initializer_list<value_type> __il);
@@ -577,14 +589,20 @@ public:
         typename enable_if
         <
              __is_input_iterator  <_InputIterator>::value &&
-            !__is_forward_iterator<_InputIterator>::value,
+            !__is_forward_iterator<_InputIterator>::value &&
+            is_constructible<
+                 value_type,
+                 typename iterator_traits<_InputIterator>::reference>::value,
             void
         >::type
         assign(_InputIterator __first, _InputIterator __last);
     template <class _ForwardIterator>
         typename enable_if
         <
-            __is_forward_iterator<_ForwardIterator>::value,
+            __is_forward_iterator<_ForwardIterator>::value &&
+            is_constructible<
+                 value_type,
+                 typename iterator_traits<_ForwardIterator>::reference>::value,
             void
         >::type
         assign(_ForwardIterator __first, _ForwardIterator __last);
@@ -700,14 +718,20 @@ public:
         typename enable_if
         <
              __is_input_iterator  <_InputIterator>::value &&
-            !__is_forward_iterator<_InputIterator>::value,
+            !__is_forward_iterator<_InputIterator>::value &&
+            is_constructible<
+                 value_type,
+                 typename iterator_traits<_InputIterator>::reference>::value,
             iterator
         >::type
         insert(const_iterator __position, _InputIterator __first, _InputIterator __last);
     template <class _ForwardIterator>
         typename enable_if
         <
-            __is_forward_iterator<_ForwardIterator>::value,
+            __is_forward_iterator<_ForwardIterator>::value &&
+            is_constructible<
+                 value_type,
+                 typename iterator_traits<_ForwardIterator>::reference>::value,
             iterator
         >::type
         insert(const_iterator __position, _ForwardIterator __first, _ForwardIterator __last);
@@ -1034,7 +1058,10 @@ template <class _Tp, class _Allocator>
 template <class _InputIterator>
 vector<_Tp, _Allocator>::vector(_InputIterator __first, _InputIterator __last,
        typename enable_if<__is_input_iterator  <_InputIterator>::value &&
-                         !__is_forward_iterator<_InputIterator>::value>::type*)
+                         !__is_forward_iterator<_InputIterator>::value &&
+                         is_constructible<
+                            value_type,
+                            typename iterator_traits<_InputIterator>::reference>::value>::type*)
 {
 #if _LIBCPP_DEBUG_LEVEL >= 2
     __get_db()->__insert_c(this);
@@ -1047,7 +1074,10 @@ template <class _Tp, class _Allocator>
 template <class _InputIterator>
 vector<_Tp, _Allocator>::vector(_InputIterator __first, _InputIterator __last, const allocator_type& __a,
        typename enable_if<__is_input_iterator  <_InputIterator>::value &&
-                         !__is_forward_iterator<_InputIterator>::value>::type*)
+                         !__is_forward_iterator<_InputIterator>::value &&
+                         is_constructible<
+                            value_type,
+                            typename iterator_traits<_InputIterator>::reference>::value>::type*)
     : __base(__a)
 {
 #if _LIBCPP_DEBUG_LEVEL >= 2
@@ -1060,7 +1090,10 @@ vector<_Tp, _Allocator>::vector(_InputIterator __first, _InputIterator __last, c
 template <class _Tp, class _Allocator>
 template <class _ForwardIterator>
 vector<_Tp, _Allocator>::vector(_ForwardIterator __first, _ForwardIterator __last,
-                                typename enable_if<__is_forward_iterator<_ForwardIterator>::value>::type*)
+                                typename enable_if<__is_forward_iterator<_ForwardIterator>::value &&
+                                is_constructible<
+                                   value_type,
+                                   typename iterator_traits<_ForwardIterator>::reference>::value>::type*)
 {
 #if _LIBCPP_DEBUG_LEVEL >= 2
     __get_db()->__insert_c(this);
@@ -1076,7 +1109,10 @@ vector<_Tp, _Allocator>::vector(_ForwardIterator __first, _ForwardIterator __las
 template <class _Tp, class _Allocator>
 template <class _ForwardIterator>
 vector<_Tp, _Allocator>::vector(_ForwardIterator __first, _ForwardIterator __last, const allocator_type& __a,
-                                typename enable_if<__is_forward_iterator<_ForwardIterator>::value>::type*)
+                                typename enable_if<__is_forward_iterator<_ForwardIterator>::value &&
+                                is_constructible<
+                                   value_type,
+                                   typename iterator_traits<_ForwardIterator>::reference>::value>::type*)
     : __base(__a)
 {
 #if _LIBCPP_DEBUG_LEVEL >= 2
@@ -1258,7 +1294,10 @@ template <class _InputIterator>
 typename enable_if
 <
      __is_input_iterator  <_InputIterator>::value &&
-    !__is_forward_iterator<_InputIterator>::value,
+    !__is_forward_iterator<_InputIterator>::value &&
+    is_constructible<
+       _Tp,
+       typename iterator_traits<_InputIterator>::reference>::value,
     void
 >::type
 vector<_Tp, _Allocator>::assign(_InputIterator __first, _InputIterator __last)
@@ -1272,7 +1311,10 @@ template <class _Tp, class _Allocator>
 template <class _ForwardIterator>
 typename enable_if
 <
-    __is_forward_iterator<_ForwardIterator>::value,
+    __is_forward_iterator<_ForwardIterator>::value &&
+    is_constructible<
+       _Tp,
+       typename iterator_traits<_ForwardIterator>::reference>::value,
     void
 >::type
 vector<_Tp, _Allocator>::assign(_ForwardIterator __first, _ForwardIterator __last)
@@ -1753,7 +1795,10 @@ template <class _InputIterator>
 typename enable_if
 <
      __is_input_iterator  <_InputIterator>::value &&
-    !__is_forward_iterator<_InputIterator>::value,
+    !__is_forward_iterator<_InputIterator>::value &&
+    is_constructible<
+       _Tp,
+       typename iterator_traits<_InputIterator>::reference>::value,
     typename vector<_Tp, _Allocator>::iterator
 >::type
 vector<_Tp, _Allocator>::insert(const_iterator __position, _InputIterator __first, _InputIterator __last)
@@ -1805,7 +1850,10 @@ template <class _Tp, class _Allocator>
 template <class _ForwardIterator>
 typename enable_if
 <
-    __is_forward_iterator<_ForwardIterator>::value,
+    __is_forward_iterator<_ForwardIterator>::value &&
+    is_constructible<
+       _Tp,
+       typename iterator_traits<_ForwardIterator>::reference>::value,
     typename vector<_Tp, _Allocator>::iterator
 >::type
 vector<_Tp, _Allocator>::insert(const_iterator __position, _ForwardIterator __first, _ForwardIterator __last)
