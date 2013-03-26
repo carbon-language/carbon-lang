@@ -1,0 +1,9 @@
+RUN: lld -core -target hexagon %p/Inputs/dynobj.o \
+RUN: -output=%t -noinhibit-exec -output-type=shared
+RUN: llvm-objdump -section-headers %t | FileCheck %s
+
+CHECK: .dynsym
+CHECK-NEXT: .dynstr
+CHECK-NEXT: .rela.dyn
+CHECK-NEXT: .rela.plt
+CHECK-NEXT: .plt

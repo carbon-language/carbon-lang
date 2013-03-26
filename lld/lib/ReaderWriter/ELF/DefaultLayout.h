@@ -259,7 +259,7 @@ public:
   RelocationTable<ELFT> *getDynamicRelocationTable() {
     if (!_dynamicRelocationTable) {
       _dynamicRelocationTable.reset(new (_allocator) RelocationTable<ELFT>(
-          _targetInfo, ".rela.dyn", ORDER_REL));
+          _targetInfo, ".rela.dyn", ORDER_DYNAMIC_RELOCS));
       addSection(_dynamicRelocationTable.get());
     }
     return _dynamicRelocationTable.get();
@@ -269,7 +269,7 @@ public:
   RelocationTable<ELFT> *getPLTRelocationTable() {
     if (!_pltRelocationTable) {
       _pltRelocationTable.reset(new (_allocator) RelocationTable<ELFT>(
-          _targetInfo, ".rela.plt", ORDER_REL));
+          _targetInfo, ".rela.plt", ORDER_DYNAMIC_PLT_RELOCS));
       addSection(_pltRelocationTable.get());
     }
     return _pltRelocationTable.get();
@@ -386,6 +386,8 @@ Layout::SegmentType DefaultLayout<ELFT>::getSegmentType(
   case ORDER_HASH:
   case ORDER_DYNAMIC_SYMBOLS:
   case ORDER_DYNAMIC_STRINGS:
+  case ORDER_DYNAMIC_RELOCS:
+  case ORDER_DYNAMIC_PLT_RELOCS:
   case ORDER_REL:
   case ORDER_INIT:
   case ORDER_PLT:
@@ -429,6 +431,8 @@ bool DefaultLayout<ELFT>::hasOutputSegment(Section<ELFT> *section) {
   case ORDER_HASH:
   case ORDER_DYNAMIC_SYMBOLS:
   case ORDER_DYNAMIC_STRINGS:
+  case ORDER_DYNAMIC_RELOCS:
+  case ORDER_DYNAMIC_PLT_RELOCS:
   case ORDER_REL:
   case ORDER_INIT:
   case ORDER_PLT:
