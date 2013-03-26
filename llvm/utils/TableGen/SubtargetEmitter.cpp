@@ -850,7 +850,22 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
     SCDesc.ReadAdvanceIdx = 0;
 
     // A Variant SchedClass has no resources of its own.
-    if (!SCI->Transitions.empty()) {
+    bool HasVariants = false;
+    for (std::vector<CodeGenSchedTransition>::const_iterator
+           TI = SCI->Transitions.begin(), TE = SCI->Transitions.end();
+         TI != TE; ++TI) {
+      if (TI->ProcIndices[0] == 0) {
+        HasVariants = true;
+        break;
+      }
+      IdxIter PIPos = std::find(TI->ProcIndices.begin(),
+                                TI->ProcIndices.end(), ProcModel.Index);
+      if (PIPos != TI->ProcIndices.end()) {
+        HasVariants = true;
+        break;
+      }
+    }
+    if (HasVariants) {
       SCDesc.NumMicroOps = MCSchedClassDesc::VariantNumMicroOps;
       continue;
     }

@@ -1308,7 +1308,7 @@ void CodeGenSchedModels::inferFromRW(const IdxVec &OperWrites,
                                      const IdxVec &OperReads,
                                      unsigned FromClassIdx,
                                      const IdxVec &ProcIndices) {
-  DEBUG(dbgs() << "INFER RW: ");
+  DEBUG(dbgs() << "INFER RW proc("; dumpIdxVec(ProcIndices); dbgs() << ") ");
 
   // Create a seed transition with an empty PredTerm and the expanded sequences
   // of SchedWrites for the current SchedClass.
@@ -1650,6 +1650,13 @@ void CodeGenSchedClass::dump(const CodeGenSchedModels* SchedModels) const {
     }
   }
   dbgs() << "\n  ProcIdx: "; dumpIdxVec(ProcIndices); dbgs() << '\n';
+  if (!Transitions.empty()) {
+    dbgs() << "\n Transitions for Proc ";
+    for (std::vector<CodeGenSchedTransition>::const_iterator
+           TI = Transitions.begin(), TE = Transitions.end(); TI != TE; ++TI) {
+      dumpIdxVec(TI->ProcIndices);
+    }
+  }
 }
 
 void PredTransitions::dump() const {
