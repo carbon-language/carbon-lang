@@ -26,8 +26,8 @@ class PPCReg<string n> : Register<n> {
 // We identify all our registers with a 5-bit ID, for consistency's sake.
 
 // GPR - One of the 32 32-bit general-purpose registers
-class GPR<bits<16> num, string n> : PPCReg<n> {
-  let HWEncoding = num;
+class GPR<bits<5> num, string n> : PPCReg<n> {
+  let HWEncoding{4-0} = num;
 }
 
 // GP8 - One of the 32 64-bit general-purpose registers
@@ -38,29 +38,29 @@ class GP8<GPR SubReg, string n> : PPCReg<n> {
 }
 
 // SPR - One of the 32-bit special-purpose registers
-class SPR<bits<16> num, string n> : PPCReg<n> {
-  let HWEncoding = num;
+class SPR<bits<10> num, string n> : PPCReg<n> {
+  let HWEncoding{9-0} = num;
 }
 
 // FPR - One of the 32 64-bit floating-point registers
-class FPR<bits<16> num, string n> : PPCReg<n> {
-  let HWEncoding = num;
+class FPR<bits<5> num, string n> : PPCReg<n> {
+  let HWEncoding{4-0} = num;
 }
 
 // VR - One of the 32 128-bit vector registers
-class VR<bits<16> num, string n> : PPCReg<n> {
-  let HWEncoding = num;
+class VR<bits<5> num, string n> : PPCReg<n> {
+  let HWEncoding{4-0} = num;
 }
 
 // CR - One of the 8 4-bit condition registers
-class CR<bits<16> num, string n, list<Register> subregs> : PPCReg<n> {
-  let HWEncoding = num;
+class CR<bits<3> num, string n, list<Register> subregs> : PPCReg<n> {
+  let HWEncoding{2-0} = num;
   let SubRegs = subregs;
 }
 
 // CRBIT - One of the 32 1-bit condition register fields
-class CRBIT<bits<16> num, string n> : PPCReg<n> {
-  let HWEncoding = num;
+class CRBIT<bits<5> num, string n> : PPCReg<n> {
+  let HWEncoding{4-0} = num;
 }
 
 // General-purpose registers
