@@ -1722,7 +1722,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI) {
   // the same object as CXXThisValue, use the return value from the CallInst.
   // We will not need to keep 'this' alive through the callsite. It also enables
   // optimizations in the backend, such as tail call optimization.
-  if (CGM.getCXXABI().HasThisReturn(CurGD) && CalleeWithThisReturn) {
+  if (CalleeWithThisReturn && CGM.getCXXABI().HasThisReturn(CurGD)) {
     llvm::BasicBlock *IP = Builder.GetInsertBlock();
     llvm::CallInst *Callsite;
     if (!IP->empty() && (Callsite = dyn_cast<llvm::CallInst>(&IP->back())) &&
