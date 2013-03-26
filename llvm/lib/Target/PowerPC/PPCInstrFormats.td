@@ -676,14 +676,13 @@ class XFXForm_7_ext<bits<6> opcode, bits<10> xo, bits<10> spr,
 // This is probably 1.7.9, but I don't have the reference that uses this
 // numbering scheme...
 class XFLForm<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr, 
-                      string cstr, InstrItinClass itin, list<dag>pattern>
+              InstrItinClass itin, list<dag>pattern>
   : I<opcode, OOL, IOL, asmstr, itin> {
   bits<8> FM;
   bits<5> rT;
 
   bit RC = 0;    // set by isDOT
   let Pattern = pattern;
-  let Constraints = cstr;
 
   let Inst{6} = 0;
   let Inst{7-14}  = FM;

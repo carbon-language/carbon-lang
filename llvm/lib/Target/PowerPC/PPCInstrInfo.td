@@ -64,20 +64,13 @@ def PPCfctiwz : SDNode<"PPCISD::FCTIWZ", SDTFPUnaryOp, []>;
 def PPCstfiwx : SDNode<"PPCISD::STFIWX", SDT_PPCstfiwx,
                        [SDNPHasChain, SDNPMayStore]>;
 
-// This sequence is used for long double->int conversions.  It changes the
-// bits in the FPSCR which is not modelled.  
-def PPCmffs   : SDNode<"PPCISD::MFFS", SDTypeProfile<1, 0, [SDTCisVT<0, f64>]>,
-                        [SDNPOutGlue]>;
-def PPCmtfsb0 : SDNode<"PPCISD::MTFSB0", SDTypeProfile<0, 1, [SDTCisInt<0>]>,
-                       [SDNPInGlue, SDNPOutGlue]>;
-def PPCmtfsb1 : SDNode<"PPCISD::MTFSB1", SDTypeProfile<0, 1, [SDTCisInt<0>]>,
-                       [SDNPInGlue, SDNPOutGlue]>;
-def PPCfaddrtz: SDNode<"PPCISD::FADDRTZ", SDTFPBinOp,
-                       [SDNPInGlue, SDNPOutGlue]>;
-def PPCmtfsf  : SDNode<"PPCISD::MTFSF", SDTypeProfile<1, 3, 
-                       [SDTCisVT<0, f64>, SDTCisInt<1>, SDTCisVT<2, f64>,
-                        SDTCisVT<3, f64>]>,
-                       [SDNPInGlue]>;
+// Extract FPSCR (not modeled at the DAG level).
+def PPCmffs   : SDNode<"PPCISD::MFFS",
+                       SDTypeProfile<1, 0, [SDTCisVT<0, f64>]>, []>;
+
+// Perform FADD in round-to-zero mode.
+def PPCfaddrtz: SDNode<"PPCISD::FADDRTZ", SDTFPBinOp, []>;
+
 
 def PPCfsel   : SDNode<"PPCISD::FSEL",  
    // Type constraint for fsel.
@@ -1288,38 +1281,29 @@ def MFOCRF: XFXForm_5a<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
                        "mfocrf $rT, $FXM", SprMFCR>,
             PPC970_DGroup_First, PPC970_Unit_CRU;
 
-// Instructions to manipulate FPSCR.  Only long double handling uses these.
-// FPSCR is not modelled; we use the SDNode Flag to keep things in order.
+// Pseudo instruction to perform FADD in round-to-zero mode.
+let usesCustomInserter = 1, Uses = [RM] in {
+  def FADDrtz: Pseudo<(outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRB), "",
+                      [(set f64:$FRT, (PPCfaddrtz f64:$FRA, f64:$FRB))]>;
+}
 
+// The above pseudo gets expanded to make use of the following instructions
+// to manipulate FPSCR.  Note that FPSCR is not modeled at the DAG level.
 let Uses = [RM], Defs = [RM] in { 
   def MTFSB0 : XForm_43<63, 70, (outs), (ins u5imm:$FM),
-                         "mtfsb0 $FM", IntMTFSB0,
-                        [(PPCmtfsb0 (i32 imm:$FM))]>,
+                        "mtfsb0 $FM", IntMTFSB0, []>,
                PPC970_DGroup_Single, PPC970_Unit_FPU;
   def MTFSB1 : XForm_43<63, 38, (outs), (ins u5imm:$FM),
-                         "mtfsb1 $FM", IntMTFSB0,
-                        [(PPCmtfsb1 (i32 imm:$FM))]>,
+                        "mtfsb1 $FM", IntMTFSB0, []>,
                PPC970_DGroup_Single, PPC970_Unit_FPU;
-  // MTFSF does not actually produce an FP result.  We pretend it copies
-  // input reg B to the output.  If we didn't do this it would look like the
-  // instruction had no outputs (because we aren't modelling the FPSCR) and
-  // it would be deleted.
-  def MTFSF  : XFLForm<63, 711, (outs F8RC:$FRA),
-                                (ins i32imm:$FM, F8RC:$rT, F8RC:$FRB),
-                         "mtfsf $FM, $rT", "$FRB = $FRA", IntMTFSB0,
-                         [(set f64:$FRA, (PPCmtfsf (i32 imm:$FM),
-                                                    f64:$rT, f64:$FRB))]>,
+  def MTFSF  : XFLForm<63, 711, (outs), (ins i32imm:$FM, F8RC:$rT),
+                       "mtfsf $FM, $rT", IntMTFSB0, []>,
                PPC970_DGroup_Single, PPC970_Unit_FPU;
 }
 let Uses = [RM] in {
   def MFFS   : XForm_42<63, 583, (outs F8RC:$rT), (ins), 
                          "mffs $rT", IntMFFS,
                          [(set f64:$rT, (PPCmffs))]>,
-               PPC970_DGroup_Single, PPC970_Unit_FPU;
-  def FADDrtz: AForm_2<63, 21,
-                      (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRB),
-                      "fadd $FRT, $FRA, $FRB", FPAddSub,
-                      [(set f64:$FRT, (PPCfaddrtz f64:$FRA, f64:$FRB))]>,
                PPC970_DGroup_Single, PPC970_Unit_FPU;
 }
 
