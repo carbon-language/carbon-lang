@@ -807,19 +807,8 @@ protected:
 
                     bool scope_already_checked = true;
                     
-                    ValueObject::DumpValueObjectOptions options;
-                    options.SetMaximumPointerDepth(m_varobj_options.ptr_depth)
-                    .SetMaximumDepth(m_varobj_options.max_depth)
-                    .SetShowLocation(m_varobj_options.show_location)
-                    .SetShowTypes(m_varobj_options.show_types)
-                    .SetUseObjectiveC(m_varobj_options.use_objc)
-                    .SetScopeChecked(scope_already_checked)
-                    .SetFlatOutput(m_varobj_options.flat_output)
-                    .SetUseSyntheticValue(m_varobj_options.be_raw ? false : m_varobj_options.use_synth)
-                    .SetOmitSummaryDepth(m_varobj_options.be_raw ? UINT32_MAX : m_varobj_options.no_summary_depth)
-                    .SetIgnoreCap(m_varobj_options.be_raw ? true : m_varobj_options.ignore_cap)
-                    .SetFormat(format)
-                    .SetSummary();
+                    ValueObject::DumpValueObjectOptions options(m_varobj_options.GetAsDumpOptions(false,format));
+                    
                     ValueObject::DumpValueObject (*output_stream,
                                                   valobj_sp.get(),
                                                   options);

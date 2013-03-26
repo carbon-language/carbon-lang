@@ -374,22 +374,7 @@ protected:
         else if (!m_option_variable.summary_string.IsCurrentValueEmpty())
             summary_format_sp.reset(new StringSummaryFormat(TypeSummaryImpl::Flags(),m_option_variable.summary_string.GetCurrentValue()));
         
-        ValueObject::DumpValueObjectOptions options;
-        
-        options.SetMaximumPointerDepth(m_varobj_options.ptr_depth)
-            .SetMaximumDepth(m_varobj_options.max_depth)
-            .SetShowTypes(m_varobj_options.show_types)
-            .SetShowLocation(m_varobj_options.show_location)
-            .SetUseObjectiveC(m_varobj_options.use_objc)
-            .SetUseDynamicType(m_varobj_options.use_dynamic)
-            .SetUseSyntheticValue(m_varobj_options.use_synth)
-            .SetFlatOutput(m_varobj_options.flat_output)
-            .SetOmitSummaryDepth(m_varobj_options.no_summary_depth)
-            .SetIgnoreCap(m_varobj_options.ignore_cap)
-            .SetSummary(summary_format_sp);
-
-        if (m_varobj_options.be_raw)
-            options.SetRawDisplay(true);
+        ValueObject::DumpValueObjectOptions options(m_varobj_options.GetAsDumpOptions(false,eFormatDefault,summary_format_sp));
         
         if (variable_list)
         {

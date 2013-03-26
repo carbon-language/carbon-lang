@@ -14,6 +14,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/ValueObject.h"
 #include "lldb/Interpreter/Options.h"
 
 namespace lldb_private {
@@ -60,6 +61,11 @@ public:
                be_raw == true ||
                ignore_cap == true;
     }
+    
+    ValueObject::DumpValueObjectOptions
+    GetAsDumpOptions (bool objc_is_compact = false,
+                      lldb::Format format = lldb::eFormatDefault,
+                      lldb::TypeSummaryImplSP summary_sp = lldb::TypeSummaryImplSP());
 
     bool show_types;
     uint32_t no_summary_depth;

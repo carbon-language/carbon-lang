@@ -1989,8 +1989,7 @@ Debugger::FormatPrompt
                                                 ValueObjectSP return_valobj_sp = StopInfo::GetReturnValueObject (stop_info_sp);
                                                 if (return_valobj_sp)
                                                 {
-                                                    ValueObject::DumpValueObjectOptions dump_options;
-                                                    ValueObject::DumpValueObject (s, return_valobj_sp.get(), dump_options);
+                                                    ValueObject::DumpValueObject (s, return_valobj_sp.get());
                                                     var_success = true;
                                                 }
                                             }

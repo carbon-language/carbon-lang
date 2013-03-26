@@ -637,19 +637,8 @@ public:
     void
     DumpValueObject (Stream &s, VariableSP &var_sp, ValueObjectSP &valobj_sp, const char *root_name)
     {
-        ValueObject::DumpValueObjectOptions options;
+        ValueObject::DumpValueObjectOptions options(m_varobj_options.GetAsDumpOptions());
         
-        options.SetMaximumPointerDepth(m_varobj_options.ptr_depth)
-               .SetMaximumDepth(m_varobj_options.max_depth)
-               .SetShowTypes(m_varobj_options.show_types)
-               .SetShowLocation(m_varobj_options.show_location)
-               .SetUseObjectiveC(m_varobj_options.use_objc)
-               .SetUseDynamicType(m_varobj_options.use_dynamic)
-               .SetUseSyntheticValue(m_varobj_options.use_synth)
-               .SetFlatOutput(m_varobj_options.flat_output)
-               .SetOmitSummaryDepth(m_varobj_options.no_summary_depth)
-               .SetIgnoreCap(m_varobj_options.ignore_cap);
-                
         switch (var_sp->GetScope())
         {
             case eValueTypeVariableGlobal:

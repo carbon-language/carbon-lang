@@ -146,3 +146,36 @@ OptionGroupValueObjectDisplay::OptionParsingStarting (CommandInterpreter &interp
         use_dynamic = lldb::eNoDynamicValues;
     }
 }
+
+ValueObject::DumpValueObjectOptions
+OptionGroupValueObjectDisplay::GetAsDumpOptions (bool objc_is_compact,
+                                                 lldb::Format format,
+                                                 lldb::TypeSummaryImplSP summary_sp)
+{
+    ValueObject::DumpValueObjectOptions options;
+    options.SetMaximumPointerDepth(ptr_depth);
+    if (use_objc)
+        options.SetShowSummary(false);
+    else
+        options.SetOmitSummaryDepth(no_summary_depth);
+    options.SetMaximumDepth(max_depth)
+    .SetShowTypes(show_types)
+    .SetShowLocation(show_location)
+    .SetUseObjectiveC(use_objc)
+    .SetUseDynamicType(use_dynamic)
+    .SetUseSyntheticValue(use_synth)
+    .SetFlatOutput(flat_output)
+    .SetIgnoreCap(ignore_cap)
+    .SetFormat(format)
+    .SetSummary(summary_sp);
+    
+    if (objc_is_compact)
+        options.SetHideRootType(use_objc)
+        .SetHideName(use_objc)
+        .SetHideValue(use_objc);
+    
+    if (be_raw)
+        options.SetRawDisplay(true);
+
+    return options;
+}
