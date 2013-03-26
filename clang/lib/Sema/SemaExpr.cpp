@@ -1563,9 +1563,10 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
           UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(
               CallsUndergoingInstantiation.back()->getCallee());
 
-          
           CXXMethodDecl *DepMethod;
-          if (CurMethod->getTemplatedKind() ==
+          if (CurMethod->isDependentContext())
+            DepMethod = CurMethod;
+          else if (CurMethod->getTemplatedKind() ==
               FunctionDecl::TK_FunctionTemplateSpecialization)
             DepMethod = cast<CXXMethodDecl>(CurMethod->getPrimaryTemplate()->
                 getInstantiatedFromMemberTemplate()->getTemplatedDecl());

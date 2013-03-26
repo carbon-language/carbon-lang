@@ -116,3 +116,23 @@ namespace PR12564 {
     void foo(Derived& d) noexcept(noexcept(d.bar(d))) {} // expected-error {{cannot bind to a value of unrelated type}}
   };
 }
+
+namespace rdar13473493 {
+  template <typename F>
+  class wrap
+  {
+  public:
+    template <typename... Args>
+    auto operator()(Args&&... args) const -> decltype(wrapped(args...)) // expected-note{{candidate template ignored: substitution failure [with Args = <int>]: use of undeclared identifier 'wrapped'}}
+    {
+      return wrapped(args...);
+    }
+  
+  private:
+    F wrapped;
+  };
+
+  void test(wrap<int (*)(int)> w) {
+    w(5); // expected-error{{no matching function for call to object of type 'wrap<int (*)(int)>'}}
+  }
+}
