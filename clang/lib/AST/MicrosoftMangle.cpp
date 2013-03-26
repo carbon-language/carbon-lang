@@ -1519,12 +1519,38 @@ void MicrosoftCXXNameMangler::mangleType(const ComplexType *T,
 
 void MicrosoftCXXNameMangler::mangleType(const VectorType *T,
                                          SourceRange Range) {
-  DiagnosticsEngine &Diags = Context.getDiags();
-  unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
-    "cannot mangle this vector type yet");
-  Diags.Report(Range.getBegin(), DiagID)
-    << Range;
+  const BuiltinType *ET = T->getElementType()->getAs<BuiltinType>();
+  assert(ET && "vectors with non-builtin elements are unsupported");
+  uint64_t Width = getASTContext().getTypeSize(T);
+  // Pattern match exactly the typedefs in our intrinsic headers.  Anything that
+  // doesn't match the Intel types uses a custom mangling below.
+  bool IntelVector = true;
+  if (Width == 64 && ET->getKind() == BuiltinType::LongLong) {
+    Out << "T__m64";
+  } else if (Width == 128 || Width == 256) {
+    if (ET->getKind() == BuiltinType::Float)
+      Out << "T__m" << Width;
+    else if (ET->getKind() == BuiltinType::LongLong)
+      Out << "T__m" << Width << 'i';
+    else if (ET->getKind() == BuiltinType::Double)
+      Out << "U__m" << Width << 'd';
+    else
+      IntelVector = false;
+  } else {
+    IntelVector = false;
+  }
+
+  if (!IntelVector) {
+    // The MS ABI doesn't have a special mangling for vector types, so we define
+    // our own mangling to handle uses of __vector_size__ on user-specified
+    // types, and for extensions like __v4sf.
+    Out << "T__clang_vec" << T->getNumElements() << '_';
+    mangleType(ET, Range);
+  }
+
+  Out << "@@";
 }
+
 void MicrosoftCXXNameMangler::mangleType(const ExtVectorType *T,
                                          SourceRange Range) {
   DiagnosticsEngine &Diags = Context.getDiags();
