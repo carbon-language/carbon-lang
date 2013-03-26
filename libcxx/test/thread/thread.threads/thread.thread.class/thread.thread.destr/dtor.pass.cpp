@@ -32,7 +32,7 @@ public:
     void operator()()
     {
         assert(alive_ == 1);
-        assert(n_alive == 1);
+        assert(n_alive >= 1);
         op_run = true;
     }
 };

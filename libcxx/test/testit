@@ -88,6 +88,10 @@ function afunc
 	if (ls *.pass.cpp &> /dev/null)
 	then
 		for FILE in $(ls *.pass.cpp); do
+            if [ "$VERBOSE" ]
+            then
+             	echo "Running test: " $FILE
+            fi
 			if $CC $OPTIONS $HEADER_INCLUDE $SOURCE_LIB $FILE $LIBS -o ./$TEST_EXE
 			then
 				if ./$TEST_EXE

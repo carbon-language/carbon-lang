@@ -32,14 +32,14 @@ public:
     void operator()()
     {
         assert(alive_ == 1);
-        assert(n_alive == 1);
+        assert(n_alive >= 1);
         op_run = true;
     }
 
     void operator()(int i, double j)
     {
         assert(alive_ == 1);
-        assert(n_alive == 1);
+        assert(n_alive >= 1);
         assert(i == 5);
         assert(j == 5.5);
         op_run = true;
