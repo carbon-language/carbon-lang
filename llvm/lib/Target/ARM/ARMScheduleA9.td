@@ -1898,8 +1898,6 @@ def CortexA9Model : SchedMachineModel {
 //===----------------------------------------------------------------------===//
 // Define each kind of processor resource and number available.
 
-let SchedModel = CortexA9Model in {
-
 def A9UnitALU : ProcResource<2>;
 def A9UnitMul : ProcResource<1> { let Super = A9UnitALU; }
 def A9UnitAGU : ProcResource<1>;
@@ -2004,6 +2002,13 @@ def A9WriteCycle1 : SchedWriteRes<[]> { let Latency = 1; let NumMicroOps = 0; }
 foreach NumCycles = 2-8 in {
 def A9WriteCycle#NumCycles : WriteSequence<[A9WriteCycle1], NumCycles>;
 } // foreach NumCycles
+
+// Define TII for use in SchedVariant Predicates.
+def : PredicateProlog<[{
+  const ARMBaseInstrInfo *TII =
+    static_cast<const ARMBaseInstrInfo*>(SchedModel->getInstrInfo());
+  (void)TII;
+}]>;
 
 // Define address generation sequences and predicates for 8 flavors of LDMs.
 foreach NumAddr = 1-8 in {
@@ -2274,6 +2279,7 @@ def A9Read4 : SchedReadAdvance<3>;
 
 // This table follows the ARM Cortex-A9 Technical Reference Manuals,
 // mostly in order.
+let SchedModel = CortexA9Model in {
 
 def :ItinRW<[A9WriteI], [IIC_iMOVi,IIC_iMOVr,IIC_iMOVsi,
                          IIC_iMVNi,IIC_iMVNsi,
@@ -2480,13 +2486,4 @@ def :ItinRW<[A9WriteV9, A9Read3, A9Read2], [IIC_VMACD, IIC_VFMACD]>;
 def :ItinRW<[A9WriteV10, A9Read3, A9Read2], [IIC_VMACQ, IIC_VFMACQ]>;
 def :ItinRW<[A9WriteV9, A9Read2, A9Read2], [IIC_VRECSD]>;
 def :ItinRW<[A9WriteV10, A9Read2, A9Read2], [IIC_VRECSQ]>;
-
-// New (incomplete) model mappings that don't rely on itinerary mappings.
-def : SchedAlias<WriteALU, A9WriteA>;
-def : SchedAlias<WriteALUsi, A9WriteAsi>;
-def : SchedAlias<WriteALUsr, A9WriteAsr>;
-def : SchedAlias<WriteALUSsr, A9WriteAsr>;
-def : SchedAlias<ReadAdvanceALU, A9ReadA>;
-def : SchedAlias<ReadAdvanceALUsr, A9ReadA>;
-
 } // SchedModel = CortexA9Model

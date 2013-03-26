@@ -1010,8 +1010,7 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
   let isReMaterializable = 1 in {
   def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
                iii, opc, "\t$Rd, $Rn, $imm",
-               [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]>,
-           Sched<[WriteALU, ReadAdvanceALU]> {
+               [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<12> imm;
@@ -1023,8 +1022,7 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
   }
   def rr : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,
                iir, opc, "\t$Rd, $Rn, $Rm",
-               [(set GPR:$Rd, (opnode GPR:$Rn, GPR:$Rm))]>,
-           Sched<[WriteALU, ReadAdvanceALU, ReadAdvanceALU]> {
+               [(set GPR:$Rd, (opnode GPR:$Rn, GPR:$Rm))]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<4> Rm;
@@ -1039,8 +1037,7 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
   def rsi : AsI1<opcod, (outs GPR:$Rd),
                (ins GPR:$Rn, so_reg_imm:$shift), DPSoRegImmFrm,
                iis, opc, "\t$Rd, $Rn, $shift",
-               [(set GPR:$Rd, (opnode GPR:$Rn, so_reg_imm:$shift))]>,
-            Sched<[WriteALUsi, ReadAdvanceALU]> {
+               [(set GPR:$Rd, (opnode GPR:$Rn, so_reg_imm:$shift))]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<12> shift;
@@ -1055,8 +1052,7 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
   def rsr : AsI1<opcod, (outs GPR:$Rd),
                (ins GPR:$Rn, so_reg_reg:$shift), DPSoRegRegFrm,
                iis, opc, "\t$Rd, $Rn, $shift",
-               [(set GPR:$Rd, (opnode GPR:$Rn, so_reg_reg:$shift))]>,
-            Sched<[WriteALUsr, ReadAdvanceALUsr]> {
+               [(set GPR:$Rd, (opnode GPR:$Rn, so_reg_reg:$shift))]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<12> shift;
@@ -1083,8 +1079,7 @@ multiclass AsI1_rbin_irs<bits<4> opcod, string opc,
   let isReMaterializable = 1 in {
   def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
                iii, opc, "\t$Rd, $Rn, $imm",
-               [(set GPR:$Rd, (opnode so_imm:$imm, GPR:$Rn))]>,
-           Sched<[WriteALU, ReadAdvanceALU]> {
+               [(set GPR:$Rd, (opnode so_imm:$imm, GPR:$Rn))]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<12> imm;
@@ -1096,8 +1091,7 @@ multiclass AsI1_rbin_irs<bits<4> opcod, string opc,
   }
   def rr : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,
                iir, opc, "\t$Rd, $Rn, $Rm",
-               [/* pattern left blank */]>,
-           Sched<[WriteALU, ReadAdvanceALU, ReadAdvanceALU]> {
+               [/* pattern left blank */]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<4> Rm;
@@ -1111,8 +1105,7 @@ multiclass AsI1_rbin_irs<bits<4> opcod, string opc,
   def rsi : AsI1<opcod, (outs GPR:$Rd),
                (ins GPR:$Rn, so_reg_imm:$shift), DPSoRegImmFrm,
                iis, opc, "\t$Rd, $Rn, $shift",
-               [(set GPR:$Rd, (opnode so_reg_imm:$shift, GPR:$Rn))]>,
-            Sched<[WriteALUsi, ReadAdvanceALU]> {
+               [(set GPR:$Rd, (opnode so_reg_imm:$shift, GPR:$Rn))]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<12> shift;
@@ -1127,8 +1120,7 @@ multiclass AsI1_rbin_irs<bits<4> opcod, string opc,
   def rsr : AsI1<opcod, (outs GPR:$Rd),
                (ins GPR:$Rn, so_reg_reg:$shift), DPSoRegRegFrm,
                iis, opc, "\t$Rd, $Rn, $shift",
-               [(set GPR:$Rd, (opnode so_reg_reg:$shift, GPR:$Rn))]>,
-            Sched<[WriteALUsr, ReadAdvanceALUsr]> {
+               [(set GPR:$Rd, (opnode so_reg_reg:$shift, GPR:$Rn))]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<12> shift;
@@ -1153,28 +1145,24 @@ multiclass AsI1_bin_s_irs<InstrItinClass iii, InstrItinClass iir,
                           bit Commutable = 0> {
   def ri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm, pred:$p),
                          4, iii,
-                         [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_imm:$imm))]>,
-                         Sched<[WriteALU, ReadAdvanceALU]>;
+                         [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_imm:$imm))]>;
 
   def rr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, pred:$p),
                          4, iir,
-                         [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, GPR:$Rm))]>,
-                         Sched<[WriteALU, ReadAdvanceALU, ReadAdvanceALU]> {
+                         [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, GPR:$Rm))]> {
     let isCommutable = Commutable;
   }
   def rsi : ARMPseudoInst<(outs GPR:$Rd),
                           (ins GPR:$Rn, so_reg_imm:$shift, pred:$p),
                           4, iis,
                           [(set GPR:$Rd, CPSR, (opnode GPR:$Rn,
-                                                so_reg_imm:$shift))]>,
-                          Sched<[WriteALUsi, ReadAdvanceALU]>;
+                                                so_reg_imm:$shift))]>;
 
   def rsr : ARMPseudoInst<(outs GPR:$Rd),
                           (ins GPR:$Rn, so_reg_reg:$shift, pred:$p),
                           4, iis,
                           [(set GPR:$Rd, CPSR, (opnode GPR:$Rn,
-                                                so_reg_reg:$shift))]>,
-                          Sched<[WriteALUSsr, ReadAdvanceALUsr]>;
+                                                so_reg_reg:$shift))]>;
 }
 }
 
@@ -1186,22 +1174,19 @@ multiclass AsI1_rbin_s_is<InstrItinClass iii, InstrItinClass iir,
                           bit Commutable = 0> {
   def ri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm, pred:$p),
                          4, iii,
-                         [(set GPR:$Rd, CPSR, (opnode so_imm:$imm, GPR:$Rn))]>,
-           Sched<[WriteALU, ReadAdvanceALU]>;
+                         [(set GPR:$Rd, CPSR, (opnode so_imm:$imm, GPR:$Rn))]>;
 
   def rsi : ARMPseudoInst<(outs GPR:$Rd),
                           (ins GPR:$Rn, so_reg_imm:$shift, pred:$p),
                           4, iis,
                           [(set GPR:$Rd, CPSR, (opnode so_reg_imm:$shift,
-                                             GPR:$Rn))]>,
-            Sched<[WriteALUsi, ReadAdvanceALU]>;
+                                             GPR:$Rn))]>;
 
   def rsr : ARMPseudoInst<(outs GPR:$Rd),
                           (ins GPR:$Rn, so_reg_reg:$shift, pred:$p),
                           4, iis,
                           [(set GPR:$Rd, CPSR, (opnode so_reg_reg:$shift,
-                                             GPR:$Rn))]>,
-            Sched<[WriteALUSsr, ReadAdvanceALUsr]>;
+                                             GPR:$Rn))]>;
 }
 }
 
