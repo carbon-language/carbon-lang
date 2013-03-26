@@ -385,31 +385,34 @@ void PreprocessingRecord::Ifdef(SourceLocation Loc, const Token &MacroNameTok,
                                 const MacroDirective *MD) {
   // This is not actually a macro expansion but record it as a macro reference.
   if (MD)
-    addMacroExpansion(MacroNameTok, MD->getInfo(), MacroNameTok.getLocation());
+    addMacroExpansion(MacroNameTok, MD->getMacroInfo(),
+                      MacroNameTok.getLocation());
 }
 
 void PreprocessingRecord::Ifndef(SourceLocation Loc, const Token &MacroNameTok,
                                  const MacroDirective *MD) {
   // This is not actually a macro expansion but record it as a macro reference.
   if (MD)
-    addMacroExpansion(MacroNameTok, MD->getInfo(), MacroNameTok.getLocation());
+    addMacroExpansion(MacroNameTok, MD->getMacroInfo(),
+                      MacroNameTok.getLocation());
 }
 
 void PreprocessingRecord::Defined(const Token &MacroNameTok,
                                   const MacroDirective *MD) {
   // This is not actually a macro expansion but record it as a macro reference.
   if (MD)
-    addMacroExpansion(MacroNameTok, MD->getInfo(), MacroNameTok.getLocation());
+    addMacroExpansion(MacroNameTok, MD->getMacroInfo(),
+                      MacroNameTok.getLocation());
 }
 
 void PreprocessingRecord::MacroExpands(const Token &Id,const MacroDirective *MD,
                                        SourceRange Range) {
-  addMacroExpansion(Id, MD->getInfo(), Range);
+  addMacroExpansion(Id, MD->getMacroInfo(), Range);
 }
 
 void PreprocessingRecord::MacroDefined(const Token &Id,
                                        const MacroDirective *MD) {
-  const MacroInfo *MI = MD->getInfo();
+  const MacroInfo *MI = MD->getMacroInfo();
   SourceRange R(MI->getDefinitionLoc(), MI->getDefinitionEndLoc());
   MacroDefinition *Def
       = new (*this) MacroDefinition(Id.getIdentifierInfo(), R);
@@ -421,7 +424,7 @@ void PreprocessingRecord::MacroUndefined(const Token &Id,
                                          const MacroDirective *MD) {
   // Note: MI may be null (when #undef'ining an undefined macro).
   if (MD)
-    MacroDefinitions.erase(MD->getInfo());
+    MacroDefinitions.erase(MD->getMacroInfo());
 }
 
 void PreprocessingRecord::InclusionDirective(

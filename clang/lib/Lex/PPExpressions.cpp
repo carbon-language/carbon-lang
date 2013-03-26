@@ -116,7 +116,7 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   // If there is a macro, mark it used.
   if (Result.Val != 0 && ValueLive) {
     Macro = PP.getMacroDirective(II);
-    PP.markMacroAsUsed(Macro->getInfo());
+    PP.markMacroAsUsed(Macro->getMacroInfo());
   }
 
   // Invoke the 'defined' callback.

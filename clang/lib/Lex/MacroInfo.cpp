@@ -108,14 +108,40 @@ bool MacroInfo::isIdenticalTo(const MacroInfo &Other, Preprocessor &PP) const {
   return true;
 }
 
-const MacroDirective *
+MacroDirective::DefInfo MacroDirective::getDefinition(bool AllowHidden) {
+  MacroDirective *MD = this;
+  SourceLocation UndefLoc;
+  Optional<bool> isPublic;
+  for (; MD; MD = MD->getPrevious()) {
+    if (!AllowHidden && MD->isHidden())
+      continue;
+
+    if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD))
+      return DefInfo(DefMD, UndefLoc,
+                     !isPublic.hasValue() || isPublic.getValue());
+
+    if (UndefMacroDirective *UndefMD = dyn_cast<UndefMacroDirective>(MD)) {
+      UndefLoc = UndefMD->getLocation();
+      continue;
+    }
+
+    VisibilityMacroDirective *VisMD = cast<VisibilityMacroDirective>(MD);
+    if (!isPublic.hasValue())
+      isPublic = VisMD->isPublic();
+  }
+
+  return DefInfo();
+}
+
+const MacroDirective::DefInfo
 MacroDirective::findDirectiveAtLoc(SourceLocation L, SourceManager &SM) const {
   assert(L.isValid() && "SourceLocation is invalid.");
-  for (const MacroDirective *MD = this; MD; MD = MD->Previous) {
-    if (MD->getLocation().isInvalid() ||  // For macros defined on the command line.
-        SM.isBeforeInTranslationUnit(MD->getLocation(), L))
-      return (MD->UndefLocation.isInvalid() ||
-              SM.isBeforeInTranslationUnit(L, MD->UndefLocation)) ? MD : NULL;
+  for (DefInfo Def = getDefinition(); Def; Def = Def.getPreviousDefinition()) {
+    if (Def.getLocation().isInvalid() ||  // For macros defined on the command line.
+        SM.isBeforeInTranslationUnit(Def.getLocation(), L))
+      return (!Def.isUndefined() ||
+              SM.isBeforeInTranslationUnit(L, Def.getUndefLocation()))
+                  ? Def : DefInfo();
   }
-  return NULL;
+  return DefInfo();
 }

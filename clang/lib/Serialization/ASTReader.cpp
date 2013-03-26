@@ -1476,8 +1476,8 @@ void ASTReader::resolvePendingMacro(IdentifierInfo *II,
 
   MacroInfo *MI = getMacro(GMacID);
   SubmoduleID SubModID = MI->getOwningModuleID();
-  MacroDirective *MD = PP.AllocateMacroDirective(MI, ImportLoc,
-                                                 /*isImported=*/true);
+  MacroDirective *MD = PP.AllocateDefMacroDirective(MI, ImportLoc,
+                                                    /*isImported=*/true);
 
   // Determine whether this macro definition is visible.
   bool Hidden = false;
@@ -1494,7 +1494,6 @@ void ASTReader::resolvePendingMacro(IdentifierInfo *II,
       }
     }
   }
-  MD->setHidden(Hidden);
 
   if (!Hidden)
     installImportedMacro(II, MD);
@@ -1527,22 +1526,30 @@ void ASTReader::installPCHMacroDirectives(IdentifierInfo *II,
   MacroDirective *Latest = 0, *Earliest = 0;
   unsigned Idx = 0, N = Record.size();
   while (Idx < N) {
-    GlobalMacroID GMacID = getGlobalMacroID(M, Record[Idx++]);
-    MacroInfo *MI = getMacro(GMacID);
+    MacroDirective *MD = 0;
     SourceLocation Loc = ReadSourceLocation(M, Record, Idx);
-    SourceLocation UndefLoc = ReadSourceLocation(M, Record, Idx);
-    SourceLocation VisibilityLoc = ReadSourceLocation(M, Record, Idx);
-    bool isImported = Record[Idx++];
-    bool isPublic = Record[Idx++];
-    bool isAmbiguous = Record[Idx++];
-
-    MacroDirective *MD = PP.AllocateMacroDirective(MI, Loc, isImported);
-    if (UndefLoc.isValid())
-      MD->setUndefLoc(UndefLoc);
-    if (VisibilityLoc.isValid())
-      MD->setVisibility(isPublic, VisibilityLoc);
-    MD->setAmbiguous(isAmbiguous);
-    MD->setIsFromPCH();
+    MacroDirective::Kind K = (MacroDirective::Kind)Record[Idx++];
+    switch (K) {
+    case MacroDirective::MD_Define: {
+      GlobalMacroID GMacID = getGlobalMacroID(M, Record[Idx++]);
+      MacroInfo *MI = getMacro(GMacID);
+      bool isImported = Record[Idx++];
+      bool isAmbiguous = Record[Idx++];
+      DefMacroDirective *DefMD =
+          PP.AllocateDefMacroDirective(MI, Loc, isImported);
+      DefMD->setAmbiguous(isAmbiguous);
+      MD = DefMD;
+      break;
+    }
+    case MacroDirective::MD_Undefine:
+      MD = PP.AllocateUndefMacroDirective(Loc);
+      break;
+    case MacroDirective::MD_Visibility: {
+      bool isPublic = Record[Idx++];
+      MD = PP.AllocateVisibilityMacroDirective(Loc, isPublic);
+      break;
+    }
+    }
 
     if (!Latest)
       Latest = MD;
@@ -1557,13 +1564,18 @@ void ASTReader::installPCHMacroDirectives(IdentifierInfo *II,
 void ASTReader::installImportedMacro(IdentifierInfo *II, MacroDirective *MD) {
   assert(II && MD);
 
+  DefMacroDirective *DefMD = cast<DefMacroDirective>(MD);
   MacroDirective *Prev = PP.getMacroDirective(II);
-  if (Prev && !Prev->getInfo()->isIdenticalTo(*MD->getInfo(), PP)) {
-    Prev->setAmbiguous(true);
-    MD->setAmbiguous(true);
+  if (Prev) {
+    MacroDirective::DefInfo PrevDef = Prev->getDefinition();
+    if (DefMD->getInfo() != PrevDef.getMacroInfo() &&
+        !PrevDef.getMacroInfo()->isIdenticalTo(*DefMD->getInfo(), PP)) {
+      PrevDef.getDirective()->setAmbiguous(true);
+      DefMD->setAmbiguous(true);
+    }
   }
   
-  PP.setMacroDirective(II, MD);
+  PP.appendMacroDirective(II, MD);
 }
 
 InputFile ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
@@ -2723,21 +2735,12 @@ void ASTReader::makeNamesVisible(const HiddenNames &Names) {
     }
     case HiddenName::MacroVisibility: {
       std::pair<IdentifierInfo *, MacroDirective *> Macro = Names[I].getMacro();
-      Macro.second->setHidden(!Macro.second->isPublic());
-      if (Macro.second->isDefined()) {
-        installImportedMacro(Macro.first, Macro.second);
-      }
+      installImportedMacro(Macro.first, Macro.second);
       break;
     }
 
     case HiddenName::MacroUndef: {
-      std::pair<IdentifierInfo *, MacroDirective *> Macro = Names[I].getMacro();
-      if (Macro.second->isDefined()) {
-        Macro.second->setUndefLoc(Names[I].getMacroUndefLoc());
-        if (PPMutationListener *Listener = PP.getPPMutationListener())
-          Listener->UndefinedMacro(Macro.second);
-        PP.makeLoadedMacroInfoVisible(Macro.first, Macro.second);
-      }
+      // FIXME: Remove HiddenName::MacroUndef and PPMutationListener.
       break;
     }
     }

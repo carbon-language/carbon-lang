@@ -1833,8 +1833,9 @@ static int compareMacroDirectives(const void *XPtr, const void *YPtr) {
 
 static bool shouldIgnoreMacro(MacroDirective *MD, bool IsModule,
                               const Preprocessor &PP) {
-  if (MD->getInfo()->isBuiltinMacro())
-    return true;
+  if (MacroInfo *MI = MD->getMacroInfo())
+    if (MI->isBuiltinMacro())
+      return true;
 
   if (IsModule) {
     SourceLocation Loc = MD->getLocation();
@@ -1902,25 +1903,30 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
 
     // If the macro or identifier need no updates, don't write the macro history
     // for this one.
-    if (MD->isFromPCH() && !MD->hasChangedAfterLoad() &&
+    // FIXME: Chain the macro history instead of re-writing it.
+    if (MD->isFromPCH() &&
         Name->isFromAST() && !Name->hasChangedSinceDeserialization())
       continue;
 
     // Emit the macro directives in reverse source order.
     for (; MD; MD = MD->getPrevious()) {
+      if (MD->isHidden())
+        continue;
       if (shouldIgnoreMacro(MD, IsModule, PP))
         continue;
-      MacroID InfoID = getMacroRef(MD->getInfo(), Name);
-      if (InfoID == 0)
-        continue;
 
-      Record.push_back(InfoID);
       AddSourceLocation(MD->getLocation(), Record);
-      AddSourceLocation(MD->getUndefLoc(), Record);
-      AddSourceLocation(MD->getVisibilityLocation(), Record);
-      Record.push_back(MD->isImported());
-      Record.push_back(MD->isPublic());
-      Record.push_back(MD->isAmbiguous());
+      Record.push_back(MD->getKind());
+      if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD)) {
+        MacroID InfoID = getMacroRef(DefMD->getInfo(), Name);
+        Record.push_back(InfoID);
+        Record.push_back(DefMD->isImported());
+        Record.push_back(DefMD->isAmbiguous());
+
+      } else if (VisibilityMacroDirective *
+                   VisMD = dyn_cast<VisibilityMacroDirective>(MD)) {
+        Record.push_back(VisMD->isPublic());
+      }
     }
     if (Record.empty())
       continue;
@@ -2898,48 +2904,78 @@ class ASTIdentifierTableTrait {
     return false;
   }
 
-  MacroDirective *getFirstPublicSubmoduleMacro(MacroDirective *MD,
-                                               SubmoduleID &ModID) {
-    if (shouldIgnoreMacro(MD, IsModule, PP))
-      return 0;
-    ModID = getSubmoduleID(MD);
-    if (ModID == 0)
-      return 0;
-    if (MD->isDefined() && MD->isPublic())
-      return MD;
-    return getNextPublicSubmoduleMacro(MD, ModID);
-  }
-
-  MacroDirective *getNextPublicSubmoduleMacro(MacroDirective *MD,
-                                              SubmoduleID &ModID) {
-    while (MD) {
-      MD = getNextSubmoduleMacro(MD, ModID);
-      if (MD && MD->isDefined() && MD->isPublic())
-        return MD;
-    }
+  DefMacroDirective *getFirstPublicSubmoduleMacro(MacroDirective *MD,
+                                                  SubmoduleID &ModID) {
+    ModID = 0;
+    if (DefMacroDirective *DefMD = getPublicSubmoduleMacro(MD, ModID))
+      if (!shouldIgnoreMacro(DefMD, IsModule, PP))
+        return DefMD;
     return 0;
   }
 
-  MacroDirective *getNextSubmoduleMacro(MacroDirective *CurrMD,
-                                        SubmoduleID &CurrModID) {
-    SubmoduleID OrigID = CurrModID;
-    while ((CurrMD = CurrMD->getPrevious())) {
-      if (shouldIgnoreMacro(CurrMD, IsModule, PP))
-        return 0;
-      CurrModID = getSubmoduleID(CurrMD);
-      if (CurrModID == 0)
-        return 0;
-      if (CurrModID != OrigID)
-        return CurrMD;
+  DefMacroDirective *getNextPublicSubmoduleMacro(DefMacroDirective *MD,
+                                                 SubmoduleID &ModID) {
+    if (DefMacroDirective *
+          DefMD = getPublicSubmoduleMacro(MD->getPrevious(), ModID))
+      if (!shouldIgnoreMacro(DefMD, IsModule, PP))
+        return DefMD;
+    return 0;
+  }
+
+  /// \brief Traverses the macro directives history and returns the latest
+  /// macro that is public and not undefined in the same submodule.
+  /// A macro that is defined in submodule A and undefined in submodule B,
+  /// will still be considered as defined/exported from submodule A.
+  DefMacroDirective *getPublicSubmoduleMacro(MacroDirective *MD,
+                                             SubmoduleID &ModID) {
+    if (!MD)
+      return 0;
+
+    bool isUndefined = false;
+    Optional<bool> isPublic;
+    for (; MD; MD = MD->getPrevious()) {
+      if (MD->isHidden())
+        continue;
+
+      SubmoduleID ThisModID = getSubmoduleID(MD);
+      if (ThisModID == 0) {
+        isUndefined = false;
+        isPublic = Optional<bool>();
+        continue;
+      }
+      if (ThisModID != ModID){
+        ModID = ThisModID;
+        isUndefined = false;
+        isPublic = Optional<bool>();
+      }
+
+      if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD)) {
+        if (!isUndefined && (!isPublic.hasValue() || isPublic.getValue()))
+          return DefMD;
+        continue;
+      }
+
+      if (isa<UndefMacroDirective>(MD)) {
+        isUndefined = true;
+        continue;
+      }
+
+      VisibilityMacroDirective *VisMD = cast<VisibilityMacroDirective>(MD);
+      if (!isPublic.hasValue())
+        isPublic = VisMD->isPublic();
     }
+
     return 0;
   }
 
   SubmoduleID getSubmoduleID(MacroDirective *MD) {
-    MacroInfo *MI = MD->getInfo();
-    if (unsigned ID = MI->getOwningModuleID())
-      return ID;
-    return Writer.inferSubmoduleIDFromLocation(MI->getDefinitionLoc());
+    if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD)) {
+      MacroInfo *MI = DefMD->getInfo();
+      if (unsigned ID = MI->getOwningModuleID())
+        return ID;
+      return Writer.inferSubmoduleIDFromLocation(MI->getDefinitionLoc());
+    }
+    return Writer.inferSubmoduleIDFromLocation(MD->getLocation());
   }
 
 public:
@@ -2969,8 +3005,9 @@ public:
         DataLen += 4; // MacroDirectives offset.
         if (IsModule) {
           SubmoduleID ModID;
-          for (MacroDirective *MD = getFirstPublicSubmoduleMacro(Macro, ModID);
-                 MD; MD = getNextPublicSubmoduleMacro(MD, ModID)) {
+          for (DefMacroDirective *
+                 DefMD = getFirstPublicSubmoduleMacro(Macro, ModID);
+                 DefMD; DefMD = getNextPublicSubmoduleMacro(DefMD, ModID)) {
             DataLen += 4; // MacroInfo ID.
           }
           DataLen += 4;
@@ -3025,9 +3062,10 @@ public:
       if (IsModule) {
         // Write the IDs of macros coming from different submodules.
         SubmoduleID ModID;
-        for (MacroDirective *MD = getFirstPublicSubmoduleMacro(Macro, ModID);
-               MD; MD = getNextPublicSubmoduleMacro(MD, ModID)) {
-          MacroID InfoID = Writer.getMacroID(MD->getInfo());
+        for (DefMacroDirective *
+               DefMD = getFirstPublicSubmoduleMacro(Macro, ModID);
+               DefMD; DefMD = getNextPublicSubmoduleMacro(DefMD, ModID)) {
+          MacroID InfoID = Writer.getMacroID(DefMD->getInfo());
           assert(InfoID);
           clang::io::Emit32(Out, InfoID);
         }

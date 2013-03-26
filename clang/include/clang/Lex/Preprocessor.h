@@ -532,14 +532,14 @@ public:
   /// associated with this preprocessor, if any.
   PPMutationListener *getPPMutationListener() const { return Listener; }
 
-  /// \brief Given an identifier, return the MacroInfo it is \#defined to
-  /// or null if it isn't \#define'd.
+  /// \brief Given an identifier, return its latest MacroDirective if it is
+  // \#defined or null if it isn't \#define'd.
   MacroDirective *getMacroDirective(IdentifierInfo *II) const {
     if (!II->hasMacroDefinition())
       return 0;
 
     MacroDirective *MD = getMacroDirectiveHistory(II);
-    assert(MD->getUndefLoc().isInvalid() && "Macro is undefined!");
+    assert(MD->isDefined() && "Macro is undefined!");
     return MD;
   }
 
@@ -549,7 +549,7 @@ public:
 
   MacroInfo *getMacroInfo(IdentifierInfo *II) {
     if (MacroDirective *MD = getMacroDirective(II))
-      return MD->getInfo();
+      return MD->getMacroInfo();
     return 0;
   }
 
@@ -559,27 +559,20 @@ public:
   /// identifiers that hadMacroDefinition().
   MacroDirective *getMacroDirectiveHistory(const IdentifierInfo *II) const;
 
-  /// \brief Specify a macro for this identifier.
-  void setMacroDirective(IdentifierInfo *II, MacroDirective *MD);
-  MacroDirective *setMacroDirective(IdentifierInfo *II, MacroInfo *MI,
-                                    SourceLocation Loc, bool isImported) {
-    MacroDirective *MD = AllocateMacroDirective(MI, Loc, isImported);
-    setMacroDirective(II, MD);
+  /// \brief Add a directive to the macro directive history for this identifier.
+  void appendMacroDirective(IdentifierInfo *II, MacroDirective *MD);
+  DefMacroDirective *appendDefMacroDirective(IdentifierInfo *II, MacroInfo *MI,
+                                             SourceLocation Loc,
+                                             bool isImported) {
+    DefMacroDirective *MD = AllocateDefMacroDirective(MI, Loc, isImported);
+    appendMacroDirective(II, MD);
     return MD;
   }
-  MacroDirective *setMacroDirective(IdentifierInfo *II, MacroInfo *MI) {
-    return setMacroDirective(II, MI, MI->getDefinitionLoc(), false);
+  DefMacroDirective *appendDefMacroDirective(IdentifierInfo *II, MacroInfo *MI){
+    return appendDefMacroDirective(II, MI, MI->getDefinitionLoc(), false);
   }
   /// \brief Set a MacroDirective that was loaded from a PCH file.
   void setLoadedMacroDirective(IdentifierInfo *II, MacroDirective *MD);
-  /// \brief Add a MacroInfo that was loaded from an AST file.
-  void addLoadedMacroInfo(IdentifierInfo *II, MacroDirective *MD,
-                          MacroDirective *Hint = 0);
-  /// \brief Make the given MacroInfo, that was loaded from an AST file and
-  /// previously hidden, visible.
-  void makeLoadedMacroInfoVisible(IdentifierInfo *II, MacroDirective *MD);
-  /// \brief Undefine a macro for this identifier.
-  void clearMacroInfo(IdentifierInfo *II);
 
   /// macro_iterator/macro_begin/macro_end - This allows you to walk the macro
   /// history table. Currently defined macros have
@@ -1294,8 +1287,12 @@ private:
   /// \brief Allocate a new MacroInfo object.
   MacroInfo *AllocateMacroInfo();
 
-  MacroDirective *AllocateMacroDirective(MacroInfo *MI, SourceLocation Loc,
-                                         bool isImported);
+  DefMacroDirective *AllocateDefMacroDirective(MacroInfo *MI,
+                                               SourceLocation Loc,
+                                               bool isImported);
+  UndefMacroDirective *AllocateUndefMacroDirective(SourceLocation UndefLoc);
+  VisibilityMacroDirective *AllocateVisibilityMacroDirective(SourceLocation Loc,
+                                                             bool isPublic);
 
   /// \brief Release the specified MacroInfo for re-use.
   ///
@@ -1449,8 +1446,6 @@ private:
   // Macro handling.
   void HandleDefineDirective(Token &Tok);
   void HandleUndefDirective(Token &Tok);
-  void UndefineMacro(IdentifierInfo *II, MacroDirective *MD,
-                     SourceLocation UndefLoc);
 
   // Conditional Inclusion.
   void HandleIfdefDirective(Token &Tok, bool isIfndef,

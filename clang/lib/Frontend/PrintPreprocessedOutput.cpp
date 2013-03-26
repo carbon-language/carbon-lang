@@ -318,7 +318,7 @@ void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, const std::string &S) {
 /// MacroDefined - This hook is called whenever a macro definition is seen.
 void PrintPPOutputPPCallbacks::MacroDefined(const Token &MacroNameTok,
                                             const MacroDirective *MD) {
-  const MacroInfo *MI = MD->getInfo();
+  const MacroInfo *MI = MD->getMacroInfo();
   // Only print out macro definitions in -dD mode.
   if (!DumpDefines ||
       // Ignore __FILE__ etc.
@@ -602,7 +602,7 @@ static void DoPrintMacros(Preprocessor &PP, raw_ostream *OS) {
   for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
        I != E; ++I) {
     if (I->first->hasMacroDefinition())
-      MacrosByID.push_back(id_macro_pair(I->first, I->second->getInfo()));
+      MacrosByID.push_back(id_macro_pair(I->first, I->second->getMacroInfo()));
   }
   llvm::array_pod_sort(MacrosByID.begin(), MacrosByID.end(), MacroIDCompare);
 

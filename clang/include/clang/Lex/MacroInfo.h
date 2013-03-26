@@ -299,6 +299,8 @@ private:
   friend class Preprocessor;
 };
 
+class DefMacroDirective;
+
 /// \brief Encapsulates changes to the "macros namespace" (the location where
 /// the macro name became active, the location where it was undefined, etc.).
 ///
@@ -314,76 +316,56 @@ private:
 /// will point to the same MacroInfo object.
 ///
 class MacroDirective {
-  MacroInfo *Info;
+public:
+  enum Kind {
+    MD_Define,
+    MD_Undefine,
+    MD_Visibility
+  };
 
-  /// \brief Previous definition, the identifier of this macro was defined to,
-  /// or NULL.
+protected:
+  /// \brief Previous macro directive for the same identifier, or NULL.
   MacroDirective *Previous;
 
   SourceLocation Loc;
 
-  /// \brief The location where the macro was #undef'd, or an invalid location
-  /// for macros that haven't been undefined.
-  SourceLocation UndefLocation;
-
-  /// \brief The location at which this macro was either explicitly exported
-  /// from its module or marked as private.
-  ///
-  /// If invalid, this macro has not been explicitly given any visibility.
-  SourceLocation VisibilityLocation;
+  /// \brief MacroDirective kind.
+  unsigned MDKind : 2;
 
   /// \brief True if the macro directive was loaded from a PCH file.
   bool IsFromPCH : 1;
 
-  /// \brief True if this macro was imported from a module.
-  bool IsImported : 1;
-
-  /// \brief Whether the macro has public (when described in a module).
-  bool IsPublic : 1;
-
-  /// \brief Whether the macro definition is currently "hidden".
+  /// \brief Whether the macro directive is currently "hidden".
   ///
   /// Note that this is transient state that is never serialized to the AST
   /// file.
   bool IsHidden : 1;
 
+  // Used by DefMacroDirective -----------------------------------------------//
+
+  /// \brief True if this macro was imported from a module.
+  bool IsImported : 1;
+
   /// \brief Whether the definition of this macro is ambiguous, due to
   /// multiple definitions coming in from multiple modules.
   bool IsAmbiguous : 1;
 
-  /// \brief Whether this macro changed after it was loaded from an AST file.
-  bool ChangedAfterLoad : 1;
+  // Used by VisibilityMacroDirective ----------------------------------------//
+
+  /// \brief Whether the macro has public visibility (when described in a
+  /// module).
+  bool IsPublic : 1;
+
+  MacroDirective(Kind K, SourceLocation Loc)
+    : Previous(0), Loc(Loc), MDKind(K), IsFromPCH(false), IsHidden(false),
+      IsImported(false), IsAmbiguous(false),
+      IsPublic(true) {
+  }
 
 public:
-  explicit MacroDirective(MacroInfo *MI)
-    : Info(MI), Previous(0), Loc(MI->getDefinitionLoc()),
-      IsFromPCH(false), IsImported(false), IsPublic(true), IsHidden(false),
-      IsAmbiguous(false), ChangedAfterLoad(false) {
-    assert(MI && "MacroInfo is null");
-  }
-
-  MacroDirective(MacroInfo *MI, SourceLocation Loc, bool isImported)
-    : Info(MI), Previous(0), Loc(Loc),
-      IsFromPCH(false), IsImported(isImported), IsPublic(true), IsHidden(false),
-      IsAmbiguous(false), ChangedAfterLoad(false) {
-    assert(MI && "MacroInfo is null");
-  }
+  Kind getKind() const { return Kind(MDKind); }
 
   SourceLocation getLocation() const { return Loc; }
-
-  /// \brief Set the location where macro was undefined. Can only be set once.
-  void setUndefLoc(SourceLocation UndefLoc) {
-    assert(UndefLocation.isInvalid() && "UndefLocation is already set!");
-    assert(UndefLoc.isValid() && "Invalid UndefLoc!");
-    UndefLocation = UndefLoc;
-  }
-
-  /// \brief The data for the macro definition.
-  const MacroInfo *getInfo() const { return Info; }
-  MacroInfo *getInfo() { return Info; }
-
-  /// \brief Get the location where macro was undefined.
-  SourceLocation getUndefLoc() const { return UndefLocation; }
 
   /// \brief Set previous definition of the macro with the same name.
   void setPrevious(MacroDirective *Prev) {
@@ -396,42 +378,104 @@ public:
   /// \brief Get previous definition of the macro with the same name.
   MacroDirective *getPrevious() { return Previous; }
 
-  /// \brief Find macro definition active in the specified source location. If
-  /// this macro was not defined there, return NULL.
-  const MacroDirective *findDirectiveAtLoc(SourceLocation L,
-                                           SourceManager &SM) const;
-
-  /// \brief Set the export location for this macro.
-  void setVisibility(bool Public, SourceLocation Loc) {
-    VisibilityLocation = Loc;
-    IsPublic = Public;
-  }
-
-  /// \brief Determine whether this macro is part of the public API of its
-  /// module.
-  bool isPublic() const { return IsPublic; }
-  
-  /// \brief Determine the location where this macro was explicitly made
-  /// public or private within its module.
-  SourceLocation getVisibilityLocation() const { return VisibilityLocation; }
-
   /// \brief Return true if the macro directive was loaded from a PCH file.
   bool isFromPCH() const { return IsFromPCH; }
 
   void setIsFromPCH() { IsFromPCH = true; }
 
-  /// \brief True if this macro was imported from a module.
-  bool isImported() const { return IsImported; }
-
-  /// \brief Determine whether this macro is currently defined (and has not
-  /// been #undef'd) or has been hidden.
-  bool isDefined() const { return UndefLocation.isInvalid() && !IsHidden; }
-
-  /// \brief Determine whether this macro definition is hidden.
+  /// \brief Determine whether this macro directive is hidden.
   bool isHidden() const { return IsHidden; }
 
-  /// \brief Set whether this macro definition is hidden.
+  /// \brief Set whether this macro directive is hidden.
   void setHidden(bool Val) { IsHidden = Val; }
+
+  class DefInfo {
+    DefMacroDirective *DefDirective;
+    SourceLocation UndefLoc;
+    bool IsPublic;
+
+  public:
+    DefInfo() : DefDirective(0) { }
+
+    DefInfo(DefMacroDirective *DefDirective, SourceLocation UndefLoc,
+            bool isPublic)
+      : DefDirective(DefDirective), UndefLoc(UndefLoc), IsPublic(isPublic) { }
+
+    const DefMacroDirective *getDirective() const { return DefDirective; }
+          DefMacroDirective *getDirective()       { return DefDirective; }
+
+    inline SourceLocation getLocation() const;
+    inline MacroInfo *getMacroInfo();
+    const MacroInfo *getMacroInfo() const {
+      return const_cast<DefInfo*>(this)->getMacroInfo();
+    }
+
+    SourceLocation getUndefLocation() const { return UndefLoc; }
+    bool isUndefined() const { return UndefLoc.isValid(); }
+
+    bool isPublic() const { return IsPublic; }
+
+    bool isValid() const { return DefDirective != 0; }
+    bool isInvalid() const { return !isValid(); }
+
+    operator bool() const { return isValid(); }
+
+    inline DefInfo getPreviousDefinition(bool AllowHidden = false);
+    const DefInfo getPreviousDefinition(bool AllowHidden = false) const {
+      return const_cast<DefInfo*>(this)->getPreviousDefinition(AllowHidden);
+    }
+  };
+
+  /// \brief Traverses the macro directives history and returns the next
+  /// macro definition directive along with info about its undefined location
+  /// (if there is one) and if it is public or private.
+  DefInfo getDefinition(bool AllowHidden = false);
+  const DefInfo getDefinition(bool AllowHidden = false) const {
+    return const_cast<MacroDirective*>(this)->getDefinition(AllowHidden);
+  }
+
+  bool isDefined(bool AllowHidden = false) const {
+    if (const DefInfo Def = getDefinition(AllowHidden))
+      return !Def.isUndefined();
+    return false;
+  }
+
+  const MacroInfo *getMacroInfo(bool AllowHidden = false) const {
+    return getDefinition(AllowHidden).getMacroInfo();
+  }
+  MacroInfo *getMacroInfo(bool AllowHidden = false) {
+    return getDefinition(AllowHidden).getMacroInfo();
+  }
+
+  /// \brief Find macro definition active in the specified source location. If
+  /// this macro was not defined there, return NULL.
+  const DefInfo findDirectiveAtLoc(SourceLocation L, SourceManager &SM) const;
+
+  static bool classof(const MacroDirective *) { return true; }
+};
+
+/// \brief A directive for a defined macro or a macro imported from a module.
+class DefMacroDirective : public MacroDirective {
+  MacroInfo *Info;
+
+public:
+  explicit DefMacroDirective(MacroInfo *MI)
+    : MacroDirective(MD_Define, MI->getDefinitionLoc()), Info(MI) {
+    assert(MI && "MacroInfo is null");
+  }
+
+  DefMacroDirective(MacroInfo *MI, SourceLocation Loc, bool isImported)
+    : MacroDirective(MD_Define, Loc), Info(MI) {
+    assert(MI && "MacroInfo is null");
+    IsImported = isImported;
+  }
+
+  /// \brief The data for the macro definition.
+  const MacroInfo *getInfo() const { return Info; }
+  MacroInfo *getInfo() { return Info; }
+
+  /// \brief True if this macro was imported from a module.
+  bool isImported() const { return IsImported; }
 
   /// \brief Determine whether this macro definition is ambiguous with
   /// other macro definitions.
@@ -440,14 +484,62 @@ public:
   /// \brief Set whether this macro definition is ambiguous.
   void setAmbiguous(bool Val) { IsAmbiguous = Val; }
 
-  /// \brief Determine whether this macro has changed since it was loaded from
-  /// an AST file.
-  bool hasChangedAfterLoad() const { return ChangedAfterLoad; }
-
-  /// \brief Note whether this macro has changed after it was loaded from an
-  /// AST file.
-  void setChangedAfterLoad(bool CAL = true) { ChangedAfterLoad = CAL; }
+  static bool classof(const MacroDirective *MD) {
+    return MD->getKind() == MD_Define;
+  }
+  static bool classof(const DefMacroDirective *) { return true; }
 };
+
+/// \brief A directive for an undefined macro.
+class UndefMacroDirective : public MacroDirective  {
+public:
+  explicit UndefMacroDirective(SourceLocation UndefLoc)
+    : MacroDirective(MD_Undefine, UndefLoc) {
+    assert(UndefLoc.isValid() && "Invalid UndefLoc!");
+  }
+
+  static bool classof(const MacroDirective *MD) {
+    return MD->getKind() == MD_Undefine;
+  }
+  static bool classof(const UndefMacroDirective *) { return true; }
+};
+
+/// \brief A directive for setting the module visibility of a macro.
+class VisibilityMacroDirective : public MacroDirective  {
+public:
+  explicit VisibilityMacroDirective(SourceLocation Loc, bool Public)
+    : MacroDirective(MD_Visibility, Loc) {
+    IsPublic = Public;
+  }
+
+  /// \brief Determine whether this macro is part of the public API of its
+  /// module.
+  bool isPublic() const { return IsPublic; }
+
+  static bool classof(const MacroDirective *MD) {
+    return MD->getKind() == MD_Visibility;
+  }
+  static bool classof(const VisibilityMacroDirective *) { return true; }
+};
+
+inline SourceLocation MacroDirective::DefInfo::getLocation() const {
+  if (isInvalid())
+    return SourceLocation();
+  return DefDirective->getLocation();
+}
+
+inline MacroInfo *MacroDirective::DefInfo::getMacroInfo() {
+  if (isInvalid())
+    return 0;
+  return DefDirective->getInfo();
+}
+
+inline MacroDirective::DefInfo
+MacroDirective::DefInfo::getPreviousDefinition(bool AllowHidden) {
+  if (isInvalid() || DefDirective->getPrevious() == 0)
+    return DefInfo();
+  return DefDirective->getPrevious()->getDefinition(AllowHidden);
+}
 
 }  // end namespace clang
 

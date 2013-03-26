@@ -41,15 +41,17 @@ Preprocessor::getMacroDirectiveHistory(const IdentifierInfo *II) const {
   return Pos->second;
 }
 
-/// \brief Specify a macro for this identifier.
-void Preprocessor::setMacroDirective(IdentifierInfo *II, MacroDirective *MD) {
+void Preprocessor::appendMacroDirective(IdentifierInfo *II, MacroDirective *MD){
   assert(MD && "MacroDirective should be non-zero!");
+  assert(!MD->getPrevious() && "Already attached to a MacroDirective history.");
 
   MacroDirective *&StoredMD = Macros[II];
   MD->setPrevious(StoredMD);
   StoredMD = MD;
-  II->setHasMacroDefinition(true);
-  if (II->isFromAST())
+  II->setHasMacroDefinition(MD->isDefined());
+  bool isImportedMacro = isa<DefMacroDirective>(MD) &&
+                         cast<DefMacroDirective>(MD)->isImported();
+  if (II->isFromAST() && !isImportedMacro)
     II->setChangedSinceDeserialization();
 }
 
@@ -66,112 +68,6 @@ void Preprocessor::setLoadedMacroDirective(IdentifierInfo *II,
     II->setHasMacroDefinition(false);
 }
 
-void Preprocessor::addLoadedMacroInfo(IdentifierInfo *II, MacroDirective *MD,
-                                      MacroDirective *Hint) {
-  assert(MD && "Missing macro?");
-  assert(MD->isImported() && "Macro is not from an AST?");
-  assert(!MD->getPrevious() && "Macro already in chain?");
-  
-  MacroDirective *&StoredMD = Macros[II];
-
-  // Easy case: this is the first macro definition for this macro.
-  if (!StoredMD) {
-    StoredMD = MD;
-
-    if (MD->isDefined())
-      II->setHasMacroDefinition(true);
-    return;
-  }
-
-  // If this macro is a definition and this identifier has been neither
-  // defined nor undef'd in the current translation unit, add this macro
-  // to the end of the chain of definitions.
-  if (MD->isDefined() && StoredMD->isImported()) {
-    // Simple case: if this is the first actual definition, just put it at
-    // th beginning.
-    if (!StoredMD->isDefined()) {
-      MD->setPrevious(StoredMD);
-      StoredMD = MD;
-
-      II->setHasMacroDefinition(true);
-      return;
-    }
-
-    // Find the end of the definition chain.
-    MacroDirective *Prev;
-    MacroDirective *PrevPrev = StoredMD;
-    bool Ambiguous = StoredMD->isAmbiguous();
-    bool MatchedOther = false;
-    do {
-      Prev = PrevPrev;
-
-      // If the macros are not identical, we have an ambiguity.
-      if (!Prev->getInfo()->isIdenticalTo(*MD->getInfo(), *this)) {
-        if (!Ambiguous) {
-          Ambiguous = true;
-          StoredMD->setAmbiguous(true);
-        }
-      } else {
-        MatchedOther = true;
-      }
-    } while ((PrevPrev = Prev->getPrevious()) &&
-             PrevPrev->isDefined());
-
-    // If there are ambiguous definitions, and we didn't match any other
-    // definition, then mark us as ambiguous.
-    if (Ambiguous && !MatchedOther)
-      MD->setAmbiguous(true);
-
-    // Wire this macro information into the chain.
-    MD->setPrevious(Prev->getPrevious());
-    Prev->setPrevious(MD);
-    return;
-  }
-
-  // The macro is not a definition; put it at the end of the list.
-  MacroDirective *Prev = Hint? Hint : StoredMD;
-  while (Prev->getPrevious())
-    Prev = Prev->getPrevious();
-  Prev->setPrevious(MD);
-}
-
-void Preprocessor::makeLoadedMacroInfoVisible(IdentifierInfo *II,
-                                              MacroDirective *MD) {
-  assert(MD->isImported() && "Macro must be from the AST");
-
-  MacroDirective *&StoredMD = Macros[II];
-  if (StoredMD == MD) {
-    // Easy case: this is the first macro anyway.
-    II->setHasMacroDefinition(MD->isDefined());
-    return;
-  }
-
-  // Go find the macro and pull it out of the list.
-  // FIXME: Yes, this is O(N), and making a pile of macros visible or hidden
-  // would be quadratic, but it's extremely rare.
-  MacroDirective *Prev = StoredMD;
-  while (Prev->getPrevious() != MD)
-    Prev = Prev->getPrevious();
-  Prev->setPrevious(MD->getPrevious());
-  MD->setPrevious(0);
-
-  // Add the macro back to the list.
-  addLoadedMacroInfo(II, MD);
-
-  II->setHasMacroDefinition(StoredMD->isDefined());
-  if (II->isFromAST())
-    II->setChangedSinceDeserialization();
-}
-
-/// \brief Undefine a macro for this identifier.
-void Preprocessor::clearMacroInfo(IdentifierInfo *II) {
-  assert(II->hasMacroDefinition() && "Macro is not defined!");
-  assert(Macros[II]->getUndefLoc().isValid() && "Macro is still defined!");
-  II->setHasMacroDefinition(false);
-  if (II->isFromAST())
-    II->setChangedSinceDeserialization();
-}
-
 /// RegisterBuiltinMacro - Register the specified identifier in the identifier
 /// table and mark it as a builtin macro to be expanded.
 static IdentifierInfo *RegisterBuiltinMacro(Preprocessor &PP, const char *Name){
@@ -181,7 +77,7 @@ static IdentifierInfo *RegisterBuiltinMacro(Preprocessor &PP, const char *Name){
   // Mark it as being a macro that is builtin.
   MacroInfo *MI = PP.AllocateMacroInfo(SourceLocation());
   MI->setIsBuiltinMacro();
-  PP.setMacroDirective(Id, MI);
+  PP.appendDefMacroDirective(Id, MI);
   return Id;
 }
 
@@ -315,7 +211,7 @@ bool Preprocessor::isNextPPTokenLParen() {
 /// expanded as a macro, handle it and return the next token as 'Identifier'.
 bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
                                                  MacroDirective *MD) {
-  MacroInfo *MI = MD->getInfo();
+  MacroInfo *MI = MD->getMacroInfo();
 
   // If this is a macro expansion in the "#if !defined(x)" line for the file,
   // then the macro could expand to different things in other contexts, we need

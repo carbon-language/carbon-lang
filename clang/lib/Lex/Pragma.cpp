@@ -703,9 +703,10 @@ void Preprocessor::HandlePragmaPopMacro(Token &PopMacroTok) {
   if (iter != PragmaPushMacroInfo.end()) {
     // Forget the MacroInfo currently associated with IdentInfo.
     if (MacroDirective *CurrentMD = getMacroDirective(IdentInfo)) {
-      if (CurrentMD->getInfo()->isWarnIfUnused())
-        WarnUnusedMacroLocs.erase(CurrentMD->getInfo()->getDefinitionLoc());
-      UndefineMacro(IdentInfo, CurrentMD, MessageLoc);
+      MacroInfo *MI = CurrentMD->getMacroInfo();
+      if (MI->isWarnIfUnused())
+        WarnUnusedMacroLocs.erase(MI->getDefinitionLoc());
+      appendMacroDirective(IdentInfo, AllocateUndefMacroDirective(MessageLoc));
     }
 
     // Get the MacroInfo we want to reinstall.
@@ -713,10 +714,8 @@ void Preprocessor::HandlePragmaPopMacro(Token &PopMacroTok) {
 
     if (MacroToReInstall) {
       // Reinstall the previously pushed macro.
-      setMacroDirective(IdentInfo, MacroToReInstall, MessageLoc,
-                        /*isImported=*/false);
-    } else if (IdentInfo->hasMacroDefinition()) {
-      clearMacroInfo(IdentInfo);
+      appendDefMacroDirective(IdentInfo, MacroToReInstall, MessageLoc,
+                              /*isImported=*/false);
     }
 
     // Pop PragmaPushMacroInfo stack.

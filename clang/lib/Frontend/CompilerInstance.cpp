@@ -923,10 +923,11 @@ static void checkConfigMacro(Preprocessor &PP, StringRef ConfigMacro,
   // If this identifier does not currently have a macro definition,
   // check whether it had one on the command line.
   if (!Id->hasMacroDefinition()) {
-    MacroDirective *UndefMD = PP.getMacroDirectiveHistory(Id);
-    for (MacroDirective *MD = UndefMD; MD; MD = MD->getPrevious()) {
-
-      FileID FID = SourceMgr.getFileID(MD->getLocation());
+    MacroDirective::DefInfo LatestDef =
+        PP.getMacroDirectiveHistory(Id)->getDefinition();
+    for (MacroDirective::DefInfo Def = LatestDef; Def;
+           Def = Def.getPreviousDefinition()) {
+      FileID FID = SourceMgr.getFileID(Def.getLocation());
       if (FID.isInvalid())
         continue;
 
@@ -942,8 +943,8 @@ static void checkConfigMacro(Preprocessor &PP, StringRef ConfigMacro,
       // Complain.
       PP.Diag(ImportLoc, diag::warn_module_config_macro_undef)
         << true << ConfigMacro << Mod->getFullModuleName();
-      if (UndefMD->getUndefLoc().isValid())
-        PP.Diag(UndefMD->getUndefLoc(), diag::note_module_def_undef_here)
+      if (LatestDef.isUndefined())
+        PP.Diag(LatestDef.getUndefLocation(), diag::note_module_def_undef_here)
           << true;
       return;
     }
@@ -954,10 +955,12 @@ static void checkConfigMacro(Preprocessor &PP, StringRef ConfigMacro,
 
   // This identifier has a macro definition. Check whether we had a definition
   // on the command line.
-  MacroDirective *DefMD = PP.getMacroDirective(Id);
-  MacroDirective *PredefinedMD = 0;
-  for (MacroDirective *MD = DefMD; MD; MD = MD->getPrevious()) {
-    FileID FID = SourceMgr.getFileID(MD->getLocation());
+  MacroDirective::DefInfo LatestDef =
+      PP.getMacroDirectiveHistory(Id)->getDefinition();
+  MacroDirective::DefInfo PredefinedDef;
+  for (MacroDirective::DefInfo Def = LatestDef; Def;
+         Def = Def.getPreviousDefinition()) {
+    FileID FID = SourceMgr.getFileID(Def.getLocation());
     if (FID.isInvalid())
       continue;
 
@@ -969,32 +972,32 @@ static void checkConfigMacro(Preprocessor &PP, StringRef ConfigMacro,
     if (!StringRef(Buffer->getBufferIdentifier()).equals("<built-in>"))
       continue;
 
-    PredefinedMD = MD;
+    PredefinedDef = Def;
     break;
   }
 
   // If there was no definition for this macro in the predefines buffer,
   // complain.
-  if (!PredefinedMD ||
-      (!PredefinedMD->getLocation().isValid() &&
-       PredefinedMD->getUndefLoc().isValid())) {
+  if (!PredefinedDef ||
+      (!PredefinedDef.getLocation().isValid() &&
+       PredefinedDef.getUndefLocation().isValid())) {
     PP.Diag(ImportLoc, diag::warn_module_config_macro_undef)
       << false << ConfigMacro << Mod->getFullModuleName();
-    PP.Diag(DefMD->getLocation(), diag::note_module_def_undef_here)
+    PP.Diag(LatestDef.getLocation(), diag::note_module_def_undef_here)
       << false;
     return;
   }
 
   // If the current macro definition is the same as the predefined macro
   // definition, it's okay.
-  if (DefMD == PredefinedMD ||
-      DefMD->getInfo()->isIdenticalTo(*PredefinedMD->getInfo(), PP))
+  if (LatestDef.getMacroInfo() == PredefinedDef.getMacroInfo() ||
+      LatestDef.getMacroInfo()->isIdenticalTo(*PredefinedDef.getMacroInfo(),PP))
     return;
 
   // The macro definitions differ.
   PP.Diag(ImportLoc, diag::warn_module_config_macro_undef)
     << false << ConfigMacro << Mod->getFullModuleName();
-  PP.Diag(DefMD->getLocation(), diag::note_module_def_undef_here)
+  PP.Diag(LatestDef.getLocation(), diag::note_module_def_undef_here)
     << false;
 }
 

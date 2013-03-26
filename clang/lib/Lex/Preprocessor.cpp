@@ -306,15 +306,15 @@ StringRef Preprocessor::getLastMacroWithSpelling(
   StringRef BestSpelling;
   for (Preprocessor::macro_iterator I = macro_begin(), E = macro_end();
        I != E; ++I) {
-    if (!I->second->getInfo()->isObjectLike())
+    if (!I->second->getMacroInfo()->isObjectLike())
       continue;
-    const MacroDirective *
-      MD = I->second->findDirectiveAtLoc(Loc, SourceMgr);
-    if (!MD)
+    const MacroDirective::DefInfo
+      Def = I->second->findDirectiveAtLoc(Loc, SourceMgr);
+    if (!Def)
       continue;
-    if (!MacroDefinitionEquals(MD->getInfo(), Tokens))
+    if (!MacroDefinitionEquals(Def.getMacroInfo(), Tokens))
       continue;
-    SourceLocation Location = I->second->getInfo()->getDefinitionLoc();
+    SourceLocation Location = Def.getLocation();
     // Choose the macro defined latest.
     if (BestLocation.isInvalid() ||
         (Location.isValid() &&
@@ -643,7 +643,7 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
 
   // If this is a macro to be expanded, do it.
   if (MacroDirective *MD = getMacroDirective(&II)) {
-    MacroInfo *MI = MD->getInfo();
+    MacroInfo *MI = MD->getMacroInfo();
     if (!DisableMacroExpansion) {
       if (!Identifier.isExpandDisabled() && MI->isEnabled()) {
         if (!HandleMacroExpandedIdentifier(Identifier, MD))
