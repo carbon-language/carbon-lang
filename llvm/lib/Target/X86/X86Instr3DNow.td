@@ -84,13 +84,16 @@ defm PI2FD    : I3DNow_conv_rm_int<0x0D, "pi2fd">;
 defm PMULHRW  : I3DNow_binop_rm_int<0xB7, "pmulhrw">;
 
 
-def FEMMS : I3DNow<0x0E, RawFrm, (outs), (ins), "femms", [(int_x86_mmx_femms)]>;
+def FEMMS : I3DNow<0x0E, RawFrm, (outs), (ins), "femms",
+                   [(int_x86_mmx_femms)]>;
 
-def PREFETCH  : I3DNow<0x0D, MRM0m, (outs), (ins i32mem:$addr),
-                       "prefetch\t$addr", []>;
+def PREFETCH : I3DNow<0x0D, MRM0m, (outs), (ins i8mem:$addr),
+                      "prefetch\t$addr",
+                      [(prefetch addr:$addr, (i32 0), imm, (i32 1))]>;
 
-def PREFETCHW : I3DNow<0x0D, MRM1m, (outs), (ins i16mem:$addr),
-                       "prefetchw\t$addr", []>;
+def PREFETCHW : I<0x0D, MRM1m, (outs), (ins i8mem:$addr), "prefetchw\t$addr",
+                  [(prefetch addr:$addr, (i32 1), (i32 3), (i32 1))]>, TB,
+                Requires<[HasPrefetchW]>;
 
 // "3DNowA" instructions
 defm PF2IW    : I3DNow_conv_rm_int<0x1C, "pf2iw", "a">;

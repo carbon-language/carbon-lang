@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse | FileCheck %s
 ; RUN: llc < %s -march=x86 -mattr=+avx | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+prfchw | FileCheck %s -check-prefix=PRFCHW
 
 ; rdar://10538297
 
@@ -9,10 +10,12 @@ entry:
 ; CHECK: prefetcht1
 ; CHECK: prefetcht0
 ; CHECK: prefetchnta
+; PRFCHW: prefetchw
 	tail call void @llvm.prefetch( i8* %ptr, i32 0, i32 1, i32 1 )
 	tail call void @llvm.prefetch( i8* %ptr, i32 0, i32 2, i32 1 )
 	tail call void @llvm.prefetch( i8* %ptr, i32 0, i32 3, i32 1 )
 	tail call void @llvm.prefetch( i8* %ptr, i32 0, i32 0, i32 1 )
+	tail call void @llvm.prefetch( i8* %ptr, i32 1, i32 3, i32 1 )
 	ret void
 }
 

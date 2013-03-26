@@ -122,6 +122,8 @@ def FeatureRTM     : SubtargetFeature<"rtm", "HasRTM", "true",
                                       "Support RTM instructions">;
 def FeatureADX     : SubtargetFeature<"adx", "HasADX", "true",
                                       "Support ADX instructions">;
+def FeaturePRFCHW  : SubtargetFeature<"prfchw", "HasPRFCHW", "true",
+                                      "Support PRFCHW instructions">;
 def FeatureLeaForSP : SubtargetFeature<"lea-sp", "UseLeaForSP", "true",
                                      "Use LEA for adjusting the stack pointer">;
 def FeatureSlowDivide : SubtargetFeature<"idiv-to-divb",

@@ -283,6 +283,10 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
         HasLZCNT = true;
         ToggleFeature(X86::FeatureLZCNT);
       }
+      if (IsIntel && ((ECX >> 8) & 0x1)) {
+        HasPRFCHW = true;
+        ToggleFeature(X86::FeaturePRFCHW);
+      }
       if (IsAMD) {
         if ((ECX >> 6) & 0x1) {
           HasSSE4A = true;
@@ -440,6 +444,7 @@ void X86Subtarget::initializeEnvironment() {
   HasBMI2 = false;
   HasRTM = false;
   HasADX = false;
+  HasPRFCHW = false;
   IsBTMemSlow = false;
   IsUAMemFast = false;
   HasVectorUAMem = false;
