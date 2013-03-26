@@ -489,9 +489,6 @@ int main(int argc_, const char **argv_) {
     // In these cases, generate additional diagnostic information if possible.
     if (CommandRes < 0 || CommandRes == 70) {
       TheDriver.generateCompilationDiagnostics(*C, FailingCommand);
-
-      // FIXME: generateCompilationDiagnostics() needs to be tested when there
-      // are multiple failing commands.
       break;
     }
   }
