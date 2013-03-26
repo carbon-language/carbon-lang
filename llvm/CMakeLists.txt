@@ -193,6 +193,9 @@ if( LLVM_USE_OPROFILE )
   endif( NOT CMAKE_SYSTEM_NAME MATCHES "Linux" )
 endif( LLVM_USE_OPROFILE )
 
+set(LLVM_USE_SANITIZER "" CACHE STRING
+  "Define the sanitizer used to build binaries and tests.")
+
 # Define an option controlling whether we should build for 32-bit on 64-bit
 # platforms, where supported.
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT WIN32 )
