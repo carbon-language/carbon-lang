@@ -151,11 +151,11 @@ static inline bool IntervalsAreSeparate(uptr start1, uptr end1,
 // several worker threads on Mac, which aren't expected to map big chunks of
 // memory).
 bool MemoryRangeIsAvailable(uptr range_start, uptr range_end) {
-  MemoryMappingLayout procmaps;
+  MemoryMappingLayout proc_maps(/*cache_enabled*/true);
   uptr start, end;
-  while (procmaps.Next(&start, &end,
-                       /*offset*/0, /*filename*/0, /*filename_size*/0,
-                       /*protection*/0)) {
+  while (proc_maps.Next(&start, &end,
+                        /*offset*/0, /*filename*/0, /*filename_size*/0,
+                        /*protection*/0)) {
     if (!IntervalsAreSeparate(start, end, range_start, range_end))
       return false;
   }
@@ -163,7 +163,7 @@ bool MemoryRangeIsAvailable(uptr range_start, uptr range_end) {
 }
 
 void DumpProcessMap() {
-  MemoryMappingLayout proc_maps;
+  MemoryMappingLayout proc_maps(/*cache_enabled*/true);
   uptr start, end;
   const sptr kBufSize = 4095;
   char *filename = (char*)MmapOrDie(kBufSize, __FUNCTION__);

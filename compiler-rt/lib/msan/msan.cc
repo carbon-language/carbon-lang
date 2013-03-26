@@ -70,7 +70,7 @@ namespace __msan {
 
 static bool IsRunningUnderDr() {
   bool result = false;
-  MemoryMappingLayout proc_maps;
+  MemoryMappingLayout proc_maps(/*cache_enabled*/true);
   const sptr kBufSize = 4095;
   char *filename = (char*)MmapOrDie(kBufSize, __FUNCTION__);
   while (proc_maps.Next(/* start */0, /* end */0, /* file_offset */0,

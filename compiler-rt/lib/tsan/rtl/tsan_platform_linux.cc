@@ -198,7 +198,7 @@ static void MapRodata() {
     return;
   }
   // Map the file into shadow of .rodata sections.
-  MemoryMappingLayout proc_maps;
+  MemoryMappingLayout proc_maps(/*cache_enabled*/true);
   uptr start, end, offset, prot;
   char name[128];
   while (proc_maps.Next(&start, &end, &offset, name, ARRAY_SIZE(name), &prot)) {
@@ -257,7 +257,7 @@ static uptr g_data_end;
 #ifndef TSAN_GO
 static void CheckPIE() {
   // Ensure that the binary is indeed compiled with -pie.
-  MemoryMappingLayout proc_maps;
+  MemoryMappingLayout proc_maps(true);
   uptr start, end;
   if (proc_maps.Next(&start, &end,
                      /*offset*/0, /*filename*/0, /*filename_size*/0,
@@ -274,7 +274,7 @@ static void CheckPIE() {
 }
 
 static void InitDataSeg() {
-  MemoryMappingLayout proc_maps;
+  MemoryMappingLayout proc_maps(true);
   uptr start, end, offset;
   char name[128];
   bool prev_is_data = false;

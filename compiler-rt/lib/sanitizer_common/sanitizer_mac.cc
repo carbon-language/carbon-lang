@@ -165,7 +165,7 @@ void PrepareForSandboxing() {
 
 // ----------------- sanitizer_procmaps.h
 
-MemoryMappingLayout::MemoryMappingLayout() {
+MemoryMappingLayout::MemoryMappingLayout(bool cache_enabled) {
   Reset();
 }
 

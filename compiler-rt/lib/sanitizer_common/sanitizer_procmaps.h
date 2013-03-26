@@ -41,7 +41,7 @@ struct ProcSelfMapsBuff {
 
 class MemoryMappingLayout {
  public:
-  MemoryMappingLayout();
+  explicit MemoryMappingLayout(bool cache_enabled);
   bool Next(uptr *start, uptr *end, uptr *offset,
             char filename[], uptr filename_size, uptr *protection);
   void Reset();

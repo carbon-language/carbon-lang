@@ -200,7 +200,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
     CHECK_EQ(getrlimit(RLIMIT_STACK, &rl), 0);
 
     // Find the mapping that contains a stack variable.
-    MemoryMappingLayout proc_maps;
+    MemoryMappingLayout proc_maps(/*cache_enabled*/true);
     uptr start, end, offset;
     uptr prev_end = 0;
     while (proc_maps.Next(&start, &end, &offset, 0, 0, /* protection */0)) {
@@ -341,18 +341,22 @@ void PrepareForSandboxing() {
 ProcSelfMapsBuff MemoryMappingLayout::cached_proc_self_maps_;
 StaticSpinMutex MemoryMappingLayout::cache_lock_;  // Linker initialized.
 
-MemoryMappingLayout::MemoryMappingLayout() {
+MemoryMappingLayout::MemoryMappingLayout(bool cache_enabled) {
   proc_self_maps_.len =
       ReadFileToBuffer("/proc/self/maps", &proc_self_maps_.data,
                        &proc_self_maps_.mmaped_size, 1 << 26);
-  if (proc_self_maps_.mmaped_size == 0) {
-    LoadFromCache();
-    CHECK_GT(proc_self_maps_.len, 0);
+  if (cache_enabled) {
+    if (proc_self_maps_.mmaped_size == 0) {
+      LoadFromCache();
+      CHECK_GT(proc_self_maps_.len, 0);
+    }
+  } else {
+    CHECK_GT(proc_self_maps_.mmaped_size, 0);
   }
-  // internal_write(2, proc_self_maps_.data, proc_self_maps_.len);
   Reset();
   // FIXME: in the future we may want to cache the mappings on demand only.
-  CacheMemoryMappings();
+  if (cache_enabled)
+    CacheMemoryMappings();
 }
 
 MemoryMappingLayout::~MemoryMappingLayout() {
@@ -642,7 +646,6 @@ int internal_sigaltstack(const struct sigaltstack *ss,
                          struct sigaltstack *oss) {
   return syscall(__NR_sigaltstack, ss, oss);
 }
-
 
 // ThreadLister implementation.
 ThreadLister::ThreadLister(int pid)
