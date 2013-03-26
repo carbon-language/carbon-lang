@@ -895,6 +895,7 @@ def mno_fma : Flag<["-"], "mno-fma">, Group<m_x86_Features_Group>;
 def mno_xop : Flag<["-"], "mno-xop">, Group<m_x86_Features_Group>;
 def mno_f16c : Flag<["-"], "mno-f16c">, Group<m_x86_Features_Group>;
 def mno_rtm : Flag<["-"], "mno-rtm">, Group<m_x86_Features_Group>;
+def mno_prfchw : Flag<["-"], "mno-prfchw">, Group<m_x86_Features_Group>;
 
 def mno_thumb : Flag<["-"], "mno-thumb">, Group<m_Group>;
 def marm : Flag<["-"], "marm">, Alias<mno_thumb>;
@@ -938,6 +939,7 @@ def mfma : Flag<["-"], "mfma">, Group<m_x86_Features_Group>;
 def mxop : Flag<["-"], "mxop">, Group<m_x86_Features_Group>;
 def mf16c : Flag<["-"], "mf16c">, Group<m_x86_Features_Group>;
 def mrtm : Flag<["-"], "mrtm">, Group<m_x86_Features_Group>;
+def mprfchw : Flag<["-"], "mprfchw">, Group<m_x86_Features_Group>;
 def mips16 : Flag<["-"], "mips16">, Group<m_Group>;
 def mno_mips16 : Flag<["-"], "mno-mips16">, Group<m_Group>;
 def mxgot : Flag<["-"], "mxgot">, Group<m_Group>;

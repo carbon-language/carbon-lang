@@ -1,4 +1,4 @@
-/*===---- x86intrin.h - X86 intrinsics -------------------------------------===
+/*===---- prfchwintrin.h - PREFETCHW intrinsic -----------------------------===
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,51 +21,14 @@
  *===-----------------------------------------------------------------------===
  */
 
-#ifndef __X86INTRIN_H
-#define __X86INTRIN_H
-
-#include <immintrin.h>
-
-#ifdef __3dNOW__
-#include <mm3dnow.h>
+#if !defined(__X86INTRIN_H) && !defined(_MM3DNOW_H_INCLUDED)
+#error "Never use <prfchwintrin.h> directly; include <x86intrin.h> or <mm3dnow.h> instead."
 #endif
 
-#ifdef __BMI__
-#include <bmiintrin.h>
+#if defined(__PRFCHW__) || defined(__3dNOW__)
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+_m_prefetchw(void *__P)
+{
+  __builtin_prefetch (__P, 1, 3 /* _MM_HINT_T0 */);
+}
 #endif
-
-#ifdef __BMI2__
-#include <bmi2intrin.h>
-#endif
-
-#ifdef __LZCNT__
-#include <lzcntintrin.h>
-#endif
-
-#ifdef __POPCNT__
-#include <popcntintrin.h>
-#endif
-
-#ifdef __PRFCHW__
-#include <prfchwintrin.h>
-#endif
-
-#ifdef __SSE4A__
-#include <ammintrin.h>
-#endif
-
-#ifdef __FMA4__
-#include <fma4intrin.h>
-#endif
-
-#ifdef __XOP__
-#include <xopintrin.h>
-#endif
-
-#ifdef __F16C__
-#include <f16cintrin.h>
-#endif
-
-// FIXME: LWP
-
-#endif /* __X86INTRIN_H */
