@@ -22,7 +22,9 @@ namespace __sanitizer {
 #if SANITIZER_WINDOWS
 class MemoryMappingLayout {
  public:
-  MemoryMappingLayout() {}
+  MemoryMappingLayout(bool cache_enabled) {
+    (void)cache_enabled;
+  }
   bool GetObjectNameAndOffset(uptr addr, uptr *offset,
                               char filename[], uptr filename_size,
                               uptr *protection) {
