@@ -617,7 +617,7 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
         "The breakpoint stops only if this condition expression evaluates to true."},
 
     { LLDB_OPT_SET_ALL, false, "thread-index", 'x', required_argument, NULL, 0, eArgTypeThreadIndex,
-        "The breakpoint stops only for the thread whose index matches this argument."},
+        "The breakpoint stops only for the thread whose indeX matches this argument."},
 
     { LLDB_OPT_SET_ALL, false, "thread-id", 't', required_argument, NULL, 0, eArgTypeThreadID,
         "The breakpoint stops only for the thread whose TID matches this argument."},
