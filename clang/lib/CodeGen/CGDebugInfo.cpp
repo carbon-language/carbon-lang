@@ -2023,7 +2023,7 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   uint64_t Size = CGM.getContext().getTypeSize(Ty);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
   const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
-  llvm::TrackingVH<llvm::MDNode> RealDecl;
+  llvm::DICompositeType RealDecl;
   
   if (RD->isUnion())
     RealDecl = DBuilder.createUnionType(RDContext, RDName, DefUnit, Line,
@@ -2040,11 +2040,11 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
                                          Size, Align, 0, llvm::DIType(), llvm::DIArray());
 
   RegionMap[Ty->getDecl()] = llvm::WeakVH(RealDecl);
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = llvm::DIType(RealDecl);
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl;
 
   if (CXXDecl) {
     // A class's primary base or the class itself contains the vtable.
-    llvm::MDNode *ContainingType = NULL;
+    llvm::DICompositeType ContainingType;
     const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
     if (const CXXRecordDecl *PBase = RL.getPrimaryBase()) {
       // Seek non virtual primary base root.
@@ -2056,13 +2056,12 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
         else
           break;
       }
-      ContainingType =
-        getOrCreateType(QualType(PBase->getTypeForDecl(), 0), DefUnit);
-    }
-    else if (CXXDecl->isDynamicClass())
+      ContainingType = llvm::DICompositeType(
+          getOrCreateType(QualType(PBase->getTypeForDecl(), 0), DefUnit));
+    } else if (CXXDecl->isDynamicClass())
       ContainingType = RealDecl;
 
-    RealDecl->replaceOperandWith(12, ContainingType);
+    RealDecl.setContainingType(ContainingType);
   }
   return llvm::DIType(RealDecl);
 }
