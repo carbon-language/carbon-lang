@@ -6,6 +6,63 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
+// Instruction scheduling annotations for out-of-order CPUs.
+// These annotations are independent of the itinerary class defined below.
+// Here we define the subtarget independent read/write per-operand resources.
+// The subtarget schedule definitions will then map these to the subtarget's
+// resource usages.
+// For example:
+// The instruction cycle timings table might contain an entry for an operation
+// like the following:
+// Rd <- ADD Rn, Rm, <shift> Rs
+//  Uops | Latency from register | Uops - resource requirements - latency
+//  2    | Rn: 1 Rm: 4 Rs: 4     | uop T0, Rm, Rs - P01 - 3
+//       |                       | uopc Rd, Rn, T0 -  P01 - 1
+// This is telling us that the result will be available in destination register
+// Rd after a minimum of three cycles after the result in Rm and Rs is available
+// and one cycle after the result in Rn is available. The micro-ops can execute
+// on resource P01.
+// To model this, we need to express that we need to dispatch two micro-ops,
+// that the resource P01 is needed and that the latency to Rn is different than
+// the latency to Rm and Rs. The scheduler can decrease Rn's producer latency by
+// two.
+// We will do this by assigning (abstract) resources to register defs/uses.
+// ARMSchedule.td:
+//   def WriteALUsr : SchedWrite;
+//   def ReadAdvanceALUsr : ScheRead;
+//
+// ARMInstrInfo.td:
+//   def ADDrs : I<>, Sched<[WriteALUsr, ReadAdvanceALUsr, ReadDefault,
+//                           ReadDefault]> { ...}
+// ReadAdvance read resources allow us to define "pipeline by-passes" or
+// shorter latencies to certain registers as needed in the example above.
+// The "ReadDefault" can be omitted.
+// Next, the subtarget td file assigns resources to the abstract resources
+// defined here.
+// ARMScheduleSubtarget.td:
+//  // Resources.
+//  def P01 : ProcResource<3>; // ALU unit (3 of it).
+//  ...
+//  // Resource usages.
+//  def : WriteRes<WriteALUsr, [P01, P01]> {
+//    Latency = 4; // Latency of 4.
+//    NumMicroOps = 2; // Dispatch 2 micro-ops.
+//    // The two instances of resource P01 are occupied for one cycle. It is one
+//    // cycle because these resources happen to be pipelined.
+//    ResourceCycles = [1, 1];
+//  }
+//  def : ReadAdvance<ReadAdvanceALUsr, 3>;
+
+// Basic ALU operation.
+def WriteALU : SchedWrite;
+def ReadAdvanceALU : SchedRead;
+
+// Basic ALU with shifts.
+def WriteALUsi : SchedWrite; // Shift by immediate.
+def WriteALUsr : SchedWrite; // Shift by register.
+def WriteALUSsr : SchedWrite; // Shift by register (flag setting).
+def ReadAdvanceALUsr : SchedRead; // Some operands are read later.
 
 //===----------------------------------------------------------------------===//
 // Instruction Itinerary classes used for ARM
