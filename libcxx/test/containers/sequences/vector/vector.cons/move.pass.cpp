@@ -45,5 +45,13 @@ int main()
         assert(l.empty());
         assert(l2.get_allocator() == lo.get_allocator());
     }
+    {
+        int a1[] = {1, 3, 7, 9, 10};
+        std::vector<int> c1(a1, a1+sizeof(a1)/sizeof(a1[0]));
+        std::vector<int>::const_iterator i = c1.begin();
+        std::vector<int> c2 = std::move(c1);
+        std::vector<int>::iterator j = c2.erase(i);
+        assert(*j == 3);
+    }
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }
