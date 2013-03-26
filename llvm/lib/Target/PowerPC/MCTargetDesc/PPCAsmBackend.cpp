@@ -30,13 +30,9 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case FK_Data_2:
   case FK_Data_4:
   case FK_Data_8:
-  case PPC::fixup_ppc_toc:
   case PPC::fixup_ppc_tlsreg:
   case PPC::fixup_ppc_nofixup:
     return Value;
-  case PPC::fixup_ppc_lo14:
-  case PPC::fixup_ppc_toc16_ds:
-    return (Value & 0xffff) << 2;
   case PPC::fixup_ppc_brcond14:
     return Value & 0xfffc;
   case PPC::fixup_ppc_br24:
@@ -48,8 +44,9 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case PPC::fixup_ppc_ha16:
     return ((Value >> 16) + ((Value & 0x8000) ? 1 : 0)) & 0xffff;
   case PPC::fixup_ppc_lo16:
-  case PPC::fixup_ppc_toc16:
     return Value & 0xffff;
+  case PPC::fixup_ppc_lo16_ds:
+    return Value & 0xfffc;
   }
 }
 
@@ -82,10 +79,7 @@ public:
       { "fixup_ppc_brcond14",    16,     14,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_ppc_lo16",        16,     16,   0 },
       { "fixup_ppc_ha16",        16,     16,   0 },
-      { "fixup_ppc_lo14",        16,     14,   0 },
-      { "fixup_ppc_toc",          0,     64,   0 },
-      { "fixup_ppc_toc16",       16,     16,   0 },
-      { "fixup_ppc_toc16_ds",    16,     14,   0 },
+      { "fixup_ppc_lo16_ds",     16,     14,   0 },
       { "fixup_ppc_tlsreg",       0,      0,   0 },
       { "fixup_ppc_nofixup",      0,      0,   0 }
     };

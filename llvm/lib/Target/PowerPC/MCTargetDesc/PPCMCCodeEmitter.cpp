@@ -43,14 +43,6 @@ public:
   
   ~PPCMCCodeEmitter() {}
 
-  bool is64BitMode() const {
-    return (STI.getFeatureBits() & PPC::Feature64Bit) != 0;
-  }
-
-  bool isSVR4ABI() const {
-    return TT.isMacOSX() == 0;
-  }
-
   unsigned getDirectBrEncoding(const MCInst &MI, unsigned OpNo,
                                SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned getCondBrEncoding(const MCInst &MI, unsigned OpNo,
@@ -177,12 +169,8 @@ unsigned PPCMCCodeEmitter::getMemRIEncoding(const MCInst &MI, unsigned OpNo,
     return (getMachineOpValue(MI, MO, Fixups) & 0xFFFF) | RegBits;
   
   // Add a fixup for the displacement field.
-  if (isSVR4ABI() && is64BitMode())
-    Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
-                                     (MCFixupKind)PPC::fixup_ppc_toc16));
-  else
-    Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
-                                     (MCFixupKind)PPC::fixup_ppc_lo16));
+  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+                                   (MCFixupKind)PPC::fixup_ppc_lo16));
   return RegBits;
 }
 
@@ -198,13 +186,9 @@ unsigned PPCMCCodeEmitter::getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
   if (MO.isImm())
     return (getMachineOpValue(MI, MO, Fixups) & 0x3FFF) | RegBits;
   
-  // Add a fixup for the branch target.
-  if (isSVR4ABI() && is64BitMode())
-    Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
-                                     (MCFixupKind)PPC::fixup_ppc_toc16_ds));
-  else
-    Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
-                                     (MCFixupKind)PPC::fixup_ppc_lo14));
+  // Add a fixup for the displacement field.
+  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+                                   (MCFixupKind)PPC::fixup_ppc_lo16_ds));
   return RegBits;
 }
 
