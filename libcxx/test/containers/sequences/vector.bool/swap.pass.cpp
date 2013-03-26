@@ -51,4 +51,14 @@ int main()
         assert(v1.get_allocator() == A(2));
         assert(v2.get_allocator() == A(1));
     }
+    {
+        std::vector<bool> v(2);
+        std::vector<bool>::reference r1 = v[0];
+        std::vector<bool>::reference r2 = v[1];
+        r1 = true;
+        using std::swap;
+        swap(r1, r2);
+        assert(v[0] == false);
+        assert(v[1] == true);
+    }
 }

@@ -81,6 +81,16 @@ class __bit_reference<_Cp, false>
 {
 };
 
+template <class _Cp>
+_LIBCPP_INLINE_VISIBILITY inline
+void
+swap(__bit_reference<_Cp> __x, __bit_reference<_Cp> __y) _NOEXCEPT
+{
+    bool __t = __x;
+    __x = __y;
+    __y = __t;
+}
+
 template <class _Cp, class _Dp>
 _LIBCPP_INLINE_VISIBILITY inline
 void
