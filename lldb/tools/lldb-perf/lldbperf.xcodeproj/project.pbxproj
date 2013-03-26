@@ -66,6 +66,7 @@
 		4C86C5CB16F7C1D300844407 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C86C5C616F7A37800844407 /* LLDB.framework */; };
 		4C86C5CC16F7C1E000844407 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C86C5C616F7A37800844407 /* LLDB.framework */; };
 		4C86C5DA16F7CED300844407 /* fmts_tester.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4C1E37B316F79E4600FF10BB /* fmts_tester.mm */; };
+		4CDDF51017011EBB00D95015 /* stepping-testcase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CE3708716FB70E100BFD501 /* stepping-testcase.cpp */; };
 		4CE3707316FB701000BFD501 /* lldb-perf-stepping.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CE3707216FB701000BFD501 /* lldb-perf-stepping.cpp */; };
 		4CE3707516FB703B00BFD501 /* liblldbperf.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1E373916F4035D00FF10BB /* liblldbperf.a */; };
 		4CE3707616FB704300BFD501 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 264B3DE816F7E47600D1E7AB /* LLDB.framework */; };
@@ -246,12 +247,8 @@
 		4C86C5C616F7A37800844407 /* LLDB.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LLDB.framework; path = build/Debug/LLDB.framework; sourceTree = "<group>"; };
 		4C86C5D116F7CC8900844407 /* format-tester */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "format-tester"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4CE3705416FB6FA100BFD501 /* lldb-perf-step */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-perf-step"; sourceTree = BUILT_PRODUCTS_DIR; };
-		4CE3705616FB6FA100BFD501 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		4CE3705816FB6FA100BFD501 /* lldb_step_test.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = lldb_step_test.1; sourceTree = "<group>"; };
 		4CE3707216FB701000BFD501 /* lldb-perf-stepping.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "lldb-perf-stepping.cpp"; path = "stepping/lldb-perf-stepping.cpp"; sourceTree = "<group>"; };
 		4CE3707C16FB70AD00BFD501 /* stepping-testcase */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "stepping-testcase"; sourceTree = BUILT_PRODUCTS_DIR; };
-		4CE3707E16FB70AD00BFD501 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		4CE3708016FB70AD00BFD501 /* stepping_testcase.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = stepping_testcase.1; sourceTree = "<group>"; };
 		4CE3708716FB70E100BFD501 /* stepping-testcase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "stepping-testcase.cpp"; path = "stepping/stepping-testcase.cpp"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -346,8 +343,6 @@
 				26DBAD4616FA637D008243D2 /* common */,
 				4C1E375A16F4081300FF10BB /* cfcpp */,
 				4C1E374116F407C800FF10BB /* lib */,
-				4CE3705516FB6FA100BFD501 /* lldb-step-test */,
-				4CE3707D16FB70AD00BFD501 /* stepping-testcase */,
 				4C1E373A16F4035D00FF10BB /* Products */,
 				4C1E37DD16F7A03900FF10BB /* Frameworks */,
 			);
@@ -466,15 +461,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		4CE3705516FB6FA100BFD501 /* lldb-step-test */ = {
-			isa = PBXGroup;
-			children = (
-				4CE3705616FB6FA100BFD501 /* main.cpp */,
-				4CE3705816FB6FA100BFD501 /* lldb_step_test.1 */,
-			);
-			path = "lldb-step-test";
-			sourceTree = "<group>";
-		};
 		4CE3707416FB701E00BFD501 /* stepping */ = {
 			isa = PBXGroup;
 			children = (
@@ -482,15 +468,6 @@
 				4CE3707216FB701000BFD501 /* lldb-perf-stepping.cpp */,
 			);
 			name = stepping;
-			sourceTree = "<group>";
-		};
-		4CE3707D16FB70AD00BFD501 /* stepping-testcase */ = {
-			isa = PBXGroup;
-			children = (
-				4CE3707E16FB70AD00BFD501 /* main.cpp */,
-				4CE3708016FB70AD00BFD501 /* stepping_testcase.1 */,
-			);
-			path = "stepping-testcase";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -797,6 +774,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4CDDF51017011EBB00D95015 /* stepping-testcase.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1075,6 +1053,7 @@
 					"$(inherited)",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				OTHER_LDFLAGS = "-Wl,-rpath,@loader_path/../../../../build/Debug";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/../ $(SRCROOT)/../../include/";
@@ -1087,6 +1066,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				OTHER_LDFLAGS = "-Wl,-rpath,@loader_path/../../../../build/Debug";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/../ $(SRCROOT)/../../include/";
