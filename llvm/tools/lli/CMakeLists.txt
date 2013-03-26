@@ -1,5 +1,5 @@
 
-set(LLVM_LINK_COMPONENTS mcjit jit interpreter nativecodegen bitreader asmparser selectiondag native)
+set(LLVM_LINK_COMPONENTS mcjit jit interpreter nativecodegen bitreader asmparser irreader selectiondag native)
 
 if( LLVM_USE_OPROFILE )
   set(LLVM_LINK_COMPONENTS

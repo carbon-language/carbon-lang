@@ -1,4 +1,4 @@
-;===- ./tools/bugpoint/LLVMBuild.txt ---------------------------*- Conf -*--===;
+;===- ./lib/AsmParser/LLVMBuild.txt ----------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -16,7 +16,7 @@
 ;===------------------------------------------------------------------------===;
 
 [component_0]
-type = Tool
-name = bugpoint
-parent = Tools
-required_libraries = AsmParser BitReader BitWriter IRReader IPO Instrumentation Linker Scalar ObjCARC
+type = Library
+name = IRReader
+parent = Libraries
+required_libraries = AsmParser BitReader Core Support

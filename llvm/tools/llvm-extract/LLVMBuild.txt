@@ -19,4 +19,4 @@
 type = Tool
 name = llvm-extract
 parent = Tools
-required_libraries = AsmParser BitReader BitWriter IPO
+required_libraries = AsmParser BitReader BitWriter IRReader IPO

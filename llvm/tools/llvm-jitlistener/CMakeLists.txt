@@ -9,6 +9,7 @@ set(LLVM_LINK_COMPONENTS
   debuginfo
   inteljitevents
   interpreter
+  irreader
   jit
   mcjit
   nativecodegen

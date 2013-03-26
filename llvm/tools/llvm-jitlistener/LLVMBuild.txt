@@ -19,4 +19,4 @@
 type = Tool
 name = llvm-jitlistener
 parent = Tools
-required_libraries = AsmParser BitReader Interpreter JIT MCJIT NativeCodeGen Object SelectionDAG Native
+required_libraries = AsmParser BitReader IRReader Interpreter JIT MCJIT NativeCodeGen Object SelectionDAG Native
