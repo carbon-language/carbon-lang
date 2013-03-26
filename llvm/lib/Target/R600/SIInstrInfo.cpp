@@ -65,6 +65,26 @@ SIInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   unsigned Opcode;
   const int16_t *SubIndices;
 
+  if (AMDGPU::M0 == DestReg) {
+    // Check if M0 isn't already set to this value
+    for (MachineBasicBlock::reverse_iterator E = MBB.rend(),
+      I = MachineBasicBlock::reverse_iterator(MI); I != E; ++I) {
+
+      if (!I->definesRegister(AMDGPU::M0))
+        continue;
+
+      unsigned Opc = I->getOpcode();
+      if (Opc != TargetOpcode::COPY && Opc != AMDGPU::S_MOV_B32)
+        break;
+
+      if (!I->readsRegister(SrcReg))
+        break;
+
+      // The copy isn't necessary
+      return;
+    }
+  }
+
   if (AMDGPU::SReg_32RegClass.contains(DestReg)) {
     assert(AMDGPU::SReg_32RegClass.contains(SrcReg));
     BuildMI(MBB, MI, DL, get(AMDGPU::S_MOV_B32), DestReg)
