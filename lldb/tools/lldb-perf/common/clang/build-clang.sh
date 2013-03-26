@@ -19,7 +19,12 @@ if [ ! -d "build" ]; then
     mkdir build
     cd build
     ../llvm/configure --enable-targets=x86_64,arm --build=x86_64-apple-darwin10 --disable-optimized --disable-assertions --enable-libcpp
-    make -j8 DEBUG_SYMBOLS=1
+    make -j8 clang-only DEBUG_SYMBOLS=1
+    rm -rf lib projects runtime unittests utils
+    ( cd ./Debug/bin ; rm -rf ll* clang-check clang-tblgen count diagtool fpcmp macho-dump not opt yaml2obj FileCheck FileUpdate arcmt-test c-arcmt-test c-index-test bugpoint )
+    ( cd ./tools ; rm -rf ll* clang-check clang-tblgen count diagtool fpcmp lto macho-dump not opt yaml2obj FileCheck FileUpdate arcmt-test c-arcmt-test c-index-test bugpoint )
+    ( cd ./tools/clang ; rm -rf lib unittests utils )
+    ( cd ./tools/clang/tools ; rm -rf arcmt-test c-arcmt-test c-index-test clang-check diagtool libclang )
 fi
 
 
