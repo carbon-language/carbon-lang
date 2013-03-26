@@ -851,9 +851,13 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
   // pointers, figure out if the indexes to the GEP tell us anything about the
   // derived pointer.
   if (const GEPOperator *GEP2 = dyn_cast<GEPOperator>(V2)) {
+    // Do the base pointers alias?
+    AliasResult BaseAlias = aliasCheck(UnderlyingV1, UnknownSize, 0,
+                                       UnderlyingV2, UnknownSize, 0);
+
     // Check for geps of non-aliasing underlying pointers where the offsets are
     // identical.
-    if (V1Size == V2Size) {
+    if ((BaseAlias == MayAlias) && V1Size == V2Size) {
       // Do the base pointers alias assuming type and size.
       AliasResult PreciseBaseAlias = aliasCheck(UnderlyingV1, V1Size,
                                                 V1TBAAInfo, UnderlyingV2,
@@ -881,10 +885,6 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
         GEP1VariableIndices.clear();
       }
     }
-
-    // Do the base pointers alias?
-    AliasResult BaseAlias = aliasCheck(UnderlyingV1, UnknownSize, 0,
-                                       UnderlyingV2, UnknownSize, 0);
     
     // If we get a No or May, then return it immediately, no amount of analysis
     // will improve this situation.
