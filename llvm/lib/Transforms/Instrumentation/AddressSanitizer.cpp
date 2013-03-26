@@ -274,8 +274,6 @@ struct AddressSanitizer : public FunctionPass {
                                    Instruction *InsertBefore, bool IsWrite);
   Value *memToShadow(Value *Shadow, IRBuilder<> &IRB);
   bool runOnFunction(Function &F);
-  void createInitializerPoisonCalls(Module &M,
-                                    Value *FirstAddr, Value *LastAddr);
   bool maybeInsertAsanInitAtFunctionEntry(Function &F);
   void emitShadowMapping(Module &M, IRBuilder<> &IRB) const;
   virtual bool doInitialization(Module &M);
@@ -333,8 +331,7 @@ class AddressSanitizerModule : public ModulePass {
   void initializeCallbacks(Module &M);
 
   bool ShouldInstrumentGlobal(GlobalVariable *G);
-  void createInitializerPoisonCalls(Module &M, Value *FirstAddr,
-                                    Value *LastAddr);
+  void createInitializerPoisonCalls(Module &M, GlobalValue *ModuleName);
   size_t RedzoneSize() const {
     return RedzoneSizeForScale(Mapping.Scale);
   }
@@ -753,7 +750,7 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
 }
 
 void AddressSanitizerModule::createInitializerPoisonCalls(
-    Module &M, Value *FirstAddr, Value *LastAddr) {
+    Module &M, GlobalValue *ModuleName) {
   // We do all of our poisoning and unpoisoning within _GLOBAL__I_a.
   Function *GlobalInit = M.getFunction("_GLOBAL__I_a");
   // If that function is not present, this TU contains no globals, or they have
@@ -765,7 +762,8 @@ void AddressSanitizerModule::createInitializerPoisonCalls(
   IRBuilder<> IRB(GlobalInit->begin()->getFirstInsertionPt());
 
   // Add a call to poison all external globals before the given function starts.
-  IRB.CreateCall2(AsanPoisonGlobals, FirstAddr, LastAddr);
+  Value *ModuleNameAddr = ConstantExpr::getPointerCast(ModuleName, IntptrTy);
+  IRB.CreateCall(AsanPoisonGlobals, ModuleNameAddr);
 
   // Add calls to unpoison all globals before each return instruction.
   for (Function::iterator I = GlobalInit->begin(), E = GlobalInit->end();
@@ -839,7 +837,7 @@ void AddressSanitizerModule::initializeCallbacks(Module &M) {
   IRBuilder<> IRB(*C);
   // Declare our poisoning and unpoisoning functions.
   AsanPoisonGlobals = checkInterfaceFunction(M.getOrInsertFunction(
-      kAsanPoisonGlobalsName, IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
+      kAsanPoisonGlobalsName, IRB.getVoidTy(), IntptrTy, NULL));
   AsanPoisonGlobals->setLinkage(Function::ExternalLinkage);
   AsanUnpoisonGlobals = checkInterfaceFunction(M.getOrInsertFunction(
       kAsanUnpoisonGlobalsName, IRB.getVoidTy(), NULL));
@@ -901,12 +899,13 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   assert(CtorFunc);
   IRBuilder<> IRB(CtorFunc->getEntryBlock().getTerminator());
 
-  // The addresses of the first and last dynamically initialized globals in
-  // this TU.  Used in initialization order checking.
-  Value *FirstDynamic = 0, *LastDynamic = 0;
+  bool HasDynamicallyInitializedGlobals = false;
 
   GlobalVariable *ModuleName = createPrivateGlobalForString(
       M, M.getModuleIdentifier());
+  // We shouldn't merge same module names, as this string serves as unique
+  // module ID in runtime.
+  ModuleName->setUnnamedAddr(false);
 
   for (size_t i = 0; i < n; i++) {
     static const uint64_t kMaxGlobalRedzone = 1 << 18;
@@ -966,11 +965,8 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
         NULL);
 
     // Populate the first and last globals declared in this TU.
-    if (CheckInitOrder && GlobalHasDynamicInitializer) {
-      LastDynamic = ConstantExpr::getPointerCast(NewGlobal, IntptrTy);
-      if (FirstDynamic == 0)
-        FirstDynamic = LastDynamic;
-    }
+    if (CheckInitOrder && GlobalHasDynamicInitializer)
+      HasDynamicallyInitializedGlobals = true;
 
     DEBUG(dbgs() << "NEW GLOBAL: " << *NewGlobal << "\n");
   }
@@ -981,8 +977,8 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
       ConstantArray::get(ArrayOfGlobalStructTy, Initializers), "");
 
   // Create calls for poisoning before initializers run and unpoisoning after.
-  if (CheckInitOrder && FirstDynamic && LastDynamic)
-    createInitializerPoisonCalls(M, FirstDynamic, LastDynamic);
+  if (CheckInitOrder && HasDynamicallyInitializedGlobals)
+    createInitializerPoisonCalls(M, ModuleName);
   IRB.CreateCall2(AsanRegisterGlobals,
                   IRB.CreatePointerCast(AllGlobals, IntptrTy),
                   ConstantInt::get(IntptrTy, n));
