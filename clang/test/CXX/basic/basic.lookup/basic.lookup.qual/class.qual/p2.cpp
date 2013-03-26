@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++98 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 struct X0 {
   X0 f1();
   X0 f2();
@@ -25,3 +26,94 @@ struct X0::X0 X0::f2() { return X0(); }
 template<typename T> X1<T>::X1<T> X1<T>::f2() { } // expected-error{{qualified reference to 'X1' is a constructor name rather than a template name wherever a constructor can be declared}}
 template<typename T> X1<T>::X1<T> (X1<T>::f2)(int) { } // expected-error{{qualified reference to 'X1' is a constructor name rather than a template name wherever a constructor can be declared}}
 template<typename T> struct X1<T>::X1<T> (X1<T>::f2)(float) { }
+
+// We have a special case for lookup within using-declarations that are
+// member-declarations: foo::bar::baz::baz always names baz's constructor
+// in such a context, even if looking up 'baz' within foo::bar::baz would
+// not find the injected-class-name. Likewise foo::bar::baz<T>::baz also
+// names the constructor.
+namespace InhCtor {
+  struct A {
+    A(int);
+  protected:
+    int T();
+  };
+  typedef A T;
+  struct B : A {
+    // This is a using-declaration for 'int A::T()' in C++98, but is an
+    // inheriting constructor declaration in C++11.
+    using InhCtor::T::T;
+  };
+#if __cplusplus < 201103L
+  B b(123);      // expected-error {{no matching constructor}}
+                 // expected-note@-7 2{{candidate constructor}}
+  int n = b.T(); // ok, accessible
+#else
+  B b(123);      // ok, inheriting constructor
+  int n = b.T(); // expected-error {{'T' is a protected member of 'InhCtor::A'}}
+                 // expected-note@-15 {{declared protected here}}
+
+  template<typename T>
+  struct S : T {
+    struct U : S {
+      using S::S;
+    };
+    using T::T;
+  };
+
+  S<A>::U ua(0);
+  S<B>::U ub(0);
+
+  template<typename T>
+  struct X : T {
+    using T::Z::U::U;
+  };
+  template<typename T>
+  struct X2 : T {
+    using T::Z::template V<int>::V;
+  };
+  struct Y {
+    struct Z {
+      typedef Y U;
+      template<typename T> using V = Y;
+    };
+    Y(int);
+  };
+  X<Y> xy(0);
+
+  namespace Repeat {
+    struct A {
+      struct T {
+        T(int);
+      };
+    };
+    struct Z : A {
+      // FIXME: Core wording says this is invalid, but we and g++ accept.
+      using A::A::A;
+    };
+    template<typename T>
+    struct ZT : T::T {
+      // FIXME: Core wording says this is invalid, but we and g++ accept.
+      using T::T::T;
+    };
+  }
+
+  namespace NS {
+    struct NS {};
+  }
+  struct DerivedFromNS : NS::NS {
+    // No special case unless the NNS names a class.
+    using InhCtor::NS::NS; // expected-error {{using declaration in class refers into 'InhCtor::NS::', which is not a class}}
+
+  };
+
+  typedef int I;
+  struct UsingInt {
+    using I::I; // expected-error {{expected a class or namespace}}
+  };
+  template<typename T> struct UsingIntTemplate {
+    using T::T; // expected-error {{type 'int' cannot be used prior to '::' because it has no members}}
+  };
+  UsingIntTemplate<int> uit; // expected-note {{here}}
+#endif
+}

@@ -1290,7 +1290,8 @@ private:
                                       ParsedType ObjectType,
                                       bool EnteringContext,
                                       bool *MayBePseudoDestructor = 0,
-                                      bool IsTypename = false);
+                                      bool IsTypename = false,
+                                      IdentifierInfo **LastII = 0);
 
   void CheckForLParenAfterColonColon();
 

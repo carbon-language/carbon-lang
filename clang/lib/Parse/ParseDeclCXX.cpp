@@ -468,7 +468,10 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
   }
 
   // Parse nested-name-specifier.
-  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false);
+  IdentifierInfo *LastII = 0;
+  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false,
+                                 /*MayBePseudoDtor=*/0, /*IsTypename=*/false,
+                                 /*LastII=*/&LastII);
 
   // Check nested-name specifier.
   if (SS.isInvalid()) {
@@ -476,18 +479,31 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
     return 0;
   }
 
+  SourceLocation TemplateKWLoc;
+  UnqualifiedId Name;
+
   // Parse the unqualified-id. We allow parsing of both constructor and
   // destructor names and allow the action module to diagnose any semantic
   // errors.
-  SourceLocation TemplateKWLoc;
-  UnqualifiedId Name;
-  if (ParseUnqualifiedId(SS,
-                         /*EnteringContext=*/false,
-                         /*AllowDestructorName=*/true,
-                         /*AllowConstructorName=*/true,
-                         ParsedType(),
-                         TemplateKWLoc,
-                         Name)) {
+  //
+  // C++11 [class.qual]p2:
+  //   [...] in a using-declaration that is a member-declaration, if the name
+  //   specified after the nested-name-specifier is the same as the identifier
+  //   or the simple-template-id's template-name in the last component of the
+  //   nested-name-specifier, the name is [...] considered to name the
+  //   constructor.
+  if (getLangOpts().CPlusPlus11 && Context == Declarator::MemberContext &&
+      Tok.is(tok::identifier) && NextToken().is(tok::semi) &&
+      SS.isNotEmpty() && LastII == Tok.getIdentifierInfo() &&
+      !SS.getScopeRep()->getAsNamespace() &&
+      !SS.getScopeRep()->getAsNamespaceAlias()) {
+    SourceLocation IdLoc = ConsumeToken();
+    ParsedType Type = Actions.getInheritingConstructorName(SS, IdLoc, *LastII);
+    Name.setConstructorName(Type, IdLoc, IdLoc);
+  } else if (ParseUnqualifiedId(SS, /*EnteringContext=*/ false,
+                                /*AllowDestructorName=*/ true,
+                                /*AllowConstructorName=*/ true, ParsedType(),
+                                TemplateKWLoc, Name)) {
     SkipUntil(tok::semi);
     return 0;
   }

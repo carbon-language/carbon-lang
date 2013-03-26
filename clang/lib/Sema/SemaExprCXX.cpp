@@ -38,6 +38,43 @@
 using namespace clang;
 using namespace sema;
 
+/// \brief Handle the result of the special case name lookup for inheriting
+/// constructor declarations. 'NS::X::X' and 'NS::X<...>::X' are treated as
+/// constructor names in member using declarations, even if 'X' is not the
+/// name of the corresponding type.
+ParsedType Sema::getInheritingConstructorName(CXXScopeSpec &SS,
+                                              SourceLocation NameLoc,
+                                              IdentifierInfo &Name) {
+  NestedNameSpecifier *NNS = SS.getScopeRep();
+
+  // Convert the nested-name-specifier into a type.
+  QualType Type;
+  switch (NNS->getKind()) {
+  case NestedNameSpecifier::TypeSpec:
+  case NestedNameSpecifier::TypeSpecWithTemplate:
+    Type = QualType(NNS->getAsType(), 0);
+    break;
+
+  case NestedNameSpecifier::Identifier:
+    // Strip off the last layer of the nested-name-specifier and build a
+    // typename type for it.
+    assert(NNS->getAsIdentifier() == &Name && "not a constructor name");
+    Type = Context.getDependentNameType(ETK_None, NNS->getPrefix(),
+                                        NNS->getAsIdentifier());
+    break;
+
+  case NestedNameSpecifier::Global:
+  case NestedNameSpecifier::Namespace:
+  case NestedNameSpecifier::NamespaceAlias:
+    llvm_unreachable("Nested name specifier is not a type for inheriting ctor");
+  }
+
+  // This reference to the type is located entirely at the location of the
+  // final identifier in the qualified-id.
+  return CreateParsedType(Type,
+                          Context.getTrivialTypeSourceInfo(Type, NameLoc));
+}
+
 ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
                                    IdentifierInfo &II,
                                    SourceLocation NameLoc,
