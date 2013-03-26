@@ -3937,6 +3937,15 @@ CompareDerivedToBaseConversions(Sema &S,
   return ImplicitConversionSequence::Indistinguishable;
 }
 
+/// \brief Determine whether the given type is valid, e.g., it is not an invalid
+/// C++ class.
+static bool isTypeValid(QualType T) {
+  if (CXXRecordDecl *Record = T->getAsCXXRecordDecl())
+    return !Record->isInvalidDecl();
+
+  return true;
+}
+
 /// CompareReferenceRelationship - Compare the two types T1 and T2 to
 /// determine whether they are reference-related,
 /// reference-compatible, reference-compatible with added
@@ -3970,7 +3979,8 @@ Sema::CompareReferenceRelationship(SourceLocation Loc,
   if (UnqualT1 == UnqualT2) {
     // Nothing to do.
   } else if (!RequireCompleteType(Loc, OrigT2, 0) &&
-           IsDerivedFrom(UnqualT2, UnqualT1))
+             isTypeValid(UnqualT1) && isTypeValid(UnqualT2) &&
+             IsDerivedFrom(UnqualT2, UnqualT1))
     DerivedToBase = true;
   else if (UnqualT1->isObjCObjectOrInterfaceType() &&
            UnqualT2->isObjCObjectOrInterfaceType() &&
