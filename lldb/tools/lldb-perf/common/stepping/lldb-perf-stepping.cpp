@@ -19,7 +19,8 @@ class StepTest : public TestCase
 public:
     StepTest(bool use_single_stepping = false) :
         m_main_source("stepping-testcase.cpp"),
-        m_use_single_stepping(use_single_stepping)
+        m_use_single_stepping(use_single_stepping),
+        m_time_measurements(nullptr)
     {
     }
     
@@ -67,12 +68,12 @@ public:
     WriteResults (Results &results)
     {
         // Gotta turn off the last timer now.
-        size_t num_time_measurements = m_time_measurements.size();
-        
-        m_time_measurements[num_time_measurements - 1].Stop();
+        m_individual_step_times.push_back(m_time_measurements.Stop());
 
+        size_t num_time_measurements = m_individual_step_times.size();
+        
         Results::Dictionary& results_dict = results.GetDictionary();
-        const char *short_format_string = "step-time-%d";
+        const char *short_format_string = "step-time-%0.2d";
         const size_t short_size = strlen(short_format_string) + 5;
         char short_buffer[short_size];
         const char *long_format_string  = "The time it takes for step %d in the step sequence.";
@@ -86,9 +87,10 @@ public:
             
             results_dict.AddDouble(short_buffer,
                                    long_buffer,
-                                   m_time_measurements[i].GetGauge().GetDeltaValue());
+                                   m_individual_step_times[i]);
 
         }
+        results_dict.AddDouble ("total-time", "Total time spent stepping.", m_time_measurements.GetMetric().GetSum());
         
         results.Write(m_out_path.c_str());
     }
@@ -138,22 +140,25 @@ private:
 	TestStep (int counter, ActionWanted &next_action)
     {
         if (counter > 0)
-            m_time_measurements[counter - 1].Stop();
-        
+        {
+            m_individual_step_times.push_back(m_time_measurements.Stop());
+            
+        }
+
+        // Disable the breakpoint, just in case it gets multiple locations we don't want that confusing the stepping.
         if (counter == 0)
             m_first_bp.SetEnabled(false);
 
-        m_time_measurements.push_back(TimeMeasurement<no_function>());
         next_action.StepOver(m_process.GetThreadAtIndex(0));
-        m_time_measurements[counter].Start();
+        m_time_measurements.Start();
 
     
     }
     
-    TimeMeasurement<std::function<void(StepTest &, int)> > m_do_one_step_over_measurement;
     SBBreakpoint m_first_bp;
     SBFileSpec   m_main_source;
-    std::vector<TimeMeasurement<no_function> > m_time_measurements;
+    TimeMeasurement<no_function> m_time_measurements;
+    std::vector<double>          m_individual_step_times;
     bool m_use_single_stepping;
     std::string m_app_path;
     std::string m_out_path;
