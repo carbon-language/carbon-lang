@@ -4230,6 +4230,25 @@ ScalarEvolution::BackedgeTakenInfo::getMax(ScalarEvolution *SE) const {
   return Max ? Max : SE->getCouldNotCompute();
 }
 
+bool ScalarEvolution::BackedgeTakenInfo::hasOperand(const SCEV *S,
+                                                    ScalarEvolution *SE) const {
+  if (Max && Max != SE->getCouldNotCompute() && SE->hasOperand(Max, S))
+    return true;
+
+  if (!ExitNotTaken.ExitingBlock)
+    return false;
+
+  for (const ExitNotTakenInfo *ENT = &ExitNotTaken;
+       ENT != 0; ENT = ENT->getNextExit()) {
+
+    if (ENT->ExactNotTaken != SE->getCouldNotCompute()
+        && SE->hasOperand(ENT->ExactNotTaken, S)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Allocate memory for BackedgeTakenInfo and copy the not-taken count of each
 /// computable exit into a persistent ExitNotTakenInfo array.
 ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
@@ -6940,6 +6959,17 @@ void ScalarEvolution::forgetMemoizedResults(const SCEV *S) {
   BlockDispositions.erase(S);
   UnsignedRanges.erase(S);
   SignedRanges.erase(S);
+
+  for (DenseMap<const Loop*, BackedgeTakenInfo>::iterator I =
+         BackedgeTakenCounts.begin(), E = BackedgeTakenCounts.end(); I != E; ) {
+    BackedgeTakenInfo &BEInfo = I->second;
+    if (BEInfo.hasOperand(S, this)) {
+      BEInfo.clear();
+      BackedgeTakenCounts.erase(I++);
+    }
+    else
+      ++I;
+  }
 }
 
 typedef DenseMap<const Loop *, std::string> VerifyMap;
