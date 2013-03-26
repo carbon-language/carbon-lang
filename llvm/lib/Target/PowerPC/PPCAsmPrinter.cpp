@@ -496,10 +496,10 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Transform %Xd = ADDItocL %Xs, <ga:@sym>
     LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
 
-    // Change the opcode to ADDI8L.  If the global address is external, then
+    // Change the opcode to ADDI8.  If the global address is external, then
     // generate a TOC entry and reference that.  Otherwise reference the
     // symbol directly.
-    TmpInst.setOpcode(PPC::ADDI8L);
+    TmpInst.setOpcode(PPC::ADDI8);
     const MachineOperand &MO = MI->getOperand(2);
     assert((MO.isGlobal() || MO.isCPI()) && "Invalid operand for ADDItocL");
     MCSymbol *MOSymbol = 0;
@@ -579,7 +579,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case PPC::ADDItlsgdL: {
     // Transform: %Xd = ADDItlsgdL %Xs, <ga:@sym>
-    // Into:      %Xd = ADDI8L %Xs, sym@got@tlsgd@l
+    // Into:      %Xd = ADDI8 %Xs, sym@got@tlsgd@l
     assert(Subtarget.isPPC64() && "Not supported for 32-bit PowerPC");
     const MachineOperand &MO = MI->getOperand(2);
     const GlobalValue *GValue = MO.getGlobal();
@@ -587,7 +587,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const MCExpr *SymGotTlsGD =
       MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_GOT_TLSGD16_LO,
                               OutContext);
-    OutStreamer.EmitInstruction(MCInstBuilder(PPC::ADDI8L)
+    OutStreamer.EmitInstruction(MCInstBuilder(PPC::ADDI8)
                                 .addReg(MI->getOperand(0).getReg())
                                 .addReg(MI->getOperand(1).getReg())
                                 .addExpr(SymGotTlsGD));
@@ -631,7 +631,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case PPC::ADDItlsldL: {
     // Transform: %Xd = ADDItlsldL %Xs, <ga:@sym>
-    // Into:      %Xd = ADDI8L %Xs, sym@got@tlsld@l
+    // Into:      %Xd = ADDI8 %Xs, sym@got@tlsld@l
     assert(Subtarget.isPPC64() && "Not supported for 32-bit PowerPC");
     const MachineOperand &MO = MI->getOperand(2);
     const GlobalValue *GValue = MO.getGlobal();
@@ -639,7 +639,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const MCExpr *SymGotTlsLD =
       MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_GOT_TLSLD16_LO,
                               OutContext);
-    OutStreamer.EmitInstruction(MCInstBuilder(PPC::ADDI8L)
+    OutStreamer.EmitInstruction(MCInstBuilder(PPC::ADDI8)
                                 .addReg(MI->getOperand(0).getReg())
                                 .addReg(MI->getOperand(1).getReg())
                                 .addExpr(SymGotTlsLD));
@@ -683,7 +683,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case PPC::ADDIdtprelL: {
     // Transform: %Xd = ADDIdtprelL %Xs, <ga:@sym>
-    // Into:      %Xd = ADDI8L %Xs, sym@dtprel@l
+    // Into:      %Xd = ADDI8 %Xs, sym@dtprel@l
     assert(Subtarget.isPPC64() && "Not supported for 32-bit PowerPC");
     const MachineOperand &MO = MI->getOperand(2);
     const GlobalValue *GValue = MO.getGlobal();
@@ -691,7 +691,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const MCExpr *SymDtprel =
       MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_DTPREL16_LO,
                               OutContext);
-    OutStreamer.EmitInstruction(MCInstBuilder(PPC::ADDI8L)
+    OutStreamer.EmitInstruction(MCInstBuilder(PPC::ADDI8)
                                 .addReg(MI->getOperand(0).getReg())
                                 .addReg(MI->getOperand(1).getReg())
                                 .addExpr(SymDtprel));

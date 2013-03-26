@@ -1477,8 +1477,7 @@ void PPCDAGToDAGISel::PostprocessISelDAG() {
     default: continue;
 
     case PPC::ADDI8:
-    case PPC::ADDI8L:
-    case PPC::ADDIL:
+    case PPC::ADDI:
       // In some cases (such as TLS) the relocation information
       // is already in place on the operand, so copying the operand
       // is sufficient.

@@ -371,10 +371,7 @@ def ADDIC8 : DForm_2<12, (outs G8RC:$rD), (ins G8RC:$rA, s16imm64:$imm),
                      "addic $rD, $rA, $imm", IntGeneral,
                      [(set i64:$rD, (addc i64:$rA, immSExt16:$imm))]>;
 }
-def ADDI8  : DForm_2<14, (outs G8RC:$rD), (ins G8RC_NOX0:$rA, s16imm64:$imm),
-                     "addi $rD, $rA, $imm", IntSimple,
-                     [(set i64:$rD, (add i64:$rA, immSExt16:$imm))]>;
-def ADDI8L  : DForm_2<14, (outs G8RC:$rD), (ins G8RC_NOX0:$rA, symbolLo64:$imm),
+def ADDI8  : DForm_2<14, (outs G8RC:$rD), (ins G8RC_NOX0:$rA, symbolLo64:$imm),
                      "addi $rD, $rA, $imm", IntSimple,
                      [(set i64:$rD, (add i64:$rA, immSExt16:$imm))]>;
 def ADDIS8 : DForm_2<15, (outs G8RC:$rD), (ins G8RC_NOX0:$rA, symbolHi64:$imm),
@@ -933,7 +930,7 @@ def : Pat<(PPClo tblockaddress:$in, 0), (LI8  tblockaddress:$in)>;
 def : Pat<(PPChi tglobaltlsaddr:$g, i64:$in),
           (ADDIS8 $in, tglobaltlsaddr:$g)>;
 def : Pat<(PPClo tglobaltlsaddr:$g, i64:$in),
-          (ADDI8L $in, tglobaltlsaddr:$g)>;
+          (ADDI8 $in, tglobaltlsaddr:$g)>;
 def : Pat<(add i64:$in, (PPChi tglobaladdr:$g, 0)),
           (ADDIS8 $in, tglobaladdr:$g)>;
 def : Pat<(add i64:$in, (PPChi tconstpool:$g, 0)),

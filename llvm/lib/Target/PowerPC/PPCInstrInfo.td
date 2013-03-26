@@ -985,10 +985,7 @@ def SYNC : XForm_24_sync<31, 598, (outs), (ins),
 //
 
 let PPC970_Unit = 1 in {  // FXU Operations.
-def ADDI   : DForm_2<14, (outs GPRC:$rD), (ins GPRC_NOR0:$rA, s16imm:$imm),
-                     "addi $rD, $rA, $imm", IntSimple,
-                     [(set i32:$rD, (add i32:$rA, immSExt16:$imm))]>;
-def ADDIL  : DForm_2<14, (outs GPRC:$rD), (ins GPRC_NOR0:$rA, symbolLo:$imm),
+def ADDI   : DForm_2<14, (outs GPRC:$rD), (ins GPRC_NOR0:$rA, symbolLo:$imm),
                      "addi $rD, $rA, $imm", IntSimple,
                      [(set i32:$rD, (add i32:$rA, immSExt16:$imm))]>;
 let Defs = [CARRY] in {
@@ -1584,7 +1581,7 @@ def : Pat<(PPClo tblockaddress:$in, 0), (LI tblockaddress:$in)>;
 def : Pat<(PPChi tglobaltlsaddr:$g, i32:$in),
           (ADDIS $in, tglobaltlsaddr:$g)>;
 def : Pat<(PPClo tglobaltlsaddr:$g, i32:$in),
-          (ADDIL $in, tglobaltlsaddr:$g)>;
+          (ADDI $in, tglobaltlsaddr:$g)>;
 def : Pat<(add i32:$in, (PPChi tglobaladdr:$g, 0)),
           (ADDIS $in, tglobaladdr:$g)>;
 def : Pat<(add i32:$in, (PPChi tconstpool:$g, 0)),
