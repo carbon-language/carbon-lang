@@ -247,12 +247,12 @@ public:
   /// This does not work with all kinds of tokens: strings and specific other
   /// tokens must be consumed with custom methods below.  This returns the
   /// location of the consumed token.
-  SourceLocation ConsumeToken() {
+  SourceLocation ConsumeToken(bool ConsumeCodeCompletionTok = false) {
     assert(!isTokenStringLiteral() && !isTokenParen() && !isTokenBracket() &&
            !isTokenBrace() &&
            "Should consume special tokens with Consume*Token");
 
-    if (Tok.is(tok::code_completion))
+    if (!ConsumeCodeCompletionTok && Tok.is(tok::code_completion))
       return handleUnexpectedCodeCompletionToken();
 
     PrevTokLocation = Tok.getLocation();
@@ -291,7 +291,7 @@ private:
   /// ConsumeAnyToken - Dispatch to the right Consume* method based on the
   /// current token type.  This should only be used in cases where the type of
   /// the token really isn't known, e.g. in error recovery.
-  SourceLocation ConsumeAnyToken() {
+  SourceLocation ConsumeAnyToken(bool ConsumeCodeCompletionTok = false) {
     if (isTokenParen())
       return ConsumeParen();
     else if (isTokenBracket())
@@ -301,7 +301,7 @@ private:
     else if (isTokenStringLiteral())
       return ConsumeStringToken();
     else
-      return ConsumeToken();
+      return ConsumeToken(ConsumeCodeCompletionTok);
   }
 
   /// ConsumeParen - This consume method keeps the paren count up-to-date.

@@ -931,7 +931,7 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
   LA.Toks.push_back(Tok);
   PP.EnterTokenStream(LA.Toks.data(), LA.Toks.size(), true, false);
   // Consume the previously pushed token.
-  ConsumeAnyToken();
+  ConsumeAnyToken(/*ConsumeCodeCompletionTok=*/true);
 
   if (OnDefinition && !IsThreadSafetyAttribute(LA.AttrName.getName())) {
     // FIXME: Do not warn on C++11 attributes, once we start supporting

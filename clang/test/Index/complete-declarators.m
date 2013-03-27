@@ -22,6 +22,7 @@
 
   static P *p = 0;
 }
+- (boid)method2 {}
 @end
 
 // RUN: c-index-test -code-completion-at=%s:7:4 %s | FileCheck -check-prefix=CHECK-CC0 %s
@@ -81,3 +82,8 @@
 // CHECK-CC5: NotImplemented:{TypedText unsigned} (50)
 // CHECK-CC5: NotImplemented:{TypedText void} (50)
 // CHECK-CC5: NotImplemented:{TypedText volatile} (50)
+
+// Check that there are no duplicate entries if we code-complete after an @implementation
+// RUN: c-index-test -code-completion-at=%s:27:1 %s | FileCheck -check-prefix=CHECK-CC6 %s
+// CHECK-CC6: ObjCInterfaceDecl:{TypedText A}
+// CHECK-CC6-NOT: ObjCInterfaceDecl:{TypedText A}

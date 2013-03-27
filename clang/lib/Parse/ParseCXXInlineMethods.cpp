@@ -407,7 +407,7 @@ void Parser::ParseLexedMethodDef(LexedMethod &LM) {
   PP.EnterTokenStream(LM.Toks.data(), LM.Toks.size(), true, false);
 
   // Consume the previously pushed token.
-  ConsumeAnyToken();
+  ConsumeAnyToken(/*ConsumeCodeCompletionTok=*/true);
   assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try))
          && "Inline method not starting with '{', ':' or 'try'");
 
@@ -510,7 +510,7 @@ void Parser::ParseLexedMemberInitializer(LateParsedMemberInitializer &MI) {
   PP.EnterTokenStream(MI.Toks.data(), MI.Toks.size(), true, false);
 
   // Consume the previously pushed token.
-  ConsumeAnyToken();
+  ConsumeAnyToken(/*ConsumeCodeCompletionTok=*/true);
 
   SourceLocation EqualLoc;
 
