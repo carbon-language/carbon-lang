@@ -804,13 +804,13 @@ let isCommutable = 1 in {
 defm V_ADD_F32 : VOP2_32 <0x00000003, "V_ADD_F32",
   [(set VReg_32:$dst, (fadd VSrc_32:$src0, VReg_32:$src1))]
 >;
-} // End isCommutable = 1
 
 defm V_SUB_F32 : VOP2_32 <0x00000004, "V_SUB_F32",
   [(set VReg_32:$dst, (fsub VSrc_32:$src0, VReg_32:$src1))]
 >;
+defm V_SUBREV_F32 : VOP2_32 <0x00000005, "V_SUBREV_F32", [], "V_SUB_F32">;
+} // End isCommutable = 1
 
-defm V_SUBREV_F32 : VOP2_32 <0x00000005, "V_SUBREV_F32", []>;
 defm V_MAC_LEGACY_F32 : VOP2_32 <0x00000006, "V_MAC_LEGACY_F32", []>;
 
 let isCommutable = 1 in {
@@ -848,22 +848,20 @@ defm V_MAX_I32 : VOP2_32 <0x00000012, "V_MAX_I32", []>;
 defm V_MIN_U32 : VOP2_32 <0x00000013, "V_MIN_U32", []>;
 defm V_MAX_U32 : VOP2_32 <0x00000014, "V_MAX_U32", []>;
 
-} // End isCommutable = 1
-
 defm V_LSHR_B32 : VOP2_32 <0x00000015, "V_LSHR_B32",
   [(set VReg_32:$dst, (srl VSrc_32:$src0, (i32 VReg_32:$src1)))]
 >;
-defm V_LSHRREV_B32 : VOP2_32 <0x00000016, "V_LSHRREV_B32", []>;
+defm V_LSHRREV_B32 : VOP2_32 <0x00000016, "V_LSHRREV_B32", [], "V_LSHR_B32">;
+
 defm V_ASHR_I32 : VOP2_32 <0x00000017, "V_ASHR_I32",
   [(set VReg_32:$dst, (sra VSrc_32:$src0, (i32 VReg_32:$src1)))]
 >;
-defm V_ASHRREV_I32 : VOP2_32 <0x00000018, "V_ASHRREV_I32", []>;
+defm V_ASHRREV_I32 : VOP2_32 <0x00000018, "V_ASHRREV_I32", [], "V_ASHR_I32">;
+
 defm V_LSHL_B32 : VOP2_32 <0x00000019, "V_LSHL_B32",
   [(set VReg_32:$dst, (shl VSrc_32:$src0, (i32 VReg_32:$src1)))]
 >;
-defm V_LSHLREV_B32 : VOP2_32 <0x0000001a, "V_LSHLREV_B32", []>;
-
-let isCommutable = 1 in {
+defm V_LSHLREV_B32 : VOP2_32 <0x0000001a, "V_LSHLREV_B32", [], "V_LSHL_B32">;
 
 defm V_AND_B32 : VOP2_32 <0x0000001b, "V_AND_B32",
   [(set VReg_32:$dst, (and VSrc_32:$src0, VReg_32:$src1))]
@@ -884,25 +882,24 @@ defm V_MADAK_F32 : VOP2_32 <0x00000021, "V_MADAK_F32", []>;
 //defm V_BCNT_U32_B32 : VOP2_32 <0x00000022, "V_BCNT_U32_B32", []>;
 //defm V_MBCNT_LO_U32_B32 : VOP2_32 <0x00000023, "V_MBCNT_LO_U32_B32", []>;
 //defm V_MBCNT_HI_U32_B32 : VOP2_32 <0x00000024, "V_MBCNT_HI_U32_B32", []>;
-let Defs = [VCC] in { // Carry-out goes to VCC
 
-let isCommutable = 1 in {
+let isCommutable = 1, Defs = [VCC] in { // Carry-out goes to VCC
 defm V_ADD_I32 : VOP2b_32 <0x00000025, "V_ADD_I32",
   [(set VReg_32:$dst, (add (i32 VSrc_32:$src0), (i32 VReg_32:$src1)))]
 >;
-} // End isCommutable = 1
 
 defm V_SUB_I32 : VOP2b_32 <0x00000026, "V_SUB_I32",
   [(set VReg_32:$dst, (sub (i32 VSrc_32:$src0), (i32 VReg_32:$src1)))]
 >;
+defm V_SUBREV_I32 : VOP2b_32 <0x00000027, "V_SUBREV_I32", [], "V_SUB_I32">;
 
-defm V_SUBREV_I32 : VOP2b_32 <0x00000027, "V_SUBREV_I32", []>;
 let Uses = [VCC] in { // Carry-out comes from VCC
 defm V_ADDC_U32 : VOP2b_32 <0x00000028, "V_ADDC_U32", []>;
 defm V_SUBB_U32 : VOP2b_32 <0x00000029, "V_SUBB_U32", []>;
-defm V_SUBBREV_U32 : VOP2b_32 <0x0000002a, "V_SUBBREV_U32", []>;
+defm V_SUBBREV_U32 : VOP2b_32 <0x0000002a, "V_SUBBREV_U32", [], "V_SUBB_U32">;
 } // End Uses = [VCC]
-} // End Defs = [VCC]
+} // End isCommutable = 1, Defs = [VCC]
+
 defm V_LDEXP_F32 : VOP2_32 <0x0000002b, "V_LDEXP_F32", []>;
 ////def V_CVT_PKACCUM_U8_F32 : VOP2_U8 <0x0000002c, "V_CVT_PKACCUM_U8_F32", []>;
 ////def V_CVT_PKNORM_I16_F32 : VOP2_I16 <0x0000002d, "V_CVT_PKNORM_I16_F32", []>;

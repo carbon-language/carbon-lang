@@ -138,6 +138,11 @@ class VOP <string opName> {
   string OpName = opName;
 }
 
+class VOP2_REV <string revOp, bit isOrig> {
+  string RevOp = revOp;
+  bit IsOrig = isOrig;
+}
+
 multiclass VOP1_Helper <bits<8> op, RegisterClass drc, RegisterClass src,
                         string opName, list<dag> pattern> {
 
@@ -166,11 +171,11 @@ multiclass VOP1_64 <bits<8> op, string opName, list<dag> pattern>
   : VOP1_Helper <op, VReg_64, VSrc_64, opName, pattern>;
 
 multiclass VOP2_Helper <bits<6> op, RegisterClass vrc, RegisterClass arc,
-                        string opName, list<dag> pattern> {
+                        string opName, list<dag> pattern, string revOp> {
   def _e32 : VOP2 <
     op, (outs vrc:$dst), (ins arc:$src0, vrc:$src1),
     opName#"_e32 $dst, $src0, $src1", pattern
-  >, VOP <opName>;
+  >, VOP <opName>, VOP2_REV<revOp#"_e32", !eq(revOp, opName)>;
 
   def _e64 : VOP3 <
     {1, 0, 0, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
@@ -179,23 +184,26 @@ multiclass VOP2_Helper <bits<6> op, RegisterClass vrc, RegisterClass arc,
          i32imm:$abs, i32imm:$clamp,
          i32imm:$omod, i32imm:$neg),
     opName#"_e64 $dst, $src0, $src1, $abs, $clamp, $omod, $neg", []
-  >, VOP <opName> {
+  >, VOP <opName>, VOP2_REV<revOp#"_e64", !eq(revOp, opName)> {
     let SRC2 = SIOperand.ZERO;
   }
 }
 
-multiclass VOP2_32 <bits<6> op, string opName, list<dag> pattern>
-  : VOP2_Helper <op, VReg_32, VSrc_32, opName, pattern>;
+multiclass VOP2_32 <bits<6> op, string opName, list<dag> pattern,
+                    string revOp = opName>
+  : VOP2_Helper <op, VReg_32, VSrc_32, opName, pattern, revOp>;
 
-multiclass VOP2_64 <bits<6> op, string opName, list<dag> pattern>
-  : VOP2_Helper <op, VReg_64, VSrc_64, opName, pattern>;
+multiclass VOP2_64 <bits<6> op, string opName, list<dag> pattern,
+                    string revOp = opName>
+  : VOP2_Helper <op, VReg_64, VSrc_64, opName, pattern, revOp>;
 
-multiclass VOP2b_32 <bits<6> op, string opName, list<dag> pattern> {
+multiclass VOP2b_32 <bits<6> op, string opName, list<dag> pattern,
+                     string revOp = opName> {
 
   def _e32 : VOP2 <
     op, (outs VReg_32:$dst), (ins VSrc_32:$src0, VReg_32:$src1),
     opName#"_e32 $dst, $src0, $src1", pattern
-  >, VOP <opName>;
+  >, VOP <opName>, VOP2_REV<revOp#"_e32", !eq(revOp, opName)>;
 
   def _e64 : VOP3b <
     {1, 0, 0, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
@@ -204,7 +212,7 @@ multiclass VOP2b_32 <bits<6> op, string opName, list<dag> pattern> {
          i32imm:$abs, i32imm:$clamp,
          i32imm:$omod, i32imm:$neg),
     opName#"_e64 $dst, $src0, $src1, $abs, $clamp, $omod, $neg", []
-  >, VOP <opName> {
+  >, VOP <opName>, VOP2_REV<revOp#"_e64", !eq(revOp, opName)> {
     let SRC2 = SIOperand.ZERO;
     /* the VOP2 variant puts the carry out into VCC, the VOP3 variant
        can write it into any SGPR. We currently don't use the carry out,
@@ -325,6 +333,24 @@ def getVOPe64 : InstrMapping {
   let ColFields = ["Size"];
   let KeyCol = ["4"];
   let ValueCols = [["8"]];
+}
+
+// Maps an original opcode to its commuted version
+def getCommuteRev : InstrMapping {
+  let FilterClass = "VOP2_REV";
+  let RowFields = ["RevOp"];
+  let ColFields = ["IsOrig"];
+  let KeyCol = ["1"];
+  let ValueCols = [["0"]];
+}
+
+// Maps an commuted opcode to its original version
+def getCommuteOrig : InstrMapping {
+  let FilterClass = "VOP2_REV";
+  let RowFields = ["RevOp"];
+  let ColFields = ["IsOrig"];
+  let KeyCol = ["0"];
+  let ValueCols = [["1"]];
 }
 
 include "SIInstructions.td"

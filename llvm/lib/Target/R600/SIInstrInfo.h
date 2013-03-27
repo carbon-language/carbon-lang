@@ -35,6 +35,8 @@ public:
                            unsigned DestReg, unsigned SrcReg,
                            bool KillSrc) const;
 
+  unsigned commuteOpcode(unsigned Opcode) const;
+
   virtual MachineInstr *commuteInstruction(MachineInstr *MI,
                                            bool NewMI=false) const;
 
@@ -76,6 +78,8 @@ public:
 namespace AMDGPU {
 
   int getVOPe64(uint16_t Opcode);
+  int getCommuteRev(uint16_t Opcode);
+  int getCommuteOrig(uint16_t Opcode);
 
 } // End namespace AMDGPU
 

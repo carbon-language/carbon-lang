@@ -544,6 +544,13 @@ SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
   unsigned NumDefs = Desc->getNumDefs();
   unsigned NumOps = Desc->getNumOperands();
 
+  // Commuted opcode if available
+  int OpcodeRev = Desc->isCommutable() ? TII->commuteOpcode(Opcode) : -1;
+  const MCInstrDesc *DescRev = OpcodeRev == -1 ? 0 : &TII->get(OpcodeRev);
+
+  assert(!DescRev || DescRev->getNumDefs() == NumDefs);
+  assert(!DescRev || DescRev->getNumOperands() == NumOps);
+
   // e64 version if available, -1 otherwise
   int OpcodeE64 = AMDGPU::getVOPe64(Opcode);
   const MCInstrDesc *DescE64 = OpcodeE64 == -1 ? 0 : &TII->get(OpcodeE64);
@@ -605,8 +612,7 @@ SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
       continue;
     }
 
-    if (i == 1 && Desc->isCommutable() &&
-        fitsRegClass(DAG, Ops[0], RegClass)) {
+    if (i == 1 && DescRev && fitsRegClass(DAG, Ops[0], RegClass)) {
 
       unsigned OtherRegClass = Desc->OpInfo[NumDefs].RegClass;
       assert(isVSrc(OtherRegClass) || isSSrc(OtherRegClass));
@@ -620,6 +626,9 @@ SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
         SDValue Tmp = Ops[1];
         Ops[1] = Ops[0];
         Ops[0] = Tmp;
+
+        Desc = DescRev;
+        DescRev = 0;
         continue;
       }
     }
@@ -655,10 +664,7 @@ SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
   for (unsigned i = NumOps - NumDefs, e = Node->getNumOperands(); i < e; ++i)
     Ops.push_back(Node->getOperand(i));
 
-  // Either create a complete new or update the current instruction
-  if (Promote2e64)
-    return DAG.getMachineNode(OpcodeE64, Node->getDebugLoc(),
-                              Node->getVTList(), Ops.data(), Ops.size());
-  else
-    return DAG.UpdateNodeOperands(Node, Ops.data(), Ops.size());
+  // Create a complete new instruction
+  return DAG.getMachineNode(Desc->Opcode, Node->getDebugLoc(),
+                            Node->getVTList(), Ops.data(), Ops.size());
 }

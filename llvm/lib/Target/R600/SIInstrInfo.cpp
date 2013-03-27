@@ -158,6 +158,21 @@ SIInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   }
 }
 
+unsigned SIInstrInfo::commuteOpcode(unsigned Opcode) const {
+
+  int NewOpc;
+
+  // Try to map original to commuted opcode
+  if ((NewOpc = AMDGPU::getCommuteRev(Opcode)) != -1)
+    return NewOpc;
+
+  // Try to map commuted to original opcode
+  if ((NewOpc = AMDGPU::getCommuteOrig(Opcode)) != -1)
+    return NewOpc;
+
+  return Opcode;
+}
+
 MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
                                               bool NewMI) const {
 
@@ -165,7 +180,12 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
       !MI->getOperand(2).isReg())
     return 0;
 
-  return TargetInstrInfo::commuteInstruction(MI, NewMI);
+  MI = TargetInstrInfo::commuteInstruction(MI, NewMI);
+
+  if (MI)
+    MI->setDesc(get(commuteOpcode(MI->getOpcode())));
+
+  return MI;
 }
 
 MachineInstr * SIInstrInfo::getMovImmInstr(MachineFunction *MF, unsigned DstReg,
