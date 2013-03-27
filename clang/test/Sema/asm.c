@@ -125,7 +125,7 @@ void test13(void) {
 }
 
 // <rdar://problem/12700799>
-struct S;  // expected-note {{forward declaration of 'struct S'}}
+struct S;  // expected-note {{forward declaration of 'struct S'}} expected-note {{forward declaration of 'struct S'}}
 void test14(struct S *s) {
   __asm("": : "a"(*s)); // expected-error {{dereference of pointer to incomplete type 'struct S'}}
   __asm("": "=a" (*s) :); // expected-error {{dereference of pointer to incomplete type 'struct S'}}
