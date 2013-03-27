@@ -383,4 +383,12 @@ void t33() {
 // CHECK: call void asm sideeffect inteldialect "mov al, byte ptr $0", "*m,~{al},~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) [[NUW]]
 }
 
+void t34() {
+  __asm prefetchnta 64[eax]
+  __asm mov eax, dword ptr 4[eax]
+// CHECK: t34
+// CHECK: call void asm sideeffect inteldialect "prefetchnta $$64[eax]", "~{dirflag},~{fpsr},~{flags}"()
+// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $$4[eax]", "~{eax},~{dirflag},~{fpsr},~{flags}"()
+}
+
 // CHECK: attributes [[NUW]] = { nounwind }
