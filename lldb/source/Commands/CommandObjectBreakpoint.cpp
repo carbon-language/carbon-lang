@@ -646,7 +646,7 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
         "Set the breakpoint by address, at the specified address."},
 
     { LLDB_OPT_SET_3, true, "name", 'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,
-        "Set the breakpoint by function name.  Can be repeated multiple times to make one breakpoint for multiple snames" },
+        "Set the breakpoint by function name.  Can be repeated multiple times to make one breakpoint for multiple names" },
 
     { LLDB_OPT_SET_4, true, "fullname", 'F', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFullName,
         "Set the breakpoint by fully qualified function names. For C++ this means namespaces and all arguments, and "
