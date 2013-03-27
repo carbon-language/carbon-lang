@@ -144,10 +144,10 @@ public:
     GetCompleteDecl (clang::ASTContext *ast,
                      clang::Decl *decl);
 
-    void SetMetadataAsUserID (uintptr_t object,
+    void SetMetadataAsUserID (const void *object,
                               lldb::user_id_t user_id);
 
-    void SetMetadata (uintptr_t object,
+    void SetMetadata (const void *object,
                       ClangASTMetadata &meta_data)
     {
         SetMetadata(getASTContext(), object, meta_data);
@@ -155,18 +155,18 @@ public:
     
     static void
     SetMetadata (clang::ASTContext *ast,
-                 uintptr_t object,
+                 const void *object,
                  ClangASTMetadata &meta_data);
     
     ClangASTMetadata *
-    GetMetadata (uintptr_t object)
+    GetMetadata (const void *object)
     {
         return GetMetadata(getASTContext(), object);
     }
     
     static ClangASTMetadata *
     GetMetadata (clang::ASTContext *ast,
-                 uintptr_t object);
+                 const void *object);
     
     //------------------------------------------------------------------
     // Basic Types

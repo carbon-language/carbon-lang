@@ -228,7 +228,7 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
         // that this is a method of a class in whatever runtime the debug info says the object pointer
         // belongs to.  Do that here.
         
-        ClangASTMetadata *metadata = ClangASTContext::GetMetadata (&decl_context->getParentASTContext(), (uintptr_t) function_decl);
+        ClangASTMetadata *metadata = ClangASTContext::GetMetadata (&decl_context->getParentASTContext(), function_decl);
         if (metadata && metadata->HasObjectPtr())
         {
             lldb::LanguageType language = metadata->GetObjectPtrLanguage();

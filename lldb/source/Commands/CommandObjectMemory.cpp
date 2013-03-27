@@ -805,8 +805,6 @@ protected:
                     if (format != eFormatDefault)
                         valobj_sp->SetFormat (format);
 
-                    bool scope_already_checked = true;
-                    
                     ValueObject::DumpValueObjectOptions options(m_varobj_options.GetAsDumpOptions(false,format));
                     
                     ValueObject::DumpValueObject (*output_stream,

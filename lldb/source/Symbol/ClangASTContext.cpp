@@ -1168,7 +1168,7 @@ ClangASTContext::CreateRecordType (DeclContext *decl_ctx,
     if (decl)
     {
         if (metadata)
-            SetMetadata(ast, (uintptr_t)decl, *metadata);
+            SetMetadata(ast, decl, *metadata);
 
         if (access_type != eAccessNone)
             decl->setAccess (ConvertAccessTypeToAccessSpecifier (access_type));
@@ -2312,7 +2312,7 @@ ClangASTContext::CreateObjCClass
                                                          isInternal);
     
     if (decl && metadata)
-        SetMetadata(ast, (uintptr_t)decl, *metadata);
+        SetMetadata(ast, decl, *metadata);
     
     return ast->getObjCInterfaceType(decl).getAsOpaquePtr();
 }
@@ -2474,7 +2474,7 @@ ClangASTContext::AddObjCClassProperty
                 if (property_decl)
                 {
                     if (metadata)
-                        SetMetadata(ast, (uintptr_t)property_decl, *metadata);
+                        SetMetadata(ast, property_decl, *metadata);
                     
                     class_interface_decl->addDecl (property_decl);
                     
@@ -2554,7 +2554,7 @@ ClangASTContext::AddObjCClassProperty
                                                                         HasRelatedResultType);
                         
                         if (getter && metadata)
-                            SetMetadata(ast, (uintptr_t)getter, *metadata);
+                            SetMetadata(ast, getter, *metadata);
                                                 
                         getter->setMethodParams(*ast, ArrayRef<ParmVarDecl*>(), ArrayRef<SourceLocation>());
                         
@@ -2589,7 +2589,7 @@ ClangASTContext::AddObjCClassProperty
                                                                         HasRelatedResultType);
                         
                         if (setter && metadata)
-                            SetMetadata(ast, (uintptr_t)setter, *metadata);
+                            SetMetadata(ast, setter, *metadata);
                         
                         llvm::SmallVector<ParmVarDecl *, 1> params;
 
@@ -5772,7 +5772,7 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast,
                                 success = cxx_record_decl->isDynamicClass();
                             else
                             {
-                                ClangASTMetadata *metadata = GetMetadata (ast, (uintptr_t)cxx_record_decl);
+                                ClangASTMetadata *metadata = GetMetadata (ast, cxx_record_decl);
                                 if (metadata)
                                     success = metadata->GetIsDynamicCXXType();
                                 else
@@ -6522,7 +6522,7 @@ ClangASTContext::GetCompleteDecl (clang::ASTContext *ast,
 }
 
 void
-ClangASTContext::SetMetadataAsUserID (uintptr_t object,
+ClangASTContext::SetMetadataAsUserID (const void *object,
                                       user_id_t user_id)
 {
     ClangASTMetadata meta_data;
@@ -6532,7 +6532,7 @@ ClangASTContext::SetMetadataAsUserID (uintptr_t object,
 
 void
 ClangASTContext::SetMetadata (clang::ASTContext *ast,
-                              uintptr_t object,
+                              const void *object,
                               ClangASTMetadata &metadata)
 {
     ClangExternalASTSourceCommon *external_source =
@@ -6544,7 +6544,7 @@ ClangASTContext::SetMetadata (clang::ASTContext *ast,
 
 ClangASTMetadata *
 ClangASTContext::GetMetadata (clang::ASTContext *ast,
-                              uintptr_t object)
+                              const void *object)
 {
     ClangExternalASTSourceCommon *external_source =
         static_cast<ClangExternalASTSourceCommon*>(ast->getExternalSource());
@@ -6611,7 +6611,7 @@ ClangASTContext::GetClassMethodInfoForDeclContext (clang::DeclContext *decl_ctx,
         }
         else if (clang::FunctionDecl *function_decl = llvm::dyn_cast<clang::FunctionDecl>(decl_ctx))
         {
-            ClangASTMetadata *metadata = GetMetadata (&decl_ctx->getParentASTContext(), (uintptr_t) function_decl);
+            ClangASTMetadata *metadata = GetMetadata (&decl_ctx->getParentASTContext(), function_decl);
             if (metadata && metadata->HasObjectPtr())
             {
                 language_object_name.SetCString (metadata->GetObjectPtrName());

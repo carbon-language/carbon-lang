@@ -74,7 +74,9 @@ public:
         m_union_is_user_id = true;
         m_union_is_isa_ptr = false;
     }
-    lldb::user_id_t GetUserID () const
+
+    lldb::user_id_t
+    GetUserID () const
     {
         if (m_union_is_user_id)
             return m_user_id;
@@ -90,7 +92,8 @@ public:
         m_union_is_isa_ptr = true;
     }
     
-    uint64_t GetISAPtr () const
+    uint64_t
+    GetISAPtr () const
     {
         if (m_union_is_isa_ptr)
             return m_isa_ptr;
@@ -98,7 +101,8 @@ public:
             return 0;
     }
     
-    void SetObjectPtrName(const char *name)
+    void
+    SetObjectPtrName(const char *name)
     {
         m_has_object_ptr = true;
         if (strcmp (name, "self") == 0)
@@ -122,7 +126,8 @@ public:
         return lldb::eLanguageTypeUnknown;
             
     }
-    const char *GetObjectPtrName() const
+    const char *
+    GetObjectPtrName() const
     {
         if (m_has_object_ptr)
         {
@@ -135,10 +140,14 @@ public:
             return NULL;
     }
     
-    bool HasObjectPtr() const
+    bool
+    HasObjectPtr() const
     {
         return m_has_object_ptr;
     }
+    
+    void
+    Dump (Stream *s);
     
 private:
     union
@@ -160,11 +169,11 @@ public:
     ClangExternalASTSourceCommon();
     ~ClangExternalASTSourceCommon();
 
-    virtual ClangASTMetadata *GetMetadata(uintptr_t object);
-    virtual void SetMetadata(uintptr_t object, ClangASTMetadata &metadata);
-    virtual bool HasMetadata(uintptr_t object);
+    virtual ClangASTMetadata *GetMetadata(const void *object);
+    virtual void SetMetadata(const void *object, ClangASTMetadata &metadata);
+    virtual bool HasMetadata(const void *object);
 private:
-    typedef llvm::DenseMap<uintptr_t, ClangASTMetadata> MetadataMap;
+    typedef llvm::DenseMap<const void *, ClangASTMetadata> MetadataMap;
     
     MetadataMap m_metadata;
     uint64_t    m_magic;        ///< Because we don't have RTTI, we must take it

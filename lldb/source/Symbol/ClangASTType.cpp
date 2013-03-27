@@ -38,6 +38,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/UniqueCStringMap.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/ClangExternalASTSourceCommon.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 
@@ -1314,6 +1315,11 @@ ClangASTType::DumpTypeDescription ()
 {
     StreamFile s (stdout, false);
     DumpTypeDescription (&s);
+    ClangASTMetadata *metadata = ClangASTContext::GetMetadata (m_ast, m_type);
+    if (metadata)
+    {
+        metadata->Dump (&s);
+    }
 }
 
 void
@@ -1339,8 +1345,9 @@ ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, clang_type_t 
         {
         case clang::Type::ObjCObject:
         case clang::Type::ObjCInterface:
-            if (ClangASTContext::GetCompleteType (ast_context, clang_type))
             {
+                ClangASTContext::GetCompleteType (ast_context, clang_type);
+                
                 const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
                 assert (objc_class_type);
                 if (objc_class_type)
@@ -1378,8 +1385,9 @@ ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, clang_type_t 
             return;
 
         case clang::Type::Record:
-            if (ClangASTContext::GetCompleteType (ast_context, clang_type))
             {
+                ClangASTContext::GetCompleteType (ast_context, clang_type);
+                
                 const clang::RecordType *record_type = llvm::cast<clang::RecordType>(qual_type.getTypePtr());
                 const clang::RecordDecl *record_decl = record_type->getDecl();
                 const clang::CXXRecordDecl *cxx_record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
@@ -1415,20 +1423,6 @@ ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, clang_type_t 
             s->Write (buf.data(), buf.size());
         }
     }
-}
-
-void
-ClangASTType::DumpTypeCode (Stream *s)
-{
-    DumpTypeCode(m_type, s);
-}
-
-void
-ClangASTType::DumpTypeCode (void *type, 
-                            Stream *s)
-{
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(type));
-    s->PutCString(qual_type.getAsString().c_str());
 }
 
 bool

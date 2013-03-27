@@ -214,12 +214,6 @@ public:
                          lldb::clang_type_t opaque_clang_qual_type,
                          Stream *s);
     
-    void DumpTypeCode (Stream *s);
-    
-    static void
-    DumpTypeCode (void *type,
-                  Stream *s);
-                         
     lldb::Encoding
     GetEncoding (uint64_t &count);
 

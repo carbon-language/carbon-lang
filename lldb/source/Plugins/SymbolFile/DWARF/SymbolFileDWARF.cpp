@@ -1848,7 +1848,7 @@ SymbolFileDWARF::ParseChildMembers
                                                                                         accessibility, 
                                                                                         bit_size);
                                 
-                                GetClangASTContext().SetMetadataAsUserID ((uintptr_t)field_decl, MakeUserID(die->GetOffset()));
+                                GetClangASTContext().SetMetadataAsUserID (field_decl, MakeUserID(die->GetOffset()));
                                 
                                 if (this_field_info.IsValid())
                                 {
@@ -1893,7 +1893,7 @@ SymbolFileDWARF::ParseChildMembers
                                                                                      &metadata));
                             
                             if (ivar_decl)
-                                GetClangASTContext().SetMetadataAsUserID ((uintptr_t)ivar_decl, MakeUserID(die->GetOffset()));
+                                GetClangASTContext().SetMetadataAsUserID (ivar_decl, MakeUserID(die->GetOffset()));
                         }
                     }
                 }
@@ -4059,7 +4059,7 @@ SymbolFileDWARF::ParseChildParameters (const SymbolContext& sc,
                             assert(param_var_decl);
                             function_param_decls.push_back(param_var_decl);
                             
-                            GetClangASTContext().SetMetadataAsUserID ((uintptr_t)param_var_decl, MakeUserID(die->GetOffset()));
+                            GetClangASTContext().SetMetadataAsUserID (param_var_decl, MakeUserID(die->GetOffset()));
                         }
                     }
                 }
@@ -5920,8 +5920,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 clang_type = ast.CreateClassTemplateSpecializationType (class_specialization_decl);
                                 clang_type_was_created = true;
                                 
-                                GetClangASTContext().SetMetadata ((uintptr_t)class_template_decl, metadata);
-                                GetClangASTContext().SetMetadata ((uintptr_t)class_specialization_decl, metadata);
+                                GetClangASTContext().SetMetadata (class_template_decl, metadata);
+                                GetClangASTContext().SetMetadata (class_specialization_decl, metadata);
                             }
                         }
 
@@ -6338,7 +6338,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     if (type_handled)
                                     {
                                         LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(objc_method_decl), die);
-                                        GetClangASTContext().SetMetadataAsUserID ((uintptr_t)objc_method_decl, MakeUserID(die->GetOffset()));
+                                        GetClangASTContext().SetMetadataAsUserID (objc_method_decl, MakeUserID(die->GetOffset()));
                                     }
                                     else
                                     {
@@ -6509,11 +6509,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                         {
                                                             metadata.SetObjectPtrName(object_pointer_name.c_str());
                                                             if (log)
-                                                                log->Printf ("Setting object pointer name: %s on method object 0x%ld.\n",
+                                                                log->Printf ("Setting object pointer name: %s on method object %p.\n",
                                                                              object_pointer_name.c_str(),
-                                                                             (uintptr_t) cxx_method_decl);
+                                                                             cxx_method_decl);
                                                         }
-                                                        GetClangASTContext().SetMetadata ((uintptr_t)cxx_method_decl, metadata);
+                                                        GetClangASTContext().SetMetadata (cxx_method_decl, metadata);
                                                     }
                                                 }
                                             }
@@ -6587,11 +6587,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             {
                                 metadata.SetObjectPtrName(object_pointer_name.c_str());
                                 if (log)
-                                    log->Printf ("Setting object pointer name: %s on function object 0x%ld.\n",
+                                    log->Printf ("Setting object pointer name: %s on function object %p.",
                                                  object_pointer_name.c_str(),
-                                                 (uintptr_t) function_decl);
+                                                function_decl);
                             }
-                            GetClangASTContext().SetMetadata ((uintptr_t)function_decl, metadata);
+                            GetClangASTContext().SetMetadata (function_decl, metadata);
                         }
                     }
                     type_sp.reset( new Type (MakeUserID(die->GetOffset()), 

@@ -337,9 +337,9 @@ ClangASTImporter::GetDeclMetadata (const clang::Decl *decl)
     DeclOrigin decl_origin = GetDeclOrigin(decl);
     
     if (decl_origin.Valid())
-        return ClangASTContext::GetMetadata(decl_origin.ctx, (uintptr_t)decl_origin.decl);
+        return ClangASTContext::GetMetadata(decl_origin.ctx, decl_origin.decl);
     else
-        return ClangASTContext::GetMetadata(&decl->getASTContext(), (uintptr_t)decl);
+        return ClangASTContext::GetMetadata(&decl->getASTContext(), decl);
 }
 
 ClangASTImporter::DeclOrigin

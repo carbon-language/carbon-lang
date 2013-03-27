@@ -198,8 +198,8 @@ AppleObjCTypeVendor::GetDeclForISA(ObjCLanguageRuntime::ObjCISA isa)
                                                                                 NULL);
     
     ClangASTMetadata meta_data;
-    meta_data.SetISAPtr((uint64_t) isa);
-    m_external_source->SetMetadata((uintptr_t)new_iface_decl, meta_data);
+    meta_data.SetISAPtr(isa);
+    m_external_source->SetMetadata(new_iface_decl, meta_data);
     
     new_iface_decl->setHasExternalVisibleStorage();
     new_iface_decl->setHasExternalLexicalStorage();
@@ -500,7 +500,7 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
 {
     lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));  // FIXME - a more appropriate log channel?
     
-    ClangASTMetadata *metadata = m_external_source->GetMetadata((uintptr_t)interface_decl);
+    ClangASTMetadata *metadata = m_external_source->GetMetadata(interface_decl);
     ObjCLanguageRuntime::ObjCISA objc_isa = 0;
     if (metadata)
      objc_isa = metadata->GetISAPtr();
@@ -630,7 +630,7 @@ AppleObjCTypeVendor::FindTypes (const ConstString &name,
                     ASTDumper dumper(result_iface_type);
                     
                     uint64_t isa_value = LLDB_INVALID_ADDRESS;
-                    ClangASTMetadata *metadata = m_external_source->GetMetadata((uintptr_t)result_iface_decl);
+                    ClangASTMetadata *metadata = m_external_source->GetMetadata(result_iface_decl);
                     if (metadata)
                         isa_value = metadata->GetISAPtr();
                     
