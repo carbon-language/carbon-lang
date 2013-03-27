@@ -681,6 +681,26 @@ TEST_F(FormatTest, AlignsMultiLineComments) {
                    " */"));
 }
 
+TEST_F(FormatTest, SplitsLongCxxComments) {
+  EXPECT_EQ("// A comment that\n"
+            "// doesn't fit on\n"
+            "// one line",
+            format("// A comment that doesn't fit on one line",
+                   getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("if (true) // A comment that\n"
+            "          // doesn't fit on\n"
+            "          // one line",
+            format("if (true) // A comment that doesn't fit on one line   ",
+                   getLLVMStyleWithColumns(30)));
+  EXPECT_EQ("//    Don't_touch_leading_whitespace",
+            format("//    Don't_touch_leading_whitespace",
+                   getLLVMStyleWithColumns(20)));
+  EXPECT_EQ(
+      "//Don't add leading\n"
+      "//whitespace",
+      format("//Don't add leading whitespace", getLLVMStyleWithColumns(20)));
+}
+
 TEST_F(FormatTest, SplitsLongLinesInComments) {
   EXPECT_EQ("/* This is a long\n"
             " * comment that\n"
@@ -727,10 +747,10 @@ TEST_F(FormatTest, SplitsLongLinesInComments) {
                    " */",
                    getLLVMStyleWithColumns(20)));
   EXPECT_EQ("/*\n"
-            " * This_comment_can_not_be_broken_into_lines\n"
+            " *    This_comment_can_not_be_broken_into_lines\n"
             " */",
             format("/*\n"
-                   " * This_comment_can_not_be_broken_into_lines\n"
+                   " *    This_comment_can_not_be_broken_into_lines\n"
                    " */",
                    getLLVMStyleWithColumns(20)));
   EXPECT_EQ("{\n"
@@ -1166,13 +1186,13 @@ TEST_F(FormatTest, HandlePreprocessorDirectiveContext) {
             "#define A(  \\\n"
             "    A, B)\n"
             "#include \"b.h\"\n"
-            "// some comment\n",
+            "// somecomment\n",
             format("  // some comment\n"
                    "  #include \"a.h\"\n"
                    "#define A(A,\\\n"
                    "    B)\n"
                    "    #include \"b.h\"\n"
-                   " // some comment\n",
+                   " // somecomment\n",
                    getLLVMStyleWithColumns(13)));
 }
 
@@ -2442,7 +2462,7 @@ TEST_F(FormatTest, IncorrectCodeMissingSemicolon) {
 
 TEST_F(FormatTest, IndentationWithinColumnLimitNotPossible) {
   verifyFormat("int aaaaaaaa =\n"
-               "    // Overly long comment\n"
+               "    // Overlylongcomment\n"
                "    b;",
                getLLVMStyleWithColumns(20));
   verifyFormat("function(\n"
