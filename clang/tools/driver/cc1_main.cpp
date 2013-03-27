@@ -39,7 +39,8 @@ using namespace clang;
 // Main driver
 //===----------------------------------------------------------------------===//
 
-static void LLVMErrorHandler(void *UserData, const std::string &Message) {
+static void LLVMErrorHandler(void *UserData, const std::string &Message,
+                             bool GenCrashDiag) {
   DiagnosticsEngine &Diags = *static_cast<DiagnosticsEngine*>(UserData);
 
   Diags.Report(diag::err_fe_error_backend) << Message;
@@ -49,9 +50,9 @@ static void LLVMErrorHandler(void *UserData, const std::string &Message) {
   llvm::sys::RunInterruptHandlers();
 
   // We cannot recover from llvm errors.  When reporting a fatal error, exit
-  // with status 70.  For BSD systems this is defined as an internal software
-  // error.  This notifies the driver to report diagnostics information.
-  exit(70);
+  // with status 70 to generate crash diagnostics.  For BSD systems this is
+  // defined as an internal software error.  Otherwise, exit with status 1.
+  exit(GenCrashDiag ? 70 : 1);
 }
 
 int cc1_main(const char **ArgBegin, const char **ArgEnd,

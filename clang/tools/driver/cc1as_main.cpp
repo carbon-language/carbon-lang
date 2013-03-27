@@ -384,7 +384,8 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
   return Success;
 }
 
-static void LLVMErrorHandler(void *UserData, const std::string &Message) {
+static void LLVMErrorHandler(void *UserData, const std::string &Message,
+                             bool GenCrashDiag) {
   DiagnosticsEngine &Diags = *static_cast<DiagnosticsEngine*>(UserData);
 
   Diags.Report(diag::err_fe_error_backend) << Message;
