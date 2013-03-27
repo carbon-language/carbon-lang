@@ -565,23 +565,11 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                                    SmallVectorImpl<MachineInstr*> &NewMIs,
                                    bool &NonRI, bool &SpillsVRS) const{
   if (PPC::GPRCRegClass.hasSubClassEq(RC)) {
-    if (DestReg != PPC::LR) {
-      NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LWZ),
-                                                 DestReg), FrameIdx));
-    } else {
-      NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LWZ),
-                                                 PPC::R11), FrameIdx));
-      NewMIs.push_back(BuildMI(MF, DL, get(PPC::MTLR)).addReg(PPC::R11));
-    }
+    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LWZ),
+                                               DestReg), FrameIdx));
   } else if (PPC::G8RCRegClass.hasSubClassEq(RC)) {
-    if (DestReg != PPC::LR8) {
-      NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LD), DestReg),
-                                         FrameIdx));
-    } else {
-      NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LD),
-                                                 PPC::X11), FrameIdx));
-      NewMIs.push_back(BuildMI(MF, DL, get(PPC::MTLR8)).addReg(PPC::X11));
-    }
+    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LD), DestReg),
+                                       FrameIdx));
   } else if (PPC::F8RCRegClass.hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LFD), DestReg),
                                        FrameIdx));
