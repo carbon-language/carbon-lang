@@ -370,11 +370,16 @@ namespace {
     
     unsigned Mode; // Mode to treat source module.
     
+    struct LazyLinkEntry {
+      Function *Fn;
+      llvm::SmallPtrSet<User*, 4> Uses;
+    };
+
     // Set of items not to link in from source.
     SmallPtrSet<const Value*, 16> DoNotLinkFromSource;
     
     // Vector of functions to lazily link in.
-    std::vector<Function*> LazilyLinkFunctions;
+    std::vector<LazyLinkEntry> LazilyLinkFunctions;
     
   public:
     std::string ErrorMsg;
@@ -801,6 +806,18 @@ bool ModuleLinker::linkFunctionProto(Function *SF) {
     }
   }
   
+  // If the function is to be lazily linked, don't create it just yet.
+  // Instead, remember its current set of uses to diff against later.
+  if (!DGV && (SF->hasLocalLinkage() || SF->hasLinkOnceLinkage() ||
+               SF->hasAvailableExternallyLinkage())) {
+    LazyLinkEntry LLE;
+    LLE.Fn = SF;
+    LLE.Uses.insert(SF->use_begin(), SF->use_end());
+    LazilyLinkFunctions.push_back(LLE);
+    DoNotLinkFromSource.insert(SF);
+    return false;
+  }
+
   // If there is no linkage to be performed or we are linking from the source,
   // bring SF over.
   Function *NewDF = Function::Create(TypeMap.get(SF->getFunctionType()),
@@ -813,13 +830,6 @@ bool ModuleLinker::linkFunctionProto(Function *SF) {
     // Any uses of DF need to change to NewDF, with cast.
     DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewDF, DGV->getType()));
     DGV->eraseFromParent();
-  } else {
-    // Internal, LO_ODR, or LO linkage - stick in set to ignore and lazily link.
-    if (SF->hasLocalLinkage() || SF->hasLinkOnceLinkage() ||
-        SF->hasAvailableExternallyLinkage()) {
-      DoNotLinkFromSource.insert(SF);
-      LazilyLinkFunctions.push_back(SF);
-    }
   }
   
   ValueMap[SF] = NewDF;
@@ -1236,16 +1246,33 @@ bool ModuleLinker::run() {
   do {
     LinkedInAnyFunctions = false;
     
-    for(std::vector<Function*>::iterator I = LazilyLinkFunctions.begin(),
-        E = LazilyLinkFunctions.end(); I != E; ++I) {
-      if (!*I)
+    for(std::vector<LazyLinkEntry>::iterator I = LazilyLinkFunctions.begin(),
+        E = LazilyLinkFunctions.end(); I != E; ++I) {      
+      Function *SF = I->Fn;
+      if (!SF)
         continue;
       
-      Function *SF = *I;
-      Function *DF = cast<Function>(ValueMap[SF]);
-      
-      if (!DF->use_empty()) {
-        
+      // If the number of uses of this function is the same as it was at the
+      // start of the link, it is not used in this link.
+      if (SF->getNumUses() != I->Uses.size()) {
+        Function *DF = Function::Create(TypeMap.get(SF->getFunctionType()),
+                                        SF->getLinkage(), SF->getName(), DstM);
+        copyGVAttributes(DF, SF);
+
+        // Now, copy over any uses of SF that were from DstM to DF.
+        for (Function::use_iterator UI = SF->use_begin(), UE = SF->use_end();
+             UI != UE;) {
+          if (I->Uses.count(*UI) == 0) {
+            Use &U = UI.getUse();
+            // Increment UI before performing the set to ensure the iterator
+            // remains valid.
+            ++UI;
+            U.set(DF);
+          } else {
+            ++UI;
+          }
+        }
+
         // Materialize if necessary.
         if (SF->isDeclaration()) {
           if (!SF->isMaterializable())
@@ -1259,7 +1286,7 @@ bool ModuleLinker::run() {
         SF->Dematerialize();
 
         // "Remove" from vector by setting the element to 0.
-        *I = 0;
+        I->Fn = 0;
         
         // Set flag to indicate we may have more functions to lazily link in
         // since we linked in a function.
@@ -1267,18 +1294,6 @@ bool ModuleLinker::run() {
       }
     }
   } while (LinkedInAnyFunctions);
-  
-  // Remove any prototypes of functions that were not actually linked in.
-  for(std::vector<Function*>::iterator I = LazilyLinkFunctions.begin(),
-      E = LazilyLinkFunctions.end(); I != E; ++I) {
-    if (!*I)
-      continue;
-    
-    Function *SF = *I;
-    Function *DF = cast<Function>(ValueMap[SF]);
-    if (DF->use_empty())
-      DF->eraseFromParent();
-  }
   
   // Now that all of the types from the source are used, resolve any structs
   // copied over to the dest that didn't exist there.
