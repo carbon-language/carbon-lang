@@ -132,7 +132,7 @@ static void PtraceDisplayBytes(int &req, void *data, size_t data_size)
 }
 
 // Wrapper for ptrace to catch errors and log calls.
-// Note that ptrace sets errno on error because -1 is a valid result for PTRACE_PEEK*
+// Note that ptrace sets errno on error because -1 can be a valid result (i.e. for PTRACE_PEEK*)
 extern long
 PtraceWrapper(int req, lldb::pid_t pid, void *addr, void *data, size_t data_size,
               const char* reqName, const char* file, int line)
