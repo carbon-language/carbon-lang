@@ -18,8 +18,8 @@ static void func() {
   id x;
 
   // rdar://8290002
-  [(*x).isa self]; // expected-warning {{direct access to Objective-C's isa is deprecated in favor of object_setClass() and object_getClass()}}
-  [x->isa self]; // expected-warning {{direct access to Objective-C's isa is deprecated in favor of object_setClass() and object_getClass()}}
+  [(*x).isa self]; // expected-warning {{direct access to Objective-C's isa is deprecated in favor of object_getClass()}}
+  [x->isa self]; // expected-warning {{direct access to Objective-C's isa is deprecated in favor of object_getClass()}}
   
   Whatever *y;
 

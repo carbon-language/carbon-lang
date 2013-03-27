@@ -491,6 +491,8 @@ ExprResult Sema::DefaultLvalueConversion(Expr *E) {
   }
 
   CheckForNullPointerDereference(*this, E);
+  if (isa<ObjCIsaExpr>(E->IgnoreParens()))
+    Diag(E->getExprLoc(), diag::warn_objc_isa_use);
 
   // C++ [conv.lval]p1:
   //   [...] If T is a non-class type, the type of the prvalue is the
@@ -8534,6 +8536,9 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   // Check for array bounds violations for both sides of the BinaryOperator
   CheckArrayAccess(LHS.get());
   CheckArrayAccess(RHS.get());
+
+  if (isa<ObjCIsaExpr>(LHS.get()->IgnoreParens()))
+    Diag(LHS.get()->getExprLoc(), diag::warn_objc_isa_assign);
 
   if (CompResultTy.isNull())
     return Owned(new (Context) BinaryOperator(LHS.take(), RHS.take(), Opc,

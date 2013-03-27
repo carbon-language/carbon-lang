@@ -21,7 +21,7 @@ void f(U value, V value2) {
   get_an_A(N)->ivar = value; // expected-error{{assigning to 'int' from incompatible type 'int *'}}
   get_an_A(N).prop = value2; // expected-error{{assigning to 'int' from incompatible type 'double *'}}
   T c = get_an_id(N)->isa; // expected-error{{cannot initialize a variable of type 'int' with an lvalue of type 'Class'}} \
-                           // expected-warning 5 {{direct access to Objective-C's isa is deprecated in favor of object_setClass() and object_getClass()}}
+                           // expected-warning 3 {{direct access to Objective-C's isa is deprecated in favor of object_getClass()}}
 }
 
 template void f<6, Class>(int, int); // expected-note{{in instantiation of}}
@@ -46,7 +46,7 @@ template void f2(A*, int, double*); // expected-note{{instantiation of}}
 template<typename T, typename U>
 void f3(U ptr) {
   T c = ptr->isa; // expected-error{{cannot initialize a variable of type 'int' with an lvalue of type 'Class'}} \
-                  // expected-warning 2 {{direct access to Objective-C's isa is deprecated in favor of object_setClass() and object_getClass()}}
+                  // expected-warning 1 {{direct access to Objective-C's isa is deprecated in favor of object_getClass()}}
 }
 
 template void f3<Class>(id); // expected-note{{in instantiation of}}
