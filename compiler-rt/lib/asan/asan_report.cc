@@ -189,6 +189,12 @@ static void PrintGlobalNameIfASCII(const __asan_global &g) {
   Printf("  '%s' is ascii string '%s'\n", g.name, (char*)g.beg);
 }
 
+static const char *MaybeDemangleGlobalName(const char *name) {
+  // We can spoil names of globals with C linkage, so use an heuristic
+  // approach to check if the name should be demangled.
+  return (name[0] == '_' && name[1] == 'Z') ? Demangle(name) : name;
+}
+
 bool DescribeAddressRelativeToGlobal(uptr addr, uptr size,
                                      const __asan_global &g) {
   static const uptr kMinimalDistanceFromAnotherGlobal = 64;
@@ -208,7 +214,7 @@ bool DescribeAddressRelativeToGlobal(uptr addr, uptr size,
     Printf("%p is located %zd bytes inside", (void*)addr, addr - g.beg);
   }
   Printf(" of global variable '%s' from '%s' (0x%zx) of size %zu\n",
-             g.name, g.module_name, g.beg, g.size);
+             MaybeDemangleGlobalName(g.name), g.module_name, g.beg, g.size);
   Printf("%s", d.EndLocation());
   PrintGlobalNameIfASCII(g);
   return true;
