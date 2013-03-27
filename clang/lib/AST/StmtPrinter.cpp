@@ -1558,9 +1558,12 @@ void StmtPrinter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *Node) {
 static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   switch (UTT) {
   case UTT_HasNothrowAssign:      return "__has_nothrow_assign";
+  case UTT_HasNothrowMoveAssign:  return "__has_nothrow_move_assign";
   case UTT_HasNothrowConstructor: return "__has_nothrow_constructor";
   case UTT_HasNothrowCopy:          return "__has_nothrow_copy";
   case UTT_HasTrivialAssign:      return "__has_trivial_assign";
+  case UTT_HasTrivialMoveAssign:      return "__has_trivial_move_assign";
+  case UTT_HasTrivialMoveConstructor: return "__has_trivial_move_constructor";
   case UTT_HasTrivialDefaultConstructor: return "__has_trivial_constructor";
   case UTT_HasTrivialCopy:          return "__has_trivial_copy";
   case UTT_HasTrivialDestructor:  return "__has_trivial_destructor";

@@ -2511,11 +2511,15 @@ static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   switch(kind) {
   default: llvm_unreachable("Not a known unary type trait.");
   case tok::kw___has_nothrow_assign:      return UTT_HasNothrowAssign;
+  case tok::kw___has_nothrow_move_assign: return UTT_HasNothrowMoveAssign;
   case tok::kw___has_nothrow_constructor: return UTT_HasNothrowConstructor;
   case tok::kw___has_nothrow_copy:           return UTT_HasNothrowCopy;
   case tok::kw___has_trivial_assign:      return UTT_HasTrivialAssign;
+  case tok::kw___has_trivial_move_assign: return UTT_HasTrivialMoveAssign;
   case tok::kw___has_trivial_constructor:
                                     return UTT_HasTrivialDefaultConstructor;
+  case tok::kw___has_trivial_move_constructor:
+                                    return UTT_HasTrivialMoveConstructor;
   case tok::kw___has_trivial_copy:           return UTT_HasTrivialCopy;
   case tok::kw___has_trivial_destructor:  return UTT_HasTrivialDestructor;
   case tok::kw___has_virtual_destructor:  return UTT_HasVirtualDestructor;

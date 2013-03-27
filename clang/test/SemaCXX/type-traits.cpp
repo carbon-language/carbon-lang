@@ -39,9 +39,34 @@ struct DerivesEmpty : Empty {};
 struct HasCons { HasCons(int); };
 struct HasCopyAssign { HasCopyAssign operator =(const HasCopyAssign&); };
 struct HasMoveAssign { HasMoveAssign operator =(const HasMoveAssign&&); };
+struct HasNoThrowMoveAssign { 
+  HasNoThrowMoveAssign& operator=(
+    const HasNoThrowMoveAssign&&) throw(); };
+struct HasNoExceptNoThrowMoveAssign { 
+  HasNoExceptNoThrowMoveAssign& operator=(
+    const HasNoExceptNoThrowMoveAssign&&) noexcept; 
+};
+struct HasThrowMoveAssign { 
+  HasThrowMoveAssign& operator=(
+    const HasThrowMoveAssign&&) throw(POD); };
+struct HasNoExceptFalseMoveAssign { 
+  HasNoExceptFalseMoveAssign& operator=(
+    const HasNoExceptFalseMoveAssign&&) noexcept(false); };
+struct HasMoveCtor { HasMoveCtor(const HasMoveCtor&&); };
+struct HasMemberMoveCtor { HasMoveCtor member; };
+struct HasMemberMoveAssign { HasMoveAssign member; };
+struct HasStaticMemberMoveCtor { static HasMoveCtor member; };
+struct HasStaticMemberMoveAssign { static HasMoveAssign member; };
+struct HasMemberThrowMoveAssign { HasThrowMoveAssign member; };
+struct HasMemberNoExceptFalseMoveAssign { 
+  HasNoExceptFalseMoveAssign member; };
+struct HasMemberNoThrowMoveAssign { HasNoThrowMoveAssign member; };
+struct HasMemberNoExceptNoThrowMoveAssign { 
+  HasNoExceptNoThrowMoveAssign member; };
+
 struct HasDefaultTrivialCopyAssign { 
-  HasDefaultTrivialCopyAssign &operator =(const HasDefaultTrivialCopyAssign&)
-    = default; 
+  HasDefaultTrivialCopyAssign &operator=(
+    const HasDefaultTrivialCopyAssign&) = default; 
 };
 struct TrivialMoveButNotCopy { 
   TrivialMoveButNotCopy &operator=(TrivialMoveButNotCopy&&) = default;
@@ -69,6 +94,7 @@ struct DerivesHasPriv : HasPriv {};
 struct DerivesHasProt : HasProt {};
 struct DerivesHasRef : HasRef {};
 struct DerivesHasVirt : HasVirt {};
+struct DerivesHasMoveCtor : HasMoveCtor {};
 
 struct HasNoThrowCopyAssign {
   void operator =(const HasNoThrowCopyAssign&) throw();
@@ -165,7 +191,7 @@ typedef Empty EmptyAr[10];
 struct Bit0 { int : 0; };
 struct Bit0Cons { int : 0; Bit0Cons(); };
 struct BitOnly { int x : 3; };
-//struct DerivesVirt : virtual POD {};
+struct DerivesVirt : virtual POD {};
 
 void is_empty()
 {
@@ -941,6 +967,19 @@ struct AllDefaulted {
   ~AllDefaulted() = default;
 };
 
+struct NoDefaultMoveAssignDueToUDCopyCtor {
+  NoDefaultMoveAssignDueToUDCopyCtor(const NoDefaultMoveAssignDueToUDCopyCtor&);
+};
+
+struct NoDefaultMoveAssignDueToUDCopyAssign {
+  NoDefaultMoveAssignDueToUDCopyAssign& operator=(
+    const NoDefaultMoveAssignDueToUDCopyAssign&);
+};
+
+struct NoDefaultMoveAssignDueToDtor {
+  ~NoDefaultMoveAssignDueToDtor();
+};
+
 struct AllDeleted {
   AllDeleted() = delete;
   AllDeleted(const AllDeleted &) = delete;
@@ -1203,6 +1242,32 @@ void has_trivial_default_constructor() {
   { int arr[F(__has_trivial_constructor(ExtDefaulted))]; }
 }
 
+void has_trivial_move_constructor() {
+  // n3376 12.8 [class.copy]/12
+  // A copy/move constructor for class X is trivial if it is not 
+  // user-provided, its declared parameter type is the same as 
+  // if it had been implicitly declared, and if
+  //   — class X has no virtual functions (10.3) and no virtual 
+  //     base classes (10.1), and
+  //   — the constructor selected to copy/move each direct base 
+  //     class subobject is trivial, and
+  //   — for each non-static data member of X that is of class 
+  //     type (or array thereof), the constructor selected
+  //     to copy/move that member is trivial;
+  // otherwise the copy/move constructor is non-trivial.
+  { int arr[T(__has_trivial_move_constructor(POD))]; }
+  { int arr[T(__has_trivial_move_constructor(Union))]; }
+  { int arr[T(__has_trivial_move_constructor(HasCons))]; }
+  { int arr[T(__has_trivial_move_constructor(HasStaticMemberMoveCtor))]; }
+  { int arr[T(__has_trivial_move_constructor(AllDeleted))]; }
+  
+  { int arr[F(__has_trivial_move_constructor(HasVirt))]; }
+  { int arr[F(__has_trivial_move_constructor(DerivesVirt))]; }
+  { int arr[F(__has_trivial_move_constructor(HasMoveCtor))]; }
+  { int arr[F(__has_trivial_move_constructor(DerivesHasMoveCtor))]; }
+  { int arr[F(__has_trivial_move_constructor(HasMemberMoveCtor))]; }
+}
+
 void has_trivial_copy_constructor() {
   { int arr[T(__has_trivial_copy(Int))]; }
   { int arr[T(__has_trivial_copy(IntAr))]; }
@@ -1353,6 +1418,54 @@ void has_nothrow_assign() {
   { int arr[F(__has_nothrow_assign(void))]; }
   { int arr[F(__has_nothrow_assign(cvoid))]; }
   { int arr[F(__has_nothrow_assign(PR11110))]; }
+}
+
+void has_nothrow_move_assign() {
+  { int arr[T(__has_nothrow_move_assign(Int))]; }
+  { int arr[T(__has_nothrow_move_assign(Enum))]; }
+  { int arr[T(__has_nothrow_move_assign(Int*))]; }
+  { int arr[T(__has_nothrow_move_assign(Enum POD::*))]; }
+  { int arr[T(__has_nothrow_move_assign(POD))]; }
+  { int arr[T(__has_nothrow_move_assign(HasPriv))]; }
+  { int arr[T(__has_nothrow_move_assign(HasNoThrowMoveAssign))]; }
+  { int arr[T(__has_nothrow_move_assign(HasNoExceptNoThrowMoveAssign))]; }
+  { int arr[T(__has_nothrow_move_assign(HasMemberNoThrowMoveAssign))]; }
+  { int arr[T(__has_nothrow_move_assign(HasMemberNoExceptNoThrowMoveAssign))]; }
+  { int arr[T(__has_nothrow_move_assign(AllDeleted))]; }
+
+
+  { int arr[F(__has_nothrow_move_assign(HasThrowMoveAssign))]; }
+  { int arr[F(__has_nothrow_move_assign(HasNoExceptFalseMoveAssign))]; }
+  { int arr[F(__has_nothrow_move_assign(HasMemberThrowMoveAssign))]; }
+  { int arr[F(__has_nothrow_move_assign(HasMemberNoExceptFalseMoveAssign))]; }
+  { int arr[F(__has_nothrow_move_assign(NoDefaultMoveAssignDueToUDCopyCtor))]; }
+  { int arr[F(__has_nothrow_move_assign(NoDefaultMoveAssignDueToUDCopyAssign))]; }
+  { int arr[F(__has_nothrow_move_assign(NoDefaultMoveAssignDueToDtor))]; }
+}
+
+void has_trivial_move_assign() {
+  // n3376 12.8 [class.copy]/25
+  // A copy/move assignment operator for class X is trivial if it 
+  // is not user-provided, its declared parameter type is the same 
+  // as if it had been implicitly declared, and if:
+  //  — class X has no virtual functions (10.3) and no virtual base 
+  //    classes (10.1), and
+  //  — the assignment operator selected to copy/move each direct 
+  //    base class subobject is trivial, and
+  //  — for each non-static data member of X that is of class type 
+  //    (or array thereof), the assignment operator
+  //    selected to copy/move that member is trivial;
+  { int arr[T(__has_trivial_move_assign(Int))]; }
+  { int arr[T(__has_trivial_move_assign(HasStaticMemberMoveAssign))]; }
+  { int arr[T(__has_trivial_move_assign(AllDeleted))]; }
+
+  { int arr[F(__has_trivial_move_assign(HasVirt))]; }
+  { int arr[F(__has_trivial_move_assign(DerivesVirt))]; }
+  { int arr[F(__has_trivial_move_assign(HasMoveAssign))]; }
+  { int arr[F(__has_trivial_move_assign(DerivesHasMoveAssign))]; }
+  { int arr[F(__has_trivial_move_assign(HasMemberMoveAssign))]; }
+  { int arr[F(__has_nothrow_move_assign(NoDefaultMoveAssignDueToUDCopyCtor))]; }
+  { int arr[F(__has_nothrow_move_assign(NoDefaultMoveAssignDueToUDCopyAssign))]; }
 }
 
 void has_nothrow_copy() {

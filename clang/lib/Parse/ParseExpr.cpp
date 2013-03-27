@@ -1188,10 +1188,13 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___is_union:
   case tok::kw___is_final:
   case tok::kw___has_trivial_constructor:
+  case tok::kw___has_trivial_move_constructor:
   case tok::kw___has_trivial_copy:
   case tok::kw___has_trivial_assign:
+  case tok::kw___has_trivial_move_assign:
   case tok::kw___has_trivial_destructor:
   case tok::kw___has_nothrow_assign:
+  case tok::kw___has_nothrow_move_assign:
   case tok::kw___has_nothrow_copy:
   case tok::kw___has_nothrow_constructor:
   case tok::kw___has_virtual_destructor:
