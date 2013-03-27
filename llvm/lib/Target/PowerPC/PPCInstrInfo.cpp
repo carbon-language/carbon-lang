@@ -94,12 +94,18 @@ bool PPCInstrInfo::isCoalescableExtInstr(const MachineInstr &MI,
 
 unsigned PPCInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                            int &FrameIndex) const {
+  // Note: This list must be kept consistent with LoadRegFromStackSlot.
   switch (MI->getOpcode()) {
   default: break;
   case PPC::LD:
   case PPC::LWZ:
   case PPC::LFS:
   case PPC::LFD:
+  case PPC::RESTORE_CR:
+  case PPC::LVX:
+  case PPC::RESTORE_VRSAVE:
+    // Check for the operands added by addFrameReference (the immediate is the
+    // offset which defaults to 0).
     if (MI->getOperand(1).isImm() && !MI->getOperand(1).getImm() &&
         MI->getOperand(2).isFI()) {
       FrameIndex = MI->getOperand(2).getIndex();
@@ -112,12 +118,18 @@ unsigned PPCInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
 
 unsigned PPCInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
                                           int &FrameIndex) const {
+  // Note: This list must be kept consistent with StoreRegToStackSlot.
   switch (MI->getOpcode()) {
   default: break;
   case PPC::STD:
   case PPC::STW:
   case PPC::STFS:
   case PPC::STFD:
+  case PPC::SPILL_CR:
+  case PPC::STVX:
+  case PPC::SPILL_VRSAVE:
+    // Check for the operands added by addFrameReference (the immediate is the
+    // offset which defaults to 0).
     if (MI->getOperand(1).isImm() && !MI->getOperand(1).getImm() &&
         MI->getOperand(2).isFI()) {
       FrameIndex = MI->getOperand(2).getIndex();
@@ -441,6 +453,9 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                   const TargetRegisterClass *RC,
                                   SmallVectorImpl<MachineInstr*> &NewMIs,
                                   bool &NonRI, bool &SpillsVRS) const{
+  // Note: If additional store instructions are added here,
+  // update isStoreToStackSlot.
+
   DebugLoc DL;
   if (PPC::GPRCRegClass.hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STW))
@@ -564,6 +579,9 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                                    const TargetRegisterClass *RC,
                                    SmallVectorImpl<MachineInstr*> &NewMIs,
                                    bool &NonRI, bool &SpillsVRS) const{
+  // Note: If additional load instructions are added here,
+  // update isLoadFromStackSlot.
+
   if (PPC::GPRCRegClass.hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LWZ),
                                                DestReg), FrameIdx));
