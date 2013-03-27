@@ -129,10 +129,9 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
                             diag::err_asm_invalid_lvalue_in_output)
                        << OutputExpr->getSourceRange());
 
-    if (RequireCompleteType(OutputExpr->getLocStart(), Exprs[i]->getType(), 0))
-      return StmtError(Diag(OutputExpr->getLocStart(),
-                            diag::err_dereference_incomplete_type)
-                       << Exprs[i]->getType());
+    if (RequireCompleteType(OutputExpr->getLocStart(), Exprs[i]->getType(),
+                            diag::err_dereference_incomplete_type))
+      return StmtError();
 
     OutputConstraintInfos.push_back(Info);
   }
@@ -189,10 +188,9 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
       continue;
 
     if (!Ty->isVoidType() || !Info.allowsMemory())
-      if (RequireCompleteType(InputExpr->getLocStart(), Exprs[i]->getType(), 0))
-        return StmtError(Diag(InputExpr->getLocStart(),
-                              diag::err_dereference_incomplete_type)
-                         << Exprs[i]->getType());
+      if (RequireCompleteType(InputExpr->getLocStart(), Exprs[i]->getType(),
+                              diag::err_dereference_incomplete_type))
+        return StmtError();
 
     unsigned Size = Context.getTypeSize(Ty);
     if (!Context.getTargetInfo().validateInputSize(Literal->getString(),
