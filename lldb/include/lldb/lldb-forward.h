@@ -178,6 +178,7 @@ class   RegisterValue;
 class   RegularExpression;
 class   Scalar;
 class   ScriptInterpreter;
+class   ScriptInterpreterLocker;
 class   ScriptInterpreterObject;
 #ifndef LLDB_DISABLE_PYTHON
 class   ScriptInterpreterPython;

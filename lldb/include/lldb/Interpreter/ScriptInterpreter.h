@@ -61,6 +61,22 @@ public:
 protected:
     void* m_object;
 };
+    
+class ScriptInterpreterLocker
+{
+public:
+    
+    ScriptInterpreterLocker ()
+    {
+    }
+    
+    virtual ~ScriptInterpreterLocker ()
+    {
+    }
+private:
+    DISALLOW_COPY_AND_ASSIGN (ScriptInterpreterLocker);
+};
+
 
 class ScriptInterpreter
 {
@@ -408,6 +424,9 @@ public:
     {
         return lldb::ScriptInterpreterObjectSP(new ScriptInterpreterObject(object));
     }
+    
+    virtual std::auto_ptr<ScriptInterpreterLocker>
+    AcquireInterpreterLock ();
     
     const char *
     GetScriptInterpreterPtyName ();

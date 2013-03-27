@@ -181,6 +181,9 @@ public:
     virtual lldb::ScriptInterpreterObjectSP
     MakeScriptObject (void* object);
     
+    virtual std::auto_ptr<ScriptInterpreterLocker>
+    AcquireInterpreterLock ();
+    
     void
     CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
                                              CommandReturnObject &result);
@@ -271,7 +274,7 @@ private:
             DISALLOW_COPY_AND_ASSIGN (ScriptInterpreterPythonObject);
     };
     
-	class Locker
+	class Locker : public ScriptInterpreterLocker
 	{
 	public:
         

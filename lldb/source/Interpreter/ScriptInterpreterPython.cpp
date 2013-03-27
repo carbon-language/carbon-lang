@@ -135,6 +135,7 @@ ScriptInterpreterPython::Locker::Locker (ScriptInterpreterPython *py_interpreter
                                          uint16_t on_entry,
                                          uint16_t on_leave,
                                          FILE* wait_msg_handle) :
+    ScriptInterpreterLocker (),
     m_teardown_session( (on_leave & TearDownSession) == TearDownSession ),
     m_python_interpreter(py_interpreter),
     m_tmp_fh(wait_msg_handle)
@@ -2804,6 +2805,15 @@ ScriptInterpreterPython::GetDocumentationForItem(const char* item, std::string& 
         dest.assign(str_stream.GetData());
         return false;
     }
+}
+
+std::auto_ptr<ScriptInterpreterLocker>
+ScriptInterpreterPython::AcquireInterpreterLock ()
+{
+    std::auto_ptr<ScriptInterpreterLocker> py_lock(new Locker(this,
+                                                              Locker::AcquireLock | Locker::InitSession,
+                                                              Locker::FreeLock | Locker::TearDownSession));
+    return py_lock;
 }
 
 void
