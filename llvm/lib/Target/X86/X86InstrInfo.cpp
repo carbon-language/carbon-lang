@@ -3655,7 +3655,16 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                     const SmallVectorImpl<MachineOperand> &MOs,
                                     unsigned Size, unsigned Align) const {
   const DenseMap<unsigned, std::pair<unsigned,unsigned> > *OpcodeTablePtr = 0;
+  bool isCallRegIndirect = TM.getSubtarget<X86Subtarget>().callRegIndirect();
   bool isTwoAddrFold = false;
+
+  // Atom favors register form of call. So, we do not fold loads into calls
+  // when X86Subtarget is Atom.
+  if (isCallRegIndirect &&
+    (MI->getOpcode() == X86::CALL32r || MI->getOpcode() == X86::CALL64r)) {
+    return NULL;
+  }
+
   unsigned NumOps = MI->getDesc().getNumOperands();
   bool isTwoAddr = NumOps > 1 &&
     MI->getDesc().getOperandConstraint(1, MCOI::TIED_TO) != -1;

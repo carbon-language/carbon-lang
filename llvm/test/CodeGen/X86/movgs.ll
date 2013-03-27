@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=x86 -mtriple=i386-linux-gnu -mattr=sse41 | FileCheck %s --check-prefix=X32
-; RUN: llc < %s -mtriple=x86_64-linux -mattr=sse41 | FileCheck %s --check-prefix=X64
-; RUN: llc < %s -mtriple=x86_64-win32 -mattr=sse41 | FileCheck %s --check-prefix=X64
+; RUN: llc < %s -march=x86 -mtriple=i386-linux-gnu -mcpu=penryn -mattr=sse41 | FileCheck %s --check-prefix=X32
+; RUN: llc < %s -mtriple=x86_64-linux -mcpu=penryn -mattr=sse41 | FileCheck %s --check-prefix=X64
+; RUN: llc < %s -mtriple=x86_64-win32 -mcpu=penryn -mattr=sse41 | FileCheck %s --check-prefix=X64
 
 define i32 @test1() nounwind readonly {
 entry:

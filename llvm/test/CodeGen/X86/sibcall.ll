@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=i686-linux   -mattr=+sse2 -asm-verbose=false | FileCheck %s -check-prefix=32
-; RUN: llc < %s -mtriple=x86_64-linux -mattr=+sse2 -asm-verbose=false | FileCheck %s -check-prefix=64
+; RUN: llc < %s -mtriple=i686-linux   -mcpu=core2 -mattr=+sse2 -asm-verbose=false | FileCheck %s -check-prefix=32
+; RUN: llc < %s -mtriple=x86_64-linux -mcpu=core2 -mattr=+sse2 -asm-verbose=false | FileCheck %s -check-prefix=64
 
 define void @t1(i32 %x) nounwind ssp {
 entry:
