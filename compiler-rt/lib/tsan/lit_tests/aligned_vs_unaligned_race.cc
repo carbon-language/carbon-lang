@@ -1,4 +1,4 @@
-// RUN: %clangxx_tsan -O1 %s -o %t && %t
+// RUN: %clangxx_tsan -O1 %s -o %t && %t 2>&1 | FileCheck %s
 // Race between an aligned access and an unaligned access, which
 // touches the same memory region.
 // This is a real race which is not detected by tsan.
@@ -27,4 +27,6 @@ int main() {
   pthread_create(&t[1], NULL, Thread2, NULL);
   pthread_join(t[0], NULL);
   pthread_join(t[1], NULL);
+  printf("Pass\n");
+  // CHECK: Pass
 }
