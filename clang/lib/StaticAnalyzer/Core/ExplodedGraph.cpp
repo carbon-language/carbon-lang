@@ -117,8 +117,7 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
     return false;
 
   // Condition 4.
-  PostStmt ps = progPoint.castAs<PostStmt>();
-  if (ps.getTag())
+  if (progPoint.getTag())
     return false;
 
   // Conditions 5, 6, and 7.
@@ -128,8 +127,9 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
       progPoint.getLocationContext() != pred->getLocationContext())
     return false;
 
-  // All further checks require expressions.
-  const Expr *Ex = dyn_cast<Expr>(ps.getStmt());
+  // All further checks require expressions. As per #3, we know that we have
+  // a PostStmt.
+  const Expr *Ex = dyn_cast<Expr>(progPoint.castAs<PostStmt>().getStmt());
   if (!Ex)
     return false;
 
