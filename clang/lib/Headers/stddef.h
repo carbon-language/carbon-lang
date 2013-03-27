@@ -53,9 +53,7 @@ typedef __WCHAR_TYPE__ wchar_t;
 #endif
 
 #undef NULL
-#if defined(__APPLE__) && defined(__DARWIN_NULL)
-#  define NULL __DARWIN_NULL
-#elif defined(__cplusplus)
+#ifdef __cplusplus
 #  if !defined(__MINGW32__) && !defined(_MSC_VER)
 #    define NULL __null
 #  else
