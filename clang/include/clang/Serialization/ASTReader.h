@@ -24,7 +24,6 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/ExternalPreprocessorSource.h"
 #include "clang/Lex/HeaderSearch.h"
-#include "clang/Lex/PPMutationListener.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/Serialization/ASTBitCodes.h"
@@ -439,15 +438,6 @@ private:
   /// macro resides along with the offset that should be added to the
   /// global macro ID to produce a local ID.
   GlobalMacroMapType GlobalMacroMap;
-
-  typedef llvm::DenseMap<serialization::MacroID,
-            SmallVector<std::pair<serialization::SubmoduleID,
-                                        MacroUpdate>, 1> >
-    MacroUpdatesMap;
-
-  /// \brief Mapping from (global) macro IDs to the set of updates to be
-  /// performed to the corresponding macro.
-  MacroUpdatesMap MacroUpdates;
 
   /// \brief A vector containing submodules that have already been loaded.
   ///

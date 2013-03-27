@@ -113,8 +113,6 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
     OwningPtr<ASTConsumer> consumer;
     consumer.reset(new PCHGenerator(Clang->getPreprocessor(), "-", 0,
                                     /*isysroot=*/"", &OS));
-    Clang->getPreprocessor().setPPMutationListener(
-                                            consumer->GetPPMutationListener());
     Clang->getASTContext().setASTMutationListener(
                                             consumer->GetASTMutationListener());
     Clang->setASTConsumer(consumer.take());

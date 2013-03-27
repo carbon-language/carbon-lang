@@ -55,10 +55,6 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
   Buffer.clear();
 }
 
-PPMutationListener *PCHGenerator::GetPPMutationListener() {
-  return &Writer;
-}
-
 ASTMutationListener *PCHGenerator::GetASTMutationListener() {
   return &Writer;
 }

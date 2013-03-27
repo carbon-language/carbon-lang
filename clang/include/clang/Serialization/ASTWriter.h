@@ -18,7 +18,6 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/TemplateBase.h"
-#include "clang/Lex/PPMutationListener.h"
 #include "clang/Sema/SemaConsumer.h"
 #include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Serialization/ASTDeserializationListener.h"
@@ -76,7 +75,6 @@ namespace SrcMgr { class SLocEntry; }
 /// data structures. This bitstream can be de-serialized via an
 /// instance of the ASTReader class.
 class ASTWriter : public ASTDeserializationListener,
-                  public PPMutationListener,
                   public ASTMutationListener {
 public:
   typedef SmallVector<uint64_t, 64> RecordData;
@@ -755,7 +753,6 @@ public:
   ~PCHGenerator();
   virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
   virtual void HandleTranslationUnit(ASTContext &Ctx);
-  virtual PPMutationListener *GetPPMutationListener();
   virtual ASTMutationListener *GetASTMutationListener();
   virtual ASTDeserializationListener *GetASTDeserializationListener();
 };

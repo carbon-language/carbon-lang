@@ -2740,7 +2740,7 @@ void ASTReader::makeNamesVisible(const HiddenNames &Names) {
     }
 
     case HiddenName::MacroUndef: {
-      // FIXME: Remove HiddenName::MacroUndef and PPMutationListener.
+      // FIXME: Remove HiddenName::MacroUndef.
       break;
     }
     }

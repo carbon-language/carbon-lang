@@ -287,8 +287,6 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
       goto failure;
 
     CI.getASTContext().setASTMutationListener(Consumer->GetASTMutationListener());
-    CI.getPreprocessor().setPPMutationListener(
-      Consumer->GetPPMutationListener());
     
     if (!CI.getPreprocessorOpts().ChainedIncludes.empty()) {
       // Convert headers to PCH and chain them.
