@@ -432,7 +432,8 @@ private:
   void WritePreprocessorDetail(PreprocessingRecord &PPRec);
   void WriteSubmodules(Module *WritingModule);
                                         
-  void WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag);
+  void WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag,
+                                     bool isModule);
   void WriteCXXBaseSpecifiersOffsets();
   void WriteType(QualType T);
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);

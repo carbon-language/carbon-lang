@@ -2444,8 +2444,14 @@ ASTWriter::inferSubmoduleIDFromLocation(SourceLocation Loc) {
   return getSubmoduleID(OwningMod);
 }
 
-void ASTWriter::WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag) {
-  // FIXME: Make it work properly with modules.
+void ASTWriter::WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag,
+                                              bool isModule) {
+  // Make sure set diagnostic pragmas don't affect the translation unit that
+  // imports the module.
+  // FIXME: Make diagnostic pragma sections work properly with modules.
+  if (isModule)
+    return;
+
   llvm::SmallDenseMap<const DiagnosticsEngine::DiagState *, unsigned, 64>
       DiagStateIDMap;
   unsigned CurrID = 0;
@@ -4048,7 +4054,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   WriteOpenCLExtensions(SemaRef);
 
   WriteTypeDeclOffsets();
-  WritePragmaDiagnosticMappings(Context.getDiagnostics());
+  WritePragmaDiagnosticMappings(Context.getDiagnostics(), isModule);
 
   WriteCXXBaseSpecifiersOffsets();
   

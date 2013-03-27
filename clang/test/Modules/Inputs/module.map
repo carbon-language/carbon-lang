@@ -188,3 +188,7 @@ module config {
   header "config.h"
   config_macros [exhaustive] WANT_FOO, WANT_BAR
 }
+
+module diag_pragma {
+  header "diag_pragma.h"
+}
