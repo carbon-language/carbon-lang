@@ -28,6 +28,10 @@
 // to the header list file directory.  Use -prefix to specify a different
 // directory.
 //
+// Note that by default, the underlying Clang front end assumes .h files
+// contain C source.  If your .h files in the file list contain C++ source,
+// you should append the following to your command lines: -x c++ 
+//
 // Modularize will do normal parsing, reporting normal errors and warnings,
 // but will also report special error messages like the following:
 //
