@@ -9,7 +9,6 @@
 // RUN: %t 6 2>&1 | FileCheck %s --check-prefix=CHECK-6
 // FIXME: %t 7 2>&1 | FileCheck %s --check-prefix=CHECK-7
 // RUN: %t 8 2>&1 | FileCheck %s --check-prefix=CHECK-8
-// RUN: %t 9 2>&1 | FileCheck %s --check-prefix=CHECK-9
 
 // This test assumes float and double are IEEE-754 single- and double-precision.
 
@@ -48,6 +47,8 @@ int main(int argc, char **argv) {
   char NaNVal[] = { 0x01, 0x00, 0x80, 0x7f };
   float NaN;
   memcpy(&NaN, NaNVal, 4);
+
+  double DblInf = (double)Inf; // ok
 
   switch (argv[1][0]) {
     // FIXME: Produce a source location for these checks and test for it here.
@@ -94,8 +95,5 @@ int main(int argc, char **argv) {
   case '8':
     // CHECK-8: runtime error: value 1e+39 is outside the range of representable values of type 'float'
     return (float)1e39;
-  case '9':
-    // CHECK-9: runtime error: value {{.*}} is outside the range of representable values of type 'double'
-    return (double)Inf;
   }
 }
