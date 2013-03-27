@@ -33,7 +33,6 @@ module _Builtin_intrinsics [system] {
     explicit module sse {
       requires sse
       export mmx
-      export * // note: for hackish <emmintrin.h> dependency
       header "xmmintrin.h"
     }
 
