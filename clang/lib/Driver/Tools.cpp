@@ -1860,6 +1860,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-S");
     } else if (JA.getType() == types::TY_AST) {
       CmdArgs.push_back("-emit-pch");
+    } else if (JA.getType() == types::TY_ModuleFile) {
+      CmdArgs.push_back("-module-file-info");
     } else if (JA.getType() == types::TY_RewrittenObjC) {
       CmdArgs.push_back("-rewrite-objc");
       rewriteKind = RK_NonFragile;
@@ -3696,6 +3698,9 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
     else if (II.getType() == types::TY_AST)
       D.Diag(diag::err_drv_no_ast_support)
         << getToolChain().getTripleString();
+    else if (II.getType() == types::TY_ModuleFile)
+      D.Diag(diag::err_drv_no_module_support)
+        << getToolChain().getTripleString();
 
     if (types::canTypeBeUserSpecified(II.getType())) {
       CmdArgs.push_back("-x");
@@ -3826,6 +3831,9 @@ void hexagon::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     else if (II.getType() == types::TY_AST)
       D.Diag(clang::diag::err_drv_no_ast_support)
         << getToolChain().getTripleString();
+    else if (II.getType() == types::TY_ModuleFile)
+      D.Diag(diag::err_drv_no_module_support)
+      << getToolChain().getTripleString();
 
     if (II.isFilename())
       CmdArgs.push_back(II.getFilename());

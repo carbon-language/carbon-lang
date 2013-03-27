@@ -22,6 +22,7 @@
 #include "clang/Basic/FileSystemOptions.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/Version.h"
 #include "clang/Lex/ExternalPreprocessorSource.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/PreprocessingRecord.h"
@@ -98,6 +99,14 @@ class ASTUnresolvedSet;
 class ASTReaderListener {
 public:
   virtual ~ASTReaderListener();
+
+  /// \brief Receives the full Clang version information.
+  ///
+  /// \returns true to indicate that the version is invalid. Subclasses should
+  /// generally defer to this implementation.
+  virtual bool ReadFullVersionInformation(StringRef FullVersion) {
+    return FullVersion != getClangFullRepositoryVersion();
+  }
 
   /// \brief Receives the language options.
   ///

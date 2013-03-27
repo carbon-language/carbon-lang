@@ -180,6 +180,9 @@ Command-line parameters
 ``-fmodules-prune-after=seconds``
   Specify the minimum time (in seconds) for which a file in the module cache must be unused (according to access time) before module pruning will remove it. The default delay is large (2,678,400 seconds, or 31 days) to avoid excessive module rebuilding.
 
+``-module-file-info <module file name>``
+  Debugging aid that prints information about a given module file (with a ``.pcm`` extension), including the language and preprocessor options that particular module variant was built with.
+
 Module Map Language
 ===================
 

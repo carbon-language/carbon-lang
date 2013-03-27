@@ -3487,10 +3487,9 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
       if (Record[0] != VERSION_MAJOR)
         return true;
 
-      const std::string &CurBranch = getClangFullRepositoryVersion();
-      if (StringRef(CurBranch) != Blob)
+      if (Listener.ReadFullVersionInformation(Blob))
         return true;
-
+      
       break;
     }
     case LANGUAGE_OPTIONS:

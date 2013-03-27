@@ -956,6 +956,7 @@ def mips64 : Flag<["-"], "mips64">, Group<mips_CPUs_Group>,
   HelpText<"Equivalent to -march=mips64">, Flags<[HelpHidden]>;
 def mips64r2 : Flag<["-"], "mips64r2">, Group<mips_CPUs_Group>,
   HelpText<"Equivalent to -march=mips64r2">, Flags<[HelpHidden]>;
+def module_file_info : Flag<["-"], "module-file-info">, Flags<[DriverOption,CC1Option]>, Group<Action_Group>;
 def mthumb : Flag<["-"], "mthumb">, Group<m_Group>;
 def mtune_EQ : Joined<["-"], "mtune=">, Group<m_Group>;
 def multi__module : Flag<["-"], "multi_module">;

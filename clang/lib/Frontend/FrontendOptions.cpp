@@ -13,7 +13,7 @@ using namespace clang;
 
 InputKind FrontendOptions::getInputKindForExtension(StringRef Extension) {
   return llvm::StringSwitch<InputKind>(Extension)
-    .Case("ast", IK_AST)
+    .Cases("ast", "pcm", IK_AST)
     .Case("c", IK_C)
     .Cases("S", "s", IK_Asm)
     .Case("i", IK_PreprocessedC)

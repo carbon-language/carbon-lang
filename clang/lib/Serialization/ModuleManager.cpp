@@ -29,7 +29,19 @@ using namespace serialization;
 ModuleFile *ModuleManager::lookup(StringRef Name) {
   const FileEntry *Entry = FileMgr.getFile(Name, /*openFile=*/false,
                                            /*cacheFailure=*/false);
-  return Modules[Entry];
+  if (Entry)
+    return lookup(Entry);
+
+  return 0;
+}
+
+ModuleFile *ModuleManager::lookup(const FileEntry *File) {
+  llvm::DenseMap<const FileEntry *, ModuleFile *>::iterator Known
+    = Modules.find(File);
+  if (Known == Modules.end())
+    return 0;
+
+  return Known->second;
 }
 
 llvm::MemoryBuffer *ModuleManager::lookupBuffer(StringRef Name) {

@@ -80,6 +80,7 @@ TYPE("lto-bc",                   LTO_BC,       INVALID,         "o",     "")
 
 // Misc.
 TYPE("ast",                      AST,          INVALID,         "ast",   "u")
+TYPE("pcm",                      ModuleFile,   INVALID,         "pcm",   "u")
 TYPE("plist",                    Plist,        INVALID,         "plist", "")
 TYPE("rewritten-objc",           RewrittenObjC,INVALID,         "cpp",   "")
 TYPE("rewritten-legacy-objc",    RewrittenLegacyObjC,INVALID,   "cpp",   "")

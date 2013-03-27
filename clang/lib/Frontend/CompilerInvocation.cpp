@@ -644,6 +644,8 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       Opts.ProgramAction = frontend::InitOnly; break;
     case OPT_fsyntax_only:
       Opts.ProgramAction = frontend::ParseSyntaxOnly; break;
+    case OPT_module_file_info:
+      Opts.ProgramAction = frontend::ModuleFileInfo; break;
     case OPT_print_decl_contexts:
       Opts.ProgramAction = frontend::PrintDeclContext; break;
     case OPT_print_preamble:
@@ -779,7 +781,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       .Case("objective-c-header", IK_ObjC)
       .Case("c++-header", IK_CXX)
       .Case("objective-c++-header", IK_ObjCXX)
-      .Case("ast", IK_AST)
+      .Cases("ast", "pcm", IK_AST)
       .Case("ir", IK_LLVM_IR)
       .Default(IK_None);
     if (DashX == IK_None)
@@ -1465,6 +1467,7 @@ static void ParsePreprocessorOutputArgs(PreprocessorOutputOptions &Opts,
   case frontend::GeneratePCH:
   case frontend::GeneratePTH:
   case frontend::ParseSyntaxOnly:
+  case frontend::ModuleFileInfo:
   case frontend::PluginAction:
   case frontend::PrintDeclContext:
   case frontend::RewriteObjC:
@@ -1627,6 +1630,8 @@ llvm::APInt ModuleSignature::getAsInteger() const {
 }
 
 std::string CompilerInvocation::getModuleHash() const {
+  // Note: For QoI reasons, the things we use as a hash here should all be
+  // dumped via the -module-info flag.
   using llvm::hash_code;
   using llvm::hash_value;
   using llvm::hash_combine;

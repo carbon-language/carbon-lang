@@ -135,7 +135,10 @@ public:
   
   /// \brief Returns the module associated with the given name
   ModuleFile *lookup(StringRef Name);
-  
+
+  /// \brief Returns the module associated with the given module file.
+  ModuleFile *lookup(const FileEntry *File);
+
   /// \brief Returns the in-memory (virtual file) buffer with the given name
   llvm::MemoryBuffer *lookupBuffer(StringRef Name);
   
