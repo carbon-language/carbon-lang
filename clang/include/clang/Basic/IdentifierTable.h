@@ -146,9 +146,6 @@ public:
   bool hadMacroDefinition() const {
     return HadMacro;
   }
-  void setHadMacroDefinition(bool Val) {
-    HadMacro = Val;
-  }
 
   /// getTokenID - If this is a source-language token (e.g. 'for'), this API
   /// can be used to cause the lexer to map identifiers to source-language
