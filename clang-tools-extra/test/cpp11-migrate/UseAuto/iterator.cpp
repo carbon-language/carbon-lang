@@ -148,5 +148,13 @@ int main(int argc, char **argv) {
     // CHECK: auto && I2 = Vec.begin();
   }
 
+  // Passing a string as an argument to introduce a temporary object
+  // that will create an expression with cleanups. Bugzilla: 15550
+  {
+    std::unordered_map<int> MapFind;
+    std::unordered_map<int>::iterator I = MapFind.find("foo");
+    // CHECK: auto I = MapFind.find("foo");
+  }
+
   return 0;
 }

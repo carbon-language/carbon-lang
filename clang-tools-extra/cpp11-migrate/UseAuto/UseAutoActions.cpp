@@ -28,7 +28,14 @@ void UseAutoFixer::run(const MatchFinder::MatchResult &Result) {
   if (!SM.isFromMainFile(D->getLocStart()))
     return;
 
-  const CXXConstructExpr *Construct = cast<CXXConstructExpr>(D->getInit());
+  const Expr *ExprInit = D->getInit();
+
+  // Skip expressions with cleanups from the initializer expression.
+  if (const ExprWithCleanups *E = dyn_cast<ExprWithCleanups>(ExprInit))
+    ExprInit = E->getSubExpr();
+
+  const CXXConstructExpr *Construct = cast<CXXConstructExpr>(ExprInit);
+
   assert(Construct->getNumArgs() == 1u &&
          "Expected constructor with single argument");
 

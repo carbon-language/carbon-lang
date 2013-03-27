@@ -107,6 +107,9 @@ public:
 
   const_reverse_iterator rbegin() const { return const_reverse_iterator(); }
   const_reverse_iterator rend() const { return const_reverse_iterator(); }
+
+  template <typename K>
+  iterator find(const K &Key) { return iterator(); }
 };
 
 #if USE_INLINE_NAMESPACE
