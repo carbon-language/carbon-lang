@@ -675,7 +675,7 @@ def : Pat<(PPCload xaddr:$src),
           (LDX xaddr:$src)>;
 
 // Support for medium and large code model.
-def ADDIStocHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, tocentry:$disp),
+def ADDIStocHA: Pseudo<(outs G8RC:$rD), (ins G8RC_NOX0:$reg, tocentry:$disp),
                        "#ADDIStocHA",
                        [(set i64:$rD,
                          (PPCaddisTocHA i64:$reg, tglobaladdr:$disp))]>,
@@ -684,13 +684,13 @@ def LDtocL: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
                    "#LDtocL",
                    [(set i64:$rD,
                      (PPCldTocL tglobaladdr:$disp, i64:$reg))]>, isPPC64;
-def ADDItocL: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, tocentry:$disp),
+def ADDItocL: Pseudo<(outs G8RC:$rD), (ins G8RC_NOX0:$reg, tocentry:$disp),
                      "#ADDItocL",
                      [(set i64:$rD,
                        (PPCaddiTocL i64:$reg, tglobaladdr:$disp))]>, isPPC64;
 
 // Support for thread-local storage.
-def ADDISgotTprelHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolHi64:$disp),
+def ADDISgotTprelHA: Pseudo<(outs G8RC:$rD), (ins G8RC_NOX0:$reg, symbolHi64:$disp),
                          "#ADDISgotTprelHA",
                          [(set i64:$rD,
                            (PPCaddisGotTprelHA i64:$reg,
@@ -703,12 +703,12 @@ def LDgotTprelL: Pseudo<(outs G8RC:$rD), (ins symbolLo64:$disp, G8RC:$reg),
                  isPPC64;
 def : Pat<(PPCaddTls i64:$in, tglobaltlsaddr:$g),
           (ADD8TLS $in, tglobaltlsaddr:$g)>;
-def ADDIStlsgdHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolHi64:$disp),
+def ADDIStlsgdHA: Pseudo<(outs G8RC:$rD), (ins G8RC_NOX0:$reg, symbolHi64:$disp),
                          "#ADDIStlsgdHA",
                          [(set i64:$rD,
                            (PPCaddisTlsgdHA i64:$reg, tglobaltlsaddr:$disp))]>,
                   isPPC64;
-def ADDItlsgdL : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolLo64:$disp),
+def ADDItlsgdL : Pseudo<(outs G8RC:$rD), (ins G8RC_NOX0:$reg, symbolLo64:$disp),
                        "#ADDItlsgdL",
                        [(set i64:$rD,
                          (PPCaddiTlsgdL i64:$reg, tglobaltlsaddr:$disp))]>,
@@ -718,12 +718,12 @@ def GETtlsADDR : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, tlsgd:$sym),
                         [(set i64:$rD,
                           (PPCgetTlsAddr i64:$reg, tglobaltlsaddr:$sym))]>,
                  isPPC64;
-def ADDIStlsldHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolHi64:$disp),
+def ADDIStlsldHA: Pseudo<(outs G8RC:$rD), (ins G8RC_NOX0:$reg, symbolHi64:$disp),
                          "#ADDIStlsldHA",
                          [(set i64:$rD,
                            (PPCaddisTlsldHA i64:$reg, tglobaltlsaddr:$disp))]>,
                   isPPC64;
-def ADDItlsldL : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolLo64:$disp),
+def ADDItlsldL : Pseudo<(outs G8RC:$rD), (ins G8RC_NOX0:$reg, symbolLo64:$disp),
                        "#ADDItlsldL",
                        [(set i64:$rD,
                          (PPCaddiTlsldL i64:$reg, tglobaltlsaddr:$disp))]>,
@@ -733,13 +733,13 @@ def GETtlsldADDR : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, tlsgd:$sym),
                           [(set i64:$rD,
                             (PPCgetTlsldAddr i64:$reg, tglobaltlsaddr:$sym))]>,
                    isPPC64;
-def ADDISdtprelHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolHi64:$disp),
+def ADDISdtprelHA: Pseudo<(outs G8RC:$rD), (ins G8RC_NOX0:$reg, symbolHi64:$disp),
                           "#ADDISdtprelHA",
                           [(set i64:$rD,
                             (PPCaddisDtprelHA i64:$reg,
                                               tglobaltlsaddr:$disp))]>,
                    isPPC64;
-def ADDIdtprelL : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolLo64:$disp),
+def ADDIdtprelL : Pseudo<(outs G8RC:$rD), (ins G8RC_NOX0:$reg, symbolLo64:$disp),
                          "#ADDIdtprelL",
                          [(set i64:$rD,
                            (PPCaddiDtprelL i64:$reg, tglobaltlsaddr:$disp))]>,
