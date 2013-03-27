@@ -49,6 +49,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->force_seq_cst_atomics = false;
   f->strip_path_prefix = "";
   f->suppressions = "";
+  f->print_suppressions = false;
   f->exitcode = 66;
   f->log_path = "stderr";
   f->atexit_sleep_ms = 1000;
@@ -78,6 +79,7 @@ void InitializeFlags(Flags *f, const char *env) {
   ParseFlag(env, &f->force_seq_cst_atomics, "force_seq_cst_atomics");
   ParseFlag(env, &f->strip_path_prefix, "strip_path_prefix");
   ParseFlag(env, &f->suppressions, "suppressions");
+  ParseFlag(env, &f->print_suppressions, "print_suppressions");
   ParseFlag(env, &f->exitcode, "exitcode");
   ParseFlag(env, &f->log_path, "log_path");
   ParseFlag(env, &f->atexit_sleep_ms, "atexit_sleep_ms");

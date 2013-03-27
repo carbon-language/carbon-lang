@@ -127,6 +127,7 @@ Suppression *SuppressionParse(Suppression *head, const char* supp) {
       s->templ = (char*)internal_alloc(MBlockSuppression, end2 - line + 1);
       internal_memcpy(s->templ, line, end2 - line);
       s->templ[end2 - line] = 0;
+      s->hit_count = 0;
     }
     if (end[0] == 0)
       break;
@@ -144,7 +145,7 @@ void InitializeSuppressions() {
 #endif
 }
 
-uptr IsSuppressed(ReportType typ, const ReportStack *stack) {
+uptr IsSuppressed(ReportType typ, const ReportStack *stack, Suppression **sp) {
   if (g_suppressions == 0 || stack == 0)
     return 0;
   SuppressionType stype;
@@ -165,10 +166,38 @@ uptr IsSuppressed(ReportType typ, const ReportStack *stack) {
            SuppressionMatch(supp->templ, frame->file) ||
            SuppressionMatch(supp->templ, frame->module))) {
         DPrintf("ThreadSanitizer: matched suppression '%s'\n", supp->templ);
+        supp->hit_count++;
+        *sp = supp;
         return frame->pc;
       }
     }
   }
   return 0;
+}
+
+static const char *SuppTypeStr(SuppressionType t) {
+  switch (t) {
+  case SuppressionRace:   return "race";
+  case SuppressionMutex:  return "mutex";
+  case SuppressionThread: return "thread";
+  case SuppressionSignal: return "signal";
+  }
+  CHECK(0);
+  return "unknown";
+}
+
+void PrintMatchedSuppressions() {
+  int hit_count = 0;
+  for (Suppression *supp = g_suppressions; supp; supp = supp->next)
+    hit_count += supp->hit_count;
+  if (hit_count == 0)
+    return;
+  Printf("ThreadSanitizer: Matched %d suppressions (pid=%d):\n",
+      hit_count, GetPid());
+  for (Suppression *supp = g_suppressions; supp; supp = supp->next) {
+    if (supp->hit_count == 0)
+      continue;
+    Printf("%d %s:%s\n", supp->hit_count, SuppTypeStr(supp->type), supp->templ);
+  }
 }
 }  // namespace __tsan

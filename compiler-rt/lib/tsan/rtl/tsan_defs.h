@@ -162,6 +162,7 @@ class ReportDesc;
 class RegionAlloc;
 class StackTrace;
 struct MBlock;
+struct Suppression;
 
 }  // namespace __tsan
 

@@ -512,6 +512,7 @@ struct RacyAddress {
 struct FiredSuppression {
   ReportType type;
   uptr pc;
+  Suppression *supp;
 };
 
 struct Context {

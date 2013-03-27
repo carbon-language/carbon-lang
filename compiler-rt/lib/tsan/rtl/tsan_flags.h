@@ -52,6 +52,8 @@ struct Flags {
   const char *strip_path_prefix;
   // Suppressions filename.
   const char *suppressions;
+  // Print matched suppressions at exit.
+  bool print_suppressions;
   // Override exit status if something was reported.
   int exitcode;
   // Write logs to "log_path.pid".

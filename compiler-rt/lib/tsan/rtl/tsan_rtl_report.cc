@@ -501,12 +501,13 @@ bool OutputReport(Context *ctx,
                   const ReportStack *suppress_stack2) {
   atomic_store(&ctx->last_symbolize_time_ns, NanoTime(), memory_order_relaxed);
   const ReportDesc *rep = srep.GetReport();
-  uptr suppress_pc = IsSuppressed(rep->typ, suppress_stack1);
+  Suppression *supp = 0;
+  uptr suppress_pc = IsSuppressed(rep->typ, suppress_stack1, &supp);
   if (suppress_pc == 0)
-    suppress_pc = IsSuppressed(rep->typ, suppress_stack2);
+    suppress_pc = IsSuppressed(rep->typ, suppress_stack2, &supp);
   if (suppress_pc != 0) {
-    FiredSuppression supp = {srep.GetReport()->typ, suppress_pc};
-    ctx->fired_suppressions.PushBack(supp);
+    FiredSuppression s = {srep.GetReport()->typ, suppress_pc, supp};
+    ctx->fired_suppressions.PushBack(s);
   }
   if (OnReport(rep, suppress_pc != 0))
     return false;
@@ -522,8 +523,12 @@ bool IsFiredSuppression(Context *ctx,
     if (ctx->fired_suppressions[k].type != srep.GetReport()->typ)
       continue;
     for (uptr j = 0; j < trace.Size(); j++) {
-      if (trace.Get(j) == ctx->fired_suppressions[k].pc)
+      FiredSuppression *s = &ctx->fired_suppressions[k];
+      if (trace.Get(j) == s->pc) {
+        if (s->supp)
+          s->supp->hit_count++;
         return true;
+      }
     }
   }
   return false;
@@ -560,7 +565,7 @@ static bool IsJavaNonsense(const ReportDesc *rep) {
           || (frame->func == 0 && frame->file == 0 && frame->line == 0
           && frame->module == 0)) {
         if (frame) {
-          FiredSuppression supp = {rep->typ, frame->pc};
+          FiredSuppression supp = {rep->typ, frame->pc, 0};
           CTX()->fired_suppressions.PushBack(supp);
         }
         return true;

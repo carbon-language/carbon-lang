@@ -277,6 +277,9 @@ int Finalize(ThreadState *thr) {
         ctx->nmissed_expected);
   }
 
+  if (flags()->print_suppressions)
+    PrintMatchedSuppressions();
+
   failed = OnFinalize(failed);
 
   StatAggregate(ctx->stat, thr->stat);
