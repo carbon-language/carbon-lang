@@ -3396,7 +3396,9 @@ TreeTransform<Derived>::TransformQualifiedType(TypeLocBuilder &TLB,
   }
   if (!Quals.empty()) {
     Result = SemaRef.BuildQualifiedType(Result, T.getBeginLoc(), Quals);
-    TLB.push<QualifiedTypeLoc>(Result);
+    // BuildQualifiedType might not add qualifiers if they are invalid.
+    if (Result.hasLocalQualifiers())
+      TLB.push<QualifiedTypeLoc>(Result);
     // No location information to preserve.
   }
 

@@ -1106,7 +1106,7 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
             << EltTy << DS.getSourceRange();
           TypeQuals &= ~DeclSpec::TQ_restrict; // Remove the restrict qualifier.
         }
-      } else {
+      } else if (!Result->isDependentType()) {
         S.Diag(DS.getRestrictSpecLoc(),
                diag::err_typecheck_invalid_restrict_not_pointer)
           << Result << DS.getSourceRange();
