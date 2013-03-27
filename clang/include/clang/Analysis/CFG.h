@@ -841,17 +841,10 @@ namespace llvm {
 
 /// Implement simplify_type for CFGTerminator, so that we can dyn_cast from
 /// CFGTerminator to a specific Stmt class.
-template <> struct simplify_type<const ::clang::CFGTerminator> {
-  typedef const ::clang::Stmt *SimpleType;
-  static SimpleType getSimplifiedValue(const ::clang::CFGTerminator &Val) {
-    return Val.getStmt();
-  }
-};
-
 template <> struct simplify_type< ::clang::CFGTerminator> {
   typedef ::clang::Stmt *SimpleType;
-  static SimpleType getSimplifiedValue(const ::clang::CFGTerminator &Val) {
-    return const_cast<SimpleType>(Val.getStmt());
+  static SimpleType getSimplifiedValue(::clang::CFGTerminator &Val) {
+    return Val.getStmt();
   }
 };
 
