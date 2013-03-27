@@ -24,7 +24,8 @@ namespace llvm {
 
   /// An error handler callback.
   typedef void (*fatal_error_handler_t)(void *user_data,
-                                        const std::string& reason);
+                                        const std::string& reason,
+                                        bool gen_crash_diag);
 
   /// install_fatal_error_handler - Installs a new error handler to be used
   /// whenever a serious (non-recoverable) error is encountered by LLVM.
@@ -73,10 +74,14 @@ namespace llvm {
   /// standard error, followed by a newline.
   /// After the error handler is called this function will call exit(1), it 
   /// does not return.
-  LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const char *reason);
-  LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const std::string &reason);
-  LLVM_ATTRIBUTE_NORETURN void report_fatal_error(StringRef reason);
-  LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const Twine &reason);
+  LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const char *reason,
+                                                  bool gen_crash_diag = true);
+  LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const std::string &reason,
+                                                  bool gen_crash_diag = true);
+  LLVM_ATTRIBUTE_NORETURN void report_fatal_error(StringRef reason,
+                                                  bool gen_crash_diag = true);
+  LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const Twine &reason,
+                                                  bool gen_crash_diag = true);
 
   /// This function calls abort(), and prints the optional message to stderr.
   /// Use the llvm_unreachable macro (that adds location info), instead of

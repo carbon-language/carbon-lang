@@ -49,21 +49,21 @@ void llvm::remove_fatal_error_handler() {
   ErrorHandler = 0;
 }
 
-void llvm::report_fatal_error(const char *Reason) {
-  report_fatal_error(Twine(Reason));
+void llvm::report_fatal_error(const char *Reason, bool GenCrashDiag) {
+  report_fatal_error(Twine(Reason), GenCrashDiag);
 }
 
-void llvm::report_fatal_error(const std::string &Reason) {
-  report_fatal_error(Twine(Reason));
+void llvm::report_fatal_error(const std::string &Reason, bool GenCrashDiag) {
+  report_fatal_error(Twine(Reason), GenCrashDiag);
 }
 
-void llvm::report_fatal_error(StringRef Reason) {
-  report_fatal_error(Twine(Reason));
+void llvm::report_fatal_error(StringRef Reason, bool GenCrashDiag) {
+  report_fatal_error(Twine(Reason), GenCrashDiag);
 }
 
-void llvm::report_fatal_error(const Twine &Reason) {
+void llvm::report_fatal_error(const Twine &Reason, bool GenCrashDiag) {
   if (ErrorHandler) {
-    ErrorHandler(ErrorHandlerUserData, Reason.str());
+    ErrorHandler(ErrorHandlerUserData, Reason.str(), GenCrashDiag);
   } else {
     // Blast the result out to stderr.  We don't try hard to make sure this
     // succeeds (e.g. handling EINTR) and we can't use errs() here because
