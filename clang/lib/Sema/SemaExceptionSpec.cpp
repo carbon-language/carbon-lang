@@ -124,7 +124,7 @@ Sema::ResolveExceptionSpec(SourceLocation Loc, const FunctionProtoType *FPT) {
     return SourceFPT;
 
   // Compute or instantiate the exception specification now.
-  if (FPT->getExceptionSpecType() == EST_Unevaluated)
+  if (SourceFPT->getExceptionSpecType() == EST_Unevaluated)
     EvaluateImplicitExceptionSpec(Loc, cast<CXXMethodDecl>(SourceDecl));
   else
     InstantiateExceptionSpec(Loc, SourceDecl);

@@ -4372,9 +4372,15 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
   if (Type->hasExceptionSpec()) {
     // Delay the check if this is the first declaration of the special member,
     // since we may not have parsed some necessary in-class initializers yet.
-    if (First)
+    if (First) {
+      // If the exception specification needs to be instantiated, do so now,
+      // before we clobber it with an EST_Unevaluated specification below.
+      if (Type->getExceptionSpecType() == EST_Uninstantiated) {
+        InstantiateExceptionSpec(MD->getLocStart(), MD);
+        Type = MD->getType()->getAs<FunctionProtoType>();
+      }
       DelayedDefaultedMemberExceptionSpecs.push_back(std::make_pair(MD, Type));
-    else
+    } else
       CheckExplicitlyDefaultedMemberExceptionSpec(MD, Type);
   }
 
@@ -11018,6 +11024,9 @@ void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
       // on it.
       Pattern->isDefined(Primary);
 
+    // If the method was defaulted on its first declaration, we will have
+    // already performed the checking in CheckCompletedCXXClass. Such a
+    // declaration doesn't trigger an implicit definition.
     if (Primary == Primary->getCanonicalDecl())
       return;
 
