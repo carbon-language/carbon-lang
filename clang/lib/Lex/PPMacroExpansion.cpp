@@ -211,7 +211,9 @@ bool Preprocessor::isNextPPTokenLParen() {
 /// expanded as a macro, handle it and return the next token as 'Identifier'.
 bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
                                                  MacroDirective *MD) {
-  MacroInfo *MI = MD->getMacroInfo();
+  MacroDirective::DefInfo Def = MD->getDefinition();
+  assert(Def.isValid());
+  MacroInfo *MI = Def.getMacroInfo();
 
   // If this is a macro expansion in the "#if !defined(x)" line for the file,
   // then the macro could expand to different things in other contexts, we need
@@ -286,25 +288,22 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     }
   }
 
-  // FIXME: Temporarily disable this warning that is currently bogus with a PCH
-  // that redefined a macro without undef'ing it first (test/PCH/macro-redef.c).
-#if 0
   // If the macro definition is ambiguous, complain.
-  if (MI->isAmbiguous()) {
+  if (Def.getDirective()->isAmbiguous()) {
     Diag(Identifier, diag::warn_pp_ambiguous_macro)
       << Identifier.getIdentifierInfo();
     Diag(MI->getDefinitionLoc(), diag::note_pp_ambiguous_macro_chosen)
       << Identifier.getIdentifierInfo();
-    for (MacroInfo *PrevMI = MI->getPreviousDefinition();
-         PrevMI && PrevMI->isDefined();
-         PrevMI = PrevMI->getPreviousDefinition()) {
-      if (PrevMI->isAmbiguous()) {
-        Diag(PrevMI->getDefinitionLoc(), diag::note_pp_ambiguous_macro_other)
+    for (MacroDirective::DefInfo PrevDef = Def.getPreviousDefinition();
+         PrevDef && !PrevDef.isUndefined();
+         PrevDef = PrevDef.getPreviousDefinition()) {
+      if (PrevDef.getDirective()->isAmbiguous()) {
+        Diag(PrevDef.getMacroInfo()->getDefinitionLoc(),
+             diag::note_pp_ambiguous_macro_other)
           << Identifier.getIdentifierInfo();
       }
     }
   }
-#endif
 
   // If we started lexing a macro, enter the macro expansion body.
 
