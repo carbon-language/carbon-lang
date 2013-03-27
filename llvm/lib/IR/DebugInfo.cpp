@@ -631,7 +631,9 @@ MDNode *DIDerivedType::getObjCProperty() const {
 
 /// \brief Set the array of member DITypes.
 void DICompositeType::setTypeArray(DIArray Elements, DIArray TParams) {
-  assert(!TParams || DbgNode->getNumOperands() == 15 && "If you're setting the template parameters this should include a slot for that");
+  assert((!TParams || DbgNode->getNumOperands() == 15) &&
+         "If you're setting the template parameters this should include a slot "
+         "for that!");
   TrackingVH<MDNode> N(*this);
   N->replaceOperandWith(11, Elements);
   if (TParams)
