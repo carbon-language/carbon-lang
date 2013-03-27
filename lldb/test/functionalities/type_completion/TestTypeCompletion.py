@@ -49,8 +49,10 @@ class TypeCompletionTestCase(TestBase):
         # clean slate for the next test case.
         def cleanup():
             self.runCmd('type category enable gnu-libstdc++', check=False)
+            self.runCmd('type category enable libcxx', check=False)
 
         self.runCmd('type category disable gnu-libstdc++', check=False)
+        self.runCmd('type category disable libcxx', check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
@@ -119,6 +121,7 @@ class TypeCompletionTestCase(TestBase):
         self.assertFalse(string.IsTypeComplete(), 'std::string complete but it should not be')
 
         self.runCmd('type category enable gnu-libstdc++', check=False)
+        self.runCmd('type category enable libcxx', check=False)
         self.runCmd('frame variable guy --show-types')
 
         p_vector = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable('p')
