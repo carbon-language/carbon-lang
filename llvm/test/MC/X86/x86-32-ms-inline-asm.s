@@ -57,6 +57,26 @@ _t21:                                   ## @t21
 // CHECK: movl 4(%esi,%eax,2), %eax
 // CHECK: # encoding: [0x8b,0x44,0x46,0x04]
 
+	mov eax, 4[esi + 2*eax + 4]
+// CHECK: movl 8(%esi,%eax,2), %eax
+// CHECK: # encoding: [0x8b,0x44,0x46,0x08]
+	mov eax, 4[esi][2*eax + 4]
+// CHECK: movl 8(%esi,%eax,2), %eax
+// CHECK: # encoding: [0x8b,0x44,0x46,0x08]
+	mov eax, 4[esi + 2*eax][4]
+// CHECK: movl 8(%esi,%eax,2), %eax
+// CHECK: # encoding: [0x8b,0x44,0x46,0x08]
+	mov eax, 4[esi][2*eax][4]
+// CHECK: movl 8(%esi,%eax,2), %eax
+// CHECK: # encoding: [0x8b,0x44,0x46,0x08]
+	mov eax, 4[esi][2*eax][4][8]
+// CHECK: movl 16(%esi,%eax,2), %eax
+// CHECK: # encoding: [0x8b,0x44,0x46,0x10]
+
+    prefetchnta 64[eax]
+// CHECK: prefetchnta 64(%eax)
+// CHECK: # encoding: [0x0f,0x18,0x40,0x40]
+        
     pusha
 // CHECK: pushal
 // CHECK: # encoding: [0x60]
