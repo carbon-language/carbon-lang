@@ -458,6 +458,7 @@ void X86Subtarget::initializeEnvironment() {
   HasSlowDivide = false;
   PostRAScheduler = false;
   PadShortFunctions = false;
+  CallRegIndirect = false;
   stackAlignment = 4;
   // FIXME: this is a known good value for Yonah. How about others?
   MaxInlineSizeThreshold = 128;

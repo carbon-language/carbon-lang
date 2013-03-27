@@ -134,6 +134,9 @@ def FeatureSlowDivide : SubtargetFeature<"idiv-to-divb",
 def FeaturePadShortFunctions : SubtargetFeature<"pad-short-functions",
                                      "PadShortFunctions", "true",
                                      "Pad short functions">;
+def FeatureCallRegIndirect : SubtargetFeature<"call-reg-indirect",
+                                     "CallRegIndirect", "true",
+                                     "Call register indirect">;
 
 //===----------------------------------------------------------------------===//
 // X86 processors supported.
@@ -181,7 +184,9 @@ def : ProcessorModel<"penryn", SandyBridgeModel,
 def : ProcessorModel<"atom", AtomModel,
                      [ProcIntelAtom, FeatureSSSE3, FeatureCMPXCHG16B,
                       FeatureMOVBE, FeatureSlowBTMem, FeatureLeaForSP,
-                      FeatureSlowDivide, FeaturePadShortFunctions]>;
+                      FeatureSlowDivide,
+                      FeatureCallRegIndirect,
+                      FeaturePadShortFunctions]>;
 
 // "Arrandale" along with corei3 and corei5
 def : ProcessorModel<"corei7", SandyBridgeModel,

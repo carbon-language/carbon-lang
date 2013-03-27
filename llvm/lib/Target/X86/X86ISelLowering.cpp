@@ -2629,6 +2629,19 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     InFlag = Chain.getValue(1);
   }
 
+  // Use indirect reference through register, when CALL uses a memory reference.
+  if (Subtarget->callRegIndirect() &&
+      Callee.getOpcode() == ISD::LOAD) {
+    const TargetRegisterClass *AddrRegClass =
+      getRegClassFor(Subtarget->is64Bit() ? MVT::i64:MVT::i32);
+    MachineRegisterInfo &MRI = MF.getRegInfo();
+    unsigned VReg = MRI.createVirtualRegister(AddrRegClass);
+    SDValue tempValue = DAG.getCopyFromReg(Callee,
+                                           dl, VReg, Callee.getValueType());
+    Chain = DAG.getCopyToReg(Chain, dl, VReg, tempValue, InFlag);
+    InFlag = Chain.getValue(1);
+  }
+
   Ops.push_back(Chain);
   Ops.push_back(Callee);
 
