@@ -37,6 +37,53 @@ void reinterpret_not_defined_class(B *b, C *c) {
   (void)reinterpret_cast<B &>(*c);
 }
 
+// Do not fail on erroneous classes with fields of incompletely-defined types.
+// Base class is malformed.
+namespace BaseMalformed {
+  struct A; // expected-note {{forward declaration of 'BaseMalformed::A'}}
+  struct B {
+    A a; // expected-error {{field has incomplete type 'BaseMalformed::A'}}
+  };
+  struct C : public B {} c;
+  B *b = reinterpret_cast<B *>(&c);
+} // end anonymous namespace
+
+// Child class is malformed.
+namespace ChildMalformed {
+  struct A; // expected-note {{forward declaration of 'ChildMalformed::A'}}
+  struct B {};
+  struct C : public B {
+    A a; // expected-error {{field has incomplete type 'ChildMalformed::A'}}
+  } c;
+  B *b = reinterpret_cast<B *>(&c);
+} // end anonymous namespace
+
+// Base class outside upcast base-chain is malformed.
+namespace BaseBaseMalformed {
+  struct A; // expected-note {{forward declaration of 'BaseBaseMalformed::A'}}
+  struct Y {};
+  struct X { A a; }; // expected-error {{field has incomplete type 'BaseBaseMalformed::A'}}
+  struct B : Y, X {};
+  struct C : B {} c;
+  B *p = reinterpret_cast<B*>(&c);
+}
+
+namespace InheritanceMalformed {
+  struct A; // expected-note {{forward declaration of 'InheritanceMalformed::A'}}
+  struct B : A {}; // expected-error {{base class has incomplete type}}
+  struct C : B {} c;
+  B *p = reinterpret_cast<B*>(&c);
+}
+
+// Virtual base class outside upcast base-chain is malformed.
+namespace VBaseMalformed{
+  struct A; // expected-note {{forward declaration of 'VBaseMalformed::A'}}
+  struct X { A a; };  // expected-error {{field has incomplete type 'VBaseMalformed::A'}}
+  struct B : public virtual X {};
+  struct C : B {} c;
+  B *p = reinterpret_cast<B*>(&c);
+}
+
 void reinterpret_not_updowncast(A *pa, const A *pca, A &a, const A &ca) {
   (void)*reinterpret_cast<C *>(pa);
   (void)*reinterpret_cast<const C *>(pa);
