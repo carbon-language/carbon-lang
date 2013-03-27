@@ -329,7 +329,7 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   const llvm::Target *TheTarget = TargetRegistry::lookupTarget(Triple, Error);
   if (!TheTarget) {
     if (MustCreateTM)
-      llvm::report_fatal_error ("Unable to create target: " + Error);
+      Diags.Report(diag::err_fe_unable_to_create_target) << Error;
     return 0;
   }
 
@@ -527,6 +527,7 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action, raw_ostream *OS) {
                       Action != Backend_EmitBC &&
                       Action != Backend_EmitLL);
   TargetMachine *TM = CreateTargetMachine(UsesCodeGen);
+  if (UsesCodeGen && !TM) return;
   CreatePasses(TM);
 
   switch (Action) {
