@@ -30,7 +30,7 @@
 //
 // Note that by default, the underlying Clang front end assumes .h files
 // contain C source.  If your .h files in the file list contain C++ source,
-// you should append the following to your command lines: -x c++ 
+// you should append the following to your command lines: -x c++
 //
 // Modularize will do normal parsing, reporting normal errors and warnings,
 // but will also report special error messages like the following:
@@ -95,6 +95,68 @@
 using namespace clang::tooling;
 using namespace clang;
 using namespace llvm;
+
+// Option to specify a file name for a list of header files to check.
+cl::opt<std::string>
+ListFileName(cl::Positional,
+             cl::desc("<name of file containing list of headers to check>"));
+
+// Collect all other arguments, which will be passed to the front end.
+cl::list<std::string> CC1Arguments(
+    cl::ConsumeAfter, cl::desc("<arguments to be passed to front end>..."));
+
+// Option to specify a prefix to be prepended to the header names.
+cl::opt<std::string> HeaderPrefix(
+    "prefix", cl::init(""),
+    cl::desc(
+        "Prepend header file paths with this prefix."
+        " If not specified,"
+        " the files are considered to be relative to the header list file."));
+
+// Read the header list file and collect the header file names.
+error_code GetHeaderFileNames(SmallVectorImpl<std::string> &headerFileNames,
+                              StringRef listFileName, StringRef headerPrefix) {
+
+  // By default, use the path component of the list file name.
+  SmallString<256> headerDirectory(listFileName);
+  sys::path::remove_filename(headerDirectory);
+
+  // Get the prefix if we have one.
+  if (headerPrefix.size() != 0)
+    headerDirectory = headerPrefix;
+
+  // Read the header list file into a buffer.
+  OwningPtr<MemoryBuffer> listBuffer;
+  if (error_code ec = MemoryBuffer::getFile(ListFileName, listBuffer)) {
+    return ec;
+  }
+
+  // Parse the header list into strings.
+  SmallVector<StringRef, 32> strings;
+  listBuffer->getBuffer().split(strings, "\n", -1, false);
+
+  // Collect the header file names from the string list.
+  for (SmallVectorImpl<StringRef>::iterator I = strings.begin(),
+                                            E = strings.end();
+       I != E; ++I) {
+    StringRef line = (*I).trim();
+    // Ignore comments and empty lines.
+    if (line.empty() || (line[0] == '#'))
+      continue;
+    SmallString<256> headerFileName;
+    // Prepend header file name prefix if it's not absolute.
+    if (sys::path::is_absolute(line))
+      headerFileName = line;
+    else {
+      headerFileName = headerDirectory;
+      sys::path::append(headerFileName, line);
+    }
+    // Save the resulting header file path.
+    headerFileNames.push_back(headerFileName.str());
+  }
+
+  return error_code::success();
+}
 
 // FIXME: The Location class seems to be something that we might
 // want to design to be applicable to a wider range of tools, and stick it
@@ -351,23 +413,6 @@ private:
   EntityMap &Entities;
 };
 
-// Option to specify a file name for a list of header files to check.
-cl::opt<std::string>
-ListFileName(cl::Positional,
-             cl::desc("<name of file containing list of headers to check>"));
-
-// Collect all other arguments, which will be passed to the front end.
-cl::list<std::string> CC1Arguments(
-    cl::ConsumeAfter, cl::desc("<arguments to be passed to front end>..."));
-
-// Option to specify a prefix to be prepended to the header names.
-cl::opt<std::string> HeaderPrefix(
-    "prefix", cl::init(""),
-    cl::desc(
-        "Prepend header file paths with this prefix."
-        " If not specified,"
-        " the files are considered to be relative to the header list file."));
-
 int main(int argc, const char **argv) {
 
   // This causes options to be parsed.
@@ -376,43 +421,15 @@ int main(int argc, const char **argv) {
   // No go if we have no header list file.
   if (ListFileName.size() == 0) {
     cl::PrintHelpMessage();
-    return -1;
+    return 1;
   }
 
-  // By default, use the path component of the list file name.
-  SmallString<256> HeaderDirectory(ListFileName);
-  sys::path::remove_filename(HeaderDirectory);
-
-  // Get the prefix if we have one.
-  if (HeaderPrefix.size() != 0)
-    HeaderDirectory = HeaderPrefix;
-
-  // Load the list of headers.
+  // Get header file names.
   SmallVector<std::string, 32> Headers;
-  {
-    OwningPtr<MemoryBuffer> listBuffer;
-    if (error_code ec = MemoryBuffer::getFile(ListFileName, listBuffer)) {
-      errs() << argv[0] << ": error: Unable to get header list '" << ListFileName
-             << "': " << ec.message() << '\n';
-      return 1;
-    }
-    SmallVector<StringRef, 32> strings;
-    listBuffer->getBuffer().split(strings, "\n", -1, false);
-    for (SmallVectorImpl<StringRef>::iterator I = strings.begin(),
-                                              E = strings.end();
-         I != E; ++I) {
-      StringRef line = (*I).trim();
-      if (line.empty() || (line[0] == '#'))
-        continue;
-      SmallString<256> headerFileName;
-      if (sys::path::is_absolute(line))
-        headerFileName = line;
-      else {
-        headerFileName = HeaderDirectory;
-        sys::path::append(headerFileName, line);
-      }
-      Headers.push_back(headerFileName.str());
-    }
+  if (error_code ec = GetHeaderFileNames(Headers, ListFileName, HeaderPrefix)) {
+    errs() << argv[0] << ": error: Unable to get header list '" << ListFileName
+           << "': " << ec.message() << '\n';
+    return 1;
   }
 
   // Create the compilation database.
