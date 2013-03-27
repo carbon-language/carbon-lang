@@ -675,7 +675,7 @@ CFG* CFGBuilder::buildCFG(const Decl *D, Stmt *Statement) {
                                    E = BackpatchBlocks.end(); I != E; ++I ) {
 
     CFGBlock *B = I->block;
-    GotoStmt *G = cast<GotoStmt>(B->getTerminator());
+    const GotoStmt *G = cast<GotoStmt>(B->getTerminator());
     LabelMapTy::iterator LI = LabelMap.find(G->getLabel());
 
     // If there is no target for the goto, then we are looking at an
