@@ -22,11 +22,20 @@ static bool GetFlagValue(const char *env, const char *name,
                          const char **value, int *value_length) {
   if (env == 0)
     return false;
-  const char *pos = internal_strstr(env, name);
-  const char *end;
-  if (pos == 0)
-    return false;
+  const char *pos = 0;
+  for (;;) {
+    pos = internal_strstr(env, name);
+    if (pos == 0)
+      return false;
+    if (pos != env && ((pos[-1] >= 'a' && pos[-1] <= 'z') || pos[-1] == '_')) {
+      // Seems to be middle of another flag name or value.
+      env = pos + 1;
+      continue;
+    }
+    break;
+  }
   pos += internal_strlen(name);
+  const char *end;
   if (pos[0] != '=') {
     end = pos;
   } else {
