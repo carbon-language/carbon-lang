@@ -35,6 +35,10 @@ opt<bool> DisableHexagonMISched("disable-hexagon-misched",
                                 cl::Hidden, cl::ZeroOrMore, cl::init(false),
                                 cl::desc("Disable Hexagon MI Scheduling"));
 
+static cl::opt<bool> DisableHexagonCFGOpt("disable-hexagon-cfgopt",
+    cl::Hidden, cl::ZeroOrMore, cl::init(false),
+    cl::desc("Disable Hexagon CFG Optimization"));
+
 /// HexagonTargetMachineModule - Note that this is used on hosts that
 /// cannot link in a library unless there are references into the
 /// library.  In particular, it seems that it is not possible to get
@@ -75,19 +79,20 @@ HexagonTargetMachine::HexagonTargetMachine(const Target &T, StringRef TT,
     TSInfo(*this),
     FrameLowering(Subtarget),
     InstrItins(&Subtarget.getInstrItineraryData()) {
-  setMCUseCFI(false);
+    setMCUseCFI(false);
 }
 
 // addPassesForOptimizations - Allow the backend (target) to add Target
 // Independent Optimization passes to the Pass Manager.
 bool HexagonTargetMachine::addPassesForOptimizations(PassManagerBase &PM) {
-
-  PM.add(createConstantPropagationPass());
-  PM.add(createLoopSimplifyPass());
-  PM.add(createDeadCodeEliminationPass());
-  PM.add(createConstantPropagationPass());
-  PM.add(createLoopUnrollPass());
-  PM.add(createLoopStrengthReducePass());
+  if (getOptLevel() != CodeGenOpt::None) {
+    PM.add(createConstantPropagationPass());
+    PM.add(createLoopSimplifyPass());
+    PM.add(createDeadCodeEliminationPass());
+    PM.add(createConstantPropagationPass());
+    PM.add(createLoopUnrollPass());
+    PM.add(createLoopStrengthReducePass());
+  }
   return true;
 }
 
@@ -121,38 +126,45 @@ TargetPassConfig *HexagonTargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 bool HexagonPassConfig::addInstSelector() {
-  addPass(createHexagonRemoveExtendOps(getHexagonTargetMachine()));
+
+  if (getOptLevel() != CodeGenOpt::None)
+    addPass(createHexagonRemoveExtendOps(getHexagonTargetMachine()));
+
   addPass(createHexagonISelDag(getHexagonTargetMachine(), getOptLevel()));
-  addPass(createHexagonPeephole());
+
+  if (getOptLevel() != CodeGenOpt::None)
+    addPass(createHexagonPeephole());
+
   return false;
 }
 
 
 bool HexagonPassConfig::addPreRegAlloc() {
-  if (!DisableHardwareLoops) {
+  if (!DisableHardwareLoops && getOptLevel() != CodeGenOpt::None)
     addPass(createHexagonHardwareLoops());
-  }
   return false;
 }
 
 bool HexagonPassConfig::addPostRegAlloc() {
-  addPass(createHexagonCFGOptimizer(getHexagonTargetMachine()));
+  if (!DisableHexagonCFGOpt && getOptLevel() != CodeGenOpt::None)
+    addPass(createHexagonCFGOptimizer(getHexagonTargetMachine()));
   return true;
 }
 
 
 bool HexagonPassConfig::addPreSched2() {
-  addPass(&IfConverterID);
+  if (getOptLevel() != CodeGenOpt::None)
+    addPass(&IfConverterID);
   return true;
 }
 
 bool HexagonPassConfig::addPreEmitPass() {
 
-  if (!DisableHardwareLoops) {
+  if (!DisableHardwareLoops && getOptLevel() != CodeGenOpt::None)
     addPass(createHexagonFixupHwLoops());
-  }
 
-  addPass(createHexagonNewValueJump());
+  if (getOptLevel() != CodeGenOpt::None)
+    addPass(createHexagonNewValueJump());
 
   // Expand Spill code for predicate registers.
   addPass(createHexagonExpandPredSpillCode(getHexagonTargetMachine()));
@@ -161,7 +173,8 @@ bool HexagonPassConfig::addPreEmitPass() {
   addPass(createHexagonSplitTFRCondSets(getHexagonTargetMachine()));
 
   // Create Packets.
-  addPass(createHexagonPacketizer());
+  if (getOptLevel() != CodeGenOpt::None)
+    addPass(createHexagonPacketizer());
 
   return false;
 }
