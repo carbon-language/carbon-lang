@@ -107,6 +107,20 @@ public:
     return FormatTok.Tok.isObjCAtKeyword(Kind);
   }
 
+  bool isAccessSpecifier(bool ColonRequired = true) const {
+    return isOneOf(tok::kw_public, tok::kw_protected, tok::kw_private) &&
+           (!ColonRequired ||
+            (!Children.empty() && Children[0].is(tok::colon)));
+  }
+
+  bool isObjCAccessSpecifier() const {
+    return is(tok::at) && !Children.empty() &&
+           (Children[0].isObjCAtKeyword(tok::objc_public) ||
+            Children[0].isObjCAtKeyword(tok::objc_protected) ||
+            Children[0].isObjCAtKeyword(tok::objc_package) ||
+            Children[0].isObjCAtKeyword(tok::objc_private));
+  }
+
   FormatToken FormatTok;
 
   TokenType Type;

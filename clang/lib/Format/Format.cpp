@@ -442,8 +442,7 @@ private:
     while (I != E) {
       if (!I->Untouchable) {
         unsigned Spaces = I->Spaces + Column - I->MinColumn;
-        storeReplacement(
-            I->Tok, std::string(I->NewLines, '\n') + std::string(Spaces, ' '));
+        storeReplacement(I->Tok, getNewLineText(I->NewLines, Spaces));
       }
       ++I;
     }
@@ -1350,6 +1349,7 @@ public:
     }
     std::vector<int> IndentForLevel;
     bool PreviousLineWasTouched = false;
+    const AnnotatedToken *PreviousLineLastToken = 0;
     for (std::vector<AnnotatedLine>::iterator I = AnnotatedLines.begin(),
                                               E = AnnotatedLines.end();
          I != E; ++I) {
@@ -1376,8 +1376,8 @@ public:
           Indent = LevelIndent =
               SourceMgr.getSpellingColumnNumber(FirstTok.Tok.getLocation()) - 1;
         } else {
-          formatFirstToken(TheLine.First, Indent, TheLine.InPPDirective,
-                           PreviousEndOfLineColumn);
+          formatFirstToken(TheLine.First, PreviousLineLastToken, Indent,
+                           TheLine.InPPDirective, PreviousEndOfLineColumn);
         }
         tryFitMultipleLinesInOne(Indent, I, E);
         UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine, Indent,
@@ -1399,8 +1399,8 @@ public:
 
           // Remove trailing whitespace of the previous line if it was touched.
           if (PreviousLineWasTouched || touchesEmptyLineBefore(TheLine))
-            formatFirstToken(TheLine.First, Indent, TheLine.InPPDirective,
-                             PreviousEndOfLineColumn);
+            formatFirstToken(TheLine.First, PreviousLineLastToken, Indent,
+                             TheLine.InPPDirective, PreviousEndOfLineColumn);
         }
         // If we did not reformat this unwrapped line, the column at the end of
         // the last token is unchanged - thus, we can calculate the end of the
@@ -1414,6 +1414,7 @@ public:
           Whitespaces.addUntouchableComment(SourceMgr.getSpellingColumnNumber(
               TheLine.Last->FormatTok.Tok.getLocation()) - 1);
       }
+      PreviousLineLastToken = I->Last;
     }
     return Whitespaces.generateReplacements();
   }
@@ -1474,17 +1475,7 @@ private:
   /// For example, 'public:' labels in classes are offset by 1 or 2
   /// characters to the left from their level.
   int getIndentOffset(const AnnotatedToken &RootToken) {
-    bool IsAccessModifier = false;
-    if (RootToken.isOneOf(tok::kw_public, tok::kw_protected, tok::kw_private))
-      IsAccessModifier = true;
-    else if (RootToken.is(tok::at) && !RootToken.Children.empty() &&
-             (RootToken.Children[0].isObjCAtKeyword(tok::objc_public) ||
-              RootToken.Children[0].isObjCAtKeyword(tok::objc_protected) ||
-              RootToken.Children[0].isObjCAtKeyword(tok::objc_package) ||
-              RootToken.Children[0].isObjCAtKeyword(tok::objc_private)))
-      IsAccessModifier = true;
-
-    if (IsAccessModifier)
+    if (RootToken.isAccessSpecifier(false) || RootToken.isObjCAccessSpecifier())
       return Style.AccessModifierOffset;
     return 0;
   }
@@ -1662,7 +1653,8 @@ private:
   /// \brief Add a new line and the required indent before the first Token
   /// of the \c UnwrappedLine if there was no structural parsing error.
   /// Returns the indent level of the \c UnwrappedLine.
-  void formatFirstToken(const AnnotatedToken &RootToken, unsigned Indent,
+  void formatFirstToken(const AnnotatedToken &RootToken,
+                        const AnnotatedToken *PreviousToken, unsigned Indent,
                         bool InPPDirective, unsigned PreviousEndOfLineColumn) {
     const FormatToken &Tok = RootToken.FormatTok;
 
@@ -1672,6 +1664,11 @@ private:
       Newlines = 1;
 
     if (!InPPDirective || Tok.HasUnescapedNewline) {
+      // Insert extra new line before access specifiers.
+      if (PreviousToken && PreviousToken->isOneOf(tok::semi, tok::r_brace) &&
+          RootToken.isAccessSpecifier() && Tok.NewlinesBefore == 1)
+        ++Newlines;
+
       Whitespaces.replaceWhitespace(RootToken, Newlines, Indent, 0);
     } else {
       Whitespaces.replacePPWhitespace(RootToken, Newlines, Indent,

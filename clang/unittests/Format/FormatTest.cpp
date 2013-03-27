@@ -937,6 +937,28 @@ TEST_F(FormatTest, UnderstandsAccessSpecifiers) {
                      "};");
 }
 
+TEST_F(FormatTest, SeparatesLogicalBlocks) {
+  EXPECT_EQ("class A {\n"
+            "public:\n"
+            "  void f();\n"
+            "\n"
+            "private:\n"
+            "  void g() {}\n"
+            "  // test\n"
+            "protected:\n"
+            "  int h;\n"
+            "};",
+            format("class A {\n"
+                   "public:\n"
+                   "void f();\n"
+                   "private:\n"
+                   "void g() {}\n"
+                   "// test\n"
+                   "protected:\n"
+                   "int h;\n"
+                   "};"));
+}
+
 TEST_F(FormatTest, FormatsDerivedClass) {
   verifyFormat("class A : public B {\n};");
   verifyFormat("class A : public ::B {\n};");
