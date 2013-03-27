@@ -20,6 +20,7 @@
 
 using namespace lldb_perf;
 
+#define NUM_EXPR_ITERATIONS 3
 class ClangTest : public TestCase
 {
 public:
@@ -37,9 +38,23 @@ public:
                                   m_target.BreakpointCreateByName("main");
                                   m_memory_change_break_main.Stop();
                               }, "time-set-break-main", "Elapsed time it takes to set a breakpoint at 'main' by name."),
-        m_memory_change_create_target(),
-        m_memory_change_break_main(),
-        m_memory_total(),
+        m_memory_change_create_target (),
+        m_memory_change_break_main (),
+        m_memory_total (),
+        m_time_launch_stop_main(),
+        m_time_total (),
+        m_expr_first_evaluate([this] (SBFrame frame) -> void
+                          {
+                              frame.EvaluateExpression("Diags.DiagArgumentsStr[0].size()").GetError();
+                          }, "time-expr", "Elapsed time it takes evaluate an expression for the first time."),
+        m_expr_frame_zero ([this] (SBFrame frame) -> void
+                       {
+                           frame.EvaluateExpression("Diags.DiagArgumentsStr[0].size()").GetError();
+                       }, "time-expr-frame-zero", "Elapsed time it takes evaluate an expression 3 times at frame zero."),
+        m_expr_frame_non_zero ([this] (SBFrame frame) -> void
+                           {
+                               frame.EvaluateExpression("Diags.DiagArgumentsStr[0].size()").GetError();
+                           }, "time-expr-frame-non-zero", "Elapsed time it takes evaluate an expression 3 times at a non-zero frame."),
         m_exe_path(),
         m_out_path(),
         m_launch_info (NULL),
@@ -73,6 +88,8 @@ public:
         {
             case 0:
                 {
+                    Xcode::RunCommand(m_debugger,"log enable -f /tmp/packets.txt gdb-remote packets",true);
+
                     m_memory_total.Start();
                     m_time_total.Start();
                     
@@ -82,7 +99,46 @@ public:
                     m_time_set_bp_main();
 
                     m_time_launch_stop_main.Start();
-                    const char *clang_argv[] = { "clang --version", NULL };
+                    const char *clang_argv[] = {
+                        "-cc1",
+                        "-triple", "x86_64-apple-macosx10.8.0",
+                        "-emit-obj",
+                        "-mrelax-all",
+                        "-disable-free",
+                        "-disable-llvm-verifier",
+                        "-main-file-name", "main.cpp",
+                        "-mrelocation-model", "pic",
+                        "-pic-level", "2",
+                        "-mdisable-fp-elim",
+                        "-masm-verbose",
+                        "-munwind-tables",
+                        "-target-cpu", "core2",
+                        "-target-linker-version", "132.10.1",
+                        "-v",
+                        "-g",
+                        "-resource-dir", "/Volumes/work/gclayton/Documents/src/lldb/tot/tools/lldb-perf/common/clang/llvm-build/build/Debug/bin/../lib/clang/3.3",
+                        "-O0",
+                        "-fdeprecated-macro",
+                        "-fdebug-compilation-dir", "/Volumes/work/gclayton/Documents/src/lldb/tot/tools/lldb-perf/common/clang/llvm-build/build/Debug/bin",
+                        "-ferror-limit", "19",
+                        "-fmessage-length", "298",
+                        "-stack-protector", "1",
+                        "-mstackrealign",
+                        "-fblocks",
+                        "-fobjc-runtime=macosx-10.8.0",
+                        "-fobjc-dispatch-method=mixed",
+                        "-fobjc-default-synthesize-properties",
+                        "-fencode-extended-block-signature",
+                        "-fcxx-exceptions",
+                        "-fexceptions",
+                        "-fdiagnostics-show-option",
+                        "-fcolor-diagnostics",
+                        "-backend-option",
+                        "-vectorize-loops",
+                        "-o", "/tmp/main.o",
+                        "-x", "c++",
+                        "/tmp/main.cpp",
+                        NULL };
                     SBLaunchInfo launch_info(clang_argv);
                     Launch (launch_info);
                 }
@@ -91,14 +147,34 @@ public:
                 puts("stop");
                 m_time_launch_stop_main.Stop();
                 m_time_total.Stop();
-//                next_action.StepOver(m_thread);
-//                break;
-//            case 2:
-//                next_action.StepOver(m_thread);
-//                break;
-//            case 3:
-//                next_action.StepOver(m_thread);
-//                break;
+            case 2:
+                {
+                    SBFrame frame (m_thread.GetFrameAtIndex(0));
+
+                    // Time the first expression evaluation
+                    m_expr_first_evaluate(frame);
+                    
+                    SBValue result;
+                    for (size_t i=0; i<NUM_EXPR_ITERATIONS; ++i)
+                    {
+                        m_expr_frame_zero(frame);
+                    }
+                    m_target.BreakpointCreateByName("DeclContext::lookup");
+                    next_action.Continue();
+                }
+                break;
+            case 3:
+                {
+                    SBFrame frame (m_thread.GetFrameAtIndex(21));
+                    SBValue result;
+                    for (size_t i=0; i<NUM_EXPR_ITERATIONS; ++i)
+                    {
+                        m_expr_frame_non_zero(frame);
+                    }
+                    m_target.BreakpointCreateByName("DeclContext::lookup");
+                    next_action.Continue();
+                }
+                break;
             default:
                 m_memory_total.Stop();
                 next_action.Kill();
@@ -121,6 +197,9 @@ public:
                           m_memory_change_break_main.GetDeltaValue().GetResult(NULL, NULL));
 
         m_time_create_target.WriteAverageValue(results);
+        m_expr_first_evaluate.WriteAverageValue(results);
+        m_expr_frame_zero.WriteAverageValue(results);
+        m_expr_frame_non_zero.WriteAverageValue(results);
         results_dict.Add ("memory-total-break-main",
                           "The total memory that the current process is using after setting the first breakpoint.",
                           m_memory_total.GetStopValue().GetResult(NULL, NULL));
@@ -188,6 +267,9 @@ private:
     MemoryGauge m_memory_total;
     TimeGauge m_time_launch_stop_main;
     TimeGauge m_time_total;
+    TimeMeasurement<std::function<void(SBFrame)>> m_expr_first_evaluate;
+    TimeMeasurement<std::function<void(SBFrame)>> m_expr_frame_zero;
+    TimeMeasurement<std::function<void(SBFrame)>> m_expr_frame_non_zero;
     std::string m_exe_path;
     std::string m_out_path;
     SBLaunchInfo m_launch_info;
