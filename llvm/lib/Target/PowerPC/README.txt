@@ -1,7 +1,6 @@
 //===- README.txt - Notes for improving PowerPC-specific code gen ---------===//
 
 TODO:
-* gpr0 allocation
 * lmw/stmw pass a la arm load store optimizer for prolog/epilog
 
 ===-------------------------------------------------------------------------===
