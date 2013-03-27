@@ -637,7 +637,7 @@ def warn_objc_isa_use : Warning<
   "direct access to Objective-C's isa is deprecated in favor of "
   "object_getClass()">, InGroup<DeprecatedObjCIsaUsage>;
 def warn_objc_isa_assign : Warning<
-  "assignemt to Objective-C's isa is deprecated in favor of "
+  "assignment to Objective-C's isa is deprecated in favor of "
   "object_setClass()">, InGroup<DeprecatedObjCIsaUsage>;
 def warn_objc_property_default_assign_on_object : Warning<
   "default property attribute 'assign' not appropriate for non-GC object">,

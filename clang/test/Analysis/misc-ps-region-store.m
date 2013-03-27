@@ -920,7 +920,7 @@ int rdar_7770737_pos(void)
 
 void pr6302(id x, Class y) {
   // This previously crashed the analyzer (reported in PR 6302)
-  x->isa  = y; // expected-warning {{assignemt to Objective-C's isa is deprecated in favor of object_setClass()}}
+  x->isa  = y; // expected-warning {{assignment to Objective-C's isa is deprecated in favor of object_setClass()}}
 }
 
 //===----------------------------------------------------------------------===//
