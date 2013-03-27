@@ -42,26 +42,26 @@ entry:
 }
 
 !llvm.dbg.cu = !{!0, !10}
-!0 = metadata !{i32 786449, metadata !23, i32 12, metadata !"clang version 3.3", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, metadata !23, null, i32 12, metadata !"clang version 3.3", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{metadata !2}
 !2 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
-!5 = metadata !{i32 786478, metadata !23, metadata !"test", metadata !"test", metadata !"", metadata !6, i32 2, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @test, null, null, metadata !1, i32 3} ; [ DW_TAG_subprogram ] [line 2] [def] [scope 3] [test]
-!6 = metadata !{i32 786473, metadata !23} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = metadata !{i32 786478, metadata !23, null, metadata !"test", metadata !"test", metadata !"", metadata !6, i32 2, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @test, null, null, metadata !1, i32 3} ; [ DW_TAG_subprogram ] [line 2] [def] [scope 3] [test]
+!6 = metadata !{i32 786473, metadata !23, null} ; [ DW_TAG_file_type ]
+!7 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9, metadata !9}
-!9 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!10 = metadata !{i32 786449, metadata !24, i32 12, metadata !"clang version 3.3 (trunk 172862)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !11, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
+!9 = metadata !{i32 786468, null, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!10 = metadata !{i32 786449, metadata !24, null, i32 12, metadata !"clang version 3.3 (trunk 172862)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !11, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !11 = metadata !{metadata !13}
-!13 = metadata !{i32 786478, metadata !24, metadata !"fn", metadata !"fn", metadata !"", metadata !14, i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @fn, null, null, metadata !1, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [fn]
-!14 = metadata !{i32 786473, metadata !24} ; [ DW_TAG_file_type ]
+!13 = metadata !{i32 786478, metadata !24, null, metadata !"fn", metadata !"fn", metadata !"", metadata !14, i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @fn, null, null, metadata !1, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [fn]
+!14 = metadata !{i32 786473, metadata !24, null} ; [ DW_TAG_file_type ]
 !15 = metadata !{i32 786689, metadata !5, metadata !"a", metadata !6, i32 16777218, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [a] [line 2]
 !16 = metadata !{i32 2, i32 0, metadata !5, null}
 !17 = metadata !{i32 4, i32 0, metadata !18, null}
-!18 = metadata !{i32 786443, metadata !23, metadata !5, i32 3, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
+!18 = metadata !{i32 786443, metadata !23, null, metadata !5, i32 3, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !19 = metadata !{i32 786689, metadata !13, metadata !"a", metadata !14, i32 16777217, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [a] [line 1]
 !20 = metadata !{i32 1, i32 0, metadata !13, null}
 !21 = metadata !{i32 2, i32 0, metadata !22, null}
-!22 = metadata !{i32 786443, metadata !24, metadata !13, i32 1, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
+!22 = metadata !{i32 786443, metadata !24, null, metadata !13, i32 1, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !23 = metadata !{metadata !"simple.c", metadata !"/private/tmp"}
 !24 = metadata !{metadata !"simple2.c", metadata !"/private/tmp"}

@@ -18,14 +18,14 @@ declare i32 @bar() nounwind readnone
 
 !llvm.dbg.cu = !{!2}
 
-!0 = metadata !{i32 786478, metadata !1, metadata !"foobar", metadata !"foobar", metadata !"foobar", metadata !1, i32 12, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true, i32 ()* @foobar, null, null, metadata !14, i32 0} ; [ DW_TAG_subprogram ]
-!1 = metadata !{i32 786473, metadata !15} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 786449, i32 12, metadata !1, metadata !"clang version 2.9 (trunk 114183)", i1 true, metadata !"", i32 0, null, null, metadata !13, null, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786478, metadata !1, null, metadata !"foobar", metadata !"foobar", metadata !"foobar", metadata !1, i32 12, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true, i32 ()* @foobar, null, null, metadata !14, i32 0} ; [ DW_TAG_subprogram ]
+!1 = metadata !{i32 786473, metadata !15, null} ; [ DW_TAG_file_type ]
+!2 = metadata !{i32 786449, i32 12, null, metadata !1, metadata !"clang version 2.9 (trunk 114183)", i1 true, metadata !"", i32 0, null, null, metadata !13, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null}
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, metadata !1, metadata !"int", metadata !1, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5}
 !6 = metadata !{i32 786688, metadata !7, metadata !"j", metadata !1, i32 15, metadata !5, i32 0, null}
-!7 = metadata !{i32 786443, metadata !1, metadata !0, i32 12, i32 52, i32 0} ; [ DW_TAG_lexical_block ]
+!7 = metadata !{i32 786443, metadata !1, null, metadata !0, i32 12, i32 52, i32 0} ; [ DW_TAG_lexical_block ]
 !8 = metadata !{i32 42}
 !9 = metadata !{i32 15, i32 12, metadata !7, null}
 !10 = metadata !{i32 23, i32 3, metadata !7, null}

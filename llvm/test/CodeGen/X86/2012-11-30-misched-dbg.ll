@@ -64,23 +64,23 @@ declare i32 @__sprintf_chk(i8*, i32, i64, i8*, ...)
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 0, i32 12, metadata !"MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c", metadata !"MultiSource/Benchmarks/MiBench/consumer-typeset", metadata !"clang version 3.3 (trunk 168918) (llvm/trunk 168920)", i1 true, i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1} ; [ DW_TAG_compile_unit ] [MultiSource/Benchmarks/MiBench/consumer-typeset/MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c] [DW_LANG_C99]
+!0 = metadata !{i32 786449, i32 0, null, i32 12, metadata !"MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c", metadata !"MultiSource/Benchmarks/MiBench/consumer-typeset", metadata !"clang version 3.3 (trunk 168918) (llvm/trunk 168920)", i1 true, i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1} ; [ DW_TAG_compile_unit ] [MultiSource/Benchmarks/MiBench/consumer-typeset/MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c] [DW_LANG_C99]
 !1 = metadata !{metadata !2}
 !2 = metadata !{i32 0}
 !3 = metadata !{}
 !4 = metadata !{i32 786688, metadata !5, metadata !"num1", metadata !14, i32 815, metadata !15, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [num1] [line 815]
-!5 = metadata !{i32 786443, metadata !6, i32 815, i32 0, metadata !14, i32 177} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!6 = metadata !{i32 786443, metadata !7, i32 812, i32 0, metadata !14, i32 176} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!7 = metadata !{i32 786443, metadata !8, i32 807, i32 0, metadata !14, i32 175} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!8 = metadata !{i32 786443, metadata !9, i32 440, i32 0, metadata !14, i32 94} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!9 = metadata !{i32 786443, metadata !10, i32 435, i32 0, metadata !14, i32 91} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!10 = metadata !{i32 786443, metadata !11, i32 434, i32 0, metadata !14, i32 90} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!11 = metadata !{i32 786443, metadata !12, i32 250, i32 0, metadata !14, i32 24} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!12 = metadata !{i32 786443, metadata !13, i32 249, i32 0, metadata !14, i32 23} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!13 = metadata !{i32 786443, metadata !3, i32 221, i32 0, metadata !14, i32 19} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!14 = metadata !{i32 786473, metadata !19} ; [ DW_TAG_file_type ]
-!15 = metadata !{i32 786433, null, null, metadata !"", i32 0, i64 160, i64 8, i32 0, i32 0, metadata !16, metadata !17, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 160, align 8, offset 0] [from char]
-!16 = metadata !{i32 786468, null, null, metadata !"char", i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ] [char] [line 0, size 8, align 8, offset 0, enc DW_ATE_signed_char]
+!5 = metadata !{i32 786443, metadata !6, null, i32 815, i32 0, metadata !14, i32 177} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
+!6 = metadata !{i32 786443, metadata !7, null, i32 812, i32 0, metadata !14, i32 176} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
+!7 = metadata !{i32 786443, metadata !8, null, i32 807, i32 0, metadata !14, i32 175} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
+!8 = metadata !{i32 786443, metadata !9, null, i32 440, i32 0, metadata !14, i32 94} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
+!9 = metadata !{i32 786443, metadata !10, null, i32 435, i32 0, metadata !14, i32 91} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
+!10 = metadata !{i32 786443, metadata !11, null, i32 434, i32 0, metadata !14, i32 90} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
+!11 = metadata !{i32 786443, metadata !12, null, i32 250, i32 0, metadata !14, i32 24} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
+!12 = metadata !{i32 786443, metadata !13, null, i32 249, i32 0, metadata !14, i32 23} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
+!13 = metadata !{i32 786443, metadata !3, null, i32 221, i32 0, metadata !14, i32 19} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
+!14 = metadata !{i32 786473, metadata !19, null} ; [ DW_TAG_file_type ]
+!15 = metadata !{i32 786433, null, null, null, metadata !"", i32 0, i64 160, i64 8, i32 0, i32 0, metadata !16, metadata !17, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 160, align 8, offset 0] [from char]
+!16 = metadata !{i32 786468, null, null, null, metadata !"char", i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ] [char] [line 0, size 8, align 8, offset 0, enc DW_ATE_signed_char]
 !17 = metadata !{metadata !18}
 !18 = metadata !{i32 786465, i64 0, i64 20}       ; [ DW_TAG_subrange_type ] [0, 19]
 !19 = metadata !{metadata !"MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c", metadata !"MultiSource/Benchmarks/MiBench/consumer-typeset"}
@@ -129,8 +129,8 @@ declare void @_Znwm()
 
 !llvm.dbg.cu = !{!30}
 
-!30 = metadata !{i32 786449, i32 0, i32 4, metadata !"SingleSource/Benchmarks/Shootout-C++/hash.cpp", metadata !"SingleSource/Benchmarks/Shootout-C++", metadata !"clang version 3.3 (trunk 169129) (llvm/trunk 169135)", i1 true, i1 true, metadata !"", i32 0, null, null, null, null} ; [ DW_TAG_compile_unit ] [SingleSource/Benchmarks/Shootout-C++/hash.cpp] [DW_LANG_C_plus_plus]
+!30 = metadata !{i32 786449, i32 0, null, i32 4, metadata !"SingleSource/Benchmarks/Shootout-C++/hash.cpp", metadata !"SingleSource/Benchmarks/Shootout-C++", metadata !"clang version 3.3 (trunk 169129) (llvm/trunk 169135)", i1 true, i1 true, metadata !"", i32 0, null, null, null, null} ; [ DW_TAG_compile_unit ] [SingleSource/Benchmarks/Shootout-C++/hash.cpp] [DW_LANG_C_plus_plus]
 !31 = metadata !{i32 786688, null, metadata !"X", null, i32 29, metadata !32, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [X] [line 29]
-!32 = metadata !{i32 786454, metadata !34, null, metadata !"HM", i32 28, i64 0, i64 0, i64 0, i32 0, null} ; [ DW_TAG_typedef ] [HM] [line 28, size 0, align 0, offset 0] [from ]
-!33 = metadata !{i32 786473, metadata !34} ; [ DW_TAG_file_type ]
+!32 = metadata !{i32 786454, metadata !34, null, null, metadata !"HM", i32 28, i64 0, i64 0, i64 0, i32 0, null} ; [ DW_TAG_typedef ] [HM] [line 28, size 0, align 0, offset 0] [from ]
+!33 = metadata !{i32 786473, metadata !34, null} ; [ DW_TAG_file_type ]
 !34 = metadata !{metadata !"SingleSource/Benchmarks/Shootout-C++/hash.cpp", metadata !"SingleSource/Benchmarks/Shootout-C++"}

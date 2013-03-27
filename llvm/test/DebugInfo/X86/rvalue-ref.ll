@@ -22,18 +22,18 @@ declare i32 @printf(i8*, ...)
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 4, metadata !6, metadata !"clang version 3.2 (trunk 157054) (llvm/trunk 157060)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, i32 4, null, metadata !6, metadata !"clang version 3.2 (trunk 157054) (llvm/trunk 157060)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
-!5 = metadata !{i32 786478, metadata !6, metadata !"foo", metadata !"foo", metadata !"_Z3fooOi", metadata !6, i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i32*)* @_Z3fooOi, null, null, metadata !1, i32 5} ; [ DW_TAG_subprogram ]
-!6 = metadata !{i32 786473, metadata !16} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
+!5 = metadata !{i32 786478, metadata !6, null, metadata !"foo", metadata !"foo", metadata !"_Z3fooOi", metadata !6, i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i32*)* @_Z3fooOi, null, null, metadata !1, i32 5} ; [ DW_TAG_subprogram ]
+!6 = metadata !{i32 786473, metadata !16, null} ; [ DW_TAG_file_type ]
+!7 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{null, metadata !9}
-!9 = metadata !{i32 786498, null, null, null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !10} ; [ DW_TAG_rvalue_reference_type ]
-!10 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!9 = metadata !{i32 786498, null, null, null, null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !10} ; [ DW_TAG_rvalue_reference_type ]
+!10 = metadata !{i32 786468, null, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !11 = metadata !{i32 786689, metadata !5, metadata !"i", metadata !6, i32 16777220, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
 !12 = metadata !{i32 4, i32 17, metadata !5, null}
 !13 = metadata !{i32 6, i32 3, metadata !14, null}
-!14 = metadata !{i32 786443, metadata !6, metadata !5, i32 5, i32 1, i32 0} ; [ DW_TAG_lexical_block ]
+!14 = metadata !{i32 786443, metadata !6, null, metadata !5, i32 5, i32 1, i32 0} ; [ DW_TAG_lexical_block ]
 !15 = metadata !{i32 7, i32 1, metadata !14, null}
 !16 = metadata !{metadata !"foo.cpp", metadata !"/Users/echristo/tmp"}
