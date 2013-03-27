@@ -5,7 +5,7 @@
 ; CHECK-DISABLED: t1:
 define <2 x float> @t1(float %f) {
   ; CHECK-ENABLED: vdup.32 d{{[0-9]*}}, d0[0]
-  ; CHECK-DISABLED: vmov.32 d0[1], r{{.}}
+  ; CHECK-DISABLED-NOT: vdup.32 d{{[0-9]*}}, d0[0]
   %i1 = insertelement <2 x float> undef, float %f, i32 1
   %i2 = fadd <2 x float> %i1, %i1
   ret <2 x float> %i2
@@ -15,7 +15,7 @@ define <2 x float> @t1(float %f) {
 ; CHECK-DISABLED: t2:
 define <4 x float> @t2(float %g, float %f) {
   ; CHECK-ENABLED: vdup.32 q{{[0-9]*}}, d0[0]
-  ; CHECK-DISABLED: vmov.32 d0[1], r{{.}}
+  ; CHECK-DISABLED-NOT: vdup.32 d{{[0-9]*}}, d0[0]
   %i1 = insertelement <4 x float> undef, float %f, i32 1
   %i2 = fadd <4 x float> %i1, %i1
   ret <4 x float> %i2
@@ -25,6 +25,7 @@ define <4 x float> @t2(float %g, float %f) {
 ; CHECK-DISABLED: t3:
 define arm_aapcs_vfpcc <2 x float> @t3(float %f) {
   ; CHECK-ENABLED: vdup.32 d{{[0-9]*}}, d0[0] 
+  ; CHECK-DISABLED-NOT: vdup.32 d{{[0-9]*}}, d0[0]
   %i1 = insertelement <2 x float> undef, float %f, i32 1
   %i2 = fadd <2 x float> %i1, %i1
   ret <2 x float> %i2

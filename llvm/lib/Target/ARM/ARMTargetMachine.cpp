@@ -185,8 +185,7 @@ bool ARMPassConfig::addPreSched2() {
       addPass(createARMLoadStoreOptimizationPass());
       printAndVerify("After ARM load / store optimizer");
     }
-    if ((DisableA15SDOptimization || !getARMSubtarget().isCortexA15()) &&
-      getARMSubtarget().hasNEON())
+    if (getARMSubtarget().hasNEON())
       addPass(createExecutionDependencyFixPass(&ARM::DPRRegClass));
   }
 
