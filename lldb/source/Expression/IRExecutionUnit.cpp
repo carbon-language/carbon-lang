@@ -11,7 +11,9 @@
 // C++ Includes
 // Other libraries and framework includes
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/SourceMgr.h"
 // Project includes
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
@@ -253,6 +255,17 @@ IRExecutionUnit::DisassembleFunction (Stream &stream,
     return ret;
 }
 
+static void ReportInlineAsmError(const llvm::SMDiagnostic &diagnostic, void *Context, unsigned LocCookie)
+{
+    Error *err = static_cast<Error*>(Context);
+    
+    if (err && err->Success())
+    {
+        err->SetErrorToGenericError();
+        err->SetErrorStringWithFormat("Inline assembly error: %s", diagnostic.getMessage().str().c_str());
+    }
+}
+
 void
 IRExecutionUnit::GetRunnableInfo(Error &error,
                                  lldb::addr_t &func_addr,
@@ -325,6 +338,8 @@ IRExecutionUnit::GetRunnableInfo(Error &error,
             codeModel = llvm::CodeModel::Small;
         }
         
+        m_module_ap->getContext().setInlineAsmDiagnosticHandler(ReportInlineAsmError, &error);
+        
         llvm::EngineBuilder builder(m_module_ap.get());
         
         builder.setEngineKind(llvm::EngineKind::JIT)
@@ -367,7 +382,11 @@ IRExecutionUnit::GetRunnableInfo(Error &error,
         
         void *fun_ptr = m_execution_engine_ap->getPointerToFunction(function);
         
-        // Errors usually cause failures in the JIT, but if we're lucky we get here.
+        if (!error.Success())
+        {
+            // We got an error through our callback!
+            return;
+        }
         
         if (!function)
         {
