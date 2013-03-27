@@ -1590,4 +1590,18 @@ defm : SI_INDIRECT_Pattern <VReg_128, v4f32, SI_INDIRECT_DST_V4>;
 defm : SI_INDIRECT_Pattern <VReg_256, v8f32, SI_INDIRECT_DST_V8>;
 defm : SI_INDIRECT_Pattern <VReg_512, v16f32, SI_INDIRECT_DST_V16>;
 
+/********** =============== **********/
+/**********   Conditions    **********/
+/********** =============== **********/
+
+def : Pat<
+  (i1 (setcc f32:$src0, f32:$src1, SETO)),
+  (V_CMP_O_F32_e64 f32:$src0, f32:$src1)
+>;
+
+def : Pat<
+  (i1 (setcc f32:$src0, f32:$src1, SETUO)),
+  (V_CMP_U_F32_e64 f32:$src0, f32:$src1)
+>;
+
 } // End isSI predicate
