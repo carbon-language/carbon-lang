@@ -155,9 +155,10 @@ private:
 
 };
 
+/// \class NilReceiverBRVisitor
+/// \brief Prints path notes when a message is sent to a nil receiver.
 class NilReceiverBRVisitor
-  : public BugReporterVisitorImpl<NilReceiverBRVisitor>
-{
+  : public BugReporterVisitorImpl<NilReceiverBRVisitor> {
 public:
   void Profile(llvm::FoldingSetNodeID &ID) const {
     static int x = 0;

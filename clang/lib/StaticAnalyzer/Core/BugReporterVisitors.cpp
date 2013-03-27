@@ -981,7 +981,7 @@ PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
                                                      const ExplodedNode *PrevN,
                                                      BugReporterContext &BRC,
                                                      BugReport &BR) {
-  Optional<PostStmt> P = N->getLocationAs<PostStmt>();
+  Optional<PreStmt> P = N->getLocationAs<PreStmt>();
   if (!P)
     return 0;
   const ObjCMessageExpr *ME = P->getStmtAs<ObjCMessageExpr>();
