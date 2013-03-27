@@ -596,9 +596,9 @@ ModuleList::Dump(Stream *s) const
 }
 
 void
-ModuleList::LogUUIDAndPaths (LogSP &log_sp, const char *prefix_cstr)
+ModuleList::LogUUIDAndPaths (Log *log, const char *prefix_cstr)
 {
-    if (log_sp)
+    if (log)
     {   
         Mutex::Locker locker(m_modules_mutex);
         char uuid_cstr[256];
@@ -608,13 +608,13 @@ ModuleList::LogUUIDAndPaths (LogSP &log_sp, const char *prefix_cstr)
             Module *module = pos->get();
             module->GetUUID().GetAsCString (uuid_cstr, sizeof(uuid_cstr));
             const FileSpec &module_file_spec = module->GetFileSpec();
-            log_sp->Printf ("%s[%u] %s (%s) \"%s/%s\"", 
-                            prefix_cstr ? prefix_cstr : "",
-                            (uint32_t)std::distance (begin, pos),
-                            uuid_cstr,
-                            module->GetArchitecture().GetArchitectureName(),
-                            module_file_spec.GetDirectory().GetCString(),
-                            module_file_spec.GetFilename().GetCString());
+            log->Printf ("%s[%u] %s (%s) \"%s/%s\"",
+                         prefix_cstr ? prefix_cstr : "",
+                         (uint32_t)std::distance (begin, pos),
+                         uuid_cstr,
+                         module->GetArchitecture().GetArchitectureName(),
+                         module_file_spec.GetDirectory().GetCString(),
+                         module_file_spec.GetFilename().GetCString());
         }
     }
 }
@@ -791,7 +791,7 @@ ModuleList::GetSharedModule
                     if (old_module_sp_ptr && !old_module_sp_ptr->get())
                         *old_module_sp_ptr = module_sp;
 
-                    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_MODULES));
+                    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_MODULES));
                     if (log)
                         log->Printf("module changed: %p, removing from global module list", module_sp.get());
 

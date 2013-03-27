@@ -102,7 +102,7 @@ CommunicationKDP::SendRequestAndGetReply (const CommandType command,
 {
     if (IsRunning())
     {
-        LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PACKETS));
+        Log *log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PACKETS));
         if (log)
         {
             PacketStreamType log_strm;
@@ -153,7 +153,7 @@ CommunicationKDP::SendRequestPacketNoLock (const PacketStreamType &request_packe
         const char *packet_data = request_packet.GetData();
         const size_t packet_size = request_packet.GetSize();
 
-        LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PACKETS));
+        Log *log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PACKETS));
         if (log)
         {
             PacketStreamType log_strm;            
@@ -202,7 +202,7 @@ CommunicationKDP::WaitForPacketWithTimeoutMicroSecondsNoLock (DataExtractor &pac
     uint8_t buffer[8192];
     Error error;
 
-    LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PACKETS | KDP_LOG_VERBOSE));
+    Log *log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PACKETS | KDP_LOG_VERBOSE));
 
     // Check for a packet from our cache first without trying any reading...
     if (CheckForPacket (NULL, 0, packet))
@@ -257,7 +257,7 @@ CommunicationKDP::CheckForPacket (const uint8_t *src, size_t src_len, DataExtrac
     // Put the packet data into the buffer in a thread safe fashion
     Mutex::Locker locker(m_bytes_mutex);
     
-    LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PACKETS));
+    Log *log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PACKETS));
 
     if (src && src_len > 0)
     {

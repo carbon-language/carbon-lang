@@ -88,7 +88,7 @@ public:
         {
             case 0:
                 {
-                    Xcode::RunCommand(m_debugger,"log enable -f /tmp/packets.txt gdb-remote packets",true);
+                    //Xcode::RunCommand(m_debugger,"log enable -f /tmp/packets.txt gdb-remote packets",true);
 
                     m_memory_total.Start();
                     m_time_total.Start();

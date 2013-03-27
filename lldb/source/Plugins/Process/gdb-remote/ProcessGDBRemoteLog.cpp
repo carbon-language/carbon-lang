@@ -22,39 +22,43 @@ using namespace lldb_private;
 // control access to our static g_log_sp by hiding it in a singleton function
 // that will construct the static g_lob_sp the first time this function is 
 // called.
-static LogSP &
+static bool g_log_enabled = false;
+static Log * g_log = NULL;
+static Log *
 GetLog ()
 {
-    static LogSP g_log_sp;
-    return g_log_sp;
+    if (!g_log_enabled)
+        return NULL;
+    return g_log;
 }
 
-LogSP
+
+Log *
 ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (uint32_t mask)
 {
-    LogSP log(GetLog ());
+    Log *log(GetLog ());
     if (log && mask)
     {
         uint32_t log_mask = log->GetMask().Get();
         if ((log_mask & mask) != mask)
-            return LogSP();
+            return NULL;
     }
     return log;
 }
 
-LogSP
+Log *
 ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (uint32_t mask)
 {
-    LogSP log(GetLog ());
+    Log *log(GetLog ());
     if (log && log->GetMask().Get() & mask)
         return log;
-    return LogSP();
+    return NULL;
 }
 
 void
 ProcessGDBRemoteLog::DisableLog (const char **categories, Stream *feedback_strm)
 {
-    LogSP log (GetLog ());
+    Log *log (GetLog ());
     if (log)
     {
         uint32_t flag_bits = 0;
@@ -91,7 +95,7 @@ ProcessGDBRemoteLog::DisableLog (const char **categories, Stream *feedback_strm)
         }
         
         if (flag_bits == 0)
-            GetLog ().reset();
+            g_log_enabled = false;
         else
             log->GetMask().Reset (flag_bits);
     }
@@ -99,24 +103,25 @@ ProcessGDBRemoteLog::DisableLog (const char **categories, Stream *feedback_strm)
     return;
 }
 
-LogSP
+Log *
 ProcessGDBRemoteLog::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, const char **categories, Stream *feedback_strm)
 {
     // Try see if there already is a log - that way we can reuse its settings.
     // We could reuse the log in toto, but we don't know that the stream is the same.
     uint32_t flag_bits = 0;
-    LogSP log(GetLog ());
-    if (log)
-        flag_bits = log->GetMask().Get();
+    if (g_log)
+        flag_bits = g_log->GetMask().Get();
 
     // Now make a new log with this stream if one was provided
     if (log_stream_sp)
     {
-        log.reset (new Log(log_stream_sp));
-        GetLog () = log;
+        if (g_log)
+            g_log->SetStream(log_stream_sp);
+        else
+            g_log = new Log(log_stream_sp);
     }
 
-    if (log)
+    if (g_log)
     {
         bool got_unknown_category = false;
         for (size_t i=0; categories[i] != NULL; ++i)
@@ -149,10 +154,11 @@ ProcessGDBRemoteLog::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, c
         }
         if (flag_bits == 0)
             flag_bits = GDBR_LOG_DEFAULT;
-        log->GetMask().Reset(flag_bits);
-        log->GetOptions().Reset(log_options);
+        g_log->GetMask().Reset(flag_bits);
+        g_log->GetOptions().Reset(log_options);
     }
-    return log;
+    g_log_enabled = true;
+    return g_log;
 }
 
 void
@@ -179,7 +185,7 @@ ProcessGDBRemoteLog::ListLogCategories (Stream *strm)
 void
 ProcessGDBRemoteLog::LogIf (uint32_t mask, const char *format, ...)
 {
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (mask));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (mask));
     if (log)
     {
         va_list args;

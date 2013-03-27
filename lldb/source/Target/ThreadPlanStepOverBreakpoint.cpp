@@ -126,7 +126,7 @@ ThreadPlanStepOverBreakpoint::MischiefManaged ()
     }
     else
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         if (log)
             log->Printf("Completed step over breakpoint plan.");
         // Otherwise, re-enable the breakpoint we were stepping over, and we're done.

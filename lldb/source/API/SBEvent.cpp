@@ -81,7 +81,7 @@ SBEvent::GetDataFlavor ()
 uint32_t
 SBEvent::GetType () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     const Event *lldb_event = get();
     uint32_t event_type = 0;
@@ -139,7 +139,7 @@ SBEvent::BroadcasterMatchesRef (const SBBroadcaster &broadcaster)
         success = lldb_event->BroadcasterIs (broadcaster.get());
 
     // For logging, this gets a little chatty so only enable this when verbose logging is on
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE));
     if (log)
         log->Printf ("SBEvent(%p)::BroadcasterMatchesRef (SBBroadcaster(%p): %s) => %i", 
                      get(),
@@ -203,7 +203,7 @@ SBEvent::IsValid() const
 const char *
 SBEvent::GetCStringFromEvent (const SBEvent &event)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBEvent(%p)::GetCStringFromEvent () => \"%s\"", 

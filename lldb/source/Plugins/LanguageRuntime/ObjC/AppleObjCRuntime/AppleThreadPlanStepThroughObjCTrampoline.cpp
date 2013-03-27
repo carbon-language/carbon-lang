@@ -173,7 +173,7 @@ AppleThreadPlanStepThroughObjCTrampoline::ShouldStop (Event *event_ptr)
         lldb::addr_t target_addr = target_addr_value.GetScalar().ULongLong();
         Address target_so_addr;
         target_so_addr.SetOpcodeLoadAddress(target_addr, exc_ctx.GetTargetPtr());
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         if (target_addr == 0)
         {
             if (log)

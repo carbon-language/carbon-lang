@@ -1441,7 +1441,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
     std::string command_string (command_line);
     std::string original_command_string (command_line);
     
-    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_COMMANDS));
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_COMMANDS));
     Host::SetCrashDescriptionWithFormat ("HandleCommand(command = \"%s\")", command_line);
     
     // Make a scoped cleanup object that will clear the crash description string 
@@ -2588,7 +2588,7 @@ CommandInterpreter::GetScriptInterpreter (bool can_create)
     static Mutex g_interpreter_mutex(Mutex::eMutexTypeRecursive);
     Mutex::Locker interpreter_lock(g_interpreter_mutex);
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf("Initializing the ScriptInterpreter now\n");
     

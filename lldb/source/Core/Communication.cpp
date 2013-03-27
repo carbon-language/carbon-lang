@@ -338,7 +338,7 @@ Communication::ReadThread (void *p)
 {
     Communication *comm = (Communication *)p;
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_COMMUNICATION));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_COMMUNICATION));
 
     if (log)
         log->Printf ("%p Communication::ReadThread () thread starting...", p);
@@ -377,10 +377,10 @@ Communication::ReadThread (void *p)
         case eConnectionStatusError:            // Check GetError() for details
         case eConnectionStatusTimedOut:         // Request timed out
             if (log)
-                error.LogIfError(log.get(), 
-                                 "%p Communication::ReadFromConnection () => status = %s", 
-                                 p, 
-                                 Communication::ConnectionStatusAsCString (status));
+                error.LogIfError (log,
+                                  "%p Communication::ReadFromConnection () => status = %s",
+                                  p,
+                                  Communication::ConnectionStatusAsCString (status));
             break;
         }
     }

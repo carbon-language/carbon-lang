@@ -76,7 +76,7 @@ ThreadKDP::WillResume (StateType resume_state)
 
     ClearStackFrames();
 
-    lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
         log->Printf ("Resuming thread: %4.4" PRIx64 " with state: %s.", GetID(), StateAsCString(resume_state));
 

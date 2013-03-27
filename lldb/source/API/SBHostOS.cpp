@@ -47,7 +47,7 @@ SBHostOS::ThreadCreate
     SBError *error_ptr
 )
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBHostOS::ThreadCreate (name=\"%s\", thread_function=%p, thread_arg=%p, error_ptr=%p)", name, 

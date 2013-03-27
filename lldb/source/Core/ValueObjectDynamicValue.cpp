@@ -202,7 +202,7 @@ ValueObjectDynamicValue::UpdateValue ()
     
     Value old_value(m_value);
 
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     
     bool has_changed_type = false;
     

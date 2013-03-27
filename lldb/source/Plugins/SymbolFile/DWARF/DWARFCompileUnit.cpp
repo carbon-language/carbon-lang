@@ -174,10 +174,10 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
         // Keep a flat array of the DIE for binary lookup by DIE offset
     if (!cu_die_only)
     {
-        LogSP log (LogChannelDWARF::GetLogIfAny(DWARF_LOG_DEBUG_INFO | DWARF_LOG_LOOKUPS));
+        Log *log (LogChannelDWARF::GetLogIfAny(DWARF_LOG_DEBUG_INFO | DWARF_LOG_LOOKUPS));
         if (log)
         {
-            m_dwarf2Data->GetObjectFile()->GetModule()->LogMessageVerboseBacktrace (log.get(),
+            m_dwarf2Data->GetObjectFile()->GetModule()->LogMessageVerboseBacktrace (log,
                                                                                     "DWARFCompileUnit::ExtractDIEsIfNeeded () for compile unit at .debug_info[0x%8.8x]",
                                                                                     GetOffset());
         }
@@ -288,7 +288,7 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
         DWARFDebugInfoEntry::collection exact_size_die_array (m_die_array.begin(), m_die_array.end());
         exact_size_die_array.swap (m_die_array);
     }
-    LogSP log (LogChannelDWARF::GetLogIfAll (DWARF_LOG_DEBUG_INFO | DWARF_LOG_VERBOSE));
+    Log *log (LogChannelDWARF::GetLogIfAll (DWARF_LOG_DEBUG_INFO | DWARF_LOG_VERBOSE));
     if (log)
     {
         StreamString strm;
@@ -434,11 +434,11 @@ DWARFCompileUnit::GetFunctionAranges ()
     if (m_func_aranges_ap.get() == NULL)
     {
         m_func_aranges_ap.reset (new DWARFDebugAranges());
-        LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES));
+        Log *log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES));
 
         if (log)
         {
-            m_dwarf2Data->GetObjectFile()->GetModule()->LogMessage (log.get(), 
+            m_dwarf2Data->GetObjectFile()->GetModule()->LogMessage (log,
                                                                     "DWARFCompileUnit::GetFunctionAranges() for compile unit at .debug_info[0x%8.8x]",
                                                                     GetOffset());
         }
@@ -609,11 +609,11 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
 
     const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize());
 
-    LogSP log (LogChannelDWARF::GetLogIfAll (DWARF_LOG_LOOKUPS));
+    Log *log (LogChannelDWARF::GetLogIfAll (DWARF_LOG_LOOKUPS));
     
     if (log)
     {
-        m_dwarf2Data->GetObjectFile()->GetModule()->LogMessage (log.get(), 
+        m_dwarf2Data->GetObjectFile()->GetModule()->LogMessage (log, 
                                                                 "DWARFCompileUnit::Index() for compile unit at .debug_info[0x%8.8x]",
                                                                 GetOffset());
     }

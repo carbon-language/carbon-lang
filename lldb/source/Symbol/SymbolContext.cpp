@@ -493,7 +493,7 @@ SymbolContext::GetParentOfInlinedScope (const Address &curr_frame_pc,
             }
             else
             {
-                LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYMBOLS));
+                Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYMBOLS));
 
                 if (log)
                 {

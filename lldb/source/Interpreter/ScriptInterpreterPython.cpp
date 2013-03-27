@@ -157,7 +157,7 @@ ScriptInterpreterPython::Locker::Locker (ScriptInterpreterPython *py_interpreter
 bool
 ScriptInterpreterPython::Locker::DoAcquireLock()
 {
-    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT | LIBLLDB_LOG_VERBOSE));
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT | LIBLLDB_LOG_VERBOSE));
     m_GILState = PyGILState_Ensure();
     if (log)
         log->Printf("Ensured PyGILState. Previous state = %slocked\n", m_GILState == PyGILState_UNLOCKED ? "un" : "");
@@ -175,7 +175,7 @@ ScriptInterpreterPython::Locker::DoInitSession(bool init_lldb_globals)
 bool
 ScriptInterpreterPython::Locker::DoFreeLock()
 {
-    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT | LIBLLDB_LOG_VERBOSE));
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT | LIBLLDB_LOG_VERBOSE));
     if (log)
         log->Printf("Releasing PyGILState. Returning to state = %slocked\n", m_GILState == PyGILState_UNLOCKED ? "un" : "");
     PyGILState_Release(m_GILState);
@@ -267,7 +267,7 @@ ScriptInterpreterPython::PythonInputReaderManager::InputReaderCallback (void *ba
                                                                         size_t bytes_len)
 {
     lldb::thread_t embedded_interpreter_thread;
-    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
     
     if (baton == NULL)
         return 0;
@@ -583,7 +583,7 @@ ScriptInterpreterPython::RestoreTerminalState ()
 void
 ScriptInterpreterPython::LeaveSession ()
 {
-    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
     if (log)
         log->PutCString("ScriptInterpreterPython::LeaveSession()");
 
@@ -616,7 +616,7 @@ ScriptInterpreterPython::EnterSession (bool init_lldb_globals)
 {
     // If we have already entered the session, without having officially 'left' it, then there is no need to 
     // 'enter' it again.
-    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
     if (m_session_is_active)
     {
         if (log)
@@ -833,7 +833,7 @@ ScriptInterpreterPython::InputReaderCallback
 )
 {
     lldb::thread_t embedded_interpreter_thread;
-    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
 
     if (baton == NULL)
         return 0;
@@ -2266,7 +2266,7 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
 {
     ScriptInterpreterPython *script_interpreter = (ScriptInterpreterPython *) baton;
     
-    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
     
     if (log)
         log->Printf ("%p ScriptInterpreterPython::RunEmbeddedPythonInterpreter () thread starting...", baton);
@@ -2846,7 +2846,7 @@ ScriptInterpreterPython::InitializePrivate ()
     stdin_tty_state.Save(STDIN_FILENO, false);
 
     PyGILState_STATE gstate;
-    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT | LIBLLDB_LOG_VERBOSE));
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT | LIBLLDB_LOG_VERBOSE));
     bool threads_already_initialized = false;
     if (PyEval_ThreadsInitialized ()) {
         gstate = PyGILState_Ensure ();

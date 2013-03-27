@@ -34,8 +34,6 @@
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/TargetList.h"
 
-using lldb::LogSP;
-
 namespace lldb_private {
     
 // this file (and its. cpp) contain the low-level implementation of LLDB Data Visualization
@@ -471,7 +469,7 @@ protected:
                        MapValueType& entry,
                        uint32_t& reason)
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
         // for bitfields, append size to the typename so one can custom format them
         StreamString sstring;
         sstring.Printf("%s:%d",typeName.AsCString(),valobj.GetBitfieldBitSize());
@@ -496,7 +494,7 @@ protected:
     bool Get_ObjC (ValueObject& valobj,
                    MapValueType& entry)
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
         lldb::ProcessSP process_sp = valobj.GetProcessSP();
         ObjCLanguageRuntime* runtime = process_sp->GetObjCLanguageRuntime();
         if (runtime == NULL)
@@ -533,7 +531,7 @@ protected:
               lldb::DynamicValueType use_dynamic,
               uint32_t& reason)
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
 
         if (type.isNull())
         {
@@ -649,7 +647,7 @@ protected:
               lldb::DynamicValueType use_dynamic,
               uint32_t& reason)
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
         
         if (Get_Impl (valobj,type,entry,use_dynamic,reason))
             return true;

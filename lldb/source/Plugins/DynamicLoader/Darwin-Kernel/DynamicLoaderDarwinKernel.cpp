@@ -1082,14 +1082,14 @@ DynamicLoaderDarwinKernel::BreakpointHit (StoppointCallbackContext *context,
                                           user_id_t break_id, 
                                           user_id_t break_loc_id)
 {    
-    LogSP log(GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
+    Log *log(GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
     if (log)
         log->Printf ("DynamicLoaderDarwinKernel::BreakpointHit (...)\n");
 
     ReadAllKextSummaries ();
     
     if (log)
-        PutToLog(log.get());
+        PutToLog(log);
 
     return GetStopWhenImagesChange();
 }
@@ -1156,7 +1156,7 @@ bool
 DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr, uint32_t count)
 {
     KextImageInfo::collection kext_summaries;
-    LogSP log(GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
+    Log *log(GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
     if (log)
         log->Printf ("Kexts-changed breakpoint hit, there are %d kexts currently.\n", count);
         
@@ -1287,7 +1287,7 @@ DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr,
                     s->Printf (".");
 
                 if (log)
-                    kext_summaries[new_kext].PutToLog (log.get());
+                    kext_summaries[new_kext].PutToLog (log);
             }
         }
         m_process->GetTarget().ModulesDidLoad (loaded_module_list);
@@ -1381,8 +1381,6 @@ DynamicLoaderDarwinKernel::ReadKextSummaries (const Address &kext_summary_addr,
 bool
 DynamicLoaderDarwinKernel::ReadAllKextSummaries ()
 {
-    LogSP log(GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
-    
     Mutex::Locker locker(m_mutex);
     
     if (ReadKextSummaryHeader ())
@@ -1537,7 +1535,7 @@ ThreadPlanSP
 DynamicLoaderDarwinKernel::GetStepThroughTrampolinePlan (Thread &thread, bool stop_others)
 {
     ThreadPlanSP thread_plan_sp;
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
         log->Printf ("Could not find symbol for step through.");
     return thread_plan_sp;

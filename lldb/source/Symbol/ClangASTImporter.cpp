@@ -24,7 +24,7 @@ using namespace clang;
 ClangASTMetrics::Counters ClangASTMetrics::global_counters = { 0, 0, 0, 0, 0, 0 };
 ClangASTMetrics::Counters ClangASTMetrics::local_counters = { 0, 0, 0, 0, 0, 0 };
 
-void ClangASTMetrics::DumpCounters (lldb::LogSP log, ClangASTMetrics::Counters &counters)
+void ClangASTMetrics::DumpCounters (Log *log, ClangASTMetrics::Counters &counters)
 {
     log->Printf("  Number of visible Decl queries by name     : %" PRIu64, counters.m_visible_query_count);
     log->Printf("  Number of lexical Decl queries             : %" PRIu64, counters.m_lexical_query_count);
@@ -34,7 +34,7 @@ void ClangASTMetrics::DumpCounters (lldb::LogSP log, ClangASTMetrics::Counters &
     log->Printf("  Number of records laid out                 : %" PRIu64, counters.m_record_layout_count);
 }
 
-void ClangASTMetrics::DumpCounters (lldb::LogSP log)
+void ClangASTMetrics::DumpCounters (Log *log)
 {
     if (!log)
         return;
@@ -82,7 +82,7 @@ ClangASTImporter::CopyDecl (clang::ASTContext *dst_ast,
         
         if (!result)
         {
-            lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+            Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
             if (log)
             {
@@ -151,7 +151,7 @@ ClangASTImporter::DeportDecl (clang::ASTContext *dst_ctx,
                               clang::ASTContext *src_ctx,
                               clang::Decl *decl)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)
         log->Printf("    [ClangASTImporter] DeportDecl called on (%sDecl*)%p from (ASTContext*)%p to (ASTContex*)%p",
@@ -199,7 +199,7 @@ ClangASTImporter::DeportDecl (clang::ASTContext *dst_ctx,
 void
 ClangASTImporter::CompleteDecl (clang::Decl *decl)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     if (log)    
         log->Printf("    [ClangASTImporter] CompleteDecl called on (%sDecl*)%p",
@@ -283,8 +283,6 @@ bool
 ClangASTImporter::CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface_decl)
 {
     ClangASTMetrics::RegisterDeclCompletion();
-
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     DeclOrigin decl_origin = GetDeclOrigin(interface_decl);
     
@@ -431,7 +429,7 @@ ClangASTImporter::BuildNamespaceMap(const clang::NamespaceDecl *decl)
 void 
 ClangASTImporter::ForgetDestination (clang::ASTContext *dst_ast)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)
         log->Printf("    [ClangASTImporter] Forgetting destination (ASTContext*)%p", dst_ast); 
@@ -444,7 +442,7 @@ ClangASTImporter::ForgetSource (clang::ASTContext *dst_ast, clang::ASTContext *s
 {
     ASTContextMetadataSP md = MaybeGetContextMetadata (dst_ast);
     
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)
         log->Printf("    [ClangASTImporter] Forgetting source->dest (ASTContext*)%p->(ASTContext*)%p", src_ast, dst_ast); 
@@ -536,7 +534,7 @@ clang::Decl
 {
     ClangASTMetrics::RegisterClangImport();
     
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
         
     if (log)
     {

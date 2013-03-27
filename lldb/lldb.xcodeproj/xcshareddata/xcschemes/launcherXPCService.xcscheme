@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "0450"
+   LastUpgradeVersion = "0500"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -38,7 +38,6 @@
       buildConfiguration = "Debug"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
-      enableOpenGLFrameCaptureMode = "0"
       allowLocationSimulation = "YES">
       <PathRunnable
          FilePath = "/Users/moi/Library/Developer/Xcode/DerivedData/Xcode-ezhudafllefyhcfivqaeslnymjsj/Build/Products/Debug/LLDB.framework/XPCServices/com.apple.lldb.launcherXPCService.xpc/Contents/MacOS/com.apple.lldb.launcherXPCService">

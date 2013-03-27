@@ -393,7 +393,7 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load, bool delete_loca
 
                     if (!break_loc->ResolveBreakpointSite())
                     {
-                        LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+                        Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
                         if (log)
                             log->Printf ("Warning: could not set breakpoint site for breakpoint location %d of breakpoint %d.\n",
                                          break_loc->GetID(), GetID());

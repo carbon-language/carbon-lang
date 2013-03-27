@@ -52,7 +52,7 @@ AddressResolverFileLine::SearchCallback
     uint32_t sc_list_size;
     CompileUnit *cu = context.comp_unit;
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
 
     sc_list_size = cu->ResolveSymbolContext (m_file_spec, m_line_number, m_inlines, false, eSymbolContextEverything,
                                              sc_list);

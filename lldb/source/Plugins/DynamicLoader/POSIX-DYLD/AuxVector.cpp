@@ -84,7 +84,7 @@ AuxVector::AuxVector(Process *process)
     : m_process(process)
 {
     DataExtractor data;
-    LogSP log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
+    Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
 
     data.SetData(GetAuxvData());
     data.SetByteOrder(m_process->GetByteOrder());
@@ -109,7 +109,7 @@ AuxVector::FindEntry(EntryType type) const
 }
 
 void
-AuxVector::DumpToLog(LogSP log) const
+AuxVector::DumpToLog(Log *log) const
 {
     if (!log)
         return;

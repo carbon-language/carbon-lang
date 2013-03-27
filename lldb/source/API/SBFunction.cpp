@@ -62,7 +62,7 @@ SBFunction::GetName() const
     if (m_opaque_ptr)
         cstr = m_opaque_ptr->GetMangled().GetName().AsCString();
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         if (cstr)
@@ -79,7 +79,7 @@ SBFunction::GetMangledName () const
     const char *cstr = NULL;
     if (m_opaque_ptr)
         cstr = m_opaque_ptr->GetMangled().GetMangledName().AsCString();
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         if (cstr)

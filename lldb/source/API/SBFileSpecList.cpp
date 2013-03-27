@@ -30,7 +30,7 @@ SBFileSpecList::SBFileSpecList () :
 SBFileSpecList::SBFileSpecList (const SBFileSpecList &rhs) :
     m_opaque_ap()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (rhs.m_opaque_ap.get())
         m_opaque_ap.reset (new FileSpecList (*(rhs.get())));

@@ -28,7 +28,7 @@ SBFileSpec::SBFileSpec () :
 SBFileSpec::SBFileSpec (const SBFileSpec &rhs) :
     m_opaque_ap()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (rhs.m_opaque_ap.get())
         m_opaque_ap.reset (new FileSpec (rhs.get()));
@@ -51,7 +51,7 @@ SBFileSpec::SBFileSpec (const char *path) :
 SBFileSpec::SBFileSpec (const char *path, bool resolve) :
     m_opaque_ap(new FileSpec (path, resolve))
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBFileSpec::SBFileSpec (path=\"%s\", resolve=%i) => SBFileSpec(%p)", path, 
@@ -82,7 +82,7 @@ SBFileSpec::IsValid() const
 bool
 SBFileSpec::Exists () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     bool result = false;
     if (m_opaque_ap.get())
@@ -115,7 +115,7 @@ SBFileSpec::GetFilename() const
     if (m_opaque_ap.get())
         s = m_opaque_ap->GetFilename().AsCString();
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         if (s)
@@ -133,7 +133,7 @@ SBFileSpec::GetDirectory() const
     const char *s = NULL;
     if (m_opaque_ap.get())
         s = m_opaque_ap->GetDirectory().AsCString();
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         if (s)
@@ -147,7 +147,7 @@ SBFileSpec::GetDirectory() const
 uint32_t
 SBFileSpec::GetPath (char *dst_path, size_t dst_len) const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     uint32_t result = 0;
     if (m_opaque_ap.get())

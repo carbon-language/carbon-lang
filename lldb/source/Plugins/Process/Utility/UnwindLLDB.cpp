@@ -108,7 +108,7 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
     if (m_unwind_complete)
         return false;
         
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     CursorSP cursor_sp(new Cursor ());
 
     // Frame zero is a little different

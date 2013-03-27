@@ -89,7 +89,7 @@ ThreadPlanStepInRange::GetDescription (Stream *s, lldb::DescriptionLevel level)
 bool
 ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     m_no_more_plans = false;
     
     if (log)
@@ -276,7 +276,7 @@ ThreadPlanStepInRange::FrameMatchesAvoidRegexp ()
             if (frame_function_name)
             {
                 size_t num_matches = 0;
-                LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+                Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
                 if (log)
                     num_matches = 1;
                 bool return_value = avoid_regexp_to_use->Execute(frame_function_name, num_matches);
@@ -305,7 +305,7 @@ ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, 
 {
     bool should_step_out = false;
     StackFrame *frame = current_plan->GetThread().GetStackFrameAtIndex(0).get();
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (flags.Test(eAvoidNoDebug))
     {
@@ -411,7 +411,7 @@ ThreadPlanStepInRange::PlanExplainsStop (Event *event_ptr)
         case eStopReasonExec:
         case eStopReasonThreadExiting:
             {
-                LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+                Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
                 if (log)
                     log->PutCString ("ThreadPlanStepInRange got asked if it explains the stop for some reason other than step.");
             }
@@ -433,7 +433,7 @@ ThreadPlanStepInRange::WillResume (lldb::StateType resume_state, bool current_pl
         bool step_without_resume = m_thread.DecrementCurrentInlinedDepth();
         if (step_without_resume)
         {
-            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+            Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
             if (log)
                 log->Printf ("ThreadPlanStepInRange::WillResume: returning false, inline_depth: %d",
                              m_thread.GetCurrentInlinedDepth());

@@ -156,8 +156,7 @@ public:
     Dump (Stream *s) const;
 
     void
-    LogUUIDAndPaths (lldb::LogSP &log_sp, 
-                     const char *prefix_cstr);
+    LogUUIDAndPaths (Log *log, const char *prefix_cstr);
                      
     Mutex &
     GetMutex () const

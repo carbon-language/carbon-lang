@@ -50,7 +50,7 @@ using namespace lldb_private;
 void
 SBDebugger::Initialize ()
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBDebugger::Initialize ()");
@@ -69,7 +69,7 @@ SBDebugger::Terminate ()
 void
 SBDebugger::Clear ()
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBDebugger(%p)::Clear ()", m_opaque_sp.get());
@@ -96,7 +96,7 @@ SBDebugger
 SBDebugger::Create(bool source_init_files, lldb::LogOutputCallback callback, void *baton)
 
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBDebugger debugger;
     debugger.reset(Debugger::CreateInstance(callback, baton));
@@ -127,7 +127,7 @@ SBDebugger::Create(bool source_init_files, lldb::LogOutputCallback callback, voi
 void
 SBDebugger::Destroy (SBDebugger &debugger)
 {
-    LogSP log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     if (log)
     {
@@ -149,7 +149,7 @@ SBDebugger::MemoryPressureDetected ()
     // non-mandatory. We have seen deadlocks with this function when called
     // so we need to safeguard against this until we can determine what is
     // causing the deadlocks.
-    LogSP log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     const bool mandatory = false;
     if (log)
@@ -231,7 +231,7 @@ SBDebugger::SkipAppInitFiles (bool b)
 void
 SBDebugger::SetInputFileHandle (FILE *fh, bool transfer_ownership)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBDebugger(%p)::SetInputFileHandle (fh=%p, transfer_ownership=%i)", m_opaque_sp.get(),
@@ -244,7 +244,7 @@ SBDebugger::SetInputFileHandle (FILE *fh, bool transfer_ownership)
 void
 SBDebugger::SetOutputFileHandle (FILE *fh, bool transfer_ownership)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
 
     if (log)
@@ -258,7 +258,7 @@ SBDebugger::SetOutputFileHandle (FILE *fh, bool transfer_ownership)
 void
 SBDebugger::SetErrorFileHandle (FILE *fh, bool transfer_ownership)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
 
     if (log)
@@ -310,7 +310,7 @@ SBDebugger::RestoreInputTerminalState()
 SBCommandInterpreter
 SBDebugger::GetCommandInterpreter ()
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBCommandInterpreter sb_interpreter;
     if (m_opaque_sp)
@@ -364,7 +364,7 @@ SBDebugger::HandleCommand (const char *command)
 SBListener
 SBDebugger::GetListener ()
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBListener sb_listener;
     if (m_opaque_sp)
@@ -492,7 +492,7 @@ SBDebugger::StateAsCString (StateType state)
 bool
 SBDebugger::StateIsRunningState (StateType state)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     const bool result = lldb_private::StateIsRunningState (state);
     if (log)
@@ -505,7 +505,7 @@ SBDebugger::StateIsRunningState (StateType state)
 bool
 SBDebugger::StateIsStoppedState (StateType state)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     const bool result = lldb_private::StateIsStoppedState (state, false);
     if (log)
@@ -545,7 +545,7 @@ SBDebugger::CreateTarget (const char *filename,
         sb_error.SetErrorString("invalid target");
     }
     
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         log->Printf ("SBDebugger(%p)::CreateTarget (filename=\"%s\", triple=%s, platform_name=%s, add_dependent_modules=%u, error=%s) => SBTarget(%p)", 
@@ -579,7 +579,7 @@ SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
         sb_target.SetSP (target_sp);
     }
     
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         log->Printf ("SBDebugger(%p)::CreateTargetWithFileAndTargetTriple (filename=\"%s\", triple=%s) => SBTarget(%p)", 
@@ -592,7 +592,7 @@ SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
 SBTarget
 SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *arch_cstr)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBTarget sb_target;
     TargetSP target_sp;
@@ -649,7 +649,7 @@ SBDebugger::CreateTarget (const char *filename)
             sb_target.SetSP (target_sp);
         }
     }
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         log->Printf ("SBDebugger(%p)::CreateTarget (filename=\"%s\") => SBTarget(%p)", 
@@ -676,7 +676,7 @@ SBDebugger::DeleteTarget (lldb::SBTarget &target)
         }
     }
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         log->Printf ("SBDebugger(%p)::DeleteTarget (SBTarget(%p)) => %i", m_opaque_sp.get(), target.m_opaque_sp.get(), result);
@@ -763,7 +763,7 @@ SBDebugger::GetNumTargets ()
 SBTarget
 SBDebugger::GetSelectedTarget ()
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBTarget sb_target;
     TargetSP target_sp;
@@ -788,7 +788,7 @@ SBDebugger::GetSelectedTarget ()
 void
 SBDebugger::SetSelectedTarget (SBTarget &sb_target)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     TargetSP target_sp (sb_target.GetSP());
     if (m_opaque_sp)
@@ -813,7 +813,7 @@ SBDebugger::DispatchInput (void* baton, const void *data, size_t data_len)
 void
 SBDebugger::DispatchInput (const void *data, size_t data_len)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBDebugger(%p)::DispatchInput (data=\"%.*s\", size_t=%" PRIu64 ")",
@@ -843,7 +843,7 @@ SBDebugger::DispatchInputEndOfFile ()
 bool
 SBDebugger::InputReaderIsTopReader (const lldb::SBInputReader &reader)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBDebugger(%p)::InputReaderIsTopReader (SBInputReader(%p))", m_opaque_sp.get(), &reader);
@@ -861,7 +861,7 @@ SBDebugger::InputReaderIsTopReader (const lldb::SBInputReader &reader)
 void
 SBDebugger::PushInputReader (SBInputReader &reader)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBDebugger(%p)::PushInputReader (SBInputReader(%p))", m_opaque_sp.get(), &reader);
@@ -880,7 +880,7 @@ SBDebugger::PushInputReader (SBInputReader &reader)
 void
 SBDebugger::NotifyTopInputReader (InputReaderAction notification)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBDebugger(%p)::NotifyTopInputReader (%d)", m_opaque_sp.get(), notification);
@@ -1004,7 +1004,7 @@ SBDebugger::SetTerminalWidth (uint32_t term_width)
 const char *
 SBDebugger::GetPrompt() const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     if (log)
         log->Printf ("SBDebugger(%p)::GetPrompt () => \"%s\"", m_opaque_sp.get(), 

@@ -1231,7 +1231,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
     lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
     uint32_t i;
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYMBOLS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYMBOLS));
 
     for (i=0; i<m_header.ncmds; ++i)
     {
@@ -1252,28 +1252,28 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             if (symtab_load_command.symoff == 0)
             {
                 if (log)
-                    module_sp->LogMessage(log.get(), "LC_SYMTAB.symoff == 0");
+                    module_sp->LogMessage(log, "LC_SYMTAB.symoff == 0");
                 return 0;
             }
 
             if (symtab_load_command.stroff == 0)
             {
                 if (log)
-                    module_sp->LogMessage(log.get(), "LC_SYMTAB.stroff == 0");
+                    module_sp->LogMessage(log, "LC_SYMTAB.stroff == 0");
                 return 0;
             }
 
             if (symtab_load_command.nsyms == 0)
             {
                 if (log)
-                    module_sp->LogMessage(log.get(), "LC_SYMTAB.nsyms == 0");
+                    module_sp->LogMessage(log, "LC_SYMTAB.nsyms == 0");
                 return 0;
             }
 
             if (symtab_load_command.strsize == 0)
             {
                 if (log)
-                    module_sp->LogMessage(log.get(), "LC_SYMTAB.strsize == 0");
+                    module_sp->LogMessage(log, "LC_SYMTAB.strsize == 0");
                 return 0;
             }
             break;
@@ -1411,7 +1411,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
         if (nlist_data.GetByteSize() == 0)
         {
             if (log)
-                module_sp->LogMessage(log.get(), "failed to read nlist data");
+                module_sp->LogMessage(log, "failed to read nlist data");
             return 0;
         }
 
@@ -1424,14 +1424,14 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 if (strtab_addr == LLDB_INVALID_ADDRESS)
                 {
                     if (log)
-                        module_sp->LogMessage(log.get(), "failed to locate the strtab in memory");
+                        module_sp->LogMessage(log, "failed to locate the strtab in memory");
                     return 0;
                 }
             }
             else
             {
                 if (log)
-                    module_sp->LogMessage(log.get(), "failed to read strtab data");
+                    module_sp->LogMessage(log, "failed to read strtab data");
                 return 0;
             }
         }

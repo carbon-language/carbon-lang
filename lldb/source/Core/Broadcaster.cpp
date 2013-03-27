@@ -29,7 +29,7 @@ Broadcaster::Broadcaster (BroadcasterManager *manager, const char *name) :
     m_hijacking_masks(),
     m_manager (manager)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Broadcaster::Broadcaster(\"%s\")", this, m_broadcaster_name.AsCString());
 
@@ -37,7 +37,7 @@ Broadcaster::Broadcaster (BroadcasterManager *manager, const char *name) :
 
 Broadcaster::~Broadcaster()
 {
-    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Broadcaster::~Broadcaster(\"%s\")", this, m_broadcaster_name.AsCString());
 
@@ -236,7 +236,7 @@ Broadcaster::PrivateBroadcastEvent (EventSP &event_sp, bool unique)
             hijacking_listener = NULL;
     }
 
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EVENTS));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EVENTS));
     if (log)
     {
         StreamString event_description;
@@ -294,7 +294,7 @@ Broadcaster::HijackBroadcaster (Listener *listener, uint32_t event_mask)
 {
     Mutex::Locker event_types_locker(m_listeners_mutex);
     
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EVENTS));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EVENTS));
     if (log)
     {
         log->Printf ("%p Broadcaster(\"%s\")::HijackBroadcaster (listener(\"%s\")=%p)",
@@ -313,7 +313,7 @@ Broadcaster::RestoreBroadcaster ()
 {
     Mutex::Locker event_types_locker(m_listeners_mutex);
 
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EVENTS));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EVENTS));
     if (log)
     {
         Listener *listener = m_hijacking_listeners.back();

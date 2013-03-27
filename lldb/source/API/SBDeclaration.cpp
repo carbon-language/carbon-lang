@@ -73,7 +73,7 @@ SBDeclaration::IsValid () const
 SBFileSpec
 SBDeclaration::GetFileSpec () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     SBFileSpec sb_file_spec;
     if (m_opaque_ap.get() && m_opaque_ap->GetFile())
@@ -93,7 +93,7 @@ SBDeclaration::GetFileSpec () const
 uint32_t
 SBDeclaration::GetLine () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     uint32_t line = 0;
     if (m_opaque_ap.get())

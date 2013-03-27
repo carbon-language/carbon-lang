@@ -90,7 +90,7 @@ ConnectionFileDescriptor::ConnectionFileDescriptor () :
     m_mutex (Mutex::eMutexTypeRecursive),
     m_shutting_down (false)
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::ConnectionFileDescriptor ()", this);
 }
@@ -109,7 +109,7 @@ ConnectionFileDescriptor::ConnectionFileDescriptor (int fd, bool owns_fd) :
     m_mutex (Mutex::eMutexTypeRecursive),
     m_shutting_down (false)
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::ConnectionFileDescriptor (fd = %i, owns_fd = %i)", this, fd, owns_fd);
     OpenCommandPipe ();
@@ -118,7 +118,7 @@ ConnectionFileDescriptor::ConnectionFileDescriptor (int fd, bool owns_fd) :
 
 ConnectionFileDescriptor::~ConnectionFileDescriptor ()
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::~ConnectionFileDescriptor ()", this);
     Disconnect (NULL);
@@ -130,7 +130,7 @@ ConnectionFileDescriptor::OpenCommandPipe ()
 {
     CloseCommandPipe();
     
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     // Make the command file descriptor here:
     int filedes[2];
     int result = pipe (filedes);
@@ -174,7 +174,7 @@ ConnectionStatus
 ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
 {
     Mutex::Locker locker (m_mutex);
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::Connect (url = '%s')", this, s);
 
@@ -295,7 +295,7 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
 ConnectionStatus
 ConnectionFileDescriptor::Disconnect (Error *error_ptr)
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::Disconnect ()", this);
 
@@ -370,7 +370,7 @@ ConnectionFileDescriptor::Read (void *dst,
                                 ConnectionStatus &status, 
                                 Error *error_ptr)
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::Read () ::read (fd = %i, dst = %p, dst_len = %" PRIu64 ")...",
                      this, m_fd_recv, dst, (uint64_t)dst_len);
@@ -482,7 +482,7 @@ ConnectionFileDescriptor::Read (void *dst,
 size_t
 ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStatus &status, Error *error_ptr)
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::Write (src = %p, src_len = %" PRIu64 ")", this, src, (uint64_t)src_len);
 
@@ -620,7 +620,7 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
     // Don't need to take the mutex here separately since we are only called from Read.  If we
     // ever get used more generally we will need to lock here as well.
     
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf("%p ConnectionFileDescriptor::BytesAvailable (timeout_usec = %u)", this, timeout_usec);
     struct timeval *tv_ptr;
@@ -770,7 +770,7 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
     // Don't need to take the mutex here separately since we are only called from Read.  If we
     // ever get used more generally we will need to lock here as well.
     
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf("%p ConnectionFileDescriptor::BytesAvailable (timeout_usec = %u)", this, timeout_usec);
     struct timeval *tv_ptr;
@@ -927,7 +927,7 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
     // Don't need to take the mutex here separately since we are only called from Read.  If we
     // ever get used more generally we will need to lock here as well.
     
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf("%p ConnectionFileDescriptor::BytesAvailable (timeout_usec = %u)", this, timeout_usec);
     int timeout_msec = 0;
@@ -1068,7 +1068,7 @@ ConnectionFileDescriptor::Close (int& fd, Error *error_ptr)
         // can get into the close scope below
         if (fd >= 0)
         {
-            LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
+            Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
             if (log)
                 log->Printf ("%p ConnectionFileDescriptor::Close (fd = %i)", this,fd);
 
@@ -1177,7 +1177,7 @@ ConnectionFileDescriptor::NamedSocketConnect (const char *socket_name, Error *er
 ConnectionStatus
 ConnectionFileDescriptor::SocketListen (uint16_t listen_port_num, Error *error_ptr)
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::SocketListen (port = %i)", this, listen_port_num);
 
@@ -1240,7 +1240,7 @@ ConnectionFileDescriptor::SocketListen (uint16_t listen_port_num, Error *error_p
 ConnectionStatus
 ConnectionFileDescriptor::ConnectTCP (const char *host_and_port, Error *error_ptr)
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::ConnectTCP (host/port = %s)", this, host_and_port);
     Disconnect (NULL);
@@ -1314,7 +1314,7 @@ ConnectionFileDescriptor::ConnectTCP (const char *host_and_port, Error *error_pt
 ConnectionStatus
 ConnectionFileDescriptor::ConnectUDP (const char *host_and_port, Error *error_ptr)
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::ConnectUDP (host/port = %s)", this, host_and_port);
     Disconnect (NULL);

@@ -34,7 +34,7 @@ DWARFDebugPubnames::Extract(const DataExtractor& data)
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "DWARFDebugPubnames::Extract (byte_size = %" PRIu64 ")",
                         (uint64_t)data.GetByteSize());
-    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_PUBNAMES));
+    Log *log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_PUBNAMES));
     if (log)
         log->Printf("DWARFDebugPubnames::Extract (byte_size = %" PRIu64 ")", (uint64_t)data.GetByteSize());
 
@@ -54,7 +54,7 @@ DWARFDebugPubnames::Extract(const DataExtractor& data)
                 break;
         }
         if (log)
-            Dump (log.get());
+            Dump (log);
         return true;
     }
     return false;
@@ -68,7 +68,7 @@ DWARFDebugPubnames::GeneratePubnames(SymbolFileDWARF* dwarf2Data)
                         "DWARFDebugPubnames::GeneratePubnames (data = %p)",
                         dwarf2Data);
 
-    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_PUBNAMES));
+    Log *log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_PUBNAMES));
     if (log)
         log->Printf("DWARFDebugPubnames::GeneratePubnames (data = %p)", dwarf2Data);
 
@@ -206,7 +206,7 @@ DWARFDebugPubnames::GeneratePubnames(SymbolFileDWARF* dwarf2Data)
     if (m_sets.empty())
         return false;
     if (log)
-        Dump (log.get());
+        Dump (log);
     return true;
 }
 

@@ -26,17 +26,21 @@ using namespace lldb_private;
 // control access to our static g_log_sp by hiding it in a singleton function
 // that will construct the static g_lob_sp the first time this function is 
 // called.
-static LogSP &
+
+static bool g_log_enabled = false;
+static Log * g_log = NULL;
+static Log *
 GetLog ()
 {
-    static LogSP g_log_sp;
-    return g_log_sp;
+    if (!g_log_enabled)
+        return NULL;
+    return g_log;
 }
 
 uint32_t
 lldb_private::GetLogMask ()
 {
-    LogSP log(GetLog ());
+    Log *log(GetLog ());
     if (log)
         return log->GetMask().Get();
     return 0;
@@ -49,15 +53,15 @@ lldb_private::IsLogVerbose ()
     return (mask & LIBLLDB_LOG_VERBOSE);
 }
 
-LogSP
+Log *
 lldb_private::GetLogIfAllCategoriesSet (uint32_t mask)
 {
-    LogSP log(GetLog ());
+    Log *log(GetLog ());
     if (log && mask)
     {
         uint32_t log_mask = log->GetMask().Get();
         if ((log_mask & mask) != mask)
-            return LogSP();
+            return NULL;
     }
     return log;
 }
@@ -65,7 +69,7 @@ lldb_private::GetLogIfAllCategoriesSet (uint32_t mask)
 void
 lldb_private::LogIfAllCategoriesSet (uint32_t mask, const char *format, ...)
 {
-    LogSP log(GetLogIfAllCategoriesSet (mask));
+    Log *log(GetLogIfAllCategoriesSet (mask));
     if (log)
     {
         va_list args;
@@ -78,7 +82,7 @@ lldb_private::LogIfAllCategoriesSet (uint32_t mask, const char *format, ...)
 void
 lldb_private::LogIfAnyCategoriesSet (uint32_t mask, const char *format, ...)
 {
-    LogSP log(GetLogIfAnyCategoriesSet (mask));
+    Log *log(GetLogIfAnyCategoriesSet (mask));
     if (log)
     {
         va_list args;
@@ -88,19 +92,19 @@ lldb_private::LogIfAnyCategoriesSet (uint32_t mask, const char *format, ...)
     }
 }
 
-LogSP
+Log *
 lldb_private::GetLogIfAnyCategoriesSet (uint32_t mask)
 {
-    LogSP log(GetLog ());
+    Log *log(GetLog ());
     if (log && mask && (mask & log->GetMask().Get()))
         return log;
-    return LogSP();
+    return NULL;
 }
 
 void
 lldb_private::DisableLog (const char **categories, Stream *feedback_strm)
 {
-    LogSP log(GetLog ());
+    Log *log(GetLog ());
 
     if (log)
     {
@@ -147,35 +151,35 @@ lldb_private::DisableLog (const char **categories, Stream *feedback_strm)
                 
             }
         }
+        log->GetMask().Reset (flag_bits);
         if (flag_bits == 0)
-            GetLog ().reset();
-        else
-            log->GetMask().Reset (flag_bits);
+            g_log_enabled = false;
     }
 
     return;
 }
 
-LogSP
+Log *
 lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, const char **categories, Stream *feedback_strm)
 {
     // Try see if there already is a log - that way we can reuse its settings.
     // We could reuse the log in toto, but we don't know that the stream is the same.
     uint32_t flag_bits;
-    LogSP log(GetLog ());
-    if (log)
-        flag_bits = log->GetMask().Get();
+    if (g_log)
+        flag_bits = g_log->GetMask().Get();
     else
         flag_bits = 0;
 
     // Now make a new log with this stream if one was provided
     if (log_stream_sp)
     {
-        log.reset (new Log(log_stream_sp));
-        GetLog () = log;
+        if (g_log)
+            g_log->SetStream(log_stream_sp);
+        else
+            g_log = new Log(log_stream_sp);
     }
 
-    if (log)
+    if (g_log)
     {
         for (size_t i=0; categories[i] != NULL; ++i)
         {
@@ -211,14 +215,15 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, const ch
             {
                 feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);
                 ListLogCategories (feedback_strm);
-                return log;
+                return g_log;
             }
         }
 
-        log->GetMask().Reset(flag_bits);
-        log->GetOptions().Reset(log_options);
+        g_log->GetMask().Reset(flag_bits);
+        g_log->GetOptions().Reset(log_options);
     }
-    return log;
+    g_log_enabled = true;
+    return g_log;
 }
 
 

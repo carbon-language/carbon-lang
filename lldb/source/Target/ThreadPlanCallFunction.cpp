@@ -57,7 +57,7 @@ ThreadPlanCallFunction::ConstructorSetup (Thread &thread,
     
     TargetSP target_sp (thread.CalculateTarget());
 
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP));
     
     SetBreakpoints();
     
@@ -237,7 +237,7 @@ ThreadPlanCallFunction::~ThreadPlanCallFunction ()
 void
 ThreadPlanCallFunction::ReportRegisterState (const char *message)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP | LIBLLDB_LOG_VERBOSE));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP | LIBLLDB_LOG_VERBOSE));
     if (log)
     {
         StreamString strm;
@@ -265,7 +265,7 @@ ThreadPlanCallFunction::ReportRegisterState (const char *message)
 void
 ThreadPlanCallFunction::DoTakedown (bool success)
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP));
     
     if (!m_valid)
     {
@@ -348,7 +348,7 @@ ThreadPlanCallFunction::ShouldReportStop(Event *event_ptr)
 bool
 ThreadPlanCallFunction::PlanExplainsStop (Event *event_ptr)
 {    
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP|LIBLLDB_LOG_PROCESS));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP|LIBLLDB_LOG_PROCESS));
     m_real_stop_info_sp = GetPrivateStopReason();
     
     // If our subplan knows why we stopped, even if it's done (which would forward the question to us)
@@ -524,7 +524,7 @@ ThreadPlanCallFunction::WillStop ()
 bool
 ThreadPlanCallFunction::MischiefManaged ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     
     if (IsPlanComplete())
     {

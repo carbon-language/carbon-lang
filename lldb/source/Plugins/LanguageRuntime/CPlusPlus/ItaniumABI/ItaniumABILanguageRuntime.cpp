@@ -111,7 +111,7 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                     const char *name = symbol->GetMangled().GetDemangledName().AsCString();
                     if (strstr(name, vtable_demangled_prefix) == name)
                     {
-                        LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+                        Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
                         if (log)
                             log->Printf ("0x%16.16" PRIx64 ": static-type = '%s' has vtable symbol '%s'\n",
                                          original_ptr,

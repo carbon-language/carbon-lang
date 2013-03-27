@@ -185,7 +185,7 @@ TypeCategoryMap::GetSummaryFormat (ValueObject& valobj,
     uint32_t reason_why;
     ActiveCategoriesIterator begin, end = m_active_categories.end();
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     
     for (begin = m_active_categories.begin(); begin != end; begin++)
     {
@@ -213,7 +213,7 @@ TypeCategoryMap::GetSyntheticChildren (ValueObject& valobj,
     
     ActiveCategoriesIterator begin, end = m_active_categories.end();
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     
     for (begin = m_active_categories.begin(); begin != end; begin++)
     {

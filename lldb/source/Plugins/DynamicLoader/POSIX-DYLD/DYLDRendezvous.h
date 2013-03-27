@@ -111,7 +111,7 @@ public:
     ModulesDidUnload() const { return !m_removed_soentries.empty(); }
 
     void
-    DumpToLog(lldb::LogSP log) const;
+    DumpToLog(lldb_private::Log *log) const;
 
     /// @brief Constants describing the state of the rendezvous.
     ///

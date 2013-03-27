@@ -303,9 +303,9 @@ DWARFCallFrameInfo::GetCFIData()
 {
     if (m_cfi_data_initialized == false)
     {
-        LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+        Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
         if (log)
-            m_objfile.GetModule()->LogMessage(log.get(), "Reading EH frame info");
+            m_objfile.GetModule()->LogMessage(log, "Reading EH frame info");
         m_objfile.ReadSectionData (m_section_sp.get(), m_cfi_data);
         m_cfi_data_initialized = true;
     }

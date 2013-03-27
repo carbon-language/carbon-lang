@@ -24,7 +24,7 @@ namespace lldb_private {
 class ClangASTMetrics
 {
 public:
-    static void DumpCounters (lldb::LogSP log);
+    static void DumpCounters (Log *log);
     static void ClearLocalCounters ()
     {
         local_counters = { 0, 0, 0, 0, 0, 0 };
@@ -80,7 +80,7 @@ private:
     static Counters global_counters;
     static Counters local_counters;
     
-    static void DumpCounters (lldb::LogSP log, Counters &counters);
+    static void DumpCounters (Log *log, Counters &counters);
 };
 
 class ClangASTImporter 

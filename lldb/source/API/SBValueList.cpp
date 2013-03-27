@@ -94,7 +94,7 @@ SBValueList::SBValueList () :
 SBValueList::SBValueList (const SBValueList &rhs) :
     m_opaque_ap ()
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (rhs.IsValid())
         m_opaque_ap.reset (new ValueListImpl (*rhs));
@@ -110,7 +110,7 @@ SBValueList::SBValueList (const SBValueList &rhs) :
 SBValueList::SBValueList (const ValueListImpl *lldb_object_ptr) :
     m_opaque_ap ()
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (lldb_object_ptr)
         m_opaque_ap.reset (new ValueListImpl (*lldb_object_ptr));
@@ -207,7 +207,7 @@ SBValueList::Append (const lldb::SBValueList& value_list)
 SBValue
 SBValueList::GetValueAtIndex (uint32_t idx) const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     //if (log)
     //    log->Printf ("SBValueList::GetValueAtIndex (uint32_t idx) idx = %d", idx);
@@ -230,7 +230,7 @@ SBValueList::GetValueAtIndex (uint32_t idx) const
 uint32_t
 SBValueList::GetSize () const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     //if (log)
     //    log->Printf ("SBValueList::GetSize ()");

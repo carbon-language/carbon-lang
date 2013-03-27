@@ -60,7 +60,7 @@ GDBRemoteCommunicationServer::~GDBRemoteCommunicationServer()
 //{
 //    GDBRemoteCommunicationServer *server = (GDBRemoteCommunicationServer*) arg;
 //
-//    LogSP log;// (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
+//    Log *log;// (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
 //    if (log)
 //        log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) thread starting...", __FUNCTION__, arg, process->GetID());
 //

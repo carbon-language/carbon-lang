@@ -76,13 +76,13 @@ public:
     virtual void
     ListCategories (lldb_private::Stream *strm);
 
-    static lldb::LogSP
+    static lldb_private::Log *
     GetLog ();
 
-    static lldb::LogSP
+    static lldb_private::Log *
     GetLogIfAll (uint32_t mask);
     
-    static lldb::LogSP
+    static lldb_private::Log *
     GetLogIfAny (uint32_t mask);
     
     static void

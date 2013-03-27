@@ -1331,7 +1331,7 @@ DWARFExpression::Evaluate
             error_ptr->SetErrorString ("Invalid offset and/or length for opcodes buffer.");
         return false;
     }
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));
 
 
     while (opcodes.ValidOffset(offset) && offset < end_offset)

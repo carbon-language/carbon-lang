@@ -248,13 +248,13 @@ GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataE
         }
         else
         {
-            LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
 #if LLDB_CONFIGURATION_DEBUG
             StreamString strm;
             gdb_comm.DumpHistory(strm);
             Host::SetCrashDescription (strm.GetData());
             assert (!"Didn't get sequence mutex for read register.");
 #else
+            Log *log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
             if (log)
             {
                 if (log->GetVerbose())
@@ -468,7 +468,7 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
         }
         else
         {
-            LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
+            Log *log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
             if (log)
             {
                 if (log->GetVerbose())
@@ -540,7 +540,7 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
     }
     else
     {
-        LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
+        Log *log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
         if (log)
         {
             if (log->GetVerbose())
@@ -673,7 +673,7 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
     }
     else
     {
-        LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
+        Log *log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
         if (log)
         {
             if (log->GetVerbose())

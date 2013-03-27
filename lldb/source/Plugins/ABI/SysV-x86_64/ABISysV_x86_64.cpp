@@ -315,7 +315,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
                                     addr_t *arg5_ptr,
                                     addr_t *arg6_ptr) const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)
         log->Printf("ABISysV_x86_64::PrepareTrivialCall\n(\n  thread = %p\n  sp = 0x%" PRIx64 "\n  func_addr = 0x%" PRIx64 "\n  return_addr = 0x%" PRIx64 "\n  arg1_ptr = %p (0x%" PRIx64 ")\n  arg2_ptr = %p (0x%" PRIx64 ")\n  arg3_ptr = %p (0x%" PRIx64 ")\n)",

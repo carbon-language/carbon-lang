@@ -306,7 +306,6 @@ namespace lldb {
     typedef STD_SHARED_PTR(lldb_private::LanguageRuntime) LanguageRuntimeSP;
     typedef STD_SHARED_PTR(lldb_private::LineTable) LineTableSP;
     typedef STD_SHARED_PTR(lldb_private::Listener) ListenerSP;
-    typedef STD_SHARED_PTR(lldb_private::Log) LogSP;
     typedef STD_SHARED_PTR(lldb_private::LogChannel) LogChannelSP;
     typedef STD_SHARED_PTR(lldb_private::Module) ModuleSP;
     typedef STD_WEAK_PTR(  lldb_private::Module) ModuleWP;
@@ -324,7 +323,6 @@ namespace lldb {
     typedef STD_SHARED_PTR(lldb_private::OptionValueFormat) OptionValueFormatSP;
     typedef STD_SHARED_PTR(lldb_private::OptionValuePathMappings) OptionValuePathMappingsSP;
     typedef STD_SHARED_PTR(lldb_private::OptionValueProperties) OptionValuePropertiesSP;
-//  typedef STD_WEAK_PTR(  lldb_private::OptionValueProperties) OptionValuePropertiesWP;
     typedef STD_SHARED_PTR(lldb_private::OptionValueRegex) OptionValueRegexSP;
     typedef STD_SHARED_PTR(lldb_private::OptionValueSInt64) OptionValueSInt64SP;
     typedef STD_SHARED_PTR(lldb_private::OptionValueString) OptionValueStringSP;

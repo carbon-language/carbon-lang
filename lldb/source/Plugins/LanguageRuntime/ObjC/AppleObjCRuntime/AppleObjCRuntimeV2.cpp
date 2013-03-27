@@ -1638,7 +1638,7 @@ AppleObjCRuntimeV2::GetClassDescriptor (ValueObject& valobj)
                     objc_class_sp = ObjCLanguageRuntime::GetClassDescriptor (isa);
                     if (isa && !objc_class_sp)
                     {
-                        lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+                        Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
                         if (log)
                             log->Printf("0x%" PRIx64 ": AppleObjCRuntimeV2::GetClassDescriptor() ISA was not in class descriptor cache 0x%" PRIx64,
                                         isa_pointer,
@@ -1685,7 +1685,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
     if (process == NULL)
         return false;
     
-    lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+    Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
     
     ExecutionContext exe_ctx;
     
@@ -1892,7 +1892,7 @@ AppleObjCRuntimeV2::ParseClassInfoArray (const DataExtractor &data, uint32_t num
     //        uint32_t hash;
     //    } __attribute__((__packed__));
 
-    lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+    Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
 
     // Iterate through all ClassInfo structures
     lldb::offset_t offset = 0;
@@ -1932,7 +1932,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
     if (process == NULL)
         return false;
     
-    lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+    Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
     
     ExecutionContext exe_ctx;
     
@@ -2141,7 +2141,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
 bool
 AppleObjCRuntimeV2::UpdateISAToDescriptorMapFromMemory (RemoteNXMapTable &hash_table)
 {
-    lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+    Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
     
     Process *process = GetProcess();
 

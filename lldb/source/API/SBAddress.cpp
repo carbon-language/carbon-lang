@@ -115,7 +115,7 @@ SBAddress::GetFileAddress () const
 lldb::addr_t
 SBAddress::GetLoadAddress (const SBTarget &target) const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     lldb::addr_t addr = LLDB_INVALID_ADDRESS;
     TargetSP target_sp (target.GetSP());

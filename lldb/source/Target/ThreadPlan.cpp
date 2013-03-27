@@ -79,7 +79,7 @@ ThreadPlan::MischiefManaged ()
 Vote
 ThreadPlan::ShouldReportStop (Event *event_ptr)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (m_stop_vote == eVoteNoOpinion)
     {
@@ -133,7 +133,7 @@ ThreadPlan::WillResume (StateType resume_state, bool current_plan)
 {
     if (current_plan)
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
         if (log)
         {

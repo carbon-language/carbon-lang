@@ -28,7 +28,7 @@ SBCommunication::SBCommunication(const char * broadcaster_name) :
     m_opaque (new Communication (broadcaster_name)),
     m_opaque_owned (true)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBCommunication::SBCommunication (broadcaster_name=\"%s\") => "
@@ -79,7 +79,7 @@ SBCommunication::Connect (const char *url)
 ConnectionStatus
 SBCommunication::AdoptFileDesriptor (int fd, bool owns_fd)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     ConnectionStatus status = eConnectionStatusNoConnection;
     if (m_opaque)
@@ -107,7 +107,7 @@ SBCommunication::AdoptFileDesriptor (int fd, bool owns_fd)
 ConnectionStatus
 SBCommunication::Disconnect ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     ConnectionStatus status= eConnectionStatusNoConnection;
     if (m_opaque)
@@ -123,7 +123,7 @@ SBCommunication::Disconnect ()
 bool
 SBCommunication::IsConnected () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     bool result = false;
     if (m_opaque)
         result = m_opaque->IsConnected ();
@@ -137,7 +137,7 @@ SBCommunication::IsConnected () const
 size_t
 SBCommunication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, ConnectionStatus &status)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBCommunication(%p)::Read (dst=%p, dst_len=%" PRIu64 ", timeout_usec=%u, &status)...",
                      m_opaque,
@@ -171,7 +171,7 @@ SBCommunication::Write (const void *src, size_t src_len, ConnectionStatus &statu
     else
         status = eConnectionStatusNoConnection;
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBCommunication(%p)::Write (src=%p, src_len=%" PRIu64 ", &status=%s) => %" PRIu64,
                      m_opaque, src, (uint64_t)src_len, Communication::ConnectionStatusAsCString (status), (uint64_t)bytes_written);
@@ -182,7 +182,7 @@ SBCommunication::Write (const void *src, size_t src_len, ConnectionStatus &statu
 bool
 SBCommunication::ReadThreadStart ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     bool success = false;
     if (m_opaque)
@@ -199,7 +199,7 @@ SBCommunication::ReadThreadStart ()
 bool
 SBCommunication::ReadThreadStop ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBCommunication(%p)::ReadThreadStop ()...", m_opaque);
 
@@ -219,7 +219,7 @@ SBCommunication::ReadThreadIsRunning ()
     bool result = false;
     if (m_opaque)
         result = m_opaque->ReadThreadIsRunning ();
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBCommunication(%p)::ReadThreadIsRunning () => %i", m_opaque, result);
     return result;
@@ -232,7 +232,7 @@ SBCommunication::SetReadThreadBytesReceivedCallback
     void *callback_baton
 )
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     bool result = false;
     if (m_opaque)
@@ -253,7 +253,7 @@ SBCommunication::GetBroadcaster ()
 {
     SBBroadcaster broadcaster (m_opaque, false);
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBCommunication(%p)::GetBroadcaster () => SBBroadcaster (%p)",

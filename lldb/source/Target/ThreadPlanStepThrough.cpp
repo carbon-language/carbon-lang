@@ -63,7 +63,7 @@ ThreadPlanStepThrough::ThreadPlanStepThrough (Thread &thread, StackID &m_stack_i
                 m_backstop_bkpt_id = return_bp->GetID();
                 return_bp->SetBreakpointKind("step-through-backstop");
             }
-            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+            Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
             if (log)
             {
                 log->Printf ("Setting backstop breakpoint %d at address: 0x%" PRIx64, m_backstop_bkpt_id, m_backstop_addr);
@@ -96,7 +96,7 @@ ThreadPlanStepThrough::LookForPlanToStepThroughFromCurrentPC()
             m_sub_plan_sp = objc_runtime->GetStepThroughTrampolinePlan (m_thread, m_stop_others);
     }
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
     {
         lldb::addr_t current_address = GetThread().GetRegisterContext()->GetPC(0);
@@ -248,7 +248,7 @@ ThreadPlanStepThrough::ClearBackstopBreakpoint ()
 bool
 ThreadPlanStepThrough::MischiefManaged ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (!IsPlanComplete())
     {
@@ -279,7 +279,7 @@ ThreadPlanStepThrough::HitOurBackstopBreakpoint()
             
             if (cur_frame_zero_id == m_return_stack_id)
             {
-                LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+                Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
                 if (log)
                     log->PutCString ("ThreadPlanStepThrough hit backstop breakpoint.");
                 return true;

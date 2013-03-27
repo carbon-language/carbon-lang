@@ -229,7 +229,7 @@ ValueObject::UpdateValueIfNeeded (bool update_format)
 bool
 ValueObject::UpdateFormatsIfNeeded()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     if (log)
         log->Printf("[%s %p] checking for FormatManager revisions. ValueObject rev: %d - Global rev: %d",
            GetName().GetCString(),

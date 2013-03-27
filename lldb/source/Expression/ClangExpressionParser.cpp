@@ -468,7 +468,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
 {
 	func_addr = LLDB_INVALID_ADDRESS;
 	func_end = LLDB_INVALID_ADDRESS;
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     std::auto_ptr<llvm::ExecutionEngine> execution_engine_ap;
     

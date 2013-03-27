@@ -169,7 +169,7 @@ ClangASTSource::FindExternalVisibleDeclsByName
 void
 ClangASTSource::CompleteType (TagDecl *tag_decl)
 {    
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     static unsigned int invocation_id = 0;
     unsigned int current_id = invocation_id++;
@@ -306,7 +306,7 @@ ClangASTSource::CompleteType (TagDecl *tag_decl)
 void
 ClangASTSource::CompleteType (clang::ObjCInterfaceDecl *interface_decl)
 {    
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)
     {
@@ -370,7 +370,7 @@ ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
 {
     ClangASTMetrics::RegisterLexicalQuery();
 
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     const Decl *context_decl = dyn_cast<Decl>(decl_context);
     
@@ -487,7 +487,7 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context)
     
     const ConstString name(context.m_decl_name.getAsString().c_str());
     
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     static unsigned int invocation_id = 0;
     unsigned int current_id = invocation_id++;
@@ -578,7 +578,7 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
 {
     assert (m_ast_context);
     
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     SymbolContextList sc_list;
     
@@ -886,7 +886,7 @@ FindObjCMethodDeclsWithOrigin (unsigned int current_id,
     if (!copied_method_decl)
         return false;
     
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)
     {
@@ -902,7 +902,7 @@ FindObjCMethodDeclsWithOrigin (unsigned int current_id,
 void
 ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     static unsigned int invocation_id = 0;
     unsigned int current_id = invocation_id++;
@@ -1189,7 +1189,7 @@ FindObjCPropertyAndIvarDeclsWithOrigin (unsigned int current_id,
                                         ClangASTImporter *ast_importer,
                                         DeclFromUser<const ObjCInterfaceDecl> &origin_iface_decl)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     if (origin_iface_decl.IsInvalid())
         return false;
@@ -1242,7 +1242,7 @@ FindObjCPropertyAndIvarDeclsWithOrigin (unsigned int current_id,
 void
 ClangASTSource::FindObjCPropertyAndIvarDecls (NameSearchContext &context)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     static unsigned int invocation_id = 0;
     unsigned int current_id = invocation_id++;
@@ -1440,7 +1440,7 @@ ClangASTSource::layoutRecordType(const RecordDecl *record,
     static unsigned int invocation_id = 0;
     unsigned int current_id = invocation_id++;
     
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)
     {
@@ -1562,7 +1562,7 @@ ClangASTSource::CompleteNamespaceMap (ClangASTImporter::NamespaceMapSP &namespac
     static unsigned int invocation_id = 0;
     unsigned int current_id = invocation_id++;
     
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)
     {
@@ -1657,8 +1657,6 @@ ClangASTSource::AddNamespace (NameSearchContext &context, ClangASTImporter::Name
     if (!namespace_decls)
         return NULL;
     
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-        
     const ClangNamespaceDecl &namespace_decl = namespace_decls->begin()->second;
     
     Decl *copied_decl = m_ast_importer->CopyDecl(m_ast_context, namespace_decl.GetASTContext(), namespace_decl.GetNamespaceDecl());
@@ -1773,7 +1771,7 @@ NameSearchContext::AddFunDecl (void *type)
     }
     else
     {
-        lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
         log->Printf("Function type wasn't a FunctionProtoType");
     }

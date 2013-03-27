@@ -51,7 +51,7 @@ ThreadPlanShouldStopHere::InvokeShouldStopHereCallback ()
     if (m_callback)
     {
         ThreadPlan *return_plan = m_callback (m_owner, m_flags, m_baton);
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         if (log)
         {
             lldb::addr_t current_addr = m_owner->GetThread().GetRegisterContext()->GetPC(0);

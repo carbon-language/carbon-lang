@@ -208,7 +208,7 @@ ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp,
         m_file = *file_spec_ptr;
     if (data_sp)
         m_data.SetData (data_sp, data_offset, length);
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
     {
         const ConstString object_name (module_sp->GetObjectName());
@@ -261,7 +261,7 @@ ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp,
 {
     if (header_data_sp)
         m_data.SetData (header_data_sp, 0, header_data_sp->GetByteSize());
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
     {
         const ConstString object_name (module_sp->GetObjectName());
@@ -280,7 +280,7 @@ ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp,
 
 ObjectFile::~ObjectFile()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p ObjectFile::~ObjectFile ()\n", this);
 }
@@ -541,7 +541,7 @@ ObjectFile::ClearSymtab ()
     if (module_sp)
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
         if (log)
         {
             log->Printf ("%p ObjectFile::ClearSymtab () symtab = %p",

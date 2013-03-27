@@ -45,7 +45,7 @@ IRExecutionUnit::WriteNow (const uint8_t *bytes,
                            size_t size,
                            Error &error)
 {    
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     auto iter = m_allocations.insert(m_allocations.end(), Allocation());
     
@@ -107,7 +107,7 @@ IRExecutionUnit::WriteNow (const uint8_t *bytes,
 void
 IRExecutionUnit::FreeNow (lldb::addr_t allocation)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     if (allocation == LLDB_INVALID_ADDRESS)
         return;
@@ -134,7 +134,7 @@ Error
 IRExecutionUnit::DisassembleFunction (Stream &stream,
                                       lldb::ProcessSP &process_wp)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     ExecutionContext exe_ctx(process_wp);
         
@@ -226,7 +226,7 @@ IRExecutionUnit::DisassembleFunction (Stream &stream,
     if (log)
     {
         log->Printf("Function data has contents:");
-        extractor.PutToLog (log.get(),
+        extractor.PutToLog (log,
                             0,
                             extractor.GetByteSize(),
                             func_remote_addr,
@@ -271,7 +271,6 @@ IRExecutionUnit::GetRunnableInfo(Error &error,
                                  lldb::addr_t &func_addr,
                                  lldb::addr_t &func_end)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     lldb::ProcessSP process_sp(m_process_wp.lock());
     
     func_addr = LLDB_INVALID_ADDRESS;
@@ -305,7 +304,7 @@ IRExecutionUnit::GetRunnableInfo(Error &error,
         
         m_did_jit = true;
         
-        lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
         
         std::string error_string;
         
@@ -480,7 +479,7 @@ IRExecutionUnit::MemoryManager::allocateStub(const llvm::GlobalValue* F,
                                              unsigned StubSize,
                                              unsigned Alignment)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     uint8_t *return_value = m_default_mm_ap->allocateStub(F, StubSize, Alignment);
     
@@ -513,7 +512,7 @@ IRExecutionUnit::MemoryManager::endFunctionBody(const llvm::Function *F,
 uint8_t *
 IRExecutionUnit::MemoryManager::allocateSpace(intptr_t Size, unsigned Alignment)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     uint8_t *return_value = m_default_mm_ap->allocateSpace(Size, Alignment);
     
@@ -540,7 +539,7 @@ IRExecutionUnit::MemoryManager::allocateCodeSection(uintptr_t Size,
                                                     unsigned Alignment,
                                                     unsigned SectionID)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     uint8_t *return_value = m_default_mm_ap->allocateCodeSection(Size, Alignment, SectionID);
     
@@ -570,7 +569,7 @@ IRExecutionUnit::MemoryManager::allocateDataSection(uintptr_t Size,
                                                     unsigned SectionID,
                                                     bool IsReadOnly)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     uint8_t *return_value = m_default_mm_ap->allocateDataSection(Size, Alignment, SectionID, IsReadOnly);
     
@@ -597,7 +596,7 @@ uint8_t *
 IRExecutionUnit::MemoryManager::allocateGlobal(uintptr_t Size,
                                                unsigned Alignment)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     uint8_t *return_value = m_default_mm_ap->allocateGlobal(Size, Alignment);
     
@@ -676,7 +675,7 @@ IRExecutionUnit::GetRemoteRangeForLocal (lldb::addr_t local_address)
 bool
 IRExecutionUnit::CommitAllocations (lldb::ProcessSP &process_sp)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     bool ret = true;
     
@@ -749,7 +748,7 @@ IRExecutionUnit::ReportAllocations (llvm::ExecutionEngine &engine)
 bool
 IRExecutionUnit::WriteData (lldb::ProcessSP &process_sp)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     for (Allocation &allocation : m_allocations)
     {
@@ -779,7 +778,7 @@ IRExecutionUnit::WriteData (lldb::ProcessSP &process_sp)
 }
 
 void 
-IRExecutionUnit::Allocation::dump (lldb::LogSP log)
+IRExecutionUnit::Allocation::dump (Log *log)
 {
     if (!log)
         return;

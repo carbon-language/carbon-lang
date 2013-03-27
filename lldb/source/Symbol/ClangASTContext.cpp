@@ -596,7 +596,7 @@ public:
         return new NullDiagnosticConsumer ();
     }
 private:
-    LogSP m_log;
+    Log * m_log;
 };
 
 DiagnosticConsumer *

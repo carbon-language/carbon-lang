@@ -87,7 +87,7 @@ RegisterContextLLDB::RegisterContextLLDB
 void
 RegisterContextLLDB::InitializeZerothFrame()
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     ExecutionContext exe_ctx(m_thread.shared_from_this());
     RegisterContextSP reg_ctx_sp = m_thread.GetRegisterContext();
 
@@ -227,7 +227,7 @@ RegisterContextLLDB::InitializeZerothFrame()
 void
 RegisterContextLLDB::InitializeNonZerothFrame()
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     if (IsFrameZero ())
     {
         m_frame_type = eNotAValidFrame;
@@ -591,7 +591,7 @@ RegisterContextLLDB::GetFastUnwindPlanForFrame ()
     {
         if (unwind_plan_sp->PlanValidAtAddress (m_current_pc))
         {
-            LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+            Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
             if (log && log->GetVerbose())
             {
                 if (m_fast_unwind_plan_sp)
@@ -1456,7 +1456,7 @@ RegisterContextLLDB::ReadPC (addr_t& pc)
 void
 RegisterContextLLDB::UnwindLogMsg (const char *fmt, ...)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     if (log)
     {
         va_list args;
@@ -1482,7 +1482,7 @@ RegisterContextLLDB::UnwindLogMsg (const char *fmt, ...)
 void
 RegisterContextLLDB::UnwindLogMsgVerbose (const char *fmt, ...)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     if (log && log->GetVerbose())
     {
         va_list args;

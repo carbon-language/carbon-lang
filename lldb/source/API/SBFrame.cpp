@@ -57,7 +57,7 @@ SBFrame::SBFrame () :
 SBFrame::SBFrame (const StackFrameSP &lldb_object_sp) :
     m_opaque_sp (new ExecutionContextRef (lldb_object_sp))
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
     {
@@ -109,7 +109,7 @@ SBFrame::IsValid() const
 SBSymbolContext
 SBFrame::GetSymbolContext (uint32_t resolve_scope) const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBSymbolContext sb_sym_ctx;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -150,7 +150,7 @@ SBFrame::GetSymbolContext (uint32_t resolve_scope) const
 SBModule
 SBFrame::GetModule () const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBModule sb_module;
     ModuleSP module_sp;
     Mutex::Locker api_locker;
@@ -193,7 +193,7 @@ SBFrame::GetModule () const
 SBCompileUnit
 SBFrame::GetCompileUnit () const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBCompileUnit sb_comp_unit;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -233,7 +233,7 @@ SBFrame::GetCompileUnit () const
 SBFunction
 SBFrame::GetFunction () const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBFunction sb_function;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -273,7 +273,7 @@ SBFrame::GetFunction () const
 SBSymbol
 SBFrame::GetSymbol () const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBSymbol sb_symbol;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -312,7 +312,7 @@ SBFrame::GetSymbol () const
 SBBlock
 SBFrame::GetBlock () const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBBlock sb_block;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -357,7 +357,7 @@ SBFrame::GetFrameBlock () const
 
     StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
     {
@@ -390,7 +390,7 @@ SBFrame::GetFrameBlock () const
 SBLineEntry
 SBFrame::GetLineEntry () const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBLineEntry sb_line_entry;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -436,7 +436,7 @@ SBFrame::GetFrameID () const
     if (frame)
         frame_idx = frame->GetFrameIndex ();
     
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFrameID () => %u", 
                      frame, frame_idx);
@@ -446,7 +446,7 @@ SBFrame::GetFrameID () const
 addr_t
 SBFrame::GetPC () const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     addr_t addr = LLDB_INVALID_ADDRESS;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -486,7 +486,7 @@ SBFrame::GetPC () const
 bool
 SBFrame::SetPC (addr_t new_pc)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     bool ret_val = false;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -527,7 +527,7 @@ SBFrame::SetPC (addr_t new_pc)
 addr_t
 SBFrame::GetSP () const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     addr_t addr = LLDB_INVALID_ADDRESS;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -567,7 +567,7 @@ SBFrame::GetSP () const
 addr_t
 SBFrame::GetFP () const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     addr_t addr = LLDB_INVALID_ADDRESS;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -607,7 +607,7 @@ SBFrame::GetFP () const
 SBAddress
 SBFrame::GetPCAddress () const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBAddress sb_addr;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -668,7 +668,7 @@ SBFrame::GetValueForVariablePath (const char *var_path, DynamicValueType use_dyn
 {
     SBValue sb_value;
     Mutex::Locker api_locker;
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (var_path == NULL || var_path[0] == '\0')
     {
         if (log)
@@ -732,7 +732,7 @@ SBFrame::FindVariable (const char *name)
 SBValue
 SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     VariableSP var_sp;
     SBValue sb_value;
 
@@ -820,7 +820,7 @@ SBFrame::FindValue (const char *name, ValueType value_type)
 SBValue
 SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueType use_dynamic)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBValue sb_value;
     
     if (name == NULL || name[0] == '\0')
@@ -987,7 +987,7 @@ SBFrame::operator != (const SBFrame &rhs) const
 SBThread
 SBFrame::GetThread () const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     ExecutionContext exe_ctx(m_opaque_sp.get());
     ThreadSP thread_sp (exe_ctx.GetThreadSP());
@@ -1009,7 +1009,7 @@ SBFrame::GetThread () const
 const char *
 SBFrame::Disassemble () const
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     const char *disassembly = NULL;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -1072,7 +1072,7 @@ SBFrame::GetVariables (bool arguments,
                        bool in_scope_only,
                        lldb::DynamicValueType  use_dynamic)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBValueList value_list;
     Mutex::Locker api_locker;
@@ -1168,7 +1168,7 @@ SBFrame::GetVariables (bool arguments,
 SBValueList
 SBFrame::GetRegisters ()
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBValueList value_list;
     Mutex::Locker api_locker;
@@ -1217,7 +1217,7 @@ SBFrame::GetRegisters ()
 bool
 SBFrame::GetDescription (SBStream &description)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     Stream &strm = description.ref();
 
     Mutex::Locker api_locker;
@@ -1294,9 +1294,9 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
 lldb::SBValue
 SBFrame::EvaluateExpression (const char *expr, const SBExpressionOptions &options)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
-    LogSP expr_log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *expr_log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     ExecutionResults exe_results = eExecutionSetupError;
     SBValue expr_result;
@@ -1376,7 +1376,7 @@ SBFrame::EvaluateExpression (const char *expr, const SBExpressionOptions &option
 bool
 SBFrame::IsInlined()
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     ExecutionContext exe_ctx(m_opaque_sp.get());
     StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
@@ -1413,7 +1413,7 @@ SBFrame::IsInlined()
 const char *
 SBFrame::GetFunctionName()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     const char *name = NULL;
     ExecutionContext exe_ctx(m_opaque_sp.get());
     StackFrame *frame = NULL;

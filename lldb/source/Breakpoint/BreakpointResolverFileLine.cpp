@@ -59,7 +59,7 @@ BreakpointResolverFileLine::SearchCallback
     SymbolContextList sc_list;
 
     assert (m_breakpoint != NULL);
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     
     // There is a tricky bit here.  You can have two compilation units that #include the same file, and
     // in one of them the function at m_line_number is used (and so code and a line entry for it is generated) but in the

@@ -31,7 +31,7 @@ public:
     
     const char *GetCString();
     void ToSTDERR();
-    void ToLog(lldb::LogSP &log, const char *prefix);
+    void ToLog(Log *log, const char *prefix);
     void ToStream(lldb::StreamSP &stream);
 private:
     std::string m_dump;

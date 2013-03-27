@@ -41,7 +41,7 @@ Log::Log () :
 {
 }
 
-Log::Log (StreamSP &stream_sp) :
+Log::Log (const StreamSP &stream_sp) :
     m_stream_sp(stream_sp),
     m_options(0),
     m_mask_bits(0)
@@ -517,7 +517,7 @@ LogChannel::FindPlugin (const char *plugin_name)
 }
 
 LogChannel::LogChannel () :
-    m_log_sp ()
+    m_log_ap ()
 {
 }
 

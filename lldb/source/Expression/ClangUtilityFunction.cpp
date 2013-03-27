@@ -68,8 +68,6 @@ bool
 ClangUtilityFunction::Install (Stream &error_stream,
                                ExecutionContext &exe_ctx)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-    
     if (m_jit_start_addr != LLDB_INVALID_ADDRESS)
     {
         error_stream.PutCString("error: already installed\n");

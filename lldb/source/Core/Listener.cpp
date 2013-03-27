@@ -32,14 +32,14 @@ Listener::Listener(const char *name) :
     m_events_mutex (Mutex::eMutexTypeRecursive),
     m_cond_wait()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Listener::Listener('%s')", this, m_name.c_str());
 }
 
 Listener::~Listener()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     Mutex::Locker locker (m_broadcasters_mutex);
     
     size_t num_managers = m_broadcaster_managers.size();
@@ -84,7 +84,7 @@ Listener::StartListeningForEvents (Broadcaster* broadcaster, uint32_t event_mask
         {
 
         }
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
         if (log)
             log->Printf ("%p Listener::StartListeningForEvents (broadcaster = %p, mask = 0x%8.8x) acquired_mask = 0x%8.8x for %s",
                          this,
@@ -113,7 +113,7 @@ Listener::StartListeningForEvents (Broadcaster* broadcaster, uint32_t event_mask
 
         uint32_t acquired_mask = broadcaster->AddListener (this, event_mask);
 
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
         if (log)
             log->Printf ("%p Listener::StartListeningForEvents (broadcaster = %p, mask = 0x%8.8x, callback = %p, user_data = %p) acquired_mask = 0x%8.8x for %s",
                         this, broadcaster, event_mask, callback, callback_user_data, acquired_mask, m_name.c_str());
@@ -183,7 +183,7 @@ Listener::BroadcasterManagerWillDestruct (BroadcasterManager *manager)
 void
 Listener::AddEvent (EventSP &event_sp)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
     if (log)
         log->Printf ("%p Listener('%s')::AddEvent (event_sp = {%p})", this, m_name.c_str(), event_sp.get());
 
@@ -270,7 +270,7 @@ Listener::FindNextEventInternal
     EventSP &event_sp,
     bool remove)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
 
     Mutex::Locker lock(m_events_mutex);
 
@@ -400,7 +400,7 @@ Listener::WaitForEventsInternal
     EventSP &event_sp
 )
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
     bool timed_out = false;
 
     if (log)

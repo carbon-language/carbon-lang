@@ -1117,7 +1117,7 @@ ScanFormatDescriptor (const char* var_name_begin,
                       Format* custom_format,
                       ValueObject::ValueObjectRepresentationStyle* val_obj_display)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     *percent_position = ::strchr(var_name_begin,'%');
     if (!*percent_position || *percent_position > var_name_end)
     {
@@ -1184,7 +1184,7 @@ ScanBracketedRange (const char* var_name_begin,
                     int64_t* index_lower,
                     int64_t* index_higher)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     *open_bracket_position = ::strchr(var_name_begin,'[');
     if (*open_bracket_position && *open_bracket_position < var_name_final)
     {
@@ -1241,7 +1241,7 @@ ExpandIndexedExpression (ValueObject* valobj,
                          StackFrame* frame,
                          bool deref_pointer)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     const char* ptr_deref_format = "[%d]";
     std::string ptr_deref_buffer(10,0);
     ::sprintf(&ptr_deref_buffer[0], ptr_deref_format, index);
@@ -1290,7 +1290,7 @@ Debugger::FormatPrompt
     ValueObject* realvalobj = NULL; // makes it super-easy to parse pointers
     bool success = true;
     const char *p;
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     for (p = format; *p != '\0'; ++p)
     {
         if (realvalobj)

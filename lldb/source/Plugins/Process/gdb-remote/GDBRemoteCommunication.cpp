@@ -171,7 +171,7 @@ GDBRemoteCommunication::CalculcateChecksum (const char *payload, size_t payload_
 size_t
 GDBRemoteCommunication::SendAck ()
 {
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
     ConnectionStatus status = eConnectionStatusSuccess;
     char ch = '+';
     const size_t bytes_written = Write (&ch, 1, status, NULL);
@@ -184,7 +184,7 @@ GDBRemoteCommunication::SendAck ()
 size_t
 GDBRemoteCommunication::SendNack ()
 {
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
     ConnectionStatus status = eConnectionStatusSuccess;
     char ch = '-';
     const size_t bytes_written = Write (&ch, 1, status, NULL);
@@ -213,7 +213,7 @@ GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_le
         packet.PutChar('#');
         packet.PutHex8(CalculcateChecksum (payload, payload_length));
 
-        LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
+        Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
         ConnectionStatus status = eConnectionStatusSuccess;
         size_t bytes_written = Write (packet.GetData(), packet.GetSize(), status, NULL);
         if (log)
@@ -223,7 +223,7 @@ GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_le
             // logs all of the packet will set a boolean so that we don't dump this more
             // than once
             if (!m_history.DidDumpToLog ())
-                m_history.Dump (log.get());
+                m_history.Dump (log);
 
             log->Printf ("<%4zu> send packet: %.*s", bytes_written, (int)packet.GetSize(), packet.GetData());
         }
@@ -285,7 +285,7 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
     uint8_t buffer[8192];
     Error error;
 
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS | GDBR_LOG_VERBOSE));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS | GDBR_LOG_VERBOSE));
 
     // Check for a packet from our cache first without trying any reading...
     if (CheckForPacket (NULL, 0, packet))
@@ -340,7 +340,7 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
     // Put the packet data into the buffer in a thread safe fashion
     Mutex::Locker locker(m_bytes_mutex);
     
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
 
     if (src && src_len > 0)
     {
@@ -457,7 +457,7 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
                 // logs all of the packet will set a boolean so that we don't dump this more
                 // than once
                 if (!m_history.DidDumpToLog ())
-                    m_history.Dump (log.get());
+                    m_history.Dump (log);
                 
                 log->Printf ("<%4zu> read packet: %.*s", total_length, (int)(total_length), m_bytes.c_str());
             }

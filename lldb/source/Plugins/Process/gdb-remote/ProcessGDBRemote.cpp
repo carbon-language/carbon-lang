@@ -578,7 +578,7 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, const ProcessLaunchInfo &launch_
     //  ::LogSetBitMask (GDBR_LOG_DEFAULT);
     //  ::LogSetOptions (LLDB_LOG_OPTION_THREADSAFE | LLDB_LOG_OPTION_PREPEND_TIMESTAMP | LLDB_LOG_OPTION_PREPEND_PROC_AND_THREAD);
     //  ::LogSetLogFile ("/dev/stdout");
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
 
     ObjectFile * object_file = exe_module->GetObjectFile();
     if (object_file)
@@ -798,7 +798,7 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
 void
 ProcessGDBRemote::DidLaunchOrAttach ()
 {
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessGDBRemote::DidLaunch()");
     if (GetID() != LLDB_INVALID_PROCESS_ID)
@@ -1036,7 +1036,7 @@ Error
 ProcessGDBRemote::DoResume ()
 {
     Error error;
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessGDBRemote::Resume()");
     
@@ -1293,7 +1293,7 @@ bool
 ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     // locker will keep a mutex locked until it goes out of scope
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_THREAD));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_THREAD));
     if (log && log->GetMask().Test(GDBR_LOG_VERBOSE))
         log->Printf ("ProcessGDBRemote::%s (pid = %" PRIu64 ")", __FUNCTION__, GetID());
     
@@ -1680,7 +1680,7 @@ ProcessGDBRemote::InterruptIfRunning
 {
     Error error;
 
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
     
     bool paused_private_state_thread = false;
     const bool is_running = m_gdb_comm.IsRunning();
@@ -1749,7 +1749,7 @@ ProcessGDBRemote::InterruptIfRunning
 Error
 ProcessGDBRemote::WillDetach ()
 {
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessGDBRemote::WillDetach()");
 
@@ -1767,7 +1767,7 @@ Error
 ProcessGDBRemote::DoDetach()
 {
     Error error;
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessGDBRemote::DoDetach()");
 
@@ -1798,7 +1798,7 @@ Error
 ProcessGDBRemote::DoDestroy ()
 {
     Error error;
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessGDBRemote::DoDestroy()");
 
@@ -2177,7 +2177,7 @@ ProcessGDBRemote::EnableBreakpointSite (BreakpointSite *bp_site)
     Error error;
     assert (bp_site != NULL);
 
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_BREAKPOINTS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_BREAKPOINTS));
     user_id_t site_id = bp_site->GetID();
     const addr_t addr = bp_site->GetLoadAddress();
     if (log)
@@ -2241,7 +2241,7 @@ ProcessGDBRemote::DisableBreakpointSite (BreakpointSite *bp_site)
     assert (bp_site != NULL);
     addr_t addr = bp_site->GetLoadAddress();
     user_id_t site_id = bp_site->GetID();
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_BREAKPOINTS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("ProcessGDBRemote::DisableBreakpointSite (site_id = %" PRIu64 ") addr = 0x%8.8" PRIx64, site_id, (uint64_t)addr);
 
@@ -2307,7 +2307,7 @@ ProcessGDBRemote::EnableWatchpoint (Watchpoint *wp, bool notify)
     {
         user_id_t watchID = wp->GetID();
         addr_t addr = wp->GetLoadAddress();
-        LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_WATCHPOINTS));
+        Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_WATCHPOINTS));
         if (log)
             log->Printf ("ProcessGDBRemote::EnableWatchpoint(watchID = %" PRIu64 ")", watchID);
         if (wp->IsEnabled())
@@ -2349,7 +2349,7 @@ ProcessGDBRemote::DisableWatchpoint (Watchpoint *wp, bool notify)
     {
         user_id_t watchID = wp->GetID();
 
-        LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_WATCHPOINTS));
+        Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_WATCHPOINTS));
 
         addr_t addr = wp->GetLoadAddress();
 
@@ -2401,7 +2401,7 @@ Error
 ProcessGDBRemote::DoSignal (int signo)
 {
     Error error;
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessGDBRemote::DoSignal (signal = %d)", signo);
 
@@ -2464,7 +2464,7 @@ ProcessGDBRemote::StartDebugserverProcess (const char *debugserver_url, const Pr
 
             m_stdio_communication.Clear();
 
-            LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
+            Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
 
             Args &debugserver_args = debugserver_launch_info.GetArguments();
             char arg_cstr[PATH_MAX];
@@ -2553,7 +2553,7 @@ ProcessGDBRemote::StartDebugserverProcess (const char *debugserver_url, const Pr
                 m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
 
             if (error.Fail() || log)
-                error.PutToLog(log.get(), "Host::LaunchProcess (launch_info) => pid=%" PRIu64 ", path='%s'", m_debugserver_pid, debugserver_path);
+                error.PutToLog(log, "Host::LaunchProcess (launch_info) => pid=%" PRIu64 ", path='%s'", m_debugserver_pid, debugserver_path);
         }
         else
         {
@@ -2588,7 +2588,7 @@ ProcessGDBRemote::MonitorDebugserverProcess
 
     // "debugserver_pid" argument passed in is the process ID for
     // debugserver that we are tracking...
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
 
     ProcessGDBRemote *process = (ProcessGDBRemote *)callback_baton;
 
@@ -2689,7 +2689,7 @@ ProcessGDBRemote::Initialize()
 bool
 ProcessGDBRemote::StartAsyncThread ()
 {
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
 
     if (log)
         log->Printf ("ProcessGDBRemote::%s ()", __FUNCTION__);
@@ -2724,7 +2724,7 @@ ProcessGDBRemote::StartAsyncThread ()
 void
 ProcessGDBRemote::StopAsyncThread ()
 {
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
 
     if (log)
         log->Printf ("ProcessGDBRemote::%s ()", __FUNCTION__);
@@ -2757,7 +2757,7 @@ ProcessGDBRemote::AsyncThread (void *arg)
 {
     ProcessGDBRemote *process = (ProcessGDBRemote*) arg;
 
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %" PRIu64 ") thread starting...", __FUNCTION__, arg, process->GetID());
 
@@ -2990,7 +2990,7 @@ ProcessGDBRemote::NewThreadNotifyBreakpointHit (void *baton,
 {
     // I don't think I have to do anything here, just make sure I notice the new thread when it starts to 
     // run so I can stop it if that's what I want to do.
-    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
         log->Printf("Hit New Thread Notification breakpoint.");
     return false;
@@ -3000,7 +3000,7 @@ ProcessGDBRemote::NewThreadNotifyBreakpointHit (void *baton,
 bool
 ProcessGDBRemote::StartNoticingNewThreads()
 {
-    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (m_thread_create_bp_sp)
     {
         if (log && log->GetVerbose())
@@ -3032,7 +3032,7 @@ ProcessGDBRemote::StartNoticingNewThreads()
 bool
 ProcessGDBRemote::StopNoticingNewThreads()
 {   
-    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log && log->GetVerbose())
         log->Printf ("Disabling new thread notification breakpoint.");
 

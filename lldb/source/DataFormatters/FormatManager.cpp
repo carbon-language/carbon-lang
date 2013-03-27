@@ -341,7 +341,7 @@ FormatManager::GetSummaryFormat (ValueObject& valobj,
 {
     TypeSummaryImplSP retval;
 #if USE_CACHE
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     ConstString valobj_type(GetTypeForCache(valobj, use_dynamic));
     if (valobj_type)
     {
@@ -376,7 +376,7 @@ FormatManager::GetSyntheticChildren (ValueObject& valobj,
 {
     SyntheticChildrenSP retval;
 #if USE_CACHE
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     ConstString valobj_type(GetTypeForCache(valobj, use_dynamic));
     if (valobj_type)
     {

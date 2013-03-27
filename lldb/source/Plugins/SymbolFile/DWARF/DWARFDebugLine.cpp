@@ -578,7 +578,7 @@ DWARFDebugLine::ParseStatementTable
     void* userData
 )
 {
-    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_LINE));
+    Log *log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_LINE));
     Prologue::shared_ptr prologue(new Prologue());
 
 
@@ -598,11 +598,11 @@ DWARFDebugLine::ParseStatementTable
     }
 
     if (log)
-        prologue->Dump (log.get());
+        prologue->Dump (log);
 
     const dw_offset_t end_offset = debug_line_offset + prologue->total_length + sizeof(prologue->total_length);
 
-    State state(prologue, log.get(), callback, userData);
+    State state(prologue, log, callback, userData);
 
     while (*offset_ptr < end_offset)
     {

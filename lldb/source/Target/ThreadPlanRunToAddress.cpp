@@ -226,7 +226,7 @@ ThreadPlanRunToAddress::WillStop ()
 bool
 ThreadPlanRunToAddress::MischiefManaged ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (AtOurAddress())
     {

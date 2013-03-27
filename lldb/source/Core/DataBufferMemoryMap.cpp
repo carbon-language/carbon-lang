@@ -83,7 +83,7 @@ DataBufferMemoryMap::Clear()
 {
     if (m_mmap_addr != NULL)
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MMAP));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MMAP));
         if (log)
             log->Printf("DataBufferMemoryMap::Clear() m_mmap_addr = %p, m_mmap_size = %zu", m_mmap_addr, m_mmap_size);
         ::munmap((void *)m_mmap_addr, m_mmap_size);
@@ -110,7 +110,7 @@ DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* filespec,
 {
     if (filespec != NULL)
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MMAP));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MMAP));
         if (log)
         {
             log->Printf("DataBufferMemoryMap::MemoryMapFromFileSpec(file=\"%s/%s\", offset=0x%" PRIx64 ", length=0x%" PRIx64 ", writeable=%i",
@@ -164,7 +164,7 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd,
     Clear();
     if (fd >= 0)
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MMAP|LIBLLDB_LOG_VERBOSE));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MMAP|LIBLLDB_LOG_VERBOSE));
         if (log)
         {
             log->Printf("DataBufferMemoryMap::MemoryMapFromFileSpec(fd=%i, offset=0x%" PRIx64 ", length=0x%" PRIx64 ", writeable=%i, fd_is_file=%i)",

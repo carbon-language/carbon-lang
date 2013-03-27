@@ -35,7 +35,7 @@ SBWatchpoint::SBWatchpoint () :
 SBWatchpoint::SBWatchpoint (const lldb::WatchpointSP &wp_sp) :
     m_opaque_sp (wp_sp)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
     {
@@ -67,7 +67,7 @@ SBWatchpoint::~SBWatchpoint ()
 watch_id_t
 SBWatchpoint::GetID ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     watch_id_t watch_id = LLDB_INVALID_WATCH_ID;
     lldb::WatchpointSP watchpoint_sp(GetSP());
@@ -183,7 +183,7 @@ SBWatchpoint::GetHitCount ()
         count = watchpoint_sp->GetHitCount();
     }
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBWatchpoint(%p)::GetHitCount () => %u", watchpoint_sp.get(), count);
 

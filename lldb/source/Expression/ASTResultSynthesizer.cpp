@@ -60,7 +60,7 @@ ASTResultSynthesizer::Initialize(ASTContext &Context)
 void
 ASTResultSynthesizer::TransformTopLevelDecl(Decl* D)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     if (NamedDecl *named_decl = dyn_cast<NamedDecl>(D))
     {
@@ -129,7 +129,7 @@ ASTResultSynthesizer::HandleTopLevelDecl(DeclGroupRef D)
 bool 
 ASTResultSynthesizer::SynthesizeFunctionResult (FunctionDecl *FunDecl)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (!m_sema)
         return false;
@@ -175,7 +175,7 @@ ASTResultSynthesizer::SynthesizeFunctionResult (FunctionDecl *FunDecl)
 bool
 ASTResultSynthesizer::SynthesizeObjCMethodResult (ObjCMethodDecl *MethodDecl)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
         
     if (!m_sema)
         return false;
@@ -224,7 +224,7 @@ bool
 ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body, 
                                             DeclContext *DC)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     ASTContext &Ctx(*m_ast_context);
         
@@ -452,7 +452,7 @@ ASTResultSynthesizer::MaybeRecordPersistentType(TypeDecl *D)
     if (name.size() == 0 || name[0] != '$')
         return;
     
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     ConstString name_cs(name.str().c_str());
     

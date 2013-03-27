@@ -55,7 +55,7 @@ SymbolFileDWARFDebugMap::CompileUnitInfo::GetFileRangeMap(SymbolFileDWARFDebugMa
     
     ObjectFile *oso_objfile = oso_module->GetObjectFile();
     
-    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_MAP));
+    Log *log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_MAP));
     if (log)
     {
         ConstString object_name (oso_module->GetObjectName());
@@ -330,7 +330,7 @@ SymbolFileDWARFDebugMap::InitOSO()
     Symtab* symtab = m_obj_file->GetSymtab();
     if (symtab)
     {
-        LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_MAP));
+        Log *log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_MAP));
 
         std::vector<uint32_t> oso_indexes;
         // When a mach-o symbol is encoded, the n_type field is encoded in bits

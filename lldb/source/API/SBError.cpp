@@ -70,7 +70,7 @@ SBError::Clear ()
 bool
 SBError::Fail () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     bool ret_value = false;
     if (m_opaque_ap.get())
@@ -85,7 +85,7 @@ SBError::Fail () const
 bool
 SBError::Success () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     bool ret_value = true;
     if (m_opaque_ap.get())
         ret_value = m_opaque_ap->Success();
@@ -99,7 +99,7 @@ SBError::Success () const
 uint32_t
 SBError::GetError () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     uint32_t err = 0;
     if (m_opaque_ap.get())
@@ -115,7 +115,7 @@ SBError::GetError () const
 ErrorType
 SBError::GetType () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     ErrorType err_type = eErrorTypeInvalid;
     if (m_opaque_ap.get())
         err_type = m_opaque_ap->GetType();

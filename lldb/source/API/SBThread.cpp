@@ -102,7 +102,7 @@ SBThread::Clear ()
 StopReason
 SBThread::GetStopReason()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     StopReason reason = eStopReasonInvalid;
     Mutex::Locker api_locker;
@@ -179,7 +179,7 @@ SBThread::GetStopReasonDataCount ()
         }
         else
         {
-            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
                 log->Printf ("SBThread(%p)::GetStopReasonDataCount() => error: process is running", exe_ctx.GetThreadPtr());
         }
@@ -253,7 +253,7 @@ SBThread::GetStopReasonDataAtIndex (uint32_t idx)
         }
         else
         {
-            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
                 log->Printf ("SBThread(%p)::GetStopReasonDataAtIndex() => error: process is running", exe_ctx.GetThreadPtr());
         }
@@ -264,7 +264,7 @@ SBThread::GetStopReasonDataAtIndex (uint32_t idx)
 size_t
 SBThread::GetStopDescription (char *dst, size_t dst_len)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -380,7 +380,7 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
         }
         else
         {
-            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
                 log->Printf ("SBThread(%p)::GetStopDescription() => error: process is running", exe_ctx.GetThreadPtr());
         }
@@ -393,7 +393,7 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
 SBValue
 SBThread::GetStopReturnValue ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     ValueObjectSP return_valobj_sp;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -453,7 +453,7 @@ SBThread::GetIndexID () const
 const char *
 SBThread::GetName () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     const char *name = NULL;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -485,7 +485,7 @@ SBThread::GetQueueName () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (exe_ctx.HasThreadScope())
     {
         Process::StopLocker stop_locker;
@@ -551,7 +551,7 @@ SBThread::ResumeNewPlan (ExecutionContext &exe_ctx, ThreadPlan *new_plan)
 void
 SBThread::StepOver (lldb::RunMode stop_other_threads)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -600,7 +600,7 @@ SBThread::StepInto (lldb::RunMode stop_other_threads)
 void
 SBThread::StepInto (const char *target_name, lldb::RunMode stop_other_threads)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -645,7 +645,7 @@ SBThread::StepInto (const char *target_name, lldb::RunMode stop_other_threads)
 void
 SBThread::StepOut ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -677,7 +677,7 @@ SBThread::StepOut ()
 void
 SBThread::StepOutOfFrame (lldb::SBFrame &sb_frame)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -712,7 +712,7 @@ SBThread::StepOutOfFrame (lldb::SBFrame &sb_frame)
 void
 SBThread::StepInstruction (bool step_over)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -735,7 +735,7 @@ SBThread::StepInstruction (bool step_over)
 void
 SBThread::RunToAddress (lldb::addr_t addr)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -766,7 +766,7 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
                          uint32_t line)
 {
     SBError sb_error;
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     char path[PATH_MAX];
     
     Mutex::Locker api_locker;
@@ -913,7 +913,7 @@ SBThread::ReturnFromFrame (SBFrame &frame, SBValue &return_value)
 {
     SBError sb_error;
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
@@ -935,7 +935,7 @@ SBThread::ReturnFromFrame (SBFrame &frame, SBValue &return_value)
 bool
 SBThread::Suspend()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     ExecutionContext exe_ctx (m_opaque_sp.get());
     bool result = false;
     if (exe_ctx.HasThreadScope())
@@ -960,7 +960,7 @@ SBThread::Suspend()
 bool
 SBThread::Resume ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     ExecutionContext exe_ctx (m_opaque_sp.get());
     bool result = false;
     if (exe_ctx.HasThreadScope())
@@ -1002,7 +1002,7 @@ SBThread::GetProcess ()
         sb_process.SetSP (exe_ctx.GetProcessSP());
     }
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         SBStream frame_desc_strm;
@@ -1017,7 +1017,7 @@ SBThread::GetProcess ()
 uint32_t
 SBThread::GetNumFrames ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     uint32_t num_frames = 0;
     Mutex::Locker api_locker;
@@ -1046,7 +1046,7 @@ SBThread::GetNumFrames ()
 SBFrame
 SBThread::GetFrameAtIndex (uint32_t idx)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBFrame sb_frame;
     StackFrameSP frame_sp;
@@ -1082,7 +1082,7 @@ SBThread::GetFrameAtIndex (uint32_t idx)
 lldb::SBFrame
 SBThread::GetSelectedFrame ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBFrame sb_frame;
     StackFrameSP frame_sp;
@@ -1118,7 +1118,7 @@ SBThread::GetSelectedFrame ()
 lldb::SBFrame
 SBThread::SetSelectedFrame (uint32_t idx)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBFrame sb_frame;
     StackFrameSP frame_sp;

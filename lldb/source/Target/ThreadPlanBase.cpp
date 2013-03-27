@@ -84,7 +84,7 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
     m_stop_vote = eVoteYes;
     m_run_vote = eVoteYes;
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     StopInfoSP stop_info_sp = GetPrivateStopReason();
     if (stop_info_sp)

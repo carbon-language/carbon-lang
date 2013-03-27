@@ -81,7 +81,7 @@ public:
     GetEntryName(EntryType type);
 
     void
-    DumpToLog(lldb::LogSP log) const;
+    DumpToLog(lldb_private::Log *log) const;
 
 private:
     lldb_private::Process *m_process;

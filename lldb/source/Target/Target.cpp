@@ -93,7 +93,7 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     
     CheckInWithManager();
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Target::Target()", this);
     if (m_arch.IsValid())
@@ -107,7 +107,7 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
 //----------------------------------------------------------------------
 Target::~Target()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Target::~Target()", this);
     DeleteCurrentProcess ();
@@ -495,7 +495,7 @@ Target::CreateBreakpoint (SearchFilterSP &filter_sp, BreakpointResolverSP &resol
         else
             m_breakpoint_list.Add (bp_sp, true);
 
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
         if (log)
         {
             StreamString s;
@@ -540,7 +540,7 @@ CheckIfWatchpointsExhausted(Target *target, Error &error)
 WatchpointSP
 Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *type, uint32_t kind, Error &error)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf("Target::%s (addr = 0x%8.8" PRIx64 " size = %" PRIu64 " type = %u)\n",
                     __FUNCTION__, addr, (uint64_t)size, kind);
@@ -620,7 +620,7 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *typ
 void
 Target::RemoveAllBreakpoints (bool internal_also)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("Target::%s (internal_also = %s)\n", __FUNCTION__, internal_also ? "yes" : "no");
 
@@ -634,7 +634,7 @@ Target::RemoveAllBreakpoints (bool internal_also)
 void
 Target::DisableAllBreakpoints (bool internal_also)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("Target::%s (internal_also = %s)\n", __FUNCTION__, internal_also ? "yes" : "no");
 
@@ -646,7 +646,7 @@ Target::DisableAllBreakpoints (bool internal_also)
 void
 Target::EnableAllBreakpoints (bool internal_also)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("Target::%s (internal_also = %s)\n", __FUNCTION__, internal_also ? "yes" : "no");
 
@@ -658,7 +658,7 @@ Target::EnableAllBreakpoints (bool internal_also)
 bool
 Target::RemoveBreakpointByID (break_id_t break_id)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("Target::%s (break_id = %i, internal = %s)\n", __FUNCTION__, break_id, LLDB_BREAK_ID_IS_INTERNAL (break_id) ? "yes" : "no");
 
@@ -683,7 +683,7 @@ Target::RemoveBreakpointByID (break_id_t break_id)
 bool
 Target::DisableBreakpointByID (break_id_t break_id)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("Target::%s (break_id = %i, internal = %s)\n", __FUNCTION__, break_id, LLDB_BREAK_ID_IS_INTERNAL (break_id) ? "yes" : "no");
 
@@ -704,7 +704,7 @@ Target::DisableBreakpointByID (break_id_t break_id)
 bool
 Target::EnableBreakpointByID (break_id_t break_id)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     if (log)
         log->Printf ("Target::%s (break_id = %i, internal = %s)\n",
                      __FUNCTION__,
@@ -734,7 +734,7 @@ Target::EnableBreakpointByID (break_id_t break_id)
 bool
 Target::RemoveAllWatchpoints (bool end_to_end)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s\n", __FUNCTION__);
 
@@ -768,7 +768,7 @@ Target::RemoveAllWatchpoints (bool end_to_end)
 bool
 Target::DisableAllWatchpoints (bool end_to_end)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s\n", __FUNCTION__);
 
@@ -801,7 +801,7 @@ Target::DisableAllWatchpoints (bool end_to_end)
 bool
 Target::EnableAllWatchpoints (bool end_to_end)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s\n", __FUNCTION__);
 
@@ -833,7 +833,7 @@ Target::EnableAllWatchpoints (bool end_to_end)
 bool
 Target::ClearAllWatchpointHitCounts ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s\n", __FUNCTION__);
 
@@ -854,7 +854,7 @@ Target::ClearAllWatchpointHitCounts ()
 bool
 Target::IgnoreAllWatchpoints (uint32_t ignore_count)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s\n", __FUNCTION__);
 
@@ -877,7 +877,7 @@ Target::IgnoreAllWatchpoints (uint32_t ignore_count)
 bool
 Target::DisableWatchpointByID (lldb::watch_id_t watch_id)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s (watch_id = %i)\n", __FUNCTION__, watch_id);
 
@@ -900,7 +900,7 @@ Target::DisableWatchpointByID (lldb::watch_id_t watch_id)
 bool
 Target::EnableWatchpointByID (lldb::watch_id_t watch_id)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s (watch_id = %i)\n", __FUNCTION__, watch_id);
 
@@ -923,7 +923,7 @@ Target::EnableWatchpointByID (lldb::watch_id_t watch_id)
 bool
 Target::RemoveWatchpointByID (lldb::watch_id_t watch_id)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s (watch_id = %i)\n", __FUNCTION__, watch_id);
 
@@ -939,7 +939,7 @@ Target::RemoveWatchpointByID (lldb::watch_id_t watch_id)
 bool
 Target::IgnoreWatchpointByID (lldb::watch_id_t watch_id, uint32_t ignore_count)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s (watch_id = %i)\n", __FUNCTION__, watch_id);
 
@@ -982,7 +982,7 @@ LoadScriptingResourceForModule (const ModuleSP &module_sp, Target *target)
 void
 Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TARGET));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TARGET));
     m_images.Clear();
     m_scratch_ast_context_ap.reset();
     m_scratch_ast_source_ap.reset();
@@ -1037,7 +1037,7 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
 bool
 Target::SetArchitecture (const ArchSpec &arch_spec)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TARGET));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TARGET));
     if (m_arch.IsCompatibleMatch(arch_spec) || !m_arch.IsValid())
     {
         // If we haven't got a valid arch spec, or the architectures are

@@ -166,7 +166,7 @@ public:
             }
             else
             {
-                LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+                Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
                 if (log)
                     log->Printf ("Process::%s could not find breakpoint site id: %" PRId64 "...", __FUNCTION__, m_value);
@@ -285,7 +285,7 @@ protected:
             return;
         m_should_perform_action = false;
         
-        LogSP log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
         
         BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (m_value));
         
@@ -476,7 +476,7 @@ protected:
         {
             m_should_stop = true;
             m_should_stop_is_valid = true;
-            LogSP log_process(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+            Log * log_process(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
             if (log_process)
                 log_process->Printf ("Process::%s could not find breakpoint site id: %" PRId64 "...", __FUNCTION__, m_value);
@@ -592,7 +592,7 @@ protected:
         }
         else
         {
-            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+            Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
             if (log)
                 log->Printf ("Process::%s could not find watchpoint location id: %" PRId64 "...",
@@ -616,7 +616,7 @@ protected:
     virtual void
     PerformAction (Event *event_ptr)
     {
-        LogSP log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS);
+        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS);
         // We're going to calculate if we should stop or not in some way during the course of
         // this code.  Also by default we're going to stop, so set that here.
         m_should_stop = true;
@@ -760,7 +760,7 @@ protected:
         }
         else
         {
-            LogSP log_process(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+            Log * log_process(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
             if (log_process)
                 log_process->Printf ("Process::%s could not find watchpoint id: %" PRId64 "...", __FUNCTION__, m_value);

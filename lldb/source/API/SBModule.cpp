@@ -88,7 +88,7 @@ SBModule::Clear()
 SBFileSpec
 SBModule::GetFileSpec () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBFileSpec file_spec;
     ModuleSP module_sp (GetSP ());
@@ -107,7 +107,7 @@ SBModule::GetFileSpec () const
 lldb::SBFileSpec
 SBModule::GetPlatformFileSpec () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     SBFileSpec file_spec;
     ModuleSP module_sp (GetSP ());
@@ -128,7 +128,7 @@ bool
 SBModule::SetPlatformFileSpec (const lldb::SBFileSpec &platform_file)
 {
     bool result = false;
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     ModuleSP module_sp (GetSP ());
     if (module_sp)
@@ -155,7 +155,7 @@ SBModule::SetPlatformFileSpec (const lldb::SBFileSpec &platform_file)
 const uint8_t *
 SBModule::GetUUIDBytes () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     const uint8_t *uuid_bytes = NULL;
     ModuleSP module_sp (GetSP ());
@@ -180,7 +180,7 @@ SBModule::GetUUIDBytes () const
 const char *
 SBModule::GetUUIDString () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     static char uuid_string[80];
     const char * uuid_c_string = NULL;

@@ -311,7 +311,7 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
 )
 {
     Mutex::Locker locker;
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     size_t response_len = 0;
     if (GetSequenceMutex (locker))
     {
@@ -527,7 +527,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
 )
 {
     m_curr_tid = LLDB_INVALID_THREAD_ID;
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     if (log)
         log->Printf ("GDBRemoteCommunicationClient::%s ()", __FUNCTION__);
 
@@ -677,7 +677,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                         }
                         else if (m_async_packet_predicate.GetValue())
                         {
-                            LogSP packet_log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
+                            Log * packet_log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
 
                             // We are supposed to send an asynchronous packet while
                             // we are running. 
@@ -837,7 +837,7 @@ GDBRemoteCommunicationClient::SendInterrupt
 )
 {
     timed_out = false;
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_PROCESS | GDBR_LOG_PACKETS));
+    Log *log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_PROCESS | GDBR_LOG_PACKETS));
 
     if (IsRunning())
     {
@@ -2283,7 +2283,7 @@ GDBRemoteCommunicationClient::GetCurrentThreadIDs (std::vector<lldb::tid_t> &thr
 #if defined (LLDB_CONFIGURATION_DEBUG)
         // assert(!"ProcessGDBRemote::UpdateThreadList() failed due to not getting the sequence mutex");
 #else
-        LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_PROCESS | GDBR_LOG_PACKETS));
+        Log *log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_PROCESS | GDBR_LOG_PACKETS));
         if (log)
             log->Printf("error: failed to get packet sequence mutex, not sending packet 'qfThreadInfo'");
 #endif

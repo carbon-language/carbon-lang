@@ -259,7 +259,7 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
     m_destroy_called (false),
     m_thread_stop_reason_stop_id (0)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Thread::Thread(tid = 0x%4.4" PRIx64 ")", this, GetID());
 
@@ -270,7 +270,7 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
 
 Thread::~Thread()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Thread::~Thread(tid = 0x%4.4" PRIx64 ")", this, GetID());
     /// If you hit this assert, it means your derived class forgot to call DoDestroy in its destructor.
@@ -569,7 +569,7 @@ Thread::ShouldStop (Event* event_ptr)
     ThreadPlan *current_plan = GetCurrentPlan();
     bool should_stop = true;
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     
     if (GetResumeState () == eStateSuspended)
     {
@@ -793,7 +793,7 @@ Thread::ShouldReportStop (Event* event_ptr)
     StateType thread_state = GetResumeState ();
     StateType temp_thread_state = GetTemporaryResumeState();
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (thread_state == eStateSuspended || thread_state == eStateInvalid)
     {
@@ -857,7 +857,7 @@ Thread::ShouldReportRun (Event* event_ptr)
         return eVoteNoOpinion;
     }
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (m_completed_plan_stack.size() > 0)
     {
         // Don't use GetCompletedPlan here, since that suppresses private plans.
@@ -902,7 +902,7 @@ Thread::PushPlan (ThreadPlanSP &thread_plan_sp)
             
         thread_plan_sp->DidPush();
 
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         if (log)
         {
             StreamString s;
@@ -917,7 +917,7 @@ Thread::PushPlan (ThreadPlanSP &thread_plan_sp)
 void
 Thread::PopPlan ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (m_plan_stack.size() <= 1)
         return;
@@ -1088,7 +1088,7 @@ Thread::DiscardThreadPlansUpToPlan (lldb::ThreadPlanSP &up_to_plan_sp)
 void
 Thread::DiscardThreadPlansUpToPlan (ThreadPlan *up_to_plan_ptr)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
     {
         log->Printf("Discarding thread plans for thread tid = 0x%4.4" PRIx64 ", up to %p", GetID(), up_to_plan_ptr);
@@ -1129,7 +1129,7 @@ Thread::DiscardThreadPlansUpToPlan (ThreadPlan *up_to_plan_ptr)
 void
 Thread::DiscardThreadPlans(bool force)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
     {
         log->Printf("Discarding thread plans for thread (tid = 0x%4.4" PRIx64 ", force %d)", GetID(), force);

@@ -54,7 +54,7 @@ DWARFDebugInfo::GetCompileUnitAranges ()
 {
     if (m_cu_aranges_ap.get() == NULL && m_dwarf2Data)
     {
-        LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES));
+        Log *log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES));
 
         m_cu_aranges_ap.reset (new DWARFDebugAranges());
         const DataExtractor &debug_aranges_data = m_dwarf2Data->get_debug_aranges_data();

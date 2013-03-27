@@ -106,7 +106,7 @@ ClangUserExpression::ASTTransformer (clang::ASTConsumer *passthrough)
 void
 ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     if (log)
         log->Printf("ClangUserExpression::ScanContext()");
@@ -372,7 +372,7 @@ ClangUserExpression::Parse (Stream &error_stream,
                             lldb_private::ExecutionPolicy execution_policy,
                             bool keep_result_in_memory)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     Error err;
  
@@ -492,7 +492,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
                                                     lldb::addr_t &object_ptr,
                                                     lldb::addr_t &cmd_ptr)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     lldb::TargetSP target;
     lldb::ProcessSP process;
@@ -627,7 +627,7 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
 {
     Error expr_error;
     
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)
     {
@@ -674,7 +674,7 @@ ClangUserExpression::Execute (Stream &error_stream,
 {
     // The expression log is quite verbose, and if you're just tracking the execution of the
     // expression, it's quite convenient to have these logs come out with the STEP log as well.
-    lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
 
     if (m_jit_start_addr != LLDB_INVALID_ADDRESS)
     {
@@ -815,7 +815,7 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
                                         bool run_others,
                                         uint32_t timeout_usec)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
 
     ExecutionResults execution_results = eExecutionSetupError;
     

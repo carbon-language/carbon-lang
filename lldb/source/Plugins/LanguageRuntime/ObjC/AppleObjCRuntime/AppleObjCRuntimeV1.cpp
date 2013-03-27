@@ -366,7 +366,7 @@ AppleObjCRuntimeV1::UpdateISAToDescriptorMapIfNeeded()
         // map, wether it was successful or not.
         m_isa_to_descriptor_stop_id = process->GetStopID();
         
-        lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+        Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
         
         ProcessSP process_sp = process->shared_from_this();
         

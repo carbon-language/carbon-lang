@@ -639,7 +639,7 @@ public:
         //   resides.  This is an IR-level variable.
         do
         {
-            lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+            lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
             lldb_private::Value resolved_value;
             lldb_private::ClangExpressionVariable::FlagType flags = 0;
@@ -984,7 +984,7 @@ bool
 IRInterpreter::supportsFunction (Function &llvm_function, 
                                  lldb_private::Error &err)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     for (Function::iterator bbi = llvm_function.begin(), bbe = llvm_function.end();
          bbi != bbe;
@@ -1080,7 +1080,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                               Module &llvm_module,
                               lldb_private::Error &err)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     lldb_private::ClangExpressionDeclMap::TargetInfo target_info = m_decl_map.GetTargetInfo();
     

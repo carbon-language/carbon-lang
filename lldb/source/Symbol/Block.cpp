@@ -395,7 +395,7 @@ Block::AddRange (const Range& range)
     Block *parent_block = GetParent ();
     if (parent_block && !parent_block->Contains(range))
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYMBOLS));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYMBOLS));
         if (log)
         {
             ModuleSP module_sp (m_parent_scope->CalculateSymbolContextModule());

@@ -333,7 +333,7 @@ ProcessKDP::DoAttachToProcessWithName (const char *process_name, bool wait_for_l
 void
 ProcessKDP::DidAttach ()
 {
-    LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PROCESS));
+    Log *log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessKDP::DidAttach()");
     if (GetID() != LLDB_INVALID_PROCESS_ID)
@@ -366,7 +366,7 @@ Error
 ProcessKDP::DoResume ()
 {
     Error error;
-    LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PROCESS));
+    Log *log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PROCESS));
     // Only start the async thread if we try to do any process control
     if (!IS_VALID_LLDB_HOST_THREAD(m_async_thread))
         StartAsyncThread ();
@@ -445,7 +445,7 @@ bool
 ProcessKDP::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     // locker will keep a mutex locked until it goes out of scope
-    LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_THREAD));
+    Log *log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_THREAD));
     if (log && log->GetMask().Test(KDP_LOG_VERBOSE))
         log->Printf ("ProcessKDP::%s (pid = %" PRIu64 ")", __FUNCTION__, GetID());
     
@@ -490,7 +490,7 @@ Error
 ProcessKDP::DoDetach()
 {
     Error error;
-    LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
+    Log *log (ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessKDP::DoDetach()");
     
@@ -695,7 +695,7 @@ ProcessKDP::Initialize()
 bool
 ProcessKDP::StartAsyncThread ()
 {
-    LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
+    Log *log (ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
     
     if (log)
         log->Printf ("ProcessKDP::StartAsyncThread ()");
@@ -710,7 +710,7 @@ ProcessKDP::StartAsyncThread ()
 void
 ProcessKDP::StopAsyncThread ()
 {
-    LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
+    Log *log (ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
     
     if (log)
         log->Printf ("ProcessKDP::StopAsyncThread ()");
@@ -733,7 +733,7 @@ ProcessKDP::AsyncThread (void *arg)
     
     const lldb::pid_t pid = process->GetID();
 
-    LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PROCESS));
+    Log *log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessKDP::AsyncThread (arg = %p, pid = %" PRIu64 ") thread starting...", arg, pid);
     

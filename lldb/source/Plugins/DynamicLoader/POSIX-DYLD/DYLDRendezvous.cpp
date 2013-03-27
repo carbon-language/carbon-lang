@@ -295,7 +295,7 @@ DYLDRendezvous::ReadSOEntryFromMemory(lldb::addr_t addr, SOEntry &entry)
 }
 
 void
-DYLDRendezvous::DumpToLog(LogSP log) const
+DYLDRendezvous::DumpToLog(Log *log) const
 {
     int state = GetState();
 

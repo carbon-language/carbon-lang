@@ -59,7 +59,7 @@ SectionLoadList::GetSectionLoadAddress (const lldb::SectionSP &section) const
 bool
 SectionLoadList::SetSectionLoadAddress (const lldb::SectionSP &section, addr_t load_addr, bool warn_multiple)
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER | LIBLLDB_LOG_VERBOSE));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER | LIBLLDB_LOG_VERBOSE));
 
     if (log)
     {
@@ -136,7 +136,7 @@ SectionLoadList::SetSectionUnloaded (const lldb::SectionSP &section_sp)
 
     if (section_sp)
     {
-        LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER | LIBLLDB_LOG_VERBOSE));
+        Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER | LIBLLDB_LOG_VERBOSE));
 
         if (log)
         {
@@ -170,7 +170,7 @@ SectionLoadList::SetSectionUnloaded (const lldb::SectionSP &section_sp)
 bool
 SectionLoadList::SetSectionUnloaded (const lldb::SectionSP &section_sp, addr_t load_addr)
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER | LIBLLDB_LOG_VERBOSE));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER | LIBLLDB_LOG_VERBOSE));
 
     if (log)
     {

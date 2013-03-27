@@ -100,7 +100,7 @@ ThreadPlanStepInstruction::ShouldStop (Event *event_ptr)
 {
     if (m_step_over)
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         
         StackID cur_frame_zero_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
         
@@ -190,7 +190,7 @@ ThreadPlanStepInstruction::MischiefManaged ()
 {
     if (IsPlanComplete())
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         if (log)
             log->Printf("Completed single instruction step plan.");
         ThreadPlan::MischiefManaged ();

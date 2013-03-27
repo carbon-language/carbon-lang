@@ -33,7 +33,7 @@ SBInputReader::SBInputReader ()  :
 SBInputReader::SBInputReader (const lldb::InputReaderSP &reader_sp) :
     m_opaque_sp (reader_sp)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBInputReader::SBInputReader (reader_sp=%p) => SBInputReader(%p)", reader_sp.get(), 
@@ -43,7 +43,7 @@ SBInputReader::SBInputReader (const lldb::InputReaderSP &reader_sp) :
 SBInputReader::SBInputReader (const SBInputReader &rhs) :
     m_opaque_sp (rhs.m_opaque_sp)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf("SBInputReader::SBInputReader (rhs.sp=%p) => SBInputReader(%p)", 
@@ -84,7 +84,7 @@ SBInputReader::Initialize
     bool echo
 )
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf("SBInputReader(%p)::Initialize (SBDebugger(%p), callback_function=%p, callback_baton=%p, "
@@ -194,7 +194,7 @@ SBInputReader::SetIsDone (bool value)
 bool
 SBInputReader::IsActive () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     bool ret_value = false;
     if (m_opaque_sp)

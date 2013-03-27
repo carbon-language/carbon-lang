@@ -89,7 +89,7 @@ void ASTDumper::ToSTDERR()
     fprintf(stderr, "%s\n", m_dump.c_str());
 }
 
-void ASTDumper::ToLog(lldb::LogSP &log, const char *prefix)
+void ASTDumper::ToLog(Log *log, const char *prefix)
 {
     size_t len = m_dump.length() + 1;
     

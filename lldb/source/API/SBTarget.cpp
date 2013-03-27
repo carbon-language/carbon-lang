@@ -536,7 +536,7 @@ SBTarget::GetProcess ()
         sb_process.SetSP (process_sp);
     }
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         log->Printf ("SBTarget(%p)::GetProcess () => SBProcess(%p)", 
@@ -618,7 +618,7 @@ SBTarget::Launch
     lldb::SBError& error
 )
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBProcess sb_process;
     ProcessSP process_sp;
@@ -743,7 +743,7 @@ SBTarget::Launch
 SBProcess
 SBTarget::Launch (SBLaunchInfo &sb_launch_info, SBError& error)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     SBProcess sb_process;
     ProcessSP process_sp;
@@ -843,7 +843,7 @@ SBTarget::Launch (SBLaunchInfo &sb_launch_info, SBError& error)
 lldb::SBProcess
 SBTarget::Attach (SBAttachInfo &sb_attach_info, SBError& error)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     SBProcess sb_process;
     ProcessSP process_sp;
@@ -959,7 +959,7 @@ SBTarget::AttachToProcessWithID
     SBError& error  // An error explaining what went wrong if attach fails
 )
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBProcess sb_process;
     ProcessSP process_sp;
@@ -1057,7 +1057,7 @@ SBTarget::AttachToProcessWithName
     SBError& error      // An error explaining what went wrong if attach fails
 )
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     SBProcess sb_process;
     ProcessSP process_sp;
@@ -1146,7 +1146,7 @@ SBTarget::ConnectRemote
     SBError& error
 )
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBProcess sb_process;
     ProcessSP process_sp;
@@ -1202,7 +1202,7 @@ SBTarget::GetExecutable ()
             exe_file_spec.SetFileSpec (exe_module->GetFileSpec());
     }
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         log->Printf ("SBTarget(%p)::GetExecutable () => SBFileSpec(%p)", 
@@ -1278,7 +1278,7 @@ SBTarget::BreakpointCreateByLocation (const char *file, uint32_t line)
 SBBreakpoint
 SBTarget::BreakpointCreateByLocation (const SBFileSpec &sb_file_spec, uint32_t line)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
     TargetSP target_sp(GetSP());
@@ -1312,7 +1312,7 @@ SBTarget::BreakpointCreateByLocation (const SBFileSpec &sb_file_spec, uint32_t l
 SBBreakpoint
 SBTarget::BreakpointCreateByName (const char *symbol_name, const char *module_name)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
     TargetSP target_sp(GetSP());
@@ -1358,7 +1358,7 @@ SBTarget::BreakpointCreateByName (const char *symbol_name,
                             const SBFileSpecList &module_list, 
                             const SBFileSpecList &comp_unit_list)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
     TargetSP target_sp(GetSP());
@@ -1391,7 +1391,7 @@ SBTarget::BreakpointCreateByNames (const char *symbol_names[],
                                    const SBFileSpecList &module_list,
                                    const SBFileSpecList &comp_unit_list)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
     TargetSP target_sp(GetSP());
@@ -1434,7 +1434,7 @@ SBTarget::BreakpointCreateByNames (const char *symbol_names[],
 SBBreakpoint
 SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *module_name)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
     TargetSP target_sp(GetSP());
@@ -1472,7 +1472,7 @@ SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex,
                          const SBFileSpecList &module_list, 
                          const SBFileSpecList &comp_unit_list)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
     TargetSP target_sp(GetSP());
@@ -1498,7 +1498,7 @@ SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex,
 SBBreakpoint
 SBTarget::BreakpointCreateByAddress (addr_t address)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
     TargetSP target_sp(GetSP());
@@ -1519,7 +1519,7 @@ SBTarget::BreakpointCreateByAddress (addr_t address)
 lldb::SBBreakpoint
 SBTarget::BreakpointCreateBySourceRegex (const char *source_regex, const lldb::SBFileSpec &source_file, const char *module_name)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
     TargetSP target_sp(GetSP());
@@ -1559,7 +1559,7 @@ SBTarget::BreakpointCreateBySourceRegex (const char *source_regex,
                                const SBFileSpecList &module_list, 
                                const lldb::SBFileSpecList &source_file_list)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
     TargetSP target_sp(GetSP());
@@ -1584,7 +1584,7 @@ SBTarget::BreakpointCreateForException  (lldb::LanguageType language,
                                bool catch_bp,
                                bool throw_bp)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
     TargetSP target_sp(GetSP());
@@ -1635,7 +1635,7 @@ SBTarget::GetBreakpointAtIndex (uint32_t idx) const
 bool
 SBTarget::BreakpointDelete (break_id_t bp_id)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     bool result = false;
     TargetSP target_sp(GetSP());
@@ -1656,7 +1656,7 @@ SBTarget::BreakpointDelete (break_id_t bp_id)
 SBBreakpoint
 SBTarget::FindBreakpointByID (break_id_t bp_id)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_breakpoint;
     TargetSP target_sp(GetSP());
@@ -1742,7 +1742,7 @@ SBTarget::GetWatchpointAtIndex (uint32_t idx) const
 bool
 SBTarget::DeleteWatchpoint (watch_id_t wp_id)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     bool result = false;
     TargetSP target_sp(GetSP());
@@ -1765,7 +1765,7 @@ SBTarget::DeleteWatchpoint (watch_id_t wp_id)
 SBWatchpoint
 SBTarget::FindWatchpointByID (lldb::watch_id_t wp_id)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBWatchpoint sb_watchpoint;
     lldb::WatchpointSP watchpoint_sp;
@@ -1791,7 +1791,7 @@ SBTarget::FindWatchpointByID (lldb::watch_id_t wp_id)
 lldb::SBWatchpoint
 SBTarget::WatchAddress (lldb::addr_t addr, size_t size, bool read, bool write, SBError &error)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     SBWatchpoint sb_watchpoint;
     lldb::WatchpointSP watchpoint_sp;
@@ -1919,7 +1919,7 @@ SBTarget::AddModule (lldb::SBModule &module)
 uint32_t
 SBTarget::GetNumModules () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     uint32_t num = 0;
     TargetSP target_sp(GetSP());
@@ -1938,7 +1938,7 @@ SBTarget::GetNumModules () const
 void
 SBTarget::Clear ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBTarget(%p)::Clear ()", m_opaque_sp.get());
@@ -1999,7 +1999,7 @@ SBTarget::GetAddressByteSize()
 SBModule
 SBTarget::GetModuleAtIndex (uint32_t idx)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBModule sb_module;
     ModuleSP module_sp;
@@ -2033,7 +2033,7 @@ SBTarget::RemoveModule (lldb::SBModule module)
 SBBroadcaster
 SBTarget::GetBroadcaster () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     TargetSP target_sp(GetSP());
     SBBroadcaster broadcaster(target_sp.get(), false);
@@ -2540,8 +2540,8 @@ SBTarget::FindSymbols (const char *name, lldb::SymbolType symbol_type)
 lldb::SBValue
 SBTarget::EvaluateExpression (const char *expr, const SBExpressionOptions &options)
 {
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    LogSP expr_log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    Log * expr_log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     SBValue expr_result;
     ExecutionResults exe_results = eExecutionSetupError;
     ValueObjectSP expr_value_sp;

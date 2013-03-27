@@ -560,7 +560,7 @@ AppleObjCTrampolineHandler::AppleObjCVTables::ReadRegions (lldb::addr_t region_a
     if (!m_process_sp)
         return false;
         
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     
     // We aren't starting at the trampoline symbol.
     InitializeVTableSymbols ();
@@ -711,7 +711,7 @@ AppleObjCTrampolineHandler::SetupDispatchFunction (Thread &thread, ValueList &di
     ExecutionContext exe_ctx (thread.shared_from_this());
     Address impl_code_address;
     StreamString errors;
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     lldb::addr_t args_addr = LLDB_INVALID_ADDRESS;
 
     // Scope for mutex locker:
@@ -865,7 +865,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
     
     if (found_it)
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
         // We are decoding a method dispatch.  
         // First job is to pull the arguments out:

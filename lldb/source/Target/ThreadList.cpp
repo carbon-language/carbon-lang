@@ -200,7 +200,7 @@ ThreadList::ShouldStop (Event *event_ptr)
 {
     // Running events should never stop, obviously...
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     // The ShouldStop method of the threads can do a whole lot of work,
     // running breakpoint commands & conditions, etc.  So we don't want
@@ -276,7 +276,7 @@ ThreadList::ShouldReportStop (Event *event_ptr)
     m_process->UpdateThreadListIfNeeded();
     collection::iterator pos, end = m_threads.end();
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (log)
         log->Printf ("ThreadList::%s %" PRIu64 " threads", __FUNCTION__, (uint64_t)m_threads.size());
@@ -331,7 +331,7 @@ ThreadList::ShouldReportRun (Event *event_ptr)
     // Run through the threads and ask whether we should report this event.
     // The rule is NO vote wins over everything, a YES vote wins over no opinion.
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     
     for (pos = m_threads.begin(); pos != end; ++pos)
     {
@@ -385,7 +385,7 @@ ThreadList::RefreshStateAfterStop ()
 
     m_process->UpdateThreadListIfNeeded();
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log && log->GetVerbose())
         log->Printf ("Turning off notification of new threads while single stepping a thread.");
 
@@ -440,14 +440,14 @@ ThreadList::WillResume ()
 
     if (wants_solo_run)
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         if (log && log->GetVerbose())
             log->Printf ("Turning on notification of new threads while single stepping a thread.");
         m_process->StartNoticingNewThreads();
     }
     else
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
         if (log && log->GetVerbose())
             log->Printf ("Turning off notification of new threads while single stepping a thread.");
         m_process->StopNoticingNewThreads();

@@ -132,7 +132,7 @@ OperatingSystemPython::GetDynamicRegisterInfo ()
     {
         if (!m_interpreter || !m_python_object_sp)
             return NULL;
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
         
         if (log)
             log->Printf ("OperatingSystemPython::GetDynamicRegisterInfo() fetching thread register definitions from python for pid %" PRIu64, m_process->GetID());
@@ -175,7 +175,7 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList
     if (!m_interpreter || !m_python_object_sp)
         return false;
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     
     // First thing we have to do is get the API lock, and the run lock.  We're going to change the thread
     // content of the process, and we're going to use python, which requires the API lock to do it.
@@ -267,7 +267,7 @@ OperatingSystemPython::CreateRegisterContextForThread (Thread *thread, addr_t re
     Target &target = m_process->GetTarget();
     Mutex::Locker api_locker (target.GetAPIMutex());
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
 
     if (reg_data_addr != LLDB_INVALID_ADDRESS)
     {
@@ -316,7 +316,7 @@ OperatingSystemPython::CreateThreadStopReason (lldb_private::Thread *thread)
 lldb::ThreadSP
 OperatingSystemPython::CreateThread (lldb::tid_t tid, addr_t context)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
     
     if (log)
         log->Printf ("OperatingSystemPython::CreateThread (tid = 0x%" PRIx64 ", context = 0x%" PRIx64 ") fetching register data from python", tid, context);

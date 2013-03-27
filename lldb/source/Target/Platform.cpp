@@ -217,7 +217,7 @@ Platform::Platform (bool is_host) :
     m_max_uid_name_len (0),
     m_max_gid_name_len (0)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Platform::Platform()", this);
 }
@@ -230,7 +230,7 @@ Platform::Platform (bool is_host) :
 //------------------------------------------------------------------
 Platform::~Platform()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Platform::~Platform()", this);
 }

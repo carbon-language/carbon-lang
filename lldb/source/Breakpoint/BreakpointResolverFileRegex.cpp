@@ -55,7 +55,7 @@ BreakpointResolverFileRegex::SearchCallback
     if (!context.target_sp)
         return eCallbackReturnContinue;
         
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
 
     CompileUnit *cu = context.comp_unit;
     FileSpec cu_file_spec = *(static_cast<FileSpec *>(cu));

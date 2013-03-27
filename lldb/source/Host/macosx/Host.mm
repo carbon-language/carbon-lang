@@ -681,7 +681,7 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
         uint32_t  reserved2;  // must be zero
     } BabelAESelInfo;
     
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_HOST));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_HOST));
     char file_path[PATH_MAX];
     file_spec.GetPath(file_path, PATH_MAX);
     CFCString file_cfstr (file_path, kCFStringEncodingUTF8);
@@ -1301,7 +1301,7 @@ static Error
 getXPCAuthorization (ProcessLaunchInfo &launch_info)
 {
     Error error;
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
     
     if ((launch_info.GetUserID() == 0) && !authorizationRef)
     {
@@ -1312,7 +1312,7 @@ getXPCAuthorization (ProcessLaunchInfo &launch_info)
             error.SetErrorString("Can't create authorizationRef.");
             if (log)
             {
-                error.PutToLog(log.get(), "%s", error.AsCString());
+                error.PutToLog(log, "%s", error.AsCString());
             }
             return error;
         }
@@ -1353,7 +1353,7 @@ getXPCAuthorization (ProcessLaunchInfo &launch_info)
             error.SetErrorStringWithFormat("Launching as root needs root authorization.");
             if (log)
             {
-                error.PutToLog(log.get(), "%s", error.AsCString());
+                error.PutToLog(log, "%s", error.AsCString());
             }
             
             if (authorizationRef)
@@ -1376,7 +1376,7 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
     if (error.Fail())
         return error;
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
     
     uid_t requested_uid = launch_info.GetUserID();
     const char *xpc_service  = nil;
@@ -1398,7 +1398,7 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
             error.SetErrorStringWithFormat("Launching root via XPC needs to externalize authorization reference.");
             if (log)
             {
-                error.PutToLog(log.get(), "%s", error.AsCString());
+                error.PutToLog(log, "%s", error.AsCString());
             }
             return error;
         }
@@ -1410,7 +1410,7 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
         error.SetErrorStringWithFormat("Launching via XPC is only currently available for either the login user or root.");
         if (log)
         {
-            error.PutToLog(log.get(), "%s", error.AsCString());
+            error.PutToLog(log, "%s", error.AsCString());
         }
         return error;
     }
@@ -1470,7 +1470,7 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
             error.SetErrorStringWithFormat("Problems with launching via XPC. Error type : %i, code : %i", errorType, errorCode);
             if (log)
             {
-                error.PutToLog(log.get(), "%s", error.AsCString());
+                error.PutToLog(log, "%s", error.AsCString());
             }
             
             if (authorizationRef)
@@ -1486,7 +1486,7 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
         error.SetErrorStringWithFormat("Problems with launching via XPC. XPC error : %s", xpc_dictionary_get_string(reply, XPC_ERROR_KEY_DESCRIPTION));
         if (log)
         {
-            error.PutToLog(log.get(), "%s", error.AsCString());
+            error.PutToLog(log, "%s", error.AsCString());
         }
     }
     
@@ -1501,13 +1501,13 @@ static Error
 LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t &pid)
 {
     Error error;
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
     
     posix_spawnattr_t attr;
     error.SetError( ::posix_spawnattr_init (&attr), eErrorTypePOSIX);
     
     if (error.Fail() || log)
-        error.PutToLog(log.get(), "::posix_spawnattr_init ( &attr )");
+        error.PutToLog(log, "::posix_spawnattr_init ( &attr )");
     if (error.Fail())
         return error;
 
@@ -1525,7 +1525,7 @@ LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, :
     short flags = GetPosixspawnFlags(launch_info);
     error.SetError( ::posix_spawnattr_setflags (&attr, flags), eErrorTypePOSIX);
     if (error.Fail() || log)
-        error.PutToLog(log.get(), "::posix_spawnattr_setflags ( &attr, flags=0x%8.8x )", flags);
+        error.PutToLog(log, "::posix_spawnattr_setflags ( &attr, flags=0x%8.8x )", flags);
     if (error.Fail())
         return error;
     
@@ -1543,7 +1543,7 @@ LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, :
         size_t ocount = 0;
         error.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu, &ocount), eErrorTypePOSIX);
         if (error.Fail() || log)
-            error.PutToLog(log.get(), "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %llu )", cpu, (uint64_t)ocount);
+            error.PutToLog(log, "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %llu )", cpu, (uint64_t)ocount);
         
         if (error.Fail() || ocount != 1)
             return error;
@@ -1586,7 +1586,7 @@ LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, :
         posix_spawn_file_actions_t file_actions;
         error.SetError( ::posix_spawn_file_actions_init (&file_actions), eErrorTypePOSIX);
         if (error.Fail() || log)
-            error.PutToLog(log.get(), "::posix_spawn_file_actions_init ( &file_actions )");
+            error.PutToLog(log, "::posix_spawn_file_actions_init ( &file_actions )");
         if (error.Fail())
             return error;
 
@@ -1601,7 +1601,7 @@ LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, :
             {
                 if (!ProcessLaunchInfo::FileAction::AddPosixSpawnFileAction (&file_actions,
                                                                              launch_file_action,
-                                                                             log.get(),
+                                                                             log,
                                                                              error))
                     return error;
             }
@@ -1617,7 +1617,7 @@ LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, :
 
         if (error.Fail() || log)
         {
-            error.PutToLog(log.get(), "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )",
+            error.PutToLog(log, "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )",
                            pid, 
                            exe_path, 
                            &file_actions, 
@@ -1644,7 +1644,7 @@ LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, :
 
         if (error.Fail() || log)
         {
-            error.PutToLog(log.get(), "::posix_spawnp ( pid => %i, path = '%s', file_actions = NULL, attr = %p, argv = %p, envp = %p )",
+            error.PutToLog(log, "::posix_spawnp ( pid => %i, path = '%s', file_actions = NULL, attr = %p, argv = %p, envp = %p )",
                            pid, 
                            exe_path, 
                            &attr, 
@@ -1790,7 +1790,7 @@ Host::StartMonitoringChildProcess (Host::MonitorChildProcessCallback callback,
     if (monitor_signals)
         mask |= DISPATCH_PROC_SIGNAL;
 
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
 
 
     dispatch_source_t source = ::dispatch_source_create (DISPATCH_SOURCE_TYPE_PROC, 
