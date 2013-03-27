@@ -2738,11 +2738,6 @@ void ASTReader::makeNamesVisible(const HiddenNames &Names) {
       installImportedMacro(Macro.first, Macro.second);
       break;
     }
-
-    case HiddenName::MacroUndef: {
-      // FIXME: Remove HiddenName::MacroUndef.
-      break;
-    }
     }
   }
 }

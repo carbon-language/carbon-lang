@@ -458,13 +458,10 @@ private:
   public:
     enum NameKind {
       Declaration,
-      MacroVisibility,
-      MacroUndef
+      MacroVisibility
     } Kind;
 
   private:
-    unsigned Loc;
-
     union {
       Decl *D;
       MacroDirective *MD;
@@ -473,13 +470,10 @@ private:
     IdentifierInfo *Id;
 
   public:
-    HiddenName(Decl *D) : Kind(Declaration), Loc(), D(D), Id() { }
+    HiddenName(Decl *D) : Kind(Declaration), D(D), Id() { }
 
     HiddenName(IdentifierInfo *II, MacroDirective *MD)
-      : Kind(MacroVisibility), Loc(), MD(MD), Id(II) { }
-
-    HiddenName(IdentifierInfo *II, MacroDirective *MD, SourceLocation Loc)
-      : Kind(MacroUndef), Loc(Loc.getRawEncoding()), MD(MD), Id(II) { }
+      : Kind(MacroVisibility), MD(MD), Id(II) { }
 
     NameKind getKind() const { return Kind; }
 
@@ -489,14 +483,8 @@ private:
     }
 
     std::pair<IdentifierInfo *, MacroDirective *> getMacro() const {
-      assert((getKind() == MacroUndef || getKind() == MacroVisibility)
-             && "Hidden name is not a macro!");
+      assert(getKind() == MacroVisibility && "Hidden name is not a macro!");
       return std::make_pair(Id, MD);
-    }
-
-    SourceLocation getMacroUndefLoc() const {
-      assert(getKind() == MacroUndef && "Hidden name is not an undef!");
-      return SourceLocation::getFromRawEncoding(Loc);
     }
 };
 
