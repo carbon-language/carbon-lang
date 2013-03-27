@@ -76,7 +76,22 @@ struct PtrWrapper {
 
 PtrWrapper *testNewInvalidation() {
   // Ensure that we don't consider this a leak.
-  return new PtrWrapper(static_cast<int *>(malloc(4)));
+  return new PtrWrapper(static_cast<int *>(malloc(4))); // no-warning
+}
+
+void testNewInvalidationPlacement(PtrWrapper *w) {
+  // Ensure that we don't consider this a leak.
+  new (w) PtrWrapper(static_cast<int *>(malloc(4))); // no-warning
+}
+
+int **testNewInvalidationScalar() {
+  // Ensure that we don't consider this a leak.
+  return new (int *)(static_cast<int *>(malloc(4))); // no-warning
+}
+
+void testNewInvalidationScalarPlacement(int **p) {
+  // Ensure that we don't consider this a leak.
+  new (p) (int *)(static_cast<int *>(malloc(4))); // no-warning
 }
 
 //--------------------------------------------------------------------
