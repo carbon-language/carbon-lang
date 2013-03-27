@@ -172,11 +172,11 @@ def RM: SPR<512, "**ROUNDING MODE**">;
 // then nonvolatiles in reverse order since stmw/lmw save from rN to r31
 def GPRC : RegisterClass<"PPC", [i32], 32, (add (sequence "R%u", 2, 12),
                                                 (sequence "R%u", 30, 13),
-                                                R31, R0, R1, LR, FP)>;
+                                                R31, R0, R1, FP)>;
 
 def G8RC : RegisterClass<"PPC", [i64], 64, (add (sequence "X%u", 2, 12),
                                                 (sequence "X%u", 30, 14),
-                                                X31, X13, X0, X1, LR8, FP8)>;
+                                                X31, X13, X0, X1, FP8)>;
 
 // For some instructions r0 is special (representing the value 0 instead of
 // the value in the r0 register), and we use these register subclasses to

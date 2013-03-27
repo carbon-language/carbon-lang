@@ -114,8 +114,8 @@ entry:
   ret i32 %add13
 
 ; CHECK: lha {{[0-9]+}}, 126(1)
-; CHECK: lbz {{[0-9]+}}, 119(1)
 ; CHECK: lha {{[0-9]+}}, 132(1)
+; CHECK: lbz {{[0-9]+}}, 119(1)
 ; CHECK: lwz {{[0-9]+}}, 140(1)
 ; CHECK: lwz {{[0-9]+}}, 144(1)
 ; CHECK: lwz {{[0-9]+}}, 152(1)
@@ -206,8 +206,8 @@ entry:
   ret i32 %add13
 
 ; CHECK: lha {{[0-9]+}}, 126(1)
-; CHECK: lbz {{[0-9]+}}, 119(1)
 ; CHECK: lha {{[0-9]+}}, 133(1)
+; CHECK: lbz {{[0-9]+}}, 119(1)
 ; CHECK: lwz {{[0-9]+}}, 140(1)
 ; CHECK: lwz {{[0-9]+}}, 147(1)
 ; CHECK: lwz {{[0-9]+}}, 154(1)
