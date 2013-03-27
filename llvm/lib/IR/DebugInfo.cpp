@@ -333,7 +333,7 @@ bool DIDescriptor::isEnumerator() const {
   return DbgNode && getTag() == dwarf::DW_TAG_enumerator;
 }
 
-/// isObjCProperty - Return true if the specified tag is DW_TAG
+/// isObjCProperty - Return true if the specified tag is DW_TAG_APPLE_property.
 bool DIDescriptor::isObjCProperty() const {
   return DbgNode && getTag() == dwarf::DW_TAG_APPLE_property;
 }
