@@ -1206,7 +1206,7 @@ public:
                          bool Complain);
   
   /// \brief Make the names within this set of hidden names visible.
-  void makeNamesVisible(const HiddenNames &Names);
+  void makeNamesVisible(const HiddenNames &Names, Module *Owner);
   
   /// \brief Set the AST callbacks listener.
   void setListener(ASTReaderListener *listener) {
@@ -1629,7 +1629,8 @@ public:
   void installPCHMacroDirectives(IdentifierInfo *II,
                                  ModuleFile &M, uint64_t Offset);
 
-  void installImportedMacro(IdentifierInfo *II, MacroDirective *MD);
+  void installImportedMacro(IdentifierInfo *II, MacroDirective *MD,
+                            Module *Owner);
 
   /// \brief Retrieve the macro with the given ID.
   MacroInfo *getMacro(serialization::MacroID ID);
