@@ -137,7 +137,8 @@ def CSR_SVR464   : CalleeSavedRegs<(add X14, X15, X16, X17, X18, X19, X20, VRSAV
                                         V20, V21, V22, V23, V24, V25, V26, V27,
                                         V28, V29, V30, V31)>;
 
-def CSR_NoRegs : CalleeSavedRegs<(add)>;
+def CSR_NoRegs : CalleeSavedRegs<(add VRSAVE)>;
+def CSR_NoRegs_Darwin : CalleeSavedRegs<(add)>;
 
 def CSR_NoRegs_Altivec : CalleeSavedRegs<(add (sequence "V%u", 0, 31), VRSAVE)>;
 

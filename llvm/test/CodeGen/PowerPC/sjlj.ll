@@ -57,8 +57,12 @@ return:                                           ; preds = %if.end, %if.then
   %3 = load i32* %retval
   ret i32 %3
 
+; FIXME: We should be saving VRSAVE on Darwin, but we're not!
+
 ; CHECK: @main
 ; CHECK: std
+; Make sure that we're not saving VRSAVE on non-Darwin:
+; CHECK-NOT: mfspr
 ; CHECK: stfd
 ; CHECK: stvx
 

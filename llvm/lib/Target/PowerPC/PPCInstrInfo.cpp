@@ -509,6 +509,8 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                        FrameIdx));
     NonRI = true;
   } else if (PPC::VRSAVERCRegClass.hasSubClassEq(RC)) {
+    assert(TM.getSubtargetImpl()->isDarwin() &&
+           "VRSAVE only needs spill/restore on Darwin");
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::SPILL_VRSAVE))
                                        .addReg(SrcReg,
                                                getKillRegState(isKill)),
@@ -627,6 +629,8 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                                        FrameIdx));
     NonRI = true;
   } else if (PPC::VRSAVERCRegClass.hasSubClassEq(RC)) {
+    assert(TM.getSubtargetImpl()->isDarwin() &&
+           "VRSAVE only needs spill/restore on Darwin");
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL,
                                                get(PPC::RESTORE_VRSAVE),
                                                DestReg),

@@ -114,6 +114,8 @@ PPCRegisterInfo::getNoPreservedMask() const {
   if (!Subtarget.hasAltivec())
     return CSR_NoRegs_Altivec_RegMask;
 
+  if (Subtarget.isDarwin())
+    return CSR_NoRegs_Darwin_RegMask;
   return CSR_NoRegs_RegMask;
 }
 
