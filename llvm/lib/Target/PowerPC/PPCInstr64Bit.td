@@ -680,7 +680,7 @@ def ADDIStocHA: Pseudo<(outs G8RC:$rD), (ins G8RC_NOX0:$reg, tocentry:$disp),
                        [(set i64:$rD,
                          (PPCaddisTocHA i64:$reg, tglobaladdr:$disp))]>,
                        isPPC64;
-def LDtocL: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
+def LDtocL: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC_NOX0:$reg),
                    "#LDtocL",
                    [(set i64:$rD,
                      (PPCldTocL tglobaladdr:$disp, i64:$reg))]>, isPPC64;
@@ -696,7 +696,7 @@ def ADDISgotTprelHA: Pseudo<(outs G8RC:$rD), (ins G8RC_NOX0:$reg, symbolHi64:$di
                            (PPCaddisGotTprelHA i64:$reg,
                                                tglobaltlsaddr:$disp))]>,
                   isPPC64;
-def LDgotTprelL: Pseudo<(outs G8RC:$rD), (ins symbolLo64:$disp, G8RC:$reg),
+def LDgotTprelL: Pseudo<(outs G8RC:$rD), (ins symbolLo64:$disp, G8RC_NOX0:$reg),
                         "#LDgotTprelL",
                         [(set i64:$rD,
                           (PPCldGotTprelL tglobaltlsaddr:$disp, i64:$reg))]>,
