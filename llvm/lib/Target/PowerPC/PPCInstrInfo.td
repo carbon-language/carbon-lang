@@ -443,10 +443,15 @@ def DYNALLOC : Pseudo<(outs GPRC:$result), (ins GPRC:$negsize, memri:$fpsi), "#D
 // instruction selection into a branch sequence.
 let usesCustomInserter = 1,    // Expanded after instruction selection.
     PPC970_Single = 1 in {
-  def SELECT_CC_I4 : Pseudo<(outs GPRC:$dst), (ins CRRC:$cond, GPRC:$T, GPRC:$F,
+  // Note that SELECT_CC_I4 and SELECT_CC_I8 use the no-r0 register classes
+  // because either operand might become the first operand in an isel, and
+  // that operand cannot be r0.
+  def SELECT_CC_I4 : Pseudo<(outs GPRC:$dst), (ins CRRC:$cond,
+                              GPRC_NOR0:$T, GPRC_NOR0:$F,
                               i32imm:$BROPC), "#SELECT_CC_I4",
                               []>;
-  def SELECT_CC_I8 : Pseudo<(outs G8RC:$dst), (ins CRRC:$cond, G8RC:$T, G8RC:$F,
+  def SELECT_CC_I8 : Pseudo<(outs G8RC:$dst), (ins CRRC:$cond,
+                              G8RC_NOX0:$T, G8RC_NOX0:$F,
                               i32imm:$BROPC), "#SELECT_CC_I8",
                               []>;
   def SELECT_CC_F4  : Pseudo<(outs F4RC:$dst), (ins CRRC:$cond, F4RC:$T, F4RC:$F,
