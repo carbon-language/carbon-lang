@@ -371,7 +371,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
     if (Scavenged[SI].Reg == 0)
       break;
 
-  if (SI < Scavenged.size()) {
+  if (SI == Scavenged.size()) {
     // We need to scavenge a register but have no spill slot, the target
     // must know how to do it (if not, we'll assert below).
     Scavenged.push_back(ScavengedInfo());
