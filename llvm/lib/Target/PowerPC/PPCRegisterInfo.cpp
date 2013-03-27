@@ -134,7 +134,6 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(PPC::FP);
   Reserved.set(PPC::FP8);
 
-  Reserved.set(PPC::R0);
   Reserved.set(PPC::R1);
   Reserved.set(PPC::LR);
   Reserved.set(PPC::LR8);
@@ -150,7 +149,6 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   if (Subtarget.isPPC64()) {
     Reserved.set(PPC::R13);
 
-    Reserved.set(PPC::X0);
     Reserved.set(PPC::X1);
     Reserved.set(PPC::X13);
 
