@@ -364,14 +364,17 @@ signed char fp16_char_overflow(__fp16 *p) {
 // CHECK: @float_float_overflow
 // CHECK-TRAP: @float_float_overflow
 float float_float_overflow(double f) {
-  // CHECK: %[[GE:.*]] = fcmp oge double %[[F:.*]], 0xC7EFFFFFE0000000
-  // CHECK: %[[LE:.*]] = fcmp ole double %[[F]], 0x47EFFFFFE0000000
+  // CHECK: %[[F:.*]] = call double @llvm.fabs.f64(
+  // CHECK: %[[GE:.*]] = fcmp ogt double %[[F]], 0x47EFFFFFE0000000
+  // CHECK: %[[LE:.*]] = fcmp olt double %[[F]], 0x7FF0000000000000
   // CHECK: and i1 %[[GE]], %[[LE]]
   // CHECK: call void @__ubsan_handle_float_cast_overflow(
 
-  // CHECK-TRAP: %[[GE:.*]] = fcmp oge double %[[F:.*]], 0xC7EFFFFFE0000000
-  // CHECK-TRAP: %[[LE:.*]] = fcmp ole double %[[F]], 0x47EFFFFFE0000000
-  // CHECK-TRAP: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
+  // CHECK-TRAP: %[[F:.*]] = call double @llvm.fabs.f64(
+  // CHECK-TRAP: %[[GE:.*]] = fcmp ogt double %[[F]], 0x47EFFFFFE0000000
+  // CHECK-TRAP: %[[LE:.*]] = fcmp olt double %[[F]], 0x7FF0000000000000
+  // CHECK-TRAP: %[[OUTOFBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
+  // CHECK-TRAP: %[[INBOUNDS:.*]] = xor i1 %[[OUTOFBOUNDS]], true
   // CHECK-TRAP-NEXT: br i1 %[[INBOUNDS]]
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
