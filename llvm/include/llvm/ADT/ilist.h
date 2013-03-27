@@ -274,12 +274,12 @@ template<typename From> struct simplify_type;
 template<typename NodeTy> struct simplify_type<ilist_iterator<NodeTy> > {
   typedef NodeTy* SimpleType;
 
-  static SimpleType getSimplifiedValue(const ilist_iterator<NodeTy> &Node) {
+  static SimpleType getSimplifiedValue(ilist_iterator<NodeTy> &Node) {
     return &*Node;
   }
 };
 template<typename NodeTy> struct simplify_type<const ilist_iterator<NodeTy> > {
-  typedef NodeTy* SimpleType;
+  typedef /*const*/ NodeTy* SimpleType;
 
   static SimpleType getSimplifiedValue(const ilist_iterator<NodeTy> &Node) {
     return &*Node;

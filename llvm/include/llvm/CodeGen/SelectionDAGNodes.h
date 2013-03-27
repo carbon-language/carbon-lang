@@ -196,14 +196,14 @@ template <> struct isPodLike<SDValue> { static const bool value = true; };
 /// SDValues as if they were SDNode*'s.
 template<> struct simplify_type<SDValue> {
   typedef SDNode* SimpleType;
-  static SimpleType getSimplifiedValue(const SDValue &Val) {
-    return static_cast<SimpleType>(Val.getNode());
+  static SimpleType getSimplifiedValue(SDValue &Val) {
+    return Val.getNode();
   }
 };
 template<> struct simplify_type<const SDValue> {
-  typedef SDNode* SimpleType;
+  typedef /*const*/ SDNode* SimpleType;
   static SimpleType getSimplifiedValue(const SDValue &Val) {
-    return static_cast<SimpleType>(Val.getNode());
+    return Val.getNode();
   }
 };
 
@@ -295,14 +295,8 @@ private:
 /// SDValues as if they were SDNode*'s.
 template<> struct simplify_type<SDUse> {
   typedef SDNode* SimpleType;
-  static SimpleType getSimplifiedValue(const SDUse &Val) {
-    return static_cast<SimpleType>(Val.getNode());
-  }
-};
-template<> struct simplify_type<const SDUse> {
-  typedef SDNode* SimpleType;
-  static SimpleType getSimplifiedValue(const SDUse &Val) {
-    return static_cast<SimpleType>(Val.getNode());
+  static SimpleType getSimplifiedValue(SDUse &Val) {
+    return Val.getNode();
   }
 };
 

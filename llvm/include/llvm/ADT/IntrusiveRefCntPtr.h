@@ -226,13 +226,13 @@ namespace llvm {
 
   template<class T> struct simplify_type<IntrusiveRefCntPtr<T> > {
     typedef T* SimpleType;
-    static SimpleType getSimplifiedValue(const IntrusiveRefCntPtr<T>& Val) {
+    static SimpleType getSimplifiedValue(IntrusiveRefCntPtr<T>& Val) {
       return Val.getPtr();
     }
   };
 
   template<class T> struct simplify_type<const IntrusiveRefCntPtr<T> > {
-    typedef T* SimpleType;
+    typedef /*const*/ T* SimpleType;
     static SimpleType getSimplifiedValue(const IntrusiveRefCntPtr<T>& Val) {
       return Val.getPtr();
     }
