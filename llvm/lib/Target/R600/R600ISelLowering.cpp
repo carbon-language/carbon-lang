@@ -28,7 +28,6 @@ using namespace llvm;
 R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
     AMDGPUTargetLowering(TM),
     TII(static_cast<const R600InstrInfo*>(TM.getInstrInfo())) {
-  setOperationAction(ISD::MUL, MVT::i64, Expand);
   addRegisterClass(MVT::v4f32, &AMDGPU::R600_Reg128RegClass);
   addRegisterClass(MVT::f32, &AMDGPU::R600_Reg32RegClass);
   addRegisterClass(MVT::v4i32, &AMDGPU::R600_Reg128RegClass);

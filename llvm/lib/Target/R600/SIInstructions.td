@@ -975,14 +975,31 @@ def V_MUL_F64 : VOP3_64 <0x00000165, "V_MUL_F64", []>;
 def V_MIN_F64 : VOP3_64 <0x00000166, "V_MIN_F64", []>;
 def V_MAX_F64 : VOP3_64 <0x00000167, "V_MAX_F64", []>;
 def V_LDEXP_F64 : VOP3_64 <0x00000168, "V_LDEXP_F64", []>;
+
+let isCommutable = 1 in {
+
 def V_MUL_LO_U32 : VOP3_32 <0x00000169, "V_MUL_LO_U32", []>;
 def V_MUL_HI_U32 : VOP3_32 <0x0000016a, "V_MUL_HI_U32", []>;
 def V_MUL_LO_I32 : VOP3_32 <0x0000016b, "V_MUL_LO_I32", []>;
+def V_MUL_HI_I32 : VOP3_32 <0x0000016c, "V_MUL_HI_I32", []>;
+
+} // isCommutable = 1
+
 def : Pat <
   (mul VSrc_32:$src0, VReg_32:$src1),
   (V_MUL_LO_I32 VSrc_32:$src0, VReg_32:$src1, (i32 0), 0, 0, 0, 0)
 >;
-def V_MUL_HI_I32 : VOP3_32 <0x0000016c, "V_MUL_HI_I32", []>;
+
+def : Pat <
+  (mulhu VSrc_32:$src0, VReg_32:$src1),
+  (V_MUL_HI_U32 VSrc_32:$src0, VReg_32:$src1, (i32 0), 0, 0, 0, 0)
+>;
+
+def : Pat <
+  (mulhs VSrc_32:$src0, VReg_32:$src1),
+  (V_MUL_HI_I32 VSrc_32:$src0, VReg_32:$src1, (i32 0), 0, 0, 0, 0)
+>;
+
 def V_DIV_SCALE_F32 : VOP3_32 <0x0000016d, "V_DIV_SCALE_F32", []>;
 def V_DIV_SCALE_F64 : VOP3_64 <0x0000016e, "V_DIV_SCALE_F64", []>;
 def V_DIV_FMAS_F32 : VOP3_32 <0x0000016f, "V_DIV_FMAS_F32", []>;
