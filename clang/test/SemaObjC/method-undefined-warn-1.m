@@ -3,12 +3,14 @@
 @interface INTF
 - (void) meth;
 - (void) meth : (int) arg1;
-- (int)  int_meth;  // expected-note {{method definition for 'int_meth' not found}}
-+ (int) cls_meth;  // expected-note {{method definition for 'cls_meth' not found}}
-+ (void) cls_meth1 : (int) arg1;  // expected-note {{method definition for 'cls_meth1:' not found}}
+- (int) int_meth;  // expected-note {{method 'int_meth' declared here}}
++ (int) cls_meth;  // expected-note {{method 'cls_meth' declared here}}
++ (void) cls_meth1 : (int) arg1;  // expected-note {{method 'cls_meth1:' declared here}}
 @end
 
-@implementation INTF 	// expected-warning {{incomplete implementation}}
+@implementation INTF // expected-warning {{method definition for 'int_meth' not found}} \
+                     // expected-warning {{method definition for 'cls_meth' not found}} \
+                     // expected-warning {{method definition for 'cls_meth1:' not found}}
 - (void) meth {}
 - (void) meth : (int) arg2{}
 - (void) cls_meth1 : (int) arg2{}
@@ -17,12 +19,14 @@
 @interface INTF1
 - (void) meth;
 - (void) meth : (int) arg1;
-- (int)  int_meth;       // expected-note {{method definition for 'int_meth' not found}}
-+ (int) cls_meth;        // expected-note {{method definition for 'cls_meth' not found}}
-+ (void) cls_meth1 : (int) arg1;  // expected-note {{method definition for 'cls_meth1:' not found}}
+- (int)  int_meth; // expected-note {{method 'int_meth' declared here}}
++ (int) cls_meth;  // expected-note {{method 'cls_meth' declared here}}
++ (void) cls_meth1 : (int) arg1;  // expected-note {{method 'cls_meth1:' declared here}}
 @end
 
-@implementation INTF1 // expected-warning {{incomplete implementation}}
+@implementation INTF1 // expected-warning {{method definition for 'int_meth' not found}} \
+                      // expected-warning {{method definition for 'cls_meth' not found}} \
+                      // expected-warning {{method definition for 'cls_meth1:' not found}}
 - (void) meth {}
 - (void) meth : (int) arg2{}
 - (void) cls_meth1 : (int) arg2{}

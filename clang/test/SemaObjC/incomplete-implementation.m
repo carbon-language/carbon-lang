@@ -1,13 +1,12 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin9 -fsyntax-only -verify -Wno-objc-root-class %s
 
 @interface I
-- Meth; // expected-note{{method definition for 'Meth' not found}} \
-        // expected-note{{method 'Meth' declared here}}
+- Meth; // expected-note 2 {{method 'Meth' declared here}}
 - unavailableMeth __attribute__((availability(macosx,unavailable)));
 - unavailableMeth2 __attribute__((unavailable));
 @end
 
-@implementation  I  // expected-warning{{incomplete implementation}}
+@implementation  I  // expected-warning {{method definition for 'Meth' not found}}
 @end
 
 @implementation I(CAT)

@@ -28,10 +28,7 @@
 			// expected-note 2 {{required for direct or indirect protocol 'P2'}}
 @end
 
-@implementation INTF   // expected-warning {{incomplete implementation}} \
-                       // expected-warning 9 {{in protocol not implemented}}
+@implementation INTF // expected-warning 9 {{in protocol not implemented}}
 - (void) DefP1proto{}
-
 + (void) DefClsP3Proto{}
-
 @end

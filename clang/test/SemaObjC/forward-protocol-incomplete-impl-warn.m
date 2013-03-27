@@ -16,6 +16,5 @@
 @end
 
 @implementation IBImageCatalogDocument // expected-warning {{auto property synthesis will not synthesize property declared in a protocol}} \ 
-				       // expected-warning {{incomplete implementation}} \
 				       // expected-warning {{method 'invalidate' in protocol not implemented}}
 @end

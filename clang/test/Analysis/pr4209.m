@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,alpha.core -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,alpha.core -analyzer-store=region -Wno-incomplete-implementation -verify %s
 
 // This test case was crashing due to how CFRefCount.cpp resolved the
 // ObjCInterfaceDecl* and ClassName in EvalObjCMessageExpr.
@@ -47,14 +47,14 @@ CMProfileLocation;
 @interface GBCategoryChooserPanelController : NSWindowController {
   GSEbayCategory *rootCategory;
 }
-- (NSMutableDictionary*)categoryDictionaryForCategoryID:(int)inID inRootTreeCategories:(NSMutableArray*)inRootTreeCategories; // expected-note {{method definition for 'categoryDictionaryForCategoryID:inRootTreeCategories:' not found}}
--(NSString*) categoryID;  // expected-note {{method definition for 'categoryID' not found}} expected-note {{using}}
+- (NSMutableDictionary*)categoryDictionaryForCategoryID:(int)inID inRootTreeCategories:(NSMutableArray*)inRootTreeCategories;
+-(NSString*) categoryID; // expected-note {{using}}
 @end @interface GSEbayCategory : NSObject <NSCoding> {
 }
 - (int) categoryID; // expected-note {{also found}}
 - (GSEbayCategory *) parent;
 - (GSEbayCategory*) subcategoryWithID:(int) inID;
-@end   @implementation GBCategoryChooserPanelController  + (int) chooseCategoryIDFromCategories:(NSArray*) inCategories        searchRequest:(GBSearchRequest*)inRequest         parentWindow:(NSWindow*) inParent { // expected-warning {{incomplete implementation}}
+@end   @implementation GBCategoryChooserPanelController  + (int) chooseCategoryIDFromCategories:(NSArray*) inCategories        searchRequest:(GBSearchRequest*)inRequest         parentWindow:(NSWindow*) inParent {
   return 0;
 }
 - (void) addCategory:(EBayCategoryType*)inCategory toRootTreeCategory:(NSMutableArray*)inRootTreeCategories {

@@ -10,7 +10,7 @@
 
 // Class extension
 @interface MyClass () <P>
-- (void)meth2; // expected-note {{method definition for 'meth2' not found}}
+- (void)meth2; // expected-note {{method 'meth2' declared here}}
 @end
 
 // Add a category to test that clang does not emit warning for this method.
@@ -18,7 +18,7 @@
 - (void)categoryMethod;
 @end
 
-@implementation MyClass // expected-warning {{incomplete implementation}}  \
-			// expected-warning {{method 'Pmeth1' in protocol not implemented}}
+@implementation MyClass // expected-warning {{method 'Pmeth1' in protocol not implemented}} \
+                        // expected-warning {{method definition for 'meth2' not found}}
 - (void)Pmeth {}
 @end

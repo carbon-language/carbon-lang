@@ -71,8 +71,7 @@
 
 @interface MultipleCat_I() <MultipleCat_P>  @end
 
-@implementation MultipleCat_I // expected-warning {{incomplete implementation}} \
-                              // expected-warning {{method 'im0' in protocol not implemented}}
+@implementation MultipleCat_I // expected-warning {{method 'im0' in protocol not implemented}}
 @end
 
 // <rdar://problem/7680391> - Handle nameless categories with no name that refer

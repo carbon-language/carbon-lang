@@ -4,25 +4,25 @@
 @end
 
 @protocol P
-- (void) Pmeth;	  // expected-note {{method 'Pmeth' declared here}}
-- (void) Pmeth1;    // expected-note {{method 'Pmeth1' declared here}}
+- (void) Pmeth;  // expected-note {{method 'Pmeth' declared here}}
+- (void) Pmeth1;  // expected-note {{method 'Pmeth1' declared here}}
 @end
 
 @interface MyClass1(CAT) <P> // expected-note {{required for direct or indirect protocol 'P'}}
-- (void) meth2;	 // expected-note {{method definition for 'meth2' not found}}
+- (void) meth2;              // expected-note {{method 'meth2' declared here}}
 @end
 
-@implementation MyClass1(CAT) // expected-warning {{incomplete implementation}}  \
-				// expected-warning {{method 'Pmeth' in protocol not implemented}}
+@implementation MyClass1(CAT) // expected-warning {{method 'Pmeth' in protocol not implemented}} \
+                              // expected-warning {{method definition for 'meth2' not found}}
 - (void) Pmeth1{}
 @end
 
 @interface MyClass1(DOG) <P> // expected-note {{required for direct or indirect protocol 'P'}}
-- (void)ppp;    // expected-note {{method definition for 'ppp' not found}} 
+- (void)ppp;                 // expected-note {{method 'ppp' declared here}}
 @end
 
-@implementation MyClass1(DOG) // expected-warning {{incomplete implementation}} \
-		// expected-warning {{method 'Pmeth1' in protocol not implemented}}
+@implementation MyClass1(DOG) // expected-warning {{method 'Pmeth1' in protocol not implemented}} \
+                              // expected-warning {{method definition for 'ppp' not found}}
 - (void) Pmeth {}
 @end
 
