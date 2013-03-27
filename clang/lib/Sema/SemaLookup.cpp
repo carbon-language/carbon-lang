@@ -945,6 +945,21 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
           continue;
         }
 
+        // If this is a file context, we need to perform unqualified name
+        // lookup considering using directives.
+        if (Ctx->isFileContext()) {
+          UnqualUsingDirectiveSet UDirs;
+          UDirs.visit(Ctx, Ctx);
+          UDirs.done();
+
+          if (CppNamespaceLookup(*this, R, Context, Ctx, UDirs)) {
+            R.resolveKind();
+            return true;
+          }
+
+          continue;
+        }
+
         // Perform qualified name lookup into this context.
         // FIXME: In some cases, we know that every name that could be found by
         // this qualified name lookup will also be on the identifier chain. For
@@ -979,7 +994,6 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   // Unqualified name lookup in C++ requires looking into scopes
   // that aren't strictly lexical, and therefore we walk through the
   // context as well as walking through the scopes.
-
   for (; S; S = S->getParent()) {
     // Check whether the IdResolver has anything in this scope.
     bool Found = false;

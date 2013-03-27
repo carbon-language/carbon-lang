@@ -17,3 +17,33 @@ namespace N {
 int i = 2; 
 N::S N::j = i;
 N::S N::j2(i);
+
+// <rdar://problem/13317030>
+namespace M {
+  class X { };
+  inline X operator-(int, X);
+
+  template<typename T>
+  class Y { };
+
+  typedef Y<float> YFloat;
+
+  namespace yfloat {
+    YFloat operator-(YFloat, YFloat);
+  }
+  using namespace yfloat;
+}
+
+using namespace M;
+
+namespace M {
+
+class Other {
+  void foo(YFloat a, YFloat b);
+};
+
+}
+
+void Other::foo(YFloat a, YFloat b) {
+  YFloat c = a - b;
+}
