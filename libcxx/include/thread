@@ -144,9 +144,11 @@ template <class _Tp>
 __thread_specific_ptr<_Tp>::__thread_specific_ptr()
 {
     int __ec = pthread_key_create(&__key_, &__thread_specific_ptr::__at_thread_exit);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__ec)
         throw system_error(error_code(__ec, system_category()),
                            "__thread_specific_ptr construction failed");
+#endif
 }
 
 template <class _Tp>
