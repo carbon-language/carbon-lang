@@ -40,6 +40,12 @@ Command Line Options
   Makes use of the new C++11 keyword ``nullptr`` where possible.
   See :doc:`UseNullptrTransform`.
 
+.. option:: -user-null-macros=<string>
+
+  ``<string>`` is a comma-separated list of user-defined macros that behave like
+  the ``NULL`` macro. The :option:`-use-nullptr` transform will replace these
+  macros along with ``NULL``. See :doc:`UseNullptrTransform`.
+
 .. option:: -use-auto
 
   Replace the type specifier of variable declarations with the ``auto`` type
@@ -76,7 +82,7 @@ Command Line Options
   :ref:`transform documentation <transforms>` for details.
 
 .. option:: -final-syntax-check
- 
+
   After applying the final transform to a file, parse the file to ensure the
   last transform did not introduce syntax errors. Syntax errors introduced by
   earlier transforms are already caught when subsequent transforms parse the

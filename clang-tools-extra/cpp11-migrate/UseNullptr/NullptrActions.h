@@ -25,9 +25,7 @@ class NullptrFixer : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
   NullptrFixer(clang::tooling::Replacements &Replace,
                unsigned &AcceptedChanges,
-               RiskLevel) :
-  Replace(Replace),
-  AcceptedChanges(AcceptedChanges) { }
+               RiskLevel);
 
   /// \brief Entry point to the callback called when matches are made.
   virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result);
@@ -35,6 +33,7 @@ public:
 private:
   clang::tooling::Replacements &Replace;
   unsigned &AcceptedChanges;
+  llvm::SmallVector<llvm::StringRef, 1> UserNullMacros;
 };
 
 #endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_NULLPTR_ACTIONS_H

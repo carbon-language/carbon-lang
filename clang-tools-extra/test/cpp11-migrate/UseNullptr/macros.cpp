@@ -1,6 +1,9 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: cpp11-migrate -use-nullptr %t.cpp -- -I %S
 // RUN: FileCheck -input-file=%t.cpp %s
+// RUN: grep -Ev "// *[A-Z-]+:" %s > %t2.cpp
+// RUN: cpp11-migrate -use-nullptr -user-null-macros=MY_NULL %t2.cpp -- -I %S
+// RUN: FileCheck -check-prefix=USER-SUPPLIED-NULL -input-file=%t2.cpp %s
 
 #define NULL 0
 // CHECK: #define NULL 0
@@ -56,10 +59,9 @@ void test_macro_expansion2() {
 
 void test_macro_expansion3() {
 #define MY_NULL NULL
-  // TODO: Eventually we should fix the transform to detect cases like this so
-  // that we can replace MY_NULL with nullptr.
   int *p = MY_NULL;
   // CHECK: int *p = MY_NULL;
+  // USER-SUPPLIED-NULL: int *p = nullptr;
 #undef MY_NULL
 }
 

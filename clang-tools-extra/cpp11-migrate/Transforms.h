@@ -37,7 +37,7 @@ public:
   typedef TransformVec::const_iterator const_iterator;
 
 public:
- 
+
   ~Transforms();
 
   /// \brief Create command line options using LLVM's command line library.

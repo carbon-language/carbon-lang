@@ -28,6 +28,13 @@ using namespace clang;
 
 namespace {
 
+const char *NullMacroName = "NULL";
+
+static llvm::cl::opt<std::string> UserNullMacroNames(
+    "user-null-macros", llvm::cl::desc("Comma-separated list of user-defined "
+                                       "macro names that behave like NULL"),
+    llvm::cl::init(""));
+
 /// \brief Replaces the provided range with the text "nullptr", but only if
 /// the start and end location are both in main file.
 /// Returns true if and only if a replacement was made.
@@ -41,6 +48,25 @@ bool ReplaceWithNullptr(tooling::Replacements &Replace, SourceManager &SM,
     return false;
 }
 
+/// \brief Returns the name of the outermost macro.
+///
+/// Given
+/// \code
+/// #define MY_NULL NULL
+/// \endcode
+/// If \p Loc points to NULL, this function will return the name MY_NULL.
+llvm::StringRef GetOutermostMacroName(
+    SourceLocation Loc, const SourceManager &SM, const LangOptions &LO) {
+  assert(Loc.isMacroID());
+  SourceLocation OutermostMacroLoc;
+
+  while (Loc.isMacroID()) {
+    OutermostMacroLoc = Loc;
+    Loc = SM.getImmediateMacroCallerLoc(Loc);
+  }
+
+  return clang::Lexer::getImmediateMacroName(OutermostMacroLoc, SM, LO);
+}
 }
 
 /// \brief Looks for a sequences of 0 or more explicit casts with an implicit
@@ -101,6 +127,16 @@ private:
   Expr *FirstSubExpr;
 };
 
+NullptrFixer::NullptrFixer(clang::tooling::Replacements &Replace,
+                           unsigned &AcceptedChanges, RiskLevel)
+    : Replace(Replace), AcceptedChanges(AcceptedChanges) {
+  if (!UserNullMacroNames.empty()) {
+    llvm::StringRef S = UserNullMacroNames;
+    S.split(UserNullMacros, ",");
+  }
+  UserNullMacros.insert(UserNullMacros.begin(), llvm::StringRef(NullMacroName));
+}
+
 void NullptrFixer::run(const ast_matchers::MatchFinder::MatchResult &Result) {
   SourceManager &SM = *Result.SourceManager;
 
@@ -127,20 +163,19 @@ void NullptrFixer::run(const ast_matchers::MatchFinder::MatchResult &Result) {
       EndLoc = SM.getFileLoc(EndLoc);
     } else if (SM.isMacroBodyExpansion(StartLoc) &&
                SM.isMacroBodyExpansion(EndLoc)) {
-      llvm::StringRef ImmediateMacroName = clang::Lexer::getImmediateMacroName(
-          StartLoc, SM, Result.Context->getLangOpts());
-      if (ImmediateMacroName != "NULL")
+      llvm::StringRef OutermostMacroName =
+          GetOutermostMacroName(StartLoc, SM, Result.Context->getLangOpts());
+
+      // Check to see if the user wants to replace the macro being expanded.
+      bool ReplaceNullMacro =
+          std::find(UserNullMacros.begin(), UserNullMacros.end(),
+                    OutermostMacroName) != UserNullMacros.end();
+
+      if (!ReplaceNullMacro)
         return;
 
-      SourceLocation MacroCallerStartLoc =
-          SM.getImmediateMacroCallerLoc(StartLoc);
-      SourceLocation MacroCallerEndLoc = SM.getImmediateMacroCallerLoc(EndLoc);
-
-      if (MacroCallerStartLoc.isFileID() && MacroCallerEndLoc.isFileID()) {
-        StartLoc = SM.getFileLoc(StartLoc);
-        EndLoc = SM.getFileLoc(EndLoc);
-      } else
-        return;
+      StartLoc = SM.getFileLoc(StartLoc);
+      EndLoc = SM.getFileLoc(EndLoc);
     }
 
     AcceptedChanges +=
