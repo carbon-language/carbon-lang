@@ -98,7 +98,7 @@ entry:
 ; CHECK-NEXT: tail call i8* @objc_retainBlock(i8* %tmp) [[NUW]]
 ; CHECK-NEXT: @use_pointer(i8* %tmp2)
 ; CHECK-NEXT: @use_pointer(i8* %tmp2)
-; CHECK-NEXT: tail call void @objc_release(i8* %tmp) [[NUW]], !clang.imprecise_release !0
+; CHECK-NEXT: tail call void @objc_release(i8* %tmp2) [[NUW]], !clang.imprecise_release !0
 ; CHECK-NOT: @objc
 ; CHECK: }
 define void @test1_no_metadata(i8* %tmp) {
@@ -122,7 +122,7 @@ entry:
 ; CHECK-NEXT: store i8* %tmp2, i8** %z
 ; CHECK-NEXT: @use_pointer(i8* %tmp2)
 ; CHECK-NEXT: @use_pointer(i8* %tmp2)
-; CHECK-NEXT: tail call void @objc_release(i8* %tmp) [[NUW]], !clang.imprecise_release !0
+; CHECK-NEXT: tail call void @objc_release(i8* %tmp2) [[NUW]], !clang.imprecise_release !0
 ; CHECK-NOT: @objc
 ; CHECK: }
 define void @test1_escape(i8* %tmp, i8** %z) {
