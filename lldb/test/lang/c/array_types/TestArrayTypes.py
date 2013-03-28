@@ -82,7 +82,7 @@ class ArrayTypesTestCase(TestBase):
                        'Bonjour',
                        'Guten Tag'])
 
-        self.expect("frame variable --show-types char_16", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable --show-types --raw -- char_16", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['(char) [0]',
                        '(char) [15]'])
 

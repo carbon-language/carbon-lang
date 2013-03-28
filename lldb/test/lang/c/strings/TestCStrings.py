@@ -52,10 +52,12 @@ class CStringsTestCase(TestBase):
         self.expect("expression -- \"\"[0]",
                     startstr = "(const char) $4 = '\\0'")
 
-        self.expect("p \"hello\"",
-            substrs = ['[6]) $', 'hello',
-                       '[0] = \'h\'',
+        self.expect("expr --raw -- \"hello\"",
+            substrs = ['[0] = \'h\'',
                        '[5] = \'\\0\''])
+
+        self.expect("p \"hello\"",
+            substrs = ['[6]) $', 'hello'])
 
         self.expect("p (char*)\"hello\"",
                     substrs = ['(char *) $', ' = 0x',

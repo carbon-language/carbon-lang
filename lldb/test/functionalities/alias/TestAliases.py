@@ -136,7 +136,7 @@ class AliasTestCase(TestBase):
                                  "= 0x00000044" ])
 
         self.runCmd ("alias exprf expr -f %1")
-        self.runCmd ("alias exprf2 expr -f %1 --")
+        self.runCmd ("alias exprf2 expr --raw -f %1 --")
         self.expect ("exprf x -- 1234",
                      substrs = [ "(int) $",
                                  "= 0x000004d2" ])
