@@ -1,7 +1,7 @@
-;  The code in InstCombiner::FoldSelectOpOp was calling
-;  Type::getVectorNumElements without checking first if the type was a vector.
+; The code in InstCombiner::FoldSelectOpOp was calling
+; Type::getVectorNumElements without checking first if the type was a vector.
 
-; RUN: opt < %s -instcombine -S -O3
+; RUN: opt < %s -instcombine -S
 
 define i32 @vselect1(i32 %a.coerce, i32 %b.coerce, i32 %c.coerce) {
 entry:
