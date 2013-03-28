@@ -1837,9 +1837,9 @@ Tool *Solaris::buildLinker() const {
   return new tools::solaris::Link(*this);
 }
 
-/// Linux toolchain (very bare-bones at the moment).
+/// Distribution (very bare-bones at the moment).
 
-enum LinuxDistro {
+enum Distro {
   ArchLinux,
   DebianLenny,
   DebianSqueeze,
@@ -1872,33 +1872,33 @@ enum LinuxDistro {
   UnknownDistro
 };
 
-static bool IsRedhat(enum LinuxDistro Distro) {
+static bool IsRedhat(enum Distro Distro) {
   return (Distro >= Fedora13 && Distro <= FedoraRawhide) ||
          (Distro >= RHEL4    && Distro <= RHEL6);
 }
 
-static bool IsOpenSuse(enum LinuxDistro Distro) {
+static bool IsOpenSuse(enum Distro Distro) {
   return Distro >= OpenSuse11_3 && Distro <= OpenSuse12_2;
 }
 
-static bool IsDebian(enum LinuxDistro Distro) {
+static bool IsDebian(enum Distro Distro) {
   return Distro >= DebianLenny && Distro <= DebianJessie;
 }
 
-static bool IsUbuntu(enum LinuxDistro Distro) {
+static bool IsUbuntu(enum Distro Distro) {
   return Distro >= UbuntuHardy && Distro <= UbuntuRaring;
 }
 
-static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
+static Distro DetectDistro(llvm::Triple::ArchType Arch) {
   OwningPtr<llvm::MemoryBuffer> File;
   if (!llvm::MemoryBuffer::getFile("/etc/lsb-release", File)) {
     StringRef Data = File.get()->getBuffer();
     SmallVector<StringRef, 8> Lines;
     Data.split(Lines, "\n");
-    LinuxDistro Version = UnknownDistro;
+    Distro Version = UnknownDistro;
     for (unsigned i = 0, s = Lines.size(); i != s; ++i)
       if (Version == UnknownDistro && Lines[i].startswith("DISTRIB_CODENAME="))
-        Version = llvm::StringSwitch<LinuxDistro>(Lines[i].substr(17))
+        Version = llvm::StringSwitch<Distro>(Lines[i].substr(17))
           .Case("hardy", UbuntuHardy)
           .Case("intrepid", UbuntuIntrepid)
           .Case("jaunty", UbuntuJaunty)
@@ -1955,7 +1955,7 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
   }
 
   if (!llvm::MemoryBuffer::getFile("/etc/SuSE-release", File))
-    return llvm::StringSwitch<LinuxDistro>(File.get()->getBuffer())
+    return llvm::StringSwitch<Distro>(File.get()->getBuffer())
       .StartsWith("openSUSE 11.3", OpenSuse11_3)
       .StartsWith("openSUSE 11.4", OpenSuse11_4)
       .StartsWith("openSUSE 12.1", OpenSuse12_1)
@@ -2089,7 +2089,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
 
   Linker = GetProgramPath("ld");
 
-  LinuxDistro Distro = DetectLinuxDistro(Arch);
+  Distro Distro = DetectDistro(Arch);
 
   if (IsOpenSuse(Distro) || IsUbuntu(Distro)) {
     ExtraOpts.push_back("-z");
