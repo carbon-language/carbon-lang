@@ -279,6 +279,10 @@ int Finalize(ThreadState *thr) {
 
   if (flags()->print_suppressions)
     PrintMatchedSuppressions();
+#ifndef TSAN_GO
+  if (flags()->print_benign)
+    PrintMatchedBenignRaces();
+#endif
 
   failed = OnFinalize(failed);
 

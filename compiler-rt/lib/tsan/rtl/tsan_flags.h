@@ -54,6 +54,8 @@ struct Flags {
   const char *suppressions;
   // Print matched suppressions at exit.
   bool print_suppressions;
+  // Print matched "benign" races at exit.
+  bool print_benign;
   // Override exit status if something was reported.
   int exitcode;
   // Write logs to "log_path.pid".

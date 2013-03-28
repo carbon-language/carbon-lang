@@ -605,6 +605,7 @@ bool IsFiredSuppression(Context *ctx,
                         const ScopedReport &srep,
                         const StackTrace &trace);
 bool IsExpectedReport(uptr addr, uptr size);
+void PrintMatchedBenignRaces();
 bool FrameIsInternal(const ReportStack *frame);
 ReportStack *SkipTsanInternalFrames(ReportStack *ent);
 

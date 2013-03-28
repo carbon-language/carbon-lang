@@ -20,6 +20,7 @@
 #include "tsan_mman.h"
 #include "tsan_flags.h"
 #include "tsan_platform.h"
+#include "tsan_vector.h"
 
 #define CALLERPC ((uptr)__builtin_return_address(0))
 
@@ -67,6 +68,7 @@ struct ExpectRace {
   ExpectRace *next;
   ExpectRace *prev;
   int hitcount;
+  int addcount;
   uptr addr;
   uptr size;
   char *file;
@@ -91,16 +93,19 @@ static void AddExpectRace(ExpectRace *list,
     char *f, int l, uptr addr, uptr size, char *desc) {
   ExpectRace *race = list->next;
   for (; race != list; race = race->next) {
-    if (race->addr == addr && race->size == size)
+    if (race->addr == addr && race->size == size) {
+      race->addcount++;
       return;
+    }
   }
   race = (ExpectRace*)internal_alloc(MBlockExpectRace, sizeof(ExpectRace));
-  race->hitcount = 0;
   race->addr = addr;
   race->size = size;
   race->file = f;
   race->line = l;
   race->desc[0] = 0;
+  race->hitcount = 0;
+  race->addcount = 1;
   if (desc) {
     int i = 0;
     for (; i < kMaxDescLen - 1 && desc[i]; i++)
@@ -155,6 +160,68 @@ bool IsExpectedReport(uptr addr, uptr size) {
   return false;
 }
 
+static void CollectMatchedBenignRaces(Vector<ExpectRace> *matched,
+    int *unique_count, int *hit_count, int ExpectRace::*counter) {
+  ExpectRace *list = &dyn_ann_ctx->benign;
+  for (ExpectRace *race = list->next; race != list; race = race->next) {
+    (*unique_count)++;
+    if (race->*counter == 0)
+      continue;
+    (*hit_count) += race->*counter;
+    uptr i = 0;
+    for (; i < matched->Size(); i++) {
+      ExpectRace *race0 = &(*matched)[i];
+      if (race->line == race0->line
+          && internal_strcmp(race->file, race0->file) == 0
+          && internal_strcmp(race->desc, race0->desc) == 0) {
+        race0->*counter += race->*counter;
+        break;
+      }
+    }
+    if (i == matched->Size())
+      matched->PushBack(*race);
+  }
+}
+
+void PrintMatchedBenignRaces() {
+  Lock lock(&dyn_ann_ctx->mtx);
+  int unique_count = 0;
+  int hit_count = 0;
+  int add_count = 0;
+  Vector<ExpectRace> hit_matched(MBlockScopedBuf);
+  CollectMatchedBenignRaces(&hit_matched, &unique_count, &hit_count,
+      &ExpectRace::hitcount);
+  Vector<ExpectRace> add_matched(MBlockScopedBuf);
+  CollectMatchedBenignRaces(&add_matched, &unique_count, &add_count,
+      &ExpectRace::addcount);
+  if (hit_matched.Size()) {
+    Printf("ThreadSanitizer: Matched %d \"benign\" races (pid=%d):\n",
+        hit_count, GetPid());
+    for (uptr i = 0; i < hit_matched.Size(); i++) {
+      Printf("%d %s:%d %s\n",
+          hit_matched[i].hitcount, hit_matched[i].file,
+          hit_matched[i].line, hit_matched[i].desc);
+    }
+  }
+  if (hit_matched.Size()) {
+    Printf("ThreadSanitizer: Annotated %d \"benign\" races, %d unique"
+           " (pid=%d):\n",
+        add_count, unique_count, GetPid());
+    for (uptr i = 0; i < add_matched.Size(); i++) {
+      Printf("%d %s:%d %s\n",
+          add_matched[i].addcount, add_matched[i].file,
+          add_matched[i].line, add_matched[i].desc);
+    }
+  }
+}
+
+static void ReportMissedExpectedRace(ExpectRace *race) {
+  Printf("==================\n");
+  Printf("WARNING: ThreadSanitizer: missed expected data race\n");
+  Printf("  %s addr=%zx %s:%d\n",
+      race->desc, race->addr, race->file, race->line);
+  Printf("==================\n");
+}
 }  // namespace __tsan
 
 using namespace __tsan;  // NOLINT
@@ -235,14 +302,6 @@ void INTERFACE_ATTRIBUTE AnnotateNewMemory(char *f, int l, uptr mem,
 
 void INTERFACE_ATTRIBUTE AnnotateNoOp(char *f, int l, uptr mem) {
   SCOPED_ANNOTATION(AnnotateNoOp);
-}
-
-static void ReportMissedExpectedRace(ExpectRace *race) {
-  Printf("==================\n");
-  Printf("WARNING: ThreadSanitizer: missed expected data race\n");
-  Printf("  %s addr=%zx %s:%d\n",
-      race->desc, race->addr, race->file, race->line);
-  Printf("==================\n");
 }
 
 void INTERFACE_ATTRIBUTE AnnotateFlushExpectedRaces(char *f, int l) {
