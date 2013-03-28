@@ -6606,6 +6606,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         (N->getOperand(1).getValueType() == MVT::i32 ||
          N->getOperand(1).getValueType() == MVT::i16 ||
          (TM.getSubtarget<PPCSubtarget>().hasLDBRX() &&
+          TM.getSubtarget<PPCSubtarget>().isPPC64() &&
           N->getOperand(1).getValueType() == MVT::i64))) {
       SDValue BSwapOp = N->getOperand(1).getOperand(0);
       // Do an any-extend to 32-bits if this is a half-word input.
@@ -6629,6 +6630,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         N->getOperand(0).hasOneUse() &&
         (N->getValueType(0) == MVT::i32 || N->getValueType(0) == MVT::i16 ||
          (TM.getSubtarget<PPCSubtarget>().hasLDBRX() &&
+          TM.getSubtarget<PPCSubtarget>().isPPC64() &&
           N->getValueType(0) == MVT::i64))) {
       SDValue Load = N->getOperand(0);
       LoadSDNode *LD = cast<LoadSDNode>(Load);
