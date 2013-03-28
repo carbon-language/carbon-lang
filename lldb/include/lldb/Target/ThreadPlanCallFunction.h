@@ -171,6 +171,7 @@ private:
                                                                          // thread plans, but for reporting purposes,
                                                                          // it's nice to know the real stop reason.
                                                                          // This gets set in DoTakedown.
+    StreamString                                    m_constructor_errors;
     ClangASTType                                    m_return_type;
     lldb::ValueObjectSP                             m_return_valobj_sp;  // If this contains a valid pointer, use the ABI to extract values when complete
     bool                                            m_takedown_done;    // We want to ensure we only do the takedown once.  This ensures that.
