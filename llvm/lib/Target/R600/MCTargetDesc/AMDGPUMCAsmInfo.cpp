@@ -68,8 +68,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(const Target &T, StringRef &TT) : MCAsmInfo() {
   //===--- Dwarf Emission Directives -----------------------------------===//
   HasLEB128 = true;
   SupportsDebugInformation = true;
-  ExceptionsType = ExceptionHandling::None;
-  DwarfUsesInlineInfoSection = false;
   DwarfSectionOffsetDirective = ".offset";
 
 }
