@@ -124,8 +124,7 @@ namespace {
     Function *insertFlush(ArrayRef<std::pair<GlobalVariable*, MDNode*> >);
     void insertIndirectCounterIncrement();
 
-    std::string mangleName(DICompileUnit CU, const char *NewStem,
-                           bool FullPath);
+    std::string mangleName(DICompileUnit CU, const char *NewStem);
 
     GCOVOptions Options;
 
@@ -365,8 +364,7 @@ namespace {
   };
 }
 
-std::string GCOVProfiler::mangleName(DICompileUnit CU, const char *NewStem,
-                                     bool FullPath) {
+std::string GCOVProfiler::mangleName(DICompileUnit CU, const char *NewStem) {
   if (NamedMDNode *GCov = M->getNamedMetadata("llvm.gcov")) {
     for (int i = 0, e = GCov->getNumOperands(); i != e; ++i) {
       MDNode *N = GCov->getOperand(i);
@@ -385,8 +383,6 @@ std::string GCOVProfiler::mangleName(DICompileUnit CU, const char *NewStem,
   SmallString<128> Filename = CU.getFilename();
   sys::path::replace_extension(Filename, NewStem);
   StringRef FName = sys::path::filename(Filename);
-  if (!FullPath)
-    return FName;
   SmallString<128> CurPath;
   if (sys::fs::current_path(CurPath)) return FName;
   sys::path::append(CurPath, FName.str());
@@ -413,7 +409,7 @@ void GCOVProfiler::emitProfileNotes() {
 
     DICompileUnit CU(CU_Nodes->getOperand(i));
     std::string ErrorInfo;
-    raw_fd_ostream out(mangleName(CU, "gcno", false).c_str(), ErrorInfo,
+    raw_fd_ostream out(mangleName(CU, "gcno").c_str(), ErrorInfo,
                        raw_fd_ostream::F_Binary);
     out.write("oncg", 4);
     out.write(ReversedVersion, 4);
@@ -735,7 +731,7 @@ Function *GCOVProfiler::insertCounterWriteout(
   if (CU_Nodes) {
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
       DICompileUnit CU(CU_Nodes->getOperand(i));
-      std::string FilenameGcda = mangleName(CU, "gcda", true);
+      std::string FilenameGcda = mangleName(CU, "gcda");
       Builder.CreateCall2(StartFile,
                           Builder.CreateGlobalStringPtr(FilenameGcda),
                           Builder.CreateGlobalStringPtr(ReversedVersion));
