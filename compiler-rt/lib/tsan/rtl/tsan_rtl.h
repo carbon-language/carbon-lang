@@ -580,11 +580,11 @@ void RestoreStack(int tid, const u64 epoch, StackTrace *stk, MutexSet *mset);
 
 void StatAggregate(u64 *dst, u64 *src);
 void StatOutput(u64 *stat);
-void ALWAYS_INLINE INLINE StatInc(ThreadState *thr, StatType typ, u64 n = 1) {
+void ALWAYS_INLINE StatInc(ThreadState *thr, StatType typ, u64 n = 1) {
   if (kCollectStats)
     thr->stat[typ] += n;
 }
-void ALWAYS_INLINE INLINE StatSet(ThreadState *thr, StatType typ, u64 n) {
+void ALWAYS_INLINE StatSet(ThreadState *thr, StatType typ, u64 n) {
   if (kCollectStats)
     thr->stat[typ] = n;
 }
@@ -647,22 +647,22 @@ const int kSizeLog2 = 1;
 const int kSizeLog4 = 2;
 const int kSizeLog8 = 3;
 
-void ALWAYS_INLINE INLINE MemoryRead(ThreadState *thr, uptr pc,
+void ALWAYS_INLINE MemoryRead(ThreadState *thr, uptr pc,
                                      uptr addr, int kAccessSizeLog) {
   MemoryAccess(thr, pc, addr, kAccessSizeLog, false, false);
 }
 
-void ALWAYS_INLINE INLINE MemoryWrite(ThreadState *thr, uptr pc,
+void ALWAYS_INLINE MemoryWrite(ThreadState *thr, uptr pc,
                                       uptr addr, int kAccessSizeLog) {
   MemoryAccess(thr, pc, addr, kAccessSizeLog, true, false);
 }
 
-void ALWAYS_INLINE INLINE MemoryReadAtomic(ThreadState *thr, uptr pc,
+void ALWAYS_INLINE MemoryReadAtomic(ThreadState *thr, uptr pc,
                                            uptr addr, int kAccessSizeLog) {
   MemoryAccess(thr, pc, addr, kAccessSizeLog, false, true);
 }
 
-void ALWAYS_INLINE INLINE MemoryWriteAtomic(ThreadState *thr, uptr pc,
+void ALWAYS_INLINE MemoryWriteAtomic(ThreadState *thr, uptr pc,
                                             uptr addr, int kAccessSizeLog) {
   MemoryAccess(thr, pc, addr, kAccessSizeLog, true, true);
 }
@@ -729,7 +729,7 @@ uptr TraceParts();
 Trace *ThreadTrace(int tid);
 
 extern "C" void __tsan_trace_switch();
-void ALWAYS_INLINE INLINE TraceAddEvent(ThreadState *thr, FastState fs,
+void ALWAYS_INLINE TraceAddEvent(ThreadState *thr, FastState fs,
                                         EventType typ, u64 addr) {
   DCHECK_GE((int)typ, 0);
   DCHECK_LE((int)typ, 7);

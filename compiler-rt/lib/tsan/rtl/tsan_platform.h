@@ -137,13 +137,13 @@ void WriteMemoryProfile(char *buf, uptr buf_size);
 
 const char *InitializePlatform();
 void FinalizePlatform();
-uptr ALWAYS_INLINE INLINE GetThreadTrace(int tid) {
+uptr ALWAYS_INLINE GetThreadTrace(int tid) {
   uptr p = kTraceMemBegin + (uptr)(tid * 2) * kTraceSize * sizeof(Event);
   DCHECK_LT(p, kTraceMemBegin + kTraceMemSize);
   return p;
 }
 
-uptr ALWAYS_INLINE INLINE GetThreadTraceHeader(int tid) {
+uptr ALWAYS_INLINE GetThreadTraceHeader(int tid) {
   uptr p = kTraceMemBegin + (uptr)(tid * 2 + 1) * kTraceSize * sizeof(Event);
   DCHECK_LT(p, kTraceMemBegin + kTraceMemSize);
   return p;

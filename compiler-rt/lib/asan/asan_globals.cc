@@ -41,11 +41,11 @@ typedef InternalVector<Global> VectorOfGlobals;
 // Lazy-initialized and never deleted.
 static VectorOfGlobals *dynamic_init_globals;
 
-ALWAYS_INLINE INLINE void PoisonShadowForGlobal(const Global *g, u8 value) {
+ALWAYS_INLINE void PoisonShadowForGlobal(const Global *g, u8 value) {
   FastPoisonShadow(g->beg, g->size_with_redzone, value);
 }
 
-ALWAYS_INLINE INLINE void PoisonRedZones(const Global &g) {
+ALWAYS_INLINE void PoisonRedZones(const Global &g) {
   uptr aligned_size = RoundUpTo(g.size, SHADOW_GRANULARITY);
   FastPoisonShadow(g.beg + aligned_size, g.size_with_redzone - aligned_size,
                    kAsanGlobalRedzoneMagic);

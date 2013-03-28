@@ -31,7 +31,7 @@ void PoisonShadowPartialRightRedzone(uptr addr,
 // Fast versions of PoisonShadow and PoisonShadowPartialRightRedzone that
 // assume that memory addresses are properly aligned. Use in
 // performance-critical code with care.
-ALWAYS_INLINE INLINE void FastPoisonShadow(uptr aligned_beg, uptr aligned_size,
+ALWAYS_INLINE void FastPoisonShadow(uptr aligned_beg, uptr aligned_size,
                                     u8 value) {
   DCHECK(flags()->poison_heap);
   uptr shadow_beg = MEM_TO_SHADOW(aligned_beg);
@@ -40,7 +40,7 @@ ALWAYS_INLINE INLINE void FastPoisonShadow(uptr aligned_beg, uptr aligned_size,
   REAL(memset)((void*)shadow_beg, value, shadow_end - shadow_beg);
 }
 
-ALWAYS_INLINE INLINE void FastPoisonShadowPartialRightRedzone(
+ALWAYS_INLINE void FastPoisonShadowPartialRightRedzone(
     uptr aligned_addr, uptr size, uptr redzone_size, u8 value) {
   DCHECK(flags()->poison_heap);
   u8 *shadow = (u8*)MEM_TO_SHADOW(aligned_addr);

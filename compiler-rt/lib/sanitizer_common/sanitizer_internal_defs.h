@@ -115,7 +115,7 @@ using namespace __sanitizer;  // NOLINT
 
 // Platform-specific defs.
 #if defined(_MSC_VER)
-# define ALWAYS_INLINE __declspec(forceinline)
+# define ALWAYS_INLINE __forceinline
 // FIXME(timurrrr): do we need this on Windows?
 # define ALIAS(x)
 # define ALIGNED(x) __declspec(align(x))
@@ -130,7 +130,7 @@ using namespace __sanitizer;  // NOLINT
 # define USED
 # define PREFETCH(x) /* _mm_prefetch(x, _MM_HINT_NTA) */
 #else  // _MSC_VER
-# define ALWAYS_INLINE __attribute__((always_inline))
+# define ALWAYS_INLINE static inline __attribute__((always_inline))
 # define ALIAS(x) __attribute__((alias(x)))
 # define ALIGNED(x) __attribute__((aligned(x)))
 # define FORMAT(f, a)  __attribute__((format(printf, f, a)))
