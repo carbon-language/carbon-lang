@@ -2389,13 +2389,14 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildObjCIsaExpr(Expr *BaseArg, SourceLocation IsaLoc,
+                                SourceLocation OpLoc,
                                       bool IsArrow) {
     CXXScopeSpec SS;
     ExprResult Base = getSema().Owned(BaseArg);
     LookupResult R(getSema(), &getSema().Context.Idents.get("isa"), IsaLoc,
                    Sema::LookupMemberName);
     ExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
-                                                         /*FIME:*/IsaLoc,
+                                                         OpLoc,
                                                          SS, 0, false);
     if (Result.isInvalid() || Base.isInvalid())
       return ExprError();
@@ -2404,7 +2405,7 @@ public:
       return Result;
 
     return getSema().BuildMemberReferenceExpr(Base.get(), Base.get()->getType(),
-                                              /*FIXME:*/IsaLoc, IsArrow,
+                                              OpLoc, IsArrow,
                                               SS, SourceLocation(),
                                               /*FirstQualifierInScope=*/0,
                                               R,
@@ -8788,6 +8789,7 @@ TreeTransform<Derived>::TransformObjCIsaExpr(ObjCIsaExpr *E) {
     return SemaRef.Owned(E);
 
   return getDerived().RebuildObjCIsaExpr(Base.get(), E->getIsaMemberLoc(),
+                                         E->getOpLoc(),
                                          E->isArrow());
 }
 

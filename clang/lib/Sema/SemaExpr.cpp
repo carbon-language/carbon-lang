@@ -491,8 +491,18 @@ ExprResult Sema::DefaultLvalueConversion(Expr *E) {
   }
 
   CheckForNullPointerDereference(*this, E);
-  if (isa<ObjCIsaExpr>(E->IgnoreParens()))
-    Diag(E->getExprLoc(), diag::warn_objc_isa_use);
+  if (const ObjCIsaExpr *OISA = dyn_cast<ObjCIsaExpr>(E->IgnoreParenCasts())) {
+    NamedDecl *ObjectGetClass = LookupSingleName(TUScope,
+                                     &Context.Idents.get("object_getClass"),
+                                     SourceLocation(), LookupOrdinaryName);
+    if (ObjectGetClass)
+      Diag(E->getExprLoc(), diag::warn_objc_isa_use) <<
+        FixItHint::CreateInsertion(OISA->getLocStart(), "object_getClass(") <<
+        FixItHint::CreateReplacement(
+                    SourceRange(OISA->getOpLoc(), OISA->getIsaMemberLoc()), ")");
+    else
+      Diag(E->getExprLoc(), diag::warn_objc_isa_use);
+  }
 
   // C++ [conv.lval]p1:
   //   [...] If T is a non-class type, the type of the prvalue is the
@@ -8537,8 +8547,20 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   CheckArrayAccess(LHS.get());
   CheckArrayAccess(RHS.get());
 
-  if (isa<ObjCIsaExpr>(LHS.get()->IgnoreParens()))
-    Diag(LHS.get()->getExprLoc(), diag::warn_objc_isa_assign);
+  if (const ObjCIsaExpr *OISA = dyn_cast<ObjCIsaExpr>(LHS.get()->IgnoreParenCasts())) {
+    NamedDecl *ObjectSetClass = LookupSingleName(TUScope,
+                                                 &Context.Idents.get("object_setClass"),
+                                                 SourceLocation(), LookupOrdinaryName);
+    if (ObjectSetClass && isa<ObjCIsaExpr>(LHS.get())) {
+      SourceLocation RHSLocEnd = PP.getLocForEndOfToken(RHS.get()->getLocEnd());
+      Diag(LHS.get()->getExprLoc(), diag::warn_objc_isa_assign) <<
+      FixItHint::CreateInsertion(LHS.get()->getLocStart(), "object_setClass(") <<
+      FixItHint::CreateReplacement(SourceRange(OISA->getOpLoc(), OpLoc), ",") <<
+      FixItHint::CreateInsertion(RHSLocEnd, ")");
+    }
+    else
+      Diag(LHS.get()->getExprLoc(), diag::warn_objc_isa_assign);
+  }
 
   if (CompResultTy.isNull())
     return Owned(new (Context) BinaryOperator(LHS.take(), RHS.take(), Opc,
