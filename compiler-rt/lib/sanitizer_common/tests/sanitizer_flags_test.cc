@@ -63,6 +63,7 @@ TEST(SanitizerCommon, StrFlags) {
   TestStrFlag("", "--flag_name='abc zxc'", "abc zxc");
   TestStrFlag("", "--flag_name='abc zxcc'", "abc zxcc");
   TestStrFlag("", "--flag_name=\"abc qwe\" asd", "abc qwe");
+  TestStrFlag("", "other_flag_name=zzz", "");
 }
 
 static void TestTwoFlags(const char *env, bool expected_flag1,

@@ -96,7 +96,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
 
   ParseFlag(str, &f->debug, "debug");
   ParseFlag(str, &f->report_globals, "report_globals");
-  ParseFlag(str, &f->check_initialization_order, "initialization_order");
+  ParseFlag(str, &f->check_initialization_order, "check_initialization_order");
   ParseFlag(str, &f->malloc_context_size, "malloc_context_size");
   CHECK((uptr)f->malloc_context_size <= kStackTraceMax);
 
