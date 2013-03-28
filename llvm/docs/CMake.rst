@@ -204,7 +204,7 @@ LLVM-specific variables
   tests.
 
 **LLVM_APPEND_VC_REV**:BOOL
-  Append version control revision info (svn revision number or git revision id)
+  Append version control revision info (svn revision number or Git revision id)
   to LLVM version string (stored in the PACKAGE_VERSION macro). For this to work
   cmake must be invoked before the build. Defaults to OFF.
 

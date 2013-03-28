@@ -521,13 +521,13 @@ By placing it in the ``llvm/projects``, it will be automatically configured by
 the LLVM configure script as well as automatically updated when you run ``svn
 update``.
 
-GIT mirror
+Git Mirror
 ----------
 
-GIT mirrors are available for a number of LLVM subprojects. These mirrors sync
+Git mirrors are available for a number of LLVM subprojects. These mirrors sync
 automatically with each Subversion commit and contain all necessary git-svn
 marks (so, you can recreate git-svn metadata locally). Note that right now
-mirrors reflect only ``trunk`` for each project. You can do the read-only GIT
+mirrors reflect only ``trunk`` for each project. You can do the read-only Git
 clone of LLVM via:
 
 .. code-block:: console
@@ -642,7 +642,7 @@ To set up clone from which you can submit code using ``git-svn``, run:
 Likewise for compiler-rt and test-suite.
 
 To update this clone without generating git-svn tags that conflict with the
-upstream git repo, run:
+upstream Git repo, run:
 
 .. code-block:: console
 
@@ -660,7 +660,7 @@ This leaves your working directories on their master branches, so you'll need to
 parent branch.
 
 For those who wish to be able to update an llvm repo in a simpler fashion,
-consider placing the following git script in your path under the name
+consider placing the following Git script in your path under the name
 ``git-svnup``:
 
 .. code-block:: bash
