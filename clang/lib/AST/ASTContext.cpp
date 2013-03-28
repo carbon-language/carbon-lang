@@ -1496,10 +1496,7 @@ ASTContext::getTypeInfoImpl(const Type *T) const {
   }
   case Type::MemberPointer: {
     const MemberPointerType *MPT = cast<MemberPointerType>(T);
-    std::pair<uint64_t, unsigned> PtrDiffInfo =
-      getTypeInfo(getPointerDiffType());
-    Width = PtrDiffInfo.first * ABI->getMemberPointerSize(MPT);
-    Align = PtrDiffInfo.second;
+    llvm::tie(Width, Align) = ABI->getMemberPointerWidthAndAlign(MPT);
     break;
   }
   case Type::Complex: {

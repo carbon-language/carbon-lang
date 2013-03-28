@@ -27,9 +27,9 @@ class CXXABI {
 public:
   virtual ~CXXABI();
 
-  /// Returns the size of a member pointer in multiples of the target
-  /// pointer size.
-  virtual unsigned getMemberPointerSize(const MemberPointerType *MPT) const = 0;
+  /// Returns the width and alignment of a member pointer in bits.
+  virtual std::pair<uint64_t, unsigned>
+  getMemberPointerWidthAndAlign(const MemberPointerType *MPT) const = 0;
 
   /// Returns the default calling convention for C++ methods.
   virtual CallingConv getDefaultMethodCallConv(bool isVariadic) const = 0;

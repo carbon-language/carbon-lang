@@ -33,10 +33,15 @@ protected:
 public:
   ItaniumCXXABI(ASTContext &Ctx) : Context(Ctx) { }
 
-  unsigned getMemberPointerSize(const MemberPointerType *MPT) const {
-    QualType Pointee = MPT->getPointeeType();
-    if (Pointee->isFunctionType()) return 2;
-    return 1;
+  std::pair<uint64_t, unsigned>
+  getMemberPointerWidthAndAlign(const MemberPointerType *MPT) const {
+    const TargetInfo &Target = Context.getTargetInfo();
+    TargetInfo::IntType PtrDiff = Target.getPtrDiffType(0);
+    uint64_t Width = Target.getTypeWidth(PtrDiff);
+    unsigned Align = Target.getTypeAlign(PtrDiff);
+    if (MPT->getPointeeType()->isFunctionType())
+      Width = 2 * Width;
+    return std::make_pair(Width, Align);
   }
 
   CallingConv getDefaultMethodCallConv(bool isVariadic) const {

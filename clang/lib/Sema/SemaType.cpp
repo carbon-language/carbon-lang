@@ -1728,13 +1728,29 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
   // according to the class type, which means that we really need a
   // complete type if possible, which means we need to instantiate templates.
   //
-  // For now, just require a complete type, which will instantiate
-  // templates.  This will also error if the type is just forward-declared,
-  // which is a bug, but it's a bug that saves us from dealing with some
-  // complexities at the moment.
-  if (Context.getTargetInfo().getCXXABI().isMicrosoft() &&
-      RequireCompleteType(Loc, Class, diag::err_incomplete_type))
-    return QualType();
+  // If template instantiation fails or the type is just incomplete, we have to
+  // add an extra slot to the member pointer.  Yes, this does cause problems
+  // when passing pointers between TUs that disagree about the size.
+  if (Context.getTargetInfo().getCXXABI().isMicrosoft()) {
+    CXXRecordDecl *RD = Class->getAsCXXRecordDecl();
+    if (!RD->hasAttr<MSInheritanceAttr>()) {
+      // Lock in the inheritance model on the first use of a member pointer.
+      // Otherwise we may disagree about the size at different points in the TU.
+      // FIXME: MSVC picks a model on the first use that needs to know the size,
+      // rather than on the first mention of the type, e.g. typedefs.
+      SourceRange DeclRange = RD->getSourceRange();
+      if (RequireCompleteType(Loc, Class, 0) && !RD->isBeingDefined()) {
+        // We know it doesn't have an attribute and it's incomplete, so use the
+        // unspecified inheritance model.  If we're in the record body, we can
+        // figure out the inheritance model.
+        for (CXXRecordDecl::redecl_iterator I = RD->redecls_begin(),
+             E = RD->redecls_end(); I != E; ++I) {
+          I->addAttr(::new (Context) UnspecifiedInheritanceAttr(
+              RD->getSourceRange(), Context));
+        }
+      }
+    }
+  }
 
   return Context.getMemberPointerType(T, Class.getTypePtr());
 }
