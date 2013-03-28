@@ -273,7 +273,8 @@ public:
                       const Address &start,
                       const void *bytes,
                       size_t length,
-                      uint32_t num_instructions = UINT32_MAX);
+                      uint32_t max_num_instructions,
+                      bool data_from_file);
 
     static bool
     Disassemble (Debugger &debugger,
@@ -356,19 +357,22 @@ public:
     size_t
     ParseInstructions (const ExecutionContext *exe_ctx,
                        const AddressRange &range,
-                       Stream *error_strm_ptr);
+                       Stream *error_strm_ptr,
+                       bool prefer_file_cache);
 
     size_t
     ParseInstructions (const ExecutionContext *exe_ctx,
                        const Address &range,
-                       uint32_t num_instructions);
+                       uint32_t num_instructions,
+                       bool prefer_file_cache);
 
     virtual size_t
     DecodeInstructions (const Address &base_addr,
                         const DataExtractor& data,
                         lldb::offset_t data_offset,
                         size_t num_instructions,
-                        bool append) = 0;
+                        bool append,
+                        bool data_from_file) = 0;
     
     InstructionList &
     GetInstructionList ();

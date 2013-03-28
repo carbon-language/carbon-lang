@@ -234,7 +234,7 @@ IRExecutionUnit::DisassembleFunction (Stream &stream,
                             DataExtractor::TypeUInt8);
     }
     
-    disassembler->DecodeInstructions (Address (func_remote_addr), extractor, 0, UINT32_MAX, false);
+    disassembler->DecodeInstructions (Address (func_remote_addr), extractor, 0, UINT32_MAX, false, false);
     
     InstructionList &instruction_list = disassembler->GetInstructionList();
     const uint32_t max_opcode_byte_size = instruction_list.GetMaxOpcocdeByteSize();

@@ -47,11 +47,11 @@ public:
     InstructionLLVMC (DisassemblerLLVMC &disasm,
                       const lldb_private::Address &address, 
                       AddressClass addr_class) :
-        Instruction(address, addr_class),
-        m_is_valid(false),
-        m_disasm(disasm),
-        m_disasm_sp(disasm.shared_from_this()),
-        m_does_branch(eLazyBoolCalculate)
+        Instruction (address, addr_class),
+        m_disasm_sp (disasm.shared_from_this()),
+        m_does_branch (eLazyBoolCalculate),
+        m_is_valid (false),
+        m_using_file_addr (false)
     {
     }
     
@@ -60,24 +60,12 @@ public:
     {
     }
     
-    static void
-    PadToWidth (lldb_private::StreamString &ss,
-                int new_width)
-    {
-        int old_width = ss.GetSize();
-        
-        if (old_width < new_width)
-        {
-            ss.Printf("%*s", new_width - old_width, "");
-        }
-    }
-        
     virtual bool
     DoesBranch ()
     {
         if (m_does_branch == eLazyBoolCalculate)
         {
-            m_disasm.Lock(this, NULL);
+            GetDisassemblerLLVMC().Lock(this, NULL);
             DataExtractor data;
             if (m_opcode.GetData(data))
             {
@@ -85,26 +73,26 @@ public:
                 lldb::addr_t pc = m_address.GetFileAddress();
 
                 DisassemblerLLVMC::LLVMCDisassembler *mc_disasm_ptr = GetDisasmToUse (is_alternate_isa);
-                uint8_t *opcode_data = const_cast<uint8_t *>(data.PeekData (0, 1));
+                const uint8_t *opcode_data = data.GetDataStart();
                 const size_t opcode_data_len = data.GetByteSize();
                 llvm::MCInst inst;
-                size_t inst_size = mc_disasm_ptr->GetMCInst(opcode_data,
-                                                            opcode_data_len,
-                                                            pc,
-                                                            inst);
+                const size_t inst_size = mc_disasm_ptr->GetMCInst (opcode_data,
+                                                                   opcode_data_len,
+                                                                   pc,
+                                                                   inst);
                 // Be conservative, if we didn't understand the instruction, say it might branch...
                 if (inst_size == 0)
                     m_does_branch = eLazyBoolYes;
                 else
                 {
-                    bool can_branch = mc_disasm_ptr->CanBranch(inst);
+                    const bool can_branch = mc_disasm_ptr->CanBranch(inst);
                     if (can_branch)
                         m_does_branch = eLazyBoolYes;
                     else
                         m_does_branch = eLazyBoolNo;
                 }
             }
-            m_disasm.Unlock();
+            GetDisassemblerLLVMC().Unlock();
         }
         return m_does_branch == eLazyBoolYes;
     }
@@ -112,20 +100,19 @@ public:
     DisassemblerLLVMC::LLVMCDisassembler *
     GetDisasmToUse (bool &is_alternate_isa)
     {
-        DisassemblerLLVMC::LLVMCDisassembler *mc_disasm_ptr = m_disasm.m_disasm_ap.get();
-        
         is_alternate_isa = false;
-        if (m_disasm.m_alternate_disasm_ap.get() != NULL)
+        DisassemblerLLVMC &llvm_disasm = GetDisassemblerLLVMC();
+        if (llvm_disasm.m_alternate_disasm_ap.get() != NULL)
         {
             const AddressClass address_class = GetAddressClass ();
         
             if (address_class == eAddressClassCodeAlternateISA)
             {
-                mc_disasm_ptr = m_disasm.m_alternate_disasm_ap.get();
                 is_alternate_isa = true;
+                return llvm_disasm.m_alternate_disasm_ap.get();
             }
         }
-         return mc_disasm_ptr;
+        return llvm_disasm.m_disasm_ap.get();
     }
     
     virtual size_t
@@ -136,7 +123,8 @@ public:
         // All we have to do is read the opcode which can be easy for some
         // architetures
         bool got_op = false;
-        const ArchSpec &arch = m_disasm.GetArchitecture();
+        DisassemblerLLVMC &llvm_disasm = GetDisassemblerLLVMC();
+        const ArchSpec &arch = llvm_disasm.GetArchitecture();
         
         const uint32_t min_op_byte_size = arch.GetMinimumOpcodeByteSize();
         const uint32_t max_op_byte_size = arch.GetMaximumOpcodeByteSize();
@@ -179,17 +167,6 @@ public:
             bool is_alternate_isa = false;
             DisassemblerLLVMC::LLVMCDisassembler *mc_disasm_ptr = GetDisasmToUse (is_alternate_isa);
             
-            if (m_disasm.m_alternate_disasm_ap.get() != NULL)
-            {
-                const AddressClass address_class = GetAddressClass ();
-            
-                if (address_class == eAddressClassCodeAlternateISA)
-                {
-                    mc_disasm_ptr = m_disasm.m_alternate_disasm_ap.get();
-                    is_alternate_isa = true;
-                }
-            }
-            
             const llvm::Triple::ArchType machine = arch.GetMachine();
             if (machine == llvm::Triple::arm || machine == llvm::Triple::thumb)
             {
@@ -219,17 +196,17 @@ public:
             {
                 // The opcode isn't evenly sized, so we need to actually use the llvm
                 // disassembler to parse it and get the size.
-                m_disasm.Lock(this, NULL);
                 uint8_t *opcode_data = const_cast<uint8_t *>(data.PeekData (data_offset, 1));
-                const size_t opcode_data_len = data.GetByteSize() - data_offset;
+                const size_t opcode_data_len = data.BytesLeft(data_offset);
                 const addr_t pc = m_address.GetFileAddress();
                 llvm::MCInst inst;
                 
+                llvm_disasm.Lock(this, NULL);
                 const size_t inst_size = mc_disasm_ptr->GetMCInst(opcode_data,
-                                                                    opcode_data_len,
-                                                                    pc,
-                                                                    inst);
-                m_disasm.Unlock();
+                                                                  opcode_data_len,
+                                                                  pc,
+                                                                  inst);
+                llvm_disasm.Unlock();
                 if (inst_size == 0)
                     m_opcode.Clear();
                 else
@@ -264,39 +241,50 @@ public:
         {
             char out_string[512];
             
+            DisassemblerLLVMC &llvm_disasm = GetDisassemblerLLVMC();
+
             DisassemblerLLVMC::LLVMCDisassembler *mc_disasm_ptr;
             
             if (address_class == eAddressClassCodeAlternateISA)
-                mc_disasm_ptr = m_disasm.m_alternate_disasm_ap.get();
+                mc_disasm_ptr = llvm_disasm.m_alternate_disasm_ap.get();
             else
-                mc_disasm_ptr = m_disasm.m_disasm_ap.get();
+                mc_disasm_ptr = llvm_disasm.m_disasm_ap.get();
             
-            lldb::addr_t pc = LLDB_INVALID_ADDRESS;
+            lldb::addr_t pc = m_address.GetFileAddress();
+            m_using_file_addr = true;
             
-            if (exe_ctx)
+            const bool data_from_file = GetDisassemblerLLVMC().m_data_from_file;
+            if (!data_from_file)
             {
-                Target *target = exe_ctx->GetTargetPtr();
-                if (target)
-                    pc = m_address.GetLoadAddress(target);
+                if (exe_ctx)
+                {
+                    Target *target = exe_ctx->GetTargetPtr();
+                    if (target)
+                    {
+                        const lldb::addr_t load_addr = m_address.GetLoadAddress(target);
+                        if (load_addr != LLDB_INVALID_ADDRESS)
+                        {
+                            pc = load_addr;
+                            m_using_file_addr = false;
+                        }
+                    }
+                }
             }
             
-            if (pc == LLDB_INVALID_ADDRESS)
-                pc = m_address.GetFileAddress();
+            llvm_disasm.Lock(this, exe_ctx);
             
-            m_disasm.Lock(this, exe_ctx);
-            
-            uint8_t *opcode_data = const_cast<uint8_t *>(data.PeekData (0, 1));
+            const uint8_t *opcode_data = data.GetDataStart();
             const size_t opcode_data_len = data.GetByteSize();
             llvm::MCInst inst;
-            size_t inst_size = mc_disasm_ptr->GetMCInst(opcode_data,
-                                                        opcode_data_len,
-                                                        pc,
-                                                        inst);
+            size_t inst_size = mc_disasm_ptr->GetMCInst (opcode_data,
+                                                         opcode_data_len,
+                                                         pc,
+                                                         inst);
                 
             if (inst_size > 0)
                 mc_disasm_ptr->PrintMCInst(inst, out_string, sizeof(out_string));
             
-            m_disasm.Unlock();
+            llvm_disasm.Unlock();
             
             if (inst_size == 0)
             {
@@ -361,7 +349,7 @@ public:
             {
                 if (m_does_branch == eLazyBoolCalculate)
                 {
-                    bool can_branch = mc_disasm_ptr->CanBranch(inst);
+                    const bool can_branch = mc_disasm_ptr->CanBranch(inst);
                     if (can_branch)
                         m_does_branch = eLazyBoolYes;
                     else
@@ -389,22 +377,33 @@ public:
     }
     
     bool
-    IsValid ()
+    IsValid () const
     {
         return m_is_valid;
     }
     
+    bool
+    UsingFileAddress() const
+    {
+        return m_using_file_addr;
+    }
     size_t
-    GetByteSize ()
+    GetByteSize () const
     {
         return m_opcode.GetByteSize();
     }
+    
+    DisassemblerLLVMC &
+    GetDisassemblerLLVMC ()
+    {
+        return *(DisassemblerLLVMC *)m_disasm_sp.get();
+    }
 protected:
     
-    bool                    m_is_valid;
-    DisassemblerLLVMC      &m_disasm;
     DisassemblerSP          m_disasm_sp; // for ownership
     LazyBool                m_does_branch;
+    bool                    m_is_valid;
+    bool                    m_using_file_addr;
     
     static bool             s_regex_compiled;
     static ::regex_t        s_regex;
@@ -476,11 +475,11 @@ DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, uns
 namespace {
     // This is the memory object we use in GetInstruction.
     class LLDBDisasmMemoryObject : public llvm::MemoryObject {
-      uint8_t *m_bytes;
+      const uint8_t *m_bytes;
       uint64_t m_size;
       uint64_t m_base_PC;
     public:
-      LLDBDisasmMemoryObject(uint8_t *bytes, uint64_t size, uint64_t basePC) :
+      LLDBDisasmMemoryObject(const uint8_t *bytes, uint64_t size, uint64_t basePC) :
                          m_bytes(bytes), m_size(size), m_base_PC(basePC) {}
      
       uint64_t getBase() const { return m_base_PC; }
@@ -496,14 +495,12 @@ namespace {
 } // End Anonymous Namespace
 
 uint64_t
-DisassemblerLLVMC::LLVMCDisassembler::GetMCInst (
-    uint8_t *opcode_data,
-    size_t opcode_data_len,
-    lldb::addr_t pc,
-    llvm::MCInst &mc_inst)
+DisassemblerLLVMC::LLVMCDisassembler::GetMCInst (const uint8_t *opcode_data,
+                                                 size_t opcode_data_len,
+                                                 lldb::addr_t pc,
+                                                 llvm::MCInst &mc_inst)
 {
     LLDBDisasmMemoryObject memory_object (opcode_data, opcode_data_len, pc);
-    llvm::MCInst inst;
     llvm::MCDisassembler::DecodeStatus status;
 
     uint64_t new_inst_size;
@@ -520,17 +517,18 @@ DisassemblerLLVMC::LLVMCDisassembler::GetMCInst (
 }
 
 uint64_t
-DisassemblerLLVMC::LLVMCDisassembler::PrintMCInst (llvm::MCInst &mc_inst, char *output_buffer, size_t out_buffer_len)
+DisassemblerLLVMC::LLVMCDisassembler::PrintMCInst (llvm::MCInst &mc_inst,
+                                                   char *dst,
+                                                   size_t dst_len)
 {
     llvm::StringRef unused_annotations;
     llvm::SmallString<64> inst_string;
     llvm::raw_svector_ostream inst_stream(inst_string);
     m_instr_printer_ap->printInst (&mc_inst, inst_stream, unused_annotations);
     inst_stream.flush();
-    
-    size_t output_size = std::min(out_buffer_len -1, inst_string.size());
-    std::memcpy(output_buffer, inst_string.data(), output_size);
-    output_buffer[output_size] = '\0';
+    const size_t output_size = std::min(dst_len - 1, inst_string.size());
+    std::memcpy(dst, inst_string.data(), output_size);
+    dst[output_size] = '\0';
     
     return output_size;
 }
@@ -576,7 +574,8 @@ DisassemblerLLVMC::CreateInstance (const ArchSpec &arch, const char *flavor)
 DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch, const char *flavor_string) :
     Disassembler(arch, flavor_string),
     m_exe_ctx (NULL),
-    m_inst (NULL)
+    m_inst (NULL),
+    m_data_from_file (false)
 {
     if (!FlavorValidForArchSpec (arch, m_flavor.c_str()))
     {
@@ -633,7 +632,8 @@ DisassemblerLLVMC::DecodeInstructions (const Address &base_addr,
                                        const DataExtractor& data,
                                        lldb::offset_t data_offset,
                                        size_t num_instructions,
-                                       bool append)
+                                       bool append,
+                                       bool data_from_file)
 {
     if (!append)
         m_instruction_list.Clear();
@@ -641,6 +641,7 @@ DisassemblerLLVMC::DecodeInstructions (const Address &base_addr,
     if (!IsValid())
         return 0;
     
+    m_data_from_file = data_from_file;
     uint32_t data_cursor = data_offset;
     const size_t data_byte_size = data.GetByteSize();
     uint32_t instructions_parsed = 0;
@@ -760,36 +761,33 @@ const char *DisassemblerLLVMC::SymbolLookup (uint64_t value,
         if (m_exe_ctx && m_inst)
         {        
             //std::string remove_this_prior_to_checkin;
-            Address reference_address;
-            
             Target *target = m_exe_ctx ? m_exe_ctx->GetTargetPtr() : NULL;
-            
-            if (target && !target->GetSectionLoadList().IsEmpty())
-                target->GetSectionLoadList().ResolveLoadAddress(value, reference_address);
-            else
+            Address value_so_addr;
+            if (m_inst->UsingFileAddress())
             {
                 ModuleSP module_sp(m_inst->GetAddress().GetModule());
                 if (module_sp)
-                    module_sp->ResolveFileAddress(value, reference_address);
+                    module_sp->ResolveFileAddress(value, value_so_addr);
             }
-                
-            if (reference_address.IsValid() && reference_address.GetSection())
+            else if (target && !target->GetSectionLoadList().IsEmpty())
+            {
+                target->GetSectionLoadList().ResolveLoadAddress(value, value_so_addr);
+            }
+            
+            if (value_so_addr.IsValid() && value_so_addr.GetSection())
             {
                 StreamString ss;
                 
-                reference_address.Dump (&ss, 
-                                        target, 
-                                        Address::DumpStyleResolvedDescriptionNoModule, 
-                                        Address::DumpStyleSectionNameOffset);
+                value_so_addr.Dump (&ss,
+                                    target,
+                                    Address::DumpStyleResolvedDescriptionNoModule,
+                                    Address::DumpStyleSectionNameOffset);
                 
                 if (!ss.GetString().empty())
                 {
-                    //remove_this_prior_to_checkin = ss.GetString();
-                    //if (*type_ptr)
                     m_inst->AppendComment(ss.GetString());
                 }
             }
-            //printf ("DisassemblerLLVMC::SymbolLookup (value=0x%16.16" PRIx64 ", type=%" PRIu64 ", pc=0x%16.16" PRIx64 ", name=\"%s\") m_exe_ctx=%p, m_inst=%p\n", value, *type_ptr, pc, remove_this_prior_to_checkin.c_str(), m_exe_ctx, m_inst);
         }
     }
 

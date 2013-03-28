@@ -1328,13 +1328,18 @@ DataExtractor::Dump (Stream *s,
             {
                 lldb::addr_t addr = base_addr + start_offset;
                 lldb_private::Address so_addr;
-                if (!target_sp->GetSectionLoadList().ResolveLoadAddress(addr, so_addr))
+				bool data_from_file = true;
+                if (target_sp->GetSectionLoadList().ResolveLoadAddress(addr, so_addr))
+                {
+                    data_from_file = false;
+                }
+                else
                 {
                     if (target_sp->GetSectionLoadList().IsEmpty() || !target_sp->GetImages().ResolveFileAddress(addr, so_addr))
                         so_addr.SetRawAddress(addr);
                 }
 
-                size_t bytes_consumed = disassembler_sp->DecodeInstructions (so_addr, *this, start_offset, item_count, false);
+                size_t bytes_consumed = disassembler_sp->DecodeInstructions (so_addr, *this, start_offset, item_count, false, data_from_file);
                 
                 if (bytes_consumed)
                 {

@@ -2288,14 +2288,22 @@ SBTarget::ReadInstructions (lldb::SBAddress base_addr, uint32_t count, const cha
             DataBufferHeap data (target_sp->GetArchitecture().GetMaximumOpcodeByteSize() * count, 0);
             bool prefer_file_cache = false;
             lldb_private::Error error;
-            const size_t bytes_read = target_sp->ReadMemory(*addr_ptr, prefer_file_cache, data.GetBytes(), data.GetByteSize(), error);
+            lldb::addr_t load_addr = LLDB_INVALID_ADDRESS;
+            const size_t bytes_read = target_sp->ReadMemory(*addr_ptr,
+                                                            prefer_file_cache,
+                                                            data.GetBytes(),
+                                                            data.GetByteSize(),
+                                                            error,
+                                                            &load_addr);
+            const bool data_from_file = load_addr == LLDB_INVALID_ADDRESS;
             sb_instructions.SetDisassembler (Disassembler::DisassembleBytes (target_sp->GetArchitecture(),
                                                                              NULL,
                                                                              flavor_string,
                                                                              *addr_ptr,
                                                                              data.GetBytes(),
                                                                              bytes_read,
-                                                                             count));
+                                                                             count,
+                                                                             data_from_file));
         }
     }
     
@@ -2322,12 +2330,16 @@ SBTarget::GetInstructionsWithFlavor (lldb::SBAddress base_addr, const char *flav
         if (base_addr.get())
             addr = *base_addr.get();
         
+        const bool data_from_file = true;
+
         sb_instructions.SetDisassembler (Disassembler::DisassembleBytes (target_sp->GetArchitecture(),
                                                                          NULL,
                                                                          flavor_string,
                                                                          addr,
                                                                          buf,
-                                                                         size));
+                                                                         size,
+                                                                         UINT32_MAX,
+                                                                         data_from_file));
     }
 
     return sb_instructions;

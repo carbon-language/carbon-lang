@@ -208,10 +208,11 @@ ThreadPlanAssemblyTracer::Log ()
                                     process_sp->GetByteOrder(), 
                                     process_sp->GetAddressByteSize());
             
+			bool data_from_file = false;
             if (addr_valid)
-                disassembler->DecodeInstructions (pc_addr, extractor, 0, 1, false);
+                disassembler->DecodeInstructions (pc_addr, extractor, 0, 1, false, data_from_file);
             else
-                disassembler->DecodeInstructions (Address (pc), extractor, 0, 1, false);
+                disassembler->DecodeInstructions (Address (pc), extractor, 0, 1, false, data_from_file);
             
             InstructionList &instruction_list = disassembler->GetInstructionList();
             const uint32_t max_opcode_byte_size = instruction_list.GetMaxOpcocdeByteSize();

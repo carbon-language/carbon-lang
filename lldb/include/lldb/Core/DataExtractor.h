@@ -1245,9 +1245,7 @@ public:
     
     bool
     Append (void* bytes, lldb::offset_t length);
-    
-protected:
-    
+
     lldb::offset_t
     BytesLeft (lldb::offset_t offset) const
     {
@@ -1256,6 +1254,8 @@ protected:
             return size - offset;
         return 0;
     }
+
+protected:
     
     //------------------------------------------------------------------
     // Member variables

@@ -45,7 +45,7 @@ class DisassemblerLLVMC : public lldb_private::Disassembler
         
         ~LLVMCDisassembler() {};
         
-        uint64_t GetMCInst (uint8_t *opcode_data, size_t opcode_data_len, lldb::addr_t pc, llvm::MCInst &mc_inst);
+        uint64_t GetMCInst (const uint8_t *opcode_data, size_t opcode_data_len, lldb::addr_t pc, llvm::MCInst &mc_inst);
         uint64_t PrintMCInst (llvm::MCInst &mc_inst, char *output_buffer, size_t out_buffer_len);
         bool     CanBranch (llvm::MCInst &mc_inst);
         bool     IsValid()
@@ -88,12 +88,13 @@ public:
     virtual
     ~DisassemblerLLVMC();
     
-    size_t
+    virtual size_t
     DecodeInstructions (const lldb_private::Address &base_addr,
                         const lldb_private::DataExtractor& data,
                         lldb::offset_t data_offset,
                         size_t num_instructions,
-                        bool append);
+                        bool append,
+                        bool data_from_file);
     
     //------------------------------------------------------------------
     // PluginInterface protocol
@@ -161,6 +162,7 @@ protected:
     const lldb_private::ExecutionContext *m_exe_ctx;
     InstructionLLVMC *m_inst;
     lldb_private::Mutex m_mutex;
+    bool m_data_from_file;
     
     std::auto_ptr<LLVMCDisassembler> m_disasm_ap;
     std::auto_ptr<LLVMCDisassembler> m_alternate_disasm_ap;
