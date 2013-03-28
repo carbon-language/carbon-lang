@@ -282,7 +282,11 @@ class InternalVector {
     UnmapOrDie(data_, capacity_ * sizeof(T));
   }
   T &operator[](uptr i) {
-    CHECK_LT(i, size_);
+    DCHECK_LT(i, size_);
+    return data_[i];
+  }
+  const T &operator[](uptr i) const {
+    DCHECK_LT(i, size_);
     return data_[i];
   }
   void push_back(const T &element) {
@@ -301,7 +305,7 @@ class InternalVector {
     CHECK_GT(size_, 0);
     size_--;
   }
-  uptr size() {
+  uptr size() const {
     return size_;
   }
 
