@@ -6642,8 +6642,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         DAG.getMemIntrinsicNode(PPCISD::LBRX, dl,
                                 DAG.getVTList(N->getValueType(0) == MVT::i64 ?
                                               MVT::i64 : MVT::i32, MVT::Other),
-                                              Ops, 3,
-                                LD->getMemoryVT(), LD->getMemOperand());
+                                Ops, 3, LD->getMemoryVT(), LD->getMemOperand());
 
       // If this is an i16 load, insert the truncate.
       SDValue ResVal = BSLoad;
