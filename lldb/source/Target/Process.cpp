@@ -4459,7 +4459,13 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         errors.Printf("RunThreadPlan called with empty thread plan.");
         return eExecutionSetupError;
     }
-
+    
+    if (!thread_plan_sp->ValidatePlan(NULL))
+    {
+        errors.Printf ("RunThreadPlan called with an invalid thread plan.");
+        return eExecutionSetupError;
+    }
+    
     if (exe_ctx.GetProcessPtr() != this)
     {
         errors.Printf("RunThreadPlan called on wrong process.");
