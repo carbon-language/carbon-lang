@@ -816,14 +816,16 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
   // The x86-64 ABI for returning structs by value requires that we copy
   // the sret argument into %rax for the return. We saved the argument into
   // a virtual register in the entry block, so now we copy the value out
-  // and into %rax.
-  if (Subtarget->is64Bit() && F.hasStructRetAttr()) {
+  // and into %rax. We also do the same with %eax for Win32.
+  if (F.hasStructRetAttr() &&
+      (Subtarget->is64Bit() || Subtarget->isTargetWindows())) {
     unsigned Reg = X86MFInfo->getSRetReturnReg();
     assert(Reg &&
            "SRetReturnReg should have been set in LowerFormalArguments()!");
+    unsigned RetReg = Subtarget->is64Bit() ? X86::RAX : X86::EAX;
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
-            X86::RAX).addReg(Reg);
-    RetRegs.push_back(X86::RAX);
+            RetReg).addReg(Reg);
+    RetRegs.push_back(RetReg);
   }
 
   // Now emit the RET.
