@@ -11,68 +11,63 @@ int *global;
 // check for leaks
 //------------------
 
-void testGlobalExprNewBeforeOverload1() {
-  int *p = new int;
-} // expected-warning{{Memory is never released; potential leak}}
-
-void testGlobalExprNewBeforeOverload2() {
-  int *p = ::new int;
-} // expected-warning{{Memory is never released; potential leak}}
-
-void testGlobalOpNewBeforeOverload() {
+//----- Standard non-placement operators
+void testGlobalOpNew() {
   void *p = operator new(0);
 } // expected-warning{{Memory is never released; potential leak}}
 
-void testMemIsOnHeap() {
+void testGlobalOpNewArray() {
+  void *p = operator new[](0);
+} // expected-warning{{Memory is never released; potential leak}}
+
+void testGlobalNewExpr() {
   int *p = new int;
-  if (global != p)
-    global = p;
 } // expected-warning{{Memory is never released; potential leak}}
-//FIXME: currently a memory region for 'new' is not a heap region, that lead to 
-//false-positive 'memory leak' ('global != p' is not evaluated to true and 'p'
-//does not escape)
 
-void *operator new(std::size_t);
-void *operator new(std::size_t, double d);
-void *operator new[](std::size_t);
-void *operator new[](std::size_t, double d);
+void testGlobalNewExprArray() {
+  int *p = new int[0];
+} // expected-warning{{Memory is never released; potential leak}}
 
-void testExprPlacementNew() {
+//----- Standard nothrow placement operators
+void testGlobalNoThrowPlacementOpNewBeforeOverload() {
+  void *p = operator new(0, std::nothrow);
+} // expected-warning{{Memory is never released; potential leak}}
+
+void testGlobalNoThrowPlacementExprNewBeforeOverload() {
+  int *p = new(std::nothrow) int;
+} // expected-warning{{Memory is never released; potential leak}}
+
+
+//----- Standard pointer placement operators
+void testGlobalPointerPlacementNew() {
   int i;
-  int *p1 = new(&i) int; // no warn - standard placement new
 
-  int *p2 = new(1.0) int; // no warn - overloaded placement new
+  void *p1 = operator new(0, &i); // no warn
 
-  int *p3 = new (std::nothrow) int;
-} // expected-warning{{Memory is never released; potential leak}}
+  void *p2 = operator new[](0, &i); // no warn
 
-void testExprPlacementNewArray() {
-  int i;
-  int *p1 = new(&i) int[1]; // no warn - standard placement new[]
+  int *p3 = new(&i) int; // no warn
 
-  int *p2 = new(1.0) int[1]; // no warn - overloaded placement new[]
-
-  int *p3 = new (std::nothrow) int[1];
-} // expected-warning{{Memory is never released; potential leak}}
-
-void testCustomOpNew() {
-  void *p = operator new(0); // no warn - call to a custom new
+  int *p4 = new(&i) int[0]; // no warn
 }
 
-void testGlobalExprNew() {
-  void *p = ::new int; // no warn - call to a custom new
+//----- Other cases
+void testNewMemoryIsInHeap() {
+  int *p = new int;
+  if (global != p) // condition is always true as 'p' wraps a heap region that 
+                   // is different from a region wrapped by 'global'
+    global = p; // pointer escapes
 }
 
-void testCustomExprNew() {
-  int *p = new int; // no warn - call to a custom new
-}
+struct PtrWrapper {
+  int *x;
 
-void testGlobalExprNewArray() {
-  void *p = ::new int[1]; // no warn - call to a custom new
-}
+  PtrWrapper(int *input) : x(input) {}
+};
 
-void testOverloadedExprNewArray() {
-  int *p = new int[1]; // no warn - call to a custom new
+void testNewInvalidationPlacement(PtrWrapper *w) {
+  // Ensure that we don't consider this a leak.
+  new (w) PtrWrapper(new int); // no warn
 }
 
 //---------------
@@ -121,22 +116,30 @@ void testAllocDeallocNames() {
 // malloc()/free() are subjects of unix.Malloc and unix.MallocWithAnnotations
 void testMallocFreeNoWarn() {
   int i;
-  free(&i); // no-warning
+  free(&i); // no warn
 
   int *p1 = (int *)malloc(sizeof(int));
-  free(++p1); // no-warning
+  free(++p1); // no warn
 
   int *p2 = (int *)malloc(sizeof(int));
   free(p2);
-  free(p2); // no-warning
+  free(p2); // no warn
 
-  int *p3 = (int *)malloc(sizeof(int)); // no-warning
+  int *p3 = (int *)malloc(sizeof(int)); // no warn
 }
 
-void testFreeNewed() {
+//----- Test free standard new
+void testFreeOpNew() {
+  void *p = operator new(0);
+  free(p);
+} // expected-warning{{Memory is never released; potential leak}}
+// FIXME: Pointer should escape
+
+void testFreeNewExpr() {
   int *p = new int;
-  free(p); // pointer escaped, no-warning
-}
+  free(p);
+} // expected-warning{{Memory is never released; potential leak}}
+// FIXME: Pointer should escape
 
 void testObjcFreeNewed() {
   int *p = new int;

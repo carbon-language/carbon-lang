@@ -457,6 +457,10 @@ bool MallocChecker::isFreeFunction(const FunctionDecl *FD, ASTContext &C) const 
   return false;
 }
 
+// Tells if the callee is one of the following:
+// 1) A global non-placement new/delete operator function.
+// 2) A global placement operator function with the single placement argument
+//    of type std::nothrow_t.
 bool MallocChecker::isStandardNewDelete(const FunctionDecl *FD,
                                         ASTContext &C) const {
   if (!FD)
@@ -467,9 +471,8 @@ bool MallocChecker::isStandardNewDelete(const FunctionDecl *FD,
       Kind != OO_Delete && Kind != OO_Array_Delete)
     return false;
 
-  // Skip custom new operators.
-  if (!FD->isImplicit() &&
-      !C.getSourceManager().isInSystemHeader(FD->getLocStart()))
+  // Skip all operator new/delete methods.
+  if (isa<CXXMethodDecl>(FD))
     return false;
 
   // Return true if tested operator is a standard placement nothrow operator.

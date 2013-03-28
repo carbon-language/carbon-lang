@@ -278,11 +278,32 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   
   unsigned blockCount = currBldrCtx->blockCount();
   const LocationContext *LCtx = Pred->getLocationContext();
-  DefinedOrUnknownSVal symVal = svalBuilder.conjureSymbolVal(0, CNE, LCtx,
-                                                             CNE->getType(),
-                                                             blockCount);
-  ProgramStateRef State = Pred->getState();
+  DefinedOrUnknownSVal symVal = UnknownVal();
+  FunctionDecl *FD = CNE->getOperatorNew();
 
+  bool IsStandardGlobalOpNewFunction = false;
+  if (FD && !isa<CXXMethodDecl>(FD) && !FD->isVariadic()) {
+    if (FD->getNumParams() == 2) {
+      QualType T = FD->getParamDecl(1)->getType();
+      if (const IdentifierInfo *II = T.getBaseTypeIdentifier())
+        // NoThrow placement new behaves as a standard new.
+        IsStandardGlobalOpNewFunction = II->getName().equals("nothrow_t");
+    }
+    else
+      // Placement forms are considered non-standard.
+      IsStandardGlobalOpNewFunction = (FD->getNumParams() == 1);
+  }
+
+  // We assume all standard global 'operator new' functions allocate memory in 
+  // heap. We realize this is an approximation that might not correctly model 
+  // a custom global allocator.
+  if (IsStandardGlobalOpNewFunction)
+    symVal = svalBuilder.getConjuredHeapSymbolVal(CNE, LCtx, blockCount);
+  else
+    symVal = svalBuilder.conjureSymbolVal(0, CNE, LCtx, CNE->getType(), 
+                                          blockCount);
+
+  ProgramStateRef State = Pred->getState();
   CallEventManager &CEMgr = getStateManager().getCallEventManager();
   CallEventRef<CXXAllocatorCall> Call =
     CEMgr.getCXXAllocatorCall(CNE, State, LCtx);
@@ -296,7 +317,6 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   // is not declared as non-throwing, failures /must/ be signalled by
   // exceptions, and thus the return value will never be NULL.
   // C++11 [basic.stc.dynamic.allocation]p3.
-  FunctionDecl *FD = CNE->getOperatorNew();
   if (FD && getContext().getLangOpts().CXXExceptions) {
     QualType Ty = FD->getType();
     if (const FunctionProtoType *ProtoType = Ty->getAs<FunctionProtoType>())
