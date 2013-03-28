@@ -65,6 +65,9 @@ StackFrameList::StackFrameList
 //----------------------------------------------------------------------
 StackFrameList::~StackFrameList()
 {
+    // Call clear since this takes a lock and clears the stack frame list
+    // in case another thread is currently using this stack frame list
+    Clear();
 }
 
 void

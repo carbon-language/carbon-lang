@@ -38,6 +38,9 @@ public:
 
     ~SectionLoadList()
     {
+        // Call clear since this takes a lock and clears the section load list
+        // in case another thread is currently using this section load list
+        Clear();
     }
 
     bool
