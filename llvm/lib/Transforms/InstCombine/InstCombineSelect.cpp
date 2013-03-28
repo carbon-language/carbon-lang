@@ -127,13 +127,14 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
     // If this is a non-volatile load or a cast from the same type,
     // merge.
     if (TI->isCast()) {
-      if (TI->getOperand(0)->getType() != FI->getOperand(0)->getType())
+      Type *FIOpndTy = FI->getOperand(0)->getType();
+      if (TI->getOperand(0)->getType() != FIOpndTy)
         return 0;
       // The select condition may be a vector. We may only change the operand
       // type if the vector width remains the same (and matches the condition).
       Type *CondTy = SI.getCondition()->getType();
-      if (CondTy->isVectorTy() && CondTy->getVectorNumElements() !=
-          FI->getOperand(0)->getType()->getVectorNumElements())
+      if (CondTy->isVectorTy() && (!FIOpndTy->isVectorTy() ||
+          CondTy->getVectorNumElements() != FIOpndTy->getVectorNumElements()))
         return 0;
     } else {
       return 0;  // unknown unary op.
