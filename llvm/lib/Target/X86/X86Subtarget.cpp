@@ -330,6 +330,10 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
         HasRTM = true;
         ToggleFeature(X86::FeatureRTM);
       }
+      if (IsIntel && ((EBX >> 19) & 0x1)) {
+        HasADX = true;
+        ToggleFeature(X86::FeatureADX);
+      }
     }
   }
 }
