@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fcxx-exceptions -fexceptions -fsyntax-only -Wignored-qualifiers -verify
+// RUN: %clang_cc1 %s -std=c++11 -fcxx-exceptions -fexceptions -fsyntax-only -Wignored-qualifiers -verify
 
 int test1() {
   throw;
@@ -45,6 +45,28 @@ const
 j();
 
 const volatile int scalar_cv(); // expected-warning{{'const volatile' type qualifiers on return type have no effect}}
+
+// FIXME: Maintain enough information that we can point the diagnostic at the 'volatile' keyword.
+const
+int S::*
+volatile
+mixed_ret(); // expected-warning {{'volatile' type qualifier on return type has no effect}}
+
+const int volatile // expected-warning {{'const volatile' type qualifiers on return type have no effect}}
+    (((parens())));
+
+_Atomic(int)
+    atomic(); // expected-warning {{'_Atomic' type qualifier on return type has no effect}}
+
+_Atomic // expected-warning {{'_Atomic' type qualifier on return type has no effect}}
+    int
+    atomic();
+
+auto
+    trailing_return_type() -> // expected-warning {{'const' type qualifier on return type has no effect}}
+    const int;
+
+const int ret_array()[4]; // expected-error {{cannot return array}}
 }
 
 namespace PR9328 {
@@ -56,6 +78,7 @@ namespace PR9328 {
 }
 
 class foo  {
+  operator const int ();
   operator int * const ();
 };
 

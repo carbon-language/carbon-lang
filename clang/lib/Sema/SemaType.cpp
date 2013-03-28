@@ -31,6 +31,7 @@
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/Template.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;
 
@@ -1880,60 +1881,117 @@ static void inferARCWriteback(TypeProcessingState &state,
   // TODO: mark whether we did this inference?
 }
 
-static void DiagnoseIgnoredQualifiers(unsigned Quals,
-                                      SourceLocation ConstQualLoc,
-                                      SourceLocation VolatileQualLoc,
-                                      SourceLocation RestrictQualLoc,
-                                      SourceLocation AtomicQualLoc,
-                                      Sema& S) {
-  std::string QualStr;
-  unsigned NumQuals = 0;
-  SourceLocation Loc;
-
-  FixItHint ConstFixIt;
-  FixItHint VolatileFixIt;
-  FixItHint RestrictFixIt;
-  FixItHint AtomicFixIt;
-
+static void diagnoseIgnoredQualifiers(
+    Sema &S, unsigned Quals,
+    SourceLocation FallbackLoc,
+    SourceLocation ConstQualLoc = SourceLocation(),
+    SourceLocation VolatileQualLoc = SourceLocation(),
+    SourceLocation RestrictQualLoc = SourceLocation(),
+    SourceLocation AtomicQualLoc = SourceLocation()) {
+  assert(Quals && "no qualifiers to diagnose");
   const SourceManager &SM = S.getSourceManager();
 
-  // FIXME: The locations here are set kind of arbitrarily. It'd be nicer to
-  // find a range and grow it to encompass all the qualifiers, regardless of
-  // the order in which they textually appear.
-  if (Quals & DeclSpec::TQ_const) {
-    ConstFixIt = FixItHint::CreateRemoval(ConstQualLoc);
-    QualStr = "const";
-    ++NumQuals;
-    if (!Loc.isValid() || SM.isBeforeInTranslationUnit(ConstQualLoc, Loc))
-      Loc = ConstQualLoc;
-  }
-  if (Quals & DeclSpec::TQ_volatile) {
-    VolatileFixIt = FixItHint::CreateRemoval(VolatileQualLoc);
-    QualStr += (NumQuals == 0 ? "volatile" : " volatile");
-    ++NumQuals;
-    if (!Loc.isValid() || SM.isBeforeInTranslationUnit(VolatileQualLoc, Loc))
-      Loc = VolatileQualLoc;
-  }
-  if (Quals & DeclSpec::TQ_restrict) {
-    RestrictFixIt = FixItHint::CreateRemoval(RestrictQualLoc);
-    QualStr += (NumQuals == 0 ? "restrict" : " restrict");
-    ++NumQuals;
-    if (!Loc.isValid() || SM.isBeforeInTranslationUnit(RestrictQualLoc, Loc))
-      Loc = RestrictQualLoc;
-  }
-  if (Quals & DeclSpec::TQ_atomic) {
-    AtomicFixIt = FixItHint::CreateRemoval(AtomicQualLoc);
-    QualStr += (NumQuals == 0 ? "_Atomic" : " _Atomic");
-    ++NumQuals;
-    if (!Loc.isValid() || SM.isBeforeInTranslationUnit(AtomicQualLoc, Loc))
-      Loc = AtomicQualLoc;
+  struct Qual {
+    unsigned Mask;
+    const char *Name;
+    SourceLocation Loc;
+  } const QualKinds[4] = {
+    { DeclSpec::TQ_const, "const", ConstQualLoc },
+    { DeclSpec::TQ_volatile, "volatile", VolatileQualLoc },
+    { DeclSpec::TQ_restrict, "restrict", RestrictQualLoc },
+    { DeclSpec::TQ_atomic, "_Atomic", AtomicQualLoc }
+  };
+
+  llvm::SmallString<32> QualStr;
+  unsigned NumQuals = 0;
+  SourceLocation Loc;
+  FixItHint FixIts[4];
+
+  // Build a string naming the redundant qualifiers.
+  for (unsigned I = 0; I != 4; ++I) {
+    if (Quals & QualKinds[I].Mask) {
+      if (!QualStr.empty()) QualStr += ' ';
+      QualStr += QualKinds[I].Name;
+
+      // If we have a location for the qualifier, offer a fixit.
+      SourceLocation QualLoc = QualKinds[I].Loc;
+      if (!QualLoc.isInvalid()) {
+        FixIts[NumQuals] = FixItHint::CreateRemoval(QualLoc);
+        if (Loc.isInvalid() || SM.isBeforeInTranslationUnit(QualLoc, Loc))
+          Loc = QualLoc;
+      }
+
+      ++NumQuals;
+    }
   }
 
-  assert(NumQuals > 0 && "No known qualifiers?");
+  S.Diag(Loc.isInvalid() ? FallbackLoc : Loc, diag::warn_qual_return_type)
+    << QualStr << NumQuals << FixIts[0] << FixIts[1] << FixIts[2] << FixIts[3];
+}
 
-  S.Diag(Loc, diag::warn_qual_return_type)
-    << QualStr << NumQuals
-    << ConstFixIt << VolatileFixIt << RestrictFixIt << AtomicFixIt;
+// Diagnose pointless type qualifiers on the return type of a function.
+static void diagnoseIgnoredFunctionQualifiers(Sema &S, QualType RetTy,
+                                              Declarator &D,
+                                              unsigned FunctionChunkIndex) {
+  unsigned AtomicQual = RetTy->isAtomicType() ? DeclSpec::TQ_atomic : 0;
+
+  if (D.getTypeObject(FunctionChunkIndex).Fun.hasTrailingReturnType()) {
+    // FIXME: TypeSourceInfo doesn't preserve location information for
+    // qualifiers.
+    diagnoseIgnoredQualifiers(S, RetTy.getCVRQualifiers() | AtomicQual,
+                              D.getIdentifierLoc());
+    return;
+  }
+
+  for (unsigned OuterChunkIndex = FunctionChunkIndex + 1,
+                End = D.getNumTypeObjects();
+       OuterChunkIndex != End; ++OuterChunkIndex) {
+    DeclaratorChunk &OuterChunk = D.getTypeObject(OuterChunkIndex);
+    switch (OuterChunk.Kind) {
+    case DeclaratorChunk::Paren:
+      continue;
+
+    case DeclaratorChunk::Pointer: {
+      DeclaratorChunk::PointerTypeInfo &PTI = OuterChunk.Ptr;
+      diagnoseIgnoredQualifiers(
+          S, PTI.TypeQuals,
+          SourceLocation(),
+          SourceLocation::getFromRawEncoding(PTI.ConstQualLoc),
+          SourceLocation::getFromRawEncoding(PTI.VolatileQualLoc),
+          SourceLocation::getFromRawEncoding(PTI.RestrictQualLoc),
+          SourceLocation::getFromRawEncoding(PTI.AtomicQualLoc));
+      return;
+    }
+
+    case DeclaratorChunk::Function:
+    case DeclaratorChunk::BlockPointer:
+    case DeclaratorChunk::Reference:
+    case DeclaratorChunk::Array:
+    case DeclaratorChunk::MemberPointer:
+      // FIXME: We can't currently provide an accurate source location and a
+      // fix-it hint for these.
+      diagnoseIgnoredQualifiers(S, RetTy.getCVRQualifiers() | AtomicQual,
+                                D.getIdentifierLoc());
+      return;
+    }
+
+    llvm_unreachable("unknown declarator chunk kind");
+  }
+
+  // If the qualifiers come from a conversion function type, don't diagnose
+  // them -- they're not necessarily redundant, since such a conversion
+  // operator can be explicitly called as "x.operator const int()".
+  if (D.getName().getKind() == UnqualifiedId::IK_ConversionFunctionId)
+    return;
+
+  // Just parens all the way out to the decl specifiers. Diagnose any qualifiers
+  // which are present there.
+  diagnoseIgnoredQualifiers(S, D.getDeclSpec().getTypeQualifiers() | AtomicQual,
+                            D.getIdentifierLoc(),
+                            D.getDeclSpec().getConstSpecLoc(),
+                            D.getDeclSpec().getVolatileSpecLoc(),
+                            D.getDeclSpec().getRestrictSpecLoc(),
+                            D.getDeclSpec().getAtomicSpecLoc());
 }
 
 static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
@@ -2530,33 +2588,10 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
 
       // cv-qualifiers on return types are pointless except when the type is a
       // class type in C++.
-      if (isa<PointerType>(T) && T.getLocalCVRQualifiers() &&
-          (D.getName().getKind() != UnqualifiedId::IK_ConversionFunctionId) &&
-          (!LangOpts.CPlusPlus || !T->isDependentType())) {
-        assert(chunkIndex + 1 < e && "No DeclaratorChunk for the return type?");
-        DeclaratorChunk ReturnTypeChunk = D.getTypeObject(chunkIndex + 1);
-        assert(ReturnTypeChunk.Kind == DeclaratorChunk::Pointer);
-
-        DeclaratorChunk::PointerTypeInfo &PTI = ReturnTypeChunk.Ptr;
-
-        DiagnoseIgnoredQualifiers(PTI.TypeQuals,
-            SourceLocation::getFromRawEncoding(PTI.ConstQualLoc),
-            SourceLocation::getFromRawEncoding(PTI.VolatileQualLoc),
-            SourceLocation::getFromRawEncoding(PTI.RestrictQualLoc),
-            SourceLocation::getFromRawEncoding(PTI.AtomicQualLoc),
-            S);
-
-      } else if (T.getCVRQualifiers() && D.getDeclSpec().getTypeQualifiers() &&
-                 (!LangOpts.CPlusPlus ||
-                  (!T->isDependentType() && !T->isRecordType()))) {
-
-        DiagnoseIgnoredQualifiers(D.getDeclSpec().getTypeQualifiers(),
-                                  D.getDeclSpec().getConstSpecLoc(),
-                                  D.getDeclSpec().getVolatileSpecLoc(),
-                                  D.getDeclSpec().getRestrictSpecLoc(),
-                                  D.getDeclSpec().getAtomicSpecLoc(),
-                                  S);
-      }
+      if ((T.getCVRQualifiers() || T->isAtomicType()) &&
+          !(S.getLangOpts().CPlusPlus &&
+            (T->isDependentType() || T->isRecordType())))
+        diagnoseIgnoredFunctionQualifiers(S, T, D, chunkIndex);
 
       // Objective-C ARC ownership qualifiers are ignored on the function
       // return type (by type canonicalization). Complain if this attribute
