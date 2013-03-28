@@ -15821,8 +15821,9 @@ static SDValue checkBoolTestSetCCCombine(SDValue Cmp, X86::CondCode &CC) {
     // Quit if the constant is neither 0 or 1.
     return SDValue();
 
-  // Skip 'zext' node.
-  if (SetCC.getOpcode() == ISD::ZERO_EXTEND)
+  // Skip 'zext' or 'trunc' node.
+  if (SetCC.getOpcode() == ISD::ZERO_EXTEND ||
+      SetCC.getOpcode() == ISD::TRUNCATE)
     SetCC = SetCC.getOperand(0);
 
   switch (SetCC.getOpcode()) {
@@ -15841,9 +15842,13 @@ static SDValue checkBoolTestSetCCCombine(SDValue Cmp, X86::CondCode &CC) {
       return SDValue();
     // Quit if false value is not a constant.
     if (!FVal) {
-      // A special case for rdrand, where 0 is set if false cond is found.
       SDValue Op = SetCC.getOperand(0);
-      if (Op.getOpcode() != X86ISD::RDRAND)
+      // Skip 'zext' or 'trunc' node.
+      if (Op.getOpcode() == ISD::ZERO_EXTEND ||
+          Op.getOpcode() == ISD::TRUNCATE)
+        Op = Op.getOperand(0);
+      // A special case for rdrand, where 0 is set if false cond is found.
+      if (Op.getOpcode() != X86ISD::RDRAND || Op.getResNo() != 0)
         return SDValue();
     }
     // Quit if false value is not the constant 0 or 1.
