@@ -67,6 +67,10 @@ defm WriteFMul  : X86SchedWritePair; // Floating point multiplication.
 defm WriteFDiv  : X86SchedWritePair; // Floating point division.
 defm WriteFSqrt : X86SchedWritePair; // Floating point square root.
 defm WriteFRcp  : X86SchedWritePair; // Floating point reciprocal.
+defm WriteFMA   : X86SchedWritePair; // Fused Multiply Add.
+
+// FMA Scheduling helper class.
+class FMASC { X86FoldableSchedWrite Sched = WriteFAdd; }
 
 // Vector integer operations.
 defm WriteVecALU   : X86SchedWritePair; // Vector integer ALU op, no logicals.
