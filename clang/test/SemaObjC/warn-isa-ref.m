@@ -39,7 +39,7 @@ static void func() {
 
 @interface BaseClass {
 @public
-    Class isa; // expected-note 3 {{instance variable is declared here}}
+    Class isa; // expected-note 4 {{instance variable is declared here}}
 }
 @end
 
@@ -70,12 +70,14 @@ static void func() {
     Subclass *x;
     SiblingClass *y;
     OtherClass *z;
-    (void)v->isa; // expected-warning {{direct access to Objective-C's isa is deprecated}}
-    (void)w->isa; // expected-warning {{direct access to Objective-C's isa is deprecated}}
-    (void)x->isa; // expected-warning {{direct access to Objective-C's isa is deprecated}}
-    (void)y->isa; // expected-warning {{direct access to Objective-C's isa is deprecated}}
+    (void)v->isa; // expected-warning {{direct access to Objective-C's isa is deprecated in favor of object_getClass()}}
+    (void)w->isa; // expected-warning {{direct access to Objective-C's isa is deprecated in favor of object_getClass()}}
+    (void)x->isa; // expected-warning {{direct access to Objective-C's isa is deprecated in favor of object_getClass()}}
+    (void)y->isa; // expected-warning {{direct access to Objective-C's isa is deprecated in favor of object_getClass()}}
     (void)z->isa;
     (void)u->isa;
+
+    w->isa = 0; // expected-warning {{assignment to Objective-C's isa is deprecated in favor of object_setClass()}}
 }
 @end
 
