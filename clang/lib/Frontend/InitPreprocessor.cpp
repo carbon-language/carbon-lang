@@ -490,6 +490,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineTypeSize("__LONG_LONG_MAX__", TargetInfo::SignedLongLong, TI, Builder);
   DefineTypeSize("__WCHAR_MAX__", TI.getWCharType(), TI, Builder);
   DefineTypeSize("__INTMAX_MAX__", TI.getIntMaxType(), TI, Builder);
+  DefineTypeSize("__SIZE_MAX__", TI.getSizeType(), TI, Builder);
 
   DefineTypeSizeof("__SIZEOF_DOUBLE__", TI.getDoubleWidth(), TI, Builder);
   DefineTypeSizeof("__SIZEOF_FLOAT__", TI.getFloatWidth(), TI, Builder);

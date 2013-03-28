@@ -248,6 +248,7 @@
 // ARM:#define __SIZEOF_SIZE_T__ 4
 // ARM:#define __SIZEOF_WCHAR_T__ 4
 // ARM:#define __SIZEOF_WINT_T__ 4
+// ARM:#define __SIZE_MAX__ 4294967295U
 // ARM:#define __SIZE_TYPE__ unsigned int
 // ARM:#define __SIZE_WIDTH__ 32
 // ARM:#define __THUMB_INTERWORK__ 1
@@ -351,6 +352,7 @@
 // ARMEABISOFTFP:#define __SIZEOF_SIZE_T__ 4
 // ARMEABISOFTFP:#define __SIZEOF_WCHAR_T__ 4
 // ARMEABISOFTFP:#define __SIZEOF_WINT_T__ 4
+// ARMEABISOFTFP:#define __SIZE_MAX__ 4294967295U
 // ARMEABISOFTFP:#define __SIZE_TYPE__ unsigned int
 // ARMEABISOFTFP:#define __SIZE_WIDTH__ 32
 // ARMEABISOFTFP:#define __SOFTFP__ 1
@@ -455,6 +457,7 @@
 // ARMEABIHARDFP:#define __SIZEOF_SIZE_T__ 4
 // ARMEABIHARDFP:#define __SIZEOF_WCHAR_T__ 4
 // ARMEABIHARDFP:#define __SIZEOF_WINT_T__ 4
+// ARMEABIHARDFP:#define __SIZE_MAX__ 4294967295U
 // ARMEABIHARDFP:#define __SIZE_TYPE__ unsigned int
 // ARMEABIHARDFP:#define __SIZE_WIDTH__ 32
 // ARMEABIHARDFP-NOT:#define __SOFTFP__ 1
@@ -554,6 +557,7 @@
 // I386:#define __SIZEOF_SIZE_T__ 4
 // I386:#define __SIZEOF_WCHAR_T__ 4
 // I386:#define __SIZEOF_WINT_T__ 4
+// I386:#define __SIZE_MAX__ 4294967295U
 // I386:#define __SIZE_TYPE__ unsigned int
 // I386:#define __SIZE_WIDTH__ 32
 // I386:#define __UINTMAX_TYPE__ long long unsigned int
@@ -651,6 +655,7 @@
 // I386-LINUX:#define __SIZEOF_SIZE_T__ 4
 // I386-LINUX:#define __SIZEOF_WCHAR_T__ 4
 // I386-LINUX:#define __SIZEOF_WINT_T__ 4
+// I386-LINUX:#define __SIZE_MAX__ 4294967295U
 // I386-LINUX:#define __SIZE_TYPE__ unsigned int
 // I386-LINUX:#define __SIZE_WIDTH__ 32
 // I386-LINUX:#define __UINTMAX_TYPE__ long long unsigned int
@@ -759,6 +764,7 @@
 // MIPS32BE:#define __SIZEOF_SIZE_T__ 4
 // MIPS32BE:#define __SIZEOF_WCHAR_T__ 4
 // MIPS32BE:#define __SIZEOF_WINT_T__ 4
+// MIPS32BE:#define __SIZE_MAX__ 4294967295U
 // MIPS32BE:#define __SIZE_TYPE__ unsigned int
 // MIPS32BE:#define __SIZE_WIDTH__ 32
 // MIPS32BE:#define __STDC_HOSTED__ 0
@@ -875,6 +881,7 @@
 // MIPS32EL:#define __SIZEOF_SIZE_T__ 4
 // MIPS32EL:#define __SIZEOF_WCHAR_T__ 4
 // MIPS32EL:#define __SIZEOF_WINT_T__ 4
+// MIPS32EL:#define __SIZE_MAX__ 4294967295U
 // MIPS32EL:#define __SIZE_TYPE__ unsigned int
 // MIPS32EL:#define __SIZE_WIDTH__ 32
 // MIPS32EL:#define __UINTMAX_TYPE__ long long unsigned int
@@ -988,6 +995,7 @@
 // MIPS64BE:#define __SIZEOF_SIZE_T__ 8
 // MIPS64BE:#define __SIZEOF_WCHAR_T__ 4
 // MIPS64BE:#define __SIZEOF_WINT_T__ 4
+// MIPS64BE:#define __SIZE_MAX__ 18446744073709551615UL
 // MIPS64BE:#define __SIZE_TYPE__ long unsigned int
 // MIPS64BE:#define __SIZE_WIDTH__ 64
 // MIPS64BE:#define __UINTMAX_TYPE__ long long unsigned int
@@ -1103,6 +1111,7 @@
 // MIPS64EL:#define __SIZEOF_SIZE_T__ 8
 // MIPS64EL:#define __SIZEOF_WCHAR_T__ 4
 // MIPS64EL:#define __SIZEOF_WINT_T__ 4
+// MIPS64EL:#define __SIZE_MAX__ 18446744073709551615UL
 // MIPS64EL:#define __SIZE_TYPE__ long unsigned int
 // MIPS64EL:#define __SIZE_WIDTH__ 64
 // MIPS64EL:#define __UINTMAX_TYPE__ long long unsigned int
@@ -1249,6 +1258,7 @@
 // MSP430:#define __SIZEOF_SIZE_T__ 2
 // MSP430:#define __SIZEOF_WCHAR_T__ 2
 // MSP430:#define __SIZEOF_WINT_T__ 2
+// MSP430:#define __SIZE_MAX__ 65535U
 // MSP430:#define __SIZE_TYPE__ unsigned int
 // MSP430:#define __SIZE_WIDTH__ 16
 // MSP430:#define __UINTMAX_TYPE__ long unsigned int
@@ -1346,6 +1356,7 @@
 // NVPTX32:#define __SIZEOF_SIZE_T__ 4
 // NVPTX32:#define __SIZEOF_WCHAR_T__ 4
 // NVPTX32:#define __SIZEOF_WINT_T__ 4
+// NVPTX32:#define __SIZE_MAX__ 4294967295U
 // NVPTX32:#define __SIZE_TYPE__ unsigned int
 // NVPTX32:#define __SIZE_WIDTH__ 32
 // NVPTX32:#define __UINTMAX_TYPE__ long long unsigned int
@@ -1442,6 +1453,7 @@
 // NVPTX64:#define __SIZEOF_SIZE_T__ 8
 // NVPTX64:#define __SIZEOF_WCHAR_T__ 4
 // NVPTX64:#define __SIZEOF_WINT_T__ 4
+// NVPTX64:#define __SIZE_MAX__ 18446744073709551615UL
 // NVPTX64:#define __SIZE_TYPE__ long long unsigned int
 // NVPTX64:#define __SIZE_WIDTH__ 64
 // NVPTX64:#define __UINTMAX_TYPE__ long long unsigned int
@@ -1543,6 +1555,7 @@
 // PPC603E:#define __SIZEOF_SIZE_T__ 4
 // PPC603E:#define __SIZEOF_WCHAR_T__ 4
 // PPC603E:#define __SIZEOF_WINT_T__ 4
+// PPC603E:#define __SIZE_MAX__ 4294967295U
 // PPC603E:#define __SIZE_TYPE__ long unsigned int
 // PPC603E:#define __SIZE_WIDTH__ 32
 // PPC603E:#define __UINTMAX_TYPE__ long long unsigned int
@@ -1651,6 +1664,7 @@
 // PPC64:#define __SIZEOF_SIZE_T__ 8
 // PPC64:#define __SIZEOF_WCHAR_T__ 4
 // PPC64:#define __SIZEOF_WINT_T__ 4
+// PPC64:#define __SIZE_MAX__ 18446744073709551615UL
 // PPC64:#define __SIZE_TYPE__ long unsigned int
 // PPC64:#define __SIZE_WIDTH__ 64
 // PPC64:#define __UINTMAX_TYPE__ long unsigned int
@@ -1913,6 +1927,7 @@
 // PPC64-LINUX:#define __SIZEOF_SIZE_T__ 8
 // PPC64-LINUX:#define __SIZEOF_WCHAR_T__ 4
 // PPC64-LINUX:#define __SIZEOF_WINT_T__ 4
+// PPC64-LINUX:#define __SIZE_MAX__ 18446744073709551615UL
 // PPC64-LINUX:#define __SIZE_TYPE__ long unsigned int
 // PPC64-LINUX:#define __SIZE_WIDTH__ 64
 // PPC64-LINUX:#define __UINTMAX_TYPE__ long unsigned int
@@ -2017,6 +2032,7 @@
 // PPC:#define __SIZEOF_SIZE_T__ 4
 // PPC:#define __SIZEOF_WCHAR_T__ 4
 // PPC:#define __SIZEOF_WINT_T__ 4
+// PPC:#define __SIZE_MAX__ 4294967295U
 // PPC:#define __SIZE_TYPE__ long unsigned int
 // PPC:#define __SIZE_WIDTH__ 32
 // PPC:#define __UINTMAX_TYPE__ long long unsigned int
@@ -2117,6 +2133,7 @@
 // PPC-LINUX:#define __SIZEOF_SIZE_T__ 4
 // PPC-LINUX:#define __SIZEOF_WCHAR_T__ 4
 // PPC-LINUX:#define __SIZEOF_WINT_T__ 4
+// PPC-LINUX:#define __SIZE_MAX__ 4294967295U
 // PPC-LINUX:#define __SIZE_TYPE__ unsigned int
 // PPC-LINUX:#define __SIZE_WIDTH__ 32
 // PPC-LINUX:#define __UINTMAX_TYPE__ long long unsigned int
@@ -2212,6 +2229,7 @@
 // SPARC:#define __SIZEOF_SIZE_T__ 4
 // SPARC:#define __SIZEOF_WCHAR_T__ 4
 // SPARC:#define __SIZEOF_WINT_T__ 4
+// SPARC:#define __SIZE_MAX__ 4294967295U
 // SPARC:#define __SIZE_TYPE__ long unsigned int
 // SPARC:#define __SIZE_WIDTH__ 32
 // SPARC:#define __UINTMAX_TYPE__ long long unsigned int
@@ -2306,6 +2324,7 @@
 // TCE:#define __SIZEOF_SIZE_T__ 4
 // TCE:#define __SIZEOF_WCHAR_T__ 4
 // TCE:#define __SIZEOF_WINT_T__ 4
+// TCE:#define __SIZE_MAX__ 4294967295U
 // TCE:#define __SIZE_TYPE__ unsigned int
 // TCE:#define __SIZE_WIDTH__ 32
 // TCE:#define __TCE_V1__ 1
@@ -2406,6 +2425,7 @@
 // X86_64:#define __SIZEOF_SIZE_T__ 8
 // X86_64:#define __SIZEOF_WCHAR_T__ 4
 // X86_64:#define __SIZEOF_WINT_T__ 4
+// X86_64:#define __SIZE_MAX__ 18446744073709551615UL
 // X86_64:#define __SIZE_TYPE__ long unsigned int
 // X86_64:#define __SIZE_WIDTH__ 64
 // X86_64:#define __SSE2_MATH__ 1
@@ -2509,6 +2529,7 @@
 // X86_64-LINUX:#define __SIZEOF_SIZE_T__ 8
 // X86_64-LINUX:#define __SIZEOF_WCHAR_T__ 4
 // X86_64-LINUX:#define __SIZEOF_WINT_T__ 4
+// X86_64-LINUX:#define __SIZE_MAX__ 18446744073709551615UL
 // X86_64-LINUX:#define __SIZE_TYPE__ long unsigned int
 // X86_64-LINUX:#define __SIZE_WIDTH__ 64
 // X86_64-LINUX:#define __SSE2_MATH__ 1
