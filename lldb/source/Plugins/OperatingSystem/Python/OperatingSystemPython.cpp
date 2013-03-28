@@ -186,6 +186,7 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList
     if (log)
         log->Printf ("OperatingSystemPython::UpdateThreadList() fetching thread data from python for pid %" PRIu64, m_process->GetID());
 
+    auto lock = m_interpreter->AcquireInterpreterLock(); // to make sure threads_list stays alive
     PythonList threads_list(m_interpreter->OSPlugin_ThreadsInfo(m_python_object_sp));
     if (threads_list)
     {
@@ -269,6 +270,7 @@ OperatingSystemPython::CreateRegisterContextForThread (Thread *thread, addr_t re
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
 
+    auto lock = m_interpreter->AcquireInterpreterLock(); // to make sure python objects stays alive
     if (reg_data_addr != LLDB_INVALID_ADDRESS)
     {
         // The registers data is in contiguous memory, just create the register
@@ -329,6 +331,7 @@ OperatingSystemPython::CreateThread (lldb::tid_t tid, addr_t context)
         Target &target = m_process->GetTarget();
         Mutex::Locker api_locker (target.GetAPIMutex());
         
+        auto lock = m_interpreter->AcquireInterpreterLock(); // to make sure thread_info_dict stays alive
         PythonDictionary thread_info_dict (m_interpreter->OSPlugin_CreateThread(m_python_object_sp, tid, context));
         if (thread_info_dict)
         {
