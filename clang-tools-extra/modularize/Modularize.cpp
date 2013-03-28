@@ -233,9 +233,8 @@ StringRef Entry::getKindName(Entry::KindType kind) {
   case Macro:
     return "macro";
     break;
-  default:
-    return "unknown";
   }
+  llvm_unreachable("invalid Entry kind");
 }
 
 struct HeaderEntry {
