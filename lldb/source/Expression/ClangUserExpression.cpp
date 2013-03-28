@@ -703,7 +703,7 @@ ClangUserExpression::Execute (Stream &error_stream,
                                                                           ((m_needs_object_ptr && m_objectivec) ? &cmd_ptr : NULL),
                                                                           shared_ptr_to_me));
         
-        if (!call_plan_sp || !call_plan_sp->ValidatePlan (NULL))
+        if (!call_plan_sp || !call_plan_sp->ValidatePlan (&error_stream))
             return eExecutionSetupError;
         
         lldb::addr_t function_stack_pointer = static_cast<ThreadPlanCallFunction *>(call_plan_sp.get())->GetFunctionStackPointer();
