@@ -5603,11 +5603,11 @@ void netbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
-void linuxtools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
-                                        const InputInfo &Output,
-                                        const InputInfoList &Inputs,
-                                        const ArgList &Args,
-                                        const char *LinkingOutput) const {
+void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
+                                      const InputInfo &Output,
+                                      const InputInfoList &Inputs,
+                                      const ArgList &Args,
+                                      const char *LinkingOutput) const {
   ArgStringList CmdArgs;
 
   // Add --32/--64 to make sure we get the format we want.
@@ -5724,11 +5724,11 @@ static bool hasMipsN32ABIArg(const ArgList &Args) {
   return A && (A->getValue() == StringRef("n32"));
 }
 
-void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
-                                    const InputInfo &Output,
-                                    const InputInfoList &Inputs,
-                                    const ArgList &Args,
-                                    const char *LinkingOutput) const {
+void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
+                                  const InputInfo &Output,
+                                  const InputInfoList &Inputs,
+                                  const ArgList &Args,
+                                  const char *LinkingOutput) const {
   const toolchains::Linux& ToolChain =
     static_cast<const toolchains::Linux&>(getToolChain());
   const Driver &D = ToolChain.getDriver();

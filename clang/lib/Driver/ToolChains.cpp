@@ -2204,11 +2204,11 @@ bool Linux::HasNativeLLVMSupport() const {
 }
 
 Tool *Linux::buildLinker() const {
-  return new tools::linuxtools::Link(*this);
+  return new tools::gnutools::Link(*this);
 }
 
 Tool *Linux::buildAssembler() const {
-  return new tools::linuxtools::Assemble(*this);
+  return new tools::gnutools::Assemble(*this);
 }
 
 void Linux::addClangTargetOptions(const ArgList &DriverArgs,
