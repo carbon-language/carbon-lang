@@ -290,6 +290,10 @@ def MallocPessimistic : Checker<"Malloc">,
 def MallocSizeofChecker : Checker<"MallocSizeof">,
   HelpText<"Check for dubious malloc arguments involving sizeof">,
   DescFile<"MallocSizeofChecker.cpp">;
+
+def MismatchedDeallocatorChecker : Checker<"MismatchedDeallocator">,
+  HelpText<"Check for mismatched deallocators.">,
+  DescFile<"MallocChecker.cpp">;
   
 } // end "unix"
 
@@ -531,4 +535,3 @@ def ExprInspectionChecker : Checker<"ExprInspection">,
   DescFile<"ExprInspectionChecker.cpp">;
 
 } // end "debug"
-

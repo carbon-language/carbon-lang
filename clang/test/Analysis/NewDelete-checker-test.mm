@@ -84,7 +84,7 @@ void testUseAfterDelete() {
 
 void testDeleteAlloca() {
   int *p = (int *)__builtin_alloca(sizeof(int));
-  delete p; // expected-warning{{Argument to free() was allocated by alloca(), not malloc()}}
+  delete p; // expected-warning{{Memory allocated by alloca() should not be deallocated}}
 }
 
 void testDoubleDelete() {
@@ -95,18 +95,18 @@ void testDoubleDelete() {
 
 void testExprDeleteArg() {
   int i;
-  delete &i; // expected-warning{{Argument to free() is the address of the local variable 'i', which is not memory allocated by malloc()}}
-} // FIXME: 'free()' -> 'delete'; 'malloc()' -> 'new'
+  delete &i; // expected-warning{{Argument to 'delete' is the address of the local variable 'i', which is not memory allocated by 'new'}}
+}
 
 void testExprDeleteArrArg() {
   int i;
-  delete[] &i; // expected-warning{{Argument to free() is the address of the local variable 'i', which is not memory allocated by malloc()}}
-} // FIXME: 'free()' -> 'delete[]'; 'malloc()' -> 'new[]'
+  delete[] &i; // expected-warning{{Argument to 'delete[]' is the address of the local variable 'i', which is not memory allocated by 'new[]'}}
+}
 
 void testAllocDeallocNames() {
   int *p = new(std::nothrow) int[1];
-  delete[] (++p); // expected-warning{{Argument to free() is offset by 4 bytes from the start of memory allocated by malloc()}}
-} // FIXME: 'free()' -> 'delete[]'; 'malloc()' -> 'new[]'
+  delete[] (++p); // expected-warning{{Argument to 'delete[]' is offset by 4 bytes from the start of memory allocated by 'new[]'}}
+}
 
 //----------------------------------------------------------------------------
 // Check for intersections with unix.Malloc and unix.MallocWithAnnotations 
@@ -143,8 +143,9 @@ void testFreeNewExpr() {
 
 void testObjcFreeNewed() {
   int *p = new int;
-  NSData *nsdata = [NSData dataWithBytesNoCopy:p length:sizeof(int) freeWhenDone:1]; // pointer escaped, no-warning
+  NSData *nsdata = [NSData dataWithBytesNoCopy:p length:sizeof(int) freeWhenDone:1]; // expected-warning{{Memory is never released; potential leak}}
 }
+// FIXME: Pointer should escape
 
 void testFreeAfterDelete() {
   int *p = new int;  
