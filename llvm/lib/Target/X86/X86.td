@@ -215,7 +215,7 @@ def : ProcessorModel<"core-avx-i", SandyBridgeModel,
                       FeatureF16C, FeatureFSGSBase]>;
 
 // Haswell
-def : ProcessorModel<"core-avx2", SandyBridgeModel,
+def : ProcessorModel<"core-avx2", HaswellModel,
                      [FeatureAVX2, FeatureCMPXCHG16B, FeatureFastUAMem,
                       FeaturePOPCNT, FeatureAES, FeaturePCLMUL, FeatureRDRAND,
                       FeatureF16C, FeatureFSGSBase, FeatureMOVBE, FeatureLZCNT,
