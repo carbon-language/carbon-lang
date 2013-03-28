@@ -44,7 +44,6 @@ namespace llvm {
   class DIVariable;
   class DIType;
   class DIObjCProperty;
-  class DIImportedModule;
 
   /// DIDescriptor - A thin wraper around MDNode to access encoded debug info.
   /// This should not be stored in a container, because the underlying MDNode
@@ -126,7 +125,6 @@ namespace llvm {
     bool isTemplateTypeParameter() const;
     bool isTemplateValueParameter() const;
     bool isObjCProperty() const;
-    bool isImportedModule() const;
 
     /// print - print descriptor.
     void print(raw_ostream &OS) const;
@@ -169,7 +167,6 @@ namespace llvm {
 
     StringRef getFilename() const;
     StringRef getDirectory() const;
-    DIArray getImportedModules() const { return getFieldAs<DIArray>(2); }
   };
 
   /// DIFile - This is a wrapper for a file.
@@ -191,19 +188,19 @@ namespace llvm {
   public:
     explicit DICompileUnit(const MDNode *N = 0) : DIScope(N) {}
 
-    unsigned getLanguage() const { return getUnsignedField(3); }
-    StringRef getProducer() const { return getStringField(4); }
+    unsigned getLanguage() const { return getUnsignedField(2); }
+    StringRef getProducer() const { return getStringField(3); }
 
-    bool isOptimized() const { return getUnsignedField(5) != 0; }
-    StringRef getFlags() const { return getStringField(6); }
-    unsigned getRunTimeVersion() const { return getUnsignedField(7); }
+    bool isOptimized() const { return getUnsignedField(4) != 0; }
+    StringRef getFlags() const { return getStringField(5); }
+    unsigned getRunTimeVersion() const { return getUnsignedField(6); }
 
     DIArray getEnumTypes() const;
     DIArray getRetainedTypes() const;
     DIArray getSubprograms() const;
     DIArray getGlobalVariables() const;
 
-    StringRef getSplitDebugFilename() const { return getStringField(12); }
+    StringRef getSplitDebugFilename() const { return getStringField(11); }
 
     /// Verify - Verify that a compile unit is well formed.
     bool Verify() const;
@@ -239,15 +236,15 @@ namespace llvm {
     explicit DIType(const MDNode *N);
     explicit DIType() {}
 
-    DIScope getContext() const          { return getFieldAs<DIScope>(3); }
-    StringRef getName() const           { return getStringField(4);     }
-    unsigned getLineNumber() const      { return getUnsignedField(5); }
-    uint64_t getSizeInBits() const      { return getUInt64Field(6); }
-    uint64_t getAlignInBits() const     { return getUInt64Field(7); }
+    DIScope getContext() const          { return getFieldAs<DIScope>(2); }
+    StringRef getName() const           { return getStringField(3);     }
+    unsigned getLineNumber() const      { return getUnsignedField(4); }
+    uint64_t getSizeInBits() const      { return getUInt64Field(5); }
+    uint64_t getAlignInBits() const     { return getUInt64Field(6); }
     // FIXME: Offset is only used for DW_TAG_member nodes.  Making every type
     // carry this is just plain insane.
-    uint64_t getOffsetInBits() const    { return getUInt64Field(8); }
-    unsigned getFlags() const           { return getUnsignedField(9); }
+    uint64_t getOffsetInBits() const    { return getUInt64Field(7); }
+    unsigned getFlags() const           { return getUnsignedField(8); }
     bool isPrivate() const {
       return (getFlags() & FlagPrivate) != 0;
     }
@@ -300,7 +297,7 @@ namespace llvm {
   public:
     explicit DIBasicType(const MDNode *N = 0) : DIType(N) {}
 
-    unsigned getEncoding() const { return getUnsignedField(10); }
+    unsigned getEncoding() const { return getUnsignedField(9); }
 
     /// Verify - Verify that a basic type descriptor is well formed.
     bool Verify() const;
@@ -319,7 +316,7 @@ namespace llvm {
     explicit DIDerivedType(const MDNode *N = 0)
       : DIType(N, true, true) {}
 
-    DIType getTypeDerivedFrom() const { return getFieldAs<DIType>(10); }
+    DIType getTypeDerivedFrom() const { return getFieldAs<DIType>(9); }
 
     /// getOriginalTypeSize - If this type is derived from a base type then
     /// return base type size.
@@ -331,12 +328,12 @@ namespace llvm {
 
     DIType getClassType() const {
       assert(getTag() == dwarf::DW_TAG_ptr_to_member_type);
-      return getFieldAs<DIType>(11);
+      return getFieldAs<DIType>(10);
     }
 
     Constant *getConstant() const {
       assert((getTag() == dwarf::DW_TAG_member) && isStaticMember());
-      return getConstantField(11);
+      return getConstantField(10);
     }
 
     /// Verify - Verify that a derived type descriptor is well formed.
@@ -356,14 +353,14 @@ namespace llvm {
         DbgNode = 0;
     }
 
-    DIArray getTypeArray() const { return getFieldAs<DIArray>(11); }
+    DIArray getTypeArray() const { return getFieldAs<DIArray>(10); }
     void setTypeArray(DIArray Elements, DIArray TParams = DIArray());
-    unsigned getRunTimeLang() const { return getUnsignedField(12); }
+    unsigned getRunTimeLang() const { return getUnsignedField(11); }
     DICompositeType getContainingType() const {
-      return getFieldAs<DICompositeType>(13);
+      return getFieldAs<DICompositeType>(12);
     }
     void setContainingType(DICompositeType ContainingType);
-    DIArray getTemplateParams() const { return getFieldAs<DIArray>(14); }
+    DIArray getTemplateParams() const { return getFieldAs<DIArray>(13); }
 
     /// Verify - Verify that a composite type descriptor is well formed.
     bool Verify() const;
@@ -415,62 +412,62 @@ namespace llvm {
   public:
     explicit DISubprogram(const MDNode *N = 0) : DIScope(N) {}
 
-    DIScope getContext() const          { return getFieldAs<DIScope>(3); }
-    StringRef getName() const         { return getStringField(4); }
-    StringRef getDisplayName() const  { return getStringField(5); }
-    StringRef getLinkageName() const  { return getStringField(6); }
-    unsigned getLineNumber() const      { return getUnsignedField(7); }
-    DICompositeType getType() const { return getFieldAs<DICompositeType>(8); }
+    DIScope getContext() const          { return getFieldAs<DIScope>(2); }
+    StringRef getName() const         { return getStringField(3); }
+    StringRef getDisplayName() const  { return getStringField(4); }
+    StringRef getLinkageName() const  { return getStringField(5); }
+    unsigned getLineNumber() const      { return getUnsignedField(6); }
+    DICompositeType getType() const { return getFieldAs<DICompositeType>(7); }
 
     /// getReturnTypeName - Subprogram return types are encoded either as
     /// DIType or as DICompositeType.
     StringRef getReturnTypeName() const {
-      DICompositeType DCT(getFieldAs<DICompositeType>(8));
+      DICompositeType DCT(getFieldAs<DICompositeType>(7));
       if (DCT.Verify()) {
         DIArray A = DCT.getTypeArray();
         DIType T(A.getElement(0));
         return T.getName();
       }
-      DIType T(getFieldAs<DIType>(8));
+      DIType T(getFieldAs<DIType>(7));
       return T.getName();
     }
 
     /// isLocalToUnit - Return true if this subprogram is local to the current
     /// compile unit, like 'static' in C.
-    unsigned isLocalToUnit() const     { return getUnsignedField(9); }
-    unsigned isDefinition() const      { return getUnsignedField(10); }
+    unsigned isLocalToUnit() const     { return getUnsignedField(8); }
+    unsigned isDefinition() const      { return getUnsignedField(9); }
 
-    unsigned getVirtuality() const { return getUnsignedField(11); }
-    unsigned getVirtualIndex() const { return getUnsignedField(12); }
+    unsigned getVirtuality() const { return getUnsignedField(10); }
+    unsigned getVirtualIndex() const { return getUnsignedField(11); }
 
     DICompositeType getContainingType() const {
-      return getFieldAs<DICompositeType>(13);
+      return getFieldAs<DICompositeType>(12);
     }
 
     unsigned getFlags() const {
-      return getUnsignedField(14);
+      return getUnsignedField(13);
     }
 
     unsigned isArtificial() const    {
-      return (getFlags() & FlagArtificial) != 0;
+      return (getUnsignedField(13) & FlagArtificial) != 0;
     }
     /// isPrivate - Return true if this subprogram has "private"
     /// access specifier.
     bool isPrivate() const    {
-      return (getFlags() & FlagPrivate) != 0;
+      return (getUnsignedField(13) & FlagPrivate) != 0;
     }
     /// isProtected - Return true if this subprogram has "protected"
     /// access specifier.
     bool isProtected() const    {
-      return (getFlags() & FlagProtected) != 0;
+      return (getUnsignedField(13) & FlagProtected) != 0;
     }
     /// isExplicit - Return true if this subprogram is marked as explicit.
     bool isExplicit() const    {
-      return (getFlags() & FlagExplicit) != 0;
+      return (getUnsignedField(13) & FlagExplicit) != 0;
     }
     /// isPrototyped - Return true if this subprogram is prototyped.
     bool isPrototyped() const    {
-      return (getFlags() & FlagPrototyped) != 0;
+      return (getUnsignedField(13) & FlagPrototyped) != 0;
     }
 
     unsigned isOptimized() const;
@@ -478,7 +475,7 @@ namespace llvm {
     /// getScopeLineNumber - Get the beginning of the scope of the
     /// function, not necessarily where the name of the program
     /// starts.
-    unsigned getScopeLineNumber() const { return getUnsignedField(20); }
+    unsigned getScopeLineNumber() const { return getUnsignedField(19); }
 
     /// Verify - Verify that a subprogram descriptor is well formed.
     bool Verify() const;
@@ -487,11 +484,11 @@ namespace llvm {
     /// information for the function F.
     bool describes(const Function *F);
 
-    Function *getFunction() const { return getFunctionField(16); }
-    void replaceFunction(Function *F) { replaceFunctionField(16, F); }
-    DIArray getTemplateParams() const { return getFieldAs<DIArray>(17); }
+    Function *getFunction() const { return getFunctionField(15); }
+    void replaceFunction(Function *F) { replaceFunctionField(15, F); }
+    DIArray getTemplateParams() const { return getFieldAs<DIArray>(16); }
     DISubprogram getFunctionDeclaration() const {
-      return getFieldAs<DISubprogram>(18);
+      return getFieldAs<DISubprogram>(17);
     }
     MDNode *getVariablesNodes() const;
     DIArray getVariables() const;
@@ -595,9 +592,9 @@ namespace llvm {
   class DILexicalBlock : public DIScope {
   public:
     explicit DILexicalBlock(const MDNode *N = 0) : DIScope(N) {}
-    DIScope getContext() const       { return getFieldAs<DIScope>(3);      }
-    unsigned getLineNumber() const   { return getUnsignedField(4);         }
-    unsigned getColumnNumber() const { return getUnsignedField(5);         }
+    DIScope getContext() const       { return getFieldAs<DIScope>(2);      }
+    unsigned getLineNumber() const   { return getUnsignedField(3);         }
+    unsigned getColumnNumber() const { return getUnsignedField(4);         }
     bool Verify() const;
   };
 
@@ -609,7 +606,7 @@ namespace llvm {
     DIScope getContext() const { if (getScope().isSubprogram()) return getScope(); return getScope().getContext(); }
     unsigned getLineNumber() const { return getScope().getLineNumber(); }
     unsigned getColumnNumber() const { return getScope().getColumnNumber(); }
-    DILexicalBlock getScope() const { return getFieldAs<DILexicalBlock>(3); }
+    DILexicalBlock getScope() const { return getFieldAs<DILexicalBlock>(2); }
     bool Verify() const;
   };
 
@@ -619,9 +616,9 @@ namespace llvm {
     void printInternal(raw_ostream &OS) const;
   public:
     explicit DINameSpace(const MDNode *N = 0) : DIScope(N) {}
-    DIScope getContext() const     { return getFieldAs<DIScope>(3);      }
-    StringRef getName() const      { return getStringField(4);           }
-    unsigned getLineNumber() const { return getUnsignedField(5);         }
+    DIScope getContext() const     { return getFieldAs<DIScope>(2);      }
+    StringRef getName() const      { return getStringField(3);           }
+    unsigned getLineNumber() const { return getUnsignedField(4);         }
     bool Verify() const;
   };
 
@@ -678,15 +675,6 @@ namespace llvm {
     DIType getType() const { return getFieldAs<DIType>(7); }
 
     /// Verify - Verify that a derived type descriptor is well formed.
-    bool Verify() const;
-  };
-
-  class DIImportedModule : public DIDescriptor {
-    friend class DIDescriptor;
-    void printInternal(raw_ostream &OS) const;
-  public:
-    explicit DIImportedModule(const MDNode *N) : DIDescriptor(N) { }
-    DINameSpace getNameSpace() const { return getFieldAs<DINameSpace>(1); }
     bool Verify() const;
   };
 

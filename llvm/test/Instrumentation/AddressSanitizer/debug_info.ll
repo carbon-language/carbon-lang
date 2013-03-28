@@ -32,16 +32,16 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 0, null, i32 4, metadata !"a.cc", metadata !"/usr/local/google/llvm_cmake_clang/tmp/debuginfo", metadata !"clang version 3.3 (trunk 169314)", i1 true, i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1} ; [ DW_TAG_compile_unit ] [/usr/local/google/llvm_cmake_clang/tmp/debuginfo/a.cc] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, i32 0, i32 4, metadata !"a.cc", metadata !"/usr/local/google/llvm_cmake_clang/tmp/debuginfo", metadata !"clang version 3.3 (trunk 169314)", i1 true, i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1} ; [ DW_TAG_compile_unit ] [/usr/local/google/llvm_cmake_clang/tmp/debuginfo/a.cc] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !2}
 !2 = metadata !{i32 0}
 !3 = metadata !{metadata !4}
 !4 = metadata !{metadata !5}
-!5 = metadata !{i32 786478, metadata !6, null, metadata !"zzz", metadata !"zzz", metadata !"_Z3zzzi", metadata !6, i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @_Z3zzzi, null, null, metadata !1, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [zzz]
-!6 = metadata !{i32 786473, metadata !16, null} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = metadata !{i32 786478, metadata !6, metadata !"zzz", metadata !"zzz", metadata !"_Z3zzzi", metadata !6, i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @_Z3zzzi, null, null, metadata !1, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [zzz]
+!6 = metadata !{i32 786473, metadata !16} ; [ DW_TAG_file_type ]
+!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9, metadata !9}
-!9 = metadata !{i32 786468, null, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!9 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !10 = metadata !{i32 786689, metadata !5, metadata !"p", metadata !6, i32 16777217, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [p] [line 1]
 !11 = metadata !{i32 1, i32 0, metadata !5, null}
 !12 = metadata !{i32 786688, metadata !13, metadata !"r", metadata !6, i32 2, metadata !9, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [r] [line 2]
@@ -55,7 +55,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ;   CHECK-NOT: DW_TAG_auto_variable
 
 
-!13 = metadata !{i32 786443, metadata !5, null, i32 1, i32 0, metadata !6, i32 0} ; [ DW_TAG_lexical_block ] [/usr/local/google/llvm_cmake_clang/tmp/debuginfo/a.cc]
+!13 = metadata !{i32 786443, metadata !5, i32 1, i32 0, metadata !6, i32 0} ; [ DW_TAG_lexical_block ] [/usr/local/google/llvm_cmake_clang/tmp/debuginfo/a.cc]
 !14 = metadata !{i32 2, i32 0, metadata !13, null}
 !15 = metadata !{i32 3, i32 0, metadata !13, null}
 !16 = metadata !{metadata !"a.cc", metadata !"/usr/local/google/llvm_cmake_clang/tmp/debuginfo"}

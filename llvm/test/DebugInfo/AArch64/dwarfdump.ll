@@ -22,13 +22,13 @@ attributes #0 = { nounwind }
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, metadata !9, null, i32 12, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !2, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ] [/home/timnor01/llvm/build/tmp.c] [DW_LANG_C99]
+!0 = metadata !{i32 786449, metadata !9, i32 12, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !2, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ] [/home/timnor01/llvm/build/tmp.c] [DW_LANG_C99]
 !1 = metadata !{i32 0}
 !2 = metadata !{metadata !3}
-!3 = metadata !{i32 786478, metadata !4, null, metadata !"main", metadata !"main", metadata !"", metadata !4, i32 1, metadata !5, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, i32 ()* @main, null, null, metadata !1, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [main]
-!4 = metadata !{i32 786473, metadata !9, null} ; [ DW_TAG_file_type ]
-!5 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !6, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!3 = metadata !{i32 786478, metadata !4, metadata !"main", metadata !"main", metadata !"", metadata !4, i32 1, metadata !5, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, i32 ()* @main, null, null, metadata !1, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [main]
+!4 = metadata !{i32 786473, metadata !9} ; [ DW_TAG_file_type ]
+!5 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !6, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !6 = metadata !{metadata !7}
-!7 = metadata !{i32 786468, null, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!7 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !8 = metadata !{i32 2, i32 0, metadata !3, null}
 !9 = metadata !{metadata !"tmp.c", metadata !"/home/tim/llvm/build"}

@@ -7,18 +7,18 @@
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, metadata !22, null, i32 4, metadata !"clang version 3.2 (trunk 157269) (llvm/trunk 157264)", i1 false, metadata !"", i32 0, metadata !1, metadata !15, metadata !15, metadata !17, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, metadata !22, i32 4, metadata !"clang version 3.2 (trunk 157269) (llvm/trunk 157264)", i1 false, metadata !"", i32 0, metadata !1, metadata !15, metadata !15, metadata !17, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{metadata !3, metadata !8, metadata !12}
-!3 = metadata !{i32 786436, metadata !4, null, null, metadata !"A", i32 1, i64 32, i64 32, i32 0, i32 0, metadata !5, metadata !6, i32 0, i32 0} ; [ DW_TAG_enumeration_type ]
-!4 = metadata !{i32 786473, metadata !22, null} ; [ DW_TAG_file_type ]
-!5 = metadata !{i32 786468, null, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!3 = metadata !{i32 786436, metadata !4, null, metadata !"A", i32 1, i64 32, i64 32, i32 0, i32 0, metadata !5, metadata !6, i32 0, i32 0} ; [ DW_TAG_enumeration_type ]
+!4 = metadata !{i32 786473, metadata !22} ; [ DW_TAG_file_type ]
+!5 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !6 = metadata !{metadata !7}
 !7 = metadata !{i32 786472, metadata !"A1", i64 1} ; [ DW_TAG_enumerator ]
-!8 = metadata !{i32 786436, metadata !4, null, null, metadata !"B", i32 2, i64 64, i64 64, i32 0, i32 0, metadata !9, metadata !10, i32 0, i32 0} ; [ DW_TAG_enumeration_type ]
-!9 = metadata !{i32 786468, null, null, null, metadata !"long unsigned int", i32 0, i64 64, i64 64, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
+!8 = metadata !{i32 786436, metadata !4, null, metadata !"B", i32 2, i64 64, i64 64, i32 0, i32 0, metadata !9, metadata !10, i32 0, i32 0} ; [ DW_TAG_enumeration_type ]
+!9 = metadata !{i32 786468, null, null, metadata !"long unsigned int", i32 0, i64 64, i64 64, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
 !10 = metadata !{metadata !11}
 !11 = metadata !{i32 786472, metadata !"B1", i64 1} ; [ DW_TAG_enumerator ]
-!12 = metadata !{i32 786436, metadata !4, null, null, metadata !"C", i32 3, i64 32, i64 32, i32 0, i32 0, null, metadata !13, i32 0, i32 0} ; [ DW_TAG_enumeration_type ]
+!12 = metadata !{i32 786436, metadata !4, null, metadata !"C", i32 3, i64 32, i64 32, i32 0, i32 0, null, metadata !13, i32 0, i32 0} ; [ DW_TAG_enumeration_type ]
 !13 = metadata !{metadata !14}
 !14 = metadata !{i32 786472, metadata !"C1", i64 1} ; [ DW_TAG_enumerator ]
 !15 = metadata !{i32 0}

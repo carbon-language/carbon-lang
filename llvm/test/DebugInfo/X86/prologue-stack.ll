@@ -20,14 +20,14 @@ declare i32 @callme(i32)
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 12, null, metadata !6, metadata !"clang version 3.2 (trunk 164980) (llvm/trunk 164979)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/bar.c] [DW_LANG_C99]
+!0 = metadata !{i32 786449, i32 12, metadata !6, metadata !"clang version 3.2 (trunk 164980) (llvm/trunk 164979)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/bar.c] [DW_LANG_C99]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
-!5 = metadata !{i32 786478, metadata !6, null, metadata !"isel_line_test2", metadata !"isel_line_test2", metadata !"", metadata !6, i32 3, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, i32 ()* @isel_line_test2, null, null, metadata !1, i32 4} ; [ DW_TAG_subprogram ] [line 3] [def] [scope 4] [isel_line_test2]
-!6 = metadata !{i32 786473, metadata !"bar.c", null, metadata !"/usr/local/google/home/echristo/tmp", null} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = metadata !{i32 786478, metadata !6, metadata !"isel_line_test2", metadata !"isel_line_test2", metadata !"", metadata !6, i32 3, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, i32 ()* @isel_line_test2, null, null, metadata !1, i32 4} ; [ DW_TAG_subprogram ] [line 3] [def] [scope 4] [isel_line_test2]
+!6 = metadata !{i32 786473, metadata !"bar.c", metadata !"/usr/local/google/home/echristo/tmp", null} ; [ DW_TAG_file_type ]
+!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9}
-!9 = metadata !{i32 786468, null, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!9 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !10 = metadata !{i32 5, i32 3, metadata !11, null}
-!11 = metadata !{i32 786443, metadata !6, null, metadata !5, i32 4, i32 1, i32 0} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/tmp/bar.c]
+!11 = metadata !{i32 786443, metadata !6, metadata !5, i32 4, i32 1, i32 0} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/tmp/bar.c]
 !12 = metadata !{i32 6, i32 3, metadata !11, null}

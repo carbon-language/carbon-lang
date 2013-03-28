@@ -46,7 +46,6 @@ namespace llvm {
   class DITemplateTypeParameter;
   class DITemplateValueParameter;
   class DIObjCProperty;
-  class DIImportedModule;
 
   class DIBuilder {
     private:
@@ -566,11 +565,6 @@ namespace llvm {
     /// @param Col         Column number
     DILexicalBlock createLexicalBlock(DIDescriptor Scope, DIFile File,
                                       unsigned Line, unsigned Col);
-
-
-    /// \brief Create a descriptor for an imported module.
-    /// @param NS The namespace being imported here
-    DIImportedModule createImportedModule(DINameSpace NS);
 
     /// insertDeclare - Insert a new llvm.dbg.declare intrinsic call.
     /// @param Storage     llvm::Value of the variable

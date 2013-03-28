@@ -69,24 +69,24 @@ declare i32 @printf(i8*, ...)
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, metadata !29, null, i32 12, metadata !"clang version 3.2 ", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ] [/home/timnor01/a64-trunk/build/simple.c] [DW_LANG_C99]
+!0 = metadata !{i32 786449, metadata !29, i32 12, metadata !"clang version 3.2 ", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ] [/home/timnor01/a64-trunk/build/simple.c] [DW_LANG_C99]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5, metadata !11, metadata !14}
-!5 = metadata !{i32 786478, metadata !6, null, metadata !"populate_array", metadata !"populate_array", metadata !"", metadata !6, i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i32*, i32)* @populate_array, null, null, metadata !1, i32 4} ; [ DW_TAG_subprogram ] [line 4] [def] [populate_array]
-!6 = metadata !{i32 786473, metadata !29, null} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = metadata !{i32 786478, metadata !6, metadata !"populate_array", metadata !"populate_array", metadata !"", metadata !6, i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i32*, i32)* @populate_array, null, null, metadata !1, i32 4} ; [ DW_TAG_subprogram ] [line 4] [def] [populate_array]
+!6 = metadata !{i32 786473, metadata !29} ; [ DW_TAG_file_type ]
+!7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{null, metadata !9, metadata !10}
-!9 = metadata !{i32 786447, null, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !10} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from int]
-!10 = metadata !{i32 786468, null, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!11 = metadata !{i32 786478, metadata !6, null, metadata !"sum_array", metadata !"sum_array", metadata !"", metadata !6, i32 9, metadata !12, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32*, i32)* @sum_array, null, null, metadata !1, i32 9} ; [ DW_TAG_subprogram ] [line 9] [def] [sum_array]
-!12 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !13, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!9 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !10} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from int]
+!10 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!11 = metadata !{i32 786478, metadata !6, metadata !"sum_array", metadata !"sum_array", metadata !"", metadata !6, i32 9, metadata !12, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32*, i32)* @sum_array, null, null, metadata !1, i32 9} ; [ DW_TAG_subprogram ] [line 9] [def] [sum_array]
+!12 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !13, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !13 = metadata !{metadata !10, metadata !9, metadata !10}
-!14 = metadata !{i32 786478, metadata !6, null, metadata !"main", metadata !"main", metadata !"", metadata !6, i32 18, metadata !15, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 ()* @main, null, null, metadata !1, i32 18} ; [ DW_TAG_subprogram ] [line 18] [def] [main]
-!15 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !16, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!14 = metadata !{i32 786478, metadata !6, metadata !"main", metadata !"main", metadata !"", metadata !6, i32 18, metadata !15, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 ()* @main, null, null, metadata !1, i32 18} ; [ DW_TAG_subprogram ] [line 18] [def] [main]
+!15 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !16, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !16 = metadata !{metadata !10}
 !17 = metadata !{i32 786688, metadata !18, metadata !"main_arr", metadata !6, i32 19, metadata !19, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [main_arr] [line 19]
-!18 = metadata !{i32 786443, metadata !6, null, metadata !14, i32 18, i32 16, i32 4} ; [ DW_TAG_lexical_block ] [/home/timnor01/a64-trunk/build/simple.c]
-!19 = metadata !{i32 786433, null, null, null, metadata !"", i32 0, i64 3200, i64 32, i32 0, i32 0, metadata !10, metadata !20, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 3200, align 32, offset 0] [from int]
+!18 = metadata !{i32 786443, metadata !6, metadata !14, i32 18, i32 16, i32 4} ; [ DW_TAG_lexical_block ] [/home/timnor01/a64-trunk/build/simple.c]
+!19 = metadata !{i32 786433, null, null, metadata !"", i32 0, i64 3200, i64 32, i32 0, i32 0, metadata !10, metadata !20, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 3200, align 32, offset 0] [from int]
 !20 = metadata !{i32 786465, i64 0, i64 99}       ; [ DW_TAG_subrange_type ] [0, 99]
 !22 = metadata !{i32 19, i32 7, metadata !18, null}
 !23 = metadata !{i32 786688, metadata !18, metadata !"val", metadata !6, i32 20, metadata !10, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [val] [line 20]
