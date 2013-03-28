@@ -100,16 +100,6 @@ void AsanTSDSet(void *tsd);
 
 void AppendToErrorMessageBuffer(const char *buffer);
 
-// asan_poisoning.cc
-// Poisons the shadow memory for "size" bytes starting from "addr".
-void PoisonShadow(uptr addr, uptr size, u8 value);
-// Poisons the shadow memory for "redzone_size" bytes starting from
-// "addr + size".
-void PoisonShadowPartialRightRedzone(uptr addr,
-                                     uptr size,
-                                     uptr redzone_size,
-                                     u8 value);
-
 // Platfrom-specific options.
 #if SANITIZER_MAC
 bool PlatformHasDifferentMemcpyAndMemmove();

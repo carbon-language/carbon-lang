@@ -17,6 +17,7 @@
 #include "asan_intercepted_functions.h"
 #include "asan_internal.h"
 #include "asan_mapping.h"
+#include "asan_poisoning.h"
 #include "asan_report.h"
 #include "asan_stack.h"
 #include "asan_stats.h"

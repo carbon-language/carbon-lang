@@ -12,6 +12,7 @@
 // FakeStack is used to detect use-after-return bugs.
 //===----------------------------------------------------------------------===//
 #include "asan_allocator.h"
+#include "asan_poisoning.h"
 #include "asan_thread.h"
 
 namespace __asan {

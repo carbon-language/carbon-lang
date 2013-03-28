@@ -12,9 +12,7 @@
 // Shadow memory poisoning by ASan RTL and by user application.
 //===----------------------------------------------------------------------===//
 
-#include "asan_interceptors.h"
-#include "asan_internal.h"
-#include "asan_mapping.h"
+#include "asan_poisoning.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
 namespace __asan {
@@ -22,11 +20,11 @@ namespace __asan {
 void PoisonShadow(uptr addr, uptr size, u8 value) {
   if (!flags()->poison_heap) return;
   CHECK(AddrIsAlignedByGranularity(addr));
+  CHECK(AddrIsInMem(addr));
   CHECK(AddrIsAlignedByGranularity(addr + size));
-  uptr shadow_beg = MemToShadow(addr);
-  uptr shadow_end = MemToShadow(addr + size - SHADOW_GRANULARITY) + 1;
+  CHECK(AddrIsInMem(addr + size - SHADOW_GRANULARITY));
   CHECK(REAL(memset) != 0);
-  REAL(memset)((void*)shadow_beg, value, shadow_end - shadow_beg);
+  FastPoisonShadow(addr, size, value);
 }
 
 void PoisonShadowPartialRightRedzone(uptr addr,
@@ -35,19 +33,9 @@ void PoisonShadowPartialRightRedzone(uptr addr,
                                      u8 value) {
   if (!flags()->poison_heap) return;
   CHECK(AddrIsAlignedByGranularity(addr));
-  u8 *shadow = (u8*)MemToShadow(addr);
-  for (uptr i = 0; i < redzone_size;
-       i += SHADOW_GRANULARITY, shadow++) {
-    if (i + SHADOW_GRANULARITY <= size) {
-      *shadow = 0;  // fully addressable
-    } else if (i >= size) {
-      *shadow = (SHADOW_GRANULARITY == 128) ? 0xff : value;  // unaddressable
-    } else {
-      *shadow = size - i;  // first size-i bytes are addressable
-    }
-  }
+  CHECK(AddrIsInMem(addr));
+  FastPoisonShadowPartialRightRedzone(addr, size, redzone_size, value);
 }
-
 
 struct ShadowSegmentEndpoint {
   u8 *chunk;
