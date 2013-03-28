@@ -334,7 +334,7 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   }
 
   addFrameReference(BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::STW8 : PPC::STW))
-                    .addReg(Reg, getKillRegState(MI.getOperand(1).getImm())),
+                    .addReg(Reg, RegState::Kill),
                     FrameIndex);
 
   // Discard the pseudo instruction.
@@ -399,7 +399,7 @@ void PPCRegisterInfo::lowerVRSAVESpilling(MachineBasicBlock::iterator II,
           .addReg(SrcReg, getKillRegState(MI.getOperand(0).isKill()));
     
   addFrameReference(BuildMI(MBB, II, dl, TII.get(PPC::STW))
-                    .addReg(Reg, getKillRegState(MI.getOperand(1).getImm())),
+                    .addReg(Reg, RegState::Kill),
                     FrameIndex);
 
   // Discard the pseudo instruction.
