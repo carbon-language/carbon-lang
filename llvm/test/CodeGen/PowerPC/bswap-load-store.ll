@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=ppc32 | FileCheck %s -check-prefix=X32
-; RUN: llc < %s -march=ppc64 | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -march=ppc32 -mcpu=ppc32 | FileCheck %s -check-prefix=X32
+; RUN: llc < %s -march=ppc64 -mcpu=ppc64 | FileCheck %s -check-prefix=X64
 ; RUN: llc < %s -march=ppc64 -mcpu=pwr7 | FileCheck %s -check-prefix=PWR7
 ; RUN: llc < %s -march=ppc32 -mcpu=pwr7 | FileCheck %s -check-prefix=X32
 
