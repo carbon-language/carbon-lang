@@ -699,6 +699,13 @@ TEST_F(FormatTest, SplitsLongCxxComments) {
       "//Don't add leading\n"
       "//whitespace",
       format("//Don't add leading whitespace", getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("// A comment before\n"
+            "// a macro\n"
+            "// definition\n"
+            "#define a b",
+            format("// A comment before a macro definition\n"
+                   "#define a b",
+                   getLLVMStyleWithColumns(20)));
 }
 
 TEST_F(FormatTest, SplitsLongLinesInComments) {
@@ -1203,13 +1210,13 @@ TEST_F(FormatTest, IndentsPPDirectiveInReducedSpace) {
 }
 
 TEST_F(FormatTest, HandlePreprocessorDirectiveContext) {
-  EXPECT_EQ("// some comment\n"
+  EXPECT_EQ("// somecomment\n"
             "#include \"a.h\"\n"
             "#define A(  \\\n"
             "    A, B)\n"
             "#include \"b.h\"\n"
             "// somecomment\n",
-            format("  // some comment\n"
+            format("  // somecomment\n"
                    "  #include \"a.h\"\n"
                    "#define A(A,\\\n"
                    "    B)\n"
