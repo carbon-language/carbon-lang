@@ -444,7 +444,9 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
     SDNode *N = I++;  // Preincrement iterator to avoid invalidation issues.
 
     if (OptLevel != CodeGenOpt::None &&
-        (N->getOpcode() == X86ISD::CALL ||
+        // Only does this when target favors doesn't favor register indirect
+        // call.
+        ((N->getOpcode() == X86ISD::CALL && !Subtarget->callRegIndirect()) ||
          (N->getOpcode() == X86ISD::TC_RETURN &&
           // Only does this if load can be folded into TC_RETURN.
           (Subtarget->is64Bit() ||

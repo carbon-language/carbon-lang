@@ -170,7 +170,8 @@ let isCall = 1 in
     def CALL32m     : I<0xFF, MRM2m, (outs), (ins i32mem:$dst),
                         "call{l}\t{*}$dst", [(X86call (loadi32 addr:$dst))],
                         IIC_CALL_MEM>,
-                      Requires<[In32BitMode]>, Sched<[WriteJumpLd]>;
+                      Requires<[In32BitMode,FavorMemIndirectCall]>,
+                      Sched<[WriteJumpLd]>;
 
     def FARCALL16i  : Iseg16<0x9A, RawFrmImm16, (outs),
                              (ins i16imm:$off, i16imm:$seg),
@@ -245,7 +246,7 @@ let isCall = 1, Uses = [RSP], SchedRW = [WriteJump] in {
   def CALL64m       : I<0xFF, MRM2m, (outs), (ins i64mem:$dst),
                         "call{q}\t{*}$dst", [(X86call (loadi64 addr:$dst))],
                         IIC_CALL_MEM>,
-                      Requires<[In64BitMode]>;
+                      Requires<[In64BitMode,FavorMemIndirectCall]>;
 
   def FARCALL64   : RI<0xFF, MRM3m, (outs), (ins opaque80mem:$dst),
                        "lcall{q}\t{*}$dst", [], IIC_CALL_FAR_MEM>;
