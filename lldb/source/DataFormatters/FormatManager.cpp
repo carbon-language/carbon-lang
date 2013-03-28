@@ -681,7 +681,7 @@ FormatManager::LoadSystemFormatters()
     lldb::TypeSummaryImplSP string_array_format(new StringSummaryFormat(TypeSummaryImpl::Flags().SetCascades(false)
                                                                         .SetSkipPointers(true)
                                                                         .SetSkipReferences(false)
-                                                                        .SetDontShowChildren(false)
+                                                                        .SetDontShowChildren(true)
                                                                         .SetDontShowValue(true)
                                                                         .SetShowMembersOneLiner(false)
                                                                         .SetHideItemNames(false),
