@@ -391,10 +391,6 @@ namespace {
     /// KnownSafe is true when either of these conditions is satisfied.
     bool KnownSafe;
 
-    /// True if the Calls are objc_retainBlock calls (as opposed to objc_retain
-    /// calls).
-    bool IsRetainBlock;
-
     /// True of the objc_release calls are all marked with the "tail" keyword.
     bool IsTailCallRelease;
 
@@ -411,9 +407,7 @@ namespace {
     SmallPtrSet<Instruction *, 2> ReverseInsertPts;
 
     RRInfo() :
-      KnownSafe(false), IsRetainBlock(false),
-      IsTailCallRelease(false),
-      ReleaseMetadata(0) {}
+      KnownSafe(false), IsTailCallRelease(false), ReleaseMetadata(0) {}
 
     void clear();
   };
@@ -421,7 +415,6 @@ namespace {
 
 void RRInfo::clear() {
   KnownSafe = false;
-  IsRetainBlock = false;
   IsTailCallRelease = false;
   ReleaseMetadata = 0;
   Calls.clear();
@@ -489,11 +482,7 @@ void
 PtrState::Merge(const PtrState &Other, bool TopDown) {
   Seq = MergeSeqs(Seq, Other.Seq, TopDown);
   KnownPositiveRefCount = KnownPositiveRefCount && Other.KnownPositiveRefCount;
-
-  // We can't merge a plain objc_retain with an objc_retainBlock.
-  if (RRI.IsRetainBlock != Other.RRI.IsRetainBlock)
-    Seq = S_None;
-
+  
   // If we're not in a sequence (anymore), drop all associated state.
   if (Seq == S_None) {
     Partial = false;
@@ -1807,10 +1796,8 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     case S_CanRelease:
       // Don't do retain+release tracking for IC_RetainRV, because it's
       // better to let it remain as the first instruction after a call.
-      if (Class != IC_RetainRV) {
-        S.RRI.IsRetainBlock = Class == IC_RetainBlock;
+      if (Class != IC_RetainRV)
         Retains[Inst] = S.RRI;
-      }
       S.ClearSequenceProgress();
       break;
     case S_None:
@@ -2022,7 +2009,6 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
 
       ANNOTATE_TOPDOWN(Inst, Arg, S.GetSeq(), S_Retain);
       S.ResetSequenceProgress(S_Retain);
-      S.RRI.IsRetainBlock = Class == IC_RetainBlock;
       S.RRI.KnownSafe = S.HasKnownPositiveRefCount();
       S.RRI.Calls.insert(Inst);
     }
@@ -2330,16 +2316,10 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
     Value *MyArg = ArgTy == ParamTy ? Arg :
                    new BitCastInst(Arg, ParamTy, "", InsertPt);
     CallInst *Call =
-      CallInst::Create(RetainsToMove.IsRetainBlock ?
-                         getRetainBlockCallee(M) : getRetainCallee(M),
-                       MyArg, "", InsertPt);
+      CallInst::Create(getRetainCallee(M), MyArg, "", InsertPt);
     Call->setDoesNotThrow();
-    if (RetainsToMove.IsRetainBlock)
-      Call->setMetadata(CopyOnEscapeMDKind,
-                        MDNode::get(M->getContext(), ArrayRef<Value *>()));
-    else
-      Call->setTailCall();
-
+    Call->setTailCall();
+    
     DEBUG(dbgs() << "ObjCARCOpt::MoveCalls: Inserting new Release: " << *Call
                  << "\n"
                     "                       At insertion point: " << *InsertPt
@@ -2414,7 +2394,6 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
   unsigned OldCount = 0;
   unsigned NewCount = 0;
   bool FirstRelease = true;
-  bool FirstRetain = true;
   for (;;) {
     for (SmallVectorImpl<Instruction *>::const_iterator
            NI = NewRetains.begin(), NE = NewRetains.end(); NI != NE; ++NI) {
@@ -2494,16 +2473,6 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
             BBStates[NewReleaseRetain->getParent()].GetAllPathCount();
           OldDelta += PathCount;
           OldCount += PathCount;
-
-          // Merge the IsRetainBlock values.
-          if (FirstRetain) {
-            RetainsToMove.IsRetainBlock = NewReleaseRetainRRI.IsRetainBlock;
-            FirstRetain = false;
-          } else if (ReleasesToMove.IsRetainBlock !=
-                     NewReleaseRetainRRI.IsRetainBlock)
-            // It's not possible to merge the sequences if one uses
-            // objc_retain and the other uses objc_retainBlock.
-            return false;
 
           // Collect the optimal insertion points.
           if (!KnownSafe)
