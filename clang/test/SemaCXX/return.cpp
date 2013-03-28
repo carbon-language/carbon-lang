@@ -55,8 +55,7 @@ mixed_ret(); // expected-warning {{'volatile' type qualifier on return type has 
 const int volatile // expected-warning {{'const volatile' type qualifiers on return type have no effect}}
     (((parens())));
 
-_Atomic(int)
-    atomic(); // expected-warning {{'_Atomic' type qualifier on return type has no effect}}
+_Atomic(int) atomic();
 
 _Atomic // expected-warning {{'_Atomic' type qualifier on return type has no effect}}
     int

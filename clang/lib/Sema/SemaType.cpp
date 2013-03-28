@@ -1888,7 +1888,9 @@ static void diagnoseIgnoredQualifiers(
     SourceLocation VolatileQualLoc = SourceLocation(),
     SourceLocation RestrictQualLoc = SourceLocation(),
     SourceLocation AtomicQualLoc = SourceLocation()) {
-  assert(Quals && "no qualifiers to diagnose");
+  if (!Quals)
+    return;
+
   const SourceManager &SM = S.getSourceManager();
 
   struct Qual {
@@ -1933,12 +1935,10 @@ static void diagnoseIgnoredQualifiers(
 static void diagnoseIgnoredFunctionQualifiers(Sema &S, QualType RetTy,
                                               Declarator &D,
                                               unsigned FunctionChunkIndex) {
-  unsigned AtomicQual = RetTy->isAtomicType() ? DeclSpec::TQ_atomic : 0;
-
   if (D.getTypeObject(FunctionChunkIndex).Fun.hasTrailingReturnType()) {
     // FIXME: TypeSourceInfo doesn't preserve location information for
     // qualifiers.
-    diagnoseIgnoredQualifiers(S, RetTy.getCVRQualifiers() | AtomicQual,
+    diagnoseIgnoredQualifiers(S, RetTy.getLocalCVRQualifiers(),
                               D.getIdentifierLoc());
     return;
   }
@@ -1970,6 +1970,7 @@ static void diagnoseIgnoredFunctionQualifiers(Sema &S, QualType RetTy,
     case DeclaratorChunk::MemberPointer:
       // FIXME: We can't currently provide an accurate source location and a
       // fix-it hint for these.
+      unsigned AtomicQual = RetTy->isAtomicType() ? DeclSpec::TQ_atomic : 0;
       diagnoseIgnoredQualifiers(S, RetTy.getCVRQualifiers() | AtomicQual,
                                 D.getIdentifierLoc());
       return;
@@ -1986,7 +1987,7 @@ static void diagnoseIgnoredFunctionQualifiers(Sema &S, QualType RetTy,
 
   // Just parens all the way out to the decl specifiers. Diagnose any qualifiers
   // which are present there.
-  diagnoseIgnoredQualifiers(S, D.getDeclSpec().getTypeQualifiers() | AtomicQual,
+  diagnoseIgnoredQualifiers(S, D.getDeclSpec().getTypeQualifiers(),
                             D.getIdentifierLoc(),
                             D.getDeclSpec().getConstSpecLoc(),
                             D.getDeclSpec().getVolatileSpecLoc(),

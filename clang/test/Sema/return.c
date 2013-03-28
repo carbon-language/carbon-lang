@@ -244,6 +244,11 @@ const int ignored_c_quals(); // expected-warning{{'const' type qualifier on retu
 const volatile int ignored_cv_quals(); // expected-warning{{'const volatile' type qualifiers on return type have no effect}}
 char* const volatile restrict ignored_cvr_quals(); // expected-warning{{'const volatile restrict' type qualifiers on return type have no effect}}
 
+typedef const int CI;
+CI ignored_quals_typedef();
+
+const CI ignored_quals_typedef_2(); // expected-warning{{'const' type qualifier}}
+
 // Test that for switch(enum) that if the switch statement covers all the cases
 // that we don't consider that for -Wreturn-type.
 enum Cases { C1, C2, C3, C4 };
