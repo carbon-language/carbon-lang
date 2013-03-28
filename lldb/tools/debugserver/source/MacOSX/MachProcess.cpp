@@ -1652,8 +1652,22 @@ MachProcess::LaunchForDebug
 
     case eLaunchFlavorSpringBoard:
         {
-            const char *app_ext = strstr(path, ".app");
-            if (app_ext && (app_ext[4] == '\0' || app_ext[4] == '/'))
+            //  .../whatever.app/whatever ?  
+            //  Or .../com.apple.whatever.app/whatever -- be careful of ".app" in "com.apple.whatever" here
+            const char *app_ext = strstr (path, ".app/");
+            if (app_ext == NULL)
+            {
+                // .../whatever.app ?
+                int len = strlen (path);
+                if (len > 5)
+                {
+                    if (strcmp (path + len - 4, ".app") == 0)
+                    {
+                        app_ext = path + len - 4;
+                    }
+                }
+            }
+            if (app_ext)
             {
                 std::string app_bundle_path(path, app_ext + strlen(".app"));
                 if (SBLaunchForDebug (app_bundle_path.c_str(), argv, envp, no_stdio, launch_err) != 0)
