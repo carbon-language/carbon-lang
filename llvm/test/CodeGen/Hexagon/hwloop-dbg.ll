@@ -33,7 +33,6 @@ for.end:                                          ; preds = %for.body
 
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
-!llvm.dbg.cu = !{!0}
 
 !0 = metadata !{i32 786449, i32 0, i32 12, metadata !"hwloop-dbg.c", metadata !"/usr2/kparzysz/s.hex/t", metadata !"QuIC LLVM Hexagon Clang version 6.1-pre-unknown, (git://git-hexagon-aus.quicinc.com/llvm/clang-mainline.git e9382867661454cdf44addb39430741578e9765c) (llvm/llvm-mainline.git 36412bb1fcf03ed426d4437b41198bae066675ac)", i1 true, i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1} ; [ DW_TAG_compile_unit ] [/usr2/kparzysz/s.hex/t/hwloop-dbg.c] [DW_LANG_C99]
 !1 = metadata !{metadata !2}
