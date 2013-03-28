@@ -3661,8 +3661,10 @@ void RetainCountChecker::printState(raw_ostream &Out, ProgramStateRef State,
 
   RefBindingsTy B = State->get<RefBindings>();
 
-  if (!B.isEmpty())
-    Out << Sep << NL;
+  if (B.isEmpty())
+    return;
+
+  Out << Sep << NL;
 
   for (RefBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     Out << I->first << " : ";
