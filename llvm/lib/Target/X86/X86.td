@@ -126,6 +126,8 @@ def FeatureADX     : SubtargetFeature<"adx", "HasADX", "true",
                                       "Support ADX instructions">;
 def FeaturePRFCHW  : SubtargetFeature<"prfchw", "HasPRFCHW", "true",
                                       "Support PRFCHW instructions">;
+def FeatureRDSEED  : SubtargetFeature<"rdseed", "HasRDSEED", "true",
+                                      "Support RDSEED instruction">;
 def FeatureLeaForSP : SubtargetFeature<"lea-sp", "UseLeaForSP", "true",
                                      "Use LEA for adjusting the stack pointer">;
 def FeatureSlowDivide : SubtargetFeature<"idiv-to-divb",

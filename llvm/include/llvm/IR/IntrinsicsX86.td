@@ -2550,7 +2550,9 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 }
 
 //===----------------------------------------------------------------------===//
-// RDRAND intrinsics. Return a random value and whether it is valid.
+// RDRAND intrinsics - Return a random value and whether it is valid.
+// RDSEED intrinsics - Return a NIST SP800-90B & C compliant random value and
+// whether it is valid.
 
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   // These are declared side-effecting so they don't get eliminated by CSE or
@@ -2558,6 +2560,9 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_rdrand_16 : Intrinsic<[llvm_i16_ty, llvm_i32_ty], [], []>;
   def int_x86_rdrand_32 : Intrinsic<[llvm_i32_ty, llvm_i32_ty], [], []>;
   def int_x86_rdrand_64 : Intrinsic<[llvm_i64_ty, llvm_i32_ty], [], []>;
+  def int_x86_rdseed_16 : Intrinsic<[llvm_i16_ty, llvm_i32_ty], [], []>;
+  def int_x86_rdseed_32 : Intrinsic<[llvm_i32_ty, llvm_i32_ty], [], []>;
+  def int_x86_rdseed_64 : Intrinsic<[llvm_i64_ty, llvm_i32_ty], [], []>;
 }
 
 //===----------------------------------------------------------------------===//

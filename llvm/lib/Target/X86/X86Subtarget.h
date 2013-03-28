@@ -130,6 +130,9 @@ protected:
   /// HasPRFCHW - Processor has PRFCHW instructions.
   bool HasPRFCHW;
 
+  /// HasRDSEED - Processor has RDSEED instructions.
+  bool HasRDSEED;
+
   /// IsBTMemSlow - True if BT (bit test) of memory instructions are slow.
   bool IsBTMemSlow;
 
@@ -266,6 +269,7 @@ public:
   bool hasHLE() const { return HasHLE; }
   bool hasADX() const { return HasADX; }
   bool hasPRFCHW() const { return HasPRFCHW; }
+  bool hasRDSEED() const { return HasRDSEED; }
   bool isBTMemSlow() const { return IsBTMemSlow; }
   bool isUnalignedMemAccessFast() const { return IsUAMemFast; }
   bool hasVectorUAMem() const { return HasVectorUAMem; }

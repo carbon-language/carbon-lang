@@ -142,6 +142,9 @@ def X86sahf    : SDNode<"X86ISD::SAHF",     SDTX86sahf>;
 def X86rdrand  : SDNode<"X86ISD::RDRAND",   SDTX86rdrand,
                         [SDNPHasChain, SDNPSideEffect]>;
 
+def X86rdseed  : SDNode<"X86ISD::RDSEED",   SDTX86rdrand,
+                        [SDNPHasChain, SDNPSideEffect]>;
+
 def X86cas : SDNode<"X86ISD::LCMPXCHG_DAG", SDTX86cas,
                         [SDNPHasChain, SDNPInGlue, SDNPOutGlue, SDNPMayStore,
                          SDNPMayLoad, SDNPMemOperand]>;
@@ -607,6 +610,7 @@ def HasHLE       : Predicate<"Subtarget->hasHLE()">;
 def HasTSX       : Predicate<"Subtarget->hasRTM() || Subtarget->hasHLE()">;
 def HasADX       : Predicate<"Subtarget->hasADX()">;
 def HasPRFCHW    : Predicate<"Subtarget->hasPRFCHW()">;
+def HasRDSEED    : Predicate<"Subtarget->hasRDSEED()">;
 def HasPrefetchW : Predicate<"Subtarget->has3DNow() || Subtarget->hasPRFCHW()">;
 def FPStackf32   : Predicate<"!Subtarget->hasSSE1()">;
 def FPStackf64   : Predicate<"!Subtarget->hasSSE2()">;
@@ -1631,6 +1635,21 @@ let Predicates = [HasRDRAND], Defs = [EFLAGS] in {
   def RDRAND64r : RI<0xC7, MRM6r, (outs GR64:$dst), (ins),
                      "rdrand{q}\t$dst",
                      [(set GR64:$dst, EFLAGS, (X86rdrand))]>, TB;
+}
+
+//===----------------------------------------------------------------------===//
+// RDSEED Instruction
+//
+let Predicates = [HasRDSEED], Defs = [EFLAGS] in {
+  def RDSEED16r : I<0xC7, MRM7r, (outs GR16:$dst), (ins),
+                    "rdseed{w}\t$dst",
+                    [(set GR16:$dst, EFLAGS, (X86rdseed))]>, OpSize, TB;
+  def RDSEED32r : I<0xC7, MRM7r, (outs GR32:$dst), (ins),
+                    "rdseed{l}\t$dst",
+                    [(set GR32:$dst, EFLAGS, (X86rdseed))]>, TB;
+  def RDSEED64r : RI<0xC7, MRM7r, (outs GR64:$dst), (ins),
+                     "rdseed{q}\t$dst",
+                     [(set GR64:$dst, EFLAGS, (X86rdseed))]>, TB;
 }
 
 //===----------------------------------------------------------------------===//

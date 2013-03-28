@@ -334,6 +334,10 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
         HasADX = true;
         ToggleFeature(X86::FeatureADX);
       }
+      if (IsIntel && ((EBX >> 18) & 0x1)) {
+        HasRDSEED = true;
+        ToggleFeature(X86::FeatureRDSEED);
+      }
     }
   }
 }
@@ -454,6 +458,7 @@ void X86Subtarget::initializeEnvironment() {
   HasHLE = false;
   HasADX = false;
   HasPRFCHW = false;
+  HasRDSEED = false;
   IsBTMemSlow = false;
   IsUAMemFast = false;
   HasVectorUAMem = false;

@@ -356,6 +356,10 @@ namespace llvm {
       // RDRAND - Get a random integer and indicate whether it is valid in CF.
       RDRAND,
 
+      // RDSEED - Get a NIST SP800-90B & C compliant random integer and
+      // indicate whether it is valid in CF.
+      RDSEED,
+
       // PCMP*STRI
       PCMPISTRI,
       PCMPESTRI,
