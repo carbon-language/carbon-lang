@@ -56,6 +56,10 @@ class RegisterCommandsTestCase(TestBase):
         self.expect("register read -a", MISSING_EXPECTED_REGISTERS,
             substrs = ['registers were unavailable'], matching = False)
         self.runCmd("register read xmm0")
+        self.runCmd("register read ymm15") # may be available
+
+        self.expect("register read -s 3",
+            substrs = ['invalid register set index: 3'], error = True)
 
         # rdar://problem/10611315
         # expression command doesn't handle xmm or stmm registers...

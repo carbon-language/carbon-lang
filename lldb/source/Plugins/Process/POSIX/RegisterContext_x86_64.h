@@ -128,6 +128,11 @@ public:
         uint64_t fault_address; // Control register CR3.
     };
 
+protected:
+    // Determines if an extended register set is supported on the processor running the inferior process.
+    virtual bool
+    IsRegisterSetAvailable(size_t set_index);
+
 private:
     UserArea user;
 

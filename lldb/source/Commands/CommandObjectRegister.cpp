@@ -134,6 +134,10 @@ public:
     {
         uint32_t unavailable_count = 0;
         uint32_t available_count = 0;
+
+        if (!reg_ctx)
+            return false; // thread has no registers (i.e. core files are corrupt, incomplete crash logs...)
+
         const RegisterSet * const reg_set = reg_ctx->GetRegisterSet(set_idx);
         if (reg_set)
         {
@@ -147,6 +151,7 @@ public:
                 // Skip the dumping of derived register if primitive_only is true.
                 if (primitive_only && reg_info && reg_info->value_regs)
                     continue;
+
                 if (DumpRegister (exe_ctx, strm, reg_ctx, reg_info))
                     ++available_count;
                 else
@@ -182,18 +187,21 @@ protected:
                 for (size_t i=0; i<set_array_size; ++i)
                 {
                     set_idx = m_command_options.set_indexes[i]->GetUInt64Value (UINT32_MAX, NULL);
-                    if (set_idx != UINT32_MAX)
+                    if (set_idx < reg_ctx->GetRegisterSetCount())
                     {
                         if (!DumpRegisterSet (m_exe_ctx, strm, reg_ctx, set_idx))
                         {
-                            result.AppendErrorWithFormat ("invalid register set index: %zu\n", set_idx);
+                            if (errno)
+                                result.AppendErrorWithFormat ("register read failed with errno: %d\n", errno);
+                            else
+                                result.AppendError ("unknown error while reading registers.\n");
                             result.SetStatus (eReturnStatusFailed);
                             break;
                         }
                     }
                     else
                     {
-                        result.AppendError ("invalid register set index\n");
+                        result.AppendErrorWithFormat ("invalid register set index: %zu\n", set_idx);
                         result.SetStatus (eReturnStatusFailed);
                         break;
                     }

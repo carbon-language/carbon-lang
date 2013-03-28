@@ -105,15 +105,30 @@ enum
     fpu_xmm15,
     k_last_fpr = fpu_xmm15,
 
-    k_num_registers,
-    k_num_gpr_registers = k_last_gpr - k_first_gpr + 1,
-    k_num_fpu_registers = k_last_fpr - k_first_fpr + 1
-};
+    k_num_registers, // TODO: Add support for AVX registers
 
-// Number of register sets provided by this context.
-enum
-{
-    k_num_register_sets = 2
+    k_first_avx,
+    fpu_ymm0 = k_first_avx,
+    fpu_ymm1,
+    fpu_ymm2,
+    fpu_ymm3,
+    fpu_ymm4,
+    fpu_ymm5,
+    fpu_ymm6,
+    fpu_ymm7,
+    fpu_ymm8,
+    fpu_ymm9,
+    fpu_ymm10,
+    fpu_ymm11,
+    fpu_ymm12,
+    fpu_ymm13,
+    fpu_ymm14,
+    fpu_ymm15,
+    k_last_avx = fpu_ymm15,
+
+    k_num_gpr_registers = k_last_gpr - k_first_gpr + 1,
+    k_num_fpu_registers = k_last_fpr - k_first_fpr + 1,
+    k_num_avx_registers = k_last_avx - k_first_avx + 1
 };
 
 enum
@@ -300,11 +315,40 @@ g_fpu_regnums[k_num_fpu_registers] =
     fpu_xmm15
 };
 
+static const uint32_t
+g_avx_regnums[k_num_avx_registers] =
+{
+    fpu_ymm0,
+    fpu_ymm1,
+    fpu_ymm2,
+    fpu_ymm3,
+    fpu_ymm4,
+    fpu_ymm5,
+    fpu_ymm6,
+    fpu_ymm7,
+    fpu_ymm8,
+    fpu_ymm9,
+    fpu_ymm10,
+    fpu_ymm11,
+    fpu_ymm12,
+    fpu_ymm13,
+    fpu_ymm14,
+    fpu_ymm15
+};
+
+// Number of register sets provided by this context.
+enum
+{
+    k_num_extended_register_sets = 1,
+    k_num_register_sets = 3
+};
+
 static const RegisterSet
 g_reg_sets[k_num_register_sets] =
 {
-    { "General Purpose Registers", "gpr", k_num_gpr_registers, g_gpr_regnums },
-    { "Floating Point Registers",  "fpu", k_num_fpu_registers, g_fpu_regnums }
+    { "General Purpose Registers",  "gpr", k_num_gpr_registers, g_gpr_regnums },
+    { "Floating Point Registers",   "fpu", k_num_fpu_registers, g_fpu_regnums },
+    { "Advanced Vector Extensions", "avx", k_num_avx_registers, g_avx_regnums }
 };
 
 // Computes the offset of the given GPR in the user data area.
@@ -462,8 +506,13 @@ static bool IsFPR(unsigned reg)
     return (k_first_fpr <= reg && reg <= k_last_fpr);
 }
 
+static bool IsAVX(unsigned reg)
+{
+    return (k_first_avx <= reg && reg <= k_last_avx);
+}
+
 RegisterContext_x86_64::RegisterContext_x86_64(Thread &thread,
-                                                         uint32_t concrete_frame_idx)
+                                               uint32_t concrete_frame_idx)
     : RegisterContextPOSIX(thread, concrete_frame_idx)
 {
 }
@@ -508,13 +557,18 @@ RegisterContext_x86_64::GetRegisterInfoAtIndex(size_t reg)
 size_t
 RegisterContext_x86_64::GetRegisterSetCount()
 {
-    return k_num_register_sets;
+    size_t sets = 0;
+    for (size_t set = 0; set < k_num_register_sets; ++set)
+        if (IsRegisterSetAvailable(set))
+            ++sets;
+
+    return sets;
 }
 
 const RegisterSet *
 RegisterContext_x86_64::GetRegisterSet(size_t set)
 {
-    if (set < k_num_register_sets)
+    if (IsRegisterSetAvailable(set))
         return &g_reg_sets[set];
     else
         return NULL;
@@ -541,17 +595,27 @@ RegisterContext_x86_64::GetRegisterName(unsigned reg)
 }
 
 bool
+RegisterContext_x86_64::IsRegisterSetAvailable(size_t set_index)
+{
+    // Note: Extended register sets are assumed to be at the end of g_reg_sets.
+    return (set_index < k_num_register_sets - k_num_extended_register_sets);
+}   
+
+bool
 RegisterContext_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue &value)
 {
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
 
-    if (reg >= k_first_fpr && reg <= k_last_fpr) {
+    if (IsAVX(reg))
+        return false;
+
+    if (IsFPR(reg)) {
         if (!ReadFPR())
             return false;
     }
     else {
         ProcessMonitor &monitor = GetMonitor();
-        return monitor.ReadRegisterValue(m_thread.GetID(), GetRegOffset(reg),GetRegSize(reg), value);
+        return monitor.ReadRegisterValue(m_thread.GetID(), GetRegOffset(reg), GetRegSize(reg), value);
     }
 
     if (reg_info->encoding == eEncodingVector) {
@@ -624,6 +688,9 @@ RegisterContext_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg_info
                                            const lldb_private::RegisterValue &value)
 {
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
+    if (IsAVX(reg))
+        return false;
+
     ProcessMonitor &monitor = GetMonitor();
     return monitor.WriteRegisterValue(m_thread.GetID(), GetRegOffset(reg), value);
 }
