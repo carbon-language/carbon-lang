@@ -187,6 +187,8 @@ public:
   ///   accessible. Pass \c NULL if this information will not be used.
   /// \param[in] Call The call expression which will be used to determine which
   ///   globals should get invalidated.
+  /// \param[in,out] ConstIS A set to fill with any symbols corresponding to
+  ///   the ConstRegions.
   /// \param[in,out] Invalidated A vector to fill with any regions being
   ///   invalidated. This should include any regions explicitly invalidated
   ///   even if they do not currently have bindings. Pass \c NULL if this
@@ -198,6 +200,7 @@ public:
                                      InvalidatedSymbols &IS,
                                      const CallEvent *Call,
                                      ArrayRef<const MemRegion *> ConstRegions,
+                                     InvalidatedSymbols &ConstIS,
                                      InvalidatedRegions *Invalidated) = 0;
 
   /// enterStackFrame - Let the StoreManager to do something when execution

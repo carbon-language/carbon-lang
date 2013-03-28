@@ -120,11 +120,12 @@ public:
   processPointerEscapedOnBind(ProgramStateRef State, SVal Loc, SVal Val) = 0;
 
   virtual ProgramStateRef
-  processPointerEscapedOnInvalidateRegions(ProgramStateRef State,
+  notifyCheckersOfPointerEscape(ProgramStateRef State,
                            const InvalidatedSymbols *Invalidated,
                            ArrayRef<const MemRegion *> ExplicitRegions,
                            ArrayRef<const MemRegion *> Regions,
-                           const CallEvent *Call) = 0;
+                           const CallEvent *Call,
+                           bool IsConst = false) = 0;
 
   /// printState - Called by ProgramStateManager to print checker-specific data.
   virtual void printState(raw_ostream &Out, ProgramStateRef State,

@@ -489,19 +489,19 @@ ProgramStateRef
 CheckerManager::runCheckersForPointerEscape(ProgramStateRef State,
                                            const InvalidatedSymbols &Escaped,
                                            const CallEvent *Call,
-                                           PointerEscapeKind Kind) {
+                                           PointerEscapeKind Kind,
+                                           bool IsConst) {
   assert((Call != NULL ||
           (Kind != PSK_DirectEscapeOnCall &&
            Kind != PSK_IndirectEscapeOnCall)) &&
          "Call must not be NULL when escaping on call");
-
-  for (unsigned i = 0, e = PointerEscapeCheckers.size(); i != e; ++i) {
-    // If any checker declares the state infeasible (or if it starts that way),
-    // bail out.
-    if (!State)
-      return NULL;
-    State = PointerEscapeCheckers[i](State, Escaped, Call, Kind);
-  }
+    for (unsigned i = 0, e = PointerEscapeCheckers.size(); i != e; ++i) {
+      // If any checker declares the state infeasible (or if it starts that
+      //  way), bail out.
+      if (!State)
+        return NULL;
+      State = PointerEscapeCheckers[i](State, Escaped, Call, Kind, IsConst);
+    }
   return State;
 }
 
@@ -663,6 +663,11 @@ void CheckerManager::_registerForRegionChanges(CheckRegionChangesFunc checkfn,
 }
 
 void CheckerManager::_registerForPointerEscape(CheckPointerEscapeFunc checkfn){
+  PointerEscapeCheckers.push_back(checkfn);
+}
+
+void CheckerManager::_registerForConstPointerEscape(
+                                          CheckPointerEscapeFunc checkfn) {
   PointerEscapeCheckers.push_back(checkfn);
 }
 

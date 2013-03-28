@@ -346,12 +346,14 @@ public:
   /// \param Escaped The list of escaped symbols.
   /// \param Call The corresponding CallEvent, if the symbols escape as 
   ///        parameters to the given call.
+  /// \param IsConst Specifies if the pointer is const.
   /// \returns Checkers can modify the state by returning a new one.
   ProgramStateRef 
   runCheckersForPointerEscape(ProgramStateRef State,
                               const InvalidatedSymbols &Escaped,
                               const CallEvent *Call,
-                              PointerEscapeKind Kind);
+                              PointerEscapeKind Kind,
+                              bool IsConst = false);
 
   /// \brief Run checkers for handling assumptions on symbolic values.
   ProgramStateRef runCheckersForEvalAssume(ProgramStateRef state,
@@ -442,7 +444,8 @@ public:
   typedef CheckerFn<ProgramStateRef (ProgramStateRef,
                                      const InvalidatedSymbols &Escaped,
                                      const CallEvent *Call,
-                                     PointerEscapeKind Kind)>
+                                     PointerEscapeKind Kind,
+                                     bool IsConst)>
       CheckPointerEscapeFunc;
   
   typedef CheckerFn<ProgramStateRef (ProgramStateRef,
@@ -486,6 +489,8 @@ public:
                                  WantsRegionChangeUpdateFunc wantUpdateFn);
 
   void _registerForPointerEscape(CheckPointerEscapeFunc checkfn);
+
+  void _registerForConstPointerEscape(CheckPointerEscapeFunc checkfn);
 
   void _registerForEvalAssume(EvalAssumeFunc checkfn);
 

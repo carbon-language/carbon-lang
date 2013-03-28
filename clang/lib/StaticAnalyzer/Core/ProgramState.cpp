@@ -170,25 +170,34 @@ ProgramState::invalidateRegionsImpl(RegionList Regions,
                                     RegionList ConstRegions) const {
   ProgramStateManager &Mgr = getStateManager();
   SubEngine* Eng = Mgr.getOwningEngine();
- 
+  InvalidatedSymbols ConstIS;
+
   if (Eng) {
     StoreManager::InvalidatedRegions Invalidated;
     const StoreRef &newStore
       = Mgr.StoreMgr->invalidateRegions(getStore(), Regions, E, Count, LCtx, IS,
-                                        Call, ConstRegions, &Invalidated);
+                                        Call, ConstRegions, ConstIS,
+                                        &Invalidated);
 
     ProgramStateRef newState = makeWithStore(newStore);
 
-    if (CausedByPointerEscape)
-      newState = Eng->processPointerEscapedOnInvalidateRegions(newState,
+    if (CausedByPointerEscape) {
+      newState = Eng->notifyCheckersOfPointerEscape(newState,
                                                &IS, Regions, Invalidated, Call);
+      if (!ConstRegions.empty()) {
+        StoreManager::InvalidatedRegions Empty;
+        newState = Eng->notifyCheckersOfPointerEscape(newState, &ConstIS,
+                                                      ConstRegions, Empty, Call,
+                                                      true);
+      }
+    }
 
     return Eng->processRegionChanges(newState, &IS, Regions, Invalidated, Call);
   }
 
   const StoreRef &newStore =
     Mgr.StoreMgr->invalidateRegions(getStore(), Regions, E, Count, LCtx, IS,
-                                    Call, ConstRegions, NULL);
+                                    Call, ConstRegions, ConstIS, NULL);
   return makeWithStore(newStore);
 }
 

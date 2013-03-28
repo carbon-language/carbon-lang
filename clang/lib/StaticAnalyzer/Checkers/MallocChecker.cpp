@@ -134,6 +134,7 @@ typedef std::pair<const ExplodedNode*, const MemRegion*> LeakInfo;
 
 class MallocChecker : public Checker<check::DeadSymbols,
                                      check::PointerEscape,
+                                     check::ConstPointerEscape,
                                      check::PreStmt<ReturnStmt>,
                                      check::PreStmt<CallExpr>,
                                      check::PostStmt<CallExpr>,
@@ -185,6 +186,10 @@ public:
                                     const InvalidatedSymbols &Escaped,
                                     const CallEvent *Call,
                                     PointerEscapeKind Kind) const;
+  ProgramStateRef checkConstPointerEscape(ProgramStateRef State,
+                                          const InvalidatedSymbols &Escaped,
+                                          const CallEvent *Call,
+                                          PointerEscapeKind Kind) const;
 
   void printState(raw_ostream &Out, ProgramStateRef State,
                   const char *NL, const char *Sep) const;
@@ -269,6 +274,13 @@ private:
   /// not handled by this checker.
   bool doesNotFreeMemOrInteresting(const CallEvent *Call,
                                    ProgramStateRef State) const;
+
+  // Implementation of the checkPointerEscape callabcks.
+  ProgramStateRef checkPointerEscapeAux(ProgramStateRef State,
+                                  const InvalidatedSymbols &Escaped,
+                                  const CallEvent *Call,
+                                  PointerEscapeKind Kind,
+                                  bool(*CheckRefState)(const RefState*)) const;
 
   static bool SummarizeValue(raw_ostream &os, SVal V);
   static bool SummarizeRegion(raw_ostream &os, const MemRegion *MR);
@@ -1865,10 +1877,35 @@ bool MallocChecker::doesNotFreeMemOrInteresting(const CallEvent *Call,
   return true;
 }
 
+static bool retTrue(const RefState *RS) {
+  return true;
+}
+
+static bool checkIfNewOrNewArrayFamily(const RefState *RS) {
+  return (RS->getAllocationFamily() == AF_CXXNewArray ||
+          RS->getAllocationFamily() == AF_CXXNew);
+}
+
 ProgramStateRef MallocChecker::checkPointerEscape(ProgramStateRef State,
                                              const InvalidatedSymbols &Escaped,
                                              const CallEvent *Call,
                                              PointerEscapeKind Kind) const {
+  return checkPointerEscapeAux(State, Escaped, Call, Kind, &retTrue);
+}
+
+ProgramStateRef MallocChecker::checkConstPointerEscape(ProgramStateRef State,
+                                              const InvalidatedSymbols &Escaped,
+                                              const CallEvent *Call,
+                                              PointerEscapeKind Kind) const {
+  return checkPointerEscapeAux(State, Escaped, Call, Kind,
+                               &checkIfNewOrNewArrayFamily);
+}
+
+ProgramStateRef MallocChecker::checkPointerEscapeAux(ProgramStateRef State,
+                                              const InvalidatedSymbols &Escaped,
+                                              const CallEvent *Call,
+                                              PointerEscapeKind Kind,
+                                  bool(*CheckRefState)(const RefState*)) const {
   // If we know that the call does not free memory, or we want to process the
   // call later, keep tracking the top level arguments.
   if ((Kind == PSK_DirectEscapeOnCall ||
@@ -1878,12 +1915,12 @@ ProgramStateRef MallocChecker::checkPointerEscape(ProgramStateRef State,
   }
 
   for (InvalidatedSymbols::const_iterator I = Escaped.begin(),
-                                          E = Escaped.end();
-                                          I != E; ++I) {
+       E = Escaped.end();
+       I != E; ++I) {
     SymbolRef sym = *I;
 
     if (const RefState *RS = State->get<RegionState>(sym)) {
-      if (RS->isAllocated())
+      if (RS->isAllocated() && CheckRefState(RS))
         State = State->remove<RegionState>(sym);
     }
   }

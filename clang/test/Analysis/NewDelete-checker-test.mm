@@ -158,3 +158,43 @@ void testStandardPlacementNewAfterDelete() {
   delete p;
   p = new(p) int; // expected-warning{{Use of memory after it is freed}}
 }
+
+//--------------------------------
+// Test escape of newed const pointer. Note, a const pointer can be deleted.
+//--------------------------------
+struct StWithConstPtr {
+  const int *memp;
+};
+void escape(const int &x);
+void escapeStruct(const StWithConstPtr &x);
+void escapePtr(const StWithConstPtr *x);
+void escapeVoidPtr(const void *x);
+
+void testConstEscape() {
+  int *p = new int(1);
+  escape(*p);
+} // no-warning
+
+void testConstEscapeStruct() {
+  StWithConstPtr *St = new StWithConstPtr();
+  escapeStruct(*St);
+} // no-warning
+
+void testConstEscapeStructPtr() {
+  StWithConstPtr *St = new StWithConstPtr();
+  escapePtr(St);
+} // no-warning
+
+void testConstEscapeMember() {
+  StWithConstPtr St;
+  St.memp = new int(2);
+  escapeVoidPtr(St.memp);
+} // no-warning
+
+void testConstEscapePlacementNew() {
+  int *x = (int *)malloc(sizeof(int));
+  void *y = new (x) int;
+  escapeVoidPtr(y);
+} // no-warning
+
+

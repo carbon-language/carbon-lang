@@ -467,12 +467,14 @@ protected:
                                               SVal Loc, SVal Val);
   /// Call PointerEscape callback when a value escapes as a result of
   /// region invalidation.
-  ProgramStateRef processPointerEscapedOnInvalidateRegions(
+  /// \param[in] IsConst Specifies that the pointer is const.
+  ProgramStateRef notifyCheckersOfPointerEscape(
                             ProgramStateRef State,
                             const InvalidatedSymbols *Invalidated,
                             ArrayRef<const MemRegion *> ExplicitRegions,
                             ArrayRef<const MemRegion *> Regions,
-                            const CallEvent *Call);
+                            const CallEvent *Call,
+                            bool IsConst);
 
 public:
   // FIXME: 'tag' should be removed, and a LocationContext should be used
