@@ -1000,7 +1000,7 @@ namespace llvm {
 /// to a specific Type class.
 template<> struct simplify_type< ::clang::QualType> {
   typedef const ::clang::Type *SimpleType;
-  static SimpleType getSimplifiedValue(::clang::QualType &Val) {
+  static SimpleType getSimplifiedValue(::clang::QualType Val) {
     return Val.getTypePtr();
   }
 };

@@ -1042,7 +1042,7 @@ namespace llvm {
     typedef const T *SimpleType;
 
     static SimpleType
-    getSimplifiedValue(clang::ento::CallEventRef<T>& Val) {
+    getSimplifiedValue(clang::ento::CallEventRef<T> Val) {
       return Val.getPtr();
     }
   };

@@ -353,7 +353,7 @@ namespace llvm {
 template<typename T>
 struct simplify_type< ::clang::CanQual<T> > {
   typedef const T *SimpleType;
-  static SimpleType getSimplifiedValue(::clang::CanQual<T> &Val) {
+  static SimpleType getSimplifiedValue(::clang::CanQual<T> Val) {
     return Val.getTypePtr();
   }
 };

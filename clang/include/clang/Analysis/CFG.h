@@ -843,7 +843,7 @@ namespace llvm {
 /// CFGTerminator to a specific Stmt class.
 template <> struct simplify_type< ::clang::CFGTerminator> {
   typedef ::clang::Stmt *SimpleType;
-  static SimpleType getSimplifiedValue(::clang::CFGTerminator &Val) {
+  static SimpleType getSimplifiedValue(::clang::CFGTerminator Val) {
     return Val.getStmt();
   }
 };
