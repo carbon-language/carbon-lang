@@ -115,7 +115,7 @@ using namespace __sanitizer;  // NOLINT
 
 // Platform-specific defs.
 #if defined(_MSC_VER)
-# define ALWAYS_INLINE __forceinline
+# define ALWAYS_INLINE static __forceinline
 // FIXME(timurrrr): do we need this on Windows?
 # define ALIAS(x)
 # define ALIGNED(x) __declspec(align(x))
