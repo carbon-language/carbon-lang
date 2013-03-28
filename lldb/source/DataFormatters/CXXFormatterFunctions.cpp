@@ -958,6 +958,8 @@ m_item_sp()
 bool
 lldb_private::formatters::VectorIteratorSyntheticFrontEnd::Update()
 {
+    m_item_sp.reset();
+
     ValueObjectSP valobj_sp = m_backend.GetSP();
     if (!valobj_sp)
         return false;
@@ -975,7 +977,7 @@ lldb_private::formatters::VectorIteratorSyntheticFrontEnd::Update()
     m_item_sp = ValueObject::CreateValueObjectFromAddress("item", item_ptr->GetValueAsUnsigned(0), m_exe_ctx_ref, ClangASTType(item_ptr->GetClangAST(),ClangASTType::GetPointeeType(item_ptr->GetClangType())));
     if (err.Fail())
         m_item_sp.reset();
-    return (m_item_sp.get() != NULL);
+    return false;
 }
 
 size_t
