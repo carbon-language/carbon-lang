@@ -1183,6 +1183,8 @@ unsigned FastISel::FastEmit_ri_(MVT VT, unsigned Opcode,
     IntegerType *ITy = IntegerType::get(FuncInfo.Fn->getContext(),
                                               VT.getSizeInBits());
     MaterialReg = getRegForValue(ConstantInt::get(ITy, Imm));
+    assert (MaterialReg != 0 && "Unable to materialize imm.");
+    if (MaterialReg == 0) return 0;
   }
   return FastEmit_rr(VT, VT, Opcode,
                      Op0, Op0IsKill,
