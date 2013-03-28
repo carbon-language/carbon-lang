@@ -52,15 +52,13 @@
 //
 // Some ideas:
 //
-// 1. Group duplicate definition messages into a single list.
-//
-// 2. Try to figure out the preprocessor conditional directives that
+// 1. Try to figure out the preprocessor conditional directives that
 // contribute to problems.
 //
-// 3. Check for correct and consistent usage of extern "C" {} and other
+// 2. Check for correct and consistent usage of extern "C" {} and other
 // directives. Warn about #include inside extern "C" {}.
 //
-// 4. What else?
+// 3. What else?
 //
 // General clean-up and refactoring:
 //
