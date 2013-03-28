@@ -1733,12 +1733,12 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
   // when passing pointers between TUs that disagree about the size.
   if (Context.getTargetInfo().getCXXABI().isMicrosoft()) {
     CXXRecordDecl *RD = Class->getAsCXXRecordDecl();
-    if (!RD->hasAttr<MSInheritanceAttr>()) {
+    if (!RD || !RD->hasAttr<MSInheritanceAttr>()) {
       // Lock in the inheritance model on the first use of a member pointer.
       // Otherwise we may disagree about the size at different points in the TU.
       // FIXME: MSVC picks a model on the first use that needs to know the size,
       // rather than on the first mention of the type, e.g. typedefs.
-      if (RequireCompleteType(Loc, Class, 0) && !RD->isBeingDefined()) {
+      if (RequireCompleteType(Loc, Class, 0) && RD && !RD->isBeingDefined()) {
         // We know it doesn't have an attribute and it's incomplete, so use the
         // unspecified inheritance model.  If we're in the record body, we can
         // figure out the inheritance model.
