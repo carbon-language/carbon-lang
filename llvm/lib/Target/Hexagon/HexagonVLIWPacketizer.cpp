@@ -149,7 +149,6 @@ namespace {
     bool canReserveResourcesForConstExt(MachineInstr *MI);
     void reserveResourcesForConstExt(MachineInstr* MI);
     bool isNewValueInst(MachineInstr* MI);
-    bool isDotNewInst(MachineInstr* MI);
   };
 }
 
@@ -2154,172 +2153,6 @@ static bool GetPredicateSense(MachineInstr* MI,
   return false;
 }
 
-bool HexagonPacketizerList::isDotNewInst(MachineInstr* MI) {
-  const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
-  if (QII->isNewValueInst(MI))
-    return true;
-
-  switch (MI->getOpcode()) {
-  case Hexagon::TFR_cdnNotPt:
-  case Hexagon::TFR_cdnPt:
-  case Hexagon::TFRI_cdnNotPt:
-  case Hexagon::TFRI_cdnPt:
-  case Hexagon::LDrid_cdnPt :
-  case Hexagon::LDrid_cdnNotPt :
-  case Hexagon::LDrid_indexed_cdnPt :
-  case Hexagon::LDrid_indexed_cdnNotPt :
-  case Hexagon::POST_LDrid_cdnPt_V4 :
-  case Hexagon::POST_LDrid_cdnNotPt_V4 :
-  case Hexagon::LDriw_cdnPt :
-  case Hexagon::LDriw_cdnNotPt :
-  case Hexagon::LDriw_indexed_cdnPt :
-  case Hexagon::LDriw_indexed_cdnNotPt :
-  case Hexagon::POST_LDriw_cdnPt_V4 :
-  case Hexagon::POST_LDriw_cdnNotPt_V4 :
-  case Hexagon::LDrih_cdnPt :
-  case Hexagon::LDrih_cdnNotPt :
-  case Hexagon::LDrih_indexed_cdnPt :
-  case Hexagon::LDrih_indexed_cdnNotPt :
-  case Hexagon::POST_LDrih_cdnPt_V4 :
-  case Hexagon::POST_LDrih_cdnNotPt_V4 :
-  case Hexagon::LDrib_cdnPt :
-  case Hexagon::LDrib_cdnNotPt :
-  case Hexagon::LDrib_indexed_cdnPt :
-  case Hexagon::LDrib_indexed_cdnNotPt :
-  case Hexagon::POST_LDrib_cdnPt_V4 :
-  case Hexagon::POST_LDrib_cdnNotPt_V4 :
-  case Hexagon::LDriuh_cdnPt :
-  case Hexagon::LDriuh_cdnNotPt :
-  case Hexagon::LDriuh_indexed_cdnPt :
-  case Hexagon::LDriuh_indexed_cdnNotPt :
-  case Hexagon::POST_LDriuh_cdnPt_V4 :
-  case Hexagon::POST_LDriuh_cdnNotPt_V4 :
-  case Hexagon::LDriub_cdnPt :
-  case Hexagon::LDriub_cdnNotPt :
-  case Hexagon::LDriub_indexed_cdnPt :
-  case Hexagon::LDriub_indexed_cdnNotPt :
-  case Hexagon::POST_LDriub_cdnPt_V4 :
-  case Hexagon::POST_LDriub_cdnNotPt_V4 :
-
-  case Hexagon::LDrid_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDrid_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDrib_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDrib_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDriub_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDriub_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDrih_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDrih_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDriuh_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDriuh_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDriw_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDriw_indexed_shl_cdnNotPt_V4 :
-
-// Coditional add
-  case Hexagon::ADD_ri_cdnPt:
-  case Hexagon::ADD_ri_cdnNotPt:
-  case Hexagon::ADD_rr_cdnPt:
-  case Hexagon::ADD_rr_cdnNotPt:
-
-  // Conditional logical operations
-  case Hexagon::XOR_rr_cdnPt :
-  case Hexagon::XOR_rr_cdnNotPt :
-  case Hexagon::AND_rr_cdnPt :
-  case Hexagon::AND_rr_cdnNotPt :
-  case Hexagon::OR_rr_cdnPt :
-  case Hexagon::OR_rr_cdnNotPt :
-
-  // Conditonal subtract
-  case Hexagon::SUB_rr_cdnPt :
-  case Hexagon::SUB_rr_cdnNotPt :
-
-  // Conditional combine
-  case Hexagon::COMBINE_rr_cdnPt :
-  case Hexagon::COMBINE_rr_cdnNotPt :
-
-  // Conditional shift operations
-  case Hexagon::ASLH_cdnPt_V4:
-  case Hexagon::ASLH_cdnNotPt_V4:
-  case Hexagon::ASRH_cdnPt_V4:
-  case Hexagon::ASRH_cdnNotPt_V4:
-  case Hexagon::SXTB_cdnPt_V4:
-  case Hexagon::SXTB_cdnNotPt_V4:
-  case Hexagon::SXTH_cdnPt_V4:
-  case Hexagon::SXTH_cdnNotPt_V4:
-  case Hexagon::ZXTB_cdnPt_V4:
-  case Hexagon::ZXTB_cdnNotPt_V4:
-  case Hexagon::ZXTH_cdnPt_V4:
-  case Hexagon::ZXTH_cdnNotPt_V4:
-
-  // Conditional stores
-  case Hexagon::STrib_imm_cdnPt_V4 :
-  case Hexagon::STrib_imm_cdnNotPt_V4 :
-  case Hexagon::STrib_cdnPt_V4 :
-  case Hexagon::STrib_cdnNotPt_V4 :
-  case Hexagon::STrib_indexed_cdnPt_V4 :
-  case Hexagon::STrib_indexed_cdnNotPt_V4 :
-  case Hexagon::POST_STbri_cdnPt_V4 :
-  case Hexagon::POST_STbri_cdnNotPt_V4 :
-  case Hexagon::STrib_indexed_shl_cdnPt_V4 :
-  case Hexagon::STrib_indexed_shl_cdnNotPt_V4 :
-
-  // Store doubleword conditionally
-  case Hexagon::STrid_indexed_cdnPt_V4 :
-  case Hexagon::STrid_indexed_cdnNotPt_V4 :
-  case Hexagon::STrid_indexed_shl_cdnPt_V4 :
-  case Hexagon::STrid_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::POST_STdri_cdnPt_V4 :
-  case Hexagon::POST_STdri_cdnNotPt_V4 :
-
-  // Store halfword conditionally
-  case Hexagon::STrih_cdnPt_V4 :
-  case Hexagon::STrih_cdnNotPt_V4 :
-  case Hexagon::STrih_indexed_cdnPt_V4 :
-  case Hexagon::STrih_indexed_cdnNotPt_V4 :
-  case Hexagon::STrih_imm_cdnPt_V4 :
-  case Hexagon::STrih_imm_cdnNotPt_V4 :
-  case Hexagon::STrih_indexed_shl_cdnPt_V4 :
-  case Hexagon::STrih_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::POST_SThri_cdnPt_V4 :
-  case Hexagon::POST_SThri_cdnNotPt_V4 :
-
-  // Store word conditionally
-  case Hexagon::STriw_cdnPt_V4 :
-  case Hexagon::STriw_cdnNotPt_V4 :
-  case Hexagon::STriw_indexed_cdnPt_V4 :
-  case Hexagon::STriw_indexed_cdnNotPt_V4 :
-  case Hexagon::STriw_imm_cdnPt_V4 :
-  case Hexagon::STriw_imm_cdnNotPt_V4 :
-  case Hexagon::STriw_indexed_shl_cdnPt_V4 :
-  case Hexagon::STriw_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::POST_STwri_cdnPt_V4 :
-  case Hexagon::POST_STwri_cdnNotPt_V4 :
-
-  case Hexagon::LDd_GP_cdnPt_V4:
-  case Hexagon::LDd_GP_cdnNotPt_V4:
-  case Hexagon::LDb_GP_cdnPt_V4:
-  case Hexagon::LDb_GP_cdnNotPt_V4:
-  case Hexagon::LDub_GP_cdnPt_V4:
-  case Hexagon::LDub_GP_cdnNotPt_V4:
-  case Hexagon::LDh_GP_cdnPt_V4:
-  case Hexagon::LDh_GP_cdnNotPt_V4:
-  case Hexagon::LDuh_GP_cdnPt_V4:
-  case Hexagon::LDuh_GP_cdnNotPt_V4:
-  case Hexagon::LDw_GP_cdnPt_V4:
-  case Hexagon::LDw_GP_cdnNotPt_V4:
-
-  case Hexagon::STd_GP_cdnPt_V4:
-  case Hexagon::STd_GP_cdnNotPt_V4:
-  case Hexagon::STb_GP_cdnPt_V4:
-  case Hexagon::STb_GP_cdnNotPt_V4:
-  case Hexagon::STh_GP_cdnPt_V4:
-  case Hexagon::STh_GP_cdnNotPt_V4:
-  case Hexagon::STw_GP_cdnPt_V4:
-  case Hexagon::STw_GP_cdnNotPt_V4:
-    return true;
-  }
-  return false;
-}
-
 static MachineOperand& GetPostIncrementOperand(MachineInstr *MI,
                                                const HexagonInstrInfo *QII) {
   assert(QII->isPostIncrement(MI) && "Not a post increment operation.");
@@ -2490,7 +2323,7 @@ bool HexagonPacketizerList::CanPromoteToNewValueStore( MachineInstr *MI,
     // sense, i.e, either both should be negated or both should be none negated.
 
     if (( predRegNumDst != predRegNumSrc) ||
-          isDotNewInst(PacketMI) != isDotNewInst(MI)  ||
+          QII->isDotNewInst(PacketMI) != QII->isDotNewInst(MI)  ||
           GetPredicateSense(MI, QII) != GetPredicateSense(PacketMI, QII)) {
       return false;
     }
@@ -2600,8 +2433,9 @@ bool HexagonPacketizerList::CanPromoteToDotNew( MachineInstr *MI,
                               MachineBasicBlock::iterator &MII,
                               const TargetRegisterClass* RC )
 {
-  // already a dot new instruction
-  if (isDotNewInst(MI) && !IsNewifyStore(MI))
+  const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
+  // Already a dot new instruction.
+  if (QII->isDotNewInst(MI) && !IsNewifyStore(MI))
     return false;
 
   if (!isNewifiable(MI))
@@ -2616,7 +2450,6 @@ bool HexagonPacketizerList::CanPromoteToDotNew( MachineInstr *MI,
   else {
     // Create a dot new machine instruction to see if resources can be
     // allocated. If not, bail out now.
-    const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
     int NewOpcode = GetDotNewOp(MI->getOpcode());
     const MCInstrDesc &desc = QII->get(NewOpcode);
     DebugLoc dl;
@@ -2759,7 +2592,7 @@ bool HexagonPacketizerList::ArePredicatesComplements (MachineInstr* MI1,
   // !p0 is not complimentary to p0.new
   return ((MI1->getOperand(1).getReg() == MI2->getOperand(1).getReg()) &&
           (GetPredicateSense(MI1, QII) != GetPredicateSense(MI2, QII)) &&
-          (isDotNewInst(MI1) == isDotNewInst(MI2)));
+          (QII->isDotNewInst(MI1) == QII->isDotNewInst(MI2)));
 }
 
 // initPacketizerState - Initialize packetizer flags

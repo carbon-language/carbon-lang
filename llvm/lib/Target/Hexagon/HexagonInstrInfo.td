@@ -508,29 +508,30 @@ def : Pat <(sext_inreg (i32 IntRegs:$src1), i16),
 //===----------------------------------------------------------------------===//
 
 // Conditional combine.
-let neverHasSideEffects = 1, isPredicated = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in {
 def COMBINE_rr_cPt : ALU32_rr<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if ($src1) $dst = combine($src2, $src3)",
             []>;
 
-let neverHasSideEffects = 1, isPredicated = 1 in
+let isPredicatedFalse = 1 in
 def COMBINE_rr_cNotPt : ALU32_rr<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if (!$src1) $dst = combine($src2, $src3)",
             []>;
 
-let neverHasSideEffects = 1, isPredicated = 1 in
+let isPredicatedNew = 1 in
 def COMBINE_rr_cdnPt : ALU32_rr<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if ($src1.new) $dst = combine($src2, $src3)",
             []>;
 
-let neverHasSideEffects = 1, isPredicated = 1 in
+let isPredicatedNew = 1, isPredicatedFalse = 1 in
 def COMBINE_rr_cdnNotPt : ALU32_rr<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if (!$src1.new) $dst = combine($src2, $src3)",
             []>;
+}
 
 // Compare.
 defm CMPGTU : CMP32_rr_ri_u9<"cmp.gtu", "CMPGTU", setugt>, ImmRegRel;

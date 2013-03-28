@@ -127,6 +127,7 @@ public:
                                    const BranchProbability &Probability) const;
 
   virtual bool isPredicated(const MachineInstr *MI) const;
+  virtual bool isPredicatedNew(const MachineInstr *MI) const;
   virtual bool DefinesPredicate(MachineInstr *MI,
                                 std::vector<MachineOperand> &Pred) const;
   virtual bool
@@ -170,6 +171,7 @@ public:
   bool isConditionalLoad (const MachineInstr* MI) const;
   bool isConditionalStore(const MachineInstr* MI) const;
   bool isNewValueInst(const MachineInstr* MI) const;
+  bool isDotNewInst(const MachineInstr* MI) const;
   bool isDeallocRet(const MachineInstr *MI) const;
   unsigned getInvertedPredicatedOpcode(const int Opc) const;
   bool isExtendable(const MachineInstr* MI) const;
