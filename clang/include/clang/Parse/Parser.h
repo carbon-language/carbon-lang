@@ -1999,7 +1999,8 @@ private:
                                DirectDeclParseFunction DirectDeclParser);
 
   void ParseTypeQualifierListOpt(DeclSpec &DS, bool GNUAttributesAllowed = true,
-                                 bool CXX11AttributesAllowed = true);
+                                 bool CXX11AttributesAllowed = true,
+                                 bool AtomicAllowed = true);
   void ParseDirectDeclarator(Declarator &D);
   void ParseParenDeclarator(Declarator &D);
   void ParseFunctionDeclarator(Declarator &D,

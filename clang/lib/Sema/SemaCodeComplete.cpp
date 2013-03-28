@@ -3729,6 +3729,9 @@ void Sema::CodeCompleteTypeQualifiers(DeclSpec &DS) {
   if (getLangOpts().C99 &&
       !(DS.getTypeQualifiers() & DeclSpec::TQ_restrict))
     Results.AddResult("restrict");
+  if (getLangOpts().C11 &&
+      !(DS.getTypeQualifiers() & DeclSpec::TQ_atomic))
+    Results.AddResult("_Atomic");
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, 
                             Results.getCompletionContext(),

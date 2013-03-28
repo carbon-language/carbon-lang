@@ -1,7 +1,9 @@
-// RUN: %clang_cc1 -verify %s
+// RUN: %clang_cc1 -verify -pedantic %s
 
 template<typename T> struct atomic {
   _Atomic(T) value;
+
+  void f() _Atomic; // expected-error {{expected ';' at end of declaration list}}
 };
 
 template<typename T> struct user {
@@ -15,9 +17,11 @@ user<int> u;
 struct A { };
 
 int &ovl1(_Atomic(int));
+int &ovl1(_Atomic int); // ok, redeclaration
 long &ovl1(_Atomic(long));
 float &ovl1(_Atomic(float));
 double &ovl1(_Atomic(A const *const *));
+double &ovl1(A const *const *_Atomic);
 short &ovl1(_Atomic(A **));
 
 void test_overloading(int i, float f, _Atomic(int) ai, _Atomic(float) af,
@@ -33,3 +37,22 @@ void test_overloading(int i, float f, _Atomic(int) ai, _Atomic(float) af,
   double &dr2 = ovl1(ac);
   short &sr1 = ovl1(a);
 }
+
+typedef int (A::*fp)() _Atomic; // expected-error {{expected ';' after top level declarator}} expected-warning {{does not declare anything}}
+
+typedef _Atomic(int(A::*)) atomic_mem_ptr_to_int;
+typedef int(A::*_Atomic atomic_mem_ptr_to_int);
+
+typedef _Atomic(int)(A::*mem_ptr_to_atomic_int);
+typedef _Atomic int(A::*mem_ptr_to_atomic_int);
+
+typedef _Atomic(int)&atomic_int_ref;
+typedef _Atomic int &atomic_int_ref;
+typedef _Atomic atomic_int_ref atomic_int_ref; // ok, qualifiers on references ignored in this case.
+
+typedef int &_Atomic atomic_reference_to_int; // expected-error {{'_Atomic' qualifier may not be applied to a reference}}
+typedef _Atomic(int &) atomic_reference_to_int; // expected-error {{_Atomic cannot be applied to reference type 'int &'}}
+
+struct S {
+  _Atomic union { int n; }; // expected-warning {{anonymous union cannot be '_Atomic'}}
+};

@@ -1810,6 +1810,9 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
     Diag(Loc, diag::w_asm_qualifier_ignored) << "const";
   if (DS.getTypeQualifiers() & DeclSpec::TQ_restrict)
     Diag(Loc, diag::w_asm_qualifier_ignored) << "restrict";
+  // FIXME: Once GCC supports _Atomic, check whether it permits it here.
+  if (DS.getTypeQualifiers() & DeclSpec::TQ_atomic)
+    Diag(Loc, diag::w_asm_qualifier_ignored) << "_Atomic";
 
   // Remember if this was a volatile asm.
   bool isVolatile = DS.getTypeQualifiers() & DeclSpec::TQ_volatile;

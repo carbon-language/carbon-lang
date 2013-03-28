@@ -1089,21 +1089,18 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     // of a function type includes any type qualifiers, the behavior is
     // undefined."
     if (Result->isFunctionType() && TypeQuals) {
-      // Get some location to point at, either the C or V location.
-      SourceLocation Loc;
       if (TypeQuals & DeclSpec::TQ_const)
-        Loc = DS.getConstSpecLoc();
-      else if (TypeQuals & DeclSpec::TQ_volatile)
-        Loc = DS.getVolatileSpecLoc();
-      else {
-        assert((TypeQuals & DeclSpec::TQ_restrict) &&
-               "Has CVR quals but not C, V, or R?");
-        // No diagnostic; we'll diagnose 'restrict' applied to a function type
-        // later, in BuildQualifiedType.
-      }
-      if (!Loc.isInvalid())
-        S.Diag(Loc, diag::warn_typecheck_function_qualifiers)
+        S.Diag(DS.getConstSpecLoc(), diag::warn_typecheck_function_qualifiers)
           << Result << DS.getSourceRange();
+      else if (TypeQuals & DeclSpec::TQ_volatile)
+        S.Diag(DS.getVolatileSpecLoc(), diag::warn_typecheck_function_qualifiers)
+          << Result << DS.getSourceRange();
+      else {
+        assert((TypeQuals & (DeclSpec::TQ_restrict | DeclSpec::TQ_atomic)) &&
+               "Has CVRA quals but not C, V, R, or A?");
+        // No diagnostic; we'll diagnose 'restrict' or '_Atomic' applied to a
+        // function type later, in BuildQualifiedType.
+      }
     }
 
     // C++ [dcl.ref]p1:
@@ -1116,6 +1113,7 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
         TypeQuals && Result->isReferenceType()) {
       TypeQuals &= ~DeclSpec::TQ_const;
       TypeQuals &= ~DeclSpec::TQ_volatile;
+      TypeQuals &= ~DeclSpec::TQ_atomic;
     }
 
     // C90 6.5.3 constraints: "The same type qualifier shall not appear more
@@ -1133,11 +1131,17 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
           << "volatile";
       }
 
-      // C90 doesn't have restrict, so it doesn't force us to produce a warning
-      // in this case.
+      // C90 doesn't have restrict nor _Atomic, so it doesn't force us to
+      // produce a warning in this case.
     }
 
-    return S.BuildQualifiedType(Result, DeclLoc, TypeQuals, &DS);
+    QualType Qualified = S.BuildQualifiedType(Result, DeclLoc, TypeQuals, &DS);
+
+    // If adding qualifiers fails, just use the unqualified type.
+    if (Qualified.isNull())
+      declarator.setInvalidType(true);
+    else
+      Result = Qualified;
   }
 
   return Result;
@@ -1186,6 +1190,39 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
   }
 
   return Context.getQualifiedType(T, Qs);
+}
+
+QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
+                                  unsigned CVRA, const DeclSpec *DS) {
+  // Convert from DeclSpec::TQ to Qualifiers::TQ by just dropping TQ_atomic.
+  unsigned CVR = CVRA & ~DeclSpec::TQ_atomic;
+
+  // C11 6.7.3/5:
+  //   If the same qualifier appears more than once in the same
+  //   specifier-qualifier-list, either directly or via one or more typedefs,
+  //   the behavior is the same as if it appeared only once.
+  //
+  // It's not specified what happens when the _Atomic qualifier is applied to
+  // a type specified with the _Atomic specifier, but we assume that this
+  // should be treated as if the _Atomic qualifier appeared multiple times.
+  if (CVRA & DeclSpec::TQ_atomic && !T->isAtomicType()) {
+    // C11 6.7.3/5:
+    //   If other qualifiers appear along with the _Atomic qualifier in a
+    //   specifier-qualifier-list, the resulting type is the so-qualified
+    //   atomic type.
+    //
+    // Don't need to worry about array types here, since _Atomic can't be
+    // applied to such types.
+    SplitQualType Split = T.getSplitUnqualifiedType();
+    T = BuildAtomicType(QualType(Split.Ty, 0),
+                        DS ? DS->getAtomicSpecLoc() : Loc);
+    if (T.isNull())
+      return T;
+    Split.Quals.addCVRQualifiers(CVR);
+    return BuildQualifiedType(T, Loc, Split.Quals);
+  }
+
+  return BuildQualifiedType(T, Loc, Qualifiers::fromCVRMask(CVR), DS);
 }
 
 /// \brief Build a paren type including \p T.
@@ -1847,6 +1884,7 @@ static void DiagnoseIgnoredQualifiers(unsigned Quals,
                                       SourceLocation ConstQualLoc,
                                       SourceLocation VolatileQualLoc,
                                       SourceLocation RestrictQualLoc,
+                                      SourceLocation AtomicQualLoc,
                                       Sema& S) {
   std::string QualStr;
   unsigned NumQuals = 0;
@@ -1855,38 +1893,47 @@ static void DiagnoseIgnoredQualifiers(unsigned Quals,
   FixItHint ConstFixIt;
   FixItHint VolatileFixIt;
   FixItHint RestrictFixIt;
+  FixItHint AtomicFixIt;
 
   const SourceManager &SM = S.getSourceManager();
 
   // FIXME: The locations here are set kind of arbitrarily. It'd be nicer to
   // find a range and grow it to encompass all the qualifiers, regardless of
   // the order in which they textually appear.
-  if (Quals & Qualifiers::Const) {
+  if (Quals & DeclSpec::TQ_const) {
     ConstFixIt = FixItHint::CreateRemoval(ConstQualLoc);
     QualStr = "const";
     ++NumQuals;
     if (!Loc.isValid() || SM.isBeforeInTranslationUnit(ConstQualLoc, Loc))
       Loc = ConstQualLoc;
   }
-  if (Quals & Qualifiers::Volatile) {
+  if (Quals & DeclSpec::TQ_volatile) {
     VolatileFixIt = FixItHint::CreateRemoval(VolatileQualLoc);
     QualStr += (NumQuals == 0 ? "volatile" : " volatile");
     ++NumQuals;
     if (!Loc.isValid() || SM.isBeforeInTranslationUnit(VolatileQualLoc, Loc))
       Loc = VolatileQualLoc;
   }
-  if (Quals & Qualifiers::Restrict) {
+  if (Quals & DeclSpec::TQ_restrict) {
     RestrictFixIt = FixItHint::CreateRemoval(RestrictQualLoc);
     QualStr += (NumQuals == 0 ? "restrict" : " restrict");
     ++NumQuals;
     if (!Loc.isValid() || SM.isBeforeInTranslationUnit(RestrictQualLoc, Loc))
       Loc = RestrictQualLoc;
   }
+  if (Quals & DeclSpec::TQ_atomic) {
+    AtomicFixIt = FixItHint::CreateRemoval(AtomicQualLoc);
+    QualStr += (NumQuals == 0 ? "_Atomic" : " _Atomic");
+    ++NumQuals;
+    if (!Loc.isValid() || SM.isBeforeInTranslationUnit(AtomicQualLoc, Loc))
+      Loc = AtomicQualLoc;
+  }
 
   assert(NumQuals > 0 && "No known qualifiers?");
 
   S.Diag(Loc, diag::warn_qual_return_type)
-    << QualStr << NumQuals << ConstFixIt << VolatileFixIt << RestrictFixIt;
+    << QualStr << NumQuals
+    << ConstFixIt << VolatileFixIt << RestrictFixIt << AtomicFixIt;
 }
 
 static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
@@ -2496,16 +2543,18 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
             SourceLocation::getFromRawEncoding(PTI.ConstQualLoc),
             SourceLocation::getFromRawEncoding(PTI.VolatileQualLoc),
             SourceLocation::getFromRawEncoding(PTI.RestrictQualLoc),
+            SourceLocation::getFromRawEncoding(PTI.AtomicQualLoc),
             S);
 
       } else if (T.getCVRQualifiers() && D.getDeclSpec().getTypeQualifiers() &&
-          (!LangOpts.CPlusPlus ||
-           (!T->isDependentType() && !T->isRecordType()))) {
+                 (!LangOpts.CPlusPlus ||
+                  (!T->isDependentType() && !T->isRecordType()))) {
 
         DiagnoseIgnoredQualifiers(D.getDeclSpec().getTypeQualifiers(),
                                   D.getDeclSpec().getConstSpecLoc(),
                                   D.getDeclSpec().getVolatileSpecLoc(),
                                   D.getDeclSpec().getRestrictSpecLoc(),
+                                  D.getDeclSpec().getAtomicSpecLoc(),
                                   S);
       }
 
@@ -3310,13 +3359,22 @@ namespace {
       TL.setNameLoc(DS.getTypeSpecTypeNameLoc());
     }
     void VisitAtomicTypeLoc(AtomicTypeLoc TL) {
-      TL.setKWLoc(DS.getTypeSpecTypeLoc());
-      TL.setParensRange(DS.getTypeofParensRange());
+      // An AtomicTypeLoc can come from either an _Atomic(...) type specifier
+      // or an _Atomic qualifier.
+      if (DS.getTypeSpecType() == DeclSpec::TST_atomic) {
+        TL.setKWLoc(DS.getTypeSpecTypeLoc());
+        TL.setParensRange(DS.getTypeofParensRange());
 
-      TypeSourceInfo *TInfo = 0;
-      Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
-      assert(TInfo);
-      TL.getValueLoc().initializeFullCopy(TInfo->getTypeLoc());
+        TypeSourceInfo *TInfo = 0;
+        Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
+        assert(TInfo);
+        TL.getValueLoc().initializeFullCopy(TInfo->getTypeLoc());
+      } else {
+        TL.setKWLoc(DS.getAtomicSpecLoc());
+        // No parens, to indicate this was spelled as an _Atomic qualifier.
+        TL.setParensRange(SourceRange());
+        Visit(TL.getValueLoc());
+      }
     }
 
     void VisitTypeLoc(TypeLoc TL) {
@@ -3439,6 +3497,29 @@ namespace {
   };
 }
 
+static void fillAtomicQualLoc(AtomicTypeLoc ATL, const DeclaratorChunk &Chunk) {
+  SourceLocation Loc;
+  switch (Chunk.Kind) {
+  case DeclaratorChunk::Function:
+  case DeclaratorChunk::Array:
+  case DeclaratorChunk::Paren:
+    llvm_unreachable("cannot be _Atomic qualified");
+
+  case DeclaratorChunk::Pointer:
+    Loc = SourceLocation::getFromRawEncoding(Chunk.Ptr.AtomicQualLoc);
+    break;
+
+  case DeclaratorChunk::BlockPointer:
+  case DeclaratorChunk::Reference:
+  case DeclaratorChunk::MemberPointer:
+    // FIXME: Provide a source location for the _Atomic keyword.
+    break;
+  }
+
+  ATL.setKWLoc(Loc);
+  ATL.setParensRange(SourceRange());
+}
+
 /// \brief Create and instantiate a TypeSourceInfo with type source information.
 ///
 /// \param T QualType referring to the type as written in source code.
@@ -3460,6 +3541,14 @@ Sema::GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,
   }
 
   for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
+    // An AtomicTypeLoc might be produced by an atomic qualifier in this
+    // declarator chunk.
+    // FIXME: Relative order of this and attributed type loc?
+    if (AtomicTypeLoc ATL = CurrTL.getAs<AtomicTypeLoc>()) {
+      fillAtomicQualLoc(ATL, D.getTypeObject(i));
+      CurrTL = ATL.getValueLoc().getUnqualifiedLoc();
+    }
+
     while (AttributedTypeLoc TL = CurrTL.getAs<AttributedTypeLoc>()) {
       fillAttributedTypeLoc(TL, D.getTypeObject(i).getAttrs());
       CurrTL = TL.getNextTypeLoc().getUnqualifiedLoc();

@@ -169,6 +169,9 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto,
                                              SourceLocation LocalRangeEnd,
                                              Declarator &TheDeclarator,
                                              TypeResult TrailingReturnType) {
+  assert(!(TypeQuals & DeclSpec::TQ_atomic) &&
+         "function cannot have _Atomic qualifier");
+
   DeclaratorChunk I;
   I.Kind                        = Function;
   I.Loc                         = LocalRangeBegin;
@@ -442,6 +445,7 @@ const char *DeclSpec::getSpecifierName(TQ T) {
   case DeclSpec::TQ_const:       return "const";
   case DeclSpec::TQ_restrict:    return "restrict";
   case DeclSpec::TQ_volatile:    return "volatile";
+  case DeclSpec::TQ_atomic:      return "_Atomic";
   }
   llvm_unreachable("Unknown typespec!");
 }
@@ -710,12 +714,14 @@ bool DeclSpec::SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
   TypeQualifiers |= T;
 
   switch (T) {
-  default: llvm_unreachable("Unknown type qualifier!");
-  case TQ_const:    TQ_constLoc = Loc; break;
-  case TQ_restrict: TQ_restrictLoc = Loc; break;
-  case TQ_volatile: TQ_volatileLoc = Loc; break;
+  case TQ_unspecified: break;
+  case TQ_const:    TQ_constLoc = Loc; return false;
+  case TQ_restrict: TQ_restrictLoc = Loc; return false;
+  case TQ_volatile: TQ_volatileLoc = Loc; return false;
+  case TQ_atomic:   TQ_atomicLoc = Loc; return false;
   }
-  return false;
+
+  llvm_unreachable("Unknown type qualifier!");
 }
 
 bool DeclSpec::setFunctionSpecInline(SourceLocation Loc) {

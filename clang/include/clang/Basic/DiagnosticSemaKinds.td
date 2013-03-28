@@ -1166,8 +1166,7 @@ def warn_cxx98_compat_static_data_member_in_union : Warning<
 def err_union_member_of_reference_type : Error<
   "union member %0 has reference type %1">;
 def ext_anonymous_struct_union_qualified : Extension<
-  "anonymous %select{struct|union}0 cannot be '%select{const|volatile|"
-  "restrict}1'">;
+  "anonymous %select{struct|union}0 cannot be '%1'">;
 def err_different_return_type_for_overriding_virtual_function : Error<
   "virtual function %0 has a different return type "
   "%diff{($) than the function it overrides (which has return type $)|"
