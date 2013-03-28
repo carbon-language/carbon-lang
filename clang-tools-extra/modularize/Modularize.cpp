@@ -209,14 +209,34 @@ struct Location {
 };
 
 struct Entry {
-  enum Kind {
+  enum KindType {
     Tag,
     Value,
     Macro
   } Kind;
+  static const int NumberOfKinds = 3;
 
   Location Loc;
+
+  StringRef getKindName() { return getKindName(Kind); }
+  static StringRef getKindName(KindType kind);
 };
+
+// Return a string representing the given kind.
+StringRef Entry::getKindName(Entry::KindType kind) {
+  switch (kind) {
+  case Tag:
+    return "tag";
+  case Value:
+    return "value";
+    break;
+  case Macro:
+    return "macro";
+    break;
+  default:
+    return "unknown";
+  }
+}
 
 struct HeaderEntry {
   std::string Name;
@@ -248,7 +268,7 @@ class EntityMap : public StringMap<SmallVector<Entry, 2> > {
 public:
   DenseMap<const FileEntry *, HeaderContents> HeaderContentMismatches;
 
-  void add(const std::string &Name, enum Entry::Kind Kind, Location Loc) {
+  void add(const std::string &Name, enum Entry::KindType Kind, Location Loc) {
     // Record this entity in its header.
     HeaderEntry HE = { Name, Loc };
     CurHeaderContents[Loc.File].push_back(HE);
@@ -444,35 +464,50 @@ int main(int argc, const char **argv) {
   ClangTool Tool(*Compilations, Headers);
   int HadErrors = Tool.run(new ModularizeFrontendActionFactory(Entities));
 
+  // Create a place to save duplicate entity locations, separate bins per kind.
+  typedef SmallVector<Location, 8> LocationArray;
+  typedef SmallVector<LocationArray *, Entry::NumberOfKinds> EntryBinArray;
+  EntryBinArray EntryBins;
+  Entry::KindType kind;
+  int kindIndex;
+  for (kindIndex = 0; kindIndex < Entry::NumberOfKinds; ++kindIndex) {
+    EntryBins.push_back(new LocationArray);
+  }
+
   // Check for the same entity being defined in multiple places.
-  // FIXME: Could they be grouped into a list?
   for (EntityMap::iterator E = Entities.begin(), EEnd = Entities.end();
        E != EEnd; ++E) {
-    Location Tag, Value, Macro;
+    // If only one occurance, exit early.
+    if (E->second.size() == 1)
+      continue;
+    // Clear entity locations.
+    for (EntryBinArray::iterator CI = EntryBins.begin(), CE = EntryBins.end();
+         CI != CE; ++CI) {
+      (**CI).clear();
+    }
+    // Walk the entities of a single name, collecting the locations,
+    // separated into separate bins.
     for (unsigned I = 0, N = E->second.size(); I != N; ++I) {
-      Location *Which;
-      switch (E->second[I].Kind) {
-      case Entry::Tag:
-        Which = &Tag;
-        break;
-      case Entry::Value:
-        Which = &Value;
-        break;
-      case Entry::Macro:
-        Which = &Macro;
-        break;
-      }
-
-      if (!Which->File) {
-        *Which = E->second[I].Loc;
+      kind = E->second[I].Kind;
+      LocationArray *locationArray = EntryBins[kind];
+      locationArray->push_back(E->second[I].Loc);
+    }
+    // Report any duplicate entity definition errors.
+    int kindIndex = 0;
+    for (EntryBinArray::iterator DI = EntryBins.begin(), DE = EntryBins.end();
+         DI != DE; ++DI, ++kindIndex) {
+      int eCount = (**DI).size();
+      // If only 1 occurance, skip;
+      if (eCount <= 1)
         continue;
+      LocationArray::iterator FI = (**DI).begin();
+      StringRef kindName = Entry::getKindName((Entry::KindType) kindIndex);
+      errs() << "error: " << kindName << " '" << E->first()
+             << "' defined at multiple locations:\n";
+      for (LocationArray::iterator FE = (**DI).end(); FI != FE; ++FI) {
+        errs() << "    " << FI->File->getName() << ":" << FI->Line << ":"
+               << FI->Column << "\n";
       }
-
-      errs() << "error: '" << E->first() << "' defined at both "
-             << Which->File->getName() << ":" << Which->Line << ":"
-             << Which->Column << " and " << E->second[I].Loc.File->getName()
-             << ":" << E->second[I].Loc.Line << ":" << E->second[I].Loc.Column
-             << "\n";
       HadErrors = 1;
     }
   }

@@ -3,7 +3,9 @@
 Inputs/InconsistentHeader1.h
 Inputs/InconsistentHeader2.h
 
-# CHECK: error: 'SYMBOL' defined at both {{.*}}{{[/\\]}}Inputs{{[/\\]}}InconsistentSubHeader.h:3:9 and {{.*}}{{[/\\]}}Inputs/InconsistentSubHeader.h:6:9
+# CHECK: error: macro 'SYMBOL' defined at multiple locations:
+# CHECK-NEXT:    {{.*}}{{[/\\]}}Inputs{{[/\\]}}InconsistentSubHeader.h:3:9
+# CHECK-NEXT:    {{.*}}{{[/\\]}}Inputs{{[/\\]}}InconsistentSubHeader.h:6:9
 # CHECK-NEXT: error: header '{{.*}}{{[/\\]}}Inputs{{[/\\]}}InconsistentSubHeader.h' has different contents dependening on how it was included
 # CHECK-NEXT: note: 'SYMBOL' in {{.*}}{{[/\\]}}Inputs{{[/\\]}}InconsistentSubHeader.h at 3:9 not always provided
 # CHECK-NEXT: note: 'SYMBOL' in {{.*}}{{[/\\]}}Inputs{{[/\\]}}InconsistentSubHeader.h at 6:9 not always provided
