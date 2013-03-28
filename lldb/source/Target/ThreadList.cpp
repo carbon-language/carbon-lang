@@ -60,6 +60,10 @@ ThreadList::operator = (const ThreadList& rhs)
 
 ThreadList::~ThreadList()
 {
+    // Clear the thread list. Clear will take the mutex lock
+    // which will ensure that if anyone is using the list
+    // they won't get it removed while using it.
+    Clear();
 }
 
 
