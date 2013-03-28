@@ -42,7 +42,6 @@ def SBPort23 : ProcResource<2>;
 def SBPort4 : ProcResource<1>;
 
 // Many micro-ops are capable of issuing on multiple ports.
-def SBPort01  : ProcResGroup<[SBPort0, SBPort1]>;
 def SBPort05  : ProcResGroup<[SBPort0, SBPort5]>;
 def SBPort15  : ProcResGroup<[SBPort1, SBPort5]>;
 def SBPort015 : ProcResGroup<[SBPort0, SBPort1, SBPort5]>;
