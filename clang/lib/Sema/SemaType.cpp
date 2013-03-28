@@ -1738,7 +1738,6 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
       // Otherwise we may disagree about the size at different points in the TU.
       // FIXME: MSVC picks a model on the first use that needs to know the size,
       // rather than on the first mention of the type, e.g. typedefs.
-      SourceRange DeclRange = RD->getSourceRange();
       if (RequireCompleteType(Loc, Class, 0) && !RD->isBeingDefined()) {
         // We know it doesn't have an attribute and it's incomplete, so use the
         // unspecified inheritance model.  If we're in the record body, we can
