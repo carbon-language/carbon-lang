@@ -52,6 +52,7 @@ class CheckerDocumentation : public Checker< check::PreStmt<ReturnStmt>,
                                        check::LiveSymbols,
                                        check::RegionChanges,
                                        check::PointerEscape,
+                                       check::ConstPointerEscape,
                                        check::Event<ImplicitNullDerefEvent>,
                                        check::ASTDecl<FunctionDecl> > {
 public:
@@ -274,6 +275,17 @@ public:
     return State;
   }
 
+  /// \brief Called when const pointers escape.
+  ///
+  /// Note: in most cases checkPointerEscape callback is sufficient.
+  /// \sa checkPointerEscape
+  ProgramStateRef checkConstPointerEscape(ProgramStateRef State,
+                                     const InvalidatedSymbols &Escaped,
+                                     const CallEvent *Call,
+                                     PointerEscapeKind Kind) const {
+    return State;
+  }
+                                         
   /// check::Event<ImplicitNullDerefEvent>
   void checkEvent(ImplicitNullDerefEvent Event) const {}
 
