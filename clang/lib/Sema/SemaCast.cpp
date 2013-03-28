@@ -766,12 +766,13 @@ static void DiagnoseReinterpretUpDownCast(Sema &Self, const Expr *SrcExpr,
   QualType DerivedType =
       ReinterpretKind == ReinterpretUpcast? SrcType : DestType;
 
-  Self.Diag(OpRange.getBegin(), diag::warn_reinterpret_different_from_static)
-    << DerivedType << BaseType << !VirtualBase << ReinterpretKind;
-  Self.Diag(OpRange.getBegin(), diag::note_reinterpret_updowncast_use_static)
-    << ReinterpretKind;
-
-  // TODO: emit fixits. This requires passing operator SourceRange from Parser.
+  SourceLocation BeginLoc = OpRange.getBegin();
+  Self.Diag(BeginLoc, diag::warn_reinterpret_different_from_static)
+    << DerivedType << BaseType << !VirtualBase << ReinterpretKind
+    << OpRange;
+  Self.Diag(BeginLoc, diag::note_reinterpret_updowncast_use_static)
+    << ReinterpretKind
+    << FixItHint::CreateReplacement(BeginLoc, "static_cast");
 }
 
 /// CheckReinterpretCast - Check that a reinterpret_cast\<DestType\>(SrcExpr) is

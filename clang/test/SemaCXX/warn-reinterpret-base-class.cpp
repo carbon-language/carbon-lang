@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -fdiagnostics-parseable-fixits -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s 2>&1 | FileCheck %s
 
 // PR 13824
 class A {
@@ -117,12 +118,17 @@ void reinterpret_pointer_downcast(A *a, const A *ca) {
   // expected-warning@+2 {{'reinterpret_cast' to class 'DVA *' from its virtual base 'A *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while downcasting}}
   (void)*reinterpret_cast<DVA *>(a);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:10-[[@LINE-1]]:26}:"static_cast"
+
   // expected-warning@+2 {{'reinterpret_cast' to class 'DDVA *' from its virtual base 'A *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while downcasting}}
   (void)*reinterpret_cast<DDVA *>(a);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:10-[[@LINE-1]]:26}:"static_cast"
+
   // expected-warning@+2 {{'reinterpret_cast' to class 'DMA *' from its virtual base 'A *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while downcasting}}
   (void)*reinterpret_cast<DMA *>(a);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:10-[[@LINE-1]]:26}:"static_cast"
 }
 
 void reinterpret_reference_downcast(A a, A &ra, const A &cra) {
@@ -145,12 +151,17 @@ void reinterpret_reference_downcast(A a, A &ra, const A &cra) {
   // expected-warning@+2 {{'reinterpret_cast' to class 'DVA &' from its virtual base 'A' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while downcasting}}
   (void)reinterpret_cast<DVA &>(a);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
+
   // expected-warning@+2 {{'reinterpret_cast' to class 'DDVA &' from its virtual base 'A' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while downcasting}}
   (void)reinterpret_cast<DDVA &>(a);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
+
   // expected-warning@+2 {{'reinterpret_cast' to class 'DMA &' from its virtual base 'A' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while downcasting}}
   (void)reinterpret_cast<DMA &>(a);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
 }
 
 void reinterpret_pointer_upcast(DA *da, const DA *cda, DDA *dda, DAo *dao,
@@ -170,18 +181,27 @@ void reinterpret_pointer_upcast(DA *da, const DA *cda, DDA *dda, DAo *dao,
   // expected-warning@+2 {{'reinterpret_cast' from class 'DVA *' to its virtual base 'A *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while upcasting}}
   (void)*reinterpret_cast<A *>(dva);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:10-[[@LINE-1]]:26}:"static_cast"
+
   // expected-warning@+2 {{'reinterpret_cast' from class 'DDVA *' to its virtual base 'A *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while upcasting}}
   (void)*reinterpret_cast<A *>(ddva);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:10-[[@LINE-1]]:26}:"static_cast"
+
   // expected-warning@+2 {{'reinterpret_cast' from class 'DDVA *' to its virtual base 'DA *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while upcasting}}
   (void)*reinterpret_cast<DA *>(ddva);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:10-[[@LINE-1]]:26}:"static_cast"
+
   // expected-warning@+2 {{'reinterpret_cast' from class 'DMA *' to its virtual base 'A *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while upcasting}}
   (void)*reinterpret_cast<A *>(dma);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:10-[[@LINE-1]]:26}:"static_cast"
+
   // expected-warning@+2 {{'reinterpret_cast' from class 'DMA *' to its virtual base 'DA *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while upcasting}}
   (void)*reinterpret_cast<DA *>(dma);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:10-[[@LINE-1]]:26}:"static_cast"
 }
 
 void reinterpret_reference_upcast(DA &da, const DA &cda, DDA &dda, DAo &dao,
@@ -201,18 +221,27 @@ void reinterpret_reference_upcast(DA &da, const DA &cda, DDA &dda, DAo &dao,
   // expected-warning@+2 {{'reinterpret_cast' from class 'DVA' to its virtual base 'A &' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while upcasting}}
   (void)reinterpret_cast<A &>(dva);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
+
   // expected-warning@+2 {{'reinterpret_cast' from class 'DDVA' to its virtual base 'A &' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while upcasting}}
   (void)reinterpret_cast<A &>(ddva);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
+
   // expected-warning@+2 {{'reinterpret_cast' from class 'DDVA' to its virtual base 'DA &' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while upcasting}}
   (void)reinterpret_cast<DA &>(ddva);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
+
   // expected-warning@+2 {{'reinterpret_cast' from class 'DMA' to its virtual base 'A &' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while upcasting}}
   (void)reinterpret_cast<A &>(dma);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
+
   // expected-warning@+2 {{'reinterpret_cast' from class 'DMA' to its virtual base 'DA &' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while upcasting}}
   (void)reinterpret_cast<DA &>(dma);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
 }
 
 struct E {
@@ -239,35 +268,45 @@ void different_subobject_downcast(E *e, F *f, A *a) {
   // expected-warning@+2 {{'reinterpret_cast' to class 'F *' from its base at non-zero offset 'E *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while downcasting}}
   (void)reinterpret_cast<F *>(e);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
+
   // expected-warning@+2 {{'reinterpret_cast' to class 'G *' from its base at non-zero offset 'E *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while downcasting}}
   (void)reinterpret_cast<G *>(e);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
+
   (void)reinterpret_cast<H *>(e);
   // expected-warning@+2 {{'reinterpret_cast' to class 'I *' from its virtual base 'E *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while downcasting}}
   (void)reinterpret_cast<I *>(e);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
+
 
   (void)reinterpret_cast<G *>(f);
   // expected-warning@+2 {{'reinterpret_cast' to class 'I *' from its virtual base 'F *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while downcasting}}
   (void)reinterpret_cast<I *>(f);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
 
   (void)reinterpret_cast<H *>(a);
 
   // expected-warning@+2 {{'reinterpret_cast' to class 'L' (aka 'const F *volatile') from its base at non-zero offset 'E *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while downcasting}}
   (void)reinterpret_cast<L>(e);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
 }
 
 void different_subobject_upcast(F *f, G *g, H *h, I *i) {
   // expected-warning@+2 {{'reinterpret_cast' from class 'F *' to its base at non-zero offset 'E *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while upcasting}}
   (void)reinterpret_cast<E *>(f);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
 
   (void)reinterpret_cast<F *>(g);
   // expected-warning@+2 {{'reinterpret_cast' from class 'G *' to its base at non-zero offset 'E *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while upcasting}}
   (void)reinterpret_cast<E *>(g);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
 
   (void)reinterpret_cast<E *>(h);
   (void)reinterpret_cast<A *>(h);
@@ -275,7 +314,10 @@ void different_subobject_upcast(F *f, G *g, H *h, I *i) {
   // expected-warning@+2 {{'reinterpret_cast' from class 'I *' to its virtual base 'F *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while upcasting}}
   (void)reinterpret_cast<F *>(i);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
+
   // expected-warning@+2 {{'reinterpret_cast' from class 'I *' to its virtual base 'E *' behaves differently from 'static_cast'}}
   // expected-note@+1 {{use 'static_cast' to adjust the pointer correctly while upcasting}}
   (void)reinterpret_cast<E *>(i);
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
 }
