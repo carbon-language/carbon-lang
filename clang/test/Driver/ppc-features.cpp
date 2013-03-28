@@ -74,3 +74,9 @@
 // RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-mfcrf -mmfcrf -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-MFCRF %s
 // CHECK-MFCRF: "-target-feature" "+mfocrf"
 
+// RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-popcntd -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-NOPOPCNTD %s
+// CHECK-NOPOPCNTD: "-target-feature" "-popcntd"
+
+// RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-popcntd -mpopcntd -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-POPCNTD %s
+// CHECK-POPCNTD: "-target-feature" "+popcntd"
+

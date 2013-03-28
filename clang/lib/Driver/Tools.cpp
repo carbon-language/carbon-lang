@@ -1106,6 +1106,10 @@ void Clang::AddPPCTargetArgs(const ArgList &Args,
                    options::OPT_mmfcrf, options::OPT_mno_mfcrf,
                    "mfocrf");
 
+  AddTargetFeature(Args, CmdArgs,
+                   options::OPT_mpopcntd, options::OPT_mno_popcntd,
+                   "popcntd");
+
   // It is really only possible to turn qpx off because turning qpx on is tied
   // to using the a2q CPU.
   if (Args.hasFlag(options::OPT_mno_qpx, options::OPT_mqpx, false)) {
