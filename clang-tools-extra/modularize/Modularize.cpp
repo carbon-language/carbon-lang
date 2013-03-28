@@ -207,29 +207,30 @@ struct Location {
 };
 
 struct Entry {
-  enum KindType {
-    Tag,
-    Value,
-    Macro
+  enum EntryKind {
+    EK_Tag,
+    EK_Value,
+    EK_Macro,
+
+    EK_NumberOfKinds
   } Kind;
-  static const int NumberOfKinds = 3;
 
   Location Loc;
 
   StringRef getKindName() { return getKindName(Kind); }
-  static StringRef getKindName(KindType kind);
+  static StringRef getKindName(EntryKind kind);
 };
 
 // Return a string representing the given kind.
-StringRef Entry::getKindName(Entry::KindType kind) {
+StringRef Entry::getKindName(Entry::EntryKind kind) {
   switch (kind) {
-  case Tag:
+  case EK_Tag:
     return "tag";
-  case Value:
+  case EK_Value:
     return "value";
-    break;
-  case Macro:
+  case EK_Macro:
     return "macro";
+  case EK_NumberOfKinds:
     break;
   }
   llvm_unreachable("invalid Entry kind");
@@ -265,7 +266,7 @@ class EntityMap : public StringMap<SmallVector<Entry, 2> > {
 public:
   DenseMap<const FileEntry *, HeaderContents> HeaderContentMismatches;
 
-  void add(const std::string &Name, enum Entry::KindType Kind, Location Loc) {
+  void add(const std::string &Name, enum Entry::EntryKind Kind, Location Loc) {
     // Record this entity in its header.
     HeaderEntry HE = { Name, Loc };
     CurHeaderContents[Loc.File].push_back(HE);
@@ -368,7 +369,7 @@ public:
     if (!Loc)
       return true;
 
-    Entities.add(Name, isa<TagDecl>(ND) ? Entry::Tag : Entry::Value, Loc);
+    Entities.add(Name, isa<TagDecl>(ND) ? Entry::EK_Tag : Entry::EK_Value, Loc);
     return true;
   }
 private:
@@ -396,7 +397,7 @@ public:
       if (!Loc)
         continue;
 
-      Entities.add(M->first->getName().str(), Entry::Macro, Loc);
+      Entities.add(M->first->getName().str(), Entry::EK_Macro, Loc);
     }
 
     // Merge header contents.
@@ -463,12 +464,12 @@ int main(int argc, const char **argv) {
 
   // Create a place to save duplicate entity locations, separate bins per kind.
   typedef SmallVector<Location, 8> LocationArray;
-  typedef SmallVector<LocationArray *, Entry::NumberOfKinds> EntryBinArray;
+  typedef SmallVector<LocationArray, Entry::EK_NumberOfKinds> EntryBinArray;
   EntryBinArray EntryBins;
-  Entry::KindType kind;
   int kindIndex;
-  for (kindIndex = 0; kindIndex < Entry::NumberOfKinds; ++kindIndex) {
-    EntryBins.push_back(new LocationArray);
+  for (kindIndex = 0; kindIndex < Entry::EK_NumberOfKinds; ++kindIndex) {
+    LocationArray array;
+    EntryBins.push_back(array);
   }
 
   // Check for the same entity being defined in multiple places.
@@ -480,28 +481,26 @@ int main(int argc, const char **argv) {
     // Clear entity locations.
     for (EntryBinArray::iterator CI = EntryBins.begin(), CE = EntryBins.end();
          CI != CE; ++CI) {
-      (**CI).clear();
+      CI->clear();
     }
     // Walk the entities of a single name, collecting the locations,
     // separated into separate bins.
     for (unsigned I = 0, N = E->second.size(); I != N; ++I) {
-      kind = E->second[I].Kind;
-      LocationArray *locationArray = EntryBins[kind];
-      locationArray->push_back(E->second[I].Loc);
+      EntryBins[E->second[I].Kind].push_back(E->second[I].Loc);
     }
     // Report any duplicate entity definition errors.
     int kindIndex = 0;
     for (EntryBinArray::iterator DI = EntryBins.begin(), DE = EntryBins.end();
          DI != DE; ++DI, ++kindIndex) {
-      int eCount = (**DI).size();
+      int eCount = DI->size();
       // If only 1 occurance, skip;
       if (eCount <= 1)
         continue;
-      LocationArray::iterator FI = (**DI).begin();
-      StringRef kindName = Entry::getKindName((Entry::KindType) kindIndex);
+      LocationArray::iterator FI = DI->begin();
+      StringRef kindName = Entry::getKindName((Entry::EntryKind) kindIndex);
       errs() << "error: " << kindName << " '" << E->first()
              << "' defined at multiple locations:\n";
-      for (LocationArray::iterator FE = (**DI).end(); FI != FE; ++FI) {
+      for (LocationArray::iterator FE = DI->end(); FI != FE; ++FI) {
         errs() << "    " << FI->File->getName() << ":" << FI->Line << ":"
                << FI->Column << "\n";
       }
