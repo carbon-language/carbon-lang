@@ -1001,6 +1001,9 @@ def : InstAlias<"and $rs, $rt, $imm",
 def : InstAlias<"j $rs", (JR CPURegs:$rs), 0>,
       Requires<[NotMips64]>;
 def : InstAlias<"jalr $rs", (JALR RA, CPURegs:$rs)>, Requires<[NotMips64]>;
+def : InstAlias<"jal $rs", (JALR RA, CPURegs:$rs), 0>, Requires<[NotMips64]>;
+def : InstAlias<"jal $rd,$rs", (JALR CPURegs:$rd, CPURegs:$rs), 0>,
+                 Requires<[NotMips64]>;
 def : InstAlias<"not $rt, $rs",
                 (NOR CPURegsOpnd:$rt, CPURegsOpnd:$rs, ZERO), 1>;
 def : InstAlias<"neg $rt, $rs",

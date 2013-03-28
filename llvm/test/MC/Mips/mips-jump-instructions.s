@@ -1,4 +1,5 @@
-# RUN: llvm-mc %s -triple=mipsel-unknown-linux -show-encoding -mcpu=mips32r2 | FileCheck %s
+# RUN: llvm-mc %s -triple=mipsel-unknown-linux -show-encoding -mcpu=mips32r2 | \
+# RUN: FileCheck %s
 # Check that the assembler can handle the documented syntax
 # for jumps and branches.
 # CHECK: .section __TEXT,__text,regular,pure_instructions
@@ -25,6 +26,9 @@
 # CHECK:   nop                    # encoding: [0x00,0x00,0x00,0x00]
 # CHECK:   bal     1332           # encoding: [0x4d,0x01,0x11,0x04]
 # CHECK:   nop                    # encoding: [0x00,0x00,0x00,0x00]
+
+.set noreorder
+
          b 1332
          nop
          bc1f 1332
@@ -63,6 +67,11 @@ end_of_code:
 # CHECK:   jr $7                # encoding: [0x08,0x00,0xe0,0x00]
 # CHECK:   nop                  # encoding: [0x00,0x00,0x00,0x00]
 # CHECK:   jr $7                # encoding: [0x08,0x00,0xe0,0x00]
+# CHECK:   nop                  # encoding: [0x00,0x00,0x00,0x00]
+# CHECK:   jalr  $25            # encoding: [0x09,0xf8,0x20,0x03]
+# CHECK:   nop                  # encoding: [0x00,0x00,0x00,0x00]
+# CHECK:   jalr  $4, $25        # encoding: [0x09,0x20,0x20,0x03]
+# CHECK:   nop                  # encoding: [0x00,0x00,0x00,0x00]
 
 
    j 1328
@@ -78,3 +87,8 @@ end_of_code:
    jr $7
    nop
    j $7
+   nop
+   jal  $25
+   nop
+   jal  $4,$25
+   nop

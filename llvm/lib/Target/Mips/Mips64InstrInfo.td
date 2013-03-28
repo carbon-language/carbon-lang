@@ -332,6 +332,10 @@ def : InstAlias<"not $rt, $rs",
 def : InstAlias<"j $rs", (JR64 CPU64Regs:$rs), 0>, Requires<[HasMips64]>;
 def : InstAlias<"jalr $rs", (JALR64 RA_64, CPU64Regs:$rs)>,
       Requires<[HasMips64]>;
+def : InstAlias<"jal $rs", (JALR64 RA_64, CPU64Regs:$rs), 0>,
+                 Requires<[HasMips64]>;
+def : InstAlias<"jal $rd,$rs", (JALR64 CPU64Regs:$rd, CPU64Regs:$rs), 0>,
+                 Requires<[HasMips64]>;
 def : InstAlias<"daddu $rs, $rt, $imm",
                 (DADDiu CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, simm16_64:$imm),
                 1>;
