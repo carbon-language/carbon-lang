@@ -598,9 +598,12 @@ private:
       }
 
     // Create the DefinedAtom and add it to the list of DefinedAtoms.
-    return new (_readerStorage) ELFDefinedAtom<
+    auto ret = new (_readerStorage) ELFDefinedAtom<
         ELFT>(*this, symbolName, sectionName, symbol, section, content,
               referenceStart, _references.size(), _references);
+    ret->permissions();
+    ret->contentType();
+    return ret;
   }
 
   llvm::BumpPtrAllocator _readerStorage;
