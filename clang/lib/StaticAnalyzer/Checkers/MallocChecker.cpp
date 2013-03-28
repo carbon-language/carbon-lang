@@ -58,7 +58,7 @@ class RefState {
                         // family.
 
   RefState(Kind k, const Stmt *s, unsigned family) 
-    : K(k), S(s), Family(family) {}
+    : S(s), K(k), Family(family) {}
 public:
   bool isAllocated() const { return K == Allocated; }
   bool isReleased() const { return K == Released; }
