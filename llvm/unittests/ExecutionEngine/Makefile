@@ -10,7 +10,10 @@
 LEVEL = ../..
 TESTNAME = ExecutionEngine
 LINK_COMPONENTS :=interpreter
-PARALLEL_DIRS = JIT MCJIT
+
+ifeq ($(TARGET_HAS_JIT),1)
+	PARALLEL_DIRS = JIT MCJIT
+endif
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
