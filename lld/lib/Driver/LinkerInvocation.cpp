@@ -66,8 +66,7 @@ void LinkerInvocation::operator()() {
     }
 
     std::vector<std::unique_ptr<File>> files;
-    if (llvm::error_code ec = reader->readFile(
-          buffer->getBufferIdentifier(), files)) {
+    if (llvm::error_code ec = reader->parseFile(std::unique_ptr<MemoryBuffer>(MemoryBuffer::getMemBuffer(buffer->getBuffer(), buffer->getBufferIdentifier())), files)) {
       llvm::errs() << "Failed to read file: " << input.getPath() << ": "
                     << ec.message() << "\n";
       return;
