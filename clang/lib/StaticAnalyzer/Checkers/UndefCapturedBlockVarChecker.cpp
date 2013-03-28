@@ -91,7 +91,8 @@ UndefCapturedBlockVarChecker::checkPostStmt(const BlockExpr *BE,
         BugReport *R = new BugReport(*BT, os.str(), N);
         if (const Expr *Ex = FindBlockDeclRefExpr(BE->getBody(), VD))
           R->addRange(Ex->getSourceRange());
-        R->addVisitor(new FindLastStoreBRVisitor(*V, VR));
+        R->addVisitor(new FindLastStoreBRVisitor(*V, VR,
+                                             /*EnableNullFPSuppression*/false));
         R->disablePathPruning();
         // need location of block
         C.emitReport(R);

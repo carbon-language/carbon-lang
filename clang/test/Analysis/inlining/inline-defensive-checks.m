@@ -16,7 +16,6 @@ typedef struct objc_object {
 -(id)retain;
 @end
 
-// expected-no-diagnostics
 // Check that inline defensive checks is triggered for null expressions
 // within CompoundLiteralExpr.
 typedef union {
@@ -44,3 +43,71 @@ dispatch_resume(dispatch_object_t object);
   dispatch_resume(p); // no warning
 }
 @end
+
+// Test nil receiver suppression.
+// We only suppress on nil receiver if the nil value is directly causing the bug.
+@interface Foo {
+@public
+  int x;
+}
+- (Foo *)getFooPtr;
+@end
+
+Foo *retNil() {
+  return 0;
+}
+
+Foo *retInputOrNil(Foo *p) {
+  if (p)
+    return p;
+  return 0;
+}
+
+void idc(Foo *p) {
+  if (p)
+    ;
+}
+
+int testNilReceiver(Foo* fPtr) {
+  if (fPtr)
+    ;
+  // On a path where fPtr is nil, mem should be nil.
+  Foo *mem = [fPtr getFooPtr];
+  return mem->x; // expected-warning {{Access to instance variable 'x' results in a dereference of a null pointer}}
+}
+
+int dontSuppressNilReceiverRetNullCond(Foo* fPtr) {
+  unsigned zero = 0;
+  fPtr = retInputOrNil(fPtr);
+  // On a path where fPtr is nil, mem should be nil.
+  // The warning is not suppressed because the receiver being nil is not
+  // directly related to the value that triggers the warning.
+  Foo *mem = [fPtr getFooPtr];
+  if (!mem)
+    return 5/zero; // expected-warning {{Division by zero}}
+  return 0;
+}
+
+int dontSuppressNilReceiverRetNull(Foo* fPtr) {
+  unsigned zero = 0;
+  fPtr = retNil();
+  // On a path where fPtr is nil, mem should be nil.
+  // The warning is not suppressed because the receiver being nil is not
+  // directly related to the value that triggers the warning.
+  Foo *mem = [fPtr getFooPtr];
+  if (!mem)
+    return 5/zero; // expected-warning {{Division by zero}}
+  return 0;
+}
+
+int dontSuppressNilReceiverIDC(Foo* fPtr) {
+  unsigned zero = 0;
+  idc(fPtr);
+  // On a path where fPtr is nil, mem should be nil.
+  // The warning is not suppressed because the receiver being nil is not
+  // directly related to the value that triggers the warning.
+  Foo *mem = [fPtr getFooPtr];
+  if (!mem)
+    return 5/zero; // expected-warning {{Division by zero}}
+  return 0;
+}
