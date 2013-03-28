@@ -3543,7 +3543,6 @@ Sema::GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,
   for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
     // An AtomicTypeLoc might be produced by an atomic qualifier in this
     // declarator chunk.
-    // FIXME: Relative order of this and attributed type loc?
     if (AtomicTypeLoc ATL = CurrTL.getAs<AtomicTypeLoc>()) {
       fillAtomicQualLoc(ATL, D.getTypeObject(i));
       CurrTL = ATL.getValueLoc().getUnqualifiedLoc();
