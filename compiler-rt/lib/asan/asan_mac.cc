@@ -288,7 +288,7 @@ typedef struct {
   u32 parent_tid;
 } asan_block_context_t;
 
-static ALWAYS_INLINE
+ALWAYS_INLINE
 void asan_register_worker_thread(int parent_tid, StackTrace *stack) {
   AsanThread *t = GetCurrentThread();
   if (!t) {

@@ -1656,7 +1656,7 @@ TSAN_INTERCEPTOR(int, poll, void *fds, long_t nfds, int timeout) {
   return res;
 }
 
-static void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
+void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
     my_siginfo_t *info, void *ctx) {
   ThreadState *thr = cur_thread();
   SignalContext *sctx = SigCtx(thr);
