@@ -194,7 +194,17 @@ const NamedImmMapper::Mapping A64SysReg::MRSMapper::MRSPairs[] = {
   {"rvbar_el3", RVBAR_EL3},
   {"isr_el1", ISR_EL1},
   {"cntpct_el0", CNTPCT_EL0},
-  {"cntvct_el0", CNTVCT_EL0}
+  {"cntvct_el0", CNTVCT_EL0},
+
+  // GICv3 registers
+  {"icc_iar1_el1", ICC_IAR1_EL1},
+  {"icc_iar0_el1", ICC_IAR0_EL1},
+  {"icc_hppir1_el1", ICC_HPPIR1_EL1},
+  {"icc_hppir0_el1", ICC_HPPIR0_EL1},
+  {"icc_rpr_el1", ICC_RPR_EL1},
+  {"ich_vtr_el2", ICH_VTR_EL2},
+  {"ich_eisr_el2", ICH_EISR_EL2},
+  {"ich_elsr_el2", ICH_ELSR_EL2}
 };
 
 A64SysReg::MRSMapper::MRSMapper() {
@@ -205,7 +215,15 @@ A64SysReg::MRSMapper::MRSMapper() {
 const NamedImmMapper::Mapping A64SysReg::MSRMapper::MSRPairs[] = {
   {"dbgdtrtx_el0", DBGDTRTX_EL0},
   {"oslar_el1", OSLAR_EL1},
-  {"pmswinc_el0", PMSWINC_EL0}
+  {"pmswinc_el0", PMSWINC_EL0},
+
+  // GICv3 registers
+  {"icc_eoir1_el1", ICC_EOIR1_EL1},
+  {"icc_eoir0_el1", ICC_EOIR0_EL1},
+  {"icc_dir_el1", ICC_DIR_EL1},
+  {"icc_sgi1r_el1", ICC_SGI1R_EL1},
+  {"icc_asgi1r_el1", ICC_ASGI1R_EL1},
+  {"icc_sgi0r_el1", ICC_SGI0R_EL1}
 };
 
 A64SysReg::MSRMapper::MSRMapper() {
@@ -467,6 +485,56 @@ const NamedImmMapper::Mapping A64SysReg::SysRegMapper::SysRegPairs[] = {
   {"pmevtyper28_el0", PMEVTYPER28_EL0},
   {"pmevtyper29_el0", PMEVTYPER29_EL0},
   {"pmevtyper30_el0", PMEVTYPER30_EL0},
+
+  // GICv3 registers
+  {"icc_bpr1_el1", ICC_BPR1_EL1},
+  {"icc_bpr0_el1", ICC_BPR0_EL1},
+  {"icc_pmr_el1", ICC_PMR_EL1},
+  {"icc_ctlr_el1", ICC_CTLR_EL1},
+  {"icc_ctlr_el3", ICC_CTLR_EL3},
+  {"icc_sre_el1", ICC_SRE_EL1},
+  {"icc_sre_el2", ICC_SRE_EL2},
+  {"icc_sre_el3", ICC_SRE_EL3},
+  {"icc_igrpen0_el1", ICC_IGRPEN0_EL1},
+  {"icc_igrpen1_el1", ICC_IGRPEN1_EL1},
+  {"icc_igrpen1_el3", ICC_IGRPEN1_EL3},
+  {"icc_seien_el1", ICC_SEIEN_EL1},
+  {"icc_ap0r0_el1", ICC_AP0R0_EL1},
+  {"icc_ap0r1_el1", ICC_AP0R1_EL1},
+  {"icc_ap0r2_el1", ICC_AP0R2_EL1},
+  {"icc_ap0r3_el1", ICC_AP0R3_EL1},
+  {"icc_ap1r0_el1", ICC_AP1R0_EL1},
+  {"icc_ap1r1_el1", ICC_AP1R1_EL1},
+  {"icc_ap1r2_el1", ICC_AP1R2_EL1},
+  {"icc_ap1r3_el1", ICC_AP1R3_EL1},
+  {"ich_ap0r0_el2", ICH_AP0R0_EL2},
+  {"ich_ap0r1_el2", ICH_AP0R1_EL2},
+  {"ich_ap0r2_el2", ICH_AP0R2_EL2},
+  {"ich_ap0r3_el2", ICH_AP0R3_EL2},
+  {"ich_ap1r0_el2", ICH_AP1R0_EL2},
+  {"ich_ap1r1_el2", ICH_AP1R1_EL2},
+  {"ich_ap1r2_el2", ICH_AP1R2_EL2},
+  {"ich_ap1r3_el2", ICH_AP1R3_EL2},
+  {"ich_hcr_el2", ICH_HCR_EL2},
+  {"ich_misr_el2", ICH_MISR_EL2},
+  {"ich_vmcr_el2", ICH_VMCR_EL2},
+  {"ich_vseir_el2", ICH_VSEIR_EL2},
+  {"ich_lr0_el2", ICH_LR0_EL2},
+  {"ich_lr1_el2", ICH_LR1_EL2},
+  {"ich_lr2_el2", ICH_LR2_EL2},
+  {"ich_lr3_el2", ICH_LR3_EL2},
+  {"ich_lr4_el2", ICH_LR4_EL2},
+  {"ich_lr5_el2", ICH_LR5_EL2},
+  {"ich_lr6_el2", ICH_LR6_EL2},
+  {"ich_lr7_el2", ICH_LR7_EL2},
+  {"ich_lr8_el2", ICH_LR8_EL2},
+  {"ich_lr9_el2", ICH_LR9_EL2},
+  {"ich_lr10_el2", ICH_LR10_EL2},
+  {"ich_lr11_el2", ICH_LR11_EL2},
+  {"ich_lr12_el2", ICH_LR12_EL2},
+  {"ich_lr13_el2", ICH_LR13_EL2},
+  {"ich_lr14_el2", ICH_LR14_EL2},
+  {"ich_lr15_el2", ICH_LR15_EL2}
 };
 
 uint32_t

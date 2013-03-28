@@ -354,13 +354,31 @@ namespace A64SysReg {
     RVBAR_EL3         = 0xf601, // 11  110  1100  0000  001
     ISR_EL1           = 0xc608, // 11  000  1100  0001  000
     CNTPCT_EL0        = 0xdf01, // 11  011  1110  0000  001
-    CNTVCT_EL0        = 0xdf02  // 11  011  1110  0000  010
+    CNTVCT_EL0        = 0xdf02,  // 11  011  1110  0000  010
+
+    // GICv3 registers
+    ICC_IAR1_EL1      = 0xc660, // 11  000  1100  1100  000
+    ICC_IAR0_EL1      = 0xc640, // 11  000  1100  1000  000
+    ICC_HPPIR1_EL1    = 0xc662, // 11  000  1100  1100  010
+    ICC_HPPIR0_EL1    = 0xc642, // 11  000  1100  1000  010
+    ICC_RPR_EL1       = 0xc65b, // 11  000  1100  1011  011
+    ICH_VTR_EL2       = 0xe659, // 11  100  1100  1011  001
+    ICH_EISR_EL2      = 0xe65b, // 11  100  1100  1011  011
+    ICH_ELSR_EL2      = 0xe65d  // 11  100  1100  1011  101
   };
 
   enum SysRegWOValues {
     DBGDTRTX_EL0      = 0x9828, // 10  011  0000  0101  000
     OSLAR_EL1         = 0x8084, // 10  000  0001  0000  100
-    PMSWINC_EL0       = 0xdce4  // 11  011  1001  1100  100
+    PMSWINC_EL0       = 0xdce4,  // 11  011  1001  1100  100
+
+    // GICv3 registers
+    ICC_EOIR1_EL1     = 0xc661, // 11  000  1100  1100  001
+    ICC_EOIR0_EL1     = 0xc641, // 11  000  1100  1000  001
+    ICC_DIR_EL1       = 0xc659, // 11  000  1100  1011  001
+    ICC_SGI1R_EL1     = 0xc65d, // 11  000  1100  1011  101
+    ICC_ASGI1R_EL1    = 0xc65e, // 11  000  1100  1011  110
+    ICC_SGI0R_EL1     = 0xc65f  // 11  000  1100  1011  111
   };
 
   enum SysRegValues {
@@ -616,7 +634,57 @@ namespace A64SysReg {
     PMEVTYPER27_EL0   = 0xdf7b, // 11  011  1110  1111  011
     PMEVTYPER28_EL0   = 0xdf7c, // 11  011  1110  1111  100
     PMEVTYPER29_EL0   = 0xdf7d, // 11  011  1110  1111  101
-    PMEVTYPER30_EL0   = 0xdf7e  // 11  011  1110  1111  110
+    PMEVTYPER30_EL0   = 0xdf7e, // 11  011  1110  1111  110
+
+    // GICv3 registers
+    ICC_BPR1_EL1      = 0xc663, // 11  000  1100  1100  011
+    ICC_BPR0_EL1      = 0xc643, // 11  000  1100  1000  011
+    ICC_PMR_EL1       = 0xc230, // 11  000  0100  0110  000
+    ICC_CTLR_EL1      = 0xc664, // 11  000  1100  1100  100
+    ICC_CTLR_EL3      = 0xf664, // 11  110  1100  1100  100
+    ICC_SRE_EL1       = 0xc665, // 11  000  1100  1100  101
+    ICC_SRE_EL2       = 0xe64d, // 11  100  1100  1001  101
+    ICC_SRE_EL3       = 0xf665, // 11  110  1100  1100  101
+    ICC_IGRPEN0_EL1   = 0xc666, // 11  000  1100  1100  110
+    ICC_IGRPEN1_EL1   = 0xc667, // 11  000  1100  1100  111
+    ICC_IGRPEN1_EL3   = 0xf667, // 11  110  1100  1100  111
+    ICC_SEIEN_EL1     = 0xc668, // 11  000  1100  1101  000
+    ICC_AP0R0_EL1     = 0xc644, // 11  000  1100  1000  100
+    ICC_AP0R1_EL1     = 0xc645, // 11  000  1100  1000  101
+    ICC_AP0R2_EL1     = 0xc646, // 11  000  1100  1000  110
+    ICC_AP0R3_EL1     = 0xc647, // 11  000  1100  1000  111
+    ICC_AP1R0_EL1     = 0xc648, // 11  000  1100  1001  000
+    ICC_AP1R1_EL1     = 0xc649, // 11  000  1100  1001  001
+    ICC_AP1R2_EL1     = 0xc64a, // 11  000  1100  1001  010
+    ICC_AP1R3_EL1     = 0xc64b, // 11  000  1100  1001  011
+    ICH_AP0R0_EL2     = 0xe640, // 11  100  1100  1000  000
+    ICH_AP0R1_EL2     = 0xe641, // 11  100  1100  1000  001
+    ICH_AP0R2_EL2     = 0xe642, // 11  100  1100  1000  010
+    ICH_AP0R3_EL2     = 0xe643, // 11  100  1100  1000  011
+    ICH_AP1R0_EL2     = 0xe648, // 11  100  1100  1001  000
+    ICH_AP1R1_EL2     = 0xe649, // 11  100  1100  1001  001
+    ICH_AP1R2_EL2     = 0xe64a, // 11  100  1100  1001  010
+    ICH_AP1R3_EL2     = 0xe64b, // 11  100  1100  1001  011
+    ICH_HCR_EL2       = 0xe658, // 11  100  1100  1011  000
+    ICH_MISR_EL2      = 0xe65a, // 11  100  1100  1011  010
+    ICH_VMCR_EL2      = 0xe65f, // 11  100  1100  1011  111
+    ICH_VSEIR_EL2     = 0xe64c, // 11  100  1100  1001  100
+    ICH_LR0_EL2       = 0xe660, // 11  100  1100  1100  000
+    ICH_LR1_EL2       = 0xe661, // 11  100  1100  1100  001
+    ICH_LR2_EL2       = 0xe662, // 11  100  1100  1100  010
+    ICH_LR3_EL2       = 0xe663, // 11  100  1100  1100  011
+    ICH_LR4_EL2       = 0xe664, // 11  100  1100  1100  100
+    ICH_LR5_EL2       = 0xe665, // 11  100  1100  1100  101
+    ICH_LR6_EL2       = 0xe666, // 11  100  1100  1100  110
+    ICH_LR7_EL2       = 0xe667, // 11  100  1100  1100  111
+    ICH_LR8_EL2       = 0xe668, // 11  100  1100  1101  000
+    ICH_LR9_EL2       = 0xe669, // 11  100  1100  1101  001
+    ICH_LR10_EL2      = 0xe66a, // 11  100  1100  1101  010
+    ICH_LR11_EL2      = 0xe66b, // 11  100  1100  1101  011
+    ICH_LR12_EL2      = 0xe66c, // 11  100  1100  1101  100
+    ICH_LR13_EL2      = 0xe66d, // 11  100  1100  1101  101
+    ICH_LR14_EL2      = 0xe66e, // 11  100  1100  1101  110
+    ICH_LR15_EL2      = 0xe66f  // 11  100  1100  1101  111
   };
 
   // Note that these do not inherit from NamedImmMapper. This class is
