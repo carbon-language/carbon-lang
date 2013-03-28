@@ -832,6 +832,8 @@ def mabi_EQ : Joined<["-"], "mabi=">, Group<m_Group>;
 def march_EQ : Joined<["-"], "march=">, Group<m_Group>;
 def maltivec : Flag<["-"], "maltivec">, Alias<faltivec>;
 def mno_altivec : Flag<["-"], "mno-altivec">, Alias<fno_altivec>;
+def mmfcrf : Flag<["-"], "mmfcrf">, Group<m_Group>;
+def mno_mfcrf : Flag<["-"], "mno-mfcrf">, Group<m_Group>;
 def mqpx : Flag<["-"], "mqpx">, Group<m_Group>;
 def mno_qpx : Flag<["-"], "mno-qpx">, Group<m_Group>;
 def mcmodel_EQ : Joined<["-"], "mcmodel=">, Group<m_Group>;

@@ -1097,11 +1097,17 @@ void Clang::AddPPCTargetArgs(const ArgList &Args,
   }
 
   // Allow override of the Altivec feature.
-  if (Args.hasFlag(options::OPT_fno_altivec, options::OPT_faltivec, false)) {
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("-altivec");
-  }
+  AddTargetFeature(Args, CmdArgs,
+                   options::OPT_faltivec, options::OPT_fno_altivec,
+                   "altivec");
 
+  // Note that gcc calls this mfcrf and LLVM calls this mfocrf.
+  AddTargetFeature(Args, CmdArgs,
+                   options::OPT_mmfcrf, options::OPT_mno_mfcrf,
+                   "mfocrf");
+
+  // It is really only possible to turn qpx off because turning qpx on is tied
+  // to using the a2q CPU.
   if (Args.hasFlag(options::OPT_mno_qpx, options::OPT_mqpx, false)) {
     CmdArgs.push_back("-target-feature");
     CmdArgs.push_back("-qpx");
