@@ -342,7 +342,9 @@ def : InstAlias<"daddu $rs, $rt, $imm",
 def : InstAlias<"dadd $rs, $rt, $imm",
                 (DADDi CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, simm16_64:$imm),
                 1>;
-
+def : InstAlias<"or $rs, $rt, $imm",
+                (ORi64 CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, uimm16_64:$imm),
+                1>, Requires<[HasMips64]>;
 /// Move between CPU and coprocessor registers
 
 let DecoderNamespace = "Mips64" in {

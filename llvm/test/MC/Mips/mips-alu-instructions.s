@@ -13,6 +13,7 @@
 # CHECK:  ins    $19, $9, 6, 7   # encoding: [0x84,0x61,0x33,0x7d]
 # CHECK:  nor    $9, $6, $7      # encoding: [0x27,0x48,0xc7,0x00]
 # CHECK:  or     $3, $3, $5      # encoding: [0x25,0x18,0x65,0x00]
+# CHECK:  ori    $4, $5, 17767   # encoding: [0x67,0x45,0xa4,0x34]
 # CHECK:  ori    $9, $6, 17767   # encoding: [0x67,0x45,0xc9,0x34]
 # CHECK:  rotr   $9, $6, 7       # encoding: [0xc2,0x49,0x26,0x00]
 # CHECK:  rotrv  $9, $6, $7      # encoding: [0x46,0x48,0xe6,0x00]
@@ -40,6 +41,7 @@
      ins    $19, $9, 6,7
      nor    $9,  $6, $7
      or     $3,  $3, $5
+     or     $4,  $5, 17767
      ori    $9,  $6, 17767
      rotr   $9,  $6, 7
      rotrv  $9,  $6, $7

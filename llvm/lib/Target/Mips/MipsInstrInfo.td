@@ -1015,6 +1015,9 @@ def : InstAlias<"slt $rs, $rt, $imm",
 def : InstAlias<"xor $rs, $rt, $imm",
                 (XORi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm), 0>,
       Requires<[NotMips64]>;
+def : InstAlias<"or $rs, $rt, $imm",
+                (ORi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm), 0>,
+                 Requires<[NotMips64]>;
 def : InstAlias<"nop", (SLL ZERO, ZERO, 0), 1>;
 def : InstAlias<"mfc0 $rt, $rd",
                 (MFC0_3OP CPURegsOpnd:$rt, CPURegsOpnd:$rd, 0), 0>;
