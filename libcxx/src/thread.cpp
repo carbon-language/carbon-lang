@@ -36,6 +36,8 @@ thread::join()
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (ec)
         throw system_error(error_code(ec, system_category()), "thread::join failed");
+#else
+    (void)ec;
 #endif  // _LIBCPP_NO_EXCEPTIONS
     __t_ = 0;
 }

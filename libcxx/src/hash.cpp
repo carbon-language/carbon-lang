@@ -155,6 +155,8 @@ __check_for_overflow(size_t N)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (N > 0xFFFFFFFB)
         throw overflow_error("__next_prime overflow");
+#else
+    (void)N;
 #endif
 }
 
@@ -166,6 +168,8 @@ __check_for_overflow(size_t N)
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (N > 0xFFFFFFFFFFFFFFC5ull)
         throw overflow_error("__next_prime overflow");
+#else
+    (void)N;
 #endif
 }
 
