@@ -822,6 +822,8 @@ def keep__private__externs : Flag<["-"], "keep_private_externs">;
 def l : JoinedOrSeparate<["-"], "l">, Flags<[LinkerInput, RenderJoined]>;
 def lazy__framework : Separate<["-"], "lazy_framework">, Flags<[LinkerInput]>;
 def lazy__library : Separate<["-"], "lazy_library">, Flags<[LinkerInput]>;
+def EL : Flag<["-"], "EL">, Flags<[DriverOption]>;
+def EB : Flag<["-"], "EB">, Flags<[DriverOption]>;
 def m32 : Flag<["-"], "m32">, Group<m_Group>, Flags<[DriverOption]>;
 def mqdsp6_compat : Flag<["-"], "mqdsp6-compat">, Group<m_Group>, Flags<[DriverOption,CC1Option]>,
   HelpText<"Enable hexagon-qdsp6 backward compatibility">;
