@@ -66,17 +66,57 @@ void test7() {
 	struct {
 		unsigned int twoBits1:2;
 		unsigned int twoBits2:2;
-		unsigned int reserved:28;
+		unsigned int twoBits3:2;
+		unsigned int reserved:26;
 	} f;
 
 	f.twoBits1 = ~1; // expected-warning {{implicit truncation from 'int' to bitfield changes value from -2 to 2}}
 	f.twoBits2 = ~2; // expected-warning {{implicit truncation from 'int' to bitfield changes value from -3 to 1}}
 	f.twoBits1 &= ~1; // no-warning
 	f.twoBits2 &= ~2; // no-warning
+	f.twoBits3 |= 4; // expected-warning {{implicit truncation from 'int' to bitfield changes value from 4 to 0}}
+	f.twoBits3 += 4; // expected-warning {{implicit truncation from 'int' to bitfield changes value from 4 to 0}}
+	f.twoBits3 *= 4; // expected-warning {{implicit truncation from 'int' to bitfield changes value from 4 to 0}}
+	f.twoBits3 |= 1; // no-warning
 }
 
 void test8() {
   enum E { A, B, C };
   struct { enum E x : 1; } f;
   f.x = C; // expected-warning {{implicit truncation from 'int' to bitfield changes value from 2 to 0}}
+}
+
+int func(int);
+
+void test9() {
+  unsigned char x = 0;
+  unsigned char y = 0;
+  x = y | 0x1ff; // expected-warning {{implicit conversion of binary operation from 'int' to 'unsigned char' may change its value; value of operand would be changed from 511 to 255 if converted before operation}}
+  x = y | 0xff; // no-warning
+  x = y & 0xdff; // expected-warning {{implicit conversion of binary operation from 'int' to 'unsigned char' may change its value; value of operand would be changed from 3583 to 255 if converted before operation}}
+  x = y & 0xff; // no-warning
+  x = y & ~1; // no-warning
+  x = 0x1ff | y; // expected-warning {{implicit conversion of binary operation from 'int' to 'unsigned char' may change its value; value of operand would be changed from 511 to 255 if converted before operation}}
+  x = 0xff | y; // no-warning
+  x = (y | 0x1ff); // expected-warning {{implicit conversion of binary operation from 'int' to 'unsigned char' may change its value; value of operand would be changed from 511 to 255 if converted before operation}}
+  x = (y | 0xff); // no-warning
+  x = 0xff + y; // no-warning
+  x += 0x1ff; // expected-warning {{implicit conversion from 'int' to 'unsigned char' changes value from 511 to 255}}
+  x = 0xff - y; // no-warning
+  x -= 0x1ff; // expected-warning {{implicit conversion from 'int' to 'unsigned char' changes value from 511 to 255}}
+  x = y * 0x1ff; // expected-warning {{implicit conversion of binary operation from 'int' to 'unsigned char' may change its value; value of operand would be changed from 511 to 255 if converted before operation}}
+  x = y * 0xff; // no-warning
+  x *= 0x1ff; // expected-warning {{implicit conversion from 'int' to 'unsigned char' changes value from 511 to 255}}
+  x = y ^ 0xff; // no-warning
+  x ^= 0x1ff; // expected-warning {{implicit conversion from 'int' to 'unsigned char' changes value from 511 to 255}}
+  x = (func(1), 0x1ff); // expected-warning {{implicit conversion of binary operation from 'int' to 'unsigned char' may change its value; value of operand would be changed from 511 to 255 if converted before operation}}
+  x = (func(1), 0xff); // no-warning
+  x = 0xff << y; // no-warning
+  x = 0x1ff << y; // expected-warning {{implicit conversion of binary operation from 'int' to 'unsigned char' may change its value; value of operand would be changed from 511 to 255 if converted before operation}}
+
+
+  // These next two tests make sure that both LHS and RHS are checked for
+  // narrowing operations.
+  x = 0x1ff | 0xff; // expected-warning {{implicit conversion of binary operation from 'int' to 'unsigned char' may change its value; value of operand would be changed from 511 to 255 if converted before operation}}
+  x = 0xff | 0x1ff; // expected-warning {{implicit conversion of binary operation from 'int' to 'unsigned char' may change its value; value of operand would be changed from 511 to 255 if converted before operation}}
 }

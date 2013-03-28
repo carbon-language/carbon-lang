@@ -4686,7 +4686,8 @@ static void AnalyzeAssignment(Sema &S, BinaryOperator *E) {
   // We want to recurse on the RHS as normal unless we're assigning to
   // a bitfield.
   if (FieldDecl *Bitfield = E->getLHS()->getBitField()) {
-    if (AnalyzeBitFieldAssignment(S, Bitfield, E->getRHS(),
+    if (E->getOpcode() != BO_AndAssign &&
+        AnalyzeBitFieldAssignment(S, Bitfield, E->getRHS(),
                                   E->getOperatorLoc())) {
       // Recurse, ignoring any implicit conversions on the RHS.
       return AnalyzeImplicitConversions(S, E->getRHS()->IgnoreParenImpCasts(),
@@ -4795,8 +4796,82 @@ void CheckImplicitArgumentConversions(Sema &S, CallExpr *TheCall,
   }
 }
 
+// Try to evaluate E as an integer. If EvaluateAsInt succeeds, Value is set to
+// the resulting value, ResultExpr is set to E.
+// Otherwise, the output parameters are not modified.
+static bool EvalAsInt(ASTContext &Ctx, llvm::APSInt &Value, Expr *E,
+                      Expr **ResultExpr) {
+  if (E->EvaluateAsInt(Value, Ctx, Expr::SE_AllowSideEffects)) {
+    *ResultExpr = E;
+    return true;
+  }
+  return false;
+}
+
+// Returns true when Value's value would change when narrowed to TargetRange.
+static bool TruncationChangesValue(const llvm::APSInt &Value,
+                                   const IntRange &TargetRange,
+                                   bool IsBitwiseAnd) {
+  // Checks if there are any active non-sign bits past the width of TargetRange.
+  if (IsBitwiseAnd)
+    return Value.getBitWidth() - Value.getNumSignBits() > TargetRange.Width;
+
+  llvm::APSInt UnsignedValue(Value);
+  unsigned BitWidth = TargetRange.NonNegative ?
+      UnsignedValue.getActiveBits() : Value.getMinSignedBits();
+  return BitWidth > TargetRange.Width;
+}
+
+// Determine if E is an expression containing or likely to contain an implicit
+// narrowing bug involving a constant.
+// If so, Value is set to the value of that constant. NarrowedExpr is set to the
+// problematic sub-expression if it is a strict subset of E.
+static bool OperandMightImplicitlyNarrow(ASTContext &Ctx, llvm::APSInt &Value,
+                                         Expr *E, IntRange TargetRange,
+                                         Expr **NarrowedExpr) {
+  BinaryOperator *BO = dyn_cast<BinaryOperator>(E);
+  if (!BO)
+    return false;
+
+  switch (BO->getOpcode()) {
+    case BO_And:
+    case BO_AndAssign:
+      return (EvalAsInt(Ctx, Value, BO->getLHS(), NarrowedExpr)
+               && TruncationChangesValue(Value, TargetRange, true)) ||
+              (EvalAsInt(Ctx, Value, BO->getRHS(), NarrowedExpr)
+               && TruncationChangesValue(Value, TargetRange, true));
+
+    case BO_Or:
+    case BO_OrAssign:
+    // FIXME: Include BO_Add, BO_Sub, and BO_Xor when we avoid false positives.
+    case BO_AddAssign:
+    case BO_SubAssign:
+    case BO_Mul:
+    case BO_MulAssign:
+    case BO_XorAssign:
+      return (EvalAsInt(Ctx, Value, BO->getLHS(), NarrowedExpr)
+               && TruncationChangesValue(Value, TargetRange, false)) ||
+              (EvalAsInt(Ctx, Value, BO->getRHS(), NarrowedExpr)
+               && TruncationChangesValue(Value, TargetRange, false));
+
+    // We can ignore the left side of the comma operator, since the value is
+    // explicitly ignored anyway.
+    case BO_Comma:
+      return EvalAsInt(Ctx, Value, BO->getRHS(), NarrowedExpr) &&
+             TruncationChangesValue(Value, TargetRange, false);
+
+    case BO_Shl:
+      return EvalAsInt(Ctx, Value, BO->getLHS(), NarrowedExpr) &&
+             TruncationChangesValue(Value, TargetRange, false);
+
+    default:
+      break;
+  }
+  return false;
+}
+
 void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
-                             SourceLocation CC, bool *ICContext = 0) {
+                             SourceLocation CC, bool *ICContext = NULL) {
   if (E->isTypeDependent() || E->isValueDependent()) return;
 
   const Type *Source = S.Context.getCanonicalType(E->getType()).getTypePtr();
@@ -4977,17 +5052,30 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
   IntRange SourceRange = GetExprRange(S.Context, E);
   IntRange TargetRange = IntRange::forTargetOfCanonicalType(S.Context, Target);
 
-  if (SourceRange.Width > TargetRange.Width) {
-    // If the source is a constant, use a default-on diagnostic.
-    // TODO: this should happen for bitfield stores, too.
-    llvm::APSInt Value(32);
-    if (E->isIntegerConstantExpr(Value, S.Context)) {
-      if (S.SourceMgr.isInSystemMacro(CC))
-        return;
+  llvm::APSInt Value(32);
+  Expr *NarrowedExpr = NULL;
+  // Use a default-on diagnostic if the source is involved in a
+  // narrowing-prone binary operation with a constant.
+  if (OperandMightImplicitlyNarrow(S.Context, Value, E, TargetRange,
+                                   &NarrowedExpr)) {
+    std::string PrettySourceValue = Value.toString(10);
+    std::string PrettyTargetValue = PrettyPrintInRange(Value, TargetRange);
 
+    S.DiagRuntimeBehavior(E->getExprLoc(), NarrowedExpr,
+      S.PDiag(diag::warn_impcast_integer_precision_binop_constant)
+          << PrettySourceValue << PrettyTargetValue
+          << E->getType() << T << NarrowedExpr->getSourceRange()
+          << clang::SourceRange(CC));
+    return;
+  } else if (SourceRange.Width > TargetRange.Width) {
+    // People want to build with -Wshorten-64-to-32 and not -Wconversion.
+    if (S.SourceMgr.isInSystemMacro(CC))
+      return;
+
+    // If the source is a constant, use a default-on diagnostic.
+    if (E->EvaluateAsInt(Value, S.Context, Expr::SE_AllowSideEffects)) {
       std::string PrettySourceValue = Value.toString(10);
       std::string PrettyTargetValue = PrettyPrintInRange(Value, TargetRange);
-
       S.DiagRuntimeBehavior(E->getExprLoc(), E,
         S.PDiag(diag::warn_impcast_integer_precision_constant)
             << PrettySourceValue << PrettyTargetValue
@@ -4995,10 +5083,6 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
             << clang::SourceRange(CC));
       return;
     }
-
-    // People want to build with -Wshorten-64-to-32 and not -Wconversion.
-    if (S.SourceMgr.isInSystemMacro(CC))
-      return;
 
     if (TargetRange.Width == 32 && S.Context.getIntWidth(E->getType()) == 64)
       return DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_integer_64_32,
@@ -5129,6 +5213,25 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
   if (E->getType() != T)
     CheckImplicitConversion(S, E, T, CC);
 
+  // For CompoundAssignmentOperators, check the conversion from the computed
+  // LHS type to the type of the assignee.
+  if (CompoundAssignOperator *CAO = dyn_cast<CompoundAssignOperator>(E)) {
+    QualType LHST = CAO->getComputationLHSType();
+    // This CheckImplicitConversion would trigger a warning in addition to the
+    // more serious problem of using NULLs in arithmetic.
+    // Let the call to CheckImplicitConversion on the child expressions at the
+    // bottom of this function handle them by filtering those out here.
+    // Similarly, disable the extra check for shift assignments, since any
+    // narrowing would be less serious than a too-large shift count.
+    if (LHST != T &&
+        T->isIntegralType(S.Context) && LHST->isIntegralType(S.Context) &&
+        !CAO->isShiftAssignOp() &&
+        CAO->getRHS()->isNullPointerConstant(S.Context,
+                                             Expr::NPC_ValueDependentIsNotNull)
+        != Expr::NPCK_GNUNull)
+      CheckImplicitConversion(S, CAO->getRHS(), T, CC);
+  }
+
   // Now continue drilling into this expression.
 
   // Skip past explicit casts.
@@ -5142,8 +5245,8 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
     if (BO->isComparisonOp())
       return AnalyzeComparison(S, BO);
 
-    // And with simple assignments.
-    if (BO->getOpcode() == BO_Assign)
+    // And with assignments.
+    if (BO->isAssignmentOp())
       return AnalyzeAssignment(S, BO);
   }
 
