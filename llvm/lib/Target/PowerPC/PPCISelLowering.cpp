@@ -6604,7 +6604,9 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         N->getOperand(1).getOpcode() == ISD::BSWAP &&
         N->getOperand(1).getNode()->hasOneUse() &&
         (N->getOperand(1).getValueType() == MVT::i32 ||
-         N->getOperand(1).getValueType() == MVT::i16)) {
+         N->getOperand(1).getValueType() == MVT::i16 ||
+         (TM.getSubtarget<PPCSubtarget>().hasLDBRX() &&
+          N->getOperand(1).getValueType() == MVT::i64))) {
       SDValue BSwapOp = N->getOperand(1).getOperand(0);
       // Do an any-extend to 32-bits if this is a half-word input.
       if (BSwapOp.getValueType() == MVT::i16)
@@ -6625,7 +6627,9 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
     // Turn BSWAP (LOAD) -> lhbrx/lwbrx.
     if (ISD::isNON_EXTLoad(N->getOperand(0).getNode()) &&
         N->getOperand(0).hasOneUse() &&
-        (N->getValueType(0) == MVT::i32 || N->getValueType(0) == MVT::i16)) {
+        (N->getValueType(0) == MVT::i32 || N->getValueType(0) == MVT::i16 ||
+         (TM.getSubtarget<PPCSubtarget>().hasLDBRX() &&
+          N->getValueType(0) == MVT::i64))) {
       SDValue Load = N->getOperand(0);
       LoadSDNode *LD = cast<LoadSDNode>(Load);
       // Create the byte-swapping load.
@@ -6636,7 +6640,9 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       };
       SDValue BSLoad =
         DAG.getMemIntrinsicNode(PPCISD::LBRX, dl,
-                                DAG.getVTList(MVT::i32, MVT::Other), Ops, 3,
+                                DAG.getVTList(N->getValueType(0) == MVT::i64 ?
+                                              MVT::i64 : MVT::i32, MVT::Other),
+                                              Ops, 3,
                                 LD->getMemoryVT(), LD->getMemOperand());
 
       // If this is an i16 load, insert the truncate.

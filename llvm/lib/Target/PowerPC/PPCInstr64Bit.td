@@ -658,7 +658,10 @@ def LDtoc_restore : DSForm_1a<58, 0, (outs), (ins),
 def LDX  : XForm_1<31,  21, (outs G8RC:$rD), (ins memrr:$src),
                    "ldx $rD, $src", LdStLD,
                    [(set i64:$rD, (load xaddr:$src))]>, isPPC64;
-                   
+def LDBRX : XForm_1<31,  532, (outs G8RC:$rD), (ins memrr:$src),
+                   "ldbrx $rD, $src", LdStLoad,
+                   [(set i64:$rD, (PPClbrx xoaddr:$src, i64))]>, isPPC64;
+
 let mayLoad = 1 in
 def LDU  : DSForm_1<58, 1, (outs G8RC:$rD, ptr_rc_nor0:$ea_result), (ins memrix:$addr),
                     "ldu $rD, $addr", LdStLDU,
@@ -779,6 +782,11 @@ def STDX  : XForm_8<31, 149, (outs), (ins G8RC:$rS, memrr:$dst),
                    "stdx $rS, $dst", LdStSTD,
                    [(store i64:$rS, xaddr:$dst)]>, isPPC64,
                    PPC970_DGroup_Cracked;
+def STDBRX: XForm_8<31, 660, (outs), (ins G8RC:$rS, memrr:$dst),
+                   "stdbrx $rS, $dst", LdStStore,
+                   [(PPCstbrx i64:$rS, xoaddr:$dst, i64)]>, isPPC64,
+                   PPC970_DGroup_Cracked;
+
 // STD_32/STDX_32 - Just like STD/STDX, but uses a '32-bit' input register.
 def STD_32  : DSForm_1<62, 0, (outs), (ins GPRC:$rT, memrix:$dst),
                        "std $rT, $dst", LdStSTD,

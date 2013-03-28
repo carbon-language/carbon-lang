@@ -36,10 +36,10 @@ def SDT_PPCcondbr : SDTypeProfile<0, 3, [
 ]>;
 
 def SDT_PPClbrx : SDTypeProfile<1, 2, [
-  SDTCisVT<0, i32>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>
+  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>
 ]>;
 def SDT_PPCstbrx : SDTypeProfile<0, 3, [
-  SDTCisVT<0, i32>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>
+  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>
 ]>;
 
 def SDT_PPClarx : SDTypeProfile<1, 1, [
