@@ -349,18 +349,18 @@ extern "C" void __tsan_report_race() {
 #endif
 
 ALWAYS_INLINE
-static Shadow LoadShadow(u64 *p) {
+Shadow LoadShadow(u64 *p) {
   u64 raw = atomic_load((atomic_uint64_t*)p, memory_order_relaxed);
   return Shadow(raw);
 }
 
 ALWAYS_INLINE
-static void StoreShadow(u64 *sp, u64 s) {
+void StoreShadow(u64 *sp, u64 s) {
   atomic_store((atomic_uint64_t*)sp, s, memory_order_relaxed);
 }
 
 ALWAYS_INLINE
-static void StoreIfNotYetStored(u64 *sp, u64 *s) {
+void StoreIfNotYetStored(u64 *sp, u64 *s) {
   StoreShadow(sp, *s);
   *s = 0;
 }
@@ -385,7 +385,7 @@ static inline bool HappensBefore(Shadow old, ThreadState *thr) {
   return thr->clock.get(old.TidWithIgnore()) >= old.epoch();
 }
 
-ALWAYS_INLINE
+// FIXME: should be ALWAYS_INLINE for performance reasons?
 void MemoryAccessImpl(ThreadState *thr, uptr addr,
     int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic,
     u64 *shadow_mem, Shadow cur) {
@@ -459,7 +459,7 @@ void MemoryAccessImpl(ThreadState *thr, uptr addr,
   return;
 }
 
-ALWAYS_INLINE
+// FIXME: should be ALWAYS_INLINE for performance reasons?
 void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
     int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic) {
   u64 *shadow_mem = (u64*)MemToShadow(addr);
@@ -597,7 +597,7 @@ void MemoryRangeImitateWrite(ThreadState *thr, uptr pc, uptr addr, uptr size) {
   MemoryRangeSet(thr, pc, addr, size, s.raw());
 }
 
-ALWAYS_INLINE
+// FIXME: should be ALWAYS_INLINE for performance reasons?
 void FuncEntry(ThreadState *thr, uptr pc) {
   DCHECK_EQ(thr->in_rtl, 0);
   StatInc(thr, StatFuncEnter);
@@ -627,7 +627,7 @@ void FuncEntry(ThreadState *thr, uptr pc) {
   thr->shadow_stack_pos++;
 }
 
-ALWAYS_INLINE
+// FIXME: should be ALWAYS_INLINE for performance reasons?
 void FuncExit(ThreadState *thr) {
   DCHECK_EQ(thr->in_rtl, 0);
   StatInc(thr, StatFuncExit);
