@@ -132,3 +132,36 @@ struct MemPtrInBody {
 };
 
 static_assert(sizeof(MemPtrInBody::MemPtr) == kSingleDataSize, "");
+
+// Passing a member pointer through a template should get the right size.
+template<typename T>
+struct SingleTemplate;
+template<typename T>
+struct SingleTemplate<void (T::*)(void)> {
+  static_assert(sizeof(int T::*) == kSingleDataSize, "");
+  static_assert(sizeof(void (T::*)()) == kSingleFunctionSize, "");
+};
+
+template<typename T>
+struct UnspecTemplate;
+template<typename T>
+struct UnspecTemplate<void (T::*)(void)> {
+  static_assert(sizeof(int T::*) == kUnspecifiedDataSize, "");
+  static_assert(sizeof(void (T::*)()) == kUnspecifiedFunctionSize, "");
+};
+
+struct NewUnspecified;
+SingleTemplate<void (IncSingle::*)()> tmpl_single;
+UnspecTemplate<void (NewUnspecified::*)()> tmpl_unspec;
+
+struct NewUnspecified { };
+
+static_assert(sizeof(void (NewUnspecified::*)()) == kUnspecifiedFunctionSize, "");
+
+template <typename T>
+struct MemPtrInTemplate {
+  // We can't require that the template arg be complete until we're
+  // instantiated.
+  int T::*data_ptr;
+  void (T::*func_ptr)();
+};
