@@ -59,11 +59,12 @@ lpad:                                             ; preds = %entry
   resume { i8*, i32 } %t8
 }
 
-; There is no !clang.arc.no_objc_arc_exceptions
-; metadata here, so the optimizer shouldn't eliminate anything.
+; There is no !clang.arc.no_objc_arc_exceptions metadata here, so the optimizer
+; shouldn't eliminate anything, but *CAN* strength reduce the objc_retainBlock
+; to an objc_retain.
 
 ; CHECK: define void @test0_no_metadata(
-; CHECK: call i8* @objc_retainBlock(
+; CHECK: call i8* @objc_retain(
 ; CHECK: invoke
 ; CHECK: call void @objc_release(
 ; CHECK: }

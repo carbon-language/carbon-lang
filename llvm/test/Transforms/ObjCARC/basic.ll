@@ -795,10 +795,10 @@ entry:
   ret void
 }
 
-; Don't optimize objc_retainBlock.
+; Don't optimize objc_retainBlock, but do strength reduce it.
 
 ; CHECK: define void @test23b
-; CHECK: @objc_retainBlock
+; CHECK: @objc_retain
 ; CHECK: @objc_release
 ; CHECK: }
 define void @test23b(i8* %p) {

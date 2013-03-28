@@ -986,6 +986,8 @@ namespace {
     bool OptimizeRetainRVCall(Function &F, Instruction *RetainRV);
     void OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV,
                                    InstructionClass &Class);
+    bool OptimizeRetainBlockCall(Function &F, Instruction *RetainBlock,
+                                 InstructionClass &Class);
     void OptimizeIndividualCalls(Function &F);
 
     void CheckForCFGHazards(const BasicBlock *BB,
@@ -1319,6 +1321,35 @@ ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV,
 
 }
 
+// \brief Attempt to strength reduce objc_retainBlock calls to objc_retain
+// calls.
+//
+// Specifically: If an objc_retainBlock call has the copy_on_escape metadata and
+// does not escape (following the rules of block escaping), strength reduce the
+// objc_retainBlock to an objc_retain.
+//
+// TODO: If an objc_retainBlock call is dominated period by a previous
+// objc_retainBlock call, strength reduce the objc_retainBlock to an
+// objc_retain.
+bool
+ObjCARCOpt::OptimizeRetainBlockCall(Function &F, Instruction *Inst,
+                                    InstructionClass &Class) {
+  assert(GetBasicInstructionClass(Inst) == Class);
+  assert(IC_RetainBlock == Class);
+  
+  // If we can not optimize Inst, return false.
+  if (!IsRetainBlockOptimizable(Inst))
+    return false;
+  
+  CallInst *RetainBlock = cast<CallInst>(Inst);
+  RetainBlock->setCalledFunction(getRetainCallee(F.getParent()));
+  // Remove copy_on_escape metadata.
+  RetainBlock->setMetadata(CopyOnEscapeMDKind, 0);
+  Class = IC_Retain;
+  
+  return true;
+}
+
 /// Visit each call, one at a time, and make simplifications without doing any
 /// additional analysis.
 void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
@@ -1402,6 +1433,12 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
       }
       break;
     }
+    case IC_RetainBlock:
+      // If we strength reduce an objc_retainBlock to amn objc_retain, continue
+      // onto the objc_retain peephole optimizations. Otherwise break.
+      if (!OptimizeRetainBlockCall(F, Inst, Class))
+        break;
+      // FALLTHROUGH
     case IC_Retain:
       OptimizeRetainCall(F, Inst);
       break;
@@ -1748,11 +1785,10 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     break;
   }
   case IC_RetainBlock:
-    // An objc_retainBlock call with just a use may need to be kept,
-    // because it may be copying a block from the stack to the heap.
-    if (!IsRetainBlockOptimizable(Inst))
-      break;
-    // FALLTHROUGH
+    // In OptimizeIndividualCalls, we have strength reduced all optimizable
+    // objc_retainBlocks to objc_retains. Thus at this point any
+    // objc_retainBlocks that we see are not optimizable.
+    break;
   case IC_Retain:
   case IC_RetainRV: {
     Arg = GetObjCArg(Inst);
@@ -1961,11 +1997,10 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
 
   switch (Class) {
   case IC_RetainBlock:
-    // An objc_retainBlock call with just a use may need to be kept,
-    // because it may be copying a block from the stack to the heap.
-    if (!IsRetainBlockOptimizable(Inst))
-      break;
-    // FALLTHROUGH
+    // In OptimizeIndividualCalls, we have strength reduced all optimizable
+    // objc_retainBlocks to objc_retains. Thus at this point any
+    // objc_retainBlocks that we see are not optimizable.
+    break;
   case IC_Retain:
   case IC_RetainRV: {
     Arg = GetObjCArg(Inst);
