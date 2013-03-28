@@ -30,6 +30,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
@@ -56,6 +57,9 @@ static cl::opt<bool>  ClInstrumentFuncEntryExit(
 static cl::opt<bool>  ClInstrumentAtomics(
     "tsan-instrument-atomics", cl::init(true),
     cl::desc("Instrument atomics"), cl::Hidden);
+static cl::opt<bool>  ClInstrumentMemIntrinsics(
+    "tsan-instrument-memintrinsics", cl::init(true),
+    cl::desc("Instrument memintrinsics (memset/memcpy/memmove)"), cl::Hidden);
 
 STATISTIC(NumInstrumentedReads, "Number of instrumented reads");
 STATISTIC(NumInstrumentedWrites, "Number of instrumented writes");
@@ -86,12 +90,14 @@ struct ThreadSanitizer : public FunctionPass {
   void initializeCallbacks(Module &M);
   bool instrumentLoadOrStore(Instruction *I);
   bool instrumentAtomic(Instruction *I);
+  bool instrumentMemIntrinsic(Instruction *I);
   void chooseInstructionsToInstrument(SmallVectorImpl<Instruction*> &Local,
                                       SmallVectorImpl<Instruction*> &All);
   bool addrPointsToConstantData(Value *Addr);
   int getMemoryAccessFuncIndex(Value *Addr);
 
   DataLayout *TD;
+  Type *IntptrTy;
   SmallString<64> BlacklistFile;
   OwningPtr<BlackList> BL;
   IntegerType *OrdTy;
@@ -110,6 +116,7 @@ struct ThreadSanitizer : public FunctionPass {
   Function *TsanAtomicSignalFence;
   Function *TsanVptrUpdate;
   Function *TsanVptrLoad;
+  Function *MemmoveFn, *MemcpyFn, *MemsetFn;
 };
 }  // namespace
 
@@ -204,6 +211,16 @@ void ThreadSanitizer::initializeCallbacks(Module &M) {
       "__tsan_atomic_thread_fence", IRB.getVoidTy(), OrdTy, NULL));
   TsanAtomicSignalFence = checkInterfaceFunction(M.getOrInsertFunction(
       "__tsan_atomic_signal_fence", IRB.getVoidTy(), OrdTy, NULL));
+
+  MemmoveFn = checkInterfaceFunction(M.getOrInsertFunction(
+    "memmove", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
+    IRB.getInt8PtrTy(), IntptrTy, NULL));
+  MemcpyFn = checkInterfaceFunction(M.getOrInsertFunction(
+    "memcpy", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
+    IntptrTy, NULL));
+  MemsetFn = checkInterfaceFunction(M.getOrInsertFunction(
+    "memset", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IRB.getInt32Ty(),
+    IntptrTy, NULL));
 }
 
 bool ThreadSanitizer::doInitialization(Module &M) {
@@ -214,6 +231,7 @@ bool ThreadSanitizer::doInitialization(Module &M) {
 
   // Always insert a call to __tsan_init into the module's CTORs.
   IRBuilder<> IRB(M.getContext());
+  IntptrTy = IRB.getIntPtrTy(TD);
   Value *TsanInit = M.getOrInsertFunction("__tsan_init",
                                           IRB.getVoidTy(), NULL);
   appendToGlobalCtors(M, cast<Function>(TsanInit), 0);
@@ -313,6 +331,7 @@ bool ThreadSanitizer::runOnFunction(Function &F) {
   SmallVector<Instruction*, 8> AllLoadsAndStores;
   SmallVector<Instruction*, 8> LocalLoadsAndStores;
   SmallVector<Instruction*, 8> AtomicAccesses;
+  SmallVector<Instruction*, 8> MemIntrinCalls;
   bool Res = false;
   bool HasCalls = false;
 
@@ -329,6 +348,8 @@ bool ThreadSanitizer::runOnFunction(Function &F) {
       else if (isa<ReturnInst>(BI))
         RetVec.push_back(BI);
       else if (isa<CallInst>(BI) || isa<InvokeInst>(BI)) {
+        if (isa<MemIntrinsic>(BI))
+          MemIntrinCalls.push_back(BI);
         HasCalls = true;
         chooseInstructionsToInstrument(LocalLoadsAndStores, AllLoadsAndStores);
       }
@@ -350,6 +371,11 @@ bool ThreadSanitizer::runOnFunction(Function &F) {
   if (ClInstrumentAtomics)
     for (size_t i = 0, n = AtomicAccesses.size(); i < n; ++i) {
       Res |= instrumentAtomic(AtomicAccesses[i]);
+    }
+
+  if (ClInstrumentMemIntrinsics)
+    for (size_t i = 0, n = MemIntrinCalls.size(); i < n; ++i) {
+      Res |= instrumentMemIntrinsic(MemIntrinCalls[i]);
     }
 
   // Instrument function entry/exit points if there were instrumented accesses.
@@ -431,6 +457,32 @@ static ConstantInt *createFailOrdering(IRBuilder<> *IRB, AtomicOrdering ord) {
     case SequentiallyConsistent: v = 5; break;
   }
   return IRB->getInt32(v);
+}
+
+// If a memset intrinsic gets inlined by the code gen, we will miss races on it.
+// So, we either need to ensure the intrinsic is not inlined, or instrument it.
+// We do not instrument memset/memmove/memcpy intrinsics (too complicated),
+// instead we simply replace them with regular function calls, which are then
+// intercepted by the run-time.
+// Since tsan is running after everyone else, the calls should not be
+// replaced back with intrinsics. If that becomes wrong at some point,
+// we will need to call e.g. __tsan_memset to avoid the intrinsics.
+bool ThreadSanitizer::instrumentMemIntrinsic(Instruction *I) {
+  IRBuilder<> IRB(I);
+  if (MemSetInst *M = dyn_cast<MemSetInst>(I)) {
+    IRB.CreateCall3(MemsetFn,
+      IRB.CreatePointerCast(M->getArgOperand(0), IRB.getInt8PtrTy()),
+      IRB.CreateIntCast(M->getArgOperand(1), IRB.getInt32Ty(), false),
+      IRB.CreateIntCast(M->getArgOperand(2), IntptrTy, false));
+    I->eraseFromParent();
+  } else if (MemTransferInst *M = dyn_cast<MemTransferInst>(I)) {
+    IRB.CreateCall3(isa<MemCpyInst>(M) ? MemcpyFn : MemmoveFn,
+      IRB.CreatePointerCast(M->getArgOperand(0), IRB.getInt8PtrTy()),
+      IRB.CreatePointerCast(M->getArgOperand(1), IRB.getInt8PtrTy()),
+      IRB.CreateIntCast(M->getArgOperand(2), IntptrTy, false));
+    I->eraseFromParent();
+  }
+  return false;
 }
 
 // Both llvm and ThreadSanitizer atomic operations are based on C++11/C1x
