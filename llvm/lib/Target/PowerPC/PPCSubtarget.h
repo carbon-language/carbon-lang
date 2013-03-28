@@ -79,6 +79,7 @@ protected:
   bool HasFSQRT;
   bool HasSTFIWX;
   bool HasISEL;
+  bool HasPOPCNTD;
   bool IsBookE;
   bool HasLazyResolverStubs;
   bool IsJITCodeModel;
@@ -159,6 +160,7 @@ public:
   bool hasQPX() const { return HasQPX; }
   bool hasMFOCRF() const { return HasMFOCRF; }
   bool hasISEL() const { return HasISEL; }
+  bool hasPOPCNTD() const { return HasPOPCNTD; }
   bool isBookE() const { return IsBookE; }
 
   const Triple &getTargetTriple() const { return TargetTriple; }

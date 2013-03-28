@@ -61,6 +61,8 @@ def FeatureSTFIWX    : SubtargetFeature<"stfiwx","HasSTFIWX", "true",
                                         "Enable the stfiwx instruction">;
 def FeatureISEL      : SubtargetFeature<"isel","HasISEL", "true",
                                         "Enable the isel instruction">;
+def FeaturePOPCNTD   : SubtargetFeature<"popcntd","HasPOPCNTD", "true",
+                                        "Enable the popcnt[dw] instructions">;
 def FeatureBookE     : SubtargetFeature<"booke", "IsBookE", "true",
                                         "Enable Book E instructions">;
 def FeatureQPX       : SubtargetFeature<"qpx","HasQPX", "true",
@@ -79,7 +81,6 @@ def FeatureQPX       : SubtargetFeature<"qpx","HasQPX", "true",
 // LFIWAX       p6, p6x, p7        lfiwax
 // LFIWZX       p7                 lfiwzx
 // POPCNTB      p5 through p7      popcntb and related instructions
-// POPCNTD      p7                 popcntd and related instructions
 // RECIP_PREC   p6, p6x, p7        higher precision reciprocal estimates
 // VSX          p7                 vector-scalar instruction set
 
@@ -131,12 +132,13 @@ def : ProcessorModel<"e5500", PPCE5500Model,
 def : Processor<"a2", PPCA2Itineraries, [DirectiveA2, FeatureBookE,
                                          FeatureMFOCRF, FeatureFSqrt,
                                          FeatureSTFIWX, FeatureISEL,
-                                         Feature64Bit
+                                         FeaturePOPCNTD, Feature64Bit
                                      /*, Feature64BitRegs */]>;
 def : Processor<"a2q", PPCA2Itineraries, [DirectiveA2, FeatureBookE,
                                           FeatureMFOCRF, FeatureFSqrt,
                                           FeatureSTFIWX, FeatureISEL,
-                                          Feature64Bit /*, Feature64BitRegs */,
+                                          FeaturePOPCNTD, Feature64Bit
+                                      /*, Feature64BitRegs */,
                                           FeatureQPX]>;
 def : Processor<"pwr3", G5Itineraries,
                   [DirectivePwr3, FeatureAltivec, FeatureMFOCRF,
@@ -160,7 +162,8 @@ def : Processor<"pwr6x", G5Itineraries,
 def : Processor<"pwr7", G5Itineraries,
                   [DirectivePwr7, FeatureAltivec,
                    FeatureMFOCRF, FeatureFSqrt, FeatureSTFIWX,
-                   FeatureISEL, Feature64Bit /*, Feature64BitRegs */]>;
+                   FeatureISEL, FeaturePOPCNTD, Feature64Bit
+               /*, Feature64BitRegs */]>;
 def : Processor<"ppc", G3Itineraries, [Directive32]>;
 def : Processor<"ppc64", G5Itineraries,
                   [Directive64, FeatureAltivec,

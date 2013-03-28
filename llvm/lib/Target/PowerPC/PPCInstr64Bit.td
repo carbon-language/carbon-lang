@@ -468,6 +468,9 @@ def SRADI  : XSForm_1<31, 413, (outs G8RC:$rA), (ins G8RC:$rS, u6imm:$SH),
 def CNTLZD : XForm_11<31, 58, (outs G8RC:$rA), (ins G8RC:$rS),
                       "cntlzd $rA, $rS", IntGeneral,
                       [(set i64:$rA, (ctlz i64:$rS))]>;
+def POPCNTD : XForm_11<31, 506, (outs G8RC:$rA), (ins G8RC:$rS),
+                      "popcntd $rA, $rS", IntGeneral,
+                      [(set i64:$rA, (ctpop i64:$rS))]>;
 
 def DIVD  : XOForm_1<31, 489, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
                      "divd $rT, $rA, $rB", IntDivD,

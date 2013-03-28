@@ -160,15 +160,21 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
 
   // PowerPC does not have BSWAP, CTPOP or CTTZ
   setOperationAction(ISD::BSWAP, MVT::i32  , Expand);
-  setOperationAction(ISD::CTPOP, MVT::i32  , Expand);
   setOperationAction(ISD::CTTZ , MVT::i32  , Expand);
   setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32, Expand);
   setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32, Expand);
   setOperationAction(ISD::BSWAP, MVT::i64  , Expand);
-  setOperationAction(ISD::CTPOP, MVT::i64  , Expand);
   setOperationAction(ISD::CTTZ , MVT::i64  , Expand);
   setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Expand);
   setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Expand);
+
+  if (Subtarget->hasPOPCNTD()) {
+    setOperationAction(ISD::CTPOP, MVT::i32  , Promote);
+    setOperationAction(ISD::CTPOP, MVT::i64  , Legal);
+  } else {
+    setOperationAction(ISD::CTPOP, MVT::i32  , Expand);
+    setOperationAction(ISD::CTPOP, MVT::i64  , Expand);
+  }
 
   // PowerPC does not have ROTR
   setOperationAction(ISD::ROTR, MVT::i32   , Expand);

@@ -122,9 +122,8 @@ llvm::createPPCTargetTransformInfoPass(const PPCTargetMachine *TM) {
 
 PPCTTI::PopcntSupportKind PPCTTI::getPopcntSupport(unsigned TyWidth) const {
   assert(isPowerOf2_32(TyWidth) && "Ty width must be power of 2");
-  // FIXME: PPC currently does not have custom popcnt lowering even though
-  // there is hardware support. Once this is fixed, update this function
-  // to reflect the real capabilities of the hardware.
+  if (ST->hasPOPCNTD() && TyWidth <= 64)
+    return PSK_FastHardware;
   return PSK_Software;
 }
 
