@@ -15,3 +15,6 @@ struct test2 { virtual void foo() = 0; }; // expected-note {{unimplemented}}
 @interface Test2
 - (void) foo: (test2) foo; // expected-error {{parameter type 'test2' is an abstract class}}
 @end
+
+template<typename T> void r1(__restrict T);
+void r2(__restrict id x) { r1(x); }

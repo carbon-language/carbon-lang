@@ -48,7 +48,7 @@ T f1(T t1, U u1, int i1)
 }
 
 template<typename T>
-void f2(__restrict T x) {} // expected-note {{substitution failure [with T = int]: pointer to function type 'int' may not be 'restrict' qualified}}
+void f2(__restrict T x) {} // expected-note {{substitution failure [with T = int]: restrict requires a pointer or reference ('int' is invalid}}
 
 void f3() {
   f2<int*>(0);

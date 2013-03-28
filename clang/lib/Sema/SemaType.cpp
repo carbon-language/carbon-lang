@@ -1085,35 +1085,6 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
   // Apply const/volatile/restrict qualifiers to T.
   if (unsigned TypeQuals = DS.getTypeQualifiers()) {
 
-    // Enforce C99 6.7.3p2: "Types other than pointer types derived from object
-    // or incomplete types shall not be restrict-qualified."  C++ also allows
-    // restrict-qualified references.
-    if (TypeQuals & DeclSpec::TQ_restrict) {
-      if (Result->isAnyPointerType() || Result->isReferenceType()) {
-        QualType EltTy;
-        if (Result->isObjCObjectPointerType())
-          EltTy = Result;
-        else
-          EltTy = Result->isPointerType() ?
-                    Result->getAs<PointerType>()->getPointeeType() :
-                    Result->getAs<ReferenceType>()->getPointeeType();
-
-        // If we have a pointer or reference, the pointee must have an object
-        // incomplete type.
-        if (!EltTy->isIncompleteOrObjectType()) {
-          S.Diag(DS.getRestrictSpecLoc(),
-               diag::err_typecheck_invalid_restrict_invalid_pointee)
-            << EltTy << DS.getSourceRange();
-          TypeQuals &= ~DeclSpec::TQ_restrict; // Remove the restrict qualifier.
-        }
-      } else if (!Result->isDependentType()) {
-        S.Diag(DS.getRestrictSpecLoc(),
-               diag::err_typecheck_invalid_restrict_not_pointer)
-          << Result << DS.getSourceRange();
-        TypeQuals &= ~DeclSpec::TQ_restrict; // Remove the restrict qualifier.
-      }
-    }
-
     // Warn about CV qualifiers on functions: C99 6.7.3p8: "If the specification
     // of a function type includes any type qualifiers, the behavior is
     // undefined."
@@ -1127,10 +1098,12 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
       else {
         assert((TypeQuals & DeclSpec::TQ_restrict) &&
                "Has CVR quals but not C, V, or R?");
-        Loc = DS.getRestrictSpecLoc();
+        // No diagnostic; we'll diagnose 'restrict' applied to a function type
+        // later, in BuildQualifiedType.
       }
-      S.Diag(Loc, diag::warn_typecheck_function_qualifiers)
-        << Result << DS.getSourceRange();
+      if (!Loc.isInvalid())
+        S.Diag(Loc, diag::warn_typecheck_function_qualifiers)
+          << Result << DS.getSourceRange();
     }
 
     // C++ [dcl.ref]p1:
@@ -1164,8 +1137,7 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
       // in this case.
     }
 
-    Qualifiers Quals = Qualifiers::fromCVRMask(TypeQuals);
-    Result = Context.getQualifiedType(Result, Quals);
+    return S.BuildQualifiedType(Result, DeclLoc, TypeQuals, &DS);
   }
 
   return Result;
@@ -1179,37 +1151,36 @@ static std::string getPrintableNameForEntity(DeclarationName Entity) {
 }
 
 QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
-                                  Qualifiers Qs) {
+                                  Qualifiers Qs, const DeclSpec *DS) {
   // Enforce C99 6.7.3p2: "Types other than pointer types derived from
   // object or incomplete types shall not be restrict-qualified."
   if (Qs.hasRestrict()) {
     unsigned DiagID = 0;
     QualType ProblemTy;
 
-    const Type *Ty = T->getCanonicalTypeInternal().getTypePtr();
-    if (const ReferenceType *RTy = dyn_cast<ReferenceType>(Ty)) {
-      if (!RTy->getPointeeType()->isIncompleteOrObjectType()) {
+    if (T->isAnyPointerType() || T->isReferenceType() ||
+        T->isMemberPointerType()) {
+      QualType EltTy;
+      if (T->isObjCObjectPointerType())
+        EltTy = T;
+      else if (const MemberPointerType *PTy = T->getAs<MemberPointerType>())
+        EltTy = PTy->getPointeeType();
+      else
+        EltTy = T->getPointeeType();
+
+      // If we have a pointer or reference, the pointee must have an object
+      // incomplete type.
+      if (!EltTy->isIncompleteOrObjectType()) {
         DiagID = diag::err_typecheck_invalid_restrict_invalid_pointee;
-        ProblemTy = T->getAs<ReferenceType>()->getPointeeType();
+        ProblemTy = EltTy;
       }
-    } else if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
-      if (!PTy->getPointeeType()->isIncompleteOrObjectType()) {
-        DiagID = diag::err_typecheck_invalid_restrict_invalid_pointee;
-        ProblemTy = T->getAs<PointerType>()->getPointeeType();
-      }
-    } else if (const MemberPointerType *PTy = dyn_cast<MemberPointerType>(Ty)) {
-      if (!PTy->getPointeeType()->isIncompleteOrObjectType()) {
-        DiagID = diag::err_typecheck_invalid_restrict_invalid_pointee;
-        ProblemTy = T->getAs<PointerType>()->getPointeeType();
-      }
-    } else if (!Ty->isDependentType()) {
-      // FIXME: this deserves a proper diagnostic
-      DiagID = diag::err_typecheck_invalid_restrict_invalid_pointee;
+    } else if (!T->isDependentType()) {
+      DiagID = diag::err_typecheck_invalid_restrict_not_pointer;
       ProblemTy = T;
     }
 
     if (DiagID) {
-      Diag(Loc, DiagID) << ProblemTy;
+      Diag(DS ? DS->getRestrictSpecLoc() : Loc, DiagID) << ProblemTy;
       Qs.removeRestrict();
     }
   }
