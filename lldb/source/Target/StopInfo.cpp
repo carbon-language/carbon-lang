@@ -287,6 +287,13 @@ protected:
         
         Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
         
+        if (!m_thread.IsValid())
+        {
+            // This shouldn't ever happen, but just in case, don't do more harm.
+            log->Printf ("PerformAction got called with an invalid thread.");
+            return;
+        }
+        
         BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (m_value));
         
         if (bp_site_sp)

@@ -497,6 +497,8 @@ StackFrameList::GetFrameAtIndex (uint32_t idx)
 {
     StackFrameSP frame_sp;
     Mutex::Locker locker (m_mutex);
+    uint32_t original_idx = idx;
+    
     uint32_t inlined_depth = GetCurrentInlinedDepth();
     if (inlined_depth != UINT32_MAX)
         idx += inlined_depth;
@@ -507,44 +509,63 @@ StackFrameList::GetFrameAtIndex (uint32_t idx)
     if (frame_sp)
         return frame_sp;
         
-        // GetFramesUpTo will fill m_frames with as many frames as you asked for,
-        // if there are that many.  If there weren't then you asked for too many
-        // frames.
-        GetFramesUpTo (idx);
-        if (idx < m_frames.size())
+    // GetFramesUpTo will fill m_frames with as many frames as you asked for,
+    // if there are that many.  If there weren't then you asked for too many
+    // frames.
+    GetFramesUpTo (idx);
+    if (idx < m_frames.size())
+    {
+        if (m_show_inlined_frames)
         {
-            if (m_show_inlined_frames)
+            // When inline frames are enabled we actually create all the frames in GetFramesUpTo.
+            frame_sp = m_frames[idx];
+        }
+        else
+        {
+            Unwind *unwinder = m_thread.GetUnwinder ();
+            if (unwinder)
             {
-                // When inline frames are enabled we actually create all the frames in GetFramesUpTo.
-                frame_sp = m_frames[idx];
-            }
-            else
-            {
-                Unwind *unwinder = m_thread.GetUnwinder ();
-                if (unwinder)
+                addr_t pc, cfa;
+                if (unwinder->GetFrameInfoAtIndex(idx, cfa, pc))
                 {
-                    addr_t pc, cfa;
-                    if (unwinder->GetFrameInfoAtIndex(idx, cfa, pc))
+                    frame_sp.reset (new StackFrame (m_thread.shared_from_this(), idx, idx, cfa, pc, NULL));
+                    
+                    Function *function = frame_sp->GetSymbolContext (eSymbolContextFunction).function;
+                    if (function)
                     {
-                        frame_sp.reset (new StackFrame (m_thread.shared_from_this(), idx, idx, cfa, pc, NULL));
-                        
-                        Function *function = frame_sp->GetSymbolContext (eSymbolContextFunction).function;
-                        if (function)
-                        {
-                            // When we aren't showing inline functions we always use
-                            // the top most function block as the scope.
-                            frame_sp->SetSymbolContextScope (&function->GetBlock(false));
-                        }
-                        else 
-                        {
-                            // Set the symbol scope from the symbol regardless if it is NULL or valid.
-                            frame_sp->SetSymbolContextScope (frame_sp->GetSymbolContext (eSymbolContextSymbol).symbol);
-                        }
-                        SetFrameAtIndex(idx, frame_sp);
+                        // When we aren't showing inline functions we always use
+                        // the top most function block as the scope.
+                        frame_sp->SetSymbolContextScope (&function->GetBlock(false));
                     }
+                    else 
+                    {
+                        // Set the symbol scope from the symbol regardless if it is NULL or valid.
+                        frame_sp->SetSymbolContextScope (frame_sp->GetSymbolContext (eSymbolContextSymbol).symbol);
+                    }
+                    SetFrameAtIndex(idx, frame_sp);
                 }
             }
         }
+    }
+    else if (original_idx == 0)
+    {
+        // There should ALWAYS be a frame at index 0.  If something went wrong with the CurrentInlinedDepth such that
+        // there weren't as many frames as we thought taking that into account, then reset the current inlined depth
+        // and return the real zeroth frame.
+        if (m_frames.size() > 0)
+        {
+            ResetCurrentInlinedDepth();
+            frame_sp = m_frames[original_idx];
+        }
+        else
+        {
+            // Why do we have a thread with zero frames, that should not ever happen...
+            if (m_thread.IsValid())
+                assert ("A valid thread has no frames.");
+            
+        }
+    }
+    
     return frame_sp;
 }
 
