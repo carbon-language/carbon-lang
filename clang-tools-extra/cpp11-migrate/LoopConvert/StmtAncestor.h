@@ -166,7 +166,7 @@ private:
 /// with a particular identifier. This search includes the names that don't
 /// actually appear in the AST (i.e. created by a refactoring tool) by including
 /// a map from Stmts to generated names associated with those stmts.
-class DeclFinderASTVisitor : 
+class DeclFinderASTVisitor :
   public clang::RecursiveASTVisitor<DeclFinderASTVisitor> {
 public:
   DeclFinderASTVisitor(const std::string &Name,
