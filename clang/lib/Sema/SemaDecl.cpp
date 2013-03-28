@@ -1389,7 +1389,7 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
     if (!D->getDeclName()) continue;
 
     // Diagnose unused variables in this scope.
-    if (!S->hasErrorOccurred())
+    if (!S->hasUnrecoverableErrorOccurred())
       DiagnoseUnusedDecl(D);
     
     // If this was a forward reference to a label, verify it was defined.

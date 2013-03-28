@@ -240,7 +240,11 @@ public:
   void setEntity(void *E) { Entity = E; }
 
   bool hasErrorOccurred() const { return ErrorTrap.hasErrorOccurred(); }
-                           
+
+  bool hasUnrecoverableErrorOccurred() const {
+    return ErrorTrap.hasUnrecoverableErrorOccurred();
+  }
+
   /// isClassScope - Return true if this scope is a class/struct/union scope.
   bool isClassScope() const {
     return (getFlags() & Scope::ClassScope);
