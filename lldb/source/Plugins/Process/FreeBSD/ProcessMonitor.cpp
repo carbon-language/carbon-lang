@@ -66,7 +66,7 @@ PtraceWrapper(int req, lldb::pid_t pid, void *addr, int data,
 {
     long int result;
 
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_PTRACE));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_PTRACE));
 
     if (log) {
         log->Printf("ptrace(%s, %u, %p, %x) called from file %s line %d",

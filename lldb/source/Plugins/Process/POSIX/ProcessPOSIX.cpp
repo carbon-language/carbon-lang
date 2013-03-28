@@ -107,7 +107,7 @@ ProcessPOSIX::DoAttachToProcessWithID(lldb::pid_t pid)
     Error error;
     assert(m_monitor == NULL);
 
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
         log->Printf ("ProcessPOSIX::%s(pid = %" PRIi64 ")", __FUNCTION__, GetID());
 
@@ -390,7 +390,7 @@ ProcessPOSIX::SendMessage(const ProcessMessage &message)
 void
 ProcessPOSIX::RefreshStateAfterStop()
 {
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
         log->Printf ("ProcessPOSIX::%s()", __FUNCTION__);
 
@@ -546,7 +546,7 @@ ProcessPOSIX::UpdateThreadListIfNeeded()
 bool
 ProcessPOSIX::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
         log->Printf ("ProcessPOSIX::%s() (pid = %" PRIi64 ")", __FUNCTION__, GetID());
 

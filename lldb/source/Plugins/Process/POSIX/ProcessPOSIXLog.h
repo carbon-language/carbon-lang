@@ -50,13 +50,13 @@ public:
     }
 
 
-    static lldb::LogSP
+    static lldb_private::Log *
     GetLogIfAllCategoriesSet(uint32_t mask = 0);
 
     static void
     DisableLog (const char **args, lldb_private::Stream *feedback_strm);
 
-    static lldb::LogSP
+    static lldb_private::Log *
     EnableLog (lldb::StreamSP &log_stream_sp, uint32_t log_options,
                const char **args, lldb_private::Stream *feedback_strm);
 

@@ -516,7 +516,7 @@ RegisterContext_i386::HardwareSingleStep(bool enable)
 void
 RegisterContext_i386::LogGPR(const char *title)
 {
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
     if (log)
     {
         if (title)

@@ -39,7 +39,7 @@ POSIXThread::POSIXThread(Process &process, lldb::tid_t tid)
     : Thread(process, tid),
       m_frame_ap(0)
 {
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
         log->Printf ("POSIXThread::%s (tid = %" PRIi64 ")", __FUNCTION__, tid);
 }
@@ -60,7 +60,7 @@ POSIXThread::GetMonitor()
 void
 POSIXThread::RefreshStateAfterStop()
 {
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
         log->Printf ("POSIXThread::%s ()", __FUNCTION__);
 
@@ -110,7 +110,7 @@ POSIXThread::CreateRegisterContextForFrame(lldb_private::StackFrame *frame)
     lldb::RegisterContextSP reg_ctx_sp;
     uint32_t concrete_frame_idx = 0;
 
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
         log->Printf ("POSIXThread::%s ()", __FUNCTION__);
 
@@ -165,7 +165,7 @@ POSIXThread::Resume()
     ProcessMonitor &monitor = GetMonitor();
     bool status;
 
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
         log->Printf ("POSIXThread::%s ()", __FUNCTION__);
 
@@ -197,7 +197,7 @@ POSIXThread::Resume()
 void
 POSIXThread::Notify(const ProcessMessage &message)
 {
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
     if (log)
         log->Printf ("POSIXThread::%s () message kind = '%s'", __FUNCTION__, message.PrintKind());
 
@@ -241,7 +241,7 @@ void
 POSIXThread::BreakNotify(const ProcessMessage &message)
 {
     bool status;
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
 
     assert(GetRegisterContext());
     status = GetRegisterContextPOSIX()->UpdateAfterBreakpoint();
@@ -300,7 +300,7 @@ POSIXThread::CrashNotify(const ProcessMessage &message)
 
     assert(message.GetKind() == ProcessMessage::eCrashMessage);
 
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
     if (log)
         log->Printf ("POSIXThread::%s () signo = %i, reason = '%s'", __FUNCTION__, signo, message.PrintCrashReason());
 

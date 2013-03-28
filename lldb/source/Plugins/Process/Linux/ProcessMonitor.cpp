@@ -74,7 +74,7 @@ DisplayBytes (lldb_private::StreamString &s, void *bytes, uint32_t count)
 static void PtraceDisplayBytes(int &req, void *data, size_t data_size)
 {
     StreamString buf;
-    LogSP verbose_log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (
+    Log *verbose_log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (
                                         POSIX_LOG_PTRACE | POSIX_LOG_VERBOSE));
 
     if (verbose_log)
@@ -139,7 +139,7 @@ PtraceWrapper(int req, lldb::pid_t pid, void *addr, void *data, size_t data_size
 {
     long int result;
 
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PTRACE));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PTRACE));
 
     if (log)
         log->Printf("ptrace(%s, %lu, %p, %p, %zu) called from file %s line %d",
@@ -208,7 +208,7 @@ DoReadMemory(lldb::pid_t pid,
     size_t remainder;
     long data;
 
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_ALL));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_ALL));
     if (log)
         ProcessPOSIXLog::IncNestLevel();
     if (log && ProcessPOSIXLog::AtTopNestLevel() && log->GetMask().Test(POSIX_LOG_MEMORY))
@@ -267,7 +267,7 @@ DoWriteMemory(lldb::pid_t pid,
     size_t bytes_written = 0;
     size_t remainder;
 
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_ALL));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_ALL));
     if (log)
         ProcessPOSIXLog::IncNestLevel();
     if (log && ProcessPOSIXLog::AtTopNestLevel() && log->GetMask().Test(POSIX_LOG_MEMORY))
@@ -462,7 +462,7 @@ private:
 void
 ReadRegOperation::Execute(ProcessMonitor *monitor)
 {
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
 
     // Set errno to zero so that we can detect a failed peek.
     errno = 0;
@@ -504,7 +504,7 @@ void
 WriteRegOperation::Execute(ProcessMonitor *monitor)
 {
     void* buf;
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
 
 #if __WORDSIZE == 32
     buf = (void*) m_value.GetAsUInt32();
@@ -1083,7 +1083,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     long ptrace_opts = 0;
 
     lldb::ThreadSP inferior;
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
 
     // Propagate the environment if one is not supplied.
     if (envp == NULL || envp[0] == NULL)
@@ -1282,7 +1282,7 @@ ProcessMonitor::Attach(AttachArgs *args)
     ProcessMonitor *monitor = args->m_monitor;
     ProcessLinux &process = monitor->GetProcess();
     lldb::ThreadSP inferior;
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
 
     if (pid <= 1)
     {

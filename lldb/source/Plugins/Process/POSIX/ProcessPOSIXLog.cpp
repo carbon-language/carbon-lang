@@ -21,24 +21,28 @@ using namespace lldb_private;
 
 // We want to avoid global constructors where code needs to be run so here we
 // control access to our static g_log_sp by hiding it in a singleton function
-// that will construct the static g_lob_sp the first time this function is 
+// that will construct the static g_log_sp the first time this function is 
 // called.
-static LogSP &
+static bool g_log_enabled = false;
+static Log * g_log = NULL;
+static Log *
 GetLog ()
 {
-    static LogSP g_log_sp;
-    return g_log_sp;
+    if (!g_log_enabled)
+        return NULL;
+    return g_log;
 }
 
-LogSP
+
+Log *
 ProcessPOSIXLog::GetLogIfAllCategoriesSet (uint32_t mask)
 {
-    LogSP log(GetLog ());
+    Log *log(GetLog ());
     if (log && mask)
     {
         uint32_t log_mask = log->GetMask().Get();
         if ((log_mask & mask) != mask)
-            return LogSP();
+            return NULL;
     }
     return log;
 }
@@ -46,7 +50,7 @@ ProcessPOSIXLog::GetLogIfAllCategoriesSet (uint32_t mask)
 void
 ProcessPOSIXLog::DisableLog (const char **args, Stream *feedback_strm)
 {
-    LogSP log (GetLog ());
+    Log *log (GetLog ());
     if (log)
     {
         uint32_t flag_bits = 0;
@@ -79,33 +83,33 @@ ProcessPOSIXLog::DisableLog (const char **args, Stream *feedback_strm)
             }
         }
         
+        log->GetMask().Reset (flag_bits);
         if (flag_bits == 0)
-            GetLog ().reset();
-        else
-            log->GetMask().Reset (flag_bits);
+            g_log_enabled = false;
     }
     
     return;
 }
 
-LogSP
+Log *
 ProcessPOSIXLog::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, const char **args, Stream *feedback_strm)
 {
     // Try see if there already is a log - that way we can reuse its settings.
     // We could reuse the log in toto, but we don't know that the stream is the same.
     uint32_t flag_bits = 0;
-    LogSP log(GetLog ());
-    if (log)
-        flag_bits = log->GetMask().Get();
+    if (g_log)
+        flag_bits = g_log->GetMask().Get();
 
     // Now make a new log with this stream if one was provided
     if (log_stream_sp)
     {
-        log = LogSP(new Log(log_stream_sp));
-        GetLog () = log;
+        if (g_log)
+            g_log->SetStream(log_stream_sp);
+        else
+            g_log = new Log(log_stream_sp);
     }
 
-    if (log)
+    if (g_log)
     {
         bool got_unknown_category = false;
         for (; args[0]; args++)
@@ -140,10 +144,11 @@ ProcessPOSIXLog::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, const
         }
         if (flag_bits == 0)
             flag_bits = POSIX_LOG_DEFAULT;
-        log->GetMask().Reset(flag_bits);
-        log->GetOptions().Reset(log_options);
+        g_log->GetMask().Reset(flag_bits);
+        g_log->GetOptions().Reset(log_options);
+        g_log_enabled = true;
     }
-    return log;
+    return g_log;
 }
 
 void
@@ -174,7 +179,7 @@ ProcessPOSIXLog::ListLogCategories (Stream *strm)
 void
 ProcessPOSIXLog::LogIf (uint32_t mask, const char *format, ...)
 {
-    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (mask));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (mask));
     if (log)
     {
         va_list args;

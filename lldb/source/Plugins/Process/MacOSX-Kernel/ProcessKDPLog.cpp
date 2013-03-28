@@ -20,7 +20,7 @@ using namespace lldb_private;
 
 // We want to avoid global constructors where code needs to be run so here we
 // control access to our static g_log_sp by hiding it in a singleton function
-// that will construct the static g_lob_sp the first time this function is 
+// that will construct the static g_log_sp the first time this function is 
 // called.
 static bool g_log_enabled = false;
 static Log * g_log = NULL;
