@@ -30,11 +30,13 @@ CommandObjectRegexCommand::CommandObjectRegexCommand
     const char *name,
     const char *help,
     const char *syntax,
-    uint32_t max_matches
+    uint32_t max_matches,
+    uint32_t completion_type_mask
 ) :
     CommandObjectRaw (interpreter, name, help, syntax),
     m_max_matches (max_matches),
-    m_entries ()
+    m_entries (),
+    m_completion_type_mask (completion_type_mask)
 {
 }
 
@@ -113,4 +115,34 @@ CommandObjectRegexCommand::AddRegexCommand (const char *re_cstr, const char *com
     // The regex didn't compile...
     m_entries.pop_back();
     return false;
+}
+
+int
+CommandObjectRegexCommand::HandleCompletion (Args &input,
+                                             int &cursor_index,
+                                             int &cursor_char_position,
+                                             int match_start_point,
+                                             int max_return_elements,
+                                             bool &word_complete,
+                                             StringList &matches)
+{
+    if (m_completion_type_mask)
+    {
+        std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
+        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
+                                                             m_completion_type_mask,
+                                                             completion_str.c_str(),
+                                                             match_start_point,
+                                                             max_return_elements,
+                                                             NULL,
+                                                             word_complete,
+                                                             matches);
+        return matches.GetSize();
+    }
+    else
+    {
+        matches.Clear();
+        word_complete = false;
+    }
+    return 0;
 }

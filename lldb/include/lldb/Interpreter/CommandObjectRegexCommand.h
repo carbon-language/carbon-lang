@@ -33,7 +33,8 @@ public:
                                const char *name, 
                                const char *help, 
                                const char *syntax, 
-                               uint32_t max_matches);
+                               uint32_t max_matches,
+                               uint32_t completion_type_mask = 0);
     
     virtual
     ~CommandObjectRegexCommand ();
@@ -46,6 +47,15 @@ public:
     {
         return !m_entries.empty();
     }
+    
+    virtual int
+    HandleCompletion (Args &input,
+                      int &cursor_index,
+                      int &cursor_char_position,
+                      int match_start_point,
+                      int max_return_elements,
+                      bool &word_complete,
+                      StringList &matches);
 
 protected:
     virtual bool
@@ -59,6 +69,7 @@ protected:
 
     typedef std::list<Entry> EntryCollection;
     const uint32_t m_max_matches;
+    const uint32_t m_completion_type_mask;
     EntryCollection m_entries;
 
 private:

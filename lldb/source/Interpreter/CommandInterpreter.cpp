@@ -42,6 +42,7 @@
 #include "../Commands/CommandObjectVersion.h"
 #include "../Commands/CommandObjectWatchpoint.h"
 
+
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/InputReader.h"
 #include "lldb/Core/Log.h"
@@ -51,8 +52,9 @@
 #include "lldb/Host/Host.h"
 
 #include "lldb/Interpreter/Args.h"
-#include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/ScriptInterpreterNone.h"
 #include "lldb/Interpreter/ScriptInterpreterPython.h"
@@ -395,7 +397,10 @@ CommandInterpreter::LoadCommandDictionary ()
     break_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                       "_regexp-break",
                                                       "Set a breakpoint using a regular expression to specify the location, where <linenum> is in decimal and <address> is in hex.",
-                                                      "_regexp-break [<filename>:<linenum>]\n_regexp-break [<linenum>]\n_regexp-break [<address>]\n_regexp-break <...>", 2));
+                                                      "_regexp-break [<filename>:<linenum>]\n_regexp-break [<linenum>]\n_regexp-break [<address>]\n_regexp-break <...>",
+                                                      2,
+                                                      CommandCompletions::eSymbolCompletion |
+                                                      CommandCompletions::eSourceFileCompletion));
 
     if (break_regex_cmd_ap.get())
     {
@@ -419,7 +424,10 @@ CommandInterpreter::LoadCommandDictionary ()
     tbreak_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                       "_regexp-tbreak",
                                                       "Set a one shot breakpoint using a regular expression to specify the location, where <linenum> is in decimal and <address> is in hex.",
-                                                      "_regexp-tbreak [<filename>:<linenum>]\n_regexp-break [<linenum>]\n_regexp-break [<address>]\n_regexp-break <...>", 2));
+                                                      "_regexp-tbreak [<filename>:<linenum>]\n_regexp-break [<linenum>]\n_regexp-break [<address>]\n_regexp-break <...>",
+                                                       2,
+                                                       CommandCompletions::eSymbolCompletion |
+                                                       CommandCompletions::eSourceFileCompletion));
 
     if (tbreak_regex_cmd_ap.get())
     {
@@ -447,7 +455,8 @@ CommandInterpreter::LoadCommandDictionary ()
     attach_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                        "_regexp-attach",
                                                        "Attach to a process id if in decimal, otherwise treat the argument as a process name to attach to.",
-                                                       "_regexp-attach [<pid>]\n_regexp-attach [<process-name>]", 2));
+                                                       "_regexp-attach [<pid>]\n_regexp-attach [<process-name>]",
+                                                       2));
     if (attach_regex_cmd_ap.get())
     {
         if (attach_regex_cmd_ap->AddRegexCommand("^([0-9]+)[[:space:]]*$", "process attach --pid %1") &&
@@ -492,9 +501,9 @@ CommandInterpreter::LoadCommandDictionary ()
 
     std::auto_ptr<CommandObjectRegexCommand>
     display_regex_cmd_ap(new CommandObjectRegexCommand (*this,
-                                                   "_regexp-display",
-                                                   "Add an expression evaluation stop-hook.",
-                                                   "_regexp-display expression", 2));
+                                                        "_regexp-display",
+                                                        "Add an expression evaluation stop-hook.",
+                                                        "_regexp-display expression", 2));
     if (display_regex_cmd_ap.get())
     {
         if (display_regex_cmd_ap->AddRegexCommand("^(.+)$", "target stop-hook add -o \"expr -- %1\""))
@@ -506,9 +515,9 @@ CommandInterpreter::LoadCommandDictionary ()
 
     std::auto_ptr<CommandObjectRegexCommand>
     undisplay_regex_cmd_ap(new CommandObjectRegexCommand (*this,
-                                                   "_regexp-undisplay",
-                                                   "Remove an expression evaluation stop-hook.",
-                                                   "_regexp-undisplay stop-hook-number", 2));
+                                                          "_regexp-undisplay",
+                                                          "Remove an expression evaluation stop-hook.",
+                                                          "_regexp-undisplay stop-hook-number", 2));
     if (undisplay_regex_cmd_ap.get())
     {
         if (undisplay_regex_cmd_ap->AddRegexCommand("^([0-9]+)$", "target stop-hook delete %1"))
@@ -520,9 +529,9 @@ CommandInterpreter::LoadCommandDictionary ()
 
     std::auto_ptr<CommandObjectRegexCommand>
     connect_gdb_remote_cmd_ap(new CommandObjectRegexCommand (*this,
-                                                      "gdb-remote",
-                                                      "Connect to a remote GDB server.  If no hostname is provided, localhost is assumed.",
-                                                      "gdb-remote [<hostname>:]<portnum>", 2));
+                                                             "gdb-remote",
+                                                             "Connect to a remote GDB server.  If no hostname is provided, localhost is assumed.",
+                                                             "gdb-remote [<hostname>:]<portnum>", 2));
     if (connect_gdb_remote_cmd_ap.get())
     {
         if (connect_gdb_remote_cmd_ap->AddRegexCommand("^([^:]+:[[:digit:]]+)$", "process connect --plugin gdb-remote connect://%1") &&
@@ -572,7 +581,9 @@ CommandInterpreter::LoadCommandDictionary ()
     list_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                      "_regexp-list",
                                                      "Implements the GDB 'list' command in all of its forms except FILE:FUNCTION and maps them to the appropriate 'source list' commands.",
-                                                     "_regexp-list [<line>]\n_regexp-attach [<file>:<line>]\n_regexp-attach [<file>:<line>]", 2));
+                                                     "_regexp-list [<line>]\n_regexp-attach [<file>:<line>]\n_regexp-attach [<file>:<line>]",
+                                                     2,
+                                                     CommandCompletions::eSourceFileCompletion));
     if (list_regex_cmd_ap.get())
     {
         if (list_regex_cmd_ap->AddRegexCommand("^([0-9]+)[[:space:]]*$", "source list --line %1") &&
@@ -590,9 +601,9 @@ CommandInterpreter::LoadCommandDictionary ()
 
     std::auto_ptr<CommandObjectRegexCommand>
     env_regex_cmd_ap(new CommandObjectRegexCommand (*this,
-                                                     "_regexp-env",
-                                                     "Implements a shortcut to viewing and setting environment variables.",
-                                                     "_regexp-env\n_regexp-env FOO=BAR", 2));
+                                                    "_regexp-env",
+                                                    "Implements a shortcut to viewing and setting environment variables.",
+                                                    "_regexp-env\n_regexp-env FOO=BAR", 2));
     if (env_regex_cmd_ap.get())
     {
         if (env_regex_cmd_ap->AddRegexCommand("^$", "settings show target.env-vars") &&
