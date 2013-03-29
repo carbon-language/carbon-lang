@@ -1672,8 +1672,8 @@ DwarfUnits::computeSizeAndOffset(DIE *Die, unsigned Offset) {
   // Start the size with the size of abbreviation code.
   Offset += MCAsmInfo::getULEB128Size(AbbrevNumber);
 
-  const SmallVector<DIEValue*, 32> &Values = Die->getValues();
-  const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev->getData();
+  const SmallVector<DIEValue*, 12> &Values = Die->getValues();
+  const SmallVector<DIEAbbrevData, 12> &AbbrevData = Abbrev->getData();
 
   // Size the DIE attribute values.
   for (unsigned i = 0, N = Values.size(); i < N; ++i)
@@ -1767,8 +1767,8 @@ void DwarfDebug::emitDIE(DIE *Die, std::vector<DIEAbbrev *> *Abbrevs) {
                                 dwarf::TagString(Abbrev->getTag()));
   Asm->EmitULEB128(AbbrevNumber);
 
-  const SmallVector<DIEValue*, 32> &Values = Die->getValues();
-  const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev->getData();
+  const SmallVector<DIEValue*, 12> &Values = Die->getValues();
+  const SmallVector<DIEAbbrevData, 12> &AbbrevData = Abbrev->getData();
 
   // Emit the DIE attribute values.
   for (unsigned i = 0, N = Values.size(); i < N; ++i) {

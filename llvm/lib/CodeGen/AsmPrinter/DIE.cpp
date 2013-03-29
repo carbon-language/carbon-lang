@@ -144,7 +144,7 @@ void DIE::print(raw_ostream &O, unsigned IncIndent) {
     O << "Size: " << Size << "\n";
   }
 
-  const SmallVector<DIEAbbrevData, 8> &Data = Abbrev.getData();
+  const SmallVector<DIEAbbrevData, 12> &Data = Abbrev.getData();
 
   IndentCount += 2;
   for (unsigned i = 0, N = Data.size(); i < N; ++i) {
@@ -324,7 +324,7 @@ void DIEEntry::print(raw_ostream &O) {
 ///
 unsigned DIEBlock::ComputeSize(AsmPrinter *AP) {
   if (!Size) {
-    const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev.getData();
+    const SmallVector<DIEAbbrevData, 12> &AbbrevData = Abbrev.getData();
     for (unsigned i = 0, N = Values.size(); i < N; ++i)
       Size += Values[i]->SizeOf(AP, AbbrevData[i].getForm());
   }
@@ -343,7 +343,7 @@ void DIEBlock::EmitValue(AsmPrinter *Asm, unsigned Form) const {
   case dwarf::DW_FORM_block:  Asm->EmitULEB128(Size); break;
   }
 
-  const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev.getData();
+  const SmallVector<DIEAbbrevData, 12> &AbbrevData = Abbrev.getData();
   for (unsigned i = 0, N = Values.size(); i < N; ++i)
     Values[i]->EmitValue(Asm, AbbrevData[i].getForm());
 }
