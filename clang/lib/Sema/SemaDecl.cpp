@@ -7565,9 +7565,9 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     }
   } else if (VDecl->isFileVarDecl()) {
     if (VDecl->getStorageClassAsWritten() == SC_Extern &&
-        !VDecl->isExternC() &&
         (!getLangOpts().CPlusPlus ||
-         !Context.getBaseElementType(VDecl->getType()).isConstQualified()))
+         !(Context.getBaseElementType(VDecl->getType()).isConstQualified() ||
+           VDecl->isExternC())))
       Diag(VDecl->getLocation(), diag::warn_extern_init);
 
     // C99 6.7.8p4. All file scoped initializers need to be constant.
