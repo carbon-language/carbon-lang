@@ -74,7 +74,7 @@ if( LLVM_ENABLE_PIC )
   set(SHARED_LIBRARY TRUE)
   add_clang_library(libclang ${SOURCES})
   target_link_libraries(libclang ${LIBRARIES})
-  add_dependencies(libclang ${GENERATED_HEADERS})
+  add_dependencies(libclang ${GENERATED_HEADERS} clang-headers)
 
   if(WIN32)
     set_target_properties(libclang
@@ -108,7 +108,7 @@ endif()
 if( NOT BUILD_SHARED_LIBS AND NOT WIN32 )
   add_clang_library(${LIBCLANG_STATIC_TARGET_NAME} STATIC ${SOURCES})
   target_link_libraries(${LIBCLANG_STATIC_TARGET_NAME} ${LIBRARIES})
-  add_dependencies(${LIBCLANG_STATIC_TARGET_NAME} ${GENERATED_HEADERS})
+  add_dependencies(${LIBCLANG_STATIC_TARGET_NAME} ${GENERATED_HEADERS} clang-headers)
 
   set_target_properties(${LIBCLANG_STATIC_TARGET_NAME}
     PROPERTIES

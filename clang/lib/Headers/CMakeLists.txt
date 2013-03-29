@@ -95,6 +95,13 @@ endif ()
 add_custom_target(clang-headers ALL DEPENDS ${out_files})
 set_target_properties(clang-headers PROPERTIES FOLDER "Misc")
 
+if (other_output_dir)
+	if(UNIX)
+		add_custom_command(TARGET clang-headers POST_BUILD
+	    	COMMAND ${CMAKE_COMMAND} -E create_symlink "${LLVM_BINARY_DIR}/bin/lib/clang" "${LLVM_BINARY_DIR}/lib/${CMAKE_CFG_INTDIR}/clang")
+	endif()
+endif ()
+
 install(FILES ${files} ${output_dir}/arm_neon.h
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
   DESTINATION lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION}/include)
