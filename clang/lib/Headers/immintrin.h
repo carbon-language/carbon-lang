@@ -102,4 +102,13 @@ _rdrand64_step(unsigned long long *__p)
 #include <rtmintrin.h>
 #endif
 
+/* FIXME: check __HLE__ as well when HLE is supported. */
+#if defined (__RTM__)
+static __inline__ int __attribute__((__always_inline__, __nodebug__))
+_xtest(void)
+{
+  return __builtin_ia32_xtest();
+}
+#endif
+
 #endif /* __IMMINTRIN_H */

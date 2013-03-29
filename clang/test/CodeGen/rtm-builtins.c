@@ -21,3 +21,8 @@ test_xabort(void) {
   // CHECK: void @llvm.x86.xabort(i8 2)
   _xabort(2);
 }
+
+unsigned int test_xtest(void) {
+  // CHECK: i32 @llvm.x86.xtest()
+  return _xtest();
+}
