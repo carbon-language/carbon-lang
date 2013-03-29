@@ -64,6 +64,8 @@ extern const CFArrayCallBacks kCFTypeArrayCallBacks;
 typedef const struct __CFArray * CFArrayRef;
 typedef struct __CFArray * CFMutableArrayRef;
 extern CFMutableArrayRef CFArrayCreateMutable(CFAllocatorRef allocator, CFIndex capacity, const CFArrayCallBacks *callBacks);
+void abort(void) __attribute__((noreturn));
+CFArrayRef CFArrayCreate(CFAllocatorRef allocator, const void **values, CFIndex numValues, const CFArrayCallBacks *callBacks);
 extern const void *CFArrayGetValueAtIndex(CFArrayRef theArray, CFIndex idx);
 extern void CFArrayAppendValue(CFMutableArrayRef theArray, const void *value);
 typedef struct {
@@ -384,4 +386,25 @@ void testCallback() {
   extern int process(int);
   val >> process;
 }
+
+//===----------------------------------------------------------------------===//
+// Test handling static initializers.
+//===----------------------------------------------------------------------===//
+
+@interface radar13227740 : NSObject
+@end
+
+@implementation radar13227740
+- (CFArrayRef)test {
+    static CFArrayRef array = ::CFArrayCreate(0, 0, 0, 0);
+    do { if (!((0 != array)/1)) { abort(); } } while (false);
+    return array;
+}
+
+// Previously this reported a bogus leak.
+- (void)test2 {
+    (void)[self test];
+    (void)[self test];
+}
+@end
 
