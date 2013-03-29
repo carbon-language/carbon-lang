@@ -11,6 +11,7 @@
 
 #include <bitset>
 #include <algorithm>
+#include <limits>
 #include <climits>
 #include <cassert>
 
@@ -19,7 +20,7 @@ void test_to_ulong()
 {
     const std::size_t M = sizeof(unsigned long) * CHAR_BIT < N ? sizeof(unsigned long) * CHAR_BIT : N;
     const std::size_t X = M == 0 ? sizeof(unsigned long) * CHAR_BIT - 1 : sizeof(unsigned long) * CHAR_BIT - M;
-    const std::size_t max = M == 0 ? 0 : std::size_t(-1) >> X;
+    const std::size_t max = M == 0 ? 0 : std::size_t(std::numeric_limits<unsigned long>::max()) >> X;
     std::size_t tests[] = {0,
                            std::min<std::size_t>(1, max),
                            std::min<std::size_t>(2, max),
