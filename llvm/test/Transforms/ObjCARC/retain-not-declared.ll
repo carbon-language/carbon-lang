@@ -21,8 +21,8 @@ define i8* @test0(i8* %p) {
 entry:
   %call = tail call i8* @objc_unretainedObject(i8* %p)
   %0 = tail call i8* @objc_retainAutoreleasedReturnValue(i8* %call) nounwind
-  %1 = tail call i8* @objc_autoreleaseReturnValue(i8* %0) nounwind
-  ret i8* %1
+  %1 = tail call i8* @objc_autoreleaseReturnValue(i8* %call) nounwind
+  ret i8* %call
 }
 
 ; Properly create the @objc_retain declaration when it doesn't already exist.
