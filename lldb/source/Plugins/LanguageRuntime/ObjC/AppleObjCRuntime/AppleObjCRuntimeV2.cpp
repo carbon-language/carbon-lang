@@ -1659,6 +1659,9 @@ AppleObjCRuntimeV2::GetISAHashTablePointer ()
         Process *process = GetProcess();
 
         ModuleSP objc_module_sp(GetObjCModule());
+        
+        if (!objc_module_sp)
+            return LLDB_INVALID_ADDRESS;
 
         static ConstString g_gdb_objc_realized_classes("gdb_objc_realized_classes");
         
