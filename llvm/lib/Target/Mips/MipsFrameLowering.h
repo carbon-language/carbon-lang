@@ -26,9 +26,8 @@ protected:
   const MipsSubtarget &STI;
 
 public:
-  explicit MipsFrameLowering(const MipsSubtarget &sti)
-    : TargetFrameLowering(StackGrowsDown, sti.hasMips64() ? 16 : 8, 0,
-                          sti.hasMips64() ? 16 : 8), STI(sti) {}
+  explicit MipsFrameLowering(const MipsSubtarget &sti, unsigned Alignment)
+    : TargetFrameLowering(StackGrowsDown, Alignment, 0, Alignment), STI(sti) {}
 
   static const MipsFrameLowering *create(MipsTargetMachine &TM,
                                          const MipsSubtarget &ST);

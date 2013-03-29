@@ -21,7 +21,7 @@ namespace llvm {
 class MipsSEFrameLowering : public MipsFrameLowering {
 public:
   explicit MipsSEFrameLowering(const MipsSubtarget &STI)
-    : MipsFrameLowering(STI) {}
+    : MipsFrameLowering(STI, STI.hasMips64() ? 16 : 8) {}
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
