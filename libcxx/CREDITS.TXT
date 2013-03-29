@@ -89,3 +89,7 @@ N: Jeffrey Yasskin
 E: jyasskin@gmail.com
 E: jyasskin@google.com
 D: Linux fixes.
+
+N: Bruce Mitchener, Jr.
+E: bruce.mitchener@gmail.com
+D: Emscripten-related changes.

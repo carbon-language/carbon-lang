@@ -67,7 +67,7 @@ thread::hardware_concurrency() _NOEXCEPT
     std::size_t s = sizeof(n);
     sysctl(mib, 2, &n, &s, 0, 0);
     return n;
-#elif defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200112L) && defined(_SC_NPROCESSORS_ONLN)
+#elif (defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200112L) && defined(_SC_NPROCESSORS_ONLN)) || defined(EMSCRIPTEN)
     long result = sysconf(_SC_NPROCESSORS_ONLN);
     // sysconf returns -1 if the name is invalid, the option does not exist or
     // does not have a definite limit.

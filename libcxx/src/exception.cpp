@@ -77,6 +77,7 @@ get_terminate() _NOEXCEPT
     return __sync_fetch_and_add(&__terminate_handler, (terminate_handler)0);
 }
 
+#ifndef EMSCRIPTEN // We provide this in JS
 _LIBCPP_NORETURN
 void
 terminate() _NOEXCEPT
@@ -97,9 +98,10 @@ terminate() _NOEXCEPT
     }
 #endif  // _LIBCPP_NO_EXCEPTIONS
 }
+#endif // !EMSCRIPTEN
 #endif // !defined(LIBCXXRT) && !defined(_LIBCPPABI_VERSION)
 
-#if !defined(LIBCXXRT) && !defined(__GLIBCXX__)
+#if !defined(LIBCXXRT) && !defined(__GLIBCXX__) && !defined(EMSCRIPTEN)
 bool uncaught_exception() _NOEXCEPT
 {
 #if defined(__APPLE__) || defined(_LIBCPPABI_VERSION)
