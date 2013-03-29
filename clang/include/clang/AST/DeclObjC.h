@@ -537,12 +537,14 @@ public:
   }
 
   // Get the local instance/class method declared in this interface.
-  ObjCMethodDecl *getMethod(Selector Sel, bool isInstance) const;
-  ObjCMethodDecl *getInstanceMethod(Selector Sel) const {
-    return getMethod(Sel, true/*isInstance*/);
+  ObjCMethodDecl *getMethod(Selector Sel, bool isInstance,
+                            bool AllowHidden = false) const;
+  ObjCMethodDecl *getInstanceMethod(Selector Sel,
+                                    bool AllowHidden = false) const {
+    return getMethod(Sel, true/*isInstance*/, AllowHidden);
   }
-  ObjCMethodDecl *getClassMethod(Selector Sel) const {
-    return getMethod(Sel, false/*isInstance*/);
+  ObjCMethodDecl *getClassMethod(Selector Sel, bool AllowHidden = false) const {
+    return getMethod(Sel, false/*isInstance*/, AllowHidden);
   }
   bool HasUserDeclaredSetterMethod(const ObjCPropertyDecl *P) const;
   ObjCIvarDecl *getIvarDecl(IdentifierInfo *Id) const;

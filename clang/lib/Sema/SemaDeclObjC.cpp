@@ -2727,9 +2727,9 @@ private:
       return;
     
     //   - categories,
-    for (ObjCInterfaceDecl::visible_categories_iterator
-           cat = iface->visible_categories_begin(),
-           catEnd = iface->visible_categories_end();
+    for (ObjCInterfaceDecl::known_categories_iterator
+           cat = iface->known_categories_begin(),
+           catEnd = iface->known_categories_end();
          cat != catEnd; ++cat) {
       search(*cat);
     }
@@ -2759,7 +2759,8 @@ private:
   void search(ObjCContainerDecl *container) {
     // Check for a method in this container which matches this selector.
     ObjCMethodDecl *meth = container->getMethod(Method->getSelector(),
-                                                Method->isInstanceMethod());
+                                                Method->isInstanceMethod(),
+                                                /*AllowHidden=*/true);
 
     // If we find one, record it and bail out.
     if (meth) {
