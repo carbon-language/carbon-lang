@@ -255,10 +255,10 @@ $(Tmp.ObjPath)/%.o: $(Tmp.SrcPath)/%.S $(Tmp.Dependencies) $(Tmp.ObjPath)/.dir
 	$(Verb) $(Tmp.CC) $(Tmp.CFLAGS) -c -o $$@ $$<
 $(Tmp.ObjPath)/%.o: $(Tmp.SrcPath)/%.c $(Tmp.Dependencies) $(Tmp.ObjPath)/.dir
 	$(Summary) "  COMPILE:   $(Tmp.Name)/$(Tmp.Config)/$(Tmp.Arch): $$<"
-	$(Verb) $(Tmp.CC) $(Tmp.CFLAGS) -c $(COMMON_CFLAGS) -o $$@ $$<
+	$(Verb) $(Tmp.CC) $(COMMON_CFLAGS) $(Tmp.CFLAGS) -c -o $$@ $$<
 $(Tmp.ObjPath)/%.o: $(Tmp.SrcPath)/%.cc $(Tmp.Dependencies) $(Tmp.ObjPath)/.dir
 	$(Summary) "  COMPILE:   $(Tmp.Name)/$(Tmp.Config)/$(Tmp.Arch): $$<"
-	$(Verb) $(Tmp.CC) $(Tmp.CFLAGS) -c $(COMMON_CXXFLAGS) -o $$@ $$<
+	$(Verb) $(Tmp.CC) $(COMMON_CXXFLAGS) $(Tmp.CFLAGS) -c -o $$@ $$<
 .PRECIOUS: $(Tmp.ObjPath)/.dir
 
 endef
