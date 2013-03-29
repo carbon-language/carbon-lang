@@ -1061,7 +1061,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
     }
 
     // Align this block if the layout predecessor's edge into this block is
-    // cold relative to the block. When this is true, othe predecessors make up
+    // cold relative to the block. When this is true, other predecessors make up
     // all of the hot entries into the block and thus alignment is likely to be
     // important.
     BranchProbability LayoutProb = MBPI->getEdgeProbability(LayoutPred, *BI);
