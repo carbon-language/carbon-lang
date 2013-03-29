@@ -482,7 +482,7 @@ void
 PtrState::Merge(const PtrState &Other, bool TopDown) {
   Seq = MergeSeqs(Seq, Other.Seq, TopDown);
   KnownPositiveRefCount = KnownPositiveRefCount && Other.KnownPositiveRefCount;
-  
+
   // If we're not in a sequence (anymore), drop all associated state.
   if (Seq == S_None) {
     Partial = false;
@@ -800,16 +800,16 @@ static void GenerateARCBBEntranceAnnotation(const char *Name, BasicBlock *BB,
                                         ArrayRef<Type*>(Params, 2),
                                         /*isVarArg=*/false);
   Constant *Callee = M->getOrInsertFunction(Name, FTy);
-  
-  IRBuilder<> Builder(BB, BB->getFirstInsertionPt());  
-  
+
+  IRBuilder<> Builder(BB, BB->getFirstInsertionPt());
+
   Value *PtrName;
   StringRef Tmp = Ptr->getName();
   if (0 == (PtrName = M->getGlobalVariable(Tmp, true))) {
     Value *ActualPtrName = Builder.CreateGlobalStringPtr(Tmp,
                                                          Tmp + "_STR");
     PtrName = new GlobalVariable(*M, I8X, true, GlobalVariable::InternalLinkage,
-                                 cast<Constant>(ActualPtrName), Tmp); 
+                                 cast<Constant>(ActualPtrName), Tmp);
   }
 
   Value *S;
@@ -837,16 +837,16 @@ static void GenerateARCBBTerminatorAnnotation(const char *Name, BasicBlock *BB,
                                         ArrayRef<Type*>(Params, 2),
                                         /*isVarArg=*/false);
   Constant *Callee = M->getOrInsertFunction(Name, FTy);
-  
-  IRBuilder<> Builder(BB, llvm::prior(BB->end()));  
-  
+
+  IRBuilder<> Builder(BB, llvm::prior(BB->end()));
+
   Value *PtrName;
   StringRef Tmp = Ptr->getName();
   if (0 == (PtrName = M->getGlobalVariable(Tmp, true))) {
     Value *ActualPtrName = Builder.CreateGlobalStringPtr(Tmp,
                                                          Tmp + "_STR");
     PtrName = new GlobalVariable(*M, I8X, true, GlobalVariable::InternalLinkage,
-                                 cast<Constant>(ActualPtrName), Tmp); 
+                                 cast<Constant>(ActualPtrName), Tmp);
   }
 
   Value *S;
@@ -857,7 +857,7 @@ static void GenerateARCBBTerminatorAnnotation(const char *Name, BasicBlock *BB,
     S = new GlobalVariable(*M, I8X, true, GlobalVariable::InternalLinkage,
                            cast<Constant>(ActualPtrName), SeqStr);
   }
-  Builder.CreateCall2(Callee, PtrName, S);  
+  Builder.CreateCall2(Callee, PtrName, S);
 }
 
 /// Adds a source annotation to pointer and a state change annotation to Inst
@@ -1325,17 +1325,17 @@ ObjCARCOpt::OptimizeRetainBlockCall(Function &F, Instruction *Inst,
                                     InstructionClass &Class) {
   assert(GetBasicInstructionClass(Inst) == Class);
   assert(IC_RetainBlock == Class);
-  
+
   // If we can not optimize Inst, return false.
   if (!IsRetainBlockOptimizable(Inst))
     return false;
-  
+
   CallInst *RetainBlock = cast<CallInst>(Inst);
   RetainBlock->setCalledFunction(getRetainCallee(F.getParent()));
   // Remove copy_on_escape metadata.
   RetainBlock->setMetadata(CopyOnEscapeMDKind, 0);
   Class = IC_Retain;
-  
+
   return true;
 }
 
@@ -1917,7 +1917,7 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
       assert(I != BBStates.end());
       MyStates.MergeSucc(I->second);
     }
-  }  
+  }
 
 #ifdef ARC_ANNOTATIONS
   if (EnableARCAnnotations) {
@@ -2319,7 +2319,7 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
       CallInst::Create(getRetainCallee(M), MyArg, "", InsertPt);
     Call->setDoesNotThrow();
     Call->setTailCall();
-    
+
     DEBUG(dbgs() << "ObjCARCOpt::MoveCalls: Inserting new Release: " << *Call
                  << "\n"
                     "                       At insertion point: " << *InsertPt
