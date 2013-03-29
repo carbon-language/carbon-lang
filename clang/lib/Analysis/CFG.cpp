@@ -1654,24 +1654,24 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(DeclStmt *DS) {
   bool HasTemporaries = false;
 
   // Guard static initializers under a branch.
-  CFGBlock *blockBeforeInit = 0;
+  CFGBlock *blockAfterStaticInit = 0;
+
+  if (BuildOpts.AddStaticInitBranches && VD->isStaticLocal()) {
+    // For static variables, we need to create a branch to track
+    // whether or not they are initialized.
+    if (Block) {
+      Succ = Block;
+      Block = 0;
+      if (badCFG)
+        return 0;
+    }
+    blockAfterStaticInit = Succ;
+  }
 
   // Destructors of temporaries in initialization expression should be called
   // after initialization finishes.
   Expr *Init = VD->getInit();
   if (Init) {
-    if (BuildOpts.AddStaticInitBranches && VD->isStaticLocal()) {
-      // For static variables, we need to create a branch to track
-      // whether or not they are initialized.
-      if (Block) {
-        Succ = Block;
-        Block = 0;
-        if (badCFG)
-          return 0;
-      }
-      blockBeforeInit = Succ;
-    }
-
     IsReference = VD->getType()->isReferenceType();
     HasTemporaries = isa<ExprWithCleanups>(Init);
 
@@ -1716,11 +1716,11 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(DeclStmt *DS) {
     ++ScopePos;
 
   CFGBlock *B = LastBlock;
-  if (blockBeforeInit) {
+  if (blockAfterStaticInit) {
     Succ = B;
     Block = createBlock(false);
     Block->setTerminator(DS);
-    addSuccessor(Block, blockBeforeInit);
+    addSuccessor(Block, blockAfterStaticInit);
     addSuccessor(Block, B);
     B = Block;
   }
