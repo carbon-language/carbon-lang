@@ -58,6 +58,13 @@ class AFPR64<bits<16> Enc, string n, list<Register> subregs>
   let SubRegIndices = [sub_32];
 }
 
+// Accumulator Registers
+class ACC<bits<16> Enc, string n, list<Register> subregs>
+  : MipsRegWithSubRegs<Enc, n, subregs> {
+  let SubRegIndices = [sub_lo, sub_hi];
+  let CoveredBySubRegs = 1;
+}
+
 // Mips Hardware Registers
 class HWR<bits<16> Enc, string n> : MipsReg<Enc, n>;
 
@@ -223,7 +230,13 @@ let Namespace = "Mips" in {
 
   // Hi/Lo registers
   def HI  : Register<"hi">, DwarfRegNum<[64]>;
+  def HI1 : Register<"hi1">, DwarfRegNum<[176]>;
+  def HI2 : Register<"hi2">, DwarfRegNum<[178]>;
+  def HI3 : Register<"hi3">, DwarfRegNum<[180]>;
   def LO  : Register<"lo">, DwarfRegNum<[65]>;
+  def LO1 : Register<"lo1">, DwarfRegNum<[177]>;
+  def LO2 : Register<"lo2">, DwarfRegNum<[179]>;
+  def LO3 : Register<"lo3">, DwarfRegNum<[181]>;
 
   let SubRegIndices = [sub_32] in {
   def HI64  : RegisterWithSubRegs<"hi", [HI]>;
@@ -244,11 +257,12 @@ let Namespace = "Mips" in {
   def HWR29_64 : MipsReg<29, "29">;
 
   // Accum registers
-  let SubRegIndices = [sub_lo, sub_hi] in
-  def AC0 : MipsRegWithSubRegs<0, "ac0", [LO, HI]>;
-  def AC1 : MipsReg<1, "ac1">;
-  def AC2 : MipsReg<2, "ac2">;
-  def AC3 : MipsReg<3, "ac3">;
+  def AC0 : ACC<0, "ac0", [LO, HI]>;
+  def AC1 : ACC<1, "ac1", [LO1, HI1]>;
+  def AC2 : ACC<2, "ac2", [LO2, HI2]>;
+  def AC3 : ACC<3, "ac3", [LO3, HI3]>;
+
+  def AC0_64 : ACC<0, "ac0", [LO64, HI64]>;
 
   def DSPCtrl : Register<"dspctrl">;
 }
@@ -334,8 +348,17 @@ def HWRegs : RegisterClass<"Mips", [i32], 32, (add HWR29)>, Unallocatable;
 def HWRegs64 : RegisterClass<"Mips", [i64], 64, (add HWR29_64)>, Unallocatable;
 
 // Accumulator Registers
-def ACRegs : RegisterClass<"Mips", [i64], 64, (sequence "AC%u", 0, 3)>,
-             Unallocatable;
+def ACRegs : RegisterClass<"Mips", [untyped], 64, (add AC0)> {
+  let Size = 64;
+}
+
+def ACRegs128 : RegisterClass<"Mips", [untyped], 128, (add AC0_64)> {
+  let Size = 128;
+}
+
+def ACRegsDSP : RegisterClass<"Mips", [untyped], 64, (sequence "AC%u", 0, 3)> {
+  let Size = 64;
+}
 
 def CPURegsAsmOperand : AsmOperandClass {
   let Name = "CPURegsAsm";
