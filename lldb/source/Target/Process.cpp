@@ -3298,13 +3298,85 @@ Process::Halt ()
 }
 
 Error
+Process::HaltForDestroyOrDetach(lldb::EventSP &exit_event_sp)
+{
+    Error error;
+    if (m_public_state.GetValue() == eStateRunning)
+    {
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+        if (log)
+            log->Printf("Process::Destroy() About to halt.");
+        error = Halt();
+        if (error.Success())
+        {
+            // Consume the halt event.
+            TimeValue timeout (TimeValue::Now());
+            timeout.OffsetWithSeconds(1);
+            StateType state = WaitForProcessToStop (&timeout, &exit_event_sp);
+            
+            // If the process exited while we were waiting for it to stop, put the exited event into
+            // the shared pointer passed in and return.  Our caller doesn't need to do anything else, since
+            // they don't have a process anymore...
+            
+            if (state == eStateExited || m_private_state.GetValue() == eStateExited)
+            {
+                if (log)
+                    log->Printf("Process::HaltForDestroyOrDetach() Process exited while waiting to Halt.");
+                return error;
+            }
+            else
+                exit_event_sp.reset(); // It is ok to consume any non-exit stop events
+    
+            if (state != eStateStopped)
+            {
+                if (log)
+                    log->Printf("Process::HaltForDestroyOrDetach() Halt failed to stop, state is: %s", StateAsCString(state));
+                // If we really couldn't stop the process then we should just error out here, but if the
+                // lower levels just bobbled sending the event and we really are stopped, then continue on.
+                StateType private_state = m_private_state.GetValue();
+                if (private_state != eStateStopped)
+                {
+                    return error;
+                }
+            }
+        }
+        else
+        {
+            if (log)
+                log->Printf("Process::HaltForDestroyOrDetach() Halt got error: %s", error.AsCString());
+        }
+    }
+    return error;
+}
+
+Error
 Process::Detach ()
 {
-    Error error (WillDetach());
+    EventSP exit_event_sp;
+    Error error;
+    m_destroy_in_process = true;
+    
+    error = WillDetach();
 
     if (error.Success())
     {
-        DisableAllBreakpointSites();
+        if (DetachRequiresHalt())
+        {
+            error = HaltForDestroyOrDetach (exit_event_sp);
+            if (!error.Success())
+            {
+                m_destroy_in_process = false;
+                return error;
+            }
+            else if (exit_event_sp)
+            {
+                // We shouldn't need to do anything else here.  There's no process left to detach from...
+                StopPrivateStateThread();
+                m_destroy_in_process = false;
+                return error;
+            }
+        }
+    
         error = DoDetach(); 
         if (error.Success())
         {
@@ -3312,6 +3384,22 @@ Process::Detach ()
             StopPrivateStateThread();
         }
     }
+    m_destroy_in_process = false;
+    
+    // If we exited when we were waiting for a process to stop, then
+    // forward the event here so we don't lose the event
+    if (exit_event_sp)
+    {
+        // Directly broadcast our exited event because we shut down our
+        // private state thread above
+        BroadcastEvent(exit_event_sp);
+    }
+
+    // If we have been interrupted (to kill us) in the middle of running, we may not end up propagating
+    // the last events through the event system, in which case we might strand the write lock.  Unlock
+    // it here so when we do to tear down the process we don't get an error destroying the lock.
+    
+    m_run_lock.WriteUnlock();
     return error;
 }
 
@@ -3329,46 +3417,11 @@ Process::Destroy ()
     if (error.Success())
     {
         EventSP exit_event_sp;
-        if (m_public_state.GetValue() == eStateRunning)
+        if (DestroyRequiresHalt())
         {
-            Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
-            if (log)
-                log->Printf("Process::Destroy() About to halt.");
-            error = Halt();
-            if (error.Success())
-            {
-                // Consume the halt event.
-                TimeValue timeout (TimeValue::Now());
-                timeout.OffsetWithSeconds(1);
-                StateType state = WaitForProcessToStop (&timeout, &exit_event_sp);
-                if (state != eStateExited)
-                    exit_event_sp.reset(); // It is ok to consume any non-exit stop events
-        
-                if (state != eStateStopped)
-                {
-                    if (log)
-                        log->Printf("Process::Destroy() Halt failed to stop, state is: %s", StateAsCString(state));
-                    // If we really couldn't stop the process then we should just error out here, but if the
-                    // lower levels just bobbled sending the event and we really are stopped, then continue on.
-                    StateType private_state = m_private_state.GetValue();
-                    if (private_state != eStateStopped && private_state != eStateExited)
-                    {
-                        // If we exited when we were waiting for a process to stop, then
-                        // forward the event here so we don't lose the event
-                        m_destroy_in_process = false;
-                        return error;
-                    }
-                }
-            }
-            else
-            {
-                if (log)
-                    log->Printf("Process::Destroy() Halt got error: %s", error.AsCString());
-                m_destroy_in_process = false;
-                return error;
-            }
+            error = HaltForDestroyOrDetach(exit_event_sp);
         }
-
+        
         if (m_public_state.GetValue() != eStateRunning)
         {
             // Ditch all thread plans, and remove all our breakpoints: in case we have to restart the target to
@@ -3378,7 +3431,7 @@ Process::Destroy ()
             m_thread_list.DiscardThreadPlans();
             DisableAllBreakpointSites();
         }
-        
+
         error = DoDestroy();
         if (error.Success())
         {

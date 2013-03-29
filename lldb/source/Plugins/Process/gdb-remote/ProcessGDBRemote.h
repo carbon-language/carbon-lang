@@ -141,10 +141,10 @@ public:
     DoHalt (bool &caused_stop);
 
     virtual lldb_private::Error
-    WillDetach ();
-
-    virtual lldb_private::Error
     DoDetach ();
+    
+    virtual bool
+    DetachRequiresHalt() { return true; }
 
     virtual lldb_private::Error
     DoSignal (int signal);
@@ -382,11 +382,6 @@ protected:
                                lldb::InputReaderAction notification,
                                const char *bytes, 
                                size_t bytes_len);
-
-    lldb_private::Error
-    InterruptIfRunning (bool discard_thread_plans, 
-                        bool catch_stop_event, 
-                        lldb::EventSP &stop_event_sp);
 
     lldb_private::DynamicLoader *
     GetDynamicLoader ();

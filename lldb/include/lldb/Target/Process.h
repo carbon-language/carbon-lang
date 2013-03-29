@@ -2350,6 +2350,9 @@ public:
     //------------------------------------------------------------------
     virtual void
     DidDetach () {}
+    
+    virtual bool
+    DetachRequiresHalt() { return false; }
 
     //------------------------------------------------------------------
     /// Called before sending a signal to a process.
@@ -2387,6 +2390,9 @@ public:
 
     virtual void
     DidDestroy () { }
+    
+    virtual bool
+    DestroyRequiresHalt() { return true; }
 
 
     //------------------------------------------------------------------
@@ -3683,6 +3689,8 @@ protected:
                                 const char *bytes,
                                 size_t bytes_len);
     
+    Error
+    HaltForDestroyOrDetach(lldb::EventSP &exit_event_sp);
     
 private:
     //------------------------------------------------------------------
