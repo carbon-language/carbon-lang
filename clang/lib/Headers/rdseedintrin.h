@@ -1,4 +1,4 @@
-/*===---- x86intrin.h - X86 intrinsics -------------------------------------===
+/*===---- rdseedintrin.h - RDSEED intrinsics -------------------------------===
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,54 +22,27 @@
  */
 
 #ifndef __X86INTRIN_H
-#define __X86INTRIN_H
-
-#include <immintrin.h>
-
-#ifdef __3dNOW__
-#include <mm3dnow.h>
-#endif
-
-#ifdef __BMI__
-#include <bmiintrin.h>
-#endif
-
-#ifdef __BMI2__
-#include <bmi2intrin.h>
-#endif
-
-#ifdef __LZCNT__
-#include <lzcntintrin.h>
-#endif
-
-#ifdef __POPCNT__
-#include <popcntintrin.h>
+#error "Never use <rdseedintrin.h> directly; include <x86intrin.h> instead."
 #endif
 
 #ifdef __RDSEED__
-#include <rdseedintrin.h>
+static __inline__ int __attribute__((__always_inline__, __nodebug__))
+_rdseed16_step(unsigned short *__p)
+{
+  return __builtin_ia32_rdseed16_step(__p);
+}
+
+static __inline__ int __attribute__((__always_inline__, __nodebug__))
+_rdseed32_step(unsigned int *__p)
+{
+  return __builtin_ia32_rdseed32_step(__p);
+}
+
+#ifdef __x86_64__
+static __inline__ int __attribute__((__always_inline__, __nodebug__))
+_rdseed64_step(unsigned long long *__p)
+{
+  return __builtin_ia32_rdseed64_step(__p);
+}
 #endif
-
-#ifdef __PRFCHW__
-#include <prfchwintrin.h>
-#endif
-
-#ifdef __SSE4A__
-#include <ammintrin.h>
-#endif
-
-#ifdef __FMA4__
-#include <fma4intrin.h>
-#endif
-
-#ifdef __XOP__
-#include <xopintrin.h>
-#endif
-
-#ifdef __F16C__
-#include <f16cintrin.h>
-#endif
-
-// FIXME: LWP
-
-#endif /* __X86INTRIN_H */
+#endif /* __RDSEED__ */

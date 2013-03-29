@@ -21,6 +21,7 @@ set(files
   pmmintrin.h
   popcntintrin.h
   prfchwintrin.h
+  rdseedintrin.h
   rtmintrin.h
   smmintrin.h
   stdalign.h

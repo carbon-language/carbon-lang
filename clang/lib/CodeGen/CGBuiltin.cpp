@@ -2709,7 +2709,10 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   }
   case X86::BI__builtin_ia32_rdrand16_step:
   case X86::BI__builtin_ia32_rdrand32_step:
-  case X86::BI__builtin_ia32_rdrand64_step: {
+  case X86::BI__builtin_ia32_rdrand64_step:
+  case X86::BI__builtin_ia32_rdseed16_step:
+  case X86::BI__builtin_ia32_rdseed32_step:
+  case X86::BI__builtin_ia32_rdseed64_step: {
     Intrinsic::ID ID;
     switch (BuiltinID) {
     default: llvm_unreachable("Unsupported intrinsic!");
@@ -2721,6 +2724,15 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
       break;
     case X86::BI__builtin_ia32_rdrand64_step:
       ID = Intrinsic::x86_rdrand_64;
+      break;
+    case X86::BI__builtin_ia32_rdseed16_step:
+      ID = Intrinsic::x86_rdseed_16;
+      break;
+    case X86::BI__builtin_ia32_rdseed32_step:
+      ID = Intrinsic::x86_rdseed_32;
+      break;
+    case X86::BI__builtin_ia32_rdseed64_step:
+      ID = Intrinsic::x86_rdseed_64;
       break;
     }
 
