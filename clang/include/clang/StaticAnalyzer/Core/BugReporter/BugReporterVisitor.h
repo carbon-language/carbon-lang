@@ -160,25 +160,11 @@ private:
 /// \brief Prints path notes when a message is sent to a nil receiver.
 class NilReceiverBRVisitor
   : public BugReporterVisitorImpl<NilReceiverBRVisitor> {
-
-  /// \brief The reciever to track. If null, all receivers should be tracked.
-  const Expr *TrackedReceiver;
-
-  /// If the visitor is tracking the value directly responsible for the
-  /// bug, we are going to employ false positive suppression.
-  bool EnableNullFPSuppression;
-    
 public:
-    NilReceiverBRVisitor(const Expr *InTrackedReceiver = 0,
-                         bool InEnableNullFPSuppression = false):
-      TrackedReceiver(InTrackedReceiver),
-      EnableNullFPSuppression(InEnableNullFPSuppression) {}
   
   void Profile(llvm::FoldingSetNodeID &ID) const {
     static int x = 0;
     ID.AddPointer(&x);
-    ID.AddPointer(TrackedReceiver);
-    ID.AddBoolean(EnableNullFPSuppression);
   }
 
   PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
@@ -186,7 +172,9 @@ public:
                                  BugReporterContext &BRC,
                                  BugReport &BR);
 
-  static const Expr *getReceiver(const Stmt *S);
+  /// If the statement is a message send expression with nil receiver, returns
+  /// the receiver expression. Returns NULL otherwise.
+  static const Expr *getNilReceiver(const Stmt *S, const ExplodedNode *N);
 };
 
 /// Visitor that tries to report interesting diagnostics from conditions.

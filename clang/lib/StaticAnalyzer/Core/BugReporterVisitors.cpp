@@ -824,12 +824,6 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
     S = Ex;
   }
 
-  // The message send could be null if the receiver is null.
-  if (const Expr *Receiver = NilReceiverBRVisitor::getReceiver(S)) {
-    report.addVisitor(new NilReceiverBRVisitor(Receiver,
-                                               EnableNullFPSuppression));
-  }
-
   const Expr *Inner = 0;
   if (const Expr *Ex = dyn_cast<Expr>(S)) {
     Ex = Ex->IgnoreParenCasts();
@@ -862,7 +856,14 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
   
   ProgramStateRef state = N->getState();
 
-  // See if the expression we're interested refers to a variable. 
+  // The message send could be nil due to the receiver being nil.
+  // At this point in the path, the receiver should be live since we are at the
+  // message send expr. If it is nil, start tracking it.
+  if (const Expr *Receiver = NilReceiverBRVisitor::getNilReceiver(S, N))
+    trackNullOrUndefValue(N, Receiver, report, IsArg, EnableNullFPSuppression);
+
+
+  // See if the expression we're interested refers to a variable.
   // If so, we can track both its contents and constraints on its value.
   if (Inner && ExplodedGraph::isInterestingLValueExpr(Inner)) {
     const MemRegion *R = 0;
@@ -985,11 +986,18 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
   return true;
 }
 
-const Expr *NilReceiverBRVisitor::getReceiver(const Stmt *S) {
+const Expr *NilReceiverBRVisitor::getNilReceiver(const Stmt *S,
+                                                 const ExplodedNode *N) {
   const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S);
   if (!ME)
     return 0;
-  return ME->getInstanceReceiver();
+  if (const Expr *Receiver = ME->getInstanceReceiver()) {
+    ProgramStateRef state = N->getState();
+    SVal V = state->getSVal(Receiver, N->getLocationContext());
+    if (state->isNull(V).isConstrainedTrue())
+      return Receiver;
+  }
+  return 0;
 }
 
 PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
@@ -1000,24 +1008,15 @@ PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
   if (!P)
     return 0;
 
-  const Expr *Receiver = getReceiver(P->getStmt());
+  const Expr *Receiver = getNilReceiver(P->getStmt(), N);
   if (!Receiver)
-    return 0;
-
-  // Are we tracking a different reciever?
-  if (TrackedReceiver && TrackedReceiver != Receiver)
-    return 0;
-
-  ProgramStateRef state = N->getState();
-  SVal V = state->getSVal(Receiver, N->getLocationContext());
-  if (!state->isNull(V).isConstrainedTrue())
     return 0;
 
   // The receiver was nil, and hence the method was skipped.
   // Register a BugReporterVisitor to issue a message telling us how
   // the receiver was null.
   bugreporter::trackNullOrUndefValue(N, Receiver, BR, /*IsArg*/ false,
-                                    EnableNullFPSuppression);
+                                     /*EnableNullFPSuppression*/ false);
   // Issue a message saying that the method was skipped.
   PathDiagnosticLocation L(Receiver, BRC.getSourceManager(),
                                      N->getLocationContext());

@@ -76,6 +76,22 @@ int testNilReceiver(Foo* fPtr) {
   return mem->x; // expected-warning {{Access to instance variable 'x' results in a dereference of a null pointer}}
 }
 
+int suppressNilReceiverRetNullCond(Foo* fPtr) {
+  unsigned zero = 0;
+  fPtr = retInputOrNil(fPtr);
+  // On a path where fPtr is nzil, mem should be nil.
+  Foo *mem = [fPtr getFooPtr];
+  return mem->x;
+}
+
+int suppressNilReceiverRetNullCondCast(id fPtr) {
+  unsigned zero = 0;
+  fPtr = retInputOrNil(fPtr);
+  // On a path where fPtr is nzil, mem should be nil.
+  Foo *mem = ((id)([(Foo*)(fPtr) getFooPtr]));
+  return mem->x;
+}
+
 int dontSuppressNilReceiverRetNullCond(Foo* fPtr) {
   unsigned zero = 0;
   fPtr = retInputOrNil(fPtr);
