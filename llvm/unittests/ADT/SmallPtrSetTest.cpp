@@ -17,61 +17,6 @@
 using namespace llvm;
 
 // SmallPtrSet swapping test.
-TEST(SmallPtrSetTest, GrowthTest) {
-  int i;
-  int buf[8];
-  for(i=0; i<8; ++i) buf[i]=0;
-
-
-  SmallPtrSet<int *, 4> s;
-  typedef SmallPtrSet<int *, 4>::iterator iter;
-  
-  s.insert(&buf[0]);
-  s.insert(&buf[1]);
-  s.insert(&buf[2]);
-  s.insert(&buf[3]);
-  EXPECT_EQ(4U, s.size());
-
-  i = 0;
-  for(iter I=s.begin(), E=s.end(); I!=E; ++I, ++i)
-      (**I)++;
-  EXPECT_EQ(4, i);
-  for(i=0; i<8; ++i)
-      EXPECT_EQ(i<4?1:0,buf[i]);
-
-  s.insert(&buf[4]);
-  s.insert(&buf[5]);
-  s.insert(&buf[6]);
-  s.insert(&buf[7]);
-
-  i = 0;
-  for(iter I=s.begin(), E=s.end(); I!=E; ++I, ++i)
-      (**I)++;
-  EXPECT_EQ(8, i);
-  s.erase(&buf[4]);
-  s.erase(&buf[5]);
-  s.erase(&buf[6]);
-  s.erase(&buf[7]);
-  EXPECT_EQ(4U, s.size());
-
-  i = 0;
-  for(iter I=s.begin(), E=s.end(); I!=E; ++I, ++i)
-      (**I)++;
-  EXPECT_EQ(4, i);
-  for(i=0; i<8; ++i)
-      EXPECT_EQ(i<4?3:1,buf[i]);
-
-  s.clear();
-  for(i=0; i<8; ++i) buf[i]=0;
-  for(i=0; i<128; ++i) s.insert(&buf[i%8]); // test repeated entires
-  EXPECT_EQ(8U, s.size());
-  for(iter I=s.begin(), E=s.end(); I!=E; ++I, ++i)
-      (**I)++;
-  for(i=0; i<8; ++i)
-      EXPECT_EQ(1,buf[i]);
-}
-
-
 TEST(SmallPtrSetTest, SwapTest) {
   int buf[10];
 

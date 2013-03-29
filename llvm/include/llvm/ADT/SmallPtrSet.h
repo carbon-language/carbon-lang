@@ -54,6 +54,8 @@ protected:
   /// then the set is in 'small mode'.
   const void **CurArray;
   /// CurArraySize - The allocated size of CurArray, always a power of two.
+  /// Note that CurArray points to an array that has CurArraySize+1 elements in
+  /// it, so that the end iterator actually points to valid memory.
   unsigned CurArraySize;
 
   // If small, this is # elts allocated consecutively
@@ -66,6 +68,9 @@ protected:
     SmallArray(SmallStorage), CurArray(SmallStorage), CurArraySize(SmallSize) {
     assert(SmallSize && (SmallSize & (SmallSize-1)) == 0 &&
            "Initial size must be a power of two!");
+    // The end pointer, always valid, is set to a valid element to help the
+    // iterator.
+    CurArray[SmallSize] = 0;
     clear();
   }
   ~SmallPtrSetImpl();
@@ -142,11 +147,9 @@ protected:
 class SmallPtrSetIteratorImpl {
 protected:
   const void *const *Bucket;
-  const void *const *End;
 public:
-    explicit SmallPtrSetIteratorImpl(const void *const *BP, const void*const *E)
-        : Bucket(BP), End(E) {
-      AdvanceIfNotValid();
+  explicit SmallPtrSetIteratorImpl(const void *const *BP) : Bucket(BP) {
+    AdvanceIfNotValid();
   }
 
   bool operator==(const SmallPtrSetIteratorImpl &RHS) const {
@@ -161,10 +164,8 @@ protected:
   /// that is.   This is guaranteed to stop because the end() bucket is marked
   /// valid.
   void AdvanceIfNotValid() {
-    assert(Bucket <= End);
-    while (Bucket != End &&
-           (*Bucket == SmallPtrSetImpl::getEmptyMarker() ||
-            *Bucket == SmallPtrSetImpl::getTombstoneMarker()))
+    while (*Bucket == SmallPtrSetImpl::getEmptyMarker() ||
+           *Bucket == SmallPtrSetImpl::getTombstoneMarker())
       ++Bucket;
   }
 };
@@ -181,13 +182,12 @@ public:
   typedef std::ptrdiff_t            difference_type;
   typedef std::forward_iterator_tag iterator_category;
   
-  explicit SmallPtrSetIterator(const void *const *BP, const void *const *E)
-    : SmallPtrSetIteratorImpl(BP, E) {}
+  explicit SmallPtrSetIterator(const void *const *BP)
+    : SmallPtrSetIteratorImpl(BP) {}
 
   // Most methods provided by baseclass.
 
   const PtrTy operator*() const {
-    assert(Bucket < End);
     return PtrTraits::getFromVoidPointer(const_cast<void*>(*Bucket));
   }
 
@@ -236,8 +236,9 @@ template<class PtrType, unsigned SmallSize>
 class SmallPtrSet : public SmallPtrSetImpl {
   // Make sure that SmallSize is a power of two, round up if not.
   enum { SmallSizePowTwo = RoundUpToPowerOfTwo<SmallSize>::Val };
-  /// SmallStorage - Fixed size storage used in 'small mode'.
-  const void *SmallStorage[SmallSizePowTwo];
+  /// SmallStorage - Fixed size storage used in 'small mode'.  The extra element
+  /// ensures that the end iterator actually points to valid memory.
+  const void *SmallStorage[SmallSizePowTwo+1];
   typedef PointerLikeTypeTraits<PtrType> PtrTraits;
 public:
   SmallPtrSet() : SmallPtrSetImpl(SmallStorage, SmallSizePowTwo) {}
@@ -274,10 +275,10 @@ public:
   typedef SmallPtrSetIterator<PtrType> iterator;
   typedef SmallPtrSetIterator<PtrType> const_iterator;
   inline iterator begin() const {
-    return iterator(CurArray, CurArray+CurArraySize);
+    return iterator(CurArray);
   }
   inline iterator end() const {
-    return iterator(CurArray+CurArraySize, CurArray+CurArraySize);
+    return iterator(CurArray+CurArraySize);
   }
 
   // Allow assignment from any smallptrset with the same element type even if it
