@@ -106,3 +106,40 @@ define double @test10(double %x) nounwind  {
 }
 
 declare double @trunc(double) nounwind readnone
+
+define float @test11(float %x) nounwind  {
+  %call = tail call float @rintf(float %x) nounwind readnone
+  ret float %call
+
+; CHECK: test11:
+; CHECK-NOT: frin
+
+; CHECK-FM: test11:
+; CHECK-FM: frin [[R2:[0-9]+]], [[R1:[0-9]+]]
+; CHECK-FM: fcmpu [[CR:[0-9]+]], [[R2]], [[R1]]
+; CHECK-FM: beq [[CR]], .LBB[[BB:[0-9]+]]_2
+; CHECK-FM: mtfsb1 6
+; CHECK-FM: .LBB[[BB]]_2:
+; CHECK-FM: blr
+}
+
+declare float @rintf(float) nounwind readnone
+
+define double @test12(double %x) nounwind  {
+  %call = tail call double @rint(double %x) nounwind readnone
+  ret double %call
+
+; CHECK: test12:
+; CHECK-NOT: frin
+
+; CHECK-FM: test12:
+; CHECK-FM: frin [[R2:[0-9]+]], [[R1:[0-9]+]]
+; CHECK-FM: fcmpu [[CR:[0-9]+]], [[R2]], [[R1]]
+; CHECK-FM: beq [[CR]], .LBB[[BB:[0-9]+]]_2
+; CHECK-FM: mtfsb1 6
+; CHECK-FM: .LBB[[BB]]_2:
+; CHECK-FM: blr
+}
+
+declare double @rint(double) nounwind readnone
+

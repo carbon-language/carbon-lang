@@ -1141,6 +1141,15 @@ let Uses = [RM] in {
                         "frin $frD, $frB", FPGeneral,
                         [(set f32:$frD, (fnearbyint f32:$frB))]>;
 
+  // These pseudos expand to rint but also set FE_INEXACT when the result does
+  // not equal the argument.
+  let usesCustomInserter = 1, Defs = [RM] in { // FIXME: Model FPSCR!
+    def FRINDrint : Pseudo<(outs F8RC:$frD), (ins F8RC:$frB),
+                            "#FRINDrint", [(set f64:$frD, (frint f64:$frB))]>;
+    def FRINSrint : Pseudo<(outs F4RC:$frD), (ins F4RC:$frB),
+                            "#FRINSrint", [(set f32:$frD, (frint f32:$frB))]>;
+  }
+
   def FRIPD  : XForm_26<63, 456, (outs F8RC:$frD), (ins F8RC:$frB),
                         "frip $frD, $frB", FPGeneral,
                         [(set f64:$frD, (fceil f64:$frB))]>;
