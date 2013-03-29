@@ -1672,8 +1672,8 @@ DwarfUnits::computeSizeAndOffset(DIE *Die, unsigned Offset) {
   // Start the size with the size of abbreviation code.
   Offset += MCAsmInfo::getULEB128Size(AbbrevNumber);
 
-  const SmallVector<DIEValue*, 12> &Values = Die->getValues();
-  const SmallVector<DIEAbbrevData, 12> &AbbrevData = Abbrev->getData();
+  const SmallVectorImpl<DIEValue*> &Values = Die->getValues();
+  const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev->getData();
 
   // Size the DIE attribute values.
   for (unsigned i = 0, N = Values.size(); i < N; ++i)
@@ -1700,7 +1700,7 @@ DwarfUnits::computeSizeAndOffset(DIE *Die, unsigned Offset) {
 void DwarfUnits::computeSizeAndOffsets() {
   // Offset from the beginning of debug info section.
   unsigned AccuOffset = 0;
-  for (SmallVector<CompileUnit *, 1>::iterator I = CUs.begin(),
+  for (SmallVectorImpl<CompileUnit *>::iterator I = CUs.begin(),
          E = CUs.end(); I != E; ++I) {
     (*I)->setDebugInfoOffset(AccuOffset);
     unsigned Offset =
@@ -1767,8 +1767,8 @@ void DwarfDebug::emitDIE(DIE *Die, std::vector<DIEAbbrev *> *Abbrevs) {
                                 dwarf::TagString(Abbrev->getTag()));
   Asm->EmitULEB128(AbbrevNumber);
 
-  const SmallVector<DIEValue*, 12> &Values = Die->getValues();
-  const SmallVector<DIEAbbrevData, 12> &AbbrevData = Abbrev->getData();
+  const SmallVectorImpl<DIEValue*> &Values = Die->getValues();
+  const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev->getData();
 
   // Emit the DIE attribute values.
   for (unsigned i = 0, N = Values.size(); i < N; ++i) {
@@ -1856,7 +1856,7 @@ void DwarfUnits::emitUnits(DwarfDebug *DD,
                            const MCSection *ASection,
                            const MCSymbol *ASectionSym) {
   Asm->OutStreamer.SwitchSection(USection);
-  for (SmallVector<CompileUnit *, 1>::iterator I = CUs.begin(),
+  for (SmallVectorImpl<CompileUnit *>::iterator I = CUs.begin(),
          E = CUs.end(); I != E; ++I) {
     CompileUnit *TheCU = *I;
     DIE *Die = TheCU->getCUDie();
@@ -1892,7 +1892,7 @@ void DwarfUnits::emitUnits(DwarfDebug *DD,
 unsigned DwarfUnits::getCUOffset(DIE *Die) {
   assert(Die->getTag() == dwarf::DW_TAG_compile_unit  &&
          "Input DIE should be compile unit in getCUOffset.");
-  for (SmallVector<CompileUnit *, 1>::iterator I = CUs.begin(),
+  for (SmallVectorImpl<CompileUnit *>::iterator I = CUs.begin(),
        E = CUs.end(); I != E; ++I) {
     CompileUnit *TheCU = *I;
     if (TheCU->getCUDie() == Die)
@@ -2285,7 +2285,7 @@ void DwarfDebug::emitDebugLoc() {
   if (DotDebugLocEntries.empty())
     return;
 
-  for (SmallVector<DotDebugLocEntry, 4>::iterator
+  for (SmallVectorImpl<DotDebugLocEntry>::iterator
          I = DotDebugLocEntries.begin(), E = DotDebugLocEntries.end();
        I != E; ++I) {
     DotDebugLocEntry &Entry = *I;
@@ -2299,7 +2299,7 @@ void DwarfDebug::emitDebugLoc() {
   unsigned char Size = Asm->getDataLayout().getPointerSize();
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_loc", 0));
   unsigned index = 1;
-  for (SmallVector<DotDebugLocEntry, 4>::iterator
+  for (SmallVectorImpl<DotDebugLocEntry>::iterator
          I = DotDebugLocEntries.begin(), E = DotDebugLocEntries.end();
        I != E; ++I, ++index) {
     DotDebugLocEntry &Entry = *I;
@@ -2392,7 +2392,7 @@ void DwarfDebug::emitDebugRanges() {
   Asm->OutStreamer.SwitchSection(
     Asm->getObjFileLowering().getDwarfRangesSection());
   unsigned char Size = Asm->getDataLayout().getPointerSize();
-  for (SmallVector<const MCSymbol *, 8>::iterator
+  for (SmallVectorImpl<const MCSymbol *>::iterator
          I = DebugRangeSymbols.begin(), E = DebugRangeSymbols.end();
        I != E; ++I) {
     if (*I)
@@ -2450,13 +2450,13 @@ void DwarfDebug::emitDebugInlineInfo() {
   Asm->OutStreamer.AddComment("Address Size (in bytes)");
   Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 
-  for (SmallVector<const MDNode *, 4>::iterator I = InlinedSPNodes.begin(),
+  for (SmallVectorImpl<const MDNode *>::iterator I = InlinedSPNodes.begin(),
          E = InlinedSPNodes.end(); I != E; ++I) {
 
     const MDNode *Node = *I;
     DenseMap<const MDNode *, SmallVector<InlineInfoLabels, 4> >::iterator II
       = InlineInfo.find(Node);
-    SmallVector<InlineInfoLabels, 4> &Labels = II->second;
+    SmallVectorImpl<InlineInfoLabels> &Labels = II->second;
     DISubprogram SP(Node);
     StringRef LName = SP.getLinkageName();
     StringRef Name = SP.getName();
@@ -2475,7 +2475,7 @@ void DwarfDebug::emitDebugInlineInfo() {
                            DwarfStrSectionSym);
     Asm->EmitULEB128(Labels.size(), "Inline count");
 
-    for (SmallVector<InlineInfoLabels, 4>::iterator LI = Labels.begin(),
+    for (SmallVectorImpl<InlineInfoLabels>::iterator LI = Labels.begin(),
            LE = Labels.end(); LI != LE; ++LI) {
       if (Asm->isVerbose()) Asm->OutStreamer.AddComment("DIE offset");
       Asm->EmitInt32(LI->second->getOffset());

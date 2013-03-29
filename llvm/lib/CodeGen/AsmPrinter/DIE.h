@@ -75,7 +75,7 @@ namespace llvm {
     uint16_t getTag() const { return Tag; }
     unsigned getNumber() const { return Number; }
     uint16_t getChildrenFlag() const { return ChildrenFlag; }
-    const SmallVector<DIEAbbrevData, 12> &getData() const { return Data; }
+    const SmallVectorImpl<DIEAbbrevData> &getData() const { return Data; }
     void setTag(uint16_t T) { Tag = T; }
     void setChildrenFlag(uint16_t CF) { ChildrenFlag = CF; }
     void setNumber(unsigned N) { Number = N; }
@@ -150,7 +150,7 @@ namespace llvm {
     unsigned getOffset() const { return Offset; }
     unsigned getSize() const { return Size; }
     const std::vector<DIE *> &getChildren() const { return Children; }
-    const SmallVector<DIEValue*, 12> &getValues() const { return Values; }
+    const SmallVectorImpl<DIEValue*> &getValues() const { return Values; }
     DIE *getParent() const { return Parent; }
     /// Climb up the parent chain to get the compile unit DIE this DIE belongs
     /// to.
