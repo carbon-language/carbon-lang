@@ -1016,7 +1016,9 @@ coupled with a good choice of :ref:`sequential container <ds_sequential>`.
 This combination provides the several nice properties: the result data is
 contiguous in memory (good for cache locality), has few allocations, is easy to
 address (iterators in the final vector are just indices or pointers), and can be
-efficiently queried with a standard binary or radix search.
+efficiently queried with a standard binary search (e.g.
+``std::lower_bound``; if you want the whole range of elements comparing
+equal, use ``std::equal_range``).
 
 .. _dss_smallset:
 
