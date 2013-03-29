@@ -1032,10 +1032,12 @@ static bool hasVariant(ArrayRef<PredTransition> Transitions,
 
 // Populate IntersectingVariants with any variants or aliased sequences of the
 // given SchedRW whose processor indices and predicates are not mutually
-// exclusive with the given transition,
+// exclusive with the given transition.
 void PredTransitions::getIntersectingVariants(
   const CodeGenSchedRW &SchedRW, unsigned TransIdx,
   std::vector<TransVariant> &IntersectingVariants) {
+
+  bool GenericRW = false;
 
   std::vector<TransVariant> Variants;
   if (SchedRW.HasVariants) {
@@ -1048,6 +1050,8 @@ void PredTransitions::getIntersectingVariants(
     const RecVec VarDefs = SchedRW.TheDef->getValueAsListOfDefs("Variants");
     for (RecIter RI = VarDefs.begin(), RE = VarDefs.end(); RI != RE; ++RI)
       Variants.push_back(TransVariant(*RI, SchedRW.Index, VarProcIdx, 0));
+    if (VarProcIdx == 0)
+      GenericRW = true;
   }
   for (RecIter AI = SchedRW.Aliases.begin(), AE = SchedRW.Aliases.end();
        AI != AE; ++AI) {
@@ -1071,6 +1075,8 @@ void PredTransitions::getIntersectingVariants(
       Variants.push_back(
         TransVariant(AliasRW.TheDef, SchedRW.Index, AliasProcIdx, 0));
     }
+    if (AliasProcIdx == 0)
+      GenericRW = true;
   }
   for (unsigned VIdx = 0, VEnd = Variants.size(); VIdx != VEnd; ++VIdx) {
     TransVariant &Variant = Variants[VIdx];
@@ -1107,6 +1113,10 @@ void PredTransitions::getIntersectingVariants(
       IntersectingVariants.push_back(Variant);
       TransVec.push_back(TransVec[TransIdx]);
     }
+  }
+  if (GenericRW && IntersectingVariants.empty()) {
+    PrintFatalError(SchedRW.TheDef->getLoc(), "No variant of this type has "
+                    "a matching predicate on any processor");
   }
 }
 
@@ -1205,10 +1215,6 @@ void PredTransitions::substituteVariantOperand(
       // This will push a copies of TransVec[TransIdx] on the back of TransVec.
       std::vector<TransVariant> IntersectingVariants;
       getIntersectingVariants(SchedRW, TransIdx, IntersectingVariants);
-      if (IntersectingVariants.empty())
-        PrintFatalError(SchedRW.TheDef->getLoc(),
-                      "No variant of this type has "
-                      "a matching predicate on any processor");
       // Now expand each variant on top of its copy of the transition.
       for (std::vector<TransVariant>::const_iterator
              IVI = IntersectingVariants.begin(),
