@@ -385,7 +385,7 @@ static inline bool HappensBefore(Shadow old, ThreadState *thr) {
   return thr->clock.get(old.TidWithIgnore()) >= old.epoch();
 }
 
-// FIXME: should be ALWAYS_INLINE for performance reasons?
+ALWAYS_INLINE USED
 void MemoryAccessImpl(ThreadState *thr, uptr addr,
     int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic,
     u64 *shadow_mem, Shadow cur) {
@@ -459,7 +459,7 @@ void MemoryAccessImpl(ThreadState *thr, uptr addr,
   return;
 }
 
-// FIXME: should be ALWAYS_INLINE for performance reasons?
+ALWAYS_INLINE USED
 void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
     int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic) {
   u64 *shadow_mem = (u64*)MemToShadow(addr);
@@ -597,7 +597,7 @@ void MemoryRangeImitateWrite(ThreadState *thr, uptr pc, uptr addr, uptr size) {
   MemoryRangeSet(thr, pc, addr, size, s.raw());
 }
 
-// FIXME: should be ALWAYS_INLINE for performance reasons?
+ALWAYS_INLINE USED
 void FuncEntry(ThreadState *thr, uptr pc) {
   DCHECK_EQ(thr->in_rtl, 0);
   StatInc(thr, StatFuncEnter);
@@ -627,7 +627,7 @@ void FuncEntry(ThreadState *thr, uptr pc) {
   thr->shadow_stack_pos++;
 }
 
-// FIXME: should be ALWAYS_INLINE for performance reasons?
+ALWAYS_INLINE USED
 void FuncExit(ThreadState *thr) {
   DCHECK_EQ(thr->in_rtl, 0);
   StatInc(thr, StatFuncExit);
