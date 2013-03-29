@@ -90,6 +90,10 @@ extern "C++" using N::value;
 // PR7076
 extern "C" const char *Version_string = "2.9";
 
+extern "C" {
+  extern const char *Version_string2 = "2.9";
+}
+
 namespace PR9162 {
   extern "C" {
     typedef struct _ArtsSink ArtsSink;
