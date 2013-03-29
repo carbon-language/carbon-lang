@@ -72,6 +72,12 @@ bool Mips16RegisterInfo::saveScavengerRegister
   return true;
 }
 
+const TargetRegisterClass *
+Mips16RegisterInfo::intRegClass(unsigned Size) const {
+  assert(Size == 4);
+  return &Mips::CPU16RegsRegClass;
+}
+
 void Mips16RegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
                                      unsigned OpNo, int FrameIndex,
                                      uint64_t StackSize,

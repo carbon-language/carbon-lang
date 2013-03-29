@@ -37,6 +37,8 @@ public:
                                      const TargetRegisterClass *RC,
                                      unsigned Reg) const;
 
+  virtual const TargetRegisterClass *intRegClass(unsigned Size) const;
+
 private:
   virtual void eliminateFI(MachineBasicBlock::iterator II, unsigned OpNo,
                            int FrameIndex, uint64_t StackSize,

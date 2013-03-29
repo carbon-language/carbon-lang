@@ -54,6 +54,15 @@ requiresFrameIndexScavenging(const MachineFunction &MF) const {
   return true;
 }
 
+const TargetRegisterClass *
+MipsSERegisterInfo::intRegClass(unsigned Size) const {
+  if (Size == 4)
+    return &Mips::CPURegsRegClass;
+
+  assert(Size == 8);
+  return &Mips::CPU64RegsRegClass;
+}
+
 void MipsSERegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
                                      unsigned OpNo, int FrameIndex,
                                      uint64_t StackSize,
