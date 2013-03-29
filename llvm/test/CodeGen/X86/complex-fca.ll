@@ -1,5 +1,8 @@
 ; RUN: llc < %s -march=x86 | grep mov | count 2
 
+; Skip this on Windows as there is no ccosl and sret behaves differently.
+; XFAIL: pc-win32
+
 define void @ccosl({ x86_fp80, x86_fp80 }* noalias sret %agg.result, { x86_fp80, x86_fp80 } %z) nounwind {
 entry:
 	%z8 = extractvalue { x86_fp80, x86_fp80 } %z, 0
