@@ -5,7 +5,7 @@
 // The second half of this patch is in llvm/tests/DebugInfo/debug-info-blocks.ll
 
 // CHECK: define {{.*}}_block_invoke
-// CHECK: %[[BLOCK:.*]] = bitcast i8* %.block_descriptor to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !88
+// CHECK: %[[BLOCK:.*]] = bitcast i8* %.block_descriptor to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg
 // CHECK-NEXT: store <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %[[BLOCK]], <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** %[[ALLOCA:.*]], align
 // CHECK-NEXT: getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %[[BLOCK]], i32 0, i32 5
 // CHECK-NEXT: call void @llvm.dbg.declare(metadata !{<{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** %[[ALLOCA]]}, metadata ![[SELF:[0-9]+]])
