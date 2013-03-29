@@ -44,6 +44,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/Transforms/ObjCARC.h"
 using namespace llvm;
 
 static cl::opt<bool>
@@ -396,6 +397,10 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   _target->addAnalysisPasses(codeGenPasses);
 
   formatted_raw_ostream Out(out);
+
+  // If the bitcode files contain ARC code and were compiled with optimization,
+  // the ObjCARCContractPass must be run, so do it unconditionally here.
+  codeGenPasses.add(createObjCARCContractPass());
 
   if (_target->addPassesToEmitFile(codeGenPasses, Out,
                                    TargetMachine::CGFT_ObjectFile)) {
