@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -std=c89
+// RUN: %clang_cc1 %s -fsyntax-only -verify -std=c89 -Wno-sizeof-array-decay
 // expected-no-diagnostics
 // rdar://6095180
 
