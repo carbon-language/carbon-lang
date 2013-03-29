@@ -539,7 +539,11 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForIndexing))
     setThreadBackgroundPriority();
 
-  CaptureDiagnosticConsumer *CaptureDiag = new CaptureDiagnosticConsumer();
+  bool CaptureDiagnostics = !Logger::isLoggingEnabled();
+
+  CaptureDiagnosticConsumer *CaptureDiag = 0;
+  if (CaptureDiagnostics)
+    CaptureDiag = new CaptureDiagnosticConsumer();
 
   // Configure the diagnostics.
   IntrusiveRefCntPtr<DiagnosticsEngine>
@@ -609,7 +613,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
     CInvok->getDiagnosticOpts().IgnoreWarnings = true;
 
   ASTUnit *Unit = ASTUnit::create(CInvok.getPtr(), Diags,
-                                  /*CaptureDiagnostics=*/true,
+                                  CaptureDiagnostics,
                                   /*UserFilesAreVolatile=*/true);
   OwningPtr<CXTUOwner> CXTU(new CXTUOwner(MakeCXTranslationUnit(CXXIdx, Unit)));
 
@@ -662,7 +666,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
                                                        Persistent,
                                                 CXXIdx->getClangResourcesPath(),
                                                        OnlyLocalDecls,
-                                                    /*CaptureDiagnostics=*/true,
+                                                       CaptureDiagnostics,
                                                        PrecompilePreamble,
                                                     CacheCodeCompletionResults,
                                  /*IncludeBriefCommentsInCodeCompletion=*/false,
