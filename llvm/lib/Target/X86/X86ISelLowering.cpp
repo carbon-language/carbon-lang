@@ -1343,7 +1343,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   MaxStoresPerMemmove = 8; // For @llvm.memmove -> sequence of stores
   MaxStoresPerMemmoveOptSize = Subtarget->isTargetDarwin() ? 8 : 4;
   setPrefLoopAlignment(4); // 2^4 bytes.
-  BenefitFromCodePlacementOpt = true;
 
   // Predictable cmov don't hurt on atom because it's in-order.
   PredictableSelectIsExpensive = !Subtarget->isAtom();

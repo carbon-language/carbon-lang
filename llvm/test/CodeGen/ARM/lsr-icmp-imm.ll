@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=thumbv7-apple-ios -disable-code-place < %s | FileCheck %s
-; RUN: llc -mtriple=armv7-apple-ios   -disable-code-place < %s | FileCheck %s
+; RUN: llc -mtriple=thumbv7-apple-ios -disable-block-placement < %s | FileCheck %s
+; RUN: llc -mtriple=armv7-apple-ios   -disable-block-placement < %s | FileCheck %s
 
 ; LSR should compare against the post-incremented induction variable.
 ; In this case, the immediate value is -2 which requires a cmn instruction.

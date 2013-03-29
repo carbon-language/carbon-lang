@@ -694,13 +694,6 @@ public:
     return false;
   }
 
-  /// This function returns true if the target would benefit from code placement
-  /// optimization.
-  /// @brief Determine if the target should perform code placement optimization.
-  bool shouldOptimizeCodePlacement() const {
-    return BenefitFromCodePlacementOpt;
-  }
-
   /// getOptimalMemOpType - Returns the target specific optimal type for load
   /// and store operations as a result of memset, memcpy, and memmove
   /// lowering. If DstAlign is zero that means it's safe to destination
@@ -1643,10 +1636,6 @@ protected:
   /// Maximum number of store instructions that may be substituted for a call
   /// to memmove, used for functions with OpSize attribute.
   unsigned MaxStoresPerMemmoveOptSize;
-
-  /// This field specifies whether the target can benefit from code placement
-  /// optimization.
-  bool BenefitFromCodePlacementOpt;
 
   /// PredictableSelectIsExpensive - Tells the code generator that select is
   /// more expensive than a branch if the branch is usually predicted right.

@@ -91,7 +91,6 @@ void initializeCFGViewerPass(PassRegistry&);
 void initializeCalculateSpillWeightsPass(PassRegistry&);
 void initializeCallGraphAnalysisGroup(PassRegistry&);
 void initializeCodeGenPreparePass(PassRegistry&);
-void initializeCodePlacementOptPass(PassRegistry&);
 void initializeConstantMergePass(PassRegistry&);
 void initializeConstantPropagationPass(PassRegistry&);
 void initializeMachineCopyPropagationPass(PassRegistry&);

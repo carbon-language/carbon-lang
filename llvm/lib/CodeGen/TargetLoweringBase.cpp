@@ -710,7 +710,6 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm,
   MaxStoresPerMemset = MaxStoresPerMemcpy = MaxStoresPerMemmove = 8;
   MaxStoresPerMemsetOptSize = MaxStoresPerMemcpyOptSize
     = MaxStoresPerMemmoveOptSize = 4;
-  BenefitFromCodePlacementOpt = false;
   UseUnderscoreSetJmp = false;
   UseUnderscoreLongJmp = false;
   SelectIsExpensive = false;

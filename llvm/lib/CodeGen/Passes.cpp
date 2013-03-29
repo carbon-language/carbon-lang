@@ -39,12 +39,9 @@ static cl::opt<bool> DisableTailDuplicate("disable-tail-duplicate", cl::Hidden,
 static cl::opt<bool> DisableEarlyTailDup("disable-early-taildup", cl::Hidden,
     cl::desc("Disable pre-register allocation tail duplication"));
 static cl::opt<bool> DisableBlockPlacement("disable-block-placement",
-    cl::Hidden, cl::desc("Disable the probability-driven block placement, and "
-                         "re-enable the old code placement pass"));
+    cl::Hidden, cl::desc("Disable probability-driven block placement"));
 static cl::opt<bool> EnableBlockPlacementStats("enable-block-placement-stats",
     cl::Hidden, cl::desc("Collect probability-driven block placement stats"));
-static cl::opt<bool> DisableCodePlace("disable-code-place", cl::Hidden,
-    cl::desc("Disable code placement"));
 static cl::opt<bool> DisableSSC("disable-ssc", cl::Hidden,
     cl::desc("Disable Stack Slot Coloring"));
 static cl::opt<bool> DisableMachineDCE("disable-machine-dce", cl::Hidden,
@@ -149,10 +146,7 @@ static AnalysisID overridePass(AnalysisID StandardID, AnalysisID TargetID) {
     return applyDisable(TargetID, DisableEarlyTailDup);
 
   if (StandardID == &MachineBlockPlacementID)
-    return applyDisable(TargetID, DisableCodePlace);
-
-  if (StandardID == &CodePlacementOptID)
-    return applyDisable(TargetID, DisableCodePlace);
+    return applyDisable(TargetID, DisableBlockPlacement);
 
   if (StandardID == &StackSlotColoringID)
     return applyDisable(TargetID, DisableSSC);
@@ -742,16 +736,7 @@ bool TargetPassConfig::addGCPasses() {
 
 /// Add standard basic block placement passes.
 void TargetPassConfig::addBlockPlacement() {
-  AnalysisID PassID = 0;
-  if (!DisableBlockPlacement) {
-    // MachineBlockPlacement is a new pass which subsumes the functionality of
-    // CodPlacementOpt. The old code placement pass can be restored by
-    // disabling block placement, but eventually it will be removed.
-    PassID = addPass(&MachineBlockPlacementID);
-  } else {
-    PassID = addPass(&CodePlacementOptID);
-  }
-  if (PassID) {
+  if (addPass(&MachineBlockPlacementID)) {
     // Run a separate pass to collect block placement statistics.
     if (EnableBlockPlacementStats)
       addPass(&MachineBlockPlacementStatsID);

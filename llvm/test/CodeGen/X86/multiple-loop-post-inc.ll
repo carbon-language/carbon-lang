@@ -1,4 +1,4 @@
-; RUN: llc -asm-verbose=false -disable-branch-fold -disable-code-place -disable-tail-duplicate -march=x86-64 -mcpu=nehalem < %s | FileCheck %s
+; RUN: llc -asm-verbose=false -disable-branch-fold -disable-block-placement -disable-tail-duplicate -march=x86-64 -mcpu=nehalem < %s | FileCheck %s
 ; rdar://7236213
 ;
 ; The scheduler's 2-address hack has been disabled, so there is

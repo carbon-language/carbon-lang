@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=thumbv7-apple-ios -disable-code-place < %s | FileCheck %s
-; RUN: llc -mtriple=armv7-apple-ios   -disable-code-place < %s | FileCheck %s
+; RUN: llc -mtriple=thumbv7-apple-ios -disable-block-placement < %s | FileCheck %s
+; RUN: llc -mtriple=armv7-apple-ios   -disable-block-placement < %s | FileCheck %s
 
 ; LLVM IR optimizers canonicalize icmp+select this way.
 ; Make sure that TwoAddressInstructionPass can commute the corresponding

@@ -444,10 +444,6 @@ namespace llvm {
   /// information.
   extern char &MachineBlockPlacementStatsID;
 
-  /// Code Placement - This pass optimize code placement and aligns loop
-  /// headers to target specific alignment boundary.
-  extern char &CodePlacementOptID;
-
   /// GCLowering Pass - Performs target-independent LLVM IR transformations for
   /// highly portable strategies.
   ///

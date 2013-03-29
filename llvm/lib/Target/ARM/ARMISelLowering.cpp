@@ -880,8 +880,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   // are at least 4 bytes aligned.
   setMinStackArgumentAlignment(4);
 
-  BenefitFromCodePlacementOpt = true;
-
   // Prefer likely predicted branches to selects on out-of-order cores.
   PredictableSelectIsExpensive = Subtarget->isLikeA9();
 

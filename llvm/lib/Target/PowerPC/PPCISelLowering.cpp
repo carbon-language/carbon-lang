@@ -543,7 +543,6 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     MaxStoresPerMemmoveOptSize = 8;
 
     setPrefFunctionAlignment(4);
-    BenefitFromCodePlacementOpt = true;
   }
 }
 

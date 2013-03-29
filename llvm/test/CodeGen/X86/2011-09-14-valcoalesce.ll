@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -disable-code-place | FileCheck %s
+; RUN: llc < %s -march=x86 -disable-block-placement | FileCheck %s
 ;
 ; Test RegistersDefinedFromSameValue. We have multiple copies of the same vreg:
 ; while.body85.i:
