@@ -346,6 +346,11 @@ void CoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode *Pred) {
       default:
         llvm_unreachable("Analysis for this terminator not implemented.");
 
+      // Model static initializers.
+      case Stmt::DeclStmtClass:
+        HandleStaticInit(cast<DeclStmt>(Term), B, Pred);
+        return;
+
       case Stmt::BinaryOperatorClass: // '&&' and '||'
         HandleBranch(cast<BinaryOperator>(Term)->getLHS(), Term, B, Pred);
         return;
@@ -455,6 +460,19 @@ void CoreEngine::HandleBranch(const Stmt *Cond, const Stmt *Term,
   // Enqueue the new frontier onto the worklist.
   enqueue(Dst);
 }
+
+
+void CoreEngine::HandleStaticInit(const DeclStmt *DS, const CFGBlock *B,
+                                  ExplodedNode *Pred) {
+  assert(B->succ_size() == 2);
+  NodeBuilderContext Ctx(*this, B, Pred);
+  ExplodedNodeSet Dst;
+  SubEng.processStaticInitializer(DS, Ctx, Pred, Dst,
+                                  *(B->succ_begin()), *(B->succ_begin()+1));
+  // Enqueue the new frontier onto the worklist.
+  enqueue(Dst);
+}
+
 
 void CoreEngine::HandlePostStmt(const CFGBlock *B, unsigned StmtIdx, 
                                   ExplodedNode *Pred) {

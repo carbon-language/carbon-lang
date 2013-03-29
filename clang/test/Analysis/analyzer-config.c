@@ -5,6 +5,7 @@ void bar() {}
 void foo() { bar(); }
 
 // CHECK: [config]
+// CHECK-NEXT: cfg-conditional-static-initializers = true
 // CHECK-NEXT: cfg-temporary-dtors = false
 // CHECK-NEXT: faux-bodies = true
 // CHECK-NEXT: graph-trim-interval = 1000
@@ -15,4 +16,5 @@ void foo() { bar(); }
 // CHECK-NEXT: max-times-inline-large = 32
 // CHECK-NEXT: mode = deep
 // CHECK-NEXT: [stats]
-// CHECK-NEXT: num-entries = 9
+// CHECK-NEXT: num-entries = 10
+

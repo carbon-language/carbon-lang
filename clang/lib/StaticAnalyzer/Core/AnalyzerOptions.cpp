@@ -238,6 +238,6 @@ bool AnalyzerOptions::shouldPrunePaths() {
 }
 
 bool AnalyzerOptions::shouldConditionalizeStaticInitializers() {
-  return getBooleanOption("conditional-static-initializers", false);
+  return getBooleanOption("cfg-conditional-static-initializers", true);
 }
 

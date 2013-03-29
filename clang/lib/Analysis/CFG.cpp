@@ -1665,6 +1665,7 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(DeclStmt *DS) {
       // whether or not they are initialized.
       if (Block) {
         Succ = Block;
+        Block = 0;
         if (badCFG)
           return 0;
       }
@@ -1714,15 +1715,14 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(DeclStmt *DS) {
   if (ScopePos && VD == *ScopePos)
     ++ScopePos;
 
-  CFGBlock *B = Block ? Block : LastBlock;
+  CFGBlock *B = LastBlock;
   if (blockBeforeInit) {
     Succ = B;
-    Block = 0;
-    CFGBlock *branchBlock = createBlock(false);
-    branchBlock->setTerminator(DS);
-    addSuccessor(branchBlock, blockBeforeInit);
-    addSuccessor(branchBlock, B);
-    B = branchBlock;
+    Block = createBlock(false);
+    Block->setTerminator(DS);
+    addSuccessor(Block, blockBeforeInit);
+    addSuccessor(Block, B);
+    B = Block;
   }
 
   return B;

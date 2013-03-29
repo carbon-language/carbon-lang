@@ -72,6 +72,15 @@ public:
                              const CFGBlock *DstT,
                              const CFGBlock *DstF) = 0;
 
+  /// Called by CoreEngine.  Used to processing branching behavior
+  /// at static initalizers.
+  virtual void processStaticInitializer(const DeclStmt *DS,
+                                        NodeBuilderContext& BuilderCtx,
+                                        ExplodedNode *Pred,
+                                        ExplodedNodeSet &Dst,
+                                        const CFGBlock *DstT,
+                                        const CFGBlock *DstF) = 0;
+
   /// Called by CoreEngine.  Used to generate successor
   /// nodes by processing the 'effects' of a computed goto jump.
   virtual void processIndirectGoto(IndirectGotoNodeBuilder& builder) = 0;

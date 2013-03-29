@@ -96,6 +96,10 @@ private:
   void HandleBranch(const Stmt *Cond, const Stmt *Term, const CFGBlock *B,
                     ExplodedNode *Pred);
 
+  /// Handle conditional logic for running static initializers.
+  void HandleStaticInit(const DeclStmt *DS, const CFGBlock *B,
+                        ExplodedNode *Pred);
+
 private:
   CoreEngine(const CoreEngine &) LLVM_DELETED_FUNCTION;
   void operator=(const CoreEngine &) LLVM_DELETED_FUNCTION;
