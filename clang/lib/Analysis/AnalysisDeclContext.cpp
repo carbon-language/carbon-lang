@@ -66,13 +66,15 @@ AnalysisDeclContextManager::AnalysisDeclContextManager(bool useUnoptimizedCFG,
                                                        bool addImplicitDtors,
                                                        bool addInitializers,
                                                        bool addTemporaryDtors,
-                                                       bool synthesizeBodies)
+                                                       bool synthesizeBodies,
+                                                       bool addStaticInitBranch)
   : SynthesizeBodies(synthesizeBodies)
 {
   cfgBuildOptions.PruneTriviallyFalseEdges = !useUnoptimizedCFG;
   cfgBuildOptions.AddImplicitDtors = addImplicitDtors;
   cfgBuildOptions.AddInitializers = addInitializers;
   cfgBuildOptions.AddTemporaryDtors = addTemporaryDtors;
+  cfgBuildOptions.AddStaticInitBranches = addStaticInitBranch;
 }
 
 void AnalysisDeclContextManager::clear() {

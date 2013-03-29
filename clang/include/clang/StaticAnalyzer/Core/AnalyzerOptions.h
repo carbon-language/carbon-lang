@@ -313,6 +313,10 @@ public:
   /// values "true" and "false".
   bool shouldPrunePaths();
 
+  /// Returns true if 'static' initializers should be in conditional logic
+  /// in the CFG.
+  bool shouldConditionalizeStaticInitializers();
+
   // Returns the size of the functions (in basic blocks), which should be
   // considered to be small enough to always inline.
   //

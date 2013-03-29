@@ -410,7 +410,8 @@ public:
                              bool addImplicitDtors = false,
                              bool addInitializers = false,
                              bool addTemporaryDtors = false,
-                             bool synthesizeBodies = false);
+                             bool synthesizeBodies = false,
+                             bool addStaticInitBranches = false);
 
   ~AnalysisDeclContextManager();
 

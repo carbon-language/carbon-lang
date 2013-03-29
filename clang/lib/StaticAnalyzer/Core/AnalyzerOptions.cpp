@@ -236,3 +236,8 @@ bool AnalyzerOptions::shouldSynthesizeBodies() {
 bool AnalyzerOptions::shouldPrunePaths() {
   return getBooleanOption("prune-paths", true);
 }
+
+bool AnalyzerOptions::shouldConditionalizeStaticInitializers() {
+  return getBooleanOption("conditional-static-initializers", false);
+}
+
