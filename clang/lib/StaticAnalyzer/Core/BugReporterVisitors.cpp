@@ -845,7 +845,7 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
     // gone too far (though we can likely track the lvalue better anyway).
     do {
       const ProgramPoint &pp = N->getLocation();
-      if (Optional<PostStmt> ps = pp.getAs<PostStmt>()) {
+      if (Optional<StmtPoint> ps = pp.getAs<StmtPoint>()) {
         if (ps->getStmt() == S || ps->getStmt() == Inner)
           break;
       } else if (Optional<CallExitEnd> CEE = pp.getAs<CallExitEnd>()) {
