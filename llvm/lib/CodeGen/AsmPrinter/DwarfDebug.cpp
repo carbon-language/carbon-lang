@@ -721,13 +721,6 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   if (!FirstCU)
     FirstCU = NewCU;
 
-  if (useSplitDwarf()) {
-    // This should be a unique identifier when we want to build .dwp files.
-    NewCU->addUInt(Die, dwarf::DW_AT_GNU_dwo_id, dwarf::DW_FORM_data8, 0);
-    // Now construct the skeleton CU associated.
-    constructSkeletonCU(N);
-  }
-
   InfoHolder.addUnit(NewCU);
 
   CUMap.insert(std::make_pair(N, NewCU));
@@ -794,6 +787,14 @@ void DwarfDebug::beginModule() {
     DIArray RetainedTypes = CUNode.getRetainedTypes();
     for (unsigned i = 0, e = RetainedTypes.getNumElements(); i != e; ++i)
       CU->getOrCreateTypeDIE(RetainedTypes.getElement(i));
+    // If we're splitting the dwarf out now that we've got the entire
+    // CU then construct a skeleton CU based upon it.
+    if (useSplitDwarf()) {
+    // This should be a unique identifier when we want to build .dwp files.
+      CU->addUInt(CU->getCUDie(), dwarf::DW_AT_GNU_dwo_id, dwarf::DW_FORM_data8, 0);
+      // Now construct the skeleton CU associated.
+      constructSkeletonCU(CUNode);
+    }
   }
 
   // Tell MMI that we have debug info.
