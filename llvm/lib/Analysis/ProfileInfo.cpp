@@ -249,7 +249,7 @@ const BasicBlock *ProfileInfoT<Function,BasicBlock>::
 
     succ_const_iterator Succ = succ_begin(BB), End = succ_end(BB);
     if (Succ == End) {
-      P[0] = BB;
+      P[(const BasicBlock*)0] = BB;
       if (Mode & GetPathToExit) {
         hasFoundPath = true;
         BB = 0;
@@ -752,10 +752,10 @@ void ProfileInfoT<Function,BasicBlock>::repair(const Function *F) {
            Succ != End; ++Succ) {
         Path P;
         GetPath(*Succ, 0, P, GetPathToExit);
-        if (Dest && Dest != P[0]) {
+        if (Dest && Dest != P[(const BasicBlock*)0]) {
           AllEdgesHaveSameReturn = false;
         }
-        Dest = P[0];
+        Dest = P[(const BasicBlock*)0];
       }
       if (AllEdgesHaveSameReturn) {
         if(EstimateMissingEdges(BB)) {
@@ -927,7 +927,7 @@ void ProfileInfoT<Function,BasicBlock>::repair(const Function *F) {
 
       Path P;
       const BasicBlock *Dest = GetPath(BB, 0, P, GetPathToExit | GetPathWithNewEdges);
-      Dest = P[0];
+      Dest = P[(const BasicBlock*)0];
       if (!Dest) continue;
 
       if (getEdgeWeight(getEdge(Dest,0)) == MissingValue) {
