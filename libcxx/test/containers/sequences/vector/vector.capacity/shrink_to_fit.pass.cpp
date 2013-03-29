@@ -31,6 +31,7 @@ int main()
         assert(v.capacity() == 101);
         assert(v.size() == 101);
     }
+#ifndef _LIBCPP_NO_EXCEPTIONS
     {
         std::vector<int, stack_allocator<int, 400> > v(100);
         v.push_back(1);
@@ -38,4 +39,5 @@ int main()
         assert(v.capacity() == 200);
         assert(v.size() == 101);
     }
+#endif
 }
