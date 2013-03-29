@@ -64,7 +64,8 @@ static inline bool ModuleHasARC(const Module &M) {
     M.getNamedValue("objc_copyWeak") ||
     M.getNamedValue("objc_retainedObject") ||
     M.getNamedValue("objc_unretainedObject") ||
-    M.getNamedValue("objc_unretainedPointer");
+    M.getNamedValue("objc_unretainedPointer") ||
+    M.getNamedValue("clang.arc.use");
 }
 
 /// \enum InstructionClass
