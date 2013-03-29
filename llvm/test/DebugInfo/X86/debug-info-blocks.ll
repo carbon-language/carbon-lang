@@ -1,5 +1,6 @@
-; RUN: llc -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj
-; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
+; RUN: llc -mtriple x86_64-apple-darwin -filetype=obj -o %t.o < %s
+; RUN: llvm-dwarfdump -debug-dump=info %t.o | FileCheck %s
+
 ; Generated from llvm/tools/clang/test/CodeGenObjC/debug-info-blocks.m
 ; rdar://problem/9279956
 ; test that the DW_AT_location of self is at ( fbreg +{{[0-9]+}}, deref, +{{[0-9]+}} )
@@ -27,7 +28,7 @@
 ; CHECK: [[A:.*]]:   DW_TAG_structure_type
 ; CHECK-NEXT: DW_AT_APPLE_objc_complete_type
 ; CHECK-NEXT: DW_AT_name{{.*}}"A"
-; CHECK: [[APTR]]:   DW_TAG_pointer_type [5]  
+; CHECK: [[APTR]]:   DW_TAG_pointer_type [5]
 ; CHECK-NEXT: {[[A]]}
 
 
