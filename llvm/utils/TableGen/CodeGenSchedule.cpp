@@ -1105,9 +1105,7 @@ void PredTransitions::getIntersectingVariants(
       // Push another copy of the current transition for more variants.
       Variant.TransVecIdx = TransVec.size();
       IntersectingVariants.push_back(Variant);
-
-      PredTransition Trans = TransVec[TransIdx];
-      TransVec.push_back(Trans);
+      TransVec.push_back(TransVec[TransIdx]);
     }
   }
 }
