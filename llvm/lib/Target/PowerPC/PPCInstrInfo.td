@@ -1128,9 +1128,38 @@ let Uses = [RM] in {
   def FCTIWZ : XForm_26<63, 15, (outs F8RC:$frD), (ins F8RC:$frB),
                         "fctiwz $frD, $frB", FPGeneral,
                         [(set f64:$frD, (PPCfctiwz f64:$frB))]>;
+
   def FRSP   : XForm_26<63, 12, (outs F4RC:$frD), (ins F8RC:$frB),
                         "frsp $frD, $frB", FPGeneral,
                         [(set f32:$frD, (fround f64:$frB))]>;
+
+  // The frin -> nearbyint mapping is valid only in fast-math mode.
+  def FRIND  : XForm_26<63, 392, (outs F8RC:$frD), (ins F8RC:$frB),
+                        "frin $frD, $frB", FPGeneral,
+                        [(set f64:$frD, (fnearbyint f64:$frB))]>;
+  def FRINS  : XForm_26<63, 392, (outs F4RC:$frD), (ins F4RC:$frB),
+                        "frin $frD, $frB", FPGeneral,
+                        [(set f32:$frD, (fnearbyint f32:$frB))]>;
+
+  def FRIPD  : XForm_26<63, 456, (outs F8RC:$frD), (ins F8RC:$frB),
+                        "frip $frD, $frB", FPGeneral,
+                        [(set f64:$frD, (fceil f64:$frB))]>;
+  def FRIPS  : XForm_26<63, 456, (outs F4RC:$frD), (ins F4RC:$frB),
+                        "frip $frD, $frB", FPGeneral,
+                        [(set f32:$frD, (fceil f32:$frB))]>;
+  def FRIZD  : XForm_26<63, 424, (outs F8RC:$frD), (ins F8RC:$frB),
+                        "friz $frD, $frB", FPGeneral,
+                        [(set f64:$frD, (ftrunc f64:$frB))]>;
+  def FRIZS  : XForm_26<63, 424, (outs F4RC:$frD), (ins F4RC:$frB),
+                        "friz $frD, $frB", FPGeneral,
+                        [(set f32:$frD, (ftrunc f32:$frB))]>;
+  def FRIMD  : XForm_26<63, 488, (outs F8RC:$frD), (ins F8RC:$frB),
+                        "frim $frD, $frB", FPGeneral,
+                        [(set f64:$frD, (ffloor f64:$frB))]>;
+  def FRIMS  : XForm_26<63, 488, (outs F4RC:$frD), (ins F4RC:$frB),
+                        "frim $frD, $frB", FPGeneral,
+                        [(set f32:$frD, (ffloor f32:$frB))]>;
+
   def FSQRT  : XForm_26<63, 22, (outs F8RC:$frD), (ins F8RC:$frB),
                         "fsqrt $frD, $frB", FPSqrt,
                         [(set f64:$frD, (fsqrt f64:$frB))]>;

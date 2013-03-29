@@ -13,8 +13,8 @@ define <2 x double> @floor_v2f64(<2 x double> %p)
   ret <2 x double> %t
 }
 ; CHECK: floor_v2f64:
-; CHECK: bl floor
-; CHECK: bl floor
+; CHECK: frim
+; CHECK: frim
 
 declare <4 x double> @llvm.floor.v4f64(<4 x double> %p)
 define <4 x double> @floor_v4f64(<4 x double> %p)
@@ -23,10 +23,10 @@ define <4 x double> @floor_v4f64(<4 x double> %p)
   ret <4 x double> %t
 }
 ; CHECK: floor_v4f64:
-; CHECK: bl floor
-; CHECK: bl floor
-; CHECK: bl floor
-; CHECK: bl floor
+; CHECK: frim
+; CHECK: frim
+; CHECK: frim
+; CHECK: frim
 
 declare <2 x double> @llvm.ceil.v2f64(<2 x double> %p)
 define <2 x double> @ceil_v2f64(<2 x double> %p)
@@ -35,8 +35,8 @@ define <2 x double> @ceil_v2f64(<2 x double> %p)
   ret <2 x double> %t
 }
 ; CHECK: ceil_v2f64:
-; CHECK: bl ceil
-; CHECK: bl ceil
+; CHECK: frip
+; CHECK: frip
 
 declare <4 x double> @llvm.ceil.v4f64(<4 x double> %p)
 define <4 x double> @ceil_v4f64(<4 x double> %p)
@@ -45,10 +45,10 @@ define <4 x double> @ceil_v4f64(<4 x double> %p)
   ret <4 x double> %t
 }
 ; CHECK: ceil_v4f64:
-; CHECK: bl ceil
-; CHECK: bl ceil
-; CHECK: bl ceil
-; CHECK: bl ceil
+; CHECK: frip
+; CHECK: frip
+; CHECK: frip
+; CHECK: frip
 
 declare <2 x double> @llvm.trunc.v2f64(<2 x double> %p)
 define <2 x double> @trunc_v2f64(<2 x double> %p)
@@ -57,8 +57,8 @@ define <2 x double> @trunc_v2f64(<2 x double> %p)
   ret <2 x double> %t
 }
 ; CHECK: trunc_v2f64:
-; CHECK: bl trunc
-; CHECK: bl trunc
+; CHECK: friz
+; CHECK: friz
 
 declare <4 x double> @llvm.trunc.v4f64(<4 x double> %p)
 define <4 x double> @trunc_v4f64(<4 x double> %p)
@@ -67,10 +67,10 @@ define <4 x double> @trunc_v4f64(<4 x double> %p)
   ret <4 x double> %t
 }
 ; CHECK: trunc_v4f64:
-; CHECK: bl trunc
-; CHECK: bl trunc
-; CHECK: bl trunc
-; CHECK: bl trunc
+; CHECK: friz
+; CHECK: friz
+; CHECK: friz
+; CHECK: friz
 
 declare <2 x double> @llvm.nearbyint.v2f64(<2 x double> %p)
 define <2 x double> @nearbyint_v2f64(<2 x double> %p)
