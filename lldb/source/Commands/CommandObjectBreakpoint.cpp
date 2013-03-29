@@ -1674,7 +1674,7 @@ protected:
             else
             {
                 target->RemoveAllBreakpoints ();
-                result.AppendMessageWithFormat ("All breakpoints removed. (%lu breakpoints)\n", num_breakpoints);
+                result.AppendMessageWithFormat ("All breakpoints removed. (%lu %s)\n", num_breakpoints, num_breakpoints > 1 ? "breakpoints" : "breakpoint");
             }
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
