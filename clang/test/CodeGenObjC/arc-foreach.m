@@ -84,7 +84,8 @@ void test0(NSArray *array) {
 
 // CHECK-LP64:    define internal void @__test0_block_invoke
 // CHECK-LP64:      [[BLOCK:%.*]] = bitcast i8* {{%.*}} to [[BLOCK_T]]*
-// CHECK-LP64-NEXT: [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+// CHECK-LP64-NOT:  ret
+// CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
 // CHECK-LP64-NEXT: [[T2:%.*]] = load i8** [[T0]], align 8 
 // CHECK-LP64-NEXT: call void @use(i8* [[T2]])
 

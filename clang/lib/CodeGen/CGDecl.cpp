@@ -1578,7 +1578,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
       LocalDeclMap[&D] = Arg;
       llvm::Value *LocalAddr = 0;
       if (CGM.getCodeGenOpts().OptimizationLevel == 0) {
-        // Allocate a stack slot to let debug info survive the RA.
+        // Allocate a stack slot to let the debug info survive the RA.
         llvm::AllocaInst *Alloc = CreateTempAlloca(ConvertTypeForMem(Ty),
                                                    D.getName() + ".addr");
         Alloc->setAlignment(getContext().getDeclAlign(&D).getQuantity());

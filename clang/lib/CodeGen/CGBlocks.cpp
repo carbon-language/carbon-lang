@@ -1138,6 +1138,18 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
   BlockPointer = Builder.CreateBitCast(blockAddr,
                                        blockInfo.StructureType->getPointerTo(),
                                        "block");
+  // At -O0 we generate an explicit alloca for the BlockPointer, so the RA
+  // won't delete the dbg.declare intrinsics for captured variables.
+  llvm::Value *BlockPointerDbgLoc = BlockPointer;
+  if (CGM.getCodeGenOpts().OptimizationLevel == 0) {
+    // Allocate a stack slot for it, so we can point the debugger to it
+    llvm::AllocaInst *Alloca = CreateTempAlloca(BlockPointer->getType(),
+                                                "block.addr");
+    unsigned Align = getContext().getDeclAlign(&selfDecl).getQuantity();
+    Alloca->setAlignment(Align);
+    Builder.CreateAlignedStore(BlockPointer, Alloca, Align);
+    BlockPointerDbgLoc = Alloca;
+  }
 
   // If we have a C++ 'this' reference, go ahead and force it into
   // existence now.
@@ -1161,20 +1173,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
       llvm::Value *selfAddr = Builder.CreateStructGEP(BlockPointer,
                                                       capture.getIndex(),
                                                       "block.captured-self");
-
-      // At -O0 we generate an explicit alloca for self to facilitate debugging.
-      if (CGM.getCodeGenOpts().OptimizationLevel == 0) {
-	llvm::Value *load = Builder.CreateLoad(selfAddr);
-
-	// Allocate a stack slot for it, so we can generate debug info for it
-	llvm::AllocaInst *alloca = CreateTempAlloca(load->getType(),
-                                                   "block.captured-self.addr");
-        unsigned align = getContext().getDeclAlign(self).getQuantity();
-        alloca->setAlignment(align);
-	Builder.CreateAlignedStore(load, alloca, align);
-        LocalDeclMap[self] = alloca;
-      } else
-        LocalDeclMap[self] = selfAddr;
+      LocalDeclMap[self] = selfAddr;
     }
   }
 
@@ -1230,7 +1229,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
           continue;
         }
 
-        DI->EmitDeclareOfBlockDeclRefVariable(variable, BlockPointer,
+        DI->EmitDeclareOfBlockDeclRefVariable(variable, BlockPointerDbgLoc,
                                               Builder, blockInfo);
       }
     }

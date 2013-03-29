@@ -2632,6 +2632,8 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(const VarDecl *VD,
 
   SmallVector<llvm::Value *, 9> addr;
   llvm::Type *Int64Ty = CGM.Int64Ty;
+  if (isa<llvm::AllocaInst>(Storage))
+    addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpDeref));
   addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
   addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
   if (isByRef) {
@@ -2653,6 +2655,7 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(const VarDecl *VD,
     DBuilder.createComplexVariable(llvm::dwarf::DW_TAG_auto_variable, 
                                    llvm::DIDescriptor(LexicalBlockStack.back()),
                                    VD->getName(), Unit, Line, Ty, addr);
+
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call =
     DBuilder.insertDeclare(Storage, D, Builder.GetInsertPoint());
@@ -2964,9 +2967,8 @@ void CGDebugInfo::finalize() {
         RepTy = llvm::DIType(cast<llvm::MDNode>(V));
     }
 
-    if (Ty.Verify() && Ty.isForwardDecl() && RepTy.Verify()) {
+    if (Ty.Verify() && Ty.isForwardDecl() && RepTy.Verify())
       Ty.replaceAllUsesWith(RepTy);
-    }
   }
 
   // We keep our own list of retained types, because we need to look

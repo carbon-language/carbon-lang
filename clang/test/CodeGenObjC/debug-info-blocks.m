@@ -1,9 +1,17 @@
-// REQUIRES: x86-64-registered-target
-// RUN: %clang_cc1 -masm-verbose -S -fblocks -g  -triple x86_64-apple-darwin10 -fobjc-dispatch-method=mixed  %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -fblocks -g  -triple x86_64-apple-darwin10 -fobjc-dispatch-method=mixed  %s -o - | FileCheck %s
 
-//Radar 9279956
-//CHECK:	## DW_OP_deref
-//CHECK-NEXT:	## DW_OP_plus_uconst
+// rdar://problem/9279956
+// Test that we generate the proper debug location for a captured self.
+// The second half of this patch is in llvm/tests/DebugInfo/debug-info-blocks.ll
+
+// CHECK: define {{.*}}_block_invoke
+// CHECK: %[[BLOCK:.*]] = bitcast i8* %.block_descriptor to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !88
+// CHECK-NEXT: store <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %[[BLOCK]], <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** %[[ALLOCA:.*]], align
+// CHECK-NEXT: getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %[[BLOCK]], i32 0, i32 5
+// CHECK-NEXT: call void @llvm.dbg.declare(metadata !{<{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** %[[ALLOCA]]}, metadata ![[SELF:[0-9]+]])
+// CHECK-NEXT: call void @llvm.dbg.declare(metadata !{%1** %d}, metadata ![[D:[0-9]+]])
+// CHECK: ![[SELF]] = {{.*}} [ DW_TAG_auto_variable ] [self] [line 52]
+// CHECK: ![[D]] = {{.*}} [d] [line 50]
 
 typedef unsigned int NSUInteger;
 

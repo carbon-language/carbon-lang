@@ -124,7 +124,7 @@ namespace test4 {
   // CHECK-NEXT: store i8* [[BLOCKDESC:%.*]], i8** {{.*}}, align 8
   // CHECK-NEXT: load i8*
   // CHECK-NEXT: bitcast i8* [[BLOCKDESC]] to <{ i8*, i32, i32, i8*, %struct.__block_descriptor* }>*
-  // CHECK-NEXT: call void @_ZN5test41AC1Ev([[A]]* [[TMP]])
+  // CHECK:      call void @_ZN5test41AC1Ev([[A]]* [[TMP]])
   // CHECK-NEXT: call void @_ZN5test43fooENS_1AE([[A]]* [[TMP]])
   // CHECK-NEXT: call void @_ZN5test41AD1Ev([[A]]* [[TMP]])
   // CHECK-NEXT: ret void
