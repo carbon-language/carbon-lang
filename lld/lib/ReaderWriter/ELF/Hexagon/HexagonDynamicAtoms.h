@@ -20,16 +20,40 @@ class HexagonGOTAtom : public GOTAtom {
   static const uint8_t _defaultContent[8];
 
 public:
-  HexagonGOTAtom(const File &f, StringRef secName)
-      : GOTAtom(f, secName) {
+  HexagonGOTAtom(const File &f) : GOTAtom(f, ".got") {}
+
+  virtual ArrayRef<uint8_t> rawContent() const {
+    return ArrayRef<uint8_t>(_defaultContent, 8);
   }
+
+  virtual Alignment alignment() const { return Alignment(2); }
+};
+
+class HexagonGOTPLTAtom : public GOTAtom {
+  static const uint8_t _defaultContent[8];
+
+public:
+  HexagonGOTPLTAtom(const File &f) : GOTAtom(f, ".got.plt") {}
 
   virtual ArrayRef<uint8_t> rawContent() const {
     return ArrayRef<uint8_t>(_defaultContent, 8);
   }
 };
 
+class HexagonGOTPLT0Atom : public GOTAtom {
+  static const uint8_t _defaultContent[16];
+
+public:
+  HexagonGOTPLT0Atom(const File &f) : GOTAtom(f, ".got.plt") {}
+
+  virtual ArrayRef<uint8_t> rawContent() const {
+    return ArrayRef<uint8_t>(_defaultContent, 16);
+  }
+};
+
 const uint8_t HexagonGOTAtom::_defaultContent[8] = { 0 };
+const uint8_t HexagonGOTPLTAtom::_defaultContent[8] = { 0 };
+const uint8_t HexagonGOTPLT0Atom::_defaultContent[16] = { 0 };
 
 class HexagonPLTAtom : public PLTAtom {
   static const uint8_t _defaultContent[16];

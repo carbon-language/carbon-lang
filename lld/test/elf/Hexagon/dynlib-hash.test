@@ -1,0 +1,9 @@
+RUN: lld -core -target hexagon %p/Inputs/dynobj.o \
+RUN: -output=%t -output=%t -noinhibit-exec -output-type=shared
+RUN: llvm-objdump -s %t > %t1
+RUN: FileCheck -check-prefix=CHECKHASH %s < %t1
+
+CHECKHASH: Contents of section .hash:
+CHECKHASH: 00b4 03000000 06000000 05000000 01000000  ................
+CHECKHASH: 00c4 04000000 00000000 00000000 00000000  ................
+CHECKHASH: 00d4 00000000 03000000 02000000           ............

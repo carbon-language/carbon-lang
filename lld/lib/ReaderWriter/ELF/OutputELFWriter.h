@@ -156,6 +156,15 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
     dyn.d_un.d_val = _dynamicStringTable->addString(loadName.getKey());
     _dynamicTable->addEntry(dyn);
   }
+  // The dynamic symbol table need to be sorted earlier because the hash
+  // table needs to be built using the dynamic symbol table. It would be
+  // late to sort the symbols due to that in finalize. In the dynamic symbol
+  // table finalize, we call the symbol table finalize and we dont want to
+  // sort again
+  _dynamicSymbolTable->sortSymbols();
+
+  // Add the dynamic symbols into the hash table
+  _dynamicSymbolTable->addSymbolsToHashTable();
 }
 
 template <class ELFT> void OutputELFWriter<ELFT>::buildAtomToAddressMap() {
@@ -227,14 +236,20 @@ void OutputELFWriter<ELFT>::createDefaultSections() {
         _targetInfo, ".dynsym", DefaultLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS));
     _hashTable.reset(new (_alloc) HashSection<ELFT>(
         _targetInfo, ".hash", DefaultLayout<ELFT>::ORDER_HASH));
+    // Set the hash table in the dynamic symbol table so that the entries in the
+    // hash table can be created
+    _dynamicSymbolTable->setHashTable(_hashTable.get());
+    _hashTable->setSymbolTable(_dynamicSymbolTable.get());
     _layout->addSection(_dynamicTable.get());
     _layout->addSection(_dynamicStringTable.get());
     _layout->addSection(_dynamicSymbolTable.get());
     _layout->addSection(_hashTable.get());
     _dynamicSymbolTable->setStringSection(_dynamicStringTable.get());
+    _dynamicTable->setSymbolTable(_dynamicSymbolTable.get());
+    _dynamicTable->setHashTable(_hashTable.get());
     if (_layout->hasDynamicRelocationTable())
-      _layout->getDynamicRelocationTable()->setSymbolTable(
-          _dynamicSymbolTable.get());
+      _layout->getDynamicRelocationTable()
+          ->setSymbolTable(_dynamicSymbolTable.get());
     if (_layout->hasPLTRelocationTable())
       _layout->getPLTRelocationTable()->setSymbolTable(
           _dynamicSymbolTable.get());
@@ -288,8 +303,7 @@ error_code OutputELFWriter<ELFT>::buildOutput(const File &file) {
   assignSectionsWithNoSegments();
 
   if (_targetInfo.isDynamic())
-    _dynamicTable->updateDynamicTable(_hashTable.get(),
-                                      _dynamicSymbolTable.get());
+    _dynamicTable->updateDynamicTable();
 
   return error_code::success();
 }

@@ -2,10 +2,16 @@ RUN: lld -core -target hexagon %p/Inputs/dynobj.o \
 RUN: -output=%t -emit-yaml -noinhibit-exec -output-type=shared
 RUN: FileCheck -check-prefix=CHECKGOTPLT %s < %t
 
+              - name:            __got0
+CHECKGOTPLT:    type:            got
+CHECKGOTPLT:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 
+CHECKGOTPLT:                       00, 00, 00, 00 ]
+CHECKGOTPLT:    alignment:       2^3
+CHECKGOTPLT:    section-name:    .got.plt
               - name:            __got_c
 CHECKGOTPLT:    type:            got
 CHECKGOTPLT:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
-CHECKGOTPLT:    alignment:       2^3
+CHECKGOTPLT:    alignment:       2^2
 CHECKGOTPLT:    section-name:    .got
 CHECKGOTPLT:    permissions:     rw-
 CHECKGOTPLT:    references:      
@@ -15,7 +21,7 @@ CHECKGOTPLT:        target:          c
               - name:            __got_shankar
 CHECKGOTPLT:    type:            got
 CHECKGOTPLT:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
-CHECKGOTPLT:    alignment:       2^3
+CHECKGOTPLT:    alignment:       2^2
 CHECKGOTPLT:    section-name:    .got
 CHECKGOTPLT:    permissions:     rw-
 CHECKGOTPLT:    references:      

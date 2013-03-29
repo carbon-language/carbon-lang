@@ -612,6 +612,15 @@ public:
     return std::distance(_symbolTable.begin(), se);
   }
 
+  virtual void finalize() { finalize(true); }
+
+  virtual void sortSymbols() {
+    std::stable_sort(_symbolTable.begin(), _symbolTable.end(),
+                     [](const SymbolEntry & A, const SymbolEntry & B) {
+      return A._symbol.getBinding() < B._symbol.getBinding();
+    });
+  }
+
   virtual void addAbsoluteAtom(Elf_Sym &sym, const AbsoluteAtom *aa,
                                int64_t addr);
 
@@ -622,7 +631,7 @@ public:
 
   virtual void addSharedLibAtom(Elf_Sym &sym, const SharedLibraryAtom *sla);
 
-  virtual void finalize();
+  virtual void finalize(bool sort = true);
 
   virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
 
@@ -774,13 +783,12 @@ void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
     this->_msize = this->_fsize;
 }
 
-template <class ELFT> void SymbolTable<ELFT>::finalize() {
+template <class ELFT> void SymbolTable<ELFT>::finalize(bool sort) {
   // sh_info should be one greater than last symbol with STB_LOCAL binding
   // we sort the symbol table to keep all local symbols at the beginning
-  std::stable_sort(_symbolTable.begin(), _symbolTable.end(),
-                   [](const SymbolEntry & A, const SymbolEntry & B) {
-    return A._symbol.getBinding() < B._symbol.getBinding();
-  });
+  if (sort)
+    sortSymbols();
+
   uint16_t shInfo = 0;
   for (const auto &i : _symbolTable) {
     if (i._symbol.getBinding() != llvm::ELF::STB_LOCAL)
@@ -806,13 +814,30 @@ void SymbolTable<ELFT>::write(ELFWriter *writer,
   }
 }
 
+template <class ELFT> class HashSection;
+
 template <class ELFT> class DynamicSymbolTable : public SymbolTable<ELFT> {
 public:
   DynamicSymbolTable(const ELFTargetInfo &ti, const char *str, int32_t order)
-      : SymbolTable<ELFT>(ti, str, order) {
+      : SymbolTable<ELFT>(ti, str, order), _hashTable(nullptr) {
     this->_type = SHT_DYNSYM;
     this->_flags = SHF_ALLOC;
     this->_msize = this->_fsize;
+  }
+
+  // Set the dynamic hash table for symbols to be added into
+  void setHashTable(HashSection<ELFT> *hashTable) { _hashTable = hashTable; }
+
+  // Add all the dynamic symbos to the hash table
+  void addSymbolsToHashTable() {
+    int index = 0;
+    for (auto &ste : this->_symbolTable) {
+      if (!ste._atom)
+        _hashTable->addSymbol("", index);
+      else
+        _hashTable->addSymbol(ste._atom->name(), index);
+      ++index;
+    }
   }
 
   virtual void finalize() {
@@ -825,9 +850,13 @@ public:
         continue;
       ste._symbol.st_value = atomLayout->_virtualAddr;
     }
-    SymbolTable<ELFT>::finalize();
+
+    // Dont sort the symbols
+    SymbolTable<ELFT>::finalize(false);
   }
 
+private:
+  HashSection<ELFT> *_hashTable;
 };
 
 template <class ELFT> class RelocationTable : public Section<ELFT> {
@@ -865,7 +894,7 @@ public:
     return true;
   }
 
-  void setSymbolTable(const SymbolTable<ELFT> *symbolTable) {
+  void setSymbolTable(const DynamicSymbolTable<ELFT> *symbolTable) {
     _symbolTable = symbolTable;
   }
 
@@ -886,22 +915,26 @@ public:
       r->setSymbolAndType(index, rel.second->kind());
       r->r_offset =
           writer->addressOfAtom(rel.first) + rel.second->offsetInAtom();
-      r->r_addend =
-          writer->addressOfAtom(rel.second->target()) + rel.second->addend();
+      // FIXME: The addend is used only by IRELATIVE relocations while static
+      // linking executable statically, check to see how does dynamic linking
+      // work with IFUNC and change accordingly
+      if (!this->_targetInfo.isDynamic())
+        r->r_addend =
+            writer->addressOfAtom(rel.second->target()) + rel.second->addend();
       dest += sizeof(Elf_Rela);
-      DEBUG_WITH_TYPE("ELFRelocationTable",
-                      llvm::dbgs()
-                      << kindOrUnknown(this->_targetInfo.stringFromRelocKind(
-                             rel.second->kind())) << " relocation at "
-                      << rel.first->name() << "@" << r->r_offset << " to "
-                      << rel.second->target()->name() << "@" << r->r_addend
-                      << "\n");
+      DEBUG_WITH_TYPE(
+          "ELFRelocationTable",
+          llvm::dbgs() << kindOrUnknown(this->_targetInfo.stringFromRelocKind(
+                              rel.second->kind())) << " relocation at "
+                       << rel.first->name() << "@" << r->r_offset << " to "
+                       << rel.second->target()->name() << "@" << r->r_addend
+                       << "\n");
     }
   }
 
 private:
-  std::vector<std::pair<const DefinedAtom *, const Reference *>> _relocs;
-  const SymbolTable<ELFT> *_symbolTable;
+  std::vector<std::pair<const DefinedAtom *, const Reference *> > _relocs;
+  const DynamicSymbolTable<ELFT> *_symbolTable;
 };
 
 template <class ELFT> class HashSection;
@@ -981,15 +1014,30 @@ public:
     }
   }
 
-  void updateDynamicTable(HashSection<ELFT> *hashTable,
-                          DynamicSymbolTable<ELFT> *dynamicSymbolTable) {
+  virtual void finalize() {
     StringTable<ELFT> *dynamicStringTable =
-        dynamicSymbolTable->getStringTable();
-    _entries[_dt_hash].d_un.d_val = hashTable->virtualAddr();
+        _dynamicSymbolTable->getStringTable();
+    this->_link = dynamicStringTable->ordinal();
+    if (this->_parent) {
+      this->_parent->setInfo(this->_info);
+      this->_parent->setLink(this->_link);
+    }
+  }
+
+  void setSymbolTable(DynamicSymbolTable<ELFT> *dynsym) {
+    _dynamicSymbolTable = dynsym;
+  }
+
+  void setHashTable(HashSection<ELFT> *hsh) { _hashTable = hsh; }
+
+  void updateDynamicTable() {
+    StringTable<ELFT> *dynamicStringTable =
+        _dynamicSymbolTable->getStringTable();
+    _entries[_dt_hash].d_un.d_val = _hashTable->virtualAddr();
     _entries[_dt_strtab].d_un.d_val = dynamicStringTable->virtualAddr();
-    _entries[_dt_symtab].d_un.d_val = dynamicSymbolTable->virtualAddr();
+    _entries[_dt_symtab].d_un.d_val = _dynamicSymbolTable->virtualAddr();
     _entries[_dt_strsz].d_un.d_val = dynamicStringTable->memSize();
-    _entries[_dt_syment].d_un.d_val = dynamicSymbolTable->getEntSize();
+    _entries[_dt_syment].d_un.d_val = _dynamicSymbolTable->getEntSize();
     if (_layout->hasDynamicRelocationTable()) {
       auto relaTbl = _layout->getDynamicRelocationTable();
       _entries[_dt_rela].d_un.d_val = relaTbl->virtualAddr();
@@ -1020,6 +1068,8 @@ private:
   std::size_t _dt_pltrel;
   std::size_t _dt_jmprel;
   TargetLayout<ELFT> *_layout;
+  DynamicSymbolTable<ELFT> *_dynamicSymbolTable;
+  HashSection<ELFT> *_hashTable;
 };
 
 template <class ELFT> class InterpSection : public Section<ELFT> {
@@ -1047,6 +1097,26 @@ private:
   StringRef _interp;
 };
 
+/// The hash table in the dynamic linker is organized into
+///
+///     [ nbuckets              ]
+///     [ nchains               ]
+///     [ buckets[0]            ]
+///     .........................
+///     [ buckets[nbuckets-1]   ]
+///     [ chains[0]             ]
+///     .........................
+///     [ chains[nchains - 1]   ]
+///
+/// nbuckets - total number of hash buckets
+/// nchains is equal to the number of dynamic symbols.
+///
+/// The symbol is searched by the dynamic linker using the below approach.
+///  * Calculate the hash of the symbol that needs to be searched
+///  * Take the value from the buckets[hash % nbuckets] as the index of symbol
+///  * Compare the symbol's name, if true return, if false, look through the
+///  * array since there was a collision
+
 template <class ELFT> class HashSection : public Section<ELFT> {
   struct SymbolTableEntry {
     StringRef _name;
@@ -1055,16 +1125,22 @@ template <class ELFT> class HashSection : public Section<ELFT> {
 
 public:
   HashSection(const ELFTargetInfo &ti, StringRef name, int32_t order)
-      : Section<ELFT>(ti, name) {
+      : Section<ELFT>(ti, name), _symbolTable(nullptr) {
     this->setOrder(order);
-    this->_align2 = 4; // Alignment of Elf32_Word.
+    this->_entSize = 4;
     this->_type = SHT_HASH;
     this->_flags = SHF_ALLOC;
-    // The size of nbucket and nchain.
-    this->_fsize = 8;
-    this->_msize = this->_fsize;
+    // Set the alignment properly depending on the target architecture
+    if (ti.is64Bits())
+      this->_align2 = 8;
+    else
+      this->_align2 = 4;
+    this->_fsize = 0;
+    this->_msize = 0;
   }
 
+  /// \brief add the dynamic symbol into the table so that the
+  /// hash could be calculated
   void addSymbol(StringRef name, uint32_t index) {
     SymbolTableEntry ste;
     ste._name = name;
@@ -1072,16 +1148,84 @@ public:
     _entries.push_back(ste);
   }
 
+  /// \brief Set the dynamic symbol table
+  void setSymbolTable(const DynamicSymbolTable<ELFT> *symbolTable) {
+    _symbolTable = symbolTable;
+  }
+
+  // The size of the section has to be determined so that fileoffsets
+  // may be properly assigned. Lets calculate the buckets and the chains
+  // and fill the chains and the buckets hash table used by the dynamic
+  // linker and update the filesize and memory size accordingly
+  virtual void doPreFlight() {
+    // The number of buckets to use for a certain number of symbols.
+    // If there are less than 3 symbols, 1 bucket will be used. If
+    // there are less than 17 symbols, 3 buckets will be used, and so
+    // forth. The bucket numbers are defined by GNU ld. We use the
+    // same rules here so we generate hash sections with the same
+    // size as those generated by GNU ld.
+    uint32_t hashBuckets[] = { 1, 3, 17, 37, 67, 97, 131, 197, 263, 521, 1031,
+                               2053, 4099, 8209, 16411, 32771, 65537, 131101,
+                               262147 };
+    int hashBucketsCount = sizeof(hashBuckets) / sizeof(uint32_t);
+
+    unsigned int bucketsCount = 0;
+    unsigned int dynSymCount = _entries.size();
+
+    // Get the number of buckes that we want to use
+    for (int i = 0; i < hashBucketsCount; ++i) {
+      if (dynSymCount < hashBuckets[i])
+        break;
+      bucketsCount = hashBuckets[i];
+    }
+    _buckets.resize(bucketsCount);
+    _chains.resize(_entries.size());
+
+    // Create the hash table for the dynamic linker
+    for (auto ai : _entries) {
+      unsigned int dynsymIndex = ai._index;
+      unsigned int bucketpos = llvm::object::elf_hash(ai._name) % bucketsCount;
+      _chains[dynsymIndex] = _buckets[bucketpos];
+      _buckets[bucketpos] = dynsymIndex;
+    }
+
+    this->_fsize = (2 + _chains.size() + _buckets.size()) * sizeof(uint32_t);
+    this->_msize = this->_fsize;
+  }
+
+  virtual void finalize() {
+    this->_link = _symbolTable ? _symbolTable->ordinal() : 0;
+    if (this->_parent)
+      this->_parent->setLink(this->_link);
+  }
+
   virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
     uint8_t *chunkBuffer = buffer.getBufferStart();
     uint8_t *dest = chunkBuffer + this->fileOffset();
-    // TODO: Calculate hashes and build the hash table in finalize. We currently
-    // just emit an empty hash table so the dynamic loader doesn't crash.
-    std::memset(dest, 0, this->_fsize);
+    uint32_t bucketChainCounts[2];
+    bucketChainCounts[0] = _buckets.size();
+    bucketChainCounts[1] = _chains.size();
+    std::memcpy(dest, (char *)bucketChainCounts, sizeof(bucketChainCounts));
+    dest += sizeof(bucketChainCounts);
+    // write bucket values
+    for (auto bi : _buckets) {
+      uint32_t val = (bi);
+      std::memcpy(dest, &val, sizeof(uint32_t));
+      dest += sizeof(uint32_t);
+    }
+    // write chain values
+    for (auto ci : _chains) {
+      uint32_t val = (ci);
+      std::memcpy(dest, &val, sizeof(uint32_t));
+      dest += sizeof(uint32_t);
+    }
   }
 
 private:
   std::vector<SymbolTableEntry> _entries;
+  std::vector<uint32_t> _buckets;
+  std::vector<uint32_t> _chains;
+  const DynamicSymbolTable<ELFT> *_symbolTable;
 };
 } // end namespace elf
 } // end namespace lld

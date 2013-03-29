@@ -32,7 +32,7 @@ CHECK:   i FUNC {{[0-9a-f]+}} 0 {{[0-9a-f]+}} undef,global
 CHECK:   Total: 2
 
 CHECK: Sections:
-CHECK:   .hash {{[0-9a-f]+}} 8 4 required,rodata
+CHECK:   .hash {{[0-9a-f]+}} 20 8 required,rodata
 
 CHECK: Dynamic section contains 14 entries
 CHECK:   Tag                Type                 Name/Value
