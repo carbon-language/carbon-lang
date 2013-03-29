@@ -135,7 +135,7 @@ OptionGroupPlatform::SetOptionValue (CommandInterpreter &interpreter,
             m_sdk_build.SetCString (option_arg);
             break;
             
-        case 's':
+        case 'S':
             m_sdk_sysroot.SetCString (option_arg);
             break;
 
