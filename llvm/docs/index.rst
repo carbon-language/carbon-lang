@@ -351,15 +351,16 @@ lists.
 
 `Commits Archive (llvm-commits)`__
   This list contains all commit messages that are made when LLVM developers
-  commit code changes to the repository. It is useful for those who want to
-  stay on the bleeding edge of LLVM development. This list is very high volume.
+  commit code changes to the repository. It also serves as a forum for
+  patch review (i.e. send patches here). It is useful for those who want to
+  stay on the bleeding edge of LLVM development. This list is very high
+  volume.
 
   .. __: http://lists.cs.uiuc.edu/pipermail/llvm-commits/
 
 `Bugs & Patches Archive (llvmbugs)`__
-  This list gets emailed every time a bug is opened and closed, and when people
-  submit patches to be included in LLVM.  It is higher volume than the LLVMdev
-  list.
+  This list gets emailed every time a bug is opened and closed. It is
+  higher volume than the LLVMdev list.
 
   .. __: http://lists.cs.uiuc.edu/pipermail/llvmbugs/
 
