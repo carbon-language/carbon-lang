@@ -47,6 +47,10 @@
 
 using namespace llvm;
 
+namespace llvm {
+void initializeNVVMReflectPass(PassRegistry&);
+}
+
 extern "C" void LLVMInitializeNVPTXTarget() {
   // Register the target.
   RegisterTargetMachine<NVPTXTargetMachine32> X(TheNVPTXTarget32);
@@ -55,6 +59,9 @@ extern "C" void LLVMInitializeNVPTXTarget() {
   RegisterMCAsmInfo<NVPTXMCAsmInfo> A(TheNVPTXTarget32);
   RegisterMCAsmInfo<NVPTXMCAsmInfo> B(TheNVPTXTarget64);
 
+  // FIXME: This pass is really intended to be invoked during IR optimization,
+  // but it's very NVPTX-specific.
+  initializeNVVMReflectPass(*PassRegistry::getPassRegistry());
 }
 
 NVPTXTargetMachine::NVPTXTargetMachine(

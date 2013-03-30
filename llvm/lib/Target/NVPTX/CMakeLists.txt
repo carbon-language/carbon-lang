@@ -22,6 +22,7 @@ set(NVPTXCodeGen_sources
   NVPTXAllocaHoisting.cpp
   NVPTXAsmPrinter.cpp
   NVPTXUtilities.cpp
+  NVVMReflect.cpp
   )
 
 add_llvm_target(NVPTXCodeGen ${NVPTXCodeGen_sources})
