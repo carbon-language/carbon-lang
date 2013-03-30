@@ -29,6 +29,155 @@
 
 using namespace llvm;
 
+namespace {
+typedef MachineBasicBlock::iterator Iter;
+
+/// Helper class to expand accumulator pseudos.
+class ExpandACCPseudo {
+public:
+  ExpandACCPseudo(MachineFunction &MF);
+  bool expand();
+
+private:
+  bool expandInstr(MachineBasicBlock &MBB, Iter I);
+  void expandLoad(MachineBasicBlock &MBB, Iter I, unsigned RegSize);
+  void expandStore(MachineBasicBlock &MBB, Iter I, unsigned RegSize);
+  void expandCopy(MachineBasicBlock &MBB, Iter I, unsigned RegSize);
+
+  MachineFunction &MF;
+  const MipsSEInstrInfo &TII;
+  const MipsRegisterInfo &RegInfo;
+  MachineRegisterInfo &MRI;
+};
+}
+
+ExpandACCPseudo::ExpandACCPseudo(MachineFunction &MF_)
+  : MF(MF_),
+    TII(*static_cast<const MipsSEInstrInfo*>(MF.getTarget().getInstrInfo())),
+    RegInfo(TII.getRegisterInfo()), MRI(MF.getRegInfo()) {}
+
+bool ExpandACCPseudo::expand() {
+  bool Expanded = false;
+
+  for (MachineFunction::iterator BB = MF.begin(), BBEnd = MF.end();
+       BB != BBEnd; ++BB)
+    for (Iter I = BB->begin(), End = BB->end(); I != End;)
+      Expanded |= expandInstr(*BB, I++);
+
+  return Expanded;
+}
+
+bool ExpandACCPseudo::expandInstr(MachineBasicBlock &MBB, Iter I) {
+  switch(I->getOpcode()) {
+  case Mips::LOAD_AC64:
+  case Mips::LOAD_AC64_P8:
+  case Mips::LOAD_AC_DSP:
+  case Mips::LOAD_AC_DSP_P8:
+    expandLoad(MBB, I, 4);
+    break;
+  case Mips::LOAD_AC128:
+  case Mips::LOAD_AC128_P8:
+    expandLoad(MBB, I, 8);
+    break;
+  case Mips::STORE_AC64:
+  case Mips::STORE_AC64_P8:
+  case Mips::STORE_AC_DSP:
+  case Mips::STORE_AC_DSP_P8:
+    expandStore(MBB, I, 4);
+    break;
+  case Mips::STORE_AC128:
+  case Mips::STORE_AC128_P8:
+    expandStore(MBB, I, 8);
+    break;
+  case Mips::COPY_AC64:
+  case Mips::COPY_AC_DSP:
+    expandCopy(MBB, I, 4);
+    break;
+  case Mips::COPY_AC128:
+    expandCopy(MBB, I, 8);
+    break;
+  default:
+    return false;
+  }
+
+  MBB.erase(I);
+  return true;
+}
+
+void ExpandACCPseudo::expandLoad(MachineBasicBlock &MBB, Iter I,
+                                 unsigned RegSize) {
+  //  load $vr0, FI
+  //  copy lo, $vr0
+  //  load $vr1, FI + 4
+  //  copy hi, $vr1
+
+  assert(I->getOperand(0).isReg() && I->getOperand(1).isFI());
+
+  const TargetRegisterClass *RC = RegInfo.intRegClass(RegSize);
+  unsigned VR0 = MRI.createVirtualRegister(RC);
+  unsigned VR1 = MRI.createVirtualRegister(RC);
+  unsigned Dst = I->getOperand(0).getReg(), FI = I->getOperand(1).getIndex();
+  unsigned Lo = RegInfo.getSubReg(Dst, Mips::sub_lo);
+  unsigned Hi = RegInfo.getSubReg(Dst, Mips::sub_hi);
+  DebugLoc DL = I->getDebugLoc();
+  const MCInstrDesc &Desc = TII.get(TargetOpcode::COPY);
+
+  TII.loadRegFromStack(MBB, I, VR0, FI, RC, &RegInfo, 0);
+  BuildMI(MBB, I, DL, Desc, Lo).addReg(VR0, RegState::Kill);
+  TII.loadRegFromStack(MBB, I, VR1, FI, RC, &RegInfo, RegSize);
+  BuildMI(MBB, I, DL, Desc, Hi).addReg(VR1, RegState::Kill);
+}
+
+void ExpandACCPseudo::expandStore(MachineBasicBlock &MBB, Iter I,
+                                  unsigned RegSize) {
+  //  copy $vr0, lo
+  //  store $vr0, FI
+  //  copy $vr1, hi
+  //  store $vr1, FI + 4
+
+  assert(I->getOperand(0).isReg() && I->getOperand(1).isFI());
+
+  const TargetRegisterClass *RC = RegInfo.intRegClass(RegSize);
+  unsigned VR0 = MRI.createVirtualRegister(RC);
+  unsigned VR1 = MRI.createVirtualRegister(RC);
+  unsigned Src = I->getOperand(0).getReg(), FI = I->getOperand(1).getIndex();
+  unsigned SrcKill = getKillRegState(I->getOperand(0).isKill());
+  unsigned Lo = RegInfo.getSubReg(Src, Mips::sub_lo);
+  unsigned Hi = RegInfo.getSubReg(Src, Mips::sub_hi);
+  DebugLoc DL = I->getDebugLoc();
+
+  BuildMI(MBB, I, DL, TII.get(TargetOpcode::COPY), VR0).addReg(Lo, SrcKill);
+  TII.storeRegToStack(MBB, I, VR0, true, FI, RC, &RegInfo, 0);
+  BuildMI(MBB, I, DL, TII.get(TargetOpcode::COPY), VR1).addReg(Hi, SrcKill);
+  TII.storeRegToStack(MBB, I, VR1, true, FI, RC, &RegInfo, RegSize);
+}
+
+void ExpandACCPseudo::expandCopy(MachineBasicBlock &MBB, Iter I,
+                                 unsigned RegSize) {
+  //  copy $vr0, src_lo
+  //  copy dst_lo, $vr0
+  //  copy $vr1, src_hi
+  //  copy dst_hi, $vr1
+
+  const TargetRegisterClass *RC = RegInfo.intRegClass(RegSize);
+  unsigned VR0 = MRI.createVirtualRegister(RC);
+  unsigned VR1 = MRI.createVirtualRegister(RC);
+  unsigned Dst = I->getOperand(0).getReg(), Src = I->getOperand(1).getReg();
+  unsigned SrcKill = getKillRegState(I->getOperand(1).isKill());
+  unsigned DstLo = RegInfo.getSubReg(Dst, Mips::sub_lo);
+  unsigned DstHi = RegInfo.getSubReg(Dst, Mips::sub_hi);
+  unsigned SrcLo = RegInfo.getSubReg(Src, Mips::sub_lo);
+  unsigned SrcHi = RegInfo.getSubReg(Src, Mips::sub_hi);
+  DebugLoc DL = I->getDebugLoc();
+
+  BuildMI(MBB, I, DL, TII.get(TargetOpcode::COPY), VR0).addReg(SrcLo, SrcKill);
+  BuildMI(MBB, I, DL, TII.get(TargetOpcode::COPY), DstLo)
+    .addReg(VR0, RegState::Kill);
+  BuildMI(MBB, I, DL, TII.get(TargetOpcode::COPY), VR1).addReg(SrcHi, SrcKill);
+  BuildMI(MBB, I, DL, TII.get(TargetOpcode::COPY), DstHi)
+    .addReg(VR1, RegState::Kill);
+}
+
 unsigned MipsSEFrameLowering::ehDataReg(unsigned I) const {
   static const unsigned EhDataReg[] = {
     Mips::A0, Mips::A1, Mips::A2, Mips::A3
@@ -246,7 +395,10 @@ MipsSEFrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
 
   // Reserve call frame if the size of the maximum call frame fits into 16-bit
   // immediate field and there are no variable sized objects on the stack.
-  return isInt<16>(MFI->getMaxCallFrameSize()) && !MFI->hasVarSizedObjects();
+  // Make sure the second register scavenger spill slot can be accessed with one
+  // instruction.
+  return isInt<16>(MFI->getMaxCallFrameSize() + getStackAlignment()) &&
+    !MFI->hasVarSizedObjects();
 }
 
 // Eliminate ADJCALLSTACKDOWN, ADJCALLSTACKUP pseudo instructions
@@ -283,6 +435,18 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // Create spill slots for eh data registers if function calls eh_return.
   if (MipsFI->callsEhReturn())
     MipsFI->createEhDataRegsFI();
+
+  // Expand pseudo instructions which load, store or copy accumulators.
+  // Add an emergency spill slot if a pseudo was expanded.
+  if (ExpandACCPseudo(MF).expand()) {
+    // The spill slot should be half the size of the accumulator. If target is
+    // mips64, it should be 64-bit, otherwise it should be 32-bt.
+    const TargetRegisterClass *RC = STI.hasMips64() ?
+      &Mips::CPU64RegsRegClass : &Mips::CPURegsRegClass;
+    int FI = MF.getFrameInfo()->CreateStackObject(RC->getSize(),
+                                                  RC->getAlignment(), false);
+    RS->addScavengingFrameIndex(FI);
+  }
 
   // Set scavenging frame index if necessary.
   uint64_t MaxSPOffset = MF.getInfo<MipsFunctionInfo>()->getIncomingArgSize() +
