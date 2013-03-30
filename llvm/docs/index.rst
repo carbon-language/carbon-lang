@@ -145,26 +145,6 @@ representation.
   Answers to some very frequent questions about LLVM's most frequently
   misunderstood instruction.
 
-IRC
-===
-
-Users and developers of the LLVM project (including subprojects such as Clang)
-can be found in #llvm on `irc.oftc.net <irc://irc.oftc.net/llvm>`_.
-
-This channel has several bots.
-
-* Buildbot reporters
-
-  * llvmbb - Bot for the main LLVM buildbot master.
-    http://lab.llvm.org:8011/console
-  * bb-chapuni - An individually run buildbot master. http://bb.pgr.jp/console
-  * smooshlab - Apple's internal buildbot master.
-
-* robot - Bugzilla linker. %bug <number>
-
-* clang-bot - A `geordi <http://www.eelis.net/geordi/>`_ instance running
-  near-trunk clang instead of gcc.
-
 Programming Documentation
 =========================
 
@@ -349,8 +329,15 @@ Information about LLVM's development process.
 :doc:`Packaging`
    Advice on packaging LLVM into a distribution.
 
+Community
+=========
+
+LLVM has a thriving community of friendly and helpful developers.
+The two primary communication mechanisms in the LLVM community are mailing
+lists and IRC.
+
 Mailing Lists
-=============
+-------------
 
 If you can't find what you need in these docs, try consulting the mailing
 lists.
@@ -388,6 +375,27 @@ lists.
   making it a high volume list.
 
   .. __: http://lists.cs.uiuc.edu/pipermail/llvm-testresults/
+
+IRC
+---
+
+Users and developers of the LLVM project (including subprojects such as Clang)
+can be found in #llvm on `irc.oftc.net <irc://irc.oftc.net/llvm>`_.
+
+This channel has several bots.
+
+* Buildbot reporters
+
+  * llvmbb - Bot for the main LLVM buildbot master.
+    http://lab.llvm.org:8011/console
+  * bb-chapuni - An individually run buildbot master. http://bb.pgr.jp/console
+  * smooshlab - Apple's internal buildbot master.
+
+* robot - Bugzilla linker. %bug <number>
+
+* clang-bot - A `geordi <http://www.eelis.net/geordi/>`_ instance running
+  near-trunk clang instead of gcc.
+
 
 Indices and tables
 ==================
