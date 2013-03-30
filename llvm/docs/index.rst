@@ -224,6 +224,7 @@ For API clients and LLVM developers.
    WritingAnLLVMPass
    TableGen/LangRef
    HowToUseAttributes
+   NVPTXUsage
 
 :doc:`WritingAnLLVMPass`
    Information on how to write LLVM transformations and analyses.
@@ -291,6 +292,10 @@ For API clients and LLVM developers.
 
 :doc:`HowToUseAttributes`
   Answers some questions about the new Attributes infrastructure.
+
+:doc:`NVPTXUsage`
+   This document describes using the NVPTX back-end to compile GPU kernels.
+
 
 Development Process Documentation
 =================================

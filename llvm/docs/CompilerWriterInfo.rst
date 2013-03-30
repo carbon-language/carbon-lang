@@ -107,6 +107,12 @@ OS X
 * `Mach-O Runtime Architecture <http://developer.apple.com/documentation/Darwin/RuntimeArchitecture-date.html>`_
 * `Notes on Mach-O ABI <http://www.unsanity.org/archives/000044.php>`_
 
+NVPTX
+=====
+
+* `CUDA Documentation <http://docs.nvidia.com/cuda/index.html>`_ includes the PTX
+  ISA and Driver API documentation
+
 Miscellaneous Resources
 =======================
 
