@@ -6823,9 +6823,9 @@ SDValue DAGCombiner::visitBRCOND(SDNode *N) {
                              MVT::Other, Chain, Tmp, N2);
         }
 
-        // visitXOR has changed XOR's operands.
-        Op0 = TheXor->getOperand(0);
-        Op1 = TheXor->getOperand(1);
+        // visitXOR has changed XOR's operands or replaced the XOR completely,
+        // bail out.
+        return SDValue(N, 0);
       }
     }
 
