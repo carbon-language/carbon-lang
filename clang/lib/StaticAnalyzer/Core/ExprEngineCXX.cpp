@@ -274,7 +274,6 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   // Also, we need to decide how allocators actually work -- they're not
   // really part of the CXXNewExpr because they happen BEFORE the
   // CXXConstructExpr subexpression. See PR12014 for some discussion.
-  StmtNodeBuilder Bldr(Pred, Dst, *currBldrCtx);
   
   unsigned blockCount = currBldrCtx->blockCount();
   const LocationContext *LCtx = Pred->getLocationContext();
@@ -312,6 +311,8 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   // FIXME: Once we figure out how we want allocators to work,
   // we should be using the usual pre-/(default-)eval-/post-call checks here.
   State = Call->invalidateRegions(blockCount);
+  if (!State)
+    return;
 
   // If we're compiling with exceptions enabled, and this allocation function
   // is not declared as non-throwing, failures /must/ be signalled by
@@ -323,6 +324,8 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
       if (!ProtoType->isNothrow(getContext()))
         State = State->assume(symVal, true);
   }
+
+  StmtNodeBuilder Bldr(Pred, Dst, *currBldrCtx);
 
   if (CNE->isArray()) {
     // FIXME: allocating an array requires simulating the constructors.
@@ -341,16 +344,16 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   // CXXNewExpr, we need to make sure that the constructed object is not
   // immediately invalidated here. (The placement call should happen before
   // the constructor call anyway.)
+  SVal Result = symVal;
   if (FD && FD->isReservedGlobalPlacementOperator()) {
     // Non-array placement new should always return the placement location.
     SVal PlacementLoc = State->getSVal(CNE->getPlacementArg(0), LCtx);
-    SVal Result = svalBuilder.evalCast(PlacementLoc, CNE->getType(),
-                                       CNE->getPlacementArg(0)->getType());
-    State = State->BindExpr(CNE, LCtx, Result);
-  } else {
-    State = State->BindExpr(CNE, LCtx, symVal);
+    Result = svalBuilder.evalCast(PlacementLoc, CNE->getType(),
+                                  CNE->getPlacementArg(0)->getType());
   }
 
+  // Bind the address of the object, then check to see if we cached out.
+  State = State->BindExpr(CNE, LCtx, Result);
   ExplodedNode *NewN = Bldr.generateNode(CNE, Pred, State);
   if (!NewN)
     return;
@@ -363,10 +366,8 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
       Bldr.takeNodes(NewN);
 
       assert(!CNE->getType()->getPointeeCXXRecordDecl());
-
-      SVal Location = State->getSVal(CNE, LCtx);
-      bool FirstInit = (Location == symVal);
-      evalBind(Dst, CNE, TmpN, Location, State->getSVal(Init, LCtx), FirstInit);
+      evalBind(Dst, CNE, NewN, Result, State->getSVal(Init, LCtx),
+               /*FirstInit=*/IsStandardGlobalOpNewFunction);
     }
   }
 }
