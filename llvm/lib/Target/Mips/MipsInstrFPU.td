@@ -503,32 +503,27 @@ let Predicates = [IsFP64bit, HasStdEnc] in {
   def : MipsPat<(f64 (fextend FGR32:$src)), (CVT_D64_S FGR32:$src)>;
 }
 
-// Load/Store patterns.
+// Patterns for loads/stores with a reg+imm operand.
 let AddedComplexity = 40 in {
   let Predicates = [IsN64, HasStdEnc] in {
-    def : MipsPat<(f32 (load addrRegImm:$a)), (LWC1_P8 addrRegImm:$a)>;
-    def : MipsPat<(store FGR32:$v, addrRegImm:$a),
-                  (SWC1_P8 FGR32:$v, addrRegImm:$a)>;
-    def : MipsPat<(f64 (load addrRegImm:$a)), (LDC164_P8 addrRegImm:$a)>;
-    def : MipsPat<(store FGR64:$v, addrRegImm:$a),
-                  (SDC164_P8 FGR64:$v, addrRegImm:$a)>;
+    def : LoadRegImmPat<LWC1_P8, f32, load>;
+    def : StoreRegImmPat<SWC1_P8, f32>;
+    def : LoadRegImmPat<LDC164_P8, f64, load>;
+    def : StoreRegImmPat<SDC164_P8, f64>;
   }
 
   let Predicates = [NotN64, HasStdEnc] in {
-    def : MipsPat<(f32 (load addrRegImm:$a)), (LWC1 addrRegImm:$a)>;
-    def : MipsPat<(store FGR32:$v, addrRegImm:$a),
-                  (SWC1 FGR32:$v, addrRegImm:$a)>;
+    def : LoadRegImmPat<LWC1, f32, load>;
+    def : StoreRegImmPat<SWC1, f32>;
   }
 
   let Predicates = [NotN64, HasMips64, HasStdEnc] in {
-    def : MipsPat<(f64 (load addrRegImm:$a)), (LDC164 addrRegImm:$a)>;
-    def : MipsPat<(store FGR64:$v, addrRegImm:$a),
-                  (SDC164 FGR64:$v, addrRegImm:$a)>;
+    def : LoadRegImmPat<LDC164, f64, load>;
+    def : StoreRegImmPat<SDC164, f64>;
   }
 
   let Predicates = [NotN64, NotMips64, HasStdEnc] in {
-    def : MipsPat<(f64 (load addrRegImm:$a)), (LDC1 addrRegImm:$a)>;
-    def : MipsPat<(store AFGR64:$v, addrRegImm:$a),
-                  (SDC1 AFGR64:$v, addrRegImm:$a)>;
+    def : LoadRegImmPat<LDC1, f64, load>;
+    def : StoreRegImmPat<SDC1, f64>;
   }
 }

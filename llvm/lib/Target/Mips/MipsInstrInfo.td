@@ -1102,6 +1102,13 @@ def LoadAddr32Imm : LoadAddressImm<"la", shamt,CPURegsOpnd>;
 //  Arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//
 
+// Load/store pattern templates.
+class LoadRegImmPat<Instruction LoadInst, ValueType ValTy, PatFrag Node> :
+  MipsPat<(ValTy (Node addrRegImm:$a)), (LoadInst addrRegImm:$a)>;
+
+class StoreRegImmPat<Instruction StoreInst, ValueType ValTy> :
+  MipsPat<(store ValTy:$v, addrRegImm:$a), (StoreInst ValTy:$v, addrRegImm:$a)>;
+
 // Small immediates
 def : MipsPat<(i32 immSExt16:$in),
               (ADDiu ZERO, imm:$in)>;
