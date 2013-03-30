@@ -436,6 +436,7 @@ class Load<string opstr, SDPatternOperator OpNode, RegisterClass RC,
          [(set RC:$rt, (OpNode addr:$addr))], NoItinerary, FrmI> {
   let DecoderMethod = "DecodeMem";
   let canFoldAsLoad = 1;
+  let mayLoad = 1;
 }
 
 class Store<string opstr, SDPatternOperator OpNode, RegisterClass RC,
@@ -443,6 +444,7 @@ class Store<string opstr, SDPatternOperator OpNode, RegisterClass RC,
   InstSE<(outs), (ins RC:$rt, MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
          [(OpNode RC:$rt, addr:$addr)], NoItinerary, FrmI> {
   let DecoderMethod = "DecodeMem";
+  let mayStore = 1;
 }
 
 multiclass LoadM<string opstr, RegisterClass RC,
@@ -793,6 +795,14 @@ let usesCustomInserter = 1 in {
   defm ATOMIC_CMP_SWAP_I16  : AtomicCmpSwap32<atomic_cmp_swap_16>;
   defm ATOMIC_CMP_SWAP_I32  : AtomicCmpSwap32<atomic_cmp_swap_32>;
 }
+
+/// Pseudo instructions for loading, storing and copying accumulator registers.
+let isPseudo = 1 in {
+  defm LOAD_AC64  : LoadM<"load_ac64", ACRegs>;
+  defm STORE_AC64 : StoreM<"store_ac64", ACRegs>;
+}
+
+def COPY_AC64 : PseudoSE<(outs ACRegs:$dst), (ins ACRegs:$src), []>;
 
 //===----------------------------------------------------------------------===//
 // Instruction definition

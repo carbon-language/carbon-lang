@@ -1271,6 +1271,14 @@ def MULSA_W_PH_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsMULSA_W_PH, NoItinerary,
 
 }
 
+/// Pseudo instructions for loading, storing and copying accumulator registers.
+let isPseudo = 1 in {
+  defm LOAD_AC_DSP  : LoadM<"load_ac_dsp", ACRegsDSP>;
+  defm STORE_AC_DSP : StoreM<"store_ac_dsp", ACRegsDSP>;
+}
+
+def COPY_AC_DSP : PseudoSE<(outs ACRegsDSP:$dst), (ins ACRegsDSP:$src), []>;
+
 // Patterns.
 class DSPPat<dag pattern, dag result, Predicate pred = HasDSP> :
   Pat<pattern, result>, Requires<[pred]>;
