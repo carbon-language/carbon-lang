@@ -1,4 +1,5 @@
 ; RUN: llc -march=mips < %s | FileCheck %s
+; RUN: llc -march=mips -mcpu=mips16 < %s
 
 ; CHECK: madd 
 define i64 @madd1(i32 %a, i32 %b, i32 %c) nounwind readnone {

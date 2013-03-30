@@ -26,6 +26,8 @@ namespace llvm {
 
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
 
+    virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+
     virtual MachineBasicBlock *
     EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const;
 
