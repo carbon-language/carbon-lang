@@ -5,7 +5,6 @@
 typedef __typeof__(sizeof(int)) size_t;
 extern "C" void *malloc(size_t);
 extern "C" void free(void *);
-//int *global;
 
 //----------------------------------------------------------------------------
 // Check for intersections with unix.Malloc and unix.MallocWithAnnotations 
@@ -26,6 +25,13 @@ void testMallocFreeNoWarn() {
 
   int *p3 = (int *)malloc(sizeof(int)); // no warn
 }
+
+void testDeleteMalloced() {
+  int *p = (int *)malloc(sizeof(int));
+  delete p; // no warn
+} 
+
+// FIXME: Pointer should escape
 
 //----- Test free standard new
 void testFreeOpNew() {
