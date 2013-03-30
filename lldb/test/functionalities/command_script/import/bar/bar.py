@@ -1,6 +1,6 @@
 def bar_function(debugger, args, result, dict):
 	global UtilityModule
-	result.Printf(UtilityModule.barutil_function("bar told me " + args))
+	print >>result,  (UtilityModule.barutil_function("bar told me " + args))
 	return None
 
 def __lldb_init_module(debugger, session_dict):

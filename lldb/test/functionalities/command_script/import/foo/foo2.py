@@ -1,5 +1,5 @@
 def foo2_function(debugger, args, result, dict):
-	result.Printf("foo2 says " + args)
+	print >>result,  ("foo2 says " + args)
 	return None
 
 def __lldb_init_module(debugger, session_dict):
