@@ -901,32 +901,32 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
 {
   switch (Op.getOpcode())
   {
-    case ISD::BR_JT:              return lowerBR_JT(Op, DAG);
-    case ISD::BRCOND:             return lowerBRCOND(Op, DAG);
-    case ISD::ConstantPool:       return lowerConstantPool(Op, DAG);
-    case ISD::GlobalAddress:      return lowerGlobalAddress(Op, DAG);
-    case ISD::BlockAddress:       return lowerBlockAddress(Op, DAG);
-    case ISD::GlobalTLSAddress:   return lowerGlobalTLSAddress(Op, DAG);
-    case ISD::JumpTable:          return lowerJumpTable(Op, DAG);
-    case ISD::SELECT:             return lowerSELECT(Op, DAG);
-    case ISD::SELECT_CC:          return lowerSELECT_CC(Op, DAG);
-    case ISD::SETCC:              return lowerSETCC(Op, DAG);
-    case ISD::VASTART:            return lowerVASTART(Op, DAG);
-    case ISD::FCOPYSIGN:          return lowerFCOPYSIGN(Op, DAG);
-    case ISD::FABS:               return lowerFABS(Op, DAG);
-    case ISD::FRAMEADDR:          return lowerFRAMEADDR(Op, DAG);
-    case ISD::RETURNADDR:         return lowerRETURNADDR(Op, DAG);
-    case ISD::EH_RETURN:          return lowerEH_RETURN(Op, DAG);
-    case ISD::MEMBARRIER:         return lowerMEMBARRIER(Op, DAG);
-    case ISD::ATOMIC_FENCE:       return lowerATOMIC_FENCE(Op, DAG);
-    case ISD::SHL_PARTS:          return lowerShiftLeftParts(Op, DAG);
-    case ISD::SRA_PARTS:          return lowerShiftRightParts(Op, DAG, true);
-    case ISD::SRL_PARTS:          return lowerShiftRightParts(Op, DAG, false);
-    case ISD::LOAD:               return lowerLOAD(Op, DAG);
-    case ISD::STORE:              return lowerSTORE(Op, DAG);
-    case ISD::INTRINSIC_WO_CHAIN: return lowerINTRINSIC_WO_CHAIN(Op, DAG);
-    case ISD::INTRINSIC_W_CHAIN:  return lowerINTRINSIC_W_CHAIN(Op, DAG);
-    case ISD::ADD:                return lowerADD(Op, DAG);
+  case ISD::BR_JT:              return lowerBR_JT(Op, DAG);
+  case ISD::BRCOND:             return lowerBRCOND(Op, DAG);
+  case ISD::ConstantPool:       return lowerConstantPool(Op, DAG);
+  case ISD::GlobalAddress:      return lowerGlobalAddress(Op, DAG);
+  case ISD::BlockAddress:       return lowerBlockAddress(Op, DAG);
+  case ISD::GlobalTLSAddress:   return lowerGlobalTLSAddress(Op, DAG);
+  case ISD::JumpTable:          return lowerJumpTable(Op, DAG);
+  case ISD::SELECT:             return lowerSELECT(Op, DAG);
+  case ISD::SELECT_CC:          return lowerSELECT_CC(Op, DAG);
+  case ISD::SETCC:              return lowerSETCC(Op, DAG);
+  case ISD::VASTART:            return lowerVASTART(Op, DAG);
+  case ISD::FCOPYSIGN:          return lowerFCOPYSIGN(Op, DAG);
+  case ISD::FABS:               return lowerFABS(Op, DAG);
+  case ISD::FRAMEADDR:          return lowerFRAMEADDR(Op, DAG);
+  case ISD::RETURNADDR:         return lowerRETURNADDR(Op, DAG);
+  case ISD::EH_RETURN:          return lowerEH_RETURN(Op, DAG);
+  case ISD::MEMBARRIER:         return lowerMEMBARRIER(Op, DAG);
+  case ISD::ATOMIC_FENCE:       return lowerATOMIC_FENCE(Op, DAG);
+  case ISD::SHL_PARTS:          return lowerShiftLeftParts(Op, DAG);
+  case ISD::SRA_PARTS:          return lowerShiftRightParts(Op, DAG, true);
+  case ISD::SRL_PARTS:          return lowerShiftRightParts(Op, DAG, false);
+  case ISD::LOAD:               return lowerLOAD(Op, DAG);
+  case ISD::STORE:              return lowerSTORE(Op, DAG);
+  case ISD::INTRINSIC_WO_CHAIN: return lowerINTRINSIC_WO_CHAIN(Op, DAG);
+  case ISD::INTRINSIC_W_CHAIN:  return lowerINTRINSIC_W_CHAIN(Op, DAG);
+  case ISD::ADD:                return lowerADD(Op, DAG);
   }
   return SDValue();
 }
