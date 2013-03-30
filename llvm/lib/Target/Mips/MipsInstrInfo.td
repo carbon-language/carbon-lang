@@ -440,35 +440,39 @@ class FMem<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
 
 // Memory Load/Store
 class Load<string opstr, SDPatternOperator OpNode, RegisterClass RC,
-           Operand MemOpnd> :
+           Operand MemOpnd, ComplexPattern Addr> :
   InstSE<(outs RC:$rt), (ins MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
-         [(set RC:$rt, (OpNode addr:$addr))], NoItinerary, FrmI> {
+         [(set RC:$rt, (OpNode Addr:$addr))], NoItinerary, FrmI> {
   let DecoderMethod = "DecodeMem";
   let canFoldAsLoad = 1;
   let mayLoad = 1;
 }
 
 class Store<string opstr, SDPatternOperator OpNode, RegisterClass RC,
-            Operand MemOpnd> :
+            Operand MemOpnd, ComplexPattern Addr> :
   InstSE<(outs), (ins RC:$rt, MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
-         [(OpNode RC:$rt, addr:$addr)], NoItinerary, FrmI> {
+         [(OpNode RC:$rt, Addr:$addr)], NoItinerary, FrmI> {
   let DecoderMethod = "DecodeMem";
   let mayStore = 1;
 }
 
 multiclass LoadM<string opstr, RegisterClass RC,
-                 SDPatternOperator OpNode = null_frag> {
-  def NAME : Load<opstr, OpNode, RC, mem>, Requires<[NotN64, HasStdEnc]>;
-  def _P8  : Load<opstr, OpNode, RC, mem64>, Requires<[IsN64, HasStdEnc]> {
+                 SDPatternOperator OpNode = null_frag,
+                 ComplexPattern Addr = addr> {
+  def NAME : Load<opstr, OpNode, RC, mem, Addr>, Requires<[NotN64, HasStdEnc]>;
+  def _P8  : Load<opstr, OpNode, RC, mem64, Addr>,
+             Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
   }
 }
 
 multiclass StoreM<string opstr, RegisterClass RC,
-                  SDPatternOperator OpNode = null_frag> {
-  def NAME : Store<opstr, OpNode, RC, mem>, Requires<[NotN64, HasStdEnc]>;
-  def _P8  : Store<opstr, OpNode, RC, mem64>, Requires<[IsN64, HasStdEnc]> {
+                  SDPatternOperator OpNode = null_frag,
+                  ComplexPattern Addr = addr> {
+  def NAME : Store<opstr, OpNode, RC, mem, Addr>, Requires<[NotN64, HasStdEnc]>;
+  def _P8  : Store<opstr, OpNode, RC, mem64, Addr>,
+             Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
   }
@@ -891,10 +895,10 @@ let Predicates = [HasMips32r2, HasStdEnc] in {
 /// Load and Store Instructions
 ///  aligned
 defm LB  : LoadM<"lb", CPURegs, sextloadi8>, LW_FM<0x20>;
-defm LBu : LoadM<"lbu", CPURegs, zextloadi8>, LW_FM<0x24>;
-defm LH  : LoadM<"lh", CPURegs, sextloadi16>, LW_FM<0x21>;
+defm LBu : LoadM<"lbu", CPURegs, zextloadi8, addrDefault>, LW_FM<0x24>;
+defm LH  : LoadM<"lh", CPURegs, sextloadi16, addrDefault>, LW_FM<0x21>;
 defm LHu : LoadM<"lhu", CPURegs, zextloadi16>, LW_FM<0x25>;
-defm LW  : LoadM<"lw", CPURegs, load>, LW_FM<0x23>;
+defm LW  : LoadM<"lw", CPURegs, load, addrDefault>, LW_FM<0x23>;
 defm SB  : StoreM<"sb", CPURegs, truncstorei8>, LW_FM<0x28>;
 defm SH  : StoreM<"sh", CPURegs, truncstorei16>, LW_FM<0x29>;
 defm SW  : StoreM<"sw", CPURegs, store>, LW_FM<0x2b>;
@@ -1289,6 +1293,20 @@ def : MipsPat<(bswap CPURegs:$rt), (ROTR (WSBH CPURegs:$rt), 16)>;
 // mflo/hi patterns.
 def : MipsPat<(i32 (ExtractLOHI ACRegs:$ac, imm:$lohi_idx)),
               (EXTRACT_SUBREG ACRegs:$ac, imm:$lohi_idx)>;
+
+// Load halfword/word patterns.
+let AddedComplexity = 40 in {
+  let Predicates = [NotN64, HasStdEnc] in {
+    def : LoadRegImmPat<LBu, i32, zextloadi8>;
+    def : LoadRegImmPat<LH, i32, sextloadi16>;
+    def : LoadRegImmPat<LW, i32, load>;
+  }
+  let Predicates = [IsN64, HasStdEnc] in {
+    def : LoadRegImmPat<LBu_P8, i32, zextloadi8>;
+    def : LoadRegImmPat<LH_P8, i32, sextloadi16>;
+    def : LoadRegImmPat<LW_P8, i32, load>;
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // Floating Point Support

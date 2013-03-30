@@ -1258,3 +1258,14 @@ def : EXTR_W_TY1_R2_Pat<MipsEXTR_S_H, EXTRV_S_H>;
 let AddedComplexity = 20 in
 def : DSPPat<(i32 (ExtractLOHI ACRegsDSP:$ac, imm:$lohi_idx)),
              (EXTRACT_SUBREG ACRegsDSP:$ac, imm:$lohi_idx)>;
+
+// Indexed load patterns.
+class IndexedLoadPat<SDPatternOperator LoadNode, Instruction Instr> :
+  DSPPat<(i32 (LoadNode (add i32:$base, i32:$index))),
+         (Instr i32:$base, i32:$index)>;
+
+let AddedComplexity = 20 in {
+  def : IndexedLoadPat<zextloadi8, LBUX>;
+  def : IndexedLoadPat<sextloadi16, LHX>;
+  def : IndexedLoadPat<load, LWX>;
+}
