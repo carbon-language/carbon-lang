@@ -342,25 +342,12 @@ Mailing Lists
 If you can't find what you need in these docs, try consulting the mailing
 lists.
 
-`LLVM Announcements List`__
-  This is a low volume list that provides important announcements regarding
-  LLVM.  It gets email about once a month.
-
-  .. __: http://lists.cs.uiuc.edu/mailman/listinfo/llvm-announce
-
 `Developer's List`__
   This list is for people who want to be included in technical discussions of
   LLVM. People post to this list when they have questions about writing code
   for or using the LLVM tools. It is relatively low volume.
 
   .. __: http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev
-
-`Bugs & Patches Archive`__
-  This list gets emailed every time a bug is opened and closed, and when people
-  submit patches to be included in LLVM.  It is higher volume than the LLVMdev
-  list.
-
-  .. __: http://lists.cs.uiuc.edu/pipermail/llvmbugs/
 
 `Commits Archive`__
   This list contains all commit messages that are made when LLVM developers
@@ -369,12 +356,25 @@ lists.
 
   .. __: http://lists.cs.uiuc.edu/pipermail/llvm-commits/
 
+`Bugs & Patches Archive`__
+  This list gets emailed every time a bug is opened and closed, and when people
+  submit patches to be included in LLVM.  It is higher volume than the LLVMdev
+  list.
+
+  .. __: http://lists.cs.uiuc.edu/pipermail/llvmbugs/
+
 `Test Results Archive`__
   A message is automatically sent to this list by every active nightly tester
   when it completes.  As such, this list gets email several times each day,
   making it a high volume list.
 
   .. __: http://lists.cs.uiuc.edu/pipermail/llvm-testresults/
+
+`LLVM Announcements List`__
+  This is a low volume list that provides important announcements regarding
+  LLVM.  It gets email about once a month.
+
+  .. __: http://lists.cs.uiuc.edu/mailman/listinfo/llvm-announce
 
 IRC
 ---
