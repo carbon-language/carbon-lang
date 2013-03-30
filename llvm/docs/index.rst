@@ -22,7 +22,6 @@ Several introductory papers and presentations.
    :hidden:
 
    LangRef
-   GetElementPtr
 
 :doc:`LangRef`
   Defines the LLVM intermediate representation.
@@ -47,10 +46,6 @@ Several introductory papers and presentations.
   More details (quite old now).
 
   .. __: http://llvm.org/pubs/2002-12-LattnerMSThesis.html
-
-:doc:`GetElementPtr`
-  Answers to some very frequent questions about LLVM's most frequently
-  misunderstood instruction.
 
 `Publications mentioning LLVM <http://llvm.org/pubs>`_
    ..
@@ -86,6 +81,7 @@ representation.
    ReleaseNotes
    Passes
    YamlIO
+   GetElementPtr
 
 :doc:`GettingStarted`
    Discusses how to get up and running quickly with the LLVM infrastructure.
@@ -144,6 +140,10 @@ representation.
 
 :doc:`YamlIO`
    A reference guide for using LLVM's YAML I/O library.
+
+:doc:`GetElementPtr`
+  Answers to some very frequent questions about LLVM's most frequently
+  misunderstood instruction.
 
 IRC
 ===
