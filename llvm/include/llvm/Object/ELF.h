@@ -2303,8 +2303,9 @@ ELFObjectFile<ELFT>::end_dynamic_table(bool NULLEnd) const {
 
     if (NULLEnd) {
       Elf_Dyn_iterator Start = begin_dynamic_table();
-      for (; Start != Ret && Start->getTag() != ELF::DT_NULL; ++Start)
-        ;
+      while (Start != Ret && Start->getTag() != ELF::DT_NULL)
+        ++Start;
+
       // Include the DT_NULL.
       if (Start != Ret)
         ++Start;
@@ -2321,10 +2322,9 @@ StringRef ELFObjectFile<ELFT>::getLoadName() const {
     // Find the DT_SONAME entry
     Elf_Dyn_iterator it = begin_dynamic_table();
     Elf_Dyn_iterator ie = end_dynamic_table();
-    for (; it != ie; ++it) {
-      if (it->getTag() == ELF::DT_SONAME)
-        break;
-    }
+    while (it != ie && it->getTag() != ELF::DT_SONAME)
+      ++it;
+
     if (it != ie) {
       if (dot_dynstr_sec == NULL)
         report_fatal_error("Dynamic string table is missing");
@@ -2341,10 +2341,8 @@ library_iterator ELFObjectFile<ELFT>::begin_libraries_needed() const {
   // Find the first DT_NEEDED entry
   Elf_Dyn_iterator i = begin_dynamic_table();
   Elf_Dyn_iterator e = end_dynamic_table();
-  for (; i != e; ++i) {
-    if (i->getTag() == ELF::DT_NEEDED)
-      break;
-  }
+  while (i != e && i->getTag() != ELF::DT_NEEDED)
+    ++i;
 
   DataRefImpl DRI;
   DRI.p = reinterpret_cast<uintptr_t>(i.get());
@@ -2359,11 +2357,10 @@ error_code ELFObjectFile<ELFT>::getLibraryNext(DataRefImpl Data,
                                         reinterpret_cast<const char *>(Data.p));
   Elf_Dyn_iterator e = end_dynamic_table();
 
-  // Skip the current dynamic table entry.
-  ++i;
-
-  // Find the next DT_NEEDED entry.
-  for (; i != e && i->getTag() != ELF::DT_NEEDED; ++i);
+  // Skip the current dynamic table entry and find the next DT_NEEDED entry.
+  do
+    ++i;
+  while (i != e && i->getTag() != ELF::DT_NEEDED);
 
   DataRefImpl DRI;
   DRI.p = reinterpret_cast<uintptr_t>(i.get());
