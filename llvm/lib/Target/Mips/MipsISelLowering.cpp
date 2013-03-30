@@ -650,8 +650,9 @@ static Mips::CondCode FPCondCCodeToFCC(ISD::CondCode CC) {
 }
 
 
-// Returns true if condition code has to be inverted.
-static bool invertFPCondCode(Mips::CondCode CC) {
+/// This function returns true if the floating point conditional branches and
+/// conditional moves which use condition code CC should be inverted.
+static bool invertFPCondCodeUser(Mips::CondCode CC) {
   if (CC >= Mips::FCOND_F && CC <= Mips::FCOND_NGT)
     return false;
 
@@ -687,9 +688,8 @@ static SDValue createFPCmp(SelectionDAG &DAG, const SDValue &Op) {
 // Creates and returns a CMovFPT/F node.
 static SDValue createCMovFP(SelectionDAG &DAG, SDValue Cond, SDValue True,
                             SDValue False, DebugLoc DL) {
-  bool invert = invertFPCondCode((Mips::CondCode)
-                                 cast<ConstantSDNode>(Cond.getOperand(2))
-                                 ->getSExtValue());
+  ConstantSDNode *CC = cast<ConstantSDNode>(Cond.getOperand(2));
+  bool invert = invertFPCondCodeUser((Mips::CondCode)CC->getSExtValue());
 
   return DAG.getNode((invert ? MipsISD::CMovFP_F : MipsISD::CMovFP_T), DL,
                      True.getValueType(), True, False, Cond);
@@ -944,17 +944,6 @@ addLiveIn(MachineFunction &MF, unsigned PReg, const TargetRegisterClass *RC)
   unsigned VReg = MF.getRegInfo().createVirtualRegister(RC);
   MF.getRegInfo().addLiveIn(PReg, VReg);
   return VReg;
-}
-
-// Get fp branch code (not opcode) from condition code.
-static Mips::FPBranchCode getFPBranchCodeFromCond(Mips::CondCode CC) {
-  if (CC >= Mips::FCOND_F && CC <= Mips::FCOND_NGT)
-    return Mips::BRANCH_T;
-
-  assert((CC >= Mips::FCOND_T && CC <= Mips::FCOND_GT) &&
-         "Invalid CondCode.");
-
-  return Mips::BRANCH_F;
 }
 
 MachineBasicBlock *
@@ -1587,8 +1576,8 @@ lowerBRCOND(SDValue Op, SelectionDAG &DAG) const
   SDValue CCNode  = CondRes.getOperand(2);
   Mips::CondCode CC =
     (Mips::CondCode)cast<ConstantSDNode>(CCNode)->getZExtValue();
-  SDValue BrCode = DAG.getConstant(getFPBranchCodeFromCond(CC), MVT::i32);
-
+  unsigned Opc = invertFPCondCodeUser(CC) ? Mips::BRANCH_F : Mips::BRANCH_T;
+  SDValue BrCode = DAG.getConstant(Opc, MVT::i32);
   return DAG.getNode(MipsISD::FPBrcond, DL, Op.getValueType(), Chain, BrCode,
                      Dest, CondRes);
 }
