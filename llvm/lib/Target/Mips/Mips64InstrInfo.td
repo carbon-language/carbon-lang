@@ -187,10 +187,16 @@ def DMULT  : Mult<"dmult", IIImul, CPU64RegsOpnd, [HI64, LO64]>,
              MULT_FM<0, 0x1c>;
 def DMULTu : Mult<"dmultu", IIImul, CPU64RegsOpnd, [HI64, LO64]>,
              MULT_FM<0, 0x1d>;
-def DSDIV  : Div<MipsDivRem, "ddiv", IIIdiv, CPU64RegsOpnd, [HI64, LO64]>,
-             MULT_FM<0, 0x1e>;
-def DUDIV  : Div<MipsDivRemU, "ddivu", IIIdiv, CPU64RegsOpnd, [HI64, LO64]>,
-             MULT_FM<0, 0x1f>;
+def PseudoDMULT  : MultDivPseudo<DMULT, ACRegs128, CPU64RegsOpnd, MipsMult,
+                                 IIImul>;
+def PseudoDMULTu : MultDivPseudo<DMULTu, ACRegs128, CPU64RegsOpnd, MipsMultu,
+                                 IIImul>;
+def DSDIV : Div<"ddiv", IIIdiv, CPU64RegsOpnd, [HI64, LO64]>, MULT_FM<0, 0x1e>;
+def DUDIV : Div<"ddivu", IIIdiv, CPU64RegsOpnd, [HI64, LO64]>, MULT_FM<0, 0x1f>;
+def PseudoDSDIV : MultDivPseudo<DSDIV, ACRegs128, CPU64RegsOpnd, MipsDivRem,
+                                IIIdiv, 0>;
+def PseudoDUDIV : MultDivPseudo<DUDIV, ACRegs128, CPU64RegsOpnd, MipsDivRemU,
+                                IIIdiv, 0>;
 
 def MTHI64 : MoveToLOHI<"mthi", CPU64Regs, [HI64]>, MTLO_FM<0x11>;
 def MTLO64 : MoveToLOHI<"mtlo", CPU64Regs, [LO64]>, MTLO_FM<0x13>;
@@ -313,6 +319,10 @@ def : MipsPat<(i64 (sext_inreg CPU64Regs:$src, i32)),
 
 // bswap MipsPattern
 def : MipsPat<(bswap CPU64Regs:$rt), (DSHD (DSBH CPU64Regs:$rt))>;
+
+// mflo/hi patterns.
+def : MipsPat<(i64 (ExtractLOHI ACRegs128:$ac, imm:$lohi_idx)),
+              (EXTRACT_SUBREG ACRegs128:$ac, imm:$lohi_idx)>;
 
 //===----------------------------------------------------------------------===//
 // Instruction aliases

@@ -23,13 +23,16 @@ def SDT_MipsCMov         : SDTypeProfile<1, 4, [SDTCisSameAs<0, 1>,
                                                 SDTCisInt<4>]>;
 def SDT_MipsCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
 def SDT_MipsCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
-def SDT_MipsMAddMSub     : SDTypeProfile<0, 4,
-                                         [SDTCisVT<0, i32>, SDTCisSameAs<0, 1>,
-                                          SDTCisSameAs<1, 2>,
-                                          SDTCisSameAs<2, 3>]>;
-def SDT_MipsDivRem       : SDTypeProfile<0, 2,
-                                         [SDTCisInt<0>,
-                                          SDTCisSameAs<0, 1>]>;
+def SDT_ExtractLOHI : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisVT<1, untyped>,
+                                           SDTCisVT<2, i32>]>;
+def SDT_InsertLOHI : SDTypeProfile<1, 2, [SDTCisVT<0, untyped>,
+                                          SDTCisVT<1, i32>, SDTCisSameAs<1, 2>]>;
+def SDT_MipsMultDiv : SDTypeProfile<1, 2, [SDTCisVT<0, untyped>, SDTCisInt<1>,
+                                    SDTCisSameAs<1, 2>]>;
+def SDT_MipsMAddMSub : SDTypeProfile<1, 3,
+                                     [SDTCisVT<0, untyped>, SDTCisSameAs<0, 3>,
+                                      SDTCisVT<1, i32>, SDTCisSameAs<1, 2>]>;
+def SDT_MipsDivRem16 : SDTypeProfile<0, 2, [SDTCisInt<0>, SDTCisSameAs<0, 1>]>;
 
 def SDT_MipsThreadPointer : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
 
@@ -82,20 +85,27 @@ def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_MipsCallSeqEnd,
                            [SDNPHasChain, SDNPSideEffect,
                             SDNPOptInGlue, SDNPOutGlue]>;
 
+// Node used to extract integer from LO/HI register.
+def ExtractLOHI : SDNode<"MipsISD::ExtractLOHI", SDT_ExtractLOHI>;
+
+// Node used to insert 32-bit integers to LOHI register pair.
+def InsertLOHI : SDNode<"MipsISD::InsertLOHI", SDT_InsertLOHI>;
+
+// Mult nodes.
+def MipsMult  : SDNode<"MipsISD::Mult", SDT_MipsMultDiv>;
+def MipsMultu : SDNode<"MipsISD::Multu", SDT_MipsMultDiv>;
+
 // MAdd*/MSub* nodes
-def MipsMAdd      : SDNode<"MipsISD::MAdd", SDT_MipsMAddMSub,
-                           [SDNPOptInGlue, SDNPOutGlue]>;
-def MipsMAddu     : SDNode<"MipsISD::MAddu", SDT_MipsMAddMSub,
-                           [SDNPOptInGlue, SDNPOutGlue]>;
-def MipsMSub      : SDNode<"MipsISD::MSub", SDT_MipsMAddMSub,
-                           [SDNPOptInGlue, SDNPOutGlue]>;
-def MipsMSubu     : SDNode<"MipsISD::MSubu", SDT_MipsMAddMSub,
-                           [SDNPOptInGlue, SDNPOutGlue]>;
+def MipsMAdd  : SDNode<"MipsISD::MAdd", SDT_MipsMAddMSub>;
+def MipsMAddu : SDNode<"MipsISD::MAddu", SDT_MipsMAddMSub>;
+def MipsMSub  : SDNode<"MipsISD::MSub", SDT_MipsMAddMSub>;
+def MipsMSubu : SDNode<"MipsISD::MSubu", SDT_MipsMAddMSub>;
 
 // DivRem(u) nodes
-def MipsDivRem    : SDNode<"MipsISD::DivRem", SDT_MipsDivRem,
-                           [SDNPOutGlue]>;
-def MipsDivRemU   : SDNode<"MipsISD::DivRemU", SDT_MipsDivRem,
+def MipsDivRem    : SDNode<"MipsISD::DivRem", SDT_MipsMultDiv>;
+def MipsDivRemU   : SDNode<"MipsISD::DivRemU", SDT_MipsMultDiv>;
+def MipsDivRem16  : SDNode<"MipsISD::DivRem16", SDT_MipsDivRem16, [SDNPOutGlue]>;
+def MipsDivRemU16 : SDNode<"MipsISD::DivRemU16", SDT_MipsDivRem16,
                            [SDNPOutGlue]>;
 
 // Target constant nodes that are not part of any isel patterns and remain
@@ -382,10 +392,9 @@ class ArithLogicI<string opstr, Operand Od, RegisterOperand RO,
 }
 
 // Arithmetic Multiply ADD/SUB
-class MArithR<string opstr, SDPatternOperator op = null_frag, bit isComm = 0> :
+class MArithR<string opstr, bit isComm = 0> :
   InstSE<(outs), (ins CPURegsOpnd:$rs, CPURegsOpnd:$rt),
-         !strconcat(opstr, "\t$rs, $rt"),
-         [(op CPURegsOpnd:$rs, CPURegsOpnd:$rt, LO, HI)], IIImul, FrmR> {
+         !strconcat(opstr, "\t$rs, $rt"), [], IIImul, FrmR> {
   let Defs = [HI, LO];
   let Uses = [HI, LO];
   let isCommutable = isComm;
@@ -629,11 +638,34 @@ class Mult<string opstr, InstrItinClass itin, RegisterOperand RO,
   let neverHasSideEffects = 1;
 }
 
-class Div<SDNode op, string opstr, InstrItinClass itin, RegisterOperand RO,
+// Pseudo multiply/divide instruction with explicit accumulator register
+// operands.
+class MultDivPseudo<Instruction RealInst, RegisterClass R0, RegisterOperand R1,
+                    SDPatternOperator OpNode, InstrItinClass Itin,
+                    bit IsComm = 1, bit HasSideEffects = 0> :
+  PseudoSE<(outs R0:$ac), (ins R1:$rs, R1:$rt),
+           [(set R0:$ac, (OpNode R1:$rs, R1:$rt))], Itin>,
+  PseudoInstExpansion<(RealInst R1:$rs, R1:$rt)> {
+  let isCommutable = IsComm;
+  let hasSideEffects = HasSideEffects;
+}
+
+// Pseudo multiply add/sub instruction with explicit accumulator register
+// operands.
+class MAddSubPseudo<Instruction RealInst, SDPatternOperator OpNode>
+  : PseudoSE<(outs ACRegs:$ac),
+             (ins CPURegsOpnd:$rs, CPURegsOpnd:$rt, ACRegs:$acin),
+             [(set ACRegs:$ac,
+              (OpNode CPURegsOpnd:$rs, CPURegsOpnd:$rt, ACRegs:$acin))],
+             IIImul>,
+    PseudoInstExpansion<(RealInst CPURegsOpnd:$rs, CPURegsOpnd:$rt)> {
+  string Constraints = "$acin = $ac";
+}
+
+class Div<string opstr, InstrItinClass itin, RegisterOperand RO,
           list<Register> DefRegs> :
-  InstSE<(outs), (ins RO:$rs, RO:$rt),
-         !strconcat(opstr, "\t$$zero, $rs, $rt"), [(op RO:$rs, RO:$rt)], itin,
-         FrmR> {
+  InstSE<(outs), (ins RO:$rs, RO:$rt), !strconcat(opstr, "\t$$zero, $rs, $rt"),
+         [], itin, FrmR> {
   let Defs = DefRegs;
 }
 
@@ -934,10 +966,13 @@ let Uses = [V0, V1], isTerminator = 1, isReturn = 1, isBarrier = 1 in {
 /// Multiply and Divide Instructions.
 def MULT  : Mult<"mult", IIImul, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x18>;
 def MULTu : Mult<"multu", IIImul, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x19>;
-def SDIV  : Div<MipsDivRem, "div", IIIdiv, CPURegsOpnd, [HI, LO]>,
-            MULT_FM<0, 0x1a>;
-def UDIV  : Div<MipsDivRemU, "divu", IIIdiv, CPURegsOpnd, [HI, LO]>,
-            MULT_FM<0, 0x1b>;
+def PseudoMULT  : MultDivPseudo<MULT, ACRegs, CPURegsOpnd, MipsMult, IIImul>;
+def PseudoMULTu : MultDivPseudo<MULTu, ACRegs, CPURegsOpnd, MipsMultu, IIImul>;
+def SDIV  : Div<"div", IIIdiv, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x1a>;
+def UDIV  : Div<"divu", IIIdiv, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x1b>;
+def PseudoSDIV : MultDivPseudo<SDIV, ACRegs, CPURegsOpnd, MipsDivRem, IIIdiv, 0>;
+def PseudoUDIV : MultDivPseudo<UDIV, ACRegs, CPURegsOpnd, MipsDivRemU, IIIdiv,
+                               0>;
 
 def MTHI : MoveToLOHI<"mthi", CPURegs, [HI]>, MTLO_FM<0x11>;
 def MTLO : MoveToLOHI<"mtlo", CPURegs, [LO]>, MTLO_FM<0x13>;
@@ -965,10 +1000,14 @@ def NOP : PseudoSE<(outs), (ins), []>, PseudoInstExpansion<(SLL ZERO, ZERO, 0)>;
 def LEA_ADDiu : EffectiveAddress<"addiu", CPURegs, mem_ea>, LW_FM<9>;
 
 // MADD*/MSUB*
-def MADD  : MArithR<"madd", MipsMAdd, 1>, MULT_FM<0x1c, 0>;
-def MADDU : MArithR<"maddu", MipsMAddu, 1>, MULT_FM<0x1c, 1>;
-def MSUB  : MArithR<"msub", MipsMSub>, MULT_FM<0x1c, 4>;
-def MSUBU : MArithR<"msubu", MipsMSubu>, MULT_FM<0x1c, 5>;
+def MADD  : MArithR<"madd", 1>, MULT_FM<0x1c, 0>;
+def MADDU : MArithR<"maddu", 1>, MULT_FM<0x1c, 1>;
+def MSUB  : MArithR<"msub">, MULT_FM<0x1c, 4>;
+def MSUBU : MArithR<"msubu">, MULT_FM<0x1c, 5>;
+def PseudoMADD  : MAddSubPseudo<MADD, MipsMAdd>;
+def PseudoMADDU : MAddSubPseudo<MADDU, MipsMAddu>;
+def PseudoMSUB  : MAddSubPseudo<MSUB, MipsMSub>;
+def PseudoMSUBU : MAddSubPseudo<MSUBU, MipsMSubu>;
 
 def RDHWR : ReadHardware<CPURegs, HWRegsOpnd>, RDHWR_FM;
 
@@ -1239,6 +1278,10 @@ defm : SetgeImmPats<CPURegs, SLTi, SLTiu>;
 
 // bswap pattern
 def : MipsPat<(bswap CPURegs:$rt), (ROTR (WSBH CPURegs:$rt), 16)>;
+
+// mflo/hi patterns.
+def : MipsPat<(i32 (ExtractLOHI ACRegs:$ac, imm:$lohi_idx)),
+              (EXTRACT_SUBREG ACRegs:$ac, imm:$lohi_idx)>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Support

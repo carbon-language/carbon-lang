@@ -24,6 +24,8 @@ namespace llvm {
 
     virtual bool allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const;
 
+    virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
+
     virtual MachineBasicBlock *
     EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const;
 
@@ -46,6 +48,9 @@ namespace llvm {
                 std::deque< std::pair<unsigned, SDValue> > &RegsToPass,
                 bool IsPICCall, bool GlobalOrExternal, bool InternalLinkage,
                 CallLoweringInfo &CLI, SDValue Callee, SDValue Chain) const;
+
+    SDValue lowerMulDiv(SDValue Op, unsigned NewOpc, bool HasLo, bool HasHi,
+                        SelectionDAG &DAG) const;
 
     MachineBasicBlock *emitBPOSGE32(MachineInstr *MI,
                                     MachineBasicBlock *BB) const;

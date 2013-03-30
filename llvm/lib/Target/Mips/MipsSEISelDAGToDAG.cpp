@@ -450,6 +450,19 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
     ReplaceUses(SDValue(Node, 0), ResNode);
     return std::make_pair(true, ResNode.getNode());
   }
+
+  case MipsISD::InsertLOHI: {
+    unsigned RCID = Subtarget.hasDSP() ? Mips::ACRegsDSPRegClassID :
+                                         Mips::ACRegsRegClassID;
+    SDValue RegClass = CurDAG->getTargetConstant(RCID, MVT::i32);
+    SDValue LoIdx = CurDAG->getTargetConstant(Mips::sub_lo, MVT::i32);
+    SDValue HiIdx = CurDAG->getTargetConstant(Mips::sub_hi, MVT::i32);
+    const SDValue Ops[] = { RegClass, Node->getOperand(0), LoIdx,
+                            Node->getOperand(1), HiIdx };
+    SDNode *Res = CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, DL,
+                                         MVT::Untyped, Ops, 5);
+    return std::make_pair(true, Res);
+  }
   }
 
   return std::make_pair(false, (SDNode*)NULL);

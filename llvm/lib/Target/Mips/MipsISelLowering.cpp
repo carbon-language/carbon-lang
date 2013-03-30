@@ -461,28 +461,32 @@ static bool selectMADD(SDNode *ADDENode, SelectionDAG *CurDAG) {
   SDValue Chain = CurDAG->getEntryNode();
   DebugLoc DL = ADDENode->getDebugLoc();
 
+  // Initialize accumulator.
+  SDValue ACCIn = CurDAG->getNode(MipsISD::InsertLOHI, DL, MVT::Untyped,
+                                  ADDCNode->getOperand(1),
+                                  ADDENode->getOperand(1));
+
   // create MipsMAdd(u) node
   MultOpc = MultOpc == ISD::UMUL_LOHI ? MipsISD::MAddu : MipsISD::MAdd;
 
-  SDValue MAdd = CurDAG->getNode(MultOpc, DL, MVT::Glue,
+  SDValue MAdd = CurDAG->getNode(MultOpc, DL, MVT::Untyped,
                                  MultNode->getOperand(0),// Factor 0
                                  MultNode->getOperand(1),// Factor 1
-                                 ADDCNode->getOperand(1),// Lo0
-                                 ADDENode->getOperand(1));// Hi0
-
-  // create CopyFromReg nodes
-  SDValue CopyFromLo = CurDAG->getCopyFromReg(Chain, DL, Mips::LO, MVT::i32,
-                                              MAdd);
-  SDValue CopyFromHi = CurDAG->getCopyFromReg(CopyFromLo.getValue(1), DL,
-                                              Mips::HI, MVT::i32,
-                                              CopyFromLo.getValue(2));
+                                 ACCIn);
 
   // replace uses of adde and addc here
-  if (!SDValue(ADDCNode, 0).use_empty())
-    CurDAG->ReplaceAllUsesOfValueWith(SDValue(ADDCNode, 0), CopyFromLo);
-
-  if (!SDValue(ADDENode, 0).use_empty())
-    CurDAG->ReplaceAllUsesOfValueWith(SDValue(ADDENode, 0), CopyFromHi);
+  if (!SDValue(ADDCNode, 0).use_empty()) {
+    SDValue LoIdx = CurDAG->getConstant(Mips::sub_lo, MVT::i32);
+    SDValue LoOut = CurDAG->getNode(MipsISD::ExtractLOHI, DL, MVT::i32, MAdd,
+                                    LoIdx);
+    CurDAG->ReplaceAllUsesOfValueWith(SDValue(ADDCNode, 0), LoOut);
+  }
+  if (!SDValue(ADDENode, 0).use_empty()) {
+    SDValue HiIdx = CurDAG->getConstant(Mips::sub_hi, MVT::i32);
+    SDValue HiOut = CurDAG->getNode(MipsISD::ExtractLOHI, DL, MVT::i32, MAdd,
+                                    HiIdx);
+    CurDAG->ReplaceAllUsesOfValueWith(SDValue(ADDENode, 0), HiOut);
+  }
 
   return true;
 }
@@ -534,28 +538,32 @@ static bool selectMSUB(SDNode *SUBENode, SelectionDAG *CurDAG) {
   SDValue Chain = CurDAG->getEntryNode();
   DebugLoc DL = SUBENode->getDebugLoc();
 
+  // Initialize accumulator.
+  SDValue ACCIn = CurDAG->getNode(MipsISD::InsertLOHI, DL, MVT::Untyped,
+                                  SUBCNode->getOperand(0),
+                                  SUBENode->getOperand(0));
+
   // create MipsSub(u) node
   MultOpc = MultOpc == ISD::UMUL_LOHI ? MipsISD::MSubu : MipsISD::MSub;
 
   SDValue MSub = CurDAG->getNode(MultOpc, DL, MVT::Glue,
                                  MultNode->getOperand(0),// Factor 0
                                  MultNode->getOperand(1),// Factor 1
-                                 SUBCNode->getOperand(0),// Lo0
-                                 SUBENode->getOperand(0));// Hi0
-
-  // create CopyFromReg nodes
-  SDValue CopyFromLo = CurDAG->getCopyFromReg(Chain, DL, Mips::LO, MVT::i32,
-                                              MSub);
-  SDValue CopyFromHi = CurDAG->getCopyFromReg(CopyFromLo.getValue(1), DL,
-                                              Mips::HI, MVT::i32,
-                                              CopyFromLo.getValue(2));
+                                 ACCIn);
 
   // replace uses of sube and subc here
-  if (!SDValue(SUBCNode, 0).use_empty())
-    CurDAG->ReplaceAllUsesOfValueWith(SDValue(SUBCNode, 0), CopyFromLo);
-
-  if (!SDValue(SUBENode, 0).use_empty())
-    CurDAG->ReplaceAllUsesOfValueWith(SDValue(SUBENode, 0), CopyFromHi);
+  if (!SDValue(SUBCNode, 0).use_empty()) {
+    SDValue LoIdx = CurDAG->getConstant(Mips::sub_lo, MVT::i32);
+    SDValue LoOut = CurDAG->getNode(MipsISD::ExtractLOHI, DL, MVT::i32, MSub,
+                                    LoIdx);
+    CurDAG->ReplaceAllUsesOfValueWith(SDValue(SUBCNode, 0), LoOut);
+  }
+  if (!SDValue(SUBENode, 0).use_empty()) {
+    SDValue HiIdx = CurDAG->getConstant(Mips::sub_hi, MVT::i32);
+    SDValue HiOut = CurDAG->getNode(MipsISD::ExtractLOHI, DL, MVT::i32, MSub,
+                                    HiIdx);
+    CurDAG->ReplaceAllUsesOfValueWith(SDValue(SUBENode, 0), HiOut);
+  }
 
   return true;
 }
@@ -595,8 +603,8 @@ static SDValue performDivRemCombine(SDNode *N, SelectionDAG &DAG,
   EVT Ty = N->getValueType(0);
   unsigned LO = (Ty == MVT::i32) ? Mips::LO : Mips::LO64;
   unsigned HI = (Ty == MVT::i32) ? Mips::HI : Mips::HI64;
-  unsigned Opc = N->getOpcode() == ISD::SDIVREM ? MipsISD::DivRem :
-                                                  MipsISD::DivRemU;
+  unsigned Opc = N->getOpcode() == ISD::SDIVREM ? MipsISD::DivRem16 :
+                                                  MipsISD::DivRemU16;
   DebugLoc DL = N->getDebugLoc();
 
   SDValue DivRem = DAG.getNode(Opc, DL, MVT::Glue,

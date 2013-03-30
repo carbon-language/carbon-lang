@@ -60,6 +60,18 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
     }
   }
 
+  setOperationAction(ISD::SMUL_LOHI,          MVT::i32, Custom);
+  setOperationAction(ISD::UMUL_LOHI,          MVT::i32, Custom);
+  setOperationAction(ISD::MULHS,              MVT::i32, Custom);
+  setOperationAction(ISD::MULHU,              MVT::i32, Custom);
+
+  if (HasMips64)
+    setOperationAction(ISD::MUL,              MVT::i64, Custom);
+
+  setOperationAction(ISD::SDIVREM, MVT::i32, Custom);
+  setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
+  setOperationAction(ISD::SDIVREM, MVT::i64, Custom);
+  setOperationAction(ISD::UDIVREM, MVT::i64, Custom);
   setOperationAction(ISD::MEMBARRIER,         MVT::Other, Custom);
   setOperationAction(ISD::ATOMIC_FENCE,       MVT::Other, Custom);
   setOperationAction(ISD::LOAD,               MVT::i32, Custom);
@@ -87,6 +99,21 @@ MipsSETargetLowering::allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const {
   default:
     return false;
   }
+}
+
+SDValue MipsSETargetLowering::LowerOperation(SDValue Op,
+                                             SelectionDAG &DAG) const {
+  switch(Op.getOpcode()) {
+  case ISD::SMUL_LOHI: return lowerMulDiv(Op, MipsISD::Mult, true, true, DAG);
+  case ISD::UMUL_LOHI: return lowerMulDiv(Op, MipsISD::Multu, true, true, DAG);
+  case ISD::MULHS:     return lowerMulDiv(Op, MipsISD::Mult, false, true, DAG);
+  case ISD::MULHU:     return lowerMulDiv(Op, MipsISD::Multu, false, true, DAG);
+  case ISD::MUL:       return lowerMulDiv(Op, MipsISD::Mult, true, false, DAG);
+  case ISD::SDIVREM:   return lowerMulDiv(Op, MipsISD::DivRem, true, true, DAG);
+  case ISD::UDIVREM:   return lowerMulDiv(Op, MipsISD::DivRemU, true, true, DAG);
+  }
+
+  return MipsTargetLowering::LowerOperation(Op, DAG);
 }
 
 MachineBasicBlock *
@@ -131,6 +158,29 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
 
   MipsTargetLowering::getOpndList(Ops, RegsToPass, IsPICCall, GlobalOrExternal,
                                   InternalLinkage, CLI, Callee, Chain);
+}
+
+SDValue MipsSETargetLowering::lowerMulDiv(SDValue Op, unsigned NewOpc,
+                                          bool HasLo, bool HasHi,
+                                          SelectionDAG &DAG) const {
+  EVT Ty = Op.getOperand(0).getValueType();
+  DebugLoc DL = Op.getDebugLoc();
+  SDValue Mult = DAG.getNode(NewOpc, DL, MVT::Untyped,
+                             Op.getOperand(0), Op.getOperand(1));
+  SDValue Lo, Hi;
+
+  if (HasLo)
+    Lo = DAG.getNode(MipsISD::ExtractLOHI, DL, Ty, Mult,
+                     DAG.getConstant(Mips::sub_lo, MVT::i32));
+  if (HasHi)
+    Hi = DAG.getNode(MipsISD::ExtractLOHI, DL, Ty, Mult,
+                     DAG.getConstant(Mips::sub_hi, MVT::i32));
+
+  if (!HasLo || !HasHi)
+    return HasLo ? Lo : Hi;
+
+  SDValue Vals[] = { Lo, Hi };
+  return DAG.getMergeValues(Vals, 2, DL);
 }
 
 MachineBasicBlock * MipsSETargetLowering::
