@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,cplusplus.NewDelete -analyzer-store region -std=c++11 -fblocks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,cplusplus.NewDelete,unix.Malloc -analyzer-store region -std=c++11 -fblocks -verify %s
 #include "Inputs/system-header-simulator-cxx.h"
 
 void *allocator(std::size_t size);
@@ -22,8 +22,8 @@ void testNewMethod() {
 } // expected-warning{{Memory is never released; potential leak}}
 
 void testOpNewArray() {
-  void *p = operator new[](0);
-} //FIXME: expected 'Memory is never released; potential leak'
+  void *p = operator new[](0); // call is inlined, no warn
+}
 
 void testNewExprArray() {
   int *p = new int[0];
@@ -31,8 +31,8 @@ void testNewExprArray() {
 
 //----- Custom non-placement operators
 void testOpNew() {
-  void *p = operator new(0);
-} //FIXME: expected 'Memory is never released; potential leak'
+  void *p = operator new(0); // call is inlined, no warn
+}
 
 void testNewExpr() {
   int *p = new int;
