@@ -16,7 +16,6 @@
 
 #include "llvm/Target/TargetFrameLowering.h"
 
-
 namespace llvm {
 class NVPTXTargetMachine;
 
@@ -26,13 +25,12 @@ class NVPTXFrameLowering : public TargetFrameLowering {
 
 public:
   explicit NVPTXFrameLowering(NVPTXTargetMachine &_tm, bool _is64bit)
-  : TargetFrameLowering(TargetFrameLowering::StackGrowsUp, 8, 0),
-    tm(_tm), is64bit(_is64bit) {}
+      : TargetFrameLowering(TargetFrameLowering::StackGrowsUp, 8, 0), tm(_tm),
+        is64bit(_is64bit) {}
 
   virtual bool hasFP(const MachineFunction &MF) const;
   virtual void emitPrologue(MachineFunction &MF) const;
-  virtual void emitEpilogue(MachineFunction &MF,
-                            MachineBasicBlock &MBB) const;
+  virtual void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,

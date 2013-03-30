@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #ifndef LLVM_SUPPORT_MANAGED_STRING_H
 #define LLVM_SUPPORT_MANAGED_STRING_H
 

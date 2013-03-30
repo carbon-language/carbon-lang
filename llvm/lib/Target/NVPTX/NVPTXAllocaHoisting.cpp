@@ -19,9 +19,9 @@
 namespace llvm {
 
 bool NVPTXAllocaHoisting::runOnFunction(Function &function) {
-  bool               functionModified    = false;
-  Function::iterator I                   = function.begin();
-  TerminatorInst    *firstTerminatorInst = (I++)->getTerminator();
+  bool functionModified = false;
+  Function::iterator I = function.begin();
+  TerminatorInst *firstTerminatorInst = (I++)->getTerminator();
 
   for (Function::iterator E = function.end(); I != E; ++I) {
     for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE;) {
@@ -37,12 +37,10 @@ bool NVPTXAllocaHoisting::runOnFunction(Function &function) {
 }
 
 char NVPTXAllocaHoisting::ID = 1;
-RegisterPass<NVPTXAllocaHoisting> X("alloca-hoisting",
-                                    "Hoisting alloca instructions in non-entry "
-                                    "blocks to the entry block");
+RegisterPass<NVPTXAllocaHoisting>
+X("alloca-hoisting", "Hoisting alloca instructions in non-entry "
+                     "blocks to the entry block");
 
-FunctionPass *createAllocaHoisting() {
-  return new NVPTXAllocaHoisting();
-}
+FunctionPass *createAllocaHoisting() { return new NVPTXAllocaHoisting(); }
 
 } // end namespace llvm

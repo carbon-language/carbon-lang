@@ -21,9 +21,7 @@
 
 using namespace llvm;
 
-namespace llvm {
-FunctionPass *createSplitBBatBarPass();
-}
+namespace llvm { FunctionPass *createSplitBBatBarPass(); }
 
 char NVPTXSplitBBatBar::ID = 0;
 
@@ -72,6 +70,4 @@ bool NVPTXSplitBBatBar::runOnFunction(Function &F) {
 // This interface will most likely not be necessary, because this pass will
 // not be invoked by the driver, but will be used as a prerequisite to
 // another pass.
-FunctionPass *llvm::createSplitBBatBarPass() {
-  return new NVPTXSplitBBatBar();
-}
+FunctionPass *llvm::createSplitBBatBarPass() { return new NVPTXSplitBBatBar(); }

@@ -25,18 +25,15 @@
 
 using namespace llvm;
 
-namespace llvm {
-FunctionPass *createLowerAggrCopies();
-}
+namespace llvm { FunctionPass *createLowerAggrCopies(); }
 
 char NVPTXLowerAggrCopies::ID = 0;
 
 // Lower MemTransferInst or load-store pair to loop
-static void convertTransferToLoop(Instruction *splitAt, Value *srcAddr,
-                                  Value *dstAddr, Value *len,
-                                  //unsigned numLoads,
-                                  bool srcVolatile, bool dstVolatile,
-                                  LLVMContext &Context, Function &F) {
+static void convertTransferToLoop(
+    Instruction *splitAt, Value *srcAddr, Value *dstAddr, Value *len,
+    //unsigned numLoads,
+    bool srcVolatile, bool dstVolatile, LLVMContext &Context, Function &F) {
   Type *indType = len->getType();
 
   BasicBlock *origBB = splitAt->getParent();
@@ -48,10 +45,8 @@ static void convertTransferToLoop(Instruction *splitAt, Value *srcAddr,
 
   // srcAddr and dstAddr are expected to be pointer types,
   // so no check is made here.
-  unsigned srcAS =
-      dyn_cast<PointerType>(srcAddr->getType())->getAddressSpace();
-  unsigned dstAS =
-      dyn_cast<PointerType>(dstAddr->getType())->getAddressSpace();
+  unsigned srcAS = dyn_cast<PointerType>(srcAddr->getType())->getAddressSpace();
+  unsigned dstAS = dyn_cast<PointerType>(dstAddr->getType())->getAddressSpace();
 
   // Cast pointers to (char *)
   srcAddr = builder.CreateBitCast(srcAddr, Type::getInt8PtrTy(Context, srcAS));
@@ -86,12 +81,11 @@ static void convertMemSetToLoop(Instruction *splitAt, Value *dstAddr,
   origBB->getTerminator()->setSuccessor(0, loopBB);
   IRBuilder<> builder(origBB, origBB->getTerminator());
 
-  unsigned dstAS =
-      dyn_cast<PointerType>(dstAddr->getType())->getAddressSpace();
+  unsigned dstAS = dyn_cast<PointerType>(dstAddr->getType())->getAddressSpace();
 
   // Cast pointer to the type of value getting stored
-  dstAddr = builder.CreateBitCast(dstAddr,
-                                  PointerType::get(val->getType(), dstAS));
+  dstAddr =
+      builder.CreateBitCast(dstAddr, PointerType::get(val->getType(), dstAS));
 
   IRBuilder<> loop(loopBB);
   PHINode *ind = loop.CreatePHI(len->getType(), 0);
@@ -120,24 +114,26 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
   for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
     //BasicBlock *bb = BI;
     for (BasicBlock::iterator II = BI->begin(), IE = BI->end(); II != IE;
-        ++II) {
-      if (LoadInst * load = dyn_cast<LoadInst>(II)) {
+         ++II) {
+      if (LoadInst *load = dyn_cast<LoadInst>(II)) {
 
-        if (load->hasOneUse() == false) continue;
+        if (load->hasOneUse() == false)
+          continue;
 
-        if (TD->getTypeStoreSize(load->getType()) < MaxAggrCopySize) continue;
+        if (TD->getTypeStoreSize(load->getType()) < MaxAggrCopySize)
+          continue;
 
         User *use = *(load->use_begin());
-        if (StoreInst * store = dyn_cast<StoreInst>(use)) {
+        if (StoreInst *store = dyn_cast<StoreInst>(use)) {
           if (store->getOperand(0) != load) //getValueOperand
-          continue;
+            continue;
           aggrLoads.push_back(load);
         }
-      } else if (MemTransferInst * intr = dyn_cast<MemTransferInst>(II)) {
+      } else if (MemTransferInst *intr = dyn_cast<MemTransferInst>(II)) {
         Value *len = intr->getLength();
         // If the number of elements being copied is greater
         // than MaxAggrCopySize, lower it to a loop
-        if (ConstantInt * len_int = dyn_cast < ConstantInt > (len)) {
+        if (ConstantInt *len_int = dyn_cast<ConstantInt>(len)) {
           if (len_int->getZExtValue() >= MaxAggrCopySize) {
             aggrMemcpys.push_back(intr);
           }
@@ -145,9 +141,9 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
           // turn variable length memcpy/memmov into loop
           aggrMemcpys.push_back(intr);
         }
-      } else if (MemSetInst * memsetintr = dyn_cast<MemSetInst>(II)) {
+      } else if (MemSetInst *memsetintr = dyn_cast<MemSetInst>(II)) {
         Value *len = memsetintr->getLength();
-        if (ConstantInt * len_int = dyn_cast<ConstantInt>(len)) {
+        if (ConstantInt *len_int = dyn_cast<ConstantInt>(len)) {
           if (len_int->getZExtValue() >= MaxAggrCopySize) {
             aggrMemsets.push_back(memsetintr);
           }
@@ -158,8 +154,9 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
       }
     }
   }
-  if ((aggrLoads.size() == 0) && (aggrMemcpys.size() == 0)
-      && (aggrMemsets.size() == 0)) return false;
+  if ((aggrLoads.size() == 0) && (aggrMemcpys.size() == 0) &&
+      (aggrMemsets.size() == 0))
+    return false;
 
   //
   // Do the transformation of an aggr load/copy/set to a loop

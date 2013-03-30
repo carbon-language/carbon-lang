@@ -11,10 +11,6 @@
 #ifndef NVPTX_NUM_REGISTERS_H
 #define NVPTX_NUM_REGISTERS_H
 
-namespace llvm {
-
-const unsigned NVPTXNumRegisters = 396;
-
-}
+namespace llvm { const unsigned NVPTXNumRegisters = 396; }
 
 #endif

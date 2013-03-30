@@ -17,7 +17,7 @@ Target llvm::TheNVPTXTarget64;
 
 extern "C" void LLVMInitializeNVPTXTargetInfo() {
   RegisterTarget<Triple::nvptx> X(TheNVPTXTarget32, "nvptx",
-    "NVIDIA PTX 32-bit");
+                                  "NVIDIA PTX 32-bit");
   RegisterTarget<Triple::nvptx64> Y(TheNVPTXTarget64, "nvptx64",
-    "NVIDIA PTX 64-bit");
+                                    "NVIDIA PTX 64-bit");
 }

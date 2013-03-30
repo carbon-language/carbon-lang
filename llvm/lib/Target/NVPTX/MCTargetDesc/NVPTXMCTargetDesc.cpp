@@ -28,7 +28,6 @@
 #define GET_REGINFO_MC_DESC
 #include "NVPTXGenRegisterInfo.inc"
 
-
 using namespace llvm;
 
 static MCInstrInfo *createNVPTXMCInstrInfo() {
@@ -44,21 +43,19 @@ static MCRegisterInfo *createNVPTXMCRegisterInfo(StringRef TT) {
   return X;
 }
 
-static MCSubtargetInfo *createNVPTXMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                                   StringRef FS) {
+static MCSubtargetInfo *
+createNVPTXMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitNVPTXMCSubtargetInfo(X, TT, CPU, FS);
   return X;
 }
 
-static MCCodeGenInfo *createNVPTXMCCodeGenInfo(StringRef TT, Reloc::Model RM,
-                                               CodeModel::Model CM,
-                                               CodeGenOpt::Level OL) {
+static MCCodeGenInfo *createNVPTXMCCodeGenInfo(
+    StringRef TT, Reloc::Model RM, CodeModel::Model CM, CodeGenOpt::Level OL) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   X->InitMCCodeGenInfo(RM, CM, OL);
   return X;
 }
-
 
 // Force static initialization.
 extern "C" void LLVMInitializeNVPTXTargetMC() {

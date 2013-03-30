@@ -17,7 +17,6 @@
 #include "ManagedStringPool.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
-
 #define GET_REGINFO_HEADER
 #include "NVPTXGenRegisterInfo.inc"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -33,30 +32,28 @@ class NVPTXRegisterInfo : public NVPTXGenRegisterInfo {
 private:
   bool Is64Bit;
   // Hold Strings that can be free'd all together with NVPTXRegisterInfo
-  ManagedStringPool     ManagedStrPool;
+  ManagedStringPool ManagedStrPool;
 
 public:
-  NVPTXRegisterInfo(const TargetInstrInfo &tii,
-                    const NVPTXSubtarget &st);
-
+  NVPTXRegisterInfo(const TargetInstrInfo &tii, const NVPTXSubtarget &st);
 
   //------------------------------------------------------
   // Pure virtual functions from TargetRegisterInfo
   //------------------------------------------------------
 
   // NVPTX callee saved registers
-  virtual const uint16_t*
+  virtual const uint16_t *
   getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 
   // NVPTX callee saved register classes
-  virtual const TargetRegisterClass* const *
+  virtual const TargetRegisterClass *const *
   getCalleeSavedRegClasses(const MachineFunction *MF) const;
 
   virtual BitVector getReservedRegs(const MachineFunction &MF) const;
 
-  virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI,
-                                   int SPAdj, unsigned FIOperandNum,
-                                   RegScavenger *RS=NULL) const;
+  virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,
+                                   unsigned FIOperandNum,
+                                   RegScavenger *RS = NULL) const;
 
   virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const;
   virtual unsigned getFrameRegister(const MachineFunction &MF) const;
@@ -74,11 +71,9 @@ public:
 
 };
 
-
-std::string getNVPTXRegClassName (const TargetRegisterClass *RC);
-std::string getNVPTXRegClassStr (const TargetRegisterClass *RC);
+std::string getNVPTXRegClassName(const TargetRegisterClass *RC);
+std::string getNVPTXRegClassStr(const TargetRegisterClass *RC);
 
 } // end namespace llvm
-
 
 #endif

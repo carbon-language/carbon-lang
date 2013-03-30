@@ -43,15 +43,15 @@
 // This is defined in AsmPrinter.cpp.
 // Used to process the constant expressions in initializers.
 namespace nvptx {
-const llvm::MCExpr *LowerConstant(const llvm::Constant *CV,
-                                  llvm::AsmPrinter &AP) ;
+const llvm::MCExpr *
+LowerConstant(const llvm::Constant *CV, llvm::AsmPrinter &AP);
 }
 
 namespace llvm {
 
 class LineReader {
 private:
-  unsigned theCurLine ;
+  unsigned theCurLine;
   std::ifstream fstr;
   char buff[512];
   std::string theFileName;
@@ -63,16 +63,11 @@ public:
     theFileName = filename;
   }
   std::string fileName() { return theFileName; }
-  ~LineReader() {
-    fstr.close();
-  }
+  ~LineReader() { fstr.close(); }
   std::string readLine(unsigned line);
 };
 
-
-
 class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
-
 
   class AggBuffer {
     // Used to buffer the emitted string for initializing global
@@ -92,7 +87,7 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
     // Once we have this AggBuffer setup, we can choose how to print
     // it out.
   public:
-    unsigned size;   // size of the buffer in bytes
+    unsigned size;         // size of the buffer in bytes
     unsigned char *buffer; // the buffer
     unsigned numSymbols;   // number of symbol addresses
     SmallVector<unsigned, 4> symbolPosInBuffer;
@@ -105,33 +100,31 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
 
   public:
     AggBuffer(unsigned _size, raw_ostream &_O, NVPTXAsmPrinter &_AP)
-    :O(_O),AP(_AP) {
+        : O(_O), AP(_AP) {
       buffer = new unsigned char[_size];
       size = _size;
       curpos = 0;
       numSymbols = 0;
     }
-    ~AggBuffer() {
-      delete [] buffer;
-    }
+    ~AggBuffer() { delete[] buffer; }
     unsigned addBytes(unsigned char *Ptr, int Num, int Bytes) {
-      assert((curpos+Num) <= size);
-      assert((curpos+Bytes) <= size);
-      for ( int i= 0; i < Num; ++i) {
+      assert((curpos + Num) <= size);
+      assert((curpos + Bytes) <= size);
+      for (int i = 0; i < Num; ++i) {
         buffer[curpos] = Ptr[i];
-        curpos ++;
+        curpos++;
       }
-      for ( int i=Num; i < Bytes ; ++i) {
+      for (int i = Num; i < Bytes; ++i) {
         buffer[curpos] = 0;
-        curpos ++;
+        curpos++;
       }
       return curpos;
     }
     unsigned addZeros(int Num) {
-      assert((curpos+Num) <= size);
-      for ( int i= 0; i < Num; ++i) {
+      assert((curpos + Num) <= size);
+      for (int i = 0; i < Num; ++i) {
         buffer[curpos] = 0;
-        curpos ++;
+        curpos++;
       }
       return curpos;
     }
@@ -143,10 +136,10 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
     void print() {
       if (numSymbols == 0) {
         // print out in bytes
-        for (unsigned i=0; i<size; i++) {
+        for (unsigned i = 0; i < size; i++) {
           if (i)
             O << ", ";
-          O << (unsigned int)buffer[i];
+          O << (unsigned int) buffer[i];
         }
       } else {
         // print out in 4-bytes or 8-bytes
@@ -156,7 +149,7 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
         unsigned int nBytes = 4;
         if (AP.nvptxSubtarget.is64Bit())
           nBytes = 8;
-        for (pos=0; pos<size; pos+=nBytes) {
+        for (pos = 0; pos < size; pos += nBytes) {
           if (pos)
             O << ", ";
           if (pos == nextSymbolPos) {
@@ -164,22 +157,19 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
             if (GlobalValue *GVar = dyn_cast<GlobalValue>(v)) {
               MCSymbol *Name = AP.Mang->getSymbol(GVar);
               O << *Name;
-            }
-            else if (ConstantExpr *Cexpr =
-                dyn_cast<ConstantExpr>(v)) {
+            } else if (ConstantExpr *Cexpr = dyn_cast<ConstantExpr>(v)) {
               O << *nvptx::LowerConstant(Cexpr, AP);
             } else
               llvm_unreachable("symbol type unknown");
             nSym++;
             if (nSym >= numSymbols)
-              nextSymbolPos = size+1;
+              nextSymbolPos = size + 1;
             else
               nextSymbolPos = symbolPosInBuffer[nSym];
-          } else
-            if (nBytes == 4)
-              O << *(unsigned int*)(buffer+pos);
-            else
-              O << *(unsigned long long*)(buffer+pos);
+          } else if (nBytes == 4)
+            O << *(unsigned int *)(buffer + pos);
+          else
+            O << *(unsigned long long *)(buffer + pos);
         }
       }
     }
@@ -189,10 +179,8 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
 
   virtual void emitSrcInText(StringRef filename, unsigned line);
 
-private :
-  virtual const char *getPassName() const {
-    return "NVPTX Assembly Printer";
-  }
+private:
+  virtual const char *getPassName() const { return "NVPTX Assembly Printer"; }
 
   const Function *F;
   std::string CurrentFnName;
@@ -207,31 +195,28 @@ private :
 
   void printGlobalVariable(const GlobalVariable *GVar);
   void printOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
-                    const char *Modifier=0);
+                    const char *Modifier = 0);
   void printLdStCode(const MachineInstr *MI, int opNum, raw_ostream &O,
-                     const char *Modifier=0);
-  void printVecModifiedImmediate(const MachineOperand &MO,
-                                 const char *Modifier, raw_ostream &O);
+                     const char *Modifier = 0);
+  void printVecModifiedImmediate(const MachineOperand &MO, const char *Modifier,
+                                 raw_ostream &O);
   void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
-                       const char *Modifier=0);
+                       const char *Modifier = 0);
   void printImplicitDef(const MachineInstr *MI, raw_ostream &O) const;
   // definition autogenerated.
   void printInstruction(const MachineInstr *MI, raw_ostream &O);
-  void printModuleLevelGV(GlobalVariable* GVar, raw_ostream &O,
-                          bool=false);
+  void printModuleLevelGV(GlobalVariable *GVar, raw_ostream &O, bool = false);
   void printParamName(int paramIndex, raw_ostream &O);
   void printParamName(Function::const_arg_iterator I, int paramIndex,
                       raw_ostream &O);
   void emitHeader(Module &M, raw_ostream &O);
-  void emitKernelFunctionDirectives(const Function& F,
-                                    raw_ostream &O) const;
+  void emitKernelFunctionDirectives(const Function &F, raw_ostream &O) const;
   void emitVirtualRegister(unsigned int vr, bool isVec, raw_ostream &O);
   void emitFunctionExternParamList(const MachineFunction &MF);
   void emitFunctionParamList(const Function *, raw_ostream &O);
   void emitFunctionParamList(const MachineFunction &MF, raw_ostream &O);
   void setAndEmitFunctionVirtualRegisters(const MachineFunction &MF);
-  void emitFunctionTempData(const MachineFunction &MF,
-                            unsigned &FrameSize);
+  void emitFunctionTempData(const MachineFunction &MF, unsigned &FrameSize);
   bool isImageType(const Type *Ty);
   bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                        unsigned AsmVariant, const char *ExtraCode,
@@ -269,17 +254,16 @@ private:
   void recordAndEmitFilenames(Module &);
 
   void emitPTXGlobalVariable(const GlobalVariable *GVar, raw_ostream &O);
-  void emitPTXAddressSpace(unsigned int AddressSpace,
-                           raw_ostream &O) const;
-  std::string getPTXFundamentalTypeStr(const Type *Ty, bool=true) const ;
-  void printScalarConstant(Constant *CPV, raw_ostream &O) ;
-  void printFPConstant(const ConstantFP *Fp, raw_ostream &O) ;
-  void bufferLEByte(Constant *CPV, int Bytes, AggBuffer *aggBuffer) ;
-  void bufferAggregateConstant(Constant *CV, AggBuffer *aggBuffer) ;
+  void emitPTXAddressSpace(unsigned int AddressSpace, raw_ostream &O) const;
+  std::string getPTXFundamentalTypeStr(const Type *Ty, bool = true) const;
+  void printScalarConstant(Constant *CPV, raw_ostream &O);
+  void printFPConstant(const ConstantFP *Fp, raw_ostream &O);
+  void bufferLEByte(Constant *CPV, int Bytes, AggBuffer *aggBuffer);
+  void bufferAggregateConstant(Constant *CV, AggBuffer *aggBuffer);
 
   void printOperandProper(const MachineOperand &MO);
 
-  void emitLinkageDirective(const GlobalValue* V, raw_ostream &O);
+  void emitLinkageDirective(const GlobalValue *V, raw_ostream &O);
   void emitDeclarations(Module &, raw_ostream &O);
   void emitDeclaration(const Function *, raw_ostream &O);
 
@@ -289,10 +273,9 @@ private:
   LineReader *reader;
   LineReader *getReader(std::string);
 public:
-  NVPTXAsmPrinter(TargetMachine &TM,
-                  MCStreamer &Streamer)
-  : AsmPrinter(TM, Streamer),
-    nvptxSubtarget(TM.getSubtarget<NVPTXSubtarget>()) {
+  NVPTXAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
+      : AsmPrinter(TM, Streamer),
+        nvptxSubtarget(TM.getSubtarget<NVPTXSubtarget>()) {
     CurrentBankselLabelInBasicBlock = "";
     VRidGlobal2LocalMap = NULL;
     reader = NULL;

@@ -52,25 +52,24 @@ enum PropertyAnnotation {
 };
 
 const unsigned AnnotationNameLen = 8; // length of each annotation name
-const char
-PropertyAnnotationNames[PROPERTY_LAST + 1][AnnotationNameLen + 1] = {
-  "maxntidx",               // PROPERTY_MAXNTID_X
-  "maxntidy",               // PROPERTY_MAXNTID_Y
-  "maxntidz",               // PROPERTY_MAXNTID_Z
-  "reqntidx",               // PROPERTY_REQNTID_X
-  "reqntidy",               // PROPERTY_REQNTID_Y
-  "reqntidz",               // PROPERTY_REQNTID_Z
-  "minctasm",               // PROPERTY_MINNCTAPERSM
-  "texture",                // PROPERTY_ISTEXTURE
-  "surface",                // PROPERTY_ISSURFACE
-  "sampler",                // PROPERTY_ISSAMPLER
-  "rdoimage",               // PROPERTY_ISREADONLY_IMAGE_PARAM
-  "wroimage",               // PROPERTY_ISWRITEONLY_IMAGE_PARAM
-  "kernel",                 // PROPERTY_ISKERNEL_FUNCTION
-  "align",                  // PROPERTY_ALIGN
+const char PropertyAnnotationNames[PROPERTY_LAST + 1][AnnotationNameLen + 1] = {
+  "maxntidx",                         // PROPERTY_MAXNTID_X
+  "maxntidy",                         // PROPERTY_MAXNTID_Y
+  "maxntidz",                         // PROPERTY_MAXNTID_Z
+  "reqntidx",                         // PROPERTY_REQNTID_X
+  "reqntidy",                         // PROPERTY_REQNTID_Y
+  "reqntidz",                         // PROPERTY_REQNTID_Z
+  "minctasm",                         // PROPERTY_MINNCTAPERSM
+  "texture",                          // PROPERTY_ISTEXTURE
+  "surface",                          // PROPERTY_ISSURFACE
+  "sampler",                          // PROPERTY_ISSAMPLER
+  "rdoimage",                         // PROPERTY_ISREADONLY_IMAGE_PARAM
+  "wroimage",                         // PROPERTY_ISWRITEONLY_IMAGE_PARAM
+  "kernel",                           // PROPERTY_ISKERNEL_FUNCTION
+  "align",                            // PROPERTY_ALIGN
 
-  // last property
-  "proplast",               // PROPERTY_LAST
+              // last property
+  "proplast", // PROPERTY_LAST
 };
 
 // name of named metadata used for global annotations
@@ -80,9 +79,8 @@ PropertyAnnotationNames[PROPERTY_LAST + 1][AnnotationNameLen + 1] = {
 // compiling those .cpp files, hence __attribute__((unused)).
 __attribute__((unused))
 #endif
-static const char* NamedMDForAnnotations = "nvvm.annotations";
+    static const char *NamedMDForAnnotations = "nvvm.annotations";
 
 }
-
 
 #endif

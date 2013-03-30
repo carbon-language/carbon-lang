@@ -23,61 +23,55 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include <cstdio>
 
-
 using namespace llvm;
 
 // FIXME: Add the subtarget support on this constructor.
 NVPTXInstrInfo::NVPTXInstrInfo(NVPTXTargetMachine &tm)
-: NVPTXGenInstrInfo(),
-  TM(tm),
-  RegInfo(*this, *TM.getSubtargetImpl()) {}
+    : NVPTXGenInstrInfo(), TM(tm), RegInfo(*this, *TM.getSubtargetImpl()) {}
 
-
-void NVPTXInstrInfo::copyPhysReg (MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator I, DebugLoc DL,
-                                  unsigned DestReg, unsigned SrcReg,
-                                  bool KillSrc) const {
+void NVPTXInstrInfo::copyPhysReg(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator I, DebugLoc DL,
+    unsigned DestReg, unsigned SrcReg, bool KillSrc) const {
   if (NVPTX::Int32RegsRegClass.contains(DestReg) &&
       NVPTX::Int32RegsRegClass.contains(SrcReg))
     BuildMI(MBB, I, DL, get(NVPTX::IMOV32rr), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
   else if (NVPTX::Int8RegsRegClass.contains(DestReg) &&
-      NVPTX::Int8RegsRegClass.contains(SrcReg))
+           NVPTX::Int8RegsRegClass.contains(SrcReg))
     BuildMI(MBB, I, DL, get(NVPTX::IMOV8rr), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
   else if (NVPTX::Int1RegsRegClass.contains(DestReg) &&
-      NVPTX::Int1RegsRegClass.contains(SrcReg))
+           NVPTX::Int1RegsRegClass.contains(SrcReg))
     BuildMI(MBB, I, DL, get(NVPTX::IMOV1rr), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
   else if (NVPTX::Float32RegsRegClass.contains(DestReg) &&
-      NVPTX::Float32RegsRegClass.contains(SrcReg))
+           NVPTX::Float32RegsRegClass.contains(SrcReg))
     BuildMI(MBB, I, DL, get(NVPTX::FMOV32rr), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
   else if (NVPTX::Int16RegsRegClass.contains(DestReg) &&
-      NVPTX::Int16RegsRegClass.contains(SrcReg))
+           NVPTX::Int16RegsRegClass.contains(SrcReg))
     BuildMI(MBB, I, DL, get(NVPTX::IMOV16rr), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
   else if (NVPTX::Int64RegsRegClass.contains(DestReg) &&
-      NVPTX::Int64RegsRegClass.contains(SrcReg))
+           NVPTX::Int64RegsRegClass.contains(SrcReg))
     BuildMI(MBB, I, DL, get(NVPTX::IMOV64rr), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
   else if (NVPTX::Float64RegsRegClass.contains(DestReg) &&
-      NVPTX::Float64RegsRegClass.contains(SrcReg))
+           NVPTX::Float64RegsRegClass.contains(SrcReg))
     BuildMI(MBB, I, DL, get(NVPTX::FMOV64rr), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
   else {
     llvm_unreachable("Don't know how to copy a register");
   }
 }
 
-bool NVPTXInstrInfo::isMoveInstr(const MachineInstr &MI,
-                                 unsigned &SrcReg,
+bool NVPTXInstrInfo::isMoveInstr(const MachineInstr &MI, unsigned &SrcReg,
                                  unsigned &DestReg) const {
   // Look for the appropriate part of TSFlags
   bool isMove = false;
 
-  unsigned TSFlags = (MI.getDesc().TSFlags & NVPTX::SimpleMoveMask) >>
-      NVPTX::SimpleMoveShift;
+  unsigned TSFlags =
+      (MI.getDesc().TSFlags & NVPTX::SimpleMoveMask) >> NVPTX::SimpleMoveShift;
   isMove = (TSFlags == 1);
 
   if (isMove) {
@@ -94,10 +88,10 @@ bool NVPTXInstrInfo::isMoveInstr(const MachineInstr &MI,
   return false;
 }
 
-bool  NVPTXInstrInfo::isReadSpecialReg(MachineInstr &MI) const
-{
+bool NVPTXInstrInfo::isReadSpecialReg(MachineInstr &MI) const {
   switch (MI.getOpcode()) {
-  default: return false;
+  default:
+    return false;
   case NVPTX::INT_PTX_SREG_NTID_X:
   case NVPTX::INT_PTX_SREG_NTID_Y:
   case NVPTX::INT_PTX_SREG_NTID_Z:
@@ -115,12 +109,11 @@ bool  NVPTXInstrInfo::isReadSpecialReg(MachineInstr &MI) const
   }
 }
 
-
 bool NVPTXInstrInfo::isLoadInstr(const MachineInstr &MI,
                                  unsigned &AddrSpace) const {
   bool isLoad = false;
-  unsigned TSFlags = (MI.getDesc().TSFlags & NVPTX::isLoadMask) >>
-      NVPTX::isLoadShift;
+  unsigned TSFlags =
+      (MI.getDesc().TSFlags & NVPTX::isLoadMask) >> NVPTX::isLoadShift;
   isLoad = (TSFlags == 1);
   if (isLoad)
     AddrSpace = getLdStCodeAddrSpace(MI);
@@ -130,14 +123,13 @@ bool NVPTXInstrInfo::isLoadInstr(const MachineInstr &MI,
 bool NVPTXInstrInfo::isStoreInstr(const MachineInstr &MI,
                                   unsigned &AddrSpace) const {
   bool isStore = false;
-  unsigned TSFlags = (MI.getDesc().TSFlags & NVPTX::isStoreMask) >>
-      NVPTX::isStoreShift;
+  unsigned TSFlags =
+      (MI.getDesc().TSFlags & NVPTX::isStoreMask) >> NVPTX::isStoreShift;
   isStore = (TSFlags == 1);
   if (isStore)
     AddrSpace = getLdStCodeAddrSpace(MI);
   return isStore;
 }
-
 
 bool NVPTXInstrInfo::CanTailMerge(const MachineInstr *MI) const {
   unsigned addrspace = 0;
@@ -151,7 +143,6 @@ bool NVPTXInstrInfo::CanTailMerge(const MachineInstr *MI) const {
       return false;
   return true;
 }
-
 
 /// AnalyzeBranch - Analyze the branching code at the end of MBB, returning
 /// true if it cannot be understood (e.g. it's a switch dispatch or isn't
@@ -176,11 +167,9 @@ bool NVPTXInstrInfo::CanTailMerge(const MachineInstr *MI) const {
 /// Note that RemoveBranch and InsertBranch must be implemented to support
 /// cases where this method returns success.
 ///
-bool NVPTXInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
-                                   MachineBasicBlock *&TBB,
-                                   MachineBasicBlock *&FBB,
-                                   SmallVectorImpl<MachineOperand> &Cond,
-                                   bool AllowModify) const {
+bool NVPTXInstrInfo::AnalyzeBranch(
+    MachineBasicBlock &MBB, MachineBasicBlock *&TBB, MachineBasicBlock *&FBB,
+    SmallVectorImpl<MachineOperand> &Cond, bool AllowModify) const {
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::iterator I = MBB.end();
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I))
@@ -208,14 +197,13 @@ bool NVPTXInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   MachineInstr *SecondLastInst = I;
 
   // If there are three terminators, we don't know what sort of block this is.
-  if (SecondLastInst && I != MBB.begin() &&
-      isUnpredicatedTerminator(--I))
+  if (SecondLastInst && I != MBB.begin() && isUnpredicatedTerminator(--I))
     return true;
 
   // If the block ends with NVPTX::GOTO and NVPTX:CBranch, handle it.
   if (SecondLastInst->getOpcode() == NVPTX::CBranch &&
       LastInst->getOpcode() == NVPTX::GOTO) {
-    TBB =  SecondLastInst->getOperand(1).getMBB();
+    TBB = SecondLastInst->getOperand(1).getMBB();
     Cond.push_back(SecondLastInst->getOperand(0));
     FBB = LastInst->getOperand(0).getMBB();
     return false;
@@ -238,7 +226,8 @@ bool NVPTXInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
 unsigned NVPTXInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator I = MBB.end();
-  if (I == MBB.begin()) return 0;
+  if (I == MBB.begin())
+    return 0;
   --I;
   if (I->getOpcode() != NVPTX::GOTO && I->getOpcode() != NVPTX::CBranch)
     return 0;
@@ -248,7 +237,8 @@ unsigned NVPTXInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
   I = MBB.end();
 
-  if (I == MBB.begin()) return 1;
+  if (I == MBB.begin())
+    return 1;
   --I;
   if (I->getOpcode() != NVPTX::CBranch)
     return 1;
@@ -258,11 +248,9 @@ unsigned NVPTXInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   return 2;
 }
 
-unsigned
-NVPTXInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                             MachineBasicBlock *FBB,
-                             const SmallVectorImpl<MachineOperand> &Cond,
-                             DebugLoc DL) const {
+unsigned NVPTXInstrInfo::InsertBranch(
+    MachineBasicBlock &MBB, MachineBasicBlock *TBB, MachineBasicBlock *FBB,
+    const SmallVectorImpl<MachineOperand> &Cond, DebugLoc DL) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 1 || Cond.size() == 0) &&
@@ -270,17 +258,16 @@ NVPTXInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 
   // One-way branch.
   if (FBB == 0) {
-    if (Cond.empty())   // Unconditional branch
+    if (Cond.empty()) // Unconditional branch
       BuildMI(&MBB, DL, get(NVPTX::GOTO)).addMBB(TBB);
-    else                // Conditional branch
-      BuildMI(&MBB, DL, get(NVPTX::CBranch))
-      .addReg(Cond[0].getReg()).addMBB(TBB);
+    else // Conditional branch
+      BuildMI(&MBB, DL, get(NVPTX::CBranch)).addReg(Cond[0].getReg())
+          .addMBB(TBB);
     return 1;
   }
 
   // Two-way Conditional Branch.
-  BuildMI(&MBB, DL, get(NVPTX::CBranch))
-  .addReg(Cond[0].getReg()).addMBB(TBB);
+  BuildMI(&MBB, DL, get(NVPTX::CBranch)).addReg(Cond[0].getReg()).addMBB(TBB);
   BuildMI(&MBB, DL, get(NVPTX::GOTO)).addMBB(FBB);
   return 2;
 }

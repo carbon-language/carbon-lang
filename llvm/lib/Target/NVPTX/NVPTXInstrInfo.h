@@ -23,8 +23,7 @@
 
 namespace llvm {
 
-class NVPTXInstrInfo : public NVPTXGenInstrInfo
-{
+class NVPTXInstrInfo : public NVPTXGenInstrInfo {
   NVPTXTargetMachine &TM;
   const NVPTXRegisterInfo RegInfo;
 public:
@@ -50,30 +49,26 @@ public:
    *                               const TargetRegisterClass *RC) const;
    */
 
-  virtual void copyPhysReg(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator I, DebugLoc DL,
-                           unsigned DestReg, unsigned SrcReg,
-                           bool KillSrc) const ;
-  virtual bool isMoveInstr(const MachineInstr &MI,
-                           unsigned &SrcReg,
+  virtual void copyPhysReg(
+      MachineBasicBlock &MBB, MachineBasicBlock::iterator I, DebugLoc DL,
+      unsigned DestReg, unsigned SrcReg, bool KillSrc) const;
+  virtual bool isMoveInstr(const MachineInstr &MI, unsigned &SrcReg,
                            unsigned &DestReg) const;
   bool isLoadInstr(const MachineInstr &MI, unsigned &AddrSpace) const;
   bool isStoreInstr(const MachineInstr &MI, unsigned &AddrSpace) const;
   bool isReadSpecialReg(MachineInstr &MI) const;
 
-  virtual bool CanTailMerge(const MachineInstr *MI) const ;
+  virtual bool CanTailMerge(const MachineInstr *MI) const;
   // Branch analysis.
-  virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
-                             MachineBasicBlock *&FBB,
-                             SmallVectorImpl<MachineOperand> &Cond,
-                             bool AllowModify) const;
+  virtual bool AnalyzeBranch(
+      MachineBasicBlock &MBB, MachineBasicBlock *&TBB, MachineBasicBlock *&FBB,
+      SmallVectorImpl<MachineOperand> &Cond, bool AllowModify) const;
   virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
-  virtual unsigned InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
-                                MachineBasicBlock *FBB,
-                                const SmallVectorImpl<MachineOperand> &Cond,
-                                DebugLoc DL) const;
+  virtual unsigned InsertBranch(
+      MachineBasicBlock &MBB, MachineBasicBlock *TBB, MachineBasicBlock *FBB,
+      const SmallVectorImpl<MachineOperand> &Cond, DebugLoc DL) const;
   unsigned getLdStCodeAddrSpace(const MachineInstr &MI) const {
-    return  MI.getOperand(2).getImm();
+    return MI.getOperand(2).getImm();
   }
 
 };

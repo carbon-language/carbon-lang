@@ -25,9 +25,7 @@
 
 using namespace llvm;
 
-bool NVPTXFrameLowering::hasFP(const MachineFunction &MF) const {
-  return true;
-}
+bool NVPTXFrameLowering::hasFP(const MachineFunction &MF) const { return true; }
 
 void NVPTXFrameLowering::emitPrologue(MachineFunction &MF) const {
   if (MF.getFrameInfo()->hasStackObjects()) {
@@ -42,46 +40,39 @@ void NVPTXFrameLowering::emitPrologue(MachineFunction &MF) const {
       // mov %SPL, %depot;
       // cvta.local %SP, %SPL;
       if (is64bit) {
-        MachineInstr *MI = BuildMI(MBB, MBBI, dl,
-                               tm.getInstrInfo()->get(NVPTX::cvta_local_yes_64),
-                                   NVPTX::VRFrame).addReg(NVPTX::VRFrameLocal);
-        BuildMI(MBB, MI, dl,
-                tm.getInstrInfo()->get(NVPTX::IMOV64rr), NVPTX::VRFrameLocal)
-        .addReg(NVPTX::VRDepot);
+        MachineInstr *MI = BuildMI(
+            MBB, MBBI, dl, tm.getInstrInfo()->get(NVPTX::cvta_local_yes_64),
+            NVPTX::VRFrame).addReg(NVPTX::VRFrameLocal);
+        BuildMI(MBB, MI, dl, tm.getInstrInfo()->get(NVPTX::IMOV64rr),
+                NVPTX::VRFrameLocal).addReg(NVPTX::VRDepot);
       } else {
-        MachineInstr *MI = BuildMI(MBB, MBBI, dl,
-                                  tm.getInstrInfo()->get(NVPTX::cvta_local_yes),
-                                   NVPTX::VRFrame).addReg(NVPTX::VRFrameLocal);
-        BuildMI(MBB, MI, dl,
-                tm.getInstrInfo()->get(NVPTX::IMOV32rr), NVPTX::VRFrameLocal)
-        .addReg(NVPTX::VRDepot);
+        MachineInstr *MI = BuildMI(
+            MBB, MBBI, dl, tm.getInstrInfo()->get(NVPTX::cvta_local_yes),
+            NVPTX::VRFrame).addReg(NVPTX::VRFrameLocal);
+        BuildMI(MBB, MI, dl, tm.getInstrInfo()->get(NVPTX::IMOV32rr),
+                NVPTX::VRFrameLocal).addReg(NVPTX::VRDepot);
       }
-    }
-    else {
+    } else {
       // mov %SP, %depot;
       if (is64bit)
-        BuildMI(MBB, MBBI, dl,
-                tm.getInstrInfo()->get(NVPTX::IMOV64rr), NVPTX::VRFrame)
-                .addReg(NVPTX::VRDepot);
+        BuildMI(MBB, MBBI, dl, tm.getInstrInfo()->get(NVPTX::IMOV64rr),
+                NVPTX::VRFrame).addReg(NVPTX::VRDepot);
       else
-        BuildMI(MBB, MBBI, dl,
-                tm.getInstrInfo()->get(NVPTX::IMOV32rr), NVPTX::VRFrame)
-                .addReg(NVPTX::VRDepot);
+        BuildMI(MBB, MBBI, dl, tm.getInstrInfo()->get(NVPTX::IMOV32rr),
+                NVPTX::VRFrame).addReg(NVPTX::VRDepot);
     }
   }
 }
 
 void NVPTXFrameLowering::emitEpilogue(MachineFunction &MF,
-                                      MachineBasicBlock &MBB) const {
-}
+                                      MachineBasicBlock &MBB) const {}
 
 // This function eliminates ADJCALLSTACKDOWN,
 // ADJCALLSTACKUP pseudo instructions
-void NVPTXFrameLowering::
-eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator I) const {
+void NVPTXFrameLowering::eliminateCallFramePseudoInstr(
+    MachineFunction &MF, MachineBasicBlock &MBB,
+    MachineBasicBlock::iterator I) const {
   // Simply discard ADJCALLSTACKDOWN,
   // ADJCALLSTACKUP instructions.
   MBB.erase(I);
 }
-

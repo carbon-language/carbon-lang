@@ -45,9 +45,7 @@
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Scalar.h"
 
-
 using namespace llvm;
-
 
 extern "C" void LLVMInitializeNVPTXTarget() {
   // Register the target.
@@ -59,50 +57,37 @@ extern "C" void LLVMInitializeNVPTXTarget() {
 
 }
 
-NVPTXTargetMachine::NVPTXTargetMachine(const Target &T,
-                                       StringRef TT,
-                                       StringRef CPU,
-                                       StringRef FS,
-                                       const TargetOptions& Options,
-                                       Reloc::Model RM,
-                                       CodeModel::Model CM,
-                                       CodeGenOpt::Level OL,
-                                       bool is64bit)
-: LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-  Subtarget(TT, CPU, FS, is64bit),
-  DL(Subtarget.getDataLayout()),
-  InstrInfo(*this), TLInfo(*this), TSInfo(*this), FrameLowering(*this,is64bit)
-/*FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0)*/ {
-}
-
-
+NVPTXTargetMachine::NVPTXTargetMachine(
+    const Target &T, StringRef TT, StringRef CPU, StringRef FS,
+    const TargetOptions &Options, Reloc::Model RM, CodeModel::Model CM,
+    CodeGenOpt::Level OL, bool is64bit)
+    : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+      Subtarget(TT, CPU, FS, is64bit), DL(Subtarget.getDataLayout()),
+      InstrInfo(*this), TLInfo(*this), TSInfo(*this),
+      FrameLowering(
+          *this, is64bit) /*FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0)*/ {}
 
 void NVPTXTargetMachine32::anchor() {}
 
-NVPTXTargetMachine32::NVPTXTargetMachine32(const Target &T, StringRef TT,
-                                           StringRef CPU, StringRef FS,
-                                           const TargetOptions &Options,
-                                           Reloc::Model RM, CodeModel::Model CM,
-                                           CodeGenOpt::Level OL)
-: NVPTXTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {
-}
+NVPTXTargetMachine32::NVPTXTargetMachine32(
+    const Target &T, StringRef TT, StringRef CPU, StringRef FS,
+    const TargetOptions &Options, Reloc::Model RM, CodeModel::Model CM,
+    CodeGenOpt::Level OL)
+    : NVPTXTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {}
 
 void NVPTXTargetMachine64::anchor() {}
 
-NVPTXTargetMachine64::NVPTXTargetMachine64(const Target &T, StringRef TT,
-                                           StringRef CPU, StringRef FS,
-                                           const TargetOptions &Options,
-                                           Reloc::Model RM, CodeModel::Model CM,
-                                           CodeGenOpt::Level OL)
-: NVPTXTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {
-}
-
+NVPTXTargetMachine64::NVPTXTargetMachine64(
+    const Target &T, StringRef TT, StringRef CPU, StringRef FS,
+    const TargetOptions &Options, Reloc::Model RM, CodeModel::Model CM,
+    CodeGenOpt::Level OL)
+    : NVPTXTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
 
 namespace llvm {
 class NVPTXPassConfig : public TargetPassConfig {
 public:
   NVPTXPassConfig(NVPTXTargetMachine *TM, PassManagerBase &PM)
-  : TargetPassConfig(TM, PM) {}
+      : TargetPassConfig(TM, PM) {}
 
   NVPTXTargetMachine &getNVPTXTargetMachine() const {
     return getTM<NVPTXTargetMachine>();
@@ -126,6 +111,4 @@ bool NVPTXPassConfig::addInstSelector() {
   return false;
 }
 
-bool NVPTXPassConfig::addPreRegAlloc() {
-  return false;
-}
+bool NVPTXPassConfig::addPreRegAlloc() { return false; }

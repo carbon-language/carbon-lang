@@ -23,8 +23,7 @@
 #include <string>
 #include <vector>
 
-namespace llvm
-{
+namespace llvm {
 
 #define NVCL_IMAGE2D_READONLY_FUNCNAME "__is_image2D_readonly"
 #define NVCL_IMAGE3D_READONLY_FUNCNAME "__is_image3D_readonly"
@@ -64,8 +63,7 @@ bool isBarrierIntrinsic(llvm::Intrinsic::ID);
 /// to pass into type construction of CallInst ctors.  This turns a null
 /// terminated list of pointers (or other value types) into a real live vector.
 ///
-template<typename T>
-inline std::vector<T> make_vector(T A, ...) {
+template <typename T> inline std::vector<T> make_vector(T A, ...) {
   va_list Args;
   va_start(Args, A);
   std::vector<T> Result;
@@ -78,8 +76,8 @@ inline std::vector<T> make_vector(T A, ...) {
 
 bool isMemorySpaceTransferIntrinsic(Intrinsic::ID id);
 const Value *skipPointerTransfer(const Value *V, bool ignore_GEP_indices);
-const Value *skipPointerTransfer(const Value *V,
-                                 std::set<const Value *> &processed);
+const Value *
+skipPointerTransfer(const Value *V, std::set<const Value *> &processed);
 BasicBlock *getParentBlock(Value *v);
 Function *getParentFunction(Value *v);
 void dumpBlock(Value *v, char *blockName);

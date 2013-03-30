@@ -46,45 +46,43 @@ public:
   }
 
   virtual void Initialize(MCContext &ctx, const TargetMachine &TM) {
-    TextSection = new NVPTXSection(MCSection::SV_ELF,
-                                   SectionKind::getText());
-    DataSection = new NVPTXSection(MCSection::SV_ELF,
-                                   SectionKind::getDataRel());
-    BSSSection = new NVPTXSection(MCSection::SV_ELF,
-                                  SectionKind::getBSS());
-    ReadOnlySection = new NVPTXSection(MCSection::SV_ELF,
-                                       SectionKind::getReadOnly());
+    TextSection = new NVPTXSection(MCSection::SV_ELF, SectionKind::getText());
+    DataSection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getDataRel());
+    BSSSection = new NVPTXSection(MCSection::SV_ELF, SectionKind::getBSS());
+    ReadOnlySection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getReadOnly());
 
-    StaticCtorSection = new NVPTXSection(MCSection::SV_ELF,
-                                         SectionKind::getMetadata());
-    StaticDtorSection = new NVPTXSection(MCSection::SV_ELF,
-                                         SectionKind::getMetadata());
-    LSDASection = new NVPTXSection(MCSection::SV_ELF,
-                                   SectionKind::getMetadata());
-    EHFrameSection = new NVPTXSection(MCSection::SV_ELF,
-                                      SectionKind::getMetadata());
-    DwarfAbbrevSection = new NVPTXSection(MCSection::SV_ELF,
-                                          SectionKind::getMetadata());
-    DwarfInfoSection = new NVPTXSection(MCSection::SV_ELF,
-                                        SectionKind::getMetadata());
-    DwarfLineSection = new NVPTXSection(MCSection::SV_ELF,
-                                        SectionKind::getMetadata());
-    DwarfFrameSection = new NVPTXSection(MCSection::SV_ELF,
-                                         SectionKind::getMetadata());
-    DwarfPubTypesSection = new NVPTXSection(MCSection::SV_ELF,
-                                            SectionKind::getMetadata());
-    DwarfDebugInlineSection = new NVPTXSection(MCSection::SV_ELF,
-                                               SectionKind::getMetadata());
-    DwarfStrSection = new NVPTXSection(MCSection::SV_ELF,
-                                       SectionKind::getMetadata());
-    DwarfLocSection = new NVPTXSection(MCSection::SV_ELF,
-                                       SectionKind::getMetadata());
-    DwarfARangesSection = new NVPTXSection(MCSection::SV_ELF,
-                                           SectionKind::getMetadata());
-    DwarfRangesSection = new NVPTXSection(MCSection::SV_ELF,
-                                          SectionKind::getMetadata());
-    DwarfMacroInfoSection = new NVPTXSection(MCSection::SV_ELF,
-                                             SectionKind::getMetadata());
+    StaticCtorSection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
+    StaticDtorSection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
+    LSDASection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
+    EHFrameSection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
+    DwarfAbbrevSection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
+    DwarfInfoSection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
+    DwarfLineSection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
+    DwarfFrameSection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
+    DwarfPubTypesSection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
+    DwarfDebugInlineSection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
+    DwarfStrSection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
+    DwarfLocSection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
+    DwarfARangesSection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
+    DwarfRangesSection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
+    DwarfMacroInfoSection =
+        new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
   }
 
   virtual const MCSection *getSectionForConstant(SectionKind Kind) const {
@@ -93,8 +91,7 @@ public:
 
   virtual const MCSection *
   getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
-                           Mangler *Mang,
-                           const TargetMachine &TM) const {
+                           Mangler *Mang, const TargetMachine &TM) const {
     return DataSection;
   }
 
