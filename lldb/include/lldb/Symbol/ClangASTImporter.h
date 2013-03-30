@@ -11,6 +11,7 @@
 #define liblldb_ClangASTImporter_h_
 
 #include <map>
+#include <set>
 
 #include "lldb/lldb-types.h"
 
@@ -250,17 +251,38 @@ private:
                                *source_ctx,
                                master.m_file_manager,
                                true /*minimal*/),
+            m_decls_to_deport(NULL),
+            m_decls_already_deported(NULL),
             m_master(master),
             m_source_ctx(source_ctx)
         {
         }
         
+        // A call to "InitDeportWorkQueues" puts the minion into deport mode.
+        // In deport mode, every copied Decl that could require completion is
+        // recorded and placed into the decls_to_deport set.
+        //
+        // A call to "ExecuteDeportWorkQueues" completes all the Decls that
+        // are in decls_to_deport, adding any Decls it sees along the way that
+        // it hasn't already deported.  It proceeds until decls_to_deport is
+        // empty.
+        //
+        // These calls must be paired.  Leaving a minion in deport mode or
+        // trying to start deport minion with a new pair of queues will result
+        // in an assertion failure.
+        
+        void InitDeportWorkQueues (std::set<clang::NamedDecl *> *decls_to_deport,
+                                   std::set<clang::NamedDecl *> *decls_already_deported);
+        void ExecuteDeportWorkQueues ();
+        
         void ImportDefinitionTo (clang::Decl *to, clang::Decl *from);
         
         clang::Decl *Imported (clang::Decl *from, clang::Decl *to);
         
-        ClangASTImporter   &m_master;
-        clang::ASTContext  *m_source_ctx;
+        std::set<clang::NamedDecl *>   *m_decls_to_deport;
+        std::set<clang::NamedDecl *>   *m_decls_already_deported;
+        ClangASTImporter               &m_master;
+        clang::ASTContext              *m_source_ctx;
     };
     
     typedef STD_SHARED_PTR(Minion) MinionSP;
