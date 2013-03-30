@@ -163,7 +163,6 @@ static bool selectMADD(SDNode *ADDENode, SelectionDAG *CurDAG) {
   if (!MultHi.hasOneUse() || !MultLo.hasOneUse())
     return false;
 
-  SDValue Chain = CurDAG->getEntryNode();
   DebugLoc DL = ADDENode->getDebugLoc();
 
   // Initialize accumulator.
@@ -240,7 +239,6 @@ static bool selectMSUB(SDNode *SUBENode, SelectionDAG *CurDAG) {
   if (!MultHi.hasOneUse() || !MultLo.hasOneUse())
     return false;
 
-  SDValue Chain = CurDAG->getEntryNode();
   DebugLoc DL = SUBENode->getDebugLoc();
 
   // Initialize accumulator.
