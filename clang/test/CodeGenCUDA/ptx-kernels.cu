@@ -2,11 +2,15 @@
 
 #include "../SemaCUDA/cuda.h"
 
-// CHECK: define ptx_device{{.*}}device_function
+// CHECK: define void @device_function
+extern "C"
 __device__ void device_function() {}
 
-// CHECK: define ptx_kernel{{.*}}global_function
+// CHECK: define void @global_function
+extern "C"
 __global__ void global_function() {
-  // CHECK: call ptx_device{{.*}}device_function
+  // CHECK: call void @device_function
   device_function();
 }
+
+// CHECK: !{{[0-9]+}} = metadata !{void ()* @global_function, metadata !"kernel", i32 1}
