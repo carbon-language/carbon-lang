@@ -28,6 +28,7 @@
 #include "clang/Analysis/Support/BumpVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SaveAndRestore.h"
 
 using namespace clang;
@@ -384,6 +385,31 @@ bool LocationContext::isParentOf(const LocationContext *LC) const {
   } while (LC);
 
   return false;
+}
+
+void LocationContext::dumpStack() const {
+  ASTContext &Ctx = getAnalysisDeclContext()->getASTContext();
+  PrintingPolicy PP(Ctx.getLangOpts());
+  PP.TerseOutput = 1;
+
+  unsigned Frame = 0;
+  for (const LocationContext *LCtx = this; LCtx; LCtx = LCtx->getParent()) {
+    switch (LCtx->getKind()) {
+    case StackFrame:
+      llvm::errs() << '#' << Frame++ << ' ';
+      cast<StackFrameContext>(LCtx)->getDecl()->print(llvm::errs(), PP);
+      llvm::errs() << '\n';
+      break;
+    case Scope:
+      llvm::errs() << "    (scope)\n";
+      break;
+    case Block:
+      llvm::errs() << "    (block context: "
+                   << cast<BlockInvocationContext>(LCtx)->getContextData()
+                   << ")\n";
+      break;
+    }
+  }
 }
 
 //===----------------------------------------------------------------------===//
