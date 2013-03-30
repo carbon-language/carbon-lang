@@ -1029,8 +1029,8 @@ void PPCTargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
 bool PPCTargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
                                          StringRef Name,
                                          bool Enabled) const {
-  if (Name == "altivec" || Name == "mfocrf" || Name == "popcntd" ||
-      Name == "qpx") {
+  if (Name == "altivec" || Name == "fprnd" || Name == "mfocrf" ||
+      Name == "popcntd" || Name == "qpx") {
     Features[Name] = Enabled;
     return true;
   }

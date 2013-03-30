@@ -1101,6 +1101,10 @@ void Clang::AddPPCTargetArgs(const ArgList &Args,
                    options::OPT_faltivec, options::OPT_fno_altivec,
                    "altivec");
 
+  AddTargetFeature(Args, CmdArgs,
+                   options::OPT_mfprnd, options::OPT_mno_fprnd,
+                   "fprnd");
+
   // Note that gcc calls this mfcrf and LLVM calls this mfocrf.
   AddTargetFeature(Args, CmdArgs,
                    options::OPT_mmfcrf, options::OPT_mno_mfcrf,
