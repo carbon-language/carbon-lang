@@ -201,7 +201,7 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO,
   case X86II::MO_TLVP_PIC_BASE:
     O << "@TLVP" << '-' << *MF->getPICBaseSymbol();
     break;
-  case X86II::MO_SECREL:      O << "@SECREL";      break;
+  case X86II::MO_SECREL:    O << "@SECREL32";  break;
   }
 }
 

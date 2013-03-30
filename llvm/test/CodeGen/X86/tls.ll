@@ -22,13 +22,13 @@ define i32 @f1() {
 ; X32_WIN:      movl __tls_index, %eax
 ; X32_WIN-NEXT: movl %fs:__tls_array, %ecx
 ; X32_WIN-NEXT: movl (%ecx,%eax,4), %eax
-; X32_WIN-NEXT: movl _i1@SECREL(%eax), %eax
+; X32_WIN-NEXT: movl _i1@SECREL32(%eax), %eax
 ; X32_WIN-NEXT: ret
 ; X64_WIN: f1:
 ; X64_WIN:      movl _tls_index(%rip), %eax
 ; X64_WIN-NEXT: movq %gs:88, %rcx
 ; X64_WIN-NEXT: movq (%rcx,%rax,8), %rax
-; X64_WIN-NEXT: movl i1@SECREL(%rax), %eax
+; X64_WIN-NEXT: movl i1@SECREL32(%rax), %eax
 ; X64_WIN-NEXT: ret
 
 entry:
@@ -49,13 +49,13 @@ define i32* @f2() {
 ; X32_WIN:      movl __tls_index, %eax
 ; X32_WIN-NEXT: movl %fs:__tls_array, %ecx
 ; X32_WIN-NEXT: movl (%ecx,%eax,4), %eax
-; X32_WIN-NEXT: leal _i1@SECREL(%eax), %eax
+; X32_WIN-NEXT: leal _i1@SECREL32(%eax), %eax
 ; X32_WIN-NEXT: ret
 ; X64_WIN: f2:
 ; X64_WIN:      movl _tls_index(%rip), %eax
 ; X64_WIN-NEXT: movq %gs:88, %rcx
 ; X64_WIN-NEXT: movq (%rcx,%rax,8), %rax
-; X64_WIN-NEXT: leaq i1@SECREL(%rax), %rax
+; X64_WIN-NEXT: leaq i1@SECREL32(%rax), %rax
 ; X64_WIN-NEXT: ret
 
 entry:
@@ -75,13 +75,13 @@ define i32 @f3() nounwind {
 ; X32_WIN:      movl __tls_index, %eax
 ; X32_WIN-NEXT: movl %fs:__tls_array, %ecx
 ; X32_WIN-NEXT: movl (%ecx,%eax,4), %eax
-; X32_WIN-NEXT: movl _i2@SECREL(%eax), %eax
+; X32_WIN-NEXT: movl _i2@SECREL32(%eax), %eax
 ; X32_WIN-NEXT: ret
 ; X64_WIN: f3:
 ; X64_WIN:      movl _tls_index(%rip), %eax
 ; X64_WIN-NEXT: movq %gs:88, %rcx
 ; X64_WIN-NEXT: movq (%rcx,%rax,8), %rax
-; X64_WIN-NEXT: movl i2@SECREL(%rax), %eax
+; X64_WIN-NEXT: movl i2@SECREL32(%rax), %eax
 ; X64_WIN-NEXT: ret
 
 entry:
@@ -102,13 +102,13 @@ define i32* @f4() {
 ; X32_WIN:      movl __tls_index, %eax
 ; X32_WIN-NEXT: movl %fs:__tls_array, %ecx
 ; X32_WIN-NEXT: movl (%ecx,%eax,4), %eax
-; X32_WIN-NEXT: leal _i2@SECREL(%eax), %eax
+; X32_WIN-NEXT: leal _i2@SECREL32(%eax), %eax
 ; X32_WIN-NEXT: ret
 ; X64_WIN: f4:
 ; X64_WIN:      movl _tls_index(%rip), %eax
 ; X64_WIN-NEXT: movq %gs:88, %rcx
 ; X64_WIN-NEXT: movq (%rcx,%rax,8), %rax
-; X64_WIN-NEXT: leaq i2@SECREL(%rax), %rax
+; X64_WIN-NEXT: leaq i2@SECREL32(%rax), %rax
 ; X64_WIN-NEXT: ret
 
 entry:
@@ -126,13 +126,13 @@ define i32 @f5() nounwind {
 ; X32_WIN:      movl __tls_index, %eax
 ; X32_WIN-NEXT: movl %fs:__tls_array, %ecx
 ; X32_WIN-NEXT: movl (%ecx,%eax,4), %eax
-; X32_WIN-NEXT: movl _i3@SECREL(%eax), %eax
+; X32_WIN-NEXT: movl _i3@SECREL32(%eax), %eax
 ; X32_WIN-NEXT: ret
 ; X64_WIN: f5:
 ; X64_WIN:      movl _tls_index(%rip), %eax
 ; X64_WIN-NEXT: movq %gs:88, %rcx
 ; X64_WIN-NEXT: movq (%rcx,%rax,8), %rax
-; X64_WIN-NEXT: movl i3@SECREL(%rax), %eax
+; X64_WIN-NEXT: movl i3@SECREL32(%rax), %eax
 ; X64_WIN-NEXT: ret
 
 entry:
@@ -153,13 +153,13 @@ define i32* @f6() {
 ; X32_WIN:      movl __tls_index, %eax
 ; X32_WIN-NEXT: movl %fs:__tls_array, %ecx
 ; X32_WIN-NEXT: movl (%ecx,%eax,4), %eax
-; X32_WIN-NEXT: leal _i3@SECREL(%eax), %eax
+; X32_WIN-NEXT: leal _i3@SECREL32(%eax), %eax
 ; X32_WIN-NEXT: ret
 ; X64_WIN: f6:
 ; X64_WIN:      movl _tls_index(%rip), %eax
 ; X64_WIN-NEXT: movq %gs:88, %rcx
 ; X64_WIN-NEXT: movq (%rcx,%rax,8), %rax
-; X64_WIN-NEXT: leaq i3@SECREL(%rax), %rax
+; X64_WIN-NEXT: leaq i3@SECREL32(%rax), %rax
 ; X64_WIN-NEXT: ret
 
 entry:
@@ -234,14 +234,14 @@ define i16 @f11() {
 ; X32_WIN:      movl __tls_index, %eax
 ; X32_WIN-NEXT: movl %fs:__tls_array, %ecx
 ; X32_WIN-NEXT: movl (%ecx,%eax,4), %eax
-; X32_WIN-NEXT: movzwl _s1@SECREL(%eax), %eax
+; X32_WIN-NEXT: movzwl _s1@SECREL32(%eax), %eax
 ; X32_WIN-NEXT: # kill
 ; X32_WIN-NEXT: ret
 ; X64_WIN: f11:
 ; X64_WIN:      movl _tls_index(%rip), %eax
 ; X64_WIN-NEXT: movq %gs:88, %rcx
 ; X64_WIN-NEXT: movq (%rcx,%rax,8), %rax
-; X64_WIN-NEXT: movzwl s1@SECREL(%rax), %eax
+; X64_WIN-NEXT: movzwl s1@SECREL32(%rax), %eax
 ; X64_WIN-NEXT: # kill
 ; X64_WIN-NEXT: ret
 
@@ -261,13 +261,13 @@ define i32 @f12() {
 ; X32_WIN:      movl __tls_index, %eax
 ; X32_WIN-NEXT: movl %fs:__tls_array, %ecx
 ; X32_WIN-NEXT: movl (%ecx,%eax,4), %eax
-; X32_WIN-NEXT: movswl _s1@SECREL(%eax), %eax
+; X32_WIN-NEXT: movswl _s1@SECREL32(%eax), %eax
 ; X32_WIN-NEXT: ret
 ; X64_WIN: f12:
 ; X64_WIN:      movl _tls_index(%rip), %eax
 ; X64_WIN-NEXT: movq %gs:88, %rcx
 ; X64_WIN-NEXT: movq (%rcx,%rax,8), %rax
-; X64_WIN-NEXT: movswl s1@SECREL(%rax), %eax
+; X64_WIN-NEXT: movswl s1@SECREL32(%rax), %eax
 ; X64_WIN-NEXT: ret
 
 entry:
@@ -287,13 +287,13 @@ define i8 @f13() {
 ; X32_WIN:      movl __tls_index, %eax
 ; X32_WIN-NEXT: movl %fs:__tls_array, %ecx
 ; X32_WIN-NEXT: movl (%ecx,%eax,4), %eax
-; X32_WIN-NEXT: movb _b1@SECREL(%eax), %al
+; X32_WIN-NEXT: movb _b1@SECREL32(%eax), %al
 ; X32_WIN-NEXT: ret
 ; X64_WIN: f13:
 ; X64_WIN:      movl _tls_index(%rip), %eax
 ; X64_WIN-NEXT: movq %gs:88, %rcx
 ; X64_WIN-NEXT: movq (%rcx,%rax,8), %rax
-; X64_WIN-NEXT: movb b1@SECREL(%rax), %al
+; X64_WIN-NEXT: movb b1@SECREL32(%rax), %al
 ; X64_WIN-NEXT: ret
 
 entry:
@@ -312,13 +312,13 @@ define i32 @f14() {
 ; X32_WIN:      movl __tls_index, %eax
 ; X32_WIN-NEXT: movl %fs:__tls_array, %ecx
 ; X32_WIN-NEXT: movl (%ecx,%eax,4), %eax
-; X32_WIN-NEXT: movsbl _b1@SECREL(%eax), %eax
+; X32_WIN-NEXT: movsbl _b1@SECREL32(%eax), %eax
 ; X32_WIN-NEXT: ret
 ; X64_WIN: f14:
 ; X64_WIN:      movl _tls_index(%rip), %eax
 ; X64_WIN-NEXT: movq %gs:88, %rcx
 ; X64_WIN-NEXT: movq (%rcx,%rax,8), %rax
-; X64_WIN-NEXT: movsbl b1@SECREL(%rax), %eax
+; X64_WIN-NEXT: movsbl b1@SECREL32(%rax), %eax
 ; X64_WIN-NEXT: ret
 
 entry:
