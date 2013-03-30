@@ -68,6 +68,16 @@ namespace llvm {
 
       EH_RETURN,
 
+      // Node used to extract integer from accumulator.
+      ExtractLOHI,
+
+      // Node used to insert integers to accumulator.
+      InsertLOHI,
+
+      // Mult nodes.
+      Mult,
+      Multu,
+
       // MAdd/Sub nodes
       MAdd,
       MAddu,
@@ -77,6 +87,8 @@ namespace llvm {
       // DivRem(u)
       DivRem,
       DivRemU,
+      DivRem16,
+      DivRemU16,
 
       BuildPairF64,
       ExtractElementF64,
