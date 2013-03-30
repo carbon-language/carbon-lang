@@ -72,7 +72,6 @@ representation.
    CMake
    HowToBuildOnARM
    CommandGuide/index
-   DeveloperPolicy
    GettingStarted
    GettingStartedVS
    FAQ
@@ -107,9 +106,6 @@ representation.
 :doc:`tutorial/index`
    Tutorials about using LLVM. Includes a tutorial about making a custom
    language with LLVM.
-
-:doc:`DeveloperPolicy`
-   The LLVM project's policy towards developers and their contributions.
 
 :doc:`LLVM Command Guide <CommandGuide/index>`
    A reference manual for the LLVM command line utilities ("man" pages for LLVM
@@ -324,11 +320,15 @@ Information about LLVM's development process.
 .. toctree::
    :hidden:
 
+   DeveloperPolicy
    MakefileGuide
    Projects
    LLVMBuild
    HowToReleaseLLVM
    Packaging
+
+:doc:`DeveloperPolicy`
+   The LLVM project's policy towards developers and their contributions.
 
 :doc:`Projects`
   How-to guide and templates for new projects that *use* the LLVM
