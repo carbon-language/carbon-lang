@@ -1510,8 +1510,8 @@ public:
                               SourceLocation StartLoc, SourceLocation NLoc,
                               DeclarationName N, QualType T,
                               TypeSourceInfo *TInfo,
-                              StorageClass SC = SC_None,
-                              StorageClass SCAsWritten = SC_None,
+                              StorageClass SC,
+                              StorageClass SCAsWritten,
                               bool isInlineSpecified = false,
                               bool hasWrittenPrototype = true,
                               bool isConstexprSpecified = false) {
@@ -1526,10 +1526,10 @@ public:
                               SourceLocation StartLoc,
                               const DeclarationNameInfo &NameInfo,
                               QualType T, TypeSourceInfo *TInfo,
-                              StorageClass SC = SC_None,
-                              StorageClass SCAsWritten = SC_None,
-                              bool isInlineSpecified = false,
-                              bool hasWrittenPrototype = true,
+                              StorageClass SC,
+                              StorageClass SCAsWritten,
+                              bool isInlineSpecified,
+                              bool hasWrittenPrototype,
                               bool isConstexprSpecified = false);
 
   static FunctionDecl *CreateDeserialized(ASTContext &C, unsigned ID);
