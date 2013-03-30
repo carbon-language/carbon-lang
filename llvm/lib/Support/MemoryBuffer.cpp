@@ -72,10 +72,12 @@ static void CopyStringRef(char *Memory, StringRef Data) {
   Memory[Data.size()] = 0; // Null terminate string.
 }
 
+namespace {
 struct NamedBufferAlloc {
   StringRef Name;
   NamedBufferAlloc(StringRef Name) : Name(Name) {}
 };
+}
 
 void *operator new(size_t N, const NamedBufferAlloc &Alloc) {
   char *Mem = static_cast<char *>(operator new(N + Alloc.Name.size() + 1));
