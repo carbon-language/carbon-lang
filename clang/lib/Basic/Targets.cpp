@@ -1302,7 +1302,14 @@ namespace {
       return TargetInfo::CharPtrBuiltinVaList;
     }
     virtual bool setCPU(const std::string &Name) {
-      return Name == "sm_10" || Name == "sm_13" || Name == "sm_20";
+      bool Valid = llvm::StringSwitch<bool>(Name)
+        .Case("sm_20", true)
+        .Case("sm_21", true)
+        .Case("sm_30", true)
+        .Case("sm_35", true)
+        .Default(false);
+
+      return Valid;
     }
     virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
                                    StringRef Name,
