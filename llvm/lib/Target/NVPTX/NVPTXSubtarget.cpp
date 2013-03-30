@@ -33,12 +33,12 @@ cl::opt<NVPTX::DrvInterface> DriverInterface(
 NVPTXSubtarget::NVPTXSubtarget(const std::string &TT, const std::string &CPU,
                                const std::string &FS, bool is64Bit)
     : NVPTXGenSubtargetInfo(TT, CPU, FS), Is64Bit(is64Bit), PTXVersion(0),
-      SmVersion(10) {
+      SmVersion(20) {
 
   drvInterface = DriverInterface;
 
   // Provide the default CPU if none
-  std::string defCPU = "sm_10";
+  std::string defCPU = "sm_20";
 
   ParseSubtargetFeatures((CPU.empty() ? defCPU : CPU), FS);
 

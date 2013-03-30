@@ -26,14 +26,6 @@ include "NVPTXInstrInfo.td"
 //===----------------------------------------------------------------------===//
 
 // SM Versions
-def SM10 : SubtargetFeature<"sm_10", "SmVersion", "10",
-                            "Target SM 1.0">;
-def SM11 : SubtargetFeature<"sm_11", "SmVersion", "11",
-                            "Target SM 1.1">;
-def SM12 : SubtargetFeature<"sm_12", "SmVersion", "12",
-                            "Target SM 1.2">;
-def SM13 : SubtargetFeature<"sm_13", "SmVersion", "13",
-                            "Target SM 1.3">;
 def SM20 : SubtargetFeature<"sm_20", "SmVersion", "20",
                             "Target SM 2.0">;
 def SM21 : SubtargetFeature<"sm_21", "SmVersion", "21",
@@ -56,10 +48,6 @@ def PTX31 : SubtargetFeature<"ptx31", "PTXVersion", "31",
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 
-def : Proc<"sm_10", [SM10]>;
-def : Proc<"sm_11", [SM11]>;
-def : Proc<"sm_12", [SM12]>;
-def : Proc<"sm_13", [SM13]>;
 def : Proc<"sm_20", [SM20]>;
 def : Proc<"sm_21", [SM21]>;
 def : Proc<"sm_30", [SM30]>;
