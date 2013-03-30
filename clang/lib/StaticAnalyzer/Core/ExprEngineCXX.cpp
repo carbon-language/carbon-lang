@@ -351,15 +351,16 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
     State = State->BindExpr(CNE, LCtx, symVal);
   }
 
-  Bldr.generateNode(CNE, Pred, State);  
+  ExplodedNode *NewN = Bldr.generateNode(CNE, Pred, State);
+  if (!NewN)
+    return;
 
   // If the type is not a record, we won't have a CXXConstructExpr as an
   // initializer. Copy the value over.
   if (const Expr *Init = CNE->getInitializer()) {
     if (!isa<CXXConstructExpr>(Init)) {
       assert(Bldr.getResults().size() == 1);
-      ExplodedNode *TmpN = *Bldr.getResults().begin();
-      Bldr.takeNodes(TmpN);
+      Bldr.takeNodes(NewN);
 
       assert(!CNE->getType()->getPointeeCXXRecordDecl());
 

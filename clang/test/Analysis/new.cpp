@@ -94,6 +94,14 @@ void testNewInvalidationScalarPlacement(int **p) {
   new (p) (int *)(static_cast<int *>(malloc(4))); // no-warning
 }
 
+void testCacheOut(PtrWrapper w) {
+  extern bool coin();
+  if (coin())
+    w.x = 0;
+  new (&w.x) (int*)(0); // we cache out here; don't crash
+}
+
+
 //--------------------------------------------------------------------
 // Check for intersection with other checkers from MallocChecker.cpp 
 // bounded with unix.Malloc
