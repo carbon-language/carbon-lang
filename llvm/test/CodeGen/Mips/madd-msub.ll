@@ -1,7 +1,9 @@
-; RUN: llc -march=mips < %s | FileCheck %s
+; RUN: llc -march=mips < %s | FileCheck %s -check-prefix=32
+; RUN: llc -march=mips -mattr=dsp < %s | FileCheck %s -check-prefix=DSP
 ; RUN: llc -march=mips -mcpu=mips16 < %s
 
-; CHECK: madd 
+; 32: madd ${{[0-9]+}}
+; DSP: madd $ac
 define i64 @madd1(i32 %a, i32 %b, i32 %c) nounwind readnone {
 entry:
   %conv = sext i32 %a to i64
@@ -12,7 +14,8 @@ entry:
   ret i64 %add
 }
 
-; CHECK: maddu
+; 32: maddu ${{[0-9]+}}
+; DSP: maddu $ac
 define i64 @madd2(i32 %a, i32 %b, i32 %c) nounwind readnone {
 entry:
   %conv = zext i32 %a to i64
@@ -23,7 +26,8 @@ entry:
   ret i64 %add
 }
 
-; CHECK: madd
+; 32: madd ${{[0-9]+}}
+; DSP: madd $ac
 define i64 @madd3(i32 %a, i32 %b, i64 %c) nounwind readnone {
 entry:
   %conv = sext i32 %a to i64
@@ -33,7 +37,8 @@ entry:
   ret i64 %add
 }
 
-; CHECK: msub
+; 32: msub ${{[0-9]+}}
+; DSP: msub $ac
 define i64 @msub1(i32 %a, i32 %b, i32 %c) nounwind readnone {
 entry:
   %conv = sext i32 %c to i64
@@ -44,7 +49,8 @@ entry:
   ret i64 %sub
 }
 
-; CHECK: msubu 
+; 32: msubu ${{[0-9]+}}
+; DSP: msubu $ac
 define i64 @msub2(i32 %a, i32 %b, i32 %c) nounwind readnone {
 entry:
   %conv = zext i32 %c to i64
@@ -55,7 +61,8 @@ entry:
   ret i64 %sub
 }
 
-; CHECK: msub 
+; 32: msub ${{[0-9]+}}
+; DSP: msub $ac
 define i64 @msub3(i32 %a, i32 %b, i64 %c) nounwind readnone {
 entry:
   %conv = sext i32 %a to i64

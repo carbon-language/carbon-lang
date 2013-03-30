@@ -20,17 +20,18 @@ def immZExt10 : ImmLeaf<i32, [{return isUInt<10>(Imm);}]>;
 def immSExt6 : ImmLeaf<i32, [{return isInt<6>(Imm);}]>;
 
 // Mips-specific dsp nodes
-def SDT_MipsExtr : SDTypeProfile<1, 1, [SDTCisVT<0, i32>, SDTCisSameAs<0, 1>]>;
-def SDT_MipsShilo : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
-def SDT_MipsDPA : SDTypeProfile<0, 2, [SDTCisVT<0, i32>, SDTCisSameAs<0, 1>]>;
+def SDT_MipsExtr : SDTypeProfile<1, 2, [SDTCisVT<0, i32>, SDTCisSameAs<0, 1>,
+                                        SDTCisVT<2, untyped>]>;
+def SDT_MipsShilo : SDTypeProfile<1, 2, [SDTCisVT<0, untyped>,
+                                         SDTCisSameAs<0, 2>, SDTCisVT<1, i32>]>;
+def SDT_MipsDPA : SDTypeProfile<1, 3, [SDTCisVT<0, untyped>, SDTCisSameAs<0, 3>,
+                                       SDTCisVT<1, i32>, SDTCisSameAs<1, 2>]>;
 
 class MipsDSPBase<string Opc, SDTypeProfile Prof> :
-  SDNode<!strconcat("MipsISD::", Opc), Prof,
-         [SDNPHasChain, SDNPInGlue, SDNPOutGlue]>;
+  SDNode<!strconcat("MipsISD::", Opc), Prof>;
 
 class MipsDSPSideEffectBase<string Opc, SDTypeProfile Prof> :
-  SDNode<!strconcat("MipsISD::", Opc), Prof,
-         [SDNPHasChain, SDNPInGlue, SDNPOutGlue, SDNPSideEffect]>;
+  SDNode<!strconcat("MipsISD::", Opc), Prof, [SDNPHasChain, SDNPSideEffect]>;
 
 def MipsEXTP : MipsDSPSideEffectBase<"EXTP", SDT_MipsExtr>;
 def MipsEXTPDP : MipsDSPSideEffectBase<"EXTPDP", SDT_MipsExtr>;
@@ -40,7 +41,7 @@ def MipsEXTR_R_W : MipsDSPSideEffectBase<"EXTR_R_W", SDT_MipsExtr>;
 def MipsEXTR_RS_W : MipsDSPSideEffectBase<"EXTR_RS_W", SDT_MipsExtr>;
 
 def MipsSHILO : MipsDSPBase<"SHILO", SDT_MipsShilo>;
-def MipsMTHLIP : MipsDSPBase<"MTHLIP", SDT_MipsShilo>;
+def MipsMTHLIP : MipsDSPSideEffectBase<"MTHLIP", SDT_MipsShilo>;
 
 def MipsMULSAQ_S_W_PH : MipsDSPSideEffectBase<"MULSAQ_S_W_PH", SDT_MipsDPA>;
 def MipsMAQ_S_W_PHL : MipsDSPSideEffectBase<"MAQ_S_W_PHL", SDT_MipsDPA>;
@@ -383,7 +384,7 @@ class APPEND_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 class EXTR_W_TY1_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                               InstrItinClass itin> {
   dag OutOperandList = (outs CPURegs:$rt);
-  dag InOperandList = (ins ACRegs:$ac, CPURegs:$shift_rs);
+  dag InOperandList = (ins ACRegsDSP:$ac, CPURegs:$shift_rs);
   string AsmString = !strconcat(instr_asm, "\t$rt, $ac, $shift_rs");
   InstrItinClass Itinerary = itin;
   list<Register> Defs = [DSPCtrl];
@@ -392,46 +393,40 @@ class EXTR_W_TY1_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 class EXTR_W_TY1_R1_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                               InstrItinClass itin> {
   dag OutOperandList = (outs CPURegs:$rt);
-  dag InOperandList = (ins ACRegs:$ac, uimm16:$shift_rs);
+  dag InOperandList = (ins ACRegsDSP:$ac, uimm16:$shift_rs);
   string AsmString = !strconcat(instr_asm, "\t$rt, $ac, $shift_rs");
   InstrItinClass Itinerary = itin;
   list<Register> Defs = [DSPCtrl];
 }
 
-class SHILO_R1_PSEUDO_BASE<SDPatternOperator OpNode, InstrItinClass itin,
-                           Instruction realinst> :
-  PseudoDSP<(outs), (ins simm16:$shift), [(OpNode immSExt6:$shift)]>,
-  PseudoInstExpansion<(realinst AC0, simm16:$shift)> {
-  list<Register> Defs = [DSPCtrl, AC0];
-  list<Register> Uses = [AC0];
-  InstrItinClass Itinerary = itin;
-}
-
-class SHILO_R1_DESC_BASE<string instr_asm> {
-  dag OutOperandList = (outs ACRegs:$ac);
-  dag InOperandList = (ins simm16:$shift);
+class SHILO_R1_DESC_BASE<string instr_asm, SDPatternOperator OpNode> {
+  dag OutOperandList = (outs ACRegsDSP:$ac);
+  dag InOperandList = (ins simm16:$shift, ACRegsDSP:$acin);
   string AsmString = !strconcat(instr_asm, "\t$ac, $shift");
+  list<dag> Pattern = [(set ACRegsDSP:$ac,
+                        (OpNode immSExt6:$shift, ACRegsDSP:$acin))];
+  list<Register> Defs = [DSPCtrl];
+  string Constraints = "$acin = $ac";
 }
 
-class SHILO_R2_PSEUDO_BASE<SDPatternOperator OpNode, InstrItinClass itin,
-                           Instruction realinst> :
-  PseudoDSP<(outs), (ins CPURegs:$rs), [(OpNode CPURegs:$rs)]>,
-  PseudoInstExpansion<(realinst AC0, CPURegs:$rs)> {
-  list<Register> Defs = [DSPCtrl, AC0];
-  list<Register> Uses = [AC0];
-  InstrItinClass Itinerary = itin;
-}
-
-class SHILO_R2_DESC_BASE<string instr_asm> {
-  dag OutOperandList = (outs ACRegs:$ac);
-  dag InOperandList = (ins CPURegs:$rs);
+class SHILO_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode> {
+  dag OutOperandList = (outs ACRegsDSP:$ac);
+  dag InOperandList = (ins CPURegs:$rs, ACRegsDSP:$acin);
   string AsmString = !strconcat(instr_asm, "\t$ac, $rs");
+  list<dag> Pattern = [(set ACRegsDSP:$ac,
+                        (OpNode CPURegs:$rs, ACRegsDSP:$acin))];
+  list<Register> Defs = [DSPCtrl];
+  string Constraints = "$acin = $ac";
 }
 
-class MTHLIP_DESC_BASE<string instr_asm> {
-  dag OutOperandList = (outs ACRegs:$ac);
-  dag InOperandList = (ins CPURegs:$rs);
+class MTHLIP_DESC_BASE<string instr_asm, SDPatternOperator OpNode> {
+  dag OutOperandList = (outs ACRegsDSP:$ac);
+  dag InOperandList = (ins CPURegs:$rs, ACRegsDSP:$acin);
   string AsmString = !strconcat(instr_asm, "\t$rs, $ac");
+  list<dag> Pattern = [(set ACRegsDSP:$ac,
+                        (OpNode CPURegs:$rs, ACRegsDSP:$acin))];
+  list<Register> Uses = [DSPCtrl];
+  string Constraints = "$acin = $ac";
 }
 
 class RDDSP_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
@@ -454,35 +449,37 @@ class WRDSP_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   list<Register> Defs = [DSPCtrl];
 }
 
-class DPA_W_PH_PSEUDO_BASE<SDPatternOperator OpNode, InstrItinClass itin,
-                           Instruction realinst> :
-  PseudoDSP<(outs), (ins CPURegs:$rs, CPURegs:$rt),
-            [(OpNode CPURegs:$rs, CPURegs:$rt)]>,
-  PseudoInstExpansion<(realinst AC0, CPURegs:$rs, CPURegs:$rt)> {
-  list<Register> Defs = [DSPCtrl, AC0];
-  list<Register> Uses = [AC0];
-  InstrItinClass Itinerary = itin;
+class DPA_W_PH_DESC_BASE<string instr_asm, SDPatternOperator OpNode> {
+  dag OutOperandList = (outs ACRegsDSP:$ac);
+  dag InOperandList = (ins CPURegs:$rs, CPURegs:$rt, ACRegsDSP:$acin);
+  string AsmString = !strconcat(instr_asm, "\t$ac, $rs, $rt");
+  list<dag> Pattern = [(set ACRegsDSP:$ac,
+                        (OpNode CPURegs:$rs, CPURegs:$rt, ACRegsDSP:$acin))];
+  list<Register> Defs = [DSPCtrl];
+  string Constraints = "$acin = $ac";
 }
 
-class DPA_W_PH_DESC_BASE<string instr_asm> {
-  dag OutOperandList = (outs ACRegs:$ac);
+class MULT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                     InstrItinClass itin> {
+  dag OutOperandList = (outs ACRegsDSP:$ac);
   dag InOperandList = (ins CPURegs:$rs, CPURegs:$rt);
   string AsmString = !strconcat(instr_asm, "\t$ac, $rs, $rt");
-}
-
-class MULT_PSEUDO_BASE<SDPatternOperator OpNode, InstrItinClass itin,
-                       Instruction realinst> :
-  PseudoDSP<(outs), (ins CPURegs:$rs, CPURegs:$rt),
-            [(OpNode CPURegs:$rs, CPURegs:$rt)]>,
-  PseudoInstExpansion<(realinst AC0, CPURegs:$rs, CPURegs:$rt)> {
-  list<Register> Defs = [DSPCtrl, AC0];
+  list<dag> Pattern = [(set ACRegsDSP:$ac, (OpNode CPURegs:$rs, CPURegs:$rt))];
   InstrItinClass Itinerary = itin;
+  int AddedComplexity = 20;
+  bit isCommutable = 1;
 }
 
-class MULT_DESC_BASE<string instr_asm> {
-  dag OutOperandList = (outs ACRegs:$ac);
-  dag InOperandList = (ins CPURegs:$rs, CPURegs:$rt);
+class MADD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                     InstrItinClass itin> {
+  dag OutOperandList = (outs ACRegsDSP:$ac);
+  dag InOperandList = (ins CPURegs:$rs, CPURegs:$rt, ACRegsDSP:$acin);
   string AsmString = !strconcat(instr_asm, "\t$ac, $rs, $rt");
+  list<dag> Pattern = [(set ACRegsDSP:$ac,
+                        (OpNode CPURegs:$rs, CPURegs:$rt, ACRegsDSP:$acin))];
+  InstrItinClass Itinerary = itin;
+  int AddedComplexity = 20;
+  string Constraints = "$acin = $ac";
 }
 
 class BPOSGE32_PSEUDO_DESC_BASE<SDPatternOperator OpNode, InstrItinClass itin> :
@@ -717,44 +714,40 @@ class MULQ_RS_PH_DESC : ADDU_QB_DESC_BASE<"mulq_rs.ph", int_mips_mulq_rs_ph,
                                           NoItinerary, DSPRegs, DSPRegs>,
                         IsCommutable;
 
-class MULSAQ_S_W_PH_DESC : DPA_W_PH_DESC_BASE<"mulsaq_s.w.ph">;
+class MULSAQ_S_W_PH_DESC : DPA_W_PH_DESC_BASE<"mulsaq_s.w.ph",
+                                              MipsMULSAQ_S_W_PH>;
 
-class MAQ_S_W_PHL_DESC : DPA_W_PH_DESC_BASE<"maq_s.w.phl">;
+class MAQ_S_W_PHL_DESC : DPA_W_PH_DESC_BASE<"maq_s.w.phl", MipsMAQ_S_W_PHL>;
 
-class MAQ_S_W_PHR_DESC : DPA_W_PH_DESC_BASE<"maq_s.w.phr">;
+class MAQ_S_W_PHR_DESC : DPA_W_PH_DESC_BASE<"maq_s.w.phr", MipsMAQ_S_W_PHR>;
 
-class MAQ_SA_W_PHL_DESC : DPA_W_PH_DESC_BASE<"maq_sa.w.phl">;
+class MAQ_SA_W_PHL_DESC : DPA_W_PH_DESC_BASE<"maq_sa.w.phl", MipsMAQ_SA_W_PHL>;
 
-class MAQ_SA_W_PHR_DESC : DPA_W_PH_DESC_BASE<"maq_sa.w.phr">;
+class MAQ_SA_W_PHR_DESC : DPA_W_PH_DESC_BASE<"maq_sa.w.phr", MipsMAQ_SA_W_PHR>;
 
 // Dot product with accumulate/subtract
-class DPAU_H_QBL_DESC : DPA_W_PH_DESC_BASE<"dpau.h.qbl">;
+class DPAU_H_QBL_DESC : DPA_W_PH_DESC_BASE<"dpau.h.qbl", MipsDPAU_H_QBL>;
 
-class DPAU_H_QBR_DESC : DPA_W_PH_DESC_BASE<"dpau.h.qbr">;
+class DPAU_H_QBR_DESC : DPA_W_PH_DESC_BASE<"dpau.h.qbr", MipsDPAU_H_QBR>;
 
-class DPSU_H_QBL_DESC : DPA_W_PH_DESC_BASE<"dpsu.h.qbl">;
+class DPSU_H_QBL_DESC : DPA_W_PH_DESC_BASE<"dpsu.h.qbl", MipsDPSU_H_QBL>;
 
-class DPSU_H_QBR_DESC : DPA_W_PH_DESC_BASE<"dpsu.h.qbr">;
+class DPSU_H_QBR_DESC : DPA_W_PH_DESC_BASE<"dpsu.h.qbr", MipsDPSU_H_QBR>;
 
-class DPAQ_S_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpaq_s.w.ph">;
+class DPAQ_S_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpaq_s.w.ph", MipsDPAQ_S_W_PH>;
 
-class DPSQ_S_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpsq_s.w.ph">;
+class DPSQ_S_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpsq_s.w.ph", MipsDPSQ_S_W_PH>;
 
-class DPAQ_SA_L_W_DESC : DPA_W_PH_DESC_BASE<"dpaq_sa.l.w">;
+class DPAQ_SA_L_W_DESC : DPA_W_PH_DESC_BASE<"dpaq_sa.l.w", MipsDPAQ_SA_L_W>;
 
-class DPSQ_SA_L_W_DESC : DPA_W_PH_DESC_BASE<"dpsq_sa.l.w">;
+class DPSQ_SA_L_W_DESC : DPA_W_PH_DESC_BASE<"dpsq_sa.l.w", MipsDPSQ_SA_L_W>;
 
-class MULT_DSP_DESC : MULT_DESC_BASE<"mult">;
-
-class MULTU_DSP_DESC : MULT_DESC_BASE<"multu">;
-
-class MADD_DSP_DESC : MULT_DESC_BASE<"madd">;
-
-class MADDU_DSP_DESC : MULT_DESC_BASE<"maddu">;
-
-class MSUB_DSP_DESC : MULT_DESC_BASE<"msub">;
-
-class MSUBU_DSP_DESC : MULT_DESC_BASE<"msubu">;
+class MULT_DSP_DESC  : MULT_DESC_BASE<"mult", MipsMult, NoItinerary>;
+class MULTU_DSP_DESC : MULT_DESC_BASE<"multu", MipsMultu, NoItinerary>;
+class MADD_DSP_DESC  : MADD_DESC_BASE<"madd", MipsMAdd, NoItinerary>;
+class MADDU_DSP_DESC : MADD_DESC_BASE<"maddu", MipsMAddu, NoItinerary>;
+class MSUB_DSP_DESC  : MADD_DESC_BASE<"msub", MipsMSub, NoItinerary>;
+class MSUBU_DSP_DESC : MADD_DESC_BASE<"msubu", MipsMSubu, NoItinerary>;
 
 // Comparison
 class CMPU_EQ_QB_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmpu.eq.qb",
@@ -867,11 +860,11 @@ class EXTR_S_H_DESC : EXTR_W_TY1_R1_DESC_BASE<"extr_s.h", MipsEXTR_S_H,
 class EXTRV_S_H_DESC : EXTR_W_TY1_R2_DESC_BASE<"extrv_s.h", MipsEXTR_S_H,
                                                NoItinerary>;
 
-class SHILO_DESC : SHILO_R1_DESC_BASE<"shilo">;
+class SHILO_DESC : SHILO_R1_DESC_BASE<"shilo", MipsSHILO>;
 
-class SHILOV_DESC : SHILO_R2_DESC_BASE<"shilov">;
+class SHILOV_DESC : SHILO_R2_DESC_BASE<"shilov", MipsSHILO>;
 
-class MTHLIP_DESC : MTHLIP_DESC_BASE<"mthlip">;
+class MTHLIP_DESC : MTHLIP_DESC_BASE<"mthlip", MipsMTHLIP>;
 
 class RDDSP_DESC : RDDSP_DESC_BASE<"rddsp", int_mips_rddsp, NoItinerary>;
 
@@ -975,23 +968,25 @@ class MULQ_S_PH_DESC : ADDU_QB_DESC_BASE<"mulq_s.ph", int_mips_mulq_s_ph,
                        IsCommutable;
 
 // Dot product with accumulate/subtract
-class DPA_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpa.w.ph">;
+class DPA_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpa.w.ph", MipsDPA_W_PH>;
 
-class DPS_W_PH_DESC : DPA_W_PH_DESC_BASE<"dps.w.ph">;
+class DPS_W_PH_DESC : DPA_W_PH_DESC_BASE<"dps.w.ph", MipsDPS_W_PH>;
 
-class DPAQX_S_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpaqx_s.w.ph">;
+class DPAQX_S_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpaqx_s.w.ph", MipsDPAQX_S_W_PH>;
 
-class DPAQX_SA_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpaqx_sa.w.ph">;
+class DPAQX_SA_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpaqx_sa.w.ph",
+                                              MipsDPAQX_SA_W_PH>;
 
-class DPAX_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpax.w.ph">;
+class DPAX_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpax.w.ph", MipsDPAX_W_PH>;
 
-class DPSX_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpsx.w.ph">;
+class DPSX_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpsx.w.ph", MipsDPSX_W_PH>;
 
-class DPSQX_S_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpsqx_s.w.ph">;
+class DPSQX_S_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpsqx_s.w.ph", MipsDPSQX_S_W_PH>;
 
-class DPSQX_SA_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpsqx_sa.w.ph">;
+class DPSQX_SA_W_PH_DESC : DPA_W_PH_DESC_BASE<"dpsqx_sa.w.ph",
+                                              MipsDPSQX_SA_W_PH>;
 
-class MULSA_W_PH_DESC : DPA_W_PH_DESC_BASE<"mulsa.w.ph">;
+class MULSA_W_PH_DESC : DPA_W_PH_DESC_BASE<"mulsa.w.ph", MipsMULSA_W_PH>;
 
 // Precision reduce/expand
 class PRECR_QB_PH_DESC : CMP_EQ_QB_R3_DESC_BASE<"precr.qb.ph",
@@ -1206,71 +1201,6 @@ def PREPEND : PREPEND_ENC, PREPEND_DESC;
 }
 
 // Pseudos.
-def MULSAQ_S_W_PH_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsMULSAQ_S_W_PH, NoItinerary,
-                                                MULSAQ_S_W_PH>;
-def MAQ_S_W_PHL_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsMAQ_S_W_PHL, NoItinerary,
-                                              MAQ_S_W_PHL>;
-def MAQ_S_W_PHR_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsMAQ_S_W_PHR, NoItinerary,
-                                              MAQ_S_W_PHR>;
-def MAQ_SA_W_PHL_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsMAQ_SA_W_PHL, NoItinerary,
-                                               MAQ_SA_W_PHL>;
-def MAQ_SA_W_PHR_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsMAQ_SA_W_PHR, NoItinerary,
-                                               MAQ_SA_W_PHR>;
-def DPAU_H_QBL_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPAU_H_QBL, NoItinerary,
-                                             DPAU_H_QBL>;
-def DPAU_H_QBR_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPAU_H_QBR, NoItinerary,
-                                             DPAU_H_QBR>;
-def DPSU_H_QBL_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPSU_H_QBL, NoItinerary,
-                                             DPSU_H_QBL>;
-def DPSU_H_QBR_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPSU_H_QBR, NoItinerary,
-                                             DPSU_H_QBR>;
-def DPAQ_S_W_PH_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPAQ_S_W_PH, NoItinerary,
-                                              DPAQ_S_W_PH>;
-def DPSQ_S_W_PH_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPSQ_S_W_PH, NoItinerary,
-                                              DPSQ_S_W_PH>;
-def DPAQ_SA_L_W_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPAQ_SA_L_W, NoItinerary,
-                                              DPAQ_SA_L_W>;
-def DPSQ_SA_L_W_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPSQ_SA_L_W, NoItinerary,
-                                              DPSQ_SA_L_W>;
-
-def MULT_DSP_PSEUDO : MULT_PSEUDO_BASE<MipsMULT, NoItinerary, MULT_DSP>,
-                      IsCommutable;
-def MULTU_DSP_PSEUDO : MULT_PSEUDO_BASE<MipsMULTU, NoItinerary, MULTU_DSP>,
-                       IsCommutable;
-def MADD_DSP_PSEUDO : MULT_PSEUDO_BASE<MipsMADD_DSP, NoItinerary, MADD_DSP>,
-                      IsCommutable, UseAC;
-def MADDU_DSP_PSEUDO : MULT_PSEUDO_BASE<MipsMADDU_DSP, NoItinerary, MADDU_DSP>,
-                       IsCommutable, UseAC;
-def MSUB_DSP_PSEUDO : MULT_PSEUDO_BASE<MipsMSUB_DSP, NoItinerary, MSUB_DSP>,
-                      UseAC;
-def MSUBU_DSP_PSEUDO : MULT_PSEUDO_BASE<MipsMSUBU_DSP, NoItinerary, MSUBU_DSP>,
-                       UseAC;
-
-def SHILO_PSEUDO : SHILO_R1_PSEUDO_BASE<MipsSHILO, NoItinerary, SHILO>;
-def SHILOV_PSEUDO : SHILO_R2_PSEUDO_BASE<MipsSHILO, NoItinerary, SHILOV>;
-def MTHLIP_PSEUDO : SHILO_R2_PSEUDO_BASE<MipsMTHLIP, NoItinerary, MTHLIP>;
-
-let Predicates = [HasDSPR2] in {
-
-def DPA_W_PH_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPA_W_PH, NoItinerary, DPA_W_PH>;
-def DPS_W_PH_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPS_W_PH, NoItinerary, DPS_W_PH>;
-def DPAQX_S_W_PH_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPAQX_S_W_PH, NoItinerary,
-                                               DPAQX_S_W_PH>;
-def DPAQX_SA_W_PH_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPAQX_SA_W_PH, NoItinerary,
-                                                DPAQX_SA_W_PH>;
-def DPAX_W_PH_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPAX_W_PH, NoItinerary,
-                                            DPAX_W_PH>;
-def DPSX_W_PH_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPSX_W_PH, NoItinerary,
-                                            DPSX_W_PH>;
-def DPSQX_S_W_PH_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPSQX_S_W_PH, NoItinerary,
-                                               DPSQX_S_W_PH>;
-def DPSQX_SA_W_PH_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsDPSQX_SA_W_PH, NoItinerary,
-                                                DPSQX_SA_W_PH>;
-def MULSA_W_PH_PSEUDO : DPA_W_PH_PSEUDO_BASE<MipsMULSA_W_PH, NoItinerary,
-                                             MULSA_W_PH>;
-
-}
-
 /// Pseudo instructions for loading, storing and copying accumulator registers.
 let isPseudo = 1 in {
   defm LOAD_AC_DSP  : LoadM<"load_ac_dsp", ACRegsDSP>;
@@ -1304,10 +1234,12 @@ def : DSPPat<(store (v4i8 DSPRegs:$val), addr:$a),
 
 // Extr patterns.
 class EXTR_W_TY1_R2_Pat<SDPatternOperator OpNode, Instruction Instr> :
-  DSPPat<(i32 (OpNode CPURegs:$rs)), (Instr AC0, CPURegs:$rs)>;
+  DSPPat<(i32 (OpNode CPURegs:$rs, ACRegsDSP:$ac)),
+         (Instr ACRegsDSP:$ac, CPURegs:$rs)>;
 
 class EXTR_W_TY1_R1_Pat<SDPatternOperator OpNode, Instruction Instr> :
-  DSPPat<(i32 (OpNode immZExt5:$shift)), (Instr AC0, immZExt5:$shift)>;
+  DSPPat<(i32 (OpNode immZExt5:$shift, ACRegsDSP:$ac)),
+         (Instr ACRegsDSP:$ac, immZExt5:$shift)>;
 
 def : EXTR_W_TY1_R1_Pat<MipsEXTP, EXTP>;
 def : EXTR_W_TY1_R2_Pat<MipsEXTP, EXTPV>;
@@ -1321,3 +1253,8 @@ def : EXTR_W_TY1_R1_Pat<MipsEXTR_RS_W, EXTR_RS_W>;
 def : EXTR_W_TY1_R2_Pat<MipsEXTR_RS_W, EXTRV_RS_W>;
 def : EXTR_W_TY1_R1_Pat<MipsEXTR_S_H, EXTR_S_H>;
 def : EXTR_W_TY1_R2_Pat<MipsEXTR_S_H, EXTRV_S_H>;
+
+// mflo/hi patterns.
+let AddedComplexity = 20 in
+def : DSPPat<(i32 (ExtractLOHI ACRegsDSP:$ac, imm:$lohi_idx)),
+             (EXTRACT_SUBREG ACRegsDSP:$ac, imm:$lohi_idx)>;
