@@ -15,6 +15,7 @@
 #define MipsSEISELLOWERING_H
 
 #include "MipsISelLowering.h"
+#include "MipsRegisterInfo.h"
 
 namespace llvm {
   class MipsSETargetLowering : public MipsTargetLowering  {
@@ -25,6 +26,14 @@ namespace llvm {
 
     virtual MachineBasicBlock *
     EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const;
+
+    virtual const TargetRegisterClass *getRepRegClassFor(MVT VT) const {
+      if (VT == MVT::Untyped)
+        return Subtarget->hasDSP() ? &Mips::ACRegsDSPRegClass :
+                                     &Mips::ACRegsRegClass;
+
+      return TargetLowering::getRepRegClassFor(VT);
+    }
 
   private:
     virtual bool
