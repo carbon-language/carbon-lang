@@ -31,8 +31,6 @@ void testDeleteMalloced() {
   delete p; // no warn
 } 
 
-// FIXME: Pointer should escape
-
 //----- Test free standard new
 void testFreeOpNew() {
   void *p = operator new(0);
