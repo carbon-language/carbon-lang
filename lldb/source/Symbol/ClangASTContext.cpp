@@ -1777,6 +1777,9 @@ ClangASTContext::AddMethodToCXXRecordType
     }
     else if (decl_name == cxx_record_decl->getDeclName())
     {
+       if (is_artificial && method_function_prototype->getNumArgs() == 1)
+          return NULL; // skip artificial copy constructors
+        
        cxx_ctor_decl = CXXConstructorDecl::Create (*ast,
                                                    cxx_record_decl,
                                                    SourceLocation(),
