@@ -66,8 +66,6 @@ private:
   void EmitSrcISA(const MCInst &MI, unsigned RegOpIdx, unsigned SelOpIdx,
                     raw_ostream &OS) const;
   void EmitDst(const MCInst &MI, raw_ostream &OS) const;
-  void EmitTexInstr(const MCInst &MI, SmallVectorImpl<MCFixup> &Fixups,
-                    raw_ostream &OS) const;
   void EmitFCInstr(const MCInst &MI, raw_ostream &OS) const;
 
   void EmitNullBytes(unsigned int byteCount, raw_ostream &OS) const;
@@ -140,9 +138,7 @@ MCCodeEmitter *llvm::createR600MCCodeEmitter(const MCInstrInfo &MCII,
 
 void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                                        SmallVectorImpl<MCFixup> &Fixups) const {
-  if (isTexOp(MI.getOpcode())) {
-    EmitTexInstr(MI, Fixups, OS);
-  } else if (isFCOp(MI.getOpcode())){
+  if (isFCOp(MI.getOpcode())){
     EmitFCInstr(MI, OS);
   } else if (MI.getOpcode() == AMDGPU::RETURN ||
     MI.getOpcode() == AMDGPU::BUNDLE ||
@@ -173,6 +169,77 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       EmitByte(INSTR_VTX, OS);
       Emit(InstWord01, OS);
       Emit(InstWord2, OS);
+      break;
+    }
+    case AMDGPU::TEX_LD:
+    case AMDGPU::TEX_GET_TEXTURE_RESINFO:
+    case AMDGPU::TEX_SAMPLE:
+    case AMDGPU::TEX_SAMPLE_C:
+    case AMDGPU::TEX_SAMPLE_L:
+    case AMDGPU::TEX_SAMPLE_C_L:
+    case AMDGPU::TEX_SAMPLE_LB:
+    case AMDGPU::TEX_SAMPLE_C_LB:
+    case AMDGPU::TEX_SAMPLE_G:
+    case AMDGPU::TEX_SAMPLE_C_G:
+    case AMDGPU::TEX_GET_GRADIENTS_H:
+    case AMDGPU::TEX_GET_GRADIENTS_V:
+    case AMDGPU::TEX_SET_GRADIENTS_H:
+    case AMDGPU::TEX_SET_GRADIENTS_V: {
+      unsigned Opcode = MI.getOpcode();
+      bool HasOffsets = (Opcode == AMDGPU::TEX_LD);
+      unsigned OpOffset = HasOffsets ? 3 : 0;
+      int64_t Sampler = MI.getOperand(OpOffset + 3).getImm();
+      int64_t TextureType = MI.getOperand(OpOffset + 4).getImm();
+
+      uint32_t SrcSelect[4] = {0, 1, 2, 3};
+      uint32_t Offsets[3] = {0, 0, 0};
+      uint64_t CoordType[4] = {1, 1, 1, 1};
+
+      if (HasOffsets)
+        for (unsigned i = 0; i < 3; i++)
+          Offsets[i] = MI.getOperand(i + 2).getImm();
+
+      if (TextureType == TEXTURE_RECT ||
+          TextureType == TEXTURE_SHADOWRECT) {
+        CoordType[ELEMENT_X] = 0;
+        CoordType[ELEMENT_Y] = 0;
+      }
+
+      if (TextureType == TEXTURE_1D_ARRAY ||
+          TextureType == TEXTURE_SHADOW1D_ARRAY) {
+        if (Opcode == AMDGPU::TEX_SAMPLE_C_L ||
+            Opcode == AMDGPU::TEX_SAMPLE_C_LB) {
+          CoordType[ELEMENT_Y] = 0;
+        } else {
+          CoordType[ELEMENT_Z] = 0;
+          SrcSelect[ELEMENT_Z] = ELEMENT_Y;
+        }
+      } else if (TextureType == TEXTURE_2D_ARRAY ||
+          TextureType == TEXTURE_SHADOW2D_ARRAY) {
+        CoordType[ELEMENT_Z] = 0;
+      }
+
+
+      if ((TextureType == TEXTURE_SHADOW1D ||
+          TextureType == TEXTURE_SHADOW2D ||
+          TextureType == TEXTURE_SHADOWRECT ||
+          TextureType == TEXTURE_SHADOW1D_ARRAY) &&
+          Opcode != AMDGPU::TEX_SAMPLE_C_L &&
+          Opcode != AMDGPU::TEX_SAMPLE_C_LB) {
+        SrcSelect[ELEMENT_W] = ELEMENT_Z;
+      }
+
+      uint64_t Word01 = getBinaryCodeForInstr(MI, Fixups) |
+          CoordType[ELEMENT_X] << 60 | CoordType[ELEMENT_Y] << 61 |
+          CoordType[ELEMENT_Z] << 62 | CoordType[ELEMENT_W] << 63;
+      uint32_t Word2 = Sampler << 15 | SrcSelect[ELEMENT_X] << 20 |
+          SrcSelect[ELEMENT_Y] << 23 | SrcSelect[ELEMENT_Z] << 26 |
+          SrcSelect[ELEMENT_W] << 29 | Offsets[0] << 0 | Offsets[1] << 5 |
+          Offsets[2] << 10;
+
+      EmitByte(INSTR_TEX, OS);
+      Emit(Word01, OS);
+      Emit(Word2, OS);
       break;
     }
     case AMDGPU::EG_ExportSwz:
@@ -332,99 +399,6 @@ void R600MCCodeEmitter::EmitSrcISA(const MCInst &MI, unsigned RegOpIdx,
 
   // Emit the literal value, if applicable (4 bytes).
   Emit(InlineConstant.i, OS);
-}
-
-void R600MCCodeEmitter::EmitTexInstr(const MCInst &MI,
-                                     SmallVectorImpl<MCFixup> &Fixups,
-                                     raw_ostream &OS) const {
-
-  unsigned Opcode = MI.getOpcode();
-  bool hasOffsets = (Opcode == AMDGPU::TEX_LD);
-  unsigned OpOffset = hasOffsets ? 3 : 0;
-  int64_t Resource = MI.getOperand(OpOffset + 2).getImm();
-  int64_t Sampler = MI.getOperand(OpOffset + 3).getImm();
-  int64_t TextureType = MI.getOperand(OpOffset + 4).getImm();
-  unsigned srcSelect[4] = {0, 1, 2, 3};
-
-  // Emit instruction type
-  EmitByte(1, OS);
-
-  // Emit instruction
-  EmitByte(getBinaryCodeForInstr(MI, Fixups), OS);
-
-  // Emit resource id
-  EmitByte(Resource, OS);
-
-  // Emit source register
-  EmitByte(getHWReg(MI.getOperand(1).getReg()), OS);
-
-  // XXX: Emit src isRelativeAddress
-  EmitByte(0, OS);
-
-  // Emit destination register
-  EmitByte(getHWReg(MI.getOperand(0).getReg()), OS);
-
-  // XXX: Emit dst isRealtiveAddress
-  EmitByte(0, OS);
-
-  // XXX: Emit dst select
-  EmitByte(0, OS); // X
-  EmitByte(1, OS); // Y
-  EmitByte(2, OS); // Z
-  EmitByte(3, OS); // W
-
-  // XXX: Emit lod bias
-  EmitByte(0, OS);
-
-  // XXX: Emit coord types
-  unsigned coordType[4] = {1, 1, 1, 1};
-
-  if (TextureType == TEXTURE_RECT
-      || TextureType == TEXTURE_SHADOWRECT) {
-    coordType[ELEMENT_X] = 0;
-    coordType[ELEMENT_Y] = 0;
-  }
-
-  if (TextureType == TEXTURE_1D_ARRAY
-      || TextureType == TEXTURE_SHADOW1D_ARRAY) {
-    if (Opcode == AMDGPU::TEX_SAMPLE_C_L || Opcode == AMDGPU::TEX_SAMPLE_C_LB) {
-      coordType[ELEMENT_Y] = 0;
-    } else {
-      coordType[ELEMENT_Z] = 0;
-      srcSelect[ELEMENT_Z] = ELEMENT_Y;
-    }
-  } else if (TextureType == TEXTURE_2D_ARRAY
-             || TextureType == TEXTURE_SHADOW2D_ARRAY) {
-    coordType[ELEMENT_Z] = 0;
-  }
-
-  for (unsigned i = 0; i < 4; i++) {
-    EmitByte(coordType[i], OS);
-  }
-
-  // XXX: Emit offsets
-  if (hasOffsets)
-	  for (unsigned i = 2; i < 5; i++)
-		  EmitByte(MI.getOperand(i).getImm()<<1, OS);
-  else
-	  EmitNullBytes(3, OS);
-
-  // Emit sampler id
-  EmitByte(Sampler, OS);
-
-  // XXX:Emit source select
-  if ((TextureType == TEXTURE_SHADOW1D
-      || TextureType == TEXTURE_SHADOW2D
-      || TextureType == TEXTURE_SHADOWRECT
-      || TextureType == TEXTURE_SHADOW1D_ARRAY)
-      && Opcode != AMDGPU::TEX_SAMPLE_C_L
-      && Opcode != AMDGPU::TEX_SAMPLE_C_LB) {
-    srcSelect[ELEMENT_W] = ELEMENT_Z;
-  }
-
-  for (unsigned i = 0; i < 4; i++) {
-    EmitByte(srcSelect[i], OS);
-  }
 }
 
 void R600MCCodeEmitter::EmitFCInstr(const MCInst &MI, raw_ostream &OS) const {

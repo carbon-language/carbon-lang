@@ -234,6 +234,80 @@ class VTX_WORD1_GPR {
   let Word1{31}    = SRF_MODE_ALL;
 }
 
+class TEX_WORD0 {
+  field bits<32> Word0;
+
+  bits<5> TEX_INST;
+  bits<2> INST_MOD;
+  bits<1> FETCH_WHOLE_QUAD;
+  bits<8> RESOURCE_ID;
+  bits<7> SRC_GPR;
+  bits<1> SRC_REL;
+  bits<1> ALT_CONST;
+  bits<2> RESOURCE_INDEX_MODE;
+  bits<2> SAMPLER_INDEX_MODE;
+
+  let Word0{4-0} = TEX_INST;
+  let Word0{6-5} = INST_MOD;
+  let Word0{7} = FETCH_WHOLE_QUAD;
+  let Word0{15-8} = RESOURCE_ID;
+  let Word0{22-16} = SRC_GPR;
+  let Word0{23} = SRC_REL;
+  let Word0{24} = ALT_CONST;
+  let Word0{26-25} = RESOURCE_INDEX_MODE;
+  let Word0{28-27} = SAMPLER_INDEX_MODE;
+}
+
+class TEX_WORD1 {
+  field bits<32> Word1;
+
+  bits<7> DST_GPR;
+  bits<1> DST_REL;
+  bits<3> DST_SEL_X;
+  bits<3> DST_SEL_Y;
+  bits<3> DST_SEL_Z;
+  bits<3> DST_SEL_W;
+  bits<7> LOD_BIAS;
+  bits<1> COORD_TYPE_X;
+  bits<1> COORD_TYPE_Y;
+  bits<1> COORD_TYPE_Z;
+  bits<1> COORD_TYPE_W;
+
+  let Word1{6-0} = DST_GPR;
+  let Word1{7} = DST_REL;
+  let Word1{11-9} = DST_SEL_X;
+  let Word1{14-12} = DST_SEL_Y;
+  let Word1{17-15} = DST_SEL_Z;
+  let Word1{20-18} = DST_SEL_W;
+  let Word1{27-21} = LOD_BIAS;
+  let Word1{28} = COORD_TYPE_X;
+  let Word1{29} = COORD_TYPE_Y;
+  let Word1{30} = COORD_TYPE_Z;
+  let Word1{31} = COORD_TYPE_W;
+}
+
+class TEX_WORD2 {
+  field bits<32> Word2;
+
+  bits<5> OFFSET_X;
+  bits<5> OFFSET_Y;
+  bits<5> OFFSET_Z;
+  bits<5> SAMPLER_ID;
+  bits<3> SRC_SEL_X;
+  bits<3> SRC_SEL_Y;
+  bits<3> SRC_SEL_Z;
+  bits<3> SRC_SEL_W;
+
+  let Word2{4-0} = OFFSET_X;
+  let Word2{9-5} = OFFSET_Y;
+  let Word2{14-10} = OFFSET_Z;
+  let Word2{19-15} = SAMPLER_ID;
+  let Word2{22-20} = SRC_SEL_X;
+  let Word2{25-23} = SRC_SEL_Y;
+  let Word2{28-26} = SRC_SEL_Z;
+  let Word2{31-29} = SRC_SEL_W;
+}
+
 /*
 XXX: R600 subtarget uses a slightly different encoding than the other
 subtargets.  We currently handle this in R600MCCodeEmitter, but we may
@@ -386,12 +460,32 @@ class R600_REDUCTION <bits<11> inst, dag ins, string asm, list<dag> pattern,
 class R600_TEX <bits<11> inst, string opName, list<dag> pattern,
                 InstrItinClass itin = AnyALU> :
   InstR600 <inst,
-          (outs R600_Reg128:$dst),
-          (ins R600_Reg128:$src0, i32imm:$resourceId, i32imm:$samplerId, i32imm:$textureTarget),
-          !strconcat(opName, "$dst, $src0, $resourceId, $samplerId, $textureTarget"),
+          (outs R600_Reg128:$DST_GPR),
+          (ins R600_Reg128:$SRC_GPR, i32imm:$RESOURCE_ID, i32imm:$SAMPLER_ID, i32imm:$textureTarget),
+          !strconcat(opName, "$DST_GPR, $SRC_GPR, $RESOURCE_ID, $SAMPLER_ID, $textureTarget"),
           pattern,
-          itin>{
-    let Inst {10-0} = inst;
+          itin>, TEX_WORD0, TEX_WORD1, TEX_WORD2 {
+    let Inst{31-0} = Word0;
+    let Inst{63-32} = Word1;
+
+    let TEX_INST = inst{4-0};
+    let SRC_REL = 0;
+    let DST_REL = 0;
+    let DST_SEL_X = 0;
+    let DST_SEL_Y = 1;
+    let DST_SEL_Z = 2;
+    let DST_SEL_W = 3;
+    let LOD_BIAS = 0;
+
+    let INST_MOD = 0;
+    let FETCH_WHOLE_QUAD = 0;
+    let ALT_CONST = 0;
+    let SAMPLER_INDEX_MODE = 0;
+
+    let COORD_TYPE_X = 0;
+    let COORD_TYPE_Y = 0;
+    let COORD_TYPE_Z = 0;
+    let COORD_TYPE_W = 0;
   }
 
 } // End mayLoad = 1, mayStore = 0, hasSideEffects = 0
@@ -867,25 +961,33 @@ def CNDGT_INT : R600_3OP <
 
 def TEX_LD : R600_TEX <
   0x03, "TEX_LD",
-  [(set R600_Reg128:$dst, (int_AMDGPU_txf R600_Reg128:$src0, imm:$src1, imm:$src2, imm:$src3, imm:$resourceId, imm:$samplerId, imm:$textureTarget))]
+  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_txf R600_Reg128:$SRC_GPR,
+      imm:$OFFSET_X, imm:$OFFSET_Y, imm:$OFFSET_Z, imm:$RESOURCE_ID,
+      imm:$SAMPLER_ID, imm:$textureTarget))]
 > {
-let AsmString = "TEX_LD $dst, $src0, $src1, $src2, $src3, $resourceId, $samplerId, $textureTarget";
-let InOperandList = (ins R600_Reg128:$src0, i32imm:$src1, i32imm:$src2, i32imm:$src3, i32imm:$resourceId, i32imm:$samplerId, i32imm:$textureTarget);
+let AsmString = "TEX_LD $DST_GPR, $SRC_GPR, $OFFSET_X, $OFFSET_Y, $OFFSET_Z,"
+    "$RESOURCE_ID, $SAMPLER_ID, $textureTarget";
+let InOperandList = (ins R600_Reg128:$SRC_GPR, i32imm:$OFFSET_X,
+    i32imm:$OFFSET_Y, i32imm:$OFFSET_Z, i32imm:$RESOURCE_ID, i32imm:$SAMPLER_ID,
+    i32imm:$textureTarget);
 }
 
 def TEX_GET_TEXTURE_RESINFO : R600_TEX <
   0x04, "TEX_GET_TEXTURE_RESINFO",
-  [(set R600_Reg128:$dst, (int_AMDGPU_txq R600_Reg128:$src0, imm:$resourceId, imm:$samplerId, imm:$textureTarget))]
+  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_txq R600_Reg128:$SRC_GPR,
+      imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
 >;
 
 def TEX_GET_GRADIENTS_H : R600_TEX <
   0x07, "TEX_GET_GRADIENTS_H",
-  [(set R600_Reg128:$dst, (int_AMDGPU_ddx R600_Reg128:$src0, imm:$resourceId, imm:$samplerId, imm:$textureTarget))]
+  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_ddx R600_Reg128:$SRC_GPR,
+      imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
 >;
 
 def TEX_GET_GRADIENTS_V : R600_TEX <
   0x08, "TEX_GET_GRADIENTS_V",
-  [(set R600_Reg128:$dst, (int_AMDGPU_ddy R600_Reg128:$src0, imm:$resourceId, imm:$samplerId, imm:$textureTarget))]
+  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_ddy R600_Reg128:$SRC_GPR,
+      imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
 >;
 
 def TEX_SET_GRADIENTS_H : R600_TEX <
@@ -900,32 +1002,38 @@ def TEX_SET_GRADIENTS_V : R600_TEX <
 
 def TEX_SAMPLE : R600_TEX <
   0x10, "TEX_SAMPLE",
-  [(set R600_Reg128:$dst, (int_AMDGPU_tex R600_Reg128:$src0, imm:$resourceId, imm:$samplerId, imm:$textureTarget))]
+  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_tex R600_Reg128:$SRC_GPR,
+      imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
 >;
 
 def TEX_SAMPLE_C : R600_TEX <
   0x18, "TEX_SAMPLE_C",
-  [(set R600_Reg128:$dst, (int_AMDGPU_tex R600_Reg128:$src0, imm:$resourceId, imm:$samplerId, TEX_SHADOW:$textureTarget))]
+  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_tex R600_Reg128:$SRC_GPR,
+      imm:$RESOURCE_ID, imm:$SAMPLER_ID, TEX_SHADOW:$textureTarget))]
 >;
 
 def TEX_SAMPLE_L : R600_TEX <
   0x11, "TEX_SAMPLE_L",
-  [(set R600_Reg128:$dst, (int_AMDGPU_txl R600_Reg128:$src0, imm:$resourceId, imm:$samplerId, imm:$textureTarget))]
+  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_txl R600_Reg128:$SRC_GPR,
+      imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
 >;
 
 def TEX_SAMPLE_C_L : R600_TEX <
   0x19, "TEX_SAMPLE_C_L",
-  [(set R600_Reg128:$dst, (int_AMDGPU_txl R600_Reg128:$src0, imm:$resourceId, imm:$samplerId, TEX_SHADOW:$textureTarget))]
+  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_txl R600_Reg128:$SRC_GPR,
+      imm:$RESOURCE_ID, imm:$SAMPLER_ID, TEX_SHADOW:$textureTarget))]
 >;
 
 def TEX_SAMPLE_LB : R600_TEX <
   0x12, "TEX_SAMPLE_LB",
-  [(set R600_Reg128:$dst, (int_AMDGPU_txb R600_Reg128:$src0,imm:$resourceId, imm:$samplerId, imm:$textureTarget))]
+  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_txb R600_Reg128:$SRC_GPR,
+      imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
 >;
 
 def TEX_SAMPLE_C_LB : R600_TEX <
   0x1A, "TEX_SAMPLE_C_LB",
-  [(set R600_Reg128:$dst, (int_AMDGPU_txb R600_Reg128:$src0, imm:$resourceId, imm:$samplerId, TEX_SHADOW:$textureTarget))]
+  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_txb R600_Reg128:$SRC_GPR,
+      imm:$RESOURCE_ID, imm:$SAMPLER_ID, TEX_SHADOW:$textureTarget))]
 >;
 
 def TEX_SAMPLE_G : R600_TEX <
