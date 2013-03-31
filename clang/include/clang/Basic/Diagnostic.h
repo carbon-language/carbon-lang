@@ -436,8 +436,8 @@ public:
   ///
   /// If this and IgnoreAllWarnings are both set, then that one wins.
   void setEnableAllWarnings(bool Val) { EnableAllWarnings = Val; }
-  bool getEnableAllWarnngs() const { return EnableAllWarnings; }
-  
+  bool getEnableAllWarnings() const { return EnableAllWarnings; }
+
   /// \brief When set to true, any warnings reported are issued as errors.
   void setWarningsAsErrors(bool Val) { WarningsAsErrors = Val; }
   bool getWarningsAsErrors() const { return WarningsAsErrors; }
