@@ -78,6 +78,7 @@ protected:
   bool HasQPX;
   bool HasFSQRT;
   bool HasSTFIWX;
+  bool HasLFIWAX;
   bool HasFPRND;
   bool HasISEL;
   bool HasPOPCNTD;
@@ -158,6 +159,7 @@ public:
   // Specific obvious features.
   bool hasFSQRT() const { return HasFSQRT; }
   bool hasSTFIWX() const { return HasSTFIWX; }
+  bool hasLFIWAX() const { return HasLFIWAX; }
   bool hasFPRND() const { return HasFPRND; }
   bool hasAltivec() const { return HasAltivec; }
   bool hasQPX() const { return HasQPX; }

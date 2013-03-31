@@ -242,6 +242,11 @@ namespace llvm {
       /// or i32.
       LBRX,
 
+      /// GPRC, CHAIN = LFIWAX CHAIN, Ptr - This is a floating-point
+      /// load which sign-extends from a 32-bit integer value into the
+      /// destination 64-bit register.
+      LFIWAX,
+
       /// G8RC = ADDIS_TOC_HA %X2, Symbol - For medium and large code model,
       /// produces an ADDIS8 instruction that adds the TOC base register to
       /// sym@toc@ha.

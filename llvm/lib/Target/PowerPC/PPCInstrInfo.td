@@ -20,6 +20,10 @@ include "PPCInstrFormats.td"
 def SDT_PPCstfiwx : SDTypeProfile<0, 2, [ // stfiwx
   SDTCisVT<0, f64>, SDTCisPtrTy<1>
 ]>;
+def SDT_PPClfiwax : SDTypeProfile<1, 1, [ // lfiwax
+  SDTCisVT<0, f64>, SDTCisPtrTy<1>
+]>;
+
 def SDT_PPCCallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32> ]>;
 def SDT_PPCCallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i32>,
                                          SDTCisVT<1, i32> ]>;
@@ -63,6 +67,8 @@ def PPCfctidz : SDNode<"PPCISD::FCTIDZ", SDTFPUnaryOp, []>;
 def PPCfctiwz : SDNode<"PPCISD::FCTIWZ", SDTFPUnaryOp, []>;
 def PPCstfiwx : SDNode<"PPCISD::STFIWX", SDT_PPCstfiwx,
                        [SDNPHasChain, SDNPMayStore]>;
+def PPClfiwax : SDNode<"PPCISD::LFIWAX", SDT_PPClfiwax,
+                       [SDNPHasChain, SDNPMayLoad]>;
 
 // Extract FPSCR (not modeled at the DAG level).
 def PPCmffs   : SDNode<"PPCISD::MFFS",
@@ -843,6 +849,10 @@ def LFSX   : XForm_25<31, 535, (outs F4RC:$frD), (ins memrr:$src),
 def LFDX   : XForm_25<31, 599, (outs F8RC:$frD), (ins memrr:$src),
                       "lfdx $frD, $src", LdStLFD,
                       [(set f64:$frD, (load xaddr:$src))]>;
+
+def LFIWAX : XForm_25<31, 855, (outs F8RC:$frD), (ins memrr:$src),
+                      "lfiwax $frD, $src", LdStLFD,
+                      [(set f64:$frD, (PPClfiwax xoaddr:$src))]>;
 }
 
 //===----------------------------------------------------------------------===//

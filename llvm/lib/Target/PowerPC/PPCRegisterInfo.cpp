@@ -528,6 +528,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   bool noImmForm = false;
   switch (OpC) {
+  case PPC::LFIWAX:
   case PPC::LVEBX:
   case PPC::LVEHX:
   case PPC::LVEWX:

@@ -4809,20 +4809,43 @@ SDValue PPCTargetLowering::LowerSINT_TO_FP(SDValue Op,
   // then lfd it and fcfid it.
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *FrameInfo = MF.getFrameInfo();
-  int FrameIdx = FrameInfo->CreateStackObject(8, 8, false);
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
-  SDValue FIdx = DAG.getFrameIndex(FrameIdx, PtrVT);
 
-  SDValue Ext64 = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::i64,
-                              Op.getOperand(0));
+  SDValue Ld;
+  if (PPCSubTarget.hasLFIWAX()) {
+    int FrameIdx = FrameInfo->CreateStackObject(4, 4, false);
+    SDValue FIdx = DAG.getFrameIndex(FrameIdx, PtrVT);
 
-  // STD the extended value into the stack slot.
-  SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, Ext64, FIdx,
-                               MachinePointerInfo(), false, false, 0);
+    SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, Op.getOperand(0), FIdx,
+                                 MachinePointerInfo::getFixedStack(FrameIdx),
+                                 false, false, 0);
 
-  // Load the value as a double.
-  SDValue Ld = DAG.getLoad(MVT::f64, dl, Store, FIdx, MachinePointerInfo(),
-                           false, false, false, 0);
+    assert(cast<StoreSDNode>(Store)->getMemoryVT() == MVT::i32 &&
+           "Expected an i32 store");
+    MachineMemOperand *MMO =
+      MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(FrameIdx),
+                              MachineMemOperand::MOLoad, 4, 4);
+    SDValue Ops[] = { Store, FIdx };
+    Ld = DAG.getMemIntrinsicNode(PPCISD::LFIWAX, dl,
+                                 DAG.getVTList(MVT::f64, MVT::Other), Ops, 2,
+                                 MVT::i32, MMO);
+  } else {
+    int FrameIdx = FrameInfo->CreateStackObject(8, 8, false);
+    SDValue FIdx = DAG.getFrameIndex(FrameIdx, PtrVT);
+
+    SDValue Ext64 = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::i64,
+                                Op.getOperand(0));
+
+    // STD the extended value into the stack slot.
+    SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, Ext64, FIdx,
+                                 MachinePointerInfo::getFixedStack(FrameIdx),
+                                 false, false, 0);
+
+    // Load the value as a double.
+    Ld = DAG.getLoad(MVT::f64, dl, Store, FIdx,
+                     MachinePointerInfo::getFixedStack(FrameIdx),
+                     false, false, false, 0);
+  }
 
   // FCFID it and return it.
   SDValue FP = DAG.getNode(PPCISD::FCFID, dl, MVT::f64, Ld);
