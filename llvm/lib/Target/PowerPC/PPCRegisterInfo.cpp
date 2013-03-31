@@ -526,24 +526,10 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     break;
   }
 
-  bool noImmForm = false;
-  switch (OpC) {
-  case PPC::LFIWAX:
-  case PPC::LVEBX:
-  case PPC::LVEHX:
-  case PPC::LVEWX:
-  case PPC::LVX:
-  case PPC::LVXL:
-  case PPC::LVSL:
-  case PPC::LVSR:
-  case PPC::STVEBX:
-  case PPC::STVEHX:
-  case PPC::STVEWX:
-  case PPC::STVX:
-  case PPC::STVXL:
-    noImmForm = true;
-    break;
-  }
+  // If the instruction is not present in ImmToIdxMap, then it has no immediate
+  // form (and must be r+r).
+  bool noImmForm = !MI.isInlineAsm() &&
+    (ImmToIdxMap.find(OpC) == ImmToIdxMap.end());
 
   // Now add the frame object offset to the offset from r1.
   int Offset = MFI->getObjectOffset(FrameIndex);

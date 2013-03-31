@@ -15,8 +15,8 @@
 #ifndef POWERPC32_REGISTERINFO_H
 #define POWERPC32_REGISTERINFO_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "PPC.h"
-#include <map>
 
 #define GET_REGINFO_HEADER
 #include "PPCGenRegisterInfo.inc"
@@ -27,7 +27,7 @@ class TargetInstrInfo;
 class Type;
 
 class PPCRegisterInfo : public PPCGenRegisterInfo {
-  std::map<unsigned, unsigned> ImmToIdxMap;
+  DenseMap<unsigned, unsigned> ImmToIdxMap;
   const PPCSubtarget &Subtarget;
   const TargetInstrInfo &TII;
 public:
