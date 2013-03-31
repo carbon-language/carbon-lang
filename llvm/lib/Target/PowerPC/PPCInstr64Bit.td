@@ -452,10 +452,6 @@ def EXTSH8 : XForm_11<31, 922, (outs G8RC:$rA), (ins G8RC:$rS),
 def EXTSW  : XForm_11<31, 986, (outs G8RC:$rA), (ins G8RC:$rS),
                       "extsw $rA, $rS", IntSimple,
                       [(set i64:$rA, (sext_inreg i64:$rS, i32))]>, isPPC64;
-/// EXTSW_32 - Just like EXTSW, but works on '32-bit' registers.
-def EXTSW_32 : XForm_11<31, 986, (outs GPRC:$rA), (ins GPRC:$rS),
-                      "extsw $rA, $rS", IntSimple,
-                      [(set i32:$rA, (PPCextsw_32 i32:$rS))]>, isPPC64;
 def EXTSW_32_64 : XForm_11<31, 986, (outs G8RC:$rA), (ins GPRC:$rS),
                       "extsw $rA, $rS", IntSimple,
                       [(set i64:$rA, (sext i32:$rS))]>, isPPC64;
@@ -786,15 +782,6 @@ def STDBRX: XForm_8<31, 660, (outs), (ins G8RC:$rS, memrr:$dst),
                    "stdbrx $rS, $dst", LdStStore,
                    [(PPCstbrx i64:$rS, xoaddr:$dst, i64)]>, isPPC64,
                    PPC970_DGroup_Cracked;
-
-// STD_32/STDX_32 - Just like STD/STDX, but uses a '32-bit' input register.
-def STD_32  : DSForm_1<62, 0, (outs), (ins GPRC:$rT, memrix:$dst),
-                       "std $rT, $dst", LdStSTD,
-                       [(PPCstd_32  i32:$rT, ixaddr:$dst)]>, isPPC64;
-def STDX_32  : XForm_8<31, 149, (outs), (ins GPRC:$rT, memrr:$dst),
-                       "stdx $rT, $dst", LdStSTD,
-                       [(PPCstd_32  i32:$rT, xaddr:$dst)]>, isPPC64,
-                       PPC970_DGroup_Cracked;
 }
 
 // Stores with Update (pre-inc).

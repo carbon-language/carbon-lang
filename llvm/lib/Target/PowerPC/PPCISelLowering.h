@@ -91,10 +91,6 @@ namespace llvm {
       /// code.
       SRL, SRA, SHL,
 
-      /// EXTSW_32 - This is the EXTSW instruction for use with "32-bit"
-      /// registers.
-      EXTSW_32,
-
       /// CALL - A direct function call.
       /// CALL_NOP is a call with the special NOP which follows 64-bit
       /// SVR4 calls.
@@ -234,14 +230,11 @@ namespace llvm {
       /// optimizations due to constant folding.
       VADD_SPLAT,
 
-      /// STD_32 - This is the STD instruction for use with "32-bit" registers.
-      STD_32 = ISD::FIRST_TARGET_MEMORY_OPCODE,
-
       /// CHAIN = STBRX CHAIN, GPRC, Ptr, Type - This is a
       /// byte-swapping store instruction.  It byte-swaps the low "Type" bits of
       /// the GPRC input, then stores it through Ptr.  Type can be either i16 or
       /// i32.
-      STBRX,
+      STBRX = ISD::FIRST_TARGET_MEMORY_OPCODE,
 
       /// GPRC, CHAIN = LBRX CHAIN, Ptr, Type - This is a
       /// byte-swapping load instruction.  It loads "Type" bits, byte swaps it,

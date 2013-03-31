@@ -68,7 +68,7 @@ PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
   ImmToIdxMap[PPC::LHZ8] = PPC::LHZX8; ImmToIdxMap[PPC::LWZ8] = PPC::LWZX8;
   ImmToIdxMap[PPC::STB8] = PPC::STBX8; ImmToIdxMap[PPC::STH8] = PPC::STHX8;
   ImmToIdxMap[PPC::STW8] = PPC::STWX8; ImmToIdxMap[PPC::STDU] = PPC::STDUX;
-  ImmToIdxMap[PPC::ADDI8] = PPC::ADD8; ImmToIdxMap[PPC::STD_32] = PPC::STDX_32;
+  ImmToIdxMap[PPC::ADDI8] = PPC::ADD8;
 }
 
 /// getPointerRegClass - Return the register class to use to hold pointers.
@@ -522,7 +522,6 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case PPC::LWA:
   case PPC::LD:
   case PPC::STD:
-  case PPC::STD_32:
     isIXAddr = true;
     break;
   }

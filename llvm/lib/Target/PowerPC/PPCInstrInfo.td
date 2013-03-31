@@ -105,10 +105,6 @@ def PPCsrl        : SDNode<"PPCISD::SRL"       , SDTIntShiftOp>;
 def PPCsra        : SDNode<"PPCISD::SRA"       , SDTIntShiftOp>;
 def PPCshl        : SDNode<"PPCISD::SHL"       , SDTIntShiftOp>;
 
-def PPCextsw_32   : SDNode<"PPCISD::EXTSW_32"  , SDTIntUnaryOp>;
-def PPCstd_32     : SDNode<"PPCISD::STD_32"    , SDTStore,
-                           [SDNPHasChain, SDNPMayStore]>;
-
 // These are target-independent nodes, but have target-specific formats.
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PPCCallSeqStart,
                            [SDNPHasChain, SDNPOutGlue]>;
