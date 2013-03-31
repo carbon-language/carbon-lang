@@ -18,6 +18,12 @@ define <4 x double> @sitofp01(<4 x i32> %a) {
   ret <4 x double> %b
 }
 
+; CHECK: vcvtdq2ps %ymm
+define <8 x float> @sitofp02(<8 x i16> %a) {
+  %b = sitofp <8 x i16> %a to <8 x float>
+  ret <8 x float> %b
+}
+
 ; CHECK: vcvttpd2dqy %ymm
 define <4 x i32> @fptosi01(<4 x double> %a) {
   %b = fptosi <4 x double> %a to <4 x i32>
