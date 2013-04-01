@@ -1,0 +1,50 @@
+// Check that -mcpu works for all supported GPUs
+
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=r600 %s -o - 2>&1 | FileCheck --check-prefix=R600-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=rv610 %s -o - 2>&1 | FileCheck --check-prefix=R600-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=rv620 %s -o - 2>&1 | FileCheck --check-prefix=R600-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=rv630 %s -o - 2>&1 | FileCheck --check-prefix=R600-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=rv635 %s -o - 2>&1 | FileCheck --check-prefix=R600-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=rs780 %s -o - 2>&1 | FileCheck --check-prefix=R600-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=rs880 %s -o - 2>&1 | FileCheck --check-prefix=R600-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=rv670 %s -o - 2>&1 | FileCheck --check-prefix=RV670-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=rv710 %s -o - 2>&1 | FileCheck --check-prefix=RV710-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=rv730 %s -o - 2>&1 | FileCheck --check-prefix=RV730-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=rv740 %s -o - 2>&1 | FileCheck --check-prefix=RV770-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=rv770 %s -o - 2>&1 | FileCheck --check-prefix=RV770-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=palm %s -o - 2>&1 | FileCheck --check-prefix=CEDAR-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=cedar %s -o - 2>&1 | FileCheck --check-prefix=CEDAR-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=sumo %s -o - 2>&1 | FileCheck --check-prefix=REDWOOD-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=sumo2 %s -o - 2>&1 | FileCheck --check-prefix=REDWOOD-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=redwood %s -o - 2>&1 | FileCheck --check-prefix=REDWOOD-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=juniper %s -o - 2>&1 | FileCheck --check-prefix=JUNIPER-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=juniper %s -o - 2>&1 | FileCheck --check-prefix=JUNIPER-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=hemlock %s -o - 2>&1 | FileCheck --check-prefix=CYPRESS-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=cypress %s -o - 2>&1 | FileCheck --check-prefix=CYPRESS-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=barts %s -o - 2>&1 | FileCheck --check-prefix=BARTS-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=turks %s -o - 2>&1 | FileCheck --check-prefix=TURKS-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=caicos %s -o - 2>&1 | FileCheck --check-prefix=CAICOS-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=cayman %s -o - 2>&1 | FileCheck --check-prefix=CAYMAN-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=aruba %s -o - 2>&1 | FileCheck --check-prefix=CAYMAN-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=tahiti %s -o - 2>&1 | FileCheck --check-prefix=TAHITI-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=pitcairn %s -o - 2>&1 | FileCheck --check-prefix=PITCAIRN-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=verde %s -o - 2>&1 | FileCheck --check-prefix=VERDE-CHECK %s
+// RUN: %clang -### -target r600 -x cl -S -emit-llvm -mcpu=oland %s -o - 2>&1 | FileCheck --check-prefix=OLAND-CHECK %s
+
+// R600-CHECK:  "-target-cpu" "r600"
+// RV670-CHECK: "-target-cpu" "rv670"
+// RV710-CHECK: "-target-cpu" "rv710"
+// RV730-CHECK: "-target-cpu" "rv730"
+// RV770-CHECK: "-target-cpu" "rv770"
+// CEDAR-CHECK: "-target-cpu" "cedar"
+// REDOWOOD-CHECK: "-target-cpu" "redwood"
+// JUNIPER-CHECK: "-target-cpu" "juniper"
+// CYPRESS-CHECK: "-target-cpu" "cypress"
+// BARTS-CHECK: "-target-cpu" "barts"
+// TURKS-CHECK: "-target-cpu" "turks"
+// CAICOS-CHECK: "-target-cpu" "caicos"
+// CAYMAN-CHECK: "-target-cpu" "cayman"
+// TAHITI-CHECK: "-target-cpu" "tahiti"
+// PITCAIRN-CHECK: "-target-cpu" "pitcairn"
+// VERDE-CHECK: "-target-cpu" "verde"
+// OLAND-CHECK: "-target-cpu" "oland"

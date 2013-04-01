@@ -1122,6 +1122,30 @@ void Clang::AddPPCTargetArgs(const ArgList &Args,
   }
 }
 
+/// Get the (LLVM) name of the R600 gpu we are targeting.
+static std::string getR600TargetGPU(const ArgList &Args) {
+  if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
+    std::string GPUName = A->getValue();
+    return llvm::StringSwitch<const char *>(GPUName)
+      .Cases("rv610", "rv620", "rv630", "r600")
+      .Cases("rv635", "rs780", "rs880", "r600")
+      .Case("rv740", "rv770")
+      .Case("palm", "cedar")
+      .Cases("sumo", "sumo2", "redwood")
+      .Case("hemlock", "cypress")
+      .Case("aruba", "cayman")
+      .Default(GPUName.c_str());
+  }
+  return "";
+}
+
+void Clang::AddR600TargetArgs(const ArgList &Args,
+                              ArgStringList &CmdArgs) const {
+  std::string TargetGPUName = getR600TargetGPU(Args);
+  CmdArgs.push_back("-target-cpu");
+  CmdArgs.push_back(Args.MakeArgString(TargetGPUName.c_str()));
+}
+
 void Clang::AddSparcTargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getDriver();
@@ -2270,6 +2294,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   case llvm::Triple::ppc:
   case llvm::Triple::ppc64:
     AddPPCTargetArgs(Args, CmdArgs);
+    break;
+
+  case llvm::Triple::r600:
+    AddR600TargetArgs(Args, CmdArgs);
     break;
 
   case llvm::Triple::sparc:
