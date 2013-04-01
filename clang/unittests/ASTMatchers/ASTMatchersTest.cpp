@@ -3387,6 +3387,19 @@ TEST(TypeMatching, MatchesFunctionTypes) {
   EXPECT_TRUE(matches("void f(int i) {}", functionType()));
 }
 
+TEST(TypeMatching, MatchesParenType) {
+  EXPECT_TRUE(
+      matches("int (*array)[4];", varDecl(hasType(pointsTo(parenType())))));
+  EXPECT_TRUE(notMatches("int *array[4];", varDecl(hasType(parenType()))));
+
+  EXPECT_TRUE(matches(
+      "int (*ptr_to_func)(int);",
+      varDecl(hasType(pointsTo(parenType(innerType(functionType())))))));
+  EXPECT_TRUE(notMatches(
+      "int (*ptr_to_array)[4];",
+      varDecl(hasType(pointsTo(parenType(innerType(functionType())))))));
+}
+
 TEST(TypeMatching, PointerTypes) {
   // FIXME: Reactive when these tests can be more specific (not matching
   // implicit code on certain platforms), likely when we have hasDescendant for

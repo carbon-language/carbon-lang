@@ -2894,6 +2894,32 @@ AST_TYPE_TRAVERSE_MATCHER(hasDeducedType, getDeducedType);
 ///   matches "int (*f)(int)" and the type of "g".
 AST_TYPE_MATCHER(FunctionType, functionType);
 
+/// \brief Matches \c ParenType nodes.
+///
+/// Given
+/// \code
+///   int (*ptr_to_array)[4];
+///   int *array_of_ptrs[4];
+/// \endcode
+///
+/// \c varDecl(hasType(pointsTo(parenType()))) matches \c ptr_to_array but not
+/// \c array_of_ptrs.
+AST_TYPE_MATCHER(ParenType, parenType);
+
+/// \brief Matches \c ParenType nodes where the inner type is a specific type.
+///
+/// Given
+/// \code
+///   int (*ptr_to_array)[4];
+///   int (*ptr_to_func)(int);
+/// \endcode
+///
+/// \c varDecl(hasType(pointsTo(parenType(innerType(functionType()))))) matches
+/// \c ptr_to_func but not \c ptr_to_array.
+///
+/// Usable as: Matcher<ParenType>
+AST_TYPE_TRAVERSE_MATCHER(innerType, getInnerType);
+
 /// \brief Matches block pointer types, i.e. types syntactically represented as
 /// "void (^)(int)".
 ///

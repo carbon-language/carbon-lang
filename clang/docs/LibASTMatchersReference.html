@@ -1000,6 +1000,18 @@ memberPointerType()
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt;</td><td class="name" onclick="toggle('parenTypeLoc0')"><a name="parenTypeLoc0Anchor">parenTypeLoc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ParenTypeLoc.html">ParenTypeLoc</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="parenTypeLoc0"><pre>Matches ParenType nodes.
+
+Given
+  int (*ptr_to_array)[4];
+  int *array_of_ptrs[4];
+
+varDecl(hasType(pointsTo(parenType()))) matches ptr_to_array but not
+array_of_ptrs.
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt;</td><td class="name" onclick="toggle('pointerTypeLoc0')"><a name="pointerTypeLoc0Anchor">pointerTypeLoc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1PointerTypeLoc.html">PointerTypeLoc</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="pointerTypeLoc0"><pre>Matches pointer types.
 
@@ -1264,6 +1276,18 @@ Given
   A::* ptr = A::i;
 memberPointerType()
   matches "A::* ptr"
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('parenType0')"><a name="parenType0Anchor">parenType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ParenType.html">ParenType</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="parenType0"><pre>Matches ParenType nodes.
+
+Given
+  int (*ptr_to_array)[4];
+  int *array_of_ptrs[4];
+
+varDecl(hasType(pointsTo(parenType()))) matches ptr_to_array but not
+array_of_ptrs.
 </pre></td></tr>
 
 
@@ -2988,6 +3012,20 @@ Given
   A::B::C c;
 nestedNameSpecifier(specifiesType(hasDeclaration(recordDecl(hasName("A")))))
   matches "A::"
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ParenType.html">ParenType</a>&gt;</td><td class="name" onclick="toggle('innerType0')"><a name="innerType0Anchor">innerType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td></tr>
+<tr><td colspan="4" class="doc" id="innerType0"><pre>Matches ParenType nodes where the inner type is a specific type.
+
+Given
+  int (*ptr_to_array)[4];
+  int (*ptr_to_func)(int);
+
+varDecl(hasType(pointsTo(parenType(innerType(functionType()))))) matches
+ptr_to_func but not ptr_to_array.
+
+Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ParenType.html">ParenType</a>&gt;
 </pre></td></tr>
 
 
