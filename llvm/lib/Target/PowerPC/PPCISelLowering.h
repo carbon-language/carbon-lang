@@ -41,10 +41,6 @@ namespace llvm {
       /// of that FP value.
       FCTIDZ, FCTIWZ,
 
-      /// STFIWX - The STFIWX instruction.  The first operand is an input token
-      /// chain, then an f64 value to store, then an address to store it to.
-      STFIWX,
-
       // VMADDFP, VNMSUBFP - The VMADDFP and VNMSUBFP instructions, taking
       // three v4f32 operands and producing a v4f32 result.
       VMADDFP, VNMSUBFP,
@@ -241,6 +237,10 @@ namespace llvm {
       /// then puts it in the bottom bits of the GPRC.  TYPE can be either i16
       /// or i32.
       LBRX,
+
+      /// STFIWX - The STFIWX instruction.  The first operand is an input token
+      /// chain, then an f64 value to store, then an address to store it to.
+      STFIWX,
 
       /// GPRC, CHAIN = LFIWAX CHAIN, Ptr - This is a floating-point
       /// load which sign-extends from a 32-bit integer value into the
