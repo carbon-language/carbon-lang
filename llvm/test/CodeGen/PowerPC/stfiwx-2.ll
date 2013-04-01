@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=ppc32 -mcpu=g5 | FileCheck %s
+; RUN: llc < %s -mtriple=powerpc-unknown-linux-gnu -mcpu=g5 | FileCheck %s
 
 define void @test(float %F, i8* %P) {
 	%I = fptosi float %F to i32
