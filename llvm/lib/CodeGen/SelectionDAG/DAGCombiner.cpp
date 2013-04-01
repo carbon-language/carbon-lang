@@ -7711,16 +7711,82 @@ SDValue DAGCombiner::TransformFPLoadStorePair(SDNode *N) {
   return SDValue();
 }
 
-/// Returns the base pointer and an integer offset from that object.
-static std::pair<SDValue, int64_t> GetPointerBaseAndOffset(SDValue Ptr) {
-  if (Ptr->getOpcode() == ISD::ADD && isa<ConstantSDNode>(Ptr->getOperand(1))) {
-    int64_t Offset = cast<ConstantSDNode>(Ptr->getOperand(1))->getSExtValue();
-    SDValue Base = Ptr->getOperand(0);
-    return std::make_pair(Base, Offset);
+/// Helper struct to parse and store a memory address as base + index + offset.
+/// We ignore sign extensions when it is safe to do so.
+/// The following two expressions are not equivalent. To differentiate we need
+/// to store whether there was a sign extension involved in the index
+/// computation.
+///  (load (i64 add (i64 copyfromreg %c)
+///                 (i64 signextend (add (i8 load %index)
+///                                      (i8 1))))
+/// vs
+///
+/// (load (i64 add (i64 copyfromreg %c)
+///                (i64 signextend (i32 add (i32 signextend (i8 load %index))
+///                                         (i32 1)))))
+struct BaseIndexOffset {
+  SDValue Base;
+  SDValue Index;
+  int64_t Offset;
+  bool IsIndexSignExt;
+
+  BaseIndexOffset() : Offset(0), IsIndexSignExt(false) {}
+
+  BaseIndexOffset(SDValue Base, SDValue Index, int64_t Offset,
+                  bool IsIndexSignExt) :
+    Base(Base), Index(Index), Offset(Offset), IsIndexSignExt(IsIndexSignExt) {}
+
+  bool equalBaseIndex(const BaseIndexOffset &Other) {
+    return Other.Base == Base && Other.Index == Index &&
+      Other.IsIndexSignExt == IsIndexSignExt;
   }
 
-  return std::make_pair(Ptr, 0);
-}
+  /// Parses tree in Ptr for base, index, offset addresses.
+  static BaseIndexOffset match(SDValue Ptr) {
+    bool IsIndexSignExt = false;
+
+    // Just Base or possibly anything else.
+    if (Ptr->getOpcode() != ISD::ADD)
+      return BaseIndexOffset(Ptr, SDValue(), 0, IsIndexSignExt);
+
+    // Base + offset.
+    if (isa<ConstantSDNode>(Ptr->getOperand(1))) {
+      int64_t Offset = cast<ConstantSDNode>(Ptr->getOperand(1))->getSExtValue();
+      return  BaseIndexOffset(Ptr->getOperand(0), SDValue(), Offset,
+                              IsIndexSignExt);
+    }
+
+    // Look at Base + Index + Offset cases.
+    SDValue Base = Ptr->getOperand(0);
+    SDValue IndexOffset = Ptr->getOperand(1);
+
+    // Skip signextends.
+    if (IndexOffset->getOpcode() == ISD::SIGN_EXTEND) {
+      IndexOffset = IndexOffset->getOperand(0);
+      IsIndexSignExt = true;
+    }
+
+    // Either the case of Base + Index (no offset) or something else.
+    if (IndexOffset->getOpcode() != ISD::ADD)
+      return BaseIndexOffset(Base, IndexOffset, 0, IsIndexSignExt);
+
+    // Now we have the case of Base + Index + offset.
+    SDValue Index = IndexOffset->getOperand(0);
+    SDValue Offset = IndexOffset->getOperand(1);
+
+    if (!isa<ConstantSDNode>(Offset))
+      return BaseIndexOffset(Ptr, SDValue(), 0, IsIndexSignExt);
+
+    // Ignore signextends.
+    if (Index->getOpcode() == ISD::SIGN_EXTEND) {
+      Index = Index->getOperand(0);
+      IsIndexSignExt = true;
+    } else IsIndexSignExt = false;
+
+    int64_t Off = cast<ConstantSDNode>(Offset)->getSExtValue();
+    return BaseIndexOffset(Base, Index, Off, IsIndexSignExt);
+  }
+};
 
 /// Holds a pointer to an LSBaseSDNode as well as information on where it
 /// is located in a sequence of memory operations connected by a chain.
@@ -7767,16 +7833,16 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   if (Chain->hasOneUse() && Chain->use_begin()->getOpcode() == ISD::STORE)
     return false;
 
-  // This holds the base pointer and the offset in bytes from the base pointer.
-  std::pair<SDValue, int64_t> BasePtr =
-      GetPointerBaseAndOffset(St->getBasePtr());
+  // This holds the base pointer, index, and the offset in bytes from the base
+  // pointer.
+  BaseIndexOffset BasePtr = BaseIndexOffset::match(St->getBasePtr());
 
   // We must have a base and an offset.
-  if (!BasePtr.first.getNode())
+  if (!BasePtr.Base.getNode())
     return false;
 
   // Do not handle stores to undef base pointers.
-  if (BasePtr.first.getOpcode() == ISD::UNDEF)
+  if (BasePtr.Base.getOpcode() == ISD::UNDEF)
     return false;
 
   // Save the LoadSDNodes that we find in the chain.
@@ -7798,11 +7864,10 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
       break;
 
     // Find the base pointer and offset for this memory node.
-    std::pair<SDValue, int64_t> Ptr =
-      GetPointerBaseAndOffset(Index->getBasePtr());
+    BaseIndexOffset Ptr = BaseIndexOffset::match(Index->getBasePtr());
 
     // Check that the base pointer is the same as the original one.
-    if (Ptr.first.getNode() != BasePtr.first.getNode())
+    if (!Ptr.equalBaseIndex(BasePtr))
       break;
 
     // Check that the alignment is the same.
@@ -7828,7 +7893,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
       break;
 
     // We found a potential memory operand to merge.
-    StoreNodes.push_back(MemOpLink(Index, Ptr.second, Seq++));
+    StoreNodes.push_back(MemOpLink(Index, Ptr.Offset, Seq++));
 
     // Find the next memory operand in the chain. If the next operand in the
     // chain is a store then move up and continue the scan with the next
@@ -8025,7 +8090,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
 
   // Find acceptable loads. Loads need to have the same chain (token factor),
   // must not be zext, volatile, indexed, and they must be consecutive.
-  SDValue LdBasePtr;
+  BaseIndexOffset LdBasePtr;
   for (unsigned i=0; i<LastConsecutiveStore+1; ++i) {
     StoreSDNode *St  = cast<StoreSDNode>(StoreNodes[i].MemNode);
     LoadSDNode *Ld = dyn_cast<LoadSDNode>(St->getValue());
@@ -8051,21 +8116,19 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
     if (Ld->getMemoryVT() != MemVT)
       break;
 
-    std::pair<SDValue, int64_t> LdPtr =
-    GetPointerBaseAndOffset(Ld->getBasePtr());
-
+    BaseIndexOffset LdPtr = BaseIndexOffset::match(Ld->getBasePtr());
     // If this is not the first ptr that we check.
-    if (LdBasePtr.getNode()) {
+    if (LdBasePtr.Base.getNode()) {
       // The base ptr must be the same.
-      if (LdPtr.first != LdBasePtr)
+      if (!LdPtr.equalBaseIndex(LdBasePtr))
         break;
     } else {
       // Check that all other base pointers are the same as this one.
-      LdBasePtr = LdPtr.first;
+      LdBasePtr = LdPtr;
     }
 
     // We found a potential memory operand to merge.
-    LoadNodes.push_back(MemOpLink(Ld, LdPtr.second, 0));
+    LoadNodes.push_back(MemOpLink(Ld, LdPtr.Offset, 0));
   }
 
   if (LoadNodes.size() < 2)
