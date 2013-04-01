@@ -99,11 +99,11 @@ endif()
 # and target a unix-like system. On Android we define the rules for building
 # unit tests, but don't execute them.
 if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX AND NOT ANDROID)
-  set(COMPILER_RT_CAN_EXECUTE_TESTS TRUE)
+  option(COMPILER_RT_CAN_EXECUTE_TESTS "Can we execute instrumented tests" ON)
 else()
-  set(COMPILER_RT_CAN_EXECUTE_TESTS FALSE)
+  option(COMPILER_RT_CAN_EXECUTE_TESTS "Can we execute instrumented tests" OFF)
 endif()
-    
+
 # Check if compiler-rt is built with libc++.
 find_flag_in_string("${CMAKE_CXX_FLAGS}" "-stdlib=libc++"
                     COMPILER_RT_USES_LIBCXX)
