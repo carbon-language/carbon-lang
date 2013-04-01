@@ -1187,6 +1187,39 @@ void Interpreter::visitVAArgInst(VAArgInst &I) {
   ++VAList.UIntPairVal.second;
 }
 
+void Interpreter::visitExtractElementInst(ExtractElementInst &I) {
+  ExecutionContext &SF = ECStack.back();
+  GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
+  GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
+  GenericValue Dest;
+
+  Type *Ty = I.getType();
+  const unsigned indx = unsigned(Src2.IntVal.getZExtValue());
+
+  if(Src1.AggregateVal.size() > indx) {
+    switch (Ty->getTypeID()) {
+    default:
+      dbgs() << "Unhandled destination type for extractelement instruction: "
+      << *Ty << "\n";
+      llvm_unreachable(0);
+      break;
+    case Type::IntegerTyID:
+      Dest.IntVal = Src1.AggregateVal[indx].IntVal;
+      break;
+    case Type::FloatTyID:
+      Dest.FloatVal = Src1.AggregateVal[indx].FloatVal;
+      break;
+    case Type::DoubleTyID:
+      Dest.DoubleVal = Src1.AggregateVal[indx].DoubleVal;
+      break;
+    }
+  } else {
+    dbgs() << "Invalid index in extractelement instruction\n";
+  }
+
+  SetValue(&I, Dest, SF);
+}
+
 GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
                                                 ExecutionContext &SF) {
   switch (CE->getOpcode()) {

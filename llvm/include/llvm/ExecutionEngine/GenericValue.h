@@ -35,14 +35,19 @@ struct GenericValue {
     struct IntPair  UIntPairVal;
     unsigned char   Untyped[8];
   };
-  APInt IntVal;   // also used for long doubles
+  APInt IntVal;   // also used for long doubles.
+  // For aggregate data types.
+  std::vector<GenericValue> AggregateVal;
 
-  GenericValue() : DoubleVal(0.0), IntVal(1,0) {}
+  // to make code faster, set GenericValue to zero could be omitted, but it is
+  // potentially can cause problems, since GenericValue to store garbage
+  // instead of zero.
+  GenericValue() : IntVal(1,0) {UIntPairVal.first = 0; UIntPairVal.second = 0;}
   explicit GenericValue(void *V) : PointerVal(V), IntVal(1,0) { }
 };
 
 inline GenericValue PTOGV(void *P) { return GenericValue(P); }
 inline void* GVTOP(const GenericValue &GV) { return GV.PointerVal; }
 
-} // End llvm namespace
+} // End llvm namespace.
 #endif

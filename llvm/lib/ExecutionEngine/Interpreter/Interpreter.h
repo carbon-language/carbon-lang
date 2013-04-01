@@ -178,6 +178,7 @@ public:
   void visitAShr(BinaryOperator &I);
 
   void visitVAArgInst(VAArgInst &I);
+  void visitExtractElementInst(ExtractElementInst &I);
   void visitInstruction(Instruction &I) {
     errs() << I << "\n";
     llvm_unreachable("Instruction not interpretable yet!");
