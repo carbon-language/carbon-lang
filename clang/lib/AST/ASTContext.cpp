@@ -7673,7 +7673,15 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     if (!VD->isFileVarDecl())
       return false;
-  } else if (!isa<FunctionDecl>(D))
+  } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // We never need to emit an uninstantiated function template.
+    if (FD->getTemplatedKind() == FunctionDecl::TK_FunctionTemplate)
+      return false;
+  } else
+    return false;
+
+  // If this is a member of a class template, we do not need to emit it.
+  if (D->getDeclContext()->isDependentContext())
     return false;
 
   // Weak references don't produce any output by themselves.
