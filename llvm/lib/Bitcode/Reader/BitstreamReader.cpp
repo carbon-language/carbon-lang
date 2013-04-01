@@ -292,7 +292,7 @@ void BitstreamCursor::ReadAbbrevRecord() {
         Abbv->Add(BitCodeAbbrevOp(0));
         continue;
       }
-      
+
       Abbv->Add(BitCodeAbbrevOp(E, Data));
     } else
       Abbv->Add(BitCodeAbbrevOp(E));

@@ -458,7 +458,7 @@ public:
   template<typename uintty>
   void EmitRecordWithArray(unsigned Abbrev, SmallVectorImpl<uintty> &Vals,
                           const char *ArrayData, unsigned ArrayLen) {
-    return EmitRecordWithAbbrevImpl(Abbrev, Vals, StringRef(ArrayData, 
+    return EmitRecordWithAbbrevImpl(Abbrev, Vals, StringRef(ArrayData,
                                                             ArrayLen));
   }
 
