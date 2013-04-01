@@ -149,3 +149,18 @@ define i32 @xor_ra_size2(i32 %x) {
 ;CHECK: %or1 = or i32 %x, 456
 ;CHECK: %xor = xor i32 %or, %or1
 }
+
+
+; ==========================================================================
+;
+;  Xor reassociation bugs
+;  
+; ==========================================================================
+
+@xor_bug1_data = external global <{}>, align 4
+define void @xor_bug1() {
+  %1 = ptrtoint i32* undef to i64
+  %2 = xor i64 %1, ptrtoint (<{}>* @xor_bug1_data to i64)
+  %3 = and i64 undef, %2
+  ret void
+}

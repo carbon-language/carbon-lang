@@ -199,7 +199,7 @@ namespace {
 }
 
 XorOpnd::XorOpnd(Value *V) {
-  assert(!isa<Constant>(V) && "No constant");
+  assert(!isa<ConstantInt>(V) && "No ConstantInt");
   OrigVal = V;
   Instruction *I = dyn_cast<Instruction>(V);
   SymbolicRank = 0;
