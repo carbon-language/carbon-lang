@@ -9387,6 +9387,11 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                                     TUK == TUK_Friend,
                                                     isExplicitSpecialization,
                                                     Invalid)) {
+      if (Kind == TTK_Enum) {
+        Diag(KWLoc, diag::err_enum_template);
+        return 0;
+      }
+
       if (TemplateParams->size() > 0) {
         // This is a declaration or definition of a class template (which may
         // be a member of another template).

@@ -3262,7 +3262,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     ColonProtectionRAIIObject X(*this, AllowFixedUnderlyingType);
 
     if (ParseOptionalCXXScopeSpecifier(SS, ParsedType(),
-                                       /*EnteringContext=*/false))
+                                       /*EnteringContext=*/true))
       return;
 
     if (SS.isSet() && Tok.isNot(tok::identifier)) {
