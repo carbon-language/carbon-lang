@@ -43,6 +43,37 @@ foreach Index = 0-127 in {
                                    Index>;
 }
 
+// KCACHE_BANK0
+foreach Index = 159-128 in {
+  foreach Chan = [ "X", "Y", "Z", "W" ] in {
+    // 32-bit Temporary Registers
+    def KC0_#Index#_#Chan : R600RegWithChan <"KC0["#Index#"-128]."#Chan, Index, Chan>;
+  }
+  // 128-bit Temporary Registers
+  def KC0_#Index#_XYZW : R600Reg_128 <"KC0["#Index#"-128].XYZW",
+                                 [!cast<Register>("KC0_"#Index#"_X"),
+                                  !cast<Register>("KC0_"#Index#"_Y"),
+                                  !cast<Register>("KC0_"#Index#"_Z"),
+                                  !cast<Register>("KC0_"#Index#"_W")],
+                                 Index>;
+}
+
+// KCACHE_BANK1
+foreach Index = 191-160 in {
+  foreach Chan = [ "X", "Y", "Z", "W" ] in {
+    // 32-bit Temporary Registers
+    def KC1_#Index#_#Chan : R600RegWithChan <"KC1["#Index#"-160]."#Chan, Index, Chan>;
+  }
+  // 128-bit Temporary Registers
+  def KC1_#Index#_XYZW : R600Reg_128 <"KC1["#Index#"-160].XYZW",
+                                 [!cast<Register>("KC1_"#Index#"_X"),
+                                  !cast<Register>("KC1_"#Index#"_Y"),
+                                  !cast<Register>("KC1_"#Index#"_Z"),
+                                  !cast<Register>("KC1_"#Index#"_W")],
+                                 Index>;
+}
+
+
 // Array Base Register holding input in FS
 foreach Index = 448-480 in {
   def ArrayBase#Index :  R600Reg<"ARRAY_BASE", Index>;
@@ -79,6 +110,38 @@ let isAllocatable = 0 in {
 def R600_Addr : RegisterClass <"AMDGPU", [i32], 127, (add (sequence "Addr%u_X", 0, 127))>;
 
 } // End isAllocatable = 0
+
+def R600_KC0_X : RegisterClass <"AMDGPU", [f32, i32], 32,
+                              (add (sequence "KC0_%u_X", 128, 159))>;
+
+def R600_KC0_Y : RegisterClass <"AMDGPU", [f32, i32], 32,
+                              (add (sequence "KC0_%u_Y", 128, 159))>;
+
+def R600_KC0_Z : RegisterClass <"AMDGPU", [f32, i32], 32,
+                              (add (sequence "KC0_%u_Z", 128, 159))>;
+
+def R600_KC0_W : RegisterClass <"AMDGPU", [f32, i32], 32,
+                              (add (sequence "KC0_%u_W", 128, 159))>;
+
+def R600_KC0 : RegisterClass <"AMDGPU", [f32, i32], 32,
+                                   (interleave R600_KC0_X, R600_KC0_Y,
+                                               R600_KC0_Z, R600_KC0_W)>;
+
+def R600_KC1_X : RegisterClass <"AMDGPU", [f32, i32], 32,
+                              (add (sequence "KC1_%u_X", 160, 191))>;
+
+def R600_KC1_Y : RegisterClass <"AMDGPU", [f32, i32], 32,
+                              (add (sequence "KC1_%u_Y", 160, 191))>;
+
+def R600_KC1_Z : RegisterClass <"AMDGPU", [f32, i32], 32,
+                              (add (sequence "KC1_%u_Z", 160, 191))>;
+
+def R600_KC1_W : RegisterClass <"AMDGPU", [f32, i32], 32,
+                              (add (sequence "KC1_%u_W", 160, 191))>;
+
+def R600_KC1 : RegisterClass <"AMDGPU", [f32, i32], 32,
+                                   (interleave R600_KC1_X, R600_KC1_Y,
+                                               R600_KC1_Z, R600_KC1_W)>;
 
 def R600_TReg32_X : RegisterClass <"AMDGPU", [f32, i32], 32,
                                    (add (sequence "T%u_X", 0, 127), AR_X)>;

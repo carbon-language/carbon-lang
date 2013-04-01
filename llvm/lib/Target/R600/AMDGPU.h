@@ -23,6 +23,7 @@ class AMDGPUTargetMachine;
 // R600 Passes
 FunctionPass* createR600KernelParametersPass(const DataLayout *TD);
 FunctionPass *createR600ExpandSpecialInstrsPass(TargetMachine &tm);
+FunctionPass *createR600EmitClauseMarkers(TargetMachine &tm);
 
 // SI Passes
 FunctionPass *createSIAnnotateControlFlowPass();

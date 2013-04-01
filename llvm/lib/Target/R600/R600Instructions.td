@@ -351,9 +351,9 @@ class R600_1OP <bits<11> inst, string opName, list<dag> pattern,
               (ins WRITE:$write, OMOD:$omod, REL:$dst_rel, CLAMP:$clamp,
                    R600_Reg32:$src0, NEG:$src0_neg, REL:$src0_rel, ABS:$src0_abs, SEL:$src0_sel,
                    LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal),
-              !strconcat(opName,
+              !strconcat("  ", opName,
                    "$clamp $dst$write$dst_rel$omod, "
-                   "$src0_neg$src0_abs$src0$src0_sel$src0_abs$src0_rel, "
+                   "$src0_neg$src0_abs$src0$src0_abs$src0_rel, "
                    "$literal $pred_sel$last"),
               pattern,
               itin>,
@@ -392,10 +392,10 @@ class R600_2OP <bits<11> inst, string opName, list<dag> pattern,
                R600_Reg32:$src0, NEG:$src0_neg, REL:$src0_rel, ABS:$src0_abs, SEL:$src0_sel,
                R600_Reg32:$src1, NEG:$src1_neg, REL:$src1_rel, ABS:$src1_abs, SEL:$src1_sel,
                LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal),
-          !strconcat(opName,
+          !strconcat("  ", opName,
                 "$clamp $update_exec_mask$update_pred$dst$write$dst_rel$omod, "
-                "$src0_neg$src0_abs$src0$src0_sel$src0_abs$src0_rel, "
-                "$src1_neg$src1_abs$src1$src1_sel$src1_abs$src1_rel, "
+                "$src0_neg$src0_abs$src0$src0_abs$src0_rel, "
+                "$src1_neg$src1_abs$src1$src1_abs$src1_rel, "
                 "$literal $pred_sel$last"),
           pattern,
           itin>,
@@ -430,10 +430,10 @@ class R600_3OP <bits<5> inst, string opName, list<dag> pattern,
                R600_Reg32:$src1, NEG:$src1_neg, REL:$src1_rel, SEL:$src1_sel,
                R600_Reg32:$src2, NEG:$src2_neg, REL:$src2_rel, SEL:$src2_sel,
                LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal),
-          !strconcat(opName, "$clamp $dst$dst_rel, "
-                             "$src0_neg$src0$src0_sel$src0_rel, "
-                             "$src1_neg$src1$src1_sel$src1_rel, "
-                             "$src2_neg$src2$src2_sel$src2_rel, "
+          !strconcat("  ", opName, "$clamp $dst$dst_rel, "
+                             "$src0_neg$src0$src0_rel, "
+                             "$src1_neg$src1$src1_rel, "
+                             "$src2_neg$src2$src2_rel, "
                              "$literal $pred_sel$last"),
           pattern,
           itin>,
@@ -764,6 +764,67 @@ class ExportBufInst : InstR600ISA<(
   let Inst{31-0} = Word0;
   let Inst{63-32} = Word1;
 }
+
+//===----------------------------------------------------------------------===//
+// Control Flow Instructions
+//===----------------------------------------------------------------------===//
+
+class CF_ALU_WORD0 {
+  field bits<32> Word0;
+
+  bits<22> ADDR;
+  bits<4> KCACHE_BANK0;
+  bits<4> KCACHE_BANK1;
+  bits<2> KCACHE_MODE0;
+
+  let Word0{21-0} = ADDR;
+  let Word0{25-22} = KCACHE_BANK0;
+  let Word0{29-26} = KCACHE_BANK1;
+  let Word0{31-30} = KCACHE_MODE0;
+}
+
+class CF_ALU_WORD1 {
+  field bits<32> Word1;
+
+  bits<2> KCACHE_MODE1;
+  bits<8> KCACHE_ADDR0;
+  bits<8> KCACHE_ADDR1;
+  bits<7> COUNT;
+  bits<1> ALT_CONST;
+  bits<4> CF_INST;
+  bits<1> WHOLE_QUAD_MODE;
+  bits<1> BARRIER;
+
+  let Word1{1-0} = KCACHE_MODE1;
+  let Word1{9-2} = KCACHE_ADDR0;
+  let Word1{17-10} = KCACHE_ADDR1;
+  let Word1{24-18} = COUNT;
+  let Word1{25} = ALT_CONST;
+  let Word1{29-26} = CF_INST;
+  let Word1{30} = WHOLE_QUAD_MODE;
+  let Word1{31} = BARRIER;
+}
+
+class ALU_CLAUSE<bits<4> inst, string OpName> : AMDGPUInst <(outs),
+(ins i32imm:$ADDR, i32imm:$KCACHE_BANK0, i32imm:$KCACHE_BANK1, i32imm:$KCACHE_MODE0, i32imm:$KCACHE_MODE1,
+i32imm:$KCACHE_ADDR0, i32imm:$KCACHE_ADDR1, i32imm:$COUNT),
+!strconcat(OpName, " $COUNT, @$ADDR, "
+"KC0[CB$KCACHE_BANK0:$KCACHE_ADDR0-$KCACHE_ADDR0+32]"
+", KC1[CB$KCACHE_BANK1:$KCACHE_ADDR1-$KCACHE_ADDR1+32]"),
+[] >, CF_ALU_WORD0, CF_ALU_WORD1 {
+  field bits<64> Inst;
+
+  let CF_INST = inst;
+  let ALT_CONST = 0;
+  let WHOLE_QUAD_MODE = 0;
+  let BARRIER = 1;
+
+  let Inst{31-0} = Word0;
+  let Inst{63-32} = Word1;
+}
+
+def CF_ALU : ALU_CLAUSE<8, "ALU">;
+def CF_ALU_PUSH_BEFORE : ALU_CLAUSE<9, "ALU_PUSH_BEFORE">;
 
 let Predicates = [isR600toCayman] in {
 

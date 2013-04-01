@@ -1,7 +1,7 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
 ; CHECK: @main1
-; CHECK: MOV T{{[0-9]+\.[XYZW], CBuf0\[[0-9]+\]\.[XYZW]}}
+; CHECK: MOV T{{[0-9]+\.[XYZW], KC0}}
 define void @main1() {
 main_body:
   %0 = load <4 x float> addrspace(8)* null
