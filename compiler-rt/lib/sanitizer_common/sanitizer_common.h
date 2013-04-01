@@ -308,6 +308,12 @@ class InternalVector {
   uptr size() const {
     return size_;
   }
+  const T *data() const {
+    return data_;
+  }
+  uptr capacity() const {
+    return capacity_;
+  }
 
  private:
   void Resize(uptr new_capacity) {
