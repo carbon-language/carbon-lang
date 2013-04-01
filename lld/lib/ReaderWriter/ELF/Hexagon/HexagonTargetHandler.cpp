@@ -38,6 +38,7 @@ template <class Derived> class GOTPLTPass : public Pass {
   void handleReference(const DefinedAtom &atom, const Reference &ref) {
     switch (ref.kind()) {
     case R_HEX_PLT_B22_PCREL:
+    case R_HEX_B22_PCREL:
       static_cast<Derived *>(this)->handlePLT32(ref);
       break;
     case R_HEX_GOT_LO16:

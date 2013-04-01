@@ -54,6 +54,9 @@ void DynamicLibraryWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
                                                atom->_virtualAddr, atom);
       }
 
+  for (const UndefinedAtom *a : file.undefined())
+    this->_dynamicSymbolTable->addSymbol(a, ELF::SHN_UNDEF);
+
   OutputELFWriter<ELFT>::buildDynamicSymbolTable(file);
 }
 

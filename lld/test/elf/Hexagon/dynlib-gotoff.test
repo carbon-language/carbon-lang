@@ -10,7 +10,7 @@ CHECKGOTPLT:    alignment:       2^3
 CHECKGOTPLT:    section-name:    .got.plt
               - name:            __got_c
 CHECKGOTPLT:    type:            got
-CHECKGOTPLT:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
+CHECKGOTPLT:    content:         [ 00, 00, 00, 00 ]
 CHECKGOTPLT:    alignment:       2^2
 CHECKGOTPLT:    section-name:    .got
 CHECKGOTPLT:    permissions:     rw-
@@ -20,7 +20,7 @@ CHECKGOTPLT:        offset:          0
 CHECKGOTPLT:        target:          c
               - name:            __got_shankar
 CHECKGOTPLT:    type:            got
-CHECKGOTPLT:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
+CHECKGOTPLT:    content:         [ 00, 00, 00, 00 ]
 CHECKGOTPLT:    alignment:       2^2
 CHECKGOTPLT:    section-name:    .got
 CHECKGOTPLT:    permissions:     rw-
@@ -30,8 +30,8 @@ CHECKGOTPLT:        offset:          0
 CHECKGOTPLT:        target:          shankar
               - name:            __got_fn
 CHECKGOTPLT:    type:            got
-CHECKGOTPLT:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
-CHECKGOTPLT:    alignment:       2^3
+CHECKGOTPLT:    content:         [ 00, 00, 00, 00 ]
+CHECKGOTPLT:    alignment:       2^2
 CHECKGOTPLT:    section-name:    .got.plt
 CHECKGOTPLT:    permissions:     rw-
 CHECKGOTPLT:    references:      
@@ -43,8 +43,8 @@ CHECKGOTPLT:        offset:          0
                     target:          .PLT0
               - name:            __got_fn1
 CHECKGOTPLT:    type:            got
-CHECKGOTPLT:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
-CHECKGOTPLT:    alignment:       2^3
+CHECKGOTPLT:    content:         [ 00, 00, 00, 00 ]
+CHECKGOTPLT:    alignment:       2^2
 CHECKGOTPLT:    section-name:    .got.plt
 CHECKGOTPLT:    permissions:     rw-
 CHECKGOTPLT:    references:      
@@ -56,8 +56,8 @@ CHECKGOTPLT:        offset:          0
                     target:          .PLT0
               - name:            __got_fn2
 CHECKGOTPLT:    type:            got
-CHECKGOTPLT:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
-CHECKGOTPLT:    alignment:       2^3
+CHECKGOTPLT:    content:         [ 00, 00, 00, 00 ]
+CHECKGOTPLT:    alignment:       2^2
 CHECKGOTPLT:    section-name:    .got.plt
 CHECKGOTPLT:    permissions:     rw-
 CHECKGOTPLT:    references:      
