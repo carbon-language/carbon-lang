@@ -515,21 +515,21 @@ NamedDecl *Sema::LookupInlineAsmIdentifier(StringRef Name, SourceLocation Loc,
     return 0;
   }
 
-  NamedDecl *ND = Result.getFoundDecl();
-  if (isa<VarDecl>(ND) || isa<FunctionDecl>(ND)) {
-    if (VarDecl *Var = dyn_cast<VarDecl>(ND)) {
-      Type = Context.getTypeInfo(Var->getType()).first;
-      QualType Ty = Var->getType();
-      if (Ty->isArrayType()) {
-        const ArrayType *ATy = Context.getAsArrayType(Ty);
-        Length = Type / Context.getTypeInfo(ATy->getElementType()).first;
-        Type /= Length; // Type is in terms of a single element.
-      }
-      Type /= 8; // Type is in terms of bits, but we want bytes.
-      Size = Length * Type;
-      IsVarDecl = true;
+  NamedDecl *FoundDecl = Result.getFoundDecl();
+  if (isa<FunctionDecl>(FoundDecl))
+    return FoundDecl;
+  if (VarDecl *Var = dyn_cast<VarDecl>(FoundDecl)) {
+    Type = Context.getTypeInfo(Var->getType()).first;
+    QualType Ty = Var->getType();
+    if (Ty->isArrayType()) {
+      const ArrayType *ATy = Context.getAsArrayType(Ty);
+      Length = Type / Context.getTypeInfo(ATy->getElementType()).first;
+      Type /= Length; // Type is in terms of a single element.
     }
-    return ND;
+    Type /= 8; // Type is in terms of bits, but we want bytes.
+    Size = Length * Type;
+    IsVarDecl = true;
+    return FoundDecl;
   }
 
   // FIXME: Handle other kinds of results? (FieldDecl, etc.)
@@ -549,13 +549,12 @@ bool Sema::LookupInlineAsmField(StringRef Base, StringRef Member,
   if (!BaseResult.isSingleResult())
     return true;
 
-  NamedDecl *FoundDecl = BaseResult.getFoundDecl();
   const RecordType *RT = 0;
-  if (VarDecl *VD = dyn_cast<VarDecl>(FoundDecl)) {
+  NamedDecl *FoundDecl = BaseResult.getFoundDecl();
+  if (VarDecl *VD = dyn_cast<VarDecl>(FoundDecl))
     RT = VD->getType()->getAs<RecordType>();
-  } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(FoundDecl)) {
+  else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(FoundDecl))
     RT = TD->getUnderlyingType()->getAs<RecordType>();
-  }
   if (!RT)
     return true;
 
