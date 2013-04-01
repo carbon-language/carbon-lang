@@ -180,19 +180,21 @@ static bool IsASCII(unsigned char c) {
   return /*0x00 <= c &&*/ c <= 0x7F;
 }
 
-// Check if the global is a zero-terminated ASCII string. If so, print it.
-static void PrintGlobalNameIfASCII(const __asan_global &g) {
-  for (uptr p = g.beg; p < g.beg + g.size - 1; p++) {
-    if (!IsASCII(*(unsigned char*)p)) return;
-  }
-  if (*(char*)(g.beg + g.size - 1) != 0) return;
-  Printf("  '%s' is ascii string '%s'\n", g.name, (char*)g.beg);
-}
-
 static const char *MaybeDemangleGlobalName(const char *name) {
   // We can spoil names of globals with C linkage, so use an heuristic
   // approach to check if the name should be demangled.
   return (name[0] == '_' && name[1] == 'Z') ? Demangle(name) : name;
+}
+
+// Check if the global is a zero-terminated ASCII string. If so, print it.
+static void PrintGlobalNameIfASCII(const __asan_global &g) {
+  for (uptr p = g.beg; p < g.beg + g.size - 1; p++) {
+    unsigned char c = *(unsigned char*)p;
+    if (c == '\0' || !IsASCII(c)) return;
+  }
+  if (*(char*)(g.beg + g.size - 1) != '\0') return;
+  Printf("  '%s' is ascii string '%s'\n",
+         MaybeDemangleGlobalName(g.name), (char*)g.beg);
 }
 
 bool DescribeAddressRelativeToGlobal(uptr addr, uptr size,

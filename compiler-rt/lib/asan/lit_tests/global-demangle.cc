@@ -4,14 +4,15 @@
 namespace XXX {
 class YYY {
  public:
-  static int ZZZ[];
+  static char ZZZ[];
 };
-int YYY::ZZZ[] = {0, 1, 2, 3};
+char YYY::ZZZ[] = "abc";
 }
 
 int main(int argc, char **argv) {
-  return XXX::YYY::ZZZ[argc + 5];  // BOOM
-  // CHECK: {{READ of size 4 at 0x.*}}
-  // CHECK: {{0x.* is located 8 bytes to the right of global variable}}
-  // CHECK: 'XXX::YYY::ZZZ' {{.*}} of size 16
+  return (int)XXX::YYY::ZZZ[argc + 5];  // BOOM
+  // CHECK: {{READ of size 1 at 0x.*}}
+  // CHECK: {{0x.* is located 2 bytes to the right of global variable}}
+  // CHECK: 'XXX::YYY::ZZZ' {{.*}} of size 4
+  // CHECK: 'XXX::YYY::ZZZ' is ascii string 'abc'
 }
