@@ -20,21 +20,21 @@
 namespace __sanitizer {
 typedef int SuspendedThreadID;
 
-// Holds the list of suspended threads. Also provides register dumping
-// functionality (to be implemented).
+// Holds the list of suspended threads and provides an interface to dump their
+// register contexts.
 class SuspendedThreadsList {
  public:
   SuspendedThreadsList()
     : thread_ids_(1024) {}
-  SuspendedThreadID GetThreadID(uptr index) {
+  SuspendedThreadID GetThreadID(uptr index) const {
     CHECK_LT(index, thread_ids_.size());
     return thread_ids_[index];
   }
-  void DumpRegisters(uptr index) const {
-    UNIMPLEMENTED();
-  }
-  uptr thread_count() { return thread_ids_.size(); }
-  bool Contains(SuspendedThreadID thread_id) {
+  int GetRegistersAndSP(uptr index, uptr *buffer, uptr *sp) const;
+  // The buffer in GetRegistersAndSP should be at least this big.
+  static uptr RegisterCount();
+  uptr thread_count() const { return thread_ids_.size(); }
+  bool Contains(SuspendedThreadID thread_id) const {
     for (uptr i = 0; i < thread_ids_.size(); i++) {
       if (thread_ids_[i] == thread_id)
         return true;
