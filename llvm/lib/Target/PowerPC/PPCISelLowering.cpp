@@ -4736,8 +4736,8 @@ SDValue PPCTargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
                       dl, MVT::f64, Src);
     break;
   case MVT::i64:
-    assert((Op.getOpcode() == ISD::SINT_TO_FP || PPCSubTarget.hasFPCVT()) &&
-           "i64 UINT_TO_FP is supported only with FPCVT");
+    assert((Op.getOpcode() == ISD::FP_TO_SINT || PPCSubTarget.hasFPCVT()) &&
+           "i64 FP_TO_UINT is supported only with FPCVT");
     Tmp = DAG.getNode(Op.getOpcode()==ISD::FP_TO_SINT ? PPCISD::FCTIDZ :
                                                         PPCISD::FCTIDUZ,
                       dl, MVT::f64, Src);
