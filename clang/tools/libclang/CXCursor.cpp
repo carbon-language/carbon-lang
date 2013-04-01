@@ -939,6 +939,13 @@ int clang_Cursor_getNumArguments(CXCursor C) {
       return FD->param_size();
   }
 
+  if (clang_isExpression(C.kind)) {
+    const Expr *E = cxcursor::getCursorExpr(C);
+    if (const CallExpr *CE = dyn_cast<CallExpr>(E)) {
+      return CE->getNumArgs();
+    }
+  }
+
   return -1;
 }
 
@@ -953,6 +960,17 @@ CXCursor clang_Cursor_getArgument(CXCursor C, unsigned i) {
       if (i < FD->param_size())
         return cxcursor::MakeCXCursor(FD->param_begin()[i],
                                       cxcursor::getCursorTU(C));
+    }
+  }
+
+  if (clang_isExpression(C.kind)) {
+    const Expr *E = cxcursor::getCursorExpr(C);
+    if (const CallExpr *CE = dyn_cast<CallExpr>(E)) {
+      if (i < CE->getNumArgs()) {
+        return cxcursor::MakeCXCursor(CE->getArg(i),
+                                      getCursorDecl(C),
+                                      cxcursor::getCursorTU(C));
+      }
     }
   }
 

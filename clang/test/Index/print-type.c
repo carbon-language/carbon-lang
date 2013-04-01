@@ -21,7 +21,7 @@ typedef int __attribute__((vector_size(16))) int4_t;
 // CHECK: ParmDecl=fn:3:55 (Definition) [type=void (*)(int)] [typekind=Pointer] [canonicaltype=void (*)(int)] [canonicaltypekind=Pointer] [isPOD=1]
 // CHECK: ParmDecl=:3:62 (Definition) [type=int] [typekind=Int] [isPOD=1]
 // CHECK: CompoundStmt= [type=] [typekind=Invalid] [isPOD=0]
-// CHECK: CallExpr=fn:3:55 [type=void] [typekind=Void] [isPOD=0]
+// CHECK: CallExpr=fn:3:55 [type=void] [typekind=Void] [args= [int] [Int]] [isPOD=0]
 // CHECK: DeclRefExpr=fn:3:55 [type=void (*)(int)] [typekind=Pointer] [canonicaltype=void (*)(int)] [canonicaltypekind=Pointer] [isPOD=1]
 // CHECK: UnaryOperator= [type=int] [typekind=Int] [isPOD=1]
 // CHECK: DeclRefExpr=p:3:13 [type=int *] [typekind=Pointer] [isPOD=1]
