@@ -1898,6 +1898,8 @@ def CortexA9Model : SchedMachineModel {
 //===----------------------------------------------------------------------===//
 // Define each kind of processor resource and number available.
 
+let SchedModel = CortexA9Model in {
+
 def A9UnitALU : ProcResource<2>;
 def A9UnitMul : ProcResource<1> { let Super = A9UnitALU; }
 def A9UnitAGU : ProcResource<1>;
@@ -1918,11 +1920,11 @@ def A9WriteI : SchedWriteRes<[A9UnitALU]>;
 def A9WriteIsr : SchedWriteRes<[A9UnitALU]> { let Latency = 2; }
 
 // Basic ALU.
-def A9WriteA : SchedWriteRes<[A9UnitALU]>;
+def : WriteRes<WriteALU, [A9UnitALU]>;
 // ALU with operand shifted by immediate.
-def A9WriteAsi : SchedWriteRes<[A9UnitALU]> { let Latency = 2; }
+def : WriteRes<WriteALUsi, [A9UnitALU]> { let Latency = 2; }
 // ALU with operand shifted by register.
-def A9WriteAsr : SchedWriteRes<[A9UnitALU]> { let Latency = 3; }
+def A9WriteALUsr : SchedWriteRes<[A9UnitALU]> { let Latency = 3; }
 
 // Multiplication
 def A9WriteM   : SchedWriteRes<[A9UnitMul, A9UnitMul]> { let Latency = 4; }
@@ -2002,13 +2004,6 @@ def A9WriteCycle1 : SchedWriteRes<[]> { let Latency = 1; let NumMicroOps = 0; }
 foreach NumCycles = 2-8 in {
 def A9WriteCycle#NumCycles : WriteSequence<[A9WriteCycle1], NumCycles>;
 } // foreach NumCycles
-
-// Define TII for use in SchedVariant Predicates.
-def : PredicateProlog<[{
-  const ARMBaseInstrInfo *TII =
-    static_cast<const ARMBaseInstrInfo*>(SchedModel->getInstrInfo());
-  (void)TII;
-}]>;
 
 // Define address generation sequences and predicates for 8 flavors of LDMs.
 foreach NumAddr = 1-8 in {
@@ -2254,11 +2249,11 @@ def A9WriteLMfp : SchedWriteVariant<[
 // These mov immediate writers are unconditionally expanded with
 // additive latency.
 def A9WriteI2 : WriteSequence<[A9WriteI, A9WriteI]>;
-def A9WriteI2pc : WriteSequence<[A9WriteI, A9WriteI, A9WriteA]>;
+def A9WriteI2pc : WriteSequence<[A9WriteI, A9WriteI, WriteALU]>;
 def A9WriteI2ld  : WriteSequence<[A9WriteI, A9WriteI, A9WriteL]>;
 
 // Some ALU operations can read loaded integer values one cycle early.
-def A9ReadA : SchedReadAdvance<1,
+def A9ReadALU : SchedReadAdvance<1,
   [A9WriteL, A9WriteLHi, A9WriteLsi, A9WriteLb, A9WriteLbsi,
    A9WriteL1, A9WriteL2, A9WriteL3, A9WriteL4,
    A9WriteL5, A9WriteL6, A9WriteL7, A9WriteL8,
@@ -2279,26 +2274,25 @@ def A9Read4 : SchedReadAdvance<3>;
 
 // This table follows the ARM Cortex-A9 Technical Reference Manuals,
 // mostly in order.
-let SchedModel = CortexA9Model in {
 
 def :ItinRW<[A9WriteI], [IIC_iMOVi,IIC_iMOVr,IIC_iMOVsi,
                          IIC_iMVNi,IIC_iMVNsi,
                          IIC_iCMOVi,IIC_iCMOVr,IIC_iCMOVsi]>;
-def :ItinRW<[A9WriteI,A9ReadA],[IIC_iMVNr]>;
+def :ItinRW<[A9WriteI,ReadALU],[IIC_iMVNr]>;
 def :ItinRW<[A9WriteIsr], [IIC_iMOVsr,IIC_iMVNsr,IIC_iCMOVsr]>;
 
 def :ItinRW<[A9WriteI2],   [IIC_iMOVix2,IIC_iCMOVix2]>;
 def :ItinRW<[A9WriteI2pc], [IIC_iMOVix2addpc]>;
 def :ItinRW<[A9WriteI2ld], [IIC_iMOVix2ld]>;
 
-def :ItinRW<[A9WriteA], [IIC_iBITi,IIC_iBITr,IIC_iUNAr,IIC_iTSTi,IIC_iTSTr]>;
-def :ItinRW<[A9WriteA, A9ReadA], [IIC_iALUi, IIC_iCMPi, IIC_iCMPsi]>;
-def :ItinRW<[A9WriteA, A9ReadA, A9ReadA],[IIC_iALUr,IIC_iCMPr]>;
-def :ItinRW<[A9WriteAsi], [IIC_iBITsi,IIC_iUNAsi,IIC_iEXTr,IIC_iTSTsi]>;
-def :ItinRW<[A9WriteAsi, A9ReadA], [IIC_iALUsi]>;
-def :ItinRW<[A9WriteAsi, ReadDefault, A9ReadA], [IIC_iALUsir]>; // RSB
-def :ItinRW<[A9WriteAsr], [IIC_iBITsr,IIC_iTSTsr,IIC_iEXTAr,IIC_iEXTAsr]>;
-def :ItinRW<[A9WriteAsr, A9ReadA], [IIC_iALUsr,IIC_iCMPsr]>;
+def :ItinRW<[WriteALU], [IIC_iBITi,IIC_iBITr,IIC_iUNAr,IIC_iTSTi,IIC_iTSTr]>;
+def :ItinRW<[WriteALU, ReadALU], [IIC_iALUi, IIC_iCMPi, IIC_iCMPsi]>;
+def :ItinRW<[WriteALU, ReadALU, ReadALU],[IIC_iALUr,IIC_iCMPr]>;
+def :ItinRW<[WriteALUsi], [IIC_iBITsi,IIC_iUNAsi,IIC_iEXTr,IIC_iTSTsi]>;
+def :ItinRW<[WriteALUsi, ReadALU], [IIC_iALUsi]>;
+def :ItinRW<[WriteALUsi, ReadDefault, ReadALU], [IIC_iALUsir]>; // RSB
+def :ItinRW<[A9WriteALUsr], [IIC_iBITsr,IIC_iTSTsr,IIC_iEXTAr,IIC_iEXTAsr]>;
+def :ItinRW<[A9WriteALUsr, ReadALU], [IIC_iALUsr,IIC_iCMPsr]>;
 
 // A9WriteHi ignored for MUL32.
 def :ItinRW<[A9WriteM, A9WriteMHi], [IIC_iMUL32,IIC_iMAC32,
@@ -2371,7 +2365,7 @@ def :ItinRW<[A9WriteLMAdr, A9WriteLM, A9WriteIssue], [IIC_iLoad_mu,
                                                       IIC_iStore_m,
                                                       IIC_iStore_mu]>;
 def :ItinRW<[A9WriteLM, A9WriteLMAdr, A9WriteB], [IIC_iLoad_mBr, IIC_iPop_Br]>;
-def :ItinRW<[A9WriteL, A9WriteAdr, A9WriteA], [IIC_iLoadiALU]>;
+def :ItinRW<[A9WriteL, A9WriteAdr, WriteALU], [IIC_iLoadiALU]>;
 
 def :ItinRW<[A9WriteLSfp, A9WriteAdr], [IIC_fpLoad32, IIC_fpLoad64]>;
 
@@ -2486,4 +2480,11 @@ def :ItinRW<[A9WriteV9, A9Read3, A9Read2], [IIC_VMACD, IIC_VFMACD]>;
 def :ItinRW<[A9WriteV10, A9Read3, A9Read2], [IIC_VMACQ, IIC_VFMACQ]>;
 def :ItinRW<[A9WriteV9, A9Read2, A9Read2], [IIC_VRECSD]>;
 def :ItinRW<[A9WriteV10, A9Read2, A9Read2], [IIC_VRECSQ]>;
+
+// Map SchedRWs that are identical for cortexa9 to existing resources.
+def : SchedAlias<WriteALUsr, A9WriteALUsr>;
+def : SchedAlias<WriteALUSsr, A9WriteALUsr>;
+def : SchedAlias<ReadALU, A9ReadALU>;
+def : SchedAlias<ReadALUsr, A9ReadALU>;
+
 } // SchedModel = CortexA9Model

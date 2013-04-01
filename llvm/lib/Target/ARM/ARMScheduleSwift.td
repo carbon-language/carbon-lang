@@ -1078,8 +1078,29 @@ def SwiftModel : SchedMachineModel {
   let IssueWidth = 3; // 3 micro-ops are dispatched per cycle.
   let MinLatency = 0; // Data dependencies are allowed within dispatch groups.
   let LoadLatency = 3;
+  let MispredictPenalty = 14; // A branch direction mispredict.
 
   let Itineraries = SwiftItineraries;
 }
 
-// TODO: Add Swift processor and scheduler resources.
+// Swift resource mapping.
+let SchedModel = SwiftModel in {
+  // Processor resources.
+  def SwiftUnitP01 : ProcResource<2>; // ALU unit.
+  def SwiftUnitP0 : ProcResource<1> { let Super = SwiftUnitP01; } // Mul unit.
+  def SwiftUnitP1 : ProcResource<1> { let Super = SwiftUnitP01; } // Br unit.
+  def SwiftUnitP2 : ProcResource<1>; // LS unit.
+  def SwiftUnitDiv : ProcResource<1>;
+
+  // 4.2.4 Arithmetic and Logical.
+  // ADC,ADD,NEG,RSB,RSC,SBC,SUB,ADR
+  // AND,BIC, EOR,ORN,ORR
+  // CLZ,RBIT,REV,REV16,REVSH,PKH
+  // Single cycle.
+  def : WriteRes<WriteALU, [SwiftUnitP01]>;
+  def : WriteRes<WriteALUsi, [SwiftUnitP01]>;
+  def : WriteRes<WriteALUsr, [SwiftUnitP01]>;
+  def : WriteRes<WriteALUSsr, [SwiftUnitP01]>;
+  def : ReadAdvance<ReadALU, 0>;
+  def : ReadAdvance<ReadALUsr, 2>;
+}
