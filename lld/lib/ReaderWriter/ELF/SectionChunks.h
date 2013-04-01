@@ -748,7 +748,10 @@ void SymbolTable<ELFT>::addUndefinedAtom(Elf_Sym &sym,
   unsigned char binding = 0, type = 0;
   sym.st_value = 0;
   type = llvm::ELF::STT_NOTYPE;
-  binding = llvm::ELF::STB_WEAK;
+  if (ua->canBeNull())
+    binding = llvm::ELF::STB_WEAK;
+  else
+    binding = llvm::ELF::STB_GLOBAL;
   sym.setBindingAndType(binding, type);
 }
 

@@ -24,4 +24,4 @@ CHECKSYMS:  00001000 B a
 CHECKSYMS:  00001004 A __bss_end
 CHECKSYMS:  00001004 A _end
 CHECKSYMS:  00001004 A end
-CHECKSYMS:           w _start
+CHECKSYMS:           U _start

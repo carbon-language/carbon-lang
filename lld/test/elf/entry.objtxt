@@ -14,7 +14,7 @@
 # CHECK:  00000080 T main
 # CHECK:  00001000 A _end
 # CHECK:  00001000 A end
-# CHECK:           w _entrypoint
+# CHECK:           U _entrypoint
 
 defined-atoms:   
   - name:            .text
