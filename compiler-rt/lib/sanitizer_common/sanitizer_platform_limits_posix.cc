@@ -21,6 +21,8 @@
 
 #include <dirent.h>
 #include <pthread.h>
+#include <pwd.h>
+#include <signal.h>
 #include <sys/utsname.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -40,12 +42,17 @@ namespace __sanitizer {
   unsigned struct_stat64_sz = sizeof(struct stat64);
   unsigned struct_rusage_sz = sizeof(struct rusage);
   unsigned struct_tm_sz = sizeof(struct tm);
+  unsigned struct_passwd_sz = sizeof(struct passwd);
+  unsigned struct_sigaction_sz = sizeof(struct sigaction);
+  unsigned struct_itimerval_sz = sizeof(struct itimerval);
+  unsigned pthread_t_sz = sizeof(pthread_t);
 
 #if SANITIZER_LINUX
   unsigned struct_rlimit_sz = sizeof(struct rlimit);
   unsigned struct_dirent_sz = sizeof(struct dirent);
   unsigned struct_statfs_sz = sizeof(struct statfs);
   unsigned struct_epoll_event_sz = sizeof(struct epoll_event);
+  unsigned struct_timespec_sz = sizeof(struct timespec);
 #endif // __linux__
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID

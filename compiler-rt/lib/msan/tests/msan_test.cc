@@ -40,6 +40,7 @@
 #include <sys/vfs.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <pwd.h>
 
 #if defined(__i386__) || defined(__x86_64__)
 # include <emmintrin.h>
@@ -849,6 +850,45 @@ TEST(MemorySanitizer, gettimeofday) {
   EXPECT_NOT_POISONED(tz.tz_dsttime);
 }
 
+TEST(MemorySanitizer, clock_gettime) {
+  struct timespec tp;
+  EXPECT_POISONED(tp.tv_sec);
+  EXPECT_POISONED(tp.tv_nsec);
+  assert(0 == clock_gettime(CLOCK_REALTIME, &tp));
+  EXPECT_NOT_POISONED(tp.tv_sec);
+  EXPECT_NOT_POISONED(tp.tv_nsec);
+}
+
+TEST(MemorySanitizer, getitimer) {
+  struct itimerval it1, it2;
+  int res;
+  EXPECT_POISONED(it1.it_interval.tv_sec);
+  EXPECT_POISONED(it1.it_interval.tv_usec);
+  EXPECT_POISONED(it1.it_value.tv_sec);
+  EXPECT_POISONED(it1.it_value.tv_usec);
+  res = getitimer(ITIMER_VIRTUAL, &it1);
+  assert(!res);
+  EXPECT_NOT_POISONED(it1.it_interval.tv_sec);
+  EXPECT_NOT_POISONED(it1.it_interval.tv_usec);
+  EXPECT_NOT_POISONED(it1.it_value.tv_sec);
+  EXPECT_NOT_POISONED(it1.it_value.tv_usec);
+
+  it1.it_interval.tv_sec = it1.it_value.tv_sec = 10000;
+  it1.it_interval.tv_usec = it1.it_value.tv_usec = 0;
+
+  res = setitimer(ITIMER_VIRTUAL, &it1, &it2);
+  assert(!res);
+  EXPECT_NOT_POISONED(it2.it_interval.tv_sec);
+  EXPECT_NOT_POISONED(it2.it_interval.tv_usec);
+  EXPECT_NOT_POISONED(it2.it_value.tv_sec);
+  EXPECT_NOT_POISONED(it2.it_value.tv_usec);
+
+  // Check that old_value can be 0, and disable the timer.
+  memset(&it1, 0, sizeof(it1));
+  res = setitimer(ITIMER_VIRTUAL, &it1, 0);
+  assert(!res);
+}
+
 TEST(MemorySanitizer, localtime) {
   time_t t = 123;
   struct tm *time = localtime(&t);
@@ -1434,6 +1474,7 @@ TEST(MemorySanitizer, SimpleThread) {
   void *p;
   int res = pthread_create(&t, NULL, SimpleThread_threadfn, NULL);
   assert(!res);
+  EXPECT_NOT_POISONED(t);
   res = pthread_join(t, &p);
   assert(!res);
   if (!__msan_has_dynamic_component())  // FIXME: intercept pthread_join (?).
@@ -1498,6 +1539,40 @@ TEST(MemorySanitizer, gethostname) {
   int res = gethostname(buf, 100);
   assert(!res);
   EXPECT_NOT_POISONED(strlen(buf));
+}
+
+TEST(MemorySanitizer, getpwuid) {
+  struct passwd *p = getpwuid(0); // root
+  assert(p);
+  EXPECT_NOT_POISONED(p->pw_name);
+  assert(p->pw_name);
+  EXPECT_NOT_POISONED(p->pw_name[0]);
+  EXPECT_NOT_POISONED(p->pw_uid);
+  assert(p->pw_uid == 0);
+}
+
+TEST(MemorySanitizer, getpwnam_r) {
+  struct passwd pwd;
+  struct passwd *pwdres;
+  char buf[10000];
+  int res = getpwnam_r("root", &pwd, buf, sizeof(buf), &pwdres);
+  assert(!res);
+  EXPECT_NOT_POISONED(pwd.pw_name);
+  assert(pwd.pw_name);
+  EXPECT_NOT_POISONED(pwd.pw_name[0]);
+  EXPECT_NOT_POISONED(pwd.pw_uid);
+  assert(pwd.pw_uid == 0);
+}
+
+TEST(MemorySanitizer, getpwnam_r_positive) {
+  struct passwd pwd;
+  struct passwd *pwdres;
+  char s[5];
+  strncpy(s, "abcd", 5);
+  __msan_poison(s, 5);
+  char buf[10000];
+  int res;
+  EXPECT_UMR(res = getpwnam_r(s, &pwd, buf, sizeof(buf), &pwdres));
 }
 
 template<class T>

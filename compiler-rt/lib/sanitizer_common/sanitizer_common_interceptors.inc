@@ -411,6 +411,126 @@ SCANF_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
 #define INIT_SCANF
 #endif
 
+#if SANITIZER_INTERCEPT_GETPWNAM_GETPWUID
+INTERCEPTOR(void *, getpwnam, const char *name) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getpwnam, name);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, name, REAL(strlen)(name) + 1);
+  void *res = REAL(getpwnam)(name);
+  if (res != 0)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_passwd_sz);
+  return res;
+}
+INTERCEPTOR(void *, getpwuid, u32 uid) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getpwuid, uid);
+  void *res = REAL(getpwuid)(uid);
+  if (res != 0)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_passwd_sz);
+  return res;
+}
+#define INIT_GETPWNAM_GETPWUID                  \
+  INTERCEPT_FUNCTION(getpwnam);                 \
+  INTERCEPT_FUNCTION(getpwuid);
+#else
+#define INIT_GETPWNAM_GETPWUID
+#endif
+
+
+#if SANITIZER_INTERCEPT_GETPWNAM_R_GETPWUID_R
+INTERCEPTOR(int, getpwnam_r, const char *name, void *pwd,
+    char *buf, SIZE_T buflen, void **result) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getpwnam_r, name, pwd, buf, buflen, result);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, name, REAL(strlen)(name) + 1);
+  int res = REAL(getpwnam_r)(name, pwd, buf, buflen, result);
+  if (!res) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwd, struct_passwd_sz);
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
+  }
+  return res;
+}
+INTERCEPTOR(int, getpwuid_r, u32 uid, void *pwd,
+    char *buf, SIZE_T buflen, void **result) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getpwuid_r, uid, pwd, buf, buflen, result);
+  int res = REAL(getpwuid_r)(uid, pwd, buf, buflen, result);
+  if (!res) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwd, struct_passwd_sz);
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
+  }
+  return res;
+}
+#define INIT_GETPWNAM_R_GETPWUID_R                \
+  INTERCEPT_FUNCTION(getpwnam_r);                 \
+  INTERCEPT_FUNCTION(getpwuid_r);
+#else
+#define INIT_GETPWNAM_R_GETPWUID_R
+#endif
+
+
+#if SANITIZER_INTERCEPT_CLOCK_GETTIME
+INTERCEPTOR(int, clock_getres, u32 clk_id, void *tp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, clock_getres, clk_id, tp);
+  int res = REAL(clock_getres)(clk_id, tp);
+  if (!res) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, tp, struct_timespec_sz);
+  }
+  return res;
+}
+INTERCEPTOR(int, clock_gettime, u32 clk_id, void *tp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, clock_gettime, clk_id, tp);
+  int res = REAL(clock_gettime)(clk_id, tp);
+  if (!res) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, tp, struct_timespec_sz);
+  }
+  return res;
+}
+INTERCEPTOR(int, clock_settime, u32 clk_id, const void *tp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, clock_settime, clk_id, tp);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, tp, struct_timespec_sz);
+  return REAL(clock_settime)(clk_id, tp);
+}
+#define INIT_CLOCK_GETTIME                         \
+  INTERCEPT_FUNCTION(clock_getres);                \
+  INTERCEPT_FUNCTION(clock_gettime);               \
+  INTERCEPT_FUNCTION(clock_settime);
+#else
+#define INIT_CLOCK_GETTIME
+#endif
+
+
+#if SANITIZER_INTERCEPT_GETITIMER
+INTERCEPTOR(int, getitimer, int which, void *curr_value) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getitimer, which, curr_value);
+  int res = REAL(getitimer)(which, curr_value);
+  if (!res) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, curr_value, struct_itimerval_sz);
+  }
+  return res;
+}
+INTERCEPTOR(int, setitimer, int which, const void *new_value, void *old_value) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, setitimer, which, new_value, old_value);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, new_value, struct_itimerval_sz);
+  int res = REAL(setitimer)(which, new_value, old_value);
+  if (!res && old_value) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, old_value, struct_itimerval_sz);
+  }
+  return res;
+}
+#define INIT_GETITIMER                             \
+  INTERCEPT_FUNCTION(getitimer);                   \
+  INTERCEPT_FUNCTION(setitimer);
+#else
+#define INIT_GETITIMER
+#endif
+
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT                                     \
   INIT_STRCASECMP;                                                             \
   INIT_STRNCASECMP;                                                            \
@@ -424,4 +544,8 @@ SCANF_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
   INIT_LOCALTIME_AND_FRIENDS;                                                  \
   INIT_SCANF;                                                                  \
   INIT_FREXP;                                                                  \
-  INIT_FREXPF_FREXPL;
+  INIT_FREXPF_FREXPL;                                                          \
+  INIT_GETPWNAM_GETPWUID;                                                      \
+  INIT_GETPWNAM_R_GETPWUID_R;                                                  \
+  INIT_CLOCK_GETTIME;                                                          \
+  INIT_GETITIMER;

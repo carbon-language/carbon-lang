@@ -282,6 +282,15 @@ enum StatType {
   StatInt_frexp,
   StatInt_frexpf,
   StatInt_frexpl,
+  StatInt_getpwnam,
+  StatInt_getpwuid,
+  StatInt_getpwnam_r,
+  StatInt_getpwuid_r,
+  StatInt_clock_getres,
+  StatInt_clock_gettime,
+  StatInt_clock_settime,
+  StatInt_getitimer,
+  StatInt_setitimer,
 
   // Dynamic annotations.
   StatAnnotation,

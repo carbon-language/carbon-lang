@@ -23,12 +23,17 @@ namespace __sanitizer {
   extern unsigned struct_stat64_sz;
   extern unsigned struct_rusage_sz;
   extern unsigned struct_tm_sz;
+  extern unsigned struct_passwd_sz;
+  extern unsigned struct_sigaction_sz;
+  extern unsigned struct_itimerval_sz;
+  extern unsigned pthread_t_sz;
 
 #if SANITIZER_LINUX
   extern unsigned struct_rlimit_sz;
   extern unsigned struct_dirent_sz;
   extern unsigned struct_statfs_sz;
   extern unsigned struct_epoll_event_sz;
+  extern unsigned struct_timespec_sz;
 #endif // __linux__
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID

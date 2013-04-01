@@ -824,6 +824,17 @@ INTERCEPTOR(int, getrusage, int who, void *usage) {
   return res;
 }
 
+INTERCEPTOR(int, sigaction, int signum, const void *act, void *oldact) {
+  ENSURE_MSAN_INITED();
+  // TODO: check that *act is unpoisoned.
+  // That requires intercepting all of sigemptyset, sigfillset, etc.
+  int res = REAL(sigaction)(signum, act, oldact);
+  if (res == 0) {
+    __msan_unpoison(oldact, __sanitizer::struct_sigaction_sz);
+  }
+  return res;
+}
+
 extern "C" int pthread_attr_init(void *attr);
 extern "C" int pthread_attr_destroy(void *attr);
 extern "C" int pthread_attr_setstacksize(void *attr, uptr stacksize);
@@ -843,6 +854,9 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
   int res = REAL(pthread_create)(th, attr, callback, param);
   if (attr == &myattr)
     pthread_attr_destroy(&myattr);
+  if (!res) {
+    __msan_unpoison(th, __sanitizer::pthread_t_sz);
+  }
   return res;
 }
 
@@ -1054,6 +1068,7 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(dladdr);
   INTERCEPT_FUNCTION(dlopen);
   INTERCEPT_FUNCTION(getrusage);
+  INTERCEPT_FUNCTION(sigaction);
   INTERCEPT_FUNCTION(pthread_create);
   inited = 1;
 }
