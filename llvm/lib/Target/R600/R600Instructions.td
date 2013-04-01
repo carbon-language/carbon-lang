@@ -823,8 +823,108 @@ i32imm:$KCACHE_ADDR0, i32imm:$KCACHE_ADDR1, i32imm:$COUNT),
   let Inst{63-32} = Word1;
 }
 
+class CF_WORD0 {
+  field bits<32> Word0;
+
+  bits<24> ADDR;
+  bits<3> JUMPTABLE_SEL;
+
+  let Word0{23-0} = ADDR;
+  let Word0{26-24} = JUMPTABLE_SEL;
+}
+
+class CF_WORD1 {
+  field bits<32> Word1;
+
+  bits<3> POP_COUNT;
+  bits<5> CF_CONST;
+  bits<2> COND;
+  bits<6> COUNT;
+  bits<1> VALID_PIXEL_MODE;
+  bits<8> CF_INST;
+  bits<1> BARRIER;
+
+  let Word1{2-0} = POP_COUNT;
+  let Word1{7-3} = CF_CONST;
+  let Word1{9-8} = COND;
+  let Word1{15-10} = COUNT;
+  let Word1{20} = VALID_PIXEL_MODE;
+  let Word1{29-22} = CF_INST;
+  let Word1{31} = BARRIER;
+}
+
+class CF_CLAUSE <bits<8> inst, dag ins, string AsmPrint> : AMDGPUInst <(outs),
+ins, AsmPrint, [] >, CF_WORD0, CF_WORD1 {
+  field bits<64> Inst;
+
+  let CF_INST = inst;
+  let BARRIER = 1;
+  let JUMPTABLE_SEL = 0;
+  let CF_CONST = 0;
+  let VALID_PIXEL_MODE = 0;
+  let COND = 0;
+
+  let Inst{31-0} = Word0;
+  let Inst{63-32} = Word1;
+}
+
+def CF_TC : CF_CLAUSE<1, (ins i32imm:$ADDR, i32imm:$COUNT),
+"TEX $COUNT @$ADDR"> {
+  let POP_COUNT = 0;
+}
+
+def CF_VC : CF_CLAUSE<2, (ins i32imm:$ADDR, i32imm:$COUNT),
+"VTX $COUNT @$ADDR"> {
+  let POP_COUNT = 0;
+}
+
+def WHILE_LOOP : CF_CLAUSE<6, (ins i32imm:$ADDR), "LOOP_START_DX10 @$ADDR"> {
+  let POP_COUNT = 0;
+  let COUNT = 0;
+}
+
+def END_LOOP : CF_CLAUSE<5, (ins i32imm:$ADDR), "END_LOOP @$ADDR"> {
+  let POP_COUNT = 0;
+  let COUNT = 0;
+}
+
+def LOOP_BREAK : CF_CLAUSE<9, (ins i32imm:$ADDR), "LOOP_BREAK @$ADDR"> {
+  let POP_COUNT = 0;
+  let COUNT = 0;
+}
+
+def CF_CONTINUE : CF_CLAUSE<8, (ins i32imm:$ADDR), "CONTINUE @$ADDR"> {
+  let POP_COUNT = 0;
+  let COUNT = 0;
+}
+
+def CF_JUMP : CF_CLAUSE<10, (ins i32imm:$ADDR, i32imm:$POP_COUNT), "JUMP @$ADDR POP:$POP_COUNT"> {
+  let COUNT = 0;
+}
+
+def CF_ELSE : CF_CLAUSE<13, (ins i32imm:$ADDR, i32imm:$POP_COUNT), "ELSE @$ADDR POP:$POP_COUNT"> {
+  let COUNT = 0;
+}
+
+def CF_CALL_FS : CF_CLAUSE<19, (ins), "CALL_FS"> {
+  let ADDR = 0;
+  let COUNT = 0;
+  let POP_COUNT = 0;
+}
+
+def POP : CF_CLAUSE<14, (ins i32imm:$ADDR, i32imm:$POP_COUNT), "POP @$ADDR POP:$POP_COUNT"> {
+  let COUNT = 0;
+}
+
 def CF_ALU : ALU_CLAUSE<8, "ALU">;
 def CF_ALU_PUSH_BEFORE : ALU_CLAUSE<9, "ALU_PUSH_BEFORE">;
+
+def STACK_SIZE : AMDGPUInst <(outs),
+(ins i32imm:$num), "nstack $num", [] > {
+  field bits<8> Inst;
+  bits<8> num;
+  let Inst = num;
+}
 
 let Predicates = [isR600toCayman] in {
 

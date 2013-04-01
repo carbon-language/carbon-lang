@@ -5,9 +5,10 @@
 ; and the PREDICATE_BREAK in this loop.
 
 ; CHECK: @loop_ge
-; CHECK: WHILE
+; CHECK: LOOP_START_DX10
 ; CHECK: PRED_SET
-; CHECK-NEXT: PREDICATED_BREAK
+; CHECK-NEXT: JUMP
+; CHECK-NEXT: LOOP_BREAK
 define void @loop_ge(i32 addrspace(1)* nocapture %out, i32 %iterations) nounwind {
 entry:
   %cmp5 = icmp sgt i32 %iterations, 0
