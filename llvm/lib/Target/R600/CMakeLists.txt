@@ -27,6 +27,7 @@ add_llvm_target(R600CodeGen
   AMDGPUFrameLowering.cpp
   AMDGPUIndirectAddressing.cpp
   AMDGPUMCInstLower.cpp
+  AMDGPUMachineFunction.cpp
   AMDGPUSubtarget.cpp
   AMDGPUStructurizeCFG.cpp
   AMDGPUTargetMachine.cpp
@@ -34,6 +35,8 @@ add_llvm_target(R600CodeGen
   AMDGPUConvertToISA.cpp
   AMDGPUInstrInfo.cpp
   AMDGPURegisterInfo.cpp
+  R600ControlFlowFinalizer.cpp
+  R600EmitClauseMarkers.cpp
   R600ExpandSpecialInstrs.cpp
   R600InstrInfo.cpp
   R600ISelLowering.cpp
