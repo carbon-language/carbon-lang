@@ -425,7 +425,10 @@ bool
 ProcessPOSIX::IsAlive()
 {
     StateType state = GetPrivateState();
-    return state != eStateDetached && state != eStateExited && state != eStateInvalid;
+    return state != eStateDetached
+        && state != eStateExited
+        && state != eStateInvalid
+        && state != eStateUnloaded;
 }
 
 size_t
