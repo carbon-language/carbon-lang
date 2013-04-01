@@ -881,6 +881,9 @@ public:
     /// \brief Exit this cleanup scope, emitting any accumulated
     /// cleanups.
     ~LexicalScope() {
+      if (CGDebugInfo *DI = CGF.getDebugInfo())
+        DI->EmitLexicalBlockEnd(CGF.Builder, Range.getEnd());
+
       // If we should perform a cleanup, force them now.  Note that
       // this ends the cleanup scope before rescoping any labels.
       if (PerformCleanup) ForceCleanup();
@@ -889,15 +892,9 @@ public:
     /// \brief Force the emission of cleanups now, instead of waiting
     /// until this object is destroyed.
     void ForceCleanup() {
-      RunCleanupsScope::ForceCleanup();
-      endLexicalScope();
-    }
-
-  private:
-    void endLexicalScope() {
       CGF.CurLexicalScope = ParentScope;
-      if (CGDebugInfo *DI = CGF.getDebugInfo())
-        DI->EmitLexicalBlockEnd(CGF.Builder, Range.getEnd());
+      RunCleanupsScope::ForceCleanup();
+
       if (!Labels.empty())
         rescopeLabels();
     }
