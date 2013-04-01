@@ -39,7 +39,21 @@ void test_macro_expansion1() {
 #undef MACRO_EXPANSION_HAS_NULL
 }
 
+// Test macro expansion with cast sequence, PR15572
 void test_macro_expansion2() {
+#define MACRO_EXPANSION_HAS_NULL \
+  dummy((int*)0); \
+  side_effect();
+  // CHECK: dummy((int*)0); \
+  // CHECK-NEXT: side_effect();
+
+  MACRO_EXPANSION_HAS_NULL;
+  // CHECK: MACRO_EXPANSION_HAS_NULL;
+
+#undef MACRO_EXPANSION_HAS_NULL
+}
+
+void test_macro_expansion3() {
 #define MACRO_EXPANSION_HAS_NULL \
   dummy(NULL); \
   side_effect();
@@ -57,7 +71,7 @@ void test_macro_expansion2() {
 #undef MACRO_EXPANSION_HAS_NULL
 }
 
-void test_macro_expansion3() {
+void test_macro_expansion4() {
 #define MY_NULL NULL
   int *p = MY_NULL;
   // CHECK: int *p = MY_NULL;
@@ -91,5 +105,3 @@ void test_function_like_macro2() {
   // CHECK: my_macro(p != nullptr);
 #undef my_macro
 }
-
-

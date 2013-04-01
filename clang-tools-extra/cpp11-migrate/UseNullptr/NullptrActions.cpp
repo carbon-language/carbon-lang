@@ -69,21 +69,25 @@ llvm::StringRef GetOutermostMacroName(
 }
 }
 
-/// \brief Looks for a sequences of 0 or more explicit casts with an implicit
-/// null-to-pointer cast within.
+/// \brief Looks for implicit casts as well as sequences of 0 or more explicit
+/// casts with an implicit null-to-pointer cast within.
 ///
-/// The matcher this visitor is used with will find a top-most explicit cast
-/// (i.e. it has no explicit casts as an ancestor) where an implicit cast is
-/// nested within. However, there is no guarantee that only explicit casts
-/// exist between the found top-most explicit cast and the possibly more than
-/// one nested implicit cast. This visitor finds all cast sequences with an
-/// implicit cast to null within and creates a replacement leaving the
-/// outermost explicit cast unchanged to avoid introducing ambiguities.
+/// The matcher this visitor is used with will find a single implicit cast or a
+/// top-most explicit cast (i.e. it has no explicit casts as an ancestor) where
+/// an implicit cast is nested within. However, there is no guarantee that only
+/// explicit casts exist between the found top-most explicit cast and the
+/// possibly more than one nested implicit cast. This visitor finds all cast
+/// sequences with an implicit cast to null within and creates a replacement
+/// leaving the outermost explicit cast unchanged to avoid introducing
+/// ambiguities.
 class CastSequenceVisitor : public RecursiveASTVisitor<CastSequenceVisitor> {
 public:
   CastSequenceVisitor(tooling::Replacements &R, SourceManager &SM,
+                      const LangOptions &LangOpts,
+                      const UserMacroNames &UserNullMacros,
                       unsigned &AcceptedChanges)
-      : Replace(R), SM(SM), AcceptedChanges(AcceptedChanges), FirstSubExpr(0) {}
+      : Replace(R), SM(SM), LangOpts(LangOpts), UserNullMacros(UserNullMacros),
+        AcceptedChanges(AcceptedChanges), FirstSubExpr(0) {}
 
   // Only VisitStmt is overridden as we shouldn't find other base AST types
   // within a cast expression.
@@ -94,8 +98,14 @@ public:
       ResetFirstSubExpr();
       return true;
     } else if (!FirstSubExpr) {
-      // Get the subexpression of the outermost explicit cast
-      FirstSubExpr = C->getSubExpr();
+      // Keep parentheses for implicit casts to avoid cases where an implicit
+      // cast within a parentheses expression is right next to a return
+      // statement otherwise get the subexpression of the outermost explicit
+      // cast.
+      if (C->getStmtClass() == Stmt::ImplicitCastExprClass)
+        FirstSubExpr = C->IgnoreParenImpCasts();
+      else
+        FirstSubExpr = C->getSubExpr();
     }
 
     if (C->getCastKind() == CK_NullToPointer ||
@@ -104,9 +114,28 @@ public:
       SourceLocation StartLoc = FirstSubExpr->getLocStart();
       SourceLocation EndLoc = FirstSubExpr->getLocEnd();
 
-      // If the start/end location is a macro, get the expansion location.
-      StartLoc = SM.getFileLoc(StartLoc);
-      EndLoc = SM.getFileLoc(EndLoc);
+      // If the start/end location is a macro argument expansion, get the
+      // expansion location. If its a macro body expansion, check to see if its
+      // coming from a macro called NULL.
+      if (SM.isMacroArgExpansion(StartLoc) && SM.isMacroArgExpansion(EndLoc)) {
+        StartLoc = SM.getFileLoc(StartLoc);
+        EndLoc = SM.getFileLoc(EndLoc);
+      } else if (SM.isMacroBodyExpansion(StartLoc) &&
+                 SM.isMacroBodyExpansion(EndLoc)) {
+        llvm::StringRef OutermostMacroName =
+            GetOutermostMacroName(StartLoc, SM, LangOpts);
+
+        // Check to see if the user wants to replace the macro being expanded.
+        bool ReplaceNullMacro =
+            std::find(UserNullMacros.begin(), UserNullMacros.end(),
+                      OutermostMacroName) != UserNullMacros.end();
+
+        if (!ReplaceNullMacro)
+          return false;
+
+        StartLoc = SM.getFileLoc(StartLoc);
+        EndLoc = SM.getFileLoc(EndLoc);
+      }
 
       AcceptedChanges +=
           ReplaceWithNullptr(Replace, SM, StartLoc, EndLoc) ? 1 : 0;
@@ -123,6 +152,8 @@ private:
 private:
   tooling::Replacements &Replace;
   SourceManager &SM;
+  const LangOptions &LangOpts;
+  const UserMacroNames &UserNullMacros;
   unsigned &AcceptedChanges;
   Expr *FirstSubExpr;
 };
@@ -141,44 +172,11 @@ void NullptrFixer::run(const ast_matchers::MatchFinder::MatchResult &Result) {
   SourceManager &SM = *Result.SourceManager;
 
   const CastExpr *NullCast = Result.Nodes.getNodeAs<CastExpr>(CastSequence);
-  if (NullCast) {
-    // Given an explicit cast with an implicit null-to-pointer cast within
-    // use CastSequenceVisitor to identify sequences of explicit casts that can
-    // be converted into 'nullptr'.
-    CastSequenceVisitor Visitor(Replace, SM, AcceptedChanges);
-    Visitor.TraverseStmt(const_cast<CastExpr *>(NullCast));
-  }
-
-  const CastExpr *Cast = Result.Nodes.getNodeAs<CastExpr>(ImplicitCastNode);
-  if (Cast) {
-    const Expr *E = Cast->IgnoreParenImpCasts();
-    SourceLocation StartLoc = E->getLocStart();
-    SourceLocation EndLoc = E->getLocEnd();
-
-    // If the start/end location is a macro argument expansion, get the
-    // expansion location. If its a macro body expansion, check to see if its
-    // coming from a macro called NULL.
-    if (SM.isMacroArgExpansion(StartLoc) && SM.isMacroArgExpansion(EndLoc)) {
-      StartLoc = SM.getFileLoc(StartLoc);
-      EndLoc = SM.getFileLoc(EndLoc);
-    } else if (SM.isMacroBodyExpansion(StartLoc) &&
-               SM.isMacroBodyExpansion(EndLoc)) {
-      llvm::StringRef OutermostMacroName =
-          GetOutermostMacroName(StartLoc, SM, Result.Context->getLangOpts());
-
-      // Check to see if the user wants to replace the macro being expanded.
-      bool ReplaceNullMacro =
-          std::find(UserNullMacros.begin(), UserNullMacros.end(),
-                    OutermostMacroName) != UserNullMacros.end();
-
-      if (!ReplaceNullMacro)
-        return;
-
-      StartLoc = SM.getFileLoc(StartLoc);
-      EndLoc = SM.getFileLoc(EndLoc);
-    }
-
-    AcceptedChanges +=
-        ReplaceWithNullptr(Replace, SM, StartLoc, EndLoc) ? 1 : 0;
-  }
+  assert(NullCast && "Bad Callback. No node provided");
+  // Given an implicit null-ptr cast or an explicit cast with an implicit
+  // null-to-pointer cast within use CastSequenceVisitor to identify sequences
+  // of explicit casts that can be converted into 'nullptr'.
+  CastSequenceVisitor Visitor(Replace, SM, Result.Context->getLangOpts(),
+     UserNullMacros, AcceptedChanges);
+  Visitor.TraverseStmt(const_cast<CastExpr *>(NullCast));
 }

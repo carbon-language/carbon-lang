@@ -18,7 +18,6 @@
 using namespace clang::ast_matchers;
 using namespace clang;
 
-const char *ImplicitCastNode = "cast";
 const char *CastSequence = "sequence";
 
 namespace clang {
@@ -47,30 +46,22 @@ AST_MATCHER(Type, sugaredNullptrType) {
 } // end namespace ast_matchers
 } // end namespace clang
 
-StatementMatcher makeImplicitCastMatcher() {
-  return implicitCastExpr(
-           isNullToPointer(),
-           unless(hasAncestor(explicitCastExpr())),
-           unless(
-             hasSourceExpression(
-               hasType(sugaredNullptrType())
-             )
-           )
-         ).bind(ImplicitCastNode);
-}
-
 StatementMatcher makeCastSequenceMatcher() {
-  return explicitCastExpr(
+  StatementMatcher ImplicitCastToNull =
+    implicitCastExpr(
+      isNullToPointer(),
+      unless(
+        hasSourceExpression(
+          hasType(sugaredNullptrType())
+        )
+      )
+    );
+
+  return castExpr(
            unless(hasAncestor(explicitCastExpr())),
-           hasDescendant(
-             implicitCastExpr(
-               isNullToPointer(),
-               unless(
-                 hasSourceExpression(
-                   hasType(sugaredNullptrType())
-                 )
-               )
-             )
+           anyOf(
+             hasDescendant(ImplicitCastToNull),
+             ImplicitCastToNull
            )
          ).bind(CastSequence);
 }

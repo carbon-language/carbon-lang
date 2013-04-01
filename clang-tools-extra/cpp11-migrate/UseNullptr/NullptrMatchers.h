@@ -18,21 +18,13 @@
 #include "clang/ASTMatchers/ASTMatchers.h"
 
 // Names to bind with matched expressions.
-extern const char *ImplicitCastNode;
 extern const char *CastSequence;
 
-/// \brief Create a matcher to find the implicit casts clang inserts
-/// when writing null to a pointer.
-///
-/// However, don't match those implicit casts that have explicit casts as
-/// an ancestor. Explicit casts are handled by makeCastSequenceMatcher().
-clang::ast_matchers::StatementMatcher makeImplicitCastMatcher();
-
-/// \brief Create a matcher that finds the head of a sequence of nested explicit
-/// casts that have an implicit cast to null within.
-///
-/// This matcher is necessary so that an entire sequence of explicit casts can
-/// be replaced instead of just the inner-most implicit cast.
+/// \brief Create a matcher that finds implicit casts as well as the head of a
+/// sequence of zero or more nested explicit casts that have an implicit cast
+/// to null within.
+/// Finding sequences of explict casts is necessary so that an entire sequence
+/// can be replaced instead of just the inner-most implicit cast.
 clang::ast_matchers::StatementMatcher makeCastSequenceMatcher();
 
 #endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_NULLPTR_MATCHERS_H

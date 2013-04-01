@@ -45,7 +45,6 @@ int UseNullptrTransform::apply(const FileContentsByPath &InputStates,
                      AcceptedChanges,
                      MaxRisk);
 
-  Finder.addMatcher(makeImplicitCastMatcher(), &Fixer);
   Finder.addMatcher(makeCastSequenceMatcher(), &Fixer);
 
   if (int result = UseNullptrTool.run(newFrontendActionFactory(&Finder))) {

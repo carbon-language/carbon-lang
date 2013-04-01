@@ -19,6 +19,9 @@
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Tooling/Refactoring.h"
 
+// The type for user-defined macro names that behave like NULL
+typedef llvm::SmallVector<llvm::StringRef, 1> UserMacroNames;
+
 /// \brief The callback to be used for nullptr migration matchers.
 ///
 class NullptrFixer : public clang::ast_matchers::MatchFinder::MatchCallback {
@@ -33,7 +36,7 @@ public:
 private:
   clang::tooling::Replacements &Replace;
   unsigned &AcceptedChanges;
-  llvm::SmallVector<llvm::StringRef, 1> UserNullMacros;
+  UserMacroNames UserNullMacros;
 };
 
 #endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_NULLPTR_ACTIONS_H
