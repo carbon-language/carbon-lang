@@ -737,10 +737,14 @@ void LoopFixer::doConversion(ASTContext *Context,
                              bool ContainerNeedsDereference,
                              bool DerefByValue) {
   std::string VarName;
+  bool VarNameFromAlias = Usages.size() == 1 && AliasDecl;
+  bool AliasVarIsRef = false;
 
-  if (Usages.size() == 1 && AliasDecl) {
+  if (VarNameFromAlias) {
     const VarDecl *AliasVar = cast<VarDecl>(AliasDecl->getSingleDecl());
     VarName = AliasVar->getName().str();
+    AliasVarIsRef = AliasVar->getType()->isReferenceType();
+
     // We keep along the entire DeclStmt to keep the correct range here.
     const SourceRange &ReplaceRange = AliasDecl->getSourceRange();
     Replace->insert(
@@ -770,13 +774,18 @@ void LoopFixer::doConversion(ASTContext *Context,
 
   QualType AutoRefType = Context->getAutoDeductType();
 
-  // If an iterator's operator*() returns a 'T&' we can bind that to 'auto&'.
-  // If operator*() returns 'T' we can bind that to 'auto&&' which will deduce
-  // to 'T&&'.
-  if (DerefByValue)
-    AutoRefType = Context->getRValueReferenceType(AutoRefType);
-  else
-    AutoRefType = Context->getLValueReferenceType(AutoRefType);
+  // If the new variable name is from the aliased variable, then the reference
+  // type for the new variable should only be used if the aliased variable was
+  // declared as a reference.
+  if (!VarNameFromAlias || AliasVarIsRef) {
+    // If an iterator's operator*() returns a 'T&' we can bind that to 'auto&'.
+    // If operator*() returns 'T' we can bind that to 'auto&&' which will deduce
+    // to 'T&&'.
+    if (DerefByValue)
+      AutoRefType = Context->getRValueReferenceType(AutoRefType);
+    else
+      AutoRefType = Context->getLValueReferenceType(AutoRefType);
+  }
 
   std::string MaybeDereference = ContainerNeedsDereference ? "*" : "";
   std::string TypeString = AutoRefType.getAsString();

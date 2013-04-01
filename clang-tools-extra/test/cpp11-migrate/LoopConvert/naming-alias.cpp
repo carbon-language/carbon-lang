@@ -57,3 +57,40 @@ void aliasing() {
   // CHECK-NEXT: Val &t = func(elem);
   // CHECK-NEXT: int y = t.x;
 }
+
+void refs_and_vals() {
+  // The following tests check that the transform correctly preserves the
+  // reference or value qualifiers of the aliased variable. That is, if the
+  // variable was declared as a value, the loop variable will be declared as a
+  // value and vice versa for references.
+
+  S s;
+  const S s_const = s;
+
+  for (S::const_iterator it = s_const.begin(); it != s_const.end(); ++it) {
+    MutableVal alias = *it; { }
+    alias.x = 0;
+  }
+  // CHECK: for (auto alias : s_const)
+  // CHECK-NOT: MutableVal {{[a-z_]+}} =
+  // CHECK-NEXT: { }
+  // CHECK-NEXT: alias.x = 0;
+
+  for (S::iterator it = s.begin(), e = s.end(); it != e; ++it) {
+    MutableVal alias = *it; { }
+    alias.x = 0;
+  }
+  // CHECK: for (auto alias : s)
+  // CHECK-NOT: MutableVal {{[a-z_]+}} =
+  // CHECK-NEXT: { }
+  // CHECK-NEXT: alias.x = 0;
+
+  for (S::iterator it = s.begin(), e = s.end(); it != e; ++it) {
+    MutableVal &alias = *it; { }
+    alias.x = 0;
+  }
+  // CHECK: for (auto & alias : s)
+  // CHECK-NOT: MutableVal &{{[a-z_]+}} =
+  // CHECK-NEXT: { }
+  // CHECK-NEXT: alias.x = 0;
+}
