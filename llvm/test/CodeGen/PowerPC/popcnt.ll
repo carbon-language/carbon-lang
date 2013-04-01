@@ -4,8 +4,8 @@ define i8 @cnt8(i8 %x) nounwind readnone {
   %cnt = tail call i8 @llvm.ctpop.i8(i8 %x)
   ret i8 %cnt
 ; CHECK: @cnt8
-; CHECK: rldicl
-; CHECK: popcntd
+; CHECK: rlwinm
+; CHECK: popcntw
 ; CHECK: blr
 }
 
@@ -13,8 +13,8 @@ define i16 @cnt16(i16 %x) nounwind readnone {
   %cnt = tail call i16 @llvm.ctpop.i16(i16 %x)
   ret i16 %cnt
 ; CHECK: @cnt16
-; CHECK: rldicl
-; CHECK: popcntd
+; CHECK: rlwinm
+; CHECK: popcntw
 ; CHECK: blr
 }
 
@@ -22,8 +22,7 @@ define i32 @cnt32(i32 %x) nounwind readnone {
   %cnt = tail call i32 @llvm.ctpop.i32(i32 %x)
   ret i32 %cnt
 ; CHECK: @cnt32
-; CHECK: rldicl
-; CHECK: popcntd
+; CHECK: popcntw
 ; CHECK: blr
 }
 

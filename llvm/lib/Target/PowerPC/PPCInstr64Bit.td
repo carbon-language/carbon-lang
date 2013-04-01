@@ -468,6 +468,13 @@ def POPCNTD : XForm_11<31, 506, (outs G8RC:$rA), (ins G8RC:$rS),
                       "popcntd $rA, $rS", IntGeneral,
                       [(set i64:$rA, (ctpop i64:$rS))]>;
 
+// popcntw also does a population count on the high 32 bits (storing the
+// results in the high 32-bits of the output). We'll ignore that here (which is
+// safe because we never separately use the high part of the 64-bit registers).
+def POPCNTW : XForm_11<31, 378, (outs GPRC:$rA), (ins GPRC:$rS),
+                      "popcntw $rA, $rS", IntGeneral,
+                      [(set i32:$rA, (ctpop i32:$rS))]>;
+
 def DIVD  : XOForm_1<31, 489, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
                      "divd $rT, $rA, $rB", IntDivD,
                      [(set i64:$rT, (sdiv i64:$rA, i64:$rB))]>, isPPC64,

@@ -190,7 +190,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Expand);
 
   if (Subtarget->hasPOPCNTD()) {
-    setOperationAction(ISD::CTPOP, MVT::i32  , Promote);
+    setOperationAction(ISD::CTPOP, MVT::i32  , Legal);
     setOperationAction(ISD::CTPOP, MVT::i64  , Legal);
   } else {
     setOperationAction(ISD::CTPOP, MVT::i32  , Expand);
