@@ -67,3 +67,10 @@ class Cls {
 
 Cls obj;
 }
+
+namespace PR15637 {
+template <typename T> union Value { int a; };
+void g(float value) {
+  Value<float> tempValue;
+}
+}
