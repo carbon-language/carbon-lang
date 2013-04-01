@@ -36,10 +36,18 @@ namespace llvm {
       /// was temporarily in the f64 operand.
       FCFID,
 
+      /// Newer FCFID[US] integer-to-floating-point conversion instructions for
+      /// unsigned integers and single-precision outputs.
+      FCFIDU, FCFIDS, FCFIDUS,
+
       /// FCTI[D,W]Z - The FCTIDZ and FCTIWZ instructions, taking an f32 or f64
       /// operand, producing an f64 value containing the integer representation
       /// of that FP value.
       FCTIDZ, FCTIWZ,
+
+      /// Newer FCTI[D,W]UZ floating-point-to-integer conversion instructions for
+      /// unsigned integers.
+      FCTIDUZ, FCTIWUZ,
 
       // VMADDFP, VNMSUBFP - The VMADDFP and VNMSUBFP instructions, taking
       // three v4f32 operands and producing a v4f32 result.
@@ -246,6 +254,11 @@ namespace llvm {
       /// load which sign-extends from a 32-bit integer value into the
       /// destination 64-bit register.
       LFIWAX,
+
+      /// GPRC, CHAIN = LFIWZX CHAIN, Ptr - This is a floating-point
+      /// load which zero-extends from a 32-bit integer value into the
+      /// destination 64-bit register.
+      LFIWZX,
 
       /// G8RC = ADDIS_TOC_HA %X2, Symbol - For medium and large code model,
       /// produces an ADDIS8 instruction that adds the TOC base register to
@@ -494,7 +507,7 @@ namespace llvm {
                                       const PPCSubtarget &Subtarget) const;
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG, DebugLoc dl) const;
-    SDValue LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFLT_ROUNDS_(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSHL_PARTS(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSRL_PARTS(SDValue Op, SelectionDAG &DAG) const;

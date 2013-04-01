@@ -326,11 +326,26 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     // We cannot do this with Promote because i64 is not a legal type.
     setOperationAction(ISD::FP_TO_UINT, MVT::i32, Custom);
 
-    if (Subtarget->isPPC64())
+    if (PPCSubTarget.hasLFIWAX() || Subtarget->isPPC64())
       setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
   } else {
     // PowerPC does not have FP_TO_UINT on 32-bit implementations.
     setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
+  }
+
+  // With the instructions enabled under FPCVT, we can do everything.
+  if (PPCSubTarget.hasFPCVT()) {
+    if (Subtarget->has64BitSupport()) {
+      setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
+      setOperationAction(ISD::FP_TO_UINT, MVT::i64, Custom);
+      setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
+      setOperationAction(ISD::UINT_TO_FP, MVT::i64, Custom);
+    }
+
+    setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
+    setOperationAction(ISD::FP_TO_UINT, MVT::i32, Custom);
+    setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
+    setOperationAction(ISD::UINT_TO_FP, MVT::i32, Custom);
   }
 
   if (Subtarget->use64BitRegs()) {
@@ -4716,36 +4731,71 @@ SDValue PPCTargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
   default: llvm_unreachable("Unhandled FP_TO_INT type in custom expander!");
   case MVT::i32:
     Tmp = DAG.getNode(Op.getOpcode()==ISD::FP_TO_SINT ? PPCISD::FCTIWZ :
-                                                         PPCISD::FCTIDZ,
+                        (PPCSubTarget.hasFPCVT() ? PPCISD::FCTIWUZ :
+                                                   PPCISD::FCTIDZ),
                       dl, MVT::f64, Src);
     break;
   case MVT::i64:
-    Tmp = DAG.getNode(PPCISD::FCTIDZ, dl, MVT::f64, Src);
+    assert((Op.getOpcode() == ISD::SINT_TO_FP || PPCSubTarget.hasFPCVT()) &&
+           "i64 UINT_TO_FP is supported only with FPCVT");
+    Tmp = DAG.getNode(Op.getOpcode()==ISD::FP_TO_SINT ? PPCISD::FCTIDZ :
+                                                        PPCISD::FCTIDUZ,
+                      dl, MVT::f64, Src);
     break;
   }
 
   // Convert the FP value to an int value through memory.
-  SDValue FIPtr = DAG.CreateStackTemporary(MVT::f64);
+  bool i32Stack = Op.getValueType() == MVT::i32 && PPCSubTarget.hasSTFIWX() &&
+    (Op.getOpcode() == ISD::FP_TO_SINT || PPCSubTarget.hasFPCVT());
+  SDValue FIPtr = DAG.CreateStackTemporary(i32Stack ? MVT::i32 : MVT::f64);
+  int FI = cast<FrameIndexSDNode>(FIPtr)->getIndex();
+  MachinePointerInfo MPI = MachinePointerInfo::getFixedStack(FI);
 
   // Emit a store to the stack slot.
-  SDValue Chain = DAG.getStore(DAG.getEntryNode(), dl, Tmp, FIPtr,
-                               MachinePointerInfo(), false, false, 0);
+  SDValue Chain;
+  if (i32Stack) {
+    MachineFunction &MF = DAG.getMachineFunction();
+    MachineMemOperand *MMO =
+      MF.getMachineMemOperand(MPI, MachineMemOperand::MOStore, 4, 4);
+    SDValue Ops[] = { DAG.getEntryNode(), Tmp, FIPtr };
+    Chain = DAG.getMemIntrinsicNode(PPCISD::STFIWX, dl,
+              DAG.getVTList(MVT::Other), Ops, array_lengthof(Ops),
+              MVT::i32, MMO);
+  } else
+    Chain = DAG.getStore(DAG.getEntryNode(), dl, Tmp, FIPtr,
+                         MPI, false, false, 0);
 
   // Result is a load from the stack slot.  If loading 4 bytes, make sure to
   // add in a bias.
-  if (Op.getValueType() == MVT::i32)
+  if (Op.getValueType() == MVT::i32 && !i32Stack) {
     FIPtr = DAG.getNode(ISD::ADD, dl, FIPtr.getValueType(), FIPtr,
                         DAG.getConstant(4, FIPtr.getValueType()));
-  return DAG.getLoad(Op.getValueType(), dl, Chain, FIPtr, MachinePointerInfo(),
+    MPI = MachinePointerInfo();
+  }
+
+  return DAG.getLoad(Op.getValueType(), dl, Chain, FIPtr, MPI,
                      false, false, false, 0);
 }
 
-SDValue PPCTargetLowering::LowerSINT_TO_FP(SDValue Op,
+SDValue PPCTargetLowering::LowerINT_TO_FP(SDValue Op,
                                            SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
   // Don't handle ppc_fp128 here; let it be lowered to a libcall.
   if (Op.getValueType() != MVT::f32 && Op.getValueType() != MVT::f64)
     return SDValue();
+
+  assert((Op.getOpcode() == ISD::SINT_TO_FP || PPCSubTarget.hasFPCVT()) &&
+         "UINT_TO_FP is supported only with FPCVT");
+
+  // If we have FCFIDS, then use it when converting to single-precision.
+  // Otherwise, convert to double-prcision and then round.
+  unsigned FCFOp = (PPCSubTarget.hasFPCVT() && Op.getValueType() == MVT::f32) ?
+                   (Op.getOpcode() == ISD::UINT_TO_FP ?
+                    PPCISD::FCFIDUS : PPCISD::FCFIDS) :
+                   (Op.getOpcode() == ISD::UINT_TO_FP ?
+                    PPCISD::FCFIDU : PPCISD::FCFID);
+  MVT      FCFTy = (PPCSubTarget.hasFPCVT() && Op.getValueType() == MVT::f32) ?
+                   MVT::f32 : MVT::f64;
 
   if (Op.getOperand(0).getValueType() == MVT::i64) {
     SDValue SINT = Op.getOperand(0);
@@ -4760,6 +4810,7 @@ SDValue PPCTargetLowering::LowerSINT_TO_FP(SDValue Op,
     // However, if -enable-unsafe-fp-math is in effect, accept double
     // rounding to avoid the extra overhead.
     if (Op.getValueType() == MVT::f32 &&
+        !PPCSubTarget.hasFPCVT() &&
         !DAG.getTarget().Options.UnsafeFPMath) {
 
       // Twiddle input to make sure the low 11 bits are zero.  (If this
@@ -4793,16 +4844,18 @@ SDValue PPCTargetLowering::LowerSINT_TO_FP(SDValue Op,
 
       SINT = DAG.getNode(ISD::SELECT, dl, MVT::i64, Cond, Round, SINT);
     }
+
     SDValue Bits = DAG.getNode(ISD::BITCAST, dl, MVT::f64, SINT);
-    SDValue FP = DAG.getNode(PPCISD::FCFID, dl, MVT::f64, Bits);
-    if (Op.getValueType() == MVT::f32)
+    SDValue FP = DAG.getNode(FCFOp, dl, FCFTy, Bits);
+
+    if (Op.getValueType() == MVT::f32 && !PPCSubTarget.hasFPCVT())
       FP = DAG.getNode(ISD::FP_ROUND, dl,
                        MVT::f32, FP, DAG.getIntPtrConstant(0));
     return FP;
   }
 
   assert(Op.getOperand(0).getValueType() == MVT::i32 &&
-         "Unhandled SINT_TO_FP type in custom expander!");
+         "Unhandled INT_TO_FP type in custom expander!");
   // Since we only generate this in 64-bit mode, we can take advantage of
   // 64-bit registers.  In particular, sign extend the input value into the
   // 64-bit register with extsw, store the WHOLE 64-bit value into the stack
@@ -4812,7 +4865,7 @@ SDValue PPCTargetLowering::LowerSINT_TO_FP(SDValue Op,
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
 
   SDValue Ld;
-  if (PPCSubTarget.hasLFIWAX()) {
+  if (PPCSubTarget.hasLFIWAX() || PPCSubTarget.hasFPCVT()) {
     int FrameIdx = FrameInfo->CreateStackObject(4, 4, false);
     SDValue FIdx = DAG.getFrameIndex(FrameIdx, PtrVT);
 
@@ -4826,10 +4879,14 @@ SDValue PPCTargetLowering::LowerSINT_TO_FP(SDValue Op,
       MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(FrameIdx),
                               MachineMemOperand::MOLoad, 4, 4);
     SDValue Ops[] = { Store, FIdx };
-    Ld = DAG.getMemIntrinsicNode(PPCISD::LFIWAX, dl,
-                                 DAG.getVTList(MVT::f64, MVT::Other), Ops, 2,
-                                 MVT::i32, MMO);
+    Ld = DAG.getMemIntrinsicNode(Op.getOpcode() == ISD::UINT_TO_FP ?
+                                   PPCISD::LFIWZX : PPCISD::LFIWAX,
+                                 dl, DAG.getVTList(MVT::f64, MVT::Other),
+                                 Ops, 2, MVT::i32, MMO);
   } else {
+    assert(PPCSubTarget.isPPC64() &&
+           "i32->FP without LFIWAX supported only on PPC64");
+
     int FrameIdx = FrameInfo->CreateStackObject(8, 8, false);
     SDValue FIdx = DAG.getFrameIndex(FrameIdx, PtrVT);
 
@@ -4848,8 +4905,8 @@ SDValue PPCTargetLowering::LowerSINT_TO_FP(SDValue Op,
   }
 
   // FCFID it and return it.
-  SDValue FP = DAG.getNode(PPCISD::FCFID, dl, MVT::f64, Ld);
-  if (Op.getValueType() == MVT::f32)
+  SDValue FP = DAG.getNode(FCFOp, dl, FCFTy, Ld);
+  if (Op.getValueType() == MVT::f32 && !PPCSubTarget.hasFPCVT())
     FP = DAG.getNode(ISD::FP_ROUND, dl, MVT::f32, FP, DAG.getIntPtrConstant(0));
   return FP;
 }
@@ -5651,7 +5708,8 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::FP_TO_UINT:
   case ISD::FP_TO_SINT:         return LowerFP_TO_INT(Op, DAG,
                                                        Op.getDebugLoc());
-  case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
+  case ISD::UINT_TO_FP:
+  case ISD::SINT_TO_FP:         return LowerINT_TO_FP(Op, DAG);
   case ISD::FLT_ROUNDS_:        return LowerFLT_ROUNDS_(Op, DAG);
 
   // Lower 64-bit shifts.

@@ -20,7 +20,7 @@ include "PPCInstrFormats.td"
 def SDT_PPCstfiwx : SDTypeProfile<0, 2, [ // stfiwx
   SDTCisVT<0, f64>, SDTCisPtrTy<1>
 ]>;
-def SDT_PPClfiwax : SDTypeProfile<1, 1, [ // lfiwax
+def SDT_PPClfiwx : SDTypeProfile<1, 1, [ // lfiw[az]x
   SDTCisVT<0, f64>, SDTCisPtrTy<1>
 ]>;
 
@@ -62,12 +62,19 @@ def SDT_PPCTC_ret : SDTypeProfile<0, 2, [
 // PowerPC specific DAG Nodes.
 //
 
-def PPCfcfid  : SDNode<"PPCISD::FCFID" , SDTFPUnaryOp, []>;
+def PPCfcfid  : SDNode<"PPCISD::FCFID",   SDTFPUnaryOp, []>;
+def PPCfcfidu : SDNode<"PPCISD::FCFIDU",  SDTFPUnaryOp, []>;
+def PPCfcfids : SDNode<"PPCISD::FCFIDS",  SDTFPRoundOp, []>;
+def PPCfcfidus: SDNode<"PPCISD::FCFIDUS", SDTFPRoundOp, []>;
 def PPCfctidz : SDNode<"PPCISD::FCTIDZ", SDTFPUnaryOp, []>;
 def PPCfctiwz : SDNode<"PPCISD::FCTIWZ", SDTFPUnaryOp, []>;
+def PPCfctiduz: SDNode<"PPCISD::FCTIDUZ",SDTFPUnaryOp, []>;
+def PPCfctiwuz: SDNode<"PPCISD::FCTIWUZ",SDTFPUnaryOp, []>;
 def PPCstfiwx : SDNode<"PPCISD::STFIWX", SDT_PPCstfiwx,
                        [SDNPHasChain, SDNPMayStore]>;
-def PPClfiwax : SDNode<"PPCISD::LFIWAX", SDT_PPClfiwax,
+def PPClfiwax : SDNode<"PPCISD::LFIWAX", SDT_PPClfiwx,
+                       [SDNPHasChain, SDNPMayLoad]>;
+def PPClfiwzx : SDNode<"PPCISD::LFIWZX", SDT_PPClfiwx,
                        [SDNPHasChain, SDNPMayLoad]>;
 
 // Extract FPSCR (not modeled at the DAG level).
@@ -853,6 +860,9 @@ def LFDX   : XForm_25<31, 599, (outs F8RC:$frD), (ins memrr:$src),
 def LFIWAX : XForm_25<31, 855, (outs F8RC:$frD), (ins memrr:$src),
                       "lfiwax $frD, $src", LdStLFD,
                       [(set f64:$frD, (PPClfiwax xoaddr:$src))]>;
+def LFIWZX : XForm_25<31, 887, (outs F8RC:$frD), (ins memrr:$src),
+                      "lfiwzx $frD, $src", LdStLFD,
+                      [(set f64:$frD, (PPClfiwzx xoaddr:$src))]>;
 }
 
 //===----------------------------------------------------------------------===//

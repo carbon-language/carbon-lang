@@ -859,6 +859,22 @@ def FCFID  : XForm_26<63, 846, (outs F8RC:$frD), (ins F8RC:$frB),
 def FCTIDZ : XForm_26<63, 815, (outs F8RC:$frD), (ins F8RC:$frB),
                       "fctidz $frD, $frB", FPGeneral,
                       [(set f64:$frD, (PPCfctidz f64:$frB))]>, isPPC64;
+
+def FCFIDU  : XForm_26<63, 974, (outs F8RC:$frD), (ins F8RC:$frB),
+                      "fcfidu $frD, $frB", FPGeneral,
+                      [(set f64:$frD, (PPCfcfidu f64:$frB))]>, isPPC64;
+def FCFIDS  : XForm_26<59, 846, (outs F4RC:$frD), (ins F8RC:$frB),
+                      "fcfids $frD, $frB", FPGeneral,
+                      [(set f32:$frD, (PPCfcfids f64:$frB))]>, isPPC64;
+def FCFIDUS : XForm_26<59, 974, (outs F4RC:$frD), (ins F8RC:$frB),
+                      "fcfidus $frD, $frB", FPGeneral,
+                      [(set f32:$frD, (PPCfcfidus f64:$frB))]>, isPPC64;
+def FCTIDUZ : XForm_26<63, 943, (outs F8RC:$frD), (ins F8RC:$frB),
+                      "fctiduz $frD, $frB", FPGeneral,
+                      [(set f64:$frD, (PPCfctiduz f64:$frB))]>, isPPC64;
+def FCTIWUZ : XForm_26<63, 143, (outs F8RC:$frD), (ins F8RC:$frB),
+                      "fctiwuz $frD, $frB", FPGeneral,
+                      [(set f64:$frD, (PPCfctiwuz f64:$frB))]>, isPPC64;
 }
 
 

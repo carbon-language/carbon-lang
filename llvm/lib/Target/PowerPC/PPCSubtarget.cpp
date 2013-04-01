@@ -41,6 +41,7 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
   , HasSTFIWX(false)
   , HasLFIWAX(false)
   , HasFPRND(false)
+  , HasFPCVT(false)
   , HasISEL(false)
   , HasPOPCNTD(false)
   , HasLDBRX(false)

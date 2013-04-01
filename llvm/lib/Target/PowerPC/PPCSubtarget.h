@@ -80,6 +80,7 @@ protected:
   bool HasSTFIWX;
   bool HasLFIWAX;
   bool HasFPRND;
+  bool HasFPCVT;
   bool HasISEL;
   bool HasPOPCNTD;
   bool HasLDBRX;
@@ -161,6 +162,7 @@ public:
   bool hasSTFIWX() const { return HasSTFIWX; }
   bool hasLFIWAX() const { return HasLFIWAX; }
   bool hasFPRND() const { return HasFPRND; }
+  bool hasFPCVT() const { return HasFPCVT; }
   bool hasAltivec() const { return HasAltivec; }
   bool hasQPX() const { return HasQPX; }
   bool hasMFOCRF() const { return HasMFOCRF; }
