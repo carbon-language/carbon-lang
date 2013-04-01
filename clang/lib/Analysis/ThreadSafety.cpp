@@ -784,7 +784,7 @@ struct LockData {
 
 /// \brief A FactEntry stores a single fact that is known at a particular point
 /// in the program execution.  Currently, this is information regarding a lock
-/// that is held at that point.  
+/// that is held at that point.
 struct FactEntry {
   SExpr    MutID;
   LockData LDat;
@@ -797,7 +797,7 @@ struct FactEntry {
 
 typedef unsigned short FactID;
 
-/// \brief FactManager manages the memory for all facts that are created during 
+/// \brief FactManager manages the memory for all facts that are created during
 /// the analysis of a single routine.
 class FactManager {
 private:
@@ -815,9 +815,9 @@ public:
 
 
 /// \brief A FactSet is the set of facts that are known to be true at a
-/// particular program point.  FactSets must be small, because they are 
+/// particular program point.  FactSets must be small, because they are
 /// frequently copied, and are thus implemented as a set of indices into a
-/// table maintained by a FactManager.  A typical FactSet only holds 1 or 2 
+/// table maintained by a FactManager.  A typical FactSet only holds 1 or 2
 /// locks, so we can get away with doing a linear search for lookup.  Note
 /// that a hashtable or map is inappropriate in this case, because lookups
 /// may involve partial pattern matches, rather than exact matches.
@@ -1858,13 +1858,11 @@ void BuildLockset::checkAccess(const Expr *Exp, AccessKind AK) {
     return;
   }
 
-  if (Analyzer->Handler.issueBetaWarnings()) {
-    if (const MemberExpr *ME = dyn_cast<MemberExpr>(Exp)) {
-      if (ME->isArrow())
-        checkPtAccess(ME->getBase(), AK);
-      else
-        checkAccess(ME->getBase(), AK);
-    }
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(Exp)) {
+    if (ME->isArrow())
+      checkPtAccess(ME->getBase(), AK);
+    else
+      checkAccess(ME->getBase(), AK);
   }
 
   const ValueDecl *D = getValueDecl(Exp);
@@ -2065,40 +2063,38 @@ void BuildLockset::VisitCastExpr(CastExpr *CE) {
 
 
 void BuildLockset::VisitCallExpr(CallExpr *Exp) {
-  if (Analyzer->Handler.issueBetaWarnings()) {
-    if (CXXMemberCallExpr *CE = dyn_cast<CXXMemberCallExpr>(Exp)) {
-      MemberExpr *ME = dyn_cast<MemberExpr>(CE->getCallee());
-      // ME can be null when calling a method pointer
-      CXXMethodDecl *MD = CE->getMethodDecl();
+  if (CXXMemberCallExpr *CE = dyn_cast<CXXMemberCallExpr>(Exp)) {
+    MemberExpr *ME = dyn_cast<MemberExpr>(CE->getCallee());
+    // ME can be null when calling a method pointer
+    CXXMethodDecl *MD = CE->getMethodDecl();
 
-      if (ME && MD) {
-        if (ME->isArrow()) {
-          if (MD->isConst()) {
-            checkPtAccess(CE->getImplicitObjectArgument(), AK_Read);
-          } else {  // FIXME -- should be AK_Written
-            checkPtAccess(CE->getImplicitObjectArgument(), AK_Read);
-          }
-        } else {
-          if (MD->isConst())
-            checkAccess(CE->getImplicitObjectArgument(), AK_Read);
-          else     // FIXME -- should be AK_Written
-            checkAccess(CE->getImplicitObjectArgument(), AK_Read);
+    if (ME && MD) {
+      if (ME->isArrow()) {
+        if (MD->isConst()) {
+          checkPtAccess(CE->getImplicitObjectArgument(), AK_Read);
+        } else {  // FIXME -- should be AK_Written
+          checkPtAccess(CE->getImplicitObjectArgument(), AK_Read);
         }
+      } else {
+        if (MD->isConst())
+          checkAccess(CE->getImplicitObjectArgument(), AK_Read);
+        else     // FIXME -- should be AK_Written
+          checkAccess(CE->getImplicitObjectArgument(), AK_Read);
       }
-    } else if (CXXOperatorCallExpr *OE = dyn_cast<CXXOperatorCallExpr>(Exp)) {
-      switch (OE->getOperator()) {
-        case OO_Equal: {
-          const Expr *Target = OE->getArg(0);
-          const Expr *Source = OE->getArg(1);
-          checkAccess(Target, AK_Written);
-          checkAccess(Source, AK_Read);
-          break;
-        }
-        default: {
-          const Expr *Source = OE->getArg(0);
-          checkAccess(Source, AK_Read);
-          break;
-        }
+    }
+  } else if (CXXOperatorCallExpr *OE = dyn_cast<CXXOperatorCallExpr>(Exp)) {
+    switch (OE->getOperator()) {
+      case OO_Equal: {
+        const Expr *Target = OE->getArg(0);
+        const Expr *Source = OE->getArg(1);
+        checkAccess(Target, AK_Written);
+        checkAccess(Source, AK_Read);
+        break;
+      }
+      default: {
+        const Expr *Source = OE->getArg(0);
+        checkAccess(Source, AK_Read);
+        break;
       }
     }
   }
@@ -2109,12 +2105,10 @@ void BuildLockset::VisitCallExpr(CallExpr *Exp) {
 }
 
 void BuildLockset::VisitCXXConstructExpr(CXXConstructExpr *Exp) {
-  if (Analyzer->Handler.issueBetaWarnings()) {
-    const CXXConstructorDecl *D = Exp->getConstructor();
-    if (D && D->isCopyConstructor()) {
-      const Expr* Source = Exp->getArg(0);
-      checkAccess(Source, AK_Read);
-    }
+  const CXXConstructorDecl *D = Exp->getConstructor();
+  if (D && D->isCopyConstructor()) {
+    const Expr* Source = Exp->getArg(0);
+    checkAccess(Source, AK_Read);
   }
   // FIXME -- only handles constructors in DeclStmt below.
 }
