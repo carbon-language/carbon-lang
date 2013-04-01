@@ -28,9 +28,77 @@ TestCase::TestCase () :
 	m_listener = m_debugger.GetListener();
 }
 
-bool
-TestCase::Setup (int argc, const char** argv)
+static std::string
+GetShortOptionString (struct option *long_options)
 {
+    std::string option_string;
+    for (int i = 0; long_options[i].name != NULL; ++i)
+    {
+        if (long_options[i].flag == NULL)
+        {
+            option_string.push_back ((char) long_options[i].val);
+            switch (long_options[i].has_arg)
+            {
+                default:
+                case no_argument:
+                    break;
+                case required_argument:
+                    option_string.push_back (':');
+                    break;
+                case optional_argument:
+                    option_string.append (2, ':');
+                    break;
+            }
+        }
+    }
+    return option_string;
+}
+
+bool
+TestCase::Setup (int& argc, const char**& argv)
+{
+    bool done = false;
+    
+    struct option* long_options = GetLongOptions();
+    
+    if (long_options)
+    {
+        std::string short_option_string (GetShortOptionString(long_options));
+        
+    #if __GLIBC__
+        optind = 0;
+    #else
+        optreset = 1;
+        optind = 1;
+    #endif
+        while (!done)
+        {
+            int long_options_index = -1;
+            const int short_option = ::getopt_long_only (argc,
+                                                         const_cast<char **>(argv),
+                                                         short_option_string.c_str(),
+                                                         long_options,
+                                                         &long_options_index);
+            
+            switch (short_option)
+            {
+                case 0:
+                    // Already handled
+                    break;
+                    
+                case -1:
+                    done = true;
+                    break;
+                    
+                default:
+                    done = !ParseOption(short_option, optarg);
+                    break;
+            }
+        }
+        argc -= optind;
+        argv += optind;
+    }
+    
     return false;
 }
 

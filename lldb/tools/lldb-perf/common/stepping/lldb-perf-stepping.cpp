@@ -28,7 +28,7 @@ public:
     ~StepTest() {}
     
     virtual bool
-    Setup (int argc, const char **argv)
+    Setup (int& argc, const char**& argv)
     {
         TestCase::Setup (argc, argv);
         

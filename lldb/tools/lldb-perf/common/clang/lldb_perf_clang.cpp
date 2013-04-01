@@ -68,7 +68,7 @@ public:
     }
     
     virtual bool
-	Setup (int argc, const char** argv)
+	Setup (int& argc, const char**& argv)
     {
         if (m_exe_path.empty())
             return false;

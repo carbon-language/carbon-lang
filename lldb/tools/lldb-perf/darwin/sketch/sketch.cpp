@@ -62,7 +62,7 @@ public:
     }
     
     virtual bool
-	Setup (int argc, const char** argv)
+	Setup (int& argc, const char**& argv)
     {
         //SetVerbose(true);
         m_app_path.assign(argv[1]);

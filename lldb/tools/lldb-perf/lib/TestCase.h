@@ -12,6 +12,7 @@
 
 #include "lldb/API/LLDB.h"
 #include "Measurement.h"
+#include <getopt.h>
 
 namespace lldb_perf {
 
@@ -74,7 +75,7 @@ public:
     }
     
 	virtual bool
-	Setup (int argc, const char** argv);
+	Setup (int& argc, const char**& argv);
     
 	virtual void
 	TestStep (int counter, ActionWanted &next_action) = 0;
@@ -114,6 +115,18 @@ public:
     
     static void
     Run (TestCase& test, int argc, const char** argv);
+    
+    virtual bool
+    ParseOption (int short_option, const char* optarg)
+    {
+        return false;
+    }
+    
+    virtual struct option*
+    GetLongOptions ()
+    {
+        return NULL;
+    }
     
     lldb::SBDebugger &
     GetDebugger()
