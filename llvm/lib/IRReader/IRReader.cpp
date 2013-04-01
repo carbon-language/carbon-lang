@@ -18,7 +18,7 @@
 using namespace llvm;
 
 Module *llvm::getLazyIRModule(MemoryBuffer *Buffer, SMDiagnostic &Err,
-                        LLVMContext &Context) {
+                              LLVMContext &Context) {
   if (isBitcode((const unsigned char *)Buffer->getBufferStart(),
                 (const unsigned char *)Buffer->getBufferEnd())) {
     std::string ErrMsg;
@@ -37,7 +37,7 @@ Module *llvm::getLazyIRModule(MemoryBuffer *Buffer, SMDiagnostic &Err,
 }
 
 Module *llvm::getLazyIRFileModule(const std::string &Filename, SMDiagnostic &Err,
-                            LLVMContext &Context) {
+                                  LLVMContext &Context) {
   OwningPtr<MemoryBuffer> File;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), File)) {
     Err = SMDiagnostic(Filename, SourceMgr::DK_Error,

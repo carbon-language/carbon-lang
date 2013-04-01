@@ -1,4 +1,4 @@
-;===- ./lib/AsmParser/LLVMBuild.txt ----------------------------*- Conf -*--===;
+;===- ./lib/IRReader/LLVMBuild.txt -----------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
