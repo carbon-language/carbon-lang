@@ -284,6 +284,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     
     m_compiler->getLangOpts().Bool = true;
     m_compiler->getLangOpts().WChar = true;
+    m_compiler->getLangOpts().Blocks = true;
     m_compiler->getLangOpts().DebuggerSupport = true; // Features specifically for debugger clients
     if (expr.DesiredResultType() == ClangExpression::eResultTypeId)
         m_compiler->getLangOpts().DebuggerCastResultToId = true;
