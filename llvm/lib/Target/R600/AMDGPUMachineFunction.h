@@ -10,23 +10,20 @@
 /// \file
 //===----------------------------------------------------------------------===//
 
-#ifndef R600MACHINEFUNCTIONINFO_H
-#define R600MACHINEFUNCTIONINFO_H
+#ifndef AMDGPUMACHINEFUNCTION_H
+#define AMDGPUMACHINEFUNCTION_H
 
-#include "llvm/ADT/BitVector.h"
-#include "llvm/CodeGen/SelectionDAG.h"
-#include "AMDGPUMachineFunction.h"
-#include <vector>
+#include "llvm/CodeGen/MachineFunction.h"
 
 namespace llvm {
 
-class R600MachineFunctionInfo : public AMDGPUMachineFunction {
+class AMDGPUMachineFunction : public MachineFunctionInfo {
+private:
+  static const char *ShaderTypeAttribute;
 public:
-  R600MachineFunctionInfo(const MachineFunction &MF);
-  SmallVector<unsigned, 4> LiveOuts;
-  std::vector<unsigned> IndirectRegs;
+  AMDGPUMachineFunction(const MachineFunction &MF);
+  unsigned ShaderType;
 };
 
-} // End llvm namespace
-
-#endif //R600MACHINEFUNCTIONINFO_H
+}
+#endif // AMDGPUMACHINEFUNCTION_H
