@@ -173,3 +173,6 @@ void f(_Atomic(int) *i, _Atomic(int*) *p, _Atomic(float) *d,
   __c11_atomic_store(&const_atomic, 0, memory_order_release); // expected-error {{first argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(int) *' invalid)}}
   __c11_atomic_load(&const_atomic, memory_order_acquire); // expected-error {{first argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(int) *' invalid)}}
 }
+
+_Atomic(int*) PR12527_a;
+void PR12527() { int *b = PR12527_a; }
