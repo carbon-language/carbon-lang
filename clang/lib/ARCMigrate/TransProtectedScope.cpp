@@ -109,7 +109,12 @@ public:
 
     SourceRange BodyRange = BodyCtx.getTopStmt()->getSourceRange();
     const CapturedDiagList &DiagList = Pass.getDiags();
-    CapturedDiagList::iterator I = DiagList.begin(), E = DiagList.end();
+    // Copy the diagnostics so we don't have to worry about invaliding iterators
+    // from the diagnostic list.
+    SmallVector<StoredDiagnostic, 16> StoredDiags;
+    StoredDiags.append(DiagList.begin(), DiagList.end());
+    SmallVectorImpl<StoredDiagnostic>::iterator
+        I = StoredDiags.begin(), E = StoredDiags.end();
     while (I != E) {
       if (I->getID() == diag::err_switch_into_protected_scope &&
           isInRange(I->getLocation(), BodyRange)) {
@@ -120,8 +125,9 @@ public:
     }
   }
 
-  void handleProtectedScopeError(CapturedDiagList::iterator &DiagI,
-                                 CapturedDiagList::iterator DiagE) {
+  void handleProtectedScopeError(
+                             SmallVectorImpl<StoredDiagnostic>::iterator &DiagI,
+                             SmallVectorImpl<StoredDiagnostic>::iterator DiagE){
     Transaction Trans(Pass.TA);
     assert(DiagI->getID() == diag::err_switch_into_protected_scope);
     SourceLocation ErrLoc = DiagI->getLocation();
