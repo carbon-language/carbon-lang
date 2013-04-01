@@ -203,7 +203,10 @@ public:
     }
   }
 
-  uint64_t getGOTSymAddr() const { return _gotSymAtom->_virtualAddr; }
+  uint64_t getGOTSymAddr() const {
+    if (!_gotSymAtom) return 0;
+    return _gotSymAtom->_virtualAddr;
+  }
 
 private:
   HexagonTargetLayout<HexagonELFType> _targetLayout;

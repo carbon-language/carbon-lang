@@ -121,67 +121,75 @@ int relocHexGPRELN(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
 }
 
 /// \brief Word32_LO: 0x00c03fff : (G) : Truncate
-int relocHexGOTLO16(uint8_t *location, uint64_t G) {
-  uint32_t result = (uint32_t)(G);
+int relocHexGOTLO16(uint8_t *location, uint64_t A, uint64_t GOT) {
+  int32_t result = (int32_t)(A-GOT);
   result = lld::scatterBits<int32_t>(result, 0x00c03fff);
   APPLY_RELOC(result);
   return 0;
 }
 
 /// \brief Word32_LO: 0x00c03fff : (G) >> 16 : Truncate
-int relocHexGOTHI16(uint8_t *location, uint64_t G) {
-  uint32_t result = (uint32_t)(G >> 16);
+int relocHexGOTHI16(uint8_t *location, uint64_t A, uint64_t GOT) {
+  int32_t result = (int32_t)((A-GOT) >> 16);
   result = lld::scatterBits<int32_t>(result, 0x00c03fff);
   APPLY_RELOC(result);
   return 0;
 }
 
 /// \brief Word32: 0xffffffff : (G) : Truncate
-int relocHexGOT32(uint8_t *location, uint64_t G) {
-  uint32_t result = (uint32_t)(G);
+int relocHexGOT32(uint8_t *location, uint64_t A, uint64_t GOT) {
+  int32_t result = (int32_t)(GOT - A);
   APPLY_RELOC(result);
   return 0;
 }
 
 /// \brief Word32_U16 : (G) : Truncate
-int relocHexGOT16(uint8_t *location, uint64_t G) {
-  uint32_t result = (uint32_t)(G);
-  uint32_t range = 1L << 16;
+int relocHexGOT16(uint8_t *location, uint64_t A, uint64_t GOT) {
+  int32_t result = (int32_t)(GOT-A);
+  int32_t range = 1L << 16;
   if (result <= range) {
-    result = lld::scatterBits<uint32_t>(result, FINDV4BITMASK(location));
+    result = lld::scatterBits<int32_t>(result, FINDV4BITMASK(location));
     APPLY_RELOC(result);
     return 0;
   }
   return 1;
 }
 
-int relocHexGOT32_6_X(uint8_t *location, uint64_t G) {
-  uint32_t result = (uint32_t)(G >> 6);
-  result = lld::scatterBits<uint32_t>(result, FINDV4BITMASK(location));
+int relocHexGOT32_6_X(uint8_t *location, uint64_t A, uint64_t GOT) {
+  int32_t result = (int32_t)((A-GOT) >> 6);
+  result = lld::scatterBits<int32_t>(result, FINDV4BITMASK(location));
   APPLY_RELOC(result);
   return 0;
 }
 
-int relocHexGOT16_X(uint8_t *location, uint64_t G) {
-  uint32_t result = (uint32_t)(G);
-  uint32_t range = 1L << 6;
+int relocHexGOT16_X(uint8_t *location, uint64_t A, uint64_t GOT) {
+  int32_t result = (int32_t)(A-GOT);
+  int32_t range = 1L << 6;
   if (result <= range) {
-    result = lld::scatterBits<uint32_t>(result, FINDV4BITMASK(location));
+    result = lld::scatterBits<int32_t>(result, FINDV4BITMASK(location));
     APPLY_RELOC(result);
     return 0;
   }
   return 1;
 }
 
-int relocHexGOT11_X(uint8_t *location, uint64_t G) {
-  uint32_t result = (uint32_t)(G);
+int relocHexGOT11_X(uint8_t *location, uint64_t A, uint64_t GOT) {
+  uint32_t result = (uint32_t)(A-GOT);
   result = lld::scatterBits<uint32_t>(result, FINDV4BITMASK(location));
   APPLY_RELOC(result);
   return 0;
 }
 
-int relocHexGOTREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
-                   uint64_t GOT, int shiftBits = 0) {
+int relocHexGOTRELSigned(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
+                         uint64_t GOT, int shiftBits = 0) {
+  int32_t result = (int32_t)((S + A - GOT) >> shiftBits);
+  result = lld::scatterBits<int32_t>(result, FINDV4BITMASK(location));
+  APPLY_RELOC(result);
+  return 0;
+}
+
+int relocHexGOTRELUnsigned(uint8_t *location, uint64_t P, uint64_t S,
+                           uint64_t A, uint64_t GOT, int shiftBits = 0) {
   uint32_t result = (uint32_t)((S + A - GOT) >> shiftBits);
   result = lld::scatterBits<uint32_t>(result, FINDV4BITMASK(location));
   APPLY_RELOC(result);
@@ -190,15 +198,15 @@ int relocHexGOTREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
 
 int relocHexGOTREL_HILO16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
                           uint64_t GOT, int shiftBits = 0) {
-  uint32_t result = (uint32_t)((S + A - GOT) >> shiftBits);
-  result = lld::scatterBits<uint32_t>(result, 0x00c03fff);
+  int32_t result = (int32_t)((S + A - GOT) >> shiftBits);
+  result = lld::scatterBits<int32_t>(result, 0x00c03fff);
   APPLY_RELOC(result);
   return 0;
 }
 
 int relocHexGOTREL_32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
                       uint64_t GOT) {
-  uint32_t result = (uint32_t)(S + A - GOT);
+  int32_t result = (int32_t)(S + A - GOT);
   APPLY_RELOC(result);
   return 0;
 }
@@ -298,33 +306,33 @@ ErrorOr<void> HexagonTargetRelocationHandler::applyRelocation(
                           _targetHandler.getGOTSymAddr(), 16);
     break;
   case R_HEX_GOT_LO16:
-    relocHexGOTLO16(location, targetVAddress);
+    relocHexGOTLO16(location, targetVAddress, _targetHandler.getGOTSymAddr());
     break;
   case R_HEX_GOT_HI16:
-    relocHexGOTHI16(location, targetVAddress);
+    relocHexGOTHI16(location, targetVAddress, _targetHandler.getGOTSymAddr());
     break;
   case R_HEX_GOT_32:
-    relocHexGOT32(location, targetVAddress);
+    relocHexGOT32(location, targetVAddress, _targetHandler.getGOTSymAddr());
     break;
   case R_HEX_GOT_16:
-    relocHexGOT16(location, targetVAddress);
+    relocHexGOT16(location, targetVAddress, _targetHandler.getGOTSymAddr());
     break;
   case R_HEX_GOT_32_6_X:
-    relocHexGOT32_6_X(location, targetVAddress);
+    relocHexGOT32_6_X(location, targetVAddress, _targetHandler.getGOTSymAddr());
     break;
   case R_HEX_GOT_16_X:
-    relocHexGOT16_X(location, targetVAddress);
+    relocHexGOT16_X(location, targetVAddress, _targetHandler.getGOTSymAddr());
     break;
   case R_HEX_GOT_11_X:
-    relocHexGOT11_X(location, targetVAddress);
+    relocHexGOT11_X(location, targetVAddress, _targetHandler.getGOTSymAddr());
     break;
   case R_HEX_GOTREL_32_6_X:
-    relocHexGOTREL(location, relocVAddress, targetVAddress, ref.addend(),
+    relocHexGOTRELSigned(location, relocVAddress, targetVAddress, ref.addend(),
                    _targetHandler.getGOTSymAddr(), 6);
     break;
   case R_HEX_GOTREL_16_X:
   case R_HEX_GOTREL_11_X:
-    relocHexGOTREL(location, relocVAddress, targetVAddress, ref.addend(),
+    relocHexGOTRELUnsigned(location, relocVAddress, targetVAddress, ref.addend(),
                    _targetHandler.getGOTSymAddr());
     break;
 
