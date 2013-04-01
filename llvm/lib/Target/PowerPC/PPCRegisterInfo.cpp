@@ -528,8 +528,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // If the instruction is not present in ImmToIdxMap, then it has no immediate
   // form (and must be r+r).
-  bool noImmForm = !MI.isInlineAsm() &&
-    (ImmToIdxMap.find(OpC) == ImmToIdxMap.end());
+  bool noImmForm = !MI.isInlineAsm() && !ImmToIdxMap.count(OpC);
 
   // Now add the frame object offset to the offset from r1.
   int Offset = MFI->getObjectOffset(FrameIndex);
