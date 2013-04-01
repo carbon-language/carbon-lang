@@ -1430,7 +1430,6 @@ MachineBasicBlock *HexagonHardwareLoops::createPreheaderForLoop(
     return 0;
 
   typedef MachineBasicBlock::instr_iterator instr_iterator;
-  typedef MachineBasicBlock::pred_iterator pred_iterator;
 
   // Verify that all existing predecessors have analyzable branches
   // (or no branches at all).
