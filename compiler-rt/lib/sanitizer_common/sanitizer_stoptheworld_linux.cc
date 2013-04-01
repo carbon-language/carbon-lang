@@ -248,6 +248,30 @@ static int TracerThread(void* argument) {
   return exit_code;
 }
 
+class ScopedStackSpaceWithGuard {
+ public:
+  explicit ScopedStackSpaceWithGuard(uptr stack_size) {
+    stack_size_ = stack_size;
+    guard_size_ = GetPageSizeCached();
+    // FIXME: Omitting MAP_STACK here works in current kernels but might break
+    // in the future.
+    guard_start_ = (uptr)MmapOrDie(stack_size_ + guard_size_,
+                                   "ScopedStackWithGuard");
+    CHECK_EQ(guard_start_, (uptr)Mprotect((uptr)guard_start_, guard_size_));
+  }
+  ~ScopedStackSpaceWithGuard() {
+    UnmapOrDie((void *)guard_start_, stack_size_ + guard_size_);
+  }
+  void *Bottom() const {
+    return (void *)(guard_start_ + stack_size_ + guard_size_);
+  }
+
+ private:
+  uptr stack_size_;
+  uptr guard_size_;
+  uptr guard_start_;
+};
+
 static sigset_t blocked_sigset;
 static sigset_t old_sigset;
 static struct sigaction old_sigactions[ARRAY_SIZE(kUnblockedSignals)];
@@ -282,16 +306,12 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
   struct TracerThreadArgument tracer_thread_argument;
   tracer_thread_argument.callback = callback;
   tracer_thread_argument.callback_argument = argument;
+  const uptr kTracerStackSize = 2 * 1024 * 1024;
+  ScopedStackSpaceWithGuard tracer_stack(kTracerStackSize);
   // Block the execution of TracerThread until after we have set ptrace
   // permissions.
   tracer_thread_argument.mutex.Lock();
-  // The tracer thread will run on the same stack, so we must reserve some
-  // stack space for the caller thread to run in as it waits on the tracer.
-  const uptr kReservedStackSize = 4096;
-  // Get a 16-byte aligned pointer for stack.
-  int a_local_variable __attribute__((__aligned__(16)));
-  pid_t tracer_pid = clone(TracerThread,
-                          (char *)&a_local_variable - kReservedStackSize,
+  pid_t tracer_pid = clone(TracerThread, tracer_stack.Bottom(),
                           CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_UNTRACED,
                           &tracer_thread_argument, 0, 0, 0);
   if (tracer_pid < 0) {
