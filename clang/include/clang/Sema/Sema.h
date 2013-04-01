@@ -1759,8 +1759,9 @@ public:
   bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old,
                                     Scope *S);
   void mergeObjCMethodDecls(ObjCMethodDecl *New, ObjCMethodDecl *Old);
-  void MergeVarDecl(VarDecl *New, LookupResult &OldDecls);
-  void MergeVarDeclTypes(VarDecl *New, VarDecl *Old);
+  void MergeVarDecl(VarDecl *New, LookupResult &OldDecls,
+                    bool OldDeclsWereHidden);
+  void MergeVarDeclTypes(VarDecl *New, VarDecl *Old, bool OldIsHidden);
   void MergeVarDeclExceptionSpecs(VarDecl *New, VarDecl *Old);
   bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old, Scope *S);
 

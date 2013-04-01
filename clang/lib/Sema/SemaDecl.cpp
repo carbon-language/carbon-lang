@@ -2773,7 +2773,7 @@ void Sema::mergeObjCMethodDecls(ObjCMethodDecl *newMethod,
 /// Declarations using the auto type specifier (C++ [decl.spec.auto]) call back
 /// to here in AddInitializerToDecl. We can't check them before the initializer
 /// is attached.
-void Sema::MergeVarDeclTypes(VarDecl *New, VarDecl *Old) {
+void Sema::MergeVarDeclTypes(VarDecl *New, VarDecl *Old, bool OldWasHidden) {
   if (New->isInvalidDecl() || Old->isInvalidDecl())
     return;
 
@@ -2820,7 +2820,11 @@ void Sema::MergeVarDeclTypes(VarDecl *New, VarDecl *Old) {
     Diag(Old->getLocation(), diag::note_previous_definition);
     return New->setInvalidDecl();
   }
-  New->setType(MergedT);
+
+  // Don't actually update the type on the new declaration if the old
+  // declaration was a extern declaration in a different scope.
+  if (!OldWasHidden)
+    New->setType(MergedT);
 }
 
 /// MergeVarDecl - We just parsed a variable 'New' which has the same name
@@ -2831,7 +2835,8 @@ void Sema::MergeVarDeclTypes(VarDecl *New, VarDecl *Old) {
 /// FinalizeDeclaratorGroup. Unfortunately, we can't analyze tentative
 /// definitions here, since the initializer hasn't been attached.
 ///
-void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
+void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous,
+                        bool PreviousWasHidden) {
   // If the new decl is already invalid, don't do any other checking.
   if (New->isInvalidDecl())
     return;
@@ -2871,7 +2876,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   }
 
   // Merge the types.
-  MergeVarDeclTypes(New, Old);
+  MergeVarDeclTypes(New, Old, PreviousWasHidden);
   if (New->isInvalidDecl())
     return;
 
@@ -5206,13 +5211,39 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD,
     NewVD->setTypeSourceInfo(FixedTInfo);
   }
 
+  // If we did not find anything by this name, look for a non-visible
+  // extern "C" declaration with the same name.
+  //
+  // Clang has a lot of problems with extern local declarations.
+  // The actual standards text here is:
+  //
+  // C++11 [basic.link]p6:
+  //   The name of a function declared in block scope and the name
+  //   of a variable declared by a block scope extern declaration
+  //   have linkage. If there is a visible declaration of an entity
+  //   with linkage having the same name and type, ignoring entities
+  //   declared outside the innermost enclosing namespace scope, the
+  //   block scope declaration declares that same entity and
+  //   receives the linkage of the previous declaration.
+  //
+  // C11 6.2.7p4:
+  //   For an identifier with internal or external linkage declared
+  //   in a scope in which a prior declaration of that identifier is
+  //   visible, if the prior declaration specifies internal or
+  //   external linkage, the type of the identifier at the later
+  //   declaration becomes the composite type.
+  //
+  // The most important point here is that we're not allowed to
+  // update our understanding of the type according to declarations
+  // not in scope.
+  bool PreviousWasHidden = false;
   if (Previous.empty() && mayConflictWithNonVisibleExternC(NewVD)) {
-    // Since we did not find anything by this name, look for a non-visible
-    // extern "C" declaration with the same name.
     llvm::DenseMap<DeclarationName, NamedDecl *>::iterator Pos
       = findLocallyScopedExternCDecl(NewVD->getDeclName());
-    if (Pos != LocallyScopedExternCDecls.end())
+    if (Pos != LocallyScopedExternCDecls.end()) {
       Previous.addDecl(Pos->second);
+      PreviousWasHidden = true;
+    }
   }
 
   // Filter out any non-conflicting previous declarations.
@@ -5245,7 +5276,7 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD,
   }
 
   if (!Previous.empty()) {
-    MergeVarDecl(NewVD, Previous);
+    MergeVarDecl(NewVD, Previous, PreviousWasHidden);
     return true;
   }
   return false;
@@ -7277,7 +7308,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     // If this is a redeclaration, check that the type we just deduced matches
     // the previously declared type.
     if (VarDecl *Old = VDecl->getPreviousDecl())
-      MergeVarDeclTypes(VDecl, Old);
+      MergeVarDeclTypes(VDecl, Old, /*OldWasHidden*/ false);
   }
 
   if (VDecl->isLocalVarDecl() && VDecl->hasExternalStorage()) {
