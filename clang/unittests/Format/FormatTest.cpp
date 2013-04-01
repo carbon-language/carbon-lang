@@ -2213,7 +2213,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyIndependentOfContext("a[a * a] = 1;");
   verifyIndependentOfContext("f() * b;");
   verifyIndependentOfContext("a * [self dostuff];");
-  verifyIndependentOfContext("a * (a + b);");
+  verifyIndependentOfContext("int x = a * (a + b);");
   verifyIndependentOfContext("(a *)(a + b);");
   verifyIndependentOfContext("int *pa = (int *)&a;");
   verifyIndependentOfContext("return sizeof(int **);");
@@ -2378,12 +2378,14 @@ TEST_F(FormatTest, FormatsFunctionTypes) {
   verifyFormat("A<SomeType()> a;");
   verifyFormat("A<void(*)(int, std::string)> a;");
   verifyFormat("A<void *(int)>;");
+  verifyFormat("void *(*a)(int *, SomeType *);");
 
   // FIXME: Inconsistent.
   verifyFormat("int (*func)(void *);");
   verifyFormat("void f() { int(*func)(void *); }");
 
-  verifyGoogleFormat("A<void*(int)>;");
+  verifyGoogleFormat("A<void*(int*, SomeType*)>;");
+  verifyGoogleFormat("void* (*a)(int);");
 }
 
 TEST_F(FormatTest, BreaksLongDeclarations) {

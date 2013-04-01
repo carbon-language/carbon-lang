@@ -682,12 +682,6 @@ private:
         NextToken->FormatTok.Tok.isLiteral() || isUnaryOperator(*NextToken))
       return TT_BinaryOperator;
 
-    // "*(" is probably part of a function type if within template parameters.
-    // Otherwise, it is probably a binary operator.
-    if (NextToken->is(tok::l_paren))
-      return Contexts.back().ContextKind == tok::less ? TT_PointerOrReference
-                                                      : TT_BinaryOperator;
-
     // It is very unlikely that we are going to find a pointer or reference type
     // definition on the RHS of an assignment.
     if (IsExpression)
@@ -993,7 +987,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Left.Type == TT_PointerOrReference)
     return Right.FormatTok.Tok.isLiteral() ||
            ((Right.Type != TT_PointerOrReference) &&
-            Right.isNot(tok::l_paren) && Style.PointerBindsToType);
+            Right.isNot(tok::l_paren) && Style.PointerBindsToType &&
+            Left.Parent && Left.Parent->isNot(tok::l_paren));
   if (Right.is(tok::star) && Left.is(tok::l_paren))
     return false;
   if (Left.is(tok::l_square))
@@ -1057,7 +1052,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
       Tok.Children[0].Type == TT_PointerOrReference &&
       !Tok.Children[0].Children.empty() &&
       Tok.Children[0].Children[0].isNot(tok::r_paren) &&
-      Tok.Parent->isNot(tok::l_paren))
+      Tok.Parent->isNot(tok::l_paren) &&
+      (Tok.Parent->Type != TT_PointerOrReference || Style.PointerBindsToType))
     return true;
   if (Tok.Parent->Type == TT_UnaryOperator || Tok.Parent->Type == TT_CastRParen)
     return false;

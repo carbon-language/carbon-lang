@@ -805,7 +805,6 @@ private:
         // parameter, i.e. let nested calls have an indent of 4.
         State.Stack.back().LastSpace = State.Column + 1; // 1 is length of "(".
       else if (Previous.is(tok::comma))
-        // Top-level spaces are exempt as that mostly leads to better results.
         State.Stack.back().LastSpace = State.Column;
       else if ((Previous.Type == TT_BinaryOperator ||
                 Previous.Type == TT_ConditionalExpr ||
