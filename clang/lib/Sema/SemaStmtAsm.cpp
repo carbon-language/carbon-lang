@@ -519,15 +519,13 @@ NamedDecl *Sema::LookupInlineAsmIdentifier(StringRef Name, SourceLocation Loc,
   if (isa<FunctionDecl>(FoundDecl))
     return FoundDecl;
   if (VarDecl *Var = dyn_cast<VarDecl>(FoundDecl)) {
-    Type = Context.getTypeInfo(Var->getType()).first;
     QualType Ty = Var->getType();
+    Type = Size = Context.getTypeSizeInChars(Ty).getQuantity();
     if (Ty->isArrayType()) {
       const ArrayType *ATy = Context.getAsArrayType(Ty);
-      Length = Type / Context.getTypeInfo(ATy->getElementType()).first;
-      Type /= Length; // Type is in terms of a single element.
+      Type = Context.getTypeSizeInChars(ATy->getElementType()).getQuantity();
+      Length = Size / Type;
     }
-    Type /= 8; // Type is in terms of bits, but we want bytes.
-    Size = Length * Type;
     IsVarDecl = true;
     return FoundDecl;
   }
