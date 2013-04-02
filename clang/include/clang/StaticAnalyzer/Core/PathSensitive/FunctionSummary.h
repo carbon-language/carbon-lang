@@ -14,35 +14,42 @@
 #ifndef LLVM_CLANG_GR_FUNCTIONSUMMARY_H
 #define LLVM_CLANG_GR_FUNCTIONSUMMARY_H
 
-#include "clang/AST/Decl.h"
-#include "llvm/ADT/SmallBitVector.h"
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/Optional.h"
+#include "llvm/ADT/SmallBitVector.h"
 #include <deque>
 
 namespace clang {
+class Decl;
+
 namespace ento {
 typedef std::deque<Decl*> SetOfDecls;
 typedef llvm::DenseSet<const Decl*> SetOfConstDecls;
 
 class FunctionSummariesTy {
-  struct FunctionSummary {
+  class FunctionSummary {
+  public:
     /// Marks the IDs of the basic blocks visited during the analyzes.
     llvm::SmallBitVector VisitedBasicBlocks;
 
     /// Total number of blocks in the function.
-    unsigned TotalBasicBlocks : 31;
+    unsigned TotalBasicBlocks : 30;
 
-    /// True if this function has reached a max block count while inlined from
-    /// at least one call site.
-    unsigned MayReachMaxBlockCount : 1;
+    /// True if this function has been checked against the rules for which
+    /// functions may be inlined.
+    unsigned InlineChecked : 1;
+
+    /// True if this function may be inlined.
+    unsigned MayInline : 1;
 
     /// The number of times the function has been inlined.
     unsigned TimesInlined : 32;
 
     FunctionSummary() :
       TotalBasicBlocks(0),
-      MayReachMaxBlockCount(0),
+      InlineChecked(0),
       TimesInlined(0) {}
   };
 
@@ -61,16 +68,27 @@ public:
     return I;
   }
 
-  void markReachedMaxBlockCount(const Decl* D) {
+  void markMayInline(const Decl *D) {
     MapTy::iterator I = findOrInsertSummary(D);
-    I->second.MayReachMaxBlockCount = 1;
+    I->second.InlineChecked = 1;
+    I->second.MayInline = 1;
   }
 
-  bool hasReachedMaxBlockCount(const Decl* D) {
-  MapTy::const_iterator I = Map.find(D);
-    if (I != Map.end())
-      return I->second.MayReachMaxBlockCount;
-    return false;
+  void markShouldNotInline(const Decl *D) {
+    MapTy::iterator I = findOrInsertSummary(D);
+    I->second.InlineChecked = 1;
+    I->second.MayInline = 0;
+  }
+
+  void markReachedMaxBlockCount(const Decl *D) {
+    markShouldNotInline(D);
+  }
+
+  Optional<bool> mayInline(const Decl *D) {
+    MapTy::const_iterator I = Map.find(D);
+    if (I != Map.end() && I->second.InlineChecked)
+      return I->second.MayInline;
+    return None;
   }
 
   void markVisitedBasicBlock(unsigned ID, const Decl* D, unsigned TotalIDs) {

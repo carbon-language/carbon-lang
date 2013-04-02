@@ -578,9 +578,15 @@ void ExprEngine::conservativeEvalCall(const CallEvent &Call, NodeBuilder &Bldr,
   Bldr.generateNode(Call.getProgramPoint(), State, Pred);
 }
 
-static bool shouldInlineCallKind(const CallEvent &Call,
-                                 const ExplodedNode *Pred,
-                                 AnalyzerOptions &Opts) {
+enum CallInlinePolicy {
+  CIP_Allowed,
+  CIP_DisallowedOnce,
+  CIP_DisallowedAlways
+};
+
+static CallInlinePolicy mayInlineCallKind(const CallEvent &Call,
+                                          const ExplodedNode *Pred,
+                                          AnalyzerOptions &Opts) {
   const LocationContext *CurLC = Pred->getLocationContext();
   const StackFrameContext *CallerSFC = CurLC->getCurrentStackFrame();
   switch (Call.getKind()) {
@@ -590,18 +596,18 @@ static bool shouldInlineCallKind(const CallEvent &Call,
   case CE_CXXMember:
   case CE_CXXMemberOperator:
     if (!Opts.mayInlineCXXMemberFunction(CIMK_MemberFunctions))
-      return false;
+      return CIP_DisallowedAlways;
     break;
   case CE_CXXConstructor: {
     if (!Opts.mayInlineCXXMemberFunction(CIMK_Constructors))
-      return false;
+      return CIP_DisallowedAlways;
 
     const CXXConstructorCall &Ctor = cast<CXXConstructorCall>(Call);
 
     // FIXME: We don't handle constructors or destructors for arrays properly.
     const MemRegion *Target = Ctor.getCXXThisVal().getAsRegion();
     if (Target && isa<ElementRegion>(Target))
-      return false;
+      return CIP_DisallowedOnce;
 
     // FIXME: This is a hack. We don't use the correct region for a new
     // expression, so if we inline the constructor its result will just be
@@ -610,7 +616,7 @@ static bool shouldInlineCallKind(const CallEvent &Call,
     const CXXConstructExpr *CtorExpr = Ctor.getOriginExpr();
     if (const Stmt *Parent = CurLC->getParentMap().getParent(CtorExpr))
       if (isa<CXXNewExpr>(Parent))
-        return false;
+        return CIP_DisallowedOnce;
 
     // Inlining constructors requires including initializers in the CFG.
     const AnalysisDeclContext *ADC = CallerSFC->getAnalysisDeclContext();
@@ -624,19 +630,19 @@ static bool shouldInlineCallKind(const CallEvent &Call,
     // For other types, only inline constructors if destructor inlining is
     // also enabled.
     if (!Opts.mayInlineCXXMemberFunction(CIMK_Destructors))
-      return false;
+      return CIP_DisallowedAlways;
 
     // FIXME: This is a hack. We don't handle temporary destructors
     // right now, so we shouldn't inline their constructors.
     if (CtorExpr->getConstructionKind() == CXXConstructExpr::CK_Complete)
       if (!Target || !isa<DeclRegion>(Target))
-        return false;
+        return CIP_DisallowedOnce;
 
     break;
   }
   case CE_CXXDestructor: {
     if (!Opts.mayInlineCXXMemberFunction(CIMK_Destructors))
-      return false;
+      return CIP_DisallowedAlways;
 
     // Inlining destructors requires building the CFG correctly.
     const AnalysisDeclContext *ADC = CallerSFC->getAnalysisDeclContext();
@@ -648,22 +654,71 @@ static bool shouldInlineCallKind(const CallEvent &Call,
     // FIXME: We don't handle constructors or destructors for arrays properly.
     const MemRegion *Target = Dtor.getCXXThisVal().getAsRegion();
     if (Target && isa<ElementRegion>(Target))
-      return false;
+      return CIP_DisallowedOnce;
 
     break;
   }
   case CE_CXXAllocator:
     // Do not inline allocators until we model deallocators.
     // This is unfortunate, but basically necessary for smart pointers and such.
-    return false;
+    return CIP_DisallowedAlways;
   case CE_ObjCMessage:
     if (!Opts.mayInlineObjCMethod())
-      return false;
+      return CIP_DisallowedAlways;
     if (!(Opts.getIPAMode() == IPAK_DynamicDispatch ||
           Opts.getIPAMode() == IPAK_DynamicDispatchBifurcate))
-      return false;
+      return CIP_DisallowedAlways;
     break;
   }
+
+  return CIP_Allowed;
+}
+
+/// Returns true if the function in \p CalleeADC may be inlined in general.
+///
+/// This checks static properties of the function, such as its signature and
+/// CFG, to determine whether the analyzer should ever consider inlining it,
+/// in any context.
+static bool mayInlineDecl(const CallEvent &Call, AnalysisDeclContext *CalleeADC,
+                          AnalyzerOptions &Opts) {
+  const Decl *D = CalleeADC->getDecl();
+
+  // FIXME: Do not inline variadic calls.
+  if (Call.isVariadic())
+    return false;
+
+  // Check certain C++-related inlining policies.
+  ASTContext &Ctx = D->getASTContext();
+  if (Ctx.getLangOpts().CPlusPlus) {
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+      // Conditionally control the inlining of template functions.
+      if (!Opts.mayInlineTemplateFunctions())
+        if (FD->getTemplatedKind() != FunctionDecl::TK_NonTemplate)
+          return false;
+
+      // Conditionally control the inlining of C++ standard library functions.
+      if (!Opts.mayInlineCXXStandardLibrary())
+        if (Ctx.getSourceManager().isInSystemHeader(FD->getLocation()))
+          if (IsInStdNamespace(FD))
+            return false;
+    }
+  }
+
+  // It is possible that the CFG cannot be constructed.
+  // Be safe, and check if the CalleeCFG is valid.
+  const CFG *CalleeCFG = CalleeADC->getCFG();
+  if (!CalleeCFG)
+    return false;
+
+  // Do not inline large functions.
+  if (CalleeCFG->getNumBlockIDs() > Opts.getMaxInlinableSize())
+    return false;
+
+  // It is possible that the live variables analysis cannot be
+  // run.  If so, bail out.
+  if (!CalleeADC->getAnalysis<RelaxedLiveVariables>())
+    return false;
+
   return true;
 }
 
@@ -686,15 +741,37 @@ bool ExprEngine::shouldInlineCall(const CallEvent &Call, const Decl *D,
   if (!AMgr.shouldInlineCall())
     return false;
 
-  // Check if we should inline a call based on its kind.
-  if (!shouldInlineCallKind(Call, Pred, Opts))
-    return false;
+  // Check if this function has been marked as non-inlinable.
+  Optional<bool> MayInline = Engine.FunctionSummaries->mayInline(D);
+  if (MayInline.hasValue()) {
+    if (!MayInline.getValue())
+      return false;
 
-  // It is possible that the CFG cannot be constructed.
-  // Be safe, and check if the CalleeCFG is valid.
-  const CFG *CalleeCFG = CalleeADC->getCFG();
-  if (!CalleeCFG)
+  } else {
+    // We haven't actually checked the static properties of this function yet.
+    // Do that now, and record our decision in the function summaries.
+    if (mayInlineDecl(Call, CalleeADC, Opts)) {
+      Engine.FunctionSummaries->markMayInline(D);
+    } else {
+      Engine.FunctionSummaries->markShouldNotInline(D);
+      return false;
+    }
+  }
+
+  // Check if we should inline a call based on its kind.
+  // FIXME: this checks both static and dynamic properties of the call, which
+  // means we're redoing a bit of work that could be cached in the function
+  // summary.
+  CallInlinePolicy CIP = mayInlineCallKind(Call, Pred, Opts);
+  if (CIP != CIP_Allowed) {
+    if (CIP == CIP_DisallowedAlways) {
+      assert(!MayInline.hasValue() || MayInline.getValue());
+      Engine.FunctionSummaries->markShouldNotInline(D);
+    }
     return false;
+  }
+
+  const CFG *CalleeCFG = CalleeADC->getCFG();
 
   // Do not inline if recursive or we've reached max stack frame count.
   bool IsRecursive = false;
@@ -703,39 +780,6 @@ bool ExprEngine::shouldInlineCall(const CallEvent &Call, const Decl *D,
   if ((StackDepth >= Opts.InlineMaxStackDepth) &&
       ((CalleeCFG->getNumBlockIDs() > Opts.getAlwaysInlineSize())
        || IsRecursive))
-    return false;
-
-  // Do not inline if it took too long to inline previously.
-  if (Engine.FunctionSummaries->hasReachedMaxBlockCount(D))
-    return false;
-
-  // Or if the function is too big.
-  if (CalleeCFG->getNumBlockIDs() > Opts.getMaxInlinableSize())
-    return false;
-
-  // Do not inline variadic calls (for now).
-  if (Call.isVariadic())
-    return false;
-
-  // Check our template policy.
-  if (getContext().getLangOpts().CPlusPlus) {
-    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-      // Conditionally allow the inlining of template functions.
-      if (!Opts.mayInlineTemplateFunctions())
-        if (FD->getTemplatedKind() != FunctionDecl::TK_NonTemplate)
-          return false;
-
-      // Conditionally allow the inlining of C++ standard library functions.
-      if (!Opts.mayInlineCXXStandardLibrary())
-        if (getContext().getSourceManager().isInSystemHeader(FD->getLocation()))
-          if (IsInStdNamespace(FD))
-            return false;
-    }
-  }
-
-  // It is possible that the live variables analysis cannot be
-  // run.  If so, bail out.
-  if (!CalleeADC->getAnalysis<RelaxedLiveVariables>())
     return false;
 
   // Do not inline large functions too many times.
