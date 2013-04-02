@@ -1840,6 +1840,21 @@ callExpr(on(hasType(asString("class Y *"))))
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt;</td><td class="name" onclick="toggle('hasLocalQualifiers0')"><a name="hasLocalQualifiers0Anchor">hasLocalQualifiers</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="hasLocalQualifiers0"><pre>Matches QualType nodes that have local CV-qualifiers attached to
+the node, not hidden within a typedef.
+
+Given
+  typedef const int const_int;
+  const_int i;
+  int *const j;
+  int *volatile k;
+  int m;
+varDecl(hasType(hasLocalQualifiers())) matches only j and k.
+i is const-qualified but the qualifier is not local.
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt;</td><td class="name" onclick="toggle('isConstQualified0')"><a name="isConstQualified0Anchor">isConstQualified</a></td><td></td></tr>
 <tr><td colspan="4" class="doc" id="isConstQualified0"><pre>Matches QualType nodes that are const-qualified, i.e., that
 include "top-level" const.

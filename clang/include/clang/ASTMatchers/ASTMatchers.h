@@ -2566,6 +2566,23 @@ AST_MATCHER(QualType, isConstQualified) {
   return Node.isConstQualified();
 }
 
+/// \brief Matches QualType nodes that have local CV-qualifiers attached to
+/// the node, not hidden within a typedef.
+///
+/// Given
+/// \code
+///   typedef const int const_int;
+///   const_int i;
+///   int *const j;
+///   int *volatile k;
+///   int m;
+/// \endcode
+/// \c varDecl(hasType(hasLocalQualifiers())) matches only \c j and \c k.
+/// \c i is const-qualified but the qualifier is not local.
+AST_MATCHER(QualType, hasLocalQualifiers) {
+  return Node.hasLocalQualifiers();
+}
+
 /// \brief Matches a member expression where the member is matched by a
 /// given matcher.
 ///
