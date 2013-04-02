@@ -158,6 +158,12 @@ bool AnalyzerOptions::shouldSuppressInlinedDefensiveChecks() {
                           /* Default = */ true);
 }
 
+bool AnalyzerOptions::shouldSuppressFromCXXStandardLibrary() {
+  return getBooleanOption(SuppressFromCXXStandardLibrary,
+                          "suppress-c++-stdlib",
+                          /* Default = */ false);
+}
+
 int AnalyzerOptions::getOptionAsInteger(StringRef Name, int DefaultVal) {
   SmallString<10> StrBuf;
   llvm::raw_svector_ostream OS(StrBuf);

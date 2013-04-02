@@ -1421,28 +1421,53 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
   return event;
 }
 
+
+// FIXME: Copied from ExprEngineCallAndReturn.cpp.
+static bool isInStdNamespace(const Decl *D) {
+  const DeclContext *DC = D->getDeclContext()->getEnclosingNamespaceContext();
+  const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC);
+  if (!ND)
+    return false;
+
+  while (const NamespaceDecl *Parent = dyn_cast<NamespaceDecl>(ND->getParent()))
+    ND = Parent;
+
+  return ND->getName() == "std";
+}
+
+
 PathDiagnosticPiece *
 LikelyFalsePositiveSuppressionBRVisitor::getEndPath(BugReporterContext &BRC,
                                                     const ExplodedNode *N,
                                                     BugReport &BR) {
-  const Stmt *S = BR.getStmt();
-  if (!S)
-    return 0;
-
-  // Here we suppress false positives coming from system macros. This list is
+  // Here we suppress false positives coming from system headers. This list is
   // based on known issues.
+
+  // Skip reports within the 'std' namespace. Although these can sometimes be
+  // the user's fault, we currently don't report them very well, and
+  // Note that this will not help for any other data structure libraries, like
+  // TR1, Boost, or llvm/ADT.
+  ExprEngine &Eng = BRC.getBugReporter().getEngine();
+  AnalyzerOptions &Options = Eng.getAnalysisManager().options;
+  if (Options.shouldSuppressFromCXXStandardLibrary()) {
+    const LocationContext *LCtx = N->getLocationContext();
+    if (isInStdNamespace(LCtx->getDecl())) {
+      BR.markInvalid(getTag(), 0);
+      return 0;
+    }
+  }
 
   // Skip reports within the sys/queue.h macros as we do not have the ability to
   // reason about data structure shapes.
   SourceManager &SM = BRC.getSourceManager();
-  SourceLocation Loc = S->getLocStart();
+  FullSourceLoc Loc = BR.getLocation(SM).asLocation();
   while (Loc.isMacroID()) {
     if (SM.isInSystemMacro(Loc) &&
        (SM.getFilename(SM.getSpellingLoc(Loc)).endswith("sys/queue.h"))) {
       BR.markInvalid(getTag(), 0);
       return 0;
     }
-    Loc = SM.getSpellingLoc(Loc);
+    Loc = Loc.getSpellingLoc();
   }
 
   return 0;

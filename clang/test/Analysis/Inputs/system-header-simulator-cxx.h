@@ -73,6 +73,13 @@ namespace std {
   struct nothrow_t {};
 
   extern const nothrow_t nothrow;
+
+  template<class InputIter, class OutputIter>
+  OutputIter copy(InputIter II, InputIter IE, OutputIter OI) {
+    while (II != IE)
+      *OI++ = *II++;
+    return OI;
+  }
 }
 
 void* operator new(std::size_t, const std::nothrow_t&) throw();

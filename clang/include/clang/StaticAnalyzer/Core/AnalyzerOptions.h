@@ -217,6 +217,9 @@ private:
   /// \sa shouldSuppressInlinedDefensiveChecks
   Optional<bool> SuppressInlinedDefensiveChecks;
 
+  /// \sa shouldSuppressFromCXXStandardLibrary
+  Optional<bool> SuppressFromCXXStandardLibrary;
+
   /// \sa getGraphTrimInterval
   Optional<unsigned> GraphTrimInterval;
 
@@ -305,6 +308,13 @@ public:
   /// This is controlled by the 'suppress-inlined-defensive-checks' config
   /// option, which accepts the values "true" and "false".
   bool shouldSuppressInlinedDefensiveChecks();
+
+  /// Returns whether or not diagnostics reported within the C++ standard
+  /// library should be suppressed.
+  ///
+  /// This is controlled by the 'suppress-c++-stdlib' config option,
+  /// which accepts the values "true" and "false".
+  bool shouldSuppressFromCXXStandardLibrary();
 
   /// Returns whether irrelevant parts of a bug report path should be pruned
   /// out of the final output.
