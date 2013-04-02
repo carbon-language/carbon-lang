@@ -479,33 +479,37 @@ Thread::SetupForResume ()
         // telling the current plan it will resume, since we might change what the current
         // plan is.
 
-//        StopReason stop_reason = lldb::eStopReasonInvalid;
-//        StopInfoSP stop_info_sp = GetStopInfo();
-//        if (stop_info_sp.get())
-//            stop_reason = stop_info_sp->GetStopReason();
-//        if (stop_reason == lldb::eStopReasonBreakpoint)
-        BreakpointSiteSP bp_site_sp = GetProcess()->GetBreakpointSiteList().FindByAddress(GetRegisterContext()->GetPC());
-        if (bp_site_sp)
+//      StopReason stop_reason = lldb::eStopReasonInvalid;
+//      StopInfoSP stop_info_sp = GetStopInfo();
+//      if (stop_info_sp.get())
+//          stop_reason = stop_info_sp->GetStopReason();
+//      if (stop_reason == lldb::eStopReasonBreakpoint)
+        lldb::RegisterContextSP reg_ctx_sp (GetRegisterContext());
+        if (reg_ctx_sp)
         {
-            // Note, don't assume there's a ThreadPlanStepOverBreakpoint, the target may not require anything
-            // special to step over a breakpoint.
-                
-            ThreadPlan *cur_plan = GetCurrentPlan();
-
-            if (cur_plan->GetKind() != ThreadPlan::eKindStepOverBreakpoint)
+            BreakpointSiteSP bp_site_sp = GetProcess()->GetBreakpointSiteList().FindByAddress(reg_ctx_sp->GetPC());
+            if (bp_site_sp)
             {
-                ThreadPlanStepOverBreakpoint *step_bp_plan = new ThreadPlanStepOverBreakpoint (*this);
-                if (step_bp_plan)
-                {
-                    ThreadPlanSP step_bp_plan_sp;
-                    step_bp_plan->SetPrivate (true);
+                // Note, don't assume there's a ThreadPlanStepOverBreakpoint, the target may not require anything
+                // special to step over a breakpoint.
+                    
+                ThreadPlan *cur_plan = GetCurrentPlan();
 
-                    if (GetCurrentPlan()->RunState() != eStateStepping)
+                if (cur_plan->GetKind() != ThreadPlan::eKindStepOverBreakpoint)
+                {
+                    ThreadPlanStepOverBreakpoint *step_bp_plan = new ThreadPlanStepOverBreakpoint (*this);
+                    if (step_bp_plan)
                     {
-                        step_bp_plan->SetAutoContinue(true);
+                        ThreadPlanSP step_bp_plan_sp;
+                        step_bp_plan->SetPrivate (true);
+
+                        if (GetCurrentPlan()->RunState() != eStateStepping)
+                        {
+                            step_bp_plan->SetAutoContinue(true);
+                        }
+                        step_bp_plan_sp.reset (step_bp_plan);
+                        QueueThreadPlan (step_bp_plan_sp, false);
                     }
-                    step_bp_plan_sp.reset (step_bp_plan);
-                    QueueThreadPlan (step_bp_plan_sp, false);
                 }
             }
         }
@@ -595,7 +599,7 @@ Thread::ShouldStop (Event* event_ptr)
             log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 ", pc = 0x%16.16" PRIx64 ", should_stop = 0 (ignore since no stop reason)",
                          __FUNCTION__, 
                          GetID (), 
-                         GetRegisterContext()->GetPC());
+                         GetRegisterContext() ? GetRegisterContext()->GetPC() : LLDB_INVALID_ADDRESS);
         return false;
     }
     
@@ -604,7 +608,7 @@ Thread::ShouldStop (Event* event_ptr)
         log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 ", pc = 0x%16.16" PRIx64,
                      __FUNCTION__, 
                      GetID (), 
-                     GetRegisterContext()->GetPC());
+                     GetRegisterContext() ? GetRegisterContext()->GetPC() : LLDB_INVALID_ADDRESS);
         log->Printf ("^^^^^^^^ Thread::ShouldStop Begin ^^^^^^^^");
         StreamString s;
         s.IndentMore();
@@ -1587,17 +1591,25 @@ Thread::ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return
     StackFrameSP youngest_frame_sp = thread->GetStackFrameAtIndex(0);
     if (youngest_frame_sp)
     {
-        bool copy_success = youngest_frame_sp->GetRegisterContext()->CopyFromRegisterContext(older_frame_sp->GetRegisterContext());
-        if (copy_success)
+        lldb::RegisterContextSP reg_ctx_sp (youngest_frame_sp->GetRegisterContext());
+        if (reg_ctx_sp)
         {
-            thread->DiscardThreadPlans(true);
-            thread->ClearStackFrames();
-            if (broadcast && EventTypeHasListeners(eBroadcastBitStackChanged))
-                BroadcastEvent(eBroadcastBitStackChanged, new ThreadEventData (this->shared_from_this()));
+            bool copy_success = reg_ctx_sp->CopyFromRegisterContext(older_frame_sp->GetRegisterContext());
+            if (copy_success)
+            {
+                thread->DiscardThreadPlans(true);
+                thread->ClearStackFrames();
+                if (broadcast && EventTypeHasListeners(eBroadcastBitStackChanged))
+                    BroadcastEvent(eBroadcastBitStackChanged, new ThreadEventData (this->shared_from_this()));
+            }
+            else
+            {
+                return_error.SetErrorString("Could not reset register values.");
+            }
         }
         else
         {
-            return_error.SetErrorString("Could not reset register values.");
+            return_error.SetErrorString("Frame has no register context.");
         }
     }
     else
@@ -1760,7 +1772,9 @@ Thread::SaveFrameZeroState (RegisterCheckpoint &checkpoint)
     if (frame_sp)
     {
         checkpoint.SetStackID(frame_sp->GetStackID());
-        return frame_sp->GetRegisterContext()->ReadAllRegisterValues (checkpoint.GetData());
+        lldb::RegisterContextSP reg_ctx_sp (frame_sp->GetRegisterContext());
+        if (reg_ctx_sp)
+            return reg_ctx_sp->ReadAllRegisterValues (checkpoint.GetData());
     }
     return false;
 }
@@ -1777,15 +1791,18 @@ Thread::ResetFrameZeroRegisters (lldb::DataBufferSP register_data_sp)
     lldb::StackFrameSP frame_sp(GetStackFrameAtIndex (0));
     if (frame_sp)
     {
-        bool ret = frame_sp->GetRegisterContext()->WriteAllRegisterValues (register_data_sp);
+        lldb::RegisterContextSP reg_ctx_sp (frame_sp->GetRegisterContext());
+        if (reg_ctx_sp)
+        {
+            bool ret = reg_ctx_sp->WriteAllRegisterValues (register_data_sp);
 
-        // Clear out all stack frames as our world just changed.
-        ClearStackFrames();
-        frame_sp->GetRegisterContext()->InvalidateIfNeeded(true);
-        if (m_unwinder_ap.get())
-            m_unwinder_ap->Clear();
-
-        return ret;
+            // Clear out all stack frames as our world just changed.
+            ClearStackFrames();
+            reg_ctx_sp->InvalidateIfNeeded(true);
+            if (m_unwinder_ap.get())
+                m_unwinder_ap->Clear();
+            return ret;
+        }
     }
     return false;
 }
@@ -1833,10 +1850,14 @@ Thread::IsStillAtLastBreakpointHit ()
         StopReason stop_reason = m_actual_stop_info_sp->GetStopReason();
         if (stop_reason == lldb::eStopReasonBreakpoint) {
             uint64_t value = m_actual_stop_info_sp->GetValue();
-            lldb::addr_t pc = GetRegisterContext()->GetPC();
-            BreakpointSiteSP bp_site_sp = GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
-            if (bp_site_sp && value == bp_site_sp->GetID())
-                return true;
+            lldb::RegisterContextSP reg_ctx_sp (GetRegisterContext());
+            if (reg_ctx_sp)
+            {
+                lldb::addr_t pc = reg_ctx_sp->GetPC();
+                BreakpointSiteSP bp_site_sp = GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
+                if (bp_site_sp && value == bp_site_sp->GetID())
+                    return true;
+            }
         }
     }
     return false;

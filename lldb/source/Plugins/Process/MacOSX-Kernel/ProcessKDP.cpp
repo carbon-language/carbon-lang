@@ -386,13 +386,35 @@ ProcessKDP::DoResume ()
                 break;
                 
             case eStateStepping:
-                kernel_thread_sp->GetRegisterContext()->HardwareSingleStep (true);
-                resume = true;
+                {
+                    lldb::RegisterContextSP reg_ctx_sp (kernel_thread_sp->GetRegisterContext());
+
+                    if (reg_ctx_sp)
+                    {
+                        reg_ctx_sp->HardwareSingleStep (true);
+                        resume = true;
+                    }
+                    else
+                    {
+                        error.SetErrorStringWithFormat("KDP thread 0x%llx has no register context", kernel_thread_sp->GetID());
+                    }
+                }
                 break;
     
             case eStateRunning:
-                kernel_thread_sp->GetRegisterContext()->HardwareSingleStep (false);
-                resume = true;
+                {
+                    lldb::RegisterContextSP reg_ctx_sp (kernel_thread_sp->GetRegisterContext());
+                    
+                        if (reg_ctx_sp)
+                        {
+                            reg_ctx_sp->HardwareSingleStep (false);
+                            resume = true;
+                        }
+                        else
+                        {
+                            error.SetErrorStringWithFormat("KDP thread 0x%llx has no register context", kernel_thread_sp->GetID());
+                        }
+                }
                 break;
 
             default:
@@ -774,8 +796,13 @@ ProcessKDP::AsyncThread (void *arg)
                             if (process->m_comm.WaitForPacketWithTimeoutMicroSeconds (exc_reply_packet, 1 * USEC_PER_SEC))
                             {
                                 ThreadSP thread_sp (process->GetKernelThread(process->GetThreadList(), process->GetThreadList()));
-                                thread_sp->GetRegisterContext()->InvalidateAllRegisters();
-                                static_cast<ThreadKDP *>(thread_sp.get())->SetStopInfoFrom_KDP_EXCEPTION (exc_reply_packet);
+                                if (thread_sp)
+                                {
+                                    lldb::RegisterContextSP reg_ctx_sp (thread_sp->GetRegisterContext());
+                                    if (reg_ctx_sp)
+                                        reg_ctx_sp->InvalidateAllRegisters();
+                                    static_cast<ThreadKDP *>(thread_sp.get())->SetStopInfoFrom_KDP_EXCEPTION (exc_reply_packet);
+                                }
 
                                 // TODO: parse the stop reply packet
                                 is_running = false;                                

@@ -95,7 +95,9 @@ ThreadKDP::RefreshStateAfterStop()
     // register supply functions where they check the process stop ID and do
     // the right thing.
     const bool force = false;
-    GetRegisterContext()->InvalidateIfNeeded (force);
+    lldb::RegisterContextSP reg_ctx_sp (GetRegisterContext());
+    if (reg_ctx_sp)
+        reg_ctx_sp->InvalidateIfNeeded (force);
 }
 
 void
