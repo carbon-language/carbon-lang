@@ -1532,6 +1532,9 @@ public:
     getLambdaData().ContextDecl = ContextDecl;
   }
 
+  /// \brief Returns the inheritance model used for this record.
+  MSInheritanceModel getMSInheritanceModel() const;
+
   /// \brief Determine whether this lambda expression was known to be dependent
   /// at the time it was created, even if its context does not appear to be
   /// dependent.

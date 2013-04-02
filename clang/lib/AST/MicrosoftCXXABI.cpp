@@ -57,7 +57,7 @@ public:
 // getNumBases() seems to only give us the number of direct bases, and not the
 // total.  This function tells us if we inherit from anybody that uses MI, or if
 // we have a non-primary base class, which uses the multiple inheritance model.
-static bool usesMultipleInheritanceModel(const CXXRecordDecl *RD) {
+bool usesMultipleInheritanceModel(const CXXRecordDecl *RD) {
   while (RD->getNumBases() > 0) {
     if (RD->getNumBases() > 1)
       return true;
@@ -70,60 +70,106 @@ static bool usesMultipleInheritanceModel(const CXXRecordDecl *RD) {
   return false;
 }
 
-std::pair<uint64_t, unsigned>
-MicrosoftCXXABI::getMemberPointerWidthAndAlign(const MemberPointerType *MPT) const {
-  const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
-  const TargetInfo &Target = Context.getTargetInfo();
-
-  assert(Target.getTriple().getArch() == llvm::Triple::x86 ||
-         Target.getTriple().getArch() == llvm::Triple::x86_64);
-
-  Attr *IA = RD->getAttr<MSInheritanceAttr>();
-  attr::Kind Inheritance;
-  if (IA) {
-    Inheritance = IA->getKind();
-  } else if (RD->getNumVBases() > 0) {
-    Inheritance = attr::VirtualInheritance;
-  } else if (MPT->getPointeeType()->isFunctionType() &&
-             usesMultipleInheritanceModel(RD)) {
-    Inheritance = attr::MultipleInheritance;
-  } else {
-    Inheritance = attr::SingleInheritance;
+MSInheritanceModel MSInheritanceAttrToModel(attr::Kind Kind) {
+  switch (Kind) {
+  default: llvm_unreachable("expected MS inheritance attribute");
+  case attr::SingleInheritance:      return IHM_Single;
+  case attr::MultipleInheritance:    return IHM_Multiple;
+  case attr::VirtualInheritance:     return IHM_Virtual;
+  case attr::UnspecifiedInheritance: return IHM_Unspecified;
   }
+}
 
-  unsigned PtrSize = Target.getPointerWidth(0);
-  unsigned IntSize = Target.getIntWidth();
-  uint64_t Width;
-  unsigned Align;
-  if (MPT->getPointeeType()->isFunctionType()) {
+MSInheritanceModel CXXRecordDecl::getMSInheritanceModel() const {
+  Attr *IA = this->getAttr<MSInheritanceAttr>();
+  if (IA)
+    return MSInheritanceAttrToModel(IA->getKind());
+  // If there was no explicit attribute, the record must be defined already, and
+  // we can figure out the inheritance model from its other properties.
+  if (this->getNumVBases() > 0)
+    return IHM_Virtual;
+  if (usesMultipleInheritanceModel(this))
+    return IHM_Multiple;
+  return IHM_Single;
+}
+
+// Returns the number of pointer and integer slots used to represent a member
+// pointer in the MS C++ ABI.
+//
+// Member function pointers have the following general form;  however, fields
+// are dropped as permitted (under the MSVC interpretation) by the inheritance
+// model of the actual class.
+//
+//   struct {
+//     // A pointer to the member function to call.  If the member function is
+//     // virtual, this will be a thunk that forwards to the appropriate vftable
+//     // slot.
+//     void *FunctionPointerOrVirtualThunk;
+//
+//     // An offset to add to the address of the vbtable pointer after (possibly)
+//     // selecting the virtual base but before resolving and calling the function.
+//     // Only needed if the class has any virtual bases or bases at a non-zero
+//     // offset.
+//     int NonVirtualBaseAdjustment;
+//
+//     // An offset within the vb-table that selects the virtual base containing
+//     // the member.  Loading from this offset produces a new offset that is
+//     // added to the address of the vb-table pointer to produce the base.
+//     int VirtualBaseAdjustmentOffset;
+//
+//     // The offset of the vb-table pointer within the object.  Only needed for
+//     // incomplete types.
+//     int VBTableOffset;
+//   };
+std::pair<unsigned, unsigned> MemberPointerType::getMSMemberPointerSlots() const {
+  const CXXRecordDecl *RD = this->getClass()->getAsCXXRecordDecl();
+  MSInheritanceModel Inheritance = RD->getMSInheritanceModel();
+  unsigned Ptrs;
+  unsigned Ints = 0;
+  if (this->isMemberFunctionPointer()) {
     // Member function pointers are a struct of a function pointer followed by a
     // variable number of ints depending on the inheritance model used.  The
     // function pointer is a real function if it is non-virtual and a vftable
     // slot thunk if it is virtual.  The ints select the object base passed for
     // the 'this' pointer.
-    Align = Target.getPointerAlign(0);
+    Ptrs = 1;  // First slot is always a function pointer.
     switch (Inheritance) {
-    case attr::SingleInheritance:      Width = PtrSize;               break;
-    case attr::MultipleInheritance:    Width = PtrSize + 1 * IntSize; break;
-    case attr::VirtualInheritance:     Width = PtrSize + 2 * IntSize; break;
-    case attr::UnspecifiedInheritance: Width = PtrSize + 3 * IntSize; break;
     default: llvm_unreachable("unknown inheritance model");
+    case IHM_Unspecified: ++Ints;  // VBTableOffset
+    case IHM_Virtual:     ++Ints;  // VirtualBaseAdjustmentOffset
+    case IHM_Multiple:    ++Ints;  // NonVirtualBaseAdjustment
+    case IHM_Single:      break;   // Nothing
     }
   } else {
     // Data pointers are an aggregate of ints.  The first int is an offset
     // followed by vbtable-related offsets.
-    Align = Target.getIntAlign();
+    Ptrs = 0;
     switch (Inheritance) {
-    case attr::SingleInheritance:       // Same as multiple inheritance.
-    case attr::MultipleInheritance:     Width = 1 * IntSize; break;
-    case attr::VirtualInheritance:      Width = 2 * IntSize; break;
-    case attr::UnspecifiedInheritance:  Width = 3 * IntSize; break;
     default: llvm_unreachable("unknown inheritance model");
+    case IHM_Unspecified: ++Ints;  // VBTableOffset
+    case IHM_Virtual:     ++Ints;  // VirtualBaseAdjustmentOffset
+    case IHM_Multiple:             // Nothing
+    case IHM_Single:      ++Ints;  // Field offset
     }
   }
-  Width = llvm::RoundUpToAlignment(Width, Align);
+  return std::make_pair(Ptrs, Ints);
+}
 
-  // FIXME: Verify that our alignment matches MSVC.
+std::pair<uint64_t, unsigned>
+MicrosoftCXXABI::getMemberPointerWidthAndAlign(const MemberPointerType *MPT) const {
+  const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
+  const TargetInfo &Target = Context.getTargetInfo();
+  assert(Target.getTriple().getArch() == llvm::Triple::x86 ||
+         Target.getTriple().getArch() == llvm::Triple::x86_64);
+  unsigned Ptrs, Ints;
+  llvm::tie(Ptrs, Ints) = MPT->getMSMemberPointerSlots();
+  // The nominal struct is laid out with pointers followed by ints and aligned
+  // to a pointer width if any are present and an int width otherwise.
+  unsigned PtrSize = Target.getPointerWidth(0);
+  unsigned IntSize = Target.getIntWidth();
+  uint64_t Width = Ptrs * PtrSize + Ints * IntSize;
+  unsigned Align = Ptrs > 0 ? Target.getPointerAlign(0) : Target.getIntAlign();
+  Width = llvm::RoundUpToAlignment(Width, Align);
   return std::make_pair(Width, Align);
 }
 
