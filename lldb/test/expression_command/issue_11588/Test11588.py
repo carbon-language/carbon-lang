@@ -7,6 +7,7 @@ expected in a SyntheticChildrenProvider
 import os, time
 import unittest2
 import lldb
+import lldbutil
 from lldbtest import *
 
 class Issue11581TestCase(TestBase):
@@ -19,23 +20,27 @@ class Issue11581TestCase(TestBase):
         def cleanup():
             self.runCmd('type synthetic clear', check=False)
 
+
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
         """valobj.AddressOf() should return correct values."""
         self.buildDefault()
+        
+        exe = os.path.join(os.getcwd(), "a.out")
+        
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target, VALID_TARGET)
 
-        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
+        breakpoint = target.BreakpointCreateBySourceRegex('Set breakpoint here.',lldb.SBFileSpec ("main.cpp", False))
+        
+        process = target.LaunchSimple (None, None, os.getcwd())
+        self.assertTrue (process, "Created a process.")
+        self.assertTrue (process.GetState() == lldb.eStateStopped, "Stopped it too.")
 
-        self.runCmd("breakpoint set --name main")
-
-        self.runCmd("run", RUN_SUCCEEDED)
-
-        self.runCmd("next", RUN_SUCCEEDED)
-        self.runCmd("next", RUN_SUCCEEDED)
-        self.runCmd("next", RUN_SUCCEEDED)
-        self.runCmd("next", RUN_SUCCEEDED)
-        self.runCmd("next", RUN_SUCCEEDED)
+        thread_list = lldbutil.get_threads_stopped_at_breakpoint (process, breakpoint)
+        self.assertTrue (len(thread_list) == 1)
+        thread = thread_list[0]
 
         self.runCmd("command script import --allow-reload s11588.py")
         self.runCmd("type synthetic add --python-class s11588.Issue11581SyntheticProvider StgClosure")

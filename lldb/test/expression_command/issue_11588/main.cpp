@@ -50,5 +50,5 @@ int main()
 	ptr_type r14 = (ptr_type)r14_;
 	int x = 0;
 	x = 3;
-	return (x-1);
+	return (x-1); // Set breakpoint here.
 }
