@@ -677,6 +677,10 @@ bool EarlyIfConverter::shouldConvertIf() {
   if (Stress)
     return true;
 
+  // Without a scheduling model, we can't make decisions.
+  if (!SchedModel->hasInstrSchedModel())
+    return false;
+
   if (!MinInstr)
     MinInstr = Traces->getEnsemble(MachineTraceMetrics::TS_MinInstrCount);
 
