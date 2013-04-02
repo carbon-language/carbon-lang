@@ -93,7 +93,8 @@ SparcTargetLowering::LowerReturn(SDValue Chain,
                  DAG.getTarget(), RVLocs, *DAG.getContext());
 
   // Analize return values.
-  CCInfo.AnalyzeReturn(Outs, RetCC_Sparc32);
+  CCInfo.AnalyzeReturn(Outs, Subtarget->is64Bit() ?
+                             RetCC_Sparc64 : RetCC_Sparc32);
 
   SDValue Flag;
   SmallVector<SDValue, 4> RetOps(1, Chain);
@@ -138,18 +139,32 @@ SparcTargetLowering::LowerReturn(SDValue Chain,
                      &RetOps[0], RetOps.size());
 }
 
-/// LowerFormalArguments - V8 uses a very simple ABI, where all values are
+SDValue SparcTargetLowering::
+LowerFormalArguments(SDValue Chain,
+                     CallingConv::ID CallConv,
+                     bool IsVarArg,
+                     const SmallVectorImpl<ISD::InputArg> &Ins,
+                     DebugLoc DL,
+                     SelectionDAG &DAG,
+                     SmallVectorImpl<SDValue> &InVals) const {
+  if (Subtarget->is64Bit())
+    return LowerFormalArguments_64(Chain, CallConv, IsVarArg, Ins,
+                                   DL, DAG, InVals);
+  return LowerFormalArguments_32(Chain, CallConv, IsVarArg, Ins,
+                                 DL, DAG, InVals);
+}
+
+/// LowerFormalArguments32 - V8 uses a very simple ABI, where all values are
 /// passed in either one or two GPRs, including FP values.  TODO: we should
 /// pass FP values in FP registers for fastcc functions.
-SDValue
-SparcTargetLowering::LowerFormalArguments(SDValue Chain,
-                                          CallingConv::ID CallConv, bool isVarArg,
-                                          const SmallVectorImpl<ISD::InputArg>
-                                            &Ins,
-                                          DebugLoc dl, SelectionDAG &DAG,
-                                          SmallVectorImpl<SDValue> &InVals)
-                                            const {
-
+SDValue SparcTargetLowering::
+LowerFormalArguments_32(SDValue Chain,
+                        CallingConv::ID CallConv,
+                        bool isVarArg,
+                        const SmallVectorImpl<ISD::InputArg> &Ins,
+                        DebugLoc dl,
+                        SelectionDAG &DAG,
+                        SmallVectorImpl<SDValue> &InVals) const {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
   SparcMachineFunctionInfo *FuncInfo = MF.getInfo<SparcMachineFunctionInfo>();
@@ -338,6 +353,63 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
     }
   }
 
+  return Chain;
+}
+
+// Lower formal arguments for the 64 bit ABI.
+SDValue SparcTargetLowering::
+LowerFormalArguments_64(SDValue Chain,
+                        CallingConv::ID CallConv,
+                        bool IsVarArg,
+                        const SmallVectorImpl<ISD::InputArg> &Ins,
+                        DebugLoc DL,
+                        SelectionDAG &DAG,
+                        SmallVectorImpl<SDValue> &InVals) const {
+  MachineFunction &MF = DAG.getMachineFunction();
+
+  // Analyze arguments according to CC_Sparc64.
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(),
+                 getTargetMachine(), ArgLocs, *DAG.getContext());
+  CCInfo.AnalyzeFormalArguments(Ins, CC_Sparc64);
+
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+    if (VA.isRegLoc()) {
+      // This argument is passed in a register.
+      // All integer register arguments are promoted by the caller to i64.
+
+      // Create a virtual register for the promoted live-in value.
+      unsigned VReg = MF.addLiveIn(VA.getLocReg(),
+                                   getRegClassFor(VA.getLocVT()));
+      SDValue Arg = DAG.getCopyFromReg(Chain, DL, VReg, VA.getLocVT());
+
+      // The caller promoted the argument, so insert an Assert?ext SDNode so we
+      // won't promote the value again in this function.
+      switch (VA.getLocInfo()) {
+      case CCValAssign::SExt:
+        Arg = DAG.getNode(ISD::AssertSext, DL, VA.getLocVT(), Arg,
+                          DAG.getValueType(VA.getValVT()));
+        break;
+      case CCValAssign::ZExt:
+        Arg = DAG.getNode(ISD::AssertZext, DL, VA.getLocVT(), Arg,
+                          DAG.getValueType(VA.getValVT()));
+        break;
+      default:
+        break;
+      }
+
+      // Truncate the register down to the argument type.
+      if (VA.isExtInLoc())
+        Arg = DAG.getNode(ISD::TRUNCATE, DL, VA.getValVT(), Arg);
+
+      InVals.push_back(Arg);
+      continue;
+    }
+
+    // The registers are exhausted. This argument was passed on the stack.
+    assert(VA.isMemLoc());
+  }
   return Chain;
 }
 

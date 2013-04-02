@@ -22,6 +22,14 @@ def RetCC_Sparc32 : CallingConv<[
   CCIfType<[f64], CCAssignToReg<[D0, D1]>>
 ]>;
 
+// Sparc 64-bit C return-value convention.
+def RetCC_Sparc64 : CallingConv<[
+  CCIfType<[i32], CCPromoteToType<i64>>,
+  CCIfType<[i64], CCAssignToReg<[I0, I1, I2, I3, I4, I5]>>,
+  CCIfType<[f32], CCAssignToReg<[F0, F1, F2, F3]>>,
+  CCIfType<[f64], CCAssignToReg<[D0, D1]>>
+]>;
+
 // Sparc 32-bit C Calling convention.
 def CC_Sparc32 : CallingConv<[
   //Custom assign SRet to [sp+64].
@@ -33,4 +41,16 @@ def CC_Sparc32 : CallingConv<[
 
   // Alternatively, they are assigned to the stack in 4-byte aligned units.
   CCAssignToStack<4, 4>
+]>;
+
+// Sparc 64-bit C Calling convention.
+def CC_Sparc64 : CallingConv<[
+  // All integers are promoted to i64 by the caller.
+  CCIfType<[i32], CCPromoteToType<i64>>,
+  // Integer arguments get passed in integer registers if there is space.
+  CCIfType<[i64], CCAssignToReg<[I0, I1, I2, I3, I4, I5]>>,
+  // FIXME: Floating point arguments.
+
+  // Alternatively, they are assigned to the stack in 8-byte aligned units.
+  CCAssignToStack<8, 8>
 ]>;
