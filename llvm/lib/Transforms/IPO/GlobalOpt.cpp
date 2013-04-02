@@ -470,8 +470,9 @@ static bool CleanupPointerRootUsers(GlobalVariable *GV,
 static bool CleanupConstantGlobalUsers(Value *V, Constant *Init,
                                        DataLayout *TD, TargetLibraryInfo *TLI) {
   bool Changed = false;
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;) {
-    User *U = *UI++;
+  SmallVector<User*, 8> WorkList(V->use_begin(), V->use_end());
+  while (!WorkList.empty()) {
+    User *U = WorkList.pop_back_val();
 
     if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
       if (Init) {
@@ -534,7 +535,6 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init,
       // us, and if they are all dead, nuke them without remorse.
       if (SafeToDestroyConstant(C)) {
         C->destroyConstant();
-        // This could have invalidated UI, start over from scratch.
         CleanupConstantGlobalUsers(V, Init, TD, TLI);
         return true;
       }
