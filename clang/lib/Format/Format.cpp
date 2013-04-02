@@ -485,7 +485,7 @@ public:
     State.Column = FirstIndent;
     State.NextToken = &RootToken;
     State.Stack.push_back(
-        ParenState(FirstIndent + 4, FirstIndent, !Style.BinPackParameters,
+        ParenState(FirstIndent, FirstIndent, !Style.BinPackParameters,
                    /*HasMultiParameterLine=*/ false));
     State.VariablePos = 0;
     State.LineContainsContinuedForLoopSection = false;
@@ -536,7 +536,8 @@ private:
           BreakBeforeClosingBrace(false), QuestionColumn(0),
           AvoidBinPacking(AvoidBinPacking), BreakBeforeParameter(false),
           HasMultiParameterLine(HasMultiParameterLine), ColonPos(0),
-          StartOfFunctionCall(0) {}
+          StartOfFunctionCall(0), NestedNameSpecifierContinuation(0),
+          CallContinuation(0) {}
 
     /// \brief The position to which a specific parenthesis level needs to be
     /// indented.
@@ -582,6 +583,14 @@ private:
     /// \brief The start of the most recent function in a builder-type call.
     unsigned StartOfFunctionCall;
 
+    /// \brief If a nested name specifier was broken over multiple lines, this
+    /// contains the start column of the second line. Otherwise 0.
+    unsigned NestedNameSpecifierContinuation;
+
+    /// \brief If a call expression was broken over multiple lines, this
+    /// contains the start column of the second line. Otherwise 0.
+    unsigned CallContinuation;
+
     bool operator<(const ParenState &Other) const {
       if (Indent != Other.Indent)
         return Indent < Other.Indent;
@@ -603,6 +612,12 @@ private:
         return ColonPos < Other.ColonPos;
       if (StartOfFunctionCall != Other.StartOfFunctionCall)
         return StartOfFunctionCall < Other.StartOfFunctionCall;
+      if (NestedNameSpecifierContinuation !=
+              Other.NestedNameSpecifierContinuation)
+        return NestedNameSpecifierContinuation <
+               Other.NestedNameSpecifierContinuation;
+      if (CallContinuation != Other.CallContinuation)
+        return CallContinuation < Other.CallContinuation;
       return false;
     }
   };
@@ -682,6 +697,8 @@ private:
       return 0;
     }
 
+    unsigned IndentedFurther =
+        std::max(State.Stack.back().LastSpace, State.Stack.back().Indent) + 4;
     if (Newline) {
       unsigned WhitespaceStartColumn = State.Column;
       if (Current.is(tok::r_brace)) {
@@ -693,15 +710,16 @@ private:
       } else if (Current.is(tok::lessless) &&
                  State.Stack.back().FirstLessLess != 0) {
         State.Column = State.Stack.back().FirstLessLess;
-      } else if (State.ParenLevel != 0 &&
-                 (Previous.isOneOf(tok::equal, tok::coloncolon) ||
-                  Current.isOneOf(tok::period, tok::arrow, tok::question) ||
-                  isComparison(Previous))) {
-        // Indent and extra 4 spaces after if we know the current expression is
-        // continued.  Don't do that on the top level, as we already indent 4
-        // there.
-        State.Column = std::max(State.Stack.back().LastSpace,
-                                State.Stack.back().Indent) + 4;
+      } else if (Previous.is(tok::coloncolon)) {
+        State.Column = IndentedFurther;
+        if (State.Stack.back().NestedNameSpecifierContinuation == 0)
+          State.Stack.back().NestedNameSpecifierContinuation = State.Column;
+        State.Column = State.Stack.back().NestedNameSpecifierContinuation;
+      } else if (Current.isOneOf(tok::period, tok::arrow)) {
+        State.Column = IndentedFurther;
+        if (State.Stack.back().CallContinuation == 0)
+          State.Stack.back().CallContinuation = State.Column;
+        State.Column = State.Stack.back().CallContinuation;
       } else if (Current.Type == TT_ConditionalExpr) {
         State.Column = State.Stack.back().QuestionColumn;
       } else if (Previous.is(tok::comma) && State.VariablePos != 0 &&
@@ -710,7 +728,7 @@ private:
         State.Column = State.VariablePos;
       } else if (Previous.ClosesTemplateDeclaration ||
                  (Current.Type == TT_StartOfName && State.ParenLevel == 0)) {
-        State.Column = State.Stack.back().Indent - 4;
+        State.Column = State.Stack.back().Indent;
       } else if (Current.Type == TT_ObjCSelectorName) {
         if (State.Stack.back().ColonPos > Current.FormatTok.TokenLength) {
           State.Column =
@@ -720,11 +738,15 @@ private:
           State.Stack.back().ColonPos =
               State.Column + Current.FormatTok.TokenLength;
         }
-      } else if (Previous.Type == TT_ObjCMethodExpr ||
-                 Current.Type == TT_StartOfName) {
-        State.Column = State.Stack.back().Indent + 4;
+      } else if (Current.Type == TT_StartOfName || Current.is(tok::question) ||
+                 Previous.is(tok::equal) || isComparison(Previous) ||
+                 Previous.Type == TT_ObjCMethodExpr) {
+        // Indent and extra 4 spaces if the current expression is continued.
+        State.Column = IndentedFurther;
       } else {
         State.Column = State.Stack.back().Indent;
+        if (State.Column == FirstIndent)
+          State.Column += 4;
       }
 
       if (Current.is(tok::question))
@@ -845,6 +867,8 @@ private:
         State.Stack.back().AvoidBinPacking = true;
       State.Stack.back().BreakBeforeParameter = false;
     }
+    if (Current.Type == TT_ObjCMethodSpecifier)
+      State.Stack.back().Indent += 4;
 
     // Insert scopes created by fake parenthesis.
     for (unsigned i = 0, e = Current.FakeLParens; i != e; ++i) {
