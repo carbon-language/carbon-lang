@@ -4403,7 +4403,7 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
 
   if (ShouldDeleteSpecialMember(MD, CSM)) {
     if (First) {
-      MD->setDeletedAsWritten();
+      SetDeclDeleted(MD, MD->getLocation());
     } else {
       // C++11 [dcl.fct.def.default]p4:
       //   [For a] user-provided explicitly-defaulted function [...] if such a
@@ -7586,7 +7586,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
   DefaultCon->setTrivial(ClassDecl->hasTrivialDefaultConstructor());
 
   if (ShouldDeleteSpecialMember(DefaultCon, CXXDefaultConstructor))
-    DefaultCon->setDeletedAsWritten();
+    SetDeclDeleted(DefaultCon, ClassLoc);
 
   // Note that we have declared this constructor.
   ++ASTContext::NumImplicitDefaultConstructorsDeclared;
@@ -7794,7 +7794,7 @@ void Sema::DeclareInheritingConstructors(CXXRecordDecl *ClassDecl) {
             // Core issue (no number): if the same inheriting constructor is
             // produced by multiple base class constructors from the same base
             // class, the inheriting constructor is defined as deleted.
-            result.first->second.second->setDeletedAsWritten();
+            SetDeclDeleted(result.first->second.second, UsingLoc);
           }
           continue;
         }
@@ -7830,7 +7830,7 @@ void Sema::DeclareInheritingConstructors(CXXRecordDecl *ClassDecl) {
         NewCtor->setParams(ParamDecls);
         NewCtor->setInheritedConstructor(BaseCtor);
         if (BaseCtor->isDeleted())
-          NewCtor->setDeletedAsWritten();
+          SetDeclDeleted(NewCtor, UsingLoc);
 
         ClassDecl->addDecl(NewCtor);
         result.first->second.second = NewCtor;
@@ -7954,7 +7954,7 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
   Destructor->setTrivial(ClassDecl->hasTrivialDestructor());
 
   if (ShouldDeleteSpecialMember(Destructor, CXXDestructor))
-    Destructor->setDeletedAsWritten();
+    SetDeclDeleted(Destructor, ClassLoc);
 
   // Note that we have declared this destructor.
   ++ASTContext::NumImplicitDestructorsDeclared;
@@ -8474,7 +8474,7 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   //   there is no user-declared move assignment operator, a copy assignment
   //   operator is implicitly declared as defaulted.
   if (ShouldDeleteSpecialMember(CopyAssignment, CXXCopyAssignment))
-    CopyAssignment->setDeletedAsWritten();
+    SetDeclDeleted(CopyAssignment, ClassLoc);
 
   // Note that we have added this copy-assignment operator.
   ++ASTContext::NumImplicitCopyAssignmentOperatorsDeclared;
@@ -9277,7 +9277,7 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   //   user-declared move assignment operator, a copy constructor is implicitly
   //   declared as defaulted.
   if (ShouldDeleteSpecialMember(CopyConstructor, CXXCopyConstructor))
-    CopyConstructor->setDeletedAsWritten();
+    SetDeclDeleted(CopyConstructor, ClassLoc);
 
   // Note that we have declared this constructor.
   ++ASTContext::NumImplicitCopyConstructorsDeclared;
@@ -10983,6 +10983,7 @@ void Sema::SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
     Diag(DelLoc, diag::err_deleted_non_function);
     return;
   }
+
   if (const FunctionDecl *Prev = Fn->getPreviousDecl()) {
     // Don't consider the implicit declaration we generate for explicit
     // specializations. FIXME: Do not generate these implicit declarations.
@@ -10993,7 +10994,29 @@ void Sema::SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
     }
     // If the declaration wasn't the first, we delete the function anyway for
     // recovery.
+    Fn = Fn->getCanonicalDecl();
   }
+
+  if (Fn->isDeleted())
+    return;
+
+  // See if we're deleting a function which is already known to override a
+  // non-deleted virtual function.
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Fn)) {
+    bool IssuedDiagnostic = false;
+    for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
+                                        E = MD->end_overridden_methods();
+         I != E; ++I) {
+      if (!(*MD->begin_overridden_methods())->isDeleted()) {
+        if (!IssuedDiagnostic) {
+          Diag(DelLoc, diag::err_deleted_override) << MD->getDeclName();
+          IssuedDiagnostic = true;
+        }
+        Diag((*I)->getLocation(), diag::note_overridden_virtual_function);
+      }
+    }
+  }
+
   Fn->setDeletedAsWritten();
 }
 
