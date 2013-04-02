@@ -2222,19 +2222,6 @@ MachProcess::SBForkChildForPTraceDebugging (const char *app_bundle_path, char co
     std::string bundleID;
     CFString::UTF8(bundleIDCFStr, bundleID);
 
-    CFData argv_data(NULL);
-
-    if (launch_argv.get())
-    {
-        if (argv_data.Serialize(launch_argv.get(), kCFPropertyListBinaryFormat_v1_0) == NULL)
-        {
-            DNBLogThreadedIf(LOG_PROCESS, "%s() error: failed to serialize launch arg array...", __FUNCTION__);
-            return INVALID_NUB_PROCESS;
-        }
-    }
-
-    DNBLogThreadedIf(LOG_PROCESS, "%s() serialized launch arg array", __FUNCTION__);
-
     // Find SpringBoard
     SBSApplicationLaunchError sbs_error = 0;
     sbs_error = SBSLaunchApplicationForDebugging (bundleIDCFStr,
