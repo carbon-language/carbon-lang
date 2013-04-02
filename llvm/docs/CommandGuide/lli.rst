@@ -50,7 +50,7 @@ GENERAL OPTIONS
 
 
 
-**-load**\ =\ *puginfilename*
+**-load**\ =\ *pluginfilename*
 
  Causes **lli** to load the plugin (shared object) named *pluginfilename* and use
  it for optimization.
