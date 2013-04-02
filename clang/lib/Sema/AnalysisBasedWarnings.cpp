@@ -817,6 +817,10 @@ namespace {
       return true;
     }
 
+    // We don't want to traverse local type declarations. We analyze their
+    // methods separately.
+    bool TraverseDecl(Decl *D) { return true; }
+
   private:
 
     static const AttributedStmt *asFallThroughAttr(const Stmt *S) {
