@@ -86,3 +86,61 @@ define i64 @reg_imm_alu(i64 %x, i64 %y, i64 %z) {
   %b = xor i64 %a, 2
   ret i64 %b
 }
+
+; CHECK: loads
+; CHECK: ldx [%i0]
+; CHECK: stx %
+; CHECK: ld [%i1]
+; CHECK: st %
+; CHECK: ldsw [%i2]
+; CHECK: stx %
+; CHECK: ldsh [%i3]
+; CHECK: sth %
+define i64 @loads(i64* %p, i32* %q, i32* %r, i16* %s) {
+  %a = load i64* %p
+  %ai = add i64 1, %a
+  store i64 %ai, i64* %p
+  %b = load i32* %q
+  %b2 = zext i32 %b to i64
+  %bi = trunc i64 %ai to i32
+  store i32 %bi, i32* %q
+  %c = load i32* %r
+  %c2 = sext i32 %c to i64
+  store i64 %ai, i64* %p
+  %d = load i16* %s
+  %d2 = sext i16 %d to i64
+  %di = trunc i64 %ai to i16
+  store i16 %di, i16* %s
+
+  %x1 = add i64 %a, %b2
+  %x2 = add i64 %c2, %d2
+  %x3 = add i64 %x1, %x2
+  ret i64 %x3
+}
+
+; CHECK: stores
+; CHECK: ldx [%i0+8], [[R:%[goli][0-7]]]
+; CHECK: stx [[R]], [%i0+16]
+; CHECK: st [[R]], [%i1+-8]
+; CHECK: sth [[R]], [%i2+40]
+; CHECK: stb [[R]], [%i3+-20]
+define void @stores(i64* %p, i32* %q, i16* %r, i8* %s) {
+  %p1 = getelementptr i64* %p, i64 1
+  %p2 = getelementptr i64* %p, i64 2
+  %pv = load i64* %p1
+  store i64 %pv, i64* %p2
+
+  %q2 = getelementptr i32* %q, i32 -2
+  %qv = trunc i64 %pv to i32
+  store i32 %qv, i32* %q2
+
+  %r2 = getelementptr i16* %r, i16 20
+  %rv = trunc i64 %pv to i16
+  store i16 %rv, i16* %r2
+
+  %s2 = getelementptr i8* %s, i8 -20
+  %sv = trunc i64 %pv to i8
+  store i8 %sv, i8* %s2
+
+  ret void
+}

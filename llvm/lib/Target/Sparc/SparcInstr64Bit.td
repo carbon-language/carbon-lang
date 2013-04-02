@@ -171,3 +171,71 @@ def : Pat<(add i64:$a, (i64 simm13:$b)), (ADDri $a, (as_i32imm $b))>;
 def : Pat<(sub i64:$a, (i64 simm13:$b)), (SUBri $a, (as_i32imm $b))>;
 
 } // Predicates = [Is64Bit]
+
+
+//===----------------------------------------------------------------------===//
+// 64-bit Loads and Stores.
+//===----------------------------------------------------------------------===//
+//
+// All the 32-bit loads and stores are available. The extending loads are sign
+// or zero-extending to 64 bits. The LDrr and LDri instructions load 32 bits
+// zero-extended to i64. Their mnemonic is lduw in SPARC v9 (Load Unsigned
+// Word).
+//
+// SPARC v9 adds 64-bit loads as well as a sign-extending ldsw i32 loads.
+
+let Predicates = [Is64Bit] in {
+
+// 64-bit loads.
+def LDXrr  : F3_1<3, 0b001011,
+                  (outs I64Regs:$dst), (ins MEMrr:$addr),
+                  "ldx [$addr], $dst",
+                  [(set i64:$dst, (load ADDRrr:$addr))]>;
+def LDXri  : F3_2<3, 0b001011,
+                  (outs I64Regs:$dst), (ins MEMri:$addr),
+                  "ldx [$addr], $dst",
+                  [(set i64:$dst, (load ADDRri:$addr))]>;
+
+// Extending loads to i64.
+def : Pat<(i64 (zextloadi8 ADDRrr:$addr)), (LDUBrr ADDRrr:$addr)>;
+def : Pat<(i64 (zextloadi8 ADDRri:$addr)), (LDUBri ADDRri:$addr)>;
+def : Pat<(i64 (sextloadi8 ADDRrr:$addr)), (LDSBrr ADDRrr:$addr)>;
+def : Pat<(i64 (sextloadi8 ADDRri:$addr)), (LDSBri ADDRri:$addr)>;
+
+def : Pat<(i64 (zextloadi16 ADDRrr:$addr)), (LDUHrr ADDRrr:$addr)>;
+def : Pat<(i64 (zextloadi16 ADDRri:$addr)), (LDUHri ADDRri:$addr)>;
+def : Pat<(i64 (sextloadi16 ADDRrr:$addr)), (LDSHrr ADDRrr:$addr)>;
+def : Pat<(i64 (sextloadi16 ADDRri:$addr)), (LDSHri ADDRri:$addr)>;
+
+def : Pat<(i64 (zextloadi32 ADDRrr:$addr)), (LDrr ADDRrr:$addr)>;
+def : Pat<(i64 (zextloadi32 ADDRri:$addr)), (LDri ADDRri:$addr)>;
+
+// Sign-extending load of i32 into i64 is a new SPARC v9 instruction.
+def LDSWrr : F3_1<3, 0b001011,
+                 (outs I64Regs:$dst), (ins MEMrr:$addr),
+                 "ldsw [$addr], $dst",
+                 [(set i64:$dst, (sextloadi32 ADDRrr:$addr))]>;
+def LDSWri : F3_2<3, 0b001011,
+                 (outs I64Regs:$dst), (ins MEMri:$addr),
+                 "ldsw [$addr], $dst",
+                 [(set i64:$dst, (sextloadi32 ADDRri:$addr))]>;
+
+// 64-bit stores.
+def STXrr  : F3_1<3, 0b001110,
+                 (outs), (ins MEMrr:$addr, I64Regs:$src),
+                 "stx $src, [$addr]",
+                 [(store i64:$src, ADDRrr:$addr)]>;
+def STXri  : F3_2<3, 0b001110,
+                 (outs), (ins MEMri:$addr, I64Regs:$src),
+                 "stx $src, [$addr]",
+                 [(store i64:$src, ADDRri:$addr)]>;
+
+// Truncating stores from i64 are identical to the i32 stores.
+def : Pat<(truncstorei8  i64:$src, ADDRrr:$addr), (STBrr ADDRrr:$addr, $src)>;
+def : Pat<(truncstorei8  i64:$src, ADDRri:$addr), (STBri ADDRri:$addr, $src)>;
+def : Pat<(truncstorei16 i64:$src, ADDRrr:$addr), (STHrr ADDRrr:$addr, $src)>;
+def : Pat<(truncstorei16 i64:$src, ADDRri:$addr), (STHri ADDRri:$addr, $src)>;
+def : Pat<(truncstorei32 i64:$src, ADDRrr:$addr), (STrr  ADDRrr:$addr, $src)>;
+def : Pat<(truncstorei32 i64:$src, ADDRri:$addr), (STri  ADDRri:$addr, $src)>;
+
+} // Predicates = [Is64Bit]
