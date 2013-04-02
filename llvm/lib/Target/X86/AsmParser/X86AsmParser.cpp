@@ -13,6 +13,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
@@ -62,6 +63,8 @@ private:
                                    SMLoc StartLoc);
   X86Operand *ParseIntelBracExpression(unsigned SegReg, uint64_t ImmDisp,
                                        unsigned Size);
+  X86Operand *ParseIntelVarWithQualifier(const MCExpr *&Disp,
+                                         SMLoc &IdentStart);
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
 
   X86Operand *CreateMemForInlineAsm(const MCExpr *Disp, SMLoc Start, SMLoc End,
@@ -935,8 +938,12 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
   if (getLexer().is(AsmToken::Identifier)) {
     if (ParseRegister(TmpReg, Start, End)) {
       const MCExpr *Disp;
+      SMLoc IdentStart = Tok.getLoc();
       if (getParser().parseExpression(Disp, End))
         return 0;
+
+      if (X86Operand *Err = ParseIntelVarWithQualifier(Disp, IdentStart))
+        return Err;
 
       if (getLexer().isNot(AsmToken::RBrac))
         return ErrorOperand(Parser.getTok().getLoc(), "Expected ']' token!");
@@ -1046,6 +1053,48 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
                                Start, End, Size);
 }
 
+// Inline assembly may use variable names with namespace alias qualifiers.
+X86Operand *X86AsmParser::ParseIntelVarWithQualifier(const MCExpr *&Disp,
+                                                     SMLoc &IdentStart) {
+  // We should only see Foo::Bar if we're parsing inline assembly.
+  if (!isParsingInlineAsm())
+    return 0;
+
+  // If we don't see a ':' then there can't be a qualifier.
+  if (getLexer().isNot(AsmToken::Colon))
+    return 0;
+
+
+  bool Done = false;
+  const AsmToken &Tok = Parser.getTok();
+  SMLoc IdentEnd = Tok.getEndLoc();
+  while (!Done) {
+    switch (getLexer().getKind()) {
+    default:
+      Done = true; 
+      break;
+    case AsmToken::Colon:
+      getLexer().Lex(); // Consume ':'.
+      if (getLexer().isNot(AsmToken::Colon))
+        return ErrorOperand(Tok.getLoc(), "Expected ':' token!");
+      getLexer().Lex(); // Consume second ':'.
+      if (getLexer().isNot(AsmToken::Identifier))
+        return ErrorOperand(Tok.getLoc(), "Expected an identifier token!");
+      break;
+    case AsmToken::Identifier:
+      IdentEnd = Tok.getEndLoc();
+      getLexer().Lex(); // Consume the identifier.
+      break;
+    }
+  }
+  size_t Len = IdentEnd.getPointer() - IdentStart.getPointer();
+  StringRef Identifier(IdentStart.getPointer(), Len);
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(Identifier);
+  MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
+  Disp = MCSymbolRefExpr::Create(Sym, Variant, getParser().getContext());
+  return 0;
+}
+
 /// ParseIntelMemOperand - Parse intel style memory operand.
 X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg,
                                                uint64_t ImmDisp,
@@ -1088,11 +1137,16 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg,
   }
 
   const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
+  SMLoc IdentStart = Tok.getLoc();
   if (getParser().parseExpression(Disp, End))
     return 0;
 
   if (!isParsingInlineAsm())
     return X86Operand::CreateMem(Disp, Start, End, Size);
+
+  if (X86Operand *Err = ParseIntelVarWithQualifier(Disp, IdentStart))
+    return Err;
+
   return CreateMemForInlineAsm(Disp, Start, End, Start, Size);
 }
 
