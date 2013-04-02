@@ -111,4 +111,41 @@ class F3_3<bits<2> opVal, bits<6> op3val, bits<9> opfval, dag outs, dag ins,
   let Inst{4-0}  = rs2;
 }
 
+// Shift by register rs2.
+class F3_Sr<bits<2> opVal, bits<6> op3val, bit xVal, dag outs, dag ins,
+            string asmstr, list<dag> pattern> : F3<outs, ins, asmstr, pattern> {
+  bit x = xVal;           // 1 for 64-bit shifts.
+  bits<5> rs2;
 
+  let op         = opVal;
+  let op3        = op3val;
+
+  let Inst{13}   = 0;     // i field = 0
+  let Inst{12}   = x;     // extended registers.
+  let Inst{4-0}  = rs2;
+}
+
+// Shift by immediate.
+class F3_Si<bits<2> opVal, bits<6> op3val, bit xVal, dag outs, dag ins,
+            string asmstr, list<dag> pattern> : F3<outs, ins, asmstr, pattern> {
+  bit x = xVal;           // 1 for 64-bit shifts.
+  bits<6> shcnt;          // shcnt32 / shcnt64.
+
+  let op         = opVal;
+  let op3        = op3val;
+
+  let Inst{13}   = 1;     // i field = 1
+  let Inst{12}   = x;     // extended registers.
+  let Inst{5-0}  = shcnt;
+}
+
+// Define rr and ri shift instructions with patterns.
+multiclass F3_S<string OpcStr, bits<6> Op3Val, bit XVal, SDNode OpNode,
+                ValueType VT, RegisterClass RC> {
+  def rr : F3_Sr<2, Op3Val, XVal, (outs RC:$rd), (ins RC:$rs, RC:$rs2),
+                 !strconcat(OpcStr, " $rs, $rs2, $rd"),
+                 [(set VT:$rd, (OpNode VT:$rs, VT:$rs2))]>;
+  def ri : F3_Si<2, Op3Val, XVal, (outs RC:$rd), (ins RC:$rs, unknown:$shcnt),
+                 !strconcat(OpcStr, " $rs, $shcnt, $rd"),
+                 [(set VT:$rd, (OpNode VT:$rs, (VT imm:$shcnt)))]>;
+}

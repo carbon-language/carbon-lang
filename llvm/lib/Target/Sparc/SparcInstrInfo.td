@@ -816,3 +816,5 @@ def : Pat<(i32 (extloadi16 ADDRri:$src)), (LDUHri ADDRri:$src)>;
 // zextload bool -> zextload byte
 def : Pat<(i32 (zextloadi1 ADDRrr:$src)), (LDUBrr ADDRrr:$src)>;
 def : Pat<(i32 (zextloadi1 ADDRri:$src)), (LDUBri ADDRri:$src)>;
+
+include "SparcInstr64Bit.td"
