@@ -63,17 +63,17 @@ def SETHIimm : PatLeaf<(imm), [{
 }], HI22>;
 
 // Addressing modes.
-def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr", [], []>;
-def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", [frameindex], []>;
+def ADDRrr : ComplexPattern<iPTR, 2, "SelectADDRrr", [], []>;
+def ADDRri : ComplexPattern<iPTR, 2, "SelectADDRri", [frameindex], []>;
 
 // Address operands
-def MEMrr : Operand<i32> {
+def MEMrr : Operand<iPTR> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops IntRegs, IntRegs);
+  let MIOperandInfo = (ops ptr_rc, ptr_rc);
 }
-def MEMri : Operand<i32> {
+def MEMri : Operand<iPTR> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops IntRegs, i32imm);
+  let MIOperandInfo = (ops ptr_rc, i32imm);
 }
 
 // Branch targets have OtherVT type.
@@ -186,7 +186,7 @@ multiclass F3_12<string OpcStr, bits<6> Op3Val, SDNode OpNode> {
   def ri  : F3_2<2, Op3Val,
                  (outs IntRegs:$dst), (ins IntRegs:$b, i32imm:$c),
                  !strconcat(OpcStr, " $b, $c, $dst"),
-                 [(set i32:$dst, (OpNode i32:$b, simm13:$c))]>;
+                 [(set i32:$dst, (OpNode i32:$b, (i32 simm13:$c)))]>;
 }
 
 /// F3_12np multiclass - Define a normal F3_1/F3_2 pattern in one shot, with no
@@ -770,7 +770,7 @@ def : Pat<(ctpop i32:$src),
 
 // Small immediates.
 def : Pat<(i32 simm13:$val),
-          (ORri G0, imm:$val)>;
+          (ORri (i32 G0), imm:$val)>;
 // Arbitrary immediates.
 def : Pat<(i32 imm:$val),
           (ORri (SETHIi (HI22 imm:$val)), (LO10 imm:$val))>;
@@ -783,9 +783,9 @@ def : Pat<(subc i32:$b, simm13:$val),
 
 // Global addresses, constant pool entries
 def : Pat<(SPhi tglobaladdr:$in), (SETHIi tglobaladdr:$in)>;
-def : Pat<(SPlo tglobaladdr:$in), (ORri G0, tglobaladdr:$in)>;
+def : Pat<(SPlo tglobaladdr:$in), (ORri (i32 G0), tglobaladdr:$in)>;
 def : Pat<(SPhi tconstpool:$in), (SETHIi tconstpool:$in)>;
-def : Pat<(SPlo tconstpool:$in), (ORri G0, tconstpool:$in)>;
+def : Pat<(SPlo tconstpool:$in), (ORri (i32 G0), tconstpool:$in)>;
 
 // Add reg, lo.  This is used when taking the addr of a global/constpool entry.
 def : Pat<(add i32:$r, (SPlo tglobaladdr:$in)),

@@ -689,11 +689,14 @@ static SPCC::CondCodes FPCondCCodeToFCC(ISD::CondCode CC) {
 
 SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
+  Subtarget = &TM.getSubtarget<SparcSubtarget>();
 
   // Set up the register classes.
   addRegisterClass(MVT::i32, &SP::IntRegsRegClass);
   addRegisterClass(MVT::f32, &SP::FPRegsRegClass);
   addRegisterClass(MVT::f64, &SP::DFPRegsRegClass);
+  if (Subtarget->is64Bit())
+    addRegisterClass(MVT::i64, &SP::I64RegsRegClass);
 
   // Turn FP extload into load/fextend
   setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);

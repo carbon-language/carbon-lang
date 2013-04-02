@@ -56,6 +56,12 @@ BitVector SparcRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
+const TargetRegisterClass*
+SparcRegisterInfo::getPointerRegClass(const MachineFunction &MF,
+                                      unsigned Kind) const {
+  return Subtarget.is64Bit() ? &SP::I64RegsRegClass : &SP::IntRegsRegClass;
+}
+
 void
 SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                        int SPAdj, unsigned FIOperandNum,

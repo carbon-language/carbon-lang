@@ -19,6 +19,8 @@
 #include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
+  class SparcSubtarget;
+
   namespace SPISD {
     enum {
       FIRST_NUMBER = ISD::BUILTIN_OP_END,
@@ -42,6 +44,7 @@ namespace llvm {
   }
 
   class SparcTargetLowering : public TargetLowering {
+    const SparcSubtarget *Subtarget;
   public:
     SparcTargetLowering(TargetMachine &TM);
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
