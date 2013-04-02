@@ -153,12 +153,12 @@ ProgramState::invalidateRegions(RegionList Regions,
                                 RegionList ConstRegions) const {
   SmallVector<SVal, 8> Values;
   for (RegionList::const_iterator I = Regions.begin(),
-                                  E = Regions.end(); I != E; ++I)
+                                  End = Regions.end(); I != End; ++I)
     Values.push_back(loc::MemRegionVal(*I));
 
   SmallVector<SVal, 8> ConstValues;
   for (RegionList::const_iterator I = ConstRegions.begin(),
-                                  E = ConstRegions.end(); I != E; ++I)
+                                  End = ConstRegions.end(); I != End; ++I)
     ConstValues.push_back(loc::MemRegionVal(*I));
 
   if (!IS) {
