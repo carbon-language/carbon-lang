@@ -133,3 +133,41 @@ def : Pat<(i64 imm:$val),
           (ORrr (SLLXri (ORri (SETHIi (HH22 $val)), (HM10 $val)), (i64 32)),
                 (ORri (SETHIi (HI22 $val)), (LO10 $val)))>,
       Requires<[Is64Bit]>;
+
+
+//===----------------------------------------------------------------------===//
+// 64-bit Integer Arithmetic and Logic.
+//===----------------------------------------------------------------------===//
+
+let Predicates = [Is64Bit] in {
+
+// Register-register instructions.
+
+def : Pat<(and i64:$a, i64:$b), (ANDrr $a, $b)>;
+def : Pat<(or  i64:$a, i64:$b), (ORrr  $a, $b)>;
+def : Pat<(xor i64:$a, i64:$b), (XORrr $a, $b)>;
+
+def : Pat<(and i64:$a, (not i64:$b)), (ANDNrr $a, $b)>;
+def : Pat<(or  i64:$a, (not i64:$b)), (ORNrr  $a, $b)>;
+def : Pat<(xor i64:$a, (not i64:$b)), (XNORrr $a, $b)>;
+
+def : Pat<(add i64:$a, i64:$b), (ADDrr $a, $b)>;
+def : Pat<(sub i64:$a, i64:$b), (SUBrr $a, $b)>;
+
+// Add/sub with carry were renamed to addc/subc in SPARC v9.
+def : Pat<(adde i64:$a, i64:$b), (ADDXrr $a, $b)>;
+def : Pat<(sube i64:$a, i64:$b), (SUBXrr $a, $b)>;
+
+def : Pat<(addc i64:$a, i64:$b), (ADDCCrr $a, $b)>;
+def : Pat<(subc i64:$a, i64:$b), (SUBCCrr $a, $b)>;
+
+// Register-immediate instructions.
+
+def : Pat<(and i64:$a, (i64 simm13:$b)), (ANDri $a, (as_i32imm $b))>;
+def : Pat<(or  i64:$a, (i64 simm13:$b)), (ORri  $a, (as_i32imm $b))>;
+def : Pat<(xor i64:$a, (i64 simm13:$b)), (XORri $a, (as_i32imm $b))>;
+
+def : Pat<(add i64:$a, (i64 simm13:$b)), (ADDri $a, (as_i32imm $b))>;
+def : Pat<(sub i64:$a, (i64 simm13:$b)), (SUBri $a, (as_i32imm $b))>;
+
+} // Predicates = [Is64Bit]

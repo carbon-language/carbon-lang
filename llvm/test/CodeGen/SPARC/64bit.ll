@@ -65,3 +65,24 @@ define i64 @ret_nimm33() {
 define i64 @ret_bigimm() {
   ret i64 6800754272627607872
 }
+
+; CHECK: reg_reg_alu
+; CHECK: add %i0, %i1, [[R0:%[goli][0-7]]]
+; CHECK: sub [[R0]], %i2, [[R1:%[goli][0-7]]]
+; CHECK: andn [[R1]], %i0, %i0
+define i64 @reg_reg_alu(i64 %x, i64 %y, i64 %z) {
+  %a = add i64 %x, %y
+  %b = sub i64 %a, %z
+  %c = xor i64 %x, -1
+  %d = and i64 %b, %c
+  ret i64 %d
+}
+
+; CHECK: reg_imm_alu
+; CHECK: add %i0, -5, [[R0:%[goli][0-7]]]
+; CHECK: xor [[R0]], 2, %i0
+define i64 @reg_imm_alu(i64 %x, i64 %y, i64 %z) {
+  %a = add i64 %x, -5
+  %b = xor i64 %a, 2
+  ret i64 %b
+}
