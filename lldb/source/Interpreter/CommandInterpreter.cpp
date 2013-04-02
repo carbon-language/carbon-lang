@@ -331,7 +331,11 @@ CommandInterpreter::Initialize ()
     {
         alias_arguments_vector_sp.reset (new OptionArgVector);
         ProcessAliasOptionsArgs (cmd_obj_sp, "--func-regex %1", alias_arguments_vector_sp);
+        AddAlias ("rb", cmd_obj_sp);
+        AddAlias ("rbr", cmd_obj_sp);
         AddAlias ("rbreak", cmd_obj_sp);
+        AddOrReplaceAliasOptions("rb", alias_arguments_vector_sp);
+        AddOrReplaceAliasOptions("rbr", alias_arguments_vector_sp);
         AddOrReplaceAliasOptions("rbreak", alias_arguments_vector_sp);
     }
 }
