@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,cplusplus.NewDelete -analyzer-store region -std=c++11 -fblocks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.cplusplus.NewDelete -analyzer-store region -std=c++11 -fblocks -verify %s
 #include "Inputs/system-header-simulator-cxx.h"
 #include "Inputs/system-header-simulator-objc.h"
 
