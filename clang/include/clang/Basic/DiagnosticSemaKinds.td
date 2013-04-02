@@ -3328,6 +3328,9 @@ def warn_internal_in_extern_inline : ExtWarn<
 def ext_internal_in_extern_inline : Extension<
   "static %select{function|variable}0 %1 is used in an inline function with "
   "external linkage">, InGroup<StaticInInline>;
+def warn_static_local_in_extern_inline : Warning<
+  "non-constant static local variable in inline function may be different "
+  "in different files">, InGroup<StaticLocalInInline>;
 def note_convert_inline_to_static : Note<
   "use 'static' to give inline function %0 internal linkage">;
 def note_internal_decl_declared_here : Note<

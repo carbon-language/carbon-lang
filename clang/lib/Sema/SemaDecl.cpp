@@ -4644,6 +4644,38 @@ static void checkAttributesAfterMerging(Sema &S, NamedDecl &ND) {
   }
 }
 
+/// Given that we are within the definition of the given function,
+/// will that definition behave like C99's 'inline', where the
+/// definition is discarded except for optimization purposes?
+static bool isFunctionDefinitionDiscarded(Sema &S, FunctionDecl *FD) {
+  // Try to avoid calling GetGVALinkageForFunction.
+
+  // All cases of this require the 'inline' keyword.
+  if (!FD->isInlined()) return false;
+
+  // This is only possible in C++ with the gnu_inline attribute.
+  if (S.getLangOpts().CPlusPlus && !FD->hasAttr<GNUInlineAttr>())
+    return false;
+
+  // Okay, go ahead and call the relatively-more-expensive function.
+
+#ifndef NDEBUG
+  // AST quite reasonably asserts that it's working on a function
+  // definition.  We don't really have a way to tell it that we're
+  // currently defining the function, so just lie to it in +Asserts
+  // builds.  This is an awful hack.
+  FD->setLazyBody(1);
+#endif
+
+  bool isC99Inline = (S.Context.GetGVALinkageForFunction(FD) == GVA_C99Inline);
+
+#ifndef NDEBUG
+  FD->setLazyBody(0);
+#endif
+
+  return isC99Inline;
+}
+
 static bool shouldConsiderLinkage(const VarDecl *VD) {
   const DeclContext *DC = VD->getDeclContext()->getRedeclContext();
   if (DC->isFunctionOrMethod())
@@ -4693,6 +4725,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     D.setInvalidType();
     SC = SC_None;
   }
+
   SCSpec = D.getDeclSpec().getStorageClassSpecAsWritten();
   VarDecl::StorageClass SCAsWritten
     = StorageClassSpecToVarDeclStorageClass(SCSpec);
@@ -4863,6 +4896,25 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_thread_unsupported);
     else
       NewVD->setThreadSpecified(true);
+  }
+
+  // C99 6.7.4p3
+  //   An inline definition of a function with external linkage shall
+  //   not contain a definition of a modifiable object with static or
+  //   thread storage duration...
+  // We only apply this when the function is required to be defined
+  // elsewhere, i.e. when the function is not 'extern inline'.  Note
+  // that a local variable with thread storage duration still has to
+  // be marked 'static'.  Also note that it's possible to get these
+  // semantics in C++ using __attribute__((gnu_inline)).
+  if (SC == SC_Static && S->getFnParent() != 0 &&
+      !NewVD->getType().isConstQualified()) {
+    FunctionDecl *CurFD = getCurFunctionDecl();
+    if (CurFD && isFunctionDefinitionDiscarded(*this, CurFD)) {
+      Diag(D.getDeclSpec().getStorageClassSpecLoc(),
+           diag::warn_static_local_in_extern_inline);
+      MaybeSuggestAddingStaticToDecl(CurFD);
+    }
   }
 
   if (D.getDeclSpec().isModulePrivateSpecified()) {

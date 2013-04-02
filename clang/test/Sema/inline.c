@@ -73,6 +73,16 @@ inline int useStaticAgain () { // expected-note 2 {{use 'static' to give inline 
 
 #pragma clang diagnostic pop
 
+inline void defineStaticVar() { // expected-note {{use 'static' to give inline function 'defineStaticVar' internal linkage}}
+  static const int x = 0; // ok
+  static int y = 0; // expected-warning {{non-constant static local variable in inline function may be different in different files}}
+}
+
+extern inline void defineStaticVarInExtern() {
+  static const int x = 0; // ok
+  static int y = 0; // ok
+}
+
 #endif
 
 

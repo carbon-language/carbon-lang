@@ -214,17 +214,22 @@ static void diagnoseUseOfInternalDeclInInlineFunction(Sema &S,
                                : diag::warn_internal_in_extern_inline)
     << /*IsVar=*/!UsedFn << D;
 
-  // Suggest "static" on the inline function, if possible.
-  if (!hasAnyExplicitStorageClass(Current)) {
-    const FunctionDecl *FirstDecl = Current->getCanonicalDecl();
-    SourceLocation DeclBegin = FirstDecl->getSourceRange().getBegin();
-    S.Diag(DeclBegin, diag::note_convert_inline_to_static)
-      << Current << FixItHint::CreateInsertion(DeclBegin, "static ");
-  }
+  S.MaybeSuggestAddingStaticToDecl(Current);
 
   S.Diag(D->getCanonicalDecl()->getLocation(),
          diag::note_internal_decl_declared_here)
     << D;
+}
+
+void Sema::MaybeSuggestAddingStaticToDecl(const FunctionDecl *Cur) {
+  const FunctionDecl *First = Cur->getFirstDeclaration();
+
+  // Suggest "static" on the function, if possible.
+  if (!hasAnyExplicitStorageClass(First)) {
+    SourceLocation DeclBegin = First->getSourceRange().getBegin();
+    Diag(DeclBegin, diag::note_convert_inline_to_static)
+      << Cur << FixItHint::CreateInsertion(DeclBegin, "static ");
+  }
 }
 
 /// \brief Determine whether the use of this declaration is valid, and
