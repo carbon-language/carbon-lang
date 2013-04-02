@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines a summary of a function gathered/used by static analyzes.
+// This file defines a summary of a function gathered/used by static analysis.
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,7 +15,7 @@
 #define LLVM_CLANG_GR_FUNCTIONSUMMARY_H
 
 #include "clang/AST/Decl.h"
-#include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include <deque>
@@ -27,90 +27,88 @@ typedef llvm::DenseSet<const Decl*> SetOfConstDecls;
 
 class FunctionSummariesTy {
   struct FunctionSummary {
-    /// True if this function has reached a max block count while inlined from
-    /// at least one call site.
-    bool MayReachMaxBlockCount;
+    /// Marks the IDs of the basic blocks visited during the analyzes.
+    llvm::SmallBitVector VisitedBasicBlocks;
 
     /// Total number of blocks in the function.
-    unsigned TotalBasicBlocks;
+    unsigned TotalBasicBlocks : 31;
 
-    /// Marks the IDs of the basic blocks visited during the analyzes.
-    llvm::BitVector VisitedBasicBlocks;
+    /// True if this function has reached a max block count while inlined from
+    /// at least one call site.
+    unsigned MayReachMaxBlockCount : 1;
 
     /// The number of times the function has been inlined.
-    unsigned TimesInlined;
+    unsigned TimesInlined : 32;
 
     FunctionSummary() :
-      MayReachMaxBlockCount(false),
       TotalBasicBlocks(0),
-      VisitedBasicBlocks(0),
+      MayReachMaxBlockCount(0),
       TimesInlined(0) {}
   };
 
-  typedef llvm::DenseMap<const Decl*, FunctionSummary*> MapTy;
+  typedef llvm::DenseMap<const Decl *, FunctionSummary> MapTy;
   MapTy Map;
 
 public:
-  ~FunctionSummariesTy();
-
   MapTy::iterator findOrInsertSummary(const Decl *D) {
     MapTy::iterator I = Map.find(D);
     if (I != Map.end())
       return I;
-    FunctionSummary *DS = new FunctionSummary();
-    I = Map.insert(std::pair<const Decl*, FunctionSummary*>(D, DS)).first;
+
+    typedef std::pair<const Decl *, FunctionSummary> KVPair;
+    I = Map.insert(KVPair(D, FunctionSummary())).first;
     assert(I != Map.end());
     return I;
   }
 
   void markReachedMaxBlockCount(const Decl* D) {
     MapTy::iterator I = findOrInsertSummary(D);
-    I->second->MayReachMaxBlockCount = true;
+    I->second.MayReachMaxBlockCount = 1;
   }
 
   bool hasReachedMaxBlockCount(const Decl* D) {
   MapTy::const_iterator I = Map.find(D);
     if (I != Map.end())
-      return I->second->MayReachMaxBlockCount;
+      return I->second.MayReachMaxBlockCount;
     return false;
   }
 
   void markVisitedBasicBlock(unsigned ID, const Decl* D, unsigned TotalIDs) {
     MapTy::iterator I = findOrInsertSummary(D);
-    llvm::BitVector &Blocks = I->second->VisitedBasicBlocks;
+    llvm::SmallBitVector &Blocks = I->second.VisitedBasicBlocks;
     assert(ID < TotalIDs);
     if (TotalIDs > Blocks.size()) {
       Blocks.resize(TotalIDs);
-      I->second->TotalBasicBlocks = TotalIDs;
+      I->second.TotalBasicBlocks = TotalIDs;
     }
-    Blocks[ID] = true;
+    Blocks.set(ID);
   }
 
   unsigned getNumVisitedBasicBlocks(const Decl* D) {
     MapTy::const_iterator I = Map.find(D);
     if (I != Map.end())
-      return I->second->VisitedBasicBlocks.count();
+      return I->second.VisitedBasicBlocks.count();
     return 0;
   }
 
   unsigned getNumTimesInlined(const Decl* D) {
     MapTy::const_iterator I = Map.find(D);
     if (I != Map.end())
-      return I->second->TimesInlined;
+      return I->second.TimesInlined;
     return 0;
   }
 
   void bumpNumTimesInlined(const Decl* D) {
     MapTy::iterator I = findOrInsertSummary(D);
-    I->second->TimesInlined++;
+    I->second.TimesInlined++;
   }
 
   /// Get the percentage of the reachable blocks.
   unsigned getPercentBlocksReachable(const Decl *D) {
     MapTy::const_iterator I = Map.find(D);
       if (I != Map.end())
-        return ((I->second->VisitedBasicBlocks.count() * 100) /
-                 I->second->TotalBasicBlocks);
+        return ((I->second.VisitedBasicBlocks.count() * 100) /
+                 I->second.TotalBasicBlocks);
     return 0;
   }
 
