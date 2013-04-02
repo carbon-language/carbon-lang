@@ -1252,7 +1252,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
     }
 
     ObjCIvarRefExpr *Result = new (Context) ObjCIvarRefExpr(IV, IV->getType(),
-                                                            MemberLoc,
+                                                            MemberLoc, OpLoc,
                                                             BaseExpr.take(),
                                                             IsArrow);
 

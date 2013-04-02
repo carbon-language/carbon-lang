@@ -1189,7 +1189,8 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
                             selfDecl->getType(), CK_LValueToRValue, &self,
                             VK_RValue);
   ObjCIvarRefExpr ivarRef(ivar, ivar->getType().getNonReferenceType(),
-                          SourceLocation(), &selfLoad, true, true);
+                          SourceLocation(), SourceLocation(),
+                          &selfLoad, true, true);
 
   ParmVarDecl *argDecl = *setterMethod->param_begin();
   QualType argType = argDecl->getType().getNonReferenceType();

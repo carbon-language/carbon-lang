@@ -461,18 +461,23 @@ class ObjCIvarRefExpr : public Expr {
   ObjCIvarDecl *D;
   Stmt *Base;
   SourceLocation Loc;
+  /// OpLoc - This is the location of '.' or '->'
+  SourceLocation OpLoc;
+  
   bool IsArrow:1;      // True if this is "X->F", false if this is "X.F".
   bool IsFreeIvar:1;   // True if ivar reference has no base (self assumed).
 
 public:
   ObjCIvarRefExpr(ObjCIvarDecl *d, QualType t,
-                  SourceLocation l, Expr *base,
+                  SourceLocation l, SourceLocation oploc,
+                  Expr *base,
                   bool arrow = false, bool freeIvar = false) :
     Expr(ObjCIvarRefExprClass, t, VK_LValue, OK_Ordinary,
          /*TypeDependent=*/false, base->isValueDependent(), 
          base->isInstantiationDependent(),
          base->containsUnexpandedParameterPack()), 
-    D(d), Base(base), Loc(l), IsArrow(arrow), IsFreeIvar(freeIvar) {}
+    D(d), Base(base), Loc(l), OpLoc(oploc),
+    IsArrow(arrow), IsFreeIvar(freeIvar) {}
 
   explicit ObjCIvarRefExpr(EmptyShell Empty)
     : Expr(ObjCIvarRefExprClass, Empty) {}
@@ -497,6 +502,9 @@ public:
     return isFreeIvar() ? Loc : getBase()->getLocStart();
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return Loc; }
+  
+  SourceLocation getOpLoc() const { return OpLoc; }
+  void setOpLoc(SourceLocation L) { OpLoc = L; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCIvarRefExprClass;
