@@ -247,3 +247,21 @@ int fallthrough_targets(int n) {
   }
   return n;
 }
+
+// Fallthrough annotations in local classes used to generate "fallthrough
+// annotation does not directly precede switch label" warning.
+void fallthrough_in_local_class() {
+  class C {
+    void f(int x) {
+      switch (x) {
+        case 0:
+          x++;
+          [[clang::fallthrough]]; // no diagnostics
+        case 1:
+          x++;
+          break;
+      }
+    }
+  };
+}
+
