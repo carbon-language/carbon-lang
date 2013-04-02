@@ -416,6 +416,9 @@ void INTERFACE_ATTRIBUTE AnnotateThreadName(
   ThreadSetName(thr, name);
 }
 
+// We deliberately omit the implementation of WTFAnnotateHappensBefore() and
+// WTFAnnotateHappensAfter(). Those are being used by Webkit to annotate
+// atomic operations, which should be handled by ThreadSanitizer correctly.
 void INTERFACE_ATTRIBUTE WTFAnnotateHappensBefore(char *f, int l, uptr addr) {
   SCOPED_ANNOTATION(AnnotateHappensBefore);
 }
@@ -427,6 +430,7 @@ void INTERFACE_ATTRIBUTE WTFAnnotateHappensAfter(char *f, int l, uptr addr) {
 void INTERFACE_ATTRIBUTE WTFAnnotateBenignRaceSized(
     char *f, int l, uptr mem, uptr sz, char *desc) {
   SCOPED_ANNOTATION(AnnotateBenignRaceSized);
+  BenignRaceImpl(f, l, mem, 1, desc);
 }
 
 int INTERFACE_ATTRIBUTE RunningOnValgrind() {
