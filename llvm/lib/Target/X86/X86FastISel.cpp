@@ -1528,7 +1528,7 @@ bool X86FastISel::FastLowerArguments() {
   if (!FuncInfo.CanLowerReturn)
     return false;
 
-  if (Subtarget->isTargetWindows())
+  if (Subtarget->isTargetWin64())
     return false;
 
   const Function *F = FuncInfo.Fn;

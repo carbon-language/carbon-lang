@@ -1,5 +1,6 @@
 ; RUN: llc < %s -fast-isel -verify-machineinstrs -mtriple=x86_64-apple-darwin10
-; RUN: llc < %s -fast-isel -verify-machineinstrs -mtriple=x86_64-pc-win32 | FileCheck %s 
+; RUN: llc < %s -fast-isel -verify-machineinstrs -mtriple=x86_64-pc-win32 | FileCheck %s -check-prefix=WIN32
+; RUN: llc < %s -fast-isel -verify-machineinstrs -mtriple=x86_64-pc-win64 | FileCheck %s -check-prefix=WIN64
 ; Requires: Asserts
 
 ; Previously, this would cause an assert.
@@ -13,8 +14,10 @@ entry:
 ; We don't handle the Windows CC, yet.
 define i32 @foo(i32* %p) {
 entry:
-; CHECK: foo
-; CHECK: movl (%rcx), %eax
+; WIN32: foo
+; WIN32: movl (%rcx), %eax
+; WIN64: foo
+; WIN64: movl (%rdi), %eax
   %0 = load i32* %p, align 4
   ret i32 %0
 }
