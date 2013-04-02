@@ -23,14 +23,23 @@ int asprintf(char **sptr, const char *__restrict fmt, ...)
     va_end(ap);
     return result;
 }
+
+// Like sprintf, but when return value >= 0 it returns a pointer to a malloc'd string in *sptr.
+// If return >= 0, use free to delete *sptr.
 int vasprintf( char **sptr, const char *__restrict fmt, va_list ap )
 {
     *sptr = NULL;
-    int count = vsnprintf( *sptr, 0, fmt, ap );
-    if( (count >= 0) && ((*sptr = (char*)malloc(count+1)) != NULL) )
-    {
-        vsprintf( *sptr, fmt, ap );
-        sptr[count] = '\0';
+    int count = vsnprintf( NULL, 0, fmt, ap ); // Query the buffer size required.
+    if( count >= 0 ) {
+        char* p = static_cast<char*>(malloc(count+1)); // Allocate memory for it and the terminator.
+        if ( p == NULL )
+            return -1;
+        if ( vsnprintf( p, count+1, fmt, ap ) == count ) // We should have used exactly what was required.
+            *sptr = p;
+        else { // Otherwise something is wrong, likely a bug in vsnprintf. If so free the memory and report the error.
+            free(p);
+            return -1;
+        }
     }
 
     return count;
