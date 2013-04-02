@@ -2094,10 +2094,10 @@ public:
 
 /// The inheritance model to use for this member pointer.
 enum MSInheritanceModel {
-  IHM_Single,
-  IHM_Multiple,
-  IHM_Virtual,
-  IHM_Unspecified
+  MSIM_Single,
+  MSIM_Multiple,
+  MSIM_Virtual,
+  MSIM_Unspecified
 };
 
 /// MemberPointerType - C++ 8.3.3 - Pointers to members

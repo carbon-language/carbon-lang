@@ -73,10 +73,10 @@ bool usesMultipleInheritanceModel(const CXXRecordDecl *RD) {
 MSInheritanceModel MSInheritanceAttrToModel(attr::Kind Kind) {
   switch (Kind) {
   default: llvm_unreachable("expected MS inheritance attribute");
-  case attr::SingleInheritance:      return IHM_Single;
-  case attr::MultipleInheritance:    return IHM_Multiple;
-  case attr::VirtualInheritance:     return IHM_Virtual;
-  case attr::UnspecifiedInheritance: return IHM_Unspecified;
+  case attr::SingleInheritance:      return MSIM_Single;
+  case attr::MultipleInheritance:    return MSIM_Multiple;
+  case attr::VirtualInheritance:     return MSIM_Virtual;
+  case attr::UnspecifiedInheritance: return MSIM_Unspecified;
   }
 }
 
@@ -87,10 +87,10 @@ MSInheritanceModel CXXRecordDecl::getMSInheritanceModel() const {
   // If there was no explicit attribute, the record must be defined already, and
   // we can figure out the inheritance model from its other properties.
   if (this->getNumVBases() > 0)
-    return IHM_Virtual;
+    return MSIM_Virtual;
   if (usesMultipleInheritanceModel(this))
-    return IHM_Multiple;
-  return IHM_Single;
+    return MSIM_Multiple;
+  return MSIM_Single;
 }
 
 // Returns the number of pointer and integer slots used to represent a member
@@ -134,22 +134,20 @@ std::pair<unsigned, unsigned> MemberPointerType::getMSMemberPointerSlots() const
     // the 'this' pointer.
     Ptrs = 1;  // First slot is always a function pointer.
     switch (Inheritance) {
-    default: llvm_unreachable("unknown inheritance model");
-    case IHM_Unspecified: ++Ints;  // VBTableOffset
-    case IHM_Virtual:     ++Ints;  // VirtualBaseAdjustmentOffset
-    case IHM_Multiple:    ++Ints;  // NonVirtualBaseAdjustment
-    case IHM_Single:      break;   // Nothing
+    case MSIM_Unspecified: ++Ints;  // VBTableOffset
+    case MSIM_Virtual:     ++Ints;  // VirtualBaseAdjustmentOffset
+    case MSIM_Multiple:    ++Ints;  // NonVirtualBaseAdjustment
+    case MSIM_Single:      break;   // Nothing
     }
   } else {
     // Data pointers are an aggregate of ints.  The first int is an offset
     // followed by vbtable-related offsets.
     Ptrs = 0;
     switch (Inheritance) {
-    default: llvm_unreachable("unknown inheritance model");
-    case IHM_Unspecified: ++Ints;  // VBTableOffset
-    case IHM_Virtual:     ++Ints;  // VirtualBaseAdjustmentOffset
-    case IHM_Multiple:             // Nothing
-    case IHM_Single:      ++Ints;  // Field offset
+    case MSIM_Unspecified: ++Ints;  // VBTableOffset
+    case MSIM_Virtual:     ++Ints;  // VirtualBaseAdjustmentOffset
+    case MSIM_Multiple:             // Nothing
+    case MSIM_Single:      ++Ints;  // Field offset
     }
   }
   return std::make_pair(Ptrs, Ints);
