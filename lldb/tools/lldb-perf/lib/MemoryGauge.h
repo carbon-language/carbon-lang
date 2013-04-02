@@ -34,8 +34,14 @@ public:
     MemoryStats
     operator - (const MemoryStats& rhs);
 
-    MemoryStats&
+    MemoryStats
+    operator + (const MemoryStats& rhs);
+    
+    MemoryStats
     operator / (size_t rhs);
+    
+    MemoryStats
+    operator * (const MemoryStats& rhs);
     
     mach_vm_size_t
     GetVirtualSize () const
@@ -80,7 +86,7 @@ private:
     mach_vm_size_t m_resident_size;
     mach_vm_size_t m_max_resident_size;
 };
-
+    
 class MemoryGauge : public Gauge<MemoryStats>
 {
 public:
@@ -134,5 +140,8 @@ Results::ResultSP
 GetResult (const char *description, MemoryStats value);
     
 } // namespace lldb_perf
+
+lldb_perf::MemoryStats
+sqrt (const lldb_perf::MemoryStats& arg);
 
 #endif // #ifndef __PerfTestDriver__MemoryGauge__

@@ -111,6 +111,13 @@ public:
         auto metric = GetMetric ();
         results.GetDictionary().Add(metric.GetName(), metric.GetDescription(), lldb_perf::GetResult<typename GaugeType::ValueType> (NULL, metric.GetAverage()));
     }
+    
+    void
+    WriteStandardDeviation (Results &results)
+    {
+        auto metric = GetMetric ();
+        results.GetDictionary().Add(metric.GetName(), metric.GetDescription(), lldb_perf::GetResult<typename GaugeType::ValueType> (NULL, metric.GetStandardDeviation()));
+    }
 
 protected:
     GaugeType m_gauge;

@@ -37,6 +37,9 @@ public:
     ValueType
     GetSum () const;
     
+    ValueType
+    GetStandardDeviation () const;
+    
     const char*
     GetName () const
     {

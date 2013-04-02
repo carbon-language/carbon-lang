@@ -9,6 +9,7 @@
 
 #include "Metric.h"
 #include "MemoryGauge.h"
+#include <cmath>
 
 using namespace lldb_perf;
 
@@ -54,6 +55,19 @@ T
 Metric<T>::GetAverage () const
 {
     return GetSum()/GetCount();
+}
+
+template <class T>
+T
+Metric<T>::GetStandardDeviation () const
+{
+    T average = GetAverage();
+    T diff_squared = 0;
+    size_t count = GetCount();
+    for (auto v : m_dataset)
+        diff_squared = diff_squared + ( (v-average)*(v-average) );
+    diff_squared = diff_squared / count;
+    return sqrt(diff_squared);
 }
 
 template class lldb_perf::Metric<double>;

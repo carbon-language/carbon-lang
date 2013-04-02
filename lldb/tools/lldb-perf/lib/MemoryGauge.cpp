@@ -9,6 +9,7 @@
 
 #include "MemoryGauge.h"
 #include <assert.h>
+#include <cmath>
 #include <mach/mach.h>
 #include <mach/task.h>
 #include <mach/mach_traps.h>
@@ -61,13 +62,30 @@ MemoryStats::operator - (const MemoryStats& rhs)
                        m_max_resident_size - rhs.m_max_resident_size);
 }
 
-MemoryStats&
+MemoryStats
+MemoryStats::operator + (const MemoryStats& rhs)
+{
+    return MemoryStats(m_virtual_size + rhs.m_virtual_size,
+                       m_resident_size + rhs.m_resident_size,
+                       m_max_resident_size + rhs.m_max_resident_size);
+}
+
+MemoryStats
 MemoryStats::operator / (size_t n)
 {
-    m_virtual_size /= n;
-    m_resident_size /= n;
-    m_max_resident_size /= n;
-    return *this;
+    MemoryStats result(*this);
+    result.m_virtual_size /= n;
+    result.m_resident_size /= n;
+    result.m_max_resident_size /= n;
+    return result;
+}
+
+MemoryStats
+MemoryStats::operator * (const MemoryStats& rhs)
+{
+    return MemoryStats(m_virtual_size * rhs.m_virtual_size,
+                       m_resident_size * rhs.m_resident_size,
+                       m_max_resident_size * rhs.m_max_resident_size);
 }
 
 Results::ResultSP
@@ -129,4 +147,18 @@ Results::ResultSP
 lldb_perf::GetResult (const char *description, MemoryStats value)
 {
     return value.GetResult (NULL, description);
+}
+
+MemoryStats
+sqrt (const MemoryStats& arg)
+{
+    long double virt_size = arg.GetVirtualSize();
+    long double resident_size = arg.GetResidentSize();
+    long double max_resident_size = arg.GetMaxResidentSize();
+    
+    virt_size = sqrtl(virt_size);
+    resident_size = sqrtl(resident_size);
+    max_resident_size = sqrtl(max_resident_size);
+    
+    return MemoryStats(virt_size,resident_size,max_resident_size);
 }
