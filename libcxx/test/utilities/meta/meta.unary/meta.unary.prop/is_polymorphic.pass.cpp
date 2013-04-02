@@ -52,6 +52,9 @@ class Abstract
     virtual ~Abstract() = 0;
 };
 
+class Final final {
+};
+
 int main()
 {
     test_is_not_polymorphic<void>();
@@ -65,6 +68,9 @@ int main()
     test_is_not_polymorphic<Union>();
     test_is_not_polymorphic<Empty>();
     test_is_not_polymorphic<bit_zero>();
+    test_is_not_polymorphic<Final>();
+    test_is_not_polymorphic<NotEmpty&>();
+    test_is_not_polymorphic<Abstract&>();
 
     test_is_polymorphic<NotEmpty>();
     test_is_polymorphic<Abstract>();

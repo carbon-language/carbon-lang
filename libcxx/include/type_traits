@@ -802,17 +802,13 @@ struct _LIBCPP_TYPE_VIS is_polymorphic
 
 #else
 
-template <class _Tp> struct __is_polymorphic1 : public _Tp {};
-template <class _Tp> struct __is_polymorphic2 : public _Tp {virtual ~__is_polymorphic2() throw();};
-
-template <class _Tp, bool = is_class<_Tp>::value>
-struct __libcpp_polymorphic
-    : public integral_constant<bool, sizeof(__is_polymorphic1<_Tp>) == sizeof(__is_polymorphic2<_Tp>)> {};
-
-template <class _Tp> struct __libcpp_polymorphic<_Tp, false> : public false_type {};
+template<typename _Tp> char &__is_polymorphic_impl(
+    typename enable_if<sizeof((_Tp*)dynamic_cast<const volatile void*>(declval<_Tp*>())) != 0,
+                       int>::type);
+template<typename _Tp> __two &__is_polymorphic_impl(...);
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS is_polymorphic
-    : public __libcpp_polymorphic<_Tp> {};
+    : public integral_constant<bool, sizeof(__is_polymorphic_impl<_Tp>(0)) == 1> {};
 
 #endif // __has_feature(is_polymorphic)
 
