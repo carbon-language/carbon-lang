@@ -20,6 +20,8 @@ locale_t newlocale( int mask, const char * locale, locale_t /*base*/ )
 locale_t uselocale( locale_t newloc )
 {
     locale_t old_locale = _get_current_locale();
+    if ( newloc == NULL )
+        return old_locale;
     // uselocale sets the thread's locale by definition, so unconditionally use thread-local locale
     _configthreadlocale( _ENABLE_PER_THREAD_LOCALE );
     // uselocale sets all categories
