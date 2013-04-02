@@ -37,8 +37,7 @@ using namespace llvm;
 /// ClassifyBlockAddressReference - Classify a blockaddress reference for the
 /// current subtarget according to how we should reference it in a non-pcrel
 /// context.
-unsigned char X86Subtarget::
-ClassifyBlockAddressReference() const {
+unsigned char X86Subtarget::ClassifyBlockAddressReference() const {
   if (isPICStyleGOT())    // 32-bit ELF targets.
     return X86II::MO_GOTOFF;
 
