@@ -156,6 +156,29 @@ public:
     return MDNode::get(Context, Vals);
   }
 
+  /// \brief Return metadata for a TBAA struct node in the type DAG
+  /// with the given name, parents in the TBAA DAG.
+  MDNode *createTBAAStructTypeNode(StringRef Name,
+             ArrayRef<std::pair<uint64_t, MDNode*> > Fields) {
+    SmallVector<Value *, 4> Ops(Fields.size() * 2 + 1);
+    Type *Int64 = IntegerType::get(Context, 64);
+    Ops[0] = createString(Name);
+    for (unsigned i = 0, e = Fields.size(); i != e; ++i) {
+      Ops[i * 2 + 1] = ConstantInt::get(Int64, Fields[i].first);
+      Ops[i * 2 + 2] = Fields[i].second;
+    }
+    return MDNode::get(Context, Ops);
+  }
+
+  /// \brief Return metadata for a TBAA tag node with the given
+  /// base type, access type and offset relative to the base type.
+  MDNode *createTBAAStructTagNode(MDNode *BaseType, MDNode *AccessType,
+                                  uint64_t Offset) {
+    Type *Int64 = IntegerType::get(Context, 64);
+    Value *Ops[3] = { BaseType, AccessType, ConstantInt::get(Int64, Offset) };
+    return MDNode::get(Context, Ops);
+  }
+
 };
 
 } // end namespace llvm
