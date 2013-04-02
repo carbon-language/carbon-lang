@@ -18,17 +18,16 @@ NSString *CreateNSString();
 void from_cf() {
   id obj1 = (__bridge_transfer id)CFCreateSomething(); // expected-warning {{'__bridge_transfer' casts have no effect when not using ARC}}
   id obj2 = (__bridge_transfer NSString*)CFCreateString(); // expected-warning {{'__bridge_transfer' casts have no effect when not using ARC}}
-  (__bridge int*)CFCreateSomething();  // expected-warning {{'__bridge' casts have no effect when not using ARC}}  \
-                                       // expected-warning {{expression result unused}}
-  id obj3 = (__bridge id)CFGetSomething(); // expected-warning {{'__bridge' casts have no effect when not using ARC}}
-  id obj4 = (__bridge NSString*)CFGetString(); // expected-warning {{'__bridge' casts have no effect when not using ARC}}
+  (__bridge int*)CFCreateSomething(); // expected-warning {{expression result unused}}
+  id obj3 = (__bridge id)CFGetSomething();
+  id obj4 = (__bridge NSString*)CFGetString();
 }
 
 void to_cf(id obj) {
   CFTypeRef cf1 = (__bridge_retained CFTypeRef)CreateSomething(); // expected-warning {{'__bridge_retained' casts have no effect when not using ARC}}
   CFStringRef cf2 = (__bridge_retained CFStringRef)CreateNSString(); // expected-warning {{'__bridge_retained' casts have no effect when not using ARC}}
-  CFTypeRef cf3 = (__bridge CFTypeRef)CreateSomething(); // expected-warning {{'__bridge' casts have no effect when not using ARC}}
-  CFStringRef cf4 = (__bridge CFStringRef)CreateNSString(); // expected-warning {{'__bridge' casts have no effect when not using ARC}} 
+  CFTypeRef cf3 = (__bridge CFTypeRef)CreateSomething();
+  CFStringRef cf4 = (__bridge CFStringRef)CreateNSString();
 }
 
 void fixits() {

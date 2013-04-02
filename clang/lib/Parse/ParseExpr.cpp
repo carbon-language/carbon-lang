@@ -1961,12 +1961,16 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
                       Tok.is(tok::kw___bridge_retained) ||
                       Tok.is(tok::kw___bridge_retain)));
   if (BridgeCast && !getLangOpts().ObjCAutoRefCount) {
-    StringRef BridgeCastName = Tok.getName();
-    SourceLocation BridgeKeywordLoc = ConsumeToken();
-    if (!PP.getSourceManager().isInSystemHeader(BridgeKeywordLoc))
-      Diag(BridgeKeywordLoc, diag::warn_arc_bridge_cast_nonarc)
-        << BridgeCastName
-        << FixItHint::CreateReplacement(BridgeKeywordLoc, "");
+    if (Tok.isNot(tok::kw___bridge)) {
+      StringRef BridgeCastName = Tok.getName();
+      SourceLocation BridgeKeywordLoc = ConsumeToken();
+      if (!PP.getSourceManager().isInSystemHeader(BridgeKeywordLoc))
+        Diag(BridgeKeywordLoc, diag::warn_arc_bridge_cast_nonarc)
+          << BridgeCastName
+          << FixItHint::CreateReplacement(BridgeKeywordLoc, "");
+    }
+    else
+      ConsumeToken(); // consume __bridge
     BridgeCast = false;
   }
   

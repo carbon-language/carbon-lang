@@ -4,9 +4,9 @@
 @end
 
 void foo(void *p) {
-  I *i = (__bridge I*)p;
-  I *i2 = (__bridge/*cake*/I*)p;
+  I *i = (__bridge_transfer I*)p;
+  I *i2 = (__bridge_transfer/*cake*/I*)p;
 }
 
-// CHECK: {7:11-7:20}:""
-// CHECK: {8:12-8:20}:""
+// CHECK: {7:11-7:29}:""
+// CHECK: {8:12-8:29}:""
