@@ -8,7 +8,8 @@
 //===----------------------------------------------------------------------===//
 ///
 ///  \file
-///  \brief This file contains the implementation of the UseAutoFixer class.
+///  \brief This file contains the implementation of callbacks for the UseAuto
+///  transform.
 ///
 //===----------------------------------------------------------------------===//
 #include "UseAutoActions.h"
@@ -19,8 +20,8 @@ using namespace clang::ast_matchers;
 using namespace clang::tooling;
 using namespace clang;
 
-void UseAutoFixer::run(const MatchFinder::MatchResult &Result) {
-  const VarDecl *D = Result.Nodes.getNodeAs<VarDecl>(DeclNodeId);
+void IteratorReplacer::run(const MatchFinder::MatchResult &Result) {
+  const VarDecl *D = Result.Nodes.getNodeAs<VarDecl>(IteratorDeclId);
 
   assert(D && "Bad Callback. No node provided");
 
@@ -67,4 +68,49 @@ void UseAutoFixer::run(const MatchFinder::MatchResult &Result) {
     Replace.insert(tooling::Replacement(SM, Range, "auto"));
     ++AcceptedChanges;
   }
+}
+
+void NewReplacer::run(const MatchFinder::MatchResult &Result) {
+  const VarDecl *D = Result.Nodes.getNodeAs<VarDecl>(DeclWithNewId);
+  assert(D && "Bad Callback. No node provided");
+
+  SourceManager &SM = *Result.SourceManager;
+  if (!SM.isFromMainFile(D->getLocStart()))
+    return;
+  
+  const CXXNewExpr *NewExpr = Result.Nodes.getNodeAs<CXXNewExpr>(NewExprId);
+  assert(NewExpr && "Bad Callback. No CXXNewExpr bound");
+
+  // If declaration and initializer have exactly the same type, just replace
+  // with 'auto'.
+  if (Result.Context->hasSameType(D->getType(), NewExpr->getType())) {
+    TypeLoc TL = D->getTypeSourceInfo()->getTypeLoc();
+    CharSourceRange Range(TL.getSourceRange(), /*IsTokenRange=*/ true);
+    // Space after 'auto' to handle cases where the '*' in the pointer type
+    // is next to the identifier. This avoids changing 'int *p' into 'autop'.
+    Replace.insert(tooling::Replacement(SM, Range, "auto "));
+    ++AcceptedChanges;
+    return;
+  }
+
+  // If the CV qualifiers for the pointer differ then we still use auto, just
+  // need to leave the qualifier behind.
+  if (Result.Context->hasSameUnqualifiedType(D->getType(),
+                                             NewExpr->getType())) {
+    TypeLoc TL = D->getTypeSourceInfo()->getTypeLoc();
+    CharSourceRange Range(TL.getSourceRange(), /*IsTokenRange=*/ true);
+    // Space after 'auto' to handle cases where the '*' in the pointer type
+    // is next to the identifier. This avoids changing 'int *p' into 'autop'.
+    Replace.insert(tooling::Replacement(SM, Range, "auto "));
+    ++AcceptedChanges;
+    return;
+  }
+
+  // The VarDecl and Initializer have mismatching types.
+  return;
+
+  // FIXME: There is, however, one case we can address: when the VarDecl
+  // pointee is the same as the initializer, just more CV-qualified. However,
+  // TypeLoc information is not reliable where CV qualifiers are concerned so
+  // we can't do anything about this case for now.
 }

@@ -18,7 +18,9 @@
 using namespace clang::ast_matchers;
 using namespace clang;
 
-const char *DeclNodeId = "decl";
+const char *IteratorDeclId = "iterator_decl";
+const char *DeclWithNewId = "decl_new";
+const char *NewExprId = "new_expr";
 
 namespace clang {
 namespace ast_matchers {
@@ -230,7 +232,7 @@ TypeMatcher iteratorFromUsingDeclaration() {
 }
 } // namespace
 
-DeclarationMatcher makeIteratorMatcher() {
+DeclarationMatcher makeIteratorDeclMatcher() {
   return varDecl(allOf(
                    hasWrittenNonListInitializer(),
                    unless(hasType(autoType())),
@@ -243,5 +245,32 @@ DeclarationMatcher makeIteratorMatcher() {
                        )
                      )
                    )
-                 )).bind(DeclNodeId);
+                 )).bind(IteratorDeclId);
+}
+
+DeclarationMatcher makeDeclWithNewMatcher() {
+  return varDecl(
+           hasInitializer(
+             ignoringParenImpCasts(
+               newExpr().bind(NewExprId)
+             )
+           ),
+
+           // FIXME: TypeLoc information is not reliable where CV qualifiers are
+           // concerned so these types can't be handled for now.
+           unless(hasType(pointerType(pointee(hasLocalQualifiers())))),
+
+           // FIXME: Handle function pointers. For now we ignore them because
+           // the replacement replaces the entire type specifier source range
+           // which includes the identifier.
+           unless(
+             hasType(
+               pointsTo(
+                 pointsTo(
+                   parenType(innerType(functionType()))
+                 )
+               )
+             )
+           )
+         ).bind(DeclWithNewId);
 }

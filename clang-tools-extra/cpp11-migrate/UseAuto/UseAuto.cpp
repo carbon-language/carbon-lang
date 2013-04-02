@@ -35,9 +35,13 @@ int UseAutoTransform::apply(const FileContentsByPath &InputStates,
   unsigned AcceptedChanges = 0;
 
   MatchFinder Finder;
-  UseAutoFixer Fixer(UseAutoTool.getReplacements(), AcceptedChanges, MaxRisk);
+  IteratorReplacer ReplaceIterators(UseAutoTool.getReplacements(),
+                                    AcceptedChanges, MaxRisk);
+  NewReplacer ReplaceNew(UseAutoTool.getReplacements(), AcceptedChanges,
+                         MaxRisk);
 
-  Finder.addMatcher(makeIteratorMatcher(), &Fixer);
+  Finder.addMatcher(makeIteratorDeclMatcher(), &ReplaceIterators);
+  Finder.addMatcher(makeDeclWithNewMatcher(), &ReplaceNew);
 
   if (int Result = UseAutoTool.run(newFrontendActionFactory(&Finder))) {
     llvm::errs() << "Error encountered during translation.\n";
