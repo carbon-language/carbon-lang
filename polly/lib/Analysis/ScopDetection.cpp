@@ -542,7 +542,7 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
   DEBUG(dbgs() << "Checking region: " << R.getNameStr() << "\n\t");
 
   // The toplevel region is no valid region.
-  if (!R.getParent()) {
+  if (R.isTopLevelRegion()) {
     DEBUG(dbgs() << "Top level region is invalid"; dbgs() << "\n");
     return false;
   }
