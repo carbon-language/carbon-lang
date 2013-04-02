@@ -674,6 +674,53 @@ static CallInlinePolicy mayInlineCallKind(const CallEvent &Call,
   return CIP_Allowed;
 }
 
+/// Returns true if the given C++ class is a container.
+///
+/// Our heuristic for this is whether it contains a method named 'begin()' or a
+/// nested type named 'iterator'.
+static bool isContainerClass(const ASTContext &Ctx, const CXXRecordDecl *RD) {
+  // Don't record any path information.
+  CXXBasePaths Paths(false, false, false);
+
+  const IdentifierInfo &BeginII = Ctx.Idents.get("begin");
+  DeclarationName BeginName = Ctx.DeclarationNames.getIdentifier(&BeginII);
+  DeclContext::lookup_const_result BeginDecls = RD->lookup(BeginName);
+  if (!BeginDecls.empty())
+    return true;
+  if (RD->lookupInBases(&CXXRecordDecl::FindOrdinaryMember,
+                        BeginName.getAsOpaquePtr(),
+                        Paths))
+    return true;
+  
+  const IdentifierInfo &IterII = Ctx.Idents.get("iterator");
+  DeclarationName IteratorName = Ctx.DeclarationNames.getIdentifier(&IterII);
+  DeclContext::lookup_const_result IterDecls = RD->lookup(IteratorName);
+  if (!IterDecls.empty())
+    return true;
+  if (RD->lookupInBases(&CXXRecordDecl::FindOrdinaryMember,
+                        IteratorName.getAsOpaquePtr(),
+                        Paths))
+    return true;
+
+  return false;
+}
+
+/// Returns true if the given function refers to a constructor or destructor of
+/// a C++ container.
+///
+/// We generally do a poor job modeling most containers right now, and would
+/// prefer not to inline their methods.
+static bool isContainerCtorOrDtor(const ASTContext &Ctx,
+                                  const FunctionDecl *FD) {
+  // Heuristic: a type is a container if it contains a "begin()" method
+  // or a type named "iterator".
+  if (!(isa<CXXConstructorDecl>(FD) || isa<CXXDestructorDecl>(FD)))
+    return false;
+
+  const CXXRecordDecl *RD = cast<CXXMethodDecl>(FD)->getParent();
+  return isContainerClass(Ctx, RD);
+}
+
 /// Returns true if the function in \p CalleeADC may be inlined in general.
 ///
 /// This checks static properties of the function, such as its signature and
@@ -681,16 +728,14 @@ static CallInlinePolicy mayInlineCallKind(const CallEvent &Call,
 /// in any context.
 static bool mayInlineDecl(const CallEvent &Call, AnalysisDeclContext *CalleeADC,
                           AnalyzerOptions &Opts) {
-  const Decl *D = CalleeADC->getDecl();
-
   // FIXME: Do not inline variadic calls.
   if (Call.isVariadic())
     return false;
 
   // Check certain C++-related inlining policies.
-  ASTContext &Ctx = D->getASTContext();
+  ASTContext &Ctx = CalleeADC->getASTContext();
   if (Ctx.getLangOpts().CPlusPlus) {
-    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CalleeADC->getDecl())) {
       // Conditionally control the inlining of template functions.
       if (!Opts.mayInlineTemplateFunctions())
         if (FD->getTemplatedKind() != FunctionDecl::TK_NonTemplate)
@@ -700,6 +745,13 @@ static bool mayInlineDecl(const CallEvent &Call, AnalysisDeclContext *CalleeADC,
       if (!Opts.mayInlineCXXStandardLibrary())
         if (Ctx.getSourceManager().isInSystemHeader(FD->getLocation()))
           if (IsInStdNamespace(FD))
+            return false;
+
+      // Conditionally control the inlining of methods on objects that look
+      // like C++ containers.
+      if (!Opts.mayInlineCXXContainerCtorsAndDtors())
+        if (!Ctx.getSourceManager().isFromMainFile(FD->getLocation()))
+          if (isContainerCtorOrDtor(Ctx, FD))
             return false;
     }
   }

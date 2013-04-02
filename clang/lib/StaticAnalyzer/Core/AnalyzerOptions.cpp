@@ -134,6 +134,13 @@ bool AnalyzerOptions::mayInlineTemplateFunctions() {
                           /*Default=*/true);
 }
 
+bool AnalyzerOptions::mayInlineCXXContainerCtorsAndDtors() {
+  return getBooleanOption(InlineCXXContainerCtorsAndDtors,
+                          "c++-container-inlining",
+                          /*Default=*/false);
+}
+
+
 bool AnalyzerOptions::mayInlineObjCMethod() {
   return getBooleanOption(ObjCInliningMode,
                           "objc-inlining",

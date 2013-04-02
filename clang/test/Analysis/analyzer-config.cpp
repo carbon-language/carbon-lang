@@ -11,6 +11,7 @@ public:
 };
 
 // CHECK: [config]
+// CHECK-NEXT: c++-container-inlining = false
 // CHECK-NEXT: c++-inlining = constructors
 // CHECK-NEXT: c++-stdlib-inlining = true
 // CHECK-NEXT: c++-template-inlining = true
@@ -25,4 +26,4 @@ public:
 // CHECK-NEXT: max-times-inline-large = 32
 // CHECK-NEXT: mode = deep
 // CHECK-NEXT: [stats]
-// CHECK-NEXT: num-entries = 13
+// CHECK-NEXT: num-entries = 14

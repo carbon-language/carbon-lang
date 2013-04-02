@@ -13,9 +13,18 @@ void testCopyNull(int *I, int *E) {
   std::copy(I, E, (int *)0);
 #ifndef SUPPRESSED
   // This line number comes from system-header-simulator-cxx.h.
-  // expected-warning@65 {{Dereference of null pointer}}
+  // expected-warning@79 {{Dereference of null pointer}}
 #endif
 }
+
+
+
+
+
+
+
+
+
 
 
 

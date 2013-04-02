@@ -198,6 +198,9 @@ private:
   /// \sa mayInlineTemplateFunctions
   Optional<bool> InlineTemplateFunctions;
 
+  /// \sa mayInlineCXXContainerCtorsAndDtors
+  Optional<bool> InlineCXXContainerCtorsAndDtors;
+
   /// \sa mayInlineObjCMethod
   Optional<bool> ObjCInliningMode;
 
@@ -280,6 +283,13 @@ public:
   /// This is controlled by the 'c++-template-inlining' config option, which
   /// accepts the values "true" and "false".
   bool mayInlineTemplateFunctions();
+
+  /// Returns whether or not constructors and destructors of C++ container
+  /// objects may be considered for inlining.
+  ///
+  /// This is controlled by the 'c++-container-inlining' config option, which
+  /// accepts the values "true" and "false".
+  bool mayInlineCXXContainerCtorsAndDtors();
 
   /// Returns whether or not paths that go through null returns should be
   /// suppressed.
