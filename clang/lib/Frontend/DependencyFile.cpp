@@ -151,12 +151,14 @@ void DependencyFileCallback::AddFilename(StringRef Filename) {
     Files.push_back(Filename);
 }
 
-/// PrintFilename - GCC escapes spaces, but apparently not ' or " or other
-/// scary characters.
+/// PrintFilename - GCC escapes spaces, # and $, but apparently not ' or " or
+/// other scary characters.
 static void PrintFilename(raw_ostream &OS, StringRef Filename) {
   for (unsigned i = 0, e = Filename.size(); i != e; ++i) {
-    if (Filename[i] == ' ')
+    if (Filename[i] == ' ' || Filename[i] == '#')
       OS << '\\';
+    else if (Filename[i] == '$') // $ is escaped by $$.
+      OS << '$';
     OS << Filename[i];
   }
 }
