@@ -51,7 +51,7 @@ class CGDebugInfo {
   SourceLocation CurLoc, PrevLoc;
   llvm::DIType VTablePtrType;
   llvm::DIType ClassTy;
-  llvm::DIType ObjTy;
+  llvm::DICompositeType ObjTy;
   llvm::DIType SelTy;
   llvm::DIType OCLImage1dDITy, OCLImage1dArrayDITy, OCLImage1dBufferDITy;
   llvm::DIType OCLImage2dDITy, OCLImage2dArrayDITy;

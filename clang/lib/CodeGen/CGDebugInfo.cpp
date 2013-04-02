@@ -392,21 +392,12 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
     
     llvm::DIType ISATy = DBuilder.createPointerType(ClassTy, Size);
 
-    llvm::DIType FwdTy =
+    ObjTy =
         DBuilder.createStructType(TheCU, "objc_object", getOrCreateMainFile(),
                                   0, 0, 0, 0, llvm::DIType(), llvm::DIArray());
 
-    llvm::TrackingVH<llvm::MDNode> ObjNode(FwdTy);
-    SmallVector<llvm::Value *, 1> EltTys;
-    llvm::DIType FieldTy = 
-      DBuilder.createMemberType(llvm::DIDescriptor(ObjNode), "isa",
-                                getOrCreateMainFile(), 0, Size,
-                                0, 0, 0, ISATy);
-    EltTys.push_back(FieldTy);
-    llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
-
-    ObjNode->replaceOperandWith(10, Elements);
-    ObjTy = llvm::DIType(ObjNode);
+    ObjTy.setTypeArray(DBuilder.getOrCreateArray(&*DBuilder.createMemberType(
+        ObjTy, "isa", getOrCreateMainFile(), 0, Size, 0, 0, 0, ISATy)));
     return ObjTy;
   }
   case BuiltinType::ObjCSel: {
@@ -1332,15 +1323,16 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
 
-  llvm::DIType FwdDecl = getOrCreateLimitedType(QualType(Ty, 0), DefUnit);
+  llvm::DICompositeType FwdDecl(
+      getOrCreateLimitedType(QualType(Ty, 0), DefUnit));
+  assert(FwdDecl.Verify() &&
+         "The debug type of a RecordType should be a DICompositeType");
 
   if (FwdDecl.isForwardDecl())
     return FwdDecl;
 
-  llvm::TrackingVH<llvm::MDNode> FwdDeclNode(FwdDecl);
-
   // Push the struct on region stack.
-  LexicalBlockStack.push_back(FwdDeclNode);
+  LexicalBlockStack.push_back(&*FwdDecl);
   RegionMap[Ty->getDecl()] = llvm::WeakVH(FwdDecl);
 
   // Add this to the completed-type cache while we're completing it recursively.
@@ -1374,19 +1366,10 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   RegionMap.erase(Ty->getDecl());
 
   llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
-  // FIXME: Magic numbers ahoy! These should be changed when we
-  // get some enums in llvm/Analysis/DebugInfo.h to refer to
-  // them.
-  if (RD->isUnion())
-    FwdDeclNode->replaceOperandWith(10, Elements);
-  else if (CXXDecl) {
-    FwdDeclNode->replaceOperandWith(10, Elements);
-    FwdDeclNode->replaceOperandWith(13, TParamsArray);
-  } else
-    FwdDeclNode->replaceOperandWith(10, Elements);
+  FwdDecl.setTypeArray(Elements, TParamsArray);
 
-  RegionMap[Ty->getDecl()] = llvm::WeakVH(FwdDeclNode);
-  return llvm::DIType(FwdDeclNode);
+  RegionMap[Ty->getDecl()] = llvm::WeakVH(FwdDecl);
+  return FwdDecl;
 }
 
 /// CreateType - get objective-c object type.
@@ -1429,7 +1412,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   if (ID->getImplementation())
     Flags |= llvm::DIDescriptor::FlagObjcClassComplete;
 
-  llvm::DIType RealDecl =
+  llvm::DICompositeType RealDecl =
     DBuilder.createStructType(Unit, ID->getName(), DefUnit,
                               Line, Size, Align, Flags,
                               llvm::DIType(), llvm::DIArray(), RuntimeLang);
@@ -1439,9 +1422,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   QualType QualTy = QualType(Ty, 0);
   CompletedTypeCache[QualTy.getAsOpaquePtr()] = RealDecl;
   // Push the struct on region stack.
-  llvm::TrackingVH<llvm::MDNode> FwdDeclNode(RealDecl);
 
-  LexicalBlockStack.push_back(FwdDeclNode);
+  LexicalBlockStack.push_back(static_cast<llvm::MDNode*>(RealDecl));
   RegionMap[Ty->getDecl()] = llvm::WeakVH(RealDecl);
 
   // Convert all the elements.
@@ -1561,7 +1543,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   }
 
   llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
-  FwdDeclNode->replaceOperandWith(10, Elements);
+  RealDecl.setTypeArray(Elements);
 
   // If the implementation is not yet set, we do not want to mark it
   // as complete. An implementation may declare additional
@@ -1570,7 +1552,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     CompletedTypeCache.erase(QualTy.getAsOpaquePtr());
   
   LexicalBlockStack.pop_back();
-  return llvm::DIType(FwdDeclNode);
+  return RealDecl;
 }
 
 llvm::DIType CGDebugInfo::CreateType(const VectorType *Ty, llvm::DIFile Unit) {
@@ -2842,7 +2824,7 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
     // Insert an llvm.dbg.value into the current block.
     llvm::Instruction *DbgVal =
       DBuilder.insertDbgValueIntrinsic(LocalAddr, 0, debugVar,
-				       Builder.GetInsertBlock());
+                                       Builder.GetInsertBlock());
     DbgVal->setDebugLoc(llvm::DebugLoc::get(line, column, scope));
   }
 
