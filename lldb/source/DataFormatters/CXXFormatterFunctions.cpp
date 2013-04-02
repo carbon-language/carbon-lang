@@ -271,7 +271,11 @@ ReadUTFBufferAndDumpToStream (ConversionResult (*ConvertFunction) (const SourceD
     if (origin_encoding != 8 && !ConvertFunction)
         return false;
 
-    sourceSize = std::min(sourceSize,process_sp->GetTarget().GetMaximumSizeOfStringSummary());
+    if (!sourceSize)
+        sourceSize = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
+    else
+        sourceSize = std::min(sourceSize,process_sp->GetTarget().GetMaximumSizeOfStringSummary());
+    
     const int bufferSPSize = sourceSize * (origin_encoding >> 2);
 
     Error error;
@@ -654,7 +658,10 @@ ReadAsciiBufferAndDumpToStream (lldb::addr_t location,
     if (!process_sp || location == 0)
         return false;
     
-    size = std::min(size,process_sp->GetTarget().GetMaximumSizeOfStringSummary());
+    if (!size)
+        size = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
+    else
+        size = std::min(size,process_sp->GetTarget().GetMaximumSizeOfStringSummary());
     
     lldb::DataBufferSP buffer_sp(new DataBufferHeap(size,0));
     
