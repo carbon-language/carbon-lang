@@ -1175,9 +1175,6 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   if (Args.hasArg(OPT_pthread))
     Opts.POSIXThreads = 1;
 
-  if (Args.hasArg(OPT_fdelayed_template_parsing))
-    Opts.DelayedTemplateParsing = 1;
-
   // The value-visibility mode defaults to "default".
   if (Arg *visOpt = Args.getLastArg(OPT_fvisibility)) {
     Opts.setValueVisibilityMode(parseVisibility(visOpt, Args, Diags));
