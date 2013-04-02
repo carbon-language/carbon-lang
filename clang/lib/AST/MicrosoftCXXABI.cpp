@@ -157,7 +157,6 @@ std::pair<unsigned, unsigned> MemberPointerType::getMSMemberPointerSlots() const
 
 std::pair<uint64_t, unsigned>
 MicrosoftCXXABI::getMemberPointerWidthAndAlign(const MemberPointerType *MPT) const {
-  const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
   const TargetInfo &Target = Context.getTargetInfo();
   assert(Target.getTriple().getArch() == llvm::Triple::x86 ||
          Target.getTriple().getArch() == llvm::Triple::x86_64);
