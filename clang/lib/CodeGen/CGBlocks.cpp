@@ -1147,7 +1147,13 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
                                                 "block.addr");
     unsigned Align = getContext().getDeclAlign(&selfDecl).getQuantity();
     Alloca->setAlignment(Align);
+    // Set the DebugLocation to empty, so the store is recognized as a
+    // frame setup instruction by llvm::DwarfDebug::beginFunction().
+    llvm::DebugLoc Empty;
+    llvm::DebugLoc Loc = Builder.getCurrentDebugLocation();
+    Builder.SetCurrentDebugLocation(Empty);
     Builder.CreateAlignedStore(BlockPointer, Alloca, Align);
+    Builder.SetCurrentDebugLocation(Loc);
     BlockPointerDbgLoc = Alloca;
   }
 
