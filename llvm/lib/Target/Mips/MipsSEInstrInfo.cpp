@@ -387,6 +387,7 @@ void MipsSEInstrInfo::ExpandEhReturn(MachineBasicBlock &MBB,
   unsigned JR = STI.isABI_N64() ? Mips::JR64 : Mips::JR;
   unsigned SP = STI.isABI_N64() ? Mips::SP_64 : Mips::SP;
   unsigned RA = STI.isABI_N64() ? Mips::RA_64 : Mips::RA;
+  unsigned T9 = STI.isABI_N64() ? Mips::T9_64 : Mips::T9;
   unsigned ZERO = STI.isABI_N64() ? Mips::ZERO_64 : Mips::ZERO;
   unsigned OffsetReg = I->getOperand(0).getReg();
   unsigned TargetReg = I->getOperand(1).getReg();
@@ -394,6 +395,9 @@ void MipsSEInstrInfo::ExpandEhReturn(MachineBasicBlock &MBB,
   // or   $ra, $v0, $zero
   // addu $sp, $sp, $v1
   // jr   $ra
+  if (TM.getRelocationModel() == Reloc::PIC_)
+    BuildMI(MBB, I, I->getDebugLoc(), TM.getInstrInfo()->get(OR), T9)
+        .addReg(TargetReg).addReg(ZERO);
   BuildMI(MBB, I, I->getDebugLoc(), TM.getInstrInfo()->get(OR), RA)
       .addReg(TargetReg).addReg(ZERO);
   BuildMI(MBB, I, I->getDebugLoc(), TM.getInstrInfo()->get(ADDU), SP)

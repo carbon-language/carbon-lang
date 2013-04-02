@@ -37,7 +37,9 @@ entry:
 ; CHECK:        lw      $7, [[offset3]]($sp)
 
 ; check that stack is adjusted by $v1 and that code returns to address in $v0
+; also check that $25 contains handler value
 ; CHECK:        addiu   $sp, $sp, [[spoffset]]
+; CHECK:        move    $25, $2
 ; CHECK:        move    $ra, $2
 ; CHECK:        jr      $ra
 ; CHECK:        addu    $sp, $sp, $3
@@ -74,7 +76,9 @@ entry:
 ; CHECK:        lw      $7, [[offset3]]($sp)
 
 ; check that stack is adjusted by $v1 and that code returns to address in $v0
+; also check that $25 contains handler value
 ; CHECK:        addiu   $sp, $sp, [[spoffset]]
+; CHECK:        move    $25, $2
 ; CHECK:        move    $ra, $2
 ; CHECK:        jr      $ra
 ; CHECK:        addu    $sp, $sp, $3
