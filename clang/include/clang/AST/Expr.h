@@ -2900,7 +2900,7 @@ public:
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
     assert(!isCompoundAssignmentOp() &&
-           "Use ArithAssignBinaryOperator for compound assignments");
+           "Use CompoundAssignOperator for compound assignments");
   }
 
   /// \brief Construct an empty binary operator.
