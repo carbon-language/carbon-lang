@@ -50,8 +50,8 @@ def HWPort15  : ProcResGroup<[HWPort1, HWPort5]>;
 def HWPort015 : ProcResGroup<[HWPort0, HWPort1, HWPort5]>;
 def HWPort0156: ProcResGroup<[HWPort0, HWPort1, HWPort5, HWPort6]>;
 
-// Integer division issued on port 0, but uses the non-pipelined divider.
-def HWDivider : ProcResource<1> { let Buffered = 0; }
+// Integer division issued on port 0.
+def HWDivider : ProcResource<1>;
 
 // Loads are 4 cycles, so ReadAfterLd registers needn't be available until 4
 // cycles after the memory operand.
