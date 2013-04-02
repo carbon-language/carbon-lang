@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -57,6 +58,8 @@ bool MachineTraceMetrics::runOnMachineFunction(MachineFunction &Func) {
     MF->getTarget().getSubtarget<TargetSubtargetInfo>();
   SchedModel.init(*ST.getSchedModel(), &ST, TII);
   BlockInfo.resize(MF->getNumBlockIDs());
+  ProcResourceCycles.resize(MF->getNumBlockIDs() *
+                            SchedModel.getNumProcResourceKinds());
   return false;
 }
 
@@ -85,9 +88,13 @@ MachineTraceMetrics::getResources(const MachineBasicBlock *MBB) {
     return FBI;
 
   // Compute resource usage in the block.
-  // FIXME: Compute per-functional unit counts.
   FBI->HasCalls = false;
   unsigned InstrCount = 0;
+
+  // Add up per-processor resource cycles as well.
+  unsigned PRKinds = SchedModel.getNumProcResourceKinds();
+  SmallVector<unsigned, 32> PRCycles(PRKinds);
+
   for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
        I != E; ++I) {
     const MachineInstr *MI = I;
@@ -96,10 +103,38 @@ MachineTraceMetrics::getResources(const MachineBasicBlock *MBB) {
     ++InstrCount;
     if (MI->isCall())
       FBI->HasCalls = true;
+
+    // Count processor resources used.
+    const MCSchedClassDesc *SC = SchedModel.resolveSchedClass(MI);
+    if (!SC->isValid())
+      continue;
+
+    for (TargetSchedModel::ProcResIter
+         PI = SchedModel.getWriteProcResBegin(SC),
+         PE = SchedModel.getWriteProcResEnd(SC); PI != PE; ++PI) {
+      assert(PI->ProcResourceIdx < PRKinds && "Bad processor resource kind");
+      PRCycles[PI->ProcResourceIdx] += PI->Cycles;
+    }
   }
   FBI->InstrCount = InstrCount;
+
+  // Scale the resource cycles so they are comparable.
+  unsigned PROffset = MBB->getNumber() * PRKinds;
+  for (unsigned K = 0; K != PRKinds; ++K)
+    ProcResourceCycles[PROffset + K] =
+      PRCycles[K] * SchedModel.getResourceFactor(K);
+
   return FBI;
 }
+
+ArrayRef<unsigned>
+MachineTraceMetrics::getProcResourceCycles(unsigned MBBNum) const {
+  assert(BlockInfo[MBBNum].hasResources() &&
+         "getResources() must be called before getProcResourceCycles()");
+  unsigned PRKinds = SchedModel.getNumProcResourceKinds();
+  return ArrayRef<unsigned>(&ProcResourceCycles[MBBNum * PRKinds], PRKinds);
+}
+
 
 //===----------------------------------------------------------------------===//
 //                         Ensemble utility functions
@@ -108,6 +143,9 @@ MachineTraceMetrics::getResources(const MachineBasicBlock *MBB) {
 MachineTraceMetrics::Ensemble::Ensemble(MachineTraceMetrics *ct)
   : MTM(*ct) {
   BlockInfo.resize(MTM.BlockInfo.size());
+  unsigned PRKinds = MTM.SchedModel.getNumProcResourceKinds();
+  ProcResourceDepths.resize(MTM.BlockInfo.size() * PRKinds);
+  ProcResourceHeights.resize(MTM.BlockInfo.size() * PRKinds);
 }
 
 // Virtual destructor serves as an anchor.
@@ -123,21 +161,32 @@ MachineTraceMetrics::Ensemble::getLoopFor(const MachineBasicBlock *MBB) const {
 void MachineTraceMetrics::Ensemble::
 computeDepthResources(const MachineBasicBlock *MBB) {
   TraceBlockInfo *TBI = &BlockInfo[MBB->getNumber()];
+  unsigned PRKinds = MTM.SchedModel.getNumProcResourceKinds();
+  unsigned PROffset = MBB->getNumber() * PRKinds;
 
   // Compute resources from trace above. The top block is simple.
   if (!TBI->Pred) {
     TBI->InstrDepth = 0;
     TBI->Head = MBB->getNumber();
+    std::fill(ProcResourceDepths.begin() + PROffset,
+              ProcResourceDepths.begin() + PROffset + PRKinds, 0);
     return;
   }
 
   // Compute from the block above. A post-order traversal ensures the
   // predecessor is always computed first.
-  TraceBlockInfo *PredTBI = &BlockInfo[TBI->Pred->getNumber()];
+  unsigned PredNum = TBI->Pred->getNumber();
+  TraceBlockInfo *PredTBI = &BlockInfo[PredNum];
   assert(PredTBI->hasValidDepth() && "Trace above has not been computed yet");
   const FixedBlockInfo *PredFBI = MTM.getResources(TBI->Pred);
   TBI->InstrDepth = PredTBI->InstrDepth + PredFBI->InstrCount;
   TBI->Head = PredTBI->Head;
+
+  // Compute per-resource depths.
+  ArrayRef<unsigned> PredPRDepths = getProcResourceDepths(PredNum);
+  ArrayRef<unsigned> PredPRCycles = MTM.getProcResourceCycles(PredNum);
+  for (unsigned K = 0; K != PRKinds; ++K)
+    ProcResourceDepths[PROffset + K] = PredPRDepths[K] + PredPRCycles[K];
 }
 
 // Update resource-related information in the TraceBlockInfo for MBB.
@@ -145,22 +194,33 @@ computeDepthResources(const MachineBasicBlock *MBB) {
 void MachineTraceMetrics::Ensemble::
 computeHeightResources(const MachineBasicBlock *MBB) {
   TraceBlockInfo *TBI = &BlockInfo[MBB->getNumber()];
+  unsigned PRKinds = MTM.SchedModel.getNumProcResourceKinds();
+  unsigned PROffset = MBB->getNumber() * PRKinds;
 
   // Compute resources for the current block.
   TBI->InstrHeight = MTM.getResources(MBB)->InstrCount;
+  ArrayRef<unsigned> PRCycles = MTM.getProcResourceCycles(MBB->getNumber());
 
   // The trace tail is done.
   if (!TBI->Succ) {
     TBI->Tail = MBB->getNumber();
+    std::copy(PRCycles.begin(), PRCycles.end(),
+              ProcResourceHeights.begin() + PROffset);
     return;
   }
 
   // Compute from the block below. A post-order traversal ensures the
   // predecessor is always computed first.
-  TraceBlockInfo *SuccTBI = &BlockInfo[TBI->Succ->getNumber()];
+  unsigned SuccNum = TBI->Succ->getNumber();
+  TraceBlockInfo *SuccTBI = &BlockInfo[SuccNum];
   assert(SuccTBI->hasValidHeight() && "Trace below has not been computed yet");
   TBI->InstrHeight += SuccTBI->InstrHeight;
   TBI->Tail = SuccTBI->Tail;
+
+  // Compute per-resource heights.
+  ArrayRef<unsigned> SuccPRHeights = getProcResourceHeights(SuccNum);
+  for (unsigned K = 0; K != PRKinds; ++K)
+    ProcResourceHeights[PROffset + K] = SuccPRHeights[K] + PRCycles[K];
 }
 
 // Check if depth resources for MBB are valid and return the TBI.
@@ -179,6 +239,31 @@ MachineTraceMetrics::Ensemble::
 getHeightResources(const MachineBasicBlock *MBB) const {
   const TraceBlockInfo *TBI = &BlockInfo[MBB->getNumber()];
   return TBI->hasValidHeight() ? TBI : 0;
+}
+
+/// Get an array of processor resource depths for MBB. Indexed by processor
+/// resource kind, this array contains the scaled processor resources consumed
+/// by all blocks preceding MBB in its trace. It does not include instructions
+/// in MBB.
+///
+/// Compare TraceBlockInfo::InstrDepth.
+ArrayRef<unsigned>
+MachineTraceMetrics::Ensemble::
+getProcResourceDepths(unsigned MBBNum) const {
+  unsigned PRKinds = MTM.SchedModel.getNumProcResourceKinds();
+  return ArrayRef<unsigned>(&ProcResourceDepths[MBBNum * PRKinds], PRKinds);
+}
+
+/// Get an array of processor resource heights for MBB. Indexed by processor
+/// resource kind, this array contains the scaled processor resources consumed
+/// by this block and all blocks following it in its trace.
+///
+/// Compare TraceBlockInfo::InstrHeight.
+ArrayRef<unsigned>
+MachineTraceMetrics::Ensemble::
+getProcResourceHeights(unsigned MBBNum) const {
+  unsigned PRKinds = MTM.SchedModel.getNumProcResourceKinds();
+  return ArrayRef<unsigned>(&ProcResourceHeights[MBBNum * PRKinds], PRKinds);
 }
 
 //===----------------------------------------------------------------------===//
@@ -713,10 +798,23 @@ computeInstrDepths(const MachineBasicBlock *MBB) {
   SmallVector<DataDep, 8> Deps;
   while (!Stack.empty()) {
     MBB = Stack.pop_back_val();
-    DEBUG(dbgs() << "Depths for BB#" << MBB->getNumber() << ":\n");
+    DEBUG(dbgs() << "\nDepths for BB#" << MBB->getNumber() << ":\n");
     TraceBlockInfo &TBI = BlockInfo[MBB->getNumber()];
     TBI.HasValidInstrDepths = true;
     TBI.CriticalPath = 0;
+
+    // Print out resource depths here as well.
+    DEBUG({
+      dbgs() << format("%7u Instructions\n", TBI.InstrDepth);
+      ArrayRef<unsigned> PRDepths = getProcResourceDepths(MBB->getNumber());
+      for (unsigned K = 0; K != PRDepths.size(); ++K)
+        if (PRDepths[K]) {
+          unsigned Factor = MTM.SchedModel.getResourceFactor(K);
+          dbgs() << format("%6uc @ ", MTM.getCycles(PRDepths[K]))
+                 << MTM.SchedModel.getProcResource(K)->Name << " ("
+                 << PRDepths[K]/Factor << " ops x" << Factor << ")\n";
+        }
+    });
 
     // Also compute the critical path length through MBB when possible.
     if (TBI.HasValidInstrHeights)
@@ -928,6 +1026,18 @@ computeInstrHeights(const MachineBasicBlock *MBB) {
     TBI.HasValidInstrHeights = true;
     TBI.CriticalPath = 0;
 
+    DEBUG({
+      dbgs() << format("%7u Instructions\n", TBI.InstrHeight);
+      ArrayRef<unsigned> PRHeights = getProcResourceHeights(MBB->getNumber());
+      for (unsigned K = 0; K != PRHeights.size(); ++K)
+        if (PRHeights[K]) {
+          unsigned Factor = MTM.SchedModel.getResourceFactor(K);
+          dbgs() << format("%6uc @ ", MTM.getCycles(PRHeights[K]))
+                 << MTM.SchedModel.getProcResource(K)->Name << " ("
+                 << PRHeights[K]/Factor << " ops x" << Factor << ")\n";
+        }
+    });
+
     // Get dependencies from PHIs in the trace successor.
     const MachineBasicBlock *Succ = TBI.Succ;
     // If MBB is the last block in the trace, and it has a back-edge to the
@@ -1058,27 +1168,52 @@ MachineTraceMetrics::Trace::getPHIDepth(const MachineInstr *PHI) const {
 }
 
 unsigned MachineTraceMetrics::Trace::getResourceDepth(bool Bottom) const {
-  // For now, we compute the resource depth from instruction count / issue
-  // width. Eventually, we should compute resource depth per functional unit
-  // and return the max.
+  // Find the limiting processor resource.
+  // Numbers have been pre-scaled to be comparable.
+  unsigned PRMax = 0;
+  ArrayRef<unsigned> PRDepths = TE.getProcResourceDepths(getBlockNum());
+  if (Bottom) {
+    ArrayRef<unsigned> PRCycles = TE.MTM.getProcResourceCycles(getBlockNum());
+    for (unsigned K = 0; K != PRDepths.size(); ++K)
+      PRMax = std::max(PRMax, PRDepths[K] + PRCycles[K]);
+  } else {
+    for (unsigned K = 0; K != PRDepths.size(); ++K)
+      PRMax = std::max(PRMax, PRDepths[K]);
+  }
+  // Convert to cycle count.
+  PRMax = TE.MTM.getCycles(PRMax);
+
   unsigned Instrs = TBI.InstrDepth;
   if (Bottom)
     Instrs += TE.MTM.BlockInfo[getBlockNum()].InstrCount;
   if (unsigned IW = TE.MTM.SchedModel.getIssueWidth())
     Instrs /= IW;
   // Assume issue width 1 without a schedule model.
-  return Instrs;
+  return std::max(Instrs, PRMax);
 }
 
 unsigned MachineTraceMetrics::Trace::
 getResourceLength(ArrayRef<const MachineBasicBlock*> Extrablocks) const {
+  // Add up resources above and below the center block.
+  ArrayRef<unsigned> PRDepths = TE.getProcResourceDepths(getBlockNum());
+  ArrayRef<unsigned> PRHeights = TE.getProcResourceHeights(getBlockNum());
+  unsigned PRMax = 0;
+  for (unsigned K = 0; K != PRDepths.size(); ++K) {
+    unsigned PRCycles = PRDepths[K] + PRHeights[K];
+    for (unsigned I = 0; I != Extrablocks.size(); ++I)
+      PRCycles += TE.MTM.getProcResourceCycles(Extrablocks[I]->getNumber())[K];
+    PRMax = std::max(PRMax, PRCycles);
+  }
+  // Convert to cycle count.
+  PRMax = TE.MTM.getCycles(PRMax);
+
   unsigned Instrs = TBI.InstrDepth + TBI.InstrHeight;
   for (unsigned i = 0, e = Extrablocks.size(); i != e; ++i)
     Instrs += TE.MTM.getResources(Extrablocks[i])->InstrCount;
   if (unsigned IW = TE.MTM.SchedModel.getIssueWidth())
     Instrs /= IW;
   // Assume issue width 1 without a schedule model.
-  return Instrs;
+  return std::max(Instrs, PRMax);
 }
 
 void MachineTraceMetrics::Ensemble::print(raw_ostream &OS) const {

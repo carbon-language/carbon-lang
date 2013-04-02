@@ -107,6 +107,13 @@ public:
   /// Get the fixed resource information about MBB. Compute it on demand.
   const FixedBlockInfo *getResources(const MachineBasicBlock*);
 
+  /// Get the scaled number of cycles used per processor resource in MBB.
+  /// This is an array with SchedModel.getNumProcResourceKinds() entries.
+  /// The getResources() function above must have been called first.
+  ///
+  /// These numbers have already been scaled by SchedModel.getResourceFactor().
+  ArrayRef<unsigned> getProcResourceCycles(unsigned MBBNum) const;
+
   /// A virtual register or regunit required by a basic block or its trace
   /// successors.
   struct LiveInReg {
@@ -284,6 +291,8 @@ public:
   class Ensemble {
     SmallVector<TraceBlockInfo, 4> BlockInfo;
     DenseMap<const MachineInstr*, InstrCycles> Cycles;
+    SmallVector<unsigned, 0> ProcResourceDepths;
+    SmallVector<unsigned, 0> ProcResourceHeights;
     friend class Trace;
 
     void computeTrace(const MachineBasicBlock*);
@@ -303,6 +312,8 @@ public:
     const MachineLoop *getLoopFor(const MachineBasicBlock*) const;
     const TraceBlockInfo *getDepthResources(const MachineBasicBlock*) const;
     const TraceBlockInfo *getHeightResources(const MachineBasicBlock*) const;
+    ArrayRef<unsigned> getProcResourceDepths(unsigned MBBNum) const;
+    ArrayRef<unsigned> getProcResourceHeights(unsigned MBBNum) const;
 
   public:
     virtual ~Ensemble();
@@ -343,8 +354,22 @@ private:
   // One entry per basic block, indexed by block number.
   SmallVector<FixedBlockInfo, 4> BlockInfo;
 
+  // Cycles consumed on each processor resource per block.
+  // The number of processor resource kinds is constant for a given subtarget,
+  // but it is not known at compile time. The number of cycles consumed by
+  // block B on processor resource R is at ProcResourceCycles[B*Kinds + R]
+  // where Kinds = SchedModel.getNumProcResourceKinds().
+  SmallVector<unsigned, 0> ProcResourceCycles;
+
   // One ensemble per strategy.
   Ensemble* Ensembles[TS_NumStrategies];
+
+  // Convert scaled resource usage to a cycle count that can be compared with
+  // latencies.
+  unsigned getCycles(unsigned Scaled) {
+    unsigned Factor = SchedModel.getLatencyFactor();
+    return (Scaled + Factor - 1) / Factor;
+  }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS,
