@@ -106,7 +106,7 @@ macro(setup_abi_lib abipathvar abidefines abilibs abifiles abidirs)
           OUTPUT "${CMAKE_BINARY_DIR}/include/${dstdir}/${ifile}"
           COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${incpath}/${fpath}"
-            "${CMAKE_BINARY_DIR}/include/${dstdir}/"
+            "${CMAKE_BINARY_DIR}/include/${dstdir}"
           MAIN_DEPENDENCY "${incpath}/${fpath}"
           )
         list(APPEND LIBCXX_CXX_ABI_DEPS
