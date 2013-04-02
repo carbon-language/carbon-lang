@@ -83,6 +83,9 @@ public:
 	bool
 	Launch (lldb::SBLaunchInfo &launch_info);
 	
+    bool
+	Launch (std::initializer_list<const char*> args = {});
+    
 	void
 	Loop();
     
@@ -113,7 +116,7 @@ public:
         return MemoryMeasurement<A> (a,name, description);
     }
     
-    static void
+    static int
     Run (TestCase& test, int argc, const char** argv);
     
     virtual bool
@@ -157,6 +160,9 @@ public:
     {
         return m_step;
     }
+    
+    static const int RUN_SUCCESS = 0;
+    static const int RUN_SETUP_ERROR = 100;
     
 protected:
     lldb::SBDebugger m_debugger;

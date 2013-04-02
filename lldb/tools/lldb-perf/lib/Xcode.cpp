@@ -33,7 +33,7 @@ Xcode::FetchVariable (SBValue value, uint32_t expand, bool verbose)
 		auto count = value.GetNumChildren();
 		for (int i = 0; i < count; i++)
 		{
-			SBValue child(value.GetChildAtIndex(i,value.IsDynamic() ? lldb::eDynamicCanRunTarget : lldb::eNoDynamicValues, true));
+			SBValue child(value.GetChildAtIndex(i, lldb::eDynamicCanRunTarget, true));
 			FetchVariable (child,expand-1,verbose);
 		}
 	}
@@ -117,7 +117,7 @@ Xcode::RunExpression (SBFrame frame, const char* expression, bool po, bool verbo
 	{
 		auto descr = value.GetObjectDescription();
 		if (descr)
-			printf("%s\n",descr);
+			printf("po = %s\n",descr);
 	}
 }
 

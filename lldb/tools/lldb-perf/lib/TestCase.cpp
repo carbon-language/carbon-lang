@@ -117,6 +117,15 @@ TestCase::Launch (lldb::SBLaunchInfo &launch_info)
     return false;
 }
 
+bool
+TestCase::Launch (std::initializer_list<const char*> args)
+{
+    std::vector<const char*> args_vect(args);
+    args_vect.push_back(NULL);
+    lldb::SBLaunchInfo launch_info((const char**)&args_vect[0]);
+    return Launch(launch_info);
+}
+
 void
 TestCase::SetVerbose (bool b)
 {
@@ -296,7 +305,7 @@ TestCase::Loop ()
 	if (GetVerbose()) printf("I am gonna die at step %d\n",m_step);
 }
 
-void
+int
 TestCase::Run (TestCase& test, int argc, const char** argv)
 {
     if (test.Setup(argc, argv))
@@ -304,6 +313,9 @@ TestCase::Run (TestCase& test, int argc, const char** argv)
         test.Loop();
         Results results;
         test.WriteResults(results);
+        return RUN_SUCCESS;
     }
+    else
+        return RUN_SETUP_ERROR;
 }
 
