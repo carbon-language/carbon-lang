@@ -4788,7 +4788,7 @@ SDValue PPCTargetLowering::LowerINT_TO_FP(SDValue Op,
          "UINT_TO_FP is supported only with FPCVT");
 
   // If we have FCFIDS, then use it when converting to single-precision.
-  // Otherwise, convert to double-prcision and then round.
+  // Otherwise, convert to double-precision and then round.
   unsigned FCFOp = (PPCSubTarget.hasFPCVT() && Op.getValueType() == MVT::f32) ?
                    (Op.getOpcode() == ISD::UINT_TO_FP ?
                     PPCISD::FCFIDUS : PPCISD::FCFIDS) :
