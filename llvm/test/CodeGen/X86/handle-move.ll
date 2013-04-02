@@ -1,7 +1,6 @@
 ; RUN: llc -march=x86-64 -mcpu=core2 -fast-isel -enable-misched -misched=shuffle -misched-bottomup -verify-machineinstrs < %s
 ; RUN: llc -march=x86-64 -mcpu=core2 -fast-isel -enable-misched -misched=shuffle -misched-topdown -verify-machineinstrs < %s
 ; REQUIRES: asserts
-; XFAIL: cygwin,mingw32
 ;
 ; Test the LiveIntervals::handleMove() function.
 ;
