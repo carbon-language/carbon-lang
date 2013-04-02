@@ -178,30 +178,40 @@ public:
   ///  invalidate additional regions that may have changed based on accessing
   ///  the given regions. Optionally, invalidates non-static globals as well.
   /// \param[in] store The initial store
-  /// \param[in] Regions The regions to invalidate.
+  /// \param[in] Values The values to invalidate.
+  /// \param[in] ConstValues The values to invalidate; these are known to be
+  ///   const, so only regions accesible from them should be invalidated.
   /// \param[in] E The current statement being evaluated. Used to conjure
   ///   symbols to mark the values of invalidated regions.
   /// \param[in] Count The current block count. Used to conjure
   ///   symbols to mark the values of invalidated regions.
-  /// \param[in,out] IS A set to fill with any symbols that are no longer
-  ///   accessible. Pass \c NULL if this information will not be used.
   /// \param[in] Call The call expression which will be used to determine which
   ///   globals should get invalidated.
+  /// \param[in,out] IS A set to fill with any symbols that are no longer
+  ///   accessible. Pass \c NULL if this information will not be used.
   /// \param[in,out] ConstIS A set to fill with any symbols corresponding to
-  ///   the ConstRegions.
+  ///   the ConstValues.
+  /// \param[in,out] InvalidatedTopLevel A vector to fill with regions
+  ////  explicitely being invalidated. Pass \c NULL if this
+  ///   information will not be used.
+  /// \param[in,out] InvalidatedTopLevelConst A vector to fill with const 
+  ////  regions explicitely being invalidated. Pass \c NULL if this
+  ///   information will not be used.
   /// \param[in,out] Invalidated A vector to fill with any regions being
   ///   invalidated. This should include any regions explicitly invalidated
   ///   even if they do not currently have bindings. Pass \c NULL if this
   ///   information will not be used.
   virtual StoreRef invalidateRegions(Store store,
-                                     ArrayRef<const MemRegion *> Regions,
-                                     const Expr *E, unsigned Count,
-                                     const LocationContext *LCtx,
-                                     InvalidatedSymbols &IS,
-                                     const CallEvent *Call,
-                                     ArrayRef<const MemRegion *> ConstRegions,
-                                     InvalidatedSymbols &ConstIS,
-                                     InvalidatedRegions *Invalidated) = 0;
+                                  ArrayRef<SVal> Values,
+                                  ArrayRef<SVal> ConstValues,
+                                  const Expr *E, unsigned Count,
+                                  const LocationContext *LCtx,
+                                  const CallEvent *Call,
+                                  InvalidatedSymbols &IS,
+                                  InvalidatedSymbols &ConstIS,
+                                  InvalidatedRegions *InvalidatedTopLevel,
+                                  InvalidatedRegions *InvalidatedTopLevelConst,
+                                  InvalidatedRegions *Invalidated) = 0;
 
   /// enterStackFrame - Let the StoreManager to do something when execution
   /// engine is about to execute into a callee.

@@ -5,7 +5,7 @@ void *malloc(size_t);
 void free(void *);
 void *realloc(void *ptr, size_t size);
 void *calloc(size_t nmemb, size_t size);
-
+char *strdup(const char *s);
 
 void checkThatMallocCheckerIsRunning() {
   malloc(4);
@@ -66,4 +66,37 @@ struct X get() {
   struct X result;
   result.a = malloc(4);
   return result; // no-warning
+}
+
+// Ensure that regions accessible through a LazyCompoundVal trigger region escape.
+// Malloc checker used to report leaks for the following two test cases.
+struct Property {
+  char* getterName;
+  Property(char* n)
+  : getterName(n) {}
+
+};
+void append(Property x);
+
+void appendWrapper(char *getterName) {
+  append(Property(getterName));
+}
+void foo(const char* name) {
+  char* getterName = strdup(name);
+  appendWrapper(getterName); // no-warning
+}
+
+struct NestedProperty {
+  Property prop;
+  NestedProperty(Property p)
+  : prop(p) {}
+};
+void appendNested(NestedProperty x);
+
+void appendWrapperNested(char *getterName) {
+  appendNested(NestedProperty(Property(getterName)));
+}
+void fooNested(const char* name) {
+  char* getterName = strdup(name);
+  appendWrapperNested(getterName); // no-warning
 }

@@ -544,7 +544,8 @@ private:
 };
 
 } // end ento::loc namespace
-} // end GR namespace
+
+} // end ento namespace
 
 } // end clang namespace
 

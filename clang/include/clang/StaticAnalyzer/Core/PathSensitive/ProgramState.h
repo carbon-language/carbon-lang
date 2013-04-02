@@ -250,6 +250,13 @@ public:
                     ArrayRef<const MemRegion *> ConstRegions =
                       ArrayRef<const MemRegion *>()) const;
 
+  ProgramStateRef
+  invalidateRegions(ArrayRef<SVal> Regions, const Expr *E,
+                    unsigned BlockCount, const LocationContext *LCtx,
+                    bool CausesPointerEscape, InvalidatedSymbols *IS = 0,
+                    const CallEvent *Call = 0,
+                    ArrayRef<SVal> ConstRegions = ArrayRef<SVal>()) const;
+
   /// enterStackFrame - Returns the state for entry to the given stack frame,
   ///  preserving the current state.
   ProgramStateRef enterStackFrame(const CallEvent &Call,
@@ -419,15 +426,16 @@ private:
   friend void ProgramStateRetain(const ProgramState *state);
   friend void ProgramStateRelease(const ProgramState *state);
 
+  /// \sa invalidateValues()
   /// \sa invalidateRegions()
   ProgramStateRef
-  invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
+  invalidateRegionsImpl(ArrayRef<SVal> Values,
                         const Expr *E, unsigned BlockCount,
                         const LocationContext *LCtx,
                         bool ResultsInSymbolEscape,
                         InvalidatedSymbols &IS,
                         const CallEvent *Call,
-                        ArrayRef<const MemRegion *> ConstRegions) const;
+                        ArrayRef<SVal> ConstValues) const;
 };
 
 //===----------------------------------------------------------------------===//
