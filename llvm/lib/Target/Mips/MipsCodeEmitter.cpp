@@ -115,6 +115,10 @@ private:
   void emitGlobalAddressUnaligned(const GlobalValue *GV, unsigned Reloc,
                                   int Offset) const;
 
+  /// Expand pseudo instructions with accumulator register operands.
+  void expandACCInstr(MachineBasicBlock::instr_iterator &MI,
+                      MachineBasicBlock &MBB, unsigned Opc) const;
+
   /// \brief Expand pseudo instruction. Return true if MI was expanded.
   bool expandPseudos(MachineBasicBlock::instr_iterator &MI,
                      MachineBasicBlock &MBB) const;
@@ -298,6 +302,14 @@ void MipsCodeEmitter::emitWord(unsigned Word) {
     MCE.emitWordBE(Word);
 }
 
+void MipsCodeEmitter::expandACCInstr(MachineBasicBlock::instr_iterator &MI,
+                                     MachineBasicBlock &MBB,
+                                     unsigned Opc) const {
+  // Expand "pseudomult $ac0, $t0, $t1" to "mult $t0, $t1".
+  BuildMI(MBB, &*MI, MI->getDebugLoc(), II->get(Opc))
+    .addReg(MI->getOperand(1).getReg()).addReg(MI->getOperand(2).getReg());
+}
+
 bool MipsCodeEmitter::expandPseudos(MachineBasicBlock::instr_iterator &MI,
                                     MachineBasicBlock &MBB) const {
   switch (MI->getOpcode()) {
@@ -308,6 +320,30 @@ bool MipsCodeEmitter::expandPseudos(MachineBasicBlock::instr_iterator &MI,
   case Mips::JALRPseudo:
     BuildMI(MBB, &*MI, MI->getDebugLoc(), II->get(Mips::JALR), Mips::RA)
       .addReg(MI->getOperand(0).getReg());
+    break;
+  case Mips::PseudoMULT:
+    expandACCInstr(MI, MBB, Mips::MULT);
+    break;
+  case Mips::PseudoMULTu:
+    expandACCInstr(MI, MBB, Mips::MULTu);
+    break;
+  case Mips::PseudoSDIV:
+    expandACCInstr(MI, MBB, Mips::SDIV);
+    break;
+  case Mips::PseudoUDIV:
+    expandACCInstr(MI, MBB, Mips::UDIV);
+    break;
+  case Mips::PseudoMADD:
+    expandACCInstr(MI, MBB, Mips::MADD);
+    break;
+  case Mips::PseudoMADDU:
+    expandACCInstr(MI, MBB, Mips::MADDU);
+    break;
+  case Mips::PseudoMSUB:
+    expandACCInstr(MI, MBB, Mips::MSUB);
+    break;
+  case Mips::PseudoMSUBU:
+    expandACCInstr(MI, MBB, Mips::MSUBU);
     break;
   default:
     return false;
