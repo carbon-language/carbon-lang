@@ -100,6 +100,7 @@ public:
     Parser.Line.reset(new UnwrappedLine());
     Parser.Line->Level = PreBlockLine->Level;
     Parser.Line->InPPDirective = PreBlockLine->InPPDirective;
+    Parser.CommentsBeforeNextToken.swap(CommentsBeforeNextToken);
   }
 
   ~ScopedLineState() {
@@ -111,6 +112,7 @@ public:
     Parser.MustBreakBeforeNextToken = true;
     if (SwitchToPreprocessorLines)
       Parser.CurrentLines = &Parser.Lines;
+    Parser.CommentsBeforeNextToken.swap(CommentsBeforeNextToken);
   }
 
 private:
@@ -118,6 +120,7 @@ private:
   const bool SwitchToPreprocessorLines;
 
   UnwrappedLine *PreBlockLine;
+  SmallVector<FormatToken, 1> CommentsBeforeNextToken;
 };
 
 UnwrappedLineParser::UnwrappedLineParser(
@@ -822,7 +825,6 @@ void UnwrappedLineParser::readToken() {
     while (!Line->InPPDirective && FormatTok.Tok.is(tok::hash) &&
            ((FormatTok.NewlinesBefore > 0 && FormatTok.HasUnescapedNewline) ||
             FormatTok.IsFirst)) {
-      flushComments(FormatTok.NewlinesBefore > 0);
       // If there is an unfinished unwrapped line, we flush the preprocessor
       // directives only after that unwrapped line was finished later.
       bool SwitchToPreprocessorLines =

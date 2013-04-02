@@ -708,6 +708,15 @@ TEST_F(FormatTest, SplitsLongCxxComments) {
                    getLLVMStyleWithColumns(20)));
 }
 
+TEST_F(FormatTest, ParsesCommentsAdjacentToPPDirectives) {
+  EXPECT_EQ("namespace {}\n// Test\n#define A",
+            format("namespace {}\n   // Test\n#define A"));
+  EXPECT_EQ("namespace {}\n/* Test */\n#define A",
+            format("namespace {}\n   /* Test */\n#define A"));
+  EXPECT_EQ("namespace {}\n/* Test */ #define A",
+            format("namespace {}\n   /* Test */    #define A"));
+}
+
 TEST_F(FormatTest, SplitsLongLinesInComments) {
   EXPECT_EQ("/* This is a long\n"
             " * comment that\n"
