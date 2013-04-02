@@ -21,6 +21,12 @@ include "SparcInstrFormats.td"
 // Feature predicates.
 //===----------------------------------------------------------------------===//
 
+// True when generating 32-bit code.
+def Is32Bit : Predicate<"!Subtarget.is64Bit()">;
+
+// True when generating 64-bit code. This also implies HasV9.
+def Is64Bit : Predicate<"Subtarget.is64Bit()">;
+
 // HasV9 - This predicate is true when the target processor supports V9
 // instructions.  Note that the machine may be running in 32-bit mode.
 def HasV9   : Predicate<"Subtarget.isV9()">;
