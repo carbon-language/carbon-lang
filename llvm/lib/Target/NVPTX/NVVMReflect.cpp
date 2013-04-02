@@ -9,9 +9,13 @@
 //
 // This pass replaces occurences of __nvvm_reflect("string") with an
 // integer based on -nvvm-reflect-list string=<int> option given to this pass.
+// If an undefined string value is seen in a call to __nvvm_reflect("string"),
+// a default value of 0 will be used.
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Pass.h"
 #include "llvm/IR/Function.h"
@@ -38,16 +42,15 @@ namespace llvm { void initializeNVVMReflectPass(PassRegistry &); }
 namespace {
 class LLVM_LIBRARY_VISIBILITY NVVMReflect : public ModulePass {
 private:
-  //std::map<std::string, int> VarMap;
   StringMap<int> VarMap;
-  typedef std::map<std::string, int>::iterator VarMapIter;
-  Function *reflectFunction;
+  typedef DenseMap<std::string, int>::iterator VarMapIter;
+  Function *ReflectFunction;
 
 public:
   static char ID;
   NVVMReflect() : ModulePass(ID) {
     VarMap.clear();
-    reflectFunction = 0;
+    ReflectFunction = 0;
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const { AU.setPreservesAll(); }
@@ -67,48 +70,30 @@ INITIALIZE_PASS(NVVMReflect, "nvvm-reflect",
                 false)
 
 static cl::list<std::string>
-ReflectList("nvvm-reflect-list", cl::value_desc("name=0/1"),
-            cl::desc("A list of string=num assignments, where num=0 or 1"),
+ReflectList("nvvm-reflect-list", cl::value_desc("name=<int>"),
+            cl::desc("A list of string=num assignments"),
             cl::ValueRequired);
 
-/// This function does the same operation as perl's split.
-/// For example, calling this with ("a=1,b=2,c=0", ",") will
-/// return ["a=1", "b=2", "c=0"] in the return std::vector.
-static std::vector<std::string>
-Tokenize(const std::string &str, const std::string &delim) {
-  std::vector<std::string> tokens;
-
-  size_t p0 = 0, p1 = std::string::npos;
-  while (p0 != std::string::npos) {
-    p1 = str.find_first_of(delim, p0);
-    if (p1 != p0) {
-      std::string token = str.substr(p0, p1 - p0);
-      tokens.push_back(token);
-    }
-    p0 = str.find_first_not_of(delim, p1);
-  }
-
-  return tokens;
-}
-
 /// The command line can look as follows :
-/// -R a=1,b=2 -R c=3,d=0 -R e=2
+/// -nvvm-reflect-list a=1,b=2 -nvvm-reflect-list c=3,d=0 -R e=2
 /// The strings "a=1,b=2", "c=3,d=0", "e=2" are available in the
 /// ReflectList vector. First, each of ReflectList[i] is 'split'
 /// using "," as the delimiter. Then each of this part is split
 /// using "=" as the delimiter.
 void NVVMReflect::setVarMap() {
   for (unsigned i = 0, e = ReflectList.size(); i != e; ++i) {
-    //    DEBUG(dbgs() << "Option : "  << ReflectList[i] << std::endl);
-    std::vector<std::string> nameValList = Tokenize(ReflectList[i], ",");
-    for (unsigned j = 0, ej = nameValList.size(); j != ej; ++j) {
-      std::vector<std::string> nameValPair = Tokenize(nameValList[j], "=");
-      assert(nameValPair.size() == 2 && "name=val expected");
-      std::stringstream valstream(nameValPair[1]);
-      int val;
-      valstream >> val;
-      assert((!(valstream.fail())) && "integer value expected");
-      VarMap[nameValPair[0]] = val;
+    DEBUG(dbgs() << "Option : "  << ReflectList[i] << "\n");
+    SmallVector<StringRef, 4> NameValList;
+    StringRef(ReflectList[i]).split(NameValList, ",");
+    for (unsigned j = 0, ej = NameValList.size(); j != ej; ++j) {
+      SmallVector<StringRef, 2> NameValPair;
+      NameValList[j].split(NameValPair, "=");
+      assert(NameValPair.size() == 2 && "name=val expected");
+      std::stringstream ValStream(NameValPair[1]);
+      int Val;
+      ValStream >> Val;
+      assert((!(ValStream.fail())) && "integer value expected");
+      VarMap[NameValPair[0]] = Val;
     }
   }
 }
@@ -119,75 +104,74 @@ bool NVVMReflect::runOnModule(Module &M) {
 
   setVarMap();
 
-  reflectFunction = M.getFunction(NVVM_REFLECT_FUNCTION);
+  ReflectFunction = M.getFunction(NVVM_REFLECT_FUNCTION);
 
   // If reflect function is not used, then there will be
   // no entry in the module.
-  if (reflectFunction == 0) {
+  if (ReflectFunction == 0)
     return false;
-  }
 
   // Validate _reflect function
-  assert(reflectFunction->isDeclaration() &&
+  assert(ReflectFunction->isDeclaration() &&
          "_reflect function should not have a body");
-  assert(reflectFunction->getReturnType()->isIntegerTy() &&
+  assert(ReflectFunction->getReturnType()->isIntegerTy() &&
          "_reflect's return type should be integer");
 
-  std::vector<Instruction *> toRemove;
+  std::vector<Instruction *> ToRemove;
 
-  // Go through the uses of reflectFunction in this Function.
+  // Go through the uses of ReflectFunction in this Function.
   // Each of them should a CallInst with a ConstantArray argument.
   // First validate that. If the c-string corresponding to the
   // ConstantArray can be found successfully, see if it can be
   // found in VarMap. If so, replace the uses of CallInst with the
   // value found in VarMap. If not, replace the use  with value 0.
-  for (Value::use_iterator iter = reflectFunction->use_begin(),
-                           iterEnd = reflectFunction->use_end();
-       iter != iterEnd; ++iter) {
-    assert(isa<CallInst>(*iter) && "Only a call instruction can use _reflect");
-    CallInst *reflect = cast<CallInst>(*iter);
+  for (Value::use_iterator I = ReflectFunction->use_begin(),
+                           E = ReflectFunction->use_end();
+       I != E; ++I) {
+    assert(isa<CallInst>(*I) && "Only a call instruction can use _reflect");
+    CallInst *Reflect = cast<CallInst>(*I);
 
-    assert((reflect->getNumOperands() == 2) &&
+    assert((Reflect->getNumOperands() == 2) &&
            "Only one operand expect for _reflect function");
     // In cuda, we will have an extra constant-to-generic conversion of
     // the string.
-    const Value *conv = reflect->getArgOperand(0);
+    const Value *conv = Reflect->getArgOperand(0);
     assert(isa<CallInst>(conv) && "Expected a const-to-gen conversion");
-    const CallInst *convcall = cast<CallInst>(conv);
-    const Value *str = convcall->getArgOperand(0);
+    const CallInst *ConvCall = cast<CallInst>(conv);
+    const Value *str = ConvCall->getArgOperand(0);
     assert(isa<ConstantExpr>(str) &&
            "Format of _reflect function not recognized");
-    const ConstantExpr *gep = cast<ConstantExpr>(str);
+    const ConstantExpr *GEP = cast<ConstantExpr>(str);
 
-    const Value *sym = gep->getOperand(0);
-    assert(isa<Constant>(sym) && "Format of _reflect function not recognized");
+    const Value *Sym = GEP->getOperand(0);
+    assert(isa<Constant>(Sym) && "Format of _reflect function not recognized");
 
-    const Constant *symstr = cast<Constant>(sym);
+    const Constant *SymStr = cast<Constant>(Sym);
 
-    assert(isa<ConstantDataSequential>(symstr->getOperand(0)) &&
+    assert(isa<ConstantDataSequential>(SymStr->getOperand(0)) &&
            "Format of _reflect function not recognized");
 
-    assert(cast<ConstantDataSequential>(symstr->getOperand(0))->isCString() &&
+    assert(cast<ConstantDataSequential>(SymStr->getOperand(0))->isCString() &&
            "Format of _reflect function not recognized");
 
-    std::string reflectArg =
-        cast<ConstantDataSequential>(symstr->getOperand(0))->getAsString();
+    std::string ReflectArg =
+        cast<ConstantDataSequential>(SymStr->getOperand(0))->getAsString();
 
-    reflectArg = reflectArg.substr(0, reflectArg.size() - 1);
-    //    DEBUG(dbgs() << "Arg of _reflect : " << reflectArg << std::endl);
+    ReflectArg = ReflectArg.substr(0, ReflectArg.size() - 1);
+    DEBUG(dbgs() << "Arg of _reflect : " << ReflectArg << "\n");
 
-    int reflectVal = 0; // The default value is 0
-    if (VarMap.find(reflectArg) != VarMap.end()) {
-      reflectVal = VarMap[reflectArg];
+    int ReflectVal = 0; // The default value is 0
+    if (VarMap.find(ReflectArg) != VarMap.end()) {
+      ReflectVal = VarMap[ReflectArg];
     }
-    reflect->replaceAllUsesWith(
-        ConstantInt::get(reflect->getType(), reflectVal));
-    toRemove.push_back(reflect);
+    Reflect->replaceAllUsesWith(
+        ConstantInt::get(Reflect->getType(), ReflectVal));
+    ToRemove.push_back(Reflect);
   }
-  if (toRemove.size() == 0)
+  if (ToRemove.size() == 0)
     return false;
 
-  for (unsigned i = 0, e = toRemove.size(); i != e; ++i)
-    toRemove[i]->eraseFromParent();
+  for (unsigned i = 0, e = ToRemove.size(); i != e; ++i)
+    ToRemove[i]->eraseFromParent();
   return true;
 }
