@@ -27,7 +27,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/YAMLParser.h"
+#include "llvm/Support/YAMLTraits.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 #include <vector>
@@ -36,6 +36,8 @@ using namespace llvm;
 
 static cl::opt<std::string>
   Input(cl::Positional, cl::desc("<input>"), cl::init("-"));
+
+namespace {
 
 template<class T>
 typename llvm::enable_if_c<std::numeric_limits<T>::is_integer, bool>::type
@@ -111,553 +113,127 @@ static bool hexStringToByteArray(StringRef Str, ContainerOut &Out) {
   return true;
 }
 
+// The structure of the yaml files is not an exact 1:1 match to COFF. In order
+// to use yaml::IO, we use these structures which are closer to the source.
+namespace COFFYAML {
+  struct Relocation {
+    uint32_t VirtualAddress;
+    uint32_t SymbolTableIndex;
+    COFF::RelocationTypeX86 Type;
+  };
+
+  struct Section {
+    std::vector<COFF::SectionCharacteristics> Characteristics;
+    StringRef SectionData;
+    std::vector<Relocation> Relocations;
+    StringRef Name;
+  };
+
+  struct Header {
+    COFF::MachineTypes Machine;
+  };
+
+  struct Symbol {
+    COFF::SymbolBaseType SimpleType;
+    uint8_t NumberOfAuxSymbols;
+    StringRef Name;
+    COFF::SymbolStorageClass StorageClass;
+    StringRef AuxillaryData;
+    COFF::SymbolComplexType ComplexType;
+    uint32_t Value;
+    uint16_t SectionNumber;
+  };
+
+  struct Object {
+    Header HeaderData;
+    std::vector<Section> Sections;
+    std::vector<Symbol> Symbols;
+  };
+}
+
 /// This parses a yaml stream that represents a COFF object file.
 /// See docs/yaml2obj for the yaml scheema.
 struct COFFParser {
-  COFFParser(yaml::Stream &Input) : YS(Input) {
+  COFFParser(COFFYAML::Object &Obj) : Obj(Obj) {
     std::memset(&Header, 0, sizeof(Header));
     // A COFF string table always starts with a 4 byte size field. Offsets into
     // it include this size, so allocate it now.
     StringTable.append(4, 0);
   }
 
-  bool parseHeader(yaml::Node *HeaderN) {
-    yaml::MappingNode *MN = dyn_cast<yaml::MappingNode>(HeaderN);
-    if (!MN) {
-      YS.printError(HeaderN, "header's value must be a mapping node");
-      return false;
-    }
-    for (yaml::MappingNode::iterator i = MN->begin(), e = MN->end();
-                                     i != e; ++i) {
-      yaml::ScalarNode *Key = dyn_cast<yaml::ScalarNode>(i->getKey());
-      if (!Key) {
-        YS.printError(i->getKey(), "Keys must be scalar values");
-        return false;
-      }
-      SmallString<32> Storage;
-      StringRef KeyValue = Key->getValue(Storage);
-      if (KeyValue == "Characteristics") {
-        if (!parseHeaderCharacteristics(i->getValue()))
-          return false;
-      } else {
-        yaml::ScalarNode *Value = dyn_cast<yaml::ScalarNode>(i->getValue());
-        if (!Value) {
-          YS.printError(Value,
-            Twine(KeyValue) + " must be a scalar value");
-          return false;
-        }
-        if (KeyValue == "Machine") {
-          uint16_t Machine = COFF::MT_Invalid;
-          if (!getAs(Value, Machine)) {
-            // It's not a raw number, try matching the string.
-            StringRef ValueValue = Value->getValue(Storage);
-            Machine = StringSwitch<COFF::MachineTypes>(ValueValue)
-              .Case( "IMAGE_FILE_MACHINE_UNKNOWN"
-                   , COFF::IMAGE_FILE_MACHINE_UNKNOWN)
-              .Case( "IMAGE_FILE_MACHINE_AM33"
-                   , COFF::IMAGE_FILE_MACHINE_AM33)
-              .Case( "IMAGE_FILE_MACHINE_AMD64"
-                   , COFF::IMAGE_FILE_MACHINE_AMD64)
-              .Case( "IMAGE_FILE_MACHINE_ARM"
-                   , COFF::IMAGE_FILE_MACHINE_ARM)
-              .Case( "IMAGE_FILE_MACHINE_ARMV7"
-                   , COFF::IMAGE_FILE_MACHINE_ARMV7)
-              .Case( "IMAGE_FILE_MACHINE_EBC"
-                   , COFF::IMAGE_FILE_MACHINE_EBC)
-              .Case( "IMAGE_FILE_MACHINE_I386"
-                   , COFF::IMAGE_FILE_MACHINE_I386)
-              .Case( "IMAGE_FILE_MACHINE_IA64"
-                   , COFF::IMAGE_FILE_MACHINE_IA64)
-              .Case( "IMAGE_FILE_MACHINE_M32R"
-                   , COFF::IMAGE_FILE_MACHINE_M32R)
-              .Case( "IMAGE_FILE_MACHINE_MIPS16"
-                   , COFF::IMAGE_FILE_MACHINE_MIPS16)
-              .Case( "IMAGE_FILE_MACHINE_MIPSFPU"
-                   , COFF::IMAGE_FILE_MACHINE_MIPSFPU)
-              .Case( "IMAGE_FILE_MACHINE_MIPSFPU16"
-                   , COFF::IMAGE_FILE_MACHINE_MIPSFPU16)
-              .Case( "IMAGE_FILE_MACHINE_POWERPC"
-                   , COFF::IMAGE_FILE_MACHINE_POWERPC)
-              .Case( "IMAGE_FILE_MACHINE_POWERPCFP"
-                   , COFF::IMAGE_FILE_MACHINE_POWERPCFP)
-              .Case( "IMAGE_FILE_MACHINE_R4000"
-                   , COFF::IMAGE_FILE_MACHINE_R4000)
-              .Case( "IMAGE_FILE_MACHINE_SH3"
-                   , COFF::IMAGE_FILE_MACHINE_SH3)
-              .Case( "IMAGE_FILE_MACHINE_SH3DSP"
-                   , COFF::IMAGE_FILE_MACHINE_SH3DSP)
-              .Case( "IMAGE_FILE_MACHINE_SH4"
-                   , COFF::IMAGE_FILE_MACHINE_SH4)
-              .Case( "IMAGE_FILE_MACHINE_SH5"
-                   , COFF::IMAGE_FILE_MACHINE_SH5)
-              .Case( "IMAGE_FILE_MACHINE_THUMB"
-                   , COFF::IMAGE_FILE_MACHINE_THUMB)
-              .Case( "IMAGE_FILE_MACHINE_WCEMIPSV2"
-                   , COFF::IMAGE_FILE_MACHINE_WCEMIPSV2)
-              .Default(COFF::MT_Invalid);
-            if (Machine == COFF::MT_Invalid) {
-              YS.printError(Value, "Invalid value for Machine");
-              return false;
-            }
-          }
-          Header.Machine = Machine;
-        } else if (KeyValue == "NumberOfSections") {
-          if (!getAs(Value, Header.NumberOfSections)) {
-              YS.printError(Value, "Invalid value for NumberOfSections");
-              return false;
-          }
-        } else if (KeyValue == "TimeDateStamp") {
-          if (!getAs(Value, Header.TimeDateStamp)) {
-              YS.printError(Value, "Invalid value for TimeDateStamp");
-              return false;
-          }
-        } else if (KeyValue == "PointerToSymbolTable") {
-          if (!getAs(Value, Header.PointerToSymbolTable)) {
-              YS.printError(Value, "Invalid value for PointerToSymbolTable");
-              return false;
-          }
-        } else if (KeyValue == "NumberOfSymbols") {
-          if (!getAs(Value, Header.NumberOfSymbols)) {
-              YS.printError(Value, "Invalid value for NumberOfSymbols");
-              return false;
-          }
-        } else if (KeyValue == "SizeOfOptionalHeader") {
-          if (!getAs(Value, Header.SizeOfOptionalHeader)) {
-              YS.printError(Value, "Invalid value for SizeOfOptionalHeader");
-              return false;
-          }
-        } else {
-          YS.printError(Key, "Unrecognized key in header");
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  bool parseHeaderCharacteristics(yaml::Node *Characteristics) {
-    yaml::ScalarNode *Value = dyn_cast<yaml::ScalarNode>(Characteristics);
-    yaml::SequenceNode *SeqValue
-      = dyn_cast<yaml::SequenceNode>(Characteristics);
-    if (!Value && !SeqValue) {
-      YS.printError(Characteristics,
-        "Characteristics must either be a number or sequence");
-      return false;
-    }
-    if (Value) {
-      if (!getAs(Value, Header.Characteristics)) {
-        YS.printError(Value, "Invalid value for Characteristics");
-        return false;
-      }
-    } else {
-      for (yaml::SequenceNode::iterator ci = SeqValue->begin(),
-                                        ce = SeqValue->end();
-                                        ci != ce; ++ci) {
-        yaml::ScalarNode *CharValue = dyn_cast<yaml::ScalarNode>(&*ci);
-        if (!CharValue) {
-          YS.printError(CharValue,
-            "Characteristics must be scalar values");
-          return false;
-        }
-        SmallString<32> Storage;
-        StringRef Char = CharValue->getValue(Storage);
-        uint16_t Characteristic = StringSwitch<COFF::Characteristics>(Char)
-          .Case( "IMAGE_FILE_RELOCS_STRIPPED"
-                , COFF::IMAGE_FILE_RELOCS_STRIPPED)
-          .Case( "IMAGE_FILE_EXECUTABLE_IMAGE"
-                , COFF::IMAGE_FILE_EXECUTABLE_IMAGE)
-          .Case( "IMAGE_FILE_LINE_NUMS_STRIPPED"
-                , COFF::IMAGE_FILE_LINE_NUMS_STRIPPED)
-          .Case( "IMAGE_FILE_LOCAL_SYMS_STRIPPED"
-                , COFF::IMAGE_FILE_LOCAL_SYMS_STRIPPED)
-          .Case( "IMAGE_FILE_AGGRESSIVE_WS_TRIM"
-                , COFF::IMAGE_FILE_AGGRESSIVE_WS_TRIM)
-          .Case( "IMAGE_FILE_LARGE_ADDRESS_AWARE"
-                , COFF::IMAGE_FILE_LARGE_ADDRESS_AWARE)
-          .Case( "IMAGE_FILE_BYTES_REVERSED_LO"
-                , COFF::IMAGE_FILE_BYTES_REVERSED_LO)
-          .Case( "IMAGE_FILE_32BIT_MACHINE"
-                , COFF::IMAGE_FILE_32BIT_MACHINE)
-          .Case( "IMAGE_FILE_DEBUG_STRIPPED"
-                , COFF::IMAGE_FILE_DEBUG_STRIPPED)
-          .Case( "IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP"
-                , COFF::IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP)
-          .Case( "IMAGE_FILE_SYSTEM"
-                , COFF::IMAGE_FILE_SYSTEM)
-          .Case( "IMAGE_FILE_DLL"
-                , COFF::IMAGE_FILE_DLL)
-          .Case( "IMAGE_FILE_UP_SYSTEM_ONLY"
-                , COFF::IMAGE_FILE_UP_SYSTEM_ONLY)
-          .Default(COFF::C_Invalid);
-        if (Characteristic == COFF::C_Invalid) {
-          // TODO: Typo-correct.
-          YS.printError(CharValue,
-            "Invalid value for Characteristic");
-          return false;
-        }
-        Header.Characteristics |= Characteristic;
-      }
-    }
-    return true;
-  }
-
-  bool parseSections(yaml::Node *SectionsN) {
-    yaml::SequenceNode *SN = dyn_cast<yaml::SequenceNode>(SectionsN);
-    if (!SN) {
-      YS.printError(SectionsN, "Sections must be a sequence");
-      return false;
-    }
-    for (yaml::SequenceNode::iterator i = SN->begin(), e = SN->end();
-                                      i != e; ++i) {
+  bool parseSections() {
+    for (std::vector<COFFYAML::Section>::iterator i = Obj.Sections.begin(),
+           e = Obj.Sections.end(); i != e; ++i) {
+      const COFFYAML::Section &YamlSection = *i;
       Section Sec;
       std::memset(&Sec.Header, 0, sizeof(Sec.Header));
-      yaml::MappingNode *SecMap = dyn_cast<yaml::MappingNode>(&*i);
-      if (!SecMap) {
-        YS.printError(&*i, "Section entry must be a map");
-        return false;
-      }
-      for (yaml::MappingNode::iterator si = SecMap->begin(), se = SecMap->end();
-                                       si != se; ++si) {
-        yaml::ScalarNode *Key = dyn_cast<yaml::ScalarNode>(si->getKey());
-        if (!Key) {
-          YS.printError(si->getKey(), "Keys must be scalar values");
+
+      // If the name is less than 8 bytes, store it in place, otherwise
+      // store it in the string table.
+      StringRef Name = YamlSection.Name;
+      std::fill_n(Sec.Header.Name, unsigned(COFF::NameSize), 0);
+      if (Name.size() <= COFF::NameSize) {
+        std::copy(Name.begin(), Name.end(), Sec.Header.Name);
+      } else {
+        // Add string to the string table and format the index for output.
+        unsigned Index = getStringIndex(Name);
+        std::string str = utostr(Index);
+        if (str.size() > 7) {
+          errs() << "String table got too large";
           return false;
         }
-        SmallString<32> Storage;
-        StringRef KeyValue = Key->getValue(Storage);
+        Sec.Header.Name[0] = '/';
+        std::copy(str.begin(), str.end(), Sec.Header.Name + 1);
+      }
 
-        yaml::ScalarNode *Value = dyn_cast<yaml::ScalarNode>(si->getValue());
-        if (KeyValue == "Name") {
-          // If the name is less than 8 bytes, store it in place, otherwise
-          // store it in the string table.
-          StringRef Name = Value->getValue(Storage);
-          std::fill_n(Sec.Header.Name, unsigned(COFF::NameSize), 0);
-          if (Name.size() <= COFF::NameSize) {
-            std::copy(Name.begin(), Name.end(), Sec.Header.Name);
-          } else {
-            // Add string to the string table and format the index for output.
-            unsigned Index = getStringIndex(Name);
-            std::string str = utostr(Index);
-            if (str.size() > 7) {
-              YS.printError(Value, "String table got too large");
-              return false;
-            }
-            Sec.Header.Name[0] = '/';
-            std::copy(str.begin(), str.end(), Sec.Header.Name + 1);
-          }
-        } else if (KeyValue == "VirtualSize") {
-          if (!getAs(Value, Sec.Header.VirtualSize)) {
-            YS.printError(Value, "Invalid value for VirtualSize");
-            return false;
-          }
-        } else if (KeyValue == "VirtualAddress") {
-          if (!getAs(Value, Sec.Header.VirtualAddress)) {
-            YS.printError(Value, "Invalid value for VirtualAddress");
-            return false;
-          }
-        } else if (KeyValue == "SizeOfRawData") {
-          if (!getAs(Value, Sec.Header.SizeOfRawData)) {
-            YS.printError(Value, "Invalid value for SizeOfRawData");
-            return false;
-          }
-        } else if (KeyValue == "PointerToRawData") {
-          if (!getAs(Value, Sec.Header.PointerToRawData)) {
-            YS.printError(Value, "Invalid value for PointerToRawData");
-            return false;
-          }
-        } else if (KeyValue == "PointerToRelocations") {
-          if (!getAs(Value, Sec.Header.PointerToRelocations)) {
-            YS.printError(Value, "Invalid value for PointerToRelocations");
-            return false;
-          }
-        } else if (KeyValue == "PointerToLineNumbers") {
-          if (!getAs(Value, Sec.Header.PointerToLineNumbers)) {
-            YS.printError(Value, "Invalid value for PointerToLineNumbers");
-            return false;
-          }
-        } else if (KeyValue == "NumberOfRelocations") {
-          if (!getAs(Value, Sec.Header.NumberOfRelocations)) {
-            YS.printError(Value, "Invalid value for NumberOfRelocations");
-            return false;
-          }
-        } else if (KeyValue == "NumberOfLineNumbers") {
-          if (!getAs(Value, Sec.Header.NumberOfLineNumbers)) {
-            YS.printError(Value, "Invalid value for NumberOfLineNumbers");
-            return false;
-          }
-        } else if (KeyValue == "Characteristics") {
-          yaml::SequenceNode *SeqValue
-            = dyn_cast<yaml::SequenceNode>(si->getValue());
-          if (!Value && !SeqValue) {
-            YS.printError(si->getValue(),
-              "Characteristics must either be a number or sequence");
-            return false;
-          }
-          if (Value) {
-            if (!getAs(Value, Sec.Header.Characteristics)) {
-              YS.printError(Value, "Invalid value for Characteristics");
-              return false;
-            }
-          } else {
-            for (yaml::SequenceNode::iterator ci = SeqValue->begin(),
-                                              ce = SeqValue->end();
-                                              ci != ce; ++ci) {
-              yaml::ScalarNode *CharValue = dyn_cast<yaml::ScalarNode>(&*ci);
-              if (!CharValue) {
-                YS.printError(CharValue, "Invalid value for Characteristics");
-                return false;
-              }
-              StringRef Char = CharValue->getValue(Storage);
-              uint32_t Characteristic =
-                StringSwitch<COFF::SectionCharacteristics>(Char)
-                .Case( "IMAGE_SCN_TYPE_NO_PAD"
-                     , COFF::IMAGE_SCN_TYPE_NO_PAD)
-                .Case( "IMAGE_SCN_CNT_CODE"
-                     , COFF::IMAGE_SCN_CNT_CODE)
-                .Case( "IMAGE_SCN_CNT_INITIALIZED_DATA"
-                     , COFF::IMAGE_SCN_CNT_INITIALIZED_DATA)
-                .Case( "IMAGE_SCN_CNT_UNINITIALIZED_DATA"
-                     , COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)
-                .Case( "IMAGE_SCN_LNK_OTHER"
-                     , COFF::IMAGE_SCN_LNK_OTHER)
-                .Case( "IMAGE_SCN_LNK_INFO"
-                     , COFF::IMAGE_SCN_LNK_INFO)
-                .Case( "IMAGE_SCN_LNK_REMOVE"
-                     , COFF::IMAGE_SCN_LNK_REMOVE)
-                .Case( "IMAGE_SCN_LNK_COMDAT"
-                     , COFF::IMAGE_SCN_LNK_COMDAT)
-                .Case( "IMAGE_SCN_GPREL"
-                     , COFF::IMAGE_SCN_GPREL)
-                .Case( "IMAGE_SCN_MEM_PURGEABLE"
-                     , COFF::IMAGE_SCN_MEM_PURGEABLE)
-                .Case( "IMAGE_SCN_MEM_16BIT"
-                     , COFF::IMAGE_SCN_MEM_16BIT)
-                .Case( "IMAGE_SCN_MEM_LOCKED"
-                     , COFF::IMAGE_SCN_MEM_LOCKED)
-                .Case( "IMAGE_SCN_MEM_PRELOAD"
-                     , COFF::IMAGE_SCN_MEM_PRELOAD)
-                .Case( "IMAGE_SCN_ALIGN_1BYTES"
-                     , COFF::IMAGE_SCN_ALIGN_1BYTES)
-                .Case( "IMAGE_SCN_ALIGN_2BYTES"
-                     , COFF::IMAGE_SCN_ALIGN_2BYTES)
-                .Case( "IMAGE_SCN_ALIGN_4BYTES"
-                     , COFF::IMAGE_SCN_ALIGN_4BYTES)
-                .Case( "IMAGE_SCN_ALIGN_8BYTES"
-                     , COFF::IMAGE_SCN_ALIGN_8BYTES)
-                .Case( "IMAGE_SCN_ALIGN_16BYTES"
-                     , COFF::IMAGE_SCN_ALIGN_16BYTES)
-                .Case( "IMAGE_SCN_ALIGN_32BYTES"
-                     , COFF::IMAGE_SCN_ALIGN_32BYTES)
-                .Case( "IMAGE_SCN_ALIGN_64BYTES"
-                     , COFF::IMAGE_SCN_ALIGN_64BYTES)
-                .Case( "IMAGE_SCN_ALIGN_128BYTES"
-                     , COFF::IMAGE_SCN_ALIGN_128BYTES)
-                .Case( "IMAGE_SCN_ALIGN_256BYTES"
-                     , COFF::IMAGE_SCN_ALIGN_256BYTES)
-                .Case( "IMAGE_SCN_ALIGN_512BYTES"
-                     , COFF::IMAGE_SCN_ALIGN_512BYTES)
-                .Case( "IMAGE_SCN_ALIGN_1024BYTES"
-                     , COFF::IMAGE_SCN_ALIGN_1024BYTES)
-                .Case( "IMAGE_SCN_ALIGN_2048BYTES"
-                     , COFF::IMAGE_SCN_ALIGN_2048BYTES)
-                .Case( "IMAGE_SCN_ALIGN_4096BYTES"
-                     , COFF::IMAGE_SCN_ALIGN_4096BYTES)
-                .Case( "IMAGE_SCN_ALIGN_8192BYTES"
-                     , COFF::IMAGE_SCN_ALIGN_8192BYTES)
-                .Case( "IMAGE_SCN_LNK_NRELOC_OVFL"
-                     , COFF::IMAGE_SCN_LNK_NRELOC_OVFL)
-                .Case( "IMAGE_SCN_MEM_DISCARDABLE"
-                     , COFF::IMAGE_SCN_MEM_DISCARDABLE)
-                .Case( "IMAGE_SCN_MEM_NOT_CACHED"
-                     , COFF::IMAGE_SCN_MEM_NOT_CACHED)
-                .Case( "IMAGE_SCN_MEM_NOT_PAGED"
-                     , COFF::IMAGE_SCN_MEM_NOT_PAGED)
-                .Case( "IMAGE_SCN_MEM_SHARED"
-                     , COFF::IMAGE_SCN_MEM_SHARED)
-                .Case( "IMAGE_SCN_MEM_EXECUTE"
-                     , COFF::IMAGE_SCN_MEM_EXECUTE)
-                .Case( "IMAGE_SCN_MEM_READ"
-                     , COFF::IMAGE_SCN_MEM_READ)
-                .Case( "IMAGE_SCN_MEM_WRITE"
-                     , COFF::IMAGE_SCN_MEM_WRITE)
-                .Default(COFF::SC_Invalid);
-              if (Characteristic == COFF::SC_Invalid) {
-                YS.printError(CharValue, "Invalid value for Characteristic");
-                return false;
-              }
-              Sec.Header.Characteristics |= Characteristic;
-            }
-          }
-        } else if (KeyValue == "SectionData") {
-          yaml::ScalarNode *Value = dyn_cast<yaml::ScalarNode>(si->getValue());
-          SmallString<32> Storage;
-          StringRef Data = Value->getValue(Storage);
-          if (!hexStringToByteArray(Data, Sec.Data)) {
-            YS.printError(Value, "SectionData must be a collection of pairs of"
-                                 "hex bytes");
-            return false;
-          }
-        } else
-          si->skip();
+      for (std::vector<COFF::SectionCharacteristics>::const_iterator i =
+             YamlSection.Characteristics.begin(),
+             e = YamlSection.Characteristics.end();
+           i != e; ++i) {
+        uint32_t Characteristic = *i;
+        Sec.Header.Characteristics |= Characteristic;
+      }
+
+      StringRef Data = YamlSection.SectionData;
+      if (!hexStringToByteArray(Data, Sec.Data)) {
+        errs() << "SectionData must be a collection of pairs of hex bytes";
+        return false;
       }
       Sections.push_back(Sec);
     }
     return true;
   }
 
-  bool parseSymbols(yaml::Node *SymbolsN) {
-    yaml::SequenceNode *SN = dyn_cast<yaml::SequenceNode>(SymbolsN);
-    if (!SN) {
-      YS.printError(SymbolsN, "Symbols must be a sequence");
-      return false;
-    }
-    for (yaml::SequenceNode::iterator i = SN->begin(), e = SN->end();
-                                      i != e; ++i) {
+  bool parseSymbols() {
+    for (std::vector<COFFYAML::Symbol>::iterator i = Obj.Symbols.begin(),
+           e = Obj.Symbols.end(); i != e; ++i) {
+      COFFYAML::Symbol YamlSymbol = *i;
       Symbol Sym;
       std::memset(&Sym.Header, 0, sizeof(Sym.Header));
-      yaml::MappingNode *SymMap = dyn_cast<yaml::MappingNode>(&*i);
-      if (!SymMap) {
-        YS.printError(&*i, "Symbol must be a map");
-        return false;
-      }
-      for (yaml::MappingNode::iterator si = SymMap->begin(), se = SymMap->end();
-                                       si != se; ++si) {
-        yaml::ScalarNode *Key = dyn_cast<yaml::ScalarNode>(si->getKey());
-        if (!Key) {
-          YS.printError(si->getKey(), "Keys must be scalar values");
-          return false;
-        }
-        SmallString<32> Storage;
-        StringRef KeyValue = Key->getValue(Storage);
 
-        yaml::ScalarNode *Value = dyn_cast<yaml::ScalarNode>(si->getValue());
-        if (!Value) {
-          YS.printError(si->getValue(), "Must be a scalar value");
-          return false;
-        }
-        if (KeyValue == "Name") {
-          // If the name is less than 8 bytes, store it in place, otherwise
-          // store it in the string table.
-          StringRef Name = Value->getValue(Storage);
-          std::fill_n(Sym.Header.Name, unsigned(COFF::NameSize), 0);
-          if (Name.size() <= COFF::NameSize) {
-            std::copy(Name.begin(), Name.end(), Sym.Header.Name);
-          } else {
-            // Add string to the string table and format the index for output.
-            unsigned Index = getStringIndex(Name);
-            *reinterpret_cast<support::aligned_ulittle32_t*>(
-              Sym.Header.Name + 4) = Index;
-          }
-        } else if (KeyValue == "Value") {
-          if (!getAs(Value, Sym.Header.Value)) {
-            YS.printError(Value, "Invalid value for Value");
-            return false;
-          }
-        } else if (KeyValue == "SimpleType") {
-          Sym.Header.Type |= StringSwitch<COFF::SymbolBaseType>(
-            Value->getValue(Storage))
-            .Case("IMAGE_SYM_TYPE_NULL", COFF::IMAGE_SYM_TYPE_NULL)
-            .Case("IMAGE_SYM_TYPE_VOID", COFF::IMAGE_SYM_TYPE_VOID)
-            .Case("IMAGE_SYM_TYPE_CHAR", COFF::IMAGE_SYM_TYPE_CHAR)
-            .Case("IMAGE_SYM_TYPE_SHORT", COFF::IMAGE_SYM_TYPE_SHORT)
-            .Case("IMAGE_SYM_TYPE_INT", COFF::IMAGE_SYM_TYPE_INT)
-            .Case("IMAGE_SYM_TYPE_LONG", COFF::IMAGE_SYM_TYPE_LONG)
-            .Case("IMAGE_SYM_TYPE_FLOAT", COFF::IMAGE_SYM_TYPE_FLOAT)
-            .Case("IMAGE_SYM_TYPE_DOUBLE", COFF::IMAGE_SYM_TYPE_DOUBLE)
-            .Case("IMAGE_SYM_TYPE_STRUCT", COFF::IMAGE_SYM_TYPE_STRUCT)
-            .Case("IMAGE_SYM_TYPE_UNION", COFF::IMAGE_SYM_TYPE_UNION)
-            .Case("IMAGE_SYM_TYPE_ENUM", COFF::IMAGE_SYM_TYPE_ENUM)
-            .Case("IMAGE_SYM_TYPE_MOE", COFF::IMAGE_SYM_TYPE_MOE)
-            .Case("IMAGE_SYM_TYPE_BYTE", COFF::IMAGE_SYM_TYPE_BYTE)
-            .Case("IMAGE_SYM_TYPE_WORD", COFF::IMAGE_SYM_TYPE_WORD)
-            .Case("IMAGE_SYM_TYPE_UINT", COFF::IMAGE_SYM_TYPE_UINT)
-            .Case("IMAGE_SYM_TYPE_DWORD", COFF::IMAGE_SYM_TYPE_DWORD)
-            .Default(COFF::IMAGE_SYM_TYPE_NULL);
-        } else if (KeyValue == "ComplexType") {
-          Sym.Header.Type |= StringSwitch<COFF::SymbolComplexType>(
-            Value->getValue(Storage))
-            .Case("IMAGE_SYM_DTYPE_NULL", COFF::IMAGE_SYM_DTYPE_NULL)
-            .Case("IMAGE_SYM_DTYPE_POINTER", COFF::IMAGE_SYM_DTYPE_POINTER)
-            .Case("IMAGE_SYM_DTYPE_FUNCTION", COFF::IMAGE_SYM_DTYPE_FUNCTION)
-            .Case("IMAGE_SYM_DTYPE_ARRAY", COFF::IMAGE_SYM_DTYPE_ARRAY)
-            .Default(COFF::IMAGE_SYM_DTYPE_NULL)
-            << COFF::SCT_COMPLEX_TYPE_SHIFT;
-        } else if (KeyValue == "StorageClass") {
-          Sym.Header.StorageClass = StringSwitch<COFF::SymbolStorageClass>(
-            Value->getValue(Storage))
-            .Case( "IMAGE_SYM_CLASS_END_OF_FUNCTION"
-                 , COFF::IMAGE_SYM_CLASS_END_OF_FUNCTION)
-            .Case( "IMAGE_SYM_CLASS_NULL"
-                 , COFF::IMAGE_SYM_CLASS_NULL)
-            .Case( "IMAGE_SYM_CLASS_AUTOMATIC"
-                 , COFF::IMAGE_SYM_CLASS_AUTOMATIC)
-            .Case( "IMAGE_SYM_CLASS_EXTERNAL"
-                 , COFF::IMAGE_SYM_CLASS_EXTERNAL)
-            .Case( "IMAGE_SYM_CLASS_STATIC"
-                 , COFF::IMAGE_SYM_CLASS_STATIC)
-            .Case( "IMAGE_SYM_CLASS_REGISTER"
-                 , COFF::IMAGE_SYM_CLASS_REGISTER)
-            .Case( "IMAGE_SYM_CLASS_EXTERNAL_DEF"
-                 , COFF::IMAGE_SYM_CLASS_EXTERNAL_DEF)
-            .Case( "IMAGE_SYM_CLASS_LABEL"
-                 , COFF::IMAGE_SYM_CLASS_LABEL)
-            .Case( "IMAGE_SYM_CLASS_UNDEFINED_LABEL"
-                 , COFF::IMAGE_SYM_CLASS_UNDEFINED_LABEL)
-            .Case( "IMAGE_SYM_CLASS_MEMBER_OF_STRUCT"
-                 , COFF::IMAGE_SYM_CLASS_MEMBER_OF_STRUCT)
-            .Case( "IMAGE_SYM_CLASS_ARGUMENT"
-                 , COFF::IMAGE_SYM_CLASS_ARGUMENT)
-            .Case( "IMAGE_SYM_CLASS_STRUCT_TAG"
-                 , COFF::IMAGE_SYM_CLASS_STRUCT_TAG)
-            .Case( "IMAGE_SYM_CLASS_MEMBER_OF_UNION"
-                 , COFF::IMAGE_SYM_CLASS_MEMBER_OF_UNION)
-            .Case( "IMAGE_SYM_CLASS_UNION_TAG"
-                 , COFF::IMAGE_SYM_CLASS_UNION_TAG)
-            .Case( "IMAGE_SYM_CLASS_TYPE_DEFINITION"
-                 , COFF::IMAGE_SYM_CLASS_TYPE_DEFINITION)
-            .Case( "IMAGE_SYM_CLASS_UNDEFINED_STATIC"
-                 , COFF::IMAGE_SYM_CLASS_UNDEFINED_STATIC)
-            .Case( "IMAGE_SYM_CLASS_ENUM_TAG"
-                 , COFF::IMAGE_SYM_CLASS_ENUM_TAG)
-            .Case( "IMAGE_SYM_CLASS_MEMBER_OF_ENUM"
-                 , COFF::IMAGE_SYM_CLASS_MEMBER_OF_ENUM)
-            .Case( "IMAGE_SYM_CLASS_REGISTER_PARAM"
-                 , COFF::IMAGE_SYM_CLASS_REGISTER_PARAM)
-            .Case( "IMAGE_SYM_CLASS_BIT_FIELD"
-                 , COFF::IMAGE_SYM_CLASS_BIT_FIELD)
-            .Case( "IMAGE_SYM_CLASS_BLOCK"
-                 , COFF::IMAGE_SYM_CLASS_BLOCK)
-            .Case( "IMAGE_SYM_CLASS_FUNCTION"
-                 , COFF::IMAGE_SYM_CLASS_FUNCTION)
-            .Case( "IMAGE_SYM_CLASS_END_OF_STRUCT"
-                 , COFF::IMAGE_SYM_CLASS_END_OF_STRUCT)
-            .Case( "IMAGE_SYM_CLASS_FILE"
-                 , COFF::IMAGE_SYM_CLASS_FILE)
-            .Case( "IMAGE_SYM_CLASS_SECTION"
-                 , COFF::IMAGE_SYM_CLASS_SECTION)
-            .Case( "IMAGE_SYM_CLASS_WEAK_EXTERNAL"
-                 , COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL)
-            .Case( "IMAGE_SYM_CLASS_CLR_TOKEN"
-                 , COFF::IMAGE_SYM_CLASS_CLR_TOKEN)
-            .Default(COFF::SSC_Invalid);
-          if (Sym.Header.StorageClass == COFF::SSC_Invalid) {
-            YS.printError(Value, "Invalid value for StorageClass");
-            return false;
-          }
-        } else if (KeyValue == "SectionNumber") {
-          if (!getAs(Value, Sym.Header.SectionNumber)) {
-              YS.printError(Value, "Invalid value for SectionNumber");
-              return false;
-          }
-        } else if (KeyValue == "AuxillaryData") {
-          StringRef Data = Value->getValue(Storage);
-          if (!hexStringToByteArray(Data, Sym.AuxSymbols)) {
-            YS.printError(Value, "AuxillaryData must be a collection of pairs"
-                                 "of hex bytes");
-            return false;
-          }
-        } else
-          si->skip();
+      // If the name is less than 8 bytes, store it in place, otherwise
+      // store it in the string table.
+      StringRef Name = YamlSymbol.Name;
+      std::fill_n(Sym.Header.Name, unsigned(COFF::NameSize), 0);
+      if (Name.size() <= COFF::NameSize) {
+        std::copy(Name.begin(), Name.end(), Sym.Header.Name);
+      } else {
+        // Add string to the string table and format the index for output.
+        unsigned Index = getStringIndex(Name);
+        *reinterpret_cast<support::aligned_ulittle32_t*>(
+            Sym.Header.Name + 4) = Index;
+      }
+
+      Sym.Header.Value = YamlSymbol.Value;
+      Sym.Header.Type |= YamlSymbol.SimpleType;
+      Sym.Header.Type |= YamlSymbol.ComplexType << COFF::SCT_COMPLEX_TYPE_SHIFT;
+      Sym.Header.StorageClass = YamlSymbol.StorageClass;
+      Sym.Header.SectionNumber = YamlSymbol.SectionNumber;
+
+      StringRef Data = YamlSymbol.AuxillaryData;
+      if (!hexStringToByteArray(Data, Sym.AuxSymbols)) {
+        errs() << "AuxillaryData must be a collection of pairs of hex bytes";
+        return false;
       }
       Symbols.push_back(Sym);
     }
@@ -665,33 +241,12 @@ struct COFFParser {
   }
 
   bool parse() {
-    yaml::Document &D = *YS.begin();
-    yaml::MappingNode *Root = dyn_cast<yaml::MappingNode>(D.getRoot());
-    if (!Root) {
-      YS.printError(D.getRoot(), "Root node must be a map");
+    Header.Machine = Obj.HeaderData.Machine;
+    if (!parseSections())
       return false;
-    }
-    for (yaml::MappingNode::iterator i = Root->begin(), e = Root->end();
-                                     i != e; ++i) {
-      yaml::ScalarNode *Key = dyn_cast<yaml::ScalarNode>(i->getKey());
-      if (!Key) {
-        YS.printError(i->getKey(), "Keys must be scalar values");
-        return false;
-      }
-      SmallString<32> Storage;
-      StringRef KeyValue = Key->getValue(Storage);
-      if (KeyValue == "header") {
-        if (!parseHeader(i->getValue()))
-          return false;
-      } else if (KeyValue == "sections") {
-        if (!parseSections(i->getValue()))
-          return false;
-      } else if (KeyValue == "symbols") {
-        if (!parseSymbols(i->getValue()))
-          return false;
-      }
-    }
-    return !YS.failed();
+    if (!parseSymbols())
+      return false;
+    return true;
   }
 
   unsigned getStringIndex(StringRef Str) {
@@ -706,7 +261,7 @@ struct COFFParser {
     return i->second;
   }
 
-  yaml::Stream &YS;
+  COFFYAML::Object &Obj;
   COFF::header Header;
 
   struct Section {
@@ -854,6 +409,239 @@ void writeCOFF(COFFParser &CP, raw_ostream &OS) {
   OS.write(&CP.StringTable[0], CP.StringTable.size());
 }
 
+}
+
+LLVM_YAML_IS_SEQUENCE_VECTOR(COFFYAML::Relocation)
+LLVM_YAML_IS_SEQUENCE_VECTOR(COFF::SectionCharacteristics)
+LLVM_YAML_IS_SEQUENCE_VECTOR(COFFYAML::Section)
+LLVM_YAML_IS_SEQUENCE_VECTOR(COFFYAML::Symbol)
+
+namespace llvm {
+namespace yaml {
+#define ECase(X) IO.enumCase(Value, #X, COFF::X);
+
+template <>
+struct ScalarEnumerationTraits<COFF::SymbolComplexType> {
+  static void enumeration(IO &IO, COFF::SymbolComplexType &Value) {
+    ECase(IMAGE_SYM_DTYPE_NULL);
+    ECase(IMAGE_SYM_DTYPE_POINTER);
+    ECase(IMAGE_SYM_DTYPE_FUNCTION);
+    ECase(IMAGE_SYM_DTYPE_ARRAY);
+  }
+};
+
+// FIXME: We cannot use ScalarBitSetTraits because of
+// IMAGE_SYM_CLASS_END_OF_FUNCTION which is -1.
+template <>
+struct ScalarEnumerationTraits<COFF::SymbolStorageClass> {
+  static void enumeration(IO &IO, COFF::SymbolStorageClass &Value) {
+    ECase(IMAGE_SYM_CLASS_END_OF_FUNCTION);
+    ECase(IMAGE_SYM_CLASS_NULL);
+    ECase(IMAGE_SYM_CLASS_AUTOMATIC);
+    ECase(IMAGE_SYM_CLASS_EXTERNAL);
+    ECase(IMAGE_SYM_CLASS_STATIC);
+    ECase(IMAGE_SYM_CLASS_REGISTER);
+    ECase(IMAGE_SYM_CLASS_EXTERNAL_DEF);
+    ECase(IMAGE_SYM_CLASS_LABEL);
+    ECase(IMAGE_SYM_CLASS_UNDEFINED_LABEL);
+    ECase(IMAGE_SYM_CLASS_MEMBER_OF_STRUCT);
+    ECase(IMAGE_SYM_CLASS_ARGUMENT);
+    ECase(IMAGE_SYM_CLASS_STRUCT_TAG);
+    ECase(IMAGE_SYM_CLASS_MEMBER_OF_UNION);
+    ECase(IMAGE_SYM_CLASS_UNION_TAG);
+    ECase(IMAGE_SYM_CLASS_TYPE_DEFINITION);
+    ECase(IMAGE_SYM_CLASS_UNDEFINED_STATIC);
+    ECase(IMAGE_SYM_CLASS_ENUM_TAG);
+    ECase(IMAGE_SYM_CLASS_MEMBER_OF_ENUM);
+    ECase(IMAGE_SYM_CLASS_REGISTER_PARAM);
+    ECase(IMAGE_SYM_CLASS_BIT_FIELD);
+    ECase(IMAGE_SYM_CLASS_BLOCK);
+    ECase(IMAGE_SYM_CLASS_FUNCTION);
+    ECase(IMAGE_SYM_CLASS_END_OF_STRUCT);
+    ECase(IMAGE_SYM_CLASS_FILE);
+    ECase(IMAGE_SYM_CLASS_SECTION);
+    ECase(IMAGE_SYM_CLASS_WEAK_EXTERNAL);
+    ECase(IMAGE_SYM_CLASS_CLR_TOKEN);
+  }
+};
+
+template <>
+struct ScalarEnumerationTraits<COFF::SymbolBaseType> {
+  static void enumeration(IO &IO, COFF::SymbolBaseType &Value) {
+    ECase(IMAGE_SYM_TYPE_NULL);
+    ECase(IMAGE_SYM_TYPE_VOID);
+    ECase(IMAGE_SYM_TYPE_CHAR);
+    ECase(IMAGE_SYM_TYPE_SHORT);
+    ECase(IMAGE_SYM_TYPE_INT);
+    ECase(IMAGE_SYM_TYPE_LONG);
+    ECase(IMAGE_SYM_TYPE_FLOAT);
+    ECase(IMAGE_SYM_TYPE_DOUBLE);
+    ECase(IMAGE_SYM_TYPE_STRUCT);
+    ECase(IMAGE_SYM_TYPE_UNION);
+    ECase(IMAGE_SYM_TYPE_ENUM);
+    ECase(IMAGE_SYM_TYPE_MOE);
+    ECase(IMAGE_SYM_TYPE_BYTE);
+    ECase(IMAGE_SYM_TYPE_WORD);
+    ECase(IMAGE_SYM_TYPE_UINT);
+    ECase(IMAGE_SYM_TYPE_DWORD);
+  }
+};
+
+template <>
+struct ScalarEnumerationTraits<COFF::MachineTypes> {
+  static void enumeration(IO &IO, COFF::MachineTypes &Value) {
+    ECase(IMAGE_FILE_MACHINE_UNKNOWN);
+    ECase(IMAGE_FILE_MACHINE_AM33);
+    ECase(IMAGE_FILE_MACHINE_AMD64);
+    ECase(IMAGE_FILE_MACHINE_ARM);
+    ECase(IMAGE_FILE_MACHINE_ARMV7);
+    ECase(IMAGE_FILE_MACHINE_EBC);
+    ECase(IMAGE_FILE_MACHINE_I386);
+    ECase(IMAGE_FILE_MACHINE_IA64);
+    ECase(IMAGE_FILE_MACHINE_M32R);
+    ECase(IMAGE_FILE_MACHINE_MIPS16);
+    ECase(IMAGE_FILE_MACHINE_MIPSFPU);
+    ECase(IMAGE_FILE_MACHINE_MIPSFPU16);
+    ECase(IMAGE_FILE_MACHINE_POWERPC);
+    ECase(IMAGE_FILE_MACHINE_POWERPCFP);
+    ECase(IMAGE_FILE_MACHINE_R4000);
+    ECase(IMAGE_FILE_MACHINE_SH3);
+    ECase(IMAGE_FILE_MACHINE_SH3DSP);
+    ECase(IMAGE_FILE_MACHINE_SH4);
+    ECase(IMAGE_FILE_MACHINE_SH5);
+    ECase(IMAGE_FILE_MACHINE_THUMB);
+    ECase(IMAGE_FILE_MACHINE_WCEMIPSV2);
+  }
+};
+
+template <>
+struct ScalarEnumerationTraits<COFF::SectionCharacteristics> {
+  static void enumeration(IO &IO, COFF::SectionCharacteristics &Value) {
+    ECase(IMAGE_SCN_TYPE_NO_PAD);
+    ECase(IMAGE_SCN_CNT_CODE);
+    ECase(IMAGE_SCN_CNT_INITIALIZED_DATA);
+    ECase(IMAGE_SCN_CNT_UNINITIALIZED_DATA);
+    ECase(IMAGE_SCN_LNK_OTHER);
+    ECase(IMAGE_SCN_LNK_INFO);
+    ECase(IMAGE_SCN_LNK_REMOVE);
+    ECase(IMAGE_SCN_LNK_COMDAT);
+    ECase(IMAGE_SCN_GPREL);
+    ECase(IMAGE_SCN_MEM_PURGEABLE);
+    ECase(IMAGE_SCN_MEM_16BIT);
+    ECase(IMAGE_SCN_MEM_LOCKED);
+    ECase(IMAGE_SCN_MEM_PRELOAD);
+    ECase(IMAGE_SCN_ALIGN_1BYTES);
+    ECase(IMAGE_SCN_ALIGN_2BYTES);
+    ECase(IMAGE_SCN_ALIGN_4BYTES);
+    ECase(IMAGE_SCN_ALIGN_8BYTES);
+    ECase(IMAGE_SCN_ALIGN_16BYTES);
+    ECase(IMAGE_SCN_ALIGN_32BYTES);
+    ECase(IMAGE_SCN_ALIGN_64BYTES);
+    ECase(IMAGE_SCN_ALIGN_128BYTES);
+    ECase(IMAGE_SCN_ALIGN_256BYTES);
+    ECase(IMAGE_SCN_ALIGN_512BYTES);
+    ECase(IMAGE_SCN_ALIGN_1024BYTES);
+    ECase(IMAGE_SCN_ALIGN_2048BYTES);
+    ECase(IMAGE_SCN_ALIGN_4096BYTES);
+    ECase(IMAGE_SCN_ALIGN_8192BYTES);
+    ECase(IMAGE_SCN_LNK_NRELOC_OVFL);
+    ECase(IMAGE_SCN_MEM_DISCARDABLE);
+    ECase(IMAGE_SCN_MEM_NOT_CACHED);
+    ECase(IMAGE_SCN_MEM_NOT_PAGED);
+    ECase(IMAGE_SCN_MEM_SHARED);
+    ECase(IMAGE_SCN_MEM_EXECUTE);
+    ECase(IMAGE_SCN_MEM_READ);
+    ECase(IMAGE_SCN_MEM_WRITE);
+  }
+};
+
+template <>
+struct ScalarEnumerationTraits<COFF::RelocationTypeX86> {
+  static void enumeration(IO &IO, COFF::RelocationTypeX86 &Value) {
+    ECase(IMAGE_REL_I386_ABSOLUTE);
+    ECase(IMAGE_REL_I386_DIR16);
+    ECase(IMAGE_REL_I386_REL16);
+    ECase(IMAGE_REL_I386_DIR32);
+    ECase(IMAGE_REL_I386_DIR32NB);
+    ECase(IMAGE_REL_I386_SEG12);
+    ECase(IMAGE_REL_I386_SECTION);
+    ECase(IMAGE_REL_I386_SECREL);
+    ECase(IMAGE_REL_I386_TOKEN);
+    ECase(IMAGE_REL_I386_SECREL7);
+    ECase(IMAGE_REL_I386_REL32);
+    ECase(IMAGE_REL_AMD64_ABSOLUTE);
+    ECase(IMAGE_REL_AMD64_ADDR64);
+    ECase(IMAGE_REL_AMD64_ADDR32);
+    ECase(IMAGE_REL_AMD64_ADDR32NB);
+    ECase(IMAGE_REL_AMD64_REL32);
+    ECase(IMAGE_REL_AMD64_REL32_1);
+    ECase(IMAGE_REL_AMD64_REL32_2);
+    ECase(IMAGE_REL_AMD64_REL32_3);
+    ECase(IMAGE_REL_AMD64_REL32_4);
+    ECase(IMAGE_REL_AMD64_REL32_5);
+    ECase(IMAGE_REL_AMD64_SECTION);
+    ECase(IMAGE_REL_AMD64_SECREL);
+    ECase(IMAGE_REL_AMD64_SECREL7);
+    ECase(IMAGE_REL_AMD64_TOKEN);
+    ECase(IMAGE_REL_AMD64_SREL32);
+    ECase(IMAGE_REL_AMD64_PAIR);
+    ECase(IMAGE_REL_AMD64_SSPAN32);
+  }
+};
+
+#undef ECase
+
+template <>
+struct MappingTraits<COFFYAML::Symbol> {
+  static void mapping(IO &IO, COFFYAML::Symbol &S) {
+    IO.mapRequired("SimpleType", S.SimpleType);
+    IO.mapOptional("NumberOfAuxSymbols", S.NumberOfAuxSymbols);
+    IO.mapRequired("Name", S.Name);
+    IO.mapRequired("StorageClass", S.StorageClass);
+    IO.mapOptional("AuxillaryData", S.AuxillaryData); // FIXME: typo
+    IO.mapRequired("ComplexType", S.ComplexType);
+    IO.mapRequired("Value", S.Value);
+    IO.mapRequired("SectionNumber", S.SectionNumber);
+  }
+};
+
+template <>
+struct MappingTraits<COFFYAML::Header> {
+  static void mapping(IO &IO, COFFYAML::Header &H) {
+    IO.mapRequired("Machine", H.Machine);
+  }
+};
+
+template <>
+struct MappingTraits<COFFYAML::Relocation> {
+  static void mapping(IO &IO, COFFYAML::Relocation &Rel) {
+    IO.mapRequired("Type", Rel.Type);
+    IO.mapRequired("VirtualAddress", Rel.VirtualAddress);
+    IO.mapRequired("SymbolTableIndex", Rel.SymbolTableIndex);
+  }
+};
+
+template <>
+struct MappingTraits<COFFYAML::Section> {
+  static void mapping(IO &IO, COFFYAML::Section &Sec) {
+    IO.mapOptional("Relocations", Sec.Relocations);
+    IO.mapRequired("SectionData", Sec.SectionData);
+    IO.mapRequired("Characteristics", Sec.Characteristics);
+    IO.mapRequired("Name", Sec.Name);
+  }
+};
+
+template <>
+struct MappingTraits<COFFYAML::Object> {
+  static void mapping(IO &IO, COFFYAML::Object &Obj) {
+    IO.mapRequired("sections", Obj.Sections);
+    IO.mapRequired("header", Obj.HeaderData);
+    IO.mapRequired("symbols", Obj.Symbols);
+  }
+};
+} // end namespace yaml
+} // end namespace llvm
+
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
   sys::PrintStackTraceOnErrorSignal();
@@ -864,13 +652,20 @@ int main(int argc, char **argv) {
   if (MemoryBuffer::getFileOrSTDIN(Input, Buf))
     return 1;
 
-  SourceMgr SM;
-  yaml::Stream S(Buf->getBuffer(), SM);
-  COFFParser CP(S);
+  yaml::Input YIn(Buf->getBuffer());
+  COFFYAML::Object Doc;
+  YIn >> Doc;
+  if (YIn.error()) {
+    errs() << "yaml2obj: Failed to parse YAML file!\n";
+    return 1;
+  }
+
+  COFFParser CP(Doc);
   if (!CP.parse()) {
     errs() << "yaml2obj: Failed to parse YAML file!\n";
     return 1;
   }
+
   if (!layoutCOFF(CP)) {
     errs() << "yaml2obj: Failed to layout COFF file!\n";
     return 1;
