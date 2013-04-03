@@ -1743,6 +1743,24 @@ static bool shouldUseFramePointer(const ArgList &Args,
   return true;
 }
 
+static bool shouldUseLeafFramePointer(const ArgList &Args,
+                                      const llvm::Triple &Triple) {
+  if (Arg *A = Args.getLastArg(options::OPT_mno_omit_leaf_frame_pointer,
+                               options::OPT_momit_leaf_frame_pointer))
+    return A->getOption().matches(options::OPT_mno_omit_leaf_frame_pointer);
+
+  // Don't use a leaf frame pointer on linux x86 and x86_64 if optimizing.
+  if ((Triple.getArch() == llvm::Triple::x86_64 ||
+       Triple.getArch() == llvm::Triple::x86) &&
+      Triple.getOS() == llvm::Triple::Linux) {
+    if (Arg *A = Args.getLastArg(options::OPT_O_Group))
+      if (!A->getOption().matches(options::OPT_O0))
+        return false;
+  }
+
+  return true;
+}
+
 /// If the PWD environment variable is set, add a CC1 option to specify the
 /// debug compilation directory.
 static void addDebugCompDirArg(const ArgList &Args, ArgStringList &CmdArgs) {
@@ -2319,10 +2337,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue());
   }
 
-  // -mno-omit-leaf-frame-pointer is the default on Darwin.
-  if (Args.hasFlag(options::OPT_momit_leaf_frame_pointer,
-                   options::OPT_mno_omit_leaf_frame_pointer,
-                   !getToolChain().getTriple().isOSDarwin()))
+  if (!shouldUseLeafFramePointer(Args, getToolChain().getTriple()))
     CmdArgs.push_back("-momit-leaf-frame-pointer");
 
   // Explicitly error on some things we know we don't support and can't just
