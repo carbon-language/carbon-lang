@@ -1149,7 +1149,7 @@ void RewriteModernObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
 
   // Lastly, comment out the @end.
   ReplaceText(CatDecl->getAtEndRange().getBegin(), 
-              strlen("@end"), "/* @end */");
+              strlen("@end"), "/* @end */\n");
 }
 
 void RewriteModernObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
@@ -1174,7 +1174,7 @@ void RewriteModernObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
   
   // Lastly, comment out the @end.
   SourceLocation LocEnd = PDecl->getAtEndRange().getBegin();
-  ReplaceText(LocEnd, strlen("@end"), "/* @end */");
+  ReplaceText(LocEnd, strlen("@end"), "/* @end */\n");
 
   // Must comment out @optional/@required
   const char *startBuf = SM->getCharacterData(LocStart);
@@ -1442,7 +1442,7 @@ void RewriteModernObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
 
     // Lastly, comment out the @end.
     ReplaceText(ClassDecl->getAtEndRange().getBegin(), strlen("@end"), 
-                "/* @end */");
+                "/* @end */\n");
   }
 }
 
@@ -2258,6 +2258,10 @@ void RewriteModernObjC::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
   else if (FieldDecl *FD = dyn_cast<FieldDecl>(Dcl)) {
     Loc = FD->getLocation();
     Type = FD->getType();
+  }
+  else if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(Dcl)) {
+    Loc = TD->getLocation();
+    Type = TD->getUnderlyingType();
   }
   else
     return;
@@ -5996,6 +6000,8 @@ void RewriteModernObjC::HandleDeclInMainFile(Decl *D) {
           RewriteBlockPointerDecl(TD);
         else if (TD->getUnderlyingType()->isFunctionPointerType())
           CheckFunctionPointerDecl(TD->getUnderlyingType(), TD);
+        else
+          RewriteObjCQualifiedInterfaceTypes(TD);
       }
       break;
     }
