@@ -55,7 +55,7 @@ static cl::opt<bool> UnknownLocations("use-unknown-locations", cl::Hidden,
      cl::init(false));
 
 static cl::opt<bool> GenerateDwarfPubNamesSection("generate-dwarf-pubnames",
-     cl::Hidden, cl::ZeroOrMore, cl::init(false),
+     cl::Hidden, cl::init(false),
      cl::desc("Generate DWARF pubnames section"));
 
 namespace {
