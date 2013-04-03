@@ -428,11 +428,13 @@ entry:
   ret void
 }
 
-; Same as test11 but the value is returned. Do an RV optimization.
+; Same as test11 but the value is returned. Do not perform an RV optimization
+; since if the frontend emitted code for an __autoreleasing variable, we may
+; want it to be in the autorelease pool.
 
 ; CHECK: define i8* @test11b(
 ; CHECK: tail call i8* @objc_retain(i8* %x) [[NUW]]
-; CHECK: tail call i8* @objc_autoreleaseReturnValue(i8* %0) [[NUW]]
+; CHECK: call i8* @objc_autorelease(i8* %0) [[NUW]]
 ; CHECK: }
 define i8* @test11b(i8* %x) nounwind {
 entry:

@@ -1440,8 +1440,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
       break;
     }
 
-    // objc_autorelease(x), objc_autoreleaseRV -> objc_release(x) if x is
-    // otherwise unused.
+    // objc_autorelease(x) -> objc_release(x) if x is otherwise unused.
     if (IsAutorelease(Class) && Inst->use_empty()) {
       CallInst *Call = cast<CallInst>(Inst);
       const Value *Arg = Call->getArgOperand(0);
@@ -2860,20 +2859,6 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
 
         DependingInstructions.clear();
         Visited.clear();
-
-        // Convert the autorelease to an autoreleaseRV, since it's
-        // returning the value.
-        if (AutoreleaseClass == IC_Autorelease) {
-          DEBUG(dbgs() << "ObjCARCOpt::OptimizeReturns: Converting autorelease "
-                          "=> autoreleaseRV since it's returning a value.\n"
-                          "                             In: " << *Autorelease
-                       << "\n");
-          Autorelease->setCalledFunction(getAutoreleaseRVCallee(F.getParent()));
-          DEBUG(dbgs() << "                             Out: " << *Autorelease
-                       << "\n");
-          Autorelease->setTailCall(); // Always tail call autoreleaseRV.
-          AutoreleaseClass = IC_AutoreleaseRV;
-        }
 
         // Check that there is nothing that can affect the reference
         // count between the retain and the call.

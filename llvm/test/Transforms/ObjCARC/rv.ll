@@ -121,7 +121,7 @@ define i8* @test7() {
   %p = call i8* @returner()
   call i8* @objc_retainAutoreleasedReturnValue(i8* %p)
   %t = call i8* @objc_autoreleaseReturnValue(i8* %p)
-  call void @use_pointer(i8* %t)
+  call void @use_pointer(i8* %p)
   ret i8* %t
 }
 
@@ -133,7 +133,7 @@ define i8* @test7b() {
   call void @use_pointer(i8* %p)
   call i8* @objc_retainAutoreleasedReturnValue(i8* %p)
   %t = call i8* @objc_autoreleaseReturnValue(i8* %p)
-  ret i8* %t
+  ret i8* %p
 }
 
 ; Turn objc_retain into objc_retainAutoreleasedReturnValue if its operand
@@ -156,11 +156,11 @@ define i8* @test9(i8* %p) {
   ret i8* %p
 }
 
-; Apply the RV optimization.
+; Do not apply the RV optimization.
 
 ; CHECK: define i8* @test10(i8* %p)
 ; CHECK: tail call i8* @objc_retain(i8* %p) [[NUW]]
-; CHECK: tail call i8* @objc_autoreleaseReturnValue(i8* %p) [[NUW]]
+; CHECK: call i8* @objc_autorelease(i8* %p) [[NUW]]
 ; CHECK-NEXT: ret i8* %p
 define i8* @test10(i8* %p) {
   %1 = call i8* @objc_retain(i8* %p)

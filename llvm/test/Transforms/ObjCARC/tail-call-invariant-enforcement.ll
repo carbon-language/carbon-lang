@@ -72,13 +72,3 @@ entry:
   ret i8* %tmp0
 }
 
-; If we convert a called @objc_autorelease to an @objc_autoreleaseReturnValue,
-; ensure that the tail call is added.
-define i8* @test6(i8* %x) {
-entry:
-  ; CHECK: %tmp0 = tail call i8* @objc_retain(i8* %x)
-  %tmp0 = tail call i8* @objc_retain(i8* %x)
-  ; CHECK: %tmp1 = tail call i8* @objc_autoreleaseReturnValue(i8* %x)
-  %tmp1 = call i8* @objc_autorelease(i8* %x)
-  ret i8* %x
-}
