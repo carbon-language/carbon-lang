@@ -1949,9 +1949,9 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
   }
 
   // If ARC Annotations are enabled, output the current state of pointers at the
-  // bottom of the basic block.  
+  // bottom of the basic block.
   ANNOTATE_BOTTOMUP_BBEND(MyStates, BB);
-  
+
   // Visit all the instructions, bottom-up.
   for (BasicBlock::iterator I = BB->end(), E = BB->begin(); I != E; --I) {
     Instruction *Inst = llvm::prior(I);
@@ -1978,7 +1978,7 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
   // If ARC Annotations are enabled, output the current state of pointers at the
   // top of the basic block.
   ANNOTATE_BOTTOMUP_BBSTART(MyStates, BB);
-  
+
   return NestingDetected;
 }
 
@@ -2151,7 +2151,7 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
   // If ARC Annotations are enabled, output the current state of pointers at the
   // top of the basic block.
   ANNOTATE_TOPDOWN_BBSTART(MyStates, BB);
-  
+
   // Visit all the instructions, top-down.
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
     Instruction *Inst = I;
@@ -2160,11 +2160,11 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
 
     NestingDetected |= VisitInstructionTopDown(Inst, Releases, MyStates);
   }
-  
+
   // If ARC Annotations are enabled, output the current state of pointers at the
   // bottom of the basic block.
   ANNOTATE_TOPDOWN_BBEND(MyStates, BB);
-  
+
   CheckForCFGHazards(BB, BBStates, MyStates);
   return NestingDetected;
 }
@@ -2779,9 +2779,9 @@ bool ObjCARCOpt::OptimizeSequences(Function &F) {
          NestingDetected;
 }
 
-// Check if there is a dependent call earlier that does not have anything in
-// between the Retain and the call that can affect the reference count of their
-// shared pointer argument. Note that Retain need not be in BB.
+/// Check if there is a dependent call earlier that does not have anything in
+/// between the Retain and the call that can affect the reference count of their
+/// shared pointer argument. Note that Retain need not be in BB.
 static bool
 HasSafePathToPredecessorCall(const Value *Arg, Instruction *Retain,
                              SmallPtrSet<Instruction *, 4> &DepInsts,
@@ -2791,19 +2791,19 @@ HasSafePathToPredecessorCall(const Value *Arg, Instruction *Retain,
                    DepInsts, Visited, PA);
   if (DepInsts.size() != 1)
     return false;
-  
+
   CallInst *Call =
     dyn_cast_or_null<CallInst>(*DepInsts.begin());
-  
+
   // Check that the pointer is the return value of the call.
   if (!Call || Arg != Call)
     return false;
-  
+
   // Check that the call is a regular call.
   InstructionClass Class = GetBasicInstructionClass(Call);
   if (Class != IC_CallOrUser && Class != IC_Call)
     return false;
-  
+
   return true;
 }
 
@@ -2868,7 +2868,7 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
 
         DependingInstructions.clear();
         Visited.clear();
-        
+
         // Check that there is nothing that can affect the reference count
         // between the retain and the call.  Note that Retain need not be in BB.
         if (HasSafePathToPredecessorCall(Arg, Retain, DependingInstructions,
