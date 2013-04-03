@@ -34,13 +34,13 @@ namespace __sanitizer {
   extern unsigned struct_statfs_sz;
   extern unsigned struct_epoll_event_sz;
   extern unsigned struct_timespec_sz;
-#endif // __linux__
+#endif // SANITIZER_LINUX
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
   extern unsigned struct_dirent64_sz;
   extern unsigned struct_rlimit64_sz;
   extern unsigned struct_statfs64_sz;
-#endif // __linux__ && !__ANDROID__
+#endif // SANITIZER_LINUX && !SANITIZER_ANDROID
 
   void* __sanitizer_get_msghdr_iov_iov_base(void* msg, int idx);
   uptr __sanitizer_get_msghdr_iov_iov_len(void* msg, int idx);

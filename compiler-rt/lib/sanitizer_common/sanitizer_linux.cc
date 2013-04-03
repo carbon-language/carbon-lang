@@ -767,4 +767,4 @@ void AdjustStackSizeLinux(void *attr_, int verbosity) {
 
 }  // namespace __sanitizer
 
-#endif  // __linux__
+#endif  // SANITIZER_LINUX

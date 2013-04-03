@@ -34,7 +34,7 @@
 #if SANITIZER_LINUX
 #include <sys/vfs.h>
 #include <sys/epoll.h>
-#endif // __linux__
+#endif // SANITIZER_LINUX
 
 namespace __sanitizer {
   unsigned struct_utsname_sz = sizeof(struct utsname);
@@ -53,13 +53,13 @@ namespace __sanitizer {
   unsigned struct_statfs_sz = sizeof(struct statfs);
   unsigned struct_epoll_event_sz = sizeof(struct epoll_event);
   unsigned struct_timespec_sz = sizeof(struct timespec);
-#endif // __linux__
+#endif // SANITIZER_LINUX
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
   unsigned struct_dirent64_sz = sizeof(struct dirent64);
   unsigned struct_rlimit64_sz = sizeof(struct rlimit64);
   unsigned struct_statfs64_sz = sizeof(struct statfs64);
-#endif // __linux__ && !__ANDROID__
+#endif // SANITIZER_LINUX && !SANITIZER_ANDROID
 
   void* __sanitizer_get_msghdr_iov_iov_base(void* msg, int idx) {
     return ((struct msghdr *)msg)->msg_iov[idx].iov_base;
@@ -80,4 +80,4 @@ namespace __sanitizer {
 
 COMPILER_CHECK(sizeof(__sanitizer_pthread_attr_t) >= sizeof(pthread_attr_t));
 
-#endif  // __linux__ || __APPLE__
+#endif  // SANITIZER_LINUX || SANITIZER_MAC

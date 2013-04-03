@@ -230,4 +230,4 @@ int internal_isatty(fd_t fd) {
 
 }  // namespace __sanitizer
 
-#endif  // __linux__ || __APPLE_
+#endif  // SANITIZER_LINUX || __APPLE_

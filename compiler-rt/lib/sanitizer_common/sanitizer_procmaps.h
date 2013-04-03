@@ -98,14 +98,14 @@ class MemoryMappingLayout {
     return false;
   }
 
-# if defined __linux__
+# if SANITIZER_LINUX
   ProcSelfMapsBuff proc_self_maps_;
   char *current_;
 
   // Static mappings cache.
   static ProcSelfMapsBuff cached_proc_self_maps_;
   static StaticSpinMutex cache_lock_;  // protects cached_proc_self_maps_.
-# elif defined __APPLE__
+# elif SANITIZER_MAC
   template<u32 kLCSegment, typename SegmentCommand>
   bool NextSegmentLoad(uptr *start, uptr *end, uptr *offset,
                        char filename[], uptr filename_size,

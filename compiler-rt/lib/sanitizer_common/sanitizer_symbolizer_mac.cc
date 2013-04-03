@@ -25,10 +25,11 @@ bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
 }
 
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules) {
-  // FIXME: Actually implement this on Mac.
+  // FIXME: Actually implement this on Mac. Just using MemoryMappingLayout
+  // may be enough for this on Mac.
   return 0;
 }
 
 }  // namespace __sanitizer
 
-#endif  // __APPLE__
+#endif  // SANITIZER_MAC

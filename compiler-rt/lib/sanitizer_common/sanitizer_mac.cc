@@ -341,4 +341,4 @@ void InitTlsSize() {
 
 }  // namespace __sanitizer
 
-#endif  // __APPLE__
+#endif  // SANITIZER_MAC

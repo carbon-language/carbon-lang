@@ -41,4 +41,4 @@ const char *__sanitizer::Demangle(const char *MangledName) {
   return MangledName;
 }
 
-#endif  // __APPLE__ || __linux__
+#endif  // SANITIZER_MAC || SANITIZER_LINUX

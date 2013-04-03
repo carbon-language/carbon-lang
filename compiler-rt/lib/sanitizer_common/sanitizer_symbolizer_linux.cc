@@ -28,7 +28,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#if !SANITIZER_ANDROID && !SANITIZER_ANDROID
+#if !SANITIZER_ANDROID
 #include <link.h>
 #endif
 
@@ -123,11 +123,11 @@ bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
   return true;
 }
 
-#if SANITIZER_ANDROID || SANITIZER_ANDROID
+#if SANITIZER_ANDROID
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules) {
   UNIMPLEMENTED();
 }
-#else  // ANDROID
+#else  // SANITIZER_ANDROID
 typedef ElfW(Phdr) Elf_Phdr;
 
 struct DlIteratePhdrData {
@@ -177,8 +177,8 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules) {
   dl_iterate_phdr(dl_iterate_phdr_cb, &data);
   return data.current_n;
 }
-#endif  // ANDROID
+#endif  // SANITIZER_ANDROID
 
 }  // namespace __sanitizer
 
-#endif  // __linux__
+#endif  // SANITIZER_LINUX

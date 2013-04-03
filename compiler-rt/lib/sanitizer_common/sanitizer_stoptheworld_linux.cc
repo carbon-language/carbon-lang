@@ -382,4 +382,4 @@ uptr SuspendedThreadsList::RegisterCount() {
 }
 }  // namespace __sanitizer
 
-#endif  // __linux__
+#endif  // SANITIZER_LINUX
