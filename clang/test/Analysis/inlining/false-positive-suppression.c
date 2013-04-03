@@ -9,6 +9,8 @@ int *getNull() {
   return 0;
 }
 
+int* getPtr();
+
 int *dynCastToInt(void *ptr) {
   if (opaquePropertyCheck(ptr))
     return (int *)ptr;
@@ -219,9 +221,10 @@ int derefAssignment(int *p) {
   // expected-warning@-2 {{Dereference of null pointer}}
 #endif
 }
+
 void ternaryAssignment(char cond) {
   static int x;
-  int *p = cond ? &x : getNull();
+  int *p = cond ? getNull() : getPtr();
   derefAssignment(p);
 }
 

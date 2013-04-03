@@ -800,14 +800,22 @@ static const Expr *peelOffOuterExpr(const Stmt *S,
 
     // Peel off the ternary operator.
     if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(Ex)) {
-      ProgramStateRef State = N->getState();
-      SVal CondVal = State->getSVal(CO->getCond(), N->getLocationContext());
-      if (State->isNull(CondVal).isConstrainedTrue()) {
-        return CO->getTrueExpr();
-      } else {
-        assert(State->isNull(CondVal).isConstrainedFalse());
-        return CO->getFalseExpr();
-      }
+      const Expr *CondEx = CO->getCond();
+
+      // Find a node where the value of the condition is known.
+      do {
+        ProgramStateRef State = N->getState();
+        SVal CondVal = State->getSVal(CondEx, N->getLocationContext());
+        ConditionTruthVal CondEvaluated = State->isNull(CondVal);
+        if (CondEvaluated.isConstrained()) {
+          if (CondEvaluated.isConstrainedTrue())
+            return CO->getFalseExpr();
+          else
+            return CO->getTrueExpr();
+        }
+        N = N->getFirstPred();
+      } while (N);
+      
     }
   }
   return 0;
@@ -820,9 +828,8 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
   if (!S || !N)
     return false;
 
-  if (const Expr *Ex = peelOffOuterExpr(S, N)) {
+  if (const Expr *Ex = peelOffOuterExpr(S, N))
     S = Ex;
-  }
 
   const Expr *Inner = 0;
   if (const Expr *Ex = dyn_cast<Expr>(S)) {

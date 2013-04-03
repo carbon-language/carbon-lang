@@ -380,9 +380,13 @@ ConditionTruthVal ProgramState::isNull(SVal V) const {
   if (V.isZeroConstant())
     return true;
 
+  if (V.isConstant())
+    return false;
+  
   SymbolRef Sym = V.getAsSymbol();
   if (!Sym)
-    return false;
+    return ConditionTruthVal();
+  
   return getStateManager().ConstraintMgr->isNull(this, Sym);
 }
 
