@@ -152,7 +152,8 @@ std::string sys::getHostCPUName() {
   // If CPUID indicates support for XSAVE, XRESTORE and AVX, and XGETBV 
   // indicates that the AVX registers will be saved and restored on context
   // switch, then we have full AVX support.
-  bool HasAVX = (ECX & ((1 << 28) | (1 << 27))) != 0 && OSHasAVXSupport();
+  const unsigned AVXBits = (1 << 27) | (1 << 28);
+  bool HasAVX = ((ECX & AVXBits) == AVXBits) && OSHasAVXSupport();
   GetX86CpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
   bool Em64T = (EDX >> 29) & 0x1;
 
