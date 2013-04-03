@@ -260,9 +260,10 @@ int testNestedConditionalOperator(int x) {
   return *(x ? (x ? 0 : getPtr()) : getPtr()); // expected-warning {{Dereference of null pointer}}
 }
 
-// False Positve - we are unable to suppress this case because the condition is
-// float.
 int testConditionalOperatorSuppressFloatCond(float x) {
-  return *(x ? getNull() : getPtr()); // expected-warning {{Dereference of null pointer}}
+  return *(x ? getNull() : getPtr());
+#ifndef SUPPRESSED
+  // expected-warning@-2 {{Dereference of null pointer}}
+#endif
 }
 

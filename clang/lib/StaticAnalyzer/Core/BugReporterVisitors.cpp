@@ -799,21 +799,25 @@ static const Expr *peelOffOuterExpr(const Expr *Ex,
 
   // Peel off the ternary operator.
   if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(Ex)) {
-    const Expr *CondEx = CO->getCond();
-
-    // Find a node where the value of the condition is known.
+    // Find a node where the branching occured and find out which branch
+    // we took (true/false) by looking at the ExplodedGraph.
+    const ExplodedNode *NI = N;
     do {
-      ProgramStateRef State = N->getState();
-      SVal CondVal = State->getSVal(CondEx, N->getLocationContext());
-      ConditionTruthVal CondEvaluated = State->isNull(CondVal);
-      if (CondEvaluated.isConstrained()) {
-        if (CondEvaluated.isConstrainedTrue())
-          return peelOffOuterExpr(CO->getFalseExpr(), N);
-        else
-          return peelOffOuterExpr(CO->getTrueExpr(), N);
+      ProgramPoint ProgPoint = NI->getLocation();
+      if (Optional<BlockEdge> BE = ProgPoint.getAs<BlockEdge>()) {
+        const CFGBlock *srcBlk = BE->getSrc();
+        if (const Stmt *term = srcBlk->getTerminator()) {
+          if (term == CO) {
+            bool TookTrueBranch = (*(srcBlk->succ_begin()) == BE->getDst());
+            if (TookTrueBranch)
+              return peelOffOuterExpr(CO->getTrueExpr(), N);
+            else
+              return peelOffOuterExpr(CO->getFalseExpr(), N);
+          }
+        }
       }
-      N = N->getFirstPred();
-    } while (N);
+      NI = NI->getFirstPred();
+    } while (NI);
   }
   return Ex;
 }
