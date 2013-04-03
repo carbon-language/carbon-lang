@@ -130,7 +130,7 @@ func:
 
 
 // MIPS64EL: RELOCATION RECORDS FOR [.eh_frame]:
-// FIXME: llvm-objdump currently misprints the relocations for mips64el
+// MIPS64EL-NEXT: R_MIPS_64
 // MIPS64EL: Contents of section .eh_frame:
 // MIPS64EL-NEXT: 0000
 

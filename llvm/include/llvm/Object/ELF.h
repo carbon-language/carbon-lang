@@ -330,6 +330,14 @@ struct Elf_Rel_Base<ELFT<TargetEndianness, MaxAlign, false>, false> {
                              MaxAlign LLVM_ELF_COMMA false>)
   Elf_Addr      r_offset; // Location (file byte offset, or program virtual addr)
   Elf_Word      r_info;  // Symbol table index and type of relocation to apply
+
+  uint32_t getRInfo(bool isMips64EL) const {
+    assert(!isMips64EL);
+    return r_info;
+  }
+  void setRInfo(uint32_t R) {
+    r_info = R;
+  }
 };
 
 template<template<endianness, std::size_t, bool> class ELFT,
@@ -339,6 +347,22 @@ struct Elf_Rel_Base<ELFT<TargetEndianness, MaxAlign, true>, false> {
                              MaxAlign LLVM_ELF_COMMA true>)
   Elf_Addr      r_offset; // Location (file byte offset, or program virtual addr)
   Elf_Xword     r_info;   // Symbol table index and type of relocation to apply
+
+  uint64_t getRInfo(bool isMips64EL) const {
+    uint64_t t = r_info;
+    if (!isMips64EL)
+      return t;
+    // Mip64 little endian has a "special" encoding of r_info. Instead of one
+    // 64 bit little endian number, it is a little ending 32 bit number followed
+    // by a 32 bit big endian number.
+    return (t << 32) | ((t >> 8) & 0xff000000) | ((t >> 24) & 0x00ff0000) |
+      ((t >> 40) & 0x0000ff00) | ((t >> 56) & 0x000000ff);
+    return r_info;
+  }
+  void setRInfo(uint64_t R) {
+    // FIXME: Add mips64el support.
+    r_info = R;
+  }
 };
 
 template<template<endianness, std::size_t, bool> class ELFT,
@@ -349,6 +373,14 @@ struct Elf_Rel_Base<ELFT<TargetEndianness, MaxAlign, false>, true> {
   Elf_Addr      r_offset; // Location (file byte offset, or program virtual addr)
   Elf_Word      r_info;   // Symbol table index and type of relocation to apply
   Elf_Sword     r_addend; // Compute value for relocatable field by adding this
+
+  uint32_t getRInfo(bool isMips64EL) const {
+    assert(!isMips64EL);
+    return r_info;
+  }
+  void setRInfo(uint32_t R) {
+    r_info = R;
+  }
 };
 
 template<template<endianness, std::size_t, bool> class ELFT,
@@ -359,6 +391,21 @@ struct Elf_Rel_Base<ELFT<TargetEndianness, MaxAlign, true>, true> {
   Elf_Addr      r_offset; // Location (file byte offset, or program virtual addr)
   Elf_Xword     r_info;   // Symbol table index and type of relocation to apply
   Elf_Sxword    r_addend; // Compute value for relocatable field by adding this.
+
+  uint64_t getRInfo(bool isMips64EL) const {
+    // Mip64 little endian has a "special" encoding of r_info. Instead of one
+    // 64 bit little endian number, it is a little ending 32 bit number followed
+    // by a 32 bit big endian number.
+    uint64_t t = r_info;
+    if (!isMips64EL)
+      return t;
+    return (t << 32) | ((t >> 8) & 0xff000000) | ((t >> 24) & 0x00ff0000) |
+      ((t >> 40) & 0x0000ff00) | ((t >> 56) & 0x000000ff);
+  }
+  void setRInfo(uint64_t R) {
+    // FIXME: Add mips64el support.
+    r_info = R;
+  }
 };
 
 template<class ELFT, bool isRela>
@@ -368,20 +415,21 @@ template<template<endianness, std::size_t, bool> class ELFT,
          endianness TargetEndianness, std::size_t MaxAlign, bool isRela>
 struct Elf_Rel_Impl<ELFT<TargetEndianness, MaxAlign, true>, isRela>
        : Elf_Rel_Base<ELFT<TargetEndianness, MaxAlign, true>, isRela> {
-  using Elf_Rel_Base<ELFT<TargetEndianness, MaxAlign, true>, isRela>::r_info;
   LLVM_ELF_IMPORT_TYPES(ELFT<TargetEndianness LLVM_ELF_COMMA
                              MaxAlign LLVM_ELF_COMMA true>)
 
   // These accessors and mutators correspond to the ELF64_R_SYM, ELF64_R_TYPE,
   // and ELF64_R_INFO macros defined in the ELF specification:
-  uint32_t getSymbol() const { return (uint32_t) (r_info >> 32); }
-  uint32_t getType() const {
-    return (uint32_t) (r_info & 0xffffffffL);
+  uint32_t getSymbol(bool isMips64EL) const {
+    return (uint32_t) (this->getRInfo(isMips64EL) >> 32);
+  }
+  uint32_t getType(bool isMips64EL) const {
+    return (uint32_t) (this->getRInfo(isMips64EL) & 0xffffffffL);
   }
   void setSymbol(uint32_t s) { setSymbolAndType(s, getType()); }
   void setType(uint32_t t) { setSymbolAndType(getSymbol(), t); }
   void setSymbolAndType(uint32_t s, uint32_t t) {
-    r_info = ((uint64_t)s << 32) + (t&0xffffffffL);
+    this->setRInfo(((uint64_t)s << 32) + (t&0xffffffffL));
   }
 };
 
@@ -389,18 +437,21 @@ template<template<endianness, std::size_t, bool> class ELFT,
          endianness TargetEndianness, std::size_t MaxAlign, bool isRela>
 struct Elf_Rel_Impl<ELFT<TargetEndianness, MaxAlign, false>, isRela>
        : Elf_Rel_Base<ELFT<TargetEndianness, MaxAlign, false>, isRela> {
-  using Elf_Rel_Base<ELFT<TargetEndianness, MaxAlign, false>, isRela>::r_info;
   LLVM_ELF_IMPORT_TYPES(ELFT<TargetEndianness LLVM_ELF_COMMA
                              MaxAlign LLVM_ELF_COMMA false>)
 
   // These accessors and mutators correspond to the ELF32_R_SYM, ELF32_R_TYPE,
   // and ELF32_R_INFO macros defined in the ELF specification:
-  uint32_t getSymbol() const { return (r_info >> 8); }
-  unsigned char getType() const { return (unsigned char) (r_info & 0x0ff); }
+  uint32_t getSymbol(bool isMips64EL) const {
+    return this->getRInfo(isMips64EL) >> 8;
+  }
+  unsigned char getType(bool isMips64EL) const {
+    return (unsigned char) (this->getRInfo(isMips64EL) & 0x0ff);
+  }
   void setSymbol(uint32_t s) { setSymbolAndType(s, getType()); }
   void setType(unsigned char t) { setSymbolAndType(getSymbol(), t); }
   void setSymbolAndType(uint32_t s, unsigned char t) {
-    r_info = (s << 8) + t;
+    this->setRInfo((s << 8) + t);
   }
 };
 
@@ -703,6 +754,13 @@ protected:
 
 public:
   ELFObjectFile(MemoryBuffer *Object, error_code &ec);
+
+  bool isMips64EL() const {
+    return Header->e_machine == ELF::EM_MIPS &&
+      Header->getFileClass() == ELF::ELFCLASS64 &&
+      Header->getDataEncoding() == ELF::ELFDATA2LSB;
+  }
+
   virtual symbol_iterator begin_symbols() const;
   virtual symbol_iterator end_symbols() const;
 
@@ -1467,11 +1525,11 @@ error_code ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel,
     default :
       report_fatal_error("Invalid section type in Rel!");
     case ELF::SHT_REL : {
-      symbolIdx = getRel(Rel)->getSymbol();
+      symbolIdx = getRel(Rel)->getSymbol(isMips64EL());
       break;
     }
     case ELF::SHT_RELA : {
-      symbolIdx = getRela(Rel)->getSymbol();
+      symbolIdx = getRela(Rel)->getSymbol(isMips64EL());
       break;
     }
   }
@@ -1537,11 +1595,11 @@ error_code ELFObjectFile<ELFT>::getRelocationType(DataRefImpl Rel,
     default :
       report_fatal_error("Invalid section type in Rel!");
     case ELF::SHT_REL : {
-      Result = getRel(Rel)->getType();
+      Result = getRel(Rel)->getType(isMips64EL());
       break;
     }
     case ELF::SHT_RELA : {
-      Result = getRela(Rel)->getType();
+      Result = getRela(Rel)->getType(isMips64EL());
       break;
     }
   }
@@ -1561,11 +1619,11 @@ error_code ELFObjectFile<ELFT>::getRelocationTypeName(
     default :
       return object_error::parse_failed;
     case ELF::SHT_REL : {
-      type = getRel(Rel)->getType();
+      type = getRel(Rel)->getType(isMips64EL());
       break;
     }
     case ELF::SHT_RELA : {
-      type = getRela(Rel)->getType();
+      type = getRela(Rel)->getType(isMips64EL());
       break;
     }
   }
@@ -2059,14 +2117,14 @@ error_code ELFObjectFile<ELFT>::getRelocationValueString(
     default:
       return object_error::parse_failed;
     case ELF::SHT_REL: {
-      type = getRel(Rel)->getType();
-      symbol_index = getRel(Rel)->getSymbol();
+      type = getRel(Rel)->getType(isMips64EL());
+      symbol_index = getRel(Rel)->getSymbol(isMips64EL());
       // TODO: Read implicit addend from section data.
       break;
     }
     case ELF::SHT_RELA: {
-      type = getRela(Rel)->getType();
-      symbol_index = getRela(Rel)->getSymbol();
+      type = getRela(Rel)->getType(isMips64EL());
+      symbol_index = getRela(Rel)->getSymbol(isMips64EL());
       addend = getRela(Rel)->r_addend;
       break;
     }

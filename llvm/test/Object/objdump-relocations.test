@@ -8,6 +8,8 @@ RUN: llvm-objdump -r %p/Inputs/trivial-object-test.elf-x86-64 \
 RUN:              | FileCheck %s -check-prefix ELF-x86-64
 RUN: llvm-objdump -r %p/Inputs/trivial-object-test.elf-hexagon \
 RUN:              | FileCheck %s -check-prefix ELF-hexagon
+RUN: llvm-objdump -r %p/Inputs/trivial-object-test.elf-mips64el \
+RUN:              | FileCheck %s -check-prefix ELF-MIPS64EL
 
 RUN: llvm-objdump -r %p/Inputs/relocations.elf-x86-64 \
 RUN:              | FileCheck %s -check-prefix ELF-complex-x86-64
@@ -39,6 +41,11 @@ ELF-hexagon: R_HEX_HI16 puts
 ELF-hexagon: R_HEX_LO16 puts
 ELF-hexagon: R_HEX_B15_PCREL testf
 ELF-hexagon: R_HEX_B22_PCREL puts
+
+// Note: this file was produced with gas to make sure we don't end up in a
+// situation where LLVM produces and accepts a broken file.
+ELF-MIPS64EL: .data
+ELF-MIPS64EL: R_MIPS_64
 
 ELF-complex-x86-64: .text
 ELF-complex-x86-64-NEXT: R_X86_64_8 .data-4
