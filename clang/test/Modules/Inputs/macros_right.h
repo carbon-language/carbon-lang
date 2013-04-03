@@ -15,3 +15,5 @@
 
 #undef TOP_RIGHT_REDEF
 #define TOP_RIGHT_REDEF float
+
+#define FN_ADD(x, y) (x+y)

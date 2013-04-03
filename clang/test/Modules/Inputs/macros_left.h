@@ -12,3 +12,5 @@
 #define LEFT_RIGHT_DIFFERENT3 float
 
 #define LEFT_RIGHT_DIFFERENT float
+
+#define FN_ADD(a,b) (a+b)

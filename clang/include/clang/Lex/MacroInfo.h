@@ -145,9 +145,12 @@ public:
   /// \brief Return true if the specified macro definition is equal to
   /// this macro in spelling, arguments, and whitespace.
   ///
-  /// This is used to emit duplicate definition warnings.  This implements the rules
-  /// in C99 6.10.3.
-  bool isIdenticalTo(const MacroInfo &Other, Preprocessor &PP) const;
+  /// \param Syntactically if true, the macro definitions can be identical even
+  /// if they use different identifiers for the function macro parameters.
+  /// Otherwise the comparison is lexical and this implements the rules in
+  /// C99 6.10.3.
+  bool isIdenticalTo(const MacroInfo &Other, Preprocessor &PP,
+                     bool Syntactically) const;
 
   /// \brief Set or clear the isBuiltinMacro flag.
   void setIsBuiltinMacro(bool Val = true) {

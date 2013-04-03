@@ -1604,7 +1604,8 @@ void ASTReader::installImportedMacro(IdentifierInfo *II, MacroDirective *MD,
     MacroDirective::DefInfo PrevDef = Prev->getDefinition();
     MacroInfo *PrevMI = PrevDef.getMacroInfo();
     MacroInfo *NewMI = DefMD->getInfo();
-    if (NewMI != PrevMI && !PrevMI->isIdenticalTo(*NewMI, PP)) {
+    if (NewMI != PrevMI && !PrevMI->isIdenticalTo(*NewMI, PP,
+                                                  /*Syntactically=*/true)) {
       // Before marking the macros as ambiguous, check if this is a case where
       // the system macro uses a not identical definition compared to a macro
       // from the clang headers. For example:

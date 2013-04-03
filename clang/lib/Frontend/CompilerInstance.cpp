@@ -991,7 +991,8 @@ static void checkConfigMacro(Preprocessor &PP, StringRef ConfigMacro,
   // If the current macro definition is the same as the predefined macro
   // definition, it's okay.
   if (LatestDef.getMacroInfo() == PredefinedDef.getMacroInfo() ||
-      LatestDef.getMacroInfo()->isIdenticalTo(*PredefinedDef.getMacroInfo(),PP))
+      LatestDef.getMacroInfo()->isIdenticalTo(*PredefinedDef.getMacroInfo(),PP,
+                                              /*Syntactically=*/true))
     return;
 
   // The macro definitions differ.

@@ -61,11 +61,17 @@ unsigned MacroInfo::getDefinitionLengthSlow(SourceManager &SM) const {
   return DefinitionLength;
 }
 
-// isIdenticalTo - Return true if the specified macro definition is equal to
-// this macro in spelling, arguments, and whitespace.  This is used to emit
-// duplicate definition warnings.  This implements the rules in C99 6.10.3.
-//
-bool MacroInfo::isIdenticalTo(const MacroInfo &Other, Preprocessor &PP) const {
+/// \brief Return true if the specified macro definition is equal to
+/// this macro in spelling, arguments, and whitespace.
+///
+/// \param Syntactically if true, the macro definitions can be identical even
+/// if they use different identifiers for the function macro parameters.
+/// Otherwise the comparison is lexical and this implements the rules in
+/// C99 6.10.3.
+bool MacroInfo::isIdenticalTo(const MacroInfo &Other, Preprocessor &PP,
+                              bool Syntactically) const {
+  bool Lexically = !Syntactically;
+
   // Check # tokens in replacement, number of args, and various flags all match.
   if (ReplacementTokens.size() != Other.ReplacementTokens.size() ||
       getNumArgs() != Other.getNumArgs() ||
@@ -74,10 +80,12 @@ bool MacroInfo::isIdenticalTo(const MacroInfo &Other, Preprocessor &PP) const {
       isGNUVarargs() != Other.isGNUVarargs())
     return false;
 
-  // Check arguments.
-  for (arg_iterator I = arg_begin(), OI = Other.arg_begin(), E = arg_end();
-       I != E; ++I, ++OI)
-    if (*I != *OI) return false;
+  if (Lexically) {
+    // Check arguments.
+    for (arg_iterator I = arg_begin(), OI = Other.arg_begin(), E = arg_end();
+         I != E; ++I, ++OI)
+      if (*I != *OI) return false;
+  }
 
   // Check all the tokens.
   for (unsigned i = 0, e = ReplacementTokens.size(); i != e; ++i) {
@@ -95,7 +103,15 @@ bool MacroInfo::isIdenticalTo(const MacroInfo &Other, Preprocessor &PP) const {
 
     // If this is an identifier, it is easy.
     if (A.getIdentifierInfo() || B.getIdentifierInfo()) {
-      if (A.getIdentifierInfo() != B.getIdentifierInfo())
+      if (A.getIdentifierInfo() == B.getIdentifierInfo())
+        continue;
+      if (Lexically)
+        return false;
+      // With syntactic equivalence the parameter names can be different as long
+      // as they are used in the same place.
+      int AArgNum = getArgumentNum(A.getIdentifierInfo());
+      int BArgNum = Other.getArgumentNum(B.getIdentifierInfo());
+      if (AArgNum == -1 || AArgNum != BArgNum)
         return false;
       continue;
     }

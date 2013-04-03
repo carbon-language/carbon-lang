@@ -125,6 +125,7 @@ void test2() {
 void test3() {
   double d;
   LEFT_RIGHT_DIFFERENT *dp = &d; // okay
+  int x = FN_ADD(1,2);
 }
 
 #ifndef TOP_RIGHT_UNDEF
