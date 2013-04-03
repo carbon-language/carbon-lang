@@ -399,7 +399,11 @@ info''' % (options.max_frames, options.max_history, addr);
         expr = history_expr
     else:
         expr = single_expr
-    expr_sbvalue = frame.EvaluateExpression (expr)
+    expr_options = lldb.SBExpressionOptions()
+    expr_options.SetIgnoreBreakpoints(True);
+    expr_options.SetTimeoutInMicroSeconds (5*1000*1000) # 5 second timeout
+    expr_options.SetTryAllThreads (True)
+    expr_sbvalue = frame.EvaluateExpression (expr, expr_options)
     if options.verbose:
         print "expression:"
         print expr
@@ -431,7 +435,12 @@ def display_match_results (result, options, arg_str_description, expr, print_no_
     if not frame:
         result.AppendMessage('error: invalid frame')
         return 0
-    expr_sbvalue = frame.EvaluateExpression (expr)
+    expr_options = lldb.SBExpressionOptions()
+    expr_options.SetIgnoreBreakpoints(True);
+    expr_options.SetFetchDynamicValue(lldb.eNoDynamicValues);
+    expr_options.SetTimeoutInMicroSeconds (30*1000*1000) # 30 second timeout
+    expr_options.SetTryAllThreads (False)
+    expr_sbvalue = frame.EvaluateExpression (expr, expr_options)
     if options.verbose:
         print "expression:"
         print expr
@@ -977,7 +986,11 @@ def objc_refs(debugger, command, result, dict):
     if options.format == None: 
         options.format = "A" # 'A' is "address" format
 
-    num_objc_classes_value = frame.EvaluateExpression("(int)objc_getClassList((void *)0, (int)0)")
+    expr_options = lldb.SBExpressionOptions()
+    expr_options.SetIgnoreBreakpoints(True);
+    expr_options.SetTimeoutInMicroSeconds (3*1000*1000) # 3 second infinite timeout
+    expr_options.SetTryAllThreads (True)
+    num_objc_classes_value = frame.EvaluateExpression("(int)objc_getClassList((void *)0, (int)0)", expr_options)
     if not num_objc_classes_value.error.Success():
         result.AppendMessage('error: %s' % num_objc_classes_value.error.GetCString())
         return
@@ -1074,7 +1087,11 @@ int nc = (int)objc_getClassList(baton.classes, sizeof(baton.classes)/sizeof(Clas
         # Iterate through all of our ObjC class name arguments
         for class_name in args:
             addr_expr_str = "(void *)[%s class]" % class_name
-            expr_sbvalue = frame.EvaluateExpression (addr_expr_str)
+            expr_options = lldb.SBExpressionOptions()
+            expr_options.SetIgnoreBreakpoints(True);
+            expr_options.SetTimeoutInMicroSeconds (1*1000*1000) # 1 second timeout
+            expr_options.SetTryAllThreads (True)
+            expr_sbvalue = frame.EvaluateExpression (addr_expr_str, expr_options)
             if expr_sbvalue.error.Success():
                 isa = expr_sbvalue.unsigned
                 if isa:
