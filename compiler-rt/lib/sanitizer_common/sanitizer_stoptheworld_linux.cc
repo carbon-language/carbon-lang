@@ -350,7 +350,7 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
 }
 
 // Platform-specific methods from SuspendedThreadsList.
-#if defined(SANITIZER_ANDROID) && defined(__arm__)
+#if defined(__arm__)
 typedef pt_regs regs_struct;
 #else
 typedef user_regs_struct regs_struct;
@@ -368,10 +368,12 @@ int SuspendedThreadsList::GetRegistersAndSP(uptr index,
   }
 #if defined(__arm__)
   *sp = regs.ARM_sp;
-#elif SANITIZER_WORDSIZE == 32
+#elif defined(__i386__)
   *sp = regs.esp;
-#else
+#elif defined(__x86_64__)
   *sp = regs.rsp;
+#else
+  UNIMPLEMENTED("Unknown architecture");
 #endif
   internal_memcpy(buffer, &regs, sizeof(regs));
   return 0;
