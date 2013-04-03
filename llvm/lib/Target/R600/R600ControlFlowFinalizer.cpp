@@ -12,6 +12,10 @@
 /// computing their address on the fly ; it also sets STACK_SIZE info.
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "r600cf"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
+
 #include "AMDGPU.h"
 #include "R600Defines.h"
 #include "R600InstrInfo.h"
@@ -87,14 +91,7 @@ private:
     return I;
   }
   void CounterPropagateAddr(MachineInstr *MI, unsigned Addr) const {
-    switch (MI->getOpcode()) {
-    case AMDGPU::WHILE_LOOP:
-      MI->getOperand(0).setImm(Addr + 1);
-      break;
-    default:
-      MI->getOperand(0).setImm(Addr);
-      break;
-    }
+    MI->getOperand(0).setImm(Addr + MI->getOperand(0).getImm());
   }
   void CounterPropagateAddr(std::set<MachineInstr *> MIs, unsigned Addr)
       const {
@@ -123,7 +120,7 @@ public:
       MachineBasicBlock &MBB = *MB;
       unsigned CfCount = 0;
       std::vector<std::pair<unsigned, std::set<MachineInstr *> > > LoopStack;
-      std::vector<std::pair<unsigned, MachineInstr *> > IfThenElseStack;
+      std::vector<MachineInstr * > IfThenElseStack;
       R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
       if (MFI->ShaderType == 1) {
         BuildMI(MBB, MBB.begin(), MBB.findDebugLoc(MBB.begin()),
@@ -133,6 +130,7 @@ public:
       for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
           I != E;) {
         if (isFetch(I)) {
+          DEBUG(dbgs() << CfCount << ":"; I->dump(););
           I = MakeFetchClause(MBB, I, 0);
           CfCount++;
           continue;
@@ -145,6 +143,7 @@ public:
           CurrentStack++;
           MaxStack = std::max(MaxStack, CurrentStack);
         case AMDGPU::CF_ALU:
+          DEBUG(dbgs() << CfCount << ":"; MI->dump(););
           CfCount++;
           break;
         case AMDGPU::WHILELOOP: {
@@ -152,7 +151,7 @@ public:
           MaxStack = std::max(MaxStack, CurrentStack);
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
               TII->get(AMDGPU::WHILE_LOOP))
-              .addImm(0);
+              .addImm(2);
           std::pair<unsigned, std::set<MachineInstr *> > Pair(CfCount,
               std::set<MachineInstr *>());
           Pair.second.insert(MIb);
@@ -178,34 +177,36 @@ public:
               TII->get(AMDGPU::CF_JUMP))
               .addImm(0)
               .addImm(0);
-          std::pair<unsigned, MachineInstr *> Pair(CfCount, MIb);
-          IfThenElseStack.push_back(Pair);
+          IfThenElseStack.push_back(MIb);
+          DEBUG(dbgs() << CfCount << ":"; MIb->dump(););
           MI->eraseFromParent();
           CfCount++;
           break;
         }
         case AMDGPU::ELSE: {
-          std::pair<unsigned, MachineInstr *> Pair = IfThenElseStack.back();
+          MachineInstr * JumpInst = IfThenElseStack.back();
           IfThenElseStack.pop_back();
-          CounterPropagateAddr(Pair.second, CfCount);
+          CounterPropagateAddr(JumpInst, CfCount);
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
               TII->get(AMDGPU::CF_ELSE))
               .addImm(0)
               .addImm(1);
-          std::pair<unsigned, MachineInstr *> NewPair(CfCount, MIb);
-          IfThenElseStack.push_back(NewPair);
+          DEBUG(dbgs() << CfCount << ":"; MIb->dump(););
+          IfThenElseStack.push_back(MIb);
           MI->eraseFromParent();
           CfCount++;
           break;
         }
         case AMDGPU::ENDIF: {
           CurrentStack--;
-          std::pair<unsigned, MachineInstr *> Pair = IfThenElseStack.back();
+          MachineInstr *IfOrElseInst = IfThenElseStack.back();
           IfThenElseStack.pop_back();
-          CounterPropagateAddr(Pair.second, CfCount + 1);
-          BuildMI(MBB, MI, MBB.findDebugLoc(MI), TII->get(AMDGPU::POP))
+          CounterPropagateAddr(IfOrElseInst, CfCount);
+          MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
+              TII->get(AMDGPU::POP))
               .addImm(CfCount + 1)
               .addImm(1);
+          DEBUG(dbgs() << CfCount << ":"; MIb->dump(););
           MI->eraseFromParent();
           CfCount++;
           break;
@@ -229,7 +230,7 @@ public:
         case AMDGPU::CONTINUE: {
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
               TII->get(AMDGPU::CF_CONTINUE))
-              .addImm(CfCount);
+              .addImm(0);
           LoopStack.back().second.insert(MIb);
           MI->eraseFromParent();
           CfCount++;
