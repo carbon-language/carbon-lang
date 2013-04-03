@@ -354,7 +354,7 @@ let ParentPackage = OSX in {
 
 def MacOSXAPIChecker : Checker<"API">,
   InPackage<OSX>,
-  HelpText<"Check for proper uses of various Mac OS X APIs">,
+  HelpText<"Check for proper uses of various Apple APIs">,
   DescFile<"MacOSXAPIChecker.cpp">;
 
 def MacOSKeychainAPIChecker : Checker<"SecKeychainAPI">,

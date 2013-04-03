@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This defines MacOSXAPIChecker, which is an assortment of checks on calls
-// to various, widely used Mac OS X functions.
+// to various, widely used Apple APIs.
 //
 // FIXME: What's currently in BasicObjCFoundationChecks.cpp should be migrated
 // to here, using the new Checker interface.
@@ -68,7 +68,7 @@ void MacOSXAPIChecker::CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
 
   if (!BT_dispatchOnce)
     BT_dispatchOnce.reset(new BugType("Improper use of 'dispatch_once'",
-                                      "Mac OS X API"));
+                                      "API Misuse (Apple)"));
 
   // Handle _dispatch_once.  In some versions of the OS X SDK we have the case
   // that dispatch_once is a macro that wraps a call to _dispatch_once.

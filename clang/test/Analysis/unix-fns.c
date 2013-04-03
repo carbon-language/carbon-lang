@@ -552,7 +552,7 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Call to &apos;dispatch_once&apos; uses the local variable &apos;pred&apos; for the predicate value.  Using such transient memory for the predicate is potentially dangerous.  Perhaps you intended to declare the variable as &apos;static&apos;?</string>
-// CHECK-NEXT:    <key>category</key><string>Mac OS X API</string>
+// CHECK-NEXT:    <key>category</key><string>API Misuse (Apple)</string>
 // CHECK-NEXT:    <key>type</key><string>Improper use of &apos;dispatch_once&apos;</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_dispatch_once</string>
@@ -1352,7 +1352,7 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Call to &apos;dispatch_once&apos; uses the local variable &apos;pred&apos; for the predicate value.  Using such transient memory for the predicate is potentially dangerous.  Perhaps you intended to declare the variable as &apos;static&apos;?</string>
-// CHECK-NEXT:    <key>category</key><string>Mac OS X API</string>
+// CHECK-NEXT:    <key>category</key><string>API Misuse (Apple)</string>
 // CHECK-NEXT:    <key>type</key><string>Improper use of &apos;dispatch_once&apos;</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_dispatch_once_in_macro</string>

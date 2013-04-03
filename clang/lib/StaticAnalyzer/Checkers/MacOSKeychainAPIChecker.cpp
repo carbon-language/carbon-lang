@@ -91,7 +91,8 @@ private:
 
   inline void initBugType() const {
     if (!BT)
-      BT.reset(new BugType("Improper use of SecKeychain API", "Mac OS API"));
+      BT.reset(new BugType("Improper use of SecKeychain API",
+                           "API Misuse (Apple)"));
   }
 
   void generateDeallocatorMismatchReport(const AllocationPair &AP,
