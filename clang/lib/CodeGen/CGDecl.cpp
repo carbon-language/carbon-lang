@@ -109,7 +109,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
 /// EmitVarDecl - This method handles emission of any variable declaration
 /// inside a function, including static vars etc.
 void CodeGenFunction::EmitVarDecl(const VarDecl &D) {
-  switch (D.getStorageClass()) {
+  switch (D.getStorageClassAsWritten()) {
   case SC_None:
   case SC_Auto:
   case SC_Register:

@@ -238,7 +238,7 @@ static ObjCMethodDecl *getNSNumberFactoryMethod(Sema &S, SourceLocation Loc,
                                              SourceLocation(), SourceLocation(),
                                              &CX.Idents.get("value"),
                                              NumberType, /*TInfo=*/0, SC_None,
-                                             0);
+                                             SC_None, 0);
     Method->setMethodParams(S.Context, value, ArrayRef<SourceLocation>());
   }
 
@@ -489,7 +489,7 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
                                 &Context.Idents.get("value"),
                                 Context.getPointerType(ConstCharType),
                                 /*TInfo=*/0,
-                                SC_None, 0);
+                                SC_None, SC_None, 0);
           M->setMethodParams(Context, value, ArrayRef<SourceLocation>());
           BoxingMethod = M;
         }
@@ -656,14 +656,16 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
                                                  SourceLocation(),
                                                  &Context.Idents.get("objects"),
                                                  Context.getPointerType(IdT),
-                                                 /*TInfo=*/0, SC_None, 0);
+                                                 /*TInfo=*/0, SC_None, SC_None,
+                                                 0);
       Params.push_back(objects);
       ParmVarDecl *cnt = ParmVarDecl::Create(Context, Method,
                                              SourceLocation(),
                                              SourceLocation(),
                                              &Context.Idents.get("cnt"),
                                              Context.UnsignedLongTy,
-                                             /*TInfo=*/0, SC_None, 0);
+                                             /*TInfo=*/0, SC_None, SC_None,
+                                             0);
       Params.push_back(cnt);
       Method->setMethodParams(Context, Params, ArrayRef<SourceLocation>());
     }
@@ -772,21 +774,24 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
                                                  SourceLocation(),
                                                  &Context.Idents.get("objects"),
                                                  Context.getPointerType(IdT),
-                                                 /*TInfo=*/0, SC_None, 0);
+                                                 /*TInfo=*/0, SC_None, SC_None,
+                                                 0);
       Params.push_back(objects);
       ParmVarDecl *keys = ParmVarDecl::Create(Context, Method,
                                               SourceLocation(),
                                               SourceLocation(),
                                               &Context.Idents.get("keys"),
                                               Context.getPointerType(IdT),
-                                              /*TInfo=*/0, SC_None, 0);
+                                              /*TInfo=*/0, SC_None, SC_None,
+                                              0);
       Params.push_back(keys);
       ParmVarDecl *cnt = ParmVarDecl::Create(Context, Method,
                                              SourceLocation(),
                                              SourceLocation(),
                                              &Context.Idents.get("cnt"),
                                              Context.UnsignedLongTy,
-                                             /*TInfo=*/0, SC_None, 0);
+                                             /*TInfo=*/0, SC_None, SC_None,
+                                             0);
       Params.push_back(cnt);
       Method->setMethodParams(Context, Params, ArrayRef<SourceLocation>());
     }

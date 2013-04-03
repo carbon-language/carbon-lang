@@ -1251,42 +1251,6 @@ bool CXXRecordDecl::mayBeAbstract() const {
 
 void CXXMethodDecl::anchor() { }
 
-bool CXXMethodDecl::isStatic() const {
-  const CXXMethodDecl *MD = this;
-  for (;;) {
-    const CXXMethodDecl *C = MD->getCanonicalDecl();
-    if (C != MD) {
-      MD = C;
-      continue;
-    }
-
-    FunctionTemplateSpecializationInfo *Info =
-      MD->getTemplateSpecializationInfo();
-    if (!Info)
-      break;
-    MD = cast<CXXMethodDecl>(Info->getTemplate()->getTemplatedDecl());
-  }
-
-  if (MD->getStorageClass() == SC_Static)
-    return true;
-
-  DeclarationName Name = getDeclName();
-  // [class.free]p1:
-  // Any allocation function for a class T is a static member
-  // (even if not explicitly declared static).
-  if (Name.getCXXOverloadedOperator() == OO_New ||
-      Name.getCXXOverloadedOperator() == OO_Array_New)
-    return true;
-
-  // [class.free]p6 Any deallocation function for a class X is a static member
-  // (even if not explicitly declared static).
-  if (Name.getCXXOverloadedOperator() == OO_Delete ||
-      Name.getCXXOverloadedOperator() == OO_Array_Delete)
-    return true;
-
-  return false;
-}
-
 static bool recursivelyOverrides(const CXXMethodDecl *DerivedMD,
                                  const CXXMethodDecl *BaseMD) {
   for (CXXMethodDecl::method_iterator I = DerivedMD->begin_overridden_methods(),
@@ -1348,10 +1312,10 @@ CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                       SourceLocation StartLoc,
                       const DeclarationNameInfo &NameInfo,
                       QualType T, TypeSourceInfo *TInfo,
-                      StorageClass SC, bool isInline,
+                      bool isStatic, StorageClass SCAsWritten, bool isInline,
                       bool isConstexpr, SourceLocation EndLocation) {
   return new (C) CXXMethodDecl(CXXMethod, RD, StartLoc, NameInfo, T, TInfo,
-                               SC, isInline, isConstexpr,
+                               isStatic, SCAsWritten, isInline, isConstexpr,
                                EndLocation);
 }
 
@@ -1359,7 +1323,7 @@ CXXMethodDecl *CXXMethodDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   void *Mem = AllocateDeserializedDecl(C, ID, sizeof(CXXMethodDecl));
   return new (Mem) CXXMethodDecl(CXXMethod, 0, SourceLocation(), 
                                  DeclarationNameInfo(), QualType(),
-                                 0, SC_None, false, false,
+                                 0, false, SC_None, false, false,
                                  SourceLocation());
 }
 

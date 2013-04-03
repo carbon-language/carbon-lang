@@ -1946,7 +1946,8 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   FunctionDecl *Alloc =
     FunctionDecl::Create(Context, GlobalCtx, SourceLocation(),
                          SourceLocation(), Name,
-                         FnType, /*TInfo=*/0, SC_None, false, true);
+                         FnType, /*TInfo=*/0, SC_None,
+                         SC_None, false, true);
   Alloc->setImplicit();
 
   if (AddMallocAttr)
@@ -1955,7 +1956,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   ParmVarDecl *Param = ParmVarDecl::Create(Context, Alloc, SourceLocation(),
                                            SourceLocation(), 0,
                                            Argument, /*TInfo=*/0,
-                                           SC_None, 0);
+                                           SC_None, SC_None, 0);
   Alloc->setParams(Param);
 
   // FIXME: Also add this declaration to the IdentifierResolver, but

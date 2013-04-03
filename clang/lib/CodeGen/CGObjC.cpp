@@ -2848,6 +2848,7 @@ CodeGenFunction::GenerateObjCAtomicSetterCopyHelperFunction(
                                           SourceLocation(),
                                           SourceLocation(), II, C.VoidTy, 0,
                                           SC_Static,
+                                          SC_None,
                                           false,
                                           false);
   
@@ -2932,6 +2933,7 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
                                           SourceLocation(),
                                           SourceLocation(), II, C.VoidTy, 0,
                                           SC_Static,
+                                          SC_None,
                                           false,
                                           false);
   

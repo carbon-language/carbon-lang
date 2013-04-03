@@ -162,7 +162,7 @@ static bool hasAnyExplicitStorageClass(const FunctionDecl *D) {
   for (FunctionDecl::redecl_iterator I = D->redecls_begin(),
                                      E = D->redecls_end();
        I != E; ++I) {
-    if (I->getStorageClass() != SC_None)
+    if (I->getStorageClassAsWritten() != SC_None)
       return true;
   }
   return false;
@@ -10854,7 +10854,7 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
       = VarDecl::Create(S.Context, S.CurContext, Loc, Loc,
                         IterationVarName, SizeType,
                         S.Context.getTrivialTypeSourceInfo(SizeType, Loc),
-                        SC_None);
+                        SC_None, SC_None);
     IndexVariables.push_back(IterationVar);
     LSI->ArrayIndexVars.push_back(IterationVar);
     

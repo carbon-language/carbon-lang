@@ -815,6 +815,15 @@ void DeclSpec::SaveWrittenBuiltinSpecs() {
   }
 }
 
+void DeclSpec::SaveStorageSpecifierAsWritten() {
+  if (SCS_extern_in_linkage_spec && StorageClassSpec == SCS_extern)
+    // If 'extern' is part of a linkage specification,
+    // then it is not a storage class "as written".
+    StorageClassSpecAsWritten = SCS_unspecified;
+  else
+    StorageClassSpecAsWritten = StorageClassSpec;
+}
+
 /// Finish - This does final analysis of the declspec, rejecting things like
 /// "_Imaginary" (lacking an FP type).  This returns a diagnostic to issue or
 /// diag::NUM_DIAGNOSTICS if there is no error.  After calling this method,
@@ -822,6 +831,7 @@ void DeclSpec::SaveWrittenBuiltinSpecs() {
 void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP) {
   // Before possibly changing their values, save specs as written.
   SaveWrittenBuiltinSpecs();
+  SaveStorageSpecifierAsWritten();
 
   // Check the type specifier components first.
 
@@ -931,7 +941,7 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP) {
   if (PP.getLangOpts().CPlusPlus && !PP.getLangOpts().MicrosoftExt &&
       TypeSpecType == TST_unspecified && StorageClassSpec == SCS_auto) {
     TypeSpecType = TST_auto;
-    StorageClassSpec = SCS_unspecified;
+    StorageClassSpec = StorageClassSpecAsWritten = SCS_unspecified;
     TSTLoc = TSTNameLoc = StorageClassSpecLoc;
     StorageClassSpecLoc = SourceLocation();
   }

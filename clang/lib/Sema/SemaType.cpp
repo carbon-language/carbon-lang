@@ -2301,7 +2301,7 @@ static void warnAboutAmbiguousFunction(Sema &S, Declarator &D,
   if (!D.isFunctionDeclarator() ||
       D.getFunctionDefinitionKind() != FDK_Declaration ||
       !S.CurContext->isFunctionOrMethod() ||
-      D.getDeclSpec().getStorageClassSpec()
+      D.getDeclSpec().getStorageClassSpecAsWritten()
         != DeclSpec::SCS_unspecified)
     return;
 

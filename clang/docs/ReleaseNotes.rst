@@ -111,14 +111,9 @@ succeeded). Essentially all previous 'cast' usage should be replaced with
 'castAs' and 'dyn_cast' should be replaced with 'getAs'. See r175462 for the
 first example of such a change along with many examples of how code was
 migrated to the new API.
-
-Storage Class
-^^^^^^^^^^^^^
-
-For each variable and function Clang used to keep the storage class as written
-in the source, the linkage and a semantic storage class. This was a bit
-redundant and the semantic storage class has been removed. The method
-getStorageClass now returns what is written it the source code for that decl.
+ 
+API change 1
+^^^^^^^^^^^^
 
 ...
 

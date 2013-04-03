@@ -1973,6 +1973,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                                     property->getType().getUnqualifiedType(),
                                                   /*TInfo=*/0,
                                                   SC_None,
+                                                  SC_None,
                                                   0);
       SetterMethod->setMethodParams(Context, Argument,
                                     ArrayRef<SourceLocation>());

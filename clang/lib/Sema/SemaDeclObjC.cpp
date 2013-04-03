@@ -2930,7 +2930,7 @@ Decl *Sema::ActOnMethodDeclaration(
 
     ParmVarDecl* Param = CheckParameter(ObjCMethod, StartLoc,
                                         ArgInfo[i].NameLoc, ArgInfo[i].Name,
-                                        ArgType, DI, SC_None);
+                                        ArgType, DI, SC_None, SC_None);
 
     Param->setObjCMethodScopeInfo(i);
 
@@ -3161,7 +3161,7 @@ VarDecl *Sema::BuildObjCExceptionDecl(TypeSourceInfo *TInfo, QualType T,
   }
   
   VarDecl *New = VarDecl::Create(Context, CurContext, StartLoc, IdLoc, Id,
-                                 T, TInfo, SC_None);
+                                 T, TInfo, SC_None, SC_None);
   New->setExceptionVariable(true);
   
   // In ARC, infer 'retaining' for variables of retainable type.
