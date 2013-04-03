@@ -2787,13 +2787,6 @@ bool ObjCARCOpt::OptimizeSequences(Function &F) {
 ///    ret i8* %3
 /// \endcode
 /// And delete the retain and autorelease.
-///
-/// Otherwise if it's just this:
-/// \code
-///    %3 = call i8* @objc_autorelease(i8* %2)
-///    ret i8* %3
-/// \endcode
-/// convert the autorelease to autoreleaseRV.
 void ObjCARCOpt::OptimizeReturns(Function &F) {
   if (!F.getReturnType()->isPointerTy())
     return;
