@@ -135,7 +135,7 @@ public:
     /// or member ends up here.
     IDNS_Ordinary            = 0x0020,
 
-    /// Objective C @protocol.
+    /// Objective C \@protocol.
     IDNS_ObjCProtocol        = 0x0040,
 
     /// This declaration is a friend function.  A friend function

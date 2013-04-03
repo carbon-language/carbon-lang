@@ -417,9 +417,13 @@ public:
   child_range children() { return child_range(); }
 };
 
-/// ObjCProtocolExpr used for protocol expression in Objective-C.  This is used
-/// as: @protocol(foo), as in:
-///   obj conformsToProtocol:@protocol(foo)]
+/// ObjCProtocolExpr used for protocol expression in Objective-C.
+///
+/// This is used as: \@protocol(foo), as in:
+/// \code
+///   [obj conformsToProtocol:@protocol(foo)]
+/// \endcode
+///
 /// The return type is "Protocol*".
 class ObjCProtocolExpr : public Expr {
   ObjCProtocolDecl *TheProtocol;
