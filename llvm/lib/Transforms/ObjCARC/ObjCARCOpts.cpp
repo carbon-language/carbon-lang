@@ -2834,6 +2834,33 @@ FindPredecessorRetainWithSafePath(const Value *Arg, BasicBlock *BB,
   return Retain;
 }
 
+/// Look for an ``autorelease'' instruction dependent on Arg such that there are
+/// no instructions dependent on Arg that need a positive ref count in between
+/// the autorelease and the ret.
+static CallInst *
+FindPredecessorAutoreleaseWithSafePath(const Value *Arg, BasicBlock *BB,
+                                       ReturnInst *Ret,
+                                       SmallPtrSet<Instruction *, 4> &DepInsts,
+                                       SmallPtrSet<const BasicBlock *, 4> &V,
+                                       ProvenanceAnalysis &PA) {
+  FindDependencies(NeedsPositiveRetainCount, Arg,
+                   BB, Ret, DepInsts, V, PA);
+  if (DepInsts.size() != 1)
+    return 0;
+  
+  CallInst *Autorelease =
+    dyn_cast_or_null<CallInst>(*DepInsts.begin());
+  if (!Autorelease)
+    return 0;
+  InstructionClass AutoreleaseClass = GetBasicInstructionClass(Autorelease);
+  if (!IsAutorelease(AutoreleaseClass))
+    return 0;
+  if (GetObjCArg(Autorelease) != Arg)
+    return 0;
+  
+  return Autorelease;
+}
+
 /// Look for this pattern:
 /// \code
 ///    %call = call i8* @something(...)
@@ -2854,32 +2881,26 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
 
     DEBUG(dbgs() << "ObjCARCOpt::OptimizeReturns: Visiting: " << *Ret << "\n");
 
-    if (!Ret) continue;
-
+    if (!Ret)
+      continue;
+    
     const Value *Arg = StripPointerCastsAndObjCCalls(Ret->getOperand(0));
-    FindDependencies(NeedsPositiveRetainCount, Arg,
-                     BB, Ret, DependingInstructions, Visited, PA);
-    if (DependingInstructions.size() != 1)
-      goto next_block;
-
-    {
-      CallInst *Autorelease =
-        dyn_cast_or_null<CallInst>(*DependingInstructions.begin());
-      if (!Autorelease)
-        goto next_block;
-      InstructionClass AutoreleaseClass = GetBasicInstructionClass(Autorelease);
-      if (!IsAutorelease(AutoreleaseClass))
-        goto next_block;
-      if (GetObjCArg(Autorelease) != Arg)
-        goto next_block;
-
+    
+    // Look for an ``autorelease'' instruction that is a predecssor of Ret and
+    // dependent on Arg such that there are no instructions dependent on Arg
+    // that need a positive ref count in between the autorelease and Ret.
+    CallInst *Autorelease =
+      FindPredecessorAutoreleaseWithSafePath(Arg, BB, Ret,
+                                             DependingInstructions, Visited,
+                                             PA);
+    if (Autorelease) {
       DependingInstructions.clear();
       Visited.clear();
-
-      CallInst *Retain = 0;
-      if ((Retain = FindPredecessorRetainWithSafePath(Arg, BB, Autorelease,
-                                                      DependingInstructions,
-                                                      Visited, PA))) {
+      
+      CallInst *Retain =
+        FindPredecessorRetainWithSafePath(Arg, BB, Autorelease,
+                                          DependingInstructions, Visited, PA);
+      if (Retain) {
         DependingInstructions.clear();
         Visited.clear();
         
@@ -2898,8 +2919,7 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
         }
       }
     }
-
-  next_block:
+    
     DependingInstructions.clear();
     Visited.clear();
   }
