@@ -12,6 +12,11 @@ configure_lit_site_cfg(
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
   )
 
+configure_lit_site_cfg(
+  ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.in
+  ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
+  )
+
 option(CLANG_TOOLS_TEST_USE_VG "Run Clang tools' tests under Valgrind" OFF)
 if(CLANG_TOOLS_TEST_USE_VG)
   set(CLANG_TOOLS_TEST_EXTRA_ARGS ${CLANG_TEST_EXTRA_ARGS} "--vg")
@@ -23,6 +28,9 @@ set(CLANG_TOOLS_TEST_DEPS
 
   # Individual tools we test.
   remove-cstr-calls cpp11-migrate modularize
+
+  # Unit tests
+  ExtraToolsUnitTests
   )
 
 add_lit_testsuite(check-clang-tools "Running the Clang extra tools' regression tests"
