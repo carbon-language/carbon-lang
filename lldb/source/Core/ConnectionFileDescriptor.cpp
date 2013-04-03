@@ -53,11 +53,12 @@ DecodeHostAndPort (const char *host_and_port,
                    int32_t& port,
                    Error *error_ptr)
 {
-    RegularExpression regex ("([^:]+):([0-9]+)");
-    if (regex.Execute (host_and_port, 2))
+    static RegularExpression g_regex ("([^:]+):([0-9]+)");
+    RegularExpression::Match regex_match(2);
+    if (g_regex.Execute (host_and_port, &regex_match))
     {
-        if (regex.GetMatchAtIndex (host_and_port, 1, host_str) &&
-            regex.GetMatchAtIndex (host_and_port, 2, port_str))
+        if (regex_match.GetMatchAtIndex (host_and_port, 1, host_str) &&
+            regex_match.GetMatchAtIndex (host_and_port, 2, port_str))
         {
             port = Args::StringToSInt32 (port_str.c_str(), INT32_MIN);
             if (port != INT32_MIN)

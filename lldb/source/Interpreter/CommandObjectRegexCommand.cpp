@@ -60,7 +60,9 @@ CommandObjectRegexCommand::DoExecute
         EntryCollection::const_iterator pos, end = m_entries.end();
         for (pos = m_entries.begin(); pos != end; ++pos)
         {
-            if (pos->regex.Execute (command, m_max_matches))
+            RegularExpression::Match regex_match(m_max_matches);
+
+            if (pos->regex.Execute (command, &regex_match))
             {
                 std::string new_command(pos->command);
                 std::string match_str;
@@ -68,7 +70,7 @@ CommandObjectRegexCommand::DoExecute
                 size_t idx, percent_var_idx;
                 for (uint32_t match_idx=1; match_idx <= m_max_matches; ++match_idx)
                 {
-                    if (pos->regex.GetMatchAtIndex (command, match_idx, match_str))
+                    if (regex_match.GetMatchAtIndex (command, match_idx, match_str))
                     {
                         const int percent_var_len = ::snprintf (percent_var, sizeof(percent_var), "%%%u", match_idx);
                         for (idx = 0; (percent_var_idx = new_command.find(percent_var, idx)) != std::string::npos; )

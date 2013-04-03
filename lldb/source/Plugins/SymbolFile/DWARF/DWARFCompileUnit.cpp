@@ -958,15 +958,16 @@ DWARFCompileUnit::ParseProducerInfo ()
             }
             else if (strstr(producer_cstr, "clang"))
             {
-                RegularExpression clang_regex("clang-([0-9]+)\\.([0-9]+)\\.([0-9]+)");
-                if (clang_regex.Execute (producer_cstr, 3))
+                static RegularExpression g_clang_version_regex("clang-([0-9]+)\\.([0-9]+)\\.([0-9]+)");
+                RegularExpression::Match regex_match(3);
+                if (g_clang_version_regex.Execute (producer_cstr, &regex_match))
                 {
                     std::string str;
-                    if (clang_regex.GetMatchAtIndex (producer_cstr, 1, str))
+                    if (regex_match.GetMatchAtIndex (producer_cstr, 1, str))
                         m_producer_version_major = Args::StringToUInt32(str.c_str(), UINT32_MAX, 10);
-                    if (clang_regex.GetMatchAtIndex (producer_cstr, 2, str))
+                    if (regex_match.GetMatchAtIndex (producer_cstr, 2, str))
                         m_producer_version_minor = Args::StringToUInt32(str.c_str(), UINT32_MAX, 10);
-                    if (clang_regex.GetMatchAtIndex (producer_cstr, 3, str))
+                    if (regex_match.GetMatchAtIndex (producer_cstr, 3, str))
                         m_producer_version_update = Args::StringToUInt32(str.c_str(), UINT32_MAX, 10);
                 }
                 m_producer = eProducerClang;

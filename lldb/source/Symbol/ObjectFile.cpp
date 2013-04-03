@@ -517,12 +517,13 @@ bool
 ObjectFile::SplitArchivePathWithObject (const char *path_with_object, FileSpec &archive_file, ConstString &archive_object, bool must_exist)
 {
     RegularExpression g_object_regex("(.*)\\(([^\\)]+)\\)$");
-    if (g_object_regex.Execute (path_with_object, 2))
+    RegularExpression::Match regex_match(2);
+    if (g_object_regex.Execute (path_with_object, &regex_match))
     {
         std::string path;
         std::string obj;
-        if (g_object_regex.GetMatchAtIndex (path_with_object, 1, path) &&
-            g_object_regex.GetMatchAtIndex (path_with_object, 2, obj))
+        if (regex_match.GetMatchAtIndex (path_with_object, 1, path) &&
+            regex_match.GetMatchAtIndex (path_with_object, 2, obj))
         {
             archive_file.SetFile (path.c_str(), false);
             archive_object.SetCString(obj.c_str());

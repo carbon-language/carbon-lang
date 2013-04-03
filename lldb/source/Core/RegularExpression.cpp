@@ -20,8 +20,7 @@ RegularExpression::RegularExpression() :
     m_re(),
     m_comp_err (1),
     m_preg(),
-    m_compile_flags(REG_EXTENDED),
-    m_matches()
+    m_compile_flags(REG_EXTENDED)
 {
     memset(&m_preg,0,sizeof(m_preg));
 }
@@ -125,59 +124,45 @@ RegularExpression::Compile(const char* re, int flags)
 // matches "match_count" should indicate the number of regmatch_t
 // values that are present in "match_ptr". The regular expression
 // will be executed using the "execute_flags".
-//----------------------------------------------------------------------
+//---------------------------------------------------------------------
 bool
-RegularExpression::Execute(const char* s, size_t num_matches, int execute_flags) const
+RegularExpression::Execute(const char* s, Match *match, int execute_flags) const
 {
-    int match_result = 1;
+    int err = 1;
     if (m_comp_err == 0)
     {
-        if (num_matches > 0)
-            m_matches.resize(num_matches + 1);
-        else
-            m_matches.clear();
-
-        match_result = ::regexec (&m_preg,
-                                  s,
-                                  m_matches.size(),
-                                  &m_matches[0],
-                                  execute_flags);
-    }
-    return match_result == 0;
-}
-
-bool
-RegularExpression::ExecuteThreadSafe (const char* s, llvm::StringRef *match_srefs, size_t count, int execute_flags) const
-{
-    bool success = false;
-    if (m_comp_err == 0)
-    {
-        std::vector<regmatch_t> matches;
-        
-        if (match_srefs && count > 0)
-            matches.resize(count + 1);
-        
-        success = ::regexec (&m_preg,
-                             s,
-                             matches.size(),
-                             matches.data(),
-                             execute_flags) == 0;
-        for (size_t i=0; i<count; ++i)
+        if (match)
         {
-            size_t match_idx = i+1;
-            if (success && matches[match_idx].rm_so < matches[match_idx].rm_eo)
-                match_srefs[i] = llvm::StringRef(s + matches[match_idx].rm_so, matches[match_idx].rm_eo - matches[match_idx].rm_so);
-            else
-                match_srefs[i] = llvm::StringRef();
+            err = ::regexec (&m_preg,
+                             s,
+                             match->GetSize(),
+                             match->GetData(),
+                             execute_flags);
+        }
+        else
+        {
+            err = ::regexec (&m_preg,
+                             s,
+                             0,
+                             NULL,
+                             execute_flags);
         }
     }
-    return success;
+    
+    if (err != 0)
+    {
+        // The regular expression didn't compile, so clear the matches
+        if (match)
+            match->Clear();
+        return false;
+    }
+    return true;
 }
 
 bool
-RegularExpression::GetMatchAtIndex (const char* s, uint32_t idx, std::string& match_str) const
+RegularExpression::Match::GetMatchAtIndex (const char* s, uint32_t idx, std::string& match_str) const
 {
-    if (idx <= m_preg.re_nsub && idx < m_matches.size())
+    if (idx < m_matches.size())
     {
         if (m_matches[idx].rm_eo == m_matches[idx].rm_so)
         {
@@ -196,9 +181,9 @@ RegularExpression::GetMatchAtIndex (const char* s, uint32_t idx, std::string& ma
 }
 
 bool
-RegularExpression::GetMatchAtIndex (const char* s, uint32_t idx, llvm::StringRef& match_str) const
+RegularExpression::Match::GetMatchAtIndex (const char* s, uint32_t idx, llvm::StringRef& match_str) const
 {
-    if (idx <= m_preg.re_nsub && idx < m_matches.size())
+    if (idx < m_matches.size())
     {
         if (m_matches[idx].rm_eo == m_matches[idx].rm_so)
         {
@@ -216,9 +201,9 @@ RegularExpression::GetMatchAtIndex (const char* s, uint32_t idx, llvm::StringRef
 }
 
 bool
-RegularExpression::GetMatchSpanningIndices (const char* s, uint32_t idx1, uint32_t idx2, llvm::StringRef& match_str) const
+RegularExpression::Match::GetMatchSpanningIndices (const char* s, uint32_t idx1, uint32_t idx2, llvm::StringRef& match_str) const
 {
-    if (idx1 <= m_preg.re_nsub && idx1 < m_matches.size() && idx2 <= m_preg.re_nsub && idx2 < m_matches.size())
+    if (idx1 < m_matches.size() && idx2 < m_matches.size())
     {
         if (m_matches[idx1].rm_so == m_matches[idx2].rm_eo)
         {

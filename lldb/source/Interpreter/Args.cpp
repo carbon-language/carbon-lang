@@ -854,20 +854,21 @@ Args::StringToAddress (const ExecutionContext *exe_ctx, const char *s, lldb::add
                     // Since the compiler can't handle things like "main + 12" we should
                     // try to do this for now. The compliler doesn't like adding offsets
                     // to function pointer types.
-                    RegularExpression symbol_plus_offset_regex("^(.*)([-\\+])[[:space:]]*(0x[0-9A-Fa-f]+|[0-9]+)[[:space:]]*$");
-                    if (symbol_plus_offset_regex.Execute(s, 3))
+                    static RegularExpression g_symbol_plus_offset_regex("^(.*)([-\\+])[[:space:]]*(0x[0-9A-Fa-f]+|[0-9]+)[[:space:]]*$");
+                    RegularExpression::Match regex_match(3);
+                    if (g_symbol_plus_offset_regex.Execute(s, &regex_match))
                     {
                         uint64_t offset = 0;
                         bool add = true;
                         std::string name;
                         std::string str;
-                        if (symbol_plus_offset_regex.GetMatchAtIndex(s, 1, name))
+                        if (regex_match.GetMatchAtIndex(s, 1, name))
                         {
-                            if (symbol_plus_offset_regex.GetMatchAtIndex(s, 2, str))
+                            if (regex_match.GetMatchAtIndex(s, 2, str))
                             {
                                 add = str[0] == '+';
                                 
-                                if (symbol_plus_offset_regex.GetMatchAtIndex(s, 3, str))
+                                if (regex_match.GetMatchAtIndex(s, 3, str))
                                 {
                                     offset = Args::StringToUInt64(str.c_str(), 0, 0, &success);
                                     

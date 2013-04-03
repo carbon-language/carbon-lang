@@ -279,13 +279,16 @@ ThreadPlanStepInRange::FrameMatchesAvoidRegexp ()
                 Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
                 if (log)
                     num_matches = 1;
-                bool return_value = avoid_regexp_to_use->Execute(frame_function_name, num_matches);
+                
+                RegularExpression::Match regex_match(num_matches);
+
+                bool return_value = avoid_regexp_to_use->Execute(frame_function_name, &regex_match);
                 if (return_value)
                 {
                     if (log)
                     {
                         std::string match;
-                        avoid_regexp_to_use->GetMatchAtIndex(frame_function_name,0, match);
+                        regex_match.GetMatchAtIndex(frame_function_name,0, match);
                         log->Printf ("Stepping out of function \"%s\" because it matches the avoid regexp \"%s\" - match substring: \"%s\".",
                                      frame_function_name,
                                      avoid_regexp_to_use->GetText(),

@@ -684,10 +684,11 @@ Instruction::ReadArray (FILE *in_file, Stream *out_stream, OptionValue::Type dat
         if (line.size() > 0)
         {
             std::string value;
-            RegularExpression reg_exp ("^[ \t]*([^ \t]+)[ \t]*$");
-            bool reg_exp_success = reg_exp.Execute (line.c_str(), 1);
+            static RegularExpression g_reg_exp ("^[ \t]*([^ \t]+)[ \t]*$");
+            RegularExpression::Match regex_match(1);
+            bool reg_exp_success = g_reg_exp.Execute (line.c_str(), &regex_match);
             if (reg_exp_success)
-                reg_exp.GetMatchAtIndex (line.c_str(), 1, value);
+                regex_match.GetMatchAtIndex (line.c_str(), 1, value);
             else
                 value = line;
                 
@@ -752,14 +753,16 @@ Instruction::ReadDictionary (FILE *in_file, Stream *out_stream)
         // Try to find a key-value pair in the current line and add it to the dictionary.
         if (line.size() > 0)
         {
-            RegularExpression reg_exp ("^[ \t]*([a-zA-Z_][a-zA-Z0-9_]*)[ \t]*=[ \t]*(.*)[ \t]*$");
-            bool reg_exp_success = reg_exp.Execute (line.c_str(), 2);
+            static RegularExpression g_reg_exp ("^[ \t]*([a-zA-Z_][a-zA-Z0-9_]*)[ \t]*=[ \t]*(.*)[ \t]*$");
+            RegularExpression::Match regex_match(2);
+
+            bool reg_exp_success = g_reg_exp.Execute (line.c_str(), &regex_match);
             std::string key;
             std::string value;
             if (reg_exp_success)
             {
-                reg_exp.GetMatchAtIndex (line.c_str(), 1, key);
-                reg_exp.GetMatchAtIndex (line.c_str(), 2, value);
+                regex_match.GetMatchAtIndex (line.c_str(), 1, key);
+                regex_match.GetMatchAtIndex (line.c_str(), 2, value);
             }
             else 
             {
