@@ -16,6 +16,7 @@ import re
 import resource
 import sys
 import time
+import types
 
 #----------------------------------------------------------------------
 # Code that auto imports LLDB
@@ -61,6 +62,67 @@ class Timer:
         self.end = time.clock()
         self.interval = self.end - self.start
 
+class Action(object):
+    """Class that encapsulates actions to take when a thread stops for a reason."""
+    def __init__(self, callback = None, callback_owner = None):
+        self.callback = callback
+        self.callback_owner = callback_owner
+    def ThreadStopped (self, thread):
+        assert False, "performance.Action.ThreadStopped(self, thread) must be overridden in a subclass"
+
+class PlanCompleteAction (Action):
+    def __init__(self, callback = None, callback_owner = None):
+        Action.__init__(self, callback, callback_owner)
+    def ThreadStopped (self, thread):
+        if thread.GetStopReason() == lldb.eStopReasonPlanComplete:
+            if self.callback:
+                if self.callback_owner:
+                    self.callback (self.callback_owner, thread)
+                else:
+                    self.callback (thread)
+            return True
+        return False
+
+
+class BreakpointAction (Action):
+    def __init__(self, callback = None, callback_owner = None, name = None, module = None, file = None, line = None, breakpoint = None):
+        Action.__init__(self, callback, callback_owner)
+        self.modules = lldb.SBFileSpecList()
+        self.files = lldb.SBFileSpecList()
+        self.breakpoints = list()
+        # "module" can be a list or a string
+        if breakpoint:
+            self.breakpoints.append(breakpoint)
+        else:
+            if module:
+                if isinstance(module, types.ListType):
+                    for module_path in module:
+                        self.modules.Append(lldb.SBFileSpec(module_path, False))
+                elif isinstance(module, types.StringTypes):
+                    self.modules.Append(lldb.SBFileSpec(module, False))
+            if name:
+                # "file" can be a list or a string
+                if file:
+                    if isinstance(file, types.ListType):
+                        self.files = lldb.SBFileSpecList()
+                        for f in file:
+                            self.files.Append(lldb.SBFileSpec(f, False))
+                    elif isinstance(file, types.StringTypes):
+                        self.files.Append(lldb.SBFileSpec(file, False))
+                self.breakpoints.append (self.target.BreakpointCreateByName(name, self.modules, self.files))
+            elif file and line:
+                self.breakpoints.append (self.target.BreakpointCreateByLocation(file, line))
+    def ThreadStopped (self, thread):
+        if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
+            for bp in self.breakpoints:
+                if bp.GetID() == thread.GetStopReasonDataAtIndex(0):
+                    if self.callback:
+                        if self.callback_owner:
+                            self.callback (self.callback_owner, thread)
+                        else:
+                            self.callback (thread)
+                    return True
+        return False
 class TestCase:
     """Class that aids in running performance tests."""
     def __init__(self):
@@ -70,22 +132,26 @@ class TestCase:
         self.process = None
         self.thread = None
         self.launch_info = None
+        self.done = False
         self.listener = self.debugger.GetListener()
-    
+        self.user_actions = list()
+        self.builtin_actions = list()
+        self.bp_id_to_dict = dict()
+        
     def Setup(self, args):
         self.launch_info = lldb.SBLaunchInfo(args)
-    
-    def Run (self, args):
-        assert False, "performance.TestCase.Run() must be subclassed"
         
+    def Run (self, args):
+        assert False, "performance.TestCase.Run(self, args) must be subclassed"
+    
     def Launch(self):
         if self.target:
             error = lldb.SBError()
-            self.process = self.target.Launch (self.launch_info, error);
+            self.process = self.target.Launch (self.launch_info, error)
             if not error.Success():
                 print "error: %s" % error.GetCString()
             if self.process:
-                self.process.GetBroadcaster().AddListener(self.listener, lldb.SBProcess.eBroadcastBitStateChanged | lldb.SBProcess.eBroadcastBitInterrupt);
+                self.process.GetBroadcaster().AddListener(self.listener, lldb.SBProcess.eBroadcastBitStateChanged | lldb.SBProcess.eBroadcastBitInterrupt)
                 return True
         return False
         
@@ -101,9 +167,10 @@ class TestCase:
                     if lldb.SBProcess.GetRestartedFromEvent(process_event):
                         continue
                     if state == lldb.eStateInvalid or state == lldb.eStateDetached or state == lldb.eStateCrashed or  state == lldb.eStateUnloaded or state == lldb.eStateExited:
-                       event = process_event
+                        event = process_event
+                        self.done = True
                     elif state == lldb.eStateConnected or state == lldb.eStateAttaching or state == lldb.eStateLaunching or state == lldb.eStateRunning or state == lldb.eStateStepping or state == lldb.eStateSuspended:
-                         continue
+                        continue
                     elif state == lldb.eStateStopped:
                         event = process_event
                         call_test_step = True
@@ -112,7 +179,8 @@ class TestCase:
                         for thread in self.process:
                             frame = thread.GetFrameAtIndex(0)
                             select_thread = False
-                            stop_reason = thread.GetStopReason();
+                            
+                            stop_reason = thread.GetStopReason()
                             if self.verbose:
                                 print "tid = %#x pc = %#x " % (thread.GetThreadID(),frame.GetPC()),
                             if stop_reason == lldb.eStopReasonNone:
@@ -142,8 +210,10 @@ class TestCase:
                                 fatal = True
                             elif stop_reason == lldb.eStopReasonBreakpoint:
                                 select_thread = True
+                                bp_id = thread.GetStopReasonDataAtIndex(0)
+                                bp_loc_id = thread.GetStopReasonDataAtIndex(1)
                                 if self.verbose:
-                                    print "breakpoint id = %d.%d" % (thread.GetStopReasonDataAtIndex(0),thread.GetStopReasonDataAtIndex(1))
+                                    print "breakpoint id = %d.%d" % (bp_id, bp_loc_id)
                             elif stop_reason == lldb.eStopReasonWatchpoint:
                                 select_thread = True
                                 if self.verbose:
@@ -152,24 +222,32 @@ class TestCase:
                                 select_thread = True
                                 if self.verbose:
                                     print "signal %d" % (thread.GetStopReasonDataAtIndex(0))
-
+                            
                             if select_thread and not selected_thread:
-                                self.thread = thread;
-                                selected_thread = self.process.SetSelectedThread(thread);
+                                self.thread = thread
+                                selected_thread = self.process.SetSelectedThread(thread)
+                            
+                            for action in self.user_actions:
+                                action.ThreadStopped (thread)
+                                    
+
                         if fatal:
                             # if self.verbose: 
-                            #     Xcode.RunCommand(self.debugger,"bt all",true);
-                            sys.exit(1);
+                            #     Xcode.RunCommand(self.debugger,"bt all",true)
+                            sys.exit(1)
         return event
     
 class Measurement:
     '''A class that encapsulates a measurement'''
+    def __init__(self):
+        object.__init__(self)
     def Measure(self):
         assert False, "performance.Measurement.Measure() must be subclassed"
         
 class MemoryMeasurement(Measurement):
     '''A class that can measure memory statistics for a process.'''
     def __init__(self, pid):
+        Measurement.__init__(self)
         self.pid = pid
         self.stats = ["rprvt","rshrd","rsize","vsize","vprvt","kprvt","kshrd","faults","cow","pageins"]
         self.command = "top -l 1 -pid %u -stats %s" % (self.pid, ",".join(self.stats))
@@ -182,15 +260,15 @@ class MemoryMeasurement(Measurement):
             multiplier = 1
             if stat:
                 if stat[-1] == 'K':
-                    multiplier = 1024;
+                    multiplier = 1024
                     stat = stat[:-1]
                 elif stat[-1] == 'M':
-                    multiplier = 1024*1024;
+                    multiplier = 1024*1024
                     stat = stat[:-1]
                 elif stat[-1] == 'G':
-                    multiplier = 1024*1024*1024;
+                    multiplier = 1024*1024*1024
                 elif stat[-1] == 'T':
-                    multiplier = 1024*1024*1024*1024;
+                    multiplier = 1024*1024*1024*1024
                     stat = stat[:-1]
                 self.value[self.stats[idx]] = int (stat) * multiplier
 
@@ -204,21 +282,40 @@ class MemoryMeasurement(Measurement):
         return s
 
 
-class TesterTestCase(TestCase):
+class TesterTestCase(TestCase):    
+    def __init__(self):
+        TestCase.__init__(self)
+        self.verbose = True
+        self.num_steps = 5
     
+    def BreakpointHit (self, thread):
+        bp_id = thread.GetStopReasonDataAtIndex(0)
+        loc_id = thread.GetStopReasonDataAtIndex(1)
+        print "Breakpoint %i.%i hit: %s" % (bp_id, loc_id, thread.process.target.FindBreakpointByID(bp_id))
+        thread.StepOver()
+    
+    def PlanComplete (self, thread):
+        if self.num_steps > 0:
+            thread.StepOver()
+            self.num_steps = self.num_steps - 1
+        else:
+            thread.process.Kill()
+
     def Run (self, args):
         self.Setup(args)
-        self.verbose = True
-        #self.breakpoints = { 'name' : { 'main' } : , 'malloc' {}
         with Timer() as total_time:
             self.target = self.debugger.CreateTarget(args[0])
             if self.target:
                 with Timer() as breakpoint_timer:
-                    self.target.BreakpointCreateByName("main")
+                    bp = self.target.BreakpointCreateByName("main")
                 print('Breakpoint time = %.03f sec.' % breakpoint_timer.interval)
+                
+                self.user_actions.append (BreakpointAction(breakpoint=bp, callback=TesterTestCase.BreakpointHit, callback_owner=self))
+                self.user_actions.append (PlanCompleteAction(callback=TesterTestCase.PlanComplete, callback_owner=self))
+                
                 if self.Launch():
-                    self.WaitForNextProcessEvent();
-                    self.process.Kill()
+                    while not self.done:
+                        self.WaitForNextProcessEvent()
                 else:
                     print "error: failed to launch process"
             else:

@@ -154,8 +154,11 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
             error.Clear();
         else
         {
-            exe_file.GetPath (exe_path, sizeof(exe_path));
-            error.SetErrorStringWithFormat ("unable to find executable for '%s'", exe_path);
+            if (!resolved_exe_file.ResolveExecutableLocation())
+            {
+                exe_file.GetPath (exe_path, sizeof(exe_path));
+                error.SetErrorStringWithFormat ("unable to find executable for '%s'", exe_path);
+            }
         }
     }
     else
