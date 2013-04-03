@@ -1378,8 +1378,16 @@ template<class ELFT>
 error_code ELFObjectFile<ELFT>::sectionContainsSymbol(DataRefImpl Sec,
                                                       DataRefImpl Symb,
                                                       bool &Result) const {
-  // FIXME: Unimplemented.
-  Result = false;
+  validateSymbol(Symb);
+
+  const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
+  const Elf_Sym  *symb = getSymbol(Symb);
+
+  unsigned shndx = symb->st_shndx;
+  bool Reserved = shndx >= ELF::SHN_LORESERVE
+               && shndx <= ELF::SHN_HIRESERVE;
+
+  Result = !Reserved && (sec == getSection(symb->st_shndx));
   return object_error::success;
 }
 
