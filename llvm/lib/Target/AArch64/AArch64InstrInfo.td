@@ -162,13 +162,13 @@ let Defs = [XSP], Uses = [XSP] in {
 let usesCustomInserter = 1 in {
 multiclass AtomicSizes<string opname> {
   def _I8 : PseudoInst<(outs GPR32:$dst), (ins GPR64:$ptr, GPR32:$incr),
-    [(set GPR32:$dst, (!cast<SDNode>(opname # "_8") GPR64:$ptr, GPR32:$incr))]>;
+          [(set i32:$dst, (!cast<SDNode>(opname # "_8") i64:$ptr, i32:$incr))]>;
   def _I16 : PseudoInst<(outs GPR32:$dst), (ins GPR64:$ptr, GPR32:$incr),
-   [(set GPR32:$dst, (!cast<SDNode>(opname # "_16") GPR64:$ptr, GPR32:$incr))]>;
+         [(set i32:$dst, (!cast<SDNode>(opname # "_16") i64:$ptr, i32:$incr))]>;
   def _I32 : PseudoInst<(outs GPR32:$dst), (ins GPR64:$ptr, GPR32:$incr),
-   [(set GPR32:$dst, (!cast<SDNode>(opname # "_32") GPR64:$ptr, GPR32:$incr))]>;
+         [(set i32:$dst, (!cast<SDNode>(opname # "_32") i64:$ptr, i32:$incr))]>;
   def _I64 : PseudoInst<(outs GPR64:$dst), (ins GPR64:$ptr, GPR64:$incr),
-   [(set GPR64:$dst, (!cast<SDNode>(opname # "_64") GPR64:$ptr, GPR64:$incr))]>;
+         [(set i64:$dst, (!cast<SDNode>(opname # "_64") i64:$ptr, i64:$incr))]>;
 }
 }
 
@@ -190,20 +190,16 @@ let Defs = [NZCV] in {
 let usesCustomInserter = 1, Defs = [NZCV] in {
 def ATOMIC_CMP_SWAP_I8
   : PseudoInst<(outs GPR32:$dst), (ins GPR64:$ptr, GPR32:$old, GPR32:$new),
-               [(set GPR32:$dst,
-                     (atomic_cmp_swap_8 GPR64:$ptr, GPR32:$old, GPR32:$new))]>;
+            [(set i32:$dst, (atomic_cmp_swap_8 i64:$ptr, i32:$old, i32:$new))]>;
 def ATOMIC_CMP_SWAP_I16
   : PseudoInst<(outs GPR32:$dst), (ins GPR64:$ptr, GPR32:$old, GPR32:$new),
-               [(set GPR32:$dst,
-                     (atomic_cmp_swap_16 GPR64:$ptr, GPR32:$old, GPR32:$new))]>;
+           [(set i32:$dst, (atomic_cmp_swap_16 i64:$ptr, i32:$old, i32:$new))]>;
 def ATOMIC_CMP_SWAP_I32
   : PseudoInst<(outs GPR32:$dst), (ins GPR64:$ptr, GPR32:$old, GPR32:$new),
-               [(set GPR32:$dst,
-                     (atomic_cmp_swap_32 GPR64:$ptr, GPR32:$old, GPR32:$new))]>;
+           [(set i32:$dst, (atomic_cmp_swap_32 i64:$ptr, i32:$old, i32:$new))]>;
 def ATOMIC_CMP_SWAP_I64
   : PseudoInst<(outs GPR64:$dst), (ins GPR64:$ptr, GPR64:$old, GPR64:$new),
-               [(set GPR64:$dst,
-                     (atomic_cmp_swap_64 GPR64:$ptr, GPR64:$old, GPR64:$new))]>;
+           [(set i64:$dst, (atomic_cmp_swap_64 i64:$ptr, i64:$old, i64:$new))]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -264,31 +260,39 @@ def LSL_extoperand : Operand<i64> {
 class extend_types {
     dag uxtb; dag uxth; dag uxtw; dag uxtx;
     dag sxtb; dag sxth; dag sxtw; dag sxtx;
+    ValueType ty;
+    RegisterClass GPR;
 }
 
 def extends_to_i64 : extend_types {
-    let uxtb = (and (anyext GPR32:$Rm), 255);
-    let uxth = (and (anyext GPR32:$Rm), 65535);
-    let uxtw = (zext GPR32:$Rm);
-    let uxtx = (i64 GPR64:$Rm);
+    let uxtb = (and (anyext i32:$Rm), 255);
+    let uxth = (and (anyext i32:$Rm), 65535);
+    let uxtw = (zext i32:$Rm);
+    let uxtx = (i64 $Rm);
 
-    let sxtb = (sext_inreg (anyext GPR32:$Rm), i8);
-    let sxth = (sext_inreg (anyext GPR32:$Rm), i16);
-    let sxtw = (sext GPR32:$Rm);
-    let sxtx = (i64 GPR64:$Rm);
+    let sxtb = (sext_inreg (anyext i32:$Rm), i8);
+    let sxth = (sext_inreg (anyext i32:$Rm), i16);
+    let sxtw = (sext i32:$Rm);
+    let sxtx = (i64 $Rm);
+
+    let ty = i64;
+    let GPR = GPR64xsp;
 }
 
 
 def extends_to_i32 : extend_types {
-    let uxtb = (and GPR32:$Rm, 255);
-    let uxth = (and GPR32:$Rm, 65535);
-    let uxtw = (i32 GPR32:$Rm);
-    let uxtx = (i32 GPR32:$Rm);
+    let uxtb = (and i32:$Rm, 255);
+    let uxth = (and i32:$Rm, 65535);
+    let uxtw = (i32 i32:$Rm);
+    let uxtx = (i32 i32:$Rm);
 
-    let sxtb = (sext_inreg GPR32:$Rm, i8);
-    let sxth = (sext_inreg GPR32:$Rm, i16);
-    let sxtw = (i32 GPR32:$Rm);
-    let sxtx = (i32 GPR32:$Rm);
+    let sxtb = (sext_inreg i32:$Rm, i8);
+    let sxth = (sext_inreg i32:$Rm, i16);
+    let sxtw = (i32 i32:$Rm);
+    let sxtx = (i32 i32:$Rm);
+
+    let ty = i32;
+    let GPR = GPR32wsp;
 }
 
 // Now, six of the extensions supported are easy and uniform: if the source size
@@ -303,44 +307,38 @@ def extends_to_i32 : extend_types {
 //       would probably be the best option).
 multiclass addsub_exts<bit sf, bit op, bit S, string asmop,
                        SDPatternOperator opfrag,
-                       dag outs, extend_types exts, RegisterClass GPRsp> {
+                       dag outs, extend_types exts> {
     def w_uxtb : A64I_addsubext<sf, op, S, 0b00, 0b000,
-                      outs,
-                      (ins GPRsp:$Rn, GPR32:$Rm, UXTB_operand:$Imm3),
-                      !strconcat(asmop, "$Rn, $Rm, $Imm3"),
-                      [(opfrag GPRsp:$Rn, (shl exts.uxtb, UXTB_operand:$Imm3))],
-                      NoItinerary>;
+                    outs, (ins exts.GPR:$Rn, GPR32:$Rm, UXTB_operand:$Imm3),
+                    !strconcat(asmop, "$Rn, $Rm, $Imm3"),
+                    [(opfrag exts.ty:$Rn, (shl exts.uxtb, UXTB_operand:$Imm3))],
+                    NoItinerary>;
     def w_uxth : A64I_addsubext<sf, op, S, 0b00, 0b001,
-                      outs,
-                      (ins GPRsp:$Rn, GPR32:$Rm, UXTH_operand:$Imm3),
-                      !strconcat(asmop, "$Rn, $Rm, $Imm3"),
-                      [(opfrag GPRsp:$Rn, (shl exts.uxth, UXTH_operand:$Imm3))],
-                      NoItinerary>;
+                    outs, (ins exts.GPR:$Rn, GPR32:$Rm, UXTH_operand:$Imm3),
+                    !strconcat(asmop, "$Rn, $Rm, $Imm3"),
+                    [(opfrag exts.ty:$Rn, (shl exts.uxth, UXTH_operand:$Imm3))],
+                    NoItinerary>;
     def w_uxtw : A64I_addsubext<sf, op, S, 0b00, 0b010,
-                      outs,
-                      (ins GPRsp:$Rn, GPR32:$Rm, UXTW_operand:$Imm3),
-                      !strconcat(asmop, "$Rn, $Rm, $Imm3"),
-                      [(opfrag GPRsp:$Rn, (shl exts.uxtw, UXTW_operand:$Imm3))],
-                      NoItinerary>;
+                    outs, (ins exts.GPR:$Rn, GPR32:$Rm, UXTW_operand:$Imm3),
+                    !strconcat(asmop, "$Rn, $Rm, $Imm3"),
+                    [(opfrag exts.ty:$Rn, (shl exts.uxtw, UXTW_operand:$Imm3))],
+                    NoItinerary>;
 
     def w_sxtb : A64I_addsubext<sf, op, S, 0b00, 0b100,
-                      outs,
-                      (ins GPRsp:$Rn, GPR32:$Rm, SXTB_operand:$Imm3),
-                      !strconcat(asmop, "$Rn, $Rm, $Imm3"),
-                      [(opfrag GPRsp:$Rn, (shl exts.sxtb, SXTB_operand:$Imm3))],
-                      NoItinerary>;
+                    outs, (ins exts.GPR:$Rn, GPR32:$Rm, SXTB_operand:$Imm3),
+                    !strconcat(asmop, "$Rn, $Rm, $Imm3"),
+                    [(opfrag exts.ty:$Rn, (shl exts.sxtb, SXTB_operand:$Imm3))],
+                    NoItinerary>;
     def w_sxth : A64I_addsubext<sf, op, S, 0b00, 0b101,
-                      outs,
-                      (ins GPRsp:$Rn, GPR32:$Rm, SXTH_operand:$Imm3),
-                      !strconcat(asmop, "$Rn, $Rm, $Imm3"),
-                      [(opfrag GPRsp:$Rn, (shl exts.sxth, SXTH_operand:$Imm3))],
-                      NoItinerary>;
+                    outs, (ins exts.GPR:$Rn, GPR32:$Rm, SXTH_operand:$Imm3),
+                    !strconcat(asmop, "$Rn, $Rm, $Imm3"),
+                    [(opfrag exts.ty:$Rn, (shl exts.sxth, SXTH_operand:$Imm3))],
+                    NoItinerary>;
     def w_sxtw : A64I_addsubext<sf, op, S, 0b00, 0b110,
-                      outs,
-                      (ins GPRsp:$Rn, GPR32:$Rm, SXTW_operand:$Imm3),
-                      !strconcat(asmop, "$Rn, $Rm, $Imm3"),
-                      [(opfrag GPRsp:$Rn, (shl exts.sxtw, SXTW_operand:$Imm3))],
-                      NoItinerary>;
+                    outs, (ins exts.GPR:$Rn, GPR32:$Rm, SXTW_operand:$Imm3),
+                    !strconcat(asmop, "$Rn, $Rm, $Imm3"),
+                    [(opfrag exts.ty:$Rn, (shl exts.sxtw, SXTW_operand:$Imm3))],
+                    NoItinerary>;
 }
 
 // These two could be merge in with the above, but their patterns aren't really
@@ -351,7 +349,7 @@ multiclass addsub_xxtx<bit op, bit S, string asmop, SDPatternOperator opfrag,
                    outs,
                    (ins GPR64xsp:$Rn, GPR64:$Rm, UXTX_operand:$Imm3),
                    !strconcat(asmop, "$Rn, $Rm, $Imm3"),
-                   [(opfrag GPR64xsp:$Rn, (shl GPR64:$Rm, UXTX_operand:$Imm3))],
+                   [(opfrag i64:$Rn, (shl i64:$Rm, UXTX_operand:$Imm3))],
                    NoItinerary>;
 
     def x_sxtx : A64I_addsubext<0b1, op, S, 0b00, 0b111,
@@ -384,53 +382,53 @@ class SetNZCV<SDPatternOperator op>
   : PatFrag<(ops node:$lhs, node:$rhs), (set NZCV, (op node:$lhs, node:$rhs))>;
 
 defm ADDxx :addsub_exts<0b1, 0b0, 0b0, "add\t$Rd, ", SetRD<GPR64xsp, add>,
-                        (outs GPR64xsp:$Rd), extends_to_i64, GPR64xsp>,
+                        (outs GPR64xsp:$Rd), extends_to_i64>,
             addsub_xxtx<     0b0, 0b0, "add\t$Rd, ", SetRD<GPR64xsp, add>,
                         (outs GPR64xsp:$Rd)>;
 defm ADDww :addsub_exts<0b0, 0b0, 0b0, "add\t$Rd, ", SetRD<GPR32wsp, add>,
-                        (outs GPR32wsp:$Rd), extends_to_i32, GPR32wsp>,
+                        (outs GPR32wsp:$Rd), extends_to_i32>,
             addsub_wxtx<     0b0, 0b0, "add\t$Rd, ",
                         (outs GPR32wsp:$Rd)>;
 defm SUBxx :addsub_exts<0b1, 0b1, 0b0, "sub\t$Rd, ", SetRD<GPR64xsp, sub>,
-                        (outs GPR64xsp:$Rd), extends_to_i64, GPR64xsp>,
+                        (outs GPR64xsp:$Rd), extends_to_i64>,
             addsub_xxtx<     0b1, 0b0, "sub\t$Rd, ", SetRD<GPR64xsp, sub>,
                         (outs GPR64xsp:$Rd)>;
 defm SUBww :addsub_exts<0b0, 0b1, 0b0, "sub\t$Rd, ", SetRD<GPR32wsp, sub>,
-                        (outs GPR32wsp:$Rd), extends_to_i32, GPR32wsp>,
+                        (outs GPR32wsp:$Rd), extends_to_i32>,
             addsub_wxtx<     0b1, 0b0, "sub\t$Rd, ",
                         (outs GPR32wsp:$Rd)>;
 
 let Defs = [NZCV] in {
 defm ADDSxx :addsub_exts<0b1, 0b0, 0b1, "adds\t$Rd, ", SetRD<GPR64, addc>,
-                         (outs GPR64:$Rd), extends_to_i64, GPR64xsp>,
+                         (outs GPR64:$Rd), extends_to_i64>,
              addsub_xxtx<     0b0, 0b1, "adds\t$Rd, ", SetRD<GPR64, addc>,
                          (outs GPR64:$Rd)>;
 defm ADDSww :addsub_exts<0b0, 0b0, 0b1, "adds\t$Rd, ", SetRD<GPR32, addc>,
-                         (outs GPR32:$Rd), extends_to_i32, GPR32wsp>,
+                         (outs GPR32:$Rd), extends_to_i32>,
              addsub_wxtx<     0b0, 0b1, "adds\t$Rd, ",
                          (outs GPR32:$Rd)>;
 defm SUBSxx :addsub_exts<0b1, 0b1, 0b1, "subs\t$Rd, ", SetRD<GPR64, subc>,
-                         (outs GPR64:$Rd), extends_to_i64, GPR64xsp>,
+                         (outs GPR64:$Rd), extends_to_i64>,
              addsub_xxtx<     0b1, 0b1, "subs\t$Rd, ", SetRD<GPR64, subc>,
                          (outs GPR64:$Rd)>;
 defm SUBSww :addsub_exts<0b0, 0b1, 0b1, "subs\t$Rd, ", SetRD<GPR32, subc>,
-                         (outs GPR32:$Rd), extends_to_i32, GPR32wsp>,
+                         (outs GPR32:$Rd), extends_to_i32>,
              addsub_wxtx<     0b1, 0b1, "subs\t$Rd, ",
                          (outs GPR32:$Rd)>;
 
 
 let Rd = 0b11111, isCompare = 1 in {
 defm CMNx : addsub_exts<0b1, 0b0, 0b1, "cmn\t", SetNZCV<A64cmn>,
-                        (outs), extends_to_i64, GPR64xsp>,
+                        (outs), extends_to_i64>,
             addsub_xxtx<     0b0, 0b1, "cmn\t", SetNZCV<A64cmn>, (outs)>;
 defm CMNw : addsub_exts<0b0, 0b0, 0b1, "cmn\t", SetNZCV<A64cmn>,
-                        (outs), extends_to_i32, GPR32wsp>,
+                        (outs), extends_to_i32>,
             addsub_wxtx<     0b0, 0b1, "cmn\t", (outs)>;
 defm CMPx : addsub_exts<0b1, 0b1, 0b1, "cmp\t", SetNZCV<A64cmp>,
-                        (outs), extends_to_i64, GPR64xsp>,
+                        (outs), extends_to_i64>,
             addsub_xxtx<     0b1, 0b1, "cmp\t", SetNZCV<A64cmp>, (outs)>;
 defm CMPw : addsub_exts<0b0, 0b1, 0b1, "cmp\t", SetNZCV<A64cmp>,
-                        (outs), extends_to_i32, GPR32wsp>,
+                        (outs), extends_to_i32>,
             addsub_wxtx<     0b1, 0b1, "cmp\t", (outs)>;
 }
 }
@@ -439,31 +437,31 @@ defm CMPw : addsub_exts<0b0, 0b1, 0b1, "cmp\t", SetNZCV<A64cmp>,
 // created for uxtx/sxtx since they're non-uniform and it's expected that
 // add/sub (shifted register) will handle those cases anyway.
 multiclass addsubext_noshift_patterns<string prefix, SDPatternOperator nodeop,
-                                      RegisterClass GPRsp, extend_types exts> {
-    def : Pat<(nodeop GPRsp:$Rn, exts.uxtb),
-              (!cast<Instruction>(prefix # "w_uxtb") GPRsp:$Rn, GPR32:$Rm, 0)>;
-    def : Pat<(nodeop GPRsp:$Rn, exts.uxth),
-              (!cast<Instruction>(prefix # "w_uxth") GPRsp:$Rn, GPR32:$Rm, 0)>;
-    def : Pat<(nodeop GPRsp:$Rn, exts.uxtw),
-              (!cast<Instruction>(prefix # "w_uxtw") GPRsp:$Rn, GPR32:$Rm, 0)>;
+                                      extend_types exts> {
+    def : Pat<(nodeop exts.ty:$Rn, exts.uxtb),
+              (!cast<Instruction>(prefix # "w_uxtb") $Rn, $Rm, 0)>;
+    def : Pat<(nodeop exts.ty:$Rn, exts.uxth),
+              (!cast<Instruction>(prefix # "w_uxth") $Rn, $Rm, 0)>;
+    def : Pat<(nodeop exts.ty:$Rn, exts.uxtw),
+              (!cast<Instruction>(prefix # "w_uxtw") $Rn, $Rm, 0)>;
 
-    def : Pat<(nodeop GPRsp:$Rn, exts.sxtb),
-              (!cast<Instruction>(prefix # "w_sxtb") GPRsp:$Rn, GPR32:$Rm, 0)>;
-    def : Pat<(nodeop GPRsp:$Rn, exts.sxth),
-              (!cast<Instruction>(prefix # "w_sxth") GPRsp:$Rn, GPR32:$Rm, 0)>;
-    def : Pat<(nodeop GPRsp:$Rn, exts.sxtw),
-              (!cast<Instruction>(prefix # "w_sxtw") GPRsp:$Rn, GPR32:$Rm, 0)>;
+    def : Pat<(nodeop exts.ty:$Rn, exts.sxtb),
+              (!cast<Instruction>(prefix # "w_sxtb") $Rn, $Rm, 0)>;
+    def : Pat<(nodeop exts.ty:$Rn, exts.sxth),
+              (!cast<Instruction>(prefix # "w_sxth") $Rn, $Rm, 0)>;
+    def : Pat<(nodeop exts.ty:$Rn, exts.sxtw),
+              (!cast<Instruction>(prefix # "w_sxtw") $Rn, $Rm, 0)>;
 }
 
-defm : addsubext_noshift_patterns<"ADDxx", add, GPR64xsp, extends_to_i64>;
-defm : addsubext_noshift_patterns<"ADDww", add, GPR32wsp, extends_to_i32>;
-defm : addsubext_noshift_patterns<"SUBxx", sub, GPR64xsp, extends_to_i64>;
-defm : addsubext_noshift_patterns<"SUBww", sub, GPR32wsp, extends_to_i32>;
+defm : addsubext_noshift_patterns<"ADDxx", add, extends_to_i64>;
+defm : addsubext_noshift_patterns<"ADDww", add, extends_to_i32>;
+defm : addsubext_noshift_patterns<"SUBxx", sub, extends_to_i64>;
+defm : addsubext_noshift_patterns<"SUBww", sub, extends_to_i32>;
 
-defm : addsubext_noshift_patterns<"CMNx", A64cmn, GPR64xsp, extends_to_i64>;
-defm : addsubext_noshift_patterns<"CMNw", A64cmn, GPR32wsp, extends_to_i32>;
-defm : addsubext_noshift_patterns<"CMPx", A64cmp, GPR64xsp, extends_to_i64>;
-defm : addsubext_noshift_patterns<"CMPw", A64cmp, GPR32wsp, extends_to_i32>;
+defm : addsubext_noshift_patterns<"CMNx", A64cmn, extends_to_i64>;
+defm : addsubext_noshift_patterns<"CMNw", A64cmn, extends_to_i32>;
+defm : addsubext_noshift_patterns<"CMPx", A64cmp, extends_to_i64>;
+defm : addsubext_noshift_patterns<"CMPw", A64cmp, extends_to_i32>;
 
 // An extend of "lsl #imm" is valid if and only if one of Rn and Rd is
 // sp/wsp. It is synonymous with uxtx/uxtw depending on the size of the
@@ -614,14 +612,13 @@ multiclass addsubimm_varieties<string prefix, bit sf, bit op, bits<2> shift,
                                string asmop, string cmpasmop,
                                Operand imm_operand, Operand cmp_imm_operand,
                                RegisterClass GPR, RegisterClass GPRsp,
-                               AArch64Reg ZR> {
+                               AArch64Reg ZR, ValueType Ty> {
     // All registers for non-S variants allow SP
   def _s : A64I_addsubimm<sf, op, 0b0, shift,
                          (outs GPRsp:$Rd),
                          (ins GPRsp:$Rn, imm_operand:$Imm12),
                          !strconcat(asmop, "\t$Rd, $Rn, $Imm12"),
-                         [(set GPRsp:$Rd,
-                               (add GPRsp:$Rn, imm_operand:$Imm12))],
+                         [(set Ty:$Rd, (add Ty:$Rn, imm_operand:$Imm12))],
                          NoItinerary>;
 
 
@@ -630,7 +627,7 @@ multiclass addsubimm_varieties<string prefix, bit sf, bit op, bits<2> shift,
                          (outs GPR:$Rd),
                          (ins GPRsp:$Rn, imm_operand:$Imm12),
                          !strconcat(asmop, "s\t$Rd, $Rn, $Imm12"),
-                         [(set GPR:$Rd, (addc GPRsp:$Rn, imm_operand:$Imm12))],
+                         [(set Ty:$Rd, (addc Ty:$Rn, imm_operand:$Imm12))],
                          NoItinerary> {
     let Defs = [NZCV];
   }
@@ -642,7 +639,7 @@ multiclass addsubimm_varieties<string prefix, bit sf, bit op, bits<2> shift,
                             (outs), (ins GPRsp:$Rn, imm_operand:$Imm12),
                             !strconcat(cmpasmop, " $Rn, $Imm12"),
                             [(set NZCV,
-                              (A64cmp GPRsp:$Rn, cmp_imm_operand:$Imm12))],
+                                  (A64cmp Ty:$Rn, cmp_imm_operand:$Imm12))],
                             NoItinerary> {
     let Rd = 0b11111;
     let Defs = [NZCV];
@@ -653,36 +650,37 @@ multiclass addsubimm_varieties<string prefix, bit sf, bit op, bits<2> shift,
 
 multiclass addsubimm_shifts<string prefix, bit sf, bit op,
            string asmop, string cmpasmop, string operand, string cmpoperand,
-           RegisterClass GPR, RegisterClass GPRsp, AArch64Reg ZR> {
+           RegisterClass GPR, RegisterClass GPRsp, AArch64Reg ZR,
+           ValueType Ty> {
   defm _lsl0 : addsubimm_varieties<prefix # "_lsl0", sf, op, 0b00,
                                    asmop, cmpasmop,
                                    !cast<Operand>(operand # "_lsl0"),
                                    !cast<Operand>(cmpoperand # "_lsl0"),
-                                   GPR, GPRsp, ZR>;
+                                   GPR, GPRsp, ZR, Ty>;
 
   defm _lsl12 : addsubimm_varieties<prefix # "_lsl12", sf, op, 0b01,
                                     asmop, cmpasmop,
                                     !cast<Operand>(operand # "_lsl12"),
                                     !cast<Operand>(cmpoperand # "_lsl12"),
-                                    GPR, GPRsp, ZR>;
+                                    GPR, GPRsp, ZR, Ty>;
 }
 
 defm ADDwwi : addsubimm_shifts<"ADDwi", 0b0, 0b0, "add", "cmn",
                               "addsubimm_operand_i32_posimm",
                               "addsubimm_operand_i32_negimm",
-                              GPR32, GPR32wsp, WZR>;
+                              GPR32, GPR32wsp, WZR, i32>;
 defm ADDxxi : addsubimm_shifts<"ADDxi", 0b1, 0b0, "add", "cmn",
                               "addsubimm_operand_i64_posimm",
                               "addsubimm_operand_i64_negimm",
-                              GPR64, GPR64xsp, XZR>;
+                              GPR64, GPR64xsp, XZR, i64>;
 defm SUBwwi : addsubimm_shifts<"SUBwi", 0b0, 0b1, "sub", "cmp",
                               "addsubimm_operand_i32_negimm",
                               "addsubimm_operand_i32_posimm",
-                              GPR32, GPR32wsp, WZR>;
+                              GPR32, GPR32wsp, WZR, i32>;
 defm SUBxxi : addsubimm_shifts<"SUBxi", 0b1, 0b1, "sub", "cmp",
                               "addsubimm_operand_i64_negimm",
                               "addsubimm_operand_i64_posimm",
-                              GPR64, GPR64xsp, XZR>;
+                              GPR64, GPR64xsp, XZR, i64>;
 
 multiclass MOVsp<RegisterClass GPRsp, RegisterClass SP, Instruction addop> {
   def _fromsp : InstAlias<"mov $Rd, $Rn",
@@ -753,36 +751,36 @@ defm ror_operand : shift_operands<"ror_operand", "ROR">;
 // N.b. the commutable parameter is just !N. It will be first against the wall
 // when the revolution comes.
 multiclass addsub_shifts<string prefix, bit sf, bit op, bit s, bit commutable,
-                         string asmop, SDPatternOperator opfrag, string sty,
+                         string asmop, SDPatternOperator opfrag, ValueType ty,
                          RegisterClass GPR, list<Register> defs> {
   let isCommutable = commutable, Defs = defs in {
   def _lsl : A64I_addsubshift<sf, op, s, 0b00,
                        (outs GPR:$Rd),
                        (ins GPR:$Rn, GPR:$Rm,
-                            !cast<Operand>("lsl_operand_" # sty):$Imm6),
+                            !cast<Operand>("lsl_operand_" # ty):$Imm6),
                        !strconcat(asmop, "\t$Rd, $Rn, $Rm, $Imm6"),
-                       [(set GPR:$Rd, (opfrag GPR:$Rn, (shl GPR:$Rm,
-                            !cast<Operand>("lsl_operand_" # sty):$Imm6))
+                       [(set GPR:$Rd, (opfrag ty:$Rn, (shl ty:$Rm,
+                            !cast<Operand>("lsl_operand_" # ty):$Imm6))
                        )],
                        NoItinerary>;
 
   def _lsr : A64I_addsubshift<sf, op, s, 0b01,
                        (outs GPR:$Rd),
                        (ins GPR:$Rn, GPR:$Rm,
-                            !cast<Operand>("lsr_operand_" # sty):$Imm6),
+                            !cast<Operand>("lsr_operand_" # ty):$Imm6),
                        !strconcat(asmop, "\t$Rd, $Rn, $Rm, $Imm6"),
-                       [(set GPR:$Rd, (opfrag GPR:$Rn, (srl GPR:$Rm,
-                            !cast<Operand>("lsr_operand_" # sty):$Imm6))
+                       [(set ty:$Rd, (opfrag ty:$Rn, (srl ty:$Rm,
+                            !cast<Operand>("lsr_operand_" # ty):$Imm6))
                        )],
                        NoItinerary>;
 
   def _asr : A64I_addsubshift<sf, op, s, 0b10,
                        (outs GPR:$Rd),
                        (ins GPR:$Rn, GPR:$Rm,
-                            !cast<Operand>("asr_operand_" # sty):$Imm6),
+                            !cast<Operand>("asr_operand_" # ty):$Imm6),
                        !strconcat(asmop, "\t$Rd, $Rn, $Rm, $Imm6"),
-                       [(set GPR:$Rd, (opfrag GPR:$Rn, (sra GPR:$Rm,
-                            !cast<Operand>("asr_operand_" # sty):$Imm6))
+                       [(set ty:$Rd, (opfrag ty:$Rn, (sra ty:$Rm,
+                            !cast<Operand>("asr_operand_" # ty):$Imm6))
                        )],
                        NoItinerary>;
   }
@@ -792,17 +790,17 @@ multiclass addsub_shifts<string prefix, bit sf, bit op, bit s, bit commutable,
                  (!cast<Instruction>(prefix # "_lsl") GPR:$Rd, GPR:$Rn,
                                                       GPR:$Rm, 0)>;
 
-  def : Pat<(opfrag GPR:$Rn, GPR:$Rm),
-            (!cast<Instruction>(prefix # "_lsl") GPR:$Rn, GPR:$Rm, 0)>;
+  def : Pat<(opfrag ty:$Rn, ty:$Rm),
+            (!cast<Instruction>(prefix # "_lsl") $Rn, $Rm, 0)>;
 }
 
 multiclass addsub_sizes<string prefix, bit op, bit s, bit commutable,
                          string asmop, SDPatternOperator opfrag,
                          list<Register> defs> {
   defm xxx : addsub_shifts<prefix # "xxx", 0b1, op, s,
-                           commutable, asmop, opfrag, "i64", GPR64, defs>;
+                           commutable, asmop, opfrag, i64, GPR64, defs>;
   defm www : addsub_shifts<prefix # "www", 0b0, op, s,
-                           commutable, asmop, opfrag, "i32", GPR32, defs>;
+                           commutable, asmop, opfrag, i32, GPR32, defs>;
 }
 
 
@@ -816,26 +814,26 @@ defm SUBS : addsub_sizes<"SUBS", 0b1, 0b1, 0b0, "subs", subc, [NZCV]>;
 // 1. The NEG/NEGS aliases
 //===-------------------------------
 
-multiclass neg_alias<Instruction INST, RegisterClass GPR,
-                     Register ZR, Operand shift_operand, SDNode shiftop> {
+multiclass neg_alias<Instruction INST, RegisterClass GPR, Register ZR,
+                     ValueType ty, Operand shift_operand, SDNode shiftop> {
    def : InstAlias<"neg $Rd, $Rm, $Imm6",
                    (INST GPR:$Rd, ZR, GPR:$Rm, shift_operand:$Imm6)>;
 
-   def : Pat<(sub 0, (shiftop GPR:$Rm, shift_operand:$Imm6)),
-             (INST ZR, GPR:$Rm, shift_operand:$Imm6)>;
+   def : Pat<(sub 0, (shiftop ty:$Rm, shift_operand:$Imm6)),
+             (INST ZR, $Rm, shift_operand:$Imm6)>;
 }
 
-defm : neg_alias<SUBwww_lsl, GPR32, WZR, lsl_operand_i32, shl>;
-defm : neg_alias<SUBwww_lsr, GPR32, WZR, lsr_operand_i32, srl>;
-defm : neg_alias<SUBwww_asr, GPR32, WZR, asr_operand_i32, sra>;
+defm : neg_alias<SUBwww_lsl, GPR32, WZR, i32, lsl_operand_i32, shl>;
+defm : neg_alias<SUBwww_lsr, GPR32, WZR, i32, lsr_operand_i32, srl>;
+defm : neg_alias<SUBwww_asr, GPR32, WZR, i32, asr_operand_i32, sra>;
 def : InstAlias<"neg $Rd, $Rm", (SUBwww_lsl GPR32:$Rd, WZR, GPR32:$Rm, 0)>;
-def : Pat<(sub 0, GPR32:$Rm), (SUBwww_lsl WZR, GPR32:$Rm, 0)>;
+def : Pat<(sub 0, i32:$Rm), (SUBwww_lsl WZR, $Rm, 0)>;
 
-defm : neg_alias<SUBxxx_lsl, GPR64, XZR, lsl_operand_i64, shl>;
-defm : neg_alias<SUBxxx_lsr, GPR64, XZR, lsr_operand_i64, srl>;
-defm : neg_alias<SUBxxx_asr, GPR64, XZR, asr_operand_i64, sra>;
+defm : neg_alias<SUBxxx_lsl, GPR64, XZR, i64, lsl_operand_i64, shl>;
+defm : neg_alias<SUBxxx_lsr, GPR64, XZR, i64, lsr_operand_i64, srl>;
+defm : neg_alias<SUBxxx_asr, GPR64, XZR, i64, asr_operand_i64, sra>;
 def : InstAlias<"neg $Rd, $Rm", (SUBxxx_lsl GPR64:$Rd, XZR, GPR64:$Rm, 0)>;
-def : Pat<(sub 0, GPR64:$Rm), (SUBxxx_lsl XZR, GPR64:$Rm, 0)>;
+def : Pat<(sub 0, i64:$Rm), (SUBxxx_lsl XZR, $Rm, 0)>;
 
 // NEGS doesn't get any patterns yet: defining multiple outputs means C++ has to
 // be involved.
@@ -859,36 +857,36 @@ def : InstAlias<"negs $Rd, $Rm", (SUBSxxx_lsl GPR64:$Rd, XZR, GPR64:$Rm, 0)>;
 //===-------------------------------
 
 multiclass cmp_shifts<string prefix, bit sf, bit op, bit commutable,
-                      string asmop, SDPatternOperator opfrag, string sty,
+                      string asmop, SDPatternOperator opfrag, ValueType ty,
                       RegisterClass GPR> {
   let isCommutable = commutable, Rd = 0b11111, Defs = [NZCV] in {
   def _lsl : A64I_addsubshift<sf, op, 0b1, 0b00,
                        (outs),
                        (ins GPR:$Rn, GPR:$Rm,
-                            !cast<Operand>("lsl_operand_" # sty):$Imm6),
+                            !cast<Operand>("lsl_operand_" # ty):$Imm6),
                        !strconcat(asmop, "\t$Rn, $Rm, $Imm6"),
-                       [(set NZCV, (opfrag GPR:$Rn, (shl GPR:$Rm,
-                            !cast<Operand>("lsl_operand_" # sty):$Imm6))
+                       [(set NZCV, (opfrag ty:$Rn, (shl ty:$Rm,
+                            !cast<Operand>("lsl_operand_" # ty):$Imm6))
                        )],
                        NoItinerary>;
 
   def _lsr : A64I_addsubshift<sf, op, 0b1, 0b01,
                        (outs),
                        (ins GPR:$Rn, GPR:$Rm,
-                            !cast<Operand>("lsr_operand_" # sty):$Imm6),
+                            !cast<Operand>("lsr_operand_" # ty):$Imm6),
                        !strconcat(asmop, "\t$Rn, $Rm, $Imm6"),
-                       [(set NZCV, (opfrag GPR:$Rn, (srl GPR:$Rm,
-                            !cast<Operand>("lsr_operand_" # sty):$Imm6))
+                       [(set NZCV, (opfrag ty:$Rn, (srl ty:$Rm,
+                            !cast<Operand>("lsr_operand_" # ty):$Imm6))
                        )],
                        NoItinerary>;
 
   def _asr : A64I_addsubshift<sf, op, 0b1, 0b10,
                        (outs),
                        (ins GPR:$Rn, GPR:$Rm,
-                            !cast<Operand>("asr_operand_" # sty):$Imm6),
+                            !cast<Operand>("asr_operand_" # ty):$Imm6),
                        !strconcat(asmop, "\t$Rn, $Rm, $Imm6"),
-                       [(set NZCV, (opfrag GPR:$Rn, (sra GPR:$Rm,
-                            !cast<Operand>("asr_operand_" # sty):$Imm6))
+                       [(set NZCV, (opfrag ty:$Rn, (sra ty:$Rm,
+                            !cast<Operand>("asr_operand_" # ty):$Imm6))
                        )],
                        NoItinerary>;
   }
@@ -897,15 +895,15 @@ multiclass cmp_shifts<string prefix, bit sf, bit op, bit commutable,
       : InstAlias<!strconcat(asmop, " $Rn, $Rm"),
                  (!cast<Instruction>(prefix # "_lsl") GPR:$Rn, GPR:$Rm, 0)>;
 
-  def : Pat<(opfrag GPR:$Rn, GPR:$Rm),
-            (!cast<Instruction>(prefix # "_lsl") GPR:$Rn, GPR:$Rm, 0)>;
+  def : Pat<(opfrag ty:$Rn, ty:$Rm),
+            (!cast<Instruction>(prefix # "_lsl") $Rn, $Rm, 0)>;
 }
 
-defm CMPww : cmp_shifts<"CMPww", 0b0, 0b1, 0b0, "cmp", A64cmp, "i32", GPR32>;
-defm CMPxx : cmp_shifts<"CMPxx", 0b1, 0b1, 0b0, "cmp", A64cmp, "i64", GPR64>;
+defm CMPww : cmp_shifts<"CMPww", 0b0, 0b1, 0b0, "cmp", A64cmp, i32, GPR32>;
+defm CMPxx : cmp_shifts<"CMPxx", 0b1, 0b1, 0b0, "cmp", A64cmp, i64, GPR64>;
 
-defm CMNww : cmp_shifts<"CMNww", 0b0, 0b0, 0b1, "cmn", A64cmn, "i32", GPR32>;
-defm CMNxx : cmp_shifts<"CMNxx", 0b1, 0b0, 0b1, "cmn", A64cmn, "i64", GPR64>;
+defm CMNww : cmp_shifts<"CMNww", 0b0, 0b0, 0b1, "cmn", A64cmn, i32, GPR32>;
+defm CMNxx : cmp_shifts<"CMNxx", 0b1, 0b0, 0b1, "cmn", A64cmn, i64, GPR64>;
 
 //===----------------------------------------------------------------------===//
 // Add-subtract (with carry) instructions
@@ -947,10 +945,10 @@ def : InstAlias<"ngcs $Rd, $Rm", (SBCSxxx GPR64:$Rd, XZR, GPR64:$Rm)>;
 
 // Note that adde and sube can form a chain longer than two (e.g. for 256-bit
 // addition). So the flag-setting instructions are appropriate.
-def : Pat<(adde GPR32:$Rn, GPR32:$Rm), (ADCSwww GPR32:$Rn, GPR32:$Rm)>;
-def : Pat<(adde GPR64:$Rn, GPR64:$Rm), (ADCSxxx GPR64:$Rn, GPR64:$Rm)>;
-def : Pat<(sube GPR32:$Rn, GPR32:$Rm), (SBCSwww GPR32:$Rn, GPR32:$Rm)>;
-def : Pat<(sube GPR64:$Rn, GPR64:$Rm), (SBCSxxx GPR64:$Rn, GPR64:$Rm)>;
+def : Pat<(adde i32:$Rn, i32:$Rm), (ADCSwww $Rn, $Rm)>;
+def : Pat<(adde i64:$Rn, i64:$Rm), (ADCSxxx $Rn, $Rm)>;
+def : Pat<(sube i32:$Rn, i32:$Rm), (SBCSwww $Rn, $Rm)>;
+def : Pat<(sube i64:$Rn, i64:$Rm), (SBCSxxx $Rn, $Rm)>;
 
 //===----------------------------------------------------------------------===//
 // Bitfield
@@ -1053,52 +1051,52 @@ def BFMxxii :
 
 // Note that these instructions are strictly more specific than the
 // BFM ones (in ImmR) so they can handle their own decoding.
-class A64I_bf_ext<bit sf, bits<2> opc, RegisterClass GPRDest, string asmop,
-                    bits<6> imms, dag pattern>
+class A64I_bf_ext<bit sf, bits<2> opc, RegisterClass GPRDest, ValueType dty,
+                    string asmop, bits<6> imms, dag pattern>
   : A64I_bitfield<sf, opc, sf,
                   (outs GPRDest:$Rd), (ins GPR32:$Rn),
                   !strconcat(asmop, "\t$Rd, $Rn"),
-                  [(set GPRDest:$Rd, pattern)], NoItinerary> {
+                  [(set dty:$Rd, pattern)], NoItinerary> {
   let ImmR = 0b000000;
   let ImmS = imms;
 }
 
 // Signed extensions
-def SXTBxw : A64I_bf_ext<0b1, 0b00, GPR64, "sxtb", 7,
-                         (sext_inreg (anyext GPR32:$Rn), i8)>;
-def SXTBww : A64I_bf_ext<0b0, 0b00, GPR32, "sxtb", 7,
-                         (sext_inreg GPR32:$Rn, i8)>;
-def SXTHxw : A64I_bf_ext<0b1, 0b00, GPR64, "sxth", 15,
-                         (sext_inreg (anyext GPR32:$Rn), i16)>;
-def SXTHww : A64I_bf_ext<0b0, 0b00, GPR32, "sxth", 15,
-                         (sext_inreg GPR32:$Rn, i16)>;
-def SXTWxw : A64I_bf_ext<0b1, 0b00, GPR64, "sxtw", 31, (sext GPR32:$Rn)>;
+def SXTBxw : A64I_bf_ext<0b1, 0b00, GPR64, i64, "sxtb", 7,
+                         (sext_inreg (anyext i32:$Rn), i8)>;
+def SXTBww : A64I_bf_ext<0b0, 0b00, GPR32, i32, "sxtb", 7,
+                         (sext_inreg i32:$Rn, i8)>;
+def SXTHxw : A64I_bf_ext<0b1, 0b00, GPR64, i64, "sxth", 15,
+                         (sext_inreg (anyext i32:$Rn), i16)>;
+def SXTHww : A64I_bf_ext<0b0, 0b00, GPR32, i32, "sxth", 15,
+                         (sext_inreg i32:$Rn, i16)>;
+def SXTWxw : A64I_bf_ext<0b1, 0b00, GPR64, i64, "sxtw", 31, (sext i32:$Rn)>;
 
 // Unsigned extensions
-def UXTBww : A64I_bf_ext<0b0, 0b10, GPR32, "uxtb", 7,
-                         (and GPR32:$Rn, 255)>;
-def UXTHww : A64I_bf_ext<0b0, 0b10, GPR32, "uxth", 15,
-                         (and GPR32:$Rn, 65535)>;
+def UXTBww : A64I_bf_ext<0b0, 0b10, GPR32, i32, "uxtb", 7,
+                         (and i32:$Rn, 255)>;
+def UXTHww : A64I_bf_ext<0b0, 0b10, GPR32, i32, "uxth", 15,
+                         (and i32:$Rn, 65535)>;
 
 // The 64-bit unsigned variants are not strictly architectural but recommended
 // for consistency.
 let isAsmParserOnly = 1 in {
-  def UXTBxw : A64I_bf_ext<0b0, 0b10, GPR64, "uxtb", 7,
-                           (and (anyext GPR32:$Rn), 255)>;
-  def UXTHxw : A64I_bf_ext<0b0, 0b10, GPR64, "uxth", 15,
-                           (and (anyext GPR32:$Rn), 65535)>;
+  def UXTBxw : A64I_bf_ext<0b0, 0b10, GPR64, i64, "uxtb", 7,
+                           (and (anyext i32:$Rn), 255)>;
+  def UXTHxw : A64I_bf_ext<0b0, 0b10, GPR64, i64, "uxth", 15,
+                           (and (anyext i32:$Rn), 65535)>;
 }
 
 // Extra patterns for when the source register is actually 64-bits
 // too. There's no architectural difference here, it's just LLVM
 // shinanigans. There's no need for equivalent zero-extension patterns
 // because they'll already be caught by logical (immediate) matching.
-def : Pat<(sext_inreg GPR64:$Rn, i8),
-          (SXTBxw (EXTRACT_SUBREG GPR64:$Rn, sub_32))>;
-def : Pat<(sext_inreg GPR64:$Rn, i16),
-          (SXTHxw (EXTRACT_SUBREG GPR64:$Rn, sub_32))>;
-def : Pat<(sext_inreg GPR64:$Rn, i32),
-          (SXTWxw (EXTRACT_SUBREG GPR64:$Rn, sub_32))>;
+def : Pat<(sext_inreg i64:$Rn, i8),
+          (SXTBxw (EXTRACT_SUBREG $Rn, sub_32))>;
+def : Pat<(sext_inreg i64:$Rn, i16),
+          (SXTHxw (EXTRACT_SUBREG $Rn, sub_32))>;
+def : Pat<(sext_inreg i64:$Rn, i32),
+          (SXTWxw (EXTRACT_SUBREG $Rn, sub_32))>;
 
 
 //===-------------------------------
@@ -1111,7 +1109,7 @@ multiclass A64I_shift<bits<2> opc, string asmop, SDNode opnode> {
   def wwi : A64I_bitfield<0b0, opc, 0b0,
                     (outs GPR32:$Rd), (ins GPR32:$Rn, bitfield32_imm:$ImmR),
                     !strconcat(asmop, "\t$Rd, $Rn, $ImmR"),
-                    [(set GPR32:$Rd, (opnode GPR32:$Rn, bitfield32_imm:$ImmR))],
+                    [(set i32:$Rd, (opnode i32:$Rn, bitfield32_imm:$ImmR))],
                     NoItinerary> {
     let ImmS = 31;
   }
@@ -1119,7 +1117,7 @@ multiclass A64I_shift<bits<2> opc, string asmop, SDNode opnode> {
   def xxi : A64I_bitfield<0b1, opc, 0b1,
                     (outs GPR64:$Rd), (ins GPR64:$Rn, bitfield64_imm:$ImmR),
                     !strconcat(asmop, "\t$Rd, $Rn, $ImmR"),
-                    [(set GPR64:$Rd, (opnode GPR64:$Rn, bitfield64_imm:$ImmR))],
+                    [(set i64:$Rd, (opnode i64:$Rn, bitfield64_imm:$ImmR))],
                     NoItinerary> {
     let ImmS = 63;
   }
@@ -1156,10 +1154,11 @@ def bitfield64_lsl_imm : Operand<i64>,
   let EncoderMethod = "getBitfield64LSLOpValue";
 }
 
-class A64I_bitfield_lsl<bit sf, RegisterClass GPR, Operand operand>
+class A64I_bitfield_lsl<bit sf, RegisterClass GPR, ValueType ty,
+                        Operand operand>
   : A64I_bitfield<sf, 0b10, sf, (outs GPR:$Rd), (ins GPR:$Rn, operand:$FullImm),
                   "lsl\t$Rd, $Rn, $FullImm",
-                  [(set GPR:$Rd, (shl GPR:$Rn, operand:$FullImm))],
+                  [(set ty:$Rd, (shl ty:$Rn, operand:$FullImm))],
                   NoItinerary> {
   bits<12> FullImm;
   let ImmR = FullImm{5-0};
@@ -1170,8 +1169,8 @@ class A64I_bitfield_lsl<bit sf, RegisterClass GPR, Operand operand>
   let isAsmParserOnly = 1;
 }
 
-def LSLwwi : A64I_bitfield_lsl<0b0, GPR32, bitfield32_lsl_imm>;
-def LSLxxi : A64I_bitfield_lsl<0b1, GPR64, bitfield64_lsl_imm>;
+def LSLwwi : A64I_bitfield_lsl<0b0, GPR32, i32, bitfield32_lsl_imm>;
+def LSLxxi : A64I_bitfield_lsl<0b1, GPR64, i64, bitfield64_lsl_imm>;
 
 //===-------------------------------
 // 5. Aliases for bitfield extract instructions
@@ -1206,7 +1205,7 @@ multiclass A64I_bitfield_extract<bits<2> opc, string asmop, SDNode op> {
   def wwii : A64I_bitfield<0b0, opc, 0b0, (outs GPR32:$Rd),
                        (ins GPR32:$Rn, bitfield32_imm:$ImmR, bfx32_width:$ImmS),
                        !strconcat(asmop, "\t$Rd, $Rn, $ImmR, $ImmS"),
-                       [(set GPR32:$Rd, (op GPR32:$Rn, imm:$ImmR, imm:$ImmS))],
+                       [(set i32:$Rd, (op i32:$Rn, imm:$ImmR, imm:$ImmS))],
                        NoItinerary> {
     // As above, no disassembler allowed.
     let isAsmParserOnly = 1;
@@ -1215,7 +1214,7 @@ multiclass A64I_bitfield_extract<bits<2> opc, string asmop, SDNode op> {
   def xxii : A64I_bitfield<0b1, opc, 0b1, (outs GPR64:$Rd),
                        (ins GPR64:$Rn, bitfield64_imm:$ImmR, bfx64_width:$ImmS),
                        !strconcat(asmop, "\t$Rd, $Rn, $ImmR, $ImmS"),
-                       [(set GPR64:$Rd, (op GPR64:$Rn, imm:$ImmR, imm:$ImmS))],
+                       [(set i64:$Rd, (op i64:$Rn, imm:$ImmR, imm:$ImmS))],
                        NoItinerary> {
     // As above, no disassembler allowed.
     let isAsmParserOnly = 1;
@@ -1243,15 +1242,15 @@ def BFXILxxii : A64I_bitfield<0b1, 0b01, 0b1, (outs GPR64:$Rd),
 }
 
 // SBFX instructions can do a 1-instruction sign-extension of boolean values.
-def : Pat<(sext_inreg GPR64:$Rn, i1), (SBFXxxii GPR64:$Rn, 0, 0)>;
-def : Pat<(sext_inreg GPR32:$Rn, i1), (SBFXwwii GPR32:$Rn, 0, 0)>;
-def : Pat<(i64 (sext_inreg (anyext GPR32:$Rn), i1)),
-          (SBFXxxii (SUBREG_TO_REG (i64 0), GPR32:$Rn, sub_32), 0, 0)>;
+def : Pat<(sext_inreg i64:$Rn, i1), (SBFXxxii $Rn, 0, 0)>;
+def : Pat<(sext_inreg i32:$Rn, i1), (SBFXwwii $Rn, 0, 0)>;
+def : Pat<(i64 (sext_inreg (anyext i32:$Rn), i1)),
+          (SBFXxxii (SUBREG_TO_REG (i64 0), $Rn, sub_32), 0, 0)>;
 
 // UBFX makes sense as an implementation of a 64-bit zero-extension too. Could
 // use either 64-bit or 32-bit variant, but 32-bit might be more efficient.
-def : Pat<(zext GPR32:$Rn), (SUBREG_TO_REG (i64 0), (UBFXwwii GPR32:$Rn, 0, 31),
-                                           sub_32)>;
+def : Pat<(zext i32:$Rn), (SUBREG_TO_REG (i64 0), (UBFXwwii $Rn, 0, 31),
+                                         sub_32)>;
 
 //===-------------------------------
 // 6. Aliases for bitfield insert instructions
@@ -1380,14 +1379,14 @@ multiclass cmpbr_sizes<bit op, string asmop, ImmLeaf SETOP> {
                      (outs),
                      (ins GPR64:$Rt, bcc_target:$Label),
                      !strconcat(asmop,"\t$Rt, $Label"),
-                     [(A64br_cc (A64cmp GPR64:$Rt, 0), SETOP, bb:$Label)],
+                     [(A64br_cc (A64cmp i64:$Rt, 0), SETOP, bb:$Label)],
                      NoItinerary>;
 
   def w : A64I_cmpbr<0b0, op,
                      (outs),
                      (ins GPR32:$Rt, bcc_target:$Label),
                      !strconcat(asmop,"\t$Rt, $Label"),
-                     [(A64br_cc (A64cmp GPR32:$Rt, 0), SETOP, bb:$Label)],
+                     [(A64br_cc (A64cmp i32:$Rt, 0), SETOP, bb:$Label)],
                      NoItinerary>;
   }
 }
@@ -1530,7 +1529,7 @@ multiclass A64I_condselSizes<bit op, bits<2> op2, string asmop,
                             (outs GPR32:$Rd),
                             (ins GPR32:$Rn, GPR32:$Rm, cond_code_op:$Cond),
                             !strconcat(asmop, "\t$Rd, $Rn, $Rm, $Cond"),
-                            [(set GPR32:$Rd, (select GPR32:$Rn, GPR32:$Rm))],
+                            [(set i32:$Rd, (select i32:$Rn, i32:$Rm))],
                             NoItinerary>;
 
 
@@ -1538,7 +1537,7 @@ multiclass A64I_condselSizes<bit op, bits<2> op2, string asmop,
                             (outs GPR64:$Rd),
                             (ins GPR64:$Rn, GPR64:$Rm, cond_code_op:$Cond),
                             !strconcat(asmop, "\t$Rd, $Rn, $Rm, $Cond"),
-                            [(set GPR64:$Rd, (select GPR64:$Rn, GPR64:$Rm))],
+                            [(set i64:$Rd, (select i64:$Rn, i64:$Rm))],
                             NoItinerary>;
   }
 }
@@ -1613,24 +1612,22 @@ def : Pat<(A64select_cc NZCV, -1, 0, inv_cond_code:$Cond),
 // No commutable pattern for CSEL since the commuted version is isomorphic.
 
 // CSINC
-def :Pat<(A64select_cc NZCV, (add GPR32:$Rm, 1), GPR32:$Rn,
-         inv_cond_code:$Cond),
-         (CSINCwwwc GPR32:$Rn, GPR32:$Rm, inv_cond_code:$Cond)>;
-def :Pat<(A64select_cc NZCV, (add GPR64:$Rm, 1), GPR64:$Rn,
-         inv_cond_code:$Cond),
-         (CSINCxxxc GPR64:$Rn, GPR64:$Rm, inv_cond_code:$Cond)>;
+def :Pat<(A64select_cc NZCV, (add i32:$Rm, 1), i32:$Rn, inv_cond_code:$Cond),
+         (CSINCwwwc $Rn, $Rm, inv_cond_code:$Cond)>;
+def :Pat<(A64select_cc NZCV, (add i64:$Rm, 1), i64:$Rn, inv_cond_code:$Cond),
+         (CSINCxxxc $Rn, $Rm, inv_cond_code:$Cond)>;
 
 // CSINV
-def :Pat<(A64select_cc NZCV, (not GPR32:$Rm), GPR32:$Rn, inv_cond_code:$Cond),
-         (CSINVwwwc GPR32:$Rn, GPR32:$Rm, inv_cond_code:$Cond)>;
-def :Pat<(A64select_cc NZCV, (not GPR64:$Rm), GPR64:$Rn, inv_cond_code:$Cond),
-         (CSINVxxxc GPR64:$Rn, GPR64:$Rm, inv_cond_code:$Cond)>;
+def :Pat<(A64select_cc NZCV, (not i32:$Rm), i32:$Rn, inv_cond_code:$Cond),
+         (CSINVwwwc $Rn, $Rm, inv_cond_code:$Cond)>;
+def :Pat<(A64select_cc NZCV, (not i64:$Rm), i64:$Rn, inv_cond_code:$Cond),
+         (CSINVxxxc $Rn, $Rm, inv_cond_code:$Cond)>;
 
 // CSNEG
-def :Pat<(A64select_cc NZCV, (ineg GPR32:$Rm), GPR32:$Rn, inv_cond_code:$Cond),
-         (CSNEGwwwc GPR32:$Rn, GPR32:$Rm, inv_cond_code:$Cond)>;
-def :Pat<(A64select_cc NZCV, (ineg GPR64:$Rm), GPR64:$Rn, inv_cond_code:$Cond),
-         (CSNEGxxxc GPR64:$Rn, GPR64:$Rm, inv_cond_code:$Cond)>;
+def :Pat<(A64select_cc NZCV, (ineg i32:$Rm), i32:$Rn, inv_cond_code:$Cond),
+         (CSNEGwwwc $Rn, $Rm, inv_cond_code:$Cond)>;
+def :Pat<(A64select_cc NZCV, (ineg i64:$Rm), i64:$Rn, inv_cond_code:$Cond),
+         (CSNEGxxxc $Rn, $Rm, inv_cond_code:$Cond)>;
 
 //===----------------------------------------------------------------------===//
 // Data Processing (1 source) instructions
@@ -1664,28 +1661,28 @@ defm RBIT  : A64I_dp_1src<0b000000, "rbit">;
 defm CLS   : A64I_dp_1src<0b000101, "cls">;
 defm CLZ   : A64I_dp_1src<0b000100, "clz">;
 
-def : Pat<(ctlz GPR32:$Rn), (CLZww GPR32:$Rn)>;
-def : Pat<(ctlz GPR64:$Rn), (CLZxx GPR64:$Rn)>;
-def : Pat<(ctlz_zero_undef GPR32:$Rn), (CLZww GPR32:$Rn)>;
-def : Pat<(ctlz_zero_undef GPR64:$Rn), (CLZxx GPR64:$Rn)>;
+def : Pat<(ctlz i32:$Rn), (CLZww $Rn)>;
+def : Pat<(ctlz i64:$Rn), (CLZxx $Rn)>;
+def : Pat<(ctlz_zero_undef i32:$Rn), (CLZww $Rn)>;
+def : Pat<(ctlz_zero_undef i64:$Rn), (CLZxx $Rn)>;
 
-def : Pat<(cttz GPR32:$Rn), (CLZww (RBITww GPR32:$Rn))>;
-def : Pat<(cttz GPR64:$Rn), (CLZxx (RBITxx GPR64:$Rn))>;
-def : Pat<(cttz_zero_undef GPR32:$Rn), (CLZww (RBITww GPR32:$Rn))>;
-def : Pat<(cttz_zero_undef GPR64:$Rn), (CLZxx (RBITxx GPR64:$Rn))>;
+def : Pat<(cttz i32:$Rn), (CLZww (RBITww $Rn))>;
+def : Pat<(cttz i64:$Rn), (CLZxx (RBITxx $Rn))>;
+def : Pat<(cttz_zero_undef i32:$Rn), (CLZww (RBITww $Rn))>;
+def : Pat<(cttz_zero_undef i64:$Rn), (CLZxx (RBITxx $Rn))>;
 
 
 def REVww : A64I_dp_1src_impl<0b0, 0b000010, "rev",
-                              [(set GPR32:$Rd, (bswap GPR32:$Rn))],
+                              [(set i32:$Rd, (bswap i32:$Rn))],
                               GPR32, NoItinerary>;
 def REVxx : A64I_dp_1src_impl<0b1, 0b000011, "rev",
-                              [(set GPR64:$Rd, (bswap GPR64:$Rn))],
+                              [(set i64:$Rd, (bswap i64:$Rn))],
                               GPR64, NoItinerary>;
 def REV32xx : A64I_dp_1src_impl<0b1, 0b000010, "rev32",
-                          [(set GPR64:$Rd, (bswap (rotr GPR64:$Rn, (i64 32))))],
+                          [(set i64:$Rd, (bswap (rotr i64:$Rn, (i64 32))))],
                           GPR64, NoItinerary>;
 def REV16ww : A64I_dp_1src_impl<0b0, 0b000001, "rev16",
-                          [(set GPR32:$Rd, (bswap (rotr GPR32:$Rn, (i64 16))))],
+                          [(set i32:$Rd, (bswap (rotr i32:$Rn, (i64 16))))],
                           GPR32,
                           NoItinerary>;
 def REV16xx : A64I_dp_1src_impl<0b1, 0b000001, "rev16", [], GPR64, NoItinerary>;
@@ -1726,14 +1723,14 @@ multiclass dp_2src_zext <bits<6> opcode, string asmop, SDPatternOperator op> {
    def www : dp_2src_impl<0b0,
                          opcode,
                          asmop,
-                         [(set GPR32:$Rd,
-                               (op GPR32:$Rn, (i64 (zext GPR32:$Rm))))],
+                         [(set i32:$Rd,
+                               (op i32:$Rn, (i64 (zext i32:$Rm))))],
                          GPR32,
                          NoItinerary>;
    def xxx : dp_2src_impl<0b1,
                          opcode,
                          asmop,
-                         [(set GPR64:$Rd, (op GPR64:$Rn, GPR64:$Rm))],
+                         [(set i64:$Rd, (op i64:$Rn, i64:$Rm))],
                          GPR64,
                          NoItinerary>;
 }
@@ -1743,13 +1740,13 @@ multiclass dp_2src <bits<6> opcode, string asmop, SDPatternOperator op> {
     def www : dp_2src_impl<0b0,
                          opcode,
                          asmop,
-                         [(set GPR32:$Rd, (op GPR32:$Rn, GPR32:$Rm))],
+                         [(set i32:$Rd, (op i32:$Rn, i32:$Rm))],
                          GPR32,
                          NoItinerary>;
    def xxx : dp_2src_impl<0b1,
                          opcode,
                          asmop,
-                         [(set GPR64:$Rd, (op GPR64:$Rn, GPR64:$Rm))],
+                         [(set i64:$Rd, (op i64:$Rn, i64:$Rm))],
                          GPR64,
                          NoItinerary>;
 }
@@ -1770,14 +1767,14 @@ defm RORV : dp_2src_zext<0b001011, "ror", rotr>;
 // operation. Since the LLVM operations are undefined (as in C) if the
 // RHS is out of range, it's perfectly permissible to discard the high
 // bits of the GPR64.
-def : Pat<(shl GPR32:$Rn, GPR64:$Rm),
-          (LSLVwww GPR32:$Rn, (EXTRACT_SUBREG GPR64:$Rm, sub_32))>;
-def : Pat<(srl GPR32:$Rn, GPR64:$Rm),
-          (LSRVwww GPR32:$Rn, (EXTRACT_SUBREG GPR64:$Rm, sub_32))>;
-def : Pat<(sra GPR32:$Rn, GPR64:$Rm),
-          (ASRVwww GPR32:$Rn, (EXTRACT_SUBREG GPR64:$Rm, sub_32))>;
-def : Pat<(rotr GPR32:$Rn, GPR64:$Rm),
-          (RORVwww GPR32:$Rn, (EXTRACT_SUBREG GPR64:$Rm, sub_32))>;
+def : Pat<(shl i32:$Rn, i64:$Rm),
+          (LSLVwww $Rn, (EXTRACT_SUBREG $Rm, sub_32))>;
+def : Pat<(srl i32:$Rn, i64:$Rm),
+          (LSRVwww $Rn, (EXTRACT_SUBREG $Rm, sub_32))>;
+def : Pat<(sra i32:$Rn, i64:$Rm),
+          (ASRVwww $Rn, (EXTRACT_SUBREG $Rm, sub_32))>;
+def : Pat<(rotr i32:$Rn, i64:$Rm),
+          (RORVwww $Rn, (EXTRACT_SUBREG $Rm, sub_32))>;
 
 // Here we define the aliases for the data processing 2 source instructions.
 def LSL_mnemonic : MnemonicAlias<"lslv", "lsl">;
@@ -1792,46 +1789,47 @@ def ROR_menmonic : MnemonicAlias<"rorv", "ror">;
 //    + aliases MUL, MNEG, SMULL, SMNEGL, UMULL, UMNEGL
 
 class A64I_dp3_4operand<bit sf, bits<6> opcode, RegisterClass AccReg,
-                        RegisterClass SrcReg, string asmop, dag pattern>
+                        ValueType AccTy, RegisterClass SrcReg,
+                        string asmop, dag pattern>
   : A64I_dp3<sf, opcode,
              (outs AccReg:$Rd), (ins SrcReg:$Rn, SrcReg:$Rm, AccReg:$Ra),
              !strconcat(asmop, "\t$Rd, $Rn, $Rm, $Ra"),
-             [(set AccReg:$Rd, pattern)], NoItinerary> {
+             [(set AccTy:$Rd, pattern)], NoItinerary> {
   RegisterClass AccGPR = AccReg;
   RegisterClass SrcGPR = SrcReg;
 }
 
-def MADDwwww : A64I_dp3_4operand<0b0, 0b000000, GPR32, GPR32, "madd",
-                                 (add GPR32:$Ra, (mul GPR32:$Rn, GPR32:$Rm))>;
-def MADDxxxx : A64I_dp3_4operand<0b1, 0b000000, GPR64, GPR64, "madd",
-                                 (add GPR64:$Ra, (mul GPR64:$Rn, GPR64:$Rm))>;
+def MADDwwww : A64I_dp3_4operand<0b0, 0b000000, GPR32, i32, GPR32, "madd",
+                                 (add i32:$Ra, (mul i32:$Rn, i32:$Rm))>;
+def MADDxxxx : A64I_dp3_4operand<0b1, 0b000000, GPR64, i64, GPR64, "madd",
+                                 (add i64:$Ra, (mul i64:$Rn, i64:$Rm))>;
 
-def MSUBwwww : A64I_dp3_4operand<0b0, 0b000001, GPR32, GPR32, "msub",
-                                 (sub GPR32:$Ra, (mul GPR32:$Rn, GPR32:$Rm))>;
-def MSUBxxxx : A64I_dp3_4operand<0b1, 0b000001, GPR64, GPR64, "msub",
-                                 (sub GPR64:$Ra, (mul GPR64:$Rn, GPR64:$Rm))>;
+def MSUBwwww : A64I_dp3_4operand<0b0, 0b000001, GPR32, i32, GPR32, "msub",
+                                 (sub i32:$Ra, (mul i32:$Rn, i32:$Rm))>;
+def MSUBxxxx : A64I_dp3_4operand<0b1, 0b000001, GPR64, i64, GPR64, "msub",
+                                 (sub i64:$Ra, (mul i64:$Rn, i64:$Rm))>;
 
-def SMADDLxwwx : A64I_dp3_4operand<0b1, 0b000010, GPR64, GPR32, "smaddl",
-               (add GPR64:$Ra, (mul (i64 (sext GPR32:$Rn)), (sext GPR32:$Rm)))>;
-def SMSUBLxwwx : A64I_dp3_4operand<0b1, 0b000011, GPR64, GPR32, "smsubl",
-               (sub GPR64:$Ra, (mul (i64 (sext GPR32:$Rn)), (sext GPR32:$Rm)))>;
+def SMADDLxwwx : A64I_dp3_4operand<0b1, 0b000010, GPR64, i64, GPR32, "smaddl",
+                     (add i64:$Ra, (mul (i64 (sext i32:$Rn)), (sext i32:$Rm)))>;
+def SMSUBLxwwx : A64I_dp3_4operand<0b1, 0b000011, GPR64, i64, GPR32, "smsubl",
+                     (sub i64:$Ra, (mul (i64 (sext i32:$Rn)), (sext i32:$Rm)))>;
 
-def UMADDLxwwx : A64I_dp3_4operand<0b1, 0b001010, GPR64, GPR32, "umaddl",
-               (add GPR64:$Ra, (mul (i64 (zext GPR32:$Rn)), (zext GPR32:$Rm)))>;
-def UMSUBLxwwx : A64I_dp3_4operand<0b1, 0b001011, GPR64, GPR32, "umsubl",
-               (sub GPR64:$Ra, (mul (i64 (zext GPR32:$Rn)), (zext GPR32:$Rm)))>;
+def UMADDLxwwx : A64I_dp3_4operand<0b1, 0b001010, GPR64, i64, GPR32, "umaddl",
+                     (add i64:$Ra, (mul (i64 (zext i32:$Rn)), (zext i32:$Rm)))>;
+def UMSUBLxwwx : A64I_dp3_4operand<0b1, 0b001011, GPR64, i64, GPR32, "umsubl",
+                     (sub i64:$Ra, (mul (i64 (zext i32:$Rn)), (zext i32:$Rm)))>;
 
 let isCommutable = 1, PostEncoderMethod = "fixMulHigh" in {
   def UMULHxxx : A64I_dp3<0b1, 0b001100, (outs GPR64:$Rd),
                           (ins GPR64:$Rn, GPR64:$Rm),
                           "umulh\t$Rd, $Rn, $Rm",
-                          [(set GPR64:$Rd, (mulhu GPR64:$Rn, GPR64:$Rm))],
+                          [(set i64:$Rd, (mulhu i64:$Rn, i64:$Rm))],
                           NoItinerary>;
 
   def SMULHxxx : A64I_dp3<0b1, 0b000100, (outs GPR64:$Rd),
                           (ins GPR64:$Rn, GPR64:$Rm),
                           "smulh\t$Rd, $Rn, $Rm",
-                          [(set GPR64:$Rd, (mulhs GPR64:$Rn, GPR64:$Rm))],
+                          [(set i64:$Rd, (mulhs i64:$Rn, i64:$Rm))],
                           NoItinerary>;
 }
 
@@ -1840,26 +1838,26 @@ multiclass A64I_dp3_3operand<string asmop, A64I_dp3_4operand INST,
   def : InstAlias<asmop # " $Rd, $Rn, $Rm",
                   (INST INST.AccGPR:$Rd, INST.SrcGPR:$Rn, INST.SrcGPR:$Rm, ZR)>;
 
-  def : Pat<pattern, (INST INST.SrcGPR:$Rn, INST.SrcGPR:$Rm, ZR)>;
+  def : Pat<pattern, (INST $Rn, $Rm, ZR)>;
 }
 
-defm : A64I_dp3_3operand<"mul", MADDwwww, WZR, (mul GPR32:$Rn, GPR32:$Rm)>;
-defm : A64I_dp3_3operand<"mul", MADDxxxx, XZR, (mul GPR64:$Rn, GPR64:$Rm)>;
+defm : A64I_dp3_3operand<"mul", MADDwwww, WZR, (mul i32:$Rn, i32:$Rm)>;
+defm : A64I_dp3_3operand<"mul", MADDxxxx, XZR, (mul i64:$Rn, i64:$Rm)>;
 
 defm : A64I_dp3_3operand<"mneg", MSUBwwww, WZR,
-                         (sub 0, (mul GPR32:$Rn, GPR32:$Rm))>;
+                         (sub 0, (mul i32:$Rn, i32:$Rm))>;
 defm : A64I_dp3_3operand<"mneg", MSUBxxxx, XZR,
-                         (sub 0, (mul GPR64:$Rn, GPR64:$Rm))>;
+                         (sub 0, (mul i64:$Rn, i64:$Rm))>;
 
 defm : A64I_dp3_3operand<"smull", SMADDLxwwx, XZR,
-                         (mul (i64 (sext GPR32:$Rn)), (sext GPR32:$Rm))>;
+                         (mul (i64 (sext i32:$Rn)), (sext i32:$Rm))>;
 defm : A64I_dp3_3operand<"smnegl", SMSUBLxwwx, XZR,
-                       (sub 0, (mul (i64 (sext GPR32:$Rn)), (sext GPR32:$Rm)))>;
+                       (sub 0, (mul (i64 (sext i32:$Rn)), (sext i32:$Rm)))>;
 
 defm : A64I_dp3_3operand<"umull", UMADDLxwwx, XZR,
-                         (mul (i64 (zext GPR32:$Rn)), (zext GPR32:$Rm))>;
+                         (mul (i64 (zext i32:$Rn)), (zext i32:$Rm))>;
 defm : A64I_dp3_3operand<"umnegl", UMSUBLxwwx, XZR,
-                       (sub 0, (mul (i64 (zext GPR32:$Rn)), (zext GPR32:$Rm)))>;
+                       (sub 0, (mul (i64 (zext i32:$Rn)), (zext i32:$Rm)))>;
 
 
 //===----------------------------------------------------------------------===//
@@ -1909,15 +1907,15 @@ def EXTRwwwi : A64I_extract<0b0, 0b000, 0b0,
                             (outs GPR32:$Rd),
                             (ins GPR32:$Rn, GPR32:$Rm, bitfield32_imm:$LSB),
                             "extr\t$Rd, $Rn, $Rm, $LSB",
-                            [(set GPR32:$Rd,
-                                  (A64Extr GPR32:$Rn, GPR32:$Rm, imm:$LSB))],
+                            [(set i32:$Rd,
+                                  (A64Extr i32:$Rn, i32:$Rm, imm:$LSB))],
                             NoItinerary>;
 def EXTRxxxi : A64I_extract<0b1, 0b000, 0b1,
                             (outs GPR64:$Rd),
                             (ins GPR64:$Rn, GPR64:$Rm, bitfield64_imm:$LSB),
                             "extr\t$Rd, $Rn, $Rm, $LSB",
-                            [(set GPR64:$Rd,
-                                  (A64Extr GPR64:$Rn, GPR64:$Rm, imm:$LSB))],
+                            [(set i64:$Rd,
+                                  (A64Extr i64:$Rn, i64:$Rm, imm:$LSB))],
                             NoItinerary>;
 
 def : InstAlias<"ror $Rd, $Rs, $LSB",
@@ -1925,10 +1923,10 @@ def : InstAlias<"ror $Rd, $Rs, $LSB",
 def : InstAlias<"ror $Rd, $Rs, $LSB",
                (EXTRxxxi GPR64:$Rd, GPR64:$Rs, GPR64:$Rs, bitfield64_imm:$LSB)>;
 
-def : Pat<(rotr GPR32:$Rn, bitfield32_imm:$LSB),
-          (EXTRwwwi GPR32:$Rn, GPR32:$Rn, bitfield32_imm:$LSB)>;
-def : Pat<(rotr GPR64:$Rn, bitfield64_imm:$LSB),
-          (EXTRxxxi GPR64:$Rn, GPR64:$Rn, bitfield64_imm:$LSB)>;
+def : Pat<(rotr i32:$Rn, bitfield32_imm:$LSB),
+          (EXTRwwwi $Rn, $Rn, bitfield32_imm:$LSB)>;
+def : Pat<(rotr i64:$Rn, bitfield64_imm:$LSB),
+          (EXTRxxxi $Rn, $Rn, bitfield64_imm:$LSB)>;
 
 //===----------------------------------------------------------------------===//
 // Floating-point compare instructions
@@ -1969,17 +1967,17 @@ multiclass A64I_fpcmpSignal<bits<2> type, bit imm, dag ins, dag pattern> {
 }
 
 defm FCMPss : A64I_fpcmpSignal<0b00, 0b0, (ins FPR32:$Rn, FPR32:$Rm),
-                               (set NZCV, (A64cmp (f32 FPR32:$Rn), FPR32:$Rm))>;
+                               (set NZCV, (A64cmp f32:$Rn, f32:$Rm))>;
 defm FCMPdd : A64I_fpcmpSignal<0b01, 0b0, (ins FPR64:$Rn, FPR64:$Rm),
-                               (set NZCV, (A64cmp (f64 FPR64:$Rn), FPR64:$Rm))>;
+                               (set NZCV, (A64cmp f64:$Rn, f64:$Rm))>;
 
 // What would be Rm should be written as 0; note that even though it's called
 // "$Rm" here to fit in with the InstrFormats, it's actually an immediate.
 defm FCMPsi : A64I_fpcmpSignal<0b00, 0b1, (ins FPR32:$Rn, fpz32:$Rm),
-                               (set NZCV, (A64cmp (f32 FPR32:$Rn), fpz32:$Rm))>;
+                               (set NZCV, (A64cmp f32:$Rn, fpz32:$Rm))>;
 
 defm FCMPdi : A64I_fpcmpSignal<0b01, 0b1, (ins FPR64:$Rn, fpz64:$Rm),
-                               (set NZCV, (A64cmp (f64 FPR64:$Rn), fpz64:$Rm))>;
+                               (set NZCV, (A64cmp f64:$Rn, fpz64:$Rm))>;
 
 
 //===----------------------------------------------------------------------===//
@@ -2010,18 +2008,16 @@ let Uses = [NZCV] in {
   def FCSELsssc : A64I_fpcondsel<0b0, 0b0, 0b00, (outs FPR32:$Rd),
                                  (ins FPR32:$Rn, FPR32:$Rm, cond_code_op:$Cond),
                                  "fcsel\t$Rd, $Rn, $Rm, $Cond",
-                                 [(set FPR32:$Rd,
-                                       (simple_select (f32 FPR32:$Rn),
-                                                      FPR32:$Rm))],
+                                 [(set f32:$Rd, 
+                                       (simple_select f32:$Rn, f32:$Rm))],
                                  NoItinerary>;
 
 
   def FCSELdddc : A64I_fpcondsel<0b0, 0b0, 0b01, (outs FPR64:$Rd),
                                  (ins FPR64:$Rn, FPR64:$Rm, cond_code_op:$Cond),
                                  "fcsel\t$Rd, $Rn, $Rm, $Cond",
-                                 [(set FPR64:$Rd,
-                                       (simple_select (f64 FPR64:$Rn),
-                                                      FPR64:$Rm))],
+                                 [(set f64:$Rd,
+                                       (simple_select f64:$Rn, f64:$Rm))],
                                  NoItinerary>;
 }
 
@@ -2039,12 +2035,12 @@ multiclass A64I_fpdp1sizes<bits<6> opcode, string asmstr,
                            SDPatternOperator opnode = FPNoUnop> {
   def ss : A64I_fpdp1<0b0, 0b0, 0b00, opcode, (outs FPR32:$Rd), (ins FPR32:$Rn),
                      !strconcat(asmstr, "\t$Rd, $Rn"),
-                     [(set (f32 FPR32:$Rd), (opnode FPR32:$Rn))],
+                     [(set f32:$Rd, (opnode f32:$Rn))],
                      NoItinerary>;
 
   def dd : A64I_fpdp1<0b0, 0b0, 0b01, opcode, (outs FPR64:$Rd), (ins FPR64:$Rn),
                      !strconcat(asmstr, "\t$Rd, $Rn"),
-                     [(set (f64 FPR64:$Rd), (opnode FPR64:$Rn))],
+                     [(set f64:$Rd, (opnode f64:$Rn))],
                      NoItinerary>;
 }
 
@@ -2080,8 +2076,7 @@ class A64I_fpdp1_fcvt<FCVTRegType DestReg, FCVTRegType SrcReg, SDNode opnode>
                {0,0,0,1, DestReg.t1, DestReg.t0},
                (outs DestReg.Class:$Rd), (ins SrcReg.Class:$Rn),
                "fcvt\t$Rd, $Rn",
-               [(set (DestReg.VT DestReg.Class:$Rd),
-                     (opnode (SrcReg.VT SrcReg.Class:$Rn)))], NoItinerary>;
+               [(set DestReg.VT:$Rd, (opnode SrcReg.VT:$Rn))], NoItinerary>;
 
 def FCVTds : A64I_fpdp1_fcvt<FCVT64, FCVT32, fextend>;
 def FCVThs : A64I_fpdp1_fcvt<FCVT16, FCVT32, fround>;
@@ -2105,14 +2100,14 @@ multiclass A64I_fpdp2sizes<bits<4> opcode, string asmstr,
                       (outs FPR32:$Rd),
                       (ins FPR32:$Rn, FPR32:$Rm),
                       !strconcat(asmstr, "\t$Rd, $Rn, $Rm"),
-                      [(set (f32 FPR32:$Rd), (opnode FPR32:$Rn, FPR32:$Rm))],
+                      [(set f32:$Rd, (opnode f32:$Rn, f32:$Rm))],
                       NoItinerary>;
 
   def ddd : A64I_fpdp2<0b0, 0b0, 0b01, opcode,
                       (outs FPR64:$Rd),
                       (ins FPR64:$Rn, FPR64:$Rm),
                       !strconcat(asmstr, "\t$Rd, $Rn, $Rm"),
-                      [(set (f64 FPR64:$Rd), (opnode FPR64:$Rn, FPR64:$Rm))],
+                      [(set f64:$Rd, (opnode f64:$Rn, f64:$Rm))],
                       NoItinerary>;
 }
 
@@ -2151,7 +2146,7 @@ class A64I_fpdp3Impl<string asmop, RegisterClass FPR, ValueType VT,
   : A64I_fpdp3<0b0, 0b0, type, o1, o0, (outs FPR:$Rd),
                (ins FPR:$Rn, FPR:$Rm, FPR:$Ra),
                !strconcat(asmop,"\t$Rd, $Rn, $Rm, $Ra"),
-               [(set FPR:$Rd, (fmakind (VT FPR:$Rn), FPR:$Rm, FPR:$Ra))],
+               [(set VT:$Rd, (fmakind VT:$Rn, VT:$Rm, VT:$Ra))],
                NoItinerary>;
 
 def FMADDssss  : A64I_fpdp3Impl<"fmadd",  FPR32, f32, 0b00, 0b0, 0b0, fma>;
@@ -2208,57 +2203,59 @@ class cvtfix_i64_op<ValueType FloatVT>
 // worth going for a multiclass here. Oh well.
 
 class A64I_fptofix<bit sf, bits<2> type, bits<3> opcode,
-                   RegisterClass GPR, RegisterClass FPR, Operand scale_op,
-                   string asmop, SDNode cvtop>
+                   RegisterClass GPR, RegisterClass FPR, 
+                   ValueType DstTy, ValueType SrcTy, 
+                   Operand scale_op, string asmop, SDNode cvtop>
   : A64I_fpfixed<sf, 0b0, type, 0b11, opcode,
                  (outs GPR:$Rd), (ins FPR:$Rn, scale_op:$Scale),
                  !strconcat(asmop, "\t$Rd, $Rn, $Scale"),
-                 [(set GPR:$Rd, (cvtop (fmul FPR:$Rn, scale_op:$Scale)))],
+                 [(set DstTy:$Rd, (cvtop (fmul SrcTy:$Rn, scale_op:$Scale)))],
                  NoItinerary>;
 
-def FCVTZSwsi : A64I_fptofix<0b0, 0b00, 0b000, GPR32, FPR32,
+def FCVTZSwsi : A64I_fptofix<0b0, 0b00, 0b000, GPR32, FPR32, i32, f32,
                              cvtfix_i32_op<f32>, "fcvtzs", fp_to_sint>;
-def FCVTZSxsi : A64I_fptofix<0b1, 0b00, 0b000, GPR64, FPR32,
+def FCVTZSxsi : A64I_fptofix<0b1, 0b00, 0b000, GPR64, FPR32, i64, f32,
                              cvtfix_i64_op<f32>, "fcvtzs", fp_to_sint>;
-def FCVTZUwsi : A64I_fptofix<0b0, 0b00, 0b001, GPR32, FPR32,
+def FCVTZUwsi : A64I_fptofix<0b0, 0b00, 0b001, GPR32, FPR32, i32, f32,
                              cvtfix_i32_op<f32>, "fcvtzu", fp_to_uint>;
-def FCVTZUxsi : A64I_fptofix<0b1, 0b00, 0b001, GPR64, FPR32,
+def FCVTZUxsi : A64I_fptofix<0b1, 0b00, 0b001, GPR64, FPR32, i64, f32,
                              cvtfix_i64_op<f32>, "fcvtzu", fp_to_uint>;
 
-def FCVTZSwdi : A64I_fptofix<0b0, 0b01, 0b000, GPR32, FPR64,
+def FCVTZSwdi : A64I_fptofix<0b0, 0b01, 0b000, GPR32, FPR64, i32, f64,
                              cvtfix_i32_op<f64>, "fcvtzs", fp_to_sint>;
-def FCVTZSxdi : A64I_fptofix<0b1, 0b01, 0b000, GPR64, FPR64,
+def FCVTZSxdi : A64I_fptofix<0b1, 0b01, 0b000, GPR64, FPR64, i64, f64,
                              cvtfix_i64_op<f64>, "fcvtzs", fp_to_sint>;
-def FCVTZUwdi : A64I_fptofix<0b0, 0b01, 0b001, GPR32, FPR64,
+def FCVTZUwdi : A64I_fptofix<0b0, 0b01, 0b001, GPR32, FPR64, i32, f64,
                              cvtfix_i32_op<f64>, "fcvtzu", fp_to_uint>;
-def FCVTZUxdi : A64I_fptofix<0b1, 0b01, 0b001, GPR64, FPR64,
+def FCVTZUxdi : A64I_fptofix<0b1, 0b01, 0b001, GPR64, FPR64, i64, f64,
                              cvtfix_i64_op<f64>, "fcvtzu", fp_to_uint>;
 
 
 class A64I_fixtofp<bit sf, bits<2> type, bits<3> opcode,
-                   RegisterClass FPR, RegisterClass GPR, Operand scale_op,
-                   string asmop, SDNode cvtop>
+                   RegisterClass FPR, RegisterClass GPR,
+                   ValueType DstTy, ValueType SrcTy,
+                   Operand scale_op, string asmop, SDNode cvtop>
   : A64I_fpfixed<sf, 0b0, type, 0b00, opcode,
                  (outs FPR:$Rd), (ins GPR:$Rn, scale_op:$Scale),
                  !strconcat(asmop, "\t$Rd, $Rn, $Scale"),
-                 [(set FPR:$Rd, (fdiv (cvtop GPR:$Rn), scale_op:$Scale))],
+                 [(set DstTy:$Rd, (fdiv (cvtop SrcTy:$Rn), scale_op:$Scale))],
                  NoItinerary>;
 
-def SCVTFswi : A64I_fixtofp<0b0, 0b00, 0b010, FPR32, GPR32,
+def SCVTFswi : A64I_fixtofp<0b0, 0b00, 0b010, FPR32, GPR32, f32, i32,
                             cvtfix_i32_op<f32>, "scvtf", sint_to_fp>;
-def SCVTFsxi : A64I_fixtofp<0b1, 0b00, 0b010, FPR32, GPR64,
+def SCVTFsxi : A64I_fixtofp<0b1, 0b00, 0b010, FPR32, GPR64, f32, i64,
                             cvtfix_i64_op<f32>, "scvtf", sint_to_fp>;
-def UCVTFswi : A64I_fixtofp<0b0, 0b00, 0b011, FPR32, GPR32,
+def UCVTFswi : A64I_fixtofp<0b0, 0b00, 0b011, FPR32, GPR32, f32, i32,
                             cvtfix_i32_op<f32>, "ucvtf", uint_to_fp>;
-def UCVTFsxi : A64I_fixtofp<0b1, 0b00, 0b011, FPR32, GPR64,
+def UCVTFsxi : A64I_fixtofp<0b1, 0b00, 0b011, FPR32, GPR64, f32, i64,
                             cvtfix_i64_op<f32>, "ucvtf", uint_to_fp>;
-def SCVTFdwi : A64I_fixtofp<0b0, 0b01, 0b010, FPR64, GPR32,
+def SCVTFdwi : A64I_fixtofp<0b0, 0b01, 0b010, FPR64, GPR32, f64, i32,
                             cvtfix_i32_op<f64>, "scvtf", sint_to_fp>;
-def SCVTFdxi : A64I_fixtofp<0b1, 0b01, 0b010, FPR64, GPR64,
+def SCVTFdxi : A64I_fixtofp<0b1, 0b01, 0b010, FPR64, GPR64, f64, i64,
                             cvtfix_i64_op<f64>, "scvtf", sint_to_fp>;
-def UCVTFdwi : A64I_fixtofp<0b0, 0b01, 0b011, FPR64, GPR32,
+def UCVTFdwi : A64I_fixtofp<0b0, 0b01, 0b011, FPR64, GPR32, f64, i32,
                             cvtfix_i32_op<f64>, "ucvtf", uint_to_fp>;
-def UCVTFdxi : A64I_fixtofp<0b1, 0b01, 0b011, FPR64, GPR64,
+def UCVTFdxi : A64I_fixtofp<0b1, 0b01, 0b011, FPR64, GPR64, f64, i64,
                             cvtfix_i64_op<f64>, "ucvtf", uint_to_fp>;
 
 //===----------------------------------------------------------------------===//
@@ -2297,14 +2294,14 @@ defm FCVTM : A64I_fptointRM<0b10, 0b0, "fcvtm">;
 defm FCVTZ : A64I_fptointRM<0b11, 0b0, "fcvtz">;
 defm FCVTA : A64I_fptointRM<0b00, 0b1, "fcvta">;
 
-def : Pat<(i32 (fp_to_sint FPR32:$Rn)), (FCVTZSws FPR32:$Rn)>;
-def : Pat<(i64 (fp_to_sint FPR32:$Rn)), (FCVTZSxs FPR32:$Rn)>;
-def : Pat<(i32 (fp_to_uint FPR32:$Rn)), (FCVTZUws FPR32:$Rn)>;
-def : Pat<(i64 (fp_to_uint FPR32:$Rn)), (FCVTZUxs FPR32:$Rn)>;
-def : Pat<(i32 (fp_to_sint (f64 FPR64:$Rn))), (FCVTZSwd FPR64:$Rn)>;
-def : Pat<(i64 (fp_to_sint (f64 FPR64:$Rn))), (FCVTZSxd FPR64:$Rn)>;
-def : Pat<(i32 (fp_to_uint (f64 FPR64:$Rn))), (FCVTZUwd FPR64:$Rn)>;
-def : Pat<(i64 (fp_to_uint (f64 FPR64:$Rn))), (FCVTZUxd FPR64:$Rn)>;
+def : Pat<(i32 (fp_to_sint f32:$Rn)), (FCVTZSws $Rn)>;
+def : Pat<(i64 (fp_to_sint f32:$Rn)), (FCVTZSxs $Rn)>;
+def : Pat<(i32 (fp_to_uint f32:$Rn)), (FCVTZUws $Rn)>;
+def : Pat<(i64 (fp_to_uint f32:$Rn)), (FCVTZUxs $Rn)>;
+def : Pat<(i32 (fp_to_sint f64:$Rn)), (FCVTZSwd $Rn)>;
+def : Pat<(i64 (fp_to_sint f64:$Rn)), (FCVTZSxd $Rn)>;
+def : Pat<(i32 (fp_to_uint f64:$Rn)), (FCVTZUwd $Rn)>;
+def : Pat<(i64 (fp_to_uint f64:$Rn)), (FCVTZUxd $Rn)>;
 
 multiclass A64I_inttofp<bit o0, string asmop> {
   def CVTFsw : A64I_fpintI<0b0, 0b00, 0b00, {0, 1, o0}, FPR32, GPR32, asmop>;
@@ -2316,24 +2313,24 @@ multiclass A64I_inttofp<bit o0, string asmop> {
 defm S : A64I_inttofp<0b0, "scvtf">;
 defm U : A64I_inttofp<0b1, "ucvtf">;
 
-def : Pat<(f32 (sint_to_fp GPR32:$Rn)), (SCVTFsw GPR32:$Rn)>;
-def : Pat<(f32 (sint_to_fp GPR64:$Rn)), (SCVTFsx GPR64:$Rn)>;
-def : Pat<(f64 (sint_to_fp GPR32:$Rn)), (SCVTFdw GPR32:$Rn)>;
-def : Pat<(f64 (sint_to_fp GPR64:$Rn)), (SCVTFdx GPR64:$Rn)>;
-def : Pat<(f32 (uint_to_fp GPR32:$Rn)), (UCVTFsw GPR32:$Rn)>;
-def : Pat<(f32 (uint_to_fp GPR64:$Rn)), (UCVTFsx GPR64:$Rn)>;
-def : Pat<(f64 (uint_to_fp GPR32:$Rn)), (UCVTFdw GPR32:$Rn)>;
-def : Pat<(f64 (uint_to_fp GPR64:$Rn)), (UCVTFdx GPR64:$Rn)>;
+def : Pat<(f32 (sint_to_fp i32:$Rn)), (SCVTFsw $Rn)>;
+def : Pat<(f32 (sint_to_fp i64:$Rn)), (SCVTFsx $Rn)>;
+def : Pat<(f64 (sint_to_fp i32:$Rn)), (SCVTFdw $Rn)>;
+def : Pat<(f64 (sint_to_fp i64:$Rn)), (SCVTFdx $Rn)>;
+def : Pat<(f32 (uint_to_fp i32:$Rn)), (UCVTFsw $Rn)>;
+def : Pat<(f32 (uint_to_fp i64:$Rn)), (UCVTFsx $Rn)>;
+def : Pat<(f64 (uint_to_fp i32:$Rn)), (UCVTFdw $Rn)>;
+def : Pat<(f64 (uint_to_fp i64:$Rn)), (UCVTFdx $Rn)>;
 
 def FMOVws : A64I_fpintI<0b0, 0b00, 0b00, 0b110, GPR32, FPR32, "fmov">;
 def FMOVsw : A64I_fpintI<0b0, 0b00, 0b00, 0b111, FPR32, GPR32, "fmov">;
 def FMOVxd : A64I_fpintI<0b1, 0b01, 0b00, 0b110, GPR64, FPR64, "fmov">;
 def FMOVdx : A64I_fpintI<0b1, 0b01, 0b00, 0b111, FPR64, GPR64, "fmov">;
 
-def : Pat<(i32 (bitconvert (f32 FPR32:$Rn))), (FMOVws FPR32:$Rn)>;
-def : Pat<(f32 (bitconvert (i32 GPR32:$Rn))), (FMOVsw GPR32:$Rn)>;
-def : Pat<(i64 (bitconvert (f64 FPR64:$Rn))), (FMOVxd FPR64:$Rn)>;
-def : Pat<(f64 (bitconvert (i64 GPR64:$Rn))), (FMOVdx GPR64:$Rn)>;
+def : Pat<(i32 (bitconvert f32:$Rn)), (FMOVws $Rn)>;
+def : Pat<(f32 (bitconvert i32:$Rn)), (FMOVsw $Rn)>;
+def : Pat<(i64 (bitconvert f64:$Rn)), (FMOVxd $Rn)>;
+def : Pat<(f64 (bitconvert i64:$Rn)), (FMOVdx $Rn)>;
 
 def lane1_asmoperand : AsmOperandClass {
   let Name = "Lane1";
@@ -2397,7 +2394,7 @@ class A64I_fpimm_impl<bits<2> type, RegisterClass Reg, ValueType VT,
                (outs Reg:$Rd),
                (ins fmov_operand:$Imm8),
                "fmov\t$Rd, $Imm8",
-               [(set (VT Reg:$Rd), fmov_operand:$Imm8)],
+               [(set VT:$Rd, fmov_operand:$Imm8)],
                NoItinerary>;
 
 def FMOVsi : A64I_fpimm_impl<0b00, FPR32, f32, fmov32_operand>;
@@ -2590,10 +2587,10 @@ def atomic_load_acquire_16 : acquiring_load<atomic_load_16>;
 def atomic_load_acquire_32 : acquiring_load<atomic_load_32>;
 def atomic_load_acquire_64 : acquiring_load<atomic_load_64>;
 
-def : Pat<(atomic_load_acquire_8  GPR64xsp:$Rn), (LDAR_byte  GPR64xsp0:$Rn)>;
-def : Pat<(atomic_load_acquire_16 GPR64xsp:$Rn), (LDAR_hword GPR64xsp0:$Rn)>;
-def : Pat<(atomic_load_acquire_32 GPR64xsp:$Rn), (LDAR_word  GPR64xsp0:$Rn)>;
-def : Pat<(atomic_load_acquire_64 GPR64xsp:$Rn), (LDAR_dword GPR64xsp0:$Rn)>;
+def : Pat<(atomic_load_acquire_8  i64:$Rn), (LDAR_byte  $Rn)>;
+def : Pat<(atomic_load_acquire_16 i64:$Rn), (LDAR_hword $Rn)>;
+def : Pat<(atomic_load_acquire_32 i64:$Rn), (LDAR_word  $Rn)>;
+def : Pat<(atomic_load_acquire_64 i64:$Rn), (LDAR_dword $Rn)>;
 
 //===----------------------------------
 // Store-release (no exclusivity)
@@ -2624,22 +2621,22 @@ def atomic_store_release_64 : releasing_store<atomic_store_64>;
 multiclass A64I_SLex<string asmstr, bits<3> opcode, string prefix> {
   def _byte:  A64I_SLexs_impl<0b00, opcode, !strconcat(asmstr, "b"),
                             (outs), (ins GPR32:$Rt, GPR64xsp0:$Rn),
-                            [(atomic_store_release_8 GPR64xsp0:$Rn, GPR32:$Rt)],
+                            [(atomic_store_release_8 i64:$Rn, i32:$Rt)],
                             NoItinerary>;
 
   def _hword:  A64I_SLexs_impl<0b01, opcode, !strconcat(asmstr, "h"),
                            (outs), (ins GPR32:$Rt, GPR64xsp0:$Rn),
-                           [(atomic_store_release_16 GPR64xsp0:$Rn, GPR32:$Rt)],
+                           [(atomic_store_release_16 i64:$Rn, i32:$Rt)],
                            NoItinerary>;
 
   def _word:  A64I_SLexs_impl<0b10, opcode, asmstr,
                            (outs), (ins GPR32:$Rt, GPR64xsp0:$Rn),
-                           [(atomic_store_release_32 GPR64xsp0:$Rn, GPR32:$Rt)],
+                           [(atomic_store_release_32 i64:$Rn, i32:$Rt)],
                            NoItinerary>;
 
   def _dword: A64I_SLexs_impl<0b11, opcode, asmstr,
                            (outs), (ins GPR64:$Rt, GPR64xsp0:$Rn),
-                           [(atomic_store_release_64 GPR64xsp0:$Rn, GPR64:$Rt)],
+                           [(atomic_store_release_64 i64:$Rn, i64:$Rt)],
                            NoItinerary>;
 }
 
@@ -3596,15 +3593,15 @@ multiclass A64I_logimmSizes<bits<2> opc, string asmop, SDNode opnode> {
   def wwi : A64I_logicalimm<0b0, opc, (outs GPR32wsp:$Rd),
                          (ins GPR32:$Rn, logical_imm32_operand:$Imm),
                          !strconcat(asmop, "\t$Rd, $Rn, $Imm"),
-                         [(set GPR32wsp:$Rd,
-                               (opnode GPR32:$Rn, logical_imm32_operand:$Imm))],
+                         [(set i32:$Rd,
+                               (opnode i32:$Rn, logical_imm32_operand:$Imm))],
                          NoItinerary>;
 
   def xxi : A64I_logicalimm<0b1, opc, (outs GPR64xsp:$Rd),
                          (ins GPR64:$Rn, logical_imm64_operand:$Imm),
                          !strconcat(asmop, "\t$Rd, $Rn, $Imm"),
-                         [(set GPR64xsp:$Rd,
-                               (opnode GPR64:$Rn, logical_imm64_operand:$Imm))],
+                         [(set i64:$Rd,
+                               (opnode i64:$Rn, logical_imm64_operand:$Imm))],
                          NoItinerary>;
 }
 
@@ -3655,46 +3652,46 @@ def signed_cond : PatLeaf<(cond), [{
 // when the revolution comes.
 multiclass logical_shifts<string prefix, bit sf, bits<2> opc,
                           bit N, bit commutable,
-                          string asmop, SDPatternOperator opfrag, string sty,
+                          string asmop, SDPatternOperator opfrag, ValueType ty,
                           RegisterClass GPR, list<Register> defs> {
   let isCommutable = commutable, Defs = defs in {
   def _lsl : A64I_logicalshift<sf, opc, 0b00, N,
                        (outs GPR:$Rd),
                        (ins GPR:$Rn, GPR:$Rm,
-                            !cast<Operand>("lsl_operand_" # sty):$Imm6),
+                            !cast<Operand>("lsl_operand_" # ty):$Imm6),
                        !strconcat(asmop, "\t$Rd, $Rn, $Rm, $Imm6"),
-                       [(set GPR:$Rd, (opfrag GPR:$Rn, (shl GPR:$Rm,
-                            !cast<Operand>("lsl_operand_" # sty):$Imm6))
+                       [(set ty:$Rd, (opfrag ty:$Rn, (shl ty:$Rm,
+                            !cast<Operand>("lsl_operand_" # ty):$Imm6))
                        )],
                        NoItinerary>;
 
   def _lsr : A64I_logicalshift<sf, opc, 0b01, N,
                        (outs GPR:$Rd),
                        (ins GPR:$Rn, GPR:$Rm,
-                            !cast<Operand>("lsr_operand_" # sty):$Imm6),
+                            !cast<Operand>("lsr_operand_" # ty):$Imm6),
                        !strconcat(asmop, "\t$Rd, $Rn, $Rm, $Imm6"),
-                       [(set GPR:$Rd, (opfrag GPR:$Rn, (srl GPR:$Rm,
-                            !cast<Operand>("lsr_operand_" # sty):$Imm6))
+                       [(set ty:$Rd, (opfrag ty:$Rn, (srl ty:$Rm,
+                            !cast<Operand>("lsr_operand_" # ty):$Imm6))
                        )],
                        NoItinerary>;
 
   def _asr : A64I_logicalshift<sf, opc, 0b10, N,
                        (outs GPR:$Rd),
                        (ins GPR:$Rn, GPR:$Rm,
-                            !cast<Operand>("asr_operand_" # sty):$Imm6),
+                            !cast<Operand>("asr_operand_" # ty):$Imm6),
                        !strconcat(asmop, "\t$Rd, $Rn, $Rm, $Imm6"),
-                       [(set GPR:$Rd, (opfrag GPR:$Rn, (sra GPR:$Rm,
-                            !cast<Operand>("asr_operand_" # sty):$Imm6))
+                       [(set ty:$Rd, (opfrag ty:$Rn, (sra ty:$Rm,
+                            !cast<Operand>("asr_operand_" # ty):$Imm6))
                        )],
                        NoItinerary>;
 
   def _ror : A64I_logicalshift<sf, opc, 0b11, N,
                        (outs GPR:$Rd),
                        (ins GPR:$Rn, GPR:$Rm,
-                            !cast<Operand>("ror_operand_" # sty):$Imm6),
+                            !cast<Operand>("ror_operand_" # ty):$Imm6),
                        !strconcat(asmop, "\t$Rd, $Rn, $Rm, $Imm6"),
-                       [(set GPR:$Rd, (opfrag GPR:$Rn, (rotr GPR:$Rm,
-                            !cast<Operand>("ror_operand_" # sty):$Imm6))
+                       [(set ty:$Rd, (opfrag ty:$Rn, (rotr ty:$Rm,
+                            !cast<Operand>("ror_operand_" # ty):$Imm6))
                        )],
                        NoItinerary>;
   }
@@ -3704,17 +3701,17 @@ multiclass logical_shifts<string prefix, bit sf, bits<2> opc,
                  (!cast<Instruction>(prefix # "_lsl") GPR:$Rd, GPR:$Rn,
                                                       GPR:$Rm, 0)>;
 
-  def : Pat<(opfrag GPR:$Rn, GPR:$Rm),
-            (!cast<Instruction>(prefix # "_lsl") GPR:$Rn, GPR:$Rm, 0)>;
+  def : Pat<(opfrag ty:$Rn, ty:$Rm),
+            (!cast<Instruction>(prefix # "_lsl") $Rn, $Rm, 0)>;
 }
 
 multiclass logical_sizes<string prefix, bits<2> opc, bit N, bit commutable,
                          string asmop, SDPatternOperator opfrag,
                          list<Register> defs> {
   defm xxx : logical_shifts<prefix # "xxx", 0b1, opc, N,
-                            commutable, asmop, opfrag, "i64", GPR64, defs>;
+                            commutable, asmop, opfrag, i64, GPR64, defs>;
   defm www : logical_shifts<prefix # "www", 0b0, opc, N,
-                            commutable, asmop, opfrag, "i32", GPR32, defs>;
+                            commutable, asmop, opfrag, i32, GPR32, defs>;
 }
 
 
@@ -3741,15 +3738,15 @@ defm BICS : logical_sizes<"BICS", 0b11, 0b1, 0b0, "bics",
                                   [{ (void)N; return false; }]>,
                           [NZCV]>;
 
-multiclass tst_shifts<string prefix, bit sf, string sty, RegisterClass GPR> {
+multiclass tst_shifts<string prefix, bit sf, ValueType ty, RegisterClass GPR> {
   let isCommutable = 1, Rd = 0b11111, Defs = [NZCV] in {
   def _lsl : A64I_logicalshift<sf, 0b11, 0b00, 0b0,
                        (outs),
                        (ins GPR:$Rn, GPR:$Rm,
-                            !cast<Operand>("lsl_operand_" # sty):$Imm6),
+                            !cast<Operand>("lsl_operand_" # ty):$Imm6),
                        "tst\t$Rn, $Rm, $Imm6",
-                       [(set NZCV, (A64setcc (and GPR:$Rn, (shl GPR:$Rm,
-                           !cast<Operand>("lsl_operand_" # sty):$Imm6)),
+                       [(set NZCV, (A64setcc (and ty:$Rn, (shl ty:$Rm,
+                           !cast<Operand>("lsl_operand_" # ty):$Imm6)),
                                           0, signed_cond))],
                        NoItinerary>;
 
@@ -3757,30 +3754,30 @@ multiclass tst_shifts<string prefix, bit sf, string sty, RegisterClass GPR> {
   def _lsr : A64I_logicalshift<sf, 0b11, 0b01, 0b0,
                        (outs),
                        (ins GPR:$Rn, GPR:$Rm,
-                            !cast<Operand>("lsr_operand_" # sty):$Imm6),
+                            !cast<Operand>("lsr_operand_" # ty):$Imm6),
                        "tst\t$Rn, $Rm, $Imm6",
-                       [(set NZCV, (A64setcc (and GPR:$Rn, (srl GPR:$Rm,
-                           !cast<Operand>("lsr_operand_" # sty):$Imm6)),
+                       [(set NZCV, (A64setcc (and ty:$Rn, (srl ty:$Rm,
+                           !cast<Operand>("lsr_operand_" # ty):$Imm6)),
                                           0, signed_cond))],
                        NoItinerary>;
 
   def _asr : A64I_logicalshift<sf, 0b11, 0b10, 0b0,
                        (outs),
                        (ins GPR:$Rn, GPR:$Rm,
-                            !cast<Operand>("asr_operand_" # sty):$Imm6),
+                            !cast<Operand>("asr_operand_" # ty):$Imm6),
                        "tst\t$Rn, $Rm, $Imm6",
-                       [(set NZCV, (A64setcc (and GPR:$Rn, (sra GPR:$Rm,
-                           !cast<Operand>("asr_operand_" # sty):$Imm6)),
+                       [(set NZCV, (A64setcc (and ty:$Rn, (sra ty:$Rm,
+                           !cast<Operand>("asr_operand_" # ty):$Imm6)),
                                           0, signed_cond))],
                        NoItinerary>;
 
   def _ror : A64I_logicalshift<sf, 0b11, 0b11, 0b0,
                        (outs),
                        (ins GPR:$Rn, GPR:$Rm,
-                            !cast<Operand>("ror_operand_" # sty):$Imm6),
+                            !cast<Operand>("ror_operand_" # ty):$Imm6),
                        "tst\t$Rn, $Rm, $Imm6",
-                       [(set NZCV, (A64setcc (and GPR:$Rn, (rotr GPR:$Rm,
-                           !cast<Operand>("ror_operand_" # sty):$Imm6)),
+                       [(set NZCV, (A64setcc (and ty:$Rn, (rotr ty:$Rm,
+                           !cast<Operand>("ror_operand_" # ty):$Imm6)),
                                           0, signed_cond))],
                        NoItinerary>;
   }
@@ -3788,63 +3785,63 @@ multiclass tst_shifts<string prefix, bit sf, string sty, RegisterClass GPR> {
   def _noshift : InstAlias<"tst $Rn, $Rm",
                      (!cast<Instruction>(prefix # "_lsl") GPR:$Rn, GPR:$Rm, 0)>;
 
-  def : Pat<(A64setcc (and GPR:$Rn, GPR:$Rm), 0, signed_cond),
-            (!cast<Instruction>(prefix # "_lsl") GPR:$Rn, GPR:$Rm, 0)>;
+  def : Pat<(A64setcc (and ty:$Rn, ty:$Rm), 0, signed_cond),
+            (!cast<Instruction>(prefix # "_lsl") $Rn, $Rm, 0)>;
 }
 
-defm TSTxx : tst_shifts<"TSTxx", 0b1, "i64", GPR64>;
-defm TSTww : tst_shifts<"TSTww", 0b0, "i32", GPR32>;
+defm TSTxx : tst_shifts<"TSTxx", 0b1, i64, GPR64>;
+defm TSTww : tst_shifts<"TSTww", 0b0, i32, GPR32>;
 
 
-multiclass mvn_shifts<string prefix, bit sf, string sty, RegisterClass GPR> {
+multiclass mvn_shifts<string prefix, bit sf, ValueType ty, RegisterClass GPR> {
   let isCommutable = 0, Rn = 0b11111 in {
   def _lsl : A64I_logicalshift<sf, 0b01, 0b00, 0b1,
                        (outs GPR:$Rd),
                        (ins GPR:$Rm,
-                            !cast<Operand>("lsl_operand_" # sty):$Imm6),
+                            !cast<Operand>("lsl_operand_" # ty):$Imm6),
                        "mvn\t$Rd, $Rm, $Imm6",
-                       [(set GPR:$Rd, (not (shl GPR:$Rm,
-                         !cast<Operand>("lsl_operand_" # sty):$Imm6)))],
+                       [(set ty:$Rd, (not (shl ty:$Rm,
+                         !cast<Operand>("lsl_operand_" # ty):$Imm6)))],
                        NoItinerary>;
 
 
   def _lsr : A64I_logicalshift<sf, 0b01, 0b01, 0b1,
                        (outs GPR:$Rd),
                        (ins GPR:$Rm,
-                            !cast<Operand>("lsr_operand_" # sty):$Imm6),
+                            !cast<Operand>("lsr_operand_" # ty):$Imm6),
                        "mvn\t$Rd, $Rm, $Imm6",
-                       [(set GPR:$Rd, (not (srl GPR:$Rm,
-                         !cast<Operand>("lsr_operand_" # sty):$Imm6)))],
+                       [(set ty:$Rd, (not (srl ty:$Rm,
+                         !cast<Operand>("lsr_operand_" # ty):$Imm6)))],
                        NoItinerary>;
 
   def _asr : A64I_logicalshift<sf, 0b01, 0b10, 0b1,
                        (outs GPR:$Rd),
                        (ins GPR:$Rm,
-                            !cast<Operand>("asr_operand_" # sty):$Imm6),
+                            !cast<Operand>("asr_operand_" # ty):$Imm6),
                        "mvn\t$Rd, $Rm, $Imm6",
-                       [(set GPR:$Rd, (not (sra GPR:$Rm,
-                         !cast<Operand>("asr_operand_" # sty):$Imm6)))],
+                       [(set ty:$Rd, (not (sra ty:$Rm,
+                         !cast<Operand>("asr_operand_" # ty):$Imm6)))],
                        NoItinerary>;
 
   def _ror : A64I_logicalshift<sf, 0b01, 0b11, 0b1,
                        (outs GPR:$Rd),
                        (ins GPR:$Rm,
-                            !cast<Operand>("ror_operand_" # sty):$Imm6),
+                            !cast<Operand>("ror_operand_" # ty):$Imm6),
                        "mvn\t$Rd, $Rm, $Imm6",
-                       [(set GPR:$Rd, (not (rotr GPR:$Rm,
-                         !cast<Operand>("lsl_operand_" # sty):$Imm6)))],
+                       [(set ty:$Rd, (not (rotr ty:$Rm,
+                         !cast<Operand>("lsl_operand_" # ty):$Imm6)))],
                        NoItinerary>;
   }
 
   def _noshift : InstAlias<"mvn $Rn, $Rm",
                      (!cast<Instruction>(prefix # "_lsl") GPR:$Rn, GPR:$Rm, 0)>;
 
-  def : Pat<(not GPR:$Rm),
-            (!cast<Instruction>(prefix # "_lsl") GPR:$Rm, 0)>;
+  def : Pat<(not ty:$Rm),
+            (!cast<Instruction>(prefix # "_lsl") $Rm, 0)>;
 }
 
-defm MVNxx : mvn_shifts<"MVNxx", 0b1, "i64", GPR64>;
-defm MVNww : mvn_shifts<"MVNww", 0b0, "i32", GPR32>;
+defm MVNxx : mvn_shifts<"MVNxx", 0b1, i64, GPR64>;
+defm MVNww : mvn_shifts<"MVNww", 0b0, i32, GPR32>;
 
 def MOVxx :InstAlias<"mov $Rd, $Rm", (ORRxxx_lsl GPR64:$Rd, XZR, GPR64:$Rm, 0)>;
 def MOVww :InstAlias<"mov $Rd, $Rm", (ORRwww_lsl GPR32:$Rd, WZR, GPR32:$Rm, 0)>;
@@ -4279,14 +4276,14 @@ let isBranch = 1, isTerminator = 1 in {
   def TBZxii : A64I_TBimm<0b0, (outs),
                         (ins GPR64:$Rt, uimm6:$Imm, tbimm_target:$Label),
                         "tbz\t$Rt, $Imm, $Label",
-                        [(A64br_cc (A64cmp (and GPR64:$Rt, tstb64_pat:$Imm), 0),
+                        [(A64br_cc (A64cmp (and i64:$Rt, tstb64_pat:$Imm), 0),
                                    A64eq, bb:$Label)],
                         NoItinerary>;
 
   def TBNZxii : A64I_TBimm<0b1, (outs),
                         (ins GPR64:$Rt, uimm6:$Imm, tbimm_target:$Label),
                         "tbnz\t$Rt, $Imm, $Label",
-                        [(A64br_cc (A64cmp (and GPR64:$Rt, tstb64_pat:$Imm), 0),
+                        [(A64br_cc (A64cmp (and i64:$Rt, tstb64_pat:$Imm), 0),
                                    A64ne, bb:$Label)],
                         NoItinerary>;
 
@@ -4298,7 +4295,7 @@ let isBranch = 1, isTerminator = 1 in {
   def TBZwii : A64I_TBimm<0b0, (outs),
                         (ins GPR32:$Rt, uimm5:$Imm, tbimm_target:$Label),
                         "tbz\t$Rt, $Imm, $Label",
-                        [(A64br_cc (A64cmp (and GPR32:$Rt, tstb32_pat:$Imm), 0),
+                        [(A64br_cc (A64cmp (and i32:$Rt, tstb32_pat:$Imm), 0),
                                    A64eq, bb:$Label)],
                         NoItinerary> {
     let Imm{5} = 0b0;
@@ -4307,7 +4304,7 @@ let isBranch = 1, isTerminator = 1 in {
   def TBNZwii : A64I_TBimm<0b1, (outs),
                         (ins GPR32:$Rt, uimm5:$Imm, tbimm_target:$Label),
                         "tbnz\t$Rt, $Imm, $Label",
-                        [(A64br_cc (A64cmp (and GPR32:$Rt, tstb32_pat:$Imm), 0),
+                        [(A64br_cc (A64cmp (and i32:$Rt, tstb32_pat:$Imm), 0),
                                    A64ne, bb:$Label)],
                         NoItinerary> {
     let Imm{5} = 0b0;
@@ -4383,13 +4380,13 @@ class A64I_BregImpl<bits<4> opc,
 
 let isBranch = 1 in {
   def BRx : A64I_BregImpl<0b0000,(outs), (ins GPR64:$Rn),
-                          "br\t$Rn", [(brind GPR64:$Rn)]> {
+                          "br\t$Rn", [(brind i64:$Rn)]> {
     let isBarrier = 1;
     let isTerminator = 1;
   }
 
   def BLRx : A64I_BregImpl<0b0001, (outs), (ins GPR64:$Rn),
-                           "blr\t$Rn", [(AArch64Call GPR64:$Rn)]> {
+                           "blr\t$Rn", [(AArch64Call i64:$Rn)]> {
     let isBarrier = 0;
     let isCall = 1;
     let Defs = [X30];
@@ -4478,7 +4475,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [XSP] in {
 
   def TC_RETURNxi
     : PseudoInst<(outs), (ins tcGPR64:$dst, i32imm:$FPDiff),
-                 [(AArch64tcret tcGPR64:$dst, (i32 timm:$FPDiff))]>;
+                 [(AArch64tcret i64:$dst, (i32 timm:$FPDiff))]>;
 }
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
@@ -4510,13 +4507,13 @@ def TLSDESCCALL : PseudoInst<(outs), (ins i64imm:$Lbl), []> {
 }
 
 def TLSDESC_BLRx : PseudoInst<(outs), (ins GPR64:$Rn, i64imm:$Var),
-                            [(A64tlsdesc_blr GPR64:$Rn, tglobaltlsaddr:$Var)]> {
+                            [(A64tlsdesc_blr i64:$Rn, tglobaltlsaddr:$Var)]> {
   let isCall = 1;
   let Defs = [X30];
 }
 
-def : Pat<(A64tlsdesc_blr GPR64:$Rn, texternalsym:$Var),
-          (TLSDESC_BLRx GPR64:$Rn, texternalsym:$Var)>;
+def : Pat<(A64tlsdesc_blr i64:$Rn, texternalsym:$Var),
+          (TLSDESC_BLRx $Rn, texternalsym:$Var)>;
 
 //===----------------------------------------------------------------------===//
 // Bitfield patterns
@@ -4539,22 +4536,22 @@ def bfi_width_to_imms : SDNodeXForm<imm, [{
 // (either all bits are used or the low 32 bits are used).
 let AddedComplexity = 10 in {
 
-def : Pat<(A64Bfi GPR64:$src, GPR64:$Rn, imm:$ImmR, imm:$ImmS),
-           (BFIxxii GPR64:$src, GPR64:$Rn,
+def : Pat<(A64Bfi i64:$src, i64:$Rn, imm:$ImmR, imm:$ImmS),
+           (BFIxxii $src, $Rn,
                     (bfi64_lsb_to_immr (i64 imm:$ImmR)),
                     (bfi_width_to_imms (i64 imm:$ImmS)))>;
 
-def : Pat<(A64Bfi GPR32:$src, GPR32:$Rn, imm:$ImmR, imm:$ImmS),
-          (BFIwwii GPR32:$src, GPR32:$Rn,
+def : Pat<(A64Bfi i32:$src, i32:$Rn, imm:$ImmR, imm:$ImmS),
+          (BFIwwii $src, $Rn,
                    (bfi32_lsb_to_immr (i64 imm:$ImmR)),
                    (bfi_width_to_imms (i64 imm:$ImmS)))>;
 
 
-def : Pat<(and (A64Bfi GPR64:$src, GPR64:$Rn, imm:$ImmR, imm:$ImmS),
+def : Pat<(and (A64Bfi i64:$src, i64:$Rn, imm:$ImmR, imm:$ImmS),
                (i64 4294967295)),
           (SUBREG_TO_REG (i64 0),
-                         (BFIwwii (EXTRACT_SUBREG GPR64:$src, sub_32),
-                                  (EXTRACT_SUBREG GPR64:$Rn, sub_32),
+                         (BFIwwii (EXTRACT_SUBREG $src, sub_32),
+                                  (EXTRACT_SUBREG $Rn, sub_32),
                                   (bfi32_lsb_to_immr (i64 imm:$ImmR)),
                                   (bfi_width_to_imms (i64 imm:$ImmS))),
                          sub_32)>;
@@ -4566,20 +4563,19 @@ def : Pat<(and (A64Bfi GPR64:$src, GPR64:$Rn, imm:$ImmR, imm:$ImmS),
 //===----------------------------------------------------------------------===//
 
 // Truncation from 64 to 32-bits just involves renaming your register.
-def : Pat<(i32 (trunc (i64 GPR64:$val))), (EXTRACT_SUBREG GPR64:$val, sub_32)>;
+def : Pat<(i32 (trunc i64:$val)), (EXTRACT_SUBREG $val, sub_32)>;
 
 // Similarly, extension where we don't care about the high bits is
 // just a rename.
-def : Pat<(i64 (anyext (i32 GPR32:$val))),
-          (INSERT_SUBREG (IMPLICIT_DEF), GPR32:$val, sub_32)>;
+def : Pat<(i64 (anyext i32:$val)),
+          (INSERT_SUBREG (IMPLICIT_DEF), $val, sub_32)>;
 
 // SELECT instructions providing f128 types need to be handled by a
 // pseudo-instruction since the eventual code will need to introduce basic
 // blocks and control flow.
 def F128CSEL : PseudoInst<(outs FPR128:$Rd),
-                          (ins FPR128:$Rn, FPR128:$Rm, cond_code_op:$Cond),
-                          [(set FPR128:$Rd, (simple_select (f128 FPR128:$Rn),
-                                                           FPR128:$Rm))]> {
+                         (ins FPR128:$Rn, FPR128:$Rm, cond_code_op:$Cond),
+                         [(set f128:$Rd, (simple_select f128:$Rn, f128:$Rm))]> {
   let Uses = [NZCV];
   let usesCustomInserter = 1;
 }
@@ -4691,13 +4687,13 @@ def atomic_store_simple_i64 : simple_store<atomic_store_64>;
 // Atomic patterns can be shared between integer operations of all sizes, a
 // quick multiclass here allows reuse.
 multiclass ls_atomic_pats<Instruction LOAD, Instruction STORE, dag Base,
-                          dag Offset, dag address, RegisterClass TPR,
+                          dag Offset, dag address, ValueType transty,
                           ValueType sty> {
   def : Pat<(!cast<PatFrag>("atomic_load_simple_" # sty) address),
             (LOAD Base, Offset)>;
 
-  def : Pat<(!cast<PatFrag>("atomic_store_simple_" # sty) address, TPR:$Rt),
-            (STORE TPR:$Rt, Base, Offset)>;
+  def : Pat<(!cast<PatFrag>("atomic_store_simple_" # sty) address, transty:$Rt),
+            (STORE $Rt, Base, Offset)>;
 }
 
 // Instructions accessing a memory chunk smaller than a register (or, in a
@@ -4709,7 +4705,7 @@ multiclass ls_atomic_pats<Instruction LOAD, Instruction STORE, dag Base,
 multiclass ls_small_pats<Instruction LOAD, Instruction STORE,
                          dag Base, dag Offset,
                          dag address, ValueType sty>
-  : ls_atomic_pats<LOAD, STORE, Base, Offset, address, GPR32, sty> {
+  : ls_atomic_pats<LOAD, STORE, Base, Offset, address, i32, sty> {
   def : Pat<(!cast<SDNode>(zextload # sty) address), (LOAD Base, Offset)>;
 
   def : Pat<(!cast<SDNode>(extload # sty) address), (LOAD Base, Offset)>;
@@ -4722,13 +4718,13 @@ multiclass ls_small_pats<Instruction LOAD, Instruction STORE,
   def : Pat<(i64 (!cast<SDNode>(extload # sty) address)),
             (SUBREG_TO_REG (i64 0), (LOAD Base, Offset), sub_32)>;
 
-  def : Pat<(!cast<SDNode>(truncstore # sty) GPR32:$Rt, address),
-            (STORE GPR32:$Rt, Base, Offset)>;
+  def : Pat<(!cast<SDNode>(truncstore # sty) i32:$Rt, address),
+            (STORE $Rt, Base, Offset)>;
 
   // For truncating store from 64-bits, we have to manually tell LLVM to
   // ignore the high bits of the x register.
-  def : Pat<(!cast<SDNode>(truncstore # sty) GPR64:$Rt, address),
-            (STORE (EXTRACT_SUBREG GPR64:$Rt, sub_32), Base, Offset)>;
+  def : Pat<(!cast<SDNode>(truncstore # sty) i64:$Rt, address),
+            (STORE (EXTRACT_SUBREG $Rt, sub_32), Base, Offset)>;
 }
 
 // Next come patterns for sign-extending loads.
@@ -4744,18 +4740,16 @@ multiclass load_signed_pats<string T, string U, dag Base, dag Offset,
 
 // and finally "natural-width" loads and stores come next.
 multiclass ls_neutral_pats<Instruction LOAD, Instruction STORE, dag Base,
-                           dag Offset, dag address, RegisterClass TPR,
-                           ValueType sty> {
+                           dag Offset, dag address, ValueType sty> {
   def : Pat<(sty (load address)), (LOAD Base, Offset)>;
-  def : Pat<(store (sty TPR:$Rt), address), (STORE TPR:$Rt, Base, Offset)>;
+  def : Pat<(store sty:$Rt, address), (STORE $Rt, Base, Offset)>;
 }
 
 // Integer operations also get atomic instructions to select for.
 multiclass ls_int_neutral_pats<Instruction LOAD, Instruction STORE, dag Base,
-                           dag Offset, dag address, RegisterClass TPR,
-                           ValueType sty>
-  : ls_neutral_pats<LOAD, STORE, Base, Offset, address, TPR, sty>,
-    ls_atomic_pats<LOAD, STORE, Base, Offset, address, TPR, sty>;
+                           dag Offset, dag address, ValueType sty>
+  : ls_neutral_pats<LOAD, STORE, Base, Offset, address, sty>,
+    ls_atomic_pats<LOAD, STORE, Base, Offset, address, sty, sty>;
 
 //===------------------------------
 // 2.2. Addressing-mode instantiations
@@ -4790,7 +4784,7 @@ multiclass uimm12_pats<dag address, dag Base, dag Offset> {
                           !foreach(decls.pattern, address,
                                    !subst(OFFSET, word_uimm12,
                                    !subst(ALIGN, min_align4, decls.pattern))),
-                          GPR32, i32>;
+                          i32>;
 
   defm : ls_int_neutral_pats<LS64_LDR, LS64_STR, Base,
                           !foreach(decls.pattern, Offset,
@@ -4798,7 +4792,7 @@ multiclass uimm12_pats<dag address, dag Base, dag Offset> {
                           !foreach(decls.pattern, address,
                                    !subst(OFFSET, dword_uimm12,
                                    !subst(ALIGN, min_align8, decls.pattern))),
-                          GPR64, i64>;
+                          i64>;
 
   defm : ls_neutral_pats<LSFP16_LDR, LSFP16_STR, Base,
                           !foreach(decls.pattern, Offset,
@@ -4806,7 +4800,7 @@ multiclass uimm12_pats<dag address, dag Base, dag Offset> {
                           !foreach(decls.pattern, address,
                                    !subst(OFFSET, hword_uimm12,
                                    !subst(ALIGN, min_align2, decls.pattern))),
-                          FPR16, f16>;
+                          f16>;
 
   defm : ls_neutral_pats<LSFP32_LDR, LSFP32_STR, Base,
                           !foreach(decls.pattern, Offset,
@@ -4814,7 +4808,7 @@ multiclass uimm12_pats<dag address, dag Base, dag Offset> {
                           !foreach(decls.pattern, address,
                                    !subst(OFFSET, word_uimm12,
                                    !subst(ALIGN, min_align4, decls.pattern))),
-                          FPR32, f32>;
+                          f32>;
 
   defm : ls_neutral_pats<LSFP64_LDR, LSFP64_STR, Base,
                           !foreach(decls.pattern, Offset,
@@ -4822,7 +4816,7 @@ multiclass uimm12_pats<dag address, dag Base, dag Offset> {
                           !foreach(decls.pattern, address,
                                    !subst(OFFSET, dword_uimm12,
                                    !subst(ALIGN, min_align8, decls.pattern))),
-                          FPR64, f64>;
+                          f64>;
 
   defm : ls_neutral_pats<LSFP128_LDR, LSFP128_STR, Base,
                           !foreach(decls.pattern, Offset,
@@ -4830,7 +4824,7 @@ multiclass uimm12_pats<dag address, dag Base, dag Offset> {
                           !foreach(decls.pattern, address,
                                    !subst(OFFSET, qword_uimm12,
                                    !subst(ALIGN, min_align16, decls.pattern))),
-                          FPR128, f128>;
+                          f128>;
 
   defm : load_signed_pats<"B", "", Base,
                           !foreach(decls.pattern, Offset,
@@ -4857,13 +4851,13 @@ multiclass uimm12_pats<dag address, dag Base, dag Offset> {
 
 // Straightforward patterns of last resort: a pointer with or without an
 // appropriate offset.
-defm : uimm12_pats<(i64 GPR64xsp:$Rn), (i64 GPR64xsp:$Rn), (i64 0)>;
-defm : uimm12_pats<(add GPR64xsp:$Rn, OFFSET:$UImm12),
-                   (i64 GPR64xsp:$Rn), (i64 OFFSET:$UImm12)>;
+defm : uimm12_pats<(i64 i64:$Rn), (i64 i64:$Rn), (i64 0)>;
+defm : uimm12_pats<(add i64:$Rn, OFFSET:$UImm12),
+                   (i64 i64:$Rn), (i64 OFFSET:$UImm12)>;
 
 // The offset could be hidden behind an "or", of course:
-defm : uimm12_pats<(add_like_or GPR64xsp:$Rn, OFFSET:$UImm12),
-                   (i64 GPR64xsp:$Rn), (i64 OFFSET:$UImm12)>;
+defm : uimm12_pats<(add_like_or i64:$Rn, OFFSET:$UImm12),
+                   (i64 i64:$Rn), (i64 OFFSET:$UImm12)>;
 
 // Global addresses under the small-absolute model should use these
 // instructions. There are ELF relocations specifically for it.
@@ -4897,36 +4891,31 @@ multiclass simm9_pats<dag address, dag Base, dag Offset> {
   defm : ls_small_pats<LS8_LDUR, LS8_STUR, Base, Offset, address, i8>;
   defm : ls_small_pats<LS16_LDUR, LS16_STUR, Base, Offset, address, i16>;
 
-  defm : ls_int_neutral_pats<LS32_LDUR, LS32_STUR, Base, Offset, address,
-                             GPR32, i32>;
-  defm : ls_int_neutral_pats<LS64_LDUR, LS64_STUR, Base, Offset, address,
-                             GPR64, i64>;
+  defm : ls_int_neutral_pats<LS32_LDUR, LS32_STUR, Base, Offset, address, i32>;
+  defm : ls_int_neutral_pats<LS64_LDUR, LS64_STUR, Base, Offset, address, i64>;
 
-  defm : ls_neutral_pats<LSFP16_LDUR, LSFP16_STUR, Base, Offset, address,
-                         FPR16, f16>;
-  defm : ls_neutral_pats<LSFP32_LDUR, LSFP32_STUR, Base, Offset, address,
-                         FPR32, f32>;
-  defm : ls_neutral_pats<LSFP64_LDUR, LSFP64_STUR, Base, Offset, address,
-                         FPR64, f64>;
+  defm : ls_neutral_pats<LSFP16_LDUR, LSFP16_STUR, Base, Offset, address, f16>;
+  defm : ls_neutral_pats<LSFP32_LDUR, LSFP32_STUR, Base, Offset, address, f32>;
+  defm : ls_neutral_pats<LSFP64_LDUR, LSFP64_STUR, Base, Offset, address, f64>;
   defm : ls_neutral_pats<LSFP128_LDUR, LSFP128_STUR, Base, Offset, address,
-                         FPR128, f128>;
+                         f128>;
 
   def : Pat<(i64 (zextloadi32 address)),
             (SUBREG_TO_REG (i64 0), (LS32_LDUR Base, Offset), sub_32)>;
 
-  def : Pat<(truncstorei32 GPR64:$Rt, address),
-            (LS32_STUR (EXTRACT_SUBREG GPR64:$Rt, sub_32), Base, Offset)>;
+  def : Pat<(truncstorei32 i64:$Rt, address),
+            (LS32_STUR (EXTRACT_SUBREG $Rt, sub_32), Base, Offset)>;
 
   defm : load_signed_pats<"B", "_U", Base, Offset, address, i8>;
   defm : load_signed_pats<"H", "_U", Base, Offset, address, i16>;
   def : Pat<(sextloadi32 address), (LDURSWx Base, Offset)>;
 }
 
-defm : simm9_pats<(add GPR64xsp:$Rn, simm9:$SImm9),
-                  (i64 GPR64xsp:$Rn), (SDXF_simm9 simm9:$SImm9)>;
+defm : simm9_pats<(add i64:$Rn, simm9:$SImm9),
+                  (i64 $Rn), (SDXF_simm9 simm9:$SImm9)>;
 
-defm : simm9_pats<(add_like_or GPR64xsp:$Rn, simm9:$SImm9),
-                  (i64 GPR64xsp:$Rn), (SDXF_simm9 simm9:$SImm9)>;
+defm : simm9_pats<(add_like_or i64:$Rn, simm9:$SImm9),
+                  (i64 $Rn), (SDXF_simm9 simm9:$SImm9)>;
 
 
 //===------------------------------
@@ -4937,12 +4926,12 @@ defm : simm9_pats<(add_like_or GPR64xsp:$Rn, simm9:$SImm9),
 // quick multiclass here allows reuse.
 multiclass ro_atomic_pats<Instruction LOAD, Instruction STORE, dag Base,
                           dag Offset, dag Extend, dag address,
-                          RegisterClass TPR, ValueType sty> {
+                          ValueType transty, ValueType sty> {
   def : Pat<(!cast<PatFrag>("atomic_load_simple_" # sty) address),
             (LOAD Base, Offset, Extend)>;
 
-  def : Pat<(!cast<PatFrag>("atomic_store_simple_" # sty) address, TPR:$Rt),
-            (STORE TPR:$Rt, Base, Offset, Extend)>;
+  def : Pat<(!cast<PatFrag>("atomic_store_simple_" # sty) address, transty:$Rt),
+            (STORE $Rt, Base, Offset, Extend)>;
 }
 
 // The register offset instructions take three operands giving the instruction,
@@ -4953,7 +4942,7 @@ multiclass ro_atomic_pats<Instruction LOAD, Instruction STORE, dag Base,
 multiclass ro_small_pats<Instruction LOAD, Instruction STORE,
                          dag Base, dag Offset, dag Extend,
                          dag address, ValueType sty>
-  : ro_atomic_pats<LOAD, STORE, Base, Offset, Extend, address, GPR32, sty> {
+  : ro_atomic_pats<LOAD, STORE, Base, Offset, Extend, address, i32, sty> {
   def : Pat<(!cast<SDNode>(zextload # sty) address),
             (LOAD Base, Offset, Extend)>;
 
@@ -4968,13 +4957,13 @@ multiclass ro_small_pats<Instruction LOAD, Instruction STORE,
   def : Pat<(i64 (!cast<SDNode>(extload # sty) address)),
             (SUBREG_TO_REG (i64 0), (LOAD Base, Offset, Extend), sub_32)>;
 
-  def : Pat<(!cast<SDNode>(truncstore # sty) GPR32:$Rt, address),
-            (STORE GPR32:$Rt, Base, Offset, Extend)>;
+  def : Pat<(!cast<SDNode>(truncstore # sty) i32:$Rt, address),
+            (STORE $Rt, Base, Offset, Extend)>;
 
   // For truncating store from 64-bits, we have to manually tell LLVM to
   // ignore the high bits of the x register.
-  def : Pat<(!cast<SDNode>(truncstore # sty) GPR64:$Rt, address),
-            (STORE (EXTRACT_SUBREG GPR64:$Rt, sub_32), Base, Offset, Extend)>;
+  def : Pat<(!cast<SDNode>(truncstore # sty) i64:$Rt, address),
+            (STORE (EXTRACT_SUBREG $Rt, sub_32), Base, Offset, Extend)>;
 
 }
 
@@ -4993,17 +4982,17 @@ multiclass ro_signed_pats<string T, string Rm, dag Base, dag Offset, dag Extend,
 // and finally "natural-width" loads and stores come next.
 multiclass ro_neutral_pats<Instruction LOAD, Instruction STORE,
                            dag Base, dag Offset, dag Extend, dag address,
-                           RegisterClass TPR, ValueType sty> {
+                           ValueType sty> {
   def : Pat<(sty (load address)), (LOAD Base, Offset, Extend)>;
-  def : Pat<(store (sty TPR:$Rt), address),
-            (STORE TPR:$Rt, Base, Offset, Extend)>;
+  def : Pat<(store sty:$Rt, address),
+            (STORE $Rt, Base, Offset, Extend)>;
 }
 
 multiclass ro_int_neutral_pats<Instruction LOAD, Instruction STORE,
                                dag Base, dag Offset, dag Extend, dag address,
-                               RegisterClass TPR, ValueType sty>
-  : ro_neutral_pats<LOAD, STORE, Base, Offset, Extend, address, TPR, sty>,
-    ro_atomic_pats<LOAD, STORE, Base, Offset, Extend, address, TPR, sty>;
+                               ValueType sty>
+  : ro_neutral_pats<LOAD, STORE, Base, Offset, Extend, address, sty>,
+    ro_atomic_pats<LOAD, STORE, Base, Offset, Extend, address, sty, sty>;
 
 multiclass regoff_pats<string Rm, dag address, dag Base, dag Offset,
                        dag Extend> {
@@ -5032,7 +5021,7 @@ multiclass regoff_pats<string Rm, dag address, dag Base, dag Offset,
                             Base, Offset, Extend,
                             !foreach(decls.pattern, address,
                                      !subst(SHIFT, imm_eq2, decls.pattern)),
-                            GPR32, i32>;
+                            i32>;
 
   defm : ro_int_neutral_pats<
                             !cast<Instruction>("LS64_" # Rm # "_RegOffset_LDR"),
@@ -5040,45 +5029,45 @@ multiclass regoff_pats<string Rm, dag address, dag Base, dag Offset,
                             Base, Offset, Extend,
                             !foreach(decls.pattern, address,
                                      !subst(SHIFT, imm_eq3, decls.pattern)),
-                            GPR64, i64>;
+                            i64>;
 
   defm : ro_neutral_pats<!cast<Instruction>("LSFP16_" # Rm # "_RegOffset_LDR"),
                          !cast<Instruction>("LSFP16_" # Rm # "_RegOffset_STR"),
                          Base, Offset, Extend,
                          !foreach(decls.pattern, address,
                                   !subst(SHIFT, imm_eq1, decls.pattern)),
-                         FPR16, f16>;
+                         f16>;
 
   defm : ro_neutral_pats<!cast<Instruction>("LSFP32_" # Rm # "_RegOffset_LDR"),
                          !cast<Instruction>("LSFP32_" # Rm # "_RegOffset_STR"),
                          Base, Offset, Extend,
                          !foreach(decls.pattern, address,
                                   !subst(SHIFT, imm_eq2, decls.pattern)),
-                         FPR32, f32>;
+                         f32>;
 
   defm : ro_neutral_pats<!cast<Instruction>("LSFP64_" # Rm # "_RegOffset_LDR"),
                          !cast<Instruction>("LSFP64_" # Rm # "_RegOffset_STR"),
                          Base, Offset, Extend,
                          !foreach(decls.pattern, address,
                                   !subst(SHIFT, imm_eq3, decls.pattern)),
-                         FPR64, f64>;
+                         f64>;
 
   defm : ro_neutral_pats<!cast<Instruction>("LSFP128_" # Rm # "_RegOffset_LDR"),
                          !cast<Instruction>("LSFP128_" # Rm # "_RegOffset_STR"),
                          Base, Offset, Extend,
                          !foreach(decls.pattern, address,
                                   !subst(SHIFT, imm_eq4, decls.pattern)),
-                         FPR128, f128>;
+                         f128>;
 
   defm : ro_signed_pats<"B", Rm, Base, Offset, Extend,
-                          !foreach(decls.pattern, address,
-                                   !subst(SHIFT, imm_eq0, decls.pattern)),
-                          i8>;
+                        !foreach(decls.pattern, address,
+                                 !subst(SHIFT, imm_eq0, decls.pattern)),
+                        i8>;
 
   defm : ro_signed_pats<"H", Rm, Base, Offset, Extend,
-                          !foreach(decls.pattern, address,
-                                   !subst(SHIFT, imm_eq1, decls.pattern)),
-                          i16>;
+                        !foreach(decls.pattern, address,
+                                 !subst(SHIFT, imm_eq1, decls.pattern)),
+                        i16>;
 
   def : Pat<(sextloadi32 !foreach(decls.pattern, address,
                                   !subst(SHIFT, imm_eq2, decls.pattern))),
@@ -5091,20 +5080,20 @@ multiclass regoff_pats<string Rm, dag address, dag Base, dag Offset,
 // using register-offset instructions. Essentially a base plus a possibly
 // extended, possibly shifted (by access size) offset.
 
-defm : regoff_pats<"Wm", (add GPR64xsp:$Rn, (sext GPR32:$Rm)),
-                   (i64 GPR64xsp:$Rn), (i32 GPR32:$Rm), (i64 6)>;
+defm : regoff_pats<"Wm", (add i64:$Rn, (sext i32:$Rm)),
+                   (i64 i64:$Rn), (i32 i32:$Rm), (i64 6)>;
 
-defm : regoff_pats<"Wm", (add GPR64xsp:$Rn, (shl (sext GPR32:$Rm), SHIFT)),
-                   (i64 GPR64xsp:$Rn), (i32 GPR32:$Rm), (i64 7)>;
+defm : regoff_pats<"Wm", (add i64:$Rn, (shl (sext i32:$Rm), SHIFT)),
+                   (i64 i64:$Rn), (i32 i32:$Rm), (i64 7)>;
 
-defm : regoff_pats<"Wm", (add GPR64xsp:$Rn, (zext GPR32:$Rm)),
-                   (i64 GPR64xsp:$Rn), (i32 GPR32:$Rm), (i64 2)>;
+defm : regoff_pats<"Wm", (add i64:$Rn, (zext i32:$Rm)),
+                   (i64 i64:$Rn), (i32 i32:$Rm), (i64 2)>;
 
-defm : regoff_pats<"Wm", (add GPR64xsp:$Rn, (shl (zext GPR32:$Rm), SHIFT)),
-                   (i64 GPR64xsp:$Rn), (i32 GPR32:$Rm), (i64 3)>;
+defm : regoff_pats<"Wm", (add i64:$Rn, (shl (zext i32:$Rm), SHIFT)),
+                   (i64 i64:$Rn), (i32 i32:$Rm), (i64 3)>;
 
-defm : regoff_pats<"Xm", (add GPR64xsp:$Rn, GPR64:$Rm),
-                   (i64 GPR64xsp:$Rn), (i64 GPR64:$Rm), (i64 2)>;
+defm : regoff_pats<"Xm", (add i64:$Rn, i64:$Rm),
+                   (i64 i64:$Rn), (i64 i64:$Rm), (i64 2)>;
 
-defm : regoff_pats<"Xm", (add GPR64xsp:$Rn, (shl GPR64:$Rm, SHIFT)),
-                   (i64 GPR64xsp:$Rn), (i64 GPR64:$Rm), (i64 3)>;
+defm : regoff_pats<"Xm", (add i64:$Rn, (shl i64:$Rm, SHIFT)),
+                   (i64 i64:$Rn), (i64 i64:$Rm), (i64 3)>;
