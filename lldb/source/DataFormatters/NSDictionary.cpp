@@ -25,6 +25,58 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::formatters;
 
+static ClangASTType
+GetLLDBNSPairType (TargetSP target_sp)
+{
+    ClangASTType clang_type = ClangASTType();
+
+    ClangASTContext *target_ast_context = target_sp->GetScratchClangASTContext();
+
+    if (!target_ast_context)
+        return clang_type;
+    
+    const char* type_name = "__lldb_autogen_nspair";
+    
+    clang::IdentifierInfo &myIdent = target_ast_context->getASTContext()->Idents.get(type_name);
+    clang::DeclarationName myName = target_ast_context->getASTContext()->DeclarationNames.getIdentifier(&myIdent);
+
+    clang::DeclContext::lookup_const_result result = target_ast_context->getASTContext()->getTranslationUnitDecl()->lookup(myName);
+
+    clang_type_t opaque_type = NULL;
+    
+    for (clang::NamedDecl *named_decl : result)
+    {
+        if (const clang::CXXRecordDecl *record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(named_decl))
+        {
+            opaque_type = clang::QualType(record_decl->getTypeForDecl(), 0).getAsOpaquePtr();
+            break;
+        }
+        else
+        {
+            // somebody else (the user?) has defined a type with the magic name already - fail!!!
+            return clang_type;
+        }
+    }
+
+    if (!opaque_type)
+    {
+        opaque_type = target_ast_context->CreateRecordType(NULL, lldb::eAccessPublic, type_name, clang::TTK_Struct, lldb::eLanguageTypeC);
+        
+        if (!opaque_type)
+            return clang_type;
+        
+        target_ast_context->StartTagDeclarationDefinition(opaque_type);
+        
+        target_ast_context->AddFieldToRecordType(opaque_type, "key", target_ast_context->GetBuiltInType_objc_id(), lldb::eAccessPublic, 0);
+        target_ast_context->AddFieldToRecordType(opaque_type, "value", target_ast_context->GetBuiltInType_objc_id(), lldb::eAccessPublic, 0);
+        
+        target_ast_context->CompleteTagDeclarationDefinition(opaque_type);
+    }
+    
+    clang_type.SetClangType(target_ast_context->getASTContext(), opaque_type);
+    return clang_type;
+}
+
 template<bool name_entries>
 bool
 lldb_private::formatters::NSDictionarySummaryProvider (ValueObject& valobj, Stream& stream)
@@ -196,8 +248,10 @@ lldb_private::formatters::NSDictionaryISyntheticFrontEnd::NSDictionaryISynthetic
 SyntheticChildrenFrontEnd(*valobj_sp.get()),
 m_exe_ctx_ref(),
 m_ptr_size(8),
+m_order(lldb::eByteOrderInvalid),
 m_data_32(NULL),
-m_data_64(NULL)
+m_data_64(NULL),
+m_pair_type()
 {
     if (valobj_sp)
         Update();
@@ -256,6 +310,7 @@ lldb_private::formatters::NSDictionaryISyntheticFrontEnd::Update()
     if (!process_sp)
         return false;
     m_ptr_size = process_sp->GetAddressByteSize();
+    m_order = process_sp->GetByteOrder();
     uint64_t data_location = valobj_sp->GetAddressOf() + m_ptr_size;
     if (m_ptr_size == 4)
     {
@@ -328,12 +383,35 @@ lldb_private::formatters::NSDictionaryISyntheticFrontEnd::GetChildAtIndex (size_
     DictionaryItemDescriptor &dict_item = m_children[idx];
     if (!dict_item.valobj_sp)
     {
-        // make the new ValueObject
-        StreamString expr;
-        expr.Printf("struct __lldb_autogen_nspair { id key; id value; } _lldb_valgen_item; _lldb_valgen_item.key = (id)%" PRIu64 " ; _lldb_valgen_item.value = (id)%" PRIu64 "; _lldb_valgen_item;",dict_item.key_ptr,dict_item.val_ptr);
+        if (!m_pair_type.IsValid())
+        {
+            TargetSP target_sp(m_backend.GetTargetSP());
+            if (!target_sp)
+                return ValueObjectSP();
+            m_pair_type = GetLLDBNSPairType(target_sp);
+        }
+        if (!m_pair_type.IsValid())
+            return ValueObjectSP();
+        
+        DataBufferSP buffer_sp(new DataBufferHeap(2*m_ptr_size,0));
+        
+        if (m_ptr_size == 8)
+        {
+            uint64_t *data_ptr = (uint64_t *)buffer_sp->GetBytes();
+            *data_ptr = dict_item.key_ptr;
+            *(data_ptr+1) = dict_item.val_ptr;
+        }
+        else
+        {
+            uint32_t *data_ptr = (uint32_t *)buffer_sp->GetBytes();
+            *data_ptr = dict_item.key_ptr;
+            *(data_ptr+1) = dict_item.val_ptr;
+        }
+        
         StreamString idx_name;
         idx_name.Printf("[%zu]",idx);
-        dict_item.valobj_sp = ValueObject::CreateValueObjectFromExpression(idx_name.GetData(), expr.GetData(), m_exe_ctx_ref);
+        DataExtractor data(buffer_sp, m_order, m_ptr_size);
+        dict_item.valobj_sp = ValueObject::CreateValueObjectFromData(idx_name.GetData(), data, m_exe_ctx_ref, m_pair_type);
     }
     return dict_item.valobj_sp;
 }
@@ -342,8 +420,10 @@ lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::NSDictionaryMSynthetic
 SyntheticChildrenFrontEnd(*valobj_sp.get()),
 m_exe_ctx_ref(),
 m_ptr_size(8),
+m_order(lldb::eByteOrderInvalid),
 m_data_32(NULL),
-m_data_64(NULL)
+m_data_64(NULL),
+m_pair_type()
 {
     if (valobj_sp)
         Update ();
@@ -402,6 +482,7 @@ lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::Update()
     if (!process_sp)
         return false;
     m_ptr_size = process_sp->GetAddressByteSize();
+    m_order = process_sp->GetByteOrder();
     uint64_t data_location = valobj_sp->GetAddressOf() + m_ptr_size;
     if (m_ptr_size == 4)
     {
@@ -476,12 +557,35 @@ lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::GetChildAtIndex (size_
     DictionaryItemDescriptor &dict_item = m_children[idx];
     if (!dict_item.valobj_sp)
     {
-        // make the new ValueObject
-        StreamString expr;
-        expr.Printf("struct __lldb_autogen_nspair { id key; id value; } _lldb_valgen_item; _lldb_valgen_item.key = (id)%" PRIu64 " ; _lldb_valgen_item.value = (id)%" PRIu64 "; _lldb_valgen_item;",dict_item.key_ptr,dict_item.val_ptr);
+        if (!m_pair_type.IsValid())
+        {
+            TargetSP target_sp(m_backend.GetTargetSP());
+            if (!target_sp)
+                return ValueObjectSP();
+            m_pair_type = GetLLDBNSPairType(target_sp);
+        }
+        if (!m_pair_type.IsValid())
+            return ValueObjectSP();
+        
+        DataBufferSP buffer_sp(new DataBufferHeap(2*m_ptr_size,0));
+        
+        if (m_ptr_size == 8)
+        {
+            uint64_t *data_ptr = (uint64_t *)buffer_sp->GetBytes();
+            *data_ptr = dict_item.key_ptr;
+            *(data_ptr+1) = dict_item.val_ptr;
+        }
+        else
+        {
+            uint32_t *data_ptr = (uint32_t *)buffer_sp->GetBytes();
+            *data_ptr = dict_item.key_ptr;
+            *(data_ptr+1) = dict_item.val_ptr;
+        }
+        
         StreamString idx_name;
         idx_name.Printf("[%zu]",idx);
-        dict_item.valobj_sp = ValueObject::CreateValueObjectFromExpression(idx_name.GetData(), expr.GetData(), m_exe_ctx_ref);
+        DataExtractor data(buffer_sp, m_order, m_ptr_size);
+        dict_item.valobj_sp = ValueObject::CreateValueObjectFromData(idx_name.GetData(), data, m_exe_ctx_ref, m_pair_type);
     }
     return dict_item.valobj_sp;
 }

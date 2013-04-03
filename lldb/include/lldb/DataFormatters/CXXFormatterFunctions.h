@@ -322,9 +322,11 @@ namespace lldb_private {
         private:
             ExecutionContextRef m_exe_ctx_ref;
             uint8_t m_ptr_size;
+            lldb::ByteOrder m_order;
             DataDescriptor_32 *m_data_32;
             DataDescriptor_64 *m_data_64;
             lldb::addr_t m_data_ptr;
+            ClangASTType m_pair_type;
             std::vector<DictionaryItemDescriptor> m_children;
         };
         
@@ -378,8 +380,10 @@ namespace lldb_private {
         private:
             ExecutionContextRef m_exe_ctx_ref;
             uint8_t m_ptr_size;
+            lldb::ByteOrder m_order;
             DataDescriptor_32 *m_data_32;
             DataDescriptor_64 *m_data_64;
+            ClangASTType m_pair_type;
             std::vector<DictionaryItemDescriptor> m_children;
         };
         
