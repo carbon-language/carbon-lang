@@ -903,6 +903,61 @@ namespace ValueDecl {
   }
 }
 
+namespace DependentDefault {
+  template <typename> struct Trait {
+    enum { V = 40 };
+    typedef int Ty;
+    static int I;
+  };
+  int other;
+
+  template <typename T, int = Trait<T>::V > struct A {};
+  template <typename T, typename = Trait<T>::Ty > struct B {};
+  template <typename T, int& = Trait<T>::I > struct C {};
+
+  void test() {
+
+    A<int> a1;
+    A<char> a2;
+    A<int, 10> a3;
+    a1 = a2;
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'A<char, [...]>' to 'A<int, [...]>'
+    a3 = a1;
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'A<[...], (default) 40>' to 'A<[...], 10>'
+    a2 = a3;
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'A<int, 10>' to 'A<char, 40>'
+
+    B<int> b1;
+    B<char> b2;
+    B<int, char> b3;
+    b1 = b2;
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'B<char, (default) Trait<T>::Ty>' to 'B<int, int>'
+    b3 = b1;
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'B<[...], (default) Trait<T>::Ty>' to 'B<[...], char>'
+    b2 = b3;
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'B<int, char>' to 'B<char, int>'
+
+    C<int> c1;
+    C<char> c2;
+    C<int, other> c3;
+    c1 = c2;
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'C<char, (default) I>' to 'C<int, I>'
+    c3 = c1;
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'C<[...], (default) I>' to 'C<[...], other>'
+    c2 = c3;
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'C<int, other>' to 'C<char, I>'
+  }
+}
+
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-ELIDE-TREE: {{[0-9]*}} errors generated.
