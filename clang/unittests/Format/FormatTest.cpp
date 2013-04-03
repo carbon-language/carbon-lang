@@ -592,6 +592,14 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
   verifyGoogleFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "    aaaaaaaaaaaaaaaaaaaaaa);  // 81 cols with this comment");
+  EXPECT_EQ("D(a, {\n"
+            "  // test\n"
+            "  int a;\n"
+            "});",
+            format("D(a, {\n"
+                   "// test\n"
+                   "int a;\n"
+                   "});"));
 }
 
 TEST_F(FormatTest, CanFormatCommentsLocally) {

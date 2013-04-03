@@ -100,7 +100,6 @@ public:
     Parser.Line.reset(new UnwrappedLine());
     Parser.Line->Level = PreBlockLine->Level;
     Parser.Line->InPPDirective = PreBlockLine->InPPDirective;
-    Parser.CommentsBeforeNextToken.swap(CommentsBeforeNextToken);
   }
 
   ~ScopedLineState() {
@@ -112,7 +111,6 @@ public:
     Parser.MustBreakBeforeNextToken = true;
     if (SwitchToPreprocessorLines)
       Parser.CurrentLines = &Parser.Lines;
-    Parser.CommentsBeforeNextToken.swap(CommentsBeforeNextToken);
   }
 
 private:
@@ -120,7 +118,6 @@ private:
   const bool SwitchToPreprocessorLines;
 
   UnwrappedLine *PreBlockLine;
-  SmallVector<FormatToken, 1> CommentsBeforeNextToken;
 };
 
 UnwrappedLineParser::UnwrappedLineParser(
@@ -830,6 +827,10 @@ void UnwrappedLineParser::readToken() {
       bool SwitchToPreprocessorLines =
           !Line->Tokens.empty() && CurrentLines == &Lines;
       ScopedLineState BlockState(*this, SwitchToPreprocessorLines);
+      // Comments stored before the preprocessor directive need to be output
+      // before the preprocessor directive, at the same level as the
+      // preprocessor directive, as we consider them to apply to the directive.
+      flushComments(FormatTok.NewlinesBefore > 0);
       parsePPDirective();
     }
     if (!FormatTok.Tok.is(tok::comment))
