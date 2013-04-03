@@ -138,7 +138,9 @@ void *LLVMGetPointerToGlobal(LLVMExecutionEngineRef EE, LLVMValueRef Global);
 
 #ifdef __cplusplus
 }
+#endif
 
+#if defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS)
 namespace llvm {
   struct GenericValue;
   class ExecutionEngine;
@@ -157,7 +159,6 @@ namespace llvm {
   
   #undef DEFINE_SIMPLE_CONVERSION_FUNCTIONS
 }
-  
-#endif /* defined(__cplusplus) */
+#endif /* defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS) */
 
 #endif

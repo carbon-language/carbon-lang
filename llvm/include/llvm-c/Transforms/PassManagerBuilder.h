@@ -18,8 +18,11 @@
 
 typedef struct LLVMOpaquePassManagerBuilder *LLVMPassManagerBuilderRef;
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS)
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -86,7 +89,9 @@ void LLVMPassManagerBuilderPopulateLTOPassManager(LLVMPassManagerBuilderRef PMB,
 
 #ifdef __cplusplus
 }
+#endif
 
+#if defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS)
 namespace llvm {
   inline PassManagerBuilder *unwrap(LLVMPassManagerBuilderRef P) {
     return reinterpret_cast<PassManagerBuilder*>(P);
@@ -96,6 +101,6 @@ namespace llvm {
     return reinterpret_cast<LLVMPassManagerBuilderRef>(P);
   }
 }
-#endif
+#endif /* defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS) */
 
 #endif

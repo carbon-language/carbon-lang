@@ -22,9 +22,11 @@
 #include "llvm-c/Core.h"
 #include "llvm/Config/llvm-config.h"
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS)
 #include "llvm/Object/ObjectFile.h"
+#endif /* defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS) */
 
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -99,7 +101,9 @@ const char *LLVMGetRelocationValueString(LLVMRelocationIteratorRef RI);
 
 #ifdef __cplusplus
 }
+#endif
 
+#if defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS)
 namespace llvm {
   namespace object {
     inline ObjectFile *unwrap(LLVMObjectFileRef OF) {
@@ -142,8 +146,8 @@ namespace llvm {
 
   }
 }
+#endif /* defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS) */
 
-#endif /* defined(__cplusplus) */
 
 #endif
 

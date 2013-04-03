@@ -235,7 +235,9 @@ void LLVMDisposeTargetData(LLVMTargetDataRef);
 
 #ifdef __cplusplus
 }
+#endif
 
+#if defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS)
 namespace llvm {
   class DataLayout;
   class TargetLibraryInfo;
@@ -257,7 +259,6 @@ namespace llvm {
     return reinterpret_cast<LLVMTargetLibraryInfoRef>(X);
   }
 }
-
-#endif /* defined(__cplusplus) */
+#endif /* defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS) */
 
 #endif
