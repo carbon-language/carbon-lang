@@ -116,6 +116,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::FTRUNC, MVT::ppcf128, Expand);
   setOperationAction(ISD::FRINT,  MVT::ppcf128, Expand);
   setOperationAction(ISD::FNEARBYINT, MVT::ppcf128, Expand);
+  setOperationAction(ISD::FREM, MVT::ppcf128, Expand);
 
   // PowerPC has no SREM/UREM instructions
   setOperationAction(ISD::SREM, MVT::i32, Expand);

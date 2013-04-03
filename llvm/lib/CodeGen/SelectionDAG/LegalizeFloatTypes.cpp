@@ -824,6 +824,7 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
   case ISD::LOAD:       ExpandFloatRes_LOAD(N, Lo, Hi); break;
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP: ExpandFloatRes_XINT_TO_FP(N, Lo, Hi); break;
+  case ISD::FREM:       ExpandFloatRes_FREM(N, Lo, Hi); break;
   }
 
   // If Lo/Hi is null, the sub-method took care of registering results etc.
@@ -1047,6 +1048,16 @@ void DAGTypeLegalizer::ExpandFloatRes_FPOWI(SDNode *N,
                                          RTLIB::POWI_F32, RTLIB::POWI_F64,
                                          RTLIB::POWI_F80, RTLIB::POWI_F128,
                                          RTLIB::POWI_PPCF128),
+                            N, false);
+  GetPairElements(Call, Lo, Hi);
+}
+
+void DAGTypeLegalizer::ExpandFloatRes_FREM(SDNode *N,
+                                           SDValue &Lo, SDValue &Hi) {
+  SDValue Call = LibCallify(GetFPLibCall(N->getValueType(0),
+                                         RTLIB::REM_F32, RTLIB::REM_F64,
+                                         RTLIB::REM_F80, RTLIB::REM_F128,
+                                         RTLIB::REM_PPCF128),
                             N, false);
   GetPairElements(Call, Lo, Hi);
 }
