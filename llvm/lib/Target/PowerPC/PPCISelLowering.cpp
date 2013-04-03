@@ -6678,15 +6678,16 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 // Target Optimization Hooks
 //===----------------------------------------------------------------------===//
 
-SDValue PPCTargetLowering::DAGCombineFastRecip(SDNode *N,
-                                             DAGCombinerInfo &DCI,
-                                             bool UseOperand) const {
+SDValue PPCTargetLowering::DAGCombineFastRecip(SDValue Op,
+                                               DAGCombinerInfo &DCI) const {
   if (DCI.isAfterLegalizeVectorOps())
     return SDValue();
 
-  if ((N->getValueType(0) == MVT::f32 && PPCSubTarget.hasFRES()) ||
-      (N->getValueType(0) == MVT::f64 && PPCSubTarget.hasFRE())  ||
-      (N->getValueType(0) == MVT::v4f32 && PPCSubTarget.hasAltivec())) {
+  EVT VT = Op.getValueType();
+
+  if ((VT == MVT::f32 && PPCSubTarget.hasFRES()) ||
+      (VT == MVT::f64 && PPCSubTarget.hasFRE())  ||
+      (VT == MVT::v4f32 && PPCSubTarget.hasAltivec())) {
 
     // Newton iteration for a function: F(X) is X_{i+1} = X_i - F(X_i)/F'(X_i)
     // For the reciprocal, we need to find the zero of the function:
@@ -6700,46 +6701,36 @@ SDValue PPCTargetLowering::DAGCombineFastRecip(SDNode *N,
     // accuracy is 2^-5. When hasRecipPrec(), this is 2^-14. IEEE float has
     // 23 digits and double has 52 digits.
     int Iterations = PPCSubTarget.hasRecipPrec() ? 1 : 3;
-    if (N->getValueType(0).getScalarType() == MVT::f64)
+    if (VT.getScalarType() == MVT::f64)
       ++Iterations;
 
     SelectionDAG &DAG = DCI.DAG;
-    DebugLoc dl = N->getDebugLoc();
+    DebugLoc dl = Op.getDebugLoc();
 
     SDValue FPOne =
-      DAG.getConstantFP(1.0, N->getValueType(0).getScalarType());
-    if (N->getValueType(0).isVector()) {
-      assert(N->getValueType(0).getVectorNumElements() == 4 &&
+      DAG.getConstantFP(1.0, VT.getScalarType());
+    if (VT.isVector()) {
+      assert(VT.getVectorNumElements() == 4 &&
              "Unknown vector type");
-      FPOne = DAG.getNode(ISD::BUILD_VECTOR, dl, N->getValueType(0),
+      FPOne = DAG.getNode(ISD::BUILD_VECTOR, dl, VT,
                           FPOne, FPOne, FPOne, FPOne);
     }
 
-    SDValue Est = DAG.getNode(PPCISD::FRE, dl,
-                              N->getValueType(0),
-                              UseOperand ? N->getOperand(1) :
-                                           SDValue(N, 0));
+    SDValue Est = DAG.getNode(PPCISD::FRE, dl, VT, Op);
     DCI.AddToWorklist(Est.getNode());
 
     // Newton iterations: Est = Est + Est (1 - Arg * Est)
     for (int i = 0; i < Iterations; ++i) {
-      SDValue NewEst = DAG.getNode(ISD::FMUL, dl,
-                                   N->getValueType(0),
-                                   UseOperand ? N->getOperand(1) :
-                                                SDValue(N, 0),
-                                   Est);
+      SDValue NewEst = DAG.getNode(ISD::FMUL, dl, VT, Op, Est);
       DCI.AddToWorklist(NewEst.getNode());
 
-      NewEst = DAG.getNode(ISD::FSUB, dl,
-                           N->getValueType(0), FPOne, NewEst);
+      NewEst = DAG.getNode(ISD::FSUB, dl, VT, FPOne, NewEst);
       DCI.AddToWorklist(NewEst.getNode());
 
-      NewEst = DAG.getNode(ISD::FMUL, dl,
-                           N->getValueType(0), Est, NewEst);
+      NewEst = DAG.getNode(ISD::FMUL, dl, VT, Est, NewEst);
       DCI.AddToWorklist(NewEst.getNode());
 
-      Est = DAG.getNode(ISD::FADD, dl,
-                        N->getValueType(0), Est, NewEst);
+      Est = DAG.getNode(ISD::FADD, dl, VT, Est, NewEst);
       DCI.AddToWorklist(Est.getNode());
     }
 
@@ -6749,14 +6740,16 @@ SDValue PPCTargetLowering::DAGCombineFastRecip(SDNode *N,
   return SDValue();
 }
 
-SDValue PPCTargetLowering::DAGCombineFastRecipFSQRT(SDNode *N,
+SDValue PPCTargetLowering::DAGCombineFastRecipFSQRT(SDValue Op,
                                              DAGCombinerInfo &DCI) const {
   if (DCI.isAfterLegalizeVectorOps())
     return SDValue();
 
-  if ((N->getValueType(0) == MVT::f32 && PPCSubTarget.hasFRSQRTES()) ||
-      (N->getValueType(0) == MVT::f64 && PPCSubTarget.hasFRSQRTE())  ||
-      (N->getValueType(0) == MVT::v4f32 && PPCSubTarget.hasAltivec())) {
+  EVT VT = Op.getValueType();
+
+  if ((VT == MVT::f32 && PPCSubTarget.hasFRSQRTES()) ||
+      (VT == MVT::f64 && PPCSubTarget.hasFRSQRTE())  ||
+      (VT == MVT::v4f32 && PPCSubTarget.hasAltivec())) {
 
     // Newton iteration for a function: F(X) is X_{i+1} = X_i - F(X_i)/F'(X_i)
     // For the reciprocal sqrt, we need to find the zero of the function:
@@ -6770,52 +6763,45 @@ SDValue PPCTargetLowering::DAGCombineFastRecipFSQRT(SDNode *N,
     // accuracy is 2^-5. When hasRecipPrec(), this is 2^-14. IEEE float has
     // 23 digits and double has 52 digits.
     int Iterations = PPCSubTarget.hasRecipPrec() ? 1 : 3;
-    if (N->getValueType(0).getScalarType() == MVT::f64)
+    if (VT.getScalarType() == MVT::f64)
       ++Iterations;
 
     SelectionDAG &DAG = DCI.DAG;
-    DebugLoc dl = N->getDebugLoc();
+    DebugLoc dl = Op.getDebugLoc();
 
-    SDValue FPThreeHalfs =
-      DAG.getConstantFP(1.5, N->getValueType(0).getScalarType());
-    if (N->getValueType(0).isVector()) {
-      assert(N->getValueType(0).getVectorNumElements() == 4 &&
+    SDValue FPThreeHalves =
+      DAG.getConstantFP(1.5, VT.getScalarType());
+    if (VT.isVector()) {
+      assert(VT.getVectorNumElements() == 4 &&
              "Unknown vector type");
-      FPThreeHalfs = DAG.getNode(ISD::BUILD_VECTOR, dl, N->getValueType(0),
-                                 FPThreeHalfs, FPThreeHalfs,
-                                 FPThreeHalfs, FPThreeHalfs);
+      FPThreeHalves = DAG.getNode(ISD::BUILD_VECTOR, dl, VT,
+                                  FPThreeHalves, FPThreeHalves,
+                                  FPThreeHalves, FPThreeHalves);
     }
 
-    SDValue Est = DAG.getNode(PPCISD::FRSQRTE, dl,
-                              N->getValueType(0), N->getOperand(0));
+    SDValue Est = DAG.getNode(PPCISD::FRSQRTE, dl, VT, Op);
     DCI.AddToWorklist(Est.getNode());
 
     // We now need 0.5*Arg which we can write as (1.5*Arg - Arg) so that
     // this entire sequence requires only one FP constant.
-    SDValue HalfArg = DAG.getNode(ISD::FMUL, dl, N->getValueType(0),
-                                  FPThreeHalfs, N->getOperand(0));
+    SDValue HalfArg = DAG.getNode(ISD::FMUL, dl, VT, FPThreeHalves, Op);
     DCI.AddToWorklist(HalfArg.getNode());
 
-    HalfArg = DAG.getNode(ISD::FSUB, dl, N->getValueType(0),
-                          HalfArg, N->getOperand(0));
+    HalfArg = DAG.getNode(ISD::FSUB, dl, VT, HalfArg, Op);
     DCI.AddToWorklist(HalfArg.getNode());
 
     // Newton iterations: Est = Est * (1.5 - HalfArg * Est * Est)
     for (int i = 0; i < Iterations; ++i) {
-      SDValue NewEst = DAG.getNode(ISD::FMUL, dl,
-                                   N->getValueType(0), Est, Est);
+      SDValue NewEst = DAG.getNode(ISD::FMUL, dl, VT, Est, Est);
       DCI.AddToWorklist(NewEst.getNode());
 
-      NewEst = DAG.getNode(ISD::FMUL, dl,
-                           N->getValueType(0), HalfArg, NewEst);
+      NewEst = DAG.getNode(ISD::FMUL, dl, VT, HalfArg, NewEst);
       DCI.AddToWorklist(NewEst.getNode());
 
-      NewEst = DAG.getNode(ISD::FSUB, dl,
-                           N->getValueType(0), FPThreeHalfs, NewEst);
+      NewEst = DAG.getNode(ISD::FSUB, dl, VT, FPThreeHalves, NewEst);
       DCI.AddToWorklist(NewEst.getNode());
 
-      Est = DAG.getNode(ISD::FMUL, dl,
-                        N->getValueType(0), Est, NewEst);
+      Est = DAG.getNode(ISD::FMUL, dl, VT, Est, NewEst);
       DCI.AddToWorklist(Est.getNode());
     }
 
@@ -6856,7 +6842,8 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
            "Reciprocal estimates require UnsafeFPMath");
 
     if (N->getOperand(1).getOpcode() == ISD::FSQRT) {
-      SDValue RV = DAGCombineFastRecipFSQRT(N->getOperand(1).getNode(), DCI);
+      SDValue RV =
+        DAGCombineFastRecipFSQRT(N->getOperand(1).getOperand(0), DCI);
       if (RV.getNode() != 0) {
         DCI.AddToWorklist(RV.getNode());
         return DAG.getNode(ISD::FMUL, dl, N->getValueType(0),
@@ -6864,7 +6851,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       }
     }
 
-    SDValue RV = DAGCombineFastRecip(N, DCI);
+    SDValue RV = DAGCombineFastRecip(N->getOperand(1), DCI);
     if (RV.getNode() != 0) {
       DCI.AddToWorklist(RV.getNode());
       return DAG.getNode(ISD::FMUL, dl, N->getValueType(0),
@@ -6879,10 +6866,10 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
 
     // Compute this as 1/(1/sqrt(X)), which is the reciprocal of the
     // reciprocal sqrt.
-    SDValue RV = DAGCombineFastRecipFSQRT(N, DCI);
+    SDValue RV = DAGCombineFastRecipFSQRT(N->getOperand(0), DCI);
     if (RV.getNode() != 0) {
       DCI.AddToWorklist(RV.getNode());
-      RV = DAGCombineFastRecip(RV.getNode(), DCI, false);
+      RV = DAGCombineFastRecip(RV, DCI);
       if (RV.getNode() != 0)
         return RV;
     }

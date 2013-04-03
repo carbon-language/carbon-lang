@@ -624,9 +624,8 @@ namespace llvm {
     SDValue lowerEH_SJLJ_SETJMP(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerEH_SJLJ_LONGJMP(SDValue Op, SelectionDAG &DAG) const;
 
-    SDValue DAGCombineFastRecip(SDNode *N, DAGCombinerInfo &DCI,
-                                bool UseOperand = true) const;
-    SDValue DAGCombineFastRecipFSQRT(SDNode *N, DAGCombinerInfo &DCI) const;
+    SDValue DAGCombineFastRecip(SDValue Op, DAGCombinerInfo &DCI) const;
+    SDValue DAGCombineFastRecipFSQRT(SDValue Op, DAGCombinerInfo &DCI) const;
   };
 }
 
