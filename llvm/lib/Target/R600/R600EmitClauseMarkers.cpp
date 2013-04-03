@@ -187,6 +187,8 @@ private:
         continue;
       if (!isALU(I))
         break;
+      if (AluInstCount > TII->getMaxAlusPerClause())
+        break;
       if (I->getOpcode() == AMDGPU::PRED_X) {
         if (TII->getFlagOp(I).getImm() & MO_FLAG_PUSH)
           PushBeforeModifier = true;
@@ -201,8 +203,6 @@ private:
           !SubstituteKCacheBank(I, KCacheBanks))
         break;
       AluInstCount += OccupiedDwords(I);
-      if (AluInstCount > TII->getMaxAlusPerClause())
-        break;
     }
     unsigned Opcode = PushBeforeModifier ?
         AMDGPU::CF_ALU_PUSH_BEFORE : AMDGPU::CF_ALU;
