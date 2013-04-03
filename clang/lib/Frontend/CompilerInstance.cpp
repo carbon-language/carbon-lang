@@ -936,7 +936,7 @@ static void checkConfigMacro(Preprocessor &PP, StringRef ConfigMacro,
         continue;
 
       // We only care about the predefines buffer.
-      if (!StringRef(Buffer->getBufferIdentifier()).equals("<built-in>"))
+      if (FID != PP.getPredefinesFileID())
         continue;
 
       // This macro was defined on the command line, then #undef'd later.
@@ -969,7 +969,7 @@ static void checkConfigMacro(Preprocessor &PP, StringRef ConfigMacro,
       continue;
 
     // We only care about the predefines buffer.
-    if (!StringRef(Buffer->getBufferIdentifier()).equals("<built-in>"))
+    if (FID != PP.getPredefinesFileID())
       continue;
 
     PredefinedDef = Def;
