@@ -37,8 +37,6 @@ using namespace llvm;
 static cl::opt<std::string>
   Input(cl::Positional, cl::desc("<input>"), cl::init("-"));
 
-namespace {
-
 template<class T>
 typename llvm::enable_if_c<std::numeric_limits<T>::is_integer, bool>::type
 getAs(const llvm::yaml::ScalarNode *SN, T &Result) {
@@ -407,8 +405,6 @@ void writeCOFF(COFFParser &CP, raw_ostream &OS) {
 
   // Output string table.
   OS.write(&CP.StringTable[0], CP.StringTable.size());
-}
-
 }
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(COFFYAML::Relocation)
