@@ -203,12 +203,6 @@ http://gcc.gnu.org/ml/gcc-patches/2006-02/msg00133.html
 
 ===-------------------------------------------------------------------------===
 
-Implement Newton-Rhapson method for improving estimate instructions to the
-correct accuracy, and implementing divide as multiply by reciprocal when it has
-more than one use.  Itanium would want this too.
-
-===-------------------------------------------------------------------------===
-
 Compile offsets from allocas:
 
 int *%test() {
@@ -532,20 +526,6 @@ void func(unsigned int *ret, float dx, float dy, float dz, float dw) {
   if(dz > dw)  code |= 32;
   *ret = code;
 }
-
-===-------------------------------------------------------------------------===
-
-Complete the signed i32 to FP conversion code using 64-bit registers
-transformation, good for PI.  See PPCISelLowering.cpp, this comment:
-
-     // FIXME: disable this lowered code.  This generates 64-bit register values,
-     // and we don't model the fact that the top part is clobbered by calls.  We
-     // need to flag these together so that the value isn't live across a call.
-     //setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
-
-Also, if the registers are spilled to the stack, we have to ensure that all
-64-bits of them are save/restored, otherwise we will miscompile the code.  It
-sounds like we need to get the 64-bit register classes going.
 
 ===-------------------------------------------------------------------------===
 
