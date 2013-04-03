@@ -4915,7 +4915,7 @@ static bool checkCondition(Sema &S, Expr *Cond) {
   // C99 6.5.15p2
   if (CondTy->isScalarType()) return false;
 
-  // OpenCL: Sec 6.3.i says the condition is allowed to be a vector or scalar.
+  // OpenCL v1.1 s6.3.i says the condition is allowed to be a vector or scalar.
   if (S.getLangOpts().OpenCL && CondTy->isVectorType())
     return false;
 
@@ -5176,9 +5176,9 @@ QualType Sema::CheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
   if (LHSTy->isVectorType() || RHSTy->isVectorType())
     return CheckVectorOperands(LHS, RHS, QuestionLoc, /*isCompAssign*/false);
 
-  // OpenCL: If the condition is a vector, and both operands are scalar,
+  // If the condition is a vector, and both operands are scalar,
   // attempt to implicity convert them to the vector type to act like the
-  // built in select.
+  // built in select. (OpenCL v1.1 s6.3.i)
   if (getLangOpts().OpenCL && CondTy->isVectorType())
     if (checkConditionalConvertScalarsToVectors(*this, LHS, RHS, CondTy))
       return QualType();
