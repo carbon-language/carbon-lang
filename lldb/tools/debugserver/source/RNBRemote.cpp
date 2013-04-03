@@ -4054,18 +4054,10 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
         }
     }
     
-    int cputype_mib[CTL_MAXNAME]={0,};
-    size_t cputype_mib_len = CTL_MAXNAME;
-    cpu_type_t cputype = -1;
-    if (::sysctlnametomib("sysctl.proc_cputype", cputype_mib, &cputype_mib_len) == 0)
+    cpu_type_t cputype = DNBProcessGetCPUType (pid);
+    if (cputype != 0)
     {
-        cputype_mib[cputype_mib_len] = pid;
-        cputype_mib_len++;
-        size_t len = sizeof(cputype);
-        if (::sysctl (cputype_mib, cputype_mib_len, &cputype, &len, 0, 0) == 0)
-        {
-            rep << "cputype:" << std::hex << cputype << ";";
-        }
+        rep << "cputype:" << std::hex << cputype << ";";
     }
 
     uint32_t cpusubtype;
