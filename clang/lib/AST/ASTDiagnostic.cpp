@@ -944,7 +944,8 @@ class TemplateDiff {
           if (!HasToValueDecl && ToExpr)
             ToValueDecl = GetValueDecl(ToIter, ToExpr);
           Tree.SetNode(FromValueDecl, ToValueDecl);
-          Tree.SetSame(FromValueDecl->getCanonicalDecl() ==
+          Tree.SetSame(FromValueDecl && ToValueDecl &&
+                       FromValueDecl->getCanonicalDecl() ==
                        ToValueDecl->getCanonicalDecl());
           Tree.SetDefault(FromIter.isEnd() && FromValueDecl,
                           ToIter.isEnd() && ToValueDecl);

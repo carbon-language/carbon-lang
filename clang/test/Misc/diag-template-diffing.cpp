@@ -958,6 +958,45 @@ namespace DependentDefault {
   }
 }
 
+namespace VariadicDefault {
+  int i1, i2, i3;
+  template <int = 5, int...> struct A {};
+  template <int& = i1, int& ...> struct B {};
+  template <typename = void, typename...> struct C {};
+
+  void test() {
+    A<> a1;
+    A<5, 6, 7> a2;
+    A<1, 2> a3;
+    a2 = a1;
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'A<[...], (no argument), (no argument)>' to 'A<[...], 6, 7>'
+    a3 = a1;
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'A<(default) 5, (no argument)>' to 'A<1, 2>'
+
+    B<> b1;
+    B<i1, i2, i3> b2;
+    B<i2, i3> b3;
+    b2 = b1;
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'B<[...], (no argument), (no argument)>' to 'B<[...], i2, i3>'
+    b3 = b1;
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'B<(default) i1, (no argument)>' to 'B<i2, i3>'
+
+    C<> c1;
+    C<void, void> c2;
+    C<char, char> c3;
+    c2 = c1;
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'C<[...], (no argument)>' to 'C<[...], void>'
+    c3 = c1;
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'C<(default) void, (no argument)>' to 'C<char, char>'
+  }
+}
+
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-ELIDE-TREE: {{[0-9]*}} errors generated.
