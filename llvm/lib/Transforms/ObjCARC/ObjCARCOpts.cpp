@@ -907,10 +907,39 @@ static void GenerateARCAnnotation(unsigned InstMDId,
                         ARCAnnotationProvenanceSourceMDKind, (inst),    \
                         const_cast<Value*>(ptr), (old), (new))
 
+#define ANNOTATE_BB(_states, _bb, _name, _type, _direction)                   \
+  do {                                                                        \
+  if (EnableARCAnnotations) {                                                 \
+    for(BBState::ptr_const_iterator I = (_states)._direction##_ptr_begin(),   \
+          E = (_states)._direction##_ptr_end(); I != E; ++I) {                \
+      Value *Ptr = const_cast<Value*>(I->first);                              \
+      Sequence Seq = I->second.GetSeq();                                      \
+      GenerateARCBB ## _type ## Annotation(_name, (_bb), Ptr, Seq);           \
+    }                                                                         \
+  }                                                                           \
+} while (0)
+
+#define ANNOTATE_BOTTOMUP_BBSTART(_states, _basicblock) \
+    ANNOTATE_BB(_states, _basicblock, "llvm.arc.annotation.bottomup.bbstart", \
+                Entrance, bottom_up)
+#define ANNOTATE_BOTTOMUP_BBEND(_states, _basicblock) \
+    ANNOTATE_BB(_states, _basicblock, "llvm.arc.annotation.bottomup.bbend", \
+                Terminator, bottom_up)
+#define ANNOTATE_TOPDOWN_BBSTART(_states, _basicblock) \
+    ANNOTATE_BB(_states, _basicblock, "llvm.arc.annotation.topdown.bbstart", \
+                Entrance, top_down)
+#define ANNOTATE_TOPDOWN_BBEND(_states, _basicblock) \
+    ANNOTATE_BB(_states, _basicblock, "llvm.arc.annotation.topdown.bbend", \
+                Terminator, top_down)
+
 #else // !ARC_ANNOTATION
 // If annotations are off, noop.
 #define ANNOTATE_BOTTOMUP(inst, ptr, old, new)
 #define ANNOTATE_TOPDOWN(inst, ptr, old, new)
+#define ANNOTATE_BOTTOMUP_BBSTART(states, basicblock)
+#define ANNOTATE_BOTTOMUP_BBEND(states, basicblock)
+#define ANNOTATE_TOPDOWN_BBSTART(states, basicblock)
+#define ANNOTATE_TOPDOWN_BBEND(states, basicblock)
 #endif // !ARC_ANNOTATION
 
 namespace {
@@ -1919,21 +1948,10 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
     }
   }
 
-#ifdef ARC_ANNOTATIONS
-  if (EnableARCAnnotations) {
-    // If ARC Annotations are enabled, output the current state of pointers at the
-    // bottom of the basic block.
-    for(BBState::ptr_const_iterator I = MyStates.bottom_up_ptr_begin(),
-          E = MyStates.bottom_up_ptr_end(); I != E; ++I) {
-      Value *Ptr = const_cast<Value*>(I->first);
-      Sequence Seq = I->second.GetSeq();
-      GenerateARCBBTerminatorAnnotation("llvm.arc.annotation.bottomup.bbend",
-                                        BB, Ptr, Seq);
-    }
-  }
-#endif
-
-
+  // If ARC Annotations are enabled, output the current state of pointers at the
+  // bottom of the basic block.  
+  ANNOTATE_BOTTOMUP_BBEND(MyStates, BB);
+  
   // Visit all the instructions, bottom-up.
   for (BasicBlock::iterator I = BB->end(), E = BB->begin(); I != E; --I) {
     Instruction *Inst = llvm::prior(I);
@@ -1957,20 +1975,10 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
       NestingDetected |= VisitInstructionBottomUp(II, BB, Retains, MyStates);
   }
 
-#ifdef ARC_ANNOTATIONS
-  if (EnableARCAnnotations) {
-    // If ARC Annotations are enabled, output the current state of pointers at the
-    // top of the basic block.
-    for(BBState::ptr_const_iterator I = MyStates.bottom_up_ptr_begin(),
-          E = MyStates.bottom_up_ptr_end(); I != E; ++I) {
-      Value *Ptr = const_cast<Value*>(I->first);
-      Sequence Seq = I->second.GetSeq();
-      GenerateARCBBEntranceAnnotation("llvm.arc.annotation.bottomup.bbstart",
-                                      BB, Ptr, Seq);
-    }
-  }
-#endif
-
+  // If ARC Annotations are enabled, output the current state of pointers at the
+  // top of the basic block.
+  ANNOTATE_BOTTOMUP_BBSTART(MyStates, BB);
+  
   return NestingDetected;
 }
 
@@ -2140,20 +2148,10 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
     }
   }
 
-#ifdef ARC_ANNOTATIONS
-  if (EnableARCAnnotations) {
-    // If ARC Annotations are enabled, output the current state of pointers at the
-    // top of the basic block.
-    for(BBState::ptr_const_iterator I = MyStates.top_down_ptr_begin(),
-          E = MyStates.top_down_ptr_end(); I != E; ++I) {
-      Value *Ptr = const_cast<Value*>(I->first);
-      Sequence Seq = I->second.GetSeq();
-      GenerateARCBBEntranceAnnotation("llvm.arc.annotation.topdown.bbstart",
-                                      BB, Ptr, Seq);
-    }
-  }
-#endif
-
+  // If ARC Annotations are enabled, output the current state of pointers at the
+  // top of the basic block.
+  ANNOTATE_TOPDOWN_BBSTART(MyStates, BB);
+  
   // Visit all the instructions, top-down.
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
     Instruction *Inst = I;
@@ -2162,21 +2160,11 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
 
     NestingDetected |= VisitInstructionTopDown(Inst, Releases, MyStates);
   }
-
-#ifdef ARC_ANNOTATIONS
-  if (EnableARCAnnotations) {
-    // If ARC Annotations are enabled, output the current state of pointers at the
-    // bottom of the basic block.
-    for(BBState::ptr_const_iterator I = MyStates.top_down_ptr_begin(),
-          E = MyStates.top_down_ptr_end(); I != E; ++I) {
-      Value *Ptr = const_cast<Value*>(I->first);
-      Sequence Seq = I->second.GetSeq();
-      GenerateARCBBTerminatorAnnotation("llvm.arc.annotation.topdown.bbend",
-                                        BB, Ptr, Seq);
-    }
-  }
-#endif
-
+  
+  // If ARC Annotations are enabled, output the current state of pointers at the
+  // bottom of the basic block.
+  ANNOTATE_TOPDOWN_BBEND(MyStates, BB);
+  
   CheckForCFGHazards(BB, BBStates, MyStates);
   return NestingDetected;
 }
