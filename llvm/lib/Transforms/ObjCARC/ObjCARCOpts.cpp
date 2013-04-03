@@ -1440,7 +1440,8 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
       break;
     }
 
-    // objc_autorelease(x) -> objc_release(x) if x is otherwise unused.
+    // objc_autorelease(x), objc_autoreleaseRV -> objc_release(x) if x is
+    // otherwise unused.
     if (IsAutorelease(Class) && Inst->use_empty()) {
       CallInst *Call = cast<CallInst>(Inst);
       const Value *Arg = Call->getArgOperand(0);
