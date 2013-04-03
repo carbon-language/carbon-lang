@@ -838,8 +838,8 @@ class TemplateDiff {
       if (TemplateTypeParmDecl *DefaultTTPD =
               dyn_cast<TemplateTypeParmDecl>(ParamND)) {
         QualType FromType, ToType;
-        GetType(FromIter, DefaultTTPD, FromType);
-        GetType(ToIter, DefaultTTPD, ToType);
+        FromType = GetType(FromIter, DefaultTTPD);
+        ToType = GetType(ToIter, DefaultTTPD);
         Tree.SetNode(FromType, ToType);
         Tree.SetDefault(FromIter.isEnd() && !FromType.isNull(),
                         ToIter.isEnd() && !ToType.isNull());
@@ -898,14 +898,14 @@ class TemplateDiff {
         else if (HasFromValueDecl)
           FromValueDecl = FromIter->getAsDecl();
         else
-          GetExpr(FromIter, DefaultNTTPD, FromExpr);
+          FromExpr = GetExpr(FromIter, DefaultNTTPD);
 
         if (HasToInt)
           ToInt = ToIter->getAsIntegral();
         else if (HasToValueDecl)
           ToValueDecl = ToIter->getAsDecl();
         else
-          GetExpr(ToIter, DefaultNTTPD, ToExpr);
+          ToExpr = GetExpr(ToIter, DefaultNTTPD);
 
         if (!HasFromInt && !HasToInt && !HasFromValueDecl && !HasToValueDecl) {
           Tree.SetNode(FromExpr, ToExpr);
@@ -956,8 +956,8 @@ class TemplateDiff {
       if (TemplateTemplateParmDecl *DefaultTTPD =
               dyn_cast<TemplateTemplateParmDecl>(ParamND)) {
         TemplateDecl *FromDecl, *ToDecl;
-        GetTemplateDecl(FromIter, DefaultTTPD, FromDecl);
-        GetTemplateDecl(ToIter, DefaultTTPD, ToDecl);
+        FromDecl = GetTemplateDecl(FromIter, DefaultTTPD);
+        ToDecl = GetTemplateDecl(ToIter, DefaultTTPD);
         Tree.SetNode(FromDecl, ToDecl);
         Tree.SetSame(
             FromDecl && ToDecl &&
@@ -1032,22 +1032,21 @@ class TemplateDiff {
 
   /// GetType - Retrieves the template type arguments, including default
   /// arguments.
-  void GetType(const TSTiterator &Iter, TemplateTypeParmDecl *DefaultTTPD,
-               QualType &ArgType) {
-    ArgType = QualType();
+  QualType GetType(const TSTiterator &Iter, TemplateTypeParmDecl *DefaultTTPD) {
     bool isVariadic = DefaultTTPD->isParameterPack();
 
     if (!Iter.isEnd())
-      ArgType = Iter->getAsType();
-    else if (!isVariadic)
-      ArgType = DefaultTTPD->getDefaultArgument();
+      return Iter->getAsType();
+    if (!isVariadic)
+      return DefaultTTPD->getDefaultArgument();
+
+    return QualType();
   }
 
   /// GetExpr - Retrieves the template expression argument, including default
   /// arguments.
-  void GetExpr(const TSTiterator &Iter, NonTypeTemplateParmDecl *DefaultNTTPD,
-               Expr *&ArgExpr) {
-    ArgExpr = 0;
+  Expr *GetExpr(const TSTiterator &Iter, NonTypeTemplateParmDecl *DefaultNTTPD) {
+    Expr *ArgExpr = 0;
     bool isVariadic = DefaultNTTPD->isParameterPack();
 
     if (!Iter.isEnd())
@@ -1059,6 +1058,8 @@ class TemplateDiff {
       while (SubstNonTypeTemplateParmExpr *SNTTPE =
                  dyn_cast<SubstNonTypeTemplateParmExpr>(ArgExpr))
         ArgExpr = SNTTPE->getReplacement();
+
+    return ArgExpr;
   }
 
   /// GetInt - Retrieves the template integer argument, including evaluating
@@ -1099,10 +1100,8 @@ class TemplateDiff {
 
   /// GetTemplateDecl - Retrieves the template template arguments, including
   /// default arguments.
-  void GetTemplateDecl(const TSTiterator &Iter,
-                       TemplateTemplateParmDecl *DefaultTTPD,
-                       TemplateDecl *&ArgDecl) {
-    ArgDecl = 0;
+  TemplateDecl *GetTemplateDecl(const TSTiterator &Iter,
+                                TemplateTemplateParmDecl *DefaultTTPD) {
     bool isVariadic = DefaultTTPD->isParameterPack();
 
     TemplateArgument TA = DefaultTTPD->getDefaultArgument().getArgument();
@@ -1111,9 +1110,11 @@ class TemplateDiff {
       DefaultTD = TA.getAsTemplate().getAsTemplateDecl();
 
     if (!Iter.isEnd())
-      ArgDecl = Iter->getAsTemplate().getAsTemplateDecl();
-    else if (!isVariadic)
-      ArgDecl = DefaultTD;
+      return Iter->getAsTemplate().getAsTemplateDecl();
+    if (!isVariadic)
+      return DefaultTD;
+
+    return 0;
   }
 
   /// IsSameConvertedInt - Returns true if both integers are equal when
