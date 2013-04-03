@@ -110,8 +110,9 @@ bool MacroInfo::isIdenticalTo(const MacroInfo &Other, Preprocessor &PP,
       // With syntactic equivalence the parameter names can be different as long
       // as they are used in the same place.
       int AArgNum = getArgumentNum(A.getIdentifierInfo());
-      int BArgNum = Other.getArgumentNum(B.getIdentifierInfo());
-      if (AArgNum == -1 || AArgNum != BArgNum)
+      if (AArgNum == -1)
+        return false;
+      if (AArgNum != Other.getArgumentNum(B.getIdentifierInfo()))
         return false;
       continue;
     }
