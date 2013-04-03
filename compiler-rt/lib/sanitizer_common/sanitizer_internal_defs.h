@@ -27,7 +27,7 @@
 # define SANITIZER_WEAK_ATTRIBUTE  __attribute__((weak))
 #endif
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !defined(SANITIZER_GO)
 # define SANITIZER_SUPPORTS_WEAK_HOOKS 1
 #else
 # define SANITIZER_SUPPORTS_WEAK_HOOKS 0
