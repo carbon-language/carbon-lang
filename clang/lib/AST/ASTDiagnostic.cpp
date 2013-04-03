@@ -911,8 +911,7 @@ class TemplateDiff {
           Tree.SetNode(FromExpr, ToExpr);
           Tree.SetDefault(FromIter.isEnd() && FromExpr,
                           ToIter.isEnd() && ToExpr);
-          if ((FromExpr && FromExpr->getType()->isIntegerType()) ||
-              (ToExpr && ToExpr->getType()->isIntegerType())) {
+          if (DefaultNTTPD->getType()->isIntegralOrEnumerationType()) {
             if (FromExpr)
               FromInt = GetInt(FromIter, FromExpr);
             if (ToExpr)

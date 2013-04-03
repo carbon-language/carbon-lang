@@ -985,6 +985,11 @@ namespace VariadicDefault {
     // CHECK-ELIDE-NOTREE: no viable overloaded '='
     // CHECK-ELIDE-NOTREE: no known conversion from 'B<(default) i1, (no argument)>' to 'B<i2, i3>'
 
+    B<i1, i2, i3> b4 = b1;
+    // CHECK-ELIDE-NOTREE: no viable conversion from 'B<[...], (no argument), (no argument)>' to 'B<[...], i2, i3>'
+    B<i2, i3> b5 = b1;
+    // CHECK-ELIDE-NOTREE: no viable conversion from 'B<(default) i1, (no argument)>' to 'B<i2, i3>'
+
     C<> c1;
     C<void, void> c2;
     C<char, char> c3;
