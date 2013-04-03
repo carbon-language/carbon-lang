@@ -2807,6 +2807,33 @@ HasSafePathToPredecessorCall(const Value *Arg, Instruction *Retain,
   return true;
 }
 
+/// Find a dependent retain that precedes the given autorelease for which there
+/// is nothing in between the two instructions that can affect the ref count of
+/// Arg.
+static CallInst *
+FindPredecessorRetainWithSafePath(const Value *Arg, BasicBlock *BB,
+                                  Instruction *Autorelease,
+                                  SmallPtrSet<Instruction *, 4> &DepInsts,
+                                  SmallPtrSet<const BasicBlock *, 4> &Visited,
+                                  ProvenanceAnalysis &PA) {
+  FindDependencies(CanChangeRetainCount, Arg,
+                   BB, Autorelease, DepInsts, Visited, PA);
+  if (DepInsts.size() != 1)
+    return 0;
+  
+  CallInst *Retain =
+    dyn_cast_or_null<CallInst>(*DepInsts.begin());
+  
+  // Check that we found a retain with the same argument.
+  if (!Retain ||
+      !IsRetain(GetBasicInstructionClass(Retain)) ||
+      GetObjCArg(Retain) != Arg) {
+    return 0;
+  }
+  
+  return Retain;
+}
+
 /// Look for this pattern:
 /// \code
 ///    %call = call i8* @something(...)
@@ -2849,26 +2876,13 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
       DependingInstructions.clear();
       Visited.clear();
 
-      // Check that there is nothing that can affect the reference
-      // count between the autorelease and the retain.
-      FindDependencies(CanChangeRetainCount, Arg,
-                       BB, Autorelease, DependingInstructions, Visited, PA);
-      if (DependingInstructions.size() != 1)
-        goto next_block;
-
-      {
-        CallInst *Retain =
-          dyn_cast_or_null<CallInst>(*DependingInstructions.begin());
-
-        // Check that we found a retain with the same argument.
-        if (!Retain ||
-            !IsRetain(GetBasicInstructionClass(Retain)) ||
-            GetObjCArg(Retain) != Arg)
-          goto next_block;
-
+      CallInst *Retain = 0;
+      if ((Retain = FindPredecessorRetainWithSafePath(Arg, BB, Autorelease,
+                                                      DependingInstructions,
+                                                      Visited, PA))) {
         DependingInstructions.clear();
         Visited.clear();
-
+        
         // Check that there is nothing that can affect the reference count
         // between the retain and the call.  Note that Retain need not be in BB.
         if (HasSafePathToPredecessorCall(Arg, Retain, DependingInstructions,
