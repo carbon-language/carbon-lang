@@ -240,4 +240,29 @@ int ternaryRetNull(char cond) {
 #endif
 }
 
+// Test suppression of nested conditional operators.
+int testConditionalOperatorSuppress(int x) {
+  return *(x ? getNull() : getPtr());
+#ifndef SUPPRESSED
+  // expected-warning@-2 {{Dereference of null pointer}}
+#endif
+}
+int testNestedConditionalOperatorSuppress(int x) {
+  return *(x ? (x ? getNull() : getPtr()) : getPtr());
+#ifndef SUPPRESSED
+  // expected-warning@-2 {{Dereference of null pointer}}
+#endif
+}
+int testConditionalOperator(int x) {
+  return *(x ? 0 : getPtr()); // expected-warning {{Dereference of null pointer}}
+}
+int testNestedConditionalOperator(int x) {
+  return *(x ? (x ? 0 : getPtr()) : getPtr()); // expected-warning {{Dereference of null pointer}}
+}
+
+// False Positve - we are unable to suppress this case because the condition is
+// float.
+int testConditionalOperatorSuppressFloatCond(float x) {
+  return *(x ? getNull() : getPtr()); // expected-warning {{Dereference of null pointer}}
+}
 

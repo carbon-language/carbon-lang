@@ -789,36 +789,33 @@ static const MemRegion *getLocationRegionIfReference(const Expr *E,
   return 0;
 }
 
-static const Expr *peelOffOuterExpr(const Stmt *S,
+static const Expr *peelOffOuterExpr(const Expr *Ex,
                                     const ExplodedNode *N) {
-  if (const Expr *Ex = dyn_cast<Expr>(S)) {
-    Ex = Ex->IgnoreParenCasts();
-    if (const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(Ex))
-      return EWC->getSubExpr();
-    if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(Ex))
-      return OVE->getSourceExpr();
+  Ex = Ex->IgnoreParenCasts();
+  if (const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(Ex))
+    return peelOffOuterExpr(EWC->getSubExpr(), N);
+  if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(Ex))
+    return peelOffOuterExpr(OVE->getSourceExpr(), N);
 
-    // Peel off the ternary operator.
-    if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(Ex)) {
-      const Expr *CondEx = CO->getCond();
+  // Peel off the ternary operator.
+  if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(Ex)) {
+    const Expr *CondEx = CO->getCond();
 
-      // Find a node where the value of the condition is known.
-      do {
-        ProgramStateRef State = N->getState();
-        SVal CondVal = State->getSVal(CondEx, N->getLocationContext());
-        ConditionTruthVal CondEvaluated = State->isNull(CondVal);
-        if (CondEvaluated.isConstrained()) {
-          if (CondEvaluated.isConstrainedTrue())
-            return CO->getFalseExpr();
-          else
-            return CO->getTrueExpr();
-        }
-        N = N->getFirstPred();
-      } while (N);
-      
-    }
+    // Find a node where the value of the condition is known.
+    do {
+      ProgramStateRef State = N->getState();
+      SVal CondVal = State->getSVal(CondEx, N->getLocationContext());
+      ConditionTruthVal CondEvaluated = State->isNull(CondVal);
+      if (CondEvaluated.isConstrained()) {
+        if (CondEvaluated.isConstrainedTrue())
+          return peelOffOuterExpr(CO->getFalseExpr(), N);
+        else
+          return peelOffOuterExpr(CO->getTrueExpr(), N);
+      }
+      N = N->getFirstPred();
+    } while (N);
   }
-  return 0;
+  return Ex;
 }
 
 bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
@@ -828,8 +825,12 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
   if (!S || !N)
     return false;
 
-  if (const Expr *Ex = peelOffOuterExpr(S, N))
-    S = Ex;
+  if (const Expr *Ex = dyn_cast<Expr>(S)) {
+    Ex = Ex->IgnoreParenCasts();
+    const Expr *PeeledEx = peelOffOuterExpr(Ex, N);
+    if (Ex != PeeledEx)
+      S = PeeledEx;
+  }
 
   const Expr *Inner = 0;
   if (const Expr *Ex = dyn_cast<Expr>(S)) {
