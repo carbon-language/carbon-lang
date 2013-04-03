@@ -113,13 +113,13 @@ static bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX,
 }
 
 static bool OSHasAVXSupport() {
-#if defined( __GNUC__ )
+#if defined(__GNUC__)
   // Check xgetbv; this uses a .byte sequence instead of the instruction 
   // directly because older assemblers do not include support for xgetbv and 
   // there is no easy way to conditionally compile based on the assembler used.
   int rEAX, rEDX;
   __asm__ (".byte 0x0f, 0x01, 0xd0" : "=a" (rEAX), "=d" (rEDX) : "c" (0));
-#elif defined(_MSC_VER)
+#elif defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 160040219
   unsigned long long rEAX = _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
 #else
   int rEAX = 0; // Ensures we return false
