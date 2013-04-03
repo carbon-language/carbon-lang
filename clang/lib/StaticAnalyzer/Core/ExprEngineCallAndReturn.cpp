@@ -605,6 +605,8 @@ static CallInlinePolicy mayInlineCallKind(const CallEvent &Call,
     const CXXConstructorCall &Ctor = cast<CXXConstructorCall>(Call);
 
     // FIXME: We don't handle constructors or destructors for arrays properly.
+    // Even once we do, we still need to be careful about implicitly-generated
+    // initializers for array fields in default move/copy constructors.
     const MemRegion *Target = Ctor.getCXXThisVal().getAsRegion();
     if (Target && isa<ElementRegion>(Target))
       return CIP_DisallowedOnce;

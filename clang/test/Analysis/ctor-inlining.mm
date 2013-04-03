@@ -307,3 +307,196 @@ namespace PODUninitialized {
     }
   }
 }
+
+namespace ArrayMembers {
+  struct Primitive {
+    int values[3];
+  };
+
+  void testPrimitive() {
+    Primitive a = { { 1, 2, 3 } };
+
+    clang_analyzer_eval(a.values[0] == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(a.values[1] == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(a.values[2] == 3); // expected-warning{{TRUE}}
+
+    Primitive b = a;
+
+    clang_analyzer_eval(b.values[0] == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(b.values[1] == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(b.values[2] == 3); // expected-warning{{TRUE}}
+
+    Primitive c;
+    c = b;
+
+    clang_analyzer_eval(c.values[0] == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(c.values[1] == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(c.values[2] == 3); // expected-warning{{TRUE}}
+  }
+
+  struct NestedPrimitive {
+    int values[2][3];
+  };
+
+  void testNestedPrimitive() {
+    NestedPrimitive a = { { { 0, 0, 0 }, { 1, 2, 3 } } };
+
+    clang_analyzer_eval(a.values[1][0] == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(a.values[1][1] == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(a.values[1][2] == 3); // expected-warning{{TRUE}}
+
+    NestedPrimitive b = a;
+
+    clang_analyzer_eval(b.values[1][0] == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(b.values[1][1] == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(b.values[1][2] == 3); // expected-warning{{TRUE}}
+
+    NestedPrimitive c;
+    c = b;
+
+    clang_analyzer_eval(c.values[1][0] == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(c.values[1][1] == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(c.values[1][2] == 3); // expected-warning{{TRUE}}
+  }
+
+  struct POD {
+    IntWrapper values[3];
+  };
+
+  void testPOD() {
+    POD a = { { { 1 }, { 2 }, { 3 } } };
+
+    clang_analyzer_eval(a.values[0].x == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(a.values[1].x == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(a.values[2].x == 3); // expected-warning{{TRUE}}
+
+    POD b = a;
+
+    clang_analyzer_eval(b.values[0].x == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(b.values[1].x == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(b.values[2].x == 3); // expected-warning{{TRUE}}
+
+    POD c;
+    c = b;
+
+    clang_analyzer_eval(c.values[0].x == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(c.values[1].x == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(c.values[2].x == 3); // expected-warning{{TRUE}}
+  }
+
+  struct NestedPOD {
+    IntWrapper values[2][3];
+  };
+
+  void testNestedPOD() {
+    NestedPOD a = { { { { 0 }, { 0 }, { 0 } }, { { 1 }, { 2 }, { 3 } } } };
+
+    clang_analyzer_eval(a.values[1][0].x == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(a.values[1][1].x == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(a.values[1][2].x == 3); // expected-warning{{TRUE}}
+
+    NestedPOD b = a;
+
+    clang_analyzer_eval(b.values[1][0].x == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(b.values[1][1].x == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(b.values[1][2].x == 3); // expected-warning{{TRUE}}
+
+    NestedPOD c;
+    c = b;
+
+    clang_analyzer_eval(c.values[1][0].x == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(c.values[1][1].x == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(c.values[1][2].x == 3); // expected-warning{{TRUE}}
+  }
+
+  struct NonPOD {
+    NonPODIntWrapper values[3];
+  };
+
+  void testNonPOD() {
+    NonPOD a;
+    a.values[0].x = 1;
+    a.values[1].x = 2;
+    a.values[2].x = 3;
+
+    clang_analyzer_eval(a.values[0].x == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(a.values[1].x == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(a.values[2].x == 3); // expected-warning{{TRUE}}
+
+    NonPOD b = a;
+
+    clang_analyzer_eval(b.values[0].x == 1); // expected-warning{{UNKNOWN}}
+    clang_analyzer_eval(b.values[1].x == 2); // expected-warning{{UNKNOWN}}
+    clang_analyzer_eval(b.values[2].x == 3); // expected-warning{{UNKNOWN}}
+
+    NonPOD c;
+    c = b;
+
+    clang_analyzer_eval(c.values[0].x == 1); // expected-warning{{UNKNOWN}}
+    clang_analyzer_eval(c.values[1].x == 2); // expected-warning{{UNKNOWN}}
+    clang_analyzer_eval(c.values[2].x == 3); // expected-warning{{UNKNOWN}}
+  }
+
+  struct NestedNonPOD {
+    NonPODIntWrapper values[2][3];
+  };
+
+  void testNestedNonPOD() {
+    NestedNonPOD a;
+    a.values[0][0].x = 0;
+    a.values[0][1].x = 0;
+    a.values[0][2].x = 0;
+    a.values[1][0].x = 1;
+    a.values[1][1].x = 2;
+    a.values[1][2].x = 3;
+
+    clang_analyzer_eval(a.values[1][0].x == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(a.values[1][1].x == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(a.values[1][2].x == 3); // expected-warning{{TRUE}}
+
+    NestedNonPOD b = a;
+
+    clang_analyzer_eval(b.values[1][0].x == 1); // expected-warning{{UNKNOWN}}
+    clang_analyzer_eval(b.values[1][1].x == 2); // expected-warning{{UNKNOWN}}
+    clang_analyzer_eval(b.values[1][2].x == 3); // expected-warning{{UNKNOWN}}
+
+    NestedNonPOD c;
+    c = b;
+
+    clang_analyzer_eval(c.values[1][0].x == 1); // expected-warning{{UNKNOWN}}
+    clang_analyzer_eval(c.values[1][1].x == 2); // expected-warning{{UNKNOWN}}
+    clang_analyzer_eval(c.values[1][2].x == 3); // expected-warning{{UNKNOWN}}
+  }
+  
+  struct NonPODDefaulted {
+    NonPODIntWrapper values[3];
+
+    NonPODDefaulted() = default;
+    NonPODDefaulted(const NonPODDefaulted &) = default;
+    NonPODDefaulted &operator=(const NonPODDefaulted &) = default;
+  };
+
+  void testNonPODDefaulted() {
+    NonPODDefaulted a;
+    a.values[0].x = 1;
+    a.values[1].x = 2;
+    a.values[2].x = 3;
+
+    clang_analyzer_eval(a.values[0].x == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(a.values[1].x == 2); // expected-warning{{TRUE}}
+    clang_analyzer_eval(a.values[2].x == 3); // expected-warning{{TRUE}}
+
+    NonPODDefaulted b = a;
+
+    clang_analyzer_eval(b.values[0].x == 1); // expected-warning{{UNKNOWN}}
+    clang_analyzer_eval(b.values[1].x == 2); // expected-warning{{UNKNOWN}}
+    clang_analyzer_eval(b.values[2].x == 3); // expected-warning{{UNKNOWN}}
+
+    NonPODDefaulted c;
+    c = b;
+
+    clang_analyzer_eval(c.values[0].x == 1); // expected-warning{{UNKNOWN}}
+    clang_analyzer_eval(c.values[1].x == 2); // expected-warning{{UNKNOWN}}
+    clang_analyzer_eval(c.values[2].x == 3); // expected-warning{{UNKNOWN}}
+  }
+};

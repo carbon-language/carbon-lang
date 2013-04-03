@@ -432,14 +432,41 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
     // but non-objects must be copied in from the initializer.
     const Expr *Init = BMI->getInit()->IgnoreImplicit();
     if (!isa<CXXConstructExpr>(Init)) {
+      const ValueDecl *Field;
       SVal FieldLoc;
-      if (BMI->isIndirectMemberInitializer())
+      if (BMI->isIndirectMemberInitializer()) {
+        Field = BMI->getIndirectMember();
         FieldLoc = State->getLValue(BMI->getIndirectMember(), thisVal);
-      else
+      } else {
+        Field = BMI->getMember();
         FieldLoc = State->getLValue(BMI->getMember(), thisVal);
+      }
 
-      SVal InitVal = State->getSVal(BMI->getInit(), stackFrame);
+      SVal InitVal;
+      if (BMI->getNumArrayIndices() > 0) {
+        // Handle arrays of trivial type. We can represent this with a
+        // primitive load/copy from the base array region.
+        const ArraySubscriptExpr *ASE;
+        while ((ASE = dyn_cast<ArraySubscriptExpr>(Init)))
+          Init = ASE->getBase()->IgnoreImplicit();
 
+        SVal LValue = State->getSVal(Init, stackFrame);
+        if (Optional<Loc> LValueLoc = LValue.getAs<Loc>())
+          InitVal = State->getSVal(*LValueLoc);
+
+        // If we fail to get the value for some reason, use a symbolic value.
+        if (InitVal.isUnknownOrUndef()) {
+          SValBuilder &SVB = getSValBuilder();
+          InitVal = SVB.conjureSymbolVal(BMI->getInit(), stackFrame,
+                                         Field->getType(),
+                                         currBldrCtx->blockCount());
+        }
+      } else {
+        InitVal = State->getSVal(BMI->getInit(), stackFrame);
+      }
+
+      assert(Tmp.size() == 1 && "have not generated any new nodes yet");
+      assert(*Tmp.begin() == Pred && "have not generated any new nodes yet");
       Tmp.clear();
       evalBind(Tmp, Init, Pred, FieldLoc, InitVal, /*isInit=*/true, &PP);
     }
