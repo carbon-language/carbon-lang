@@ -78,7 +78,7 @@ class HelpCommandTestCase(TestBase):
         import re
         match = re.match('[0-9]+', version_str)
         if sys.platform.startswith("darwin"):
-            search_regexp = ['LLDB-' + (version_str if match else '[0-9]+')]
+            search_regexp = ['lldb-' + (version_str if match else '[0-9]+')]
         else:
             search_regexp = ['lldb version (\d|\.)+.*$']
 
