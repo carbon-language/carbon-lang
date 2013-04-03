@@ -338,8 +338,6 @@ private:
   // constexpr-specifier
   unsigned Constexpr_specified : 1;
 
-  /*SCS*/unsigned StorageClassSpecAsWritten : 3;
-
   union {
     UnionParsedType TypeRep;
     Decl *DeclRep;
@@ -378,7 +376,6 @@ private:
 
   WrittenBuiltinSpecs writtenBS;
   void SaveWrittenBuiltinSpecs();
-  void SaveStorageSpecifierAsWritten();
 
   ObjCDeclSpec *ObjCQualifiers;
 
@@ -418,7 +415,6 @@ public:
       FS_noreturn_specified(false),
       Friend_specified(false),
       Constexpr_specified(false),
-      StorageClassSpecAsWritten(SCS_unspecified),
       Attrs(attrFactory),
       ProtocolQualifiers(0),
       NumProtocolQualifiers(0),
@@ -552,10 +548,6 @@ public:
   /// \brief Return a bitmask of which flavors of specifiers this
   /// DeclSpec includes.
   unsigned getParsedSpecifiers() const;
-
-  SCS getStorageClassSpecAsWritten() const {
-    return (SCS)StorageClassSpecAsWritten;
-  }
 
   /// isEmpty - Return true if this declaration specifier is completely empty:
   /// no tokens were parsed in the production of it.

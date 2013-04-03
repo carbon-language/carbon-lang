@@ -435,7 +435,7 @@ bool Decl::canBeWeakImported(bool &IsDefinition) const {
 
   // Variables, if they aren't definitions.
   if (const VarDecl *Var = dyn_cast<VarDecl>(this)) {
-    if (!Var->hasExternalStorage() || Var->getInit()) {
+    if (Var->isThisDeclarationADefinition()) {
       IsDefinition = true;
       return false;
     }

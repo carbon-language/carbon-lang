@@ -498,26 +498,24 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
     //   declared to have external linkage; or (there is no equivalent in C99)
     if (Context.getLangOpts().CPlusPlus &&
         Var->getType().isConstQualified() && 
-        !Var->getType().isVolatileQualified() &&
-        Var->getStorageClass() != SC_Extern &&
-        Var->getStorageClass() != SC_PrivateExtern) {
-      bool FoundExtern = false;
-      for (const VarDecl *PrevVar = Var->getPreviousDecl();
-           PrevVar && !FoundExtern; 
-           PrevVar = PrevVar->getPreviousDecl())
-        if (isExternalLinkage(PrevVar->getLinkage()))
-          FoundExtern = true;
-      
-      if (!FoundExtern)
-        return LinkageInfo::internal();
-    }
-    if (Var->getStorageClass() == SC_None) {
+        !Var->getType().isVolatileQualified()) {
       const VarDecl *PrevVar = Var->getPreviousDecl();
-      for (; PrevVar; PrevVar = PrevVar->getPreviousDecl())
-        if (PrevVar->getStorageClass() == SC_PrivateExtern)
-          break;
       if (PrevVar)
         return PrevVar->getLinkageAndVisibility();
+
+      if (Var->getStorageClass() != SC_Extern &&
+          Var->getStorageClass() != SC_PrivateExtern)
+        return LinkageInfo::internal();
+    }
+
+    for (const VarDecl *PrevVar = Var->getPreviousDecl(); PrevVar;
+         PrevVar = PrevVar->getPreviousDecl()) {
+      if (PrevVar->getStorageClass() == SC_PrivateExtern &&
+          Var->getStorageClass() == SC_None)
+        return PrevVar->getLinkageAndVisibility();
+      // Explicitly declared static.
+      if (PrevVar->getStorageClass() == SC_Static)
+        return LinkageInfo::internal();
     }
   } else if (isa<FunctionDecl>(D) || isa<FunctionTemplateDecl>(D)) {
     // C++ [temp]p4:
@@ -531,7 +529,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
       Function = cast<FunctionDecl>(D);
 
     // Explicitly declared static.
-    if (Function->getStorageClass() == SC_Static)
+    if (Function->getCanonicalDecl()->getStorageClass() == SC_Static)
       return LinkageInfo(InternalLinkage, DefaultVisibility, false);
   } else if (const FieldDecl *Field = dyn_cast<FieldDecl>(D)) {
     //   - a data member of an anonymous union.
@@ -995,7 +993,7 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
       return LinkageInfo::uniqueExternal();
 
     // This is a "void f();" which got merged with a file static.
-    if (Function->getStorageClass() == SC_Static)
+    if (Function->getCanonicalDecl()->getStorageClass() == SC_Static)
       return LinkageInfo::internal();
 
     LinkageInfo LV;
@@ -1013,14 +1011,10 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
   }
 
   if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
-    if (Var->hasExternalStorageAsWritten()) {
+    if (Var->hasExternalStorage()) {
       if (Var->isInAnonymousNamespace() &&
           !Var->getDeclContext()->isExternCContext())
         return LinkageInfo::uniqueExternal();
-
-      // This is an "extern int foo;" which got merged with a file static.
-      if (Var->getStorageClass() == SC_Static)
-        return LinkageInfo::internal();
 
       LinkageInfo LV;
       if (Var->getStorageClass() == SC_PrivateExtern)
@@ -1030,9 +1024,13 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
           LV.mergeVisibility(*Vis, true);
       }
 
-      // Note that Sema::MergeVarDecl already takes care of implementing
-      // C99 6.2.2p4 and propagating the visibility attribute, so we don't
-      // have to do it here.
+      if (const VarDecl *Prev = Var->getPreviousDecl()) {
+        LinkageInfo PrevLV = getLVForDecl(Prev, computation);
+        if (PrevLV.getLinkage())
+          LV.setLinkage(PrevLV.getLinkage());
+        LV.mergeVisibility(PrevLV);
+      }
+
       return LV;
     }
   }
@@ -1467,21 +1465,18 @@ const char *VarDecl::getStorageClassSpecifierString(StorageClass SC) {
 VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC,
                          SourceLocation StartL, SourceLocation IdL,
                          IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
-                         StorageClass S, StorageClass SCAsWritten) {
-  return new (C) VarDecl(Var, DC, StartL, IdL, Id, T, TInfo, S, SCAsWritten);
+                         StorageClass S) {
+  return new (C) VarDecl(Var, DC, StartL, IdL, Id, T, TInfo, S);
 }
 
 VarDecl *VarDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   void *Mem = AllocateDeserializedDecl(C, ID, sizeof(VarDecl));
   return new (Mem) VarDecl(Var, 0, SourceLocation(), SourceLocation(), 0, 
-                           QualType(), 0, SC_None, SC_None);
+                           QualType(), 0, SC_None);
 }
 
 void VarDecl::setStorageClass(StorageClass SC) {
   assert(isLegalForVariable(SC));
-  if (getStorageClass() != SC)
-    assert(isLinkageValid());
-
   VarDeclBits.SClass = SC;
 }
 
@@ -1581,7 +1576,7 @@ VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition(
   if (hasExternalStorage())
     return DeclarationOnly;
 
-  if (hasExternalStorageAsWritten()) {
+  if (hasExternalStorage()) {
     for (const VarDecl *PrevVar = getPreviousDecl();
          PrevVar; PrevVar = PrevVar->getPreviousDecl()) {
       if (PrevVar->getLinkage() == InternalLinkage)
@@ -1879,16 +1874,15 @@ ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation StartLoc,
                                  SourceLocation IdLoc, IdentifierInfo *Id,
                                  QualType T, TypeSourceInfo *TInfo,
-                                 StorageClass S, StorageClass SCAsWritten,
-                                 Expr *DefArg) {
+                                 StorageClass S, Expr *DefArg) {
   return new (C) ParmVarDecl(ParmVar, DC, StartLoc, IdLoc, Id, T, TInfo,
-                             S, SCAsWritten, DefArg);
+                             S, DefArg);
 }
 
 ParmVarDecl *ParmVarDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ParmVarDecl));
   return new (Mem) ParmVarDecl(ParmVar, 0, SourceLocation(), SourceLocation(),
-                               0, QualType(), 0, SC_None, SC_None, 0);
+                               0, QualType(), 0, SC_None, 0);
 }
 
 SourceRange ParmVarDecl::getSourceRange() const {
@@ -2067,7 +2061,7 @@ bool FunctionDecl::isGlobal() const {
   if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(this))
     return Method->isStatic();
 
-  if (getStorageClass() == SC_Static)
+  if (getCanonicalDecl()->getStorageClass() == SC_Static)
     return false;
 
   for (const DeclContext *DC = getDeclContext();
@@ -2110,14 +2104,6 @@ const FunctionDecl *FunctionDecl::getCanonicalDecl() const {
 
 FunctionDecl *FunctionDecl::getCanonicalDecl() {
   return getFirstDeclaration();
-}
-
-void FunctionDecl::setStorageClass(StorageClass SC) {
-  assert(isLegalForFunction(SC));
-  if (getStorageClass() != SC)
-    assert(isLinkageValid());
-
-  SClass = SC;
 }
 
 /// \brief Returns a value indicating whether this function
@@ -2270,7 +2256,7 @@ bool FunctionDecl::doesDeclarationForceExternallyVisibleDefinition() const {
     //
     // FIXME: What happens if gnu_inline gets added on after the first
     // declaration?
-    if (!isInlineSpecified() || getStorageClassAsWritten() == SC_Extern)
+    if (!isInlineSpecified() || getStorageClass() == SC_Extern)
       return false;
 
     const FunctionDecl *Prev = this;
@@ -2282,10 +2268,10 @@ bool FunctionDecl::doesDeclarationForceExternallyVisibleDefinition() const {
         // If it's not the case that both 'inline' and 'extern' are
         // specified on the definition, then it is always externally visible.
         if (!Prev->isInlineSpecified() ||
-            Prev->getStorageClassAsWritten() != SC_Extern)
+            Prev->getStorageClass() != SC_Extern)
           return false;
       } else if (Prev->isInlineSpecified() && 
-                 Prev->getStorageClassAsWritten() != SC_Extern) {
+                 Prev->getStorageClass() != SC_Extern) {
         return false;
       }
     }
@@ -2340,7 +2326,7 @@ bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
     // If it's not the case that both 'inline' and 'extern' are
     // specified on the definition, then this inline definition is
     // externally visible.
-    if (!(isInlineSpecified() && getStorageClassAsWritten() == SC_Extern))
+    if (!(isInlineSpecified() && getStorageClass() == SC_Extern))
       return true;
     
     // If any declaration is 'inline' but not 'extern', then this definition
@@ -2349,7 +2335,7 @@ bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
          Redecl != RedeclEnd;
          ++Redecl) {
       if (Redecl->isInlineSpecified() && 
-          Redecl->getStorageClassAsWritten() != SC_Extern)
+          Redecl->getStorageClass() != SC_Extern)
         return true;
     }    
     
@@ -3212,12 +3198,12 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation StartLoc,
                                    const DeclarationNameInfo &NameInfo,
                                    QualType T, TypeSourceInfo *TInfo,
-                                   StorageClass SC, StorageClass SCAsWritten,
+                                   StorageClass SC,
                                    bool isInlineSpecified, 
                                    bool hasWrittenPrototype,
                                    bool isConstexprSpecified) {
   FunctionDecl *New = new (C) FunctionDecl(Function, DC, StartLoc, NameInfo,
-                                           T, TInfo, SC, SCAsWritten,
+                                           T, TInfo, SC,
                                            isInlineSpecified,
                                            isConstexprSpecified);
   New->HasWrittenPrototype = hasWrittenPrototype;
@@ -3228,7 +3214,7 @@ FunctionDecl *FunctionDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   void *Mem = AllocateDeserializedDecl(C, ID, sizeof(FunctionDecl));
   return new (Mem) FunctionDecl(Function, 0, SourceLocation(), 
                                 DeclarationNameInfo(), QualType(), 0,
-                                SC_None, SC_None, false, false);
+                                SC_None, false, false);
 }
 
 BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {

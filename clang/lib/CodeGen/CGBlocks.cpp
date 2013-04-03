@@ -1316,7 +1316,6 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
                                           SourceLocation(),
                                           SourceLocation(), II, C.VoidTy, 0,
                                           SC_Static,
-                                          SC_None,
                                           false,
                                           false);
   StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
@@ -1491,7 +1490,6 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
                                           SourceLocation(),
                                           SourceLocation(), II, C.VoidTy, 0,
                                           SC_Static,
-                                          SC_None,
                                           false, false);
   StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
 
@@ -1782,7 +1780,6 @@ generateByrefCopyHelper(CodeGenFunction &CGF,
                                           SourceLocation(),
                                           SourceLocation(), II, R, 0,
                                           SC_Static,
-                                          SC_None,
                                           false, false);
 
   // Initialize debug info if necessary.
@@ -1857,7 +1854,6 @@ generateByrefDisposeHelper(CodeGenFunction &CGF,
                                           SourceLocation(),
                                           SourceLocation(), II, R, 0,
                                           SC_Static,
-                                          SC_None,
                                           false, false);
   // Initialize debug info if necessary.
   CGF.maybeInitializeDebugInfo();

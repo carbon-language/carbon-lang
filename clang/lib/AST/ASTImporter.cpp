@@ -2716,8 +2716,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
                                        cast<CXXRecordDecl>(DC),
                                        D->getInnerLocStart(),
                                        NameInfo, T, TInfo,
-                                       Method->isStatic(),
-                                       Method->getStorageClassAsWritten(),
+                                       Method->getStorageClass(),
                                        Method->isInlineSpecified(),
                                        D->isConstexpr(),
                                        Importer.Import(D->getLocEnd()));
@@ -2725,7 +2724,6 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
     ToFunction = FunctionDecl::Create(Importer.getToContext(), DC,
                                       D->getInnerLocStart(),
                                       NameInfo, T, TInfo, D->getStorageClass(),
-                                      D->getStorageClassAsWritten(),
                                       D->isInlineSpecified(),
                                       D->hasWrittenPrototype(),
                                       D->isConstexpr());
@@ -3076,8 +3074,7 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
                                    Importer.Import(D->getInnerLocStart()),
                                    Loc, Name.getAsIdentifierInfo(),
                                    T, TInfo,
-                                   D->getStorageClass(),
-                                   D->getStorageClassAsWritten());
+                                   D->getStorageClass());
   ToVar->setQualifierInfo(Importer.Import(D->getQualifierLoc()));
   ToVar->setAccess(D->getAccess());
   ToVar->setLexicalDeclContext(LexicalDC);
@@ -3145,7 +3142,6 @@ Decl *ASTNodeImporter::VisitParmVarDecl(ParmVarDecl *D) {
                                      Importer.Import(D->getInnerLocStart()),
                                             Loc, Name.getAsIdentifierInfo(),
                                             T, TInfo, D->getStorageClass(),
-                                             D->getStorageClassAsWritten(),
                                             /*FIXME: Default argument*/ 0);
   ToParm->setHasInheritedDefaultArg(D->hasInheritedDefaultArg());
   return Importer.Imported(D, ToParm);
