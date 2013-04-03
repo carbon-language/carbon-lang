@@ -1087,7 +1087,7 @@ void RegionStoreManager::populateWorkList(invalidateRegionsWorker &W,
 
       for (SValListTy::const_iterator I = Vals.begin(),
                                       E = Vals.end(); I != E; ++I) {
-        // Note: the last argumet is false here because these are
+        // Note: the last argument is false here because these are
         // non-top-level regions.
         if (const MemRegion *R = (*I).getAsRegion())
           W.AddToWorkList(R, /*IsConst=*/ false);
