@@ -399,6 +399,8 @@ def err_objc_properties_require_objc2 : Error<
   "properties are an Objective-C 2 feature">;
 def err_objc_unexpected_attr : Error<
   "prefix attribute must be followed by an interface or protocol">;
+def err_objc_postfix_attribute : Error <
+  "postfix attributes are not allowed on Objective-C directives">;
 def err_objc_directive_only_in_protocol : Error<
   "directive may only be specified in protocols only">;
 def err_missing_catch_finally : Error<
