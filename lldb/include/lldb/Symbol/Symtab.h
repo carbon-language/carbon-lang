@@ -107,6 +107,8 @@ protected:
     collection          m_symbols;
     std::vector<uint32_t> m_addr_indexes;
     UniqueCStringMap<uint32_t> m_name_to_index;
+    UniqueCStringMap<uint32_t> m_basename_to_index;
+    UniqueCStringMap<uint32_t> m_method_to_index;
     UniqueCStringMap<uint32_t> m_selector_to_index;
     mutable Mutex       m_mutex; // Provide thread safety for this symbol table
     bool                m_addr_indexes_computed:1,

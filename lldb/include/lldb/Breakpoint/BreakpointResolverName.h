@@ -86,13 +86,33 @@ public:
     }
 
 protected:
-    std::vector<ConstString> m_func_names;
-    uint32_t m_func_name_type_mask;  // See FunctionNameType
-    ConstString m_class_name;  // FIXME: Not used yet.  The idea would be to stop on methods of this class.
+    struct LookupInfo
+    {
+        ConstString name;
+        ConstString lookup_name;
+        uint32_t name_type_mask; // See FunctionNameType
+        bool match_name_after_lookup;
+        
+        LookupInfo () :
+            name(),
+            lookup_name(),
+            name_type_mask (0),
+            match_name_after_lookup (false)
+        {
+        }
+        
+        void
+        Prune (SymbolContextList &sc_list,
+               size_t start_idx) const;
+    };
+    std::vector<LookupInfo> m_lookups;
+    ConstString m_class_name;
     RegularExpression m_regex;
     Breakpoint::MatchType m_match_type;
     bool m_skip_prologue;
 
+    void
+    AddNameLookup (const ConstString &name, uint32_t name_type_mask);
 private:
     DISALLOW_COPY_AND_ASSIGN(BreakpointResolverName);
 };

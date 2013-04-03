@@ -25,6 +25,93 @@ class CPPLanguageRuntime :
     public LanguageRuntime
 {
 public:
+    
+    class MethodName
+    {
+    public:
+        enum Type
+        {
+            eTypeInvalid,
+            eTypeUnknownMethod,
+            eTypeClassMethod,
+            eTypeInstanceMethod
+        };
+        
+        MethodName () :
+            m_full(),
+            m_basename(),
+            m_context(),
+            m_arguments(),
+            m_qualifiers(),
+            m_type (eTypeInvalid),
+            m_parsed (false),
+            m_parse_error (false)
+        {
+        }
+
+        MethodName (const ConstString &s) :
+            m_full(s),
+            m_basename(),
+            m_context(),
+            m_arguments(),
+            m_qualifiers(),
+            m_type (eTypeInvalid),
+            m_parsed (false),
+            m_parse_error (false)
+        {
+        }
+
+        void
+        Clear();
+        
+        bool
+        IsValid () const
+        {
+            if (m_parse_error)
+                return false;
+            if (m_type == eTypeInvalid)
+                return false;
+            return (bool)m_full;
+        }
+
+        Type
+        GetType () const
+        {
+            return m_type;
+        }
+        
+        const ConstString &
+        GetFullName () const
+        {
+            return m_full;
+        }
+        
+        const ConstString &
+        GetBasename ();
+
+        llvm::StringRef
+        GetContext ();
+        
+        llvm::StringRef
+        GetArguments ();
+        
+        llvm::StringRef
+        GetQualifiers ();
+
+    protected:
+        void
+        Parse();
+
+        ConstString     m_full;         // Full name:    "lldb::SBTarget::GetBreakpointAtIndex(unsigned int) const"
+        ConstString     m_basename;     // Basename:     "GetBreakpointAtIndex"
+        llvm::StringRef m_context;      // Decl context: "lldb::SBTarget"
+        llvm::StringRef m_arguments;    // Arguments:    "(unsigned int)"
+        llvm::StringRef m_qualifiers;   // Qualifiers:   "const"
+        Type m_type;
+        bool m_parsed;
+        bool m_parse_error;
+    };
+
     virtual
     ~CPPLanguageRuntime();
     

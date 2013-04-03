@@ -35,8 +35,8 @@ CommandObjectRegexCommand::CommandObjectRegexCommand
 ) :
     CommandObjectRaw (interpreter, name, help, syntax),
     m_max_matches (max_matches),
-    m_entries (),
-    m_completion_type_mask (completion_type_mask)
+    m_completion_type_mask (completion_type_mask),
+    m_entries ()
 {
 }
 

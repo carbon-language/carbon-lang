@@ -3116,7 +3116,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 //   instance methods for eFunctionNameTypeBase.
                 
                 target->GetImages().FindFunctions(name,
-                                                  eFunctionNameTypeBase,
+                                                  eFunctionNameTypeFull,
                                                   include_symbols,
                                                   include_inlines,
                                                   append, 

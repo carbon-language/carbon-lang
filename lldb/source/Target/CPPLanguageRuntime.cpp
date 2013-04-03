@@ -190,65 +190,65 @@ CPPLanguageRuntime::IsCPPMangledName (const char *name)
 bool
 CPPLanguageRuntime::StripNamespacesFromVariableName (const char *name, const char *&base_name_start, const char *&base_name_end)
 {
-  if (base_name_end == NULL)
-    base_name_end = name + strlen (name);
+    if (base_name_end == NULL)
+        base_name_end = name + strlen (name);
     
-  const char *last_colon = NULL;
-  for (const char *ptr = base_name_end; ptr != name; ptr--)
+    const char *last_colon = NULL;
+    for (const char *ptr = base_name_end; ptr != name; ptr--)
     {
-      if (*ptr == ':')
+        if (*ptr == ':')
         {
-          last_colon = ptr;
-          break;
+            last_colon = ptr;
+            break;
         }
     }
-
-  if (last_colon == NULL)
+    
+    if (last_colon == NULL)
     {
-      base_name_start = name;
-      return true;
+        base_name_start = name;
+        return true;
     }
-
-  // Can't have a C++ name that begins with a single ':', nor contains an internal single ':'
-  if (last_colon == name)
-    return false;
-  else if (last_colon[-1] != ':')
-    return false;
-  else
+    
+    // Can't have a C++ name that begins with a single ':', nor contains an internal single ':'
+    if (last_colon == name)
+        return false;
+    else if (last_colon[-1] != ':')
+        return false;
+    else
     {
-      // FIXME: should check if there is
-      base_name_start = last_colon + 1;
-      return true;
+        // FIXME: should check if there is
+        base_name_start = last_colon + 1;
+        return true;
     }
 }
 bool
 CPPLanguageRuntime::IsPossibleCPPCall (const char *name, const char *&base_name_start, const char *&base_name_end)
 {
     if (!name)
-      return false;
+        return false;
     // For now, I really can't handle taking template names apart, so if you
     // have < or > I'll say "could be CPP but leave the base_name empty which
     // means I couldn't figure out what to use for that.
     // FIXME: Do I need to do more sanity checking here?
-
+    
     if (strchr(name, '>') != NULL || strchr (name, '>') != NULL)
-      return true;
-
+        return true;
+    
     size_t name_len = strlen (name);
-
+    
     if (name[name_len - 1] == ')')
     {
         // We've got arguments.
         base_name_end = strchr (name, '(');
         if (base_name_end == NULL)
-          return false;
-
+            return false;
+        
         // FIXME: should check that this parenthesis isn't a template specialized
         // on a function type or something gross like that...
     }
     else
         base_name_end = name + strlen (name);
-
+    
     return StripNamespacesFromVariableName (name, base_name_start, base_name_end);
 }
 
@@ -267,3 +267,156 @@ CPPLanguageRuntime::FindEquivalentNames(ConstString type_name, std::vector<Const
     
     return count;
 }
+
+void
+CPPLanguageRuntime::MethodName::Clear()
+{
+    m_full.Clear();
+    m_basename.Clear();
+    m_context = llvm::StringRef();
+    m_arguments = llvm::StringRef();
+    m_qualifiers = llvm::StringRef();
+    m_type = eTypeInvalid;
+    m_parsed = false;
+    m_parse_error = false;
+}
+
+bool
+ReverseFindMatchingChars (const llvm::StringRef &s,
+                          const llvm::StringRef &left_right_chars,
+                          size_t &left_pos,
+                          size_t &right_pos,
+                          size_t pos = llvm::StringRef::npos)
+{
+    assert (left_right_chars.size() == 2);
+    left_pos = llvm::StringRef::npos;
+    const char left_char = left_right_chars[0];
+    const char right_char = left_right_chars[1];
+    pos = s.find_last_of(left_right_chars, pos);
+    if (pos == llvm::StringRef::npos || s[pos] == left_char)
+        return false;
+    right_pos = pos;
+    uint32_t depth = 1;
+    while (pos > 0 && depth > 0)
+    {
+        pos = s.find_last_of(left_right_chars, pos);
+        if (pos == llvm::StringRef::npos)
+            return false;
+        if (s[pos] == left_char)
+        {
+            if (--depth == 0)
+            {
+                left_pos = pos;
+                return left_pos < right_pos;
+            }            
+        }
+        else if (s[pos] == right_char)
+        {
+            ++depth;
+        }
+    }
+    return false;
+}
+
+void
+CPPLanguageRuntime::MethodName::Parse()
+{
+    if (!m_parsed && m_full)
+    {
+//        ConstString mangled;
+//        m_full.GetMangledCounterpart(mangled);
+//        printf ("\n   parsing = '%s'\n", m_full.GetCString());
+//        if (mangled)
+//            printf ("   mangled = '%s'\n", mangled.GetCString());
+        m_parse_error = false;
+        m_parsed = true;
+        llvm::StringRef full (m_full.GetCString());
+        
+        size_t arg_start, arg_end;
+        llvm::StringRef parens("()", 2);
+        if (ReverseFindMatchingChars (full, parens, arg_start, arg_end))
+        {
+            m_arguments = full.substr(arg_start, arg_end - arg_start + 1);
+            if (arg_end + 1 < full.size())
+                m_qualifiers = full.substr(arg_end + 1);
+            if (arg_start > 0)
+            {
+                size_t basename_end = arg_start;
+                size_t context_end = llvm::StringRef::npos;
+                if (basename_end > 0 && full[basename_end-1] == '>')
+                {
+                    // TODO: handle template junk...
+                    // Templated function
+                    size_t template_start, template_end;
+                    llvm::StringRef lt_gt("<>", 2);
+                    if (ReverseFindMatchingChars (full, lt_gt, template_start, template_end, basename_end))
+                        context_end = full.rfind(':', template_start);
+                }
+                if (context_end == llvm::StringRef::npos)
+                    context_end = full.rfind(':', basename_end);
+
+                if (context_end == llvm::StringRef::npos)
+                    m_basename.SetString(full.substr(0, basename_end));
+                else
+                {
+                    m_context = full.substr(0, context_end - 1);
+                    const size_t basename_begin = context_end + 1;
+                    m_basename.SetString(full.substr(basename_begin, basename_end - basename_begin));
+                }
+                m_type = eTypeUnknownMethod;
+            }
+            else
+            {
+                m_parse_error = true;
+                return;
+            }
+        
+//            if (!m_context.empty())
+//                printf ("   context = '%s'\n", m_context.str().c_str());
+//            if (m_basename)
+//                printf ("  basename = '%s'\n", m_basename.GetCString());
+//            if (!m_arguments.empty())
+//                printf (" arguments = '%s'\n", m_arguments.str().c_str());
+//            if (!m_qualifiers.empty())
+//                printf ("qualifiers = '%s'\n", m_qualifiers.str().c_str());
+        }
+        else
+        {
+            m_parse_error = true;
+//            printf ("error: didn't find matching parens for arguments\n");
+        }
+    }
+}
+
+const ConstString &
+CPPLanguageRuntime::MethodName::GetBasename ()
+{
+    if (!m_parsed)
+        Parse();
+    return m_basename;
+}
+
+llvm::StringRef
+CPPLanguageRuntime::MethodName::GetContext ()
+{
+    if (!m_parsed)
+        Parse();
+    return m_context;
+}
+
+llvm::StringRef
+CPPLanguageRuntime::MethodName::GetArguments ()
+{
+    if (!m_parsed)
+        Parse();
+    return m_arguments;
+}
+
+llvm::StringRef
+CPPLanguageRuntime::MethodName::GetQualifiers ()
+{
+    if (!m_parsed)
+        Parse();
+    return m_qualifiers;
+}
+

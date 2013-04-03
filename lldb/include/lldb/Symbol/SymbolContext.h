@@ -461,6 +461,19 @@ public:
     bool
     GetContextAtIndex(size_t idx, SymbolContext& sc) const;
 
+    //------------------------------------------------------------------
+    /// Get accessor for the last symbol context in the list.
+    ///
+    /// @param[out] sc
+    ///     A reference to the symbol context to fill in.
+    ///
+    /// @return
+    ///     Returns \b true if \a sc was filled in, \b false if the
+    ///     list is empty.
+    //------------------------------------------------------------------
+    bool
+    GetLastContext(SymbolContext& sc) const;
+
     bool
     RemoveContextAtIndex (size_t idx);
     //------------------------------------------------------------------

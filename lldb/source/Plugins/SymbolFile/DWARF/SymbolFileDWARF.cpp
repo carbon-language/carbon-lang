@@ -3322,6 +3322,9 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                         "SymbolFileDWARF::FindFunctions (name = '%s')",
                         name.AsCString());
 
+    // eFunctionNameTypeAuto should be pre-resolved by a call to Module::PrepareForFunctionNameLookup()
+    assert ((name_type_mask & eFunctionNameTypeAuto) == 0);
+
     Log *log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_LOOKUPS));
     
     if (log)
@@ -3347,59 +3350,16 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
     // Remember how many sc_list are in the list before we search in case
     // we are appending the results to a variable list.
 
-    const uint32_t original_size = sc_list.GetSize();
-
     const char *name_cstr = name.GetCString();
-    uint32_t effective_name_type_mask = eFunctionNameTypeNone;
-    const char *base_name_start = name_cstr;
-    const char *base_name_end = name_cstr + strlen(name_cstr);
-    
-    if (name_type_mask & eFunctionNameTypeAuto)
-    {
-        if (CPPLanguageRuntime::IsCPPMangledName (name_cstr))
-            effective_name_type_mask = eFunctionNameTypeFull;
-        else if (ObjCLanguageRuntime::IsPossibleObjCMethodName (name_cstr))
-            effective_name_type_mask = eFunctionNameTypeFull;
-        else
-        {
-            if (ObjCLanguageRuntime::IsPossibleObjCSelector(name_cstr))
-                effective_name_type_mask |= eFunctionNameTypeSelector;
-                
-            if (CPPLanguageRuntime::IsPossibleCPPCall(name_cstr, base_name_start, base_name_end))
-                effective_name_type_mask |= (eFunctionNameTypeMethod | eFunctionNameTypeBase);
-        }
-    }
-    else
-    {
-        effective_name_type_mask = name_type_mask;
-        if (effective_name_type_mask & eFunctionNameTypeMethod || name_type_mask & eFunctionNameTypeBase)
-        {
-            // If they've asked for a CPP method or function name and it can't be that, we don't
-            // even need to search for CPP methods or names.
-            if (!CPPLanguageRuntime::IsPossibleCPPCall(name_cstr, base_name_start, base_name_end))
-            {
-                effective_name_type_mask &= ~(eFunctionNameTypeMethod | eFunctionNameTypeBase);
-                if (effective_name_type_mask == eFunctionNameTypeNone)
-                    return 0;
-            }
-        }
-        
-        if (effective_name_type_mask & eFunctionNameTypeSelector)
-        {
-            if (!ObjCLanguageRuntime::IsPossibleObjCSelector(name_cstr))
-            {
-                effective_name_type_mask &= ~(eFunctionNameTypeSelector);
-                if (effective_name_type_mask == eFunctionNameTypeNone)
-                    return 0;
-            }
-        }
-    }
-    
+
+    const uint32_t original_size = sc_list.GetSize();
+   
     DWARFDebugInfo* info = DebugInfo();
     if (info == NULL)
         return 0;
 
     DWARFCompileUnit *dwarf_cu = NULL;
+    std::set<const DWARFDebugInfoEntry *> resolved_dies;
     if (m_using_apple_tables)
     {
         if (m_apple_names_ap.get())
@@ -3409,7 +3369,7 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
 
             uint32_t num_matches = 0;
                 
-            if (effective_name_type_mask & eFunctionNameTypeFull)
+            if (name_type_mask & eFunctionNameTypeFull)
             {
                 // If they asked for the full name, match what they typed.  At some point we may
                 // want to canonicalize this (strip double spaces, etc.  For now, we just add all the
@@ -3427,7 +3387,11 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                         if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
                             continue;
                         
-                        ResolveFunction (dwarf_cu, die, sc_list);
+                        if (resolved_dies.find(die) == resolved_dies.end())
+                        {
+                            if (ResolveFunction (dwarf_cu, die, sc_list))
+                                resolved_dies.insert(die);
+                        }
                     }
                     else
                     {
@@ -3436,87 +3400,116 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                     }                                    
                 }
             }
-            else
-            {                
-                if (effective_name_type_mask & eFunctionNameTypeSelector)
-                {
-                    if (namespace_decl && *namespace_decl)
-                        return 0; // no selectors in namespaces
-                        
-                    num_matches = m_apple_names_ap->FindByName (name_cstr, die_offsets);
-                    // Now make sure these are actually ObjC methods.  In this case we can simply look up the name,
-                    // and if it is an ObjC method name, we're good.
+
+            if (name_type_mask & eFunctionNameTypeSelector)
+            {
+                if (namespace_decl && *namespace_decl)
+                    return 0; // no selectors in namespaces
                     
-                    for (uint32_t i = 0; i < num_matches; i++)
-                    {
-                        const dw_offset_t die_offset = die_offsets[i];
-                        const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
-                        if (die)
-                        {
-                            const char *die_name = die->GetName(this, dwarf_cu);
-                            if (ObjCLanguageRuntime::IsPossibleObjCMethodName(die_name))
-                            {
-                                if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
-                                    continue;
-                                
-                                ResolveFunction (dwarf_cu, die, sc_list);
-                            }
-                        }
-                        else
-                        {
-                            GetObjectFile()->GetModule()->ReportError ("the DWARF debug information has been modified (.apple_names accelerator table had bad die 0x%8.8x for '%s')",
-                                                                       die_offset, name_cstr);
-                        }                                    
-                    }
-                    die_offsets.clear();
-                }
+                num_matches = m_apple_names_ap->FindByName (name_cstr, die_offsets);
+                // Now make sure these are actually ObjC methods.  In this case we can simply look up the name,
+                // and if it is an ObjC method name, we're good.
                 
-                if (effective_name_type_mask & eFunctionNameTypeMethod
-                    || effective_name_type_mask & eFunctionNameTypeBase)
+                for (uint32_t i = 0; i < num_matches; i++)
                 {
-                    if ((effective_name_type_mask & eFunctionNameTypeMethod) &&
-                        (namespace_decl && *namespace_decl))
-                        return 0; // no methods in namespaces
-                    
-                    // The apple_names table stores just the "base name" of C++ methods in the table.  So we have to 
-                    // extract the base name, look that up, and if there is any other information in the name we were
-                    // passed in we have to post-filter based on that.
-                    
-                    // FIXME: Arrange the logic above so that we don't calculate the base name twice:
-                    std::string base_name(base_name_start, base_name_end - base_name_start);
-                    num_matches = m_apple_names_ap->FindByName (base_name.c_str(), die_offsets);
-                    
-                    for (uint32_t i = 0; i < num_matches; i++)
+                    const dw_offset_t die_offset = die_offsets[i];
+                    const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
+                    if (die)
                     {
-                        const dw_offset_t die_offset = die_offsets[i];
-                        const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
-                        if (die)
+                        const char *die_name = die->GetName(this, dwarf_cu);
+                        if (ObjCLanguageRuntime::IsPossibleObjCMethodName(die_name))
                         {
                             if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
                                 continue;
                             
-                            if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
-                                continue;
-                            
-                            if (!FunctionDieMatchesPartialName(die,
-                                                               dwarf_cu, 
-                                                               effective_name_type_mask,
-                                                               name_cstr, 
-                                                               base_name_start, 
-                                                               base_name_end))
-                                continue;
-                            
-                            // If we get to here, the die is good, and we should add it:
-                            ResolveFunction (dwarf_cu, die, sc_list);
+                            if (resolved_dies.find(die) == resolved_dies.end())
+                            {
+                                if (ResolveFunction (dwarf_cu, die, sc_list))
+                                    resolved_dies.insert(die);
+                            }
                         }
-                        else
-                        {
-                            GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_names accelerator table had bad die 0x%8.8x for '%s')",
-                                                                                       die_offset, name_cstr);
-                        }                                    
                     }
-                    die_offsets.clear();
+                    else
+                    {
+                        GetObjectFile()->GetModule()->ReportError ("the DWARF debug information has been modified (.apple_names accelerator table had bad die 0x%8.8x for '%s')",
+                                                                   die_offset, name_cstr);
+                    }                                    
                 }
+                die_offsets.clear();
+            }
+            
+            if (((name_type_mask & eFunctionNameTypeMethod) && !namespace_decl) || name_type_mask & eFunctionNameTypeBase)
+            {
+                // The apple_names table stores just the "base name" of C++ methods in the table.  So we have to
+                // extract the base name, look that up, and if there is any other information in the name we were
+                // passed in we have to post-filter based on that.
+                
+                // FIXME: Arrange the logic above so that we don't calculate the base name twice:
+                num_matches = m_apple_names_ap->FindByName (name_cstr, die_offsets);
+                
+                for (uint32_t i = 0; i < num_matches; i++)
+                {
+                    const dw_offset_t die_offset = die_offsets[i];
+                    const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
+                    if (die)
+                    {
+                        if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
+                            continue;
+                        
+                        if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
+                            continue;
+
+                        // If we get to here, the die is good, and we should add it:
+                        if (resolved_dies.find(die) == resolved_dies.end())
+                        if (ResolveFunction (dwarf_cu, die, sc_list))
+                        {
+                            bool keep_die = true;
+                            if ((name_type_mask & (eFunctionNameTypeBase|eFunctionNameTypeMethod)) != (eFunctionNameTypeBase|eFunctionNameTypeMethod))
+                            {
+                                // We are looking for either basenames or methods, so we need to
+                                // trim out the ones we won't want by looking at the type
+                                SymbolContext sc;
+                                if (sc_list.GetLastContext(sc))
+                                {
+                                    if (sc.block)
+                                    {
+                                        // We have an inlined function
+                                    }
+                                    else if (sc.function)
+                                    {
+                                        Type *type = sc.function->GetType();
+                                        
+                                        clang::DeclContext* decl_ctx = GetClangDeclContextContainingTypeUID (type->GetID());
+                                        if (decl_ctx->isRecord())
+                                        {
+                                            if (name_type_mask & eFunctionNameTypeBase)
+                                            {
+                                                sc_list.RemoveContextAtIndex(sc_list.GetSize()-1);
+                                                keep_die = false;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (name_type_mask & eFunctionNameTypeMethod)
+                                            {
+                                                sc_list.RemoveContextAtIndex(sc_list.GetSize()-1);
+                                                keep_die = false;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (keep_die)
+                                resolved_dies.insert(die);
+                        }
+                    }
+                    else
+                    {
+                        GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_names accelerator table had bad die 0x%8.8x for '%s')",
+                                                                                   die_offset, name_cstr);
+                    }                                    
+                }
+                die_offsets.clear();
             }
         }
     }
@@ -3530,14 +3523,12 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
         if (name_type_mask & eFunctionNameTypeFull)
             FindFunctions (name, m_function_fullname_index, sc_list);
 
-        std::string base_name(base_name_start, base_name_end - base_name_start);
-        ConstString base_name_const(base_name.c_str());
         DIEArray die_offsets;
         DWARFCompileUnit *dwarf_cu = NULL;
         
-        if (effective_name_type_mask & eFunctionNameTypeBase)
+        if (name_type_mask & eFunctionNameTypeBase)
         {
-            uint32_t num_base = m_function_basename_index.Find(base_name_const, die_offsets);
+            uint32_t num_base = m_function_basename_index.Find(name, die_offsets);
             for (uint32_t i = 0; i < num_base; i++)
             {
                 const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
@@ -3549,27 +3540,23 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                     if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
                         continue;
                     
-                    if (!FunctionDieMatchesPartialName(die, 
-                                                       dwarf_cu, 
-                                                       eFunctionNameTypeBase, 
-                                                       name_cstr, 
-                                                       base_name_start, 
-                                                       base_name_end))
-                        continue;
-                    
                     // If we get to here, the die is good, and we should add it:
-                    ResolveFunction (dwarf_cu, die, sc_list);
+                    if (resolved_dies.find(die) == resolved_dies.end())
+                    {
+                        if (ResolveFunction (dwarf_cu, die, sc_list))
+                            resolved_dies.insert(die);
+                    }
                 }
             }
             die_offsets.clear();
         }
         
-        if (effective_name_type_mask & eFunctionNameTypeMethod)
+        if (name_type_mask & eFunctionNameTypeMethod)
         {
             if (namespace_decl && *namespace_decl)
                 return 0; // no methods in namespaces
 
-            uint32_t num_base = m_function_method_index.Find(base_name_const, die_offsets);
+            uint32_t num_base = m_function_method_index.Find(name, die_offsets);
             {
                 for (uint32_t i = 0; i < num_base; i++)
                 {
@@ -3579,23 +3566,19 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                         if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
                             continue;
                         
-                        if (!FunctionDieMatchesPartialName(die,
-                                                           dwarf_cu, 
-                                                           eFunctionNameTypeMethod, 
-                                                           name_cstr, 
-                                                           base_name_start, 
-                                                           base_name_end))
-                            continue;
-                        
                         // If we get to here, the die is good, and we should add it:
-                        ResolveFunction (dwarf_cu, die, sc_list);
+                        if (resolved_dies.find(die) == resolved_dies.end())
+                        {
+                            if (ResolveFunction (dwarf_cu, die, sc_list))
+                                resolved_dies.insert(die);
+                        }
                     }
                 }
             }
             die_offsets.clear();
         }
 
-        if ((effective_name_type_mask & eFunctionNameTypeSelector) && (!namespace_decl || !*namespace_decl))
+        if ((name_type_mask & eFunctionNameTypeSelector) && (!namespace_decl || !*namespace_decl))
         {
             FindFunctions (name, m_function_selector_index, sc_list);
         }

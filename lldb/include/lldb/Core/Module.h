@@ -882,6 +882,56 @@ public:
     bool
     RemapSourceFile (const char *path, std::string &new_path) const;
     
+    
+    //------------------------------------------------------------------
+    /// Prepare to do a function name lookup.
+    ///
+    /// Looking up functions by name can be a tricky thing. LLDB requires
+    /// that accelerator tables contain full names for functions as well
+    /// as function basenames which include functions, class methods and
+    /// class functions. When the user requests that an action use a
+    /// function by name, we are sometimes asked to automatically figure
+    /// out what a name could possibly map to. A user might request a
+    /// breakpoint be set on "count". If no options are supplied to limit
+    /// the scope of where to search for count, we will by default match
+    /// any function names named "count", all class and instance methods
+    /// named "count" (no matter what the namespace or contained context)
+    /// and any selectors named "count". If a user specifies "a::b" we
+    /// will search for the basename "b", and then prune the results that
+    /// don't match "a::b" (note that "c::a::b" and "d::e::a::b" will
+    /// match a query of "a::b".
+    ///
+    /// @param[in] name
+    ///     The user supplied name to use in the lookup
+    ///
+    /// @param[in] name_type_mask
+    ///     The mask of bits from lldb::FunctionNameType enumerations
+    ///     that tell us what kind of name we are looking for.
+    ///
+    /// @param[out] lookup_name
+    ///     The actual name that will be used when calling
+    ///     SymbolVendor::FindFunctions() or Symtab::FindFunctionSymbols()
+    ///
+    /// @param[out] lookup_name_type_mask
+    ///     The actual name mask that should be used in the calls to
+    ///     SymbolVendor::FindFunctions() or Symtab::FindFunctionSymbols()
+    ///
+    /// @param[out] match_name_after_lookup
+    ///     A boolean that indicates if we need to iterate through any
+    ///     match results obtained from SymbolVendor::FindFunctions() or
+    ///     Symtab::FindFunctionSymbols() to see if the name contains
+    ///     \a name. For example if \a name is "a::b", this function will
+    ///     return a \a lookup_name of "b", with \a match_name_after_lookup
+    ///     set to true to indicate any matches will need to be checked
+    ///     to make sure they contain \a name.
+    //------------------------------------------------------------------
+    static void
+    PrepareForFunctionNameLookup (const ConstString &name,
+                                  uint32_t name_type_mask,
+                                  ConstString &lookup_name,
+                                  uint32_t &lookup_name_type_mask,
+                                  bool &match_name_after_lookup);
+
 protected:
     //------------------------------------------------------------------
     // Member Variables

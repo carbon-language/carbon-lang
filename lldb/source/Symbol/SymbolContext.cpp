@@ -1056,6 +1056,17 @@ SymbolContextList::GetContextAtIndex(size_t idx, SymbolContext& sc) const
 }
 
 bool
+SymbolContextList::GetLastContext(SymbolContext& sc) const
+{
+    if (!m_symbol_contexts.empty())
+    {
+        sc = m_symbol_contexts.back();
+        return true;
+    }
+    return false;
+}
+
+bool
 SymbolContextList::RemoveContextAtIndex (size_t idx)
 {
     if (idx < m_symbol_contexts.size())

@@ -29,6 +29,8 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/SymbolVendor.h"
+#include "lldb/Target/CPPLanguageRuntime.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 
@@ -589,42 +591,83 @@ Module::FindFunctions (const ConstString &name,
     if (!append)
         sc_list.Clear();
 
-    const size_t start_size = sc_list.GetSize();
+    const size_t old_size = sc_list.GetSize();
 
     // Find all the functions (not symbols, but debug information functions...
     SymbolVendor *symbols = GetSymbolVendor ();
-    if (symbols)
-        symbols->FindFunctions(name, namespace_decl, name_type_mask, include_inlines, append, sc_list);
-
-    // Now check our symbol table for symbols that are code symbols if requested
-    if (include_symbols)
+    
+    if (name_type_mask & eFunctionNameTypeAuto)
     {
-        ObjectFile *objfile = GetObjectFile();
-        if (objfile)
+        ConstString lookup_name;
+        uint32_t lookup_name_type_mask = 0;
+        bool match_name_after_lookup = false;
+        Module::PrepareForFunctionNameLookup (name,
+                                              name_type_mask,
+                                              lookup_name,
+                                              lookup_name_type_mask,
+                                              match_name_after_lookup);
+        
+        if (symbols)
+            symbols->FindFunctions(lookup_name,
+                                   namespace_decl,
+                                   lookup_name_type_mask,
+                                   include_inlines,
+                                   append,
+                                   sc_list);
+        
+        // Now check our symbol table for symbols that are code symbols if requested
+        if (include_symbols)
         {
-            Symtab *symtab = objfile->GetSymtab();
-            if (symtab)
+            ObjectFile *objfile = GetObjectFile();
+            if (objfile)
             {
-                std::vector<uint32_t> symbol_indexes;
-                symtab->FindAllSymbolsWithNameAndType (name, eSymbolTypeAny, Symtab::eDebugAny, Symtab::eVisibilityAny, symbol_indexes);
-                const size_t num_matches = symbol_indexes.size();
-                if (num_matches)
+                Symtab *symtab = objfile->GetSymtab();
+                if (symtab)
+                    symtab->FindFunctionSymbols(lookup_name, lookup_name_type_mask, sc_list);
+            }
+        }
+
+        if (match_name_after_lookup)
+        {
+            SymbolContext sc;
+            size_t i = old_size;
+            while (i<sc_list.GetSize())
+            {
+                if (sc_list.GetContextAtIndex(i, sc))
                 {
-                    const bool merge_symbol_into_function = true;
-                    SymbolContext sc(this);
-                    for (size_t i=0; i<num_matches; i++)
+                    const char *func_name = sc.GetFunctionName().GetCString();
+                    if (func_name && strstr (func_name, name.GetCString()) == NULL)
                     {
-                        sc.symbol = symtab->SymbolAtIndex(symbol_indexes[i]);
-                        SymbolType sym_type = sc.symbol->GetType();
-                        if (sc.symbol && (sym_type == eSymbolTypeCode ||
-                                          sym_type == eSymbolTypeResolver))
-                            sc_list.AppendIfUnique (sc, merge_symbol_into_function);
+                        // Remove the current context
+                        sc_list.RemoveContextAtIndex(i);
+                        // Don't increment i and continue in the loop
+                        continue;
                     }
                 }
+                ++i;
+            }
+        }
+        
+    }
+    else
+    {
+        if (symbols)
+            symbols->FindFunctions(name, namespace_decl, name_type_mask, include_inlines, append, sc_list);
+
+        // Now check our symbol table for symbols that are code symbols if requested
+        if (include_symbols)
+        {
+            ObjectFile *objfile = GetObjectFile();
+            if (objfile)
+            {
+                Symtab *symtab = objfile->GetSymtab();
+                if (symtab)
+                    symtab->FindFunctionSymbols(name, name_type_mask, sc_list);
             }
         }
     }
-    return sc_list.GetSize() - start_size;
+
+    return sc_list.GetSize() - old_size;
 }
 
 size_t
@@ -1346,4 +1389,79 @@ Module::GetVersion (uint32_t *versions, uint32_t num_versions)
             versions[i] = UINT32_MAX;
     }
     return 0;
+}
+
+void
+Module::PrepareForFunctionNameLookup (const ConstString &name,
+                                      uint32_t name_type_mask,
+                                      ConstString &lookup_name,
+                                      uint32_t &lookup_name_type_mask,
+                                      bool &match_name_after_lookup)
+{
+    const char *name_cstr = name.GetCString();
+    lookup_name_type_mask = eFunctionNameTypeNone;
+    match_name_after_lookup = false;
+    const char *base_name_start = NULL;
+    const char *base_name_end = NULL;
+    
+    if (name_type_mask & eFunctionNameTypeAuto)
+    {
+        if (CPPLanguageRuntime::IsCPPMangledName (name_cstr))
+            lookup_name_type_mask = eFunctionNameTypeFull;
+        else if (ObjCLanguageRuntime::IsPossibleObjCMethodName (name_cstr))
+            lookup_name_type_mask = eFunctionNameTypeFull;
+        else
+        {
+            if (ObjCLanguageRuntime::IsPossibleObjCSelector(name_cstr))
+                lookup_name_type_mask |= eFunctionNameTypeSelector;
+            
+            if (CPPLanguageRuntime::IsPossibleCPPCall(name_cstr, base_name_start, base_name_end))
+                lookup_name_type_mask |= (eFunctionNameTypeMethod | eFunctionNameTypeBase);
+        }
+    }
+    else
+    {
+        lookup_name_type_mask = name_type_mask;
+        if (lookup_name_type_mask & eFunctionNameTypeMethod || name_type_mask & eFunctionNameTypeBase)
+        {
+            // If they've asked for a CPP method or function name and it can't be that, we don't
+            // even need to search for CPP methods or names.
+            if (!CPPLanguageRuntime::IsPossibleCPPCall(name_cstr, base_name_start, base_name_end))
+            {
+                lookup_name_type_mask &= ~(eFunctionNameTypeMethod | eFunctionNameTypeBase);
+                if (lookup_name_type_mask == eFunctionNameTypeNone)
+                    return;
+            }
+        }
+        
+        if (lookup_name_type_mask & eFunctionNameTypeSelector)
+        {
+            if (!ObjCLanguageRuntime::IsPossibleObjCSelector(name_cstr))
+            {
+                lookup_name_type_mask &= ~(eFunctionNameTypeSelector);
+                if (lookup_name_type_mask == eFunctionNameTypeNone)
+                    return;
+            }
+        }
+    }
+    
+    if (base_name_start &&
+        base_name_end &&
+        base_name_start != name_cstr &&
+        base_name_start < base_name_end)
+    {
+        // The name supplied was a partial C++ path like "a::count". In this case we want to do a
+        // lookup on the basename "count" and then make sure any matching results contain "a::count"
+        // so that it would match "b::a::count" and "a::count". This is why we set "match_name_after_lookup"
+        // to true
+        lookup_name.SetCStringWithLength(base_name_start, base_name_end - base_name_start);
+        match_name_after_lookup = true;
+    }
+    else
+    {
+        // The name is already correct, just use the exact name as supplied, and we won't need
+        // to check if any matches contain "name"
+        lookup_name = name;
+        match_name_after_lookup = false;
+    }
 }
