@@ -287,10 +287,10 @@ void LookupResult::configure() {
   IDNS = getIDNS(LookupKind, SemaRef.getLangOpts().CPlusPlus,
                  isForRedeclaration());
 
-  // If we're looking for one of the allocation or deallocation
-  // operators, make sure that the implicitly-declared new and delete
-  // operators can be found.
   if (!isForRedeclaration()) {
+    // If we're looking for one of the allocation or deallocation
+    // operators, make sure that the implicitly-declared new and delete
+    // operators can be found.
     switch (NameInfo.getName().getCXXOverloadedOperator()) {
     case OO_New:
     case OO_Delete:
@@ -301,6 +301,15 @@ void LookupResult::configure() {
 
     default:
       break;
+    }
+
+    // Compiler builtins are always visible, regardless of where they end
+    // up being declared.
+    if (IdentifierInfo *Id = NameInfo.getName().getAsIdentifierInfo()) {
+      if (unsigned BuiltinID = Id->getBuiltinID()) {
+        if (!SemaRef.Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID))
+          AllowHidden = true;
+      }
     }
   }
 }

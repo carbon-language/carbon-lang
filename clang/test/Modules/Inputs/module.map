@@ -192,3 +192,10 @@ module config {
 module diag_pragma {
   header "diag_pragma.h"
 }
+
+module builtin {
+  header "builtin.h"
+  explicit module sub {
+    header "builtin_sub.h"
+  }
+}
