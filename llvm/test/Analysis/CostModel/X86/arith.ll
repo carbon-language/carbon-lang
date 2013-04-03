@@ -94,7 +94,7 @@ define void @shift() {
   ; AVX2: cost of 1 {{.*}} ashr
   %C0 = ashr <4 x i32> undef, undef
   ; AVX: cost of 6 {{.*}} ashr
-  ; AVX2: cost of 6 {{.*}} ashr
+  ; AVX2: cost of 20 {{.*}} ashr
   %C1 = ashr <2 x i64> undef, undef
 
   ret void
@@ -121,7 +121,7 @@ define void @avx2shift() {
   ; AVX2: cost of 1 {{.*}} ashr
   %C0 = ashr <8 x i32> undef, undef
   ; AVX: cost of 12 {{.*}} ashr
-  ; AVX2: cost of 12 {{.*}} ashr
+  ; AVX2: cost of 40 {{.*}} ashr
   %C1 = ashr <4 x i64> undef, undef
 
   ret void

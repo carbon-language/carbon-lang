@@ -182,6 +182,16 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty) const {
     { ISD::SRL,     MVT::v2i64,    1 },
     { ISD::SHL,     MVT::v4i64,    1 },
     { ISD::SRL,     MVT::v4i64,    1 },
+
+    { ISD::SHL,  MVT::v32i8,  42 }, // cmpeqb sequence.
+    { ISD::SHL,  MVT::v16i16,  16*10 }, // Scalarized.
+
+    { ISD::SRL,  MVT::v32i8,  32*10 }, // Scalarized.
+    { ISD::SRL,  MVT::v16i16,  8*10 }, // Scalarized.
+
+    { ISD::SRA,  MVT::v32i8,  32*10 }, // Scalarized.
+    { ISD::SRA,  MVT::v16i16,  16*10 }, // Scalarized.
+    { ISD::SRA,  MVT::v4i64,  4*10 }, // Scalarized.
   };
 
   // Look for AVX2 lowering tricks.
@@ -190,6 +200,38 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty) const {
                                    ISD, LT.second);
     if (Idx != -1)
       return LT.first * AVX2CostTable[Idx].Cost;
+  }
+
+  static const CostTblEntry<MVT> SSE2CostTable[] = {
+    // We don't correctly identify costs of casts because they are marked as
+    // custom.
+    // For some cases, where the shift amount is a scalar we would be able
+    // to generate better code. Unfortunately, when this is the case the value
+    // (the splat) will get hoisted out of the loop, thereby making it invisible
+    // to ISel. The cost model must return worst case assumptions because it is
+    // used for vectorization and we don't want to make vectorized code worse
+    // than scalar code.
+    { ISD::SHL,  MVT::v16i8,  30 }, // cmpeqb sequence.
+    { ISD::SHL,  MVT::v8i16,  8*10 }, // Scalarized.
+    { ISD::SHL,  MVT::v4i32,  2*5 }, // We optimized this using mul.
+    { ISD::SHL,  MVT::v2i64,  2*10 }, // Scalarized.
+
+    { ISD::SRL,  MVT::v16i8,  16*10 }, // Scalarized.
+    { ISD::SRL,  MVT::v8i16,  8*10 }, // Scalarized.
+    { ISD::SRL,  MVT::v4i32,  4*10 }, // Scalarized.
+    { ISD::SRL,  MVT::v2i64,  2*10 }, // Scalarized.
+
+    { ISD::SRA,  MVT::v16i8,  16*10 }, // Scalarized.
+    { ISD::SRA,  MVT::v8i16,  8*10 }, // Scalarized.
+    { ISD::SRA,  MVT::v4i32,  4*10 }, // Scalarized.
+    { ISD::SRA,  MVT::v2i64,  2*10 }, // Scalarized.
+  };
+
+  if (ST->hasSSE2()) {
+    int Idx = CostTableLookup<MVT>(SSE2CostTable, array_lengthof(SSE2CostTable),
+                                   ISD, LT.second);
+    if (Idx != -1)
+      return LT.first * SSE2CostTable[Idx].Cost;
   }
 
   static const CostTblEntry<MVT> AVX1CostTable[] = {
