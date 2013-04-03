@@ -4099,7 +4099,7 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
 #endif
 
 #if (defined (__x86_64__) || defined (__i386__)) && defined (x86_THREAD_STATE)
-    nub_thread_t thread = DNBProcessGetCurrentThread (pid);
+    nub_thread_t thread = DNBProcessGetCurrentThreadMachPort (pid);
     kern_return_t kr;
     x86_thread_state_t gp_regs;
     mach_msg_type_number_t gp_count = x86_THREAD_STATE_COUNT;

@@ -75,6 +75,7 @@ nub_bool_t      DNBProcessGetExitStatus                 (nub_process_t pid, int 
 nub_bool_t      DNBProcessSetExitStatus                 (nub_process_t pid, int status) DNB_EXPORT;
 nub_size_t      DNBProcessGetNumThreads                 (nub_process_t pid) DNB_EXPORT;
 nub_thread_t    DNBProcessGetCurrentThread              (nub_process_t pid) DNB_EXPORT;
+nub_thread_t    DNBProcessGetCurrentThreadMachPort      (nub_process_t pid) DNB_EXPORT;
 nub_thread_t    DNBProcessSetCurrentThread              (nub_process_t pid, nub_thread_t tid) DNB_EXPORT;
 nub_thread_t    DNBProcessGetThreadAtIndex              (nub_process_t pid, nub_size_t thread_idx) DNB_EXPORT;
 nub_bool_t      DNBProcessSyncThreadState               (nub_process_t pid, nub_thread_t tid) DNB_EXPORT;

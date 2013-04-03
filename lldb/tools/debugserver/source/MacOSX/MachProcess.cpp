@@ -186,6 +186,12 @@ MachProcess::GetCurrentThread ()
 }
 
 nub_thread_t
+MachProcess::GetCurrentThreadMachPort ()
+{
+    return m_thread_list.GetMachPortNumberByThreadID(m_thread_list.CurrentThreadID());
+}
+
+nub_thread_t
 MachProcess::SetCurrentThread(nub_thread_t tid)
 {
     return m_thread_list.SetCurrentThread(tid);

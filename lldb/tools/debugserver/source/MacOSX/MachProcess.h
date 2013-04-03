@@ -176,6 +176,7 @@ public:
     nub_size_t              GetNumThreads () const;
     nub_thread_t            GetThreadAtIndex (nub_size_t thread_idx) const;
     nub_thread_t            GetCurrentThread ();
+    nub_thread_t            GetCurrentThreadMachPort ();
     nub_thread_t            SetCurrentThread (nub_thread_t tid);
     MachThreadList &        GetThreadList() { return m_thread_list; }
     bool                    GetThreadStoppedReason(nub_thread_t tid, struct DNBThreadStopInfo *stop_info) const;

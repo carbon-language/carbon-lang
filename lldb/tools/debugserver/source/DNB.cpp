@@ -1773,6 +1773,18 @@ DNBProcessGetCurrentThread (nub_process_t pid)
 }
 
 //----------------------------------------------------------------------
+// Get the mach port number of the current thread.
+//----------------------------------------------------------------------
+nub_thread_t
+DNBProcessGetCurrentThreadMachPort (nub_process_t pid)
+{
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+        return procSP->GetCurrentThreadMachPort();
+    return 0;
+}
+
+//----------------------------------------------------------------------
 // Change the current thread.
 //----------------------------------------------------------------------
 nub_thread_t
