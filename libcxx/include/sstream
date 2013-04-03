@@ -260,17 +260,36 @@ template <class _CharT, class _Traits, class _Allocator>
 basic_stringbuf<_CharT, _Traits, _Allocator>::basic_stringbuf(basic_stringbuf&& __rhs)
     : __mode_(__rhs.__mode_)
 {
-    ptrdiff_t __ninp = __rhs.gptr()  - __rhs.eback();
-    ptrdiff_t __einp = __rhs.egptr() - __rhs.eback();
-    ptrdiff_t __nout = __rhs.pptr()  - __rhs.pbase();
-    ptrdiff_t __eout = __rhs.epptr() - __rhs.pbase();
-    ptrdiff_t __hm   = __rhs.__hm_   - __rhs.pbase();
+    char_type* __p = const_cast<char_type*>(__rhs.__str_.data());
+    ptrdiff_t __binp = -1;
+    ptrdiff_t __ninp = -1;
+    ptrdiff_t __einp = -1;
+    if (__rhs.eback() != nullptr)
+    {
+        __binp = __rhs.eback() - __p;
+        __ninp = __rhs.gptr() - __p;
+        __einp = __rhs.egptr() - __p;
+    }
+    ptrdiff_t __bout = -1;
+    ptrdiff_t __nout = -1;
+    ptrdiff_t __eout = -1;
+    if (__rhs.pbase() != nullptr)
+    {
+        __bout = __rhs.pbase() - __p;
+        __nout = __rhs.pptr() - __p;
+        __eout = __rhs.epptr() - __p;
+    }
+    ptrdiff_t __hm = __rhs.__hm_ == nullptr ? -1 : __rhs.__hm_ - __p;
     __str_ = _VSTD::move(__rhs.__str_);
-    char_type* __p = const_cast<char_type*>(__str_.data());
-    this->setg(__p, __p + __ninp, __p + __einp);
-    this->setp(__p, __p + __eout);
-    this->pbump(__nout);
-    __hm_ = __p + __hm;
+    __p = const_cast<char_type*>(__str_.data());
+    if (__binp != -1)
+        this->setg(__p + __binp, __p + __ninp, __p + __einp);
+    if (__bout != -1)
+    {
+        this->setp(__p + __bout, __p + __eout);
+        this->pbump(__nout);
+    }
+    __hm_ = __hm == -1 ? nullptr : __p + __hm;
     __p = const_cast<char_type*>(__rhs.__str_.data());
     __rhs.setg(__p, __p, __p);
     __rhs.setp(__p, __p);
@@ -282,18 +301,37 @@ template <class _CharT, class _Traits, class _Allocator>
 basic_stringbuf<_CharT, _Traits, _Allocator>&
 basic_stringbuf<_CharT, _Traits, _Allocator>::operator=(basic_stringbuf&& __rhs)
 {
-    ptrdiff_t __ninp = __rhs.gptr()  - __rhs.eback();
-    ptrdiff_t __einp = __rhs.egptr() - __rhs.eback();
-    ptrdiff_t __nout = __rhs.pptr()  - __rhs.pbase();
-    ptrdiff_t __eout = __rhs.epptr() - __rhs.pbase();
-    ptrdiff_t __hm   = __rhs.__hm_   - __rhs.pbase();
-    __mode_ = __rhs.__mode_;
+    char_type* __p = const_cast<char_type*>(__rhs.__str_.data());
+    ptrdiff_t __binp = -1;
+    ptrdiff_t __ninp = -1;
+    ptrdiff_t __einp = -1;
+    if (__rhs.eback() != nullptr)
+    {
+        __binp = __rhs.eback() - __p;
+        __ninp = __rhs.gptr() - __p;
+        __einp = __rhs.egptr() - __p;
+    }
+    ptrdiff_t __bout = -1;
+    ptrdiff_t __nout = -1;
+    ptrdiff_t __eout = -1;
+    if (__rhs.pbase() != nullptr)
+    {
+        __bout = __rhs.pbase() - __p;
+        __nout = __rhs.pptr() - __p;
+        __eout = __rhs.epptr() - __p;
+    }
+    ptrdiff_t __hm = __rhs.__hm_ == nullptr ? -1 : __rhs.__hm_ - __p;
     __str_ = _VSTD::move(__rhs.__str_);
-    char_type* __p = const_cast<char_type*>(__str_.data());
-    this->setg(__p, __p + __ninp, __p + __einp);
-    this->setp(__p, __p + __eout);
-    this->pbump(__nout);
-    __hm_ = __p + __hm;
+    __p = const_cast<char_type*>(__str_.data());
+    if (__binp != -1)
+        this->setg(__p + __binp, __p + __ninp, __p + __einp);
+    if (__bout != -1)
+    {
+        this->setp(__p + __bout, __p + __eout);
+        this->pbump(__nout);
+    }
+    __hm_ = __hm == -1 ? nullptr : __p + __hm;
+    __mode_ = __rhs.__mode_;
     __p = const_cast<char_type*>(__rhs.__str_.data());
     __rhs.setg(__p, __p, __p);
     __rhs.setp(__p, __p);
@@ -308,28 +346,74 @@ template <class _CharT, class _Traits, class _Allocator>
 void
 basic_stringbuf<_CharT, _Traits, _Allocator>::swap(basic_stringbuf& __rhs)
 {
-    ptrdiff_t __rninp = __rhs.gptr()  - __rhs.eback();
-    ptrdiff_t __reinp = __rhs.egptr() - __rhs.eback();
-    ptrdiff_t __rnout = __rhs.pptr()  - __rhs.pbase();
-    ptrdiff_t __reout = __rhs.epptr() - __rhs.pbase();
-    ptrdiff_t __rhm   = __rhs.__hm_   - __rhs.pbase();
-    ptrdiff_t __lninp = this->gptr()  - this->eback();
-    ptrdiff_t __leinp = this->egptr() - this->eback();
-    ptrdiff_t __lnout = this->pptr()  - this->pbase();
-    ptrdiff_t __leout = this->epptr() - this->pbase();
-    ptrdiff_t __lhm   = this->__hm_   - this->pbase();
+    char_type* __p = const_cast<char_type*>(__rhs.__str_.data());
+    ptrdiff_t __rbinp = -1;
+    ptrdiff_t __rninp = -1;
+    ptrdiff_t __reinp = -1;
+    if (__rhs.eback() != nullptr)
+    {
+        __rbinp = __rhs.eback() - __p;
+        __rninp = __rhs.gptr() - __p;
+        __reinp = __rhs.egptr() - __p;
+    }
+    ptrdiff_t __rbout = -1;
+    ptrdiff_t __rnout = -1;
+    ptrdiff_t __reout = -1;
+    if (__rhs.pbase() != nullptr)
+    {
+        __rbout = __rhs.pbase() - __p;
+        __rnout = __rhs.pptr() - __p;
+        __reout = __rhs.epptr() - __p;
+    }
+    ptrdiff_t __rhm = __rhs.__hm_ == nullptr ? -1 : __rhs.__hm_ - __p;
+    __p = const_cast<char_type*>(__str_.data());
+    ptrdiff_t __lbinp = -1;
+    ptrdiff_t __lninp = -1;
+    ptrdiff_t __leinp = -1;
+    if (this->eback() != nullptr)
+    {
+        __lbinp = this->eback() - __p;
+        __lninp = this->gptr() - __p;
+        __leinp = this->egptr() - __p;
+    }
+    ptrdiff_t __lbout = -1;
+    ptrdiff_t __lnout = -1;
+    ptrdiff_t __leout = -1;
+    if (this->pbase() != nullptr)
+    {
+        __lbout = this->pbase() - __p;
+        __lnout = this->pptr() - __p;
+        __leout = this->epptr() - __p;
+    }
+    ptrdiff_t __lhm = __hm_ == nullptr ? -1 : __hm_ - __p;
     _VSTD::swap(__mode_, __rhs.__mode_);
     __str_.swap(__rhs.__str_);
-    char_type* __p = const_cast<char_type*>(__str_.data());
-    this->setg(__p, __p + __rninp, __p + __reinp);
-    this->setp(__p, __p + __reout);
-    this->pbump(__rnout);
-    __hm_ = __p + __rhm;
+    __p = const_cast<char_type*>(__str_.data());
+    if (__rbinp != -1)
+        this->setg(__p + __rbinp, __p + __rninp, __p + __reinp);
+    else
+        this->setg(nullptr, nullptr, nullptr);
+    if (__rbout != -1)
+    {
+        this->setp(__p + __rbout, __p + __reout);
+        this->pbump(__rnout);
+    }
+    else
+        this->setp(nullptr, nullptr);
+    __hm_ = __rhm == -1 ? nullptr : __p + __rhm;
     __p = const_cast<char_type*>(__rhs.__str_.data());
-    __rhs.setg(__p, __p + __lninp, __p + __leinp);
-    __rhs.setp(__p, __p + __leout);
-    __rhs.pbump(__lnout);
-    __rhs.__hm_ = __p + __lhm;
+    if (__lbinp != -1)
+        __rhs.setg(__p + __lbinp, __p + __lninp, __p + __leinp);
+    else
+        __rhs.setg(nullptr, nullptr, nullptr);
+    if (__lbout != -1)
+    {
+        __rhs.setp(__p + __lbout, __p + __leout);
+        __rhs.pbump(__lnout);
+    }
+    else
+        __rhs.setp(nullptr, nullptr);
+    __rhs.__hm_ = __lhm == -1 ? nullptr : __p + __lhm;
     locale __tl = __rhs.getloc();
     __rhs.pubimbue(this->getloc());
     this->pubimbue(__tl);
