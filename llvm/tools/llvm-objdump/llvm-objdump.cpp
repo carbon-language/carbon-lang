@@ -228,6 +228,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       if (!error(i->containsSymbol(*si, contains)) && contains) {
         uint64_t Address;
         if (error(si->getAddress(Address))) break;
+        if (Address == UnknownAddressOrSize) continue;
         Address -= SectionAddr;
 
         StringRef Name;
