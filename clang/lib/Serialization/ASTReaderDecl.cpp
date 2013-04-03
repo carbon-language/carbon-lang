@@ -2196,10 +2196,6 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
       }
       PendingVisibleUpdates.erase(I);
     }
-
-    if (!LookupDC->hasExternalVisibleStorage() &&
-        DC->hasExternalLexicalStorage())
-      LookupDC->setMustBuildLookupTable();
   }
   assert(Idx == Record.size());
 

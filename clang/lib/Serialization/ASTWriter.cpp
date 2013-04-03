@@ -3324,8 +3324,6 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
 
   // If not in C++, we perform name lookup for the translation unit via the
   // IdentifierInfo chains, don't bother to build a visible-declarations table.
-  // FIXME: In C++ we need the visible declarations in order to "see" the
-  // friend declarations, is there a way to do this without writing the table ?
   if (DC->isTranslationUnit() && !Context.getLangOpts().CPlusPlus)
     return 0;
 

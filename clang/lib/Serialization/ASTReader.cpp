@@ -1995,8 +1995,14 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       Error("error at end of module block in AST file");
       return true;
     case llvm::BitstreamEntry::EndBlock: {
+      // Outside of C++, we do not store a lookup map for the translation unit.
+      // Instead, mark it as needing a lookup map to be built if this module
+      // contains any declarations lexically within it (which it always does!).
+      // This usually has no cost, since we very rarely need the lookup map for
+      // the translation unit outside C++.
       DeclContext *DC = Context.getTranslationUnitDecl();
-      if (!DC->hasExternalVisibleStorage() && DC->hasExternalLexicalStorage())
+      if (DC->hasExternalLexicalStorage() &&
+          !getContext().getLangOpts().CPlusPlus)
         DC->setMustBuildLookupTable();
       
       return false;
