@@ -184,8 +184,13 @@ DWARFDebugInfoEntry::FastExtract
 
                     // Compile unit address sized values
                     case DW_FORM_addr        :
-                    case DW_FORM_ref_addr    :
                         form_size = cu->GetAddressByteSize();
+                        break;
+                    case DW_FORM_ref_addr    :
+                        if (cu->GetVersion() <= 2)
+                            form_size = cu->GetAddressByteSize();
+                        else
+                            form_size = 4; // 4 bytes for DWARF 32, 8 bytes for DWARF 64, but we don't support DWARF64 yet
                         break;
 
                     // 0 sized form
@@ -343,8 +348,13 @@ DWARFDebugInfoEntry::Extract
 
                             // Compile unit address sized values
                             case DW_FORM_addr        :
-                            case DW_FORM_ref_addr    :
                                 form_size = cu_addr_size;
+                                break;
+                            case DW_FORM_ref_addr    :
+                                if (cu->GetVersion() <= 2)
+                                    form_size = cu_addr_size;
+                                else
+                                    form_size = 4; // 4 bytes for DWARF 32, 8 bytes for DWARF 64, but we don't support DWARF64 yet
                                 break;
 
                             // 0 sized form
