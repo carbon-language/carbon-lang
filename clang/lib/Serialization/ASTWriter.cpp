@@ -2937,6 +2937,7 @@ class ASTIdentifierTableTrait {
     if (!MD)
       return 0;
 
+    SubmoduleID OrigModID = ModID;
     bool isUndefined = false;
     Optional<bool> isPublic;
     for (; MD; MD = MD->getPrevious()) {
@@ -2954,6 +2955,11 @@ class ASTIdentifierTableTrait {
         isUndefined = false;
         isPublic = Optional<bool>();
       }
+      // We are looking for a definition in a different submodule than the one
+      // that we started with. If a submodule has re-definitions of the same
+      // macro, only the last definition will be used as the "exported" one.
+      if (ModID == OrigModID)
+        continue;
 
       if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD)) {
         if (!isUndefined && (!isPublic.hasValue() || isPublic.getValue()))
