@@ -49,7 +49,14 @@ StopInfoMachException::GetDescription ()
             exc_desc = "EXC_BAD_ACCESS";
             subcode_label = "address";
             switch (cpu)
-            {                        
+            {
+            case llvm::Triple::x86:
+            case llvm::Triple::x86_64:
+                switch (m_exc_code)
+                {
+                case 0xd: code_desc = "EXC_I386_GPFLT"; m_exc_data_count = 1; break;
+                }
+                break;
             case llvm::Triple::arm:
                 switch (m_exc_code)
                 {
