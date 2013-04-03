@@ -24,7 +24,11 @@
 #include <sys/prctl.h> // for PR_* definitions
 #include <sys/ptrace.h> // for PTRACE_* definitions
 #include <sys/types.h> // for pid_t
-#include <sys/user.h> // for user_regst_struct
+#if defined(SANITIZER_ANDROID) && defined(__arm__)
+# include <linux/user.h>  // for pt_regs
+#else
+# include <sys/user.h>  // for user_regs_struct
+#endif
 #include <sys/wait.h> // for signal-related stuff
 
 #include "sanitizer_common.h"
@@ -346,27 +350,35 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
 }
 
 // Platform-specific methods from SuspendedThreadsList.
+#if defined(SANITIZER_ANDROID) && defined(__arm__)
+typedef pt_regs regs_struct;
+#else
+typedef user_regs_struct regs_struct;
+#endif
+
 int SuspendedThreadsList::GetRegistersAndSP(uptr index,
                                             uptr *buffer,
                                             uptr *sp) const {
   pid_t tid = GetThreadID(index);
-  user_regs_struct regs;
+  regs_struct regs;
   if (internal_ptrace(PTRACE_GETREGS, tid, NULL, &regs) != 0) {
     Report("Could not get registers from thread %d (errno %d).\n",
            tid, errno);
     return -1;
   }
-#if __WORDSIZE == 32
-    *sp = regs.esp;
+#if defined(__arm__)
+  *sp = regs.ARM_sp;
+#elif SANITIZER_WORDSIZE == 32
+  *sp = regs.esp;
 #else
-    *sp = regs.rsp;
+  *sp = regs.rsp;
 #endif
   internal_memcpy(buffer, &regs, sizeof(regs));
   return 0;
 }
 
 uptr SuspendedThreadsList::RegisterCount() {
-  return sizeof(user_regs_struct) / sizeof(uptr);
+  return sizeof(regs_struct) / sizeof(uptr);
 }
 }  // namespace __sanitizer
 
