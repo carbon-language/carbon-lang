@@ -2779,6 +2779,34 @@ bool ObjCARCOpt::OptimizeSequences(Function &F) {
          NestingDetected;
 }
 
+// Check if there is a dependent call earlier that does not have anything in
+// between the Retain and the call that can affect the reference count of their
+// shared pointer argument. Note that Retain need not be in BB.
+static bool
+HasSafePathToPredecessorCall(const Value *Arg, Instruction *Retain,
+                             SmallPtrSet<Instruction *, 4> &DepInsts,
+                             SmallPtrSet<const BasicBlock *, 4> &Visited,
+                             ProvenanceAnalysis &PA) {
+  FindDependencies(CanChangeRetainCount, Arg, Retain->getParent(), Retain,
+                   DepInsts, Visited, PA);
+  if (DepInsts.size() != 1)
+    return false;
+  
+  CallInst *Call =
+    dyn_cast_or_null<CallInst>(*DepInsts.begin());
+  
+  // Check that the pointer is the return value of the call.
+  if (!Call || Arg != Call)
+    return false;
+  
+  // Check that the call is a regular call.
+  InstructionClass Class = GetBasicInstructionClass(Call);
+  if (Class != IC_CallOrUser && Class != IC_Call)
+    return false;
+  
+  return true;
+}
+
 /// Look for this pattern:
 /// \code
 ///    %call = call i8* @something(...)
@@ -2840,28 +2868,11 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
 
         DependingInstructions.clear();
         Visited.clear();
-
-        // Check that there is nothing that can affect the reference
-        // count between the retain and the call.
-        // Note that Retain need not be in BB.
-        FindDependencies(CanChangeRetainCount, Arg, Retain->getParent(), Retain,
-                         DependingInstructions, Visited, PA);
-        if (DependingInstructions.size() != 1)
-          goto next_block;
-
-        {
-          CallInst *Call =
-            dyn_cast_or_null<CallInst>(*DependingInstructions.begin());
-
-          // Check that the pointer is the return value of the call.
-          if (!Call || Arg != Call)
-            goto next_block;
-
-          // Check that the call is a regular call.
-          InstructionClass Class = GetBasicInstructionClass(Call);
-          if (Class != IC_CallOrUser && Class != IC_Call)
-            goto next_block;
-
+        
+        // Check that there is nothing that can affect the reference count
+        // between the retain and the call.  Note that Retain need not be in BB.
+        if (HasSafePathToPredecessorCall(Arg, Retain, DependingInstructions,
+                                         Visited, PA)) {
           // If so, we can zap the retain and autorelease.
           Changed = true;
           ++NumRets;
