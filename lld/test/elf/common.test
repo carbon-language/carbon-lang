@@ -1,5 +1,10 @@
 RUN: lld -core -target x86_64-linux -output=%t %p/Inputs/relocs.x86-64 \
 RUN:   -output-type=static
-RUN: llvm-readobj %t | FileCheck %s
+RUN: llvm-readobj -t %t | FileCheck %s
 
-CHECK: i DATA
+CHECK:        Symbol {
+CHECK:          Name: i
+CHECK-NEXT:     Value:
+CHECK-NEXT:     Size:
+CHECK-NEXT:     Binding:
+CHECK-NEXT:     Type: Object

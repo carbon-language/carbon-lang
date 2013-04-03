@@ -1,7 +1,6 @@
 RUN: lld-core -reader ELF -writer ELF -o %t1 %p/Inputs/section-test.i386
 RUN: llvm-objdump -section-headers %t1 |  FileCheck -check-prefix=OBJDUMP %s
-RUN: llvm-readobj  %t1 |  FileCheck -check-prefix=READOBJ %s
-RUN: elf-dump  --dump-section %t1 |  FileCheck -check-prefix=ED %s
+RUN: llvm-readobj -h -s -t %t1 |  FileCheck -check-prefix=READOBJ %s
 
 OBJDUMP:  0               00000000 0000000000000000
 OBJDUMP:  1 .text         0000000a 0000000000000074 TEXT DATA
@@ -13,23 +12,128 @@ OBJDUMP:  6 .shstrtab     {{[0-9a-f]+}} 0000000000000000
 OBJDUMP:  7 .symtab       {{[0-9a-f]+}} 0000000000000000
 OBJDUMP:  8 .strtab       {{[0-9a-f]+}} 0000000000000000
 
-READOBJ: File Format : ELF32-i386
-READOBJ: Arch        : i386
-READOBJ: Address Size: 32 bits
-READOBJ: Symbols
-READOBJ: baz FUNC .text   74 a   e8 global
-READOBJ: y   DATA .special 1004 4 2008 global
+READOBJ: Format: ELF32-i386
+READOBJ: Arch: i386
+READOBJ: AddressSize: 32bit
+READOBJ: ElfHeader {
+READOBJ:   Ident {
+READOBJ:     DataEncoding: LittleEndian (0x1)
+READOBJ:   }
+READOBJ:   Machine: EM_386
+READOBJ: }
 
-ED: 'e_indent[EI_DATA]', 0x01
-ED: 'e_machine', 0x0003
-ED: Section 1
-ED: 'sh_addralign', 0x00000004
-ED: Section 2
-ED: 'sh_addralign', 0x00000004
-ED: Section 6
-ED: 'sh_link', 0x00000000
-ED: 'sh_addralign', 0x00000001
-ED: Section 7
-ED: 'sh_link', 0x00000008
-ED: 'sh_addralign', 0x00000004
-ED: 'sh_entsize', 0x00000010
+READOBJ: Sections [
+READOBJ:   Section {
+READOBJ:     Index: 0
+READOBJ:     Name: (0)
+READOBJ:     Type: SHT_NULL
+READOBJ:     Flags [ (0x0)
+READOBJ:     ]
+READOBJ:     Address: 0x0
+READOBJ:     Size: 0
+READOBJ:   }
+READOBJ:   Section {
+READOBJ:     Index: 1
+READOBJ:     Name: .text
+READOBJ:     Type: SHT_PROGBITS
+READOBJ:     Flags [ (0x6)
+READOBJ:       SHF_ALLOC
+READOBJ:       SHF_EXECINSTR
+READOBJ:     ]
+READOBJ:     Address: 0x74
+READOBJ:     Size: 10
+READOBJ:     AddressAlignment: 4
+READOBJ:   }
+READOBJ:   Section {
+READOBJ:     Index: 2
+READOBJ:     Name: .data
+READOBJ:     Type: SHT_PROGBITS
+READOBJ:     Flags [ (0x3)
+READOBJ:       SHF_ALLOC
+READOBJ:       SHF_WRITE
+READOBJ:     ]
+READOBJ:     Address: 0x1000
+READOBJ:     Size: 4
+READOBJ:     AddressAlignment: 4
+READOBJ:   }
+READOBJ:   Section {
+READOBJ:     Index: 3
+READOBJ:     Name: .special
+READOBJ:     Type: SHT_PROGBITS
+READOBJ:     Flags [ (0x3)
+READOBJ:       SHF_ALLOC
+READOBJ:       SHF_WRITE
+READOBJ:     ]
+READOBJ:     Address: 0x1004
+READOBJ:     Size: 4
+READOBJ:   }
+READOBJ:   Section {
+READOBJ:     Index: 4
+READOBJ:     Name: .anotherspecial
+READOBJ:     Type: SHT_PROGBITS
+READOBJ:     Flags [ (0x3)
+READOBJ:       SHF_ALLOC
+READOBJ:       SHF_WRITE
+READOBJ:     ]
+READOBJ:     Address: 0x1008
+READOBJ:     Size: 4
+READOBJ:   }
+READOBJ:   Section {
+READOBJ:     Index: 5
+READOBJ:     Name: .bss
+READOBJ:     Type: SHT_NOBITS
+READOBJ:     Flags [ (0x3)
+READOBJ:       SHF_ALLOC
+READOBJ:       SHF_WRITE
+READOBJ:     ]
+READOBJ:     Address: 0x100C
+READOBJ:     Size: 4
+READOBJ:   }
+READOBJ:   Section {
+READOBJ:     Index: 6
+READOBJ:     Name: .shstrtab
+READOBJ:     Type: SHT_STRTAB
+READOBJ:     Flags [ (0x0)
+READOBJ:     ]
+READOBJ:     Address: 0x0
+READOBJ:     Link: 0
+READOBJ:     AddressAlignment: 1
+READOBJ:   }
+READOBJ:   Section {
+READOBJ:     Index: 7
+READOBJ:     Name: .symtab
+READOBJ:     Type: SHT_SYMTAB
+READOBJ:     Flags [ (0x0)
+READOBJ:     ]
+READOBJ:     Address: 0x0
+READOBJ:     Link: 8
+READOBJ:     AddressAlignment: 4
+READOBJ:     EntrySize: 16
+READOBJ:   }
+READOBJ:   Section {
+READOBJ:     Index: 8
+READOBJ:     Name: .strtab
+READOBJ:     Type: SHT_STRTAB
+READOBJ:     Flags [ (0x0)
+READOBJ:     ]
+READOBJ:     Address: 0x0
+READOBJ:   }
+READOBJ: ]
+
+READOBJ: Symbols [
+READOBJ:   Symbol {
+READOBJ:     Name: baz
+READOBJ:     Value: 0x74
+READOBJ:     Size: 10
+READOBJ:     Binding: Global
+READOBJ:     Type: Function
+READOBJ:     Section: .text
+READOBJ:   }
+READOBJ:   Symbol {
+READOBJ:     Name: y
+READOBJ:     Value: 0x1004
+READOBJ:     Size: 4
+READOBJ:     Binding: Global
+READOBJ:     Type: Object
+READOBJ:     Section: .special
+READOBJ:   }

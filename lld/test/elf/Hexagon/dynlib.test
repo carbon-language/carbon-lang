@@ -1,11 +1,34 @@
 RUN: lld -core -target hexagon %p/Inputs/use-shared.hexagon \
 RUN: -output=%t1 -output-type=shared
-RUN: llvm-readobj %t1 > %t2
+RUN: llvm-readobj -dyn-symbols %t1 > %t2
 RUN: FileCheck -check-prefix=DYNSYMS %s < %t2
 
-DYNSYMS: Dynamic Symbols:
-DYNSYMS: Name Type Section Address Size FileOffset Flags                     
-DYNSYMS: fn2 FUNC .text {{[0-9a-f]+}} {{[0-9a-f]+}} {{[0-9a-f]+}} global
-DYNSYMS: fn1 FUNC .text {{[0-9a-f]+}} {{[0-9a-f]+}} {{[0-9a-f]+}} global
-DYNSYMS: fn3 FUNC .text {{[0-9a-f]+}} {{[0-9a-f]+}} {{[0-9a-f]+}} global
-DYNSYMS: Total: 3
+DYNSYMS:      DynamicSymbols [
+DYNSYMS:        Symbol {
+DYNSYMS:          Name: fn2
+DYNSYMS-NEXT:     Value:
+DYNSYMS-NEXT:     Size:
+DYNSYMS-NEXT:     Binding: Global
+DYNSYMS-NEXT:     Type: Function
+DYNSYMS-NEXT:     Other:
+DYNSYMS-NEXT:     Section: .text
+DYNSYMS:       }
+DYNSYMS:        Symbol {
+DYNSYMS:          Name: fn1
+DYNSYMS-NEXT:     Value:
+DYNSYMS-NEXT:     Size:
+DYNSYMS-NEXT:     Binding: Global
+DYNSYMS-NEXT:     Type: Function
+DYNSYMS-NEXT:     Other:
+DYNSYMS-NEXT:     Section: .text
+DYNSYMS:        }
+DYNSYMS:        Symbol {
+DYNSYMS:          Name: fn3
+DYNSYMS-NEXT:     Value:
+DYNSYMS-NEXT:     Size:
+DYNSYMS-NEXT:     Binding: Global
+DYNSYMS-NEXT:     Type: Function
+DYNSYMS-NEXT:     Other:
+DYNSYMS-NEXT:     Section: .text
+DYNSYMS-NEXT:   }
+DYNSYMS-NEXT: ]
