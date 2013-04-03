@@ -357,7 +357,6 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
                                       result_ptr_id,
                                       ptr_qual_type,
                                       NULL,
-                                      SC_Static,
                                       SC_Static);
         
         if (!result_decl)
@@ -378,7 +377,6 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
                                       &result_id, 
                                       expr_qual_type, 
                                       NULL, 
-                                      SC_Static, 
                                       SC_Static);
         
         if (!result_decl)

@@ -1813,7 +1813,6 @@ ClangASTContext::AddMethodToCXXRecordType
                                                          DeclarationNameInfo (ast->DeclarationNames.getCXXOperatorName (op_kind), SourceLocation()),
                                                          method_qual_type,
                                                          NULL, // TypeSourceInfo *
-                                                         is_static,
                                                          SC_None,
                                                          is_inline,
                                                          false /*is_constexpr*/,
@@ -1843,7 +1842,6 @@ ClangASTContext::AddMethodToCXXRecordType
                                                      DeclarationNameInfo (decl_name, SourceLocation()),
                                                      method_qual_type,
                                                      NULL, // TypeSourceInfo *
-                                                     is_static,
                                                      SC_None,
                                                      is_inline,
                                                      false /*is_constexpr*/,
@@ -1874,7 +1872,6 @@ ClangASTContext::AddMethodToCXXRecordType
                                                NULL, // anonymous
                                                method_function_prototype->getArgType(param_index), 
                                                NULL,
-                                               SC_None,
                                                SC_None,
                                                NULL));
     }
@@ -2603,7 +2600,6 @@ ClangASTContext::AddObjCClassProperty
                                                                NULL, // anonymous
                                                                QualType::getFromOpaquePtr(property_opaque_type_to_access), 
                                                                NULL,
-                                                               SC_Auto, 
                                                                SC_Auto,
                                                                NULL));
                         
@@ -2772,7 +2768,6 @@ ClangASTContext::AddMethodToObjCObjectType (ASTContext *ast,
                                                    NULL, // anonymous
                                                    method_function_prototype->getArgType(param_index), 
                                                    NULL,
-                                                   SC_Auto, 
                                                    SC_Auto,
                                                    NULL));
         }
@@ -5325,7 +5320,6 @@ ClangASTContext::CreateParameterDeclaration (const char *name, clang_type_t para
                                 name && name[0] ? &ast->Idents.get(name) : NULL,
                                 QualType::getFromOpaquePtr(param_type),
                                 NULL,
-                                (VarDecl::StorageClass)storage,
                                 (VarDecl::StorageClass)storage,
                                 0);
 }

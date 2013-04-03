@@ -403,7 +403,6 @@ public:
                                                            arg_type,
                                                            NULL,
                                                            clang::SC_None,
-                                                           clang::SC_None,
                                                            NULL));
         }
         

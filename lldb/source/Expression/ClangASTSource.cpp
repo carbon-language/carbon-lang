@@ -1713,7 +1713,6 @@ NameSearchContext::AddVarDecl(void *type)
                                              ii, 
                                              QualType::getFromOpaquePtr(type), 
                                              0, 
-                                             SC_Static, 
                                              SC_Static);
     m_decls.push_back(Decl);
     
@@ -1762,7 +1761,6 @@ NameSearchContext::AddFunDecl (void *type)
                                                           NULL,
                                                           arg_qual_type,
                                                           NULL,
-                                                          SC_Static,
                                                           SC_Static,
                                                           NULL));
         }
