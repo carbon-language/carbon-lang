@@ -790,6 +790,7 @@ public:
   uint64_t getNumSections() const;
   uint64_t getStringTableIndex() const;
   ELF::Elf64_Word getSymbolTableIndex(const Elf_Sym *symb) const;
+  const Elf_Ehdr *getElfHeader() const;
   const Elf_Shdr *getSection(const Elf_Sym *symb) const;
   const Elf_Shdr *getElfSection(section_iterator &It) const;
   const Elf_Sym *getElfSymbol(symbol_iterator &It) const;
@@ -966,6 +967,12 @@ ELFObjectFile<ELFT>::getSection(const Elf_Sym *symb) const {
   if (symb->st_shndx >= ELF::SHN_LORESERVE)
     return 0;
   return getSection(symb->st_shndx);
+}
+
+template<class ELFT>
+const typename ELFObjectFile<ELFT>::Elf_Ehdr *
+ELFObjectFile<ELFT>::getElfHeader() const {
+  return Header;
 }
 
 template<class ELFT>

@@ -9,7 +9,7 @@
 
 LEVEL := ../..
 TOOLNAME := llvm-readobj
-LINK_COMPONENTS := archive bitreader object
+LINK_COMPONENTS := archive bitreader object all-targets
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS := 1

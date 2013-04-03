@@ -1,6 +1,15 @@
-set(LLVM_LINK_COMPONENTS archive bitreader object)
+set(LLVM_LINK_COMPONENTS
+  ${LLVM_TARGETS_TO_BUILD}
+  archive
+  bitreader
+  object)
 
 add_llvm_tool(llvm-readobj
-  ELF.cpp
   llvm-readobj.cpp
+  ObjDumper.cpp
+  COFFDumper.cpp
+  ELFDumper.cpp
+  MachODumper.cpp
+  Error.cpp
+  StreamWriter.cpp
   )

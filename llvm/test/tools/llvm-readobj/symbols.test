@@ -1,0 +1,44 @@
+RUN: llvm-readobj -t %p/Inputs/trivial.obj.coff-i386 \
+RUN:   | FileCheck %s -check-prefix COFF
+RUN: llvm-readobj -t %p/Inputs/trivial.obj.elf-i386 \
+RUN:   | FileCheck %s -check-prefix ELF
+
+COFF:      Symbols [
+COFF-NEXT:   Symbol {
+COFF-NEXT:     Name: .text
+COFF-NEXT:     Value: 0
+COFF-NEXT:     Section: .text (1)
+COFF-NEXT:     BaseType: Null (0x0)
+COFF-NEXT:     ComplexType: Null (0x0)
+COFF-NEXT:     StorageClass: Static (0x3)
+COFF-NEXT:     AuxSymbolCount: 1
+COFF-NEXT:     AuxSectionDef {
+COFF-NEXT:       Length: 22
+COFF-NEXT:       RelocationCount: 3
+COFF-NEXT:       LineNumberCount: 0
+COFF-NEXT:       Checksum: 0x0
+COFF-NEXT:       Number: 1
+COFF-NEXT:       Selection: 0x0
+COFF-NEXT:       Unused: (00 00 00)
+COFF-NEXT:     }
+COFF-NEXT:   }
+
+ELF:      Symbols [
+ELF-NEXT:   Symbol {
+ELF-NEXT:     Name: trivial.ll (1)
+ELF-NEXT:     Value: 0x0
+ELF-NEXT:     Size: 0
+ELF-NEXT:     Binding: Local (0x0)
+ELF-NEXT:     Type: File (0x4)
+ELF-NEXT:     Other: 0
+ELF-NEXT:     Section:  (0xFFF1)
+ELF-NEXT:   }
+ELF-NEXT:   Symbol {
+ELF-NEXT:     Name: .L.str (39)
+ELF-NEXT:     Value: 0x0
+ELF-NEXT:     Size: 13
+ELF-NEXT:     Binding: Local (0x0)
+ELF-NEXT:     Type: Object (0x1)
+ELF-NEXT:     Other: 0
+ELF-NEXT:     Section: .rodata.str1.1 (0x5)
+ELF-NEXT:   }

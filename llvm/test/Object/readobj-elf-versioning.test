@@ -1,15 +1,46 @@
-RUN: llvm-readobj %p/Inputs/elf-versioning-test.i386 \
+RUN: llvm-readobj -dt %p/Inputs/elf-versioning-test.i386 \
 RUN:         | FileCheck %s -check-prefix ELF
-RUN: llvm-readobj %p/Inputs/elf-versioning-test.i386 \
+RUN: llvm-readobj -dt %p/Inputs/elf-versioning-test.i386 \
 RUN:         | FileCheck %s -check-prefix ELF32
-RUN: llvm-readobj %p/Inputs/elf-versioning-test.x86_64 \
+RUN: llvm-readobj -dt %p/Inputs/elf-versioning-test.x86_64 \
 RUN:         | FileCheck %s -check-prefix ELF
-RUN: llvm-readobj %p/Inputs/elf-versioning-test.x86_64 \
+RUN: llvm-readobj -dt %p/Inputs/elf-versioning-test.x86_64 \
 RUN:         | FileCheck %s -check-prefix ELF64
 
-ELF: foo@@VER2          FUNC  .text {{[0-9a-f]+}} {{[0-9a-f]+}} {{[0-9a-f]+}} global
-ELF: foo@VER1           FUNC  .text {{[0-9a-f]+}} {{[0-9a-f]+}} {{[0-9a-f]+}} global
-ELF: unversioned_define FUNC  .text {{[0-9a-f]+}} {{[0-9a-f]+}} {{[0-9a-f]+}} global
+ELF: DynamicSymbols [
+ELF:   Symbol {
+ELF:     Name: foo@@VER2
+ELF:     Binding: Global
+ELF:     Type: Function
+ELF:     Section: .text
+ELF:   }
+ELF:   Symbol {
+ELF:     Name: foo@VER1
+ELF:     Binding: Global
+ELF:     Type: Function
+ELF:     Section: .text
+ELF:   }
+ELF:   Symbol {
+ELF:     Name: unversioned_define
+ELF:     Binding: Global
+ELF:     Type: Function
+ELF:     Section: .text
+ELF:   }
+ELF: ]
 
-ELF32: puts@GLIBC_2.0   FUNC {{[0-9a-f]+}} {{[0-9a-f]+}} {{[0-9a-f]+}} undef,global
-ELF64: puts@GLIBC_2.2.5 FUNC {{[0-9a-f]+}} {{[0-9a-f]+}} {{[0-9a-f]+}} undef,global
+ELF32: DynamicSymbols [
+ELF32:   Symbol {
+ELF32:     Name: puts@GLIBC_2.0
+ELF32:     Binding: Global
+ELF32:     Type: Function
+ELF32:     Section:  (0x0)
+ELF32:   }
+ELF32: ]
+ELF64: DynamicSymbols [
+ELF64:   Symbol {
+ELF64:     Name: puts@GLIBC_2.2.5
+ELF64:     Binding: Global
+ELF64:     Type: Function
+ELF64:     Section:  (0x0)
+ELF64:   }
+ELF64: ]

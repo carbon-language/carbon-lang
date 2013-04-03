@@ -19,4 +19,4 @@
 type = Tool
 name = llvm-readobj
 parent = Tools
-required_libraries = Archive BitReader Object
+required_libraries = all-targets Archive BitReader Object

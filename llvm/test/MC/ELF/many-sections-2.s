@@ -1,5 +1,5 @@
 // RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o %t
-// RUN: llvm-readobj %t | FileCheck %s
+// RUN: llvm-readobj -s %t | FileCheck %s
 
 // CHECK: symtab_shndx
 

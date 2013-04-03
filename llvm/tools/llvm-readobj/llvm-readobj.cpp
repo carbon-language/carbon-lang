@@ -21,268 +21,263 @@
 
 #include "llvm-readobj.h"
 
-#include "llvm/ADT/Triple.h"
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/Object/ELF.h"
+#include "Error.h"
+#include "ObjDumper.h"
+#include "StreamWriter.h"
+
+#include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Format.h"
-#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/system_error.h"
+
+#include <string>
+
 
 using namespace llvm;
 using namespace llvm::object;
 
-static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<input object>"), cl::init(""));
+namespace opts {
+  cl::list<std::string> InputFilenames(cl::Positional,
+    cl::desc("<input object files>"),
+    cl::ZeroOrMore);
 
-static void dumpSymbolHeader() {
-  outs() << format("  %-32s", (const char *)"Name")
-         << format("  %-4s", (const char *)"Type")
-         << format("  %-4s", (const char *)"Section")
-         << format("  %-16s", (const char *)"Address")
-         << format("  %-16s", (const char *)"Size")
-         << format("  %-16s", (const char *)"FileOffset")
-         << format("  %-26s", (const char *)"Flags") << "\n";
+  // -file-headers, -h
+  cl::opt<bool> FileHeaders("file-headers",
+    cl::desc("Display file headers "));
+  cl::alias FileHeadersShort("h",
+    cl::desc("Alias for --file-headers"),
+    cl::aliasopt(FileHeaders));
+
+  // -sections, -s
+  cl::opt<bool> Sections("sections",
+    cl::desc("Display all sections."));
+  cl::alias SectionsShort("s",
+    cl::desc("Alias for --sections"),
+    cl::aliasopt(Sections));
+
+  // -section-relocations, -sr
+  cl::opt<bool> SectionRelocations("section-relocations",
+    cl::desc("Display relocations for each section shown."));
+  cl::alias SectionRelocationsShort("sr",
+    cl::desc("Alias for --section-relocations"),
+    cl::aliasopt(SectionRelocations));
+
+  // -section-symbols, -st
+  cl::opt<bool> SectionSymbols("section-symbols",
+    cl::desc("Display symbols for each section shown."));
+  cl::alias SectionSymbolsShort("st",
+    cl::desc("Alias for --section-symbols"),
+    cl::aliasopt(SectionSymbols));
+
+  // -section-data, -sd
+  cl::opt<bool> SectionData("section-data",
+    cl::desc("Display section data for each section shown."));
+  cl::alias SectionDataShort("sd",
+    cl::desc("Alias for --section-data"),
+    cl::aliasopt(SectionData));
+
+  // -relocations, -r
+  cl::opt<bool> Relocations("relocations",
+    cl::desc("Display the relocation entries in the file"));
+  cl::alias RelocationsShort("r",
+    cl::desc("Alias for --relocations"),
+    cl::aliasopt(Relocations));
+
+  // -symbols, -t
+  cl::opt<bool> Symbols("symbols",
+    cl::desc("Display the symbol table"));
+  cl::alias SymbolsShort("t",
+    cl::desc("Alias for --symbols"),
+    cl::aliasopt(Symbols));
+
+  // -dyn-symbols, -dt
+  cl::opt<bool> DynamicSymbols("dyn-symbols",
+    cl::desc("Display the dynamic symbol table"));
+  cl::alias DynamicSymbolsShort("dt",
+    cl::desc("Alias for --dyn-symbols"),
+    cl::aliasopt(DynamicSymbols));
+
+  // -unwind, -u
+  cl::opt<bool> UnwindInfo("unwind",
+    cl::desc("Display unwind information"));
+  cl::alias UnwindInfoShort("u",
+    cl::desc("Alias for --unwind"),
+    cl::aliasopt(UnwindInfo));
+
+  // -dynamic-table
+  cl::opt<bool> DynamicTable("dynamic-table",
+    cl::desc("Display the ELF .dynamic section table"));
+
+  // -needed-libs
+  cl::opt<bool> NeededLibraries("needed-libs",
+    cl::desc("Display the needed libraries"));
+} // namespace opts
+
+namespace llvm {
+
+bool error(error_code EC) {
+  if (!EC)
+    return false;
+
+  outs() << "\nError reading file: " << EC.message() << ".\n";
+  outs().flush();
+  return true;
 }
 
-static void dumpSectionHeader() {
-  outs() << format("  %-24s", (const char*)"Name")
-         << format("  %-16s", (const char*)"Address")
-         << format("  %-16s", (const char*)"Size")
-         << format("  %-8s", (const char*)"Align")
-         << format("  %-26s", (const char*)"Flags")
+bool relocAddressLess(RelocationRef a, RelocationRef b) {
+  uint64_t a_addr, b_addr;
+  if (error(a.getAddress(a_addr))) return false;
+  if (error(b.getAddress(b_addr))) return false;
+  return a_addr < b_addr;
+}
+
+} // namespace llvm
+
+
+static void reportError(StringRef Input, error_code EC) {
+  if (Input == "-")
+    Input = "<stdin>";
+
+  errs() << Input << ": " << EC.message() << "\n";
+  errs().flush();
+}
+
+static void reportError(StringRef Input, StringRef Message) {
+  if (Input == "-")
+    Input = "<stdin>";
+
+  errs() << Input << ": " << Message << "\n";
+}
+
+/// @brief Creates an format-specific object file dumper.
+static error_code createDumper(const ObjectFile *Obj,
+                               StreamWriter &Writer,
+                               OwningPtr<ObjDumper> &Result) {
+  if (!Obj)
+    return readobj_error::unsupported_file_format;
+
+  if (Obj->isCOFF())
+    return createCOFFDumper(Obj, Writer, Result);
+  if (Obj->isELF())
+    return createELFDumper(Obj, Writer, Result);
+  if (Obj->isMachO())
+    return createMachODumper(Obj, Writer, Result);
+
+  return readobj_error::unsupported_obj_file_format;
+}
+
+
+/// @brief Dumps the specified object file.
+static void dumpObject(const ObjectFile *Obj) {
+  StreamWriter Writer(outs());
+  OwningPtr<ObjDumper> Dumper;
+  if (error_code EC = createDumper(Obj, Writer, Dumper)) {
+    reportError(Obj->getFileName(), EC);
+    return;
+  }
+
+  outs() << '\n';
+  outs() << "File: " << Obj->getFileName() << "\n";
+  outs() << "Format: " << Obj->getFileFormatName() << "\n";
+  outs() << "Arch: "
+         << Triple::getArchTypeName((llvm::Triple::ArchType)Obj->getArch())
          << "\n";
+  outs() << "AddressSize: " << (8*Obj->getBytesInAddress()) << "bit\n";
+  if (Obj->isELF())
+    outs() << "LoadName: " << Obj->getLoadName() << "\n";
+
+  if (opts::FileHeaders)
+    Dumper->printFileHeaders();
+  if (opts::Sections)
+    Dumper->printSections();
+  if (opts::Relocations)
+    Dumper->printRelocations();
+  if (opts::Symbols)
+    Dumper->printSymbols();
+  if (opts::DynamicSymbols)
+    Dumper->printDynamicSymbols();
+  if (opts::UnwindInfo)
+    Dumper->printUnwindInfo();
+  if (opts::DynamicTable)
+    Dumper->printDynamicTable();
+  if (opts::NeededLibraries)
+    Dumper->printNeededLibraries();
 }
 
-static const char *getTypeStr(SymbolRef::Type Type) {
-  switch (Type) {
-  case SymbolRef::ST_Unknown: return "?";
-  case SymbolRef::ST_Data: return "DATA";
-  case SymbolRef::ST_Debug: return "DBG";
-  case SymbolRef::ST_File: return "FILE";
-  case SymbolRef::ST_Function: return "FUNC";
-  case SymbolRef::ST_Other: return "-";
-  }
-  return "INV";
-}
 
-static std::string getSymbolFlagStr(uint32_t Flags) {
-  std::string result;
-  if (Flags & SymbolRef::SF_Undefined)
-    result += "undef,";
-  if (Flags & SymbolRef::SF_Global)
-    result += "global,";
-  if (Flags & SymbolRef::SF_Weak)
-    result += "weak,";
-  if (Flags & SymbolRef::SF_Absolute)
-    result += "absolute,";
-  if (Flags & SymbolRef::SF_ThreadLocal)
-    result += "threadlocal,";
-  if (Flags & SymbolRef::SF_Common)
-    result += "common,";
-  if (Flags & SymbolRef::SF_FormatSpecific)
-    result += "formatspecific,";
-
-  // Remove trailing comma
-  if (result.size() > 0) {
-    result.erase(result.size() - 1);
-  }
-  return result;
-}
-
-static void checkError(error_code ec, const char *msg) {
-  if (ec)
-    report_fatal_error(std::string(msg) + ": " + ec.message());
-}
-
-static std::string getSectionFlagStr(const SectionRef &Section) {
-  const struct {
-    error_code (SectionRef::*MemF)(bool &) const;
-    const char *FlagStr, *ErrorStr;
-  } Work[] =
-      {{ &SectionRef::isText, "text,", "Section.isText() failed" },
-       { &SectionRef::isData, "data,", "Section.isData() failed" },
-       { &SectionRef::isBSS, "bss,", "Section.isBSS() failed"  },
-       { &SectionRef::isRequiredForExecution, "required,",
-         "Section.isRequiredForExecution() failed" },
-       { &SectionRef::isVirtual, "virtual,", "Section.isVirtual() failed" },
-       { &SectionRef::isZeroInit, "zeroinit,", "Section.isZeroInit() failed" },
-       { &SectionRef::isReadOnlyData, "rodata,",
-         "Section.isReadOnlyData() failed" }};
-
-  std::string result;
-  for (uint32_t I = 0; I < sizeof(Work)/sizeof(*Work); ++I) {
-    bool B;
-    checkError((Section.*Work[I].MemF)(B), Work[I].ErrorStr);
-    if (B)
-      result += Work[I].FlagStr;
-  }
-
-  // Remove trailing comma
-  if (result.size() > 0) {
-    result.erase(result.size() - 1);
-  }
-  return result;
-}
-
-static void
-dumpSymbol(const SymbolRef &Sym, const ObjectFile *obj, bool IsDynamic) {
-  StringRef Name;
-  SymbolRef::Type Type;
-  uint32_t Flags;
-  uint64_t Address;
-  uint64_t Size;
-  uint64_t FileOffset;
-  checkError(Sym.getName(Name), "SymbolRef.getName() failed");
-  checkError(Sym.getAddress(Address), "SymbolRef.getAddress() failed");
-  checkError(Sym.getSize(Size), "SymbolRef.getSize() failed");
-  checkError(Sym.getFileOffset(FileOffset),
-             "SymbolRef.getFileOffset() failed");
-  checkError(Sym.getType(Type), "SymbolRef.getType() failed");
-  checkError(Sym.getFlags(Flags), "SymbolRef.getFlags() failed");
-  std::string FullName = Name;
-
-  llvm::object::section_iterator symSection(obj->begin_sections());
-  Sym.getSection(symSection);
-  StringRef sectionName;
-
-  if (symSection != obj->end_sections())
-    checkError(symSection->getName(sectionName),
-               "SectionRef::getName() failed");
-
-  // If this is a dynamic symbol from an ELF object, append
-  // the symbol's version to the name.
-  if (IsDynamic && obj->isELF()) {
-    StringRef Version;
-    bool IsDefault;
-    GetELFSymbolVersion(obj, Sym, Version, IsDefault);
-    if (!Version.empty()) {
-      FullName += (IsDefault ? "@@" : "@");
-      FullName += Version;
+/// @brief Dumps each object file in \a Arc;
+static void dumpArchive(const Archive *Arc) {
+  for (Archive::child_iterator ArcI = Arc->begin_children(),
+                               ArcE = Arc->end_children();
+                               ArcI != ArcE; ++ArcI) {
+    OwningPtr<Binary> child;
+    if (error_code EC = ArcI->getAsBinary(child)) {
+      // Ignore non-object files.
+      if (EC != object_error::invalid_file_type)
+        reportError(Arc->getFileName(), EC.message());
+      continue;
     }
+
+    if (ObjectFile *Obj = dyn_cast<ObjectFile>(child.get()))
+      dumpObject(Obj);
+    else
+      reportError(Arc->getFileName(), readobj_error::unrecognized_file_format);
+  }
+}
+
+
+/// @brief Opens \a File and dumps it.
+static void dumpInput(StringRef File) {
+  // If file isn't stdin, check that it exists.
+  if (File != "-" && !sys::fs::exists(File)) {
+    reportError(File, readobj_error::file_not_found);
+    return;
   }
 
-  // format() can't handle StringRefs
-  outs() << format("  %-32s", FullName.c_str())
-         << format("  %-4s", getTypeStr(Type))
-         << format("  %-32s", std::string(sectionName).c_str())
-         << format("  %16" PRIx64, Address) << format("  %16" PRIx64, Size)
-         << format("  %16" PRIx64, FileOffset) << "  "
-         << getSymbolFlagStr(Flags) << "\n";
-}
-
-static void dumpStaticSymbol(const SymbolRef &Sym, const ObjectFile *obj) {
-  return dumpSymbol(Sym, obj, false);
-}
-
-static void dumpDynamicSymbol(const SymbolRef &Sym, const ObjectFile *obj) {
-  return dumpSymbol(Sym, obj, true);
-}
-
-static void dumpSection(const SectionRef &Section, const ObjectFile *obj) {
-  StringRef Name;
-  checkError(Section.getName(Name), "SectionRef::getName() failed");
-  uint64_t Addr, Size, Align;
-  checkError(Section.getAddress(Addr), "SectionRef::getAddress() failed");
-  checkError(Section.getSize(Size), "SectionRef::getSize() failed");
-  checkError(Section.getAlignment(Align), "SectionRef::getAlignment() failed");
-  outs() << format("  %-24s", std::string(Name).c_str())
-         << format("  %16" PRIx64, Addr)
-         << format("  %16" PRIx64, Size)
-         << format("  %8" PRIx64, Align)
-         << "  " << getSectionFlagStr(Section)
-         << "\n";
-}
-
-static void dumpLibrary(const LibraryRef &lib, const ObjectFile *obj) {
-  StringRef path;
-  lib.getPath(path);
-  outs() << "  " << path << "\n";
-}
-
-template<typename Iterator, typename Func>
-static void dump(const ObjectFile *obj, Func f, Iterator begin, Iterator end,
-                 const char *errStr) {
-  error_code ec;
-  uint32_t count = 0;
-  Iterator it = begin, ie = end;
-  while (it != ie) {
-    f(*it, obj);
-    it.increment(ec);
-    if (ec)
-      report_fatal_error(errStr);
-    ++count;
+  // Attempt to open the binary.
+  OwningPtr<Binary> Binary;
+  if (error_code EC = createBinary(File, Binary)) {
+    reportError(File, EC);
+    return;
   }
-  outs() << "  Total: " << count << "\n\n";
+
+  if (Archive *Arc = dyn_cast<Archive>(Binary.get()))
+    dumpArchive(Arc);
+  else if (ObjectFile *Obj = dyn_cast<ObjectFile>(Binary.get()))
+    dumpObject(Obj);
+  else
+    reportError(File, readobj_error::unrecognized_file_format);
 }
 
-static void dumpHeaders(const ObjectFile *obj) {
-  outs() << "File Format : " << obj->getFileFormatName() << "\n";
-  outs() << "Arch        : "
-         << Triple::getArchTypeName((llvm::Triple::ArchType)obj->getArch())
-         << "\n";
-  outs() << "Address Size: " << (8*obj->getBytesInAddress()) << " bits\n";
-  outs() << "Load Name   : " << obj->getLoadName() << "\n";
-  outs() << "\n";
-}
 
-int main(int argc, char** argv) {
-  error_code ec;
+int main(int argc, const char *argv[]) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
+  llvm_shutdown_obj Y;
 
-  cl::ParseCommandLineOptions(argc, argv,
-                              "LLVM Object Reader\n");
+  // Initialize targets.
+  llvm::InitializeAllTargetInfos();
 
-  if (InputFilename.empty()) {
-    errs() << "Please specify an input filename\n";
-    return 1;
-  }
+  // Register the target printer for --version.
+  cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
 
-  // Open the object file
-  OwningPtr<MemoryBuffer> File;
-  if (MemoryBuffer::getFile(InputFilename, File)) {
-    errs() << InputFilename << ": Open failed\n";
-    return 1;
-  }
+  cl::ParseCommandLineOptions(argc, argv, "LLVM Object Reader\n");
 
-  OwningPtr<ObjectFile> o(ObjectFile::createObjectFile(File.take()));
-  ObjectFile *obj = o.get();
-  if (!obj) {
-    errs() << InputFilename << ": Object type not recognized\n";
-  }
+  // Default to stdin if no filename is specified.
+  if (opts::InputFilenames.size() == 0)
+    opts::InputFilenames.push_back("-");
 
-  dumpHeaders(obj);
-
-  outs() << "Symbols:\n";
-  dumpSymbolHeader();
-  dump(obj, dumpStaticSymbol, obj->begin_symbols(), obj->end_symbols(),
-       "Symbol iteration failed");
-
-  outs() << "Dynamic Symbols:\n";
-  dumpSymbolHeader();
-  dump(obj, dumpDynamicSymbol, obj->begin_dynamic_symbols(),
-       obj->end_dynamic_symbols(), "Symbol iteration failed");
-
-  outs() << "Sections:\n";
-  dumpSectionHeader();
-  dump(obj, &dumpSection, obj->begin_sections(), obj->end_sections(),
-       "Section iteration failed");
-
-  if (obj->isELF()) {
-    if (ErrorOr<void> e = dumpELFDynamicTable(obj, outs()))
-      ;
-    else
-      errs() << "InputFilename" << ": " << error_code(e).message() << "\n";
-  }
-
-  outs() << "Libraries needed:\n";
-  dump(obj, &dumpLibrary, obj->begin_libraries_needed(),
-       obj->end_libraries_needed(), "Needed libraries iteration failed");
+  std::for_each(opts::InputFilenames.begin(), opts::InputFilenames.end(),
+                dumpInput);
 
   return 0;
 }
-

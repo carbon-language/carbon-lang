@@ -1,0 +1,113 @@
+RUN: llvm-readobj -s %p/Inputs/trivial.obj.coff-i386 \
+RUN:   | FileCheck %s -check-prefix COFF
+RUN: llvm-readobj -s %p/Inputs/trivial.obj.elf-i386 \
+RUN:   | FileCheck %s -check-prefix ELF
+RUN: llvm-readobj -s %p/Inputs/trivial.obj.macho-i386 \
+RUN:   | FileCheck %s -check-prefix MACHO
+
+COFF:      Sections [
+COFF-NEXT:   Section {
+COFF-NEXT:     Number: 1
+COFF-NEXT:     Name: .text (2E 74 65 78 74 00 00 00)
+COFF-NEXT:     VirtualSize: 0x0
+COFF-NEXT:     VirtualAddress: 0x0
+COFF-NEXT:     RawDataSize: 22
+COFF-NEXT:     PointerToRawData: 0x64
+COFF-NEXT:     PointerToRelocations: 0x7A
+COFF-NEXT:     PointerToLineNumbers: 0x0
+COFF-NEXT:     RelocationCount: 3
+COFF-NEXT:     LineNumberCount: 0
+COFF-NEXT:     Characteristics [ (0x60500020)
+COFF-NEXT:       IMAGE_SCN_ALIGN_16BYTES (0x500000)
+COFF-NEXT:       IMAGE_SCN_CNT_CODE (0x20)
+COFF-NEXT:       IMAGE_SCN_MEM_EXECUTE (0x20000000)
+COFF-NEXT:       IMAGE_SCN_MEM_READ (0x40000000)
+COFF-NEXT:     ]
+COFF-NEXT:   }
+COFF-NEXT:   Section {
+COFF-NEXT:     Number: 2
+COFF-NEXT:     Name: .data (2E 64 61 74 61 00 00 00)
+COFF-NEXT:     VirtualSize: 0x0
+COFF-NEXT:     VirtualAddress: 0x0
+COFF-NEXT:     RawDataSize: 13
+COFF-NEXT:     PointerToRawData: 0x98
+COFF-NEXT:     PointerToRelocations: 0x0
+COFF-NEXT:     PointerToLineNumbers: 0x0
+COFF-NEXT:     RelocationCount: 0
+COFF-NEXT:     LineNumberCount: 0
+COFF-NEXT:     Characteristics [ (0xC0300040)
+COFF-NEXT:       IMAGE_SCN_ALIGN_4BYTES (0x300000)
+COFF-NEXT:       IMAGE_SCN_CNT_INITIALIZED_DATA (0x40)
+COFF-NEXT:       IMAGE_SCN_MEM_READ (0x40000000)
+COFF-NEXT:       IMAGE_SCN_MEM_WRITE (0x80000000)
+COFF-NEXT:     ]
+COFF-NEXT:   }
+COFF-NEXT: ]
+
+ELF:      Sections [
+ELF-NEXT:   Section {
+ELF-NEXT:     Index: 0
+ELF-NEXT:     Name:  (0)
+ELF-NEXT:     Type: SHT_NULL (0x0)
+ELF-NEXT:     Flags [ (0x0)
+ELF-NEXT:     ]
+ELF-NEXT:     Address: 0x0
+ELF-NEXT:     Offset: 0x0
+ELF-NEXT:     Size: 0
+ELF-NEXT:     Link: 0
+ELF-NEXT:     Info: 0
+ELF-NEXT:     AddressAlignment: 0
+ELF-NEXT:     EntrySize: 0
+ELF-NEXT:   }
+ELF-NEXT:   Section {
+ELF-NEXT:     Index: 1
+ELF-NEXT:     Name: .text (5)
+ELF-NEXT:     Type: SHT_PROGBITS (0x1)
+ELF-NEXT:     Flags [ (0x6)
+ELF-NEXT:       SHF_ALLOC (0x2)
+ELF-NEXT:       SHF_EXECINSTR (0x4)
+ELF-NEXT:     ]
+ELF-NEXT:     Address: 0x0
+ELF-NEXT:     Offset: 0x40
+ELF-NEXT:     Size: 42
+ELF-NEXT:     Link: 0
+ELF-NEXT:     Info: 0
+ELF-NEXT:     AddressAlignment: 16
+ELF-NEXT:     EntrySize: 0
+ELF-NEXT:   }
+
+MACHO:      Sections [
+MACHO-NEXT:   Section {
+MACHO-NEXT:     Index: 0
+MACHO-NEXT:     Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
+MACHO-NEXT:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+MACHO-NEXT:     Address: 0x0
+MACHO-NEXT:     Size: 0x22
+MACHO-NEXT:     Offset: 324
+MACHO-NEXT:     Alignment: 4
+MACHO-NEXT:     RelocationOffset: 0x174
+MACHO-NEXT:     RelocationCount: 4
+MACHO-NEXT:     Type: 0x0
+MACHO-NEXT:     Attributes [ (0x800004)
+MACHO-NEXT:       PureInstructions (0x800000)
+MACHO-NEXT:       SomeInstructions (0x4)
+MACHO-NEXT:     ]
+MACHO-NEXT:     Reserved1: 0x0
+MACHO-NEXT:     Reserved2: 0x0
+MACHO-NEXT:   }
+MACHO-NEXT:   Section {
+MACHO-NEXT:     Index: 1
+MACHO-NEXT:     Name: __cstring (5F 5F 63 73 74 72 69 6E 67 00 00 00 00 00 00 00)
+MACHO-NEXT:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+MACHO-NEXT:     Address: 0x22
+MACHO-NEXT:     Size: 0xD
+MACHO-NEXT:     Offset: 358
+MACHO-NEXT:     Alignment: 0
+MACHO-NEXT:     RelocationOffset: 0x0
+MACHO-NEXT:     RelocationCount: 0
+MACHO-NEXT:     Type: ExtReloc (0x2)
+MACHO-NEXT:     Attributes [ (0x0)
+MACHO-NEXT:     ]
+MACHO-NEXT:     Reserved1: 0x0
+MACHO-NEXT:     Reserved2: 0x0
+MACHO-NEXT:   }
