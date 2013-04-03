@@ -331,11 +331,7 @@ CommandInterpreter::Initialize ()
     {
         alias_arguments_vector_sp.reset (new OptionArgVector);
         ProcessAliasOptionsArgs (cmd_obj_sp, "--func-regex %1", alias_arguments_vector_sp);
-        AddAlias ("rb", cmd_obj_sp);
-        AddAlias ("rbr", cmd_obj_sp);
         AddAlias ("rbreak", cmd_obj_sp);
-        AddOrReplaceAliasOptions("rb", alias_arguments_vector_sp);
-        AddOrReplaceAliasOptions("rbr", alias_arguments_vector_sp);
         AddOrReplaceAliasOptions("rbreak", alias_arguments_vector_sp);
     }
 }
@@ -920,6 +916,40 @@ CommandInterpreter::ProcessAliasOptionsArgs (lldb::CommandObjectSP &cmd_obj_sp,
     }
         
     return success;
+}
+
+bool
+CommandInterpreter::GetAliasFullName (const char *cmd, std::string &full_name)
+{
+    bool exact_match  = (m_alias_dict.find(cmd) != m_alias_dict.end());
+    if (exact_match)
+    {
+        full_name.assign(cmd);
+        return exact_match;
+    }
+    else
+    {
+        StringList matches;
+        size_t num_alias_matches;
+        num_alias_matches = CommandObject::AddNamesMatchingPartialString (m_alias_dict, cmd, matches);
+        if (num_alias_matches == 1)
+        {
+            // Make sure this isn't shadowing a command in the regular command space:
+            StringList regular_matches;
+            const bool include_aliases = false;
+            const bool exact = false;
+            CommandObjectSP cmd_obj_sp(GetCommandSP (cmd, include_aliases, exact, &regular_matches));
+            if (cmd_obj_sp || regular_matches.GetSize() > 0)
+                return false;
+            else
+            {
+                full_name.assign (matches.GetStringAtIndex(0));
+                return true;
+            }
+        }
+        else
+            return false;
+    }
 }
 
 bool
@@ -1574,10 +1604,11 @@ CommandInterpreter::HandleCommand (const char *command_line,
         ExtractCommand (command_string, next_word, suffix, quote_char);
         if (cmd_obj == NULL)
         {
-            if (AliasExists (next_word.c_str())) 
+            std::string full_name;
+            if (GetAliasFullName(next_word.c_str(), full_name))
             {
                 std::string alias_result;
-                cmd_obj = BuildAliasResult (next_word.c_str(), command_string, alias_result, result);
+                cmd_obj = BuildAliasResult (full_name.c_str(), command_string, alias_result, result);
                 revised_command_line.Printf ("%s", alias_result.c_str());
                 if (cmd_obj)
                 {

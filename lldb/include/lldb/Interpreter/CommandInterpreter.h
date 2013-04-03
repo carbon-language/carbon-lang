@@ -114,6 +114,9 @@ public:
 
     bool
     RemoveAlias (const char *alias_name);
+    
+    bool
+    GetAliasFullName (const char *cmd, std::string &full_name);
 
     bool
     RemoveUser (const char *alias_name);
