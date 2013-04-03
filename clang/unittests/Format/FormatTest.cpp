@@ -311,8 +311,8 @@ TEST_F(FormatTest, FormatsForLoop) {
   verifyFormat(
       "for (MachineFun::iterator IIII = PrevIt, EEEE = F.end(); IIII != EEEE;\n"
       "     ++IIIII) {\n}");
-  verifyFormat("for (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
-               "         aaaaaaaaaaa = aaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaa;\n"
+  verifyFormat("for (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaa =\n"
+               "         aaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaa;\n"
                "     aaaaaaaaaaa != aaaaaaaaaaaaaaaaaaa; ++aaaaaaaaaaa) {\n}");
   verifyFormat("for (llvm::ArrayRef<NamedDecl *>::iterator\n"
                "         I = FD->getDeclsInPrototypeScope().begin(),\n"
@@ -328,6 +328,10 @@ TEST_F(FormatTest, FormatsForLoop) {
       "     ++aaaaaaaaaaa) {\n}");
   verifyFormat("for (int aaaaaaaaaaa = 1; aaaaaaaaaaa <= bbbbbbbbbbbbbbb;\n"
                "     aaaaaaaaaaa++, bbbbbbbbbbbbbbbbb++) {\n"
+               "}");
+  verifyFormat("for (some_namespace::SomeIterator iter( // force break\n"
+               "         aaaaaaaaaa);\n"
+               "     iter; ++iter) {\n"
                "}");
 
   FormatStyle NoBinPacking = getLLVMStyle();
@@ -1188,8 +1192,9 @@ TEST_F(FormatTest, FormatsSmallMacroDefinitionsInSingleLine) {
 }
 
 TEST_F(FormatTest, DoesNotBreakPureVirtualFunctionDefinition) {
-  verifyFormat("virtual void write(ELFWriter *writerrr,\n"
-               "                   OwningPtr<FileOutputBuffer> &buffer) = 0;");
+  verifyFormat(
+      "virtual void\n"
+      "write(ELFWriter *writerrr, OwningPtr<FileOutputBuffer> &buffer) = 0;");
 }
 
 TEST_F(FormatTest, LayoutUnknownPPDirective) {
@@ -1378,7 +1383,7 @@ TEST_F(FormatTest, MixingPreprocessorDirectivesAndNormalCode) {
 TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
   EXPECT_EQ("int\n"
             "#define A\n"
-            "    a;",
+            "a;",
             format("int\n#define A\na;"));
   verifyFormat("functionCallTo(\n"
                "    someOtherFunction(\n"
@@ -1613,7 +1618,7 @@ TEST_F(FormatTest, BreaksDesireably) {
 }
 
 TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
-  FormatStyle NoBinPacking = getLLVMStyle();
+  FormatStyle NoBinPacking = getGoogleStyle();
   NoBinPacking.BinPackParameters = false;
   verifyFormat("f(aaaaaaaaaaaaaaaaaaaa,\n"
                "  aaaaaaaaaaaaaaaaaaaa,\n"
@@ -1851,14 +1856,13 @@ TEST_F(FormatTest, DeclarationsOfMultipleVariables) {
                "     aaaaaaaaaaa = aaaaaa->aaaaaaaaaaa();");
   verifyFormat("bool a = true, b = false;");
 
-  // FIXME: Indentation looks weird.
   verifyFormat("bool aaaaaaaaaaaaaaaaaaaaaaaaa =\n"
-               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaa),\n"
+               "         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaa),\n"
                "     bbbbbbbbbbbbbbbbbbbbbbbbb =\n"
                "         bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb(bbbbbbbbbbbbbbbb);");
   verifyFormat(
       "bool aaaaaaaaaaaaaaaaaaaaa =\n"
-      "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb && cccccccccccccccccccccccccccc,\n"
+      "         bbbbbbbbbbbbbbbbbbbbbbbbbbbb && cccccccccccccccccccccccccccc,\n"
       "     d = e && f;");
 
 }
@@ -2051,7 +2055,7 @@ TEST_F(FormatTest, WrapsTemplateDeclarations) {
       "                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
   verifyFormat("template <typename T>\n"
                "void aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
-               "    int aaaaaaaaaaaaaaaaa);");
+               "    int aaaaaaaaaaaaaaaaaaaaaa);");
   verifyFormat(
       "template <typename T1, typename T2 = char, typename T3 = char,\n"
       "          typename T4 = char>\n"

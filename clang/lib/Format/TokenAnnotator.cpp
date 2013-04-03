@@ -408,6 +408,10 @@ private:
           Tok->FormatTok.Tok.getIdentifierInfo() == &Ident_in)
         Tok->Type = TT_ObjCForIn;
       break;
+    case tok::comma:
+      if (Contexts.back().FirstStartOfName)
+        Contexts.back().FirstStartOfName->PartOfMultiVariableDeclStmt = true;
+      break;
     default:
       break;
     }
@@ -538,7 +542,8 @@ private:
         : ContextKind(ContextKind), BindingStrength(BindingStrength),
           LongestObjCSelectorName(0), ColonIsForRangeExpr(false),
           ColonIsObjCMethodExpr(false), FirstObjCSelectorName(NULL),
-          IsExpression(IsExpression), CanBeExpression(true) {}
+          FirstStartOfName(NULL), IsExpression(IsExpression),
+          CanBeExpression(true) {}
 
     tok::TokenKind ContextKind;
     unsigned BindingStrength;
@@ -546,6 +551,7 @@ private:
     bool ColonIsForRangeExpr;
     bool ColonIsObjCMethodExpr;
     AnnotatedToken *FirstObjCSelectorName;
+    AnnotatedToken *FirstStartOfName;
     bool IsExpression;
     bool CanBeExpression;
   };
@@ -600,8 +606,10 @@ private:
           ((Current.Parent->is(tok::identifier) &&
             Current.Parent->FormatTok.Tok.getIdentifierInfo()
                 ->getPPKeywordID() == tok::pp_not_keyword) ||
+           isSimpleTypeSpecifier(*Current.Parent) ||
            Current.Parent->Type == TT_PointerOrReference ||
            Current.Parent->Type == TT_TemplateCloser)) {
+        Contexts.back().FirstStartOfName = &Current;
         Current.Type = TT_StartOfName;
       } else if (Current.isOneOf(tok::star, tok::amp, tok::ampamp)) {
         Current.Type =
@@ -718,6 +726,39 @@ private:
       return TT_TrailingUnaryOperator;
 
     return TT_UnaryOperator;
+  }
+
+  // FIXME: This is copy&pasted from Sema. Put it in a common place and remove
+  // duplication.
+  /// \brief Determine whether the token kind starts a simple-type-specifier.
+  bool isSimpleTypeSpecifier(const AnnotatedToken &Tok) const {
+    switch (Tok.FormatTok.Tok.getKind()) {
+    case tok::kw_short:
+    case tok::kw_long:
+    case tok::kw___int64:
+    case tok::kw___int128:
+    case tok::kw_signed:
+    case tok::kw_unsigned:
+    case tok::kw_void:
+    case tok::kw_char:
+    case tok::kw_int:
+    case tok::kw_half:
+    case tok::kw_float:
+    case tok::kw_double:
+    case tok::kw_wchar_t:
+    case tok::kw_bool:
+    case tok::kw___underlying_type:
+      return true;
+    case tok::annot_typename:
+    case tok::kw_char16_t:
+    case tok::kw_char32_t:
+    case tok::kw_typeof:
+    case tok::kw_decltype:
+      return Lex.getLangOpts().CPlusPlus;
+    default:
+      break;
+    }
+    return false;
   }
 
   SmallVector<Context, 8> Contexts;
@@ -886,7 +927,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   const AnnotatedToken &Right = Tok;
 
   if (Right.Type == TT_StartOfName) {
-    if (Line.First.is(tok::kw_for))
+    if (Line.First.is(tok::kw_for) && Right.PartOfMultiVariableDeclStmt)
       return 3;
     else if (Line.MightBeFunctionDecl && Right.BindingStrength == 1)
       // FIXME: Clean up hack of using BindingStrength to find top-level names.
