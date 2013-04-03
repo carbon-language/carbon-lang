@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-runtime=macosx-fragile-10.5 -emit-llvm -fexceptions -fobjc-exceptions -O2 -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-runtime=macosx-fragile-10.5 -emit-llvm -fobjc-exceptions -O2 -o - %s | FileCheck %s
 //
 // <rdar://problem/7471679> [irgen] [eh] Exception code built with clang (x86_64) crashes
 
@@ -28,7 +28,7 @@ void f1() {
     // CHECK:      call void asm sideeffect "", "*m"
     // CHECK-NEXT: call void @foo()
       foo();
-    // CHECK-NEXT: call void @objc_exception_try_exit
+    // CHECK:      call void @objc_exception_try_exit
 
     // CHECK:      call void asm sideeffect "", "=*m"
     } @finally {
