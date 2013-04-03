@@ -82,3 +82,43 @@ entry:
   store i32 42, i32* %x, align 4
   ret void
 }
+
+%struct.S5 = type { i32 }
+%class.C5 = type { i8 }
+
+define x86_thiscallcc void @"\01?foo@C5@@QAE?AUS5@@XZ"(%struct.S5* noalias sret %agg.result, %class.C5* %this) {
+entry:
+  %this.addr = alloca %class.C5*, align 4
+  store %class.C5* %this, %class.C5** %this.addr, align 4
+  %this1 = load %class.C5** %this.addr
+  %x = getelementptr inbounds %struct.S5* %agg.result, i32 0, i32 0
+  store i32 42, i32* %x, align 4
+  ret void
+; WIN32:     {{^}}"?foo@C5@@QAE?AUS5@@XZ":
+
+; The address of the return structure is passed as an implicit parameter.
+; In the -O0 build, %eax is spilled at the beginning of the function, hence we
+; should match both 4(%esp) and 8(%esp).
+; WIN32:     {{[48]}}(%esp), %eax
+; WIN32:     movl $42, (%eax)
+; WIN32:     ret $4
+}
+
+define void @call_foo5() {
+entry:
+  %c = alloca %class.C5, align 1
+  %s = alloca %struct.S5, align 4
+  call x86_thiscallcc void @"\01?foo@C5@@QAE?AUS5@@XZ"(%struct.S5* sret %s, %class.C5* %c)
+; WIN32:      {{^}}_call_foo5:
+
+; Load the address of the result and put it onto stack
+; (through %ecx in the -O0 build).
+; WIN32:      leal {{[0-9]+}}(%esp), %eax
+; WIN32:      movl %eax, (%e{{[sc][px]}})
+
+; The this pointer goes to ECX.
+; WIN32-NEXT: leal {{[0-9]+}}(%esp), %ecx
+; WIN32-NEXT: calll "?foo@C5@@QAE?AUS5@@XZ"
+; WIN32:      ret
+  ret void
+}
