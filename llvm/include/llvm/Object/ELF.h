@@ -1058,6 +1058,11 @@ error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
       IsRelocatable = true;
     }
     Result = symb->st_value;
+
+    // Clear the ARM/Thumb indicator flag.
+    if (Header->e_machine == ELF::EM_ARM)
+      Result &= ~1;
+
     if (IsRelocatable && Section != 0)
       Result += Section->sh_addr;
     return object_error::success;
