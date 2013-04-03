@@ -113,7 +113,8 @@ static bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX,
 }
 
 static bool OSHasAVXSupport() {
-#if defined(__GNUC__)
+#if defined( __GNUC__ ) && \
+    (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 4)
   int rEAX, rEDX;
   __asm__ ("xgetbv" : "=a" (rEAX), "=d" (rEDX) : "c" (0)); 
 #elif defined(_MSC_VER)
