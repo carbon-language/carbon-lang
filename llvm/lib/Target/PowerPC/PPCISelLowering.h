@@ -49,6 +49,9 @@ namespace llvm {
       /// unsigned integers.
       FCTIDUZ, FCTIWUZ,
 
+      /// Reciprocal estimate instructions (unary FP ops).
+      FRE, FRSQRTE,
+
       // VMADDFP, VNMSUBFP - The VMADDFP and VNMSUBFP instructions, taking
       // three v4f32 operands and producing a v4f32 result.
       VMADDFP, VNMSUBFP,
@@ -620,6 +623,10 @@ namespace llvm {
 
     SDValue lowerEH_SJLJ_SETJMP(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerEH_SJLJ_LONGJMP(SDValue Op, SelectionDAG &DAG) const;
+
+    SDValue DAGCombineFastRecip(SDNode *N, DAGCombinerInfo &DCI,
+                                bool UseOperand = true) const;
+    SDValue DAGCombineFastRecipFSQRT(SDNode *N, DAGCombinerInfo &DCI) const;
   };
 }
 

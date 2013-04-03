@@ -62,6 +62,9 @@ def SDT_PPCTC_ret : SDTypeProfile<0, 2, [
 // PowerPC specific DAG Nodes.
 //
 
+def PPCfre    : SDNode<"PPCISD::FRE",     SDTFPUnaryOp, []>;
+def PPCfrsqrte: SDNode<"PPCISD::FRSQRTE", SDTFPUnaryOp, []>;
+
 def PPCfcfid  : SDNode<"PPCISD::FCFID",   SDTFPUnaryOp, []>;
 def PPCfcfidu : SDNode<"PPCISD::FCFIDU",  SDTFPUnaryOp, []>;
 def PPCfcfids : SDNode<"PPCISD::FCFIDS",  SDTFPRoundOp, []>;
@@ -1223,8 +1226,21 @@ def FNEGS  : XForm_26<63, 40, (outs F4RC:$frD), (ins F4RC:$frB),
 def FNEGD  : XForm_26<63, 40, (outs F8RC:$frD), (ins F8RC:$frB),
                       "fneg $frD, $frB", FPGeneral,
                       [(set f64:$frD, (fneg f64:$frB))]>;
+
+// Reciprocal estimates.
+def FRE      : XForm_26<63, 24, (outs F8RC:$frD), (ins F8RC:$frB),
+                        "fre $frD, $frB", FPGeneral,
+                        [(set f64:$frD, (PPCfre f64:$frB))]>;
+def FRES     : XForm_26<59, 24, (outs F4RC:$frD), (ins F4RC:$frB),
+                        "fres $frD, $frB", FPGeneral,
+                        [(set f32:$frD, (PPCfre f32:$frB))]>;
+def FRSQRTE  : XForm_26<63, 26, (outs F8RC:$frD), (ins F8RC:$frB),
+                        "frsqrte $frD, $frB", FPGeneral,
+                        [(set f64:$frD, (PPCfrsqrte f64:$frB))]>;
+def FRSQRTES : XForm_26<59, 26, (outs F4RC:$frD), (ins F4RC:$frB),
+                        "frsqrtes $frD, $frB", FPGeneral,
+                        [(set f32:$frD, (PPCfrsqrte f32:$frB))]>;
 }
-                      
 
 // XL-Form instructions.  condition register logical ops.
 //
@@ -1686,6 +1702,16 @@ def : Pat<(membarrier (i32 imm /*ll*/),
            (SYNC)>;
 
 def : Pat<(atomic_fence (imm), (imm)), (SYNC)>;
+
+// Additional FNMSUB patterns: -a*c + b == -(a*c - b)
+def : Pat<(fma (fneg f64:$A), f64:$C, f64:$B),
+          (FNMSUB $A, $C, $B)>;
+def : Pat<(fma f64:$A, (fneg f64:$C), f64:$B),
+          (FNMSUB $A, $C, $B)>;
+def : Pat<(fma (fneg f32:$A), f32:$C, f32:$B),
+          (FNMSUBS $A, $C, $B)>;
+def : Pat<(fma f32:$A, (fneg f32:$C), f32:$B),
+          (FNMSUBS $A, $C, $B)>;
 
 include "PPCInstrAltivec.td"
 include "PPCInstr64Bit.td"

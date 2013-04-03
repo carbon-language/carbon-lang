@@ -57,6 +57,16 @@ def FeatureMFOCRF    : SubtargetFeature<"mfocrf","HasMFOCRF", "true",
                                         "Enable the MFOCRF instruction">;
 def FeatureFSqrt     : SubtargetFeature<"fsqrt","HasFSQRT", "true",
                                         "Enable the fsqrt instruction">;
+def FeatureFRE       : SubtargetFeature<"fre", "HasFRE", "true",
+                                        "Enable the fre instruction">;
+def FeatureFRES      : SubtargetFeature<"fres", "HasFRES", "true",
+                                        "Enable the fres instruction">;
+def FeatureFRSQRTE   : SubtargetFeature<"frsqrte", "HasFRSQRTE", "true",
+                                        "Enable the frsqrte instruction">;
+def FeatureFRSQRTES  : SubtargetFeature<"frsqrtes", "HasFRSQRTES", "true",
+                                        "Enable the frsqrtes instruction">;
+def FeatureRecipPrec : SubtargetFeature<"recipprec", "HasRecipPrec", "true",
+                              "Assume higher precision reciprocal estimates">;
 def FeatureSTFIWX    : SubtargetFeature<"stfiwx","HasSTFIWX", "true",
                                         "Enable the stfiwx instruction">;
 def FeatureLFIWAX    : SubtargetFeature<"lfiwax","HasLFIWAX", "true",
@@ -101,30 +111,46 @@ include "PPCInstrInfo.td"
 
 def : Processor<"generic", G3Itineraries, [Directive32]>;
 def : Processor<"440", PPC440Itineraries, [Directive440, FeatureISEL,
+                                           FeatureFRES, FeatureFRSQRTE,
                                            FeatureBookE]>;
 def : Processor<"450", PPC440Itineraries, [Directive440, FeatureISEL,
+                                           FeatureFRES, FeatureFRSQRTE,
                                            FeatureBookE]>;
 def : Processor<"601", G3Itineraries, [Directive601]>;
 def : Processor<"602", G3Itineraries, [Directive602]>;
-def : Processor<"603", G3Itineraries, [Directive603]>;
-def : Processor<"603e", G3Itineraries, [Directive603]>;
-def : Processor<"603ev", G3Itineraries, [Directive603]>;
-def : Processor<"604", G3Itineraries, [Directive604]>;
-def : Processor<"604e", G3Itineraries, [Directive604]>;
-def : Processor<"620", G3Itineraries, [Directive620]>;
-def : Processor<"750", G4Itineraries, [Directive750]>;
-def : Processor<"g3", G3Itineraries, [Directive750]>;
-def : Processor<"7400", G4Itineraries, [Directive7400, FeatureAltivec]>;
-def : Processor<"g4", G4Itineraries, [Directive7400, FeatureAltivec]>;
-def : Processor<"7450", G4PlusItineraries, [Directive7400, FeatureAltivec]>;
-def : Processor<"g4+", G4PlusItineraries, [Directive7400, FeatureAltivec]>;
+def : Processor<"603", G3Itineraries, [Directive603,
+                                       FeatureFRES, FeatureFRSQRTE]>;
+def : Processor<"603e", G3Itineraries, [Directive603,
+                                        FeatureFRES, FeatureFRSQRTE]>;
+def : Processor<"603ev", G3Itineraries, [Directive603,
+                                         FeatureFRES, FeatureFRSQRTE]>;
+def : Processor<"604", G3Itineraries, [Directive604,
+                                       FeatureFRES, FeatureFRSQRTE]>;
+def : Processor<"604e", G3Itineraries, [Directive604,
+                                        FeatureFRES, FeatureFRSQRTE]>;
+def : Processor<"620", G3Itineraries, [Directive620,
+                                       FeatureFRES, FeatureFRSQRTE]>;
+def : Processor<"750", G4Itineraries, [Directive750,
+                                       FeatureFRES, FeatureFRSQRTE]>;
+def : Processor<"g3", G3Itineraries, [Directive750,
+                                      FeatureFRES, FeatureFRSQRTE]>;
+def : Processor<"7400", G4Itineraries, [Directive7400, FeatureAltivec,
+                                        FeatureFRES, FeatureFRSQRTE]>;
+def : Processor<"g4", G4Itineraries, [Directive7400, FeatureAltivec,
+                                      FeatureFRES, FeatureFRSQRTE]>;
+def : Processor<"7450", G4PlusItineraries, [Directive7400, FeatureAltivec,
+                                            FeatureFRES, FeatureFRSQRTE]>;
+def : Processor<"g4+", G4PlusItineraries, [Directive7400, FeatureAltivec,
+                                           FeatureFRES, FeatureFRSQRTE]>;
 def : Processor<"970", G5Itineraries,
                   [Directive970, FeatureAltivec,
-                   FeatureMFOCRF, FeatureFSqrt, FeatureSTFIWX,
+                   FeatureMFOCRF, FeatureFSqrt,
+                   FeatureFRES, FeatureFRSQRTE, FeatureSTFIWX,
                    Feature64Bit /*, Feature64BitRegs */]>;
 def : Processor<"g5", G5Itineraries,
                   [Directive970, FeatureAltivec,
                    FeatureMFOCRF, FeatureFSqrt, FeatureSTFIWX,
+                   FeatureFRES, FeatureFRSQRTE,
                    Feature64Bit /*, Feature64BitRegs */]>;
 def : ProcessorModel<"e500mc", PPCE500mcModel,
                   [DirectiveE500mc, FeatureMFOCRF,
@@ -134,43 +160,57 @@ def : ProcessorModel<"e5500", PPCE5500Model,
                    FeatureSTFIWX, FeatureBookE, FeatureISEL]>;
 def : Processor<"a2", PPCA2Itineraries,
                   [DirectiveA2, FeatureBookE, FeatureMFOCRF,
-                   FeatureFSqrt, FeatureSTFIWX, FeatureLFIWAX,
+                   FeatureFSqrt, FeatureFRE, FeatureFRES,
+                   FeatureFRSQRTE, FeatureFRSQRTES, FeatureRecipPrec,
+                   FeatureSTFIWX, FeatureLFIWAX,
                    FeatureFPRND, FeatureFPCVT, FeatureISEL,
                    FeaturePOPCNTD, FeatureLDBRX, Feature64Bit
                /*, Feature64BitRegs */]>;
 def : Processor<"a2q", PPCA2Itineraries,
                   [DirectiveA2, FeatureBookE, FeatureMFOCRF,
-                   FeatureFSqrt, FeatureSTFIWX, FeatureLFIWAX,
+                   FeatureFSqrt, FeatureFRE, FeatureFRES,
+                   FeatureFRSQRTE, FeatureFRSQRTES, FeatureRecipPrec,
+                   FeatureSTFIWX, FeatureLFIWAX,
                    FeatureFPRND, FeatureFPCVT, FeatureISEL,
                    FeaturePOPCNTD, FeatureLDBRX, Feature64Bit
                /*, Feature64BitRegs */, FeatureQPX]>;
 def : Processor<"pwr3", G5Itineraries,
-                  [DirectivePwr3, FeatureAltivec, FeatureMFOCRF,
+                  [DirectivePwr3, FeatureAltivec,
+                   FeatureFRES, FeatureFRSQRTE, FeatureMFOCRF,
                    FeatureSTFIWX, Feature64Bit]>;
 def : Processor<"pwr4", G5Itineraries,
                   [DirectivePwr4, FeatureAltivec, FeatureMFOCRF,
-                   FeatureFSqrt, FeatureSTFIWX, Feature64Bit]>;
+                   FeatureFSqrt, FeatureFRES, FeatureFRSQRTE,
+                   FeatureSTFIWX, Feature64Bit]>;
 def : Processor<"pwr5", G5Itineraries,
                   [DirectivePwr5, FeatureAltivec, FeatureMFOCRF,
-                   FeatureFSqrt, FeatureSTFIWX, Feature64Bit]>;
+                   FeatureFSqrt, FeatureFRE, FeatureFRES,
+                   FeatureFRSQRTE, FeatureFRSQRTES,
+                   FeatureSTFIWX, Feature64Bit]>;
 def : Processor<"pwr5x", G5Itineraries,
                   [DirectivePwr5x, FeatureAltivec, FeatureMFOCRF,
-                   FeatureFSqrt, FeatureSTFIWX, FeatureFPRND,
-                   Feature64Bit]>;
+                   FeatureFSqrt, FeatureFRE, FeatureFRES,
+                   FeatureFRSQRTE, FeatureFRSQRTES,
+                   FeatureSTFIWX, FeatureFPRND, Feature64Bit]>;
 def : Processor<"pwr6", G5Itineraries,
                   [DirectivePwr6, FeatureAltivec,
-                   FeatureMFOCRF, FeatureFSqrt, FeatureSTFIWX,
-                   FeatureLFIWAX, FeatureFPRND, Feature64Bit
-               /*, Feature64BitRegs */]>;
+                   FeatureMFOCRF, FeatureFSqrt, FeatureFRE,
+                   FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
+                   FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
+                   FeatureFPRND, Feature64Bit /*, Feature64BitRegs */]>;
 def : Processor<"pwr6x", G5Itineraries,
                   [DirectivePwr5x, FeatureAltivec, FeatureMFOCRF,
-                   FeatureFSqrt, FeatureSTFIWX, FeatureLFIWAX,
+                   FeatureFSqrt, FeatureFRE, FeatureFRES,
+                   FeatureFRSQRTE, FeatureFRSQRTES, FeatureRecipPrec,
+                   FeatureSTFIWX, FeatureLFIWAX,
                    FeatureFPRND, Feature64Bit]>;
 def : Processor<"pwr7", G5Itineraries,
                   [DirectivePwr7, FeatureAltivec,
-                   FeatureMFOCRF, FeatureFSqrt, FeatureSTFIWX,
-                   FeatureLFIWAX, FeatureFPRND, FeatureFPCVT,
-                   FeatureISEL, FeaturePOPCNTD, FeatureLDBRX,
+                   FeatureMFOCRF, FeatureFSqrt, FeatureFRE,
+                   FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
+                   FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
+                   FeatureFPRND, FeatureFPCVT, FeatureISEL,
+                   FeaturePOPCNTD, FeatureLDBRX,
                    Feature64Bit /*, Feature64BitRegs */]>;
 def : Processor<"ppc", G3Itineraries, [Directive32]>;
 def : Processor<"ppc64", G5Itineraries,

@@ -795,6 +795,9 @@ def : Pat<(int_ppc_altivec_vnmsubfp v4f32:$A, v4f32:$B, v4f32:$C),
 def : Pat<(PPCvperm (v16i8 VRRC:$vA), VRRC:$vB, VRRC:$vC),
           (VPERM $vA, $vB, $vC)>;
 
+def : Pat<(PPCfre v4f32:$A), (VREFP $A)>;
+def : Pat<(PPCfrsqrte v4f32:$A), (VRSQRTEFP $A)>;
+
 // Vector shifts
 def : Pat<(v16i8 (shl v16i8:$vA, v16i8:$vB)),
           (v16i8 (VSLB $vA, $vB))>;

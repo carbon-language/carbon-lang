@@ -150,10 +150,15 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::FLT_ROUNDS_, MVT::i32, Custom);
 
   // If we're enabling GP optimizations, use hardware square root
-  if (!Subtarget->hasFSQRT()) {
+  if (!Subtarget->hasFSQRT() &&
+      !(TM.Options.UnsafeFPMath &&
+        Subtarget->hasFRSQRTE() && Subtarget->hasFRE()))
     setOperationAction(ISD::FSQRT, MVT::f64, Expand);
+
+  if (!Subtarget->hasFSQRT() &&
+      !(TM.Options.UnsafeFPMath &&
+        Subtarget->hasFRSQRTES() && Subtarget->hasFRES()))
     setOperationAction(ISD::FSQRT, MVT::f32, Expand);
-  }
 
   setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
   setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
@@ -469,6 +474,12 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
 
     setOperationAction(ISD::MUL, MVT::v4f32, Legal);
     setOperationAction(ISD::FMA, MVT::v4f32, Legal);
+
+    if (TM.Options.UnsafeFPMath) {
+      setOperationAction(ISD::FDIV, MVT::v4f32, Legal);
+      setOperationAction(ISD::FSQRT, MVT::v4f32, Legal);
+    }
+
     setOperationAction(ISD::MUL, MVT::v4i32, Custom);
     setOperationAction(ISD::MUL, MVT::v8i16, Custom);
     setOperationAction(ISD::MUL, MVT::v16i8, Custom);
@@ -518,6 +529,12 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::BR_CC);
   setTargetDAGCombine(ISD::BSWAP);
+
+  // Use reciprocal estimates.
+  if (TM.Options.UnsafeFPMath) {
+    setTargetDAGCombine(ISD::FDIV);
+    setTargetDAGCombine(ISD::FSQRT);
+  }
 
   // Darwin long double math library functions have $LDBL128 appended.
   if (Subtarget->isDarwin()) {
@@ -590,6 +607,8 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::FCFID:           return "PPCISD::FCFID";
   case PPCISD::FCTIDZ:          return "PPCISD::FCTIDZ";
   case PPCISD::FCTIWZ:          return "PPCISD::FCTIWZ";
+  case PPCISD::FRE:             return "PPCISD::FRE";
+  case PPCISD::FRSQRTE:         return "PPCISD::FRSQRTE";
   case PPCISD::STFIWX:          return "PPCISD::STFIWX";
   case PPCISD::VMADDFP:         return "PPCISD::VMADDFP";
   case PPCISD::VNMSUBFP:        return "PPCISD::VNMSUBFP";
@@ -6658,6 +6677,153 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 // Target Optimization Hooks
 //===----------------------------------------------------------------------===//
 
+SDValue PPCTargetLowering::DAGCombineFastRecip(SDNode *N,
+                                             DAGCombinerInfo &DCI,
+                                             bool UseOperand) const {
+  if (DCI.isAfterLegalizeVectorOps())
+    return SDValue();
+
+  if ((N->getValueType(0) == MVT::f32 && PPCSubTarget.hasFRES()) ||
+      (N->getValueType(0) == MVT::f64 && PPCSubTarget.hasFRE())  ||
+      (N->getValueType(0) == MVT::v4f32 && PPCSubTarget.hasAltivec())) {
+
+    // Newton iteration for a function: F(X) is X_{i+1} = X_i - F(X_i)/F'(X_i)
+    // For the reciprocal, we need to find the zero of the function:
+    //   F(X) = A X - 1 [which has a zero at X = 1/A]
+    //     =>
+    //   X_{i+1} = X_i (2 - A X_i) = X_i + X_i (1 - A X_i) [this second form
+    //     does not require additional intermediate precision]
+
+    // Convergence is quadratic, so we essentially double the number of digits
+    // correct after every iteration. The minimum architected relative
+    // accuracy is 2^-5. When hasRecipPrec(), this is 2^-14. IEEE float has
+    // 23 digits and double has 52 digits.
+    int Iterations = PPCSubTarget.hasRecipPrec() ? 1 : 3;
+    if (N->getValueType(0).getScalarType() == MVT::f64)
+      ++Iterations;
+
+    SelectionDAG &DAG = DCI.DAG;
+    DebugLoc dl = N->getDebugLoc();
+
+    SDValue FPOne =
+      DAG.getConstantFP(1.0, N->getValueType(0).getScalarType());
+    if (N->getValueType(0).isVector()) {
+      assert(N->getValueType(0).getVectorNumElements() == 4 &&
+             "Unknown vector type");
+      FPOne = DAG.getNode(ISD::BUILD_VECTOR, dl, N->getValueType(0),
+                          FPOne, FPOne, FPOne, FPOne);
+    }
+
+    SDValue Est = DAG.getNode(PPCISD::FRE, dl,
+                              N->getValueType(0),
+                              UseOperand ? N->getOperand(1) :
+                                           SDValue(N, 0));
+    DCI.AddToWorklist(Est.getNode());
+
+    // Newton iterations: Est = Est + Est (1 - Arg * Est)
+    for (int i = 0; i < Iterations; ++i) {
+      SDValue NewEst = DAG.getNode(ISD::FMUL, dl,
+                                   N->getValueType(0),
+                                   UseOperand ? N->getOperand(1) :
+                                                SDValue(N, 0),
+                                   Est);
+      DCI.AddToWorklist(NewEst.getNode());
+
+      NewEst = DAG.getNode(ISD::FSUB, dl,
+                           N->getValueType(0), FPOne, NewEst);
+      DCI.AddToWorklist(NewEst.getNode());
+
+      NewEst = DAG.getNode(ISD::FMUL, dl,
+                           N->getValueType(0), Est, NewEst);
+      DCI.AddToWorklist(NewEst.getNode());
+
+      Est = DAG.getNode(ISD::FADD, dl,
+                        N->getValueType(0), Est, NewEst);
+      DCI.AddToWorklist(Est.getNode());
+    }
+
+    return Est;
+  }
+
+  return SDValue();
+}
+
+SDValue PPCTargetLowering::DAGCombineFastRecipFSQRT(SDNode *N,
+                                             DAGCombinerInfo &DCI) const {
+  if (DCI.isAfterLegalizeVectorOps())
+    return SDValue();
+
+  if ((N->getValueType(0) == MVT::f32 && PPCSubTarget.hasFRSQRTES()) ||
+      (N->getValueType(0) == MVT::f64 && PPCSubTarget.hasFRSQRTE())  ||
+      (N->getValueType(0) == MVT::v4f32 && PPCSubTarget.hasAltivec())) {
+
+    // Newton iteration for a function: F(X) is X_{i+1} = X_i - F(X_i)/F'(X_i)
+    // For the reciprocal sqrt, we need to find the zero of the function:
+    //   F(X) = 1/X^2 - A [which has a zero at X = 1/sqrt(A)]
+    //     =>
+    //   X_{i+1} = X_i (1.5 - A X_i^2 / 2)
+    // As a result, we precompute A/2 prior to the iteration loop.
+
+    // Convergence is quadratic, so we essentially double the number of digits
+    // correct after every iteration. The minimum architected relative
+    // accuracy is 2^-5. When hasRecipPrec(), this is 2^-14. IEEE float has
+    // 23 digits and double has 52 digits.
+    int Iterations = PPCSubTarget.hasRecipPrec() ? 1 : 3;
+    if (N->getValueType(0).getScalarType() == MVT::f64)
+      ++Iterations;
+
+    SelectionDAG &DAG = DCI.DAG;
+    DebugLoc dl = N->getDebugLoc();
+
+    SDValue FPThreeHalfs =
+      DAG.getConstantFP(1.5, N->getValueType(0).getScalarType());
+    if (N->getValueType(0).isVector()) {
+      assert(N->getValueType(0).getVectorNumElements() == 4 &&
+             "Unknown vector type");
+      FPThreeHalfs = DAG.getNode(ISD::BUILD_VECTOR, dl, N->getValueType(0),
+                                 FPThreeHalfs, FPThreeHalfs,
+                                 FPThreeHalfs, FPThreeHalfs);
+    }
+
+    SDValue Est = DAG.getNode(PPCISD::FRSQRTE, dl,
+                              N->getValueType(0), N->getOperand(0));
+    DCI.AddToWorklist(Est.getNode());
+
+    // We now need 0.5*Arg which we can write as (1.5*Arg - Arg) so that
+    // this entire sequence requires only one FP constant.
+    SDValue HalfArg = DAG.getNode(ISD::FMUL, dl, N->getValueType(0),
+                                  FPThreeHalfs, N->getOperand(0));
+    DCI.AddToWorklist(HalfArg.getNode());
+
+    HalfArg = DAG.getNode(ISD::FSUB, dl, N->getValueType(0),
+                          HalfArg, N->getOperand(0));
+    DCI.AddToWorklist(HalfArg.getNode());
+
+    // Newton iterations: Est = Est * (1.5 - HalfArg * Est * Est)
+    for (int i = 0; i < Iterations; ++i) {
+      SDValue NewEst = DAG.getNode(ISD::FMUL, dl,
+                                   N->getValueType(0), Est, Est);
+      DCI.AddToWorklist(NewEst.getNode());
+
+      NewEst = DAG.getNode(ISD::FMUL, dl,
+                           N->getValueType(0), HalfArg, NewEst);
+      DCI.AddToWorklist(NewEst.getNode());
+
+      NewEst = DAG.getNode(ISD::FSUB, dl,
+                           N->getValueType(0), FPThreeHalfs, NewEst);
+      DCI.AddToWorklist(NewEst.getNode());
+
+      Est = DAG.getNode(ISD::FMUL, dl,
+                        N->getValueType(0), Est, NewEst);
+      DCI.AddToWorklist(Est.getNode());
+    }
+
+    return Est;
+  }
+
+  return SDValue();
+}
+
 SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
   const TargetMachine &TM = getTargetMachine();
@@ -6684,7 +6850,44 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         return N->getOperand(0);
     }
     break;
+  case ISD::FDIV: {
+    assert(TM.Options.UnsafeFPMath &&
+           "Reciprocal estimates require UnsafeFPMath");
 
+    if (N->getOperand(1).getOpcode() == ISD::FSQRT) {
+      SDValue RV = DAGCombineFastRecipFSQRT(N->getOperand(1).getNode(), DCI);
+      if (RV.getNode() != 0) {
+        DCI.AddToWorklist(RV.getNode());
+        return DAG.getNode(ISD::FMUL, dl, N->getValueType(0),
+                           N->getOperand(0), RV);
+      }
+    }
+
+    SDValue RV = DAGCombineFastRecip(N, DCI);
+    if (RV.getNode() != 0) {
+      DCI.AddToWorklist(RV.getNode());
+      return DAG.getNode(ISD::FMUL, dl, N->getValueType(0),
+                         N->getOperand(0), RV);
+    }
+
+    }
+    break;
+  case ISD::FSQRT: {
+    assert(TM.Options.UnsafeFPMath &&
+           "Reciprocal estimates require UnsafeFPMath");
+
+    // Compute this as 1/(1/sqrt(X)), which is the reciprocal of the
+    // reciprocal sqrt.
+    SDValue RV = DAGCombineFastRecipFSQRT(N, DCI);
+    if (RV.getNode() != 0) {
+      DCI.AddToWorklist(RV.getNode());
+      RV = DAGCombineFastRecip(RV.getNode(), DCI, false);
+      if (RV.getNode() != 0)
+        return RV;
+    }
+
+    }
+    break;
   case ISD::SINT_TO_FP:
     if (TM.getSubtarget<PPCSubtarget>().has64BitSupport()) {
       if (N->getOperand(0).getOpcode() == ISD::FP_TO_SINT) {
