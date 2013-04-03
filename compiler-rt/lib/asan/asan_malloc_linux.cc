@@ -147,4 +147,4 @@ INTERCEPTOR(void, malloc_stats, void) {
   __asan_print_accumulated_stats();
 }
 
-#endif  // __linux__
+#endif  // SANITIZER_LINUX

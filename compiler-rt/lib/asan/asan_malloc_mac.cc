@@ -346,4 +346,4 @@ void ReplaceSystemMalloc() {
 }
 }  // namespace __asan
 
-#endif  // __APPLE__
+#endif  // SANITIZER_MAC

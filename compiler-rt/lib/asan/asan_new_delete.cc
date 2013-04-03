@@ -59,7 +59,7 @@ INTERCEPTOR_ATTRIBUTE
 void *operator new[](size_t size, std::nothrow_t const&)
 { OPERATOR_NEW_BODY(FROM_NEW_BR); }
 
-#else  // __APPLE__
+#else  // SANITIZER_MAC
 INTERCEPTOR(void *, _Znwm, size_t size) {
   OPERATOR_NEW_BODY(FROM_NEW);
 }
@@ -90,7 +90,7 @@ INTERCEPTOR_ATTRIBUTE
 void operator delete[](void *ptr, std::nothrow_t const&)
 { OPERATOR_DELETE_BODY(FROM_NEW_BR); }
 
-#else  // __APPLE__
+#else  // SANITIZER_MAC
 INTERCEPTOR(void, _ZdlPv, void *ptr) {
   OPERATOR_DELETE_BODY(FROM_NEW);
 }

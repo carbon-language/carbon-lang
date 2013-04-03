@@ -134,4 +134,4 @@ void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
 
 }  // namespace __asan
 
-#endif  // __linux__
+#endif  // SANITIZER_LINUX

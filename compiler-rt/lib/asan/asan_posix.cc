@@ -118,4 +118,4 @@ void AsanTSDSet(void *tsd) {
 
 }  // namespace __asan
 
-#endif  // __linux__ || __APPLE_
+#endif  // SANITIZER_LINUX || SANITIZER_MAC

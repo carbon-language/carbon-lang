@@ -435,4 +435,4 @@ INTERCEPTOR(void, dispatch_source_set_event_handler,
 }
 #endif
 
-#endif  // __APPLE__
+#endif  // SANITIZER_MAC
