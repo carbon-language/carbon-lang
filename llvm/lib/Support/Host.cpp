@@ -112,19 +112,6 @@ static bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX,
 #endif
 }
 
-static bool OSHasAVXSupport() {
-#if defined( __GNUC__ ) && \
-    (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 4)
-  int rEAX, rEDX;
-  __asm__ ("xgetbv" : "=a" (rEAX), "=d" (rEDX) : "c" (0)); 
-#elif defined(_MSC_VER)
-  unsigned long long rEAX = _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
-#else
-  int rEAX = 0; // Ensures we return false
-#endif
-  return (rEAX & 6) == 6;
-}
-
 static void DetectX86FamilyModel(unsigned EAX, unsigned &Family,
                                  unsigned &Model) {
   Family = (EAX >> 8) & 0xf; // Bits 8 - 11
@@ -147,10 +134,6 @@ std::string sys::getHostCPUName() {
   DetectX86FamilyModel(EAX, Family, Model);
 
   bool HasSSE3 = (ECX & 0x1);
-  // If CPUID indicates support for XSAVE, XRESTORE and AVX, and XGETBV 
-  // indicates that the AVX registers will be saved and restored on context
-  // switch, when we have full AVX support.
-  bool HasAVX = (ECX & ((1 << 28) | (1 << 27))) != 0 && OSHasAVXSupport();
   GetX86CpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
   bool Em64T = (EDX >> 29) & 0x1;
 
@@ -260,15 +243,11 @@ std::string sys::getHostCPUName() {
       case 42: // Intel Core i7 processor. All processors are manufactured
                // using the 32 nm process.
       case 45:
-        // Not all Sandy Bridge processors support AVX (such as the Pentium
-        // versions instead of the i7 versions).
-        return HasAVX ? "corei7-avx" : "corei7";
+        return "corei7-avx";
 
       // Ivy Bridge:
       case 58:
-        // Not all Ivy Bridge processors support AVX (such as the Pentium
-        // versions instead of the i7 versions).
-        return HasAVX ? "core-avx-i" : "corei7";
+        return "core-avx-i";
 
       case 28: // Most 45 nm Intel Atom processors
       case 38: // 45 nm Atom Lincroft
