@@ -1739,10 +1739,8 @@ bool PassManager::run(Module &M) {
 }
 
 //===----------------------------------------------------------------------===//
-// TimingInfo Class - This class is used to calculate information about the
-// amount of time each pass takes to execute.  This only happens with
-// -time-passes is enabled on the command line.
-//
+// TimingInfo implementation
+
 bool llvm::TimePassesIsEnabled = false;
 static cl::opt<bool,true>
 EnableTiming("time-passes", cl::location(TimePassesIsEnabled),
