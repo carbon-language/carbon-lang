@@ -4139,3 +4139,21 @@ std::string TypoCorrection::getAsString(const LangOptions &LO) const {
 
   return CorrectionName.getAsString();
 }
+
+bool CorrectionCandidateCallback::ValidateCandidate(const TypoCorrection &candidate) {
+  if (!candidate.isResolved())
+    return true;
+
+  if (candidate.isKeyword())
+    return WantTypeSpecifiers || WantExpressionKeywords || WantCXXNamedCasts ||
+           WantRemainingKeywords || WantObjCSuper;
+
+  for (TypoCorrection::const_decl_iterator CDecl = candidate.begin(),
+                                           CDeclEnd = candidate.end();
+       CDecl != CDeclEnd; ++CDecl) {
+    if (!isa<TypeDecl>(*CDecl))
+      return true;
+  }
+
+  return WantTypeSpecifiers;
+}

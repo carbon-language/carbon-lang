@@ -250,3 +250,13 @@ void f(B &x) {
   x.Createfoo(0,0); // expected-error {{no member named 'Createfoo' in 'PR13387::B'; did you mean 'CreateFoo'?}}
 }
 }
+
+struct DataStruct {void foo();};
+struct T {
+ DataStruct data_struct;
+ void f();
+};
+// should be void T::f();
+void f() {
+ data_struct->foo(); // expected-error-re{{use of undeclared identifier 'data_struct'$}}
+}

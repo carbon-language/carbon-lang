@@ -999,6 +999,7 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
       // to types and identifiers, in order to try to recover from errors.
       CorrectionCandidateCallback TypoCorrection;
       TypoCorrection.WantRemainingKeywords = false;
+      TypoCorrection.WantTypeSpecifiers = Next.isNot(tok::arrow);
       switch (TryAnnotateName(false /* no nested name specifier */,
                               &TypoCorrection)) {
       case ANK_Error:
