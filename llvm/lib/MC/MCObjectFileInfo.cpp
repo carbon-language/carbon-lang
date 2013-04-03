@@ -223,10 +223,13 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
 }
 
 void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
-  if (T.getArch() != Triple::mips &&
-      T.getArch() != Triple::mipsel &&
-      T.getArch() != Triple::mips64 &&
-      T.getArch() != Triple::mips64el )
+  if (T.getArch() == Triple::mips ||
+      T.getArch() == Triple::mipsel)
+    FDECFIEncoding = dwarf::DW_EH_PE_sdata4;
+  else if (T.getArch() == Triple::mips64 ||
+           T.getArch() == Triple::mips64el)
+    FDECFIEncoding = dwarf::DW_EH_PE_sdata8;
+  else
     FDECFIEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
 
   if (T.getArch() == Triple::x86) {
