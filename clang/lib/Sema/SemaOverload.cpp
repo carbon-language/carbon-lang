@@ -920,7 +920,8 @@ Sema::CheckOverload(Scope *S, FunctionDecl *New, const LookupResult &Old,
     // function templates hide function templates with different
     // return types or template parameter lists.
     bool UseMemberUsingDeclRules =
-      (OldIsUsingDecl || NewIsUsingDecl) && CurContext->isRecord();
+      (OldIsUsingDecl || NewIsUsingDecl) && CurContext->isRecord() &&
+      !New->getFriendObjectKind();
 
     if (FunctionTemplateDecl *OldT = dyn_cast<FunctionTemplateDecl>(OldD)) {
       if (!IsOverload(New, OldT->getTemplatedDecl(), UseMemberUsingDeclRules)) {

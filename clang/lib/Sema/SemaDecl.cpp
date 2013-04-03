@@ -2277,6 +2277,15 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
     Old = dyn_cast<FunctionDecl>(OldD);
   if (!Old) {
     if (UsingShadowDecl *Shadow = dyn_cast<UsingShadowDecl>(OldD)) {
+      if (New->getFriendObjectKind()) {
+        Diag(New->getLocation(), diag::err_using_decl_friend);
+        Diag(Shadow->getTargetDecl()->getLocation(),
+             diag::note_using_decl_target);
+        Diag(Shadow->getUsingDecl()->getLocation(),
+             diag::note_using_decl) << 0;
+        return true;
+      }
+
       Diag(New->getLocation(), diag::err_using_decl_conflict_reverse);
       Diag(Shadow->getTargetDecl()->getLocation(),
            diag::note_using_decl_target);

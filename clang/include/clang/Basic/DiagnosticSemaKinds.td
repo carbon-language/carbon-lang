@@ -867,6 +867,8 @@ def err_friend_def_in_local_class : Error<
   "friend function cannot be defined in a local class">;
 def err_friend_not_first_in_declaration : Error<
   "'friend' must appear first in a non-function declaration">;
+def err_using_decl_friend : Error<
+  "cannot befriend target of using declaration">;
   
 def err_invalid_member_in_interface : Error<
   "%select{data member |non-public member function |static member function |"

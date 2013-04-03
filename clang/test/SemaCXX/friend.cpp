@@ -138,3 +138,19 @@ namespace test7 {
     };
   }
 }
+
+// PR15485
+namespace test8 {
+  namespace ns1 {
+    namespace ns2 {
+      template<class T> void f(T t); // expected-note {{target of using declaration}}
+    }
+    using ns2::f; // expected-note {{using declaration}}
+  }
+  struct A { void f(); }; // expected-note {{target of using declaration}}
+  struct B : public A { using A::f; }; // expected-note {{using declaration}}
+  struct X {
+    template<class T> friend void ns1::f(T t); // expected-error {{cannot befriend target of using declaration}}
+    friend void B::f(); // expected-error {{cannot befriend target of using declaration}}
+  };
+}
