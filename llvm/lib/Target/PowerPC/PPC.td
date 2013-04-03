@@ -91,10 +91,7 @@ def FeatureQPX       : SubtargetFeature<"qpx","HasQPX", "true",
 //
 // CMPB         p6, p6x, p7        cmpb
 // DFP          p6, p6x, p7        decimal floating-point instructions
-// FRE          p5 through p7      fre (vs. fres, available since p3)
-// FRSQRTES     p5 through p7      frsqrtes (vs. frsqrte, available since p3)
 // POPCNTB      p5 through p7      popcntb and related instructions
-// RECIP_PREC   p6, p6x, p7        higher precision reciprocal estimates
 // VSX          p7                 vector-scalar instruction set
 
 //===----------------------------------------------------------------------===//
