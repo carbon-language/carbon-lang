@@ -144,7 +144,6 @@ public:
         case AMDGPU::CF_ALU_PUSH_BEFORE:
           CurrentStack++;
           MaxStack = std::max(MaxStack, CurrentStack);
-        case AMDGPU::KILLGT:
         case AMDGPU::CF_ALU:
           CfCount++;
           break;

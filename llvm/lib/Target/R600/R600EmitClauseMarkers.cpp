@@ -61,8 +61,6 @@ private:
   }
 
   bool isALU(const MachineInstr *MI) const {
-    if (MI->getOpcode() == AMDGPU::KILLGT)
-      return false;
     if (TII->isALUInstr(MI->getOpcode()))
       return true;
     if (TII->isVector(*MI) || TII->isCubeOp(MI->getOpcode()))
@@ -194,6 +192,10 @@ private:
           PushBeforeModifier = true;
         AluInstCount ++;
         continue;
+      }
+      if (I->getOpcode() == AMDGPU::KILLGT) {
+        I++;
+        break;
       }
       if (TII->isALUInstr(I->getOpcode()) &&
           !SubstituteKCacheBank(I, KCacheBanks))
