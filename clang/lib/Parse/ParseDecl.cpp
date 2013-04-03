@@ -3093,6 +3093,13 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       continue;
     }
 
+    // Parse _Static_assert declaration.
+    if (Tok.is(tok::kw__Static_assert)) {
+      SourceLocation DeclEnd;
+      ParseStaticAssertDeclaration(DeclEnd);
+      continue;
+    }
+
     if (!Tok.is(tok::at)) {
       struct CFieldCallback : FieldCallback {
         Parser &P;
