@@ -1479,11 +1479,7 @@ public:
   inline ddiag_iterator ddiag_end() const;
 
   // Low-level accessors
-
-  bool mustBuildLookupTable() {
-    return LookupPtr.getInt();
-  }
-
+    
   /// \brief Mark the lookup table as needing to be built.  This should be
   /// used only if setHasExternalLexicalStorage() has been called on any
   /// decl context for which this is the primary context.
