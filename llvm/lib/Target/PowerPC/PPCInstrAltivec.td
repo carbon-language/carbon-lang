@@ -318,6 +318,8 @@ def VMADDFP : VAForm_1<46, (outs VRRC:$vD), (ins VRRC:$vA, VRRC:$vC, VRRC:$vB),
                        "vmaddfp $vD, $vA, $vC, $vB", VecFP,
                        [(set v4f32:$vD,
                         (fma v4f32:$vA, v4f32:$vC, v4f32:$vB))]>;
+
+// FIXME: The fma+fneg pattern won't match because fneg is not legal.
 def VNMSUBFP: VAForm_1<47, (outs VRRC:$vD), (ins VRRC:$vA, VRRC:$vC, VRRC:$vB),
                        "vnmsubfp $vD, $vA, $vC, $vB", VecFP,
                        [(set v4f32:$vD, (fneg (fma v4f32:$vA, v4f32:$vC,
