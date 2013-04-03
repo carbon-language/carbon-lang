@@ -328,7 +328,7 @@ __thread_specific_ptr<__thread_struct>& __thread_local_data();
 template <class _Fp, class ..._Args, size_t ..._Indices>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-__threaad_execute(tuple<_Fp, _Args...>& __t, __tuple_indices<_Indices...>)
+__thread_execute(tuple<_Fp, _Args...>& __t, __tuple_indices<_Indices...>)
 {
     __invoke(_VSTD::move(_VSTD::get<0>(__t)), _VSTD::move(_VSTD::get<_Indices>(__t))...);
 }
@@ -340,7 +340,7 @@ __thread_proxy(void* __vp)
     __thread_local_data().reset(new __thread_struct);
     std::unique_ptr<_Fp> __p(static_cast<_Fp*>(__vp));
     typedef typename __make_tuple_indices<tuple_size<_Fp>::value, 1>::type _Index;
-    __threaad_execute(*__p, _Index());
+    __thread_execute(*__p, _Index());
     return nullptr;
 }
 
