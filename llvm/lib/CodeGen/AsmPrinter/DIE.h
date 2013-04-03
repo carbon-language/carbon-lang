@@ -108,7 +108,7 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   /// DIE - A structured debug information entry.  Has an abbreviation which
-  /// describes it's organization.
+  /// describes its organization.
   class DIEValue;
 
   class DIE {
