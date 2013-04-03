@@ -145,6 +145,7 @@ namespace llvm {
 
   virtual const TargetRegisterClass *getSuperIndirectRegClass() const;
 
+  unsigned getMaxAlusPerClause() const;
 
   ///buildDefaultInstruction - This function returns a MachineInstr with
   /// all the instruction modifiers initialized to their default values.

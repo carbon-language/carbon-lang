@@ -37,7 +37,7 @@ void R600SchedStrategy::initialize(ScheduleDAGMI *dag) {
   CurInstKind = IDOther;
   CurEmitted = 0;
   OccupedSlotsMask = 15;
-  InstKindLimit[IDAlu] = 120; // 120 minus 8 for security
+  InstKindLimit[IDAlu] = TII->getMaxAlusPerClause();
 
 
   const AMDGPUSubtarget &ST = DAG->TM.getSubtarget<AMDGPUSubtarget>();

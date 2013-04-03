@@ -201,7 +201,7 @@ private:
           !SubstituteKCacheBank(I, KCacheBanks))
         break;
       AluInstCount += OccupiedDwords(I);
-      if (AluInstCount > 124)
+      if (AluInstCount > TII->getMaxAlusPerClause())
         break;
     }
     unsigned Opcode = PushBeforeModifier ?

@@ -645,6 +645,9 @@ const TargetRegisterClass *R600InstrInfo::getSuperIndirectRegClass() const {
   return &AMDGPU::IndirectRegRegClass;
 }
 
+unsigned R600InstrInfo::getMaxAlusPerClause() const {
+  return 115;
+}
 
 MachineInstrBuilder R600InstrInfo::buildDefaultInstruction(MachineBasicBlock &MBB,
                                                   MachineBasicBlock::iterator I,
