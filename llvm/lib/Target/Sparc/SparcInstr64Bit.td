@@ -161,6 +161,8 @@ def : Pat<(sube i64:$a, i64:$b), (SUBXrr $a, $b)>;
 def : Pat<(addc i64:$a, i64:$b), (ADDCCrr $a, $b)>;
 def : Pat<(subc i64:$a, i64:$b), (SUBCCrr $a, $b)>;
 
+def : Pat<(SPcmpicc i64:$a, i64:$b), (SUBCCrr $a, $b)>;
+
 // Register-immediate instructions.
 
 def : Pat<(and i64:$a, (i64 simm13:$b)), (ANDri $a, (as_i32imm $b))>;
@@ -169,6 +171,8 @@ def : Pat<(xor i64:$a, (i64 simm13:$b)), (XORri $a, (as_i32imm $b))>;
 
 def : Pat<(add i64:$a, (i64 simm13:$b)), (ADDri $a, (as_i32imm $b))>;
 def : Pat<(sub i64:$a, (i64 simm13:$b)), (SUBri $a, (as_i32imm $b))>;
+
+def : Pat<(SPcmpicc i64:$a, (i64 simm13:$b)), (SUBCCri $a, (as_i32imm $b))>;
 
 } // Predicates = [Is64Bit]
 
@@ -239,3 +243,20 @@ def : Pat<(truncstorei32 i64:$src, ADDRrr:$addr), (STrr  ADDRrr:$addr, $src)>;
 def : Pat<(truncstorei32 i64:$src, ADDRri:$addr), (STri  ADDRri:$addr, $src)>;
 
 } // Predicates = [Is64Bit]
+
+
+//===----------------------------------------------------------------------===//
+// 64-bit Conditionals.
+//===----------------------------------------------------------------------===//
+//
+// Flag-setting instructions like subcc and addcc set both icc and xcc flags.
+// The icc flags correspond to the 32-bit result, and the xcc are for the
+// full 64-bit result.
+//
+// We reuse CMPICC SDNodes for compares, but use new BRXCC branch nodes for
+// 64-bit compares. See LowerBR_CC.
+
+let Uses = [ICC] in
+def BPXCC : BranchSP<0, (ins brtarget:$dst, CCOp:$cc),
+                     "bp$cc %xcc, $dst",
+                     [(SPbrxcc bb:$dst, imm:$cc)]>;

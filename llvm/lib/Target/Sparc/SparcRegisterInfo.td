@@ -43,7 +43,7 @@ class Rd<bits<5> num, string n, list<Register> subregs> : SparcReg<n> {
 }
 
 // Control Registers
-def ICC : SparcCtrlReg<"ICC">;
+def ICC : SparcCtrlReg<"ICC">; // This represents icc and xcc in 64-bit code.
 def FCC : SparcCtrlReg<"FCC">;
 
 // Y register

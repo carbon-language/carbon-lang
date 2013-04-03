@@ -824,6 +824,10 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::f64, Custom);
 
+  if (Subtarget->is64Bit()) {
+    setOperationAction(ISD::BR_CC, MVT::i64, Custom);
+  }
+
   // FIXME: There are instructions available for ATOMIC_FENCE
   // on SparcV8 and later.
   setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
@@ -893,6 +897,7 @@ const char *SparcTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case SPISD::CMPICC:     return "SPISD::CMPICC";
   case SPISD::CMPFCC:     return "SPISD::CMPFCC";
   case SPISD::BRICC:      return "SPISD::BRICC";
+  case SPISD::BRXCC:      return "SPISD::BRXCC";
   case SPISD::BRFCC:      return "SPISD::BRFCC";
   case SPISD::SELECT_ICC: return "SPISD::SELECT_ICC";
   case SPISD::SELECT_FCC: return "SPISD::SELECT_FCC";
@@ -1029,12 +1034,13 @@ static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) {
 
   // Get the condition flag.
   SDValue CompareFlag;
-  if (LHS.getValueType() == MVT::i32) {
-    EVT VTs[] = { MVT::i32, MVT::Glue };
+  if (LHS.getValueType().isInteger()) {
+    EVT VTs[] = { LHS.getValueType(), MVT::Glue };
     SDValue Ops[2] = { LHS, RHS };
     CompareFlag = DAG.getNode(SPISD::CMPICC, dl, VTs, Ops, 2).getValue(1);
     if (SPCC == ~0U) SPCC = IntCondCCodeToICC(CC);
-    Opc = SPISD::BRICC;
+    // 32-bit compares use the icc flags, 64-bit uses the xcc flags.
+    Opc = LHS.getValueType() == MVT::i32 ? SPISD::BRICC : SPISD::BRXCC;
   } else {
     CompareFlag = DAG.getNode(SPISD::CMPFCC, dl, MVT::Glue, LHS, RHS);
     if (SPCC == ~0U) SPCC = FPCondCCodeToFCC(CC);
