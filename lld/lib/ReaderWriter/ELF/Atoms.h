@@ -33,16 +33,18 @@ template <class ELFT> class ELFReference LLVM_FINAL : public Reference {
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
 public:
 
-  ELFReference(const Elf_Rela *rela, uint64_t offset, const Atom *target)
-      : _target(target), _targetSymbolIndex(rela->getSymbol()),
+  ELFReference(const Elf_Rela *rela, uint64_t offset, const Atom *target,
+               Kind kind, uint32_t symbol)
+      : _target(target), _targetSymbolIndex(symbol),
         _offsetInAtom(offset), _addend(rela->r_addend) {
-    _kind = (Kind) rela->getType();
+    _kind = kind;
   }
 
-  ELFReference(const Elf_Rel *rel, uint64_t offset, const Atom *target)
-      : _target(target), _targetSymbolIndex(rel->getSymbol()),
+  ELFReference(const Elf_Rel *rel, uint64_t offset, const Atom *target,
+               Kind kind, uint32_t symbol)
+      : _target(target), _targetSymbolIndex(symbol),
         _offsetInAtom(offset), _addend(0) {
-    _kind = (Kind) rel->getType();
+    _kind = kind;
   }
 
   ELFReference(Kind kind)
