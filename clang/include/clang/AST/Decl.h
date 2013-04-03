@@ -660,7 +660,6 @@ private:
     friend class ASTDeclReader;
 
     unsigned SClass : 3;
-    unsigned SClassAsWritten : 3;
     unsigned ThreadSpecified : 1;
     unsigned InitStyle : 2;
 
@@ -727,14 +726,12 @@ protected:
 
   VarDecl(Kind DK, DeclContext *DC, SourceLocation StartLoc,
           SourceLocation IdLoc, IdentifierInfo *Id,
-          QualType T, TypeSourceInfo *TInfo, StorageClass SC,
-          StorageClass SCAsWritten)
+          QualType T, TypeSourceInfo *TInfo, StorageClass SC)
     : DeclaratorDecl(DK, DC, IdLoc, Id, T, TInfo, StartLoc), Init() {
     assert(sizeof(VarDeclBitfields) <= sizeof(unsigned));
     assert(sizeof(ParmVarDeclBitfields) <= sizeof(unsigned));
     AllBits = 0;
     VarDeclBits.SClass = SC;
-    VarDeclBits.SClassAsWritten = SCAsWritten;
     // Everything else is implicitly initialized to false.
   }
 
@@ -757,23 +754,18 @@ public:
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation StartLoc, SourceLocation IdLoc,
                          IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
-                         StorageClass S, StorageClass SCAsWritten);
+                         StorageClass S);
 
   static VarDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
   virtual SourceRange getSourceRange() const LLVM_READONLY;
 
+  /// \brief Returns the storage class as written in the source. For the
+  /// computed linkage of symbol, see getLinkage.
   StorageClass getStorageClass() const {
     return (StorageClass) VarDeclBits.SClass;
   }
-  StorageClass getStorageClassAsWritten() const {
-    return (StorageClass) VarDeclBits.SClassAsWritten;
-  }
   void setStorageClass(StorageClass SC);
-  void setStorageClassAsWritten(StorageClass SC) {
-    assert(isLegalForVariable(SC));
-    VarDeclBits.SClassAsWritten = SC;
-  }
 
   void setThreadSpecified(bool T) { VarDeclBits.ThreadSpecified = T; }
   bool isThreadSpecified() const {
@@ -803,13 +795,6 @@ public:
   bool hasExternalStorage() const {
     return getStorageClass() == SC_Extern ||
            getStorageClass() == SC_PrivateExtern;
-  }
-
-  /// \brief Returns true if a variable was written with extern or
-  /// __private_extern__ storage.
-  bool hasExternalStorageAsWritten() const {
-    return getStorageClassAsWritten() == SC_Extern ||
-           getStorageClassAsWritten() == SC_PrivateExtern;
   }
 
   /// hasGlobalStorage - Returns true for all variables that do not
@@ -1145,7 +1130,7 @@ public:
   ImplicitParamDecl(DeclContext *DC, SourceLocation IdLoc,
                     IdentifierInfo *Id, QualType Type)
     : VarDecl(ImplicitParam, DC, IdLoc, IdLoc, Id, Type,
-              /*tinfo*/ 0, SC_None, SC_None) {
+              /*tinfo*/ 0, SC_None) {
     setImplicit();
   }
 
@@ -1164,8 +1149,8 @@ protected:
   ParmVarDecl(Kind DK, DeclContext *DC, SourceLocation StartLoc,
               SourceLocation IdLoc, IdentifierInfo *Id,
               QualType T, TypeSourceInfo *TInfo,
-              StorageClass S, StorageClass SCAsWritten, Expr *DefArg)
-    : VarDecl(DK, DC, StartLoc, IdLoc, Id, T, TInfo, S, SCAsWritten) {
+              StorageClass S, Expr *DefArg)
+    : VarDecl(DK, DC, StartLoc, IdLoc, Id, T, TInfo, S) {
     assert(ParmVarDeclBits.HasInheritedDefaultArg == false);
     assert(ParmVarDeclBits.IsKNRPromoted == false);
     assert(ParmVarDeclBits.IsObjCMethodParam == false);
@@ -1177,8 +1162,7 @@ public:
                              SourceLocation StartLoc,
                              SourceLocation IdLoc, IdentifierInfo *Id,
                              QualType T, TypeSourceInfo *TInfo,
-                             StorageClass S, StorageClass SCAsWritten,
-                             Expr *DefArg);
+                             StorageClass S, Expr *DefArg);
 
   static ParmVarDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
@@ -1383,7 +1367,6 @@ private:
   // FIXME: This can be packed into the bitfields in Decl.
   // NOTE: VC++ treats enums as signed, avoid using the StorageClass enum
   unsigned SClass : 2;
-  unsigned SClassAsWritten : 2;
   bool IsInline : 1;
   bool IsInlineSpecified : 1;
   bool IsVirtualAsWritten : 1;
@@ -1473,13 +1456,13 @@ protected:
   FunctionDecl(Kind DK, DeclContext *DC, SourceLocation StartLoc,
                const DeclarationNameInfo &NameInfo,
                QualType T, TypeSourceInfo *TInfo,
-               StorageClass S, StorageClass SCAsWritten, bool isInlineSpecified,
+               StorageClass S, bool isInlineSpecified,
                bool isConstexprSpecified)
     : DeclaratorDecl(DK, DC, NameInfo.getLoc(), NameInfo.getName(), T, TInfo,
                      StartLoc),
       DeclContext(DK),
       ParamInfo(0), Body(),
-      SClass(S), SClassAsWritten(SCAsWritten),
+      SClass(S),
       IsInline(isInlineSpecified), IsInlineSpecified(isInlineSpecified),
       IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false),
       HasWrittenPrototype(true), IsDeleted(false), IsTrivial(false),
@@ -1511,13 +1494,12 @@ public:
                               DeclarationName N, QualType T,
                               TypeSourceInfo *TInfo,
                               StorageClass SC,
-                              StorageClass SCAsWritten,
                               bool isInlineSpecified = false,
                               bool hasWrittenPrototype = true,
                               bool isConstexprSpecified = false) {
     DeclarationNameInfo NameInfo(N, NLoc);
     return FunctionDecl::Create(C, DC, StartLoc, NameInfo, T, TInfo,
-                                SC, SCAsWritten,
+                                SC,
                                 isInlineSpecified, hasWrittenPrototype,
                                 isConstexprSpecified);
   }
@@ -1527,7 +1509,6 @@ public:
                               const DeclarationNameInfo &NameInfo,
                               QualType T, TypeSourceInfo *TInfo,
                               StorageClass SC,
-                              StorageClass SCAsWritten,
                               bool isInlineSpecified,
                               bool hasWrittenPrototype,
                               bool isConstexprSpecified = false);
@@ -1779,12 +1760,9 @@ public:
     return getType()->getAs<FunctionType>()->getCallResultType(getASTContext());
   }
 
+  /// \brief Returns the storage class as written in the source. For the
+  /// computed linkage of symbol, see getLinkage.
   StorageClass getStorageClass() const { return StorageClass(SClass); }
-  void setStorageClass(StorageClass SC);
-
-  StorageClass getStorageClassAsWritten() const {
-    return StorageClass(SClassAsWritten);
-  }
 
   /// \brief Determine whether the "inline" keyword was specified for this
   /// function.

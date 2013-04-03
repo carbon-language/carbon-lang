@@ -728,7 +728,7 @@ void Sema::ActOnEndOfTranslationUnit() {
             Diag(DiagD->getLocation(), diag::warn_unneeded_member_function)
                   << DiagD->getDeclName();
           else {
-            if (FD->getStorageClassAsWritten() == SC_Static &&
+            if (FD->getStorageClass() == SC_Static &&
                 !FD->isInlineSpecified() &&
                 !SourceMgr.isFromMainFile(
                    SourceMgr.getExpansionLoc(FD->getLocation())))

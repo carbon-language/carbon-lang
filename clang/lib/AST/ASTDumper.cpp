@@ -749,7 +749,7 @@ void ASTDumper::VisitFunctionDecl(const FunctionDecl *D) {
   dumpName(D);
   dumpType(D->getType());
 
-  StorageClass SC = D->getStorageClassAsWritten();
+  StorageClass SC = D->getStorageClass();
   if (SC != SC_None)
     OS << ' ' << VarDecl::getStorageClassSpecifierString(SC);
   if (D->isInlineSpecified())
@@ -850,7 +850,7 @@ void ASTDumper::VisitFieldDecl(const FieldDecl *D) {
 void ASTDumper::VisitVarDecl(const VarDecl *D) {
   dumpName(D);
   dumpType(D->getType());
-  StorageClass SC = D->getStorageClassAsWritten();
+  StorageClass SC = D->getStorageClass();
   if (SC != SC_None)
     OS << ' ' << VarDecl::getStorageClassSpecifierString(SC);
   if (D->isThreadSpecified())

@@ -1573,11 +1573,10 @@ protected:
   CXXMethodDecl(Kind DK, CXXRecordDecl *RD, SourceLocation StartLoc,
                 const DeclarationNameInfo &NameInfo,
                 QualType T, TypeSourceInfo *TInfo,
-                bool isStatic, StorageClass SCAsWritten, bool isInline,
+                StorageClass SC, bool isInline,
                 bool isConstexpr, SourceLocation EndLocation)
     : FunctionDecl(DK, RD, StartLoc, NameInfo, T, TInfo,
-                   (isStatic ? SC_Static : SC_None),
-                   SCAsWritten, isInline, isConstexpr) {
+                   SC, isInline, isConstexpr) {
     if (EndLocation.isValid())
       setRangeEnd(EndLocation);
   }
@@ -1587,15 +1586,14 @@ public:
                                SourceLocation StartLoc,
                                const DeclarationNameInfo &NameInfo,
                                QualType T, TypeSourceInfo *TInfo,
-                               bool isStatic,
-                               StorageClass SCAsWritten,
+                               StorageClass SC,
                                bool isInline,
                                bool isConstexpr,
                                SourceLocation EndLocation);
 
   static CXXMethodDecl *CreateDeserialized(ASTContext &C, unsigned ID);
-  
-  bool isStatic() const { return getStorageClass() == SC_Static; }
+
+  bool isStatic() const;
   bool isInstance() const { return !isStatic(); }
 
   bool isConst() const { return getType()->castAs<FunctionType>()->isConst(); }
@@ -2003,7 +2001,7 @@ class CXXConstructorDecl : public CXXMethodDecl {
                      QualType T, TypeSourceInfo *TInfo,
                      bool isExplicitSpecified, bool isInline,
                      bool isImplicitlyDeclared, bool isConstexpr)
-    : CXXMethodDecl(CXXConstructor, RD, StartLoc, NameInfo, T, TInfo, false,
+    : CXXMethodDecl(CXXConstructor, RD, StartLoc, NameInfo, T, TInfo,
                     SC_None, isInline, isConstexpr, SourceLocation()),
       IsExplicitSpecified(isExplicitSpecified), ImplicitlyDefined(false),
       CtorInitializers(0), NumCtorInitializers(0) {
@@ -2222,7 +2220,7 @@ class CXXDestructorDecl : public CXXMethodDecl {
                     const DeclarationNameInfo &NameInfo,
                     QualType T, TypeSourceInfo *TInfo,
                     bool isInline, bool isImplicitlyDeclared)
-    : CXXMethodDecl(CXXDestructor, RD, StartLoc, NameInfo, T, TInfo, false,
+    : CXXMethodDecl(CXXDestructor, RD, StartLoc, NameInfo, T, TInfo,
                     SC_None, isInline, /*isConstexpr=*/false, SourceLocation()),
       ImplicitlyDefined(false), OperatorDelete(0) {
     setImplicit(isImplicitlyDeclared);
@@ -2289,7 +2287,7 @@ class CXXConversionDecl : public CXXMethodDecl {
                     QualType T, TypeSourceInfo *TInfo,
                     bool isInline, bool isExplicitSpecified,
                     bool isConstexpr, SourceLocation EndLocation)
-    : CXXMethodDecl(CXXConversion, RD, StartLoc, NameInfo, T, TInfo, false,
+    : CXXMethodDecl(CXXConversion, RD, StartLoc, NameInfo, T, TInfo,
                     SC_None, isInline, isConstexpr, EndLocation),
       IsExplicitSpecified(isExplicitSpecified) { }
 

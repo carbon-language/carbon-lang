@@ -3349,7 +3349,7 @@ void Sema::CodeCompleteDeclSpec(Scope *S, DeclSpec &DS,
   // the initial opening bracket '[' missing. Add appropriate completions.
   if (AllowNonIdentifiers && !AllowNestedNameSpecifiers &&
       DS.getTypeSpecType() == DeclSpec::TST_typename &&
-      DS.getStorageClassSpecAsWritten() == DeclSpec::SCS_unspecified &&
+      DS.getStorageClassSpec() == DeclSpec::SCS_unspecified &&
       !DS.isThreadSpecified() && !DS.isExternInLinkageSpec() &&
       DS.getTypeSpecComplex() == DeclSpec::TSC_unspecified &&
       DS.getTypeSpecSign() == DeclSpec::TSS_unspecified &&

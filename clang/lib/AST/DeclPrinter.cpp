@@ -393,7 +393,7 @@ void DeclPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {
 void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
   CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(D);
   if (!Policy.SuppressSpecifiers) {
-    switch (D->getStorageClassAsWritten()) {
+    switch (D->getStorageClass()) {
     case SC_None: break;
     case SC_Extern: Out << "extern "; break;
     case SC_Static: Out << "static "; break;
@@ -641,9 +641,9 @@ void DeclPrinter::VisitLabelDecl(LabelDecl *D) {
 
 
 void DeclPrinter::VisitVarDecl(VarDecl *D) {
-  StorageClass SCAsWritten = D->getStorageClassAsWritten();
-  if (!Policy.SuppressSpecifiers && SCAsWritten != SC_None)
-    Out << VarDecl::getStorageClassSpecifierString(SCAsWritten) << " ";
+  StorageClass SC = D->getStorageClass();
+  if (!Policy.SuppressSpecifiers && SC != SC_None)
+    Out << VarDecl::getStorageClassSpecifierString(SC) << " ";
 
   if (!Policy.SuppressSpecifiers && D->isThreadSpecified())
     Out << "__thread ";

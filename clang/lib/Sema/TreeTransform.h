@@ -3994,7 +3994,6 @@ ParmVarDecl *TreeTransform<Derived>::TransformFunctionTypeParam(
                                              NewDI->getType(),
                                              NewDI,
                                              OldParm->getStorageClass(),
-                                             OldParm->getStorageClassAsWritten(),
                                              /* DefArg */ NULL);
   newParm->setScopeInfo(OldParm->getFunctionScopeDepth(),
                         OldParm->getFunctionScopeIndex() + indexAdjustment);

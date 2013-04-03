@@ -2852,7 +2852,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
         = VarDecl::Create(SemaRef.Context, SemaRef.CurContext, Loc, Loc,
                           IterationVarName, SizeType,
                         SemaRef.Context.getTrivialTypeSourceInfo(SizeType, Loc),
-                          SC_None, SC_None);
+                          SC_None);
       IndexVariables.push_back(IterationVar);
       
       // Create a reference to the iteration variable.
@@ -7822,7 +7822,7 @@ void Sema::DeclareInheritingConstructors(CXXRecordDecl *ClassDecl) {
                                                 /*IdentifierInfo=*/0,
                                                 BaseCtorType->getArgType(i),
                                                 /*TInfo=*/0, SC_None,
-                                                SC_None, /*DefaultArg=*/0);
+                                                /*DefaultArg=*/0);
           PD->setScopeInfo(0, i);
           PD->setImplicit();
           ParamDecls.push_back(PD);
@@ -8275,7 +8275,7 @@ buildSingleCopyAssignRecursively(Sema &S, SourceLocation Loc, QualType T,
   VarDecl *IterationVar = VarDecl::Create(S.Context, S.CurContext, Loc, Loc,
                                           IterationVarName, SizeType,
                             S.Context.getTrivialTypeSourceInfo(SizeType, Loc),
-                                          SC_None, SC_None);
+                                          SC_None);
 
   // Initialize the iteration variable to zero.
   llvm::APInt Zero(S.Context.getTypeSize(SizeType), 0);
@@ -8439,8 +8439,8 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   DeclarationNameInfo NameInfo(Name, ClassLoc);
   CXXMethodDecl *CopyAssignment
     = CXXMethodDecl::Create(Context, ClassDecl, ClassLoc, NameInfo, QualType(),
-                            /*TInfo=*/0, /*isStatic=*/false,
-                            /*StorageClassAsWritten=*/SC_None,
+                            /*TInfo=*/0,
+                            /*StorageClass=*/SC_None,
                             /*isInline=*/true, /*isConstexpr=*/false,
                             SourceLocation());
   CopyAssignment->setAccess(AS_public);
@@ -8457,7 +8457,6 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyAssignment,
                                                ClassLoc, ClassLoc, /*Id=*/0,
                                                ArgType, /*TInfo=*/0,
-                                               SC_None,
                                                SC_None, 0);
   CopyAssignment->setParams(FromParam);
 
@@ -8888,8 +8887,8 @@ CXXMethodDecl *Sema::DeclareImplicitMoveAssignment(CXXRecordDecl *ClassDecl) {
   DeclarationNameInfo NameInfo(Name, ClassLoc);
   CXXMethodDecl *MoveAssignment
     = CXXMethodDecl::Create(Context, ClassDecl, ClassLoc, NameInfo, QualType(),
-                            /*TInfo=*/0, /*isStatic=*/false,
-                            /*StorageClassAsWritten=*/SC_None,
+                            /*TInfo=*/0,
+                            /*StorageClass=*/SC_None,
                             /*isInline=*/true,
                             /*isConstexpr=*/false,
                             SourceLocation());
@@ -8907,7 +8906,6 @@ CXXMethodDecl *Sema::DeclareImplicitMoveAssignment(CXXRecordDecl *ClassDecl) {
   ParmVarDecl *FromParam = ParmVarDecl::Create(Context, MoveAssignment,
                                                ClassLoc, ClassLoc, /*Id=*/0,
                                                ArgType, /*TInfo=*/0,
-                                               SC_None,
                                                SC_None, 0);
   MoveAssignment->setParams(FromParam);
 
@@ -9262,7 +9260,6 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
                                                ClassLoc, ClassLoc,
                                                /*IdentifierInfo=*/0,
                                                ArgType, /*TInfo=*/0,
-                                               SC_None,
                                                SC_None, 0);
   CopyConstructor->setParams(FromParam);
 
@@ -9449,7 +9446,6 @@ CXXConstructorDecl *Sema::DeclareImplicitMoveConstructor(
                                                ClassLoc, ClassLoc,
                                                /*IdentifierInfo=*/0,
                                                ArgType, /*TInfo=*/0,
-                                               SC_None,
                                                SC_None, 0);
   MoveConstructor->setParams(FromParam);
 
@@ -10281,7 +10277,7 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S,
   }
 
   VarDecl *ExDecl = VarDecl::Create(Context, CurContext, StartLoc, Loc, Name,
-                                    ExDeclType, TInfo, SC_None, SC_None);
+                                    ExDeclType, TInfo, SC_None);
   ExDecl->setExceptionVariable(true);
   
   // In ARC, infer 'retaining' for variables of retainable type.

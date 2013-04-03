@@ -1602,7 +1602,7 @@ CodeGenModule::MaybeEmitGlobalStdInitializerListInitializer(const VarDecl *D,
                                                           D->getDeclContext()),
                                           D->getLocStart(), D->getLocation(),
                                           name, arrayType, sourceInfo,
-                                          SC_Static, SC_Static);
+                                          SC_Static);
 
   // Now clone the InitListExpr to initialize the array instead.
   // Incredible hack: we want to use the existing InitListExpr here, so we need
