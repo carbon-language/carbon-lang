@@ -1513,7 +1513,8 @@ MachProcess::PrepareForAttach (const char *path, nub_launch_flavor_t launch_flav
         return NULL;
 
     const char *app_ext = strstr(path, ".app");
-    if (app_ext == NULL)
+    const bool is_app = app_ext != NULL && (app_ext[4] == '\0' || app_ext[4] == '/');
+    if (!is_app)
     {
         DNBLogThreadedIf(LOG_PROCESS, "MachProcess::PrepareForAttach(): path '%s' doesn't contain .app, we can't tell springboard to wait for launch...", path);
         return NULL;
