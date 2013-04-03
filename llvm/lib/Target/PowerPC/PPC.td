@@ -212,7 +212,8 @@ def : Processor<"pwr7", G5Itineraries,
 def : Processor<"ppc", G3Itineraries, [Directive32]>;
 def : Processor<"ppc64", G5Itineraries,
                   [Directive64, FeatureAltivec,
-                   FeatureMFOCRF, FeatureFSqrt, FeatureSTFIWX,
+                   FeatureMFOCRF, FeatureFSqrt, FeatureFRES,
+                   FeatureFRSQRTE, FeatureSTFIWX,
                    Feature64Bit /*, Feature64BitRegs */]>;
 
 
