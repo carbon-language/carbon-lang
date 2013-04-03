@@ -697,7 +697,8 @@ private:
       return 0;
     }
 
-    unsigned IndentedFurther =
+    // If we are continuing an expression, we want to indent an extra 4 spaces.
+    unsigned ContinuationIndent =
         std::max(State.Stack.back().LastSpace, State.Stack.back().Indent) + 4;
     if (Newline) {
       unsigned WhitespaceStartColumn = State.Column;
@@ -711,15 +712,19 @@ private:
                  State.Stack.back().FirstLessLess != 0) {
         State.Column = State.Stack.back().FirstLessLess;
       } else if (Previous.is(tok::coloncolon)) {
-        State.Column = IndentedFurther;
-        if (State.Stack.back().NestedNameSpecifierContinuation == 0)
+        if (State.Stack.back().NestedNameSpecifierContinuation == 0) {
+          State.Column = ContinuationIndent;
           State.Stack.back().NestedNameSpecifierContinuation = State.Column;
-        State.Column = State.Stack.back().NestedNameSpecifierContinuation;
+        } else {
+          State.Column = State.Stack.back().NestedNameSpecifierContinuation;
+        }
       } else if (Current.isOneOf(tok::period, tok::arrow)) {
-        State.Column = IndentedFurther;
-        if (State.Stack.back().CallContinuation == 0)
+        if (State.Stack.back().CallContinuation == 0) {
+          State.Column = ContinuationIndent;
           State.Stack.back().CallContinuation = State.Column;
-        State.Column = State.Stack.back().CallContinuation;
+        } else {
+          State.Column = State.Stack.back().CallContinuation;
+        }
       } else if (Current.Type == TT_ConditionalExpr) {
         State.Column = State.Stack.back().QuestionColumn;
       } else if (Previous.is(tok::comma) && State.VariablePos != 0 &&
@@ -741,10 +746,11 @@ private:
       } else if (Current.Type == TT_StartOfName || Current.is(tok::question) ||
                  Previous.is(tok::equal) || isComparison(Previous) ||
                  Previous.Type == TT_ObjCMethodExpr) {
-        // Indent and extra 4 spaces if the current expression is continued.
-        State.Column = IndentedFurther;
+        State.Column = ContinuationIndent;
       } else {
         State.Column = State.Stack.back().Indent;
+        // Ensure that we fall back to indenting 4 spaces instead of just
+        // flushing continuations left.
         if (State.Column == FirstIndent)
           State.Column += 4;
       }
@@ -867,6 +873,9 @@ private:
         State.Stack.back().AvoidBinPacking = true;
       State.Stack.back().BreakBeforeParameter = false;
     }
+
+    // In ObjC method declaration we align on the ":" of parameters, but we need
+    // to ensure that we indent parameters on subsequent lines by at least 4.
     if (Current.Type == TT_ObjCMethodSpecifier)
       State.Stack.back().Indent += 4;
 
