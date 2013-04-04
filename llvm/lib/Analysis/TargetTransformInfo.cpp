@@ -150,8 +150,10 @@ unsigned TargetTransformInfo::getMaximumUnrollFactor() const {
 }
 
 unsigned TargetTransformInfo::getArithmeticInstrCost(unsigned Opcode,
-                                                     Type *Ty) const {
-  return PrevTTI->getArithmeticInstrCost(Opcode, Ty);
+                                                Type *Ty,
+                                                OperandValueKind Op1Info,
+                                                OperandValueKind Op2Info) const {
+  return PrevTTI->getArithmeticInstrCost(Opcode, Ty, Op1Info, Op2Info);
 }
 
 unsigned TargetTransformInfo::getShuffleCost(ShuffleKind Kind, Type *Tp,
@@ -495,7 +497,8 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
     return 1;
   }
 
-  unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const {
+  unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty, OperandValueKind,
+                                  OperandValueKind) const {
     return 1;
   }
 

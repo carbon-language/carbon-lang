@@ -85,7 +85,9 @@ public:
   virtual unsigned getNumberOfRegisters(bool Vector) const;
   virtual unsigned getMaximumUnrollFactor() const;
   virtual unsigned getRegisterBitWidth(bool Vector) const;
-  virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const;
+  virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty,
+                                          OperandValueKind,
+                                          OperandValueKind) const;
   virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
                                   int Index, Type *SubTp) const;
   virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
@@ -193,7 +195,9 @@ unsigned BasicTTI::getMaximumUnrollFactor() const {
   return 1;
 }
 
-unsigned BasicTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty) const {
+unsigned BasicTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
+                                          OperandValueKind,
+                                          OperandValueKind) const {
   // Check if any of the operands are vector operands.
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");

@@ -88,6 +88,23 @@ static bool isReverseVectorMask(SmallVector<int, 16> &Mask) {
   return true;
 }
 
+static TargetTransformInfo::OperandValueKind getOperandInfo(Value *V) {
+  TargetTransformInfo::OperandValueKind OpInfo =
+    TargetTransformInfo::OK_AnyValue;
+
+  // Check for a splat of a constant.
+  ConstantDataVector *CDV = 0;
+  if ((CDV = dyn_cast<ConstantDataVector>(V)))
+    if (CDV->getSplatValue() != NULL)
+      OpInfo = TargetTransformInfo::OK_UniformConstantValue;
+  ConstantVector *CV = 0;
+  if ((CV = dyn_cast<ConstantVector>(V)))
+    if (CV->getSplatValue() != NULL)
+      OpInfo = TargetTransformInfo::OK_UniformConstantValue;
+
+  return OpInfo;
+}
+
 unsigned CostModelAnalysis::getInstructionCost(const Instruction *I) const {
   if (!TTI)
     return -1;
@@ -121,7 +138,12 @@ unsigned CostModelAnalysis::getInstructionCost(const Instruction *I) const {
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor: {
-    return TTI->getArithmeticInstrCost(I->getOpcode(), I->getType());
+    TargetTransformInfo::OperandValueKind Op1VK =
+      getOperandInfo(I->getOperand(0));
+    TargetTransformInfo::OperandValueKind Op2VK =
+      getOperandInfo(I->getOperand(1));
+    return TTI->getArithmeticInstrCost(I->getOpcode(), I->getType(), Op1VK,
+                                       Op2VK);
   }
   case Instruction::Select: {
     const SelectInst *SI = cast<SelectInst>(I);
