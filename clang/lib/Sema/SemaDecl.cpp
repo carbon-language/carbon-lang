@@ -2896,9 +2896,10 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous,
   if (New->isInvalidDecl())
     return;
 
-  // C99 6.2.2p4: Check if we have a static decl followed by a non-static.
+  // [dcl.stc]p8: Check if we have a non-static decl followed by a static.
   if (New->getStorageClass() == SC_Static &&
-      (Old->getStorageClass() == SC_None || Old->hasExternalStorage())) {
+      !New->isStaticDataMember() &&
+      isExternalLinkage(Old->getLinkage())) {
     Diag(New->getLocation(), diag::err_static_non_static) << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
     return New->setInvalidDecl();
@@ -2915,6 +2916,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous,
   if (New->hasExternalStorage() && Old->hasLinkage())
     /* Okay */;
   else if (New->getCanonicalDecl()->getStorageClass() != SC_Static &&
+           !New->isStaticDataMember() &&
            Old->getCanonicalDecl()->getStorageClass() == SC_Static) {
     Diag(New->getLocation(), diag::err_non_static_static) << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
@@ -4781,8 +4783,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         Diag(D.getDeclSpec().getStorageClassSpecLoc(),
              diag::err_static_out_of_line)
           << FixItHint::CreateRemoval(D.getDeclSpec().getStorageClassSpecLoc());
-      } else if (SC == SC_None)
-        SC = SC_Static;
+      }
     }
     if (SC == SC_Static && CurContext->isRecord()) {
       if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC)) {

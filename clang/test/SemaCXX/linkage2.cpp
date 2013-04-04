@@ -147,3 +147,8 @@ namespace test14 {
     static void a(void) {} // expected-error {{static declaration of 'a' follows non-static declaration}}
   }
 }
+
+namespace test15 {
+  const int a = 5; // expected-note {{previous definition is here}}
+  static const int a; // expected-error {{redefinition of 'a'}}
+}
