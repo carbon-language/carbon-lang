@@ -7,12 +7,8 @@ set_target_properties(LLDUnitTests PROPERTIES FOLDER "lld tests")
 # Produces a binary named 'basename(test_dirname)'.
 function(add_lld_unittest test_dirname)
   add_unittest(LLDUnitTests ${test_dirname} ${ARGN})
+  target_link_libraries(${test_dirname} ${LLVM_COMMON_LIBS})
 endfunction()
 
-set(LLVM_LINK_COMPONENTS
-    support
-    )
-
-add_lld_unittest(CoreTests
-  RangeTest.cpp
-  )
+add_subdirectory(CoreTests)
+add_subdirectory(DriverTests)

@@ -48,21 +48,11 @@ private:
 class UniversalDriver : public Driver {
 public:
   /// Determine flavor and pass control to Driver for that flavor.
-  static bool link(int argc, const char *argv[]);
+  static bool link(int argc, const char *argv[],
+                   raw_ostream &diagnostics = llvm::errs());
 
 private:
   UniversalDriver() LLVM_DELETED_FUNCTION; 
-
-  enum class Flavor {
-    invalid,
-    gnu_ld,       // -flavor gnu
-    win_link,     // -flavor link
-    darwin_ld,    // -flavor darwin
-    core          // -flavor core OR -core
-  };
-
-  static Flavor selectFlavor(std::vector<const char*> &args);
-  static Flavor strToFlavor(StringRef str);
 };
 
 
