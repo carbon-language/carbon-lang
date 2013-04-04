@@ -127,7 +127,6 @@ CheckPropertyAgainstProtocol(Sema &S, ObjCPropertyDecl *Prop,
   for (unsigned I = 0, N = R.size(); I != N; ++I) {
     if (ObjCPropertyDecl *ProtoProp = dyn_cast<ObjCPropertyDecl>(R[I])) {
       S.DiagnosePropertyMismatch(Prop, ProtoProp, Proto->getIdentifier());
-      S.mergeDeclAttributes(Prop, ProtoProp, Sema::AMK_Override);
       return;
     }
   }
@@ -210,7 +209,6 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
       for (unsigned I = 0, N = R.size(); I != N; ++I) {
         if (ObjCPropertyDecl *SuperProp = dyn_cast<ObjCPropertyDecl>(R[I])) {
           DiagnosePropertyMismatch(Res, SuperProp, Super->getIdentifier());
-          mergeDeclAttributes(Res, SuperProp, AMK_Override);
           FoundInSuper = true;
           break;
         }
