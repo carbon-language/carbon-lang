@@ -119,9 +119,7 @@ LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M,
 
 #ifdef __cplusplus
 }
-#endif
 
-#if defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS)
 namespace llvm {
   class TargetMachine;
   class Target;
@@ -140,6 +138,6 @@ namespace llvm {
     return reinterpret_cast<LLVMTargetRef>(const_cast<Target*>(P));
   }
 }
-#endif /* defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS) */
+#endif
 
 #endif

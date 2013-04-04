@@ -17,15 +17,14 @@
 
 #include "llvm/Support/DataTypes.h"
 
-#if defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS)
+#ifdef __cplusplus
+
 /* Need these includes to support the LLVM 'cast' template for the C++ 'wrap' 
    and 'unwrap' conversion functions. */
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/PassRegistry.h"
-#endif /* defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS) */
 
-#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -2670,9 +2669,7 @@ LLVMBool LLVMIsMultithreaded();
 
 #ifdef __cplusplus
 }
-#endif
 
-#if defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS)
 namespace llvm {
   class MemoryBuffer;
   class PassManagerBase;
@@ -2766,6 +2763,6 @@ namespace llvm {
   }
 }
 
-#endif /* defined(__cplusplus) && !defined(LLVM_DO_NOT_INCLUDE_CPP_HEADERS) */
+#endif /* !defined(__cplusplus) */
 
-#endif /* defined(LLVM_C_CORE_H) */
+#endif /* !defined(LLVM_C_CORE_H) */
