@@ -127,6 +127,8 @@ public:
     if (EC)
       return;
 
+    int ordinal = 0;
+
     // Point Obj to correct class and bitwidth ELF object
     _objFile.reset(
         llvm::dyn_cast<llvm::object::ELFObjectFile<ELFT> >(binaryFile.get()));
@@ -334,10 +336,11 @@ public:
         sym->st_size = 0;
         ArrayRef<uint8_t> content((const uint8_t *)sectionContents.data(),
                                   sectionContents.size());
-        _definedAtoms._atoms.push_back(
-            new (_readerStorage)
+        auto newAtom = new (_readerStorage)
             ELFDefinedAtom<ELFT>(*this, sectionName, sectionName, sym, i.first,
-                                 content, 0, 0, _references));
+                                 content, 0, 0, _references);
+        newAtom->setOrdinal(++ordinal);
+        _definedAtoms._atoms.push_back(newAtom);
       }
 
       ELFDefinedAtom<ELFT> *previous_atom = nullptr;
@@ -410,8 +413,10 @@ public:
           sym->setBinding(llvm::ELF::STB_GLOBAL);
           anonAtom = createDefinedAtomAndAssignRelocations(
               "", sectionName, sym, i.first,
-              ArrayRef<uint8_t>((uint8_t *)sectionContents.data() +
-                                (*si)->st_value, contentSize));
+              ArrayRef<uint8_t>(
+                  (uint8_t *)sectionContents.data() + (*si)->st_value,
+                  contentSize));
+          anonAtom->setOrdinal(++ordinal);
 
           // If this is the last atom, lets not create a followon
           // reference
@@ -453,6 +458,8 @@ public:
 
         auto newAtom = createDefinedAtomAndAssignRelocations(
             symbolName, sectionName, *si, i.first, symbolData);
+
+        newAtom->setOrdinal(++ordinal);
 
         // If the atom was a weak symbol, lets create a followon
         // reference to the anonymous atom that we created
