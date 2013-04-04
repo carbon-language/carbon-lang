@@ -206,6 +206,35 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
       return LT.first * AVX2CostTable[Idx].Cost;
   }
 
+  static const CostTblEntry<MVT> SSE2UniformConstCostTable[] = {
+    // We don't correctly identify costs of casts because they are marked as
+    // custom.
+    // Constant splats are cheaper for the following instructions.
+    { ISD::SHL,  MVT::v16i8,  1 }, // psllw.
+    { ISD::SHL,  MVT::v8i16,  1 }, // psllw.
+    { ISD::SHL,  MVT::v4i32,  1 }, // pslld
+    { ISD::SHL,  MVT::v2i64,  1 }, // psllq.
+
+    { ISD::SRL,  MVT::v16i8,  1 }, // psrlw.
+    { ISD::SRL,  MVT::v8i16,  1 }, // psrlw.
+    { ISD::SRL,  MVT::v4i32,  1 }, // psrld.
+    { ISD::SRL,  MVT::v2i64,  1 }, // psrlq.
+
+    { ISD::SRA,  MVT::v16i8,  4 }, // psrlw, pand, pxor, psubb.
+    { ISD::SRA,  MVT::v8i16,  1 }, // psraw.
+    { ISD::SRA,  MVT::v4i32,  1 }, // psrad.
+  };
+
+  if (Op2Info == TargetTransformInfo::OK_UniformConstantValue &&
+      ST->hasSSE2()) {
+    int Idx = CostTableLookup<MVT>(SSE2UniformConstCostTable,
+                                   array_lengthof(SSE2UniformConstCostTable),
+                                   ISD, LT.second);
+    if (Idx != -1)
+      return LT.first * SSE2UniformConstCostTable[Idx].Cost;
+  }
+
+
   static const CostTblEntry<MVT> SSE2CostTable[] = {
     // We don't correctly identify costs of casts because they are marked as
     // custom.
