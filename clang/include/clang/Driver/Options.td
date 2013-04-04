@@ -675,6 +675,7 @@ def fshow_source_location : Flag<["-"], "fshow-source-location">, Group<f_Group>
 def fspell_checking : Flag<["-"], "fspell-checking">, Group<f_Group>;
 def fsigned_bitfields : Flag<["-"], "fsigned-bitfields">, Group<f_Group>;
 def fsigned_char : Flag<["-"], "fsigned-char">, Group<f_Group>;
+def fsplit_stack : Flag<["-"], "fsplit-stack">, Group<f_Group>;
 def fstack_protector_all : Flag<["-"], "fstack-protector-all">, Group<f_Group>;
 def fstack_protector : Flag<["-"], "fstack-protector">, Group<f_Group>;
 def fstrict_aliasing : Flag<["-"], "fstrict-aliasing">, Group<f_Group>;

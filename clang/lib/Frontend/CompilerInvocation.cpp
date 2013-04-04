@@ -358,6 +358,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.NumRegisterParameters = Args.getLastArgIntValue(OPT_mregparm, 0, Diags);
   Opts.NoGlobalMerge = Args.hasArg(OPT_mno_global_merge);
   Opts.NoExecStack = Args.hasArg(OPT_mno_exec_stack);
+  Opts.EnableSegmentedStacks = Args.hasArg(OPT_split_stacks);
   Opts.RelaxAll = Args.hasArg(OPT_mrelax_all);
   Opts.OmitLeafFramePointer = Args.hasArg(OPT_momit_leaf_frame_pointer);
   Opts.SaveTempLabels = Args.hasArg(OPT_msave_temp_labels);

@@ -457,6 +457,7 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   Options.TrapFuncName = CodeGenOpts.TrapFuncName;
   Options.PositionIndependentExecutable = LangOpts.PIELevel != 0;
   Options.SSPBufferSize = CodeGenOpts.SSPBufferSize;
+  Options.EnableSegmentedStacks = CodeGenOpts.EnableSegmentedStacks;
 
   TargetMachine *TM = TheTarget->createTargetMachine(Triple, TargetOpts.CPU,
                                                      FeaturesStr, Options,
