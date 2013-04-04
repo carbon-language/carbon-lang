@@ -927,11 +927,11 @@ private:
     }
 
     // Remove scopes created by fake parenthesis.
-    unsigned VariablePos = State.Stack.back().VariablePos;
     for (unsigned i = 0, e = Current.FakeRParens; i != e; ++i) {
+      unsigned VariablePos = State.Stack.back().VariablePos;
       State.Stack.pop_back();
+      State.Stack.back().VariablePos = VariablePos;
     }
-    State.Stack.back().VariablePos = VariablePos;
 
     if (Current.is(tok::string_literal)) {
       State.StartOfStringLiteral = State.Column;
