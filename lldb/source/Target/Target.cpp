@@ -2271,7 +2271,7 @@ g_properties[] =
         "file and line breakpoints." },
     // FIXME: This is the wrong way to do per-architecture settings, but we don't have a general per architecture settings system in place yet.
     { "x86-disassembly-flavor"             , OptionValue::eTypeEnum      , false, eX86DisFlavorDefault,       NULL, g_x86_dis_flavor_value_types, "The default disassembly flavor to use for x86 or x86-64 targets." },
-    { "use-fast-stepping"                  , OptionValue::eTypeBoolean   , false, false,                      NULL, NULL, "Use a fast stepping algorithm based on running from branch to branch rather than instruction single-stepping." },
+    { "use-fast-stepping"                  , OptionValue::eTypeBoolean   , false, true,                       NULL, NULL, "Use a fast stepping algorithm based on running from branch to branch rather than instruction single-stepping." },
     { NULL                                 , OptionValue::eTypeInvalid   , false, 0                         , NULL, NULL, NULL }
 };
 enum
