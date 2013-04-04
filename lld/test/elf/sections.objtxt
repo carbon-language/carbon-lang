@@ -1,4 +1,5 @@
-RUN: lld-core -reader ELF -writer ELF -o %t1 %p/Inputs/section-test.i386
+RUN: lld -flavor gnu -target i386 -o %t1 %p/Inputs/section-test.i386 \
+RUN:    -static -e baz
 RUN: llvm-objdump -section-headers %t1 |  FileCheck -check-prefix=OBJDUMP %s
 RUN: llvm-readobj -h -s -t %t1 |  FileCheck -check-prefix=READOBJ %s
 

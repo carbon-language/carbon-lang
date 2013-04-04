@@ -42,7 +42,6 @@ protected:
       : File(path, kindArchiveLibrary), _targetInfo(ti) {
   }
 
-private:
   const TargetInfo &_targetInfo;
 };
 

@@ -345,7 +345,7 @@ error_code OutputELFWriter<ELFT>::writeFile(const File &file, StringRef path) {
   _Header->e_shnum(_shdrtab->numHeaders());
   _Header->e_shstrndx(_shstrtab->ordinal());
   uint64_t virtualAddr = 0;
-  _layout->findAtomAddrByName(_targetInfo.getEntry(), virtualAddr);
+  _layout->findAtomAddrByName(_targetInfo.entrySymbolName(), virtualAddr);
   _Header->e_entry(virtualAddr);
 
   // HACK: We have to write out the header and program header here even though

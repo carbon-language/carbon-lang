@@ -1,5 +1,5 @@
-RUN: lld -core -target hexagon %p/Inputs/dynobj.o \
-RUN: -output=%t -output=%t -noinhibit-exec -output-type=shared
+RUN: lld -flavor gnu -target hexagon %p/Inputs/dynobj.o \
+RUN:   -o %t --noinhibit-exec -shared
 RUN: llvm-nm -n -s %t > %t1
 RUN: FileCheck -check-prefix=CHECKSYMS %s < %t1
 

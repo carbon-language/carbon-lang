@@ -12,7 +12,6 @@
 
 #include "X86_64TargetHandler.h"
 
-#include "lld/Core/LinkerOptions.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
 
 #include "llvm/Object/ELF.h"
@@ -29,19 +28,18 @@ enum {
 
 class X86_64TargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
-  X86_64TargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
+  X86_64TargetInfo(llvm::Triple triple) 
+    : ELFTargetInfo(triple) {
     _targetHandler =
         std::unique_ptr<TargetHandlerBase>(new X86_64TargetHandler(*this));
   }
 
-  virtual uint64_t getPageSize() const { return 0x1000; }
-
   virtual void addPasses(PassManager &) const;
 
   virtual uint64_t getBaseAddress() const {
-    if (_options._baseAddress == 0)
+    if (_baseAddress == 0)
       return 0x400000;
-    return _options._baseAddress;
+    return _baseAddress;
   }
 
   virtual bool isDynamicRelocation(const DefinedAtom &,
@@ -66,8 +64,8 @@ public:
     }
   }
 
-  virtual ErrorOr<int32_t> relocKindFromString(StringRef str) const;
-  virtual ErrorOr<std::string> stringFromRelocKind(int32_t kind) const;
+  virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
+  virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
 };
 } // end namespace elf

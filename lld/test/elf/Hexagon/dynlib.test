@@ -1,5 +1,4 @@
-RUN: lld -core -target hexagon %p/Inputs/use-shared.hexagon \
-RUN: -output=%t1 -output-type=shared
+RUN: lld -flavor gnu -target hexagon %p/Inputs/use-shared.hexagon -shared -o %t1 
 RUN: llvm-readobj -dyn-symbols %t1 > %t2
 RUN: FileCheck -check-prefix=DYNSYMS %s < %t2
 

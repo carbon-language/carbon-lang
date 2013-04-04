@@ -42,7 +42,7 @@ public:
   virtual void doFile(const File&);
 
   /// @brief do work of merging and resolving and return list
-  void resolve();
+  bool resolve();
 
   MutableFile& resultFile() {
     return _result;
@@ -54,7 +54,7 @@ private:
   void resolveUndefines();
   void updateReferences();
   void deadStripOptimize();
-  void checkUndefines(bool final);
+  bool checkUndefines(bool final);
   void removeCoalescedAwayAtoms();
   void checkDylibSymbolCollisions();
   void linkTimeOptimize();

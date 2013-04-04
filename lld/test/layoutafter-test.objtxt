@@ -1,4 +1,4 @@
-# RUN: lld-core -layout-pass=true %s | FileCheck %s -check-prefix=CHKORDER
+# RUN: lld -core -layout-pass=true %s | FileCheck %s -check-prefix=CHKORDER
 
 ---
 defined-atoms:   

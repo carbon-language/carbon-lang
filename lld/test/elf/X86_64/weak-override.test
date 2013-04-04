@@ -1,12 +1,12 @@
 # Test for weak symbol getting overridden
-RUN: lld-core -reader ELF -writer ELF -arch x86_64 %p/Inputs/weak.o \
-RUN: %p/Inputs/ovrd.o -o %t
+RUN: lld -flavor gnu -target x86_64 %p/Inputs/weak.o %p/Inputs/ovrd.o \
+RUN:    -o %t --noinhibit-exec
 RUN: llvm-nm %t | FileCheck -check-prefix=WEAKORDER %s
-RUN: lld-core -reader ELF -arch x86_64 %p/Inputs/weak.o \
-RUN: %p/Inputs/ovrd.o -layout-pass=true -o %t2 
+RUN: lld -flavor gnu -target x86_64 %p/Inputs/weak.o \
+RUN:   %p/Inputs/ovrd.o -o %t2 -emit-yaml --noinhibit-exec
 RUN: FileCheck -check-prefix=WEAKATOMSORDER %s < %t2
 
-WEAKORDER: 004000fc T f
+WEAKORDER: 004001ec T f
 
 WEAKATOMSORDER:  - name:            .text
 WEAKATOMSORDER:    references:      
@@ -34,7 +34,7 @@ WEAKATOMSORDER:    scope:           global
 WEAKATOMSORDER:    content:         [ 55, 48, 89, E5, B8, 00, 00, 00, 00, E8, 00, 00, 
 WEAKATOMSORDER:                       00, 00, B8, 00, 00, 00, 00, 5D, C3 ]
 WEAKATOMSORDER:    references:      
-WEAKATOMSORDER:      - kind:            call32
+WEAKATOMSORDER:      - kind:            R_X86_64_PC32
 WEAKATOMSORDER:        offset:          10
 WEAKATOMSORDER:        target:          f
 WEAKATOMSORDER:        addend:          -4

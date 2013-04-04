@@ -1,16 +1,17 @@
-RUN: lld-core -arch hexagon -reader ELF %p/Inputs/quickdata-sortcommon-test.o.elf-hexagon -writer ELF -o %t1
+RUN: lld -flavor gnu -target hexagon -o %t1 --noinhibit-exec \
+RUN:     %p/Inputs/quickdata-sortcommon-test.o.elf-hexagon 
 RUN: llvm-nm -n %t1 | FileCheck %s -check-prefix=quickdataSortCommon
 
-quickdataSortCommon: 00001000 D A1
-quickdataSortCommon: 00001001 D AA1
-quickdataSortCommon: 00001002 D AAA1
-quickdataSortCommon: 00001004 D B1
-quickdataSortCommon: 00001006 D BB1
-quickdataSortCommon: 00001008 D BBB1
-quickdataSortCommon: 0000100c D C1
-quickdataSortCommon: 00001010 D CC1
-quickdataSortCommon: 00001014 D CCC1
-quickdataSortCommon: 00001018 D D1
-quickdataSortCommon: 00001020 D DD1
-quickdataSortCommon: 00001028 D DDD1
+quickdataSortCommon: 00002000 D A1
+quickdataSortCommon: 00002001 D AA1
+quickdataSortCommon: 00002002 D AAA1
+quickdataSortCommon: 00002004 D B1
+quickdataSortCommon: 00002006 D BB1
+quickdataSortCommon: 00002008 D BBB1
+quickdataSortCommon: 0000200c D C1
+quickdataSortCommon: 00002010 D CC1
+quickdataSortCommon: 00002014 D CCC1
+quickdataSortCommon: 00002018 D D1
+quickdataSortCommon: 00002020 D DD1
+quickdataSortCommon: 00002028 D DDD1
 

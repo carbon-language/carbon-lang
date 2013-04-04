@@ -1,45 +1,10 @@
-RUN: lld-core -merge-strings=true -reader ELF %p/Inputs/reloc-test.elf-i386 | FileCheck %s -check-prefix ELF-i386
+RUN: lld -flavor gnu --merge-strings -r -emit-yaml %p/Inputs/reloc-test.elf-i386 | FileCheck %s -check-prefix ELF-i386
 
 ELF-i386: defined-atoms:   
-ELF-i386:   - ref-name:        L000
+ELF-i386:   - ref-name:        [[STRNAME:[-a-zA-Z0-9_]+]]
 ELF-i386:     type:            constant
 ELF-i386:     content:         [ 68, 65, 6C, 6C, 6F, 20, 77, 6F, 72, 6C, 64, 00 ]
 ELF-i386:     merge:           by-content
-ELF-i386:     section-choice:  custom-required
-ELF-i386:     section-name:    .rodata.str1.1
-ELF-i386:   - type:            constant
-ELF-i386:     content:         [ 00 ]
-ELF-i386:     merge:           by-content
-ELF-i386:     section-choice:  custom-required
-ELF-i386:     section-name:    .comment
-ELF-i386:   - type:            constant
-ELF-i386:     content:         [ 47, 43, 43, 3A, 20, 28, 47, 4E, 55, 29, 20, 34, 
-ELF-i386:                        2E, 37, 2E, 30, 00 ]
-ELF-i386:     merge:           by-content
-ELF-i386:     section-choice:  custom-required
-ELF-i386:     section-name:    .comment
-ELF-i386:   - name:            .text
-ELF-i386:     alignment:       2^2
-ELF-i386:     section-choice:  custom-required
-ELF-i386:     section-name:    .text
-ELF-i386:   - name:            .data
-ELF-i386:     type:            data
-ELF-i386:     alignment:       2^2
-ELF-i386:     section-choice:  custom-required
-ELF-i386:     section-name:    .data
-ELF-i386:   - name:            .bss
-ELF-i386:     type:            zero-fill
-ELF-i386:     alignment:       2^2
-ELF-i386:     section-choice:  custom-required
-ELF-i386:     section-name:    .bss
-ELF-i386:   - name:            .text.startup
-ELF-i386:     alignment:       2^4
-ELF-i386:     section-choice:  custom-required
-ELF-i386:     section-name:    .text.startup
-ELF-i386:     references:      
-ELF-i386:       - kind:            layout-after
-ELF-i386:         offset:          0
-ELF-i386:         target:          main
 ELF-i386:   - name:            main
 ELF-i386:     scope:           global
 ELF-i386:     content:         [ 55, 89, E5, 83, E4, F0, 83, EC, 10, C7, 04, 24, 
@@ -49,33 +14,15 @@ ELF-i386:     alignment:       2^4
 ELF-i386:     section-choice:  custom-required
 ELF-i386:     section-name:    .text.startup
 ELF-i386:     references:      
-ELF-i386:       - kind:            <unknown>
+ELF-i386:       - kind:            R_X86_64_64
 ELF-i386:         offset:          12
-ELF-i386:         target:          L000
-ELF-i386:       - kind:            call32
+ELF-i386:         target:          [[STRNAME]]
+ELF-i386:       - kind:            R_X86_64_PC32
 ELF-i386:         offset:          17
 ELF-i386:         target:          puts
 ELF-i386:         addend:          252
 ELF-i386:       - kind:            layout-before
 ELF-i386:         offset:          0
-ELF-i386:         target:          .text.startup
-ELF-i386:   - name:            .note.GNU-stack
-ELF-i386:     section-choice:  custom-required
-ELF-i386:     section-name:    .note.GNU-stack
-ELF-i386:     permissions:     r--
-ELF-i386:   - name:            .eh_frame
-ELF-i386:     content:         [ 14, 00, 00, 00, 00, 00, 00, 00, 01, 7A, 52, 00, 
-ELF-i386:                        01, 7C, 08, 01, 1B, 0C, 04, 04, 88, 01, 00, 00, 
-ELF-i386:                        1C, 00, 00, 00, 1C, 00, 00, 00, 00, 00, 00, 00, 
-ELF-i386:                        19, 00, 00, 00, 00, 41, 0E, 08, 85, 02, 42, 0D, 
-ELF-i386:                        05, 55, C5, 0C, 04, 04, 00, 00 ]
-ELF-i386:     alignment:       2^2
-ELF-i386:     section-choice:  custom-required
-ELF-i386:     section-name:    .eh_frame
-ELF-i386:     permissions:     r--
-ELF-i386:     references:      
-ELF-i386:       - kind:            call32
-ELF-i386:         offset:          32
 ELF-i386:         target:          .text.startup
 ELF-i386: undefined-atoms: 
 ELF-i386:   - name:            puts

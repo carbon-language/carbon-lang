@@ -11,7 +11,6 @@
 #define LLD_READERWRITER_READER_H
 
 #include "lld/Core/LLVM.h"
-#include "lld/Core/TargetInfo.h"
 
 #include <functional>
 #include <memory>
@@ -21,7 +20,7 @@ namespace lld {
 class ELFTargetInfo;
 class File;
 class LinkerInput;
-struct LinkerOptions;
+class TargetInfo;
 
 /// \brief An abstract class for reading object files, library files, and
 /// executable files.
@@ -34,30 +33,27 @@ public:
 
   /// \brief Parse a file given its file system path and create a File object.
   virtual error_code readFile(StringRef path,
-                              std::vector<std::unique_ptr<File>> &result);
+                              std::vector<std::unique_ptr<File>> &result) const;
 
   /// \brief Parse a supplied buffer (already filled with the contents of a
   /// file) and create a File object.
   ///
   /// On success, the resulting File object takes ownership of the MemoryBuffer.
-  virtual error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
-                               std::vector<std::unique_ptr<File>> &result) = 0;
+  virtual error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
+                          std::vector<std::unique_ptr<File>> &result) const = 0;
 
 protected:
   // only concrete subclasses can be instantiated
   Reader(const TargetInfo &ti)
-      : _targetInfo(ti), _options(ti.getLinkerOptions()) {}
+      : _targetInfo(ti) {}
 
   const TargetInfo &_targetInfo;
-  const LinkerOptions &_options;
 };
 
 typedef ErrorOr<Reader &> ReaderFunc(const LinkerInput &);
 
-std::unique_ptr<Reader> createReaderELF(const ELFTargetInfo &,
-                                        std::function<ReaderFunc>);
-std::unique_ptr<Reader> createReaderMachO(const TargetInfo &,
-                                          std::function<ReaderFunc>);
+std::unique_ptr<Reader> createReaderELF(const ELFTargetInfo &);
+std::unique_ptr<Reader> createReaderMachO(const TargetInfo &);
 std::unique_ptr<Reader> createReaderNative(const TargetInfo &);
 std::unique_ptr<Reader> createReaderPECOFF(const TargetInfo &,
                                            std::function<ReaderFunc>);

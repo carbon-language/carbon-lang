@@ -49,6 +49,7 @@ public:
 
   /// \brief add an undefined atom
   virtual void addUndefinedAtom(StringRef symbolName) {
+    assert(!symbolName.empty() && "UndefinedAtoms must have a name");
     Elf_Sym *symbol = new (_allocator) Elf_Sym;
     symbol->st_name = 0;
     symbol->st_value = 0;

@@ -46,7 +46,7 @@ private:
 /// absolute symbols
 template<class ELFT>
 void ExecutableWriter<ELFT>::addDefaultAtoms() {
-  _runtimeFile.addUndefinedAtom(this->_targetInfo.getEntry());
+  _runtimeFile.addUndefinedAtom(this->_targetInfo.entrySymbolName());
   _runtimeFile.addAbsoluteAtom("__bss_start");
   _runtimeFile.addAbsoluteAtom("__bss_end");
   _runtimeFile.addAbsoluteAtom("_end");

@@ -18,7 +18,7 @@ configure_lit_site_cfg(
 if ( NOT LLD_BUILT_STANDALONE )
 
   set(LLD_TEST_DEPS
-    lld-core lld-test.deps
+    lld-test.deps
     FileCheck not llvm-nm
     lld llvm-objdump llvm-readobj
     linker-script-test
@@ -68,7 +68,7 @@ else()
                   ${LIT_ARGS}
                   ${CMAKE_CURRENT_BINARY_DIR}
       COMMENT "Running lld regression tests"
-      DEPENDS lld-core lld-test.deps
+      DEPENDS lld-test.deps
       )
     set_target_properties(check-lld PROPERTIES FOLDER "lld tests")
   endif()

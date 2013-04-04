@@ -8,28 +8,49 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Core/TargetInfo.h"
-
-#include "lld/Core/LinkerOptions.h"
+#include "lld/ReaderWriter/Writer.h"
 
 #include "llvm/ADT/Triple.h"
 
 namespace lld {
+
+TargetInfo::TargetInfo()
+  : Reader(*this)
+  , _deadStrip(false)
+  , _globalsAreDeadStripRoots(false)
+  , _searchArchivesToOverrideTentativeDefinitions(false)
+  , _searchSharedLibrariesToOverrideTentativeDefinitions(false)
+  , _warnIfCoalesableAtomsHaveDifferentCanBeNull(false)
+  , _warnIfCoalesableAtomsHaveDifferentLoadName(false)
+  , _forceLoadAllArchives(false)
+  , _printRemainingUndefines(true)
+  , _allowRemainingUndefines(false)
+{
+}
+
 TargetInfo::~TargetInfo() {}
 
-llvm::Triple TargetInfo::getTriple() const {
-  return llvm::Triple(llvm::Triple::normalize(_options._target));
+
+error_code TargetInfo::readFile(StringRef path,
+                        std::vector<std::unique_ptr<File>> &result) const {
+  OwningPtr<llvm::MemoryBuffer> opmb;
+  if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, opmb))
+    return ec;
+ 
+  std::unique_ptr<MemoryBuffer> mb(opmb.take());
+  return this->parseFile(mb, result);
 }
 
-bool TargetInfo::is64Bits() const {
-  return getTriple().isArch64Bit();
+error_code TargetInfo::writeFile(const File &linkedFile) const {
+   return this->writer().writeFile(linkedFile, _outputPath);
 }
 
-bool TargetInfo::isLittleEndian() const {
-  // TODO: Do this properly. It is not defined purely by arch.
-  return true;
+void TargetInfo::addImplicitFiles(InputFiles& inputs) const {
+   this->writer().addFiles(inputs);
 }
 
-StringRef TargetInfo::getEntry() const {
-  return _options._entrySymbol;
+void TargetInfo::addPasses(PassManager &pm) const {
 }
+
+
 } // end namespace lld

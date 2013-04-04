@@ -1,6 +1,6 @@
-# RUN: not lld-core -undefines-are-errors %s 2> %t.err
+# RUN: not lld -core --undefines-are-errors %s 2> %t.err
 # RUN:   FileCheck -check-prefix=CHECKERR < %t.err %s
-# RUN: lld-core -undefines-are-errors=false %s | FileCheck %s
+# RUN: lld -core  %s | FileCheck %s
 
 #
 # Test that -undefines-are-errors triggers and error 

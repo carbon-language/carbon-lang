@@ -1,4 +1,4 @@
-# RUN: lld-core %s | FileCheck %s
+# RUN: lld -core %s | FileCheck %s
 
 #
 # Test that undefined symbols preserve their attributes and merge properly

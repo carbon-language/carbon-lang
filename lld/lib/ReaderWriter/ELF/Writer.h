@@ -28,7 +28,7 @@ public:
   virtual void buildChunks(const File &file) = 0;
 
   /// \brief Writes the chunks into the output file specified by path
-  virtual error_code writeFile(const File &File, StringRef path) = 0;
+  virtual error_code writeFile(const File &file, StringRef path) = 0;
 
   /// \brief Get the virtual address of \p atom after layout.
   virtual uint64_t addressOfAtom(const Atom *atom) = 0;

@@ -19,12 +19,12 @@ Reader::~Reader() {
 }
 
 error_code Reader::readFile(StringRef path,
-                            std::vector<std::unique_ptr<File>> &result) {
+                            std::vector<std::unique_ptr<File>> &result) const {
   OwningPtr<llvm::MemoryBuffer> opmb;
   if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, opmb))
     return ec;
 
   std::unique_ptr<MemoryBuffer> mb(opmb.take());
-  return this->parseFile(std::move(mb), result);
+  return this->parseFile(mb, result);
 }
 } // end namespace lld

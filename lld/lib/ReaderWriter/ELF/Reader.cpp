@@ -78,12 +78,12 @@ namespace elf {
 /// memory buffer for ELF class and bit width
 class ELFReader : public Reader {
 public:
-  ELFReader(const ELFTargetInfo &ti, std::function<ReaderFunc> read)
-      : lld::Reader(ti), _elfTargetInfo(ti), _readerArchive(ti, read) {
+  ELFReader(const ELFTargetInfo &ti)
+      : lld::Reader(ti), _elfTargetInfo(ti), _readerArchive(ti, *this) {
   }
 
-  error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
-                       std::vector<std::unique_ptr<File> > &result) {
+  error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
+                       std::vector<std::unique_ptr<File> > &result) const {
     using llvm::object::ELFType;
     llvm::sys::LLVMFileType fileType =
         llvm::sys::IdentifyFileType(mb->getBufferStart(),
@@ -112,10 +112,10 @@ public:
       break;
     }
     case llvm::sys::Archive_FileType:
-      ec = _readerArchive.parseFile(std::move(mb), result);
+      ec = _readerArchive.parseFile(mb, result);
       break;
     default:
-      llvm_unreachable("not supported format");
+      return llvm::make_error_code(llvm::errc::executable_format_error);
       break;
     }
 
@@ -131,8 +131,7 @@ private:
 };
 } // end namespace elf
 
-std::unique_ptr<Reader> createReaderELF(const ELFTargetInfo &eti,
-                                        std::function<ReaderFunc> read) {
-  return std::unique_ptr<Reader>(new elf::ELFReader(eti, std::move(read)));
+std::unique_ptr<Reader> createReaderELF(const ELFTargetInfo &targetinfo) {
+  return std::unique_ptr<Reader>(new elf::ELFReader(targetinfo));
 }
 } // end namespace lld

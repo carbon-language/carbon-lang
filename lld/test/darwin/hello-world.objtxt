@@ -1,5 +1,5 @@
-# RUN: lld-core -writer=mach-o -stubs-pass %s -o %t && llvm-nm %t | FileCheck %s
-
+# RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 %s -o %t  && \
+# RUN: llvm-nm %t | FileCheck %s
 #
 # Test that hello-world can be linked into a mach-o executable
 #
@@ -14,10 +14,10 @@ defined-atoms:
                            31, C0, 5D, C3 ]
       references:
       - offset:          7
-        kind:            pcrel32
+        kind:            ripRel32
         target:          LC1
       - offset:          12
-        kind:            call32
+        kind:            branch32
         target:          _printf
 
     - ref-name:          LC1

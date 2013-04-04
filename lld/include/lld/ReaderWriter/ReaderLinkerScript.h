@@ -21,19 +21,15 @@ class TargetInfo;
 /// \brief ReaderLinkerScript is a class for reading linker scripts
 class ReaderLinkerScript : public Reader {
 public:
-  ReaderLinkerScript(
-      const TargetInfo &ti,
-      std::function<ErrorOr<Reader &>(const LinkerInput &)> getReader)
-      : Reader(ti), _getReader(getReader) {}
+  ReaderLinkerScript(const TargetInfo &ti)
+      : Reader(ti) {}
 
   /// \brief Returns a vector of Files that are contained in the archive file
   ///        pointed to by the Memorybuffer
-  error_code parseFile(std::unique_ptr<llvm::MemoryBuffer> mb,
-                       std::vector<std::unique_ptr<File>> &result);
-
-private:
-  std::function<ErrorOr<Reader &>(const LinkerInput &)> _getReader;
+  error_code parseFile(std::unique_ptr<llvm::MemoryBuffer> &mb,
+                       std::vector<std::unique_ptr<File>> &result) const;
 };
+
 } // end namespace lld
 
 #endif

@@ -1,4 +1,4 @@
-# RUN: lld-core %s | FileCheck %s
+# RUN: lld -core %s | FileCheck %s
 
 #
 # Test that shared-library symbols are parsed and preserved

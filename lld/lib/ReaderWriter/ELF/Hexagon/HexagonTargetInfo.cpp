@@ -22,8 +22,8 @@ using namespace lld;
 
 #define LLD_CASE(name) .Case(#name, llvm::ELF::name)
 
-ErrorOr<int32_t> elf::HexagonTargetInfo::relocKindFromString(
-    StringRef str) const {
+ErrorOr<Reference::Kind> 
+elf::HexagonTargetInfo::relocKindFromString(StringRef str) const {
   int32_t ret = llvm::StringSwitch<int32_t>(str)
         LLD_CASE(R_HEX_NONE)
         LLD_CASE(R_HEX_B22_PCREL)

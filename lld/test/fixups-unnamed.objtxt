@@ -1,4 +1,4 @@
-# RUN: lld-core %s | FileCheck %s
+# RUN: lld -core %s | FileCheck %s
 
 #
 # Test references to unnamed atoms
@@ -12,10 +12,10 @@ defined-atoms:
                            48, 8D, 3D, 00, 00, 00, 00 ]
       references:
       - offset:          3
-        kind:            3
+        kind:            pcrel32
         target:          LC1
       - offset:          10
-        kind:            3
+        kind:            pcrel32
         target:          LC2
   
 

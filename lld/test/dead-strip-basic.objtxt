@@ -1,5 +1,5 @@
-# RUN: lld-core -dead-strip=true  %s | FileCheck -check-prefix=CHK1 %s
-# RUN: lld-core -dead-strip=false %s | FileCheck -check-prefix=CHK2 %s
+# RUN: lld -core --dead-strip  %s | FileCheck -check-prefix=CHK1 %s
+# RUN: lld -core  %s | FileCheck -check-prefix=CHK2 %s
 
 #
 # Test that -dead-strip removes unreachable code and data

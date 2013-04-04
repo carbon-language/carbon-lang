@@ -1,5 +1,5 @@
-RUN: lld -core -target x86_64-linux %p/Inputs/relocs-dynamic.x86-64 -emit-yaml \
-RUN:   -output=- -noinhibit-exec -output-type=dynamic | FileCheck %s
+RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/relocs-dynamic.x86-64 \
+RUN:  -emit-yaml --noinhibit-exec | FileCheck %s
 
 path:            <linker-internal>
 defined-atoms:

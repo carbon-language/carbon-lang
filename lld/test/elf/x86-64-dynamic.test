@@ -1,47 +1,10 @@
-RUN: lld -core -target x86_64-linux %p/Inputs/use-shared.x86-64 \
-RUN:   %p/Inputs/shared.so-x86-64 -emit-yaml -output=%t1 -noinhibit-exec \
-RUN:   -output-type=dynamic
+RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/use-shared.x86-64 \
+RUN:   %p/Inputs/shared.so-x86-64 -emit-yaml -o %t1 --noinhibit-exec
 RUN: FileCheck %s < %t1
 
 // Don't check the GOT and PLT names as they are only present in assert builds.
 
-        - name:            __got_null
-CHECK:    type:            got
-CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
-CHECK:    alignment:       2^3
-CHECK:    section-choice:  custom-required
-CHECK:    section-name:    .got.plt
-CHECK:    permissions:     rw-
-        - name:            __got0
-CHECK:    type:            got
-CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
-CHECK:    alignment:       2^3
-CHECK:    section-choice:  custom-required
-CHECK:    section-name:    .got.plt
-CHECK:    permissions:     rw-
-        - name:            __got1
-CHECK:    type:            got
-CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
-CHECK:    alignment:       2^3
-CHECK:    section-choice:  custom-required
-CHECK:    section-name:    .got.plt
-CHECK:    permissions:     rw-
-        - name:            __got_foo
-CHECK:    type:            got
-CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
-CHECK:    alignment:       2^3
-CHECK:    section-choice:  custom-required
-CHECK:    section-name:    .got.plt
-CHECK:    permissions:     rw-
-CHECK:    references:
-CHECK:      - kind:            R_X86_64_JUMP_SLOT
-CHECK:        offset:          0
-CHECK:        target:          foo
-CHECK:      - kind:            R_X86_64_64
-CHECK:        offset:          0
-              target:          __plt_foo
-CHECK:        addend:          6
-        - name:            __got_i
+CHECK:    name:            [[GOTNAME:[-a-zA-Z0-9_]+]]
 CHECK:    type:            got
 CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
 CHECK:    section-choice:  custom-required
@@ -57,11 +20,11 @@ CHECK:    scope:           global
 CHECK:    references:
 CHECK:      - kind:            R_X86_64_PC32
 CHECK:        offset:          18
-              target:          __plt_foo
+              target:          [[PLTNAME:[-a-zA-Z0-9_]+]]
 CHECK:        addend:          -4
-CHECK:     - kind:            R_X86_64_PC32
+CHECK:      - kind:            R_X86_64_PC32
 CHECK:        offset:          25
-              target:          __got_i
+              target:          [[GOTNAME]]
 CHECK:        addend:          -4
 
         - name:            .PLT0
@@ -80,7 +43,7 @@ CHECK:      - kind:            R_X86_64_PC32
 CHECK:        offset:          8
               target:          __got1
 CHECK:        addend:          -4
-        - name:            __plt_foo
+        - name:            [[PLTNAME]]
 CHECK:    type:            stub
 CHECK:    content:         [ FF, 25, 00, 00, 00, 00, 68, 00, 00, 00, 00, E9,
 CHECK:                       00, 00, 00, 00 ]
@@ -99,6 +62,7 @@ CHECK:      - kind:            R_X86_64_PC32
 CHECK:        offset:          12
               target:          .PLT0
 CHECK:        addend:          -4
+
 
 CHECK:shared-library-atoms:
 CHECK:  - name:            foo

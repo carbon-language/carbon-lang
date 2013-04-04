@@ -1,20 +1,40 @@
-RUN: lld-core -reader ELF -writer ELF -o %t1 %p/Inputs/phdr.i386
-RUN: elf-dump %t1 |  FileCheck -check-prefix=ED %s
+RUN: lld -flavor gnu -target i386-linux -o %t1 -e main %p/Inputs/phdr.i386 \
+RUN:  | elf-dump %t1 |  FileCheck -check-prefix=ED %s
+RUN: lld -flavor gnu -target x86_64-linux -o %t1 -e _start %p/Inputs/relocs.x86-64 -static \
+RUN:  && llvm-objdump -p %t1 | FileCheck %s -check-prefix=X86_64
 
-RUN: lld -core -target x86_64-linux -output=%t1 %p/Inputs/relocs.x86-64 \
-RUN:   -output-type=static && llvm-objdump -p %t1 \
-RUN: | FileCheck %s -check-prefix=X86_64
 
+ED:  # Program Header 0
+ED:  (('p_type', 0x00000006)
+ED:   ('p_flags', 0x00000005)
+ED:   ('p_offset', 0x00000034)
+ED:   ('p_vaddr', 0x00000034)
+ED:   ('p_paddr', 0x00000034)
+ED:   ('p_filesz', 0x000000c0)
+ED:   ('p_memsz', 0x000000c0)
+ED:   ('p_align', 0x00000008)
+ED:  ),
+ED:  # Program Header 1
+ED:  (('p_type', 0x00000003)
+ED:   ('p_flags', 0x00000004)
+ED:   ('p_offset', 0x000000f4)
+ED:   ('p_vaddr', 0x000000f4)
+ED:   ('p_paddr', 0x000000f4)
+ED:   ('p_filesz', 0x0000001c)
+ED:   ('p_memsz', 0x0000001c)
+ED:   ('p_align', 0x00000001)
+ED:  ),
+ED:  # Program Header 2
 ED:  (('p_type', 0x00000001)
 ED:   ('p_flags', 0x00000005)
 ED:   ('p_offset', 0x00000000)
 ED:   ('p_vaddr', 0x00000000)
 ED:   ('p_paddr', 0x00000000)
-ED:   ('p_filesz', 0x00000144)
-ED:   ('p_memsz', 0x00000144)
+ED:   ('p_filesz', 0x00000214)
+ED:   ('p_memsz', 0x00000214)
 ED:   ('p_align', 0x00001000)
 ED:  ),
-ED:  # Program Header 1
+ED:  # Program Header 3
 ED:  (('p_type', 0x00000001)
 ED:   ('p_flags', 0x00000006)
 ED:   ('p_offset', 0x00001000)
@@ -24,7 +44,7 @@ ED:   ('p_filesz', 0x00000104)
 ED:   ('p_memsz', 0x00000004)
 ED:   ('p_align', 0x00001000)
 ED:  ),
-ED:  # Program Header 2
+ED:  # Program Header 4
 ED:  (('p_type', 0x00000001)
 ED:   ('p_flags', 0x00000006)
 ED:   ('p_offset', 0x00004000)
@@ -34,5 +54,16 @@ ED:   ('p_filesz', 0x00000004)
 ED:   ('p_memsz', 0x00004008)
 ED:   ('p_align', 0x00001000)
 ED:  ),
+ED:  # Program Header 5
+ED:  (('p_type', 0x00000002)
+ED:   ('p_flags', 0x00000004)
+ED:   ('p_offset', 0x000001e4)
+ED:   ('p_vaddr', 0x000001e4)
+ED:   ('p_paddr', 0x000001e4)
+ED:   ('p_filesz', 0x00000030)
+ED:   ('p_memsz', 0x00000030)
+ED:   ('p_align', 0x00000004)
+ED:  ),
 
-X86_64: vaddr 0x0000000000400000
+X86_64: LOAD off    0x0000000000000000
+X86_64: LOAD off    0x0000000000001000

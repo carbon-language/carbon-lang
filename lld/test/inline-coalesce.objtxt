@@ -1,4 +1,4 @@
-# RUN: lld-core %s | FileCheck %s
+# RUN: lld -core %s | FileCheck %s
 
 #
 # Test that non-inlined inlined functions are silently coalesced

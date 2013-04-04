@@ -1,4 +1,4 @@
-RUN: lld-core -merge-strings=true -reader ELF %p/Inputs/constants-merge.x86-64 | FileCheck -check-prefix=mergeAtoms %s
+RUN: lld -flavor gnu --merge-strings -emit-yaml %p/Inputs/constants-merge.x86-64 | FileCheck -check-prefix=mergeAtoms %s
 
 mergeAtoms:  - name:            foo
 mergeAtoms:    scope:           global
@@ -8,7 +8,7 @@ mergeAtoms:    alignment:       2^3
 mergeAtoms:    section-choice:  custom-required
 mergeAtoms:    section-name:    .data
 mergeAtoms:    references:      
-mergeAtoms:      - kind:            <unknown>
+mergeAtoms:      - kind:            R_X86_64_64
 mergeAtoms:        offset:          3
 mergeAtoms:        target:          L001
 mergeAtoms:      - kind:            layout-before

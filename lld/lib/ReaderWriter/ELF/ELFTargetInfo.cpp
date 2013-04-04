@@ -12,41 +12,38 @@
 #include "TargetHandler.h"
 #include "Targets.h"
 
-#include "lld/Core/LinkerOptions.h"
 #include "lld/Passes/LayoutPass.h"
 #include "lld/ReaderWriter/ReaderLinkerScript.h"
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Path.h"
 
 namespace lld {
-ELFTargetInfo::ELFTargetInfo(const LinkerOptions &lo) : TargetInfo(lo) {}
+ELFTargetInfo::ELFTargetInfo(llvm::Triple triple)
+ : _outputFileType(elf::ET_EXEC)
+ , _triple(triple)
+ , _baseAddress(0)
+ , _isStaticExecutable(false)
+ , _outputYAML(false)
+ , _noInhibitExec(false)
+ , _mergeCommonStrings(false)
+ , _runLayoutPass(true) {
+}
 
-uint16_t ELFTargetInfo::getOutputType() const {
-  switch (_options._outputKind) {
-  case OutputKind::StaticExecutable:
-  case OutputKind::DynamicExecutable:
-    return llvm::ELF::ET_EXEC;
-  case OutputKind::Relocatable:
-    return llvm::ELF::ET_REL;
-  case OutputKind::Shared:
-    return llvm::ELF::ET_DYN;
-  case OutputKind::Core:
-    return llvm::ELF::ET_CORE;
-  case OutputKind::SharedStubs:
-  case OutputKind::DebugSymbols:
-  case OutputKind::Bundle:
-  case OutputKind::Preload:
-    break;
-  case OutputKind::Invalid:
-    llvm_unreachable("Invalid output kind!");
-  }
-  llvm_unreachable("Unhandled OutputKind");
+bool ELFTargetInfo::is64Bits() const {
+  return getTriple().isArch64Bit();
+}
+
+bool ELFTargetInfo::isLittleEndian() const {
+  // TODO: Do this properly. It is not defined purely by arch.
+  return true;
 }
 
 void ELFTargetInfo::addPasses(PassManager &pm) const {
-  pm.add(std::unique_ptr<Pass>(new LayoutPass()));
+  if (_runLayoutPass)
+    pm.add(std::unique_ptr<Pass>(new LayoutPass()));
 }
 
 uint16_t ELFTargetInfo::getOutputMachine() const {
@@ -64,31 +61,63 @@ uint16_t ELFTargetInfo::getOutputMachine() const {
   }
 }
 
-ErrorOr<Reader &> ELFTargetInfo::getReader(const LinkerInput &input) const {
-  DEBUG_WITH_TYPE("inputs", llvm::dbgs() << input.getPath() << "\n");
-  auto buffer = input.getBuffer();
-  if (!buffer)
-    return error_code(buffer);
-  auto magic = llvm::sys::fs::identify_magic(buffer->getBuffer());
-  // Assume unknown file types are linker scripts.
-  if (magic == llvm::sys::fs::file_magic::unknown) {
-    if (!_linkerScriptReader)
-      _linkerScriptReader.reset(new ReaderLinkerScript(
-          *this,
-          std::bind(&ELFTargetInfo::getReader, this, std::placeholders::_1)));
-    return *_linkerScriptReader;
+bool ELFTargetInfo::validate(raw_ostream &diagnostics) {
+  if (_outputFileType == elf::ET_EXEC) {
+    if (_entrySymbolName.empty()) {
+      _entrySymbolName = "_start";
+    }
+  }
+  
+  if (_inputFiles.empty()) {
+    diagnostics << "No input files\n";
+    return true;
   }
 
-  // Assume anything else is an ELF file.
-  if (!_elfReader)
-    _elfReader = createReaderELF(*this, std::bind(&ELFTargetInfo::getReader,
-                                                  this, std::placeholders::_1));
-  return *_elfReader;
+
+  return false;
 }
 
-ErrorOr<Writer &> ELFTargetInfo::getWriter() const {
+
+bool ELFTargetInfo::isDynamic() const {
+  switch (_outputFileType) {
+  case llvm::ELF::ET_EXEC:
+    if (_isStaticExecutable)
+      return false;
+    else
+      return true;
+  case llvm::ELF::ET_DYN:
+    return true;
+  }
+  return false;
+}
+
+
+error_code ELFTargetInfo::parseFile(std::unique_ptr<MemoryBuffer> &mb,
+                          std::vector<std::unique_ptr<File>> &result) const {
+  if (!_elfReader)
+    _elfReader = createReaderELF(*this);
+  error_code ec = _elfReader->parseFile(mb, result);
+  if (ec) {
+    // Not an ELF file, check file extension to see if it might be yaml
+    StringRef path = mb->getBufferIdentifier();
+    if ( path.endswith(".objtxt") ) {
+      if (!_yamlReader)
+          _yamlReader = createReaderYAML(*this);
+      ec = _yamlReader->parseFile(mb, result);
+    }
+    if (ec) {
+      // Not a yaml file, assume it is a linkerscript
+      if (!_linkerScriptReader)
+        _linkerScriptReader.reset(new ReaderLinkerScript(*this));
+      ec = _linkerScriptReader->parseFile(mb, result);
+    }
+  }
+  return ec;
+}
+
+Writer &ELFTargetInfo::writer() const {
   if (!_writer) {
-    if (_options._outputYAML)
+    if (_outputYAML)
       _writer = createWriterYAML(*this);
     else
       _writer = createWriterELF(*this);
@@ -96,27 +125,40 @@ ErrorOr<Writer &> ELFTargetInfo::getWriter() const {
   return *_writer;
 }
 
-std::unique_ptr<ELFTargetInfo> ELFTargetInfo::create(const LinkerOptions &lo) {
-  switch (llvm::Triple(llvm::Triple::normalize(lo._target)).getArch()) {
+
+std::unique_ptr<ELFTargetInfo> ELFTargetInfo::create(llvm::Triple triple) {
+  switch (triple.getArch()) {
   case llvm::Triple::x86:
-    return std::unique_ptr<ELFTargetInfo>(new lld::elf::X86TargetInfo(lo));
+    return std::unique_ptr<ELFTargetInfo>(new lld::elf::X86TargetInfo(triple));
   case llvm::Triple::x86_64:
     return std::unique_ptr<
-        ELFTargetInfo>(new lld::elf::X86_64TargetInfo(lo));
+        ELFTargetInfo>(new lld::elf::X86_64TargetInfo(triple));
   case llvm::Triple::hexagon:
     return std::unique_ptr<
-        ELFTargetInfo>(new lld::elf::HexagonTargetInfo(lo));
+        ELFTargetInfo>(new lld::elf::HexagonTargetInfo(triple));
   case llvm::Triple::ppc:
-    return std::unique_ptr<ELFTargetInfo>(new lld::elf::PPCTargetInfo(lo));
+    return std::unique_ptr<ELFTargetInfo>(new lld::elf::PPCTargetInfo(triple));
   default:
     return std::unique_ptr<ELFTargetInfo>();
   }
 }
 
-StringRef ELFTargetInfo::getEntry() const {
-  if (!_options._entrySymbol.empty())
-    return _options._entrySymbol;
-  return "_start";
+bool ELFTargetInfo::appendLibrary(StringRef libName) {
+  SmallString<128> fullPath;
+  for (StringRef dir : _inputSearchPaths) {
+    // FIXME: need to handle other extensions, like .so
+    fullPath.assign(dir);
+    llvm::sys::path::append(fullPath, Twine("lib") + libName + ".a");
+    StringRef pathref = fullPath.str();
+    unsigned pathlen = pathref.size();
+    if (llvm::sys::fs::exists(pathref)) {
+      char *x = _extraStrings.Allocate<char>(pathlen);
+      memcpy(x, pathref.data(), pathlen);
+      appendInputFile(StringRef(x,pathlen));
+      return false;
+    }
+  }
+  return true;
 }
 
 } // end namespace lld

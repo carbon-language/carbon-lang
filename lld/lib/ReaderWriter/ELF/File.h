@@ -143,7 +143,7 @@ public:
     // Sections that have merge string property
     std::vector<const Elf_Shdr *> mergeStringSections;
 
-    bool doStringsMerge = _elfTargetInfo.getLinkerOptions()._mergeCommonStrings;
+    bool doStringsMerge = _elfTargetInfo.mergeCommonStrings();
 
     // Handle: SHT_REL and SHT_RELA sections:
     // Increment over the sections, when REL/RELA section types are found add

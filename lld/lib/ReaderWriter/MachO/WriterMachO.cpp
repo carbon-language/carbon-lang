@@ -28,7 +28,6 @@
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
-#include "lld/Core/LinkerOptions.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/SharedLibraryAtom.h"
 #include "lld/ReaderWriter/MachOTargetInfo.h"
@@ -155,7 +154,6 @@ public:
   uint64_t              loadCommandsSize();
 
 private:
-  uint32_t              filetype(OutputKind);
   uint32_t              magic(uint32_t cpuType);
 
   mach_header               _mh;
@@ -350,7 +348,7 @@ public:
                                 uint64_t *segStartAddr, uint64_t *segEndAddr);
 
   const std::vector<Chunk*> chunks() { return _chunks; }
-  KindHandler *kindHandler() { return _referenceKindHandler; }
+  mach_o::KindHandler &kindHandler() { return _referenceKindHandler; }
 
   bool use64BitMachO() const;
 
@@ -372,7 +370,7 @@ private:
   typedef llvm::DenseMap<const Atom*, uint64_t> AtomToAddress;
 
   const MachOTargetInfo      &_targetInfo;
-  KindHandler                *_referenceKindHandler;
+  mach_o::KindHandler        &_referenceKindHandler;
   CRuntimeFile                _cRuntimeFile;
   LoadCommandsChunk          *_loadCommandsChunk;
   LoadCommandPaddingChunk    *_paddingChunk;
@@ -580,7 +578,7 @@ void SectionChunk::write(uint8_t *chunkBuffer) {
       if ( ref->target() != nullptr )
         targetAddress = _writer.addressOfAtom(ref->target());
       uint64_t fixupAddress = _writer.addressOfAtom(atomInfo.atom) + offset;
-      _writer.kindHandler()->applyFixup(ref->kind(), ref->addend(),
+      _writer.kindHandler().applyFixup(ref->kind(), ref->addend(), 
                             &atomContent[offset], fixupAddress, targetAddress);
     }
   }
@@ -596,7 +594,7 @@ MachHeaderChunk::MachHeaderChunk(const MachOTargetInfo &ti, const File &file) {
   _mh.magic      = this->magic(ti.getCPUType());
   _mh.cputype    = ti.getCPUType();
   _mh.cpusubtype = ti.getCPUSubType();
-  _mh.filetype   = this->filetype(ti.getLinkerOptions()._outputKind);
+  _mh.filetype   = ti.outputFileType();
   _mh.ncmds      = 0;
   _mh.sizeofcmds = 0;
   _mh.flags      = 0;
@@ -635,30 +633,6 @@ uint32_t MachHeaderChunk::magic(uint32_t cpuType) {
       return MH_MAGIC_64;
   }
   llvm_unreachable("file CPU type not supported");
-  return 0;
-}
-
-uint32_t MachHeaderChunk::filetype(OutputKind kind) {
-  switch ( kind ) {
-  case OutputKind::StaticExecutable:
-  case OutputKind::DynamicExecutable:
-    return MH_EXECUTE;
-  case OutputKind::Relocatable:
-    return MH_OBJECT;
-  case OutputKind::Shared:
-    return MH_DYLIB;
-  case OutputKind::SharedStubs:
-    return MH_DYLIB_STUB;
-  case OutputKind::Bundle:
-    return MH_BUNDLE;
-  case OutputKind::Preload:
-  case OutputKind::DebugSymbols:
-  case OutputKind::Core:
-    break;
-  case OutputKind::Invalid:
-    llvm_unreachable("Invalid output kind!");
-  }
-  llvm_unreachable("file OutputKind not supported");
   return 0;
 }
 
@@ -719,7 +693,7 @@ uint32_t LoadCommandsChunk::permissionsFromSections(
 void LoadCommandsChunk::computeSize(const lld::File &file) {
   const bool is64 = _writer.use64BitMachO();
   // Main executables have a __PAGEZERO segment.
-  uint64_t pageZeroSize = _targetInfo.getPageZeroSize();
+  uint64_t pageZeroSize = _targetInfo.pageZeroSize();
   if ( pageZeroSize != 0 ) {
     assert(is64 || (pageZeroSize < 0xFFFFFFFF));
     segment_command* pzSegCmd = new segment_command(0, is64);
@@ -1032,7 +1006,7 @@ void BindingInfoChunk::computeSize(const lld::File &file,
           const SharedLibraryAtom *shlTarget
                                         = dyn_cast<SharedLibraryAtom>(target);
           if ( shlTarget != nullptr ) {
-            assert(_writer.kindHandler()->isPointer(ref->kind()));
+            assert(_writer.kindHandler().isPointer(ref->kind()));
             targetName = shlTarget->name();
             ordinal = 1; // FIXME
           }
@@ -1099,14 +1073,14 @@ const char* LazyBindingInfoChunk::info() {
 void LazyBindingInfoChunk::updateHelper(const DefinedAtom *lazyPointerAtom,
                                         uint32_t offset) {
   for (const Reference *ref : *lazyPointerAtom ) {
-    if ( ! _writer.kindHandler()->isPointer(ref->kind() ) )
+    if ( ! _writer.kindHandler().isPointer(ref->kind() ) )
       continue;
     const Atom *targ = ref->target();
     const DefinedAtom *helperAtom = dyn_cast<DefinedAtom>(targ);
     assert(helperAtom != nullptr);
     // Found helper atom.  Search it for Reference that is lazy immediate value.
     for (const Reference *href : *helperAtom ) {
-      if ( _writer.kindHandler()->isLazyImmediate(href->kind()) ) {
+      if ( _writer.kindHandler().isLazyImmediate(href->kind()) ) {
         (const_cast<Reference*>(href))->setAddend(offset);
         return;
       }
@@ -1156,7 +1130,7 @@ void LazyBindingInfoChunk::computeSize(const lld::File &file,
       int flags = 0;
       StringRef name;
       for (const Reference *ref : *lazyPointerAtom ) {
-        if ( _writer.kindHandler()->isLazyTarget(ref->kind()) ) {
+        if ( _writer.kindHandler().isLazyTarget(ref->kind()) ) {
           const Atom *shlib = ref->target();
           assert(shlib != nullptr);
           name = shlib->name();
@@ -1301,7 +1275,7 @@ uint32_t SymbolStringsChunk::stringIndex(StringRef str) {
 
 MachOWriter::MachOWriter(const MachOTargetInfo &ti)
   : _targetInfo(ti),
-    _referenceKindHandler(KindHandler::makeHandler(ti.getTriple().getArch())),
+    _referenceKindHandler(ti.kindHandler()),
     _cRuntimeFile(ti),
     _bindingInfo(nullptr), _lazyBindingInfo(nullptr),
     _symbolTableChunk(nullptr), _stringsChunk(nullptr), _entryAtom(nullptr),
@@ -1392,17 +1366,14 @@ void MachOWriter::addLinkEditChunk(LinkEditChunk *chunk) {
 void MachOWriter::buildAtomToAddressMap() {
   DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs()
                    << "assign atom addresses:\n");
-  const bool lookForEntry = _targetInfo.getLinkerOptions()._outputKind ==
-                            OutputKind::StaticExecutable ||
-                            _targetInfo.getLinkerOptions()._outputKind ==
-                            OutputKind::DynamicExecutable;
+  const bool lookForEntry = _targetInfo.outputTypeHasEntry();
   for (SectionChunk *chunk : _sectionChunks ) {
     for (const SectionChunk::AtomInfo &info : chunk->atoms() ) {
       _atomToAddress[info.atom] = chunk->address() + info.offsetInSection;
       if (       lookForEntry
               && (info.atom->contentType() == DefinedAtom::typeCode)
               && (info.atom->size() != 0)
-              &&  info.atom->name() == _targetInfo.getEntry()) {
+              &&  info.atom->name() == _targetInfo.entrySymbolName()) {
         _entryAtom = info.atom;
       }
       DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs()
@@ -1425,7 +1396,7 @@ void MachOWriter::assignFileOffsets() {
   DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs()
                     << "assign file offsets:\n");
   uint64_t offset = 0;
-  uint64_t address = _targetInfo.getPageZeroSize();
+  uint64_t address = _targetInfo.pageZeroSize();
   for ( Chunk *chunk : _chunks ) {
     if ( chunk->segmentName().equals("__LINKEDIT") ) {
       _linkEditStartOffset  = Chunk::alignTo(offset, 12);
@@ -1463,7 +1434,7 @@ void MachOWriter::findSegment(StringRef segmentName, uint32_t *segIndex,
   const uint64_t kInvalidAddress = (uint64_t)(-1);
   StringRef lastSegName("__TEXT");
   *segIndex = 0;
-  if ( _targetInfo.getPageZeroSize() != 0 ) {
+  if ( _targetInfo.pageZeroSize() != 0 ) {
       *segIndex = 1;
   }
   *segStartAddr = kInvalidAddress;
@@ -1487,7 +1458,17 @@ void MachOWriter::findSegment(StringRef segmentName, uint32_t *segIndex,
 }
 
 bool MachOWriter::use64BitMachO() const {
-  return _targetInfo.getTriple().isArch64Bit();
+  switch (_targetInfo.arch()) {
+    case MachOTargetInfo::arch_x86_64:
+      return true;
+    case MachOTargetInfo::arch_x86:
+    case MachOTargetInfo::arch_armv6:
+    case MachOTargetInfo::arch_armv7:
+    case MachOTargetInfo::arch_armv7s:
+      return false;
+    default:
+      llvm_unreachable("Unknown mach-o arch");
+  }
 }
 
 

@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Core/Atom.h"
-#include "lld/Core/LinkerOptions.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/PassManager.h"
@@ -101,7 +100,7 @@ cmdLineEntryPoint("entry",
 
 
 enum WriteChoice {
-  writeYAML, writeMachO, writePECOFF, writeELF
+  writeYAML, writePECOFF, writeELF
 };
 
 llvm::cl::opt<WriteChoice>
@@ -109,7 +108,6 @@ writeSelected("writer",
   llvm::cl::desc("Select writer"),
   llvm::cl::values(
     clEnumValN(writeYAML,   "YAML",   "link assuming YAML format"),
-    clEnumValN(writeMachO,  "mach-o", "link as darwin would"),
     clEnumValN(writePECOFF, "PECOFF", "link as windows would"),
     clEnumValN(writeELF,    "ELF",    "link as linux would"),
     clEnumValEnd),
@@ -162,9 +160,11 @@ llvm::cl::opt<endianChoice> endianSelected(
 
 class TestingTargetInfo : public TargetInfo {
 public:
-  TestingTargetInfo(const LinkerOptions &lo, bool stubs, bool got, bool layout)
-      : TargetInfo(lo), _doStubs(stubs), _doGOT(got), _doLayout(layout) {
+  TestingTargetInfo(bool stubs, bool got, bool layout)
+      : _doStubs(stubs), _doGOT(got), _doLayout(layout) {
   }
+
+  llvm::Triple getTriple() const { return llvm::Triple("x86_64"); }
 
   virtual uint64_t getPageSize() const { return 0x1000; }
 
@@ -225,48 +225,43 @@ int main(int argc, char *argv[]) {
   // if no output path specified, write to stdout
   if (cmdLineOutputFilePath.empty())
     cmdLineOutputFilePath.assign("-");
-
-  LinkerOptions lo;
+#if 0
+  ELFLinkerOptions lo;
   lo._noInhibitExec = !cmdLineUndefinesIsError;
   lo._searchArchivesToOverrideTentativeDefinitions =
       cmdLineCommonsSearchArchives;
   lo._deadStrip = cmdLineDeadStrip;
   lo._globalsAreDeadStripRoots = cmdLineGlobalsNotDeadStrip;
   lo._forceLoadArchives = cmdLineForceLoad;
-  lo._outputKind = OutputKind::StaticExecutable;
   lo._entrySymbol = cmdLineEntryPoint;
   lo._mergeCommonStrings = cmdLineDoMergeStrings;
+#endif
 
+  llvm::Triple targetTriple;
   switch (archSelected) {
   case i386:
-    lo._target = "i386";
+    targetTriple =  llvm::Triple("i386");
     break;
   case x86_64:
-    lo._target = "x86_64";
+    targetTriple = llvm::Triple("x86_64");
     break;
   case hexagon:
-    lo._target = "hexagon";
+    targetTriple = llvm::Triple("hexagon");
     break;
   case ppc:
-    lo._target = "powerpc";
+    targetTriple = llvm::Triple("powerpc");
     break;
   }
-
-  TestingTargetInfo tti(lo, cmdLineDoStubsPass, cmdLineDoGotPass,
+  TestingTargetInfo tti(cmdLineDoStubsPass, cmdLineDoGotPass,
                         cmdLineDoLayoutPass);
 
-  std::unique_ptr<ELFTargetInfo> eti = ELFTargetInfo::create(lo);
-  std::unique_ptr<MachOTargetInfo> mti = MachOTargetInfo::create(lo);
+  std::unique_ptr<ELFTargetInfo> eti = ELFTargetInfo::create(targetTriple.getArch());
   std::unique_ptr<Writer> writer;
   const TargetInfo *ti = 0;
   switch ( writeSelected ) {
     case writeYAML:
       writer = createWriterYAML(tti);
       ti = &tti;
-      break;
-    case writeMachO:
-      writer = createWriterMachO(*mti);
-      ti = mti.get();
       break;
     case writePECOFF:
       writer = createWriterPECOFF(tti);

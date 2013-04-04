@@ -1,15 +1,15 @@
-RUN: lld -core -target hexagon %p/Inputs/use-shared.hexagon \
-RUN: -emit-yaml -output=%t2 -noinhibit-exec -output-type=dynamic
+RUN: lld -flavor gnu -target hexagon %p/Inputs/use-shared.hexagon \
+RUN: -emit-yaml -o %t2 
 RUN: FileCheck %s < %t2
 
 CHECK:  - name:            fn3
 CHECK:    references:      
 CHECK:      - kind:            R_HEX_B22_PCREL
 CHECK:        offset:          4
-              target:          __plt_fn1
+              target:          
 CHECK:      - kind:            R_HEX_B22_PCREL
 CHECK:        offset:          8
-              target:          __plt_fn2
-CHECK:      - kind:            <unknown>
+              target:          
+CHECK:      - kind:            layout-before
 CHECK:        offset:          0
 CHECK:        target:          fn1

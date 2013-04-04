@@ -11,7 +11,6 @@
 
 #include "lld/Core/Error.h"
 #include "lld/Core/File.h"
-#include "lld/Core/LinkerOptions.h"
 #include "lld/ReaderWriter/LinkerScript.h"
 
 using namespace lld;
@@ -81,8 +80,8 @@ private:
 
 namespace lld {
 error_code
-ReaderLinkerScript::parseFile(std::unique_ptr<llvm::MemoryBuffer> mb,
-                              std::vector<std::unique_ptr<File> > &result) {
+ReaderLinkerScript::parseFile(std::unique_ptr<llvm::MemoryBuffer> &mb,
+                            std::vector<std::unique_ptr<File> > &result) const {
   auto lsf = LinkerScriptFile::create(_targetInfo, std::move(mb));
   if (!lsf)
     return lsf;
@@ -91,10 +90,7 @@ ReaderLinkerScript::parseFile(std::unique_ptr<llvm::MemoryBuffer> mb,
   for (const auto &c : ls->_commands) {
     if (auto group = dyn_cast<Group>(c))
       for (const auto &path : group->getPaths()) {
-        auto reader = _getReader(LinkerInput(path._path));
-        if (!reader)
-          return reader;
-        if (error_code ec = reader->readFile(path._path, result))
+        if (error_code ec = _targetInfo.readFile(path._path, result))
           return ec;
       }
   }

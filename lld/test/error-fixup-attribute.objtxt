@@ -1,4 +1,4 @@
-# RUN: not lld-core %s 2> %t.err
+# RUN: not lld -core %s 2> %t.err
 # RUN:   FileCheck < %t.err %s
 
 #
@@ -11,7 +11,7 @@ defined-atoms:
       scope:         hidden
       references:
       - offset:      3
-        kind:        3
+        kind:        pcrel32
         weasel:      bar
         addend:      100
 

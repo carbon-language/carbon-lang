@@ -8,12 +8,12 @@
 #  }
 #
 
-# RUN: lld-core -reader YAML %s -writer ELF --entry=_entrypoint -o %t1
+# RUN: lld -flavor gnu %s -e _entrypoint --noinhibit-exec -o %t1 
 # RUN: llvm-nm -n %t1 | FileCheck %s
 # 
-# CHECK:  00000080 T main
-# CHECK:  00001000 A _end
-# CHECK:  00001000 A end
+# CHECK:  004001b0 T main
+# CHECK:  00401000 A _end
+# CHECK:  00401000 A end
 # CHECK:           U _entrypoint
 
 defined-atoms:   
@@ -52,6 +52,6 @@ defined-atoms:
     section-name:    .eh_frame
     permissions:     r--
     references:      
-      - kind:            call32
+      - kind:            R_X86_64_PC32
         offset:          32
         target:          .text

@@ -12,7 +12,6 @@
 
 #include "PPCTargetHandler.h"
 
-#include "lld/Core/LinkerOptions.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
 
 #include "llvm/Object/ELF.h"
@@ -22,14 +21,15 @@ namespace lld {
 namespace elf {
 class PPCTargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
-  PPCTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
+  PPCTargetInfo(llvm::Triple triple)
+    : ELFTargetInfo(triple) {
     _targetHandler = std::unique_ptr<TargetHandlerBase>(
         new PPCTargetHandler(*this));
   }
 
   virtual bool isLittleEndian() const { return false; }
-
-  virtual uint64_t getPageSize() const { return 0x1000; }
+  virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
+  virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 };
 
 } // elf

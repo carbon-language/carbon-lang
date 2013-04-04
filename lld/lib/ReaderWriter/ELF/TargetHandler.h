@@ -19,7 +19,6 @@
 #include "Layout.h"
 
 #include "lld/Core/InputFiles.h"
-#include "lld/Core/LinkerOptions.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/TargetInfo.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"

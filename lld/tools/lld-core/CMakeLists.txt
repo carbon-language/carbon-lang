@@ -12,6 +12,7 @@ target_link_libraries(lld-core
   lldReaderWriter
   lldYAML
   lldCore
+  lldDriver
   LLVMObject
   LLVMSupport
  )

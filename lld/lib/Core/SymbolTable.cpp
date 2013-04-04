@@ -13,7 +13,6 @@
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
-#include "lld/Core/LinkerOptions.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/SharedLibraryAtom.h"
@@ -184,8 +183,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
             useNew = false;
           }
           else {
-            if (_targetInfo.getLinkerOptions().
-                    _warnIfCoalesableAtomsHaveDifferentCanBeNull) {
+            if (_targetInfo.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
               // FIXME: need diagonstics interface for writing warning messages
               llvm::errs() << "lld warning: undefined symbol "
                            << existingUndef->name()
@@ -210,8 +208,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
           bool sameName = curShLib->loadName().equals(newShLib->loadName());
           if ( !sameName ) {
             useNew = false;
-            if (_targetInfo.getLinkerOptions().
-                  _warnIfCoalesableAtomsHaveDifferentLoadName) {
+            if (_targetInfo.warnIfCoalesableAtomsHaveDifferentLoadName()) {
               // FIXME: need diagonstics interface for writing warning messages
               llvm::errs() << "lld warning: shared library symbol "
                            << curShLib->name()
@@ -223,8 +220,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
           }
           else if ( ! sameNullness ) {
             useNew = false;
-            if (_targetInfo.getLinkerOptions().
-                    _warnIfCoalesableAtomsHaveDifferentCanBeNull) {
+            if (_targetInfo.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
               // FIXME: need diagonstics interface for writing warning messages
               llvm::errs() << "lld warning: shared library symbol "
                            << curShLib->name()

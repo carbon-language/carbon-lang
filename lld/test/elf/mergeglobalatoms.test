@@ -1,6 +1,7 @@
 # ELF files can have mergeable strings which are global!, treat them as global
 # defined atoms
-RUN: lld-core -merge-strings=true -reader ELF %p/Inputs/globalconst.o.x86-64 | FileCheck -check-prefix=globalatoms %s
+RUN: lld -flavor gnu -emit-yaml %p/Inputs/globalconst.o.x86-64 \
+RUN:  | FileCheck -check-prefix=globalatoms %s
 
 globalatoms:  - name:            mystr
 globalatoms:    scope:           global

@@ -16,7 +16,6 @@
 #include "SectionChunks.h"
 #include "SegmentChunks.h"
 
-#include "lld/Core/LinkerOptions.h"
 #include "lld/Core/STDExtras.h"
 
 #include "llvm/ADT/ArrayRef.h"
@@ -28,6 +27,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/Format.h"
 
 #include <map>
 #include <tuple>
@@ -667,7 +667,6 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
   }
   firstLoadSegment->prepend(_programHeader);
   firstLoadSegment->prepend(_header);
-
   bool newSegmentHeaderAdded = true;
   while (true) {
     for (auto si : _segments) {

@@ -1,8 +1,8 @@
-# RUN: lld-core -commons-search-archives=false  %s | FileCheck -check-prefix=CHK1 %s
-# RUN: lld-core -commons-search-archives=true   %s | FileCheck -check-prefix=CHK2 %s
+# RUN: lld -core %s | FileCheck -check-prefix=CHK1 %s
+# RUN: lld -core --commons-search-archives  %s | FileCheck -check-prefix=CHK2 %s
 
 #
-# Tests that -commons_search_archives cause core linker to look for overrides
+# Tests that -commons-search-archives cause core linker to look for overrides
 # of tentative definition in archives, and that not using that option
 # does not search.
 #

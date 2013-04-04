@@ -1,26 +1,26 @@
-RUN: lld -core -target x86_64-linux %p/Inputs/use-shared.x86-64 \
-RUN:   %p/Inputs/shared.so-x86-64 -output=%t -entry=main \
-RUN:   -output-type=dynamic
-RUN: lld -core -target x86_64-linux %p/Inputs/use-shared.x86-64 \
-RUN:   %p/Inputs/shared.so-x86-64 -emit-yaml -output=%t2 -noinhibit-exec \
-RUN:   -output-type=dynamic
+RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/use-shared.x86-64 \
+RUN:   %p/Inputs/shared.so-x86-64 -o %t -e main 
+RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/use-shared.x86-64 \
+RUN:   %p/Inputs/shared.so-x86-64 -emit-yaml -o %t2 --noinhibit-exec
 RUN: llvm-objdump -p %t >> %t2
 RUN: llvm-readobj -s -dyn-symbols -dynamic-table %t >> %t2
 RUN: FileCheck %s < %t2
 
 CHECK: type: got
-CHECK: R_X86_64_JUMP_SLOT
+CHECK: references:
+CHECK:   kind: R_X86_64_JUMP_SLOT
 
 CHECK: name: main
 CHECK: kind: R_X86_64_PC32
-CHECK: target: [[PLTNAME:[-a-zA-Z0-9_]+]]
+CHECK:  offset: 18
+CHECK:  target: [[PLTNAME:[-a-zA-Z0-9_]+]]
 
 CHECK: name: [[PLTNAME]]
 CHECK: type: stub
 
 CHECK: shared-library-atoms:
-CHECK: name: foo
-CHECK: load-name: shared.so-x86-64
+CHECK:  name: foo
+CHECK:  load-name: shared.so-x86-64
 
 CHECK: PHDR off 0x{{0+}}40
 CHECK: INTERP

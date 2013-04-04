@@ -40,12 +40,14 @@ enum {
   CPU_SUBTYPE_X86_ALL    = 0x00000003,
   CPU_SUBTYPE_X86_64_ALL = 0x00000003,
   CPU_SUBTYPE_ARM_V6     = 0x00000006,
-  CPU_SUBTYPE_ARM_V7     = 0x00000009
+  CPU_SUBTYPE_ARM_V7     = 0x00000009,
+  CPU_SUBTYPE_ARM_V7S    = 0x0000000B
 };
 
 enum {
   MH_OBJECT     = 0x1,
   MH_EXECUTE    = 0x2,
+  MH_PRELOAD    = 0x5,
   MH_DYLIB      = 0x6,
   MH_DYLINKER   = 0x7,
   MH_BUNDLE     = 0x8,
@@ -494,7 +496,7 @@ public:
       // in-memory matches on-disk, so copy first fields followed by path
       ::memcpy(to, (uint8_t*)&cmd, 24);
       ::memcpy(&to[24], _loadPath.data(), _loadPath.size());
-      ::memset(&to[12+_loadPath.size()], 0, cmdsize-(12+_loadPath.size()));
+      ::memset(&to[24+_loadPath.size()], 0, cmdsize-(24+_loadPath.size()));
     }
   }
 

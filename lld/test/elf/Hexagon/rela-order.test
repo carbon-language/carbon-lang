@@ -1,5 +1,5 @@
-RUN: lld -core -target hexagon %p/Inputs/dynobj.o \
-RUN: -output=%t -noinhibit-exec -output-type=shared
+RUN: lld -flavor gnu -target hexagon %p/Inputs/dynobj.o -shared \
+RUN:  --noinhibit-exec -o %t 
 RUN: llvm-objdump -section-headers %t | FileCheck %s
 
 CHECK: .dynsym

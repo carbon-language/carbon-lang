@@ -9,9 +9,8 @@
 ///
 /// \file
 ///
-/// Interface and factory for creating a specific driver emulator. A Driver is
-/// used to transform command line arguments into command line arguments for
-/// core. Core arguments are used to generate a LinkerOptions object.
+/// Interface for Drivers which convert command line arguments into 
+/// TargetInfo objects, then perform the link.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -20,48 +19,111 @@
 
 #include "lld/Core/LLVM.h"
 
-#include "llvm/Option/ArgList.h"
+#include "llvm/ADT/Triple.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include <memory>
-#include <string>
+#include <vector>
 
 namespace lld {
-struct LinkerOptions;
+class TargetInfo;
+class CoreTargetInfo;
+class MachOTargetInfo;
+class ELFTargetInfo;
 
-/// \brief Base class for all Drivers.
+/// Base class for all Drivers.
 class Driver {
 protected:
-  Driver(StringRef defaultTargetTriple)
-    : _defaultTargetTriple(defaultTargetTriple) {}
 
-  std::string _defaultTargetTriple;
-
-public:
-  enum class Flavor {
-    invalid,
-    ld,
-    link,
-    ld64,
-    core
-  };
-
-  virtual ~Driver();
-
-  virtual std::unique_ptr<llvm::opt::DerivedArgList>
-    transform(llvm::ArrayRef<const char *> args) = 0;
-
-  /// \param flavor driver flavor to create.
-  /// \param defaultTargetTriple target triple as determined by the program name
-  ///        or host. May be overridden by -target.
-  /// \returns the created driver.
-  static std::unique_ptr<Driver> create(Flavor flavor,
-                                        StringRef defaultTargetTriple);
+  /// Performs link using specified options.
+  static bool link(const TargetInfo &targetInfo,
+                   raw_ostream &diagnostics = llvm::errs());
+private:
+  Driver() LLVM_DELETED_FUNCTION; 
 };
 
-std::unique_ptr<llvm::opt::ArgList>
-parseCoreArgs(llvm::ArrayRef<const char *> args);
 
-LinkerOptions generateOptions(const llvm::opt::ArgList &args);
+/// Driver for "universal" lld tool which can mimic any linker command line
+/// parsing once it figures out which command line flavor to use.
+class UniversalDriver : public Driver {
+public:
+  /// Determine flavor and pass control to Driver for that flavor.
+  static bool link(int argc, const char *argv[]);
+
+private:
+  UniversalDriver() LLVM_DELETED_FUNCTION; 
+
+  enum class Flavor {
+    invalid,
+    gnu_ld,       // -flavor gnu
+    win_link,     // -flavor link
+    darwin_ld,    // -flavor darwin
+    core          // -flavor core OR -core
+  };
+
+  static Flavor selectFlavor(std::vector<const char*> &args);
+  static Flavor strToFlavor(StringRef str);
+};
+
+
+/// Driver for gnu/binutil 'ld' command line options.
+class GnuLdDriver : public Driver {
+public:
+  /// Parses command line arguments same as gnu/binutils ld and performs link.
+  /// Returns true iff an error occurred.
+  static bool linkELF(int argc, const char *argv[],
+                  raw_ostream &diagnostics = llvm::errs());
+
+  /// Uses gnu/binutils style ld command line options to fill in options struct.
+  /// Returns true iff there was an error.
+  static std::unique_ptr<ELFTargetInfo> parse(int argc, const char *argv[], 
+                                      raw_ostream &diagnostics = llvm::errs());
+  
+private:
+  static llvm::Triple getDefaultTarget(const char *progName);
+
+  GnuLdDriver() LLVM_DELETED_FUNCTION; 
+};
+
+
+/// Driver for darwin/ld64 'ld' command line options.
+class DarwinLdDriver : public Driver {
+public:
+  /// Parses command line arguments same as darwin's ld and performs link.
+  /// Returns true iff there was an error.
+  static bool linkMachO(int argc, const char *argv[],
+                        raw_ostream &diagnostics = llvm::errs());
+                        
+  /// Uses darwin style ld command line options to update targetInfo object.
+  /// Returns true iff there was an error.
+  static bool parse(int argc, const char *argv[], MachOTargetInfo &info, 
+                    raw_ostream &diagnostics = llvm::errs());
+private:
+  DarwinLdDriver() LLVM_DELETED_FUNCTION; 
+};
+
+
+/// Driver for lld unit tests
+class CoreDriver : public Driver {
+public:
+
+  /// Parses command line arguments same as lld-core and performs link.
+  /// Returns true iff there was an error.
+  static bool link(int argc, const char *argv[],
+                        raw_ostream &diagnostics = llvm::errs());
+  
+  /// Uses lld-core command line options to fill in options struct.
+  /// Returns true iff there was an error.
+  static bool parse(int argc, const char *argv[], CoreTargetInfo &info, 
+                    raw_ostream &diagnostics = llvm::errs());
+
+private:
+  CoreDriver() LLVM_DELETED_FUNCTION; 
+};
+
+
+
+
 } // end namespace lld
 
 #endif

@@ -288,16 +288,44 @@ struct ScalarTraits<RefKind> {
                                                       llvm::raw_ostream &out) {
     assert(ctxt != nullptr);
     ContextInfo *info = reinterpret_cast<ContextInfo*>(ctxt);
-    auto relocStr = info->_targetInfo.stringFromRelocKind(value);
-    out << (relocStr ? *relocStr : "<unknown>");
-  }
+    switch (value) {
+    case lld::Reference::kindLayoutAfter:
+      out << "layout-after";
+      break;
+    case lld::Reference::kindLayoutBefore:
+      out << "layout-before";
+      break;
+    case lld::Reference::kindInGroup:
+      out << "in-group";
+      break;
+    default:
+      if (auto relocStr = info->_targetInfo.stringFromRelocKind(value))
+        out << *relocStr;
+      else 
+        out << "<unknown>";
+      break;
+    }
+  } 
 
   static StringRef input(StringRef scalar, void *ctxt, RefKind &value) {
     assert(ctxt != nullptr);
     ContextInfo *info = reinterpret_cast<ContextInfo*>(ctxt);
     auto relocKind = info->_targetInfo.relocKindFromString(scalar);
-    if (!relocKind)
+    if (!relocKind) {
+      if (scalar.equals("layout-after")) {
+        value = lld::Reference::kindLayoutAfter;
+        return StringRef();
+      }
+      if (scalar.equals("layout-before")) {
+        value = lld::Reference::kindLayoutBefore;
+        return StringRef();
+      }
+      if (scalar.equals("in-group")) {
+        value = lld::Reference::kindInGroup;
+        return StringRef();
+      }
       return "Invalid relocation kind";
+    }
     value = *relocKind;
     return StringRef();
   }
@@ -1314,8 +1342,8 @@ class ReaderYAML : public Reader {
 public:
   ReaderYAML(const TargetInfo &ti) : Reader(ti) {}
 
-  error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
-                       std::vector<std::unique_ptr<File>> &result) {
+  error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
+                       std::vector<std::unique_ptr<File>> &result) const {
     // Note: we do not take ownership of the MemoryBuffer.  That is
     // because yaml may produce multiple File objects, so there is no
     // *one* File to take ownership.  Therefore, the yaml File objects

@@ -9,7 +9,7 @@
 
 # built using: "gcc -m32"
 #
-RUN: lld-core -reader ELF %p/Inputs/abs-test.i386 | FileCheck -check-prefix=YAML %s
+RUN: lld -flavor gnu -emit-yaml -r %p/Inputs/abs-test.i386 | FileCheck -check-prefix=YAML %s
 
 YAML:  absolute-atoms: 
 YAML:    - name:              absLocalSymbol

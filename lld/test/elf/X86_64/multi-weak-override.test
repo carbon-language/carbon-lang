@@ -1,15 +1,16 @@
 # Test for weak symbol getting overridden
-RUN: lld-core -reader ELF -writer ELF -arch x86_64 %p/Inputs/multi-weak.o \
-RUN: %p/Inputs/multi-ovrd.o -o %t
+RUN: lld -flavor gnu -target x86_64 %p/Inputs/multi-weak.o \
+RUN:     %p/Inputs/multi-ovrd.o -o %t -e main --noinhibit-exec
 RUN: llvm-nm -n %t | FileCheck -check-prefix=WEAKORDER %s
-RUN: lld-core -reader ELF -arch x86_64 %p/Inputs/multi-weak.o \
-RUN: %p/Inputs/multi-ovrd.o -layout-pass=true -o %t2 
+RUN: lld -flavor gnu -target x86_64 %p/Inputs/multi-weak.o \
+RUN:    %p/Inputs/multi-ovrd.o -emit-yaml -o %t2 --noinhibit-exec
 RUN: FileCheck -check-prefix=WEAKATOMSORDER %s < %t2
 
-WEAKORDER: 0040011c T f
-WEAKORDER: 0040012c T g
+WEAKORDER: 0040020c T f
+WEAKORDER: 0040021c T g
 
 WEAKATOMSORDER:  - ref-name:        L002
 WEAKATOMSORDER:  - ref-name:        L003
 WEAKATOMSORDER:  - name:            f
 WEAKATOMSORDER:  - name:            g
+

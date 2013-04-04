@@ -13,7 +13,6 @@
 #include "llvm/ADT/DenseMap.h"
 
 #include "lld/Core/DefinedAtom.h"
-#include "lld/Core/LinkerOptions.h"
 #include "lld/Core/SharedLibraryAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
@@ -31,7 +30,7 @@ class StubsPass : public lld::StubsPass {
 public:
   StubsPass(const MachOTargetInfo &ti) 
     : _targetInfo(ti)
-    , _kindHandler(KindHandler::makeHandler(_targetInfo.getTriple().getArch()))
+    , _kindHandler(_targetInfo.kindHandler())
     , _file(ti)
     , _helperCommonAtom(nullptr)
     , _helperCacheAtom(nullptr)
@@ -39,11 +38,11 @@ public:
   }
 
   virtual bool noTextRelocs() {
-    return !_targetInfo.getLinkerOptions()._textRelocations;
+    return true;
   }
 
   virtual bool isCallSite(int32_t kind) {
-    return _kindHandler->isCallSite(kind);
+    return _kindHandler.isCallSite(kind);
   }
 
   virtual const DefinedAtom* getStub(const Atom& target) {
@@ -60,15 +59,17 @@ public:
   }
 
   const DefinedAtom* makeStub(const Atom& target) {
-    switch (_targetInfo.getTriple().getArch()) {
-      case llvm::Triple::x86_64:
+    switch (_targetInfo.arch()) {
+      case MachOTargetInfo::arch_x86_64:
         return makeStub_x86_64(target);
-      case llvm::Triple::x86:
+      case MachOTargetInfo::arch_x86:
         return makeStub_x86(target);
-      case llvm::Triple::arm:
+      case MachOTargetInfo::arch_armv6:
+      case MachOTargetInfo::arch_armv7:
+      case MachOTargetInfo::arch_armv7s:
         return makeStub_arm(target);
       default:
-        llvm_unreachable("Unknown arch");
+        llvm_unreachable("Unknown mach-o arch");
     }
   }
 
@@ -153,7 +154,7 @@ private:
   };
 
   const MachOTargetInfo                          &_targetInfo;
-  KindHandler                                    *_kindHandler;
+  mach_o::KindHandler                            &_kindHandler;
   File                                            _file;
   llvm::DenseMap<const Atom*, const DefinedAtom*> _targetToStub;
   std::vector<const DefinedAtom*>                 _lazyPointers;

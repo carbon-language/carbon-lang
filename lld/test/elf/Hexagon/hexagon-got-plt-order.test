@@ -1,5 +1,4 @@
-RUN: lld -core -target hexagon %p/Inputs/got-plt-order.o \
-RUN: -output=%t -noinhibit-exec -output-type=shared
+RUN: lld -flavor gnu -target hexagon %p/Inputs/got-plt-order.o -o %t -shared
 RUN: llvm-objdump -section-headers %t | FileCheck %s
 
 CHECK: .got

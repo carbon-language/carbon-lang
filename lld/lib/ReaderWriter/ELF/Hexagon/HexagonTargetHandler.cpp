@@ -212,8 +212,7 @@ public:
 } // end anonymous namespace
 
 void elf::HexagonTargetInfo::addPasses(PassManager &pm) const {
-  if (_options._outputKind == OutputKind::DynamicExecutable ||
-           _options._outputKind == OutputKind::Shared)
+  if (isDynamic())
     pm.add(std::unique_ptr<Pass>(new DynamicGOTPLTPass(*this)));
   ELFTargetInfo::addPasses(pm);
 }

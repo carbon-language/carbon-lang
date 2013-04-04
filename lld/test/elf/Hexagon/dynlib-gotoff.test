@@ -1,5 +1,5 @@
-RUN: lld -core -target hexagon %p/Inputs/dynobj.o \
-RUN: -output=%t -emit-yaml -noinhibit-exec -output-type=shared
+RUN: lld -flavor gnu -target hexagon %p/Inputs/dynobj.o \
+RUN:   -o %t -emit-yaml -shared --noinhibit-exec
 RUN: FileCheck -check-prefix=CHECKGOTPLT %s < %t
 
               - name:            __got0
@@ -71,7 +71,7 @@ CHECKGOTPLT:  - name:            .text
 CHECKGOTPLT:    alignment:       2^2
 CHECKGOTPLT:    section-name:    .text
 CHECKGOTPLT:    references:      
-CHECKGOTPLT:      - kind:            <unknown>
+CHECKGOTPLT:      - kind:            layout-after
 CHECKGOTPLT:        offset:          0
 CHECKGOTPLT:        target:          fn2
 CHECKGOTPLT:  - name:            fn2

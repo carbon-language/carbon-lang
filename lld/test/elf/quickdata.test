@@ -1,4 +1,5 @@
-RUN: lld-core -arch hexagon -reader ELF %p/Inputs/quickdata-test.elf-hexagon | FileCheck %s -check-prefix hexagon
+RUN: lld -flavor gnu -target hexagon -emit-yaml %p/Inputs/quickdata-test.elf-hexagon \
+RUN:  | FileCheck %s -check-prefix hexagon
 
 hexagon:  - name:            init
 hexagon:    scope:           global

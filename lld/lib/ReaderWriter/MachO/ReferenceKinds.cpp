@@ -10,6 +10,7 @@
 
 #include "ReferenceKinds.h"
 
+
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
@@ -29,14 +30,17 @@ KindHandler::KindHandler() {
 KindHandler::~KindHandler() {
 }
 
-KindHandler *KindHandler::makeHandler(llvm::Triple::ArchType arch) {
+std::unique_ptr<mach_o::KindHandler> KindHandler::create(
+                                                MachOTargetInfo::Arch arch) {
   switch( arch ) {
-    case llvm::Triple::x86_64:
-      return new KindHandler_x86_64();
-    case llvm::Triple::x86:
-      return new KindHandler_x86();
-    case llvm::Triple::arm:
-      return new KindHandler_arm();
+    case MachOTargetInfo::arch_x86_64:
+      return std::unique_ptr<mach_o::KindHandler>(new KindHandler_x86_64());
+    case MachOTargetInfo::arch_x86:
+      return std::unique_ptr<mach_o::KindHandler>(new KindHandler_x86());
+    case MachOTargetInfo::arch_armv6:
+    case MachOTargetInfo::arch_armv7:
+    case MachOTargetInfo::arch_armv7s:
+      return std::unique_ptr<mach_o::KindHandler>(new KindHandler_arm());
     default:
       llvm_unreachable("Unknown arch");
   }

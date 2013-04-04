@@ -399,18 +399,29 @@ public:
 } // end anon namespace
 
 void elf::X86_64TargetInfo::addPasses(PassManager &pm) const {
-  if (_options._outputKind == OutputKind::StaticExecutable)
-    pm.add(std::unique_ptr<Pass>(new StaticGOTPLTPass(*this)));
-  else if (_options._outputKind == OutputKind::DynamicExecutable ||
-           _options._outputKind == OutputKind::Shared)
+  switch (_outputFileType) {
+  case llvm::ELF::ET_EXEC:
+    if (_isStaticExecutable)
+      pm.add(std::unique_ptr<Pass>(new StaticGOTPLTPass(*this)));
+    else
+      pm.add(std::unique_ptr<Pass>(new DynamicGOTPLTPass(*this)));
+    break;
+  case llvm::ELF::ET_DYN:
     pm.add(std::unique_ptr<Pass>(new DynamicGOTPLTPass(*this)));
+    break;
+  case llvm::ELF::ET_REL:
+    break;
+  default:
+    llvm_unreachable("Unhandled output file type");
+  }
   ELFTargetInfo::addPasses(pm);
 }
 
+
 #define LLD_CASE(name) .Case(#name, llvm::ELF::name)
 
-ErrorOr<int32_t> elf::X86_64TargetInfo::relocKindFromString(
-    StringRef str) const {
+ErrorOr<Reference::Kind> 
+elf::X86_64TargetInfo::relocKindFromString(StringRef str) const {
   int32_t ret = llvm::StringSwitch<int32_t>(str)
     LLD_CASE(R_X86_64_NONE)
     LLD_CASE(R_X86_64_64)
@@ -462,8 +473,8 @@ ErrorOr<int32_t> elf::X86_64TargetInfo::relocKindFromString(
 
 #define LLD_CASE(name) case llvm::ELF::name: return std::string(#name);
 
-ErrorOr<std::string> elf::X86_64TargetInfo::stringFromRelocKind(
-    int32_t kind) const {
+ErrorOr<std::string> 
+elf::X86_64TargetInfo::stringFromRelocKind(Reference::Kind kind) const {
   switch (kind) {
   LLD_CASE(R_X86_64_NONE)
   LLD_CASE(R_X86_64_64)

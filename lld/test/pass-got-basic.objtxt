@@ -1,4 +1,4 @@
-# RUN: lld-core %s -got-pass  | FileCheck %s
+# RUN: lld -core %s --add-pass GOT  | FileCheck %s
 
 #
 # Test that GOT pass instantiates GOT entires and alters references

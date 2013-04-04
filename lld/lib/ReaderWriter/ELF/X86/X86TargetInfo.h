@@ -12,7 +12,6 @@
 
 #include "X86TargetHandler.h"
 
-#include "lld/Core/LinkerOptions.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
 
 #include "llvm/Object/ELF.h"
@@ -22,12 +21,14 @@ namespace lld {
 namespace elf {
 class X86TargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
-  X86TargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
+  X86TargetInfo(llvm::Triple triple) 
+    : ELFTargetInfo(triple) {
     _targetHandler = std::unique_ptr<TargetHandlerBase>(
         new X86TargetHandler(*this));
   }
 
-  virtual uint64_t getPageSize() const { return 0x1000; }
+  virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
+  virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 };
 } // end namespace elf
 } // end namespace lld

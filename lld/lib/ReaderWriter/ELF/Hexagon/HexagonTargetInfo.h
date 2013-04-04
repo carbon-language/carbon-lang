@@ -12,7 +12,6 @@
 
 #include "HexagonTargetHandler.h"
 
-#include "lld/Core/LinkerOptions.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
 
 #include "llvm/Object/ELF.h"
@@ -23,15 +22,14 @@ namespace elf {
 
 class HexagonTargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
-  HexagonTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
+  HexagonTargetInfo(llvm::Triple triple) 
+    : ELFTargetInfo(triple) {
     _targetHandler = std::unique_ptr<TargetHandlerBase>(
         new HexagonTargetHandler(*this));
   }
 
-  virtual uint64_t getPageSize() const { return 0x1000; }
-
-  virtual ErrorOr<int32_t> relocKindFromString(StringRef str) const;
-  virtual ErrorOr<std::string> stringFromRelocKind(int32_t kind) const;
+  virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
+  virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
   virtual void addPasses(PassManager &) const;
 

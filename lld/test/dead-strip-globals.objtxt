@@ -1,5 +1,5 @@
-# RUN: lld-core -dead-strip -keep-globals=true  %s | FileCheck -check-prefix=CHK1 %s
-# RUN: lld-core -dead-strip -keep-globals=false %s | FileCheck -check-prefix=CHK2 %s
+# RUN: lld -core --dead-strip --keep-globals  %s | FileCheck -check-prefix=CHK1 %s
+# RUN: lld -core --dead-strip  %s | FileCheck -check-prefix=CHK2 %s
 
 #
 # Test that -keep-globals prevents -dead-strip from removing globals.

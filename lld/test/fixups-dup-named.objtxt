@@ -1,4 +1,4 @@
-# RUN: lld-core %s | FileCheck %s
+# RUN: lld -core %s | FileCheck %s
 
 #
 # Test references referencing multiple atoms that have the same name
@@ -11,10 +11,10 @@ defined-atoms:
       content:           [ E8, 00, 00, 00, 00, E8, 00, 00, 00, 00 ]
       references:
       - offset:          1
-        kind:            3
+        kind:            pcrel32
         target:          bar_1
       - offset:          6
-        kind:            3
+        kind:            pcrel32
         target:          bar_2
   
     - name:              bar

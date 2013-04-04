@@ -1,4 +1,4 @@
-# RUN: lld-core %s -stubs-pass  | FileCheck %s
+# RUN: lld -core %s --add-pass stubs  | FileCheck %s
 
 #
 # Test that stubs pass adds stubs and rebinds call sites to the stub

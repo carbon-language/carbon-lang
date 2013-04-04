@@ -13,7 +13,6 @@
 #include "DefaultLayout.h"
 #include "TargetHandler.h"
 
-#include "lld/Core/LinkerOptions.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
 
 #include "llvm/ADT/Triple.h"

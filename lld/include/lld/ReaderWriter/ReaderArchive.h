@@ -29,19 +29,17 @@ class TargetInfo;
 /// \brief ReaderArchive is a class for reading archive libraries
 class ReaderArchive : public Reader {
 public:
-  ReaderArchive(const TargetInfo &ti,
-                std::function<ErrorOr<Reader&> (const LinkerInput &)> getReader)
-      : Reader(ti),
-        _getReader(getReader) {}
+  ReaderArchive(const TargetInfo &ti, const Reader &memberReader)
+      : Reader(ti) {
+  }
 
   /// \brief Returns a vector of Files that are contained in the archive file
   ///        pointed to by the Memorybuffer
-  error_code parseFile(std::unique_ptr<llvm::MemoryBuffer> mb,
-                       std::vector<std::unique_ptr<File>> &result);
+  error_code parseFile(std::unique_ptr<llvm::MemoryBuffer> &mb,
+                       std::vector<std::unique_ptr<File>> &result) const;
 
 private:
-  std::function<ErrorOr<Reader&> (const LinkerInput &)> _getReader;
-  std::unique_ptr<llvm::object::Archive> _archive;
+  mutable std::unique_ptr<llvm::object::Archive> _archive;
 };
 } // end namespace lld
 

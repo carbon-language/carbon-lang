@@ -1,24 +1,19 @@
-RUN: lld-core -arch hexagon -reader ELF %p/Inputs/branch-test.hexagon %p/Inputs/target-test.hexagon | FileCheck %s -check-prefix hexagon-yaml
-RUN: lld-core -arch hexagon -reader ELF -writer ELF -o %t1 %p/Inputs/branch-test.hexagon %p/Inputs/target-test.hexagon
+RUN: lld -flavor gnu -target hexagon -static -emit-yaml %p/Inputs/branch-test.hexagon %p/Inputs/target-test.hexagon | FileCheck %s -check-prefix hexagon-yaml
+RUN: lld -flavor gnu -target hexagon -e target -o %t1 %p/Inputs/branch-test.hexagon %p/Inputs/target-test.hexagon
 RUN: elf-dump %t1 |  FileCheck -check-prefix=hexagon-elfdump %s 
 
 hexagon-yaml:    - name:              back
 hexagon-yaml:      scope:             global
 hexagon-yaml:      content:           [ 00, C0, 00, 7F, 00, C0, 00, 5A, 00, 00, 00, 00, 
 hexagon-yaml:                           00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 ]
-hexagon-yaml:      section-choice:    custom-required
-hexagon-yaml:      section-name:      .text
-
 hexagon-yaml:      references:
-hexagon-yaml:      - kind:  
-hexagon-yaml:        offset:            4
-hexagon-yaml:        target:            target
+hexagon-yaml:       - kind:  
+hexagon-yaml:         offset:            4
+hexagon-yaml:         target:            target
 
 hexagon-yaml:    - name:              target
 hexagon-yaml:      scope:             global
 hexagon-yaml:      content:           [ 00, C0, 00, 5A ]
-hexagon-yaml:      section-choice:    custom-required
-hexagon-yaml:      section-name:      .text
 hexagon-yaml:      references:
 hexagon-yaml:      - kind:  
 hexagon-yaml:        offset:            0

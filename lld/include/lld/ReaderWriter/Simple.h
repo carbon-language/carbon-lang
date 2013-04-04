@@ -171,7 +171,11 @@ private:
 
 class SimpleUndefinedAtom : public UndefinedAtom {
 public:
-  SimpleUndefinedAtom(const File &f, StringRef name) : _file(f), _name(name) {}
+  SimpleUndefinedAtom(const File &f, StringRef name) 
+    : _file(f)
+    , _name(name) {
+    assert(!name.empty() && "UndefinedAtoms must have a name");
+  }
 
   /// file - returns the File that produced/owns this Atom
   virtual const class File &file() const { return _file; }

@@ -1,4 +1,5 @@
-RUN: lld -flavor ld -### -target i686-linux -e adena -o out.a 2>&1 \
-RUN:   | FileCheck %s
+RUN: lld -flavor gnu --help | FileCheck %s
 
-CHECK: -target i686-linux -entry=adena -output=out.a
+CHECK: -L
+CHECK: -emit-yaml
+CHECK: --noinhibit-exec

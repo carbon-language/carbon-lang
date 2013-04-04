@@ -369,8 +369,8 @@ class ReaderCOFF : public Reader {
 public:
   ReaderCOFF(const TargetInfo &ti) : Reader(ti) {}
 
-  error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
-                       std::vector<std::unique_ptr<File> > &result) {
+  error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
+                       std::vector<std::unique_ptr<File> > &result) const {
     llvm::error_code ec;
     std::unique_ptr<File> f(new FileCOFF(_targetInfo, std::move(mb), ec));
     if (ec) {

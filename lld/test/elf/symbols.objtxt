@@ -14,14 +14,13 @@
 #}
 #
 
-RUN: lld-core -reader ELF %p/Inputs/writersyms.o -writer ELF -o %t1 
+RUN: lld -flavor gnu  -target i386 -e main %p/Inputs/writersyms.o -o %t1 
 RUN: llvm-nm -n %t1 | FileCheck -check-prefix CHECKSYMS %s
 
 CHECKSYMS:  00000000 a 1.c
-CHECKSYMS:  00000074 T main
+CHECKSYMS:  00000114 T main
 CHECKSYMS:  00001000 A __bss_start
 CHECKSYMS:  00001000 B a
 CHECKSYMS:  00001004 A __bss_end
 CHECKSYMS:  00001004 A _end
 CHECKSYMS:  00001004 A end
-CHECKSYMS:           U _start

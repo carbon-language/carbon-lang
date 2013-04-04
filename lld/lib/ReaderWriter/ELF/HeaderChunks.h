@@ -18,6 +18,7 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
+#include "llvm/Support/Format.h"
 
 /// \brief An Header represents the Elf[32/64]_Ehdr structure at the
 ///        start of an ELF executable file.
@@ -98,10 +99,10 @@ public:
     FindPhdr(uint64_t type, uint64_t flags, uint64_t flagsClear)
              : _type(type)
              , _flags(flags)
-             , _flagsClear(flagsClear)
-    {}
+             , _flagsClear(flagsClear) {
+    }
 
-    bool operator()(const Elf_Phdr *j) const {
+    bool operator()(const llvm::object::Elf_Phdr_Impl<ELFT> *j) const {
       return ((j->p_type == _type) &&
               ((j->p_flags & _flags) == _flags) &&
               (!(j->p_flags & _flagsClear)));

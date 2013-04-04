@@ -1,5 +1,4 @@
-RUN: lld -core -target x86_64 %p/Inputs/no-interp-section.o -output=%t \
-RUN: -noinhibit-exec -output-type=shared
+RUN: lld -flavor gnu -target x86_64 %p/Inputs/no-interp-section.o -o %t -shared
 RUN: llvm-objdump -section-headers %t | FileCheck %s
 
 CHECK-NOT: .interp

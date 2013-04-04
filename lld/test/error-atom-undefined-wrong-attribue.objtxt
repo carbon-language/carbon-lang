@@ -1,4 +1,4 @@
-# RUN: not lld-core %s 2> %t.err
+# RUN: not lld -core %s 2> %t.err
 # RUN:   FileCheck < %t.err %s
 
 #

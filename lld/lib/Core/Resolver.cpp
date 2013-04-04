@@ -10,7 +10,6 @@
 #include "lld/Core/Atom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
-#include "lld/Core/LinkerOptions.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/SymbolTable.h"
@@ -129,7 +128,7 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
   // tell symbol table
   _symbolTable.add(atom);
 
-  if (_targetInfo.getLinkerOptions()._deadStrip) {
+  if (_targetInfo.deadStrip()) {
     // add to set of dead-strip-roots, all symbols that
     // the compiler marks as don't strip
     if (atom.deadStrip() == DefinedAtom::deadStripNever)
@@ -182,11 +181,11 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
 // ask symbol table if any definitionUndefined atoms still exist
 // if so, keep searching libraries until no more atoms being added
 void Resolver::resolveUndefines() {
-  const bool searchArchives = _targetInfo.getLinkerOptions().
-      _searchArchivesToOverrideTentativeDefinitions;
-  const bool searchSharedLibs = _targetInfo.getLinkerOptions().
-      _searchSharedLibrariesToOverrideTentativeDefinitions;
-
+  const bool searchArchives   = 
+                    _targetInfo.searchArchivesToOverrideTentativeDefinitions();
+  const bool searchSharedLibs = 
+             _targetInfo.searchSharedLibrariesToOverrideTentativeDefinitions();
+  
   // keep looping until no more undefines were added in last loop
   unsigned int undefineGenCount = 0xFFFFFFFF;
   while (undefineGenCount != _symbolTable.size()) {
@@ -259,14 +258,14 @@ void Resolver::markLive(const Atom &atom) {
 // remove all atoms not actually used
 void Resolver::deadStripOptimize() {
   // only do this optimization with -dead_strip
-  if (!_targetInfo.getLinkerOptions()._deadStrip)
+  if (!_targetInfo.deadStrip())
     return;
 
   // clear liveness on all atoms
   _liveAtoms.clear();
 
   // By default, shared libraries are built with all globals as dead strip roots
-  if (_targetInfo.getLinkerOptions()._globalsAreDeadStripRoots) {
+  if (_targetInfo.globalsAreDeadStripRoots()) {
     for ( const Atom *atom : _atoms ) {
       const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom);
       if (defAtom == nullptr)
@@ -277,7 +276,7 @@ void Resolver::deadStripOptimize() {
   }
 
   // Or, use list of names that are dead stip roots.
-  for (const StringRef &name : _targetInfo.getLinkerOptions()._deadStripRoots) {
+  for (const StringRef &name : _targetInfo.deadStripRoots()) {
     const Atom *symAtom = _symbolTable.findByName(name);
     assert(symAtom->definition() != Atom::definitionUndefined);
     _deadStripRoots.insert(symAtom);
@@ -295,15 +294,15 @@ void Resolver::deadStripOptimize() {
 
 
 // error out if some undefines remain
-void Resolver::checkUndefines(bool final) {
+bool Resolver::checkUndefines(bool final) {
   // when using LTO, undefines are checked after bitcode is optimized
   if (_haveLLVMObjs && !final)
-    return;
+    return false;
 
   // build vector of remaining undefined symbols
   std::vector<const UndefinedAtom *> undefinedAtoms;
   _symbolTable.undefines(undefinedAtoms);
-  if (_targetInfo.getLinkerOptions()._deadStrip) {
+  if (_targetInfo.deadStrip()) {
     // When dead code stripping, we don't care if dead atoms are undefined.
     undefinedAtoms.erase(std::remove_if(
                            undefinedAtoms.begin(), undefinedAtoms.end(),
@@ -311,21 +310,25 @@ void Resolver::checkUndefines(bool final) {
   }
 
   // error message about missing symbols
-  if (!undefinedAtoms.empty() &&
-      (!_targetInfo.getLinkerOptions()._noInhibitExec ||
-       _targetInfo.getLinkerOptions()._outputKind == OutputKind::Relocatable)) {
+  if (!undefinedAtoms.empty()) {
     // FIXME: need diagonstics interface for writing error messages
-    bool isError = false;
+    bool foundUndefines = false;
     for (const UndefinedAtom *undefAtom : undefinedAtoms) {
       if (undefAtom->canBeNull() == UndefinedAtom::canBeNullNever) {
-        llvm::errs() << "Undefined Symbol: " << undefAtom->file().path()
-                     << " : " << undefAtom->name() << "\n";
-        isError = true;
+        foundUndefines = true;
+        if (_targetInfo.printRemainingUndefines()) {
+          llvm::errs() << "Undefined Symbol: " << undefAtom->file().path()
+                       << " : " << undefAtom->name() << "\n";
+        }
       }
     }
-    if (isError)
-      llvm::report_fatal_error("symbol(s) not found");
+    if (foundUndefines) {
+      if (_targetInfo.printRemainingUndefines())
+        llvm::errs() << "symbol(s) not found\n";
+      return true;
+    }
   }
+  return false;
 }
 
 
@@ -357,16 +360,20 @@ void Resolver::linkTimeOptimize() {
   // FIX ME
 }
 
-void Resolver::resolve() {
+bool Resolver::resolve() {
   this->buildInitialAtomList();
   this->resolveUndefines();
   this->updateReferences();
   this->deadStripOptimize();
-  this->checkUndefines(false);
+  if (this->checkUndefines(false)) {
+    if (!_targetInfo.allowRemainingUndefines())
+      return true;
+  }
   this->removeCoalescedAwayAtoms();
   this->checkDylibSymbolCollisions();
   this->linkTimeOptimize();
   this->_result.addAtoms(_atoms);
+  return false;
 }
 
 void Resolver::MergedFile::addAtom(const Atom& atom) {

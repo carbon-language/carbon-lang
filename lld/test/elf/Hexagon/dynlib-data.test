@@ -1,5 +1,5 @@
-RUN: lld -core -target hexagon %p/Inputs/dynobj-data.o \
-RUN: -output=%t -output=%t -noinhibit-exec -output-type=shared
+RUN: lld -flavor gnu -target hexagon %p/Inputs/dynobj-data.o \
+RUN:    -o %t --noinhibit-exec -shared
 RUN: llvm-objdump -s %t > %t1
 RUN: FileCheck -check-prefix=CHECKRELOCS %s < %t1
 
