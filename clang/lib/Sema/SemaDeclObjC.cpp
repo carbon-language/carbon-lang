@@ -521,8 +521,14 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
               dyn_cast_or_null<TypedefNameDecl>(PrevDecl)) {
           QualType T = TDecl->getUnderlyingType();
           if (T->isObjCObjectType()) {
-            if (NamedDecl *IDecl = T->getAs<ObjCObjectType>()->getInterface())
+            if (NamedDecl *IDecl = T->getAs<ObjCObjectType>()->getInterface()) {
               SuperClassDecl = dyn_cast<ObjCInterfaceDecl>(IDecl);
+              // This handles the following case:
+              // @interface NewI @end
+              // typedef NewI DeprI __attribute__((deprecated("blah")))
+              // @interface SI : DeprI /* warn here */ @end
+              (void)DiagnoseUseOfDecl(const_cast<TypedefNameDecl*>(TDecl), SuperLoc);
+            }
           }
         }
 
