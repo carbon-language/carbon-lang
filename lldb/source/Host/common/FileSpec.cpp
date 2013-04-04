@@ -891,8 +891,15 @@ FileSpec::EnumerateDirectory
         lldb_utility::CleanUp <DIR *, int> dir_path_dir (opendir(dir_path), NULL, closedir);
         if (dir_path_dir.is_valid())
         {
-            struct dirent* dp;
-            while ((dp = readdir(dir_path_dir.get())) != NULL)
+            long path_max = fpathconf (dirfd (dir_path_dir.get()), _PC_NAME_MAX);
+#if defined (__APPLE_) && defined (__DARWIN_MAXPATHLEN)
+            if (path_max < __DARWIN_MAXPATHLEN)
+                path_max = __DARWIN_MAXPATHLEN;
+#endif
+            struct dirent *buf, *dp;
+            buf = (struct dirent *) malloc (offsetof (struct dirent, d_name) + path_max + 1);
+
+            while (buf && readdir_r(dir_path_dir.get(), buf, &dp) == 0 && dp)
             {
                 // Only search directories
                 if (dp->d_type == DT_DIR || dp->d_type == DT_UNKNOWN)
@@ -968,6 +975,10 @@ FileSpec::EnumerateDirectory
                         }
                     }
                 }
+            }
+            if (buf)
+            {
+                free (buf);
             }
         }
     }
