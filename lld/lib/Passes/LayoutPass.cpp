@@ -436,29 +436,32 @@ void LayoutPass::perform(MutableFile &mergedFile) {
   // Build override maps
   buildOrdinalOverrideMap(atomRange);
 
-  DEBUG_WITH_TYPE("layout", llvm::dbgs() << "unsorted atoms:\n");
-  for ( const DefinedAtom *atom : atomRange ) {
-    DEBUG_WITH_TYPE("layout", llvm::dbgs()
-                    << "  file=" << atom->file().path()
+  DEBUG_WITH_TYPE("layout", { 
+    llvm::dbgs() << "unsorted atoms:\n";
+    for (const DefinedAtom *atom : atomRange) {
+      llvm::dbgs()  << "  file=" << atom->file().path()
                     << ", name=" << atom->name()
                     << ", size=" << atom->size()
                     << ", type=" << atom->contentType()
                     << ", ordinal=" << atom->ordinal()
-                    << "\n");
-  }
-
+                    << "\n";
+    }
+  });
+  
   // sort the atoms
   std::sort(atomRange.begin(), atomRange.end(), _compareAtoms);
   
-  DEBUG_WITH_TYPE("layout", llvm::dbgs() << "sorted atoms:\n");
-  for ( const DefinedAtom *atom : atomRange ) {
-    DEBUG_WITH_TYPE("layout", llvm::dbgs()
-                    << "  file=" << atom->file().path()
+  DEBUG_WITH_TYPE("layout", { 
+    llvm::dbgs() << "sorted atoms:\n";
+    for (const DefinedAtom *atom : atomRange) {
+      llvm::dbgs()  << "  file=" << atom->file().path()
                     << ", name=" << atom->name()
                     << ", size=" << atom->size()
                     << ", type=" << atom->contentType()
                     << ", ordinal=" << atom->ordinal()
-                    << "\n");
-  }
+                    << "\n";
+    }
+  });
+  
 
 }
