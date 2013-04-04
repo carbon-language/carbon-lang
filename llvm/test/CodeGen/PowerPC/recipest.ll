@@ -31,6 +31,54 @@ entry:
 ; CHECK-SAFE: blr
 }
 
+define double @foof(double %a, float %b) nounwind {
+entry:
+  %x = call float @llvm.sqrt.f32(float %b)
+  %y = fpext float %x to double
+  %r = fdiv double %a, %y
+  ret double %r
+
+; CHECK: @foof
+; CHECK: frsqrtes
+; CHECK: fnmsubs
+; CHECK: fmuls
+; CHECK: fmadds
+; CHECK: fmuls
+; CHECK: fmul
+; CHECK: blr
+
+; CHECK-SAFE: @foof
+; CHECK-SAFE: fsqrts
+; CHECK-SAFE: fdiv
+; CHECK-SAFE: blr
+}
+
+define float @food(float %a, double %b) nounwind {
+entry:
+  %x = call double @llvm.sqrt.f64(double %b)
+  %y = fptrunc double %x to float
+  %r = fdiv float %a, %y
+  ret float %r
+
+; CHECK: @foo
+; CHECK: frsqrte
+; CHECK: fnmsub
+; CHECK: fmul
+; CHECK: fmadd
+; CHECK: fmul
+; CHECK: fmul
+; CHECK: fmadd
+; CHECK: fmul
+; CHECK: frsp
+; CHECK: fmuls
+; CHECK: blr
+
+; CHECK-SAFE: @foo
+; CHECK-SAFE: fsqrt
+; CHECK-SAFE: fdivs
+; CHECK-SAFE: blr
+}
+
 define float @goo(float %a, float %b) nounwind {
 entry:
   %x = call float @llvm.sqrt.f32(float %b)
