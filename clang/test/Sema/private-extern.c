@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -verify -fsyntax-only -Wno-private-extern %s
+// RUN: %clang_cc1 -verify -fsyntax-only -Wno-private-extern -fmodules %s
 
 static int g0; // expected-note{{previous definition}}
 int g0; // expected-error{{non-static declaration of 'g0' follows static declaration}}

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fmodules %s
 
 namespace test1 {
   int x; // expected-note {{previous definition is here}}

@@ -2,6 +2,8 @@
 // RUN: %clang_cc1 -include %s -include %s -fsyntax-only %s
 // with PCH
 // RUN: %clang_cc1 -chain-include %s -chain-include %s -fsyntax-only %s
+// with PCH, with modules enabled
+// RUN: %clang_cc1 -chain-include %s -chain-include %s -fsyntax-only -fmodules %s
 #if !defined(PASS1)
 #define PASS1
 

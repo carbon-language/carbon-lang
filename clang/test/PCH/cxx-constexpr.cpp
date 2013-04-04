@@ -4,6 +4,9 @@
 // RUN: %clang_cc1 -pedantic-errors -std=c++11 -emit-pch %s -o %t-cxx11
 // RUN: %clang_cc1 -pedantic-errors -std=c++11 -include-pch %t-cxx11 -verify %s
 
+// RUN: %clang_cc1 -pedantic-errors -std=c++98 -emit-pch %s -o %t -fmodules
+// RUN: %clang_cc1 -pedantic-errors -std=c++98 -include-pch %t -verify %s -fmodules
+
 #ifndef HEADER_INCLUDED
 
 #define HEADER_INCLUDED
