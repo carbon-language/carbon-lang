@@ -1,4 +1,5 @@
 // RUN: %clangxx -emit-llvm -c -o - %s
+// XFAIL: hexagon
 #include <stddef.h>
 #include <stdlib.h>
 #include <assert.h>
