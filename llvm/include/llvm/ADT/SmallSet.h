@@ -55,6 +55,7 @@ public:
   }
 
   /// insert - Insert an element into the set if it isn't already there.
+  /// Returns true if the element is inserted (it was not in the set before).
   bool insert(const T &V) {
     if (!isSmall())
       return Set.insert(V).second;
