@@ -25,6 +25,7 @@ namespace __sanitizer {
   extern unsigned struct_tm_sz;
   extern unsigned struct_passwd_sz;
   extern unsigned struct_sigaction_sz;
+  extern unsigned struct_ucontext_sz;
   extern unsigned struct_itimerval_sz;
   extern unsigned pthread_t_sz;
 
@@ -54,6 +55,18 @@ namespace __sanitizer {
     char size[pthread_attr_t_max_sz]; // NOLINT
     void *align;
   };
+
+  uptr __sanitizer_get_sigaction_sa_sigaction(void *act);
+  void __sanitizer_set_sigaction_sa_sigaction(void *act, uptr cb);
+  bool __sanitizer_get_sigaction_sa_siginfo(void *act);
+
+  const unsigned struct_sigaction_max_sz = 256;
+  union __sanitizer_sigaction {
+    char size[struct_sigaction_max_sz]; // NOLINT
+  };
+
+  extern uptr sig_ign;
+  extern uptr sig_dfl;
 }  // namespace __sanitizer
 
 #endif

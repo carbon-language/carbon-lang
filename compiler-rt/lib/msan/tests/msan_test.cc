@@ -960,6 +960,55 @@ TEST(MemorySanitizer, frexp) {
   EXPECT_NOT_POISONED(x);
 }
 
+namespace {
+
+static int cnt;
+
+void SigactionHandler(int signo, siginfo_t* si, void* uc) {
+  assert(signo == SIGPROF);
+  assert(si);
+  EXPECT_NOT_POISONED(si->si_errno);
+  EXPECT_NOT_POISONED(si->si_pid);
+#if __linux__
+# if defined(__x86_64__)
+  EXPECT_NOT_POISONED(((ucontext_t*)uc)->uc_mcontext.gregs[REG_RIP]);
+# elif defined(__i386__)
+  EXPECT_NOT_POISONED(((ucontext_t*)uc)->uc_mcontext.gregs[REG_EIP]);
+# endif
+#endif
+  ++cnt;
+}
+
+TEST(MemorySanitizer, sigaction) {
+  struct sigaction act = {};
+  act.sa_flags |= SA_SIGINFO;
+  act.sa_sigaction = &SigactionHandler;
+  sigaction(SIGPROF, &act, 0);
+
+  kill(getpid(), SIGPROF);
+
+  act.sa_flags &= ~SA_SIGINFO;
+  act.sa_handler = SIG_DFL;
+  sigaction(SIGPROF, &act, 0);
+
+  act.sa_flags &= ~SA_SIGINFO;
+  act.sa_handler = SIG_IGN;
+  sigaction(SIGPROF, &act, 0);
+  kill(getpid(), SIGPROF);
+
+  act.sa_flags |= SA_SIGINFO;
+  act.sa_sigaction = &SigactionHandler;
+  sigaction(SIGPROF, &act, 0);
+  kill(getpid(), SIGPROF);
+
+  act.sa_flags &= ~SA_SIGINFO;
+  act.sa_handler = SIG_DFL;
+  sigaction(SIGPROF, &act, 0);
+  EXPECT_EQ(2, cnt);
+}
+
+} // namespace
+
 struct StructWithDtor {
   ~StructWithDtor();
 };

@@ -29,6 +29,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
+#include <sys/ucontext.h>
 #include <time.h>
 
 #if SANITIZER_LINUX
@@ -44,6 +45,7 @@ namespace __sanitizer {
   unsigned struct_tm_sz = sizeof(struct tm);
   unsigned struct_passwd_sz = sizeof(struct passwd);
   unsigned struct_sigaction_sz = sizeof(struct sigaction);
+  unsigned struct_ucontext_sz = sizeof(struct ucontext);
   unsigned struct_itimerval_sz = sizeof(struct itimerval);
   unsigned pthread_t_sz = sizeof(pthread_t);
 
@@ -61,6 +63,9 @@ namespace __sanitizer {
   unsigned struct_statfs64_sz = sizeof(struct statfs64);
 #endif // SANITIZER_LINUX && !SANITIZER_ANDROID
 
+  uptr sig_ign = (uptr)SIG_IGN;
+  uptr sig_dfl = (uptr)SIG_DFL;
+
   void* __sanitizer_get_msghdr_iov_iov_base(void* msg, int idx) {
     return ((struct msghdr *)msg)->msg_iov[idx].iov_base;
   }
@@ -76,8 +81,24 @@ namespace __sanitizer {
   uptr __sanitizer_get_socklen_t(void* socklen_ptr) {
     return *(socklen_t*)socklen_ptr;
   }
+
+  uptr __sanitizer_get_sigaction_sa_sigaction(void *act) {
+    struct sigaction *a = (struct sigaction *)act;
+    // Check that sa_sigaction and sa_handler are the same.
+    CHECK((void *)&(a->sa_sigaction) == (void *)&(a->sa_handler));
+    return (uptr) a->sa_sigaction;
+  }
+  void __sanitizer_set_sigaction_sa_sigaction(void *act, uptr cb) {
+    struct sigaction *a = (struct sigaction *)act;
+    a->sa_sigaction = (void (*)(int, siginfo_t *, void *))cb;
+  }
+  bool __sanitizer_get_sigaction_sa_siginfo(void *act) {
+    struct sigaction *a = (struct sigaction *)act;
+    return a->sa_flags & SA_SIGINFO;
+  }
 }  // namespace __sanitizer
 
 COMPILER_CHECK(sizeof(__sanitizer_pthread_attr_t) >= sizeof(pthread_attr_t));
-
+COMPILER_CHECK(sizeof(__sanitizer::struct_sigaction_max_sz) >=
+                   sizeof(__sanitizer::struct_sigaction_sz));
 #endif  // SANITIZER_LINUX || SANITIZER_MAC
