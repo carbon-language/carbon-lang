@@ -19,7 +19,7 @@ entry:
 ; CHECK: bfc	[[REG]], #0, #3
   %0 = va_arg i8** %g, double
   call void @llvm.va_end(i8* %g1)
-  
+
   ret void
 }
 
