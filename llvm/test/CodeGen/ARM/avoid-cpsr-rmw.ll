@@ -83,3 +83,34 @@ while.body:
 while.end:
   ret void
 }
+
+; Avoid producing tMOVi8 after a high-latency flag-setting operation.
+; <rdar://problem/13468102>
+define void @t4(i32* nocapture %p, double* nocapture %q) {
+entry:
+; CHECK: t4
+; CHECK: vmrs APSR_nzcv, fpscr
+; CHECK: if.then
+; CHECK-NOT movs
+  %0 = load double* %q, align 4
+  %cmp = fcmp olt double %0, 1.000000e+01
+  %incdec.ptr1 = getelementptr inbounds i32* %p, i32 1
+  br i1 %cmp, label %if.then, label %if.else
+
+if.then:
+  store i32 7, i32* %p, align 4
+  %incdec.ptr2 = getelementptr inbounds i32* %p, i32 2
+  store i32 8, i32* %incdec.ptr1, align 4
+  store i32 9, i32* %incdec.ptr2, align 4
+  br label %if.end
+
+if.else:
+  store i32 3, i32* %p, align 4
+  %incdec.ptr5 = getelementptr inbounds i32* %p, i32 2
+  store i32 5, i32* %incdec.ptr1, align 4
+  store i32 6, i32* %incdec.ptr5, align 4
+  br label %if.end
+
+if.end:
+  ret void
+}
