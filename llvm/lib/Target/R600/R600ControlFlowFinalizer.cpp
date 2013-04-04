@@ -205,7 +205,7 @@ public:
           CurrentStack--;
           MachineInstr *IfOrElseInst = IfThenElseStack.back();
           IfThenElseStack.pop_back();
-          CounterPropagateAddr(IfOrElseInst, CfCount);
+          CounterPropagateAddr(IfOrElseInst, CfCount + 1);
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
               TII->get(AMDGPU::POP))
               .addImm(CfCount + 1)
