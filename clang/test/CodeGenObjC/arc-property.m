@@ -86,4 +86,49 @@ static Class theGlobalClass;
 // CHECK-NEXT: call void @objc_storeStrong(i8** [[T3]], i8* null) [[NUW]]
 // CHECK-NEXT: ret void
 
+// rdar://13115896
+@interface Test3
+@property id copyMachine;
+@end
+
+void test3(Test3 *t) {
+  id x = t.copyMachine;
+  x = [t copyMachine];
+}
+// CHECK:    define void @test3([[TEST3:%.*]]*
+//   Prologue.
+// CHECK:      [[T:%.*]] = alloca [[TEST3]]*,
+// CHECK-NEXT: [[X:%.*]] = alloca i8*,
+//   Property access.
+// CHECK:      [[T0:%.*]] = load [[TEST3]]** [[T]],
+// CHECK-NEXT: [[SEL:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
+// CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST3]]* [[T0]] to i8*
+// CHECK-NEXT: [[T2:%.*]] = call i8* bitcast ({{.*}} @objc_msgSend to {{.*}})(i8* [[T1]], i8* [[SEL]])
+// CHECK-NEXT: store i8* [[T2]], i8** [[X]],
+//   Message send.
+// CHECK-NEXT: [[T0:%.*]] = load [[TEST3]]** [[T]],
+// CHECK-NEXT: [[SEL:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
+// CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST3]]* [[T0]] to i8*
+// CHECK-NEXT: [[T2:%.*]] = call i8* bitcast ({{.*}} @objc_msgSend to {{.*}})(i8* [[T1]], i8* [[SEL]])
+// CHECK-NEXT: [[T3:%.*]] = load i8** [[X]],
+// CHECK-NEXT: store i8* [[T2]], i8** [[X]],
+// CHECK-NEXT: call void @objc_release(i8* [[T3]])
+//   Epilogue.
+// CHECK-NEXT: call void @objc_storeStrong(i8** [[X]], i8* null)
+// CHECK-NEXT: [[T0:%.*]] = bitcast [[TEST3]]** [[T]] to i8**
+// CHECK-NEXT: call void @objc_storeStrong(i8** [[T0]], i8* null)
+// CHECK-NEXT: ret void
+
+@implementation Test3
+- (id) copyMachine {
+  extern id test3_helper(void);
+  return test3_helper();
+}
+// CHECK:    define internal i8* @"\01-[Test3 copyMachine]"(
+// CHECK:      [[T0:%.*]] = call i8* @test3_helper()
+// CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T0]])
+// CHECK-NEXT: ret i8* [[T1]]
+- (void) setCopyMachine: (id) x {}
+@end
+
 // CHECK: attributes [[NUW]] = { nounwind }

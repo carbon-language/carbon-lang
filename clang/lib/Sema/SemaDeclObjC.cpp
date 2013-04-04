@@ -193,7 +193,7 @@ void Sema::CheckObjCMethodOverride(ObjCMethodDecl *NewMethod,
 
 /// \brief Check a method declaration for compatibility with the Objective-C
 /// ARC conventions.
-static bool CheckARCMethodDecl(Sema &S, ObjCMethodDecl *method) {
+bool Sema::CheckARCMethodDecl(ObjCMethodDecl *method) {
   ObjCMethodFamily family = method->getMethodFamily();
   switch (family) {
   case OMF_None:
@@ -207,17 +207,17 @@ static bool CheckARCMethodDecl(Sema &S, ObjCMethodDecl *method) {
     return false;
 
   case OMF_dealloc:
-    if (!S.Context.hasSameType(method->getResultType(), S.Context.VoidTy)) {
+    if (!Context.hasSameType(method->getResultType(), Context.VoidTy)) {
       SourceRange ResultTypeRange;
       if (const TypeSourceInfo *ResultTypeInfo
           = method->getResultTypeSourceInfo())
         ResultTypeRange = ResultTypeInfo->getTypeLoc().getSourceRange();
       if (ResultTypeRange.isInvalid())
-        S.Diag(method->getLocation(), diag::error_dealloc_bad_result_type) 
+        Diag(method->getLocation(), diag::error_dealloc_bad_result_type) 
           << method->getResultType() 
           << FixItHint::CreateInsertion(method->getSelectorLoc(0), "(void)");
       else
-        S.Diag(method->getLocation(), diag::error_dealloc_bad_result_type) 
+        Diag(method->getLocation(), diag::error_dealloc_bad_result_type) 
           << method->getResultType() 
           << FixItHint::CreateReplacement(ResultTypeRange, "void");
       return true;
@@ -226,11 +226,11 @@ static bool CheckARCMethodDecl(Sema &S, ObjCMethodDecl *method) {
       
   case OMF_init:
     // If the method doesn't obey the init rules, don't bother annotating it.
-    if (S.checkInitMethod(method, QualType()))
+    if (checkInitMethod(method, QualType()))
       return true;
 
-    method->addAttr(new (S.Context) NSConsumesSelfAttr(SourceLocation(),
-                                                       S.Context));
+    method->addAttr(new (Context) NSConsumesSelfAttr(SourceLocation(),
+                                                     Context));
 
     // Don't add a second copy of this attribute, but otherwise don't
     // let it be suppressed.
@@ -249,8 +249,8 @@ static bool CheckARCMethodDecl(Sema &S, ObjCMethodDecl *method) {
     break;
   }
 
-  method->addAttr(new (S.Context) NSReturnsRetainedAttr(SourceLocation(),
-                                                        S.Context));
+  method->addAttr(new (Context) NSReturnsRetainedAttr(SourceLocation(),
+                                                      Context));
   return false;
 }
 
@@ -3032,7 +3032,7 @@ Decl *Sema::ActOnMethodDeclaration(
 
   bool ARCError = false;
   if (getLangOpts().ObjCAutoRefCount)
-    ARCError = CheckARCMethodDecl(*this, ObjCMethod);
+    ARCError = CheckARCMethodDecl(ObjCMethod);
 
   // Infer the related result type when possible.
   if (!ARCError && RTC == Sema::RTC_Compatible &&
