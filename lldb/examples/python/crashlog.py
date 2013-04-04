@@ -680,10 +680,10 @@ def SymbolicateCrashLog(crash_log, options):
         for frame_idx, frame in enumerate(thread.frames):
             disassemble = (this_thread_crashed or options.disassemble_all_threads) and frame_idx < options.disassemble_depth;
             if frame_idx == 0:
-                symbolicated_frame_addresses = crash_log.symbolicate (frame.pc, options.verbose)
+                symbolicated_frame_addresses = crash_log.symbolicate (frame.pc & crash_log.addr_mask, options.verbose)
             else:
                 # Any frame above frame zero and we have to subtract one to get the previous line entry
-                symbolicated_frame_addresses = crash_log.symbolicate (frame.pc - 1, options.verbose)
+                symbolicated_frame_addresses = crash_log.symbolicate ((frame.pc & crash_log.addr_mask) - 1, options.verbose)
             
             if symbolicated_frame_addresses:
                 symbolicated_frame_address_idx = 0

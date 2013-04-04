@@ -211,6 +211,7 @@ class Image:
         self.module = None
         self.symfile = None
         self.slide = None
+        
     
     def dump(self, prefix):
         print "%s%s" % (prefix, self)
@@ -377,7 +378,7 @@ class Symbolicator:
         """A class the represents the information needed to symbolicate addresses in a program"""
         self.target = None
         self.images = list() # a list of images to be used when symbolicating
-
+        self.addr_mask = 0xffffffffffffffff
     
     def __str__(self):
         s = "Symbolicator:\n"
@@ -412,6 +413,12 @@ class Symbolicator:
             for image in self.images:
                 self.target = image.create_target ()
                 if self.target:
+                    if self.target.GetAddressByteSize() == 4:
+                        triple = self.target.triple
+                        if triple:
+                            arch = triple.split('-')[0]
+                            if "arm" in arch:
+                                self.addr_mask = 0xfffffffffffffffe
                     return self.target
         return None
     
