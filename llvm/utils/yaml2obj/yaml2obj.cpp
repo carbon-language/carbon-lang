@@ -129,6 +129,7 @@ namespace COFFYAML {
 
   struct Header {
     COFF::MachineTypes Machine;
+    std::vector<COFF::Characteristics> Characteristics;
   };
 
   struct Symbol {
@@ -157,6 +158,18 @@ struct COFFParser {
     // A COFF string table always starts with a 4 byte size field. Offsets into
     // it include this size, so allocate it now.
     StringTable.append(4, 0);
+  }
+
+  void parseHeader() {
+    Header.Machine = Obj.HeaderData.Machine;
+
+    const std::vector<COFF::Characteristics> &Characteristics =
+      Obj.HeaderData.Characteristics;
+    for (std::vector<COFF::Characteristics>::const_iterator I =
+           Characteristics.begin(), E = Characteristics.end(); I != E; ++I) {
+      uint16_t Characteristic = *I;
+      Header.Characteristics |= Characteristic;
+    }
   }
 
   bool parseSections() {
@@ -239,7 +252,7 @@ struct COFFParser {
   }
 
   bool parse() {
-    Header.Machine = Obj.HeaderData.Machine;
+    parseHeader();
     if (!parseSections())
       return false;
     if (!parseSymbols())
@@ -409,6 +422,7 @@ void writeCOFF(COFFParser &CP, raw_ostream &OS) {
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(COFFYAML::Relocation)
 LLVM_YAML_IS_SEQUENCE_VECTOR(COFF::SectionCharacteristics)
+LLVM_YAML_IS_SEQUENCE_VECTOR(COFF::Characteristics)
 LLVM_YAML_IS_SEQUENCE_VECTOR(COFFYAML::Section)
 LLVM_YAML_IS_SEQUENCE_VECTOR(COFFYAML::Symbol)
 
@@ -511,6 +525,27 @@ struct ScalarEnumerationTraits<COFF::MachineTypes> {
 };
 
 template <>
+struct ScalarEnumerationTraits<COFF::Characteristics> {
+  static void enumeration(IO &IO, COFF::Characteristics &Value) {
+    ECase(IMAGE_FILE_RELOCS_STRIPPED);
+    ECase(IMAGE_FILE_EXECUTABLE_IMAGE);
+    ECase(IMAGE_FILE_LINE_NUMS_STRIPPED);
+    ECase(IMAGE_FILE_LOCAL_SYMS_STRIPPED);
+    ECase(IMAGE_FILE_AGGRESSIVE_WS_TRIM);
+    ECase(IMAGE_FILE_LARGE_ADDRESS_AWARE);
+    ECase(IMAGE_FILE_BYTES_REVERSED_LO);
+    ECase(IMAGE_FILE_32BIT_MACHINE);
+    ECase(IMAGE_FILE_DEBUG_STRIPPED);
+    ECase(IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP);
+    ECase(IMAGE_FILE_NET_RUN_FROM_SWAP);
+    ECase(IMAGE_FILE_SYSTEM);
+    ECase(IMAGE_FILE_DLL);
+    ECase(IMAGE_FILE_UP_SYSTEM_ONLY);
+    ECase(IMAGE_FILE_BYTES_REVERSED_HI);
+  }
+};
+
+template <>
 struct ScalarEnumerationTraits<COFF::SectionCharacteristics> {
   static void enumeration(IO &IO, COFF::SectionCharacteristics &Value) {
     ECase(IMAGE_SCN_TYPE_NO_PAD);
@@ -605,6 +640,7 @@ template <>
 struct MappingTraits<COFFYAML::Header> {
   static void mapping(IO &IO, COFFYAML::Header &H) {
     IO.mapRequired("Machine", H.Machine);
+    IO.mapOptional("Characteristics", H.Characteristics);
   }
 };
 
