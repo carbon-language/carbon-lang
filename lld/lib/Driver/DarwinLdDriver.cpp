@@ -188,6 +188,10 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     info.appendInputFile((*it)->getValue());
   }
   
+  // Validate the combination of options used.
+  if (info.validate(diagnostics))
+    return true;
+
   return false;
 }
 
