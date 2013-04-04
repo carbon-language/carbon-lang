@@ -126,3 +126,11 @@ extern "C" {
     void  __attribute__((overloadable)) test11_g(double);
   }
 }
+
+namespace test12 {
+  const int n = 0;
+  extern const int n;
+  void f() {
+    extern const int n;
+  }
+}

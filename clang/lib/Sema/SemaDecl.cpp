@@ -2929,8 +2929,8 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous,
     Diag(Old->getLocation(), diag::note_previous_definition);
     return New->setInvalidDecl();
   }
-  if (Old->hasExternalStorage() &&
-      New->isLocalVarDecl() && !New->hasLinkage()) {
+  if (Old->hasLinkage() && New->isLocalVarDecl() &&
+      !New->hasExternalStorage()) {
     Diag(New->getLocation(), diag::err_non_extern_extern) << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
     return New->setInvalidDecl();
