@@ -58,9 +58,9 @@ struct Flags {
   bool mac_ignore_invalid_free;
   // ASan allocator flag. See asan_allocator.cc.
   bool use_fake_stack;
-  // ASan allocator flag. Sets the maximal size of allocation request
-  // that would return memory filled with zero bytes.
-  int  max_malloc_fill_size;
+  // ASan allocator flag. max_malloc_fill_size is the maximal amount of bytes
+  // that will be filled with malloc_fill_byte on malloc.
+  int max_malloc_fill_size, malloc_fill_byte;
   // Override exit status if something was reported.
   int  exitcode;
   // If set, user may manually mark memory regions as poisoned or unpoisoned.
