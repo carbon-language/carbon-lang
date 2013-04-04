@@ -336,7 +336,9 @@ namespace llvm {
 
     /// SizeOf - Determine size of debug information entry in bytes.
     ///
-    virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const;
+    virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const {
+      return sizeof(int32_t);
+    }
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEValue *E) { return E->getType() == isEntry; }
