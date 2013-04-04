@@ -32,10 +32,10 @@ public:
   getMemberPointerWidthAndAlign(const MemberPointerType *MPT) const;
 
   CallingConv getDefaultMethodCallConv(bool isVariadic) const {
-    if (!isVariadic && Context.getTargetInfo().getTriple().getArch() == llvm::Triple::x86)
+    if (!isVariadic &&
+        Context.getTargetInfo().getTriple().getArch() == llvm::Triple::x86)
       return CC_X86ThisCall;
-    else
-      return CC_C;
+    return CC_C;
   }
 
   bool isNearlyEmpty(const CXXRecordDecl *RD) const {
@@ -57,12 +57,13 @@ public:
 // getNumBases() seems to only give us the number of direct bases, and not the
 // total.  This function tells us if we inherit from anybody that uses MI, or if
 // we have a non-primary base class, which uses the multiple inheritance model.
-bool usesMultipleInheritanceModel(const CXXRecordDecl *RD) {
+static bool usesMultipleInheritanceModel(const CXXRecordDecl *RD) {
   while (RD->getNumBases() > 0) {
     if (RD->getNumBases() > 1)
       return true;
     assert(RD->getNumBases() == 1);
-    const CXXRecordDecl *Base = RD->bases_begin()->getType()->getAsCXXRecordDecl();
+    const CXXRecordDecl *Base =
+        RD->bases_begin()->getType()->getAsCXXRecordDecl();
     if (RD->isPolymorphic() && !Base->isPolymorphic())
       return true;
     RD = Base;
@@ -70,7 +71,7 @@ bool usesMultipleInheritanceModel(const CXXRecordDecl *RD) {
   return false;
 }
 
-MSInheritanceModel MSInheritanceAttrToModel(attr::Kind Kind) {
+static MSInheritanceModel MSInheritanceAttrToModel(attr::Kind Kind) {
   switch (Kind) {
   default: llvm_unreachable("expected MS inheritance attribute");
   case attr::SingleInheritance:      return MSIM_Single;
@@ -81,8 +82,7 @@ MSInheritanceModel MSInheritanceAttrToModel(attr::Kind Kind) {
 }
 
 MSInheritanceModel CXXRecordDecl::getMSInheritanceModel() const {
-  Attr *IA = this->getAttr<MSInheritanceAttr>();
-  if (IA)
+  if (Attr *IA = this->getAttr<MSInheritanceAttr>())
     return MSInheritanceAttrToModel(IA->getKind());
   // If there was no explicit attribute, the record must be defined already, and
   // we can figure out the inheritance model from its other properties.
@@ -121,7 +121,8 @@ MSInheritanceModel CXXRecordDecl::getMSInheritanceModel() const {
 //     // incomplete types.
 //     int VBTableOffset;
 //   };
-std::pair<unsigned, unsigned> MemberPointerType::getMSMemberPointerSlots() const {
+std::pair<unsigned, unsigned>
+MemberPointerType::getMSMemberPointerSlots() const {
   const CXXRecordDecl *RD = this->getClass()->getAsCXXRecordDecl();
   MSInheritanceModel Inheritance = RD->getMSInheritanceModel();
   unsigned Ptrs;
@@ -153,8 +154,8 @@ std::pair<unsigned, unsigned> MemberPointerType::getMSMemberPointerSlots() const
   return std::make_pair(Ptrs, Ints);
 }
 
-std::pair<uint64_t, unsigned>
-MicrosoftCXXABI::getMemberPointerWidthAndAlign(const MemberPointerType *MPT) const {
+std::pair<uint64_t, unsigned> MicrosoftCXXABI::getMemberPointerWidthAndAlign(
+    const MemberPointerType *MPT) const {
   const TargetInfo &Target = Context.getTargetInfo();
   assert(Target.getTriple().getArch() == llvm::Triple::x86 ||
          Target.getTriple().getArch() == llvm::Triple::x86_64);
