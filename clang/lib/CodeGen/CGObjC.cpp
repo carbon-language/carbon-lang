@@ -109,32 +109,50 @@ llvm::Value *CodeGenFunction::EmitObjCCollectionLiteral(const Expr *E,
   if (DLE)
     Keys = CreateMemTemp(ElementArrayType, "keys");
   
+  // In ARC, we may need to do extra work to keep all the keys and
+  // values alive until after the call.
+  SmallVector<llvm::Value *, 16> NeededObjects;
+  bool TrackNeededObjects =
+    (getLangOpts().ObjCAutoRefCount &&
+    CGM.getCodeGenOpts().OptimizationLevel != 0);
+
   // Perform the actual initialialization of the array(s).
   for (uint64_t i = 0; i < NumElements; i++) {
     if (ALE) {
-      // Emit the initializer.
+      // Emit the element and store it to the appropriate array slot.
       const Expr *Rhs = ALE->getElement(i);
       LValue LV = LValue::MakeAddr(Builder.CreateStructGEP(Objects, i),
                                    ElementType,
                                    Context.getTypeAlignInChars(Rhs->getType()),
                                    Context);
-      EmitScalarInit(Rhs, /*D=*/0, LV, /*capturedByInit=*/false);
+
+      llvm::Value *value = EmitScalarExpr(Rhs);
+      EmitStoreThroughLValue(RValue::get(value), LV, true);
+      if (TrackNeededObjects) {
+        NeededObjects.push_back(value);
+      }
     } else {      
-      // Emit the key initializer.
+      // Emit the key and store it to the appropriate array slot.
       const Expr *Key = DLE->getKeyValueElement(i).Key;
       LValue KeyLV = LValue::MakeAddr(Builder.CreateStructGEP(Keys, i),
                                       ElementType,
                                     Context.getTypeAlignInChars(Key->getType()),
                                       Context);
-      EmitScalarInit(Key, /*D=*/0, KeyLV, /*capturedByInit=*/false);
+      llvm::Value *keyValue = EmitScalarExpr(Key);
+      EmitStoreThroughLValue(RValue::get(keyValue), KeyLV, /*isInit=*/true);
 
-      // Emit the value initializer.
+      // Emit the value and store it to the appropriate array slot.
       const Expr *Value = DLE->getKeyValueElement(i).Value;  
       LValue ValueLV = LValue::MakeAddr(Builder.CreateStructGEP(Objects, i), 
                                         ElementType,
                                   Context.getTypeAlignInChars(Value->getType()),
                                         Context);
-      EmitScalarInit(Value, /*D=*/0, ValueLV, /*capturedByInit=*/false);
+      llvm::Value *valueValue = EmitScalarExpr(Value);
+      EmitStoreThroughLValue(RValue::get(valueValue), ValueLV, /*isInit=*/true);
+      if (TrackNeededObjects) {
+        NeededObjects.push_back(keyValue);
+        NeededObjects.push_back(valueValue);
+      }
     }
   }
   
@@ -172,6 +190,15 @@ llvm::Value *CodeGenFunction::EmitObjCCollectionLiteral(const Expr *E,
                                   Sel,
                                   Receiver, Args, Class,
                                   MethodWithObjects);
+
+  // The above message send needs these objects, but in ARC they are
+  // passed in a buffer that is essentially __unsafe_unretained.
+  // Therefore we must prevent the optimizer from releasing them until
+  // after the call.
+  if (TrackNeededObjects) {
+    EmitARCIntrinsicUse(NeededObjects);
+  }
+
   return Builder.CreateBitCast(result.getScalarVal(), 
                                ConvertType(E->getType()));
 }
