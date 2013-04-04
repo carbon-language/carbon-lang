@@ -16,7 +16,7 @@
 #ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_LOOP_CONVERT_H
 #define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_LOOP_CONVERT_H
 
-#include "Transform.h"
+#include "Core/Transform.h"
 #include "llvm/Support/Compiler.h" // For LLVM_OVERRIDE
 
 /// \brief Subclass of Transform that transforms for-loops into range-based

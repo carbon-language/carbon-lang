@@ -16,7 +16,7 @@
 #ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_NULLPTR_H
 #define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_NULLPTR_H
 
-#include "Transform.h"
+#include "Core/Transform.h"
 #include "llvm/Support/Compiler.h" // For LLVM_OVERRIDE
 
 /// \brief Subclass of Transform that transforms null pointer constants into

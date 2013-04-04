@@ -16,7 +16,7 @@
 #define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_LOOP_ACTIONS_H
 
 #include "StmtAncestor.h"
-#include "Transform.h"
+#include "Core/Transform.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"

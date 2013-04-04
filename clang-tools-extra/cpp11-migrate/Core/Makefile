@@ -1,4 +1,4 @@
-##===- tools/extra/loop-convert/Makefile ----sssss----------*- Makefile -*-===##
+##===- cpp11-migrate/Core/Makefile -------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,10 +6,9 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-
-CLANG_LEVEL := ../../..
-include $(CLANG_LEVEL)/../../Makefile.config
-
-DIRS = Core tool
+CLANG_LEVEL := ../../../..
+LIBRARYNAME := migrateCore
 
 include $(CLANG_LEVEL)/Makefile
+
+CPP.Flags += -I$(PROJ_SRC_DIR)/..

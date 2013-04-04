@@ -17,7 +17,7 @@
 #ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_AUTO_H
 #define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_AUTO_H
 
-#include "Transform.h"
+#include "Core/Transform.h"
 #include "llvm/Support/Compiler.h"
 
 /// \brief Subclass of Transform that transforms type specifiers for variable
