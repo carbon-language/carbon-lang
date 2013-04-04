@@ -56,7 +56,7 @@ struct Flags {
   bool replace_intrin;
   // Used on Mac only.
   bool mac_ignore_invalid_free;
-  // ASan allocator flag. See asan_allocator.cc.
+  // ASan allocator flag.
   bool use_fake_stack;
   // ASan allocator flag. max_malloc_fill_size is the maximal amount of bytes
   // that will be filled with malloc_fill_byte on malloc.

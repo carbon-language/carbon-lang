@@ -348,11 +348,7 @@ TEST(AddressSanitizer, MemsetWildAddressTest) {
 }
 
 TEST(AddressSanitizerInterface, GetEstimatedAllocatedSize) {
-#if ASAN_ALLOCATOR_VERSION == 1
-  EXPECT_EQ(1U, __asan_get_estimated_allocated_size(0));
-#elif ASAN_ALLOCATOR_VERSION == 2
   EXPECT_EQ(0U, __asan_get_estimated_allocated_size(0));
-#endif
   const size_t sizes[] = { 1, 30, 1<<30 };
   for (size_t i = 0; i < 3; i++) {
     EXPECT_EQ(sizes[i], __asan_get_estimated_allocated_size(sizes[i]));
@@ -426,39 +422,6 @@ static void DoDoubleFree() {
   delete Ident(x);
 }
 
-#if ASAN_ALLOCATOR_VERSION == 1
-// This test is run in a separate process, so that large malloced
-// chunk won't remain in the free lists after the test.
-// Note: use ASSERT_* instead of EXPECT_* here.
-static void RunGetHeapSizeTestAndDie() {
-  size_t old_heap_size, new_heap_size, heap_growth;
-  // We unlikely have have chunk of this size in free list.
-  static const size_t kLargeMallocSize = 1 << 29;  // 512M
-  old_heap_size = __asan_get_heap_size();
-  fprintf(stderr, "allocating %zu bytes:\n", kLargeMallocSize);
-  free(Ident(malloc(kLargeMallocSize)));
-  new_heap_size = __asan_get_heap_size();
-  heap_growth = new_heap_size - old_heap_size;
-  fprintf(stderr, "heap growth after first malloc: %zu\n", heap_growth);
-  ASSERT_GE(heap_growth, kLargeMallocSize);
-  ASSERT_LE(heap_growth, 2 * kLargeMallocSize);
-
-  // Now large chunk should fall into free list, and can be
-  // allocated without increasing heap size.
-  old_heap_size = new_heap_size;
-  free(Ident(malloc(kLargeMallocSize)));
-  heap_growth = __asan_get_heap_size() - old_heap_size;
-  fprintf(stderr, "heap growth after second malloc: %zu\n", heap_growth);
-  ASSERT_LT(heap_growth, kLargeMallocSize);
-
-  // Test passed. Now die with expected double-free.
-  DoDoubleFree();
-}
-
-TEST(AddressSanitizerInterface, GetHeapSizeTest) {
-  EXPECT_DEATH(RunGetHeapSizeTestAndDie(), "double-free");
-}
-#elif ASAN_ALLOCATOR_VERSION == 2
 TEST(AddressSanitizerInterface, GetHeapSizeTest) {
   // asan_allocator2 does not keep huge chunks in free list, but unmaps them.
   // The chunk should be greater than the quarantine size,
@@ -471,55 +434,6 @@ TEST(AddressSanitizerInterface, GetHeapSizeTest) {
     free(Ident(malloc(kLargeMallocSize)));
     EXPECT_EQ(old_heap_size, __asan_get_heap_size());
   }
-}
-#endif
-
-// Note: use ASSERT_* instead of EXPECT_* here.
-static void DoLargeMallocForGetFreeBytesTestAndDie() {
-#if ASAN_ALLOCATOR_VERSION == 1
-  // asan_allocator2 does not keep large chunks in free_lists, so this test
-  // will not work.
-  size_t old_free_bytes, new_free_bytes;
-  static const size_t kLargeMallocSize = 1 << 29;  // 512M
-  // If we malloc and free a large memory chunk, it will not fall
-  // into quarantine and will be available for future requests.
-  old_free_bytes = __asan_get_free_bytes();
-  fprintf(stderr, "allocating %zu bytes:\n", kLargeMallocSize);
-  fprintf(stderr, "free bytes before malloc: %zu\n", old_free_bytes);
-  free(Ident(malloc(kLargeMallocSize)));
-  new_free_bytes = __asan_get_free_bytes();
-  fprintf(stderr, "free bytes after malloc and free: %zu\n", new_free_bytes);
-  ASSERT_GE(new_free_bytes, old_free_bytes + kLargeMallocSize);
-#endif  // ASAN_ALLOCATOR_VERSION
-  // Test passed.
-  DoDoubleFree();
-}
-
-TEST(AddressSanitizerInterface, GetFreeBytesTest) {
-#if ASAN_ALLOCATOR_VERSION == 1
-  // Allocate a small chunk. Now allocator probably has a lot of these
-  // chunks to fulfill future requests. So, future requests will decrease
-  // the number of free bytes. Do this only on systems where there
-  // is enough memory for such assumptions.
-  if (SANITIZER_WORDSIZE == 64 && !ASAN_LOW_MEMORY) {
-    static const size_t kNumOfChunks = 100;
-    static const size_t kChunkSize = 100;
-    char *chunks[kNumOfChunks];
-    size_t i;
-    size_t old_free_bytes, new_free_bytes;
-    chunks[0] = Ident((char*)malloc(kChunkSize));
-    old_free_bytes = __asan_get_free_bytes();
-    for (i = 1; i < kNumOfChunks; i++) {
-      chunks[i] = Ident((char*)malloc(kChunkSize));
-      new_free_bytes = __asan_get_free_bytes();
-      EXPECT_LT(new_free_bytes, old_free_bytes);
-      old_free_bytes = new_free_bytes;
-    }
-    for (i = 0; i < kNumOfChunks; i++)
-      free(chunks[i]);
-  }
-#endif
-  EXPECT_DEATH(DoLargeMallocForGetFreeBytesTestAndDie(), "double-free");
 }
 
 static const size_t kManyThreadsMallocSizes[] = {5, 1UL<<10, 1UL<<14, 357};
@@ -828,12 +742,7 @@ TEST(AddressSanitizerInterface, SetErrorReportCallbackTest) {
 TEST(AddressSanitizerInterface, GetOwnershipStressTest) {
   std::vector<char *> pointers;
   std::vector<size_t> sizes;
-#if ASAN_ALLOCATOR_VERSION == 1
-  const size_t kNumMallocs =
-      (SANITIZER_WORDSIZE <= 32 || ASAN_LOW_MEMORY) ? 1 << 10 : 1 << 14;
-#elif ASAN_ALLOCATOR_VERSION == 2  // too slow with asan_allocator2. :(
   const size_t kNumMallocs = 1 << 9;
-#endif
   for (size_t i = 0; i < kNumMallocs; i++) {
     size_t size = i * 100 + 1;
     pointers.push_back((char*)malloc(size));

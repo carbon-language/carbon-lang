@@ -16,7 +16,6 @@
 // Status: under development, not enabled by default yet.
 //===----------------------------------------------------------------------===//
 #include "asan_allocator.h"
-#if ASAN_ALLOCATOR_VERSION == 2
 
 #include "asan_mapping.h"
 #include "asan_poisoning.h"
@@ -715,6 +714,3 @@ void __asan_free_hook(void *ptr) {
 }
 }  // extern "C"
 #endif
-
-
-#endif  // ASAN_ALLOCATOR_VERSION

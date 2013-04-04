@@ -1,7 +1,6 @@
 # Build for the AddressSanitizer runtime support library.
 
 set(ASAN_SOURCES
-  asan_allocator.cc
   asan_allocator2.cc
   asan_fake_stack.cc
   asan_globals.cc

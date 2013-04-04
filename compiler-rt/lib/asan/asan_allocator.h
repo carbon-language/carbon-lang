@@ -9,7 +9,7 @@
 //
 // This file is a part of AddressSanitizer, an address sanity checker.
 //
-// ASan-private header for asan_allocator.cc.
+// ASan-private header for asan_allocator2.cc.
 //===----------------------------------------------------------------------===//
 
 #ifndef ASAN_ALLOCATOR_H
@@ -18,14 +18,6 @@
 #include "asan_internal.h"
 #include "asan_interceptors.h"
 #include "sanitizer_common/sanitizer_list.h"
-
-// We are in the process of transitioning from the old allocator (version 1)
-// to a new one (version 2). The change is quite intrusive so both allocators
-// will co-exist in the source base for a while. The actual allocator is chosen
-// at build time by redefining this macro.
-#ifndef ASAN_ALLOCATOR_VERSION
-#define ASAN_ALLOCATOR_VERSION 2
-#endif  // ASAN_ALLOCATOR_VERSION
 
 namespace __asan {
 
@@ -99,22 +91,14 @@ class AsanChunkFifoList: public IntrusiveList<AsanChunk> {
 
 struct AsanThreadLocalMallocStorage {
   explicit AsanThreadLocalMallocStorage(LinkerInitialized x)
-#if ASAN_ALLOCATOR_VERSION == 1
-      : quarantine_(x)
-#endif
       { }
   AsanThreadLocalMallocStorage() {
     CHECK(REAL(memset));
     REAL(memset)(this, 0, sizeof(AsanThreadLocalMallocStorage));
   }
 
-#if ASAN_ALLOCATOR_VERSION == 1
-  AsanChunkFifoList quarantine_;
-  AsanChunk *free_lists_[kNumberOfSizeClasses];
-#else
   uptr quarantine_cache[16];
   uptr allocator2_cache[96 * (512 * 8 + 16)];  // Opaque.
-#endif
   void CommitBack();
 };
 
