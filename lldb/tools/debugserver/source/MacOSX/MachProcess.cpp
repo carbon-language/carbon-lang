@@ -390,6 +390,21 @@ MachProcess::Kill (const struct timespec *timeout_abstime)
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Kill() DoSIGSTOP() ::ptrace (PT_KILL, pid=%u, 0, 0) => 0x%8.8x (%s)", m_pid, err.Error(), err.AsString());
     m_thread_actions = DNBThreadResumeActions (eStateRunning, 0);
     PrivateResume ();
+    
+    // Try and reap the process without touching our m_events since
+    // we want the code above this to still get the eStateExited event
+    const uint32_t reap_timeout_usec = 1000000;    // Wait 1 second and try to reap the process
+    const uint32_t reap_interval_usec = 10000;  //
+    uint32_t reap_time_elapsed;
+    for (reap_time_elapsed = 0;
+         reap_time_elapsed < reap_timeout_usec;
+         reap_time_elapsed += reap_interval_usec)
+    {
+        if (GetState() == eStateExited)
+            break;
+        usleep(reap_interval_usec);
+    }
+    DNBLog ("Waited %u ms for process to be reaped (state = %s)", reap_time_elapsed/1000, DNBStateAsString(GetState()));
     return true;
 }
 
