@@ -1398,7 +1398,7 @@ __search_n(_RandomAccessIterator __first, _RandomAccessIterator __last,
         // Find first element in sequence that matchs __value_, with a mininum of loop checks
         while (true)
         {
-            if (__first == __s)  // return __last if no element matches __value_
+            if (__first >= __s)  // return __last if no element matches __value_
                 return __last;
             if (__pred(*__first, __value_))
                 break;
