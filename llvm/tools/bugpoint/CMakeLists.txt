@@ -12,3 +12,4 @@ add_llvm_tool(bugpoint
   ToolRunner.cpp
   bugpoint.cpp
   )
+set_target_properties(bugpoint PROPERTIES ENABLE_EXPORTS 1)

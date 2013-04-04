@@ -6,3 +6,4 @@ add_llvm_tool(opt
   PrintSCC.cpp
   opt.cpp
   )
+set_target_properties(opt PROPERTIES ENABLE_EXPORTS 1)
