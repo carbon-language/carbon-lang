@@ -782,6 +782,10 @@ public:
   const RetainSummary *getStandardMethodSummary(const ObjCMethodDecl *MD,
                                                 Selector S, QualType RetTy);
 
+  /// Determine if there is a special return effect for this function or method.
+  Optional<RetEffect> getRetEffectFromAnnotations(QualType RetTy,
+                                                  const Decl *D);
+
   void updateSummaryFromAnnotations(const RetainSummary *&Summ,
                                     const ObjCMethodDecl *MD);
 
@@ -1271,6 +1275,30 @@ RetainSummaryManager::getCFSummaryGetRule(const FunctionDecl *FD) {
 // Summary creation for Selectors.
 //===----------------------------------------------------------------------===//
 
+Optional<RetEffect>
+RetainSummaryManager::getRetEffectFromAnnotations(QualType RetTy,
+                                                  const Decl *D) {
+  if (cocoa::isCocoaObjectRef(RetTy)) {
+    if (D->getAttr<NSReturnsRetainedAttr>())
+      return ObjCAllocRetE;
+
+    if (D->getAttr<NSReturnsNotRetainedAttr>() ||
+        D->getAttr<NSReturnsAutoreleasedAttr>())
+      return RetEffect::MakeNotOwned(RetEffect::ObjC);
+
+  } else if (!RetTy->isPointerType()) {
+    return None;
+  }
+
+  if (D->getAttr<CFReturnsRetainedAttr>())
+    return RetEffect::MakeOwned(RetEffect::CF, true);
+
+  if (D->getAttr<CFReturnsNotRetainedAttr>())
+    return RetEffect::MakeNotOwned(RetEffect::CF);
+
+  return None;
+}
+
 void
 RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
                                                    const FunctionDecl *FD) {
@@ -1285,40 +1313,15 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
   for (FunctionDecl::param_const_iterator pi = FD->param_begin(), 
          pe = FD->param_end(); pi != pe; ++pi, ++parm_idx) {
     const ParmVarDecl *pd = *pi;
-    if (pd->getAttr<NSConsumedAttr>()) {
-      if (!GCEnabled) {
-        Template->addArg(AF, parm_idx, DecRef);      
-      }
-    } else if (pd->getAttr<CFConsumedAttr>()) {
+    if (pd->getAttr<NSConsumedAttr>())
+      Template->addArg(AF, parm_idx, DecRefMsg);
+    else if (pd->getAttr<CFConsumedAttr>())
       Template->addArg(AF, parm_idx, DecRef);      
-    }   
   }
   
   QualType RetTy = FD->getResultType();
-
-  // Determine if there is a special return effect for this method.
-  if (cocoa::isCocoaObjectRef(RetTy)) {
-    if (FD->getAttr<NSReturnsRetainedAttr>()) {
-      Template->setRetEffect(ObjCAllocRetE);
-    }
-    else if (FD->getAttr<CFReturnsRetainedAttr>()) {
-      Template->setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
-    }
-    else if (FD->getAttr<NSReturnsNotRetainedAttr>() ||
-             FD->getAttr<NSReturnsAutoreleasedAttr>()) {
-      Template->setRetEffect(RetEffect::MakeNotOwned(RetEffect::ObjC));
-    }
-    else if (FD->getAttr<CFReturnsNotRetainedAttr>())
-      Template->setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
-    }
-    else if (RetTy->getAs<PointerType>()) {
-    if (FD->getAttr<CFReturnsRetainedAttr>()) {
-      Template->setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
-    }
-    else if (FD->getAttr<CFReturnsNotRetainedAttr>()) {
-      Template->setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
-    }
-  }
+  if (Optional<RetEffect> RetE = getRetEffectFromAnnotations(RetTy, FD))
+    Template->setRetEffect(*RetE);
 }
 
 void
@@ -1329,13 +1332,10 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
 
   assert(Summ && "Must have a valid summary to add annotations to");
   RetainSummaryTemplate Template(Summ, *this);
-  bool isTrackedLoc = false;
 
   // Effects on the receiver.
-  if (MD->getAttr<NSConsumesSelfAttr>()) {
-    if (!GCEnabled)
-      Template->setReceiverEffect(DecRefMsg);      
-  }
+  if (MD->getAttr<NSConsumesSelfAttr>())
+    Template->setReceiverEffect(DecRefMsg);      
   
   // Effects on the parameters.
   unsigned parm_idx = 0;
@@ -1343,38 +1343,16 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
          pi=MD->param_begin(), pe=MD->param_end();
        pi != pe; ++pi, ++parm_idx) {
     const ParmVarDecl *pd = *pi;
-    if (pd->getAttr<NSConsumedAttr>()) {
-      if (!GCEnabled)
-        Template->addArg(AF, parm_idx, DecRef);      
-    }
-    else if(pd->getAttr<CFConsumedAttr>()) {
+    if (pd->getAttr<NSConsumedAttr>())
+      Template->addArg(AF, parm_idx, DecRefMsg);      
+    else if (pd->getAttr<CFConsumedAttr>()) {
       Template->addArg(AF, parm_idx, DecRef);      
     }   
   }
   
-  // Determine if there is a special return effect for this method.
-  if (cocoa::isCocoaObjectRef(MD->getResultType())) {
-    if (MD->getAttr<NSReturnsRetainedAttr>()) {
-      Template->setRetEffect(ObjCAllocRetE);
-      return;
-    }
-    if (MD->getAttr<NSReturnsNotRetainedAttr>() ||
-        MD->getAttr<NSReturnsAutoreleasedAttr>()) {
-      Template->setRetEffect(RetEffect::MakeNotOwned(RetEffect::ObjC));
-      return;
-    }
-
-    isTrackedLoc = true;
-  } else {
-    isTrackedLoc = MD->getResultType()->getAs<PointerType>() != NULL;
-  }
-
-  if (isTrackedLoc) {
-    if (MD->getAttr<CFReturnsRetainedAttr>())
-      Template->setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
-    else if (MD->getAttr<CFReturnsNotRetainedAttr>())
-      Template->setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
-  }
+  QualType RetTy = MD->getResultType();
+  if (Optional<RetEffect> RetE = getRetEffectFromAnnotations(RetTy, MD))
+    Template->setRetEffect(*RetE);
 }
 
 const RetainSummary *

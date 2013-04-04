@@ -1967,6 +1967,21 @@ void test_drain() {
   [obj release]; // no-warning
 }
 
+//===----------------------------------------------------------------------===//
+// Allow cf_returns_retained and cf_returns_not_retained to mark a return
+// value as tracked, even if the object isn't a known CF type.
+//===----------------------------------------------------------------------===//
+
+MyCFType getCustom() __attribute__((cf_returns_not_retained));
+MyCFType makeCustom() __attribute__((cf_returns_retained));
+
+void testCustomReturnsRetained() {
+  MyCFType obj = makeCustom(); // expected-warning {{leak of an object stored into 'obj'}}
+}
+
+void testCustomReturnsNotRetained() {
+  CFRelease(getCustom()); // expected-warning {{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+}
 
 
 // CHECK:  <key>diagnostics</key>
