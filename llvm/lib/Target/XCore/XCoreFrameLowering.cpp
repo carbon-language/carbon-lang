@@ -261,7 +261,7 @@ void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
       BuildMI(MBB, MBBI, dl, TII.get(Opcode)).addImm(FrameSize);
       MBB.erase(MBBI);
     } else {
-      int Opcode = (isU6) ? XCore::LDAWSP_ru6_RRegs : XCore::LDAWSP_lru6_RRegs;
+      int Opcode = (isU6) ? XCore::LDAWSP_ru6 : XCore::LDAWSP_lru6;
       BuildMI(MBB, MBBI, dl, TII.get(Opcode), XCore::SP).addImm(FrameSize);
     }
   }
@@ -371,7 +371,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
           .addImm(Amount);
       } else {
         assert(Old->getOpcode() == XCore::ADJCALLSTACKUP);
-        int Opcode = isU6 ? XCore::LDAWSP_ru6_RRegs : XCore::LDAWSP_lru6_RRegs;
+        int Opcode = isU6 ? XCore::LDAWSP_ru6 : XCore::LDAWSP_lru6;
         New=BuildMI(MF, Old->getDebugLoc(), TII.get(Opcode), XCore::SP)
           .addImm(Amount);
       }

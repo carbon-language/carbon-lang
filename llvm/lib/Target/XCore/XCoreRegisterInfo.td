@@ -51,6 +51,9 @@ def GRRegs : RegisterClass<"XCore", [i32], 32,
   R11)>;
 
 // Reserved
-def RRegs : RegisterClass<"XCore", [i32], 32, (add CP, DP, SP, LR)> {
+def RRegs : RegisterClass<"XCore", [i32], 32,
+  (add R0, R1, R2, R3,
+   R4, R5, R6, R7, R8, R9, R10,
+   R11, CP, DP, SP, LR)> {
   let isAllocatable = 0;
 }

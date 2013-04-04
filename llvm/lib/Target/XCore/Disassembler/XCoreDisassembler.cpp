@@ -89,6 +89,11 @@ static DecodeStatus DecodeGRRegsRegisterClass(MCInst &Inst,
                                               uint64_t Address,
                                               const void *Decoder);
 
+static DecodeStatus DecodeRRegsRegisterClass(MCInst &Inst,
+                                             unsigned RegNo,
+                                             uint64_t Address,
+                                             const void *Decoder);
+
 static DecodeStatus DecodeBitpOperand(MCInst &Inst, unsigned Val,
                                       uint64_t Address, const void *Decoder);
 
@@ -210,6 +215,18 @@ static DecodeStatus DecodeGRRegsRegisterClass(MCInst &Inst,
   if (RegNo > 11)
     return MCDisassembler::Fail;
   unsigned Reg = getReg(Decoder, XCore::GRRegsRegClassID, RegNo);
+  Inst.addOperand(MCOperand::CreateReg(Reg));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeRRegsRegisterClass(MCInst &Inst,
+                                             unsigned RegNo,
+                                             uint64_t Address,
+                                             const void *Decoder)
+{
+  if (RegNo > 15)
+    return MCDisassembler::Fail;
+  unsigned Reg = getReg(Decoder, XCore::RRegsRegClassID, RegNo);
   Inst.addOperand(MCOperand::CreateReg(Reg));
   return MCDisassembler::Success;
 }
