@@ -27,7 +27,10 @@ namespace __sanitizer {
   extern unsigned struct_sigaction_sz;
   extern unsigned struct_itimerval_sz;
   extern unsigned pthread_t_sz;
+
+#if !SANITIZER_ANDROID
   extern unsigned ucontext_t_sz;
+#endif // !SANITIZER_ANDROID
 
 #if SANITIZER_LINUX
   extern unsigned struct_rlimit_sz;

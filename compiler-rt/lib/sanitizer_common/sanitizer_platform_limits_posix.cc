@@ -29,8 +29,11 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
-#include <sys/ucontext.h>
 #include <time.h>
+
+#if !SANITIZER_ANDROID
+#include <sys/ucontext.h>
+#endif // !SANITIZER_ANDROID
 
 #if SANITIZER_LINUX
 #include <sys/vfs.h>
@@ -47,7 +50,10 @@ namespace __sanitizer {
   unsigned struct_sigaction_sz = sizeof(struct sigaction);
   unsigned struct_itimerval_sz = sizeof(struct itimerval);
   unsigned pthread_t_sz = sizeof(pthread_t);
+
+#if !SANITIZER_ANDROID
   unsigned ucontext_t_sz = sizeof(ucontext_t);
+#endif // !SANITIZER_ANDROID
 
 #if SANITIZER_LINUX
   unsigned struct_rlimit_sz = sizeof(struct rlimit);
