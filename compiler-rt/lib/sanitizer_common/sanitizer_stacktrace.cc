@@ -137,6 +137,7 @@ void StackTrace::FastUnwindStack(uptr pc, uptr bp,
   while (frame > prev_frame &&
          frame < (uhwptr *)stack_top - 2 &&
          frame > (uhwptr *)stack_bottom &&
+         IsAligned((uptr)frame, sizeof(*frame)) &&
          size < max_size) {
     uhwptr pc1 = frame[1];
     if (pc1 != pc) {

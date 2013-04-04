@@ -826,7 +826,7 @@ INTERCEPTOR(int, getrusage, int who, void *usage) {
 
 INTERCEPTOR(int, sigaction, int signum, const void *act, void *oldact) {
   ENSURE_MSAN_INITED();
-  // TODO: check that *act is unpoisoned.
+  // FIXME: check that *act is unpoisoned.
   // That requires intercepting all of sigemptyset, sigfillset, etc.
   int res = REAL(sigaction)(signum, act, oldact);
   if (res == 0) {
