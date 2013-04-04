@@ -17,6 +17,7 @@ module _Builtin_intrinsics [system] {
     }
 
     explicit module cpuid {
+      requires x86
       header "cpuid.h"
     }
 

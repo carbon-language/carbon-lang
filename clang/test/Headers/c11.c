@@ -1,4 +1,5 @@
 // RUN: %clang -fsyntax-only -Xclang -verify -std=c11 %s
+// RUN: %clang -fsyntax-only -Xclang -verify -std=c11 -fmodules %s
 
 noreturn int f(); // expected-error 1+{{}}
 
