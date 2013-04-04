@@ -143,9 +143,13 @@ namespace {
     //   So, if Rank(X) < Rank(Y) < Rank(Z), it means X is defined earlier 
     //   than Y which is defined earlier than Z. Permute "x | 1", "Y & 2",
     //   "z" in the order of X-Y-Z is better than any other orders.
-    struct PtrSortFunctor {
-      bool operator()(XorOpnd * const &LHS, XorOpnd * const &RHS) {
-        return LHS->getSymbolicRank() < RHS->getSymbolicRank();
+    class PtrSortFunctor {
+      ArrayRef<XorOpnd> A;
+
+    public:
+      PtrSortFunctor(ArrayRef<XorOpnd> Array) : A(Array) {}
+      bool operator()(unsigned LHSIndex, unsigned RHSIndex) {
+        return A[LHSIndex].getSymbolicRank() < A[RHSIndex].getSymbolicRank();
       }
     };
   private:
@@ -1270,7 +1274,7 @@ Value *Reassociate::OptimizeXor(Instruction *I,
     return 0;
 
   SmallVector<XorOpnd, 8> Opnds;
-  SmallVector<XorOpnd*, 8> OpndPtrs;
+  SmallVector<unsigned, 8> OpndIndices;
   Type *Ty = Ops[0].Op->getType();
   APInt ConstOpnd(Ty->getIntegerBitWidth(), 0);
 
@@ -1281,7 +1285,7 @@ Value *Reassociate::OptimizeXor(Instruction *I,
       XorOpnd O(V);
       O.setSymbolicRank(getRank(O.getSymbolicPart()));
       Opnds.push_back(O);
-      OpndPtrs.push_back(&Opnds.back());
+      OpndIndices.push_back(Opnds.size() - 1);
     } else
       ConstOpnd ^= cast<ConstantInt>(V)->getValue();
   }
@@ -1290,13 +1294,14 @@ Value *Reassociate::OptimizeXor(Instruction *I,
   //  the same symbolic value cluster together. For instance, the input operand
   //  sequence ("x | 123", "y & 456", "x & 789") will be sorted into:
   //  ("x | 123", "x & 789", "y & 456").
-  std::sort(OpndPtrs.begin(), OpndPtrs.end(), XorOpnd::PtrSortFunctor());
+  std::sort(OpndIndices.begin(), OpndIndices.end(),
+            XorOpnd::PtrSortFunctor(Opnds));
 
   // Step 3: Combine adjacent operands
   XorOpnd *PrevOpnd = 0;
   bool Changed = false;
   for (unsigned i = 0, e = Opnds.size(); i < e; i++) {
-    XorOpnd *CurrOpnd = OpndPtrs[i];
+    XorOpnd *CurrOpnd = &Opnds[OpndIndices[i]];
     // The combined value
     Value *CV;
 
