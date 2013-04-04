@@ -101,8 +101,9 @@ public:
   /// Searches directories then calls appendInputFile()
   bool appendLibrary(StringRef libName);
   
+private:
+  ELFTargetInfo() LLVM_DELETED_FUNCTION;
 protected:
-  ELFTargetInfo() = delete;
   ELFTargetInfo(llvm::Triple); 
 
   virtual Writer &writer() const;
