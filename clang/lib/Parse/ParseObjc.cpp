@@ -23,10 +23,14 @@
 using namespace clang;
 
 /// Skips attributes after an Objective-C @ directive. Emits a diagnostic.
-void Parser::MaybeSkipAttributes() {
+void Parser::MaybeSkipAttributes(tok::ObjCKeywordKind Kind) {
   ParsedAttributes attrs(AttrFactory);
   if (Tok.is(tok::kw___attribute)) {
-    Diag(Tok, diag::err_objc_postfix_attribute);
+    if (Kind == tok::objc_interface || Kind == tok::objc_protocol)
+      Diag(Tok, diag::err_objc_postfix_attribute_hint)
+          << (Kind == tok::objc_protocol);
+    else
+      Diag(Tok, diag::err_objc_postfix_attribute);
     ParseGNUAttributes(attrs);
   }
 }
@@ -101,7 +105,7 @@ Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
 
 
   while (1) {
-    MaybeSkipAttributes();
+    MaybeSkipAttributes(tok::objc_class);
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_expected_ident);
       SkipUntil(tok::semi);
@@ -188,7 +192,7 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
     return 0;
   }
 
-  MaybeSkipAttributes();
+  MaybeSkipAttributes(tok::objc_interface);
 
   if (Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_ident); // missing class or category name.
@@ -1408,7 +1412,7 @@ Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
     return DeclGroupPtrTy();
   }
 
-  MaybeSkipAttributes();
+  MaybeSkipAttributes(tok::objc_protocol);
 
   if (Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_ident); // missing protocol name.
@@ -1501,7 +1505,7 @@ Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
     return DeclGroupPtrTy();
   }
 
-  MaybeSkipAttributes();
+  MaybeSkipAttributes(tok::objc_implementation);
 
   if (Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_ident); // missing class or category name.

@@ -401,6 +401,9 @@ def err_objc_unexpected_attr : Error<
   "prefix attribute must be followed by an interface or protocol">;
 def err_objc_postfix_attribute : Error <
   "postfix attributes are not allowed on Objective-C directives">;
+def err_objc_postfix_attribute_hint : Error <
+  "postfix attributes are not allowed on Objective-C directives, place"
+  " them in front of '%select{@interface|@protocol}0'">;
 def err_objc_directive_only_in_protocol : Error<
   "directive may only be specified in protocols only">;
 def err_missing_catch_finally : Error<
