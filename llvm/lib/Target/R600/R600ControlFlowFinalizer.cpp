@@ -143,6 +143,10 @@ public:
           CurrentStack++;
           MaxStack = std::max(MaxStack, CurrentStack);
         case AMDGPU::CF_ALU:
+        case AMDGPU::EG_ExportBuf:
+        case AMDGPU::EG_ExportSwz:
+        case AMDGPU::R600_ExportBuf:
+        case AMDGPU::R600_ExportSwz:
           DEBUG(dbgs() << CfCount << ":"; MI->dump(););
           CfCount++;
           break;
