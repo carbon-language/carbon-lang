@@ -134,3 +134,9 @@ namespace test12 {
     extern const int n;
   }
 }
+
+namespace test13 {
+  static void a(void);
+  extern void a();
+  static void a(void) {}
+}
