@@ -2328,7 +2328,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
   // storage classes.
   if (!isa<CXXMethodDecl>(New) && !isa<CXXMethodDecl>(Old) &&
       New->getStorageClass() == SC_Static &&
-      Old->hasExternalLinkage() &&
+      isExternalLinkage(Old->getLinkage()) &&
       !New->getTemplateSpecializationInfo() &&
       !canRedefineFunction(Old, getLangOpts())) {
     if (getLangOpts().MicrosoftExt) {

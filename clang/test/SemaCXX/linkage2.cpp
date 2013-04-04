@@ -140,3 +140,10 @@ namespace test13 {
   extern void a();
   static void a(void) {}
 }
+
+namespace test14 {
+  namespace {
+    void a(void); // expected-note {{previous declaration is here}}
+    static void a(void) {} // expected-error {{static declaration of 'a' follows non-static declaration}}
+  }
+}
