@@ -184,7 +184,7 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
     int pass_env = 1;
     std::string unix_socket_name;
     std::string working_dir;
-	while ((ch = getopt_long(argc, argv, "a:dehsu:?", g_long_options, NULL)) != -1)
+	while ((ch = getopt_long_only(argc, argv, "a:dehsu:?", g_long_options, NULL)) != -1)
 	{
 		switch (ch) 
 		{

@@ -510,7 +510,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
         return error;
     }
 
-    // Build the option_string argument for call to getopt_long.
+    // Build the option_string argument for call to getopt_long_only.
 
     for (int i = 0; long_options[i].name != NULL; ++i)
     {
@@ -541,7 +541,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
     m_debugger.SkipLLDBInitFiles (false);
     m_debugger.SkipAppInitFiles (false);
 
-    // Prepare for & make calls to getopt_long.
+    // Prepare for & make calls to getopt_long_only.
 #if __GLIBC__
     optind = 0;
 #else
@@ -552,7 +552,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
     while (1)
     {
         int long_options_index = -1;
-        val = ::getopt_long (argc, const_cast<char **>(argv), option_string.c_str(), long_options, &long_options_index);
+        val = ::getopt_long_only (argc, const_cast<char **>(argv), option_string.c_str(), long_options, &long_options_index);
 
         if (val == -1)
             break;
@@ -738,7 +738,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
         // are arguments for the inferior program. If no file was specified with
         // -f, then what is left is the program name followed by any arguments.
 
-        // Skip any options we consumed with getopt_long
+        // Skip any options we consumed with getopt_long_only
         argc -= optind;
         argv += optind;
 
@@ -755,7 +755,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
     }
     else
     {
-        // Skip any options we consumed with getopt_long
+        // Skip any options we consumed with getopt_long_only
         argc -= optind;
         //argv += optind; // Commented out to keep static analyzer happy
 

@@ -169,7 +169,7 @@ CommandObject::ParseOptions
         Error error;
         options->NotifyOptionParsingStarting();
 
-        // ParseOptions calls getopt_long, which always skips the zero'th item in the array and starts at position 1,
+        // ParseOptions calls getopt_long_only, which always skips the zero'th item in the array and starts at position 1,
         // so we need to push a dummy value into position zero.
         args.Unshift("dummy_string");
         error = args.ParseOptions (*options);
@@ -416,7 +416,7 @@ CommandObject::HandleCompletion
 
 
             // I stick an element on the end of the input, because if the last element is
-            // option that requires an argument, getopt_long will freak out.
+            // option that requires an argument, getopt_long_only will freak out.
 
             input.AppendArgument ("<FAKE-VALUE>");
 

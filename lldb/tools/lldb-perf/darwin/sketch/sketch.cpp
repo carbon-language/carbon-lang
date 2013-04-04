@@ -304,7 +304,7 @@ GetShortOptionString (struct option *long_options)
 int main(int argc, const char * argv[])
 {
     
-    // Prepare for & make calls to getopt_long.
+    // Prepare for & make calls to getopt_long_only.
     
     SketchTest test;
     

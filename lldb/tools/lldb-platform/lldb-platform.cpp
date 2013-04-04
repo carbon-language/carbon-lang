@@ -32,7 +32,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 //----------------------------------------------------------------------
-// option descriptors for getopt_long()
+// option descriptors for getopt_long_only()
 //----------------------------------------------------------------------
 
 int g_debug = 0;
@@ -117,7 +117,7 @@ main (int argc, char *argv[])
 //        return 3;
 //    }
     
-    while ((ch = getopt_long(argc, argv, "l:f:L:", g_long_options, &long_option_index)) != -1)
+    while ((ch = getopt_long_only(argc, argv, "l:f:L:", g_long_options, &long_option_index)) != -1)
     {
 //        DNBLogDebug("option: ch == %c (0x%2.2x) --%s%c%s\n",
 //                    ch, (uint8_t)ch,
@@ -177,7 +177,7 @@ main (int argc, char *argv[])
         ProcessGDBRemoteLog::EnableLog (log_stream_sp, 0,log_args.GetConstArgumentVector(), log_stream_sp.get());
     }
 
-    // Skip any options we consumed with getopt_long
+    // Skip any options we consumed with getopt_long_only
     argc -= optind;
     argv += optind;
 

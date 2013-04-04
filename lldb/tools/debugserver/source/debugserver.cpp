@@ -760,7 +760,7 @@ show_usage_and_exit (int exit_code)
 
 
 //----------------------------------------------------------------------
-// option descriptors for getopt_long()
+// option descriptors for getopt_long_only()
 //----------------------------------------------------------------------
 static struct option g_long_options[] =
 {
@@ -880,7 +880,7 @@ main (int argc, char *argv[])
     }
     // NULL terminate the short option string.
     short_options[short_options_idx++] = '\0';
-    while ((ch = getopt_long(argc, argv, short_options, g_long_options, &long_option_index)) != -1)
+    while ((ch = getopt_long_only(argc, argv, short_options, g_long_options, &long_option_index)) != -1)
     {
         DNBLogDebug("option: ch == %c (0x%2.2x) --%s%c%s\n",
                     ch, (uint8_t)ch,
@@ -1106,7 +1106,7 @@ main (int argc, char *argv[])
 //        fprintf(stderr, "error: no architecture was specified\n");
 //        exit (8);
 //    }
-    // Skip any options we consumed with getopt_long
+    // Skip any options we consumed with getopt_long_only
     argc -= optind;
     argv += optind;
 

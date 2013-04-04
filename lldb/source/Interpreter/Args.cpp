@@ -655,11 +655,11 @@ Args::ParseOptions (Options &options)
     while (1)
     {
         int long_options_index = -1;
-        val = ::getopt_long(GetArgumentCount(),
-                            GetArgumentVector(),
-                            sstr.GetData(),
-                            long_options,
-                            &long_options_index);
+        val = ::getopt_long_only(GetArgumentCount(),
+                                 GetArgumentVector(),
+                                 sstr.GetData(),
+                                 long_options,
+                                 &long_options_index);
         if (val == -1)
             break;
 
@@ -1314,8 +1314,11 @@ Args::ParseAliasOptions (Options &options,
     while (1)
     {
         int long_options_index = -1;
-        val = ::getopt_long (GetArgumentCount(), GetArgumentVector(), sstr.GetData(), long_options,
-                             &long_options_index);
+        val = ::getopt_long_only (GetArgumentCount(),
+                                  GetArgumentVector(),
+                                  sstr.GetData(),
+                                  long_options,
+                                  &long_options_index);
 
         if (val == -1)
             break;
@@ -1492,8 +1495,8 @@ Args::ParseArgsForCompletion
     int val;
     const OptionDefinition *opt_defs = options.GetDefinitions();
 
-    // Fooey... getopt_long permutes the GetArgumentVector to move the options to the front.
-    // So we have to build another Arg and pass that to getopt_long so it doesn't
+    // Fooey... getopt_long_only permutes the GetArgumentVector to move the options to the front.
+    // So we have to build another Arg and pass that to getopt_long_only so it doesn't
     // change the one we have.
 
     std::vector<const char *> dummy_vec (GetArgumentVector(), GetArgumentVector() + GetArgumentCount() + 1);
@@ -1507,11 +1510,11 @@ Args::ParseArgsForCompletion
         int parse_start = optind;
         int long_options_index = -1;
         
-        val = ::getopt_long (dummy_vec.size() - 1,
-                             (char *const *) &dummy_vec.front(), 
-                             sstr.GetData(), 
-                             long_options,
-                             &long_options_index);
+        val = ::getopt_long_only (dummy_vec.size() - 1,
+                                  (char *const *) &dummy_vec.front(),
+                                  sstr.GetData(),
+                                  long_options,
+                                  &long_options_index);
 
         if (val == -1)
         {
@@ -1525,7 +1528,7 @@ Args::ParseArgsForCompletion
             // Handling the "--" is a little tricky, since that may mean end of options or arguments, or the
             // user might want to complete options by long name.  I make this work by checking whether the
             // cursor is in the "--" argument, and if so I assume we're completing the long option, otherwise
-            // I let it pass to getopt_long which will terminate the option parsing.
+            // I let it pass to getopt_long_only which will terminate the option parsing.
             // Note, in either case we continue parsing the line so we can figure out what other options
             // were passed.  This will be useful when we come to restricting completions based on what other
             // options we've seen on the line.
@@ -1641,7 +1644,7 @@ Args::ParseArgsForCompletion
     }
     
     // Finally we have to handle the case where the cursor index points at a single "-".  We want to mark that in
-    // the option_element_vector, but only if it is not after the "--".  But it turns out that getopt_long just ignores
+    // the option_element_vector, but only if it is not after the "--".  But it turns out that getopt_long_only just ignores
     // an isolated "-".  So we have to look it up by hand here.  We only care if it is AT the cursor position.
     
     if ((dash_dash_pos == -1 || cursor_index < dash_dash_pos)
