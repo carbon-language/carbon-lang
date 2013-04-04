@@ -2211,7 +2211,9 @@ public:
   /// the LLVM value representation.
   llvm::Value *EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
                                 unsigned Alignment, QualType Ty,
-                                llvm::MDNode *TBAAInfo = 0);
+                                llvm::MDNode *TBAAInfo = 0,
+                                QualType TBAABaseTy = QualType(),
+                                uint64_t TBAAOffset = 0);
 
   /// EmitLoadOfScalar - Load a scalar value from an address, taking
   /// care to appropriately convert from the memory representation to
@@ -2224,7 +2226,9 @@ public:
   /// the LLVM value representation.
   void EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                          bool Volatile, unsigned Alignment, QualType Ty,
-                         llvm::MDNode *TBAAInfo = 0, bool isInit=false);
+                         llvm::MDNode *TBAAInfo = 0, bool isInit = false,
+                         QualType TBAABaseTy = QualType(),
+                         uint64_t TBAAOffset = 0);
 
   /// EmitStoreOfScalar - Store a scalar value to an address, taking
   /// care to appropriately convert from the memory representation to

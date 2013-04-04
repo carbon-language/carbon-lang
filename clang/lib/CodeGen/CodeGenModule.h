@@ -501,6 +501,11 @@ public:
   llvm::MDNode *getTBAAInfo(QualType QTy);
   llvm::MDNode *getTBAAInfoForVTablePtr();
   llvm::MDNode *getTBAAStructInfo(QualType QTy);
+  /// Return the MDNode in the type DAG for the given struct type.
+  llvm::MDNode *getTBAAStructTypeInfo(QualType QTy);
+  /// Return the path-aware tag for given base type, access node and offset.
+  llvm::MDNode *getTBAAStructTagInfo(QualType BaseTy, llvm::MDNode *AccessN,
+                                     uint64_t O);
 
   bool isTypeConstant(QualType QTy, bool ExcludeCtorDtor);
 

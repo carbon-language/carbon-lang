@@ -157,6 +157,11 @@ class LValue {
 
   Expr *BaseIvarExp;
 
+  /// Used by struct-path-aware TBAA.
+  QualType TBAABaseType;
+  /// Offset relative to the base type.
+  uint64_t TBAAOffset;
+
   /// TBAAInfo - TBAA information to attach to dereferences of this LValue.
   llvm::MDNode *TBAAInfo;
 
@@ -175,6 +180,10 @@ private:
     this->ImpreciseLifetime = false;
     this->ThreadLocalRef = false;
     this->BaseIvarExp = 0;
+
+    // Initialize fields for TBAA.
+    this->TBAABaseType = Type;
+    this->TBAAOffset = 0;
     this->TBAAInfo = TBAAInfo;
   }
 
@@ -231,6 +240,12 @@ public:
   
   Expr *getBaseIvarExp() const { return BaseIvarExp; }
   void setBaseIvarExp(Expr *V) { BaseIvarExp = V; }
+
+  QualType getTBAABaseType() const { return TBAABaseType; }
+  void setTBAABaseType(QualType T) { TBAABaseType = T; }
+
+  uint64_t getTBAAOffset() const { return TBAAOffset; }
+  void setTBAAOffset(uint64_t O) { TBAAOffset = O; }
 
   llvm::MDNode *getTBAAInfo() const { return TBAAInfo; }
   void setTBAAInfo(llvm::MDNode *N) { TBAAInfo = N; }
