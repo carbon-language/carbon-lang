@@ -3,6 +3,7 @@ LDFLAGS=-ldl -lpthread -pie
 CXXFLAGS = -fPIE -fno-rtti -g -Wall -Werror \
 					 -DGTEST_HAS_RTTI=0 -DTSAN_DEBUG=$(DEBUG) -DSANITIZER_DEBUG=$(DEBUG)
 CLANG=clang
+FILECHECK=FileCheck
 # Silence warnings that Clang produces for gtest code.
 # Use -Wno-attributes so that gcc doesn't complain about unknown warning types.
 CXXFLAGS += -Wno-attributes
@@ -56,7 +57,7 @@ test: libtsan tsan_test
 
 run: all
 	(ulimit -s 8192; ./tsan_test)
-	CC=$(CLANG) CXX=$(CLANG)++ ./lit_tests/test_output.sh
+	CC=$(CLANG) CXX=$(CLANG)++ FILECHECK=$(FILECHECK) ./lit_tests/test_output.sh
 
 presubmit:
 	../sanitizer_common/scripts/check_lint.sh
