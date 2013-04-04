@@ -421,6 +421,8 @@ class PNaClTargetCodeGenInfo : public TargetCodeGenInfo {
 void PNaClABIInfo::computeInfo(CGFunctionInfo &FI) const {
     FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
 
+    // Obtain the initial number of registers available for passing integers
+    // from the function's regparm attribute.
     unsigned FreeRegs = FI.getHasRegParm() ? FI.getRegParm() : 0;
 
     for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
@@ -433,15 +435,18 @@ llvm::Value *PNaClABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return 0;
 }
 
+// \brief Classify argument of given type \p Ty. \p FreeRegs is the number of
+// registers available for passing arguments - it can be updated by this
+// method.
 ABIArgInfo PNaClABIInfo::classifyArgumentType(QualType Ty,
                                               unsigned &FreeRegs) const {
   if (isAggregateTypeForABI(Ty)) {
-    // Records with non trivial destructors/constructors should not be passed
-    // by value.
+    // In the PNaCl ABI we always pass records/structures on the stack. The
+    // byval attribute can be used if the record doesn't have non-trivial
+    // constructors/destructors.
     FreeRegs = 0;
     if (isRecordWithNonTrivialDestructorOrCopyConstructor(Ty))
       return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
-
     return ABIArgInfo::getIndirect(0);
   }
 
@@ -452,14 +457,17 @@ ABIArgInfo PNaClABIInfo::classifyArgumentType(QualType Ty,
   ABIArgInfo BaseInfo = (Ty->isPromotableIntegerType() ?
           ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
 
-  // Regparm regs hold 32 bits.
-  unsigned SizeInRegs = (getContext().getTypeSize(Ty) + 31) / 32;
-  if (SizeInRegs == 0) return BaseInfo;
-  if (SizeInRegs > FreeRegs) {
+  // Figure out how many of the free registers can be occupied by this type.
+  // regparm registers are 32-bit.
+  unsigned NumRegsRequired = (getContext().getTypeSize(Ty) + 31) / 32;
+  if (NumRegsRequired == 0) return BaseInfo;
+  if (NumRegsRequired > FreeRegs) {
+    // If this type needs more registers than we have available, no more
+    // passing in-registers can happen.
     FreeRegs = 0;
     return BaseInfo;
   }
-  FreeRegs -= SizeInRegs;
+  FreeRegs -= NumRegsRequired;
   return BaseInfo.isDirect() ?
       ABIArgInfo::getDirectInReg(BaseInfo.getCoerceToType()) :
       ABIArgInfo::getExtendInReg(BaseInfo.getCoerceToType());
@@ -469,6 +477,7 @@ ABIArgInfo PNaClABIInfo::classifyReturnType(QualType RetTy) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
+  // In the PNaCl ABI we always return records/structures on the stack.
   if (isAggregateTypeForABI(RetTy))
     return ABIArgInfo::getIndirect(0);
 
