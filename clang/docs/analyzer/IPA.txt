@@ -46,11 +46,14 @@ Each of these modes implies that all the previous member function kinds will be
 inlined as well; it doesn't make sense to inline destructors without inlining
 constructors, for example.
 
-The default c++-inlining mode is 'constructors', meaning that member functions,
-overloaded operators, and some constructors will be inlined. If a type has a
-non-trivial destructor, however, its constructor will not be inlined. Note that
-no C++ member functions will be inlined under -analyzer-config ipa=none or
--analyzer-config ipa=basic-inlining.
+The default c++-inlining mode is 'destructors', meaning that all member
+functions with visible definitions will be considered for inlining. In some
+cases the analyzer may still choose not to inline the function.
+
+Note that under 'constructors', constructors for types with non-trivial
+destructors will not be inlined. Additionally, no C++ member functions will be 
+inlined under -analyzer-config ipa=none or -analyzer-config ipa=basic-inlining,
+regardless of the setting of the c++-inlining mode.
 
 ### c++-template-inlining ###
 
@@ -73,13 +76,39 @@ considered for inlining.
 
     -analyzer-config c++-template-inlining=[true | false]
 
-Currently, C++ standard library functions are NOT considered for inlining by default.
+Currently, C++ standard library functions are considered for inlining by 
+default.
 
 The standard library functions and the STL in particular are used ubiquitously
 enough that our tolerance for false positives is even lower here. A false
 positive due to poor modeling of the STL leads to a poor user experience, since
 most users would not be comfortable adding assertions to system headers in order
 to silence analyzer warnings.
+
+### c++-container-inlining ###
+
+This option controls whether constructors and destructors of "container" types
+should be considered for inlining.
+
+    -analyzer-config c++-container-inlining=[true | false]
+
+Currently, these constructors and destructors are NOT considered for inlining
+by default.
+
+The current implementation of this setting checks whether a type has a member
+named 'iterator' or a member named 'begin'; these names are idiomatic in C++,
+with the latter specified in the C++11 standard. The analyzer currently does a
+fairly poor job of modeling certain data structure invariants of container-like
+objects. For example, these three expressions should be equivalent:
+
+    std::distance(c.begin(), c.end()) == 0
+    c.begin() == c.end()
+    c.empty())
+
+Many of these issues are avoided if containers always have unknown, symbolic
+state, which is what happens when their constructors are treated as opaque.
+In the future, we may decide specific containers are "safe" to model through
+inlining, or choose to model them directly using checkers instead.
 
 
 Basics of Implementation

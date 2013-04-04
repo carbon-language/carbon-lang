@@ -74,7 +74,7 @@ AnalyzerOptions::mayInlineCXXMemberFunction(CXXInlineableMemberKind K) {
     static const char *ModeKey = "c++-inlining";
     
     StringRef ModeStr(Config.GetOrCreateValue(ModeKey,
-                                              "constructors").getValue());
+                                              "destructors").getValue());
 
     CXXInlineableMemberKind &MutableMode =
       const_cast<CXXInlineableMemberKind &>(CXXMemberInliningMode);

@@ -12,7 +12,7 @@ public:
 
 // CHECK: [config]
 // CHECK-NEXT: c++-container-inlining = false
-// CHECK-NEXT: c++-inlining = constructors
+// CHECK-NEXT: c++-inlining = destructors
 // CHECK-NEXT: c++-stdlib-inlining = true
 // CHECK-NEXT: c++-template-inlining = true
 // CHECK-NEXT: cfg-conditional-static-initializers = true

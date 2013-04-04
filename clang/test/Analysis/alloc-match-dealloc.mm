@@ -185,3 +185,37 @@ void testStandardPlacementNewAfterDelete() {
   delete p;
   p = new(p) int; // no-warning
 }
+
+
+// Smart pointer example
+template <typename T>
+struct SimpleSmartPointer {
+  T *ptr;
+
+  explicit SimpleSmartPointer(T *p = 0) : ptr(p) {}
+  ~SimpleSmartPointer() {
+    delete ptr;
+    // expected-warning@-1 {{Memory allocated by 'new[]' should be deallocated by 'delete[]', not 'delete'}}
+    // expected-warning@-2 {{Memory allocated by malloc() should be deallocated by free(), not 'delete'}}
+  }
+};
+
+void testSimpleSmartPointerArrayNew() {
+  {
+    SimpleSmartPointer<int> a(new int);
+  } // no-warning
+
+  {
+    SimpleSmartPointer<int> a(new int[4]);
+  }
+}
+
+void testSimpleSmartPointerMalloc() {
+  {
+    SimpleSmartPointer<int> a(new int);
+  } // no-warning
+
+  {
+    SimpleSmartPointer<int> a((int *)malloc(4));
+  }
+}
