@@ -114,6 +114,7 @@ def SPftoi  : SDNode<"SPISD::FTOI", SDTSPFTOI>;
 def SPitof  : SDNode<"SPISD::ITOF", SDTSPITOF>;
 
 def SPselecticc : SDNode<"SPISD::SELECT_ICC", SDTSPselectcc, [SDNPInGlue]>;
+def SPselectxcc : SDNode<"SPISD::SELECT_XCC", SDTSPselectcc, [SDNPInGlue]>;
 def SPselectfcc : SDNode<"SPISD::SELECT_FCC", SDTSPselectcc, [SDNPInGlue]>;
 
 //  These are target-independent nodes, but have target-specific formats.

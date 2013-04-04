@@ -19,8 +19,8 @@ let Predicates = [Is64Bit] in {
 // The same integer registers are used for i32 and i64 values.
 // When registers hold i32 values, the high bits are don't care.
 // This give us free trunc and anyext.
-def : Pat<(i64 (anyext i32:$val)), (COPY $val)>;
-def : Pat<(i32 (trunc i64:$val)), (COPY $val)>;
+def : Pat<(i64 (anyext i32:$val)), (COPY_TO_REGCLASS $val, I64Regs)>;
+def : Pat<(i32 (trunc i64:$val)), (COPY_TO_REGCLASS $val, IntRegs)>;
 
 } // Predicates = [Is64Bit]
 
@@ -256,7 +256,30 @@ def : Pat<(truncstorei32 i64:$src, ADDRri:$addr), (STri  ADDRri:$addr, $src)>;
 // We reuse CMPICC SDNodes for compares, but use new BRXCC branch nodes for
 // 64-bit compares. See LowerBR_CC.
 
+let Predicates = [Is64Bit] in {
+
 let Uses = [ICC] in
 def BPXCC : BranchSP<0, (ins brtarget:$dst, CCOp:$cc),
                      "bp$cc %xcc, $dst",
                      [(SPbrxcc bb:$dst, imm:$cc)]>;
+
+// Conditional moves on %xcc.
+let Uses = [ICC], Constraints = "$f = $rd" in {
+def MOVXCCrr : Pseudo<(outs IntRegs:$rd),
+                      (ins IntRegs:$rs2, IntRegs:$f, CCOp:$cond),
+                      "mov$cond %xcc, $rs2, $rd",
+                      [(set i32:$rd,
+                       (SPselectxcc i32:$rs2, i32:$f, imm:$cond))]>;
+def MOVXCCri : Pseudo<(outs IntRegs:$rd),
+                      (ins i32imm:$i, IntRegs:$f, CCOp:$cond),
+                      "mov$cond %xcc, $i, $rd",
+                      [(set i32:$rd,
+                       (SPselecticc simm11:$i, i32:$f, imm:$cond))]>;
+} // Uses, Constraints
+
+def : Pat<(SPselectxcc i64:$t, i64:$f, imm:$cond),
+          (MOVXCCrr $t, $f, imm:$cond)>;
+def : Pat<(SPselectxcc (i64 simm11:$t), i64:$f, imm:$cond),
+          (MOVXCCri (as_i32imm $t), $f, imm:$cond)>;
+
+} // Predicates = [Is64Bit]

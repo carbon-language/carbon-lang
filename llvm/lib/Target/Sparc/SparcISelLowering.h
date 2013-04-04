@@ -30,6 +30,7 @@ namespace llvm {
       BRXCC,       // Branch to dest on xcc condition (64-bit only).
       BRFCC,       // Branch to dest on fcc condition
       SELECT_ICC,  // Select between two values using the current ICC flags.
+      SELECT_XCC,  // Select between two values using the current XCC flags.
       SELECT_FCC,  // Select between two values using the current FCC flags.
 
       Hi, Lo,      // Hi/Lo operations, typically on a global address.

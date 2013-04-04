@@ -826,6 +826,7 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
 
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::BR_CC, MVT::i64, Custom);
+    setOperationAction(ISD::SELECT_CC, MVT::i64, Custom);
   }
 
   // FIXME: There are instructions available for ATOMIC_FENCE
@@ -900,6 +901,7 @@ const char *SparcTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case SPISD::BRXCC:      return "SPISD::BRXCC";
   case SPISD::BRFCC:      return "SPISD::BRFCC";
   case SPISD::SELECT_ICC: return "SPISD::SELECT_ICC";
+  case SPISD::SELECT_XCC: return "SPISD::SELECT_XCC";
   case SPISD::SELECT_FCC: return "SPISD::SELECT_FCC";
   case SPISD::Hi:         return "SPISD::Hi";
   case SPISD::Lo:         return "SPISD::Lo";
@@ -926,6 +928,7 @@ void SparcTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   switch (Op.getOpcode()) {
   default: break;
   case SPISD::SELECT_ICC:
+  case SPISD::SELECT_XCC:
   case SPISD::SELECT_FCC:
     DAG.ComputeMaskedBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
     DAG.ComputeMaskedBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
@@ -946,7 +949,8 @@ static void LookThroughSetCC(SDValue &LHS, SDValue &RHS,
   if (isa<ConstantSDNode>(RHS) &&
       cast<ConstantSDNode>(RHS)->isNullValue() &&
       CC == ISD::SETNE &&
-      ((LHS.getOpcode() == SPISD::SELECT_ICC &&
+      (((LHS.getOpcode() == SPISD::SELECT_ICC ||
+         LHS.getOpcode() == SPISD::SELECT_XCC) &&
         LHS.getOperand(3).getOpcode() == SPISD::CMPICC) ||
        (LHS.getOpcode() == SPISD::SELECT_FCC &&
         LHS.getOperand(3).getOpcode() == SPISD::CMPFCC)) &&
@@ -1064,12 +1068,13 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   LookThroughSetCC(LHS, RHS, CC, SPCC);
 
   SDValue CompareFlag;
-  if (LHS.getValueType() == MVT::i32) {
+  if (LHS.getValueType().isInteger()) {
     // subcc returns a value
     EVT VTs[] = { LHS.getValueType(), MVT::Glue };
     SDValue Ops[2] = { LHS, RHS };
     CompareFlag = DAG.getNode(SPISD::CMPICC, dl, VTs, Ops, 2).getValue(1);
-    Opc = SPISD::SELECT_ICC;
+    Opc = LHS.getValueType() == MVT::i32 ?
+          SPISD::SELECT_ICC : SPISD::SELECT_XCC;
     if (SPCC == ~0U) SPCC = IntCondCCodeToICC(CC);
   } else {
     CompareFlag = DAG.getNode(SPISD::CMPFCC, dl, MVT::Glue, LHS, RHS);

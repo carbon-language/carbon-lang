@@ -32,3 +32,25 @@ if.then:
 if.end:
   ret void
 }
+
+; CHECK: selecti32_xcc
+; CHECK: subcc %i0, %i1
+; CHECK: movg %xcc, %i2, %i3
+; CHECK: or %g0, %i3, %i0
+define i32 @selecti32_xcc(i64 %x, i64 %y, i32 %a, i32 %b) {
+entry:
+  %tobool = icmp sgt i64 %x, %y
+  %rv = select i1 %tobool, i32 %a, i32 %b
+  ret i32 %rv
+}
+
+; CHECK: selecti64_xcc
+; CHECK: subcc %i0, %i1
+; CHECK: movg %xcc, %i2, %i3
+; CHECK: or %g0, %i3, %i0
+define i64 @selecti64_xcc(i64 %x, i64 %y, i64 %a, i64 %b) {
+entry:
+  %tobool = icmp sgt i64 %x, %y
+  %rv = select i1 %tobool, i64 %a, i64 %b
+  ret i64 %rv
+}
