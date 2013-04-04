@@ -1,7 +1,7 @@
 RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/tls.x86-64 -static  \
 RUN: -emit-yaml --noinhibit-exec | FileCheck %s -check-prefix=YAML
 
-RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/tls.x86-64 -output=%t \
+RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/tls.x86-64 -o %t \
 RUN:   --noinhibit-exec -e main -static && llvm-objdump -d %t | FileCheck %s
 
 // Verify that the TLS accesses have the correct offsets.
