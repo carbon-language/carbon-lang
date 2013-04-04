@@ -201,8 +201,11 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       uint64_t CoordType[4] = {1, 1, 1, 1};
 
       if (HasOffsets)
-        for (unsigned i = 0; i < 3; i++)
-          Offsets[i] = MI.getOperand(i + 2).getImm();
+        for (unsigned i = 0; i < 3; i++) {
+          int SignedOffset = MI.getOperand(i + 2).getImm();
+          Offsets[i] = (SignedOffset & 0x1F);
+        }
+          
 
       if (TextureType == TEXTURE_RECT ||
           TextureType == TEXTURE_SHADOWRECT) {
