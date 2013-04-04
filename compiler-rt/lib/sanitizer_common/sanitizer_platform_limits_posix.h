@@ -25,9 +25,9 @@ namespace __sanitizer {
   extern unsigned struct_tm_sz;
   extern unsigned struct_passwd_sz;
   extern unsigned struct_sigaction_sz;
-  extern unsigned struct_ucontext_sz;
   extern unsigned struct_itimerval_sz;
   extern unsigned pthread_t_sz;
+  extern unsigned ucontext_t_sz;
 
 #if SANITIZER_LINUX
   extern unsigned struct_rlimit_sz;

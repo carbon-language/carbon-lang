@@ -45,9 +45,9 @@ namespace __sanitizer {
   unsigned struct_tm_sz = sizeof(struct tm);
   unsigned struct_passwd_sz = sizeof(struct passwd);
   unsigned struct_sigaction_sz = sizeof(struct sigaction);
-  unsigned struct_ucontext_sz = sizeof(struct ucontext);
   unsigned struct_itimerval_sz = sizeof(struct itimerval);
   unsigned pthread_t_sz = sizeof(pthread_t);
+  unsigned ucontext_t_sz = sizeof(ucontext_t);
 
 #if SANITIZER_LINUX
   unsigned struct_rlimit_sz = sizeof(struct rlimit);
