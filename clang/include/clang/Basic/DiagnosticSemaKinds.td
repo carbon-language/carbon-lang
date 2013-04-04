@@ -6205,9 +6205,7 @@ def err_sampler_argument_required : Error<
   "sampler_t variable required - got %0">;
 def err_wrong_sampler_addressspace: Error<
   "sampler type cannot be used with the __local and __global address space qualifiers">;
-def err_opencl_global_invalid_addr_space : Error<
-  "global variables must have a constant address space qualifier">;
-  
+
 // OpenMP support.
 def err_omp_expected_var_arg_suggest : Error<
   "%0 is not a global variable, static local variable or static data member%select{|; did you mean %2?}1">;
