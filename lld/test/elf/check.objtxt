@@ -1,5 +1,9 @@
-RUN: lld -flavor gnu -target i386    -e global_func --noinhibit-exec -emit-yaml %p/Inputs/object-test.elf-i386    | FileCheck %s -check-prefix ELF-i386
-RUN: lld -flavor gnu -target hexagon -e global_func --noinhibit-exec -emit-yaml %p/Inputs/object-test.elf-hexagon | FileCheck %s -check-prefix ELF-hexagon
+RUN: lld -flavor gnu -target i386 -e global_func --noinhibit-exec -emit-yaml \
+RUN:    %p/Inputs/object-test.elf-i386  -o %t 
+RUN: cat %t
+RUN: FileCheck %s -check-prefix ELF-i386 < %t
+RUN: lld -flavor gnu -target hexagon -e global_func --noinhibit-exec -emit-yaml \
+RUN:    %p/Inputs/object-test.elf-hexagon | FileCheck %s -check-prefix ELF-hexagon
 
 ELF-i386:defined-atoms:
 ELF-i386:    - name:              tentative
