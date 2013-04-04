@@ -21,7 +21,6 @@
 #include "clang/AST/Mangle.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Frontend/CodeGenOptions.h"
-#include "llvm/ADT/SmallSet.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
@@ -225,88 +224,4 @@ CodeGenTBAA::getTBAAStructInfo(QualType QTy) {
 
   // For now, handle any other kind of type conservatively.
   return StructMetadataCache[Ty] = NULL;
-}
-
-/// Check if the given type can be handled by path-aware TBAA.
-static bool isTBAAPathStruct(QualType QTy) {
-  if (const RecordType *TTy = QTy->getAs<RecordType>()) {
-    const RecordDecl *RD = TTy->getDecl()->getDefinition();
-    // RD can be struct, union, class, interface or enum.
-    // For now, we only handle struct.
-    if (RD->isStruct() && !RD->hasFlexibleArrayMember())
-      return true;
-  }
-  return false;
-}
-
-llvm::MDNode *
-CodeGenTBAA::getTBAAStructTypeInfo(QualType QTy) {
-  const Type *Ty = Context.getCanonicalType(QTy).getTypePtr();
-  assert(isTBAAPathStruct(QTy));
-
-  if (llvm::MDNode *N = StructTypeMetadataCache[Ty])
-    return N;
-
-  if (const RecordType *TTy = QTy->getAs<RecordType>()) {
-    const RecordDecl *RD = TTy->getDecl()->getDefinition();
-
-    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-    SmallVector <std::pair<uint64_t, llvm::MDNode*>, 4> Fields;
-    // To reduce the size of MDNode for a given struct type, we only output
-    // once for all the fields with the same scalar types.
-    // Offsets for scalar fields in the type DAG are not used.
-    llvm::SmallSet <llvm::MDNode*, 4> ScalarFieldTypes;
-    unsigned idx = 0;
-    for (RecordDecl::field_iterator i = RD->field_begin(),
-         e = RD->field_end(); i != e; ++i, ++idx) {
-      QualType FieldQTy = i->getType();
-      llvm::MDNode *FieldNode;
-      if (isTBAAPathStruct(FieldQTy))
-        FieldNode = getTBAAStructTypeInfo(FieldQTy);
-      else {
-        FieldNode = getTBAAInfo(FieldQTy);
-        // Ignore this field if the type already exists.
-        if (ScalarFieldTypes.count(FieldNode))
-          continue;
-        ScalarFieldTypes.insert(FieldNode);
-       }
-      if (!FieldNode)
-        return StructTypeMetadataCache[Ty] = NULL;
-      Fields.push_back(std::make_pair(
-          Layout.getFieldOffset(idx) / Context.getCharWidth(), FieldNode));
-    }
-
-    // TODO: This is using the RTTI name. Is there a better way to get
-    // a unique string for a type?
-    SmallString<256> OutName;
-    llvm::raw_svector_ostream Out(OutName);
-    MContext.mangleCXXRTTIName(QualType(Ty, 0), Out);
-    Out.flush();
-    // Create the struct type node with a vector of pairs (offset, type).
-    return StructTypeMetadataCache[Ty] =
-      MDHelper.createTBAAStructTypeNode(OutName, Fields);
-  }
-
-  return StructMetadataCache[Ty] = NULL;
-}
-
-llvm::MDNode *
-CodeGenTBAA::getTBAAStructTagInfo(QualType BaseQTy, llvm::MDNode *AccessNode,
-                                  uint64_t Offset) {
-  if (!CodeGenOpts.StructPathTBAA)
-    return AccessNode;
-
-  const Type *BTy = Context.getCanonicalType(BaseQTy).getTypePtr();
-  TBAAPathTag PathTag = TBAAPathTag(BTy, AccessNode, Offset);
-  if (llvm::MDNode *N = StructTagMetadataCache[PathTag])
-    return N;
-
-  llvm::MDNode *BNode = 0;
-  if (isTBAAPathStruct(BaseQTy))
-    BNode  = getTBAAStructTypeInfo(BaseQTy);
-  if (!BNode)
-    return StructTagMetadataCache[PathTag] = AccessNode;
-
-  return StructTagMetadataCache[PathTag] =
-    MDHelper.createTBAAStructTagNode(BNode, AccessNode, Offset);
 }

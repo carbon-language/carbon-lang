@@ -1044,8 +1044,7 @@ CodeGenFunction::tryEmitAsConstant(DeclRefExpr *refExpr) {
 llvm::Value *CodeGenFunction::EmitLoadOfScalar(LValue lvalue) {
   return EmitLoadOfScalar(lvalue.getAddress(), lvalue.isVolatile(),
                           lvalue.getAlignment().getQuantity(),
-                          lvalue.getType(), lvalue.getTBAAInfo(),
-                          lvalue.getTBAABaseType(), lvalue.getTBAAOffset());
+                          lvalue.getType(), lvalue.getTBAAInfo());
 }
 
 static bool hasBooleanRepresentation(QualType Ty) {
@@ -1107,9 +1106,7 @@ llvm::MDNode *CodeGenFunction::getRangeForLoadFromType(QualType Ty) {
 
 llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
                                               unsigned Alignment, QualType Ty,
-                                              llvm::MDNode *TBAAInfo,
-                                              QualType TBAABaseType,
-                                              uint64_t TBAAOffset) {
+                                              llvm::MDNode *TBAAInfo) {
   // For better performance, handle vector loads differently.
   if (Ty->isVectorType()) {
     llvm::Value *V;
@@ -1161,11 +1158,8 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
     Load->setVolatile(true);
   if (Alignment)
     Load->setAlignment(Alignment);
-  if (TBAAInfo) {
-    llvm::MDNode *TBAAPath = CGM.getTBAAStructTagInfo(TBAABaseType, TBAAInfo,
-                                                      TBAAOffset);
-    CGM.DecorateInstruction(Load, TBAAPath);
-  }
+  if (TBAAInfo)
+    CGM.DecorateInstruction(Load, TBAAInfo);
 
   if ((SanOpts->Bool && hasBooleanRepresentation(Ty)) ||
       (SanOpts->Enum && Ty->getAs<EnumType>())) {
@@ -1223,8 +1217,7 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                                         bool Volatile, unsigned Alignment,
                                         QualType Ty,
                                         llvm::MDNode *TBAAInfo,
-                                        bool isInit, QualType TBAABaseType,
-                                        uint64_t TBAAOffset) {
+                                        bool isInit) {
   
   // Handle vectors differently to get better performance.
   if (Ty->isVectorType()) {
@@ -1275,19 +1268,15 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
   llvm::StoreInst *Store = Builder.CreateStore(Value, Addr, Volatile);
   if (Alignment)
     Store->setAlignment(Alignment);
-  if (TBAAInfo) {
-    llvm::MDNode *TBAAPath = CGM.getTBAAStructTagInfo(TBAABaseType, TBAAInfo,
-                                                      TBAAOffset);
-    CGM.DecorateInstruction(Store, TBAAPath);
-  }
+  if (TBAAInfo)
+    CGM.DecorateInstruction(Store, TBAAInfo);
 }
 
 void CodeGenFunction::EmitStoreOfScalar(llvm::Value *value, LValue lvalue,
                                         bool isInit) {
   EmitStoreOfScalar(value, lvalue.getAddress(), lvalue.isVolatile(),
                     lvalue.getAlignment().getQuantity(), lvalue.getType(),
-                    lvalue.getTBAAInfo(), isInit, lvalue.getTBAABaseType(),
-                    lvalue.getTBAAOffset());
+                    lvalue.getTBAAInfo(), isInit);
 }
 
 /// EmitLoadOfLValue - Given an expression that represents a value lvalue, this
@@ -2505,12 +2494,9 @@ LValue CodeGenFunction::EmitLValueForField(LValue base,
 
   llvm::Value *addr = base.getAddress();
   unsigned cvr = base.getVRQualifiers();
-  bool TBAAPath = CGM.getCodeGenOpts().StructPathTBAA;
   if (rec->isUnion()) {
     // For unions, there is no pointer adjustment.
     assert(!type->isReferenceType() && "union has reference member");
-    // TODO: handle path-aware TBAA for union.
-    TBAAPath = false;
   } else {
     // For structs, we GEP to the field that the record layout suggests.
     unsigned idx = CGM.getTypes().getCGRecordLayout(rec).getLLVMFieldNo(field);
@@ -2522,8 +2508,6 @@ LValue CodeGenFunction::EmitLValueForField(LValue base,
       if (cvr & Qualifiers::Volatile) load->setVolatile(true);
       load->setAlignment(alignment.getQuantity());
 
-      // Loading the reference will disable path-aware TBAA.
-      TBAAPath = false;
       if (CGM.shouldUseTBAA()) {
         llvm::MDNode *tbaa;
         if (mayAlias)
@@ -2557,16 +2541,6 @@ LValue CodeGenFunction::EmitLValueForField(LValue base,
 
   LValue LV = MakeAddrLValue(addr, type, alignment);
   LV.getQuals().addCVRQualifiers(cvr);
-  if (TBAAPath) {
-    const ASTRecordLayout &Layout =
-        getContext().getASTRecordLayout(field->getParent());
-    // Set the base type to be the base type of the base LValue and
-    // update offset to be relative to the base type.
-    LV.setTBAABaseType(base.getTBAABaseType());
-    LV.setTBAAOffset(base.getTBAAOffset() +
-                     Layout.getFieldOffset(field->getFieldIndex()) /
-                                           getContext().getCharWidth());
-  }
 
   // __weak attribute on a field is ignored.
   if (LV.getQuals().getObjCGCAttr() == Qualifiers::Weak)
