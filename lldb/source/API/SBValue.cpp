@@ -106,6 +106,12 @@ namespace {
             if (!m_opaque_sp)
                 return m_opaque_sp;
             lldb::ValueObjectSP value_sp = m_opaque_sp;
+            
+            Mutex::Locker api_lock;
+            Target *target = value_sp->GetTargetSP().get();
+            if (target)
+                api_lock.Lock(target->GetAPIMutex());
+            
             if (value_sp->GetDynamicValue(m_use_dynamic))
                 value_sp = value_sp->GetDynamicValue(m_use_dynamic);
             if (value_sp->GetSyntheticValue(m_use_synthetic))
