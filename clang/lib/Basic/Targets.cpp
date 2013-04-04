@@ -2730,6 +2730,14 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   case NoMMX3DNow:
     break;
   }
+
+  if (CPU >= CK_i486) {
+    Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_1");
+    Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_2");
+    Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4");
+  }
+  if (CPU >= CK_i586)
+    Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8");
 }
 
 bool X86TargetInfo::hasFeature(StringRef Feature) const {
