@@ -931,10 +931,6 @@ static void checkConfigMacro(Preprocessor &PP, StringRef ConfigMacro,
       if (FID.isInvalid())
         continue;
 
-      const llvm::MemoryBuffer *Buffer = SourceMgr.getBuffer(FID);
-      if (!Buffer)
-        continue;
-
       // We only care about the predefines buffer.
       if (FID != PP.getPredefinesFileID())
         continue;
@@ -962,10 +958,6 @@ static void checkConfigMacro(Preprocessor &PP, StringRef ConfigMacro,
          Def = Def.getPreviousDefinition()) {
     FileID FID = SourceMgr.getFileID(Def.getLocation());
     if (FID.isInvalid())
-      continue;
-
-    const llvm::MemoryBuffer *Buffer = SourceMgr.getBuffer(FID);
-    if (!Buffer)
       continue;
 
     // We only care about the predefines buffer.
