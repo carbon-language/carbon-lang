@@ -1018,8 +1018,8 @@ possible, it transforms the individual ``alloca`` instructions into nice clean
 scalar SSA form.
 
 This combines a simple scalar replacement of aggregates algorithm with the
-:ref:`mem2reg <passes-mem2reg>` algorithm because often interact, especially
-for C++ programs.  As such, iterating between ``scalarrepl``, then
+:ref:`mem2reg <passes-mem2reg>` algorithm because they often interact,
+especially for C++ programs.  As such, iterating between ``scalarrepl``, then
 :ref:`mem2reg <passes-mem2reg>` until we run out of things to promote works
 well.
 
