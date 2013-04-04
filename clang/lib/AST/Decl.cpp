@@ -866,6 +866,10 @@ bool NamedDecl::isLinkageValid() const {
     Linkage(CachedLinkage);
 }
 
+bool NamedDecl::hasExternalLinkageUncached() const {
+  return getLVForDecl(this, LVForExplicitValue).getLinkage() == ExternalLinkage;
+}
+
 Linkage NamedDecl::getLinkage() const {
   if (HasCachedLinkage)
     return Linkage(CachedLinkage);

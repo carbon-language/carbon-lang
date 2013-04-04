@@ -1614,7 +1614,19 @@ static void filterNonConflictingPreviousDecls(ASTContext &context,
       continue;
 
     // If either has no-external linkage, ignore the old declaration.
-    if (old->getLinkage() != ExternalLinkage || !decl->hasExternalLinkage())
+    // If this declaration would have external linkage if it were the first
+    // declaration of this name, then it may in fact be a redeclaration of
+    // some hidden declaration, so include those too. We don't need to worry
+    // about some previous visible declaration giving this declaration external
+    // linkage, because in that case, we'll mark this declaration as a redecl
+    // of the visible decl, and that decl will already be a redecl of the
+    // hidden declaration if that's appropriate.
+    //
+    // Don't cache this linkage computation, because it's not yet correct: we
+    // may later give this declaration a previous declaration which changes
+    // its linkage.
+    if (old->getLinkage() != ExternalLinkage ||
+        !decl->hasExternalLinkageUncached())
       filter.erase();
   }
 
