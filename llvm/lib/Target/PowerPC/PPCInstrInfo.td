@@ -524,11 +524,11 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
   }
 }
 
-// The direct BCL used by the SjLj setjmp code.
+// The unconditional BCL used by the SjLj setjmp code.
 let isCall = 1, hasCtrlDep = 1, isCodeGenOnly = 1, PPC970_Unit = 7 in {
   let Defs = [LR], Uses = [RM] in {
-    def BCL  : BForm_2<16, 20, 31, 0, 1, (outs), (ins condbrtarget:$dst),
-                       "bcl 20, 31, $dst">;
+    def BCLalways  : BForm_2<16, 20, 31, 0, 1, (outs), (ins condbrtarget:$dst),
+                            "bcl 20, 31, $dst">;
   }
 }
 

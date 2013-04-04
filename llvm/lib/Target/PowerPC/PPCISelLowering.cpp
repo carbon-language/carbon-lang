@@ -6080,7 +6080,7 @@ PPCTargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
   }
 
   // Setup
-  MIB = BuildMI(*thisMBB, MI, DL, TII->get(PPC::BCL)).addMBB(mainMBB);
+  MIB = BuildMI(*thisMBB, MI, DL, TII->get(PPC::BCLalways)).addMBB(mainMBB);
   MIB.addRegMask(PPCRegInfo->getNoPreservedMask());
 
   BuildMI(*thisMBB, MI, DL, TII->get(PPC::LI), restoreDstReg).addImm(1);

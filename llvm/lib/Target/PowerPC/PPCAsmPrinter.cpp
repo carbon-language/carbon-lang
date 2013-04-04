@@ -914,7 +914,7 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
       // mflr r0
       OutStreamer.EmitInstruction(MCInstBuilder(PPC::MFLR).addReg(PPC::R0));
       // bcl 20, 31, AnonSymbol
-      OutStreamer.EmitInstruction(MCInstBuilder(PPC::BCL).addExpr(Anon));
+      OutStreamer.EmitInstruction(MCInstBuilder(PPC::BCLalways).addExpr(Anon));
       OutStreamer.EmitLabel(AnonSymbol);
       // mflr r11
       OutStreamer.EmitInstruction(MCInstBuilder(PPC::MFLR).addReg(PPC::R11));
