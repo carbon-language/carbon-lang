@@ -924,6 +924,9 @@ def BR_JT32 : PseudoInstXCore<(outs), (ins InlineJT32:$t, GRRegs:$i),
                               "bru $i\n$t",
                               [(XCoreBR_JT32 tjumptable:$t, GRRegs:$i)]>;
 
+let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1 in
+def BRU_1r : _F1R<0b001010, (outs), (ins GRRegs:$a), "bru $a", []>;
+
 let Defs=[SP], neverHasSideEffects=1 in
 def SETSP_1r : _F1R<0b001011, (outs), (ins GRRegs:$a), "set sp, $a", []>;
 
