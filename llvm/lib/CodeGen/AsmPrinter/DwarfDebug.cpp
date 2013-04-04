@@ -1791,7 +1791,14 @@ void DwarfDebug::emitDIE(DIE *Die, std::vector<DIEAbbrev *> *Abbrevs) {
         DwarfUnits &Holder = useSplitDwarf() ? SkeletonHolder : InfoHolder;
         Addr += Holder.getCUOffset(Origin->getCompileUnit());
       }
-      Asm->EmitInt32(Addr);
+      // DWARF4: References that use the attribute form DW_FORM_ref_addr are
+      // specified to be four bytes in the DWARF 32-bit format and eight bytes
+      // in the DWARF 64-bit format, while DWARF Version 2 specifies that such
+      // references have the same size as an address on the target system.
+      // Our current version is version 2.
+      Asm->OutStreamer.EmitIntValue(Addr,
+          Form == dwarf::DW_FORM_ref_addr ?
+          Asm->getDataLayout().getPointerSize() : 4);
       break;
     }
     case dwarf::DW_AT_ranges: {

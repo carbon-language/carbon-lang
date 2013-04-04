@@ -310,6 +310,12 @@ void DIEEntry::EmitValue(AsmPrinter *AP, unsigned Form) const {
   AP->EmitInt32(Entry->getOffset());
 }
 
+unsigned DIEEntry::SizeOf(AsmPrinter *AP, unsigned Form) const {
+  if (Form == dwarf::DW_FORM_ref_addr)
+    return AP->getDataLayout().getPointerSize();
+  return sizeof(int32_t);
+}
+
 #ifndef NDEBUG
 void DIEEntry::print(raw_ostream &O) {
   O << format("Die: 0x%lx", (long)(intptr_t)Entry);
