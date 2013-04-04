@@ -3331,8 +3331,19 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
   case Instruction::AShr:
   case Instruction::And:
   case Instruction::Or:
-  case Instruction::Xor:
-    return TTI.getArithmeticInstrCost(I->getOpcode(), VectorTy);
+  case Instruction::Xor: {
+    // Certain instructions can be cheaper to vectorize if they have a constant
+    // second vector operand. One example of this are shifts on x86.
+    TargetTransformInfo::OperandValueKind Op1VK =
+      TargetTransformInfo::OK_AnyValue;
+    TargetTransformInfo::OperandValueKind Op2VK =
+      TargetTransformInfo::OK_AnyValue;
+
+    if (isa<ConstantInt>(I->getOperand(1)))
+      Op2VK = TargetTransformInfo::OK_UniformConstantValue;
+
+    return TTI.getArithmeticInstrCost(I->getOpcode(), VectorTy, Op1VK, Op2VK);
+  }
   case Instruction::Select: {
     SelectInst *SI = cast<SelectInst>(I);
     const SCEV *CondSCEV = SE->getSCEV(SI->getCondition());
