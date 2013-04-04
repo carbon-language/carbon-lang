@@ -407,7 +407,7 @@ SymbolFileDWARF::InitializeObject()
 bool
 SymbolFileDWARF::SupportedVersion(uint16_t version)
 {
-    return version == 2 || version == 3;
+    return version == 2 || version == 3 || version == 4;
 }
 
 uint32_t
