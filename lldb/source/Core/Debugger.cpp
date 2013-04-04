@@ -102,6 +102,8 @@ g_language_enumerators[] =
     "{, ${frame.pc}}"\
     MODULE_WITH_FUNC\
     FILE_AND_LINE\
+    "{, name = '${thread.name}}"\
+    "{, queue = '${thread.queue}}"\
     "{, stop reason = ${thread.stop-reason}}"\
     "{\\nReturn value: ${thread.return-value}}"\
     "\\n"
