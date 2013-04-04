@@ -285,14 +285,11 @@ lldb_private::formatters::NSArrayISyntheticFrontEnd::GetChildAtIndex (size_t idx
     if (!process_sp)
         return lldb::ValueObjectSP();
     Error error;
-    object_at_idx = process_sp->ReadPointerFromMemory(object_at_idx, error);
     if (error.Fail())
         return lldb::ValueObjectSP();
-    StreamString expr;
-    expr.Printf("(id)%" PRIu64,object_at_idx);
     StreamString idx_name;
     idx_name.Printf("[%zu]",idx);
-    lldb::ValueObjectSP retval_sp = ValueObject::CreateValueObjectFromExpression(idx_name.GetData(), expr.GetData(), m_exe_ctx_ref);
+    lldb::ValueObjectSP retval_sp = ValueObject::CreateValueObjectFromAddress(idx_name.GetData(), object_at_idx, m_exe_ctx_ref, m_id_type);
     m_children.push_back(retval_sp);
     return retval_sp;
 }
