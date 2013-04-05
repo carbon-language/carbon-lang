@@ -284,7 +284,7 @@ private:
                                   bool(*CheckRefState)(const RefState*)) const;
 
   // Used to suppress warnings if they are not related to the tracked family
-  // (derived from AllocDeallocStmt).
+  // (derived from Sym or AllocDeallocStmt).
   bool isTrackedFamily(AllocationFamily Family) const;
   bool isTrackedFamily(CheckerContext &C, const Stmt *AllocDeallocStmt) const;
   bool isTrackedFamily(CheckerContext &C, SymbolRef Sym) const;
@@ -1058,7 +1058,8 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
     }
   }
 
-  AllocationFamily Family = RsBase ? RsBase->getAllocationFamily() : AF_None;
+  AllocationFamily Family = RsBase ? RsBase->getAllocationFamily()
+                                   : getAllocationFamily(C, ParentExpr);
   // Normal free.
   if (Hold)
     return State->set<RegionState>(SymBase,
@@ -1083,7 +1084,7 @@ bool MallocChecker::isTrackedFamily(AllocationFamily Family) const {
     return true;
   }
   case AF_None: {
-    return true;
+    llvm_unreachable("no family");
   }
   }
   llvm_unreachable("unhandled family");
@@ -1095,10 +1096,10 @@ bool MallocChecker::isTrackedFamily(CheckerContext &C,
 }
 
 bool MallocChecker::isTrackedFamily(CheckerContext &C, SymbolRef Sym) const {
-  const RefState *RS = C.getState()->get<RegionState>(Sym);
 
-  return RS ? isTrackedFamily(RS->getAllocationFamily()) 
-            : isTrackedFamily(AF_None);
+  const RefState *RS = C.getState()->get<RegionState>(Sym);
+  assert(RS);
+  return isTrackedFamily(RS->getAllocationFamily());
 }
 
 bool MallocChecker::SummarizeValue(raw_ostream &os, SVal V) {
