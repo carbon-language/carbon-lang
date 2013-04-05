@@ -58,10 +58,12 @@ StatementMatcher makeCastSequenceMatcher() {
     );
 
   return castExpr(
-           unless(hasAncestor(explicitCastExpr())),
            anyOf(
-             hasDescendant(ImplicitCastToNull),
-             ImplicitCastToNull
-           )
+             ImplicitCastToNull,
+             explicitCastExpr(
+               hasDescendant(ImplicitCastToNull)
+             )
+           ),
+           unless(hasAncestor(explicitCastExpr()))
          ).bind(CastSequence);
 }
