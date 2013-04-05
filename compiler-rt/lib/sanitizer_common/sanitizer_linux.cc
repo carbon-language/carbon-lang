@@ -651,8 +651,9 @@ int internal_sigaltstack(const struct sigaltstack *ss,
 ThreadLister::ThreadLister(int pid)
   : pid_(pid),
     descriptor_(-1),
+    buffer_(4096),
     error_(true),
-    entry_((linux_dirent *)buffer_),
+    entry_((struct linux_dirent *)buffer_.data()),
     bytes_read_(0) {
   char task_directory_path[80];
   internal_snprintf(task_directory_path, sizeof(task_directory_path),
@@ -700,8 +701,8 @@ bool ThreadLister::GetDirectoryEntries() {
   CHECK_GE(descriptor_, 0);
   CHECK_NE(error_, true);
   bytes_read_ = internal_getdents(descriptor_,
-                                  (struct linux_dirent *)buffer_,
-                                  sizeof(buffer_));
+                                  (struct linux_dirent *)buffer_.data(),
+                                  buffer_.size());
   if (bytes_read_ < 0) {
     Report("Can't read directory entries from /proc/%d/task.\n", pid_);
     error_ = true;
@@ -709,7 +710,7 @@ bool ThreadLister::GetDirectoryEntries() {
   } else if (bytes_read_ == 0) {
     return false;
   }
-  entry_ = (struct linux_dirent *)buffer_;
+  entry_ = (struct linux_dirent *)buffer_.data();
   return true;
 }
 

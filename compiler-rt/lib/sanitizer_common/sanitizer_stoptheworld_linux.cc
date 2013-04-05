@@ -148,27 +148,24 @@ void ThreadSuspender::KillAllThreads() {
 }
 
 bool ThreadSuspender::SuspendAllThreads() {
-  void *mem = InternalAlloc(sizeof(ThreadLister));
-  ThreadLister *thread_lister = new(mem) ThreadLister(pid_);
+  ThreadLister thread_lister(pid_);
   bool added_threads;
   do {
     // Run through the directory entries once.
     added_threads = false;
-    pid_t tid = thread_lister->GetNextTID();
+    pid_t tid = thread_lister.GetNextTID();
     while (tid >= 0) {
       if (SuspendThread(tid))
         added_threads = true;
-      tid = thread_lister->GetNextTID();
+      tid = thread_lister.GetNextTID();
     }
-    if (thread_lister->error()) {
+    if (thread_lister.error()) {
       // Detach threads and fail.
       ResumeAllThreads();
-      InternalFree(mem);
       return false;
     }
-    thread_lister->Reset();
+    thread_lister.Reset();
   } while (added_threads);
-  InternalFree(mem);
   return true;
 }
 
