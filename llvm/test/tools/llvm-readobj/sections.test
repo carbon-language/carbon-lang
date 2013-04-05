@@ -80,7 +80,7 @@ MACHO:      Sections [
 MACHO-NEXT:   Section {
 MACHO-NEXT:     Index: 0
 MACHO-NEXT:     Name: __text (
-MACHO-NEXT:     Segment: __TEXT (
+MACHO-NEXT:     Segment: 
 MACHO-NEXT:     Address: 0x0
 MACHO-NEXT:     Size: 0x22
 MACHO-NEXT:     Offset: 324
