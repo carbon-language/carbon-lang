@@ -232,7 +232,7 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   Constant *Init = GV->getInitializer();
   if (!isa<ConstantArray>(Init) && !isa<ConstantDataArray>(Init))
     return 0;
-  
+
   uint64_t ArrayElementCount = Init->getType()->getArrayNumElements();
   if (ArrayElementCount > 1024) return 0;  // Don't blow up on huge arrays.
 

@@ -838,7 +838,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
             Value *NewFalseOp = NegVal;
             if (AddOp != TI)
               std::swap(NewTrueOp, NewFalseOp);
-            Value *NewSel = 
+            Value *NewSel =
               Builder->CreateSelect(CondVal, NewTrueOp,
                                     NewFalseOp, SI.getName() + ".p");
 
@@ -862,7 +862,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     Value *LHS, *RHS, *LHS2, *RHS2;
     if (SelectPatternFlavor SPF = MatchSelectPattern(&SI, LHS, RHS)) {
       if (SelectPatternFlavor SPF2 = MatchSelectPattern(LHS, LHS2, RHS2))
-        if (Instruction *R = FoldSPFofSPF(cast<Instruction>(LHS),SPF2,LHS2,RHS2, 
+        if (Instruction *R = FoldSPFofSPF(cast<Instruction>(LHS),SPF2,LHS2,RHS2,
                                           SI, SPF, RHS))
           return R;
       if (SelectPatternFlavor SPF2 = MatchSelectPattern(RHS, LHS2, RHS2))
