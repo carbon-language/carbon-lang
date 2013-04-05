@@ -408,6 +408,10 @@ namespace {
       KnownSafe(false), IsTailCallRelease(false), ReleaseMetadata(0) {}
 
     void clear();
+    
+    bool IsTrackingImpreciseReleases() {
+      return ReleaseMetadata != 0;
+    }
   };
 }
 
@@ -1746,7 +1750,9 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
   bool NestingDetected = false;
   InstructionClass Class = GetInstructionClass(Inst);
   const Value *Arg = 0;
-
+  
+  DEBUG(dbgs() << "Class: " << Class << "\n");
+  
   switch (Class) {
   case IC_Release: {
     Arg = GetObjCArg(Inst);
@@ -1794,7 +1800,10 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     case S_Release:
     case S_MovableRelease:
     case S_Use:
-      S.RRI.ReverseInsertPts.clear();
+      // If OldSeq is not S_Use or OldSeq is S_Use and we are tracking an
+      // imprecise release, clear our reverse insertion points.
+      if (OldSeq != S_Use || S.RRI.IsTrackingImpreciseReleases())
+        S.RRI.ReverseInsertPts.clear();
       // FALL THROUGH
     case S_CanRelease:
       // Don't do retain+release tracking for IC_RetainRV, because it's
@@ -2017,14 +2026,19 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
 
     PtrState &S = MyStates.getPtrTopDownState(Arg);
     S.ClearKnownPositiveRefCount();
-
-    switch (S.GetSeq()) {
+    
+    Sequence OldSeq = S.GetSeq();
+    
+    MDNode *ReleaseMetadata = Inst->getMetadata(ImpreciseReleaseMDKind);
+    
+    switch (OldSeq) {
     case S_Retain:
     case S_CanRelease:
-      S.RRI.ReverseInsertPts.clear();
+      if (OldSeq == S_Retain || ReleaseMetadata != 0)
+        S.RRI.ReverseInsertPts.clear();
       // FALL THROUGH
     case S_Use:
-      S.RRI.ReleaseMetadata = Inst->getMetadata(ImpreciseReleaseMDKind);
+      S.RRI.ReleaseMetadata = ReleaseMetadata;
       S.RRI.IsTailCallRelease = cast<CallInst>(Inst)->isTailCall();
       Releases[Inst] = S.RRI;
       ANNOTATE_TOPDOWN(Inst, Arg, S.GetSeq(), S_None);

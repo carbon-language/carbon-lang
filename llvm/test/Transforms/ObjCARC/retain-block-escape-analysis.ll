@@ -23,6 +23,23 @@ define void @bitcasttest(i8* %storage, void (...)* %block)  {
 ; CHECK: define void @bitcasttest
 entry:
   %t1 = bitcast void (...)* %block to i8*
+; CHECK: tail call i8* @objc_retain
+  %t2 = tail call i8* @objc_retain(i8* %t1)
+; CHECK: tail call i8* @objc_retainBlock
+  %t3 = tail call i8* @objc_retainBlock(i8* %t1), !clang.arc.copy_on_escape !0
+  %t4 = bitcast i8* %storage to void (...)**
+  %t5 = bitcast i8* %t3 to void (...)*
+  store void (...)* %t5, void (...)** %t4, align 8
+; CHECK: call void @objc_release
+  call void @objc_release(i8* %t1)
+  ret void
+; CHECK: }
+}
+
+define void @bitcasttest_a(i8* %storage, void (...)* %block)  {
+; CHECK: define void @bitcasttest_a
+entry:
+  %t1 = bitcast void (...)* %block to i8*
 ; CHECK-NOT: tail call i8* @objc_retain
   %t2 = tail call i8* @objc_retain(i8* %t1)
 ; CHECK: tail call i8* @objc_retainBlock
@@ -31,12 +48,32 @@ entry:
   %t5 = bitcast i8* %t3 to void (...)*
   store void (...)* %t5, void (...)** %t4, align 8
 ; CHECK-NOT: call void @objc_release
-  call void @objc_release(i8* %t1)
+  call void @objc_release(i8* %t1), !clang.imprecise_release !0
   ret void
+; CHECK: }
 }
 
 define void @geptest(void (...)** %storage_array, void (...)* %block)  {
 ; CHECK: define void @geptest
+entry:
+  %t1 = bitcast void (...)* %block to i8*
+; CHECK: tail call i8* @objc_retain
+  %t2 = tail call i8* @objc_retain(i8* %t1)
+; CHECK: tail call i8* @objc_retainBlock
+  %t3 = tail call i8* @objc_retainBlock(i8* %t1), !clang.arc.copy_on_escape !0
+  %t4 = bitcast i8* %t3 to void (...)*
+  
+  %storage = getelementptr inbounds void (...)** %storage_array, i64 0
+  
+  store void (...)* %t4, void (...)** %storage, align 8
+; CHECK: call void @objc_release
+  call void @objc_release(i8* %t1)
+  ret void
+; CHECK: }
+}
+
+define void @geptest_a(void (...)** %storage_array, void (...)* %block)  {
+; CHECK: define void @geptest_a
 entry:
   %t1 = bitcast void (...)* %block to i8*
 ; CHECK-NOT: tail call i8* @objc_retain
@@ -49,13 +86,32 @@ entry:
   
   store void (...)* %t4, void (...)** %storage, align 8
 ; CHECK-NOT: call void @objc_release
-  call void @objc_release(i8* %t1)
+  call void @objc_release(i8* %t1), !clang.imprecise_release !0
   ret void
+; CHECK: }
 }
 
 define void @selecttest(void (...)** %store1, void (...)** %store2,
                         void (...)* %block) {
 ; CHECK: define void @selecttest
+entry:
+  %t1 = bitcast void (...)* %block to i8*
+; CHECK: tail call i8* @objc_retain
+  %t2 = tail call i8* @objc_retain(i8* %t1)
+; CHECK: tail call i8* @objc_retainBlock
+  %t3 = tail call i8* @objc_retainBlock(i8* %t1), !clang.arc.copy_on_escape !0
+  %t4 = bitcast i8* %t3 to void (...)*
+  %store = select i1 undef, void (...)** %store1, void (...)** %store2
+  store void (...)* %t4, void (...)** %store, align 8
+; CHECK: call void @objc_release
+  call void @objc_release(i8* %t1)
+  ret void
+; CHECK: }
+}
+
+define void @selecttest_a(void (...)** %store1, void (...)** %store2,
+                          void (...)* %block) {
+; CHECK: define void @selecttest_a
 entry:
   %t1 = bitcast void (...)* %block to i8*
 ; CHECK-NOT: tail call i8* @objc_retain
@@ -66,14 +122,45 @@ entry:
   %store = select i1 undef, void (...)** %store1, void (...)** %store2
   store void (...)* %t4, void (...)** %store, align 8
 ; CHECK-NOT: call void @objc_release
-  call void @objc_release(i8* %t1)
+  call void @objc_release(i8* %t1), !clang.imprecise_release !0
   ret void
+; CHECK: }
 }
 
 define void @phinodetest(void (...)** %storage1,
                          void (...)** %storage2,
                          void (...)* %block) {
 ; CHECK: define void @phinodetest
+entry:
+  %t1 = bitcast void (...)* %block to i8*
+; CHECK: tail call i8* @objc_retain
+  %t2 = tail call i8* @objc_retain(i8* %t1)
+; CHECK: tail call i8* @objc_retainBlock
+  %t3 = tail call i8* @objc_retainBlock(i8* %t1), !clang.arc.copy_on_escape !0
+  %t4 = bitcast i8* %t3 to void (...)*
+  br i1 undef, label %store1_set, label %store2_set
+; CHECK: store1_set:
+
+store1_set:
+  br label %end
+
+store2_set:
+  br label %end
+
+end:
+; CHECK: end:
+  %storage = phi void (...)** [ %storage1, %store1_set ], [ %storage2, %store2_set]
+  store void (...)* %t4, void (...)** %storage, align 8
+; CHECK: call void @objc_release
+  call void @objc_release(i8* %t1)
+  ret void
+; CHECK: }
+}
+
+define void @phinodetest_a(void (...)** %storage1,
+                           void (...)** %storage2,
+                           void (...)* %block) {
+; CHECK: define void @phinodetest_a
 entry:
   %t1 = bitcast void (...)* %block to i8*
 ; CHECK-NOT: tail call i8* @objc_retain
@@ -93,9 +180,10 @@ end:
   %storage = phi void (...)** [ %storage1, %store1_set ], [ %storage2, %store2_set]
   store void (...)* %t4, void (...)** %storage, align 8
 ; CHECK-NOT: call void @objc_release
-  call void @objc_release(i8* %t1)
+  call void @objc_release(i8* %t1), !clang.imprecise_release !0
   ret void
 }
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; This test makes sure that we do not hang clang when visiting a use ;
