@@ -135,7 +135,7 @@ ELF-NEXT:   }
 MACHO:      Sections [
 MACHO-NEXT:   Section {
 MACHO-NEXT:     Index: 0
-MACHO-NEXT:     Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
+MACHO-NEXT:     Name: __text (5F 5F 74 65 78 74 00
 MACHO-NEXT:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
 MACHO-NEXT:     Address: 0x0
 MACHO-NEXT:     Size: 0x22
