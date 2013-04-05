@@ -1535,6 +1535,9 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
       !Filter.CNewDeleteChecker)
     return;
 
+  if (!isTrackedFamily(C, Sym))
+    return;
+
   assert(N);
   if (!BT_Leak) {
     BT_Leak.reset(new BugType("Memory leak", "Memory Error"));
@@ -1560,13 +1563,10 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
     AllocationStmt = Exit->getCalleeContext()->getCallSite();
   else if (Optional<StmtPoint> SP = P.getAs<StmtPoint>())
     AllocationStmt = SP->getStmt();
-  if (AllocationStmt) {
+  if (AllocationStmt)
     LocUsedForUniqueing = PathDiagnosticLocation::createBegin(AllocationStmt,
                                               C.getSourceManager(),
                                               AllocNode->getLocationContext());
-    if (!isTrackedFamily(C, AllocationStmt))
-      return;
-  }
 
   SmallString<200> buf;
   llvm::raw_svector_ostream os(buf);
