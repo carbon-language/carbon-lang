@@ -110,11 +110,30 @@ void RegScavenger::addRegWithSubRegs(BitVector &BV, unsigned Reg) {
     BV.set(*SubRegs);
 }
 
-void RegScavenger::determineKillsAndDefs() {
-  assert(Tracking && "Must be tracking to determine kills and defs");
+void RegScavenger::forward() {
+  // Move ptr forward.
+  if (!Tracking) {
+    MBBI = MBB->begin();
+    Tracking = true;
+  } else {
+    assert(MBBI != MBB->end() && "Already past the end of the basic block!");
+    MBBI = llvm::next(MBBI);
+  }
+  assert(MBBI != MBB->end() && "Already at the end of the basic block!");
 
   MachineInstr *MI = MBBI;
-  assert(!MI->isDebugValue() && "Debug values have no kills or defs");
+
+  for (SmallVector<ScavengedInfo, 2>::iterator I = Scavenged.begin(),
+       IE = Scavenged.end(); I != IE; ++I) {
+    if (I->Restore != MI)
+      continue;
+
+    I->Reg = 0;
+    I->Restore = NULL;
+  }
+
+  if (MI->isDebugValue())
+    return;
 
   // Find out which registers are early clobbered, killed, defined, and marked
   // def-dead in this instruction.
@@ -148,54 +167,6 @@ void RegScavenger::determineKillsAndDefs() {
         addRegWithSubRegs(DefRegs, Reg);
     }
   }
-}
-
-void RegScavenger::unprocess() {
-  assert(Tracking && "Cannot unprocess because we're not tracking");
-
-  MachineInstr *MI = MBBI;
-  if (MI->isDebugValue())
-    return;
-
-  determineKillsAndDefs();
-
-  // Commit the changes.
-  setUsed(KillRegs);
-  setUnused(DefRegs);
-
-  if (MBBI == MBB->begin()) {
-    MBBI = MachineBasicBlock::iterator(NULL);
-    Tracking = false;
-  } else
-    --MBBI;
-}
-
-void RegScavenger::forward() {
-  // Move ptr forward.
-  if (!Tracking) {
-    MBBI = MBB->begin();
-    Tracking = true;
-  } else {
-    assert(MBBI != MBB->end() && "Already past the end of the basic block!");
-    MBBI = llvm::next(MBBI);
-  }
-  assert(MBBI != MBB->end() && "Already at the end of the basic block!");
-
-  MachineInstr *MI = MBBI;
-
-  for (SmallVector<ScavengedInfo, 2>::iterator I = Scavenged.begin(),
-       IE = Scavenged.end(); I != IE; ++I) {
-    if (I->Restore != MI)
-      continue;
-
-    I->Reg = 0;
-    I->Restore = NULL;
-  }
-
-  if (MI->isDebugValue())
-    return;
-
-  determineKillsAndDefs();
 
   // Verify uses and defs.
 #ifndef NDEBUG

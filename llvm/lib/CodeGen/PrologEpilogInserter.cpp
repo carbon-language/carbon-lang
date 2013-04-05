@@ -826,8 +826,6 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
       MachineInstr *MI = I;
       MachineBasicBlock::iterator J = llvm::next(I);
-      MachineBasicBlock::iterator P = I == BB->begin() ?
-        MachineBasicBlock::iterator(NULL) : llvm::prior(I);
 
       // RS should process this instruction before we might scavenge at this
       // location. This is because we might be replacing a virtual register
@@ -871,20 +869,8 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
       // problem because we need the spill code before I: Move I to just
       // prior to J.
       if (I != llvm::prior(J)) {
-        BB->splice(J, BB, I);
-
-        // Before we move I, we need to prepare the RS to visit I again.
-        // Specifically, RS will assert if it sees uses of registers that
-        // it believes are undefined. Because we have already processed
-        // register kills in I, when it visits I again, it will believe that
-        // those registers are undefined. To avoid this situation, unprocess
-        // the instruction I.
-        assert(RS->getCurrentPosition() == I &&
-          "The register scavenger has an unexpected position");
-        I = P;
-        RS->unprocess(P);
-
-        // RS->skipTo(I == BB->begin() ? NULL : llvm::prior(I));
+        BB->splice(J, BB, I++);
+        RS->skipTo(I == BB->begin() ? NULL : llvm::prior(I));
       } else
         ++I;
     }
