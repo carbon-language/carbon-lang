@@ -932,12 +932,6 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
       report.markInteresting(V);
       report.addVisitor(new UndefOrNullArgVisitor(R));
 
-      if (isa<SymbolicRegion>(R)) {
-        TrackConstraintBRVisitor *VI =
-          new TrackConstraintBRVisitor(loc::MemRegionVal(R), false);
-        report.addVisitor(VI);
-      }
-
       // If the contents are symbolic, find out when they became null.
       if (V.getAsLocSymbol()) {
         BugReporterVisitor *ConstraintTracker =
