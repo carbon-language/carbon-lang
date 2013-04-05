@@ -92,6 +92,9 @@ ObjCLanguageRuntime::LookupInCompleteClassCache (ConstString &name)
             m_complete_class_cache.erase(name);
     }
     
+    if (m_negative_complete_class_cache.count(name) > 0)
+        return TypeSP();
+    
     const ModuleList &modules = m_process->GetTarget().GetImages();
 
     SymbolContextList sc_list;
@@ -139,6 +142,7 @@ ObjCLanguageRuntime::LookupInCompleteClassCache (ConstString &name)
             }
         }
     }
+    m_negative_complete_class_cache.insert(name);
     return TypeSP();
 }
 

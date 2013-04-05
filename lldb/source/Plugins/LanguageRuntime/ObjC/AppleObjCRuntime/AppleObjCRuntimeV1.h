@@ -46,10 +46,12 @@ public:
             return m_valid;
         }
         
+        // v1 does not support tagged pointers
         virtual bool
-        IsTagged ()
+        GetTaggedPointerInfo (uint64_t* info_bits = NULL,
+                              uint64_t* value_bits = NULL)
         {
-            return false;   // v1 runtime does not support tagged pointers
+            return false;
         }
         
         virtual uint64_t

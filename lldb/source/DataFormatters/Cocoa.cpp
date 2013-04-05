@@ -321,12 +321,10 @@ lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& 
     
     if (!strcmp(class_name,"NSNumber") || !strcmp(class_name,"__NSCFNumber"))
     {
-        if (descriptor->IsTagged())
+        uint64_t value = 0;
+        uint64_t i_bits = 0;
+        if (descriptor->GetTaggedPointerInfo(&i_bits,&value))
         {
-            // we have a call to get info and value bits in the tagged descriptor. but we prefer not to cast and replicate them
-            int64_t value = (valobj_addr & ~0x0000000000000000FFL) >> 8;
-            uint64_t i_bits = (valobj_addr & 0xF0) >> 4;
-            
             switch (i_bits)
             {
                 case 0:
@@ -515,10 +513,9 @@ lldb_private::formatters::NSDateSummaryProvider (ValueObject& valobj, Stream& st
         strcmp(class_name,"__NSDate") == 0 ||
         strcmp(class_name,"__NSTaggedDate") == 0)
     {
-        if (descriptor->IsTagged())
+        uint64_t info_bits=0,value_bits = 0;
+        if (descriptor->GetTaggedPointerInfo(&info_bits,&value_bits))
         {
-            uint64_t info_bits = (valobj_addr & 0xF0ULL) >> 4;
-            uint64_t value_bits = (valobj_addr & ~0x0000000000000000FFULL) >> 8;
             date_value_bits = ((value_bits << 8) | (info_bits << 4));
             date_value = *((double*)&date_value_bits);
         }

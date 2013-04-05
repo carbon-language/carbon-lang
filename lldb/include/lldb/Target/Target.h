@@ -302,7 +302,8 @@ public:
         eBroadcastBitBreakpointChanged  = (1 << 0),
         eBroadcastBitModulesLoaded      = (1 << 1),
         eBroadcastBitModulesUnloaded    = (1 << 2),
-        eBroadcastBitWatchpointChanged  = (1 << 3)
+        eBroadcastBitWatchpointChanged  = (1 << 3),
+        eBroadcastBitSymbolsLoaded      = (1 << 4)
     };
     
     // These two functions fill out the Broadcaster interface:
@@ -666,6 +667,9 @@ public:
 
     void
     ModulesDidUnload (ModuleList &module_list);
+    
+    void
+    SymbolsDidLoad (ModuleList &module_list);
     
     //------------------------------------------------------------------
     /// Gets the module for the main executable.

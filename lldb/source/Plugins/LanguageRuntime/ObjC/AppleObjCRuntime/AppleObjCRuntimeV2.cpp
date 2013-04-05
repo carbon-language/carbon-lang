@@ -854,10 +854,12 @@ public:
         return true;    // any Objective-C v2 runtime class descriptor we vend is valid
     }
     
+    // a custom descriptor is used for tagged pointers
     virtual bool
-    IsTagged ()
+    GetTaggedPointerInfo (uint64_t* info_bits = NULL,
+                          uint64_t* value_bits = NULL)
     {
-        return false;   // we use a special class for tagged descriptors
+        return false;
     }
     
     virtual uint64_t
@@ -1530,9 +1532,14 @@ public:
     }
     
     virtual bool
-    IsTagged ()
+    GetTaggedPointerInfo (uint64_t* info_bits = NULL,
+                          uint64_t* value_bits = NULL)
     {
-        return true;   // we use this class to describe tagged pointers
+        if (info_bits)
+            *info_bits = GetInfoBits();
+        if (value_bits)
+            *value_bits = GetValueBits();
+        return true;
     }
     
     virtual uint64_t

@@ -237,7 +237,8 @@ public:
         eBroadcastBitBreakpointChanged  = (1 << 0),
         eBroadcastBitModulesLoaded      = (1 << 1),
         eBroadcastBitModulesUnloaded    = (1 << 2),
-        eBroadcastBitWatchpointChanged  = (1 << 3)
+        eBroadcastBitWatchpointChanged  = (1 << 3),
+        eBroadcastBitSymbolsLoaded      = (1 << 4)
     };
 
     //------------------------------------------------------------------

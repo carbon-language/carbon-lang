@@ -90,6 +90,7 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     SetEventName (eBroadcastBitModulesLoaded, "modules-loaded");
     SetEventName (eBroadcastBitModulesUnloaded, "modules-unloaded");
     SetEventName (eBroadcastBitWatchpointChanged, "watchpoint-changed");
+    SetEventName (eBroadcastBitSymbolsLoaded, "symbols-loaded");
     
     CheckInWithManager();
 
@@ -1123,6 +1124,23 @@ Target::ModulesDidLoad (ModuleList &module_list)
         // TODO: make event data that packages up the module_list
         BroadcastEvent (eBroadcastBitModulesLoaded, NULL);
     }
+}
+
+void
+Target::SymbolsDidLoad (ModuleList &module_list)
+{
+    if (module_list.GetSize() == 0)
+        return;
+    if (m_process_sp)
+    {
+        LanguageRuntime* runtime = m_process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+        if (runtime)
+        {
+            ObjCLanguageRuntime *objc_runtime = (ObjCLanguageRuntime*)runtime;
+            objc_runtime->SymbolsDidLoad(module_list);
+        }
+    }
+    BroadcastEvent(eBroadcastBitSymbolsLoaded, NULL);
 }
 
 void
