@@ -53,3 +53,21 @@ void radar13224271_caller()
 	radar13224271_callee(getTyVal(), value );
 	notNullArg(value); // no-warning
 }
+
+struct Foo {
+	int *ptr;
+	Foo(int *p)  {
+		*p = 1; // no-warning
+	}
+};
+void idc(int *p3) {
+  if (p3)
+    ;
+}
+int *retNull() {
+  return 0;
+}
+void test(int *p1, int *p2) {
+  idc(p1);
+	Foo f(p1);
+}
