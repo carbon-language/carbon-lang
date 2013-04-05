@@ -481,8 +481,7 @@ static StringRef parseSegmentOrSectionName(const char *P) {
   return StringRef(P, 16);
 }
 
-error_code MachOObjectFile::getSectionName(DataRefImpl DRI,
-                                           StringRef &Result) const {
+ArrayRef<char> MachOObjectFile::getSectionRawName(DataRefImpl DRI) const {
   if (is64BitLoadCommand(MachOObj.get(), DRI)) {
     LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
     unsigned SectionOffset = LCI.Offset + sizeof(macho::Segment64LoadCommand) +
@@ -490,7 +489,7 @@ error_code MachOObjectFile::getSectionName(DataRefImpl DRI,
     StringRef Data = MachOObj->getData(SectionOffset, sizeof(macho::Section64));
     const macho::Section64 *sec =
       reinterpret_cast<const macho::Section64*>(Data.data());
-    Result = parseSegmentOrSectionName(sec->Name);
+    return ArrayRef<char>(sec->Name, 16);
   } else {
     LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
     unsigned SectionOffset = LCI.Offset + sizeof(macho::SegmentLoadCommand) +
@@ -498,13 +497,19 @@ error_code MachOObjectFile::getSectionName(DataRefImpl DRI,
     StringRef Data = MachOObj->getData(SectionOffset, sizeof(macho::Section));
     const macho::Section *sec =
       reinterpret_cast<const macho::Section*>(Data.data());
-    Result = parseSegmentOrSectionName(sec->Name);
+    return ArrayRef<char>(sec->Name, 16);
   }
+}
+
+error_code MachOObjectFile::getSectionName(DataRefImpl DRI,
+                                           StringRef &Result) const {
+  ArrayRef<char> Raw = getSectionRawName(DRI);
+  Result = parseSegmentOrSectionName(Raw.data());
   return object_error::success;
 }
 
-error_code MachOObjectFile::getSectionFinalSegmentName(DataRefImpl Sec,
-                                                       StringRef &Res) const {
+ArrayRef<char>
+MachOObjectFile::getSectionRawFinalSegmentName(DataRefImpl Sec) const {
   if (is64BitLoadCommand(MachOObj.get(), Sec)) {
     LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(Sec.d.a);
     unsigned SectionOffset = LCI.Offset + sizeof(macho::Segment64LoadCommand) +
@@ -512,7 +517,7 @@ error_code MachOObjectFile::getSectionFinalSegmentName(DataRefImpl Sec,
     StringRef Data = MachOObj->getData(SectionOffset, sizeof(macho::Section64));
     const macho::Section64 *sec =
       reinterpret_cast<const macho::Section64*>(Data.data());
-    Res = parseSegmentOrSectionName(sec->SegmentName);
+    return ArrayRef<char>(sec->SegmentName, 16);
   } else {
     LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(Sec.d.a);
     unsigned SectionOffset = LCI.Offset + sizeof(macho::SegmentLoadCommand) +
@@ -520,9 +525,13 @@ error_code MachOObjectFile::getSectionFinalSegmentName(DataRefImpl Sec,
     StringRef Data = MachOObj->getData(SectionOffset, sizeof(macho::Section));
     const macho::Section *sec =
       reinterpret_cast<const macho::Section*>(Data.data());
-    Res = parseSegmentOrSectionName(sec->SegmentName);
+    return ArrayRef<char>(sec->SegmentName);
   }
-  return object_error::success;
+}
+
+StringRef MachOObjectFile::getSectionFinalSegmentName(DataRefImpl DRI) const {
+  ArrayRef<char> Raw = getSectionRawFinalSegmentName(DRI);
+  return parseSegmentOrSectionName(Raw.data());
 }
 
 error_code MachOObjectFile::getSectionAddress(DataRefImpl DRI,

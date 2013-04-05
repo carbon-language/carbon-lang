@@ -15,6 +15,7 @@
 #ifndef LLVM_OBJECT_MACHO_H
 #define LLVM_OBJECT_MACHO_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Object/MachOObject.h"
 #include "llvm/Object/ObjectFile.h"
@@ -47,7 +48,12 @@ public:
   // In a MachO file, sections have a segment name. This is used in the .o
   // files. They have a single segment, but this field specifies which segment
   // a section should be put in in the final object.
-  error_code getSectionFinalSegmentName(DataRefImpl Sec, StringRef &Res) const;
+  StringRef getSectionFinalSegmentName(DataRefImpl Sec) const;
+
+  // Names are stored as 16 bytes. These returns the raw 16 bytes without
+  // interpreting them as a C string.
+  ArrayRef<char> getSectionRawName(DataRefImpl Sec) const;
+  ArrayRef<char>getSectionRawFinalSegmentName(DataRefImpl Sec) const;
 
   MachOObject *getObject() { return MachOObj.get(); }
 

@@ -157,14 +157,6 @@ namespace {
   };
 }
 
-static StringRef parseSegmentOrSectionName(ArrayRef<char> P) {
-  if (P[15] == 0)
-    // Null terminated.
-    return StringRef(P.data());
-  // Not null terminated, so this is a 16 char string.
-  return StringRef(P.data(), 16);
-}
-
 static bool is64BitLoadCommand(const MachOObject *MachOObj, DataRefImpl DRI) {
   LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
   if (LCI.Command.Type == macho::LCT_Segment64)
@@ -181,8 +173,6 @@ static void getSection(const MachOObject *MachOObj,
     InMemoryStruct<macho::Section64> Sect;
     MachOObj->ReadSection64(LCI, DRI.d.b, Sect);
 
-    Section.Name        = ArrayRef<char>(Sect->Name);
-    Section.SegmentName = ArrayRef<char>(Sect->SegmentName);
     Section.Address     = Sect->Address;
     Section.Size        = Sect->Size;
     Section.Offset      = Sect->Offset;
@@ -196,8 +186,6 @@ static void getSection(const MachOObject *MachOObj,
     InMemoryStruct<macho::Section> Sect;
     MachOObj->ReadSection(LCI, DRI.d.b, Sect);
 
-    Section.Name        = Sect->Name;
-    Section.SegmentName = Sect->SegmentName;
     Section.Address     = Sect->Address;
     Section.Size        = Sect->Size;
     Section.Offset      = Sect->Offset;
@@ -270,15 +258,20 @@ void MachODumper::printSections() {
 
     MachOSection Section;
     getSection(MachO, SecI->getRawDataRefImpl(), Section);
+    DataRefImpl DR = SecI->getRawDataRefImpl();
+
     StringRef Name;
     if (error(SecI->getName(Name)))
         Name = "";
 
+    ArrayRef<char> RawName = Obj->getSectionRawName(DR);
+    StringRef SegmentName = Obj->getSectionFinalSegmentName(DR);
+    ArrayRef<char> RawSegmentName = Obj->getSectionRawFinalSegmentName(DR);
+
     DictScope SectionD(W, "Section");
     W.printNumber("Index", SectionIndex);
-    W.printBinary("Name", Name, Section.Name);
-    W.printBinary("Segment", parseSegmentOrSectionName(Section.SegmentName),
-                    Section.SegmentName);
+    W.printBinary("Name", Name, RawName);
+    W.printBinary("Segment", SegmentName, RawSegmentName);
     W.printHex   ("Address", Section.Address);
     W.printHex   ("Size", Section.Size);
     W.printNumber("Offset", Section.Offset);

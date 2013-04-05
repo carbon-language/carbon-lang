@@ -337,10 +337,9 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
         SectName != "__text")
       continue; // Skip non-text sections
 
-    StringRef SegmentName;
     DataRefImpl DR = Sections[SectIdx].getRawDataRefImpl();
-    if (MachOOF->getSectionFinalSegmentName(DR, SegmentName) ||
-        SegmentName != "__TEXT")
+    StringRef SegmentName = MachOOF->getSectionFinalSegmentName(DR);
+    if (SegmentName != "__TEXT")
       continue;
 
     // Insert the functions from the function starts segment into our map.
