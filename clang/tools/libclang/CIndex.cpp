@@ -723,6 +723,13 @@ bool CursorVisitor::VisitEnumConstantDecl(EnumConstantDecl *D) {
 }
 
 bool CursorVisitor::VisitDeclaratorDecl(DeclaratorDecl *DD) {
+  unsigned NumParamList = DD->getNumTemplateParameterLists();
+  for (unsigned i = 0; i < NumParamList; i++) {
+    TemplateParameterList* Params = DD->getTemplateParameterList(i);
+    if (VisitTemplateParameters(Params))
+      return true;
+  }
+
   if (TypeSourceInfo *TSInfo = DD->getTypeSourceInfo())
     if (Visit(TSInfo->getTypeLoc()))
       return true;
@@ -751,6 +758,13 @@ static int CompareCXXCtorInitializers(const void* Xp, const void *Yp) {
 }
 
 bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
+  unsigned NumParamList = ND->getNumTemplateParameterLists();
+  for (unsigned i = 0; i < NumParamList; i++) {
+    TemplateParameterList* Params = ND->getTemplateParameterList(i);
+    if (VisitTemplateParameters(Params))
+      return true;
+  }
+
   if (TypeSourceInfo *TSInfo = ND->getTypeSourceInfo()) {
     // Visit the function declaration's syntactic components in the order
     // written. This requires a bit of work.
