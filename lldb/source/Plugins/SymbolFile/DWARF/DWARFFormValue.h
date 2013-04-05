@@ -57,6 +57,7 @@ public:
     uint64_t            Reference(const DWARFCompileUnit* cu) const;
     uint64_t            Reference (dw_offset_t offset) const;
     bool                ResolveCompileUnitReferences(const DWARFCompileUnit* cu);
+    bool                Boolean() const { return m_value.value.uval != 0; }
     uint64_t            Unsigned() const { return m_value.value.uval; }
     void                SetUnsigned(uint64_t uval) { m_value.value.uval = uval; }
     int64_t             Signed() const { return m_value.value.sval; }

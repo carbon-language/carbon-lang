@@ -51,7 +51,7 @@ public:
 protected:
     lldb::ValueObjectSP
     GetReturnValueObjectSimple (lldb_private::Thread &thread,
-                    lldb_private::ClangASTType &ast_type) const;
+                                lldb_private::ClangASTType &ast_type) const;
     
 public:    
     virtual lldb::ValueObjectSP

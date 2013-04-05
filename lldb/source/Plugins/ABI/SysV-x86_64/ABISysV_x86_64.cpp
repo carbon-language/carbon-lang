@@ -470,7 +470,7 @@ ABISysV_x86_64::GetArgumentValues (Thread &thread,
     // For now, assume that the types in the AST values come from the Target's 
     // scratch AST.    
     
-    clang::ASTContext *ast_context = thread.CalculateTarget()->GetScratchClangASTContext()->getASTContext();
+    clang::ASTContext *ast = thread.CalculateTarget()->GetScratchClangASTContext()->getASTContext();
     
     // Extract the register context so we can read arguments from registers
     
@@ -522,7 +522,7 @@ ABISysV_x86_64::GetArgumentValues (Thread &thread,
                 
                 if (ClangASTContext::IsIntegerType (value_type, is_signed))
                 {
-                    size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
+                    size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast, value_type);
                     
                     ReadIntegerArgument(value->GetScalar(),
                                         bit_width, 
@@ -567,8 +567,8 @@ ABISysV_x86_64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
         return error;
     }
     
-    clang::ASTContext *ast_context = new_value_sp->GetClangAST();
-    if (!ast_context)
+    clang::ASTContext *ast = new_value_sp->GetClangAST();
+    if (!ast)
     {
         error.SetErrorString ("Null clang AST for return value.");
         return error;
@@ -608,7 +608,7 @@ ABISysV_x86_64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
             error.SetErrorString ("We don't support returning complex values at present");
         else
         {
-            size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
+            size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast, value_type);
             if (bit_width <= 64)
             {
                 const RegisterInfo *xmm0_info = reg_ctx->GetRegisterInfoByName("xmm0", 0);
@@ -645,140 +645,181 @@ ABISysV_x86_64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
 
 ValueObjectSP
 ABISysV_x86_64::GetReturnValueObjectSimple (Thread &thread,
-                                ClangASTType &ast_type) const
+                                            ClangASTType &ast_type) const
 {
     ValueObjectSP return_valobj_sp;
     Value value;
     
-    clang_type_t value_type = ast_type.GetOpaqueQualType();
-    if (!value_type) 
+    clang_type_t return_value_type = ast_type.GetOpaqueQualType();
+    if (!return_value_type)
         return return_valobj_sp;
     
-    clang::ASTContext *ast_context = ast_type.GetASTContext();
-    if (!ast_context)
+    clang::ASTContext *ast = ast_type.GetASTContext();
+    if (!ast)
         return return_valobj_sp;
 
-    value.SetContext (Value::eContextTypeClangType, value_type);
+    value.SetContext (Value::eContextTypeClangType, return_value_type);
     
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
         return return_valobj_sp;
     
-    bool is_signed;
-    bool is_complex;
-    uint32_t count;
+    const uint32_t type_flags = ClangASTContext::GetTypeInfo (return_value_type, ast, NULL);
+    if (type_flags & ClangASTContext::eTypeIsScalar)
+    {
+        value.SetValueType(Value::eValueTypeScalar);
 
-    if (ClangASTContext::IsIntegerType (value_type, is_signed))
-    {
-        // For now, assume that the types in the AST values come from the Target's 
-        // scratch AST.    
-        
-        
-        // Extract the register context so we can read arguments from registers
-        
-        size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
-        uint64_t raw_value = thread.GetRegisterContext()->ReadRegisterAsUnsigned(reg_ctx->GetRegisterInfoByName("rax", 0), 0);
-        
-        switch (bit_width)
+        bool success = false;
+        if (type_flags & ClangASTContext::eTypeIsInteger)
         {
-        default:
-        case 128:
-            // Scalar can't hold 128-bit literals, so we don't handle this
-            return return_valobj_sp;
-        case 64:
-            if (is_signed)
-                value.GetScalar() = (int64_t)(raw_value);
-            else
-                value.GetScalar() = (uint64_t)(raw_value);
-            break;
-        case 32:
-            if (is_signed)
-                value.GetScalar() = (int32_t)(raw_value & 0xffffffff);
-            else
-                value.GetScalar() = (uint32_t)(raw_value & 0xffffffff);
-            break;
-        case 16:
-            if (is_signed)
-                value.GetScalar() = (int16_t)(raw_value & 0xffff);
-            else
-                value.GetScalar() = (uint16_t)(raw_value & 0xffff);
-            break;
-        case 8:
-            if (is_signed)
-                value.GetScalar() = (int8_t)(raw_value & 0xff);
-            else
-                value.GetScalar() = (uint8_t)(raw_value & 0xff);
-            break;
-        }
-    }
-    else if (ClangASTContext::IsFloatingPointType(value_type, count, is_complex))
-    {
-        // Don't handle complex yet.
-        if (is_complex)
-            return return_valobj_sp;
-        
-        size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
-        if (bit_width <= 64)
-        {
-            const RegisterInfo *xmm0_info = reg_ctx->GetRegisterInfoByName("xmm0", 0);
-            RegisterValue xmm0_value;
-            if (reg_ctx->ReadRegister (xmm0_info, xmm0_value))
+            // Extract the register context so we can read arguments from registers
+            
+            const size_t byte_size = ClangASTType::GetClangTypeByteSize(ast, return_value_type);
+            uint64_t raw_value = thread.GetRegisterContext()->ReadRegisterAsUnsigned(reg_ctx->GetRegisterInfoByName("rax", 0), 0);
+            const bool is_signed = (type_flags & ClangASTContext::eTypeIsSigned) != 0;
+            switch (byte_size)
             {
-                DataExtractor data;
-                if (xmm0_value.GetData(data))
+            default:
+                break;
+
+            case sizeof(uint64_t):
+                if (is_signed)
+                    value.GetScalar() = (int64_t)(raw_value);
+                else
+                    value.GetScalar() = (uint64_t)(raw_value);
+                success = true;
+                break;
+
+            case sizeof(uint32_t):
+                if (is_signed)
+                    value.GetScalar() = (int32_t)(raw_value & UINT32_MAX);
+                else
+                    value.GetScalar() = (uint32_t)(raw_value & UINT32_MAX);
+                success = true;
+                break;
+
+            case sizeof(uint16_t):
+                if (is_signed)
+                    value.GetScalar() = (int16_t)(raw_value & UINT16_MAX);
+                else
+                    value.GetScalar() = (uint16_t)(raw_value & UINT16_MAX);
+                success = true;
+                break;
+
+            case sizeof(uint8_t):
+                if (is_signed)
+                    value.GetScalar() = (int8_t)(raw_value & UINT8_MAX);
+                else
+                    value.GetScalar() = (uint8_t)(raw_value & UINT8_MAX);
+                success = true;
+                break;
+            }
+        }
+        else if (type_flags & ClangASTContext::eTypeIsFloat)
+        {
+            if (type_flags & ClangASTContext::eTypeIsComplex)
+            {
+                // Don't handle complex yet.
+            }
+            else
+            {
+                const size_t byte_size = ClangASTType::GetClangTypeByteSize(ast, return_value_type);
+                if (byte_size <= sizeof(long double))
                 {
-                    lldb::offset_t offset = 0;
-                    switch (bit_width)
+                    const RegisterInfo *xmm0_info = reg_ctx->GetRegisterInfoByName("xmm0", 0);
+                    RegisterValue xmm0_value;
+                    if (reg_ctx->ReadRegister (xmm0_info, xmm0_value))
                     {
-                        default:
-                            return return_valobj_sp;
-                        case 32:
-                            value.GetScalar() = (float) data.GetFloat(&offset);
-                            break;
-                        case 64:
-                            value.GetScalar() = (double) data.GetDouble(&offset);
-                            break;
+                        DataExtractor data;
+                        if (xmm0_value.GetData(data))
+                        {
+                            lldb::offset_t offset = 0;
+                            if (byte_size == sizeof(float))
+                            {
+                                value.GetScalar() = (float) data.GetFloat(&offset);
+                                success = true;
+                            }
+                            else if (byte_size == sizeof(double))
+                            {
+                                value.GetScalar() = (double) data.GetDouble(&offset);
+                                success = true;
+                            }
+                            else if (byte_size == sizeof(long double))
+                            {
+                                // Don't handle long double since that can be encoded as 80 bit floats...
+                            }
+                        }
                     }
                 }
             }
         }
-        else if (bit_width == 128)
-        {
-            // FIXME: x86_64 returns long doubles in stmm0, which is in some 80 bit long double
-            // format, and so we'll have to write some code to convert that into 128 bit long doubles.
-//            const RegisterInfo *st0_info = reg_ctx->GetRegisterInfoByName("stmm0", 0);
-//            RegisterValue st0_value;
-//            if (reg_ctx->ReadRegister (st0_info, st0_value))
-//            {
-//                DataExtractor data;
-//                if (st0_value.GetData(data))
-//                {
-//                    uint32_t offset = 0;
-//                    value.GetScalar() = (long double) data.GetLongDouble (&offset);
-//                    return true;
-//                }
-//            }
-            
-            return return_valobj_sp;
-        }
+        
+        if (success)
+            return_valobj_sp = ValueObjectConstResult::Create (thread.GetStackFrameAtIndex(0).get(),
+                                                               ast_type.GetASTContext(),
+                                                               value,
+                                                               ConstString(""));
+
     }
-    else if (ClangASTContext::IsPointerType (value_type))
+    else if (type_flags & ClangASTContext::eTypeIsPointer)
     {
         unsigned rax_id = reg_ctx->GetRegisterInfoByName("rax", 0)->kinds[eRegisterKindLLDB];
         value.GetScalar() = (uint64_t)thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0);
+        value.SetValueType(Value::eValueTypeScalar);
+        return_valobj_sp = ValueObjectConstResult::Create (thread.GetStackFrameAtIndex(0).get(),
+                                                           ast_type.GetASTContext(),
+                                                           value,
+                                                           ConstString(""));
     }
-    else
+    else if (type_flags & ClangASTContext::eTypeIsVector)
     {
-        return return_valobj_sp;
+        const size_t byte_size = ClangASTType::GetClangTypeByteSize(ast, return_value_type);
+        if (byte_size > 0)
+        {
+
+            const RegisterInfo *altivec_reg = reg_ctx->GetRegisterInfoByName("ymm0", 0);
+            if (altivec_reg == NULL)
+            {
+                altivec_reg = reg_ctx->GetRegisterInfoByName("xmm0", 0);
+                if (altivec_reg == NULL)
+                    altivec_reg = reg_ctx->GetRegisterInfoByName("mm0", 0);
+            }
+            
+            if (altivec_reg)
+            {
+                if (byte_size <= altivec_reg->byte_size)
+                {
+                    ProcessSP process_sp (thread.GetProcess());
+                    if (process_sp)
+                    {
+                        std::unique_ptr<DataBufferHeap> heap_data_ap (new DataBufferHeap(byte_size, 0));
+                        const ByteOrder byte_order = process_sp->GetByteOrder();
+                        RegisterValue reg_value;
+                        if (reg_ctx->ReadRegister(altivec_reg, reg_value))
+                        {
+                            Error error;
+                            if (reg_value.GetAsMemoryData (altivec_reg,
+                                                           heap_data_ap->GetBytes(),
+                                                           heap_data_ap->GetByteSize(),
+                                                           byte_order,
+                                                           error))
+                            {
+                                DataExtractor data (DataBufferSP (heap_data_ap.release()),
+                                                    byte_order,
+                                                    process_sp->GetTarget().GetArchitecture().GetAddressByteSize());
+                                return_valobj_sp = ValueObjectConstResult::Create (&thread,
+                                                                                   ast,
+                                                                                   return_value_type,
+                                                                                   ConstString(""),
+                                                                                   data);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     
-    // If we get here, we have a valid Value, so make our ValueObject out of it:
-    
-    return_valobj_sp = ValueObjectConstResult::Create(
-                                    thread.GetStackFrameAtIndex(0).get(),
-                                    ast_type.GetASTContext(),
-                                    value,
-                                    ConstString(""));
     return return_valobj_sp;
 }
 
@@ -792,20 +833,20 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &ast_type
     if (return_valobj_sp)
         return return_valobj_sp;
     
-    clang_type_t ret_value_type = ast_type.GetOpaqueQualType();
-    if (!ret_value_type) 
+    clang_type_t return_value_type = ast_type.GetOpaqueQualType();
+    if (!return_value_type)
         return return_valobj_sp;
     
-    clang::ASTContext *ast_context = ast_type.GetASTContext();
-    if (!ast_context)
+    clang::ASTContext *ast = ast_type.GetASTContext();
+    if (!ast)
         return return_valobj_sp;
         
     RegisterContextSP reg_ctx_sp = thread.GetRegisterContext();
     if (!reg_ctx_sp)
         return return_valobj_sp;
         
-    size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, ret_value_type);
-    if (ClangASTContext::IsAggregateType(ret_value_type))
+    size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast, return_value_type);
+    if (ClangASTContext::IsAggregateType(return_value_type))
     {
         Target *target = exe_ctx.GetTargetPtr();
         bool is_memory = true;
@@ -838,7 +879,7 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &ast_type
             uint32_t fp_bytes = 0;       // Tracks how much of the xmm registers we've consumed so far
             uint32_t integer_bytes = 0;  // Tracks how much of the rax/rds registers we've consumed so far
             
-            uint32_t num_children = ClangASTContext::GetNumFields (ast_context, ret_value_type);
+            uint32_t num_children = ClangASTContext::GetNumFields (ast, return_value_type);
             
             // Since we are in the small struct regime, assume we are not in memory.
             is_memory = false;
@@ -851,8 +892,8 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &ast_type
                 bool is_complex;
                 uint32_t count;
                 
-                clang_type_t field_clang_type = ClangASTContext::GetFieldAtIndex (ast_context, ret_value_type, idx, name, &field_bit_offset, NULL, NULL);
-                size_t field_bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, field_clang_type);
+                clang_type_t field_clang_type = ClangASTContext::GetFieldAtIndex (ast, return_value_type, idx, name, &field_bit_offset, NULL, NULL);
+                size_t field_bit_width = ClangASTType::GetClangTypeBitWidth(ast, field_clang_type);
 
                 // If there are any unaligned fields, this is stored in memory.
                 if (field_bit_offset % field_bit_width != 0)
@@ -934,8 +975,8 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &ast_type
                             else
                             {
                                 uint64_t next_field_bit_offset = 0;
-                                clang_type_t next_field_clang_type = ClangASTContext::GetFieldAtIndex (ast_context,
-                                                                                                       ret_value_type, 
+                                clang_type_t next_field_clang_type = ClangASTContext::GetFieldAtIndex (ast,
+                                                                                                       return_value_type,
                                                                                                        idx + 1, 
                                                                                                        name, 
                                                                                                        &next_field_bit_offset,
@@ -960,8 +1001,8 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &ast_type
                             else
                             {
                                 uint64_t prev_field_bit_offset = 0;
-                                clang_type_t prev_field_clang_type = ClangASTContext::GetFieldAtIndex (ast_context, 
-                                                                                                       ret_value_type, 
+                                clang_type_t prev_field_clang_type = ClangASTContext::GetFieldAtIndex (ast,
+                                                                                                       return_value_type,
                                                                                                        idx - 1, 
                                                                                                        name, 
                                                                                                        &prev_field_bit_offset,
@@ -1031,8 +1072,8 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &ast_type
             {
                 // The result is in our data buffer.  Let's make a variable object out of it:
                 return_valobj_sp = ValueObjectConstResult::Create (&thread, 
-                                                                   ast_context, 
-                                                                   ret_value_type, 
+                                                                   ast,
+                                                                   return_value_type,
                                                                    ConstString(""),
                                                                    return_ext);
             }

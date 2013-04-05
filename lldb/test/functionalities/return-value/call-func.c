@@ -301,6 +301,21 @@ return_one_int_one_pointer (struct one_int_one_pointer value)
   return value;
 }
 
+typedef float vector_size_float32 __attribute__((__vector_size__(16)));
+typedef float ext_vector_size_float32 __attribute__((ext_vector_type(4)));
+
+vector_size_float32
+return_vector_size_float32 (vector_size_float32 value)
+{
+    return value;
+}
+
+ext_vector_size_float32
+return_ext_vector_size_float32 (ext_vector_size_float32 value)
+{
+    return value;
+}
+
 int 
 main ()
 {
@@ -351,6 +366,9 @@ main ()
   return_one_int_one_double_packed ((struct one_int_one_double_packed) {10, 20.0});
   return_one_int_one_long ((struct one_int_one_long) {10, 20});
 
+  return_vector_size_float32 (( vector_size_float32 ){1.5, 2.25, 4.125, 8.0625});
+  return_ext_vector_size_float32 ((ext_vector_size_float32){ 16.5, 32.25, 64.125, 128.0625});
+  
   return 0;
   
 }

@@ -211,6 +211,9 @@ class ReturnValueTestCase(TestBase):
         #self.return_and_test_struct_value ("return_one_int_one_double_packed")
         self.return_and_test_struct_value ("return_one_int_one_long")
 
+        self.return_and_test_struct_value ("return_vector_size_float32")
+        self.return_and_test_struct_value ("return_ext_vector_size_float32")
+
         
 if __name__ == '__main__':
     import atexit

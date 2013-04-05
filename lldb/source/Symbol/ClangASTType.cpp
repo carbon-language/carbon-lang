@@ -1227,6 +1227,12 @@ ClangASTType::GetClangTypeByteSize ()
 }
 
 uint64_t
+ClangASTType::GetClangTypeByteSize (clang::ASTContext *ast_context, clang_type_t clang_type)
+{
+    return (GetClangTypeBitWidth (ast_context, clang_type) + 7) / 8;
+}
+
+uint64_t
 ClangASTType::GetClangTypeBitWidth ()
 {
     return GetClangTypeBitWidth (m_ast, m_type);

@@ -110,6 +110,10 @@ public:
     uint64_t
     GetClangTypeByteSize ();
 
+    static uint64_t
+    GetClangTypeByteSize (clang::ASTContext *ast_context,
+                          lldb::clang_type_t clang_type);
+    
     uint64_t
     GetClangTypeBitWidth ();
 

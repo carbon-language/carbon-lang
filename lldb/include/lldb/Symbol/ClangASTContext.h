@@ -53,7 +53,11 @@ public:
         eTypeIsTemplate         = (1u << 14),
         eTypeIsTypedef          = (1u << 15),
         eTypeIsVector           = (1u << 16),
-        eTypeIsScalar           = (1u << 17)
+        eTypeIsScalar           = (1u << 17),
+        eTypeIsInteger          = (1u << 18),
+        eTypeIsFloat            = (1u << 19),
+        eTypeIsComplex          = (1u << 20),
+        eTypeIsSigned           = (1u << 21)
     };
 
     typedef void (*CompleteTagDeclCallback)(void *baton, clang::TagDecl *);
@@ -578,8 +582,8 @@ public:
     // Returns a mask containing bits from the ClangASTContext::eTypeXXX enumerations
     static uint32_t
     GetTypeInfo (lldb::clang_type_t clang_type, 
-                     clang::ASTContext *ast,                // The AST for clang_type (can be NULL)
-                     lldb::clang_type_t *pointee_or_element_type);  // (can be NULL)
+                 clang::ASTContext *ast,                // The AST for clang_type (can be NULL)
+                 lldb::clang_type_t *pointee_or_element_type);  // (can be NULL)
 
     static uint32_t
     GetNumChildren (clang::ASTContext *ast,
@@ -800,7 +804,8 @@ public:
 
     lldb::clang_type_t
     CreateArrayType (lldb::clang_type_t element_type,
-                     size_t element_count);
+                     size_t element_count,
+                     bool is_vector);
 
     //------------------------------------------------------------------
     // Tag Declarations

@@ -1589,12 +1589,12 @@ SymbolFileDWARF::ParseChildMembers
                                 break;
 
                             case DW_AT_accessibility: accessibility = DW_ACCESS_to_AccessType (form_value.Unsigned()); break;
-                            case DW_AT_artificial: is_artificial = form_value.Unsigned() != 0; break;
+                            case DW_AT_artificial: is_artificial = form_value.Boolean(); break;
                             case DW_AT_APPLE_property_name:      prop_name = form_value.AsCString(&get_debug_str_data()); break;
                             case DW_AT_APPLE_property_getter:    prop_getter_name = form_value.AsCString(&get_debug_str_data()); break;
                             case DW_AT_APPLE_property_setter:    prop_setter_name = form_value.AsCString(&get_debug_str_data()); break;
                             case DW_AT_APPLE_property_attribute: prop_attributes = form_value.Unsigned(); break;
-                            case DW_AT_external:                 is_external = form_value.Unsigned() != 0; break;
+                            case DW_AT_external:                 is_external = form_value.Boolean(); break;
 
                             default:
                             case DW_AT_declaration:
@@ -1837,7 +1837,7 @@ SymbolFileDWARF::ParseChildMembers
                                                                                            MakeUserID(parent_die->GetOffset()));
                                             }
                                             
-                                            member_clang_type = GetClangASTContext().CreateArrayType(member_array_element_type, 0);
+                                            member_clang_type = GetClangASTContext().CreateArrayType(member_array_element_type, 0, false);
                                         }
                                     }
                                 }
@@ -1969,7 +1969,7 @@ SymbolFileDWARF::ParseChildMembers
                                 accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned());
                                 break;
 
-                            case DW_AT_virtuality: is_virtual = form_value.Unsigned() != 0; break;
+                            case DW_AT_virtuality: is_virtual = form_value.Boolean(); break;
                             default:
                             case DW_AT_sibling:
                                 break;
@@ -3944,7 +3944,7 @@ SymbolFileDWARF::ParseChildParameters (const SymbolContext& sc,
                             case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
                             case DW_AT_name:        name = form_value.AsCString(&get_debug_str_data()); break;
                             case DW_AT_type:        param_type_die_offset = form_value.Reference(dwarf_cu); break;
-                            case DW_AT_artificial:  is_artificial = form_value.Unsigned() != 0; break;
+                            case DW_AT_artificial:  is_artificial = form_value.Boolean(); break;
                             case DW_AT_location:
     //                          if (form_value.BlockData())
     //                          {
@@ -5682,7 +5682,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     break;
 
                                 case DW_AT_declaration: 
-                                    is_forward_declaration = form_value.Unsigned() != 0; 
+                                    is_forward_declaration = form_value.Boolean();
                                     break;
 
                                 case DW_AT_APPLE_runtime_class: 
@@ -6041,7 +6041,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 case DW_AT_type:            encoding_uid = form_value.Reference(dwarf_cu); break;
                                 case DW_AT_byte_size:       byte_size = form_value.Unsigned(); break;
                                 case DW_AT_accessibility:   break; //accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
-                                case DW_AT_declaration:     break; //is_forward_declaration = form_value.Unsigned() != 0; break;
+                                case DW_AT_declaration:     break; //is_forward_declaration = form_value.Boolean(); break;
                                 case DW_AT_allocated:
                                 case DW_AT_associated:
                                 case DW_AT_bit_stride:
@@ -6159,11 +6159,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 case DW_AT_MIPS_linkage_name:   break; // mangled = form_value.AsCString(&get_debug_str_data()); break;
                                 case DW_AT_type:                type_die_offset = form_value.Reference(dwarf_cu); break;
                                 case DW_AT_accessibility:       accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
-                                case DW_AT_declaration:         break; // is_forward_declaration = form_value.Unsigned() != 0; break;
-                                case DW_AT_inline:              is_inline = form_value.Unsigned() != 0; break;
-                                case DW_AT_virtuality:          is_virtual = form_value.Unsigned() != 0;  break;
-                                case DW_AT_explicit:            is_explicit = form_value.Unsigned() != 0;  break; 
-                                case DW_AT_artificial:          is_artificial = form_value.Unsigned() != 0;  break; 
+                                case DW_AT_declaration:         break; // is_forward_declaration = form_value.Boolean(); break;
+                                case DW_AT_inline:              is_inline = form_value.Boolean(); break;
+                                case DW_AT_virtuality:          is_virtual = form_value.Boolean();  break;
+                                case DW_AT_explicit:            is_explicit = form_value.Boolean();  break;
+                                case DW_AT_artificial:          is_artificial = form_value.Boolean();  break;
                                         
 
                                 case DW_AT_external:
@@ -6600,6 +6600,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     int64_t first_index = 0;
                     uint32_t byte_stride = 0;
                     uint32_t bit_stride = 0;
+                    bool is_vector = false;
                     const size_t num_attributes = die->GetAttributes(this, dwarf_cu, NULL, attributes);
 
                     if (num_attributes > 0)
@@ -6625,8 +6626,9 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 case DW_AT_byte_size:       break; // byte_size = form_value.Unsigned(); break;
                                 case DW_AT_byte_stride:     byte_stride = form_value.Unsigned(); break;
                                 case DW_AT_bit_stride:      bit_stride = form_value.Unsigned(); break;
+                                case DW_AT_GNU_vector:      is_vector = form_value.Boolean(); break;
                                 case DW_AT_accessibility:   break; // accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
-                                case DW_AT_declaration:     break; // is_forward_declaration = form_value.Unsigned() != 0; break;
+                                case DW_AT_declaration:     break; // is_forward_declaration = form_value.Boolean(); break;
                                 case DW_AT_allocated:
                                 case DW_AT_associated:
                                 case DW_AT_data_location:
@@ -6661,7 +6663,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             {
                                 num_elements = *pos;
                                 clang_type = ast.CreateArrayType (array_element_type, 
-                                                                  num_elements);
+                                                                  num_elements,
+                                                                  is_vector);
                                 array_element_type = clang_type;
                                 array_element_bit_stride = num_elements ? array_element_bit_stride * num_elements : array_element_bit_stride;
                             }
@@ -7026,7 +7029,7 @@ SymbolFileDWARF::ParseVariableDIE
                     case DW_AT_linkage_name:
                     case DW_AT_MIPS_linkage_name: mangled = form_value.AsCString(&get_debug_str_data()); break;
                     case DW_AT_type:        type_uid = form_value.Reference(dwarf_cu); break;
-                    case DW_AT_external:    is_external = form_value.Unsigned() != 0; break;
+                    case DW_AT_external:    is_external = form_value.Boolean(); break;
                     case DW_AT_const_value:
                         // If we have already found a DW_AT_location attribute, ignore this attribute.
                         if (!has_explicit_location)
@@ -7097,7 +7100,7 @@ SymbolFileDWARF::ParseVariableDIE
                         }
                         break;
 
-                    case DW_AT_artificial:      is_artificial = form_value.Unsigned() != 0; break;
+                    case DW_AT_artificial:      is_artificial = form_value.Boolean(); break;
                     case DW_AT_accessibility:   break; //accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
                     case DW_AT_declaration:
                     case DW_AT_description:
