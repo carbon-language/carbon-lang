@@ -364,11 +364,10 @@ public:
   /// condition code in Cond.
   ///
   /// When successful, also return the latency in cycles from TrueReg,
-  /// FalseReg, and Cond to the destination register. The Cond latency should
-  /// compensate for a conditional branch being removed. For example, if a
-  /// conditional branch has a 3 cycle latency from the condition code read,
-  /// and a cmov instruction has a 2 cycle latency from the condition code
-  /// read, CondCycles should be returned as -1.
+  /// FalseReg, and Cond to the destination register. In most cases, a select
+  /// instruction will be 1 cycle, so CondCycles = TrueCycles = FalseCycles = 1
+  ///
+  /// Some x86 implementations have 2-cycle cmov instructions.
   ///
   /// @param MBB         Block where select instruction would be inserted.
   /// @param Cond        Condition returned by AnalyzeBranch.
