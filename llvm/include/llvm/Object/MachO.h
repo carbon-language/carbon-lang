@@ -19,11 +19,43 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Object/MachOObject.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 namespace object {
+
+namespace MachOFormat {
+  struct Section {
+    char Name[16];
+    char SegmentName[16];
+    support::ulittle32_t Address;
+    support::ulittle32_t Size;
+    support::ulittle32_t Offset;
+    support::ulittle32_t Align;
+    support::ulittle32_t RelocationTableOffset;
+    support::ulittle32_t NumRelocationTableEntries;
+    support::ulittle32_t Flags;
+    support::ulittle32_t Reserved1;
+    support::ulittle32_t Reserved2;
+  };
+
+  struct Section64 {
+    char Name[16];
+    char SegmentName[16];
+    support::ulittle64_t Address;
+    support::ulittle64_t Size;
+    support::ulittle32_t Offset;
+    support::ulittle32_t Align;
+    support::ulittle32_t RelocationTableOffset;
+    support::ulittle32_t NumRelocationTableEntries;
+    support::ulittle32_t Flags;
+    support::ulittle32_t Reserved1;
+    support::ulittle32_t Reserved2;
+    support::ulittle32_t Reserved3;
+  };
+}
 
 typedef MachOObject::LoadCommandInfo LoadCommandInfo;
 
@@ -127,8 +159,8 @@ private:
   void getSymbol64TableEntry(DataRefImpl DRI,
                           InMemoryStruct<macho::Symbol64TableEntry> &Res) const;
   void moveToNextSymbol(DataRefImpl &DRI) const;
-  const macho::Section *getSection(DataRefImpl DRI) const;
-  const macho::Section64 *getSection64(DataRefImpl DRI) const;
+  const MachOFormat::Section *getSection(DataRefImpl DRI) const;
+  const MachOFormat::Section64 *getSection64(DataRefImpl DRI) const;
   void getRelocation(DataRefImpl Rel,
                      InMemoryStruct<macho::RelocationEntry> &Res) const;
   std::size_t getSectionIndex(DataRefImpl Sec) const;
