@@ -1038,6 +1038,12 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &ast_type
             }
         }
         
+        
+        // FIXME: This is just taking a guess, rax may very well no longer hold the return storage location.
+        // If we are going to do this right, when we make a new frame we should check to see if it uses a memory
+        // return, and if we are at the first instruction and if so stash away the return location.  Then we would
+        // only return the memory return value if we know it is valid.
+        
         if (is_memory)
         {
             unsigned rax_id = reg_ctx_sp->GetRegisterInfoByName("rax", 0)->kinds[eRegisterKindLLDB];
