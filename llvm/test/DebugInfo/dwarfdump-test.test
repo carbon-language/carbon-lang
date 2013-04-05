@@ -8,11 +8,11 @@ RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test2.elf-x86-64 \
 RUN:   --address=0x4004e8 --functions | FileCheck %s -check-prefix MANY_CU_1
 RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test2.elf-x86-64 \
 RUN:   --address=0x4004f4 --functions | FileCheck %s -check-prefix MANY_CU_2
-RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test3.elf-x86-64 \
+RUN: llvm-dwarfdump "%p/Inputs/dwarfdump-test3.elf-x86-64 space" \
 RUN:   --address=0x640 --functions | FileCheck %s -check-prefix ABS_ORIGIN_1
-RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test3.elf-x86-64 \
+RUN: llvm-dwarfdump "%p/Inputs/dwarfdump-test3.elf-x86-64 space" \
 RUN:   --address=0x633 --functions | FileCheck %s -check-prefix INCLUDE_TEST_1
-RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test3.elf-x86-64 \
+RUN: llvm-dwarfdump "%p/Inputs/dwarfdump-test3.elf-x86-64 space" \
 RUN:   --address=0x62d --functions | FileCheck %s -check-prefix INCLUDE_TEST_2
 RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test4.elf-x86-64 \
 RUN:   --address=0x62c --functions \
