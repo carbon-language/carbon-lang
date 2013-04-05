@@ -1068,13 +1068,24 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
 }
 
 bool MallocChecker::isTrackedFamily(AllocationFamily Family) const {
-  if (Family == AF_Malloc &&
-    (!Filter.CMallocOptimistic && !Filter.CMallocPessimistic))
-    return false;
-
-  if ((Family == AF_CXXNew || Family == AF_CXXNewArray) &&
-    !Filter.CNewDeleteChecker)
-    return false;
+  switch (Family) {
+  case AF_Malloc: {
+    if (!Filter.CMallocOptimistic && !Filter.CMallocPessimistic)
+      return false;
+    break;  
+  }
+  case AF_CXXNew:
+  case AF_CXXNewArray: {
+    if (!Filter.CNewDeleteChecker)
+      return false;
+    break;
+  }
+  case AF_None: {
+    return true;
+  }
+  default:
+    llvm_unreachable("unhandled family");
+  }
 
   return true;
 }
