@@ -244,7 +244,8 @@ void __msan_init() {
   InitTlsSize();
   InitializeInterceptors();
 
-  ReplaceOperatorsNewAndDelete();
+  if (MSAN_REPLACE_OPERATORS_NEW_AND_DELETE)
+    ReplaceOperatorsNewAndDelete();
   const char *msan_options = GetEnv("MSAN_OPTIONS");
   InitializeFlags(&msan_flags, msan_options);
   if (StackSizeIsUnlimited()) {

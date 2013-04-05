@@ -20,6 +20,10 @@
 #include "msan_interface_internal.h"
 #include "msan_flags.h"
 
+#ifndef MSAN_REPLACE_OPERATORS_NEW_AND_DELETE
+# define MSAN_REPLACE_OPERATORS_NEW_AND_DELETE 1
+#endif
+
 #define MEM_TO_SHADOW(mem) (((uptr)mem)       & ~0x400000000000ULL)
 #define MEM_TO_ORIGIN(mem) (MEM_TO_SHADOW(mem) + 0x200000000000ULL)
 #define MEM_IS_APP(mem)    ((uptr)mem >=         0x600000000000ULL)
