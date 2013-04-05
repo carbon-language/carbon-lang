@@ -4686,7 +4686,16 @@ def warn_overloaded_virtual : Warning<
   "%q0 hides overloaded virtual %select{function|functions}1">,
   InGroup<OverloadedVirtual>, DefaultIgnore;
 def note_hidden_overloaded_virtual_declared_here : Note<
-  "hidden overloaded virtual function %q0 declared here">;
+  "hidden overloaded virtual function %q0 declared here"
+  "%select{|: different classes%diff{ ($ vs $)|}2,3"
+  "|: different number of parameters (%2 vs %3)"
+  "|: type mismatch at %ordinal2 parameter%diff{ ($ vs $)|}3,4"
+  "|: different return type%diff{ ($ vs $)|}2,3"
+  "|: different qualifiers ("
+  "%select{none|const|restrict|const and restrict|volatile|const and volatile|"
+  "volatile and restrict|const, volatile, and restrict}2 vs "
+  "%select{none|const|restrict|const and restrict|volatile|const and volatile|"
+  "volatile and restrict|const, volatile, and restrict}3)}1">;
 def warn_using_directive_in_header : Warning<
   "using namespace directive in global context in header">,
   InGroup<HeaderHygiene>, DefaultIgnore;

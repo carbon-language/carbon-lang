@@ -5409,8 +5409,10 @@ void Sema::DiagnoseHiddenVirtualMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
 
     for (unsigned i = 0, e = Data.OverloadedMethods.size(); i != e; ++i) {
       CXXMethodDecl *overloadedMD = Data.OverloadedMethods[i];
-      Diag(overloadedMD->getLocation(),
+      PartialDiagnostic PD = PDiag(
            diag::note_hidden_overloaded_virtual_declared_here) << overloadedMD;
+      HandleFunctionTypeMismatch(PD, MD->getType(), overloadedMD->getType());
+      Diag(overloadedMD->getLocation(), PD);
     }
   }
 }
