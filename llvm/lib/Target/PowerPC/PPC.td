@@ -155,7 +155,7 @@ def : ProcessorModel<"e500mc", PPCE500mcModel,
 def : ProcessorModel<"e5500", PPCE5500Model,
                   [DirectiveE5500, FeatureMFOCRF, Feature64Bit,
                    FeatureSTFIWX, FeatureBookE, FeatureISEL]>;
-def : Processor<"a2", PPCA2Itineraries,
+def : ProcessorModel<"a2", PPCA2Model,
                   [DirectiveA2, FeatureBookE, FeatureMFOCRF,
                    FeatureFSqrt, FeatureFRE, FeatureFRES,
                    FeatureFRSQRTE, FeatureFRSQRTES, FeatureRecipPrec,
@@ -163,7 +163,7 @@ def : Processor<"a2", PPCA2Itineraries,
                    FeatureFPRND, FeatureFPCVT, FeatureISEL,
                    FeaturePOPCNTD, FeatureLDBRX, Feature64Bit
                /*, Feature64BitRegs */]>;
-def : Processor<"a2q", PPCA2Itineraries,
+def : ProcessorModel<"a2q", PPCA2Model,
                   [DirectiveA2, FeatureBookE, FeatureMFOCRF,
                    FeatureFSqrt, FeatureFRE, FeatureFRES,
                    FeatureFRSQRTE, FeatureFRSQRTES, FeatureRecipPrec,

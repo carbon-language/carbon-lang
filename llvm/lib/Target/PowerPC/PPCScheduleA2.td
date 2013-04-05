@@ -749,3 +749,18 @@ def PPCA2Itineraries : ProcessorItineraries<
                               [15, 7],
                               [FPR_Bypass, FPR_Bypass]>
 ]>;
+
+// ===---------------------------------------------------------------------===//
+// A2 machine model for scheduling and other instruction cost heuristics.
+
+def PPCA2Model : SchedMachineModel {
+  let IssueWidth = 1;  // 2 micro-ops are dispatched per cycle.
+  let MinLatency = -1; // OperandCycles are interpreted as MinLatency.
+  let LoadLatency = 6; // Optimistic load latency assuming bypass.
+                       // This is overriden by OperandCycles if the
+                       // Itineraries are queried instead.
+  let MispredictPenalty = 6;
+
+  let Itineraries = PPCA2Itineraries;
+}
+
