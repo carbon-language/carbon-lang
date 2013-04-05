@@ -87,53 +87,6 @@ namespace {
                       MachineBasicBlock::iterator i)
         : Offset(o), Reg(r), isKill(k), Position(p), MBBI(i), Merged(false) {}
     };
-    class UnitRegsMap {
-    public:
-      UnitRegsMap(const TargetRegisterInfo* _TRI) : TRI(_TRI) {}
-      const SmallVector<unsigned, 4>& operator[](unsigned Reg) {
-        DenseMap<unsigned, SmallVector<unsigned, 4> >::iterator found =
-            Cache.find(Reg);
-        if (found != Cache.end())
-          return found->second;
-        else
-          return Cache.insert(std::make_pair(Reg, this->getUnitRegs(Reg)))
-                      .first->second;
-      }
-    private:
-      SmallVector<unsigned, 4> getUnitRegs(unsigned Reg) {
-        SmallVector<unsigned, 4> Res;
-
-        const TargetRegisterClass* TRC = TRI->getMinimalPhysRegClass(Reg);
-        if (TRC == &ARM::QPRRegClass) {
-          if (Reg > ARM::Q7) {
-            Res.push_back(TRI->getSubReg(Reg, ARM::dsub_0));
-            Res.push_back(TRI->getSubReg(Reg, ARM::dsub_1));
-            return Res;
-          }
-
-          Res.push_back(TRI->getSubReg(Reg, ARM::ssub_0));
-          Res.push_back(TRI->getSubReg(Reg, ARM::ssub_1));
-          Res.push_back(TRI->getSubReg(Reg, ARM::ssub_2));
-          Res.push_back(TRI->getSubReg(Reg, ARM::ssub_3));
-
-          return Res;
-        }
-
-        if (TRC == &ARM::DPRRegClass && Reg < ARM::D15) {
-          Res.push_back(TRI->getSubReg(Reg, ARM::ssub_0));
-          Res.push_back(TRI->getSubReg(Reg, ARM::ssub_1));
-
-          return Res;
-        }
-
-        Res.push_back(Reg);
-
-        return Res;
-
-      }
-      const TargetRegisterInfo* TRI;
-      DenseMap<unsigned, SmallVector<unsigned, 4> > Cache;
-    };
     typedef SmallVector<MemOpQueueEntry,8> MemOpQueue;
     typedef MemOpQueue::iterator MemOpQueueIter;
 
@@ -175,11 +128,6 @@ namespace {
                                    MachineBasicBlock::iterator MBBI,
                                    bool &Advance,
                                    MachineBasicBlock::iterator &I);
-    unsigned AddMemOp(MemOpQueue& MemOps,
-                      const MemOpQueueEntry newEntry,
-                      UnitRegsMap& UnitRegsInfo,
-                      SmallSet<unsigned, 4>& UsedUnitRegs,
-                      unsigned At = -1U);
     bool LoadStoreMultipleOpti(MachineBasicBlock &MBB);
     bool MergeReturnIntoLDM(MachineBasicBlock &MBB);
   };
@@ -1265,103 +1213,12 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
   return false;
 }
 
-/// AddMemOp - helper for ARMLoadStoreOpt::LoadStoreMultipleOpti.
-/// It adds store mem ops with simple push_back/insert method,
-/// without any additional logic.
-/// For load operation it does the next:
-/// 1. Adds new load operation into MemOp collection at "At" position.
-/// 2. Removes any "load" operations from MemOps, that changes "Reg" register
-/// contents, prior to "At".
-/// UnitRegsInfo - Map of type Map< Register, UnitRegisters-vector >
-/// UsedUnitRegs - set of unit-registers currently in use.
-/// At - position at which it would added, and prior which the clean-up
-/// should be made (for load operation).
-/// FIXME: The clean-up also should be made for store operations,
-/// but the memory address should be analyzed instead of unit registers.
-unsigned ARMLoadStoreOpt::AddMemOp(MemOpQueue& MemOps,
-                                   const MemOpQueueEntry NewEntry,
-                                   UnitRegsMap& UnitRegsInfo,
-                                   SmallSet<unsigned, 4>& UsedUnitRegs,
-                                   unsigned At) {
-  unsigned Cleaned = 0;
-
-  if (At == -1U) {
-    At = MemOps.size();
-    MemOps.push_back(NewEntry);
-  } else
-    MemOps.insert(&MemOps[At], NewEntry);
-
-  // FIXME:
-  // If operation is not load, leave it as is by now,
-  // So 0 overridden ops would cleaned in this case.
-  if (!NewEntry.MBBI->mayLoad())
-    return 0;
-
-  const SmallVector<unsigned, 4>& NewEntryUnitRegs = UnitRegsInfo[NewEntry.Reg];
-
-  bool FoundOverriddenLoads = false;
-
-  for (unsigned i = 0, e = NewEntryUnitRegs.size(); i != e; ++i)
-    if (UsedUnitRegs.count(NewEntryUnitRegs[i])) {
-      FoundOverriddenLoads = true;
-      break;
-    }
-
-  // If we detect that this register is used by load operations that are
-  // predecessors for the new one, remove them from MemOps then.
-  if (FoundOverriddenLoads) {
-    MemOpQueue UpdatedMemOps;
-
-    // Scan through MemOps entries.
-    for (unsigned i = 0; i != At; ++i) {
-      MemOpQueueEntry& MemOpEntry = MemOps[i];
-
-      // FIXME: Skip non-load operations by now.
-      if (!MemOpEntry.MBBI->mayLoad())
-        continue;
-
-      const SmallVector<unsigned, 4>& MemOpUnitRegs =
-          UnitRegsInfo[MemOpEntry.Reg];
-
-      // Lookup entry that loads contents into register used by new entry.
-      bool ReleaseThisEntry = false;
-      for (unsigned m = 0, em = MemOpUnitRegs.size(); m != em; ++m) {
-        if (std::find(NewEntryUnitRegs.begin(), NewEntryUnitRegs.end(),
-                      MemOpUnitRegs[m]) != NewEntryUnitRegs.end()) {
-          ReleaseThisEntry = true;
-          ++Cleaned;
-          break;
-        }
-      }
-
-      if (ReleaseThisEntry) {
-        const SmallVector<unsigned, 4>& RelesedRegs = UnitRegsInfo[MemOpEntry.Reg];
-        for (unsigned r = 0, er = RelesedRegs.size(); r != er; ++r)
-          UsedUnitRegs.erase(RelesedRegs[r]);
-      } else
-        UpdatedMemOps.push_back(MemOpEntry);
-    }
-
-    // Keep anything without changes after At position.
-    for (unsigned i = At, e = MemOps.size(); i != e; ++i)
-      UpdatedMemOps.push_back(MemOps[i]);
-
-    MemOps.swap(UpdatedMemOps);
-  }
-
-  UsedUnitRegs.insert(NewEntryUnitRegs.begin(), NewEntryUnitRegs.end());
-
-  return Cleaned;
-}
-
 /// LoadStoreMultipleOpti - An optimization pass to turn multiple LDR / STR
 /// ops of the same base and incrementing offset into LDM / STM ops.
 bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
   unsigned NumMerges = 0;
   unsigned NumMemOps = 0;
   MemOpQueue MemOps;
-  UnitRegsMap UnitRegsInfo(TRI);
-  SmallSet<unsigned, 4> UsedRegUnits;
   unsigned CurrBase = 0;
   int CurrOpc = -1;
   unsigned CurrSize = 0;
@@ -1408,11 +1265,8 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
         CurrSize = Size;
         CurrPred = Pred;
         CurrPredReg = PredReg;
-
         MemOps.push_back(MemOpQueueEntry(Offset, Reg, isKill, Position, MBBI));
         ++NumMemOps;
-        const SmallVector<unsigned, 4>& EntryUnitRegs = UnitRegsInfo[Reg];
-        UsedRegUnits.insert(EntryUnitRegs.begin(), EntryUnitRegs.end());
         Advance = true;
       } else {
         if (Clobber) {
@@ -1424,24 +1278,20 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
           // No need to match PredReg.
           // Continue adding to the queue.
           if (Offset > MemOps.back().Offset) {
-            unsigned OverridesCleaned =
-              AddMemOp(MemOps,
-                           MemOpQueueEntry(Offset, Reg, isKill, Position, MBBI),
-                           UnitRegsInfo, UsedRegUnits) != 0;
-            NumMemOps += 1 - OverridesCleaned;
+            MemOps.push_back(MemOpQueueEntry(Offset, Reg, isKill,
+                                             Position, MBBI));
+            ++NumMemOps;
             Advance = true;
           } else {
-            for (unsigned I = 0; I != NumMemOps; ++I) {
-              if (Offset < MemOps[I].Offset) {
-                MemOpQueueEntry entry(Offset, Reg, isKill, Position, MBBI);
-                unsigned OverridesCleaned =
-                    AddMemOp(MemOps, entry, UnitRegsInfo,
-                                 UsedRegUnits, I) != 0;
-                NumMemOps += 1 - OverridesCleaned;
-
+            for (MemOpQueueIter I = MemOps.begin(), E = MemOps.end();
+                 I != E; ++I) {
+              if (Offset < I->Offset) {
+                MemOps.insert(I, MemOpQueueEntry(Offset, Reg, isKill,
+                                                 Position, MBBI));
+                ++NumMemOps;
                 Advance = true;
                 break;
-              } else if (Offset == MemOps[I].Offset) {
+              } else if (Offset == I->Offset) {
                 // Collision! This can't be merged!
                 break;
               }
@@ -1512,7 +1362,6 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
       CurrPredReg = 0;
       if (NumMemOps) {
         MemOps.clear();
-        UsedRegUnits.clear();
         NumMemOps = 0;
       }
 
