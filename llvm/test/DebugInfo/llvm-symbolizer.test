@@ -1,0 +1,21 @@
+RUN: echo "%p/Inputs/dwarfdump-test.elf-x86-64 0x400559" > %t.input
+RUN: echo "%p/Inputs/dwarfdump-test4.elf-x86-64 0x62c" >> %t.input
+RUN: echo "%p/Inputs/dwarfdump-inl-test.elf-x86-64 0x710" >> %t.input
+
+RUN: llvm-symbolizer --functions --inlining --demangle=false < %t.input \
+RUN:    | FileCheck %s
+
+REQUIRES: shell
+
+CHECK:       main
+CHECK-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test.cc:16
+CHECK:      _Z1cv
+CHECK-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test4-part1.cc:2
+CHECK:      inlined_h
+CHECK-NEXT: dwarfdump-inl-test.h:2
+CHECK-NEXT: inlined_g
+CHECK-NEXT: dwarfdump-inl-test.h:7
+CHECK-NEXT: inlined_f
+CHECK-NEXT: dwarfdump-inl-test.cc:3
+CHECK-NEXT: main
+CHECK-NEXT: dwarfdump-inl-test.cc:8
