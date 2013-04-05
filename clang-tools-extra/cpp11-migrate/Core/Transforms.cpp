@@ -13,16 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "Core/Transforms.h"
-#include "LoopConvert/LoopConvert.h"
-#include "UseNullptr/UseNullptr.h"
-#include "UseAuto/UseAuto.h"
+#include "Core/Transform.h"
 
 namespace cl = llvm::cl;
-
-template <typename T>
-Transform *ConstructTransform() {
-  return new T();
-}
 
 Transforms::~Transforms() {
   for (std::vector<Transform*>::iterator I = ChosenTransforms.begin(),
@@ -35,26 +28,11 @@ Transforms::~Transforms() {
   }
 }
 
-void Transforms::createTransformOpts() {
-  Options.push_back(
-    OptionVec::value_type(
-      new cl::opt<bool>("loop-convert",
-        cl::desc("Make use of range-based for loops where possible")),
-      &ConstructTransform<LoopConvertTransform>));
-
-  Options.push_back(
-    OptionVec::value_type(
-      new cl::opt<bool>("use-nullptr",
-        cl::desc("Make use of nullptr keyword where possible")),
-      &ConstructTransform<UseNullptrTransform>));
-
-  Options.push_back(
-    OptionVec::value_type(
-      new cl::opt<bool>("use-auto",
-        cl::desc("Use of 'auto' type specifier")),
-      &ConstructTransform<UseAutoTransform>));
-
-  // Add more transform options here.
+void Transforms::registerTransform(llvm::StringRef OptName,
+                                   llvm::StringRef Description,
+                                   TransformCreator Creator) {
+  Options.push_back(OptionVec::value_type(
+      new cl::opt<bool>(OptName.data(), cl::desc(Description.data())), Creator));
 }
 
 void Transforms::createSelectedTransforms() {

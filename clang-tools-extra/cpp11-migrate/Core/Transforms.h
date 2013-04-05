@@ -17,6 +17,7 @@
 #define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_TRANSFORMS_H
 
 #include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/StringRef.h"
 #include <vector>
 
 // Forward declarations
@@ -28,6 +29,10 @@ class Option;
 class Transform;
 
 typedef Transform *(*TransformCreator)();
+template <typename T>
+Transform *ConstructTransform() {
+  return new T();
+}
 
 /// \brief Class encapsulating the creation of command line bool options
 /// for each transform and instantiating transforms chosen by the user.
@@ -40,10 +45,12 @@ public:
 
   ~Transforms();
 
-  /// \brief Create command line options using LLVM's command line library.
+  /// \brief Registers a transform causing the transform to be made available
+  /// on the command line.
   ///
-  /// Be sure to call *before* parsing options.
-  void createTransformOpts();
+  /// Be sure to register all transforms *before* parsing command line options.
+  void registerTransform(llvm::StringRef OptName, llvm::StringRef Description,
+                         TransformCreator Creator);
 
   /// \brief Instantiate all transforms that were selected on the command line.
   ///

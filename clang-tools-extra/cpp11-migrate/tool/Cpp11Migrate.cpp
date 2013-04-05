@@ -17,6 +17,9 @@
 
 #include "Core/Transforms.h"
 #include "Core/Transform.h"
+#include "LoopConvert/LoopConvert.h"
+#include "UseNullptr/UseNullptr.h"
+#include "UseAuto/UseAuto.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
@@ -59,7 +62,16 @@ int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   Transforms TransformManager;
 
-  TransformManager.createTransformOpts();
+  TransformManager.registerTransform(
+      "loop-convert", "Make use of range-based for loops where possible",
+      &ConstructTransform<LoopConvertTransform>);
+  TransformManager.registerTransform(
+      "use-nullptr", "Make use of nullptr keyword where possible",
+      &ConstructTransform<UseNullptrTransform>);
+  TransformManager.registerTransform(
+      "use-auto", "Use of 'auto' type specifier",
+      &ConstructTransform<UseAutoTransform>);
+  // Add more transform options here.
 
   // This causes options to be parsed.
   CommonOptionsParser OptionsParser(argc, argv);
