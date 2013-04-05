@@ -759,7 +759,7 @@ def PPCA2Model : SchedMachineModel {
   let LoadLatency = 6; // Optimistic load latency assuming bypass.
                        // This is overriden by OperandCycles if the
                        // Itineraries are queried instead.
-  let MispredictPenalty = 6;
+  let MispredictPenalty = 13;
 
   let Itineraries = PPCA2Itineraries;
 }
