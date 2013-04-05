@@ -2226,6 +2226,10 @@ TEST_F(FormatTest, UndestandsOverloadedOperators) {
   verifyFormat(
       "ostream &operator<<(ostream &OutputStream,\n"
       "                    SomeReallyLongType WithSomeReallyLongValue);");
+  verifyFormat("bool operator<(const aaaaaaaaaaaaaaaaaaaaa &left,\n"
+               "               const aaaaaaaaaaaaaaaaaaaaa &right) {\n"
+               "  return left.group < right.group;\n"
+               "}");
 
   verifyGoogleFormat("operator void*();");
   verifyGoogleFormat("operator SomeType<SomeType<int>>();");

@@ -1137,7 +1137,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   if (Right.Type == TT_ConditionalExpr || Right.is(tok::question))
     return true;
   if (Right.Type == TT_RangeBasedForLoopColon ||
-      Right.Type == TT_InheritanceColon)
+      Right.Type == TT_InheritanceColon ||
+      Right.Type == TT_OverloadedOperatorLParen)
     return false;
   if (Left.Type == TT_RangeBasedForLoopColon ||
       Left.Type == TT_InheritanceColon)
