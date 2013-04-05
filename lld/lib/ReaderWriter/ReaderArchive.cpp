@@ -48,7 +48,7 @@ public:
     if (_targetInfo.logInputFiles())
       llvm::outs() << buff->getBufferIdentifier() << "\n";
     std::unique_ptr<MemoryBuffer> mb(buff.take());
-    if (_targetInfo.parseFile(mb, result))
+    if (_targetInfo.parseFile(std::move(mb), result))
       return nullptr;
 
     assert(result.size() == 1);
@@ -159,8 +159,9 @@ public:
 
 // Returns a vector of Files that are contained in the archive file
 // pointed to by the MemoryBuffer
-error_code ReaderArchive::parseFile(std::unique_ptr<llvm::MemoryBuffer> &mb,
-                            std::vector<std::unique_ptr<File>> &result) const {
+error_code
+ReaderArchive::parseFile(std::unique_ptr<llvm::MemoryBuffer> mb,
+                         std::vector<std::unique_ptr<File>> &result) const {
   error_code ec;
 
   if (_targetInfo.forceLoadAllArchives()) {
@@ -176,7 +177,7 @@ error_code ReaderArchive::parseFile(std::unique_ptr<llvm::MemoryBuffer> &mb,
       std::unique_ptr<MemoryBuffer> mbc(buff.take());
       if (_targetInfo.logInputFiles())
         llvm::outs() << buff->getBufferIdentifier() << "\n";
-      if ((ec = _targetInfo.parseFile(mbc, result)))
+      if ((ec = _targetInfo.parseFile(std::move(mbc), result)))
         return ec;
     }
   } else {

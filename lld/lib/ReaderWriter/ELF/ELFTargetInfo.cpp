@@ -91,28 +91,27 @@ bool ELFTargetInfo::isDynamic() const {
   return false;
 }
 
-
-error_code ELFTargetInfo::parseFile(std::unique_ptr<MemoryBuffer> &mb,
-                          std::vector<std::unique_ptr<File>> &result) const {
+error_code
+ELFTargetInfo::parseFile(std::unique_ptr<MemoryBuffer> mb,
+                         std::vector<std::unique_ptr<File>> &result) const {
   if (!_elfReader)
     _elfReader = createReaderELF(*this);
-  error_code ec = _elfReader->parseFile(mb, result);
-  if (ec) {
-    // Not an ELF file, check file extension to see if it might be yaml
-    StringRef path = mb->getBufferIdentifier();
-    if ( path.endswith(".objtxt") ) {
-      if (!_yamlReader)
-          _yamlReader = createReaderYAML(*this);
-      ec = _yamlReader->parseFile(mb, result);
-    }
-    if (ec) {
-      // Not a yaml file, assume it is a linkerscript
-      if (!_linkerScriptReader)
-        _linkerScriptReader.reset(new ReaderLinkerScript(*this));
-      ec = _linkerScriptReader->parseFile(mb, result);
-    }
+  std::string path = mb->getBufferIdentifier();
+  auto magic = llvm::sys::fs::identify_magic(mb->getBuffer());
+  if (magic == llvm::sys::fs::file_magic::elf_relocatable ||
+      magic == llvm::sys::fs::file_magic::elf_shared_object ||
+      magic == llvm::sys::fs::file_magic::archive)
+    return _elfReader->parseFile(std::move(mb), result);
+  // Not an ELF file, check file extension to see if it might be yaml
+  if (StringRef(path).endswith(".objtxt")) {
+    if (!_yamlReader)
+      _yamlReader = createReaderYAML(*this);
+    return _yamlReader->parseFile(std::move(mb), result);
   }
-  return ec;
+  // Not a yaml file, assume it is a linkerscript
+  if (!_linkerScriptReader)
+    _linkerScriptReader.reset(new ReaderLinkerScript(*this));
+  return _linkerScriptReader->parseFile(std::move(mb), result);
 }
 
 Writer &ELFTargetInfo::writer() const {

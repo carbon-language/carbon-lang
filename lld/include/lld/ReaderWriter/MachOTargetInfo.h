@@ -31,9 +31,10 @@ public:
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
   virtual bool validate(raw_ostream &diagnostics);
-  
-  virtual error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
-                        std::vector<std::unique_ptr<File>> &result) const;
+
+  virtual error_code
+  parseFile(std::unique_ptr<MemoryBuffer> mb,
+            std::vector<std::unique_ptr<File>> &result) const;
 
   uint32_t getCPUType() const;
   uint32_t getCPUSubType() const;

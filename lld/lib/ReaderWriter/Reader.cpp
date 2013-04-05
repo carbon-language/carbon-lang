@@ -24,7 +24,6 @@ error_code Reader::readFile(StringRef path,
   if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, opmb))
     return ec;
 
-  std::unique_ptr<MemoryBuffer> mb(opmb.take());
-  return this->parseFile(mb, result);
+  return parseFile(std::unique_ptr<MemoryBuffer>(opmb.take()), result);
 }
 } // end namespace lld

@@ -35,7 +35,7 @@ public:
 
   /// \brief Returns a vector of Files that are contained in the archive file
   ///        pointed to by the Memorybuffer
-  error_code parseFile(std::unique_ptr<llvm::MemoryBuffer> &mb,
+  error_code parseFile(std::unique_ptr<llvm::MemoryBuffer> mb,
                        std::vector<std::unique_ptr<File>> &result) const;
 
 private:

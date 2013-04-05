@@ -30,11 +30,10 @@ public:
   virtual ErrorOr<Reference::Kind>    relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
+  virtual error_code
+  parseFile(std::unique_ptr<MemoryBuffer> mb,
+            std::vector<std::unique_ptr<File>> &result) const;
 
-  virtual error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
-                        std::vector<std::unique_ptr<File>> &result) const;
-                        
- 
   void addPassNamed(StringRef name) {
     _passNames.push_back(name);
   }

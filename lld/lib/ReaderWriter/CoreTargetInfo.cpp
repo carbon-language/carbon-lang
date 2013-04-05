@@ -358,12 +358,12 @@ void CoreTargetInfo::addPasses(PassManager &pm) const {
   }
 }
 
-
-error_code CoreTargetInfo::parseFile(std::unique_ptr<MemoryBuffer> &mb,
-                            std::vector<std::unique_ptr<File>> &result) const {
+error_code
+CoreTargetInfo::parseFile(std::unique_ptr<MemoryBuffer> mb,
+                          std::vector<std::unique_ptr<File>> &result) const {
   if (!_reader)
-      _reader = createReaderYAML(*this);
-  return _reader->parseFile(mb,result);
+    _reader = createReaderYAML(*this);
+  return _reader->parseFile(std::move(mb), result);
 }
 
 Writer &CoreTargetInfo::writer() const {
