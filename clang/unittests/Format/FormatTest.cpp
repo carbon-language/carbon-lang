@@ -987,7 +987,7 @@ TEST_F(FormatTest, SeparatesLogicalBlocks) {
                    "};"));
 }
 
-TEST_F(FormatTest, FormatsDerivedClass) {
+TEST_F(FormatTest, FormatsClasses) {
   verifyFormat("class A : public B {\n};");
   verifyFormat("class A : public ::B {\n};");
 
@@ -1009,6 +1009,10 @@ TEST_F(FormatTest, FormatsDerivedClass) {
                "                     public F,\n"
                "                     public G {\n"
                "};");
+
+  verifyFormat("class\n"
+               "    ReallyReallyLongClassName {\n};",
+               getLLVMStyleWithColumns(32));
 }
 
 TEST_F(FormatTest, FormatsVariableDeclarationsAfterStructOrClass) {
