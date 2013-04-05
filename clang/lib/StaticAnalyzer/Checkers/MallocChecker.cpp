@@ -1072,22 +1072,19 @@ bool MallocChecker::isTrackedFamily(AllocationFamily Family) const {
   case AF_Malloc: {
     if (!Filter.CMallocOptimistic && !Filter.CMallocPessimistic)
       return false;
-    break;  
+    return true;
   }
   case AF_CXXNew:
   case AF_CXXNewArray: {
     if (!Filter.CNewDeleteChecker)
       return false;
-    break;
+    return true;
   }
   case AF_None: {
     return true;
   }
-  default:
-    llvm_unreachable("unhandled family");
   }
-
-  return true;
+  llvm_unreachable("unhandled family");
 }
 
 bool MallocChecker::isTrackedFamily(CheckerContext &C, 
