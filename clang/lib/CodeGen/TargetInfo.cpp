@@ -435,9 +435,9 @@ llvm::Value *PNaClABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return 0;
 }
 
-// \brief Classify argument of given type \p Ty. \p FreeRegs is the number of
-// registers available for passing arguments - it can be updated by this
-// method.
+/// \brief Classify argument of given type \p Ty. \p FreeRegs is the number of
+/// registers available for passing arguments - it can be updated by this
+/// method.
 ABIArgInfo PNaClABIInfo::classifyArgumentType(QualType Ty,
                                               unsigned &FreeRegs) const {
   if (isAggregateTypeForABI(Ty)) {
