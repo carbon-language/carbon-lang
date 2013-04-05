@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TOOLNAME = yaml2obj
-USEDLIBS = LLVMSupport.a
+LINK_COMPONENTS := support
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
