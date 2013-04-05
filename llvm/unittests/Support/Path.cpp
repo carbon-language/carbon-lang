@@ -298,12 +298,19 @@ TEST_F(FileSystemTest, DirectoryIteration) {
   ASSERT_LT(z0, za1);
 }
 
+const char elf[] = {0x7f, 'E', 'L', 'F', 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+
 TEST_F(FileSystemTest, Magic) {
   struct type {
     const char *filename;
     const char *magic_str;
-    size_t      magic_str_len;
-  } types [] = {{"magic.archive", "!<arch>\x0A", 8}};
+    size_t magic_str_len;
+    fs::file_magic magic;
+  } types [] = {
+    {"magic.archive", "!<arch>\x0A", 8, fs::file_magic::archive},
+    {"magic.elf", elf, sizeof(elf),
+     fs::file_magic::elf_relocatable}
+  };
 
   // Create some files filled with magic.
   for (type *i = types, *e = types + (sizeof(types) / sizeof(type)); i != e;
@@ -320,6 +327,7 @@ TEST_F(FileSystemTest, Magic) {
     bool res = false;
     ASSERT_NO_ERROR(fs::has_magic(file_pathname.c_str(), magic, res));
     EXPECT_TRUE(res);
+    EXPECT_EQ(i->magic, fs::identify_magic(magic));
   }
 }
 
