@@ -424,9 +424,12 @@ int32_t SITargetLowering::analyzeImmediate(const SDNode *N) const {
     float F;
   } Imm;
 
-  if (const ConstantSDNode *Node = dyn_cast<ConstantSDNode>(N))
+  if (const ConstantSDNode *Node = dyn_cast<ConstantSDNode>(N)) {
+    if (Node->getZExtValue() >> 32) {
+        return -1;
+    }
     Imm.I = Node->getSExtValue();
-  else if (const ConstantFPSDNode *Node = dyn_cast<ConstantFPSDNode>(N))
+  } else if (const ConstantFPSDNode *Node = dyn_cast<ConstantFPSDNode>(N))
     Imm.F = Node->getValueAPF().convertToFloat();
   else
     return -1; // It isn't an immediate
