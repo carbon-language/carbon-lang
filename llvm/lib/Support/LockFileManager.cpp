@@ -174,8 +174,8 @@ void LockFileManager::waitForUnlock() {
   Interval.tv_sec = 0;
   Interval.tv_nsec = 1000000;
 #endif
-  // Don't wait more than an hour for the file to appear.
-  const unsigned MaxSeconds = 3600;
+  // Don't wait more than five minutes for the file to appear.
+  unsigned MaxSeconds = 300;
   bool LockFileGone = false;
   do {
     // Sleep for the designated interval, to allow the owning process time to
@@ -187,21 +187,48 @@ void LockFileManager::waitForUnlock() {
 #else
     nanosleep(&Interval, NULL);
 #endif
-    // If the lock file no longer exists, wait for the actual file.
     bool Exists = false;
+    bool LockFileJustDisappeared = false;
+
+    // If the lock file is still expected to be there, check whether it still
+    // is.
     if (!LockFileGone) {
       if (!sys::fs::exists(LockFileName.str(), Exists) && !Exists) {
         LockFileGone = true;
+        LockFileJustDisappeared = true;
         Exists = false;
       }
     }
+
+    // If the lock file is no longer there, check if the original file is
+    // available now.
     if (LockFileGone) {
-      if (!sys::fs::exists(FileName.str(), Exists) && Exists)
+      if (!sys::fs::exists(FileName.str(), Exists) && Exists) {
         return;
+      }
+
+      // The lock file is gone, so now we're waiting for the original file to
+      // show up. If this just happened, reset our waiting intervals and keep
+      // waiting.
+      if (LockFileJustDisappeared) {
+        MaxSeconds = 5;
+
+#if LLVM_ON_WIN32
+        Interval = 1;
+#else
+        Interval.tv_sec = 0;
+        Interval.tv_nsec = 1000000;
+#endif
+        continue;
+      }
     }
 
-    if (!processStillExecuting((*Owner).first, (*Owner).second))
+    // If we're looking for the lock file to disappear, but the process
+    // owning the lock died without cleaning up, just bail out.
+    if (!LockFileGone &&
+        !processStillExecuting((*Owner).first, (*Owner).second)) {
       return;
+    }
 
     // Exponentially increase the time we wait for the lock to be removed.
 #if LLVM_ON_WIN32
