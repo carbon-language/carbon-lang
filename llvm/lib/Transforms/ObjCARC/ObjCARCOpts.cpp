@@ -1817,8 +1817,9 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     case S_Retain:
       llvm_unreachable("bottom-up pointer in retain state!");
     }
-    ANNOTATE_BOTTOMUP(Inst, Arg, OldSeq, S.GetSeq());
-    return NestingDetected;
+    ANNOTATE_BOTTOMUP(Inst, Arg, OldSeq, S.GetSeq());    
+    // A retain moving bottom up can be a use.
+    break;
   }
   case IC_AutoreleasepoolPop:
     // Conservatively, clear MyStates for all known pointers.
