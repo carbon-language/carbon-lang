@@ -127,9 +127,8 @@ private:
   void getSymbol64TableEntry(DataRefImpl DRI,
                           InMemoryStruct<macho::Symbol64TableEntry> &Res) const;
   void moveToNextSymbol(DataRefImpl &DRI) const;
-  void getSection(DataRefImpl DRI, InMemoryStruct<macho::Section> &Res) const;
-  void getSection64(DataRefImpl DRI,
-                    InMemoryStruct<macho::Section64> &Res) const;
+  const macho::Section *getSection(DataRefImpl DRI) const;
+  const macho::Section64 *getSection64(DataRefImpl DRI) const;
   void getRelocation(DataRefImpl Rel,
                      InMemoryStruct<macho::RelocationEntry> &Res) const;
   std::size_t getSectionIndex(DataRefImpl Sec) const;

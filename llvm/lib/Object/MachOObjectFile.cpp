@@ -138,8 +138,8 @@ error_code MachOObjectFile::getSymbolFileOffset(DataRefImpl DRI,
     getSymbol64TableEntry(DRI, Entry);
     Result = Entry->Value;
     if (Entry->SectionIndex) {
-      InMemoryStruct<macho::Section64> Section;
-      getSection64(Sections[Entry->SectionIndex-1], Section);
+      const macho::Section64 *Section =
+        getSection64(Sections[Entry->SectionIndex-1]);
       Result += Section->Offset - Section->Address;
     }
   } else {
@@ -147,8 +147,8 @@ error_code MachOObjectFile::getSymbolFileOffset(DataRefImpl DRI,
     getSymbolTableEntry(DRI, Entry);
     Result = Entry->Value;
     if (Entry->SectionIndex) {
-      InMemoryStruct<macho::Section> Section;
-      getSection(Sections[Entry->SectionIndex-1], Section);
+      const macho::Section *Section =
+        getSection(Sections[Entry->SectionIndex-1]);
       Result += Section->Offset - Section->Address;
     }
   }
@@ -444,11 +444,21 @@ error_code MachOObjectFile::getSectionNext(DataRefImpl DRI,
   return object_error::success;
 }
 
-void
-MachOObjectFile::getSection(DataRefImpl DRI,
-                            InMemoryStruct<macho::Section> &Res) const {
+static bool is64BitLoadCommand(const MachOObject *MachOObj, DataRefImpl DRI) {
   LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
-  MachOObj->ReadSection(LCI, DRI.d.b, Res);
+  if (LCI.Command.Type == macho::LCT_Segment64)
+    return true;
+  assert(LCI.Command.Type == macho::LCT_Segment && "Unexpected Type.");
+  return false;
+}
+
+const macho::Section *MachOObjectFile::getSection(DataRefImpl DRI) const {
+  assert(!is64BitLoadCommand(MachOObj.get(), DRI));
+  LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
+  unsigned SectionOffset = LCI.Offset + sizeof(macho::SegmentLoadCommand) +
+    DRI.d.b * sizeof(macho::Section);
+  StringRef Data = MachOObj->getData(SectionOffset, sizeof(macho::Section));
+  return reinterpret_cast<const macho::Section*>(Data.data());
 }
 
 std::size_t MachOObjectFile::getSectionIndex(DataRefImpl Sec) const {
@@ -458,19 +468,14 @@ std::size_t MachOObjectFile::getSectionIndex(DataRefImpl Sec) const {
   return std::distance(Sections.begin(), loc);
 }
 
-void
-MachOObjectFile::getSection64(DataRefImpl DRI,
-                            InMemoryStruct<macho::Section64> &Res) const {
+const macho::Section64 *
+MachOObjectFile::getSection64(DataRefImpl DRI) const {
+  assert(is64BitLoadCommand(MachOObj.get(), DRI));
   LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
-  MachOObj->ReadSection64(LCI, DRI.d.b, Res);
-}
-
-static bool is64BitLoadCommand(const MachOObject *MachOObj, DataRefImpl DRI) {
-  LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
-  if (LCI.Command.Type == macho::LCT_Segment64)
-    return true;
-  assert(LCI.Command.Type == macho::LCT_Segment && "Unexpected Type.");
-  return false;
+  unsigned SectionOffset = LCI.Offset + sizeof(macho::Segment64LoadCommand) +
+    DRI.d.b * sizeof(macho::Section64);
+  StringRef Data = MachOObj->getData(SectionOffset, sizeof(macho::Section64));
+  return reinterpret_cast<const macho::Section64*>(Data.data());
 }
 
 static StringRef parseSegmentOrSectionName(const char *P) {
@@ -483,21 +488,11 @@ static StringRef parseSegmentOrSectionName(const char *P) {
 
 ArrayRef<char> MachOObjectFile::getSectionRawName(DataRefImpl DRI) const {
   if (is64BitLoadCommand(MachOObj.get(), DRI)) {
-    LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
-    unsigned SectionOffset = LCI.Offset + sizeof(macho::Segment64LoadCommand) +
-      DRI.d.b * sizeof(macho::Section64);
-    StringRef Data = MachOObj->getData(SectionOffset, sizeof(macho::Section64));
-    const macho::Section64 *sec =
-      reinterpret_cast<const macho::Section64*>(Data.data());
-    return ArrayRef<char>(sec->Name, 16);
+    const macho::Section64 *sec = getSection64(DRI);
+    return ArrayRef<char>(sec->Name);
   } else {
-    LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
-    unsigned SectionOffset = LCI.Offset + sizeof(macho::SegmentLoadCommand) +
-      DRI.d.b * sizeof(macho::Section);
-    StringRef Data = MachOObj->getData(SectionOffset, sizeof(macho::Section));
-    const macho::Section *sec =
-      reinterpret_cast<const macho::Section*>(Data.data());
-    return ArrayRef<char>(sec->Name, 16);
+    const macho::Section *sec = getSection(DRI);
+    return ArrayRef<char>(sec->Name);
   }
 }
 
@@ -511,20 +506,10 @@ error_code MachOObjectFile::getSectionName(DataRefImpl DRI,
 ArrayRef<char>
 MachOObjectFile::getSectionRawFinalSegmentName(DataRefImpl Sec) const {
   if (is64BitLoadCommand(MachOObj.get(), Sec)) {
-    LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(Sec.d.a);
-    unsigned SectionOffset = LCI.Offset + sizeof(macho::Segment64LoadCommand) +
-      Sec.d.b * sizeof(macho::Section64);
-    StringRef Data = MachOObj->getData(SectionOffset, sizeof(macho::Section64));
-    const macho::Section64 *sec =
-      reinterpret_cast<const macho::Section64*>(Data.data());
+    const macho::Section64 *sec = getSection64(Sec);
     return ArrayRef<char>(sec->SegmentName, 16);
   } else {
-    LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(Sec.d.a);
-    unsigned SectionOffset = LCI.Offset + sizeof(macho::SegmentLoadCommand) +
-      Sec.d.b * sizeof(macho::Section);
-    StringRef Data = MachOObj->getData(SectionOffset, sizeof(macho::Section));
-    const macho::Section *sec =
-      reinterpret_cast<const macho::Section*>(Data.data());
+    const macho::Section *sec = getSection(Sec);
     return ArrayRef<char>(sec->SegmentName);
   }
 }
@@ -537,12 +522,10 @@ StringRef MachOObjectFile::getSectionFinalSegmentName(DataRefImpl DRI) const {
 error_code MachOObjectFile::getSectionAddress(DataRefImpl DRI,
                                               uint64_t &Result) const {
   if (is64BitLoadCommand(MachOObj.get(), DRI)) {
-    InMemoryStruct<macho::Section64> Sect;
-    getSection64(DRI, Sect);
+    const macho::Section64 *Sect = getSection64(DRI);
     Result = Sect->Address;
   } else {
-    InMemoryStruct<macho::Section> Sect;
-    getSection(DRI, Sect);
+    const macho::Section *Sect = getSection(DRI);
     Result = Sect->Address;
   }
   return object_error::success;
@@ -551,12 +534,10 @@ error_code MachOObjectFile::getSectionAddress(DataRefImpl DRI,
 error_code MachOObjectFile::getSectionSize(DataRefImpl DRI,
                                            uint64_t &Result) const {
   if (is64BitLoadCommand(MachOObj.get(), DRI)) {
-    InMemoryStruct<macho::Section64> Sect;
-    getSection64(DRI, Sect);
+    const macho::Section64 *Sect = getSection64(DRI);
     Result = Sect->Size;
   } else {
-    InMemoryStruct<macho::Section> Sect;
-    getSection(DRI, Sect);
+    const macho::Section *Sect = getSection(DRI);
     Result = Sect->Size;
   }
   return object_error::success;
@@ -565,12 +546,10 @@ error_code MachOObjectFile::getSectionSize(DataRefImpl DRI,
 error_code MachOObjectFile::getSectionContents(DataRefImpl DRI,
                                                StringRef &Result) const {
   if (is64BitLoadCommand(MachOObj.get(), DRI)) {
-    InMemoryStruct<macho::Section64> Sect;
-    getSection64(DRI, Sect);
+    const macho::Section64 *Sect = getSection64(DRI);
     Result = MachOObj->getData(Sect->Offset, Sect->Size);
   } else {
-    InMemoryStruct<macho::Section> Sect;
-    getSection(DRI, Sect);
+    const macho::Section *Sect = getSection(DRI);
     Result = MachOObj->getData(Sect->Offset, Sect->Size);
   }
   return object_error::success;
@@ -579,12 +558,10 @@ error_code MachOObjectFile::getSectionContents(DataRefImpl DRI,
 error_code MachOObjectFile::getSectionAlignment(DataRefImpl DRI,
                                                 uint64_t &Result) const {
   if (is64BitLoadCommand(MachOObj.get(), DRI)) {
-    InMemoryStruct<macho::Section64> Sect;
-    getSection64(DRI, Sect);
+    const macho::Section64 *Sect = getSection64(DRI);
     Result = uint64_t(1) << Sect->Align;
   } else {
-    InMemoryStruct<macho::Section> Sect;
-    getSection(DRI, Sect);
+    const macho::Section *Sect = getSection(DRI);
     Result = uint64_t(1) << Sect->Align;
   }
   return object_error::success;
@@ -593,12 +570,10 @@ error_code MachOObjectFile::getSectionAlignment(DataRefImpl DRI,
 error_code MachOObjectFile::isSectionText(DataRefImpl DRI,
                                           bool &Result) const {
   if (is64BitLoadCommand(MachOObj.get(), DRI)) {
-    InMemoryStruct<macho::Section64> Sect;
-    getSection64(DRI, Sect);
+    const macho::Section64 *Sect = getSection64(DRI);
     Result = Sect->Flags & macho::SF_PureInstructions;
   } else {
-    InMemoryStruct<macho::Section> Sect;
-    getSection(DRI, Sect);
+    const macho::Section *Sect = getSection(DRI);
     Result = Sect->Flags & macho::SF_PureInstructions;
   }
   return object_error::success;
@@ -635,14 +610,12 @@ error_code MachOObjectFile::isSectionVirtual(DataRefImpl Sec,
 error_code MachOObjectFile::isSectionZeroInit(DataRefImpl DRI,
                                               bool &Result) const {
   if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Section64> Sect;
-    getSection64(DRI, Sect);
+    const macho::Section64 *Sect = getSection64(DRI);
     unsigned SectionType = Sect->Flags & MachO::SectionFlagMaskSectionType;
     Result = (SectionType == MachO::SectionTypeZeroFill ||
               SectionType == MachO::SectionTypeZeroFillLarge);
   } else {
-    InMemoryStruct<macho::Section> Sect;
-    getSection(DRI, Sect);
+    const macho::Section *Sect = getSection(DRI);
     unsigned SectionType = Sect->Flags & MachO::SectionFlagMaskSectionType;
     Result = (SectionType == MachO::SectionTypeZeroFill ||
               SectionType == MachO::SectionTypeZeroFillLarge);
@@ -700,12 +673,10 @@ relocation_iterator MachOObjectFile::getSectionRelBegin(DataRefImpl Sec) const {
 relocation_iterator MachOObjectFile::getSectionRelEnd(DataRefImpl Sec) const {
   uint32_t last_reloc;
   if (is64BitLoadCommand(MachOObj.get(), Sec)) {
-    InMemoryStruct<macho::Section64> Sect;
-    getSection64(Sec, Sect);
+    const macho::Section64 *Sect = getSection64(Sec);
     last_reloc = Sect->NumRelocationTableEntries;
   } else {
-    InMemoryStruct<macho::Section> Sect;
-    getSection(Sec, Sect);
+    const macho::Section *Sect = getSection(Sec);
     last_reloc = Sect->NumRelocationTableEntries;
   }
   DataRefImpl ret;
@@ -733,12 +704,10 @@ getRelocation(DataRefImpl Rel,
               InMemoryStruct<macho::RelocationEntry> &Res) const {
   uint32_t relOffset;
   if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Section64> Sect;
-    getSection64(Sections[Rel.d.b], Sect);
+    const macho::Section64 *Sect = getSection64(Sections[Rel.d.b]);
     relOffset = Sect->RelocationTableOffset;
   } else {
-    InMemoryStruct<macho::Section> Sect;
-    getSection(Sections[Rel.d.b], Sect);
+    const macho::Section *Sect = getSection(Sections[Rel.d.b]);
     relOffset = Sect->RelocationTableOffset;
   }
   MachOObj->ReadRelocationEntry(relOffset, Rel.d.a, Res);
@@ -753,12 +722,10 @@ error_code MachOObjectFile::getRelocationAddress(DataRefImpl Rel,
                                                  uint64_t &Res) const {
   const uint8_t* sectAddress = 0;
   if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Section64> Sect;
-    getSection64(Sections[Rel.d.b], Sect);
+    const macho::Section64 *Sect = getSection64(Sections[Rel.d.b]);
     sectAddress += Sect->Address;
   } else {
-    InMemoryStruct<macho::Section> Sect;
-    getSection(Sections[Rel.d.b], Sect);
+    const macho::Section *Sect = getSection(Sections[Rel.d.b]);
     sectAddress += Sect->Address;
   }
   InMemoryStruct<macho::RelocationEntry> RE;
@@ -928,12 +895,10 @@ error_code MachOObjectFile::getRelocationAdditionalInfo(DataRefImpl Rel,
   if (!isExtern) {
     const uint8_t* sectAddress = base();
     if (MachOObj->is64Bit()) {
-      InMemoryStruct<macho::Section64> Sect;
-      getSection64(Sections[Rel.d.b], Sect);
+      const macho::Section64 *Sect = getSection64(Sections[Rel.d.b]);
       sectAddress += Sect->Offset;
     } else {
-      InMemoryStruct<macho::Section> Sect;
-      getSection(Sections[Rel.d.b], Sect);
+      const macho::Section *Sect = getSection(Sections[Rel.d.b]);
       sectAddress += Sect->Offset;
     }
     Res = reinterpret_cast<uintptr_t>(sectAddress);
