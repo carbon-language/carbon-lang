@@ -1724,17 +1724,8 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI,
       continue;
 
     ConstantInt *IdxVal = dyn_cast<ConstantInt>(GEPIt.getOperand());
-    if (!IdxVal) {
-      // Non constant GEPs are only a problem on arrays, structs, and pointers
-      // Vectors can be dynamically indexed.
-      // FIXME: Add support for dynamic indexing on arrays.  This should be
-      // ok on any subarrays of the alloca array, eg, a[0][i] is ok, but a[i][0]
-      // isn't.
-      if (!(*GEPIt)->isVectorTy())
-        return MarkUnsafe(Info, GEPI);
-      NonConstant = true;
-      NonConstantIdxSize = TD->getTypeAllocSize(*GEPIt);
-    }
+    if (!IdxVal)
+      return MarkUnsafe(Info, GEPI);
   }
 
   // Compute the offset due to this GEP and check if the alloca has a
