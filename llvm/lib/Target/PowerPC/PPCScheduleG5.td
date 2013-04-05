@@ -92,3 +92,18 @@ def G5Itineraries : ProcessorItineraries<
   InstrItinData<VecVSL      , [InstrStage<2, [VIU1]>]>,
   InstrItinData<VecVSR      , [InstrStage<3, [VPU]>]>
 ]>;
+
+// ===---------------------------------------------------------------------===//
+// e5500 machine model for scheduling and other instruction cost heuristics.
+
+def G5Model : SchedMachineModel {
+  let IssueWidth = 4;  // 4 (non-branch) instructions are dispatched per cycle.
+  let MinLatency = 0;  // Out-of-order dispatch.
+  let LoadLatency = 3; // Optimistic load latency assuming bypass.
+                       // This is overriden by OperandCycles if the
+                       // Itineraries are queried instead.
+  let MispredictPenalty = 16;
+
+  let Itineraries = G5Itineraries;
+}
+

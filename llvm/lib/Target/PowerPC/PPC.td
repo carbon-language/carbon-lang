@@ -139,12 +139,12 @@ def : Processor<"7450", G4PlusItineraries, [Directive7400, FeatureAltivec,
                                             FeatureFRES, FeatureFRSQRTE]>;
 def : Processor<"g4+", G4PlusItineraries, [Directive7400, FeatureAltivec,
                                            FeatureFRES, FeatureFRSQRTE]>;
-def : Processor<"970", G5Itineraries,
+def : ProcessorModel<"970", G5Model,
                   [Directive970, FeatureAltivec,
                    FeatureMFOCRF, FeatureFSqrt,
                    FeatureFRES, FeatureFRSQRTE, FeatureSTFIWX,
                    Feature64Bit /*, Feature64BitRegs */]>;
-def : Processor<"g5", G5Itineraries,
+def : ProcessorModel<"g5", G5Model,
                   [Directive970, FeatureAltivec,
                    FeatureMFOCRF, FeatureFSqrt, FeatureSTFIWX,
                    FeatureFRES, FeatureFRSQRTE,
@@ -171,37 +171,37 @@ def : ProcessorModel<"a2q", PPCA2Model,
                    FeatureFPRND, FeatureFPCVT, FeatureISEL,
                    FeaturePOPCNTD, FeatureLDBRX, Feature64Bit
                /*, Feature64BitRegs */, FeatureQPX]>;
-def : Processor<"pwr3", G5Itineraries,
+def : ProcessorModel<"pwr3", G5Model,
                   [DirectivePwr3, FeatureAltivec,
                    FeatureFRES, FeatureFRSQRTE, FeatureMFOCRF,
                    FeatureSTFIWX, Feature64Bit]>;
-def : Processor<"pwr4", G5Itineraries,
+def : ProcessorModel<"pwr4", G5Model,
                   [DirectivePwr4, FeatureAltivec, FeatureMFOCRF,
                    FeatureFSqrt, FeatureFRES, FeatureFRSQRTE,
                    FeatureSTFIWX, Feature64Bit]>;
-def : Processor<"pwr5", G5Itineraries,
+def : ProcessorModel<"pwr5", G5Model,
                   [DirectivePwr5, FeatureAltivec, FeatureMFOCRF,
                    FeatureFSqrt, FeatureFRE, FeatureFRES,
                    FeatureFRSQRTE, FeatureFRSQRTES,
                    FeatureSTFIWX, Feature64Bit]>;
-def : Processor<"pwr5x", G5Itineraries,
+def : ProcessorModel<"pwr5x", G5Model,
                   [DirectivePwr5x, FeatureAltivec, FeatureMFOCRF,
                    FeatureFSqrt, FeatureFRE, FeatureFRES,
                    FeatureFRSQRTE, FeatureFRSQRTES,
                    FeatureSTFIWX, FeatureFPRND, Feature64Bit]>;
-def : Processor<"pwr6", G5Itineraries,
+def : ProcessorModel<"pwr6", G5Model,
                   [DirectivePwr6, FeatureAltivec,
                    FeatureMFOCRF, FeatureFSqrt, FeatureFRE,
                    FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
                    FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
                    FeatureFPRND, Feature64Bit /*, Feature64BitRegs */]>;
-def : Processor<"pwr6x", G5Itineraries,
+def : ProcessorModel<"pwr6x", G5Model,
                   [DirectivePwr5x, FeatureAltivec, FeatureMFOCRF,
                    FeatureFSqrt, FeatureFRE, FeatureFRES,
                    FeatureFRSQRTE, FeatureFRSQRTES, FeatureRecipPrec,
                    FeatureSTFIWX, FeatureLFIWAX,
                    FeatureFPRND, Feature64Bit]>;
-def : Processor<"pwr7", G5Itineraries,
+def : ProcessorModel<"pwr7", G5Model,
                   [DirectivePwr7, FeatureAltivec,
                    FeatureMFOCRF, FeatureFSqrt, FeatureFRE,
                    FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
@@ -210,7 +210,7 @@ def : Processor<"pwr7", G5Itineraries,
                    FeaturePOPCNTD, FeatureLDBRX,
                    Feature64Bit /*, Feature64BitRegs */]>;
 def : Processor<"ppc", G3Itineraries, [Directive32]>;
-def : Processor<"ppc64", G5Itineraries,
+def : ProcessorModel<"ppc64", G5Model,
                   [Directive64, FeatureAltivec,
                    FeatureMFOCRF, FeatureFSqrt, FeatureFRES,
                    FeatureFRSQRTE, FeatureSTFIWX,
