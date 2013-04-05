@@ -457,6 +457,15 @@ DynamicLoaderDarwinKernel::DynamicLoaderDarwinKernel (Process* process, lldb::ad
     m_mutex(Mutex::eMutexTypeRecursive),
     m_break_id (LLDB_INVALID_BREAK_ID)
 {
+    PlatformSP platform_sp(Platform::FindPlugin (process, "darwin-kernel"));
+    // Only select the darwin-kernel Platform if we've been asked to load kexts.
+    // It can take some time to scan over all of the kext info.plists and that
+    // shouldn't be done if kext loading is explicitly disabled.
+    if (platform_sp.get() && GetGlobalProperties()->GetLoadKexts())
+    {
+        process->GetTarget().SetPlatform (platform_sp);
+        process->GetTarget().GetDebugger().GetPlatformList().SetSelectedPlatform (platform_sp);
+    }
 }
 
 //----------------------------------------------------------------------
@@ -794,6 +803,22 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
                             target.ModulesDidLoad (loaded_module_list);
                         }
                     }
+                }
+            }
+
+            // If the current platform is PlatformDarwinKernel, create a ModuleSpec with the filename set 
+            // to be the bundle ID for this kext, e.g. "com.apple.filesystems.msdosfs", and ask the platform
+            // to find it.
+            PlatformSP platform_sp (target.GetPlatform());
+            if (platform_sp)
+            {
+                const char *pname = platform_sp->GetShortPluginName();
+                if (pname && strcmp (pname, "darwin-kernel") == 0)
+                {
+                    ModuleSpec kext_bundle_module_spec(module_spec);
+                    FileSpec kext_filespec(m_name.c_str(), false);
+                    kext_bundle_module_spec.GetFileSpec() = kext_filespec;
+                    platform_sp->GetSharedModule (kext_bundle_module_spec, m_module_sp, &target.GetExecutableSearchPaths(), NULL, NULL);
                 }
             }
 

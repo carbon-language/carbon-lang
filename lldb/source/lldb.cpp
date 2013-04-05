@@ -56,6 +56,7 @@
 #include "Plugins/Process/MacOSX-Kernel/ProcessKDP.h"
 #include "Plugins/Platform/MacOSX/PlatformMacOSX.h"
 #include "Plugins/Platform/MacOSX/PlatformRemoteiOS.h"
+#include "Plugins/Platform/MacOSX/PlatformDarwinKernel.h"
 #include "Plugins/Platform/MacOSX/PlatformiOSSimulator.h"
 #endif
 
@@ -127,6 +128,7 @@ lldb_private::Initialize ()
         ProcessKDP::Initialize();
         ProcessMachCore::Initialize();
         SymbolVendorMacOSX::Initialize();
+        PlatformDarwinKernel::Initialize();
         PlatformRemoteiOS::Initialize();
         PlatformMacOSX::Initialize();
         PlatformiOSSimulator::Initialize();
@@ -204,6 +206,7 @@ lldb_private::Terminate ()
     ProcessKDP::Terminate();
     SymbolVendorMacOSX::Terminate();
     PlatformMacOSX::Terminate();
+    PlatformDarwinKernel::Terminate();
     PlatformRemoteiOS::Terminate();
     PlatformiOSSimulator::Terminate();
 #endif
