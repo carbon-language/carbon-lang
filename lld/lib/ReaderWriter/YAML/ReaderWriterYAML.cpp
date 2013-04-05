@@ -866,7 +866,7 @@ struct MappingTraits<const lld::DefinedAtom*> {
   class NormalizedAtom : public lld::DefinedAtom {
   public:
     NormalizedAtom(IO &io)
-      : _file(fileFromContext(io)), _name(), _refName(),
+      : _file(fileFromContext(io)), _name(), _refName(), _contentType(),
         _alignment(0), _content(), _references() {
       static uint32_t ordinalCounter = 1;
       _ordinal = ordinalCounter++;

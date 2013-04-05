@@ -25,6 +25,7 @@ TargetInfo::TargetInfo()
   , _forceLoadAllArchives(false)
   , _printRemainingUndefines(true)
   , _allowRemainingUndefines(false)
+  , _logInputFiles(false)
 {
 }
 
