@@ -430,9 +430,7 @@ rety_open_create:
     if (SavedErrno == errc::file_exists)
       goto retry_random_path;
     // If path prefix doesn't exist, try to create it.
-    if (SavedErrno == errc::no_such_file_or_directory &&
-        !exists(path::parent_path(RandomPath)) &&
-        !TriedToCreateParent) {
+    if (SavedErrno == errc::no_such_file_or_directory && !TriedToCreateParent) {
       TriedToCreateParent = true;
       StringRef p(RandomPath);
       SmallString<64> dir_to_create;
