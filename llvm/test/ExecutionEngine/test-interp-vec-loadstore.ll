@@ -1,4 +1,5 @@
 ; RUN: %lli -force-interpreter=true %s | FileCheck %s
+; XFAIL: mips
 ; CHECK: 1
 ; CHECK: 2
 ; CHECK: 3
