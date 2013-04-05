@@ -4123,3 +4123,15 @@ breakPartialRegDependency(MachineBasicBlock::iterator MI,
 bool ARMBaseInstrInfo::hasNOP() const {
   return (Subtarget.getFeatureBits() & ARM::HasV6T2Ops) != 0;
 }
+
+bool ARMBaseInstrInfo::isSwiftFastImmShift(const MachineInstr *MI) const {
+  unsigned ShOpVal = MI->getOperand(3).getImm();
+  unsigned ShImm = ARM_AM::getSORegOffset(ShOpVal);
+  // Swift supports faster shifts for: lsl 2, lsl 1, and lsr 1.
+  if ((ShImm == 1 && ARM_AM::getSORegShOp(ShOpVal) == ARM_AM::lsr) ||
+      ((ShImm == 1 || ShImm == 2) &&
+       ARM_AM::getSORegShOp(ShOpVal) == ARM_AM::lsl))
+    return true;
+
+  return false;
+}

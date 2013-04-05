@@ -314,6 +314,10 @@ public:
   bool canCauseFpMLxStall(unsigned Opcode) const {
     return MLxHazardOpcodes.count(Opcode);
   }
+
+  /// Returns true if the instruction has a shift by immediate that can be
+  /// executed in one cycle less.
+  bool isSwiftFastImmShift(const MachineInstr *MI) const;
 };
 
 static inline

@@ -1083,6 +1083,9 @@ def SwiftModel : SchedMachineModel {
   let Itineraries = SwiftItineraries;
 }
 
+// Swift predicates.
+def IsFastImmShiftSwiftPred : SchedPredicate<[{TII->isSwiftFastImmShift(MI)}]>;
+
 // Swift resource mapping.
 let SchedModel = SwiftModel in {
   // Processor resources.
@@ -1092,15 +1095,46 @@ let SchedModel = SwiftModel in {
   def SwiftUnitP2 : ProcResource<1>; // LS unit.
   def SwiftUnitDiv : ProcResource<1>;
 
+  // Generic resource requirements.
+  def SwiftWriteP01TwoCycle : SchedWriteRes<[SwiftUnitP01]> { let Latency = 2; }
+  def SwiftWriteP01ThreeCycleTwoUops :
+    SchedWriteRes<[SwiftUnitP01, SwiftUnitP01]> {
+    let Latency = 3;
+    let NumMicroOps = 2;
+  }
+  def SwiftWriteP0ThreeCycleThreeUops : SchedWriteRes<[SwiftUnitP0]> {
+    let Latency = 3;
+    let NumMicroOps = 3;
+    let ResourceCycles = [3];
+  }
+
   // 4.2.4 Arithmetic and Logical.
+  // ALU operation register shifted by immediate variant.
+  def SwiftWriteALUsi : SchedWriteVariant<[
+    // lsl #2, lsl #1, or lsr #1.
+    SchedVar<IsFastImmShiftSwiftPred, [SwiftWriteP01TwoCycle]>,
+    // Arbitrary imm shift.
+    SchedVar<NoSchedPred,             [WriteALU]>
+  ]>;
+  def SwiftWriteALUsr : SchedWriteVariant<[
+    SchedVar<IsPredicatedPred, [SwiftWriteP01ThreeCycleTwoUops]>,
+    SchedVar<NoSchedPred, [SwiftWriteP01TwoCycle]>
+  ]>;
+  def SwiftWriteALUSsr : SchedWriteVariant<[
+    SchedVar<IsPredicatedPred, [SwiftWriteP0ThreeCycleThreeUops]>,
+    SchedVar<NoSchedPred, [SwiftWriteP01TwoCycle]>
+  ]>;
+  def SwiftReadAdvanceALUsr : SchedReadVariant<[
+    SchedVar<IsPredicatedPred, [SchedReadAdvance<2>]>,
+    SchedVar<NoSchedPred, [NoReadAdvance]>
+  ]>;
   // ADC,ADD,NEG,RSB,RSC,SBC,SUB,ADR
   // AND,BIC, EOR,ORN,ORR
   // CLZ,RBIT,REV,REV16,REVSH,PKH
-  // Single cycle.
   def : WriteRes<WriteALU, [SwiftUnitP01]>;
-  def : WriteRes<WriteALUsi, [SwiftUnitP01]>;
-  def : WriteRes<WriteALUsr, [SwiftUnitP01]>;
-  def : WriteRes<WriteALUSsr, [SwiftUnitP01]>;
+  def : SchedAlias<WriteALUsi, SwiftWriteALUsi>;
+  def : SchedAlias<WriteALUsr, SwiftWriteALUsr>;
+  def : SchedAlias<WriteALUSsr, SwiftWriteALUSsr>;
   def : ReadAdvance<ReadALU, 0>;
-  def : ReadAdvance<ReadALUsr, 2>;
+  def : SchedAlias<ReadALUsr, SwiftReadAdvanceALUsr>;
 }
