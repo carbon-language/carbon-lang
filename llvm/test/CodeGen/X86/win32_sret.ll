@@ -1,7 +1,9 @@
-; RUN: llc < %s -mtriple=i686-pc-win32 | FileCheck %s -check-prefix=WIN32
+; We specify -mcpu explicitly to avoid instruction reordering that happens on
+; some setups (e.g., Atom) from affecting the output.
+; RUN: llc < %s -mcpu=core2 -mtriple=i686-pc-win32 | FileCheck %s -check-prefix=WIN32
 ; RUN: llc < %s -mtriple=i686-pc-mingw32 | FileCheck %s -check-prefix=MINGW_X86
 ; RUN: llc < %s -mtriple=i386-pc-linux | FileCheck %s -check-prefix=LINUX
-; RUN: llc < %s -O0 -mtriple=i686-pc-win32 | FileCheck %s -check-prefix=WIN32
+; RUN: llc < %s -mcpu=core2 -O0 -mtriple=i686-pc-win32 | FileCheck %s -check-prefix=WIN32
 ; RUN: llc < %s -O0 -mtriple=i686-pc-mingw32 | FileCheck %s -check-prefix=MINGW_X86
 ; RUN: llc < %s -O0 -mtriple=i386-pc-linux | FileCheck %s -check-prefix=LINUX
 
@@ -117,11 +119,8 @@ entry:
 ; WIN32:      movl %eax, (%e{{[sc][px]}})
 
 ; The this pointer goes to ECX.
-; FIXME: for some reason, the below checks fail on the Ubuntu Atom D2700 bot.
-; FIXME-NEXT: leal {{[0-9]+}}(%esp), %ecx
-; FIXME-NEXT: calll "?foo@C5@@QAE?AUS5@@XZ"
-
-; WIN32:      calll "?foo@C5@@QAE?AUS5@@XZ"
+; WIN32-NEXT: leal {{[0-9]+}}(%esp), %ecx
+; WIN32-NEXT: calll "?foo@C5@@QAE?AUS5@@XZ"
 ; WIN32:      ret
   ret void
 }
