@@ -207,7 +207,16 @@ protected:
     {
         Stream &ostrm = result.GetOutputStream();      
         
-        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        PlatformSP platform_sp;
+        if (target)
+        {
+            platform_sp = target->GetPlatform();
+        }
+        if (!platform_sp)
+        {
+            platform_sp = m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform();
+        }
         if (platform_sp)
         {
             platform_sp->GetStatus (ostrm);
@@ -381,8 +390,17 @@ protected:
     virtual bool
     DoExecute (Args& args, CommandReturnObject &result)
     {
-        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
-        
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        PlatformSP platform_sp;
+        if (target)
+        {   
+            platform_sp = target->GetPlatform();
+        }   
+        if (!platform_sp)
+        {
+            platform_sp = m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform();
+        }   
+
         if (platform_sp)
         {
             Error error;
@@ -490,7 +508,16 @@ protected:
     virtual bool
     DoExecute (Args& args, CommandReturnObject &result)
     {
-        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        PlatformSP platform_sp;
+        if (target)
+        {   
+            platform_sp = target->GetPlatform();
+        }   
+        if (!platform_sp)
+        {
+            platform_sp = m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform();
+        }   
         
         if (platform_sp)
         {
@@ -770,7 +797,17 @@ protected:
     virtual bool
     DoExecute (Args& args, CommandReturnObject &result)
     {
-        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        PlatformSP platform_sp;
+        if (target)
+        {   
+            platform_sp = target->GetPlatform();
+        }   
+        if (!platform_sp)
+        {
+            platform_sp = m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform();
+        }   
+
         if (platform_sp)
         {
             const size_t argc = args.GetArgumentCount();

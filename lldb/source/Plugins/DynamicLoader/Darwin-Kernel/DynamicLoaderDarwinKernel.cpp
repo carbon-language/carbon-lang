@@ -464,7 +464,6 @@ DynamicLoaderDarwinKernel::DynamicLoaderDarwinKernel (Process* process, lldb::ad
     if (platform_sp.get() && GetGlobalProperties()->GetLoadKexts())
     {
         process->GetTarget().SetPlatform (platform_sp);
-        process->GetTarget().GetDebugger().GetPlatformList().SetSelectedPlatform (platform_sp);
     }
 }
 
