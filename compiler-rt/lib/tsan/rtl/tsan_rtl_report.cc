@@ -130,9 +130,11 @@ ScopedReport::ScopedReport(ReportType typ) {
   rep_ = new(mem) ReportDesc;
   rep_->typ = typ;
   ctx_->report_mtx.Lock();
+  CommonSanitizerReportMutex.Lock();
 }
 
 ScopedReport::~ScopedReport() {
+  CommonSanitizerReportMutex.Unlock();
   ctx_->report_mtx.Unlock();
   DestroyAndFree(rep_);
 }

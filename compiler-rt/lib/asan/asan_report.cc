@@ -458,10 +458,12 @@ class ScopedInErrorReport {
       internal__exit(flags()->exitcode);
     }
     ASAN_ON_ERROR();
-    // Make sure the registry is locked while we're printing an error report.
-    // We can lock the registry only here to avoid self-deadlock in case of
+    // Make sure the registry and sanitizer report mutexes are locked while
+    // we're printing an error report.
+    // We can lock them only here to avoid self-deadlock in case of
     // recursive reports.
     asanThreadRegistry().Lock();
+    CommonSanitizerReportMutex.Lock();
     reporting_thread_tid = GetCurrentTidOrInvalid();
     Printf("===================================================="
            "=============\n");

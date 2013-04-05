@@ -31,7 +31,7 @@ Location __ubsan::getCallerLocation(uptr CallerLoc) {
   if (!SymbolizeCode(Loc, &Info, 1) || !Info.module || !*Info.module)
     return Location(Loc);
 
-  if (!Info.function)
+  if (!Info.file)
     return ModuleLocation(Info.module, Info.module_offset);
 
   return SourceLocation(Info.file, Info.line, Info.column);
@@ -237,6 +237,7 @@ static void renderMemorySnippet(const __sanitizer::AnsiColorDecorator &Decor,
 
 Diag::~Diag() {
   __sanitizer::AnsiColorDecorator Decor(PrintsToTty());
+  SpinMutexLock l(&CommonSanitizerReportMutex);
   Printf(Decor.Bold());
 
   renderLocation(Loc);

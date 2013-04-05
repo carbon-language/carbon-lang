@@ -23,6 +23,8 @@
 
 namespace __sanitizer {
 
+StaticSpinMutex CommonSanitizerReportMutex;
+
 static int AppendChar(char **buff, const char *buff_end, char c) {
   if (*buff < buff_end) {
     **buff = c;

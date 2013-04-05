@@ -21,8 +21,6 @@
 
 using namespace __sanitizer;
 
-static StaticSpinMutex report_mu;
-
 namespace __msan {
 
 static bool PrintsToTtyCached() {
@@ -89,7 +87,7 @@ static void ReportSummary(const char *error_type, StackTrace *stack) {
 void ReportUMR(StackTrace *stack, u32 origin) {
   if (!__msan::flags()->report_umrs) return;
 
-  GenericScopedLock<StaticSpinMutex> lock(&report_mu);
+  SpinMutexLock l(&CommonSanitizerReportMutex);
 
   Decorator d;
   Printf("%s", d.Warning());
@@ -103,13 +101,15 @@ void ReportUMR(StackTrace *stack, u32 origin) {
 }
 
 void ReportExpectedUMRNotFound(StackTrace *stack) {
-  GenericScopedLock<StaticSpinMutex> lock(&report_mu);
+  SpinMutexLock l(&CommonSanitizerReportMutex);
 
   Printf(" WARNING: Expected use of uninitialized value not found\n");
   PrintStack(stack->trace, stack->size);
 }
 
 void ReportAtExitStatistics() {
+  SpinMutexLock l(&CommonSanitizerReportMutex);
+
   Decorator d;
   Printf("%s", d.Warning());
   Printf("MemorySanitizer: %d warnings reported.\n", msan_report_count);
