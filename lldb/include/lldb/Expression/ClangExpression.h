@@ -93,13 +93,6 @@ public:
     DeclMap () = 0;
     
     //------------------------------------------------------------------
-    /// Return the object that the parser should use when registering
-    /// local variables.  May be NULL if the Expression doesn't care.
-    //------------------------------------------------------------------
-    virtual ClangExpressionVariableList *
-    LocalVariables () = 0;
-    
-    //------------------------------------------------------------------
     /// Return the object that the parser should allow to access ASTs.
     /// May be NULL if the ASTs do not need to be transformed.
     ///

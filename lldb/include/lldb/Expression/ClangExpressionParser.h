@@ -84,6 +84,10 @@ public:
     ///     and func_end do not delimit an allocated region; the allocated
     ///     region may begin before func_addr.)
     ///
+    /// @param[in] execution_unit_ap
+    ///     After parsing, ownership of the execution unit for
+    ///     for the expression is handed to this auto_ptr.
+    ///
     /// @param[in] exe_ctx
     ///     The execution context to write the function into.
     ///
@@ -108,6 +112,7 @@ public:
     Error
     PrepareForExecution (lldb::addr_t &func_addr,
                          lldb::addr_t &func_end,
+                         std::auto_ptr<IRExecutionUnit> &execution_unit_ap,
                          ExecutionContext &exe_ctx,
                          bool &evaluated_statically,
                          lldb::ClangExpressionVariableSP &const_result,

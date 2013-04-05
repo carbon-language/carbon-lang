@@ -243,16 +243,6 @@ public:
     }
     
     //------------------------------------------------------------------
-    /// Return the object that the parser should use when registering
-    /// local variables.  May be NULL if the Expression doesn't care.
-    //------------------------------------------------------------------
-    ClangExpressionVariableList *
-    LocalVariables ()
-    {
-        return m_local_variables.get();
-    }
-    
-    //------------------------------------------------------------------
     /// Return the object that the parser should allow to access ASTs.
     /// May be NULL if the ASTs do not need to be transformed.
     ///
@@ -431,7 +421,7 @@ private:
     ResultType                                  m_desired_type;         ///< The type to coerce the expression's result to.  If eResultTypeAny, inferred from the expression.
     
     std::auto_ptr<ClangExpressionDeclMap>       m_expr_decl_map;        ///< The map to use when parsing and materializing the expression.
-    std::auto_ptr<ClangExpressionVariableList>  m_local_variables;      ///< The local expression variables, if the expression is DWARF.
+    std::auto_ptr<IRExecutionUnit>              m_execution_unit_ap;    ///< The execution unit the expression is stored in.
     
     std::auto_ptr<ASTResultSynthesizer>         m_result_synthesizer;   ///< The result synthesizer, if one is needed.
     

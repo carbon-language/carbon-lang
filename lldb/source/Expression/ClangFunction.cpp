@@ -266,6 +266,7 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
     
     Error jit_error (m_parser->PrepareForExecution (m_jit_start_addr,
                                                     m_jit_end_addr,
+                                                    m_execution_unit_ap,
                                                     exe_ctx, 
                                                     evaluated_statically,
                                                     const_result,

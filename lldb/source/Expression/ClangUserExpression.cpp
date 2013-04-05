@@ -463,6 +463,7 @@ ClangUserExpression::Parse (Stream &error_stream,
             
     Error jit_error = parser.PrepareForExecution (m_jit_start_addr,
                                                   m_jit_end_addr,
+                                                  m_execution_unit_ap,
                                                   exe_ctx,
                                                   m_evaluated_statically,
                                                   m_const_result,

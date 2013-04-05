@@ -130,7 +130,8 @@ ClangUtilityFunction::Install (Stream &error_stream,
     bool evaluated_statically = false; // should stay that way
     
     Error jit_error = parser.PrepareForExecution (m_jit_start_addr, 
-                                                  m_jit_end_addr, 
+                                                  m_jit_end_addr,
+                                                  m_execution_unit_ap,
                                                   exe_ctx,
                                                   evaluated_statically,
                                                   const_result,

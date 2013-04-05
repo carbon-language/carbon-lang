@@ -461,7 +461,8 @@ static bool FindFunctionInModule (ConstString &mangled_name,
 
 Error
 ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr, 
-                                            lldb::addr_t &func_end, 
+                                            lldb::addr_t &func_end,
+                                            std::auto_ptr<IRExecutionUnit> &execution_unit_ap,
                                             ExecutionContext &exe_ctx,
                                             bool &evaluated_statically,
                                             lldb::ClangExpressionVariableSP &const_result,
@@ -593,6 +594,8 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
     }
     
     m_execution_unit->GetRunnableInfo(err, func_addr, func_end);
+    
+    execution_unit_ap = m_execution_unit;
         
     return err;
 }

@@ -118,6 +118,7 @@ class   InlineFunctionInfo;
 class   InputReader;
 class   Instruction;
 class   InstructionList;
+class   IRExecutionUnit;
 class   LanguageRuntime;
 class   LineTable;
 class   Listener;

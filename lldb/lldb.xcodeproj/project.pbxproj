@@ -497,6 +497,7 @@
 		49A71FE8141FFACF00D59478 /* DataEncoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268ED0A4140FF54200DE830F /* DataEncoder.cpp */; };
 		49D8FB3913B5598F00411094 /* ClangASTImporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D8FB3513B558DE00411094 /* ClangASTImporter.cpp */; };
 		49DA65031485C92A005FF180 /* AppleObjCTypeVendor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DA65021485C92A005FF180 /* AppleObjCTypeVendor.cpp */; };
+		49DCF6FE170E6B4A0092F75E /* IRMemoryMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DCF6FD170E6B4A0092F75E /* IRMemoryMap.cpp */; };
 		4C6649A014EEE7F100B0316F /* StreamCallback.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C66499F14EEE7F100B0316F /* StreamCallback.h */; };
 		4C6649A314EEE81000B0316F /* StreamCallback.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C6649A214EEE81000B0316F /* StreamCallback.cpp */; };
 		4C701C1E15ABB70C00B50001 /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26D55234159A7DB100708D8D /* libxml2.dylib */; };
@@ -1449,6 +1450,7 @@
 		49A8A3A311D568BF00AD3B68 /* ASTResultSynthesizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTResultSynthesizer.h; path = include/lldb/Expression/ASTResultSynthesizer.h; sourceTree = "<group>"; };
 		49B01A2D15F67B1700666829 /* TypeVendor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TypeVendor.h; path = include/lldb/Symbol/TypeVendor.h; sourceTree = "<group>"; };
 		49BB309511F79450001A4197 /* TaggedASTType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TaggedASTType.h; path = include/lldb/Symbol/TaggedASTType.h; sourceTree = "<group>"; };
+		49C66B1C17011A43004D1922 /* IRMemoryMap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = IRMemoryMap.h; path = include/lldb/Expression/IRMemoryMap.h; sourceTree = "<group>"; };
 		49CF9829122C70BD007A0B96 /* IRDynamicChecks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IRDynamicChecks.cpp; path = source/Expression/IRDynamicChecks.cpp; sourceTree = "<group>"; };
 		49CF9833122C718B007A0B96 /* IRDynamicChecks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IRDynamicChecks.h; path = include/lldb/Expression/IRDynamicChecks.h; sourceTree = "<group>"; };
 		49D4FE821210B5FB00CDB854 /* ClangPersistentVariables.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangPersistentVariables.h; path = include/lldb/Expression/ClangPersistentVariables.h; sourceTree = "<group>"; };
@@ -1459,6 +1461,7 @@
 		49D8FB3713B5594900411094 /* ClangASTImporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangASTImporter.h; path = include/lldb/Symbol/ClangASTImporter.h; sourceTree = "<group>"; };
 		49DA65021485C92A005FF180 /* AppleObjCTypeVendor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppleObjCTypeVendor.cpp; sourceTree = "<group>"; };
 		49DA65041485C942005FF180 /* AppleObjCTypeVendor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppleObjCTypeVendor.h; sourceTree = "<group>"; };
+		49DCF6FD170E6B4A0092F75E /* IRMemoryMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IRMemoryMap.cpp; path = source/Expression/IRMemoryMap.cpp; sourceTree = "<group>"; };
 		49E45FA911F660DC008F7B28 /* ClangASTType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangASTType.h; path = include/lldb/Symbol/ClangASTType.h; sourceTree = "<group>"; };
 		49E45FAD11F660FE008F7B28 /* ClangASTType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangASTType.cpp; path = source/Symbol/ClangASTType.cpp; sourceTree = "<group>"; };
 		49EC3E98118F90AC00B1265E /* ThreadPlanCallFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanCallFunction.cpp; path = source/Target/ThreadPlanCallFunction.cpp; sourceTree = "<group>"; };
@@ -2892,6 +2895,8 @@
 				491193501226386000578B7F /* ASTStructExtractor.cpp */,
 				49CF9833122C718B007A0B96 /* IRDynamicChecks.h */,
 				49CF9829122C70BD007A0B96 /* IRDynamicChecks.cpp */,
+				49C66B1C17011A43004D1922 /* IRMemoryMap.h */,
+				49DCF6FD170E6B4A0092F75E /* IRMemoryMap.cpp */,
 				4C98D3E1118FB98F00E575D0 /* IRExecutionUnit.h */,
 				4C98D3DB118FB96F00E575D0 /* IRExecutionUnit.cpp */,
 				49307AB111DEA4F20081F992 /* IRForTarget.h */,
@@ -4298,6 +4303,7 @@
 				260CC64A15D0440D002BF2E0 /* OptionValueBoolean.cpp in Sources */,
 				260CC64B15D0440D002BF2E0 /* OptionValueProperties.cpp in Sources */,
 				260CC64C15D0440D002BF2E0 /* OptionValueDictionary.cpp in Sources */,
+				49DCF6FE170E6B4A0092F75E /* IRMemoryMap.cpp in Sources */,
 				260CC64D15D0440D002BF2E0 /* OptionValueEnumeration.cpp in Sources */,
 				260CC64E15D0440D002BF2E0 /* OptionValueFileSpec.cpp in Sources */,
 				260CC64F15D0440D002BF2E0 /* OptionValueFileSpecLIst.cpp in Sources */,
