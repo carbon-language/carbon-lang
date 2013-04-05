@@ -12,9 +12,14 @@
 // template <InputIterator Iter>
 //   iterator insert(const_iterator position, Iter first, Iter last);
 
+#if _LIBCPP_DEBUG2 >= 1
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <list>
 #include <cstdlib>
 #include <cassert>
+#include "test_iterators.h"
 
 int throw_next = 0xFFFF;
 int count = 0;
@@ -36,6 +41,7 @@ void  operator delete(void* p) throw()
 
 int main()
 {
+    {
     int a1[] = {1, 2, 3};
     std::list<int> l1;
     std::list<int>::iterator i = l1.insert(l1.begin(), a1, a1+3);
@@ -90,4 +96,17 @@ int main()
     assert(*i == 6);
     ++i;
     assert(*i == 3);
+    }
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        throw_next = 0xFFFF;
+        std::list<int> v(100);
+        std::list<int> v2(100);
+        int a[] = {1, 2, 3, 4, 5};
+        const int N = sizeof(a)/sizeof(a[0]);
+        std::list<int>::iterator i = v.insert(next(v2.cbegin(), 10), input_iterator<const int*>(a),
+                                       input_iterator<const int*>(a+N));
+        assert(false);
+    }
+#endif
 }

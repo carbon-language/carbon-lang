@@ -1292,7 +1292,11 @@ list<_Tp, _Alloc>::insert(const_iterator __p, const value_type& __x)
     __node_alloc_traits::construct(__na, _VSTD::addressof(__hold->__value_), __x);
     __link_nodes(const_cast<__node&>(*__p.__ptr_), *__hold, *__hold);
     ++base::__sz();
+#if _LIBCPP_DEBUG_LEVEL >= 2
+    return iterator(__hold.release(), this);
+#else
     return iterator(__hold.release());
+#endif
 }
 
 template <class _Tp, class _Alloc>
@@ -1518,6 +1522,11 @@ template <class... _Args>
 typename list<_Tp, _Alloc>::iterator
 list<_Tp, _Alloc>::emplace(const_iterator __p, _Args&&... __args)
 {
+#if _LIBCPP_DEBUG_LEVEL >= 2
+    _LIBCPP_ASSERT(__get_const_db()->__find_c_from_i(&__p) == this,
+        "list::emplace(iterator, args...) called with an iterator not"
+        " referring to this list");
+#endif
     __node_allocator& __na = base::__node_alloc();
     typedef __allocator_destructor<__node_allocator> _Dp;
     unique_ptr<__node, _Dp> __hold(__node_alloc_traits::allocate(__na, 1), _Dp(__na, 1));
@@ -1624,6 +1633,8 @@ list<_Tp, _Alloc>::erase(const_iterator __p)
         "list::erase(iterator) called with an iterator not"
         " referring to this list");
 #endif
+    _LIBCPP_ASSERT(__p != end(),
+        "list::erase(iterator) called with a non-dereferenceable iterator");
     __node_allocator& __na = base::__node_alloc();
     __node& __n = const_cast<__node&>(*__p.__ptr_);
     __node_pointer __r = __n.__next_;

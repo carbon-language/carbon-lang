@@ -11,6 +11,10 @@
 
 // template <class... Args> void emplace(const_iterator p, Args&&... args);
 
+#if _LIBCPP_DEBUG2 >= 1
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <list>
 #include <cassert>
 
@@ -44,4 +48,12 @@ int main()
     assert(c.back().geti() == 3);
     assert(c.back().getd() == 4.5);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        std::list<A> c1;
+        std::list<A> c2;
+        std::list<A>::iterator i = c1.emplace(c2.cbegin(), 2, 3.5);
+        assert(false);
+    }
+#endif
 }

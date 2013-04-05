@@ -11,6 +11,10 @@
 
 // iterator insert(const_iterator position, size_type n, const value_type& x);
 
+#if _LIBCPP_DEBUG2 >= 1
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <list>
 #include <cstdlib>
 #include <cassert>
@@ -54,4 +58,12 @@ int main()
     throw_next = 0xFFFF;
     assert(save_count == count);
     assert(l1 == std::list<int>(a2, a2+8));
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        std::list<int> c1(100);
+        std::list<int> c2;
+        std::list<int>::iterator i = c1.insert(next(c2.cbegin(), 10), 5, 1);
+        assert(false);
+    }
+#endif
 }

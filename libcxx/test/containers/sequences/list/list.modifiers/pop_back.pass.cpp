@@ -11,6 +11,10 @@
 
 // void pop_back();
 
+#if _LIBCPP_DEBUG2 >= 1
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <list>
 #include <cassert>
 
@@ -24,4 +28,8 @@ int main()
     assert(c == std::list<int>(a, a+1));
     c.pop_back();
     assert(c.empty());
+#if _LIBCPP_DEBUG2 >= 1
+        c.pop_back();
+        assert(false);
+#endif        
 }
