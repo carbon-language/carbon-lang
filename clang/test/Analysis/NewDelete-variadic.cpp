@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.cplusplus.NewDelete,alpha.cplusplus.NewDeleteLeaks,unix.Malloc -std=c++11 -fblocks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,cplusplus.NewDelete,alpha.cplusplus.NewDeleteLeaks,unix.Malloc -std=c++11 -fblocks -verify %s
 // expected-no-diagnostics
 
 namespace std {
