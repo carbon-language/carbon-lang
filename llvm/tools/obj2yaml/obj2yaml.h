@@ -10,8 +10,8 @@
 // source file, implement it.
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_UTILS_OBJ2YAML_H
-#define LLVM_UTILS_OBJ2YAML_H
+#ifndef LLVM_TOOLS_OBJ2YAML_H
+#define LLVM_TOOLS_OBJ2YAML_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/MemoryBuffer.h"
