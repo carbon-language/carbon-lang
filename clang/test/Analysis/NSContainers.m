@@ -115,32 +115,32 @@ void testNilArgNSArray1() {
 
 // NSMutableDictionary and NSDictionary APIs.
 void testNilArgNSMutableDictionary1(NSMutableDictionary *d, NSString* key) {
-  [d setObject:0 forKey:key]; // expected-warning {{Argument to 'NSMutableDictionary' method 'setObject:forKey:' cannot be nil}}
+  [d setObject:0 forKey:key]; // expected-warning {{Value argument to 'setObject:forKey:' cannot be nil}}
 }
 
 void testNilArgNSMutableDictionary2(NSMutableDictionary *d, NSObject *obj) {
-  [d setObject:obj forKey:0]; // expected-warning {{Argument to 'NSMutableDictionary' method 'setObject:forKey:' cannot be nil}}
+  [d setObject:obj forKey:0]; // expected-warning {{Key argument to 'setObject:forKey:' cannot be nil}}
 }
 
 void testNilArgNSMutableDictionary3(NSMutableDictionary *d) {
-  [d removeObjectForKey:0]; // expected-warning {{Argument to 'NSMutableDictionary' method 'removeObjectForKey:' cannot be nil}}
+  [d removeObjectForKey:0]; // expected-warning {{Value argument to 'removeObjectForKey:' cannot be nil}}
 }
 
 void testNilArgNSMutableDictionary5(NSMutableDictionary *d, NSString* key) {
-  d[key] = 0; // expected-warning {{Dictionary object cannot be nil}}
+  d[key] = 0; // expected-warning {{Value stored in 'NSMutableDictionary' cannot be nil}}
 }
 void testNilArgNSMutableDictionary6(NSMutableDictionary *d, NSString *key) {
   if (key)
     ;
-  d[key] = 0; // expected-warning {{Dictionary key cannot be nil}}
-  // expected-warning@-1 {{Dictionary object cannot be nil}}
+  d[key] = 0; // expected-warning {{'NSMutableDictionary' key cannot be nil}}
+  // expected-warning@-1 {{Value stored in 'NSMutableDictionary' cannot be nil}}
 }
 
 NSDictionary *testNilArgNSDictionary1(NSString* key) {
-  return [NSDictionary dictionaryWithObject:0 forKey:key]; // expected-warning {{Argument to 'NSDictionary' method 'dictionaryWithObject:forKey:' cannot be nil}}
+  return [NSDictionary dictionaryWithObject:0 forKey:key]; // expected-warning {{Value argument to 'dictionaryWithObject:forKey:' cannot be nil}}
 }
 NSDictionary *testNilArgNSDictionary2(NSObject *obj) {
-  return [NSDictionary dictionaryWithObject:obj forKey:0]; // expected-warning {{Argument to 'NSDictionary' method 'dictionaryWithObject:forKey:' cannot be nil}}
+  return [NSDictionary dictionaryWithObject:obj forKey:0]; // expected-warning {{Key argument to 'dictionaryWithObject:forKey:' cannot be nil}}
 }
 
 // Test inline defensive checks suppression.
