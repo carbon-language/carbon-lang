@@ -3323,40 +3323,40 @@ public:
     // FIXME: these were written based on an unreleased version of a 32-bit ACLE
     // which was intended to be compatible with a 64-bit implementation. They
     // will need updating when a real 64-bit ACLE exists. Particularly pressing
-    // instances are: __AARCH_ISA_A32, __AARCH_ISA_T32, __ARCH_PCS.
-    Builder.defineMacro("__AARCH_ACLE",    "101");
-    Builder.defineMacro("__AARCH",         "8");
-    Builder.defineMacro("__AARCH_PROFILE", "'A'");
+    // instances are: __ARM_ARCH_ISA_ARM, __ARM_ARCH_ISA_THUMB, __ARM_PCS.
+    Builder.defineMacro("__ARM_ACLE",         "101");
+    Builder.defineMacro("__ARM_ARCH",         "8");
+    Builder.defineMacro("__ARM_ARCH_PROFILE", "'A'");
 
-    Builder.defineMacro("__AARCH_FEATURE_UNALIGNED");
-    Builder.defineMacro("__AARCH_FEATURE_CLZ");
-    Builder.defineMacro("__AARCH_FEATURE_FMA");
+    Builder.defineMacro("__ARM_FEATURE_UNALIGNED");
+    Builder.defineMacro("__ARM_FEATURE_CLZ");
+    Builder.defineMacro("__ARM_FEATURE_FMA");
 
     // FIXME: ACLE 1.1 reserves bit 4. Will almost certainly come to mean
     // 128-bit LDXP present, at which point this becomes 0x1f.
-    Builder.defineMacro("__AARCH_FEATURE_LDREX", "0xf");
+    Builder.defineMacro("__ARM_FEATURE_LDREX", "0xf");
 
     // 0xe implies support for half, single and double precision operations.
-    Builder.defineMacro("__AARCH_FP", "0xe");
+    Builder.defineMacro("__ARM_FP", "0xe");
 
     // PCS specifies this for SysV variants, which is all we support. Other ABIs
-    // may choose __AARCH_FP16_FORMAT_ALTERNATIVE.
-    Builder.defineMacro("__AARCH_FP16_FORMAT_IEEE");
+    // may choose __ARM_FP16_FORMAT_ALTERNATIVE.
+    Builder.defineMacro("__ARM_FP16_FORMAT_IEEE");
 
     if (Opts.FastMath || Opts.FiniteMathOnly)
-      Builder.defineMacro("__AARCH_FP_FAST");
+      Builder.defineMacro("__ARM_FP_FAST");
 
     if ((Opts.C99 || Opts.C11) && !Opts.Freestanding)
-      Builder.defineMacro("__AARCH_FP_FENV_ROUNDING");
+      Builder.defineMacro("__ARM_FP_FENV_ROUNDING");
 
-    Builder.defineMacro("__AARCH_SIZEOF_WCHAR_T",
+    Builder.defineMacro("__ARM_SIZEOF_WCHAR_T",
                         Opts.ShortWChar ? "2" : "4");
 
-    Builder.defineMacro("__AARCH_SIZEOF_MINIMAL_ENUM",
+    Builder.defineMacro("__ARM_SIZEOF_MINIMAL_ENUM",
                         Opts.ShortEnums ? "1" : "4");
 
     if (BigEndian)
-      Builder.defineMacro("__AARCH_BIG_ENDIAN");
+      Builder.defineMacro("__ARM_BIG_ENDIAN");
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
