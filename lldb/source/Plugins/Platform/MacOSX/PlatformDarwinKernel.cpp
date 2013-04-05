@@ -26,6 +26,10 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Interpreter/OptionValueFileSpecList.h"
+#include "lldb/Interpreter/OptionValueProperties.h"
+#include "lldb/Interpreter/Property.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 
@@ -51,7 +55,8 @@ PlatformDarwinKernel::Initialize ()
     {
         PluginManager::RegisterPlugin (PlatformDarwinKernel::GetShortPluginNameStatic(),
                                        PlatformDarwinKernel::GetDescriptionStatic(),
-                                       PlatformDarwinKernel::CreateInstance);
+                                       PlatformDarwinKernel::CreateInstance,
+                                       PlatformDarwinKernel::DebuggerInitialize);
     }
 }
 
@@ -160,6 +165,88 @@ PlatformDarwinKernel::GetDescriptionStatic()
     return "Darwin Kernel platform plug-in.";
 }
 
+//------------------------------------------------------------------
+/// Code to handle the PlatformDarwinKernel settings
+//------------------------------------------------------------------
+
+static PropertyDefinition
+g_properties[] =
+{
+    { "search-locally-for-kexts" , OptionValue::eTypeBoolean,      true, true, NULL, NULL, "Automatically search for kexts on the local system when doing kernel debugging." },
+    { "kext-directories",          OptionValue::eTypeFileSpecList, false, 0,   NULL, NULL, "Directories/KDKs to search for kexts in when starting a kernel debug session." },
+    {  NULL        , OptionValue::eTypeInvalid, false, 0  , NULL, NULL, NULL  }
+};
+
+enum {
+    ePropertySearchForKexts = 0,
+    ePropertyKextDirectories
+};
+
+
+
+class PlatformDarwinKernelProperties : public Properties
+{
+public:
+    
+    static ConstString &
+    GetSettingName ()
+    {
+        static ConstString g_setting_name("darwin-kernel");
+        return g_setting_name;
+    }
+
+    PlatformDarwinKernelProperties() :
+        Properties ()
+    {
+        m_collection_sp.reset (new OptionValueProperties(GetSettingName()));
+        m_collection_sp->Initialize(g_properties);
+    }
+
+    virtual
+    ~PlatformDarwinKernelProperties()
+    {
+    }
+
+    bool
+    GetSearchForKexts() const
+    {
+        const uint32_t idx = ePropertySearchForKexts;
+        return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+    }
+
+    FileSpecList &
+    GetKextDirectories() const
+    {
+        const uint32_t idx = ePropertyKextDirectories;
+        OptionValueFileSpecList *option_value = m_collection_sp->GetPropertyAtIndexAsOptionValueFileSpecList (NULL, false, idx);
+        assert(option_value);
+        return option_value->GetCurrentValue();
+    }
+};
+
+typedef STD_SHARED_PTR(PlatformDarwinKernelProperties) PlatformDarwinKernelPropertiesSP;
+
+static const PlatformDarwinKernelPropertiesSP &
+GetGlobalProperties()
+{
+    static PlatformDarwinKernelPropertiesSP g_settings_sp;
+    if (!g_settings_sp)
+        g_settings_sp.reset (new PlatformDarwinKernelProperties ());
+    return g_settings_sp;
+}
+
+void
+PlatformDarwinKernel::DebuggerInitialize (lldb_private::Debugger &debugger)
+{
+    if (!PluginManager::GetSettingForPlatformPlugin (debugger, PlatformDarwinKernelProperties::GetSettingName()))
+    {
+        const bool is_global_setting = true;
+        PluginManager::CreateSettingForPlatformPlugin (debugger,
+                                                            GetGlobalProperties()->GetValueProperties(),
+                                                            ConstString ("Properties for the PlatformDarwinKernel plug-in."),
+                                                            is_global_setting);
+    }
+}
 
 //------------------------------------------------------------------
 /// Default Constructor
@@ -171,7 +258,10 @@ PlatformDarwinKernel::PlatformDarwinKernel (lldb_private::LazyBool is_ios_debug_
     m_ios_debug_session(is_ios_debug_session)
 
 {
-    SearchForKexts ();
+    if (GetGlobalProperties()->GetSearchForKexts())
+    {
+        SearchForKexts ();
+    }
 }
 
 //------------------------------------------------------------------
@@ -201,7 +291,7 @@ PlatformDarwinKernel::GetStatus (Stream &strm)
     {
         const FileSpec &kdk_dir = m_directories_searched[i];
 
-        strm.Printf (" KDK Roots: [%2u] \"%s/%s\"\n",
+        strm.Printf (" Kext directories: [%2u] \"%s/%s\"\n",
                      i,
                      kdk_dir.GetDirectory().GetCString(),
                      kdk_dir.GetFilename().GetCString());
@@ -237,6 +327,8 @@ PlatformDarwinKernel::SearchForKexts ()
         GetMacDirectoriesToSearch (kext_dirs);
 
     GetGenericDirectoriesToSearch (kext_dirs);
+
+    GetUserSpecifiedDirectoriesToSearch (kext_dirs);
 
     // We now have a complete list of directories that we will search for kext bundles
     m_directories_searched = kext_dirs;
@@ -320,6 +412,35 @@ PlatformDarwinKernel::GetGenericDirectoriesToSearch (std::vector<lldb_private::F
     }
 }
 
+void
+PlatformDarwinKernel::GetUserSpecifiedDirectoriesToSearch (std::vector<lldb_private::FileSpec> &directories)
+{
+    FileSpecList user_dirs(GetGlobalProperties()->GetKextDirectories());
+    std::vector<FileSpec> possible_sdk_dirs;
+
+    const uint32_t user_dirs_count = user_dirs.GetSize();
+    for (uint32_t i = 0; i < user_dirs_count; i++)
+    {
+        const FileSpec &dir = user_dirs.GetFileSpecAtIndex (i);
+        if (dir.Exists() && dir.GetFileType() == FileSpec::eFileTypeDirectory)
+        {
+            directories.push_back (dir);
+            possible_sdk_dirs.push_back (dir);  // does this directory have a *.sdk or *.kdk that we should look in?
+
+            // Is there a "System/Library/Extensions" subdir of this directory?
+            char pathbuf[PATH_MAX];
+            ::snprintf (pathbuf, sizeof (pathbuf), "%s/%s/System/Library/Extensions", dir.GetDirectory().GetCString(), dir.GetFilename().GetCString());
+            FileSpec dir_sle(pathbuf, true);
+            if (dir_sle.Exists() && dir_sle.GetFileType() == FileSpec::eFileTypeDirectory)
+            {
+                directories.push_back (dir_sle);
+            }
+        }
+    }
+
+    SearchSDKsForKextDirectories (possible_sdk_dirs, directories);
+}
+
 // Scan through the SDK directories, looking for directories where kexts are likely.
 // Add those directories to kext_dirs.
 void
@@ -379,6 +500,7 @@ void
 PlatformDarwinKernel::IndexKextsInDirectories (std::vector<lldb_private::FileSpec> kext_dirs)
 {
     std::vector<FileSpec> kext_bundles;
+
     const uint32_t num_dirs = kext_dirs.size();
     for (uint32_t i = 0; i < num_dirs; i++)
     {

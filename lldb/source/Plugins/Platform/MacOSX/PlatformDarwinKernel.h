@@ -32,6 +32,9 @@ public:
     CreateInstance (bool force, const lldb_private::ArchSpec *arch);
 
     static void
+    DebuggerInitialize (lldb_private::Debugger &debugger);
+
+    static void
     Initialize ();
 
     static void
@@ -147,6 +150,10 @@ protected:
     // Directories where we may find iOS or MacOSX kext bundles
     void
     GetGenericDirectoriesToSearch (std::vector<lldb_private::FileSpec> &directories);
+
+    // Directories specified via the "kext-directories" setting - maybe KDK/SDKs, may be plain directories
+    void
+    GetUserSpecifiedDirectoriesToSearch (std::vector<lldb_private::FileSpec> &directories);
 
     // Search through a vector of SDK FileSpecs, add any directories that may contain kexts
     // to the vector of kext dir FileSpecs

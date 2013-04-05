@@ -199,7 +199,8 @@ public:
     static bool
     RegisterPlugin (const char *name,
                     const char *description,
-                    PlatformCreateInstance create_callback);
+                    PlatformCreateInstance create_callback,
+                    DebuggerInitializeCallback debugger_init_callback = NULL);
 
     static bool
     UnregisterPlugin (PlatformCreateInstance create_callback);
@@ -299,7 +300,7 @@ public:
     // callback when registering the plug-in. After a new Debugger
     // instance is created, this DebuggerInitialize function will get
     // called. This allows plug-ins to install Properties and do any
-    // other intialization that requires a debugger instance.
+    // other initialization that requires a debugger instance.
     //------------------------------------------------------------------
     static void
     DebuggerInitialize (Debugger &debugger);
@@ -310,6 +311,16 @@ public:
     
     static bool
     CreateSettingForDynamicLoaderPlugin (Debugger &debugger,
+                                         const lldb::OptionValuePropertiesSP &properties_sp,
+                                         const ConstString &description,
+                                         bool is_global_property);
+    
+    static lldb::OptionValuePropertiesSP
+    GetSettingForPlatformPlugin (Debugger &debugger,
+                                       const ConstString &setting_name);
+    
+    static bool
+    CreateSettingForPlatformPlugin (Debugger &debugger,
                                          const lldb::OptionValuePropertiesSP &properties_sp,
                                          const ConstString &description,
                                          bool is_global_property);

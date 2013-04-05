@@ -1229,13 +1229,15 @@ struct PlatformInstance
     PlatformInstance() :
         name(),
         description(),
-        create_callback(NULL)
+        create_callback(NULL),
+        debugger_init_callback (NULL)
     {
     }
     
     std::string name;
     std::string description;
     PlatformCreateInstance create_callback;
+    DebuggerInitializeCallback debugger_init_callback;
 };
 
 typedef std::vector<PlatformInstance> PlatformInstances;
@@ -1258,7 +1260,8 @@ GetPlatformInstances ()
 bool
 PluginManager::RegisterPlugin (const char *name,
                                const char *description,
-                               PlatformCreateInstance create_callback)
+                               PlatformCreateInstance create_callback,
+                               DebuggerInitializeCallback debugger_init_callback)
 {
     if (create_callback)
     {
@@ -1270,11 +1273,13 @@ PluginManager::RegisterPlugin (const char *name,
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
+        instance.debugger_init_callback = debugger_init_callback;
         GetPlatformInstances ().push_back (instance);
         return true;
     }
     return false;
 }
+
 
 const char *
 PluginManager::GetPlatformPluginNameAtIndex (uint32_t idx)
@@ -1365,7 +1370,6 @@ PluginManager::AutoCompletePlatformName (const char *name, StringList &matches)
     }
     return matches.GetSize();
 }
-
 #pragma mark Process
 
 struct ProcessInstance
@@ -1813,14 +1817,30 @@ PluginManager::GetUnwindAssemblyCreateCallbackForPluginName (const char *name)
 void
 PluginManager::DebuggerInitialize (Debugger &debugger)
 {
-    Mutex::Locker locker (GetDynamicLoaderMutex ());
-    DynamicLoaderInstances &instances = GetDynamicLoaderInstances ();
-    
-    DynamicLoaderInstances::iterator pos, end = instances.end();
-    for (pos = instances.begin(); pos != end; ++ pos)
+    // Initialize the DynamicLoader plugins
     {
-        if (pos->debugger_init_callback)
-            pos->debugger_init_callback (debugger);
+        Mutex::Locker locker (GetDynamicLoaderMutex ());
+        DynamicLoaderInstances &instances = GetDynamicLoaderInstances ();
+    
+        DynamicLoaderInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->debugger_init_callback)
+                pos->debugger_init_callback (debugger);
+        }
+    }
+
+    // Initialize the Platform plugins
+    {
+        Mutex::Locker locker (GetPlatformInstancesMutex ());
+        PlatformInstances &instances = GetPlatformInstances ();
+    
+        PlatformInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->debugger_init_callback)
+                pos->debugger_init_callback (debugger);
+        }
     }
 }
 
@@ -1886,6 +1906,44 @@ PluginManager::CreateSettingForDynamicLoaderPlugin (Debugger &debugger,
         lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPlugins (debugger,
                                                                                                 ConstString("dynamic-loader"),
                                                                                                 ConstString("Settings for dynamic loader plug-ins"),
+                                                                                                true));
+        if (plugin_type_properties_sp)
+        {
+            plugin_type_properties_sp->AppendProperty (properties_sp->GetName(),
+                                                       description,
+                                                       is_global_property,
+                                                       properties_sp);
+            return true;
+        }
+    }
+    return false;
+}
+
+
+lldb::OptionValuePropertiesSP
+PluginManager::GetSettingForPlatformPlugin (Debugger &debugger, const ConstString &setting_name)
+{
+    lldb::OptionValuePropertiesSP properties_sp;
+    lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPlugins (debugger,
+                                                                                            ConstString("platform"),
+                                                                                            ConstString(), // not creating to so we don't need the description
+                                                                                            false));
+    if (plugin_type_properties_sp)
+        properties_sp = plugin_type_properties_sp->GetSubProperty (NULL, setting_name);
+    return properties_sp;
+}
+
+bool
+PluginManager::CreateSettingForPlatformPlugin (Debugger &debugger,
+                                                    const lldb::OptionValuePropertiesSP &properties_sp,
+                                                    const ConstString &description,
+                                                    bool is_global_property)
+{
+    if (properties_sp)
+    {
+        lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPlugins (debugger,
+                                                                                                ConstString("platform"),
+                                                                                                ConstString("Settings for platform plug-ins"),
                                                                                                 true));
         if (plugin_type_properties_sp)
         {
