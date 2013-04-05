@@ -1,8 +1,5 @@
 ; RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
 
-; XXX: Enable once SI supports buffer stores
-; XFAIL: *
-
 ; Use a 64-bit value with lo bits that can be represented as an inline constant
 ; CHECK: @i64_imm_inline_lo
 ; CHECK: S_MOV_B32 [[LO:SGPR[0-9]+]], 5

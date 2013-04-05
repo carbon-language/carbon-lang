@@ -32,8 +32,14 @@ def CC_SI : CallingConv<[
     VGPR8, VGPR9, VGPR10, VGPR11, VGPR12, VGPR13, VGPR14, VGPR15,
     VGPR16, VGPR17, VGPR18, VGPR19, VGPR20, VGPR21, VGPR22, VGPR23,
     VGPR24, VGPR25, VGPR26, VGPR27, VGPR28, VGPR29, VGPR30, VGPR31
-  ]>>>
+  ]>>>,
 
+  // This is the default for i64 values.
+  // XXX: We should change this once clang understands the CC_AMDGPU.
+  CCIfType<[i64], CCAssignToRegWithShadow<
+   [ SGPR0, SGPR2, SGPR4, SGPR6, SGPR8, SGPR10, SGPR12, SGPR14 ],
+   [ SGPR1, SGPR3, SGPR5, SGPR7, SGPR9, SGPR11, SGPR13, SGPR15 ]
+  >>
 ]>;
 
 def CC_AMDGPU : CallingConv<[

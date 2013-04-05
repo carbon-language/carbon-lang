@@ -116,6 +116,7 @@ enum {
   BRANCH_COND,
   // End AMDIL ISD Opcodes
   BITALIGN,
+  BUFFER_STORE,
   DWORDADDR,
   FRACT,
   FMAX,
