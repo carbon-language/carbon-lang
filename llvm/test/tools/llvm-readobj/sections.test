@@ -98,7 +98,7 @@ MACHO-NEXT:   }
 MACHO-NEXT:   Section {
 MACHO-NEXT:     Index: 1
 MACHO-NEXT:     Name: __cstring (
-MACHO-NEXT:     Segment: __TEXT (
+MACHO-NEXT:     Segment:
 MACHO-NEXT:     Address: 0x22
 MACHO-NEXT:     Size: 0xD
 MACHO-NEXT:     Offset: 358
