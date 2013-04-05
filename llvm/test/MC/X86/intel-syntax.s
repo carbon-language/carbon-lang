@@ -247,4 +247,41 @@ _main:
     mov [16][eax][ebx*4], ecx
 // CHECK: movl %ecx, -16(%eax,%ebx,4)
     mov [eax][ebx*4 - 16], ecx
-	ret
+
+// CHECK: prefetchnta 12800(%esi)
+    prefetchnta [esi + (200*64)]
+// CHECK: prefetchnta 32(%esi)
+    prefetchnta [esi + (64/2)]
+// CHECK: prefetchnta 128(%esi)
+    prefetchnta [esi + (64/2*4)]
+// CHECK: prefetchnta 8(%esi)
+    prefetchnta [esi + (64/(2*4))]
+// CHECK: prefetchnta 48(%esi)
+    prefetchnta [esi + (64/(2*4)+40)]
+
+// CHECK: movl %ecx, -16(%eax,%ebx,4)
+    mov [eax][ebx*4 - 2*8], ecx
+// CHECK: movl %ecx, -16(%eax,%ebx,4)
+    mov [eax][4*ebx - 2*8], ecx
+// CHECK: movl %ecx, -16(%eax,%ebx,4)
+    mov [eax + 4*ebx - 2*8], ecx
+// CHECK: movl %ecx, -16(%eax,%ebx,4)
+    mov [12 + eax + (4*ebx) - 2*14], ecx
+// CHECK: movl %ecx, -16(%eax,%ebx,4)
+    mov [eax][ebx*4 - 2*2*2*2], ecx
+// CHECK: movl %ecx, -16(%eax,%ebx,4)
+    mov [eax][ebx*4 - (2*8)], ecx
+// CHECK: movl %ecx, -16(%eax,%ebx,4)
+    mov [eax][ebx*4 - 2 * 8 + 4 - 4], ecx
+// CHECK: movl %ecx, -16(%eax,%ebx,4)
+    mov [eax + ebx*4 - 2 * 8 + 4 - 4], ecx
+// CHECK: movl %ecx, -16(%eax,%ebx,4)
+    mov [eax + ebx*4 - 2 * ((8 + 4) - 4)], ecx
+// CHECK: movl %ecx, -16(%eax,%ebx,4)
+    mov [-2 * ((8 + 4) - 4) + eax + ebx*4], ecx
+// CHECK: movl %ecx, -16(%eax,%ebx,4)
+    mov [((-2) * ((8 + 4) - 4)) + eax + ebx*4], ecx
+// CHECK: movl %ecx, -16(%eax,%ebx,4)
+    mov [eax + ((-2) * ((8 + 4) - 4)) + ebx*4], ecx
+
+    ret

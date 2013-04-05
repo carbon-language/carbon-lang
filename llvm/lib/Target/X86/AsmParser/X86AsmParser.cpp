@@ -676,41 +676,180 @@ static unsigned getIntelMemOperandSize(StringRef OpStr) {
   return Size;
 }
 
+enum InfixCalculatorTok {
+  IC_PLUS = 0,
+  IC_MINUS,
+  IC_MULTIPLY,
+  IC_DIVIDE,
+  IC_RPAREN,
+  IC_LPAREN,
+  IC_IMM,
+  IC_REGISTER
+};
+static const char OpPrecedence[] = {
+  0, // IC_PLUS
+  0, // IC_MINUS
+  1, // IC_MULTIPLY
+  1, // IC_DIVIDE
+  2, // IC_RPAREN
+  3, // IC_LPAREN
+  0, // IC_IMM
+  0  // IC_REGISTER
+};
+
+class InfixCalculator {
+  typedef std::pair< InfixCalculatorTok, int64_t > ICToken;
+  SmallVector<InfixCalculatorTok, 4> InfixOperatorStack;
+  SmallVector<ICToken, 4> PostfixStack;
+
+public:
+  int64_t popOperand() {
+    assert (!PostfixStack.empty() && "Poped an empty stack!");
+    ICToken Op = PostfixStack.pop_back_val();
+    assert ((Op.first == IC_IMM || Op.first == IC_REGISTER)
+            && "Expected and immediate or register!");
+    return Op.second;
+  }
+  void pushOperand(InfixCalculatorTok Op, int64_t Val = 0) {
+    assert ((Op == IC_IMM || Op == IC_REGISTER) &&
+            "Unexpected operand!");
+    PostfixStack.push_back(std::make_pair(Op, Val));
+  }
+
+  void popOperator() { InfixOperatorStack.pop_back_val(); }
+  void pushOperator(InfixCalculatorTok Op) {
+    // Push the new operator if the stack is empty.
+    if (InfixOperatorStack.empty()) {
+      InfixOperatorStack.push_back(Op);
+      return;
+    }
+
+    // Push the new operator if it has a higher precedence than the operator on
+    // the top of the stack or the operator on the top of the stack is a left
+    // parentheses.
+    unsigned Idx = InfixOperatorStack.size() - 1;
+    InfixCalculatorTok StackOp = InfixOperatorStack[Idx];
+    if (OpPrecedence[Op] > OpPrecedence[StackOp] || StackOp == IC_LPAREN) {
+      InfixOperatorStack.push_back(Op);
+      return;
+    }
+
+    // The operator on the top of the stack has higher precedence than the
+    // new operator.
+    unsigned ParenCount = 0;
+    while (1) {
+      // Nothing to process.
+      if (InfixOperatorStack.empty())
+        break;
+
+      Idx = InfixOperatorStack.size() - 1;
+      StackOp = InfixOperatorStack[Idx];
+      if (!(OpPrecedence[StackOp] >= OpPrecedence[Op] || ParenCount))
+        break;
+
+      // If we have an even parentheses count and we see a left parentheses,
+      // then stop processing.
+      if (!ParenCount && StackOp == IC_LPAREN)
+        break;
+
+      if (StackOp == IC_RPAREN) {
+        ++ParenCount;
+        InfixOperatorStack.pop_back_val();
+      } else if (StackOp == IC_LPAREN) {
+        --ParenCount;
+        InfixOperatorStack.pop_back_val();
+      } else {
+        InfixOperatorStack.pop_back_val();
+        PostfixStack.push_back(std::make_pair(StackOp, 0));
+      }
+    }
+    // Push the new operator.
+    InfixOperatorStack.push_back(Op);
+  }
+  int64_t execute() {
+    // Push any remaining operators onto the postfix stack.
+    while (!InfixOperatorStack.empty()) {
+      InfixCalculatorTok StackOp = InfixOperatorStack.pop_back_val();
+      if (StackOp != IC_LPAREN && StackOp != IC_RPAREN)
+        PostfixStack.push_back(std::make_pair(StackOp, 0));
+    }
+
+    if (PostfixStack.empty())
+      return 0;
+
+    SmallVector<ICToken, 16> OperandStack;
+    for (unsigned i = 0, e = PostfixStack.size(); i != e; ++i) {
+      ICToken Op = PostfixStack[i];
+      if (Op.first == IC_IMM || Op.first == IC_REGISTER) {
+        OperandStack.push_back(Op);
+      } else {
+        assert (OperandStack.size() > 1 && "Too few operands.");
+        int64_t Val;
+        ICToken Op2 = OperandStack.pop_back_val();
+        ICToken Op1 = OperandStack.pop_back_val();
+        switch (Op.first) {
+        default:
+          report_fatal_error("Unexpected operator!");
+          break;
+        case IC_PLUS:
+          Val = Op1.second + Op2.second;
+          OperandStack.push_back(std::make_pair(IC_IMM, Val));
+          break;
+        case IC_MINUS:
+          Val = Op1.second - Op2.second;
+          OperandStack.push_back(std::make_pair(IC_IMM, Val));
+          break;
+        case IC_MULTIPLY:
+          assert (Op1.first == IC_IMM && Op2.first == IC_IMM &&
+                  "Multiply operation with an immediate and a register!");
+          Val = Op1.second * Op2.second;
+          OperandStack.push_back(std::make_pair(IC_IMM, Val));
+          break;
+        case IC_DIVIDE:
+          assert (Op1.first == IC_IMM && Op2.first == IC_IMM &&
+                  "Divide operation with an immediate and a register!");
+          assert (Op2.second != 0 && "Division by zero!");
+          Val = Op1.second / Op2.second;
+          OperandStack.push_back(std::make_pair(IC_IMM, Val));
+          break;
+        }
+      }
+    }
+    assert (OperandStack.size() == 1 && "Expected a single result.");
+    return OperandStack.pop_back_val().second;
+  }
+};
+
 enum IntelBracExprState {
-  IBES_START,
+  IBES_PLUS,
+  IBES_MINUS,
+  IBES_MULTIPLY,
+  IBES_DIVIDE,
   IBES_LBRAC,
   IBES_RBRAC,
+  IBES_LPAREN,
+  IBES_RPAREN,
   IBES_REGISTER,
   IBES_REGISTER_STAR,
-  IBES_REGISTER_STAR_INTEGER,
   IBES_INTEGER,
   IBES_INTEGER_STAR,
-  IBES_INDEX_REGISTER,
   IBES_IDENTIFIER,
-  IBES_DISP_EXPR,
-  IBES_MINUS,
   IBES_ERROR
 };
 
 class IntelBracExprStateMachine {
   IntelBracExprState State;
-  unsigned BaseReg, IndexReg, Scale;
+  unsigned BaseReg, IndexReg, TmpReg, Scale;
   int64_t Disp;
-
-  unsigned TmpReg;
-  int64_t TmpInteger;
-
-  bool isPlus;
-
+  InfixCalculator IC;
 public:
   IntelBracExprStateMachine(MCAsmParser &parser, int64_t disp) :
-    State(IBES_START), BaseReg(0), IndexReg(0), Scale(1), Disp(disp),
-    TmpReg(0), TmpInteger(0), isPlus(true) {}
+    State(IBES_PLUS), BaseReg(0), IndexReg(0), TmpReg(0), Scale(1), Disp(disp){}
 
   unsigned getBaseReg() { return BaseReg; }
   unsigned getIndexReg() { return IndexReg; }
   unsigned getScale() { return Scale; }
-  int64_t getDisp() { return Disp; }
+  int64_t getDisp() { return Disp + IC.execute(); }
   bool isValidEndState() { return State == IBES_RBRAC; }
 
   void onPlus() {
@@ -719,14 +858,12 @@ public:
       State = IBES_ERROR;
       break;
     case IBES_INTEGER:
-      State = IBES_START;
-      if (isPlus)
-        Disp += TmpInteger;
-      else
-        Disp -= TmpInteger;
+    case IBES_RPAREN:
+      State = IBES_PLUS;
+      IC.pushOperator(IC_PLUS);
       break;
     case IBES_REGISTER:
-      State = IBES_START;
+      State = IBES_PLUS;
       // If we already have a BaseReg, then assume this is the IndexReg with a
       // scale of 1.
       if (!BaseReg) {
@@ -736,30 +873,25 @@ public:
         IndexReg = TmpReg;
         Scale = 1;
       }
-      break;
-    case IBES_INDEX_REGISTER:
-      State = IBES_START;
+      IC.pushOperator(IC_PLUS);
       break;
     }
-    isPlus = true;
   }
   void onMinus() {
     switch (State) {
     default:
       State = IBES_ERROR;
       break;
-    case IBES_START:
-      State = IBES_MINUS;
-      break;
+    case IBES_PLUS:
+    case IBES_LPAREN:
+      IC.pushOperand(IC_IMM);
     case IBES_INTEGER:
-      State = IBES_START;
-      if (isPlus)
-        Disp += TmpInteger;
-      else
-        Disp -= TmpInteger;
+    case IBES_RPAREN:
+      State = IBES_MINUS;
+      IC.pushOperator(IC_MINUS);
       break;
     case IBES_REGISTER:
-      State = IBES_START;
+      State = IBES_MINUS;
       // If we already have a BaseReg, then assume this is the IndexReg with a
       // scale of 1.
       if (!BaseReg) {
@@ -769,27 +901,28 @@ public:
         IndexReg = TmpReg;
         Scale = 1;
       }
-      break;
-    case IBES_INDEX_REGISTER:
-      State = IBES_START;
+      IC.pushOperator(IC_MINUS);
       break;
     }
-    isPlus = false;
   }
   void onRegister(unsigned Reg) {
     switch (State) {
     default:
       State = IBES_ERROR;
       break;
-    case IBES_START:
+    case IBES_PLUS:
+    case IBES_LPAREN:
       State = IBES_REGISTER;
       TmpReg = Reg;
+      IC.pushOperand(IC_REGISTER);
       break;
     case IBES_INTEGER_STAR:
       assert (!IndexReg && "IndexReg already set!");
-      State = IBES_INDEX_REGISTER;
+      State = IBES_INTEGER;
       IndexReg = Reg;
-      Scale = TmpInteger;
+      Scale = IC.popOperand();
+      IC.pushOperand(IC_IMM);
+      IC.popOperator();
       break;
     }
   }
@@ -798,8 +931,10 @@ public:
     default:
       State = IBES_ERROR;
       break;
-    case IBES_START:
-      State = IBES_DISP_EXPR;
+    case IBES_PLUS:
+    case IBES_MINUS:
+      State = IBES_INTEGER;
+      IC.pushOperand(IC_IMM);
       break;
     }
   }
@@ -808,19 +943,21 @@ public:
     default:
       State = IBES_ERROR;
       break;
-    case IBES_START:
-      State = IBES_INTEGER;
-      TmpInteger = TmpInt;
-      break;
+    case IBES_PLUS:
     case IBES_MINUS:
+    case IBES_MULTIPLY:
+    case IBES_DIVIDE:
+    case IBES_LPAREN:
+    case IBES_INTEGER_STAR:
       State = IBES_INTEGER;
-      TmpInteger = TmpInt;
+      IC.pushOperand(IC_IMM, TmpInt);
       break;
     case IBES_REGISTER_STAR:
       assert (!IndexReg && "IndexReg already set!");
-      State = IBES_INDEX_REGISTER;
+      State = IBES_INTEGER;
       IndexReg = TmpReg;
       Scale = TmpInt;
+      IC.popOperator();
       break;
     }
   }
@@ -831,9 +968,26 @@ public:
       break;
     case IBES_INTEGER:
       State = IBES_INTEGER_STAR;
+      IC.pushOperator(IC_MULTIPLY);
       break;
     case IBES_REGISTER:
       State = IBES_REGISTER_STAR;
+      IC.pushOperator(IC_MULTIPLY);
+      break;
+    case IBES_RPAREN:
+      State = IBES_MULTIPLY;
+      IC.pushOperator(IC_MULTIPLY);
+      break;
+    }
+  }
+  void onDivide() {
+    switch (State) {
+    default:
+      State = IBES_ERROR;
+      break;
+    case IBES_INTEGER:
+      State = IBES_DIVIDE;
+      IC.pushOperator(IC_DIVIDE);
       break;
     }
   }
@@ -843,8 +997,8 @@ public:
       State = IBES_ERROR;
       break;
     case IBES_RBRAC:
-      State = IBES_START;
-      isPlus = true;
+      State = IBES_PLUS;
+      IC.pushOperator(IC_PLUS);
       break;
     }
   }
@@ -853,15 +1007,9 @@ public:
     default:
       State = IBES_ERROR;
       break;
-    case IBES_DISP_EXPR:
-      State = IBES_RBRAC;
-      break;
+    case IBES_RPAREN:
     case IBES_INTEGER:
       State = IBES_RBRAC;
-      if (isPlus)
-        Disp += TmpInteger;
-      else
-        Disp -= TmpInteger;
       break;
     case IBES_REGISTER:
       State = IBES_RBRAC;
@@ -875,8 +1023,38 @@ public:
         Scale = 1;
       }
       break;
-    case IBES_INDEX_REGISTER:
-      State = IBES_RBRAC;
+    }
+  }
+  void onLParen() {
+    switch (State) {
+    default:
+      State = IBES_ERROR;
+      break;
+    case IBES_PLUS:
+    case IBES_MINUS:
+    case IBES_MULTIPLY:
+    case IBES_DIVIDE:
+    case IBES_INTEGER_STAR:
+    case IBES_LPAREN:
+      State = IBES_LPAREN;
+      IC.pushOperator(IC_LPAREN);
+      break;
+    }
+  }
+  void onRParen() {
+    switch (State) {
+    default:
+      State = IBES_ERROR;
+      break;
+    case IBES_REGISTER:
+    case IBES_INTEGER:
+    case IBES_PLUS:
+    case IBES_MINUS:
+    case IBES_MULTIPLY:
+    case IBES_DIVIDE:
+    case IBES_RPAREN:
+      State = IBES_RPAREN;
+      IC.pushOperator(IC_RPAREN);
       break;
     }
   }
@@ -1005,16 +1183,20 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       }
       return ErrorOperand(Tok.getLoc(), "Unexpected identifier!");
     }
-    case AsmToken::Integer: {
-      int64_t Val = Tok.getIntVal();
-      SM.onInteger(Val);
+    case AsmToken::Integer:
+      if (isParsingInlineAsm())
+        InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_ImmPrefix,
+                                                    Tok.getLoc()));
+      SM.onInteger(Tok.getIntVal());
       break;
-    }
     case AsmToken::Plus:    SM.onPlus(); break;
     case AsmToken::Minus:   SM.onMinus(); break;
     case AsmToken::Star:    SM.onStar(); break;
+    case AsmToken::Slash:   SM.onDivide(); break;
     case AsmToken::LBrac:   SM.onLBrac(); break;
     case AsmToken::RBrac:   SM.onRBrac(); break;
+    case AsmToken::LParen:  SM.onLParen(); break;
+    case AsmToken::RParen:  SM.onRParen(); break;
     }
     if (!Done && UpdateLocLex) {
       End = Tok.getLoc();
