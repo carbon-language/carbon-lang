@@ -305,7 +305,7 @@ void MachineScheduler::print(raw_ostream &O, const Module* m) const {
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void ReadyQueue::dump() {
-  dbgs() << Name << ": ";
+  dbgs() << "  " << Name << ": ";
   for (unsigned i = 0, e = Queue.size(); i < e; ++i)
     dbgs() << Queue[i]->NodeNum << " ";
   dbgs() << "\n";
@@ -1192,7 +1192,7 @@ protected:
                          SchedCandidate &Candidate);
 
 #ifndef NDEBUG
-  void traceCandidate(const SchedCandidate &Cand, const SchedBoundary &Zone);
+  void traceCandidate(const SchedCandidate &Cand);
 #endif
 };
 } // namespace
@@ -1403,8 +1403,8 @@ void ConvergingScheduler::SchedBoundary::bumpCycle() {
   CheckPending = true;
   IsResourceLimited = getCriticalCount() > std::max(ExpectedLatency, CurrCycle);
 
-  DEBUG(dbgs() << "  *** " << Available.getName() << " cycle "
-        << CurrCycle << '\n');
+  DEBUG(dbgs() << "  " << Available.getName()
+        << " Cycle: " << CurrCycle << '\n');
 }
 
 /// Add the given processor resource to this scheduled zone.
@@ -1870,9 +1870,7 @@ const char *ConvergingScheduler::getReasonStr(
   llvm_unreachable("Unknown reason!");
 }
 
-void ConvergingScheduler::traceCandidate(const SchedCandidate &Cand,
-                                         const SchedBoundary &Zone) {
-  const char *Label = getReasonStr(Cand.Reason);
+void ConvergingScheduler::traceCandidate(const SchedCandidate &Cand) {
   PressureElement P;
   unsigned ResIdx = 0;
   unsigned Latency = 0;
@@ -1907,21 +1905,21 @@ void ConvergingScheduler::traceCandidate(const SchedCandidate &Cand,
     Latency = Cand.SU->getDepth();
     break;
   }
-  dbgs() << Label << " " << Zone.Available.getName() << " ";
+  dbgs() << "  SU(" << Cand.SU->NodeNum << ") " << getReasonStr(Cand.Reason);
   if (P.isValid())
-    dbgs() << TRI->getRegPressureSetName(P.PSetID) << ":" << P.UnitIncrease
-           << " ";
+    dbgs() << " " << TRI->getRegPressureSetName(P.PSetID)
+           << ":" << P.UnitIncrease << " ";
   else
-    dbgs() << "     ";
+    dbgs() << "      ";
   if (ResIdx)
-    dbgs() << SchedModel->getProcResource(ResIdx)->Name << " ";
-  else
-    dbgs() << "        ";
-  if (Latency)
-    dbgs() << Latency << " cycles ";
+    dbgs() << " " << SchedModel->getProcResource(ResIdx)->Name << " ";
   else
     dbgs() << "         ";
-  Cand.SU->dump(DAG);
+  if (Latency)
+    dbgs() << " " << Latency << " cycles ";
+  else
+    dbgs() << "          ";
+  dbgs() << '\n';
 }
 #endif
 
@@ -1950,14 +1948,14 @@ void ConvergingScheduler::pickNodeFromQueue(SchedBoundary &Zone,
       if (TryCand.ResDelta == SchedResourceDelta())
         TryCand.initResourceDelta(DAG, SchedModel);
       Cand.setBest(TryCand);
-      DEBUG(traceCandidate(Cand, Zone));
+      DEBUG(traceCandidate(Cand));
     }
   }
 }
 
 static void tracePick(const ConvergingScheduler::SchedCandidate &Cand,
                       bool IsTop) {
-  DEBUG(dbgs() << "Pick " << (IsTop ? "top" : "bot")
+  DEBUG(dbgs() << "Pick " << (IsTop ? "Top" : "Bot")
         << " SU(" << Cand.SU->NodeNum << ") "
         << ConvergingScheduler::getReasonStr(Cand.Reason) << '\n');
 }
@@ -2069,10 +2067,7 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
   if (SU->isBottomReady())
     Bot.removeReady(SU);
 
-  DEBUG(dbgs() << "*** " << (IsTopNode ? "Top" : "Bottom")
-        << " Scheduling Instruction in cycle "
-        << (IsTopNode ? Top.CurrCycle : Bot.CurrCycle) << '\n';
-        SU->dump(DAG));
+  DEBUG(dbgs() << "Scheduling " << *SU->getInstr());
   return SU;
 }
 
