@@ -848,38 +848,51 @@ INTERCEPTOR(int, sigaction, int signo, const __sanitizer_sigaction *act,
   ENSURE_MSAN_INITED();
   // FIXME: check that *act is unpoisoned.
   // That requires intercepting all of sigemptyset, sigfillset, etc.
-  SpinMutexLock lock(&sigactions_mu);
-  CHECK_LT(signo, kMaxSignals);
-  uptr old_cb = sigactions[signo];
-  __sanitizer_sigaction new_act;
-  __sanitizer_sigaction *pnew_act = act ? &new_act : 0;
-  if (act) {
-    internal_memcpy(pnew_act, act, __sanitizer::struct_sigaction_sz);
-    uptr cb = __sanitizer::__sanitizer_get_sigaction_sa_sigaction(pnew_act);
-    uptr new_cb = __sanitizer::__sanitizer_get_sigaction_sa_siginfo(pnew_act) ?
-        (uptr)SignalAction : (uptr)SignalHandler;
-    if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
-      sigactions[signo] = cb;
-      __sanitizer::__sanitizer_set_sigaction_sa_sigaction(pnew_act, new_cb);
+  int res;
+  if (flags()->wrap_signals) {
+    SpinMutexLock lock(&sigactions_mu);
+    CHECK_LT(signo, kMaxSignals);
+    uptr old_cb = sigactions[signo];
+    __sanitizer_sigaction new_act;
+    __sanitizer_sigaction *pnew_act = act ? &new_act : 0;
+    if (act) {
+      internal_memcpy(pnew_act, act, __sanitizer::struct_sigaction_sz);
+      uptr cb = __sanitizer::__sanitizer_get_sigaction_sa_sigaction(pnew_act);
+      uptr new_cb =
+          __sanitizer::__sanitizer_get_sigaction_sa_siginfo(pnew_act) ?
+          (uptr)SignalAction : (uptr)SignalHandler;
+      if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
+        sigactions[signo] = cb;
+        __sanitizer::__sanitizer_set_sigaction_sa_sigaction(pnew_act, new_cb);
+      }
     }
+    res = REAL(sigaction)(signo, pnew_act, oldact);
+    if (res == 0 && oldact) {
+      __sanitizer::__sanitizer_set_sigaction_sa_sigaction(oldact, old_cb);
+    }
+  } else {
+    res = REAL(sigaction)(signo, act, oldact);
   }
-  int res = REAL(sigaction)(signo, pnew_act, oldact);
+
   if (res == 0 && oldact) {
     __msan_unpoison(oldact, __sanitizer::struct_sigaction_sz);
-    __sanitizer::__sanitizer_set_sigaction_sa_sigaction(oldact, old_cb);
   }
   return res;
 }
 
 INTERCEPTOR(int, signal, int signo, uptr cb) {
   ENSURE_MSAN_INITED();
-  CHECK_LT(signo, kMaxSignals);
-  SpinMutexLock lock(&sigactions_mu);
-  if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
-    sigactions[signo] = cb;
-    cb = (uptr)SignalHandler;
+  if (flags()->wrap_signals) {
+    CHECK_LT(signo, kMaxSignals);
+    SpinMutexLock lock(&sigactions_mu);
+    if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
+      sigactions[signo] = cb;
+      cb = (uptr) SignalHandler;
+    }
+    return REAL(signal)(signo, cb);
+  } else {
+    return REAL(signal)(signo, cb);
   }
-  return REAL(signal)(signo, cb);
 }
 
 extern "C" int pthread_attr_init(void *attr);

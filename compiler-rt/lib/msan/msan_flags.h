@@ -30,6 +30,7 @@ struct Flags {
   bool fast_unwind_on_fatal;
   // Use fast (frame-pointer-based) unwinder on malloc/free (if available).
   bool fast_unwind_on_malloc;
+  bool wrap_signals;
 };
 
 Flags *flags();

@@ -129,6 +129,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix");
   ParseFlag(str, &f->fast_unwind_on_fatal, "fast_unwind_on_fatal");
   ParseFlag(str, &f->fast_unwind_on_malloc, "fast_unwind_on_malloc");
+  ParseFlag(str, &f->wrap_signals, "wrap_signals");
 }
 
 static void InitializeFlags(Flags *f, const char *options) {
@@ -144,6 +145,7 @@ static void InitializeFlags(Flags *f, const char *options) {
   f->strip_path_prefix = "";
   f->fast_unwind_on_fatal = false;
   f->fast_unwind_on_malloc = true;
+  f->wrap_signals = true;
 
   // Override from user-specified string.
   if (__msan_default_options)
