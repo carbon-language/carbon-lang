@@ -121,7 +121,7 @@ namespace COFFYAML {
   };
 
   struct Section {
-    std::vector<COFF::SectionCharacteristics> Characteristics;
+    COFF::SectionCharacteristics Characteristics;
     StringRef SectionData;
     std::vector<Relocation> Relocations;
     StringRef Name;
@@ -129,7 +129,7 @@ namespace COFFYAML {
 
   struct Header {
     COFF::MachineTypes Machine;
-    std::vector<COFF::Characteristics> Characteristics;
+    COFF::Characteristics Characteristics;
   };
 
   struct Symbol {
@@ -162,14 +162,7 @@ struct COFFParser {
 
   void parseHeader() {
     Header.Machine = Obj.HeaderData.Machine;
-
-    const std::vector<COFF::Characteristics> &Characteristics =
-      Obj.HeaderData.Characteristics;
-    for (std::vector<COFF::Characteristics>::const_iterator I =
-           Characteristics.begin(), E = Characteristics.end(); I != E; ++I) {
-      uint16_t Characteristic = *I;
-      Header.Characteristics |= Characteristic;
-    }
+    Header.Characteristics = Obj.HeaderData.Characteristics;
   }
 
   bool parseSections() {
@@ -197,13 +190,7 @@ struct COFFParser {
         std::copy(str.begin(), str.end(), Sec.Header.Name + 1);
       }
 
-      for (std::vector<COFF::SectionCharacteristics>::const_iterator i =
-             YamlSection.Characteristics.begin(),
-             e = YamlSection.Characteristics.end();
-           i != e; ++i) {
-        uint32_t Characteristic = *i;
-        Sec.Header.Characteristics |= Characteristic;
-      }
+      Sec.Header.Characteristics = YamlSection.Characteristics;
 
       StringRef Data = YamlSection.SectionData;
       if (!hexStringToByteArray(Data, Sec.Data)) {
@@ -421,13 +408,91 @@ void writeCOFF(COFFParser &CP, raw_ostream &OS) {
 }
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(COFFYAML::Relocation)
-LLVM_YAML_IS_SEQUENCE_VECTOR(COFF::SectionCharacteristics)
-LLVM_YAML_IS_SEQUENCE_VECTOR(COFF::Characteristics)
 LLVM_YAML_IS_SEQUENCE_VECTOR(COFFYAML::Section)
 LLVM_YAML_IS_SEQUENCE_VECTOR(COFFYAML::Symbol)
 
 namespace llvm {
+
+namespace COFF {
+  Characteristics operator|(Characteristics a, Characteristics b) {
+    uint32_t Ret = static_cast<uint32_t>(a) | static_cast<uint32_t>(b);
+    return static_cast<Characteristics>(Ret);
+  }
+
+  SectionCharacteristics
+  operator|(SectionCharacteristics a, SectionCharacteristics b) {
+    uint32_t Ret = static_cast<uint32_t>(a) | static_cast<uint32_t>(b);
+    return static_cast<SectionCharacteristics>(Ret);
+  }
+}
+
 namespace yaml {
+
+#define BCase(X) IO.bitSetCase(Value, #X, COFF::X);
+
+template <>
+struct ScalarBitSetTraits<COFF::SectionCharacteristics> {
+  static void bitset(IO &IO, COFF::SectionCharacteristics &Value) {
+    BCase(IMAGE_SCN_TYPE_NO_PAD);
+    BCase(IMAGE_SCN_CNT_CODE);
+    BCase(IMAGE_SCN_CNT_INITIALIZED_DATA);
+    BCase(IMAGE_SCN_CNT_UNINITIALIZED_DATA);
+    BCase(IMAGE_SCN_LNK_OTHER);
+    BCase(IMAGE_SCN_LNK_INFO);
+    BCase(IMAGE_SCN_LNK_REMOVE);
+    BCase(IMAGE_SCN_LNK_COMDAT);
+    BCase(IMAGE_SCN_GPREL);
+    BCase(IMAGE_SCN_MEM_PURGEABLE);
+    BCase(IMAGE_SCN_MEM_16BIT);
+    BCase(IMAGE_SCN_MEM_LOCKED);
+    BCase(IMAGE_SCN_MEM_PRELOAD);
+    BCase(IMAGE_SCN_ALIGN_1BYTES);
+    BCase(IMAGE_SCN_ALIGN_2BYTES);
+    BCase(IMAGE_SCN_ALIGN_4BYTES);
+    BCase(IMAGE_SCN_ALIGN_8BYTES);
+    BCase(IMAGE_SCN_ALIGN_16BYTES);
+    BCase(IMAGE_SCN_ALIGN_32BYTES);
+    BCase(IMAGE_SCN_ALIGN_64BYTES);
+    BCase(IMAGE_SCN_ALIGN_128BYTES);
+    BCase(IMAGE_SCN_ALIGN_256BYTES);
+    BCase(IMAGE_SCN_ALIGN_512BYTES);
+    BCase(IMAGE_SCN_ALIGN_1024BYTES);
+    BCase(IMAGE_SCN_ALIGN_2048BYTES);
+    BCase(IMAGE_SCN_ALIGN_4096BYTES);
+    BCase(IMAGE_SCN_ALIGN_8192BYTES);
+    BCase(IMAGE_SCN_LNK_NRELOC_OVFL);
+    BCase(IMAGE_SCN_MEM_DISCARDABLE);
+    BCase(IMAGE_SCN_MEM_NOT_CACHED);
+    BCase(IMAGE_SCN_MEM_NOT_PAGED);
+    BCase(IMAGE_SCN_MEM_SHARED);
+    BCase(IMAGE_SCN_MEM_EXECUTE);
+    BCase(IMAGE_SCN_MEM_READ);
+    BCase(IMAGE_SCN_MEM_WRITE);
+  }
+};
+
+template <>
+struct ScalarBitSetTraits<COFF::Characteristics> {
+  static void bitset(IO &IO, COFF::Characteristics &Value) {
+    BCase(IMAGE_FILE_RELOCS_STRIPPED);
+    BCase(IMAGE_FILE_EXECUTABLE_IMAGE);
+    BCase(IMAGE_FILE_LINE_NUMS_STRIPPED);
+    BCase(IMAGE_FILE_LOCAL_SYMS_STRIPPED);
+    BCase(IMAGE_FILE_AGGRESSIVE_WS_TRIM);
+    BCase(IMAGE_FILE_LARGE_ADDRESS_AWARE);
+    BCase(IMAGE_FILE_BYTES_REVERSED_LO);
+    BCase(IMAGE_FILE_32BIT_MACHINE);
+    BCase(IMAGE_FILE_DEBUG_STRIPPED);
+    BCase(IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP);
+    BCase(IMAGE_FILE_NET_RUN_FROM_SWAP);
+    BCase(IMAGE_FILE_SYSTEM);
+    BCase(IMAGE_FILE_DLL);
+    BCase(IMAGE_FILE_UP_SYSTEM_ONLY);
+    BCase(IMAGE_FILE_BYTES_REVERSED_HI);
+  }
+};
+#undef BCase
+
 #define ECase(X) IO.enumCase(Value, #X, COFF::X);
 
 template <>
@@ -440,8 +505,6 @@ struct ScalarEnumerationTraits<COFF::SymbolComplexType> {
   }
 };
 
-// FIXME: We cannot use ScalarBitSetTraits because of
-// IMAGE_SYM_CLASS_END_OF_FUNCTION which is -1.
 template <>
 struct ScalarEnumerationTraits<COFF::SymbolStorageClass> {
   static void enumeration(IO &IO, COFF::SymbolStorageClass &Value) {
@@ -521,68 +584,6 @@ struct ScalarEnumerationTraits<COFF::MachineTypes> {
     ECase(IMAGE_FILE_MACHINE_SH5);
     ECase(IMAGE_FILE_MACHINE_THUMB);
     ECase(IMAGE_FILE_MACHINE_WCEMIPSV2);
-  }
-};
-
-template <>
-struct ScalarEnumerationTraits<COFF::Characteristics> {
-  static void enumeration(IO &IO, COFF::Characteristics &Value) {
-    ECase(IMAGE_FILE_RELOCS_STRIPPED);
-    ECase(IMAGE_FILE_EXECUTABLE_IMAGE);
-    ECase(IMAGE_FILE_LINE_NUMS_STRIPPED);
-    ECase(IMAGE_FILE_LOCAL_SYMS_STRIPPED);
-    ECase(IMAGE_FILE_AGGRESSIVE_WS_TRIM);
-    ECase(IMAGE_FILE_LARGE_ADDRESS_AWARE);
-    ECase(IMAGE_FILE_BYTES_REVERSED_LO);
-    ECase(IMAGE_FILE_32BIT_MACHINE);
-    ECase(IMAGE_FILE_DEBUG_STRIPPED);
-    ECase(IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP);
-    ECase(IMAGE_FILE_NET_RUN_FROM_SWAP);
-    ECase(IMAGE_FILE_SYSTEM);
-    ECase(IMAGE_FILE_DLL);
-    ECase(IMAGE_FILE_UP_SYSTEM_ONLY);
-    ECase(IMAGE_FILE_BYTES_REVERSED_HI);
-  }
-};
-
-template <>
-struct ScalarEnumerationTraits<COFF::SectionCharacteristics> {
-  static void enumeration(IO &IO, COFF::SectionCharacteristics &Value) {
-    ECase(IMAGE_SCN_TYPE_NO_PAD);
-    ECase(IMAGE_SCN_CNT_CODE);
-    ECase(IMAGE_SCN_CNT_INITIALIZED_DATA);
-    ECase(IMAGE_SCN_CNT_UNINITIALIZED_DATA);
-    ECase(IMAGE_SCN_LNK_OTHER);
-    ECase(IMAGE_SCN_LNK_INFO);
-    ECase(IMAGE_SCN_LNK_REMOVE);
-    ECase(IMAGE_SCN_LNK_COMDAT);
-    ECase(IMAGE_SCN_GPREL);
-    ECase(IMAGE_SCN_MEM_PURGEABLE);
-    ECase(IMAGE_SCN_MEM_16BIT);
-    ECase(IMAGE_SCN_MEM_LOCKED);
-    ECase(IMAGE_SCN_MEM_PRELOAD);
-    ECase(IMAGE_SCN_ALIGN_1BYTES);
-    ECase(IMAGE_SCN_ALIGN_2BYTES);
-    ECase(IMAGE_SCN_ALIGN_4BYTES);
-    ECase(IMAGE_SCN_ALIGN_8BYTES);
-    ECase(IMAGE_SCN_ALIGN_16BYTES);
-    ECase(IMAGE_SCN_ALIGN_32BYTES);
-    ECase(IMAGE_SCN_ALIGN_64BYTES);
-    ECase(IMAGE_SCN_ALIGN_128BYTES);
-    ECase(IMAGE_SCN_ALIGN_256BYTES);
-    ECase(IMAGE_SCN_ALIGN_512BYTES);
-    ECase(IMAGE_SCN_ALIGN_1024BYTES);
-    ECase(IMAGE_SCN_ALIGN_2048BYTES);
-    ECase(IMAGE_SCN_ALIGN_4096BYTES);
-    ECase(IMAGE_SCN_ALIGN_8192BYTES);
-    ECase(IMAGE_SCN_LNK_NRELOC_OVFL);
-    ECase(IMAGE_SCN_MEM_DISCARDABLE);
-    ECase(IMAGE_SCN_MEM_NOT_CACHED);
-    ECase(IMAGE_SCN_MEM_NOT_PAGED);
-    ECase(IMAGE_SCN_MEM_SHARED);
-    ECase(IMAGE_SCN_MEM_EXECUTE);
-    ECase(IMAGE_SCN_MEM_READ);
-    ECase(IMAGE_SCN_MEM_WRITE);
   }
 };
 
