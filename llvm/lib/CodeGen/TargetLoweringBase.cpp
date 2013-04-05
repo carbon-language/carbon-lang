@@ -620,12 +620,56 @@ static void InitCmpLibcallCCs(ISD::CondCode *CCs) {
 TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm,
                                        const TargetLoweringObjectFile *tlof)
   : TM(tm), TD(TM.getDataLayout()), TLOF(*tlof) {
+  initActions();
+
+  // Perform these initializations only once.
+  IsLittleEndian = TD->isLittleEndian();
+  PointerTy = MVT::getIntegerVT(8*TD->getPointerSize(0));
+  MaxStoresPerMemset = MaxStoresPerMemcpy = MaxStoresPerMemmove = 8;
+  MaxStoresPerMemsetOptSize = MaxStoresPerMemcpyOptSize
+    = MaxStoresPerMemmoveOptSize = 4;
+  UseUnderscoreSetJmp = false;
+  UseUnderscoreLongJmp = false;
+  SelectIsExpensive = false;
+  IntDivIsCheap = false;
+  Pow2DivIsCheap = false;
+  JumpIsExpensive = false;
+  PredictableSelectIsExpensive = false;
+  StackPointerRegisterToSaveRestore = 0;
+  ExceptionPointerRegister = 0;
+  ExceptionSelectorRegister = 0;
+  BooleanContents = UndefinedBooleanContent;
+  BooleanVectorContents = UndefinedBooleanContent;
+  SchedPreferenceInfo = Sched::ILP;
+  JumpBufSize = 0;
+  JumpBufAlignment = 0;
+  MinFunctionAlignment = 0;
+  PrefFunctionAlignment = 0;
+  PrefLoopAlignment = 0;
+  MinStackArgumentAlignment = 1;
+  ShouldFoldAtomicFences = false;
+  InsertFencesForAtomic = false;
+  SupportJumpTables = true;
+  MinimumJumpTableEntries = 4;
+
+  InitLibcallNames(LibcallRoutineNames, TM);
+  InitCmpLibcallCCs(CmpLibcallCCs);
+  InitLibcallCallingConvs(LibcallCallingConvs);
+}
+
+TargetLoweringBase::~TargetLoweringBase() {
+  delete &TLOF;
+}
+
+void TargetLoweringBase::initActions() {
   // All operations default to being supported.
   memset(OpActions, 0, sizeof(OpActions));
   memset(LoadExtActions, 0, sizeof(LoadExtActions));
   memset(TruncStoreActions, 0, sizeof(TruncStoreActions));
   memset(IndexedModeActions, 0, sizeof(IndexedModeActions));
   memset(CondCodeActions, 0, sizeof(CondCodeActions));
+  memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
+  memset(TargetDAGCombineArray, 0, array_lengthof(TargetDAGCombineArray));
 
   // Set default actions for various operations.
   for (unsigned VT = 0; VT != (unsigned)MVT::LAST_VALUETYPE; ++VT) {
@@ -702,45 +746,6 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm,
   // here is to inform DAG Legalizer to replace DEBUGTRAP with TRAP.
   //
   setOperationAction(ISD::DEBUGTRAP, MVT::Other, Expand);
-
-  IsLittleEndian = TD->isLittleEndian();
-  PointerTy = MVT::getIntegerVT(8*TD->getPointerSize(0));
-  memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
-  memset(TargetDAGCombineArray, 0, array_lengthof(TargetDAGCombineArray));
-  MaxStoresPerMemset = MaxStoresPerMemcpy = MaxStoresPerMemmove = 8;
-  MaxStoresPerMemsetOptSize = MaxStoresPerMemcpyOptSize
-    = MaxStoresPerMemmoveOptSize = 4;
-  UseUnderscoreSetJmp = false;
-  UseUnderscoreLongJmp = false;
-  SelectIsExpensive = false;
-  IntDivIsCheap = false;
-  Pow2DivIsCheap = false;
-  JumpIsExpensive = false;
-  PredictableSelectIsExpensive = false;
-  StackPointerRegisterToSaveRestore = 0;
-  ExceptionPointerRegister = 0;
-  ExceptionSelectorRegister = 0;
-  BooleanContents = UndefinedBooleanContent;
-  BooleanVectorContents = UndefinedBooleanContent;
-  SchedPreferenceInfo = Sched::ILP;
-  JumpBufSize = 0;
-  JumpBufAlignment = 0;
-  MinFunctionAlignment = 0;
-  PrefFunctionAlignment = 0;
-  PrefLoopAlignment = 0;
-  MinStackArgumentAlignment = 1;
-  ShouldFoldAtomicFences = false;
-  InsertFencesForAtomic = false;
-  SupportJumpTables = true;
-  MinimumJumpTableEntries = 4;
-
-  InitLibcallNames(LibcallRoutineNames, TM);
-  InitCmpLibcallCCs(CmpLibcallCCs);
-  InitLibcallCallingConvs(LibcallCallingConvs);
-}
-
-TargetLoweringBase::~TargetLoweringBase() {
-  delete &TLOF;
 }
 
 MVT TargetLoweringBase::getScalarShiftAmountTy(EVT LHSTy) const {
