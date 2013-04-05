@@ -103,7 +103,7 @@ namespace {
       SmallVector<unsigned, 4> getUnitRegs(unsigned Reg) {
         SmallVector<unsigned, 4> Res;
 
-        const TargetRegisterClass* TRC = TRI->getRegClass(Reg);
+        const TargetRegisterClass* TRC = TRI->getMinimalPhysRegClass(Reg);
         if (TRC == &ARM::QPRRegClass) {
           if (Reg > ARM::Q7) {
             Res.push_back(TRI->getSubReg(Reg, ARM::dsub_0));
