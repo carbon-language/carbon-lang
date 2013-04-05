@@ -178,6 +178,19 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 
 #ifdef _MSC_VER
+/// AvoidMessageBoxHook - Emulates hitting "retry" from an "abort, retry,
+/// ignore" CRT debug report dialog.  "retry" raises an exception which
+/// ultimately triggers our stack dumper.
+static int AvoidMessageBoxHook(int ReportType, char *Message, int *Return) {
+  // Set *Return to the retry code for the return value of _CrtDbgReport:
+  // http://msdn.microsoft.com/en-us/library/8hyw4sy7(v=vs.71).aspx
+  // This may also trigger just-in-time debugging via DebugBreak().
+  if (Return)
+    *Return = 1;
+  // Don't call _CrtDbgReport.
+  return TRUE;
+}
+
 /// CRTReportHook - Function called on a CRT debugging event.
 static int CRTReportHook(int ReportType, char *Message, int *Return) {
   // Don't cause a DebugBreak() on return.
@@ -237,6 +250,15 @@ static void RegisterHandler() {
   RegisteredUnhandledExceptionFilter = true;
   OldFilter = SetUnhandledExceptionFilter(LLVMUnhandledExceptionFilter);
   SetConsoleCtrlHandler(LLVMConsoleCtrlHandler, TRUE);
+
+#ifdef _MSC_VER
+  const char *EnableMsgbox = getenv("LLVM_ENABLE_CRT_REPORT");
+  if (!EnableMsgbox || strcmp("0", EnableMsgbox) == 0) {
+    // Setting a report hook overrides the default behavior of popping an "abort,
+    // retry, or ignore" dialog.
+    _CrtSetReportHook(AvoidMessageBoxHook);
+  }
+#endif
 
   // Environment variable to disable any kind of crash dialog.
   if (getenv("LLVM_DISABLE_CRASH_REPORT")) {
