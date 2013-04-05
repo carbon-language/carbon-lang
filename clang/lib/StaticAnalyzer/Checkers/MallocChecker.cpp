@@ -293,8 +293,8 @@ private:
   void ReportBadFree(CheckerContext &C, SVal ArgVal, SourceRange Range, 
                      const Expr *DeallocExpr) const;
   void ReportMismatchedDealloc(CheckerContext &C, SourceRange Range,
-                               const Expr *DeallocExpr, 
-                               const RefState *RS) const;
+                               const Expr *DeallocExpr, const RefState *RS,
+                               SymbolRef Sym) const;
   void ReportOffsetFree(CheckerContext &C, SVal ArgVal, SourceRange Range, 
                         const Expr *DeallocExpr, 
                         const Expr *AllocExpr = 0) const;
@@ -1013,7 +1013,8 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
 
     // Check if an expected deallocation function matches the real one.
     if (!DeallocMatchesAlloc && RsBase->isAllocated()) {
-      ReportMismatchedDealloc(C, ArgExpr->getSourceRange(), ParentExpr, RsBase);
+      ReportMismatchedDealloc(C, ArgExpr->getSourceRange(), ParentExpr, RsBase,
+                              SymBase);
       return 0;
     }
 
@@ -1236,7 +1237,8 @@ void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
 void MallocChecker::ReportMismatchedDealloc(CheckerContext &C, 
                                             SourceRange Range,
                                             const Expr *DeallocExpr, 
-                                            const RefState *RS) const {
+                                            const RefState *RS,
+                                            SymbolRef Sym) const {
 
   if (!Filter.CMismatchedDeallocatorChecker)
     return;
@@ -1266,7 +1268,9 @@ void MallocChecker::ReportMismatchedDealloc(CheckerContext &C,
       os << ", not " << DeallocOs.str();
 
     BugReport *R = new BugReport(*BT_MismatchedDealloc, os.str(), N);
+    R->markInteresting(Sym);
     R->addRange(Range);
+    R->addVisitor(new MallocBugVisitor(Sym));
     C.emitReport(R);
   }
 }
