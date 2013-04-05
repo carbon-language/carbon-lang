@@ -260,18 +260,17 @@ public:
   /// \param [out] result The instantiated lld::File object is returned here.
   /// The \p result is a vector because some input files parse into more than
   /// one lld::File (e.g. YAML). 
-  virtual error_code
-  parseFile(std::unique_ptr<MemoryBuffer> inputBuff,
-            std::vector<std::unique_ptr<File>> &result) const = 0;
-
+  virtual error_code parseFile(std::unique_ptr<MemoryBuffer> &inputBuff,
+                        std::vector<std::unique_ptr<File>> &result) const = 0;
+  
   /// This is a wrapper around parseFile() where the input file is specified
   /// by file system path.  The default implementation reads the input file
   /// into a memory buffer and calls parseFile().
   ///
   /// \param path This is the file system path to the input file.
   /// \param [out] result The instantiated lld::File object is returned here.
-  virtual error_code
-  readFile(StringRef path, std::vector<std::unique_ptr<File>> &result) const;
+  virtual error_code readFile(StringRef path,
+                        std::vector<std::unique_ptr<File>> &result) const;
 
   /// This method is called by core linking to give the Writer a chance
   /// to add file format specific "files" to set of files to be linked. This is

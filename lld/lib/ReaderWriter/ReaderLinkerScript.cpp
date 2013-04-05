@@ -79,9 +79,9 @@ private:
 } // end anon namespace
 
 namespace lld {
-error_code ReaderLinkerScript::parseFile(
-    std::unique_ptr<llvm::MemoryBuffer> mb,
-    std::vector<std::unique_ptr<File>> &result) const {
+error_code
+ReaderLinkerScript::parseFile(std::unique_ptr<llvm::MemoryBuffer> &mb,
+                            std::vector<std::unique_ptr<File> > &result) const {
   auto lsf = LinkerScriptFile::create(_targetInfo, std::move(mb));
   if (!lsf)
     return lsf;

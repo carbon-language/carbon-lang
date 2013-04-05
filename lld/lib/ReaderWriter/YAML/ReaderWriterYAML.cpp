@@ -1342,7 +1342,7 @@ class ReaderYAML : public Reader {
 public:
   ReaderYAML(const TargetInfo &ti) : Reader(ti) {}
 
-  error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
+  error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                        std::vector<std::unique_ptr<File>> &result) const {
     // Note: we do not take ownership of the MemoryBuffer.  That is
     // because yaml may produce multiple File objects, so there is no

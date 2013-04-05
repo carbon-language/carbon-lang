@@ -57,10 +57,10 @@ public:
   }
   virtual bool validate(raw_ostream &diagnostics);
 
-  virtual error_code
-  parseFile(std::unique_ptr<MemoryBuffer> mb,
-            std::vector<std::unique_ptr<File>> &result) const;
 
+  virtual error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
+                        std::vector<std::unique_ptr<File>> &result) const;
+   
   static std::unique_ptr<ELFTargetInfo> create(llvm::Triple);
 
   /// \brief Does this relocation belong in the dynamic plt relocation table?

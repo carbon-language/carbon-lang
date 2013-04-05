@@ -209,16 +209,15 @@ void MachOTargetInfo::addPasses(PassManager &pm) const {
   pm.add(std::unique_ptr<Pass>(new LayoutPass()));
 }
 
-error_code MachOTargetInfo::parseFile(
-    std::unique_ptr<MemoryBuffer> mb,
-    std::vector<std::unique_ptr<File>> &result) const {
+error_code MachOTargetInfo::parseFile(std::unique_ptr<MemoryBuffer> &mb,
+                          std::vector<std::unique_ptr<File>> &result) const {
 //  if (!_machoReader)
 //    _machoReader = createReaderMachO(*this);
 //  error_code ec = _machoReader->parseFile(mb,result);
 //  if (ec) {
     if (!_yamlReader)
       _yamlReader = createReaderYAML(*this);
-    return _yamlReader->parseFile(std::move(mb), result);
+    return _yamlReader->parseFile(mb, result);
 //  }
 
   return error_code::success();

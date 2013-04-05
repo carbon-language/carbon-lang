@@ -915,9 +915,9 @@ public:
   Reader(const TargetInfo &ti)
    : lld::Reader(ti) {}
 
-  virtual error_code
-  parseFile(std::unique_ptr<MemoryBuffer> mb,
-            std::vector<std::unique_ptr<lld::File>> &result) const {
+  virtual error_code parseFile(
+      std::unique_ptr<MemoryBuffer> &mb,
+      std::vector<std::unique_ptr<lld::File> > &result) const {
     return File::make(_targetInfo, mb, mb->getBufferIdentifier(), result);
   }
 };
