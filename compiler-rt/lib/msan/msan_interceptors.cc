@@ -868,7 +868,10 @@ INTERCEPTOR(int, sigaction, int signo, const __sanitizer_sigaction *act,
     }
     res = REAL(sigaction)(signo, pnew_act, oldact);
     if (res == 0 && oldact) {
-      __sanitizer::__sanitizer_set_sigaction_sa_sigaction(oldact, old_cb);
+      uptr cb = __sanitizer::__sanitizer_get_sigaction_sa_sigaction(oldact);
+      if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
+        __sanitizer::__sanitizer_set_sigaction_sa_sigaction(oldact, old_cb);
+      }
     }
   } else {
     res = REAL(sigaction)(signo, act, oldact);

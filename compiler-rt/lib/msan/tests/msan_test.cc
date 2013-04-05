@@ -981,6 +981,7 @@ void SigactionHandler(int signo, siginfo_t* si, void* uc) {
 
 TEST(MemorySanitizer, sigaction) {
   struct sigaction act = {};
+  struct sigaction oldact = {};
   act.sa_flags |= SA_SIGINFO;
   act.sa_sigaction = &SigactionHandler;
   sigaction(SIGPROF, &act, 0);
@@ -993,17 +994,23 @@ TEST(MemorySanitizer, sigaction) {
 
   act.sa_flags &= ~SA_SIGINFO;
   act.sa_handler = SIG_IGN;
-  sigaction(SIGPROF, &act, 0);
+  sigaction(SIGPROF, &act, &oldact);
+  EXPECT_FALSE(oldact.sa_flags & SA_SIGINFO);
+  EXPECT_EQ(SIG_DFL, oldact.sa_handler);
   kill(getpid(), SIGPROF);
 
   act.sa_flags |= SA_SIGINFO;
   act.sa_sigaction = &SigactionHandler;
-  sigaction(SIGPROF, &act, 0);
+  sigaction(SIGPROF, &act, &oldact);
+  EXPECT_FALSE(oldact.sa_flags & SA_SIGINFO);
+  EXPECT_EQ(SIG_IGN, oldact.sa_handler);
   kill(getpid(), SIGPROF);
 
   act.sa_flags &= ~SA_SIGINFO;
   act.sa_handler = SIG_DFL;
-  sigaction(SIGPROF, &act, 0);
+  sigaction(SIGPROF, &act, &oldact);
+  EXPECT_TRUE(oldact.sa_flags & SA_SIGINFO);
+  EXPECT_EQ(&SigactionHandler, oldact.sa_sigaction);
   EXPECT_EQ(2, cnt);
 }
 
