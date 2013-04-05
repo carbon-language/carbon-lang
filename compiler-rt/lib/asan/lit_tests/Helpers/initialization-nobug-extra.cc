@@ -4,6 +4,6 @@ static int ab = getAB();
 // Function local statics:
 int countCalls();
 static int one = countCalls();
-// Constexpr:
-int getCoolestInteger();
-static int coolest_integer = getCoolestInteger();
+// Trivial constructor, non-trivial destructor:
+int getStructWithDtorValue();
+static int val = getStructWithDtorValue();

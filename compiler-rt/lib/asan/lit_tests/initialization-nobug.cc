@@ -1,32 +1,21 @@
 // A collection of various initializers which shouldn't trip up initialization
 // order checking.  If successful, this will just return 0.
 
-// RUN: %clangxx_asan -m64 -O0 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -fsanitize=init-order -o %t
+// RUN: %clangxx_asan -m64 -O0 %s %p/Helpers/initialization-nobug-extra.cc -fsanitize=init-order -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
-// RUN: %clangxx_asan -m64 -O1 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -fsanitize=init-order -o %t
+// RUN: %clangxx_asan -m64 -O1 %s %p/Helpers/initialization-nobug-extra.cc -fsanitize=init-order -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
-// RUN: %clangxx_asan -m64 -O2 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -fsanitize=init-order -o %t
+// RUN: %clangxx_asan -m64 -O2 %s %p/Helpers/initialization-nobug-extra.cc -fsanitize=init-order -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
-// RUN: %clangxx_asan -m64 -O3 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -fsanitize=init-order -o %t
+// RUN: %clangxx_asan -m64 -O3 %s %p/Helpers/initialization-nobug-extra.cc -fsanitize=init-order -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
-// RUN: %clangxx_asan -m32 -O0 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -fsanitize=init-order -o %t
+// RUN: %clangxx_asan -m32 -O0 %s %p/Helpers/initialization-nobug-extra.cc -fsanitize=init-order -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
-// RUN: %clangxx_asan -m32 -O0 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -fsanitize=init-order -o %t
+// RUN: %clangxx_asan -m32 -O1 %s %p/Helpers/initialization-nobug-extra.cc -fsanitize=init-order -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
-// RUN: %clangxx_asan -m32 -O1 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -fsanitize=init-order -o %t
+// RUN: %clangxx_asan -m32 -O2 %s %p/Helpers/initialization-nobug-extra.cc -fsanitize=init-order -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
-// RUN: %clangxx_asan -m32 -O2 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -fsanitize=init-order -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
-// RUN: %clangxx_asan -m32 -O3 %s %p/Helpers/initialization-nobug-extra.cc\
-// RUN:   --std=c++11 -fsanitize=init-order -o %t
+// RUN: %clangxx_asan -m32 -O3 %s %p/Helpers/initialization-nobug-extra.cc -fsanitize=init-order -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
 
 // Simple access:
@@ -56,21 +45,12 @@ int countCalls() {
   return ++calls;
 }
 
-// Constexpr:
-// We need to check that a global variable initialized with a constexpr
-// constructor can be accessed during dynamic initialization (as a constexpr
-// constructor implies that it was initialized during constant initialization,
-// not dynamic initialization).
-
-class Integer {
-  private:
+// Trivial constructor, non-trivial destructor.
+struct StructWithDtor {
+  ~StructWithDtor() { }
   int value;
-
-  public:
-  constexpr Integer(int x = 0) : value(x) {}
-  int getValue() {return value;}
 };
-Integer coolestInteger(42);
-int getCoolestInteger() { return coolestInteger.getValue(); }
+StructWithDtor struct_with_dtor;
+int getStructWithDtorValue() { return struct_with_dtor.value; }
 
 int main() { return 0; }
