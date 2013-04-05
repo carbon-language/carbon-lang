@@ -1243,8 +1243,6 @@ void ConvergingScheduler::initialize(ScheduleDAGMI *dag) {
   Top.init(DAG, SchedModel, &Rem);
   Bot.init(DAG, SchedModel, &Rem);
 
-  DAG->computeDFSResult();
-
   // Initialize resource counts.
 
   // Initialize the HazardRecognizers. If itineraries don't exist, are empty, or
