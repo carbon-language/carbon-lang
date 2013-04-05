@@ -286,15 +286,15 @@ PlatformDarwinKernel::GetStatus (Stream &strm)
         strm.Printf ("Mac OS X kernel debugging\n");
     else
             strm.Printf ("unknown kernel debugging\n");
-    const uint32_t num_kdk_dirs = m_directories_searched.size();
-    for (uint32_t i=0; i<num_kdk_dirs; ++i)
+    const uint32_t num_kext_dirs = m_directories_searched.size();
+    for (uint32_t i=0; i<num_kext_dirs; ++i)
     {
-        const FileSpec &kdk_dir = m_directories_searched[i];
-
-        strm.Printf (" Kext directories: [%2u] \"%s/%s\"\n",
-                     i,
-                     kdk_dir.GetDirectory().GetCString(),
-                     kdk_dir.GetFilename().GetCString());
+        const FileSpec &kext_dir = m_directories_searched[i];
+        char pathbuf[PATH_MAX];
+        if (kext_dir.GetPath (pathbuf, sizeof (pathbuf)))
+        {
+            strm.Printf (" Kext directories: [%2u] \"%s\"\n", i, pathbuf);
+        }
     }
     strm.Printf (" Total number of kexts indexed: %d\n", (int) m_name_to_kext_path_map.size());
 }
@@ -421,19 +421,24 @@ PlatformDarwinKernel::GetUserSpecifiedDirectoriesToSearch (std::vector<lldb_priv
     const uint32_t user_dirs_count = user_dirs.GetSize();
     for (uint32_t i = 0; i < user_dirs_count; i++)
     {
-        const FileSpec &dir = user_dirs.GetFileSpecAtIndex (i);
+        FileSpec dir = user_dirs.GetFileSpecAtIndex (i);
+        dir.ResolvePath();
         if (dir.Exists() && dir.GetFileType() == FileSpec::eFileTypeDirectory)
         {
             directories.push_back (dir);
             possible_sdk_dirs.push_back (dir);  // does this directory have a *.sdk or *.kdk that we should look in?
 
-            // Is there a "System/Library/Extensions" subdir of this directory?
-            char pathbuf[PATH_MAX];
-            ::snprintf (pathbuf, sizeof (pathbuf), "%s/%s/System/Library/Extensions", dir.GetDirectory().GetCString(), dir.GetFilename().GetCString());
-            FileSpec dir_sle(pathbuf, true);
-            if (dir_sle.Exists() && dir_sle.GetFileType() == FileSpec::eFileTypeDirectory)
+            char dir_pathbuf[PATH_MAX];
+            if (dir.GetPath (dir_pathbuf, sizeof (dir_pathbuf)))
             {
-                directories.push_back (dir_sle);
+                // Is there a "System/Library/Extensions" subdir of this directory?
+                char pathbuf[PATH_MAX];
+                ::snprintf (pathbuf, sizeof (pathbuf), "%s/System/Library/Extensions", dir_pathbuf);
+                FileSpec dir_sle(pathbuf, true);
+                if (dir_sle.Exists() && dir_sle.GetFileType() == FileSpec::eFileTypeDirectory)
+                {
+                    directories.push_back (dir_sle);
+                }
             }
         }
     }

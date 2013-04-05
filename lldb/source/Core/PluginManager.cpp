@@ -1844,11 +1844,14 @@ PluginManager::DebuggerInitialize (Debugger &debugger)
     }
 }
 
+// This will put a plugin's settings under e.g. "plugin.dynamic-loader.darwin-kernel.SETTINGNAME".
+// The new preferred ordering is to put plugins under "dynamic-loader.plugin.darwin-kernel.SETTINGNAME"
+// and if there were a generic dynamic-loader setting, it would be "dynamic-loader.SETTINGNAME".
 static lldb::OptionValuePropertiesSP
-GetDebuggerPropertyForPlugins (Debugger &debugger,
-                               const ConstString &plugin_type_name,
-                               const ConstString &plugin_type_desc,
-                               bool can_create)
+GetDebuggerPropertyForPluginsOldStyle (Debugger &debugger,
+                                       const ConstString &plugin_type_name,
+                                       const ConstString &plugin_type_desc,
+                                       bool can_create)
 {
     lldb::OptionValuePropertiesSP parent_properties_sp (debugger.GetValueProperties());
     if (parent_properties_sp)
@@ -1882,11 +1885,52 @@ GetDebuggerPropertyForPlugins (Debugger &debugger,
     return lldb::OptionValuePropertiesSP();
 }
 
+// This is the preferred new way to register plugin specific settings.  e.g.
+// "platform.plugin.darwin-kernel.SETTINGNAME"
+// and Platform generic settings would be under "platform.SETTINGNAME".
+static lldb::OptionValuePropertiesSP
+GetDebuggerPropertyForPlugins (Debugger &debugger, 
+                               const ConstString &plugin_type_name,
+                               const ConstString &plugin_type_desc,
+                               bool can_create)
+{
+    static ConstString g_property_name("plugin");
+    lldb::OptionValuePropertiesSP parent_properties_sp (debugger.GetValueProperties());
+    if (parent_properties_sp)
+    {
+        OptionValuePropertiesSP plugin_properties_sp = parent_properties_sp->GetSubProperty (NULL, plugin_type_name);
+        if (!plugin_properties_sp && can_create)
+        {
+            plugin_properties_sp.reset (new OptionValueProperties (plugin_type_name));
+            parent_properties_sp->AppendProperty (plugin_type_name,
+                                                  plugin_type_desc,
+                                                  true,
+                                                  plugin_properties_sp);
+        }
+        
+        if (plugin_properties_sp)
+        {
+            lldb::OptionValuePropertiesSP plugin_type_properties_sp = plugin_properties_sp->GetSubProperty (NULL, g_property_name);
+            if (!plugin_type_properties_sp && can_create)
+            {
+                plugin_type_properties_sp.reset (new OptionValueProperties (g_property_name));
+                plugin_properties_sp->AppendProperty (g_property_name,
+                                                      ConstString("Settings specific to plugins"),
+                                                      true,
+                                                      plugin_type_properties_sp);
+            }
+            return plugin_type_properties_sp;
+        }
+    }
+    return lldb::OptionValuePropertiesSP();
+}
+
+
 lldb::OptionValuePropertiesSP
 PluginManager::GetSettingForDynamicLoaderPlugin (Debugger &debugger, const ConstString &setting_name)
 {
     lldb::OptionValuePropertiesSP properties_sp;
-    lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPlugins (debugger,
+    lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPluginsOldStyle (debugger,
                                                                                             ConstString("dynamic-loader"),
                                                                                             ConstString(), // not creating to so we don't need the description
                                                                                             false));
@@ -1903,7 +1947,7 @@ PluginManager::CreateSettingForDynamicLoaderPlugin (Debugger &debugger,
 {
     if (properties_sp)
     {
-        lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPlugins (debugger,
+        lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPluginsOldStyle (debugger,
                                                                                                 ConstString("dynamic-loader"),
                                                                                                 ConstString("Settings for dynamic loader plug-ins"),
                                                                                                 true));
