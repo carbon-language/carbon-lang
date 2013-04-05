@@ -111,7 +111,7 @@ class ExternalSymbolizer {
 
   char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
     CHECK(module_name);
-    internal_snprintf(buffer_, kBufferSize, "%s%s 0x%zx\n",
+    internal_snprintf(buffer_, kBufferSize, "%s\"%s\" 0x%zx\n",
                       is_data ? "DATA " : "", module_name, module_offset);
     if (!writeToSymbolizer(buffer_, internal_strlen(buffer_)))
       return 0;
