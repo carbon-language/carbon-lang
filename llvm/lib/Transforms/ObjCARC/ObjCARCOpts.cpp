@@ -2063,6 +2063,8 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
 
     // Check for possible releases.
     if (CanAlterRefCount(Inst, Ptr, PA, Class)) {
+      DEBUG(dbgs() << "CanAlterRefCount: Seq: " << Seq << "; " << *Ptr
+            << "\n");      
       S.ClearKnownPositiveRefCount();
       switch (Seq) {
       case S_Retain:
@@ -2090,6 +2092,8 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
     switch (Seq) {
     case S_CanRelease:
       if (CanUse(Inst, Ptr, PA, Class)) {
+        DEBUG(dbgs() << "CanUse: Seq: " << Seq << "; " << *Ptr
+              << "\n");
         S.SetSeq(S_Use);
         ANNOTATE_TOPDOWN(Inst, Ptr, Seq, S_Use);
       }
