@@ -18,7 +18,7 @@
 namespace __asan {
 
 FakeStack::FakeStack() {
-  CHECK(REAL(memset) != 0);
+  CHECK(REAL(memset));
   REAL(memset)(this, 0, sizeof(*this));
 }
 
@@ -150,9 +150,9 @@ void FakeStack::DeallocateFrame(FakeFrame *fake_frame) {
 
 void FakeStack::OnFree(uptr ptr, uptr size, uptr real_stack) {
   FakeFrame *fake_frame = (FakeFrame*)ptr;
-  CHECK(fake_frame->magic = kRetiredStackFrameMagic);
-  CHECK(fake_frame->descr != 0);
-  CHECK(fake_frame->size_minus_one == size - 1);
+  CHECK_EQ(fake_frame->magic, kRetiredStackFrameMagic);
+  CHECK_NE(fake_frame->descr, 0);
+  CHECK_EQ(fake_frame->size_minus_one, size - 1);
   PoisonShadow(ptr, size, kAsanStackAfterReturnMagic);
 }
 

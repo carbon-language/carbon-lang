@@ -58,9 +58,9 @@ int GetMacosVersion() {
   uptr len = 0, maxlen = sizeof(version) / sizeof(version[0]);
   for (uptr i = 0; i < maxlen; i++) version[i] = '\0';
   // Get the version length.
-  CHECK(sysctl(mib, 2, 0, &len, 0, 0) != -1);
-  CHECK(len < maxlen);
-  CHECK(sysctl(mib, 2, version, &len, 0, 0) != -1);
+  CHECK_NE(sysctl(mib, 2, 0, &len, 0, 0), -1);
+  CHECK_LT(len, maxlen);
+  CHECK_NE(sysctl(mib, 2, version, &len, 0, 0), -1);
   switch (version[0]) {
     case '9': return MACOS_VERSION_LEOPARD;
     case '1': {

@@ -23,7 +23,7 @@ void PoisonShadow(uptr addr, uptr size, u8 value) {
   CHECK(AddrIsInMem(addr));
   CHECK(AddrIsAlignedByGranularity(addr + size));
   CHECK(AddrIsInMem(addr + size - SHADOW_GRANULARITY));
-  CHECK(REAL(memset) != 0);
+  CHECK(REAL(memset));
   FastPoisonShadow(addr, size, value);
 }
 

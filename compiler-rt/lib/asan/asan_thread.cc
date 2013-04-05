@@ -129,7 +129,7 @@ thread_return_t AsanThread::ThreadStart(uptr os_id) {
     // start_routine_ == 0 if we're on the main thread or on one of the
     // OS X libdispatch worker threads. But nobody is supposed to call
     // ThreadStart() for the worker threads.
-    CHECK(tid() == 0);
+    CHECK_EQ(tid(), 0);
     return 0;
   }
 

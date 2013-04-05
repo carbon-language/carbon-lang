@@ -23,7 +23,7 @@ CPPLINT=${SCRIPT_DIR}/cpplint/cpplint.py
 # TODO: remove some of these filters
 COMMON_LINT_FILTER=-build/include,-build/header_guard,-legal/copyright,-whitespace/comments,-readability/casting,\
 -build/namespaces
-ASAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER},-readability/check,-runtime/int
+ASAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
 ASAN_TEST_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/sizeof,-runtime/int,-runtime/printf
 ASAN_LIT_TEST_LINT_FILTER=${ASAN_TEST_LINT_FILTER},-whitespace/line_length
 TSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER}

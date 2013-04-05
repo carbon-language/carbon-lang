@@ -829,7 +829,7 @@ static uptr sigactions[kMaxSignals];
 static StaticSpinMutex sigactions_mu;
 
 static void SignalHandler(int signo) {
-  typedef void (*signal_cb)(int);
+  typedef void (*signal_cb)(int x);
   signal_cb cb = (signal_cb)sigactions[signo];
   cb(signo);
 }

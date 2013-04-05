@@ -21,7 +21,7 @@
 namespace __asan {
 
 AsanStats::AsanStats() {
-  CHECK(REAL(memset) != 0);
+  CHECK(REAL(memset));
   REAL(memset)(this, 0, sizeof(AsanStats));
 }
 

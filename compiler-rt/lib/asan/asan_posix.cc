@@ -43,7 +43,7 @@ static void MaybeInstallSigaction(int signum,
   sigact.sa_sigaction = handler;
   sigact.sa_flags = SA_SIGINFO;
   if (flags()->use_sigaltstack) sigact.sa_flags |= SA_ONSTACK;
-  CHECK(0 == REAL(sigaction)(signum, &sigact, 0));
+  CHECK_EQ(0, REAL(sigaction)(signum, &sigact, 0));
   if (flags()->verbosity >= 1) {
     Report("Installed the sigaction for signal %d\n", signum);
   }
@@ -60,7 +60,7 @@ static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
 
 void SetAlternateSignalStack() {
   stack_t altstack, oldstack;
-  CHECK(0 == sigaltstack(0, &oldstack));
+  CHECK_EQ(0, sigaltstack(0, &oldstack));
   // If the alternate stack is already in place, do nothing.
   if ((oldstack.ss_flags & SS_DISABLE) == 0) return;
   // TODO(glider): the mapped stack should have the MAP_STACK flag in the
@@ -70,7 +70,7 @@ void SetAlternateSignalStack() {
   altstack.ss_sp = base;
   altstack.ss_flags = 0;
   altstack.ss_size = kAltStackSize;
-  CHECK(0 == sigaltstack(&altstack, 0));
+  CHECK_EQ(0, sigaltstack(&altstack, 0));
   if (flags()->verbosity > 0) {
     Report("Alternative stack for T%d set: [%p,%p)\n",
            GetCurrentTidOrInvalid(),
@@ -83,7 +83,7 @@ void UnsetAlternateSignalStack() {
   altstack.ss_sp = 0;
   altstack.ss_flags = SS_DISABLE;
   altstack.ss_size = 0;
-  CHECK(0 == sigaltstack(&altstack, &oldstack));
+  CHECK_EQ(0, sigaltstack(&altstack, &oldstack));
   UnmapOrDie(oldstack.ss_sp, oldstack.ss_size);
 }
 
@@ -103,7 +103,7 @@ static bool tsd_key_inited = false;
 void AsanTSDInit(void (*destructor)(void *tsd)) {
   CHECK(!tsd_key_inited);
   tsd_key_inited = true;
-  CHECK(0 == pthread_key_create(&tsd_key, destructor));
+  CHECK_EQ(0, pthread_key_create(&tsd_key, destructor));
 }
 
 void *AsanTSDGet() {

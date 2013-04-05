@@ -298,7 +298,7 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   // Report the number of stack objects.
   char *p;
   uptr n_objects = internal_simple_strtoll(frame_descr, &p, 10);
-  CHECK(n_objects > 0);
+  CHECK_GT(n_objects, 0);
   Printf("  This frame has %zu object(s):\n", n_objects);
   // Report all objects in this frame.
   for (uptr i = 0; i < n_objects; i++) {
