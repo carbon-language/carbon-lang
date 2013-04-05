@@ -164,6 +164,7 @@ public:
     DefaultBool CMallocPessimistic;
     DefaultBool CMallocOptimistic;
     DefaultBool CNewDeleteChecker;
+    DefaultBool CNewDeleteLeaksChecker;
     DefaultBool CMismatchedDeallocatorChecker;
   };
 
@@ -1536,11 +1537,20 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
                                CheckerContext &C) const {
 
   if (!Filter.CMallocOptimistic && !Filter.CMallocPessimistic && 
-      !Filter.CNewDeleteChecker)
+      !Filter.CNewDeleteLeaksChecker)
     return;
 
-  if (!isTrackedFamily(C, Sym))
+  const RefState *RS = C.getState()->get<RegionState>(Sym);
+  assert(RS && "cannot leak an untracked symbol");
+  AllocationFamily Family = RS->getAllocationFamily();
+  if (!isTrackedFamily(Family))
     return;
+
+  // Special case for new and new[]; these are controlled by a separate checker
+  // flag so that they can be selectively disabled.
+  if (Family == AF_CXXNew || Family == AF_CXXNewArray)
+    if (!Filter.CNewDeleteLeaksChecker)
+      return;
 
   assert(N);
   if (!BT_Leak) {
@@ -2115,4 +2125,5 @@ void ento::register##name(CheckerManager &mgr) {\
 REGISTER_CHECKER(MallocPessimistic)
 REGISTER_CHECKER(MallocOptimistic)
 REGISTER_CHECKER(NewDeleteChecker)
+REGISTER_CHECKER(NewDeleteLeaksChecker)
 REGISTER_CHECKER(MismatchedDeallocatorChecker)

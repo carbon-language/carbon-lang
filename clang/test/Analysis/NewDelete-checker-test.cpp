@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.cplusplus.NewDelete -analyzer-store region -std=c++11 -fblocks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.cplusplus.NewDelete -std=c++11 -fblocks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.cplusplus.NewDelete,alpha.cplusplus.NewDeleteLeaks -DLEAKS -std=c++11 -fblocks -verify %s
 #include "Inputs/system-header-simulator-cxx.h"
 
 typedef __typeof__(sizeof(int)) size_t;
@@ -12,28 +13,46 @@ int *global;
 //----- Standard non-placement operators
 void testGlobalOpNew() {
   void *p = operator new(0);
-} // expected-warning{{Memory is never released; potential leak}}
+}
+#ifdef LEAKS
+// expected-warning@-2{{Memory is never released; potential leak}}
+#endif
 
 void testGlobalOpNewArray() {
   void *p = operator new[](0);
-} // expected-warning{{Memory is never released; potential leak}}
+}
+#ifdef LEAKS
+// expected-warning@-2{{Memory is never released; potential leak}}
+#endif
 
 void testGlobalNewExpr() {
   int *p = new int;
-} // expected-warning{{Memory is never released; potential leak}}
+}
+#ifdef LEAKS
+// expected-warning@-2{{Memory is never released; potential leak}}
+#endif
 
 void testGlobalNewExprArray() {
   int *p = new int[0];
-} // expected-warning{{Memory is never released; potential leak}}
+}
+#ifdef LEAKS
+// expected-warning@-2{{Memory is never released; potential leak}}
+#endif
 
 //----- Standard nothrow placement operators
 void testGlobalNoThrowPlacementOpNewBeforeOverload() {
   void *p = operator new(0, std::nothrow);
-} // expected-warning{{Memory is never released; potential leak}}
+}
+#ifdef LEAKS
+// expected-warning@-2{{Memory is never released; potential leak}}
+#endif
 
 void testGlobalNoThrowPlacementExprNewBeforeOverload() {
   int *p = new(std::nothrow) int;
-} // expected-warning{{Memory is never released; potential leak}}
+}
+#ifdef LEAKS
+// expected-warning@-2{{Memory is never released; potential leak}}
+#endif
 
 
 //----- Standard pointer placement operators

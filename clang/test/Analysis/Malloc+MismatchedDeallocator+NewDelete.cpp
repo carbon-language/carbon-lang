@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,unix.MismatchedDeallocator,alpha.cplusplus.NewDelete -analyzer-store region -std=c++11 -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,unix.MismatchedDeallocator,alpha.cplusplus.NewDelete -std=c++11 -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,unix.MismatchedDeallocator,alpha.cplusplus.NewDelete,alpha.cplusplus.NewDeleteLeaks -DLEAKS -std=c++11 -verify %s
 
 typedef __typeof(sizeof(int)) size_t;
 void *malloc(size_t);
@@ -52,7 +53,10 @@ void testNewDoubleFree() {
 
 void testNewLeak() {
   int *p = new int;
-} // expected-warning{{Memory is never released; potential leak of memory pointed to by 'p'}}
+}
+#ifdef LEAKS
+// expected-warning@-2 {{Memory is never released; potential leak of memory pointed to by 'p'}}
+#endif
 
 void testNewUseAfterFree() {
   int *p = (int *)operator new(0);

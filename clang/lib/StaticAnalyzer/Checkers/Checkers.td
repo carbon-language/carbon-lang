@@ -176,7 +176,11 @@ def VirtualCallChecker : Checker<"VirtualCall">,
   DescFile<"VirtualCallChecker.cpp">;
 
 def NewDeleteChecker : Checker<"NewDelete">,
-  HelpText<"Check for memory leaks, double free, and use-after-free problems. Traces memory managed by new/delete.">, 
+  HelpText<"Check for double-free and use-after-free problems. Traces memory managed by new/delete.">,
+  DescFile<"MallocChecker.cpp">;
+
+def NewDeleteLeaksChecker : Checker<"NewDeleteLeaks">,
+  HelpText<"Check for memory leaks. Traces memory managed by new/delete.">, 
   DescFile<"MallocChecker.cpp">;
 
 } // end: "alpha.cplusplus"

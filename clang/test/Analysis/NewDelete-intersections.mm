@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.cplusplus.NewDelete -analyzer-store region -std=c++11 -fblocks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.cplusplus.NewDelete -std=c++11 -fblocks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.cplusplus.NewDelete,alpha.cplusplus.NewDeleteLeaks -std=c++11 -DLEAKS -fblocks -verify %s
 #include "Inputs/system-header-simulator-cxx.h"
 #include "Inputs/system-header-simulator-objc.h"
 
@@ -39,16 +40,25 @@ void testDeleteMalloced() {
 void testFreeOpNew() {
   void *p = operator new(0);
   free(p);
-} // expected-warning{{Memory is never released; potential leak}}
+}
+#ifdef LEAKS
+// expected-warning@-2 {{Memory is never released; potential leak}}
+#endif
 
 void testFreeNewExpr() {
   int *p = new int;
   free(p);
-} // expected-warning{{Memory is never released; potential leak}}
+}
+#ifdef LEAKS
+// expected-warning@-2 {{Memory is never released; potential leak}}
+#endif
 
 void testObjcFreeNewed() {
   int *p = new int;
-  NSData *nsdata = [NSData dataWithBytesNoCopy:p length:sizeof(int) freeWhenDone:1]; // expected-warning{{Memory is never released; potential leak}}
+  NSData *nsdata = [NSData dataWithBytesNoCopy:p length:sizeof(int) freeWhenDone:1];
+#ifdef LEAKS
+  // expected-warning@-2 {{Memory is never released; potential leak}}
+#endif
 }
 
 void testFreeAfterDelete() {

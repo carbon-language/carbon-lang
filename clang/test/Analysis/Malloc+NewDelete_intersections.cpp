@@ -1,11 +1,12 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,alpha.cplusplus.NewDelete -analyzer-store region -std=c++11 -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,alpha.cplusplus.NewDelete -std=c++11 -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,alpha.cplusplus.NewDelete,alpha.cplusplus.NewDeleteLeaks -std=c++11 -verify %s
 
 typedef __typeof(sizeof(int)) size_t;
 void *malloc(size_t);
 void free(void *);
 
 //-------------------------------------------------------------------
-// Check that unix.Malloc + alpha.cplusplus.NewDelete does not enable
+// Check that unix.Malloc + cplusplus.NewDelete does not enable
 // warnings produced by unix.MismatchedDeallocator.
 //-------------------------------------------------------------------
 void testMismatchedDeallocator() {
