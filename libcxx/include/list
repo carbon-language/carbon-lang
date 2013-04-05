@@ -394,7 +394,7 @@ public:
 #endif
     }
     _LIBCPP_INLINE_VISIBILITY
-    __list_const_iterator(__list_iterator<_Tp, _VoidPtr> __p) _NOEXCEPT
+    __list_const_iterator(const __list_iterator<_Tp, _VoidPtr>& __p) _NOEXCEPT
         : __ptr_(__p.__ptr_)
     {
 #if _LIBCPP_DEBUG_LEVEL >= 2
