@@ -45,9 +45,9 @@ public:
     OwningPtr<MemoryBuffer> buff;
     if (ci->getMemoryBuffer(buff, true))
       return nullptr;
-    std::unique_ptr<MemoryBuffer> mb(buff.take());
     if (_targetInfo.logInputFiles())
       llvm::outs() << buff->getBufferIdentifier() << "\n";
+    std::unique_ptr<MemoryBuffer> mb(buff.take());
     if (_targetInfo.parseFile(mb, result))
       return nullptr;
 
@@ -153,7 +153,7 @@ public:
     }
   }
 
-  std::unordered_map<StringRef, 
+  std::unordered_map<StringRef,
                      llvm::object::Archive::child_iterator> _symbolMemberMap;
 }; // class FileArchive
 

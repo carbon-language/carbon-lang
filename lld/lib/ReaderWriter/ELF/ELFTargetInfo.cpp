@@ -67,7 +67,7 @@ bool ELFTargetInfo::validate(raw_ostream &diagnostics) {
       _entrySymbolName = "_start";
     }
   }
-  
+
   if (_inputFiles.empty()) {
     diagnostics << "No input files\n";
     return true;
@@ -144,14 +144,31 @@ std::unique_ptr<ELFTargetInfo> ELFTargetInfo::create(llvm::Triple triple) {
 }
 
 bool ELFTargetInfo::appendLibrary(StringRef libName) {
-  SmallString<128> fullPath;
+  bool foundFile = false;
+  StringRef pathref;
   for (StringRef dir : _inputSearchPaths) {
-    // FIXME: need to handle other extensions, like .so
-    fullPath.assign(dir);
-    llvm::sys::path::append(fullPath, Twine("lib") + libName + ".a");
-    StringRef pathref = fullPath.str();
-    unsigned pathlen = pathref.size();
-    if (llvm::sys::fs::exists(pathref)) {
+    // Search for dynamic library
+    if (!_isStaticExecutable) {
+      SmallString<128> dynlibPath;
+      dynlibPath.assign(dir);
+      llvm::sys::path::append(dynlibPath, Twine("lib") + libName + ".so");
+      pathref = dynlibPath.str();
+      if (llvm::sys::fs::exists(pathref)) {
+        foundFile = true;
+      }
+    }
+    // Search for static libraries too
+    if (!foundFile) {
+      SmallString<128> archivefullPath;
+      archivefullPath.assign(dir);
+      llvm::sys::path::append(archivefullPath, Twine("lib") + libName + ".a");
+      pathref = archivefullPath.str();
+      if (llvm::sys::fs::exists(pathref)) {
+        foundFile = true;
+      }
+    }
+    if (foundFile) {
+      unsigned pathlen = pathref.size();
       char *x = _extraStrings.Allocate<char>(pathlen);
       memcpy(x, pathref.data(), pathlen);
       appendInputFile(StringRef(x,pathlen));
