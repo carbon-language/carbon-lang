@@ -408,7 +408,7 @@ namespace {
       KnownSafe(false), IsTailCallRelease(false), ReleaseMetadata(0) {}
 
     void clear();
-    
+
     bool IsTrackingImpreciseReleases() {
       return ReleaseMetadata != 0;
     }
@@ -460,7 +460,7 @@ namespace {
 
     void SetSeq(Sequence NewSeq) {
       DEBUG(dbgs() << "Old: " << Seq << "; New: " << NewSeq << "\n");
-      Seq = NewSeq;      
+      Seq = NewSeq;
     }
 
     Sequence GetSeq() const {
@@ -1750,9 +1750,9 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
   bool NestingDetected = false;
   InstructionClass Class = GetInstructionClass(Inst);
   const Value *Arg = 0;
-  
+
   DEBUG(dbgs() << "Class: " << Class << "\n");
-  
+
   switch (Class) {
   case IC_Release: {
     Arg = GetObjCArg(Inst);
@@ -1817,7 +1817,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     case S_Retain:
       llvm_unreachable("bottom-up pointer in retain state!");
     }
-    ANNOTATE_BOTTOMUP(Inst, Arg, OldSeq, S.GetSeq());    
+    ANNOTATE_BOTTOMUP(Inst, Arg, OldSeq, S.GetSeq());
     // A retain moving bottom up can be a use.
     break;
   }
@@ -1921,7 +1921,7 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
                           MapVector<Value *, RRInfo> &Retains) {
 
   DEBUG(dbgs() << "\n== ObjCARCOpt::VisitBottomUp ==\n");
-  
+
   bool NestingDetected = false;
   BBState &MyStates = BBStates[BB];
 
@@ -2027,11 +2027,11 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
 
     PtrState &S = MyStates.getPtrTopDownState(Arg);
     S.ClearKnownPositiveRefCount();
-    
+
     Sequence OldSeq = S.GetSeq();
-    
+
     MDNode *ReleaseMetadata = Inst->getMetadata(ImpreciseReleaseMDKind);
-    
+
     switch (OldSeq) {
     case S_Retain:
     case S_CanRelease:
@@ -2079,7 +2079,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
     // Check for possible releases.
     if (CanAlterRefCount(Inst, Ptr, PA, Class)) {
       DEBUG(dbgs() << "CanAlterRefCount: Seq: " << Seq << "; " << *Ptr
-            << "\n");      
+            << "\n");
       S.ClearKnownPositiveRefCount();
       switch (Seq) {
       case S_Retain:
@@ -2297,12 +2297,12 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
                            MapVector<Value *, RRInfo> &Retains,
                            DenseMap<Value *, RRInfo> &Releases,
                            SmallVectorImpl<Instruction *> &DeadInsts,
-                           Module *M) {  
+                           Module *M) {
   Type *ArgTy = Arg->getType();
   Type *ParamTy = PointerType::getUnqual(Type::getInt8Ty(ArgTy->getContext()));
-  
+
   DEBUG(dbgs() << "== ObjCARCOpt::MoveCalls ==\n");
-  
+
   // Insert the new retain and release calls.
   for (SmallPtrSet<Instruction *, 2>::const_iterator
        PI = ReleasesToMove.ReverseInsertPts.begin(),
@@ -2354,7 +2354,7 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
     DeadInsts.push_back(OrigRelease);
     DEBUG(dbgs() << "Deleting release: " << *OrigRelease << "\n");
   }
-  
+
 }
 
 bool
@@ -2601,7 +2601,7 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
 /// Weak pointer optimizations.
 void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
   DEBUG(dbgs() << "\n== ObjCARCOpt::OptimizeWeakCalls ==\n");
-  
+
   // First, do memdep-style RLE and S2L optimizations. We can't use memdep
   // itself because it uses AliasAnalysis and we need to do provenance
   // queries instead.
@@ -2821,17 +2821,17 @@ FindPredecessorRetainWithSafePath(const Value *Arg, BasicBlock *BB,
                    BB, Autorelease, DepInsts, Visited, PA);
   if (DepInsts.size() != 1)
     return 0;
-  
+
   CallInst *Retain =
     dyn_cast_or_null<CallInst>(*DepInsts.begin());
-  
+
   // Check that we found a retain with the same argument.
   if (!Retain ||
       !IsRetain(GetBasicInstructionClass(Retain)) ||
       GetObjCArg(Retain) != Arg) {
     return 0;
   }
-  
+
   return Retain;
 }
 
@@ -2848,7 +2848,7 @@ FindPredecessorAutoreleaseWithSafePath(const Value *Arg, BasicBlock *BB,
                    BB, Ret, DepInsts, V, PA);
   if (DepInsts.size() != 1)
     return 0;
-  
+
   CallInst *Autorelease =
     dyn_cast_or_null<CallInst>(*DepInsts.begin());
   if (!Autorelease)
@@ -2858,7 +2858,7 @@ FindPredecessorAutoreleaseWithSafePath(const Value *Arg, BasicBlock *BB,
     return 0;
   if (GetObjCArg(Autorelease) != Arg)
     return 0;
-  
+
   return Autorelease;
 }
 
@@ -2873,9 +2873,9 @@ FindPredecessorAutoreleaseWithSafePath(const Value *Arg, BasicBlock *BB,
 void ObjCARCOpt::OptimizeReturns(Function &F) {
   if (!F.getReturnType()->isPointerTy())
     return;
-  
+
   DEBUG(dbgs() << "\n== ObjCARCOpt::OptimizeReturns ==\n");
-  
+
   SmallPtrSet<Instruction *, 4> DependingInstructions;
   SmallPtrSet<const BasicBlock *, 4> Visited;
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
@@ -2886,9 +2886,9 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
 
     if (!Ret)
       continue;
-    
+
     const Value *Arg = StripPointerCastsAndObjCCalls(Ret->getOperand(0));
-    
+
     // Look for an ``autorelease'' instruction that is a predecssor of Ret and
     // dependent on Arg such that there are no instructions dependent on Arg
     // that need a positive ref count in between the autorelease and Ret.
@@ -2899,14 +2899,14 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
     if (Autorelease) {
       DependingInstructions.clear();
       Visited.clear();
-      
+
       CallInst *Retain =
         FindPredecessorRetainWithSafePath(Arg, BB, Autorelease,
                                           DependingInstructions, Visited, PA);
       if (Retain) {
         DependingInstructions.clear();
         Visited.clear();
-        
+
         // Check that there is nothing that can affect the reference count
         // between the retain and the call.  Note that Retain need not be in BB.
         if (HasSafePathToPredecessorCall(Arg, Retain, DependingInstructions,
@@ -2921,7 +2921,7 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
         }
       }
     }
-    
+
     DependingInstructions.clear();
     Visited.clear();
   }
