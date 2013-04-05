@@ -1,4 +1,5 @@
-// RUN: %clangxx_asan -m64  %s -o %t && %t 2>&1 | %symbolize > %t.out
+// RUN: %clangxx_asan -m64  %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -m64 -O %s -o %t && %t 2>&1 | FileCheck %s
 // Check that we can find huge buffer overflows to the left.
 #include <stdlib.h>
 #include <string.h>
@@ -7,4 +8,6 @@ int main(int argc, char **argv) {
   memset(x, 0, 10);
   int res = x[-argc * 4000];  // BOOOM
   // CHECK: is located 4000 bytes to the left of
+  free(x);
+  return res;
 }
