@@ -1214,7 +1214,8 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
                        PatFrag opnode, bit Commutable = 0> {
   def ri : AI1<opcod, (outs), (ins GPR:$Rn, so_imm:$imm), DPFrm, iii,
                opc, "\t$Rn, $imm",
-               [(opnode GPR:$Rn, so_imm:$imm)]> {
+               [(opnode GPR:$Rn, so_imm:$imm)]>,
+           Sched<[WriteCMP, ReadALU]> {
     bits<4> Rn;
     bits<12> imm;
     let Inst{25} = 1;
@@ -1227,7 +1228,8 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
   }
   def rr : AI1<opcod, (outs), (ins GPR:$Rn, GPR:$Rm), DPFrm, iir,
                opc, "\t$Rn, $Rm",
-               [(opnode GPR:$Rn, GPR:$Rm)]> {
+               [(opnode GPR:$Rn, GPR:$Rm)]>,
+           Sched<[WriteCMP, ReadALU, ReadALU]> {
     bits<4> Rn;
     bits<4> Rm;
     let isCommutable = Commutable;
@@ -1243,7 +1245,8 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
   def rsi : AI1<opcod, (outs),
                (ins GPR:$Rn, so_reg_imm:$shift), DPSoRegImmFrm, iis,
                opc, "\t$Rn, $shift",
-               [(opnode GPR:$Rn, so_reg_imm:$shift)]> {
+               [(opnode GPR:$Rn, so_reg_imm:$shift)]>,
+            Sched<[WriteCMPsi, ReadALU]> {
     bits<4> Rn;
     bits<12> shift;
     let Inst{25} = 0;
@@ -1259,7 +1262,8 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
   def rsr : AI1<opcod, (outs),
                (ins GPRnopc:$Rn, so_reg_reg:$shift), DPSoRegRegFrm, iis,
                opc, "\t$Rn, $shift",
-               [(opnode GPRnopc:$Rn, so_reg_reg:$shift)]> {
+               [(opnode GPRnopc:$Rn, so_reg_reg:$shift)]>,
+            Sched<[WriteCMPsr, ReadALU]> {
     bits<4> Rn;
     bits<12> shift;
     let Inst{25} = 0;
@@ -1341,7 +1345,8 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
   def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
                 DPFrm, IIC_iALUi, opc, "\t$Rd, $Rn, $imm",
                [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_imm:$imm, CPSR))]>,
-               Requires<[IsARM]> {
+               Requires<[IsARM]>,
+           Sched<[WriteALU, ReadALU]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<12> imm;
@@ -1353,7 +1358,8 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
   def rr : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
                 DPFrm, IIC_iALUr, opc, "\t$Rd, $Rn, $Rm",
                [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, GPR:$Rm, CPSR))]>,
-               Requires<[IsARM]> {
+               Requires<[IsARM]>,
+           Sched<[WriteALU, ReadALU, ReadALU]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<4> Rm;
@@ -1368,7 +1374,8 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
                 (ins GPR:$Rn, so_reg_imm:$shift),
                 DPSoRegImmFrm, IIC_iALUsr, opc, "\t$Rd, $Rn, $shift",
               [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_reg_imm:$shift, CPSR))]>,
-               Requires<[IsARM]> {
+               Requires<[IsARM]>,
+            Sched<[WriteALUsi, ReadALU]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<12> shift;
@@ -1384,7 +1391,8 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
                 DPSoRegRegFrm, IIC_iALUsr, opc, "\t$Rd, $Rn, $shift",
               [(set GPRnopc:$Rd, CPSR,
                     (opnode GPRnopc:$Rn, so_reg_reg:$shift, CPSR))]>,
-               Requires<[IsARM]> {
+               Requires<[IsARM]>,
+            Sched<[WriteALUsr, ReadALUsr]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<12> shift;
@@ -1407,7 +1415,8 @@ multiclass AI1_rsc_irs<bits<4> opcod, string opc, PatFrag opnode> {
   def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
                 DPFrm, IIC_iALUi, opc, "\t$Rd, $Rn, $imm",
                [(set GPR:$Rd, CPSR, (opnode so_imm:$imm, GPR:$Rn, CPSR))]>,
-               Requires<[IsARM]> {
+               Requires<[IsARM]>,
+           Sched<[WriteALU, ReadALU]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<12> imm;
@@ -1418,7 +1427,8 @@ multiclass AI1_rsc_irs<bits<4> opcod, string opc, PatFrag opnode> {
   }
   def rr : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
                 DPFrm, IIC_iALUr, opc, "\t$Rd, $Rn, $Rm",
-               [/* pattern left blank */]> {
+               [/* pattern left blank */]>,
+           Sched<[WriteALU, ReadALU, ReadALU]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<4> Rm;
@@ -1431,7 +1441,8 @@ multiclass AI1_rsc_irs<bits<4> opcod, string opc, PatFrag opnode> {
   def rsi : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_reg_imm:$shift),
                 DPSoRegImmFrm, IIC_iALUsr, opc, "\t$Rd, $Rn, $shift",
               [(set GPR:$Rd, CPSR, (opnode so_reg_imm:$shift, GPR:$Rn, CPSR))]>,
-               Requires<[IsARM]> {
+               Requires<[IsARM]>,
+            Sched<[WriteALUsi, ReadALU]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<12> shift;
@@ -1445,7 +1456,8 @@ multiclass AI1_rsc_irs<bits<4> opcod, string opc, PatFrag opnode> {
   def rsr : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_reg_reg:$shift),
                 DPSoRegRegFrm, IIC_iALUsr, opc, "\t$Rd, $Rn, $shift",
               [(set GPR:$Rd, CPSR, (opnode so_reg_reg:$shift, GPR:$Rn, CPSR))]>,
-               Requires<[IsARM]> {
+               Requires<[IsARM]>,
+            Sched<[WriteALUsr, ReadALUsr]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<12> shift;
@@ -1857,7 +1869,8 @@ let neverHasSideEffects = 1, isReMaterializable = 1 in
 // the instruction. The {24-21} opcode bits are set by the fixup, as we don't
 // know until then which form of the instruction will be used.
 def ADR : AI1<{0,?,?,0}, (outs GPR:$Rd), (ins adrlabel:$label),
-                 MiscFrm, IIC_iALUi, "adr", "\t$Rd, $label", []> {
+                 MiscFrm, IIC_iALUi, "adr", "\t$Rd, $label", []>,
+                 Sched<[WriteALU, ReadALU]> {
   bits<4> Rd;
   bits<14> label;
   let Inst{27-25} = 0b001;
@@ -3881,28 +3894,33 @@ def UDIV : ADivA1I<0b011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), IIC_iDIV,
 
 def CLZ  : AMiscA1I<0b000010110, 0b0001, (outs GPR:$Rd), (ins GPR:$Rm),
               IIC_iUNAr, "clz", "\t$Rd, $Rm",
-              [(set GPR:$Rd, (ctlz GPR:$Rm))]>, Requires<[IsARM, HasV5T]>;
+              [(set GPR:$Rd, (ctlz GPR:$Rm))]>, Requires<[IsARM, HasV5T]>,
+           Sched<[WriteALU]>;
 
 def RBIT : AMiscA1I<0b01101111, 0b0011, (outs GPR:$Rd), (ins GPR:$Rm),
               IIC_iUNAr, "rbit", "\t$Rd, $Rm",
               [(set GPR:$Rd, (ARMrbit GPR:$Rm))]>,
-           Requires<[IsARM, HasV6T2]>;
+           Requires<[IsARM, HasV6T2]>,
+           Sched<[WriteALU]>;
 
 def REV  : AMiscA1I<0b01101011, 0b0011, (outs GPR:$Rd), (ins GPR:$Rm),
               IIC_iUNAr, "rev", "\t$Rd, $Rm",
-              [(set GPR:$Rd, (bswap GPR:$Rm))]>, Requires<[IsARM, HasV6]>;
+              [(set GPR:$Rd, (bswap GPR:$Rm))]>, Requires<[IsARM, HasV6]>,
+           Sched<[WriteALU]>;
 
 let AddedComplexity = 5 in
 def REV16 : AMiscA1I<0b01101011, 0b1011, (outs GPR:$Rd), (ins GPR:$Rm),
                IIC_iUNAr, "rev16", "\t$Rd, $Rm",
                [(set GPR:$Rd, (rotr (bswap GPR:$Rm), (i32 16)))]>,
-               Requires<[IsARM, HasV6]>;
+               Requires<[IsARM, HasV6]>,
+           Sched<[WriteALU]>;
 
 let AddedComplexity = 5 in
 def REVSH : AMiscA1I<0b01101111, 0b1011, (outs GPR:$Rd), (ins GPR:$Rm),
                IIC_iUNAr, "revsh", "\t$Rd, $Rm",
                [(set GPR:$Rd, (sra (bswap GPR:$Rm), (i32 16)))]>,
-               Requires<[IsARM, HasV6]>;
+               Requires<[IsARM, HasV6]>,
+           Sched<[WriteALU]>;
 
 def : ARMV6Pat<(or (sra (shl GPR:$Rm, (i32 24)), (i32 16)),
                    (and (srl GPR:$Rm, (i32 8)), 0xFF)),
@@ -3914,7 +3932,8 @@ def PKHBT : APKHI<0b01101000, 0, (outs GPRnopc:$Rd),
                [(set GPRnopc:$Rd, (or (and GPRnopc:$Rn, 0xFFFF),
                                       (and (shl GPRnopc:$Rm, pkh_lsl_amt:$sh),
                                            0xFFFF0000)))]>,
-               Requires<[IsARM, HasV6]>;
+               Requires<[IsARM, HasV6]>,
+           Sched<[WriteALUsi, ReadALU]>;
 
 // Alternate cases for PKHBT where identities eliminate some nodes.
 def : ARMV6Pat<(or (and GPRnopc:$Rn, 0xFFFF), (and GPRnopc:$Rm, 0xFFFF0000)),
@@ -3930,7 +3949,8 @@ def PKHTB : APKHI<0b01101000, 1, (outs GPRnopc:$Rd),
                [(set GPRnopc:$Rd, (or (and GPRnopc:$Rn, 0xFFFF0000),
                                       (and (sra GPRnopc:$Rm, pkh_asr_amt:$sh),
                                            0xFFFF)))]>,
-               Requires<[IsARM, HasV6]>;
+               Requires<[IsARM, HasV6]>,
+           Sched<[WriteALUsi, ReadALU]>;
 
 // Alternate cases for PKHTB where identities eliminate some nodes.  Note that
 // a shift amount of 0 is *not legal* here, it is PKHBT instead.

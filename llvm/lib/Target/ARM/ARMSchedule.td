@@ -64,6 +64,11 @@ def WriteALUsr : SchedWrite; // Shift by register.
 def WriteALUSsr : SchedWrite; // Shift by register (flag setting).
 def ReadALUsr : SchedRead; // Some operands are read later.
 
+// Compares.
+def WriteCMP : SchedWrite;
+def WriteCMPsi : SchedWrite;
+def WriteCMPsr : SchedWrite;
+
 // Define TII for use in SchedVariant Predicates.
 def : PredicateProlog<[{
   const ARMBaseInstrInfo *TII =

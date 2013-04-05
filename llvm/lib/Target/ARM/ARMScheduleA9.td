@@ -1920,7 +1920,7 @@ def A9WriteI : SchedWriteRes<[A9UnitALU]>;
 def A9WriteIsr : SchedWriteRes<[A9UnitALU]> { let Latency = 2; }
 
 // Basic ALU.
-def : WriteRes<WriteALU, [A9UnitALU]>;
+def A9WriteALU : SchedWriteRes<[A9UnitALU]>;
 // ALU with operand shifted by immediate.
 def : WriteRes<WriteALUsi, [A9UnitALU]> { let Latency = 2; }
 // ALU with operand shifted by register.
@@ -2278,7 +2278,7 @@ def A9Read4 : SchedReadAdvance<3>;
 def :ItinRW<[A9WriteI], [IIC_iMOVi,IIC_iMOVr,IIC_iMOVsi,
                          IIC_iMVNi,IIC_iMVNsi,
                          IIC_iCMOVi,IIC_iCMOVr,IIC_iCMOVsi]>;
-def :ItinRW<[A9WriteI,ReadALU],[IIC_iMVNr]>;
+def :ItinRW<[A9WriteI,A9ReadALU],[IIC_iMVNr]>;
 def :ItinRW<[A9WriteIsr], [IIC_iMOVsr,IIC_iMVNsr,IIC_iCMOVsr]>;
 
 def :ItinRW<[A9WriteI2],   [IIC_iMOVix2,IIC_iCMOVix2]>;
@@ -2286,13 +2286,13 @@ def :ItinRW<[A9WriteI2pc], [IIC_iMOVix2addpc]>;
 def :ItinRW<[A9WriteI2ld], [IIC_iMOVix2ld]>;
 
 def :ItinRW<[WriteALU], [IIC_iBITi,IIC_iBITr,IIC_iUNAr,IIC_iTSTi,IIC_iTSTr]>;
-def :ItinRW<[WriteALU, ReadALU], [IIC_iALUi, IIC_iCMPi, IIC_iCMPsi]>;
-def :ItinRW<[WriteALU, ReadALU, ReadALU],[IIC_iALUr,IIC_iCMPr]>;
+def :ItinRW<[WriteALU, A9ReadALU], [IIC_iALUi, IIC_iCMPi, IIC_iCMPsi]>;
+def :ItinRW<[WriteALU, A9ReadALU, A9ReadALU],[IIC_iALUr,IIC_iCMPr]>;
 def :ItinRW<[WriteALUsi], [IIC_iBITsi,IIC_iUNAsi,IIC_iEXTr,IIC_iTSTsi]>;
-def :ItinRW<[WriteALUsi, ReadALU], [IIC_iALUsi]>;
-def :ItinRW<[WriteALUsi, ReadDefault, ReadALU], [IIC_iALUsir]>; // RSB
+def :ItinRW<[WriteALUsi, A9ReadALU], [IIC_iALUsi]>;
+def :ItinRW<[WriteALUsi, ReadDefault, A9ReadALU], [IIC_iALUsir]>; // RSB
 def :ItinRW<[A9WriteALUsr], [IIC_iBITsr,IIC_iTSTsr,IIC_iEXTAr,IIC_iEXTAsr]>;
-def :ItinRW<[A9WriteALUsr, ReadALU], [IIC_iALUsr,IIC_iCMPsr]>;
+def :ItinRW<[A9WriteALUsr, A9ReadALU], [IIC_iALUsr,IIC_iCMPsr]>;
 
 // A9WriteHi ignored for MUL32.
 def :ItinRW<[A9WriteM, A9WriteMHi], [IIC_iMUL32,IIC_iMAC32,
@@ -2482,9 +2482,15 @@ def :ItinRW<[A9WriteV9, A9Read2, A9Read2], [IIC_VRECSD]>;
 def :ItinRW<[A9WriteV10, A9Read2, A9Read2], [IIC_VRECSQ]>;
 
 // Map SchedRWs that are identical for cortexa9 to existing resources.
+def : SchedAlias<WriteALU, A9WriteALU>;
 def : SchedAlias<WriteALUsr, A9WriteALUsr>;
 def : SchedAlias<WriteALUSsr, A9WriteALUsr>;
 def : SchedAlias<ReadALU, A9ReadALU>;
 def : SchedAlias<ReadALUsr, A9ReadALU>;
+// FIXME: need to special case AND, ORR, EOR, BIC because they don't read
+// advance. But our instrinfo claims it does.
 
+def : SchedAlias<WriteCMP, A9WriteALU>;
+def : SchedAlias<WriteCMPsi, A9WriteALU>;
+def : SchedAlias<WriteCMPsr, A9WriteALU>;
 } // SchedModel = CortexA9Model

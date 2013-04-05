@@ -1113,23 +1113,22 @@ let SchedModel = SwiftModel in {
   def SwiftWriteALUsi : SchedWriteVariant<[
     // lsl #2, lsl #1, or lsr #1.
     SchedVar<IsFastImmShiftSwiftPred, [SwiftWriteP01TwoCycle]>,
-    // Arbitrary imm shift.
     SchedVar<NoSchedPred,             [WriteALU]>
   ]>;
   def SwiftWriteALUsr : SchedWriteVariant<[
     SchedVar<IsPredicatedPred, [SwiftWriteP01ThreeCycleTwoUops]>,
-    SchedVar<NoSchedPred, [SwiftWriteP01TwoCycle]>
+    SchedVar<NoSchedPred,      [SwiftWriteP01TwoCycle]>
   ]>;
   def SwiftWriteALUSsr : SchedWriteVariant<[
     SchedVar<IsPredicatedPred, [SwiftWriteP0ThreeCycleThreeUops]>,
-    SchedVar<NoSchedPred, [SwiftWriteP01TwoCycle]>
+    SchedVar<NoSchedPred,      [SwiftWriteP01TwoCycle]>
   ]>;
   def SwiftReadAdvanceALUsr : SchedReadVariant<[
     SchedVar<IsPredicatedPred, [SchedReadAdvance<2>]>,
-    SchedVar<NoSchedPred, [NoReadAdvance]>
+    SchedVar<NoSchedPred,      [NoReadAdvance]>
   ]>;
   // ADC,ADD,NEG,RSB,RSC,SBC,SUB,ADR
-  // AND,BIC, EOR,ORN,ORR
+  // AND,BIC,EOR,ORN,ORR
   // CLZ,RBIT,REV,REV16,REVSH,PKH
   def : WriteRes<WriteALU, [SwiftUnitP01]>;
   def : SchedAlias<WriteALUsi, SwiftWriteALUsi>;
@@ -1137,4 +1136,9 @@ let SchedModel = SwiftModel in {
   def : SchedAlias<WriteALUSsr, SwiftWriteALUSsr>;
   def : ReadAdvance<ReadALU, 0>;
   def : SchedAlias<ReadALUsr, SwiftReadAdvanceALUsr>;
+
+  // 4.2.5 Integer comparison
+  def : WriteRes<WriteCMP, [SwiftUnitP01]>;
+  def : WriteRes<WriteCMPsi, [SwiftUnitP01]>;
+  def : WriteRes<WriteCMPsr, [SwiftUnitP01]>;
 }
