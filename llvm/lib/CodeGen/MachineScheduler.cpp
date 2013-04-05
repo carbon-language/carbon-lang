@@ -1660,7 +1660,7 @@ initResourceDelta(const ScheduleDAGMI *DAG,
 }
 
 /// Return true if this heuristic determines order.
-static bool tryLess(unsigned TryVal, unsigned CandVal,
+static bool tryLess(int TryVal, int CandVal,
                     ConvergingScheduler::SchedCandidate &TryCand,
                     ConvergingScheduler::SchedCandidate &Cand,
                     ConvergingScheduler::CandReason Reason) {
@@ -1676,7 +1676,7 @@ static bool tryLess(unsigned TryVal, unsigned CandVal,
   return false;
 }
 
-static bool tryGreater(unsigned TryVal, unsigned CandVal,
+static bool tryGreater(int TryVal, int CandVal,
                        ConvergingScheduler::SchedCandidate &TryCand,
                        ConvergingScheduler::SchedCandidate &Cand,
                        ConvergingScheduler::CandReason Reason) {
