@@ -16,6 +16,7 @@
 #define LLVM_TARGET_POWERPC_PPC32ISELLOWERING_H
 
 #include "PPC.h"
+#include "PPCInstrInfo.h"
 #include "PPCRegisterInfo.h"
 #include "PPCSubtarget.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -327,6 +328,7 @@ namespace llvm {
   class PPCTargetLowering : public TargetLowering {
     const PPCSubtarget &PPCSubTarget;
     const PPCRegisterInfo *PPCRegInfo;
+    const PPCInstrInfo *PPCII;
 
   public:
     explicit PPCTargetLowering(PPCTargetMachine &TM);

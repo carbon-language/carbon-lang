@@ -86,7 +86,12 @@ public:
     return getTM<PPCTargetMachine>();
   }
 
+  const PPCSubtarget &getPPCSubtarget() const {
+    return *getPPCTargetMachine().getSubtargetImpl();
+  }
+
   virtual bool addPreRegAlloc();
+  virtual bool addILPOpts();
   virtual bool addInstSelector();
   virtual bool addPreEmitPass();
 };
@@ -99,6 +104,15 @@ TargetPassConfig *PPCTargetMachine::createPassConfig(PassManagerBase &PM) {
 bool PPCPassConfig::addPreRegAlloc() {
   if (!DisableCTRLoops && getOptLevel() != CodeGenOpt::None)
     addPass(createPPCCTRLoops());
+
+  return false;
+}
+
+bool PPCPassConfig::addILPOpts() {
+  if (getPPCSubtarget().hasISEL()) {
+    addPass(&EarlyIfConverterID);
+    return true;
+  }
 
   return false;
 }

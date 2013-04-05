@@ -417,6 +417,105 @@ PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   return 2;
 }
 
+// Select analysis.
+bool PPCInstrInfo::canInsertSelect(const MachineBasicBlock &MBB,
+                const SmallVectorImpl<MachineOperand> &Cond,
+                unsigned TrueReg, unsigned FalseReg,
+                int &CondCycles, int &TrueCycles, int &FalseCycles) const {
+  if (!TM.getSubtargetImpl()->hasISEL())
+    return false;
+
+  if (Cond.size() != 2)
+    return false;
+
+  // If this is really a bdnz-like condition, then it cannot be turned into a
+  // select.
+  if (Cond[1].getReg() == PPC::CTR || Cond[1].getReg() == PPC::CTR8)
+    return false;
+
+  // Check register classes.
+  const MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+  const TargetRegisterClass *RC =
+    RI.getCommonSubClass(MRI.getRegClass(TrueReg), MRI.getRegClass(FalseReg));
+  if (!RC)
+    return false;
+
+  // isel is for regular integer GPRs only.
+  if (!PPC::GPRCRegClass.hasSubClassEq(RC) &&
+      !PPC::G8RCRegClass.hasSubClassEq(RC))
+    return false;
+
+  // FIXME: These numbers are for the A2, how well they work for other cores is
+  // an open question. On the A2, the isel instruction has a 2-cycle latency
+  // but single-cycle throughput. These numbers are used in combination with
+  // the MispredictPenalty setting from the active SchedMachineModel.
+  CondCycles = 1;
+  TrueCycles = 1;
+  FalseCycles = 1;
+
+  return true;
+}
+
+void PPCInstrInfo::insertSelect(MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator MI, DebugLoc dl,
+                                unsigned DestReg,
+                                const SmallVectorImpl<MachineOperand> &Cond,
+                                unsigned TrueReg, unsigned FalseReg) const {
+  assert(Cond.size() == 2 &&
+         "PPC branch conditions have two components!");
+
+  assert(TM.getSubtargetImpl()->hasISEL() &&
+         "Cannot insert select on target without ISEL support");
+
+  // Get the register classes.
+  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+  const TargetRegisterClass *RC =
+    RI.getCommonSubClass(MRI.getRegClass(TrueReg), MRI.getRegClass(FalseReg));
+  assert(RC && "TrueReg and FalseReg must have overlapping register classes");
+  assert((PPC::GPRCRegClass.hasSubClassEq(RC) ||
+          PPC::G8RCRegClass.hasSubClassEq(RC)) &&
+         "isel is for regular integer GPRs only");
+
+  unsigned OpCode =
+    PPC::GPRCRegClass.hasSubClassEq(RC) ? PPC::ISEL : PPC::ISEL8;
+  unsigned SelectPred = Cond[0].getImm();
+
+  unsigned SubIdx;
+  bool SwapOps;
+  switch (SelectPred) {
+  default: llvm_unreachable("invalid predicate for isel");
+  case PPC::PRED_EQ: SubIdx = PPC::sub_eq; SwapOps = false; break;
+  case PPC::PRED_NE: SubIdx = PPC::sub_eq; SwapOps = true; break;
+  case PPC::PRED_LT: SubIdx = PPC::sub_lt; SwapOps = false; break;
+  case PPC::PRED_GE: SubIdx = PPC::sub_lt; SwapOps = true; break;
+  case PPC::PRED_GT: SubIdx = PPC::sub_gt; SwapOps = false; break;
+  case PPC::PRED_LE: SubIdx = PPC::sub_gt; SwapOps = true; break;
+  case PPC::PRED_UN: SubIdx = PPC::sub_un; SwapOps = false; break;
+  case PPC::PRED_NU: SubIdx = PPC::sub_un; SwapOps = true; break;
+  }
+
+  unsigned FirstReg =  SwapOps ? FalseReg : TrueReg,
+           SecondReg = SwapOps ? TrueReg  : FalseReg;
+
+  // The first input register of isel cannot be r0. If it is a member
+  // of a register class that can be r0, then copy it first (the
+  // register allocator should eliminate the copy).
+  if (MRI.getRegClass(FirstReg)->contains(PPC::R0) ||
+      MRI.getRegClass(FirstReg)->contains(PPC::X0)) {
+    const TargetRegisterClass *FirstRC =
+      MRI.getRegClass(FirstReg)->contains(PPC::X0) ?
+        &PPC::G8RC_NOX0RegClass : &PPC::GPRC_NOR0RegClass;
+    unsigned OldFirstReg = FirstReg;
+    FirstReg = MRI.createVirtualRegister(FirstRC);
+    BuildMI(MBB, MI, dl, get(TargetOpcode::COPY), FirstReg)
+      .addReg(OldFirstReg);
+  }
+
+  BuildMI(MBB, MI, dl, get(OpCode), DestReg)
+    .addReg(FirstReg).addReg(SecondReg)
+    .addReg(Cond[1].getReg(), 0, SubIdx);
+}
+
 void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator I, DebugLoc DL,
                                unsigned DestReg, unsigned SrcReg,

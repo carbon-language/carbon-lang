@@ -71,6 +71,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   : TargetLowering(TM, CreateTLOF(TM)), PPCSubTarget(*TM.getSubtargetImpl()) {
   const PPCSubtarget *Subtarget = &TM.getSubtarget<PPCSubtarget>();
   PPCRegInfo = TM.getRegisterInfo();
+  PPCII = TM.getInstrInfo();
 
   setPow2DivIsCheap();
 
@@ -6239,29 +6240,13 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
   if (PPCSubTarget.hasISEL() && (MI->getOpcode() == PPC::SELECT_CC_I4 ||
                                  MI->getOpcode() == PPC::SELECT_CC_I8)) {
-    unsigned OpCode = MI->getOpcode() == PPC::SELECT_CC_I8 ?
-                                         PPC::ISEL8 : PPC::ISEL;
-    unsigned SelectPred = MI->getOperand(4).getImm();
+    SmallVector<MachineOperand, 2> Cond;
+    Cond.push_back(MI->getOperand(4));
+    Cond.push_back(MI->getOperand(1));
+
     DebugLoc dl = MI->getDebugLoc();
-
-    unsigned SubIdx;
-    bool SwapOps;
-    switch (SelectPred) {
-    default: llvm_unreachable("invalid predicate for isel");
-    case PPC::PRED_EQ: SubIdx = PPC::sub_eq; SwapOps = false; break;
-    case PPC::PRED_NE: SubIdx = PPC::sub_eq; SwapOps = true; break;
-    case PPC::PRED_LT: SubIdx = PPC::sub_lt; SwapOps = false; break;
-    case PPC::PRED_GE: SubIdx = PPC::sub_lt; SwapOps = true; break;
-    case PPC::PRED_GT: SubIdx = PPC::sub_gt; SwapOps = false; break;
-    case PPC::PRED_LE: SubIdx = PPC::sub_gt; SwapOps = true; break;
-    case PPC::PRED_UN: SubIdx = PPC::sub_un; SwapOps = false; break;
-    case PPC::PRED_NU: SubIdx = PPC::sub_un; SwapOps = true; break;
-    }
-
-    BuildMI(*BB, MI, dl, TII->get(OpCode), MI->getOperand(0).getReg())
-      .addReg(MI->getOperand(SwapOps? 3 : 2).getReg())
-      .addReg(MI->getOperand(SwapOps? 2 : 3).getReg())
-      .addReg(MI->getOperand(1).getReg(), 0, SubIdx);
+    PPCII->insertSelect(*BB, MI, dl, MI->getOperand(0).getReg(), Cond,
+                        MI->getOperand(2).getReg(), MI->getOperand(3).getReg());
   } else if (MI->getOpcode() == PPC::SELECT_CC_I4 ||
              MI->getOpcode() == PPC::SELECT_CC_I8 ||
              MI->getOpcode() == PPC::SELECT_CC_F4 ||
