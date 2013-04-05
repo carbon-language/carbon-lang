@@ -94,6 +94,23 @@ namespace lldb_private {
         ~Platform();
 
         //------------------------------------------------------------------
+        /// Find a platform plugin for a given process.
+        ///
+        /// Scans the installed Platform plug-ins and tries to find
+        /// an instance that can be used for \a process
+        ///
+        /// @param[in] process
+        ///     The process for which to try and locate a platform
+        ///     plug-in instance.
+        ///
+        /// @param[in] plugin_name
+        ///     An optional name of a specific platform plug-in that
+        ///     should be used. If NULL, pick the best plug-in.
+        //------------------------------------------------------------------
+        static Platform*
+        FindPlugin (Process *process, const char *plugin_name);
+
+        //------------------------------------------------------------------
         /// Set the target's executable based off of the existing 
         /// architecture information in \a target given a path to an 
         /// executable \a exe_file.
