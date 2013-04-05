@@ -284,33 +284,33 @@ let Uses = [EXEC] in {
 class MUBUF <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
     Enc64<outs, ins, asm, pattern> {
 
-  bits<8> VDATA;
-  bits<12> OFFSET;
-  bits<1> OFFEN;
-  bits<1> IDXEN;
-  bits<1> GLC;
-  bits<1> ADDR64;
-  bits<1> LDS;
-  bits<8> VADDR;
-  bits<7> SRSRC;
-  bits<1> SLC;
-  bits<1> TFE;
-  bits<8> SOFFSET;
+  bits<12> offset;
+  bits<1> offen;
+  bits<1> idxen;
+  bits<1> glc;
+  bits<1> addr64;
+  bits<1> lds;
+  bits<8> vaddr;
+  bits<8> vdata;
+  bits<7> srsrc;
+  bits<1> slc;
+  bits<1> tfe;
+  bits<8> soffset;
 
-  let Inst{11-0} = OFFSET;
-  let Inst{12} = OFFEN;
-  let Inst{13} = IDXEN;
-  let Inst{14} = GLC;
-  let Inst{15} = ADDR64;
-  let Inst{16} = LDS;
+  let Inst{11-0} = offset;
+  let Inst{12} = offen;
+  let Inst{13} = idxen;
+  let Inst{14} = glc;
+  let Inst{15} = addr64;
+  let Inst{16} = lds;
   let Inst{24-18} = op;
   let Inst{31-26} = 0x38; //encoding
-  let Inst{39-32} = VADDR;
-  let Inst{47-40} = VDATA;
-  let Inst{52-48} = SRSRC{6-2};
-  let Inst{54} = SLC;
-  let Inst{55} = TFE;
-  let Inst{63-56} = SOFFSET;
+  let Inst{39-32} = vaddr;
+  let Inst{47-40} = vdata;
+  let Inst{52-48} = srsrc{6-2};
+  let Inst{54} = slc;
+  let Inst{55} = tfe;
+  let Inst{63-56} = soffset;
 
   let VM_CNT = 1;
   let EXP_CNT = 1;

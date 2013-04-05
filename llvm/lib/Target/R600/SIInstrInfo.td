@@ -285,11 +285,11 @@ class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBU
 
 class MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass> : MUBUF <
   op,
-  (outs regClass:$dst),
+  (outs regClass:$vdata),
   (ins i16imm:$offset, i1imm:$offen, i1imm:$idxen, i1imm:$glc, i1imm:$addr64,
        i1imm:$lds, VReg_32:$vaddr, SReg_128:$srsrc, i1imm:$slc,
        i1imm:$tfe, SSrc_32:$soffset),
-  asm#" $dst, $offset, $offen, $idxen, $glc, $addr64, "
+  asm#" $vdata, $offset, $offen, $idxen, $glc, $addr64, "
      #"$lds, $vaddr, $srsrc, $slc, $tfe, $soffset",
   []> {
   let mayLoad = 1;
