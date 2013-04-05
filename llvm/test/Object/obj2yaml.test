@@ -1,0 +1,170 @@
+RUN: obj2yaml %p/Inputs/trivial-object-test.coff-i386 | FileCheck %s --check-prefix COFF-I386
+RUN: obj2yaml %p/Inputs/trivial-object-test.coff-x86-64 | FileCheck %s --check-prefix COFF-X86-64
+
+
+COFF-I386: header: !Header
+COFF-I386-NEXT:  Machine: IMAGE_FILE_MACHINE_I386 # (0x14c)
+
+COFF-I386: sections:
+COFF-I386-NEXT:   - !Section
+COFF-I386-NEXT:    Name: .text
+COFF-I386-NEXT:    Characteristics: [IMAGE_SCN_CNT_CODE, IMAGE_SCN_ALIGN_16BYTES, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ, ] # 0x60500020
+COFF-I386-NEXT:    SectionData:  !hex "83EC0CC744240800000000C7042400000000E800000000E8000000008B44240883C40CC3" # |....D$.......$...............D$.....|
+
+COFF-I386:    Relocations:
+COFF-I386-NEXT:      - !Relocation
+COFF-I386-NEXT:        VirtualAddress: 0xe
+COFF-I386-NEXT:        SymbolTableIndex: 5
+COFF-I386-NEXT:        Type: IMAGE_REL_I386_DIR32
+
+COFF-I386:      - !Relocation
+COFF-I386-NEXT:        VirtualAddress: 0x13
+COFF-I386-NEXT:        SymbolTableIndex: 6
+COFF-I386-NEXT:        Type: IMAGE_REL_I386_REL32
+
+COFF-I386:      - !Relocation
+COFF-I386-NEXT:        VirtualAddress: 0x18
+COFF-I386-NEXT:        SymbolTableIndex: 7
+COFF-I386-NEXT:        Type: IMAGE_REL_I386_REL32
+
+COFF-I386:  - !Section
+COFF-I386-NEXT:    Name: .data
+COFF-I386-NEXT:    Characteristics: [IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_ALIGN_1BYTES, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE, ] # 0xc0100040
+COFF-I386-NEXT:    SectionData:  !hex "48656C6C6F20576F726C642100" # |Hello World!.|
+
+COFF-I386: symbols:
+COFF-I386-NEXT:  - !Symbol
+COFF-I386-NEXT:    Name: .text
+COFF-I386-NEXT:    Value: 0
+COFF-I386-NEXT:    SectionNumber: 1
+COFF-I386-NEXT:    SimpleType: IMAGE_SYM_TYPE_NULL # (0)
+COFF-I386-NEXT:    ComplexType: IMAGE_SYM_DTYPE_NULL # (0)
+COFF-I386-NEXT:    StorageClass: IMAGE_SYM_CLASS_STATIC # (3)
+COFF-I386-NEXT:    NumberOfAuxSymbols: 1
+COFF-I386-NEXT:    AuxillaryData:  !hex "240000000300000000000000010000000000" # |$.................|
+
+COFF-I386:  - !Symbol
+COFF-I386-NEXT:    Name: .data
+COFF-I386-NEXT:    Value: 0
+COFF-I386-NEXT:    SectionNumber: 2
+COFF-I386-NEXT:    SimpleType: IMAGE_SYM_TYPE_NULL # (0)
+COFF-I386-NEXT:    ComplexType: IMAGE_SYM_DTYPE_NULL # (0)
+COFF-I386-NEXT:    StorageClass: IMAGE_SYM_CLASS_STATIC # (3)
+COFF-I386-NEXT:    NumberOfAuxSymbols: 1
+COFF-I386-NEXT:    AuxillaryData:  !hex "0D0000000000000000000000020000000000" # |..................|
+
+COFF-I386:  - !Symbol
+COFF-I386-NEXT:    Name: _main
+COFF-I386-NEXT:    Value: 0
+COFF-I386-NEXT:    SectionNumber: 1
+COFF-I386-NEXT:    SimpleType: IMAGE_SYM_TYPE_NULL # (0)
+COFF-I386-NEXT:    ComplexType: IMAGE_SYM_DTYPE_FUNCTION # (2)
+COFF-I386-NEXT:    StorageClass: IMAGE_SYM_CLASS_EXTERNAL # (2)
+
+COFF-I386:  - !Symbol
+COFF-I386-NEXT:    Name: L_.str
+COFF-I386-NEXT:    Value: 0
+COFF-I386-NEXT:    SectionNumber: 2
+COFF-I386-NEXT:    SimpleType: IMAGE_SYM_TYPE_NULL # (0)
+COFF-I386-NEXT:    ComplexType: IMAGE_SYM_DTYPE_NULL # (0)
+COFF-I386-NEXT:    StorageClass: IMAGE_SYM_CLASS_STATIC # (3)
+
+COFF-I386:  - !Symbol
+COFF-I386-NEXT:    Name: _puts
+COFF-I386-NEXT:    Value: 0
+COFF-I386-NEXT:    SectionNumber: 0
+COFF-I386-NEXT:    SimpleType: IMAGE_SYM_TYPE_NULL # (0)
+COFF-I386-NEXT:    ComplexType: IMAGE_SYM_DTYPE_NULL # (0)
+COFF-I386-NEXT:    StorageClass: IMAGE_SYM_CLASS_EXTERNAL # (2)
+
+COFF-I386:  - !Symbol
+COFF-I386-NEXT:    Name: _SomeOtherFunction
+COFF-I386-NEXT:    Value: 0
+COFF-I386-NEXT:    SectionNumber: 0
+COFF-I386-NEXT:    SimpleType: IMAGE_SYM_TYPE_NULL # (0)
+COFF-I386-NEXT:    ComplexType: IMAGE_SYM_DTYPE_NULL # (0)
+COFF-I386-NEXT:    StorageClass: IMAGE_SYM_CLASS_EXTERNAL # (2)
+
+
+COFF-X86-64: header: !Header
+COFF-X86-64-NEXT:  Machine: IMAGE_FILE_MACHINE_AMD64 # (0x8664)
+
+COFF-X86-64: sections:
+COFF-X86-64-NEXT:   - !Section
+COFF-X86-64-NEXT:     Name: .text
+COFF-X86-64-NEXT:     Characteristics: [IMAGE_SCN_CNT_CODE, IMAGE_SCN_ALIGN_16BYTES, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ, ] # 0x60500020
+COFF-X86-64-NEXT:     SectionData:  !hex "4883EC28C744242400000000488D0D00000000E800000000E8000000008B4424244883C428C3" # |H..(.D$$....H.................D$$H..(.|
+
+COFF-X86-64:     Relocations:
+COFF-X86-64-NEXT:       - !Relocation
+COFF-X86-64-NEXT:         VirtualAddress: 0xf
+COFF-X86-64-NEXT:         SymbolTableIndex: 5
+COFF-X86-64-NEXT:         Type: IMAGE_REL_AMD64_REL32
+
+COFF-X86-64:       - !Relocation
+COFF-X86-64-NEXT:         VirtualAddress: 0x14
+COFF-X86-64-NEXT:         SymbolTableIndex: 6
+COFF-X86-64-NEXT:         Type: IMAGE_REL_AMD64_REL32
+
+COFF-X86-64:       - !Relocation
+COFF-X86-64-NEXT:         VirtualAddress: 0x19
+COFF-X86-64-NEXT:         SymbolTableIndex: 7
+COFF-X86-64-NEXT:         Type: IMAGE_REL_AMD64_REL32
+
+COFF-X86-64:   - !Section
+COFF-X86-64-NEXT:     Name: .data
+COFF-X86-64-NEXT:     Characteristics: [IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_ALIGN_1BYTES, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE, ] # 0xc0100040
+COFF-X86-64-NEXT:     SectionData:  !hex "48656C6C6F20576F726C642100" # |Hello World!.|
+
+COFF-X86-64: symbols:
+COFF-X86-64-NEXT:   - !Symbol
+COFF-X86-64-NEXT:     Name: .text
+COFF-X86-64-NEXT:     Value: 0
+COFF-X86-64-NEXT:     SectionNumber: 1
+COFF-X86-64-NEXT:     SimpleType: IMAGE_SYM_TYPE_NULL # (0)
+COFF-X86-64-NEXT:     ComplexType: IMAGE_SYM_DTYPE_NULL # (0)
+COFF-X86-64-NEXT:     StorageClass: IMAGE_SYM_CLASS_STATIC # (3)
+COFF-X86-64-NEXT:     NumberOfAuxSymbols: 1
+COFF-X86-64-NEXT:     AuxillaryData:  !hex "260000000300000000000000010000000000" # |&.................|
+
+COFF-X86-64:   - !Symbol
+COFF-X86-64-NEXT:     Name: .data
+COFF-X86-64-NEXT:     Value: 0
+COFF-X86-64-NEXT:     SectionNumber: 2
+COFF-X86-64-NEXT:     SimpleType: IMAGE_SYM_TYPE_NULL # (0)
+COFF-X86-64-NEXT:     ComplexType: IMAGE_SYM_DTYPE_NULL # (0)
+COFF-X86-64-NEXT:     StorageClass: IMAGE_SYM_CLASS_STATIC # (3)
+COFF-X86-64-NEXT:     NumberOfAuxSymbols: 1
+COFF-X86-64-NEXT:     AuxillaryData:  !hex "0D0000000000000000000000020000000000" # |..................|
+
+COFF-X86-64:   - !Symbol
+COFF-X86-64-NEXT:     Name: main
+COFF-X86-64-NEXT:     Value: 0
+COFF-X86-64-NEXT:     SectionNumber: 1
+COFF-X86-64-NEXT:     SimpleType: IMAGE_SYM_TYPE_NULL # (0)
+COFF-X86-64-NEXT:     ComplexType: IMAGE_SYM_DTYPE_NULL # (0)
+COFF-X86-64-NEXT:     StorageClass: IMAGE_SYM_CLASS_EXTERNAL # (2)
+
+COFF-X86-64:   - !Symbol
+COFF-X86-64-NEXT:     Name: L.str
+COFF-X86-64-NEXT:     Value: 0
+COFF-X86-64-NEXT:     SectionNumber: 2
+COFF-X86-64-NEXT:     SimpleType: IMAGE_SYM_TYPE_NULL # (0)
+COFF-X86-64-NEXT:     ComplexType: IMAGE_SYM_DTYPE_NULL # (0)
+COFF-X86-64-NEXT:     StorageClass: IMAGE_SYM_CLASS_STATIC # (3)
+
+COFF-X86-64:   - !Symbol
+COFF-X86-64-NEXT:     Name: puts
+COFF-X86-64-NEXT:     Value: 0
+COFF-X86-64-NEXT:     SectionNumber: 0
+COFF-X86-64-NEXT:     SimpleType: IMAGE_SYM_TYPE_NULL # (0)
+COFF-X86-64-NEXT:     ComplexType: IMAGE_SYM_DTYPE_NULL # (0)
+COFF-X86-64-NEXT:     StorageClass: IMAGE_SYM_CLASS_EXTERNAL # (2)
+
+COFF-X86-64:   - !Symbol
+COFF-X86-64-NEXT:     Name: SomeOtherFunction
+COFF-X86-64-NEXT:     Value: 0
+COFF-X86-64-NEXT:     SectionNumber: 0
+COFF-X86-64-NEXT:     SimpleType: IMAGE_SYM_TYPE_NULL # (0)
+COFF-X86-64-NEXT:     ComplexType: IMAGE_SYM_DTYPE_NULL # (0)
+COFF-X86-64-NEXT:     StorageClass: IMAGE_SYM_CLASS_EXTERNAL # (2)
