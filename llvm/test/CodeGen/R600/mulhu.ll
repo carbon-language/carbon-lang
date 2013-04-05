@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s
+;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
 
 ;CHECK: V_MOV_B32_e32 VGPR1, -1431655765
 ;CHECK-NEXT: V_MUL_HI_U32 VGPR0, VGPR0, VGPR1, 0, 0, 0, 0, 0

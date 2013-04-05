@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
 
 ; XXX: Enable once SI supports buffer stores
 ; XFAIL: *

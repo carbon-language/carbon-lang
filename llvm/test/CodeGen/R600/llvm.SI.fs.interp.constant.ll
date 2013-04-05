@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s
+;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
 
 ;CHECK: S_MOV_B32
 ;CHECK-NEXT: V_INTERP_MOV_F32

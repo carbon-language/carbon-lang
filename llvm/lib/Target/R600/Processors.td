@@ -26,5 +26,8 @@ def : Proc<"barts",      R600_EG_Itin, [FeatureByteAddress, FeatureImages]>;
 def : Proc<"turks",      R600_EG_Itin, [FeatureByteAddress, FeatureImages]>;
 def : Proc<"caicos",     R600_EG_Itin, [FeatureByteAddress, FeatureImages]>;
 def : Proc<"cayman",     R600_EG_Itin, [FeatureByteAddress, FeatureImages, FeatureFP64]>;
-def : Proc<"SI", SI_Itin, [Feature64BitPtr]>;
-
+def : Proc<"SI",         SI_Itin, [Feature64BitPtr, FeatureFP64]>;
+def : Proc<"tahiti",     SI_Itin, [Feature64BitPtr, FeatureFP64]>;
+def : Proc<"pitcairn",   SI_Itin, [Feature64BitPtr, FeatureFP64]>;
+def : Proc<"verde",      SI_Itin, [Feature64BitPtr, FeatureFP64]>;
+def : Proc<"oland",      SI_Itin, [Feature64BitPtr, FeatureFP64]>;

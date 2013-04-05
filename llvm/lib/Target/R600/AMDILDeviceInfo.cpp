@@ -79,7 +79,9 @@ AMDGPUDevice* getDeviceFromName(const std::string &deviceName,
           " on 32bit pointers!");
 #endif
     return new AMDGPUNIDevice(ptr);
-  } else if (deviceName == "SI") {
+  } else if (deviceName == "SI" ||
+             deviceName == "tahiti" || deviceName == "pitcairn" ||
+             deviceName == "verde"  || deviceName == "oland") {
     return new AMDGPUSIDevice(ptr);
   } else {
 #if DEBUG

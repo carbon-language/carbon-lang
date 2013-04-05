@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s
+;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
 
 ;CHECK: V_LSHRREV_B32_e32 VGPR0, 1, VGPR0
 
