@@ -435,6 +435,16 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
     }
   }
 
+  // If this is a post initializer expression, initializing the region, we
+  // should track the initializer expression.
+  if (Optional<PostInitializer> PIP = Pred->getLocationAs<PostInitializer>()) {
+    const MemRegion *FieldReg = (const MemRegion *)PIP->getLocationValue();
+    if (FieldReg && FieldReg == R) {
+      StoreSite = Pred;
+      InitE = PIP->getInitializer()->getInit();
+    }
+  }
+  
   // Otherwise, see if this is the store site:
   // (1) Succ has this binding and Pred does not, i.e. this is
   //     where the binding first occurred.

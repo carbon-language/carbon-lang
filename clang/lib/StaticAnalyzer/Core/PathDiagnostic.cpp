@@ -588,6 +588,9 @@ PathDiagnosticLocation
     S = SP->getStmt();
     if (P.getAs<PostStmtPurgeDeadSymbols>())
       return PathDiagnosticLocation::createEnd(S, SMng, P.getLocationContext());
+  } else if (Optional<PostInitializer> PIP = P.getAs<PostInitializer>()) {
+    return PathDiagnosticLocation(PIP->getInitializer()->getSourceLocation(),
+                                  SMng);
   } else if (Optional<PostImplicitCall> PIE = P.getAs<PostImplicitCall>()) {
     return PathDiagnosticLocation(PIE->getLocation(), SMng);
   } else if (Optional<CallEnter> CE = P.getAs<CallEnter>()) {

@@ -471,12 +471,23 @@ private:
 
 class PostInitializer : public ProgramPoint {
 public:
-  PostInitializer(const CXXCtorInitializer *I, 
+  /// \brief Construct a PostInitializer point that represents a location after
+  ///   CXXCtorInitializer expression evaluation.
+  ///
+  /// \param I The initializer.
+  /// \param Loc The location of the field being initialized.
+  PostInitializer(const CXXCtorInitializer *I,
+                  const void *Loc,
                   const LocationContext *L)
-    : ProgramPoint(I, PostInitializerKind, L) {}
+    : ProgramPoint(I, Loc, PostInitializerKind, L) {}
 
   const CXXCtorInitializer *getInitializer() const {
     return static_cast<const CXXCtorInitializer *>(getData1());
+  }
+
+  /// \brief Returns the location of the field.
+  const void *getLocationValue() const {
+    return getData2();
   }
 
 private:

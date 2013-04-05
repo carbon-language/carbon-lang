@@ -438,8 +438,8 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
   ProgramStateRef State = Pred->getState();
   SVal thisVal = State->getSVal(svalBuilder.getCXXThis(decl, stackFrame));
 
-  PostInitializer PP(BMI, stackFrame);
   ExplodedNodeSet Tmp(Pred);
+  SVal FieldLoc;
 
   // Evaluate the initializer, if necessary
   if (BMI->isAnyMemberInitializer()) {
@@ -448,7 +448,6 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
     const Expr *Init = BMI->getInit()->IgnoreImplicit();
     if (!isa<CXXConstructExpr>(Init)) {
       const ValueDecl *Field;
-      SVal FieldLoc;
       if (BMI->isIndirectMemberInitializer()) {
         Field = BMI->getIndirectMember();
         FieldLoc = State->getLValue(BMI->getIndirectMember(), thisVal);
@@ -483,6 +482,8 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
       assert(Tmp.size() == 1 && "have not generated any new nodes yet");
       assert(*Tmp.begin() == Pred && "have not generated any new nodes yet");
       Tmp.clear();
+      
+      PostInitializer PP(BMI, FieldLoc.getAsRegion(), stackFrame);
       evalBind(Tmp, Init, Pred, FieldLoc, InitVal, /*isInit=*/true, &PP);
     }
   } else {
@@ -492,6 +493,7 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
 
   // Construct PostInitializer nodes whether the state changed or not,
   // so that the diagnostics don't get confused.
+  PostInitializer PP(BMI, FieldLoc.getAsRegion(), stackFrame);
   ExplodedNodeSet Dst;
   NodeBuilder Bldr(Tmp, Dst, *currBldrCtx);
   for (ExplodedNodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I != E; ++I) {
