@@ -140,9 +140,11 @@ def Todo       : BlockCommand<"todo">;
 def Version    : BlockCommand<"version">;
 def Warning    : BlockCommand<"warning">;
 // HeaderDoc commands
+def Abstract      : BlockCommand<"abstract">;
 def ClassDesign   : RecordLikeDetailCommand<"classdesign">;
 def CoClass       : RecordLikeDetailCommand<"coclass">;
 def Dependency    : RecordLikeDetailCommand<"dependency">;
+def Discussion    : BlockCommand<"discussion">;
 def Helper        : RecordLikeDetailCommand<"helper">;
 def HelperClass   : RecordLikeDetailCommand<"helperclass">;
 def Helps         : RecordLikeDetailCommand<"helps">;
@@ -172,6 +174,9 @@ defm Msc : VerbatimBlockCommand<"msc", "endmsc">;
 def  FDollar  : VerbatimBlockCommand<"f$">; // Inline LaTeX formula
 defm FBracket : VerbatimBlockCommand<"f[", "f]">; // Displayed LaTeX formula
 defm FBrace   : VerbatimBlockCommand<"f{", "f}">; // LaTeX environment
+
+// HeaderDoc commands
+defm Textblock    : VerbatimBlockCommand<"textblock", "/textblock">;
 
 //===----------------------------------------------------------------------===//
 // VerbatimLineCommand

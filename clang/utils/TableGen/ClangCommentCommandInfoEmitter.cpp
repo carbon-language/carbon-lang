@@ -97,6 +97,9 @@ static std::string MangleName(StringRef Str) {
     case '$':
       Mangled += "dollar";
       break;
+    case '/':
+      Mangled += "slash";
+      break;
     }
   }
   return Mangled;
