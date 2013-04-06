@@ -74,6 +74,78 @@ static bool CC_Sparc_Assign_f64(unsigned &ValNo, MVT &ValVT,
   return true;
 }
 
+// Allocate a full-sized argument for the 64-bit ABI.
+static bool CC_Sparc64_Full(unsigned &ValNo, MVT &ValVT,
+                            MVT &LocVT, CCValAssign::LocInfo &LocInfo,
+                            ISD::ArgFlagsTy &ArgFlags, CCState &State) {
+  assert((LocVT == MVT::f32 || LocVT.getSizeInBits() == 64) &&
+         "Can't handle non-64 bits locations");
+
+  // Stack space is allocated for all arguments starting from [%fp+BIAS+128].
+  unsigned Offset = State.AllocateStack(8, 8);
+  unsigned Reg = 0;
+
+  if (LocVT == MVT::i64 && Offset < 6*8)
+    // Promote integers to %i0-%i5.
+    Reg = SP::I0 + Offset/8;
+  else if (LocVT == MVT::f64 && Offset < 16*8)
+    // Promote doubles to %d0-%d30. (Which LLVM calls D0-D15).
+    Reg = SP::D0 + Offset/8;
+  else if (LocVT == MVT::f32 && Offset < 16*8)
+    // Promote floats to %f1, %f3, ...
+    Reg = SP::F1 + Offset/4;
+
+  // Promote to register when possible, otherwise use the stack slot.
+  if (Reg) {
+    State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
+    return true;
+  }
+
+  // This argument goes on the stack in an 8-byte slot.
+  // When passing floats, LocVT is smaller than 8 bytes. Adjust the offset to
+  // the right-aligned float. The first 4 bytes of the stack slot are undefined.
+  if (LocVT == MVT::f32)
+    Offset += 4;
+
+  State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
+  return true;
+}
+
+// Allocate a half-sized argument for the 64-bit ABI.
+//
+// This is used when passing { float, int } structs by value in registers.
+static bool CC_Sparc64_Half(unsigned &ValNo, MVT &ValVT,
+                            MVT &LocVT, CCValAssign::LocInfo &LocInfo,
+                            ISD::ArgFlagsTy &ArgFlags, CCState &State) {
+  assert(LocVT.getSizeInBits() == 32 && "Can't handle non-32 bits locations");
+  unsigned Offset = State.AllocateStack(4, 4);
+
+  if (LocVT == MVT::f32 && Offset < 16*8) {
+    // Promote floats to %f0-%f31.
+    State.addLoc(CCValAssign::getReg(ValNo, ValVT, SP::F0 + Offset/4,
+                                     LocVT, LocInfo));
+    return true;
+  }
+
+  if (LocVT == MVT::i32 && Offset < 6*8) {
+    // Promote integers to %i0-%i5, using half the register.
+    unsigned Reg = SP::I0 + Offset/8;
+    LocVT = MVT::i64;
+    LocInfo = CCValAssign::AExt;
+
+    // Set the Custom bit if this i32 goes in the high bits of a register.
+    if (Offset % 8 == 0)
+      State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg,
+                                             LocVT, LocInfo));
+    else
+      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
+    return true;
+  }
+
+  State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
+  return true;
+}
+
 #include "SparcGenCallingConv.inc"
 
 SDValue
@@ -93,8 +165,7 @@ SparcTargetLowering::LowerReturn(SDValue Chain,
                  DAG.getTarget(), RVLocs, *DAG.getContext());
 
   // Analize return values.
-  CCInfo.AnalyzeReturn(Outs, Subtarget->is64Bit() ?
-                             RetCC_Sparc64 : RetCC_Sparc32);
+  CCInfo.AnalyzeReturn(Outs, Subtarget->is64Bit() ? CC_Sparc64 : RetCC_Sparc32);
 
   SDValue Flag;
   SmallVector<SDValue, 4> RetOps(1, Chain);
@@ -384,6 +455,11 @@ LowerFormalArguments_64(SDValue Chain,
                                    getRegClassFor(VA.getLocVT()));
       SDValue Arg = DAG.getCopyFromReg(Chain, DL, VReg, VA.getLocVT());
 
+      // Get the high bits for i32 struct elements.
+      if (VA.getValVT() == MVT::i32 && VA.needsCustom())
+        Arg = DAG.getNode(ISD::SRL, DL, VA.getLocVT(), Arg,
+                          DAG.getConstant(32, MVT::i32));
+
       // The caller promoted the argument, so insert an Assert?ext SDNode so we
       // won't promote the value again in this function.
       switch (VA.getLocInfo()) {
@@ -409,6 +485,20 @@ LowerFormalArguments_64(SDValue Chain,
 
     // The registers are exhausted. This argument was passed on the stack.
     assert(VA.isMemLoc());
+    // The CC_Sparc64_Full/Half functions compute stack offsets relative to the
+    // beginning of the arguments area at %fp+BIAS+128.
+    unsigned Offset = VA.getLocMemOffset() + 128;
+    unsigned ValSize = VA.getValVT().getSizeInBits() / 8;
+    // Adjust offset for extended arguments, SPARC is big-endian.
+    // The caller will have written the full slot with extended bytes, but we
+    // prefer our own extending loads.
+    if (VA.isExtInLoc())
+      Offset += 8 - ValSize;
+    int FI = MF.getFrameInfo()->CreateFixedObject(ValSize, Offset, true);
+    InVals.push_back(DAG.getLoad(VA.getValVT(), DL, Chain,
+                                 DAG.getFrameIndex(FI, getPointerTy()),
+                                 MachinePointerInfo::getFixedStack(FI),
+                                 false, false, false, 0));
   }
   return Chain;
 }
