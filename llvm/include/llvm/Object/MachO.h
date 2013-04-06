@@ -85,6 +85,34 @@ namespace MachOFormat {
     support::ulittle32_t StringTableOffset;
     support::ulittle32_t StringTableSize;
   };
+
+  struct SegmentLoadCommand {
+    support::ulittle32_t Type;
+    support::ulittle32_t Size;
+    char Name[16];
+    support::ulittle32_t VMAddress;
+    support::ulittle32_t VMSize;
+    support::ulittle32_t FileOffset;
+    support::ulittle32_t FileSize;
+    support::ulittle32_t MaxVMProtection;
+    support::ulittle32_t InitialVMProtection;
+    support::ulittle32_t NumSections;
+    support::ulittle32_t Flags;
+  };
+
+  struct Segment64LoadCommand {
+    support::ulittle32_t Type;
+    support::ulittle32_t Size;
+    char Name[16];
+    support::ulittle64_t VMAddress;
+    support::ulittle64_t VMSize;
+    support::ulittle64_t FileOffset;
+    support::ulittle64_t FileSize;
+    support::ulittle32_t MaxVMProtection;
+    support::ulittle32_t InitialVMProtection;
+    support::ulittle32_t NumSections;
+    support::ulittle32_t Flags;
+  };
 }
 
 typedef MachOObject::LoadCommandInfo LoadCommandInfo;
@@ -204,6 +232,10 @@ private:
   const MachOFormat::RelocationEntry *getRelocation(DataRefImpl Rel) const;
   const MachOFormat::SymtabLoadCommand *
     getSymtabLoadCommand(LoadCommandInfo LCI) const;
+  const MachOFormat::SegmentLoadCommand *
+    getSegmentLoadCommand(LoadCommandInfo LCI) const;
+  const MachOFormat::Segment64LoadCommand *
+    getSegment64LoadCommand(LoadCommandInfo LCI) const;
   std::size_t getSectionIndex(DataRefImpl Sec) const;
 
   void printRelocationTargetName(const MachOFormat::RelocationEntry *RE,

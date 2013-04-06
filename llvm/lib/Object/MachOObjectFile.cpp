@@ -68,6 +68,21 @@ MachOObjectFile::getSymtabLoadCommand(LoadCommandInfo LCI) const {
   return reinterpret_cast<const MachOFormat::SymtabLoadCommand*>(Data.data());
 }
 
+const MachOFormat::SegmentLoadCommand *
+MachOObjectFile::getSegmentLoadCommand(LoadCommandInfo LCI) const {
+  StringRef Data = MachOObj->getData(LCI.Offset,
+                                     sizeof(MachOFormat::SegmentLoadCommand));
+  return reinterpret_cast<const MachOFormat::SegmentLoadCommand*>(Data.data());
+}
+
+const MachOFormat::Segment64LoadCommand *
+MachOObjectFile::getSegment64LoadCommand(LoadCommandInfo LCI) const {
+  StringRef Data = MachOObj->getData(LCI.Offset,
+                                     sizeof(MachOFormat::Segment64LoadCommand));
+  return
+    reinterpret_cast<const MachOFormat::Segment64LoadCommand*>(Data.data());
+}
+
 void MachOObjectFile::moveToNextSymbol(DataRefImpl &DRI) const {
   uint32_t LoadCommandCount = MachOObj->getHeader().NumLoadCommands;
   while (DRI.d.a < LoadCommandCount) {
@@ -436,13 +451,13 @@ void MachOObjectFile::moveToNextSection(DataRefImpl &DRI) const {
   while (DRI.d.a < LoadCommandCount) {
     LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
     if (LCI.Command.Type == macho::LCT_Segment) {
-      InMemoryStruct<macho::SegmentLoadCommand> SegmentLoadCmd;
-      MachOObj->ReadSegmentLoadCommand(LCI, SegmentLoadCmd);
+      const MachOFormat::SegmentLoadCommand *SegmentLoadCmd =
+        getSegmentLoadCommand(LCI);
       if (DRI.d.b < SegmentLoadCmd->NumSections)
         return;
     } else if (LCI.Command.Type == macho::LCT_Segment64) {
-      InMemoryStruct<macho::Segment64LoadCommand> Segment64LoadCmd;
-      MachOObj->ReadSegment64LoadCommand(LCI, Segment64LoadCmd);
+      const MachOFormat::Segment64LoadCommand *Segment64LoadCmd =
+        getSegment64LoadCommand(LCI);
       if (DRI.d.b < Segment64LoadCmd->NumSections)
         return;
     }
