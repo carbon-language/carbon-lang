@@ -186,6 +186,7 @@ void CodeGenModule::Release() {
   EmitCtorList(GlobalCtors, "llvm.global_ctors");
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitGlobalAnnotations();
+  EmitStaticExternCAliases();
   EmitLLVMUsed();
 
   if (CodeGenOpts.ModulesAutolink) {
@@ -1707,6 +1708,39 @@ unsigned CodeGenModule::GetGlobalVarAddressSpace(const VarDecl *D,
   return AddrSpace;
 }
 
+template<typename SomeDecl>
+void CodeGenModule::MaybeHandleStaticInExternC(const SomeDecl *D,
+                                               llvm::GlobalValue *GV) {
+  if (!getLangOpts().CPlusPlus)
+    return;
+
+  // Must have 'used' attribute, or else inline assembly can't rely on
+  // the name existing.
+  if (!D->template hasAttr<UsedAttr>())
+    return;
+
+  // Must have internal linkage and an ordinary name.
+  if (!D->getIdentifier() || D->getLinkage() != InternalLinkage)
+    return;
+
+  // Must be in an extern "C" context. Entities declared directly within
+  // a record are not extern "C" even if the record is in such a context.
+  const DeclContext *DC = D->getFirstDeclaration()->getDeclContext();
+  if (DC->isRecord() || !DC->isExternCContext())
+    return;
+
+  // OK, this is an internal linkage entity inside an extern "C" linkage
+  // specification. Make a note of that so we can give it the "expected"
+  // mangled name if nothing else is using that name.
+  StaticExternCMap::iterator I =
+      StaticExternCValues.insert(std::make_pair(D->getIdentifier(), GV)).first;
+
+  // If we have multiple internal linkage entities with the same name
+  // in extern "C" regions, none of them gets that name.
+  if (I->second != GV)
+    I->second = 0;
+}
+
 void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   llvm::Constant *Init = 0;
   QualType ASTTy = D->getType();
@@ -1804,6 +1838,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     // Erase the old global, since it is no longer used.
     cast<llvm::GlobalValue>(Entry)->eraseFromParent();
   }
+
+  MaybeHandleStaticInExternC(D, GV);
 
   if (D->hasAttr<AnnotateAttr>())
     AddGlobalAnnotations(D, GV);
@@ -2082,6 +2118,8 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
 
   // FIXME: this is redundant with part of SetFunctionDefinitionAttributes
   setGlobalVisibility(Fn, D);
+
+  MaybeHandleStaticInExternC(D, Fn);
 
   CodeGenFunction(*this).GenerateCode(D, Fn, FI);
 
@@ -2901,6 +2939,21 @@ static void EmitGlobalDeclMetadata(CodeGenModule &CGM,
     GetPointerConstant(CGM.getLLVMContext(), D.getDecl())
   };
   GlobalMetadata->addOperand(llvm::MDNode::get(CGM.getLLVMContext(), Ops));
+}
+
+/// For each function which is declared within an extern "C" region and marked
+/// as 'used', but has internal linkage, create an alias from the unmangled
+/// name to the mangled name if possible. People expect to be able to refer
+/// to such functions with an unmangled name from inline assembly within the
+/// same translation unit.
+void CodeGenModule::EmitStaticExternCAliases() {
+  for (StaticExternCMap::iterator I = StaticExternCValues.begin(),
+                                  E = StaticExternCValues.end();
+       I != E; ++I)
+    if (I->second && !getModule().getNamedValue(I->first->getName()))
+      AddUsedGlobal(
+        new llvm::GlobalAlias(I->second->getType(), I->second->getLinkage(),
+                              I->first->getName(), I->second, &getModule()));
 }
 
 /// Emits metadata nodes associating all the global values in the

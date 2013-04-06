@@ -305,6 +305,12 @@ class CodeGenModule : public CodeGenTypeCache {
   llvm::DenseMap<QualType, llvm::Constant *> AtomicSetterHelperFnMap;
   llvm::DenseMap<QualType, llvm::Constant *> AtomicGetterHelperFnMap;
 
+  /// Map used to track internal linkage functions declared within
+  /// extern "C" regions.
+  typedef llvm::DenseMap<IdentifierInfo *,
+                         llvm::GlobalValue *> StaticExternCMap;
+  StaticExternCMap StaticExternCValues;
+
   /// CXXGlobalInits - Global variables with initializers that need to run
   /// before main.
   std::vector<llvm::Constant*> CXXGlobalInits;
@@ -736,6 +742,12 @@ public:
   // variable has been instantiated.
   void HandleCXXStaticMemberVarInstantiation(VarDecl *VD);
 
+  /// \brief If the declaration has internal linkage but is inside an
+  /// extern "C" linkage specification, prepare to emit an alias for it
+  /// to the expected name.
+  template<typename SomeDecl>
+  void MaybeHandleStaticInExternC(const SomeDecl *D, llvm::GlobalValue *GV);
+
   /// AddUsedGlobal - Add a global which should be forced to be
   /// present in the object file; these are emitted to the llvm.used
   /// metadata global.
@@ -1047,6 +1059,10 @@ private:
 
   /// \brief Emit the link options introduced by imported modules.
   void EmitModuleLinkOptions();
+
+  /// \brief Emit aliases for internal-linkage declarations inside "C" language
+  /// linkage specifications, giving them the "expected" name where possible.
+  void EmitStaticExternCAliases();
 
   void EmitDeclMetadata();
 
