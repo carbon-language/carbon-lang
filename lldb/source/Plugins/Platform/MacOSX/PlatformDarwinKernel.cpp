@@ -172,7 +172,7 @@ PlatformDarwinKernel::GetDescriptionStatic()
 static PropertyDefinition
 g_properties[] =
 {
-    { "search-locally-for-kexts" , OptionValue::eTypeBoolean,      true, true, NULL, NULL, "Automatically search for kexts on the local system when doing kernel debugging." },
+    { "search-locally-for-kexts" , OptionValue::eTypeBoolean,      true, false, NULL, NULL, "Automatically search for kexts on the local system when doing kernel debugging." },
     { "kext-directories",          OptionValue::eTypeFileSpecList, false, 0,   NULL, NULL, "Directories/KDKs to search for kexts in when starting a kernel debug session." },
     {  NULL        , OptionValue::eTypeInvalid, false, 0  , NULL, NULL, NULL  }
 };
