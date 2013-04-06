@@ -16,7 +16,7 @@ void testMallocDoubleFree() {
 
 void testMallocLeak() {
   int *p = (int *)malloc(sizeof(int));
-} // expected-warning{{Memory is never released; potential leak of memory pointed to by 'p'}}
+} // expected-warning{{Potential leak of memory pointed to by 'p'}}
 
 void testMallocUseAfterFree() {
   int *p = (int *)malloc(sizeof(int));
@@ -55,7 +55,7 @@ void testNewLeak() {
   int *p = new int;
 }
 #ifdef LEAKS
-// expected-warning@-2 {{Memory is never released; potential leak of memory pointed to by 'p'}}
+// expected-warning@-2 {{Potential leak of memory pointed to by 'p'}}
 #endif
 
 void testNewUseAfterFree() {

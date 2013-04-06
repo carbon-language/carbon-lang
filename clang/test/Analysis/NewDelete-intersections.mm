@@ -42,7 +42,7 @@ void testFreeOpNew() {
   free(p);
 }
 #ifdef LEAKS
-// expected-warning@-2 {{Memory is never released; potential leak}}
+// expected-warning@-2 {{Potential leak of memory pointed to by 'p'}}
 #endif
 
 void testFreeNewExpr() {
@@ -50,14 +50,14 @@ void testFreeNewExpr() {
   free(p);
 }
 #ifdef LEAKS
-// expected-warning@-2 {{Memory is never released; potential leak}}
+// expected-warning@-2 {{Potential leak of memory pointed to by 'p'}}
 #endif
 
 void testObjcFreeNewed() {
   int *p = new int;
   NSData *nsdata = [NSData dataWithBytesNoCopy:p length:sizeof(int) freeWhenDone:1];
 #ifdef LEAKS
-  // expected-warning@-2 {{Memory is never released; potential leak}}
+  // expected-warning@-2 {{Potential leak of memory pointed to by 'p'}}
 #endif
 }
 

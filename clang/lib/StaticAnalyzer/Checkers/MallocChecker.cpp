@@ -1585,11 +1585,12 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
 
   SmallString<200> buf;
   llvm::raw_svector_ostream os(buf);
-  os << "Memory is never released; potential leak";
   if (Region && Region->canPrintPretty()) {
-    os << " of memory pointed to by '";
+    os << "Potential leak of memory pointed to by '";
     Region->printPretty(os);
     os << '\'';
+  } else {
+    os << "Potential memory leak";
   }
 
   BugReport *R = new BugReport(*BT_Leak, os.str(), N, 

@@ -126,7 +126,7 @@ void testNewDeleteNoWarn() {
 void testDeleteMallocked() {
   int *x = (int *)malloc(sizeof(int));
   delete x; // FIXME: Shoud detect pointer escape and keep silent after 'delete' is modeled properly.
-} // expected-warning{{Memory is never released; potential leak}}
+} // expected-warning{{Potential leak of memory pointed to by 'x'}}
 
 void testDeleteOpAfterFree() {
   int *p = (int *)malloc(sizeof(int));

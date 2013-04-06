@@ -27,7 +27,7 @@ void testNewMethod() {
   C *c3 = ::new C;
 }
 #ifdef LEAKS
-// expected-warning@-2{{Memory is never released; potential leak}}
+// expected-warning@-2{{Potential leak of memory pointed to by 'c3'}}
 #endif
 
 void testOpNewArray() {
@@ -38,7 +38,7 @@ void testNewExprArray() {
   int *p = new int[0];
 }
 #ifdef LEAKS
-// expected-warning@-2{{Memory is never released; potential leak}}
+// expected-warning@-2{{Potential leak of memory pointed to by 'p'}}
 #endif
 
 
@@ -51,7 +51,7 @@ void testNewExpr() {
   int *p = new int;
 }
 #ifdef LEAKS
-// expected-warning@-2{{Memory is never released; potential leak}}
+// expected-warning@-2{{Potential leak of memory pointed to by 'p'}}
 #endif
 
 
@@ -60,14 +60,14 @@ void testOpNewNoThrow() {
   void *p = operator new(0, std::nothrow);
 }
 #ifdef LEAKS
-// expected-warning@-2{{Memory is never released; potential leak}}
+// expected-warning@-2{{Potential leak of memory pointed to by 'p'}}
 #endif
 
 void testNewExprNoThrow() {
   int *p = new(std::nothrow) int;
 }
 #ifdef LEAKS
-// expected-warning@-2{{Memory is never released; potential leak}}
+// expected-warning@-2{{Potential leak of memory pointed to by 'p'}}
 #endif
 
 //----- Custom placement operators

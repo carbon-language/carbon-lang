@@ -34,7 +34,7 @@ id constant_string() {
 }
 
 id dynamic_string() {
-    return @(strdup("boxed dynamic string")); // expected-warning{{Memory is never released; potential leak}}
+    return @(strdup("boxed dynamic string")); // expected-warning{{Potential memory leak}}
 }
 
 id const_char_pointer(int *x) {

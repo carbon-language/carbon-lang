@@ -15,28 +15,28 @@ void testGlobalOpNew() {
   void *p = operator new(0);
 }
 #ifdef LEAKS
-// expected-warning@-2{{Memory is never released; potential leak}}
+// expected-warning@-2{{Potential leak of memory pointed to by 'p'}}
 #endif
 
 void testGlobalOpNewArray() {
   void *p = operator new[](0);
 }
 #ifdef LEAKS
-// expected-warning@-2{{Memory is never released; potential leak}}
+// expected-warning@-2{{Potential leak of memory pointed to by 'p'}}
 #endif
 
 void testGlobalNewExpr() {
   int *p = new int;
 }
 #ifdef LEAKS
-// expected-warning@-2{{Memory is never released; potential leak}}
+// expected-warning@-2{{Potential leak of memory pointed to by 'p'}}
 #endif
 
 void testGlobalNewExprArray() {
   int *p = new int[0];
 }
 #ifdef LEAKS
-// expected-warning@-2{{Memory is never released; potential leak}}
+// expected-warning@-2{{Potential leak of memory pointed to by 'p'}}
 #endif
 
 //----- Standard nothrow placement operators
@@ -44,14 +44,14 @@ void testGlobalNoThrowPlacementOpNewBeforeOverload() {
   void *p = operator new(0, std::nothrow);
 }
 #ifdef LEAKS
-// expected-warning@-2{{Memory is never released; potential leak}}
+// expected-warning@-2{{Potential leak of memory pointed to by 'p'}}
 #endif
 
 void testGlobalNoThrowPlacementExprNewBeforeOverload() {
   int *p = new(std::nothrow) int;
 }
 #ifdef LEAKS
-// expected-warning@-2{{Memory is never released; potential leak}}
+// expected-warning@-2{{Potential leak of memory pointed to by 'p'}}
 #endif
 
 

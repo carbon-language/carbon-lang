@@ -12,4 +12,4 @@ void free(void *);
 void testMismatchedDeallocator() {
   int *p = (int *)malloc(sizeof(int));
   delete p;
-} // expected-warning{{Memory is never released; potential leak of memory pointed to by 'p'}}
+} // expected-warning{{Potential leak of memory pointed to by 'p'}}

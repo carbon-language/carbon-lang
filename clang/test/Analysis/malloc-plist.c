@@ -378,12 +378,12 @@ void use_function_with_leak7() {
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;p&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;p&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;p&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;p&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;p&apos;</string>
+// CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;p&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
@@ -540,12 +540,12 @@ void use_function_with_leak7() {
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;A&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;A&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;A&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;A&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;A&apos;</string>
+// CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;A&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
@@ -925,12 +925,12 @@ void use_function_with_leak7() {
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
@@ -1324,12 +1324,12 @@ void use_function_with_leak7() {
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
@@ -2403,12 +2403,12 @@ void use_function_with_leak7() {
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
@@ -2671,12 +2671,12 @@ void use_function_with_leak7() {
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;v&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;v&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;v&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;v&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;v&apos;</string>
+// CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;v&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
@@ -2833,12 +2833,12 @@ void use_function_with_leak7() {
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;m&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;m&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;m&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;m&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;m&apos;</string>
+// CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;m&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
@@ -3038,12 +3038,12 @@ void use_function_with_leak7() {
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>depth</key><integer>1</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
@@ -3243,12 +3243,12 @@ void use_function_with_leak7() {
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>depth</key><integer>1</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
@@ -3545,12 +3545,12 @@ void use_function_with_leak7() {
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>depth</key><integer>1</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
@@ -3847,12 +3847,12 @@ void use_function_with_leak7() {
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>depth</key><integer>1</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
@@ -4052,12 +4052,12 @@ void use_function_with_leak7() {
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>depth</key><integer>1</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
@@ -4257,12 +4257,12 @@ void use_function_with_leak7() {
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>depth</key><integer>1</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:      <string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
@@ -4491,12 +4491,12 @@ void use_function_with_leak7() {
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak</string>
+// CHECK-NEXT:      <string>Potential memory leak</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Memory is never released; potential leak</string>
+// CHECK-NEXT:      <string>Potential memory leak</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Memory is never released; potential leak</string>
+// CHECK-NEXT:    <key>description</key><string>Potential memory leak</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
