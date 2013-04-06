@@ -98,8 +98,8 @@ MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI) const {
   return reinterpret_cast<const MachOFormat::SymbolTableEntry*>(Data.data());
 }
 
-void MachOObjectFile::getSymbol64TableEntry(DataRefImpl DRI,
-    InMemoryStruct<macho::Symbol64TableEntry> &Res) const {
+const MachOFormat::Symbol64TableEntry*
+MachOObjectFile::getSymbol64TableEntry(DataRefImpl DRI) const {
   InMemoryStruct<macho::SymtabLoadCommand> SymtabLoadCmd;
   LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
   MachOObj->ReadSymtabLoadCommand(LCI, SymtabLoadCmd);
@@ -109,10 +109,14 @@ void MachOObjectFile::getSymbol64TableEntry(DataRefImpl DRI,
     RegisteredStringTable = DRI.d.a;
   }
 
-  MachOObj->ReadSymbol64TableEntry(SymtabLoadCmd->SymbolTableOffset, DRI.d.b,
-                                   Res);
+  uint64_t SymbolTableOffset = SymtabLoadCmd->SymbolTableOffset;
+  unsigned Index = DRI.d.b;
+  uint64_t Offset = (SymbolTableOffset +
+                     Index * sizeof(macho::Symbol64TableEntry));
+  StringRef Data = MachOObj->getData(Offset,
+                                     sizeof(MachOFormat::Symbol64TableEntry));
+  return reinterpret_cast<const MachOFormat::Symbol64TableEntry*>(Data.data());
 }
-
 
 error_code MachOObjectFile::getSymbolNext(DataRefImpl DRI,
                                           SymbolRef &Result) const {
@@ -125,8 +129,7 @@ error_code MachOObjectFile::getSymbolNext(DataRefImpl DRI,
 error_code MachOObjectFile::getSymbolName(DataRefImpl DRI,
                                           StringRef &Result) const {
   if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Symbol64TableEntry> Entry;
-    getSymbol64TableEntry(DRI, Entry);
+    const MachOFormat::Symbol64TableEntry *Entry = getSymbol64TableEntry(DRI);
     Result = MachOObj->getStringAtIndex(Entry->StringIndex);
   } else {
     const MachOFormat::SymbolTableEntry *Entry = getSymbolTableEntry(DRI);
@@ -138,8 +141,7 @@ error_code MachOObjectFile::getSymbolName(DataRefImpl DRI,
 error_code MachOObjectFile::getSymbolFileOffset(DataRefImpl DRI,
                                                 uint64_t &Result) const {
   if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Symbol64TableEntry> Entry;
-    getSymbol64TableEntry(DRI, Entry);
+    const MachOFormat::Symbol64TableEntry *Entry = getSymbol64TableEntry(DRI);
     Result = Entry->Value;
     if (Entry->SectionIndex) {
       const MachOFormat::Section64 *Section =
@@ -162,8 +164,7 @@ error_code MachOObjectFile::getSymbolFileOffset(DataRefImpl DRI,
 error_code MachOObjectFile::getSymbolAddress(DataRefImpl DRI,
                                              uint64_t &Result) const {
   if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Symbol64TableEntry> Entry;
-    getSymbol64TableEntry(DRI, Entry);
+    const MachOFormat::Symbol64TableEntry *Entry = getSymbol64TableEntry(DRI);
     Result = Entry->Value;
   } else {
     const MachOFormat::SymbolTableEntry *Entry = getSymbolTableEntry(DRI);
@@ -179,8 +180,7 @@ error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
   uint64_t EndOffset = 0;
   uint8_t SectionIndex;
   if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Symbol64TableEntry> Entry;
-    getSymbol64TableEntry(DRI, Entry);
+    const MachOFormat::Symbol64TableEntry *Entry = getSymbol64TableEntry(DRI);
     BeginOffset = Entry->Value;
     SectionIndex = Entry->SectionIndex;
     if (!SectionIndex) {
@@ -199,7 +199,7 @@ error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
     while (Command == DRI.d.a) {
       moveToNextSymbol(DRI);
       if (DRI.d.a < LoadCommandCount) {
-        getSymbol64TableEntry(DRI, Entry);
+        Entry = getSymbol64TableEntry(DRI);
         if (Entry->SectionIndex == SectionIndex && Entry->Value > BeginOffset)
           if (!EndOffset || Entry->Value < EndOffset)
             EndOffset = Entry->Value;
@@ -248,8 +248,7 @@ error_code MachOObjectFile::getSymbolNMTypeChar(DataRefImpl DRI,
                                                 char &Result) const {
   uint8_t Type, Flags;
   if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Symbol64TableEntry> Entry;
-    getSymbol64TableEntry(DRI, Entry);
+    const MachOFormat::Symbol64TableEntry *Entry = getSymbol64TableEntry(DRI);
     Type = Entry->Type;
     Flags = Entry->Flags;
   } else {
@@ -283,8 +282,7 @@ error_code MachOObjectFile::getSymbolFlags(DataRefImpl DRI,
   uint16_t MachOFlags;
   uint8_t MachOType;
   if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Symbol64TableEntry> Entry;
-    getSymbol64TableEntry(DRI, Entry);
+    const MachOFormat::Symbol64TableEntry *Entry = getSymbol64TableEntry(DRI);
     MachOFlags = Entry->Flags;
     MachOType = Entry->Type;
   } else {
@@ -321,8 +319,7 @@ error_code MachOObjectFile::getSymbolSection(DataRefImpl Symb,
                                              section_iterator &Res) const {
   uint8_t index;
   if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Symbol64TableEntry> Entry;
-    getSymbol64TableEntry(Symb, Entry);
+    const MachOFormat::Symbol64TableEntry *Entry = getSymbol64TableEntry(Symb);
     index = Entry->SectionIndex;
   } else {
     const MachOFormat::SymbolTableEntry *Entry = getSymbolTableEntry(Symb);
@@ -341,8 +338,7 @@ error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
                                           SymbolRef::Type &Res) const {
   uint8_t n_type;
   if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Symbol64TableEntry> Entry;
-    getSymbol64TableEntry(Symb, Entry);
+    const MachOFormat::Symbol64TableEntry *Entry = getSymbol64TableEntry(Symb);
     n_type = Entry->Type;
   } else {
     const MachOFormat::SymbolTableEntry *Entry = getSymbolTableEntry(Symb);
@@ -648,8 +644,7 @@ error_code MachOObjectFile::sectionContainsSymbol(DataRefImpl Sec,
   SectEnd += SectBegin;
 
   if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Symbol64TableEntry> Entry;
-    getSymbol64TableEntry(Symb, Entry);
+    const MachOFormat::Symbol64TableEntry *Entry = getSymbol64TableEntry(Symb);
     uint64_t SymAddr= Entry->Value;
     Result = (SymAddr >= SectBegin) && (SymAddr < SectEnd);
   } else {
