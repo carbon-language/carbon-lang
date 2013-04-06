@@ -310,6 +310,7 @@ class CodeGenModule : public CodeGenTypeCache {
   typedef llvm::DenseMap<IdentifierInfo *,
                          llvm::GlobalValue *> StaticExternCMap;
   StaticExternCMap StaticExternCValues;
+  std::vector<IdentifierInfo*> StaticExternCIdents;
 
   /// CXXGlobalInits - Global variables with initializers that need to run
   /// before main.

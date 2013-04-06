@@ -1732,13 +1732,15 @@ void CodeGenModule::MaybeHandleStaticInExternC(const SomeDecl *D,
   // OK, this is an internal linkage entity inside an extern "C" linkage
   // specification. Make a note of that so we can give it the "expected"
   // mangled name if nothing else is using that name.
-  StaticExternCMap::iterator I =
-      StaticExternCValues.insert(std::make_pair(D->getIdentifier(), GV)).first;
+  std::pair<StaticExternCMap::iterator, bool> R =
+      StaticExternCValues.insert(std::make_pair(D->getIdentifier(), GV));
 
   // If we have multiple internal linkage entities with the same name
   // in extern "C" regions, none of them gets that name.
-  if (I->second != GV)
-    I->second = 0;
+  if (!R.second)
+    R.first->second = 0;
+  else
+    StaticExternCIdents.push_back(D->getIdentifier());
 }
 
 void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
@@ -2947,13 +2949,13 @@ static void EmitGlobalDeclMetadata(CodeGenModule &CGM,
 /// to such functions with an unmangled name from inline assembly within the
 /// same translation unit.
 void CodeGenModule::EmitStaticExternCAliases() {
-  for (StaticExternCMap::iterator I = StaticExternCValues.begin(),
-                                  E = StaticExternCValues.end();
-       I != E; ++I)
-    if (I->second && !getModule().getNamedValue(I->first->getName()))
-      AddUsedGlobal(
-        new llvm::GlobalAlias(I->second->getType(), I->second->getLinkage(),
-                              I->first->getName(), I->second, &getModule()));
+  for (unsigned I = 0, N = StaticExternCIdents.size(); I != N; ++I) {
+    IdentifierInfo *Name = StaticExternCIdents[I];
+    llvm::GlobalValue *Val = StaticExternCValues[Name];
+    if (Val && !getModule().getNamedValue(Name->getName()))
+      AddUsedGlobal(new llvm::GlobalAlias(Val->getType(), Val->getLinkage(),
+                                          Name->getName(), Val, &getModule()));
+  }
 }
 
 /// Emits metadata nodes associating all the global values in the
