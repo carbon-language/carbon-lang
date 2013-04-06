@@ -44,6 +44,10 @@ MachVMMemory::PageSize(task_t task)
             {
                 return vm_info.page_size;
             }
+            else
+            {
+                DNBLogThreadedIf(LOG_TASK, "MachVMMemory::PageSize task_info call failed to get page size, TASK_VM_INFO %d, TASK_VM_INFO_COUNT %d, kern return %d", TASK_VM_INFO, TASK_VM_INFO_COUNT, kr);
+            }
         }
 #endif
         m_err = ::host_page_size( ::mach_host_self(), &m_page_size);
