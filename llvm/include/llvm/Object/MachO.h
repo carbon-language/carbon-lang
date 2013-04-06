@@ -55,6 +55,11 @@ namespace MachOFormat {
     support::ulittle32_t Reserved2;
     support::ulittle32_t Reserved3;
   };
+
+  struct RelocationEntry {
+    support::ulittle32_t Word0;
+    support::ulittle32_t Word1;
+  };
 }
 
 typedef MachOObject::LoadCommandInfo LoadCommandInfo;
@@ -161,11 +166,10 @@ private:
   void moveToNextSymbol(DataRefImpl &DRI) const;
   const MachOFormat::Section *getSection(DataRefImpl DRI) const;
   const MachOFormat::Section64 *getSection64(DataRefImpl DRI) const;
-  void getRelocation(DataRefImpl Rel,
-                     InMemoryStruct<macho::RelocationEntry> &Res) const;
+  const MachOFormat::RelocationEntry *getRelocation(DataRefImpl Rel) const;
   std::size_t getSectionIndex(DataRefImpl Sec) const;
 
-  void printRelocationTargetName(InMemoryStruct<macho::RelocationEntry>& RE,
+  void printRelocationTargetName(const MachOFormat::RelocationEntry *RE,
                                  raw_string_ostream &fmt) const;
 };
 

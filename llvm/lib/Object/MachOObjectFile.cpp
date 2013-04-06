@@ -699,9 +699,8 @@ section_iterator MachOObjectFile::end_sections() const {
 
 /*===-- Relocations -------------------------------------------------------===*/
 
-void MachOObjectFile::
-getRelocation(DataRefImpl Rel,
-              InMemoryStruct<macho::RelocationEntry> &Res) const {
+const MachOFormat::RelocationEntry *
+MachOObjectFile::getRelocation(DataRefImpl Rel) const {
   uint32_t relOffset;
   if (MachOObj->is64Bit()) {
     const MachOFormat::Section64 *Sect = getSection64(Sections[Rel.d.b]);
@@ -710,8 +709,12 @@ getRelocation(DataRefImpl Rel,
     const MachOFormat::Section *Sect = getSection(Sections[Rel.d.b]);
     relOffset = Sect->RelocationTableOffset;
   }
-  MachOObj->ReadRelocationEntry(relOffset, Rel.d.a, Res);
+  uint64_t Offset = relOffset + Rel.d.a * sizeof(MachOFormat::RelocationEntry);
+  StringRef Data =
+    MachOObj->getData(Offset, sizeof(MachOFormat::RelocationEntry));
+  return reinterpret_cast<const MachOFormat::RelocationEntry*>(Data.data());
 }
+
 error_code MachOObjectFile::getRelocationNext(DataRefImpl Rel,
                                               RelocationRef &Res) const {
   ++Rel.d.a;
@@ -728,8 +731,7 @@ error_code MachOObjectFile::getRelocationAddress(DataRefImpl Rel,
     const MachOFormat::Section *Sect = getSection(Sections[Rel.d.b]);
     sectAddress += Sect->Address;
   }
-  InMemoryStruct<macho::RelocationEntry> RE;
-  getRelocation(Rel, RE);
+  const MachOFormat::RelocationEntry *RE = getRelocation(Rel);
 
   unsigned Arch = getArch();
   bool isScattered = (Arch != Triple::x86_64) &&
@@ -745,8 +747,7 @@ error_code MachOObjectFile::getRelocationAddress(DataRefImpl Rel,
 }
 error_code MachOObjectFile::getRelocationOffset(DataRefImpl Rel,
                                                 uint64_t &Res) const {
-  InMemoryStruct<macho::RelocationEntry> RE;
-  getRelocation(Rel, RE);
+  const MachOFormat::RelocationEntry *RE = getRelocation(Rel);
 
   unsigned Arch = getArch();
   bool isScattered = (Arch != Triple::x86_64) &&
@@ -759,8 +760,7 @@ error_code MachOObjectFile::getRelocationOffset(DataRefImpl Rel,
 }
 error_code MachOObjectFile::getRelocationSymbol(DataRefImpl Rel,
                                                 SymbolRef &Res) const {
-  InMemoryStruct<macho::RelocationEntry> RE;
-  getRelocation(Rel, RE);
+  const MachOFormat::RelocationEntry *RE = getRelocation(Rel);
   uint32_t SymbolIdx = RE->Word1 & 0xffffff;
   bool isExtern = (RE->Word1 >> 27) & 1;
 
@@ -779,8 +779,7 @@ error_code MachOObjectFile::getRelocationSymbol(DataRefImpl Rel,
 }
 error_code MachOObjectFile::getRelocationType(DataRefImpl Rel,
                                               uint64_t &Res) const {
-  InMemoryStruct<macho::RelocationEntry> RE;
-  getRelocation(Rel, RE);
+  const MachOFormat::RelocationEntry *RE = getRelocation(Rel);
   Res = RE->Word0;
   Res <<= 32;
   Res |= RE->Word1;
@@ -790,8 +789,7 @@ error_code MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
   // TODO: Support scattered relocations.
   StringRef res;
-  InMemoryStruct<macho::RelocationEntry> RE;
-  getRelocation(Rel, RE);
+  const MachOFormat::RelocationEntry *RE = getRelocation(Rel);
 
   unsigned Arch = getArch();
   bool isScattered = (Arch != Triple::x86_64) &&
@@ -888,8 +886,7 @@ error_code MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
 }
 error_code MachOObjectFile::getRelocationAdditionalInfo(DataRefImpl Rel,
                                                         int64_t &Res) const {
-  InMemoryStruct<macho::RelocationEntry> RE;
-  getRelocation(Rel, RE);
+  const MachOFormat::RelocationEntry *RE = getRelocation(Rel);
   bool isExtern = (RE->Word1 >> 27) & 1;
   Res = 0;
   if (!isExtern) {
@@ -923,7 +920,7 @@ void advanceTo(T &it, size_t Val) {
 }
 
 void MachOObjectFile::printRelocationTargetName(
-                                     InMemoryStruct<macho::RelocationEntry>& RE,
+                                     const MachOFormat::RelocationEntry *RE,
                                      raw_string_ostream &fmt) const {
   unsigned Arch = getArch();
   bool isScattered = (Arch != Triple::x86_64) &&
@@ -994,8 +991,7 @@ void MachOObjectFile::printRelocationTargetName(
 
 error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
-  InMemoryStruct<macho::RelocationEntry> RE;
-  getRelocation(Rel, RE);
+  const MachOFormat::RelocationEntry *RE = getRelocation(Rel);
 
   unsigned Arch = getArch();
   bool isScattered = (Arch != Triple::x86_64) &&
@@ -1032,10 +1028,9 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
         break;
       }
       case macho::RIT_X86_64_Subtractor: { // X86_64_RELOC_SUBTRACTOR
-        InMemoryStruct<macho::RelocationEntry> RENext;
         DataRefImpl RelNext = Rel;
         RelNext.d.a++;
-        getRelocation(RelNext, RENext);
+        const MachOFormat::RelocationEntry *RENext = getRelocation(RelNext);
 
         // X86_64_SUBTRACTOR must be followed by a relocation of type
         // X86_64_RELOC_UNSIGNED.
@@ -1080,10 +1075,9 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
       case macho::RIT_Pair: // GENERIC_RELOC_PAIR - prints no info
         return object_error::success;
       case macho::RIT_Difference: { // GENERIC_RELOC_SECTDIFF
-        InMemoryStruct<macho::RelocationEntry> RENext;
         DataRefImpl RelNext = Rel;
         RelNext.d.a++;
-        getRelocation(RelNext, RENext);
+        const MachOFormat::RelocationEntry *RENext = getRelocation(RelNext);
 
         // X86 sect diff's must be followed by a relocation of type
         // GENERIC_RELOC_PAIR.
@@ -1110,10 +1104,9 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
       // handled in the generic code.
       switch (Type) {
         case macho::RIT_Generic_LocalDifference:{// GENERIC_RELOC_LOCAL_SECTDIFF
-          InMemoryStruct<macho::RelocationEntry> RENext;
           DataRefImpl RelNext = Rel;
           RelNext.d.a++;
-          getRelocation(RelNext, RENext);
+          const MachOFormat::RelocationEntry *RENext = getRelocation(RelNext);
 
           // X86 sect diff's must be followed by a relocation of type
           // GENERIC_RELOC_PAIR.
@@ -1160,10 +1153,9 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
             fmt << ":lower16:(";
           printRelocationTargetName(RE, fmt);
 
-          InMemoryStruct<macho::RelocationEntry> RENext;
           DataRefImpl RelNext = Rel;
           RelNext.d.a++;
-          getRelocation(RelNext, RENext);
+          const MachOFormat::RelocationEntry *RENext = getRelocation(RelNext);
 
           // ARM half relocs must be followed by a relocation of type
           // ARM_RELOC_PAIR.
@@ -1209,8 +1201,7 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
 
 error_code MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
                                                 bool &Result) const {
-  InMemoryStruct<macho::RelocationEntry> RE;
-  getRelocation(Rel, RE);
+  const MachOFormat::RelocationEntry *RE = getRelocation(Rel);
 
   unsigned Arch = getArch();
   bool isScattered = (Arch != Triple::x86_64) &&
@@ -1233,8 +1224,7 @@ error_code MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
     if (Type == macho::RIT_X86_64_Unsigned && Rel.d.a > 0) {
       DataRefImpl RelPrev = Rel;
       RelPrev.d.a--;
-      InMemoryStruct<macho::RelocationEntry> REPrev;
-      getRelocation(RelPrev, REPrev);
+      const MachOFormat::RelocationEntry *REPrev = getRelocation(RelPrev);
 
       unsigned PrevType = (REPrev->Word1 >> 28) & 0xF;
 
