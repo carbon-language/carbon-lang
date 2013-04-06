@@ -68,6 +68,20 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
 "`CMakeFiles'. Please delete them.")
 endif()
 
+list (APPEND CMAKE_MODULE_PATH "${LLD_SOURCE_DIR}/cmake/modules")
+
+option(LLD_USE_VTUNE
+       "Enable VTune user task tracking."
+       OFF)
+if (LLD_USE_VTUNE)
+  find_package(VTune)
+  if (VTUNE_FOUND)
+    include_directories(${VTune_INCLUDE_DIRS})
+    list(APPEND LLVM_COMMON_LIBS ${VTune_LIBRARIES})
+    add_definitions(-DLLD_HAS_VTUNE)
+  endif()
+endif()
+
 # lld requires c++11 to build. Make sure that we have a compiler and standard
 # library combination that can do that.
 if (MSVC11)

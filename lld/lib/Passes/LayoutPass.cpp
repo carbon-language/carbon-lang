@@ -11,7 +11,8 @@
 #define DEBUG_TYPE "LayoutPass"
 
 #include "lld/Passes/LayoutPass.h"
-#include "llvm/Support/Debug.h"
+
+#include "lld/Core/Instrumentation.h"
 
 #include "llvm/Support/Debug.h"
 
@@ -133,6 +134,7 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
 ///    targetAtom until the targetAtom has all atoms of size 0, then chain the
 ///    targetAtoms and its tree to the current chain
 void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
+  ScopedTask task(getDefaultDomain(), "LayoutPass::buildFollowOnTable");
   for (auto ai : range) {
     for (const Reference *r : *ai) {
       if (r->kind() == lld::Reference::kindLayoutAfter) {
@@ -250,6 +252,7 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
 ///    if not add the atom to the chain, so that the current atom is part of the
 ///    the chain where the rootAtom is in
 void LayoutPass::buildInGroupTable(MutableFile::DefinedAtomRange &range) {
+  ScopedTask task(getDefaultDomain(), "LayoutPass::buildInGroupTable");
   // This table would convert precededby references to follow on
   // references so that we have only one table
   for (auto ai : range) {
@@ -336,6 +339,7 @@ void LayoutPass::buildInGroupTable(MutableFile::DefinedAtomRange &range) {
 ///    same chain), chain all the atoms that are lead by the targetAtom into
 ///    the current chain
 void LayoutPass::buildPrecededByTable(MutableFile::DefinedAtomRange &range) {
+  ScopedTask task(getDefaultDomain(), "LayoutPass::buildPrecededByTable");
   // This table would convert precededby references to follow on
   // references so that we have only one table
   for (auto ai : range) {
@@ -400,6 +404,7 @@ void LayoutPass::buildPrecededByTable(MutableFile::DefinedAtomRange &range) {
 /// already assigned skip the atom and move to the next. This is the
 /// main map thats used to sort the atoms while comparing two atoms together
 void LayoutPass::buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range) {
+  ScopedTask task(getDefaultDomain(), "LayoutPass::buildOrdinalOverrideMap");
   uint64_t index = 0;
   for (auto ai : range) {
     const DefinedAtom *atom = ai;
