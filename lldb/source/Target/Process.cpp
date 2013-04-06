@@ -2048,7 +2048,9 @@ Process::RemoveOwnerFromBreakpointSite (lldb::user_id_t owner_id, lldb::user_id_
     uint32_t num_owners = bp_site_sp->RemoveOwner (owner_id, owner_loc_id);
     if (num_owners == 0)
     {
-        DisableBreakpointSite (bp_site_sp.get());
+        // Don't try to disable the site if we don't have a live process anymore.
+        if (IsAlive())
+            DisableBreakpointSite (bp_site_sp.get());
         m_breakpoint_site_list.RemoveByAddress(bp_site_sp->GetLoadAddress());
     }
 }
