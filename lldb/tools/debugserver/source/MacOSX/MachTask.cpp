@@ -422,7 +422,7 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
             if (!calculated)
             {
                 calculated = true;
-                host_page_size(mach_host_self(), &pagesize);
+                pagesize = PageSize();
             }
             
             profile_data_stream << "wired:" << vm_stats.wire_count * pagesize << ';';
@@ -1026,4 +1026,10 @@ MachTask::EnumerateMallocFrames (MachMallocEventId event_id,
     if (function_addresses_buffer[*count-1] < vm_page_size)
         *count -= 1;
     return (*count > 0);
+}
+
+nub_size_t
+MachTask::PageSize ()
+{
+    return m_vm_memory.PageSize (m_task);
 }

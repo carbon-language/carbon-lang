@@ -29,10 +29,23 @@ MachVMMemory::~MachVMMemory()
 }
 
 nub_size_t
-MachVMMemory::PageSize()
+MachVMMemory::PageSize(task_t task)
 {
     if (m_page_size == kInvalidPageSize)
     {
+#if defined (TASK_VM_INFO) && TASK_VM_INFO >= 22
+        if (task != TASK_NULL)
+        {
+            kern_return_t kr;
+            mach_msg_type_number_t info_count = TASK_VM_INFO_COUNT;
+            task_vm_info_data_t vm_info;
+            kr = task_info (task, TASK_VM_INFO, (task_info_t) &vm_info, &info_count);
+            if (kr == KERN_SUCCESS)
+            {
+                return vm_info.page_size;
+            }
+        }
+#endif
         m_err = ::host_page_size( ::mach_host_self(), &m_page_size);
         if (m_err.Fail())
             m_page_size = 0;
@@ -41,9 +54,9 @@ MachVMMemory::PageSize()
 }
 
 nub_size_t
-MachVMMemory::MaxBytesLeftInPage(nub_addr_t addr, nub_size_t count)
+MachVMMemory::MaxBytesLeftInPage(task_t task, nub_addr_t addr, nub_size_t count)
 {
-    const nub_size_t page_size = PageSize();
+    const nub_size_t page_size = PageSize(task);
     if (page_size > 0)
     {
         nub_size_t page_offset = (addr % page_size);
@@ -91,7 +104,8 @@ MachVMMemory::GetMemoryRegionInfo(task_t task, nub_addr_t address, DNBRegionInfo
 }
 
 // For integrated graphics chip, this makes the accounting info for 'wired' memory more like top.
-static uint64_t GetStolenPages()
+uint64_t 
+MachVMMemory::GetStolenPages(task_t task)
 {
     static uint64_t stolenPages = 0;
     static bool calculated = false;
@@ -187,7 +201,7 @@ static uint64_t GetStolenPages()
             {
                 stolen = (stolen & ~((128 * 1024 * 1024ULL) - 1)); // rounding down
                 vm_size_t pagesize = vm_page_size;
-                host_page_size(mach_host_self(), &pagesize);
+                pagesize = PageSize (task);
                 stolenPages = stolen/pagesize;
 			}
 		}
@@ -213,7 +227,8 @@ static uint64_t GetPhysicalMemory()
 }
 
 // rsize and dirty_size is not adjusted for dyld shared cache and multiple __LINKEDIT segment, as in vmmap. In practice, dirty_size doesn't differ much but rsize may. There is performance penalty for the adjustment. Right now, only use the dirty_size.
-static void GetRegionSizes(task_t task, mach_vm_size_t &rsize, mach_vm_size_t &dirty_size)
+void 
+MachVMMemory::GetRegionSizes(task_t task, mach_vm_size_t &rsize, mach_vm_size_t &dirty_size)
 {
     mach_vm_address_t address = 0;
     mach_vm_size_t size;
@@ -267,7 +282,7 @@ static void GetRegionSizes(task_t task, mach_vm_size_t &rsize, mach_vm_size_t &d
     if (!calculated)
     {
         calculated = true;
-        host_page_size(mach_host_self(), &pagesize);
+        pagesize = PageSize (task);
     }
     
     rsize = pages_resident * pagesize;
@@ -305,7 +320,8 @@ static bool InSharedRegion(mach_vm_address_t addr, cpu_type_t type)
     return(addr >= base && addr < (base + size));
 }
 
-static void GetMemorySizes(task_t task, cpu_type_t cputype, nub_process_t pid, mach_vm_size_t &rprvt, mach_vm_size_t &vprvt)
+void 
+MachVMMemory::GetMemorySizes(task_t task, cpu_type_t cputype, nub_process_t pid, mach_vm_size_t &rprvt, mach_vm_size_t &vprvt)
 {
     // Collecting some other info cheaply but not reporting for now.
     mach_vm_size_t empty = 0;
@@ -319,7 +335,7 @@ static void GetMemorySizes(task_t task, cpu_type_t cputype, nub_process_t pid, m
     if (!calculated)
     {
         calculated = true;
-        host_page_size(mach_host_self(), &pagesize);
+        pagesize = PageSize (task);
     }
     
     for (mach_vm_address_t addr=0, size=0; ; addr += size)
@@ -421,7 +437,7 @@ MachVMMemory::GetMemoryProfile(DNBProfileDataScanType scanType, task_t task, str
         static mach_port_t localHost = mach_host_self();
         mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
         host_statistics(localHost, HOST_VM_INFO, (host_info_t)&vm_stats, &count);
-        vm_stats.wire_count += GetStolenPages();
+        vm_stats.wire_count += GetStolenPages(task);
     
         GetMemorySizes(task, cputype, pid, rprvt, vprvt);
     
@@ -449,7 +465,7 @@ MachVMMemory::Read(task_t task, nub_addr_t address, void *data, nub_size_t data_
     uint8_t *curr_data = (uint8_t*)data;
     while (total_bytes_read < data_count)
     {
-        mach_vm_size_t curr_size = MaxBytesLeftInPage(curr_addr, data_count - total_bytes_read);
+        mach_vm_size_t curr_size = MaxBytesLeftInPage(task, curr_addr, data_count - total_bytes_read);
         mach_msg_type_number_t curr_bytes_read = 0;
         vm_offset_t vm_memory = NULL;
         m_err = ::mach_vm_read (task, curr_addr, curr_size, &vm_memory, &curr_bytes_read);
@@ -545,7 +561,7 @@ MachVMMemory::WriteRegion(task_t task, const nub_addr_t address, const void *dat
     const uint8_t *curr_data = (const uint8_t*)data;
     while (total_bytes_written < data_count)
     {
-        mach_msg_type_number_t curr_data_count = MaxBytesLeftInPage(curr_addr, data_count - total_bytes_written);
+        mach_msg_type_number_t curr_data_count = MaxBytesLeftInPage(task, curr_addr, data_count - total_bytes_written);
         m_err = ::mach_vm_write (task, curr_addr, (pointer_t) curr_data, curr_data_count);
         if (DNBLogCheckLogBit(LOG_MEMORY) || m_err.Fail())
             m_err.LogThreaded("::mach_vm_write ( task = 0x%4.4x, addr = 0x%8.8llx, data = %8.8p, dataCnt = %u )", task, (uint64_t)curr_addr, curr_data, curr_data_count);

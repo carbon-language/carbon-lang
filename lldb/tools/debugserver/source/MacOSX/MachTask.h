@@ -92,6 +92,7 @@ public:
             MachProcess *   Process () { return m_process; }
     const   MachProcess *   Process () const { return m_process; }
     
+            nub_size_t      PageSize ();
     
             bool            HasMallocLoggingEnabled ();
 
