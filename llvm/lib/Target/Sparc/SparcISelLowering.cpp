@@ -150,22 +150,32 @@ static bool CC_Sparc64_Half(unsigned &ValNo, MVT &ValVT,
 
 SDValue
 SparcTargetLowering::LowerReturn(SDValue Chain,
-                                 CallingConv::ID CallConv, bool isVarArg,
+                                 CallingConv::ID CallConv, bool IsVarArg,
                                  const SmallVectorImpl<ISD::OutputArg> &Outs,
                                  const SmallVectorImpl<SDValue> &OutVals,
-                                 DebugLoc dl, SelectionDAG &DAG) const {
+                                 DebugLoc DL, SelectionDAG &DAG) const {
+  if (Subtarget->is64Bit())
+    return LowerReturn_64(Chain, CallConv, IsVarArg, Outs, OutVals, DL, DAG);
+  return LowerReturn_32(Chain, CallConv, IsVarArg, Outs, OutVals, DL, DAG);
+}
 
+SDValue
+SparcTargetLowering::LowerReturn_32(SDValue Chain,
+                                    CallingConv::ID CallConv, bool IsVarArg,
+                                    const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                    const SmallVectorImpl<SDValue> &OutVals,
+                                    DebugLoc DL, SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
 
   // CCValAssign - represent the assignment of the return value to locations.
   SmallVector<CCValAssign, 16> RVLocs;
 
   // CCState - Info about the registers and stack slot.
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+  CCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(),
                  DAG.getTarget(), RVLocs, *DAG.getContext());
 
-  // Analize return values.
-  CCInfo.AnalyzeReturn(Outs, Subtarget->is64Bit() ? CC_Sparc64 : RetCC_Sparc32);
+  // Analyze return values.
+  CCInfo.AnalyzeReturn(Outs, RetCC_Sparc32);
 
   SDValue Flag;
   SmallVector<SDValue, 4> RetOps(1, Chain);
@@ -177,7 +187,7 @@ SparcTargetLowering::LowerReturn(SDValue Chain,
     CCValAssign &VA = RVLocs[i];
     assert(VA.isRegLoc() && "Can only return in registers!");
 
-    Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(),
+    Chain = DAG.getCopyToReg(Chain, DL, VA.getLocReg(),
                              OutVals[i], Flag);
 
     // Guarantee that all emitted copies are stuck together with flags.
@@ -192,8 +202,8 @@ SparcTargetLowering::LowerReturn(SDValue Chain,
     unsigned Reg = SFI->getSRetReturnReg();
     if (!Reg)
       llvm_unreachable("sret virtual register not created in the entry block");
-    SDValue Val = DAG.getCopyFromReg(Chain, dl, Reg, getPointerTy());
-    Chain = DAG.getCopyToReg(Chain, dl, SP::I0, Val, Flag);
+    SDValue Val = DAG.getCopyFromReg(Chain, DL, Reg, getPointerTy());
+    Chain = DAG.getCopyToReg(Chain, DL, SP::I0, Val, Flag);
     Flag = Chain.getValue(1);
     RetOps.push_back(DAG.getRegister(SP::I0, getPointerTy()));
     RetAddrOffset = 12; // CallInst + Delay Slot + Unimp
@@ -206,7 +216,85 @@ SparcTargetLowering::LowerReturn(SDValue Chain,
   if (Flag.getNode())
     RetOps.push_back(Flag);
 
-  return DAG.getNode(SPISD::RET_FLAG, dl, MVT::Other,
+  return DAG.getNode(SPISD::RET_FLAG, DL, MVT::Other,
+                     &RetOps[0], RetOps.size());
+}
+
+// Lower return values for the 64-bit ABI.
+// Return values are passed the exactly the same way as function arguments.
+SDValue
+SparcTargetLowering::LowerReturn_64(SDValue Chain,
+                                    CallingConv::ID CallConv, bool IsVarArg,
+                                    const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                    const SmallVectorImpl<SDValue> &OutVals,
+                                    DebugLoc DL, SelectionDAG &DAG) const {
+  // CCValAssign - represent the assignment of the return value to locations.
+  SmallVector<CCValAssign, 16> RVLocs;
+
+  // CCState - Info about the registers and stack slot.
+  CCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(),
+                 DAG.getTarget(), RVLocs, *DAG.getContext());
+
+  // Analyze return values.
+  CCInfo.AnalyzeReturn(Outs, CC_Sparc64);
+
+  SDValue Flag;
+  SmallVector<SDValue, 4> RetOps(1, Chain);
+
+  // The second operand on the return instruction is the return address offset.
+  // The return address is always %i7+8 with the 64-bit ABI.
+  RetOps.push_back(DAG.getConstant(8, MVT::i32));
+
+  // Copy the result values into the output registers.
+  for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    CCValAssign &VA = RVLocs[i];
+    assert(VA.isRegLoc() && "Can only return in registers!");
+    SDValue OutVal = OutVals[i];
+
+    // Integer return values must be sign or zero extended by the callee.
+    switch (VA.getLocInfo()) {
+    case CCValAssign::SExt:
+      OutVal = DAG.getNode(ISD::SIGN_EXTEND, DL, VA.getLocVT(), OutVal);
+      break;
+    case CCValAssign::ZExt:
+      OutVal = DAG.getNode(ISD::ZERO_EXTEND, DL, VA.getLocVT(), OutVal);
+      break;
+    case CCValAssign::AExt:
+      OutVal = DAG.getNode(ISD::ANY_EXTEND, DL, VA.getLocVT(), OutVal);
+    default:
+      break;
+    }
+
+    // The custom bit on an i32 return value indicates that it should be passed
+    // in the high bits of the register.
+    if (VA.getValVT() == MVT::i32 && VA.needsCustom()) {
+      OutVal = DAG.getNode(ISD::SHL, DL, MVT::i64, OutVal,
+                           DAG.getConstant(32, MVT::i32));
+
+      // The next value may go in the low bits of the same register.
+      // Handle both at once.
+      if (i+1 < RVLocs.size() && RVLocs[i+1].getLocReg() == VA.getLocReg()) {
+        SDValue NV = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i64, OutVals[i+1]);
+        OutVal = DAG.getNode(ISD::OR, DL, MVT::i64, OutVal, NV);
+        // Skip the next value, it's already done.
+        ++i;
+      }
+    }
+
+    Chain = DAG.getCopyToReg(Chain, DL, VA.getLocReg(), OutVal, Flag);
+
+    // Guarantee that all emitted copies are stuck together with flags.
+    Flag = Chain.getValue(1);
+    RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
+  }
+
+  RetOps[0] = Chain;  // Update chain.
+
+  // Add the flag if we have it.
+  if (Flag.getNode())
+    RetOps.push_back(Flag);
+
+  return DAG.getNode(SPISD::RET_FLAG, DL, MVT::Other,
                      &RetOps[0], RetOps.size());
 }
 

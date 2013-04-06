@@ -102,6 +102,16 @@ namespace llvm {
                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                   const SmallVectorImpl<SDValue> &OutVals,
                   DebugLoc dl, SelectionDAG &DAG) const;
+    SDValue LowerReturn_32(SDValue Chain,
+                           CallingConv::ID CallConv, bool IsVarArg,
+                           const SmallVectorImpl<ISD::OutputArg> &Outs,
+                           const SmallVectorImpl<SDValue> &OutVals,
+                           DebugLoc DL, SelectionDAG &DAG) const;
+    SDValue LowerReturn_64(SDValue Chain,
+                           CallingConv::ID CallConv, bool IsVarArg,
+                           const SmallVectorImpl<ISD::OutputArg> &Outs,
+                           const SmallVectorImpl<SDValue> &OutVals,
+                           DebugLoc DL, SelectionDAG &DAG) const;
 
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;

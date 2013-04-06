@@ -132,3 +132,87 @@ define i32 @inreg_ii(i32 inreg %a0,   ; high bits of %i0
   %rv = sub i32 %a1, %a0
   ret i32 %rv
 }
+
+; Structs up to 32 bytes in size can be returned in registers.
+; CHECK: ret_i64_pair
+; CHECK: ldx [%i2], %i0
+; CHECK: ldx [%i3], %i1
+define { i64, i64 } @ret_i64_pair(i32 %a0, i32 %a1, i64* %p, i64* %q) {
+  %r1 = load i64* %p
+  %rv1 = insertvalue { i64, i64 } undef, i64 %r1, 0
+  store i64 0, i64* %p
+  %r2 = load i64* %q
+  %rv2 = insertvalue { i64, i64 } %rv1, i64 %r2, 1
+  ret { i64, i64 } %rv2
+}
+
+; This is not a C struct, each member uses 8 bytes.
+; CHECK: ret_i32_float_pair
+; CHECK: ld [%i2], %i0
+; CHECK: ld [%i3], %f3
+define { i32, float } @ret_i32_float_pair(i32 %a0, i32 %a1,
+                                          i32* %p, float* %q) {
+  %r1 = load i32* %p
+  %rv1 = insertvalue { i32, float } undef, i32 %r1, 0
+  store i32 0, i32* %p
+  %r2 = load float* %q
+  %rv2 = insertvalue { i32, float } %rv1, float %r2, 1
+  ret { i32, float } %rv2
+}
+
+; This is a C struct, each member uses 4 bytes.
+; CHECK: ret_i32_float_packed
+; CHECK: ld [%i2], [[R:%[gilo][0-7]]]
+; CHECK: sllx [[R]], 32, %i0
+; CHECK: ld [%i3], %f1
+define inreg { i32, float } @ret_i32_float_packed(i32 %a0, i32 %a1,
+                                                  i32* %p, float* %q) {
+  %r1 = load i32* %p
+  %rv1 = insertvalue { i32, float } undef, i32 %r1, 0
+  store i32 0, i32* %p
+  %r2 = load float* %q
+  %rv2 = insertvalue { i32, float } %rv1, float %r2, 1
+  ret { i32, float } %rv2
+}
+
+; The C frontend should use i64 to return { i32, i32 } structs, but verify that
+; we don't miscompile thi case where both struct elements are placed in %i0.
+; CHECK: ret_i32_packed
+; CHECK: ld [%i2], [[R1:%[gilo][0-7]]]
+; CHECK: ld [%i3], [[R2:%[gilo][0-7]]]
+; CHECK: sllx [[R2]], 32, [[R3:%[gilo][0-7]]]
+; CHECK: or [[R3]], [[R1]], %i0
+define inreg { i32, i32 } @ret_i32_packed(i32 %a0, i32 %a1,
+                                          i32* %p, i32* %q) {
+  %r1 = load i32* %p
+  %rv1 = insertvalue { i32, i32 } undef, i32 %r1, 1
+  store i32 0, i32* %p
+  %r2 = load i32* %q
+  %rv2 = insertvalue { i32, i32 } %rv1, i32 %r2, 0
+  ret { i32, i32 } %rv2
+}
+
+; The return value must be sign-extended to 64 bits.
+; CHECK: ret_sext
+; CHECK: sra %i0, 0, %i0
+define signext i32 @ret_sext(i32 %a0) {
+  ret i32 %a0
+}
+
+; CHECK: ret_zext
+; CHECK: srl %i0, 0, %i0
+define zeroext i32 @ret_zext(i32 %a0) {
+  ret i32 %a0
+}
+
+; CHECK: ret_nosext
+; CHECK-NOT: sra
+define signext i32 @ret_nosext(i32 signext %a0) {
+  ret i32 %a0
+}
+
+; CHECK: ret_nozext
+; CHECK-NOT: srl
+define signext i32 @ret_nozext(i32 signext %a0) {
+  ret i32 %a0
+}
