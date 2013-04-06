@@ -515,6 +515,7 @@ def RLWINM8 : MForm_2<21,
                      "rlwinm $rA, $rS, $SH, $MB, $ME", IntGeneral,
                      []>;
 
+let isSelect = 1, neverHasSideEffects = 1 in
 def ISEL8   : AForm_4<31, 15,
                      (outs G8RC:$rT), (ins G8RC_NOX0:$rA, G8RC:$rB, CRBITRC:$cond),
                      "isel $rT, $rA, $rB, $cond", IntGeneral,
