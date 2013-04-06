@@ -643,7 +643,7 @@ unsigned DwarfDebug::getOrCreateSourceID(StringRef FileName,
 
   // We look up the CUID/file/dir by concatenating them with a zero byte.
   SmallString<128> NamePair;
-  NamePair += CUID;
+  NamePair += utostr(CUID);
   NamePair += '\0';
   NamePair += DirName;
   NamePair += '\0'; // Zero bytes are not allowed in paths.
