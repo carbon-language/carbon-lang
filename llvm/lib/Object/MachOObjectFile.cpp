@@ -78,8 +78,8 @@ void MachOObjectFile::moveToNextSymbol(DataRefImpl &DRI) const {
   }
 }
 
-void MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI,
-    InMemoryStruct<macho::SymbolTableEntry> &Res) const {
+const MachOFormat::SymbolTableEntry *
+MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI) const {
   InMemoryStruct<macho::SymtabLoadCommand> SymtabLoadCmd;
   LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
   MachOObj->ReadSymtabLoadCommand(LCI, SymtabLoadCmd);
@@ -89,8 +89,13 @@ void MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI,
     RegisteredStringTable = DRI.d.a;
   }
 
-  MachOObj->ReadSymbolTableEntry(SymtabLoadCmd->SymbolTableOffset, DRI.d.b,
-                                 Res);
+  uint64_t SymbolTableOffset = SymtabLoadCmd->SymbolTableOffset;
+  unsigned Index = DRI.d.b;
+  uint64_t Offset = (SymbolTableOffset +
+                     Index * sizeof(macho::SymbolTableEntry));
+  StringRef Data = MachOObj->getData(Offset,
+                                     sizeof(MachOFormat::SymbolTableEntry));
+  return reinterpret_cast<const MachOFormat::SymbolTableEntry*>(Data.data());
 }
 
 void MachOObjectFile::getSymbol64TableEntry(DataRefImpl DRI,
@@ -124,8 +129,7 @@ error_code MachOObjectFile::getSymbolName(DataRefImpl DRI,
     getSymbol64TableEntry(DRI, Entry);
     Result = MachOObj->getStringAtIndex(Entry->StringIndex);
   } else {
-    InMemoryStruct<macho::SymbolTableEntry> Entry;
-    getSymbolTableEntry(DRI, Entry);
+    const MachOFormat::SymbolTableEntry *Entry = getSymbolTableEntry(DRI);
     Result = MachOObj->getStringAtIndex(Entry->StringIndex);
   }
   return object_error::success;
@@ -143,8 +147,7 @@ error_code MachOObjectFile::getSymbolFileOffset(DataRefImpl DRI,
       Result += Section->Offset - Section->Address;
     }
   } else {
-    InMemoryStruct<macho::SymbolTableEntry> Entry;
-    getSymbolTableEntry(DRI, Entry);
+    const MachOFormat::SymbolTableEntry *Entry = getSymbolTableEntry(DRI);
     Result = Entry->Value;
     if (Entry->SectionIndex) {
       const MachOFormat::Section *Section =
@@ -163,8 +166,7 @@ error_code MachOObjectFile::getSymbolAddress(DataRefImpl DRI,
     getSymbol64TableEntry(DRI, Entry);
     Result = Entry->Value;
   } else {
-    InMemoryStruct<macho::SymbolTableEntry> Entry;
-    getSymbolTableEntry(DRI, Entry);
+    const MachOFormat::SymbolTableEntry *Entry = getSymbolTableEntry(DRI);
     Result = Entry->Value;
   }
   return object_error::success;
@@ -205,8 +207,7 @@ error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
       DRI.d.b++;
     }
   } else {
-    InMemoryStruct<macho::SymbolTableEntry> Entry;
-    getSymbolTableEntry(DRI, Entry);
+    const MachOFormat::SymbolTableEntry *Entry = getSymbolTableEntry(DRI);
     BeginOffset = Entry->Value;
     SectionIndex = Entry->SectionIndex;
     if (!SectionIndex) {
@@ -225,7 +226,7 @@ error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
     while (Command == DRI.d.a) {
       moveToNextSymbol(DRI);
       if (DRI.d.a < LoadCommandCount) {
-        getSymbolTableEntry(DRI, Entry);
+        Entry = getSymbolTableEntry(DRI);
         if (Entry->SectionIndex == SectionIndex && Entry->Value > BeginOffset)
           if (!EndOffset || Entry->Value < EndOffset)
             EndOffset = Entry->Value;
@@ -252,8 +253,7 @@ error_code MachOObjectFile::getSymbolNMTypeChar(DataRefImpl DRI,
     Type = Entry->Type;
     Flags = Entry->Flags;
   } else {
-    InMemoryStruct<macho::SymbolTableEntry> Entry;
-    getSymbolTableEntry(DRI, Entry);
+    const MachOFormat::SymbolTableEntry *Entry = getSymbolTableEntry(DRI);
     Type = Entry->Type;
     Flags = Entry->Flags;
   }
@@ -288,8 +288,7 @@ error_code MachOObjectFile::getSymbolFlags(DataRefImpl DRI,
     MachOFlags = Entry->Flags;
     MachOType = Entry->Type;
   } else {
-    InMemoryStruct<macho::SymbolTableEntry> Entry;
-    getSymbolTableEntry(DRI, Entry);
+    const MachOFormat::SymbolTableEntry *Entry = getSymbolTableEntry(DRI);
     MachOFlags = Entry->Flags;
     MachOType = Entry->Type;
   }
@@ -326,8 +325,7 @@ error_code MachOObjectFile::getSymbolSection(DataRefImpl Symb,
     getSymbol64TableEntry(Symb, Entry);
     index = Entry->SectionIndex;
   } else {
-    InMemoryStruct<macho::SymbolTableEntry> Entry;
-    getSymbolTableEntry(Symb, Entry);
+    const MachOFormat::SymbolTableEntry *Entry = getSymbolTableEntry(Symb);
     index = Entry->SectionIndex;
   }
 
@@ -347,8 +345,7 @@ error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
     getSymbol64TableEntry(Symb, Entry);
     n_type = Entry->Type;
   } else {
-    InMemoryStruct<macho::SymbolTableEntry> Entry;
-    getSymbolTableEntry(Symb, Entry);
+    const MachOFormat::SymbolTableEntry *Entry = getSymbolTableEntry(Symb);
     n_type = Entry->Type;
   }
   Res = SymbolRef::ST_Other;
@@ -656,8 +653,7 @@ error_code MachOObjectFile::sectionContainsSymbol(DataRefImpl Sec,
     uint64_t SymAddr= Entry->Value;
     Result = (SymAddr >= SectBegin) && (SymAddr < SectEnd);
   } else {
-    InMemoryStruct<macho::SymbolTableEntry> Entry;
-    getSymbolTableEntry(Symb, Entry);
+    const MachOFormat::SymbolTableEntry *Entry = getSymbolTableEntry(Symb);
     uint64_t SymAddr= Entry->Value;
     Result = (SymAddr >= SectBegin) && (SymAddr < SectEnd);
   }

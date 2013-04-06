@@ -60,6 +60,15 @@ namespace MachOFormat {
     support::ulittle32_t Word0;
     support::ulittle32_t Word1;
   };
+
+  struct SymbolTableEntry {
+    support::ulittle32_t StringIndex;
+    uint8_t Type;
+    uint8_t SectionIndex;
+    support::ulittle16_t Flags;
+    support::ulittle32_t Value;
+  };
+
 }
 
 typedef MachOObject::LoadCommandInfo LoadCommandInfo;
@@ -159,8 +168,8 @@ private:
 
 
   void moveToNextSection(DataRefImpl &DRI) const;
-  void getSymbolTableEntry(DataRefImpl DRI,
-                           InMemoryStruct<macho::SymbolTableEntry> &Res) const;
+  const MachOFormat::SymbolTableEntry *
+  getSymbolTableEntry(DataRefImpl DRI) const;
   void getSymbol64TableEntry(DataRefImpl DRI,
                           InMemoryStruct<macho::Symbol64TableEntry> &Res) const;
   void moveToNextSymbol(DataRefImpl &DRI) const;
