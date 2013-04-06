@@ -76,6 +76,8 @@ PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
 const TargetRegisterClass *
 PPCRegisterInfo::getPointerRegClass(const MachineFunction &MF, unsigned Kind)
                                                                        const {
+  // Note that PPCInstrInfo::FoldImmediate also directly uses this Kind value
+  // when it checks for ZERO folding.
   if (Kind == 1) {
     if (Subtarget.isPPC64())
       return &PPC::G8RC_NOX0RegClass;

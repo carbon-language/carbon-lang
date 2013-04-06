@@ -806,6 +806,74 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   return false;
 }
 
+bool PPCInstrInfo::FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
+                             unsigned Reg, MachineRegisterInfo *MRI) const {
+  // For some instructions, it is legal to fold ZERO into the RA register field.
+  // A zero immediate should always be loaded with a single li.
+  unsigned DefOpc = DefMI->getOpcode();
+  if (DefOpc != PPC::LI && DefOpc != PPC::LI8)
+    return false;
+  if (!DefMI->getOperand(1).isImm())
+    return false;
+  if (DefMI->getOperand(1).getImm() != 0)
+    return false;
+
+  // Note that we cannot here invert the arguments of an isel in order to fold
+  // a ZERO into what is presented as the second argument. All we have here
+  // is the condition bit, and that might come from a CR-logical bit operation.
+
+  const MCInstrDesc &UseMCID = UseMI->getDesc();
+
+  // Only fold into real machine instructions.
+  if (UseMCID.isPseudo())
+    return false;
+
+  unsigned UseIdx;
+  for (UseIdx = 0; UseIdx < UseMI->getNumOperands(); ++UseIdx)
+    if (UseMI->getOperand(UseIdx).isReg() &&
+        UseMI->getOperand(UseIdx).getReg() == Reg)
+      break;
+
+  assert(UseIdx < UseMI->getNumOperands() && "Cannot find Reg in UseMI");
+  assert(UseIdx < UseMCID.getNumOperands() && "No operand description for Reg");
+
+  const MCOperandInfo *UseInfo = &UseMCID.OpInfo[UseIdx];
+
+  // We can fold the zero if this register requires a GPRC_NOR0/G8RC_NOX0
+  // register (which might also be specified as a pointer class kind).
+  if (UseInfo->isLookupPtrRegClass()) {
+    if (UseInfo->RegClass /* Kind */ != 1)
+      return false;
+  } else {
+    if (UseInfo->RegClass != PPC::GPRC_NOR0RegClassID &&
+        UseInfo->RegClass != PPC::G8RC_NOX0RegClassID)
+      return false;
+  }
+
+  // Make sure this is not tied to an output register (or otherwise
+  // constrained). This is true for ST?UX registers, for example, which
+  // are tied to their output registers.
+  if (UseInfo->Constraints != 0)
+    return false;
+
+  unsigned ZeroReg;
+  if (UseInfo->isLookupPtrRegClass()) {
+    bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+    ZeroReg = isPPC64 ? PPC::ZERO8 : PPC::ZERO;
+  } else {
+    ZeroReg = UseInfo->RegClass == PPC::G8RC_NOX0RegClassID ?
+              PPC::ZERO8 : PPC::ZERO;
+  }
+
+  bool DeleteDef = MRI->hasOneNonDBGUse(Reg);
+  UseMI->getOperand(UseIdx).setReg(ZeroReg);
+
+  if (DeleteDef)
+    DefMI->eraseFromParent();
+
+  return true;
+}
+
 /// GetInstSize - Return the number of bytes of code the specified
 /// instruction may be.  This returns the maximum number of bytes.
 ///
