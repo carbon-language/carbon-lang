@@ -76,6 +76,15 @@ namespace MachOFormat {
     support::ulittle16_t Flags;
     support::ulittle64_t Value;
   };
+
+  struct SymtabLoadCommand {
+    support::ulittle32_t Type;
+    support::ulittle32_t Size;
+    support::ulittle32_t SymbolTableOffset;
+    support::ulittle32_t NumSymbolTableEntries;
+    support::ulittle32_t StringTableOffset;
+    support::ulittle32_t StringTableSize;
+  };
 }
 
 typedef MachOObject::LoadCommandInfo LoadCommandInfo;
@@ -169,20 +178,32 @@ protected:
 
 private:
   OwningPtr<MachOObject> MachOObj;
-  mutable uint32_t RegisteredStringTable;
   typedef SmallVector<DataRefImpl, 1> SectionList;
   SectionList Sections;
 
 
   void moveToNextSection(DataRefImpl &DRI) const;
+
   const MachOFormat::SymbolTableEntry *
   getSymbolTableEntry(DataRefImpl DRI) const;
+
+  const MachOFormat::SymbolTableEntry *
+  getSymbolTableEntry(DataRefImpl DRI,
+                     const MachOFormat::SymtabLoadCommand *SymtabLoadCmd) const;
+
   const MachOFormat::Symbol64TableEntry *
   getSymbol64TableEntry(DataRefImpl DRI) const;
+
+  const MachOFormat::Symbol64TableEntry *
+  getSymbol64TableEntry(DataRefImpl DRI,
+                     const MachOFormat::SymtabLoadCommand *SymtabLoadCmd) const;
+
   void moveToNextSymbol(DataRefImpl &DRI) const;
   const MachOFormat::Section *getSection(DataRefImpl DRI) const;
   const MachOFormat::Section64 *getSection64(DataRefImpl DRI) const;
   const MachOFormat::RelocationEntry *getRelocation(DataRefImpl Rel) const;
+  const MachOFormat::SymtabLoadCommand *
+    getSymtabLoadCommand(LoadCommandInfo LCI) const;
   std::size_t getSectionIndex(DataRefImpl Sec) const;
 
   void printRelocationTargetName(const MachOFormat::RelocationEntry *RE,

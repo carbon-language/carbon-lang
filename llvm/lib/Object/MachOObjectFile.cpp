@@ -30,8 +30,7 @@ namespace object {
 MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, MachOObject *MOO,
                                  error_code &ec)
     : ObjectFile(Binary::ID_MachO, Object, ec),
-      MachOObj(MOO),
-      RegisteredStringTable(std::numeric_limits<uint32_t>::max()) {
+      MachOObj(MOO) {
   DataRefImpl DRI;
   moveToNextSection(DRI);
   uint32_t LoadCommandCount = MachOObj->getHeader().NumLoadCommands;
@@ -62,13 +61,20 @@ ObjectFile *ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer) {
 
 /*===-- Symbols -----------------------------------------------------------===*/
 
+const MachOFormat::SymtabLoadCommand *
+MachOObjectFile::getSymtabLoadCommand(LoadCommandInfo LCI) const {
+  StringRef Data = MachOObj->getData(LCI.Offset,
+                                     sizeof(MachOFormat::SymtabLoadCommand));
+  return reinterpret_cast<const MachOFormat::SymtabLoadCommand*>(Data.data());
+}
+
 void MachOObjectFile::moveToNextSymbol(DataRefImpl &DRI) const {
   uint32_t LoadCommandCount = MachOObj->getHeader().NumLoadCommands;
   while (DRI.d.a < LoadCommandCount) {
     LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
     if (LCI.Command.Type == macho::LCT_Symtab) {
-      InMemoryStruct<macho::SymtabLoadCommand> SymtabLoadCmd;
-      MachOObj->ReadSymtabLoadCommand(LCI, SymtabLoadCmd);
+      const MachOFormat::SymtabLoadCommand *SymtabLoadCmd =
+        getSymtabLoadCommand(LCI);
       if (DRI.d.b < SymtabLoadCmd->NumSymbolTableEntries)
         return;
     }
@@ -80,15 +86,16 @@ void MachOObjectFile::moveToNextSymbol(DataRefImpl &DRI) const {
 
 const MachOFormat::SymbolTableEntry *
 MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI) const {
-  InMemoryStruct<macho::SymtabLoadCommand> SymtabLoadCmd;
   LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
-  MachOObj->ReadSymtabLoadCommand(LCI, SymtabLoadCmd);
+  const MachOFormat::SymtabLoadCommand *SymtabLoadCmd =
+    getSymtabLoadCommand(LCI);
 
-  if (RegisteredStringTable != DRI.d.a) {
-    MachOObj->RegisterStringTable(*SymtabLoadCmd);
-    RegisteredStringTable = DRI.d.a;
-  }
+  return getSymbolTableEntry(DRI, SymtabLoadCmd);
+}
 
+const MachOFormat::SymbolTableEntry *
+MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI,
+                    const MachOFormat::SymtabLoadCommand *SymtabLoadCmd) const {
   uint64_t SymbolTableOffset = SymtabLoadCmd->SymbolTableOffset;
   unsigned Index = DRI.d.b;
   uint64_t Offset = (SymbolTableOffset +
@@ -100,15 +107,16 @@ MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI) const {
 
 const MachOFormat::Symbol64TableEntry*
 MachOObjectFile::getSymbol64TableEntry(DataRefImpl DRI) const {
-  InMemoryStruct<macho::SymtabLoadCommand> SymtabLoadCmd;
   LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
-  MachOObj->ReadSymtabLoadCommand(LCI, SymtabLoadCmd);
+  const MachOFormat::SymtabLoadCommand *SymtabLoadCmd =
+    getSymtabLoadCommand(LCI);
 
-  if (RegisteredStringTable != DRI.d.a) {
-    MachOObj->RegisterStringTable(*SymtabLoadCmd);
-    RegisteredStringTable = DRI.d.a;
-  }
+  return getSymbol64TableEntry(DRI, SymtabLoadCmd);
+}
 
+const MachOFormat::Symbol64TableEntry*
+MachOObjectFile::getSymbol64TableEntry(DataRefImpl DRI,
+                    const MachOFormat::SymtabLoadCommand *SymtabLoadCmd) const {
   uint64_t SymbolTableOffset = SymtabLoadCmd->SymbolTableOffset;
   unsigned Index = DRI.d.b;
   uint64_t Offset = (SymbolTableOffset +
@@ -128,13 +136,28 @@ error_code MachOObjectFile::getSymbolNext(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSymbolName(DataRefImpl DRI,
                                           StringRef &Result) const {
+  LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
+  const MachOFormat::SymtabLoadCommand *SymtabLoadCmd =
+    getSymtabLoadCommand(LCI);
+
+  StringRef StringTable =
+    MachOObj->getData(SymtabLoadCmd->StringTableOffset,
+                      SymtabLoadCmd->StringTableSize);
+
+  uint32_t StringIndex;
   if (MachOObj->is64Bit()) {
-    const MachOFormat::Symbol64TableEntry *Entry = getSymbol64TableEntry(DRI);
-    Result = MachOObj->getStringAtIndex(Entry->StringIndex);
+    const MachOFormat::Symbol64TableEntry *Entry =
+      getSymbol64TableEntry(DRI, SymtabLoadCmd);
+    StringIndex = Entry->StringIndex;
   } else {
-    const MachOFormat::SymbolTableEntry *Entry = getSymbolTableEntry(DRI);
-    Result = MachOObj->getStringAtIndex(Entry->StringIndex);
+    const MachOFormat::SymbolTableEntry *Entry =
+      getSymbolTableEntry(DRI, SymtabLoadCmd);
+    StringIndex = Entry->StringIndex;
   }
+
+  const char *Start = &StringTable.data()[StringIndex];
+  Result = StringRef(Start);
+
   return object_error::success;
 }
 
