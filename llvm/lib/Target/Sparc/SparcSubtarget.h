@@ -52,6 +52,12 @@ public:
     }
     return std::string(p);
   }
+
+  /// The 64-bit ABI uses biased stack and frame pointers, so the stack frame
+  /// of the current function is the area from [%sp+BIAS] to [%fp+BIAS].
+  int64_t getStackPointerBias() const {
+    return is64Bit() ? 2047 : 0;
+  }
 };
 
 } // end namespace llvm

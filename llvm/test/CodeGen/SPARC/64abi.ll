@@ -7,10 +7,9 @@
 ; CHECK: st  %i3, [%i4]
 ; CHECK: stx %i4, [%i4]
 ; CHECK: st  %i5, [%i4]
-; FIXME: Stack bias
-; CHECK: ld [%fp+180], [[R:%[gilo][0-7]]]
+; CHECK: ld [%fp+2227], [[R:%[gilo][0-7]]]
 ; CHECK: st  [[R]], [%i4]
-; CHECK: ldx [%fp+184], [[R:%[gilo][0-7]]]
+; CHECK: ldx [%fp+2231], [[R:%[gilo][0-7]]]
 ; CHECK: stx [[R]], [%i4]
 define void @intarg(i8  %a0,   ; %i0
                     i8  %a1,   ; %i1
@@ -39,8 +38,7 @@ define void @intarg(i8  %a0,   ; %i0
 ; CHECK: faddd %f2,
 ; CHECK: faddd %f4,
 ; CHECK: faddd %f6,
-; FIXME: Stack bias
-; CHECK: ld [%fp+260], [[F:%f[0-9]+]]
+; CHECK: ld [%fp+2307], [[F:%f[0-9]+]]
 ; CHECK: fadds %f31, [[F]]
 define double @floatarg(float %a0,    ; %f1
                         double %a1,   ; %d2
@@ -74,8 +72,8 @@ define double @floatarg(float %a0,    ; %f1
 ; CHECK: fstod %f3
 ; CHECK: faddd %f6
 ; CHECK: faddd %f16
-; CHECK: ldx [%fp+184]
-; CHECK: ldx [%fp+200]
+; CHECK: ldx [%fp+2231]
+; CHECK: ldx [%fp+2247]
 define void @mixedarg(i8 %a0,      ; %i0
                       float %a1,   ; %f3
                       i16 %a2,     ; %i2
