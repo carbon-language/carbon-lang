@@ -774,6 +774,10 @@ public:
 
   /// FoldImmediate - 'Reg' is known to be defined by a move immediate
   /// instruction, try to fold the immediate into the use instruction.
+  /// If MRI->hasOneNonDBGUse(Reg) is true, and this function returns true,
+  /// then the caller may assume that DefMI has been erased from its parent
+  /// block. The caller may assume that it will not be erased by this
+  /// function otherwise.
   virtual bool FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
                              unsigned Reg, MachineRegisterInfo *MRI) const {
     return false;
