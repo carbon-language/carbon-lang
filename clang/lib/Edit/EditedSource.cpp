@@ -188,6 +188,8 @@ void EditedSource::commitRemove(SourceLocation OrigLoc,
     unsigned diff = EndOffs.getOffset() - TopEnd.getOffset();
     TopEnd = EndOffs;
     TopFA->RemoveLen += diff;
+    if (B == BeginOffs)
+      TopFA->Text = StringRef();
     ++I;
   }
 
