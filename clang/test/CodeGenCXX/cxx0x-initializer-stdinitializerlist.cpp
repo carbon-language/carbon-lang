@@ -250,3 +250,22 @@ namespace PR12178 {
 
   map m{ {1, 2}, {3, 4} };
 }
+
+namespace rdar13325066 {
+  struct X { ~X(); };
+
+  // CHECK: define void @_ZN12rdar133250664loopERNS_1XES1_
+  void loop(X &x1, X &x2) {
+    // CHECK: br label
+    // CHECK: br i1
+    // CHECK: br label
+    // CHECK call void @_ZN12rdar133250661XD1Ev
+    // CHECK: br label
+    // CHECK: br label
+    // CHECK: call void @_ZN12rdar133250661XD1Ev
+    // CHECK: br i1
+    // CHECK: br label
+    // CHECK: ret void
+    for (X x : { x1, x2 }) { }
+  }
+}
