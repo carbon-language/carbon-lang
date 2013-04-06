@@ -17,7 +17,7 @@
 
 // rdar://11475360
 @interface B : A
-- (void)method; // expected-note {{method 'method' declared here}}
+- (void)method; // NOTE: we expect 'method' to *not* inherit availability.
 - (void)overridden __attribute__((availability(macosx,introduced=10.4))); // expected-warning{{overriding method introduced after overridden method on OS X (10.4 vs. 10.3)}}
 - (void)overridden2 __attribute__((availability(macosx,introduced=10.2)));
 - (void)overridden3 __attribute__((availability(macosx,deprecated=10.4)));
@@ -28,7 +28,7 @@
 
 void f(A *a, B *b) {
   [a method]; // expected-warning{{'method' is deprecated: first deprecated in OS X 10.2}}
-  [b method]; // expected-warning {{'method' is deprecated: first deprecated in OS X 10.2}}
+  [b method]; // no-warning
   [a proto_method]; // expected-warning{{'proto_method' is deprecated: first deprecated in OS X 10.2}}
   [b proto_method]; // expected-warning{{'proto_method' is deprecated: first deprecated in OS X 10.2}}
 }
