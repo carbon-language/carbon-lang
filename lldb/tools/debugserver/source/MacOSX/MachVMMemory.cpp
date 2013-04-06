@@ -43,7 +43,8 @@ MachVMMemory::PageSize(task_t task)
             if (kr == KERN_SUCCESS)
             {
                 DNBLogThreadedIf(LOG_TASK, "MachVMMemory::PageSize task_info returned page size of 0x%x", (int) vm_info.page_size);
-                return vm_info.page_size;
+                m_page_size = vm_info.page_size;
+                return m_page_size;
             }
             else
             {
