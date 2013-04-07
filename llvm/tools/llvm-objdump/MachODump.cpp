@@ -201,7 +201,6 @@ static void emitDOTFile(const char *FileName, const MCFunction &f,
 
 static void getSectionsAndSymbols(const macho::Header &Header,
                                   MachOObjectFile *MachOObj,
-                             InMemoryStruct<macho::SymtabLoadCommand> *SymtabLC,
                                   std::vector<SectionRef> &Sections,
                                   std::vector<SymbolRef> &Symbols,
                                   SmallVectorImpl<uint64_t> &FoundFns) {
@@ -295,8 +294,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
   std::vector<SymbolRef> Symbols;
   SmallVector<uint64_t, 8> FoundFns;
 
-  getSectionsAndSymbols(Header, MachOOF.get(), &SymtabLC, Sections, Symbols,
-                        FoundFns);
+  getSectionsAndSymbols(Header, MachOOF.get(), Sections, Symbols, FoundFns);
 
   // Make a copy of the unsorted symbol list. FIXME: duplication
   std::vector<SymbolRef> UnsortedSymbols(Symbols);
