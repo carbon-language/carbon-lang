@@ -11538,7 +11538,7 @@ static void CheckForDuplicateEnumValues(Sema &S, Decl **Elements,
   // Populate the EnumMap with all values represented by enum constants without
   // an initialier.
   for (unsigned i = 0; i < NumElements; ++i) {
-    EnumConstantDecl *ECD = cast<EnumConstantDecl>(Elements[i]);
+    EnumConstantDecl *ECD = cast_or_null<EnumConstantDecl>(Elements[i]);
 
     // Null EnumConstantDecl means a previous diagnostic has been emitted for
     // this constant.  Skip this enum since it may be ill-formed.

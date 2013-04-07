@@ -90,3 +90,12 @@ enum {
   NMax = N2,
   NCount = NMax + 1
 };
+
+// PR15693
+enum enum1 {
+  VALUE // expected-note{{previous definition is here}}
+};
+
+enum enum2 {
+  VALUE // expected-error{{redefinition of enumerator 'VALUE'}}
+};
