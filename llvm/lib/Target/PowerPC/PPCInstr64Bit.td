@@ -594,7 +594,7 @@ def LWZX8 : XForm_1<31,  23, (outs G8RC:$rD), (ins memrr:$src),
                    
                    
 // Update forms.
-let mayLoad = 1 in {
+let mayLoad = 1, neverHasSideEffects = 1 in {
 def LBZU8 : DForm_1<35, (outs G8RC:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr),
                     "lbzu $rD, $addr", LdStLoadUpd,
                     []>, RegConstraint<"$addr.reg = $ea_result">,
@@ -666,7 +666,7 @@ def LDBRX : XForm_1<31,  532, (outs G8RC:$rD), (ins memrr:$src),
                    "ldbrx $rD, $src", LdStLoad,
                    [(set i64:$rD, (PPClbrx xoaddr:$src, i64))]>, isPPC64;
 
-let mayLoad = 1 in
+let mayLoad = 1, neverHasSideEffects = 1 in
 def LDU  : DSForm_1<58, 1, (outs G8RC:$rD, ptr_rc_nor0:$ea_result), (ins memrix:$addr),
                     "ldu $rD, $addr", LdStLDU,
                     []>, RegConstraint<"$addr.reg = $ea_result">, isPPC64,
