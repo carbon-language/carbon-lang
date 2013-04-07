@@ -549,7 +549,7 @@ def LWAX : XForm_1<31, 341, (outs G8RC:$rD), (ins memrr:$src),
                    PPC970_DGroup_Cracked;
 
 // Update forms.
-let mayLoad = 1 in {
+let mayLoad = 1, neverHasSideEffects = 1 in {
 def LHAU8 : DForm_1<43, (outs G8RC:$rD, ptr_rc_nor0:$ea_result),
                     (ins memri:$addr),
                     "lhau $rD, $addr", LdStLHAU,
@@ -666,7 +666,7 @@ def LDBRX : XForm_1<31,  532, (outs G8RC:$rD), (ins memrr:$src),
                    "ldbrx $rD, $src", LdStLoad,
                    [(set i64:$rD, (PPClbrx xoaddr:$src, i64))]>, isPPC64;
 
-let mayLoad = 1, neverHasSideEffects = 1 in
+let mayLoad = 1, neverHasSideEffects = 1 in {
 def LDU  : DSForm_1<58, 1, (outs G8RC:$rD, ptr_rc_nor0:$ea_result), (ins memrix:$addr),
                     "ldu $rD, $addr", LdStLDU,
                     []>, RegConstraint<"$addr.reg = $ea_result">, isPPC64,
@@ -677,6 +677,7 @@ def LDUX : XForm_1<31, 53, (outs G8RC:$rD, ptr_rc_nor0:$ea_result),
                    "ldux $rD, $addr", LdStLDU,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">, isPPC64;
+}
 }
 
 def : Pat<(PPCload ixaddr:$src),
