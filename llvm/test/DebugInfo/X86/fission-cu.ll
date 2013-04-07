@@ -1,5 +1,6 @@
 ; RUN: llc -split-dwarf=Enable -O0 %s -mtriple=x86_64-unknown-linux-gnu -filetype=obj -o %t
 ; RUN: llvm-dwarfdump -debug-dump=all %t | FileCheck %s
+; RUN: llvm-readobj --relocations %t | FileCheck --check-prefix=OBJ %s
 
 @a = common global i32 0, align 4
 
@@ -98,3 +99,14 @@
 ; CHECK: 0x00000008: 0000003b
 ; CHECK: 0x0000000c: 0000005f
 ; CHECK: 0x00000010: 00000061
+
+; Object file checks
+; For x86-64-linux we should have this set of relocations for the debug info section
+;
+; OBJ: .debug_info
+; OBJ-NEXT: R_X86_64_32 .debug_abbrev
+; OBJ-NEXT: R_X86_64_32 .debug_str
+; OBJ-NEXT: R_X86_64_32 .debug_addr
+; OBJ-NEXT: R_X86_64_32 .debug_line
+; OBJ-NEXT: R_X86_64_32 .debug_str
+; OBJ-NEXT: }

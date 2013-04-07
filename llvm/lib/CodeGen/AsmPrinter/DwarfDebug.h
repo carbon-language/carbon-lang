@@ -392,7 +392,7 @@ class DwarfDebug {
   // section offsets and are created by EmitSectionLabels.
   MCSymbol *DwarfInfoSectionSym, *DwarfAbbrevSectionSym;
   MCSymbol *DwarfStrSectionSym, *TextSectionSym, *DwarfDebugRangeSectionSym;
-  MCSymbol *DwarfDebugLocSectionSym, *DwarfLineSectionSym;
+  MCSymbol *DwarfDebugLocSectionSym, *DwarfLineSectionSym, *DwarfAddrSectionSym;
   MCSymbol *FunctionBeginSym, *FunctionEndSym;
   MCSymbol *DwarfAbbrevDWOSectionSym, *DwarfStrDWOSectionSym;
 

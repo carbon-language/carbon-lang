@@ -170,6 +170,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
   DwarfStrSectionSym = TextSectionSym = 0;
   DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = DwarfLineSectionSym = 0;
+  DwarfAddrSectionSym = 0;
   DwarfAbbrevDWOSectionSym = DwarfStrDWOSectionSym = 0;
   FunctionBeginSym = FunctionEndSym = 0;
 
@@ -1740,9 +1741,12 @@ void DwarfDebug::emitSectionLabels() {
   emitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
   DwarfStrSectionSym =
     emitSectionSym(Asm, TLOF.getDwarfStrSection(), "info_string");
-  if (useSplitDwarf())
+  if (useSplitDwarf()) {
     DwarfStrDWOSectionSym =
       emitSectionSym(Asm, TLOF.getDwarfStrDWOSection(), "skel_string");
+    DwarfAddrSectionSym =
+      emitSectionSym(Asm, TLOF.getDwarfAddrSection(), "addr_sec");
+  }
   DwarfDebugRangeSectionSym = emitSectionSym(Asm, TLOF.getDwarfRangesSection(),
                                              "debug_range");
 
@@ -2510,9 +2514,13 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
   // This should be a unique identifier when we want to build .dwp files.
   NewCU->addUInt(Die, dwarf::DW_AT_GNU_dwo_id, dwarf::DW_FORM_data8, 0);
 
-  // FIXME: The addr base should be relative for each compile unit, however,
-  // this one is going to be 0 anyhow.
-  NewCU->addUInt(Die, dwarf::DW_AT_GNU_addr_base, dwarf::DW_FORM_sec_offset, 0);
+  // Relocate to the beginning of the addr_base section, else 0 for the beginning
+  // of the one for this compile unit.
+  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
+    NewCU->addLabel(Die, dwarf::DW_AT_GNU_addr_base, dwarf::DW_FORM_sec_offset,
+                    DwarfAddrSectionSym);
+  else
+    NewCU->addUInt(Die, dwarf::DW_AT_GNU_addr_base, dwarf::DW_FORM_sec_offset, 0);
 
   // 2.17.1 requires that we use DW_AT_low_pc for a single entry point
   // into an entity. We're using 0, or a NULL label for this.
@@ -2520,6 +2528,7 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
 
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section.
+  // FIXME: Should handle multiple compile units.
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
     NewCU->addLabel(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_sec_offset,
                     DwarfLineSectionSym);
