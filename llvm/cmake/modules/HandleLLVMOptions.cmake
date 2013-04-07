@@ -21,6 +21,9 @@ if( LLVM_ENABLE_ASSERTIONS )
   # explicitly undefine it:
   if( uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" )
     add_definitions( -UNDEBUG )
+    # Also remove /D NDEBUG to avoid MSVC warnings about conflicting defines.
+    string (REGEX REPLACE "(^| )[/-]D *NDEBUG($| )" " "
+      CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
   endif()
 else()
   if( NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" )
