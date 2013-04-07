@@ -157,20 +157,10 @@ namespace {
   };
 }
 
-static bool is64BitLoadCommand(const MachOObject *MachOObj, DataRefImpl DRI) {
-  LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
-  if (LCI.Command.Type == macho::LCT_Segment64)
-    return true;
-  assert(LCI.Command.Type == macho::LCT_Segment && "Unexpected Type.");
-  return false;
-}
-
 static void getSection(const MachOObjectFile *Obj,
                        DataRefImpl DRI,
                        MachOSection &Section) {
-  const MachOObject *MachOObj = Obj->getObject();
-
-  if (is64BitLoadCommand(MachOObj, DRI)) {
+  if (Obj->is64Bit()) {
     const MachOFormat::Section64 *Sect = Obj->getSection64(DRI);
 
     Section.Address     = Sect->Address;
@@ -200,8 +190,7 @@ static void getSection(const MachOObjectFile *Obj,
 static void getSymbol(const MachOObjectFile *Obj,
                       DataRefImpl DRI,
                       MachOSymbol &Symbol) {
-  const MachOObject *MachOObj = Obj->getObject();
-  if (MachOObj->is64Bit()) {
+  if (Obj->is64Bit()) {
     const MachOFormat::Symbol64TableEntry *Entry =
       Obj->getSymbol64TableEntry( DRI);
     Symbol.StringIndex  = Entry->StringIndex;

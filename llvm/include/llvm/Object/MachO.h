@@ -160,6 +160,7 @@ public:
     getSymbol64TableEntry(DataRefImpl DRI) const;
   const MachOFormat::SymbolTableEntry *
     getSymbolTableEntry(DataRefImpl DRI) const;
+  bool is64Bit() const;
 
   const MachOObject *getObject() const { return MachOObj.get(); }
 

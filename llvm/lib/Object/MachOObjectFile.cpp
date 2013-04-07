@@ -41,6 +41,9 @@ MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, MachOObject *MOO,
   }
 }
 
+bool MachOObjectFile::is64Bit() const {
+  return MachOObj->is64Bit();
+}
 
 ObjectFile *ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer) {
   error_code ec;
