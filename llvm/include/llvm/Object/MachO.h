@@ -161,8 +161,9 @@ public:
   const MachOFormat::SymbolTableEntry *
     getSymbolTableEntry(DataRefImpl DRI) const;
   bool is64Bit() const;
-
-  const MachOObject *getObject() const { return MachOObj.get(); }
+  const LoadCommandInfo &getLoadCommandInfo(unsigned Index) const;
+  void ReadULEB128s(uint64_t Index, SmallVectorImpl<uint64_t> &Out) const;
+  const macho::Header &getHeader() const;
 
   static inline bool classof(const Binary *v) {
     return v->isMachO();

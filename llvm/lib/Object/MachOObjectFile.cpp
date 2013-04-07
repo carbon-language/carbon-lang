@@ -45,6 +45,20 @@ bool MachOObjectFile::is64Bit() const {
   return MachOObj->is64Bit();
 }
 
+const LoadCommandInfo &
+MachOObjectFile::getLoadCommandInfo(unsigned Index) const {
+  return MachOObj->getLoadCommandInfo(Index);
+}
+
+void MachOObjectFile::ReadULEB128s(uint64_t Index,
+                                   SmallVectorImpl<uint64_t> &Out) const {
+  return MachOObj->ReadULEB128s(Index, Out);
+}
+
+const macho::Header &MachOObjectFile::getHeader() const {
+  return MachOObj->getHeader();
+}
+
 ObjectFile *ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer) {
   error_code ec;
   std::string Err;
