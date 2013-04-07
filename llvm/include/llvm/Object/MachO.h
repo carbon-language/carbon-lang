@@ -165,6 +165,8 @@ public:
   const MachOFormat::LoadCommand *getLoadCommandInfo(unsigned Index) const;
   void ReadULEB128s(uint64_t Index, SmallVectorImpl<uint64_t> &Out) const;
   const macho::Header &getHeader() const;
+  unsigned getHeaderSize() const;
+  StringRef getData(size_t Offset, size_t Size) const;
 
   static inline bool classof(const Binary *v) {
     return v->isMachO();
