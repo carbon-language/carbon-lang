@@ -1337,6 +1337,7 @@ let mayLoad = 1 in
 def RESTORE_VRSAVE : Pseudo<(outs VRSAVERC:$vrsave), (ins memri:$F),
                      "#RESTORE_VRSAVE", []>;
 
+let neverHasSideEffects = 1 in {
 def MTCRF : XFXForm_5<31, 144, (outs crbitm:$FXM), (ins GPRC:$rS),
                       "mtcrf $FXM, $rS", BrMCRX>,
             PPC970_MicroCode, PPC970_Unit_CRU;
@@ -1355,14 +1356,20 @@ let isCodeGenOnly = 1 in
 def MFCRpseud: XFXForm_3<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
                        "#MFCRpseud", SprMFCR>,
             PPC970_MicroCode, PPC970_Unit_CRU;
-            
-def MFCR : XFXForm_3<31, 19, (outs GPRC:$rT), (ins),
-                     "mfcr $rT", SprMFCR>,
-                     PPC970_MicroCode, PPC970_Unit_CRU;
 
 def MFOCRF: XFXForm_5a<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
                        "mfocrf $rT, $FXM", SprMFCR>,
             PPC970_DGroup_First, PPC970_Unit_CRU;
+} // neverHasSideEffects = 1
+
+// MFCR uses all CR registers, but marking that explicitly causes 
+// problems because some of them appear to be undefined. Because
+// this form is used only in prologue code, just mark it as having
+// side effects.
+let /* Uses = [CR0, CR1, CR2, CR3, CR4, CR5, CR6] */ hasSideEffects = 1 in
+def MFCR : XFXForm_3<31, 19, (outs GPRC:$rT), (ins),
+                     "mfcr $rT", SprMFCR>,
+                     PPC970_MicroCode, PPC970_Unit_CRU;
 
 // Pseudo instruction to perform FADD in round-to-zero mode.
 let usesCustomInserter = 1, Uses = [RM] in {
