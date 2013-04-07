@@ -2189,8 +2189,7 @@ ELFObjectFile<ELFT>::ELFObjectFile(MemoryBuffer *Object, error_code &ec)
   : ObjectFile(getELFType(
       static_cast<endianness>(ELFT::TargetEndianness) == support::little,
       ELFT::Is64Bits),
-      Object,
-      ec)
+      Object)
   , isDyldELFObject(false)
   , SectionHeaderTable(0)
   , dot_shstrtab_sec(0)

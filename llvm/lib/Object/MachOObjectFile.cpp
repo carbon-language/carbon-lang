@@ -29,7 +29,7 @@ namespace object {
 
 MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, MachOObject *MOO,
                                  error_code &ec)
-    : ObjectFile(Binary::ID_MachO, Object, ec),
+    : ObjectFile(Binary::ID_MachO, Object),
       MachOObj(MOO) {
   DataRefImpl DRI;
   moveToNextSection(DRI);

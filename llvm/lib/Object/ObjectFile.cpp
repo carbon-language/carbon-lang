@@ -23,7 +23,7 @@ using namespace object;
 
 void ObjectFile::anchor() { }
 
-ObjectFile::ObjectFile(unsigned int Type, MemoryBuffer *source, error_code &ec)
+ObjectFile::ObjectFile(unsigned int Type, MemoryBuffer *source)
   : Binary(Type, source) {
 }
 

@@ -276,7 +276,7 @@ class ObjectFile : public Binary {
   ObjectFile(const ObjectFile &other) LLVM_DELETED_FUNCTION;
 
 protected:
-  ObjectFile(unsigned int Type, MemoryBuffer *source, error_code &ec);
+  ObjectFile(unsigned int Type, MemoryBuffer *source);
 
   const uint8_t *base() const {
     return reinterpret_cast<const uint8_t *>(Data->getBufferStart());
