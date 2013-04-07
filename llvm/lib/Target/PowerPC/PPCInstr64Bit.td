@@ -495,6 +495,7 @@ def MULLD : XOForm_1<31, 233, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
                      [(set i64:$rT, (mul i64:$rA, i64:$rB))]>, isPPC64;
 
 
+let neverHasSideEffects = 1 in {
 let isCommutable = 1 in {
 def RLDIMI : MDForm_1<30, 3,
                       (outs G8RC:$rA), (ins G8RC:$rSi, G8RC:$rS, u6imm:$SH, u6imm:$MB),
@@ -522,11 +523,12 @@ def RLWINM8 : MForm_2<21,
                      "rlwinm $rA, $rS, $SH, $MB, $ME", IntGeneral,
                      []>;
 
-let isSelect = 1, neverHasSideEffects = 1 in
+let isSelect = 1 in
 def ISEL8   : AForm_4<31, 15,
                      (outs G8RC:$rT), (ins G8RC_NOX0:$rA, G8RC:$rB, CRBITRC:$cond),
                      "isel $rT, $rA, $rB, $cond", IntGeneral,
                      []>;
+}  // neverHasSideEffects = 1
 }  // End FXU Operations.
 
 
