@@ -27,10 +27,23 @@ using namespace object;
 namespace llvm {
 namespace object {
 
-MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, MachOObject *MOO,
-                                 error_code &ec)
-    : ObjectFile(Binary::ID_MachO, Object),
-      MachOObj(MOO) {
+MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, error_code &ec)
+    : ObjectFile(Binary::ID_MachO, Object) {
+  // MachOObject takes ownership of the Buffer we passed to it, and
+  // MachOObjectFile does, too, so we need to make sure they don't get the
+  // same object. A MemoryBuffer is cheap (it's just a reference to memory,
+  // not a copy of the memory itself), so just make a new copy here for
+  // the MachOObjectFile.
+  MemoryBuffer *NewBuffer =
+    MemoryBuffer::getMemBuffer(Object->getBuffer(),
+                               Object->getBufferIdentifier(), false);
+  std::string ErrorStr;
+  MachOObj.reset(MachOObject::LoadFromBuffer(NewBuffer, &ErrorStr));
+  if (!MachOObj) {
+    ec = object_error::parse_failed;
+    return;
+  }
+
   DataRefImpl DRI;
   moveToNextSection(DRI);
   uint32_t LoadCommandCount = MachOObj->getHeader().NumLoadCommands;
@@ -61,19 +74,10 @@ const macho::Header &MachOObjectFile::getHeader() const {
 
 ObjectFile *ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer) {
   error_code ec;
-  std::string Err;
-  MachOObject *MachOObj = MachOObject::LoadFromBuffer(Buffer, &Err);
-  if (!MachOObj)
+  ObjectFile *Ret = new MachOObjectFile(Buffer, ec);
+  if (ec)
     return NULL;
-  // MachOObject takes ownership of the Buffer we passed to it, and
-  // MachOObjectFile does, too, so we need to make sure they don't get the
-  // same object. A MemoryBuffer is cheap (it's just a reference to memory,
-  // not a copy of the memory itself), so just make a new copy here for
-  // the MachOObjectFile.
-  MemoryBuffer *NewBuffer =
-    MemoryBuffer::getMemBuffer(Buffer->getBuffer(),
-                               Buffer->getBufferIdentifier(), false);
-  return new MachOObjectFile(NewBuffer, MachOObj, ec);
+  return Ret;
 }
 
 /*===-- Symbols -----------------------------------------------------------===*/
