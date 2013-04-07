@@ -117,28 +117,33 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
   // Loads.  These don't map directly to GCC builtins because they represent the
   // source address with a single pointer.
   def int_ppc_altivec_lvx :
-              Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], [IntrReadMem]>;
+              Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], [IntrReadArgMem]>;
   def int_ppc_altivec_lvxl :
-              Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], [IntrReadMem]>;
+              Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], [IntrReadArgMem]>;
   def int_ppc_altivec_lvebx :
-              Intrinsic<[llvm_v16i8_ty], [llvm_ptr_ty], [IntrReadMem]>;
+              Intrinsic<[llvm_v16i8_ty], [llvm_ptr_ty], [IntrReadArgMem]>;
   def int_ppc_altivec_lvehx :
-              Intrinsic<[llvm_v8i16_ty], [llvm_ptr_ty], [IntrReadMem]>;
+              Intrinsic<[llvm_v8i16_ty], [llvm_ptr_ty], [IntrReadArgMem]>;
   def int_ppc_altivec_lvewx :
-              Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], [IntrReadMem]>;
+              Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], [IntrReadArgMem]>;
 
   // Stores.  These don't map directly to GCC builtins because they represent the
   // source address with a single pointer.
   def int_ppc_altivec_stvx :
-              Intrinsic<[], [llvm_v4i32_ty, llvm_ptr_ty], []>;
+              Intrinsic<[], [llvm_v4i32_ty, llvm_ptr_ty],
+                        [IntrReadWriteArgMem]>;
   def int_ppc_altivec_stvxl :
-              Intrinsic<[], [llvm_v4i32_ty, llvm_ptr_ty], []>;
+              Intrinsic<[], [llvm_v4i32_ty, llvm_ptr_ty],
+                        [IntrReadWriteArgMem]>;
   def int_ppc_altivec_stvebx :
-              Intrinsic<[], [llvm_v16i8_ty, llvm_ptr_ty], []>;
+              Intrinsic<[], [llvm_v16i8_ty, llvm_ptr_ty],
+                        [IntrReadWriteArgMem]>;
   def int_ppc_altivec_stvehx :
-              Intrinsic<[], [llvm_v8i16_ty, llvm_ptr_ty], []>;
+              Intrinsic<[], [llvm_v8i16_ty, llvm_ptr_ty],
+                        [IntrReadWriteArgMem]>;
   def int_ppc_altivec_stvewx :
-              Intrinsic<[], [llvm_v4i32_ty, llvm_ptr_ty], []>;
+              Intrinsic<[], [llvm_v4i32_ty, llvm_ptr_ty],
+                        [IntrReadWriteArgMem]>;
 
   // Comparisons setting a vector.
   def int_ppc_altivec_vcmpbfp : GCCBuiltin<"__builtin_altivec_vcmpbfp">,
