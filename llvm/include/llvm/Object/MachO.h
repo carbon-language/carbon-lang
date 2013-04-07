@@ -129,14 +129,6 @@ namespace MachOFormat {
 
 class MachOObjectFile : public ObjectFile {
 public:
-  struct LoadCommandInfo {
-    /// The load command information.
-    const MachOFormat::LoadCommand *Command;
-
-    /// The offset to the start of the load command in memory.
-    uint64_t Offset;
-  };
-
   MachOObjectFile(MemoryBuffer *Object, error_code &ec);
 
   virtual symbol_iterator begin_symbols() const;
@@ -163,8 +155,6 @@ public:
   ArrayRef<char> getSectionRawName(DataRefImpl Sec) const;
   ArrayRef<char>getSectionRawFinalSegmentName(DataRefImpl Sec) const;
 
-  const MachOFormat::LinkeditDataLoadCommand *
-    getLinkeditDataLoadCommand(LoadCommandInfo LCI) const;
   const MachOFormat::Section64 *getSection64(DataRefImpl DRI) const;
   const MachOFormat::Section *getSection(DataRefImpl DRI) const;
   const MachOFormat::Symbol64TableEntry *
@@ -172,7 +162,7 @@ public:
   const MachOFormat::SymbolTableEntry *
     getSymbolTableEntry(DataRefImpl DRI) const;
   bool is64Bit() const;
-  LoadCommandInfo getLoadCommandInfo(unsigned Index) const;
+  const MachOFormat::LoadCommand *getLoadCommandInfo(unsigned Index) const;
   void ReadULEB128s(uint64_t Index, SmallVectorImpl<uint64_t> &Out) const;
   const macho::Header &getHeader() const;
 
@@ -251,12 +241,6 @@ private:
 
   void moveToNextSymbol(DataRefImpl &DRI) const;
   const MachOFormat::RelocationEntry *getRelocation(DataRefImpl Rel) const;
-  const MachOFormat::SymtabLoadCommand *
-    getSymtabLoadCommand(LoadCommandInfo LCI) const;
-  const MachOFormat::SegmentLoadCommand *
-    getSegmentLoadCommand(LoadCommandInfo LCI) const;
-  const MachOFormat::Segment64LoadCommand *
-    getSegment64LoadCommand(LoadCommandInfo LCI) const;
   std::size_t getSectionIndex(DataRefImpl Sec) const;
 
   void printRelocationTargetName(const MachOFormat::RelocationEntry *RE,

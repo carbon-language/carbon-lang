@@ -58,7 +58,7 @@ bool MachOObjectFile::is64Bit() const {
   return MachOObj->is64Bit();
 }
 
-MachOObjectFile::LoadCommandInfo
+const MachOFormat::LoadCommand *
 MachOObjectFile::getLoadCommandInfo(unsigned Index) const {
   uint64_t Offset;
   uint64_t NewOffset = MachOObj->getHeaderSize();
@@ -73,8 +73,7 @@ MachOObjectFile::getLoadCommandInfo(unsigned Index) const {
     ++I;
   } while (I != Index + 1);
 
-  LoadCommandInfo Ret = {Load, Offset};
-  return Ret;
+  return Load;
 }
 
 void MachOObjectFile::ReadULEB128s(uint64_t Index,
@@ -96,43 +95,13 @@ ObjectFile *ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer) {
 
 /*===-- Symbols -----------------------------------------------------------===*/
 
-const MachOFormat::SymtabLoadCommand *
-MachOObjectFile::getSymtabLoadCommand(LoadCommandInfo LCI) const {
-  StringRef Data = MachOObj->getData(LCI.Offset,
-                                     sizeof(MachOFormat::SymtabLoadCommand));
-  return reinterpret_cast<const MachOFormat::SymtabLoadCommand*>(Data.data());
-}
-
-const MachOFormat::SegmentLoadCommand *
-MachOObjectFile::getSegmentLoadCommand(LoadCommandInfo LCI) const {
-  StringRef Data = MachOObj->getData(LCI.Offset,
-                                     sizeof(MachOFormat::SegmentLoadCommand));
-  return reinterpret_cast<const MachOFormat::SegmentLoadCommand*>(Data.data());
-}
-
-const MachOFormat::LinkeditDataLoadCommand *
-MachOObjectFile::getLinkeditDataLoadCommand(LoadCommandInfo LCI) const {
-  StringRef Data = MachOObj->getData(LCI.Offset,
-                                  sizeof(MachOFormat::LinkeditDataLoadCommand));
-  return
-    reinterpret_cast<const MachOFormat::LinkeditDataLoadCommand*>(Data.data());
-}
-
-const MachOFormat::Segment64LoadCommand *
-MachOObjectFile::getSegment64LoadCommand(LoadCommandInfo LCI) const {
-  StringRef Data = MachOObj->getData(LCI.Offset,
-                                     sizeof(MachOFormat::Segment64LoadCommand));
-  return
-    reinterpret_cast<const MachOFormat::Segment64LoadCommand*>(Data.data());
-}
-
 void MachOObjectFile::moveToNextSymbol(DataRefImpl &DRI) const {
   uint32_t LoadCommandCount = MachOObj->getHeader().NumLoadCommands;
   while (DRI.d.a < LoadCommandCount) {
-    LoadCommandInfo LCI = getLoadCommandInfo(DRI.d.a);
-    if (LCI.Command->Type == macho::LCT_Symtab) {
+    const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
+    if (Command->Type == macho::LCT_Symtab) {
       const MachOFormat::SymtabLoadCommand *SymtabLoadCmd =
-        getSymtabLoadCommand(LCI);
+        reinterpret_cast<const MachOFormat::SymtabLoadCommand*>(Command);
       if (DRI.d.b < SymtabLoadCmd->NumSymbolTableEntries)
         return;
     }
@@ -144,9 +113,9 @@ void MachOObjectFile::moveToNextSymbol(DataRefImpl &DRI) const {
 
 const MachOFormat::SymbolTableEntry *
 MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI) const {
-  LoadCommandInfo LCI = getLoadCommandInfo(DRI.d.a);
+  const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
   const MachOFormat::SymtabLoadCommand *SymtabLoadCmd =
-    getSymtabLoadCommand(LCI);
+    reinterpret_cast<const MachOFormat::SymtabLoadCommand*>(Command);
 
   return getSymbolTableEntry(DRI, SymtabLoadCmd);
 }
@@ -165,9 +134,9 @@ MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI,
 
 const MachOFormat::Symbol64TableEntry*
 MachOObjectFile::getSymbol64TableEntry(DataRefImpl DRI) const {
-  LoadCommandInfo LCI = getLoadCommandInfo(DRI.d.a);
+  const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
   const MachOFormat::SymtabLoadCommand *SymtabLoadCmd =
-    getSymtabLoadCommand(LCI);
+    reinterpret_cast<const MachOFormat::SymtabLoadCommand*>(Command);
 
   return getSymbol64TableEntry(DRI, SymtabLoadCmd);
 }
@@ -194,9 +163,9 @@ error_code MachOObjectFile::getSymbolNext(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSymbolName(DataRefImpl DRI,
                                           StringRef &Result) const {
-  LoadCommandInfo LCI = getLoadCommandInfo(DRI.d.a);
+  const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
   const MachOFormat::SymtabLoadCommand *SymtabLoadCmd =
-    getSymtabLoadCommand(LCI);
+    reinterpret_cast<const MachOFormat::SymtabLoadCommand*>(Command);
 
   StringRef StringTable =
     MachOObj->getData(SymtabLoadCmd->StringTableOffset,
@@ -492,15 +461,15 @@ StringRef MachOObjectFile::getLoadName() const {
 void MachOObjectFile::moveToNextSection(DataRefImpl &DRI) const {
   uint32_t LoadCommandCount = MachOObj->getHeader().NumLoadCommands;
   while (DRI.d.a < LoadCommandCount) {
-    LoadCommandInfo LCI = getLoadCommandInfo(DRI.d.a);
-    if (LCI.Command->Type == macho::LCT_Segment) {
+    const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
+    if (Command->Type == macho::LCT_Segment) {
       const MachOFormat::SegmentLoadCommand *SegmentLoadCmd =
-        getSegmentLoadCommand(LCI);
+        reinterpret_cast<const MachOFormat::SegmentLoadCommand*>(Command);
       if (DRI.d.b < SegmentLoadCmd->NumSections)
         return;
-    } else if (LCI.Command->Type == macho::LCT_Segment64) {
+    } else if (Command->Type == macho::LCT_Segment64) {
       const MachOFormat::Segment64LoadCommand *Segment64LoadCmd =
-        getSegment64LoadCommand(LCI);
+        reinterpret_cast<const MachOFormat::Segment64LoadCommand*>(Command);
       if (DRI.d.b < Segment64LoadCmd->NumSections)
         return;
     }
@@ -520,21 +489,21 @@ error_code MachOObjectFile::getSectionNext(DataRefImpl DRI,
 
 static bool is64BitLoadCommand(const MachOObjectFile *MachOObj,
                                DataRefImpl DRI) {
-  MachOObjectFile::LoadCommandInfo LCI =
+  const MachOFormat::LoadCommand *Command =
     MachOObj->getLoadCommandInfo(DRI.d.a);
-  if (LCI.Command->Type == macho::LCT_Segment64)
+  if (Command->Type == macho::LCT_Segment64)
     return true;
-  assert(LCI.Command->Type == macho::LCT_Segment && "Unexpected Type.");
+  assert(Command->Type == macho::LCT_Segment && "Unexpected Type.");
   return false;
 }
 
 const MachOFormat::Section *MachOObjectFile::getSection(DataRefImpl DRI) const {
   assert(!is64BitLoadCommand(this, DRI));
-  LoadCommandInfo LCI = getLoadCommandInfo(DRI.d.a);
-  unsigned SectionOffset = LCI.Offset + sizeof(macho::SegmentLoadCommand) +
+  const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
+  uintptr_t CommandAddr = reinterpret_cast<uintptr_t>(Command);
+  uintptr_t SectionAddr = CommandAddr + sizeof(macho::SegmentLoadCommand) +
     DRI.d.b * sizeof(MachOFormat::Section);
-  StringRef Data = MachOObj->getData(SectionOffset, sizeof(MachOFormat::Section));
-  return reinterpret_cast<const MachOFormat::Section*>(Data.data());
+  return reinterpret_cast<const MachOFormat::Section*>(SectionAddr);
 }
 
 std::size_t MachOObjectFile::getSectionIndex(DataRefImpl Sec) const {
@@ -547,11 +516,11 @@ std::size_t MachOObjectFile::getSectionIndex(DataRefImpl Sec) const {
 const MachOFormat::Section64 *
 MachOObjectFile::getSection64(DataRefImpl DRI) const {
   assert(is64BitLoadCommand(this, DRI));
-  LoadCommandInfo LCI = getLoadCommandInfo(DRI.d.a);
-  unsigned SectionOffset = LCI.Offset + sizeof(macho::Segment64LoadCommand) +
+  const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
+  uintptr_t CommandAddr = reinterpret_cast<uintptr_t>(Command);
+  uintptr_t SectionAddr = CommandAddr + sizeof(macho::Segment64LoadCommand) +
     DRI.d.b * sizeof(MachOFormat::Section64);
-  StringRef Data = MachOObj->getData(SectionOffset, sizeof(MachOFormat::Section64));
-  return reinterpret_cast<const MachOFormat::Section64*>(Data.data());
+  return reinterpret_cast<const MachOFormat::Section64*>(SectionAddr);
 }
 
 static StringRef parseSegmentOrSectionName(const char *P) {

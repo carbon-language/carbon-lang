@@ -218,12 +218,12 @@ static void getSectionsAndSymbols(const macho::Header &Header,
   }
 
   for (unsigned i = 0; i != Header.NumLoadCommands; ++i) {
-    MachOObjectFile::LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(i);
-    if (LCI.Command->Type == macho::LCT_FunctionStarts) {
+    const MachOFormat::LoadCommand *Command = MachOObj->getLoadCommandInfo(i);
+    if (Command->Type == macho::LCT_FunctionStarts) {
       // We found a function starts segment, parse the addresses for later
       // consumption.
       const MachOFormat::LinkeditDataLoadCommand *LLC =
-        MachOObj->getLinkeditDataLoadCommand(LCI);
+        reinterpret_cast<const MachOFormat::LinkeditDataLoadCommand*>(Command);
 
       MachOObj->ReadULEB128s(LLC->DataOffset, FoundFns);
     }
