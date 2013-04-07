@@ -86,7 +86,7 @@ const MachOFormat::Header *MachOObjectFile::getHeader() const {
 }
 
 unsigned MachOObjectFile::getHeaderSize() const {
-  return MachOObj->getHeaderSize();
+  return is64Bit() ? macho::Header64Size : macho::Header32Size;
 }
 
 StringRef MachOObjectFile::getData(size_t Offset, size_t Size) const {
