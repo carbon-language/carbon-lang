@@ -1201,6 +1201,7 @@ let Uses = [RM] in {
 /// often coalesced away and we don't want the dispatch group builder to think
 /// that they will fill slots (which could cause the load of a LSU reject to
 /// sneak into a d-group with a store).
+let neverHasSideEffects = 1 in
 def FMR   : XForm_26<63, 72, (outs F4RC:$frD), (ins F4RC:$frB),
                      "fmr $frD, $frB", FPGeneral,
                      []>,  // (set f32:$frD, f32:$frB)
