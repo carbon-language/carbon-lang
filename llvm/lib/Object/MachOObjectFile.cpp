@@ -115,7 +115,7 @@ MachOObjectFile::getSegment64LoadCommand(LoadCommandInfo LCI) const {
 void MachOObjectFile::moveToNextSymbol(DataRefImpl &DRI) const {
   uint32_t LoadCommandCount = MachOObj->getHeader().NumLoadCommands;
   while (DRI.d.a < LoadCommandCount) {
-    LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
+    LoadCommandInfo LCI = getLoadCommandInfo(DRI.d.a);
     if (LCI.Command.Type == macho::LCT_Symtab) {
       const MachOFormat::SymtabLoadCommand *SymtabLoadCmd =
         getSymtabLoadCommand(LCI);
@@ -130,7 +130,7 @@ void MachOObjectFile::moveToNextSymbol(DataRefImpl &DRI) const {
 
 const MachOFormat::SymbolTableEntry *
 MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI) const {
-  LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
+  LoadCommandInfo LCI = getLoadCommandInfo(DRI.d.a);
   const MachOFormat::SymtabLoadCommand *SymtabLoadCmd =
     getSymtabLoadCommand(LCI);
 
@@ -151,7 +151,7 @@ MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI,
 
 const MachOFormat::Symbol64TableEntry*
 MachOObjectFile::getSymbol64TableEntry(DataRefImpl DRI) const {
-  LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
+  LoadCommandInfo LCI = getLoadCommandInfo(DRI.d.a);
   const MachOFormat::SymtabLoadCommand *SymtabLoadCmd =
     getSymtabLoadCommand(LCI);
 
@@ -180,7 +180,7 @@ error_code MachOObjectFile::getSymbolNext(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSymbolName(DataRefImpl DRI,
                                           StringRef &Result) const {
-  LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
+  LoadCommandInfo LCI = getLoadCommandInfo(DRI.d.a);
   const MachOFormat::SymtabLoadCommand *SymtabLoadCmd =
     getSymtabLoadCommand(LCI);
 
@@ -478,7 +478,7 @@ StringRef MachOObjectFile::getLoadName() const {
 void MachOObjectFile::moveToNextSection(DataRefImpl &DRI) const {
   uint32_t LoadCommandCount = MachOObj->getHeader().NumLoadCommands;
   while (DRI.d.a < LoadCommandCount) {
-    LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
+    LoadCommandInfo LCI = getLoadCommandInfo(DRI.d.a);
     if (LCI.Command.Type == macho::LCT_Segment) {
       const MachOFormat::SegmentLoadCommand *SegmentLoadCmd =
         getSegmentLoadCommand(LCI);
@@ -504,7 +504,8 @@ error_code MachOObjectFile::getSectionNext(DataRefImpl DRI,
   return object_error::success;
 }
 
-static bool is64BitLoadCommand(const MachOObject *MachOObj, DataRefImpl DRI) {
+static bool is64BitLoadCommand(const MachOObjectFile *MachOObj,
+                               DataRefImpl DRI) {
   LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
   if (LCI.Command.Type == macho::LCT_Segment64)
     return true;
@@ -513,8 +514,8 @@ static bool is64BitLoadCommand(const MachOObject *MachOObj, DataRefImpl DRI) {
 }
 
 const MachOFormat::Section *MachOObjectFile::getSection(DataRefImpl DRI) const {
-  assert(!is64BitLoadCommand(MachOObj.get(), DRI));
-  LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
+  assert(!is64BitLoadCommand(this, DRI));
+  LoadCommandInfo LCI = getLoadCommandInfo(DRI.d.a);
   unsigned SectionOffset = LCI.Offset + sizeof(macho::SegmentLoadCommand) +
     DRI.d.b * sizeof(MachOFormat::Section);
   StringRef Data = MachOObj->getData(SectionOffset, sizeof(MachOFormat::Section));
@@ -530,8 +531,8 @@ std::size_t MachOObjectFile::getSectionIndex(DataRefImpl Sec) const {
 
 const MachOFormat::Section64 *
 MachOObjectFile::getSection64(DataRefImpl DRI) const {
-  assert(is64BitLoadCommand(MachOObj.get(), DRI));
-  LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
+  assert(is64BitLoadCommand(this, DRI));
+  LoadCommandInfo LCI = getLoadCommandInfo(DRI.d.a);
   unsigned SectionOffset = LCI.Offset + sizeof(macho::Segment64LoadCommand) +
     DRI.d.b * sizeof(MachOFormat::Section64);
   StringRef Data = MachOObj->getData(SectionOffset, sizeof(MachOFormat::Section64));
@@ -547,7 +548,7 @@ static StringRef parseSegmentOrSectionName(const char *P) {
 }
 
 ArrayRef<char> MachOObjectFile::getSectionRawName(DataRefImpl DRI) const {
-  if (is64BitLoadCommand(MachOObj.get(), DRI)) {
+  if (is64BitLoadCommand(this, DRI)) {
     const MachOFormat::Section64 *sec = getSection64(DRI);
     return ArrayRef<char>(sec->Name);
   } else {
@@ -565,7 +566,7 @@ error_code MachOObjectFile::getSectionName(DataRefImpl DRI,
 
 ArrayRef<char>
 MachOObjectFile::getSectionRawFinalSegmentName(DataRefImpl Sec) const {
-  if (is64BitLoadCommand(MachOObj.get(), Sec)) {
+  if (is64BitLoadCommand(this, Sec)) {
     const MachOFormat::Section64 *sec = getSection64(Sec);
     return ArrayRef<char>(sec->SegmentName, 16);
   } else {
@@ -581,7 +582,7 @@ StringRef MachOObjectFile::getSectionFinalSegmentName(DataRefImpl DRI) const {
 
 error_code MachOObjectFile::getSectionAddress(DataRefImpl DRI,
                                               uint64_t &Result) const {
-  if (is64BitLoadCommand(MachOObj.get(), DRI)) {
+  if (is64BitLoadCommand(this, DRI)) {
     const MachOFormat::Section64 *Sect = getSection64(DRI);
     Result = Sect->Address;
   } else {
@@ -593,7 +594,7 @@ error_code MachOObjectFile::getSectionAddress(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSectionSize(DataRefImpl DRI,
                                            uint64_t &Result) const {
-  if (is64BitLoadCommand(MachOObj.get(), DRI)) {
+  if (is64BitLoadCommand(this, DRI)) {
     const MachOFormat::Section64 *Sect = getSection64(DRI);
     Result = Sect->Size;
   } else {
@@ -605,7 +606,7 @@ error_code MachOObjectFile::getSectionSize(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSectionContents(DataRefImpl DRI,
                                                StringRef &Result) const {
-  if (is64BitLoadCommand(MachOObj.get(), DRI)) {
+  if (is64BitLoadCommand(this, DRI)) {
     const MachOFormat::Section64 *Sect = getSection64(DRI);
     Result = MachOObj->getData(Sect->Offset, Sect->Size);
   } else {
@@ -617,7 +618,7 @@ error_code MachOObjectFile::getSectionContents(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSectionAlignment(DataRefImpl DRI,
                                                 uint64_t &Result) const {
-  if (is64BitLoadCommand(MachOObj.get(), DRI)) {
+  if (is64BitLoadCommand(this, DRI)) {
     const MachOFormat::Section64 *Sect = getSection64(DRI);
     Result = uint64_t(1) << Sect->Align;
   } else {
@@ -629,7 +630,7 @@ error_code MachOObjectFile::getSectionAlignment(DataRefImpl DRI,
 
 error_code MachOObjectFile::isSectionText(DataRefImpl DRI,
                                           bool &Result) const {
-  if (is64BitLoadCommand(MachOObj.get(), DRI)) {
+  if (is64BitLoadCommand(this, DRI)) {
     const MachOFormat::Section64 *Sect = getSection64(DRI);
     Result = Sect->Flags & macho::SF_PureInstructions;
   } else {
@@ -730,7 +731,7 @@ relocation_iterator MachOObjectFile::getSectionRelBegin(DataRefImpl Sec) const {
 }
 relocation_iterator MachOObjectFile::getSectionRelEnd(DataRefImpl Sec) const {
   uint32_t last_reloc;
-  if (is64BitLoadCommand(MachOObj.get(), Sec)) {
+  if (is64BitLoadCommand(this, Sec)) {
     const MachOFormat::Section64 *Sect = getSection64(Sec);
     last_reloc = Sect->NumRelocationTableEntries;
   } else {
