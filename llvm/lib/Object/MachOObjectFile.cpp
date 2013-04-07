@@ -46,7 +46,7 @@ MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, error_code &ec)
 
   DataRefImpl DRI;
   moveToNextSection(DRI);
-  uint32_t LoadCommandCount = getHeader().NumLoadCommands;
+  uint32_t LoadCommandCount = getHeader()->NumLoadCommands;
   while (DRI.d.a < LoadCommandCount) {
     Sections.push_back(DRI);
     DRI.d.b++;
@@ -80,8 +80,9 @@ void MachOObjectFile::ReadULEB128s(uint64_t Index,
   return MachOObj->ReadULEB128s(Index, Out);
 }
 
-const macho::Header &MachOObjectFile::getHeader() const {
-  return MachOObj->getHeader();
+const MachOFormat::Header *MachOObjectFile::getHeader() const {
+  StringRef Data = getData(0, sizeof(MachOFormat::Header));
+  return reinterpret_cast<const MachOFormat::Header*>(Data.data());
 }
 
 unsigned MachOObjectFile::getHeaderSize() const {
@@ -103,7 +104,7 @@ ObjectFile *ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer) {
 /*===-- Symbols -----------------------------------------------------------===*/
 
 void MachOObjectFile::moveToNextSymbol(DataRefImpl &DRI) const {
-  uint32_t LoadCommandCount = getHeader().NumLoadCommands;
+  uint32_t LoadCommandCount = getHeader()->NumLoadCommands;
   while (DRI.d.a < LoadCommandCount) {
     const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
     if (Command->Type == macho::LCT_Symtab) {
@@ -229,7 +230,7 @@ error_code MachOObjectFile::getSymbolAddress(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
                                           uint64_t &Result) const {
-  uint32_t LoadCommandCount = getHeader().NumLoadCommands;
+  uint32_t LoadCommandCount = getHeader()->NumLoadCommands;
   uint64_t BeginOffset;
   uint64_t EndOffset = 0;
   uint8_t SectionIndex;
@@ -431,7 +432,7 @@ symbol_iterator MachOObjectFile::begin_symbols() const {
 
 symbol_iterator MachOObjectFile::end_symbols() const {
   DataRefImpl DRI;
-  DRI.d.a = getHeader().NumLoadCommands;
+  DRI.d.a = getHeader()->NumLoadCommands;
   return symbol_iterator(SymbolRef(DRI, this));
 }
 
@@ -463,7 +464,7 @@ StringRef MachOObjectFile::getLoadName() const {
 /*===-- Sections ----------------------------------------------------------===*/
 
 void MachOObjectFile::moveToNextSection(DataRefImpl &DRI) const {
-  uint32_t LoadCommandCount = getHeader().NumLoadCommands;
+  uint32_t LoadCommandCount = getHeader()->NumLoadCommands;
   while (DRI.d.a < LoadCommandCount) {
     const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
     if (Command->Type == macho::LCT_Segment) {
@@ -740,7 +741,7 @@ section_iterator MachOObjectFile::begin_sections() const {
 
 section_iterator MachOObjectFile::end_sections() const {
   DataRefImpl DRI;
-  DRI.d.a = getHeader().NumLoadCommands;
+  DRI.d.a = getHeader()->NumLoadCommands;
   return section_iterator(SectionRef(DRI, this));
 }
 
@@ -816,7 +817,7 @@ error_code MachOObjectFile::getRelocationSymbol(DataRefImpl Rel,
     for (unsigned i = 0; i < SymbolIdx; i++) {
       Sym.d.b++;
       moveToNextSymbol(Sym);
-      assert(Sym.d.a < getHeader().NumLoadCommands &&
+      assert(Sym.d.a < getHeader()->NumLoadCommands &&
              "Relocation symbol index out of range!");
     }
   }
@@ -1300,7 +1301,7 @@ uint8_t MachOObjectFile::getBytesInAddress() const {
 
 StringRef MachOObjectFile::getFileFormatName() const {
   if (!is64Bit()) {
-    switch (getHeader().CPUType) {
+    switch (getHeader()->CPUType) {
     case llvm::MachO::CPUTypeI386:
       return "Mach-O 32-bit i386";
     case llvm::MachO::CPUTypeARM:
@@ -1308,18 +1309,18 @@ StringRef MachOObjectFile::getFileFormatName() const {
     case llvm::MachO::CPUTypePowerPC:
       return "Mach-O 32-bit ppc";
     default:
-      assert((getHeader().CPUType & llvm::MachO::CPUArchABI64) == 0 &&
+      assert((getHeader()->CPUType & llvm::MachO::CPUArchABI64) == 0 &&
              "64-bit object file when we're not 64-bit?");
       return "Mach-O 32-bit unknown";
     }
   }
 
   // Make sure the cpu type has the correct mask.
-  assert((getHeader().CPUType & llvm::MachO::CPUArchABI64)
+  assert((getHeader()->CPUType & llvm::MachO::CPUArchABI64)
 	 == llvm::MachO::CPUArchABI64 &&
 	 "32-bit object file when we're 64-bit?");
 
-  switch (getHeader().CPUType) {
+  switch (getHeader()->CPUType) {
   case llvm::MachO::CPUTypeX86_64:
     return "Mach-O 64-bit x86-64";
   case llvm::MachO::CPUTypePowerPC64:
@@ -1330,7 +1331,7 @@ StringRef MachOObjectFile::getFileFormatName() const {
 }
 
 unsigned MachOObjectFile::getArch() const {
-  switch (getHeader().CPUType) {
+  switch (getHeader()->CPUType) {
   case llvm::MachO::CPUTypeI386:
     return Triple::x86;
   case llvm::MachO::CPUTypeX86_64:

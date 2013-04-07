@@ -56,7 +56,7 @@ static const Target *GetTarget(const MachOObjectFile *MachOObj) {
   // Figure out the target triple.
   if (TripleName.empty()) {
     llvm::Triple TT("unknown-unknown-unknown");
-    switch (MachOObj->getHeader().CPUType) {
+    switch (MachOObj->getHeader()->CPUType) {
     case llvm::MachO::CPUTypeI386:
       TT.setArch(Triple::ArchType(Triple::x86));
       break;
@@ -199,7 +199,7 @@ static void emitDOTFile(const char *FileName, const MCFunction &f,
   Out << "}\n";
 }
 
-static void getSectionsAndSymbols(const macho::Header &Header,
+static void getSectionsAndSymbols(const MachOFormat::Header *Header,
                                   MachOObjectFile *MachOObj,
                                   std::vector<SectionRef> &Sections,
                                   std::vector<SymbolRef> &Symbols,
@@ -217,7 +217,7 @@ static void getSectionsAndSymbols(const macho::Header &Header,
     Sections.push_back(*SI);
   }
 
-  for (unsigned i = 0; i != Header.NumLoadCommands; ++i) {
+  for (unsigned i = 0; i != Header->NumLoadCommands; ++i) {
     const MachOFormat::LoadCommand *Command = MachOObj->getLoadCommandInfo(i);
     if (Command->Type == macho::LCT_FunctionStarts) {
       // We found a function starts segment, parse the addresses for later
@@ -269,7 +269,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
 
   outs() << '\n' << Filename << ":\n\n";
 
-  const macho::Header &Header = MachOOF->getHeader();
+  const MachOFormat::Header *Header = MachOOF->getHeader();
 
   std::vector<SectionRef> Sections;
   std::vector<SymbolRef> Symbols;

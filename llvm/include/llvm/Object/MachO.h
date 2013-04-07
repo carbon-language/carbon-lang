@@ -125,6 +125,16 @@ namespace MachOFormat {
     support::ulittle32_t DataOffset;
     support::ulittle32_t DataSize;
   };
+
+  struct Header {
+    support::ulittle32_t Magic;
+    support::ulittle32_t CPUType;
+    support::ulittle32_t CPUSubtype;
+    support::ulittle32_t FileType;
+    support::ulittle32_t NumLoadCommands;
+    support::ulittle32_t SizeOfLoadCommands;
+    support::ulittle32_t Flags;
+  };
 }
 
 class MachOObjectFile : public ObjectFile {
@@ -164,7 +174,7 @@ public:
   bool is64Bit() const;
   const MachOFormat::LoadCommand *getLoadCommandInfo(unsigned Index) const;
   void ReadULEB128s(uint64_t Index, SmallVectorImpl<uint64_t> &Out) const;
-  const macho::Header &getHeader() const;
+  const MachOFormat::Header *getHeader() const;
   unsigned getHeaderSize() const;
   StringRef getData(size_t Offset, size_t Size) const;
 
