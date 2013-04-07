@@ -55,7 +55,8 @@ MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, error_code &ec)
 }
 
 bool MachOObjectFile::is64Bit() const {
-  return MachOObj->is64Bit();
+  StringRef Magic = getData(0, 4);
+  return (Magic == "\xFE\xED\xFA\xCF") || (Magic == "\xCF\xFA\xED\xFE");
 }
 
 const MachOFormat::LoadCommand *
