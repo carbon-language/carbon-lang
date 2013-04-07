@@ -1245,6 +1245,7 @@ def FRSQRTES : XForm_26<59, 26, (outs F4RC:$frD), (ins F4RC:$frB),
 
 // XL-Form instructions.  condition register logical ops.
 //
+let neverHasSideEffects = 1 in
 def MCRF   : XLForm_3<19, 0, (outs CRRC:$BF), (ins CRRC:$BFA),
                       "mcrf $BF, $BFA", BrMCR>,
              PPC970_DGroup_First, PPC970_Unit_CRU;
