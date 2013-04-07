@@ -75,6 +75,14 @@ MachOObjectFile::getSegmentLoadCommand(LoadCommandInfo LCI) const {
   return reinterpret_cast<const MachOFormat::SegmentLoadCommand*>(Data.data());
 }
 
+const MachOFormat::LinkeditDataLoadCommand *
+MachOObjectFile::getLinkeditDataLoadCommand(LoadCommandInfo LCI) const {
+  StringRef Data = MachOObj->getData(LCI.Offset,
+                                  sizeof(MachOFormat::LinkeditDataLoadCommand));
+  return
+    reinterpret_cast<const MachOFormat::LinkeditDataLoadCommand*>(Data.data());
+}
+
 const MachOFormat::Segment64LoadCommand *
 MachOObjectFile::getSegment64LoadCommand(LoadCommandInfo LCI) const {
   StringRef Data = MachOObj->getData(LCI.Offset,

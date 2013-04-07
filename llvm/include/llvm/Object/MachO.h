@@ -113,6 +113,13 @@ namespace MachOFormat {
     support::ulittle32_t NumSections;
     support::ulittle32_t Flags;
   };
+
+  struct LinkeditDataLoadCommand {
+    support::ulittle32_t Type;
+    support::ulittle32_t Size;
+    support::ulittle32_t DataOffset;
+    support::ulittle32_t DataSize;
+  };
 }
 
 typedef MachOObject::LoadCommandInfo LoadCommandInfo;
@@ -144,6 +151,9 @@ public:
   // interpreting them as a C string.
   ArrayRef<char> getSectionRawName(DataRefImpl Sec) const;
   ArrayRef<char>getSectionRawFinalSegmentName(DataRefImpl Sec) const;
+
+  const MachOFormat::LinkeditDataLoadCommand *
+    getLinkeditDataLoadCommand(LoadCommandInfo LCI) const;
 
   MachOObject *getObject() { return MachOObj.get(); }
 

@@ -223,8 +223,8 @@ static void getSectionsAndSymbols(const macho::Header &Header,
     if (LCI.Command.Type == macho::LCT_FunctionStarts) {
       // We found a function starts segment, parse the addresses for later
       // consumption.
-      InMemoryStruct<macho::LinkeditDataLoadCommand> LLC;
-      MachOObj->getObject()->ReadLinkeditDataLoadCommand(LCI, LLC);
+      const MachOFormat::LinkeditDataLoadCommand *LLC =
+        MachOObj->getLinkeditDataLoadCommand(LCI);
 
       MachOObj->getObject()->ReadULEB128s(LLC->DataOffset, FoundFns);
     }
