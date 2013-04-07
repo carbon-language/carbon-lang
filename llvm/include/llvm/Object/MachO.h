@@ -77,6 +77,11 @@ namespace MachOFormat {
     support::ulittle64_t Value;
   };
 
+  struct LoadCommand {
+    support::ulittle32_t Type;
+    support::ulittle32_t Size;
+  };
+
   struct SymtabLoadCommand {
     support::ulittle32_t Type;
     support::ulittle32_t Size;
@@ -122,10 +127,16 @@ namespace MachOFormat {
   };
 }
 
-typedef MachOObject::LoadCommandInfo LoadCommandInfo;
-
 class MachOObjectFile : public ObjectFile {
 public:
+  struct LoadCommandInfo {
+    /// The load command information.
+    const MachOFormat::LoadCommand *Command;
+
+    /// The offset to the start of the load command in memory.
+    uint64_t Offset;
+  };
+
   MachOObjectFile(MemoryBuffer *Object, error_code &ec);
 
   virtual symbol_iterator begin_symbols() const;
@@ -161,7 +172,7 @@ public:
   const MachOFormat::SymbolTableEntry *
     getSymbolTableEntry(DataRefImpl DRI) const;
   bool is64Bit() const;
-  const LoadCommandInfo &getLoadCommandInfo(unsigned Index) const;
+  LoadCommandInfo getLoadCommandInfo(unsigned Index) const;
   void ReadULEB128s(uint64_t Index, SmallVectorImpl<uint64_t> &Out) const;
   const macho::Header &getHeader() const;
 

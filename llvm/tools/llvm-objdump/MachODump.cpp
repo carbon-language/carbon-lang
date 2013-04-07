@@ -218,8 +218,8 @@ static void getSectionsAndSymbols(const macho::Header &Header,
   }
 
   for (unsigned i = 0; i != Header.NumLoadCommands; ++i) {
-    const MachOObject::LoadCommandInfo &LCI = MachOObj->getLoadCommandInfo(i);
-    if (LCI.Command.Type == macho::LCT_FunctionStarts) {
+    MachOObjectFile::LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(i);
+    if (LCI.Command->Type == macho::LCT_FunctionStarts) {
       // We found a function starts segment, parse the addresses for later
       // consumption.
       const MachOFormat::LinkeditDataLoadCommand *LLC =
