@@ -91,7 +91,7 @@ unsigned MachOObjectFile::getHeaderSize() const {
 }
 
 StringRef MachOObjectFile::getData(size_t Offset, size_t Size) const {
-  return MachOObj->getData(Offset, Size);
+  return ObjectFile::getData().substr(Offset, Size);
 }
 
 ObjectFile *ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer) {
