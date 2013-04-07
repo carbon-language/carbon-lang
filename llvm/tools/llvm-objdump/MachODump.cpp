@@ -273,23 +273,6 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
 
   const macho::Header &Header = MachOObj->getHeader();
 
-  const MachOObject::LoadCommandInfo *SymtabLCI = 0;
-  // First, find the symbol table segment.
-  for (unsigned i = 0; i != Header.NumLoadCommands; ++i) {
-    const MachOObject::LoadCommandInfo &LCI = MachOObj->getLoadCommandInfo(i);
-    if (LCI.Command.Type == macho::LCT_Symtab) {
-      SymtabLCI = &LCI;
-      break;
-    }
-  }
-
-  // Read and register the symbol table data.
-  InMemoryStruct<macho::SymtabLoadCommand> SymtabLC;
-  if (SymtabLCI) {
-    MachOObj->ReadSymtabLoadCommand(*SymtabLCI, SymtabLC);
-    MachOObj->RegisterStringTable(*SymtabLC);
-  }
-
   std::vector<SectionRef> Sections;
   std::vector<SymbolRef> Symbols;
   SmallVector<uint64_t, 8> FoundFns;
