@@ -113,7 +113,7 @@ entry:
 define %shifttype32i32 @shift32i32(%shifttype32i32 %a, %shifttype32i32 %b) {
 entry:
   ; SSE2: shift32i32
-  ; SSE2: cost of 256 {{.*}} lshr
+  ; SSE2: cost of 320 {{.*}} lshr
   ; SSE2-CODEGEN: shift32i32
   ; SSE2-CODEGEN: shrl %cl
 
@@ -173,7 +173,7 @@ entry:
 define %shifttype32i64 @shift32i64(%shifttype32i64 %a, %shifttype32i64 %b) {
 entry:
   ; SSE2: shift32i64
-  ; SSE2: cost of 256 {{.*}} lshr
+  ; SSE2: cost of 320 {{.*}} lshr
   ; SSE2-CODEGEN: shift32i64
   ; SSE2-CODEGEN: shrq %cl
 
@@ -372,8 +372,7 @@ entry:
 define %shifttypec32i32 @shift32i32c(%shifttypec32i32 %a, %shifttypec32i32 %b) {
 entry:
   ; SSE2: shift32i32c
-  ; getTypeConversion fails here and promotes this to a i64.
-  ; SSE2: cost of 256 {{.*}} lshr
+  ; SSE2: cost of 8 {{.*}} lshr
   ; SSE2-CODEGEN: shift32i32c
   ; SSE2-CODEGEN: psrld $3
   %0 = lshr %shifttypec32i32 %a , <i32 3, i32 3, i32 3, i32 3,
@@ -443,7 +442,7 @@ entry:
 define %shifttypec32i64 @shift32i64c(%shifttypec32i64 %a, %shifttypec32i64 %b) {
 entry:
   ; SSE2: shift32i64c
-  ; SSE2: cost of 256 {{.*}} lshr
+  ; SSE2: cost of 16 {{.*}} lshr
   ; SSE2-CODEGEN: shift32i64c
   ; SSE2-CODEGEN: psrlq $3
 

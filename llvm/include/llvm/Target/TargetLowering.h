@@ -1523,6 +1523,7 @@ public:
       // or until the element integer type is too big. If a legal type was not
       // found, fallback to the usual mechanism of widening/splitting the
       // vector.
+      EVT OldEltVT = EltVT;
       while (1) {
         // Increase the bitwidth of the element to the next pow-of-two
         // (which is greater than 8 bits).
@@ -1541,6 +1542,10 @@ public:
           return LegalizeKind(TypePromoteInteger,
                               EVT::getVectorVT(Context, EltVT, NumElts));
       }
+
+      // Reset the type to the unexpanded type if we did not find a legal vector
+      // type with a promoted vector element type.
+      EltVT = OldEltVT;
     }
 
     // Try to widen the vector until a legal type is found.
