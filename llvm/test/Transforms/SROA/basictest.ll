@@ -1243,3 +1243,66 @@ entry:
   %v = load i32* %a
   ret i32 %v
 }
+
+define void @PR15674(i8* %data, i8* %src, i32 %size) {
+; Arrange (via control flow) to have unmerged stores of a particular width to
+; an alloca where we incrementally store from the end of the array toward the
+; beginning of the array. Ensure that the final integer store, despite being
+; convertable to the integer type that we end up promoting this alloca toward,
+; doesn't get widened to a full alloca store.
+; CHECK: @PR15674
+
+entry:
+  %tmp = alloca [4 x i8], align 1
+; CHECK: alloca i32
+
+  switch i32 %size, label %end [
+    i32 4, label %bb4
+    i32 3, label %bb3
+    i32 2, label %bb2
+    i32 1, label %bb1
+  ]
+
+bb4:
+  %src.gep3 = getelementptr inbounds i8* %src, i32 3
+  %src.3 = load i8* %src.gep3
+  %tmp.gep3 = getelementptr inbounds [4 x i8]* %tmp, i32 0, i32 3
+  store i8 %src.3, i8* %tmp.gep3
+; CHECK: store i8
+
+  br label %bb3
+
+bb3:
+  %src.gep2 = getelementptr inbounds i8* %src, i32 2
+  %src.2 = load i8* %src.gep2
+  %tmp.gep2 = getelementptr inbounds [4 x i8]* %tmp, i32 0, i32 2
+  store i8 %src.2, i8* %tmp.gep2
+; CHECK: store i8
+
+  br label %bb2
+
+bb2:
+  %src.gep1 = getelementptr inbounds i8* %src, i32 1
+  %src.1 = load i8* %src.gep1
+  %tmp.gep1 = getelementptr inbounds [4 x i8]* %tmp, i32 0, i32 1
+  store i8 %src.1, i8* %tmp.gep1
+; CHECK: store i8
+
+  br label %bb1
+
+bb1:
+  %src.gep0 = getelementptr inbounds i8* %src, i32 0
+  %src.0 = load i8* %src.gep0
+  %tmp.gep0 = getelementptr inbounds [4 x i8]* %tmp, i32 0, i32 0
+  store i8 %src.0, i8* %tmp.gep0
+; CHECK: store i8
+
+  br label %end
+
+end:
+  %tmp.raw = bitcast [4 x i8]* %tmp to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %data, i8* %tmp.raw, i32 %size, i32 1, i1 false)
+  ret void
+; CHECK: ret void
+}
+

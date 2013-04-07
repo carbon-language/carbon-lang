@@ -2671,6 +2671,7 @@ private:
 
     StoreInst *NewSI;
     if (BeginOffset == NewAllocaBeginOffset &&
+        EndOffset == NewAllocaEndOffset &&
         canConvertValue(TD, V->getType(), NewAllocaTy)) {
       V = convertValue(TD, IRB, V, NewAllocaTy);
       NewSI = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment(),
