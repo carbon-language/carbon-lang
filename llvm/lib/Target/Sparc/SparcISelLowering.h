@@ -95,6 +95,10 @@ namespace llvm {
     virtual SDValue
       LowerCall(TargetLowering::CallLoweringInfo &CLI,
                 SmallVectorImpl<SDValue> &InVals) const;
+    SDValue LowerCall_32(TargetLowering::CallLoweringInfo &CLI,
+                         SmallVectorImpl<SDValue> &InVals) const;
+    SDValue LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
+                         SmallVectorImpl<SDValue> &InVals) const;
 
     virtual SDValue
       LowerReturn(SDValue Chain,
