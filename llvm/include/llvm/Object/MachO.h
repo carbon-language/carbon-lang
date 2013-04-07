@@ -155,7 +155,7 @@ public:
   const MachOFormat::LinkeditDataLoadCommand *
     getLinkeditDataLoadCommand(LoadCommandInfo LCI) const;
 
-  MachOObject *getObject() { return MachOObj.get(); }
+  const MachOObject *getObject() const { return MachOObj.get(); }
 
   static inline bool classof(const Binary *v) {
     return v->isMachO();

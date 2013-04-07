@@ -254,7 +254,7 @@ void MachODumper::printSections() {
 
     ++SectionIndex;
 
-    const MachOObject *MachO = const_cast<MachOObjectFile*>(Obj)->getObject();
+    const MachOObject *MachO = Obj->getObject();
 
     MachOSection Section;
     getSection(MachO, SecI->getRawDataRefImpl(), Section);

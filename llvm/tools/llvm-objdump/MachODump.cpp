@@ -108,7 +108,7 @@ struct SymbolSorter {
 
 // Print additional information about an address, if available.
 static void DumpAddress(uint64_t Address, ArrayRef<SectionRef> Sections,
-                        MachOObject *MachOObj, raw_ostream &OS) {
+                        const MachOObject *MachOObj, raw_ostream &OS) {
   for (unsigned i = 0; i != Sections.size(); ++i) {
     uint64_t SectAddr = 0, SectSize = 0;
     Sections[i].getAddress(SectAddr);
@@ -241,7 +241,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
 
   OwningPtr<MachOObjectFile> MachOOF(static_cast<MachOObjectFile*>(
         ObjectFile::createMachOObjectFile(Buff.take())));
-  MachOObject *MachOObj = MachOOF->getObject();
+  const MachOObject *MachOObj = MachOOF->getObject();
 
   const Target *TheTarget = GetTarget(MachOObj);
   if (!TheTarget) {
