@@ -15,6 +15,7 @@
 #include "llvm/Object/MachO.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Object/MachOFormat.h"
+#include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cctype>
@@ -29,21 +30,6 @@ namespace object {
 
 MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, error_code &ec)
     : ObjectFile(Binary::ID_MachO, Object) {
-  // MachOObject takes ownership of the Buffer we passed to it, and
-  // MachOObjectFile does, too, so we need to make sure they don't get the
-  // same object. A MemoryBuffer is cheap (it's just a reference to memory,
-  // not a copy of the memory itself), so just make a new copy here for
-  // the MachOObjectFile.
-  MemoryBuffer *NewBuffer =
-    MemoryBuffer::getMemBuffer(Object->getBuffer(),
-                               Object->getBufferIdentifier(), false);
-  std::string ErrorStr;
-  MachOObj.reset(MachOObject::LoadFromBuffer(NewBuffer, &ErrorStr));
-  if (!MachOObj) {
-    ec = object_error::parse_failed;
-    return;
-  }
-
   DataRefImpl DRI;
   moveToNextSection(DRI);
   uint32_t LoadCommandCount = getHeader()->NumLoadCommands;
@@ -78,7 +64,14 @@ MachOObjectFile::getLoadCommandInfo(unsigned Index) const {
 
 void MachOObjectFile::ReadULEB128s(uint64_t Index,
                                    SmallVectorImpl<uint64_t> &Out) const {
-  return MachOObj->ReadULEB128s(Index, Out);
+  DataExtractor extractor(ObjectFile::getData(), true, 0);
+
+  uint32_t offset = Index;
+  uint64_t data = 0;
+  while (uint64_t delta = extractor.getULEB128(&offset)) {
+    data += delta;
+    Out.push_back(data);
+  }
 }
 
 const MachOFormat::Header *MachOObjectFile::getHeader() const {

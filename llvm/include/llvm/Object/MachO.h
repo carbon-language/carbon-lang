@@ -236,7 +236,6 @@ protected:
   virtual error_code getLibraryPath(DataRefImpl LibData, StringRef &Res) const;
 
 private:
-  OwningPtr<MachOObject> MachOObj;
   typedef SmallVector<DataRefImpl, 1> SectionList;
   SectionList Sections;
 
