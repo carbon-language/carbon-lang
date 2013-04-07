@@ -197,38 +197,20 @@ static void getSection(const MachOObjectFile *Obj,
   }
 }
 
-static void getSymbolTableEntry(const MachOObject *MachO,
-                                DataRefImpl DRI,
-                                InMemoryStruct<macho::SymbolTableEntry> &Res) {
-  InMemoryStruct<macho::SymtabLoadCommand> SymtabLoadCmd;
-  LoadCommandInfo LCI = MachO->getLoadCommandInfo(DRI.d.a);
-  MachO->ReadSymtabLoadCommand(LCI, SymtabLoadCmd);
-  MachO->ReadSymbolTableEntry(SymtabLoadCmd->SymbolTableOffset, DRI.d.b, Res);
-}
-
-static void getSymbol64TableEntry(const MachOObject *MachO,
-                                  DataRefImpl DRI,
-                               InMemoryStruct<macho::Symbol64TableEntry> &Res) {
-  InMemoryStruct<macho::SymtabLoadCommand> SymtabLoadCmd;
-  LoadCommandInfo LCI = MachO->getLoadCommandInfo(DRI.d.a);
-  MachO->ReadSymtabLoadCommand(LCI, SymtabLoadCmd);
-  MachO->ReadSymbol64TableEntry(SymtabLoadCmd->SymbolTableOffset, DRI.d.b, Res);
-}
-
-static void getSymbol(const MachOObject *MachOObj,
+static void getSymbol(const MachOObjectFile *Obj,
                       DataRefImpl DRI,
                       MachOSymbol &Symbol) {
+  const MachOObject *MachOObj = Obj->getObject();
   if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Symbol64TableEntry> Entry;
-    getSymbol64TableEntry(MachOObj, DRI, Entry);
+    const MachOFormat::Symbol64TableEntry *Entry =
+      Obj->getSymbol64TableEntry( DRI);
     Symbol.StringIndex  = Entry->StringIndex;
     Symbol.Type         = Entry->Type;
     Symbol.SectionIndex = Entry->SectionIndex;
     Symbol.Flags        = Entry->Flags;
     Symbol.Value        = Entry->Value;
   } else {
-    InMemoryStruct<macho::SymbolTableEntry> Entry;
-    getSymbolTableEntry(MachOObj, DRI, Entry);
+    const MachOFormat::SymbolTableEntry *Entry = Obj->getSymbolTableEntry(DRI);
     Symbol.StringIndex  = Entry->StringIndex;
     Symbol.Type         = Entry->Type;
     Symbol.SectionIndex = Entry->SectionIndex;
@@ -397,10 +379,8 @@ void MachODumper::printSymbol(symbol_iterator SymI) {
   if (SymI->getName(SymbolName))
     SymbolName = "";
 
-  const MachOObject *MachO = const_cast<MachOObjectFile*>(Obj)->getObject();
-
   MachOSymbol Symbol;
-  getSymbol(MachO, SymI->getRawDataRefImpl(), Symbol);
+  getSymbol(Obj, SymI->getRawDataRefImpl(), Symbol);
 
   StringRef SectionName;
   section_iterator SecI(Obj->end_sections());

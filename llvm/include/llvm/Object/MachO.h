@@ -156,6 +156,10 @@ public:
     getLinkeditDataLoadCommand(LoadCommandInfo LCI) const;
   const MachOFormat::Section64 *getSection64(DataRefImpl DRI) const;
   const MachOFormat::Section *getSection(DataRefImpl DRI) const;
+  const MachOFormat::Symbol64TableEntry *
+    getSymbol64TableEntry(DataRefImpl DRI) const;
+  const MachOFormat::SymbolTableEntry *
+    getSymbolTableEntry(DataRefImpl DRI) const;
 
   const MachOObject *getObject() const { return MachOObj.get(); }
 
@@ -225,14 +229,8 @@ private:
   void moveToNextSection(DataRefImpl &DRI) const;
 
   const MachOFormat::SymbolTableEntry *
-  getSymbolTableEntry(DataRefImpl DRI) const;
-
-  const MachOFormat::SymbolTableEntry *
   getSymbolTableEntry(DataRefImpl DRI,
                      const MachOFormat::SymtabLoadCommand *SymtabLoadCmd) const;
-
-  const MachOFormat::Symbol64TableEntry *
-  getSymbol64TableEntry(DataRefImpl DRI) const;
 
   const MachOFormat::Symbol64TableEntry *
   getSymbol64TableEntry(DataRefImpl DRI,
