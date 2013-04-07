@@ -154,6 +154,8 @@ public:
 
   const MachOFormat::LinkeditDataLoadCommand *
     getLinkeditDataLoadCommand(LoadCommandInfo LCI) const;
+  const MachOFormat::Section64 *getSection64(DataRefImpl DRI) const;
+  const MachOFormat::Section *getSection(DataRefImpl DRI) const;
 
   const MachOObject *getObject() const { return MachOObj.get(); }
 
@@ -237,8 +239,6 @@ private:
                      const MachOFormat::SymtabLoadCommand *SymtabLoadCmd) const;
 
   void moveToNextSymbol(DataRefImpl &DRI) const;
-  const MachOFormat::Section *getSection(DataRefImpl DRI) const;
-  const MachOFormat::Section64 *getSection64(DataRefImpl DRI) const;
   const MachOFormat::RelocationEntry *getRelocation(DataRefImpl Rel) const;
   const MachOFormat::SymtabLoadCommand *
     getSymtabLoadCommand(LoadCommandInfo LCI) const;

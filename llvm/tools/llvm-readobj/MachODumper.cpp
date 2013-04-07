@@ -165,13 +165,13 @@ static bool is64BitLoadCommand(const MachOObject *MachOObj, DataRefImpl DRI) {
   return false;
 }
 
-static void getSection(const MachOObject *MachOObj,
+static void getSection(const MachOObjectFile *Obj,
                        DataRefImpl DRI,
                        MachOSection &Section) {
-  LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
+  const MachOObject *MachOObj = Obj->getObject();
+
   if (is64BitLoadCommand(MachOObj, DRI)) {
-    InMemoryStruct<macho::Section64> Sect;
-    MachOObj->ReadSection64(LCI, DRI.d.b, Sect);
+    const MachOFormat::Section64 *Sect = Obj->getSection64(DRI);
 
     Section.Address     = Sect->Address;
     Section.Size        = Sect->Size;
@@ -183,8 +183,7 @@ static void getSection(const MachOObject *MachOObj,
     Section.Reserved1   = Sect->Reserved1;
     Section.Reserved2   = Sect->Reserved2;
   } else {
-    InMemoryStruct<macho::Section> Sect;
-    MachOObj->ReadSection(LCI, DRI.d.b, Sect);
+    const MachOFormat::Section *Sect = Obj->getSection(DRI);
 
     Section.Address     = Sect->Address;
     Section.Size        = Sect->Size;
@@ -254,10 +253,8 @@ void MachODumper::printSections() {
 
     ++SectionIndex;
 
-    const MachOObject *MachO = Obj->getObject();
-
     MachOSection Section;
-    getSection(MachO, SecI->getRawDataRefImpl(), Section);
+    getSection(Obj, SecI->getRawDataRefImpl(), Section);
     DataRefImpl DR = SecI->getRawDataRefImpl();
 
     StringRef Name;
