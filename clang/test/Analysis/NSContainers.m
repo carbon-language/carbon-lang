@@ -127,13 +127,13 @@ void testNilArgNSMutableDictionary3(NSMutableDictionary *d) {
 }
 
 void testNilArgNSMutableDictionary5(NSMutableDictionary *d, NSString* key) {
-  d[key] = 0; // expected-warning {{Value stored in 'NSMutableDictionary' cannot be nil}}
+  d[key] = 0; // expected-warning {{Value stored into 'NSMutableDictionary' cannot be nil}}
 }
 void testNilArgNSMutableDictionary6(NSMutableDictionary *d, NSString *key) {
   if (key)
     ;
   d[key] = 0; // expected-warning {{'NSMutableDictionary' key cannot be nil}}
-  // expected-warning@-1 {{Value stored in 'NSMutableDictionary' cannot be nil}}
+  // expected-warning@-1 {{Value stored into 'NSMutableDictionary' cannot be nil}}
 }
 
 NSDictionary *testNilArgNSDictionary1(NSString* key) {

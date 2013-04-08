@@ -124,7 +124,7 @@ void NilArgChecker::WarnIfNilArg(CheckerContext &C,
         os << "Array element cannot be nil";
       } else if (Class == FC_NSDictionary) {
         if (Arg == 0) {
-          os << "Value stored in '";
+          os << "Value stored into '";
           os << GetReceiverInterfaceName(msg) << "' cannot be nil";
         } else {
           assert(Arg == 1);
