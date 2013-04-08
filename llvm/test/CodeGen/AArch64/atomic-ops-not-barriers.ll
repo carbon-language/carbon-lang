@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
 
 define i32 @foo(i32* %var, i1 %cond) {
 ; CHECK: foo:
@@ -9,7 +9,9 @@ simple_ver:
   store i32 %newval, i32* %var
   br label %somewhere
 atomic_ver:
-  %val = atomicrmw add i32* %var, i32 -1 seq_cst
+  fence seq_cst
+  %val = atomicrmw add i32* %var, i32 -1 monotonic
+  fence seq_cst
   br label %somewhere
 ; CHECK: dmb
 ; CHECK: ldxr

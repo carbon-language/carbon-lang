@@ -88,6 +88,8 @@ public:
 
   bool SelectTSTBOperand(SDValue N, SDValue &FixedPos, unsigned RegWidth);
 
+  SDNode *SelectAtomic(SDNode *N, unsigned Op8, unsigned Op16, unsigned Op32, unsigned Op64);
+
   SDNode *TrySelectToMoveImm(SDNode *N);
   SDNode *LowerToFPLitPool(SDNode *Node);
   SDNode *SelectToLitPool(SDNode *N);
@@ -318,6 +320,38 @@ AArch64DAGToDAGISel::SelectTSTBOperand(SDValue N, SDValue &FixedPos,
   return true;
 }
 
+SDNode *AArch64DAGToDAGISel::SelectAtomic(SDNode *Node, unsigned Op8,
+                                          unsigned Op16,unsigned Op32,
+                                          unsigned Op64) {
+  // Mostly direct translation to the given operations, except that we preserve
+  // the AtomicOrdering for use later on.
+  AtomicSDNode *AN = cast<AtomicSDNode>(Node);
+  EVT VT = AN->getMemoryVT();
+
+  unsigned Op;
+  if (VT == MVT::i8)
+    Op = Op8;
+  else if (VT == MVT::i16)
+    Op = Op16;
+  else if (VT == MVT::i32)
+    Op = Op32;
+  else if (VT == MVT::i64)
+    Op = Op64;
+  else
+    llvm_unreachable("Unexpected atomic operation");
+
+  SmallVector<SDValue, 4> Ops;
+  for (unsigned i = 1; i < AN->getNumOperands(); ++i)
+      Ops.push_back(AN->getOperand(i));
+
+  Ops.push_back(CurDAG->getTargetConstant(AN->getOrdering(), MVT::i32));
+  Ops.push_back(AN->getOperand(0)); // Chain moves to the end
+
+  return CurDAG->SelectNodeTo(Node, Op,
+                              AN->getValueType(0), MVT::Other,
+                              &Ops[0], Ops.size());
+}
+
 SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   // Dump information about the Node being selected
   DEBUG(dbgs() << "Selecting: "; Node->dump(CurDAG); dbgs() << "\n");
@@ -328,6 +362,78 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   }
 
   switch (Node->getOpcode()) {
+  case ISD::ATOMIC_LOAD_ADD:
+    return SelectAtomic(Node,
+                        AArch64::ATOMIC_LOAD_ADD_I8,
+                        AArch64::ATOMIC_LOAD_ADD_I16,
+                        AArch64::ATOMIC_LOAD_ADD_I32,
+                        AArch64::ATOMIC_LOAD_ADD_I64);
+  case ISD::ATOMIC_LOAD_SUB:
+    return SelectAtomic(Node,
+                        AArch64::ATOMIC_LOAD_SUB_I8,
+                        AArch64::ATOMIC_LOAD_SUB_I16,
+                        AArch64::ATOMIC_LOAD_SUB_I32,
+                        AArch64::ATOMIC_LOAD_SUB_I64);
+  case ISD::ATOMIC_LOAD_AND:
+    return SelectAtomic(Node,
+                        AArch64::ATOMIC_LOAD_AND_I8,
+                        AArch64::ATOMIC_LOAD_AND_I16,
+                        AArch64::ATOMIC_LOAD_AND_I32,
+                        AArch64::ATOMIC_LOAD_AND_I64);
+  case ISD::ATOMIC_LOAD_OR:
+    return SelectAtomic(Node,
+                        AArch64::ATOMIC_LOAD_OR_I8,
+                        AArch64::ATOMIC_LOAD_OR_I16,
+                        AArch64::ATOMIC_LOAD_OR_I32,
+                        AArch64::ATOMIC_LOAD_OR_I64);
+  case ISD::ATOMIC_LOAD_XOR:
+    return SelectAtomic(Node,
+                        AArch64::ATOMIC_LOAD_XOR_I8,
+                        AArch64::ATOMIC_LOAD_XOR_I16,
+                        AArch64::ATOMIC_LOAD_XOR_I32,
+                        AArch64::ATOMIC_LOAD_XOR_I64);
+  case ISD::ATOMIC_LOAD_NAND:
+    return SelectAtomic(Node,
+                        AArch64::ATOMIC_LOAD_NAND_I8,
+                        AArch64::ATOMIC_LOAD_NAND_I16,
+                        AArch64::ATOMIC_LOAD_NAND_I32,
+                        AArch64::ATOMIC_LOAD_NAND_I64);
+  case ISD::ATOMIC_LOAD_MIN:
+    return SelectAtomic(Node,
+                        AArch64::ATOMIC_LOAD_MIN_I8,
+                        AArch64::ATOMIC_LOAD_MIN_I16,
+                        AArch64::ATOMIC_LOAD_MIN_I32,
+                        AArch64::ATOMIC_LOAD_MIN_I64);
+  case ISD::ATOMIC_LOAD_MAX:
+    return SelectAtomic(Node,
+                        AArch64::ATOMIC_LOAD_MAX_I8,
+                        AArch64::ATOMIC_LOAD_MAX_I16,
+                        AArch64::ATOMIC_LOAD_MAX_I32,
+                        AArch64::ATOMIC_LOAD_MAX_I64);
+  case ISD::ATOMIC_LOAD_UMIN:
+    return SelectAtomic(Node,
+                        AArch64::ATOMIC_LOAD_UMIN_I8,
+                        AArch64::ATOMIC_LOAD_UMIN_I16,
+                        AArch64::ATOMIC_LOAD_UMIN_I32,
+                        AArch64::ATOMIC_LOAD_UMIN_I64);
+  case ISD::ATOMIC_LOAD_UMAX:
+    return SelectAtomic(Node,
+                        AArch64::ATOMIC_LOAD_UMAX_I8,
+                        AArch64::ATOMIC_LOAD_UMAX_I16,
+                        AArch64::ATOMIC_LOAD_UMAX_I32,
+                        AArch64::ATOMIC_LOAD_UMAX_I64);
+  case ISD::ATOMIC_SWAP:
+    return SelectAtomic(Node,
+                        AArch64::ATOMIC_SWAP_I8,
+                        AArch64::ATOMIC_SWAP_I16,
+                        AArch64::ATOMIC_SWAP_I32,
+                        AArch64::ATOMIC_SWAP_I64);
+  case ISD::ATOMIC_CMP_SWAP:
+    return SelectAtomic(Node,
+                        AArch64::ATOMIC_CMP_SWAP_I8,
+                        AArch64::ATOMIC_CMP_SWAP_I16,
+                        AArch64::ATOMIC_CMP_SWAP_I32,
+                        AArch64::ATOMIC_CMP_SWAP_I64);
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(Node)->getIndex();
     EVT PtrTy = TLI.getPointerTy();

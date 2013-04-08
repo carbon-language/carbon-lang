@@ -59,12 +59,9 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
 
   computeRegisterProperties();
 
-  // Some atomic operations can be folded into load-acquire or store-release
-  // instructions on AArch64. It's marginally simpler to let LLVM expand
-  // everything out to a barrier and then recombine the (few) barriers we can.
-  setInsertFencesForAtomic(true);
-  setTargetDAGCombine(ISD::ATOMIC_FENCE);
-  setTargetDAGCombine(ISD::ATOMIC_STORE);
+  // We have particularly efficient implementations of atomic fences if they can
+  // be combined with nearby atomic loads and stores.
+  setShouldFoldAtomicFences(true);
 
   // We combine OR nodes for bitfield and NEON BSL operations.
   setTargetDAGCombine(ISD::OR);
@@ -275,27 +272,34 @@ EVT AArch64TargetLowering::getSetCCResultType(EVT VT) const {
   return VT.changeVectorElementTypeToInteger();
 }
 
-static void getExclusiveOperation(unsigned Size, unsigned &ldrOpc,
-                                  unsigned &strOpc) {
-  switch (Size) {
-  default: llvm_unreachable("unsupported size for atomic binary op!");
-  case 1:
-    ldrOpc = AArch64::LDXR_byte;
-    strOpc = AArch64::STXR_byte;
-    break;
-  case 2:
-    ldrOpc = AArch64::LDXR_hword;
-    strOpc = AArch64::STXR_hword;
-    break;
-  case 4:
-    ldrOpc = AArch64::LDXR_word;
-    strOpc = AArch64::STXR_word;
-    break;
-  case 8:
-    ldrOpc = AArch64::LDXR_dword;
-    strOpc = AArch64::STXR_dword;
-    break;
-  }
+static void getExclusiveOperation(unsigned Size, AtomicOrdering Ord,
+                                  unsigned &LdrOpc,
+                                  unsigned &StrOpc) {
+  static unsigned LoadBares[] = {AArch64::LDXR_byte, AArch64::LDXR_hword,
+                                 AArch64::LDXR_word, AArch64::LDXR_dword};
+  static unsigned LoadAcqs[] = {AArch64::LDAXR_byte, AArch64::LDAXR_hword,
+                                AArch64::LDAXR_word, AArch64::LDAXR_dword};
+  static unsigned StoreBares[] = {AArch64::STXR_byte, AArch64::STXR_hword,
+                                  AArch64::STXR_word, AArch64::STXR_dword};
+  static unsigned StoreRels[] = {AArch64::STLXR_byte, AArch64::STLXR_hword,
+                                 AArch64::STLXR_word, AArch64::STLXR_dword};
+
+  unsigned *LoadOps, *StoreOps;
+  if (Ord == Acquire || Ord == AcquireRelease || Ord == SequentiallyConsistent)
+    LoadOps = LoadAcqs;
+  else
+    LoadOps = LoadBares;
+
+  if (Ord == Release || Ord == AcquireRelease || Ord == SequentiallyConsistent)
+    StoreOps = StoreRels;
+  else
+    StoreOps = StoreBares;
+
+  assert(isPowerOf2_32(Size) && Size <= 8 &&
+         "unsupported size for atomic binary op!");
+
+  LdrOpc = LoadOps[Log2_32(Size)];
+  StrOpc = StoreOps[Log2_32(Size)];
 }
 
 MachineBasicBlock *
@@ -313,12 +317,13 @@ AArch64TargetLowering::emitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   unsigned dest = MI->getOperand(0).getReg();
   unsigned ptr = MI->getOperand(1).getReg();
   unsigned incr = MI->getOperand(2).getReg();
+  AtomicOrdering Ord = static_cast<AtomicOrdering>(MI->getOperand(3).getImm());
   DebugLoc dl = MI->getDebugLoc();
 
   MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
 
   unsigned ldrOpc, strOpc;
-  getExclusiveOperation(Size, ldrOpc, strOpc);
+  getExclusiveOperation(Size, Ord, ldrOpc, strOpc);
 
   MachineBasicBlock *loopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *exitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
@@ -397,6 +402,8 @@ AArch64TargetLowering::emitAtomicBinaryMinMax(MachineInstr *MI,
   unsigned dest = MI->getOperand(0).getReg();
   unsigned ptr = MI->getOperand(1).getReg();
   unsigned incr = MI->getOperand(2).getReg();
+  AtomicOrdering Ord = static_cast<AtomicOrdering>(MI->getOperand(3).getImm());
+
   unsigned oldval = dest;
   DebugLoc dl = MI->getDebugLoc();
 
@@ -411,7 +418,7 @@ AArch64TargetLowering::emitAtomicBinaryMinMax(MachineInstr *MI,
   }
 
   unsigned ldrOpc, strOpc;
-  getExclusiveOperation(Size, ldrOpc, strOpc);
+  getExclusiveOperation(Size, Ord, ldrOpc, strOpc);
 
   MachineBasicBlock *loopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *exitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
@@ -479,6 +486,7 @@ AArch64TargetLowering::emitAtomicCmpSwap(MachineInstr *MI,
   unsigned ptr     = MI->getOperand(1).getReg();
   unsigned oldval  = MI->getOperand(2).getReg();
   unsigned newval  = MI->getOperand(3).getReg();
+  AtomicOrdering Ord = static_cast<AtomicOrdering>(MI->getOperand(4).getImm());
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
 
@@ -487,7 +495,7 @@ AArch64TargetLowering::emitAtomicCmpSwap(MachineInstr *MI,
   TRCsp = Size == 8 ? &AArch64::GPR64xspRegClass : &AArch64::GPR32wspRegClass;
 
   unsigned ldrOpc, strOpc;
-  getExclusiveOperation(Size, ldrOpc, strOpc);
+  getExclusiveOperation(Size, Ord, ldrOpc, strOpc);
 
   MachineFunction *MF = BB->getParent();
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
@@ -2377,78 +2385,6 @@ static SDValue PerformANDCombine(SDNode *N,
                      DAG.getConstant(LSB + Width - 1, MVT::i64));
 }
 
-static SDValue PerformATOMIC_FENCECombine(SDNode *FenceNode,
-                                         TargetLowering::DAGCombinerInfo &DCI) {
-  // An atomic operation followed by an acquiring atomic fence can be reduced to
-  // an acquiring load. The atomic operation provides a convenient pointer to
-  // load from. If the original operation was a load anyway we can actually
-  // combine the two operations into an acquiring load.
-  SelectionDAG &DAG = DCI.DAG;
-  SDValue AtomicOp = FenceNode->getOperand(0);
-  AtomicSDNode *AtomicNode = dyn_cast<AtomicSDNode>(AtomicOp);
-
-  // A fence on its own can't be optimised
-  if (!AtomicNode)
-    return SDValue();
-
-  AtomicOrdering FenceOrder
-    = static_cast<AtomicOrdering>(FenceNode->getConstantOperandVal(1));
-  SynchronizationScope FenceScope
-    = static_cast<SynchronizationScope>(FenceNode->getConstantOperandVal(2));
-
-  if (FenceOrder != Acquire || FenceScope != AtomicNode->getSynchScope())
-    return SDValue();
-
-  // If the original operation was an ATOMIC_LOAD then we'll be replacing it, so
-  // the chain we use should be its input, otherwise we'll put our store after
-  // it so we use its output chain.
-  SDValue Chain = AtomicNode->getOpcode() == ISD::ATOMIC_LOAD ?
-    AtomicNode->getChain() : AtomicOp;
-
-  // We have an acquire fence with a handy atomic operation nearby, we can
-  // convert the fence into a load-acquire, discarding the result.
-  DebugLoc DL = FenceNode->getDebugLoc();
-  SDValue Op = DAG.getAtomic(ISD::ATOMIC_LOAD, DL, AtomicNode->getMemoryVT(),
-                             AtomicNode->getValueType(0),
-                             Chain,                  // Chain
-                             AtomicOp.getOperand(1), // Pointer
-                             AtomicNode->getMemOperand(), Acquire,
-                             FenceScope);
-
-  if (AtomicNode->getOpcode() == ISD::ATOMIC_LOAD)
-    DAG.ReplaceAllUsesWith(AtomicNode, Op.getNode());
-
-  return Op.getValue(1);
-}
-
-static SDValue PerformATOMIC_STORECombine(SDNode *N,
-                                         TargetLowering::DAGCombinerInfo &DCI) {
-  // A releasing atomic fence followed by an atomic store can be combined into a
-  // single store operation.
-  SelectionDAG &DAG = DCI.DAG;
-  AtomicSDNode *AtomicNode = cast<AtomicSDNode>(N);
-  SDValue FenceOp = AtomicNode->getOperand(0);
-
-  if (FenceOp.getOpcode() != ISD::ATOMIC_FENCE)
-    return SDValue();
-
-  AtomicOrdering FenceOrder
-    = static_cast<AtomicOrdering>(FenceOp->getConstantOperandVal(1));
-  SynchronizationScope FenceScope
-    = static_cast<SynchronizationScope>(FenceOp->getConstantOperandVal(2));
-
-  if (FenceOrder != Release || FenceScope != AtomicNode->getSynchScope())
-    return SDValue();
-
-  DebugLoc DL = AtomicNode->getDebugLoc();
-  return DAG.getAtomic(ISD::ATOMIC_STORE, DL, AtomicNode->getMemoryVT(),
-                       FenceOp.getOperand(0),  // Chain
-                       AtomicNode->getOperand(1),       // Pointer
-                       AtomicNode->getOperand(2),       // Value
-                       AtomicNode->getMemOperand(), Release,
-                       FenceScope);
-}
-
 /// For a true bitfield insert, the bits getting into that contiguous mask
 /// should come from the low part of an existing value: they must be formed from
 /// a compatible SHL operation (unless they're already low). This function
@@ -2804,8 +2740,6 @@ AArch64TargetLowering::PerformDAGCombine(SDNode *N,
   switch (N->getOpcode()) {
   default: break;
   case ISD::AND: return PerformANDCombine(N, DCI);
-  case ISD::ATOMIC_FENCE: return PerformATOMIC_FENCECombine(N, DCI);
-  case ISD::ATOMIC_STORE: return PerformATOMIC_STORECombine(N, DCI);
   case ISD::OR: return PerformORCombine(N, DCI, Subtarget);
   case ISD::SRA: return PerformSRACombine(N, DCI);
   }
