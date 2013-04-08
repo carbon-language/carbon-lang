@@ -152,7 +152,7 @@ def InstanceSize  : RecordLikeDetailCommand<"instancesize">;
 def Ownership     : RecordLikeDetailCommand<"ownership">;
 def Performance   : RecordLikeDetailCommand<"performance">;
 def Security      : RecordLikeDetailCommand<"security">;
-def Seealso       : BlockCommand<"seealso">;
+def SeeAlso       : BlockCommand<"seealso">;
 def SuperClass    : RecordLikeDetailCommand<"superclass">;
 
 //===----------------------------------------------------------------------===//
