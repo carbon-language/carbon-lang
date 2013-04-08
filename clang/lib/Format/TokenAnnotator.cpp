@@ -16,6 +16,7 @@
 #include "TokenAnnotator.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
+#include "llvm/Support/Debug.h"
 
 namespace clang {
 namespace format {
@@ -71,12 +72,12 @@ static const AnnotatedToken *getNextToken(const AnnotatedToken &Tok) {
   return NextToken;
 }
 
-static bool closesScope(const AnnotatedToken &Tok) {
+bool closesScope(const AnnotatedToken &Tok) {
   return Tok.isOneOf(tok::r_paren, tok::r_brace, tok::r_square) ||
          Tok.Type == TT_TemplateCloser;
 }
 
-static bool opensScope(const AnnotatedToken &Tok) {
+bool opensScope(const AnnotatedToken &Tok) {
   return Tok.isOneOf(tok::l_paren, tok::l_brace, tok::l_square) ||
          Tok.Type == TT_TemplateOpener;
 }
@@ -782,10 +783,6 @@ public:
     if (Precedence > prec::PointerToMember || Current == NULL)
       return;
 
-    // Skip over "return" until we can properly parse it.
-    if (Current->is(tok::kw_return))
-      next();
-
     // Eagerly consume trailing comments.
     while (isTrailingComment(Current)) {
       next();
@@ -796,14 +793,13 @@ public:
 
     while (Current) {
       // Consume operators with higher precedence.
-      parse(prec::Level(Precedence + 1));
+      parse(Precedence + 1);
 
       int CurrentPrecedence = 0;
       if (Current) {
         if (Current->Type == TT_ConditionalExpr)
           CurrentPrecedence = 1 + (int) prec::Conditional;
-        else if (Current->is(tok::semi) || Current->Type == TT_InlineASMColon ||
-                 Current->Type == TT_CtorInitializerColon)
+        else if (Current->is(tok::semi) || Current->Type == TT_InlineASMColon)
           CurrentPrecedence = 1;
         else if (Current->Type == TT_BinaryOperator || Current->is(tok::comma))
           CurrentPrecedence = 1 + (int) getPrecedence(*Current);
@@ -814,7 +810,7 @@ public:
       if (Current == NULL || closesScope(*Current) ||
           (CurrentPrecedence != 0 && CurrentPrecedence < Precedence)) {
         if (OperatorFound) {
-          ++Start->FakeLParens;
+          Start->FakeLParens.push_back(prec::Level(Precedence - 1));
           if (Current)
             ++Current->Parent->FakeRParens;
         }
@@ -823,16 +819,9 @@ public:
 
       // Consume scopes: (), [], <> and {}
       if (opensScope(*Current)) {
-        AnnotatedToken *Left = Current;
         while (Current && !closesScope(*Current)) {
           next();
           parse();
-        }
-        // Remove fake parens that just duplicate the real parens.
-        if (Current && Left->Children[0].FakeLParens > 0 &&
-            Current->Parent->FakeRParens > 0) {
-          --Left->Children[0].FakeLParens;
-          --Current->Parent->FakeRParens;
         }
         next();
       } else {
@@ -919,6 +908,10 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
 
     Current = Current->Children.empty() ? NULL : &Current->Children[0];
   }
+
+  DEBUG({
+    printDebugInfo(Line);
+  });
 }
 
 unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
@@ -1185,6 +1178,22 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
           Right.isOneOf(tok::identifier, tok::kw___attribute)) ||
          (Left.is(tok::l_paren) && !Right.is(tok::r_paren)) ||
          (Left.is(tok::l_square) && !Right.is(tok::r_square));
+}
+
+void TokenAnnotator::printDebugInfo(const AnnotatedLine &Line) {
+  llvm::errs() << "AnnotatedTokens:\n";
+  const AnnotatedToken *Tok = &Line.First;
+  while (Tok) {
+    llvm::errs() << " M=" << Tok->MustBreakBefore
+                 << " C=" << Tok->CanBreakBefore << " T=" << Tok->Type
+                 << " S=" << Tok->SpacesRequiredBefore
+                 << " Name=" << Tok->FormatTok.Tok.getName() << " FakeLParens=";
+    for (unsigned i = 0, e = Tok->FakeLParens.size(); i != e; ++i)
+      llvm::errs() << Tok->FakeLParens[i] << "/";
+    llvm::errs() << " FakeRParens=" << Tok->FakeRParens << "\n";
+    Tok = Tok->Children.empty() ? NULL : &Tok->Children[0];
+  }
+  llvm::errs() << "----\n";
 }
 
 } // namespace format
