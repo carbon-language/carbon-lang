@@ -16,18 +16,19 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
 
+using namespace llvm;
+
 namespace yaml {  // generic yaml-writing specific routines
 
 unsigned char printable(unsigned char Ch) {
   return Ch >= ' ' && Ch <= '~' ? Ch : '.';
 }
 
-llvm::raw_ostream &writeHexStream(llvm::raw_ostream &Out,
-                                  const llvm::ArrayRef<uint8_t> arr) {
+raw_ostream &writeHexStream(raw_ostream &Out, const ArrayRef<uint8_t> arr) {
   const char *hex = "0123456789ABCDEF";
   Out << " !hex \"";
 
-  typedef llvm::ArrayRef<uint8_t>::const_iterator iter_t;
+  typedef ArrayRef<uint8_t>::const_iterator iter_t;
   const iter_t end = arr.end();
   for (iter_t iter = arr.begin(); iter != end; ++iter)
     Out << hex[(*iter >> 4) & 0x0F] << hex[(*iter & 0x0F)];
@@ -40,20 +41,20 @@ llvm::raw_ostream &writeHexStream(llvm::raw_ostream &Out,
   return Out;
 }
 
-llvm::raw_ostream &writeHexNumber(llvm::raw_ostream &Out,
-                                  unsigned long long N) {
+raw_ostream &writeHexNumber(raw_ostream &Out, unsigned long long N) {
   if (N >= 10)
     Out << "0x";
   Out.write_hex(N);
   return Out;
 }
 
-}
+} // end namespace yaml
 
-using namespace llvm;
+namespace {
 enum ObjectFileType {
   coff
 };
+}
 
 cl::opt<ObjectFileType> InputFormat(
     cl::desc("Choose input format"),
@@ -73,12 +74,12 @@ int main(int argc, char *argv[]) {
 
   // TODO: If this is an archive, then burst it and dump each entry
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, buf)) {
-    llvm::errs() << "Error: '" << ec.message() << "' opening file '"
-                 << InputFilename << "'\n";
+    errs() << "Error: '" << ec.message() << "' opening file '" << InputFilename
+           << "'\n";
   } else {
-    ec = coff2yaml(llvm::outs(), buf.take());
+    ec = coff2yaml(outs(), buf.take());
     if (ec)
-      llvm::errs() << "Error: " << ec.message() << " dumping COFF file\n";
+      errs() << "Error: " << ec.message() << " dumping COFF file\n";
   }
 
   return 0;
