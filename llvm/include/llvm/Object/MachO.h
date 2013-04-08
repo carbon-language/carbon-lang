@@ -27,7 +27,11 @@ namespace llvm {
 namespace object {
 
 namespace MachOFormat {
-  struct Section {
+  template<bool is64Bits>
+  struct Section;
+
+  template<>
+  struct Section<false> {
     char Name[16];
     char SegmentName[16];
     support::ulittle32_t Address;
@@ -41,7 +45,8 @@ namespace MachOFormat {
     support::ulittle32_t Reserved2;
   };
 
-  struct Section64 {
+  template<>
+  struct Section<true> {
     char Name[16];
     char SegmentName[16];
     support::ulittle64_t Address;
@@ -61,7 +66,11 @@ namespace MachOFormat {
     support::ulittle32_t Word1;
   };
 
-  struct SymbolTableEntry {
+  template<bool is64Bits>
+  struct SymbolTableEntry;
+
+  template<>
+  struct SymbolTableEntry<false> {
     support::ulittle32_t StringIndex;
     uint8_t Type;
     uint8_t SectionIndex;
@@ -69,7 +78,8 @@ namespace MachOFormat {
     support::ulittle32_t Value;
   };
 
-  struct Symbol64TableEntry {
+  template<>
+  struct SymbolTableEntry<true> {
     support::ulittle32_t StringIndex;
     uint8_t Type;
     uint8_t SectionIndex;
@@ -91,7 +101,11 @@ namespace MachOFormat {
     support::ulittle32_t StringTableSize;
   };
 
-  struct SegmentLoadCommand {
+  template<bool is64Bits>
+  struct SegmentLoadCommand;
+
+  template<>
+  struct SegmentLoadCommand<false> {
     support::ulittle32_t Type;
     support::ulittle32_t Size;
     char Name[16];
@@ -105,7 +119,8 @@ namespace MachOFormat {
     support::ulittle32_t Flags;
   };
 
-  struct Segment64LoadCommand {
+  template<>
+  struct SegmentLoadCommand<true> {
     support::ulittle32_t Type;
     support::ulittle32_t Size;
     char Name[16];
@@ -165,11 +180,11 @@ public:
   ArrayRef<char> getSectionRawName(DataRefImpl Sec) const;
   ArrayRef<char>getSectionRawFinalSegmentName(DataRefImpl Sec) const;
 
-  const MachOFormat::Section64 *getSection64(DataRefImpl DRI) const;
-  const MachOFormat::Section *getSection(DataRefImpl DRI) const;
-  const MachOFormat::Symbol64TableEntry *
+  const MachOFormat::Section<true> *getSection64(DataRefImpl DRI) const;
+  const MachOFormat::Section<false> *getSection(DataRefImpl DRI) const;
+  const MachOFormat::SymbolTableEntry<true> *
     getSymbol64TableEntry(DataRefImpl DRI) const;
-  const MachOFormat::SymbolTableEntry *
+  const MachOFormat::SymbolTableEntry<false> *
     getSymbolTableEntry(DataRefImpl DRI) const;
   bool is64Bit() const;
   const MachOFormat::LoadCommand *getLoadCommandInfo(unsigned Index) const;
@@ -242,11 +257,11 @@ private:
 
   void moveToNextSection(DataRefImpl &DRI) const;
 
-  const MachOFormat::SymbolTableEntry *
+  const MachOFormat::SymbolTableEntry<false> *
   getSymbolTableEntry(DataRefImpl DRI,
                      const MachOFormat::SymtabLoadCommand *SymtabLoadCmd) const;
 
-  const MachOFormat::Symbol64TableEntry *
+  const MachOFormat::SymbolTableEntry<true> *
   getSymbol64TableEntry(DataRefImpl DRI,
                      const MachOFormat::SymtabLoadCommand *SymtabLoadCmd) const;
 

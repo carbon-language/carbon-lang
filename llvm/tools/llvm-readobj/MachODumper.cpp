@@ -161,7 +161,7 @@ static void getSection(const MachOObjectFile *Obj,
                        DataRefImpl DRI,
                        MachOSection &Section) {
   if (Obj->is64Bit()) {
-    const MachOFormat::Section64 *Sect = Obj->getSection64(DRI);
+    const MachOFormat::Section<true> *Sect = Obj->getSection64(DRI);
 
     Section.Address     = Sect->Address;
     Section.Size        = Sect->Size;
@@ -173,7 +173,7 @@ static void getSection(const MachOObjectFile *Obj,
     Section.Reserved1   = Sect->Reserved1;
     Section.Reserved2   = Sect->Reserved2;
   } else {
-    const MachOFormat::Section *Sect = Obj->getSection(DRI);
+    const MachOFormat::Section<false> *Sect = Obj->getSection(DRI);
 
     Section.Address     = Sect->Address;
     Section.Size        = Sect->Size;
@@ -191,15 +191,16 @@ static void getSymbol(const MachOObjectFile *Obj,
                       DataRefImpl DRI,
                       MachOSymbol &Symbol) {
   if (Obj->is64Bit()) {
-    const MachOFormat::Symbol64TableEntry *Entry =
-      Obj->getSymbol64TableEntry( DRI);
+    const MachOFormat::SymbolTableEntry<true> *Entry =
+      Obj->getSymbol64TableEntry(DRI);
     Symbol.StringIndex  = Entry->StringIndex;
     Symbol.Type         = Entry->Type;
     Symbol.SectionIndex = Entry->SectionIndex;
     Symbol.Flags        = Entry->Flags;
     Symbol.Value        = Entry->Value;
   } else {
-    const MachOFormat::SymbolTableEntry *Entry = Obj->getSymbolTableEntry(DRI);
+    const MachOFormat::SymbolTableEntry<false> *Entry =
+      Obj->getSymbolTableEntry(DRI);
     Symbol.StringIndex  = Entry->StringIndex;
     Symbol.Type         = Entry->Type;
     Symbol.SectionIndex = Entry->SectionIndex;
