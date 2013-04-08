@@ -621,7 +621,7 @@ class NaClTargetInfo : public OSTargetInfo<Target> {
     this->SizeType = TargetInfo::UnsignedInt;
     this->PtrDiffType = TargetInfo::SignedInt;
     this->IntPtrType = TargetInfo::SignedInt;
-    this->RegParmMax = 2;
+    // RegParmMax is inherited from the underlying architecture
     this->LongDoubleFormat = &llvm::APFloat::IEEEdouble;
     this->DescriptionString = "e-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-"
                               "f32:32:32-f64:64:64-p:32:32:32-v128:32:32";
@@ -4862,7 +4862,7 @@ public:
     this->SizeType = TargetInfo::UnsignedInt;
     this->PtrDiffType = TargetInfo::SignedInt;
     this->IntPtrType = TargetInfo::SignedInt;
-    this->RegParmMax = 2;
+    this->RegParmMax = 0; // Disallow regparm
     DescriptionString = "e-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-"
                         "f32:32:32-f64:64:64-p:32:32:32-v128:32:32";
   }
