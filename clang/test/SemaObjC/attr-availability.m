@@ -32,3 +32,31 @@ void f(A *a, B *b) {
   [a proto_method]; // expected-warning{{'proto_method' is deprecated: first deprecated in OS X 10.2}}
   [b proto_method]; // expected-warning{{'proto_method' is deprecated: first deprecated in OS X 10.2}}
 }
+
+// Test case for <rdar://problem/11627873>.  Warn about
+// using a deprecated method when that method is re-implemented in a
+// subclass where the redeclared method is not deprecated.
+@interface C
+- (void) method __attribute__((availability(macosx,introduced=10.1,deprecated=10.2))); // expected-note {{method 'method' declared here}}
+@end
+
+@interface D : C
+- (void) method;
+@end
+
+@interface E : D
+- (void) method;
+@end
+
+@implementation D
+- (void) method {
+  [super method]; // expected-warning {{'method' is deprecated: first deprecated in OS X 10.2}}
+}
+@end
+
+@implementation E
+- (void) method {
+  [super method]; // no-warning
+}
+@end
+
