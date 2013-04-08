@@ -1,6 +1,5 @@
-; RUN: not llvm-as < %s 2>&1 | grep "multiple entries for the same basic block"
-
-
+; RUN: not llvm-as < %s 2>&1 | FileCheck %s
+; CHECK: multiple entries for the same basic block
 
 define i32 @test(i32 %i, i32 %j, i1 %c) {
 	br i1 %c, label %A, label %A

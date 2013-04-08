@@ -1,5 +1,6 @@
 ; RUN: not llvm-as < %s > /dev/null 2> %t
-; RUN: grep "basic block pointers are invalid" %t
+; RUN: FileCheck %s --input-file=%t
+; CHECK: basic block pointers are invalid
 
 define i32 @main() {
          %foo  = call i8* %llvm.stacksave()
