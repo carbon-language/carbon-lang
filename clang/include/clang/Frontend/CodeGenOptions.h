@@ -137,7 +137,7 @@ public:
 #include "clang/Frontend/CodeGenOptions.def"
 
     RelocationModel = "pic";
-    memcpy(CoverageVersion, "*204", 4);
+    memcpy(CoverageVersion, "402*", 4);
   }
 };
 
