@@ -549,53 +549,6 @@ INTERCEPTOR(int, setitimer, int which, const void *new_value, void *old_value) {
 #endif
 
 
-#if SANITIZER_INTERCEPT_GLOB
-struct sanitizer_glob_t {
-  SIZE_T gl_pathc;
-  char **gl_pathv;
-};
-
-static void unpoison_glob_t(void *ctx, sanitizer_glob_t *pglob) {
-  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pglob, sizeof(*pglob));
-  // +1 for NULL pointer at the end.
-  COMMON_INTERCEPTOR_WRITE_RANGE(
-      ctx, pglob->gl_pathv,
-      (sizeof(pglob->gl_pathc) + 1) * sizeof(*pglob->gl_pathv));
-  for (SIZE_T i = 0; i < pglob->gl_pathc; ++i) {
-    char *p = pglob->gl_pathv[i];
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p, REAL(strlen)(p) + 1);
-  }
-}
-
-INTERCEPTOR(int, glob, const char *pattern, int flags,
-            int (*errfunc)(const char *epath, int eerrno),
-            sanitizer_glob_t *pglob) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, glob, pattern, flags, errfunc, pglob);
-  int res = REAL(glob)(pattern, flags, errfunc, pglob);
-  if (res == 0)
-    unpoison_glob_t(ctx, pglob);
-  return res;
-}
-
-INTERCEPTOR(int, glob64, const char *pattern, int flags,
-            int (*errfunc)(const char *epath, int eerrno),
-            sanitizer_glob_t *pglob) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, glob64, pattern, flags, errfunc, pglob);
-  int res = REAL(glob64)(pattern, flags, errfunc, pglob);
-  if (res == 0)
-    unpoison_glob_t(ctx, pglob);
-  return res;
-}
-#define INIT_GLOB                               \
-  INTERCEPT_FUNCTION(glob);                     \
-  INTERCEPT_FUNCTION(glob64);
-#else // SANITIZER_INTERCEPT_GLOB
-#define INIT_GLOB
-#endif // SANITIZER_INTERCEPT_GLOB
-
-
 #define SANITIZER_COMMON_INTERCEPTORS_INIT                                     \
   INIT_STRCASECMP;                                                             \
   INIT_STRNCASECMP;                                                            \
@@ -614,5 +567,4 @@ INTERCEPTOR(int, glob64, const char *pattern, int flags,
   INIT_GETPWNAM_R_GETPWUID_R;                                                  \
   INIT_CLOCK_GETTIME;                                                          \
   INIT_GETITIMER;                                                              \
-  INIT_TIME;                                                                   \
-  INIT_GLOB;
+  INIT_TIME;
