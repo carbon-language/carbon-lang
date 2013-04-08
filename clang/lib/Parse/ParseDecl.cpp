@@ -1527,14 +1527,23 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
   // C++0x [stmt.iter]p1: Check if we have a for-range-declarator. If so, we
   // must parse and analyze the for-range-initializer before the declaration is
   // analyzed.
-  if (FRI && Tok.is(tok::colon)) {
-    FRI->ColonLoc = ConsumeToken();
-    if (Tok.is(tok::l_brace))
-      FRI->RangeExpr = ParseBraceInitializer();
-    else
-      FRI->RangeExpr = ParseExpression();
+  //
+  // Handle the Objective-C for-in loop variable similarly, although we
+  // don't need to parse the container in advance.
+  if (FRI && (Tok.is(tok::colon) || isTokIdentifier_in())) {
+    bool IsForRangeLoop = false;
+    if (Tok.is(tok::colon)) {
+      IsForRangeLoop = true;
+      FRI->ColonLoc = ConsumeToken();
+      if (Tok.is(tok::l_brace))
+        FRI->RangeExpr = ParseBraceInitializer();
+      else
+        FRI->RangeExpr = ParseExpression();
+    }
+
     Decl *ThisDecl = Actions.ActOnDeclarator(getCurScope(), D);
-    Actions.ActOnCXXForRangeDecl(ThisDecl);
+    if (IsForRangeLoop)
+      Actions.ActOnCXXForRangeDecl(ThisDecl);
     Actions.FinalizeDeclaration(ThisDecl);
     D.complete(ThisDecl);
     return Actions.FinalizeDeclaratorGroup(getCurScope(), DS, &ThisDecl, 1);

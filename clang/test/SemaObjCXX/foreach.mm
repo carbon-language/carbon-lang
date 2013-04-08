@@ -69,3 +69,9 @@ void test2(NSObject<NSFastEnumeration> *collection) {
                                 // expected-warning {{property access result unused - getters should not be used for side effects}}
   }
 }
+
+void testErrors(NSArray *array) {
+  typedef int fn(int);
+
+  for (fn x in array) { } // expected-error{{non-variable declaration in 'for' loop}}
+}
