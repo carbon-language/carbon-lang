@@ -650,5 +650,44 @@ void test18(id x) {
 // CHECK-UNOPT-NEXT: ret void
 }
 
+// rdar://13588325
+void test19_sink(void (^)(int));
+void test19(void (^b)(void)) {
+// CHECK:    define void @test19(
+//   Prologue.
+// CHECK:      [[B:%.*]] = alloca void ()*,
+// CHECK-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]],
+// CHECK-NEXT: [[T0:%.*]] = bitcast void ()* {{%.*}} to i8*
+// CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]])
+// CHECK-NEXT: [[T2:%.*]] = bitcast i8* [[T1]] to void ()*
+// CHECK-NEXT: store void ()* [[T2]], void ()** [[B]]
+
+//   Block setup.  We skip most of this.  Note the bare retain.
+// CHECK-NEXT: [[SLOTREL:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+// CHECK:      [[SLOT:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+// CHECK-NEXT: [[T0:%.*]] = load void ()** [[B]],
+// CHECK-NEXT: [[T1:%.*]] = bitcast void ()* [[T0]] to i8*
+// CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retain(i8* [[T1]])
+// CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to void ()*
+// CHECK-NEXT: store void ()* [[T3]], void ()** [[SLOT]],
+//   Call.
+// CHECK-NEXT: [[T0:%.*]] = bitcast [[BLOCK_T]]* [[BLOCK]] to void (i32)*
+// CHECK-NEXT: call void @test19_sink(void (i32)* [[T0]])
+
+  test19_sink(^(int x) { b(); });
+
+//   Block teardown.
+// CHECK-NEXT: [[T0:%.*]] = load void ()** [[SLOTREL]]
+// CHECK-NEXT: [[T1:%.*]] = bitcast void ()* [[T0]] to i8*
+// CHECK-NEXT: call void @objc_release(i8* [[T1]])
+
+//   Local cleanup.
+// CHECK-NEXT: [[T0:%.*]] = load void ()** [[B]]
+// CHECK-NEXT: [[T1:%.*]] = bitcast void ()* [[T0]] to i8*
+// CHECK-NEXT: call void @objc_release(i8* [[T1]])
+
+// CHECK-NEXT: ret void
+}
+
 // CHECK: attributes [[NUW]] = { nounwind }
 // CHECK-UNOPT: attributes [[NUW]] = { nounwind }

@@ -753,6 +753,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
     if (capture.isConstant()) continue;
 
     QualType type = variable->getType();
+    CharUnits align = getContext().getDeclAlign(variable);
 
     // This will be a [[type]]*, except that a byref entry will just be
     // an i8**.
@@ -796,21 +797,21 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
     if (ci->isByRef()) {
       // Get a void* that points to the byref struct.
       if (ci->isNested())
-        src = Builder.CreateLoad(src, "byref.capture");
+        src = Builder.CreateAlignedLoad(src, align.getQuantity(),
+                                        "byref.capture");
       else
         src = Builder.CreateBitCast(src, VoidPtrTy);
 
       // Write that void* into the capture field.
-      Builder.CreateStore(src, blockField);
+      Builder.CreateAlignedStore(src, blockField, align.getQuantity());
 
     // If we have a copy constructor, evaluate that into the block field.
     } else if (const Expr *copyExpr = ci->getCopyExpr()) {
       if (blockDecl->isConversionFromLambda()) {
         // If we have a lambda conversion, emit the expression
         // directly into the block instead.
-        CharUnits Align = getContext().getTypeAlignInChars(type);
         AggValueSlot Slot =
-            AggValueSlot::forAddr(blockField, Align, Qualifiers(),
+            AggValueSlot::forAddr(blockField, align, Qualifiers(),
                                   AggValueSlot::IsDestructed,
                                   AggValueSlot::DoesNotNeedGCBarriers,
                                   AggValueSlot::IsNotAliased);
@@ -821,7 +822,27 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
 
     // If it's a reference variable, copy the reference into the block field.
     } else if (type->isReferenceType()) {
-      Builder.CreateStore(Builder.CreateLoad(src, "ref.val"), blockField);
+      llvm::Value *ref =
+        Builder.CreateAlignedLoad(src, align.getQuantity(), "ref.val");
+      Builder.CreateAlignedStore(ref, blockField, align.getQuantity());
+
+    // If this is an ARC __strong block-pointer variable, don't do a
+    // block copy.
+    //
+    // TODO: this can be generalized into the normal initialization logic:
+    // we should never need to do a block-copy when initializing a local
+    // variable, because the local variable's lifetime should be strictly
+    // contained within the stack block's.
+    } else if (type.getObjCLifetime() == Qualifiers::OCL_Strong &&
+               type->isBlockPointerType()) {
+      // Load the block and do a simple retain.
+      LValue srcLV = MakeAddrLValue(src, type, align);
+      llvm::Value *value = EmitLoadOfScalar(srcLV);
+      value = EmitARCRetainNonBlock(value);
+
+      // Do a primitive store to the block field.
+      LValue destLV = MakeAddrLValue(blockField, type, align);
+      EmitStoreOfScalar(value, destLV, /*init*/ true);
 
     // Otherwise, fake up a POD copy into the block field.
     } else {
@@ -839,8 +860,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
       ImplicitCastExpr l2r(ImplicitCastExpr::OnStack, type, CK_LValueToRValue,
                            &declRef, VK_RValue);
       EmitExprAsInit(&l2r, &blockFieldPseudoVar,
-                     MakeAddrLValue(blockField, type,
-                                    getContext().getDeclAlign(variable)),
+                     MakeAddrLValue(blockField, type, align),
                      /*captured by init*/ false);
     }
 
