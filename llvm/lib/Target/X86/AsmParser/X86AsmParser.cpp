@@ -61,8 +61,8 @@ private:
   X86Operand *ParseIntelOperator(SMLoc StartLoc, unsigned OpKind);
   X86Operand *ParseIntelMemOperand(unsigned SegReg, uint64_t ImmDisp,
                                    SMLoc StartLoc);
-  X86Operand *ParseIntelBracExpression(unsigned SegReg, uint64_t ImmDisp,
-                                       unsigned Size);
+  X86Operand *ParseIntelBracExpression(unsigned SegReg, SMLoc SizeDirLoc,
+                                       uint64_t ImmDisp, unsigned Size);
   X86Operand *ParseIntelVarWithQualifier(const MCExpr *&Disp,
                                          SMLoc &IdentStart);
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
@@ -1100,6 +1100,7 @@ X86Operand *X86AsmParser::CreateMemForInlineAsm(const MCExpr *Disp, SMLoc Start,
 }
 
 X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
+                                                   SMLoc SizeDirLoc,
                                                    uint64_t ImmDisp,
                                                    unsigned Size) {
   const AsmToken &Tok = Parser.getTok();
@@ -1126,18 +1127,11 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       if (getLexer().isNot(AsmToken::RBrac))
         return ErrorOperand(Parser.getTok().getLoc(), "Expected ']' token!");
 
-      // FIXME: We don't handle 'ImmDisp' '[' 'Symbol' ']'.
-      if (ImmDisp)
-        return ErrorOperand(Start, "Unsupported immediate displacement!");
-
       // Adjust the EndLoc due to the ']'.
       End = SMLoc::getFromPointer(Parser.getTok().getEndLoc().getPointer()-1);
       Parser.Lex();
       if (!isParsingInlineAsm())
         return X86Operand::CreateMem(Disp, Start, End, Size);
-
-      // We want the size directive before the '['.
-      SMLoc SizeDirLoc = SMLoc::getFromPointer(Start.getPointer()-1);
       return CreateMemForInlineAsm(Disp, Start, End, SizeDirLoc, Size);
     }
   }
@@ -1302,11 +1296,11 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg,
     Parser.Lex(); // Eat the integer.
     if (getLexer().isNot(AsmToken::LBrac))
       return ErrorOperand(Start, "Expected '[' token!");
-    return ParseIntelBracExpression(SegReg, ImmDisp, Size);
+    return ParseIntelBracExpression(SegReg, Start, ImmDisp, Size);
   }
 
   if (getLexer().is(AsmToken::LBrac))
-    return ParseIntelBracExpression(SegReg, ImmDisp, Size);
+    return ParseIntelBracExpression(SegReg, Start, ImmDisp, Size);
 
   if (!ParseRegister(SegReg, Start, End)) {
     // Handel SegReg : [ ... ]
@@ -1315,7 +1309,7 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg,
     Parser.Lex(); // Eat :
     if (getLexer().isNot(AsmToken::LBrac))
       return ErrorOperand(Start, "Expected '[' token!");
-    return ParseIntelBracExpression(SegReg, ImmDisp, Size);
+    return ParseIntelBracExpression(SegReg, Start, ImmDisp, Size);
   }
 
   const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());

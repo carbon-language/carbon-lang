@@ -4046,19 +4046,17 @@ static int RewritesSort(const void *A, const void *B) {
   if (AsmRewriteB->Loc.getPointer() < AsmRewriteA->Loc.getPointer())
     return 1;
 
-  // It's possible to have a SizeDirective rewrite and an Input/Output rewrite
-  // to the same location.  Make sure the SizeDirective rewrite is performed
-  // first.  This also ensure the sort algorithm is stable.
-  if (AsmRewriteA->Kind == AOK_SizeDirective) {
-    assert ((AsmRewriteB->Kind == AOK_Input || AsmRewriteB->Kind == AOK_Output) &&
-            "Expected an Input/Output rewrite!");
+  // It's possible to have a SizeDirective, Imm/ImmPrefix and an Input/Output
+  // rewrite to the same location.  Make sure the SizeDirective rewrite is
+  // performed first, then the Imm/ImmPrefix and finally the Input/Output.  This
+  // ensures the sort algorithm is stable.
+  if (AsmRewritePrecedence [AsmRewriteA->Kind] >
+      AsmRewritePrecedence [AsmRewriteB->Kind])
     return -1;
-  }
-  if (AsmRewriteB->Kind == AOK_SizeDirective) {
-    assert ((AsmRewriteA->Kind == AOK_Input || AsmRewriteA->Kind == AOK_Output) &&
-            "Expected an Input/Output rewrite!");
+
+  if (AsmRewritePrecedence [AsmRewriteA->Kind] <
+      AsmRewritePrecedence [AsmRewriteB->Kind])
     return 1;
-  }
   llvm_unreachable ("Unstable rewrite sort.");
 }
 
