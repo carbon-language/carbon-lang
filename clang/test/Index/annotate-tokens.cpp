@@ -28,7 +28,7 @@ struct TS {
 template <bool (*tfn)(X*)>
 void TS<tfn>::foo() {}
 
-// RUN: c-index-test -test-annotate-tokens=%s:1:1:30:1 %s | FileCheck %s
+// RUN: c-index-test -test-annotate-tokens=%s:1:1:30:1 %s -fno-delayed-template-parsing | FileCheck %s
 // CHECK: Keyword: "struct" [1:1 - 1:7] StructDecl=bonk:1:8 (Definition)
 // CHECK: Identifier: "bonk" [1:8 - 1:12] StructDecl=bonk:1:8 (Definition)
 // CHECK: Punctuation: "{" [1:13 - 1:14] StructDecl=bonk:1:8 (Definition)
