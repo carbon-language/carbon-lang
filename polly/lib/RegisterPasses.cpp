@@ -213,8 +213,10 @@ static void registerCanonicalicationPasses(llvm::PassManagerBase &PM) {
   //           the regioninfo pass does currently not recover simple regions.
   //           As a result we need to run the RegionSimplify pass again to
   //           recover them
-  PM.add(polly::createIndVarSimplifyPass());
-  PM.add(polly::createRegionSimplifyPass());
+  if (!SCEVCodegen) {
+    PM.add(polly::createIndVarSimplifyPass());
+    PM.add(polly::createRegionSimplifyPass());
+  }
 }
 
 /// @brief Register Polly passes such that they form a polyhedral optimizer.
