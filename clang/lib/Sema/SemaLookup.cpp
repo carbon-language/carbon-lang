@@ -3405,7 +3405,7 @@ class NamespaceSpecifierSet {
 }
 
 DeclContextList NamespaceSpecifierSet::BuildContextChain(DeclContext *Start) {
-  assert(Start && "Bulding a context chain from a null context");
+  assert(Start && "Building a context chain from a null context");
   DeclContextList Chain;
   for (DeclContext *DC = Start->getPrimaryContext(); DC != NULL;
        DC = DC->getLookupParent()) {
