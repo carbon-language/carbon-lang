@@ -21,9 +21,9 @@ namespace yaml {  // generic yaml-writing specific routines
 unsigned char printable(unsigned char Ch) {
   return Ch >= ' ' && Ch <= '~' ? Ch : '.';
 }
-  
-llvm::raw_ostream &writeHexStream(llvm::raw_ostream &Out, 
-                                     const llvm::ArrayRef<uint8_t> arr) {
+
+llvm::raw_ostream &writeHexStream(llvm::raw_ostream &Out,
+                                  const llvm::ArrayRef<uint8_t> arr) {
   const char *hex = "0123456789ABCDEF";
   Out << " !hex \"";
 
@@ -38,9 +38,10 @@ llvm::raw_ostream &writeHexStream(llvm::raw_ostream &Out,
   Out << "|\n";
 
   return Out;
-  }
+}
 
-llvm::raw_ostream &writeHexNumber(llvm::raw_ostream &Out, unsigned long long N) {
+llvm::raw_ostream &writeHexNumber(llvm::raw_ostream &Out,
+                                  unsigned long long N) {
   if (N >= 10)
     Out << "0x";
   Out.write_hex(N);
@@ -49,32 +50,32 @@ llvm::raw_ostream &writeHexNumber(llvm::raw_ostream &Out, unsigned long long N) 
 
 }
 
-
 using namespace llvm;
-enum ObjectFileType { coff };
+enum ObjectFileType {
+  coff
+};
 
 cl::opt<ObjectFileType> InputFormat(
-  cl::desc("Choose input format"),
-    cl::values(
-      clEnumVal(coff, "process COFF object files"),
-    clEnumValEnd));
-    
-cl::opt<std::string> InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"));
+    cl::desc("Choose input format"),
+    cl::values(clEnumVal(coff, "process COFF object files"), clEnumValEnd));
 
-int main(int argc, char * argv[]) {
+cl::opt<std::string> InputFilename(cl::Positional, cl::desc("<input file>"),
+                                   cl::init("-"));
+
+int main(int argc, char *argv[]) {
   cl::ParseCommandLineOptions(argc, argv);
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
-  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+  llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
-// Process the input file  
+  // Process the input file
   OwningPtr<MemoryBuffer> buf;
 
-// TODO: If this is an archive, then burst it and dump each entry
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, buf))
-    llvm::errs() << "Error: '" << ec.message() << "' opening file '" 
-              << InputFilename << "'\n";
-  else {
+  // TODO: If this is an archive, then burst it and dump each entry
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, buf)) {
+    llvm::errs() << "Error: '" << ec.message() << "' opening file '"
+                 << InputFilename << "'\n";
+  } else {
     ec = coff2yaml(llvm::outs(), buf.take());
     if (ec)
       llvm::errs() << "Error: " << ec.message() << " dumping COFF file\n";
