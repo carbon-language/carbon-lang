@@ -123,7 +123,7 @@ struct IndependentBlocks : public FunctionPass {
 
   // Split the exit block to hold load instructions.
   bool splitExitBlock(Region *R);
-
+  bool onlyUsedInRegion(Instruction *Inst, const Region *R);
   bool translateScalarToArray(BasicBlock *BB, const Region *R);
   bool translateScalarToArray(Instruction *Inst, const Region *R);
   bool translateScalarToArray(const Region *R);
@@ -352,9 +352,20 @@ bool IndependentBlocks::translateScalarToArray(const Region *R) {
   return Changed;
 }
 
+// Returns true when Inst is only used inside region R.
+bool IndependentBlocks::onlyUsedInRegion(Instruction *Inst, const Region *R) {
+  for (Instruction::use_iterator UI = Inst->use_begin(), UE = Inst->use_end();
+       UI != UE; ++UI)
+    if (Instruction *U = dyn_cast<Instruction>(*UI))
+      if (isEscapeUse(U, R))
+        return false;
+
+  return true;
+}
+
 bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
                                                const Region *R) {
-  if (canSynthesize(Inst, LI, SE, R))
+  if (canSynthesize(Inst, LI, SE, R) && onlyUsedInRegion(Inst, R))
     return false;
 
   SmallVector<Instruction *, 4> LoadInside, LoadOutside;
@@ -362,14 +373,13 @@ bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
        UI != UE; ++UI)
     // Inst is referenced outside or referenced as an escaped operand.
     if (Instruction *U = dyn_cast<Instruction>(*UI)) {
-      BasicBlock *UParent = U->getParent();
-
       if (isEscapeUse(U, R))
         LoadOutside.push_back(U);
 
       if (canSynthesize(U, LI, SE, R))
         continue;
 
+      BasicBlock *UParent = U->getParent();
       if (R->contains(UParent) && isEscapeOperand(Inst, UParent, R))
         LoadInside.push_back(U);
     }
