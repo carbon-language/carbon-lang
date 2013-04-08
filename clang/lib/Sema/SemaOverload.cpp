@@ -8508,13 +8508,35 @@ void DiagnoseBadDeduction(Sema &S, OverloadCandidate *Cand,
     return;
   }
 
-  case Sema::TDK_NonDeducedMismatch:
+  case Sema::TDK_NonDeducedMismatch: {
     // FIXME: Provide a source location to indicate what we couldn't match.
+    TemplateArgument FirstTA = *Cand->DeductionFailure.getFirstArg();
+    TemplateArgument SecondTA = *Cand->DeductionFailure.getSecondArg();
+    if (FirstTA.getKind() == TemplateArgument::Template &&
+        SecondTA.getKind() == TemplateArgument::Template) {
+      TemplateName FirstTN = FirstTA.getAsTemplate();
+      TemplateName SecondTN = SecondTA.getAsTemplate();
+      if (FirstTN.getKind() == TemplateName::Template &&
+          SecondTN.getKind() == TemplateName::Template) {
+        if (FirstTN.getAsTemplateDecl()->getName() ==
+            SecondTN.getAsTemplateDecl()->getName()) {
+          // FIXME: This fixes a bad diagnostic where both templates are named
+          // the same.  This particular case is a bit difficult since:
+          // 1) It is passed as a string to the diagnostic printer.
+          // 2) The diagnostic printer only attempts to find a better
+          //    name for types, not decls.
+          // Ideally, this should folded into the diagnostic printer.
+          S.Diag(Fn->getLocation(),
+                 diag::note_ovl_candidate_non_deduced_mismatch_qualified)
+              << FirstTN.getAsTemplateDecl() << SecondTN.getAsTemplateDecl();
+          return;
+        }
+      }
+    }
     S.Diag(Fn->getLocation(), diag::note_ovl_candidate_non_deduced_mismatch)
-      << *Cand->DeductionFailure.getFirstArg()
-      << *Cand->DeductionFailure.getSecondArg();
+      << FirstTA << SecondTA;
     return;
-
+  }
   // TODO: diagnose these individually, then kill off
   // note_ovl_candidate_bad_deduction, which is uselessly vague.
   case Sema::TDK_MiscellaneousDeductionFailure:

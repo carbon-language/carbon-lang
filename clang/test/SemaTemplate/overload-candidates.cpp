@@ -62,3 +62,20 @@ template<typename T> struct NonTemplateFunction {
   typename boost::enable_if<sizeof(T) == 4, int>::type f(); // expected-error{{no type named 'type' in 'boost::enable_if<false, int>'; 'enable_if' cannot be used to disable this declaration}}
 };
 NonTemplateFunction<char> NTFC; // expected-note{{here}}
+
+namespace NS1 {
+  template <class A>
+  class array {};
+}
+
+namespace NS2 {
+  template <class A>
+  class array {};
+}
+
+template <class A>
+void foo(NS2::array<A>); // expected-note{{candidate template ignored: could not match 'NS2::array' against 'NS1::array'}}
+
+void test() {
+  foo(NS1::array<int>()); // expected-error{{no matching function for call to 'foo'}}
+}
