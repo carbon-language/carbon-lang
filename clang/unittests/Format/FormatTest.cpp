@@ -1339,6 +1339,22 @@ TEST_F(FormatTest, MacroDefinitionsWithIncompleteCode) {
                "f(STR(this_is_a_string_literal{));");
 }
 
+TEST_F(FormatTest, MacroCallsWithoutTrailingSemicolon) {
+  EXPECT_EQ("INITIALIZE_PASS_BEGIN(ScopDetection, \"polly-detect\")\n"
+            "INITIALIZE_AG_DEPENDENCY(AliasAnalysis)\n"
+            "INITIALIZE_PASS_DEPENDENCY(DominatorTree)\n"
+            "class X {\n"
+            "};\n"
+            "INITIALIZE_PASS_END(ScopDetection, \"polly-detect\")\n"
+            "int *createScopDetectionPass() { return 0; }",
+            format("  INITIALIZE_PASS_BEGIN(ScopDetection, \"polly-detect\")\n"
+                   "  INITIALIZE_AG_DEPENDENCY(AliasAnalysis)\n"
+                   "  INITIALIZE_PASS_DEPENDENCY(DominatorTree)\n"
+                   "  class X {};\n"
+                   "  INITIALIZE_PASS_END(ScopDetection, \"polly-detect\")\n"
+                   "  int *createScopDetectionPass() { return 0; }"));
+}
+
 TEST_F(FormatTest, IndentPreprocessorDirectivesAtZero) {
   EXPECT_EQ("{\n  {\n#define A\n  }\n}", format("{{\n#define A\n}}"));
 }

@@ -71,7 +71,7 @@ public:
   }
 
 private:
-  bool eof() { return Token.NewlinesBefore > 0 && Token.HasUnescapedNewline; }
+  bool eof() { return Token.HasUnescapedNewline; }
 
   FormatToken createEOF() {
     FormatToken FormatTok;
@@ -262,7 +262,6 @@ void UnwrappedLineParser::parsePPUnknown() {
 
 void UnwrappedLineParser::parseStructuralElement() {
   assert(!FormatTok.Tok.is(tok::l_brace));
-  int TokenNumber = 0;
   switch (FormatTok.Tok.getKind()) {
   case tok::at:
     nextToken();
@@ -297,7 +296,6 @@ void UnwrappedLineParser::parseStructuralElement() {
     return;
   case tok::kw_inline:
     nextToken();
-    TokenNumber++;
     if (FormatTok.Tok.is(tok::kw_namespace)) {
       parseNamespace();
       return;
@@ -347,7 +345,6 @@ void UnwrappedLineParser::parseStructuralElement() {
     break;
   }
   do {
-    ++TokenNumber;
     switch (FormatTok.Tok.getKind()) {
     case tok::at:
       nextToken();
@@ -384,9 +381,20 @@ void UnwrappedLineParser::parseStructuralElement() {
       return;
     case tok::identifier:
       nextToken();
-      if (TokenNumber == 1 && FormatTok.Tok.is(tok::colon)) {
-        parseLabel();
-        return;
+      if (Line->Tokens.size() == 1) {
+        if (FormatTok.Tok.is(tok::colon)) {
+          parseLabel();
+          return;
+        }
+        // Recognize function-like macro usages without trailing semicolon in
+        // declaration context.
+        if (FormatTok.Tok.is(tok::l_paren)) {
+          parseParens();
+          if (Line->MustBeDeclaration && FormatTok.HasUnescapedNewline) {
+            addUnwrappedLine();
+            return;
+          }
+        }
       }
       break;
     case tok::equal:
@@ -820,8 +828,7 @@ void UnwrappedLineParser::readToken() {
   do {
     FormatTok = Tokens->getNextToken();
     while (!Line->InPPDirective && FormatTok.Tok.is(tok::hash) &&
-           ((FormatTok.NewlinesBefore > 0 && FormatTok.HasUnescapedNewline) ||
-            FormatTok.IsFirst)) {
+           (FormatTok.HasUnescapedNewline || FormatTok.IsFirst)) {
       // If there is an unfinished unwrapped line, we flush the preprocessor
       // directives only after that unwrapped line was finished later.
       bool SwitchToPreprocessorLines =
