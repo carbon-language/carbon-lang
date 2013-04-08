@@ -201,9 +201,6 @@ RelocationTypesARMPairs [] = {
 };
 #undef STRING_PAIR
 
-
-static const char endl = '\n';
-
 namespace yaml {  // COFF-specific yaml-writing specific routines
 
 static llvm::raw_ostream &writeName(llvm::raw_ostream &Out, 
@@ -242,25 +239,25 @@ const char *nameLookup(const pod_pair<T, const char *> (&Arr)[N],
 static llvm::raw_ostream &yamlCOFFHeader(
           const llvm::object::coff_file_header *Header,llvm::raw_ostream &Out) {
 
-  Out << "header: !Header" << endl;
+  Out << "header: !Header\n";
   Out << "  Machine: ";
   Out << nameLookup(MachineTypePairs, Header->Machine, "# Unknown_MachineTypes")
       << " # (";
-  return yaml::writeHexNumber(Out, Header->Machine) << ")" << endl << endl;
+  return yaml::writeHexNumber(Out, Header->Machine) << ")\n\n";
 }
 
 
 static llvm::raw_ostream &yamlCOFFSections(llvm::object::COFFObjectFile &Obj, 
                             std::size_t NumSections, llvm::raw_ostream &Out) {
   llvm::error_code ec;
-  Out << "sections:" << endl;
+  Out << "sections:\n";
   for (llvm::object::section_iterator iter = Obj.begin_sections(); 
                              iter != Obj.end_sections(); iter.increment(ec)) {
     const llvm::object::coff_section *sect = Obj.getCOFFSection(iter);
   
-    Out << "  - !Section" << endl;
+    Out << "  - !Section\n";
     Out << "    Name: ";
-    yaml::writeName(Out, sect->Name, sizeof(sect->Name)) << endl;
+    yaml::writeName(Out, sect->Name, sizeof(sect->Name)) << '\n';
 
     Out << "    Characteristics: [";
     yaml::writeBitMask(Out, SectionCharacteristicsPairs1, sect->Characteristics);
@@ -269,26 +266,26 @@ static llvm::raw_ostream &yamlCOFFSections(llvm::object::COFFObjectFile &Obj,
         << ", ";
     yaml::writeBitMask(Out, SectionCharacteristicsPairs2, sect->Characteristics);
     Out << "] # ";
-    yaml::writeHexNumber(Out, sect->Characteristics) << endl;
+    yaml::writeHexNumber(Out, sect->Characteristics) << '\n';
 
     llvm::ArrayRef<uint8_t> sectionData;
     Obj.getSectionContents(sect, sectionData);    
     Out << "    SectionData: ";
-    yaml::writeHexStream(Out, sectionData) << endl;
+    yaml::writeHexStream(Out, sectionData) << '\n';
     if (iter->begin_relocations() != iter->end_relocations())
       Out << "    Relocations:\n";
     for (llvm::object::relocation_iterator rIter = iter->begin_relocations();
                        rIter != iter->end_relocations(); rIter.increment(ec)) {
       const llvm::object::coff_relocation *reloc = Obj.getCOFFRelocation(rIter);
 
-        Out << "      - !Relocation" << endl;
+        Out << "      - !Relocation\n";
         Out << "        VirtualAddress: " ;
-        yaml::writeHexNumber(Out, reloc->VirtualAddress) << endl;
-        Out << "        SymbolTableIndex: " << reloc->SymbolTableIndex << endl;
+        yaml::writeHexNumber(Out, reloc->VirtualAddress) << '\n';
+        Out << "        SymbolTableIndex: " << reloc->SymbolTableIndex << '\n';
         Out << "        Type: " 
-            << nameLookup(RelocationTypeX86Pairs, reloc->Type) << endl;
+            << nameLookup(RelocationTypeX86Pairs, reloc->Type) << '\n';
     // TODO: Use the correct reloc type for the machine.
-        Out << endl;
+        Out << '\n';
       }
 
   } 
@@ -298,7 +295,7 @@ static llvm::raw_ostream &yamlCOFFSections(llvm::object::COFFObjectFile &Obj,
 static llvm::raw_ostream& yamlCOFFSymbols(llvm::object::COFFObjectFile &Obj, 
                               std::size_t NumSymbols, llvm::raw_ostream &Out) {
   llvm::error_code ec;
-  Out << "symbols:" << endl;
+  Out << "symbols:\n";
   for (llvm::object::symbol_iterator iter = Obj.begin_symbols(); 
                              iter != Obj.end_symbols(); iter.increment(ec)) {
  // Gather all the info that we need
@@ -309,36 +306,36 @@ static llvm::raw_ostream& yamlCOFFSymbols(llvm::object::COFFObjectFile &Obj,
     std::size_t complexType  = symbol->getComplexType();
     std::size_t storageClass = symbol->StorageClass;
     
-    Out << "  - !Symbol" << endl;
-    Out << "    Name: " << str << endl; 
+    Out << "  - !Symbol\n";
+    Out << "    Name: " << str << '\n'; 
 
-    Out << "    Value: "         << symbol->Value << endl;
-    Out << "    SectionNumber: " << symbol->SectionNumber << endl;
+    Out << "    Value: "         << symbol->Value << '\n';
+    Out << "    SectionNumber: " << symbol->SectionNumber << '\n';
 
     Out << "    SimpleType: " 
         << nameLookup(SymbolBaseTypePairs, simpleType, 
             "# Unknown_SymbolBaseType") 
-        << " # (" << simpleType << ")" << endl;
+        << " # (" << simpleType << ")\n";
     
     Out << "    ComplexType: " 
         << nameLookup(SymbolComplexTypePairs, complexType, 
                 "# Unknown_SymbolComplexType") 
-        << " # (" << complexType << ")" << endl;
+        << " # (" << complexType << ")\n";
     
     Out << "    StorageClass: " 
         << nameLookup(SymbolStorageClassPairs, storageClass,
               "# Unknown_StorageClass") 
-        << " # (" << (int) storageClass << ")" << endl;
+        << " # (" << (int) storageClass << ")\n";
 
     if (symbol->NumberOfAuxSymbols > 0) {
       llvm::ArrayRef<uint8_t> aux = Obj.getSymbolAuxData(symbol);
       Out << "    NumberOfAuxSymbols: " 
-          << (int) symbol->NumberOfAuxSymbols << endl;
+          << (int) symbol->NumberOfAuxSymbols << '\n';
       Out << "    AuxillaryData: ";
       yaml::writeHexStream(Out, aux);
     }
       
-    Out << endl;
+    Out << '\n';
   }
 
   return Out;
