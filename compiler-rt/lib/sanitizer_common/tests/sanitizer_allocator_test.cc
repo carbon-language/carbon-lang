@@ -337,6 +337,14 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
       a.Deallocate(&stats, allocated[i]);
     }
   }
+
+  // Regression test for boundary condition in GetBlockBegin().
+  uptr page_size = GetPageSizeCached();
+  char *p = (char *)a.Allocate(&stats, page_size, 1);
+  CHECK_EQ(p, a.GetBlockBegin(p));
+  CHECK_EQ(p, (char *)a.GetBlockBegin(p + page_size - 1));
+  CHECK_NE(p, (char *)a.GetBlockBegin(p + page_size));
+  a.Deallocate(&stats, p);
 }
 
 template
@@ -628,7 +636,6 @@ TEST(SanitizerCommon, SizeClassAllocator64Iteration) {
 TEST(SanitizerCommon, SizeClassAllocator32Iteration) {
   TestSizeClassAllocatorIteration<Allocator32Compact>();
 }
-
 
 TEST(SanitizerCommon, LargeMmapAllocatorIteration) {
   LargeMmapAllocator<> a;

@@ -1014,7 +1014,7 @@ class LargeMmapAllocator {
     CHECK_GE(nearest_chunk, h->map_beg);
     CHECK_LT(nearest_chunk, h->map_beg + h->map_size);
     CHECK_LE(nearest_chunk, p);
-    if (h->map_beg + h->map_size < p)
+    if (h->map_beg + h->map_size <= p)
       return 0;
     return GetUser(h);
   }
