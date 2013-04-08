@@ -5024,7 +5024,7 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
   Expr::EvalResult Eval;
   Eval.Diag = &Notes;
 
-  if (!Result.get()->EvaluateAsRValue(Eval, Context)) {
+  if (!Result.get()->EvaluateAsRValue(Eval, Context) || !Eval.Val.isInt()) {
     // The expression can't be folded, so we can't keep it at this position in
     // the AST.
     Result = ExprError();

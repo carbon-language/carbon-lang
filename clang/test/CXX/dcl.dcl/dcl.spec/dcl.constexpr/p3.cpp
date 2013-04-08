@@ -137,3 +137,19 @@ namespace DR1364 {
     return kGlobal; // expected-note {{read of non-const}}
   }
 }
+
+namespace rdar13584715 {
+  typedef __PTRDIFF_TYPE__ ptrdiff_t;
+  
+  template<typename T> struct X {
+    static T value() {};
+  };
+  
+  void foo(ptrdiff_t id) {
+    switch (id) {
+    case reinterpret_cast<ptrdiff_t>(&X<long>::value):  // expected-error{{case value is not a constant expression}} \
+      // expected-note{{reinterpret_cast is not allowed in a constant expression}}
+      break;
+    }
+  }
+}
