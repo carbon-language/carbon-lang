@@ -334,11 +334,42 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
+  std::pair<unsigned, MVT> LTSrc = TLI->getTypeLegalizationCost(Src);
+  std::pair<unsigned, MVT> LTDest = TLI->getTypeLegalizationCost(Dst);
+
+  static const TypeConversionCostTblEntry<MVT> SSE2ConvTbl[] = {
+    // These are somewhat magic numbers justified by looking at the output of
+    // Intel's IACA, running some kernels and making sure when we take
+    // legalization into account the throughput will be overestimated.
+    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v2i64, 2*10 },
+    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v4i32, 4*10 },
+    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v8i16, 8*10 },
+    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v16i8, 16*10 },
+    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v2i64, 2*10 },
+    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v4i32, 4*10 },
+    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v8i16, 8*10 },
+    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v16i8, 16*10 },
+    // There are faster sequences for float conversions.
+    { ISD::UINT_TO_FP, MVT::v4f32, MVT::v2i64, 15 },
+    { ISD::UINT_TO_FP, MVT::v4f32, MVT::v4i32, 15 },
+    { ISD::UINT_TO_FP, MVT::v4f32, MVT::v8i16, 15 },
+    { ISD::UINT_TO_FP, MVT::v4f32, MVT::v16i8, 8 },
+    { ISD::SINT_TO_FP, MVT::v4f32, MVT::v2i64, 15 },
+    { ISD::SINT_TO_FP, MVT::v4f32, MVT::v4i32, 15 },
+    { ISD::SINT_TO_FP, MVT::v4f32, MVT::v8i16, 15 },
+    { ISD::SINT_TO_FP, MVT::v4f32, MVT::v16i8, 8 },
+  };
+
+  if (ST->hasSSE2() && !ST->hasAVX()) {
+    int Idx = ConvertCostTableLookup<MVT>(SSE2ConvTbl,
+                                          array_lengthof(SSE2ConvTbl),
+                                          ISD, LTDest.second, LTSrc.second);
+    if (Idx != -1)
+      return LTSrc.first * SSE2ConvTbl[Idx].Cost;
+  }
+
   EVT SrcTy = TLI->getValueType(Src);
   EVT DstTy = TLI->getValueType(Dst);
-
-  if (!SrcTy.isSimple() || !DstTy.isSimple())
-    return TargetTransformInfo::getCastInstrCost(Opcode, Dst, Src);
 
   static const TypeConversionCostTblEntry<MVT> AVXConversionTbl[] = {
     { ISD::SIGN_EXTEND, MVT::v8i32, MVT::v8i16, 1 },
