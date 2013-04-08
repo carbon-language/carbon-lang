@@ -16,6 +16,14 @@ void f(NSArray *a) {
   for (auto thisKey : keys) { } // expected-warning{{'auto' deduced as 'id' in declaration of 'thisKey'}}
 }
 
+template<typename Collection>
+void ft(Collection col) {
+  for (id x : col) { }
+  for (auto x : col) { }
+}
+
+template void ft(NSArray *);
+
 /* // rdar://9072298 */
 @protocol NSObject @end
 

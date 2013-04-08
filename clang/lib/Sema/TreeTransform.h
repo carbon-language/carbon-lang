@@ -1338,6 +1338,20 @@ public:
                                     Expr *Cond, Expr *Inc,
                                     Stmt *LoopVar,
                                     SourceLocation RParenLoc) {
+    // If we've just learned that the range is actually an Objective-C
+    // collection, treat this as an Objective-C fast enumeration loop.
+    if (DeclStmt *RangeStmt = dyn_cast<DeclStmt>(Range)) {
+      if (RangeStmt->isSingleDecl()) {
+        if (VarDecl *RangeVar = dyn_cast<VarDecl>(RangeStmt->getSingleDecl())) {
+          Expr *RangeExpr = RangeVar->getInit();
+          if (!RangeExpr->isTypeDependent() &&
+              RangeExpr->getType()->isObjCObjectPointerType())
+            return getSema().ActOnObjCForCollectionStmt(ForLoc, LoopVar, RangeExpr,
+                                                        RParenLoc);
+        }
+      }
+    }
+
     return getSema().BuildCXXForRangeStmt(ForLoc, ColonLoc, Range, BeginEnd,
                                           Cond, Inc, LoopVar, RParenLoc,
                                           Sema::BFRK_Rebuild);
