@@ -12,6 +12,8 @@ void f(NSArray *a) {
                  // expected-warning {{expression result unused}}
   
   for (id thisKey : keys);
+
+  for (auto thisKey : keys) { } // expected-warning{{'auto' deduced as 'id' in declaration of 'thisKey'}}
 }
 
 /* // rdar://9072298 */

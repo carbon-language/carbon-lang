@@ -1570,6 +1570,33 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
       if (!D->hasLocalStorage())
         return StmtError(Diag(D->getLocation(),
                               diag::err_non_variable_decl_in_for));
+
+      // If the type contained 'auto', deduce the 'auto' to 'id'.
+      if (FirstType->getContainedAutoType()) {
+        TypeSourceInfo *DeducedType = 0;
+        OpaqueValueExpr OpaqueId(D->getLocation(), Context.getObjCIdType(),
+                                 VK_RValue);
+        Expr *DeducedInit = &OpaqueId;
+        if (DeduceAutoType(D->getTypeSourceInfo(), DeducedInit, DeducedType)
+              == DAR_Failed) {
+          DiagnoseAutoDeductionFailure(D, DeducedInit);
+        }
+        if (!DeducedType) {
+          D->setInvalidDecl();
+          return StmtError();
+        }
+
+        D->setTypeSourceInfo(DeducedType);
+        D->setType(DeducedType->getType());
+        FirstType = DeducedType->getType();
+
+        if (ActiveTemplateInstantiations.empty()) {
+          SourceLocation Loc = DeducedType->getTypeLoc().getBeginLoc();
+          Diag(Loc, diag::warn_auto_var_is_id)
+            << D->getDeclName();
+        }
+      }
+
     } else {
       Expr *FirstE = cast<Expr>(First);
       if (!FirstE->isTypeDependent() && !FirstE->isLValue())
