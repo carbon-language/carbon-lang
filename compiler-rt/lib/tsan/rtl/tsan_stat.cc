@@ -297,6 +297,8 @@ void StatOutput(u64 *stat) {
   name[StatInt_getitimer]                = "  getitimer                       ";
   name[StatInt_setitimer]                = "  setitimer                       ";
   name[StatInt_time]                     = "  time                            ";
+  name[StatInt_glob]                     = "  glob                            ";
+  name[StatInt_glob64]                   = "  glob64                          ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";
