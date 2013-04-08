@@ -41,10 +41,6 @@ public:
   const_iterator begin() const { return const_iterator(Decls.begin()); }
   const_iterator end() const { return const_iterator(Decls.end()); }
 
-  void addDecl(ASTContext &C, NamedDecl *D) {
-    addDecl(C, D, AS_none);
-  }
-
   void addDecl(ASTContext &C, NamedDecl *D, AccessSpecifier AS) {
     Decls.push_back(DeclAccessPair::make(D, AS), C);
   }
@@ -52,10 +48,13 @@ public:
   /// Replaces the given declaration with the new one, once.
   ///
   /// \return true if the set changed
-  bool replace(const NamedDecl* Old, NamedDecl *New) {
-    for (DeclsTy::iterator I = Decls.begin(), E = Decls.end(); I != E; ++I)
-      if (I->getDecl() == Old)
-        return (I->setDecl(New), true);
+  bool replace(const NamedDecl* Old, NamedDecl *New, AccessSpecifier AS) {
+    for (DeclsTy::iterator I = Decls.begin(), E = Decls.end(); I != E; ++I) {
+      if (I->getDecl() == Old) {
+        I->set(New, AS);
+        return true;
+      }
+    }
     return false;
   }
 

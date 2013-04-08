@@ -542,22 +542,28 @@ void CXXRecordDecl::addedMember(Decl *D) {
 
     // Keep the list of conversion functions up-to-date.
     if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(D)) {
-      // FIXME: We intentionally don't use the decl's access here because it
-      // hasn't been set yet.  That's really just a misdesign in Sema.
+      // FIXME: We use the 'unsafe' accessor for the access specifier here,
+      // because Sema may not have set it yet. That's really just a misdesign
+      // in Sema. However, LLDB *will* have set the access specifier correctly,
+      // and adds declarations after the class is technically completed,
+      // so completeDefinition()'s overriding of the access specifiers doesn't
+      // work.
+      AccessSpecifier AS = Conversion->getAccessUnsafe();
+
       if (Conversion->getPrimaryTemplate()) {
         // We don't record specializations.
       } else if (FunTmpl) {
         if (FunTmpl->getPreviousDecl())
           data().Conversions.replace(FunTmpl->getPreviousDecl(),
-                                     FunTmpl);
+                                     FunTmpl, AS);
         else
-          data().Conversions.addDecl(getASTContext(), FunTmpl);
+          data().Conversions.addDecl(getASTContext(), FunTmpl, AS);
       } else {
         if (Conversion->getPreviousDecl())
           data().Conversions.replace(Conversion->getPreviousDecl(),
-                                     Conversion);
+                                     Conversion, AS);
         else
-          data().Conversions.addDecl(getASTContext(), Conversion);
+          data().Conversions.addDecl(getASTContext(), Conversion, AS);
       }
     }
 

@@ -402,6 +402,12 @@ public:
     return AccessSpecifier(Access);
   }
 
+  /// \brief Retrieve the access specifier for this declaration, even though
+  /// it may not yet have been properly set.
+  AccessSpecifier getAccessUnsafe() const {
+    return AccessSpecifier(Access);
+  }
+
   bool hasAttrs() const { return HasAttrs; }
   void setAttrs(const AttrVec& Attrs) {
     return setAttrsImpl(Attrs, getASTContext());
