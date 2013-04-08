@@ -139,7 +139,6 @@ int main(int argc, const char **argv) {
   cl::ParseCommandLineOptions(
       argc, argv,
       "A tool to format C/C++/Obj-C code.\n\n"
-      "Currently supports LLVM and Google style guides.\n"
       "If no arguments are specified, it formats the code from standard input\n"
       "and writes the result to the standard output.\n"
       "If <file> is given, it reformats the file. If -i is specified together\n"
