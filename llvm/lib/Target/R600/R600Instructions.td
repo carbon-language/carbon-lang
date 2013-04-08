@@ -823,7 +823,61 @@ i32imm:$KCACHE_ADDR0, i32imm:$KCACHE_ADDR1, i32imm:$COUNT),
   let Inst{63-32} = Word1;
 }
 
-class CF_WORD0 {
+class CF_WORD0_R600 {
+  field bits<32> Word0;
+
+  bits<32> ADDR;
+
+  let Word0 = ADDR;
+}
+
+class CF_WORD1_R600 {
+  field bits<32> Word1;
+
+  bits<3> POP_COUNT;
+  bits<5> CF_CONST;
+  bits<2> COND;
+  bits<3> COUNT;
+  bits<6> CALL_COUNT;
+  bits<1> COUNT_3;
+  bits<1> END_OF_PROGRAM;
+  bits<1> VALID_PIXEL_MODE;
+  bits<7> CF_INST;
+  bits<1> WHOLE_QUAD_MODE;
+  bits<1> BARRIER;
+
+  let Word1{2-0} = POP_COUNT;
+  let Word1{7-3} = CF_CONST;
+  let Word1{9-8} = COND;
+  let Word1{12-10} = COUNT;
+  let Word1{18-13} = CALL_COUNT;
+  let Word1{19} = COUNT_3;
+  let Word1{21} = END_OF_PROGRAM;
+  let Word1{22} = VALID_PIXEL_MODE;
+  let Word1{29-23} = CF_INST;
+  let Word1{30} = WHOLE_QUAD_MODE;
+  let Word1{31} = BARRIER;
+}
+
+class CF_CLAUSE_R600 <bits<7> inst, dag ins, string AsmPrint> : AMDGPUInst <(outs),
+ins, AsmPrint, [] >, CF_WORD0_R600, CF_WORD1_R600 {
+  field bits<64> Inst;
+
+  let CF_INST = inst;
+  let BARRIER = 1;
+  let CF_CONST = 0;
+  let VALID_PIXEL_MODE = 0;
+  let COND = 0;
+  let CALL_COUNT = 0;
+  let COUNT_3 = 0;
+  let END_OF_PROGRAM = 0;
+  let WHOLE_QUAD_MODE = 0;
+
+  let Inst{31-0} = Word0;
+  let Inst{63-32} = Word1;
+}
+
+class CF_WORD0_EG {
   field bits<32> Word0;
 
   bits<24> ADDR;
@@ -833,7 +887,7 @@ class CF_WORD0 {
   let Word0{26-24} = JUMPTABLE_SEL;
 }
 
-class CF_WORD1 {
+class CF_WORD1_EG {
   field bits<32> Word1;
 
   bits<3> POP_COUNT;
@@ -853,8 +907,8 @@ class CF_WORD1 {
   let Word1{31} = BARRIER;
 }
 
-class CF_CLAUSE <bits<8> inst, dag ins, string AsmPrint> : AMDGPUInst <(outs),
-ins, AsmPrint, [] >, CF_WORD0, CF_WORD1 {
+class CF_CLAUSE_EG <bits<8> inst, dag ins, string AsmPrint> : AMDGPUInst <(outs),
+ins, AsmPrint, [] >, CF_WORD0_EG, CF_WORD1_EG {
   field bits<64> Inst;
 
   let CF_INST = inst;
@@ -866,54 +920,6 @@ ins, AsmPrint, [] >, CF_WORD0, CF_WORD1 {
 
   let Inst{31-0} = Word0;
   let Inst{63-32} = Word1;
-}
-
-def CF_TC : CF_CLAUSE<1, (ins i32imm:$ADDR, i32imm:$COUNT),
-"TEX $COUNT @$ADDR"> {
-  let POP_COUNT = 0;
-}
-
-def CF_VC : CF_CLAUSE<2, (ins i32imm:$ADDR, i32imm:$COUNT),
-"VTX $COUNT @$ADDR"> {
-  let POP_COUNT = 0;
-}
-
-def WHILE_LOOP : CF_CLAUSE<6, (ins i32imm:$ADDR), "LOOP_START_DX10 @$ADDR"> {
-  let POP_COUNT = 0;
-  let COUNT = 0;
-}
-
-def END_LOOP : CF_CLAUSE<5, (ins i32imm:$ADDR), "END_LOOP @$ADDR"> {
-  let POP_COUNT = 0;
-  let COUNT = 0;
-}
-
-def LOOP_BREAK : CF_CLAUSE<9, (ins i32imm:$ADDR), "LOOP_BREAK @$ADDR"> {
-  let POP_COUNT = 0;
-  let COUNT = 0;
-}
-
-def CF_CONTINUE : CF_CLAUSE<8, (ins i32imm:$ADDR), "CONTINUE @$ADDR"> {
-  let POP_COUNT = 0;
-  let COUNT = 0;
-}
-
-def CF_JUMP : CF_CLAUSE<10, (ins i32imm:$ADDR, i32imm:$POP_COUNT), "JUMP @$ADDR POP:$POP_COUNT"> {
-  let COUNT = 0;
-}
-
-def CF_ELSE : CF_CLAUSE<13, (ins i32imm:$ADDR, i32imm:$POP_COUNT), "ELSE @$ADDR POP:$POP_COUNT"> {
-  let COUNT = 0;
-}
-
-def CF_CALL_FS : CF_CLAUSE<19, (ins), "CALL_FS"> {
-  let ADDR = 0;
-  let COUNT = 0;
-  let POP_COUNT = 0;
-}
-
-def POP : CF_CLAUSE<14, (ins i32imm:$ADDR, i32imm:$POP_COUNT), "POP @$ADDR POP:$POP_COUNT"> {
-  let COUNT = 0;
 }
 
 def CF_ALU : ALU_CLAUSE<8, "ALU">;
@@ -1433,6 +1439,52 @@ let Predicates = [isR600] in {
     let Word1{31} = 1; // BARRIER
   }
   defm : SteamOutputExportPattern<R600_ExportBuf, 0x20, 0x21, 0x22, 0x23>;
+
+  def CF_TC_R600 : CF_CLAUSE_R600<1, (ins i32imm:$ADDR, i32imm:$COUNT),
+  "TEX $COUNT @$ADDR"> {
+    let POP_COUNT = 0;
+  }
+  def CF_VC_R600 : CF_CLAUSE_R600<2, (ins i32imm:$ADDR, i32imm:$COUNT),
+  "VTX $COUNT @$ADDR"> {
+    let POP_COUNT = 0;
+  }
+  def WHILE_LOOP_R600 : CF_CLAUSE_R600<6, (ins i32imm:$ADDR),
+  "LOOP_START_DX10 @$ADDR"> {
+    let POP_COUNT = 0;
+    let COUNT = 0;
+  }
+  def END_LOOP_R600 : CF_CLAUSE_R600<5, (ins i32imm:$ADDR), "END_LOOP @$ADDR"> {
+    let POP_COUNT = 0;
+    let COUNT = 0;
+  }
+  def LOOP_BREAK_R600 : CF_CLAUSE_R600<9, (ins i32imm:$ADDR),
+  "LOOP_BREAK @$ADDR"> {
+    let POP_COUNT = 0;
+    let COUNT = 0;
+  }
+  def CF_CONTINUE_R600 : CF_CLAUSE_R600<8, (ins i32imm:$ADDR),
+  "CONTINUE @$ADDR"> {
+    let POP_COUNT = 0;
+    let COUNT = 0;
+  }
+  def CF_JUMP_R600 : CF_CLAUSE_R600<10, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
+  "JUMP @$ADDR POP:$POP_COUNT"> {
+    let COUNT = 0;
+  }
+  def CF_ELSE_R600 : CF_CLAUSE_R600<13, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
+  "ELSE @$ADDR POP:$POP_COUNT"> {
+    let COUNT = 0;
+  }
+  def CF_CALL_FS_R600 : CF_CLAUSE_R600<19, (ins), "CALL_FS"> {
+    let ADDR = 0;
+    let COUNT = 0;
+    let POP_COUNT = 0;
+  }
+  def POP_R600 : CF_CLAUSE_R600<14, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
+  "POP @$ADDR POP:$POP_COUNT"> {
+    let COUNT = 0;
+  }
+
 }
 
 // Helper pattern for normalizing inputs to triginomic instructions for R700+
@@ -1588,6 +1640,52 @@ let hasSideEffects = 1 in {
     let Word1{31} = 1; // BARRIER
   }
   defm : SteamOutputExportPattern<EG_ExportBuf, 0x40, 0x41, 0x42, 0x43>;
+
+  def CF_TC_EG : CF_CLAUSE_EG<1, (ins i32imm:$ADDR, i32imm:$COUNT),
+  "TEX $COUNT @$ADDR"> {
+    let POP_COUNT = 0;
+  }
+  def CF_VC_EG : CF_CLAUSE_EG<2, (ins i32imm:$ADDR, i32imm:$COUNT),
+  "VTX $COUNT @$ADDR"> {
+    let POP_COUNT = 0;
+  }
+  def WHILE_LOOP_EG : CF_CLAUSE_EG<6, (ins i32imm:$ADDR),
+  "LOOP_START_DX10 @$ADDR"> {
+    let POP_COUNT = 0;
+    let COUNT = 0;
+  }
+  def END_LOOP_EG : CF_CLAUSE_EG<5, (ins i32imm:$ADDR), "END_LOOP @$ADDR"> {
+    let POP_COUNT = 0;
+    let COUNT = 0;
+  }
+  def LOOP_BREAK_EG : CF_CLAUSE_EG<9, (ins i32imm:$ADDR),
+  "LOOP_BREAK @$ADDR"> {
+    let POP_COUNT = 0;
+    let COUNT = 0;
+  }
+  def CF_CONTINUE_EG : CF_CLAUSE_EG<8, (ins i32imm:$ADDR),
+  "CONTINUE @$ADDR"> {
+    let POP_COUNT = 0;
+    let COUNT = 0;
+  }
+  def CF_JUMP_EG : CF_CLAUSE_EG<10, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
+  "JUMP @$ADDR POP:$POP_COUNT"> {
+    let COUNT = 0;
+  }
+  def CF_ELSE_EG : CF_CLAUSE_EG<13, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
+  "ELSE @$ADDR POP:$POP_COUNT"> {
+    let COUNT = 0;
+  }
+  def CF_CALL_FS_EG : CF_CLAUSE_EG<19, (ins), "CALL_FS"> {
+    let ADDR = 0;
+    let COUNT = 0;
+    let POP_COUNT = 0;
+  }
+  def POP_EG : CF_CLAUSE_EG<14, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
+  "POP @$ADDR POP:$POP_COUNT"> {
+    let COUNT = 0;
+  }
+
 
 //===----------------------------------------------------------------------===//
 // Memory read/write instructions

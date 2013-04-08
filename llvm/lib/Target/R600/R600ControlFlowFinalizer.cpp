@@ -30,9 +30,22 @@ namespace llvm {
 class R600ControlFlowFinalizer : public MachineFunctionPass {
 
 private:
+  enum ControlFlowInstruction {
+    CF_TC,
+    CF_CALL_FS,
+    CF_WHILE_LOOP,
+    CF_END_LOOP,
+    CF_LOOP_BREAK,
+    CF_LOOP_CONTINUE,
+    CF_JUMP,
+    CF_ELSE,
+    CF_POP
+  };
+  
   static char ID;
   const R600InstrInfo *TII;
   unsigned MaxFetchInst;
+  const AMDGPUSubtarget &ST;
 
   bool isFetch(const MachineInstr *MI) const {
     switch (MI->getOpcode()) {
@@ -70,6 +83,52 @@ private:
     }
   }
 
+  const MCInstrDesc &getHWInstrDesc(ControlFlowInstruction CFI) const {
+    if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD4XXX) {
+      switch (CFI) {
+      case CF_TC:
+        return TII->get(AMDGPU::CF_TC_R600);
+      case CF_CALL_FS:
+        return TII->get(AMDGPU::CF_CALL_FS_R600);
+      case CF_WHILE_LOOP:
+        return TII->get(AMDGPU::WHILE_LOOP_R600);
+      case CF_END_LOOP:
+        return TII->get(AMDGPU::END_LOOP_R600);
+      case CF_LOOP_BREAK:
+        return TII->get(AMDGPU::LOOP_BREAK_R600);
+      case CF_LOOP_CONTINUE:
+        return TII->get(AMDGPU::CF_CONTINUE_R600);
+      case CF_JUMP:
+        return TII->get(AMDGPU::CF_JUMP_R600);
+      case CF_ELSE:
+        return TII->get(AMDGPU::CF_ELSE_R600);
+      case CF_POP:
+        return TII->get(AMDGPU::POP_R600);
+      }
+    } else {
+      switch (CFI) {
+      case CF_TC:
+        return TII->get(AMDGPU::CF_TC_EG);
+      case CF_CALL_FS:
+        return TII->get(AMDGPU::CF_CALL_FS_EG);
+      case CF_WHILE_LOOP:
+        return TII->get(AMDGPU::WHILE_LOOP_EG);
+      case CF_END_LOOP:
+        return TII->get(AMDGPU::END_LOOP_EG);
+      case CF_LOOP_BREAK:
+        return TII->get(AMDGPU::LOOP_BREAK_EG);
+      case CF_LOOP_CONTINUE:
+        return TII->get(AMDGPU::CF_CONTINUE_EG);
+      case CF_JUMP:
+        return TII->get(AMDGPU::CF_JUMP_EG);
+      case CF_ELSE:
+        return TII->get(AMDGPU::CF_ELSE_EG);
+      case CF_POP:
+        return TII->get(AMDGPU::POP_EG);
+      }
+    }
+  }
+
   MachineBasicBlock::iterator
   MakeFetchClause(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       unsigned CfAddress) const {
@@ -85,7 +144,7 @@ private:
         break;
     }
     BuildMI(MBB, ClauseHead, MBB.findDebugLoc(ClauseHead),
-        TII->get(AMDGPU::CF_TC))
+        getHWInstrDesc(CF_TC))
         .addImm(CfAddress) // ADDR
         .addImm(AluInstCount); // COUNT
     return I;
@@ -104,7 +163,8 @@ private:
 
 public:
   R600ControlFlowFinalizer(TargetMachine &tm) : MachineFunctionPass(ID),
-    TII (static_cast<const R600InstrInfo *>(tm.getInstrInfo())) {
+    TII (static_cast<const R600InstrInfo *>(tm.getInstrInfo())),
+    ST(tm.getSubtarget<AMDGPUSubtarget>()) {
       const AMDGPUSubtarget &ST = tm.getSubtarget<AMDGPUSubtarget>();
       if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD4XXX)
         MaxFetchInst = 8;
@@ -124,7 +184,7 @@ public:
       R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
       if (MFI->ShaderType == 1) {
         BuildMI(MBB, MBB.begin(), MBB.findDebugLoc(MBB.begin()),
-            TII->get(AMDGPU::CF_CALL_FS));
+            getHWInstrDesc(CF_CALL_FS));
         CfCount++;
       }
       for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
@@ -154,7 +214,7 @@ public:
           CurrentStack++;
           MaxStack = std::max(MaxStack, CurrentStack);
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
-              TII->get(AMDGPU::WHILE_LOOP))
+              getHWInstrDesc(CF_WHILE_LOOP))
               .addImm(2);
           std::pair<unsigned, std::set<MachineInstr *> > Pair(CfCount,
               std::set<MachineInstr *>());
@@ -170,7 +230,7 @@ public:
               LoopStack.back();
           LoopStack.pop_back();
           CounterPropagateAddr(Pair.second, CfCount);
-          BuildMI(MBB, MI, MBB.findDebugLoc(MI), TII->get(AMDGPU::END_LOOP))
+          BuildMI(MBB, MI, MBB.findDebugLoc(MI), getHWInstrDesc(CF_END_LOOP))
               .addImm(Pair.first + 1);
           MI->eraseFromParent();
           CfCount++;
@@ -178,7 +238,7 @@ public:
         }
         case AMDGPU::IF_PREDICATE_SET: {
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
-              TII->get(AMDGPU::CF_JUMP))
+              getHWInstrDesc(CF_JUMP))
               .addImm(0)
               .addImm(0);
           IfThenElseStack.push_back(MIb);
@@ -192,7 +252,7 @@ public:
           IfThenElseStack.pop_back();
           CounterPropagateAddr(JumpInst, CfCount);
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
-              TII->get(AMDGPU::CF_ELSE))
+              getHWInstrDesc(CF_ELSE))
               .addImm(0)
               .addImm(1);
           DEBUG(dbgs() << CfCount << ":"; MIb->dump(););
@@ -207,7 +267,7 @@ public:
           IfThenElseStack.pop_back();
           CounterPropagateAddr(IfOrElseInst, CfCount + 1);
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
-              TII->get(AMDGPU::POP))
+              getHWInstrDesc(CF_POP))
               .addImm(CfCount + 1)
               .addImm(1);
           DEBUG(dbgs() << CfCount << ":"; MIb->dump(););
@@ -218,13 +278,13 @@ public:
         case AMDGPU::PREDICATED_BREAK: {
           CurrentStack--;
           CfCount += 3;
-          BuildMI(MBB, MI, MBB.findDebugLoc(MI), TII->get(AMDGPU::CF_JUMP))
+          BuildMI(MBB, MI, MBB.findDebugLoc(MI), getHWInstrDesc(CF_JUMP))
               .addImm(CfCount)
               .addImm(1);
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
-              TII->get(AMDGPU::LOOP_BREAK))
+              getHWInstrDesc(CF_LOOP_BREAK))
               .addImm(0);
-          BuildMI(MBB, MI, MBB.findDebugLoc(MI), TII->get(AMDGPU::POP))
+          BuildMI(MBB, MI, MBB.findDebugLoc(MI), getHWInstrDesc(CF_POP))
               .addImm(CfCount)
               .addImm(1);
           LoopStack.back().second.insert(MIb);
@@ -233,7 +293,7 @@ public:
         }
         case AMDGPU::CONTINUE: {
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
-              TII->get(AMDGPU::CF_CONTINUE))
+              getHWInstrDesc(CF_LOOP_CONTINUE))
               .addImm(0);
           LoopStack.back().second.insert(MIb);
           MI->eraseFromParent();

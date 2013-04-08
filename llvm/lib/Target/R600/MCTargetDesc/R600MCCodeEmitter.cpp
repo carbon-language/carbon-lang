@@ -266,17 +266,27 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       Emit(Inst, OS);
       break;
     }
-    case AMDGPU::CF_TC:
-    case AMDGPU::CF_VC:
-    case AMDGPU::CF_CALL_FS:
+    case AMDGPU::CF_TC_EG:
+    case AMDGPU::CF_VC_EG:
+    case AMDGPU::CF_CALL_FS_EG:
+    case AMDGPU::CF_TC_R600:
+    case AMDGPU::CF_VC_R600:
+    case AMDGPU::CF_CALL_FS_R600:
       return;
-    case AMDGPU::WHILE_LOOP:
-    case AMDGPU::END_LOOP:
-    case AMDGPU::LOOP_BREAK:
-    case AMDGPU::CF_CONTINUE:
-    case AMDGPU::CF_JUMP:
-    case AMDGPU::CF_ELSE:
-    case AMDGPU::POP: {
+    case AMDGPU::WHILE_LOOP_EG:
+    case AMDGPU::END_LOOP_EG:
+    case AMDGPU::LOOP_BREAK_EG:
+    case AMDGPU::CF_CONTINUE_EG:
+    case AMDGPU::CF_JUMP_EG:
+    case AMDGPU::CF_ELSE_EG:
+    case AMDGPU::POP_EG:
+    case AMDGPU::WHILE_LOOP_R600:
+    case AMDGPU::END_LOOP_R600:
+    case AMDGPU::LOOP_BREAK_R600:
+    case AMDGPU::CF_CONTINUE_R600:
+    case AMDGPU::CF_JUMP_R600:
+    case AMDGPU::CF_ELSE_R600:
+    case AMDGPU::POP_R600: {
       uint64_t Inst = getBinaryCodeForInstr(MI, Fixups);
       EmitByte(INSTR_NATIVE, OS);
       Emit(Inst, OS);
