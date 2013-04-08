@@ -27,6 +27,11 @@ namespace llvm {
 namespace object {
 
 namespace MachOFormat {
+  struct SectionBase {
+    char Name[16];
+    char SegmentName[16];
+  };
+
   template<bool is64Bits>
   struct Section;
 
@@ -254,6 +259,7 @@ private:
   typedef SmallVector<DataRefImpl, 1> SectionList;
   SectionList Sections;
 
+  const MachOFormat::SectionBase *getSectionBase(DataRefImpl DRI) const;
 
   void moveToNextSection(DataRefImpl &DRI) const;
 

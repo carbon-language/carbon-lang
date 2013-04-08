@@ -509,11 +509,8 @@ error_code MachOObjectFile::getSectionNext(DataRefImpl DRI,
 const MachOFormat::Section<false> *
 MachOObjectFile::getSection(DataRefImpl DRI) const {
   assert(!is64Bit());
-  const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
-  uintptr_t CommandAddr = reinterpret_cast<uintptr_t>(Command);
-  uintptr_t SectionAddr = CommandAddr + sizeof(macho::SegmentLoadCommand) +
-    DRI.d.b * sizeof(MachOFormat::Section<false>);
-  return reinterpret_cast<const MachOFormat::Section<false>*>(SectionAddr);
+  const MachOFormat::SectionBase *Addr = getSectionBase(DRI);
+  return reinterpret_cast<const MachOFormat::Section<false>*>(Addr);
 }
 
 std::size_t MachOObjectFile::getSectionIndex(DataRefImpl Sec) const {
@@ -523,14 +520,27 @@ std::size_t MachOObjectFile::getSectionIndex(DataRefImpl Sec) const {
   return std::distance(Sections.begin(), loc);
 }
 
+const MachOFormat::SectionBase*
+MachOObjectFile::getSectionBase(DataRefImpl DRI) const {
+  const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
+  uintptr_t CommandAddr = reinterpret_cast<uintptr_t>(Command);
+
+  bool Is64 = is64Bit();
+  unsigned SegmentLoadSize =
+    Is64 ? sizeof(MachOFormat::SegmentLoadCommand<true>) :
+           sizeof(MachOFormat::SegmentLoadCommand<false>);
+  unsigned SectionSize = Is64 ? sizeof(MachOFormat::Section<true>) :
+                                sizeof(MachOFormat::Section<false>);
+
+  uintptr_t SectionAddr = CommandAddr + SegmentLoadSize + DRI.d.b * SectionSize;
+  return reinterpret_cast<const MachOFormat::SectionBase*>(SectionAddr);
+}
+
 const MachOFormat::Section<true> *
 MachOObjectFile::getSection64(DataRefImpl DRI) const {
   assert(is64Bit());
-  const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
-  uintptr_t CommandAddr = reinterpret_cast<uintptr_t>(Command);
-  uintptr_t SectionAddr = CommandAddr + sizeof(macho::Segment64LoadCommand) +
-    DRI.d.b * sizeof(MachOFormat::Section<true>);
-  return reinterpret_cast<const MachOFormat::Section<true>*>(SectionAddr);
+  const MachOFormat::SectionBase *Addr = getSectionBase(DRI);
+  return reinterpret_cast<const MachOFormat::Section<true>*>(Addr);
 }
 
 static StringRef parseSegmentOrSectionName(const char *P) {
@@ -542,13 +552,8 @@ static StringRef parseSegmentOrSectionName(const char *P) {
 }
 
 ArrayRef<char> MachOObjectFile::getSectionRawName(DataRefImpl DRI) const {
-  if (is64Bit()) {
-    const MachOFormat::Section<true> *sec = getSection64(DRI);
-    return ArrayRef<char>(sec->Name);
-  } else {
-    const MachOFormat::Section<false> *sec = getSection(DRI);
-    return ArrayRef<char>(sec->Name);
-  }
+  const MachOFormat::SectionBase *Base = getSectionBase(DRI);
+  return ArrayRef<char>(Base->Name);
 }
 
 error_code MachOObjectFile::getSectionName(DataRefImpl DRI,
@@ -560,13 +565,8 @@ error_code MachOObjectFile::getSectionName(DataRefImpl DRI,
 
 ArrayRef<char>
 MachOObjectFile::getSectionRawFinalSegmentName(DataRefImpl Sec) const {
-  if (is64Bit()) {
-    const MachOFormat::Section<true> *sec = getSection64(Sec);
-    return ArrayRef<char>(sec->SegmentName, 16);
-  } else {
-    const MachOFormat::Section<false> *sec = getSection(Sec);
-    return ArrayRef<char>(sec->SegmentName);
-  }
+  const MachOFormat::SectionBase *Base = getSectionBase(Sec);
+  return ArrayRef<char>(Base->SegmentName);
 }
 
 StringRef MachOObjectFile::getSectionFinalSegmentName(DataRefImpl DRI) const {
