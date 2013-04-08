@@ -152,6 +152,7 @@ def InstanceSize  : RecordLikeDetailCommand<"instancesize">;
 def Ownership     : RecordLikeDetailCommand<"ownership">;
 def Performance   : RecordLikeDetailCommand<"performance">;
 def Security      : RecordLikeDetailCommand<"security">;
+def Seealso       : BlockCommand<"seealso">;
 def SuperClass    : RecordLikeDetailCommand<"superclass">;
 
 //===----------------------------------------------------------------------===//
@@ -177,6 +178,7 @@ defm FBrace   : VerbatimBlockCommand<"f{", "f}">; // LaTeX environment
 
 // HeaderDoc commands
 defm Textblock    : VerbatimBlockCommand<"textblock", "/textblock">;
+defm Link         : VerbatimBlockCommand<"link", "/link">;
 
 //===----------------------------------------------------------------------===//
 // VerbatimLineCommand
