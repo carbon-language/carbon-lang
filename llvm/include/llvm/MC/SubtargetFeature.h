@@ -62,10 +62,8 @@ struct SubtargetInfoKV {
 ///
 /// SubtargetFeatures - Manages the enabling and disabling of subtarget
 /// specific features.  Features are encoded as a string of the form
-///   "cpu,+attr1,+attr2,-attr3,...,+attrN"
+///   "+attr1,+attr2,-attr3,...,+attrN"
 /// A comma separates each feature from the next (all lowercase.)
-/// The first feature is always the CPU subtype (eg. pentiumm).  If the CPU
-/// value is "generic" then the CPU subtype should be generic for the target.
 /// Each of the remaining features is prefixed with + or - indicating whether
 /// that feature should be enabled or disabled contrary to the cpu
 /// specification.
