@@ -15,6 +15,20 @@
 
 <h1>Release notes for <tt>checker-XXX</tt> builds</h1>
 
+<h4 id="checker_273">checker-273</h4>
+<p><b>built:</b> April 8, 2013</br>
+	<b>download:</b> <a href="https://attache.apple.com/AttacheWeb/dl?id=ATCdefcc852a99546cfbaba2a960e07478e">checker-273.tar.bz2</a></p>
+	<p><b>highlights:</b></p>
+	<ul>
+    <li>Additional checks for misuse of Foundation collection APIs.
+    <li>New C++ checker for attempting to create a reference to null.</li>
+    <li>New use-after-free checker for C++ 'delete'.</li>
+    <li>New checker for simple cases of mismatched allocators and deallocators, e.g. "delete malloc(4);"</li>
+    <li>Support for basic interprocedural analysis of C++ destructors.</li>
+    <li>Additional heuristics for suppressing null pointer false positives.</li>
+    <li>Misc. bug fixes and performance enhancements.</li>
+	</ul>
+
 <h4 id="checker_272">checker-272</h4>
 <p><b>built:</b> March 1, 2013</br>
 	<b>download:</b> <a href="https://attache.apple.com/AttacheWeb/dl?id=ATCbb91eedf8edf4c7388549be8f91e810d">checker-272.tar.bz2</a></p>
