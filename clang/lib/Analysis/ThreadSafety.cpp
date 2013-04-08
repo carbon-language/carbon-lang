@@ -2279,6 +2279,10 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
   // Fill in source locations for all CFGBlocks.
   findBlockLocations(CFGraph, SortedGraph, BlockInfo);
 
+  MutexIDList ExclusiveLocksAcquired;
+  MutexIDList SharedLocksAcquired;
+  MutexIDList LocksReleased;
+
   // Add locks from exclusive_locks_required and shared_locks_required
   // to initial lockset. Also turn off checking for lock and unlock functions.
   // FIXME: is there a more intelligent way to check lock/unlock functions?
@@ -2300,15 +2304,30 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
       } else if (SharedLocksRequiredAttr *A
                    = dyn_cast<SharedLocksRequiredAttr>(Attr)) {
         getMutexIDs(SharedLocksToAdd, A, (Expr*) 0, D);
-      } else if (isa<UnlockFunctionAttr>(Attr)) {
-        // Don't try to check unlock functions for now
-        return;
-      } else if (isa<ExclusiveLockFunctionAttr>(Attr)) {
-        // Don't try to check lock functions for now
-        return;
-      } else if (isa<SharedLockFunctionAttr>(Attr)) {
-        // Don't try to check lock functions for now
-        return;
+      } else if (UnlockFunctionAttr *A = dyn_cast<UnlockFunctionAttr>(Attr)) {
+        if (!Handler.issueBetaWarnings())
+          return;
+        // UNLOCK_FUNCTION() is used to hide the underlying lock implementation.
+        // We must ignore such methods.
+        if (A->args_size() == 0)
+          return;
+        // FIXME -- deal with exclusive vs. shared unlock functions?
+        getMutexIDs(ExclusiveLocksToAdd, A, (Expr*) 0, D);
+        getMutexIDs(LocksReleased, A, (Expr*) 0, D);
+      } else if (ExclusiveLockFunctionAttr *A
+                   = dyn_cast<ExclusiveLockFunctionAttr>(Attr)) {
+        if (!Handler.issueBetaWarnings())
+          return;
+        if (A->args_size() == 0)
+          return;
+        getMutexIDs(ExclusiveLocksAcquired, A, (Expr*) 0, D);
+      } else if (SharedLockFunctionAttr *A
+                   = dyn_cast<SharedLockFunctionAttr>(Attr)) {
+        if (!Handler.issueBetaWarnings())
+          return;
+        if (A->args_size() == 0)
+          return;
+        getMutexIDs(SharedLocksAcquired, A, (Expr*) 0, D);
       } else if (isa<ExclusiveTrylockFunctionAttr>(Attr)) {
         // Don't try to check trylock functions for now
         return;
@@ -2491,8 +2510,27 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
   if (!Final->Reachable)
     return;
 
+  // By default, we expect all locks held on entry to be held on exit.
+  FactSet ExpectedExitSet = Initial->EntrySet;
+
+  // Adjust the expected exit set by adding or removing locks, as declared
+  // by *-LOCK_FUNCTION and UNLOCK_FUNCTION.  The intersect below will then
+  // issue the appropriate warning.
+  // FIXME: the location here is not quite right.
+  for (unsigned i=0,n=ExclusiveLocksAcquired.size(); i<n; ++i) {
+    ExpectedExitSet.addLock(FactMan, ExclusiveLocksAcquired[i],
+                            LockData(D->getLocation(), LK_Exclusive));
+  }
+  for (unsigned i=0,n=SharedLocksAcquired.size(); i<n; ++i) {
+    ExpectedExitSet.addLock(FactMan, SharedLocksAcquired[i],
+                            LockData(D->getLocation(), LK_Shared));
+  }
+  for (unsigned i=0,n=LocksReleased.size(); i<n; ++i) {
+    ExpectedExitSet.removeLock(FactMan, LocksReleased[i]);
+  }
+
   // FIXME: Should we call this function for all blocks which exit the function?
-  intersectAndWarn(Initial->EntrySet, Final->ExitSet,
+  intersectAndWarn(ExpectedExitSet, Final->ExitSet,
                    Final->ExitLoc,
                    LEK_LockedAtEndOfFunction,
                    LEK_NotLockedAtEndOfFunction,

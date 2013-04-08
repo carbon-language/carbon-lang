@@ -1475,8 +1475,8 @@ namespace substitution_test {
   public:
     Mutex mu;
 
-    void lockData()    __attribute__((exclusive_lock_function(mu)))   { }
-    void unlockData()  __attribute__((unlock_function(mu)))           { }
+    void lockData()    __attribute__((exclusive_lock_function(mu)));
+    void unlockData()  __attribute__((unlock_function(mu)));
 
     void doSomething() __attribute__((exclusive_locks_required(mu)))  { }
   };
@@ -1484,8 +1484,8 @@ namespace substitution_test {
 
   class DataLocker {
   public:
-    void lockData  (MyData *d) __attribute__((exclusive_lock_function(d->mu))) { }
-    void unlockData(MyData *d) __attribute__((unlock_function(d->mu)))         { }
+    void lockData  (MyData *d) __attribute__((exclusive_lock_function(d->mu)));
+    void unlockData(MyData *d) __attribute__((unlock_function(d->mu)));
   };
 
 
@@ -2858,7 +2858,7 @@ void Foo::lock1()  EXCLUSIVE_LOCK_FUNCTION(mu1_) {
 }
 
 void Foo::slock1() SHARED_LOCK_FUNCTION(mu1_) {
-  mu1_.Lock();
+  mu1_.ReaderLock();
 }
 
 void Foo::lock3()  EXCLUSIVE_LOCK_FUNCTION(mu1_, mu2_, mu3_) {
@@ -3640,8 +3640,8 @@ class Foo {
                        LOCKS_EXCLUDED(mu2_);
   void lock()          EXCLUSIVE_LOCK_FUNCTION(mu1_)
                        EXCLUSIVE_LOCK_FUNCTION(mu2_);
-  void readerlock()    EXCLUSIVE_LOCK_FUNCTION(mu1_)
-                       EXCLUSIVE_LOCK_FUNCTION(mu2_);
+  void readerlock()    SHARED_LOCK_FUNCTION(mu1_)
+                       SHARED_LOCK_FUNCTION(mu2_);
   void unlock()        UNLOCK_FUNCTION(mu1_)
                        UNLOCK_FUNCTION(mu2_);
   bool trylock()       EXCLUSIVE_TRYLOCK_FUNCTION(true, mu1_)
@@ -3663,9 +3663,9 @@ void Foo::foo2() {
 }
 
 void Foo::foo3() { }
-void Foo::lock() { }
-void Foo::readerlock() { }
-void Foo::unlock() { }
+void Foo::lock() { mu1_.Lock();  mu2_.Lock(); }
+void Foo::readerlock() { mu1_.ReaderLock();  mu2_.ReaderLock(); }
+void Foo::unlock() { mu1_.Unlock();  mu2_.Unlock(); }
 bool Foo::trylock()       { return true; }
 bool Foo::readertrylock() { return true; }
 
@@ -3914,4 +3914,74 @@ void bar() EXCLUSIVE_LOCKS_REQUIRED(getMutex1());
 void bar2() EXCLUSIVE_LOCKS_REQUIRED(getMutex1(), getMutex2());
 
 }  // end namespace UnevaluatedContextTest
+
+
+namespace LockUnlockFunctionTest {
+
+// Check built-in lock functions
+class LOCKABLE MyLockable  {
+public:
+  void lock()       EXCLUSIVE_LOCK_FUNCTION() { mu_.Lock(); }
+  void readerLock() SHARED_LOCK_FUNCTION()    { mu_.ReaderLock(); }
+  void unlock()     UNLOCK_FUNCTION()         { mu_.Unlock(); }
+
+private:
+  Mutex mu_;
+};
+
+
+class Foo {
+public:
+  // Correct lock/unlock functions
+  void lock() EXCLUSIVE_LOCK_FUNCTION(mu_) {
+    mu_.Lock();
+  }
+
+  void readerLock() SHARED_LOCK_FUNCTION(mu_) {
+    mu_.ReaderLock();
+  }
+
+  void unlock() UNLOCK_FUNCTION(mu_) {
+    mu_.Unlock();
+  }
+
+  // Check failure to lock.
+  void lockBad() EXCLUSIVE_LOCK_FUNCTION(mu_) {    // expected-note {{mutex acquired here}}
+    mu2_.Lock();
+    mu2_.Unlock();
+  }  // expected-warning {{expecting mutex 'mu_' to be locked at the end of function}}
+
+  void readerLockBad() SHARED_LOCK_FUNCTION(mu_) {  // expected-note {{mutex acquired here}}
+    mu2_.Lock();
+    mu2_.Unlock();
+  }  // expected-warning {{expecting mutex 'mu_' to be locked at the end of function}}
+
+  void unlockBad() UNLOCK_FUNCTION(mu_) {  // expected-note {{mutex acquired here}}
+    mu2_.Lock();
+    mu2_.Unlock();
+  }  // expected-warning {{mutex 'mu_' is still locked at the end of function}}
+
+  // Check locking the wrong thing.
+  void lockBad2() EXCLUSIVE_LOCK_FUNCTION(mu_) {   // expected-note {{mutex acquired here}}
+    mu2_.Lock();            // expected-note {{mutex acquired here}}
+  } // expected-warning {{expecting mutex 'mu_' to be locked at the end of function}} \
+    // expected-warning {{mutex 'mu2_' is still locked at the end of function}}
+
+
+  void readerLockBad2() SHARED_LOCK_FUNCTION(mu_) {   // expected-note {{mutex acquired here}}
+    mu2_.ReaderLock();      // expected-note {{mutex acquired here}}
+  } // expected-warning {{expecting mutex 'mu_' to be locked at the end of function}} \
+    // expected-warning {{mutex 'mu2_' is still locked at the end of function}}
+
+
+  void unlockBad2() UNLOCK_FUNCTION(mu_) {  // expected-note {{mutex acquired here}}
+    mu2_.Unlock();  // expected-warning {{unlocking 'mu2_' that was not locked}}
+  }  // expected-warning {{mutex 'mu_' is still locked at the end of function}}
+
+private:
+  Mutex mu_;
+  Mutex mu2_;
+};
+
+}  // end namespace LockUnlockFunctionTest
 
