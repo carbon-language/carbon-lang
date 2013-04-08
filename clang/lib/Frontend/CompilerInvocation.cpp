@@ -1244,7 +1244,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.AccessControl = !Args.hasArg(OPT_fno_access_control);
   Opts.ElideConstructors = !Args.hasArg(OPT_fno_elide_constructors);
   Opts.MathErrno = Args.hasArg(OPT_fmath_errno);
-  Opts.InstantiationDepth = Args.getLastArgIntValue(OPT_ftemplate_depth, 512,
+  Opts.InstantiationDepth = Args.getLastArgIntValue(OPT_ftemplate_depth, 256,
                                                     Diags);
   Opts.ConstexprCallDepth = Args.getLastArgIntValue(OPT_fconstexpr_depth, 512,
                                                     Diags);
