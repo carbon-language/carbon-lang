@@ -337,14 +337,22 @@ TEST(DeclarationMatcher, hasDeclContext) {
       "    class D {};"
       "  }"
       "}",
-      recordDecl(hasDeclContext(namedDecl(hasName("M"))))));
+      recordDecl(hasDeclContext(namespaceDecl(hasName("M"))))));
   EXPECT_TRUE(notMatches(
       "namespace N {"
       "  namespace M {"
       "    class D {};"
       "  }"
       "}",
-      recordDecl(hasDeclContext(namedDecl(hasName("N"))))));
+      recordDecl(hasDeclContext(namespaceDecl(hasName("N"))))));
+
+  EXPECT_TRUE(matches("namespace {"
+                      "  namespace M {"
+                      "    class D {};"
+                      "  }"
+                      "}",
+                      recordDecl(hasDeclContext(namespaceDecl(
+                          hasName("M"), hasDeclContext(namespaceDecl()))))));
 }
 
 TEST(ClassTemplate, DoesNotMatchClass) {

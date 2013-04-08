@@ -129,7 +129,8 @@ typedef internal::Matcher<NestedNameSpecifierLoc> NestedNameSpecifierLocMatcher;
 /// \endcode
 ///
 /// Usable as: Any Matcher
-inline internal::PolymorphicMatcherWithParam0<internal::TrueMatcher> anything() {
+inline internal::PolymorphicMatcherWithParam0<internal::TrueMatcher>
+anything() {
   return internal::PolymorphicMatcherWithParam0<internal::TrueMatcher>();
 }
 
@@ -156,6 +157,17 @@ const internal::VariadicAllOfMatcher<Decl> decl;
 ///   };
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<Decl, NamedDecl> namedDecl;
+
+/// \brief Matches a declaration of a namespace.
+///
+/// Given
+/// \code
+///   namespace {}
+///   namespace test {}
+/// \endcode
+/// namespaceDecl()
+///   matches "namespace {}" and "namespace test {}"
+const internal::VariadicDynCastAllOfMatcher<Decl, NamespaceDecl> namespaceDecl;
 
 /// \brief Matches C++ class declarations.
 ///
