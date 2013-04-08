@@ -239,6 +239,7 @@ class InternalSymbolizer {
 
 class Symbolizer {
  public:
+  Symbolizer() : modules_fresh_(false) { };
   uptr SymbolizeCode(uptr addr, AddressInfo *frames, uptr max_frames) {
     if (max_frames == 0)
       return 0;
@@ -376,7 +377,8 @@ class Symbolizer {
   }
 
   LoadedModule *FindModuleForAddress(uptr address) {
-    if (modules_ == 0) {
+    bool modules_were_reloaded = false;
+    if (modules_ == 0 || !modules_fresh_) {
       modules_ = (LoadedModule*)(symbolizer_allocator.Allocate(
           kMaxNumberOfModuleContexts * sizeof(LoadedModule)));
       CHECK(modules_);
@@ -384,14 +386,25 @@ class Symbolizer {
       // FIXME: Return this check when GetListOfModules is implemented on Mac.
       // CHECK_GT(n_modules_, 0);
       CHECK_LT(n_modules_, kMaxNumberOfModuleContexts);
+      modules_fresh_ = true;
+      modules_were_reloaded = true;
     }
     for (uptr i = 0; i < n_modules_; i++) {
       if (modules_[i].containsAddress(address)) {
         return &modules_[i];
       }
     }
+    // Reload the modules and look up again, if we haven't tried it yet.
+    if (!modules_were_reloaded) {
+      // FIXME: set modules_fresh_ from dlopen()/dlclose() interceptors.
+      // It's too aggressive to reload the list of modules each time we fail
+      // to find a module for a given address.
+      modules_fresh_ = false;
+      return FindModuleForAddress(address);
+    }
     return 0;
   }
+
   void ReportExternalSymbolizerError(const char *msg) {
     // Don't use atomics here for now, as SymbolizeCode can't be called
     // from multiple threads anyway.
@@ -406,6 +419,8 @@ class Symbolizer {
   static const uptr kMaxNumberOfModuleContexts = 1 << 14;
   LoadedModule *modules_;  // Array of module descriptions is leaked.
   uptr n_modules_;
+  // If stale, need to reload the modules before looking up addresses.
+  bool modules_fresh_;
 
   ExternalSymbolizer *external_symbolizer_;  // Leaked.
   InternalSymbolizer *internal_symbolizer_;  // Leaked.
