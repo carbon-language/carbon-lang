@@ -489,18 +489,8 @@ error_code MachOObjectFile::getSectionNext(DataRefImpl DRI,
   return object_error::success;
 }
 
-static bool is64BitLoadCommand(const MachOObjectFile *MachOObj,
-                               DataRefImpl DRI) {
-  const MachOFormat::LoadCommand *Command =
-    MachOObj->getLoadCommandInfo(DRI.d.a);
-  if (Command->Type == macho::LCT_Segment64)
-    return true;
-  assert(Command->Type == macho::LCT_Segment && "Unexpected Type.");
-  return false;
-}
-
 const MachOFormat::Section *MachOObjectFile::getSection(DataRefImpl DRI) const {
-  assert(!is64BitLoadCommand(this, DRI));
+  assert(!is64Bit());
   const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
   uintptr_t CommandAddr = reinterpret_cast<uintptr_t>(Command);
   uintptr_t SectionAddr = CommandAddr + sizeof(macho::SegmentLoadCommand) +
@@ -517,7 +507,7 @@ std::size_t MachOObjectFile::getSectionIndex(DataRefImpl Sec) const {
 
 const MachOFormat::Section64 *
 MachOObjectFile::getSection64(DataRefImpl DRI) const {
-  assert(is64BitLoadCommand(this, DRI));
+  assert(is64Bit());
   const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
   uintptr_t CommandAddr = reinterpret_cast<uintptr_t>(Command);
   uintptr_t SectionAddr = CommandAddr + sizeof(macho::Segment64LoadCommand) +
@@ -534,7 +524,7 @@ static StringRef parseSegmentOrSectionName(const char *P) {
 }
 
 ArrayRef<char> MachOObjectFile::getSectionRawName(DataRefImpl DRI) const {
-  if (is64BitLoadCommand(this, DRI)) {
+  if (is64Bit()) {
     const MachOFormat::Section64 *sec = getSection64(DRI);
     return ArrayRef<char>(sec->Name);
   } else {
@@ -552,7 +542,7 @@ error_code MachOObjectFile::getSectionName(DataRefImpl DRI,
 
 ArrayRef<char>
 MachOObjectFile::getSectionRawFinalSegmentName(DataRefImpl Sec) const {
-  if (is64BitLoadCommand(this, Sec)) {
+  if (is64Bit()) {
     const MachOFormat::Section64 *sec = getSection64(Sec);
     return ArrayRef<char>(sec->SegmentName, 16);
   } else {
@@ -568,7 +558,7 @@ StringRef MachOObjectFile::getSectionFinalSegmentName(DataRefImpl DRI) const {
 
 error_code MachOObjectFile::getSectionAddress(DataRefImpl DRI,
                                               uint64_t &Result) const {
-  if (is64BitLoadCommand(this, DRI)) {
+  if (is64Bit()) {
     const MachOFormat::Section64 *Sect = getSection64(DRI);
     Result = Sect->Address;
   } else {
@@ -580,7 +570,7 @@ error_code MachOObjectFile::getSectionAddress(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSectionSize(DataRefImpl DRI,
                                            uint64_t &Result) const {
-  if (is64BitLoadCommand(this, DRI)) {
+  if (is64Bit()) {
     const MachOFormat::Section64 *Sect = getSection64(DRI);
     Result = Sect->Size;
   } else {
@@ -592,7 +582,7 @@ error_code MachOObjectFile::getSectionSize(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSectionContents(DataRefImpl DRI,
                                                StringRef &Result) const {
-  if (is64BitLoadCommand(this, DRI)) {
+  if (is64Bit()) {
     const MachOFormat::Section64 *Sect = getSection64(DRI);
     Result = getData(Sect->Offset, Sect->Size);
   } else {
@@ -604,7 +594,7 @@ error_code MachOObjectFile::getSectionContents(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSectionAlignment(DataRefImpl DRI,
                                                 uint64_t &Result) const {
-  if (is64BitLoadCommand(this, DRI)) {
+  if (is64Bit()) {
     const MachOFormat::Section64 *Sect = getSection64(DRI);
     Result = uint64_t(1) << Sect->Align;
   } else {
@@ -616,7 +606,7 @@ error_code MachOObjectFile::getSectionAlignment(DataRefImpl DRI,
 
 error_code MachOObjectFile::isSectionText(DataRefImpl DRI,
                                           bool &Result) const {
-  if (is64BitLoadCommand(this, DRI)) {
+  if (is64Bit()) {
     const MachOFormat::Section64 *Sect = getSection64(DRI);
     Result = Sect->Flags & macho::SF_PureInstructions;
   } else {
@@ -717,7 +707,7 @@ relocation_iterator MachOObjectFile::getSectionRelBegin(DataRefImpl Sec) const {
 }
 relocation_iterator MachOObjectFile::getSectionRelEnd(DataRefImpl Sec) const {
   uint32_t last_reloc;
-  if (is64BitLoadCommand(this, Sec)) {
+  if (is64Bit()) {
     const MachOFormat::Section64 *Sect = getSection64(Sec);
     last_reloc = Sect->NumRelocationTableEntries;
   } else {
