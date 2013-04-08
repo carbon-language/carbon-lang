@@ -47,3 +47,22 @@ class Other {
 void Other::foo(YFloat a, YFloat b) {
   YFloat c = a - b;
 }
+
+// <rdar://problem/13540899>
+namespace Other {
+  void other_foo();
+}
+
+namespace M2 {
+  using namespace Other;
+
+  namespace MInner {
+    class Bar { 
+      void bar();
+    };
+  }
+}
+
+void M2::MInner::Bar::bar() {
+  other_foo();
+}
