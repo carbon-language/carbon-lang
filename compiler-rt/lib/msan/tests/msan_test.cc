@@ -41,6 +41,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <pwd.h>
+#include <sys/socket.h>
 
 #if defined(__i386__) || defined(__x86_64__)
 # include <emmintrin.h>
@@ -603,6 +604,26 @@ TEST(MemorySanitizer, pipe) {
   EXPECT_NOT_POISONED(pipefd[1]);
   close(pipefd[0]);
   close(pipefd[1]);
+}
+
+TEST(MemorySanitizer, pipe2) {
+  int* pipefd = new int[2];
+  int res = pipe2(pipefd, O_NONBLOCK);
+  assert(!res);
+  EXPECT_NOT_POISONED(pipefd[0]);
+  EXPECT_NOT_POISONED(pipefd[1]);
+  close(pipefd[0]);
+  close(pipefd[1]);
+}
+
+TEST(MemorySanitizer, socketpair) {
+  int sv[2];
+  int res = socketpair(AF_UNIX, SOCK_STREAM, 0, sv);
+  assert(!res);
+  EXPECT_NOT_POISONED(sv[0]);
+  EXPECT_NOT_POISONED(sv[1]);
+  close(sv[0]);
+  close(sv[1]);
 }
 
 TEST(MemorySanitizer, getcwd) {

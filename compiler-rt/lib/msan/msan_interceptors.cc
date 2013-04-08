@@ -540,6 +540,22 @@ INTERCEPTOR(int, pipe, int pipefd[2]) {
   return res;
 }
 
+INTERCEPTOR(int, pipe2, int pipefd[2], int flags) {
+  ENSURE_MSAN_INITED();
+  int res = REAL(pipe2)(pipefd, flags);
+  if (!res)
+    __msan_unpoison(pipefd, sizeof(int[2]));
+  return res;
+}
+
+INTERCEPTOR(int, socketpair, int domain, int type, int protocol, int sv[2]) {
+  ENSURE_MSAN_INITED();
+  int res = REAL(socketpair)(domain, type, protocol, sv);
+  if (!res)
+    __msan_unpoison(sv, sizeof(int[2]));
+  return res;
+}
+
 INTERCEPTOR(int, wait, int *status) {
   ENSURE_MSAN_INITED();
   int res = REAL(wait)(status);
@@ -1109,6 +1125,8 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(__xstat64);
   INTERCEPT_FUNCTION(__lxstat64);
   INTERCEPT_FUNCTION(pipe);
+  INTERCEPT_FUNCTION(pipe2);
+  INTERCEPT_FUNCTION(socketpair);
   INTERCEPT_FUNCTION(wait);
   INTERCEPT_FUNCTION(waitpid);
   INTERCEPT_FUNCTION(fgets);
