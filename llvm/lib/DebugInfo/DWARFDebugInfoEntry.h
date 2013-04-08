@@ -45,12 +45,17 @@ public:
                      uint32_t *offset_ptr, uint16_t attr, uint16_t form,
                      unsigned indent = 0) const;
 
-  bool extractFast(const DWARFCompileUnit *cu, const uint8_t *fixed_form_sizes,
-                   uint32_t *offset_ptr);
+  /// Extracts a debug info entry, which is a child of a given compile unit,
+  /// starting at a given offset. If DIE can't be extracted, returns false and
+  /// doesn't change OffsetPtr.
+  bool extractFast(const DWARFCompileUnit *CU, const uint8_t *FixedFormSizes,
+                   uint32_t *OffsetPtr);
 
   /// Extract a debug info entry for a given compile unit from the
   /// .debug_info and .debug_abbrev data starting at the given offset.
-  bool extract(const DWARFCompileUnit *cu, uint32_t *offset_ptr);
+  /// If compile unit can't be parsed, returns false and doesn't change
+  /// OffsetPtr.
+  bool extract(const DWARFCompileUnit *CU, uint32_t *OffsetPtr);
 
   uint32_t getTag() const { return AbbrevDecl ? AbbrevDecl->getTag() : 0; }
   bool isNULL() const { return AbbrevDecl == 0; }
