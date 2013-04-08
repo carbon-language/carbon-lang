@@ -21,19 +21,14 @@ The Loop Vectorizer
 Usage
 -----
 
-LLVM's Loop Vectorizer is now available and will be useful for many people.
-It is not enabled by default, but can be enabled through clang using the
-command line flag:
+LLVM's Loop Vectorizer is now enabled by default for -O3.
+The vectorizer can be disabled using the command line:
 
 .. code-block:: console
 
-   $ clang -fvectorize -O3 file.c
+   $ clang ... -fno-vectorize  file.c
 
-If the ``-fvectorize`` flag is used then the loop vectorizer will be enabled
-when running with ``-O3``, ``-O2``. When ``-Os`` is used, the loop vectorizer
-will only vectorize loops that do not require a major increase in code size.
-
-We plan to enable the Loop Vectorizer by default as part of the LLVM 3.3 release.
+At this point the loop vectorizer is only enabled for -O3, and will not work for -O2 or -Os.
 
 Command line flags
 ^^^^^^^^^^^^^^^^^^
