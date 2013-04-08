@@ -1562,7 +1562,7 @@ TEST_F(FormatTest, BreaksAsHighAsPossible) {
       "    f();\n"
       "}");
   verifyFormat("if (Intervals[i].getRange().getFirst() <\n"
-               "        Intervals[i - 1].getRange().getLast()) {\n}");
+               "    Intervals[i - 1].getRange().getLast()) {\n}");
 }
 
 TEST_F(FormatTest, BreaksDesireably) {
@@ -1681,13 +1681,13 @@ TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
 TEST_F(FormatTest, FormatsBuilderPattern) {
   verifyFormat(
       "return llvm::StringSwitch<Reference::Kind>(name)\n"
-      "    .StartsWith(\".eh_frame_hdr\", ORDER_EH_FRAMEHDR)\n"
-      "    .StartsWith(\".eh_frame\", ORDER_EH_FRAME).StartsWith(\".init\", ORDER_INIT)\n"
-      "    .StartsWith(\".fini\", ORDER_FINI).StartsWith(\".hash\", ORDER_HASH)\n"
-      "    .Default(ORDER_TEXT);\n");
+      "           .StartsWith(\".eh_frame_hdr\", ORDER_EH_FRAMEHDR)\n"
+      "           .StartsWith(\".eh_frame\", ORDER_EH_FRAME)\n"
+      "           .StartsWith(\".init\", ORDER_INIT).StartsWith(\".fini\", ORDER_FINI)\n"
+      "           .StartsWith(\".hash\", ORDER_HASH).Default(ORDER_TEXT);\n");
 
   verifyFormat("return aaaaaaaaaaaaaaaaa->aaaaa().aaaaaaaaaaaaa().aaaaaa() <\n"
-               "           aaaaaaaaaaaaaaa->aaaaa().aaaaaaaaaaaaa().aaaaaa();");
+               "       aaaaaaaaaaaaaaa->aaaaa().aaaaaaaaaaaaa().aaaaaa();");
   verifyFormat(
       "aaaaaaa->aaaaaaa\n"
       "    ->aaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
@@ -1784,10 +1784,10 @@ TEST_F(FormatTest, AlignsAfterReturn) {
       "        aaaaaaaaaaaaaaaaaaaaaaaaa);");
   verifyFormat(
       "return aaaaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa >=\n"
-      "           aaaaaaaaaaaaaaaaaaaaaa();");
+      "       aaaaaaaaaaaaaaaaaaaaaa();");
   verifyFormat(
       "return (aaaaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa >=\n"
-      "            aaaaaaaaaaaaaaaaaaaaaa());");
+      "        aaaaaaaaaaaaaaaaaaaaaa());");
 }
 
 TEST_F(FormatTest, BreaksConditionalExpressions) {
@@ -1831,9 +1831,9 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
       "    ? aaaaaaaaaaaaaaa\n"
       "    : aaaaaaaaaaaaaaa;");
   verifyFormat("f(aaaaaaaaaaaaaaaa == // force break\n"
-               "  aaaaaaaaa\n"
-               "      ? b\n"
-               "      : c);");
+               "      aaaaaaaaa\n"
+               "  ? b\n"
+               "  : c);");
   verifyFormat(
       "unsigned Indent =\n"
       "    format(TheLine.First, IndentForLevel[TheLine.Level] >= 0\n"

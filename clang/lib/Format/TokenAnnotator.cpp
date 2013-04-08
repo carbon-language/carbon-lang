@@ -16,6 +16,7 @@
 #include "TokenAnnotator.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
+#include "llvm/Support/Debug.h"
 
 namespace clang {
 namespace format {
@@ -782,12 +783,9 @@ public:
     if (Precedence > prec::PointerToMember || Current == NULL)
       return;
 
-    // Skip over "return" until we can properly parse it.
-    if (Current->is(tok::kw_return))
-      next();
-
     // Eagerly consume trailing comments.
-    while (isTrailingComment(Current)) {
+    while (Current && Current->FormatTok.NewlinesBefore == 0 &&
+           isTrailingComment(Current)) {
       next();
     }
 
@@ -802,8 +800,7 @@ public:
       if (Current) {
         if (Current->Type == TT_ConditionalExpr)
           CurrentPrecedence = 1 + (int) prec::Conditional;
-        else if (Current->is(tok::semi) || Current->Type == TT_InlineASMColon ||
-                 Current->Type == TT_CtorInitializerColon)
+        else if (Current->is(tok::semi) || Current->Type == TT_InlineASMColon)
           CurrentPrecedence = 1;
         else if (Current->Type == TT_BinaryOperator || Current->is(tok::comma))
           CurrentPrecedence = 1 + (int) getPrecedence(*Current);
@@ -814,7 +811,7 @@ public:
       if (Current == NULL || closesScope(*Current) ||
           (CurrentPrecedence != 0 && CurrentPrecedence < Precedence)) {
         if (OperatorFound) {
-          ++Start->FakeLParens;
+          Start->FakeLParens.push_back(Precedence);
           if (Current)
             ++Current->Parent->FakeRParens;
         }
@@ -829,9 +826,9 @@ public:
           parse();
         }
         // Remove fake parens that just duplicate the real parens.
-        if (Current && Left->Children[0].FakeLParens > 0 &&
+        if (Current && !Left->Children[0].FakeLParens.empty() &&
             Current->Parent->FakeRParens > 0) {
-          --Left->Children[0].FakeLParens;
+          Left->Children[0].FakeLParens.pop_back();
           --Current->Parent->FakeRParens;
         }
         next();
@@ -862,6 +859,10 @@ void TokenAnnotator::annotate(AnnotatedLine &Line) {
 
   ExpressionParser ExprParser(Line);
   ExprParser.parse();
+
+  DEBUG({
+    printDebugInfo(Line);
+  });
 
   if (Line.First.Type == TT_ObjCMethodSpecifier)
     Line.Type = LT_ObjCMethodDecl;
@@ -1185,6 +1186,20 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
           Right.isOneOf(tok::identifier, tok::kw___attribute)) ||
          (Left.is(tok::l_paren) && !Right.is(tok::r_paren)) ||
          (Left.is(tok::l_square) && !Right.is(tok::r_square));
+}
+
+void TokenAnnotator::printDebugInfo(const AnnotatedLine &Line) {
+  llvm::errs() << "AnnotatedTokens:\n";
+  const AnnotatedToken *Tok = &Line.First;
+  while (Tok) {
+    llvm::errs() << Tok->FormatTok.Tok.getName() << ":"
+                 << " Type=" << Tok->Type << " FakeLParens=";
+    for (unsigned i = 0, e = Tok->FakeLParens.size(); i != e; ++i)
+      llvm::errs() << Tok->FakeLParens[i] << "/";
+    llvm::errs() << " FakeRParens=" << Tok->FakeRParens << "\n";
+    Tok = Tok->Children.empty() ? NULL : &Tok->Children[0];
+  }
+  llvm::errs() << "----\n";
 }
 
 } // namespace format

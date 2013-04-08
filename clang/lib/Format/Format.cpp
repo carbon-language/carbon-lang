@@ -86,12 +86,6 @@ static bool isTrailingComment(const AnnotatedToken &Tok) {
          (Tok.Children.empty() || Tok.Children[0].MustBreakBefore);
 }
 
-static bool isComparison(const AnnotatedToken &Tok) {
-  prec::Level Precedence = getPrecedence(Tok);
-  return Tok.Type == TT_BinaryOperator &&
-         (Precedence == prec::Equality || Precedence == prec::Relational);
-}
-
 // Returns the length of everything up to the first possible line break after
 // the ), ], } or > matching \c Tok.
 static unsigned getLengthToMatchingParen(const AnnotatedToken &Tok) {
@@ -492,10 +486,6 @@ public:
     State.StartOfStringLiteral = 0;
     State.StartOfLineLevel = State.ParenLevel;
 
-    DEBUG({
-      DebugTokenState(*State.NextToken);
-    });
-
     // The first token has already been indented and thus consumed.
     moveStateToNextToken(State, /*DryRun=*/ false);
 
@@ -741,8 +731,7 @@ private:
           State.Stack.back().ColonPos =
               State.Column + Current.FormatTok.TokenLength;
         }
-      } else if (Current.Type == TT_StartOfName || Current.is(tok::question) ||
-                 Previous.is(tok::equal) || isComparison(Previous) ||
+      } else if (Current.Type == TT_StartOfName || Previous.is(tok::equal) ||
                  Previous.Type == TT_ObjCMethodExpr) {
         State.Column = ContinuationIndent;
       } else {
@@ -879,10 +868,13 @@ private:
       State.Stack.back().StartOfFunctionCall =
           Current.LastInChainOfCalls ? 0 : State.Column;
     if (Current.Type == TT_CtorInitializerColon) {
+      State.Stack.back().Indent = State.Column + 2;
       if (Style.ConstructorInitializerAllOnOneLineOrOnePerLine)
         State.Stack.back().AvoidBinPacking = true;
       State.Stack.back().BreakBeforeParameter = false;
     }
+    if (Current.is(tok::kw_return))
+      State.Stack.back().LastSpace = State.Column + 7;
 
     // In ObjC method declaration we align on the ":" of parameters, but we need
     // to ensure that we indent parameters on subsequent lines by at least 4.
@@ -890,9 +882,15 @@ private:
       State.Stack.back().Indent += 4;
 
     // Insert scopes created by fake parenthesis.
-    for (unsigned i = 0, e = Current.FakeLParens; i != e; ++i) {
+    for (SmallVector<unsigned, 4>::const_reverse_iterator
+             I = Current.FakeLParens.rbegin(),
+             E = Current.FakeLParens.rend();
+         I != E; ++I) {
       ParenState NewParenState = State.Stack.back();
-      NewParenState.Indent = std::max(State.Column, State.Stack.back().Indent);
+      NewParenState.Indent = //State.Stack.back().LastSpace;
+          std::max(State.Column, State.Stack.back().LastSpace);
+      if ((*I > 3 && State.ParenLevel != 0) || *I == 4)
+        NewParenState.Indent += 4;
       NewParenState.BreakBeforeParameter = false;
       State.Stack.push_back(NewParenState);
     }
