@@ -296,6 +296,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_clock_settime]            = "  clock_settime                   ";
   name[StatInt_getitimer]                = "  getitimer                       ";
   name[StatInt_setitimer]                = "  setitimer                       ";
+  name[StatInt_time]                     = "  time                            ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

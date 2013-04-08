@@ -236,7 +236,7 @@ INTERCEPTOR(unsigned long, time, unsigned long *t) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, time, t);
   unsigned long res = REAL(time)(t);
-  if (res != -1) {
+  if (res != (unsigned long)-1) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, t, sizeof(*t));
   }
   return res;
