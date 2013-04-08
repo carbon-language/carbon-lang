@@ -75,7 +75,7 @@ public:
         CanBreakBefore(false), MustBreakBefore(false),
         ClosesTemplateDeclaration(false), MatchingParen(NULL),
         ParameterCount(0), BindingStrength(0), SplitPenalty(0),
-        LongestObjCSelectorName(0), Parent(NULL),
+        LongestObjCSelectorName(0), Parent(NULL), FakeLParens(0),
         FakeRParens(0), LastInChainOfCalls(false),
         PartOfMultiVariableDeclStmt(false) {}
 
@@ -158,9 +158,8 @@ public:
   std::vector<AnnotatedToken> Children;
   AnnotatedToken *Parent;
 
-  /// \brief Stores the number of required fake parenthesis and the
-  /// corresponding operator precedence.
-  SmallVector<unsigned, 4>  FakeLParens;
+  /// \brief Insert this many fake ( before this token for correct indentation.
+  unsigned FakeLParens;
   /// \brief Insert this many fake ) after this token for correct indentation.
   unsigned FakeRParens;
 
@@ -248,8 +247,6 @@ private:
                            const AnnotatedToken &Tok);
 
   bool canBreakBefore(const AnnotatedLine &Line, const AnnotatedToken &Right);
-
-  void printDebugInfo(const AnnotatedLine &Line);
 
   const FormatStyle &Style;
   SourceManager &SourceMgr;
