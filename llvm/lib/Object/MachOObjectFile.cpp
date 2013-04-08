@@ -28,8 +28,9 @@ using namespace object;
 namespace llvm {
 namespace object {
 
-MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, error_code &ec)
-    : ObjectFile(Binary::ID_MachO, Object) {
+MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, bool Is64bits,
+                                 error_code &ec)
+    : ObjectFile(getMachOType(true, Is64bits), Object) {
   DataRefImpl DRI;
   moveToNextSection(DRI);
   uint32_t LoadCommandCount = getHeader()->NumLoadCommands;
@@ -41,8 +42,8 @@ MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, error_code &ec)
 }
 
 bool MachOObjectFile::is64Bit() const {
-  StringRef Magic = getData(0, 4);
-  return (Magic == "\xFE\xED\xFA\xCF") || (Magic == "\xCF\xFA\xED\xFE");
+  unsigned int Type = getType();
+  return Type == ID_MachO64L || Type == ID_MachO64B;
 }
 
 const MachOFormat::LoadCommand *
@@ -88,8 +89,10 @@ StringRef MachOObjectFile::getData(size_t Offset, size_t Size) const {
 }
 
 ObjectFile *ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer) {
+  StringRef Magic = Buffer->getBuffer().slice(0, 4);
   error_code ec;
-  ObjectFile *Ret = new MachOObjectFile(Buffer, ec);
+  bool Is64Bits = Magic == "\xFE\xED\xFA\xCF" || Magic == "\xCF\xFA\xED\xFE";
+  ObjectFile *Ret = new MachOObjectFile(Buffer, Is64Bits, ec);
   if (ec)
     return NULL;
   return Ret;

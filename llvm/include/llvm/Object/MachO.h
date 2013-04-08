@@ -139,7 +139,7 @@ namespace MachOFormat {
 
 class MachOObjectFile : public ObjectFile {
 public:
-  MachOObjectFile(MemoryBuffer *Object, error_code &ec);
+  MachOObjectFile(MemoryBuffer *Object, bool Is64bits, error_code &ec);
 
   virtual symbol_iterator begin_symbols() const;
   virtual symbol_iterator end_symbols() const;
