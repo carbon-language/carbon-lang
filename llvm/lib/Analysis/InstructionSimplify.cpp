@@ -1711,7 +1711,7 @@ static Value *ExtractEquivalentCondition(Value *V, CmpInst::Predicate Pred,
 //    subobject at its beginning) or function, both are pointers to one past the
 //    last element of the same array object, or one is a pointer to one past the
 //    end of one array object and the other is a pointer to the start of a
-//    different array object that happens to immediately follow the ﬁrst array
+//    different array object that happens to immediately follow the first array
 //    object in the address space.)
 //
 // C11's version is more restrictive, however there's no reason why an argument
