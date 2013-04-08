@@ -889,6 +889,14 @@ TEST(MemorySanitizer, getitimer) {
   assert(!res);
 }
 
+TEST(MemorySanitizer, time) {
+  time_t t;
+  EXPECT_POISONED(t);
+  time_t t2 = time(&t);
+  assert(t2 != (time_t)-1);
+  EXPECT_NOT_POISONED(t);
+}
+
 TEST(MemorySanitizer, localtime) {
   time_t t = 123;
   struct tm *time = localtime(&t);

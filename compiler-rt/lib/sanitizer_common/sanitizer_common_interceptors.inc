@@ -230,6 +230,24 @@ INTERCEPTOR(int, prctl, int option,
 #define INIT_PRCTL
 #endif // SANITIZER_INTERCEPT_PRCTL
 
+
+#if SANITIZER_INTERCEPT_TIME
+INTERCEPTOR(unsigned long, time, unsigned long *t) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, time, t);
+  unsigned long res = REAL(time)(t);
+  if (res != -1) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, t, sizeof(*t));
+  }
+  return res;
+}
+#define INIT_TIME                                \
+  INTERCEPT_FUNCTION(time);
+#else
+#define INIT_TIME
+#endif // SANITIZER_INTERCEPT_TIME
+
+
 #if SANITIZER_INTERCEPT_LOCALTIME_AND_FRIENDS
 INTERCEPTOR(void *, localtime, unsigned long *timep) {
   void *ctx;
@@ -548,4 +566,5 @@ INTERCEPTOR(int, setitimer, int which, const void *new_value, void *old_value) {
   INIT_GETPWNAM_GETPWUID;                                                      \
   INIT_GETPWNAM_R_GETPWUID_R;                                                  \
   INIT_CLOCK_GETTIME;                                                          \
-  INIT_GETITIMER;
+  INIT_GETITIMER;                                                              \
+  INIT_TIME;
