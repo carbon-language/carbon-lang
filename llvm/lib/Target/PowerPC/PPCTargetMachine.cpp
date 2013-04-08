@@ -124,6 +124,8 @@ bool PPCPassConfig::addInstSelector() {
 }
 
 bool PPCPassConfig::addPreEmitPass() {
+  if (getOptLevel() != CodeGenOpt::None)
+    addPass(createPPCEarlyReturnPass());
   // Must run branch selection immediately preceding the asm printer.
   addPass(createPPCBranchSelectionPass());
   return false;

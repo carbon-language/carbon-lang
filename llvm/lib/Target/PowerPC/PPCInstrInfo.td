@@ -511,10 +511,14 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
   // BCC represents an arbitrary conditional branch on a predicate.
   // FIXME: should be able to write a pattern for PPCcondbranch, but can't use
   // a two-value operand where a dag node expects two operands. :(
-  let isCodeGenOnly = 1 in
+  let isCodeGenOnly = 1 in {
     def BCC : BForm<16, 0, 0, (outs), (ins pred:$cond, condbrtarget:$dst),
                     "b${cond:cc} ${cond:reg}, $dst"
                     /*[(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]*/>;
+    let isReturn = 1, Uses = [LR, RM] in
+    def BCLR : XLForm_2_br<19, 16, 0, (outs), (ins pred:$cond),
+                           "b${cond:cc}lr ${cond:reg}", BrB, []>;
+  }
 
   let Defs = [CTR], Uses = [CTR] in {
     def BDZ  : BForm_1<16, 18, 0, 0, (outs), (ins condbrtarget:$dst),

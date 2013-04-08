@@ -107,9 +107,10 @@ define double @test10(double %x) nounwind  {
 
 declare double @trunc(double) nounwind readnone
 
-define float @test11(float %x) nounwind  {
+define void @test11(float %x, float* %y) nounwind  {
   %call = tail call float @rintf(float %x) nounwind readnone
-  ret float %call
+  store float %call, float* %y
+  ret void
 
 ; CHECK: test11:
 ; CHECK-NOT: frin
@@ -125,9 +126,10 @@ define float @test11(float %x) nounwind  {
 
 declare float @rintf(float) nounwind readnone
 
-define double @test12(double %x) nounwind  {
+define void @test12(double %x, double* %y) nounwind  {
   %call = tail call double @rint(double %x) nounwind readnone
-  ret double %call
+  store double %call, double* %y
+  ret void
 
 ; CHECK: test12:
 ; CHECK-NOT: frin

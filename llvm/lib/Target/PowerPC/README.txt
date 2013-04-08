@@ -126,25 +126,6 @@ produced this with bdnz, the loop would be a single dispatch group.
 
 ===-------------------------------------------------------------------------===
 
-Compile:
-
-void foo(int *P) {
- if (P)  *P = 0;
-}
-
-into:
-
-_foo:
-        cmpwi cr0,r3,0
-        beqlr cr0
-        li r0,0
-        stw r0,0(r3)
-        blr
-
-This is effectively a simple form of predication.
-
-===-------------------------------------------------------------------------===
-
 Lump the constant pool for each function into ONE pic object, and reference
 pieces of it as offsets from the start.  For functions like this (contrived
 to have lots of constants obviously):
