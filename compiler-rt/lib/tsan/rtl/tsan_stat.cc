@@ -299,6 +299,11 @@ void StatOutput(u64 *stat) {
   name[StatInt_time]                     = "  time                            ";
   name[StatInt_glob]                     = "  glob                            ";
   name[StatInt_glob64]                   = "  glob64                          ";
+  name[StatInt_wait]                     = "  wait                            ";
+  name[StatInt_waitid]                   = "  waitid                          ";
+  name[StatInt_waitpid]                  = "  waitpid                         ";
+  name[StatInt_wait3]                    = "  wait3                           ";
+  name[StatInt_wait4]                    = "  wait4                           ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

@@ -595,6 +595,64 @@ INTERCEPTOR(int, glob64, const char *pattern, int flags,
 #endif // SANITIZER_INTERCEPT_GLOB
 
 
+#if SANITIZER_INTERCEPT_WAIT
+INTERCEPTOR(int, wait, int *status) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, wait, status);
+  int res = REAL(wait)(status);
+  if (res != -1)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, status, sizeof(*status));
+  return res;
+}
+INTERCEPTOR(int, waitid, int idtype, int id, void *infop, int options) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, waitid, idtype, id, infop, options);
+  int res = REAL(waitid)(idtype, id, infop, options);
+  if (res != -1)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, infop, siginfo_t_sz);
+  return res;
+}
+INTERCEPTOR(int, waitpid, int pid, int *status, int options) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, waitpid, pid, status, options);
+  int res = REAL(waitpid)(pid, status, options);
+  if (res != -1)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, status, sizeof(*status));
+  return res;
+}
+INTERCEPTOR(int, wait3, int *status, int options, void *rusage) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, wait3, status, options, rusage);
+  int res = REAL(wait3)(status, options, rusage);
+  if (res != -1) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, status, sizeof(*status));
+    if (rusage)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, rusage, struct_rusage_sz);
+  }
+  return res;
+}
+INTERCEPTOR(int, wait4, int pid, int *status, int options, void *rusage) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, wait4, pid, status, options, rusage);
+  int res = REAL(wait4)(pid, status, options, rusage);
+  if (res != -1) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, status, sizeof(*status));
+    if (rusage)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, rusage, struct_rusage_sz);
+  }
+  return res;
+}
+#define INIT_WAIT                                \
+  INTERCEPT_FUNCTION(wait);                      \
+  INTERCEPT_FUNCTION(waitid);                    \
+  INTERCEPT_FUNCTION(waitpid);                   \
+  INTERCEPT_FUNCTION(wait3);                     \
+  INTERCEPT_FUNCTION(wait4);
+#else
+#define INIT_WAIT
+#endif
+
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT                                     \
   INIT_STRCASECMP;                                                             \
   INIT_STRNCASECMP;                                                            \
@@ -614,4 +672,5 @@ INTERCEPTOR(int, glob64, const char *pattern, int flags,
   INIT_CLOCK_GETTIME;                                                          \
   INIT_GETITIMER;                                                              \
   INIT_TIME;                                                                   \
-  INIT_GLOB;
+  INIT_GLOB;                                                                   \
+  INIT_WAIT;

@@ -556,24 +556,6 @@ INTERCEPTOR(int, socketpair, int domain, int type, int protocol, int sv[2]) {
   return res;
 }
 
-INTERCEPTOR(int, wait, int *status) {
-  ENSURE_MSAN_INITED();
-  int res = REAL(wait)(status);
-  if (status)
-    __msan_unpoison(status, sizeof(*status));
-  return res;
-}
-
-INTERCEPTOR(int, waitpid, int pid, int *status, int options) {
-  if (msan_init_is_running)
-    return REAL(waitpid)(pid, status, options);
-  ENSURE_MSAN_INITED();
-  int res = REAL(waitpid)(pid, status, options);
-  if (status)
-    __msan_unpoison(status, sizeof(*status));
-  return res;
-}
-
 INTERCEPTOR(char *, fgets, char *s, int size, void *stream) {
   ENSURE_MSAN_INITED();
   char *res = REAL(fgets)(s, size, stream);
@@ -942,11 +924,13 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) \
     __msan_unpoison(ptr, size)
 #define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size) do { } while (false)
-#define COMMON_INTERCEPTOR_ENTER(ctx, func, ...) \
-  do {                                           \
-    ctx = 0;                                     \
-    (void)ctx;                                   \
-    ENSURE_MSAN_INITED();                        \
+#define COMMON_INTERCEPTOR_ENTER(ctx, func, ...)  \
+  do {                                            \
+    if (msan_init_is_running)                     \
+      return REAL(func)(__VA_ARGS__);             \
+    ctx = 0;                                      \
+    (void)ctx;                                    \
+    ENSURE_MSAN_INITED();                         \
   } while (false)
 #define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) do { } while (false)
 #define COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd) do { } while (false)
@@ -1127,8 +1111,6 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(pipe);
   INTERCEPT_FUNCTION(pipe2);
   INTERCEPT_FUNCTION(socketpair);
-  INTERCEPT_FUNCTION(wait);
-  INTERCEPT_FUNCTION(waitpid);
   INTERCEPT_FUNCTION(fgets);
   INTERCEPT_FUNCTION(fgets_unlocked);
   INTERCEPT_FUNCTION(getcwd);
