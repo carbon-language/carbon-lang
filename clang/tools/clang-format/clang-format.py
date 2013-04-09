@@ -23,6 +23,10 @@ import subprocess
 # Change this to the full path if clang-format is not on the path.
 binary = 'clang-format'
 
+# Change this to format according to other formatting styles (see 
+# clang-format -help)
+style = 'LLVM'
+
 # Get the current text.
 buf = vim.current.buffer
 text = "\n".join(buf)
@@ -34,7 +38,8 @@ length = int(vim.eval('line2byte(' +
                       str(vim.current.range.end + 2) + ')')) - offset - 2
 
 # Call formatter.
-p = subprocess.Popen([binary, '-offset', str(offset), '-length', str(length)],
+p = subprocess.Popen([binary, '-offset', str(offset), '-length', str(length),
+                      '-style', style],
                      stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                      stdin=subprocess.PIPE)
 stdout, stderr = p.communicate(input=text)
