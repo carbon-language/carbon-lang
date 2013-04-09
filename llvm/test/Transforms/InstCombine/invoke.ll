@@ -47,3 +47,19 @@ lpad:
   unreachable
 }
 
+; CHECK: @f3
+define void @f3() nounwind uwtable ssp {
+; CHECK: invoke void @llvm.donothing()
+  %call = invoke noalias i8* @_Znwm(i64 13)
+          to label %invoke.cont unwind label %lpad
+
+invoke.cont:
+  ret void
+
+lpad:
+  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+          filter [0 x i8*] zeroinitializer
+  %2 = extractvalue { i8*, i32 } %1, 0
+  tail call void @__cxa_call_unexpected(i8* %2) noreturn nounwind
+  unreachable
+}

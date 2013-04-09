@@ -52,6 +52,14 @@ struct AllocFnsTy {
 static const AllocFnsTy AllocationFnData[] = {
   {LibFunc::malloc,              MallocLike,  1, 0,  -1},
   {LibFunc::valloc,              MallocLike,  1, 0,  -1},
+  {LibFunc::Znwj,                MallocLike,  1, 0,  -1}, // new(unsigned int)
+  {LibFunc::ZnwjRKSt9nothrow_t,  MallocLike,  2, 0,  -1}, // new(unsigned int, nothrow)
+  {LibFunc::Znwm,                MallocLike,  1, 0,  -1}, // new(unsigned long)
+  {LibFunc::ZnwmRKSt9nothrow_t,  MallocLike,  2, 0,  -1}, // new(unsigned long, nothrow)
+  {LibFunc::Znaj,                MallocLike,  1, 0,  -1}, // new[](unsigned int)
+  {LibFunc::ZnajRKSt9nothrow_t,  MallocLike,  2, 0,  -1}, // new[](unsigned int, nothrow)
+  {LibFunc::Znam,                MallocLike,  1, 0,  -1}, // new[](unsigned long)
+  {LibFunc::ZnamRKSt9nothrow_t,  MallocLike,  2, 0,  -1}, // new[](unsigned long, nothrow)
   {LibFunc::posix_memalign,      MallocLike,  3, 2,  -1},
   {LibFunc::calloc,              CallocLike,  2, 0,   1},
   {LibFunc::realloc,             ReallocLike, 2, 1,  -1},
