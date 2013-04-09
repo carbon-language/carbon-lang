@@ -35,6 +35,18 @@ void template_mangling() {
   c1.method();
 // CHECK: call {{.*}} @"\01?method@?$Class@VTypename@@@@QAEXXZ"
 
+  Class<const Typename> c1_const;
+  Class<volatile Typename> c1_volatile;
+  Class<const volatile Typename> c1_cv;
+  c1_const.method();
+  c1_volatile.method();
+  c1_cv.method();
+// Types with qualifiers have an extra $$C escape when used as template
+// arguments.  Not sure why.
+// CHECK: call {{.*}} @"\01?method@?$Class@$$CBVTypename@@@@QAEXXZ"
+// CHECK: call {{.*}} @"\01?method@?$Class@$$CCVTypename@@@@QAEXXZ"
+// CHECK: call {{.*}} @"\01?method@?$Class@$$CDVTypename@@@@QAEXXZ"
+
   Class<Nested<Typename> > c2;
   c2.method();
 // CHECK: call {{.*}} @"\01?method@?$Class@V?$Nested@VTypename@@@@@@QAEXXZ"

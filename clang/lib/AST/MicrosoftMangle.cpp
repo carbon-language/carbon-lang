@@ -824,9 +824,13 @@ MicrosoftCXXNameMangler::mangleTemplateArgs(const TemplateDecl *TD,
     switch (TA.getKind()) {
     case TemplateArgument::Null:
       llvm_unreachable("Can't mangle null template arguments!");
-    case TemplateArgument::Type:
-      mangleType(TA.getAsType(), SourceRange());
+    case TemplateArgument::Type: {
+      QualType T = TA.getAsType();
+      if (T.hasQualifiers())
+        Out << "$$C";
+      mangleType(T, SourceRange());
       break;
+    }
     case TemplateArgument::Declaration:
       mangle(cast<NamedDecl>(TA.getAsDecl()), "$1?");
       break;
