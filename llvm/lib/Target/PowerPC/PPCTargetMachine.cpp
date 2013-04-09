@@ -93,6 +93,7 @@ public:
   virtual bool addPreRegAlloc();
   virtual bool addILPOpts();
   virtual bool addInstSelector();
+  virtual bool addPreSched2();
   virtual bool addPreEmitPass();
 };
 } // namespace
@@ -121,6 +122,13 @@ bool PPCPassConfig::addInstSelector() {
   // Install an instruction selector.
   addPass(createPPCISelDag(getPPCTargetMachine()));
   return false;
+}
+
+bool PPCPassConfig::addPreSched2() {
+  if (getOptLevel() != CodeGenOpt::None)
+    addPass(&IfConverterID);
+
+  return true;
 }
 
 bool PPCPassConfig::addPreEmitPass() {

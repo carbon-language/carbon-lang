@@ -518,6 +518,13 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
     let isReturn = 1, Uses = [LR, RM] in
     def BCLR : XLForm_2_br<19, 16, 0, (outs), (ins pred:$cond),
                            "b${cond:cc}lr ${cond:reg}", BrB, []>;
+
+    let isReturn = 1, Defs = [CTR], Uses = [CTR, LR, RM] in {
+      def BDZLR  : XLForm_2_ext<19, 16, 18, 0, 0, (outs), (ins),
+                             "bdzlr", BrB, []>;
+      def BDNZLR : XLForm_2_ext<19, 16, 16, 0, 0, (outs), (ins),
+                             "bdnzlr", BrB, []>;
+    }
   }
 
   let Defs = [CTR], Uses = [CTR] in {

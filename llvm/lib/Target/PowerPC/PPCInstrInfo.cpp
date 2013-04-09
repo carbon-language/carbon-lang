@@ -876,6 +876,143 @@ bool PPCInstrInfo::FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
   return true;
 }
 
+bool PPCInstrInfo::isPredicated(const MachineInstr *MI) const {
+  unsigned OpC = MI->getOpcode();
+  switch (OpC) {
+  default:
+    return false;
+  case PPC::BCC:
+  case PPC::BCLR:
+  case PPC::BDZLR:
+  case PPC::BDZLR8:
+  case PPC::BDNZLR:
+  case PPC::BDNZLR8:
+    return true;
+  }
+}
+
+bool PPCInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
+  if (!MI->isTerminator())
+    return false;
+
+  // Conditional branch is a special case.
+  if (MI->isBranch() && !MI->isBarrier())
+    return true;
+
+  return !isPredicated(MI);
+}
+
+bool PPCInstrInfo::PredicateInstruction(
+                     MachineInstr *MI,
+                     const SmallVectorImpl<MachineOperand> &Pred) const {
+  unsigned OpC = MI->getOpcode();
+  if (OpC == PPC::BLR) {
+    if (Pred[1].getReg() == PPC::CTR8 || Pred[1].getReg() == PPC::CTR) {
+      bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+      MI->setDesc(get(Pred[0].getImm() ?
+                      (isPPC64 ? PPC::BDNZLR8 : PPC::BDNZLR) :
+                      (isPPC64 ? PPC::BDZLR8  : PPC::BDZLR)));
+    } else {
+      MI->setDesc(get(PPC::BCLR));
+      MachineInstrBuilder(*MI->getParent()->getParent(), MI)
+        .addImm(Pred[0].getImm())
+        .addReg(Pred[1].getReg());
+    }
+
+    return true;
+  } else if (OpC == PPC::B) {
+    if (Pred[1].getReg() == PPC::CTR8 || Pred[1].getReg() == PPC::CTR) {
+      bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+      MI->setDesc(get(Pred[0].getImm() ?
+                      (isPPC64 ? PPC::BDNZ8 : PPC::BDNZ) :
+                      (isPPC64 ? PPC::BDZ8  : PPC::BDZ)));
+    } else {
+      MachineBasicBlock *MBB = MI->getOperand(0).getMBB();
+      MI->RemoveOperand(0);
+
+      MI->setDesc(get(PPC::BCC));
+      MachineInstrBuilder(*MI->getParent()->getParent(), MI)
+        .addImm(Pred[0].getImm())
+        .addReg(Pred[1].getReg())
+        .addMBB(MBB);
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+bool PPCInstrInfo::SubsumesPredicate(
+                     const SmallVectorImpl<MachineOperand> &Pred1,
+                     const SmallVectorImpl<MachineOperand> &Pred2) const {
+  assert(Pred1.size() == 2 && "Invalid PPC first predicate");
+  assert(Pred2.size() == 2 && "Invalid PPC second predicate");
+
+  if (Pred1[1].getReg() == PPC::CTR8 || Pred1[1].getReg() == PPC::CTR)
+    return false;
+  if (Pred2[1].getReg() == PPC::CTR8 || Pred2[1].getReg() == PPC::CTR)
+    return false;
+
+  PPC::Predicate P1 = (PPC::Predicate) Pred1[0].getImm();
+  PPC::Predicate P2 = (PPC::Predicate) Pred2[0].getImm();
+
+  if (P1 == P2)
+    return true;
+
+  // Does P1 subsume P2, e.g. GE subsumes GT.
+  if (P1 == PPC::PRED_LE &&
+      (P2 == PPC::PRED_LT || P2 == PPC::PRED_EQ))
+    return true;
+  if (P1 == PPC::PRED_GE &&
+      (P2 == PPC::PRED_GT || P2 == PPC::PRED_EQ))
+    return true;
+
+  return false;
+}
+
+bool PPCInstrInfo::DefinesPredicate(MachineInstr *MI,
+                                    std::vector<MachineOperand> &Pred) const {
+  // Note: At the present time, the contents of Pred from this function is
+  // unused by IfConversion. This implementation follows ARM by pushing the
+  // CR-defining operand. Because the 'DZ' and 'DNZ' count as types of
+  // predicate, instructions defining CTR or CTR8 are also included as
+  // predicate-defining instructions.
+
+  const TargetRegisterClass *RCs[] =
+    { &PPC::CRRCRegClass, &PPC::CRBITRCRegClass,
+      &PPC::CTRRCRegClass, &PPC::CTRRC8RegClass };
+
+  bool Found = false;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    for (int c = 0; c < 2 && !Found; ++c) {
+      const TargetRegisterClass *RC = RCs[c];
+      for (TargetRegisterClass::iterator I = RC->begin(),
+           IE = RC->end(); I != IE; ++I) {
+        if ((MO.isRegMask() && MO.clobbersPhysReg(*I)) ||
+            (MO.isReg() && MO.isDef() && MO.getReg() == *I)) {
+          Pred.push_back(MO);
+          Found = true;
+        }
+      }
+    }
+  }
+
+  return Found;
+}
+
+bool PPCInstrInfo::isPredicable(MachineInstr *MI) const {
+  unsigned OpC = MI->getOpcode();
+  switch (OpC) {
+  default:
+    return false;
+  case PPC::B:
+  case PPC::BLR:
+    return true;
+  }
+}
+
 /// GetInstSize - Return the number of bytes of code the specified
 /// instruction may be.  This returns the maximum number of bytes.
 ///

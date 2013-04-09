@@ -160,6 +160,53 @@ public:
   virtual bool FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
                              unsigned Reg, MachineRegisterInfo *MRI) const;
 
+  // If conversion by predication (only supported by some branch instructions).
+  // All of the profitability checks always return true; it is always
+  // profitable to use the predicated branches.
+  virtual bool isProfitableToIfCvt(MachineBasicBlock &MBB,
+                                   unsigned NumCycles, unsigned ExtraPredCycles,
+                                   const BranchProbability &Probability) const {
+    return true;
+  }
+
+  virtual bool isProfitableToIfCvt(MachineBasicBlock &TMBB,
+                                   unsigned NumT, unsigned ExtraT,
+                                   MachineBasicBlock &FMBB,
+                                   unsigned NumF, unsigned ExtraF,
+                                   const BranchProbability &Probability) const {
+    return true;
+  }
+
+  virtual bool isProfitableToDupForIfCvt(MachineBasicBlock &MBB,
+                                         unsigned NumCycles,
+                                         const BranchProbability
+                                         &Probability) const {
+    return true;
+  }
+
+  virtual bool isProfitableToUnpredicate(MachineBasicBlock &TMBB,
+                                         MachineBasicBlock &FMBB) const {
+    return false;
+  }
+
+  // Predication support.
+  bool isPredicated(const MachineInstr *MI) const;
+
+  virtual bool isUnpredicatedTerminator(const MachineInstr *MI) const;
+
+  virtual
+  bool PredicateInstruction(MachineInstr *MI,
+                            const SmallVectorImpl<MachineOperand> &Pred) const;
+
+  virtual
+  bool SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
+                         const SmallVectorImpl<MachineOperand> &Pred2) const;
+
+  virtual bool DefinesPredicate(MachineInstr *MI,
+                                std::vector<MachineOperand> &Pred) const;
+
+  virtual bool isPredicable(MachineInstr *MI) const;
+
   /// GetInstSize - Return the number of bytes of code the specified
   /// instruction may be.  This returns the maximum number of bytes.
   ///
