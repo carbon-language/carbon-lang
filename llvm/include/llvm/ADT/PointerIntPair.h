@@ -29,7 +29,7 @@ struct DenseMapInfo;
 /// on the number of bits available according to PointerLikeTypeTraits for the
 /// type.
 ///
-/// Note that PointerIntPair always puts the Int part in the highest bits
+/// Note that PointerIntPair always puts the IntVal part in the highest bits
 /// possible.  For example, PointerIntPair<void*, 1, bool> will put the bit for
 /// the bool into bit #2, not bit #0, which allows the low two bits to be used
 /// for something else.  For example, this allows:
@@ -57,13 +57,13 @@ class PointerIntPair {
   };
 public:
   PointerIntPair() : Value(0) {}
-  PointerIntPair(PointerTy Ptr, IntType Int) {
+  PointerIntPair(PointerTy PtrVal, IntType IntVal) {
     assert(IntBits <= PtrTraits::NumLowBitsAvailable &&
            "PointerIntPair formed with integer size too large for pointer");
-    setPointerAndInt(Ptr, Int);
+    setPointerAndInt(PtrVal, IntVal);
   }
-  explicit PointerIntPair(PointerTy Ptr) {
-    initWithPointer(Ptr);
+  explicit PointerIntPair(PointerTy PtrVal) {
+    initWithPointer(PtrVal);
   }
 
   PointerTy getPointer() const {
@@ -75,41 +75,41 @@ public:
     return (IntType)((Value >> IntShift) & IntMask);
   }
 
-  void setPointer(PointerTy Ptr) {
-    intptr_t PtrVal
-      = reinterpret_cast<intptr_t>(PtrTraits::getAsVoidPointer(Ptr));
-    assert((PtrVal & ((1 << PtrTraits::NumLowBitsAvailable)-1)) == 0 &&
+  void setPointer(PointerTy PtrVal) {
+    intptr_t PtrWord
+      = reinterpret_cast<intptr_t>(PtrTraits::getAsVoidPointer(PtrVal));
+    assert((PtrWord & ((1 << PtrTraits::NumLowBitsAvailable)-1)) == 0 &&
            "Pointer is not sufficiently aligned");
     // Preserve all low bits, just update the pointer.
-    Value = PtrVal | (Value & ~PointerBitMask);
+    Value = PtrWord | (Value & ~PointerBitMask);
   }
 
-  void setInt(IntType Int) {
-    intptr_t IntVal = Int;
-    assert(IntVal < (1 << IntBits) && "Integer too large for field");
+  void setInt(IntType IntVal) {
+    intptr_t IntWord = static_cast<intptr_t>(IntVal);
+    assert(IntWord < (1 << IntBits) && "Integer too large for field");
     
     // Preserve all bits other than the ones we are updating.
     Value &= ~ShiftedIntMask;     // Remove integer field.
-    Value |= IntVal << IntShift;  // Set new integer.
+    Value |= IntWord << IntShift;  // Set new integer.
   }
 
-  void initWithPointer(PointerTy Ptr) {
-    intptr_t PtrVal
-      = reinterpret_cast<intptr_t>(PtrTraits::getAsVoidPointer(Ptr));
-    assert((PtrVal & ((1 << PtrTraits::NumLowBitsAvailable)-1)) == 0 &&
+  void initWithPointer(PointerTy PtrVal) {
+    intptr_t PtrWord
+      = reinterpret_cast<intptr_t>(PtrTraits::getAsVoidPointer(PtrVal));
+    assert((PtrWord & ((1 << PtrTraits::NumLowBitsAvailable)-1)) == 0 &&
            "Pointer is not sufficiently aligned");
-    Value = PtrVal;
+    Value = PtrWord;
   }
 
-  void setPointerAndInt(PointerTy Ptr, IntType Int) {
-    intptr_t PtrVal
-      = reinterpret_cast<intptr_t>(PtrTraits::getAsVoidPointer(Ptr));
-    assert((PtrVal & ((1 << PtrTraits::NumLowBitsAvailable)-1)) == 0 &&
+  void setPointerAndInt(PointerTy PtrVal, IntType IntVal) {
+    intptr_t PtrWord
+      = reinterpret_cast<intptr_t>(PtrTraits::getAsVoidPointer(PtrVal));
+    assert((PtrWord & ((1 << PtrTraits::NumLowBitsAvailable)-1)) == 0 &&
            "Pointer is not sufficiently aligned");
-    intptr_t IntVal = Int;
-    assert(IntVal < (1 << IntBits) && "Integer too large for field");
+    intptr_t IntWord = static_cast<intptr_t>(IntVal);
+    assert(IntWord < (1 << IntBits) && "Integer too large for field");
 
-    Value = PtrVal | (IntVal << IntShift);
+    Value = PtrWord | (IntWord << IntShift);
   }
 
   PointerTy const *getAddrOfPointer() const {
