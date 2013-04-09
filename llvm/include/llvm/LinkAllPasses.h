@@ -161,6 +161,7 @@ namespace {
       (void) llvm::createMemDepPrinter();
       (void) llvm::createInstructionSimplifierPass();
       (void) llvm::createLoopVectorizePass();
+      (void) llvm::createSLPVectorizerPass();
       (void) llvm::createBBVectorizePass();
 
       (void)new llvm::IntervalPartition();

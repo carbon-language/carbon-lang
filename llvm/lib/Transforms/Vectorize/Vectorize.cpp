@@ -28,6 +28,7 @@ using namespace llvm;
 void llvm::initializeVectorization(PassRegistry &Registry) {
   initializeBBVectorizePass(Registry);
   initializeLoopVectorizePass(Registry);
+  initializeSLPVectorizerPass(Registry);
 }
 
 void LLVMInitializeVectorization(LLVMPassRegistryRef R) {
@@ -40,4 +41,8 @@ void LLVMAddBBVectorizePass(LLVMPassManagerRef PM) {
 
 void LLVMAddLoopVectorizePass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createLoopVectorizePass());
+}
+
+void LLVMAddLoopRollerPass(LLVMPassManagerRef PM) {
+  unwrap(PM)->add(createSLPVectorizerPass());
 }

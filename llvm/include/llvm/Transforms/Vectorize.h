@@ -117,6 +117,12 @@ createBBVectorizePass(const VectorizeConfig &C = VectorizeConfig());
 Pass *createLoopVectorizePass();
 
 //===----------------------------------------------------------------------===//
+//
+// SLPVectorizer - Create a bottom-up SLP vectorizer pass.
+//
+Pass *createSLPVectorizerPass();
+
+//===----------------------------------------------------------------------===//
 /// @brief Vectorize the BasicBlock.
 ///
 /// @param BB The BasicBlock to be vectorized
