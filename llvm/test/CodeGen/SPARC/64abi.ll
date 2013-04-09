@@ -1,6 +1,9 @@
 ; RUN: llc < %s -march=sparcv9 -disable-sparc-delay-filler | FileCheck %s
 
 ; CHECK: intarg
+; The save/restore frame is not strictly necessary here, but we would need to
+; refer to %o registers instead.
+; CHECK: save %sp, -128, %sp
 ; CHECK: stb %i0, [%i4]
 ; CHECK: stb %i1, [%i4]
 ; CHECK: sth %i2, [%i4]
@@ -11,6 +14,7 @@
 ; CHECK: st  [[R]], [%i4]
 ; CHECK: ldx [%fp+2231], [[R:%[gilo][0-7]]]
 ; CHECK: stx [[R]], [%i4]
+; CHECK: restore
 define void @intarg(i8  %a0,   ; %i0
                     i8  %a1,   ; %i1
                     i16 %a2,   ; %i2
@@ -34,18 +38,23 @@ define void @intarg(i8  %a0,   ; %i0
 }
 
 ; CHECK: call_intarg
+; 16 saved + 8 args.
+; CHECK: save %sp, -192, %sp
 ; Sign-extend and store the full 64 bits.
 ; CHECK: sra %i0, 0, [[R:%[gilo][0-7]]]
 ; CHECK: stx [[R]], [%sp+2223]
 ; Use %o0-%o5 for outgoing arguments
 ; CHECK: or %g0, 5, %o5
 ; CHECK: call intarg
+; CHECK-NOT: add %sp
+; CHECK: restore
 define void @call_intarg(i32 %i0, i8* %i1) {
   call void @intarg(i8 0, i8 1, i16 2, i32 3, i8* undef, i32 5, i32 %i0, i8* %i1)
   ret void
 }
 
 ; CHECK: floatarg
+; CHECK: save %sp, -128, %sp
 ; CHECK: fstod %f1,
 ; CHECK: faddd %f2,
 ; CHECK: faddd %f4,
@@ -81,12 +90,15 @@ define double @floatarg(float %a0,    ; %f1
 }
 
 ; CHECK: call_floatarg
+; CHECK: save %sp, -272, %sp
 ; Store 4 bytes, right-aligned in slot.
 ; CHECK: st %f1, [%sp+2307]
 ; Store 8 bytes in full slot.
 ; CHECK: std %f2, [%sp+2311]
 ; CHECK: fmovd %f2, %f4
 ; CHECK: call floatarg
+; CHECK-NOT: add %sp
+; CHECK: restore
 define void @call_floatarg(float %f1, double %d2, float %f5, double *%p) {
   %r = call double @floatarg(float %f5, double %d2, double %d2, double %d2,
                              float %f5, float %f5,  float %f5,  float %f5,
@@ -127,6 +139,8 @@ define void @mixedarg(i8 %a0,      ; %i0
 ; CHECK: fmovd %f2, %f6
 ; CHECK: fmovd %f2, %f16
 ; CHECK: call mixedarg
+; CHECK-NOT: add %sp
+; CHECK: restore
 define void @call_mixedarg(i64 %i0, double %f2, i16* %i2) {
   call void @mixedarg(i8 undef,
                       float undef,
@@ -155,6 +169,8 @@ define i32 @inreg_fi(i32 inreg %a0,     ; high bits of %i0
 }
 
 ; CHECK: call_inreg_fi
+; Allocate space for 6 arguments, even when only 2 are used.
+; CHECK: save %sp, -176, %sp
 ; CHECK: sllx %i1, 32, %o0
 ; CHECK: fmovs %f5, %f1
 ; CHECK: call inreg_fi

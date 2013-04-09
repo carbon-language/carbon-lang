@@ -912,8 +912,9 @@ SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
 
   // Get the size of the outgoing arguments stack space requirement.
   // The stack offset computed by CC_Sparc64 includes all arguments.
-  // We always allocate space for 6 arguments in the prolog.
-  unsigned ArgsSize = std::max(6*8u, CCInfo.getNextStackOffset()) - 6*8u;
+  // Called functions expect 6 argument words to exist in the stack frame, used
+  // or not.
+  unsigned ArgsSize = std::max(6*8u, CCInfo.getNextStackOffset());
 
   // Keep stack frames 16-byte aligned.
   ArgsSize = RoundUpToAlignment(ArgsSize, 16);
