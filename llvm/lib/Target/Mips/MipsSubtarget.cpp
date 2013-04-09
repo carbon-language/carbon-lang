@@ -11,29 +11,49 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "mips-subtarget"
+
+#include "MipsMachineFunction.h"
 #include "MipsSubtarget.h"
+#include "MipsTargetMachine.h"
 #include "Mips.h"
 #include "MipsRegisterInfo.h"
+#include "llvm/IR/Attributes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/raw_ostream.h"
 
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "MipsGenSubtargetInfo.inc"
 
+
 using namespace llvm;
+
+// FIXME: Maybe this should be on by default when Mips16 is specified
+//
+static cl::opt<bool> Mixed16_32(
+  "mips-mixed-16-32",
+  cl::init(false),
+  cl::desc("Allow for a mixture of Mips16 "
+           "and Mips32 code in a single source file"),
+  cl::Hidden);
 
 void MipsSubtarget::anchor() { }
 
 MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
                              const std::string &FS, bool little,
-                             Reloc::Model _RM) :
+                             Reloc::Model _RM, MipsTargetMachine *_TM) :
   MipsGenSubtargetInfo(TT, CPU, FS),
   MipsArchVersion(Mips32), MipsABI(UnknownABI), IsLittle(little),
   IsSingleFloat(false), IsFP64bit(false), IsGP64bit(false), HasVFPU(false),
   IsLinux(true), HasSEInReg(false), HasCondMov(false), HasSwap(false),
   HasBitCount(false), HasFPIdx(false),
   InMips16Mode(false), InMicroMipsMode(false), HasDSP(false), HasDSPR2(false),
-  RM(_RM)
+  AllowMixed16_32(Mixed16_32),
+  RM(_RM), OverrideMode(NoOverride), TM(_TM)
 {
   std::string CPUName = CPU;
   if (CPUName.empty())
@@ -41,6 +61,8 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
 
   // Parse features string.
   ParseSubtargetFeatures(CPUName, FS);
+
+  PreviousInMips16Mode = InMips16Mode;
 
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUName);
@@ -72,3 +94,48 @@ MipsSubtarget::enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                             &Mips::CPU64RegsRegClass : &Mips::CPURegsRegClass);
   return OptLevel >= CodeGenOpt::Aggressive;
 }
+
+//FIXME: This logic for reseting the subtarget along with
+// the helper classes can probably be simplified but there are a lot of
+// cases so we will defer rewriting this to later.
+//
+void MipsSubtarget::resetSubtarget(MachineFunction *MF) {
+  bool ChangeToMips16 = false, ChangeToNoMips16 = false;
+  DEBUG(dbgs() << "resetSubtargetFeatures" << "\n");
+  AttributeSet FnAttrs = MF->getFunction()->getAttributes();
+  ChangeToMips16 = FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
+                                        "mips16");
+  ChangeToNoMips16 = FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
+                                        "nomips16");
+  assert (!(ChangeToMips16 & ChangeToNoMips16) &&
+          "mips16 and nomips16 specified on the same function");
+  if (ChangeToMips16) {
+    if (PreviousInMips16Mode)
+      return;
+    OverrideMode = Mips16Override;
+    PreviousInMips16Mode = true;
+    TM->setHelperClassesMips16();
+    return;
+  } else if (ChangeToNoMips16) {
+    if (!PreviousInMips16Mode)
+      return;
+    OverrideMode = NoMips16Override;
+    PreviousInMips16Mode = false;
+    TM->setHelperClassesMipsSE();
+    return;
+  } else {
+    if (OverrideMode == NoOverride)
+      return;
+    OverrideMode = NoOverride;
+    DEBUG(dbgs() << "back to default" << "\n");
+    if (inMips16Mode() && !PreviousInMips16Mode) {
+      TM->setHelperClassesMips16();
+      PreviousInMips16Mode = true;
+    } else if (!inMips16Mode() && PreviousInMips16Mode) {
+      TM->setHelperClassesMipsSE();
+      PreviousInMips16Mode = false;
+    }
+    return;
+  }
+}
+

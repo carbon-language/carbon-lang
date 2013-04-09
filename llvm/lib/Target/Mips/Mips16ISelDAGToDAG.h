@@ -28,6 +28,8 @@ private:
 
   SDValue getMips16SPAliasReg();
 
+  virtual bool runOnMachineFunction(MachineFunction &MF);
+
   void getMips16SPRefReg(SDNode *Parent, SDValue &AliasReg);
 
   virtual bool selectAddr16(SDNode *Parent, SDValue N, SDValue &Base,

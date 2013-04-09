@@ -35,6 +35,11 @@
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
+bool MipsSEDAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
+  if (Subtarget.inMips16Mode())
+    return false;
+  return MipsDAGToDAGISel::runOnMachineFunction(MF);
+}
 
 bool MipsSEDAGToDAGISel::replaceUsesWithZeroReg(MachineRegisterInfo *MRI,
                                                 const MachineInstr& MI) {

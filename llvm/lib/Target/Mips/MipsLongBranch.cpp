@@ -399,6 +399,8 @@ static void emitGPDisp(MachineFunction &F, const MipsInstrInfo *TII) {
 }
 
 bool MipsLongBranch::runOnMachineFunction(MachineFunction &F) {
+  if (TM.getSubtarget<MipsSubtarget>().inMips16Mode())
+    return false;
   if ((TM.getRelocationModel() == Reloc::PIC_) &&
       TM.getSubtarget<MipsSubtarget>().isABI_O32() &&
       F.getInfo<MipsFunctionInfo>()->globalBaseRegSet())

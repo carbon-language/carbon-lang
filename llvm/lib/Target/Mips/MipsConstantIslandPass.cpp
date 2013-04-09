@@ -80,6 +80,10 @@ FunctionPass *llvm::createMipsConstantIslandPass(MipsTargetMachine &tm) {
 }
 
 bool MipsConstantIslands::runOnMachineFunction(MachineFunction &F) {
-  return true;
+  // The intention is for this to be a mips16 only pass for now
+  // FIXME:
+  // if (!TM.getSubtarget<MipsSubtarget>().inMips16Mode())
+  //  return false;
+  return false;
 }
 

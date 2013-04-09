@@ -27,6 +27,9 @@ EnableMipsTailCalls("enable-mips-tail-calls", cl::Hidden,
 MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
   : MipsTargetLowering(TM) {
   // Set up the register classes
+
+  clearRegisterClasses();
+
   addRegisterClass(MVT::i32, &Mips::CPURegsRegClass);
 
   if (HasMips64)

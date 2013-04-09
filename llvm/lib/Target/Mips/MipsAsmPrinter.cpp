@@ -46,6 +46,10 @@
 using namespace llvm;
 
 bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  // Initialize TargetLoweringObjectFile.
+  if (Subtarget->allowMixed16_32())
+    const_cast<TargetLoweringObjectFile&>(getObjFileLowering())
+      .Initialize(OutContext, TM);
   MipsFI = MF.getInfo<MipsFunctionInfo>();
   AsmPrinter::runOnMachineFunction(MF);
   return true;
