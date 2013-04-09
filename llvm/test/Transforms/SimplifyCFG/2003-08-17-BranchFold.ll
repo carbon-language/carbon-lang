@@ -1,11 +1,11 @@
 ; This test checks to make sure that 'br X, Dest, Dest' is folded into 
 ; 'br Dest'
 
-; RUN: opt < %s -simplifycfg -S | \
-; RUN:   not grep "br i1 %c2"
+; RUN: opt < %s -simplifycfg -S | FileCheck %s
 
 declare void @noop()
 
+; CHECK-NOT: br i1 %c2
 define i32 @test(i1 %c1, i1 %c2) {
 	call void @noop( )
 	br i1 %c1, label %A, label %Y

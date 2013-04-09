@@ -1,9 +1,7 @@
 ; Make sure this doesn't turn into an infinite loop
 
-; RUN: opt < %s -simplifycfg -constprop -simplifycfg |\
-; RUN:   llvm-dis | grep bb86
-; END.
-	
+; RUN: opt < %s -simplifycfg -constprop -simplifycfg | llvm-dis | FileCheck %s
+
 %struct.anon = type { i32, i32, i32, i32, [1024 x i8] }
 @_zero_ = external global %struct.anon*		; <%struct.anon**> [#uses=2]
 @_one_ = external global %struct.anon*		; <%struct.anon**> [#uses=4]
@@ -112,6 +110,7 @@ cond_true83:		; preds = %bb80
 	%tmp71 = call i32 @_do_compare( %struct.anon* null, %struct.anon* null, i32 0, i32 1 )		; <i32> [#uses=1]
 	%tmp76 = icmp eq i32 %tmp71, 0		; <i1> [#uses=1]
 	br i1 %tmp76, label %bb80.outer, label %bb80
+; CHECK: bb86
 bb86:		; preds = %bb80
 	call void @free_num( %struct.anon** %num )
 	%tmp88 = load %struct.anon** %guess		; <%struct.anon*> [#uses=1]

@@ -1,6 +1,7 @@
 ; PR957
-; RUN: opt < %s -simplifycfg -S | \
-; RUN:   not grep select
+; RUN: opt < %s -simplifycfg -S | FileCheck %s
+
+; CHECK-NOT: select
 
 @G = extern_weak global i32
 

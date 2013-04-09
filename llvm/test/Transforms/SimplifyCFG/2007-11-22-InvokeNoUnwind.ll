@@ -1,4 +1,6 @@
-; RUN: opt < %s -simplifycfg -S | not grep invoke
+; RUN: opt < %s -simplifycfg -S | FileCheck %s
+
+; CHECK-NOT: invoke
 
 declare i32 @func(i8*) nounwind
 
