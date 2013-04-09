@@ -745,7 +745,10 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
         << ProtocolId[i].first;
       continue;
     }
-
+    // If this is a forward protocol declaration, get its definition.
+    if (!PDecl->isThisDeclarationADefinition() && PDecl->getDefinition())
+      PDecl = PDecl->getDefinition();
+    
     (void)DiagnoseUseOfDecl(PDecl, ProtocolId[i].second);
 
     // If this is a forward declaration and we are supposed to warn in this

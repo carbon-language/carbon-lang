@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -Wmethod-signatures -fsyntax-only -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -x objective-c++ -Wmethod-signatures -fsyntax-only -verify -Wno-objc-root-class %s
 
 @interface A @end
 @interface B : A @end
@@ -41,4 +42,25 @@
 @implementation Test4
 - (A*) test1 { return 0; } // id -> A* is rdar://problem/8596987
 - (id) test2 { return 0; }
+@end
+
+// rdar://12522752
+typedef int int32_t;
+typedef long long int64_t;
+
+@interface NSObject @end
+
+@protocol CKMessage
+@property (nonatomic,readonly,assign) int64_t sequenceNumber; // expected-note {{previous definition is here}}
+@end
+
+@protocol CKMessage;
+
+@interface CKIMMessage : NSObject<CKMessage>
+@end
+
+@implementation CKIMMessage
+- (int32_t)sequenceNumber { // expected-warning {{conflicting return type in implementation of 'sequenceNumber': 'int64_t' (aka 'long long') vs 'int32_t' (aka 'int')}}
+  return 0;
+}
 @end
