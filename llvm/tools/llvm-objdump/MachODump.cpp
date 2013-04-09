@@ -52,7 +52,7 @@ static cl::opt<bool>
 static cl::opt<std::string>
   DSYMFile("dsym", cl::desc("Use .dSYM file for debug info"));
 
-static const Target *GetTarget(const MachOObjectFile *MachOObj) {
+static const Target *GetTarget(const MachOObjectFileBase *MachOObj) {
   // Figure out the target triple.
   if (TripleName.empty()) {
     llvm::Triple TT("unknown-unknown-unknown");
@@ -108,7 +108,7 @@ struct SymbolSorter {
 
 // Print additional information about an address, if available.
 static void DumpAddress(uint64_t Address, ArrayRef<SectionRef> Sections,
-                        const MachOObjectFile *MachOObj, raw_ostream &OS) {
+                        const MachOObjectFileBase *MachOObj, raw_ostream &OS) {
   for (unsigned i = 0; i != Sections.size(); ++i) {
     uint64_t SectAddr = 0, SectSize = 0;
     Sections[i].getAddress(SectAddr);
@@ -200,7 +200,7 @@ static void emitDOTFile(const char *FileName, const MCFunction &f,
 }
 
 static void getSectionsAndSymbols(const MachOFormat::Header *Header,
-                                  MachOObjectFile *MachOObj,
+                                  MachOObjectFileBase *MachOObj,
                                   std::vector<SectionRef> &Sections,
                                   std::vector<SymbolRef> &Symbols,
                                   SmallVectorImpl<uint64_t> &FoundFns) {
@@ -238,7 +238,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
     return;
   }
 
-  OwningPtr<MachOObjectFile> MachOOF(static_cast<MachOObjectFile*>(
+  OwningPtr<MachOObjectFileBase> MachOOF(static_cast<MachOObjectFileBase*>(
         ObjectFile::createMachOObjectFile(Buff.take())));
 
   const Target *TheTarget = GetTarget(MachOOF.get());

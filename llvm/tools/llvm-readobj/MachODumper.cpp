@@ -27,7 +27,7 @@ namespace {
 
 class MachODumper : public ObjDumper {
 public:
-  MachODumper(const llvm::object::MachOObjectFile *Obj, StreamWriter& Writer)
+  MachODumper(const llvm::object::MachOObjectFileBase *Obj, StreamWriter& Writer)
     : ObjDumper(Writer)
     , Obj(Obj) { }
 
@@ -43,7 +43,7 @@ private:
 
   void printRelocation(section_iterator SecI, relocation_iterator RelI);
 
-  const llvm::object::MachOObjectFile *Obj;
+  const llvm::object::MachOObjectFileBase *Obj;
 };
 
 } // namespace
@@ -54,7 +54,7 @@ namespace llvm {
 error_code createMachODumper(const object::ObjectFile *Obj,
                              StreamWriter& Writer,
                              OwningPtr<ObjDumper> &Result) {
-  const MachOObjectFile *MachOObj = dyn_cast<MachOObjectFile>(Obj);
+  const MachOObjectFileBase *MachOObj = dyn_cast<MachOObjectFileBase>(Obj);
   if (!MachOObj)
     return readobj_error::unsupported_obj_file_format;
 
@@ -157,11 +157,11 @@ namespace {
   };
 }
 
-static void getSection(const MachOObjectFile *Obj,
+static void getSection(const MachOObjectFileBase *Obj,
                        DataRefImpl DRI,
                        MachOSection &Section) {
-  if (Obj->is64Bit()) {
-    const MachOFormat::Section<true> *Sect = Obj->getSection64(DRI);
+  if (const MachOObjectFile<true> *O = dyn_cast<MachOObjectFile<true> >(Obj)) {
+    const MachOObjectFile<true>::Section *Sect = O->getSection(DRI);
 
     Section.Address     = Sect->Address;
     Section.Size        = Sect->Size;
@@ -173,7 +173,8 @@ static void getSection(const MachOObjectFile *Obj,
     Section.Reserved1   = Sect->Reserved1;
     Section.Reserved2   = Sect->Reserved2;
   } else {
-    const MachOFormat::Section<false> *Sect = Obj->getSection(DRI);
+    const MachOObjectFile<false> *O2 = cast<MachOObjectFile<false> >(Obj);
+    const MachOObjectFile<false>::Section *Sect = O2->getSection(DRI);
 
     Section.Address     = Sect->Address;
     Section.Size        = Sect->Size;
@@ -187,20 +188,21 @@ static void getSection(const MachOObjectFile *Obj,
   }
 }
 
-static void getSymbol(const MachOObjectFile *Obj,
+static void getSymbol(const MachOObjectFileBase *Obj,
                       DataRefImpl DRI,
                       MachOSymbol &Symbol) {
-  if (Obj->is64Bit()) {
-    const MachOFormat::SymbolTableEntry<true> *Entry =
-      Obj->getSymbol64TableEntry(DRI);
+  if (const MachOObjectFile<true> *O = dyn_cast<MachOObjectFile<true> >(Obj)) {
+    const MachOObjectFile<true>::SymbolTableEntry *Entry =
+      O->getSymbolTableEntry(DRI);
     Symbol.StringIndex  = Entry->StringIndex;
     Symbol.Type         = Entry->Type;
     Symbol.SectionIndex = Entry->SectionIndex;
     Symbol.Flags        = Entry->Flags;
     Symbol.Value        = Entry->Value;
   } else {
-    const MachOFormat::SymbolTableEntry<false> *Entry =
-      Obj->getSymbolTableEntry(DRI);
+    const MachOObjectFile<false> *O2 = cast<MachOObjectFile<false> >(Obj);
+    const MachOObjectFile<false>::SymbolTableEntry *Entry =
+      O2->getSymbolTableEntry(DRI);
     Symbol.StringIndex  = Entry->StringIndex;
     Symbol.Type         = Entry->Type;
     Symbol.SectionIndex = Entry->SectionIndex;

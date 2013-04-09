@@ -255,7 +255,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     std::sort(Rels.begin(), Rels.end(), RelocAddressLess);
 
     StringRef SegmentName = "";
-    if (const MachOObjectFile *MachO = dyn_cast<const MachOObjectFile>(Obj)) {
+    if (const MachOObjectFileBase *MachO = dyn_cast<const MachOObjectFileBase>(Obj)) {
       DataRefImpl DR = i->getRawDataRefImpl();
       SegmentName = MachO->getSectionFinalSegmentName(DR);
     }
@@ -591,7 +591,7 @@ static void PrintSymbolTable(const ObjectFile *o) {
       else if (Section == o->end_sections())
         outs() << "*UND*";
       else {
-        if (const MachOObjectFile *MachO = dyn_cast<const MachOObjectFile>(o)) {
+        if (const MachOObjectFileBase *MachO = dyn_cast<const MachOObjectFileBase>(o)) {
           DataRefImpl DR = Section->getRawDataRefImpl();
           StringRef SegmentName = MachO->getSectionFinalSegmentName(DR);
           outs() << SegmentName << ",";
