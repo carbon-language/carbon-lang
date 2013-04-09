@@ -221,7 +221,6 @@ public:
 
   bool parseExpression(const MCExpr *&Res);
   virtual bool parseExpression(const MCExpr *&Res, SMLoc &EndLoc);
-  virtual bool parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc);
   virtual bool parseParenExpression(const MCExpr *&Res, SMLoc &EndLoc);
   virtual bool parseAbsoluteExpression(int64_t &Res);
 
@@ -868,10 +867,6 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
 bool AsmParser::parseExpression(const MCExpr *&Res) {
   SMLoc EndLoc;
   return parseExpression(Res, EndLoc);
-}
-
-bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
-  return ParsePrimaryExpr(Res, EndLoc);
 }
 
 const MCExpr *

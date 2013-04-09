@@ -151,13 +151,6 @@ public:
   virtual bool parseExpression(const MCExpr *&Res, SMLoc &EndLoc) = 0;
   bool parseExpression(const MCExpr *&Res);
 
-  /// parsePrimaryExpr - Parse a primary expression.
-  ///
-  /// @param Res - The value of the expression. The result is undefined
-  /// on error.
-  /// @result - False on success.
-  virtual bool parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) = 0;
-
   /// parseParenExpression - Parse an arbitrary expression, assuming that an
   /// initial '(' has already been consumed.
   ///

@@ -1130,7 +1130,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
     if (ParseRegister(TmpReg, Start, End)) {
       const MCExpr *Disp;
       SMLoc IdentStart = Tok.getLoc();
-      if (getParser().parsePrimaryExpr(Disp, End))
+      if (getParser().parseExpression(Disp, End))
         return 0;
 
       if (X86Operand *Err = ParseIntelVarWithQualifier(Disp, IdentStart))
@@ -1182,7 +1182,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
         SM.onRegister(TmpReg);
         UpdateLocLex = false;
         break;
-      } else if (!getParser().parsePrimaryExpr(Disp, End)) {
+      } else if (!getParser().parseExpression(Disp, End)) {
         SM.onDispExpr();
         UpdateLocLex = false;
         break;
@@ -1324,7 +1324,7 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg,
 
   const MCExpr *Disp = 0;
   SMLoc IdentStart = Tok.getLoc();
-  if (getParser().parsePrimaryExpr(Disp, End))
+  if (getParser().parseExpression(Disp, End))
     return 0;
 
   if (!isParsingInlineAsm())
@@ -1401,7 +1401,7 @@ X86Operand *X86AsmParser::ParseIntelOffsetOfOperator(SMLoc Start) {
 
   SMLoc End;
   const MCExpr *Val;
-  if (getParser().parsePrimaryExpr(Val, End))
+  if (getParser().parseExpression(Val, End))
     return ErrorOperand(Start, "Unable to parse expression!");
 
   // Don't emit the offset operator.
@@ -1437,7 +1437,7 @@ X86Operand *X86AsmParser::ParseIntelOperator(SMLoc Start, unsigned OpKind) {
 
   SMLoc End;
   const MCExpr *Val;
-  if (getParser().parsePrimaryExpr(Val, End))
+  if (getParser().parseExpression(Val, End))
     return 0;
 
   unsigned Length = 0, Size = 0, Type = 0;
