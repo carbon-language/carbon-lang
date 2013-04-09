@@ -1,4 +1,6 @@
-; RUN: llvm-link %s %p/2011-08-18-unique-class-type2.ll -S -o - | grep DW_TAG_class_type | count 1
+; RUN: llvm-link %s %p/2011-08-18-unique-class-type2.ll -S -o - | FileCheck %s
+; CHECK: DW_TAG_class_type
+; CHECK-NOT: DW_TAG_class_type
 ; Test to check there is only one MDNode for class A after linking.
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
