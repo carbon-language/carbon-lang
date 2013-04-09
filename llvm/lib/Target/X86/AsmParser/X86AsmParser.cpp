@@ -57,8 +57,8 @@ private:
   X86Operand *ParseOperand();
   X86Operand *ParseATTOperand();
   X86Operand *ParseIntelOperand();
-  X86Operand *ParseIntelOffsetOfOperator(SMLoc StartLoc);
-  X86Operand *ParseIntelOperator(SMLoc StartLoc, unsigned OpKind);
+  X86Operand *ParseIntelOffsetOfOperator();
+  X86Operand *ParseIntelOperator(unsigned OpKind);
   X86Operand *ParseIntelMemOperand(unsigned SegReg, uint64_t ImmDisp,
                                    SMLoc StartLoc);
   X86Operand *ParseIntelBracExpression(unsigned SegReg, SMLoc SizeDirLoc,
@@ -1393,13 +1393,13 @@ bool X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp,
 
 /// Parse the 'offset' operator.  This operator is used to specify the
 /// location rather then the content of a variable.
-X86Operand *X86AsmParser::ParseIntelOffsetOfOperator(SMLoc Start) {
-  SMLoc OffsetOfLoc = Start;
+X86Operand *X86AsmParser::ParseIntelOffsetOfOperator() {
+  AsmToken Tok = *&Parser.getTok();
+  SMLoc OffsetOfLoc = Tok.getLoc();
   Parser.Lex(); // Eat offset.
-  Start = Parser.getTok().getLoc();
-  assert (Parser.getTok().is(AsmToken::Identifier) && "Expected an identifier");
+  assert (Tok.is(AsmToken::Identifier) && "Expected an identifier");
 
-  SMLoc End;
+  SMLoc Start = Parser.getTok().getLoc(), End;
   const MCExpr *Val;
   if (getParser().parseExpression(Val, End))
     return ErrorOperand(Start, "Unable to parse expression!");
@@ -1429,14 +1429,14 @@ enum IntelOperatorKind {
 /// variable.  A variable's size is the product of its LENGTH and TYPE.  The
 /// TYPE operator returns the size of a C or C++ type or variable. If the
 /// variable is an array, TYPE returns the size of a single element.
-X86Operand *X86AsmParser::ParseIntelOperator(SMLoc Start, unsigned OpKind) {
-  SMLoc TypeLoc = Start;
-  Parser.Lex(); // Eat offset.
-  Start = Parser.getTok().getLoc();
+X86Operand *X86AsmParser::ParseIntelOperator(unsigned OpKind) {
+  AsmToken Tok = *&Parser.getTok();
+  SMLoc TypeLoc = Tok.getLoc();
+  Parser.Lex(); // Eat operator.
   assert (Parser.getTok().is(AsmToken::Identifier) && "Expected an identifier");
 
-  SMLoc End;
   const MCExpr *Val;
+  SMLoc Start = Parser.getTok().getLoc(), End;
   if (getParser().parseExpression(Val, End))
     return 0;
 
@@ -1475,13 +1475,13 @@ X86Operand *X86AsmParser::ParseIntelOperand() {
   // Offset, length, type and size operators.
   if (isParsingInlineAsm()) {
     if (AsmTokStr == "offset" || AsmTokStr == "OFFSET")
-      return ParseIntelOffsetOfOperator(Start);
+      return ParseIntelOffsetOfOperator();
     if (AsmTokStr == "length" || AsmTokStr == "LENGTH")
-      return ParseIntelOperator(Start, IOK_LENGTH);
+      return ParseIntelOperator(IOK_LENGTH);
     if (AsmTokStr == "size" || AsmTokStr == "SIZE")
-      return ParseIntelOperator(Start, IOK_SIZE);
+      return ParseIntelOperator(IOK_SIZE);
     if (AsmTokStr == "type" || AsmTokStr == "TYPE")
-      return ParseIntelOperator(Start, IOK_TYPE);
+      return ParseIntelOperator(IOK_TYPE);
   }
 
   // Immediate.
