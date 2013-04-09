@@ -1605,12 +1605,20 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC, const ArgList &Args)
                    /* Default */false);
 
   // Parse -f(no-)sanitize-address-zero-base-shadow options.
-  if (NeedsAsan)
+  if (NeedsAsan) {
+    bool IsAndroid = (TC.getTriple().getEnvironment() == llvm::Triple::Android);
+    bool ZeroBaseShadowDefault = IsAndroid;
     AsanZeroBaseShadow =
-      TC.getTriple().getEnvironment() == llvm::Triple::Android ||
-      Args.hasFlag(options::OPT_fsanitize_address_zero_base_shadow,
-                   options::OPT_fno_sanitize_address_zero_base_shadow,
-                   /* Default */false);
+        Args.hasFlag(options::OPT_fsanitize_address_zero_base_shadow,
+                     options::OPT_fno_sanitize_address_zero_base_shadow,
+                     ZeroBaseShadowDefault);
+    // Zero-base shadow is a requirement on Android.
+    if (IsAndroid && !AsanZeroBaseShadow) {
+      D.Diag(diag::err_drv_argument_not_allowed_with)
+          << "-fno-sanitize-address-zero-base-shadow"
+          << lastArgumentForKind(D, Args, Address);
+    }
+  }
 }
 
 static void addSanitizerRTLinkFlagsLinux(
