@@ -39,6 +39,8 @@ namespace cxtu {
 CXTranslationUnitImpl *MakeCXTranslationUnit(CIndexer *CIdx, ASTUnit *AU);
 
 static inline ASTUnit *getASTUnit(CXTranslationUnit TU) {
+  if (!TU)
+    return 0;
   return TU->TheASTUnit;
 }
 
