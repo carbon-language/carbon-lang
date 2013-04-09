@@ -65,6 +65,7 @@ namespace {
     bool VisitDeclRefExpr(DeclRefExpr *DRE);
     bool VisitCXXThisExpr(CXXThisExpr *ThisE);
     bool VisitLambdaExpr(LambdaExpr *Lambda);
+    bool VisitPseudoObjectExpr(PseudoObjectExpr *POE);
   };
 
   /// VisitExpr - Visit all of the children of this expression.
@@ -113,6 +114,23 @@ namespace {
     return S->Diag(ThisE->getLocStart(),
                    diag::err_param_default_argument_references_this)
                << ThisE->getSourceRange();
+  }
+
+  bool CheckDefaultArgumentVisitor::VisitPseudoObjectExpr(PseudoObjectExpr *POE) {
+    bool Invalid = false;
+    for (PseudoObjectExpr::semantics_iterator
+           i = POE->semantics_begin(), e = POE->semantics_end(); i != e; ++i) {
+      Expr *E = *i;
+
+      // Look through bindings.
+      if (OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(E)) {
+        E = OVE->getSourceExpr();
+        assert(E && "pseudo-object binding without source expression?");
+      }
+
+      Invalid |= Visit(E);
+    }
+    return Invalid;
   }
 
   bool CheckDefaultArgumentVisitor::VisitLambdaExpr(LambdaExpr *Lambda) {

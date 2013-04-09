@@ -57,3 +57,21 @@ template<typename T> void f() {
 }
 
 template void f<int>();
+
+// rdar://13602832
+//
+// Make sure that the default-argument checker looks through
+// pseudo-object expressions correctly.  The default argument
+// needs to force l2r to test this effectively because the checker
+// is syntactic and runs before placeholders are handled.
+@interface Test13602832
+- (int) x;
+@end
+namespace test13602832 {
+  template <int N> void foo(Test13602832 *a, int limit = a.x + N) {} // expected-error {{default argument references parameter 'a'}}
+
+  void test(Test13602832 *a) {
+    // FIXME: this is a useless cascade error.
+    foo<1024>(a); // expected-error {{no matching function}}
+  }
+}
