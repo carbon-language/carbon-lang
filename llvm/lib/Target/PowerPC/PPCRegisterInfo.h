@@ -61,6 +61,10 @@ public:
     return true;
   }
 
+  virtual bool requiresVirtualBaseRegisters(const MachineFunction &MF) const {
+    return true;
+  }
+
   void lowerDynamicAlloc(MachineBasicBlock::iterator II) const;
   void lowerCRSpilling(MachineBasicBlock::iterator II,
                        unsigned FrameIndex) const;
@@ -76,6 +80,15 @@ public:
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, unsigned FIOperandNum,
                            RegScavenger *RS = NULL) const;
+
+  // Support for virtual base registers.
+  bool needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const;
+  void materializeFrameBaseRegister(MachineBasicBlock *MBB,
+                                    unsigned BaseReg, int FrameIdx,
+                                    int64_t Offset) const;
+  void resolveFrameIndex(MachineBasicBlock::iterator I,
+                         unsigned BaseReg, int64_t Offset) const;
+  bool isFrameOffsetLegal(const MachineInstr *MI, int64_t Offset) const;
 
   // Debug information queries.
   unsigned getFrameRegister(const MachineFunction &MF) const;
