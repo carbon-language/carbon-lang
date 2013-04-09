@@ -4118,26 +4118,29 @@ AsmParser::parseMSInlineAsm(void *AsmLoc, std::string &AsmString,
       // Expr/Input or Output.
       bool IsVarDecl;
       unsigned Length, Size, Type;
-      void *OpDecl = SI.LookupInlineAsmIdentifier(Operand->getName(), AsmLoc,
+      StringRef SymName = Operand->getSymName();
+      if (SymName.empty())
+        continue;
+
+      void *OpDecl = SI.LookupInlineAsmIdentifier(SymName, AsmLoc,
                                                   Length, Size, Type,
                                                   IsVarDecl);
       if (!OpDecl)
         continue;
 
       bool isOutput = (i == 1) && Desc.mayStore();
+      SMLoc Start = SMLoc::getFromPointer(SymName.data());
       if (isOutput) {
         ++InputIdx;
         OutputDecls.push_back(OpDecl);
         OutputDeclsAddressOf.push_back(Operand->needAddressOf());
         OutputConstraints.push_back('=' + Operand->getConstraint().str());
-        AsmStrRewrites.push_back(AsmRewrite(AOK_Output, Operand->getStartLoc(),
-                                            Operand->getNameLen()));
+        AsmStrRewrites.push_back(AsmRewrite(AOK_Output, Start, SymName.size()));
       } else {
         InputDecls.push_back(OpDecl);
         InputDeclsAddressOf.push_back(Operand->needAddressOf());
         InputConstraints.push_back(Operand->getConstraint().str());
-        AsmStrRewrites.push_back(AsmRewrite(AOK_Input, Operand->getStartLoc(),
-                                            Operand->getNameLen()));
+        AsmStrRewrites.push_back(AsmRewrite(AOK_Input, Start, SymName.size()));
       }
     }
   }

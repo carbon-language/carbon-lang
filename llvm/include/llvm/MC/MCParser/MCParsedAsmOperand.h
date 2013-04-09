@@ -37,15 +37,7 @@ public:
   void setMCOperandNum (unsigned OpNum) { MCOperandNum = OpNum; }
   unsigned getMCOperandNum() { return MCOperandNum; }
 
-  unsigned getNameLen() {
-    assert (getStartLoc().isValid() && "Invalid StartLoc!");
-    assert (getEndLoc().isValid() && "Invalid EndLoc!");
-    return getEndLoc().getPointer() - getStartLoc().getPointer();
-  }
-
-  StringRef getName() {
-    return StringRef(getStartLoc().getPointer(), getNameLen());
-  }
+  virtual StringRef getSymName() { return StringRef(); }
 
   /// isToken - Is this a token operand?
   virtual bool isToken() const = 0;
