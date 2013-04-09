@@ -364,26 +364,6 @@ bool llvm::getObjectSize(const Value *Ptr, uint64_t &Size, const DataLayout *TD,
   return true;
 }
 
-/// \brief Compute the size of the underlying object pointed by Ptr. Returns
-/// true and the object size in Size if successful, and false otherwise.
-/// If RoundToAlign is true, then Size is rounded up to the aligment of allocas,
-/// byval arguments, and global variables.
-bool llvm::getUnderlyingObjectSize(const Value *Ptr, uint64_t &Size,
-                                   const DataLayout *TD,
-                                   const TargetLibraryInfo *TLI,
-                                   bool RoundToAlign) {
-  if (!TD)
-    return false;
-
-  ObjectSizeOffsetVisitor Visitor(TD, TLI, Ptr->getContext(), RoundToAlign);
-  SizeOffsetType Data = Visitor.compute(const_cast<Value*>(Ptr));
-  if (!Visitor.knownSize(Data))
-    return false;
-
-  Size = Data.first.getZExtValue();
-  return true;
-}
-
 
 STATISTIC(ObjectVisitorArgument,
           "Number of arguments with unsolved size and offset");
@@ -409,23 +389,16 @@ ObjectSizeOffsetVisitor::ObjectSizeOffsetVisitor(const DataLayout *TD,
 
 SizeOffsetType ObjectSizeOffsetVisitor::compute(Value *V) {
   V = V->stripPointerCasts();
+  if (Instruction *I = dyn_cast<Instruction>(V)) {
+    // If we have already seen this instruction, bail out. Cycles can happen in
+    // unreachable code after constant propagation.
+    if (!SeenInsts.insert(I))
+      return unknown();
 
-  if (isa<Instruction>(V) || isa<GEPOperator>(V)) {
-    // Return cached value or insert unknown in cache if size of V was not
-    // computed yet in order to avoid recursions in PHis.
-    std::pair<CacheMapTy::iterator, bool> CacheVal =
-      CacheMap.insert(std::make_pair(V, unknown()));
-    if (!CacheVal.second)
-      return CacheVal.first->second;
-
-    SizeOffsetType Result;
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V))
-      Result = visitGEPOperator(*GEP);
-    else
-      Result = visit(cast<Instruction>(*V));
-    return CacheMap[V] = Result;
+      return visitGEPOperator(*GEP);
+    return visit(*I);
   }
-
   if (Argument *A = dyn_cast<Argument>(V))
     return visitArgument(*A);
   if (ConstantPointerNull *P = dyn_cast<ConstantPointerNull>(V))
@@ -439,6 +412,8 @@ SizeOffsetType ObjectSizeOffsetVisitor::compute(Value *V) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     if (CE->getOpcode() == Instruction::IntToPtr)
       return unknown(); // clueless
+    if (CE->getOpcode() == Instruction::GetElementPtr)
+      return visitGEPOperator(cast<GEPOperator>(*CE));
   }
 
   DEBUG(dbgs() << "ObjectSizeOffsetVisitor::compute() unhandled value: " << *V
@@ -572,21 +547,9 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitLoadInst(LoadInst&) {
   return unknown();
 }
 
-SizeOffsetType ObjectSizeOffsetVisitor::visitPHINode(PHINode &PHI) {
-  if (PHI.getNumIncomingValues() == 0)
-    return unknown();
-
-  SizeOffsetType Ret = compute(PHI.getIncomingValue(0));
-  if (!bothKnown(Ret))
-    return unknown();
-
-  // Verify that all PHI incoming pointers have the same size and offset.
-  for (unsigned i = 1, e = PHI.getNumIncomingValues(); i != e; ++i) {
-    SizeOffsetType EdgeData = compute(PHI.getIncomingValue(i));
-    if (!bothKnown(EdgeData) || EdgeData != Ret)
-      return unknown();
-  }
-  return Ret;
+SizeOffsetType ObjectSizeOffsetVisitor::visitPHINode(PHINode&) {
+  // too complex to analyze statically.
+  return unknown();
 }
 
 SizeOffsetType ObjectSizeOffsetVisitor::visitSelectInst(SelectInst &I) {

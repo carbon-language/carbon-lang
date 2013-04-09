@@ -146,14 +146,6 @@ static inline CallInst *isFreeCall(Value *I, const TargetLibraryInfo *TLI) {
 bool getObjectSize(const Value *Ptr, uint64_t &Size, const DataLayout *TD,
                    const TargetLibraryInfo *TLI, bool RoundToAlign = false);
 
-/// \brief Compute the size of the underlying object pointed by Ptr. Returns
-/// true and the object size in Size if successful, and false otherwise.
-/// If RoundToAlign is true, then Size is rounded up to the aligment of allocas,
-/// byval arguments, and global variables.
-bool getUnderlyingObjectSize(const Value *Ptr, uint64_t &Size,
-                             const DataLayout *TD, const TargetLibraryInfo *TLI,
-                             bool RoundToAlign = false);
-
 
 
 typedef std::pair<APInt, APInt> SizeOffsetType;
@@ -163,14 +155,12 @@ typedef std::pair<APInt, APInt> SizeOffsetType;
 class ObjectSizeOffsetVisitor
   : public InstVisitor<ObjectSizeOffsetVisitor, SizeOffsetType> {
 
-  typedef DenseMap<const Value*, SizeOffsetType> CacheMapTy;
-
   const DataLayout *TD;
   const TargetLibraryInfo *TLI;
   bool RoundToAlign;
   unsigned IntTyBits;
   APInt Zero;
-  CacheMapTy CacheMap;
+  SmallPtrSet<Instruction *, 8> SeenInsts;
 
   APInt align(APInt Size, uint64_t Align);
 
