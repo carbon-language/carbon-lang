@@ -116,47 +116,40 @@ void MachOObjectFile::moveToNextSymbol(DataRefImpl &DRI) const {
   }
 }
 
-const MachOFormat::SymbolTableEntry<false> *
-MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI) const {
+const MachOFormat::SymbolTableEntryBase *
+MachOObjectFile::getSymbolTableEntryBase(DataRefImpl DRI) const {
   const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
   const MachOFormat::SymtabLoadCommand *SymtabLoadCmd =
     reinterpret_cast<const MachOFormat::SymtabLoadCommand*>(Command);
-
-  return getSymbolTableEntry(DRI, SymtabLoadCmd);
+  return getSymbolTableEntryBase(DRI, SymtabLoadCmd);
 }
 
 const MachOFormat::SymbolTableEntry<false> *
-MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI,
+MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI) const {
+  const MachOFormat::SymbolTableEntryBase *Base = getSymbolTableEntryBase(DRI);
+  return reinterpret_cast<const MachOFormat::SymbolTableEntry<false>*>(Base);
+}
+
+const MachOFormat::SymbolTableEntryBase *
+MachOObjectFile::getSymbolTableEntryBase(DataRefImpl DRI,
                     const MachOFormat::SymtabLoadCommand *SymtabLoadCmd) const {
   uint64_t SymbolTableOffset = SymtabLoadCmd->SymbolTableOffset;
   unsigned Index = DRI.d.b;
-  uint64_t Offset = (SymbolTableOffset +
-                     Index * sizeof(MachOFormat::SymbolTableEntry<false>));
-  StringRef Data =
-    getData(Offset, sizeof(MachOFormat::SymbolTableEntry<false>));
+
+  unsigned SymbolTableEntrySize = is64Bit() ?
+    sizeof(MachOFormat::SymbolTableEntry<true>) :
+    sizeof(MachOFormat::SymbolTableEntry<false>);
+
+  uint64_t Offset = SymbolTableOffset + Index * SymbolTableEntrySize;
+  StringRef Data = getData(Offset, SymbolTableEntrySize);
   return
-    reinterpret_cast<const MachOFormat::SymbolTableEntry<false>*>(Data.data());
+    reinterpret_cast<const MachOFormat::SymbolTableEntryBase*>(Data.data());
 }
 
 const MachOFormat::SymbolTableEntry<true>*
 MachOObjectFile::getSymbol64TableEntry(DataRefImpl DRI) const {
-  const MachOFormat::LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
-  const MachOFormat::SymtabLoadCommand *SymtabLoadCmd =
-    reinterpret_cast<const MachOFormat::SymtabLoadCommand*>(Command);
-
-  return getSymbol64TableEntry(DRI, SymtabLoadCmd);
-}
-
-const MachOFormat::SymbolTableEntry<true>*
-MachOObjectFile::getSymbol64TableEntry(DataRefImpl DRI,
-                    const MachOFormat::SymtabLoadCommand *SymtabLoadCmd) const {
-  uint64_t SymbolTableOffset = SymtabLoadCmd->SymbolTableOffset;
-  unsigned Index = DRI.d.b;
-  uint64_t Offset = (SymbolTableOffset +
-                     Index * sizeof(MachOFormat::SymbolTableEntry<true>));
-  StringRef Data = getData(Offset, sizeof(MachOFormat::SymbolTableEntry<true>));
-  return
-    reinterpret_cast<const MachOFormat::SymbolTableEntry<true>*>(Data.data());
+  const MachOFormat::SymbolTableEntryBase *Base = getSymbolTableEntryBase(DRI);
+  return reinterpret_cast<const MachOFormat::SymbolTableEntry<true>*>(Base);
 }
 
 error_code MachOObjectFile::getSymbolNext(DataRefImpl DRI,
@@ -176,16 +169,9 @@ error_code MachOObjectFile::getSymbolName(DataRefImpl DRI,
   StringRef StringTable = getData(SymtabLoadCmd->StringTableOffset,
                                   SymtabLoadCmd->StringTableSize);
 
-  uint32_t StringIndex;
-  if (is64Bit()) {
-    const MachOFormat::SymbolTableEntry<true> *Entry =
-      getSymbol64TableEntry(DRI, SymtabLoadCmd);
-    StringIndex = Entry->StringIndex;
-  } else {
-    const MachOFormat::SymbolTableEntry<false> *Entry =
-      getSymbolTableEntry(DRI, SymtabLoadCmd);
-    StringIndex = Entry->StringIndex;
-  }
+  const MachOFormat::SymbolTableEntryBase *Entry =
+    getSymbolTableEntryBase(DRI, SymtabLoadCmd);
+  uint32_t StringIndex = Entry->StringIndex;
 
   const char *Start = &StringTable.data()[StringIndex];
   Result = StringRef(Start);
@@ -403,16 +389,10 @@ error_code MachOObjectFile::getSymbolSection(DataRefImpl Symb,
 
 error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
                                           SymbolRef::Type &Res) const {
-  uint8_t n_type;
-  if (is64Bit()) {
-    const MachOFormat::SymbolTableEntry<true> *Entry =
-      getSymbol64TableEntry(Symb);
-    n_type = Entry->Type;
-  } else {
-    const MachOFormat::SymbolTableEntry<false> *Entry =
-      getSymbolTableEntry(Symb);
-    n_type = Entry->Type;
-  }
+  const MachOFormat::SymbolTableEntryBase *Entry =
+    getSymbolTableEntryBase(Symb);
+  uint8_t n_type = Entry->Type;
+
   Res = SymbolRef::ST_Other;
 
   // If this is a STAB debugging symbol, we can do nothing more.
