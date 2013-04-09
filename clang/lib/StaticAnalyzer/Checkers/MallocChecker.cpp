@@ -50,7 +50,12 @@ class RefState {
               Released,
               // The responsibility for freeing resources has transfered from
               // this reference. A relinquished symbol should not be freed.
-              Relinquished };
+              Relinquished,
+              // We are no longer guaranteed to have observed all manipulations
+              // of this pointer/memory. For example, it could have been
+              // passed as a parameter to an opaque function.
+              Escaped
+  };
 
   const Stmt *S;
   unsigned K : 2; // Kind enum, but stored as a bitfield.
@@ -58,12 +63,15 @@ class RefState {
                         // family.
 
   RefState(Kind k, const Stmt *s, unsigned family) 
-    : S(s), K(k), Family(family) {}
+    : S(s), K(k), Family(family) {
+    assert(family != AF_None);
+  }
 public:
   bool isAllocated() const { return K == Allocated; }
   bool isReleased() const { return K == Released; }
   bool isRelinquished() const { return K == Relinquished; }
-  AllocationFamily getAllocationFamily() const { 
+  bool isEscaped() const { return K == Escaped; }
+  AllocationFamily getAllocationFamily() const {
     return (AllocationFamily)Family;
   }
   const Stmt *getStmt() const { return S; }
@@ -80,6 +88,9 @@ public:
   }
   static RefState getRelinquished(unsigned family, const Stmt *s) {
     return RefState(Relinquished, s, family);
+  }
+  static RefState getEscaped(const RefState *RS) {
+    return RefState(Escaped, RS->getStmt(), RS->getAllocationFamily());
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
@@ -1008,37 +1019,37 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
 
   if (RsBase) {
 
-    bool DeallocMatchesAlloc = 
-      RsBase->getAllocationFamily() == AF_None ||
-      RsBase->getAllocationFamily() == getAllocationFamily(C, ParentExpr);
-
-    // Check if an expected deallocation function matches the real one.
-    if (!DeallocMatchesAlloc && RsBase->isAllocated()) {
-      ReportMismatchedDealloc(C, ArgExpr->getSourceRange(), ParentExpr, RsBase,
-                              SymBase);
-      return 0;
-    }
-
-    // Check double free.
-    if (DeallocMatchesAlloc &&
-        (RsBase->isReleased() || RsBase->isRelinquished()) &&
+    // Check for double free first.
+    if ((RsBase->isReleased() || RsBase->isRelinquished()) &&
         !didPreviousFreeFail(State, SymBase, PreviousRetStatusSymbol)) {
       ReportDoubleFree(C, ParentExpr->getSourceRange(), RsBase->isReleased(),
                        SymBase, PreviousRetStatusSymbol);
       return 0;
-    }
 
-    // Check if the memory location being freed is the actual location
-    // allocated, or an offset.
-    RegionOffset Offset = R->getAsOffset();
-    if (RsBase->isAllocated() &&
-        Offset.isValid() &&
-        !Offset.hasSymbolicOffset() &&
-        Offset.getOffset() != 0) {
-      const Expr *AllocExpr = cast<Expr>(RsBase->getStmt());
-      ReportOffsetFree(C, ArgVal, ArgExpr->getSourceRange(), ParentExpr, 
-                       AllocExpr);
-      return 0;
+    // If the pointer is allocated or escaped, but we are now trying to free it,
+    // check that the call to free is proper.
+    } else if (RsBase->isAllocated() || RsBase->isEscaped()) {
+
+      // Check if an expected deallocation function matches the real one.
+      bool DeallocMatchesAlloc =
+        RsBase->getAllocationFamily() == getAllocationFamily(C, ParentExpr);
+      if (!DeallocMatchesAlloc) {
+        ReportMismatchedDealloc(C, ArgExpr->getSourceRange(),
+                                ParentExpr, RsBase, SymBase);
+        return 0;
+      }
+
+      // Check if the memory location being freed is the actual location
+      // allocated, or an offset.
+      RegionOffset Offset = R->getAsOffset();
+      if (Offset.isValid() &&
+          !Offset.hasSymbolicOffset() &&
+          Offset.getOffset() != 0) {
+        const Expr *AllocExpr = cast<Expr>(RsBase->getStmt());
+        ReportOffsetFree(C, ArgVal, ArgExpr->getSourceRange(), ParentExpr, 
+                         AllocExpr);
+        return 0;
+      }
     }
   }
 
@@ -1992,8 +2003,10 @@ ProgramStateRef MallocChecker::checkPointerEscapeAux(ProgramStateRef State,
     SymbolRef sym = *I;
 
     if (const RefState *RS = State->get<RegionState>(sym)) {
-      if (RS->isAllocated() && CheckRefState(RS))
+      if (RS->isAllocated() && CheckRefState(RS)) {
         State = State->remove<RegionState>(sym);
+        State = State->set<RegionState>(sym, RefState::getEscaped(RS));
+      }
     }
   }
   return State;

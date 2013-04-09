@@ -1107,7 +1107,7 @@ void testOffsetOfRegionFreedAfterFunctionCall() {
   int *p = malloc(sizeof(int)*2);
   p += 1;
   myfoo(p);
-  free(p); // no-warning
+  free(p); // expected-warning{{Argument to free() is offset by 4 bytes from the start of memory allocated by malloc()}}
 }
 
 void testFixManipulatedPointerBeforeFree() {
