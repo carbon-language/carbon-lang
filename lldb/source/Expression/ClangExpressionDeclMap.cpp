@@ -2893,6 +2893,9 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     return;
                 
                 const clang::Type *interface_type = self_interface->getTypeForDecl();
+                
+                if (!interface_type)
+                    return; // This is unlikely, but we have seen crashes where this occurred
                         
                 TypeFromUser class_user_type(QualType(interface_type, 0).getAsOpaquePtr(),
                                              &method_decl->getASTContext());
