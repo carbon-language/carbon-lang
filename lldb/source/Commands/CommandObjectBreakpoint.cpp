@@ -611,7 +611,7 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
         "Set the number of times this breakpoint is skipped before stopping." },
 
     { LLDB_OPT_SET_ALL, false, "one-shot", 'o', no_argument,   NULL, 0, eArgTypeNone,
-        "The breakpoint is deleted the first time it stop causes a stop." },
+        "The breakpoint is deleted the first time it causes a stop." },
 
     { LLDB_OPT_SET_ALL, false, "condition",    'c', required_argument, NULL, 0, eArgTypeExpression,
         "The breakpoint stops only if this condition expression evaluates to true."},
