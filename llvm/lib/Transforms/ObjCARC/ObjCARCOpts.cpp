@@ -373,7 +373,7 @@ static Sequence MergeSeqs(Sequence A, Sequence B, bool TopDown) {
 namespace {
   /// \brief Unidirectional information about either a
   /// retain-decrement-use-release sequence or release-use-decrement-retain
-  /// reverese sequence.
+  /// reverse sequence.
   struct RRInfo {
     /// After an objc_retain, the reference count of the referenced
     /// object is known to be positive. Similarly, before an objc_release, the
@@ -430,7 +430,7 @@ namespace {
     /// True if the reference count is known to be incremented.
     bool KnownPositiveRefCount;
 
-    /// True of we've seen an opportunity for partial RR elimination, such as
+    /// True if we've seen an opportunity for partial RR elimination, such as
     /// pushing calls into a CFG triangle or into one side of a CFG diamond.
     bool Partial;
 
