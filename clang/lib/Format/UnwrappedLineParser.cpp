@@ -260,6 +260,33 @@ void UnwrappedLineParser::parsePPUnknown() {
   addUnwrappedLine();
 }
 
+// Here we blacklist certain tokens that are not usually the first token in an
+// unwrapped line. This is used in attempt to distinguish macro calls without
+// trailing semicolons from other constructs split to several lines.
+bool tokenCanStartNewLine(clang::Token Tok) {
+  // Semicolon can be a null-statement, l_square can be a start of a macro or
+  // a C++11 attribute, but this doesn't seem to be common.
+  return Tok.isNot(tok::semi) && Tok.isNot(tok::l_brace) &&
+         Tok.isNot(tok::l_square) &&
+         // Tokens that can only be used as binary operators and a part of
+         // overloaded operator names.
+         Tok.isNot(tok::period) && Tok.isNot(tok::periodstar) &&
+         Tok.isNot(tok::arrow) && Tok.isNot(tok::arrowstar) &&
+         Tok.isNot(tok::less) && Tok.isNot(tok::greater) &&
+         Tok.isNot(tok::slash) && Tok.isNot(tok::percent) &&
+         Tok.isNot(tok::lessless) && Tok.isNot(tok::greatergreater) &&
+         Tok.isNot(tok::equal) && Tok.isNot(tok::plusequal) &&
+         Tok.isNot(tok::minusequal) && Tok.isNot(tok::starequal) &&
+         Tok.isNot(tok::slashequal) && Tok.isNot(tok::percentequal) &&
+         Tok.isNot(tok::ampequal) && Tok.isNot(tok::pipeequal) &&
+         Tok.isNot(tok::caretequal) && Tok.isNot(tok::greatergreaterequal) &&
+         Tok.isNot(tok::lesslessequal) &&
+         // Colon is used in labels, base class lists, initializer lists,
+         // range-based for loops, ternary operator, but should never be the
+         // first token in an unwrapped line.
+         Tok.isNot(tok::colon);
+}
+
 void UnwrappedLineParser::parseStructuralElement() {
   assert(!FormatTok.Tok.is(tok::l_brace));
   switch (FormatTok.Tok.getKind()) {
@@ -386,11 +413,11 @@ void UnwrappedLineParser::parseStructuralElement() {
           parseLabel();
           return;
         }
-        // Recognize function-like macro usages without trailing semicolon in
-        // declaration context.
+        // Recognize function-like macro usages without trailing semicolon.
         if (FormatTok.Tok.is(tok::l_paren)) {
           parseParens();
-          if (Line->MustBeDeclaration && FormatTok.HasUnescapedNewline) {
+          if (FormatTok.HasUnescapedNewline &&
+              tokenCanStartNewLine(FormatTok.Tok)) {
             addUnwrappedLine();
             return;
           }
