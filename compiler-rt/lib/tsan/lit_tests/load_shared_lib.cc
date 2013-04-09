@@ -19,7 +19,7 @@ void *write_glob(void *unused) {
   return NULL;
 }
 
-void race_two_threads(void *(*access_callback)(void *)) {
+void race_two_threads(void *(*access_callback)(void *unused)) {
   pthread_t t1, t2;
   pthread_create(&t1, NULL, access_callback, NULL);
   pthread_create(&t2, NULL, access_callback, NULL);
@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     printf("error in dlopen(): %s\n", dlerror());
     return 1;
   }
-  void *(*write_from_so)(void *);
+  void *(*write_from_so)(void *unused);
   *(void **)&write_from_so = dlsym(lib, "write_from_so");
   race_two_threads(write_from_so);
   // CHECK: write_from_so

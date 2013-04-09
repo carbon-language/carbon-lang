@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
   // CHECK: main
 
   // Check that shadow for stack memory occupies lower part of address space.
-  // CHECK-64: =>0x0f{{.*}}
-  // CHECK-32: =>0x1f{{.*}}
+  // CHECK-64: =>0x0f
+  // CHECK-32: =>0x1
   return res;
 }

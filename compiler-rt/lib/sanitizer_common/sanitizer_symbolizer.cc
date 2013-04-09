@@ -239,7 +239,7 @@ class InternalSymbolizer {
 
 class Symbolizer {
  public:
-  Symbolizer() : modules_fresh_(false) { };
+  Symbolizer() : modules_fresh_(false) { }
   uptr SymbolizeCode(uptr addr, AddressInfo *frames, uptr max_frames) {
     if (max_frames == 0)
       return 0;
