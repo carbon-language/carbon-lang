@@ -292,6 +292,8 @@ enum StatType {
   StatInt_getitimer,
   StatInt_setitimer,
   StatInt_time,
+  StatInt_glob,
+  StatInt_glob64,
 
   // Dynamic annotations.
   StatAnnotation,
