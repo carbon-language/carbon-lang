@@ -1,5 +1,6 @@
 ; RUN: llc -march=mipsel < %s | FileCheck %s
 
+; Simple memory
 @g1 = external global i32
 
 define i32 @f1(i32 %x) nounwind {
@@ -20,4 +21,20 @@ entry:
   store i32 %0, i32* @g1, align 4
   ret i32 %0
 }
+
+; "D": Second word of double word. This works for any memory element.
+; CHECK: #APP
+; CHECK-NEXT: lw ${{[0-9]+}},4(${{[0-9]+}});
+; CHECK-NEXT: #NO_APP
+
+@b = common global [20 x i32] zeroinitializer, align 4
+
+define void @main() #0 {
+entry:
+  tail call void asm sideeffect "    lw    $0,${1:D};", "r,*m,~{$11}"(i32 undef, i32* getelementptr inbounds ([20 x i32]* @b, i32 0, i32 3)) #1
+  ret void
+}
+
+attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf"="true" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #1 = { nounwind }
 
