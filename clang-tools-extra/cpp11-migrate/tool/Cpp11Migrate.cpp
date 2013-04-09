@@ -20,6 +20,7 @@
 #include "LoopConvert/LoopConvert.h"
 #include "UseNullptr/UseNullptr.h"
 #include "UseAuto/UseAuto.h"
+#include "AddOverride/AddOverride.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
@@ -71,6 +72,9 @@ int main(int argc, const char **argv) {
   TransformManager.registerTransform(
       "use-auto", "Use of 'auto' type specifier",
       &ConstructTransform<UseAutoTransform>);
+  TransformManager.registerTransform(
+      "add-override", "Make use of override specifier where possible",
+      &ConstructTransform<AddOverrideTransform>);
   // Add more transform options here.
 
   // This causes options to be parsed.

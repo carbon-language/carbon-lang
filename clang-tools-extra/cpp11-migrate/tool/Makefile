@@ -29,6 +29,8 @@ SOURCES += $(addprefix ../UseNullptr/,$(notdir $(wildcard $(PROJ_SRC_DIR)/../Use
 BUILT_SOURCES += $(ObjDir)/../UseNullptr/.objdir
 SOURCES += $(addprefix ../UseAuto/,$(notdir $(wildcard $(PROJ_SRC_DIR)/../UseAuto/*.cpp)))
 BUILT_SOURCES += $(ObjDir)/../UseAuto/.objdir
+SOURCES += $(addprefix ../AddOverride/,$(notdir $(wildcard $(PROJ_SRC_DIR)/../AddOverride/*.cpp)))
+BUILT_SOURCES += $(ObjDir)/../AddOverride/.objdir
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc
 USEDLIBS = clangTooling.a clangFrontend.a clangSerialization.a clangDriver.a \

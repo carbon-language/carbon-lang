@@ -10,6 +10,7 @@ cpp11-migrate User's Manual
    UseAutoTransform
    UseNullptrTransform
    LoopConvertTransform
+   AddOverrideTransform
 
 :program:`cpp11-migrate` is a standalone tool used to automatically convert
 C++98 and C++03 code to use features of the new C++11 standard where
@@ -50,6 +51,13 @@ Command Line Options
 
   Replace the type specifier of variable declarations with the ``auto`` type
   specifier. See :doc:`UseAutoTransform`.
+
+.. option:: -add-override
+
+  Adds the override specifier to member functions where it is appropriate. That
+  is, the override specifier is added to member functions that override a
+  virtual function in a base class and that don't already have the specifier.
+  See :doc:`AddOverrideTransform`.
 
 .. option:: -p=<build-path>
 
