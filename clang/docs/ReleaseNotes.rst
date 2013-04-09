@@ -81,6 +81,12 @@ C11 Feature Support
 C++ Language Changes in Clang
 -----------------------------
 
+- Clang now correctly implements language linkage for functions and variables.
+  This means that, for example, it is now possible to overload static functions
+  declared in an ``extern "C"`` context. For backwards compatibility, an alias
+  with the unmangled name is still emitted if it is the only one and has the
+  ``used`` attribute.
+
 C++11 Feature Support
 ^^^^^^^^^^^^^^^^^^^^^
 
