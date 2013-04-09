@@ -100,7 +100,11 @@ Currently it can:
 
 * convert loops to range-based for loops;
 
-* convert null pointer constants (like ``NULL`` or ``0``) to C++11 ``nullptr``.
+* convert null pointer constants (like ``NULL`` or ``0``) to C++11 ``nullptr``;
+
+* replace the type specifier in variable declarations with the ``auto`` type specifier;
+
+* add the ``override`` specifier to applicable member functions.
 
 Extra Clang Tools
 =================
