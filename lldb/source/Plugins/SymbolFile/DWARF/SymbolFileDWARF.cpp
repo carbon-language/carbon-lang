@@ -6498,6 +6498,10 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                         }
                                                         GetClangASTContext().SetMetadata (cxx_method_decl, metadata);
                                                     }
+                                                    else
+                                                    {
+                                                        return TypeSP();
+                                                    }
                                                 }
                                             }
                                             else
