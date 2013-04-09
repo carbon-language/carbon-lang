@@ -962,8 +962,12 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
           // If we haven't handled using directives yet, do so now.
           if (!VisitedUsingDirectives) {
             // Add using directives from this context up to the top level.
-            for (DeclContext *UCtx = Ctx; UCtx; UCtx = UCtx->getParent())
+            for (DeclContext *UCtx = Ctx; UCtx; UCtx = UCtx->getParent()) {
+              if (UCtx->isTransparentContext())
+                continue;
+
               UDirs.visit(UCtx, UCtx);
+            }
 
             // Find the innermost file scope, so we can add using directives
             // from local scopes.

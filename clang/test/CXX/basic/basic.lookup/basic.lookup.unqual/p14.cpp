@@ -56,10 +56,14 @@ namespace Other {
 namespace M2 {
   using namespace Other;
 
-  namespace MInner {
-    class Bar { 
-      void bar();
-    };
+  extern "C" {
+    namespace MInner {
+      extern "C" {
+        class Bar { 
+          void bar();
+        };
+      }
+    }
   }
 }
 
