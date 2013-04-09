@@ -682,9 +682,12 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   NewCU->addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                  DIUnit.getLanguage());
   NewCU->addString(Die, dwarf::DW_AT_name, FN);
+
   // 2.17.1 requires that we use DW_AT_low_pc for a single entry point
-  // into an entity. We're using 0 (or a NULL label) for this.
-  NewCU->addLabelAddress(Die, dwarf::DW_AT_low_pc, NULL);
+  // into an entity. We're using 0 (or a NULL label) for this. For
+  // split dwarf it's in the skeleton CU so omit it here.
+  if (!useSplitDwarf())
+    NewCU->addLabelAddress(Die, dwarf::DW_AT_low_pc, NULL);
 
   // Define start line table label for each Compile Unit.
   MCSymbol *LineTableStartSym = Asm->GetTempSymbol("line_table_start",
@@ -693,20 +696,25 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
                                                      NewCU->getUniqueID());
 
   // DW_AT_stmt_list is a offset of line number information for this
-  // compile unit in debug_line section.
+  // compile unit in debug_line section. For split dwarf this is
+  // left in the skeleton CU and so not included.
   // The line table entries are not always emitted in assembly, so it
   // is not okay to use line_table_start here.
-  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-    NewCU->addLabel(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
-                    NewCU->getUniqueID() == 0 ?
-                    Asm->GetTempSymbol("section_line") : LineTableStartSym);
-  else if (NewCU->getUniqueID() == 0)
-    NewCU->addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
-  else
-    NewCU->addDelta(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
-                    LineTableStartSym, DwarfLineSectionSym);
+  if (!useSplitDwarf()) {
+    if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
+      NewCU->addLabel(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
+                      NewCU->getUniqueID() == 0 ?
+                      Asm->GetTempSymbol("section_line") : LineTableStartSym);
+    else if (NewCU->getUniqueID() == 0)
+      NewCU->addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
+    else
+      NewCU->addDelta(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
+                      LineTableStartSym, DwarfLineSectionSym);
+  }
 
-  if (!CompilationDir.empty())
+  // If we're using split dwarf the compilation dir is going to be in the
+  // skeleton CU and so we don't need to duplicate it here.
+  if (!useSplitDwarf() && !CompilationDir.empty())
     NewCU->addString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
   if (DIUnit.isOptimized())
     NewCU->addFlag(Die, dwarf::DW_AT_APPLE_optimized);

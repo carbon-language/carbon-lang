@@ -49,9 +49,9 @@
 ; CHECK: DW_AT_producer  DW_FORM_GNU_str_index
 ; CHECK: DW_AT_language  DW_FORM_data2
 ; CHECK: DW_AT_name      DW_FORM_GNU_str_index
-; CHECK: DW_AT_low_pc    DW_FORM_GNU_addr_index
-; CHECK: DW_AT_stmt_list DW_FORM_data4
-; CHECK: DW_AT_comp_dir  DW_FORM_GNU_str_index
+; CHECK-NOT: DW_AT_low_pc
+; CHECK-NOT: DW_AT_stmt_list
+; CHECK-NOT: DW_AT_comp_dir
 ; CHECK: DW_AT_GNU_dwo_id        DW_FORM_data8
 
 ; CHECK: [2] DW_TAG_base_type    DW_CHILDREN_no
@@ -73,32 +73,32 @@
 ; CHECK: DW_AT_producer [DW_FORM_GNU_str_index] ( indexed (00000000) string = "clang version 3.3 (trunk 169021) (llvm/trunk 169020)")
 ; CHECK: DW_AT_language [DW_FORM_data2]        (0x000c)
 ; CHECK: DW_AT_name [DW_FORM_GNU_str_index]    ( indexed (00000001) string = "baz.c")
-; CHECK: DW_AT_low_pc [DW_FORM_GNU_addr_index]     ( indexed (00000000) address = 0x0000000000000000)
+; CHECK-NOT: DW_AT_low_pc
+; CHECK-NOT: DW_AT_stmt_list
+; CHECK-NOT: DW_AT_comp_dir
 ; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8]  (0x0000000000000000)
 ; CHECK: DW_TAG_base_type
-; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000004) string = "int")
+; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000003) string = "int")
 ; CHECK: DW_TAG_variable
-; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000003) string = "a")
-; CHECK: DW_AT_type [DW_FORM_ref4]       (cu + 0x001e => {0x0000001e})
+; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000002) string = "a")
+; CHECK: DW_AT_type [DW_FORM_ref4]       (cu + 0x0018 => {0x00000018})
 ; CHECK: DW_AT_external [DW_FORM_flag_present]   (true)
 ; CHECK: DW_AT_decl_file [DW_FORM_data1] (0x01)
 ; CHECK: DW_AT_decl_line [DW_FORM_data1] (0x01)
-; CHECK: DW_AT_location [DW_FORM_block1] (<0x02> fb 01 )
+; CHECK: DW_AT_location [DW_FORM_block1] (<0x02> fb 00 )
 
 
 ; CHECK: .debug_str.dwo contents:
 ; CHECK: 0x00000000: "clang version 3.3 (trunk 169021) (llvm/trunk 169020)"
 ; CHECK: 0x00000035: "baz.c"
-; CHECK: 0x0000003b: "/usr/local/google/home/echristo/tmp"
-; CHECK: 0x0000005f: "a"
-; CHECK: 0x00000061: "int"
+; CHECK: 0x0000003b: "a"
+; CHECK: 0x0000003d: "int"
 
 ; CHECK: .debug_str_offsets.dwo contents:
 ; CHECK: 0x00000000: 00000000
 ; CHECK: 0x00000004: 00000035
 ; CHECK: 0x00000008: 0000003b
-; CHECK: 0x0000000c: 0000005f
-; CHECK: 0x00000010: 00000061
+; CHECK: 0x0000000c: 0000003d
 
 ; Object file checks
 ; For x86-64-linux we should have this set of relocations for the debug info section
