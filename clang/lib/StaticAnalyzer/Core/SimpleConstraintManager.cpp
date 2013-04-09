@@ -137,7 +137,7 @@ SimpleConstraintManager::assumeAuxForSymbol(ProgramStateRef State,
   QualType T = Sym->getType();
 
   // None of the constraint solvers currently support non-integer types.
-  if (!T->isIntegerType())
+  if (!T->isIntegralOrEnumerationType())
     return State;
 
   const llvm::APSInt &zero = BVF.getValue(0, T);

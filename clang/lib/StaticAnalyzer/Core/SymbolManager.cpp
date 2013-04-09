@@ -340,8 +340,8 @@ bool SymbolManager::canSymbolicate(QualType T) {
   if (Loc::isLocType(T))
     return true;
 
-  if (T->isIntegerType())
-    return T->isScalarType();
+  if (T->isIntegralOrEnumerationType())
+    return true;
 
   if (T->isRecordType() && !T->isUnionType())
     return true;

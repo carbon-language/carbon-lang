@@ -345,7 +345,7 @@ void WalkAST::checkCall_getpw(const CallExpr *CE, const FunctionDecl *FD) {
     return;
 
   // Verify the first argument type is integer.
-  if (!FPT->getArgType(0)->isIntegerType())
+  if (!FPT->getArgType(0)->isIntegralOrUnscopedEnumerationType())
     return;
 
   // Verify the second argument type is char*.
@@ -602,7 +602,7 @@ void WalkAST::checkCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
     if (!PT)
       return;
 
-    if (! PT->getPointeeType()->isIntegerType())
+    if (! PT->getPointeeType()->isIntegralOrUnscopedEnumerationType())
       return;
   }
   else if (FTP->getNumArgs() != 0)
@@ -725,7 +725,7 @@ void WalkAST::checkUncheckedReturnValue(CallExpr *CE) {
 
   // The arguments must be integers.
   for (unsigned i = 0; i < FTP->getNumArgs(); i++)
-    if (! FTP->getArgType(i)->isIntegerType())
+    if (! FTP->getArgType(i)->isIntegralOrUnscopedEnumerationType())
       return;
 
   // Issue a warning.

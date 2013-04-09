@@ -33,7 +33,7 @@ DefinedOrUnknownSVal SValBuilder::makeZeroVal(QualType type) {
   if (Loc::isLocType(type))
     return makeNull();
 
-  if (type->isIntegerType())
+  if (type->isIntegralOrEnumerationType())
     return makeIntVal(0, type);
 
   // FIXME: Handle floats.
@@ -327,11 +327,11 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
       return val;
   
   // Check for casts from pointers to integers.
-  if (castTy->isIntegerType() && Loc::isLocType(originalTy))
+  if (castTy->isIntegralOrEnumerationType() && Loc::isLocType(originalTy))
     return evalCastFromLoc(val.castAs<Loc>(), castTy);
 
   // Check for casts from integers to pointers.
-  if (Loc::isLocType(castTy) && originalTy->isIntegerType()) {
+  if (Loc::isLocType(castTy) && originalTy->isIntegralOrEnumerationType()) {
     if (Optional<nonloc::LocAsInteger> LV = val.getAs<nonloc::LocAsInteger>()) {
       if (const MemRegion *R = LV->getLoc().getAsRegion()) {
         StoreManager &storeMgr = StateMgr.getStoreManager();
@@ -361,7 +361,7 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
 
     // Are we casting from an array to an integer?  If so, cast the decayed
     // pointer value to an integer.
-    assert(castTy->isIntegerType());
+    assert(castTy->isIntegralOrEnumerationType());
 
     // FIXME: Keep these here for now in case we decide soon that we
     // need the original decayed type.
@@ -373,7 +373,7 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
   // Check for casts from a region to a specific type.
   if (const MemRegion *R = val.getAsRegion()) {
     // Handle other casts of locations to integers.
-    if (castTy->isIntegerType())
+    if (castTy->isIntegralOrEnumerationType())
       return evalCastFromLoc(loc::MemRegionVal(R), castTy);
 
     // FIXME: We should handle the case where we strip off view layers to get

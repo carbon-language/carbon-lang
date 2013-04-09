@@ -78,7 +78,8 @@ public:
     // FIXME: Remove the second disjunct when we support symbolic
     // truncation/extension.
     return (Context.getCanonicalType(Ty1) == Context.getCanonicalType(Ty2) ||
-            (Ty1->isIntegerType() && Ty2->isIntegerType()));
+            (Ty1->isIntegralOrEnumerationType() &&
+             Ty2->isIntegralOrEnumerationType()));
   }
 
   SVal evalCast(SVal val, QualType castTy, QualType originalType);

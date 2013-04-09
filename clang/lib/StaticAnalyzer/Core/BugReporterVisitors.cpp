@@ -1351,7 +1351,7 @@ ConditionBRVisitor::VisitConditionVariable(StringRef LhsString,
     Out << (tookTrue ? "not nil" : "nil");
   else if (Ty->isBooleanType())
     Out << (tookTrue ? "true" : "false");
-  else if (Ty->isIntegerType())
+  else if (Ty->isIntegralOrEnumerationType())
     Out << (tookTrue ? "non-zero" : "zero");
   else
     return 0;

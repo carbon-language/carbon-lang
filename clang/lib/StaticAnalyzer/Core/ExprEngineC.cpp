@@ -68,12 +68,14 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
         // SymSymExpr.
         unsigned Count = currBldrCtx->blockCount();
         if (LeftV.getAs<Loc>() &&
-            RHS->getType()->isIntegerType() && RightV.isUnknown()) {
+            RHS->getType()->isIntegralOrEnumerationType() &&
+            RightV.isUnknown()) {
           RightV = svalBuilder.conjureSymbolVal(RHS, LCtx, RHS->getType(),
                                                 Count);
         }
         if (RightV.getAs<Loc>() &&
-            LHS->getType()->isIntegerType() && LeftV.isUnknown()) {
+            LHS->getType()->isIntegralOrEnumerationType() &&
+            LeftV.isUnknown()) {
           LeftV = svalBuilder.conjureSymbolVal(LHS, LCtx, LHS->getType(),
                                                Count);
         }
@@ -662,8 +664,9 @@ VisitOffsetOfExpr(const OffsetOfExpr *OOE,
   APSInt IV;
   if (OOE->EvaluateAsInt(IV, getContext())) {
     assert(IV.getBitWidth() == getContext().getTypeSize(OOE->getType()));
-    assert(OOE->getType()->isIntegerType());
-    assert(IV.isSigned() == OOE->getType()->isSignedIntegerOrEnumerationType());
+    assert(OOE->getType()->isBuiltinType());
+    assert(OOE->getType()->getAs<BuiltinType>()->isInteger());
+    assert(IV.isSigned() == OOE->getType()->isSignedIntegerType());
     SVal X = svalBuilder.makeIntVal(IV);
     B.generateNode(OOE, Pred,
                    Pred->getState()->BindExpr(OOE, Pred->getLocationContext(),

@@ -388,7 +388,7 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
   // FIXME: If the pointee isn't an integer type, should we flag a warning?
   //  People can do weird stuff with pointers.
 
-  if (!T->isIntegerType())
+  if (!T->isIntegralOrEnumerationType())
     return;
 
   uint64_t SourceSize = Ctx.getTypeSize(T);

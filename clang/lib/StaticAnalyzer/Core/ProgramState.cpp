@@ -270,7 +270,7 @@ SVal ProgramState::getSValAsScalarOrLoc(const MemRegion *R) const {
 
   if (const TypedValueRegion *TR = dyn_cast<TypedValueRegion>(R)) {
     QualType T = TR->getValueType();
-    if (Loc::isLocType(T) || T->isIntegerType())
+    if (Loc::isLocType(T) || T->isIntegralOrEnumerationType())
       return getSVal(R);
   }
 

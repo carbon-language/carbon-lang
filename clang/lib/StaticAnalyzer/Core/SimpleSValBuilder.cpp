@@ -109,7 +109,7 @@ SVal SimpleSValBuilder::evalCastFromNonLoc(NonLoc val, QualType castTy) {
 
   // Only handle casts from integers to integers - if val is an integer constant
   // being cast to a non integer type, produce unknown.
-  if (!isLocType && !castTy->isIntegerType())
+  if (!isLocType && !castTy->isIntegralOrEnumerationType())
     return UnknownVal();
 
   llvm::APSInt i = val.castAs<nonloc::ConcreteInt>().getValue();
@@ -137,7 +137,7 @@ SVal SimpleSValBuilder::evalCastFromLoc(Loc val, QualType castTy) {
   if (castTy->isUnionType())
     return UnknownVal();
 
-  if (castTy->isIntegerType()) {
+  if (castTy->isIntegralOrEnumerationType()) {
     unsigned BitWidth = Context.getTypeSize(castTy);
 
     if (!val.getAs<loc::ConcreteInt>())
