@@ -9125,6 +9125,44 @@ SDValue DAGCombiner::visitEXTRACT_SUBVECTOR(SDNode* N) {
   return SDValue();
 }
 
+// Tries to turn a shuffle of two CONCAT_VECTORS into a single concat.
+static SDValue partitionShuffleOfConcats(SDNode *N, SelectionDAG &DAG) {
+  EVT VT = N->getValueType(0);
+  unsigned NumElts = VT.getVectorNumElements();
+
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N);
+
+  SmallVector<SDValue, 4> Ops;
+  EVT ConcatVT = N0.getOperand(0).getValueType();
+  unsigned NumElemsPerConcat = ConcatVT.getVectorNumElements();
+  unsigned NumConcats = NumElts / NumElemsPerConcat;
+
+  // Look at every vector that's inserted. We're looking for exact
+  // subvector-sized copies from a concatenated vector
+  for (unsigned I = 0; I != NumConcats; ++I) {
+    // Make sure we're dealing with a copy.
+    unsigned Begin = I * NumElemsPerConcat;
+    if (SVN->getMaskElt(Begin) % NumElemsPerConcat != 0)
+      return SDValue();
+
+    for (unsigned J = 1; J != NumElemsPerConcat; ++J) {
+      if (SVN->getMaskElt(Begin + J - 1) + 1 != SVN->getMaskElt(Begin + J))
+        return SDValue();
+    }
+
+    unsigned FirstElt = SVN->getMaskElt(Begin) / NumElemsPerConcat;
+    if (FirstElt < N0.getNumOperands())
+      Ops.push_back(N0.getOperand(FirstElt));
+    else
+      Ops.push_back(N1.getOperand(FirstElt - N0.getNumOperands()));
+  }
+
+  return DAG.getNode(ISD::CONCAT_VECTORS, N->getDebugLoc(), VT, Ops.data(),
+                     Ops.size());
+}
+
 SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   EVT VT = N->getValueType(0);
   unsigned NumElts = VT.getVectorNumElements();
@@ -9224,6 +9262,17 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       if (AllSame)
         return N0;
     }
+  }
+
+  if (N0.getOpcode() == ISD::CONCAT_VECTORS &&
+      Level < AfterLegalizeVectorOps &&
+      (N1.getOpcode() == ISD::UNDEF ||
+      (N1.getOpcode() == ISD::CONCAT_VECTORS &&
+       N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType()))) {
+    SDValue V = partitionShuffleOfConcats(N, DAG);
+
+    if (V.getNode())
+      return V;
   }
 
   // If this shuffle node is simply a swizzle of another shuffle node,
