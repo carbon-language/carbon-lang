@@ -20,6 +20,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 
+#include "clang/Basic/CharInfo.h"
 #include "clang/Lex/Lexer.h"
 
 using namespace clang::ast_matchers;
@@ -42,7 +43,14 @@ bool ReplaceWithNullptr(tooling::Replacements &Replace, SourceManager &SM,
                         SourceLocation StartLoc, SourceLocation EndLoc) {
   if (SM.isFromSameFile(StartLoc, EndLoc) && SM.isFromMainFile(StartLoc)) {
     CharSourceRange Range(SourceRange(StartLoc, EndLoc), true);
-    Replace.insert(tooling::Replacement(SM, Range, "nullptr"));
+    // Add a space if nullptr follows an alphanumeric character. This happens
+    // whenever there is an c-style explicit cast to nullptr not surrounded by
+    // parentheses and right beside a return statement.
+    SourceLocation PreviousLocation = StartLoc.getLocWithOffset(-1);
+    if (isAlphanumeric(*FullSourceLoc(PreviousLocation, SM).getCharacterData()))
+      Replace.insert(tooling::Replacement(SM, Range, " nullptr"));
+    else
+      Replace.insert(tooling::Replacement(SM, Range, "nullptr"));
     return true;
   } else
     return false;
@@ -93,19 +101,11 @@ public:
   // within a cast expression.
   bool VisitStmt(Stmt *S) {
     CastExpr *C = dyn_cast<CastExpr>(S);
-
     if (!C) {
       ResetFirstSubExpr();
       return true;
     } else if (!FirstSubExpr) {
-      // Keep parentheses for implicit casts to avoid cases where an implicit
-      // cast within a parentheses expression is right next to a return
-      // statement otherwise get the subexpression of the outermost explicit
-      // cast.
-      if (C->getStmtClass() == Stmt::ImplicitCastExprClass)
-        FirstSubExpr = C->IgnoreParenImpCasts();
-      else
-        FirstSubExpr = C->getSubExpr();
+        FirstSubExpr = C->getSubExpr()->IgnoreParens();
     }
 
     if (C->getCastKind() == CK_NullToPointer ||

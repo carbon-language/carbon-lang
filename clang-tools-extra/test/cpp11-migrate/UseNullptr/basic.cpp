@@ -180,6 +180,18 @@ int test_function_return6() {
   // CHECK: return g_null;
 }
 
+int *test_function_return_cast1() {
+  return(int)0;
+  // CHECK: return nullptr;
+}
+
+int *test_function_return_cast2() {
+  #define RET return
+  RET(int)0;
+  // CHECK: RET nullptr;
+  #undef RET
+}
+
 // Test parentheses expressions resulting in a nullptr.
 int *test_parentheses_expression1() {
   return(0);
