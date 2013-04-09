@@ -82,7 +82,7 @@ private:
   /// @}
 
 protected:
-  MCFragment(FragmentType _Kind, MCSectionData *_Parent = 0);
+  MCFragment(FragmentType _Kind, MCSectionData *_Parent);
 
 public:
   // Only for sentinel.
@@ -92,7 +92,6 @@ public:
   FragmentType getKind() const { return Kind; }
 
   MCSectionData *getParent() const { return Parent; }
-  void setParent(MCSectionData *Value) { Parent = Value; }
 
   MCSymbolData *getAtom() const { return Atom; }
   void setAtom(MCSymbolData *Value) { Atom = Value; }
@@ -133,7 +132,7 @@ class MCEncodedFragment : public MCFragment {
 
   uint8_t BundlePadding;
 public:
-  MCEncodedFragment(MCFragment::FragmentType FType, MCSectionData *SD = 0)
+  MCEncodedFragment(MCFragment::FragmentType FType, MCSectionData *SD)
     : MCFragment(FType, SD), BundlePadding(0)
   {
   }
@@ -348,7 +347,7 @@ class MCAlignFragment : public MCFragment {
 
 public:
   MCAlignFragment(unsigned _Alignment, int64_t _Value, unsigned _ValueSize,
-                  unsigned _MaxBytesToEmit, MCSectionData *SD = 0)
+                  unsigned _MaxBytesToEmit, MCSectionData *SD)
     : MCFragment(FT_Align, SD), Alignment(_Alignment),
       Value(_Value),ValueSize(_ValueSize),
       MaxBytesToEmit(_MaxBytesToEmit), EmitNops(false) {}
@@ -389,7 +388,7 @@ class MCFillFragment : public MCFragment {
 
 public:
   MCFillFragment(int64_t _Value, unsigned _ValueSize, uint64_t _Size,
-                 MCSectionData *SD = 0)
+                 MCSectionData *SD)
     : MCFragment(FT_Fill, SD),
       Value(_Value), ValueSize(_ValueSize), Size(_Size) {
     assert((!ValueSize || (Size % ValueSize) == 0) &&
@@ -422,7 +421,7 @@ class MCOrgFragment : public MCFragment {
   int8_t Value;
 
 public:
-  MCOrgFragment(const MCExpr &_Offset, int8_t _Value, MCSectionData *SD = 0)
+  MCOrgFragment(const MCExpr &_Offset, int8_t _Value, MCSectionData *SD)
     : MCFragment(FT_Org, SD),
       Offset(&_Offset), Value(_Value) {}
 
