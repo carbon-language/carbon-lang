@@ -165,7 +165,7 @@ size_t DWARFCompileUnit::extractDIEsIfNeeded(bool cu_die_only) {
   // we were told to parse
 
   const uint8_t *fixed_form_sizes =
-    DWARFFormValue::getFixedFormSizesForAddressSize(getAddressByteSize());
+    DWARFFormValue::getFixedFormSizes(getAddressByteSize(), getVersion());
 
   while (offset < next_cu_offset &&
          die.extractFast(this, fixed_form_sizes, &offset)) {

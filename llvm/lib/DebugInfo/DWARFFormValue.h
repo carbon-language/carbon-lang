@@ -74,7 +74,7 @@ public:
                         uint32_t *offset_ptr, const DWARFCompileUnit *cu);
   static bool isBlockForm(uint16_t form);
   static bool isDataForm(uint16_t form);
-  static const uint8_t *getFixedFormSizesForAddressSize(uint8_t addr_size);
+  static const uint8_t *getFixedFormSizes(uint8_t AddrSize, uint16_t Version);
 };
 
 }
