@@ -922,42 +922,41 @@ namespace {
     const PPCInstrInfo *TII;
 
 protected:
-    bool processBlock(MachineBasicBlock &LastMBB) {
+    bool processBlock(MachineBasicBlock &ReturnMBB) {
       bool Changed = false;
 
-      MachineBasicBlock::iterator I = LastMBB.begin();
-      I = LastMBB.SkipPHIsAndLabels(I);
+      MachineBasicBlock::iterator I = ReturnMBB.begin();
+      I = ReturnMBB.SkipPHIsAndLabels(I);
 
       // The block must be essentially empty except for the blr.
-      if (I == LastMBB.end() || I->getOpcode() != PPC::BLR ||
-          I != LastMBB.getLastNonDebugInstr())
+      if (I == ReturnMBB.end() || I->getOpcode() != PPC::BLR ||
+          I != ReturnMBB.getLastNonDebugInstr())
         return Changed;
 
       SmallVector<MachineBasicBlock*, 8> PredToRemove;
-      for (MachineBasicBlock::pred_iterator PI = LastMBB.pred_begin(),
-           PIE = LastMBB.pred_end(); PI != PIE; ++PI) {
+      for (MachineBasicBlock::pred_iterator PI = ReturnMBB.pred_begin(),
+           PIE = ReturnMBB.pred_end(); PI != PIE; ++PI) {
         bool OtherReference = false, BlockChanged = false;
-        for (MachineBasicBlock::iterator J = (*PI)->begin();
-             J != (*PI)->end();) {
+        for (MachineBasicBlock::iterator J = (*PI)->getLastNonDebugInstr();;) {
           if (J->getOpcode() == PPC::B) {
-            if (J->getOperand(0).getMBB() == &LastMBB) {
+            if (J->getOperand(0).getMBB() == &ReturnMBB) {
               // This is an unconditional branch to the return. Replace the
 	      // branch with a blr.
               BuildMI(**PI, J, J->getDebugLoc(), TII->get(PPC::BLR));
-              MachineBasicBlock::iterator K = J++;
+              MachineBasicBlock::iterator K = J--;
               K->eraseFromParent();
               BlockChanged = true;
               ++NumBLR;
               continue;
             }
           } else if (J->getOpcode() == PPC::BCC) {
-            if (J->getOperand(2).getMBB() == &LastMBB) {
+            if (J->getOperand(2).getMBB() == &ReturnMBB) {
               // This is a conditional branch to the return. Replace the branch
               // with a bclr.
               BuildMI(**PI, J, J->getDebugLoc(), TII->get(PPC::BCLR))
                 .addImm(J->getOperand(0).getImm())
                 .addReg(J->getOperand(1).getReg());
-              MachineBasicBlock::iterator K = J++;
+              MachineBasicBlock::iterator K = J--;
               K->eraseFromParent();
               BlockChanged = true;
               ++NumBCLR;
@@ -965,19 +964,23 @@ protected:
             }
           } else if (J->isBranch()) {
             if (J->isIndirectBranch()) {
-              if (LastMBB.hasAddressTaken())
+              if (ReturnMBB.hasAddressTaken())
                 OtherReference = true;
             } else
               for (unsigned i = 0; i < J->getNumOperands(); ++i)
                 if (J->getOperand(i).isMBB() &&
-                    J->getOperand(i).getMBB() == &LastMBB)
+                    J->getOperand(i).getMBB() == &ReturnMBB)
                   OtherReference = true;
-          }
+          } else if (!J->isTerminator() && !J->isDebugValue())
+            break;
 
-          ++J;
+          if (J == (*PI)->begin())
+            break;
+
+          --J;
         }
 
-        if ((*PI)->canFallThrough() && (*PI)->isLayoutSuccessor(&LastMBB))
+        if ((*PI)->canFallThrough() && (*PI)->isLayoutSuccessor(&ReturnMBB))
           OtherReference = true;
 
 	// Predecessors are stored in a vector and can't be removed here.
@@ -990,21 +993,21 @@ protected:
       }
 
       for (unsigned i = 0, ie = PredToRemove.size(); i != ie; ++i)
-        PredToRemove[i]->removeSuccessor(&LastMBB);
+        PredToRemove[i]->removeSuccessor(&ReturnMBB);
 
-      if (Changed && !LastMBB.hasAddressTaken()) {
+      if (Changed && !ReturnMBB.hasAddressTaken()) {
         // We now might be able to merge this blr-only block into its
         // by-layout predecessor.
-        if (LastMBB.pred_size() == 1 &&
-            (*LastMBB.pred_begin())->isLayoutSuccessor(&LastMBB)) {
+        if (ReturnMBB.pred_size() == 1 &&
+            (*ReturnMBB.pred_begin())->isLayoutSuccessor(&ReturnMBB)) {
           // Move the blr into the preceding block.
-          MachineBasicBlock &PrevMBB = **LastMBB.pred_begin();
-          PrevMBB.splice(PrevMBB.end(), &LastMBB, I);
-          PrevMBB.removeSuccessor(&LastMBB);
+          MachineBasicBlock &PrevMBB = **ReturnMBB.pred_begin();
+          PrevMBB.splice(PrevMBB.end(), &ReturnMBB, I);
+          PrevMBB.removeSuccessor(&ReturnMBB);
         }
 
-        if (LastMBB.pred_empty())
-          LastMBB.eraseFromParent();
+        if (ReturnMBB.pred_empty())
+          ReturnMBB.eraseFromParent();
       }
 
       return Changed;
@@ -1017,7 +1020,7 @@ public:
 
       bool Changed = false;
 
-      // If the function does not have at least two block, then there is
+      // If the function does not have at least two blocks, then there is
       // nothing to do.
       if (MF.size() < 2)
         return Changed;
