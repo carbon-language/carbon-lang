@@ -6173,6 +6173,8 @@ TreeTransform<Derived>::TransformCharacterLiteral(CharacterLiteral *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformUserDefinedLiteral(UserDefinedLiteral *E) {
+  if (FunctionDecl *FD = E->getDirectCallee())
+    SemaRef.MarkFunctionReferenced(E->getLocStart(), FD);
   return SemaRef.MaybeBindToTemporary(E);
 }
 
