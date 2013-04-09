@@ -28,8 +28,6 @@ The vectorizer can be disabled using the command line:
 
    $ clang ... -fno-vectorize  file.c
 
-At this point the loop vectorizer is only enabled for -O3, and will not work for -O2 or -Os.
-
 Command line flags
 ^^^^^^^^^^^^^^^^^^
 
