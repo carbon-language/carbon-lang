@@ -1394,13 +1394,13 @@ bool X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp,
 /// Parse the 'offset' operator.  This operator is used to specify the
 /// location rather then the content of a variable.
 X86Operand *X86AsmParser::ParseIntelOffsetOfOperator() {
-  AsmToken Tok = *&Parser.getTok();
+  const AsmToken &Tok = Parser.getTok();
   SMLoc OffsetOfLoc = Tok.getLoc();
   Parser.Lex(); // Eat offset.
   assert (Tok.is(AsmToken::Identifier) && "Expected an identifier");
 
-  SMLoc Start = Parser.getTok().getLoc(), End;
   const MCExpr *Val;
+  SMLoc Start = Tok.getLoc(), End;
   if (getParser().parseExpression(Val, End))
     return ErrorOperand(Start, "Unable to parse expression!");
 
@@ -1430,13 +1430,13 @@ enum IntelOperatorKind {
 /// TYPE operator returns the size of a C or C++ type or variable. If the
 /// variable is an array, TYPE returns the size of a single element.
 X86Operand *X86AsmParser::ParseIntelOperator(unsigned OpKind) {
-  AsmToken Tok = *&Parser.getTok();
+  const AsmToken &Tok = Parser.getTok();
   SMLoc TypeLoc = Tok.getLoc();
   Parser.Lex(); // Eat operator.
-  assert (Parser.getTok().is(AsmToken::Identifier) && "Expected an identifier");
+  assert (Tok.is(AsmToken::Identifier) && "Expected an identifier");
 
   const MCExpr *Val;
-  SMLoc Start = Parser.getTok().getLoc(), End;
+  SMLoc Start = Tok.getLoc(), End;
   if (getParser().parseExpression(Val, End))
     return 0;
 
