@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -Wparentheses -fsyntax-only -verify %s
-// RUN: %clang_cc1 -Wparentheses -fixit %s -o - | %clang_cc1 -Wparentheses -Werror -
 
 // Test the various warnings under -Wparentheses
 void if_assign(void) {
