@@ -148,6 +148,16 @@ static bool CC_Sparc64_Half(unsigned &ValNo, MVT &ValVT,
 
 #include "SparcGenCallingConv.inc"
 
+// The calling conventions in SparcCallingConv.td are described in terms of the
+// callee's register window. This function translates registers to the
+// corresponding caller window %o register.
+static unsigned toCallerWindow(unsigned Reg) {
+  assert(SP::I0 + 7 == SP::I7 && SP::O0 + 7 == SP::O7 && "Unexpected enum");
+  if (Reg >= SP::I0 && Reg <= SP::I7)
+    return Reg - SP::I0 + SP::O0;
+  return Reg;
+}
+
 SDValue
 SparcTargetLowering::LowerReturn(SDValue Chain,
                                  CallingConv::ID CallConv, bool IsVarArg,
@@ -805,11 +815,7 @@ SparcTargetLowering::LowerCall_32(TargetLowering::CallLoweringInfo &CLI,
   // stuck together.
   SDValue InFlag;
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-    unsigned Reg = RegsToPass[i].first;
-    // Remap I0->I7 -> O0->O7.
-    if (Reg >= SP::I0 && Reg <= SP::I7)
-      Reg = Reg-SP::I0+SP::O0;
-
+    unsigned Reg = toCallerWindow(RegsToPass[i].first);
     Chain = DAG.getCopyToReg(Chain, dl, Reg, RegsToPass[i].second, InFlag);
     InFlag = Chain.getValue(1);
   }
@@ -831,13 +837,9 @@ SparcTargetLowering::LowerCall_32(TargetLowering::CallLoweringInfo &CLI,
   Ops.push_back(Callee);
   if (hasStructRetAttr)
     Ops.push_back(DAG.getTargetConstant(SRetArgSize, MVT::i32));
-  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-    unsigned Reg = RegsToPass[i].first;
-    if (Reg >= SP::I0 && Reg <= SP::I7)
-      Reg = Reg-SP::I0+SP::O0;
-
-    Ops.push_back(DAG.getRegister(Reg, RegsToPass[i].second.getValueType()));
-  }
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
+    Ops.push_back(DAG.getRegister(toCallerWindow(RegsToPass[i].first),
+                                  RegsToPass[i].second.getValueType()));
   if (InFlag.getNode())
     Ops.push_back(InFlag);
 
@@ -857,13 +859,7 @@ SparcTargetLowering::LowerCall_32(TargetLowering::CallLoweringInfo &CLI,
 
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
-    unsigned Reg = RVLocs[i].getLocReg();
-
-    // Remap I0->I7 -> O0->O7.
-    if (Reg >= SP::I0 && Reg <= SP::I7)
-      Reg = Reg-SP::I0+SP::O0;
-
-    Chain = DAG.getCopyFromReg(Chain, dl, Reg,
+    Chain = DAG.getCopyFromReg(Chain, dl, toCallerWindow(RVLocs[i].getLocReg()),
                                RVLocs[i].getValVT(), InFlag).getValue(1);
     InFlag = Chain.getValue(2);
     InVals.push_back(Chain.getValue(0));
@@ -976,13 +972,7 @@ SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
           ++i;
         }
       }
-
-      // The argument registers are described in term of the callee's register
-      // window, so translate I0-I7 -> O0-O7.
-      unsigned Reg = VA.getLocReg();
-      if (Reg >= SP::I0 && Reg <= SP::I7)
-        Reg = Reg - SP::I0 + SP::O0;
-      RegsToPass.push_back(std::make_pair(Reg, Arg));
+      RegsToPass.push_back(std::make_pair(toCallerWindow(VA.getLocReg()), Arg));
       continue;
     }
 
@@ -1061,11 +1051,7 @@ SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
     CCValAssign &VA = RVLocs[i];
-    unsigned Reg = VA.getLocReg();
-
-    // Remap I0-I7 -> O0-O7.
-    if (Reg >= SP::I0 && Reg <= SP::I7)
-      Reg = Reg - SP::I0 + SP::O0;
+    unsigned Reg = toCallerWindow(VA.getLocReg());
 
     // When returning 'inreg {i32, i32 }', two consecutive i32 arguments can
     // reside in the same register in the high and low bits. Reuse the
