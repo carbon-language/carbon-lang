@@ -36,6 +36,8 @@
 //
 // CHECK-NO-PIE-NOT: "-pie"
 //
+// CHECK-NO-UNUSED-ARG-NOT: argument unused during compilation
+//
 // RUN: %clang -c %s -target i386-unknown-unknown -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-NO-PIC
 // RUN: %clang -c %s -target i386-unknown-unknown -fpic -### 2>&1 \
@@ -164,6 +166,8 @@
 // RUN:   | FileCheck %s --check-prefix=CHECK-PIC2
 // RUN: %clang -c %s -target x86_64-apple-darwin -fPIE -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-PIC2
+// RUN: %clang -c %s -target x86_64-apple-darwin -fPIC -### 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=CHECK-NO-UNUSED-ARG
 //
 // Darwin gets even more special with '-mdynamic-no-pic'. This flag is only
 // valid on Darwin, and it's behavior is very strange but needs to remain
