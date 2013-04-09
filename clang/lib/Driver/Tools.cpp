@@ -1508,11 +1508,12 @@ static bool UseRelaxAll(Compilation &C, const ArgList &Args) {
     RelaxDefault);
 }
 
-SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args)
+SanitizerArgs::SanitizerArgs(const ToolChain &TC, const ArgList &Args)
     : Kind(0), BlacklistFile(""), MsanTrackOrigins(false),
       AsanZeroBaseShadow(false) {
   unsigned AllKinds = 0;  // All kinds of sanitizers that were turned on
                           // at least once (possibly, disabled further).
+  const Driver &D = TC.getDriver();
   for (ArgList::const_iterator I = Args.begin(), E = Args.end(); I != E; ++I) {
     unsigned Add, Remove;
     if (!parse(D, Args, *I, Add, Remove, true))
@@ -1606,6 +1607,7 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args)
   // Parse -f(no-)sanitize-address-zero-base-shadow options.
   if (NeedsAsan)
     AsanZeroBaseShadow =
+      TC.getTriple().getEnvironment() == llvm::Triple::Android ||
       Args.hasFlag(options::OPT_fsanitize_address_zero_base_shadow,
                    options::OPT_fno_sanitize_address_zero_base_shadow,
                    /* Default */false);
@@ -1656,11 +1658,6 @@ static void addSanitizerRTLinkFlagsLinux(
 static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
                            ArgStringList &CmdArgs) {
   if(TC.getTriple().getEnvironment() == llvm::Triple::Android) {
-    if (!Args.hasArg(options::OPT_shared)) {
-      if (!Args.hasArg(options::OPT_pie))
-        TC.getDriver().Diag(diag::err_drv_asan_android_requires_pie);
-    }
-
     SmallString<128> LibAsan(TC.getDriver().ResourceDir);
     llvm::sys::path::append(LibAsan, "lib", "linux",
         (Twine("libclang_rt.asan-") +
@@ -1668,13 +1665,6 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
     CmdArgs.insert(CmdArgs.begin(), Args.MakeArgString(LibAsan));
   } else {
     if (!Args.hasArg(options::OPT_shared)) {
-      bool ZeroBaseShadow = Args.hasFlag(
-          options::OPT_fsanitize_address_zero_base_shadow,
-          options::OPT_fno_sanitize_address_zero_base_shadow, false);
-      if (ZeroBaseShadow && !Args.hasArg(options::OPT_pie)) {
-        TC.getDriver().Diag(diag::err_drv_argument_only_allowed_with) <<
-            "-fsanitize-address-zero-base-shadow" << "-pie";
-      }
       addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "asan", true);
     }
   }
@@ -1685,9 +1675,6 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
 static void addTsanRTLinux(const ToolChain &TC, const ArgList &Args,
                            ArgStringList &CmdArgs) {
   if (!Args.hasArg(options::OPT_shared)) {
-    if (!Args.hasArg(options::OPT_pie))
-      TC.getDriver().Diag(diag::err_drv_argument_only_allowed_with) <<
-        "-fsanitize=thread" << "-pie";
     addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "tsan", true);
   }
 }
@@ -1697,9 +1684,6 @@ static void addTsanRTLinux(const ToolChain &TC, const ArgList &Args,
 static void addMsanRTLinux(const ToolChain &TC, const ArgList &Args,
                            ArgStringList &CmdArgs) {
   if (!Args.hasArg(options::OPT_shared)) {
-    if (!Args.hasArg(options::OPT_pie))
-      TC.getDriver().Diag(diag::err_drv_argument_only_allowed_with) <<
-        "-fsanitize=memory" << "-pie";
     addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "msan", true);
   }
 }
@@ -2000,37 +1984,37 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   CheckCodeGenerationOptions(D, Args);
 
-  // For the PIC and PIE flag options, this logic is different from the legacy
-  // logic in very old versions of GCC, as that logic was just a bug no one had
-  // ever fixed. This logic is both more rational and consistent with GCC's new
-  // logic now that the bugs are fixed. The last argument relating to either
-  // PIC or PIE wins, and no other argument is used. If the last argument is
-  // any flavor of the '-fno-...' arguments, both PIC and PIE are disabled. Any
-  // PIE option implicitly enables PIC at the same level.
-  bool PIE = false;
-  bool PIC = getToolChain().isPICDefault();
+  bool PIE = getToolChain().isPIEDefault();
+  bool PIC = PIE || getToolChain().isPICDefault();
   bool IsPICLevelTwo = PIC;
-  if (Arg *A = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
-                               options::OPT_fpic, options::OPT_fno_pic,
-                               options::OPT_fPIE, options::OPT_fno_PIE,
-                               options::OPT_fpie, options::OPT_fno_pie)) {
-    Option O = A->getOption();
-    if (O.matches(options::OPT_fPIC) || O.matches(options::OPT_fpic) ||
-        O.matches(options::OPT_fPIE) || O.matches(options::OPT_fpie)) {
-      PIE = O.matches(options::OPT_fPIE) || O.matches(options::OPT_fpie);
-      PIC = PIE || O.matches(options::OPT_fPIC) || O.matches(options::OPT_fpic);
-      IsPICLevelTwo = O.matches(options::OPT_fPIE) ||
-                      O.matches(options::OPT_fPIC);
-    } else {
-      PIE = PIC = false;
-    }
-  }
+
   // Check whether the tool chain trumps the PIC-ness decision. If the PIC-ness
   // is forced, then neither PIC nor PIE flags will have no effect.
-  if (getToolChain().isPICDefaultForced()) {
-    PIE = false;
-    PIC = getToolChain().isPICDefault();
-    IsPICLevelTwo = PIC;
+  if (!getToolChain().isPICDefaultForced()) {
+    // For the PIC and PIE flag options, this logic is different from the
+    // legacy logic in very old versions of GCC, as that logic was just
+    // a bug no one had ever fixed. This logic is both more rational and
+    // consistent with GCC's new logic now that the bugs are fixed. The last
+    // argument relating to either PIC or PIE wins, and no other argument is
+    // used. If the last argument is any flavor of the '-fno-...' arguments,
+    // both PIC and PIE are disabled. Any PIE option implicitly enables PIC
+    // at the same level.
+    if (Arg *A = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
+                                 options::OPT_fpic, options::OPT_fno_pic,
+                                 options::OPT_fPIE, options::OPT_fno_PIE,
+                                 options::OPT_fpie, options::OPT_fno_pie)) {
+      Option O = A->getOption();
+      if (O.matches(options::OPT_fPIC) || O.matches(options::OPT_fpic) ||
+          O.matches(options::OPT_fPIE) || O.matches(options::OPT_fpie)) {
+        PIE = O.matches(options::OPT_fPIE) || O.matches(options::OPT_fpie);
+        PIC = PIE || O.matches(options::OPT_fPIC) ||
+              O.matches(options::OPT_fpic);
+        IsPICLevelTwo = O.matches(options::OPT_fPIE) ||
+                        O.matches(options::OPT_fPIC);
+      } else {
+        PIE = PIC = false;
+      }
+    }
   }
 
   // Inroduce a Darwin-specific hack. If the default is PIC but the flags
@@ -2708,7 +2692,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fdiagnostics_show_template_tree);
   Args.AddLastArg(CmdArgs, options::OPT_fno_elide_type);
 
-  SanitizerArgs Sanitize(D, Args);
+  SanitizerArgs Sanitize(getToolChain(), Args);
   Sanitize.addArgs(Args, CmdArgs);
 
   if (!Args.hasFlag(options::OPT_fsanitize_recover,
@@ -4582,7 +4566,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
 
-  SanitizerArgs Sanitize(getToolChain().getDriver(), Args);
+  SanitizerArgs Sanitize(getToolChain(), Args);
   // If we're building a dynamic lib with -fsanitize=address,
   // unresolved symbols may appear. Mark all
   // of them as dynamic_lookup. Linking executables is handled in
@@ -5787,6 +5771,10 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   const Driver &D = ToolChain.getDriver();
   const bool isAndroid =
     ToolChain.getTriple().getEnvironment() == llvm::Triple::Android;
+  SanitizerArgs Sanitize(getToolChain(), Args);
+  const bool IsPIE =
+    !Args.hasArg(options::OPT_shared) &&
+    (Args.hasArg(options::OPT_pie) || Sanitize.hasZeroBaseShadow());
 
   ArgStringList CmdArgs;
 
@@ -5801,7 +5789,7 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!D.SysRoot.empty())
     CmdArgs.push_back(Args.MakeArgString("--sysroot=" + D.SysRoot));
 
-  if (Args.hasArg(options::OPT_pie) && !Args.hasArg(options::OPT_shared))
+  if (IsPIE)
     CmdArgs.push_back("-pie");
 
   if (Args.hasArg(options::OPT_rdynamic))
@@ -5907,7 +5895,7 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
     if (!isAndroid) {
       const char *crt1 = NULL;
       if (!Args.hasArg(options::OPT_shared)){
-        if (Args.hasArg(options::OPT_pie))
+        if (IsPIE)
           crt1 = "Scrt1.o";
         else
           crt1 = "crt1.o";
@@ -5923,7 +5911,7 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
       crtbegin = isAndroid ? "crtbegin_static.o" : "crtbeginT.o";
     else if (Args.hasArg(options::OPT_shared))
       crtbegin = isAndroid ? "crtbegin_so.o" : "crtbeginS.o";
-    else if (Args.hasArg(options::OPT_pie))
+    else if (IsPIE)
       crtbegin = isAndroid ? "crtbegin_dynamic.o" : "crtbeginS.o";
     else
       crtbegin = isAndroid ? "crtbegin_dynamic.o" : "crtbegin.o";
@@ -5973,8 +5961,6 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("--no-demangle");
 
   AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
-
-  SanitizerArgs Sanitize(D, Args);
 
   // Call these before we add the C++ ABI library.
   if (Sanitize.needsUbsanRt())
@@ -6033,7 +6019,7 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
       const char *crtend;
       if (Args.hasArg(options::OPT_shared))
         crtend = isAndroid ? "crtend_so.o" : "crtendS.o";
-      else if (Args.hasArg(options::OPT_pie))
+      else if (IsPIE)
         crtend = isAndroid ? "crtend_android.o" : "crtendS.o";
       else
         crtend = isAndroid ? "crtend_android.o" : "crtend.o";

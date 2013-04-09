@@ -95,19 +95,24 @@
 // CHECK-DEPRECATED: argument '-fbounds-checking' is deprecated, use '-fsanitize=bounds' instead
 
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=thread %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-TSAN-NO-PIE
-// CHECK-TSAN-NO-PIE: invalid argument '-fsanitize=thread' only allowed with '-pie'
+// CHECK-TSAN-NO-PIE: "-mrelocation-model" "pic" "-pic-level" "2" "-pie-level" "2"
+// CHECK-TSAN-NO-PIE: "-pie"
 
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=memory %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-MSAN-NO-PIE
-// CHECK-MSAN-NO-PIE: invalid argument '-fsanitize=memory' only allowed with '-pie'
+// CHECK-MSAN-NO-PIE: "-mrelocation-model" "pic" "-pic-level" "2" "-pie-level" "2"
+// CHECK-MSAN-NO-PIE: "-pie"
 
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=address -fsanitize-address-zero-base-shadow %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-ASAN-ZERO-BASE-SHADOW-NO-PIE
-// CHECK-ASAN-ZERO-BASE-SHADOW-NO-PIE: invalid argument '-fsanitize-address-zero-base-shadow' only allowed with '-pie'
+// CHECK-ASAN-ZERO-BASE-SHADOW-NO-PIE: "-mrelocation-model" "pic" "-pic-level" "2" "-pie-level" "2"
+// CHECK-ASAN-ZERO-BASE-SHADOW-NO-PIE: "-pie"
 
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=address -fsanitize-address-zero-base-shadow -fno-sanitize-address-zero-base-shadow %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-ASAN-ZERO-BASE-SHADOW-CANCEL
-// CHECK-ASAN-ZERO-BASE-SHADOW-CANCEL-NOT: '-fsanitize-address-zero-base-shadow' only allowed with '-pie'
+// CHECK-ASAN-ZERO-BASE-SHADOW-CANCEL-NOT: "-mrelocation-model" "pic" "-pic-level" "2" "-pie-level" "2"
+// CHECK-ASAN-ZERO-BASE-SHADOW-CANCEL-NOT: "-pie"
 
 // RUN: %clang -target arm-linux-androideabi -fsanitize=address %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-ANDROID-ASAN-NO-PIE
-// CHECK-ANDROID-ASAN-NO-PIE: AddressSanitizer on Android requires '-pie'
+// CHECK-ANDROID-ASAN-NO-PIE: "-mrelocation-model" "pic" "-pic-level" "2" "-pie-level" "2"
+// CHECK-ANDROID-ASAN-NO-PIE: "-pie"
 
 // RUN: %clang -target x86_64-linux-gnu %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-RECOVER
 // RUN: %clang -target x86_64-linux-gnu %s -fsanitize-recover -### 2>&1 | FileCheck %s --check-prefix=CHECK-RECOVER

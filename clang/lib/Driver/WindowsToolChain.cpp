@@ -60,6 +60,10 @@ bool Windows::isPICDefault() const {
   return getArch() == llvm::Triple::x86_64;
 }
 
+bool Windows::isPIEDefault() const {
+  return false;
+}
+
 bool Windows::isPICDefaultForced() const {
   return getArch() == llvm::Triple::x86_64;
 }

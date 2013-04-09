@@ -105,8 +105,6 @@ def err_arc_unsupported_on_toolchain : Error< // feel free to generalize this
   "-fobjc-arc is not supported on versions of OS X prior to 10.6">;
 def err_drv_mg_requires_m_or_mm : Error<
   "option '-MG' requires '-M' or '-MM'">;
-def err_drv_asan_android_requires_pie : Error<
-  "AddressSanitizer on Android requires '-pie'">;
 def err_drv_unknown_objc_runtime : Error<
   "unknown or ill-formed Objective-C runtime '%0'">;
 
