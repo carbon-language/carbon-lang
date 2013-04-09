@@ -293,18 +293,9 @@ error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSymbolNMTypeChar(DataRefImpl DRI,
                                                 char &Result) const {
-  uint8_t Type, Flags;
-  if (is64Bit()) {
-    const MachOFormat::SymbolTableEntry<true> *Entry =
-      getSymbol64TableEntry(DRI);
-    Type = Entry->Type;
-    Flags = Entry->Flags;
-  } else {
-    const MachOFormat::SymbolTableEntry<false> *Entry =
-      getSymbolTableEntry(DRI);
-    Type = Entry->Type;
-    Flags = Entry->Flags;
-  }
+  const MachOFormat::SymbolTableEntryBase *Entry = getSymbolTableEntryBase(DRI);
+  uint8_t Type = Entry->Type;
+  uint16_t Flags = Entry->Flags;
 
   char Char;
   switch (Type & macho::STF_TypeMask) {
@@ -328,19 +319,9 @@ error_code MachOObjectFile::getSymbolNMTypeChar(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSymbolFlags(DataRefImpl DRI,
                                            uint32_t &Result) const {
-  uint16_t MachOFlags;
-  uint8_t MachOType;
-  if (is64Bit()) {
-    const MachOFormat::SymbolTableEntry<true> *Entry =
-      getSymbol64TableEntry(DRI);
-    MachOFlags = Entry->Flags;
-    MachOType = Entry->Type;
-  } else {
-    const MachOFormat::SymbolTableEntry<false> *Entry =
-      getSymbolTableEntry(DRI);
-    MachOFlags = Entry->Flags;
-    MachOType = Entry->Type;
-  }
+  const MachOFormat::SymbolTableEntryBase *Entry = getSymbolTableEntryBase(DRI);
+  uint8_t MachOType = Entry->Type;
+  uint16_t MachOFlags = Entry->Flags;
 
   // TODO: Correctly set SF_ThreadLocal
   Result = SymbolRef::SF_None;
@@ -368,16 +349,9 @@ error_code MachOObjectFile::getSymbolFlags(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSymbolSection(DataRefImpl Symb,
                                              section_iterator &Res) const {
-  uint8_t index;
-  if (is64Bit()) {
-    const MachOFormat::SymbolTableEntry<true> *Entry =
-      getSymbol64TableEntry(Symb);
-    index = Entry->SectionIndex;
-  } else {
-    const MachOFormat::SymbolTableEntry<false> *Entry =
-      getSymbolTableEntry(Symb);
-    index = Entry->SectionIndex;
-  }
+  const MachOFormat::SymbolTableEntryBase *Entry =
+    getSymbolTableEntryBase(Symb);
+  uint8_t index = Entry->SectionIndex;
 
   if (index == 0)
     Res = end_sections();
