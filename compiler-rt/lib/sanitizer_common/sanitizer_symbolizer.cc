@@ -238,8 +238,9 @@ class InternalSymbolizer {
 #endif  // SANITIZER_SUPPORTS_WEAK_HOOKS
 
 class Symbolizer {
+  // This class has no constructor, as global constructors are forbidden in
+  // sanitizer_common. It should be linker initialized instead.
  public:
-  Symbolizer() : modules_fresh_(false) { }
   uptr SymbolizeCode(uptr addr, AddressInfo *frames, uptr max_frames) {
     if (max_frames == 0)
       return 0;

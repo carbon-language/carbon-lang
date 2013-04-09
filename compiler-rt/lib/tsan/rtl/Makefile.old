@@ -1,8 +1,9 @@
 CXXFLAGS = -fPIE -g -Wall -Werror -fno-builtin -DTSAN_DEBUG=$(DEBUG) -DSANITIZER_DEBUG=$(DEBUG)
+CLANG=clang
 ifeq ($(DEBUG), 0)
   CXXFLAGS += -O3
 endif
-ifeq ($(CXX), clang++)
+ifeq ($(CXX), $(CLANG)++)
   CXXFLAGS+= -Wgnu
 endif
 
@@ -21,7 +22,7 @@ ifeq ($(CXX), g++)
 endif  # CXX=g++
 endif  # DEBUG=0
 
-ifeq ($(CXX), clang++)
+ifeq ($(CXX), $(CLANG)++)
   # Global constructors are banned.
   CXXFLAGS+=-Wglobal-constructors
 endif

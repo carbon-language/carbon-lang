@@ -36,6 +36,10 @@ if [ "$1" == "" ]; then
       echo SKIPPING FAILING TEST $c
       continue
     fi
+    if [[ $c == */load_shared_lib.cc ]]; then
+      echo TEST $c is not supported
+      continue
+    fi
     COMPILER=$CXX
     case $c in
       *.c) COMPILER=$CC
