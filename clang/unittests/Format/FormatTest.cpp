@@ -432,6 +432,7 @@ TEST_F(FormatTest, FormatsSwitchStatement) {
                "  // Do nothing.\n"
                "}");
   verifyFormat("switch (x) {\n"
+               "// comment\n"
                "// if 1, do f()\n"
                "case 1:\n"
                "  f();\n"
