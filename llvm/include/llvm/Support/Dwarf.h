@@ -67,7 +67,7 @@ const uint64_t DW64_CIE_ID = UINT64_MAX;
 
 
 enum dwarf_constants {
-  DWARF_VERSION = 2,
+  DWARF_VERSION = 3,
 
   // Tags
   DW_TAG_array_type = 0x01,
