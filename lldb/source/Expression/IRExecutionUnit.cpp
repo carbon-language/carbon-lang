@@ -490,7 +490,7 @@ IRExecutionUnit::MemoryManager::allocateCodeSection(uintptr_t Size,
     uint8_t *return_value = m_default_mm_ap->allocateCodeSection(Size, Alignment, SectionID);
     
     m_parent.m_records.push_back(AllocationRecord((uintptr_t)return_value,
-                                                  lldb::ePermissionsReadable | lldb::ePermissionsWritable | lldb::ePermissionsExecutable,
+                                                  lldb::ePermissionsReadable | lldb::ePermissionsExecutable,
                                                   Size,
                                                   Alignment,
                                                   SectionID));
