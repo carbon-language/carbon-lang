@@ -1500,6 +1500,27 @@ TEST(Matcher, MatchesAccessSpecDecls) {
   EXPECT_TRUE(notMatches("class C { int i; };", accessSpecDecl()));
 }
 
+TEST(Matcher, MatchesVirtualMethod) {
+  EXPECT_TRUE(matches("class X { virtual int f(); };",
+      methodDecl(isVirtual(), hasName("::X::f"))));
+  EXPECT_TRUE(notMatches("class X { int f(); };",
+      methodDecl(isVirtual())));
+}
+
+TEST(Matcher, MatchesOverridingMethod) {
+  EXPECT_TRUE(matches("class X { virtual int f(); }; "
+                      "class Y : public X { int f(); };",
+       methodDecl(isOverride(), hasName("::Y::f"))));
+  EXPECT_TRUE(notMatches("class X { virtual int f(); }; "
+                        "class Y : public X { int f(); };",
+       methodDecl(isOverride(), hasName("::X::f"))));
+  EXPECT_TRUE(notMatches("class X { int f(); }; "
+                         "class Y : public X { int f(); };",
+       methodDecl(isOverride())));
+  EXPECT_TRUE(notMatches("class X { int f(); int f(int); }; ",
+       methodDecl(isOverride())));
+}
+
 TEST(Matcher, ConstructorCall) {
   StatementMatcher Constructor = constructExpr();
 

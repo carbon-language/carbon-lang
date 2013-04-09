@@ -2526,6 +2526,38 @@ AST_MATCHER_P(CXXMethodDecl, ofClass,
           InnerMatcher.matches(*Parent, Finder, Builder));
 }
 
+/// \brief Matches if the given method declaration is virtual.
+///
+/// Given
+/// \code
+///   class A {
+///    public:
+///     virtual void x();
+///   };
+/// \endcode
+///   matches A::x
+AST_MATCHER(CXXMethodDecl, isVirtual) {
+  return Node.isVirtual();
+}
+
+/// \brief Matches if the given method declaration overrides another method.
+///
+/// Given
+/// \code
+///   class A {
+///    public:
+///     virtual void x();
+///   };
+///   class B : public A {
+///    public:
+///     virtual void x();
+///   };
+/// \endcode
+///   matches B::x
+AST_MATCHER(CXXMethodDecl, isOverride) {
+  return Node.size_overridden_methods() > 0;
+}
+
 /// \brief Matches member expressions that are called with '->' as opposed
 /// to '.'.
 ///
