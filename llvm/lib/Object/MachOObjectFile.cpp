@@ -35,7 +35,7 @@ MachOObjectFileBase::MachOObjectFileBase(MemoryBuffer *Object, bool Is64bits,
 }
 
 bool MachOObjectFileBase::is64Bit() const {
-  return isa<MachOObjectFile<true> >(this);
+  return isa<MachOObjectFile64Le>(this);
 }
 
 const MachOObjectFileBase::LoadCommand *
@@ -86,9 +86,9 @@ ObjectFile *ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer) {
   bool Is64Bits = Magic == "\xFE\xED\xFA\xCF" || Magic == "\xCF\xFA\xED\xFE";
   ObjectFile *Ret;
   if (Is64Bits)
-    Ret = new MachOObjectFile<true>(Buffer, ec);
+    Ret = new MachOObjectFile64Le(Buffer, ec);
   else
-    Ret = new MachOObjectFile<false>(Buffer, ec);
+    Ret = new MachOObjectFile32Le(Buffer, ec);
   if (ec)
     return NULL;
   return Ret;
@@ -127,8 +127,8 @@ MachOObjectFileBase::getSymbolTableEntryBase(DataRefImpl DRI,
   unsigned Index = DRI.d.b;
 
   unsigned SymbolTableEntrySize = is64Bit() ?
-    sizeof(MachOObjectFile<true>::SymbolTableEntry) :
-    sizeof(MachOObjectFile<false>::SymbolTableEntry);
+    sizeof(MachOObjectFile64Le::SymbolTableEntry) :
+    sizeof(MachOObjectFile32Le::SymbolTableEntry);
 
   uint64_t Offset = SymbolTableOffset + Index * SymbolTableEntrySize;
   StringRef Data = getData(Offset, SymbolTableEntrySize);
@@ -314,10 +314,10 @@ MachOObjectFileBase::getSectionBase(DataRefImpl DRI) const {
 
   bool Is64 = is64Bit();
   unsigned SegmentLoadSize =
-    Is64 ? sizeof(MachOObjectFile<true>::SegmentLoadCommand) :
-           sizeof(MachOObjectFile<false>::SegmentLoadCommand);
-  unsigned SectionSize = Is64 ? sizeof(MachOObjectFile<true>::Section) :
-                                sizeof(MachOObjectFile<false>::Section);
+    Is64 ? sizeof(MachOObjectFile64Le::SegmentLoadCommand) :
+           sizeof(MachOObjectFile32Le::SegmentLoadCommand);
+  unsigned SectionSize = Is64 ? sizeof(MachOObjectFile64Le::Section) :
+                                sizeof(MachOObjectFile32Le::Section);
 
   uintptr_t SectionAddr = CommandAddr + SegmentLoadSize + DRI.d.b * SectionSize;
   return reinterpret_cast<const SectionBase*>(SectionAddr);

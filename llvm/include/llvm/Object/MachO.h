@@ -289,34 +289,41 @@ private:
                                   const SymtabLoadCommand *SymtabLoadCmd) const;
 };
 
-template<bool is64Bits>
-struct MachOObjectFileHelperCommon {
-  typedef MachOFormat::SegmentLoadCommand<MachOType<support::little, is64Bits> >
+template<class MachOT>
+struct MachOObjectFileHelperCommon;
+
+template<endianness TargetEndianness, bool Is64Bits>
+struct MachOObjectFileHelperCommon<MachOType<TargetEndianness, Is64Bits> > {
+  typedef
+    MachOFormat::SegmentLoadCommand<MachOType<TargetEndianness, Is64Bits> >
     SegmentLoadCommand;
-  typedef MachOFormat::SymbolTableEntry<MachOType<support::little, is64Bits> >
+  typedef MachOFormat::SymbolTableEntry<MachOType<TargetEndianness, Is64Bits> >
     SymbolTableEntry;
-  typedef MachOFormat::Section<MachOType<support::little, is64Bits> > Section;
+  typedef MachOFormat::Section<MachOType<TargetEndianness, Is64Bits> > Section;
 };
 
-template<bool is64Bits>
+template<class MachOT>
 struct MachOObjectFileHelper;
 
-template<>
-struct MachOObjectFileHelper<false> :
-    public MachOObjectFileHelperCommon<false> {
+template<endianness TargetEndianness>
+struct MachOObjectFileHelper<MachOType<TargetEndianness, false> > :
+    public MachOObjectFileHelperCommon<MachOType<TargetEndianness, false> > {
   static const macho::LoadCommandType SegmentLoadType = macho::LCT_Segment;
 };
 
-template<>
-struct MachOObjectFileHelper<true> :
-    public MachOObjectFileHelperCommon<true> {
+template<endianness TargetEndianness>
+struct MachOObjectFileHelper<MachOType<TargetEndianness, true> > :
+    public MachOObjectFileHelperCommon<MachOType<TargetEndianness, true> > {
   static const macho::LoadCommandType SegmentLoadType = macho::LCT_Segment64;
 };
 
-template<bool is64Bits>
+template<class MachOT>
 class MachOObjectFile : public MachOObjectFileBase {
 public:
-  typedef MachOObjectFileHelper<is64Bits> Helper;
+  static const endianness TargetEndianness = MachOT::TargetEndianness;
+  static const bool Is64Bits = MachOT::Is64Bits;
+
+  typedef MachOObjectFileHelper<MachOT> Helper;
   static const macho::LoadCommandType SegmentLoadType = Helper::SegmentLoadType;
   typedef typename Helper::SegmentLoadCommand SegmentLoadCommand;
   typedef typename Helper::SymbolTableEntry SymbolTableEntry;
@@ -357,10 +364,10 @@ public:
   void moveToNextSection(DataRefImpl &DRI) const;
 };
 
-template<bool is64Bits>
-MachOObjectFile<is64Bits>::MachOObjectFile(MemoryBuffer *Object,
-                                           error_code &ec) :
-  MachOObjectFileBase(Object, is64Bits, ec) {
+template<class MachOT>
+MachOObjectFile<MachOT>::MachOObjectFile(MemoryBuffer *Object,
+                                         error_code &ec) :
+  MachOObjectFileBase(Object, Is64Bits, ec) {
   DataRefImpl DRI;
   moveToNextSection(DRI);
   uint32_t LoadCommandCount = getHeader()->NumLoadCommands;
@@ -371,28 +378,28 @@ MachOObjectFile<is64Bits>::MachOObjectFile(MemoryBuffer *Object,
   }
 }
 
-template<bool is64Bits>
-bool MachOObjectFile<is64Bits>::classof(const Binary *v) {
-  return v->getType() == getMachOType(true, is64Bits);
+template<class MachOT>
+bool MachOObjectFile<MachOT>::classof(const Binary *v) {
+  return v->getType() == getMachOType(true, Is64Bits);
 }
 
-template<bool is64Bits>
-const typename MachOObjectFile<is64Bits>::Section *
-MachOObjectFile<is64Bits>::getSection(DataRefImpl DRI) const {
+template<class MachOT>
+const typename MachOObjectFile<MachOT>::Section *
+MachOObjectFile<MachOT>::getSection(DataRefImpl DRI) const {
   const SectionBase *Addr = getSectionBase(DRI);
   return reinterpret_cast<const Section*>(Addr);
 }
 
-template<bool is64Bits>
-const typename MachOObjectFile<is64Bits>::SymbolTableEntry *
-MachOObjectFile<is64Bits>::getSymbolTableEntry(DataRefImpl DRI) const {
+template<class MachOT>
+const typename MachOObjectFile<MachOT>::SymbolTableEntry *
+MachOObjectFile<MachOT>::getSymbolTableEntry(DataRefImpl DRI) const {
   const SymbolTableEntryBase *Base = getSymbolTableEntryBase(DRI);
   return reinterpret_cast<const SymbolTableEntry*>(Base);
 }
 
-template<bool is64Bits>
-const typename MachOObjectFile<is64Bits>::RelocationEntry *
-MachOObjectFile<is64Bits>::getRelocation(DataRefImpl Rel) const {
+template<class MachOT>
+const typename MachOObjectFile<MachOT>::RelocationEntry *
+MachOObjectFile<MachOT>::getRelocation(DataRefImpl Rel) const {
   const Section *Sect = getSection(Sections[Rel.d.b]);
   uint32_t RelOffset = Sect->RelocationTableOffset;
   uint64_t Offset = RelOffset + Rel.d.a * sizeof(RelocationEntry);
@@ -400,53 +407,53 @@ MachOObjectFile<is64Bits>::getRelocation(DataRefImpl Rel) const {
   return reinterpret_cast<const RelocationEntry*>(Data.data());
 }
 
-template<bool is64Bits>
+template<class MachOT>
 error_code
-MachOObjectFile<is64Bits>::getSectionAddress(DataRefImpl Sec,
-                                             uint64_t &Res) const {
+MachOObjectFile<MachOT>::getSectionAddress(DataRefImpl Sec,
+                                           uint64_t &Res) const {
   const Section *Sect = getSection(Sec);
   Res = Sect->Address;
   return object_error::success;
 }
 
-template<bool is64Bits>
+template<class MachOT>
 error_code
-MachOObjectFile<is64Bits>::getSectionSize(DataRefImpl Sec,
-                                          uint64_t &Res) const {
+MachOObjectFile<MachOT>::getSectionSize(DataRefImpl Sec,
+                                        uint64_t &Res) const {
   const Section *Sect = getSection(Sec);
   Res = Sect->Size;
   return object_error::success;
 }
 
-template<bool is64Bits>
+template<class MachOT>
 error_code
-MachOObjectFile<is64Bits>::getSectionContents(DataRefImpl Sec,
-                                              StringRef &Res) const {
+MachOObjectFile<MachOT>::getSectionContents(DataRefImpl Sec,
+                                            StringRef &Res) const {
   const Section *Sect = getSection(Sec);
   Res = getData(Sect->Offset, Sect->Size);
   return object_error::success;
 }
 
-template<bool is64Bits>
+template<class MachOT>
 error_code
-MachOObjectFile<is64Bits>::getSectionAlignment(DataRefImpl Sec,
-                                               uint64_t &Res) const {
+MachOObjectFile<MachOT>::getSectionAlignment(DataRefImpl Sec,
+                                             uint64_t &Res) const {
   const Section *Sect = getSection(Sec);
   Res = uint64_t(1) << Sect->Align;
   return object_error::success;
 }
 
-template<bool is64Bits>
+template<class MachOT>
 error_code
-MachOObjectFile<is64Bits>::isSectionText(DataRefImpl Sec, bool &Res) const {
+MachOObjectFile<MachOT>::isSectionText(DataRefImpl Sec, bool &Res) const {
   const Section *Sect = getSection(Sec);
   Res = Sect->Flags & macho::SF_PureInstructions;
   return object_error::success;
 }
 
-template<bool is64Bits>
+template<class MachOT>
 error_code
-MachOObjectFile<is64Bits>::isSectionZeroInit(DataRefImpl Sec, bool &Res) const {
+MachOObjectFile<MachOT>::isSectionZeroInit(DataRefImpl Sec, bool &Res) const {
   const Section *Sect = getSection(Sec);
   unsigned SectionType = Sect->Flags & MachO::SectionFlagMaskSectionType;
   Res = SectionType == MachO::SectionTypeZeroFill ||
@@ -454,9 +461,9 @@ MachOObjectFile<is64Bits>::isSectionZeroInit(DataRefImpl Sec, bool &Res) const {
   return object_error::success;
 }
 
-template<bool is64Bits>
+template<class MachOT>
 relocation_iterator
-MachOObjectFile<is64Bits>::getSectionRelEnd(DataRefImpl Sec) const {
+MachOObjectFile<MachOT>::getSectionRelEnd(DataRefImpl Sec) const {
   const Section *Sect = getSection(Sec);
   uint32_t LastReloc = Sect->NumRelocationTableEntries;
   DataRefImpl Ret;
@@ -465,10 +472,10 @@ MachOObjectFile<is64Bits>::getSectionRelEnd(DataRefImpl Sec) const {
   return relocation_iterator(RelocationRef(Ret, this));
 }
 
-template<bool is64Bits>
+template<class MachOT>
 error_code
-MachOObjectFile<is64Bits>::getRelocationAddress(DataRefImpl Rel,
-                                                uint64_t &Res) const {
+MachOObjectFile<MachOT>::getRelocationAddress(DataRefImpl Rel,
+                                              uint64_t &Res) const {
   const Section *Sect = getSection(Sections[Rel.d.b]);
   uint64_t SectAddress = Sect->Address;
   const RelocationEntry *RE = getRelocation(Rel);
@@ -486,10 +493,10 @@ MachOObjectFile<is64Bits>::getRelocationAddress(DataRefImpl Rel,
   return object_error::success;
 }
 
-template<bool is64Bits>
+template<class MachOT>
 error_code
-MachOObjectFile<is64Bits>::getRelocationOffset(DataRefImpl Rel,
-                                               uint64_t &Res) const {
+MachOObjectFile<MachOT>::getRelocationOffset(DataRefImpl Rel,
+                                             uint64_t &Res) const {
   const RelocationEntry *RE = getRelocation(Rel);
 
   unsigned Arch = getArch();
@@ -502,10 +509,10 @@ MachOObjectFile<is64Bits>::getRelocationOffset(DataRefImpl Rel,
   return object_error::success;
 }
 
-template<bool is64Bits>
+template<class MachOT>
 error_code
-MachOObjectFile<is64Bits>::getRelocationSymbol(DataRefImpl Rel,
-                                               SymbolRef &Res) const {
+MachOObjectFile<MachOT>::getRelocationSymbol(DataRefImpl Rel,
+                                             SymbolRef &Res) const {
   const RelocationEntry *RE = getRelocation(Rel);
   uint32_t SymbolIdx = RE->Word1 & 0xffffff;
   bool isExtern = (RE->Word1 >> 27) & 1;
@@ -524,10 +531,10 @@ MachOObjectFile<is64Bits>::getRelocationSymbol(DataRefImpl Rel,
   return object_error::success;
 }
 
-template<bool is64Bits>
+template<class MachOT>
 error_code
-MachOObjectFile<is64Bits>::getRelocationAdditionalInfo(DataRefImpl Rel,
-                                                       int64_t &Res) const {
+MachOObjectFile<MachOT>::getRelocationAdditionalInfo(DataRefImpl Rel,
+                                                     int64_t &Res) const {
   const RelocationEntry *RE = getRelocation(Rel);
   bool isExtern = (RE->Word1 >> 27) & 1;
   Res = 0;
@@ -540,9 +547,9 @@ MachOObjectFile<is64Bits>::getRelocationAdditionalInfo(DataRefImpl Rel,
   return object_error::success;
 }
 
-template<bool is64Bits>
-error_code MachOObjectFile<is64Bits>::getRelocationType(DataRefImpl Rel,
-                                                        uint64_t &Res) const {
+template<class MachOT>
+error_code MachOObjectFile<MachOT>::getRelocationType(DataRefImpl Rel,
+                                                      uint64_t &Res) const {
   const RelocationEntry *RE = getRelocation(Rel);
   Res = RE->Word0;
   Res <<= 32;
@@ -550,9 +557,9 @@ error_code MachOObjectFile<is64Bits>::getRelocationType(DataRefImpl Rel,
   return object_error::success;
 }
 
-template<bool is64Bits>
+template<class MachOT>
 error_code
-MachOObjectFile<is64Bits>::getRelocationTypeName(DataRefImpl Rel,
+MachOObjectFile<MachOT>::getRelocationTypeName(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
     // TODO: Support scattered relocations.
   StringRef res;
@@ -652,9 +659,9 @@ MachOObjectFile<is64Bits>::getRelocationTypeName(DataRefImpl Rel,
   return object_error::success;
 }
 
-template<bool is64Bits>
+template<class MachOT>
 error_code
-MachOObjectFile<is64Bits>::getRelocationValueString(DataRefImpl Rel,
+MachOObjectFile<MachOT>::getRelocationValueString(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
   const RelocationEntry *RE = getRelocation(Rel);
 
@@ -864,10 +871,10 @@ MachOObjectFile<is64Bits>::getRelocationValueString(DataRefImpl Rel,
   return object_error::success;
 }
 
-template<bool is64Bits>
+template<class MachOT>
 error_code
-MachOObjectFile<is64Bits>::getRelocationHidden(DataRefImpl Rel,
-                                               bool &Result) const {
+MachOObjectFile<MachOT>::getRelocationHidden(DataRefImpl Rel,
+                                             bool &Result) const {
   const RelocationEntry *RE = getRelocation(Rel);
 
   unsigned Arch = getArch();
@@ -902,10 +909,10 @@ MachOObjectFile<is64Bits>::getRelocationHidden(DataRefImpl Rel,
   return object_error::success;
 }
 
-template<bool is64Bits>
+template<class MachOT>
 error_code
-MachOObjectFile<is64Bits>::getSymbolFileOffset(DataRefImpl Symb,
-                                               uint64_t &Res) const {
+MachOObjectFile<MachOT>::getSymbolFileOffset(DataRefImpl Symb,
+                                             uint64_t &Res) const {
   const SymbolTableEntry *Entry = getSymbolTableEntry(Symb);
   Res = Entry->Value;
   if (Entry->SectionIndex) {
@@ -916,11 +923,11 @@ MachOObjectFile<is64Bits>::getSymbolFileOffset(DataRefImpl Symb,
   return object_error::success;
 }
 
-template<bool is64Bits>
+template<class MachOT>
 error_code
-MachOObjectFile<is64Bits>::sectionContainsSymbol(DataRefImpl Sec,
-                                                 DataRefImpl Symb,
-                                                 bool &Result) const {
+MachOObjectFile<MachOT>::sectionContainsSymbol(DataRefImpl Sec,
+                                               DataRefImpl Symb,
+                                               bool &Result) const {
   SymbolRef::Type ST;
   getSymbolType(Symb, ST);
   if (ST == SymbolRef::ST_Unknown) {
@@ -940,16 +947,16 @@ MachOObjectFile<is64Bits>::sectionContainsSymbol(DataRefImpl Sec,
   return object_error::success;
 }
 
-template<bool is64Bits>
-error_code MachOObjectFile<is64Bits>::getSymbolAddress(DataRefImpl Symb,
-                                                       uint64_t &Res) const {
+template<class MachOT>
+error_code MachOObjectFile<MachOT>::getSymbolAddress(DataRefImpl Symb,
+                                                     uint64_t &Res) const {
   const SymbolTableEntry *Entry = getSymbolTableEntry(Symb);
   Res = Entry->Value;
   return object_error::success;
 }
 
-template<bool is64Bits>
-error_code MachOObjectFile<is64Bits>::getSymbolSize(DataRefImpl DRI,
+template<class MachOT>
+error_code MachOObjectFile<MachOT>::getSymbolSize(DataRefImpl DRI,
                                                     uint64_t &Result) const {
   uint32_t LoadCommandCount = getHeader()->NumLoadCommands;
   uint64_t BeginOffset;
@@ -992,24 +999,24 @@ error_code MachOObjectFile<is64Bits>::getSymbolSize(DataRefImpl DRI,
   return object_error::success;
 }
 
-template<bool is64Bits>
-error_code MachOObjectFile<is64Bits>::getSectionNext(DataRefImpl Sec,
-                                                     SectionRef &Res) const {
+template<class MachOT>
+error_code MachOObjectFile<MachOT>::getSectionNext(DataRefImpl Sec,
+                                                   SectionRef &Res) const {
   Sec.d.b++;
   moveToNextSection(Sec);
   Res = SectionRef(Sec, this);
   return object_error::success;
 }
 
-template<bool is64Bits>
-section_iterator MachOObjectFile<is64Bits>::begin_sections() const {
+template<class MachOT>
+section_iterator MachOObjectFile<MachOT>::begin_sections() const {
   DataRefImpl DRI;
   moveToNextSection(DRI);
   return section_iterator(SectionRef(DRI, this));
 }
 
-template<bool is64Bits>
-void MachOObjectFile<is64Bits>::moveToNextSection(DataRefImpl &DRI) const {
+template<class MachOT>
+void MachOObjectFile<MachOT>::moveToNextSection(DataRefImpl &DRI) const {
   uint32_t LoadCommandCount = getHeader()->NumLoadCommands;
   while (DRI.d.a < LoadCommandCount) {
     const LoadCommand *Command = getLoadCommandInfo(DRI.d.a);
@@ -1025,6 +1032,10 @@ void MachOObjectFile<is64Bits>::moveToNextSection(DataRefImpl &DRI) const {
   }
 }
 
+  typedef MachOObjectFile<MachOType<support::little, false> >
+    MachOObjectFile32Le;
+  typedef MachOObjectFile<MachOType<support::little, true> >
+    MachOObjectFile64Le;
 }
 }
 

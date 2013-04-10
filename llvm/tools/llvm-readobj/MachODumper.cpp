@@ -160,8 +160,8 @@ namespace {
 static void getSection(const MachOObjectFileBase *Obj,
                        DataRefImpl DRI,
                        MachOSection &Section) {
-  if (const MachOObjectFile<true> *O = dyn_cast<MachOObjectFile<true> >(Obj)) {
-    const MachOObjectFile<true>::Section *Sect = O->getSection(DRI);
+  if (const MachOObjectFile64Le *O = dyn_cast<MachOObjectFile64Le>(Obj)) {
+    const MachOObjectFile64Le::Section *Sect = O->getSection(DRI);
 
     Section.Address     = Sect->Address;
     Section.Size        = Sect->Size;
@@ -173,8 +173,8 @@ static void getSection(const MachOObjectFileBase *Obj,
     Section.Reserved1   = Sect->Reserved1;
     Section.Reserved2   = Sect->Reserved2;
   } else {
-    const MachOObjectFile<false> *O2 = cast<MachOObjectFile<false> >(Obj);
-    const MachOObjectFile<false>::Section *Sect = O2->getSection(DRI);
+    const MachOObjectFile32Le *O2 = cast<MachOObjectFile32Le>(Obj);
+    const MachOObjectFile32Le::Section *Sect = O2->getSection(DRI);
 
     Section.Address     = Sect->Address;
     Section.Size        = Sect->Size;
@@ -191,8 +191,8 @@ static void getSection(const MachOObjectFileBase *Obj,
 static void getSymbol(const MachOObjectFileBase *Obj,
                       DataRefImpl DRI,
                       MachOSymbol &Symbol) {
-  if (const MachOObjectFile<true> *O = dyn_cast<MachOObjectFile<true> >(Obj)) {
-    const MachOObjectFile<true>::SymbolTableEntry *Entry =
+  if (const MachOObjectFile64Le *O = dyn_cast<MachOObjectFile64Le>(Obj)) {
+    const MachOObjectFile64Le::SymbolTableEntry *Entry =
       O->getSymbolTableEntry(DRI);
     Symbol.StringIndex  = Entry->StringIndex;
     Symbol.Type         = Entry->Type;
@@ -200,8 +200,8 @@ static void getSymbol(const MachOObjectFileBase *Obj,
     Symbol.Flags        = Entry->Flags;
     Symbol.Value        = Entry->Value;
   } else {
-    const MachOObjectFile<false> *O2 = cast<MachOObjectFile<false> >(Obj);
-    const MachOObjectFile<false>::SymbolTableEntry *Entry =
+    const MachOObjectFile32Le *O2 = cast<MachOObjectFile32Le>(Obj);
+    const MachOObjectFile32Le::SymbolTableEntry *Entry =
       O2->getSymbolTableEntry(DRI);
     Symbol.StringIndex  = Entry->StringIndex;
     Symbol.Type         = Entry->Type;
