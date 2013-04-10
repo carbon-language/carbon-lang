@@ -107,6 +107,11 @@ struct SLPVectorizer : public BasicBlockPass {
     AA = &getAnalysis<AliasAnalysis>();
     StoreRefs.clear();
 
+    // Must have DataLayout. We can't require it because some tests run w/o
+    // triple.
+    if (!DL)
+      return false;
+
     // Use the bollom up slp vectorizer to construct chains that start with
     // he store instructions.
     BoUpSLP R(&BB, SE, DL, TTI, AA);

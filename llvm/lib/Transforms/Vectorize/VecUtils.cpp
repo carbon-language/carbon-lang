@@ -94,7 +94,7 @@ bool BoUpSLP::isConsecutiveAccess(Value *A, Value *B) {
   Type *Ty = cast<PointerType>(PtrA->getType())->getElementType();
   // The Instructions are connsecutive if the size of the first load/store is
   // the same as the offset.
-  unsigned Sz = (DL ? DL->getTypeStoreSize(Ty) : Ty->getScalarSizeInBits()/8);
+  unsigned Sz = DL->getTypeStoreSize(Ty);
   return ((-Offset) == Sz);
 }
 
