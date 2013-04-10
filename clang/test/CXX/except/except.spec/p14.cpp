@@ -112,3 +112,26 @@ namespace rdar13017229 {
     Typo foo(); // expected-error{{unknown type name 'Typo'}}
   };
 }
+
+namespace InhCtor {
+  template<int> struct X {};
+  struct Base {
+    Base(X<0>) noexcept(true);
+    Base(X<1>) noexcept(false);
+    Base(X<2>) throw(X<2>);
+    template<typename T> Base(T) throw(T);
+  };
+  template<typename T> struct Throw {
+    Throw() throw(T);
+  };
+  struct Derived : Base, Throw<X<3>> {
+    using Base::Base;
+    Throw<X<4>> x;
+  };
+  struct Test {
+    friend Derived::Derived(X<0>) throw(X<3>, X<4>);
+    friend Derived::Derived(X<1>) noexcept(false);
+    friend Derived::Derived(X<2>) throw(X<2>, X<3>, X<4>);
+  };
+  static_assert(!noexcept(Derived{X<5>{}}), "");
+}

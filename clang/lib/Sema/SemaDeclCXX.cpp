@@ -145,8 +145,9 @@ namespace {
   }
 }
 
-void Sema::ImplicitExceptionSpecification::CalledDecl(SourceLocation CallLoc,
-                                                      CXXMethodDecl *Method) {
+void
+Sema::ImplicitExceptionSpecification::CalledDecl(SourceLocation CallLoc,
+                                                 const CXXMethodDecl *Method) {
   // If we have an MSAny spec already, don't bother.
   if (!Method || ComputedEST == EST_MSAny)
     return;
@@ -7522,9 +7523,73 @@ Sema::ComputeDefaultedDefaultCtorExceptionSpec(SourceLocation Loc,
 }
 
 Sema::ImplicitExceptionSpecification
-Sema::ComputeInheritingCtorExceptionSpec(CXXMethodDecl *MD) {
+Sema::ComputeInheritingCtorExceptionSpec(CXXConstructorDecl *CD) {
+  CXXRecordDecl *ClassDecl = CD->getParent();
+
+  // C++ [except.spec]p14:
+  //   An inheriting constructor [...] shall have an exception-specification. [...]
   ImplicitExceptionSpecification ExceptSpec(*this);
-  // FIXME: Compute the exception spec.
+  if (ClassDecl->isInvalidDecl())
+    return ExceptSpec;
+
+  // Inherited constructor.
+  const CXXConstructorDecl *InheritedCD = CD->getInheritedConstructor();
+  const CXXRecordDecl *InheritedDecl = InheritedCD->getParent();
+  // FIXME: Copying or moving the parameters could add extra exceptions to the
+  // set, as could the default arguments for the inherited constructor. This
+  // will be addressed when we implement the resolution of core issue 1351.
+  ExceptSpec.CalledDecl(CD->getLocStart(), InheritedCD);
+
+  // Direct base-class constructors.
+  for (CXXRecordDecl::base_class_iterator B = ClassDecl->bases_begin(),
+                                       BEnd = ClassDecl->bases_end();
+       B != BEnd; ++B) {
+    if (B->isVirtual()) // Handled below.
+      continue;
+
+    if (const RecordType *BaseType = B->getType()->getAs<RecordType>()) {
+      CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
+      if (BaseClassDecl == InheritedDecl)
+        continue;
+      CXXConstructorDecl *Constructor = LookupDefaultConstructor(BaseClassDecl);
+      if (Constructor)
+        ExceptSpec.CalledDecl(B->getLocStart(), Constructor);
+    }
+  }
+
+  // Virtual base-class constructors.
+  for (CXXRecordDecl::base_class_iterator B = ClassDecl->vbases_begin(),
+                                       BEnd = ClassDecl->vbases_end();
+       B != BEnd; ++B) {
+    if (const RecordType *BaseType = B->getType()->getAs<RecordType>()) {
+      CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
+      if (BaseClassDecl == InheritedDecl)
+        continue;
+      CXXConstructorDecl *Constructor = LookupDefaultConstructor(BaseClassDecl);
+      if (Constructor)
+        ExceptSpec.CalledDecl(B->getLocStart(), Constructor);
+    }
+  }
+
+  // Field constructors.
+  for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
+                               FEnd = ClassDecl->field_end();
+       F != FEnd; ++F) {
+    if (F->hasInClassInitializer()) {
+      if (Expr *E = F->getInClassInitializer())
+        ExceptSpec.CalledExpr(E);
+      else if (!F->isInvalidDecl())
+        Diag(CD->getLocation(),
+             diag::err_in_class_initializer_references_def_ctor) << CD;
+    } else if (const RecordType *RecordTy
+              = Context.getBaseElementType(F->getType())->getAs<RecordType>()) {
+      CXXRecordDecl *FieldRecDecl = cast<CXXRecordDecl>(RecordTy->getDecl());
+      CXXConstructorDecl *Constructor = LookupDefaultConstructor(FieldRecDecl);
+      if (Constructor)
+        ExceptSpec.CalledDecl(F->getLocation(), Constructor);
+    }
+  }
+
   return ExceptSpec;
 }
 
