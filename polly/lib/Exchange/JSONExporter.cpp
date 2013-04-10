@@ -270,7 +270,7 @@ bool JSONImporter::runOnScop(Scop &scop) {
       isl_map *currentAccessMap = (*MI)->getAccessRelation();
 
       if (isl_map_dim(newAccessMap, isl_dim_param) !=
-              isl_map_dim(currentAccessMap, isl_dim_param)) {
+          isl_map_dim(currentAccessMap, isl_dim_param)) {
         errs() << "JScop file changes the number of parameter dimensions\n";
         isl_map_free(currentAccessMap);
         isl_map_free(newAccessMap);
@@ -332,20 +332,17 @@ INITIALIZE_PASS_BEGIN(JSONExporter, "polly-export-jscop",
                       "Polly - Export Scops as JSON"
                       " (Writes a .jscop file for each Scop)",
                       false, false);
-INITIALIZE_PASS_DEPENDENCY(Dependences);
+INITIALIZE_PASS_DEPENDENCY(Dependences)
 INITIALIZE_PASS_END(JSONExporter, "polly-export-jscop",
                     "Polly - Export Scops as JSON"
                     " (Writes a .jscop file for each Scop)",
                     false, false)
 
-    // typedef to make clang-format introduce a linebreak
-    typedef int clangformatdef;
-
 INITIALIZE_PASS_BEGIN(JSONImporter, "polly-import-jscop",
                       "Polly - Import Scops from JSON"
                       " (Reads a .jscop file for each Scop)",
                       false, false);
-INITIALIZE_PASS_DEPENDENCY(Dependences);
+INITIALIZE_PASS_DEPENDENCY(Dependences)
 INITIALIZE_PASS_END(JSONImporter, "polly-import-jscop",
                     "Polly - Import Scops from JSON"
                     " (Reads a .jscop file for each Scop)",

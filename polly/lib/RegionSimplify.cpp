@@ -38,6 +38,7 @@ class RegionSimplify : public RegionPass {
   Region *r;
   void createSingleEntryEdge(Region *R);
   void createSingleExitEdge(Region *R);
+
 public:
   static char ID;
   explicit RegionSimplify() : RegionPass(ID), r(0) {}

@@ -179,7 +179,7 @@ char &polly::CodePreparationID = CodePreparation::ID;
 Pass *polly::createCodePreparationPass() { return new CodePreparation(); }
 
 INITIALIZE_PASS_BEGIN(CodePreparation, "polly-prepare",
-                      "Polly - Prepare code for polly", false, false);
-INITIALIZE_PASS_DEPENDENCY(LoopInfo);
+                      "Polly - Prepare code for polly", false, false)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_END(CodePreparation, "polly-prepare",
                     "Polly - Prepare code for polly", false, false)

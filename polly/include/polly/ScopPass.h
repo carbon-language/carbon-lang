@@ -32,6 +32,7 @@ class Scop;
 /// runOnRegion, subclasses override runOnScop.
 class ScopPass : public RegionPass {
   Scop *S;
+
 protected:
   explicit ScopPass(char &ID) : RegionPass(ID), S(0) {}
 
@@ -50,6 +51,7 @@ public:
     assert(S && "Not on a Scop!");
     return *S;
   }
+
 private:
   virtual bool runOnRegion(Region *R, RGPassManager &RGM);
   void print(raw_ostream &OS, const Module *) const;

@@ -143,8 +143,8 @@ static void freeIslAstUser(void *Ptr) {
 // dimension, then the loop is parallel. The distance is zero in the current
 // dimension if it is a subset of a map with equal values for the current
 // dimension.
-static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
-                                     Dependences *D) {
+static bool
+astScheduleDimIsParallel(__isl_keep isl_ast_build *Build, Dependences *D) {
   isl_union_map *Schedule, *Deps;
   isl_map *ScheduleDeps, *Test;
   isl_space *ScheduleSpace;

@@ -192,10 +192,10 @@ public:
   ///                   loop containing the statemenet.
   /// @param P          A reference to the pass this function is called from.
   ///                   The pass is needed to update other analysis.
-  static void generate(
-      IRBuilder<> &B, ScopStmt &Stmt, VectorValueMapT &GlobalMaps,
-      std::vector<LoopToScevMapT> &VLTS, __isl_keep isl_map *Schedule,
-      Pass *P) {
+  static void
+  generate(IRBuilder<> &B, ScopStmt &Stmt, VectorValueMapT &GlobalMaps,
+           std::vector<LoopToScevMapT> &VLTS, __isl_keep isl_map *Schedule,
+           Pass *P) {
     VectorBlockGenerator Generator(B, GlobalMaps, VLTS, Stmt, Schedule, P);
     Generator.copyBB();
   }

@@ -71,9 +71,9 @@ void TempScop::print(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI) const {
   printDetail(OS, SE, LI, &R, 0);
 }
 
-void TempScop::printDetail(llvm::raw_ostream &OS, ScalarEvolution *SE,
-                           LoopInfo *LI, const Region *CurR,
-                           unsigned ind) const {}
+void
+TempScop::printDetail(llvm::raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI,
+                      const Region *CurR, unsigned ind) const {}
 
 void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB) {
   AccFuncSetType Functions;

@@ -83,6 +83,7 @@ class MayAliasSet {
   MayAliasSet() {}
 
   friend class MayAliasSetInfo;
+
 public:
 
   /// @name Must Alias Pointer Iterators

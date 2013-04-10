@@ -150,8 +150,8 @@ std::string ScopDetection::regionIsInvalidBecause(const Region *R) const {
   return InvalidRegions.find(R)->second;
 }
 
-bool ScopDetection::isValidCFG(BasicBlock &BB,
-                               DetectionContext &Context) const {
+bool
+ScopDetection::isValidCFG(BasicBlock &BB, DetectionContext &Context) const {
   Region &RefRegion = Context.CurRegion;
   TerminatorInst *TI = BB.getTerminator();
 
@@ -176,8 +176,7 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
   // Only Constant and ICmpInst are allowed as condition.
   if (!(isa<Constant>(Condition) || isa<ICmpInst>(Condition)))
     INVALID(AffFunc, "Condition in BB '" + BB.getName() +
-                     "' neither "
-                     "constant nor an icmp instruction");
+                         "' neither constant nor an icmp instruction");
 
   // Allow perfectly nested conditions.
   assert(Br->getNumSuccessors() == 2 && "Unexpected number of successors");
@@ -316,8 +315,8 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   return true;
 }
 
-bool ScopDetection::hasScalarDependency(Instruction &Inst,
-                                        Region &RefRegion) const {
+bool
+ScopDetection::hasScalarDependency(Instruction &Inst, Region &RefRegion) const {
   for (Instruction::use_iterator UI = Inst.use_begin(), UE = Inst.use_end();
        UI != UE; ++UI)
     if (Instruction *Use = dyn_cast<Instruction>(*UI))
@@ -410,7 +409,7 @@ bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
   if (!isAffineExpr(&Context.CurRegion, LoopCount, *SE))
     INVALID(LoopBound,
             "Non affine loop bound '"
-            << *LoopCount << "' in loop: " << L->getHeader()->getName());
+                << *LoopCount << "' in loop: " << L->getHeader()->getName());
 
   return true;
 }
@@ -438,7 +437,8 @@ Region *ScopDetection::expandRegion(Region &R) {
       if (LastValidRegion)
         delete LastValidRegion;
 
-      // Store this region, because it is the greatest valid (encountered so far)
+      // Store this region, because it is the greatest valid (encountered so
+      // far).
       LastValidRegion = ExpandedRegion;
 
       // Create and test the next greater region (if any)
@@ -456,7 +456,7 @@ Region *ScopDetection::expandRegion(Region &R) {
   }
 
   DEBUG(if (LastValidRegion)
-        dbgs() << "\tto " << LastValidRegion->getNameStr() << "\n";
+            dbgs() << "\tto " << LastValidRegion->getNameStr() << "\n";
         else dbgs() << "\tExpanding " << R.getNameStr() << " failed\n";);
 
   return LastValidRegion;

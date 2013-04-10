@@ -106,6 +106,7 @@ private:
 
   /// Updated access relation read from JSCOP file.
   isl_map *newAccessRelation;
+
 public:
   // @brief Create a memory access from an access in LLVM-IR.
   //
@@ -293,6 +294,7 @@ class ScopStmt {
            SmallVectorImpl<unsigned> &Scatter);
 
   friend class Scop;
+
 public:
 
   ~ScopStmt();
@@ -469,6 +471,7 @@ class Scop {
   void printStatements(raw_ostream &OS) const;
 
   friend class ScopInfo;
+
 public:
 
   ~Scop();

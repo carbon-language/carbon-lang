@@ -178,9 +178,9 @@ void IndependentBlocks::moveOperandTree(Instruction *Inst, const Region *R,
 
       // If the Scop Region does not contain N, skip it and all its operands and
       // continue: because we reach a "parameter".
-      // FIXME: we must keep the predicate instruction inside the Scop, otherwise
-      // it will be translated to a load instruction, and we can not handle load
-      // as affine predicate at this moment.
+      // FIXME: we must keep the predicate instruction inside the Scop,
+      // otherwise it will be translated to a load instruction, and we can not
+      // handle load as affine predicate at this moment.
       if (!R->contains(Operand) && !isa<TerminatorInst>(CurInst)) {
         DEBUG(dbgs() << "Out of region.\n");
         continue;
@@ -235,8 +235,8 @@ void IndependentBlocks::moveOperandTree(Instruction *Inst, const Region *R,
   SE->forgetValue(Inst);
 }
 
-bool IndependentBlocks::createIndependentBlocks(BasicBlock *BB,
-                                                const Region *R) {
+bool
+IndependentBlocks::createIndependentBlocks(BasicBlock *BB, const Region *R) {
   std::vector<Instruction *> WorkList;
   for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE; ++II)
     if (!isSafeToMove(II) && !canSynthesize(II, LI, SE, R))
@@ -363,8 +363,8 @@ bool IndependentBlocks::onlyUsedInRegion(Instruction *Inst, const Region *R) {
   return true;
 }
 
-bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
-                                               const Region *R) {
+bool
+IndependentBlocks::translateScalarToArray(Instruction *Inst, const Region *R) {
   if (canSynthesize(Inst, LI, SE, R) && onlyUsedInRegion(Inst, R))
     return false;
 
@@ -418,8 +418,8 @@ bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
   return true;
 }
 
-bool IndependentBlocks::translateScalarToArray(BasicBlock *BB,
-                                               const Region *R) {
+bool
+IndependentBlocks::translateScalarToArray(BasicBlock *BB, const Region *R) {
   bool changed = false;
 
   SmallVector<Instruction *, 32> Insts;
@@ -434,8 +434,8 @@ bool IndependentBlocks::translateScalarToArray(BasicBlock *BB,
   return changed;
 }
 
-bool IndependentBlocks::isIndependentBlock(const Region *R,
-                                           BasicBlock *BB) const {
+bool
+IndependentBlocks::isIndependentBlock(const Region *R, BasicBlock *BB) const {
   for (BasicBlock::iterator II = BB->begin(), IE = --BB->end(); II != IE;
        ++II) {
     Instruction *Inst = &*II;

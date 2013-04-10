@@ -74,6 +74,7 @@ class PollyIndVarSimplify : public LoopPass {
 
   SmallVector<WeakVH, 16> DeadInsts;
   bool Changed;
+
 public:
 
   static char ID; // Pass identification, replacement for typeid
@@ -491,8 +492,8 @@ void PollyIndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
 /// happen later, except that it's more powerful in some cases, because it's
 /// able to brute-force evaluate arbitrary instructions as long as they have
 /// constant operands at the beginning of the loop.
-void PollyIndVarSimplify::RewriteLoopExitValues(Loop *L,
-                                                SCEVExpander &Rewriter) {
+void
+PollyIndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
   // Verify the input to the pass in already in LCSSA form.
   assert(L->isLCSSAForm(*DT));
 
@@ -644,8 +645,8 @@ static bool isSafe(const SCEV *S, const Loop *L, ScalarEvolution *SE) {
   return false;
 }
 
-void PollyIndVarSimplify::RewriteIVExpressions(Loop *L,
-                                               SCEVExpander &Rewriter) {
+void
+PollyIndVarSimplify::RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter) {
   // Rewrite all induction variable expressions in terms of the canonical
   // induction variable.
   //
@@ -899,13 +900,13 @@ Instruction *WidenIV::CloneIVUser(NarrowIVDefUse DU) {
     // comes from a widened IV, it should be removed during a future call to
     // WidenIVUse.
     Value *LHS = (DU.NarrowUse->getOperand(0) == DU.NarrowDef)
-                 ? DU.WideDef
-                 : getExtend(DU.NarrowUse->getOperand(0), WideType, IsSigned,
-                             DU.NarrowUse);
+                     ? DU.WideDef
+                     : getExtend(DU.NarrowUse->getOperand(0), WideType,
+                                 IsSigned, DU.NarrowUse);
     Value *RHS = (DU.NarrowUse->getOperand(1) == DU.NarrowDef)
-                 ? DU.WideDef
-                 : getExtend(DU.NarrowUse->getOperand(1), WideType, IsSigned,
-                             DU.NarrowUse);
+                     ? DU.WideDef
+                     : getExtend(DU.NarrowUse->getOperand(1), WideType,
+                                 IsSigned, DU.NarrowUse);
 
     BinaryOperator *NarrowBO = cast<BinaryOperator>(DU.NarrowUse);
     BinaryOperator *WideBO = BinaryOperator::Create(NarrowBO->getOpcode(), LHS,
@@ -975,7 +976,7 @@ const SCEVAddRecExpr *WidenIV::GetWideRecurrence(Instruction *NarrowUse) {
 
   const SCEV *NarrowExpr = SE->getSCEV(NarrowUse);
   if (SE->getTypeSizeInBits(NarrowExpr->getType()) >=
-          SE->getTypeSizeInBits(WideType)) {
+      SE->getTypeSizeInBits(WideType)) {
     // NarrowUse implicitly widens its operand. e.g. a gep with a narrow
     // index. So don't follow this use.
     return 0;
@@ -1584,7 +1585,7 @@ static Value *genLoopLimit(PHINode *IndVar, const SCEV *IVCount, Loop *L,
 
       // For integer IVs, truncate the IV before computing IVInit + BECount.
       if (SE->getTypeSizeInBits(IVInit->getType()) >
-              SE->getTypeSizeInBits(IVCount->getType()))
+          SE->getTypeSizeInBits(IVCount->getType()))
         IVInit = SE->getTruncateExpr(IVInit, IVCount->getType());
 
       IVLimit = SE->getAddExpr(IVInit, IVCount);
@@ -1674,7 +1675,7 @@ Value *PollyIndVarSimplify::LinearFunctionTestReplace(
 
   IRBuilder<> Builder(BI);
   if (SE->getTypeSizeInBits(CmpIndVar->getType()) >
-          SE->getTypeSizeInBits(ExitCnt->getType())) {
+      SE->getTypeSizeInBits(ExitCnt->getType())) {
     CmpIndVar =
         Builder.CreateTrunc(CmpIndVar, ExitCnt->getType(), "lftr.wideiv");
   }
@@ -1901,7 +1902,7 @@ bool PollyIndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     SmallVector<PHINode *, 2> OldCannIVs;
     while (PHINode *OldCannIV = L->getCanonicalInductionVariable()) {
       if (SE->getTypeSizeInBits(OldCannIV->getType()) >
-              SE->getTypeSizeInBits(LargestType))
+          SE->getTypeSizeInBits(LargestType))
         OldCannIV->removeFromParent();
       else
         break;
@@ -1985,7 +1986,7 @@ bool PollyIndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     SE->forgetLoop(L);
     const SCEV *NewBECount = SE->getBackedgeTakenCount(L);
     if (SE->getTypeSizeInBits(BackedgeTakenCount->getType()) <
-            SE->getTypeSizeInBits(NewBECount->getType()))
+        SE->getTypeSizeInBits(NewBECount->getType()))
       NewBECount =
           SE->getTruncateOrNoop(NewBECount, BackedgeTakenCount->getType());
     else

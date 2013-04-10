@@ -39,6 +39,7 @@ class ScopLibExporter : public ScopPass {
   Scop *S;
 
   std::string getFileName(Scop *S) const;
+
 public:
   static char ID;
   explicit ScopLibExporter() : ScopPass(ID) {}

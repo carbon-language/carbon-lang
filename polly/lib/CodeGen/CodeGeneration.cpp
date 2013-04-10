@@ -88,6 +88,7 @@ class ClastExpCodeGen {
   Value *codegen(const clast_term *e, Type *Ty);
   Value *codegen(const clast_binary *e, Type *Ty);
   Value *codegen(const clast_reduction *r, Type *Ty);
+
 public:
 
   // A generator for clast expressions.
@@ -261,10 +262,10 @@ private:
 
   void codegen(const clast_assignment *a);
 
-  void codegen(const clast_assignment *a, ScopStmt *Statement,
-               unsigned Dimension, int vectorDim,
-               std::vector<ValueMapT> *VectorVMap = 0,
-               std::vector<LoopToScevMapT> *VLTS = 0);
+  void
+  codegen(const clast_assignment *a, ScopStmt *Statement, unsigned Dimension,
+          int vectorDim, std::vector<ValueMapT> *VectorVMap = 0,
+          std::vector<LoopToScevMapT> *VLTS = 0);
 
   void codegenSubstitutions(const clast_stmt *Assignment, ScopStmt *Statement,
                             int vectorDim = 0,
@@ -421,9 +422,9 @@ extractPartialSchedule(ScopStmt *Statement, isl_set *Domain) {
                              UnscheduledDimensions);
 }
 
-void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
-                               std::vector<Value *> *IVS, const char *iterator,
-                               isl_set *Domain) {
+void
+ClastStmtCodeGen::codegen(const clast_user_stmt *u, std::vector<Value *> *IVS,
+                          const char *iterator, isl_set *Domain) {
   ScopStmt *Statement = (ScopStmt *)u->statement->usr;
 
   if (u->substitutions)
@@ -488,6 +489,7 @@ void ClastStmtCodeGen::codegenForSequential(const clast_for *f) {
 // clast. Scalar parameters are scalar variables defined outside of the SCoP.
 class ParameterVisitor : public ClastVisitor {
   std::set<Value *> Values;
+
 public:
   ParameterVisitor() : ClastVisitor(), Values() {}
 
@@ -545,8 +547,8 @@ SetVector<Value *> ClastStmtCodeGen::getOMPValues(const clast_stmt *Body) {
   return Values;
 }
 
-void ClastStmtCodeGen::updateWithValueMap(
-    OMPGenerator::ValueToValueMapTy &VMap) {
+void
+ClastStmtCodeGen::updateWithValueMap(OMPGenerator::ValueToValueMapTy &VMap) {
   std::set<Value *> Inserted;
 
   for (CharMapT::iterator I = ClastVars.begin(), E = ClastVars.end(); I != E;
@@ -986,8 +988,8 @@ public:
 
     Region &R = S.getRegion();
 
-    assert (!R.isTopLevelRegion() && "Top level regions are not supported");
-    assert (R.getEnteringBlock() && "Only support regions with a single entry");
+    assert(!R.isTopLevelRegion() && "Top level regions are not supported");
+    assert(R.getEnteringBlock() && "Only support regions with a single entry");
 
     if (!R.getExitingBlock()) {
       BasicBlock *newExit = createSingleExitEdge(&R, this);

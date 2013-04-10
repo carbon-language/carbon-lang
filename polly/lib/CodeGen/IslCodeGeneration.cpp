@@ -698,8 +698,8 @@ void IslNodeBuilder::createUserVector(
   isl_ast_node_free(User);
 }
 
-void IslNodeBuilder::createForVector(__isl_take isl_ast_node *For,
-                                     int VectorWidth) {
+void
+IslNodeBuilder::createForVector(__isl_take isl_ast_node *For, int VectorWidth) {
   isl_ast_node *Body = isl_ast_node_for_get_body(For);
   isl_ast_expr *Init = isl_ast_node_for_get_init(For);
   isl_ast_expr *Inc = isl_ast_node_for_get_inc(For);
@@ -1028,8 +1028,8 @@ public:
 
     Region &R = S.getRegion();
 
-    assert (!R.isTopLevelRegion() && "Top level regions are not supported");
-    assert (R.getEnteringBlock() && "Only support regions with a single entry");
+    assert(!R.isTopLevelRegion() && "Top level regions are not supported");
+    assert(R.getEnteringBlock() && "Only support regions with a single entry");
 
     if (!R.getExitingBlock()) {
       BasicBlock *newExit = createSingleExitEdge(&R, this);

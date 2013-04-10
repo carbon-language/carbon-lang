@@ -66,8 +66,8 @@ void DeadCodeElim::getAnalysisUsage(AnalysisUsage &AU) const {
 Pass *polly::createDeadCodeElimPass() { return new DeadCodeElim(); }
 
 INITIALIZE_PASS_BEGIN(DeadCodeElim, "polly-dce",
-                      "Polly - Remove dead iterations", false, false);
-INITIALIZE_PASS_DEPENDENCY(Dependences);
-INITIALIZE_PASS_DEPENDENCY(ScopInfo);
+                      "Polly - Remove dead iterations", false, false)
+INITIALIZE_PASS_DEPENDENCY(Dependences)
+INITIALIZE_PASS_DEPENDENCY(ScopInfo)
 INITIALIZE_PASS_END(DeadCodeElim, "polly-dce", "Polly - Remove dead iterations",
                     false, false)

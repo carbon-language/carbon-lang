@@ -130,14 +130,14 @@ private:
                                       Value *Size);
   void createCallSetKernelParameters(Value *Kernel, Value *BlockWidth,
                                      Value *BlockHeight, Value *DeviceData);
-  void createCallLaunchKernel(Value *Kernel, Value *GridWidth,
-                              Value *GridHeight);
+  void
+  createCallLaunchKernel(Value *Kernel, Value *GridWidth, Value *GridHeight);
   void createCallStartTimerByCudaEvent(Value *StartEvent, Value *StopEvent);
   void createCallStopTimerByCudaEvent(Value *StartEvent, Value *StopEvent,
                                       Value *Timer);
-  void createCallCleanupGPGPUResources(Value *HostData, Value *DeviceData,
-                                       Value *Module, Value *Context,
-                                       Value *Kernel);
+  void
+  createCallCleanupGPGPUResources(Value *HostData, Value *DeviceData,
+                                  Value *Module, Value *Context, Value *Kernel);
 
   /// @brief Create the CUDA subfunction.
   ///

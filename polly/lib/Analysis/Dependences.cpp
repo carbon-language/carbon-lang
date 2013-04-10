@@ -50,9 +50,9 @@ ValueDependences("polly-value-dependences",
 //===----------------------------------------------------------------------===//
 Dependences::Dependences() : ScopPass(ID) { RAW = WAR = WAW = NULL; }
 
-void Dependences::collectInfo(Scop &S, isl_union_map **Read,
-                              isl_union_map **Write, isl_union_map **MayWrite,
-                              isl_union_map **Schedule) {
+void
+Dependences::collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
+                         isl_union_map **MayWrite, isl_union_map **Schedule) {
   isl_space *Space = S.getParamSpace();
   *Read = isl_union_map_empty(isl_space_copy(Space));
   *Write = isl_union_map_empty(isl_space_copy(Space));

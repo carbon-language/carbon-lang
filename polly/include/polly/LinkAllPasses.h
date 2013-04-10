@@ -1,4 +1,4 @@
-//===- polly/LinkAllPasses.h ------------ Reference All Passes ---*- C++ -*-===//
+//===- polly/LinkAllPasses.h ----------- Reference All Passes ---*- C++ -*-===//
 //
 //                      The LLVM Compiler Infrastructure
 //

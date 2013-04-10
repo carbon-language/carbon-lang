@@ -179,7 +179,7 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
     Value *New = GlobalMap[Old];
 
     if (Old->getType()->getScalarSizeInBits() <
-            New->getType()->getScalarSizeInBits())
+        New->getType()->getScalarSizeInBits())
       New = Builder.CreateTruncOrBitCast(New, Old->getType());
 
     return New;
@@ -338,9 +338,9 @@ BlockGenerator::generateScalarStore(const StoreInst *Store, ValueMapT &BBMap,
   return Builder.CreateStore(ValueOperand, NewPointer);
 }
 
-void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
-                                     ValueMapT &GlobalMap,
-                                     LoopToScevMapT &LTS) {
+void
+BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
+                                ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
   // Terminator instructions control the control flow. They are explicitly
   // expressed in the clast and do not need to be copied.
   if (Inst->isTerminator())

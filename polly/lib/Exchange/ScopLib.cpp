@@ -694,7 +694,7 @@ StatementToIslMapTy *readScattering(Scop *S, scoplib_scop_p OScop) {
   ScopStmt *pollyStmt = *S->begin();
 
   if (stmt->schedule->NbColumns ==
-          2 + pollyStmt->getNumParams() + pollyStmt->getNumIterators()) {
+      2 + pollyStmt->getNumParams() + pollyStmt->getNumIterators()) {
     numScatteringDims = maxScattering(stmt);
   }
 
