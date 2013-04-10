@@ -1225,7 +1225,6 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
     Disp = NewDisp;
   }
 
-  StringRef SymName;
   int BaseReg = SM.getBaseReg();
   int IndexReg = SM.getIndexReg();
 
