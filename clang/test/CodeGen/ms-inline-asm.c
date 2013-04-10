@@ -402,6 +402,9 @@ void t35() {
 void t36() {
   int arr[4];
   __asm mov eax, 4[arr]
+  __asm mov eax, [arr + 4]
+  __asm mov eax, [4 + arr]
+  __asm mov eax, [4 + arr + 4]
 // CHECK: t36
 // CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $$4$0", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"([4 x i32]* %arr)
 }
