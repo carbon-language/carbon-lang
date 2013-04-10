@@ -4,7 +4,7 @@
 
 // This checks that the frontend will accept inline asm operand modifiers
 
-#include "stdio.h"
+int printf(const char*, ...);
 
   // CHECK: %{{[0-9]+}} = call i32 asm ".set noreorder;\0Alw    $0,$1;\0A.set reorder;\0A", "=r,*m"(i32* getelementptr inbounds ([8 x i32]* @b, i32 {{[0-9]+}}, i32 {{[0-9]+}})) #2, !srcloc !0
   // CHECK: %{{[0-9]+}} = call i32 asm "lw    $0,${1:D};\0A", "=r,*m"(i32* getelementptr inbounds ([8 x i32]* @b, i32 {{[0-9]+}}, i32 {{[0-9]+}})) #2, !srcloc !1
