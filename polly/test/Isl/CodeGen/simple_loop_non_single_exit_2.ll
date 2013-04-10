@@ -1,7 +1,5 @@
-; RUN: opt %loadPolly -polly-detect -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-region-simplify -polly-detect -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect -polly-codegen-scev -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-region-simplify -polly-detect -polly-codegen-scev -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen-isl -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen-isl -S < %s | FileCheck %s -check-prefix=CHECK-CODE
 
 ; void f(long A[], long N) {
 ;   long i;
@@ -35,4 +33,6 @@ return:
   ret void
 }
 
-; CHECK: Valid Region for Scop: next => return
+; CHECK: Create LLVM-IR from SCoPs' for region: 'for.i => return'
+; CHECK-CODE: polly.split_new_and_old
+; CHECK-CODE: polly.merge_new_and_old

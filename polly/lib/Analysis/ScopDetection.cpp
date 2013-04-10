@@ -554,9 +554,9 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
   if (R.getEntry() == &(R.getEntry()->getParent()->getEntryBlock()))
     INVALID(Other, "Region containing entry block of function is invalid!");
 
-  // Only a simple region is allowed.
-  if (!R.isSimple())
-    INVALID(SimpleRegion, "Region not simple: " << R.getNameStr());
+  // Only regions that have a single entry are allowed.
+  if (!R.getEnteringBlock())
+    INVALID(SimpleRegion, "Region has multiple entries: " << R.getNameStr());
 
   if (!isValidExit(Context))
     return false;

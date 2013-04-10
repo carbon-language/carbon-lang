@@ -34,6 +34,7 @@
 #include "polly/CodeGen/PTXGenerator.h"
 #include "polly/CodeGen/Utils.h"
 #include "polly/Support/GICHelper.h"
+#include "polly/Support/ScopHelper.h"
 
 #include "llvm/IR/Module.h"
 #include "llvm/ADT/SetVector.h"
@@ -983,7 +984,16 @@ public:
   bool runOnScop(Scop &S) {
     ParallelLoops.clear();
 
-    assert(S.getRegion().isSimple() && "Only simple regions are supported");
+    Region &R = S.getRegion();
+
+    assert (!R.isTopLevelRegion() && "Top level regions are not supported");
+    assert (R.getEnteringBlock() && "Only support regions with a single entry");
+
+    if (!R.getExitingBlock()) {
+      BasicBlock *newExit = createSingleExitEdge(&R, this);
+      for (Region::const_iterator RI = R.begin(), RE = R.end(); RI != RE; ++RI)
+        (*RI)->replaceExitRecursive(newExit);
+    }
 
     BasicBlock *StartBlock = executeScopConditionally(S, this);
 

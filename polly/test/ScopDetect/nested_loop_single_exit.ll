@@ -1,12 +1,12 @@
 ; RUN: opt %loadPolly -polly-detect -analyze < %s | FileCheck %s
 ; RUN: opt %loadPolly -polly-region-simplify -polly-detect -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect -polly-codegen-scev -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-region-simplify -polly-detect -polly-codegen-scev -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect -polly-codegen-isl -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-region-simplify -polly-detect -polly-codegen-isl -analyze < %s | FileCheck %s
 
 ; void f(long A[], long N) {
-;   long i;
+;   long i, j;
 ;   if (true)
-;     if (true)
+;     for (j = 0; j < N; ++j)
 ;       for (i = 0; i < N; ++i)
 ;         A[i] = i;
 ; }
@@ -17,18 +17,27 @@ target triple = "x86_64-unknown-linux-gnu"
 define void @f(i64* %A, i64 %N) nounwind {
 entry:
   fence seq_cst
-  br i1 true, label %next, label %return
+  br label %next
 
 next:
-  br i1 true, label %for.i, label %return
+  br i1 true, label %for.j, label %return
+
+for.j:
+  %j.015 = phi i64 [ %inc5, %for.inc8 ], [ 0, %next ]
+  br label %for.i
 
 for.i:
-  %indvar = phi i64 [ 0, %next], [ %indvar.next, %for.i ]
+  %indvar = phi i64 [ 0, %for.j], [ %indvar.next, %for.i ]
   %scevgep = getelementptr i64* %A, i64 %indvar
   store i64 %indvar, i64* %scevgep
   %indvar.next = add nsw i64 %indvar, 1
   %exitcond = icmp eq i64 %indvar.next, %N
-  br i1 %exitcond, label %return, label %for.i
+  br i1 %exitcond, label %for.inc8, label %for.i
+
+for.inc8:                                         ; preds = %for.body3
+  %inc5 = add nsw i64 %j.015, 1
+  %exitcond16 = icmp eq i64 %inc5, %N
+  br i1 %exitcond16, label %return, label %for.j
 
 return:
   fence seq_cst
