@@ -128,4 +128,4 @@ D: IndVar Simplify, Loop Strength Reduction, Instruction Scheduling
 
 N: Bill Wendling
 E: wendling@apple.com
-D: libLTO & IR Linker
+D: libLTO, IR Linker, and Release Manager
