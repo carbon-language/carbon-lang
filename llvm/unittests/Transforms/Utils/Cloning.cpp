@@ -7,12 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/IR/Instructions.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/Constant.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -141,6 +144,30 @@ TEST_F(CloneInstruction, Exact) {
 
   SDiv->setIsExact(true);
   EXPECT_TRUE(this->clone(SDiv)->isExact());
+}
+
+TEST_F(CloneInstruction, Attributes) {
+  Type *ArgTy1[] = { Type::getInt32PtrTy(context) };
+  FunctionType *FT1 =  FunctionType::get(Type::getVoidTy(context), ArgTy1, false);
+
+  Function *F1 = Function::Create(FT1, Function::ExternalLinkage);
+  BasicBlock *BB = BasicBlock::Create(context, "", F1);
+  IRBuilder<> Builder(BB);
+  Builder.CreateRetVoid();
+
+  Function *F2 = Function::Create(FT1, Function::ExternalLinkage);
+
+  Attribute::AttrKind AK[] = { Attribute::NoCapture };
+  AttributeSet AS = AttributeSet::get(context, 0, AK);
+  Argument *A = F1->arg_begin();
+  A->addAttr(AS);
+
+  SmallVector<ReturnInst*, 4> Returns;
+  ValueToValueMapTy VMap;
+  VMap[A] = UndefValue::get(A->getType());
+
+  CloneFunctionInto(F2, F1, VMap, false, Returns);
+  EXPECT_FALSE(F2->arg_begin()->hasNoCaptureAttr());
 }
 
 }

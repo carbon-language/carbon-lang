@@ -87,29 +87,26 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
     assert(VMap.count(I) && "No mapping from source argument specified!");
 #endif
 
-  // Clone any attributes.
-  if (NewFunc->arg_size() == OldFunc->arg_size())
-    NewFunc->copyAttributesFrom(OldFunc);
-  else {
-    //Some arguments were deleted with the VMap. Copy arguments one by one
-    for (Function::const_arg_iterator I = OldFunc->arg_begin(), 
-           E = OldFunc->arg_end(); I != E; ++I)
-      if (Argument* Anew = dyn_cast<Argument>(VMap[I])) {
-        AttributeSet attrs = OldFunc->getAttributes()
-          .getParamAttributes(I->getArgNo() + 1);
-        if (attrs.getNumSlots() > 0)
-          Anew->addAttr(attrs);
-      }
-    NewFunc->setAttributes(NewFunc->getAttributes()
-                           .addAttributes(NewFunc->getContext(),
-                                          AttributeSet::ReturnIndex,
-                                          OldFunc->getAttributes()));
-    NewFunc->setAttributes(NewFunc->getAttributes()
-                           .addAttributes(NewFunc->getContext(),
-                                          AttributeSet::FunctionIndex,
-                                          OldFunc->getAttributes()));
+  AttributeSet OldAttrs = OldFunc->getAttributes();
+  // Clone any argument attributes that are present in the VMap.
+  for (Function::const_arg_iterator I = OldFunc->arg_begin(),
+                                    E = OldFunc->arg_end();
+       I != E; ++I)
+    if (Argument *Anew = dyn_cast<Argument>(VMap[I])) {
+      AttributeSet attrs =
+          OldAttrs.getParamAttributes(I->getArgNo() + 1);
+      if (attrs.getNumSlots() > 0)
+        Anew->addAttr(attrs);
+    }
 
-  }
+  NewFunc->setAttributes(NewFunc->getAttributes()
+                         .addAttributes(NewFunc->getContext(),
+                                        AttributeSet::ReturnIndex,
+                                        OldAttrs.getRetAttributes()));
+  NewFunc->setAttributes(NewFunc->getAttributes()
+                         .addAttributes(NewFunc->getContext(),
+                                        AttributeSet::FunctionIndex,
+                                        OldAttrs.getFnAttributes()));
 
   // Loop over all of the basic blocks in the function, cloning them as
   // appropriate.  Note that we save BE this way in order to handle cloning of
