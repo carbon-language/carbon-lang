@@ -1983,7 +1983,26 @@ void testCustomReturnsNotRetained() {
   CFRelease(getCustom()); // expected-warning {{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
 }
 
-
+//===----------------------------------------------------------------------===//
+// Don't print variables which are out of the current scope.
+//===----------------------------------------------------------------------===//
+@interface MyObj12706177 : NSObject
+-(id)initX;
++(void)test12706177;
+@end
+static int Cond;
+@implementation MyObj12706177
+-(id)initX {
+  if (Cond)
+    return 0;
+  self = [super init];
+  return self;
+}
++(void)test12706177 {
+  id x = [[MyObj12706177 alloc] initX]; //expected-warning {{Potential leak of an object}}
+  [x release]; 
+}
+@end
 // CHECK:  <key>diagnostics</key>
 // CHECK-NEXT:  <array>
 // CHECK-NEXT:   <dict>

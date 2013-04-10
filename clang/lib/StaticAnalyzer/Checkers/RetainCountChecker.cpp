@@ -2150,7 +2150,14 @@ GetAllocationSite(ProgramStateManager& StateMgr, const ExplodedNode *N,
 
     StoreManager::FindUniqueBinding FB(Sym);
     StateMgr.iterBindings(St, FB);
-    if (FB) FirstBinding = FB.getRegion();
+    if (FB) {
+      const MemRegion *R = FB.getRegion();
+      const VarRegion *VR = R->getAs<VarRegion>();
+      // Do not show local variables belonging to a function other than
+      // where the error is reported.
+      if (!VR || VR->getStackFrame() == LeakContext->getCurrentStackFrame())
+          FirstBinding = R;
+    }
 
     // Allocation node, is the last node in the current context in which the
     // symbol was tracked.
