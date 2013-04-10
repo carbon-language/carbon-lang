@@ -67,6 +67,13 @@ private:
     case AMDGPU::TEX_SAMPLE_C_G:
     case AMDGPU::TXD:
     case AMDGPU::TXD_SHADOW:
+    case AMDGPU::VTX_READ_GLOBAL_8_eg:
+    case AMDGPU::VTX_READ_GLOBAL_32_eg:
+    case AMDGPU::VTX_READ_GLOBAL_128_eg:
+    case AMDGPU::VTX_READ_PARAM_8_eg:
+    case AMDGPU::VTX_READ_PARAM_16_eg:
+    case AMDGPU::VTX_READ_PARAM_32_eg:
+    case AMDGPU::VTX_READ_PARAM_128_eg:
      return true;
     default:
       return false;
@@ -207,6 +214,8 @@ public:
         case AMDGPU::EG_ExportSwz:
         case AMDGPU::R600_ExportBuf:
         case AMDGPU::R600_ExportSwz:
+        case AMDGPU::RAT_WRITE_CACHELESS_32_eg:
+        case AMDGPU::RAT_WRITE_CACHELESS_128_eg:
           DEBUG(dbgs() << CfCount << ":"; MI->dump(););
           CfCount++;
           break;
@@ -215,7 +224,7 @@ public:
           MaxStack = std::max(MaxStack, CurrentStack);
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
               getHWInstrDesc(CF_WHILE_LOOP))
-              .addImm(2);
+              .addImm(1);
           std::pair<unsigned, std::set<MachineInstr *> > Pair(CfCount,
               std::set<MachineInstr *>());
           Pair.second.insert(MIb);
