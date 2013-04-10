@@ -149,6 +149,37 @@ void display(__node* x, int indent = 0)
 
 #endif
 
+class __block_invoke
+    : public __node
+{
+    static const ptrdiff_t n = sizeof("invocation function for block in ") - 1;
+public:
+    __block_invoke(__node* type)
+    {
+        __right_ = type;
+    }
+
+    virtual size_t first_size() const
+    {
+        if (__cached_size_ == -1)
+            const_cast<long&>(__cached_size_) = n + static_cast<long>(__right_->size());
+        return static_cast<size_t>(__cached_size_);
+    }
+    virtual char* first_demangled_name(char* buf) const
+    {
+        strncpy(buf, "invocation function for block in ", n);
+        return __right_->get_demangled_name(buf+n);
+    }
+    virtual __node* base_name() const
+    {
+        return __right_->base_name();
+    }
+    virtual bool fix_forward_references(__node** t_begin, __node** t_end)
+    {
+        return __right_->fix_forward_references(t_begin, t_end);
+    }
+};
+
 class __vtable
     : public __node
 {
@@ -10836,6 +10867,41 @@ __demangle_tree::__parse_dot_suffix(const char* first, const char* last)
     return first;
 }
 
+// _block_invoke
+// _block_invoke<decimal-digit>+
+// _block_invoke_<decimal-digit>+
+
+const char*
+__demangle_tree::__parse_block_invoke(const char* first, const char* last)
+{
+    if (last - first >= 13)
+    {
+        const char test[] = "_block_invoke";
+        const char* t = first;
+        for (int i = 0; i < 13; ++i, ++t)
+        {
+            if (*t != test[i])
+                return first;
+        }
+        if (t != last)
+        {
+            if (*t == '_')
+            {
+                // must have at least 1 decimal digit
+                if (++t == last || !isdigit(*t))
+                    return first;
+                ++t;
+            }
+            // parse zero or more digits
+            while (t != last && isdigit(*t))
+                ++t;
+        }
+        if (__make<__block_invoke>(__root_))
+            first = t;
+    }
+    return first;
+}
+
 // <encoding> ::= <function name> <bare-function-type>
 //            ::= <data name>
 //            ::= <special-name>
@@ -10896,6 +10962,9 @@ __demangle_tree::__parse_encoding(const char* first, const char* last)
     return first;
 }
 
+// <block-involcaton-function> ___Z<encoding>_block_invoke
+// <block-involcaton-function> ___Z<encoding>_block_invoke<decimal-digit>+
+// <block-involcaton-function> ___Z<encoding>_block_invoke_<decimal-digit>+
 // <mangled-name> ::= _Z<encoding>
 //                ::= <type>
 
@@ -10915,6 +10984,18 @@ __demangle_tree::__parse()
         t = __parse_encoding(__mangled_name_begin_+2, __mangled_name_end_);
         if (t != __mangled_name_begin_+2 && t != __mangled_name_end_ && *t == '.')
             t = __parse_dot_suffix(t, __mangled_name_end_);
+    }
+    else if (__mangled_name_end_ - __mangled_name_begin_ >= 4 &&
+                         __mangled_name_begin_[0] == '_' &&
+                         __mangled_name_begin_[1] == '_' &&
+                         __mangled_name_begin_[2] == '_' &&
+                         __mangled_name_begin_[3] == 'Z')
+    {
+        t = __parse_encoding(__mangled_name_begin_+4, __mangled_name_end_);
+        if (t != __mangled_name_begin_+4 && t != __mangled_name_end_)
+            t = __parse_block_invoke(t, __mangled_name_end_);
+        else
+            t = __mangled_name_begin_;
     }
     else
         t = __parse_type(__mangled_name_begin_, __mangled_name_end_);
