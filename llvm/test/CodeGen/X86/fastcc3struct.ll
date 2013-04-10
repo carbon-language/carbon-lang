@@ -1,7 +1,8 @@
 ; RUN: llc < %s -march=x86 -o %t
-; RUN: grep "movl	.48, %ecx" %t
-; RUN: grep "movl	.24, %edx" %t
-; RUN: grep "movl	.12, %eax" %t
+; RUN: FileCheck %s -input-file %t
+; CHECK: movl {{.}}12, %eax
+; CHECK: movl {{.}}24, %edx
+; CHECK: movl {{.}}48, %ecx
 
 %0 = type { i32, i32, i32 }
 

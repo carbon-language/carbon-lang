@@ -1,4 +1,5 @@
-; RUN: llc -O0 -relocation-model=pic < %s | not grep call
+; RUN: llc -O0 -relocation-model=pic < %s | FileCheck %s
+; CHECK-NOT: call
 ; rdar://8396318
 
 ; Don't emit a PIC base register if no addresses are needed.

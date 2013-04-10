@@ -1,5 +1,8 @@
 ; RUN: llc < %s -fast-isel -fast-isel-abort -mtriple=x86_64-apple-darwin10 | FileCheck %s
-; RUN: llc < %s -fast-isel -march=x86 -mattr=+sse2 | grep xor | count 2
+; RUN: llc < %s -fast-isel -march=x86 -mattr=+sse2 | FileCheck --check-prefix=SSE2 %s
+
+; SSE2: xor
+; SSE2: xor
 
 ; CHECK: doo:
 ; CHECK: xor

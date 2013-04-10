@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=x86 -tailcallopt=false | grep ret | not grep 4
+; RUN: llc < %s -march=x86 -tailcallopt=false | FileCheck %s
+; CHECK: ret{{[^4]*$}}
 
 	%struct.foo = type { [4 x i32] }
 

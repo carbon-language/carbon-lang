@@ -1,4 +1,5 @@
-; RUN: llc < %s -fast-isel -tailcallopt -march=x86 | not grep add
+; RUN: llc < %s -fast-isel -tailcallopt -march=x86 | FileCheck %s
+; CHECK-NOT: add
 ; PR4154
 
 ; On x86, -tailcallopt changes the ABI so the caller shouldn't readjust

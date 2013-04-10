@@ -1,4 +1,7 @@
-; RUN: llc < %s -tailcallopt=false | grep "movl[[:space:]]*8(%esp), %eax" | count 2
+; RUN: llc < %s -tailcallopt=false | FileCheck %s
+; CHECK: movl 8(%esp), %eax 
+; CHECK: movl 8(%esp), %eax 
+
 ; PR3122
 ; rdar://6400815
 
