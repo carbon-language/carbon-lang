@@ -169,36 +169,6 @@ void t17() {
 // CHECK:  call void asm sideeffect inteldialect ".byte 0x4B", "~{dirflag},~{fpsr},~{flags}"()
 }
 
-struct t18_type { int a, b; };
-
-int t18() {
-  struct t18_type foo;
-  foo.a = 1;
-  foo.b = 2;
-  __asm {
-     lea ebx, foo
-     mov eax, [ebx].0
-     mov [ebx].4, ecx
-  }
-  return foo.b;
-// CHECK: t18
-// CHECK: call void asm sideeffect inteldialect "lea ebx, qword ptr foo\0A\09mov eax, [ebx].0\0A\09mov [ebx].4, ecx", "~{eax},~{dirflag},~{fpsr},~{flags}"()
-}
-
-int t19() {
-  struct t18_type foo;
-  foo.a = 1;
-  foo.b = 2;
-  __asm {
-     lea ebx, foo
-     mov eax, [ebx].foo.a
-     mov [ebx].foo.b, ecx
-  }
-  return foo.b;
-// CHECK: t19
-// CHECK: call void asm sideeffect inteldialect "lea ebx, qword ptr foo\0A\09mov eax, [ebx].0\0A\09mov [ebx].4, ecx", "~{eax},~{dirflag},~{fpsr},~{flags}"()
-}
-
 void t20() {
   char bar;
   int foo;
