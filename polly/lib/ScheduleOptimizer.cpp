@@ -537,8 +537,21 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
     isl_union_map *StmtBand;
     StmtBand = isl_union_map_intersect_domain(isl_union_map_copy(ScheduleMap),
                                               isl_union_set_from_set(Domain));
-    isl_map *StmtSchedule;
+    isl_map *StmtSchedule = NULL;
     isl_union_map_foreach_map(StmtBand, getSingleMap, &StmtSchedule);
+
+    // Statements with an empty iteration domain may not have a schedule
+    // assigned by the isl schedule optimizer. As Polly expects each statement
+    // to have a schedule, we keep the old schedule for this statement. As
+    // there are zero iterations to execute, the content of the schedule does
+    // not matter.
+    //
+    // TODO: Consider removing such statements when constructing the scop.
+    if (!StmtSchedule) {
+      StmtSchedule = Stmt->getScattering();
+      StmtSchedule = isl_map_set_tuple_id(StmtSchedule, isl_dim_out, NULL);
+    }
+
     Stmt->setScattering(StmtSchedule);
     isl_union_map_free(StmtBand);
   }
