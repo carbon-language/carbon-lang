@@ -1127,7 +1127,8 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
 
   // Try to handle '[' 'Symbol' ']'
   if (getLexer().is(AsmToken::Identifier)) {
-    if (ParseRegister(TmpReg, Start, End)) {
+    SMLoc Loc = Tok.getLoc();
+    if (ParseRegister(TmpReg, Loc, End)) {
       const MCExpr *Disp;
       SMLoc IdentStart = Tok.getLoc();
       if (getParser().parseExpression(Disp, End))
@@ -1137,7 +1138,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
         return Err;
 
       if (getLexer().isNot(AsmToken::RBrac))
-        return ErrorOperand(Parser.getTok().getLoc(), "Expected ']' token!");
+        return ErrorOperand(Tok.getLoc(), "Expected ']' token!");
 
       unsigned Len = Tok.getLoc().getPointer() - IdentStart.getPointer();
       StringRef SymName(IdentStart.getPointer(), Len);
@@ -1178,7 +1179,8 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
     }
     case AsmToken::Identifier: {
       // This could be a register or a displacement expression.
-      if(!ParseRegister(TmpReg, Start, End)) {
+      SMLoc Loc = Tok.getLoc();
+      if(!ParseRegister(TmpReg, Loc, End)) {
         SM.onRegister(TmpReg);
         UpdateLocLex = false;
         break;
@@ -1220,7 +1222,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
     if (ParseIntelDotOperator(Disp, &NewDisp, Err))
       return ErrorOperand(Tok.getLoc(), Err);
     
-    End = Parser.getTok().getEndLoc();
+    End = Tok.getEndLoc();
     Parser.Lex();  // Eat the field.
     Disp = NewDisp;
   }
@@ -1297,11 +1299,10 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg,
 
   // Parse ImmDisp [ BaseReg + Scale*IndexReg + Disp ].
   if (getLexer().is(AsmToken::Integer)) {
-    const AsmToken &IntTok = Parser.getTok();
     if (isParsingInlineAsm())
       InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_ImmPrefix,
-                                                  IntTok.getLoc()));
-    uint64_t ImmDisp = IntTok.getIntVal();
+                                                  Tok.getLoc()));
+    uint64_t ImmDisp = Tok.getIntVal();
     Parser.Lex(); // Eat the integer.
     if (getLexer().isNot(AsmToken::LBrac))
       return ErrorOperand(Start, "Expected '[' token!");
@@ -1341,7 +1342,7 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg,
 bool X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp,
                                          const MCExpr **NewDisp,
                                          SmallString<64> &Err) {
-  AsmToken Tok = *&Parser.getTok();
+  const AsmToken &Tok = Parser.getTok();
   uint64_t OrigDispVal, DotDispVal;
 
   // FIXME: Handle non-constant expressions.
@@ -1468,8 +1469,9 @@ X86Operand *X86AsmParser::ParseIntelOperator(unsigned OpKind) {
 }
 
 X86Operand *X86AsmParser::ParseIntelOperand() {
-  SMLoc Start = Parser.getTok().getLoc(), End;
-  StringRef AsmTokStr = Parser.getTok().getString();
+  const AsmToken &Tok = Parser.getTok();
+  SMLoc Start = Tok.getLoc(), End;
+  StringRef AsmTokStr = Tok.getString();
 
   // Offset, length, type and size operators.
   if (isParsingInlineAsm()) {
@@ -1497,7 +1499,7 @@ X86Operand *X86AsmParser::ParseIntelOperand() {
 
       // Only positive immediates are valid.
       if (!isInteger) {
-        Error(Parser.getTok().getLoc(), "expected a positive immediate "
+        Error(Tok.getLoc(), "expected a positive immediate "
               "displacement before bracketed expr.");
         return 0;
       }
