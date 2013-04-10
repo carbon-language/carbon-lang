@@ -46,7 +46,7 @@ BasicBlock *polly::executeScopConditionally(Scop &S, Pass *PassInfo) {
     SplitBlock = OldBlock;
     OldBlock->setName("polly.split");
     NewBlock->setName(OldName);
-    R.replaceEntry(NewBlock);
+    R.replaceEntryRecursive(NewBlock);
     RI.setRegionFor(NewBlock, &R);
   } else {
     RI.setRegionFor(NewBlock, R.getParent());
@@ -72,7 +72,8 @@ BasicBlock *polly::executeScopConditionally(Scop &S, Pass *PassInfo) {
     MergeBlock = SplitEdge(R.getExitingBlock(), R.getExit(), PassInfo);
     // SplitEdge will never split R.getExit(), as R.getExit() has more than
     // one predecessor. Hence, mergeBlock is always a newly generated block.
-    R.replaceExit(MergeBlock);
+    R.replaceExitRecursive(MergeBlock);
+    RI.setRegionFor(MergeBlock, &R);
   }
 
   Builder.CreateBr(MergeBlock);
