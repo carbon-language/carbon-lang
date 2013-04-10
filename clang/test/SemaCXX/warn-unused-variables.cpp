@@ -41,15 +41,6 @@ void test_dependent_init(T *p) {
   (void)i;
 }
 
-namespace PR6948 {
-  template<typename T> class X; // expected-note{{template is declared here}}
-  
-  void f() {
-    X<char> str (read_from_file()); // expected-error{{use of undeclared identifier 'read_from_file'}} \
-                                       expected-error{{implicit instantiation of undefined template 'PR6948::X<char>'}}
-  }
-}
-
 void unused_local_static() {
   static int x = 0;
   static int y = 0; // expected-warning{{unused variable 'y'}}
@@ -135,3 +126,5 @@ namespace ctor_with_cleanups {
     S2 s((S1()));
   }
 }
+
+#include "Inputs/warn-unused-variables.h"
