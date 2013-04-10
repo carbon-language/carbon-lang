@@ -1,21 +1,21 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
 
-;CHECK: IMAGE_SAMPLE
-;CHECK: IMAGE_SAMPLE
-;CHECK: IMAGE_SAMPLE
-;CHECK: IMAGE_SAMPLE
-;CHECK: IMAGE_SAMPLE
-;CHECK: IMAGE_SAMPLE_C
-;CHECK: IMAGE_SAMPLE_C
-;CHECK: IMAGE_SAMPLE_C
-;CHECK: IMAGE_SAMPLE
-;CHECK: IMAGE_SAMPLE
-;CHECK: IMAGE_SAMPLE_C
-;CHECK: IMAGE_SAMPLE_C
-;CHECK: IMAGE_SAMPLE_C
-;CHECK: IMAGE_SAMPLE
-;CHECK: IMAGE_SAMPLE
-;CHECK: IMAGE_SAMPLE
+;CHECK: IMAGE_SAMPLE {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 15
+;CHECK: IMAGE_SAMPLE {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 3
+;CHECK: IMAGE_SAMPLE {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 2
+;CHECK: IMAGE_SAMPLE {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 1
+;CHECK: IMAGE_SAMPLE {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 4
+;CHECK: IMAGE_SAMPLE {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 8
+;CHECK: IMAGE_SAMPLE_C {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 5
+;CHECK: IMAGE_SAMPLE_C {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 9
+;CHECK: IMAGE_SAMPLE_C {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 6
+;CHECK: IMAGE_SAMPLE {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 10
+;CHECK: IMAGE_SAMPLE {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 12
+;CHECK: IMAGE_SAMPLE_C {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 7
+;CHECK: IMAGE_SAMPLE_C {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 11
+;CHECK: IMAGE_SAMPLE_C {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 13
+;CHECK: IMAGE_SAMPLE {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 14
+;CHECK: IMAGE_SAMPLE {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 8
 
 define void @test(i32 %a1, i32 %a2, i32 %a3, i32 %a4) {
    %v1 = insertelement <4 x i32> undef, i32 %a1, i32 0
@@ -67,21 +67,55 @@ define void @test(i32 %a1, i32 %a2, i32 %a3, i32 %a4) {
    %res16 = call <4 x float> @llvm.SI.sample.(<4 x i32> %v16,
       <8 x i32> undef, <4 x i32> undef, i32 16)
    %e1 = extractelement <4 x float> %res1, i32 0
-   %e2 = extractelement <4 x float> %res2, i32 0
-   %e3 = extractelement <4 x float> %res3, i32 0
-   %e4 = extractelement <4 x float> %res4, i32 0
-   %e5 = extractelement <4 x float> %res5, i32 0
-   %e6 = extractelement <4 x float> %res6, i32 0
-   %e7 = extractelement <4 x float> %res7, i32 0
-   %e8 = extractelement <4 x float> %res8, i32 0
-   %e9 = extractelement <4 x float> %res9, i32 0
-   %e10 = extractelement <4 x float> %res10, i32 0
-   %e11 = extractelement <4 x float> %res11, i32 0
-   %e12 = extractelement <4 x float> %res12, i32 0
-   %e13 = extractelement <4 x float> %res13, i32 0
-   %e14 = extractelement <4 x float> %res14, i32 0
-   %e15 = extractelement <4 x float> %res15, i32 0
-   %e16 = extractelement <4 x float> %res16, i32 0
+   %e2 = extractelement <4 x float> %res2, i32 1
+   %e3 = extractelement <4 x float> %res3, i32 2
+   %e4 = extractelement <4 x float> %res4, i32 3
+   %t0 = extractelement <4 x float> %res5, i32 0
+   %t1 = extractelement <4 x float> %res5, i32 1
+   %e5 = fadd float %t0, %t1
+   %t2 = extractelement <4 x float> %res6, i32 0
+   %t3 = extractelement <4 x float> %res6, i32 2
+   %e6 = fadd float %t2, %t3
+   %t4 = extractelement <4 x float> %res7, i32 0
+   %t5 = extractelement <4 x float> %res7, i32 3
+   %e7 = fadd float %t4, %t5
+   %t6 = extractelement <4 x float> %res8, i32 1
+   %t7 = extractelement <4 x float> %res8, i32 2
+   %e8 = fadd float %t6, %t7
+   %t8 = extractelement <4 x float> %res9, i32 1
+   %t9 = extractelement <4 x float> %res9, i32 3
+   %e9 = fadd float %t8, %t9
+   %t10 = extractelement <4 x float> %res10, i32 2
+   %t11 = extractelement <4 x float> %res10, i32 3
+   %e10 = fadd float %t10, %t11
+   %t12 = extractelement <4 x float> %res11, i32 0
+   %t13 = extractelement <4 x float> %res11, i32 1
+   %t14 = extractelement <4 x float> %res11, i32 2
+   %t15 = fadd float %t12, %t13
+   %e11 = fadd float %t14, %t15
+   %t16 = extractelement <4 x float> %res12, i32 0
+   %t17 = extractelement <4 x float> %res12, i32 1
+   %t18 = extractelement <4 x float> %res12, i32 3
+   %t19 = fadd float %t16, %t17
+   %e12 = fadd float %t18, %t19
+   %t20 = extractelement <4 x float> %res13, i32 0
+   %t21 = extractelement <4 x float> %res13, i32 2
+   %t22 = extractelement <4 x float> %res13, i32 3
+   %t23 = fadd float %t20, %t21
+   %e13 = fadd float %t22, %t23
+   %t24 = extractelement <4 x float> %res14, i32 1
+   %t25 = extractelement <4 x float> %res14, i32 2
+   %t26 = extractelement <4 x float> %res14, i32 3
+   %t27 = fadd float %t24, %t25
+   %e14 = fadd float %t26, %t27
+   %t28 = extractelement <4 x float> %res15, i32 0
+   %t29 = extractelement <4 x float> %res15, i32 1
+   %t30 = extractelement <4 x float> %res15, i32 2
+   %t31 = extractelement <4 x float> %res15, i32 3
+   %t32 = fadd float %t28, %t29
+   %t33 = fadd float %t30, %t31
+   %e15 = fadd float %t32, %t33
+   %e16 = extractelement <4 x float> %res16, i32 3
    %s1 = fadd float %e1, %e2
    %s2 = fadd float %s1, %e3
    %s3 = fadd float %s2, %e4

@@ -379,4 +379,12 @@ def getCommuteOrig : InstrMapping {
   let ValueCols = [["1"]];
 }
 
+def isMIMG : InstrMapping {
+  let FilterClass = "MIMG_Load_Helper";
+  let RowFields = ["Inst"];
+  let ColFields = ["Size"];
+  let KeyCol = ["8"];
+  let ValueCols = [["8"]];
+}
+
 include "SIInstructions.td"

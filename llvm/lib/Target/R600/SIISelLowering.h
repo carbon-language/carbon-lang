@@ -34,6 +34,9 @@ class SITargetLowering : public AMDGPUTargetLowering {
   void ensureSRegLimit(SelectionDAG &DAG, SDValue &Operand, 
                        unsigned RegClass, bool &ScalarSlotUsed) const;
 
+  SDNode *foldOperands(MachineSDNode *N, SelectionDAG &DAG) const;
+  void adjustWritemask(MachineSDNode *&N, SelectionDAG &DAG) const;
+
 public:
   SITargetLowering(TargetMachine &tm);
 

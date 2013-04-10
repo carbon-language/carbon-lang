@@ -80,6 +80,7 @@ namespace AMDGPU {
   int getVOPe64(uint16_t Opcode);
   int getCommuteRev(uint16_t Opcode);
   int getCommuteOrig(uint16_t Opcode);
+  int isMIMG(uint16_t Opcode);
 
 } // End namespace AMDGPU
 
