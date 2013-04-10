@@ -50,24 +50,26 @@ class PassConfigImpl;
 ///
 /// AnalysisID is sadly char*, so PointerIntPair won't work.
 class IdentifyingPassPtr {
-  void *P;
+  union {
+    AnalysisID ID;
+    Pass *P;
+  };
   bool IsInstance;
 public:
-  IdentifyingPassPtr(): P(0), IsInstance(false) {}
-  IdentifyingPassPtr(AnalysisID IDPtr): P((void*)IDPtr), IsInstance(false) {}
-  IdentifyingPassPtr(Pass *InstancePtr)
-    : P((void*)InstancePtr), IsInstance(true) {}
+  IdentifyingPassPtr() : P(0), IsInstance(false) {}
+  IdentifyingPassPtr(AnalysisID IDPtr) : ID(IDPtr), IsInstance(false) {}
+  IdentifyingPassPtr(Pass *InstancePtr) : P(InstancePtr), IsInstance(true) {}
 
   bool isValid() const { return P; }
   bool isInstance() const { return IsInstance; }
 
   AnalysisID getID() const {
     assert(!IsInstance && "Not a Pass ID");
-    return (AnalysisID)P;
+    return ID;
   }
   Pass *getInstance() const {
     assert(IsInstance && "Not a Pass Instance");
-    return (Pass *)P;
+    return P;
   }
 };
 
