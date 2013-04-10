@@ -882,6 +882,10 @@ bool PPCInstrInfo::isPredicated(const MachineInstr *MI) const {
   default:
     return false;
   case PPC::BCC:
+  case PPC::BCCTR:
+  case PPC::BCCTR8:
+  case PPC::BCCTRL:
+  case PPC::BCCTRL8:
   case PPC::BCLR:
   case PPC::BDZLR:
   case PPC::BDZLR8:
@@ -937,6 +941,19 @@ bool PPCInstrInfo::PredicateInstruction(
         .addMBB(MBB);
     }
 
+    return true;
+  } else if (OpC == PPC::BCTR  || OpC == PPC::BCTR8 ||
+             OpC == PPC::BCTRL || OpC == PPC::BCTRL8) {
+    if (Pred[1].getReg() == PPC::CTR8 || Pred[1].getReg() == PPC::CTR)
+      llvm_unreachable("Cannot predicate bctr[l] on the ctr register");
+
+    bool setLR = OpC == PPC::BCTRL || OpC == PPC::BCTRL8;
+    bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+    MI->setDesc(get(isPPC64 ? (setLR ? PPC::BCCTRL8 : PPC::BCCTR8) :
+                              (setLR ? PPC::BCCTRL  : PPC::BCCTR)));
+    MachineInstrBuilder(*MI->getParent()->getParent(), MI)
+      .addImm(Pred[0].getImm())
+      .addReg(Pred[1].getReg());
     return true;
   }
 
@@ -1009,6 +1026,10 @@ bool PPCInstrInfo::isPredicable(MachineInstr *MI) const {
     return false;
   case PPC::B:
   case PPC::BLR:
+  case PPC::BCTR:
+  case PPC::BCTR8:
+  case PPC::BCTRL:
+  case PPC::BCTRL8:
     return true;
   }
 }

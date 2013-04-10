@@ -493,8 +493,12 @@ let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
   let isReturn = 1, Uses = [LR, RM] in
     def BLR : XLForm_2_ext<19, 16, 20, 0, 0, (outs), (ins), "blr", BrB,
                            [(retflag)]>;
-  let isBranch = 1, isIndirectBranch = 1, Uses = [CTR] in
+  let isBranch = 1, isIndirectBranch = 1, Uses = [CTR] in {
     def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>;
+
+    def BCCTR : XLForm_2_br<19, 528, 0, (outs), (ins pred:$cond),
+                            "b${cond:cc}ctr ${cond:reg}", BrB, []>;
+  }
 }
 
 let Defs = [LR] in
@@ -555,6 +559,8 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
     def BCTRL : XLForm_2_ext<19, 528, 20, 0, 1, (outs), (ins),
                              "bctrl", BrB, [(PPCbctrl)]>,
                 Requires<[In32BitMode]>;
+    def BCCTRL : XLForm_2_br<19, 528, 1, (outs), (ins pred:$cond),
+                             "b${cond:cc}ctrl ${cond:reg}", BrB, []>;
   }
 }
 

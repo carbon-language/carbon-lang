@@ -67,9 +67,14 @@ def HI48_64 : SDNodeXForm<imm, [{
 //
 
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
-  let isBranch = 1, isIndirectBranch = 1, Uses = [CTR8] in
+  let isBranch = 1, isIndirectBranch = 1, Uses = [CTR8] in {
     def BCTR8 : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>,
         Requires<[In64BitMode]>;
+
+    def BCCTR8 : XLForm_2_br<19, 528, 0, (outs), (ins pred:$cond),
+                             "b${cond:cc}ctr ${cond:reg}", BrB, []>,
+        Requires<[In64BitMode]>;
+  }
 }
 
 let Defs = [LR8] in
@@ -125,6 +130,9 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
     def BCTRL8 : XLForm_2_ext<19, 528, 20, 0, 1, (outs), (ins),
                               "bctrl", BrB, [(PPCbctrl)]>,
                  Requires<[In64BitMode]>;
+    def BCCTRL8 : XLForm_2_br<19, 528, 1, (outs), (ins pred:$cond),
+                              "b${cond:cc}ctrl ${cond:reg}", BrB, []>,
+        Requires<[In64BitMode]>;
   }
 }
 
