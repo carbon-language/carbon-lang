@@ -1,3 +1,5 @@
+; REQUIRES: object-emission
+
 ; RUN: llc -filetype=obj -O0 < %s > %t
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 

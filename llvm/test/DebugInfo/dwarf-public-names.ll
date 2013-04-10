@@ -1,6 +1,7 @@
+; REQUIRES: object-emission
+
 ; RUN: llc -generate-dwarf-pubnames -filetype=obj -o %t.o < %s
 ; RUN: llvm-dwarfdump -debug-dump=pubnames %t.o | FileCheck %s
-; XFAIL: hexagon
 ; ModuleID = 'dwarf-public-names.cpp'
 ;
 ; Generated from:
