@@ -127,8 +127,8 @@ MachOObjectFileBase::getSymbolTableEntryBase(DataRefImpl DRI,
   unsigned Index = DRI.d.b;
 
   unsigned SymbolTableEntrySize = is64Bit() ?
-    sizeof(MachOFormat::SymbolTableEntry<true>) :
-    sizeof(MachOFormat::SymbolTableEntry<false>);
+    sizeof(MachOObjectFile<true>::SymbolTableEntry) :
+    sizeof(MachOObjectFile<false>::SymbolTableEntry);
 
   uint64_t Offset = SymbolTableOffset + Index * SymbolTableEntrySize;
   StringRef Data = getData(Offset, SymbolTableEntrySize);
@@ -314,10 +314,10 @@ MachOObjectFileBase::getSectionBase(DataRefImpl DRI) const {
 
   bool Is64 = is64Bit();
   unsigned SegmentLoadSize =
-    Is64 ? sizeof(MachOFormat::SegmentLoadCommand<true>) :
-           sizeof(MachOFormat::SegmentLoadCommand<false>);
-  unsigned SectionSize = Is64 ? sizeof(MachOFormat::Section<true>) :
-                                sizeof(MachOFormat::Section<false>);
+    Is64 ? sizeof(MachOObjectFile<true>::SegmentLoadCommand) :
+           sizeof(MachOObjectFile<false>::SegmentLoadCommand);
+  unsigned SectionSize = Is64 ? sizeof(MachOObjectFile<true>::Section) :
+                                sizeof(MachOObjectFile<false>::Section);
 
   uintptr_t SectionAddr = CommandAddr + SegmentLoadSize + DRI.d.b * SectionSize;
   return reinterpret_cast<const SectionBase*>(SectionAddr);

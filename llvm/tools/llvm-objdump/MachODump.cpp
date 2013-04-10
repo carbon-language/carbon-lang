@@ -199,7 +199,7 @@ static void emitDOTFile(const char *FileName, const MCFunction &f,
   Out << "}\n";
 }
 
-static void getSectionsAndSymbols(const MachOFormat::Header *Header,
+static void getSectionsAndSymbols(const MachOObjectFileBase::Header *Header,
                                   MachOObjectFileBase *MachOObj,
                                   std::vector<SectionRef> &Sections,
                                   std::vector<SymbolRef> &Symbols,
@@ -218,12 +218,13 @@ static void getSectionsAndSymbols(const MachOFormat::Header *Header,
   }
 
   for (unsigned i = 0; i != Header->NumLoadCommands; ++i) {
-    const MachOFormat::LoadCommand *Command = MachOObj->getLoadCommandInfo(i);
+    const MachOObjectFileBase::LoadCommand *Command =
+      MachOObj->getLoadCommandInfo(i);
     if (Command->Type == macho::LCT_FunctionStarts) {
       // We found a function starts segment, parse the addresses for later
       // consumption.
-      const MachOFormat::LinkeditDataLoadCommand *LLC =
-        reinterpret_cast<const MachOFormat::LinkeditDataLoadCommand*>(Command);
+      const MachOObjectFileBase::LinkeditDataLoadCommand *LLC =
+ reinterpret_cast<const MachOObjectFileBase::LinkeditDataLoadCommand*>(Command);
 
       MachOObj->ReadULEB128s(LLC->DataOffset, FoundFns);
     }
@@ -269,7 +270,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
 
   outs() << '\n' << Filename << ":\n\n";
 
-  const MachOFormat::Header *Header = MachOOF->getHeader();
+  const MachOObjectFileBase::Header *Header = MachOOF->getHeader();
 
   std::vector<SectionRef> Sections;
   std::vector<SymbolRef> Symbols;
