@@ -46,9 +46,14 @@ protected:
   unsigned FDEEncoding;
   unsigned FDECFIEncoding;
   unsigned TTypeEncoding;
-  // Section flags for eh_frame
+
+  /// Section flags for eh_frame
   unsigned EHSectionType;
   unsigned EHSectionFlags;
+
+  /// CompactUnwindDwarfEHFrameOnly - Compact unwind encoding indicating that we
+  /// should emit only an EH frame.
+  unsigned CompactUnwindDwarfEHFrameOnly;
 
   /// TextSection - Section directive for standard text.
   ///
@@ -200,6 +205,10 @@ public:
     return CFI ? FDECFIEncoding : FDEEncoding;
   }
   unsigned getTTypeEncoding() const { return TTypeEncoding; }
+
+  unsigned getCompactUnwindDwarfEHFrameOnly() const {
+    return CompactUnwindDwarfEHFrameOnly;
+  }
 
   const MCSection *getTextSection() const { return TextSection; }
   const MCSection *getDataSection() const { return DataSection; }

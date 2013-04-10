@@ -1168,10 +1168,10 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   //   .quad except_tab1
 
   uint32_t Encoding = Frame.CompactUnwindEncoding;
-  if (!Encoding) return false;
+  bool DwarfEHFrameOnly = (Encoding == MOFI->getCompactUnwindDwarfEHFrameOnly());
 
   // The encoding needs to know we have an LSDA.
-  if (Frame.Lsda)
+  if (!DwarfEHFrameOnly && Frame.Lsda)
     Encoding |= 0x40000000;
 
   Streamer.SwitchSection(MOFI->getCompactUnwindSection());
@@ -1194,11 +1194,10 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
                                       Twine::utohexstr(Encoding));
   Streamer.EmitIntValue(Encoding, Size);
 
-
   // Personality Function
   Size = getSizeForEncoding(Streamer, dwarf::DW_EH_PE_absptr);
   if (VerboseAsm) Streamer.AddComment("Personality Function");
-  if (Frame.Personality)
+  if (!DwarfEHFrameOnly && Frame.Personality)
     Streamer.EmitSymbolValue(Frame.Personality, Size);
   else
     Streamer.EmitIntValue(0, Size); // No personality fn
@@ -1206,7 +1205,7 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   // LSDA
   Size = getSizeForEncoding(Streamer, Frame.LsdaEncoding);
   if (VerboseAsm) Streamer.AddComment("LSDA");
-  if (Frame.Lsda)
+  if (!DwarfEHFrameOnly && Frame.Lsda)
     Streamer.EmitSymbolValue(Frame.Lsda, Size);
   else
     Streamer.EmitIntValue(0, Size); // No LSDA

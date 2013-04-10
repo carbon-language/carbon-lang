@@ -145,11 +145,15 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
   LSDASection = Ctx->getMachOSection("__TEXT", "__gcc_except_tab", 0,
                                      SectionKind::getReadOnlyWithRel());
 
-  if (T.isMacOSX() && !T.isMacOSXVersionLT(10, 6))
+  if (T.isMacOSX() && !T.isMacOSXVersionLT(10, 6)) {
     CompactUnwindSection =
       Ctx->getMachOSection("__LD", "__compact_unwind",
                            MCSectionMachO::S_ATTR_DEBUG,
                            SectionKind::getReadOnly());
+
+    if (T.getArch() == Triple::x86_64 || T.getArch() == Triple::x86)
+      CompactUnwindDwarfEHFrameOnly = 0x04000000;
+  }
 
   // Debug Information.
   DwarfAccelNamesSection =
@@ -628,6 +632,8 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
 
   PersonalityEncoding = LSDAEncoding = FDEEncoding = FDECFIEncoding =
     TTypeEncoding = dwarf::DW_EH_PE_absptr;
+
+  CompactUnwindDwarfEHFrameOnly = 0;
 
   EHFrameSection = 0;             // Created on demand.
   CompactUnwindSection = 0;       // Used only by selected targets.
