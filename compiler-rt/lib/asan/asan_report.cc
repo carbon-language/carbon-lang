@@ -128,8 +128,8 @@ static void PrintLegend() {
     PrintShadowByte("", i, " ");
   Printf("\n");
   PrintShadowByte("  Heap left redzone:     ", kAsanHeapLeftRedzoneMagic);
-  PrintShadowByte("  Heap righ redzone:     ", kAsanHeapRightRedzoneMagic);
-  PrintShadowByte("  Freed Heap region:     ", kAsanHeapFreeMagic);
+  PrintShadowByte("  Heap right redzone:    ", kAsanHeapRightRedzoneMagic);
+  PrintShadowByte("  Freed heap region:     ", kAsanHeapFreeMagic);
   PrintShadowByte("  Stack left redzone:    ", kAsanStackLeftRedzoneMagic);
   PrintShadowByte("  Stack mid redzone:     ", kAsanStackMidRedzoneMagic);
   PrintShadowByte("  Stack right redzone:   ", kAsanStackRightRedzoneMagic);
