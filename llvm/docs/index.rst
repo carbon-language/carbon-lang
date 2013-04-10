@@ -160,6 +160,7 @@ For developers of applications which use LLVM as a library.
    ExtendingLLVM
    HowToSetUpLLVMStyleRTTI
    ProgrammersManual
+   Extensions
 
 :doc:`LLVM Language Reference Manual <LangRef>`
   Defines the LLVM intermediate representation and the assembly form of the
@@ -171,6 +172,9 @@ For developers of applications which use LLVM as a library.
 :doc:`ProgrammersManual`
   Introduction to the general layout of the LLVM sourcebase, important classes
   and APIs, and some tips & tricks.
+
+:doc:`Extensions`
+  LLVM-specific extensions to tools and formats LLVM seeks compatibility with.
 
 :doc:`CommandLine`
   Provides information on using the command line parsing library.

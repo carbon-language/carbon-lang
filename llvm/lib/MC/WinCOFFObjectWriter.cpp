@@ -689,13 +689,8 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   ++Reloc.Symb->Relocations;
 
   Reloc.Data.VirtualAddress += Fixup.getOffset();
-
-  unsigned FixupKind = Fixup.getKind();
-
-  if (CrossSection)
-    FixupKind = FK_PCRel_4;
-
-  Reloc.Data.Type = TargetObjectWriter->getRelocType(FixupKind);
+  Reloc.Data.Type = TargetObjectWriter->getRelocType(Target, Fixup,
+                                                     CrossSection);
 
   // FIXME: Can anyone explain what this does other than adjust for the size
   // of the offset?

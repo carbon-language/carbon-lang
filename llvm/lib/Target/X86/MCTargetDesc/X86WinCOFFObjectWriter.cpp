@@ -9,6 +9,8 @@
 
 #include "MCTargetDesc/X86FixupKinds.h"
 #include "MCTargetDesc/X86MCTargetDesc.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/MC/MCWinCOFFObjectWriter.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -27,7 +29,9 @@ namespace {
     X86WinCOFFObjectWriter(bool Is64Bit_);
     ~X86WinCOFFObjectWriter();
 
-    virtual unsigned getRelocType(unsigned FixupKind) const;
+    virtual unsigned getRelocType(const MCValue &Target,
+                                  const MCFixup &Fixup,
+                                  bool IsCrossSection) const LLVM_OVERRIDE;
   };
 }
 
@@ -38,7 +42,14 @@ X86WinCOFFObjectWriter::X86WinCOFFObjectWriter(bool Is64Bit_)
 
 X86WinCOFFObjectWriter::~X86WinCOFFObjectWriter() {}
 
-unsigned X86WinCOFFObjectWriter::getRelocType(unsigned FixupKind) const {
+unsigned X86WinCOFFObjectWriter::getRelocType(const MCValue &Target,
+                                              const MCFixup &Fixup,
+                                              bool IsCrossSection) const {
+  unsigned FixupKind = IsCrossSection ? FK_PCRel_4 : Fixup.getKind();
+
+  MCSymbolRefExpr::VariantKind Modifier = Target.isAbsolute() ?
+    MCSymbolRefExpr::VK_None : Target.getSymA()->getKind();
+
   switch (FixupKind) {
   case FK_PCRel_4:
   case X86::reloc_riprel_4byte:
@@ -46,6 +57,9 @@ unsigned X86WinCOFFObjectWriter::getRelocType(unsigned FixupKind) const {
     return Is64Bit ? COFF::IMAGE_REL_AMD64_REL32 : COFF::IMAGE_REL_I386_REL32;
   case FK_Data_4:
   case X86::reloc_signed_4byte:
+    if (Modifier == MCSymbolRefExpr::VK_COFF_IMGREL32)
+      return Is64Bit ? COFF::IMAGE_REL_AMD64_ADDR32NB :
+                       COFF::IMAGE_REL_I386_DIR32NB;
     return Is64Bit ? COFF::IMAGE_REL_AMD64_ADDR32 : COFF::IMAGE_REL_I386_DIR32;
   case FK_Data_8:
     if (Is64Bit)
