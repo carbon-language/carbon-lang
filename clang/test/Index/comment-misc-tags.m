@@ -46,3 +46,28 @@
 // CHECK:       (CXComment_BlockCommand CommandName=[seealso]
 // CHECK-NEXT:     (CXComment_Paragraph
 // CHECK-NEXT:     (CXComment_Text Text=[ //k_ref/doc/uid/XX30000905-CH204 Programming] HasTrailingNewline)
+
+// rdar://12379053
+/*!
+\arg \c AlignLeft left alignment.
+\li \c AlignRight right alignment.
+
+  No other types of alignment are supported.
+*/
+struct S {
+  int AlignLeft;
+  int AlignRight;
+};
+
+// CHECK:       (CXComment_BlockCommand CommandName=[arg]
+// CHECK-NEXT:    (CXComment_Paragraph
+// CHECK-NEXT:    (CXComment_Text Text=[ ] IsWhitespace)
+// CHECK-NEXT:    (CXComment_InlineCommand CommandName=[c] RenderMonospaced Arg[0]=AlignLeft)
+// CHECK-NEXT:    (CXComment_Text Text=[ left alignment.] HasTrailingNewline)))
+// CHECK:       (CXComment_BlockCommand CommandName=[li]
+// CHECK-NEXT:    (CXComment_Paragraph
+// CHECK-NEXT:    (CXComment_Text Text=[ ] IsWhitespace)
+// CHECK-NEXT:    (CXComment_InlineCommand CommandName=[c] RenderMonospaced Arg[0]=AlignRight)
+// CHECK-NEXT:    (CXComment_Text Text=[ right alignment.])))
+// CHECK:       (CXComment_Paragraph
+// CHECK-NEXT:    (CXComment_Text Text=[  No other types of alignment are supported.]))
