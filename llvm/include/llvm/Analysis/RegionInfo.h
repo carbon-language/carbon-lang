@@ -266,6 +266,24 @@ public:
   /// @param BB  The new exit basic block of the region.
   void replaceExit(BasicBlock *BB);
 
+  /// @brief Recursively replace the entry basic block of the region.
+  ///
+  /// This function replaces the entry basic block with a new basic block. It
+  /// also updates all child regions that have the same entry basic block as
+  /// this region.
+  ///
+  /// @param NewEntry The new entry basic block.
+  void replaceEntryRecursive(BasicBlock *NewEntry);
+
+  /// @brief Recursively replace the exit basic block of the region.
+  ///
+  /// This function replaces the exit basic block with a new basic block. It
+  /// also updates all child regions that have the same exit basic block as
+  /// this region.
+  ///
+  /// @param NewExit The new exit basic block.
+  void replaceExitRecursive(BasicBlock *NewExit);
+
   /// @brief Get the exit BasicBlock of the Region.
   /// @return The exit BasicBlock of the Region, NULL if this is the TopLevel
   ///         Region.

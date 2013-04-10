@@ -79,6 +79,38 @@ void Region::replaceExit(BasicBlock *BB) {
   exit = BB;
 }
 
+void Region::replaceEntryRecursive(BasicBlock *NewEntry) {
+  std::vector<Region *> RegionQueue;
+  BasicBlock *OldEntry = getEntry();
+
+  RegionQueue.push_back(this);
+  while (!RegionQueue.empty()) {
+    Region *R = RegionQueue.back();
+    RegionQueue.pop_back();
+
+    R->replaceEntry(NewEntry);
+    for (Region::const_iterator RI = R->begin(), RE = R->end(); RI != RE; ++RI)
+      if ((*RI)->getEntry() == OldEntry)
+        RegionQueue.push_back(*RI);
+  }
+}
+
+void Region::replaceExitRecursive(BasicBlock *NewExit) {
+  std::vector<Region *> RegionQueue;
+  BasicBlock *OldExit = getExit();
+
+  RegionQueue.push_back(this);
+  while (!RegionQueue.empty()) {
+    Region *R = RegionQueue.back();
+    RegionQueue.pop_back();
+
+    R->replaceExit(NewExit);
+    for (Region::const_iterator RI = R->begin(), RE = R->end(); RI != RE; ++RI)
+      if ((*RI)->getExit() == OldExit)
+        RegionQueue.push_back(*RI);
+  }
+}
+
 bool Region::contains(const BasicBlock *B) const {
   BasicBlock *BB = const_cast<BasicBlock*>(B);
 
