@@ -3734,5 +3734,19 @@ TEST_F(FormatTest, DoNotBreakStringLiteralsInEscapeSequence) {
             format("R\"(\\x\\x00)\"\n", getLLVMStyleWithColumns(7)));
 }
 
+TEST_F(FormatTest, DoNotCreateUnreasonableUnwrappedLines) {
+  verifyFormat("void f() {\n"
+               "  return g() {}\n"
+               "  void h() {}");
+  verifyFormat("if (foo)\n"
+               "  return { forgot_closing_brace();\n"
+               "test();");
+  verifyFormat("int a[] = { void forgot_closing_brace()\n"
+               "{\n"
+               "  f();\n"
+               "  g();\n"
+               "}");
+}
+
 } // end namespace tooling
 } // end namespace clang

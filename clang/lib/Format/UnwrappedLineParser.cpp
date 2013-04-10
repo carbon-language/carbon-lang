@@ -440,16 +440,36 @@ void UnwrappedLineParser::parseStructuralElement() {
 void UnwrappedLineParser::parseBracedList() {
   nextToken();
 
+  // FIXME: Once we have an expression parser in the UnwrappedLineParser,
+  // replace this by using parseAssigmentExpression() inside.
+  bool StartOfExpression = true;
   do {
+    // FIXME: When we start to support lambdas, we'll want to parse them away
+    // here, otherwise our bail-out scenarios below break. The better solution
+    // might be to just implement a more or less complete expression parser.
     switch (FormatTok.Tok.getKind()) {
     case tok::l_brace:
+      if (!StartOfExpression) {
+        // Probably a missing closing brace. Bail out.
+        addUnwrappedLine();
+        return;
+      }
       parseBracedList();
+      StartOfExpression = false;
       break;
     case tok::r_brace:
       nextToken();
       return;
+    case tok::semi:
+      // Probably a missing closing brace. Bail out.
+      return;
+    case tok::comma:
+      nextToken();
+      StartOfExpression = true;
+      break;
     default:
       nextToken();
+      StartOfExpression = false;
       break;
     }
   } while (!eof());
@@ -462,6 +482,11 @@ void UnwrappedLineParser::parseReturn() {
     switch (FormatTok.Tok.getKind()) {
     case tok::l_brace:
       parseBracedList();
+      if (FormatTok.Tok.isNot(tok::semi)) {
+        // Assume missing ';'.
+        addUnwrappedLine();
+        return;
+      }
       break;
     case tok::l_paren:
       parseParens();
