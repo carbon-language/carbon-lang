@@ -83,8 +83,7 @@ static unsigned getOptimizationLevel(ArgList &Args, InputKind IK,
   return DefaultOpt;
 }
 
-static unsigned getOptimizationLevelSize(ArgList &Args, InputKind IK,
-                                         DiagnosticsEngine &Diags) {
+static unsigned getOptimizationLevelSize(ArgList &Args) {
   if (Arg *A = Args.getLastArg(options::OPT_O_Group)) {
     if (A->getOption().matches(options::OPT_O)) {
       switch (A->getValue()[0]) {
@@ -341,7 +340,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.MergeAllConstants = !Args.hasArg(OPT_fno_merge_all_constants);
   Opts.NoCommon = Args.hasArg(OPT_fno_common);
   Opts.NoImplicitFloat = Args.hasArg(OPT_no_implicit_float);
-  Opts.OptimizeSize = getOptimizationLevelSize(Args, IK, Diags);
+  Opts.OptimizeSize = getOptimizationLevelSize(Args);
   Opts.SimplifyLibCalls = !(Args.hasArg(OPT_fno_builtin) ||
                             Args.hasArg(OPT_ffreestanding));
   Opts.UnrollLoops = Args.hasArg(OPT_funroll_loops) ||
@@ -1304,7 +1303,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
 
   // FIXME: Eliminate this dependency.
   unsigned Opt = getOptimizationLevel(Args, IK, Diags),
-       OptSize = getOptimizationLevelSize(Args, IK, Diags);
+       OptSize = getOptimizationLevelSize(Args);
   Opts.Optimize = Opt != 0;
   Opts.OptimizeSize = OptSize != 0;
 
