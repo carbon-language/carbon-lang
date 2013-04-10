@@ -147,7 +147,7 @@ class MallocChecker : public Checker<check::DeadSymbols,
                                      check::PointerEscape,
                                      check::ConstPointerEscape,
                                      check::PreStmt<ReturnStmt>,
-                                     check::PreStmt<CallExpr>,
+                                     check::PreCall,
                                      check::PostStmt<CallExpr>,
                                      check::PostStmt<CXXNewExpr>,
                                      check::PreStmt<CXXDeleteExpr>,
@@ -181,7 +181,7 @@ public:
 
   ChecksFilter Filter;
 
-  void checkPreStmt(const CallExpr *S, CheckerContext &C) const;
+  void checkPreCall(const CallEvent &Call, CheckerContext &C) const;
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
   void checkPostStmt(const CXXNewExpr *NE, CheckerContext &C) const;
   void checkPreStmt(const CXXDeleteExpr *DE, CheckerContext &C) const;
@@ -1671,26 +1671,39 @@ void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   C.addTransition(state->set<RegionState>(RS), N);
 }
 
-void MallocChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
+void MallocChecker::checkPreCall(const CallEvent &Call,
+                                 CheckerContext &C) const {
+
   // We will check for double free in the post visit.
-  if ((Filter.CMallocOptimistic || Filter.CMallocPessimistic) &&
-      isFreeFunction(C.getCalleeDecl(CE), C.getASTContext()))
-    return;
+  if (const AnyFunctionCall *FC = dyn_cast<AnyFunctionCall>(&Call)) {
+    const FunctionDecl *FD = FC->getDecl();
+    if (!FD)
+      return;
 
-  if (Filter.CNewDeleteChecker &&
-      isStandardNewDelete(C.getCalleeDecl(CE), C.getASTContext()))
-    return;
+    if ((Filter.CMallocOptimistic || Filter.CMallocPessimistic) &&
+        isFreeFunction(FD, C.getASTContext()))
+      return;
 
-  // Check use after free, when a freed pointer is passed to a call.
-  ProgramStateRef State = C.getState();
-  for (CallExpr::const_arg_iterator I = CE->arg_begin(),
-                                    E = CE->arg_end(); I != E; ++I) {
-    const Expr *A = *I;
-    if (A->getType().getTypePtr()->isAnyPointerType()) {
-      SymbolRef Sym = C.getSVal(A).getAsSymbol();
+    if (Filter.CNewDeleteChecker &&
+        isStandardNewDelete(FD, C.getASTContext()))
+      return;
+  }
+
+  // Check if the callee of a method is deleted.
+  if (const CXXInstanceCall *CC = dyn_cast<CXXInstanceCall>(&Call)) {
+    SymbolRef Sym = CC->getCXXThisVal().getAsSymbol();
+    if (!Sym || checkUseAfterFree(Sym, C, CC->getCXXThisExpr()))
+      return;
+  }
+
+  // Check arguments for being used after free.
+  for (unsigned I = 0, E = Call.getNumArgs(); I != E; ++I) {
+    SVal ArgSVal = Call.getArgSVal(I);
+    if (ArgSVal.getAs<Loc>()) {
+      SymbolRef Sym = ArgSVal.getAsSymbol();
       if (!Sym)
         continue;
-      if (checkUseAfterFree(Sym, C, A))
+      if (checkUseAfterFree(Sym, C, Call.getArgExpr(I)))
         return;
     }
   }

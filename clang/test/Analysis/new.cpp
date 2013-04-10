@@ -8,6 +8,12 @@ extern "C" void *malloc(size_t);
 extern "C" void free(void *);
 
 int someGlobal;
+
+class SomeClass {
+public:
+  void f(int *p);
+};
+
 void testImplicitlyDeclaredGlobalNew() {
   if (someGlobal != 0)
     return;
@@ -101,6 +107,12 @@ void testCacheOut(PtrWrapper w) {
   new (&w.x) (int*)(0); // we cache out here; don't crash
 }
 
+void testUseAfter(int *p) {
+  SomeClass *c = new SomeClass;
+  free(p);
+  c->f(p); // expected-warning{{Use of memory after it is freed}}
+  delete c;
+}
 
 //--------------------------------------------------------------------
 // Check for intersection with other checkers from MallocChecker.cpp 
@@ -150,6 +162,12 @@ void testCustomPlacementNewAfterFree() {
   int *p = (int *)malloc(sizeof(int));
   free(p);
   p = new(0, p) int; // expected-warning{{Use of memory after it is freed}}
+}
+
+void testUsingThisAfterDelete() {
+  SomeClass *c = new SomeClass;
+  delete c;
+  c->f(0); // no-warning
 }
 
 //--------------------------------

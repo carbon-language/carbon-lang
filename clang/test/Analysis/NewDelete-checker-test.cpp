@@ -54,7 +54,6 @@ void testGlobalNoThrowPlacementExprNewBeforeOverload() {
 // expected-warning@-2{{Potential leak of memory pointed to by 'p'}}
 #endif
 
-
 //----- Standard pointer placement operators
 void testGlobalPointerPlacementNew() {
   int i;
@@ -91,12 +90,52 @@ void testNewInvalidationPlacement(PtrWrapper *w) {
 // other checks
 //---------------
 
-void f(int *);
+class SomeClass {
+public:
+  void f(int *p);
+};
 
-void testUseAfterDelete() {
+void f(int *p1, int *p2 = 0, int *p3 = 0);
+void g(SomeClass &c, ...);
+
+void testUseFirstArgAfterDelete() {
   int *p = new int;
   delete p;
   f(p); // expected-warning{{Use of memory after it is freed}}
+}
+
+void testUseMiddleArgAfterDelete(int *p) {
+  delete p;
+  f(0, p); // expected-warning{{Use of memory after it is freed}}
+}
+
+void testUseLastArgAfterDelete(int *p) {
+  delete p;
+  f(0, 0, p); // expected-warning{{Use of memory after it is freed}}
+}
+
+void testUseRefArgAfterDelete(SomeClass &c) {
+  delete &c;
+  g(c); // expected-warning{{Use of memory after it is freed}}
+}
+
+void testVariadicArgAfterDelete() {
+  SomeClass c;
+  int *p = new int;
+  delete p;
+  g(c, 0, p); // expected-warning{{Use of memory after it is freed}}
+}
+
+void testUseMethodArgAfterDelete(int *p) {
+  SomeClass *c = new SomeClass;
+  delete p;
+  c->f(p); // expected-warning{{Use of memory after it is freed}}
+}
+
+void testUseThisAfterDelete() {
+  SomeClass *c = new SomeClass;
+  delete c;
+  c->f(0); // expected-warning{{Use of memory after it is freed}}
 }
 
 void testDeleteAlloca() {

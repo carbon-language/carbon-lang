@@ -81,7 +81,17 @@ void testRelinquished2() {
   void *data = malloc(42);
   NSData *nsdata;
   free(data);
-  [NSData dataWithBytesNoCopy:data length:42]; // expected-warning {{Attempt to free released memory}}
+  [NSData dataWithBytesNoCopy:data length:42]; // expected-warning {{Use of memory after it is freed}}
+}
+
+@interface My
++ (void)param:(void *)p;
+@end
+
+void testUseAfterFree() {
+  int *p = (int *)malloc(sizeof(int));
+  free(p);
+  [My param:p];  // expected-warning{{Use of memory after it is freed}}
 }
 
 void testNoCopy() {
