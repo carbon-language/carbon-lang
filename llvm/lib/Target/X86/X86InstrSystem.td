@@ -515,8 +515,8 @@ let Predicates = [HasFSGSBase, In64BitMode] in {
 //===----------------------------------------------------------------------===//
 // INVPCID Instruction
 def INVPCID32 : I<0x82, MRMSrcMem, (outs), (ins GR32:$src1, i128mem:$src2),
-                "invpcid {$src2, $src1|$src1, $src2}", []>, OpSize, T8,
+                "invpcid\t{$src2, $src1|$src1, $src2}", []>, OpSize, T8,
                 Requires<[In32BitMode]>;
 def INVPCID64 : I<0x82, MRMSrcMem, (outs), (ins GR64:$src1, i128mem:$src2),
-                "invpcid {$src2, $src1|$src1, $src2}", []>, OpSize, T8,
+                "invpcid\t{$src2, $src1|$src1, $src2}", []>, OpSize, T8,
                 Requires<[In64BitMode]>;
