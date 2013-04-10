@@ -2138,10 +2138,10 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
 // treated as interesting.
 struct AllocationInfo {
   const ExplodedNode* N;
-  const MemRegion* R;
+  const MemRegion *R;
   const LocationContext *InterestingMethodContext;
-  AllocationInfo(const ExplodedNode* InN,
-                 const MemRegion* InR,
+  AllocationInfo(const ExplodedNode *InN,
+                 const MemRegion *InR,
                  const LocationContext *InInterestingMethodContext) :
     N(InN), R(InR), InterestingMethodContext(InInterestingMethodContext) {}
 };
@@ -2185,22 +2185,26 @@ GetAllocationSite(ProgramStateManager& StateMgr, const ExplodedNode *N,
     if (NContext == LeakContext)
       AllocationNodeInCurrentContext = N;
 
-    // If init was called on the given symbol, store the init method's location
-    // context.
-    if (Optional<CallEnter> CEP = N->getLocation().getAs<CallEnter>()) {
-      const Stmt *CE = CEP->getCallExpr();
-      if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(CE)) {
-        SVal RecVal = St->getSVal(ME->getInstanceReceiver(), NContext);
-        if (RecVal.getAsSymbol() == Sym && ME->getMethodFamily() == OMF_init)
-          InitMethodContext = CEP->getCalleeContext();
+    // Find the last init that was called on the given symbol and store the
+    // init method's location context.
+    if (!InitMethodContext)
+      if (Optional<CallEnter> CEP = N->getLocation().getAs<CallEnter>()) {
+        const Stmt *CE = CEP->getCallExpr();
+        if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(CE)) {
+          const Stmt *RecExpr = ME->getInstanceReceiver();
+          if (RecExpr) {
+            SVal RecV = St->getSVal(RecExpr, NContext);
+            if (ME->getMethodFamily() == OMF_init && RecV.getAsSymbol() == Sym)
+              InitMethodContext = CEP->getCalleeContext();
+          }
+        }
       }
-    }
 
     N = N->pred_empty() ? NULL : *(N->pred_begin());
   }
 
   // If we are reporting a leak of the object that was allocated with alloc,
-  // mark it's init method as interesting.
+  // mark its init method as interesting.
   const LocationContext *InterestingMethodContext = 0;
   if (InitMethodContext) {
     const ProgramPoint AllocPP = AllocationNode->getLocation();
