@@ -1003,15 +1003,20 @@ bool PPCInstrInfo::DefinesPredicate(MachineInstr *MI,
   bool Found = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    for (int c = 0; c < 2 && !Found; ++c) {
+    for (unsigned c = 0; c < array_lengthof(RCs) && !Found; ++c) {
       const TargetRegisterClass *RC = RCs[c];
-      for (TargetRegisterClass::iterator I = RC->begin(),
-           IE = RC->end(); I != IE; ++I) {
-        if ((MO.isRegMask() && MO.clobbersPhysReg(*I)) ||
-            (MO.isReg() && MO.isDef() && MO.getReg() == *I)) {
+      if (MO.isReg()) {
+        if (MO.isDef() && RC->contains(MO.getReg())) {
           Pred.push_back(MO);
           Found = true;
         }
+      } else if (MO.isRegMask()) {
+        for (TargetRegisterClass::iterator I = RC->begin(),
+             IE = RC->end(); I != IE; ++I)
+          if (MO.clobbersPhysReg(*I)) {
+            Pred.push_back(MO);
+            Found = true;
+          }
       }
     }
   }
