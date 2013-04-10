@@ -94,6 +94,7 @@ class Constants {
 int TWO_PI = 0x40c90fdb;
 int PI = 0x40490fdb;
 int TWO_PI_INV = 0x3e22f983;
+int FP_UINT_MAX_PLUS_1 = 0x4f800000;	// 1 << 32 in floating point encoding
 }
 def CONST : Constants;
 

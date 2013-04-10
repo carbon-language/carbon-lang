@@ -602,8 +602,8 @@ defm V_READFIRSTLANE_B32 : VOP1_32 <0x00000002, "V_READFIRSTLANE_B32", []>;
 defm V_CVT_F32_I32 : VOP1_32 <0x00000005, "V_CVT_F32_I32",
   [(set VReg_32:$dst, (sint_to_fp VSrc_32:$src0))]
 >;
-//defm V_CVT_F32_U32 : VOP1_32 <0x00000006, "V_CVT_F32_U32", []>;
-//defm V_CVT_U32_F32 : VOP1_32 <0x00000007, "V_CVT_U32_F32", []>;
+defm V_CVT_F32_U32 : VOP1_32 <0x00000006, "V_CVT_F32_U32", []>;
+defm V_CVT_U32_F32 : VOP1_32 <0x00000007, "V_CVT_U32_F32", []>;
 defm V_CVT_I32_F32 : VOP1_32 <0x00000008, "V_CVT_I32_F32",
   [(set (i32 VReg_32:$dst), (fp_to_sint VSrc_32:$src0))]
 >;
@@ -1512,6 +1512,14 @@ def : Pat <
 def : Pat <
   (int_SI_load_const SReg_128:$sbase, VReg_32:$voff),
   (BUFFER_LOAD_DWORD 0, 1, 0, 0, 0, 0, VReg_32:$voff, SReg_128:$sbase, 0, 0, 0)
+>;
+
+// The multiplication scales from [0,1] to the unsigned integer range
+def : Pat <
+  (AMDGPUurecip i32:$src0),
+  (V_CVT_U32_F32_e32
+    (V_MUL_F32_e32 CONST.FP_UINT_MAX_PLUS_1,
+                   (V_RCP_IFLAG_F32_e32 (V_CVT_F32_U32_e32 $src0))))
 >;
 
 /********** ================== **********/

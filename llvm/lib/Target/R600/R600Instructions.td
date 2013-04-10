@@ -1923,10 +1923,11 @@ def : COS_PAT <COS_cm>;
 defm DIV_cm : DIV_Common<RECIP_IEEE_cm>;
 
 // RECIP_UINT emulation for Cayman
+// The multiplication scales from [0,1] to the unsigned integer range
 def : Pat <
   (AMDGPUurecip R600_Reg32:$src0),
   (FLT_TO_UINT_eg (MUL_IEEE (RECIP_IEEE_cm (UINT_TO_FLT_eg R600_Reg32:$src0)),
-                            (MOV_IMM_I32 0x4f800000)))
+                            (MOV_IMM_I32 CONST.FP_UINT_MAX_PLUS_1)))
 >;
 
 
