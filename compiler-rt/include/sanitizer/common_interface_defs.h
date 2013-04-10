@@ -41,6 +41,16 @@ extern "C" {
   // the error message. This function can be overridden by the client.
   void __sanitizer_report_error_summary(const char *error_summary);
 
+  // Some of the sanitizers (e.g. asan/tsan) may miss bugs that happen
+  // in unaligned loads/stores. In order to find such bugs reliably one needs
+  // to replace plain unaligned loads/stores with these calls.
+  uint16_t __sanitizer_unaligned_load16(const void *p);
+  uint32_t __sanitizer_unaligned_load32(const void *p);
+  uint64_t __sanitizer_unaligned_load64(const void *p);
+  void __sanitizer_unaligned_store16(void *p, uint16_t x);
+  void __sanitizer_unaligned_store32(void *p, uint32_t x);
+  void __sanitizer_unaligned_store64(void *p, uint64_t x);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

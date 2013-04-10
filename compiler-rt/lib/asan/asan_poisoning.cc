@@ -169,6 +169,55 @@ uptr __asan_region_is_poisoned(uptr beg, uptr size) {
   return 0;
 }
 
+#define CHECK_SMALL_REGION(p, size, isWrite)                  \
+  do {                                                        \
+    uptr __p = reinterpret_cast<uptr>(p);                     \
+    uptr __size = size;                                       \
+    if (UNLIKELY(__asan::AddressIsPoisoned(__p) ||            \
+        __asan::AddressIsPoisoned(__p + __size - 1))) {       \
+      GET_CURRENT_PC_BP_SP;                                   \
+      uptr __bad = __asan_region_is_poisoned(__p, __size);    \
+      __asan_report_error(pc, bp, sp, __bad, isWrite, __size);\
+    }                                                         \
+  } while (false);                                            \
+
+
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+u16 __sanitizer_unaligned_load16(const u16 *p) {
+  CHECK_SMALL_REGION(p, sizeof(*p), false);
+  return *p;
+}
+
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+u32 __sanitizer_unaligned_load32(const u32 *p) {
+  CHECK_SMALL_REGION(p, sizeof(*p), false);
+  return *p;
+}
+
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+u64 __sanitizer_unaligned_load64(const u64 *p) {
+  CHECK_SMALL_REGION(p, sizeof(*p), false);
+  return *p;
+}
+
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+void __sanitizer_unaligned_store16(u16 *p, u16 x) {
+  CHECK_SMALL_REGION(p, sizeof(*p), true);
+  *p = x;
+}
+
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+void __sanitizer_unaligned_store32(u32 *p, u32 x) {
+  CHECK_SMALL_REGION(p, sizeof(*p), true);
+  *p = x;
+}
+
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+void __sanitizer_unaligned_store64(u64 *p, u64 x) {
+  CHECK_SMALL_REGION(p, sizeof(*p), true);
+  *p = x;
+}
+
 // This is a simplified version of __asan_(un)poison_memory_region, which
 // assumes that left border of region to be poisoned is properly aligned.
 static void PoisonAlignedStackMemory(uptr addr, uptr size, bool do_poison) {
