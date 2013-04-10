@@ -253,7 +253,7 @@ bool InclusionRewriter::Process(FileID FileId,
   bool Invalid;
   const MemoryBuffer &FromFile = *SM.getBuffer(FileId, &Invalid);
   if (Invalid) // invalid inclusion
-    return true;
+    return false;
   const char *FileName = FromFile.getBufferIdentifier();
   Lexer RawLex(FileId, &FromFile, PP.getSourceManager(), PP.getLangOpts());
   RawLex.SetCommentRetentionState(false);
@@ -264,7 +264,7 @@ bool InclusionRewriter::Process(FileID FileId,
   WriteLineInfo(FileName, 1, FileType, EOL, " 1");
 
   if (SM.getFileIDSize(FileId) == 0)
-    return true;
+    return false;
 
   // The next byte to be copied from the source file
   unsigned NextToWrite = 0;
@@ -292,12 +292,17 @@ bool InclusionRewriter::Process(FileID FileId,
             if (const FileChange *Change = FindFileChangeLocation(
                 HashToken.getLocation())) {
               // now include and recursively process the file
-              if (Process(Change->Id, Change->FileType))
+              if (Process(Change->Id, Change->FileType)) {
                 // and set lineinfo back to this file, if the nested one was
                 // actually included
                 // `2' indicates returning to a file (after having included
                 // another file.
                 WriteLineInfo(FileName, Line, FileType, EOL, " 2");
+              } else {
+                // fix up lineinfo (since commented out directive changed line
+                // numbers).
+                WriteLineInfo(FileName, Line, FileType, EOL);
+              }
             } else
               // fix up lineinfo (since commented out directive changed line
               // numbers) for inclusions that were skipped due to header guards
