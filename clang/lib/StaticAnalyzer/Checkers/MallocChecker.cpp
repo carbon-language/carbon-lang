@@ -1531,7 +1531,7 @@ MallocChecker::getAllocationSite(const ExplodedNode *N, SymbolRef Sym,
         if (const MemRegion *MR = C.getLocationRegionIfPostStore(N)) {
           SVal Val = State->getSVal(MR);
           if (Val.getAsLocSymbol() == Sym) {
-            const VarRegion* VR = MR->getAs<VarRegion>();
+            const VarRegion* VR = MR->getBaseRegion()->getAs<VarRegion>();
             // Do not show local variables belonging to a function other than
             // where the error is reported.
             if (!VR ||

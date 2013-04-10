@@ -2170,7 +2170,7 @@ GetAllocationSite(ProgramStateManager& StateMgr, const ExplodedNode *N,
     
     if (FB) {
       const MemRegion *R = FB.getRegion();
-      const VarRegion *VR = R->getAs<VarRegion>();
+      const VarRegion *VR = R->getBaseRegion()->getAs<VarRegion>();
       // Do not show local variables belonging to a function other than
       // where the error is reported.
       if (!VR || VR->getStackFrame() == LeakContext->getCurrentStackFrame())
