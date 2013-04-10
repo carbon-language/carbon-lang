@@ -114,6 +114,11 @@ void testUseLastArgAfterDelete(int *p) {
   f(0, 0, p); // expected-warning{{Use of memory after it is freed}}
 }
 
+void testUseSeveralArgsAfterDelete(int *p) {
+  delete p;
+  f(p, p, p); // expected-warning{{Use of memory after it is freed}}
+}
+
 void testUseRefArgAfterDelete(SomeClass &c) {
   delete &c;
   g(c); // expected-warning{{Use of memory after it is freed}}
