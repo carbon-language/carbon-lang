@@ -89,7 +89,7 @@ public:
 
   /// Returns true if this comment any kind of a documentation comment.
   bool isDocumentation() const LLVM_READONLY {
-    return !isInvalid() && (!isOrdinary() || ParseAllComments);
+    return !isInvalid() && !isOrdinary();
   }
 
   /// Returns whether we are parsing all comments.

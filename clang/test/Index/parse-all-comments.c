@@ -15,6 +15,12 @@ void notdoxy3(void);
 /** Doxygen comment.  isdoxy4 IS_DOXYGEN_SINGLE */
 void isdoxy4(void);
 
+/*! Doxygen comment.  isdoxy5 IS_DOXYGEN_SINGLE */
+void isdoxy5(void);
+
+/// Doxygen comment.  isdoxy6 IS_DOXYGEN_SINGLE
+void isdoxy6(void);
+
 /* BLOCK_ORDINARY_COMMENT */
 // ORDINARY COMMENT
 /// This is a BCPL comment. IS_DOXYGEN_START
@@ -45,4 +51,6 @@ void multi_line_comment_plus_ordinary(int);
 // CHECK: parse-all-comments.c:10:6: FunctionDecl=notdoxy2:{{.*}} notdoxy2 NOT_DOXYGEN
 // CHECK: parse-all-comments.c:13:6: FunctionDecl=notdoxy3:{{.*}} notdoxy3 NOT_DOXYGEN
 // CHECK: parse-all-comments.c:16:6: FunctionDecl=isdoxy4:{{.*}} isdoxy4 IS_DOXYGEN_SINGLE
-// CHECK: parse-all-comments.c:23:6: FunctionDecl=multi_line_comment_plus_ordinary:{{.*}} BLOCK_ORDINARY_COMMENT {{.*}} ORDINARY COMMENT {{.*}} IS_DOXYGEN_START {{.*}} IS_DOXYGEN_END
+// CHECK: parse-all-comments.c:19:6: FunctionDecl=isdoxy5:{{.*}} isdoxy5 IS_DOXYGEN_SINGLE
+// CHECK: parse-all-comments.c:22:6: FunctionDecl=isdoxy6:{{.*}} isdoxy6 IS_DOXYGEN_SINGLE
+// CHECK: parse-all-comments.c:29:6: FunctionDecl=multi_line_comment_plus_ordinary:{{.*}} BLOCK_ORDINARY_COMMENT {{.*}} ORDINARY COMMENT {{.*}} IS_DOXYGEN_START {{.*}} IS_DOXYGEN_END
