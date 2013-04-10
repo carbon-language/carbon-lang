@@ -979,18 +979,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   if ((TSFlags & X86II::FormMask) == X86II::Pseudo)
     return;
 
-  // If this is a two-address instruction, skip one of the register operands.
-  // FIXME: This should be handled during MCInst lowering.
   unsigned NumOps = Desc.getNumOperands();
-  unsigned CurOp = 0;
-  if (NumOps > 1 && Desc.getOperandConstraint(1, MCOI::TIED_TO) == 0)
-    ++CurOp;
-  else if (NumOps > 3 && Desc.getOperandConstraint(2, MCOI::TIED_TO) == 0) {
-    assert(Desc.getOperandConstraint(NumOps - 1, MCOI::TIED_TO) == 1);
-    // Special case for GATHER with 2 TIED_TO operands
-    // Skip the first 2 operands: dst, mask_wb
-    CurOp += 2;
-  }
+  unsigned CurOp = X86II::getOperandBias(Desc);
 
   // Keep track of the current byte being emitted.
   unsigned CurByte = 0;

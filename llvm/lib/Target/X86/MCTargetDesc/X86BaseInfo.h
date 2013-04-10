@@ -20,6 +20,7 @@
 #include "X86MCTargetDesc.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/MC/MCInstrInfo.h"
 
 namespace llvm {
 
@@ -41,7 +42,6 @@ namespace X86 {
     AddrNumOperands = 5
   };
 } // end namespace X86;
- 
 
 /// X86II - This namespace holds all of the target specific flags that
 /// instruction info tracks.
@@ -519,6 +519,26 @@ namespace X86II {
     case X86II::Imm64:
       return false;
     }
+  }
+
+  /// getOperandBias - compute any additional adjustment needed to
+  ///                  the offset to the start of the memory operand
+  ///                  in this instruction.
+  /// If this is a two-address instruction,skip one of the register operands.
+  /// FIXME: This should be handled during MCInst lowering.
+  inline int getOperandBias(const MCInstrDesc& Desc)
+  {
+    unsigned NumOps = Desc.getNumOperands();
+    unsigned CurOp = 0;
+    if (NumOps > 1 && Desc.getOperandConstraint(1, MCOI::TIED_TO) == 0)
+      ++CurOp;
+    else if (NumOps > 3 && Desc.getOperandConstraint(2, MCOI::TIED_TO) == 0) {
+      assert(Desc.getOperandConstraint(NumOps - 1, MCOI::TIED_TO) == 1);
+      // Special case for GATHER with 2 TIED_TO operands
+      // Skip the first 2 operands: dst, mask_wb
+      CurOp += 2;
+    }
+    return CurOp;
   }
 
   /// getMemoryOperandNo - The function returns the MCInst operand # for the
