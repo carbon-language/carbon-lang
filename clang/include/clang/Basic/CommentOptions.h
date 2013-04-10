@@ -27,6 +27,11 @@ struct CommentOptions {
   /// \brief Command names to treat as block commands in comments.
   /// Should not include the leading backslash.
   BlockCommandNamesTy BlockCommandNames;
+
+  /// \brief Treat ordinary comments as documentation comments.
+  bool ParseAllComments;
+
+  CommentOptions() : ParseAllComments(false) { }
 };
 
 }  // end namespace clang

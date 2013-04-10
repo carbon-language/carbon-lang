@@ -141,7 +141,9 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
     // When searching for comments during parsing, the comment we are looking
     // for is usually among the last two comments we parsed -- check them
     // first.
-    RawComment CommentAtDeclLoc(SourceMgr, SourceRange(DeclLoc));
+    RawComment CommentAtDeclLoc(
+        SourceMgr, SourceRange(DeclLoc), false,
+        LangOpts.CommentOpts.ParseAllComments);
     BeforeThanCompare<RawComment> Compare(SourceMgr);
     ArrayRef<RawComment *>::iterator MaybeBeforeDecl = RawComments.end() - 1;
     bool Found = Compare(*MaybeBeforeDecl, &CommentAtDeclLoc);

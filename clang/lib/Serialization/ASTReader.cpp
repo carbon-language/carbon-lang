@@ -3907,6 +3907,7 @@ bool ASTReader::ParseLanguageOptions(const RecordData &Record,
     LangOpts.CommentOpts.BlockCommandNames.push_back(
       ReadString(Record, Idx));
   }
+  LangOpts.CommentOpts.ParseAllComments = Record[Idx++];
 
   return Listener.ReadLanguageOptions(LangOpts, Complain);
 }
@@ -7165,9 +7166,9 @@ void ASTReader::ReadComments() {
             (RawComment::CommentKind) Record[Idx++];
         bool IsTrailingComment = Record[Idx++];
         bool IsAlmostTrailingComment = Record[Idx++];
-        Comments.push_back(new (Context) RawComment(SR, Kind,
-                                                    IsTrailingComment,
-                                                    IsAlmostTrailingComment));
+        Comments.push_back(new (Context) RawComment(
+            SR, Kind, IsTrailingComment, IsAlmostTrailingComment,
+            Context.getLangOpts().CommentOpts.ParseAllComments));
         break;
       }
       }

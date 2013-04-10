@@ -3294,6 +3294,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Forward -fcomment-block-commands to -cc1.
   Args.AddAllArgs(CmdArgs, options::OPT_fcomment_block_commands);
+  // Forward -fparse-all-comments to -cc1.
+  Args.AddAllArgs(CmdArgs, options::OPT_fparse_all_comments);
 
   // Forward -Xclang arguments to -cc1, and -mllvm arguments to the LLVM option
   // parser.

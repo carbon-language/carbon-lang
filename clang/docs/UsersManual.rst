@@ -1005,6 +1005,19 @@ below. If multiple flags are present, the last one is used.
 
   Generate complete debug info.
 
+Comment Parsing Options
+--------------------------
+
+Clang parses Doxygen and non-Doxygen style documentation comments and attaches
+them to the appropriate declaration nodes.  By default, it only parses
+Doxygen-style comments and ignores ordinary comments starting with ``//`` and
+``/*``.
+
+.. option:: -fparse-all-comments
+
+  Parse all comments as documentation comments (including ordinary comments
+  starting with ``//`` and ``/*``).
+
 .. _c:
 
 C Language Features

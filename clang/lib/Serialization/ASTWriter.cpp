@@ -1069,6 +1069,7 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
        I != IEnd; ++I) {
     AddString(*I, Record);
   }
+  Record.push_back(LangOpts.CommentOpts.ParseAllComments);
 
   Stream.EmitRecord(LANGUAGE_OPTIONS, Record);
 

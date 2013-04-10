@@ -281,6 +281,7 @@ static bool ParseMigratorArgs(MigratorOptions &Opts, ArgList &Args) {
 
 static void ParseCommentArgs(CommentOptions &Opts, ArgList &Args) {
   Opts.BlockCommandNames = Args.getAllArgValues(OPT_fcomment_block_commands);
+  Opts.ParseAllComments = Args.hasArg(OPT_fparse_all_comments);
 }
 
 static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
