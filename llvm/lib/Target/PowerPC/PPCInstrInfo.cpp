@@ -876,6 +876,29 @@ bool PPCInstrInfo::FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
   return true;
 }
 
+static bool MBBDefinesCTR(MachineBasicBlock &MBB) {
+  for (MachineBasicBlock::iterator I = MBB.begin(), IE = MBB.end();
+       I != IE; ++I)
+    if (I->definesRegister(PPC::CTR) || I->definesRegister(PPC::CTR8))
+      return true;
+  return false;
+}
+
+// We should make sure that, if we're going to predicate both sides of a
+// condition (a diamond), that both sides don't define the counter register. We
+// can predicate counter-decrement-based branches, but while that predicates
+// the branching, it does not predicate the counter decrement. If we tried to
+// merge the triangle into one predicated block, we'd decrement the counter
+// twice.
+bool PPCInstrInfo::isProfitableToIfCvt(MachineBasicBlock &TMBB,
+                     unsigned NumT, unsigned ExtraT,
+                     MachineBasicBlock &FMBB,
+                     unsigned NumF, unsigned ExtraF,
+                     const BranchProbability &Probability) const {
+  return !(MBBDefinesCTR(TMBB) && MBBDefinesCTR(FMBB));
+}
+
+
 bool PPCInstrInfo::isPredicated(const MachineInstr *MI) const {
   unsigned OpC = MI->getOpcode();
   switch (OpC) {

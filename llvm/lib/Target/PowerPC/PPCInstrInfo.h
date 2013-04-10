@@ -173,9 +173,7 @@ public:
                                    unsigned NumT, unsigned ExtraT,
                                    MachineBasicBlock &FMBB,
                                    unsigned NumF, unsigned ExtraF,
-                                   const BranchProbability &Probability) const {
-    return true;
-  }
+                                   const BranchProbability &Probability) const;
 
   virtual bool isProfitableToDupForIfCvt(MachineBasicBlock &MBB,
                                          unsigned NumCycles,
