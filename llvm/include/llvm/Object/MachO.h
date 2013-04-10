@@ -327,21 +327,8 @@ public:
     SymbolTableEntry;
   typedef typename MachOObjectFileHelper<is64Bits>::Section Section;
 
-  MachOObjectFile(MemoryBuffer *Object, error_code &ec) :
-    MachOObjectFileBase(Object, is64Bits, ec) {
-    DataRefImpl DRI;
-    moveToNextSection(DRI);
-    uint32_t LoadCommandCount = getHeader()->NumLoadCommands;
-    while (DRI.d.a < LoadCommandCount) {
-      Sections.push_back(DRI);
-      DRI.d.b++;
-      moveToNextSection(DRI);
-    }
-  }
-
-  static inline bool classof(const Binary *v) {
-    return v->getType() == getMachOType(true, is64Bits);
-  }
+  MachOObjectFile(MemoryBuffer *Object, error_code &ec);
+  static bool classof(const Binary *v);
 
   const Section *getSection(DataRefImpl DRI) const;
   const SymbolTableEntry *getSymbolTableEntry(DataRefImpl DRI) const;
@@ -374,6 +361,25 @@ public:
   virtual section_iterator begin_sections() const;
   void moveToNextSection(DataRefImpl &DRI) const;
 };
+
+template<bool is64Bits>
+MachOObjectFile<is64Bits>::MachOObjectFile(MemoryBuffer *Object,
+                                           error_code &ec) :
+  MachOObjectFileBase(Object, is64Bits, ec) {
+  DataRefImpl DRI;
+  moveToNextSection(DRI);
+  uint32_t LoadCommandCount = getHeader()->NumLoadCommands;
+  while (DRI.d.a < LoadCommandCount) {
+    Sections.push_back(DRI);
+    DRI.d.b++;
+    moveToNextSection(DRI);
+  }
+}
+
+template<bool is64Bits>
+bool MachOObjectFile<is64Bits>::classof(const Binary *v) {
+  return v->getType() == getMachOType(true, is64Bits);
+}
 
 template<bool is64Bits>
 const typename MachOObjectFile<is64Bits>::Section *
