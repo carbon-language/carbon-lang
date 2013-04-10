@@ -16,6 +16,7 @@
 #include "MipsFrameLowering.h"
 #include "MipsInstrInfo.h"
 #include "MipsModuleISelDAGToDAG.h"
+#include "MipsOs16.h"
 #include "MipsSEFrameLowering.h"
 #include "MipsSEInstrInfo.h"
 #include "MipsSEISelLowering.h"
@@ -141,6 +142,7 @@ public:
     return *getMipsTargetMachine().getSubtargetImpl();
   }
 
+  virtual void addIRPasses();
   virtual bool addInstSelector();
   virtual bool addPreEmitPass();
 };
@@ -150,6 +152,11 @@ TargetPassConfig *MipsTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new MipsPassConfig(this, PM);
 }
 
+void MipsPassConfig::addIRPasses() {
+  TargetPassConfig::addIRPasses();
+  if (getMipsSubtarget().os16())
+    addPass(createMipsOs16(getMipsTargetMachine()));
+}
 // Install an instruction selector pass using
 // the ISelDag to gen Mips code.
 bool MipsPassConfig::addInstSelector() {

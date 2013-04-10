@@ -105,6 +105,11 @@ protected:
   // Allow mixed Mips16 and Mips32 in one source file
   bool AllowMixed16_32;
 
+  // Optimize for space by compiling all functions as Mips 16 unless
+  // it needs floating point. Functions needing floating point are
+  // compiled as Mips32
+  bool Os16;
+
   InstrItineraryData InstrItins;
 
   // The instance to the register info section object
@@ -184,6 +189,8 @@ public:
   bool hasFPIdx()     const { return HasFPIdx; }
 
   bool allowMixed16_32() const { return AllowMixed16_32;};
+
+  bool os16() const { return Os16;};
 
   // Grab MipsRegInfo object
   const MipsReginfo &getMReginfo() const { return MRI; }

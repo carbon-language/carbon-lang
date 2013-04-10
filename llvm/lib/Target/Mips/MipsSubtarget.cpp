@@ -41,6 +41,13 @@ static cl::opt<bool> Mixed16_32(
            "and Mips32 code in a single source file"),
   cl::Hidden);
 
+static cl::opt<bool> Mips_Os16(
+  "mips-os16",
+  cl::init(false),
+  cl::desc("Compile all functions that don' use "
+           "floating point as Mips 16"),
+  cl::Hidden);
+
 void MipsSubtarget::anchor() { }
 
 MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
@@ -52,7 +59,7 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
   IsLinux(true), HasSEInReg(false), HasCondMov(false), HasSwap(false),
   HasBitCount(false), HasFPIdx(false),
   InMips16Mode(false), InMicroMipsMode(false), HasDSP(false), HasDSPR2(false),
-  AllowMixed16_32(Mixed16_32),
+  AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16),
   RM(_RM), OverrideMode(NoOverride), TM(_TM)
 {
   std::string CPUName = CPU;
