@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -basicaa -polly-codegen-isl -polly-codegen-scev %s
+; RUN: opt %loadPolly -basicaa -polly-detect %s
 
 ; Used to fail with:
 ; ../../isl/isl_aff.c:591: position out of bounds
