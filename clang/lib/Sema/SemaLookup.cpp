@@ -2582,6 +2582,12 @@ Sema::LookupLiteralOperator(Scope *S, LookupResult &R,
     bool IsRaw = false;
     bool IsExactMatch = false;
 
+    // If the declaration we found is invalid, skip it.
+    if (D->isInvalidDecl()) {
+      F.erase();
+      continue;
+    }
+
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
       if (FD->getNumParams() == 1 &&
           FD->getParamDecl(0)->getType()->getAs<PointerType>())
