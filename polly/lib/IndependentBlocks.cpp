@@ -176,8 +176,8 @@ void IndependentBlocks::moveOperandTree(Instruction *Inst, const Region *R,
 
       DEBUG(dbgs() << "For Operand:\n" << *Operand << "\n--->");
 
-      // If the Scop Region does not contain N, skip it and all its operand and
-      // continue. because we reach a "parameter".
+      // If the Scop Region does not contain N, skip it and all its operands and
+      // continue: because we reach a "parameter".
       // FIXME: we must keep the predicate instruction inside the Scop, otherwise
       // it will be translated to a load instruction, and we can not handle load
       // as affine predicate at this moment.
@@ -197,7 +197,7 @@ void IndependentBlocks::moveOperandTree(Instruction *Inst, const Region *R,
         continue;
       }
 
-      // Do not need to move instruction if it contained in the same BB with
+      // Do not need to move instruction if it is contained in the same BB with
       // the root instruction.
       if (Operand->getParent() == CurBB) {
         DEBUG(dbgs() << "No need to move.\n");
