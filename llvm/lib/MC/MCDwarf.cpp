@@ -899,7 +899,7 @@ namespace {
     /// EmitCompactUnwind - Emit the unwind information in a compact way. If
     /// we're successful, return 'true'. Otherwise, return 'false' and it will
     /// emit the normal CIE and FDE.
-    bool EmitCompactUnwind(MCStreamer &streamer,
+    void EmitCompactUnwind(MCStreamer &streamer,
                            const MCDwarfFrameInfo &frame);
 
     const MCSymbol &EmitCIE(MCStreamer &streamer,
@@ -1139,7 +1139,7 @@ void FrameEmitterImpl::EmitCFIInstructions(MCStreamer &streamer,
 /// EmitCompactUnwind - Emit the unwind information in a compact way. If we're
 /// successful, return 'true'. Otherwise, return 'false' and it will emit the
 /// normal CIE and FDE.
-bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
+void FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
                                          const MCDwarfFrameInfo &Frame) {
   MCContext &Context = Streamer.getContext();
   const MCObjectFileInfo *MOFI = Context.getObjectFileInfo();
@@ -1168,6 +1168,8 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   //   .quad except_tab1
 
   uint32_t Encoding = Frame.CompactUnwindEncoding;
+  if (!Encoding) return;
+
   bool DwarfEHFrameOnly = (Encoding == MOFI->getCompactUnwindDwarfEHFrameOnly());
 
   // The encoding needs to know we have an LSDA.
@@ -1209,8 +1211,6 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
     Streamer.EmitSymbolValue(Frame.Lsda, Size);
   else
     Streamer.EmitIntValue(0, Size); // No LSDA
-
-  return true;
 }
 
 const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
