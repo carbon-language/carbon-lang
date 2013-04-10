@@ -94,6 +94,12 @@ def VGPR_64 : RegisterTuples<[sub0, sub1],
                              [(add (trunc VGPR_32, 255)),
                               (add (shl VGPR_32, 1))]>;
 
+// VGPR 96-bit registers
+def VGPR_96 : RegisterTuples<[sub0, sub1, sub2],
+                             [(add (trunc VGPR_32, 254)),
+                              (add (shl VGPR_32, 1)),
+                              (add (shl VGPR_32, 2))]>;
+
 // VGPR 128-bit registers
 def VGPR_128 : RegisterTuples<[sub0, sub1, sub2, sub3],
                               [(add (trunc VGPR_32, 253)),
@@ -161,6 +167,10 @@ def SReg_512 : RegisterClass<"AMDGPU", [v64i8], 512, (add SGPR_512)>;
 def VReg_32 : RegisterClass<"AMDGPU", [i32, f32, v1i32], 32, (add VGPR_32)>;
 
 def VReg_64 : RegisterClass<"AMDGPU", [i64, f64, v2i32, v2f32], 64, (add VGPR_64)>;
+
+def VReg_96 : RegisterClass<"AMDGPU", [untyped], 96, (add VGPR_96)> {
+  let Size = 96;
+}
 
 def VReg_128 : RegisterClass<"AMDGPU", [v4i32, v4f32], 128, (add VGPR_128)>;
 

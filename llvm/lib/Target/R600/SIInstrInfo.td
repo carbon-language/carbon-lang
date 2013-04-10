@@ -346,6 +346,7 @@ class MIMG_Load_Helper <bits<7> op, string asm> : MIMG <
   []> {
   let mayLoad = 1;
   let mayStore = 0;
+  let hasPostISelHook = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -379,6 +380,7 @@ def getCommuteOrig : InstrMapping {
   let ValueCols = [["1"]];
 }
 
+// Test if the supplied opcode is an MIMG instruction
 def isMIMG : InstrMapping {
   let FilterClass = "MIMG_Load_Helper";
   let RowFields = ["Inst"];

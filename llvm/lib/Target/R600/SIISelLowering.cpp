@@ -720,7 +720,7 @@ unsigned SubIdx2Lane(unsigned Idx) {
 void SITargetLowering::adjustWritemask(MachineSDNode *&Node,
                                        SelectionDAG &DAG) const {
   SDNode *Users[4] = { };
-  unsigned Writemask = 0;
+  unsigned Writemask = 0, Lane = 0;
 
   // Try to figure out the used register components
   for (SDNode::use_iterator I = Node->use_begin(), E = Node->use_end();
@@ -731,7 +731,7 @@ void SITargetLowering::adjustWritemask(MachineSDNode *&Node,
         I->getMachineOpcode() != TargetOpcode::EXTRACT_SUBREG)
       return;
 
-    unsigned Lane = SubIdx2Lane(I->getConstantOperandVal(1));
+    Lane = SubIdx2Lane(I->getConstantOperandVal(1));
 
     // Abort if we have more than one user per component
     if (Users[Lane])
@@ -751,6 +751,16 @@ void SITargetLowering::adjustWritemask(MachineSDNode *&Node,
   for (unsigned i = 1, e = Node->getNumOperands(); i != e; ++i)
     Ops.push_back(Node->getOperand(i));
   Node = (MachineSDNode*)DAG.UpdateNodeOperands(Node, Ops.data(), Ops.size());
+
+  // If we only got one lane, replace it with a copy
+  if (Writemask == (1U << Lane)) {
+    SDValue RC = DAG.getTargetConstant(AMDGPU::VReg_32RegClassID, MVT::i32);
+    SDNode *Copy = DAG.getMachineNode(TargetOpcode::COPY_TO_REGCLASS,
+                                      DebugLoc(), MVT::f32,
+                                      SDValue(Node, 0), RC);
+    DAG.ReplaceAllUsesWith(Users[Lane], Copy);
+    return;
+  }
 
   // Update the users of the node with the new indices
   for (unsigned i = 0, Idx = AMDGPU::sub0; i < 4; ++i) {
@@ -779,4 +789,29 @@ SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
     adjustWritemask(Node, DAG);
 
   return foldOperands(Node, DAG);
+}
+
+/// \brief Assign the register class depending on the number of
+/// bits set in the writemask
+void SITargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
+                                                     SDNode *Node) const {
+  if (AMDGPU::isMIMG(MI->getOpcode()) == -1)
+    return;
+
+  unsigned VReg = MI->getOperand(0).getReg();
+  unsigned Writemask = MI->getOperand(1).getImm();
+  unsigned BitsSet = 0;
+  for (unsigned i = 0; i < 4; ++i)
+    BitsSet += Writemask & (1 << i) ? 1 : 0;
+
+  const TargetRegisterClass *RC;
+  switch (BitsSet) {
+  default: return;
+  case 1:  RC = &AMDGPU::VReg_32RegClass; break;
+  case 2:  RC = &AMDGPU::VReg_64RegClass; break;
+  case 3:  RC = &AMDGPU::VReg_96RegClass; break;
+  }
+
+  MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
+  MRI.setRegClass(VReg, RC);
 }

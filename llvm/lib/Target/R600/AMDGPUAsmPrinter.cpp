@@ -107,6 +107,9 @@ void AMDGPUAsmPrinter::EmitProgramInfo(MachineFunction &MF) {
         } else if (AMDGPU::VReg_64RegClass.contains(reg)) {
           isSGPR = false;
           width = 2;
+        } else if (AMDGPU::VReg_96RegClass.contains(reg)) {
+          isSGPR = false;
+          width = 3;
         } else if (AMDGPU::SReg_128RegClass.contains(reg)) {
           isSGPR = true;
           width = 4;

@@ -53,6 +53,8 @@ public:
   virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
   virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   virtual SDNode *PostISelFolding(MachineSDNode *N, SelectionDAG &DAG) const;
+  virtual void AdjustInstrPostInstrSelection(MachineInstr *MI,
+                                             SDNode *Node) const;
 
   int32_t analyzeImmediate(const SDNode *N) const;
 };
