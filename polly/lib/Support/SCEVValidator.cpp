@@ -208,6 +208,11 @@ public:
       if (Op.isINT())
         continue;
 
+      if (Op.isPARAM() && Return.isPARAM()) {
+        Return.merge(Op);
+        continue;
+      }
+
       if ((Op.isIV() || Op.isPARAM()) && !Return.isINT()) {
         DEBUG(dbgs() << "INVALID: More than one non-int operand in MulExpr\n"
                      << "\tExpr: " << *Expr << "\n"
