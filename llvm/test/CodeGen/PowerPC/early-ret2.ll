@@ -17,7 +17,6 @@ while.end:                                        ; preds = %while.body, %while.
 
 ; CHECK: @_Z8example3iPiS_
 ; CHECK: bnelr
-; CHECK: bnelr
 }
 
 attributes #0 = { noinline nounwind }

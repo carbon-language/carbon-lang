@@ -53,6 +53,7 @@ for.end:                                          ; preds = %for.body, %if.end, 
 ; CHECK: bnelr
 ; CHECK: bnelr
 ; CHECK: bdzlr
+; CHECK-NOT: blr
 }
 
 attributes #0 = { nounwind }

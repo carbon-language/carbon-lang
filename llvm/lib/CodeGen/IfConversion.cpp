@@ -1054,6 +1054,10 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI, IfcvtKind Kind) {
     // Copy instructions in the true block, predicate them, and add them to
     // the entry block.
     CopyAndPredicateBlock(BBI, *CvtBBI, Cond, Redefs);
+
+    // RemoveExtraEdges won't work if the block has an unanalyzable branch, so
+    // explicitly remove CvtBBI as a successor.
+    BBI.BB->removeSuccessor(CvtBBI->BB);
   } else {
     PredicateBlock(*CvtBBI, CvtBBI->BB->end(), Cond, Redefs);
 
@@ -1146,6 +1150,10 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
     // Copy instructions in the true block, predicate them, and add them to
     // the entry block.
     CopyAndPredicateBlock(BBI, *CvtBBI, Cond, Redefs, true);
+
+    // RemoveExtraEdges won't work if the block has an unanalyzable branch, so
+    // explicitly remove CvtBBI as a successor.
+    BBI.BB->removeSuccessor(CvtBBI->BB);
   } else {
     // Predicate the 'true' block after removing its branch.
     CvtBBI->NonPredSize -= TII->RemoveBranch(*CvtBBI->BB);
