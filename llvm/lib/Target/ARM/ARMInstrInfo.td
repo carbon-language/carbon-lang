@@ -221,6 +221,9 @@ def HasDB            : Predicate<"Subtarget->hasDataBarrier()">,
 def HasMP            : Predicate<"Subtarget->hasMPExtension()">,
                                  AssemblerPredicate<"FeatureMP",
                                                     "mp-extensions">;
+def HasTrustZone     : Predicate<"Subtarget->hasTrustZone()">,
+                                 AssemblerPredicate<"FeatureTrustZone",
+                                                    "TrustZone">;
 def UseNEONForFP     : Predicate<"Subtarget->useNEONForSinglePrecisionFP()">;
 def DontUseNEONForFP : Predicate<"!Subtarget->useNEONForSinglePrecisionFP()">;
 def IsThumb          : Predicate<"Subtarget->isThumb()">,
@@ -2077,7 +2080,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [SP] in {
 
 // Secure Monitor Call is a system instruction.
 def SMC : ABI<0b0001, (outs), (ins imm0_15:$opt), NoItinerary, "smc", "\t$opt",
-              []> {
+              []>, Requires<[IsARM, HasTrustZone]> {
   bits<4> opt;
   let Inst{23-4} = 0b01100000000000000111;
   let Inst{3-0} = opt;
