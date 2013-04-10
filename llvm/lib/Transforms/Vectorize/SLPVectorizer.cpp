@@ -65,10 +65,6 @@ struct SLPVectorizer : public BasicBlockPass {
   /// if we flush the chain creation every time we run into a memory barrier.
   bool CollectStores(BasicBlock *BB, BoUpSLP &R) {
     for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
-      // Can't vectorize instructions with side effects.
-      if (it->mayThrow())
-        return false;
-
       StoreInst *SI = dyn_cast<StoreInst>(it);
       if (!SI)
         continue;
