@@ -13,6 +13,7 @@
 
 typedef signed char BOOL;
 typedef unsigned int NSUInteger;
+typedef long NSInteger;
 @class NSString, Protocol;
 extern void NSLog(NSString *format, ...);
 extern void NSLogv(NSString *format, va_list args);
@@ -233,5 +234,10 @@ void testByValueObjectInFormat(Foo *obj) {
   printf("%d %d %d", 1L, *obj, 1L); // expected-error {{cannot pass object with interface type 'Foo' by value to variadic function; expected type from format string was 'int'}} expected-warning 2 {{format specifies type 'int' but the argument has type 'long'}}
 
   [Bar log2:@"%d", *obj]; // expected-error {{cannot pass object with interface type 'Foo' by value to variadic method; expected type from format string was 'int'}}
+}
+
+// <rdar://problem/13557053>
+void testTypeOf(NSInteger dW, NSInteger dH) {
+  NSLog(@"dW %d  dH %d",({ __typeof__(dW) __a = (dW); __a < 0 ? -__a : __a; }),({ __typeof__(dH) __a = (dH); __a < 0 ? -__a : __a; })); // expected-warning 2 {{values of type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
 }
 

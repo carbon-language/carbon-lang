@@ -2744,6 +2744,10 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
     return true;
 
   QualType ExprTy = E->getType();
+  while (const TypeOfExprType *TET = dyn_cast<TypeOfExprType>(ExprTy)) {
+    ExprTy = TET->getUnderlyingExpr()->getType();
+  }
+
   if (AT.matchesType(S.Context, ExprTy))
     return true;
 
