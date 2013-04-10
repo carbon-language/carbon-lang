@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 %s -emit-llvm -g -o - | grep DW_TAG_pointer_type | grep -v {"char"}
+// RUN: %clang_cc1 %s -emit-llvm -g -o - | FileCheck %s
+// CHECK: DW_TAG_pointer_type
+// CHECK-NOT: {"char"}
 
 char i = 1;
 void foo() {

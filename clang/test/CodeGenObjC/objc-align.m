@@ -1,14 +1,14 @@
 // 32-bit
 
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -fobjc-runtime=macosx-fragile-10.5 -emit-llvm -o %t %s
-// RUN: grep '@"\\01L_OBJC_CATEGORY_A_Cat" = internal global .*, section "__OBJC,__category,regular,no_dead_strip", align 4' %t
-// RUN: grep '@"\\01L_OBJC_CLASS_A" = internal global .*, section "__OBJC,__class,regular,no_dead_strip", align 4' %t
-// RUN: grep '@"\\01L_OBJC_CLASS_C" = internal global .*, section "__OBJC,__class,regular,no_dead_strip", align 4' %t
-// RUN: grep '@"\\01L_OBJC_CLASS_PROTOCOLS_C" = internal global .*, section "__OBJC,__cat_cls_meth,regular,no_dead_strip", align 4' %t
-// RUN: grep '@"\\01L_OBJC_METACLASS_A" = internal global .*, section "__OBJC,__meta_class,regular,no_dead_strip", align 4' %t
-// RUN: grep '@"\\01L_OBJC_METACLASS_C" = internal global .*, section "__OBJC,__meta_class,regular,no_dead_strip", align 4' %t
-// RUN: grep '@"\\01L_OBJC_MODULES" = internal global .*, section "__OBJC,__module_info,regular,no_dead_strip", align 4' %t
-// RUN: grep '@"\\01L_OBJC_PROTOCOL_P" = internal global .*, section "__OBJC,__protocol,regular,no_dead_strip", align 4' %t
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -fobjc-runtime=macosx-fragile-10.5 -emit-llvm -o - %s | FileCheck %s
+// CHECK: @"\01L_OBJC_METACLASS_A" = internal global {{.*}}, section "__OBJC,__meta_class,regular,no_dead_strip", align 4
+// CHECK: @"\01L_OBJC_CLASS_A" = internal global {{.*}}, section "__OBJC,__class,regular,no_dead_strip", align 4
+// CHECK: @"\01L_OBJC_CATEGORY_A_Cat" = internal global {{.*}}, section "__OBJC,__category,regular,no_dead_strip", align 4
+// CHECK: @"\01L_OBJC_PROTOCOL_P" = internal global {{.*}}, section "__OBJC,__protocol,regular,no_dead_strip", align 4
+// CHECK: @"\01L_OBJC_CLASS_PROTOCOLS_C" = internal global {{.*}}, section "__OBJC,__cat_cls_meth,regular,no_dead_strip", align 4
+// CHECK: @"\01L_OBJC_METACLASS_C" = internal global {{.*}}, section "__OBJC,__meta_class,regular,no_dead_strip", align 4
+// CHECK: @"\01L_OBJC_CLASS_C" = internal global {{.*}}, section "__OBJC,__class,regular,no_dead_strip", align 4
+// CHECK: @"\01L_OBJC_MODULES" = internal global {{.*}}, section "__OBJC,__module_info,regular,no_dead_strip", align 4
 
 // 64-bit
 

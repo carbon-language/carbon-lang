@@ -1,5 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o %t %s
-// RUN: grep '@"OBJC_IVAR_$_XCOrganizerDeviceNodeInfo.viewController"' %t
+// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
 
 // PR13820
 // REQUIRES: LP64
@@ -17,5 +16,6 @@
 
 @implementation XCOrganizerDeviceNodeInfo
 @synthesize viewController;
+// CHECK: @"OBJC_IVAR_$_XCOrganizerDeviceNodeInfo.viewController"
 @end
 
