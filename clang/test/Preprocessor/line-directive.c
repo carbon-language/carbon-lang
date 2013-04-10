@@ -83,14 +83,21 @@ typedef int q;  // original definition in system header, should not diagnose.
 // Line markers are digit strings interpreted as decimal numbers, this is
 // 10, not 8.
 #line 010  // expected-warning {{#line directive interprets number as decimal, not octal}}
-# 010      // expected-warning {{GNU line marker directive interprets number as decimal, not octal}}
 extern int array[__LINE__ == 10 ? 1:-1];
+
+# 020      // expected-warning {{GNU line marker directive interprets number as decimal, not octal}}
+extern int array_gnuline[__LINE__ == 20 ? 1:-1];
 
 /* PR3917 */
 #line 41
 extern char array2[\
 _\
 _LINE__ == 42 ? 1: -1];  /* line marker is location of first _ */
+
+# 51
+extern char array2_gnuline[\
+_\
+_LINE__ == 52 ? 1: -1];  /* line marker is location of first _ */
 
 // rdar://11550996
 #line 0 "line-directive.c" // expected-warning {{#line directive with zero argument is a GNU extension}}
