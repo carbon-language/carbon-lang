@@ -15,6 +15,7 @@
 #include "lldb/lldb-private-log.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBuffer.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
@@ -836,6 +837,31 @@ ObjectFileMachO::ParseSections ()
                 load_cmd.vmsize = m_data.GetAddress(&offset);
                 load_cmd.fileoff = m_data.GetAddress(&offset);
                 load_cmd.filesize = m_data.GetAddress(&offset);
+                if (m_length != 0 && load_cmd.filesize != 0)
+                {
+                    if (load_cmd.fileoff + load_cmd.filesize > m_length)
+                    {
+                        // We have a load command that says it extends past the end of hte file.  This is likely
+                        // a corrupt file.  We don't have any way to return an error condition here (this method
+                        // was likely invokved from something like ObjectFile::GetSectionList()) -- all we can do
+                        // is null out the SectionList vector and if a process has been set up, dump a message
+                        // to stdout.  The most common case here is core file debugging with a truncated file - and
+                        // in that case we don't have a Process yet so nothing will be printed.  Not really ideal;
+                        // the ObjectFile needs some way of reporting an error message for methods like GetSectionList
+                        // which fail.
+                        ProcessSP process_sp (m_process_wp.lock());
+                        if (process_sp)
+                        {
+                            Stream *s = &process_sp->GetTarget().GetDebugger().GetOutputStream();
+                            if (s)
+                            {
+                                s->Printf ("Corrupt/invalid Mach-O object file -- a load command extends past the end of the file.\n");
+                            }
+                        }
+                        m_sections_ap->Clear();
+                        return 0;
+                    }
+                }
                 if (m_data.GetU32(&offset, &load_cmd.maxprot, 4))
                 {
 
