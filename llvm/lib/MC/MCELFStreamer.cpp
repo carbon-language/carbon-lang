@@ -13,6 +13,7 @@
 
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
@@ -126,6 +127,26 @@ void MCELFStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {
   Alias->setVariableValue(Value);
 }
 
+// When GNU as encounters more than one .type declaration for an object it seems
+// to use a mechanism similar to the one below to decide which type is actually
+// used in the object file.  The greater of T1 and T2 is selected based on the
+// following ordering:
+//  STT_NOTYPE < STT_OBJECT < STT_FUNC < STT_GNU_IFUNC < STT_TLS < anything else
+// If neither T1 < T2 nor T2 < T1 according to this ordering, use T2 (the user
+// provided type).
+static unsigned CombineSymbolTypes(unsigned T1, unsigned T2) {
+  unsigned TypeOrdering[] = {ELF::STT_NOTYPE, ELF::STT_OBJECT, ELF::STT_FUNC,
+                             ELF::STT_GNU_IFUNC, ELF::STT_TLS};
+  for (unsigned i = 0; i != array_lengthof(TypeOrdering); ++i) {
+    if (T1 == TypeOrdering[i])
+      return T2;
+    if (T2 == TypeOrdering[i])
+      return T1;
+  }
+
+  return T2;
+}
+
 void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
                                           MCSymbolAttr Attribute) {
   // Indirect symbols are handled differently, to match how 'as' handles
@@ -187,27 +208,34 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     break;
 
   case MCSA_ELF_TypeFunction:
-    MCELF::SetType(SD, ELF::STT_FUNC);
+    MCELF::SetType(SD, CombineSymbolTypes(MCELF::GetType(SD),
+                                          ELF::STT_FUNC));
     break;
 
   case MCSA_ELF_TypeIndFunction:
-    MCELF::SetType(SD, ELF::STT_GNU_IFUNC);
+    MCELF::SetType(SD, CombineSymbolTypes(MCELF::GetType(SD),
+                                          ELF::STT_GNU_IFUNC));
     break;
 
   case MCSA_ELF_TypeObject:
-    MCELF::SetType(SD, ELF::STT_OBJECT);
+    MCELF::SetType(SD, CombineSymbolTypes(MCELF::GetType(SD),
+                                          ELF::STT_OBJECT));
     break;
 
   case MCSA_ELF_TypeTLS:
-    MCELF::SetType(SD, ELF::STT_TLS);
+    MCELF::SetType(SD, CombineSymbolTypes(MCELF::GetType(SD),
+                                          ELF::STT_TLS));
     break;
 
   case MCSA_ELF_TypeCommon:
-    MCELF::SetType(SD, ELF::STT_COMMON);
+    // TODO: Emit these as a common symbol.
+    MCELF::SetType(SD, CombineSymbolTypes(MCELF::GetType(SD),
+                                          ELF::STT_OBJECT));
     break;
 
   case MCSA_ELF_TypeNoType:
-    MCELF::SetType(SD, ELF::STT_NOTYPE);
+    MCELF::SetType(SD, CombineSymbolTypes(MCELF::GetType(SD),
+                                          ELF::STT_NOTYPE));
     break;
 
   case MCSA_Protected:
