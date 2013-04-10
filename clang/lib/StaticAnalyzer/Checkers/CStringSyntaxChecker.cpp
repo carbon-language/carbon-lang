@@ -101,6 +101,8 @@ public:
 //   - strncat(dst, src, sizeof(dst) - 1);
 //   - strncat(dst, src, sizeof(dst));
 bool WalkAST::containsBadStrncatPattern(const CallExpr *CE) {
+  if (CE->getNumArgs() != 3)
+    return false;
   const Expr *DstArg = CE->getArg(0);
   const Expr *SrcArg = CE->getArg(1);
   const Expr *LenArg = CE->getArg(2);
