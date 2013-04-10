@@ -35,6 +35,46 @@ namespace llvm {
 
 class PassConfigImpl;
 
+/// Discriminated union of Pass ID types.
+///
+/// The PassConfig API prefers dealing with IDs because they are safer and more
+/// efficient. IDs decouple configuration from instantiation. This way, when a
+/// pass is overriden, it isn't unnecessarily instantiated. It is also unsafe to
+/// refer to a Pass pointer after adding it to a pass manager, which deletes
+/// redundant pass instances.
+///
+/// However, it is convient to directly instantiate target passes with
+/// non-default ctors. These often don't have a registered PassInfo. Rather than
+/// force all target passes to implement the pass registry boilerplate, allow
+/// the PassConfig API to handle either type.
+///
+/// AnalysisID is sadly char*, so PointerIntPair won't work.
+class IdentifyingPassPtr {
+  void *P;
+  bool IsInstance;
+public:
+  IdentifyingPassPtr(): P(0), IsInstance(false) {}
+  IdentifyingPassPtr(AnalysisID IDPtr): P((void*)IDPtr), IsInstance(false) {}
+  IdentifyingPassPtr(Pass *InstancePtr)
+    : P((void*)InstancePtr), IsInstance(true) {}
+
+  bool isValid() const { return P; }
+  bool isInstance() const { return IsInstance; }
+
+  AnalysisID getID() const {
+    assert(!IsInstance && "Not a Pass ID");
+    return (AnalysisID)P;
+  }
+  Pass *getInstance() const {
+    assert(IsInstance && "Not a Pass Instance");
+    return (Pass *)P;
+  }
+};
+
+template <> struct isPodLike<IdentifyingPassPtr> {
+  static const bool value = true;
+};
+
 /// Target-Independent Code Generator Pass Configuration Options.
 ///
 /// This is an ImmutablePass solely for the purpose of exposing CodeGen options
@@ -117,20 +157,22 @@ public:
   /// Allow the target to override a specific pass without overriding the pass
   /// pipeline. When passes are added to the standard pipeline at the
   /// point where StandardID is expected, add TargetID in its place.
-  void substitutePass(AnalysisID StandardID, AnalysisID TargetID);
+  void substitutePass(AnalysisID StandardID, IdentifyingPassPtr TargetID);
 
   /// Insert InsertedPassID pass after TargetPassID pass.
-  void insertPass(AnalysisID TargetPassID, AnalysisID InsertedPassID);
+  void insertPass(AnalysisID TargetPassID, IdentifyingPassPtr InsertedPassID);
 
   /// Allow the target to enable a specific standard pass by default.
   void enablePass(AnalysisID PassID) { substitutePass(PassID, PassID); }
 
   /// Allow the target to disable a specific standard pass by default.
-  void disablePass(AnalysisID PassID) { substitutePass(PassID, 0); }
+  void disablePass(AnalysisID PassID) {
+    substitutePass(PassID, IdentifyingPassPtr());
+  }
 
   /// Return the pass substituted for StandardID by the target.
   /// If no substitution exists, return StandardID.
-  AnalysisID getPassSubstitution(AnalysisID StandardID) const;
+  IdentifyingPassPtr getPassSubstitution(AnalysisID StandardID) const;
 
   /// Return true if the optimized regalloc pipeline is enabled.
   bool getOptimizeRegAlloc() const;
@@ -219,17 +261,6 @@ protected:
   /// When these passes run, VirtRegMap contains legal physreg assignments for
   /// all virtual registers.
   virtual bool addPreRewrite() {
-    return false;
-  }
-
-  /// addFinalizeRegAlloc - This method may be implemented by targets that want
-  /// to run passes within the regalloc pipeline, immediately after the register
-  /// allocation pass itself. These passes run as soon as virtual regisiters
-  /// have been rewritten to physical registers but before and other postRA
-  /// optimization happens. Targets that have marked instructions for bundling
-  /// must have finalized those bundles by the time these passes have run,
-  /// because subsequent passes are not guaranteed to be bundle-aware.
-  virtual bool addFinalizeRegAlloc() {
     return false;
   }
 

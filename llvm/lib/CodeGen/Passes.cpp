@@ -93,9 +93,10 @@ static cl::opt<bool> EarlyLiveIntervals("early-live-intervals", cl::Hidden,
 /// simple binary flags that either suppress the pass or do nothing.
 /// i.e. -disable-mypass=false has no effect.
 /// These should be converted to boolOrDefault in order to use applyOverride.
-static AnalysisID applyDisable(AnalysisID PassID, bool Override) {
+static IdentifyingPassPtr applyDisable(IdentifyingPassPtr PassID,
+                                       bool Override) {
   if (Override)
-    return 0;
+    return IdentifyingPassPtr();
   return PassID;
 }
 
@@ -103,19 +104,20 @@ static AnalysisID applyDisable(AnalysisID PassID, bool Override) {
 /// flags with ternary conditions. TargetID is passed through by default. The
 /// pass is suppressed when the option is false. When the option is true, the
 /// StandardID is selected if the target provides no default.
-static AnalysisID applyOverride(AnalysisID TargetID, cl::boolOrDefault Override,
-                                AnalysisID StandardID) {
+static IdentifyingPassPtr applyOverride(IdentifyingPassPtr TargetID,
+                                        cl::boolOrDefault Override,
+                                        AnalysisID StandardID) {
   switch (Override) {
   case cl::BOU_UNSET:
     return TargetID;
   case cl::BOU_TRUE:
-    if (TargetID)
+    if (TargetID.isValid())
       return TargetID;
     if (StandardID == 0)
       report_fatal_error("Target cannot enable pass");
     return StandardID;
   case cl::BOU_FALSE:
-    return 0;
+    return IdentifyingPassPtr();
   }
   llvm_unreachable("Invalid command line option state");
 }
@@ -132,7 +134,8 @@ static AnalysisID applyOverride(AnalysisID TargetID, cl::boolOrDefault Override,
 /// StandardID may be a pseudo ID. In that case TargetID is the name of the real
 /// pass to run. This allows multiple options to control a single pass depending
 /// on where in the pipeline that pass is added.
-static AnalysisID overridePass(AnalysisID StandardID, AnalysisID TargetID) {
+static IdentifyingPassPtr overridePass(AnalysisID StandardID,
+                                       IdentifyingPassPtr TargetID) {
   if (StandardID == &PostRASchedulerID)
     return applyDisable(TargetID, DisablePostRA);
 
@@ -200,11 +203,11 @@ public:
   // user interface. For example, a target may disable a standard pass by
   // default by substituting a pass ID of zero, and the user may still enable
   // that standard pass with an explicit command line option.
-  DenseMap<AnalysisID,AnalysisID> TargetPasses;
+  DenseMap<AnalysisID,IdentifyingPassPtr> TargetPasses;
 
   /// Store the pairs of <AnalysisID, AnalysisID> of which the second pass
   /// is inserted after each instance of the first one.
-  SmallVector<std::pair<AnalysisID, AnalysisID>, 4> InsertedPasses;
+  SmallVector<std::pair<AnalysisID, IdentifyingPassPtr>, 4> InsertedPasses;
 };
 } // namespace llvm
 
@@ -239,9 +242,13 @@ TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
 
 /// Insert InsertedPassID pass after TargetPassID.
 void TargetPassConfig::insertPass(AnalysisID TargetPassID,
-                                  AnalysisID InsertedPassID) {
-  assert(TargetPassID != InsertedPassID && "Insert a pass after itself!");
-  std::pair<AnalysisID, AnalysisID> P(TargetPassID, InsertedPassID);
+                                  IdentifyingPassPtr InsertedPassID) {
+  assert((!InsertedPassID.isInstance() &&
+          TargetPassID != InsertedPassID.getID()) ||
+         (InsertedPassID.isInstance() &&
+          TargetPassID != InsertedPassID.getInstance()->getPassID()) &&
+         "Insert a pass after itself!");
+  std::pair<AnalysisID, IdentifyingPassPtr> P(TargetPassID, InsertedPassID);
   Impl->InsertedPasses.push_back(P);
 }
 
@@ -265,12 +272,12 @@ void TargetPassConfig::setOpt(bool &Opt, bool Val) {
 }
 
 void TargetPassConfig::substitutePass(AnalysisID StandardID,
-                                      AnalysisID TargetID) {
+                                      IdentifyingPassPtr TargetID) {
   Impl->TargetPasses[StandardID] = TargetID;
 }
 
-AnalysisID TargetPassConfig::getPassSubstitution(AnalysisID ID) const {
-  DenseMap<AnalysisID, AnalysisID>::const_iterator
+IdentifyingPassPtr TargetPassConfig::getPassSubstitution(AnalysisID ID) const {
+  DenseMap<AnalysisID, IdentifyingPassPtr>::const_iterator
     I = Impl->TargetPasses.find(ID);
   if (I == Impl->TargetPasses.end())
     return ID;
@@ -303,24 +310,39 @@ void TargetPassConfig::addPass(Pass *P) {
 
 /// Add a CodeGen pass at this point in the pipeline after checking for target
 /// and command line overrides.
+///
+/// addPass cannot return a pointer to the pass instance because is internal the
+/// PassManager and the instance we create here may already be freed.
 AnalysisID TargetPassConfig::addPass(AnalysisID PassID) {
-  AnalysisID TargetID = getPassSubstitution(PassID);
-  AnalysisID FinalID = overridePass(PassID, TargetID);
-  if (FinalID == 0)
-    return FinalID;
+  IdentifyingPassPtr TargetID = getPassSubstitution(PassID);
+  IdentifyingPassPtr FinalPtr = overridePass(PassID, TargetID);
+  if (!FinalPtr.isValid())
+    return 0;
 
-  Pass *P = Pass::createPass(FinalID);
-  if (!P)
-    llvm_unreachable("Pass ID not registered");
-  addPass(P);
+  Pass *P;
+  if (FinalPtr.isInstance())
+    P = FinalPtr.getInstance();
+  else {
+    P = Pass::createPass(FinalPtr.getID());
+    if (!P)
+      llvm_unreachable("Pass ID not registered");
+  }
+  AnalysisID FinalID = P->getPassID();
+  addPass(P); // Ends the lifetime of P.
+
   // Add the passes after the pass P if there is any.
-  for (SmallVector<std::pair<AnalysisID, AnalysisID>, 4>::iterator
+  for (SmallVector<std::pair<AnalysisID, IdentifyingPassPtr>, 4>::iterator
          I = Impl->InsertedPasses.begin(), E = Impl->InsertedPasses.end();
        I != E; ++I) {
     if ((*I).first == PassID) {
-      assert((*I).second && "Illegal Pass ID!");
-      Pass *NP = Pass::createPass((*I).second);
-      assert(NP && "Pass ID not registered");
+      assert((*I).second.isValid() && "Illegal Pass ID!");
+      Pass *NP;
+      if ((*I).second.isInstance())
+        NP = (*I).second.getInstance();
+      else {
+        NP = Pass::createPass((*I).second.getID());
+        assert(NP && "Pass ID not registered");
+      }
       addPass(NP);
     }
   }
@@ -686,14 +708,6 @@ void TargetPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
   // Finally rewrite virtual registers.
   addPass(&VirtRegRewriterID);
   printAndVerify("After Virtual Register Rewriter");
-
-  // FinalizeRegAlloc is convenient until MachineInstrBundles is more mature,
-  // but eventually, all users of it should probably be moved to addPostRA and
-  // it can go away.  Currently, it's the intended place for targets to run
-  // FinalizeMachineBundles, because passes other than MachineScheduling an
-  // RegAlloc itself may not be aware of bundles.
-  if (addFinalizeRegAlloc())
-    printAndVerify("After RegAlloc finalization");
 
   // Perform stack slot coloring and post-ra machine LICM.
   //
