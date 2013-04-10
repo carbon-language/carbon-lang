@@ -53,14 +53,14 @@ typedef typename MachODataTypeTypedefHelperCommon<E>::MachOInt64 MachOInt64;
 template<class MachOT>
 struct MachODataTypeTypedefHelper;
 
-template<template<endianness, bool> class MachOT, endianness TargetEndianness>
-struct MachODataTypeTypedefHelper<MachOT<TargetEndianness, false> > {
+template<endianness TargetEndianness>
+struct MachODataTypeTypedefHelper<MachOType<TargetEndianness, false> > {
   typedef MachODataTypeTypedefHelperCommon<TargetEndianness> Base;
   typedef typename Base::MachOInt32 MachOIntPtr;
 };
 
-template<template<endianness, bool> class MachOT, endianness TargetEndianness>
-struct MachODataTypeTypedefHelper<MachOT<TargetEndianness, true> > {
+template<endianness TargetEndianness>
+struct MachODataTypeTypedefHelper<MachOType<TargetEndianness, true> > {
   typedef MachODataTypeTypedefHelperCommon<TargetEndianness> Base;
   typedef typename Base::MachOInt64 MachOIntPtr;
 };
@@ -79,8 +79,8 @@ namespace MachOFormat {
   template<class MachOT>
   struct Section;
 
-  template<template<endianness, bool> class MachOT, endianness TargetEndianness>
-  struct Section<MachOT<TargetEndianness, false> > {
+  template<endianness TargetEndianness>
+  struct Section<MachOType<TargetEndianness, false> > {
     LLVM_MACHOB_IMPORT_TYPES(TargetEndianness)
     char Name[16];
     char SegmentName[16];
@@ -95,9 +95,8 @@ namespace MachOFormat {
     MachOInt32 Reserved2;
   };
 
-  template<template<endianness, bool> class MachOT,
-           endianness TargetEndianness>
-  struct Section<MachOT<TargetEndianness, true> > {
+  template<endianness TargetEndianness>
+  struct Section<MachOType<TargetEndianness, true> > {
     LLVM_MACHOB_IMPORT_TYPES(TargetEndianness)
     char Name[16];
     char SegmentName[16];
@@ -132,10 +131,9 @@ namespace MachOFormat {
   template<class MachOT>
   struct SymbolTableEntry;
 
-  template<template<endianness, bool> class MachOT, endianness TargetEndianness,
-           bool Is64Bits>
-  struct SymbolTableEntry<MachOT<TargetEndianness, Is64Bits> > {
-    LLVM_MACHO_IMPORT_TYPES(MachOT, TargetEndianness, Is64Bits)
+  template<endianness TargetEndianness, bool Is64Bits>
+  struct SymbolTableEntry<MachOType<TargetEndianness, Is64Bits> > {
+    LLVM_MACHO_IMPORT_TYPES(MachOType, TargetEndianness, Is64Bits)
     MachOInt32 StringIndex;
     uint8_t Type;
     uint8_t SectionIndex;
@@ -164,10 +162,9 @@ namespace MachOFormat {
   template<class MachOT>
   struct SegmentLoadCommand;
 
-  template<template<endianness, bool> class MachOT, endianness TargetEndianness,
-           bool Is64Bits>
-  struct SegmentLoadCommand<MachOT<TargetEndianness, Is64Bits> > {
-    LLVM_MACHO_IMPORT_TYPES(MachOT, TargetEndianness, Is64Bits)
+  template<endianness TargetEndianness, bool Is64Bits>
+  struct SegmentLoadCommand<MachOType<TargetEndianness, Is64Bits> > {
+    LLVM_MACHO_IMPORT_TYPES(MachOType, TargetEndianness, Is64Bits)
     MachOInt32 Type;
     MachOInt32 Size;
     char Name[16];
@@ -319,13 +316,11 @@ struct MachOObjectFileHelper<true> :
 template<bool is64Bits>
 class MachOObjectFile : public MachOObjectFileBase {
 public:
-  static const macho::LoadCommandType SegmentLoadType =
-    MachOObjectFileHelper<is64Bits>::SegmentLoadType;
-  typedef typename MachOObjectFileHelper<is64Bits>::SegmentLoadCommand
-    SegmentLoadCommand;
-  typedef typename MachOObjectFileHelper<is64Bits>::SymbolTableEntry
-    SymbolTableEntry;
-  typedef typename MachOObjectFileHelper<is64Bits>::Section Section;
+  typedef MachOObjectFileHelper<is64Bits> Helper;
+  static const macho::LoadCommandType SegmentLoadType = Helper::SegmentLoadType;
+  typedef typename Helper::SegmentLoadCommand SegmentLoadCommand;
+  typedef typename Helper::SymbolTableEntry SymbolTableEntry;
+  typedef typename Helper::Section Section;
 
   MachOObjectFile(MemoryBuffer *Object, error_code &ec);
   static bool classof(const Binary *v);
