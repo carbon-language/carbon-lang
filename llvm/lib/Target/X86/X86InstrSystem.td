@@ -449,15 +449,15 @@ let Uses = [RDX, RAX] in {
   def XSAVE : I<0xAE, MRM4m, (outs opaque512mem:$dst), (ins),
                "xsave\t$dst", []>, TB;
   def XSAVE64 : I<0xAE, MRM4m, (outs opaque512mem:$dst), (ins),
-                 "xsaveq\t$dst", []>, TB, REX_W, Requires<[In64BitMode]>;
+                 "xsave{q|64}\t$dst", []>, TB, REX_W, Requires<[In64BitMode]>;
   def XRSTOR : I<0xAE, MRM5m, (outs), (ins opaque512mem:$dst),
                "xrstor\t$dst", []>, TB;
   def XRSTOR64 : I<0xAE, MRM5m, (outs), (ins opaque512mem:$dst),
-                 "xrstorq\t$dst", []>, TB, REX_W, Requires<[In64BitMode]>;
+                 "xrstor{q|64}\t$dst", []>, TB, REX_W, Requires<[In64BitMode]>;
   def XSAVEOPT : I<0xAE, MRM6m, (outs opaque512mem:$dst), (ins),
                   "xsaveopt\t$dst", []>, TB;
   def XSAVEOPT64 : I<0xAE, MRM6m, (outs opaque512mem:$dst), (ins),
-                    "xsaveoptq\t$dst", []>, TB, REX_W, Requires<[In64BitMode]>;
+                    "xsaveopt{q|64}\t$dst", []>, TB, REX_W, Requires<[In64BitMode]>;
 }
 } // SchedRW
 
