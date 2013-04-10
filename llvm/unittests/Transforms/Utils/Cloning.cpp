@@ -168,6 +168,9 @@ TEST_F(CloneInstruction, Attributes) {
 
   CloneFunctionInto(F2, F1, VMap, false, Returns);
   EXPECT_FALSE(F2->arg_begin()->hasNoCaptureAttr());
+
+  delete F1;
+  delete F2;
 }
 
 }
