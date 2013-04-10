@@ -4,6 +4,7 @@
 
 ; Combine sin / cos into a single call.
 ; rdar://13087969
+; rdar://13599493
 
 define float @test1(float %x) nounwind {
 entry:
@@ -14,7 +15,8 @@ entry:
 
 ; OSX_SINCOS: test1:
 ; OSX_SINCOS: callq ___sincosf_stret
-; OSX_SINCOS: addss %xmm1, %xmm0
+; OSX_SINCOS: pshufd $1, %xmm0, %xmm1
+; OSX_SINCOS: addss %xmm0, %xmm1
 
 ; OSX_NOOPT: test1
 ; OSX_NOOPT: callq _cosf
