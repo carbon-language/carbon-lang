@@ -77,6 +77,7 @@ void TempScop::printDetail(llvm::raw_ostream &OS, ScalarEvolution *SE,
 
 void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB) {
   AccFuncSetType Functions;
+  Loop *L = LI->getLoopFor(&BB);
 
   for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I) {
     Instruction &Inst = *I;
@@ -93,7 +94,8 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB) {
         Type = IRAccess::WRITE;
       }
 
-      const SCEV *AccessFunction = SE->getSCEV(getPointerOperand(Inst));
+      const SCEV *AccessFunction =
+          SE->getSCEVAtScope(getPointerOperand(Inst), L);
       const SCEVUnknown *BasePointer =
           dyn_cast<SCEVUnknown>(SE->getPointerBase(AccessFunction));
 
@@ -163,8 +165,9 @@ void TempScopInfo::buildAffineCondition(Value &V, bool inverted,
   ICmpInst *ICmp = dyn_cast<ICmpInst>(&V);
   assert(ICmp && "Only ICmpInst of constant as condition supported!");
 
-  const SCEV *LHS = SE->getSCEV(ICmp->getOperand(0)),
-              *RHS = SE->getSCEV(ICmp->getOperand(1));
+  Loop *L = LI->getLoopFor(ICmp->getParent());
+  const SCEV *LHS = SE->getSCEVAtScope(ICmp->getOperand(0), L);
+  const SCEV *RHS = SE->getSCEVAtScope(ICmp->getOperand(1), L);
 
   ICmpInst::Predicate Pred = ICmp->getPredicate();
 

@@ -196,8 +196,9 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
         isa<UndefValue>(ICmp->getOperand(1)))
       INVALID(AffFunc, "undef operand in branch at BB: " + BB.getName());
 
-    const SCEV *LHS = SE->getSCEV(ICmp->getOperand(0));
-    const SCEV *RHS = SE->getSCEV(ICmp->getOperand(1));
+    Loop *L = LI->getLoopFor(ICmp->getParent());
+    const SCEV *LHS = SE->getSCEVAtScope(ICmp->getOperand(0), L);
+    const SCEV *RHS = SE->getSCEVAtScope(ICmp->getOperand(1), L);
 
     if (!isAffineExpr(&Context.CurRegion, LHS, *SE) ||
         !isAffineExpr(&Context.CurRegion, RHS, *SE))
@@ -239,7 +240,8 @@ bool ScopDetection::isValidCallInst(CallInst &CI) {
 bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
                                         DetectionContext &Context) const {
   Value *Ptr = getPointerOperand(Inst);
-  const SCEV *AccessFunction = SE->getSCEV(Ptr);
+  Loop *L = LI->getLoopFor(Inst.getParent());
+  const SCEV *AccessFunction = SE->getSCEVAtScope(Ptr, L);
   const SCEVUnknown *BasePointer;
   Value *BaseValue;
 
