@@ -4244,9 +4244,8 @@ updateExceptionSpec(Sema &S, FunctionDecl *FD, const FunctionProtoType *FPT,
                     const Sema::ImplicitExceptionSpecification &ExceptSpec) {
   FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
   ExceptSpec.getEPI(EPI);
-  const FunctionProtoType *NewFPT = cast<FunctionProtoType>(
-      S.Context.getFunctionType(FPT->getResultType(), FPT->getArgTypes(), EPI));
-  FD->setType(QualType(NewFPT, 0));
+  FD->setType(S.Context.getFunctionType(FPT->getResultType(),
+                                        FPT->getArgTypes(), EPI));
 }
 
 void Sema::EvaluateImplicitExceptionSpec(SourceLocation Loc, CXXMethodDecl *MD) {
@@ -7655,208 +7654,305 @@ void Sema::ActOnFinishDelayedMemberInitializers(Decl *D) {
   CheckDelayedExplicitlyDefaultedMemberExceptionSpecs();
 }
 
-void Sema::DeclareInheritingConstructors(CXXRecordDecl *ClassDecl) {
-  // We start with an initial pass over the base classes to collect those that
-  // inherit constructors from. If there are none, we can forgo all further
-  // processing.
-  typedef SmallVector<const RecordType *, 4> BasesVector;
-  BasesVector BasesToInheritFrom;
-  for (CXXRecordDecl::base_class_iterator BaseIt = ClassDecl->bases_begin(),
-                                          BaseE = ClassDecl->bases_end();
-         BaseIt != BaseE; ++BaseIt) {
-    if (BaseIt->getInheritConstructors()) {
-      QualType Base = BaseIt->getType();
-      if (Base->isDependentType()) {
-        // If we inherit constructors from anything that is dependent, just
-        // abort processing altogether. We'll get another chance for the
-        // instantiations.
-        // FIXME: We need to ensure that any call to a constructor of this class
-        // is considered instantiation-dependent in this case.
-        return;
+namespace {
+/// Information on inheriting constructors to declare.
+class InheritingConstructorInfo {
+public:
+  InheritingConstructorInfo(Sema &SemaRef, CXXRecordDecl *Derived)
+      : SemaRef(SemaRef), Derived(Derived) {
+    // Mark the constructors that we already have in the derived class.
+    //
+    // C++11 [class.inhctor]p3: [...] a constructor is implicitly declared [...]
+    //   unless there is a user-declared constructor with the same signature in
+    //   the class where the using-declaration appears.
+    visitAll(Derived, &InheritingConstructorInfo::noteDeclaredInDerived);
+  }
+
+  void inheritAll(CXXRecordDecl *RD) {
+    visitAll(RD, &InheritingConstructorInfo::inherit);
+  }
+
+private:
+  /// Information about an inheriting constructor.
+  struct InheritingConstructor {
+    InheritingConstructor()
+      : DeclaredInDerived(false), BaseCtor(0), DerivedCtor(0) {}
+
+    /// If \c true, a constructor with this signature is already declared
+    /// in the derived class.
+    bool DeclaredInDerived;
+
+    /// The constructor which is inherited.
+    const CXXConstructorDecl *BaseCtor;
+
+    /// The derived constructor we declared.
+    CXXConstructorDecl *DerivedCtor;
+  };
+
+  /// Inheriting constructors with a given canonical type. There can be at
+  /// most one such non-template constructor, and any number of templated
+  /// constructors.
+  struct InheritingConstructorsForType {
+    InheritingConstructor NonTemplate;
+    llvm::SmallVector<
+      std::pair<TemplateParameterList*, InheritingConstructor>, 4> Templates;
+
+    InheritingConstructor &getEntry(Sema &S, const CXXConstructorDecl *Ctor) {
+      if (FunctionTemplateDecl *FTD = Ctor->getDescribedFunctionTemplate()) {
+        TemplateParameterList *ParamList = FTD->getTemplateParameters();
+        for (unsigned I = 0, N = Templates.size(); I != N; ++I)
+          if (S.TemplateParameterListsAreEqual(ParamList, Templates[I].first,
+                                               false, S.TPL_TemplateMatch))
+            return Templates[I].second;
+        Templates.push_back(std::make_pair(ParamList, InheritingConstructor()));
+        return Templates.back().second;
       }
-      BasesToInheritFrom.push_back(Base->castAs<RecordType>());
+
+      return NonTemplate;
+    }
+  };
+
+  /// Get or create the inheriting constructor record for a constructor.
+  InheritingConstructor &getEntry(const CXXConstructorDecl *Ctor,
+                                  QualType CtorType) {
+    return Map[CtorType.getCanonicalType()->castAs<FunctionProtoType>()]
+        .getEntry(SemaRef, Ctor);
+  }
+
+  typedef void (InheritingConstructorInfo::*VisitFn)(const CXXConstructorDecl*);
+
+  /// Process all constructors for a class.
+  void visitAll(const CXXRecordDecl *RD, VisitFn Callback) {
+    for (CXXRecordDecl::ctor_iterator CtorIt = RD->ctor_begin(),
+                                      CtorE = RD->ctor_end();
+         CtorIt != CtorE; ++CtorIt)
+      (this->*Callback)(*CtorIt);
+    for (CXXRecordDecl::specific_decl_iterator<FunctionTemplateDecl>
+             I(RD->decls_begin()), E(RD->decls_end());
+         I != E; ++I) {
+      const FunctionDecl *FD = (*I)->getTemplatedDecl();
+      if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD))
+        (this->*Callback)(CD);
     }
   }
-  if (BasesToInheritFrom.empty())
+
+  /// Note that a constructor (or constructor template) was declared in Derived.
+  void noteDeclaredInDerived(const CXXConstructorDecl *Ctor) {
+    getEntry(Ctor, Ctor->getType()).DeclaredInDerived = true;
+  }
+
+  /// Inherit a single constructor.
+  void inherit(const CXXConstructorDecl *Ctor) {
+    const FunctionProtoType *CtorType =
+        Ctor->getType()->castAs<FunctionProtoType>();
+    ArrayRef<QualType> ArgTypes(CtorType->getArgTypes());
+    FunctionProtoType::ExtProtoInfo EPI = CtorType->getExtProtoInfo();
+
+    SourceLocation UsingLoc = getUsingLoc(Ctor->getParent());
+
+    // Core issue (no number yet): the ellipsis is always discarded.
+    if (EPI.Variadic) {
+      SemaRef.Diag(UsingLoc, diag::warn_using_decl_constructor_ellipsis);
+      SemaRef.Diag(Ctor->getLocation(),
+                   diag::note_using_decl_constructor_ellipsis);
+      EPI.Variadic = false;
+    }
+
+    // Declare a constructor for each number of parameters.
+    //
+    // C++11 [class.inhctor]p1:
+    //   The candidate set of inherited constructors from the class X named in
+    //   the using-declaration consists of [... modulo defects ...] for each
+    //   constructor or constructor template of X, the set of constructors or
+    //   constructor templates that results from omitting any ellipsis parameter
+    //   specification and successively omitting parameters with a default
+    //   argument from the end of the parameter-type-list
+    for (unsigned Params = std::max(minParamsToInherit(Ctor),
+                                    Ctor->getMinRequiredArguments()),
+                  MaxParams = Ctor->getNumParams();
+         Params <= MaxParams; ++Params)
+      declareCtor(UsingLoc, Ctor,
+                  SemaRef.Context.getFunctionType(
+                      Ctor->getResultType(), ArgTypes.slice(0, Params), EPI));
+  }
+
+  /// Find the using-declaration which specified that we should inherit the
+  /// constructors of \p Base.
+  SourceLocation getUsingLoc(const CXXRecordDecl *Base) {
+    // No fancy lookup required; just look for the base constructor name
+    // directly within the derived class.
+    ASTContext &Context = SemaRef.Context;
+    DeclarationName Name = Context.DeclarationNames.getCXXConstructorName(
+        Context.getCanonicalType(Context.getRecordType(Base)));
+    DeclContext::lookup_const_result Decls = Derived->lookup(Name);
+    return Decls.empty() ? Derived->getLocation() : Decls[0]->getLocation();
+  }
+
+  unsigned minParamsToInherit(const CXXConstructorDecl *Ctor) {
+    // C++11 [class.inhctor]p3:
+    //   [F]or each constructor template in the candidate set of inherited
+    //   constructors, a constructor template is implicitly declared
+    if (Ctor->getDescribedFunctionTemplate())
+      return 0;
+
+    //   For each non-template constructor in the candidate set of inherited
+    //   constructors other than a constructor having no parameters or a
+    //   copy/move constructor having a single parameter, a constructor is
+    //   implicitly declared [...]
+    if (Ctor->getNumParams() == 0)
+      return 1;
+    if (Ctor->isCopyOrMoveConstructor())
+      return 2;
+
+    // Per discussion on core reflector, never inherit a constructor which
+    // would become a default, copy, or move constructor of Derived either.
+    const ParmVarDecl *PD = Ctor->getParamDecl(0);
+    const ReferenceType *RT = PD->getType()->getAs<ReferenceType>();
+    return (RT && RT->getPointeeCXXRecordDecl() == Derived) ? 2 : 1;
+  }
+
+  /// Declare a single inheriting constructor, inheriting the specified
+  /// constructor, with the given type.
+  void declareCtor(SourceLocation UsingLoc, const CXXConstructorDecl *BaseCtor,
+                   QualType DerivedType) {
+    InheritingConstructor &Entry = getEntry(BaseCtor, DerivedType);
+
+    // C++11 [class.inhctor]p3:
+    //   ... a constructor is implicitly declared with the same constructor
+    //   characteristics unless there is a user-declared constructor with
+    //   the same signature in the class where the using-declaration appears
+    if (Entry.DeclaredInDerived)
+      return;
+
+    // C++11 [class.inhctor]p7:
+    //   If two using-declarations declare inheriting constructors with the
+    //   same signature, the program is ill-formed
+    if (Entry.DerivedCtor) {
+      if (BaseCtor->getParent() != Entry.BaseCtor->getParent()) {
+        // Only diagnose this once per constructor.
+        if (Entry.DerivedCtor->isInvalidDecl())
+          return;
+        Entry.DerivedCtor->setInvalidDecl();
+
+        SemaRef.Diag(UsingLoc, diag::err_using_decl_constructor_conflict);
+        SemaRef.Diag(BaseCtor->getLocation(),
+                     diag::note_using_decl_constructor_conflict_current_ctor);
+        SemaRef.Diag(Entry.BaseCtor->getLocation(),
+                     diag::note_using_decl_constructor_conflict_previous_ctor);
+        SemaRef.Diag(Entry.DerivedCtor->getLocation(),
+                     diag::note_using_decl_constructor_conflict_previous_using);
+      } else {
+        // Core issue (no number): if the same inheriting constructor is
+        // produced by multiple base class constructors from the same base
+        // class, the inheriting constructor is defined as deleted.
+        SemaRef.SetDeclDeleted(Entry.DerivedCtor, UsingLoc);
+      }
+
+      return;
+    }
+
+    ASTContext &Context = SemaRef.Context;
+    DeclarationName Name = Context.DeclarationNames.getCXXConstructorName(
+        Context.getCanonicalType(Context.getRecordType(Derived)));
+    DeclarationNameInfo NameInfo(Name, UsingLoc);
+
+    TemplateParameterList *TemplateParams = 0;
+    if (const FunctionTemplateDecl *FTD =
+            BaseCtor->getDescribedFunctionTemplate()) {
+      TemplateParams = FTD->getTemplateParameters();
+      // We're reusing template parameters from a different DeclContext. This
+      // is questionable at best, but works out because the template depth in
+      // both places is guaranteed to be 0.
+      // FIXME: Rebuild the template parameters in the new context, and
+      // transform the function type to refer to them.
+    }
+
+    // Build type source info pointing at the using-declaration. This is
+    // required by template instantiation.
+    TypeSourceInfo *TInfo =
+        Context.getTrivialTypeSourceInfo(DerivedType, UsingLoc);
+    FunctionProtoTypeLoc ProtoLoc =
+        TInfo->getTypeLoc().IgnoreParens().castAs<FunctionProtoTypeLoc>();
+
+    CXXConstructorDecl *DerivedCtor = CXXConstructorDecl::Create(
+        Context, Derived, UsingLoc, NameInfo, DerivedType,
+        TInfo, BaseCtor->isExplicit(), /*Inline=*/true,
+        /*ImplicitlyDeclared=*/true, /*Constexpr=*/BaseCtor->isConstexpr());
+
+    // Build an unevaluated exception specification for this constructor.
+    const FunctionProtoType *FPT = DerivedType->castAs<FunctionProtoType>();
+    FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
+    EPI.ExceptionSpecType = EST_Unevaluated;
+    EPI.ExceptionSpecDecl = DerivedCtor;
+    DerivedCtor->setType(Context.getFunctionType(FPT->getResultType(),
+                                                 FPT->getArgTypes(), EPI));
+
+    // Build the parameter declarations.
+    SmallVector<ParmVarDecl *, 16> ParamDecls;
+    for (unsigned I = 0, N = FPT->getNumArgs(); I != N; ++I) {
+      TypeSourceInfo *TInfo =
+          Context.getTrivialTypeSourceInfo(FPT->getArgType(I), UsingLoc);
+      ParmVarDecl *PD = ParmVarDecl::Create(
+          Context, DerivedCtor, UsingLoc, UsingLoc, /*IdentifierInfo=*/0,
+          FPT->getArgType(I), TInfo, SC_None, /*DefaultArg=*/0);
+      PD->setScopeInfo(0, I);
+      PD->setImplicit();
+      ParamDecls.push_back(PD);
+      ProtoLoc.setArg(I, PD);
+    }
+
+    // Set up the new constructor.
+    DerivedCtor->setAccess(BaseCtor->getAccess());
+    DerivedCtor->setParams(ParamDecls);
+    DerivedCtor->setInheritedConstructor(BaseCtor);
+    if (BaseCtor->isDeleted())
+      SemaRef.SetDeclDeleted(DerivedCtor, UsingLoc);
+
+    // If this is a constructor template, build the template declaration.
+    if (TemplateParams) {
+      FunctionTemplateDecl *DerivedTemplate =
+          FunctionTemplateDecl::Create(SemaRef.Context, Derived, UsingLoc, Name,
+                                       TemplateParams, DerivedCtor);
+      DerivedTemplate->setAccess(BaseCtor->getAccess());
+      DerivedCtor->setDescribedFunctionTemplate(DerivedTemplate);
+      Derived->addDecl(DerivedTemplate);
+    } else {
+      Derived->addDecl(DerivedCtor);
+    }
+
+    Entry.BaseCtor = BaseCtor;
+    Entry.DerivedCtor = DerivedCtor;
+  }
+
+  Sema &SemaRef;
+  CXXRecordDecl *Derived;
+  typedef llvm::DenseMap<const Type *, InheritingConstructorsForType> MapType;
+  MapType Map;
+};
+}
+
+void Sema::DeclareInheritingConstructors(CXXRecordDecl *ClassDecl) {
+  // Defer declaring the inheriting constructors until the class is
+  // instantiated.
+  if (ClassDecl->isDependentContext())
     return;
 
-  // FIXME: Constructor templates.
+  // Find base classes from which we might inherit constructors.
+  SmallVector<CXXRecordDecl*, 4> InheritedBases;
+  for (CXXRecordDecl::base_class_iterator BaseIt = ClassDecl->bases_begin(),
+                                          BaseE = ClassDecl->bases_end();
+       BaseIt != BaseE; ++BaseIt)
+    if (BaseIt->getInheritConstructors())
+      InheritedBases.push_back(BaseIt->getType()->getAsCXXRecordDecl());
 
-  // Now collect the constructors that we already have in the current class.
-  // Those take precedence over inherited constructors.
-  // C++11 [class.inhctor]p3: [...] a constructor is implicitly declared [...]
-  //   unless there is a user-declared constructor with the same signature in
-  //   the class where the using-declaration appears.
-  llvm::SmallSet<const Type *, 8> ExistingConstructors;
-  for (CXXRecordDecl::ctor_iterator CtorIt = ClassDecl->ctor_begin(),
-                                    CtorE = ClassDecl->ctor_end();
-       CtorIt != CtorE; ++CtorIt)
-    ExistingConstructors.insert(
-        Context.getCanonicalType(CtorIt->getType()).getTypePtr());
+  // Go no further if we're not inheriting any constructors.
+  if (InheritedBases.empty())
+    return;
 
-  DeclarationName CreatedCtorName =
-      Context.DeclarationNames.getCXXConstructorName(
-          ClassDecl->getTypeForDecl()->getCanonicalTypeUnqualified());
-
-  // Now comes the true work.
-  // First, we keep a map from constructor types to the base that introduced
-  // them. Needed for finding conflicting constructors. We also keep the
-  // actually inserted declarations in there, for pretty diagnostics.
-  typedef std::pair<CanQualType, CXXConstructorDecl *> ConstructorInfo;
-  typedef llvm::DenseMap<const Type *, ConstructorInfo> ConstructorToSourceMap;
-  ConstructorToSourceMap InheritedConstructors;
-  for (BasesVector::iterator BaseIt = BasesToInheritFrom.begin(),
-                             BaseE = BasesToInheritFrom.end();
-       BaseIt != BaseE; ++BaseIt) {
-    const RecordType *Base = *BaseIt;
-    CanQualType CanonicalBase = Base->getCanonicalTypeUnqualified();
-    CXXRecordDecl *BaseDecl = cast<CXXRecordDecl>(Base->getDecl());
-    for (CXXRecordDecl::ctor_iterator CtorIt = BaseDecl->ctor_begin(),
-                                      CtorE = BaseDecl->ctor_end();
-         CtorIt != CtorE; ++CtorIt) {
-      // Find the using declaration for inheriting this base's constructors.
-      // FIXME: Don't perform name lookup just to obtain a source location!
-      DeclarationName Name =
-          Context.DeclarationNames.getCXXConstructorName(CanonicalBase);
-      LookupResult Result(*this, Name, SourceLocation(), LookupUsingDeclName);
-      LookupQualifiedName(Result, CurContext);
-      UsingDecl *UD = Result.getAsSingle<UsingDecl>();
-      SourceLocation UsingLoc = UD ? UD->getLocation() :
-                                     ClassDecl->getLocation();
-
-      // C++11 [class.inhctor]p1:
-      //   The candidate set of inherited constructors from the class X named in
-      //   the using-declaration consists of actual constructors and notional
-      //   constructors that result from the transformation of defaulted
-      //   parameters as follows:
-      //   - all non-template constructors of X, and
-      //   - for each non-template constructor of X that has at least one
-      //     parameter with a default argument, the set of constructors that
-      //     results from omitting any ellipsis parameter specification and
-      //     successively omitting parameters with a default argument from the
-      //     end of the parameter-type-list, and
-      // FIXME: ...also constructor templates.
-      CXXConstructorDecl *BaseCtor = *CtorIt;
-      bool CanBeCopyOrMove = BaseCtor->isCopyOrMoveConstructor();
-      const FunctionProtoType *BaseCtorType =
-          BaseCtor->getType()->getAs<FunctionProtoType>();
-
-      // Determine whether this would be a copy or move constructor for the
-      // derived class.
-      if (BaseCtorType->getNumArgs() >= 1 &&
-          BaseCtorType->getArgType(0)->isReferenceType() &&
-          Context.hasSameUnqualifiedType(
-            BaseCtorType->getArgType(0)->getPointeeType(),
-            Context.getTagDeclType(ClassDecl)))
-        CanBeCopyOrMove = true;
-
-      ArrayRef<QualType> ArgTypes(BaseCtorType->getArgTypes());
-      FunctionProtoType::ExtProtoInfo EPI = BaseCtorType->getExtProtoInfo();
-      // Core issue (no number yet): the ellipsis is always discarded.
-      if (EPI.Variadic) {
-        Diag(UsingLoc, diag::warn_using_decl_constructor_ellipsis);
-        Diag(BaseCtor->getLocation(),
-             diag::note_using_decl_constructor_ellipsis);
-        EPI.Variadic = false;
-      }
-
-      for (unsigned Params = BaseCtor->getMinRequiredArguments(),
-                    MaxParams = BaseCtor->getNumParams();
-           Params <= MaxParams; ++Params) {
-        // Skip default constructors. They're never inherited.
-        if (Params == 0)
-          continue;
-
-        // Skip copy and move constructors for both base and derived class
-        // for the same reason.
-        if (CanBeCopyOrMove && Params == 1)
-          continue;
-
-        // Build up a function type for this particular constructor.
-        QualType NewCtorType =
-            Context.getFunctionType(Context.VoidTy, ArgTypes.slice(0, Params),
-                                    EPI);
-        const Type *CanonicalNewCtorType =
-            Context.getCanonicalType(NewCtorType).getTypePtr();
-
-        // C++11 [class.inhctor]p3:
-        //   ... a constructor is implicitly declared with the same constructor
-        //   characteristics unless there is a user-declared constructor with
-        //   the same signature in the class where the using-declaration appears
-        if (ExistingConstructors.count(CanonicalNewCtorType))
-          continue;
-
-        // C++11 [class.inhctor]p7:
-        //   If two using-declarations declare inheriting constructors with the
-        //   same signature, the program is ill-formed
-        std::pair<ConstructorToSourceMap::iterator, bool> result =
-            InheritedConstructors.insert(std::make_pair(
-                CanonicalNewCtorType,
-                std::make_pair(CanonicalBase, (CXXConstructorDecl*)0)));
-        if (!result.second) {
-          // Already in the map. If it came from a different class, that's an
-          // error. Not if it's from the same.
-          CanQualType PreviousBase = result.first->second.first;
-          if (CanonicalBase != PreviousBase) {
-            const CXXConstructorDecl *PrevCtor = result.first->second.second;
-            const CXXConstructorDecl *PrevBaseCtor =
-                PrevCtor->getInheritedConstructor();
-            assert(PrevBaseCtor && "Conflicting constructor was not inherited");
-
-            Diag(UsingLoc, diag::err_using_decl_constructor_conflict);
-            Diag(BaseCtor->getLocation(),
-                 diag::note_using_decl_constructor_conflict_current_ctor);
-            Diag(PrevBaseCtor->getLocation(),
-                 diag::note_using_decl_constructor_conflict_previous_ctor);
-            Diag(PrevCtor->getLocation(),
-                 diag::note_using_decl_constructor_conflict_previous_using);
-          } else {
-            // Core issue (no number): if the same inheriting constructor is
-            // produced by multiple base class constructors from the same base
-            // class, the inheriting constructor is defined as deleted.
-            SetDeclDeleted(result.first->second.second, UsingLoc);
-          }
-          continue;
-        }
-
-        // OK, we're there, now add the constructor.
-        DeclarationNameInfo DNI(CreatedCtorName, UsingLoc);
-        CXXConstructorDecl *NewCtor = CXXConstructorDecl::Create(
-            Context, ClassDecl, UsingLoc, DNI, NewCtorType,
-            /*TInfo=*/0, BaseCtor->isExplicit(), /*Inline=*/true,
-            /*ImplicitlyDeclared=*/true, /*Constexpr=*/BaseCtor->isConstexpr());
-        NewCtor->setAccess(BaseCtor->getAccess());
-
-        // Build an unevaluated exception specification for this constructor.
-        EPI.ExceptionSpecType = EST_Unevaluated;
-        EPI.ExceptionSpecDecl = NewCtor;
-        NewCtor->setType(Context.getFunctionType(Context.VoidTy,
-                                                 ArgTypes.slice(0, Params),
-                                                 EPI));
-
-        // Build up the parameter decls and add them.
-        SmallVector<ParmVarDecl *, 16> ParamDecls;
-        for (unsigned i = 0; i < Params; ++i) {
-          ParmVarDecl *PD = ParmVarDecl::Create(Context, NewCtor,
-                                                UsingLoc, UsingLoc,
-                                                /*IdentifierInfo=*/0,
-                                                BaseCtorType->getArgType(i),
-                                                /*TInfo=*/0, SC_None,
-                                                /*DefaultArg=*/0);
-          PD->setScopeInfo(0, i);
-          PD->setImplicit();
-          ParamDecls.push_back(PD);
-        }
-        NewCtor->setParams(ParamDecls);
-        NewCtor->setInheritedConstructor(BaseCtor);
-        if (BaseCtor->isDeleted())
-          SetDeclDeleted(NewCtor, UsingLoc);
-
-        ClassDecl->addDecl(NewCtor);
-        result.first->second.second = NewCtor;
-      }
-    }
-  }
+  // Declare the inherited constructors.
+  InheritingConstructorInfo ICI(*this, ClassDecl);
+  for (unsigned I = 0, N = InheritedBases.size(); I != N; ++I)
+    ICI.inheritAll(InheritedBases[I]);
 }
 
 void Sema::DefineInheritingConstructor(SourceLocation CurrentLocation,

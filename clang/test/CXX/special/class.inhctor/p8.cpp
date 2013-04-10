@@ -19,3 +19,12 @@ constexpr B b0{0};
 constexpr B b1{k};
 
 static_assert(a0.rval && !a1.rval && b0.rval && !b1.rval, "");
+
+struct C {
+  template<typename T> constexpr C(T t) : v(t) {}
+  int v;
+};
+struct D : C {
+  using C::C;
+};
+static_assert(D(123).v == 123, "");

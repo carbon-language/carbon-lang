@@ -3,7 +3,7 @@
 template<int> struct X {};
 
 // Constructor characteristics are:
-//   - the template parameter list [FIXME]
+//   - the template parameter list
 //   - the parameter-type-list
 //   - absence or presence of explicit
 //   - absence or presence of constexpr
@@ -85,3 +85,37 @@ struct ConstexprEval3 : ConstexprEval, ConstexprEval2 {
 constexpr ConstexprEval3 ce{4, "foobar"};
 static_assert(ce.k == 'a', "");
 static_assert(ce.k2 == 'x', "");
+
+
+struct TemplateCtors {
+  constexpr TemplateCtors() {}
+  template<template<int> class T> TemplateCtors(X<0>, T<0>);
+  template<int N> TemplateCtors(X<1>, X<N>);
+  template<typename T> TemplateCtors(X<2>, T);
+
+  template<typename T = int> TemplateCtors(int, int = 0, int = 0); // expected-note {{inherited from here}}
+};
+
+struct UsingTemplateCtors : TemplateCtors {
+  using TemplateCtors::TemplateCtors; // expected-note 4{{here}} expected-note {{candidate}}
+
+  constexpr UsingTemplateCtors(X<0>, X<0>) {}
+  constexpr UsingTemplateCtors(X<1>, X<1>) {}
+  constexpr UsingTemplateCtors(X<2>, X<2>) {}
+
+  template<int = 0> constexpr UsingTemplateCtors(int) {} // expected-note {{candidate}}
+  template<typename T = void> constexpr UsingTemplateCtors(int, int) {}
+  template<typename T, typename U> constexpr UsingTemplateCtors(int, int, int) {}
+};
+
+template<int> struct Y {};
+constexpr UsingTemplateCtors uct1{ X<0>{}, X<0>{} };
+constexpr UsingTemplateCtors uct2{ X<0>{}, Y<0>{} }; // expected-error {{must be initialized by a constant expression}} expected-note {{non-constexpr}}
+constexpr UsingTemplateCtors uct3{ X<1>{}, X<0>{} }; // expected-error {{must be initialized by a constant expression}} expected-note {{non-constexpr}}
+constexpr UsingTemplateCtors uct4{ X<1>{}, X<1>{} };
+constexpr UsingTemplateCtors uct5{ X<2>{}, 0 }; // expected-error {{must be initialized by a constant expression}} expected-note {{non-constexpr}}
+constexpr UsingTemplateCtors uct6{ X<2>{}, X<2>{} };
+
+constexpr UsingTemplateCtors utc7{ 0 }; // expected-error {{ambiguous}}
+constexpr UsingTemplateCtors utc8{ 0, 0 }; // ok
+constexpr UsingTemplateCtors utc9{ 0, 0, 0 }; // expected-error {{must be initialized by a constant expression}} expected-note {{non-constexpr}}

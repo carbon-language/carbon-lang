@@ -55,3 +55,10 @@ template<typename T> struct F : D<bool> {
   using A<T>::A; // expected-error {{'A<bool>' is not a direct base of 'F<bool>'}}
 };
 F<bool> fb; // expected-note {{here}}
+
+template<typename T>
+struct G : T {
+  using T::T;
+  G(int &) : G(0) {}
+};
+G<B1> g(123);

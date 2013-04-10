@@ -44,11 +44,13 @@ FA fa2{X<2>{}}; // expected-error {{calling a private constructor}}
 // It is deleted if the corresponding constructor [...] is deleted.
 struct G {
   G(int) = delete;
+  template<typename T> G(T*) = delete;
 };
 struct H : G {
-  using G::G; // expected-note {{marked deleted here}}
+  using G::G; // expected-note 2{{marked deleted here}}
 };
-H h(5); // expected-error {{call to implicitly-deleted function of 'H'}}
+H h1(5); // expected-error {{call to implicitly-deleted function of 'H'}}
+H h2("foo"); // expected-error {{call to deleted constructor of 'H'}}
 
 
 // Core defect: It is also deleted if multiple base constructors generate the

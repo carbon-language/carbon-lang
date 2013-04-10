@@ -46,3 +46,13 @@ struct U {
   friend T3<int>::T3(int);
   friend T3<int>::T3(int, int);
 };
+
+struct B4 {
+  template<typename T> explicit B4(T, int = 0);
+};
+template<typename T> struct T4 : B4 {
+  using B4::B4; // expected-note {{here}}
+  template<typename U> T4(U);
+};
+T4<void> t4a = {0};
+T4<void> t4b = {0, 0}; // expected-error {{chosen constructor is explicit}}
