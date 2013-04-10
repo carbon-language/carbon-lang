@@ -81,11 +81,6 @@ FormatStyle getChromiumStyle() {
   return ChromiumStyle;
 }
 
-static bool isTrailingComment(const AnnotatedToken &Tok) {
-  return Tok.is(tok::comment) &&
-         (Tok.Children.empty() || Tok.Children[0].MustBreakBefore);
-}
-
 // Returns the length of everything up to the first possible line break after
 // the ), ], } or > matching \c Tok.
 static unsigned getLengthToMatchingParen(const AnnotatedToken &Tok) {
@@ -127,7 +122,7 @@ public:
 
     // Align line comments if they are trailing or if they continue other
     // trailing comments.
-    if (isTrailingComment(Tok)) {
+    if (Tok.isTrailingComment()) {
       // Remove the comment's trailing whitespace.
       if (Tok.FormatTok.Tok.getLength() != Tok.FormatTok.TokenLength)
         Replaces.insert(tooling::Replacement(
@@ -151,7 +146,7 @@ public:
     }
 
     // If this line does not have a trailing comment, align the stored comments.
-    if (Tok.Children.empty() && !isTrailingComment(Tok))
+    if (Tok.Children.empty() && !Tok.isTrailingComment())
       alignComments();
 
     if (Tok.Type == TT_BlockComment) {
@@ -819,10 +814,10 @@ private:
               State.Column + Spaces + Current.FormatTok.TokenLength;
       }
 
-      if (opensScope(Previous) && Previous.Type != TT_ObjCMethodExpr &&
+      if (Previous.opensScope() && Previous.Type != TT_ObjCMethodExpr &&
           Current.Type != TT_LineComment)
         State.Stack.back().Indent = State.Column + Spaces;
-      if (Previous.is(tok::comma) && !isTrailingComment(Current))
+      if (Previous.is(tok::comma) && !Current.isTrailingComment())
         State.Stack.back().HasMultiParameterLine = true;
 
       State.Column += Spaces;
@@ -839,7 +834,7 @@ private:
         State.Stack.back().LastSpace = State.Column;
       else if (Previous.Type == TT_InheritanceColon)
         State.Stack.back().Indent = State.Column;
-      else if (opensScope(Previous) && Previous.ParameterCount > 1)
+      else if (Previous.opensScope() && Previous.ParameterCount > 1)
         // If this function has multiple parameters, indent nested calls from
         // the start of the first parameter.
         State.Stack.back().LastSpace = State.Column;
@@ -887,7 +882,7 @@ private:
     // is special cased.
     bool SkipFirstExtraIndent =
         Current.is(tok::kw_return) ||
-        (Previous && (opensScope(*Previous) ||
+        (Previous && (Previous->opensScope() ||
                       getPrecedence(*Previous) == prec::Assignment));
     for (SmallVector<prec::Level, 4>::const_reverse_iterator
              I = Current.FakeLParens.rbegin(),
@@ -905,7 +900,7 @@ private:
       if (*I == prec::Conditional ||
           (!SkipFirstExtraIndent && *I > prec::Assignment))
         NewParenState.Indent += 4;
-      if (Previous && !opensScope(*Previous))
+      if (Previous && !Previous->opensScope())
         NewParenState.BreakBeforeParameter = false;
       State.Stack.push_back(NewParenState);
       SkipFirstExtraIndent = false;
@@ -913,7 +908,7 @@ private:
 
     // If we encounter an opening (, [, { or <, we add a level to our stacks to
     // prepare for the following tokens.
-    if (opensScope(Current)) {
+    if (Current.opensScope()) {
       unsigned NewIndent;
       bool AvoidBinPacking;
       if (Current.is(tok::l_brace)) {
@@ -1229,7 +1224,7 @@ private:
          State.NextToken->is(tok::question) ||
          State.NextToken->Type == TT_ConditionalExpr) &&
         State.Stack.back().BreakBeforeParameter &&
-        !isTrailingComment(*State.NextToken) &&
+        !State.NextToken->isTrailingComment() &&
         State.NextToken->isNot(tok::r_paren) &&
         State.NextToken->isNot(tok::r_brace))
       return true;

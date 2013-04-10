@@ -121,6 +121,15 @@ public:
             Children[0].isObjCAtKeyword(tok::objc_private));
   }
 
+  /// \brief Returns whether \p Tok is ([{ or a template opening <.
+  bool opensScope() const;
+  /// \brief Returns whether \p Tok is )]} or a template opening >.
+  bool closesScope() const;
+
+  bool isUnaryOperator() const;
+  bool isBinaryOperator() const;
+  bool isTrailingComment() const;
+
   FormatToken FormatTok;
 
   TokenType Type;
@@ -175,12 +184,11 @@ public:
   /// Only set if \c Type == \c TT_StartOfName.
   bool PartOfMultiVariableDeclStmt;
 
-  const AnnotatedToken *getPreviousNoneComment() const {
-    AnnotatedToken *Tok = Parent;
-    while (Tok != NULL && Tok->is(tok::comment))
-      Tok = Tok->Parent;
-    return Tok;
-  }
+  /// \brief Returns the previous token ignoring comments.
+  AnnotatedToken *getPreviousNoneComment() const;
+
+  /// \brief Returns the next token ignoring comments.
+  const AnnotatedToken *getNextNoneComment() const;
 };
 
 class AnnotatedLine {
@@ -226,11 +234,6 @@ public:
 inline prec::Level getPrecedence(const AnnotatedToken &Tok) {
   return getBinOpPrecedence(Tok.FormatTok.Tok.getKind(), true, true);
 }
-
-/// \brief Returns whether \p Tok is ([{ or a template opening <.
-bool opensScope(const AnnotatedToken &Tok);
-/// \brief Returns whether \p Tok is )]} or a template opening >.
-bool closesScope(const AnnotatedToken &Tok);
 
 /// \brief Determines extra information about the tokens comprising an
 /// \c UnwrappedLine.
