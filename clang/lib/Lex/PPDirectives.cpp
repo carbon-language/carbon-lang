@@ -793,7 +793,8 @@ void Preprocessor::HandleDirective(Token &Result) {
 /// GetLineValue - Convert a numeric token into an unsigned value, emitting
 /// Diagnostic DiagID if it is invalid, and returning the value in Val.
 static bool GetLineValue(Token &DigitTok, unsigned &Val,
-                         unsigned DiagID, Preprocessor &PP) {
+                         unsigned DiagID, Preprocessor &PP,
+                         bool IsGNULineDirective=false) {
   if (DigitTok.isNot(tok::numeric_constant)) {
     PP.Diag(DigitTok, DiagID);
 
@@ -817,7 +818,7 @@ static bool GetLineValue(Token &DigitTok, unsigned &Val,
   for (unsigned i = 0; i != ActualLength; ++i) {
     if (!isDigit(DigitTokBegin[i])) {
       PP.Diag(PP.AdvanceToTokenCharacter(DigitTok.getLocation(), i),
-              diag::err_pp_line_digit_sequence);
+              diag::err_pp_line_digit_sequence) << IsGNULineDirective;
       PP.DiscardUntilEndOfDirective();
       return true;
     }
@@ -832,7 +833,8 @@ static bool GetLineValue(Token &DigitTok, unsigned &Val,
   }
 
   if (DigitTokBegin[0] == '0' && Val)
-    PP.Diag(DigitTok.getLocation(), diag::warn_pp_line_decimal);
+    PP.Diag(DigitTok.getLocation(), diag::warn_pp_line_decimal)
+      << IsGNULineDirective;
 
   return false;
 }
@@ -998,7 +1000,7 @@ void Preprocessor::HandleDigitDirective(Token &DigitTok) {
   // line # limit other than it fit in 32-bits.
   unsigned LineNo;
   if (GetLineValue(DigitTok, LineNo, diag::err_pp_linemarker_requires_integer,
-                   *this))
+                   *this, true))
     return;
 
   Token StrTok;
