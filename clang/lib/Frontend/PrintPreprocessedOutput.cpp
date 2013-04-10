@@ -127,6 +127,15 @@ public:
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
                            SrcMgr::CharacteristicKind FileType,
                            FileID PrevFID);
+  virtual void InclusionDirective(SourceLocation HashLoc,
+                                  const Token &IncludeTok,
+                                  StringRef FileName,
+                                  bool IsAngled,
+                                  CharSourceRange FilenameRange,
+                                  const FileEntry *File,
+                                  StringRef SearchPath,
+                                  StringRef RelativePath,
+                                  const Module *Imported);
   virtual void Ident(SourceLocation Loc, const std::string &str);
   virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind,
                              const std::string &Str);
@@ -302,6 +311,26 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   case PPCallbacks::RenameFile:
     WriteLineInfo(CurLine);
     break;
+  }
+}
+
+void PrintPPOutputPPCallbacks::InclusionDirective(SourceLocation HashLoc,
+                                                  const Token &IncludeTok,
+                                                  StringRef FileName,
+                                                  bool IsAngled,
+                                                  CharSourceRange FilenameRange,
+                                                  const FileEntry *File,
+                                                  StringRef SearchPath,
+                                                  StringRef RelativePath,
+                                                  const Module *Imported) {
+  // When preprocessing, turn implicit imports into @imports.
+  // FIXME: This is a stop-gap until a more comprehensive "preprocessing with
+  // modules" solution is introduced.
+  if (Imported) {
+    startNewLineIfNeeded();
+    MoveToLine(HashLoc);
+    OS << "@import " << Imported->getFullModuleName() << ";"
+       << " /* clang -E: implicit import for \"" << File->getName() << "\" */";
   }
 }
 
