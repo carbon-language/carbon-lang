@@ -1411,8 +1411,13 @@ X86Operand *X86AsmParser::ParseIntelOffsetOfOperator() {
 
   const MCExpr *Val;
   SMLoc Start = Tok.getLoc(), End;
+  StringRef Identifier = Tok.getString();
   if (getParser().parsePrimaryExpr(Val, End))
     return ErrorOperand(Start, "Unable to parse expression!");
+
+  const MCExpr *Disp = 0;
+  if (X86Operand *Err = ParseIntelVarWithQualifier(Disp, Identifier))
+    return Err;
 
   // Don't emit the offset operator.
   InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, OffsetOfLoc, 7));
@@ -1421,10 +1426,8 @@ X86Operand *X86AsmParser::ParseIntelOffsetOfOperator() {
   // register operand to ensure proper matching.  Just pick a GPR based on
   // the size of a pointer.
   unsigned RegNo = is64BitMode() ? X86::RBX : X86::EBX;
-  unsigned Len = End.getPointer() - Start.getPointer();
-  StringRef SymName(Start.getPointer(), Len);
   return X86Operand::CreateReg(RegNo, Start, End, /*GetAddress=*/true,
-                               OffsetOfLoc, SymName);
+                               OffsetOfLoc, Identifier);
 }
 
 enum IntelOperatorKind {
