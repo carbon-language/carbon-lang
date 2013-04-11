@@ -1,10 +1,11 @@
 ; Test to make sure that the 'private' is used correctly.
 ;
-; RUN: llc < %s -mtriple=arm-linux-gnueabi > %t
-; RUN: grep .Lfoo: %t
-; RUN: egrep bl.*\.Lfoo %t
-; RUN: grep .Lbaz: %t
-; RUN: grep long.*\.Lbaz %t
+; RUN: llc < %s -mtriple=arm-linux-gnueabi | FileCheck %s
+; CHECK: .Lfoo:
+; CHECK: bar:
+; CHECK: bl .Lfoo
+; CHECK: .long .Lbaz
+; CHECK: .Lbaz:
 
 define private void @foo() {
         ret void
