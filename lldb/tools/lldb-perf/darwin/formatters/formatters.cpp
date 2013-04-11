@@ -148,7 +148,7 @@ public:
         switch (counter)
         {
             case 0:
-                m_target.BreakpointCreateByLocation("fmts_tester.mm", 68);
+                m_target.BreakpointCreateByLocation("fmts_tester.mm", 78);
                 next_action.Continue();
                 break;
             case 1:
