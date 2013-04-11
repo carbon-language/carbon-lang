@@ -1,7 +1,9 @@
-; RUN: llc < %s -mtriple=i386-linux-gnu -mcpu=atom 2>&1 | \
-; RUN:     grep "calll" | not grep "("
-; RUN: llc < %s -mtriple=i386-linux-gnu -mcpu=core2 2>&1 | \
-; RUN:     grep "calll" | grep "*funcp"
+; RUN: llc < %s -mtriple=i386-linux-gnu -mcpu=atom  | \
+; RUN:     FileCheck --check-prefix=ATOM %s
+; RUN: llc < %s -mtriple=i386-linux-gnu -mcpu=core2 | \
+; RUN:     FileCheck --check-prefix=CORE2 %s
+; ATOM: calll *{{%[a-z]+}}
+; CORE2: calll *funcp
 ;
 ; original source code built with clang -S -emit-llvm -M32 test32.c:
 ;
@@ -18,10 +20,6 @@
 ;     }
 ;   }
 ;
-; ModuleID = 'test32.c'
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32-S128"
-target triple = "i386-unknown-linux-gnu"
-
 @sum = external global i32
 @a = common global i32 0, align 4
 @i = common global i32 0, align 4
@@ -74,4 +72,3 @@ for.end:                                          ; preds = %for.cond
   ret void
 }
 
-attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-frame-pointer-elim-non-leaf"="true" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
