@@ -169,7 +169,7 @@ bool isPlusOne(const Expr *E);
 /// source location will be invalid.
 SourceLocation findLocationAfterSemi(SourceLocation loc, ASTContext &Ctx);
 
-/// \brief \arg Loc is the end of a statement range. This returns the location
+/// \brief 'Loc' is the end of a statement range. This returns the location
 /// of the semicolon following the statement.
 /// If no semicolon is found or the location is inside a macro, the returned
 /// source location will be invalid.
