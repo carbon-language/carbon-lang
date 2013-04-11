@@ -2996,6 +2996,7 @@ enum CX_CXXAccessSpecifier {
 
 /**
  * \brief Returns the access control level for the referenced object.
+ *
  * If the cursor refers to a C++ declaration, its access control level within its
  * parent scope is returned. Otherwise, if the cursor refers to a base specifier or
  * access specifier, the specifier itself is returned.
