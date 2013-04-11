@@ -216,6 +216,9 @@ sdir_has_content = False
 # svn_info stores the output from 'svn info lldb.base.dir'.
 svn_info = ''
 
+# svn_silent means do not try to obtain svn status
+svn_silent = True
+
 # Default verbosity is 0.
 verbose = 1
 
@@ -355,6 +358,7 @@ def parseOptionsAndInitTestdirs():
     global regexp
     global rdir
     global sdir_name
+    global svn_silent
     global verbose
     global testdirs
 
@@ -419,6 +423,7 @@ def parseOptionsAndInitTestdirs():
     group.add_argument('-u', dest='unset_env_varnames', metavar='variable', action='append', help='Specify an environment variable to unset before running the test cases. e.g., -u DYLD_INSERT_LIBRARIES -u MallocScribble')
     X('-v', 'Do verbose mode of unittest framework (print out each test case invocation)')
     X('-w', 'Insert some wait time (currently 0.5 sec) between consecutive test cases')
+    X('-T', 'Obtain and dump svn information for this checkout of LLDB (off by default)')
 
     # Remove the reference to our helper function
     del X
@@ -594,6 +599,9 @@ def parseOptionsAndInitTestdirs():
     if args.t:
         os.environ['LLDB_COMMAND_TRACE'] = 'YES'
 
+    if args.T:
+        svn_silent = False
+
     if args.v:
         verbose = 2
 
@@ -713,6 +721,7 @@ def setupSysPath():
     global dumpSysPath
     global noHeaders
     global svn_info
+    global svn_silent
     global lldbFrameworkPath
     global lldbExecutablePath
 
@@ -833,7 +842,7 @@ def setupSysPath():
         #print "The 'lldb' from PATH env variable", lldbExec
 
     # Skip printing svn/git information when running in parsable (lit-test compatibility) mode
-    if not parsable:
+    if not svn_silent and not parsable:
         if os.path.isdir(os.path.join(base, '.svn')) and which("svn") is not None:
             pipe = subprocess.Popen([which("svn"), "info", base], stdout = subprocess.PIPE)
             svn_info = pipe.stdout.read()
