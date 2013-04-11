@@ -200,3 +200,37 @@ namespace rdar13278115 {
   X &&f1(Y &y) { return y; } // expected-error{{rvalue reference to type 'rdar13278115::X' cannot bind to lvalue of type 'rdar13278115::Y'}}
   const X &&f2(Y &y) { return y; } // expected-error{{rvalue reference to type 'const rdar13278115::X' cannot bind to lvalue of type 'rdar13278115::Y'}}
 }
+
+namespace bitfields {
+  struct IntBitfield {
+    int i : 17; // expected-note 3 {{bit-field is declared here}}
+  };
+
+  // A simplified version of std::move.
+  template <typename T>
+  T &&move(T &obj) {
+    return static_cast<T &&>(obj);
+  }
+
+  void test() {
+    int & ir1 = (lvalue<IntBitfield>().i); // expected-error{{non-const reference cannot bind to bit-field 'i'}}
+    int & ir2 = (xvalue<IntBitfield>().i); // expected-error{{non-const lvalue reference to type 'int' cannot bind to a temporary of type 'int'}}
+    int && ir3 = (xvalue<IntBitfield>().i); // no-warning
+    int && ir4 = move(lvalue<IntBitfield>()).i; // no-warning
+
+    volatile int & vir1 = (lvalue<IntBitfield>().i); // expected-error{{non-const reference cannot bind to bit-field 'i'}}
+    volatile int & vir2 = (xvalue<IntBitfield>().i); // expected-error{{volatile lvalue reference to type 'volatile int' cannot bind to a temporary of type 'int'}}
+    volatile int && vir3 = (xvalue<IntBitfield>().i); // no-warning
+    volatile int && vir4 = move(lvalue<IntBitfield>()).i; // no-warning
+
+    const int & cir1 = (lvalue<IntBitfield>().i); // no-warning
+    const int & cir2 = (xvalue<IntBitfield>().i); // no-warning
+    const int && cir3 = (xvalue<IntBitfield>().i); // no-warning
+    const int && cir4 = move(lvalue<IntBitfield>()).i; // no-warning
+
+    const volatile int & cvir1 = (lvalue<IntBitfield>().i); // expected-error{{non-const reference cannot bind to bit-field 'i'}}
+    const volatile int & cvir2 = (xvalue<IntBitfield>().i); // expected-error{{volatile lvalue reference to type 'const volatile int' cannot bind to a temporary of type 'int'}}
+    const volatile int && cvir3 = (xvalue<IntBitfield>().i); // no-warning
+    const volatile int && cvir4 = move(lvalue<IntBitfield>()).i; // no-warning
+  }
+}

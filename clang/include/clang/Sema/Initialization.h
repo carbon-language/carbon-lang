@@ -594,6 +594,8 @@ public:
     SK_QualificationConversionXValue,
     /// \brief Perform a qualification conversion, producing an lvalue.
     SK_QualificationConversionLValue,
+    /// \brief Perform a load from a glvalue, producing an rvalue.
+    SK_LValueToRValue,
     /// \brief Perform an implicit conversion sequence.
     SK_ConversionSequence,
     /// \brief Perform list-initialization without a constructor
@@ -911,6 +913,12 @@ public:
   void AddQualificationConversionStep(QualType Ty,
                                      ExprValueKind Category);
   
+  /// \brief Add a new step that performs a load of the given type.
+  ///
+  /// Although the term "LValueToRValue" is conventional, this applies to both
+  /// lvalues and xvalues.
+  void AddLValueToRValueStep(QualType Ty);
+
   /// \brief Add a new step that applies an implicit conversion sequence.
   void AddConversionSequenceStep(const ImplicitConversionSequence &ICS,
                                  QualType T);

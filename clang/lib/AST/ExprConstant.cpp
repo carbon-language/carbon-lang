@@ -2865,25 +2865,12 @@ bool LValueExprEvaluator::VisitVarDecl(const Expr *E, const VarDecl *VD) {
 
 bool LValueExprEvaluator::VisitMaterializeTemporaryExpr(
     const MaterializeTemporaryExpr *E) {
-  if (E->GetTemporaryExpr()->isRValue()) {
-    if (E->getType()->isRecordType())
-      return EvaluateTemporary(E->GetTemporaryExpr(), Result, Info);
+  if (E->getType()->isRecordType())
+    return EvaluateTemporary(E->GetTemporaryExpr(), Result, Info);
 
-    Result.set(E, Info.CurrentCall->Index);
-    return EvaluateInPlace(Info.CurrentCall->Temporaries[E], Info,
-                           Result, E->GetTemporaryExpr());
-  }
-
-  // Materialization of an lvalue temporary occurs when we need to force a copy
-  // (for instance, if it's a bitfield).
-  // FIXME: The AST should contain an lvalue-to-rvalue node for such cases.
-  if (!Visit(E->GetTemporaryExpr()))
-    return false;
-  if (!HandleLValueToRValueConversion(Info, E, E->getType(), Result,
-                                      Info.CurrentCall->Temporaries[E]))
-    return false;
   Result.set(E, Info.CurrentCall->Index);
-  return true;
+  return EvaluateInPlace(Info.CurrentCall->Temporaries[E], Info,
+                         Result, E->GetTemporaryExpr());
 }
 
 bool

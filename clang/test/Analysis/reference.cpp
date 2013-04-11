@@ -224,3 +224,13 @@ namespace rdar11212286 {
     return *x; // no-warning
   }
 }
+
+namespace PR15694 {
+  class C {
+    bool bit : 1;
+    template <class T> void bar(const T &obj) {}
+    void foo() {
+      bar(bit); // don't crash
+    }
+  };
+}
