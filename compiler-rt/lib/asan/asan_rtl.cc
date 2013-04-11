@@ -66,11 +66,7 @@ static void AsanCheckFailed(const char *file, int line, const char *cond,
 // -------------------------- Flags ------------------------- {{{1
 static const int kDeafultMallocContextSize = 30;
 
-static Flags asan_flags;
-
-Flags *flags() {
-  return &asan_flags;
-}
+Flags asan_flags_dont_use_directly;  // use via flags().
 
 static const char *MaybeCallAsanDefaultOptions() {
   return (&__asan_default_options) ? __asan_default_options() : "";

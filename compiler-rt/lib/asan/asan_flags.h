@@ -115,7 +115,10 @@ struct Flags {
   bool strict_memcmp;
 };
 
-Flags *flags();
+extern Flags asan_flags_dont_use_directly;
+inline Flags *flags() {
+  return &asan_flags_dont_use_directly;
+}
 void InitializeFlags(Flags *f, const char *env);
 
 }  // namespace __asan
