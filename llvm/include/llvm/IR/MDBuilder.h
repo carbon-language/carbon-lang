@@ -157,7 +157,7 @@ public:
   }
 
   /// \brief Return metadata for a TBAA struct node in the type DAG
-  /// with the given name, parents in the TBAA DAG.
+  /// with the given name, a list of pairs (offset, field type in the type DAG).
   MDNode *createTBAAStructTypeNode(StringRef Name,
              ArrayRef<std::pair<uint64_t, MDNode*> > Fields) {
     SmallVector<Value *, 4> Ops(Fields.size() * 2 + 1);
@@ -167,6 +167,18 @@ public:
       Ops[i * 2 + 1] = ConstantInt::get(Int64, Fields[i].first);
       Ops[i * 2 + 2] = Fields[i].second;
     }
+    return MDNode::get(Context, Ops);
+  }
+
+  /// \brief Return metadata for a TBAA scalar type node with the
+  /// given name, an offset and a parent in the TBAA type DAG.
+  MDNode *createTBAAScalarTypeNode(StringRef Name, uint64_t Offset,
+                                   MDNode *Parent) {
+    SmallVector<Value *, 4> Ops(3);
+    Type *Int64 = IntegerType::get(Context, 64);
+    Ops[0] = createString(Name);
+    Ops[1] = ConstantInt::get(Int64, Offset);
+    Ops[2] = Parent;
     return MDNode::get(Context, Ops);
   }
 
