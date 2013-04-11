@@ -934,6 +934,23 @@ enum CXChildVisitResult FilteredPrintingVisitor(CXCursor Cursor,
            GetCursorSource(Cursor), line, column);
     PrintCursor(Cursor, &Data->ValidationData);
     PrintCursorExtent(Cursor);
+    if (clang_isDeclaration(Cursor.kind)) {
+      enum CX_CXXAccessSpecifier access = clang_getCXXAccessSpecifier(Cursor);
+      const char *accessStr = 0;
+
+      switch (access) {
+        case CX_CXXInvalidAccessSpecifier: break;
+        case CX_CXXPublic:
+          accessStr = "public"; break;
+        case CX_CXXProtected:
+          accessStr = "protected"; break;
+        case CX_CXXPrivate:
+          accessStr = "private"; break;
+      }
+
+      if (accessStr)
+        printf(" [access=%s]", accessStr);
+    }
     printf("\n");
     return CXChildVisit_Recurse;
   }

@@ -33,7 +33,7 @@ unsigned clang_isVirtualBase(CXCursor C) {
 enum CX_CXXAccessSpecifier clang_getCXXAccessSpecifier(CXCursor C) {
   AccessSpecifier spec = AS_none;
 
-  if (C.kind == CXCursor_CXXAccessSpecifier)
+  if (C.kind == CXCursor_CXXAccessSpecifier || clang_isDeclaration(C.kind))
     spec = getCursorDecl(C)->getAccess();
   else if (C.kind == CXCursor_CXXBaseSpecifier)
     spec = getCursorCXXBaseSpecifier(C)->getAccessSpecifier();
