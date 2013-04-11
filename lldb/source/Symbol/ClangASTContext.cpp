@@ -1990,10 +1990,10 @@ ClangASTContext::AddFieldToRecordType
                 }
             }
 
-            field->setAccess (ConvertAccessTypeToAccessSpecifier (access));
-
             if (field)
             {
+                field->setAccess (ConvertAccessTypeToAccessSpecifier (access));
+                
                 record_decl->addDecl(field);
                 
 #ifdef LLDB_CONFIGURATION_DEBUG
@@ -2008,17 +2008,62 @@ ClangASTContext::AddFieldToRecordType
             {
                 bool is_synthesized = false;
                 field = ClangASTContext::AddObjCClassIVar (ast,
-                                                   record_clang_type,
-                                                   name,
-                                                   field_type,
-                                                   access,
-                                                   bitfield_bit_size,
-                                                   is_synthesized);
+                                                           record_clang_type,
+                                                           name,
+                                                           field_type,
+                                                           access,
+                                                           bitfield_bit_size,
+                                                           is_synthesized);
             }
         }
     }
     return field;
 }
+
+clang::VarDecl *
+ClangASTContext::AddVariableToRecordType (clang::ASTContext *ast,
+                                          lldb::clang_type_t record_opaque_type,
+                                          const char *name,
+                                          lldb::clang_type_t var_type,
+                                          AccessType access)
+{
+    clang::VarDecl *var_decl = NULL;
+
+    if (record_opaque_type == NULL || var_type == NULL)
+        return NULL;
+    
+    IdentifierTable *identifier_table = &ast->Idents;
+    
+    assert (ast != NULL);
+    assert (identifier_table != NULL);
+    
+    const RecordType *record_type = dyn_cast<RecordType>(QualType::getFromOpaquePtr(record_opaque_type).getTypePtr());
+    
+    if (record_type)
+    {
+        RecordDecl *record_decl = record_type->getDecl();
+        
+        var_decl = VarDecl::Create (*ast,                                       // ASTContext &
+                                    record_decl,                                // DeclContext *
+                                    SourceLocation(),                           // SourceLocation StartLoc
+                                    SourceLocation(),                           // SourceLocation IdLoc
+                                    name ? &identifier_table->get(name) : NULL, // IdentifierInfo *
+                                    QualType::getFromOpaquePtr(var_type),       // Variable QualType
+                                    NULL,                                       // TypeSourceInfo *
+                                    SC_Static);                                 // StorageClass
+        if (var_decl)
+        {
+            var_decl->setAccess(ConvertAccessTypeToAccessSpecifier (access));
+            record_decl->addDecl(var_decl);
+                
+#ifdef LLDB_CONFIGURATION_DEBUG
+            VerifyDecl(var_decl);
+#endif
+        }
+    }
+    return var_decl;
+}
+
 
 static clang::AccessSpecifier UnifyAccessSpecifiers (clang::AccessSpecifier lhs,
                                                      clang::AccessSpecifier rhs)

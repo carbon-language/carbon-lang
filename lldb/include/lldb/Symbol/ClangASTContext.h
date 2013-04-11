@@ -336,6 +336,26 @@ public:
                                                       bitfield_bit_size);
     }
     
+    clang::VarDecl *
+    AddVariableToRecordType (lldb::clang_type_t record_opaque_type,
+                             const char *name,
+                             lldb::clang_type_t var_opaque_type,
+                             lldb::AccessType access)
+    {
+        return ClangASTContext::AddVariableToRecordType (getASTContext(),
+                                                         record_opaque_type,
+                                                         name,
+                                                         var_opaque_type,
+                                                         access);
+    }
+
+    static clang::VarDecl *
+    AddVariableToRecordType (clang::ASTContext *ast,
+                             lldb::clang_type_t record_opaque_type,
+                             const char *name,
+                             lldb::clang_type_t var_opaque_type,
+                             lldb::AccessType access);
+
     static void
     BuildIndirectFields (clang::ASTContext *ast,
                          lldb::clang_type_t record_qual_type);
