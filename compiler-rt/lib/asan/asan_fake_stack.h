@@ -53,7 +53,7 @@ class FakeFrameLifo {
   FakeFrame *top() {
     if (n_frames_ == 0)
       return 0;
-    return frames_[n_frames_];
+    return frames_[n_frames_ - 1];
   }
  private:
   uptr n_frames_;

@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 __attribute__((noinline))
 inline char *pretend_to_do_something(char *x) {
@@ -24,7 +25,7 @@ char *LeakStack() {
 __attribute__((noinline))
 void RecuriveFunctionWithStackFrame(int depth) {
   if (depth <= 0) return;
-  char x[1000];
+  char x[1024];
   memset(x, 0, sizeof(x));
   pretend_to_do_something(x);
   RecuriveFunctionWithStackFrame(depth - 1);
@@ -33,9 +34,11 @@ void RecuriveFunctionWithStackFrame(int depth) {
 
 int main(int argc, char **argv) {
   char *stale_stack = LeakStack();
-  RecuriveFunctionWithStackFrame(10);
-  RecuriveFunctionWithStackFrame(20);
-  RecuriveFunctionWithStackFrame(30);
+  int n_iter = argc >= 2 ? atoi(argv[1]) : 1000;
+  int depth  = argc >= 3 ? atoi(argv[2]) : 1000;
+  for (int i = 0; i < n_iter; i++) {
+    RecuriveFunctionWithStackFrame(depth);
+  }
   stale_stack[100]++;
   // CHECK: ERROR: AddressSanitizer: stack-use-after-return on address
   // CHECK: is located in stack of thread T0 at offset 132 in frame
