@@ -20,7 +20,7 @@ void t1() {
 // CHECK: @_Z2t1v
 // CHECK: call void asm sideeffect inteldialect "mov eax, Foo::ptr", "~{eax},~{dirflag},~{fpsr},~{flags}"()
 // CHECK: call void asm sideeffect inteldialect "mov eax, Foo::Bar::ptr", "~{eax},~{dirflag},~{fpsr},~{flags}"()
-// CHECK: call void asm sideeffect inteldialect "mov eax, [Foo::ptr]", "~{eax},~{dirflag},~{fpsr},~{flags}"()
-// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr [Foo::ptr]", "~{eax},~{dirflag},~{fpsr},~{flags}"()
-// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr [Foo::ptr]", "~{eax},~{dirflag},~{fpsr},~{flags}"()
+// CHECK: call void asm sideeffect inteldialect "mov eax, Foo::ptr", "~{eax},~{dirflag},~{fpsr},~{flags}"()
+// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr Foo::ptr", "~{eax},~{dirflag},~{fpsr},~{flags}"()
+// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr Foo::ptr", "~{eax},~{dirflag},~{fpsr},~{flags}"()
 }
