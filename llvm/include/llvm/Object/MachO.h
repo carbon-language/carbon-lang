@@ -112,11 +112,18 @@ namespace MachOFormat {
     MachOInt32 Reserved3;
   };
 
+  struct MachOInt24 {
+    uint8_t bytes[3];
+    operator uint32_t() const {
+      return (bytes[2] << 24) | (bytes[1] << 16) | bytes[0];
+    }
+  };
+
   template<endianness TargetEndianness>
   struct RelocationEntry {
     LLVM_MACHOB_IMPORT_TYPES(TargetEndianness)
     MachOInt32 Address;
-    unsigned SymbolNum : 24;
+    MachOInt24 SymbolNum;
     unsigned PCRel : 1;
     unsigned Length : 2;
     unsigned External : 1;
