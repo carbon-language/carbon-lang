@@ -981,8 +981,11 @@ bool A64Imms::isLogicalImm(unsigned RegWidth, uint64_t Imm, uint32_t &Bits) {
       Rotation = RepeatWidth - Rotation;
     }
 
-    uint64_t ReplicatedOnes = (ReplicatedMask >> Rotation)
-      | ((ReplicatedMask << (RepeatWidth - Rotation)) & RepeatMask);
+    uint64_t ReplicatedOnes = ReplicatedMask;
+    if (Rotation != 0 && Rotation != 64)
+      ReplicatedOnes = (ReplicatedMask >> Rotation)
+        | ((ReplicatedMask << (RepeatWidth - Rotation)) & RepeatMask);
+
     // Of course, they may not actually be ones, so we have to check that:
     if (!isMask_64(ReplicatedOnes))
       continue;
@@ -1051,13 +1054,14 @@ bool A64Imms::isLogicalImmBits(unsigned RegWidth, uint32_t Bits,
   int Rotation = (ImmR & (Width - 1));
   uint64_t Mask = (1ULL << Num1s) - 1;
   uint64_t WidthMask = Width == 64 ? -1 : (1ULL << Width) - 1;
-  Mask = (Mask >> Rotation)
-    | ((Mask << (Width - Rotation)) & WidthMask);
+  if (Rotation != 0 && Rotation != 64)
+    Mask = (Mask >> Rotation)
+      | ((Mask << (Width - Rotation)) & WidthMask);
 
-  Imm = 0;
-  for (unsigned i = 0; i < RegWidth / Width; ++i) {
-    Imm |= Mask;
+  Imm = Mask;
+  for (unsigned i = 1; i < RegWidth / Width; ++i) {
     Mask <<= Width;
+    Imm |= Mask;
   }
 
   return true;
