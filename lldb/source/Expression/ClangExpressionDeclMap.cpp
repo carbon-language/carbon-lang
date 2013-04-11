@@ -520,6 +520,12 @@ ClangExpressionDeclMap::AddPersistentVariable
     parser_vars->m_named_decl = decl;
     parser_vars->m_parser_type = parser_type;
     
+    if (m_parser_vars->m_materializer)
+    {
+        Error err;
+        m_parser_vars->m_materializer->AddResultVariable(user_type, err);
+    }
+    
     return true;
 }
 
@@ -536,6 +542,8 @@ ClangExpressionDeclMap::AddValueToStruct
     assert (m_struct_vars.get());
     assert (m_parser_vars.get());
     
+    bool is_persistent_variable = false;
+    
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     m_struct_vars->m_struct_laid_out = false;
@@ -546,7 +554,10 @@ ClangExpressionDeclMap::AddValueToStruct
     ClangExpressionVariableSP var_sp (m_found_entities.GetVariable(decl, GetParserID()));
     
     if (!var_sp)
+    {
         var_sp = m_parser_vars->m_persistent_vars->GetVariable(decl, GetParserID());
+        is_persistent_variable = true;
+    }
     
     if (!var_sp)
         return false;
@@ -572,6 +583,25 @@ ClangExpressionDeclMap::AddValueToStruct
     jit_vars->m_size = size;
     
     m_struct_members.AddVariable(var_sp);
+    
+    if (m_parser_vars->m_materializer)
+    {
+        Error err;
+
+        if (is_persistent_variable)
+        {
+            m_parser_vars->m_materializer->AddPersistentVariable(var_sp, err);
+        }
+        else
+        {
+            if (const lldb_private::Symbol *sym = parser_vars->m_lldb_sym)
+                m_parser_vars->m_materializer->AddSymbol(*sym, err);
+            else if (const RegisterInfo *reg_info = var_sp->GetRegisterInfo())
+                m_parser_vars->m_materializer->AddRegister(*reg_info, err);
+            else if (parser_vars->m_lldb_var)
+                m_parser_vars->m_materializer->AddVariable(parser_vars->m_lldb_var, err);
+        }
+    }
     
     return true;
 }
@@ -3412,12 +3442,6 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
     ConstString entity_name(decl_name.c_str());
     ClangExpressionVariableSP entity(m_found_entities.CreateVariable (valobj));
     
-    if (m_parser_vars->m_materializer)
-    {
-        Error err;
-        m_parser_vars->m_materializer->AddVariable(var, err);
-    }
-    
     assert (entity.get());
     entity->EnableParserVars(GetParserID());
     ClangExpressionVariable::ParserVars *parser_vars = entity->GetParserVars(GetParserID());
@@ -3507,12 +3531,6 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
                                                                       m_parser_vars->m_target_info.byte_order,
                                                                       m_parser_vars->m_target_info.address_byte_size));
     assert (entity.get());
-    
-    if (m_parser_vars->m_materializer)
-    {
-        Error err;
-        m_parser_vars->m_materializer->AddSymbol(symbol, err);
-    }
     
     std::auto_ptr<Value> symbol_location(new Value);
     
@@ -3628,12 +3646,6 @@ ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
                                                                       m_parser_vars->m_target_info.byte_order,
                                                                       m_parser_vars->m_target_info.address_byte_size));
     assert (entity.get());
-    
-    if (m_parser_vars->m_materializer && reg_info)
-    {
-        Error err;
-        m_parser_vars->m_materializer->AddRegister(*reg_info, err);
-    }
     
     std::string decl_name(context.m_decl_name.getAsString());
     entity->SetName (ConstString (decl_name.c_str()));
