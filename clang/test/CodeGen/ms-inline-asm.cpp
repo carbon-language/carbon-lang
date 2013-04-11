@@ -24,3 +24,13 @@ void t1() {
 // CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr Foo::ptr", "~{eax},~{dirflag},~{fpsr},~{flags}"()
 // CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr Foo::ptr", "~{eax},~{dirflag},~{fpsr},~{flags}"()
 }
+
+int gvar = 10;
+void t2() {
+  int lvar = 10;
+  __asm mov eax, offset Foo::ptr
+  __asm mov eax, offset Foo::Bar::ptr
+// CHECK: t2
+// CHECK: call void asm sideeffect inteldialect "mov eax, Foo::ptr", "~{eax},~{dirflag},~{fpsr},~{flags}"()
+// CHECK: call void asm sideeffect inteldialect "mov eax, Foo::Bar::ptr", "~{eax},~{dirflag},~{fpsr},~{flags}"()
+}
