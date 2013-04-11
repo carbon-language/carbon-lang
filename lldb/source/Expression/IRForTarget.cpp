@@ -1703,6 +1703,8 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
         {
             if (!global_variable->hasExternalLinkage())
                 return true;
+            else if (HandleSymbol (global_variable))
+                return true;
             else
                 return false;
         }
