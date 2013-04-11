@@ -22,7 +22,8 @@ class MCInst;
 template <typename T> class SmallVectorImpl;
 
 enum AsmRewriteKind {
-  AOK_Align = 0,      // Rewrite align as .align.
+  AOK_Delete = 0,     // Rewrite should be ignored.
+  AOK_Align,          // Rewrite align as .align.
   AOK_DotOperator,    // Rewrite a dot operator expression as an immediate.
                       // E.g., [eax].foo.bar -> [eax].8
   AOK_Emit,           // Rewrite _emit as .byte.
@@ -35,15 +36,16 @@ enum AsmRewriteKind {
 };
 
 const char AsmRewritePrecedence [] = {
-  0, // AOK_Align
-  0, // AOK_DotOperator
-  0, // AOK_Emit
-  2, // AOK_Imm
-  2, // AOK_ImmPrefix
-  1, // AOK_Input
-  1, // AOK_Output
-  3, // AOK_SizeDirective
-  0  // AOK_Skip
+  0, // AOK_Delete
+  1, // AOK_Align
+  1, // AOK_DotOperator
+  1, // AOK_Emit
+  3, // AOK_Imm
+  3, // AOK_ImmPrefix
+  2, // AOK_Input
+  2, // AOK_Output
+  4, // AOK_SizeDirective
+  1  // AOK_Skip
 };
 
 struct AsmRewrite {
