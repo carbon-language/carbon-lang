@@ -18,4 +18,6 @@ add_lldb_library(lldbExpression
   IRExecutionUnit.cpp
   IRForTarget.cpp
   IRInterpreter.cpp
+  IRMemoryMap.cpp
+  Materializer.cpp
   )
