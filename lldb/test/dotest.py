@@ -913,6 +913,8 @@ def setupSysPath():
     if frameWithVersion != "" :
         lldbPath = before + "LLDB.framework" + after
 
+    lldbPath = os.path.abspath(lldbPath)
+
     # If tests need to find LLDB_FRAMEWORK, now they can do it
     os.environ["LLDB_FRAMEWORK"] = os.path.dirname(os.path.dirname(lldbPath))
 
