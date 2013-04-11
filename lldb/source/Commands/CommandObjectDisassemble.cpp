@@ -17,6 +17,7 @@
 // Project includes
 #include "lldb/Core/AddressRange.h"
 #include "lldb/Core/Disassembler.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/SourceManager.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandCompletions.h"
@@ -48,7 +49,8 @@ CommandObjectDisassemble::CommandOptions::CommandOptions (CommandInterpreter &in
     plugin_name (),
     flavor_string(),
     arch(),
-    some_location_specified (false) 
+    some_location_specified (false),
+    symbol_containing_addr () 
 {
     OptionParsingStarting();
 }
@@ -147,9 +149,20 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (uint32_t option_idx, c
         some_location_specified = true;
         break;
 
-    case 'a':
+    case 'A':
         if (!arch.SetTriple (option_arg, m_interpreter.GetPlatform (true).get()))
             arch.SetTriple (option_arg);
+        break;
+
+    case 'a':
+        {
+            ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
+            symbol_containing_addr = Args::StringToAddress(&exe_ctx, option_arg, LLDB_INVALID_ADDRESS, &error);
+            if (symbol_containing_addr != LLDB_INVALID_ADDRESS)
+            {
+                some_location_specified = true;
+            }
+        }
         break;
 
     default:
@@ -173,6 +186,7 @@ CommandObjectDisassemble::CommandOptions::OptionParsingStarting ()
     frame_line = false;
     start_addr = LLDB_INVALID_ADDRESS;
     end_addr = LLDB_INVALID_ADDRESS;
+    symbol_containing_addr = LLDB_INVALID_ADDRESS;
     raw = false;
     plugin_name.clear();
     
@@ -225,7 +239,7 @@ CommandObjectDisassemble::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_ALL, false, "flavor"       , 'F', required_argument  , NULL, 0, eArgTypeDisassemblyFlavor,        "Name of the disassembly flavor you want to use.  "
                                                                                                     "Currently the only valid options are default, and for Intel"
                                                                                                     " architectures, att and intel."},
-{ LLDB_OPT_SET_ALL, false, "arch"         , 'a', required_argument  , NULL, 0, eArgTypeArchitecture,"Specify the architecture to use from cross disassembly."},
+{ LLDB_OPT_SET_ALL, false, "arch"         , 'A', required_argument  , NULL, 0, eArgTypeArchitecture,"Specify the architecture to use from cross disassembly."},
 { LLDB_OPT_SET_1  |
   LLDB_OPT_SET_2  , true , "start-address", 's', required_argument  , NULL, 0, eArgTypeAddressOrExpression,"Address at which to start disassembling."},
 { LLDB_OPT_SET_1  , false, "end-address"  , 'e', required_argument  , NULL, 0, eArgTypeAddressOrExpression,  "Address at which to end disassembling."},
@@ -238,6 +252,7 @@ CommandObjectDisassemble::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_4  , false, "frame"        , 'f', no_argument        , NULL, 0, eArgTypeNone,        "Disassemble from the start of the current frame's function."},
 { LLDB_OPT_SET_5  , false, "pc"           , 'p', no_argument        , NULL, 0, eArgTypeNone,        "Disassemble around the current pc."},
 { LLDB_OPT_SET_6  , false, "line"         , 'l', no_argument        , NULL, 0, eArgTypeNone,        "Disassemble the current frame's current source line instructions if there debug line table information, else disasemble around the pc."},
+{ LLDB_OPT_SET_7  , false, "address"      , 'a', required_argument  , NULL, 0, eArgTypeAddressOrExpression, "Disassemble function containing this address."},
 { 0               , false, NULL           ,   0, 0                  , NULL, 0, eArgTypeNone,        NULL }
 };
 
@@ -426,9 +441,43 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
                         range.SetByteSize (m_options.end_addr - m_options.start_addr);
                     }
                 }
+                else
+                {
+                    if (m_options.symbol_containing_addr != LLDB_INVALID_ADDRESS 
+                        && target 
+                        && !target->GetSectionLoadList().IsEmpty())
+                    {
+                        bool failed = false;
+                        Address symbol_containing_address;
+                        if (target->GetSectionLoadList().ResolveLoadAddress (m_options.symbol_containing_addr, symbol_containing_address))
+                        {
+                            ModuleSP module_sp (symbol_containing_address.GetModule());
+                            SymbolContext sc;
+                            module_sp->ResolveSymbolContextForAddress (symbol_containing_address, eSymbolContextEverything, sc);
+                            if (sc.function || sc.symbol)
+                            {
+                                sc.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false, range);
+                            }
+                            else
+                            {
+                                failed = true;
+                            }
+                        }
+                        else
+                        {
+                            failed = true;
+                        }
+                        if (failed)
+                        {
+                            result.AppendErrorWithFormat ("Could not find function bounds for address 0x%" PRIx64 "\n", m_options.symbol_containing_addr);
+                            result.SetStatus (eReturnStatusFailed);
+                            return false;
+                        }
+                    }
+                }
             }
         }
-        
+
         if (m_options.num_instructions != 0)
         {
             if (!range.GetBaseAddress().IsValid())

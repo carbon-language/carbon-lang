@@ -80,6 +80,7 @@ public:
         ArchSpec arch;
         bool some_location_specified; // If no location was specified, we'll select "at_pc".  This should be set
                                       // in SetOptionValue if anything the selects a location is set.
+        lldb::addr_t symbol_containing_addr;
         static OptionDefinition g_option_table[];
     };
 
