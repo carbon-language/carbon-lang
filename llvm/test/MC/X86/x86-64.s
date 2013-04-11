@@ -1228,3 +1228,11 @@ sysexitl
 // CHECK: sysexitq
 // CHECK: encoding: [0x48,0x0f,0x35]
 sysexitq
+
+// CHECK: clac
+// CHECK: encoding: [0x0f,0x01,0xca]
+clac
+
+// CHECK: stac
+// CHECK: encoding: [0x0f,0x01,0xcb]
+stac

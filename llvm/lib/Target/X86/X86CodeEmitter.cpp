@@ -1451,6 +1451,14 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     MCE.emitByte(BaseOpcode);
     MCE.emitByte(0xC9);
     break;
+  case X86II::MRM_CA:
+    MCE.emitByte(BaseOpcode);
+    MCE.emitByte(0xCA);
+    break;
+  case X86II::MRM_CB:
+    MCE.emitByte(BaseOpcode);
+    MCE.emitByte(0xCB);
+    break;
   case X86II::MRM_E8:
     MCE.emitByte(BaseOpcode);
     MCE.emitByte(0xE8);

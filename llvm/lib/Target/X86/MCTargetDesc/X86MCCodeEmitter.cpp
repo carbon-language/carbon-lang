@@ -1128,12 +1128,13 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     break;
   case X86II::MRM_C1: case X86II::MRM_C2: case X86II::MRM_C3:
   case X86II::MRM_C4: case X86II::MRM_C8: case X86II::MRM_C9:
-  case X86II::MRM_D0: case X86II::MRM_D1: case X86II::MRM_D4:
-  case X86II::MRM_D5: case X86II::MRM_D6: case X86II::MRM_D8:
-  case X86II::MRM_D9: case X86II::MRM_DA: case X86II::MRM_DB:
-  case X86II::MRM_DC: case X86II::MRM_DD: case X86II::MRM_DE:
-  case X86II::MRM_DF: case X86II::MRM_E8: case X86II::MRM_F0:
-  case X86II::MRM_F8: case X86II::MRM_F9:
+  case X86II::MRM_CA: case X86II::MRM_CB: case X86II::MRM_D0:
+  case X86II::MRM_D1: case X86II::MRM_D4: case X86II::MRM_D5:
+  case X86II::MRM_D6: case X86II::MRM_D8: case X86II::MRM_D9:
+  case X86II::MRM_DA: case X86II::MRM_DB: case X86II::MRM_DC:
+  case X86II::MRM_DD: case X86II::MRM_DE: case X86II::MRM_DF:
+  case X86II::MRM_E8: case X86II::MRM_F0: case X86II::MRM_F8:
+  case X86II::MRM_F9:
     EmitByte(BaseOpcode, CurByte, OS);
 
     unsigned char MRM;
@@ -1145,6 +1146,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     case X86II::MRM_C4: MRM = 0xC4; break;
     case X86II::MRM_C8: MRM = 0xC8; break;
     case X86II::MRM_C9: MRM = 0xC9; break;
+    case X86II::MRM_CA: MRM = 0xCA; break;
+    case X86II::MRM_CB: MRM = 0xCB; break;
     case X86II::MRM_D0: MRM = 0xD0; break;
     case X86II::MRM_D1: MRM = 0xD1; break;
     case X86II::MRM_D4: MRM = 0xD4; break;

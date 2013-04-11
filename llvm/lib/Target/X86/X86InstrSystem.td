@@ -520,3 +520,10 @@ def INVPCID32 : I<0x82, MRMSrcMem, (outs), (ins GR32:$src1, i128mem:$src2),
 def INVPCID64 : I<0x82, MRMSrcMem, (outs), (ins GR64:$src1, i128mem:$src2),
                 "invpcid\t{$src2, $src1|$src1, $src2}", []>, OpSize, T8,
                 Requires<[In64BitMode]>;
+
+//===----------------------------------------------------------------------===//
+// SMAP Instruction
+let Defs = [EFLAGS], Uses = [EFLAGS] in {
+  def CLAC : I<0x01, MRM_CA, (outs), (ins), "clac", []>, TB;
+  def STAC : I<0x01, MRM_CB, (outs), (ins), "stac", []>, TB;
+}
