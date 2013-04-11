@@ -453,10 +453,8 @@ ProcessKDP::GetKernelThread(ThreadList &old_thread_list, ThreadList &new_thread_
     const lldb::tid_t kernel_tid = 1;
     ThreadSP thread_sp (old_thread_list.FindThreadByID (kernel_tid, false));
     if (!thread_sp)
-    {
         thread_sp.reset(new ThreadKDP (*this, kernel_tid));
-        new_thread_list.AddThread(thread_sp);
-    }
+    new_thread_list.AddThread(thread_sp);
     return thread_sp;
 }
 
@@ -471,7 +469,7 @@ ProcessKDP::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_threa
     if (log && log->GetMask().Test(KDP_LOG_VERBOSE))
         log->Printf ("ProcessKDP::%s (pid = %" PRIu64 ")", __FUNCTION__, GetID());
     
-    // Even though there is a CPU mask, it doesn't mean to can see each CPU
+    // Even though there is a CPU mask, it doesn't mean we can see each CPU
     // indivudually, there is really only one. Lets call this thread 1.
     GetKernelThread (old_thread_list, new_thread_list);
 
