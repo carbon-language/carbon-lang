@@ -129,7 +129,7 @@ int loadDataMemberPointerVirtual(Virtual *o, int Virtual::*memptr) {
 // data pointer.
 // CHECK: define i32 @"\01?loadDataMemberPointerVirtual@@YAHPAUVirtual@@PQ1@H@Z"{{.*}} {
 // CHECK:   %[[o:.*]] = load %{{.*}}** %{{.*}}, align 4
-// CHECK:   %[[memptr:.*]] = load { i32, i32 }* %memptr.addr, align 4
+// CHECK:   %[[memptr:.*]] = load { i32, i32 }* %{{.*}}, align 4
 // CHECK:   %[[memptr0:.*]] = extractvalue { i32, i32 } %[[memptr:.*]], 0
 // CHECK:   %[[memptr1:.*]] = extractvalue { i32, i32 } %[[memptr:.*]], 1
 // CHECK:   %[[v6:.*]] = bitcast %{{.*}}* %[[o]] to i8*
@@ -153,7 +153,7 @@ int loadDataMemberPointerUnspecified(Unspecified *o, int Unspecified::*memptr) {
 // data pointer.
 // CHECK: define i32 @"\01?loadDataMemberPointerUnspecified@@YAHPAUUnspecified@@PQ1@H@Z"{{.*}} {
 // CHECK:   %[[o:.*]] = load %{{.*}}** %{{.*}}, align 4
-// CHECK:   %[[memptr:.*]] = load { i32, i32, i32 }* %memptr.addr, align 4
+// CHECK:   %[[memptr:.*]] = load { i32, i32, i32 }* %{{.*}}, align 4
 // CHECK:   %[[memptr0:.*]] = extractvalue { i32, i32, i32 } %[[memptr:.*]], 0
 // CHECK:   %[[memptr1:.*]] = extractvalue { i32, i32, i32 } %[[memptr:.*]], 1
 // CHECK:   %[[memptr2:.*]] = extractvalue { i32, i32, i32 } %[[memptr:.*]], 2
@@ -161,7 +161,7 @@ int loadDataMemberPointerUnspecified(Unspecified *o, int Unspecified::*memptr) {
 // CHECK:   %[[is_vbase:.*]] = icmp ne i32 %[[memptr2]], 0
 // CHECK:   br i1 %[[is_vbase]], label %[[vadjust:.*]], label %[[skip:.*]]
 //
-// CHECK: [[vadjust]]:
+// CHECK: [[vadjust]]
 // CHECK:   %[[vbptr:.*]] = getelementptr inbounds i8* %[[base]], i32 %[[memptr1]]
 // CHECK:   %[[vbptr_a:.*]] = bitcast i8* %[[vbptr]] to i8**
 // CHECK:   %[[vbtable:.*]] = load i8** %[[vbptr_a:.*]]
@@ -170,8 +170,8 @@ int loadDataMemberPointerUnspecified(Unspecified *o, int Unspecified::*memptr) {
 // CHECK:   %[[vbase_offs:.*]] = load i32* %[[v8]]
 // CHECK:   %[[base_adj:.*]] = getelementptr inbounds i8* %[[vbptr]], i32 %[[vbase_offs]]
 //
-// CHECK: [[skip]]:
-// CHECK:   %[[new_base:.*]] = phi i8* [ %[[base]], %entry ], [ %[[base_adj]], %[[vadjust]] ]
+// CHECK: [[skip]]
+// CHECK:   %[[new_base:.*]] = phi i8* [ %[[base]], %{{.*}} ], [ %[[base_adj]], %[[vadjust]] ]
 // CHECK:   %[[offset:.*]] = getelementptr inbounds i8* %[[new_base]], i32 %[[memptr0]]
 // CHECK:   %[[v11:.*]] = bitcast i8* %[[offset]] to i32*
 // CHECK:   %[[v12:.*]] = load i32* %[[v11]]
