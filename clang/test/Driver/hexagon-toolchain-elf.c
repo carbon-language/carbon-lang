@@ -560,5 +560,5 @@
 // RUN:   | FileCheck -check-prefix=CHECK029 %s
 // CHECK029:      "{{.*}}clang{{.*}}" "-cc1"
 // CHECK029-NEXT: "{{.*}}/bin/hexagon-as"
-// CHECK029:        "-gdwarf-2" "--noexecstack" "--trap" "--keep-locals"
+// CHECK029:      "--noexecstack" "--trap" "--keep-locals"
 // CHECK029-NEXT: "{{.*}}/bin/hexagon-ld"
