@@ -900,22 +900,14 @@ bool PPCInstrInfo::isProfitableToIfCvt(MachineBasicBlock &TMBB,
 
 
 bool PPCInstrInfo::isPredicated(const MachineInstr *MI) const {
-  unsigned OpC = MI->getOpcode();
-  switch (OpC) {
-  default:
-    return false;
-  case PPC::BCC:
-  case PPC::BCCTR:
-  case PPC::BCCTR8:
-  case PPC::BCCTRL:
-  case PPC::BCCTRL8:
-  case PPC::BCLR:
-  case PPC::BDZLR:
-  case PPC::BDZLR8:
-  case PPC::BDNZLR:
-  case PPC::BDNZLR8:
-    return true;
-  }
+  // The predicated branches are identified by their type, not really by the
+  // explicit presence of a predicate. Furthermore, some of them can be
+  // predicated more than once. Because if conversion won't try to predicate
+  // any instruction which already claims to be predicated (by returning true
+  // here), always return false. In doing so, we let isPredicable() be the
+  // final word on whether not the instruction can be (further) predicated.
+
+  return false;
 }
 
 bool PPCInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
