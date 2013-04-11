@@ -80,46 +80,6 @@ StringRef MachOObjectFileBase::getData(size_t Offset, size_t Size) const {
   return ObjectFile::getData().substr(Offset, Size);
 }
 
-const MachOObjectFileBase::RelocationEntry *
-MachOObjectFileBase::getRelocation(DataRefImpl Rel) const {
-  if (const MachOObjectFile32Le *O = dyn_cast<MachOObjectFile32Le>(this))
-    return O->getRelocation(Rel);
-  const MachOObjectFile64Le *O = dyn_cast<MachOObjectFile64Le>(this);
-  return O->getRelocation(Rel);
-}
-
-bool MachOObjectFileBase::isScattered(const RelocationEntry *RE) const {
-  unsigned Arch = getArch();
-  return (Arch != Triple::x86_64) && (RE->Address & macho::RF_Scattered);
-}
-
-bool MachOObjectFileBase::isPCRel(const RelocationEntry *RE) const {
-  if (isScattered(RE)) {
-    const ScatteredRelocationEntry *SRE =
-      reinterpret_cast<const ScatteredRelocationEntry *>(RE);
-    return SRE->PCRel;
-  }
-  return RE->PCRel;
-}
-
-unsigned MachOObjectFileBase::getLength(const RelocationEntry *RE) const {
-  if (isScattered(RE)) {
-    const ScatteredRelocationEntry *SRE =
-      reinterpret_cast<const ScatteredRelocationEntry *>(RE);
-    return SRE->Length;
-  }
-  return RE->Length;
-}
-
-unsigned MachOObjectFileBase::getType(const RelocationEntry *RE) const {
-  if (isScattered(RE)) {
-    const ScatteredRelocationEntry *SRE =
-      reinterpret_cast<const ScatteredRelocationEntry *>(RE);
-    return SRE->Type;
-  }
-  return RE->Type;
-}
-
 ObjectFile *ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer) {
   StringRef Magic = Buffer->getBuffer().slice(0, 4);
   error_code ec;
@@ -475,12 +435,16 @@ void advanceTo(T &it, size_t Val) {
 void
 MachOObjectFileBase::printRelocationTargetName(const RelocationEntry *RE,
                                                raw_string_ostream &fmt) const {
+  unsigned Arch = getArch();
+  bool isScattered = (Arch != Triple::x86_64) &&
+                     (RE->Word0 & macho::RF_Scattered);
+
   // Target of a scattered relocation is an address.  In the interest of
   // generating pretty output, scan through the symbol table looking for a
   // symbol that aligns with that address.  If we find one, print it.
   // Otherwise, we just print the hex address of the target.
-  if (isScattered(RE)) {
-    uint32_t Val = RE->SymbolNum;
+  if (isScattered) {
+    uint32_t Val = RE->Word1;
 
     error_code ec;
     for (symbol_iterator SI = begin_symbols(), SE = end_symbols(); SI != SE;
@@ -522,8 +486,8 @@ MachOObjectFileBase::printRelocationTargetName(const RelocationEntry *RE,
   }
 
   StringRef S;
-  bool isExtern = RE->External;
-  uint32_t Val = RE->Address;
+  bool isExtern = (RE->Word1 >> 27) & 1;
+  uint32_t Val = RE->Word1 & 0xFFFFFF;
 
   if (isExtern) {
     symbol_iterator SI = begin_symbols();

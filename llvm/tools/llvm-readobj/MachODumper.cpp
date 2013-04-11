@@ -330,28 +330,20 @@ void MachODumper::printRelocation(section_iterator SecI,
                                   relocation_iterator RelI) {
   uint64_t Offset;
   SmallString<32> RelocName;
+  int64_t Info;
   StringRef SymbolName;
   SymbolRef Symbol;
   if (error(RelI->getOffset(Offset))) return;
   if (error(RelI->getTypeName(RelocName))) return;
+  if (error(RelI->getAdditionalInfo(Info))) return;
   if (error(RelI->getSymbol(Symbol))) return;
   if (error(Symbol.getName(SymbolName))) return;
 
-  DataRefImpl DR = RelI->getRawDataRefImpl();
-  const MachOObjectFileBase::RelocationEntry *RE = Obj->getRelocation(DR);
-  bool IsScattered = Obj->isScattered(RE);
-
   raw_ostream& OS = W.startLine();
   OS << W.hex(Offset)
-     << " " << Obj->isPCRel(RE)
-     << " " << Obj->getLength(RE);
-  if (IsScattered)
-    OS << " n/a";
-  else
-    OS << " " << RE->External;
-  OS << " " << RelocName
-     << " " << IsScattered
+     << " " << RelocName
      << " " << (SymbolName.size() > 0 ? SymbolName : "-")
+     << " " << W.hex(Info)
      << "\n";
 }
 
