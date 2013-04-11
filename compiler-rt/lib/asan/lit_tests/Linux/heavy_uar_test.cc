@@ -1,4 +1,4 @@
-// XFAIL *
+// XFAIL: *
 // RUN: %clangxx_asan -fsanitize=use-after-return -m64 -O0 %s -o %t && \
 // RUN:   %t 2>&1 | %symbolize | FileCheck %s
 // RUN: %clangxx_asan -fsanitize=use-after-return -m64 -O2 %s -o %t && \

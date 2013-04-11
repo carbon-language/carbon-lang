@@ -16,6 +16,7 @@
 
 #include "asan_allocator.h"
 #include "asan_internal.h"
+#include "asan_fake_stack.h"
 #include "asan_stack.h"
 #include "asan_stats.h"
 #include "sanitizer_common/sanitizer_libc.h"
