@@ -1140,6 +1140,11 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       if (getLexer().isNot(AsmToken::RBrac))
         return ErrorOperand(Tok.getLoc(), "Expected ']' token!");
 
+      if (isParsingInlineAsm()) {
+        // Remove the '[' and ']' from the IR string.
+        InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, Start, 1));
+        InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, Tok.getLoc(), 1));
+      }
       unsigned Len = Tok.getLoc().getPointer() - IdentStart.getPointer();
       StringRef SymName(IdentStart.getPointer(), Len);
       Parser.Lex(); // Eat ']'
@@ -1210,6 +1215,11 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       End = Tok.getLoc();
       Parser.Lex(); // Consume the token.
     }
+  }
+  if (isParsingInlineAsm() && Disp && isa<MCSymbolRefExpr>(Disp)) {
+    // Remove the '[' and ']' from the IR string.
+    InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, Start, 1));
+    InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, End, 1));
   }
 
   if (!Disp)

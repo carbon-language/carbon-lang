@@ -4196,12 +4196,8 @@ AsmParser::parseMSInlineAsm(void *AsmLoc, std::string &AsmString,
 
     // Emit everything up to the immediate/expression.
     unsigned Len = Loc - AsmStart;
-    if (Len) {
-      // For Input/Output operands we need to remove the brackets, if present.
-      if ((Kind == AOK_Input || Kind == AOK_Output) && Loc[-1] == '[')
-        --Len;
+    if (Len)
       OS << StringRef(AsmStart, Len);
-    }
 
     // Skip the original expression.
     if (Kind == AOK_Skip) {
@@ -4255,11 +4251,6 @@ AsmParser::parseMSInlineAsm(void *AsmLoc, std::string &AsmString,
 
     // Skip the original expression.
     AsmStart = Loc + (*I).Len + AdditionalSkip;
-
-    // For Input/Output operands we need to remove the brackets, if present.
-    if ((Kind == AOK_Input || Kind == AOK_Output) && AsmStart != AsmEnd &&
-        *AsmStart == ']')
-      ++AsmStart;
   }
 
   // Emit the remainder of the asm string.
