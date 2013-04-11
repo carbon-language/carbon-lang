@@ -64,6 +64,7 @@ static user_id_t g_value_obj_uid = 0;
 ValueObject::ValueObject (ValueObject &parent) :
     UserID (++g_value_obj_uid), // Unique identifier for every value object
     m_parent (&parent),
+    m_root (NULL),
     m_update_point (parent.GetUpdatePoint ()),
     m_name (),
     m_data (),
@@ -108,6 +109,7 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope,
                           AddressType child_ptr_or_ref_addr_type) :
     UserID (++g_value_obj_uid), // Unique identifier for every value object
     m_parent (NULL),
+    m_root (NULL),
     m_update_point (exe_scope),
     m_name (),
     m_data (),
@@ -4149,4 +4151,67 @@ ValueObject::CreateValueObjectFromData (const char* name,
     if (new_value_sp && name && *name)
         new_value_sp->SetName(ConstString(name));
     return new_value_sp;
+}
+
+ModuleSP
+ValueObject::GetModule ()
+{
+    ValueObject* root(GetRoot());
+    if (root != this)
+        return root->GetModule();
+    return lldb::ModuleSP();
+}
+
+ValueObject*
+ValueObject::GetRoot ()
+{
+    if (m_root)
+        return m_root;
+    ValueObject* parent = m_parent;
+    if (!parent)
+        return (m_root = this);
+    while (parent->m_parent)
+    {
+        if (parent->m_root)
+            return (m_root = parent->m_root);
+        parent = parent->m_parent;
+    }
+    return (m_root = parent);
+}
+
+AddressType
+ValueObject::GetAddressTypeOfChildren()
+{
+    if (m_address_type_of_ptr_or_ref_children == eAddressTypeInvalid)
+    {
+        ValueObject* root(GetRoot());
+        if (root != this)
+            return root->GetAddressTypeOfChildren();
+    }
+    return m_address_type_of_ptr_or_ref_children;
+}
+
+lldb::DynamicValueType
+ValueObject::GetDynamicValueType ()
+{
+    ValueObject* with_dv_info = this;
+    while (with_dv_info)
+    {
+        if (with_dv_info->HasDynamicValueTypeInfo())
+            return with_dv_info->GetDynamicValueTypeImpl();
+        with_dv_info = with_dv_info->m_parent;
+    }
+    return lldb::eNoDynamicValues;
+}
+lldb::Format
+ValueObject::GetFormat () const
+{
+    const ValueObject* with_fmt_info = this;
+    while (with_fmt_info)
+    {
+        if (with_fmt_info->m_format != lldb::eFormatDefault)
+            return with_fmt_info->m_format;
+        with_fmt_info = with_fmt_info->m_parent;
+    }
+    return m_format;
 }

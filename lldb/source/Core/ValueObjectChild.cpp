@@ -229,5 +229,8 @@ ValueObjectChild::UpdateValue ()
 bool
 ValueObjectChild::IsInScope ()
 {
-    return m_parent->IsInScope ();
+    ValueObject* root(GetRoot());
+    if (root)
+        return root->IsInScope ();
+    return false;
 }
