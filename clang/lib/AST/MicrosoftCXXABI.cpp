@@ -89,8 +89,8 @@ MSInheritanceModel CXXRecordDecl::getMSInheritanceModel() const {
   if (this->getNumVBases() > 0)
     return MSIM_Virtual;
   if (usesMultipleInheritanceModel(this))
-    return MSIM_Multiple;
-  return MSIM_Single;
+    return this->isPolymorphic() ? MSIM_MultiplePolymorphic : MSIM_Multiple;
+  return this->isPolymorphic() ? MSIM_SinglePolymorphic : MSIM_Single;
 }
 
 // Returns the number of pointer and integer slots used to represent a member
@@ -119,15 +119,15 @@ MSInheritanceModel CXXRecordDecl::getMSInheritanceModel() const {
 //
 //     // The offset of the vb-table pointer within the object.  Only needed for
 //     // incomplete types.
-//     int VBTableOffset;
+//     int VBPtrOffset;
 //   };
-std::pair<unsigned, unsigned>
-MemberPointerType::getMSMemberPointerSlots() const {
-  const CXXRecordDecl *RD = this->getClass()->getAsCXXRecordDecl();
+static std::pair<unsigned, unsigned>
+getMSMemberPointerSlots(const MemberPointerType *MPT) {
+  const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
   MSInheritanceModel Inheritance = RD->getMSInheritanceModel();
   unsigned Ptrs;
   unsigned Ints = 0;
-  if (this->isMemberFunctionPointer()) {
+  if (MPT->isMemberFunctionPointer()) {
     // Member function pointers are a struct of a function pointer followed by a
     // variable number of ints depending on the inheritance model used.  The
     // function pointer is a real function if it is non-virtual and a vftable
@@ -137,7 +137,9 @@ MemberPointerType::getMSMemberPointerSlots() const {
     switch (Inheritance) {
     case MSIM_Unspecified: ++Ints;  // VBTableOffset
     case MSIM_Virtual:     ++Ints;  // VirtualBaseAdjustmentOffset
+    case MSIM_MultiplePolymorphic:
     case MSIM_Multiple:    ++Ints;  // NonVirtualBaseAdjustment
+    case MSIM_SinglePolymorphic:
     case MSIM_Single:      break;   // Nothing
     }
   } else {
@@ -147,7 +149,9 @@ MemberPointerType::getMSMemberPointerSlots() const {
     switch (Inheritance) {
     case MSIM_Unspecified: ++Ints;  // VBTableOffset
     case MSIM_Virtual:     ++Ints;  // VirtualBaseAdjustmentOffset
+    case MSIM_MultiplePolymorphic:
     case MSIM_Multiple:             // Nothing
+    case MSIM_SinglePolymorphic:
     case MSIM_Single:      ++Ints;  // Field offset
     }
   }
@@ -160,7 +164,7 @@ std::pair<uint64_t, unsigned> MicrosoftCXXABI::getMemberPointerWidthAndAlign(
   assert(Target.getTriple().getArch() == llvm::Triple::x86 ||
          Target.getTriple().getArch() == llvm::Triple::x86_64);
   unsigned Ptrs, Ints;
-  llvm::tie(Ptrs, Ints) = MPT->getMSMemberPointerSlots();
+  llvm::tie(Ptrs, Ints) = getMSMemberPointerSlots(MPT);
   // The nominal struct is laid out with pointers followed by ints and aligned
   // to a pointer width if any are present and an int width otherwise.
   unsigned PtrSize = Target.getPointerWidth(0);

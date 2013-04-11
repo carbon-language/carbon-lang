@@ -254,6 +254,16 @@ public:
   TypeSourceInfo *getTypeSourceInfo() const { return BaseTypeInfo; }
 };
 
+/// The inheritance model to use for member pointers of a given CXXRecordDecl.
+enum MSInheritanceModel {
+  MSIM_Single,
+  MSIM_SinglePolymorphic,
+  MSIM_Multiple,
+  MSIM_MultiplePolymorphic,
+  MSIM_Virtual,
+  MSIM_Unspecified
+};
+
 /// CXXRecordDecl - Represents a C++ struct/union/class.
 /// FIXME: This class will disappear once we've properly taught RecordDecl
 /// to deal with C++-specific things.

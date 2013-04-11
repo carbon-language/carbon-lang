@@ -2092,14 +2092,6 @@ public:
   }
 };
 
-/// The inheritance model to use for this member pointer.
-enum MSInheritanceModel {
-  MSIM_Single,
-  MSIM_Multiple,
-  MSIM_Virtual,
-  MSIM_Unspecified
-};
-
 /// MemberPointerType - C++ 8.3.3 - Pointers to members
 ///
 class MemberPointerType : public Type, public llvm::FoldingSetNode {
@@ -2134,10 +2126,6 @@ public:
   bool isMemberDataPointer() const {
     return !PointeeType->isFunctionProtoType();
   }
-
-  /// Returns the number of pointer and integer slots used to represent this
-  /// member pointer in the MS C++ ABI.
-  std::pair<unsigned, unsigned> getMSMemberPointerSlots() const;
 
   const Type *getClass() const { return Class; }
 

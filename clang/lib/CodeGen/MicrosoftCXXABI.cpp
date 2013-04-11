@@ -111,17 +111,28 @@ public:
   static bool needThisReturn(GlobalDecl GD);
 
 private:
-  llvm::Constant *getSimpleNullMemberPointer(const MemberPointerType *MPT);
-
-  llvm::Constant *getZeroPtrDiff() {
-    return llvm::ConstantInt::get(CGM.PtrDiffTy, 0);
+  llvm::Constant *getZeroInt() {
+    return llvm::ConstantInt::get(CGM.IntTy, 0);
   }
 
-  llvm::Constant *getAllOnesPtrDiff() {
-    return  llvm::Constant::getAllOnesValue(CGM.PtrDiffTy);
+  llvm::Constant *getAllOnesInt() {
+    return  llvm::Constant::getAllOnesValue(CGM.IntTy);
   }
+
+  void
+  GetNullMemberPointerFields(const MemberPointerType *MPT,
+                             llvm::SmallVectorImpl<llvm::Constant *> &fields);
+
+  llvm::Value *AdjustVirtualBase(CodeGenFunction &CGF, const CXXRecordDecl *RD,
+                                 llvm::Value *Base,
+                                 llvm::Value *VirtualBaseAdjustmentOffset,
+                                 llvm::Value *VBPtrOffset /* optional */);
 
 public:
+  virtual llvm::Type *ConvertMemberPointerType(const MemberPointerType *MPT);
+
+  virtual bool isZeroInitializable(const MemberPointerType *MPT);
+
   virtual llvm::Constant *EmitNullMemberPointer(const MemberPointerType *MPT);
 
   virtual llvm::Constant *EmitMemberDataPointer(const MemberPointerType *MPT,
@@ -135,6 +146,12 @@ public:
                                                     llvm::Value *Base,
                                                     llvm::Value *MemPtr,
                                                   const MemberPointerType *MPT);
+
+  virtual llvm::Value *
+  EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
+                                  llvm::Value *&This,
+                                  llvm::Value *MemPtr,
+                                  const MemberPointerType *MPT);
 
 };
 
@@ -379,45 +396,125 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
   CGF.EmitCXXGlobalVarDeclInit(D, DeclPtr, PerformInit);
 }
 
-// Returns true for member pointer types that we know how to represent with a
-// simple ptrdiff_t.  Currently we only know how to emit, test, and load member
-// data pointers for complete single inheritance classes.
-static bool isSimpleMemberPointer(const MemberPointerType *MPT) {
-  const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
-  return (MPT->isMemberDataPointer() &&
-          !MPT->getClass()->isIncompleteType() &&
-          RD->getNumVBases() == 0);
+// Member pointer helpers.
+static bool hasVBPtrOffsetField(MSInheritanceModel Inheritance) {
+  return Inheritance == MSIM_Unspecified;
 }
 
-llvm::Constant *
-MicrosoftCXXABI::getSimpleNullMemberPointer(const MemberPointerType *MPT) {
-  if (isSimpleMemberPointer(MPT)) {
-    const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
-    // A null member data pointer is represented as -1 if the class is not
-    // polymorphic, and 0 otherwise.
-    if (RD->isPolymorphic())
-      return getZeroPtrDiff();
-    return getAllOnesPtrDiff();
+// Only member pointers to functions need a this adjustment, since it can be
+// combined with the field offset for data pointers.
+static bool hasNonVirtualBaseAdjustmentField(const MemberPointerType *MPT,
+                                             MSInheritanceModel Inheritance) {
+  return (MPT->isMemberFunctionPointer() &&
+          Inheritance >= MSIM_Multiple);
+}
+
+static bool hasVirtualBaseAdjustmentField(MSInheritanceModel Inheritance) {
+  return Inheritance >= MSIM_Virtual;
+}
+
+// Use zero for the field offset of a null data member pointer if we can
+// guarantee that zero is not a valid field offset, or if the member pointer has
+// multiple fields.  Polymorphic classes have a vfptr at offset zero, so we can
+// use zero for null.  If there are multiple fields, we can use zero even if it
+// is a valid field offset because null-ness testing will check the other
+// fields.
+static bool nullFieldOffsetIsZero(MSInheritanceModel Inheritance) {
+  return Inheritance != MSIM_Multiple && Inheritance != MSIM_Single;
+}
+
+bool MicrosoftCXXABI::isZeroInitializable(const MemberPointerType *MPT) {
+  // Null-ness for function memptrs only depends on the first field, which is
+  // the function pointer.  The rest don't matter, so we can zero initialize.
+  if (MPT->isMemberFunctionPointer())
+    return true;
+
+  // The virtual base adjustment field is always -1 for null, so if we have one
+  // we can't zero initialize.  The field offset is sometimes also -1 if 0 is a
+  // valid field offset.
+  const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
+  MSInheritanceModel Inheritance = RD->getMSInheritanceModel();
+  return (!hasVirtualBaseAdjustmentField(Inheritance) &&
+          nullFieldOffsetIsZero(Inheritance));
+}
+
+llvm::Type *
+MicrosoftCXXABI::ConvertMemberPointerType(const MemberPointerType *MPT) {
+  const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
+  MSInheritanceModel Inheritance = RD->getMSInheritanceModel();
+  llvm::SmallVector<llvm::Type *, 4> fields;
+  if (MPT->isMemberFunctionPointer())
+    fields.push_back(CGM.VoidPtrTy);  // FunctionPointerOrVirtualThunk
+  else
+    fields.push_back(CGM.IntTy);  // FieldOffset
+
+  if (hasVBPtrOffsetField(Inheritance))
+    fields.push_back(CGM.IntTy);
+  if (hasNonVirtualBaseAdjustmentField(MPT, Inheritance))
+    fields.push_back(CGM.IntTy);
+  if (hasVirtualBaseAdjustmentField(Inheritance))
+    fields.push_back(CGM.IntTy);  // VirtualBaseAdjustmentOffset
+
+  if (fields.size() == 1)
+    return fields[0];
+  return llvm::StructType::get(CGM.getLLVMContext(), fields);
+}
+
+void MicrosoftCXXABI::
+GetNullMemberPointerFields(const MemberPointerType *MPT,
+                           llvm::SmallVectorImpl<llvm::Constant *> &fields) {
+  assert(fields.empty());
+  const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
+  MSInheritanceModel Inheritance = RD->getMSInheritanceModel();
+  if (MPT->isMemberFunctionPointer()) {
+    // FunctionPointerOrVirtualThunk
+    fields.push_back(llvm::Constant::getNullValue(CGM.VoidPtrTy));
+  } else {
+    if (nullFieldOffsetIsZero(Inheritance))
+      fields.push_back(getZeroInt());  // FieldOffset
+    else
+      fields.push_back(getAllOnesInt());  // FieldOffset
   }
-  return GetBogusMemberPointer(QualType(MPT, 0));
+
+  if (hasVBPtrOffsetField(Inheritance))
+    fields.push_back(getZeroInt());
+  if (hasNonVirtualBaseAdjustmentField(MPT, Inheritance))
+    fields.push_back(getZeroInt());
+  if (hasVirtualBaseAdjustmentField(Inheritance))
+    fields.push_back(getAllOnesInt());
 }
 
 llvm::Constant *
 MicrosoftCXXABI::EmitNullMemberPointer(const MemberPointerType *MPT) {
-  if (isSimpleMemberPointer(MPT))
-    return getSimpleNullMemberPointer(MPT);
-  // FIXME: Implement function member pointers.
-  return GetBogusMemberPointer(QualType(MPT, 0));
+  llvm::SmallVector<llvm::Constant *, 4> fields;
+  GetNullMemberPointerFields(MPT, fields);
+  if (fields.size() == 1)
+    return fields[0];
+  llvm::Constant *Res = llvm::ConstantStruct::getAnon(fields);
+  assert(Res->getType() == ConvertMemberPointerType(MPT));
+  return Res;
 }
 
 llvm::Constant *
 MicrosoftCXXABI::EmitMemberDataPointer(const MemberPointerType *MPT,
                                        CharUnits offset) {
-  // Member data pointers are plain offsets when no virtual bases are involved.
-  if (isSimpleMemberPointer(MPT))
-    return llvm::ConstantInt::get(CGM.PtrDiffTy, offset.getQuantity());
-  // FIXME: Implement member pointers other inheritance models.
-  return GetBogusMemberPointer(QualType(MPT, 0));
+  const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
+  MSInheritanceModel Inheritance = RD->getMSInheritanceModel();
+  llvm::SmallVector<llvm::Constant *, 4> fields;
+  fields.push_back(llvm::ConstantInt::get(CGM.IntTy, offset.getQuantity()));
+  if (hasVBPtrOffsetField(Inheritance)) {
+    int64_t VBPtrOffset =
+      getContext().getASTRecordLayout(RD).getVBPtrOffset().getQuantity();
+    fields.push_back(llvm::ConstantInt::get(CGM.IntTy, VBPtrOffset));
+  }
+  assert(!hasNonVirtualBaseAdjustmentField(MPT, Inheritance));
+  // The virtual base field starts out zero.  It is adjusted by conversions to
+  // member pointer types of a more derived class.  See http://llvm.org/PR15713
+  if (hasVirtualBaseAdjustmentField(Inheritance))
+    fields.push_back(getZeroInt());
+  if (fields.size() == 1)
+    return fields[0];
+  return llvm::ConstantStruct::getAnon(fields);
 }
 
 llvm::Value *
@@ -425,16 +522,90 @@ MicrosoftCXXABI::EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
                                             llvm::Value *MemPtr,
                                             const MemberPointerType *MPT) {
   CGBuilderTy &Builder = CGF.Builder;
+  llvm::SmallVector<llvm::Constant *, 4> fields;
+  // We only need one field for member functions.
+  if (MPT->isMemberFunctionPointer())
+    fields.push_back(llvm::Constant::getNullValue(CGM.VoidPtrTy));
+  else
+    GetNullMemberPointerFields(MPT, fields);
+  assert(!fields.empty());
+  llvm::Value *FirstField = MemPtr;
+  if (MemPtr->getType()->isStructTy())
+    FirstField = Builder.CreateExtractValue(MemPtr, 0);
+  llvm::Value *Res = Builder.CreateICmpNE(FirstField, fields[0], "memptr.cmp0");
 
-  // For member data pointers, this is just a check against -1 or 0.
-  if (isSimpleMemberPointer(MPT)) {
-    llvm::Constant *Val = getSimpleNullMemberPointer(MPT);
-    return Builder.CreateICmpNE(MemPtr, Val, "memptr.tobool");
+  // For function member pointers, we only need to test the function pointer
+  // field.  The other fields if any can be garbage.
+  if (MPT->isMemberFunctionPointer())
+    return Res;
+
+  // Otherwise, emit a series of compares and combine the results.
+  for (int I = 1, E = fields.size(); I < E; ++I) {
+    llvm::Value *Field = Builder.CreateExtractValue(MemPtr, I);
+    llvm::Value *Next = Builder.CreateICmpNE(Field, fields[I], "memptr.cmp");
+    Res = Builder.CreateAnd(Res, Next, "memptr.tobool");
+  }
+  return Res;
+}
+
+// Returns an adjusted base cast to i8*, since we do more address arithmetic on
+// it.
+llvm::Value *
+MicrosoftCXXABI::AdjustVirtualBase(CodeGenFunction &CGF,
+                                   const CXXRecordDecl *RD, llvm::Value *Base,
+                                   llvm::Value *VirtualBaseAdjustmentOffset,
+                                   llvm::Value *VBPtrOffset) {
+  CGBuilderTy &Builder = CGF.Builder;
+  Base = Builder.CreateBitCast(Base, CGM.Int8PtrTy);
+  llvm::BasicBlock *OriginalBB = 0;
+  llvm::BasicBlock *SkipAdjustBB = 0;
+  llvm::BasicBlock *VBaseAdjustBB = 0;
+
+  // In the unspecified inheritance model, there might not be a vbtable at all,
+  // in which case we need to skip the virtual base lookup.  If there is a
+  // vbtable, the first entry is a no-op entry that gives back the original
+  // base, so look for a virtual base adjustment offset of zero.
+  if (VBPtrOffset) {
+    OriginalBB = Builder.GetInsertBlock();
+    VBaseAdjustBB = CGF.createBasicBlock("memptr.vadjust");
+    SkipAdjustBB = CGF.createBasicBlock("memptr.skip_vadjust");
+    llvm::Value *IsVirtual =
+      Builder.CreateICmpNE(VirtualBaseAdjustmentOffset, getZeroInt(),
+                           "memptr.is_vbase");
+    Builder.CreateCondBr(IsVirtual, VBaseAdjustBB, SkipAdjustBB);
+    CGF.EmitBlock(VBaseAdjustBB);
   }
 
-  // FIXME: Implement member pointers other inheritance models.
-  ErrorUnsupportedABI(CGF, "function member pointer tests");
-  return GetBogusMemberPointer(QualType(MPT, 0));
+  // If we weren't given a dynamic vbptr offset, RD should be complete and we'll
+  // know the vbptr offset.
+  if (!VBPtrOffset) {
+    CharUnits offs = getContext().getASTRecordLayout(RD).getVBPtrOffset();
+    VBPtrOffset = llvm::ConstantInt::get(CGM.IntTy, offs.getQuantity());
+  }
+  // Load the vbtable pointer from the vbtable offset in the instance.
+  llvm::Value *VBPtr =
+    Builder.CreateInBoundsGEP(Base, VBPtrOffset, "memptr.vbptr");
+  llvm::Value *VBTable =
+    Builder.CreateBitCast(VBPtr, CGM.Int8PtrTy->getPointerTo(0));
+  VBTable = Builder.CreateLoad(VBTable, "memptr.vbtable");
+  // Load an i32 offset from the vb-table.
+  llvm::Value *VBaseOffs =
+    Builder.CreateInBoundsGEP(VBTable, VirtualBaseAdjustmentOffset);
+  VBaseOffs = Builder.CreateBitCast(VBaseOffs, CGM.Int32Ty->getPointerTo(0));
+  VBaseOffs = Builder.CreateLoad(VBaseOffs, "memptr.vbase_offs");
+  // Add it to VBPtr.  GEP will sign extend the i32 value for us.
+  llvm::Value *AdjustedBase = Builder.CreateInBoundsGEP(VBPtr, VBaseOffs);
+
+  // Merge control flow with the case where we didn't have to adjust.
+  if (VBaseAdjustBB) {
+    Builder.CreateBr(SkipAdjustBB);
+    CGF.EmitBlock(SkipAdjustBB);
+    llvm::PHINode *Phi = Builder.CreatePHI(CGM.Int8PtrTy, 2, "memptr.base");
+    Phi->addIncoming(Base, OriginalBB);
+    Phi->addIncoming(AdjustedBase, VBaseAdjustBB);
+    return Phi;
+  }
+  return AdjustedBase;
 }
 
 llvm::Value *
@@ -442,30 +613,88 @@ MicrosoftCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF,
                                               llvm::Value *Base,
                                               llvm::Value *MemPtr,
                                               const MemberPointerType *MPT) {
+  assert(MPT->isMemberDataPointer());
   unsigned AS = Base->getType()->getPointerAddressSpace();
   llvm::Type *PType =
       CGF.ConvertTypeForMem(MPT->getPointeeType())->getPointerTo(AS);
   CGBuilderTy &Builder = CGF.Builder;
+  const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
+  MSInheritanceModel Inheritance = RD->getMSInheritanceModel();
 
-  if (MPT->isMemberFunctionPointer()) {
-    ErrorUnsupportedABI(CGF, "function member pointer address");
-    return llvm::Constant::getNullValue(PType);
+  // Extract the fields we need, regardless of model.  We'll apply them if we
+  // have them.
+  llvm::Value *FieldOffset = MemPtr;
+  llvm::Value *VirtualBaseAdjustmentOffset = 0;
+  llvm::Value *VBPtrOffset = 0;
+  if (MemPtr->getType()->isStructTy()) {
+    // We need to extract values.
+    unsigned I = 0;
+    FieldOffset = Builder.CreateExtractValue(MemPtr, I++);
+    if (hasVBPtrOffsetField(Inheritance))
+      VBPtrOffset = Builder.CreateExtractValue(MemPtr, I++);
+    if (hasVirtualBaseAdjustmentField(Inheritance))
+      VirtualBaseAdjustmentOffset = Builder.CreateExtractValue(MemPtr, I++);
   }
 
-  llvm::Value *Addr;
-  if (isSimpleMemberPointer(MPT)) {
-    // Add the offset with GEP and i8*.
-    assert(MemPtr->getType() == CGM.PtrDiffTy);
-    Base = Builder.CreateBitCast(Base, Builder.getInt8Ty()->getPointerTo(AS));
-    Addr = Builder.CreateInBoundsGEP(Base, MemPtr, "memptr.offset");
-  } else {
-    ErrorUnsupportedABI(CGF, "non-scalar member pointers");
-    return llvm::Constant::getNullValue(PType);
+  if (VirtualBaseAdjustmentOffset) {
+    Base = AdjustVirtualBase(CGF, RD, Base, VirtualBaseAdjustmentOffset,
+                             VBPtrOffset);
   }
+  llvm::Value *Addr =
+    Builder.CreateInBoundsGEP(Base, FieldOffset, "memptr.offset");
 
   // Cast the address to the appropriate pointer type, adopting the address
   // space of the base pointer.
   return Builder.CreateBitCast(Addr, PType);
+}
+
+llvm::Value *
+MicrosoftCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
+                                                 llvm::Value *&This,
+                                                 llvm::Value *MemPtr,
+                                                 const MemberPointerType *MPT) {
+  assert(MPT->isMemberFunctionPointer());
+  const FunctionProtoType *FPT =
+    MPT->getPointeeType()->castAs<FunctionProtoType>();
+  const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
+  llvm::FunctionType *FTy =
+    CGM.getTypes().GetFunctionType(
+      CGM.getTypes().arrangeCXXMethodType(RD, FPT));
+  CGBuilderTy &Builder = CGF.Builder;
+
+  MSInheritanceModel Inheritance = RD->getMSInheritanceModel();
+
+  // Extract the fields we need, regardless of model.  We'll apply them if we
+  // have them.
+  llvm::Value *FunctionPointer = MemPtr;
+  llvm::Value *NonVirtualBaseAdjustment = NULL;
+  llvm::Value *VirtualBaseAdjustmentOffset = NULL;
+  llvm::Value *VBPtrOffset = NULL;
+  if (MemPtr->getType()->isStructTy()) {
+    // We need to extract values.
+    unsigned I = 0;
+    FunctionPointer = Builder.CreateExtractValue(MemPtr, I++);
+    if (hasVBPtrOffsetField(Inheritance))
+      VBPtrOffset = Builder.CreateExtractValue(MemPtr, I++);
+    if (hasNonVirtualBaseAdjustmentField(MPT, Inheritance))
+      NonVirtualBaseAdjustment = Builder.CreateExtractValue(MemPtr, I++);
+    if (hasVirtualBaseAdjustmentField(Inheritance))
+      VirtualBaseAdjustmentOffset = Builder.CreateExtractValue(MemPtr, I++);
+  }
+
+  if (VirtualBaseAdjustmentOffset) {
+    This = AdjustVirtualBase(CGF, RD, This, VirtualBaseAdjustmentOffset,
+                             VBPtrOffset);
+  }
+
+  if (NonVirtualBaseAdjustment) {
+    // Apply the adjustment and cast back to the original struct type.
+    llvm::Value *Ptr = Builder.CreateBitCast(This, Builder.getInt8PtrTy());
+    Ptr = Builder.CreateInBoundsGEP(Ptr, NonVirtualBaseAdjustment);
+    This = Builder.CreateBitCast(Ptr, This->getType(), "this.adjusted");
+  }
+
+  return Builder.CreateBitCast(FunctionPointer, FTy->getPointerTo());
 }
 
 CGCXXABI *clang::CodeGen::CreateMicrosoftCXXABI(CodeGenModule &CGM) {
