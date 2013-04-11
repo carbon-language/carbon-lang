@@ -489,7 +489,7 @@
         }
 }
 %extend lldb::SBValueList {
-        PyObject *lldb::SBValueList::__repr__ (){
+        PyObject *lldb::SBValueList::__str__ (){
                 lldb::SBStream description;
                 const size_t n = $self->GetSize();
                 if (n)
@@ -507,7 +507,8 @@
                     --desc_len;
                 if (desc_len > 0)
                     return PyString_FromStringAndSize (desc, desc_len);
-                return Py_None;
+                else
+                    return PyString_FromString("");
         }
 }
 %extend lldb::SBWatchpoint {
