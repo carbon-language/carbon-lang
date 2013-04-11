@@ -49,7 +49,7 @@ define void @MemSetTest(i8* nocapture %x)  {
 entry:
     tail call void @llvm.memset.p0i8.i64(i8* %x, i8 77, i64 16, i32 4, i1 false)
     ret void
-; CHECK define void @MemSetTest
+; CHECK: define void @MemSetTest
 ; CHECK: call i8* @memset
 ; CHECK: ret void
 }

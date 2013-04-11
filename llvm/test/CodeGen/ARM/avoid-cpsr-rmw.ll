@@ -91,7 +91,7 @@ entry:
 ; CHECK: t4
 ; CHECK: vmrs APSR_nzcv, fpscr
 ; CHECK: if.then
-; CHECK-NOT movs
+; CHECK-NOT: movs
   %0 = load double* %q, align 4
   %cmp = fcmp olt double %0, 1.000000e+01
   %incdec.ptr1 = getelementptr inbounds i32* %p, i32 1

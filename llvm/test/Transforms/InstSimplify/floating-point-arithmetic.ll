@@ -14,7 +14,7 @@ define float @fsub_0_0_x(float %a) {
 ; CHECK: @fsub_x_0
 define float @fsub_x_0(float %a) {
   %ret = fsub float %a, 0.0
-; CHECK ret float %a
+; CHECK: ret float %a
   ret float %ret
 }
 
@@ -22,7 +22,7 @@ define float @fsub_x_0(float %a) {
 ; CHECK: @fadd_x_n0
 define float @fadd_x_n0(float %a) {
   %ret = fadd float %a, -0.0
-; CHECK ret float %a
+; CHECK: ret float %a
   ret float %ret
 }
 
