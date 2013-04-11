@@ -82,9 +82,13 @@ class DynamicValueTestCase(TestBase):
         contained_auto_ptr = this_dynamic.GetChildMemberWithName ('m_client_A', use_dynamic)
         self.assertTrue (contained_auto_ptr)
         contained_b = contained_auto_ptr.GetChildMemberWithName ('_M_ptr', use_dynamic)
+        if not contained_b:
+                contained_b = contained_auto_ptr.GetChildMemberWithName ('__ptr_', use_dynamic)
         self.assertTrue (contained_b)
         
         contained_b_static = contained_auto_ptr.GetChildMemberWithName ('_M_ptr', no_dynamic)
+        if not contained_b_static:
+                contained_b_static = contained_auto_ptr.GetChildMemberWithName ('__ptr_', no_dynamic)
         self.assertTrue (contained_b_static)
         
         contained_b_addr = int (contained_b.GetValue(), 16)
@@ -177,7 +181,7 @@ class DynamicValueTestCase(TestBase):
         # The "frame var" code uses another path to get into children, so let's
         # make sure that works as well:
 
-        self.expect('frame var -d run-target anotherA.m_client_A._M_ptr', 'frame var finds its way into a child member',
+        self.expect('frame var -d run-target --ptr-depth=2 --show-types anotherA.m_client_A', 'frame var finds its way into a child member',
             patterns = ['\(B \*\)'])
 
         # Now make sure we also get it right for a reference as well:
