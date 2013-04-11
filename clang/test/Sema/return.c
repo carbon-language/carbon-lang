@@ -197,6 +197,7 @@ int test29() {
   exit(1);
 }
 
+#ifndef __hexagon__
 #include <setjmp.h>
 jmp_buf test30_j;
 int test30() {
@@ -209,6 +210,7 @@ int test30() {
     _longjmp(test30_j, 1);
 #endif
 }
+#endif
 
 typedef void test31_t(int status);
 void test31(test31_t *callback __attribute__((noreturn)));
