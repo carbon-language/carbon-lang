@@ -110,7 +110,8 @@ static StringRef GetGVTypeString(const GlobalVariable &G) {
 bool BlackList::isInInit(const GlobalVariable &G) const {
   return (isIn(*G.getParent()) ||
           inSection("global-init", G.getName()) ||
-          inSection("global-init-type", GetGVTypeString(G)));
+          inSection("global-init-type", GetGVTypeString(G)) ||
+          inSection("global-init-src", G.getParent()->getModuleIdentifier()));
 }
 
 bool BlackList::inSection(const StringRef Section,

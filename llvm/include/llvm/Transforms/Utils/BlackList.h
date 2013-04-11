@@ -20,6 +20,7 @@
 // global-init:*global_with_initialization_issues*
 // global-init-type:*Namespace::ClassName*
 // src:file_with_tricky_code.cc
+// global-init-src:ignore-global-initializers-issues.cc
 // ---
 // Note that the wild card is in fact an llvm::Regex, but * is automatically
 // replaced with .*
