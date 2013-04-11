@@ -363,13 +363,29 @@ protected:
                 }
                 
                 StoppointCallbackContext context (event_ptr, exe_ctx, false);
+                
+                // Let's copy the breakpoint locations out of the site and store them in a local list.  That way if
+                // one of the breakpoint actions changes the site, then we won't be operating on a bad list.
+                
+                BreakpointLocationCollection site_locations;
+                for (size_t j = 0; j < num_owners; j++)
+                    site_locations.Add(bp_site_sp->GetOwnerAtIndex(j));
 
                 for (size_t j = 0; j < num_owners; j++)
                 {
-                    lldb::BreakpointLocationSP bp_loc_sp = bp_site_sp->GetOwnerAtIndex(j);
+                    lldb::BreakpointLocationSP bp_loc_sp = site_locations.GetByIndex(j);
+                    
+                    // If another action disabled this breakpoint or its location, then don't run the actions.
+                    if (!bp_loc_sp->IsEnabled() || !bp_loc_sp->GetBreakpoint().IsEnabled())
+                        continue;
+                    
+                    // The breakpoint site may have many locations associated with it, not all of them valid for
+                    // this thread.  Skip the ones that aren't:
+                    if (!bp_loc_sp->ValidForThisThread(&m_thread))
+                        continue;
                                                       
                     // First run the condition for the breakpoint.  If that says we should stop, then we'll run
-                    // the callback for the breakpoint.  If the callback says we shouldn't stop that will win.
+                    // the callback for the breakpoint.  If the callback says we shouldn't stop that will win.                    
                     
                     bool condition_says_stop = true;
                     if (bp_loc_sp->GetConditionText() != NULL)
