@@ -1449,9 +1449,15 @@ X86Operand *X86AsmParser::ParseIntelOperator(unsigned OpKind) {
   assert (Tok.is(AsmToken::Identifier) && "Expected an identifier");
 
   const MCExpr *Val;
+  AsmToken StartTok = Tok;
   SMLoc Start = Tok.getLoc(), End;
+  StringRef Identifier = Tok.getString();
   if (getParser().parsePrimaryExpr(Val, End))
-    return 0;
+    return ErrorOperand(Start, "Unable to parse expression!");
+
+  const MCExpr *Disp = 0;
+  if (X86Operand *Err = ParseIntelVarWithQualifier(Disp, Identifier))
+    return Err;
 
   unsigned Length = 0, Size = 0, Type = 0;
   if (const MCSymbolRefExpr *SymRef = dyn_cast<MCSymbolRefExpr>(Val)) {
@@ -1462,7 +1468,10 @@ X86Operand *X86AsmParser::ParseIntelOperator(unsigned OpKind) {
     bool IsVarDecl;
     if (!SemaCallback->LookupInlineAsmIdentifier(Sym.getName(), NULL, Length,
                                                  Size, Type, IsVarDecl))
-      return ErrorOperand(Start, "Unable to lookup expr!");
+      // FIXME: We don't warn on variables with namespace alias qualifiers
+      // because support still needs to be added in the frontend.
+      if (Identifier.equals(StartTok.getString()))
+        return ErrorOperand(Start, "Unable to lookup expr!");
   }
   unsigned CVal;
   switch(OpKind) {
