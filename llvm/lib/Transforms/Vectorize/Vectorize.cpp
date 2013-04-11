@@ -1,4 +1,4 @@
-   //===-- Vectorize.cpp -----------------------------------------------------===//
+//===-- Vectorize.cpp -----------------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -43,6 +43,6 @@ void LLVMAddLoopVectorizePass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createLoopVectorizePass());
 }
 
-void LLVMAddLoopRollerPass(LLVMPassManagerRef PM) {
+void LLVMAddSLPVectorizePass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createSLPVectorizerPass());
 }

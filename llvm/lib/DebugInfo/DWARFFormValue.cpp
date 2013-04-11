@@ -18,10 +18,11 @@
 using namespace llvm;
 using namespace dwarf;
 
-template <uint8_t AddrSize, uint8_t RefAddrSize>
-struct FixedFormSizes {
+namespace {
+template <uint8_t AddrSize, uint8_t RefAddrSize> struct FixedFormSizes {
   static const uint8_t sizes[];
 };
+}
 
 template <uint8_t AddrSize, uint8_t RefAddrSize>
 const uint8_t FixedFormSizes<AddrSize, RefAddrSize>::sizes[] = {
