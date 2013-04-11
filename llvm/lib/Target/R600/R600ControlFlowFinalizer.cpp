@@ -41,7 +41,7 @@ private:
     CF_ELSE,
     CF_POP
   };
-  
+
   static char ID;
   const R600InstrInfo *TII;
   unsigned MaxFetchInst;
@@ -334,4 +334,3 @@ char R600ControlFlowFinalizer::ID = 0;
 llvm::FunctionPass *llvm::createR600ControlFlowFinalizer(TargetMachine &TM) {
   return new R600ControlFlowFinalizer(TM);
 }
-
