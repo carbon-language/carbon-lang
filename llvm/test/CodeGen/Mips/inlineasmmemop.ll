@@ -34,6 +34,22 @@ entry:
 ; CHECK-NEXT: lw ${{[0-9]+}},0(${{[0-9]+}});
 ; CHECK-NEXT: #NO_APP
 
+;int b[8] = {0,1,2,3,4,5,6,7};
+;int main()
+;{
+;  int i;
+; 
+;  // The first word. Notice, no 'D'
+;  { asm (
+;    "lw    %0,%1;\n"
+;    : "=r" (i) : "m" (*(b+4)));}
+; 
+;  // The second word
+;  { asm (
+;    "lw    %0,%D1;\n"
+;    : "=r" (i) "m" (*(b+4)));}
+;}
+
 @b = common global [20 x i32] zeroinitializer, align 4
 
 define void @main() {
