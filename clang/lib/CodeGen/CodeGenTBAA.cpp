@@ -50,13 +50,25 @@ llvm::MDNode *CodeGenTBAA::getRoot() {
   return Root;
 }
 
+// For struct-path aware TBAA, the scalar type has the same format as
+// the struct type: name, offset, pointer to another node in the type DAG.
+// For scalar TBAA, the scalar type is the same as the scalar tag:
+// name and a parent pointer.
+llvm::MDNode *CodeGenTBAA::createTBAAScalarType(StringRef Name,
+                                                llvm::MDNode *Parent) {
+  if (CodeGenOpts.StructPathTBAA)
+    return MDHelper.createTBAAScalarTypeNode(Name, 0, Parent);
+  else
+    return MDHelper.createTBAANode(Name, Parent);
+}
+
 llvm::MDNode *CodeGenTBAA::getChar() {
   // Define the root of the tree for user-accessible memory. C and C++
   // give special powers to char and certain similar types. However,
   // these special powers only cover user-accessible memory, and doesn't
   // include things like vtables.
   if (!Char)
-    Char = MDHelper.createTBAANode("omnipotent char", getRoot());
+    Char = createTBAAScalarType("omnipotent char", getRoot());
 
   return Char;
 }
@@ -124,7 +136,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     // "underlying types".
     default:
       return MetadataCache[Ty] =
-        MDHelper.createTBAANode(BTy->getName(Features), getChar());
+        createTBAAScalarType(BTy->getName(Features), getChar());
     }
   }
 
@@ -132,8 +144,8 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
   // TODO: Implement C++'s type "similarity" and consider dis-"similar"
   // pointers distinct.
   if (Ty->isPointerType())
-    return MetadataCache[Ty] = MDHelper.createTBAANode("any pointer",
-                                                       getChar());
+    return MetadataCache[Ty] = createTBAAScalarType("any pointer",
+                                                    getChar());
 
   // Enum types are distinct types. In C++ they have "underlying types",
   // however they aren't related for TBAA.
@@ -160,7 +172,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     llvm::raw_svector_ostream Out(OutName);
     MContext.mangleCXXRTTIName(QualType(ETy, 0), Out);
     Out.flush();
-    return MetadataCache[Ty] = MDHelper.createTBAANode(OutName, getChar());
+    return MetadataCache[Ty] = createTBAAScalarType(OutName, getChar());
   }
 
   // For now, handle any other kind of type conservatively.
@@ -168,7 +180,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
 }
 
 llvm::MDNode *CodeGenTBAA::getTBAAInfoForVTablePtr() {
-  return MDHelper.createTBAANode("vtable pointer", getRoot());
+  return createTBAAScalarType("vtable pointer", getRoot());
 }
 
 bool
@@ -252,10 +264,6 @@ CodeGenTBAA::getTBAAStructTypeInfo(QualType QTy) {
 
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
     SmallVector <std::pair<uint64_t, llvm::MDNode*>, 4> Fields;
-    // To reduce the size of MDNode for a given struct type, we only output
-    // once for all the fields with the same scalar types.
-    // Offsets for scalar fields in the type DAG are not used.
-    llvm::SmallSet <llvm::MDNode*, 4> ScalarFieldTypes;
     unsigned idx = 0;
     for (RecordDecl::field_iterator i = RD->field_begin(),
          e = RD->field_end(); i != e; ++i, ++idx) {
@@ -263,13 +271,8 @@ CodeGenTBAA::getTBAAStructTypeInfo(QualType QTy) {
       llvm::MDNode *FieldNode;
       if (isTBAAPathStruct(FieldQTy))
         FieldNode = getTBAAStructTypeInfo(FieldQTy);
-      else {
+      else
         FieldNode = getTBAAInfo(FieldQTy);
-        // Ignore this field if the type already exists.
-        if (ScalarFieldTypes.count(FieldNode))
-          continue;
-        ScalarFieldTypes.insert(FieldNode);
-       }
       if (!FieldNode)
         return StructTypeMetadataCache[Ty] = NULL;
       Fields.push_back(std::make_pair(
@@ -305,8 +308,18 @@ CodeGenTBAA::getTBAAStructTagInfo(QualType BaseQTy, llvm::MDNode *AccessNode,
   if (isTBAAPathStruct(BaseQTy))
     BNode  = getTBAAStructTypeInfo(BaseQTy);
   if (!BNode)
-    return StructTagMetadataCache[PathTag] = AccessNode;
+    return StructTagMetadataCache[PathTag] =
+       MDHelper.createTBAAStructTagNode(AccessNode, AccessNode, 0);
 
   return StructTagMetadataCache[PathTag] =
     MDHelper.createTBAAStructTagNode(BNode, AccessNode, Offset);
+}
+
+llvm::MDNode *
+CodeGenTBAA::getTBAAScalarTagInfo(llvm::MDNode *AccessNode) {
+  if (llvm::MDNode *N = ScalarTagMetadataCache[AccessNode])
+    return N;
+
+  return ScalarTagMetadataCache[AccessNode] =
+    MDHelper.createTBAAStructTagNode(AccessNode, AccessNode, 0);
 }

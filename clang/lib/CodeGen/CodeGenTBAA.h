@@ -61,6 +61,8 @@ class CodeGenTBAA {
   llvm::DenseMap<const Type *, llvm::MDNode *> StructTypeMetadataCache;
   /// This maps TBAAPathTags to a tag node.
   llvm::DenseMap<TBAAPathTag, llvm::MDNode *> StructTagMetadataCache;
+  /// This maps a scalar type to a scalar tag node.
+  llvm::DenseMap<const llvm::MDNode *, llvm::MDNode *> ScalarTagMetadataCache;
 
   /// StructMetadataCache - This maps clang::Types to llvm::MDNodes describing
   /// them for struct assignments.
@@ -84,6 +86,11 @@ class CodeGenTBAA {
                      SmallVectorImpl<llvm::MDBuilder::TBAAStructField> &Fields,
                      bool MayAlias);
 
+  /// A wrapper function to create a scalar type. For struct-path aware TBAA,
+  /// the scalar type has the same format as the struct type: name, offset,
+  /// pointer to another node in the type DAG.
+  llvm::MDNode *createTBAAScalarType(StringRef Name, llvm::MDNode *Parent);
+
 public:
   CodeGenTBAA(ASTContext &Ctx, llvm::LLVMContext &VMContext,
               const CodeGenOptions &CGO,
@@ -105,10 +112,13 @@ public:
 
   /// Get the MDNode in the type DAG for given struct type QType.
   llvm::MDNode *getTBAAStructTypeInfo(QualType QType);
-  /// Get the tag MDNode for a given base type, the actual sclar access MDNode
+  /// Get the tag MDNode for a given base type, the actual scalar access MDNode
   /// and offset into the base type.
   llvm::MDNode *getTBAAStructTagInfo(QualType BaseQType,
                                      llvm::MDNode *AccessNode, uint64_t Offset);
+
+  /// Get the sclar tag MDNode for a given scalar type.
+  llvm::MDNode *getTBAAScalarTagInfo(llvm::MDNode *AccessNode);
 };
 
 }  // end namespace CodeGen
