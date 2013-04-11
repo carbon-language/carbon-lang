@@ -48,7 +48,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.AllowShortIfStatementsOnASingleLine = false;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
   LLVMStyle.PenaltyExcessCharacter = 1000000;
-  LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 5;
+  LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 75;
   return LLVMStyle;
 }
 
@@ -68,7 +68,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.AllowShortIfStatementsOnASingleLine = false;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
   GoogleStyle.PenaltyExcessCharacter = 1000000;
-  GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 100;
+  GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 200;
   return GoogleStyle;
 }
 
@@ -1395,7 +1395,7 @@ public:
 
     // Adapt level to the next line if this is a comment.
     // FIXME: Can/should this be done in the UnwrappedLineParser?
-    const AnnotatedLine* NextNoneCommentLine = NULL;
+    const AnnotatedLine *NextNoneCommentLine = NULL;
     for (unsigned i = AnnotatedLines.size() - 1; i > 0; --i) {
       if (NextNoneCommentLine && AnnotatedLines[i].First.is(tok::comment) &&
           AnnotatedLines[i].First.Children.empty())

@@ -81,7 +81,7 @@ public:
   AnnotatingParser(SourceManager &SourceMgr, Lexer &Lex, AnnotatedLine &Line,
                    IdentifierInfo &Ident_in)
       : SourceMgr(SourceMgr), Lex(Lex), Line(Line), CurrentToken(&Line.First),
-        KeywordVirtualFound(false), Ident_in(Ident_in) {
+        KeywordVirtualFound(false), NameFound(false), Ident_in(Ident_in) {
     Contexts.push_back(Context(tok::unknown, 1, /*IsExpression=*/ false));
   }
 
@@ -347,7 +347,7 @@ private:
     case tok::l_paren:
       if (!parseParens())
         return false;
-      if (Line.MustBeDeclaration)
+      if (Line.MustBeDeclaration && NameFound && !Contexts.back().IsExpression)
         Line.MightBeFunctionDecl = true;
       break;
     case tok::l_square:
@@ -602,6 +602,7 @@ private:
            Current.Parent->Type == TT_TemplateCloser)) {
         Contexts.back().FirstStartOfName = &Current;
         Current.Type = TT_StartOfName;
+        NameFound = true;
       } else if (Current.isOneOf(tok::star, tok::amp, tok::ampamp)) {
         Current.Type =
             determineStarAmpUsage(Current, Contexts.back().IsExpression);
@@ -759,6 +760,7 @@ private:
   AnnotatedLine &Line;
   AnnotatedToken *CurrentToken;
   bool KeywordVirtualFound;
+  bool NameFound;
   IdentifierInfo &Ident_in;
 };
 
@@ -916,7 +918,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
       // FIXME: Clean up hack of using BindingStrength to find top-level names.
       return Style.PenaltyReturnTypeOnItsOwnLine;
     else
-      return 100;
+      return 200;
   }
   if (Left.is(tok::equal) && Right.is(tok::l_brace))
     return 150;
@@ -954,6 +956,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   if (Left.is(tok::colon) && Left.Type == TT_ObjCMethodExpr)
     return 20;
 
+  if (Left.is(tok::l_paren) && Line.MightBeFunctionDecl)
+    return 100;
   if (Left.opensScope())
     return Left.ParameterCount > 1 ? prec::Comma : 20;
 
