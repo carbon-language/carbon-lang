@@ -10,7 +10,7 @@
 #include <stdlib.h>
 
 __attribute__((noinline))
-inline char *pretend_to_do_something(char *x) {
+char *pretend_to_do_something(char *x) {
   __asm__ __volatile__("" : : "r" (x) : "memory");
   return x;
 }
@@ -26,19 +26,18 @@ __attribute__((noinline))
 void RecuriveFunctionWithStackFrame(int depth) {
   if (depth <= 0) return;
   char x[1024];
-  memset(x, 0, sizeof(x));
+  x[0] = depth;
   pretend_to_do_something(x);
   RecuriveFunctionWithStackFrame(depth - 1);
-  memset(x, 0, sizeof(x));
 }
 
 int main(int argc, char **argv) {
-  char *stale_stack = LeakStack();
   int n_iter = argc >= 2 ? atoi(argv[1]) : 1000;
-  int depth  = argc >= 3 ? atoi(argv[2]) : 1000;
-  for (int i = 0; i < n_iter; i++) {
+  int depth  = argc >= 3 ? atoi(argv[2]) : 500;
+  for (int i = 0; i < n_iter; i++)
     RecuriveFunctionWithStackFrame(depth);
-  }
+  char *stale_stack = LeakStack();
+  RecuriveFunctionWithStackFrame(10);
   stale_stack[100]++;
   // CHECK: ERROR: AddressSanitizer: stack-use-after-return on address
   // CHECK: is located in stack of thread T0 at offset 132 in frame
