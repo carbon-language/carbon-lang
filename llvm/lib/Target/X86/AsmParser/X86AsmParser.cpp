@@ -64,7 +64,7 @@ private:
   X86Operand *ParseIntelBracExpression(unsigned SegReg, SMLoc SizeDirLoc,
                                        uint64_t ImmDisp, unsigned Size);
   X86Operand *ParseIntelVarWithQualifier(const MCExpr *&Disp,
-                                         SMLoc &IdentStart);
+                                         StringRef &Identifier);
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
 
   X86Operand *CreateMemForInlineAsm(const MCExpr *Disp, SMLoc Start, SMLoc End,
@@ -1130,11 +1130,11 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
     SMLoc Loc = Tok.getLoc();
     if (ParseRegister(TmpReg, Loc, End)) {
       const MCExpr *Disp;
-      SMLoc IdentStart = Tok.getLoc();
+      StringRef Identifier = Tok.getString();
       if (getParser().parseExpression(Disp, End))
         return 0;
 
-      if (X86Operand *Err = ParseIntelVarWithQualifier(Disp, IdentStart))
+      if (X86Operand *Err = ParseIntelVarWithQualifier(Disp, Identifier))
         return Err;
 
       if (getLexer().isNot(AsmToken::RBrac))
@@ -1145,12 +1145,11 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
         InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, Start, 1));
         InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, Tok.getLoc(), 1));
       }
-      unsigned Len = Tok.getLoc().getPointer() - IdentStart.getPointer();
-      StringRef SymName(IdentStart.getPointer(), Len);
       Parser.Lex(); // Eat ']'
       if (!isParsingInlineAsm())
-        return X86Operand::CreateMem(Disp, Start, End, Size, SymName);
-      return CreateMemForInlineAsm(Disp, Start, End, SizeDirLoc, Size, SymName);
+        return X86Operand::CreateMem(Disp, Start, End, Size);
+      return CreateMemForInlineAsm(Disp, Start, End, SizeDirLoc, Size,
+                                   Identifier);
     }
   }
 
@@ -1255,7 +1254,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
 
 // Inline assembly may use variable names with namespace alias qualifiers.
 X86Operand *X86AsmParser::ParseIntelVarWithQualifier(const MCExpr *&Disp,
-                                                     SMLoc &IdentStart) {
+                                                     StringRef &Identifier) {
   // We should only see Foo::Bar if we're parsing inline assembly.
   if (!isParsingInlineAsm())
     return 0;
@@ -1266,6 +1265,7 @@ X86Operand *X86AsmParser::ParseIntelVarWithQualifier(const MCExpr *&Disp,
 
   bool Done = false;
   const AsmToken &Tok = Parser.getTok();
+  AsmToken IdentEnd = Tok;
   while (!Done) {
     switch (getLexer().getKind()) {
     default:
@@ -1280,12 +1280,14 @@ X86Operand *X86AsmParser::ParseIntelVarWithQualifier(const MCExpr *&Disp,
         return ErrorOperand(Tok.getLoc(), "Expected an identifier token!");
       break;
     case AsmToken::Identifier:
+      IdentEnd = Tok;
       getLexer().Lex(); // Consume the identifier.
       break;
     }
   }
-  size_t Len = Tok.getLoc().getPointer() - IdentStart.getPointer();
-  StringRef Identifier(IdentStart.getPointer(), Len);
+
+  unsigned Len = IdentEnd.getLoc().getPointer() - Identifier.data();
+  Identifier = StringRef(Identifier.data(), Len + IdentEnd.getString().size());
   MCSymbol *Sym = getContext().GetOrCreateSymbol(Identifier);
   MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
   Disp = MCSymbolRefExpr::Create(Sym, Variant, getParser().getContext());
@@ -1333,19 +1335,17 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg,
   }
 
   const MCExpr *Disp = 0;
-  SMLoc IdentStart = Tok.getLoc();
+  StringRef Identifier = Tok.getString();
   if (getParser().parseExpression(Disp, End))
     return 0;
 
   if (!isParsingInlineAsm())
     return X86Operand::CreateMem(Disp, Start, End, Size);
 
-  if (X86Operand *Err = ParseIntelVarWithQualifier(Disp, IdentStart))
+  if (X86Operand *Err = ParseIntelVarWithQualifier(Disp, Identifier))
     return Err;
 
-  unsigned Len = Tok.getLoc().getPointer() - IdentStart.getPointer();
-  StringRef SymName(IdentStart.getPointer(), Len);
-  return CreateMemForInlineAsm(Disp, Start, End, Start, Size, SymName);
+  return CreateMemForInlineAsm(Disp, Start, End, Start, Size, Identifier);
 }
 
 /// Parse the '.' operator.
