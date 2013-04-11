@@ -50,3 +50,4 @@ Developer Tools
    tblgen
    lit
    llvm-build
+   llvm-readobj
