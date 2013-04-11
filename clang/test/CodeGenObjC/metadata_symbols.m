@@ -1,6 +1,12 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -fexceptions -fobjc-exceptions -o %t %s
 // RUN: FileCheck -check-prefix=CHECK-X86_64 < %t %s
-// RUN: grep '@"OBJC_EHTYPE_$_EH3"' %t | count 3
+// RUN: FileCheck -check-prefix=CHECK-EHTYPE < %t %s
+
+// We need exactly 3 of these.
+// CHECK-EHTYPE: @"OBJC_EHTYPE_$_EH3"
+// CHECK-EHTYPE: @"OBJC_EHTYPE_$_EH3"
+// CHECK-EHTYPE: @"OBJC_EHTYPE_$_EH3"
+// CHECK-EHTYPE-NOT: @"OBJC_EHTYPE_$_EH3"
 
 // CHECK-X86_64: @"OBJC_CLASS_$_A" = global {{.*}}, section "__DATA, __objc_data", align 8
 // CHECK-X86_64: @"OBJC_METACLASS_$_A" = global {{.*}}, section "__DATA, __objc_data", align 8
