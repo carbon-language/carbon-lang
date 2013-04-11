@@ -182,27 +182,6 @@ void MipsSEDAGToDAGISel::processFunctionAfterISel(MachineFunction &MF) {
       replaceUsesWithZeroReg(MRI, *I);
 }
 
-/// Select multiply instructions.
-std::pair<SDNode*, SDNode*>
-MipsSEDAGToDAGISel::selectMULT(SDNode *N, unsigned Opc, DebugLoc DL, EVT Ty,
-                               bool HasLo, bool HasHi) {
-  SDNode *Lo = 0, *Hi = 0;
-  SDNode *Mul = CurDAG->getMachineNode(Opc, DL, MVT::Glue, N->getOperand(0),
-                                       N->getOperand(1));
-  SDValue InFlag = SDValue(Mul, 0);
-
-  if (HasLo) {
-    unsigned Opcode = (Ty == MVT::i32 ? Mips::MFLO : Mips::MFLO64);
-    Lo = CurDAG->getMachineNode(Opcode, DL, Ty, MVT::Glue, InFlag);
-    InFlag = SDValue(Lo, 1);
-  }
-  if (HasHi) {
-    unsigned Opcode = (Ty == MVT::i32 ? Mips::MFHI : Mips::MFHI64);
-    Hi = CurDAG->getMachineNode(Opcode, DL, Ty, InFlag);
-  }
-  return std::make_pair(Lo, Hi);
-}
-
 SDNode *MipsSEDAGToDAGISel::selectAddESubE(unsigned MOp, SDValue InFlag,
                                            SDValue CmpLHS, DebugLoc DL,
                                            SDNode *Node) const {
@@ -312,9 +291,7 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
   // Instruction Selection not handled by the auto-generated
   // tablegen selection should be handled here.
   ///
-  EVT NodeTy = Node->getValueType(0);
   SDNode *Result;
-  unsigned MultOpc;
 
   switch(Opcode) {
   default: break;
@@ -328,46 +305,6 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
   case ISD::ADDE: {
     SDValue InFlag = Node->getOperand(2);
     Result = selectAddESubE(Mips::ADDu, InFlag, InFlag.getValue(0), DL, Node);
-    return std::make_pair(true, Result);
-  }
-
-  /// Mul with two results
-  case ISD::SMUL_LOHI:
-  case ISD::UMUL_LOHI: {
-    if (NodeTy == MVT::i32)
-      MultOpc = (Opcode == ISD::UMUL_LOHI ? Mips::MULTu : Mips::MULT);
-    else
-      MultOpc = (Opcode == ISD::UMUL_LOHI ? Mips::DMULTu : Mips::DMULT);
-
-    std::pair<SDNode*, SDNode*> LoHi = selectMULT(Node, MultOpc, DL, NodeTy,
-                                                  true, true);
-
-    if (!SDValue(Node, 0).use_empty())
-      ReplaceUses(SDValue(Node, 0), SDValue(LoHi.first, 0));
-
-    if (!SDValue(Node, 1).use_empty())
-      ReplaceUses(SDValue(Node, 1), SDValue(LoHi.second, 0));
-
-    return std::make_pair(true, (SDNode*)NULL);
-  }
-
-  /// Special Muls
-  case ISD::MUL: {
-    // Mips32 has a 32-bit three operand mul instruction.
-    if (Subtarget.hasMips32() && NodeTy == MVT::i32)
-      break;
-    MultOpc = NodeTy == MVT::i32 ? Mips::MULT : Mips::DMULT;
-    Result = selectMULT(Node, MultOpc, DL, NodeTy, true, false).first;
-    return std::make_pair(true, Result);
-  }
-  case ISD::MULHS:
-  case ISD::MULHU: {
-    if (NodeTy == MVT::i32)
-      MultOpc = (Opcode == ISD::MULHU ? Mips::MULTu : Mips::MULT);
-    else
-      MultOpc = (Opcode == ISD::MULHU ? Mips::DMULTu : Mips::DMULT);
-
-    Result = selectMULT(Node, MultOpc, DL, NodeTy, false, true).second;
     return std::make_pair(true, Result);
   }
 

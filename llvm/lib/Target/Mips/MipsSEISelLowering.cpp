@@ -68,8 +68,11 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::MULHS,              MVT::i32, Custom);
   setOperationAction(ISD::MULHU,              MVT::i32, Custom);
 
-  if (HasMips64)
+  if (HasMips64) {
+    setOperationAction(ISD::MULHS,            MVT::i64, Custom);
+    setOperationAction(ISD::MULHU,            MVT::i64, Custom);
     setOperationAction(ISD::MUL,              MVT::i64, Custom);
+  }
 
   setOperationAction(ISD::SDIVREM, MVT::i32, Custom);
   setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
