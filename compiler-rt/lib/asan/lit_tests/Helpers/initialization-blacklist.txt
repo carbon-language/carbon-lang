@@ -1,2 +1,3 @@
 global-init:*badGlobal*
 global-init-type:*badNamespace::BadClass*
+global-init-src:*initialization-blacklist-extra2.cc
