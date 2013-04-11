@@ -651,6 +651,126 @@ long long clang_getArraySize(CXType CT) {
   return result;
 }
 
+long long clang_Type_getAlignOf(CXType T) {
+  if (T.kind == CXType_Invalid)
+    return CXTypeLayoutError_Invalid;
+  ASTContext &Ctx = cxtu::getASTUnit(GetTU(T))->getASTContext();
+  QualType QT = GetQualType(T);
+  // [expr.alignof] p1: return size_t value for complete object type, reference
+  //                    or array.
+  // [expr.alignof] p3: if reference type, return size of referenced type
+  if (QT->isReferenceType())
+    QT = QT.getNonReferenceType();
+  if (QT->isIncompleteType())
+    return CXTypeLayoutError_Incomplete;
+  if (QT->isDependentType())
+    return CXTypeLayoutError_Dependent;
+  // Exceptions by GCC extension - see ASTContext.cpp:1313 getTypeInfoImpl
+  // if (QT->isFunctionType()) return 4; // Bug #15511 - should be 1
+  // if (QT->isVoidType()) return 1;
+  return Ctx.getTypeAlignInChars(QT).getQuantity();
+}
+
+long long clang_Type_getSizeOf(CXType T) {
+  if (T.kind == CXType_Invalid)
+    return CXTypeLayoutError_Invalid;
+  ASTContext &Ctx = cxtu::getASTUnit(GetTU(T))->getASTContext();
+  QualType QT = GetQualType(T);
+  // [expr.sizeof] p2: if reference type, return size of referenced type
+  if (QT->isReferenceType())
+    QT = QT.getNonReferenceType();
+  // [expr.sizeof] p1: return -1 on: func, incomplete, bitfield, incomplete
+  //                   enumeration
+  // Note: We get the cxtype, not the cxcursor, so we can't call
+  //       FieldDecl->isBitField()
+  // [expr.sizeof] p3: pointer ok, function not ok.
+  // [gcc extension] lib/AST/ExprConstant.cpp:1372 HandleSizeof : vla == error
+  if (QT->isIncompleteType())
+    return CXTypeLayoutError_Incomplete;
+  if (QT->isDependentType())
+    return CXTypeLayoutError_Dependent;
+  if (!QT->isConstantSizeType())
+    return CXTypeLayoutError_NotConstantSize;
+  // [gcc extension] lib/AST/ExprConstant.cpp:1372
+  //                 HandleSizeof : {voidtype,functype} == 1
+  // not handled by ASTContext.cpp:1313 getTypeInfoImpl
+  if (QT->isVoidType() || QT->isFunctionType())
+    return 1;
+  return Ctx.getTypeSizeInChars(QT).getQuantity();
+}
+
+static long long visitRecordForValidation(const RecordDecl *RD) {
+  for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
+       I != E; ++I){
+    QualType FQT = (*I)->getType();
+    if (FQT->isIncompleteType())
+      return CXTypeLayoutError_Incomplete;
+    if (FQT->isDependentType())
+      return CXTypeLayoutError_Dependent;
+    // recurse
+    if (const RecordType *ChildType = (*I)->getType()->getAs<RecordType>()) {
+      if (const RecordDecl *Child = ChildType->getDecl()) {
+        long long ret = visitRecordForValidation(Child);
+        if (ret < 0)
+          return ret;
+      }
+    }
+    // else try next field
+  }
+  return 0;
+}
+
+long long clang_Type_getOffsetOf(CXType PT, const char *S) {
+  // check that PT is not incomplete/dependent
+  CXCursor PC = clang_getTypeDeclaration(PT);
+  if (clang_isInvalid(PC.kind))
+    return CXTypeLayoutError_Invalid;
+  const RecordDecl *RD =
+        dyn_cast_or_null<RecordDecl>(cxcursor::getCursorDecl(PC));
+  if (!RD)
+    return CXTypeLayoutError_Invalid;
+  RD = RD->getDefinition();
+  if (!RD)
+    return CXTypeLayoutError_Incomplete;
+  QualType RT = GetQualType(PT);
+  if (RT->isIncompleteType())
+    return CXTypeLayoutError_Incomplete;
+  if (RT->isDependentType())
+    return CXTypeLayoutError_Dependent;
+  // We recurse into all record fields to detect incomplete and dependent types.
+  long long Error = visitRecordForValidation(RD);
+  if (Error < 0)
+    return Error;
+  if (!S)
+    return CXTypeLayoutError_InvalidFieldName;
+  // lookup field
+  ASTContext &Ctx = cxtu::getASTUnit(GetTU(PT))->getASTContext();
+  IdentifierInfo *II = &Ctx.Idents.get(S);
+  DeclarationName FieldName(II);
+  RecordDecl::lookup_const_result Res = RD->lookup(FieldName);
+  // If a field of the parent record is incomplete, lookup will fail.
+  // and we would return InvalidFieldName instead of Incomplete.
+  // But this erroneous results does protects again a hidden assertion failure
+  // in the RecordLayoutBuilder
+  if (Res.size() != 1)
+    return CXTypeLayoutError_InvalidFieldName;
+  if (const FieldDecl *FD = dyn_cast<FieldDecl>(Res.front()))
+    return Ctx.getFieldOffset(FD);
+  if (const IndirectFieldDecl *IFD = dyn_cast<IndirectFieldDecl>(Res.front()))
+    return Ctx.getFieldOffset(IFD);
+  // we don't want any other Decl Type.
+  return CXTypeLayoutError_InvalidFieldName;
+}
+
+unsigned clang_Cursor_isBitField(CXCursor C) {
+  if (!clang_isDeclaration(C.kind))
+    return 0;
+  const FieldDecl *FD = dyn_cast_or_null<FieldDecl>(cxcursor::getCursorDecl(C));
+  if (!FD)
+    return 0;
+  return FD->isBitField();
+}
+
 CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return cxstring::createEmpty();

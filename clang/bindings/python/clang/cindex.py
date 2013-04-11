@@ -1314,6 +1314,18 @@ class Cursor(Structure):
         """
         return TokenGroup.get_tokens(self._tu, self.extent)
 
+    def is_bitfield(self):
+        """
+        Check if the field is a bitfield.
+        """
+        return conf.lib.clang_Cursor_isBitField(self)
+
+    def get_bitfield_width(self):
+        """
+        Retrieve the width of a bitfield.
+        """
+        return conf.lib.clang_getFieldDeclBitWidth(self)
+
     @staticmethod
     def from_result(res, fn, args):
         assert isinstance(res, Cursor)
@@ -1612,6 +1624,24 @@ class Type(Structure):
         Retrieve the size of the constant array.
         """
         return conf.lib.clang_getArraySize(self)
+
+    def get_align(self):
+        """
+        Retrieve the alignment of the record.
+        """
+        return conf.lib.clang_Type_getAlignOf(self)
+
+    def get_size(self):
+        """
+        Retrieve the size of the record.
+        """
+        return conf.lib.clang_Type_getSizeOf(self)
+
+    def get_offset(self, fieldname):
+        """
+        Retrieve the offset of a field in the record.
+        """
+        return conf.lib.clang_Type_getOffsetOf(self, c_char_p(fieldname))
 
     def __eq__(self, other):
         if type(other) != type(self):
@@ -2623,6 +2653,10 @@ functionList = [
    [Type],
    c_longlong),
 
+  ("clang_getFieldDeclBitWidth",
+   [Cursor],
+   c_int),
+
   ("clang_getCanonicalCursor",
    [Cursor],
    Cursor,
@@ -3038,6 +3072,22 @@ functionList = [
    [Cursor, c_uint],
    Cursor,
    Cursor.from_result),
+
+  ("clang_Cursor_isBitField",
+   [Cursor],
+   c_long),
+
+  ("clang_Type_getAlignOf",
+   [Type],
+   c_longlong),
+
+  ("clang_Type_getOffsetOf",
+   [Type, c_char_p],
+   c_longlong),
+
+  ("clang_Type_getSizeOf",
+   [Type],
+   c_ulonglong),
 ]
 
 class LibclangError(Exception):
