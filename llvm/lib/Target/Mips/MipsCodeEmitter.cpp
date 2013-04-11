@@ -116,7 +116,7 @@ private:
                                   int Offset) const;
 
   /// Expand pseudo instructions with accumulator register operands.
-  void expandACCInstr(MachineBasicBlock::instr_iterator &MI,
+  void expandACCInstr(MachineBasicBlock::instr_iterator MI,
                       MachineBasicBlock &MBB, unsigned Opc) const;
 
   /// \brief Expand pseudo instruction. Return true if MI was expanded.
@@ -302,7 +302,7 @@ void MipsCodeEmitter::emitWord(unsigned Word) {
     MCE.emitWordBE(Word);
 }
 
-void MipsCodeEmitter::expandACCInstr(MachineBasicBlock::instr_iterator &MI,
+void MipsCodeEmitter::expandACCInstr(MachineBasicBlock::instr_iterator MI,
                                      MachineBasicBlock &MBB,
                                      unsigned Opc) const {
   // Expand "pseudomult $ac0, $t0, $t1" to "mult $t0, $t1".

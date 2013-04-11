@@ -1918,7 +1918,7 @@ SDValue MipsTargetLowering::lowerShiftRightParts(SDValue Op, SelectionDAG &DAG,
   return DAG.getMergeValues(Ops, 2, DL);
 }
 
-static SDValue CreateLoadLR(unsigned Opc, SelectionDAG &DAG, LoadSDNode *LD,
+static SDValue createLoadLR(unsigned Opc, SelectionDAG &DAG, LoadSDNode *LD,
                             SDValue Chain, SDValue Src, unsigned Offset) {
   SDValue Ptr = LD->getBasePtr();
   EVT VT = LD->getValueType(0), MemVT = LD->getMemoryVT();
@@ -1958,15 +1958,15 @@ SDValue MipsTargetLowering::lowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   //  (set tmp, (ldl (add baseptr, 7), undef))
   //  (set dst, (ldr baseptr, tmp))
   if ((VT == MVT::i64) && (ExtType == ISD::NON_EXTLOAD)) {
-    SDValue LDL = CreateLoadLR(MipsISD::LDL, DAG, LD, Chain, Undef,
+    SDValue LDL = createLoadLR(MipsISD::LDL, DAG, LD, Chain, Undef,
                                IsLittle ? 7 : 0);
-    return CreateLoadLR(MipsISD::LDR, DAG, LD, LDL.getValue(1), LDL,
+    return createLoadLR(MipsISD::LDR, DAG, LD, LDL.getValue(1), LDL,
                         IsLittle ? 0 : 7);
   }
 
-  SDValue LWL = CreateLoadLR(MipsISD::LWL, DAG, LD, Chain, Undef,
+  SDValue LWL = createLoadLR(MipsISD::LWL, DAG, LD, Chain, Undef,
                              IsLittle ? 3 : 0);
-  SDValue LWR = CreateLoadLR(MipsISD::LWR, DAG, LD, LWL.getValue(1), LWL,
+  SDValue LWR = createLoadLR(MipsISD::LWR, DAG, LD, LWL.getValue(1), LWL,
                              IsLittle ? 0 : 3);
 
   // Expand
@@ -1997,7 +1997,7 @@ SDValue MipsTargetLowering::lowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getMergeValues(Ops, 2, DL);
 }
 
-static SDValue CreateStoreLR(unsigned Opc, SelectionDAG &DAG, StoreSDNode *SD,
+static SDValue createStoreLR(unsigned Opc, SelectionDAG &DAG, StoreSDNode *SD,
                              SDValue Chain, unsigned Offset) {
   SDValue Ptr = SD->getBasePtr(), Value = SD->getValue();
   EVT MemVT = SD->getMemoryVT(), BasePtrVT = Ptr.getValueType();
@@ -2034,9 +2034,9 @@ SDValue MipsTargetLowering::lowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   //  (swl val, (add baseptr, 3))
   //  (swr val, baseptr)
   if ((VT == MVT::i32) || SD->isTruncatingStore()) {
-    SDValue SWL = CreateStoreLR(MipsISD::SWL, DAG, SD, Chain,
+    SDValue SWL = createStoreLR(MipsISD::SWL, DAG, SD, Chain,
                                 IsLittle ? 3 : 0);
-    return CreateStoreLR(MipsISD::SWR, DAG, SD, SWL, IsLittle ? 0 : 3);
+    return createStoreLR(MipsISD::SWR, DAG, SD, SWL, IsLittle ? 0 : 3);
   }
 
   assert(VT == MVT::i64);
@@ -2046,8 +2046,8 @@ SDValue MipsTargetLowering::lowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   // to
   //  (sdl val, (add baseptr, 7))
   //  (sdr val, baseptr)
-  SDValue SDL = CreateStoreLR(MipsISD::SDL, DAG, SD, Chain, IsLittle ? 7 : 0);
-  return CreateStoreLR(MipsISD::SDR, DAG, SD, SDL, IsLittle ? 0 : 7);
+  SDValue SDL = createStoreLR(MipsISD::SDL, DAG, SD, Chain, IsLittle ? 7 : 0);
+  return createStoreLR(MipsISD::SDR, DAG, SD, SDL, IsLittle ? 0 : 7);
 }
 
 static SDValue initAccumulator(SDValue In, DebugLoc DL, SelectionDAG &DAG) {
