@@ -86,7 +86,7 @@ private:
     ValueListImpl &
     ref ();
     
-    std::auto_ptr<ValueListImpl> m_opaque_ap;
+    std::unique_ptr<ValueListImpl> m_opaque_ap;
 };
 
 
