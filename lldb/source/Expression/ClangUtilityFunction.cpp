@@ -102,7 +102,7 @@ ClangUtilityFunction::Install (Stream &error_stream,
     
     m_expr_decl_map.reset(new ClangExpressionDeclMap(keep_result_in_memory, exe_ctx));
     
-    if (!m_expr_decl_map->WillParse(exe_ctx))
+    if (!m_expr_decl_map->WillParse(exe_ctx, NULL))
     {
         error_stream.PutCString ("error: current process state is unsuitable for expression parsing\n");
         return false;

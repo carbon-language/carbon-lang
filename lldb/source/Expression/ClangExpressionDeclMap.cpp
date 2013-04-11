@@ -27,6 +27,7 @@
 #include "lldb/Expression/ASTDumper.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
+#include "lldb/Expression/Materializer.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
@@ -74,7 +75,8 @@ ClangExpressionDeclMap::~ClangExpressionDeclMap()
 }
 
 bool 
-ClangExpressionDeclMap::WillParse(ExecutionContext &exe_ctx)
+ClangExpressionDeclMap::WillParse(ExecutionContext &exe_ctx,
+                                  Materializer *materializer)
 {
     ClangASTMetrics::ClearLocalCounters();
     
@@ -106,11 +108,12 @@ ClangExpressionDeclMap::WillParse(ExecutionContext &exe_ctx)
     }
     
     m_parser_vars->m_target_info = GetTargetInfo();
+    m_parser_vars->m_materializer = materializer;
     
     return true;
 }
 
-void 
+void
 ClangExpressionDeclMap::DidParse()
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
@@ -3409,6 +3412,12 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
     ConstString entity_name(decl_name.c_str());
     ClangExpressionVariableSP entity(m_found_entities.CreateVariable (valobj));
     
+    if (m_parser_vars->m_materializer)
+    {
+        Error err;
+        m_parser_vars->m_materializer->AddVariable(var, err);
+    }
+    
     assert (entity.get());
     entity->EnableParserVars(GetParserID());
     ClangExpressionVariable::ParserVars *parser_vars = entity->GetParserVars(GetParserID());
@@ -3498,6 +3507,12 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
                                                                       m_parser_vars->m_target_info.byte_order,
                                                                       m_parser_vars->m_target_info.address_byte_size));
     assert (entity.get());
+    
+    if (m_parser_vars->m_materializer)
+    {
+        Error err;
+        m_parser_vars->m_materializer->AddSymbol(symbol, err);
+    }
     
     std::auto_ptr<Value> symbol_location(new Value);
     
@@ -3613,6 +3628,13 @@ ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
                                                                       m_parser_vars->m_target_info.byte_order,
                                                                       m_parser_vars->m_target_info.address_byte_size));
     assert (entity.get());
+    
+    if (m_parser_vars->m_materializer && reg_info)
+    {
+        Error err;
+        m_parser_vars->m_materializer->AddRegister(*reg_info, err);
+    }
+    
     std::string decl_name(context.m_decl_name.getAsString());
     entity->SetName (ConstString (decl_name.c_str()));
     entity->SetRegisterInfo (reg_info);

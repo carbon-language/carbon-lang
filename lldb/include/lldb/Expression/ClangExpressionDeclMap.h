@@ -69,6 +69,9 @@ public:
     ///     If true, inhibits the normal deallocation of the memory for
     ///     the result persistent variable, and instead marks the variable
     ///     as persisting.
+    ///
+    /// @param[in] exe_ctx
+    ///     The execution context to use when parsing.
     //------------------------------------------------------------------
     ClangExpressionDeclMap (bool keep_result_in_memory,
                             ExecutionContext &exe_ctx);
@@ -85,11 +88,16 @@ public:
     ///     The execution context to use when finding types for variables.
     ///     Also used to find a "scratch" AST context to store result types.
     ///
+    /// @param[in] materializer
+    ///     If non-NULL, the materializer to populate with information about
+    ///     the variables to use
+    ///
     /// @return
     ///     True if parsing is possible; false if it is unsafe to continue.
     //------------------------------------------------------------------
     bool
-    WillParse (ExecutionContext &exe_ctx);
+    WillParse (ExecutionContext &exe_ctx,
+               Materializer *materializer);
     
     //------------------------------------------------------------------
     /// [Used by ClangExpressionParser] For each variable that had an unknown
@@ -674,6 +682,7 @@ private:
             m_sym_ctx(),
             m_persistent_vars(NULL),
             m_enable_lookups(false),
+            m_materializer(NULL),
             m_decl_map(decl_map)
         {
         }
@@ -693,6 +702,7 @@ private:
         ClangPersistentVariables   *m_persistent_vars;  ///< The persistent variables for the process.
         bool                        m_enable_lookups;   ///< Set to true during parsing if we have found the first "$__lldb" name.
         TargetInfo                  m_target_info;      ///< Basic information about the target.
+        Materializer               *m_materializer;     ///< If non-NULL, the materializer to use when reporting used variables.
     private:
         ClangExpressionDeclMap     &m_decl_map;
         DISALLOW_COPY_AND_ASSIGN (ParserVars);

@@ -29,6 +29,7 @@
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Expression/ExpressionSourceCode.h"
+#include "lldb/Expression/Materializer.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/ClangASTContext.h"
@@ -430,9 +431,11 @@ ClangUserExpression::Parse (Stream &error_stream,
     // Parse the expression
     //
         
+    m_materializer_ap.reset(new Materializer());
+        
     m_expr_decl_map.reset(new ClangExpressionDeclMap(keep_result_in_memory, exe_ctx));
     
-    if (!m_expr_decl_map->WillParse(exe_ctx))
+    if (!m_expr_decl_map->WillParse(exe_ctx, m_materializer_ap.get()))
     {
         error_stream.PutCString ("error: current process state is unsuitable for expression parsing\n");
         return false;

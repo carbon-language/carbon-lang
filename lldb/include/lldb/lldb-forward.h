@@ -125,6 +125,7 @@ class   Listener;
 class   Log;
 class   LogChannel;
 class   Mangled;
+class   Materializer;
 class   Module;
 class   ModuleList;
 class   ModuleSpec;

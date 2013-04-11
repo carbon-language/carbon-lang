@@ -420,8 +420,10 @@ private:
     std::string                                 m_transformed_text;     ///< The text of the expression, as send to the parser
     ResultType                                  m_desired_type;         ///< The type to coerce the expression's result to.  If eResultTypeAny, inferred from the expression.
     
-    std::auto_ptr<ClangExpressionDeclMap>       m_expr_decl_map;        ///< The map to use when parsing and materializing the expression.
+    std::auto_ptr<ClangExpressionDeclMap>       m_expr_decl_map;        ///< The map to use when parsing the expression.
+    
     std::auto_ptr<IRExecutionUnit>              m_execution_unit_ap;    ///< The execution unit the expression is stored in.
+    std::auto_ptr<Materializer>                 m_materializer_ap;      ///< The materializer to use when running the expression.
     
     std::auto_ptr<ASTResultSynthesizer>         m_result_synthesizer;   ///< The result synthesizer, if one is needed.
     
