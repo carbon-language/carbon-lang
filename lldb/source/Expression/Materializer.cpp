@@ -25,7 +25,7 @@ Materializer::AddStructMember (Entity &entity)
     
     uint32_t ret;
     
-    if (!m_current_offset)
+    if (m_current_offset == 0)
         m_struct_alignment = alignment;
     
     if (m_current_offset % alignment)
@@ -95,17 +95,9 @@ public:
         Entity(),
         m_variable_sp(variable_sp)
     {
-        Type *type = variable_sp->GetType();
-        
-        assert(type);
-        
-        if (type)
-        {
-            ClangASTType clang_type(type->GetClangAST(),
-                                    type->GetClangLayoutType());
-            
-            SetSizeAndAlignmentFromType(clang_type);
-        }
+        // Hard-coding to maximum size of a pointer since all varaibles are materialized by reference
+        m_size = 8;
+        m_alignment = 8;
     }
     
     virtual void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)

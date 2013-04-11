@@ -586,21 +586,31 @@ ClangExpressionDeclMap::AddValueToStruct
     
     if (m_parser_vars->m_materializer)
     {
+        uint32_t offset = 0;
+
         Error err;
 
         if (is_persistent_variable)
         {
-            m_parser_vars->m_materializer->AddPersistentVariable(var_sp, err);
+            offset = m_parser_vars->m_materializer->AddPersistentVariable(var_sp, err);
         }
         else
         {
             if (const lldb_private::Symbol *sym = parser_vars->m_lldb_sym)
-                m_parser_vars->m_materializer->AddSymbol(*sym, err);
+                offset = m_parser_vars->m_materializer->AddSymbol(*sym, err);
             else if (const RegisterInfo *reg_info = var_sp->GetRegisterInfo())
-                m_parser_vars->m_materializer->AddRegister(*reg_info, err);
+                offset = m_parser_vars->m_materializer->AddRegister(*reg_info, err);
             else if (parser_vars->m_lldb_var)
-                m_parser_vars->m_materializer->AddVariable(parser_vars->m_lldb_var, err);
+                offset = m_parser_vars->m_materializer->AddVariable(parser_vars->m_lldb_var, err);
         }
+        
+        if (!err.Success())
+            return false;
+        
+        if (log)
+            log->Printf("Placed at 0x%llx", (unsigned long long)offset);
+        
+        jit_vars->m_offset = offset; // TODO DoStructLayout() should not change this.
     }
     
     return true;
@@ -613,6 +623,14 @@ ClangExpressionDeclMap::DoStructLayout ()
     
     if (m_struct_vars->m_struct_laid_out)
         return true;
+    
+    if (m_parser_vars->m_materializer)
+    {
+        m_struct_vars->m_struct_alignment = m_parser_vars->m_materializer->GetStructAlignment();
+        m_struct_vars->m_struct_size = m_parser_vars->m_materializer->GetStructByteSize();
+        m_struct_vars->m_struct_laid_out = true;
+        return true;
+    }
     
     off_t cursor = 0;
     

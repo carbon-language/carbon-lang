@@ -58,7 +58,15 @@ public:
     uint32_t AddSymbol (const Symbol &symbol_sp, Error &err);
     uint32_t AddRegister (const RegisterInfo &register_info, Error &err);
     
-    uint32_t GetStructAlignment ();
+    uint32_t GetStructAlignment ()
+    {
+        return m_struct_alignment;
+    }
+    
+    uint32_t GetStructByteSize ()
+    {
+        return m_current_offset;
+    }
 
     class Entity
     {
