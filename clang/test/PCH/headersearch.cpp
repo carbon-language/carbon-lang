@@ -20,15 +20,15 @@
 // RUN: cp -pR %t_orig %t_moved
 
 // Check diagnostic with location in original source:
-// RUN: %clang_cc1 -include-pch all.h.pch -I%t_moved -I%t_moved/sub2 -Wpadded -emit-obj -o %t.o %s 2> %t.stderr
+// RUN: %clang_cc1 -include-pch all.h.pch -I%t_moved -I%t_moved/sub2 -Wpadded -emit-llvm-only %s 2> %t.stderr
 // RUN: grep 'struct orig_sub' %t.stderr
 
 // Check diagnostic with 2nd location in original source:
-// RUN: not %clang_cc1 -DREDECL -include-pch all.h.pch -I%t_moved -I%t_moved/sub2 -emit-obj -o %t.o %s 2> %t.stderr
+// RUN: not %clang_cc1 -DREDECL -include-pch all.h.pch -I%t_moved -I%t_moved/sub2 -emit-llvm-only %s 2> %t.stderr
 // RUN: grep 'void foo' %t.stderr
 
 // Check diagnostic with instantiation location in original source:
-// RUN: not %clang_cc1 -DINSTANTIATION -include-pch all.h.pch -I%t_moved -I%t_moved/sub2 -emit-obj -o %t.o %s 2> %t.stderr
+// RUN: not %clang_cc1 -DINSTANTIATION -include-pch all.h.pch -I%t_moved -I%t_moved/sub2 -emit-llvm-only %s 2> %t.stderr
 // RUN: grep 'orig_sub2_1' %t.stderr
 
 void qq(orig_sub*) {all();}
