@@ -23,5 +23,5 @@ RUN:   %p/Inputs/shared.so-x86-64 -o %t -e main -shared \
 RUN: --use-shlib-undefines --no-allow-shlib-undefined  2> %t2
 RUN: FileCheck -check-prefix=SHLIB %s < %t2
 
-EXEC: Undefined Symbol: {{[Ia-z.\/]+}}shared.so-x86-64 : puts
-SHLIB: Undefined Symbol: {{[Ia-z.\/]+}}shared.so-x86-64 : puts
+EXEC: Undefined Symbol: {{[-A-Za-z0-9.\\/]+}}shared.so-x86-64 : puts
+SHLIB: Undefined Symbol: {{[-A-Za-z0-9.\\/]+}}shared.so-x86-64 : puts
