@@ -396,4 +396,20 @@ error_code Program::ChangeStderrToBinary(){
   return make_error_code(errc::success);
 }
 
+bool llvm::sys::argumentsFitWithinSystemLimits(ArrayRef<const char*> Args) {
+  // The documented max length of the command line passed to CreateProcess.
+  static const size_t MaxCommandStringLength = 32768;
+  size_t ArgLength = 0;
+  for (ArrayRef<const char*>::iterator I = Args.begin(), E = Args.end();
+       I != E; ++I) {
+    // Account for the trailing space for every arg but the last one and the
+    // trailing NULL of the last argument.
+    ArgLength += ArgLenWithQuotes(*I) + 1;
+    if (ArgLength > MaxCommandStringLength) {
+      return false;
+    }
+  }
+  return true;
+}
+
 }
