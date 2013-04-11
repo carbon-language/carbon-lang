@@ -219,7 +219,7 @@ def main(builtinParameters = {}):
     group.add_option("", "--shuffle", dest="shuffle",
                      help="Run tests in random order",
                      action="store_true", default=False)
-    group.add_option("", "--filter", dest="filter", metavar="EXPRESSION",
+    group.add_option("", "--filter", dest="filter", metavar="REGEX",
                      help=("Only run tests with paths matching the given "
                            "regular expression"),
                      action="store", default=None)
