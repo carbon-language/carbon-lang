@@ -34,6 +34,7 @@ set(SANITIZER_HEADERS
   sanitizer_common.h
   sanitizer_common_interceptors.inc
   sanitizer_common_interceptors_scanf.inc
+  sanitizer_common_syscalls.inc
   sanitizer_flags.h
   sanitizer_internal_defs.h
   sanitizer_lfstack.h

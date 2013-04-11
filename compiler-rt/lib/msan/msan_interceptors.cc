@@ -43,7 +43,7 @@ using namespace __msan;
   do { \
     sptr offset = __msan_test_shadow(x, n);                 \
     if (__msan::IsInSymbolizer()) break;                    \
-    if (offset >= 0 && flags()->report_umrs) {              \
+    if (offset >= 0 && __msan::flags()->report_umrs) {      \
       GET_CALLER_PC_BP_SP;                                  \
       (void)sp;                                             \
       Printf("UMR in %s at offset %d inside [%p, +%d) \n",  \
@@ -937,6 +937,12 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) \
   do { } while (false)  // FIXME
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
+
+#define COMMON_SYSCALL_PRE_READ_RANGE(p, s) CHECK_UNPOISONED(p, s)
+#define COMMON_SYSCALL_PRE_WRITE_RANGE(p, s)
+#define COMMON_SYSCALL_POST_READ_RANGE(p, s)
+#define COMMON_SYSCALL_POST_WRITE_RANGE(p, s) __msan_unpoison(p, s)
+#include "sanitizer_common/sanitizer_common_syscalls.inc"
 
 // static
 void *fast_memset(void *ptr, int c, SIZE_T n) {
