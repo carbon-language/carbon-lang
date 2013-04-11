@@ -23,3 +23,18 @@
 # CHECK-BASIC-OUT: PASS: top-level-suite :: subdir/test-three
 # CHECK-BASIC-OUT: PASS: top-level-suite :: test-one
 # CHECK-BASIC-OUT: PASS: top-level-suite :: test-two
+
+
+# Check discovery when exact test names are given.
+#
+# RUN: %{lit} \
+# RUN:     %{inputs}/discovery/subdir/test-three.py \
+# RUN:     %{inputs}/discovery/subsuite/test-one.txt \
+# RUN:   -j 1 --no-execute --show-suites -v > %t.out
+# RUN: FileCheck --check-prefix=CHECK-EXACT-TEST < %t.out %s
+#
+# CHECK-EXACT-TEST: -- Testing: 2 tests, 1 threads --
+# CHECK-EXACT-TEST: PASS: sub-suite :: test-one
+# CHECK-EXACT-TEST: PASS: top-level-suite :: subdir/test-three
+
+
