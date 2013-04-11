@@ -3,7 +3,9 @@ RUN:   | FileCheck %s -check-prefix COFF
 RUN: llvm-readobj -s %p/Inputs/trivial.obj.elf-i386 \
 RUN:   | FileCheck %s -check-prefix ELF
 RUN: llvm-readobj -s %p/Inputs/trivial.obj.macho-i386 \
-RUN:   | FileCheck %s -check-prefix MACHO
+RUN:   | FileCheck %s -check-prefix MACHO-I386
+RUN: llvm-readobj -s %p/Inputs/trivial.obj.macho-x86-64 \
+RUN:   | FileCheck %s -check-prefix MACHO-X86-64
 
 COFF:      Sections [
 COFF-NEXT:   Section {
@@ -76,38 +78,76 @@ ELF-NEXT:     AddressAlignment: 16
 ELF-NEXT:     EntrySize: 0
 ELF-NEXT:   }
 
-MACHO:      Sections [
-MACHO-NEXT:   Section {
-MACHO-NEXT:     Index: 0
-MACHO-NEXT:     Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
-MACHO-NEXT:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
-MACHO-NEXT:     Address: 0x0
-MACHO-NEXT:     Size: 0x22
-MACHO-NEXT:     Offset: 324
-MACHO-NEXT:     Alignment: 4
-MACHO-NEXT:     RelocationOffset: 0x174
-MACHO-NEXT:     RelocationCount: 4
-MACHO-NEXT:     Type: 0x0
-MACHO-NEXT:     Attributes [ (0x800004)
-MACHO-NEXT:       PureInstructions (0x800000)
-MACHO-NEXT:       SomeInstructions (0x4)
-MACHO-NEXT:     ]
-MACHO-NEXT:     Reserved1: 0x0
-MACHO-NEXT:     Reserved2: 0x0
-MACHO-NEXT:   }
-MACHO-NEXT:   Section {
-MACHO-NEXT:     Index: 1
-MACHO-NEXT:     Name: __cstring (5F 5F 63 73 74 72 69 6E 67 00 00 00 00 00 00 00)
-MACHO-NEXT:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
-MACHO-NEXT:     Address: 0x22
-MACHO-NEXT:     Size: 0xD
-MACHO-NEXT:     Offset: 358
-MACHO-NEXT:     Alignment: 0
-MACHO-NEXT:     RelocationOffset: 0x0
-MACHO-NEXT:     RelocationCount: 0
-MACHO-NEXT:     Type: ExtReloc (0x2)
-MACHO-NEXT:     Attributes [ (0x0)
-MACHO-NEXT:     ]
-MACHO-NEXT:     Reserved1: 0x0
-MACHO-NEXT:     Reserved2: 0x0
-MACHO-NEXT:   }
+MACHO-I386:      Sections [
+MACHO-I386-NEXT:   Section {
+MACHO-I386-NEXT:     Index: 0
+MACHO-I386-NEXT:     Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
+MACHO-I386-NEXT:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+MACHO-I386-NEXT:     Address: 0x0
+MACHO-I386-NEXT:     Size: 0x22
+MACHO-I386-NEXT:     Offset: 324
+MACHO-I386-NEXT:     Alignment: 4
+MACHO-I386-NEXT:     RelocationOffset: 0x174
+MACHO-I386-NEXT:     RelocationCount: 4
+MACHO-I386-NEXT:     Type: 0x0
+MACHO-I386-NEXT:     Attributes [ (0x800004)
+MACHO-I386-NEXT:       PureInstructions (0x800000)
+MACHO-I386-NEXT:       SomeInstructions (0x4)
+MACHO-I386-NEXT:     ]
+MACHO-I386-NEXT:     Reserved1: 0x0
+MACHO-I386-NEXT:     Reserved2: 0x0
+MACHO-I386-NEXT:   }
+MACHO-I386-NEXT:   Section {
+MACHO-I386-NEXT:     Index: 1
+MACHO-I386-NEXT:     Name: __cstring (5F 5F 63 73 74 72 69 6E 67 00 00 00 00 00 00 00)
+MACHO-I386-NEXT:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+MACHO-I386-NEXT:     Address: 0x22
+MACHO-I386-NEXT:     Size: 0xD
+MACHO-I386-NEXT:     Offset: 358
+MACHO-I386-NEXT:     Alignment: 0
+MACHO-I386-NEXT:     RelocationOffset: 0x0
+MACHO-I386-NEXT:     RelocationCount: 0
+MACHO-I386-NEXT:     Type: ExtReloc (0x2)
+MACHO-I386-NEXT:     Attributes [ (0x0)
+MACHO-I386-NEXT:     ]
+MACHO-I386-NEXT:     Reserved1: 0x0
+MACHO-I386-NEXT:     Reserved2: 0x0
+MACHO-I386-NEXT:   }
+
+
+MACHO-X86-64:     Sections [
+MACHO-X86-64-NEXT:  Section {
+MACHO-X86-64-NEXT:    Index: 0
+MACHO-X86-64-NEXT:    Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
+MACHO-X86-64-NEXT:    Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+MACHO-X86-64-NEXT:    Address: 0x0
+MACHO-X86-64-NEXT:    Size: 0x16
+MACHO-X86-64-NEXT:    Offset: 368
+MACHO-X86-64-NEXT:    Alignment: 4
+MACHO-X86-64-NEXT:    RelocationOffset: 0x194
+MACHO-X86-64-NEXT:    RelocationCount: 3
+MACHO-X86-64-NEXT:    Type: 0x0
+MACHO-X86-64-NEXT:    Attributes [ (0x800004)
+MACHO-X86-64-NEXT:      PureInstructions (0x800000)
+MACHO-X86-64-NEXT:      SomeInstructions (0x4)
+MACHO-X86-64-NEXT:    ]
+MACHO-X86-64-NEXT:    Reserved1: 0x0
+MACHO-X86-64-NEXT:    Reserved2: 0x0
+MACHO-X86-64-NEXT:  }
+MACHO-X86-64-NEXT:  Section {
+MACHO-X86-64-NEXT:    Index: 1
+MACHO-X86-64-NEXT:    Name: __cstring (5F 5F 63 73 74 72 69 6E 67 00 00 00 00 00 00 00)
+MACHO-X86-64-NEXT:    Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+MACHO-X86-64-NEXT:    Address: 0x16
+MACHO-X86-64-NEXT:    Size: 0xD
+MACHO-X86-64-NEXT:    Offset: 390
+MACHO-X86-64-NEXT:    Alignment: 0
+MACHO-X86-64-NEXT:    RelocationOffset: 0x0
+MACHO-X86-64-NEXT:    RelocationCount: 0
+MACHO-X86-64-NEXT:    Type: ExtReloc (0x2)
+MACHO-X86-64-NEXT:    Attributes [ (0x0)
+MACHO-X86-64-NEXT:    ]
+MACHO-X86-64-NEXT:    Reserved1: 0x0
+MACHO-X86-64-NEXT:    Reserved2: 0x0
+MACHO-X86-64-NEXT:  }
+MACHO-X86-64-NEXT:]

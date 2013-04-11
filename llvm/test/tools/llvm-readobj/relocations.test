@@ -3,7 +3,9 @@ RUN:   | FileCheck %s -check-prefix COFF
 RUN: llvm-readobj -r %p/Inputs/trivial.obj.elf-i386 \
 RUN:   | FileCheck %s -check-prefix ELF
 RUN: llvm-readobj -r %p/Inputs/trivial.obj.macho-i386 \
-RUN:   | FileCheck %s -check-prefix MACHO
+RUN:   | FileCheck %s -check-prefix MACHO-I386
+RUN: llvm-readobj -r %p/Inputs/trivial.obj.macho-x86-64 \
+RUN:   | FileCheck %s -check-prefix MACHO-X86-64
 
 COFF:      Relocations [
 COFF-NEXT:   Section (1) .text {
@@ -22,11 +24,19 @@ ELF-NEXT:     0x1F R_386_PLT32 SomeOtherFunction 0x0
 ELF-NEXT:   }
 ELF-NEXT: ]
 
-MACHO:      Relocations [
-MACHO-NEXT:   Section __text {
-MACHO-NEXT:     0x18 GENERIC_RELOC_VANILLA _SomeOtherFunction 0x0
-MACHO-NEXT:     0x13 GENERIC_RELOC_VANILLA _puts 0x0
-MACHO-NEXT:     0xB GENERIC_RELOC_LOCAL_SECTDIFF _main 0x{{[0-9A-F]+}}
-MACHO-NEXT:     0x0 GENERIC_RELOC_PAIR _main 0x{{[0-9A-F]+}}
-MACHO-NEXT:   }
-MACHO-NEXT: ]
+MACHO-I386:      Relocations [
+MACHO-I386-NEXT:   Section __text {
+MACHO-I386-NEXT:     0x18 GENERIC_RELOC_VANILLA _SomeOtherFunction 0x0
+MACHO-I386-NEXT:     0x13 GENERIC_RELOC_VANILLA _puts 0x0
+MACHO-I386-NEXT:     0xB GENERIC_RELOC_LOCAL_SECTDIFF _main 0x{{[0-9A-F]+}}
+MACHO-I386-NEXT:     0x0 GENERIC_RELOC_PAIR _main 0x{{[0-9A-F]+}}
+MACHO-I386-NEXT:   }
+MACHO-I386-NEXT: ]
+
+MACHO-X86-64: Relocations [
+MACHO-X86-64-NEXT:  Section __text {
+MACHO-X86-64-NEXT:    0xE X86_64_RELOC_BRANCH _SomeOtherFunction 0x0
+MACHO-X86-64-NEXT:    0x9 X86_64_RELOC_BRANCH _puts 0x0
+MACHO-X86-64-NEXT:    0x4 X86_64_RELOC_SIGNED L_.str 0x0
+MACHO-X86-64-NEXT:  }
+MACHO-X86-64-NEXT:]
