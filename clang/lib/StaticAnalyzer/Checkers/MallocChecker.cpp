@@ -294,12 +294,13 @@ private:
                                   PointerEscapeKind Kind,
                                   bool(*CheckRefState)(const RefState*)) const;
 
-  // Used to suppress warnings if they are not related to the tracked family
-  // (derived from Sym or AllocDeallocStmt).
-  bool isTrackedFamily(AllocationFamily Family) const;
-  bool isTrackedFamily(CheckerContext &C, const Stmt *AllocDeallocStmt) const;
-  bool isTrackedFamily(CheckerContext &C, SymbolRef Sym) const;
-
+  ///@{
+  /// Tells if a given family/call/symbol is tracked by the current checker.
+  bool isTrackedByCurrentChecker(AllocationFamily Family) const;
+  bool isTrackedByCurrentChecker(CheckerContext &C,
+                                 const Stmt *AllocDeallocStmt) const;
+  bool isTrackedByCurrentChecker(CheckerContext &C, SymbolRef Sym) const;
+  ///@}
   static bool SummarizeValue(raw_ostream &os, SVal V);
   static bool SummarizeRegion(raw_ostream &os, const MemRegion *MR);
   void ReportBadFree(CheckerContext &C, SVal ArgVal, SourceRange Range, 
@@ -1081,7 +1082,7 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
                                  RefState::getReleased(Family, ParentExpr));
 }
 
-bool MallocChecker::isTrackedFamily(AllocationFamily Family) const {
+bool MallocChecker::isTrackedByCurrentChecker(AllocationFamily Family) const {
   switch (Family) {
   case AF_Malloc: {
     if (!Filter.CMallocOptimistic && !Filter.CMallocPessimistic)
@@ -1101,16 +1102,18 @@ bool MallocChecker::isTrackedFamily(AllocationFamily Family) const {
   llvm_unreachable("unhandled family");
 }
 
-bool MallocChecker::isTrackedFamily(CheckerContext &C, 
-                                    const Stmt *AllocDeallocStmt) const {
-  return isTrackedFamily(getAllocationFamily(C, AllocDeallocStmt));
+bool
+MallocChecker::isTrackedByCurrentChecker(CheckerContext &C, 
+                                         const Stmt *AllocDeallocStmt) const {
+  return isTrackedByCurrentChecker(getAllocationFamily(C, AllocDeallocStmt));
 }
 
-bool MallocChecker::isTrackedFamily(CheckerContext &C, SymbolRef Sym) const {
+bool MallocChecker::isTrackedByCurrentChecker(CheckerContext &C,
+                                              SymbolRef Sym) const {
 
   const RefState *RS = C.getState()->get<RegionState>(Sym);
   assert(RS);
-  return isTrackedFamily(RS->getAllocationFamily());
+  return isTrackedByCurrentChecker(RS->getAllocationFamily());
 }
 
 bool MallocChecker::SummarizeValue(raw_ostream &os, SVal V) {
@@ -1208,7 +1211,7 @@ void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
       !Filter.CNewDeleteChecker)
     return;
 
-  if (!isTrackedFamily(C, DeallocExpr))
+  if (!isTrackedByCurrentChecker(C, DeallocExpr))
     return;
 
   if (ExplodedNode *N = C.generateSink()) {
@@ -1296,7 +1299,7 @@ void MallocChecker::ReportOffsetFree(CheckerContext &C, SVal ArgVal,
       !Filter.CNewDeleteChecker)
     return;
 
-  if (!isTrackedFamily(C, AllocExpr))
+  if (!isTrackedByCurrentChecker(C, AllocExpr))
     return;
 
   ExplodedNode *N = C.generateSink();
@@ -1348,7 +1351,7 @@ void MallocChecker::ReportUseAfterFree(CheckerContext &C, SourceRange Range,
       !Filter.CNewDeleteChecker)
     return;
 
-  if (!isTrackedFamily(C, Sym))
+  if (!isTrackedByCurrentChecker(C, Sym))
     return;
 
   if (ExplodedNode *N = C.generateSink()) {
@@ -1373,7 +1376,7 @@ void MallocChecker::ReportDoubleFree(CheckerContext &C, SourceRange Range,
       !Filter.CNewDeleteChecker)
     return;
 
-  if (!isTrackedFamily(C, Sym))
+  if (!isTrackedByCurrentChecker(C, Sym))
     return;
 
   if (ExplodedNode *N = C.generateSink()) {
@@ -1561,7 +1564,7 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
   const RefState *RS = C.getState()->get<RegionState>(Sym);
   assert(RS && "cannot leak an untracked symbol");
   AllocationFamily Family = RS->getAllocationFamily();
-  if (!isTrackedFamily(Family))
+  if (!isTrackedByCurrentChecker(Family))
     return;
 
   // Special case for new and new[]; these are controlled by a separate checker
