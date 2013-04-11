@@ -189,13 +189,6 @@ private:
 
 char IslScheduleOptimizer::ID = 0;
 
-static int getSingleMap(__isl_take isl_map *map, void *user) {
-  isl_map **singleMap = (isl_map **)user;
-  *singleMap = map;
-
-  return 0;
-}
-
 void IslScheduleOptimizer::extendScattering(Scop &S, unsigned NewDimensions) {
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
@@ -533,27 +526,28 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
+    isl_map *StmtSchedule;
     isl_set *Domain = Stmt->getDomain();
     isl_union_map *StmtBand;
     StmtBand = isl_union_map_intersect_domain(isl_union_map_copy(ScheduleMap),
                                               isl_union_set_from_set(Domain));
-    isl_map *StmtSchedule = NULL;
-    isl_union_map_foreach_map(StmtBand, getSingleMap, &StmtSchedule);
-
-    // Statements with an empty iteration domain may not have a schedule
-    // assigned by the isl schedule optimizer. As Polly expects each statement
-    // to have a schedule, we keep the old schedule for this statement. As
-    // there are zero iterations to execute, the content of the schedule does
-    // not matter.
-    //
-    // TODO: Consider removing such statements when constructing the scop.
-    if (!StmtSchedule) {
+    if (isl_union_map_is_empty(StmtBand)) {
+      // Statements with an empty iteration domain may not have a schedule
+      // assigned by the isl schedule optimizer. As Polly expects each statement
+      // to have a schedule, we keep the old schedule for this statement. As
+      // there are zero iterations to execute, the content of the schedule does
+      // not matter.
+      //
+      // TODO: Consider removing such statements when constructing the scop.
       StmtSchedule = Stmt->getScattering();
       StmtSchedule = isl_map_set_tuple_id(StmtSchedule, isl_dim_out, NULL);
+      isl_union_map_free(StmtBand);
+    } else {
+      assert(isl_union_map_n_map(StmtBand) == 1);
+      StmtSchedule = isl_map_from_union_map(StmtBand);
     }
 
     Stmt->setScattering(StmtSchedule);
-    isl_union_map_free(StmtBand);
   }
 
   isl_union_map_free(ScheduleMap);
