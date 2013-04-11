@@ -71,6 +71,7 @@ using namespace llvm;
 // achieved by stripping the !tbaa tags from IR, but this option is sometimes
 // more convenient.
 static cl::opt<bool> EnableTBAA("enable-tbaa", cl::init(true));
+static cl::opt<bool> EnableStructPathTBAA("struct-path-tbaa", cl::init(false));
 
 namespace {
   /// TBAANode - This is a simple wrapper around an MDNode which provides a
@@ -109,6 +110,76 @@ namespace {
       return CI->getValue()[0];
     }
   };
+
+  /// This is a simple wrapper around an MDNode which provides a
+  /// higher-level interface by hiding the details of how alias analysis
+  /// information is encoded in its operands.
+  class TBAAStructTagNode {
+    /// This node should be created with createTBAAStructTagNode.
+    const MDNode *Node;
+
+  public:
+    TBAAStructTagNode() : Node(0) {}
+    explicit TBAAStructTagNode(const MDNode *N) : Node(N) {}
+
+    /// Get the MDNode for this TBAAStructTagNode.
+    const MDNode *getNode() const { return Node; }
+
+    const MDNode *getBaseType() const {
+      return dyn_cast_or_null<MDNode>(Node->getOperand(0));
+    }
+    const MDNode *getAccessType() const {
+      return dyn_cast_or_null<MDNode>(Node->getOperand(1));
+    }
+    uint64_t getOffset() const {
+      return cast<ConstantInt>(Node->getOperand(2))->getZExtValue();
+    }
+  };
+
+  /// This is a simple wrapper around an MDNode which provides a
+  /// higher-level interface by hiding the details of how alias analysis
+  /// information is encoded in its operands.
+  class TBAAStructTypeNode {
+    /// This node should be created with createTBAAStructTypeNode.
+    const MDNode *Node;
+
+  public:
+    TBAAStructTypeNode() : Node(0) {}
+    explicit TBAAStructTypeNode(const MDNode *N) : Node(N) {}
+
+    /// Get the MDNode for this TBAAStructTypeNode.
+    const MDNode *getNode() const { return Node; }
+
+    /// Get this TBAAStructTypeNode's field in the type DAG with
+    /// given offset. Update the offset to be relative to the field type.
+    TBAAStructTypeNode getParent(uint64_t &Offset) const {
+      if (Node->getNumOperands() < 2)
+        return TBAAStructTypeNode();
+
+      // Assume the offsets are in order. We return the previous field if
+      // the current offset is bigger than the given offset.
+      unsigned TheIdx = 0;
+      for (unsigned Idx = 1; Idx < Node->getNumOperands(); Idx += 2) {
+        uint64_t Cur = cast<ConstantInt>(Node->getOperand(Idx))->getZExtValue();
+        if (Cur > Offset) {
+          assert(Idx >= 3 &&
+                 "TBAAStructTypeNode::getParent should have an offset match!");
+          TheIdx = Idx - 2;
+          break;
+        }
+      }
+      // Move along the last field.
+      if (TheIdx == 0)
+        TheIdx = Node->getNumOperands() - 2;
+      uint64_t Cur = cast<ConstantInt>(Node->getOperand(TheIdx))->
+                       getZExtValue();
+      Offset -= Cur;
+      MDNode *P = dyn_cast_or_null<MDNode>(Node->getOperand(TheIdx + 1));
+      if (!P)
+        return TBAAStructTypeNode();
+      return TBAAStructTypeNode(P);
+    }
+  };
 }
 
 namespace {
@@ -137,6 +208,7 @@ namespace {
     }
 
     bool Aliases(const MDNode *A, const MDNode *B) const;
+    bool PathAliases(const MDNode *A, const MDNode *B) const;
 
   private:
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -171,6 +243,9 @@ TypeBasedAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 bool
 TypeBasedAliasAnalysis::Aliases(const MDNode *A,
                                 const MDNode *B) const {
+  if (EnableStructPathTBAA)
+    return PathAliases(A, B);
+
   // Keep track of the root node for A and B.
   TBAANode RootA, RootB;
 
@@ -200,6 +275,67 @@ TypeBasedAliasAnalysis::Aliases(const MDNode *A,
 
   // Neither node is an ancestor of the other.
   
+  // If they have different roots, they're part of different potentially
+  // unrelated type systems, so we must be conservative.
+  if (RootA.getNode() != RootB.getNode())
+    return true;
+
+  // If they have the same root, then we've proved there's no alias.
+  return false;
+}
+
+/// Test whether the struct-path tag represented by A may alias the
+/// struct-path tag represented by B.
+bool
+TypeBasedAliasAnalysis::PathAliases(const MDNode *A,
+                                    const MDNode *B) const {
+  // Keep track of the root node for A and B.
+  TBAAStructTypeNode RootA, RootB;
+  TBAAStructTagNode TagA(A), TagB(B);
+
+  // TODO: We need to check if AccessType of TagA encloses AccessType of
+  // TagB to support aggregate AccessType. If yes, return true.
+
+  // Start from the base type of A, follow the edge with the correct offset in
+  // the type DAG and adjust the offset until we reach the base type of B or
+  // until we reach the Root node.
+  // Compare the adjusted offset once we have the same base.
+
+  // Climb the type DAG from base type of A to see if we reach base type of B.
+  const MDNode *BaseA = TagA.getBaseType();
+  const MDNode *BaseB = TagB.getBaseType();
+  uint64_t OffsetA = TagA.getOffset(), OffsetB = TagB.getOffset();
+  for (TBAAStructTypeNode T(BaseA); ; ) {
+    if (T.getNode() == BaseB)
+      // Base type of A encloses base type of B, check if the offsets match.
+      return OffsetA == OffsetB;
+
+    RootA = T;
+    // Follow the edge with the correct offset, OffsetA will be adjusted to
+    // be relative to the field type.
+    T = T.getParent(OffsetA);
+    if (!T.getNode())
+      break;
+  }
+
+  // Reset OffsetA and climb the type DAG from base type of B to see if we reach
+  // base type of A.
+  OffsetA = TagA.getOffset();
+  for (TBAAStructTypeNode T(BaseB); ; ) {
+    if (T.getNode() == BaseA)
+      // Base type of B encloses base type of A, check if the offsets match.
+      return OffsetA == OffsetB;
+
+    RootB = T;
+    // Follow the edge with the correct offset, OffsetB will be adjusted to
+    // be relative to the field type.
+    T = T.getParent(OffsetB);
+    if (!T.getNode())
+      break;
+  }
+
+  // Neither node is an ancestor of the other.
+
   // If they have different roots, they're part of different potentially
   // unrelated type systems, so we must be conservative.
   if (RootA.getNode() != RootB.getNode())
