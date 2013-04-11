@@ -7,9 +7,8 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS)
   # Run UBSan output tests only if we're sure that clang would produce
   # working binaries.
   set(UBSAN_TEST_DEPS
-    clang clang-headers FileCheck count not
-    ${UBSAN_RUNTIME_LIBRARIES}
-    )
+    ${SANITIZER_COMMON_LIT_TEST_DEPS}
+    ${UBSAN_RUNTIME_LIBRARIES})
   set(UBSAN_TEST_PARAMS
     ubsan_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
     )

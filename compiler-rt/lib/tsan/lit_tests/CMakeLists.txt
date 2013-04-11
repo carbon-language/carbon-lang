@@ -11,9 +11,8 @@ configure_lit_site_cfg(
 if(COMPILER_RT_CAN_EXECUTE_TESTS)
   # Run TSan output tests only if we're sure we can produce working binaries.
   set(TSAN_TEST_DEPS
-    clang clang-headers FileCheck count not llvm-symbolizer
-    ${TSAN_RUNTIME_LIBRARIES}
-    )
+    ${SANITIZER_COMMON_LIT_TEST_DEPS}
+    ${TSAN_RUNTIME_LIBRARIES})
   set(TSAN_TEST_PARAMS
     tsan_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
     )

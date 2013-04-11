@@ -14,9 +14,8 @@ configure_lit_site_cfg(
 if(COMPILER_RT_CAN_EXECUTE_TESTS)
   # Run MSan tests only if we're sure we may produce working binaries.
   set(MSAN_TEST_DEPS
-    clang clang-headers FileCheck count not llvm-nm llvm-symbolizer
-    ${MSAN_RUNTIME_LIBRARIES}
-    )
+    ${SANITIZER_COMMON_LIT_TEST_DEPS}
+    ${MSAN_RUNTIME_LIBRARIES})
   set(MSAN_TEST_PARAMS
     msan_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
     )
