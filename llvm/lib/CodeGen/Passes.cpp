@@ -243,10 +243,10 @@ TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
 /// Insert InsertedPassID pass after TargetPassID.
 void TargetPassConfig::insertPass(AnalysisID TargetPassID,
                                   IdentifyingPassPtr InsertedPassID) {
-  assert((!InsertedPassID.isInstance() &&
-          TargetPassID != InsertedPassID.getID()) ||
-         (InsertedPassID.isInstance() &&
-          TargetPassID != InsertedPassID.getInstance()->getPassID()) &&
+  assert(((!InsertedPassID.isInstance() &&
+           TargetPassID != InsertedPassID.getID()) ||
+          (InsertedPassID.isInstance() &&
+           TargetPassID != InsertedPassID.getInstance()->getPassID())) &&
          "Insert a pass after itself!");
   std::pair<AnalysisID, IdentifyingPassPtr> P(TargetPassID, InsertedPassID);
   Impl->InsertedPasses.push_back(P);
