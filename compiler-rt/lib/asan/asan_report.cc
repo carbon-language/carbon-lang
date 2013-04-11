@@ -499,7 +499,8 @@ static void ReportSummary(const char *error_type, StackTrace *stack) {
     AddressInfo ai;
     // Currently, we include the first stack frame into the report summary.
     // Maybe sometimes we need to choose another frame (e.g. skip memcpy/etc).
-    SymbolizeCode(stack->trace[0], &ai, 1);
+    uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
+    SymbolizeCode(pc, &ai, 1);
     ReportErrorSummary(error_type,
                        StripPathPrefix(ai.file, flags()->strip_path_prefix),
                        ai.line, ai.function);
