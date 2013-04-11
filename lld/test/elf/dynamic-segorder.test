@@ -1,5 +1,5 @@
 RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/tls.x86-64 \
-RUN:   %p/Inputs/shared.so-x86-64 -o %t -e main 
+RUN:   %p/Inputs/shared.so-x86-64 -o %t -e main --allow-shlib-undefined
 RUN: llvm-objdump -p %t | FileCheck %s
 
 CHECK: PHDR

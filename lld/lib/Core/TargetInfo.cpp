@@ -15,22 +15,16 @@
 namespace lld {
 
 TargetInfo::TargetInfo()
-  : Reader(*this)
-  , _deadStrip(false)
-  , _globalsAreDeadStripRoots(false)
-  , _searchArchivesToOverrideTentativeDefinitions(false)
-  , _searchSharedLibrariesToOverrideTentativeDefinitions(false)
-  , _warnIfCoalesableAtomsHaveDifferentCanBeNull(false)
-  , _warnIfCoalesableAtomsHaveDifferentLoadName(false)
-  , _forceLoadAllArchives(false)
-  , _printRemainingUndefines(true)
-  , _allowRemainingUndefines(false)
-  , _logInputFiles(false)
-{
-}
+    : Reader(*this), _deadStrip(false), _globalsAreDeadStripRoots(false),
+      _searchArchivesToOverrideTentativeDefinitions(false),
+      _searchSharedLibrariesToOverrideTentativeDefinitions(false),
+      _warnIfCoalesableAtomsHaveDifferentCanBeNull(false),
+      _warnIfCoalesableAtomsHaveDifferentLoadName(false),
+      _forceLoadAllArchives(false), _printRemainingUndefines(true),
+      _allowRemainingUndefines(false), _logInputFiles(false),
+      _allowShlibUndefines(false) {}
 
 TargetInfo::~TargetInfo() {}
-
 
 error_code TargetInfo::readFile(StringRef path,
                         std::vector<std::unique_ptr<File>> &result) const {

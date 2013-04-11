@@ -181,11 +181,11 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
 // ask symbol table if any definitionUndefined atoms still exist
 // if so, keep searching libraries until no more atoms being added
 void Resolver::resolveUndefines() {
-  const bool searchArchives   = 
-                    _targetInfo.searchArchivesToOverrideTentativeDefinitions();
-  const bool searchSharedLibs = 
-             _targetInfo.searchSharedLibrariesToOverrideTentativeDefinitions();
-  
+  const bool searchArchives =
+      _targetInfo.searchArchivesToOverrideTentativeDefinitions();
+  const bool searchSharedLibs =
+      _targetInfo.searchSharedLibrariesToOverrideTentativeDefinitions();
+
   // keep looping until no more undefines were added in last loop
   unsigned int undefineGenCount = 0xFFFFFFFF;
   while (undefineGenCount != _symbolTable.size()) {
@@ -311,15 +311,23 @@ bool Resolver::checkUndefines(bool final) {
 
   // error message about missing symbols
   if (!undefinedAtoms.empty()) {
-    // FIXME: need diagonstics interface for writing error messages
+    // FIXME: need diagnostics interface for writing error messages
     bool foundUndefines = false;
     for (const UndefinedAtom *undefAtom : undefinedAtoms) {
-      if (undefAtom->canBeNull() == UndefinedAtom::canBeNullNever) {
-        foundUndefines = true;
-        if (_targetInfo.printRemainingUndefines()) {
-          llvm::errs() << "Undefined Symbol: " << undefAtom->file().path()
-                       << " : " << undefAtom->name() << "\n";
+      const File &f = undefAtom->file();
+      bool isAtomUndefined = false;
+      if (isa<SharedLibraryFile>(f)) {
+        if (!_targetInfo.allowShlibUndefines()) {
+          foundUndefines = true;
+          isAtomUndefined = true;
         }
+      } else if (undefAtom->canBeNull() == UndefinedAtom::canBeNullNever) {
+        foundUndefines = true;
+        isAtomUndefined = true;
+      }
+      if (isAtomUndefined && _targetInfo.printRemainingUndefines()) {
+        llvm::errs() << "Undefined Symbol: " << undefAtom->file().path()
+                     << " : " << undefAtom->name() << "\n";
       }
     }
     if (foundUndefines) {

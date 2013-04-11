@@ -10,6 +10,8 @@
 #ifndef LLD_READER_WRITER_ELF_DYNAMIC_FILE_H
 #define LLD_READER_WRITER_ELF_DYNAMIC_FILE_H
 
+#include "Atoms.h"
+
 #include "lld/Core/SharedLibraryFile.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
 
@@ -27,6 +29,8 @@ public:
     std::unique_ptr<DynamicFile> file(
         new DynamicFile(ti, mb->getBufferIdentifier()));
     llvm::OwningPtr<llvm::object::Binary> binaryFile;
+    bool useShlibUndefines = ti.useShlibUndefines();
+
     if (error_code ec = createBinary(mb.release(), binaryFile))
       return ec;
 
@@ -51,18 +55,25 @@ public:
     for (auto i = obj.begin_elf_dynamic_symbols(),
               e = obj.end_elf_dynamic_symbols();
          i != e; ++i) {
-      // Don't expose undefined or absolute symbols to export.
-      if (i->st_shndx == llvm::ELF::SHN_ABS ||
-          i->st_shndx == llvm::ELF::SHN_UNDEF)
-        continue;
       StringRef name;
-      if (error_code ec =
-              obj.getSymbolName(obj.getDynamicSymbolTableSectionHeader(), &*i,
-                                name))
+      if (error_code ec = obj.getSymbolName(
+              obj.getDynamicSymbolTableSectionHeader(), &*i, name))
         return ec;
-      file->_nameToSym[name]._symbol = &*i;
 
-      // TODO: Read undefined dynamic symbols into _undefinedAtoms.
+      // TODO: Add absolute symbols
+      if (i->st_shndx == llvm::ELF::SHN_ABS)
+        continue;
+
+      if (useShlibUndefines && (i->st_shndx == llvm::ELF::SHN_UNDEF)) {
+        // Create an undefined atom.
+        if (!name.empty()) {
+          auto *newAtom =
+              new (file->_alloc) ELFUndefinedAtom<ELFT>(*file.get(), name, &*i);
+          file->_undefinedAtoms._atoms.push_back(newAtom);
+        }
+        continue;
+      }
+      file->_nameToSym[name]._symbol = &*i;
     }
 
     return std::move(file);

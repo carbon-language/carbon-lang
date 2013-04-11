@@ -12,6 +12,7 @@
 
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
+#include "lld/Core/SharedLibraryFile.h"
 #include "lld/Core/SymbolTable.h"
 
 #include "llvm/ADT/DenseSet.h"

@@ -51,6 +51,15 @@ def merge_strings : Flag<["--"], "merge-strings">,
     HelpText<"Merge common strings across mergeable sections">;
 
 
+def no_allow_shlib_undefs : Flag<["--"], "no-allow-shlib-undefined">,
+    HelpText<"Donot allow undefined symbols from dynamic library when creating executables">;
+
+def allow_shlib_undefs : Flag<["--"], "allow-shlib-undefined">,
+    HelpText<"Allow undefined symbols from dynamic library when creating executables">;
+
+def use_shlib_undefs: Flag<["--"], "use-shlib-undefines">,
+    HelpText<"Resolve undefined symbols from dynamic libraries">;
+
 // extensions
 def emit_yaml : Flag<["-"], "emit-yaml">, 
     HelpText<"Write YAML instead of ELF">;

@@ -126,17 +126,12 @@ class ELFUndefinedAtom LLVM_FINAL : public lld::UndefinedAtom {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
 public:
-  ELFUndefinedAtom(const ELFFile<ELFT> &file, StringRef name,
-                   const Elf_Sym *symbol)
+  ELFUndefinedAtom(const File &file, StringRef name, const Elf_Sym *symbol)
       : _owningFile(file), _name(name), _symbol(symbol) {}
 
-  virtual const ELFFile<ELFT> &file() const {
-    return _owningFile;
-  }
+  virtual const File &file() const { return _owningFile; }
 
-  virtual StringRef name() const {
-    return _name;
-  }
+  virtual StringRef name() const { return _name; }
 
   // FIXME: What distinguishes a symbol in ELF that can help decide if the
   // symbol is undefined only during build and not runtime? This will make us
@@ -149,7 +144,7 @@ public:
   }
 
 private:
-  const ELFFile<ELFT> &_owningFile;
+  const File &_owningFile;
   StringRef _name;
   const Elf_Sym *_symbol;
 };

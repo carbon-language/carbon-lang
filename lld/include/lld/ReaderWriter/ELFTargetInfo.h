@@ -45,6 +45,13 @@ public:
   bool mergeCommonStrings() const { return _mergeCommonStrings; }
   virtual uint64_t getBaseAddress() const { return _baseAddress; }
 
+  /// This controls if undefined atoms need to be created for undefines that are
+  /// present in a SharedLibrary. If this option is set, undefined atoms are
+  /// created for every undefined symbol that are present in the dynamic table
+  /// in the shared library
+  bool useShlibUndefines() const { return _useShlibUndefines; }
+  /// @}
+
   /// \brief Does this relocation belong in the dynamic relocation table?
   ///
   /// This table is evaluated at loadtime by the dynamic loader and is
@@ -60,7 +67,7 @@ public:
 
   virtual error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                         std::vector<std::unique_ptr<File>> &result) const;
-   
+
   static std::unique_ptr<ELFTargetInfo> create(llvm::Triple);
 
   /// \brief Does this relocation belong in the dynamic plt relocation table?
@@ -79,7 +86,7 @@ public:
   }
 
   /// \brief Does the output have dynamic sections.
-  bool isDynamic() const; 
+  bool isDynamic() const;
 
   template <typename ELFT>
   lld::elf::TargetHandler<ELFT> &getTargetHandler() const {
@@ -95,16 +102,17 @@ public:
   void setNoInhibitExec(bool v) { _noInhibitExec = v; }
   void setIsStaticExecutable(bool v) { _isStaticExecutable = v; }
   void setMergeCommonStrings(bool v) { _mergeCommonStrings = v; }
-  void appendSearchPath(StringRef dirPath) { 
+  void setUseShlibUndefines(bool use) { _useShlibUndefines = use; }
+  void appendSearchPath(StringRef dirPath) {
     _inputSearchPaths.push_back(dirPath);
   }
   /// Searches directories then calls appendInputFile()
   bool appendLibrary(StringRef libName);
-  
+
 private:
   ELFTargetInfo() LLVM_DELETED_FUNCTION;
 protected:
-  ELFTargetInfo(llvm::Triple); 
+  ELFTargetInfo(llvm::Triple);
 
   virtual Writer &writer() const;
 
@@ -117,6 +125,7 @@ protected:
   bool                               _noInhibitExec;
   bool                               _mergeCommonStrings;
   bool                               _runLayoutPass;
+  bool                               _useShlibUndefines;
   std::vector<StringRef>             _inputSearchPaths;
   llvm::BumpPtrAllocator             _extraStrings;
   mutable std::unique_ptr<Reader>    _elfReader;

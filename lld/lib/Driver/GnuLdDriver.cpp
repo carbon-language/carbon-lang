@@ -77,33 +77,33 @@ bool GnuLdDriver::linkELF(int argc, const char *argv[],
   std::unique_ptr<ELFTargetInfo> options(parse(argc, argv, diagnostics));
   if (!options)
     return true;
-    
+
   return link(*options, diagnostics);
 }
 
-
-std::unique_ptr<ELFTargetInfo> GnuLdDriver::parse(int argc, const char *argv[],  
-                                                  raw_ostream &diagnostics) {
+std::unique_ptr<ELFTargetInfo>
+GnuLdDriver::parse(int argc, const char *argv[], raw_ostream &diagnostics) {
   // Parse command line options using LDOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   GnuLdOptTable table;
   unsigned missingIndex;
   unsigned missingCount;
-  parsedArgs.reset(table.ParseArgs(&argv[1], &argv[argc], 
-                                                missingIndex, missingCount));
+  parsedArgs.reset(
+      table.ParseArgs(&argv[1], &argv[argc], missingIndex, missingCount));
   if (missingCount) {
-    diagnostics  << "error: missing arg value for '"
-                 << parsedArgs->getArgString(missingIndex)
-                 << "' expected " << missingCount << " argument(s).\n";
+    diagnostics << "error: missing arg value for '"
+                << parsedArgs->getArgString(missingIndex) << "' expected "
+                << missingCount << " argument(s).\n";
     return nullptr;
   }
 
   for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
             ie = parsedArgs->filtered_end(); it != ie; ++it) {
-    diagnostics  << "warning: ignoring unknown argument: "
-                 << (*it)->getAsString(*parsedArgs) << "\n";
+    diagnostics << "warning: ignoring unknown argument: " << (*it)->getAsString(
+                                                                 *parsedArgs)
+                << "\n";
   }
-  
+
   // Handle --help
   if (parsedArgs->getLastArg(OPT_help)) {
     table.PrintHelp(llvm::outs(), argv[0], "LLVM Linker", false);
@@ -112,37 +112,36 @@ std::unique_ptr<ELFTargetInfo> GnuLdDriver::parse(int argc, const char *argv[],
 
   // Use -target or use default target triple to instantiate TargetInfo
   llvm::Triple triple;
-  if (llvm::opt::Arg *trip = parsedArgs->getLastArg(OPT_target)) 
+  if (llvm::opt::Arg *trip = parsedArgs->getLastArg(OPT_target))
     triple = llvm::Triple(trip->getValue());
   else
     triple = getDefaultTarget(argv[0]);
   std::unique_ptr<ELFTargetInfo> options(ELFTargetInfo::create(triple));
-  
+
   if (!options) {
     diagnostics << "unknown target triple\n";
     return nullptr;
   }
-  
+
   // Handle -e xxx
   if (llvm::opt::Arg *entry = parsedArgs->getLastArg(OPT_entry))
     options->setEntrySymbolName(entry->getValue());
-    
+
   // Handle -emit-yaml
   if (parsedArgs->getLastArg(OPT_emit_yaml))
     options->setOutputYAML(true);
-  
+
   // Handle -o xxx
-  if (llvm::opt::Arg *output = parsedArgs->getLastArg(OPT_output)) 
+  if (llvm::opt::Arg *output = parsedArgs->getLastArg(OPT_output))
     options->setOutputPath(output->getValue());
   else if (options->outputYAML())
-    options->setOutputPath("-");  // yaml writes to stdout by default
+    options->setOutputPath("-"); // yaml writes to stdout by default
   else
     options->setOutputPath("a.out");
-    
+
   // Handle -r, -shared, or -static
-  if ( llvm::opt::Arg *kind = parsedArgs->getLastArg(OPT_relocatable, 
-                                                     OPT_shared,
-                                                     OPT_static)) {
+  if (llvm::opt::Arg *kind =
+          parsedArgs->getLastArg(OPT_relocatable, OPT_shared, OPT_static)) {
     switch (kind->getOption().getID()) {
     case OPT_relocatable:
       options->setOutputFileType(llvm::ELF::ET_REL);
@@ -151,60 +150,76 @@ std::unique_ptr<ELFTargetInfo> GnuLdDriver::parse(int argc, const char *argv[],
       break;
     case OPT_shared:
       options->setOutputFileType(llvm::ELF::ET_DYN);
+      options->setAllowShlibUndefines(true);
+      options->setUseShlibUndefines(false);
       break;
     case OPT_static:
       options->setOutputFileType(llvm::ELF::ET_EXEC);
       options->setIsStaticExecutable(true);
       break;
     }
+  } else {
+    options->setOutputFileType(llvm::ELF::ET_EXEC);
+    options->setIsStaticExecutable(false);
+    options->setAllowShlibUndefines(false);
+    options->setUseShlibUndefines(true);
   }
-  else {
-      options->setOutputFileType(llvm::ELF::ET_EXEC);
-      options->setIsStaticExecutable(false);
-  }
-  
+
   // Handle --noinhibit-exec
-  if (parsedArgs->getLastArg(OPT_noinhibit_exec)) 
+  if (parsedArgs->getLastArg(OPT_noinhibit_exec))
     options->setAllowRemainingUndefines(true);
-    
+
   // Handle --force-load
   if (parsedArgs->getLastArg(OPT_force_load))
     options->setForceLoadAllArchives(true);
-  
+
   // Handle --merge-strings
   if (parsedArgs->getLastArg(OPT_merge_strings))
     options->setMergeCommonStrings(true);
-  
+
   // Handle -t
   if (parsedArgs->getLastArg(OPT_t))
     options->setLogInputFiles(true);
-  
+
+  // Handle --no-allow-shlib-undefined
+  if (parsedArgs->getLastArg(OPT_no_allow_shlib_undefs))
+    options->setAllowShlibUndefines(false);
+
+  // Handle --allow-shlib-undefined
+  if (parsedArgs->getLastArg(OPT_allow_shlib_undefs))
+    options->setAllowShlibUndefines(true);
+
+  // Handle --use-shlib-undefs
+  if (parsedArgs->getLastArg(OPT_use_shlib_undefs))
+    options->setUseShlibUndefines(true);
+
   // Handle -Lxxx
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_L),
                                ie = parsedArgs->filtered_end();
-                               it != ie; ++it) {
+       it != ie; ++it) {
     options->appendSearchPath((*it)->getValue());
   }
-  
+
   // Copy mllvm
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_mllvm),
                                ie = parsedArgs->filtered_end();
-                               it != ie; ++it) {
-      options->appendLLVMOption((*it)->getValue());
+       it != ie; ++it) {
+    options->appendLLVMOption((*it)->getValue());
   }
-  
+
   // Handle input files (full paths and -lxxx)
-  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_INPUT,OPT_l),
-                               ie = parsedArgs->filtered_end();
-                              it != ie; ++it) {
+  for (llvm::opt::arg_iterator
+           it = parsedArgs->filtered_begin(OPT_INPUT, OPT_l),
+           ie = parsedArgs->filtered_end();
+       it != ie; ++it) {
     switch ((*it)->getOption().getID()) {
     case OPT_INPUT:
       options->appendInputFile((*it)->getValue());
       break;
     case OPT_l:
       if (options->appendLibrary((*it)->getValue())) {
-        diagnostics << "Failed to find library for " 
-                    << (*it)->getValue() << "\n";
+        diagnostics << "Failed to find library for " << (*it)->getValue()
+                    << "\n";
         return nullptr;
       }
       break;
@@ -212,7 +227,7 @@ std::unique_ptr<ELFTargetInfo> GnuLdDriver::parse(int argc, const char *argv[],
       llvm_unreachable("input option type not handled");
     }
   }
-  
+
   // Validate the combination of options used.
   if (options->validate(diagnostics))
     return nullptr;
@@ -220,22 +235,20 @@ std::unique_ptr<ELFTargetInfo> GnuLdDriver::parse(int argc, const char *argv[],
   return options;
 }
 
-
-/// Get the default target triple based on either the program name 
+/// Get the default target triple based on either the program name
 /// (e.g. "x86-ibm-linux-lld") or the primary target llvm was configured for.
 llvm::Triple GnuLdDriver::getDefaultTarget(const char *progName) {
   SmallVector<StringRef, 4> components;
   llvm::SplitString(llvm::sys::path::stem(progName), components, "-");
   // If has enough parts to be start with a triple.
   if (components.size() >= 4) {
-    llvm::Triple triple(components[0], components[1], components[2], 
-                                                      components[3]);
+    llvm::Triple triple(components[0], components[1], components[2],
+                        components[3]);
     // If first component looks like an arch.
     if (triple.getArch() != llvm::Triple::UnknownArch)
       return triple;
   }
-  
+
   // Fallback to use whatever default triple llvm was configured for.
   return llvm::Triple(llvm::sys::getDefaultTargetTriple());
 }
-

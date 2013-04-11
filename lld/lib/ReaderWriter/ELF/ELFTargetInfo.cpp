@@ -29,7 +29,8 @@ ELFTargetInfo::ELFTargetInfo(llvm::Triple triple)
  , _outputYAML(false)
  , _noInhibitExec(false)
  , _mergeCommonStrings(false)
- , _runLayoutPass(true) {
+ , _runLayoutPass(true)
+ , _useShlibUndefines(false) {
 }
 
 bool ELFTargetInfo::is64Bits() const {
