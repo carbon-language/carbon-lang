@@ -8608,16 +8608,11 @@ TreeTransform<Derived>::TransformObjCEncodeExpr(ObjCEncodeExpr *E) {
 template<typename Derived>
 ExprResult TreeTransform<Derived>::
 TransformObjCIndirectCopyRestoreExpr(ObjCIndirectCopyRestoreExpr *E) {
-  ExprResult result = getDerived().TransformExpr(E->getSubExpr());
-  if (result.isInvalid()) return ExprError();
-  Expr *subExpr = result.take();
-
-  if (!getDerived().AlwaysRebuild() &&
-      subExpr == E->getSubExpr())
-    return SemaRef.Owned(E);
-
-  return SemaRef.Owned(new(SemaRef.Context)
-      ObjCIndirectCopyRestoreExpr(subExpr, E->getType(), E->shouldCopy()));
+  // This is a kind of implicit conversion, and it needs to get dropped
+  // and recomputed for the same general reasons that ImplicitCastExprs
+  // do, as well a more specific one: this expression is only valid when
+  // it appears *immediately* as an argument expression.
+  return getDerived().TransformExpr(E->getSubExpr());
 }
 
 template<typename Derived>
