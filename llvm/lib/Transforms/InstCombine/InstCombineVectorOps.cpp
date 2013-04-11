@@ -336,6 +336,10 @@ static Value *CollectShuffleElements(Value *V, SmallVectorImpl<Constant*> &Mask,
 
         if (VecOp == RHS) {
           Value *V = CollectShuffleElements(EI->getOperand(0), Mask, RHS);
+          // Update Mask to reflect that `ScalarOp' has been inserted at
+          // position `InsertedIdx' within the vector returned by IEI.
+          Mask[InsertedIdx % NumElts] = Mask[ExtractedIdx];
+
           // Everything but the extracted element is replaced with the RHS.
           for (unsigned i = 0; i != NumElts; ++i) {
             if (i != InsertedIdx)

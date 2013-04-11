@@ -196,3 +196,30 @@ define <4 x i16> @test13e(<4 x i16> %lhs, <4 x i16> %rhs) {
            <4 x i16> %lhs, <4 x i16> %rhs
   ret <4 x i16> %A
 }
+
+; Check that sequences of insert/extract element are
+; collapsed into shuffle instruction with correct shuffle indexes.
+
+define <4 x float> @test14a(<4 x float> %LHS, <4 x float> %RHS) {
+; CHECK: @test14a
+; CHECK-NEXT: shufflevector <4 x float> %LHS, <4 x float> %RHS, <4 x i32> <i32 4, i32 0, i32 6, i32 6>
+; CHECK-NEXT: ret <4 x float> %tmp4
+        %tmp1 = extractelement <4 x float> %LHS, i32 0
+        %tmp2 = insertelement <4 x float> %RHS, float %tmp1, i32 1
+        %tmp3 = extractelement <4 x float> %RHS, i32 2
+        %tmp4 = insertelement <4 x float> %tmp2, float %tmp3, i32 3
+        ret <4 x float> %tmp4
+}
+
+define <4 x float> @test14b(<4 x float> %LHS, <4 x float> %RHS) {
+; CHECK: @test14b
+; CHECK-NEXT: shufflevector <4 x float> %LHS, <4 x float> %RHS, <4 x i32> <i32 4, i32 3, i32 6, i32 6>
+; CHECK-NEXT: ret <4 x float> %tmp5
+        %tmp0 = extractelement <4 x float> %LHS, i32 3
+        %tmp1 = insertelement <4 x float> %RHS, float %tmp0, i32 0
+        %tmp2 = extractelement <4 x float> %tmp1, i32 0
+        %tmp3 = insertelement <4 x float> %RHS, float %tmp2, i32 1
+        %tmp4 = extractelement <4 x float> %RHS, i32 2
+        %tmp5 = insertelement <4 x float> %tmp3, float %tmp4, i32 3
+        ret <4 x float> %tmp5
+}
