@@ -18,13 +18,15 @@
 namespace __asan {
 
 // Fake stack frame contains local variables of one function.
-// This struct should fit into a stack redzone (32 bytes).
 struct FakeFrame {
   uptr magic;  // Modified by the instrumented code.
   uptr descr;  // Modified by the instrumented code.
-  FakeFrame *next;
+  uptr pc;     // Modified by the instrumented code.
   u64 real_stack     : 48;
   u64 size_minus_one : 16;
+  // End of the first 32 bytes.
+  // The rest should not be used when the frame is active.
+  FakeFrame *next;
 };
 
 struct FakeFrameFifo {
@@ -35,19 +37,27 @@ struct FakeFrameFifo {
   FakeFrame *first_, *last_;
 };
 
+template<uptr kMaxNumberOfFrames>
 class FakeFrameLifo {
  public:
+  explicit FakeFrameLifo(LinkerInitialized) {}
+  FakeFrameLifo() : n_frames_(0) {}
   void LifoPush(FakeFrame *node) {
-    node->next = top_;
-    top_ = node;
+    CHECK_LT(n_frames_, kMaxNumberOfFrames);
+    frames_[n_frames_++] = node;
   }
   void LifoPop() {
-    CHECK(top_);
-    top_ = top_->next;
+    CHECK(n_frames_);
+    n_frames_--;
   }
-  FakeFrame *top() { return top_; }
+  FakeFrame *top() {
+    if (n_frames_ == 0)
+      return 0;
+    return frames_[n_frames_];
+  }
  private:
-  FakeFrame *top_;
+  uptr n_frames_;
+  FakeFrame *frames_[kMaxNumberOfFrames];
 };
 
 // For each thread we create a fake stack and place stack objects on this fake
@@ -62,7 +72,7 @@ class FakeFrameLifo {
 class FakeStack {
  public:
   FakeStack();
-  explicit FakeStack(LinkerInitialized) {}
+  explicit FakeStack(LinkerInitialized x) : call_stack_(x) {}
   void Init(uptr stack_size);
   void StopUsingFakeStack() { alive_ = false; }
   void Cleanup();
@@ -78,6 +88,7 @@ class FakeStack {
   static const uptr kMaxStackMallocSize = 1 << kMaxStackFrameSizeLog;
   static const uptr kNumberOfSizeClasses =
       kMaxStackFrameSizeLog - kMinStackFrameSizeLog + 1;
+  static const uptr kMaxRecursionDepth = 1023;
 
   bool AddrIsInSizeClass(uptr addr, uptr size_class);
 
@@ -98,7 +109,7 @@ class FakeStack {
 
   uptr allocated_size_classes_[kNumberOfSizeClasses];
   FakeFrameFifo size_classes_[kNumberOfSizeClasses];
-  FakeFrameLifo call_stack_;
+  FakeFrameLifo<kMaxRecursionDepth> call_stack_;
 };
 
 }  // namespace __asan
