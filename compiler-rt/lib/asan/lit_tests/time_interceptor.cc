@@ -11,10 +11,10 @@ int main() {
   time_t *tm = (time_t*)malloc(sizeof(time_t));
   free(tm);
   time_t t = time(NULL);
-  fprintf(stderr, "Time: %s\n", ctime(&t));
+  fprintf(stderr, "Time: %s\n", ctime(&t));  // NOLINT
   // CHECK: {{Time: .* .* .*}}
   t = time(tm);
-  printf("Time: %s\n", ctime(&t));
+  printf("Time: %s\n", ctime(&t));  // NOLINT
   // CHECK: use-after-free
   return 0;
 }
