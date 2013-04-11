@@ -563,7 +563,8 @@ private:
   };
 
   void determineTokenType(AnnotatedToken &Current) {
-    if (getPrecedence(Current) == prec::Assignment) {
+    if (getPrecedence(Current) == prec::Assignment &&
+        (!Current.Parent || Current.Parent->isNot(tok::kw_operator))) {
       Contexts.back().IsExpression = true;
       for (AnnotatedToken *Previous = Current.Parent;
            Previous && Previous->isNot(tok::comma);

@@ -2374,6 +2374,7 @@ TEST_F(FormatTest, UndestandsOverloadedOperators) {
                "               const aaaaaaaaaaaaaaaaaaaaa &right) {\n"
                "  return left.group < right.group;\n"
                "}");
+  verifyFormat("SomeType &operator=(const SomeType &S);");
 
   verifyGoogleFormat("operator void*();");
   verifyGoogleFormat("operator SomeType<SomeType<int>>();");
