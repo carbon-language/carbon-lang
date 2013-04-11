@@ -251,6 +251,12 @@ D: The initial llvm-ar tool, converted regression testsuite to dejagnu
 D: Modulo scheduling in the SparcV9 backend
 D: Release manager (1.7+)
 
+N: Sylvestre Ledru
+E: sylvestre@debian.org
+W: http://sylvesre.ledru.info/
+D: Debian and Ubuntu packaging
+D: Continous integration with jenkins
+
 N: Andrew Lenharth
 E: alenhar2@cs.uiuc.edu
 W: http://www.lenharth.org/~andrewl/
