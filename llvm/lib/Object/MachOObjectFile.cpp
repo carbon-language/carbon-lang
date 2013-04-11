@@ -512,6 +512,12 @@ error_code MachOObjectFileBase::getLibraryPath(DataRefImpl LibData,
   report_fatal_error("Needed libraries unimplemented in MachOObjectFileBase");
 }
 
+error_code MachOObjectFileBase::getRelocationAdditionalInfo(DataRefImpl Rel,
+                                                           int64_t &Res) const {
+  Res = 0;
+  return object_error::success;
+}
+
 
 /*===-- Miscellaneous -----------------------------------------------------===*/
 

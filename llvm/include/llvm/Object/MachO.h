@@ -271,6 +271,8 @@ protected:
 
   virtual error_code getLibraryNext(DataRefImpl LibData, LibraryRef &Res) const;
   virtual error_code getLibraryPath(DataRefImpl LibData, StringRef &Res) const;
+  virtual error_code getRelocationAdditionalInfo(DataRefImpl Rel,
+                                                 int64_t &Res) const;
 
   std::size_t getSectionIndex(DataRefImpl Sec) const;
 
@@ -346,8 +348,6 @@ public:
   virtual error_code getRelocationAddress(DataRefImpl Rel, uint64_t &Res) const;
   virtual error_code getRelocationOffset(DataRefImpl Rel, uint64_t &Res) const;
   virtual error_code getRelocationSymbol(DataRefImpl Rel, SymbolRef &Res) const;
-  virtual error_code getRelocationAdditionalInfo(DataRefImpl Rel,
-                                                 int64_t &Res) const;
   virtual error_code getRelocationType(DataRefImpl Rel, uint64_t &Res) const;
   virtual error_code getRelocationTypeName(DataRefImpl Rel,
                                            SmallVectorImpl<char> &Result) const;
@@ -528,22 +528,6 @@ MachOObjectFile<MachOT>::getRelocationSymbol(DataRefImpl Rel,
     }
   }
   Res = SymbolRef(Sym, this);
-  return object_error::success;
-}
-
-template<class MachOT>
-error_code
-MachOObjectFile<MachOT>::getRelocationAdditionalInfo(DataRefImpl Rel,
-                                                     int64_t &Res) const {
-  const RelocationEntry *RE = getRelocation(Rel);
-  bool isExtern = (RE->Word1 >> 27) & 1;
-  Res = 0;
-  if (!isExtern) {
-    const uint8_t* sectAddress = base();
-    const Section *Sect = getSection(Sections[Rel.d.b]);
-    sectAddress += Sect->Offset;
-    Res = reinterpret_cast<uintptr_t>(sectAddress);
-  }
   return object_error::success;
 }
 
