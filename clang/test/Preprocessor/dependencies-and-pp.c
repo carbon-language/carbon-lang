@@ -4,7 +4,8 @@
 // RUN: %clang -E -MD -MF %t.d -MT foo -o %t.2 %s
 // RUN: diff %t.1 %t.2
 // RUN: FileCheck -check-prefix=TEST1 %s < %t.d
-// TEST1: foo: {{.*}}dependencies-and-pp.c
+// TEST1: foo:
+// TEST1: dependencies-and-pp.c
 
 // Test -MQ flag without quoting
 
