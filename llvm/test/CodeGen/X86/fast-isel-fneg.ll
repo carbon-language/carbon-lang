@@ -3,6 +3,7 @@
 
 ; SSE2: xor
 ; SSE2: xor
+; SSE2-NOT: xor
 
 ; CHECK: doo:
 ; CHECK: xor
