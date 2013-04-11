@@ -279,6 +279,7 @@ public:
               getHWInstrDesc(CF_POP))
               .addImm(CfCount + 1)
               .addImm(1);
+          (void)MIb;
           DEBUG(dbgs() << CfCount << ":"; MIb->dump(););
           MI->eraseFromParent();
           CfCount++;
