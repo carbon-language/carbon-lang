@@ -119,8 +119,8 @@ entry:
 
 ; X64: test8:
 ; X64: addq
-; X64-NEXT: sbbq
-; X64-NEXT: testb
+; X64-NEXT: setb
+; X64: ret
 
 define i32 @test9(i32 %x, i32 %y) nounwind readnone {
   %cmp = icmp eq i32 %x, 10
