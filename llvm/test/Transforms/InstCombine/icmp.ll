@@ -938,3 +938,29 @@ define i1 @icmp_sub57_sge_sub20(i32 %x, i32 %y) {
   %cmp = icmp sge i32 %1, %2
   ret i1 %cmp
 }
+
+; CHECK: @icmp_and_shl_neg_ne_0
+; CHECK-NEXT: [[SHL:%[a-z0-9]+]] = shl i32 1, %B
+; CHECK-NEXT: [[AND:%[a-z0-9]+]] = and i32 [[SHL]], %A
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp eq i32 [[AND]], 0
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_and_shl_neg_ne_0(i32 %A, i32 %B) {
+  %neg = xor i32 %A, -1
+  %shl = shl i32 1, %B
+  %and = and i32 %shl, %neg
+  %cmp = icmp ne i32 %and, 0
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_and_shl_neg_eq_0
+; CHECK-NEXT: [[SHL:%[a-z0-9]+]] = shl i32 1, %B
+; CHECK-NEXT: [[AND:%[a-z0-9]+]] = and i32 [[SHL]], %A
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ne i32 [[AND]], 0
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_and_shl_neg_eq_0(i32 %A, i32 %B) {
+  %neg = xor i32 %A, -1
+  %shl = shl i32 1, %B
+  %and = and i32 %shl, %neg
+  %cmp = icmp eq i32 %and, 0
+  ret i1 %cmp
+}

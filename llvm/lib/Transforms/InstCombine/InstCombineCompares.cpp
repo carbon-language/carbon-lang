@@ -2669,6 +2669,15 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   }
 
   { Value *A, *B;
+    // Transform (A & ~B) == 0 --> (A & B) != 0
+    // and       (A & ~B) != 0 --> (A & B) == 0
+    // if A is a power of 2.
+    if (match(Op0, m_And(m_Value(A), m_Not(m_Value(B)))) &&
+        match(Op1, m_Zero()) && isKnownToBeAPowerOfTwo(A) && I.isEquality())
+      return new ICmpInst(I.getInversePredicate(),
+                          Builder->CreateAnd(A, B),
+                          Op1);
+
     // ~x < ~y --> y < x
     // ~x < cst --> ~cst < x
     if (match(Op0, m_Not(m_Value(A)))) {
