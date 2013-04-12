@@ -1,7 +1,7 @@
 ; Codegen version to check for ELF header flags.
 ;
 ; RUN: llc %s -mtriple=thumbv7-linux-gnueabi -relocation-model=pic \
-; RUN: -filetype=obj -o - | elf-dump --dump-section-data | \
+; RUN: -filetype=obj -o - | llvm-readobj -h | \
 ; RUN: FileCheck %s
 
 define void @bar() nounwind {
@@ -10,4 +10,5 @@ entry:
 }
 
 ; For now the only e_flag set is EF_ARM_EABI_VER5
-;CHECK:    'e_flags', 0x05000000
+; CHECK: ElfHeader {
+; CHECK:   Flags [ (0x5000000)

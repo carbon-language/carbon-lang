@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s | FileCheck %s
 
 // Test that the alignment of rodata doesn't force a alignment of the
 // previous section (.bss)
@@ -7,26 +7,33 @@
 	.section	.rodata,"a",@progbits
 	.align	8
 
-// CHECK: # Section 3
-// CHECK-NEXT:  (('sh_name', 0x00000007) # '.bss'
-// CHECK-NEXT:   ('sh_type', 0x00000008)
-// CHECK-NEXT:   ('sh_flags', 0x0000000000000003)
-// CHECK-NEXT:   ('sh_addr', 0x0000000000000000)
-// CHECK-NEXT:   ('sh_offset', 0x0000000000000044)
-// CHECK-NEXT:   ('sh_size', 0x0000000000000000)
-// CHECK-NEXT:   ('sh_link', 0x00000000)
-// CHECK-NEXT:   ('sh_info', 0x00000000)
-// CHECK-NEXT:   ('sh_addralign', 0x0000000000000004)
-// CHECK-NEXT:   ('sh_entsize', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Section 4
-// CHECK-NEXT:  (('sh_name', 0x00000026) # '.rodata'
-// CHECK-NEXT:   ('sh_type', 0x00000001)
-// CHECK-NEXT:   ('sh_flags', 0x0000000000000002)
-// CHECK-NEXT:   ('sh_addr', 0x0000000000000000)
-// CHECK-NEXT:   ('sh_offset', 0x0000000000000048)
-// CHECK-NEXT:   ('sh_size', 0x0000000000000000)
-// CHECK-NEXT:   ('sh_link', 0x00000000)
-// CHECK-NEXT:   ('sh_info', 0x00000000)
-// CHECK-NEXT:   ('sh_addralign', 0x0000000000000008)
-// CHECK-NEXT:   ('sh_entsize', 0x0000000000000000)
+// CHECK:        Section {
+// CHECK:          Name: .bss
+// CHECK-NEXT:     Type: SHT_NOBITS
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:       SHF_ALLOC
+// CHECK-NEXT:       SHF_WRITE
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address: 0x0
+// CHECK-NEXT:     Offset: 0x44
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Link: 0
+// CHECK-NEXT:     Info: 0
+// CHECK-NEXT:     AddressAlignment: 4
+// CHECK-NEXT:     EntrySize: 0
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Section {
+// CHECK-NEXT:     Index: 4
+// CHECK-NEXT:     Name: .rodata
+// CHECK-NEXT:     Type: SHT_PROGBITS
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:       SHF_ALLOC
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address: 0x0
+// CHECK-NEXT:     Offset: 0x48
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Link: 0
+// CHECK-NEXT:     Info: 0
+// CHECK-NEXT:     AddressAlignment: 8
+// CHECK-NEXT:     EntrySize: 0
+// CHECK-NEXT:   }

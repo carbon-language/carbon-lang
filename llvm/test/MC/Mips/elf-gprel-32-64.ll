@@ -1,5 +1,5 @@
 ; RUN: llc -filetype=obj -march=mips64el -mcpu=mips64 %s -o - \
-; RUN: | elf-dump --dump-section-data \
+; RUN: | llvm-readobj -r \
 ; RUN: | FileCheck %s
 
 define i32 @test(i32 %c) nounwind {
@@ -30,8 +30,11 @@ return:
 ; Check that the appropriate relocations were created.
 
 ; R_MIPS_GPREL32/R_MIPS_64/R_MIPS_NONE
-; CHECK: (('sh_name', 0x{{[a-z0-9]+}}) # '.rela.rodata'
-; CHECK:      ('r_type3', 0x00)
-; CHECK-NEXT: ('r_type2', 0x12)
-; CHECK-NEXT: ('r_type', 0x0c)
-
+; CHECK:      Relocations [
+; CHECK:        Section ({{[a-z0-9]+}}) .rodata {
+; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_MIPS_GPREL32/R_MIPS_64/R_MIPS_NONE
+; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_MIPS_GPREL32/R_MIPS_64/R_MIPS_NONE
+; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_MIPS_GPREL32/R_MIPS_64/R_MIPS_NONE
+; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_MIPS_GPREL32/R_MIPS_64/R_MIPS_NONE
+; CHECK-NEXT:   }
+; CHECK-NEXT: ]

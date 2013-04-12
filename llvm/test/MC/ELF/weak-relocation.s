@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -r | FileCheck %s
 
 // Test that weak symbols always produce relocations
 
@@ -7,9 +7,8 @@ foo:
 bar:
         call    foo
 
-//CHECK:        # Relocation 0
-//CHECK-NEXT:   (('r_offset', 0x0000000000000001)
-//CHECK-NEXT:    ('r_sym', 0x00000005)
-//CHECK-NEXT:    ('r_type', 0x00000002)
-//CHECK-NEXT:    ('r_addend', 0xfffffffffffffffc)
-//CHECK-NEXT:   ),
+// CHECK:      Relocations [
+// CHECK-NEXT:   Section ({{[0-9]+}}) .text {
+// CHECK-NEXT:     0x1 R_X86_64_PC32 foo 0xFFFFFFFFFFFFFFFC
+// CHECK-NEXT:   }
+// CHECK-NEXT: ]

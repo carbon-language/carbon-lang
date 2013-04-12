@@ -1,11 +1,21 @@
-; RUN: llc -filetype=obj -mtriple mipsel-unknown-linux %s -o - | elf-dump --dump-section-data  | FileCheck %s
+; RUN: llc -filetype=obj -mtriple mipsel-unknown-linux %s -o - | llvm-readobj -t | FileCheck %s
 
 ; Check that the appropriate symbols were created.
 
-; CHECK: (('st_name', 0x{{[0-9|a-f]+}}) # '$.str'
-; CHECK: (('st_name', 0x{{[0-9|a-f]+}}) # '$.str1'
-; CHECK: (('st_name', 0x{{[0-9|a-f]+}}) # '$CPI0_0'
-; CHECK: (('st_name', 0x{{[0-9|a-f]+}}) # '$CPI0_1'
+; CHECK: Symbols [
+; CHECK:   Symbol {
+; CHECK:     Name: $.str
+; CHECK:   }
+; CHECK:   Symbol {
+; CHECK:     Name: $.str1
+; CHECK:   }
+; CHECK:   Symbol {
+; CHECK:     Name: $CPI0_0
+; CHECK:   }
+; CHECK:   Symbol {
+; CHECK:     Name: $CPI0_1
+; CHECK:   }
+; CHECK: ]
 
 @.str = private unnamed_addr constant [6 x i8] c"abcde\00", align 1
 @gc1 = external global i8*

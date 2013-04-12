@@ -1,7 +1,7 @@
 // This test checks that the COFF object emitter works for the most basic
 // programs.
 
-// RUN: llvm-mc -filetype=obj -triple i686-pc-win32 %s | llvm-readobj -h -s -sr -sd -t | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-win32 %s | llvm-readobj -h -s -sr -sd -t | FileCheck %s
 
 .def	 _main;
 	.scl	2;
@@ -13,18 +13,18 @@
 _main:                                  # @main
 # BB#0:                                 # %entry
 	subl	$4, %esp
-	movl	$L_.str, (%esp)
+	movl	$.L_.str, (%esp)
 	call	_printf
 	xorl	%eax, %eax
 	addl	$4, %esp
 	ret
 
 	.data
-L_.str:                                 # @.str
+.L_.str:                                # @.str
 	.asciz	"Hello World"
 
 // CHECK: ImageFileHeader {
-// CHECK:   Machine: IMAGE_FILE_MACHINE_I386
+// CHECK:   Machine: IMAGE_FILE_MACHINE_AMD64
 // CHECK:   SectionCount: 2
 // CHECK:   TimeDateStamp: {{[0-9]+}}
 // CHECK:   PointerToSymbolTable: 0x{{[0-9A-F]+}}
@@ -39,7 +39,7 @@ L_.str:                                 # @.str
 // CHECK:     Name:                 .text
 // CHECK:     VirtualSize:          0
 // CHECK:     VirtualAddress:       0
-// CHECK:     RawDataSize:          {{[0-9]+}}
+// CHECK:     RawDataSize:          [[TextSize:[0-9]+]]
 // CHECK:     PointerToRawData:     0x{{[0-9A-F]+}}
 // CHECK:     PointerToRelocations: 0x{{[0-9A-F]+}}
 // CHECK:     PointerToLineNumbers: 0x0
@@ -52,8 +52,8 @@ L_.str:                                 # @.str
 // CHECK:       IMAGE_SCN_MEM_READ
 // CHECK:     ]
 // CHECK:     Relocations [
-// CHECK:       0x{{[0-9A-F]+}} IMAGE_REL_I386_DIR32 .data
-// CHECK:       0x{{[0-9A-F]+}} IMAGE_REL_I386_REL32 _printf
+// CHECK:       0x{{[0-9A-F]+}} IMAGE_REL_AMD64_ADDR32 .data
+// CHECK:       0x{{[0-9A-F]+}} IMAGE_REL_AMD64_REL32 _printf
 // CHECK:     ]
 // CHECK:   }
 // CHECK:   Section {
@@ -61,7 +61,7 @@ L_.str:                                 # @.str
 // CHECK:     Name:                 .data
 // CHECK:     VirtualSize:          0
 // CHECK:     VirtualAddress:       0
-// CHECK:     RawDataSize:          {{[0-9]+}}
+// CHECK:     RawDataSize:          [[DataSize:[0-9]+]]
 // CHECK:     PointerToRawData:     0x{{[0-9A-F]+}}
 // CHECK:     PointerToRelocations: 0x0
 // CHECK:     PointerToLineNumbers: 0x0
@@ -90,11 +90,11 @@ L_.str:                                 # @.str
 // CHECK:     StorageClass:   Static
 // CHECK:     AuxSymbolCount: 1
 // CHECK:     AuxSectionDef {
-// CHECK:       Length: 21
+// CHECK:       Length: [[TextSize]]
 // CHECK:       RelocationCount: 2
 // CHECK:       LineNumberCount: 0
 // CHECK:       Checksum: 0x0
-// CHECK:       Number: 1
+// CHECK:       Number: [[TextNum]]
 // CHECK:       Selection: 0x0
 // CHECK:     }
 // CHECK:   }
@@ -107,11 +107,11 @@ L_.str:                                 # @.str
 // CHECK:     StorageClass:   Static
 // CHECK:     AuxSymbolCount: 1
 // CHECK:     AuxSectionDef {
-// CHECK:       Length: 12
+// CHECK:       Length: [[DataSize]]
 // CHECK:       RelocationCount: 0
 // CHECK:       LineNumberCount: 0
 // CHECK:       Checksum: 0x0
-// CHECK:       Number: 2
+// CHECK:       Number: [[DataNum]]
 // CHECK:       Selection: 0x0
 // CHECK:       Unused: (00 00 00)
 // CHECK:     }

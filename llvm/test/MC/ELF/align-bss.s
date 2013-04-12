@@ -1,17 +1,22 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s | FileCheck %s
 
 // Test that the bss section is correctly aligned
 
 	.local	foo
 	.comm	foo,2048,16
 
-// CHECK:        ('sh_name', 0x00000007) # '.bss'
-// CHECK-NEXT:   ('sh_type', 0x00000008)
-// CHECK-NEXT:   ('sh_flags', 0x0000000000000003)
-// CHECK-NEXT:   ('sh_addr', 0x0000000000000000)
-// CHECK-NEXT:   ('sh_offset', 0x0000000000000040)
-// CHECK-NEXT:   ('sh_size', 0x0000000000000800)
-// CHECK-NEXT:   ('sh_link', 0x00000000)
-// CHECK-NEXT:   ('sh_info', 0x00000000)
-// CHECK-NEXT:   ('sh_addralign', 0x0000000000000010)
-// CHECK-NEXT:   ('sh_entsize', 0x0000000000000000)
+// CHECK:        Section {
+// CHECK:          Name: .bss
+// CHECK-NEXT:     Type: SHT_NOBITS
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:       SHF_ALLOC
+// CHECK-NEXT:       SHF_WRITE
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address: 0x0
+// CHECK-NEXT:     Offset: 0x40
+// CHECK-NEXT:     Size: 2048
+// CHECK-NEXT:     Link: 0
+// CHECK-NEXT:     Info: 0
+// CHECK-NEXT:     AddressAlignment: 16
+// CHECK-NEXT:     EntrySize: 0
+// CHECK-NEXT:   }

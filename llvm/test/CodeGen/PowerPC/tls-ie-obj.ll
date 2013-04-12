@@ -1,5 +1,5 @@
 ; RUN: llc -mcpu=pwr7 -O0 -filetype=obj %s -o - | \
-; RUN: elf-dump --dump-section-data | FileCheck %s
+; RUN: llvm-readobj -r | FileCheck %s
 
 ; Test correct relocation generation for thread-local storage
 ; using the initial-exec model and integrated assembly.
@@ -20,17 +20,10 @@ entry:
 ; Verify generation of R_PPC64_GOT_TPREL16_DS and R_PPC64_TLS for
 ; accessing external variable a.
 ;
-; CHECK:       '.rela.text'
-; CHECK:       Relocation 0
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM1:[0-9a-f]+]]
-; CHECK-NEXT:  'r_type', 0x0000005a
-; CHECK:       Relocation 1
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM1]]
-; CHECK-NEXT:  'r_type', 0x00000058
-; CHECK:       Relocation 2
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM1]]
-; CHECK-NEXT:  'r_type', 0x00000043
-
+; CHECK: Relocations [
+; CHECK:   Section (1) .text {
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_GOT_TPREL16_HA    a
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_GOT_TPREL16_LO_DS a
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TLS               a
+; CHECK:   }
+; CHECK: ]

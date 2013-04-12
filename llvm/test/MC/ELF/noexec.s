@@ -1,24 +1,26 @@
-// RUN: llvm-mc -mc-no-exec-stack -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  | FileCheck  %s
+// RUN: llvm-mc -mc-no-exec-stack -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s -t | FileCheck  %s
 
-// CHECK:       # Section 4
-// CHECK-NEXT:  (('sh_name', 0x0000000c) # '.note.GNU-stack'
-// CHECK-NEXT:   ('sh_type', 0x00000001)
-// CHECK-NEXT:   ('sh_flags', 0x0000000000000000)
-// CHECK-NEXT:   ('sh_addr', 0x0000000000000000)
-// CHECK-NEXT:   ('sh_offset', 0x0000000000000040)
-// CHECK-NEXT:   ('sh_size', 0x0000000000000000)
-// CHECK-NEXT:   ('sh_link', 0x00000000)
-// CHECK-NEXT:   ('sh_info', 0x00000000)
-// CHECK-NEXT:   ('sh_addralign', 0x0000000000000001)
-// CHECK-NEXT:   ('sh_entsize', 0x0000000000000000)
-// CHECK-NEXT:  ),
+// CHECK:        Section {
+// CHECK:          Index: 4
+// CHECK-NEXT:     Name: .note.GNU-stack
+// CHECK-NEXT:     Type: SHT_PROGBITS
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address: 0x0
+// CHECK-NEXT:     Offset: 0x40
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Link: 0
+// CHECK-NEXT:     Info: 0
+// CHECK-NEXT:     AddressAlignment: 1
+// CHECK-NEXT:     EntrySize: 0
+// CHECK-NEXT:   }
 
-// CHECK:       # Symbol 4
-// CHECK-NEXT:  (('st_name', 0x00000000) # ''
-// CHECK-NEXT:   ('st_bind', 0x0)
-// CHECK-NEXT:   ('st_type', 0x3)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0004)
-// CHECK-NEXT:   ('st_value', 0x0000000000000000)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
+// CHECK:        Symbol {
+// CHECK:          Name: .note.GNU-stack (0)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: Section
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .note.GNU-stack (0x4)
+// CHECK-NEXT:   }

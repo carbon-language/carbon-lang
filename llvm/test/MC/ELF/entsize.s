@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  --dump-section-data | FileCheck  %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s | FileCheck  %s
 
 // Test that mergeable constants have sh_entsize set.
 
@@ -32,38 +32,53 @@
     .quad 42
     .quad 42
 
-// CHECK: # Section 4
-// CHECK-NEXT:   ('sh_name', 0x00000048) # '.rodata.str1.1'
-// CHECK-NEXT:   ('sh_type', 0x00000001)
-// CHECK-NEXT:   ('sh_flags', 0x0000000000000032)
-// CHECK-NEXT:   ('sh_addr',
-// CHECK-NEXT:   ('sh_offset',
-// CHECK-NEXT:   ('sh_size', 0x000000000000000d)
-// CHECK-NEXT:   ('sh_link',
-// CHECK-NEXT:   ('sh_info',
-// CHECK-NEXT:   ('sh_addralign', 0x0000000000000001)
-// CHECK-NEXT:   ('sh_entsize', 0x0000000000000001)
-
-// CHECK: # Section 5
-// CHECK-NEXT:   ('sh_name', 0x00000039) # '.rodata.str2.1'
-// CHECK-NEXT:   ('sh_type', 0x00000001)
-// CHECK-NEXT:   ('sh_flags', 0x0000000000000032)
-// CHECK-NEXT:   ('sh_addr',
-// CHECK-NEXT:   ('sh_offset',
-// CHECK-NEXT:   ('sh_size', 0x0000000000000010)
-// CHECK-NEXT:   ('sh_link',
-// CHECK-NEXT:   ('sh_info',
-// CHECK-NEXT:   ('sh_addralign', 0x0000000000000001)
-// CHECK-NEXT:   ('sh_entsize', 0x0000000000000002)
-
-// CHECK: # Section 6
-// CHECK-NEXT:   ('sh_name', 0x0000002c) # '.rodata.cst8
-// CHECK-NEXT:   ('sh_type', 0x00000001)
-// CHECK-NEXT:   ('sh_flags', 0x0000000000000012)
-// CHECK-NEXT:   ('sh_addr',
-// CHECK-NEXT:   ('sh_offset',
-// CHECK-NEXT:   ('sh_size', 0x0000000000000010)
-// CHECK-NEXT:   ('sh_link',
-// CHECK-NEXT:   ('sh_info',
-// CHECK-NEXT:   ('sh_addralign', 0x0000000000000001)
-// CHECK-NEXT:   ('sh_entsize', 0x0000000000000008)
+// CHECK:        Section {
+// CHECK:          Index: 4
+// CHECK-NEXT:     Name: .rodata.str1.1
+// CHECK-NEXT:     Type: SHT_PROGBITS
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:       SHF_ALLOC
+// CHECK-NEXT:       SHF_MERGE
+// CHECK-NEXT:       SHF_STRINGS
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address:
+// CHECK-NEXT:     Offset:
+// CHECK-NEXT:     Size: 13
+// CHECK-NEXT:     Link:
+// CHECK-NEXT:     Info:
+// CHECK-NEXT:     AddressAlignment: 1
+// CHECK-NEXT:     EntrySize: 1
+// CHECK-NEXT:   }
+// CHECK:        Section {
+// CHECK:          Index: 5
+// CHECK-NEXT:     Name: .rodata.str2.1
+// CHECK-NEXT:     Type: SHT_PROGBITS
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:       SHF_ALLOC
+// CHECK-NEXT:       SHF_MERGE
+// CHECK-NEXT:       SHF_STRINGS
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address:
+// CHECK-NEXT:     Offset:
+// CHECK-NEXT:     Size: 16
+// CHECK-NEXT:     Link:
+// CHECK-NEXT:     Info:
+// CHECK-NEXT:     AddressAlignment: 1
+// CHECK-NEXT:     EntrySize: 2
+// CHECK-NEXT:   }
+// CHECK:        Section {
+// CHECK:          Index: 6
+// CHECK-NEXT:     Name: .rodata.cst8
+// CHECK-NEXT:     Type: SHT_PROGBITS
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:       SHF_ALLOC
+// CHECK-NEXT:       SHF_MERGE
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address:
+// CHECK-NEXT:     Offset:
+// CHECK-NEXT:     Size: 16
+// CHECK-NEXT:     Link:
+// CHECK-NEXT:     Info:
+// CHECK-NEXT:     AddressAlignment: 1
+// CHECK-NEXT:     EntrySize: 8
+// CHECK-NEXT:   }

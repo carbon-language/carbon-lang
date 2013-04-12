@@ -1,10 +1,14 @@
-; RUN: llc -filetype=obj -mtriple mipsel-unknown-linux %s -o - | elf-dump --dump-section-data  | FileCheck %s
+; RUN: llc -filetype=obj -mtriple mipsel-unknown-linux %s -o - | llvm-readobj -r | FileCheck %s
 
 ; Check that the appropriate relocations were created.
 
-; CHECK:     ('r_type', 0x2b)
-; CHECK:     ('r_type', 0x2c)
-; CHECK:     ('r_type', 0x2d)
+; CHECK: Relocations [
+; CHECK:   Section (1) .text {
+; CHECK:     R_MIPS_TLS_LDM
+; CHECK:     R_MIPS_TLS_DTPREL_HI16
+; CHECK:     R_MIPS_TLS_DTPREL_LO16
+; CHECK:   }
+; CHECK: ]
 
 @t1 = thread_local global i32 0, align 4
 

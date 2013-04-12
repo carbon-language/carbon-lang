@@ -1,24 +1,26 @@
 // This test ensures that, if the section containing a function has a suffix
 // (e.g. .text$foo), its unwind info section also has a suffix (.xdata$foo).
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-win32 %s | coff-dump.py | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-win32 %s | llvm-readobj -s -sd | FileCheck %s
 // XFAIL: *
 
-// CHECK:      Name                 = .xdata$foo
+// CHECK:      Name: .xdata$foo
 // CHECK-NEXT: VirtualSize
 // CHECK-NEXT: VirtualAddress
-// CHECK-NEXT: SizeOfRawData        = 8
+// CHECK-NEXT: RawDataSize: 8
 // CHECK-NEXT: PointerToRawData
 // CHECK-NEXT: PointerToRelocations
 // CHECK-NEXT: PointerToLineNumbers
-// CHECK-NEXT: NumberOfRelocations  = 0
-// CHECK-NEXT: NumberOfLineNumbers  = 0
-// CHECK-NEXT: Charateristics
-// CHECK-NEXT:   IMAGE_SCN_CNT_INITIALIZED_DATA
+// CHECK-NEXT: RelocationCount: 0
+// CHECK-NEXT: LineNumberCount: 0
+// CHECK-NEXT: Characteristics [
 // CHECK-NEXT:   IMAGE_SCN_ALIGN_4BYTES
+// CHECK-NEXT:   IMAGE_SCN_CNT_INITIALIZED_DATA
 // CHECK-NEXT:   IMAGE_SCN_MEM_READ
 // CHECK-NEXT:   IMAGE_SCN_MEM_WRITE
-// CHECK-NEXT: SectionData
-// CHECK-NEXT:   01 05 02 00 05 50 04 02
+// CHECK-NEXT: ]
+// CHECK-NEXT: SectionData (
+// CHECK-NEXT:   0000: 01050200 05500402
+// CHECK-NEXT: )
 
     .section .text$foo,"x"
     .globl foo

@@ -1,17 +1,18 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  --dump-section-data | FileCheck  %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -t | FileCheck  %s
 
 // Test that we emit the correct value.
 
 .set kernbase,0xffffffff80000000
 
-// CHECK:         (('st_name', 0x00000001) # 'kernbase'
-// CHECK-NEXT:     ('st_bind', 0x0)
-// CHECK-NEXT:     ('st_type', 0x0)
-// CHECK-NEXT:     ('st_other', 0x00)
-// CHECK-NEXT:     ('st_shndx', 0xfff1)
-// CHECK-NEXT:     ('st_value', 0xffffffff80000000)
-// CHECK-NEXT:     ('st_size', 0x0000000000000000)
-// CHECK-NEXT:    ),
+// CHECK:        Symbol {
+// CHECK:          Name: kernbase (1)
+// CHECK-NEXT:     Value: 0xFFFFFFFF80000000
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: (0xFFF1)
+// CHECK-NEXT:   }
 
 // Test that we accept .set of a symbol after it has been used in a statement.
 
@@ -24,11 +25,12 @@
 	.set	foo2,bar2
 
 // Test that there is an undefined reference to bar
-// CHECK:      (('st_name', 0x0000000a) # 'bar'
-// CHECK-NEXT:  ('st_bind', 0x1)
-// CHECK-NEXT:  ('st_type', 0x0)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0000)
-// CHECK-NEXT:  ('st_value', 0x0000000000000000)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
+// CHECK:        Symbol {
+// CHECK:          Name: bar (10)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: (0x0)
+// CHECK-NEXT:   }

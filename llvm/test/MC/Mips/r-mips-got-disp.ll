@@ -1,8 +1,9 @@
-; RUN: llc -march=mips64el -filetype=obj -mcpu=mips64r2 < %s -o - | elf-dump --dump-section-data  | FileCheck %s
+; RUN: llc -march=mips64el -filetype=obj -mcpu=mips64r2 < %s -o - | llvm-readobj -r | FileCheck %s
 
 ; Check that the R_MIPS_GOT_DISP relocations were created.
 
-; CHECK:     ('r_type', 0x13)
+; CHECK: Relocations [
+; CHECK:     0x{{[0-9,A-F]+}} R_MIPS_GOT_DISP
 
 @shl = global i64 1, align 8
 @.str = private unnamed_addr constant [8 x i8] c"0x%llx\0A\00", align 1

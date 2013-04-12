@@ -7,7 +7,7 @@
 ; RUN: llc -mtriple arm-unknown-linux-gnueabi \
 ; RUN:     -arm-enable-ehabi -arm-enable-ehabi-descriptors \
 ; RUN:     -filetype=obj -o - %s \
-; RUN:   | elf-dump --dump-section-data \
+; RUN:   | llvm-readobj -s \
 ; RUN:   | FileCheck %s
 
 define void @test1() nounwind {
@@ -20,28 +20,39 @@ entry:
   ret void
 }
 
-; CHECK: # Section 1
-; CHECK-NEXT: (('sh_name', 0x00000010) # '.text'
+; CHECK:      Sections [
+; CHECK:        Section {
+; CHECK:          Index: 1
+; CHECK-NEXT:     Name: .text (16)
 
-; CHECK:      (('sh_name', 0x00000005) # '.ARM.exidx'
-; CHECK-NEXT:  ('sh_type', 0x70000001)
-; CHECK-NEXT:  ('sh_flags', 0x00000082)
-; CHECK-NEXT:  ('sh_addr', 0x00000000)
-; CHECK-NEXT:  ('sh_offset', 0x0000005c)
-; CHECK-NEXT:  ('sh_size', 0x00000008)
-; CHECK-NEXT:  ('sh_link',  0x00000001)
-; CHECK-NEXT:  ('sh_info',  0x00000000)
-; CHECK-NEXT:  ('sh_addralign',  0x00000004)
+; CHECK:        Section {
+; CHECK:          Name: .ARM.exidx (5)
+; CHECK-NEXT:     Type: SHT_ARM_EXIDX
+; CHECK-NEXT:     Flags [ (0x82)
+; CHECK-NEXT:       SHF_ALLOC
+; CHECK-NEXT:       SHF_LINK_ORDER
+; CHECK-NEXT:     ]
+; CHECK-NEXT:     Address: 0x0
+; CHECK-NEXT:     Offset: 0x5C
+; CHECK-NEXT:     Size: 8
+; CHECK-NEXT:     Link: 1
+; CHECK-NEXT:     Info: 0
+; CHECK-NEXT:     AddressAlignment: 4
 
-; CHECK: # Section 7
-; CHECK-NEXT: (('sh_name', 0x00000039) # '.test_section'
+; CHECK:        Section {
+; CHECK:          Index: 7
+; CHECK-NEXT:     Name: .test_section (57)
 
-; CHECK:      (('sh_name', 0x0000002f) # '.ARM.exidx.test_section'
-; CHECK-NEXT:  ('sh_type', 0x70000001)
-; CHECK-NEXT:  ('sh_flags', 0x00000082)
-; CHECK-NEXT:  ('sh_addr', 0x00000000)
-; CHECK-NEXT:  ('sh_offset', 0x00000068)
-; CHECK-NEXT:  ('sh_size', 0x00000008)
-; CHECK-NEXT:  ('sh_link',  0x00000007)
-; CHECK-NEXT:  ('sh_info',  0x00000000)
-; CHECK-NEXT:  ('sh_addralign',  0x00000004)
+; CHECK:        Section {
+; CHECK:          Name: .ARM.exidx.test_section (47)
+; CHECK-NEXT:     Type: SHT_ARM_EXIDX
+; CHECK-NEXT:     Flags [ (0x82)
+; CHECK-NEXT:       SHF_ALLOC
+; CHECK-NEXT:       SHF_LINK_ORDER
+; CHECK-NEXT:     ]
+; CHECK-NEXT:     Address: 0x0
+; CHECK-NEXT:     Offset: 0x68
+; CHECK-NEXT:     Size: 8
+; CHECK-NEXT:     Link: 7
+; CHECK-NEXT:     Info: 0
+; CHECK-NEXT:     AddressAlignment: 4

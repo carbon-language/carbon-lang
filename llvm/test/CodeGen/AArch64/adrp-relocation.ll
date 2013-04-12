@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs -filetype=obj < %s | elf-dump | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs -filetype=obj < %s | llvm-readobj -s -r | FileCheck %s
 
 define i64 @testfn() nounwind {
 entry:
@@ -19,17 +19,9 @@ entry:
 ; relative offsets of testfn and foo) because its value depends on where this
 ; object file's .text section gets relocated in memory.
 
-; CHECK: .rela.text
-
-; CHECK: # Relocation 0
-; CHECK-NEXT: (('r_offset', 0x0000000000000010)
-; CHECK-NEXT:  ('r_sym', 0x00000007)
-; CHECK-NEXT:  ('r_type', 0x00000113)
-; CHECK-NEXT:  ('r_addend', 0x0000000000000000)
-; CHECK-NEXT: ),
-; CHECK-NEXT:  Relocation 1
-; CHECK-NEXT: (('r_offset', 0x0000000000000014)
-; CHECK-NEXT:  ('r_sym', 0x00000007)
-; CHECK-NEXT:  ('r_type', 0x00000115)
-; CHECK-NEXT:  ('r_addend', 0x0000000000000000)
-; CHECK-NEXT: ),
+; CHECK:      Relocations [
+; CHECK-NEXT:   Section (1) .text {
+; CHECK-NEXT:     0x10 R_AARCH64_ADR_PREL_PG_HI21 testfn 0x0
+; CHECK-NEXT:     0x14 R_AARCH64_ADD_ABS_LO12_NC testfn 0x0
+; CHECK-NEXT:   }
+; CHECK-NEXT: ]

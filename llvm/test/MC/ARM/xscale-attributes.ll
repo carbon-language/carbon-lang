@@ -2,7 +2,7 @@
 ; RUN: FileCheck -check-prefix=ASM %s
 
 ; RUN: llc %s -mtriple=thumbv5-linux-gnueabi -filetype=obj \
-; RUN: -mcpu=xscale -o - | elf-dump --dump-section-data | \
+; RUN: -mcpu=xscale -o - | llvm-readobj -s -sd | \
 ; RUN: FileCheck -check-prefix=OBJ %s
 
 ; FIXME: The OBJ test should be a .s to .o test and the ASM test should
@@ -17,15 +17,22 @@ entry:
 ; ASM-NEXT:      .eabi_attribute 8, 1
 ; ASM-NEXT:      .eabi_attribute 9, 1
 
-; OBJ:           Section 4
-; OBJ-NEXT:      'sh_name', 0x0000000c
-; OBJ-NEXT:      'sh_type', 0x70000003
-; OBJ-NEXT:	   'sh_flags', 0x00000000
-; OBJ-NEXT:	   'sh_addr', 0x00000000
-; OBJ-NEXT:	   'sh_offset', 0x00000038
-; OBJ-NEXT:	   'sh_size', 0x00000020
-; OBJ-NEXT:	   'sh_link', 0x00000000
-; OBJ-NEXT:	   'sh_info', 0x00000000
-; OBJ-NEXT:	   'sh_addralign', 0x00000001
-; OBJ-NEXT:	   'sh_entsize', 0x00000000
-; OBJ-NEXT:      '_section_data', '411f0000 00616561 62690001 15000000 06050801 09011401 15011703 18011901'
+; OBJ:      Sections [
+; OBJ:        Section {
+; OBJ:          Index: 4
+; OBJ-NEXT:     Name: .ARM.attributes (12)
+; OBJ-NEXT:     Type: SHT_ARM_ATTRIBUTES
+; OBJ-NEXT:     Flags [ (0x0)
+; OBJ-NEXT:     ]
+; OBJ-NEXT:     Address: 0x0
+; OBJ-NEXT:     Offset: 0x38
+; OBJ-NEXT:     Size: 32
+; OBJ-NEXT:     Link: 0
+; OBJ-NEXT:     Info: 0
+; OBJ-NEXT:     AddressAlignment: 1
+; OBJ-NEXT:     EntrySize: 0
+; OBJ-NEXT:     SectionData (
+; OBJ-NEXT:       0000: 411F0000 00616561 62690001 15000000
+; OBJ-NEXT:       0010: 06050801 09011401 15011703 18011901
+; OBJ-NEXT:     )
+; OBJ-NEXT:   }

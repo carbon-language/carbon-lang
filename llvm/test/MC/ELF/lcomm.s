@@ -1,21 +1,23 @@
-// RUN: llvm-mc -triple i386-pc-linux-gnu %s -filetype=obj -o - | elf-dump | FileCheck %s
+// RUN: llvm-mc -triple i386-pc-linux-gnu %s -filetype=obj -o - | llvm-readobj -t | FileCheck %s
 
 .lcomm A, 5
 .lcomm B, 32 << 20
 
-// CHECK: (('st_name', 0x00000001) # 'A'
-// CHECK:  ('st_value', 0x00000000)
-// CHECK:  ('st_size', 0x00000005)
-// CHECK:  ('st_bind', 0x0)
-// CHECK:  ('st_type', 0x1)
-// CHECK:  ('st_other', 0x00)
-// CHECK:  ('st_shndx', 0x0003)
-// CHECK: ),
-// CHECK: (('st_name', 0x00000003) # 'B'
-// CHECK:  ('st_value', 0x00000005)
-// CHECK:  ('st_size', 0x02000000)
-// CHECK:  ('st_bind', 0x0)
-// CHECK:  ('st_type', 0x1)
-// CHECK:  ('st_other', 0x00)
-// CHECK:  ('st_shndx', 0x0003)
-// CHECK: ),
+// CHECK:        Symbol {
+// CHECK:          Name: A (1)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 5
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .bss (0x3)
+// CHECK-NEXT:   }
+// CHECK:        Symbol {
+// CHECK:          Name: B (3)
+// CHECK-NEXT:     Value: 0x5
+// CHECK-NEXT:     Size: 33554432
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .bss (0x3)
+// CHECK-NEXT:   }

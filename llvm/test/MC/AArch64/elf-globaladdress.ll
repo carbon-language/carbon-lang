@@ -1,10 +1,10 @@
 ;; RUN: llc -mtriple=aarch64-none-linux-gnu -filetype=obj %s -o - | \
-;; RUN:   elf-dump | FileCheck -check-prefix=OBJ %s
+;; RUN:   llvm-readobj -h -r | FileCheck -check-prefix=OBJ %s
 
 ; Also take it on a round-trip through llvm-mc to stretch assembly-parsing's legs:
 ;; RUN: llc -mtriple=aarch64-none-linux-gnu %s -o - | \
 ;; RUN:     llvm-mc -arch=aarch64 -filetype=obj -o - | \
-;; RUN:     elf-dump | FileCheck -check-prefix=OBJ %s
+;; RUN:     llvm-readobj -h -r | FileCheck -check-prefix=OBJ %s
 
 @var8 = global i8 0
 @var16 = global i16 0
@@ -35,77 +35,28 @@ define void @address() {
 }
 
 ; Check we're using EM_AARCH64
-; OBJ: 'e_machine', 0x00
+; OBJ: ElfHeader {
+; OBJ:   Machine: EM_AARCH64
+; OBJ: }
 
-; OBJ: .rela.text
-
-; var8
-; R_AARCH64_ADR_PREL_PG_HI21 against var8
-; OBJ: 'r_sym', 0x0000000f
-; OBJ-NEXT: 'r_type', 0x00000113
-
-; R_AARCH64_LDST8_ABS_LO12_NC against var8
-; OBJ: 'r_sym', 0x0000000f
-; OBJ-NEXT: 'r_type', 0x00000116
-
-
-; var16
-; R_AARCH64_ADR_PREL_PG_HI21 against var16
-; OBJ: 'r_sym', 0x0000000c
-; OBJ-NEXT: 'r_type', 0x00000113
-
-; R_AARCH64_LDST16_ABS_LO12_NC against var16
-; OBJ: 'r_sym', 0x0000000c
-; OBJ-NEXT: 'r_type', 0x0000011c
-
-
-; var32
-; R_AARCH64_ADR_PREL_PG_HI21 against var32
-; OBJ: 'r_sym', 0x0000000d
-; OBJ-NEXT: 'r_type', 0x00000113
-
-; R_AARCH64_LDST32_ABS_LO12_NC against var32
-; OBJ: 'r_sym', 0x0000000d
-; OBJ-NEXT: 'r_type', 0x0000011d
-
-
-; var64
-; R_AARCH64_ADR_PREL_PG_HI21 against var64
-; OBJ: 'r_sym', 0x0000000e
-; OBJ-NEXT: 'r_type', 0x00000113
-
-; R_AARCH64_LDST64_ABS_LO12_NC against var64
-; OBJ: 'r_sym', 0x0000000e
-; OBJ-NEXT: 'r_type', 0x0000011e
+; OBJ: Relocations [
+; OBJ:   Section (1) .text {
+; OBJ:     0x{{[0-9,A-F]+}} R_AARCH64_ADR_PREL_PG_HI21   var8
+; OBJ:     0x{{[0-9,A-F]+}} R_AARCH64_LDST8_ABS_LO12_NC  var8
+; OBJ:     0x{{[0-9,A-F]+}} R_AARCH64_ADR_PREL_PG_HI21   var16
+; OBJ:     0x{{[0-9,A-F]+}} R_AARCH64_LDST16_ABS_LO12_NC var16
+; OBJ:     0x{{[0-9,A-F]+}} R_AARCH64_ADR_PREL_PG_HI21   var32
+; OBJ:     0x{{[0-9,A-F]+}} R_AARCH64_LDST32_ABS_LO12_NC var32
+; OBJ:     0x{{[0-9,A-F]+}} R_AARCH64_ADR_PREL_PG_HI21   var64
+; OBJ:     0x{{[0-9,A-F]+}} R_AARCH64_LDST64_ABS_LO12_NC var64
 
 ; This is on the store, so not really important, but it stops the next
 ; match working.
-; R_AARCH64_LDST64_ABS_LO12_NC against var64
-; OBJ: 'r_sym', 0x0000000e
-; OBJ-NEXT: 'r_type', 0x0000011e
-
+; OBJ:     0x{{[0-9,A-F]+}} R_AARCH64_LDST64_ABS_LO12_NC var64
 
 ; Pure address-calculation against var64
-; R_AARCH64_ADR_PREL_PG_HI21 against var64
-; OBJ: 'r_sym', 0x0000000e
-; OBJ-NEXT: 'r_type', 0x00000113
+; OBJ:     0x{{[0-9,A-F]+}} R_AARCH64_ADR_PREL_PG_HI21   var64
+; OBJ:     0x{{[0-9,A-F]+}} R_AARCH64_ADD_ABS_LO12_NC    var64
 
-; R_AARCH64_ADD_ABS_LO12_NC against var64
-; OBJ: 'r_sym', 0x0000000e
-; OBJ-NEXT: 'r_type', 0x00000115
-
-
-; Make sure the symbols don't move around, otherwise relocation info
-; will be wrong:
-
-; OBJ: Symbol 12
-; OBJ-NEXT: var16
-
-; OBJ: Symbol 13
-; OBJ-NEXT: var32
-
-; OBJ: Symbol 14
-; OBJ-NEXT: var64
-
-; OBJ: Symbol 15
-; OBJ-NEXT: var8
+; OBJ:   }
+; OBJ: ]

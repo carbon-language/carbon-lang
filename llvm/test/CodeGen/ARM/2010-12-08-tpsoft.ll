@@ -1,9 +1,9 @@
 ; RUN: llc  %s -mtriple=armv7-linux-gnueabi -o - | \
 ; RUN:    FileCheck  -check-prefix=ELFASM %s 
 ; RUN: llc  %s -mtriple=armv7-linux-gnueabi -filetype=obj -o - | \
-; RUN:    elf-dump --dump-section-data | FileCheck  -check-prefix=ELFOBJ %s
+; RUN:    llvm-readobj -s -sd | FileCheck  -check-prefix=ELFOBJ %s
 
-;; Make sure that bl __aeabi_read_tp is materiazlied and fixed up correctly
+;; Make sure that bl __aeabi_read_tp is materialized and fixed up correctly
 ;; in the obj case. 
 
 @i = external thread_local global i32
@@ -24,19 +24,13 @@ bb:                                               ; preds = %entry
 ; ELFASM:       	bl	__aeabi_read_tp
 
 
-; ELFOBJ:   '.text'
-; ELFOBJ-NEXT:  'sh_type'
-; ELFOBJ-NEXT:  'sh_flags'
-; ELFOBJ-NEXT:  'sh_addr'
-; ELFOBJ-NEXT:  'sh_offset'
-; ELFOBJ-NEXT:  'sh_size'
-; ELFOBJ-NEXT:  'sh_link'
-; ELFOBJ-NEXT:  'sh_info'
-; ELFOBJ-NEXT:  'sh_addralign'
-; ELFOBJ-NEXT:  'sh_entsize'
-;;;               BL __aeabi_read_tp is ---+
-;;;                                        V
-; ELFOBJ-NEXT:  00482de9 3c009fe5 00109fe7 feffffeb
+; ELFOBJ:      Sections [
+; ELFOBJ:        Section {
+; ELFOBJ:          Name: .text
+; ELFOBJ:          SectionData (
+;;;                  BL __aeabi_read_tp is ---------+
+;;;                                                 V
+; ELFOBJ-NEXT:     0000: 00482DE9 3C009FE5 00109FE7 FEFFFFEB
 
 
 bb1:                                              ; preds = %entry

@@ -1,16 +1,23 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  --dump-section-data | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s -sd | FileCheck %s
 
-// CHECK:       (('sh_name', 0x00000007) # '.comment'
-// CHECK-NEXT:   ('sh_type', 0x00000001)
-// CHECK-NEXT:   ('sh_flags', 0x0000000000000030)
-// CHECK-NEXT:   ('sh_addr', 0x0000000000000000)
-// CHECK-NEXT:   ('sh_offset', 0x0000000000000040)
-// CHECK-NEXT:   ('sh_size', 0x000000000000000d)
-// CHECK-NEXT:   ('sh_link', 0x00000000)
-// CHECK-NEXT:   ('sh_info', 0x00000000)
-// CHECK-NEXT:   ('sh_addralign', 0x0000000000000001)
-// CHECK-NEXT:   ('sh_entsize', 0x0000000000000001)
-// CHECK-NEXT:   ('_section_data', '00666f6f 00626172 007a6564 00')
+// CHECK:        Section {
+// CHECK:          Name: .comment
+// CHECK-NEXT:     Type: SHT_PROGBITS
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:       SHF_MERGE
+// CHECK-NEXT:       SHF_STRINGS
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address: 0x0
+// CHECK-NEXT:     Offset: 0x40
+// CHECK-NEXT:     Size: 13
+// CHECK-NEXT:     Link: 0
+// CHECK-NEXT:     Info: 0
+// CHECK-NEXT:     AddressAlignment: 1
+// CHECK-NEXT:     EntrySize: 1
+// CHECK-NEXT:     SectionData (
+// CHECK-NEXT:       0000: 00666F6F 00626172 007A6564 00
+// CHECK-NEXT:     )
+// CHECK-NEXT:   }
 
         .ident "foo"
         .ident "bar"

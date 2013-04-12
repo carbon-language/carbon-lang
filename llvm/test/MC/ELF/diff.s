@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -r | FileCheck %s
 
         .global zed
 foo:
@@ -8,8 +8,4 @@ bar:
 zed:
         mov zed+(bar-foo), %eax
 
-// CHECK:       # Relocation 0
-// CHECK-NEXT:  (('r_offset', 0x0000000000000005)
-// CHECK-NEXT:   ('r_sym', 0x00000006)
-// CHECK-NEXT:   ('r_type', 0x0000000b)
-// CHECK-NEXT:   ('r_addend', 0x0000000000000001)
+// CHECK:       0x5 R_X86_64_32S zed 0x1

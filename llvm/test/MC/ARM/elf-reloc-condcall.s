@@ -1,33 +1,18 @@
 // RUN: llvm-mc -triple=armv7-linux-gnueabi -filetype=obj %s -o - | \
-// RUN:   elf-dump | FileCheck -check-prefix=OBJ %s
+// RUN:   llvm-readobj -r | FileCheck -check-prefix=OBJ %s
 
         bleq some_label
         bl some_label
         blx some_label
         beq some_label
         b some_label
-// OBJ: .rel.text
 
-// OBJ: 'r_offset', 0x00000000
-// OBJ-NEXT:  'r_sym', 0x000005
-// OBJ-NEXT: 'r_type', 0x1d
-
-// OBJ: 'r_offset', 0x00000004
-// OBJ-NEXT:  'r_sym', 0x000005
-// OBJ-NEXT: 'r_type', 0x1c
-
-// OBJ: 'r_offset', 0x00000008
-// OBJ-NEXT:  'r_sym', 0x000005
-// OBJ-NEXT: 'r_type', 0x1c
-
-// OBJ: 'r_offset', 0x0000000c
-// OBJ-NEXT:  'r_sym', 0x000005
-// OBJ-NEXT: 'r_type', 0x1d
-
-// OBJ: 'r_offset', 0x00000010
-// OBJ-NEXT:  'r_sym', 0x000005
-// OBJ-NEXT: 'r_type', 0x1d
-
-// OBJ: .symtab
-// OBJ: Symbol 5
-// OBJ-NEXT: some_label
+// OBJ:      Relocations [
+// OBJ-NEXT:   Section (1) .text {
+// OBJ-NEXT:     0x0  R_ARM_JUMP24 some_label 0x0
+// OBJ-NEXT:     0x4  R_ARM_CALL   some_label 0x0
+// OBJ-NEXT:     0x8  R_ARM_CALL   some_label 0x0
+// OBJ-NEXT:     0xC  R_ARM_JUMP24 some_label 0x0
+// OBJ-NEXT:     0x10 R_ARM_JUMP24 some_label 0x0
+// OBJ-NEXT:   }
+// OBJ-NEXT: ]

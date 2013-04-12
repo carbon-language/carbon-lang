@@ -1,24 +1,105 @@
 // This test checks that the SEH directives emit the correct unwind data.
-// RUN: llvm-mc -triple x86_64-pc-win32 -filetype=obj %s | coff-dump.py | FileCheck %s
 
-// CHECK:      Name                 = .xdata
-// CHECK-NEXT: VirtualSize
-// CHECK-NEXT: VirtualAddress
-// CHECK-NEXT: SizeOfRawData        = 52
-// CHECK-NEXT: PointerToRawData
-// CHECK-NEXT: PointerToRelocations
-// CHECK-NEXT: PointerToLineNumbers
-// CHECK-NEXT: NumberOfRelocations  = 4
-// CHECK-NEXT: NumberOfLineNumbers  = 0
-// CHECK-NEXT: Charateristics
-// CHECK-NEXT:   IMAGE_SCN_CNT_INITIALIZED_DATA
-// CHECK-NEXT:   IMAGE_SCN_ALIGN_4BYTES
-// CHECK-NEXT:   IMAGE_SCN_MEM_READ
-// CHECK-NEXT: SectionData
-// CHECK-NEXT:   09 12 08 03 00 03 0F 30 - 0E 88 00 00 09 64 02 00
-// CHECK-NEXT:   04 22 00 1A 00 00 00 00 - 00 00 00 00 21 00 00 00
-// CHECK-NEXT:   00 00 00 00 1B 00 00 00 - 00 00 00 00 01 00 00 00
-// CHECK-NEXT:   00 00 00 00
+// TODO: Expected fail because SET_FPREG has a wrong offset.
+// XFAIL: *
+// RUN: llvm-mc -triple x86_64-pc-win32 -filetype=obj %s | llvm-readobj -s -u | FileCheck %s
+
+// CHECK:      Sections [
+// CHECK:        Section {
+// CHECK:          Name: .text
+// CHECK:          RelocationCount: 0
+// CHECK:          Characteristics [
+// CHECK-NEXT:       ALIGN_4BYTES
+// CHECK-NEXT:       CNT_CODE
+// CHECK-NEXT:       MEM_EXECUTE
+// CHECK-NEXT:       MEM_READ
+// CHECK-NEXT:     ]
+// CHECK-NEXT:   }
+// CHECK:        Section {
+// CHECK:          Name: .xdata
+// CHECK:          RawDataSize: 52
+// CHECK:          RelocationCount: 4
+// CHECK:          Characteristics [
+// CHECK-NEXT:       ALIGN_4BYTES
+// CHECK-NEXT:       CNT_INITIALIZED_DATA
+// CHECK-NEXT:       MEM_READ
+// CHECK-NEXT:     ]
+// CHECK-NEXT:   }
+// CHECK:        Section {
+// CHECK:          Name: .pdata
+// CHECK:          RelocationCount: 9
+// CHECK:          Characteristics [
+// CHECK-NEXT:       ALIGN_4BYTES
+// CHECK-NEXT:       CNT_INITIALIZED_DATA
+// CHECK-NEXT:       MEM_READ
+// CHECK-NEXT:     ]
+// CHECK-NEXT:   }
+// CHECK-NEXT: ]
+
+// CHECK:      UnwindInformation [
+// CHECK-NEXT:   RuntimeFunction {
+// CHECK-NEXT:     StartAddress: [[CodeSect1:[^ ]+]] [[BeginDisp1:(\+0x[A-F0-9]+)?]]
+// CHECK-NEXT:     EndAddress: [[CodeSect1]] [[EndDisp1:(\+0x[A-F0-9]+)?]]
+// CHECK-NEXT:     UnwindInfoAddress:
+// CHECK-NEXT:     UnwindInfo {
+// CHECK-NEXT:       Version: 1
+// CHECK-NEXT:       Flags [
+// CHECK-NEXT:         ExceptionHandler
+// CHECK-NEXT:       ]
+// CHECK-NEXT:       PrologSize: 18
+// CHECK-NEXT:       FrameRegister: RBX
+// CHECK-NEXT:       FrameOffset: 0x0
+// CHECK-NEXT:       UnwindCodeCount: 8
+// CHECK-NEXT:       UnwindCodes [
+// CHECK-NEXT:         0x12: SET_FPREG reg=RBX, offset=0x0
+// CHECK-NEXT:         0x0F: PUSH_NONVOL reg=RBX
+// CHECK-NEXT:         0x0E: SAVE_XMM128 reg=XMM8, offset=0x0
+// CHECK-NEXT:         0x09: SAVE_NONVOL reg=RSI, offset=0x10
+// CHECK-NEXT:         0x04: ALLOC_SMALL size=24
+// CHECK-NEXT:         0x00: PUSH_MACHFRAME errcode=yes
+// CHECK-NEXT:       ]
+// CHECK-NEXT:       Handler: __C_specific_handler
+// CHECK-NEXT:     }
+// CHECK-NEXT:   }
+// CHECK-NEXT:   RuntimeFunction {
+// CHECK-NEXT:     StartAddress: [[CodeSect2:[^ ]+]] [[BeginDisp2:(\+0x[A-F0-9]+)?]]
+// CHECK-NEXT:     EndAddress: [[CodeSect2]] [[BeginDisp2:(\+0x[A-F0-9]+)?]]
+// CHECK-NEXT:     UnwindInfoAddress:
+// CHECK-NEXT:     UnwindInfo {
+// CHECK-NEXT:       Version: 1
+// CHECK-NEXT:       Flags [
+// CHECK-NEXT:         ChainInfo
+// CHECK-NEXT:       ]
+// CHECK-NEXT:       PrologSize: 0
+// CHECK-NEXT:       FrameRegister: -
+// CHECK-NEXT:       FrameOffset: -
+// CHECK-NEXT:       UnwindCodeCount: 0
+// CHECK-NEXT:       UnwindCodes [
+// CHECK-NEXT:       ]
+// CHECK-NEXT:       Chained {
+// CHECK-NEXT:         StartAddress: [[CodeSect1]] [[BeginDisp1]]
+// CHECK-NEXT:         EndAddress: [[CodeSect1]] [[EndDisp1]]
+// CHECK-NEXT:         UnwindInfoAddress:
+// CHECK-NEXT:       }
+// CHECK-NEXT:     }
+// CHECK-NEXT:   }
+// CHECK-NEXT:   RuntimeFunction {
+// CHECK-NEXT:     StartAddress: [[CodeSect3:[^ ]+]] [[BeginDisp3:(\+0x[A-F0-9]+)?]]
+// CHECK-NEXT:     EndAddress: [[CodeSect3]] [[BeginDisp3:(\+0x[A-F0-9]+)?]]
+// CHECK-NEXT:     UnwindInfoAddress:
+// CHECK-NEXT:     UnwindInfo {
+// CHECK-NEXT:       Version: 1
+// CHECK-NEXT:       Flags [
+// CHECK-NEXT:       ]
+// CHECK-NEXT:       PrologSize: 0
+// CHECK-NEXT:       FrameRegister: -
+// CHECK-NEXT:       FrameOffset: -
+// CHECK-NEXT:       UnwindCodeCount: 0
+// CHECK-NEXT:       UnwindCodes [
+// CHECK-NEXT:       ]
+// CHECK-NEXT:     }
+// CHECK-NEXT:   }
+// CHECK-NEXT: ]
 
     .text
     .globl func

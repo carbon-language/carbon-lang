@@ -1,17 +1,23 @@
-// RUN: llvm-mc -filetype=obj -triple i386-pc-linux-gnu %s -o - | elf-dump --dump-section-data | FileCheck  %s
+// RUN: llvm-mc -filetype=obj -triple i386-pc-linux-gnu %s -o - | llvm-readobj -s -sd | FileCheck  %s
 
 .version "1234"
 .version "123"
 
-// CHECK:       (('sh_name', 0x0000000c) # '.note'
-// CHECK-NEXT:   ('sh_type', 0x00000007)
-// CHECK-NEXT:   ('sh_flags', 0x00000000)
-// CHECK-NEXT:   ('sh_addr', 0x00000000)
-// CHECK-NEXT:   ('sh_offset', 0x00000034)
-// CHECK-NEXT:   ('sh_size', 0x00000024)
-// CHECK-NEXT:   ('sh_link', 0x00000000)
-// CHECK-NEXT:   ('sh_info', 0x00000000)
-// CHECK-NEXT:   ('sh_addralign', 0x00000004)
-// CHECK-NEXT:   ('sh_entsize', 0x00000000)
-// CHECK-NEXT:   ('_section_data', '05000000 00000000 01000000 31323334 00000000 04000000 00000000 01000000 31323300')
-// CHECK-NEXT:  ),
+// CHECK:        Section {
+// CHECK:          Name: .note
+// CHECK-NEXT:     Type: SHT_NOTE
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address: 0x0
+// CHECK-NEXT:     Offset: 0x34
+// CHECK-NEXT:     Size: 36
+// CHECK-NEXT:     Link: 0
+// CHECK-NEXT:     Info: 0
+// CHECK-NEXT:     AddressAlignment: 4
+// CHECK-NEXT:     EntrySize: 0
+// CHECK-NEXT:     SectionData (
+// CHECK-NEXT:       0000: 05000000 00000000 01000000 31323334
+// CHECK-NEXT:       0010: 00000000 04000000 00000000 01000000
+// CHECK-NEXT:       0020: 31323300
+// CHECK-NEXT:     )
+// CHECK-NEXT:   }

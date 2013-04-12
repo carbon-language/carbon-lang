@@ -1,8 +1,8 @@
 ;; RUN: llc -O0 -mtriple=armv7-linux-gnueabi -filetype=obj %s -o - | \
-;; RUN:   elf-dump | FileCheck -check-prefix=ARM %s
+;; RUN:   llvm-readobj -t | FileCheck -check-prefix=ARM %s
 
 ;; RUN: llc -O0 -mtriple=thumbv7-linux-gnueabi -filetype=obj %s -o - | \
-;; RUN:   elf-dump --dump-section-data | FileCheck -check-prefix=TMB %s
+;; RUN:   llvm-readobj -t | FileCheck -check-prefix=TMB %s
 
 ;; Ensure that if a jump table is generated that it has Mapping Symbols
 ;; marking the data-in-code region.
@@ -108,68 +108,68 @@ exit:
   ret void
 }
 
-;; ARM:         # Symbol 2
-;; ARM-NEXT:    $a
-;; ARM-NEXT:   'st_value', 0x00000000
-;; ARM-NEXT:   'st_size', 0x00000000
-;; ARM-NEXT:   'st_bind', 0x0
-;; ARM-NEXT:   'st_type', 0x0
-;; ARM-NEXT:   'st_other'
-;; ARM-NEXT:   'st_shndx', [[MIXED_SECT:0x[0-9a-f]+]]
+;; ARM:        Symbol {
+;; ARM:          Name: $a
+;; ARM-NEXT:     Value: 0x0
+;; ARM-NEXT:     Size: 0
+;; ARM-NEXT:     Binding: Local
+;; ARM-NEXT:     Type: None
+;; ARM-NEXT:     Other:
+;; ARM-NEXT:     Section: [[MIXED_SECT:[^ ]+]]
 
-;; ARM:         # Symbol 3
-;; ARM-NEXT:    $a
-;; ARM-NEXT:   'st_value', 0x000000ac
-;; ARM-NEXT:   'st_size', 0x00000000
-;; ARM-NEXT:   'st_bind', 0x0
-;; ARM-NEXT:   'st_type', 0x0
-;; ARM-NEXT:   'st_other'
-;; ARM-NEXT:   'st_shndx', [[MIXED_SECT]]
+;; ARM:        Symbol {
+;; ARM:          Name: $a
+;; ARM-NEXT:     Value: 0xAC
+;; ARM-NEXT:     Size: 0
+;; ARM-NEXT:     Binding: Local
+;; ARM-NEXT:     Type: None
+;; ARM-NEXT:     Other:
+;; ARM-NEXT:     Section: [[MIXED_SECT]]
 
-;; ARM:         # Symbol 4
-;; ARM-NEXT:    $d
-;; ARM-NEXT:    'st_value', 0x00000000
-;; ARM-NEXT:    'st_size', 0x00000000
-;; ARM-NEXT:    'st_bind', 0x0
-;; ARM-NEXT:    'st_type', 0x0
+;; ARM:        Symbol {
+;; ARM:          Name: $d
+;; ARM-NEXT:     Value: 0
+;; ARM-NEXT:     Size: 0
+;; ARM-NEXT:     Binding: Local
+;; ARM-NEXT:     Type: None
 
-;; ARM:         # Symbol 5
-;; ARM-NEXT:    $d
-;; ARM-NEXT:   'st_value', 0x00000030
-;; ARM-NEXT:   'st_size', 0x00000000
-;; ARM-NEXT:   'st_bind', 0x0
-;; ARM-NEXT:   'st_type', 0x0
-;; ARM-NEXT:   'st_other'
-;; ARM-NEXT:   'st_shndx', [[MIXED_SECT]]
+;; ARM:        Symbol {
+;; ARM:          Name: $d
+;; ARM-NEXT:     Value: 0x30
+;; ARM-NEXT:     Size: 0
+;; ARM-NEXT:     Binding: Local
+;; ARM-NEXT:     Type: None
+;; ARM-NEXT:     Other:
+;; ARM-NEXT:     Section: [[MIXED_SECT]]
 
 ;; ARM-NOT:     ${{[atd]}}
 
-;; TMB:         # Symbol 3
-;; TMB-NEXT:    $d
-;; TMB-NEXT:   'st_value', 0x00000016
-;; TMB-NEXT:   'st_size', 0x00000000
-;; TMB-NEXT:   'st_bind', 0x0
-;; TMB-NEXT:   'st_type', 0x0
-;; TMB-NEXT:   'st_other'
-;; TMB-NEXT:   'st_shndx', [[MIXED_SECT:0x[0-9a-f]+]]
+;; TMB:        Symbol {
+;; TMB:          Name: $d.2
+;; TMB-NEXT:     Value: 0x16
+;; TMB-NEXT:     Size: 0
+;; TMB-NEXT:     Binding: Local
+;; TMB-NEXT:     Type: None
+;; TMB-NEXT:     Other:
+;; TMB-NEXT:     Section: [[MIXED_SECT:[^ ]+]]
 
-;; TMB:         # Symbol 4
-;; TMB-NEXT:    $t
-;; TMB-NEXT:   'st_value', 0x00000000
-;; TMB-NEXT:   'st_size', 0x00000000
-;; TMB-NEXT:   'st_bind', 0x0
-;; TMB-NEXT:   'st_type', 0x0
-;; TMB-NEXT:   'st_other'
-;; TMB-NEXT:   'st_shndx', [[MIXED_SECT]]
+;; TMB:        Symbol {
+;; TMB:          Name: $t
+;; TMB-NEXT:     Value: 0x0
+;; TMB-NEXT:     Size: 0
+;; TMB-NEXT:     Binding: Local
+;; TMB-NEXT:     Type: None
+;; TMB-NEXT:     Other:
+;; TMB-NEXT:     Section: [[MIXED_SECT]]
 
-;; TMB:         # Symbol 5
-;; TMB-NEXT:    $t
-;; TMB-NEXT:   'st_value', 0x00000036
-;; TMB-NEXT:   'st_size', 0x00000000
-;; TMB-NEXT:   'st_bind', 0x0
-;; TMB-NEXT:   'st_type', 0x0
-;; TMB-NEXT:   'st_other'
-;; TMB-NEXT:   'st_shndx', [[MIXED_SECT]]
+;; TMB:        Symbol {
+;; TMB:          Name: $t
+;; TMB-NEXT:     Value: 0x36
+;; TMB-NEXT:     Size: 0
+;; TMB-NEXT:     Binding: Local
+;; TMB-NEXT:     Type: None
+;; TMB-NEXT:     Other:
+;; TMB-NEXT:     Section: [[MIXED_SECT]]
 
 
 ;; TMB-NOT:     ${{[atd]}}

@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  --dump-section-data | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -t | FileCheck %s
 
 
 	.text
@@ -8,13 +8,15 @@
 	.local	common1
 	.comm	common1,1,1
 
-// CHECK: ('st_name', 0x00000001) # 'common1'
-// CHECK-NEXT: ('st_bind', 0x0)
-// CHECK-NEXT: ('st_type', 0x1)
-// CHECK-NEXT: ('st_other', 0x00)
-// CHECK-NEXT: ('st_shndx',
-// CHECK-NEXT: ('st_value', 0x0000000000000000)
-// CHECK-NEXT: ('st_size', 0x0000000000000001)
+// CHECK:        Symbol {
+// CHECK:          Name: common1 (1)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 1
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section:
+// CHECK-NEXT:   }
 
 
 // Same as common1, but with directives in a different order.
@@ -22,38 +24,44 @@
 	.type	common2,@object
 	.comm	common2,1,1
 
-// CHECK: ('st_name', 0x00000009) # 'common2'
-// CHECK-NEXT: ('st_bind', 0x0)
-// CHECK-NEXT: ('st_type', 0x1)
-// CHECK-NEXT: ('st_other', 0x00)
-// CHECK-NEXT: ('st_shndx',
-// CHECK-NEXT: ('st_value', 0x0000000000000001)
-// CHECK-NEXT: ('st_size', 0x0000000000000001)
+// CHECK:        Symbol {
+// CHECK:          Name: common2 (9)
+// CHECK-NEXT:     Value: 0x1
+// CHECK-NEXT:     Size: 1
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section:
+// CHECK-NEXT:   }
+
 
         .local	common6
         .comm	common6,8,16
 
-// CHECK:      # Symbol 3
-// CHECK-NEXT: (('st_name', 0x00000011) # 'common6'
-// CHECK-NEXT:  ('st_bind', 0x0)
-// CHECK-NEXT:  ('st_type', 0x1)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0004)
-// CHECK-NEXT:  ('st_value', 0x0000000000000010)
-// CHECK-NEXT:  ('st_size', 0x0000000000000008)
-// CHECK-NEXT: ),
+// CHECK:        Symbol {
+// CHECK:          Name: common6 (17)
+// CHECK-NEXT:     Value: 0x10
+// CHECK-NEXT:     Size: 8
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .bss (0x4)
+// CHECK-NEXT:   }
+
 
 // Test that without an explicit .local we produce a global.
 	.type	common3,@object
 	.comm	common3,4,4
 
-// CHECK: ('st_name', 0x00000019) # 'common3'
-// CHECK-NEXT: ('st_bind', 0x1)
-// CHECK-NEXT: ('st_type', 0x1)
-// CHECK-NEXT: ('st_other', 0x00)
-// CHECK-NEXT: ('st_shndx', 0xfff2)
-// CHECK-NEXT: ('st_value', 0x0000000000000004)
-// CHECK-NEXT: ('st_size', 0x0000000000000004)
+// CHECK:        Symbol {
+// CHECK:          Name: common3 (25)
+// CHECK-NEXT:     Value: 0x4
+// CHECK-NEXT:     Size: 4
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: (0xFFF2)
+// CHECK-NEXT:   }
 
 
 // Test that without an explicit .local we produce a global, even if the first
@@ -67,22 +75,25 @@ foo:
 	.type	common4,@object
 	.comm	common4,40,16
 
-// CHECK: ('st_name', 0x00000025) # 'common4'
-// CHECK-NEXT: ('st_bind', 0x1)
-// CHECK-NEXT: ('st_type', 0x1)
-// CHECK-NEXT: ('st_other', 0x00)
-// CHECK-NEXT: ('st_shndx', 0xfff2)
-// CHECK-NEXT: ('st_value', 0x0000000000000010)
-// CHECK-NEXT: ('st_size', 0x0000000000000028)
+// CHECK:        Symbol {
+// CHECK:          Name: common4 (37)
+// CHECK-NEXT:     Value: 0x10
+// CHECK-NEXT:     Size: 40
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: (0xFFF2)
+// CHECK-NEXT:   }
+
 
         .comm	common5,4,4
 
-// CHECK:      # Symbol 9
-// CHECK-NEXT: (('st_name', 0x0000002d) # 'common5'
-// CHECK-NEXT:  ('st_bind', 0x1)
-// CHECK-NEXT:  ('st_type', 0x1)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0xfff2)
-// CHECK-NEXT:  ('st_value', 0x0000000000000004)
-// CHECK-NEXT:  ('st_size', 0x0000000000000004)
-// CHECK-NEXT: ),
+// CHECK:        Symbol {
+// CHECK:          Name: common5 (45)
+// CHECK-NEXT:     Value: 0x4
+// CHECK-NEXT:     Size: 4
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: (0xFFF2)
+// CHECK-NEXT:   }

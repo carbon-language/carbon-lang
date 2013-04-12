@@ -1,24 +1,37 @@
-; DISABLE: llc -filetype=obj -mtriple mips-unknown-linux %s -o - | elf-dump --dump-section-data  | FileCheck %s
+; DISABLE: llc -filetype=obj -mtriple mips-unknown-linux %s -o - | llvm-readobj -h -s -sd | FileCheck %s
 ; RUN: false
 ; XFAIL: *
 
 ; Check that this is big endian.
-; CHECK: ('e_indent[EI_DATA]', 0x02)
+; CHECK: ElfHeader {
+; CHECK:   Ident {
+; CHECK:     DataEncoding: BigEndian
+; CHECK:   }
+; CHECK: }
 
 ; Make sure that a section table (text) entry is correct.
-; CHECK:   (('sh_name', 0x{{[0]*}}5) # '.text'
-; CHECK-NEXT:   ('sh_type', 0x{{[0]*}}1)
-; CHECK-NEXT:   ('sh_flags', 0x{{[0]*}}6)
-; CHECK-NEXT:   ('sh_addr', 0x{{[0-9,a-f]+}})
-; CHECK-NEXT:   ('sh_offset', 0x{{[0-9,a-f]+}})
-; CHECK-NEXT:   ('sh_size', 0x{{[0-9,a-f]+}})
-; CHECK-NEXT:   ('sh_link', 0x{{[0]+}})
-; CHECK-NEXT:   ('sh_info', 0x{{[0]+}})
-; CHECK-NEXT:   ('sh_addralign', 0x{{[0]*}}4)
-; CHECK-NEXT:   ('sh_entsize', 0x{{[0]+}})
+; CHECK:      Sections [
+; CHECK:        Section {
+; CHECK:          Index:
+; CHECK:          Name: .text
+; CHECK-NEXT:     Type: SHT_PROGBITS
+; CHECK-NEXT:     Flags [ (0x6)
+; CHECK-NEXT:       SHF_ALLOC
+; CHECK-NEXT:       SHF_EXECINSTR
+; CHECK-NEXT:     ]
+; CHECK-NEXT:     Address: 0x{{[0-9,A-F]+}}
+; CHECK-NEXT:     Offset: 0x{{[0-9,A-F]+}}
+; CHECK-NEXT:     Size: {{[0-9]+}}
+; CHECK-NEXT:     Link: 0
+; CHECK-NEXT:     Info: 0
+; CHECK-NEXT:     AddressAlignment: 4
+; CHECK-NEXT:     EntrySize: 0
 
 ; See that at least first 3 instructions are correct: GP prologue
-; CHECK-NEXT:   ('_section_data', '3c1c0000 279c0000 0399e021 {{[0-9,a-f, ]*}}')
+; CHECK-NEXT:     SectionData (
+; CHECK-NEXT:       0000: 3C1C0000 279C0000 0399E021 {{[0-9,A-F, ]*}}
+; CHECK:          )
+; CHECK:   }
 
 ; ModuleID = '../br1.c'
 target datalayout = "E-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32"

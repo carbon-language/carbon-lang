@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -filetype=obj | elf-dump | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -filetype=obj | llvm-readobj -r | FileCheck %s
 
 ; External symbols are a different concept to global variables but should still
 ; get relocations and so on when used.
@@ -10,12 +10,8 @@ define i32 @check_extern() {
   ret i32 0
 }
 
-; CHECK: .rela.text
-; CHECK: ('r_sym', 0x00000009)
-; CHECK-NEXT: ('r_type', 0x0000011b)
-
-; CHECK: .symtab
-; CHECK: Symbol 9
-; CHECK-NEXT: memcpy
-
-
+; CHECK: Relocations [
+; CHECK:   Section (1) .text {
+; CHECK:     0x{{[0-9,A-F]+}} R_AARCH64_CALL26 memcpy
+; CHECK:   }
+; CHECK: ]

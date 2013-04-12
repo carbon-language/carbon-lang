@@ -1,75 +1,81 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump   | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s -t | FileCheck %s
 
 // Test that we produce the group sections and that they are a the beginning
 // of the file.
 
-// CHECK:       # Section 1
-// CHECK-NEXT:  (('sh_name', 0x0000001b) # '.group'
-// CHECK-NEXT:   ('sh_type', 0x00000011)
-// CHECK-NEXT:   ('sh_flags', 0x0000000000000000)
-// CHECK-NEXT:   ('sh_addr', 0x0000000000000000)
-// CHECK-NEXT:   ('sh_offset', 0x0000000000000040)
-// CHECK-NEXT:   ('sh_size', 0x000000000000000c)
-// CHECK-NEXT:   ('sh_link', 0x0000000d)
-// CHECK-NEXT:   ('sh_info', 0x00000001)
-// CHECK-NEXT:   ('sh_addralign', 0x0000000000000004)
-// CHECK-NEXT:   ('sh_entsize', 0x0000000000000004)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Section 2
-// CHECK-NEXT:  (('sh_name', 0x0000001b) # '.group'
-// CHECK-NEXT:   ('sh_type', 0x00000011)
-// CHECK-NEXT:   ('sh_flags', 0x0000000000000000)
-// CHECK-NEXT:   ('sh_addr', 0x0000000000000000)
-// CHECK-NEXT:   ('sh_offset', 0x000000000000004c)
-// CHECK-NEXT:   ('sh_size', 0x0000000000000008)
-// CHECK-NEXT:   ('sh_link', 0x0000000d)
-// CHECK-NEXT:   ('sh_info', 0x00000002)
-// CHECK-NEXT:   ('sh_addralign', 0x0000000000000004)
-// CHECK-NEXT:   ('sh_entsize', 0x0000000000000004)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Section 3
-// CHECK-NEXT:  (('sh_name', 0x0000001b) # '.group'
-// CHECK-NEXT:   ('sh_type', 0x00000011)
-// CHECK-NEXT:   ('sh_flags', 0x0000000000000000)
-// CHECK-NEXT:   ('sh_addr', 0x0000000000000000)
-// CHECK-NEXT:   ('sh_offset', 0x0000000000000054)
-// CHECK-NEXT:   ('sh_size', 0x0000000000000008)
-// CHECK-NEXT:   ('sh_link', 0x0000000d)
-// CHECK-NEXT:   ('sh_info', 0x0000000d)
-// CHECK-NEXT:   ('sh_addralign', 0x0000000000000004)
-// CHECK-NEXT:   ('sh_entsize', 0x0000000000000004)
-// CHECK-NEXT:  ),
+// CHECK:        Section {
+// CHECK:          Index: 1
+// CHECK-NEXT:     Name: .group
+// CHECK-NEXT:     Type: SHT_GROUP
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address: 0x0
+// CHECK-NEXT:     Offset: 0x40
+// CHECK-NEXT:     Size: 12
+// CHECK-NEXT:     Link: 13
+// CHECK-NEXT:     Info: 1
+// CHECK-NEXT:     AddressAlignment: 4
+// CHECK-NEXT:     EntrySize: 4
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Section {
+// CHECK-NEXT:     Index: 2
+// CHECK-NEXT:     Name: .group
+// CHECK-NEXT:     Type: SHT_GROUP
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address: 0x0
+// CHECK-NEXT:     Offset: 0x4C
+// CHECK-NEXT:     Size: 8
+// CHECK-NEXT:     Link: 13
+// CHECK-NEXT:     Info: 2
+// CHECK-NEXT:     AddressAlignment: 4
+// CHECK-NEXT:     EntrySize: 4
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Section {
+// CHECK-NEXT:     Index: 3
+// CHECK-NEXT:     Name: .group
+// CHECK-NEXT:     Type: SHT_GROUP
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address: 0x0
+// CHECK-NEXT:     Offset: 0x54
+// CHECK-NEXT:     Size: 8
+// CHECK-NEXT:     Link: 13
+// CHECK-NEXT:     Info: 13
+// CHECK-NEXT:     AddressAlignment: 4
+// CHECK-NEXT:     EntrySize: 4
+// CHECK-NEXT:   }
 
 // Test that g1 and g2 are local, but g3 is an undefined global.
 
-// CHECK:      # Symbol 1
-// CHECK-NEXT: (('st_name', 0x00000001) # 'g1'
-// CHECK-NEXT:  ('st_bind', 0x0)
-// CHECK-NEXT:  ('st_type', 0x0)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0007)
-// CHECK-NEXT:  ('st_value', 0x0000000000000000)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 2
-// CHECK-NEXT: (('st_name', 0x00000004) # 'g2'
-// CHECK-NEXT:  ('st_bind', 0x0)
-// CHECK-NEXT:  ('st_type', 0x0)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0002)
-// CHECK-NEXT:  ('st_value', 0x0000000000000000)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
+// CHECK:        Symbol {
+// CHECK:          Name: g1 (1)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .foo (0x7)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: g2 (4)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .group (0x2)
+// CHECK-NEXT:   }
 
-// CHECK:      # Symbol 13
-// CHECK-NEXT: (('st_name', 0x00000007) # 'g3'
-// CHECK-NEXT:  ('st_bind', 0x1)
-// CHECK-NEXT:  ('st_type', 0x0)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0000)
-// CHECK-NEXT:  ('st_value', 0x0000000000000000)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
+// CHECK:        Symbol {
+// CHECK:          Name: g3 (7)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: (0x0)
+// CHECK-NEXT:   }
 
 
 	.section	.foo,"axG",@progbits,g1,comdat

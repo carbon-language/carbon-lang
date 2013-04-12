@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple i686-pc-linux-gnu %s -o - | elf-dump | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple i686-pc-linux-gnu %s -o - | llvm-readobj -h -s -r -t | FileCheck %s
 
 	.text
 	.globl	main
@@ -30,49 +30,53 @@ main:                                   # @main
 
 	.section	.note.GNU-stack,"",@progbits
 
-// CHECK: ('e_indent[EI_CLASS]', 0x01)
-// CHECK: ('e_indent[EI_DATA]', 0x01)
-// CHECK: ('e_indent[EI_VERSION]', 0x01)
-// CHECK: ('_sections', [
-// CHECK:   # Section 0
-// CHECK:   (('sh_name', 0x00000000) # ''
+// CHECK: ElfHeader {
+// CHECK:   Class: 32-bit
+// CHECK:   DataEncoding: LittleEndian
+// CHECK:   FileVersion: 1
+// CHECK: }
+// CHECK: Sections [
+// CHECK:   Section {
+// CHECK:     Index: 0
+// CHECK:     Name: (0)
 
-// CHECK:   # '.text'
+// CHECK:     Name: .text
 
-// CHECK:   # '.rel.text'
+// CHECK:     Name: .rel.text
 
-// CHECK:   ('_relocations', [
-// CHECK:     # Relocation 0
-// CHECK:     (('r_offset', 0x00000006)
-// CHECK:      ('r_type', 0x01)
-// CHECK:     ),
-// CHECK:     # Relocation 1
-// CHECK:     (('r_offset', 0x0000000b)
-// CHECK:      ('r_type', 0x02)
-// CHECK:     ),
-// CHECK:     # Relocation 2
-// CHECK:     (('r_offset', 0x00000012)
-// CHECK:      ('r_type', 0x01)
-// CHECK:     ),
-// CHECK:     # Relocation 3
-// CHECK:     (('r_offset', 0x00000017)
-// CHECK:      ('r_type', 0x02)
-// CHECK:     ),
-// CHECK:   ])
+// CHECK: Relocations [
+// CHECK:   Section (1) .text {
+// CHECK:     0x6  R_386_32   .rodata.str1.1
+// CHECK:     0xB  R_386_PC32 puts
+// CHECK:     0x12 R_386_32   .rodata.str1.1
+// CHECK:     0x17 R_386_PC32 puts
+// CHECK:   }
+// CHECK: ]
 
-// CHECK: ('st_bind', 0x0)
-// CHECK: ('st_type', 0x3)
+// CHECK: Symbols [
+// CHECK:   Symbol {
+// CHECK:     Binding: Local
+// CHECK:     Type: Section
+// CHECK:   }
 
-// CHECK: ('st_bind', 0x0)
-// CHECK: ('st_type', 0x3)
+// CHECK:   Symbol {
+// CHECK:     Binding: Local
+// CHECK:     Type: Section
+// CHECK:   }
 
-// CHECK: ('st_bind', 0x0)
-// CHECK: ('st_type', 0x3)
+// CHECK:   Symbol {
+// CHECK:     Binding: Local
+// CHECK:     Type: Section
+// CHECK:   }
 
-// CHECK:   # 'main'
-// CHECK:   ('st_bind', 0x1)
-// CHECK-NEXT: ('st_type', 0x2)
+// CHECK:   Symbol {
+// CHECK:     Name: main
+// CHECK:     Binding: Global
+// CHECK:     Type: Function
+// CHECK:   }
 
-// CHECK:   # 'puts'
-// CHECK:   ('st_bind', 0x1)
-// CHECK-NEXT: ('st_type', 0x0)
+// CHECK:   Symbol {
+// CHECK:     Name: puts
+// CHECK:     Binding: Global
+// CHECK:     Type: None
+// CHECK:   }

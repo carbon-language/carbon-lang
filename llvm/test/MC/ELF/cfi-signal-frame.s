@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  --dump-section-data | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s -sd | FileCheck %s
 
 f:
         .cfi_startproc
@@ -9,15 +9,25 @@ g:
         .cfi_startproc
         .cfi_endproc
 
-// CHECK:      (('sh_name', 0x00000011) # '.eh_frame'
-// CHECK-NEXT:  ('sh_type', 0x00000001)
-// CHECK-NEXT:  ('sh_flags', 0x0000000000000002)
-// CHECK-NEXT:  ('sh_addr', 0x0000000000000000)
-// CHECK-NEXT:  ('sh_offset', 0x0000000000000040)
-// CHECK-NEXT:  ('sh_size', 0x0000000000000058)
-// CHECK-NEXT:  ('sh_link', 0x00000000)
-// CHECK-NEXT:  ('sh_info', 0x00000000)
-// CHECK-NEXT:  ('sh_addralign', 0x0000000000000008)
-// CHECK-NEXT:  ('sh_entsize', 0x0000000000000000)
-// CHECK-NEXT:  ('_section_data', '14000000 00000000 017a5253 00017810 011b0c07 08900100 10000000 1c000000 00000000 00000000 00000000 14000000 00000000 017a5200 01781001 1b0c0708 90010000 10000000 1c000000 00000000 00000000 00000000')
-// CHECK-NEXT: ),
+// CHECK:        Section {
+// CHECK:          Name: .eh_frame
+// CHECK-NEXT:     Type: SHT_PROGBITS
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:       SHF_ALLOC
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address: 0x0
+// CHECK-NEXT:     Offset: 0x40
+// CHECK-NEXT:     Size: 88
+// CHECK-NEXT:     Link: 0
+// CHECK-NEXT:     Info: 0
+// CHECK-NEXT:     AddressAlignment: 8
+// CHECK-NEXT:     EntrySize: 0
+// CHECK-NEXT:     SectionData (
+// CHECK-NEXT:       0000: 14000000 00000000 017A5253 00017810
+// CHECK-NEXT:       0010: 011B0C07 08900100 10000000 1C000000
+// CHECK-NEXT:       0020: 00000000 00000000 00000000 14000000
+// CHECK-NEXT:       0030: 00000000 017A5200 01781001 1B0C0708
+// CHECK-NEXT:       0040: 90010000 10000000 1C000000 00000000
+// CHECK-NEXT:       0050: 00000000 00000000
+// CHECK-NEXT:     )
+// CHECK-NEXT:   }

@@ -1,5 +1,5 @@
 ; RUN: llc -mcpu=pwr7 -O0 -filetype=obj -relocation-model=pic %s -o - | \
-; RUN: elf-dump --dump-section-data | FileCheck %s
+; RUN: llvm-readobj -r | FileCheck %s
 
 ; Test correct relocation generation for thread-local storage using
 ; the general dynamic model and integrated assembly.
@@ -21,21 +21,11 @@ entry:
 ; and R_PPC64_TLSGD for accessing external variable a, and R_PPC64_REL24
 ; for the call to __tls_get_addr.
 ;
-; CHECK:       '.rela.text'
-; CHECK:       Relocation 0
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM1:[0-9a-f]+]]
-; CHECK-NEXT:  'r_type', 0x00000052
-; CHECK:       Relocation 1
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM1]]
-; CHECK-NEXT:  'r_type', 0x00000050
-; CHECK:       Relocation 2
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM1]]
-; CHECK-NEXT:  'r_type', 0x0000006b
-; CHECK:       Relocation 3
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x{{[0-9a-f]+}}
-; CHECK-NEXT:  'r_type', 0x0000000a
-
+; CHECK: Relocations [
+; CHECK:   Section (1) .text {
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_GOT_TLSGD16_HA a
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_GOT_TLSGD16_LO a
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TLSGD          a
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_REL24          __tls_get_addr
+; CHECK:   }
+; CHECK: ]

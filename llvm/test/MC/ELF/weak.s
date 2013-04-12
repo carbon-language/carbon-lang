@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -t | FileCheck %s
 
 // Test that this produces a weak undefined symbol.
 
@@ -9,22 +9,22 @@
         .weak bar
 bar:
 
-//CHECK:        # Symbol 4
-//CHECK-NEXT:   (('st_name', 0x00000005) # 'bar'
-//CHECK-NEXT:    ('st_bind', 0x2)
-//CHECK-NEXT:    ('st_type', 0x0)
-//CHECK-NEXT:    ('st_other', 0x00)
-//CHECK-NEXT:    ('st_shndx', 0x0001)
-//CHECK-NEXT:    ('st_value', 0x0000000000000004)
-//CHECK-NEXT:    ('st_size', 0x0000000000000000)
-//CHECK-NEXT:   ),
-//CHECK-NEXT:   # Symbol 5
-//CHECK:       (('st_name', 0x00000001) # 'foo'
-//CHECK-NEXT:   ('st_bind', 0x2)
-//CHECK-NEXT:   ('st_type', 0x0)
-//CHECK-NEXT:   ('st_other', 0x00)
-//CHECK-NEXT:   ('st_shndx', 0x0000)
-//CHECK-NEXT:   ('st_value', 0x0000000000000000)
-//CHECK-NEXT:   ('st_size', 0x0000000000000000)
-//CHECK-NEXT:  ),
-//CHECK-NEXT: ])
+// CHECK:        Symbol {
+// CHECK:          Name: bar
+// CHECK-NEXT:     Value: 0x4
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK:        Symbol {
+// CHECK:          Name: foo
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: (0x0)
+// CHECK-NEXT:   }
+// CHECK-NEXT:  ]

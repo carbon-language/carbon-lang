@@ -8,7 +8,7 @@
 ; RUN: llc -mtriple arm-unknown-linux-gnueabi \
 ; RUN:     -arm-enable-ehabi -arm-enable-ehabi-descriptors \
 ; RUN:     -filetype=obj -o - %s \
-; RUN:   | elf-dump --dump-section-data \
+; RUN:   | llvm-readobj -s -sd \
 ; RUN:   | FileCheck %s
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:64:128-a0:0:64-n32-S64"
@@ -68,12 +68,21 @@ declare void @__cxa_end_catch()
 
 declare void @_ZSt9terminatev()
 
-; CHECK:      # Section 1
-; CHECK-NEXT: (('sh_name', 0x0000002f) # '.group'
-; CHECK:       ('_section_data', '01000000 0a000000 0c000000 0e000000')
-; CHECK:      # Section 10
-; CHECK-NEXT: (('sh_name', 0x000000e1) # '.text._Z4testIidEvT_S0_S0_S0_S0_T0_S1_S1_S1_S1_'
-; CHECK:      # Section 12
-; CHECK-NEXT: (('sh_name', 0x000000d7) # '.ARM.extab.text._Z4testIidEvT_S0_S0_S0_S0_T0_S1_S1_S1_S1_'
-; CHECK:      # Section 14
-; CHECK-NEXT: (('sh_name', 0x00000065) # '.ARM.exidx.text._Z4testIidEvT_S0_S0_S0_S0_T0_S1_S1_S1_S1_'
+; CHECK:        Section {
+; CHECK:          Index: 1
+; CHECK-NEXT:     Name: .group (47)
+; CHECK:          SectionData (
+; CHECK-NEXT:       0000: 01000000 0A000000 0C000000 0E000000
+; CHECK-NEXT:     )
+
+; CHECK:        Section {
+; CHECK:          Index: 10
+; CHECK-NEXT:     Name: .text._Z4testIidEvT_S0_S0_S0_S0_T0_S1_S1_S1_S1_ (225)
+
+; CHECK:        Section {
+; CHECK:          Index: 12
+; CHECK-NEXT:     Name: .ARM.extab.text._Z4testIidEvT_S0_S0_S0_S0_T0_S1_S1_S1_S1_ (215)
+
+; CHECK:        Section {
+; CHECK:          Index: 14
+; CHECK-NEXT:     Name: .ARM.exidx.text._Z4testIidEvT_S0_S0_S0_S0_T0_S1_S1_S1_S1_ (101)

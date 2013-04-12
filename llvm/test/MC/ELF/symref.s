@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -r -t | FileCheck %s
 
 defined1:
 defined2:
@@ -21,145 +21,122 @@ defined3:
         .symver global1, g1@@zed
 global1:
 
+// CHECK:      Relocations [
+// CHECK-NEXT:   Section (1) .text {
+// CHECK-NEXT:     0x0 R_X86_64_32 .text 0x0
+// CHECK-NEXT:     0x4 R_X86_64_32 bar2@zed 0x0
+// CHECK-NEXT:     0x8 R_X86_64_32 .text 0x0
+// CHECK-NEXT:     0xC R_X86_64_32 .text 0x0
+// CHECK-NEXT:     0x10 R_X86_64_32 bar6@zed 0x0
+// CHECK-NEXT:   }
+// CHECK-NEXT: ]
 
-// CHECK:      # Relocation 0
-// CHECK-NEXT: (('r_offset', 0x0000000000000000)
-// CHECK-NEXT:  ('r_sym', 0x00000006)
-// CHECK-NEXT:  ('r_type', 0x0000000a)
-// CHECK-NEXT:  ('r_addend', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Relocation 1
-// CHECK-NEXT: (('r_offset', 0x0000000000000004)
-// CHECK-NEXT:  ('r_sym', 0x0000000b)
-// CHECK-NEXT:  ('r_type', 0x0000000a)
-// CHECK-NEXT:  ('r_addend', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Relocation 2
-// CHECK-NEXT: (('r_offset', 0x0000000000000008)
-// CHECK-NEXT:  ('r_sym', 0x00000006)
-// CHECK-NEXT:  ('r_type', 0x0000000a)
-// CHECK-NEXT:  ('r_addend', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Relocation 3
-// CHECK-NEXT: (('r_offset', 0x000000000000000c)
-// CHECK-NEXT:  ('r_sym', 0x00000006)
-// CHECK-NEXT:  ('r_type', 0x0000000a)
-// CHECK-NEXT:  ('r_addend', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Relocation 4
-// CHECK-NEXT: (('r_offset', 0x0000000000000010)
-// CHECK-NEXT:  ('r_sym', 0x0000000c)
-// CHECK-NEXT:  ('r_type', 0x0000000a)
-// CHECK-NEXT:  ('r_addend', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT:])
-
-// CHECK:      # Symbol 1
-// CHECK-NEXT: (('st_name', 0x00000013) # 'bar1@zed'
-// CHECK-NEXT:  ('st_bind', 0x0)
-// CHECK-NEXT:  ('st_type', 0x0)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0001)
-// CHECK-NEXT:  ('st_value', 0x0000000000000000)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 2
-// CHECK-NEXT: (('st_name', 0x00000025) # 'bar3@@zed'
-// CHECK-NEXT:  ('st_bind', 0x0)
-// CHECK-NEXT:  ('st_type', 0x0)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0001)
-// CHECK-NEXT:  ('st_value', 0x0000000000000000)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 3
-// CHECK-NEXT: (('st_name', 0x0000002f) # 'bar5@@zed'
-// CHECK-NEXT:  ('st_bind', 0x0)
-// CHECK-NEXT:  ('st_type', 0x0)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0001)
-// CHECK-NEXT:  ('st_value', 0x0000000000000000)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 4
-// CHECK-NEXT: (('st_name', 0x00000001) # 'defined1'
-// CHECK-NEXT:  ('st_bind', 0x0)
-// CHECK-NEXT:  ('st_type', 0x0)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0001)
-// CHECK-NEXT:  ('st_value', 0x0000000000000000)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 5
-// CHECK-NEXT: (('st_name', 0x0000000a) # 'defined2'
-// CHECK-NEXT:  ('st_bind', 0x0)
-// CHECK-NEXT:  ('st_type', 0x0)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0001)
-// CHECK-NEXT:  ('st_value', 0x0000000000000000)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 6
-// CHECK-NEXT: (('st_name', 0x00000000) # ''
-// CHECK-NEXT:  ('st_bind', 0x0)
-// CHECK-NEXT:  ('st_type', 0x3)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0001)
-// CHECK-NEXT:  ('st_value', 0x0000000000000000)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 7
-// CHECK-NEXT: (('st_name', 0x00000000) # ''
-// CHECK-NEXT:  ('st_bind', 0x0)
-// CHECK-NEXT:  ('st_type', 0x3)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0003)
-// CHECK-NEXT:  ('st_value', 0x0000000000000000)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 8
-// CHECK-NEXT: (('st_name', 0x00000000) # ''
-// CHECK-NEXT:  ('st_bind', 0x0)
-// CHECK-NEXT:  ('st_type', 0x3)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0004)
-// CHECK-NEXT:  ('st_value', 0x0000000000000000)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 9
-// CHECK-NEXT: (('st_name', 0x0000004a) # 'g1@@zed'
-// CHECK-NEXT:  ('st_bind', 0x1)
-// CHECK-NEXT:  ('st_type', 0x0)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0001)
-// CHECK-NEXT:  ('st_value', 0x0000000000000014)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 10
-// CHECK-NEXT: (('st_name', 0x00000042) # 'global1'
-// CHECK-NEXT:  ('st_bind', 0x1)
-// CHECK-NEXT:  ('st_type', 0x0)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0001)
-// CHECK-NEXT:  ('st_value', 0x0000000000000014)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 11
-// CHECK-NEXT: (('st_name', 0x0000001c) # 'bar2@zed'
-// CHECK-NEXT:  ('st_bind', 0x1)
-// CHECK-NEXT:  ('st_type', 0x0)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0000)
-// CHECK-NEXT:  ('st_value', 0x0000000000000000)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 12
-// CHECK-NEXT: (('st_name', 0x00000039) # 'bar6@zed'
-// CHECK-NEXT:  ('st_bind', 0x1)
-// CHECK-NEXT:  ('st_type', 0x0)
-// CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x0000)
-// CHECK-NEXT:  ('st_value', 0x0000000000000000)
-// CHECK-NEXT:  ('st_size', 0x0000000000000000)
-// CHECK-NEXT: ),
-// CHECK-NEXT:])
+// CHECK:        Symbol {
+// CHECK:          Name: bar1@zed (19)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar3@@zed (37)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar5@@zed (47)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: defined1 (1)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: defined2 (10)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: .text (0)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: Section
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: .data (0)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: Section
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .data (0x3)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: .bss (0)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: Section
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .bss (0x4)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: g1@@zed (74)
+// CHECK-NEXT:     Value: 0x14
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: global1 (66)
+// CHECK-NEXT:     Value: 0x14
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar2@zed (28)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: (0x0)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar6@zed (57)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: (0x0)
+// CHECK-NEXT:   }
+// CHECK-NEXT: ]

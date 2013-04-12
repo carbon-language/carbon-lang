@@ -1,5 +1,5 @@
 ; RUN: llc -O1 -mcpu=pwr7 -code-model=medium -filetype=obj %s -o - | \
-; RUN: elf-dump --dump-section-data | FileCheck %s
+; RUN: llvm-readobj -r | FileCheck %s
 
 ; FIXME: When asm-parse is available, could make this an assembly test.
 
@@ -19,18 +19,11 @@ entry:
 ; Verify generation of R_PPC64_TOC16_HA and R_PPC64_TOC16_LO for
 ; accessing function-scoped variable si.
 ;
-; CHECK:       Relocation 0
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM2:[0-9]+]]
-; CHECK-NEXT:  'r_type', 0x00000032
-; CHECK:       Relocation 1
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM2]]
-; CHECK-NEXT:  'r_type', 0x00000030
-; CHECK:       Relocation 2
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM2]]
-; CHECK-NEXT:  'r_type', 0x00000030
+; CHECK: Relocations [
+; CHECK:   Section (1) .text {
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_HA [[SYM2:[^ ]+]]
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_LO [[SYM2]]
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_LO [[SYM2]]
 
 @gi = global i32 5, align 4
 
@@ -45,18 +38,9 @@ entry:
 ; Verify generation of R_PPC64_TOC16_HA and R_PPC64_TOC16_LO for
 ; accessing file-scope variable gi.
 ;
-; CHECK:       Relocation 3
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM3:[0-9]+]]
-; CHECK-NEXT:  'r_type', 0x00000032
-; CHECK:       Relocation 4
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM3]]
-; CHECK-NEXT:  'r_type', 0x00000030
-; CHECK:       Relocation 5
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM3]]
-; CHECK-NEXT:  'r_type', 0x00000030
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_HA [[SYM3:[^ ]+]]
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_LO [[SYM3]]
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_LO [[SYM3]]
 
 define double @test_double_const() nounwind {
 entry:
@@ -66,12 +50,5 @@ entry:
 ; Verify generation of R_PPC64_TOC16_HA and R_PPC64_TOC16_LO for
 ; accessing a constant.
 ;
-; CHECK:       Relocation 6
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM4:[0-9]+]]
-; CHECK-NEXT:  'r_type', 0x00000032
-; CHECK:       Relocation 7
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM4]]
-; CHECK-NEXT:  'r_type', 0x00000030
-
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_HA [[SYM4:[^ ]+]]
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_LO [[SYM4]]

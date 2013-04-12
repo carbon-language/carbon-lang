@@ -1,7 +1,8 @@
 // This tests that default-null weak symbols (a GNU extension) are created
 // properly via the .weak directive.
 
-// RUN: llvm-mc -filetype=obj -triple i686-pc-win32 < %s | coff-dump.py | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple i686-pc-win32 %s | llvm-readobj -t | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-win32 %s | llvm-readobj -t | FileCheck %s
 
     .def    _main;
     .scl    2;
@@ -17,7 +18,7 @@ _main:                                  # @main
     testl   %eax, %eax
     je      LBB0_2
 # BB#1:                                 # %if.then
-    calll   _test_weak
+    call    _test_weak
     movl    $1, %eax
     addl    $4, %esp
     ret
@@ -28,24 +29,29 @@ LBB0_2:                                 # %return
 
     .weak   _test_weak
 
-// CHECK: Symbols = [
+// CHECK: Symbols [
 
-// CHECK:      Name               = _test_weak
-// CHECK-NEXT: Value              = 0
-// CHECK-NEXT: SectionNumber      = 0
-// CHECK-NEXT: SimpleType         = IMAGE_SYM_TYPE_NULL (0)
-// CHECK-NEXT: ComplexType        = IMAGE_SYM_DTYPE_NULL (0)
-// CHECK-NEXT: StorageClass       = IMAGE_SYM_CLASS_WEAK_EXTERNAL (105)
-// CHECK-NEXT: NumberOfAuxSymbols = 1
-// CHECK-NEXT: AuxillaryData      =
-// CHECK-NEXT: 05 00 00 00 02 00 00 00 - 00 00 00 00 00 00 00 00 |................|
-// CHECK-NEXT: 00 00                                             |..|
+// CHECK:      Symbol {
+// CHECK:        Name:           _test_weak
+// CHECK-NEXT:   Value:          0
+// CHECK-NEXT:   Section:        (0)
+// CHECK-NEXT:   BaseType:       Null
+// CHECK-NEXT:   ComplexType:    Null
+// CHECK-NEXT:   StorageClass:   WeakExternal
+// CHECK-NEXT:   AuxSymbolCount: 1
+// CHECK-NEXT:   AuxWeakExternal {
+// CHECK-NEXT:     Linked: .weak._test_weak.default
+// CHECK-NEXT:      Search: Library
+// CHECK-NEXT:      Unused: (00 00 00 00 00 00 00 00 00 00)
+// CHECK-NEXT:   }
+// CHECK-NEXT: }
 
-// CHECK:      Name               = .weak._test_weak.default
-// CHECK-NEXT: Value              = 0
-// CHECK-NEXT: SectionNumber      = 65535
-// CHECK-NEXT: SimpleType         = IMAGE_SYM_TYPE_NULL (0)
-// CHECK-NEXT: ComplexType        = IMAGE_SYM_DTYPE_NULL (0)
-// CHECK-NEXT: StorageClass       = IMAGE_SYM_CLASS_EXTERNAL (2)
-// CHECK-NEXT: NumberOfAuxSymbols = 0
-// CHECK-NEXT: AuxillaryData      =
+// CHECK:      Symbol {
+// CHECK:        Name:                .weak._test_weak.default
+// CHECK-NEXT:   Value:               0
+// CHECK-NEXT:   Section:             (-1)
+// CHECK-NEXT:   BaseType:            Null
+// CHECK-NEXT:   ComplexType:         Null
+// CHECK-NEXT:   StorageClass:        External
+// CHECK-NEXT:   AuxSymbolCount:      0
+// CHECK-NEXT: }

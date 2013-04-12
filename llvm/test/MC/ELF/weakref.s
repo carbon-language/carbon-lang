@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -t | FileCheck %s
 
 // This is a long test that checks that the aliases created by weakref are
 // never in the symbol table and that the only case it causes a symbol to
@@ -69,166 +69,158 @@ bar15:
         .long bar15
         .long foo15
 
-// CHECK:       # Symbol 0
-// CHECK-NEXT:  (('st_name', 0x00000000) # ''
-// CHECK-NEXT:   ('st_bind', 0x0)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0000)
-// CHECK-NEXT:   ('st_value', 0x0000000000000000)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 1
-// CHECK-NEXT:  (('st_name', 0x00000015) # 'bar6'
-// CHECK-NEXT:   ('st_bind', 0x0)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0001)
-// CHECK-NEXT:   ('st_value', 0x0000000000000018)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 2
-// CHECK-NEXT:  (('st_name', 0x0000001a) # 'bar7'
-// CHECK-NEXT:   ('st_bind', 0x0)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0001)
-// CHECK-NEXT:   ('st_value', 0x0000000000000018)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 3
-// CHECK-NEXT:  (('st_name', 0x0000001f) # 'bar8'
-// CHECK-NEXT:   ('st_bind', 0x0)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0001)
-// CHECK-NEXT:   ('st_value', 0x000000000000001c)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 4
-// CHECK-NEXT:  (('st_name', 0x00000024) # 'bar9'
-// CHECK-NEXT:   ('st_bind', 0x0)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0001)
-// CHECK-NEXT:   ('st_value', 0x0000000000000020)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 5
-// CHECK-NEXT:  (('st_name', 0x00000000) # ''
-// CHECK-NEXT:   ('st_bind', 0x0)
-// CHECK-NEXT:   ('st_type', 0x3)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0001)
-// CHECK-NEXT:   ('st_value', 0x0000000000000000)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 6
-// CHECK-NEXT:  (('st_name', 0x00000000) # ''
-// CHECK-NEXT:   ('st_bind', 0x0)
-// CHECK-NEXT:   ('st_type', 0x3)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0003)
-// CHECK-NEXT:   ('st_value', 0x0000000000000000)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 7
-// CHECK-NEXT:  (('st_name', 0x00000000) # ''
-// CHECK-NEXT:   ('st_bind', 0x0)
-// CHECK-NEXT:   ('st_type', 0x3)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0004)
-// CHECK-NEXT:   ('st_value', 0x0000000000000000)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 8
-// CHECK-NEXT:  (('st_name', 0x00000029) # 'bar10'
-// CHECK-NEXT:   ('st_bind', 0x1)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0001)
-// CHECK-NEXT:   ('st_value', 0x0000000000000028)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 9
-// CHECK-NEXT:  (('st_name', 0x0000002f) # 'bar11'
-// CHECK-NEXT:   ('st_bind', 0x1)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0001)
-// CHECK-NEXT:   ('st_value', 0x0000000000000030)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 10
-// CHECK-NEXT:  (('st_name', 0x00000035) # 'bar12'
-// CHECK-NEXT:   ('st_bind', 0x1)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0001)
-// CHECK-NEXT:   ('st_value', 0x0000000000000030)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 11
-// CHECK-NEXT:  (('st_name', 0x0000003b) # 'bar13'
-// CHECK-NEXT:   ('st_bind', 0x1)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0001)
-// CHECK-NEXT:   ('st_value', 0x0000000000000034)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 12
-// CHECK-NEXT:  (('st_name', 0x00000041) # 'bar14'
-// CHECK-NEXT:   ('st_bind', 0x1)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0001)
-// CHECK-NEXT:   ('st_value', 0x0000000000000038)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 13
-// CHECK-NEXT:  (('st_name', 0x00000047) # 'bar15'
-// CHECK-NEXT:   ('st_bind', 0x1)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0001)
-// CHECK-NEXT:   ('st_value', 0x0000000000000040)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 14
-// CHECK-NEXT:  (('st_name', 0x00000001) # 'bar2'
-// CHECK-NEXT:   ('st_bind', 0x1)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0000)
-// CHECK-NEXT:   ('st_value', 0x0000000000000000)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 15
-// CHECK-NEXT:  (('st_name', 0x00000006) # 'bar3'
-// CHECK-NEXT:   ('st_bind', 0x2)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0000)
-// CHECK-NEXT:   ('st_value', 0x0000000000000000)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 16
-// CHECK-NEXT:  (('st_name', 0x0000000b) # 'bar4'
-// CHECK-NEXT:   ('st_bind', 0x1)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0000)
-// CHECK-NEXT:   ('st_value', 0x0000000000000000)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT:  # Symbol 17
-// CHECK-NEXT:  (('st_name', 0x00000010) # 'bar5'
-// CHECK-NEXT:   ('st_bind', 0x1)
-// CHECK-NEXT:   ('st_type', 0x0)
-// CHECK-NEXT:   ('st_other', 0x00)
-// CHECK-NEXT:   ('st_shndx', 0x0000)
-// CHECK-NEXT:   ('st_value', 0x0000000000000000)
-// CHECK-NEXT:   ('st_size', 0x0000000000000000)
-// CHECK-NEXT:  ),
-// CHECK-NEXT: ])
+// CHECK:      Symbols [
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar6 (21)
+// CHECK-NEXT:     Value: 0x18
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar7 (26)
+// CHECK-NEXT:     Value: 0x18
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar8 (31)
+// CHECK-NEXT:     Value: 0x1C
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar9 (36)
+// CHECK-NEXT:     Value: 0x20
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: .text (0)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: Section
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: .data (0)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: Section
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .data (0x3)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: .bss (0)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: Section
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .bss (0x4)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar10 (41)
+// CHECK-NEXT:     Value: 0x28
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar11 (47)
+// CHECK-NEXT:     Value: 0x30
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar12 (53)
+// CHECK-NEXT:     Value: 0x30
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar13 (59)
+// CHECK-NEXT:     Value: 0x34
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar14 (65)
+// CHECK-NEXT:     Value: 0x38
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar15 (71)
+// CHECK-NEXT:     Value: 0x40
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar2 (1)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: (0x0)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar3 (6)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: (0x0)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar4 (11)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: (0x0)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar5 (16)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: (0x0)
+// CHECK-NEXT:   }
+// CHECK-NEXT: ]

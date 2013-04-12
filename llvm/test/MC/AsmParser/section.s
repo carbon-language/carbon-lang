@@ -1,5 +1,5 @@
 # RUN: llvm-mc -triple i386-pc-linux-gnu -filetype=obj -o %t %s
-# RUN: elf-dump --dump-section-data < %t | FileCheck %s
+# RUN: llvm-readobj -s -sd < %t | FileCheck %s
 .section test1
 .byte 1
 .section test2
@@ -45,63 +45,85 @@
 .previous
 .byte 1
 .previous
-# CHECK:       (('sh_name', 0x00000044) # 'test1'
-# CHECK-NEXT:   ('sh_type', 0x00000001)
-# CHECK-NEXT:   ('sh_flags', 0x00000000)
-# CHECK-NEXT:   ('sh_addr', 0x00000000)
-# CHECK-NEXT:   ('sh_offset', 0x00000034)
-# CHECK-NEXT:   ('sh_size', 0x00000007)
-# CHECK-NEXT:   ('sh_link', 0x00000000)
-# CHECK-NEXT:   ('sh_info', 0x00000000)
-# CHECK-NEXT:   ('sh_addralign', 0x00000001)
-# CHECK-NEXT:   ('sh_entsize', 0x00000000)
-# CHECK-NEXT:   ('_section_data', '01010101 010101')
-# CHECK-NEXT:  ),
-# CHECK:       (('sh_name', 0x0000003e) # 'test2'
-# CHECK-NEXT:   ('sh_type', 0x00000001)
-# CHECK-NEXT:   ('sh_flags', 0x00000000)
-# CHECK-NEXT:   ('sh_addr', 0x00000000)
-# CHECK-NEXT:   ('sh_offset', 0x0000003b)
-# CHECK-NEXT:   ('sh_size', 0x00000006)
-# CHECK-NEXT:   ('sh_link', 0x00000000)
-# CHECK-NEXT:   ('sh_info', 0x00000000)
-# CHECK-NEXT:   ('sh_addralign', 0x00000001)
-# CHECK-NEXT:   ('sh_entsize', 0x00000000)
-# CHECK-NEXT:   ('_section_data', '02020202 0202')
-# CHECK-NEXT:  ),
-# CHECK:       (('sh_name', 0x00000038) # 'test3'
-# CHECK-NEXT:   ('sh_type', 0x00000001)
-# CHECK-NEXT:   ('sh_flags', 0x00000000)
-# CHECK-NEXT:   ('sh_addr', 0x00000000)
-# CHECK-NEXT:   ('sh_offset', 0x00000041)
-# CHECK-NEXT:   ('sh_size', 0x00000005)
-# CHECK-NEXT:   ('sh_link', 0x00000000)
-# CHECK-NEXT:   ('sh_info', 0x00000000)
-# CHECK-NEXT:   ('sh_addralign', 0x00000001)
-# CHECK-NEXT:   ('sh_entsize', 0x00000000)
-# CHECK-NEXT:   ('_section_data', '03030303 03')
-# CHECK-NEXT:  ),
-# CHECK:       (('sh_name', 0x00000032) # 'test4'
-# CHECK-NEXT:   ('sh_type', 0x00000001)
-# CHECK-NEXT:   ('sh_flags', 0x00000000)
-# CHECK-NEXT:   ('sh_addr', 0x00000000)
-# CHECK-NEXT:   ('sh_offset', 0x00000046)
-# CHECK-NEXT:   ('sh_size', 0x00000003)
-# CHECK-NEXT:   ('sh_link', 0x00000000)
-# CHECK-NEXT:   ('sh_info', 0x00000000)
-# CHECK-NEXT:   ('sh_addralign', 0x00000001)
-# CHECK-NEXT:   ('sh_entsize', 0x00000000)
-# CHECK-NEXT:   ('_section_data', '040404')
-# CHECK-NEXT:  ),
-# CHECK:       (('sh_name', 0x0000002c) # 'test5'
-# CHECK-NEXT:   ('sh_type', 0x00000001)
-# CHECK-NEXT:   ('sh_flags', 0x00000000)
-# CHECK-NEXT:   ('sh_addr', 0x00000000)
-# CHECK-NEXT:   ('sh_offset', 0x00000049)
-# CHECK-NEXT:   ('sh_size', 0x00000001)
-# CHECK-NEXT:   ('sh_link', 0x00000000)
-# CHECK-NEXT:   ('sh_info', 0x00000000)
-# CHECK-NEXT:   ('sh_addralign', 0x00000001)
-# CHECK-NEXT:   ('sh_entsize', 0x00000000)
-# CHECK-NEXT:   ('_section_data', '05')
-# CHECK-NEXT:  ),
+
+# CHECK:      Sections [
+# CHECK:        Section {
+# CHECK:          Name: test1 (68)
+# CHECK-NEXT:     Type: SHT_PROGBITS
+# CHECK-NEXT:     Flags [ (0x0)
+# CHECK-NEXT:     ]
+# CHECK-NEXT:     Address: 0x0
+# CHECK-NEXT:     Offset: 0x34
+# CHECK-NEXT:     Size: 7
+# CHECK-NEXT:     Link: 0
+# CHECK-NEXT:     Info: 0
+# CHECK-NEXT:     AddressAlignment: 1
+# CHECK-NEXT:     EntrySize: 0
+# CHECK-NEXT:     SectionData (
+# CHECK-NEXT:       0000: 01010101 010101
+# CHECK-NEXT:     )
+# CHECK-NEXT:   }
+# CHECK:        Section {
+# CHECK:          Name: test2 (62)
+# CHECK-NEXT:     Type: SHT_PROGBITS
+# CHECK-NEXT:     Flags [ (0x0)
+# CHECK-NEXT:     ]
+# CHECK-NEXT:     Address: 0x0
+# CHECK-NEXT:     Offset: 0x3B
+# CHECK-NEXT:     Size: 6
+# CHECK-NEXT:     Link: 0
+# CHECK-NEXT:     Info: 0
+# CHECK-NEXT:     AddressAlignment: 1
+# CHECK-NEXT:     EntrySize: 0
+# CHECK-NEXT:     SectionData (
+# CHECK-NEXT:       0000: 02020202 0202
+# CHECK-NEXT:     )
+# CHECK-NEXT:   }
+# CHECK:        Section {
+# CHECK:          Name: test3 (56)
+# CHECK-NEXT:     Type: SHT_PROGBITS
+# CHECK-NEXT:     Flags [ (0x0)
+# CHECK-NEXT:     ]
+# CHECK-NEXT:     Address: 0x0
+# CHECK-NEXT:     Offset: 0x41
+# CHECK-NEXT:     Size: 5
+# CHECK-NEXT:     Link: 0
+# CHECK-NEXT:     Info: 0
+# CHECK-NEXT:     AddressAlignment: 1
+# CHECK-NEXT:     EntrySize: 0
+# CHECK-NEXT:     SectionData (
+# CHECK-NEXT:       0000: 03030303 03
+# CHECK-NEXT:     )
+# CHECK-NEXT:   }
+# CHECK:        Section {
+# CHECK:          Name: test4 (50)
+# CHECK-NEXT:     Type: SHT_PROGBITS
+# CHECK-NEXT:     Flags [ (0x0)
+# CHECK-NEXT:     ]
+# CHECK-NEXT:     Address: 0x0
+# CHECK-NEXT:     Offset: 0x46
+# CHECK-NEXT:     Size: 3
+# CHECK-NEXT:     Link: 0
+# CHECK-NEXT:     Info: 0
+# CHECK-NEXT:     AddressAlignment: 1
+# CHECK-NEXT:     EntrySize: 0
+# CHECK-NEXT:     SectionData (
+# CHECK-NEXT:       0000: 040404
+# CHECK-NEXT:     )
+# CHECK-NEXT:   }
+# CHECK:        Section {
+# CHECK:          Name: test5 (44)
+# CHECK-NEXT:     Type: SHT_PROGBITS
+# CHECK-NEXT:     Flags [ (0x0)
+# CHECK-NEXT:     ]
+# CHECK-NEXT:     Address: 0x0
+# CHECK-NEXT:     Offset: 0x49
+# CHECK-NEXT:     Size: 1
+# CHECK-NEXT:     Link: 0
+# CHECK-NEXT:     Info: 0
+# CHECK-NEXT:     AddressAlignment: 1
+# CHECK-NEXT:     EntrySize: 0
+# CHECK-NEXT:     SectionData (
+# CHECK-NEXT:       0000: 05
+# CHECK-NEXT:     )
+# CHECK-NEXT:   }

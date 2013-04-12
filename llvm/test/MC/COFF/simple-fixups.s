@@ -1,8 +1,8 @@
 // The purpose of this test is to verify that we do not produce unneeded
 // relocations when symbols are in the same section and we know their offset.
 
-// RUN: llvm-mc -filetype=obj -triple i686-pc-win32 %s | coff-dump.py | FileCheck %s
-// I WOULD RUN, BUT THIS FAILS: llvm-mc -filetype=obj -triple x86_64-pc-win32 %s | coff-dump.py | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple i686-pc-win32 %s | llvm-readobj -s | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-win32 %s | llvm-readobj -s | FileCheck %s
 
 	.def	 _foo;
 	.scl	2;
@@ -41,10 +41,9 @@ _baz:                                   # @baz
 # BB#0:                                 # %e
 	subl	$4, %esp
 Ltmp0:
-	calll	_baz
+	call	_baz
 	addl	$4, %esp
 	ret
 
-// CHECK:     Sections = [
-// CHECK-NOT: NumberOfRelocations = {{[^0]}}
-// CHECK:     Symbols = [
+// CHECK:     Sections [
+// CHECK-NOT: RelocationCount: {{[^0]}}

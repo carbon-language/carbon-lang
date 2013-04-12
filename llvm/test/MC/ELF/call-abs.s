@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple i686-pc-linux-gnu %s -o - | elf-dump | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple i686-pc-linux-gnu %s -o - | llvm-readobj -r | FileCheck %s
 
 	.text
 	.globl	f
@@ -15,10 +15,8 @@ f:                                      # @f
 
 	.section	.note.GNU-stack,"",@progbits
 
-// CHECK:      ('_relocations', [
-// CHECK-NEXT:  # Relocation 0
-// CHECK-NEXT:  (('r_offset', 0x00000004)
-// CHECK-NEXT:   ('r_sym', 0x000000)
-// CHECK-NEXT:   ('r_type', 0x02)
-// CHECK-NEXT:  ),
-// CHECK-NEXT: ])
+// CHECK:      Relocations [
+// CHECK:        Section ({{[^ ]+}}) {{[^ ]+}} {
+// CHECK-NEXT:     0x4 R_386_PC32 -
+// CHECK-NEXT:   }
+// CHECK-NEXT: ]

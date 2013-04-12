@@ -1,18 +1,26 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  --dump-section-data | FileCheck  %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s -sd -sr | FileCheck  %s
 
         call bar
 bar:
 
-// CHECK: ('sh_name', 0x00000001) # '.text'
-// CHECK-NEXT: ('sh_type', 0x00000001)
-// CHECK-NEXT: ('sh_flags', 0x0000000000000006)
-// CHECK-NEXT: ('sh_addr', 0x0000000000000000)
-// CHECK-NEXT: ('sh_offset', 0x0000000000000040)
-// CHECK-NEXT: ('sh_size', 0x0000000000000005)
-// CHECK-NEXT: ('sh_link', 0x00000000)
-// CHECK-NEXT: ('sh_info', 0x00000000)
-// CHECK-NEXT: ('sh_addralign', 0x0000000000000004)
-// CHECK-NEXT: ('sh_entsize', 0x0000000000000000)
-// CHECK-NEXT: ('_section_data', 'e8000000 00')
-// CHECK-NOT: .rela.text
+// CHECK:        Section {
+// CHECK:          Name: .text
+// CHECK-NEXT:     Type: SHT_PROGBITS
+// CHECK-NEXT:     Flags [ (0x6)
+// CHECK-NEXT:       SHF_ALLOC
+// CHECK-NEXT:       SHF_EXECINSTR
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address: 0x0
+// CHECK-NEXT:     Offset: 0x40
+// CHECK-NEXT:     Size: 5
+// CHECK-NEXT:     Link: 0
+// CHECK-NEXT:     Info: 0
+// CHECK-NEXT:     AddressAlignment: 4
+// CHECK-NEXT:     EntrySize: 0
+// CHECK-NEXT:     Relocations [
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     SectionData (
+// CHECK-NEXT:       0000: E8000000 00
+// CHECK-NEXT:     )
+// CHECK-NEXT:   }
 // CHECK: shstrtab

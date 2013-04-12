@@ -1,7 +1,7 @@
 ;; RUN: llc -mtriple=armv7-linux-gnueabi -O3  \
 ;; RUN:    -mcpu=cortex-a8 -mattr=-neon -mattr=+vfp2  -arm-reserve-r9  \
 ;; RUN:    -filetype=obj %s -o - | \
-;; RUN:   elf-dump --dump-section-data | FileCheck -check-prefix=OBJ %s
+;; RUN:   llvm-readobj -r | FileCheck -check-prefix=OBJ %s
 
 ;; FIXME: This file needs to be in .s form!
 ;; The args to llc are there to constrain the codegen only.
@@ -88,10 +88,8 @@ entry:
 
 declare void @exit(i32) noreturn nounwind
 
-;; OBJ:           Relocation 1
-;; OBJ-NEXT:     'r_offset',
-;; OBJ-NEXT:     'r_sym', 0x000010
-;; OBJ-NEXT:     'r_type', 0x2b
-
-;; OBJ:      Symbol 16
-;; OBJ-NEXT:    'vtable'
+;; OBJ: Relocations [
+;; OBJ:   Section (1) .text {
+;; OBJ:     0x{{[0-9,A-F]+}} R_ARM_MOVW_ABS_NC vtable
+;; OBJ:   }
+;; OBJ: ]

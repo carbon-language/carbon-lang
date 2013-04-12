@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple i686-pc-mingw32 %s | coff-dump.py | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple i686-pc-mingw32 %s | llvm-readobj -s -sr -sd | FileCheck %s
 
 	.def	 _foobar;
 	.scl	2;
@@ -21,26 +21,12 @@ _rust_crate:
 	.long	_foobar-_rust_crate
 	.long	_foobar-_rust_crate
 
-// CHECK:      Name                     = .data
-// CHECK:      SectionData              =
-// CHECK-NEXT:   00 00 00 00 00 00 00 00 - 1C 00 00 00 20 00 00 00 |............ ...|
-// CHECK:        Relocations              = [
-// CHECK-NEXT:   0 = {
-// CHECK-NEXT:     VirtualAddress           = 0x4
-// CHECK-NEXT:     SymbolTableIndex         =
-// CHECK-NEXT:     Type                     = IMAGE_REL_I386_DIR32 (6)
-// CHECK-NEXT:     SymbolName               = _foobar
-// CHECK-NEXT:   }
-// CHECK-NEXT:   1 = {
-// CHECK-NEXT:     VirtualAddress           = 0x8
-// CHECK-NEXT:     SymbolTableIndex         = 0
-// CHECK-NEXT:     Type                     = IMAGE_REL_I386_REL32 (20)
-// CHECK-NEXT:     SymbolName               = .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   2 = {
-// CHECK-NEXT:     VirtualAddress           = 0xC
-// CHECK-NEXT:     SymbolTableIndex         = 0
-// CHECK-NEXT:     Type                     = IMAGE_REL_I386_REL32 (20)
-// CHECK-NEXT:     SymbolName               = .text
-// CHECK-NEXT:   }
-// CHECK-NEXT: ]
+// CHECK:        Name: .data
+// CHECK:        Relocations [
+// CHECK-NEXT:     0x4 IMAGE_REL_I386_DIR32 _foobar
+// CHECK-NEXT:     0x8 IMAGE_REL_I386_REL32 .text
+// CHECK-NEXT:     0xC IMAGE_REL_I386_REL32 .text
+// CHECK-NEXT:   ]
+// CHECK:        SectionData (
+// CHECK-NEXT:     0000: 00000000 00000000 1C000000 20000000
+// CHECK-NEXT:   )

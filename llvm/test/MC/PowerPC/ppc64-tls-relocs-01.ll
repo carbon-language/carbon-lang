@@ -1,5 +1,5 @@
 ;; RUN: llc -mtriple=powerpc64-unknown-linux-gnu -filetype=obj %s -o - | \
-;; RUN: elf-dump --dump-section-data | FileCheck %s
+;; RUN: llvm-readobj -r | FileCheck %s
 
 ;; FIXME: this file should be in .s form, change when asm parser is available.
 
@@ -12,17 +12,8 @@ entry:
 
 ;; Check for a pair of R_PPC64_TPREL16_HA / R_PPC64_TPREL16_LO relocs
 ;; against the thread-local symbol 't'.
-;; CHECK:       '.rela.text'
-;; CHECK:       Relocation 0
-;; CHECK-NEXT:  'r_offset',
-;; CHECK-NEXT:  'r_sym', 0x00000008
-;; CHECK-NEXT:  'r_type', 0x00000048
-;; CHECK:       Relocation 1
-;; CHECK-NEXT:  'r_offset',
-;; CHECK-NEXT:  'r_sym', 0x00000008
-;; CHECK-NEXT:  'r_type', 0x00000046
-
-;; Check that we got the correct symbol.
-;; CHECK:       Symbol 8
-;; CHECK-NEXT:  't'
-
+;; CHECK:      Relocations [
+;; CHECK:        Section ({{[0-9]+}}) .text {
+;; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_PPC64_TPREL16_HA t
+;; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_PPC64_TPREL16_LO t
+;; CHECK-NEXT:   }

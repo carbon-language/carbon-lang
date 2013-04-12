@@ -1,5 +1,5 @@
 ; RUN: llc  %s -mtriple=armv7-linux-gnueabi -filetype=obj -o - | \
-; RUN:    elf-dump --dump-section-data | FileCheck  -check-prefix=OBJ %s
+; RUN:    llvm-readobj -s -t | FileCheck  -check-prefix=OBJ %s
 ; RUN: llc  %s -mtriple=armv7-linux-gnueabi -o - | \
 ; RUN:    FileCheck  -check-prefix=ASM %s
 
@@ -15,17 +15,20 @@
 ; ASM-NEXT:     .type   _MergedGlobals,%object  @ @_MergedGlobals
 
 
+; OBJ:      Sections [
+; OBJ:        Section {
+; OBJ:          Index: 4
+; OBJ-NEXT:     Name: .bss
 
-; OBJ:          Section 4
-; OBJ-NEXT:     '.bss'
-
-; OBJ:          'array00'
-; OBJ-NEXT:     'st_value', 0x00000000
-; OBJ-NEXT:     'st_size', 0x00000050
-; OBJ-NEXT:     'st_bind', 0x0
-; OBJ-NEXT:     'st_type', 0x1
-; OBJ-NEXT:     'st_other', 0x00
-; OBJ-NEXT:     'st_shndx', 0x0004
+; OBJ:      Symbols [
+; OBJ:        Symbol {
+; OBJ:          Name: array00
+; OBJ-NEXT:     Value: 0x0
+; OBJ-NEXT:     Size: 80
+; OBJ-NEXT:     Binding: Local
+; OBJ-NEXT:     Type: Object
+; OBJ-NEXT:     Other: 0
+; OBJ-NEXT:     Section: .bss
 
 define i32 @main(i32 %argc) nounwind {
   %1 = load i32* @sum, align 4

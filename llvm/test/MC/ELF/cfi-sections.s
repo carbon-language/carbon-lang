@@ -1,5 +1,5 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  --dump-section-data | FileCheck -check-prefix=ELF_64 %s
-// RUN: llvm-mc -filetype=obj -triple i686-pc-linux-gnu %s -o - | elf-dump  --dump-section-data | FileCheck -check-prefix=ELF_32 %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s -sd | FileCheck -check-prefix=ELF_64 %s
+// RUN: llvm-mc -filetype=obj -triple i686-pc-linux-gnu %s -o - | llvm-readobj -s -sd | FileCheck -check-prefix=ELF_32 %s
 
 .cfi_sections .debug_frame
 
@@ -13,26 +13,43 @@ f2:
         nop
         .cfi_endproc
 
-// ELF_64:      (('sh_name', 0x00000011) # '.debug_frame'
-// ELF_64-NEXT:  ('sh_type', 0x00000001)
-// ELF_64-NEXT:  ('sh_flags', 0x0000000000000000)
-// ELF_64-NEXT:  ('sh_addr', 0x0000000000000000)
-// ELF_64-NEXT:  ('sh_offset', 0x0000000000000048)
-// ELF_64-NEXT:  ('sh_size', 0x0000000000000048)
-// ELF_64-NEXT:  ('sh_link', 0x00000000)
-// ELF_64-NEXT:  ('sh_info', 0x00000000)
-// ELF_64-NEXT:  ('sh_addralign', 0x0000000000000008)
-// ELF_64-NEXT:  ('sh_entsize', 0x0000000000000000)
-// ELF_64-NEXT:  ('_section_data', '14000000 ffffffff 01000178 100c0708 90010000 00000000 14000000 00000000 00000000 00000000 01000000 00000000 14000000 00000000 00000000 00000000 01000000 00000000')
+// ELF_64:        Section {
+// ELF_64:          Name: .debug_frame
+// ELF_64-NEXT:     Type: SHT_PROGBITS
+// ELF_64-NEXT:     Flags [
+// ELF_64-NEXT:     ]
+// ELF_64-NEXT:     Address: 0x0
+// ELF_64-NEXT:     Offset: 0x48
+// ELF_64-NEXT:     Size: 72
+// ELF_64-NEXT:     Link: 0
+// ELF_64-NEXT:     Info: 0
+// ELF_64-NEXT:     AddressAlignment: 8
+// ELF_64-NEXT:     EntrySize: 0
+// ELF_64-NEXT:     SectionData (
+// ELF_64-NEXT:       0000: 14000000 FFFFFFFF 01000178 100C0708
+// ELF_64-NEXT:       0010: 90010000 00000000 14000000 00000000
+// ELF_64-NEXT:       0020: 00000000 00000000 01000000 00000000
+// ELF_64-NEXT:       0030: 14000000 00000000 00000000 00000000
+// ELF_64-NEXT:       0040: 01000000 00000000
+// ELF_64-NEXT:     )
+// ELF_64-NEXT:   }
 
-// ELF_32:      (('sh_name', 0x00000010) # '.debug_frame'
-// ELF_32-NEXT:  ('sh_type', 0x00000001)
-// ELF_32-NEXT:  ('sh_flags', 0x00000000)
-// ELF_32-NEXT:  ('sh_addr', 0x00000000)
-// ELF_32-NEXT:  ('sh_offset', 0x00000038)
-// ELF_32-NEXT:  ('sh_size', 0x00000034)
-// ELF_32-NEXT:  ('sh_link', 0x00000000)
-// ELF_32-NEXT:  ('sh_info', 0x00000000)
-// ELF_32-NEXT:  ('sh_addralign', 0x00000004)
-// ELF_32-NEXT:  ('sh_entsize', 0x00000000)
-// ELF_32-NEXT:  ('_section_data', '10000000 ffffffff 0100017c 080c0404 88010000 0c000000 00000000 00000000 01000000 0c000000 00000000 01000000 01000000')
+// ELF_32:        Section {
+// ELF_32:          Name: .debug_frame
+// ELF_32-NEXT:     Type: SHT_PROGBITS
+// ELF_32-NEXT:     Flags [
+// ELF_32-NEXT:     ]
+// ELF_32-NEXT:     Address: 0x0
+// ELF_32-NEXT:     Offset: 0x38
+// ELF_32-NEXT:     Size: 52
+// ELF_32-NEXT:     Link: 0
+// ELF_32-NEXT:     Info: 0
+// ELF_32-NEXT:     AddressAlignment: 4
+// ELF_32-NEXT:     EntrySize: 0
+// ELF_32-NEXT:     SectionData (
+// ELF_32-NEXT:       0000: 10000000 FFFFFFFF 0100017C 080C0404
+// ELF_32-NEXT:       0010: 88010000 0C000000 00000000 00000000
+// ELF_32-NEXT:       0020: 01000000 0C000000 00000000 01000000
+// ELF_32-NEXT:       0030: 01000000
+// ELF_32-NEXT:     )
+// ELF_32-NEXT:   }

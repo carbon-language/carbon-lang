@@ -1,5 +1,5 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -filetype=obj | elf-dump | FileCheck %s -check-prefix=CHECK-ELF
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -filetype=obj | llvm-readobj -r | FileCheck %s -check-prefix=CHECK-ELF
 
 define i32 @test_jumptable(i32 %in) {
 ; CHECK: test_jumptable
@@ -44,13 +44,15 @@ lbl4:
 ; ELF tests:
 
 ; First make sure we get a page/lo12 pair in .text to pick up the jump-table
-; CHECK-ELF: .rela.text
-; CHECK-ELF: ('r_sym', 0x00000008)
-; CHECK-ELF-NEXT: ('r_type', 0x00000113)
-; CHECK-ELF: ('r_sym', 0x00000008)
-; CHECK-ELF-NEXT: ('r_type', 0x00000115)
+
+; CHECK-ELF:      Relocations [
+; CHECK-ELF:        Section ({{[0-9]+}}) .text {
+; CHECK-ELF-NEXT:     0x{{[0-9,A-F]+}} R_AARCH64_ADR_PREL_PG_HI21 .rodata
+; CHECK-ELF-NEXT:     0x{{[0-9,A-F]+}} R_AARCH64_ADD_ABS_LO12_NC .rodata
+; CHECK-ELF:        }
 
 ; Also check the targets in .rodata are relocated
-; CHECK-ELF: .rela.rodata
-; CHECK-ELF: ('r_sym', 0x00000005)
-; CHECK-ELF-NEXT: ('r_type', 0x00000101)
+; CHECK-ELF:        Section ({{[0-9]+}}) .rodata {
+; CHECK-ELF-NEXT:     0x{{[0-9,A-F]+}} R_AARCH64_ABS64 .text
+; CHECK-ELF:        }
+; CHECK-ELF:      ]
