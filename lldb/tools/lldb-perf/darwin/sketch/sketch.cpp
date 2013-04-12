@@ -22,6 +22,14 @@
 
 using namespace lldb_perf;
 
+static struct option g_long_options[] = {
+    { "verbose",    no_argument,            NULL, 'v' },
+    { "sketch",     required_argument,      NULL, 'c' },
+    { "foobar",     required_argument,      NULL, 'f' },
+    { "out-file",   required_argument,      NULL, 'o' },
+    { NULL,         0,                      NULL,  0  }
+};
+
 class SketchTest : public TestCase
 {
 public:
@@ -54,7 +62,12 @@ public:
                 SBValue value(frame.EvaluateExpression(expr, lldb::eDynamicCanRunTarget));
                 Xcode::FetchVariable (value, 0, GetVerbose());
             }, "run-expr", "time to evaluate an expression and display the result")
-    {}
+    {
+        m_app_path.clear();
+        m_out_path.clear();
+        m_doc_path.clear();
+        m_print_help = false;
+    }
     
     virtual
     ~SketchTest ()
@@ -62,13 +75,103 @@ public:
     }
     
     virtual bool
+    ParseOption (int short_option, const char* optarg)
+    {
+        switch (short_option)
+        {
+            case 0:
+                return false;
+                
+            case -1:
+                return false;
+                
+            case '?':
+            case 'h':
+                m_print_help = true;
+                break;
+                
+            case 'v':
+                SetVerbose(true);
+                break;
+                
+            case 'c':
+            {
+                SBFileSpec file(optarg);
+                if (file.Exists())
+                    SetExecutablePath(optarg);
+                else
+                    fprintf(stderr, "error: file specified in --sketch (-c) option doesn't exist: '%s'\n", optarg);
+            }
+                break;
+                
+            case 'f':
+            {
+                SBFileSpec file(optarg);
+                if (file.Exists())
+                    SetDocumentPath(optarg);
+                else
+                    fprintf(stderr, "error: file specified in --foobar (-f) option doesn't exist: '%s'\n", optarg);
+            }
+                break;
+                
+            case 'o':
+                SetResultFilePath(optarg);
+                break;
+                
+            default:
+                m_print_help = true;
+                fprintf (stderr, "error: unrecognized option %c\n", short_option);
+                break;
+        }
+        return true;
+    }
+    
+    virtual struct option*
+    GetLongOptions ()
+    {
+        return g_long_options;
+    }
+    
+    virtual bool
 	Setup (int& argc, const char**& argv)
     {
-        //SetVerbose(true);
-        m_app_path.assign(argv[1]);
-        m_doc_path.assign(argv[2]);
-        m_out_path.assign(argv[3]);
         TestCase::Setup(argc,argv);
+        bool error = false;
+        
+        if (GetExecutablePath() == NULL)
+        {
+            // --sketch is mandatory
+            error = true;
+            fprintf (stderr, "error: the '--sketch=PATH' option is mandatory\n");
+        }
+        
+        if (GetDocumentPath() == NULL)
+        {
+            // --foobar is mandatory
+            error = true;
+            fprintf (stderr, "error: the '--foobar=PATH' option is mandatory\n");
+        }
+        
+        if (error || GetPrintHelp())
+        {
+            puts(R"(
+                 NAME
+                 lldb_perf_sketch -- a tool that measures LLDB peformance while debugging sketch.
+                 
+                 SYNOPSIS
+                 lldb_perf_sketch --sketch=PATH --foobar=PATH [--out-file=PATH --verbose]
+                 
+                 DESCRIPTION
+                 Runs a set of static timing and memory tasks against sketch and outputs results
+                 to a plist file.
+                 )");
+        }
+        
+        if (error)
+        {
+            exit(1);
+        }
+        
         m_target = m_debugger.CreateTarget(m_app_path.c_str());
         const char* file_arg = m_doc_path.c_str(); 
         const char* persist_arg = "-ApplePersistenceIgnoreState";
@@ -188,7 +291,7 @@ public:
         m_fetch_modules_measurement.WriteAverageValue(results);
         m_fetch_vars_measurement.WriteAverageValue(results);
         m_run_expr_measurement.WriteAverageValue(results);
-        results.Write(m_out_path.c_str());
+        results.Write(GetResultFilePath());
     }
     
     void
@@ -233,8 +336,14 @@ public:
     GetResultFilePath ()
     {
         if (m_out_path.empty())
-            return NULL;
+            return "/dev/stdout";
         return m_out_path.c_str();
+    }
+    
+    bool
+    GetPrintHelp ()
+    {
+        return m_print_help;
     }
     
 private:
@@ -247,182 +356,11 @@ private:
     std::string m_app_path;
     std::string m_doc_path;
     std::string m_out_path;
+    bool m_print_help;
 };
-
-struct Options
-{
-    std::string sketch_path;
-    std::string foobar_path;
-    std::string out_file;
-    bool verbose;
-    bool error;
-    bool print_help;
-    
-    Options() :
-    verbose (false),
-    error (false),
-    print_help (false)
-    {
-    }
-};
-
-static struct option g_long_options[] = {
-    { "verbose",    no_argument,            NULL, 'v' },
-    { "sketch",     required_argument,      NULL, 'c' },
-    { "foobar",     required_argument,      NULL, 'f' },
-    { "out-file",   required_argument,      NULL, 'o' },
-    { NULL,         0,                      NULL,  0  }
-};
-
-
-std::string
-GetShortOptionString (struct option *long_options)
-{
-    std::string option_string;
-    for (int i = 0; long_options[i].name != NULL; ++i)
-    {
-        if (long_options[i].flag == NULL)
-        {
-            option_string.push_back ((char) long_options[i].val);
-            switch (long_options[i].has_arg)
-            {
-                default:
-                case no_argument:
-                    break;
-                case required_argument:
-                    option_string.push_back (':');
-                    break;
-                case optional_argument:
-                    option_string.append (2, ':');
-                    break;
-            }
-        }
-    }
-    return option_string;
-}
 
 int main(int argc, const char * argv[])
 {
-    
-    // Prepare for & make calls to getopt_long_only.
-    
     SketchTest test;
-    
-    std::string short_option_string (GetShortOptionString(g_long_options));
-    
-    Options option_data;
-    bool done = false;
-    
-#if __GLIBC__
-    optind = 0;
-#else
-    optreset = 1;
-    optind = 1;
-#endif
-    while (!done)
-    {
-        int long_options_index = -1;
-        const int short_option = ::getopt_long_only (argc,
-                                                     const_cast<char **>(argv),
-                                                     short_option_string.c_str(),
-                                                     g_long_options,
-                                                     &long_options_index);
-        
-        switch (short_option)
-        {
-            case 0:
-                // Already handled
-                break;
-                
-            case -1:
-                done = true;
-                break;
-                
-            case '?':
-                option_data.print_help = true;
-                break;
-                
-            case 'h':
-                option_data.print_help = true;
-                break;
-                
-            case 'v':
-                option_data.verbose = true;
-                break;
-                
-            case 'c':
-            {
-                SBFileSpec file(optarg);
-                if (file.Exists())
-                    test.SetExecutablePath(optarg);
-                else
-                    fprintf(stderr, "error: file specified in --sketch (-c) option doesn't exist: '%s'\n", optarg);
-            }
-                break;
-                
-            case 'f':
-            {
-                SBFileSpec file(optarg);
-                if (file.Exists())
-                    test.SetDocumentPath(optarg);
-                else
-                    fprintf(stderr, "error: file specified in --foobar (-f) option doesn't exist: '%s'\n", optarg);
-            }
-                break;
-                
-            case 'o':
-                test.SetResultFilePath(optarg);
-                break;
-                
-            default:
-                option_data.error = true;
-                option_data.print_help = true;
-                fprintf (stderr, "error: unrecognized option %c\n", short_option);
-                break;
-        }
-    }
-    
-    
-    if (test.GetExecutablePath() == NULL)
-    {
-        // --sketch is mandatory
-        option_data.print_help = true;
-        option_data.error = true;
-        fprintf (stderr, "error: the '--sketch=PATH' option is mandatory\n");
-    }
-    
-    if (test.GetDocumentPath() == NULL)
-    {
-        // --foobar is mandatory
-        option_data.print_help = true;
-        option_data.error = true;
-        fprintf (stderr, "error: the '--foobar=PATH' option is mandatory\n");
-    }
-    
-    if (option_data.print_help)
-    {
-        puts(R"(
-             NAME
-             lldb_perf_sketch -- a tool that measures LLDB peformance while debugging sketch.
-             
-             SYNOPSIS
-             lldb_perf_sketch --sketch=PATH --foobar=PATH [--out-file=PATH --verbose]
-             
-             DESCRIPTION
-             Runs a set of static timing and memory tasks against sketch and outputs results
-             to a plist file.
-             )");
-    }
-    if (option_data.error)
-    {
-        exit(1);
-    }
-    
-    // Update argc and argv after parsing options
-    argc -= optind;
-    argv += optind;
-    
-    test.SetVerbose(option_data.verbose);
-    TestCase::Run(test, argc, argv);
-    return 0;
+    return TestCase::Run(test, argc, argv);
 }
