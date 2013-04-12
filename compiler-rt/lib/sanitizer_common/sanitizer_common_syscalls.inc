@@ -61,7 +61,7 @@ PRE_SYSCALL(recvmsg)(int sockfd, struct sanitizer_kernel_msghdr *msg,
   PRE_READ(msg, sizeof(*msg));
 }
 
-POST_SYSCALL(recvmsg)(int res, int sockfd, struct sanitizer_kernel_msghdr *msg,
+POST_SYSCALL(recvmsg)(long res, int sockfd, struct sanitizer_kernel_msghdr *msg,
                       int flags) {
   if (res > 0)
     for (unsigned long i = 0; i < msg->msg_iovlen; ++i)
@@ -71,14 +71,14 @@ POST_SYSCALL(recvmsg)(int res, int sockfd, struct sanitizer_kernel_msghdr *msg,
 
 PRE_SYSCALL(rt_sigpending)(void *p, unsigned long s) { PRE_WRITE(p, s); }
 
-POST_SYSCALL(rt_sigpending)(int res, void *p, unsigned long s) {
+POST_SYSCALL(rt_sigpending)(long res, void *p, unsigned long s) {
   if (res == 0)
     POST_WRITE(p, s);
 }
 
 PRE_SYSCALL(getdents)(int fd, void *dirp, int count) { PRE_WRITE(dirp, count); }
 
-POST_SYSCALL(getdents)(int res, int fd, void *dirp, int count) {
+POST_SYSCALL(getdents)(long res, int fd, void *dirp, int count) {
   if (res > 0)
     POST_WRITE(dirp, res);
 }
@@ -87,7 +87,7 @@ PRE_SYSCALL(getdents64)(int fd, void *dirp, int count) {
   PRE_WRITE(dirp, count);
 }
 
-POST_SYSCALL(getdents64)(int res, int fd, void *dirp, int count) {
+POST_SYSCALL(getdents64)(long res, int fd, void *dirp, int count) {
   if (res > 0)
     POST_WRITE(dirp, res);
 }
