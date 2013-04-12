@@ -307,9 +307,9 @@ public:
     if (LValue) {
       if (const MemRegion *MR = LValue->getAsRegion()) {
         if (MR->canPrintPretty()) {
-          Out << " (reference to '";
+          Out << " (reference to ";
           MR->printPretty(Out);
-          Out << "')";
+          Out << ")";
         }
       }
     } else {
@@ -545,13 +545,9 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
     }
 
     if (action) {
-      if (!R)
-        return 0;
-
-      os << '\'';
       R->printPretty(os);
-      os << "' ";
-
+      os << " ";
+      
       if (V.getAs<loc::ConcreteInt>()) {
         bool b = false;
         if (R->isBoundable()) {
@@ -606,10 +602,8 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
 
       // Printed parameter indexes are 1-based, not 0-based.
       unsigned Idx = Param->getFunctionScopeIndex() + 1;
-      os << " via " << Idx << llvm::getOrdinalSuffix(Idx) << " parameter '";
-
+      os << " via " << Idx << llvm::getOrdinalSuffix(Idx) << " parameter ";
       R->printPretty(os);
-      os << '\'';
     }
   }
 
@@ -637,9 +631,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
     else
       os << "Value assigned to ";
 
-    os << '\'';
     R->printPretty(os);
-    os << '\'';
   }
 
   // Construct a new PathDiagnosticPiece.

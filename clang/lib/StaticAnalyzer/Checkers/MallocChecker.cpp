@@ -1606,9 +1606,8 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
   SmallString<200> buf;
   llvm::raw_svector_ostream os(buf);
   if (Region && Region->canPrintPretty()) {
-    os << "Potential leak of memory pointed to by '";
+    os << "Potential leak of memory pointed to by ";
     Region->printPretty(os);
-    os << '\'';
   } else {
     os << "Potential memory leak";
   }

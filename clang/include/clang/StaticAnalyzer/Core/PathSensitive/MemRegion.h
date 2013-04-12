@@ -169,6 +169,8 @@ public:
   /// \brief Print the region for use in diagnostics.
   virtual void printPretty(raw_ostream &os) const;
 
+  virtual void printPrettyNoQuotes(raw_ostream &os) const;
+
   Kind getKind() const { return kind; }
 
   template<typename RegionTy> const RegionTy* getAs() const;
@@ -875,7 +877,8 @@ public:
   }
 
   bool canPrintPretty() const;
-  void printPretty(raw_ostream &os) const;
+
+  void printPrettyNoQuotes(raw_ostream &os) const;
 };
   
 /// CXXThisRegion - Represents the region for the implicit 'this' parameter
@@ -937,6 +940,7 @@ public:
 
   bool canPrintPretty() const;
   void printPretty(raw_ostream &os) const;
+  void printPrettyNoQuotes(raw_ostream &os) const;
 };
 
 class ObjCIvarRegion : public DeclRegion {
@@ -953,7 +957,7 @@ public:
   QualType getValueType() const;
 
   bool canPrintPretty() const;
-  void printPretty(raw_ostream &os) const;
+  void printPrettyNoQuotes(raw_ostream &os) const;
 
   void dumpToStream(raw_ostream &os) const;
 

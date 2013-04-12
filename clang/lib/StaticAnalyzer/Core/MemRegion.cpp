@@ -559,6 +559,15 @@ bool MemRegion::canPrintPretty() const {
 }
 
 void MemRegion::printPretty(raw_ostream &os) const {
+  assert(canPrintPretty() && "This region cannot be printed pretty.");
+  os << "'";
+  printPrettyNoQuotes(os);
+  os << "'";
+  return;
+}
+
+void MemRegion::printPrettyNoQuotes(raw_ostream &os) const {
+  assert(canPrintPretty() && "This region cannot be printed pretty.");
   return;
 }
 
@@ -566,7 +575,7 @@ bool VarRegion::canPrintPretty() const {
   return true;
 }
 
-void VarRegion::printPretty(raw_ostream &os) const {
+void VarRegion::printPrettyNoQuotes(raw_ostream &os) const {
   os << getDecl()->getName();
 }
 
@@ -574,17 +583,32 @@ bool ObjCIvarRegion::canPrintPretty() const {
   return true;
 }
 
-void ObjCIvarRegion::printPretty(raw_ostream &os) const {
+void ObjCIvarRegion::printPrettyNoQuotes(raw_ostream &os) const {
   os << getDecl()->getName();
 }
 
 bool FieldRegion::canPrintPretty() const {
-  return superRegion->canPrintPretty();
+  return true;
+}
+
+void FieldRegion::printPrettyNoQuotes(raw_ostream &os) const {
+  if (superRegion->canPrintPretty()) {
+    superRegion->printPrettyNoQuotes(os);
+    os << "." << getDecl()->getName();
+  } else {
+    os << "field " << "\'" << getDecl()->getName() << "'";
+  }
 }
 
 void FieldRegion::printPretty(raw_ostream &os) const {
-  superRegion->printPretty(os);
-  os << "." << getDecl()->getName();
+  if (superRegion->canPrintPretty()) {
+    os << "\'";
+    printPrettyNoQuotes(os);
+    os << "'";
+  } else {
+    printPrettyNoQuotes(os);
+  }
+  return;
 }
 
 //===----------------------------------------------------------------------===//
