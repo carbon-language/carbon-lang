@@ -61,7 +61,7 @@ private:
   X86Operand *ParseIntelOperator(unsigned OpKind);
   X86Operand *ParseIntelMemOperand(unsigned SegReg, uint64_t ImmDisp,
                                    SMLoc StartLoc);
-  X86Operand *ParseIntelBracExpression(unsigned SegReg, SMLoc SizeDirLoc,
+  X86Operand *ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
                                        uint64_t ImmDisp, unsigned Size);
   X86Operand *ParseIntelVarWithQualifier(const MCExpr *&Disp,
                                          StringRef &Identifier);
@@ -70,8 +70,7 @@ private:
   X86Operand *CreateMemForInlineAsm(unsigned SegReg, const MCExpr *Disp,
                                     unsigned BaseReg, unsigned IndexReg,
                                     unsigned Scale, SMLoc Start, SMLoc End,
-                                    SMLoc SizeDirLoc, unsigned Size,
-                                    StringRef SymName);
+                                    unsigned Size, StringRef SymName);
 
   bool ParseIntelDotOperator(const MCExpr *Disp, const MCExpr **NewDisp,
                              SmallString<64> &Err);
@@ -1083,8 +1082,7 @@ X86Operand *
 X86AsmParser::CreateMemForInlineAsm(unsigned SegReg, const MCExpr *Disp,
                                     unsigned BaseReg, unsigned IndexReg,
                                     unsigned Scale, SMLoc Start, SMLoc End,
-                                    SMLoc SizeDirLoc, unsigned Size,
-                                    StringRef SymName) {
+                                    unsigned Size, StringRef SymName) {
   bool NeedSizeDir = false;
   if (const MCSymbolRefExpr *SymRef = dyn_cast<MCSymbolRefExpr>(Disp)) {
     const MCSymbol &Sym = SymRef->getSymbol();
@@ -1111,8 +1109,8 @@ X86AsmParser::CreateMemForInlineAsm(unsigned SegReg, const MCExpr *Disp,
   }
 
   if (NeedSizeDir)
-    InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_SizeDirective, SizeDirLoc,
-                                                /*Len*/0, Size));  
+    InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_SizeDirective, Start,
+                                                /*Len=*/0, Size));  
 
   // When parsing inline assembly we set the base register to a non-zero value
   // if we don't know the actual value at this time.  This is necessary to
@@ -1122,15 +1120,13 @@ X86AsmParser::CreateMemForInlineAsm(unsigned SegReg, const MCExpr *Disp,
                                End, Size, SymName);
 }
 
-X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
-                                                   SMLoc SizeDirLoc,
+X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
                                                    uint64_t ImmDisp,
                                                    unsigned Size) {
   const AsmToken &Tok = Parser.getTok();
-  SMLoc Start = Tok.getLoc(), End = Tok.getEndLoc();
-
+  SMLoc BracLoc = Tok.getLoc(), End = Tok.getEndLoc();
   if (getLexer().isNot(AsmToken::LBrac))
-    return ErrorOperand(Start, "Expected '[' token!");
+    return ErrorOperand(BracLoc, "Expected '[' token!");
   Parser.Lex(); // Eat '['
 
   unsigned TmpReg = 0;
@@ -1210,7 +1206,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
 
     if (isParsingInlineAsm()) {
       // Remove the '[' and ']' from the IR string.
-      InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, Start, 1));
+      InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, BracLoc, 1));
       InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, End, 1));
 
       // If ImmDisp is non-zero, then we parsed a displacement before the
@@ -1221,14 +1217,29 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       // then we have an additional displacement in the bracketed expression.
       if (ImmDisp != FinalImmDisp) {
         if (ImmDisp) {
-          // FIXME: We have an immediate displacement before the bracketed
-          // expression. Adjust this to match the final immediate displacement.
+          // We have an immediate displacement before the bracketed expression.
+          // Adjust this to match the final immediate displacement.
+          bool Found = false;
+          for (SmallVectorImpl<AsmRewrite>::iterator
+                 I = InstInfo->AsmRewrites->begin(),
+                 E = InstInfo->AsmRewrites->end(); I != E; ++I) {
+            if ((*I).Loc.getPointer() > BracLoc.getPointer())
+              continue;
+            if ((*I).Kind == AOK_ImmPrefix) {
+              (*I).Kind = AOK_Imm;
+              (*I).Len = BracLoc.getPointer() - (*I).Loc.getPointer();
+              (*I).Val = FinalImmDisp;
+              Found = true;
+              break;
+            }
+          }
+          assert (Found && "Unable to rewrite ImmDisp.");
         } else {
           // We have a symbolic and an immediate displacement, but no displacement
           // before the bracketed expression.
         
           // Put the immediate displacement before the bracketed expression.
-          InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Imm, Start, 0,
+          InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Imm, BracLoc, 0,
                                                       FinalImmDisp));
         }
       }
@@ -1278,7 +1289,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
 
   if (isParsingInlineAsm())
     return CreateMemForInlineAsm(SegReg, Disp, BaseReg, IndexReg, Scale, Start,
-                                 End, SizeDirLoc, Size, SM.getSymName());
+                                 End, Size, SM.getSymName());
 
   // handle [-42]
   if (!BaseReg && !IndexReg) {
@@ -1385,7 +1396,7 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg,
     return Err;
 
   return CreateMemForInlineAsm(/*SegReg=*/0, Disp, /*BaseReg=*/0,/*IndexReg=*/0,
-                               /*Scale=*/1, Start, End, Start, Size,Identifier);
+                               /*Scale=*/1, Start, End, Size, Identifier);
 }
 
 /// Parse the '.' operator.
