@@ -1,11 +1,14 @@
 RUN: lld -flavor gnu -target powerpc  %p/Inputs/branch-test.ppc %p/Inputs/target-test.ppc -o %t1 --noinhibit-exec
-RUN: elf-dump %t1 |  FileCheck -check-prefix=ppc-elfdump %s 
+RUN: llvm-readobj -h %t1 |  FileCheck -check-prefix=ppc-readobj %s
 
-ppc-elfdump: ('e_indent[EI_CLASS]', 0x01)
-ppc-elfdump: ('e_indent[EI_DATA]', 0x02)
-ppc-elfdump: ('e_indent[EI_VERSION]', 0x01)
-ppc-elfdump: ('e_indent[EI_OSABI]', 0x00)
-ppc-elfdump: ('e_indent[EI_ABIVERSION]', 0x00)
-ppc-elfdump: ('e_type', 0x0002)
-ppc-elfdump: ('e_machine', 0x0014)
 
+ppc-readobj: ElfHeader {
+ppc-readobj:   Ident {
+ppc-readobj:     Class: 32-bit (0x1)
+ppc-readobj:     DataEncoding: BigEndian (0x2)
+ppc-readobj:     FileVersion: 1
+ppc-readobj:     OS/ABI: SystemV (0x0)
+ppc-readobj:     ABIVersion: 0
+ppc-readobj:   }
+ppc-readobj:   Type: Executable (0x2)
+ppc-readobj:   Machine: EM_PPC (0x14)
