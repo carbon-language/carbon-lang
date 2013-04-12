@@ -200,7 +200,7 @@ int main(int argc, char **argv) {
 static int compileModule(char **argv, LLVMContext &Context) {
   // Load the module to be compiled...
   SMDiagnostic Err;
-  std::auto_ptr<Module> M;
+  OwningPtr<Module> M;
   Module *mod = 0;
   Triple TheTriple;
 
@@ -281,7 +281,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
   Options.UseInitArray = UseInitArray;
   Options.SSPBufferSize = SSPBufferSize;
 
-  std::auto_ptr<TargetMachine>
+  OwningPtr<TargetMachine>
     target(TheTarget->createTargetMachine(TheTriple.getTriple(),
                                           MCPU, FeaturesStr, Options,
                                           RelocModel, CMModel, OLvl));
