@@ -91,6 +91,10 @@ struct SLPVectorizer : public BasicBlockPass {
          it != e; ++it) {
       if (it->second.size() < 2)
         continue;
+
+      DEBUG(dbgs()<<"SLP: Analyzing a store chain of length " <<
+            it->second.size() << ".\n");
+
       Changed |= R.vectorizeStores(it->second, -SLPCostThreshold);
     }
     return Changed;
@@ -117,7 +121,7 @@ struct SLPVectorizer : public BasicBlockPass {
 
     bool Changed = RollStoreChains(R);
     if (Changed) {
-      DEBUG(dbgs()<<"Rolled chains in \""<<BB.getParent()->getName()<<"\"\n");
+      DEBUG(dbgs()<<"SLP: vectorized in \""<<BB.getParent()->getName()<<"\"\n");
       DEBUG(verifyFunction(*BB.getParent()));
     }
 
