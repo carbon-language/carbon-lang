@@ -1091,7 +1091,7 @@ bool MallocChecker::isTrackedByCurrentChecker(AllocationFamily Family) const {
   }
   case AF_CXXNew:
   case AF_CXXNewArray: {
-    if (!Filter.CNewDeleteChecker && !Filter.CNewDeleteLeaksChecker)
+    if (!Filter.CNewDeleteChecker)
       return false;
     return true;
   }
@@ -2152,6 +2152,14 @@ void MallocChecker::printState(raw_ostream &Out, ProgramStateRef State,
   }
 }
 
+void ento::registerNewDeleteLeaksChecker(CheckerManager &mgr) {
+  registerCStringCheckerBasic(mgr);
+  mgr.registerChecker<MallocChecker>()->Filter.CNewDeleteLeaksChecker = true;
+  // We currently treat NewDeleteLeaks checker as a subchecker of NewDelete 
+  // checker.
+  mgr.registerChecker<MallocChecker>()->Filter.CNewDeleteChecker = true;
+}
+
 #define REGISTER_CHECKER(name) \
 void ento::register##name(CheckerManager &mgr) {\
   registerCStringCheckerBasic(mgr); \
@@ -2161,5 +2169,4 @@ void ento::register##name(CheckerManager &mgr) {\
 REGISTER_CHECKER(MallocPessimistic)
 REGISTER_CHECKER(MallocOptimistic)
 REGISTER_CHECKER(NewDeleteChecker)
-REGISTER_CHECKER(NewDeleteLeaksChecker)
 REGISTER_CHECKER(MismatchedDeallocatorChecker)
