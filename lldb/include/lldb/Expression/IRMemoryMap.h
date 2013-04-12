@@ -38,6 +38,7 @@ class IRMemoryMap
 {
 public:
     IRMemoryMap (lldb::ProcessSP process_sp);
+    IRMemoryMap (lldb::TargetSP target_sp);
     ~IRMemoryMap ();
     
     enum AllocationPolicy {
@@ -53,8 +54,15 @@ public:
     void Free (lldb::addr_t process_address, Error &error);
     
     void WriteMemory (lldb::addr_t process_address, const uint8_t *bytes, size_t size, Error &error);
+    void WriteScalarToMemory (lldb::addr_t process_address, Scalar &scalar, size_t size, Error &error);
     void ReadMemory (uint8_t *bytes, lldb::addr_t process_address, size_t size, Error &error);
+    void ReadScalarFromMemory (Scalar &scalar, lldb::addr_t process_address, size_t size, Error &error);
     
+    lldb::ByteOrder GetByteOrder();
+    uint32_t GetAddressByteSize();
+    
+    ExecutionContextScope *GetBestExecutionContextScope();
+
 protected:
     lldb::ProcessWP GetProcessWP ()
     {
@@ -76,9 +84,10 @@ private:
     };
     
     lldb::ProcessWP                             m_process_wp;
+    lldb::TargetWP                              m_target_wp;
     typedef std::map<lldb::addr_t, Allocation>  AllocationMap;
     AllocationMap                               m_allocations;
-    
+        
     lldb::addr_t FindSpace (size_t size);
     bool ContainsHostOnlyAllocations ();
     AllocationMap::iterator FindAllocation (lldb::addr_t addr, size_t size);

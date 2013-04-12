@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/Core/Log.h"
+#include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
 #include "lldb/Expression/Materializer.h"
 #include "lldb/Symbol/ClangASTContext.h"
@@ -67,12 +69,234 @@ public:
         SetSizeAndAlignmentFromType(type);
     }
     
-    virtual void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
+    void MakeAllocation (IRMemoryMap &map, Error &err)
     {
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+        // Allocate a spare memory area to store the persistent variable's contents.
+        
+        Error allocate_error;
+        
+        lldb::addr_t mem = map.Malloc(m_persistent_variable_sp->GetByteSize(),
+                                      8,
+                                      lldb::ePermissionsReadable | lldb::ePermissionsWritable,
+                                      IRMemoryMap::eAllocationPolicyMirror,
+                                      allocate_error);
+        
+        if (!allocate_error.Success())
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat("Couldn't allocate a memory area to store %s: %s", m_persistent_variable_sp->GetName().GetCString(), allocate_error.AsCString());
+            return;
+        }
+        
+        if (log)
+            log->Printf("Allocated %s (0x%" PRIx64 ") sucessfully", m_persistent_variable_sp->GetName().GetCString(), mem);
+        
+        // Put the location of the spare memory into the live data of the ValueObject.
+                
+        m_persistent_variable_sp->m_live_sp = ValueObjectConstResult::Create (map.GetBestExecutionContextScope(),
+                                                                              m_persistent_variable_sp->GetTypeFromUser().GetASTContext(),
+                                                                              m_persistent_variable_sp->GetTypeFromUser().GetOpaqueQualType(),
+                                                                              m_persistent_variable_sp->GetName(),
+                                                                              mem,
+                                                                              eAddressTypeLoad,
+                                                                              m_persistent_variable_sp->GetByteSize());
+        
+        // Clear the flag if the variable will never be deallocated.
+        
+        if (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVKeepInTarget)
+            m_persistent_variable_sp->m_flags &= ~ClangExpressionVariable::EVNeedsAllocation;
+        
+        // Write the contents of the variable to the area.
+        
+        Error write_error;
+        
+        map.WriteMemory (mem,
+                         m_persistent_variable_sp->GetValueBytes(),
+                         m_persistent_variable_sp->GetByteSize(),
+                         write_error);
+        
+        if (!write_error.Success())
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", m_persistent_variable_sp->GetName().AsCString(),
+                                          write_error.AsCString());
+            return;
+        }
     }
     
-    virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
+    void DestroyAllocation (IRMemoryMap &map, Error &err)
     {
+        Error deallocate_error;
+        
+        map.Free((lldb::addr_t)m_persistent_variable_sp->m_live_sp->GetValue().GetScalar().ULongLong(), deallocate_error);
+            
+        if (!deallocate_error.Success())
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat ("Couldn't deallocate memory for %s: %s", m_persistent_variable_sp->GetName().GetCString(), deallocate_error.AsCString());
+        }
+    }
+    
+    virtual void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
+    {
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+        if (log)
+        {
+            log->Printf("EntityPersistentVariable::Materialize [process_address = 0x%llx, m_name = %s, m_flags = 0x%hx]",
+                        (uint64_t)process_address,
+                        m_persistent_variable_sp->GetName().AsCString(),
+                        m_persistent_variable_sp->m_flags);
+        }
+        
+        if (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVNeedsAllocation)
+        {
+            MakeAllocation(map, err);
+            if (!err.Success())
+                return;
+        }
+        
+        if ((m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVIsProgramReference && m_persistent_variable_sp->m_live_sp) ||
+            m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVIsLLDBAllocated)
+        {
+            Error write_error;
+            
+            map.WriteScalarToMemory(process_address + m_offset,
+                                    m_persistent_variable_sp->m_live_sp->GetValue().GetScalar(),
+                                    m_persistent_variable_sp->m_live_sp->GetProcessSP()->GetAddressByteSize(),
+                                    write_error);
+            
+            if (!write_error.Success())
+            {
+                err.SetErrorToGenericError();
+                err.SetErrorStringWithFormat("Couldn't write the location of %s to memory: %s", m_persistent_variable_sp->GetName().AsCString(), write_error.AsCString());
+            }
+        }
+        else
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat("No materialization happened for persistent variable %s", m_persistent_variable_sp->GetName().AsCString());
+            return;
+        }
+    }
+    
+    virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map,
+                                lldb::addr_t frame_top, lldb::addr_t frame_bottom, lldb::addr_t process_address, Error &err)
+    {
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+        
+        if (log)
+        {
+            log->Printf("EntityPersistentVariable::Dematerialize [process_address = 0x%llx, m_name = %s, m_flags = 0x%hx]",
+                        (uint64_t)process_address,
+                        m_persistent_variable_sp->GetName().AsCString(),
+                        m_persistent_variable_sp->m_flags);
+        }
+        
+        if ((m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVIsLLDBAllocated) ||
+            (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVIsProgramReference))
+        {
+            if (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVIsProgramReference &&
+                !m_persistent_variable_sp->m_live_sp)
+            {
+                // If the reference comes from the program, then the ClangExpressionVariable's
+                // live variable data hasn't been set up yet.  Do this now.
+                
+                Scalar location_scalar;
+                Error read_error;
+                
+                map.ReadScalarFromMemory(location_scalar, process_address + m_offset, map.GetAddressByteSize(), read_error);
+                                
+                if (!read_error.Success())
+                {
+                    err.SetErrorToGenericError();
+                    err.SetErrorStringWithFormat("Couldn't read the address of program-allocated variable %s: %s", m_persistent_variable_sp->GetName().GetCString(), read_error.AsCString());
+                    return;
+                }
+                
+                lldb::addr_t location = location_scalar.ULongLong();
+                
+                m_persistent_variable_sp->m_live_sp = ValueObjectConstResult::Create (map.GetBestExecutionContextScope (),
+                                                                                      m_persistent_variable_sp->GetTypeFromUser().GetASTContext(),
+                                                                                      m_persistent_variable_sp->GetTypeFromUser().GetOpaqueQualType(),
+                                                                                      m_persistent_variable_sp->GetName(),
+                                                                                      location,
+                                                                                      eAddressTypeLoad,
+                                                                                      m_persistent_variable_sp->GetByteSize());
+                
+                if (frame_top != LLDB_INVALID_ADDRESS &&
+                    frame_bottom != LLDB_INVALID_ADDRESS &&
+                    location >= frame_bottom &&
+                    location <= frame_top)
+                {
+                    // If the variable is resident in the stack frame created by the expression,
+                    // then it cannot be relied upon to stay around.  We treat it as needing
+                    // reallocation.
+                    m_persistent_variable_sp->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
+                    m_persistent_variable_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
+                    m_persistent_variable_sp->m_flags |= ClangExpressionVariable::EVNeedsFreezeDry;
+                    m_persistent_variable_sp->m_flags &= ~ClangExpressionVariable::EVIsProgramReference;
+                }
+            }
+            
+            lldb::addr_t mem = m_persistent_variable_sp->m_live_sp->GetValue().GetScalar().ULongLong();
+            
+            if (!m_persistent_variable_sp->m_live_sp)
+            {
+                err.SetErrorToGenericError();
+                err.SetErrorStringWithFormat("Couldn't find the memory area used to store %s", m_persistent_variable_sp->GetName().GetCString());
+                return;
+            }
+            
+            if (m_persistent_variable_sp->m_live_sp->GetValue().GetValueAddressType() != eAddressTypeLoad)
+            {
+                err.SetErrorToGenericError();
+                err.SetErrorStringWithFormat("The address of the memory area for %s is in an incorrect format", m_persistent_variable_sp->GetName().GetCString());
+                return;
+            }
+            
+            if (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVNeedsFreezeDry ||
+                m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVKeepInTarget)
+            {                
+                if (log)
+                    log->Printf("Dematerializing %s from 0x%" PRIx64 " (size = %llu)", m_persistent_variable_sp->GetName().GetCString(), (uint64_t)mem, (unsigned long long)m_persistent_variable_sp->GetByteSize());
+                
+                // Read the contents of the spare memory area
+                
+                m_persistent_variable_sp->ValueUpdated ();
+                
+                Error read_error;
+                
+                map.ReadMemory(m_persistent_variable_sp->GetValueBytes(),
+                               mem,
+                               m_persistent_variable_sp->GetByteSize(),
+                               read_error);
+                
+                if (!read_error.Success())
+                {
+                    err.SetErrorStringWithFormat ("Couldn't read the contents of %s from memory: %s", m_persistent_variable_sp->GetName().GetCString(), read_error.AsCString());
+                    return;
+                }
+                    
+                m_persistent_variable_sp->m_flags &= ~ClangExpressionVariable::EVNeedsFreezeDry;
+            }
+        }
+        else
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat("No dematerialization happened for persistent variable %s", m_persistent_variable_sp->GetName().AsCString());
+            return;
+        }
+        
+        if (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVNeedsAllocation &&
+            !(m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVKeepInTarget))
+        {
+            DestroyAllocation(map, err);
+            if (!err.Success())
+                return;
+        }
     }
 private:
     lldb::ClangExpressionVariableSP m_persistent_variable_sp;
@@ -104,7 +328,8 @@ public:
     {
     }
     
-    virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
+    virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address,
+                                lldb::addr_t frame_top, lldb::addr_t frame_bottom, Error &err)
     {
     }
 private:
@@ -124,9 +349,10 @@ Materializer::AddVariable (lldb::VariableSP &variable_sp, Error &err)
 class EntityResultVariable : public Materializer::Entity
 {
 public:
-    EntityResultVariable (const ClangASTType &type) :
+    EntityResultVariable (const ClangASTType &type, bool keep_in_memory) :
         Entity(),
-        m_type(type)
+        m_type(type),
+        m_keep_in_memory(keep_in_memory)
     {
         SetSizeAndAlignmentFromType(m_type);
     }
@@ -135,18 +361,20 @@ public:
     {
     }
     
-    virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
+    virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address,
+                                lldb::addr_t frame_top, lldb::addr_t frame_bottom, Error &err)
     {
     }
 private:
-    ClangASTType m_type;
+    ClangASTType    m_type;
+    bool            m_keep_in_memory;
 };
 
 uint32_t
-Materializer::AddResultVariable (const ClangASTType &type, Error &err)
+Materializer::AddResultVariable (const ClangASTType &type, bool keep_in_memory, Error &err)
 {
     EntityVector::iterator iter = m_entities.insert(m_entities.end(), EntityUP());
-    iter->reset (new EntityResultVariable (type));
+    iter->reset (new EntityResultVariable (type, keep_in_memory));
     uint32_t ret = AddStructMember(**iter);
     (*iter)->SetOffset(ret);
     return ret;
@@ -168,7 +396,8 @@ public:
     {
     }
     
-    virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
+    virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address,
+                                lldb::addr_t frame_top, lldb::addr_t frame_bottom, Error &err)
     {
     }
 private:
@@ -201,7 +430,8 @@ public:
     {
     }
     
-    virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
+    virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address,
+                                lldb::addr_t frame_top, lldb::addr_t frame_bottom, Error &err)
     {
     }
 private:
@@ -243,7 +473,7 @@ Materializer::Materialize (lldb::StackFrameSP &frame_sp, lldb::ClangExpressionVa
 }
 
 void
-Materializer::Dematerializer::Dematerialize (Error &error)
+Materializer::Dematerializer::Dematerialize (Error &error, lldb::addr_t frame_top, lldb::addr_t frame_bottom)
 {
     lldb::StackFrameSP frame_sp = m_frame_wp.lock();
     
@@ -256,7 +486,7 @@ Materializer::Dematerializer::Dematerialize (Error &error)
     {
         for (EntityUP &entity_up : m_materializer.m_entities)
         {
-            entity_up->Dematerialize (frame_sp, m_map, m_process_address, error);
+            entity_up->Dematerialize (frame_sp, m_map, m_process_address, frame_top, frame_bottom, error);
             
             if (!error.Success())
                 break;

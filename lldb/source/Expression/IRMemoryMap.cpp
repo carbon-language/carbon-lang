@@ -7,15 +7,26 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/Core/DataBufferHeap.h"
+#include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Scalar.h"
 #include "lldb/Expression/IRMemoryMap.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb_private;
 
 IRMemoryMap::IRMemoryMap (lldb::ProcessSP process_sp) :
-    m_process_wp(process_sp)
+    m_process_wp(process_sp),
+    m_target_wp(process_sp->GetTarget().shared_from_this())
+{
+}
+
+IRMemoryMap::IRMemoryMap (lldb::TargetSP target_sp) :
+    m_process_wp(),
+    m_target_wp(target_sp)
 {
 }
 
@@ -95,6 +106,54 @@ IRMemoryMap::FindAllocation (lldb::addr_t addr, size_t size)
         return iter;
     
     return m_allocations.end();
+}
+
+lldb::ByteOrder
+IRMemoryMap::GetByteOrder()
+{
+    lldb::ProcessSP process_sp = m_process_wp.lock();
+    
+    if (process_sp)
+        return process_sp->GetByteOrder();
+    
+    lldb::TargetSP target_sp = m_target_wp.lock();
+    
+    if (target_sp)
+        return target_sp->GetDefaultArchitecture().GetByteOrder();
+    
+    return lldb::eByteOrderInvalid;
+}
+
+uint32_t
+IRMemoryMap::GetAddressByteSize()
+{
+    lldb::ProcessSP process_sp = m_process_wp.lock();
+    
+    if (process_sp)
+        return process_sp->GetAddressByteSize();
+    
+    lldb::TargetSP target_sp = m_target_wp.lock();
+    
+    if (target_sp)
+        return target_sp->GetDefaultArchitecture().GetAddressByteSize();
+    
+    return UINT32_MAX;
+}
+
+ExecutionContextScope *
+IRMemoryMap::GetBestExecutionContextScope()
+{
+    lldb::ProcessSP process_sp = m_process_wp.lock();
+    
+    if (process_sp)
+        return process_sp.get();
+    
+    lldb::TargetSP target_sp = m_target_wp.lock();
+    
+    if (target_sp)
+        return target_sp.get();
+    
+    return NULL;
 }
 
 lldb::addr_t
@@ -336,6 +395,34 @@ IRMemoryMap::WriteMemory (lldb::addr_t process_address, const uint8_t *bytes, si
 }
 
 void
+IRMemoryMap::WriteScalarToMemory (lldb::addr_t process_address, Scalar &scalar, size_t size, Error &error)
+{    
+    if (size == UINT32_MAX)
+        size = scalar.GetByteSize();
+    
+    if (size > 0)
+    {
+        uint8_t buf[32];
+        const size_t mem_size = scalar.GetAsMemoryData (buf, size, GetByteOrder(), error);
+        if (mem_size > 0)
+        {
+            return WriteMemory(process_address, buf, mem_size, error);
+        }
+        else
+        {
+            error.SetErrorToGenericError();
+            error.SetErrorString ("Couldn't write scalar: failed to get scalar as memory data");
+        }
+    }
+    else
+    {
+        error.SetErrorToGenericError();
+        error.SetErrorString ("Couldn't write scalar: its size was zero");
+    }
+    return;
+}
+
+void
 IRMemoryMap::ReadMemory (uint8_t *bytes, lldb::addr_t process_address, size_t size, Error &error)
 {
     AllocationMap::iterator iter = FindAllocation(process_address, size);
@@ -408,3 +495,39 @@ IRMemoryMap::ReadMemory (uint8_t *bytes, lldb::addr_t process_address, size_t si
                     (uint64_t)allocation.m_process_start + (uint64_t)allocation.m_size);
     }
 }
+
+void
+IRMemoryMap::ReadScalarFromMemory (Scalar &scalar, lldb::addr_t process_address, size_t size, Error &error)
+{ 
+    if (size > 0)
+    {
+        DataBufferHeap buf(size, 0);
+        ReadMemory(buf.GetBytes(), process_address, size, error);
+        
+        if (!error.Success())
+            return;
+        
+        DataExtractor extractor(buf.GetBytes(), buf.GetByteSize(), GetByteOrder(), GetAddressByteSize());
+        
+        lldb::offset_t offset = 0;
+        
+        switch (size)
+        {
+        default:
+            error.SetErrorToGenericError();
+            error.SetErrorStringWithFormat("Couldn't read scalar: unsupported size %lld", (unsigned long long)size);
+            return;
+        case 1: scalar = extractor.GetU8(&offset);  break;
+        case 2: scalar = extractor.GetU16(&offset); break;
+        case 4: scalar = extractor.GetU32(&offset); break;
+        case 8: scalar = extractor.GetU64(&offset); break;
+        }
+    }
+    else
+    {
+        error.SetErrorToGenericError();
+        error.SetErrorString ("Couldn't write scalar: its size was zero");
+    }
+    return;
+}
+

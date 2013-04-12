@@ -510,6 +510,11 @@ ClangExpressionDeclMap::AddPersistentVariable
         var_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
     }
     
+    if (m_keep_result_in_memory)
+    {
+        var_sp->m_flags |= ClangExpressionVariable::EVKeepInTarget;
+    }
+    
     if (log)
         log->Printf("Created persistent variable with flags 0x%hx", var_sp->m_flags);
     
@@ -523,7 +528,7 @@ ClangExpressionDeclMap::AddPersistentVariable
     if (m_parser_vars->m_materializer)
     {
         Error err;
-        m_parser_vars->m_materializer->AddResultVariable(user_type, err);
+        m_parser_vars->m_materializer->AddResultVariable(user_type, m_keep_result_in_memory, err);
     }
     
     return true;
