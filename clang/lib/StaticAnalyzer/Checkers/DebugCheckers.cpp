@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines a checkers that display debugging information.
+//  This file defines checkers that display debugging information.
 //
 //===----------------------------------------------------------------------===//
 
