@@ -296,6 +296,8 @@ static void ReportCall(raw_ostream &o,
   
   for (PathPieces::const_iterator I = P.path.begin(), E = P.path.end();I!=E;++I)
     ReportPiece(o, **I, FM, SM, LangOpts, indent, depth, true);
+
+  --depth;
   
   IntrusiveRefCntPtr<PathDiagnosticEventPiece> callExit =
     P.getCallExitEvent();

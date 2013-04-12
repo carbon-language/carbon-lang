@@ -393,7 +393,7 @@ int testDispatchSyncInliningNoPruning(int coin) {
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
 // CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning from &apos;getZeroIfNil&apos;</string>
 // CHECK-NEXT:      <key>message</key>
@@ -655,7 +655,7 @@ int testDispatchSyncInliningNoPruning(int coin) {
 // CHECK-NEXT:       <key>col</key><integer>1</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>depth</key><integer>2</integer>
+// CHECK-NEXT:      <key>depth</key><integer>1</integer>
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning to caller</string>
 // CHECK-NEXT:      <key>message</key>
@@ -684,7 +684,7 @@ int testDispatchSyncInliningNoPruning(int coin) {
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
 // CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning from &apos;dispatch_sync&apos;</string>
 // CHECK-NEXT:      <key>message</key>

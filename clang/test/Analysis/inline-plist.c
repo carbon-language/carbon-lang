@@ -1214,7 +1214,7 @@ void test_block_arg() {
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
 // CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning to caller</string>
 // CHECK-NEXT:      <key>message</key>
@@ -1526,7 +1526,7 @@ void test_block_arg() {
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
 // CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning to caller</string>
 // CHECK-NEXT:      <key>message</key>
@@ -1775,7 +1775,7 @@ void test_block_arg() {
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
 // CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>1</integer>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Returning to caller</string>
 // CHECK-NEXT:      <key>message</key>
