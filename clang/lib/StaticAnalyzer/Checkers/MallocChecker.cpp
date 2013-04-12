@@ -1091,7 +1091,7 @@ bool MallocChecker::isTrackedByCurrentChecker(AllocationFamily Family) const {
   }
   case AF_CXXNew:
   case AF_CXXNewArray: {
-    if (!Filter.CNewDeleteChecker)
+    if (!Filter.CNewDeleteChecker && !Filter.CNewDeleteLeaksChecker)
       return false;
     return true;
   }
