@@ -30,7 +30,48 @@
  */
 #if __STDC_HOSTED__ && \
     defined(__has_include_next) && __has_include_next(<stdint.h>)
+
+// C99 7.18.3 Limits of other integer types
+//
+//  Footnote 219, 220: C++ implementations should define these macros only when
+//  __STDC_LIMIT_MACROS is defined before <stdint.h> is included.
+//
+//  Footnote 222: C++ implementations should define these macros only when
+//  __STDC_CONSTANT_MACROS is defined before <stdint.h> is included.
+//
+// C++11 [cstdint.syn]p2:
+//
+//  The macros defined by <cstdint> are provided unconditionally. In particular,
+//  the symbols __STDC_LIMIT_MACROS and __STDC_CONSTANT_MACROS (mentioned in
+//  footnotes 219, 220, and 222 in the C standard) play no role in C++.
+//
+// C11 removed the problematic footnotes.
+//
+// Work around this inconsistency by always defining those macros in C++ mode,
+// so that a C library implementation which follows the C99 standard can be
+// used in C++.
+# ifdef __cplusplus
+#  if !defined(__STDC_LIMIT_MACROS)
+#   define __STDC_LIMIT_MACROS
+#   define __STDC_LIMIT_MACROS_DEFINED_BY_CLANG
+#  endif
+#  if !defined(__STDC_CONSTANT_MACROS)
+#   define __STDC_CONSTANT_MACROS
+#   define __STDC_CONSTANT_MACROS_DEFINED_BY_CLANG
+#  endif
+# endif
+
 # include_next <stdint.h>
+
+# ifdef __STDC_LIMIT_MACROS_DEFINED_BY_CLANG
+#  undef __STDC_LIMIT_MACROS
+#  undef __STDC_LIMIT_MACROS_DEFINED_BY_CLANG
+# endif
+# ifdef __STDC_CONSTANT_MACROS_DEFINED_BY_CLANG
+#  undef __STDC_CONSTANT_MACROS
+#  undef __STDC_CONSTANT_MACROS_DEFINED_BY_CLANG
+# endif
+
 #else
 
 /* C99 7.18.1.1 Exact-width integer types.
