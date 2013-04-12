@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple thumbv7-apple-darwin10 -target-cpu cortex-a8 -fsyntax-only -Wvector-conversion -ffreestanding -verify %s
+#ifndef INCLUDE
 
 #include <arm_neon.h>
 
@@ -33,3 +34,14 @@ int16x8_t test5(int *p) {
 void test6(float *p, int32x2_t v) {
   return vst1_s32(p, v); // expected-warning {{incompatible pointer types}}
 }
+
+#define INCLUDE
+#include "arm-neon-types.c"
+#else
+
+// Make sure we don't get a warning about using a static function in an
+// extern inline function from a header.
+extern inline uint8x8_t test7(uint8x8_t a, uint8x8_t b) {
+  return vadd_u8(a, b);
+}
+#endif
