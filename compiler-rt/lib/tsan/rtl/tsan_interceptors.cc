@@ -1856,6 +1856,13 @@ struct TsanInterceptorContext {
     ThreadSetName(((TsanInterceptorContext*)ctx)->thr, name)
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
+// FIXME: Implement these with MemoryAccessRange().
+#define COMMON_SYSCALL_PRE_READ_RANGE(p, s)
+#define COMMON_SYSCALL_PRE_WRITE_RANGE(p, s)
+#define COMMON_SYSCALL_POST_READ_RANGE(p, s)
+#define COMMON_SYSCALL_POST_WRITE_RANGE(p, s)
+#include "sanitizer_common/sanitizer_common_syscalls.inc"
+
 namespace __tsan {
 
 void ProcessPendingSignals(ThreadState *thr) {
