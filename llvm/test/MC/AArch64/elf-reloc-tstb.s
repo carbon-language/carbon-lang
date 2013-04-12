@@ -1,4 +1,4 @@
-// RUN: llvm-mc -arch=aarch64 -filetype=obj %s -o - | \
+// RUN: llvm-mc -triple=aarch64-none-linux-gnu -filetype=obj %s -o - | \
 // RUN:   llvm-readobj -r | FileCheck -check-prefix=OBJ %s
 
         tbz x6, #45, somewhere
