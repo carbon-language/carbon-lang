@@ -1523,7 +1523,16 @@ Process::UpdateThreadListIfNeeded ()
                 {
                     OperatingSystem *os = GetOperatingSystem ();
                     if (os)
+                    {
+                        // Clear any old backing threads where memory threads might have been
+                        // backed by actual threads from the lldb_private::Process subclass
+                        size_t num_old_threads = m_thread_list.GetSize(false);
+                        for (size_t i=0; i<num_old_threads; ++i)
+                            m_thread_list.GetThreadAtIndex(i, false)->ClearBackingThread();
+
+                        // Now let the OperatingSystem plug-in update the thread list
                         os->UpdateThreadList (m_thread_list, new_thread_list);
+                    }
                     m_thread_list.Update (new_thread_list);
                     m_thread_list.SetStopID (stop_id);
                 }

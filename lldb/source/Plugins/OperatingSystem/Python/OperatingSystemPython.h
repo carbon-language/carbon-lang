@@ -93,7 +93,8 @@ protected:
     
     lldb::ThreadSP
     CreateThreadFromThreadInfo (lldb_private::PythonDictionary &thread_dict,
-                                lldb_private::ThreadList *old_thread_list_ptr,
+                                lldb_private::ThreadList &core_thread_list,
+                                lldb_private::ThreadList &old_thread_list,
                                 bool *did_create_ptr);
 
     DynamicRegisterInfo *

@@ -21,6 +21,7 @@ ThreadMemory::ThreadMemory (Process &process,
                             tid_t tid,
                             const ValueObjectSP &thread_info_valobj_sp) :
     Thread (process, tid),
+    m_backing_thread_sp (),
     m_thread_info_valobj_sp (thread_info_valobj_sp),
     m_name(),
     m_queue()
@@ -34,6 +35,7 @@ ThreadMemory::ThreadMemory (Process &process,
                             const char *queue,
                             lldb::addr_t register_data_addr) :
     Thread (process, tid),
+    m_backing_thread_sp (),
     m_thread_info_valobj_sp (),
     m_name(),
     m_queue(),
@@ -65,6 +67,9 @@ ThreadMemory::WillResume (StateType resume_state)
 RegisterContextSP
 ThreadMemory::GetRegisterContext ()
 {
+    if (m_backing_thread_sp)
+        return m_backing_thread_sp->GetRegisterContext();
+
     if (!m_reg_context_sp)
     {
         ProcessSP process_sp (GetProcess());
@@ -81,6 +86,9 @@ ThreadMemory::GetRegisterContext ()
 RegisterContextSP
 ThreadMemory::CreateRegisterContextForFrame (StackFrame *frame)
 {
+    if (m_backing_thread_sp)
+        return m_backing_thread_sp->CreateRegisterContextForFrame(frame);
+
     RegisterContextSP reg_ctx_sp;
     uint32_t concrete_frame_idx = 0;
     
@@ -91,9 +99,11 @@ ThreadMemory::CreateRegisterContextForFrame (StackFrame *frame)
     {
         reg_ctx_sp = GetRegisterContext ();
     }
-    else if (m_unwinder_ap.get())
+    else
     {
-        reg_ctx_sp = m_unwinder_ap->CreateRegisterContextForFrame (frame);
+        Unwind *unwinder = GetUnwinder ();
+        if (unwinder)
+            reg_ctx_sp = unwinder->CreateRegisterContextForFrame (frame);
     }
     return reg_ctx_sp;
 }
@@ -101,6 +111,9 @@ ThreadMemory::CreateRegisterContextForFrame (StackFrame *frame)
 lldb::StopInfoSP
 ThreadMemory::GetPrivateStopReason ()
 {
+    if (m_backing_thread_sp)
+        return m_backing_thread_sp->GetPrivateStopReason();
+
     ProcessSP process_sp (GetProcess());
 
     if (process_sp)
@@ -135,6 +148,10 @@ ThreadMemory::GetPrivateStopReason ()
 void
 ThreadMemory::RefreshStateAfterStop()
 {
+    if (m_backing_thread_sp)
+        return m_backing_thread_sp->RefreshStateAfterStop();
+    
+
     // Don't fetch the registers by calling Thread::GetRegisterContext() below.
     // We might not have fetched any registers yet and we don't want to fetch
     // the registers just to call invalidate on them...

@@ -202,8 +202,12 @@ ThreadGDBRemote::CreateRegisterContextForFrame (StackFrame *frame)
             reg_ctx_sp.reset (new GDBRemoteRegisterContext (*this, concrete_frame_idx, gdb_process->m_register_info, read_all_registers_at_once));
         }
     }
-    else if (m_unwinder_ap.get())
-        reg_ctx_sp = m_unwinder_ap->CreateRegisterContextForFrame (frame);
+    else
+    {
+        Unwind *unwinder = GetUnwinder ();
+        if (unwinder)
+            reg_ctx_sp = unwinder->CreateRegisterContextForFrame (frame);
+    }
     return reg_ctx_sp;
 }
 

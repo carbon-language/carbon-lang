@@ -166,8 +166,12 @@ ThreadKDP::CreateRegisterContextForFrame (StackFrame *frame)
             }
         }
     }
-    else if (m_unwinder_ap.get())
-        reg_ctx_sp = m_unwinder_ap->CreateRegisterContextForFrame (frame);
+    else
+    {
+        Unwind *unwinder = GetUnwinder ();
+        if (unwinder)
+            reg_ctx_sp = unwinder->CreateRegisterContextForFrame (frame);
+    }
     return reg_ctx_sp;
 }
 

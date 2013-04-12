@@ -416,6 +416,24 @@ public:
     virtual void
     ClearStackFrames ();
 
+    virtual bool
+    SetBackingThread (const lldb::ThreadSP &thread_sp)
+    {
+        return false;
+    }
+
+    virtual void
+    ClearBackingThread ()
+    {
+        // Subclasses can use this function if a thread is actually backed by
+        // another thread. This is currently used for the OperatingSystem plug-ins
+        // where they might have a thread that is in memory, yet its registers
+        // are available through the lldb_private::Thread subclass for the current
+        // lldb_private::Process class. Since each time the process stops the backing
+        // threads for memory threads can change, we need a way to clear the backing
+        // thread for all memory threads each time we stop.
+    }
+
     void
     DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx);
 

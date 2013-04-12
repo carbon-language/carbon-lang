@@ -118,9 +118,11 @@ ThreadMachCore::CreateRegisterContextForFrame (StackFrame *frame)
         }
         reg_ctx_sp = m_thread_reg_ctx_sp;
     }
-    else if (m_unwinder_ap.get())
+    else
     {
-        reg_ctx_sp = m_unwinder_ap->CreateRegisterContextForFrame (frame);
+        Unwind *unwinder = GetUnwinder ();
+        if (unwinder)
+            reg_ctx_sp = unwinder->CreateRegisterContextForFrame (frame);
     }
     return reg_ctx_sp;
 }

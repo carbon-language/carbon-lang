@@ -186,17 +186,40 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList
     if (log)
         log->Printf ("OperatingSystemPython::UpdateThreadList() fetching thread data from python for pid %" PRIu64, m_process->GetID());
 
+    // The threads that are in "new_thread_list" upon entry are the threads from the
+    // lldb_private::Process subclass, no memory threads will be in this list.
+    
     auto lock = m_interpreter->AcquireInterpreterLock(); // to make sure threads_list stays alive
     PythonList threads_list(m_interpreter->OSPlugin_ThreadsInfo(m_python_object_sp));
     if (threads_list)
     {
+        ThreadList core_thread_list(new_thread_list);
+
+        threads_list.Dump(); // REMOVE THIS
+
+        uint32_t i;
         const uint32_t num_threads = threads_list.GetSize();
-        for (uint32_t i=0; i<num_threads; ++i)
+        for (i=0; i<num_threads; ++i)
         {
             PythonDictionary thread_dict(threads_list.GetItemAtIndex(i));
             if (thread_dict)
             {
-                ThreadSP thread_sp (CreateThreadFromThreadInfo (thread_dict, &old_thread_list, NULL));
+                if (thread_dict.GetItemForKey("core"))
+                {
+                    // We have some threads that are saying they are on a "core", which means
+                    // they map the threads that are gotten from the lldb_private::Process subclass
+                    // so clear the new threads list so the core threads don't show up
+                    new_thread_list.Clear();
+                    break;
+                }
+            }
+        }
+        for (i=0; i<num_threads; ++i)
+        {
+            PythonDictionary thread_dict(threads_list.GetItemAtIndex(i));
+            if (thread_dict)
+            {
+                ThreadSP thread_sp (CreateThreadFromThreadInfo (thread_dict, core_thread_list, old_thread_list, NULL));
                 if (thread_sp)
                     new_thread_list.AddThread(thread_sp);
             }
@@ -210,7 +233,10 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList
 }
 
 ThreadSP
-OperatingSystemPython::CreateThreadFromThreadInfo (PythonDictionary &thread_dict, ThreadList *old_thread_list_ptr, bool *did_create_ptr)
+OperatingSystemPython::CreateThreadFromThreadInfo (PythonDictionary &thread_dict,
+                                                   ThreadList &core_thread_list,
+                                                   ThreadList &old_thread_list,
+                                                   bool *did_create_ptr)
 {
     ThreadSP thread_sp;
     if (thread_dict)
@@ -219,20 +245,21 @@ OperatingSystemPython::CreateThreadFromThreadInfo (PythonDictionary &thread_dict
         const tid_t tid = thread_dict.GetItemForKeyAsInteger (tid_pystr, LLDB_INVALID_THREAD_ID);
         if (tid != LLDB_INVALID_THREAD_ID)
         {
+            PythonString core_pystr("core");
             PythonString name_pystr("name");
             PythonString queue_pystr("queue");
             PythonString state_pystr("state");
             PythonString stop_reason_pystr("stop_reason");
             PythonString reg_data_addr_pystr ("register_data_addr");
             
+            const uint32_t core_number = thread_dict.GetItemForKeyAsInteger (core_pystr, UINT32_MAX);
             const addr_t reg_data_addr = thread_dict.GetItemForKeyAsInteger (reg_data_addr_pystr, LLDB_INVALID_ADDRESS);
             const char *name = thread_dict.GetItemForKeyAsString (name_pystr);
             const char *queue = thread_dict.GetItemForKeyAsString (queue_pystr);
             //const char *state = thread_dict.GetItemForKeyAsString (state_pystr);
             //const char *stop_reason = thread_dict.GetItemForKeyAsString (stop_reason_pystr);
             
-            if (old_thread_list_ptr)
-                thread_sp = old_thread_list_ptr->FindThreadByID (tid, false);
+            thread_sp = old_thread_list.FindThreadByID (tid, false);
             if (!thread_sp)
             {
                 if (did_create_ptr)
@@ -242,6 +269,12 @@ OperatingSystemPython::CreateThreadFromThreadInfo (PythonDictionary &thread_dict
                                                    name,
                                                    queue,
                                                    reg_data_addr));
+                
+            }
+            
+            if (core_number < core_thread_list.GetSize(false))
+            {
+                thread_sp->SetBackingThread(core_thread_list.GetThreadAtIndex(core_number, false));
             }
         }
     }
@@ -335,9 +368,10 @@ OperatingSystemPython::CreateThread (lldb::tid_t tid, addr_t context)
         PythonDictionary thread_info_dict (m_interpreter->OSPlugin_CreateThread(m_python_object_sp, tid, context));
         if (thread_info_dict)
         {
+            ThreadList core_threads(m_process);
             ThreadList &thread_list = m_process->GetThreadList();
             bool did_create = false;
-            ThreadSP thread_sp (CreateThreadFromThreadInfo (thread_info_dict, &thread_list, &did_create));
+            ThreadSP thread_sp (CreateThreadFromThreadInfo (thread_info_dict, core_threads, thread_list, &did_create));
             if (did_create)
                 thread_list.AddThread(thread_sp);
             return thread_sp;

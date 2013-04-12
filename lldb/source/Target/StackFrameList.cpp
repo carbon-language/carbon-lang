@@ -296,27 +296,30 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
                 // if we need to
                 if (m_frames.empty())
                 {
-                    m_thread.GetRegisterContext();
-                    assert (m_thread.m_reg_context_sp.get());
-
-                    const bool success = unwinder->GetFrameInfoAtIndex(idx, cfa, pc);
-                    // There shouldn't be any way not to get the frame info for frame 0.
-                    // But if the unwinder can't make one, lets make one by hand with the
-                    // SP as the CFA and see if that gets any further.
-                    if (!success)
-                    {
-                        cfa = m_thread.GetRegisterContext()->GetSP();
-                        pc = m_thread.GetRegisterContext()->GetPC();
-                    }
+                    RegisterContextSP reg_ctx_sp (m_thread.GetRegisterContext());
                     
-                    unwind_frame_sp.reset (new StackFrame (m_thread.shared_from_this(),
-                                                           m_frames.size(), 
-                                                           idx,
-                                                           m_thread.m_reg_context_sp,
-                                                           cfa,
-                                                           pc,
-                                                           NULL));
-                    m_frames.push_back (unwind_frame_sp);
+                    if (reg_ctx_sp)
+                    {
+
+                        const bool success = unwinder->GetFrameInfoAtIndex(idx, cfa, pc);
+                        // There shouldn't be any way not to get the frame info for frame 0.
+                        // But if the unwinder can't make one, lets make one by hand with the
+                        // SP as the CFA and see if that gets any further.
+                        if (!success)
+                        {
+                            cfa = reg_ctx_sp->GetSP();
+                            pc = reg_ctx_sp->GetPC();
+                        }
+                        
+                        unwind_frame_sp.reset (new StackFrame (m_thread.shared_from_this(),
+                                                               m_frames.size(), 
+                                                               idx,
+                                                               reg_ctx_sp,
+                                                               cfa,
+                                                               pc,
+                                                               NULL));
+                        m_frames.push_back (unwind_frame_sp);
+                    }
                 }
                 else
                 {
