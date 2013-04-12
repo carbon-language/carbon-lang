@@ -2833,8 +2833,6 @@ LoopVectorizationLegality::isReductionInstr(Instruction *I,
   case Instruction::Sub:
   case Instruction::Add:
     return Kind == RK_IntegerAdd;
-  case Instruction::SDiv:
-  case Instruction::UDiv:
   case Instruction::Mul:
     return Kind == RK_IntegerMult;
   case Instruction::And:
