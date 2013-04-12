@@ -198,6 +198,17 @@ static void createNullLocation(CXString *filename, unsigned *line,
 
 extern "C" {
 
+int clang_Location_isInSystemHeader(CXSourceLocation location) {
+  const SourceLocation Loc =
+    SourceLocation::getFromRawEncoding(location.int_data);
+  if (Loc.isInvalid())
+    return 0;
+
+  const SourceManager &SM =
+    *static_cast<const SourceManager*>(location.ptr_data[0]);
+  return SM.isInSystemHeader(Loc);
+}
+
 void clang_getExpansionLocation(CXSourceLocation location,
                                 CXFile *file,
                                 unsigned *line,

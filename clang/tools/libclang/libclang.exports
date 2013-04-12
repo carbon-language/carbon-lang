@@ -248,6 +248,7 @@ clang_isUnexposed
 clang_isVirtualBase
 clang_isVolatileQualifiedType
 clang_loadDiagnostics
+clang_Location_isInSystemHeader
 clang_parseTranslationUnit
 clang_remap_dispose
 clang_remap_getFilenames
