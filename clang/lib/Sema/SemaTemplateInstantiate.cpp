@@ -2701,11 +2701,10 @@ void LocalInstantiationScope::InstantiatedLocal(const Decl *D, Decl *Inst) {
   llvm::PointerUnion<Decl *, DeclArgumentPack *> &Stored = LocalDecls[D];
   if (Stored.isNull())
     Stored = Inst;
-  else if (Stored.is<Decl *>()) {
+  else if (DeclArgumentPack *Pack = Stored.dyn_cast<DeclArgumentPack *>())
+    Pack->push_back(Inst);
+  else
     assert(Stored.get<Decl *>() == Inst && "Already instantiated this local");
-    Stored = Inst;
-  } else
-    LocalDecls[D].get<DeclArgumentPack *>()->push_back(Inst);
 }
 
 void LocalInstantiationScope::InstantiatedLocalPackArg(const Decl *D, 
