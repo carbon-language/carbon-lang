@@ -307,7 +307,7 @@ def LDriw_abs_set_V4 : LDInst2<(outs IntRegs:$dst1, IntRegs:$dst2),
 // addressing mode
 multiclass ld_idxd_shl_pbase<string mnemonic, RegisterClass RC, bit isNot,
                              bit isPredNew> {
-  let PNewValue = !if(isPredNew, "new", "") in
+  let isPredicatedNew = isPredNew in
   def NAME : LDInst2<(outs RC:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, u2Imm:$offset),
             !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
@@ -598,7 +598,7 @@ def STriw_abs_set_V4 : STInst2<(outs IntRegs:$dst1),
 // mode
 multiclass ST_Idxd_shl_Pbase<string mnemonic, RegisterClass RC, bit isNot,
                              bit isPredNew> {
-  let PNewValue = !if(isPredNew, "new", "") in
+  let isPredicatedNew = isPredNew in
   def NAME : STInst2<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, u2Imm:$src4,
                  RC:$src5),
@@ -637,7 +637,7 @@ multiclass ST_Idxd_shl<string mnemonic, string CextOp, RegisterClass RC> {
 // addressing mode.
 multiclass ST_Idxd_shl_Pbase_nv<string mnemonic, RegisterClass RC, bit isNot,
                              bit isPredNew> {
-  let PNewValue = !if(isPredNew, "new", "") in
+  let isPredicatedNew = isPredNew in
   def NAME#_nv_V4 : NVInst_V4<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, u2Imm:$src4,
                  RC:$src5),
@@ -741,7 +741,7 @@ def STrid_shl_V4 : STInst<(outs),
 //===----------------------------------------------------------------------===//
 multiclass ST_Imm_Pbase<string mnemonic, Operand OffsetOp, bit isNot,
                         bit isPredNew> {
-  let PNewValue = !if(isPredNew, "new", "") in
+  let isPredicatedNew = isPredNew in
   def NAME : STInst2<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, OffsetOp:$src3, s6Ext:$src4),
             !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
@@ -907,7 +907,7 @@ def STriw_shl_V4 : STInst<(outs),
 //
 multiclass ST_Idxd_Pbase_nv<string mnemonic, RegisterClass RC,
                             Operand predImmOp, bit isNot, bit isPredNew> {
-  let PNewValue = !if(isPredNew, "new", "") in
+  let isPredicatedNew = isPredNew in
   def NAME#_nv_V4 : NVInst_V4<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, predImmOp:$src3, RC: $src4),
             !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
@@ -960,7 +960,7 @@ let addrMode = BaseImmOffset, validSubTargets = HasV4SubT in {
 // and MEMri operand.
 multiclass ST_MEMri_Pbase_nv<string mnemonic, RegisterClass RC, bit isNot,
                           bit isPredNew> {
-  let PNewValue = !if(isPredNew, "new", "") in
+  let isPredicatedNew = isPredNew in
   def NAME#_nv_V4 : NVInst_V4<(outs),
             (ins PredRegs:$src1, MEMri:$addr, RC: $src2),
             !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
@@ -1022,7 +1022,7 @@ def STrib_shl_nv_V4 : NVInst_V4<(outs),
 
 multiclass ST_PostInc_Pbase_nv<string mnemonic, RegisterClass RC, Operand ImmOp,
                             bit isNot, bit isPredNew> {
-  let PNewValue = !if(isPredNew, "new", "") in
+  let isPredicatedNew = isPredNew in
   def NAME#_nv_V4 : NVInstPI_V4<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, ImmOp:$offset, RC:$src3),
             !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
@@ -2769,7 +2769,7 @@ let isReturn = 1, isTerminator = 1,
 
 multiclass ST_Abs_Predbase<string mnemonic, RegisterClass RC, bit isNot,
                            bit isPredNew> {
-  let PNewValue = !if(isPredNew, "new", "") in
+  let isPredicatedNew = isPredNew in
   def NAME#_V4 : STInst2<(outs),
             (ins PredRegs:$src1, globaladdressExt:$absaddr, RC: $src2),
             !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
@@ -2805,7 +2805,7 @@ multiclass ST_Abs<string mnemonic, string CextOp, RegisterClass RC> {
 
 multiclass ST_Abs_Predbase_nv<string mnemonic, RegisterClass RC, bit isNot,
                            bit isPredNew> {
-  let PNewValue = !if(isPredNew, "new", "") in
+  let isPredicatedNew = isPredNew in
   def NAME#_nv_V4 : NVInst_V4<(outs),
             (ins PredRegs:$src1, globaladdressExt:$absaddr, RC: $src2),
             !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
@@ -2974,7 +2974,7 @@ def : Pat<(store (i32 IntRegs:$src1), (HexagonCONST32_GP tglobaladdr:$global)),
 //===----------------------------------------------------------------------===//
 multiclass LD_Abs_Predbase<string mnemonic, RegisterClass RC, bit isNot,
                            bit isPredNew> {
-  let PNewValue = !if(isPredNew, "new", "") in
+  let isPredicatedNew = isPredNew in
   def NAME : LDInst2<(outs RC:$dst),
             (ins PredRegs:$src1, globaladdressExt:$absaddr),
             !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
