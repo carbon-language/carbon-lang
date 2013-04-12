@@ -511,9 +511,6 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
     }
   }
 
-  if (!R->canPrintPretty())
-    return 0;
-
   // Okay, we've found the binding. Emit an appropriate message.
   SmallString<256> sbuf;
   llvm::raw_svector_ostream os(sbuf);
@@ -525,9 +522,11 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
     const VarRegion *VR = dyn_cast<VarRegion>(R);
 
     if (DS) {
-      action = "initialized to ";
+      action = R->canPrintPretty() ? "initialized to " :
+                                     "Initializing to ";
     } else if (isa<BlockExpr>(S)) {
-      action = "captured by block as ";
+      action = R->canPrintPretty() ? "captured by block as " :
+                                     "Capturing by block as ";
       if (VR) {
         // See if we can get the BlockVarRegion.
         ProgramStateRef State = StoreSite->getState();
@@ -545,9 +544,11 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
     }
 
     if (action) {
-      R->printPretty(os);
-      os << " ";
-      
+      if (R->canPrintPretty()) {
+        R->printPretty(os);
+        os << " ";
+      }
+
       if (V.getAs<loc::ConcreteInt>()) {
         bool b = false;
         if (R->isBoundable()) {
@@ -569,14 +570,18 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
         if (V.isUndef()) {
           if (isa<VarRegion>(R)) {
             const VarDecl *VD = cast<VarDecl>(DS->getSingleDecl());
-            if (VD->getInit())
-              os << "initialized to a garbage value";
-            else
-              os << "declared without an initial value";
+            if (VD->getInit()) {
+              os << (R->canPrintPretty() ? "initialized" : "Initializing")
+                 << " to a garbage value";
+            } else {
+              os << (R->canPrintPretty() ? "declared" : "Declaring")
+                 << " without an initial value";
+            }
           }
         }
         else {
-          os << "initialized here";
+          os << (R->canPrintPretty() ? "initialized" : "Initializing")
+             << " here";
         }
       }
     }
@@ -602,8 +607,11 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
 
       // Printed parameter indexes are 1-based, not 0-based.
       unsigned Idx = Param->getFunctionScopeIndex() + 1;
-      os << " via " << Idx << llvm::getOrdinalSuffix(Idx) << " parameter ";
-      R->printPretty(os);
+      os << " via " << Idx << llvm::getOrdinalSuffix(Idx) << " parameter";
+      if (R->canPrintPretty()) {
+        os << " ";
+        R->printPretty(os);
+      }
     }
   }
 
@@ -613,25 +621,28 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
       if (R->isBoundable()) {
         if (const TypedValueRegion *TR = dyn_cast<TypedValueRegion>(R)) {
           if (TR->getValueType()->isObjCObjectPointerType()) {
-            os << "nil object reference stored to ";
+            os << "nil object reference stored";
             b = true;
           }
         }
       }
 
       if (!b)
-        os << "Null pointer value stored to ";
+        os << "Null pointer value stored";
     }
     else if (V.isUndef()) {
-      os << "Uninitialized value stored to ";
+      os << "Uninitialized value stored";
     } else if (Optional<nonloc::ConcreteInt> CV =
                    V.getAs<nonloc::ConcreteInt>()) {
-      os << "The value " << CV->getValue() << " is assigned to ";
+      os << "The value " << CV->getValue() << " is assigned";
     }
     else
-      os << "Value assigned to ";
+      os << "Value assigned";
 
-    R->printPretty(os);
+    if (R->canPrintPretty()) {
+      os << " to ";
+      R->printPretty(os);
+    }
   }
 
   // Construct a new PathDiagnosticPiece.
