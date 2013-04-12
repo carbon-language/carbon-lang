@@ -316,7 +316,7 @@ multiclass ld_idxd_shl_pbase<string mnemonic, RegisterClass RC, bit isNot,
 }
 
 multiclass ld_idxd_shl_pred<string mnemonic, RegisterClass RC, bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : ld_idxd_shl_pbase<mnemonic, RC, PredNot, 0>;
     // Predicate new
     defm _cdn#NAME : ld_idxd_shl_pbase<mnemonic, RC, PredNot, 1>;
@@ -609,7 +609,7 @@ multiclass ST_Idxd_shl_Pbase<string mnemonic, RegisterClass RC, bit isNot,
 }
 
 multiclass ST_Idxd_shl_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : ST_Idxd_shl_Pbase<mnemonic, RC, PredNot, 0>;
     // Predicate new
     defm _cdn#NAME : ST_Idxd_shl_Pbase<mnemonic, RC, PredNot, 1>;
@@ -648,7 +648,7 @@ multiclass ST_Idxd_shl_Pbase_nv<string mnemonic, RegisterClass RC, bit isNot,
 }
 
 multiclass ST_Idxd_shl_Pred_nv<string mnemonic, RegisterClass RC, bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : ST_Idxd_shl_Pbase_nv<mnemonic, RC, PredNot, 0>;
     // Predicate new
     defm _cdn#NAME : ST_Idxd_shl_Pbase_nv<mnemonic, RC, PredNot, 1>;
@@ -751,7 +751,7 @@ multiclass ST_Imm_Pbase<string mnemonic, Operand OffsetOp, bit isNot,
 }
 
 multiclass ST_Imm_Pred<string mnemonic, Operand OffsetOp, bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : ST_Imm_Pbase<mnemonic, OffsetOp, PredNot, 0>;
     // Predicate new
     defm _cdn#NAME : ST_Imm_Pbase<mnemonic, OffsetOp, PredNot, 1>;
@@ -918,7 +918,7 @@ multiclass ST_Idxd_Pbase_nv<string mnemonic, RegisterClass RC,
 
 multiclass ST_Idxd_Pred_nv<string mnemonic, RegisterClass RC, Operand predImmOp,
                            bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : ST_Idxd_Pbase_nv<mnemonic, RC, predImmOp, PredNot, 0>;
     // Predicate new
     defm _cdn#NAME : ST_Idxd_Pbase_nv<mnemonic, RC, predImmOp, PredNot, 1>;
@@ -970,7 +970,7 @@ multiclass ST_MEMri_Pbase_nv<string mnemonic, RegisterClass RC, bit isNot,
 }
 
 multiclass ST_MEMri_Pred_nv<string mnemonic, RegisterClass RC, bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : ST_MEMri_Pbase_nv<mnemonic, RC, PredNot, 0>;
 
     // Predicate new
@@ -1034,7 +1034,7 @@ multiclass ST_PostInc_Pbase_nv<string mnemonic, RegisterClass RC, Operand ImmOp,
 
 multiclass ST_PostInc_Pred_nv<string mnemonic, RegisterClass RC,
                            Operand ImmOp, bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : ST_PostInc_Pbase_nv<mnemonic, RC, ImmOp, PredNot, 0>;
     // Predicate new
     let Predicates = [HasV4T], validSubTargets = HasV4SubT in
@@ -2779,7 +2779,7 @@ multiclass ST_Abs_Predbase<string mnemonic, RegisterClass RC, bit isNot,
 }
 
 multiclass ST_Abs_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : ST_Abs_Predbase<mnemonic, RC, PredNot, 0>;
     // Predicate new
     defm _cdn#NAME : ST_Abs_Predbase<mnemonic, RC, PredNot, 1>;
@@ -2815,7 +2815,7 @@ multiclass ST_Abs_Predbase_nv<string mnemonic, RegisterClass RC, bit isNot,
 }
 
 multiclass ST_Abs_Pred_nv<string mnemonic, RegisterClass RC, bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : ST_Abs_Predbase_nv<mnemonic, RC, PredNot, 0>;
     // Predicate new
     defm _cdn#NAME : ST_Abs_Predbase_nv<mnemonic, RC, PredNot, 1>;
@@ -2984,7 +2984,7 @@ multiclass LD_Abs_Predbase<string mnemonic, RegisterClass RC, bit isNot,
 }
 
 multiclass LD_Abs_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : LD_Abs_Predbase<mnemonic, RC, PredNot, 0>;
     // Predicate new
     defm _cdn#NAME : LD_Abs_Predbase<mnemonic, RC, PredNot, 1>;

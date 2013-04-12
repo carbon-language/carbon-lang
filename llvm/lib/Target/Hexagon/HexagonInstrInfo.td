@@ -107,7 +107,7 @@ multiclass ALU32_Pbase<string mnemonic, bit isNot,
 }
 
 multiclass ALU32_Pred<string mnemonic, bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : ALU32_Pbase<mnemonic, PredNot, 0>;
     // Predicate new
     defm _cdn#NAME : ALU32_Pbase<mnemonic, PredNot, 1>;
@@ -153,7 +153,7 @@ multiclass ALU32ri_Pbase<string mnemonic, bit isNot, bit isPredNew> {
 }
 
 multiclass ALU32ri_Pred<string mnemonic, bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : ALU32ri_Pbase<mnemonic, PredNot, 0>;
     // Predicate new
     defm _cdn#NAME : ALU32ri_Pbase<mnemonic, PredNot, 1>;
@@ -222,7 +222,7 @@ def SUB_ri : ALU32_ri<(outs IntRegs:$dst),
 
 
 multiclass TFR_Pred<bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     def _c#NAME : ALU32_rr<(outs IntRegs:$dst),
                            (ins PredRegs:$src1, IntRegs:$src2),
             !if(PredNot, "if (!$src1", "if ($src1")#") $dst = $src2",
@@ -274,7 +274,7 @@ class T_TFR64_Pred<bit PredNot, bit isPredNew>
 }
 
 multiclass TFR64_Pred<bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     def _c#NAME : T_TFR64_Pred<PredNot, 0>;
 
     let PNewValue = "new" in
@@ -309,7 +309,7 @@ multiclass TFR64_base<string BaseName> {
 }
 
 multiclass TFRI_Pred<bit PredNot> {
-  let isMoveImm = 1, PredSense = !if(PredNot, "false", "true") in {
+  let isMoveImm = 1, isPredicatedFalse = PredNot in {
     def _c#NAME : ALU32_ri<(outs IntRegs:$dst),
                            (ins PredRegs:$src1, s12Ext:$src2),
             !if(PredNot, "if (!$src1", "if ($src1")#") $dst = #$src2",
@@ -901,7 +901,7 @@ multiclass LD_MEMri_Pbase<string mnemonic, RegisterClass RC,
 }
 
 multiclass LD_MEMri_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : LD_MEMri_Pbase<mnemonic, RC, PredNot, 0>;
     // Predicate new
     defm _cdn#NAME : LD_MEMri_Pbase<mnemonic, RC, PredNot, 1>;
@@ -968,7 +968,7 @@ multiclass LD_Idxd_Pbase<string mnemonic, RegisterClass RC, Operand predImmOp,
 
 multiclass LD_Idxd_Pred<string mnemonic, RegisterClass RC, Operand predImmOp,
                         bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : LD_Idxd_Pbase<mnemonic, RC, predImmOp, PredNot, 0>;
     // Predicate new
     defm _cdn#NAME : LD_Idxd_Pbase<mnemonic, RC, predImmOp, PredNot, 1>;
@@ -1049,7 +1049,7 @@ multiclass LD_PostInc_Pbase<string mnemonic, RegisterClass RC, Operand ImmOp,
 
 multiclass LD_PostInc_Pred<string mnemonic, RegisterClass RC,
                            Operand ImmOp, bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : LD_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 0>;
     // Predicate new
     let Predicates = [HasV4T], validSubTargets = HasV4SubT in
@@ -1377,7 +1377,7 @@ multiclass ST_PostInc_Pbase<string mnemonic, RegisterClass RC, Operand ImmOp,
 
 multiclass ST_PostInc_Pred<string mnemonic, RegisterClass RC,
                            Operand ImmOp, bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME# : ST_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 0>;
     // Predicate new
     let Predicates = [HasV4T], validSubTargets = HasV4SubT in
@@ -1440,7 +1440,7 @@ multiclass ST_MEMri_Pbase<string mnemonic, RegisterClass RC, bit isNot,
 }
 
 multiclass ST_MEMri_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true") in {
+  let isPredicatedFalse = PredNot in {
     defm _c#NAME : ST_MEMri_Pbase<mnemonic, RC, PredNot, 0>;
 
     // Predicate new
@@ -1507,7 +1507,7 @@ multiclass ST_Idxd_Pbase<string mnemonic, RegisterClass RC, Operand predImmOp,
 
 multiclass ST_Idxd_Pred<string mnemonic, RegisterClass RC, Operand predImmOp,
                         bit PredNot> {
-  let PredSense = !if(PredNot, "false", "true"), isPredicated = 1 in {
+  let isPredicatedFalse = PredNot, isPredicated = 1 in {
     defm _c#NAME : ST_Idxd_Pbase<mnemonic, RC, predImmOp, PredNot, 0>;
 
     // Predicate new
