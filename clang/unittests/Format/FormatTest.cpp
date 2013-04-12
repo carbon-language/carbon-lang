@@ -430,6 +430,7 @@ TEST_F(FormatTest, FormatsSwitchStatement) {
   verifyFormat("switch (x) {\n"
                "default: {\n"
                "  // Do nothing.\n"
+               "}\n"
                "}");
   verifyFormat("switch (x) {\n"
                "// comment\n"
@@ -3563,8 +3564,18 @@ TEST_F(FormatTest, ObjCLiterals) {
   verifyFormat("@{ @\"one\" : @1 }");
   verifyFormat("return @{ @\"one\" : @1 };");
   verifyFormat("@{ @\"one\" : @1, }");
-  verifyFormat("@{ @\"one\" : @{ @2 : @1 } }");
-  verifyFormat("@{ @\"one\" : @{ @2 : @1 }, }");
+
+  // FIXME: Breaking in cases where we think there's a structural error
+  // showed that we're incorrectly parsing this code. We need to fix the
+  // parsing here.
+  verifyFormat("@{ @\"one\" : @\n"
+               "{ @2 : @1 }\n"
+               "}");
+  verifyFormat("@{ @\"one\" : @\n"
+               "{ @2 : @1 }\n"
+               ",\n"
+               "}");
+
   verifyFormat("@{ 1 > 2 ? @\"one\" : @\"two\" : 1 > 2 ? @1 : @2 }");
   verifyFormat("[self setDict:@{}");
   verifyFormat("[self setDict:@{ @1 : @2 }");

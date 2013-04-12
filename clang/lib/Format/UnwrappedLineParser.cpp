@@ -45,9 +45,11 @@ private:
 class ScopedMacroState : public FormatTokenSource {
 public:
   ScopedMacroState(UnwrappedLine &Line, FormatTokenSource *&TokenSource,
-                   FormatToken &ResetToken)
+                   FormatToken &ResetToken, bool &StructuralError)
       : Line(Line), TokenSource(TokenSource), ResetToken(ResetToken),
-        PreviousLineLevel(Line.Level), PreviousTokenSource(TokenSource) {
+        PreviousLineLevel(Line.Level), PreviousTokenSource(TokenSource),
+        StructuralError(StructuralError),
+        PreviousStructuralError(StructuralError) {
     TokenSource = this;
     Line.Level = 0;
     Line.InPPDirective = true;
@@ -58,6 +60,7 @@ public:
     ResetToken = Token;
     Line.InPPDirective = false;
     Line.Level = PreviousLineLevel;
+    StructuralError = PreviousStructuralError;
   }
 
   virtual FormatToken getNextToken() {
@@ -85,6 +88,8 @@ private:
   FormatToken &ResetToken;
   unsigned PreviousLineLevel;
   FormatTokenSource *PreviousTokenSource;
+  bool &StructuralError;
+  bool PreviousStructuralError;
 
   FormatToken Token;
 };
@@ -124,13 +129,13 @@ UnwrappedLineParser::UnwrappedLineParser(
     clang::DiagnosticsEngine &Diag, const FormatStyle &Style,
     FormatTokenSource &Tokens, UnwrappedLineConsumer &Callback)
     : Line(new UnwrappedLine), MustBreakBeforeNextToken(false),
-      CurrentLines(&Lines), Diag(Diag), Style(Style), Tokens(&Tokens),
-      Callback(Callback) {}
+      CurrentLines(&Lines), StructuralError(false), Diag(Diag), Style(Style),
+      Tokens(&Tokens), Callback(Callback) {}
 
 bool UnwrappedLineParser::parse() {
   DEBUG(llvm::dbgs() << "----\n");
   readToken();
-  bool Error = parseFile();
+  parseFile();
   for (std::vector<UnwrappedLine>::iterator I = Lines.begin(), E = Lines.end();
        I != E; ++I) {
     Callback.consumeUnwrappedLine(*I);
@@ -139,23 +144,20 @@ bool UnwrappedLineParser::parse() {
   // Create line with eof token.
   pushToken(FormatTok);
   Callback.consumeUnwrappedLine(*Line);
-
-  return Error;
+  return StructuralError;
 }
 
-bool UnwrappedLineParser::parseFile() {
+void UnwrappedLineParser::parseFile() {
   ScopedDeclarationState DeclarationState(
       *Line, DeclarationScopeStack,
       /*MustBeDeclaration=*/ !Line->InPPDirective);
-  bool Error = parseLevel(/*HasOpeningBrace=*/ false);
+  parseLevel(/*HasOpeningBrace=*/ false);
   // Make sure to format the remaining tokens.
   flushComments(true);
   addUnwrappedLine();
-  return Error;
 }
 
-bool UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
-  bool Error = false;
+void UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
   do {
     switch (FormatTok.Tok.getKind()) {
     case tok::comment:
@@ -165,30 +167,27 @@ bool UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
     case tok::l_brace:
       // FIXME: Add parameter whether this can happen - if this happens, we must
       // be in a non-declaration context.
-      Error |= parseBlock(/*MustBeDeclaration=*/ false);
+      parseBlock(/*MustBeDeclaration=*/ false);
       addUnwrappedLine();
       break;
     case tok::r_brace:
-      if (HasOpeningBrace) {
-        return false;
-      } else {
-        Diag.Report(FormatTok.Tok.getLocation(),
-                    Diag.getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                         "unexpected '}'"));
-        Error = true;
-        nextToken();
-        addUnwrappedLine();
-      }
+      if (HasOpeningBrace)
+        return;
+      Diag.Report(FormatTok.Tok.getLocation(),
+                  Diag.getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                       "unexpected '}'"));
+      StructuralError = true;
+      nextToken();
+      addUnwrappedLine();
       break;
     default:
       parseStructuralElement();
       break;
     }
   } while (!eof());
-  return Error;
 }
 
-bool UnwrappedLineParser::parseBlock(bool MustBeDeclaration,
+void UnwrappedLineParser::parseBlock(bool MustBeDeclaration,
                                      unsigned AddLevels) {
   assert(FormatTok.Tok.is(tok::l_brace) && "'{' expected");
   nextToken();
@@ -202,17 +201,17 @@ bool UnwrappedLineParser::parseBlock(bool MustBeDeclaration,
 
   if (!FormatTok.Tok.is(tok::r_brace)) {
     Line->Level -= AddLevels;
-    return true;
+    StructuralError = true;
+    return;
   }
 
   nextToken(); // Munch the closing brace.
   Line->Level -= AddLevels;
-  return false;
 }
 
 void UnwrappedLineParser::parsePPDirective() {
   assert(FormatTok.Tok.is(tok::hash) && "'#' expected");
-  ScopedMacroState MacroState(*Line, Tokens, FormatTok);
+  ScopedMacroState MacroState(*Line, Tokens, FormatTok, StructuralError);
   nextToken();
 
   if (FormatTok.Tok.getIdentifierInfo() == NULL) {

@@ -459,7 +459,7 @@ public:
   UnwrappedLineFormatter(const FormatStyle &Style, SourceManager &SourceMgr,
                          const AnnotatedLine &Line, unsigned FirstIndent,
                          const AnnotatedToken &RootToken,
-                         WhitespaceManager &Whitespaces, bool StructuralError)
+                         WhitespaceManager &Whitespaces)
       : Style(Style), SourceMgr(SourceMgr), Line(Line),
         FirstIndent(FirstIndent), RootToken(RootToken),
         Whitespaces(Whitespaces), Count(0) {}
@@ -1381,7 +1381,7 @@ public:
   tooling::Replacements format() {
     LexerBasedFormatTokenSource Tokens(Lex, SourceMgr);
     UnwrappedLineParser Parser(Diag, Style, Tokens, *this);
-    StructuralError = Parser.parse();
+    bool StructuralError = Parser.parse();
     unsigned PreviousEndOfLineColumn = 0;
     TokenAnnotator Annotator(Style, SourceMgr, Lex,
                              Tokens.getIdentTable().get("in"));
@@ -1431,17 +1431,19 @@ public:
         unsigned Indent = LevelIndent;
         if (static_cast<int>(Indent) + Offset >= 0)
           Indent += Offset;
-        if (!FirstTok.WhiteSpaceStart.isValid() || StructuralError) {
-          Indent = LevelIndent =
-              SourceMgr.getSpellingColumnNumber(FirstTok.Tok.getLocation()) - 1;
-        } else {
+        if (FirstTok.WhiteSpaceStart.isValid() &&
+            // Insert a break even if there is a structural error in case where
+            // we break apart a line consisting of multiple unwrapped lines.
+            (FirstTok.NewlinesBefore == 0 || !StructuralError)) {
           formatFirstToken(TheLine.First, PreviousLineLastToken, Indent,
                            TheLine.InPPDirective, PreviousEndOfLineColumn);
+        } else {
+          Indent = LevelIndent =
+              SourceMgr.getSpellingColumnNumber(FirstTok.Tok.getLocation()) - 1;
         }
         tryFitMultipleLinesInOne(Indent, I, E);
         UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine, Indent,
-                                         TheLine.First, Whitespaces,
-                                         StructuralError);
+                                         TheLine.First, Whitespaces);
         PreviousEndOfLineColumn =
             Formatter.format(I + 1 != E ? &*(I + 1) : NULL);
         IndentForLevel[TheLine.Level] = LevelIndent;
@@ -1742,7 +1744,6 @@ private:
   WhitespaceManager Whitespaces;
   std::vector<CharSourceRange> Ranges;
   std::vector<AnnotatedLine> AnnotatedLines;
-  bool StructuralError;
 };
 
 tooling::Replacements

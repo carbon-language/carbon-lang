@@ -125,9 +125,9 @@ public:
   bool parse();
 
 private:
-  bool parseFile();
-  bool parseLevel(bool HasOpeningBrace);
-  bool parseBlock(bool MustBeDeclaration, unsigned AddLevels = 1);
+  void parseFile();
+  void parseLevel(bool HasOpeningBrace);
+  void parseBlock(bool MustBeDeclaration, unsigned AddLevels = 1);
   void parsePPDirective();
   void parsePPDefine();
   void parsePPUnknown();
@@ -186,6 +186,10 @@ private:
   // We store for each line whether it must be a declaration depending on
   // whether we are in a compound statement or not.
   std::vector<bool> DeclarationScopeStack;
+
+  // Will be true if we encounter an error that leads to possibily incorrect
+  // indentation levels.
+  bool StructuralError;
 
   clang::DiagnosticsEngine &Diag;
   const FormatStyle &Style;
