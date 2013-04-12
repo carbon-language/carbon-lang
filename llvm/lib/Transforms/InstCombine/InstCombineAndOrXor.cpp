@@ -934,6 +934,9 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
 Value *InstCombiner::FoldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
   if (LHS->getPredicate() == FCmpInst::FCMP_ORD &&
       RHS->getPredicate() == FCmpInst::FCMP_ORD) {
+    if (LHS->getOperand(0)->getType() != RHS->getOperand(0)->getType())
+      return 0;
+
     // (fcmp ord x, c) & (fcmp ord y, c)  -> (fcmp ord x, y)
     if (ConstantFP *LHSC = dyn_cast<ConstantFP>(LHS->getOperand(1)))
       if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
