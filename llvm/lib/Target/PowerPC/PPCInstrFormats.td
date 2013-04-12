@@ -35,6 +35,10 @@ class I<bits<6> opcode, dag OOL, dag IOL, string asmstr, InstrItinClass itin>
   let TSFlags{1}   = PPC970_Single;
   let TSFlags{2}   = PPC970_Cracked;
   let TSFlags{5-3} = PPC970_Unit;
+
+  // Fields used for relation models.
+  string BaseName = "";
+  bit Interpretation64Bit = 0;
 }
 
 class PPC970_DGroup_First   { bits<1> PPC970_First = 1;  }
@@ -80,6 +84,10 @@ class I2<bits<6> opcode1, bits<6> opcode2, dag OOL, dag IOL, string asmstr,
   let TSFlags{1}   = PPC970_Single;
   let TSFlags{2}   = PPC970_Cracked;
   let TSFlags{5-3} = PPC970_Unit;
+
+  // Fields used for relation models.
+  string BaseName = "";
+  bit Interpretation64Bit = 0;
 }
 
 // 1.7.1 I-Form
@@ -177,7 +185,12 @@ class DForm_1a<bits<6> opcode, dag OOL, dag IOL, string asmstr,
 
 class DForm_2<bits<6> opcode, dag OOL, dag IOL, string asmstr,
               InstrItinClass itin, list<dag> pattern>
-  : DForm_base<opcode, OOL, IOL, asmstr, itin, pattern>;
+  : DForm_base<opcode, OOL, IOL, asmstr, itin, pattern> {
+
+  // Even though ADDICo does not really have an RC bit, provide
+  // the declaration of one here so that isDOT has something to set.
+  bit RC = 0;
+}
 
 class DForm_2_r0<bits<6> opcode, dag OOL, dag IOL, string asmstr,
                  InstrItinClass itin, list<dag> pattern>

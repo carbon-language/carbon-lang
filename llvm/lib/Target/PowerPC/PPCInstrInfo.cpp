@@ -149,7 +149,8 @@ PPCInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
   MachineFunction &MF = *MI->getParent()->getParent();
 
   // Normal instructions can be commuted the obvious way.
-  if (MI->getOpcode() != PPC::RLWIMI)
+  if (MI->getOpcode() != PPC::RLWIMI &&
+      MI->getOpcode() != PPC::RLWIMIo)
     return TargetInstrInfo::commuteInstruction(MI, NewMI);
 
   // Cannot commute if it has a non-zero rotate count.
