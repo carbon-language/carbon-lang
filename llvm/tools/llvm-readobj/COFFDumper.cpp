@@ -680,11 +680,18 @@ void COFFDumper::printRelocation(section_iterator SecI,
   if (error(Symbol.getName(SymbolName))) return;
   if (error(SecI->getContents(Contents))) return;
 
-  raw_ostream& OS = W.startLine();
-  OS << W.hex(Offset)
-     << " " << RelocName
-     << " " << (SymbolName.size() > 0 ? SymbolName : "-")
-     << "\n";
+  if (opts::ExpandRelocs) {
+    DictScope Group(W, "Relocation");
+    W.printHex("Offset", Offset);
+    W.printNumber("Type", RelocName, RelocType);
+    W.printString("Symbol", SymbolName.size() > 0 ? SymbolName : "-");
+  } else {
+    raw_ostream& OS = W.startLine();
+    OS << W.hex(Offset)
+       << " " << RelocName
+       << " " << (SymbolName.size() > 0 ? SymbolName : "-")
+       << "\n";
+  }
 }
 
 void COFFDumper::printSymbols() {

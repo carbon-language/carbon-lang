@@ -37,6 +37,7 @@ namespace opts {
   extern llvm::cl::opt<bool> Symbols;
   extern llvm::cl::opt<bool> DynamicSymbols;
   extern llvm::cl::opt<bool> UnwindInfo;
+  extern llvm::cl::opt<bool> ExpandRelocs;
 } // namespace opts
 
 #define LLVM_READOBJ_ENUM_ENT(ns, enum) \

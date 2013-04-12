@@ -341,18 +341,32 @@ void MachODumper::printRelocation(section_iterator SecI,
   const MachOObjectFileBase::RelocationEntry *RE = Obj->getRelocation(DR);
   bool IsScattered = Obj->isScattered(RE);
 
-  raw_ostream& OS = W.startLine();
-  OS << W.hex(Offset)
-     << " " << Obj->isPCRel(RE)
-     << " " << Obj->getLength(RE);
-  if (IsScattered)
-    OS << " n/a";
-  else
-    OS << " " << RE->getExternal();
-  OS << " " << RelocName
-     << " " << IsScattered
-     << " " << (SymbolName.size() > 0 ? SymbolName : "-")
-     << "\n";
+  if (opts::ExpandRelocs) {
+    DictScope Group(W, "Relocation");
+    W.printHex("Offset", Offset);
+    W.printNumber("PCRel", Obj->isPCRel(RE));
+    W.printNumber("Length", Obj->getLength(RE));
+    if (IsScattered)
+      W.printString("Extern", StringRef("N/A"));
+    else
+      W.printNumber("Extern", RE->getExternal());
+    W.printNumber("Type", RelocName, RE->getType());
+    W.printString("Symbol", SymbolName.size() > 0 ? SymbolName : "-");
+    W.printNumber("Scattered", IsScattered);
+  } else {
+    raw_ostream& OS = W.startLine();
+    OS << W.hex(Offset)
+       << " " << Obj->isPCRel(RE)
+       << " " << Obj->getLength(RE);
+    if (IsScattered)
+      OS << " n/a";
+    else
+      OS << " " << RE->getExternal();
+    OS << " " << RelocName
+       << " " << IsScattered
+       << " " << (SymbolName.size() > 0 ? SymbolName : "-")
+       << "\n";
+  }
 }
 
 void MachODumper::printSymbols() {

@@ -120,6 +120,10 @@ namespace opts {
   // -needed-libs
   cl::opt<bool> NeededLibraries("needed-libs",
     cl::desc("Display the needed libraries"));
+
+  // -expand-relocs
+  cl::opt<bool> ExpandRelocs("expand-relocs",
+    cl::desc("Expand each shown relocation to multiple lines"));
 } // namespace opts
 
 namespace llvm {

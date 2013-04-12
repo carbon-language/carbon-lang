@@ -549,22 +549,32 @@ template<class ELFT>
 void ELFDumper<ELFT>::printRelocation(section_iterator Sec,
                                       relocation_iterator RelI) {
   uint64_t Offset;
+  uint64_t RelocType;
   SmallString<32> RelocName;
   int64_t Info;
   StringRef SymbolName;
   SymbolRef Symbol;
   if (error(RelI->getOffset(Offset))) return;
+  if (error(RelI->getType(RelocType))) return;
   if (error(RelI->getTypeName(RelocName))) return;
   if (error(RelI->getAdditionalInfo(Info))) return;
   if (error(RelI->getSymbol(Symbol))) return;
   if (error(Symbol.getName(SymbolName))) return;
 
-  raw_ostream& OS = W.startLine();
-  OS << W.hex(Offset)
-     << " " << RelocName
-     << " " << (SymbolName.size() > 0 ? SymbolName : "-")
-     << " " << W.hex(Info)
-     << "\n";
+  if (opts::ExpandRelocs) {
+    DictScope Group(W, "Relocation");
+    W.printHex("Offset", Offset);
+    W.printNumber("Type", RelocName, RelocType);
+    W.printString("Symbol", SymbolName.size() > 0 ? SymbolName : "-");
+    W.printHex("Info", Info);
+  } else {
+    raw_ostream& OS = W.startLine();
+    OS << W.hex(Offset)
+       << " " << RelocName
+       << " " << (SymbolName.size() > 0 ? SymbolName : "-")
+       << " " << W.hex(Info)
+       << "\n";
+  }
 }
 
 template<class ELFT>
