@@ -109,13 +109,13 @@ using namespace __sanitizer;  // NOLINT
 // This header should NOT include any other headers to avoid portability issues.
 
 // Common defs.
-#define INLINE static inline
+#define INLINE inline
 #define INTERFACE_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
 #define WEAK SANITIZER_WEAK_ATTRIBUTE
 
 // Platform-specific defs.
 #if defined(_MSC_VER)
-# define ALWAYS_INLINE static __forceinline
+# define ALWAYS_INLINE __forceinline
 // FIXME(timurrrr): do we need this on Windows?
 # define ALIAS(x)
 # define ALIGNED(x) __declspec(align(x))
