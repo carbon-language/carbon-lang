@@ -1,9 +1,9 @@
-; RUN: llc -march=x86 -align-all-blocks=16 < %s | FileCheck %s
+; RUN: llc  -mcpu=corei7 -mtriple=x86_64-linux -align-all-blocks=16 < %s | FileCheck %s
 
 ;CHECK: foo
-;CHECK: .align  16, 0x90
-;CHECK: .align  16, 0x90
-;CHECK: .align  16, 0x90
+;CHECK: .align  65536, 0x90
+;CHECK: .align  65536, 0x90
+;CHECK: .align  65536, 0x90
 ;CHECK: ret
 define i32 @foo(i32 %t, i32 %l) nounwind readnone ssp uwtable {
   %1 = icmp eq i32 %t, 0
