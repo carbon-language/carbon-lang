@@ -16,6 +16,7 @@ set(IRSources
   TypeBuilderTest.cpp
   TypesTest.cpp
   ValueMapTest.cpp
+  ValueTest.cpp
   VerifierTest.cpp
   WaymarkTest.cpp
   )

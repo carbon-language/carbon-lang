@@ -118,7 +118,7 @@ bool Value::isUsedInBasicBlock(const BasicBlock *BB) const {
   for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
     if (std::find(I->op_begin(), I->op_end(), this) != I->op_end())
       return true;
-    if (MaxBlockSize-- == 0) // If the block is larger fall back to use_iterator
+    if (--MaxBlockSize == 0) // If the block is larger fall back to use_iterator
       break;
   }
 
