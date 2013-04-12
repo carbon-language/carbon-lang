@@ -76,6 +76,10 @@ input. Otherwise, it will read from the specified ``filenames``.
 
  Display the needed libraries (only for ELF object files).
 
+.. option:: -program-headers
+
+ Display the ELF program headers (only for ELF object files).
+
 EXIT STATUS
 -----------
 

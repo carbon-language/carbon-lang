@@ -1,0 +1,74 @@
+RUN: llvm-readobj -program-headers %p/../../Object/Inputs/program-headers.elf-i386 \
+RUN:     | FileCheck %s -check-prefix ELF-I386
+RUN: llvm-readobj -program-headers %p/../../Object/Inputs/program-headers.elf-x86-64 \
+RUN:     | FileCheck %s -check-prefix ELF-X86-64
+
+ELF-I386:      ProgramHeaders [
+ELF-I386-NEXT:   ProgramHeader {
+ELF-I386-NEXT:     Type: PT_LOAD (0x1)
+ELF-I386-NEXT:     Offset: 0x0
+ELF-I386-NEXT:     VirtualAddress: 0x8048000
+ELF-I386-NEXT:     PhysicalAddress: 0x8048000
+ELF-I386-NEXT:     FileSize: 308
+ELF-I386-NEXT:     MemSize: 308
+ELF-I386-NEXT:     Flags [ (0x5)
+ELF-I386-NEXT:       PF_R (0x4)
+ELF-I386-NEXT:       PF_X (0x1)
+ELF-I386-NEXT:     ]
+ELF-I386-NEXT:     Alignment: 4096
+ELF-I386-NEXT:   }
+ELF-I386-NEXT:   ProgramHeader {
+ELF-I386-NEXT:     Type: PT_GNU_STACK (0x6474E551)
+ELF-I386-NEXT:     Offset: 0x0
+ELF-I386-NEXT:     VirtualAddress: 0x0
+ELF-I386-NEXT:     PhysicalAddress: 0x0
+ELF-I386-NEXT:     FileSize: 0
+ELF-I386-NEXT:     MemSize: 0
+ELF-I386-NEXT:     Flags [ (0x6)
+ELF-I386-NEXT:       PF_R (0x4)
+ELF-I386-NEXT:       PF_W (0x2)
+ELF-I386-NEXT:     ]
+ELF-I386-NEXT:     Alignment: 4
+ELF-I386-NEXT:   }
+ELF-I386-NEXT: ]
+
+ELF-X86-64:      ProgramHeaders [
+ELF-X86-64-NEXT:   ProgramHeader {
+ELF-X86-64-NEXT:     Type: PT_LOAD (0x1)
+ELF-X86-64-NEXT:     Offset: 0x0
+ELF-X86-64-NEXT:     VirtualAddress: 0x400000
+ELF-X86-64-NEXT:     PhysicalAddress: 0x400000
+ELF-X86-64-NEXT:     FileSize: 312
+ELF-X86-64-NEXT:     MemSize: 312
+ELF-X86-64-NEXT:     Flags [ (0x5)
+ELF-X86-64-NEXT:       PF_R (0x4)
+ELF-X86-64-NEXT:       PF_X (0x1)
+ELF-X86-64-NEXT:     ]
+ELF-X86-64-NEXT:     Alignment: 2097152
+ELF-X86-64-NEXT:   }
+ELF-X86-64-NEXT:   ProgramHeader {
+ELF-X86-64-NEXT:     Type: PT_GNU_EH_FRAME (0x6474E550)
+ELF-X86-64-NEXT:     Offset: 0xF4
+ELF-X86-64-NEXT:     VirtualAddress: 0x4000F4
+ELF-X86-64-NEXT:     PhysicalAddress: 0x4000F4
+ELF-X86-64-NEXT:     FileSize: 20
+ELF-X86-64-NEXT:     MemSize: 20
+ELF-X86-64-NEXT:     Flags [ (0x4)
+ELF-X86-64-NEXT:       PF_R (0x4)
+ELF-X86-64-NEXT:     ]
+ELF-X86-64-NEXT:     Alignment: 4
+ELF-X86-64-NEXT:   }
+ELF-X86-64-NEXT:   ProgramHeader {
+ELF-X86-64-NEXT:     Type: PT_GNU_STACK (0x6474E551)
+ELF-X86-64-NEXT:     Offset: 0x0
+ELF-X86-64-NEXT:     VirtualAddress: 0x0
+ELF-X86-64-NEXT:     PhysicalAddress: 0x0
+ELF-X86-64-NEXT:     FileSize: 0
+ELF-X86-64-NEXT:     MemSize: 0
+ELF-X86-64-NEXT:     Flags [ (0x6)
+ELF-X86-64-NEXT:       PF_R (0x4)
+ELF-X86-64-NEXT:       PF_W (0x2)
+ELF-X86-64-NEXT:     ]
+ELF-X86-64-NEXT:     Alignment: 8
+ELF-X86-64-NEXT:   }
+ELF-X86-64-NEXT: ]

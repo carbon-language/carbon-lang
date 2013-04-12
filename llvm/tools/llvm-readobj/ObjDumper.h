@@ -38,6 +38,7 @@ public:
   // Only implemented for ELF at this time.
   virtual void printDynamicTable() { }
   virtual void printNeededLibraries() { }
+  virtual void printProgramHeaders() { }
 
 protected:
   StreamWriter& W;
