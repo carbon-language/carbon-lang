@@ -66,9 +66,9 @@ define void @avx2mull() {
 
 ; CHECK: fmul
 define i32 @fmul(i32 %arg) {
-  ;CHECK: cost of 1 {{.*}} fmul
+  ;CHECK: cost of 2 {{.*}} fmul
   %A = fmul <4 x float> undef, undef
-  ;CHECK: cost of 1 {{.*}} fmul
+  ;CHECK: cost of 2 {{.*}} fmul
   %B = fmul <8 x float> undef, undef
   ret i32 undef
 }

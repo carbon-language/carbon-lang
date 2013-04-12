@@ -12,7 +12,11 @@ define double @test1(double %A1, double %A2, double %B1, double %B2) {
 	%R  = fmul double %Z1, %Z2
 	ret double %R
 ; CHECK: @test1
-; CHECK-NOT: fmul <2 x double>
+; CHECK: fsub <2 x double>
+; CHECK: fmul <2 x double>
+; CHECK: fadd <2 x double>
+; CHECK: extract
+; CHECK: extract
 ; CHECK: ret double %R
 }
 
@@ -63,7 +67,12 @@ define double @test2(double %A1, double %A2, double %B1, double %B2) {
 	%R  = fmul double %Z1, %Z2
 	ret double %R
 ; CHECK: @test2
-; CHECK-NOT: fmul <2 x double>
+; CHECK: insertelement
+; CHECK: insertelement
+; CHECK: insertelement
+; CHECK: insertelement
+; CHECK: fsub <2 x double>
+; CHECK: fmul <2 x double>
 ; CHECK: ret double %R
 }
 
@@ -80,7 +89,15 @@ define double @test4(double %A1, double %A2, double %B1, double %B2) {
 	%R  = fmul double %Z1, %Z2
 	ret double %R
 ; CHECK: @test4
-; CHECK-NOT: fmul <2 x double>
+; CHECK: insertelement
+; CHECK: insertelement
+; CHECK: insertelement
+; CHECK: insertelement
+; CHECK: fsub <2 x double>
+; CHECK: fmul <2 x double>
+; CHECK: insertelement
+; CHECK: insertelement
+; CHECK: fadd <2 x double>
 ; CHECK: ret double %R
 }
 

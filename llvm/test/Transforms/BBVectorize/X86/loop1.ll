@@ -34,7 +34,15 @@ for.body:                                         ; preds = %for.body, %entry
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
   %exitcond = icmp eq i32 %lftr.wideiv, 10
   br i1 %exitcond, label %for.end, label %for.body
-; CHECK-NOT: <2 x double>
+; CHECK: insertelement
+; CHECK-NEXT: insertelement
+; CHECK-NEXT: fadd <2 x double>
+; CHECK-NEXT: insertelement
+; CHECK-NEXT: insertelement
+; CHECK-NEXT: fadd <2 x double>
+; CHECK-NEXT: insertelement
+; CHECK-NEXT: fmul <2 x double>
+
 ; CHECK-UNRL: %mul = fmul <2 x double> %2, %2
 ; CHECK-UNRL: %mul3 = fmul <2 x double> %2, %3
 ; CHECK-UNRL: %add = fadd <2 x double> %mul, %mul3
