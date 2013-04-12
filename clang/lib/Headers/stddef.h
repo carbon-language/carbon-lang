@@ -42,6 +42,17 @@ typedef __PTRDIFF_TYPE__ ptrdiff_t;
 typedef __SIZE_TYPE__ size_t;
 #endif
 
+/* ISO9899:2011 7.20 (C11 Annex K): Define risze_t if __STDC_WANT_LIB_EXT1__ is
+ * enabled. */
+#if (defined(__STDC_WANT_LIB_EXT1__) && __STDC_WANT_LIB_EXT1__ >= 1 && \
+     !defined(_RSIZE_T)) || __has_feature(modules)
+/* Always define rsize_t when modules are available. */
+#if !__has_feature(modules)
+#define _RSIZE_T
+#endif
+typedef __SIZE_TYPE__ rsize_t;
+#endif
+
 #ifndef __cplusplus
 /* Always define wchar_t when modules are available. */
 #if !defined(_WCHAR_T) || __has_feature(modules)

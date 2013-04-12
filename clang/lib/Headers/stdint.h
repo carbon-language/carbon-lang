@@ -667,6 +667,12 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #define PTRDIFF_MAX  __INTN_MAX(__PTRDIFF_WIDTH__)
 #define    SIZE_MAX __UINTN_MAX(__SIZE_WIDTH__)
 
+/* ISO9899:2011 7.20 (C11 Annex K): Define RSIZE_MAX if __STDC_WANT_LIB_EXT1__
+ * is enabled. */
+#if defined(__STDC_WANT_LIB_EXT1__) && __STDC_WANT_LIB_EXT1__ >= 1
+#define   RSIZE_MAX            (SIZE_MAX >> 1)
+#endif
+
 /* C99 7.18.2.5 Limits of greatest-width integer types. */
 #define INTMAX_MIN   __INTN_MIN(__INTMAX_WIDTH__)
 #define INTMAX_MAX   __INTN_MAX(__INTMAX_WIDTH__)
