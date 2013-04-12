@@ -177,7 +177,6 @@ public:
   void setBuiltinIncludeDir(const DirectoryEntry *Dir) {
     BuiltinIncludeDir = Dir;
   }
-  const DirectoryEntry *getBuiltinIncludeDir() { return BuiltinIncludeDir; }
 
   /// \brief Retrieve the module that owns the given header file, if any.
   ///

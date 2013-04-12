@@ -1563,9 +1563,9 @@ void ASTReader::installPCHMacroDirectives(IdentifierInfo *II,
 }
 
 /// \brief For the given macro definitions, check if they are both in system
-/// modules and if one of the two is in the clang builtin headers.
-static bool isSystemAndClangMacro(MacroInfo *PrevMI, MacroInfo *NewMI,
-                                  Module *NewOwner, ASTReader &Reader) {
+/// modules.
+static bool areDefinedInSystemModules(MacroInfo *PrevMI, MacroInfo *NewMI,
+                                       Module *NewOwner, ASTReader &Reader) {
   assert(PrevMI && NewMI);
   if (!NewOwner)
     return false;
@@ -1576,22 +1576,7 @@ static bool isSystemAndClangMacro(MacroInfo *PrevMI, MacroInfo *NewMI,
     return false;
   if (PrevOwner == NewOwner)
     return false;
-  if (!PrevOwner->IsSystem || !NewOwner->IsSystem)
-    return false;
-
-  SourceManager &SM = Reader.getSourceManager();
-  FileID PrevFID = SM.getFileID(PrevMI->getDefinitionLoc());
-  FileID NewFID = SM.getFileID(NewMI->getDefinitionLoc());
-  const FileEntry *PrevFE = SM.getFileEntryForID(PrevFID);
-  const FileEntry *NewFE = SM.getFileEntryForID(NewFID);
-  if (PrevFE == 0 || NewFE == 0)
-    return false;
-
-  Preprocessor &PP = Reader.getPreprocessor();
-  ModuleMap &ModMap = PP.getHeaderSearchInfo().getModuleMap();
-  const DirectoryEntry *BuiltinDir = ModMap.getBuiltinIncludeDir();
-
-  return (PrevFE->getDir() == BuiltinDir) != (NewFE->getDir() == BuiltinDir);
+  return PrevOwner->IsSystem && NewOwner->IsSystem;
 }
 
 void ASTReader::installImportedMacro(IdentifierInfo *II, MacroDirective *MD,
@@ -1607,15 +1592,12 @@ void ASTReader::installImportedMacro(IdentifierInfo *II, MacroDirective *MD,
     if (NewMI != PrevMI && !PrevMI->isIdenticalTo(*NewMI, PP,
                                                   /*Syntactically=*/true)) {
       // Before marking the macros as ambiguous, check if this is a case where
-      // the system macro uses a not identical definition compared to a macro
-      // from the clang headers. For example:
+      // both macros are in system headers. If so, we trust that the system
+      // did not get it wrong. This also handles cases where Clang's own
+      // headers have a different spelling of certain system macros:
       //   #define LONG_MAX __LONG_MAX__ (clang's limits.h)
       //   #define LONG_MAX 0x7fffffffffffffffL (system's limits.h)
-      // in which case don't mark them to avoid the "ambiguous macro expansion"
-      // warning.
-      // FIXME: This should go away if the system headers get "fixed" to use
-      // identical definitions.
-      if (!isSystemAndClangMacro(PrevMI, NewMI, Owner, *this)) {
+      if (!areDefinedInSystemModules(PrevMI, NewMI, Owner, *this)) {
         PrevDef.getDirective()->setAmbiguous(true);
         DefMD->setAmbiguous(true);
       }
