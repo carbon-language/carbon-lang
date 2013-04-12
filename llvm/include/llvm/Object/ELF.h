@@ -689,6 +689,7 @@ public:
 protected:
   const Elf_Sym  *getSymbol(DataRefImpl Symb) const; // FIXME: Should be private?
   void            validateSymbol(DataRefImpl Symb) const;
+  StringRef       getRelocationTypeName(uint32_t Type) const;
 
 public:
   error_code      getSymbolName(const Elf_Shdr *section,
@@ -1607,29 +1608,14 @@ error_code ELFObjectFile<ELFT>::getRelocationType(DataRefImpl Rel,
 }
 
 #define LLVM_ELF_SWITCH_RELOC_TYPE_NAME(enum) \
-  case ELF::enum: res = #enum; break;
+  case ELF::enum: Res = #enum; break;
 
 template<class ELFT>
-error_code ELFObjectFile<ELFT>::getRelocationTypeName(
-    DataRefImpl Rel, SmallVectorImpl<char> &Result) const {
-  const Elf_Shdr *sec = getSection(Rel.w.b);
-  uint32_t type;
-  StringRef res;
-  switch (sec->sh_type) {
-    default :
-      return object_error::parse_failed;
-    case ELF::SHT_REL : {
-      type = getRel(Rel)->getType(isMips64EL());
-      break;
-    }
-    case ELF::SHT_RELA : {
-      type = getRela(Rel)->getType(isMips64EL());
-      break;
-    }
-  }
+StringRef ELFObjectFile<ELFT>::getRelocationTypeName(uint32_t Type) const {
+  StringRef Res = "Unknown";
   switch (Header->e_machine) {
   case ELF::EM_X86_64:
-    switch (type) {
+    switch (Type) {
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_NONE);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_64);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_PC32);
@@ -1662,12 +1648,11 @@ error_code ELFObjectFile<ELFT>::getRelocationTypeName(
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_GOTPC32_TLSDESC);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_TLSDESC_CALL);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_X86_64_TLSDESC);
-    default:
-      res = "Unknown";
+    default: break;
     }
     break;
   case ELF::EM_386:
-    switch (type) {
+    switch (Type) {
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_NONE);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_32);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_PC32);
@@ -1708,12 +1693,11 @@ error_code ELFObjectFile<ELFT>::getRelocationTypeName(
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_DESC_CALL);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_TLS_DESC);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_386_IRELATIVE);
-    default:
-      res = "Unknown";
+    default: break;
     }
     break;
   case ELF::EM_MIPS:
-    switch (type) {
+    switch (Type) {
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_MIPS_NONE);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_MIPS_16);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_MIPS_32);
@@ -1765,12 +1749,11 @@ error_code ELFObjectFile<ELFT>::getRelocationTypeName(
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_MIPS_GLOB_DAT);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_MIPS_COPY);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_MIPS_JUMP_SLOT);
-    default:
-      res = "Unknown";
+    default: break;
     }
     break;
   case ELF::EM_AARCH64:
-    switch (type) {
+    switch (Type) {
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_AARCH64_NONE);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_AARCH64_ABS64);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_AARCH64_ABS32);
@@ -1844,13 +1827,11 @@ error_code ELFObjectFile<ELFT>::getRelocationTypeName(
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_AARCH64_TLSDESC_LD64_LO12_NC);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_AARCH64_TLSDESC_ADD_LO12_NC);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_AARCH64_TLSDESC_CALL);
-
-    default:
-      res = "Unknown";
+    default: break;
     }
     break;
   case ELF::EM_ARM:
-    switch (type) {
+    switch (Type) {
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_ARM_NONE);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_ARM_PC24);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_ARM_ABS32);
@@ -1982,12 +1963,11 @@ error_code ELFObjectFile<ELFT>::getRelocationTypeName(
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_ARM_ME_TOO);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_ARM_THM_TLS_DESCSEQ16);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_ARM_THM_TLS_DESCSEQ32);
-    default:
-      res = "Unknown";
+    default: break;
     }
     break;
   case ELF::EM_HEXAGON:
-    switch (type) {
+    switch (Type) {
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_HEX_NONE);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_HEX_B22_PCREL);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_HEX_B15_PCREL);
@@ -2074,18 +2054,57 @@ error_code ELFObjectFile<ELFT>::getRelocationTypeName(
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_HEX_TPREL_32_6_X);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_HEX_TPREL_16_X);
       LLVM_ELF_SWITCH_RELOC_TYPE_NAME(R_HEX_TPREL_11_X);
-    default:
-      res = "Unknown";
+    default: break;
     }
     break;
-  default:
-    res = "Unknown";
+  default: break;
   }
-  Result.append(res.begin(), res.end());
-  return object_error::success;
+  return Res;
 }
 
 #undef LLVM_ELF_SWITCH_RELOC_TYPE_NAME
+
+template<class ELFT>
+error_code ELFObjectFile<ELFT>::getRelocationTypeName(
+    DataRefImpl Rel, SmallVectorImpl<char> &Result) const {
+  const Elf_Shdr *sec = getSection(Rel.w.b);
+  uint32_t type;
+  switch (sec->sh_type) {
+    default :
+      return object_error::parse_failed;
+    case ELF::SHT_REL : {
+      type = getRel(Rel)->getType(isMips64EL());
+      break;
+    }
+    case ELF::SHT_RELA : {
+      type = getRela(Rel)->getType(isMips64EL());
+      break;
+    }
+  }
+
+  if (!isMips64EL()) {
+    StringRef Name = getRelocationTypeName(type);
+    Result.append(Name.begin(), Name.end());
+  } else {
+    uint8_t Type1 = (type >>  0) & 0xFF;
+    uint8_t Type2 = (type >>  8) & 0xFF;
+    uint8_t Type3 = (type >> 16) & 0xFF;
+
+    // Concat all three relocation type names.
+    StringRef Name = getRelocationTypeName(Type1);
+    Result.append(Name.begin(), Name.end());
+
+    Name = getRelocationTypeName(Type2);
+    Result.append(1, '/');
+    Result.append(Name.begin(), Name.end());
+
+    Name = getRelocationTypeName(Type3);
+    Result.append(1, '/');
+    Result.append(Name.begin(), Name.end());
+  }
+
+  return object_error::success;
+}
 
 template<class ELFT>
 error_code ELFObjectFile<ELFT>::getRelocationAdditionalInfo(
