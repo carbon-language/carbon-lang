@@ -1089,18 +1089,16 @@ bool MachineBlockPlacement::runOnMachineFunction(MachineFunction &F) {
   TLI = F.getTarget().getTargetLowering();
   assert(BlockToChain.empty());
 
-  if (AlignAllBlock) {
-    // Align all of the blocks in the function to a specific alignment.
-    for (MachineFunction::iterator FI = F.begin(), FE = F.end();
-         FI != FE; ++FI)
-      FI->setAlignment(AlignAllBlock);
-    return true;
-  }
-
   buildCFGChains(F);
 
   BlockToChain.clear();
   ChainAllocator.DestroyAll();
+
+  if (AlignAllBlock)
+    // Align all of the blocks in the function to a specific alignment.
+    for (MachineFunction::iterator FI = F.begin(), FE = F.end();
+         FI != FE; ++FI)
+      FI->setAlignment(AlignAllBlock);
 
   // We always return true as we have no way to track whether the final order
   // differs from the original order.
