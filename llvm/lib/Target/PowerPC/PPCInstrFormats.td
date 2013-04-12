@@ -38,6 +38,11 @@ class I<bits<6> opcode, dag OOL, dag IOL, string asmstr, InstrItinClass itin>
 
   // Fields used for relation models.
   string BaseName = "";
+
+  // For cases where multiple instruction definitions really represent the
+  // same underlying instruction but with one definition for 64-bit arguments
+  // and one for 32-bit arguments, this bit breaks the degeneracy between
+  // the two forms and allows TableGen to generate mapping tables.
   bit Interpretation64Bit = 0;
 }
 
