@@ -303,8 +303,6 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
   }
 
   case ISD::ADDE: {
-    if (Subtarget.hasDSP()) // Select DSP instructions, ADDSC and ADDWC.
-      break;
     SDValue InFlag = Node->getOperand(2);
     Result = selectAddESubE(Mips::ADDu, InFlag, InFlag.getValue(0), DL, Node);
     return std::make_pair(true, Result);
