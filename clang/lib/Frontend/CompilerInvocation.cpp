@@ -29,6 +29,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/system_error.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -1695,6 +1696,22 @@ std::string CompilerInvocation::getModuleHash() const {
                       hsOpts.UseStandardSystemIncludes,
                       hsOpts.UseStandardCXXIncludes,
                       hsOpts.UseLibcxx);
+
+  // Darwin-specific hack: if we have a sysroot, use the contents of
+  //   $sysroot/System/Library/CoreServices/SystemVersion.plist
+  // as part of the module hash.
+  if (!hsOpts.Sysroot.empty()) {
+    llvm::OwningPtr<llvm::MemoryBuffer> buffer;
+    SmallString<128> systemVersionFile;
+    systemVersionFile += hsOpts.Sysroot;
+    llvm::sys::path::append(systemVersionFile, "System");
+    llvm::sys::path::append(systemVersionFile, "Library");
+    llvm::sys::path::append(systemVersionFile, "CoreServices");
+    llvm::sys::path::append(systemVersionFile, "SystemVersion.plist");
+    if (!llvm::MemoryBuffer::getFile(systemVersionFile, buffer)) {
+      code = hash_combine(code, buffer.get()->getBuffer());
+    }
+  }
 
   return llvm::APInt(64, code).toString(36, /*Signed=*/false);
 }
