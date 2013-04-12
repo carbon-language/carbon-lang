@@ -4188,11 +4188,12 @@ AsmParser::parseMSInlineAsm(void *AsmLoc, std::string &AsmString,
   for (SmallVectorImpl<AsmRewrite>::iterator I = AsmStrRewrites.begin(),
                                              E = AsmStrRewrites.end();
        I != E; ++I) {
+    AsmRewriteKind Kind = (*I).Kind;
+    if (Kind == AOK_Delete)
+      continue;
+
     const char *Loc = (*I).Loc.getPointer();
     assert(Loc >= AsmStart && "Expected Loc to be at or after Start!");
-
-    unsigned AdditionalSkip = 0;
-    AsmRewriteKind Kind = (*I).Kind;
 
     // Emit everything up to the immediate/expression.
     unsigned Len = Loc - AsmStart;
@@ -4205,6 +4206,7 @@ AsmParser::parseMSInlineAsm(void *AsmLoc, std::string &AsmString,
       continue;
     }
 
+    unsigned AdditionalSkip = 0;
     // Rewrite expressions in $N notation.
     switch (Kind) {
     default: break;
