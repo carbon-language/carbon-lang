@@ -79,3 +79,18 @@
 #
 # CHECK-ASEXEC-EXACT-TEST: -- Testing: 1 tests, 1 threads --
 # CHECK-ASEXEC-EXACT-TEST: PASS: top-level-suite :: subdir/test-three
+
+
+# Check that we don't recurse infinitely when loading an site specific test
+# suite located inside the test source root.
+#
+# RUN: %{lit} \
+# RUN:     %{inputs}/exec-discovery-in-tree/obj/ \
+# RUN:   -j 1 --no-execute --show-suites -v > %t.out
+# RUN: FileCheck --check-prefix=CHECK-ASEXEC-INTREE < %t.out %s
+#
+#      CHECK-ASEXEC-INTREE:   exec-discovery-in-tree-suite - 1 tests
+# CHECK-ASEXEC-INTREE-NEXT:     Source Root: {{.*/exec-discovery-in-tree$}}
+# CHECK-ASEXEC-INTREE-NEXT:     Exec Root  : {{.*/exec-discovery-in-tree/obj$}}
+# CHECK-ASEXEC-INTREE-NEXT: -- Testing: 1 tests, 1 threads --
+# CHECK-ASEXEC-INTREE-NEXT: PASS: exec-discovery-in-tree-suite :: test-one

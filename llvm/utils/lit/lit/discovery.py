@@ -147,19 +147,30 @@ def getTestsInSuite(ts, path_in_suite, litConfig,
 
         # Check for nested test suites, first in the execpath in case there is a
         # site configuration and then in the source path.
-        file_execpath = ts.getExecPath(path_in_suite + (filename,))
+        subpath = path_in_suite + (filename,)
+        file_execpath = ts.getExecPath(subpath)
         if dirContainsTestSuite(file_execpath, litConfig):
-            sub_ts, subiter = getTests(file_execpath, litConfig,
-                                       testSuiteCache, localConfigCache)
+            sub_ts, subpath_in_suite = getTestSuite(file_execpath, litConfig,
+                                                    testSuiteCache)
         elif dirContainsTestSuite(file_sourcepath, litConfig):
-            sub_ts, subiter = getTests(file_sourcepath, litConfig,
-                                       testSuiteCache, localConfigCache)
+            sub_ts, subpath_in_suite = getTestSuite(file_sourcepath, litConfig,
+                                                    testSuiteCache)
         else:
-            # Otherwise, continue loading from inside this test suite.
-            subiter = getTestsInSuite(ts, path_in_suite + (filename,),
-                                      litConfig, testSuiteCache,
-                                      localConfigCache)
             sub_ts = None
+
+        # If the this directory recursively maps back to the current test suite,
+        # disregard it (this can happen if the exec root is located inside the
+        # current test suite, for example).
+        if sub_ts is ts:
+            continue
+
+        # Otherwise, load from the nested test suite, if present.
+        if sub_ts is not None:
+            subiter = getTestsInSuite(sub_ts, subpath_in_suite, litConfig,
+                                      testSuiteCache, localConfigCache)
+        else:
+            subiter = getTestsInSuite(ts, subpath, litConfig, testSuiteCache,
+                                      localConfigCache)
 
         N = 0
         for res in subiter:
