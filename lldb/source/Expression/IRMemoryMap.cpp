@@ -423,6 +423,15 @@ IRMemoryMap::WriteScalarToMemory (lldb::addr_t process_address, Scalar &scalar, 
 }
 
 void
+IRMemoryMap::WritePointerToMemory (lldb::addr_t process_address, lldb::addr_t address, Error &error)
+{
+    Scalar scalar(address);
+    
+    WriteScalarToMemory(process_address, scalar, GetAddressByteSize(), error);
+}
+
+
+void
 IRMemoryMap::ReadMemory (uint8_t *bytes, lldb::addr_t process_address, size_t size, Error &error)
 {
     AllocationMap::iterator iter = FindAllocation(process_address, size);

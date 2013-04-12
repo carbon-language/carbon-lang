@@ -9,6 +9,7 @@
 
 #include "lldb/Core/Log.h"
 #include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
 #include "lldb/Expression/Materializer.h"
 #include "lldb/Symbol/ClangASTContext.h"
@@ -16,6 +17,7 @@
 #include "lldb/Symbol/Type.h"
 #include "lldb/Symbol/Variable.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/StackFrame.h"
 
 using namespace lldb_private;
 
@@ -317,23 +319,174 @@ class EntityVariable : public Materializer::Entity
 public:
     EntityVariable (lldb::VariableSP &variable_sp) :
         Entity(),
-        m_variable_sp(variable_sp)
+        m_variable_sp(variable_sp),
+        m_is_reference(false),
+        m_temporary_allocation(LLDB_INVALID_ADDRESS)
     {
-        // Hard-coding to maximum size of a pointer since all varaibles are materialized by reference
+        // Hard-coding to maximum size of a pointer since all variables are materialized by reference
         m_size = 8;
         m_alignment = 8;
+        m_is_reference = ClangASTContext::IsReferenceType(m_variable_sp->GetType()->GetClangForwardType());
     }
     
     virtual void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
     {
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+        
+        if (log)
+        {
+            log->Printf("EntityVariable::Materialize [process_address = 0x%llx, m_variable_sp = %s]",
+                        (uint64_t)process_address,
+                        m_variable_sp->GetName().AsCString());
+        }
+        
+        lldb::ValueObjectSP valobj_sp = ValueObjectVariable::Create(frame_sp.get(), m_variable_sp);
+        
+        if (!valobj_sp)
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat("Couldn't get a value object for variable %s", m_variable_sp->GetName().AsCString());
+            return;
+        }
+        
+        if (m_is_reference)
+        {
+            DataExtractor valobj_extractor;
+            valobj_sp->GetData(valobj_extractor);
+            lldb::offset_t offset = 0;
+            lldb::addr_t reference_addr = valobj_extractor.GetAddress(&offset);
+            
+            Error write_error;
+            map.WritePointerToMemory(process_address + m_offset, reference_addr, write_error);
+            
+            if (!write_error.Success())
+            {
+                err.SetErrorToGenericError();
+                err.SetErrorStringWithFormat("Couldn't write the contents of reference variable %s to memory: %s", m_variable_sp->GetName().AsCString(), write_error.AsCString());
+                return;
+            }
+        }
+        else
+        {
+            Error get_address_error;
+            lldb::ValueObjectSP addr_of_valobj_sp = valobj_sp->AddressOf(get_address_error);
+            if (get_address_error.Success())
+            {
+                DataExtractor valobj_extractor;
+                addr_of_valobj_sp->GetData(valobj_extractor);
+                lldb::offset_t offset = 0;
+                lldb::addr_t addr_of_valobj_addr = valobj_extractor.GetAddress(&offset);
+                
+                Error write_error;
+                map.WritePointerToMemory(process_address + m_offset, addr_of_valobj_addr, write_error);
+                
+                if (!write_error.Success())
+                {
+                    err.SetErrorToGenericError();
+                    err.SetErrorStringWithFormat("Couldn't write the address of variable %s to memory: %s", m_variable_sp->GetName().AsCString(), write_error.AsCString());
+                    return;
+                }
+            }
+            else
+            {
+                DataExtractor data;
+                valobj_sp->GetData(data);
+                
+                if (m_temporary_allocation == LLDB_INVALID_ADDRESS)
+                {
+                    err.SetErrorToGenericError();
+                    err.SetErrorStringWithFormat("Trying to create a temporary region for %s but one exists", m_variable_sp->GetName().AsCString());
+                    return;
+                }
+                
+                if (data.GetByteSize() != m_variable_sp->GetType()->GetByteSize())
+                {
+                    err.SetErrorToGenericError();
+                    err.SetErrorStringWithFormat("Size of variable %s disagrees with the ValueObject's size", m_variable_sp->GetName().AsCString());
+                    return;
+                }
+                
+                size_t bit_align = ClangASTType::GetTypeBitAlign(m_variable_sp->GetType()->GetClangAST(), m_variable_sp->GetType()->GetClangLayoutType());
+                size_t byte_align = (bit_align + 7) / 8;
+                
+                Error alloc_error;
+                
+                m_temporary_allocation = map.Malloc(data.GetByteSize(), byte_align, lldb::ePermissionsReadable | lldb::ePermissionsWritable, IRMemoryMap::eAllocationPolicyMirror, alloc_error);
+                
+                if (!alloc_error.Success())
+                {
+                    err.SetErrorToGenericError();
+                    err.SetErrorStringWithFormat("Couldn't allocate a temporary region for %s: %s", m_variable_sp->GetName().AsCString(), alloc_error.AsCString());
+                    return;
+                }
+                
+                Error write_error;
+                
+                map.WriteMemory(m_temporary_allocation, data.GetDataStart(), data.GetByteSize(), write_error);
+                
+                if (!write_error.Success())
+                {
+                    err.SetErrorToGenericError();
+                    err.SetErrorStringWithFormat("Couldn't write to the temporary region for %s: %s", m_variable_sp->GetName().AsCString(), write_error.AsCString());
+                    return;
+                }
+                
+                Error pointer_write_error;
+                
+                map.WritePointerToMemory(process_address + m_offset, m_temporary_allocation, pointer_write_error);
+                
+                if (!pointer_write_error.Success())
+                {
+                    err.SetErrorToGenericError();
+                    err.SetErrorStringWithFormat("Couldn't write the address of the temporary region for %s: %s", m_variable_sp->GetName().AsCString(), pointer_write_error.AsCString());
+                }
+            }
+        }
     }
     
     virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address,
                                 lldb::addr_t frame_top, lldb::addr_t frame_bottom, Error &err)
     {
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+        if (log)
+        {
+            log->Printf("EntityVariable::Dematerialize [process_address = 0x%llx, m_variable_sp = %s]",
+                        (uint64_t)process_address,
+                        m_variable_sp->GetName().AsCString());
+        }
+        
+        if (m_temporary_allocation != LLDB_INVALID_ADDRESS)
+        {
+            lldb::ValueObjectSP valobj_sp = ValueObjectVariable::Create(frame_sp.get(), m_variable_sp);
+            
+            if (!valobj_sp)
+            {
+                err.SetErrorToGenericError();
+                err.SetErrorStringWithFormat("Couldn't get a value object for variable %s", m_variable_sp->GetName().AsCString());
+                return;
+            }
+            
+            // TODO Write to the ValueObject
+            
+            Error free_error;
+            
+            map.Free(m_temporary_allocation, free_error);
+            
+            if (!free_error.Success())
+            {
+                err.SetErrorToGenericError();
+                err.SetErrorStringWithFormat("Couldn'tfree the temporary region for %s: %s", m_variable_sp->GetName().AsCString(), free_error.AsCString());
+                return;
+            }
+            
+            m_temporary_allocation = LLDB_INVALID_ADDRESS;
+        }
     }
 private:
-    lldb::VariableSP m_variable_sp;
+    lldb::VariableSP    m_variable_sp;
+    bool                m_is_reference;
+    lldb::addr_t        m_temporary_allocation;
 };
 
 uint32_t
