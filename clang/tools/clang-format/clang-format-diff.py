@@ -65,7 +65,7 @@ def formatRange(r, style):
     text = f.read()
   command = [binary, '-offset', str(offset), '-length', str(length)]
   if style:
-    command.append('-style', style)
+    command.extend(['-style', style])
   p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                        stdin=subprocess.PIPE)
   stdout, stderr = p.communicate(input=text)
