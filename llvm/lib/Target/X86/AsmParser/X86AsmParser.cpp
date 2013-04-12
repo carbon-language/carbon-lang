@@ -1135,38 +1135,9 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
 
   unsigned TmpReg = 0;
   SMLoc StartInBrac = Tok.getLoc();
-
-  // Try to handle '[' 'Symbol' ']'
-  if (getLexer().is(AsmToken::Identifier)) {
-    SMLoc Loc = Tok.getLoc();
-    if (ParseRegister(TmpReg, Loc, End)) {
-      const MCExpr *Disp;
-      StringRef Identifier = Tok.getString();
-      if (getParser().parseExpression(Disp, End))
-        return 0;
-
-      if (X86Operand *Err = ParseIntelVarWithQualifier(Disp, Identifier))
-        return Err;
-
-      if (getLexer().isNot(AsmToken::RBrac))
-        return ErrorOperand(Tok.getLoc(), "Expected ']' token!");
-
-      if (isParsingInlineAsm()) {
-        // Remove the '[' and ']' from the IR string.
-        InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, Start, 1));
-        InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, Tok.getLoc(), 1));
-      }
-      Parser.Lex(); // Eat ']'
-      if (!isParsingInlineAsm())
-        return X86Operand::CreateMem(Disp, Start, End, Size);
-      return CreateMemForInlineAsm(/*SegReg=*/0, Disp, /*BaseReg=*/0,
-                                   /*IndexReg=*/0, /*Scale*/1, Start, End,
-                                   SizeDirLoc, Size, Identifier);
-    }
-  }
-
-  // Parse [ BaseReg + Scale*IndexReg + Disp ].  We may have already parsed an
-  // immediate displacement before the bracketed expression.
+  // Parse [ Symbol + ImmDisp ] and [ BaseReg + Scale*IndexReg + ImmDisp ].  We
+  // may have already parsed an immediate displacement before the bracketed
+  // expression.
   bool Done = false;
   IntelBracExprStateMachine SM(Parser, ImmDisp);
 
@@ -1196,14 +1167,17 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       // This could be a register or a symbolic displacement.
       unsigned TmpReg;
       const MCExpr *Disp = 0;
-      AsmToken IdentTok = Parser.getTok();
-      SMLoc IdentLoc = IdentTok.getLoc();
+      SMLoc IdentLoc = Tok.getLoc();
+      StringRef Identifier = Tok.getString();
       if(!ParseRegister(TmpReg, IdentLoc, End)) {
         SM.onRegister(TmpReg);
         UpdateLocLex = false;
         break;
       } else if (!getParser().parsePrimaryExpr(Disp, End)) {
-        SM.onDispExpr(Disp, IdentTok.getString());
+        if (X86Operand *Err = ParseIntelVarWithQualifier(Disp, Identifier))
+          return Err;
+
+        SM.onDispExpr(Disp, Identifier);
         UpdateLocLex = false;
         break;
       }
@@ -1240,19 +1214,23 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, End, 1));
 
       // If ImmDisp is non-zero, then we parsed a displacement before the
-      // bracketed expression (i.e., ImmDisp [ BaseReg + Scale*IndexReg + Disp ])
+      // bracketed expression (i.e., ImmDisp [ BaseReg + Scale*IndexReg + Disp])
       uint64_t FinalImmDisp = SM.getImmDisp();
-      if (ImmDisp && ImmDisp != FinalImmDisp) {
-        // If ImmDisp doesn't match the displacement computed by the state machine
-        // then we have an additional displacement in the bracketed expression.
+
+      // If ImmDisp doesn't match the displacement computed by the state machine
+      // then we have an additional displacement in the bracketed expression.
+      if (ImmDisp != FinalImmDisp) {
+        if (ImmDisp) {
+          // FIXME: We have an immediate displacement before the bracketed
+          // expression. Adjust this to match the final immediate displacement.
+        } else {
+          // We have a symbolic and an immediate displacement, but no displacement
+          // before the bracketed expression.
         
-      } else if (FinalImmDisp) {
-        // We have a symbolic and an immediate displacement, but no displacement
-        // before the bracketed expression.
-        
-        // Put the immediate displacement before the bracketed expression.
-        InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Imm, Start, 0,
-                                                    FinalImmDisp));
+          // Put the immediate displacement before the bracketed expression.
+          InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Imm, Start, 0,
+                                                      FinalImmDisp));
+        }
       }
       // Remove all the ImmPrefix rewrites within the brackets.
       for (SmallVectorImpl<AsmRewrite>::iterator
