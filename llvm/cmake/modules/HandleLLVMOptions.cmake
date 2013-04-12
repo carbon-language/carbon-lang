@@ -252,8 +252,6 @@ if(LLVM_USE_SANITIZER)
     elseif (LLVM_USE_SANITIZER MATCHES "Memory(WithOrigins)?")
       append_common_sanitizer_flags()
       add_flag_or_print_warning("-fsanitize=memory")
-      # -pie is required for MSan.
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie")
       if(LLVM_USE_SANITIZER STREQUAL "MemoryWithOrigins")
         add_flag_or_print_warning("-fsanitize-memory-track-origins")
       endif()
