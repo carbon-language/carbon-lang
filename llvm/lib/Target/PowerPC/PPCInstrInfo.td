@@ -319,14 +319,7 @@ def unaligned4sextloadi32 : PatFrag<(ops node:$ptr), (sextloadi32 node:$ptr), [{
 // PowerPC Flag Definitions.
 
 class isPPC64 { bit PPC64 = 1; }
-class isDOT   {
-  list<Register> Defs = [CR0];
-  bit RC  = 1;
-}
-class isDOT1  {
-  list<Register> Defs = [CR1];
-  bit RC  = 1;
-}
+class isDOT   { bit RC = 1; }
 
 class RegConstraint<string C> {
   string Constraints = C;
@@ -443,6 +436,22 @@ multiclass XForm_6r<bits<6> opcode, bits<10> xo, dag OOL, dag IOL,
     def NAME : XForm_6<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
                        pattern>, RecFormRel;
+    let Defs = [CR0] in
+    def o    : XForm_6<opcode, xo, OOL, IOL,
+                       !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
+                       []>, isDOT, RecFormRel;
+  }
+}
+
+multiclass XForm_6rc<bits<6> opcode, bits<10> xo, dag OOL, dag IOL,
+                     string asmbase, string asmstr, InstrItinClass itin,
+                     list<dag> pattern> {
+  let BaseName = asmbase in {
+    let Defs = [CARRY] in
+    def NAME : XForm_6<opcode, xo, OOL, IOL,
+                       !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
+                       pattern>, RecFormRel;
+    let Defs = [CARRY, CR0] in
     def o    : XForm_6<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
                        []>, isDOT, RecFormRel;
@@ -456,6 +465,22 @@ multiclass XForm_10r<bits<6> opcode, bits<10> xo, dag OOL, dag IOL,
     def NAME : XForm_10<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
                        pattern>, RecFormRel;
+    let Defs = [CR0] in
+    def o    : XForm_10<opcode, xo, OOL, IOL,
+                       !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
+                       []>, isDOT, RecFormRel;
+  }
+}
+
+multiclass XForm_10rc<bits<6> opcode, bits<10> xo, dag OOL, dag IOL,
+                      string asmbase, string asmstr, InstrItinClass itin,
+                      list<dag> pattern> {
+  let BaseName = asmbase in {
+    let Defs = [CARRY] in
+    def NAME : XForm_10<opcode, xo, OOL, IOL,
+                       !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
+                       pattern>, RecFormRel;
+    let Defs = [CARRY, CR0] in
     def o    : XForm_10<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
                        []>, isDOT, RecFormRel;
@@ -469,6 +494,7 @@ multiclass XForm_11r<bits<6> opcode, bits<10> xo, dag OOL, dag IOL,
     def NAME : XForm_11<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
                        pattern>, RecFormRel;
+    let Defs = [CR0] in
     def o    : XForm_11<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
                        []>, isDOT, RecFormRel;
@@ -482,6 +508,22 @@ multiclass XOForm_1r<bits<6> opcode, bits<9> xo, bit oe, dag OOL, dag IOL,
     def NAME : XOForm_1<opcode, xo, oe, OOL, IOL,
                        !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
                        pattern>, RecFormRel;
+    let Defs = [CR0] in
+    def o    : XOForm_1<opcode, xo, oe, OOL, IOL,
+                       !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
+                       []>, isDOT, RecFormRel;
+  }
+}
+
+multiclass XOForm_1rc<bits<6> opcode, bits<9> xo, bit oe, dag OOL, dag IOL,
+                      string asmbase, string asmstr, InstrItinClass itin,
+                      list<dag> pattern> {
+  let BaseName = asmbase in {
+    let Defs = [CARRY] in
+    def NAME : XOForm_1<opcode, xo, oe, OOL, IOL,
+                       !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
+                       pattern>, RecFormRel;
+    let Defs = [CARRY, CR0] in
     def o    : XOForm_1<opcode, xo, oe, OOL, IOL,
                        !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
                        []>, isDOT, RecFormRel;
@@ -495,6 +537,22 @@ multiclass XOForm_3r<bits<6> opcode, bits<9> xo, bit oe, dag OOL, dag IOL,
     def NAME : XOForm_3<opcode, xo, oe, OOL, IOL,
                        !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
                        pattern>, RecFormRel;
+    let Defs = [CR0] in
+    def o    : XOForm_3<opcode, xo, oe, OOL, IOL,
+                       !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
+                       []>, isDOT, RecFormRel;
+  }
+}
+
+multiclass XOForm_3rc<bits<6> opcode, bits<9> xo, bit oe, dag OOL, dag IOL,
+                      string asmbase, string asmstr, InstrItinClass itin,
+                      list<dag> pattern> {
+  let BaseName = asmbase in {
+    let Defs = [CARRY] in
+    def NAME : XOForm_3<opcode, xo, oe, OOL, IOL,
+                       !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
+                       pattern>, RecFormRel;
+    let Defs = [CARRY, CR0] in
     def o    : XOForm_3<opcode, xo, oe, OOL, IOL,
                        !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
                        []>, isDOT, RecFormRel;
@@ -508,6 +566,7 @@ multiclass MForm_2r<bits<6> opcode, dag OOL, dag IOL,
     def NAME : MForm_2<opcode, OOL, IOL,
                        !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
                        pattern>, RecFormRel;
+    let Defs = [CR0] in
     def o    : MForm_2<opcode, OOL, IOL,
                        !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
                        []>, isDOT, RecFormRel;
@@ -521,19 +580,22 @@ multiclass MDForm_1r<bits<6> opcode, bits<3> xo, dag OOL, dag IOL,
     def NAME : MDForm_1<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
                        pattern>, RecFormRel;
+    let Defs = [CR0] in
     def o    : MDForm_1<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
                        []>, isDOT, RecFormRel;
   }
 }
 
-multiclass XSForm_1r<bits<6> opcode, bits<9> xo, dag OOL, dag IOL,
-                    string asmbase, string asmstr, InstrItinClass itin,
-                    list<dag> pattern> {
+multiclass XSForm_1rc<bits<6> opcode, bits<9> xo, dag OOL, dag IOL,
+                      string asmbase, string asmstr, InstrItinClass itin,
+                      list<dag> pattern> {
   let BaseName = asmbase in {
+    let Defs = [CARRY] in
     def NAME : XSForm_1<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
                        pattern>, RecFormRel;
+    let Defs = [CARRY, CR0] in
     def o    : XSForm_1<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
                        []>, isDOT, RecFormRel;
@@ -547,9 +609,10 @@ multiclass XForm_26r<bits<6> opcode, bits<10> xo, dag OOL, dag IOL,
     def NAME : XForm_26<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
                        pattern>, RecFormRel;
+    let Defs = [CR1] in
     def o    : XForm_26<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
-                       []>, isDOT1, RecFormRel;
+                       []>, isDOT, RecFormRel;
   }
 }
 
@@ -560,9 +623,10 @@ multiclass AForm_1r<bits<6> opcode, bits<5> xo, dag OOL, dag IOL,
     def NAME : AForm_1<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
                        pattern>, RecFormRel;
+    let Defs = [CR1] in
     def o    : AForm_1<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
-                       []>, isDOT1, RecFormRel;
+                       []>, isDOT, RecFormRel;
   }
 }
 
@@ -573,9 +637,10 @@ multiclass AForm_2r<bits<6> opcode, bits<5> xo, dag OOL, dag IOL,
     def NAME : AForm_2<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
                        pattern>, RecFormRel;
+    let Defs = [CR1] in
     def o    : AForm_2<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
-                       []>, isDOT1, RecFormRel;
+                       []>, isDOT, RecFormRel;
   }
 }
 
@@ -586,9 +651,10 @@ multiclass AForm_3r<bits<6> opcode, bits<5> xo, dag OOL, dag IOL,
     def NAME : AForm_3<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
                        pattern>, RecFormRel;
+    let Defs = [CR1] in
     def o    : AForm_3<opcode, xo, OOL, IOL,
                        !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
-                       []>, isDOT1, RecFormRel;
+                       []>, isDOT, RecFormRel;
   }
 }
 
@@ -1190,11 +1256,13 @@ let PPC970_Unit = 1 in {  // FXU Operations.
 def ADDI   : DForm_2<14, (outs GPRC:$rD), (ins GPRC_NOR0:$rA, symbolLo:$imm),
                      "addi $rD, $rA, $imm", IntSimple,
                      [(set i32:$rD, (add i32:$rA, immSExt16:$imm))]>;
-let Defs = [CARRY], BaseName = "addic" in {
+let BaseName = "addic" in {
+let Defs = [CARRY] in
 def ADDIC  : DForm_2<12, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
                      "addic $rD, $rA, $imm", IntGeneral,
                      [(set i32:$rD, (addc i32:$rA, immSExt16:$imm))]>,
                      RecFormRel, PPC970_DGroup_Cracked;
+let Defs = [CARRY, CR0] in
 def ADDICo : DForm_2<13, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
                      "addic. $rD, $rA, $imm", IntGeneral,
                      []>, isDOT, RecFormRel;
@@ -1210,11 +1278,10 @@ def LA     : DForm_2<14, (outs GPRC:$rD), (ins GPRC_NOR0:$rA, symbolLo:$sym),
 def MULLI  : DForm_2< 7, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
                      "mulli $rD, $rA, $imm", IntMulLI,
                      [(set i32:$rD, (mul i32:$rA, immSExt16:$imm))]>;
-let Defs = [CARRY] in {
+let Defs = [CARRY] in
 def SUBFIC : DForm_2< 8, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
                      "subfic $rD, $rA, $imm", IntGeneral,
                      [(set i32:$rD, (subc immSExt16:$imm, i32:$rA))]>;
-}
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in {
   def LI  : DForm_2_r0<14, (outs GPRC:$rD), (ins symbolLo:$imm),
@@ -1227,6 +1294,7 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in {
 }
 
 let PPC970_Unit = 1 in {  // FXU Operations.
+let Defs = [CR0] in {
 def ANDIo : DForm_4<28, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
                     "andi. $dst, $src1, $src2", IntGeneral,
                     [(set i32:$dst, (and i32:$src1, immZExt16:$src2))]>,
@@ -1235,6 +1303,7 @@ def ANDISo : DForm_4<29, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
                     "andis. $dst, $src1, $src2", IntGeneral,
                     [(set i32:$dst, (and i32:$src1, imm16ShiftedZExt:$src2))]>,
                     isDOT;
+}
 def ORI   : DForm_4<24, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
                     "ori $dst, $src1, $src2", IntSimple,
                     [(set i32:$dst, (or i32:$src1, immZExt16:$src2))]>;
@@ -1286,20 +1355,16 @@ defm SLW  : XForm_6r<31,  24, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
 defm SRW  : XForm_6r<31, 536, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
                      "srw", "$rA, $rS, $rB", IntGeneral,
                      [(set i32:$rA, (PPCsrl i32:$rS, i32:$rB))]>;
-let Defs = [CARRY] in {
-defm SRAW : XForm_6r<31, 792, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
-                     "sraw", "$rA, $rS, $rB", IntShift,
-                     [(set i32:$rA, (PPCsra i32:$rS, i32:$rB))]>;
-}
+defm SRAW : XForm_6rc<31, 792, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
+                      "sraw", "$rA, $rS, $rB", IntShift,
+                      [(set i32:$rA, (PPCsra i32:$rS, i32:$rB))]>;
 }
 
 let PPC970_Unit = 1 in {  // FXU Operations.
 let neverHasSideEffects = 1 in {
-let Defs = [CARRY] in {
-defm SRAWI : XForm_10r<31, 824, (outs GPRC:$rA), (ins GPRC:$rS, u5imm:$SH), 
-                       "srawi", "$rA, $rS, $SH", IntShift,
-                       [(set i32:$rA, (sra i32:$rS, (i32 imm:$SH)))]>;
-}
+defm SRAWI : XForm_10rc<31, 824, (outs GPRC:$rA), (ins GPRC:$rS, u5imm:$SH), 
+                        "srawi", "$rA, $rS, $SH", IntShift,
+                        [(set i32:$rA, (sra i32:$rS, (i32 imm:$SH)))]>;
 defm CNTLZW : XForm_11r<31,  26, (outs GPRC:$rA), (ins GPRC:$rS),
                         "cntlzw", "$rA, $rS", IntGeneral,
                         [(set i32:$rA, (ctlz i32:$rS))]>;
@@ -1595,12 +1660,10 @@ let PPC970_Unit = 1, neverHasSideEffects = 1 in {  // FXU Operations.
 defm ADD4  : XOForm_1r<31, 266, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                        "add", "$rT, $rA, $rB", IntSimple,
                        [(set i32:$rT, (add i32:$rA, i32:$rB))]>;
-let Defs = [CARRY] in {
-defm ADDC  : XOForm_1r<31, 10, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
-                       "addc", "$rT, $rA, $rB", IntGeneral,
-                       [(set i32:$rT, (addc i32:$rA, i32:$rB))]>,
-                       PPC970_DGroup_Cracked;
-}
+defm ADDC  : XOForm_1rc<31, 10, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
+                        "addc", "$rT, $rA, $rB", IntGeneral,
+                        [(set i32:$rT, (addc i32:$rA, i32:$rB))]>,
+                        PPC970_DGroup_Cracked;
 defm DIVW  : XOForm_1r<31, 491, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                        "divw", "$rT, $rA, $rB", IntDivW,
                        [(set i32:$rT, (sdiv i32:$rA, i32:$rB))]>,
@@ -1621,34 +1684,32 @@ defm MULLW : XOForm_1r<31, 235, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
 defm SUBF  : XOForm_1r<31, 40, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                        "subf", "$rT, $rA, $rB", IntGeneral,
                        [(set i32:$rT, (sub i32:$rB, i32:$rA))]>;
-let Defs = [CARRY] in {
-defm SUBFC : XOForm_1r<31, 8, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
-                       "subfc", "$rT, $rA, $rB", IntGeneral,
-                       [(set i32:$rT, (subc i32:$rB, i32:$rA))]>,
-                       PPC970_DGroup_Cracked;
-}
+defm SUBFC : XOForm_1rc<31, 8, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
+                        "subfc", "$rT, $rA, $rB", IntGeneral,
+                        [(set i32:$rT, (subc i32:$rB, i32:$rA))]>,
+                        PPC970_DGroup_Cracked;
 defm NEG    : XOForm_3r<31, 104, 0, (outs GPRC:$rT), (ins GPRC:$rA),
                         "neg", "$rT, $rA", IntSimple,
                         [(set i32:$rT, (ineg i32:$rA))]>;
-let Uses = [CARRY], Defs = [CARRY] in {
-defm ADDE  : XOForm_1r<31, 138, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
-                       "adde", "$rT, $rA, $rB", IntGeneral,
-                       [(set i32:$rT, (adde i32:$rA, i32:$rB))]>;
-defm ADDME  : XOForm_3r<31, 234, 0, (outs GPRC:$rT), (ins GPRC:$rA),
-                        "addme", "$rT, $rA", IntGeneral,
-                        [(set i32:$rT, (adde i32:$rA, -1))]>;
-defm ADDZE  : XOForm_3r<31, 202, 0, (outs GPRC:$rT), (ins GPRC:$rA),
-                        "addze", "$rT, $rA", IntGeneral,
-                        [(set i32:$rT, (adde i32:$rA, 0))]>;
-defm SUBFE : XOForm_1r<31, 136, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
-                       "subfe", "$rT, $rA, $rB", IntGeneral,
-                       [(set i32:$rT, (sube i32:$rB, i32:$rA))]>;
-defm SUBFME : XOForm_3r<31, 232, 0, (outs GPRC:$rT), (ins GPRC:$rA),
-                        "subfme", "$rT, $rA", IntGeneral,
-                        [(set i32:$rT, (sube -1, i32:$rA))]>;
-defm SUBFZE : XOForm_3r<31, 200, 0, (outs GPRC:$rT), (ins GPRC:$rA),
-                        "subfze", "$rT, $rA", IntGeneral,
-                        [(set i32:$rT, (sube 0, i32:$rA))]>;
+let Uses = [CARRY] in {
+defm ADDE  : XOForm_1rc<31, 138, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
+                        "adde", "$rT, $rA, $rB", IntGeneral,
+                        [(set i32:$rT, (adde i32:$rA, i32:$rB))]>;
+defm ADDME  : XOForm_3rc<31, 234, 0, (outs GPRC:$rT), (ins GPRC:$rA),
+                         "addme", "$rT, $rA", IntGeneral,
+                         [(set i32:$rT, (adde i32:$rA, -1))]>;
+defm ADDZE  : XOForm_3rc<31, 202, 0, (outs GPRC:$rT), (ins GPRC:$rA),
+                         "addze", "$rT, $rA", IntGeneral,
+                         [(set i32:$rT, (adde i32:$rA, 0))]>;
+defm SUBFE : XOForm_1rc<31, 136, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
+                        "subfe", "$rT, $rA, $rB", IntGeneral,
+                        [(set i32:$rT, (sube i32:$rB, i32:$rA))]>;
+defm SUBFME : XOForm_3rc<31, 232, 0, (outs GPRC:$rT), (ins GPRC:$rA),
+                         "subfme", "$rT, $rA", IntGeneral,
+                         [(set i32:$rT, (sube -1, i32:$rA))]>;
+defm SUBFZE : XOForm_3rc<31, 200, 0, (outs GPRC:$rT), (ins GPRC:$rA),
+                         "subfze", "$rT, $rA", IntGeneral,
+                         [(set i32:$rT, (sube 0, i32:$rA))]>;
 }
 }
 
@@ -1770,6 +1831,7 @@ def RLWINM : MForm_2<21,
                      (outs GPRC:$rA), (ins GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
                      "rlwinm $rA, $rS, $SH, $MB, $ME", IntGeneral,
                      []>, RecFormRel;
+let Defs = [CR0] in
 def RLWINMo : MForm_2<21,
                       (outs GPRC:$rA), (ins GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
                       "rlwinm. $rA, $rS, $SH, $MB, $ME", IntGeneral,
