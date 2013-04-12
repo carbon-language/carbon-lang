@@ -1848,7 +1848,8 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS, AccessSpecifier AS,
     if (DS.getStorageClassSpecLoc().isValid())
       Diag(DS.getStorageClassSpecLoc(),diag::err_typename_invalid_storageclass);
     else
-      Diag(DS.getThreadSpecLoc(), diag::err_typename_invalid_storageclass);
+      Diag(DS.getThreadStorageClassSpecLoc(),
+           diag::err_typename_invalid_storageclass);
     DS.ClearStorageClassSpecs();
   }
 
@@ -2181,6 +2182,8 @@ void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
 ///         'auto'
 ///         'register'
 /// [C++]   'mutable'
+/// [C++11] 'thread_local'
+/// [C11]   '_Thread_local'
 /// [GNU]   '__thread'
 ///       function-specifier: [C99 6.7.4]
 /// [C99]   'inline'
@@ -2617,7 +2620,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                          PrevSpec, DiagID);
       break;
     case tok::kw_extern:
-      if (DS.isThreadSpecified())
+      if (DS.getThreadStorageClassSpec() == DeclSpec::TSCS___thread)
         Diag(Tok, diag::ext_thread_before) << "extern";
       isInvalid = DS.SetStorageClassSpec(Actions, DeclSpec::SCS_extern, Loc,
                                          PrevSpec, DiagID);
@@ -2627,7 +2630,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                          Loc, PrevSpec, DiagID);
       break;
     case tok::kw_static:
-      if (DS.isThreadSpecified())
+      if (DS.getThreadStorageClassSpec() == DeclSpec::TSCS___thread)
         Diag(Tok, diag::ext_thread_before) << "static";
       isInvalid = DS.SetStorageClassSpec(Actions, DeclSpec::SCS_static, Loc,
                                          PrevSpec, DiagID);
@@ -2656,7 +2659,16 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                          PrevSpec, DiagID);
       break;
     case tok::kw___thread:
-      isInvalid = DS.SetStorageClassSpecThread(Loc, PrevSpec, DiagID);
+      isInvalid = DS.SetStorageClassSpecThread(DeclSpec::TSCS___thread, Loc,
+                                               PrevSpec, DiagID);
+      break;
+    case tok::kw_thread_local:
+      isInvalid = DS.SetStorageClassSpecThread(DeclSpec::TSCS_thread_local, Loc,
+                                               PrevSpec, DiagID);
+      break;
+    case tok::kw__Thread_local:
+      isInvalid = DS.SetStorageClassSpecThread(DeclSpec::TSCS__Thread_local,
+                                               Loc, PrevSpec, DiagID);
       break;
 
     // function-specifier
@@ -3903,6 +3915,8 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::kw_auto:
   case tok::kw_register:
   case tok::kw___thread:
+  case tok::kw_thread_local:
+  case tok::kw__Thread_local:
 
     // Modules
   case tok::kw___module_private__:

@@ -1679,30 +1679,24 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   // data members and cannot be applied to names declared const or static,
   // and cannot be applied to reference members.
   switch (DS.getStorageClassSpec()) {
-    case DeclSpec::SCS_unspecified:
-    case DeclSpec::SCS_typedef:
-    case DeclSpec::SCS_static:
-      // FALL THROUGH.
-      break;
-    case DeclSpec::SCS_mutable:
-      if (isFunc) {
-        if (DS.getStorageClassSpecLoc().isValid())
-          Diag(DS.getStorageClassSpecLoc(), diag::err_mutable_function);
-        else
-          Diag(DS.getThreadSpecLoc(), diag::err_mutable_function);
+  case DeclSpec::SCS_unspecified:
+  case DeclSpec::SCS_typedef:
+  case DeclSpec::SCS_static:
+    break;
+  case DeclSpec::SCS_mutable:
+    if (isFunc) {
+      Diag(DS.getStorageClassSpecLoc(), diag::err_mutable_function);
 
-        // FIXME: It would be nicer if the keyword was ignored only for this
-        // declarator. Otherwise we could get follow-up errors.
-        D.getMutableDeclSpec().ClearStorageClassSpecs();
-      }
-      break;
-    default:
-      if (DS.getStorageClassSpecLoc().isValid())
-        Diag(DS.getStorageClassSpecLoc(),
-             diag::err_storageclass_invalid_for_member);
-      else
-        Diag(DS.getThreadSpecLoc(), diag::err_storageclass_invalid_for_member);
+      // FIXME: It would be nicer if the keyword was ignored only for this
+      // declarator. Otherwise we could get follow-up errors.
       D.getMutableDeclSpec().ClearStorageClassSpecs();
+    }
+    break;
+  default:
+    Diag(DS.getStorageClassSpecLoc(),
+         diag::err_storageclass_invalid_for_member);
+    D.getMutableDeclSpec().ClearStorageClassSpecs();
+    break;
   }
 
   bool isInstField = ((DS.getStorageClassSpec() == DeclSpec::SCS_unspecified ||

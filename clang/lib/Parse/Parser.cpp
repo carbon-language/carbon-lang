@@ -1141,8 +1141,8 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
            diag::err_invalid_storage_class_in_func_decl);
       DS.ClearStorageClassSpecs();
     }
-    if (DS.isThreadSpecified()) {
-      Diag(DS.getThreadSpecLoc(),
+    if (DS.getThreadStorageClassSpec() != DeclSpec::TSCS_unspecified) {
+      Diag(DS.getThreadStorageClassSpecLoc(),
            diag::err_invalid_storage_class_in_func_decl);
       DS.ClearStorageClassSpecs();
     }

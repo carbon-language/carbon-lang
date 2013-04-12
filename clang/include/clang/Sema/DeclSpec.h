@@ -226,6 +226,19 @@ public:
     SCS_private_extern,
     SCS_mutable
   };
+  /// \brief Thread storage-class-specifier. These can be combined with
+  /// SCS_extern and SCS_static.
+  enum TSCS {
+    TSCS_unspecified,
+    /// GNU __thread.
+    TSCS___thread,
+    /// C++11 thread_local. Implies 'static' at block scope, but not at
+    /// class scope.
+    TSCS_thread_local,
+    /// C11 _Thread_local. Must be combined with either 'static' or 'extern'
+    /// if used at block scope.
+    TSCS__Thread_local
+  };
 
   // Import type specifier width enumeration and constants.
   typedef TypeSpecifierWidth TSW;
@@ -310,7 +323,7 @@ public:
 private:
   // storage-class-specifier
   /*SCS*/unsigned StorageClassSpec : 3;
-  unsigned SCS_thread_specified : 1;
+  /*TSCS*/unsigned ThreadStorageClassSpec : 2;
   unsigned SCS_extern_in_linkage_spec : 1;
 
   // type-specifier
@@ -362,7 +375,7 @@ private:
   // the setting was synthesized.
   SourceRange Range;
 
-  SourceLocation StorageClassSpecLoc, SCS_threadLoc;
+  SourceLocation StorageClassSpecLoc, ThreadStorageClassSpecLoc;
   SourceLocation TSWLoc, TSCLoc, TSSLoc, TSTLoc, AltiVecLoc;
   /// TSTNameLoc - If TypeSpecType is any of class, enum, struct, union,
   /// typename, then this is the location of the named type (if present);
@@ -398,7 +411,7 @@ public:
 
   DeclSpec(AttributeFactory &attrFactory)
     : StorageClassSpec(SCS_unspecified),
-      SCS_thread_specified(false),
+      ThreadStorageClassSpec(TSCS_unspecified),
       SCS_extern_in_linkage_spec(false),
       TypeSpecWidth(TSW_unspecified),
       TypeSpecComplex(TSC_unspecified),
@@ -428,21 +441,25 @@ public:
   }
   // storage-class-specifier
   SCS getStorageClassSpec() const { return (SCS)StorageClassSpec; }
-  bool isThreadSpecified() const { return SCS_thread_specified; }
+  TSCS getThreadStorageClassSpec() const {
+    return (TSCS)ThreadStorageClassSpec;
+  }
   bool isExternInLinkageSpec() const { return SCS_extern_in_linkage_spec; }
   void setExternInLinkageSpec(bool Value) {
     SCS_extern_in_linkage_spec = Value;
   }
 
   SourceLocation getStorageClassSpecLoc() const { return StorageClassSpecLoc; }
-  SourceLocation getThreadSpecLoc() const { return SCS_threadLoc; }
+  SourceLocation getThreadStorageClassSpecLoc() const {
+    return ThreadStorageClassSpecLoc;
+  }
 
   void ClearStorageClassSpecs() {
-    StorageClassSpec     = DeclSpec::SCS_unspecified;
-    SCS_thread_specified = false;
+    StorageClassSpec           = DeclSpec::SCS_unspecified;
+    ThreadStorageClassSpec     = DeclSpec::TSCS_unspecified;
     SCS_extern_in_linkage_spec = false;
-    StorageClassSpecLoc  = SourceLocation();
-    SCS_threadLoc        = SourceLocation();
+    StorageClassSpecLoc        = SourceLocation();
+    ThreadStorageClassSpecLoc  = SourceLocation();
   }
 
   // type-specifier
@@ -494,6 +511,7 @@ public:
   static const char *getSpecifierName(DeclSpec::TSC C);
   static const char *getSpecifierName(DeclSpec::TSW W);
   static const char *getSpecifierName(DeclSpec::SCS S);
+  static const char *getSpecifierName(DeclSpec::TSCS S);
 
   // type-qualifiers
 
@@ -570,8 +588,8 @@ public:
   /// diagnostics to be ignored when desired.
   bool SetStorageClassSpec(Sema &S, SCS SC, SourceLocation Loc,
                            const char *&PrevSpec, unsigned &DiagID);
-  bool SetStorageClassSpecThread(SourceLocation Loc, const char *&PrevSpec,
-                                 unsigned &DiagID);
+  bool SetStorageClassSpecThread(TSCS TSC, SourceLocation Loc,
+                                 const char *&PrevSpec, unsigned &DiagID);
   bool SetTypeSpecWidth(TSW W, SourceLocation Loc, const char *&PrevSpec,
                         unsigned &DiagID);
   bool SetTypeSpecComplex(TSC C, SourceLocation Loc, const char *&PrevSpec,
