@@ -1,3 +1,4 @@
+// XFAIL: hexagon
 // Test this without pch.
 // RUN: %clang -include %S/cxx-typeid.h -fsyntax-only -Xclang -verify %s
 
