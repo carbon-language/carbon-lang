@@ -1390,7 +1390,7 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg,
 
   const MCExpr *Disp = 0;
   StringRef Identifier = Tok.getString();
-  if (getParser().parseExpression(Disp, End))
+  if (getParser().parsePrimaryExpr(Disp, End))
     return 0;
 
   if (!isParsingInlineAsm())
