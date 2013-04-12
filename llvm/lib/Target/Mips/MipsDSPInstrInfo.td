@@ -515,27 +515,27 @@ class INSV_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 //===----------------------------------------------------------------------===//
 
 // Addition/subtraction
-class ADDU_QB_DESC : ADDU_QB_DESC_BASE<"addu.qb", int_mips_addu_qb, NoItinerary,
+class ADDU_QB_DESC : ADDU_QB_DESC_BASE<"addu.qb", null_frag, NoItinerary,
                                        DSPRegs, DSPRegs>, IsCommutable;
 
 class ADDU_S_QB_DESC : ADDU_QB_DESC_BASE<"addu_s.qb", int_mips_addu_s_qb,
                                          NoItinerary, DSPRegs, DSPRegs>,
                        IsCommutable;
 
-class SUBU_QB_DESC : ADDU_QB_DESC_BASE<"subu.qb", int_mips_subu_qb, NoItinerary,
+class SUBU_QB_DESC : ADDU_QB_DESC_BASE<"subu.qb", null_frag, NoItinerary,
                                        DSPRegs, DSPRegs>;
 
 class SUBU_S_QB_DESC : ADDU_QB_DESC_BASE<"subu_s.qb", int_mips_subu_s_qb,
                                          NoItinerary, DSPRegs, DSPRegs>;
 
-class ADDQ_PH_DESC : ADDU_QB_DESC_BASE<"addq.ph", int_mips_addq_ph, NoItinerary,
+class ADDQ_PH_DESC : ADDU_QB_DESC_BASE<"addq.ph", null_frag, NoItinerary,
                                        DSPRegs, DSPRegs>, IsCommutable;
 
 class ADDQ_S_PH_DESC : ADDU_QB_DESC_BASE<"addq_s.ph", int_mips_addq_s_ph,
                                          NoItinerary, DSPRegs, DSPRegs>,
                        IsCommutable;
 
-class SUBQ_PH_DESC : ADDU_QB_DESC_BASE<"subq.ph", int_mips_subq_ph, NoItinerary,
+class SUBQ_PH_DESC : ADDU_QB_DESC_BASE<"subq.ph", null_frag, NoItinerary,
                                        DSPRegs, DSPRegs>;
 
 class SUBQ_S_PH_DESC : ADDU_QB_DESC_BASE<"subq_s.ph", int_mips_subq_s_ph,
@@ -951,7 +951,7 @@ class ABSQ_S_QB_DESC : ABSQ_S_PH_R2_DESC_BASE<"absq_s.qb", int_mips_absq_s_qb,
                                               NoItinerary, DSPRegs>;
 
 // Multiplication
-class MUL_PH_DESC : ADDUH_QB_DESC_BASE<"mul.ph", int_mips_mul_ph, NoItinerary,
+class MUL_PH_DESC : ADDUH_QB_DESC_BASE<"mul.ph", null_frag, NoItinerary,
                                        DSPRegs>, IsCommutable;
 
 class MUL_S_PH_DESC : ADDUH_QB_DESC_BASE<"mul_s.ph", int_mips_mul_s_ph,
@@ -1231,6 +1231,22 @@ def : DSPPat<(store (v2i16 DSPRegs:$val), addr:$a),
              (SW (COPY_TO_REGCLASS DSPRegs:$val, CPURegs), addr:$a)>;
 def : DSPPat<(store (v4i8 DSPRegs:$val), addr:$a),
              (SW (COPY_TO_REGCLASS DSPRegs:$val, CPURegs), addr:$a)>;
+
+// Binary operations.
+class DSPBinPat<Instruction Inst, ValueType ValTy, SDPatternOperator Node,
+                Predicate Pred = HasDSP> :
+  DSPPat<(Node ValTy:$a, ValTy:$b), (Inst ValTy:$a, ValTy:$b), Pred>;
+
+def : DSPBinPat<ADDQ_PH, v2i16, int_mips_addq_ph>;
+def : DSPBinPat<ADDQ_PH, v2i16, add>;
+def : DSPBinPat<SUBQ_PH, v2i16, int_mips_subq_ph>;
+def : DSPBinPat<SUBQ_PH, v2i16, sub>;
+def : DSPBinPat<MUL_PH, v2i16, int_mips_mul_ph, HasDSPR2>;
+def : DSPBinPat<MUL_PH, v2i16, mul, HasDSPR2>;
+def : DSPBinPat<ADDU_QB, v4i8, int_mips_addu_qb>;
+def : DSPBinPat<ADDU_QB, v4i8, add>;
+def : DSPBinPat<SUBU_QB, v4i8, int_mips_subu_qb>;
+def : DSPBinPat<SUBU_QB, v4i8, sub>;
 
 // Extr patterns.
 class EXTR_W_TY1_R2_Pat<SDPatternOperator OpNode, Instruction Instr> :
