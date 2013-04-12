@@ -114,6 +114,15 @@ static void executeFRemInst(GenericValue &Dest, GenericValue Src1,
       Dest.IntVal = APInt(1,Src1.IntVal.OP(Src2.IntVal)); \
       break;
 
+#define IMPLEMENT_VECTOR_INTEGER_ICMP(OP, TY)                        \
+  case Type::VectorTyID: {                                           \
+    assert(Src1.AggregateVal.size() == Src2.AggregateVal.size());    \
+    Dest.AggregateVal.resize( Src1.AggregateVal.size() );            \
+    for( uint32_t _i=0;_i<Src1.AggregateVal.size();_i++)             \
+      Dest.AggregateVal[_i].IntVal = APInt(1,                        \
+      Src1.AggregateVal[_i].IntVal.OP(Src2.AggregateVal[_i].IntVal));\
+  } break;
+
 // Handle pointers specially because they must be compared with only as much
 // width as the host has.  We _do not_ want to be comparing 64 bit values when
 // running on a 32-bit target, otherwise the upper 32 bits might mess up
@@ -129,6 +138,7 @@ static GenericValue executeICMP_EQ(GenericValue Src1, GenericValue Src2,
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_INTEGER_ICMP(eq,Ty);
+    IMPLEMENT_VECTOR_INTEGER_ICMP(eq,Ty);
     IMPLEMENT_POINTER_ICMP(==);
   default:
     dbgs() << "Unhandled type for ICMP_EQ predicate: " << *Ty << "\n";
@@ -142,6 +152,7 @@ static GenericValue executeICMP_NE(GenericValue Src1, GenericValue Src2,
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_INTEGER_ICMP(ne,Ty);
+    IMPLEMENT_VECTOR_INTEGER_ICMP(ne,Ty);
     IMPLEMENT_POINTER_ICMP(!=);
   default:
     dbgs() << "Unhandled type for ICMP_NE predicate: " << *Ty << "\n";
@@ -155,6 +166,7 @@ static GenericValue executeICMP_ULT(GenericValue Src1, GenericValue Src2,
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_INTEGER_ICMP(ult,Ty);
+    IMPLEMENT_VECTOR_INTEGER_ICMP(ult,Ty);
     IMPLEMENT_POINTER_ICMP(<);
   default:
     dbgs() << "Unhandled type for ICMP_ULT predicate: " << *Ty << "\n";
@@ -168,6 +180,7 @@ static GenericValue executeICMP_SLT(GenericValue Src1, GenericValue Src2,
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_INTEGER_ICMP(slt,Ty);
+    IMPLEMENT_VECTOR_INTEGER_ICMP(slt,Ty);
     IMPLEMENT_POINTER_ICMP(<);
   default:
     dbgs() << "Unhandled type for ICMP_SLT predicate: " << *Ty << "\n";
@@ -181,6 +194,7 @@ static GenericValue executeICMP_UGT(GenericValue Src1, GenericValue Src2,
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_INTEGER_ICMP(ugt,Ty);
+    IMPLEMENT_VECTOR_INTEGER_ICMP(ugt,Ty);
     IMPLEMENT_POINTER_ICMP(>);
   default:
     dbgs() << "Unhandled type for ICMP_UGT predicate: " << *Ty << "\n";
@@ -194,6 +208,7 @@ static GenericValue executeICMP_SGT(GenericValue Src1, GenericValue Src2,
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_INTEGER_ICMP(sgt,Ty);
+    IMPLEMENT_VECTOR_INTEGER_ICMP(sgt,Ty);
     IMPLEMENT_POINTER_ICMP(>);
   default:
     dbgs() << "Unhandled type for ICMP_SGT predicate: " << *Ty << "\n";
@@ -207,6 +222,7 @@ static GenericValue executeICMP_ULE(GenericValue Src1, GenericValue Src2,
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_INTEGER_ICMP(ule,Ty);
+    IMPLEMENT_VECTOR_INTEGER_ICMP(ule,Ty);
     IMPLEMENT_POINTER_ICMP(<=);
   default:
     dbgs() << "Unhandled type for ICMP_ULE predicate: " << *Ty << "\n";
@@ -220,6 +236,7 @@ static GenericValue executeICMP_SLE(GenericValue Src1, GenericValue Src2,
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_INTEGER_ICMP(sle,Ty);
+    IMPLEMENT_VECTOR_INTEGER_ICMP(sle,Ty);
     IMPLEMENT_POINTER_ICMP(<=);
   default:
     dbgs() << "Unhandled type for ICMP_SLE predicate: " << *Ty << "\n";
@@ -233,6 +250,7 @@ static GenericValue executeICMP_UGE(GenericValue Src1, GenericValue Src2,
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_INTEGER_ICMP(uge,Ty);
+    IMPLEMENT_VECTOR_INTEGER_ICMP(uge,Ty);
     IMPLEMENT_POINTER_ICMP(>=);
   default:
     dbgs() << "Unhandled type for ICMP_UGE predicate: " << *Ty << "\n";
@@ -246,6 +264,7 @@ static GenericValue executeICMP_SGE(GenericValue Src1, GenericValue Src2,
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_INTEGER_ICMP(sge,Ty);
+    IMPLEMENT_VECTOR_INTEGER_ICMP(sge,Ty);
     IMPLEMENT_POINTER_ICMP(>=);
   default:
     dbgs() << "Unhandled type for ICMP_SGE predicate: " << *Ty << "\n";
@@ -285,12 +304,29 @@ void Interpreter::visitICmpInst(ICmpInst &I) {
      Dest.IntVal = APInt(1,Src1.TY##Val OP Src2.TY##Val); \
      break
 
+#define IMPLEMENT_VECTOR_FCMP_T(OP, TY)                             \
+  assert(Src1.AggregateVal.size() == Src2.AggregateVal.size());     \
+  Dest.AggregateVal.resize( Src1.AggregateVal.size() );             \
+  for( uint32_t _i=0;_i<Src1.AggregateVal.size();_i++)              \
+    Dest.AggregateVal[_i].IntVal = APInt(1,                         \
+    Src1.AggregateVal[_i].TY##Val OP Src2.AggregateVal[_i].TY##Val);\
+  break;
+
+#define IMPLEMENT_VECTOR_FCMP(OP)                                   \
+  case Type::VectorTyID:                                            \
+    if(dyn_cast<VectorType>(Ty)->getElementType()->isFloatTy()) {   \
+      IMPLEMENT_VECTOR_FCMP_T(OP, Float);                           \
+    } else {                                                        \
+        IMPLEMENT_VECTOR_FCMP_T(OP, Double);                        \
+    }
+
 static GenericValue executeFCMP_OEQ(GenericValue Src1, GenericValue Src2,
                                    Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_FCMP(==, Float);
     IMPLEMENT_FCMP(==, Double);
+    IMPLEMENT_VECTOR_FCMP(==);
   default:
     dbgs() << "Unhandled type for FCmp EQ instruction: " << *Ty << "\n";
     llvm_unreachable(0);
@@ -298,17 +334,62 @@ static GenericValue executeFCMP_OEQ(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
+#define IMPLEMENT_SCALAR_NANS(TY, X,Y)                                      \
+  if (TY->isFloatTy()) {                                                    \
+    if (X.FloatVal != X.FloatVal || Y.FloatVal != Y.FloatVal) {             \
+      Dest.IntVal = APInt(1,false);                                         \
+      return Dest;                                                          \
+    }                                                                       \
+  } else if (X.DoubleVal != X.DoubleVal || Y.DoubleVal != Y.DoubleVal) {    \
+    Dest.IntVal = APInt(1,false);                                           \
+    return Dest;                                                            \
+  }
+
+#define MASK_VECTOR_NANS_T(X,Y, TZ, FLAG)                                   \
+  assert(X.AggregateVal.size() == Y.AggregateVal.size());                   \
+  Dest.AggregateVal.resize( X.AggregateVal.size() );                        \
+  for( uint32_t _i=0;_i<X.AggregateVal.size();_i++) {                       \
+    if (X.AggregateVal[_i].TZ##Val != X.AggregateVal[_i].TZ##Val ||         \
+        Y.AggregateVal[_i].TZ##Val != Y.AggregateVal[_i].TZ##Val)           \
+      Dest.AggregateVal[_i].IntVal = APInt(1,FLAG);                         \
+    else  {                                                                 \
+      Dest.AggregateVal[_i].IntVal = APInt(1,!FLAG);                        \
+    }                                                                       \
+  }
+
+#define MASK_VECTOR_NANS(TY, X,Y, FLAG)                                     \
+  if (TY->isVectorTy())                                                     \
+    if (dyn_cast<VectorType>(TY)->getElementType()->isFloatTy()) {          \
+      MASK_VECTOR_NANS_T(X, Y, Float, FLAG)                                 \
+    } else {                                                                \
+      MASK_VECTOR_NANS_T(X, Y, Double, FLAG)                                \
+    }                                                                       \
+
+
+
 static GenericValue executeFCMP_ONE(GenericValue Src1, GenericValue Src2,
-                                   Type *Ty) {
+                                    Type *Ty)
+{
   GenericValue Dest;
+  // if input is scalar value and Src1 or Src2 is NaN return false
+  IMPLEMENT_SCALAR_NANS(Ty, Src1, Src2)
+  // if vector input detect NaNs and fill mask
+  MASK_VECTOR_NANS(Ty, Src1, Src2, false)
+  GenericValue DestMask = Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_FCMP(!=, Float);
     IMPLEMENT_FCMP(!=, Double);
-
-  default:
-    dbgs() << "Unhandled type for FCmp NE instruction: " << *Ty << "\n";
-    llvm_unreachable(0);
+    IMPLEMENT_VECTOR_FCMP(!=);
+    default:
+      dbgs() << "Unhandled type for FCmp NE instruction: " << *Ty << "\n";
+      llvm_unreachable(0);
   }
+  // in vector case mask out NaN elements
+  if (Ty->isVectorTy())
+    for( size_t _i=0; _i<Src1.AggregateVal.size(); _i++)
+      if (DestMask.AggregateVal[_i].IntVal == false)
+        Dest.AggregateVal[_i].IntVal = APInt(1,false);
+
   return Dest;
 }
 
@@ -318,6 +399,7 @@ static GenericValue executeFCMP_OLE(GenericValue Src1, GenericValue Src2,
   switch (Ty->getTypeID()) {
     IMPLEMENT_FCMP(<=, Float);
     IMPLEMENT_FCMP(<=, Double);
+    IMPLEMENT_VECTOR_FCMP(<=);
   default:
     dbgs() << "Unhandled type for FCmp LE instruction: " << *Ty << "\n";
     llvm_unreachable(0);
@@ -331,6 +413,7 @@ static GenericValue executeFCMP_OGE(GenericValue Src1, GenericValue Src2,
   switch (Ty->getTypeID()) {
     IMPLEMENT_FCMP(>=, Float);
     IMPLEMENT_FCMP(>=, Double);
+    IMPLEMENT_VECTOR_FCMP(>=);
   default:
     dbgs() << "Unhandled type for FCmp GE instruction: " << *Ty << "\n";
     llvm_unreachable(0);
@@ -344,6 +427,7 @@ static GenericValue executeFCMP_OLT(GenericValue Src1, GenericValue Src2,
   switch (Ty->getTypeID()) {
     IMPLEMENT_FCMP(<, Float);
     IMPLEMENT_FCMP(<, Double);
+    IMPLEMENT_VECTOR_FCMP(<);
   default:
     dbgs() << "Unhandled type for FCmp LT instruction: " << *Ty << "\n";
     llvm_unreachable(0);
@@ -357,6 +441,7 @@ static GenericValue executeFCMP_OGT(GenericValue Src1, GenericValue Src2,
   switch (Ty->getTypeID()) {
     IMPLEMENT_FCMP(>, Float);
     IMPLEMENT_FCMP(>, Double);
+    IMPLEMENT_VECTOR_FCMP(>);
   default:
     dbgs() << "Unhandled type for FCmp GT instruction: " << *Ty << "\n";
     llvm_unreachable(0);
@@ -375,18 +460,32 @@ static GenericValue executeFCMP_OGT(GenericValue Src1, GenericValue Src2,
     return Dest;                                                         \
   }
 
+#define IMPLEMENT_VECTOR_UNORDERED(TY, X,Y, _FUNC)                       \
+  if (TY->isVectorTy()) {                                                \
+    GenericValue DestMask = Dest;                                        \
+    Dest = _FUNC(Src1, Src2, Ty);                                        \
+      for( size_t _i=0; _i<Src1.AggregateVal.size(); _i++)               \
+        if (DestMask.AggregateVal[_i].IntVal == true)                    \
+          Dest.AggregateVal[_i].IntVal = APInt(1,true);                  \
+      return Dest;                                                       \
+  }
 
 static GenericValue executeFCMP_UEQ(GenericValue Src1, GenericValue Src2,
                                    Type *Ty) {
   GenericValue Dest;
   IMPLEMENT_UNORDERED(Ty, Src1, Src2)
+  MASK_VECTOR_NANS(Ty, Src1, Src2, true)
+  IMPLEMENT_VECTOR_UNORDERED(Ty, Src1, Src2, executeFCMP_OEQ)
   return executeFCMP_OEQ(Src1, Src2, Ty);
+
 }
 
 static GenericValue executeFCMP_UNE(GenericValue Src1, GenericValue Src2,
                                    Type *Ty) {
   GenericValue Dest;
   IMPLEMENT_UNORDERED(Ty, Src1, Src2)
+  MASK_VECTOR_NANS(Ty, Src1, Src2, true)
+  IMPLEMENT_VECTOR_UNORDERED(Ty, Src1, Src2, executeFCMP_ONE)
   return executeFCMP_ONE(Src1, Src2, Ty);
 }
 
@@ -394,6 +493,8 @@ static GenericValue executeFCMP_ULE(GenericValue Src1, GenericValue Src2,
                                    Type *Ty) {
   GenericValue Dest;
   IMPLEMENT_UNORDERED(Ty, Src1, Src2)
+  MASK_VECTOR_NANS(Ty, Src1, Src2, true)
+  IMPLEMENT_VECTOR_UNORDERED(Ty, Src1, Src2, executeFCMP_OLE)
   return executeFCMP_OLE(Src1, Src2, Ty);
 }
 
@@ -401,6 +502,8 @@ static GenericValue executeFCMP_UGE(GenericValue Src1, GenericValue Src2,
                                    Type *Ty) {
   GenericValue Dest;
   IMPLEMENT_UNORDERED(Ty, Src1, Src2)
+  MASK_VECTOR_NANS(Ty, Src1, Src2, true)
+  IMPLEMENT_VECTOR_UNORDERED(Ty, Src1, Src2, executeFCMP_OGE)
   return executeFCMP_OGE(Src1, Src2, Ty);
 }
 
@@ -408,6 +511,8 @@ static GenericValue executeFCMP_ULT(GenericValue Src1, GenericValue Src2,
                                    Type *Ty) {
   GenericValue Dest;
   IMPLEMENT_UNORDERED(Ty, Src1, Src2)
+  MASK_VECTOR_NANS(Ty, Src1, Src2, true)
+  IMPLEMENT_VECTOR_UNORDERED(Ty, Src1, Src2, executeFCMP_OLT)
   return executeFCMP_OLT(Src1, Src2, Ty);
 }
 
@@ -415,31 +520,86 @@ static GenericValue executeFCMP_UGT(GenericValue Src1, GenericValue Src2,
                                      Type *Ty) {
   GenericValue Dest;
   IMPLEMENT_UNORDERED(Ty, Src1, Src2)
+  MASK_VECTOR_NANS(Ty, Src1, Src2, true)
+  IMPLEMENT_VECTOR_UNORDERED(Ty, Src1, Src2, executeFCMP_OGT)
   return executeFCMP_OGT(Src1, Src2, Ty);
 }
 
 static GenericValue executeFCMP_ORD(GenericValue Src1, GenericValue Src2,
                                      Type *Ty) {
   GenericValue Dest;
-  if (Ty->isFloatTy())
+  if(Ty->isVectorTy()) {
+    assert(Src1.AggregateVal.size() == Src2.AggregateVal.size());
+    Dest.AggregateVal.resize( Src1.AggregateVal.size() );
+    if(dyn_cast<VectorType>(Ty)->getElementType()->isFloatTy()) {
+      for( size_t _i=0;_i<Src1.AggregateVal.size();_i++)
+        Dest.AggregateVal[_i].IntVal = APInt(1,
+        ( (Src1.AggregateVal[_i].FloatVal ==
+        Src1.AggregateVal[_i].FloatVal) &&
+        (Src2.AggregateVal[_i].FloatVal ==
+        Src2.AggregateVal[_i].FloatVal)));
+    } else {
+      for( size_t _i=0;_i<Src1.AggregateVal.size();_i++)
+        Dest.AggregateVal[_i].IntVal = APInt(1,
+        ( (Src1.AggregateVal[_i].DoubleVal ==
+        Src1.AggregateVal[_i].DoubleVal) &&
+        (Src2.AggregateVal[_i].DoubleVal ==
+        Src2.AggregateVal[_i].DoubleVal)));
+    }
+  } else if (Ty->isFloatTy())
     Dest.IntVal = APInt(1,(Src1.FloatVal == Src1.FloatVal && 
                            Src2.FloatVal == Src2.FloatVal));
-  else
+  else {
     Dest.IntVal = APInt(1,(Src1.DoubleVal == Src1.DoubleVal && 
                            Src2.DoubleVal == Src2.DoubleVal));
+  }
   return Dest;
 }
 
 static GenericValue executeFCMP_UNO(GenericValue Src1, GenericValue Src2,
                                      Type *Ty) {
   GenericValue Dest;
-  if (Ty->isFloatTy())
+  if(Ty->isVectorTy()) {
+    assert(Src1.AggregateVal.size() == Src2.AggregateVal.size());
+    Dest.AggregateVal.resize( Src1.AggregateVal.size() );
+    if(dyn_cast<VectorType>(Ty)->getElementType()->isFloatTy()) {
+      for( size_t _i=0;_i<Src1.AggregateVal.size();_i++)
+        Dest.AggregateVal[_i].IntVal = APInt(1,
+        ( (Src1.AggregateVal[_i].FloatVal !=
+           Src1.AggregateVal[_i].FloatVal) ||
+          (Src2.AggregateVal[_i].FloatVal !=
+           Src2.AggregateVal[_i].FloatVal)));
+      } else {
+        for( size_t _i=0;_i<Src1.AggregateVal.size();_i++)
+          Dest.AggregateVal[_i].IntVal = APInt(1,
+          ( (Src1.AggregateVal[_i].DoubleVal !=
+             Src1.AggregateVal[_i].DoubleVal) ||
+            (Src2.AggregateVal[_i].DoubleVal !=
+             Src2.AggregateVal[_i].DoubleVal)));
+      }
+  } else if (Ty->isFloatTy())
     Dest.IntVal = APInt(1,(Src1.FloatVal != Src1.FloatVal || 
                            Src2.FloatVal != Src2.FloatVal));
-  else
+  else {
     Dest.IntVal = APInt(1,(Src1.DoubleVal != Src1.DoubleVal || 
                            Src2.DoubleVal != Src2.DoubleVal));
+  }
   return Dest;
+}
+
+static GenericValue executeFCMP_BOOL(GenericValue Src1, GenericValue Src2,
+                                    const Type *Ty, const bool val) {
+  GenericValue Dest;
+    if(Ty->isVectorTy()) {
+      assert(Src1.AggregateVal.size() == Src2.AggregateVal.size());
+      Dest.AggregateVal.resize( Src1.AggregateVal.size() );
+      for( size_t _i=0; _i<Src1.AggregateVal.size(); _i++)
+        Dest.AggregateVal[_i].IntVal = APInt(1,val);
+    } else {
+      Dest.IntVal = APInt(1, val);
+    }
+
+    return Dest;
 }
 
 void Interpreter::visitFCmpInst(FCmpInst &I) {
@@ -450,8 +610,14 @@ void Interpreter::visitFCmpInst(FCmpInst &I) {
   GenericValue R;   // Result
   
   switch (I.getPredicate()) {
-  case FCmpInst::FCMP_FALSE: R.IntVal = APInt(1,false); break;
-  case FCmpInst::FCMP_TRUE:  R.IntVal = APInt(1,true); break;
+  default:
+    dbgs() << "Don't know how to handle this FCmp predicate!\n-->" << I;
+    llvm_unreachable(0);
+  break;
+  case FCmpInst::FCMP_FALSE: R = executeFCMP_BOOL(Src1, Src2, Ty, false); 
+  break;
+  case FCmpInst::FCMP_TRUE:  R = executeFCMP_BOOL(Src1, Src2, Ty, true); 
+  break;
   case FCmpInst::FCMP_ORD:   R = executeFCMP_ORD(Src1, Src2, Ty); break;
   case FCmpInst::FCMP_UNO:   R = executeFCMP_UNO(Src1, Src2, Ty); break;
   case FCmpInst::FCMP_UEQ:   R = executeFCMP_UEQ(Src1, Src2, Ty); break;
@@ -466,9 +632,6 @@ void Interpreter::visitFCmpInst(FCmpInst &I) {
   case FCmpInst::FCMP_OLE:   R = executeFCMP_OLE(Src1, Src2, Ty); break;
   case FCmpInst::FCMP_UGE:   R = executeFCMP_UGE(Src1, Src2, Ty); break;
   case FCmpInst::FCMP_OGE:   R = executeFCMP_OGE(Src1, Src2, Ty); break;
-  default:
-    dbgs() << "Don't know how to handle this FCmp predicate!\n-->" << I;
-    llvm_unreachable(0);
   }
  
   SetValue(&I, R, SF);
@@ -502,16 +665,8 @@ static GenericValue executeCmpInst(unsigned predicate, GenericValue Src1,
   case FCmpInst::FCMP_ULE:   return executeFCMP_ULE(Src1, Src2, Ty);
   case FCmpInst::FCMP_OGE:   return executeFCMP_OGE(Src1, Src2, Ty);
   case FCmpInst::FCMP_UGE:   return executeFCMP_UGE(Src1, Src2, Ty);
-  case FCmpInst::FCMP_FALSE: { 
-    GenericValue Result;
-    Result.IntVal = APInt(1, false);
-    return Result;
-  }
-  case FCmpInst::FCMP_TRUE: {
-    GenericValue Result;
-    Result.IntVal = APInt(1, true);
-    return Result;
-  }
+  case FCmpInst::FCMP_FALSE: return executeFCMP_BOOL(Src1, Src2, Ty, false);
+  case FCmpInst::FCMP_TRUE:  return executeFCMP_BOOL(Src1, Src2, Ty, true);
   default:
     dbgs() << "Unhandled Cmp predicate\n";
     llvm_unreachable(0);
@@ -525,27 +680,105 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
   GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
   GenericValue R;   // Result
 
-  switch (I.getOpcode()) {
-  case Instruction::Add:   R.IntVal = Src1.IntVal + Src2.IntVal; break;
-  case Instruction::Sub:   R.IntVal = Src1.IntVal - Src2.IntVal; break;
-  case Instruction::Mul:   R.IntVal = Src1.IntVal * Src2.IntVal; break;
-  case Instruction::FAdd:  executeFAddInst(R, Src1, Src2, Ty); break;
-  case Instruction::FSub:  executeFSubInst(R, Src1, Src2, Ty); break;
-  case Instruction::FMul:  executeFMulInst(R, Src1, Src2, Ty); break;
-  case Instruction::FDiv:  executeFDivInst(R, Src1, Src2, Ty); break;
-  case Instruction::FRem:  executeFRemInst(R, Src1, Src2, Ty); break;
-  case Instruction::UDiv:  R.IntVal = Src1.IntVal.udiv(Src2.IntVal); break;
-  case Instruction::SDiv:  R.IntVal = Src1.IntVal.sdiv(Src2.IntVal); break;
-  case Instruction::URem:  R.IntVal = Src1.IntVal.urem(Src2.IntVal); break;
-  case Instruction::SRem:  R.IntVal = Src1.IntVal.srem(Src2.IntVal); break;
-  case Instruction::And:   R.IntVal = Src1.IntVal & Src2.IntVal; break;
-  case Instruction::Or:    R.IntVal = Src1.IntVal | Src2.IntVal; break;
-  case Instruction::Xor:   R.IntVal = Src1.IntVal ^ Src2.IntVal; break;
-  default:
-    dbgs() << "Don't know how to handle this binary operator!\n-->" << I;
-    llvm_unreachable(0);
-  }
+  // First process vector operation
+  if (Ty->isVectorTy()) {
+    assert(Src1.AggregateVal.size() == Src2.AggregateVal.size());
+    R.AggregateVal.resize(Src1.AggregateVal.size());
 
+    // Macros to execute binary operation 'OP' over integer vectors
+#define INTEGER_VECTOR_OPERATION(OP)                               \
+    for (unsigned i = 0; i < R.AggregateVal.size(); ++i)           \
+      R.AggregateVal[i].IntVal =                                   \
+      Src1.AggregateVal[i].IntVal OP Src2.AggregateVal[i].IntVal;
+
+    // Additional macros to execute binary operations udiv/sdiv/urem/srem since
+    // they have different notation.
+#define INTEGER_VECTOR_FUNCTION(OP)                                \
+    for (unsigned i = 0; i < R.AggregateVal.size(); ++i)           \
+      R.AggregateVal[i].IntVal =                                   \
+      Src1.AggregateVal[i].IntVal.OP(Src2.AggregateVal[i].IntVal);
+
+    // Macros to execute binary operation 'OP' over floating point type TY
+    // (float or double) vectors
+#define FLOAT_VECTOR_FUNCTION(OP, TY)                               \
+      for (unsigned i = 0; i < R.AggregateVal.size(); ++i)          \
+        R.AggregateVal[i].TY =                                      \
+        Src1.AggregateVal[i].TY OP Src2.AggregateVal[i].TY;
+
+    // Macros to choose appropriate TY: float or double and run operation
+    // execution
+#define FLOAT_VECTOR_OP(OP) {                                         \
+  if (dyn_cast<VectorType>(Ty)->getElementType()->isFloatTy())        \
+    FLOAT_VECTOR_FUNCTION(OP, FloatVal)                               \
+  else {                                                              \
+    if (dyn_cast<VectorType>(Ty)->getElementType()->isDoubleTy())     \
+      FLOAT_VECTOR_FUNCTION(OP, DoubleVal)                            \
+    else {                                                            \
+      dbgs() << "Unhandled type for OP instruction: " << *Ty << "\n"; \
+      llvm_unreachable(0);                                            \
+    }                                                                 \
+  }                                                                   \
+}
+
+    switch(I.getOpcode()){
+    default:
+      dbgs() << "Don't know how to handle this binary operator!\n-->" << I;
+      llvm_unreachable(0);
+      break;
+    case Instruction::Add:   INTEGER_VECTOR_OPERATION(+) break;
+    case Instruction::Sub:   INTEGER_VECTOR_OPERATION(-) break;
+    case Instruction::Mul:   INTEGER_VECTOR_OPERATION(*) break;
+    case Instruction::UDiv:  INTEGER_VECTOR_FUNCTION(udiv) break;
+    case Instruction::SDiv:  INTEGER_VECTOR_FUNCTION(sdiv) break;
+    case Instruction::URem:  INTEGER_VECTOR_FUNCTION(urem) break;
+    case Instruction::SRem:  INTEGER_VECTOR_FUNCTION(srem) break;
+    case Instruction::And:   INTEGER_VECTOR_OPERATION(&) break;
+    case Instruction::Or:    INTEGER_VECTOR_OPERATION(|) break;
+    case Instruction::Xor:   INTEGER_VECTOR_OPERATION(^) break;
+    case Instruction::FAdd:  FLOAT_VECTOR_OP(+) break;
+    case Instruction::FSub:  FLOAT_VECTOR_OP(-) break;
+    case Instruction::FMul:  FLOAT_VECTOR_OP(*) break;
+    case Instruction::FDiv:  FLOAT_VECTOR_OP(/) break;
+    case Instruction::FRem:
+      if (dyn_cast<VectorType>(Ty)->getElementType()->isFloatTy())
+        for (unsigned i = 0; i < R.AggregateVal.size(); ++i)
+          R.AggregateVal[i].FloatVal = 
+          fmod(Src1.AggregateVal[i].FloatVal, Src2.AggregateVal[i].FloatVal);
+      else {
+        if (dyn_cast<VectorType>(Ty)->getElementType()->isDoubleTy())
+          for (unsigned i = 0; i < R.AggregateVal.size(); ++i)
+            R.AggregateVal[i].DoubleVal = 
+            fmod(Src1.AggregateVal[i].DoubleVal, Src2.AggregateVal[i].DoubleVal);
+        else {
+          dbgs() << "Unhandled type for Rem instruction: " << *Ty << "\n";
+          llvm_unreachable(0);
+        }
+      }
+      break;
+    }
+  } else {
+    switch (I.getOpcode()) {
+    default:
+      dbgs() << "Don't know how to handle this binary operator!\n-->" << I;
+      llvm_unreachable(0);
+      break;
+    case Instruction::Add:   R.IntVal = Src1.IntVal + Src2.IntVal; break;
+    case Instruction::Sub:   R.IntVal = Src1.IntVal - Src2.IntVal; break;
+    case Instruction::Mul:   R.IntVal = Src1.IntVal * Src2.IntVal; break;
+    case Instruction::FAdd:  executeFAddInst(R, Src1, Src2, Ty); break;
+    case Instruction::FSub:  executeFSubInst(R, Src1, Src2, Ty); break;
+    case Instruction::FMul:  executeFMulInst(R, Src1, Src2, Ty); break;
+    case Instruction::FDiv:  executeFDivInst(R, Src1, Src2, Ty); break;
+    case Instruction::FRem:  executeFRemInst(R, Src1, Src2, Ty); break;
+    case Instruction::UDiv:  R.IntVal = Src1.IntVal.udiv(Src2.IntVal); break;
+    case Instruction::SDiv:  R.IntVal = Src1.IntVal.sdiv(Src2.IntVal); break;
+    case Instruction::URem:  R.IntVal = Src1.IntVal.urem(Src2.IntVal); break;
+    case Instruction::SRem:  R.IntVal = Src1.IntVal.srem(Src2.IntVal); break;
+    case Instruction::And:   R.IntVal = Src1.IntVal & Src2.IntVal; break;
+    case Instruction::Or:    R.IntVal = Src1.IntVal | Src2.IntVal; break;
+    case Instruction::Xor:   R.IntVal = Src1.IntVal ^ Src2.IntVal; break;
+    }
+  }
   SetValue(&I, R, SF);
 }
 
