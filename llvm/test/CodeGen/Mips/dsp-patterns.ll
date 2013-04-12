@@ -117,3 +117,14 @@ entry:
   %.fca.0.insert = insertvalue { i32 } undef, i32 %2, 0
   ret { i32 } %.fca.0.insert
 }
+
+; R1: test_addsc:
+; R1: addsc ${{[0-9]+}}
+; R1: addwc ${{[0-9]+}}
+
+define i64 @test_addsc(i64 %a, i64 %b) #1 {
+entry:
+  %add = add nsw i64 %b, %a
+  ret i64 %add
+}
+

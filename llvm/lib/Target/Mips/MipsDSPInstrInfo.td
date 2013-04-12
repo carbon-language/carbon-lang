@@ -548,10 +548,10 @@ class ADDQ_S_W_DESC : ADDU_QB_DESC_BASE<"addq_s.w", int_mips_addq_s_w,
 class SUBQ_S_W_DESC : ADDU_QB_DESC_BASE<"subq_s.w", int_mips_subq_s_w,
                                         NoItinerary, CPURegs, CPURegs>;
 
-class ADDSC_DESC : ADDU_QB_DESC_BASE<"addsc", int_mips_addsc, NoItinerary,
+class ADDSC_DESC : ADDU_QB_DESC_BASE<"addsc", null_frag, NoItinerary,
                                      CPURegs, CPURegs>, IsCommutable;
 
-class ADDWC_DESC : ADDU_QB_DESC_BASE<"addwc", int_mips_addwc, NoItinerary,
+class ADDWC_DESC : ADDU_QB_DESC_BASE<"addwc", null_frag, NoItinerary,
                                      CPURegs, CPURegs>,
                    IsCommutable, UseDSPCtrl;
 
@@ -1247,6 +1247,10 @@ def : DSPBinPat<ADDU_QB, v4i8, int_mips_addu_qb>;
 def : DSPBinPat<ADDU_QB, v4i8, add>;
 def : DSPBinPat<SUBU_QB, v4i8, int_mips_subu_qb>;
 def : DSPBinPat<SUBU_QB, v4i8, sub>;
+def : DSPBinPat<ADDSC, i32, int_mips_addsc>;
+def : DSPBinPat<ADDSC, i32, addc>;
+def : DSPBinPat<ADDWC, i32, int_mips_addwc>;
+def : DSPBinPat<ADDWC, i32, adde>;
 
 // Extr patterns.
 class EXTR_W_TY1_R2_Pat<SDPatternOperator OpNode, Instruction Instr> :

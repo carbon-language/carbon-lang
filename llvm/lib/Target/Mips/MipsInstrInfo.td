@@ -179,6 +179,7 @@ def NoNaNsFPMath :    Predicate<"TM.Options.NoNaNsFPMath">,
                       AssemblerPredicate<"FeatureMips32">;
 def HasStdEnc :       Predicate<"Subtarget.hasStandardEncoding()">,
                       AssemblerPredicate<"!FeatureMips16">;
+def NotDSP :          Predicate<"!Subtarget.hasDSP()">;
 
 class MipsPat<dag pattern, dag result> : Pat<pattern, result> {
   let Predicates = [HasStdEnc];
@@ -1128,10 +1129,12 @@ def : MipsPat<(i32 imm:$imm),
 // Carry MipsPatterns
 def : MipsPat<(subc CPURegs:$lhs, CPURegs:$rhs),
               (SUBu CPURegs:$lhs, CPURegs:$rhs)>;
-def : MipsPat<(addc CPURegs:$lhs, CPURegs:$rhs),
-              (ADDu CPURegs:$lhs, CPURegs:$rhs)>;
-def : MipsPat<(addc  CPURegs:$src, immSExt16:$imm),
-              (ADDiu CPURegs:$src, imm:$imm)>;
+let Predicates = [HasStdEnc, NotDSP] in {
+  def : MipsPat<(addc CPURegs:$lhs, CPURegs:$rhs),
+                (ADDu CPURegs:$lhs, CPURegs:$rhs)>;
+  def : MipsPat<(addc  CPURegs:$src, immSExt16:$imm),
+                (ADDiu CPURegs:$src, imm:$imm)>;
+}
 
 // Call
 def : MipsPat<(MipsJmpLink (i32 tglobaladdr:$dst)),
