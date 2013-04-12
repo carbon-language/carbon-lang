@@ -1,4 +1,3 @@
-// REQUIRES: mips-registered-target
 // RUN: %clang -target mipsel-unknown-linux -S -o - -emit-llvm %s \
 // RUN: | FileCheck %s
 
