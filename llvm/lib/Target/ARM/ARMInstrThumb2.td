@@ -150,7 +150,7 @@ def lo5AllOne : PatLeaf<(i32 imm), [{
 def t2addrmode_imm12_asmoperand : AsmOperandClass {let Name="MemUImm12Offset";}
 def t2addrmode_imm12 : Operand<i32>,
                        ComplexPattern<i32, 2, "SelectT2AddrModeImm12", []> {
-  let PrintMethod = "printAddrModeImm12Operand";
+  let PrintMethod = "printAddrModeImm12Operand<false>";
   let EncoderMethod = "getAddrModeImm12OpValue";
   let DecoderMethod = "DecodeT2AddrModeImm12";
   let ParserMatchClass = t2addrmode_imm12_asmoperand;

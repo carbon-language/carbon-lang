@@ -744,18 +744,26 @@ def imm1_16 : Operand<i32>, PatLeaf<(imm), [{ return Imm > 0 && Imm <= 16; }],
 // addrmode_imm12 := reg +/- imm12
 //
 def MemImm12OffsetAsmOperand : AsmOperandClass { let Name = "MemImm12Offset"; }
-def addrmode_imm12 : Operand<i32>,
+class AddrMode_Imm12 : Operand<i32>,
                      ComplexPattern<i32, 2, "SelectAddrModeImm12", []> {
   // 12-bit immediate operand. Note that instructions using this encode
   // #0 and #-0 differently. We flag #-0 as the magic value INT32_MIN. All other
   // immediate values are as normal.
 
   let EncoderMethod = "getAddrModeImm12OpValue";
-  let PrintMethod = "printAddrModeImm12Operand";
   let DecoderMethod = "DecodeAddrModeImm12Operand";
   let ParserMatchClass = MemImm12OffsetAsmOperand;
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
+
+def addrmode_imm12 : AddrMode_Imm12 {
+  let PrintMethod = "printAddrModeImm12Operand<false>";
+}
+
+def addrmode_imm12_pre : AddrMode_Imm12 {
+  let PrintMethod = "printAddrModeImm12Operand<true>";
+}
+
 // ldst_so_reg := reg +/- reg shop imm
 //
 def MemRegOffsetAsmOperand : AsmOperandClass { let Name = "MemRegOffset"; }
@@ -855,12 +863,21 @@ def am2offset_imm : Operand<i32>,
 //
 // FIXME: split into imm vs. reg versions.
 def AddrMode3AsmOperand : AsmOperandClass { let Name = "AddrMode3"; }
-def addrmode3 : Operand<i32>,
-                ComplexPattern<i32, 3, "SelectAddrMode3", []> {
+class AddrMode3 : Operand<i32>,
+                  ComplexPattern<i32, 3, "SelectAddrMode3", []> {
   let EncoderMethod = "getAddrMode3OpValue";
-  let PrintMethod = "printAddrMode3Operand";
   let ParserMatchClass = AddrMode3AsmOperand;
   let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
+}
+
+def addrmode3 : AddrMode3
+{
+  let PrintMethod = "printAddrMode3Operand<false>";
+}
+
+def addrmode3_pre : AddrMode3
+{
+  let PrintMethod = "printAddrMode3Operand<true>";
 }
 
 // FIXME: split into imm vs. reg versions.
@@ -888,13 +905,20 @@ def ldstm_mode : OptionalDefOperand<OtherVT, (ops i32), (ops (i32 1))> {
 // addrmode5 := reg +/- imm8*4
 //
 def AddrMode5AsmOperand : AsmOperandClass { let Name = "AddrMode5"; }
-def addrmode5 : Operand<i32>,
-                ComplexPattern<i32, 2, "SelectAddrMode5", []> {
-  let PrintMethod = "printAddrMode5Operand";
+class AddrMode5 : Operand<i32>,
+                  ComplexPattern<i32, 2, "SelectAddrMode5", []> {
   let EncoderMethod = "getAddrMode5OpValue";
   let DecoderMethod = "DecodeAddrMode5Operand";
   let ParserMatchClass = AddrMode5AsmOperand;
   let MIOperandInfo = (ops GPR:$base, i32imm);
+}
+
+def addrmode5 : AddrMode5 {
+   let PrintMethod = "printAddrMode5Operand<false>";
+}
+
+def addrmode5_pre : AddrMode5 {
+   let PrintMethod = "printAddrMode5Operand<true>";
 }
 
 // addrmode6 := reg with optional alignment
@@ -2241,7 +2265,7 @@ def LDRD : AI3ld<0b1101, 0, (outs GPR:$Rd, GPR:$dst2),
 multiclass AI2_ldridx<bit isByte, string opc,
                       InstrItinClass iii, InstrItinClass iir> {
   def _PRE_IMM  : AI2ldstidx<1, isByte, 1, (outs GPR:$Rt, GPR:$Rn_wb),
-                      (ins addrmode_imm12:$addr), IndexModePre, LdFrm, iii,
+                      (ins addrmode_imm12_pre:$addr), IndexModePre, LdFrm, iii,
                       opc, "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
     bits<17> addr;
     let Inst{25} = 0;
@@ -2310,7 +2334,7 @@ defm LDRB : AI2_ldridx<1, "ldrb", IIC_iLoad_bh_iu, IIC_iLoad_bh_ru>;
 
 multiclass AI3_ldridx<bits<4> op, string opc, InstrItinClass itin> {
   def _PRE  : AI3ldstidx<op, 1, 1, (outs GPR:$Rt, GPR:$Rn_wb),
-                        (ins addrmode3:$addr), IndexModePre,
+                        (ins addrmode3_pre:$addr), IndexModePre,
                         LdMiscFrm, itin,
                         opc, "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
     bits<14> addr;
@@ -2344,7 +2368,7 @@ defm LDRSH : AI3_ldridx<0b1111, "ldrsh", IIC_iLoad_bh_ru>;
 defm LDRSB : AI3_ldridx<0b1101, "ldrsb", IIC_iLoad_bh_ru>;
 let hasExtraDefRegAllocReq = 1 in {
 def LDRD_PRE : AI3ldstidx<0b1101, 0, 1, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
-                          (ins addrmode3:$addr), IndexModePre,
+                          (ins addrmode3_pre:$addr), IndexModePre,
                           LdMiscFrm, IIC_iLoad_d_ru,
                           "ldrd", "\t$Rt, $Rt2, $addr!",
                           "$addr.base = $Rn_wb", []> {
@@ -2500,7 +2524,7 @@ def STRD : AI3str<0b1111, (outs), (ins GPR:$Rt, GPR:$src2, addrmode3:$addr),
 multiclass AI2_stridx<bit isByte, string opc,
                       InstrItinClass iii, InstrItinClass iir> {
   def _PRE_IMM : AI2ldstidx<0, isByte, 1, (outs GPR:$Rn_wb),
-                            (ins GPR:$Rt, addrmode_imm12:$addr), IndexModePre,
+                            (ins GPR:$Rt, addrmode_imm12_pre:$addr), IndexModePre,
                             StFrm, iii,
                             opc, "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
     bits<17> addr;
@@ -2622,7 +2646,7 @@ def STRH_preidx: ARMPseudoInst<(outs GPR:$Rn_wb),
 
 
 def STRH_PRE  : AI3ldstidx<0b1011, 0, 1, (outs GPR:$Rn_wb),
-                           (ins GPR:$Rt, addrmode3:$addr), IndexModePre,
+                           (ins GPR:$Rt, addrmode3_pre:$addr), IndexModePre,
                            StMiscFrm, IIC_iStore_bh_ru,
                            "strh", "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
   bits<14> addr;
@@ -2654,7 +2678,7 @@ def STRH_POST : AI3ldstidx<0b1011, 0, 0, (outs GPR:$Rn_wb),
 
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
 def STRD_PRE : AI3ldstidx<0b1111, 0, 1, (outs GPR:$Rn_wb),
-                          (ins GPR:$Rt, GPR:$Rt2, addrmode3:$addr),
+                          (ins GPR:$Rt, GPR:$Rt2, addrmode3_pre:$addr),
                           IndexModePre, StMiscFrm, IIC_iStore_d_ru,
                           "strd", "\t$Rt, $Rt2, $addr!",
                           "$addr.base = $Rn_wb", []> {
@@ -4429,7 +4453,7 @@ multiclass LdStCop<bit load, bit Dbit, string asm> {
     let Inst{7-0} = addr{7-0};
     let DecoderMethod = "DecodeCopMemInstruction";
   }
-  def _PRE : ACI<(outs), (ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr),
+  def _PRE : ACI<(outs), (ins p_imm:$cop, c_imm:$CRd, addrmode5_pre:$addr),
                  asm, "\t$cop, $CRd, $addr!", IndexModePre> {
     bits<13> addr;
     bits<4> cop;
@@ -4500,7 +4524,7 @@ multiclass LdSt2Cop<bit load, bit Dbit, string asm> {
     let Inst{7-0} = addr{7-0};
     let DecoderMethod = "DecodeCopMemInstruction";
   }
-  def _PRE : ACInoP<(outs), (ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr),
+  def _PRE : ACInoP<(outs), (ins p_imm:$cop, c_imm:$CRd, addrmode5_pre:$addr),
                     asm, "\t$cop, $CRd, $addr!", IndexModePre> {
     bits<13> addr;
     bits<4> cop;

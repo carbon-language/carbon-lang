@@ -47,12 +47,13 @@ public:
                                   raw_ostream &O);
   void printAddrMode2OffsetOperand(const MCInst *MI, unsigned OpNum,
                                    raw_ostream &O);
-
+  template <bool AlwaysPrintImm0>
   void printAddrMode3Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAddrMode3OffsetOperand(const MCInst *MI, unsigned OpNum,
                                    raw_ostream &O);
   void printAM3PostIndexOp(const MCInst *MI, unsigned Op, raw_ostream &O);
-  void printAM3PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,raw_ostream &O);
+  void printAM3PreOrOffsetIndexOp(const MCInst *MI, unsigned Op, raw_ostream &O,
+                                  bool AlwaysPrintImm0);
   void printPostIdxImm8Operand(const MCInst *MI, unsigned OpNum,
                                raw_ostream &O);
   void printPostIdxRegOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
@@ -60,6 +61,7 @@ public:
                                raw_ostream &O);
 
   void printLdStmModeOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  template <bool AlwaysPrintImm0>
   void printAddrMode5Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAddrMode6Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAddrMode7Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
@@ -91,6 +93,7 @@ public:
                                    raw_ostream &O);
 
   void printT2SOOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  template<bool AlwaysPrintImm0>
   void printAddrModeImm12Operand(const MCInst *MI, unsigned OpNum,
                                  raw_ostream &O);
   void printT2AddrModeImm8Operand(const MCInst *MI, unsigned OpNum,
