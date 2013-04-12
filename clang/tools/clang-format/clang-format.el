@@ -10,38 +10,18 @@
 ;; 'style' and 'binary' below.
 (defun clang-format-region ()
   (interactive)
-  (let ((orig-file buffer-file-name)
+  (let ((orig-window-start (window-start))
         (orig-point (point))
-        (orig-mark (mark t))
-        (orig-mark-active mark-active)
         (binary "clang-format")
-        (style "LLVM")
-        replacement-text replaced beg end)
-    (basic-save-buffer)
-    (save-restriction
-      (widen)
-      (if mark-active
-          (setq beg (1- (region-beginning))
-                end (1- (region-end)))
-        (setq beg (1- (line-beginning-position))
-              end (1- (line-end-position))))
-      (with-temp-buffer
-        (call-process
-         binary orig-file '(t nil) t
-         "-offset" (number-to-string beg)
-         "-length" (number-to-string (- end beg))
-         "-style" style)
-        (setq replacement-text
-              (buffer-substring-no-properties (point-min) (point-max))))
-      (unless (string= replacement-text
-                       (buffer-substring-no-properties (point-min) (point-max)))
-        (delete-region (point-min) (point-max))
-        (insert replacement-text)
-        (setq replaced t)))
-    (ignore-errors
-      (when orig-mark
-        (push-mark orig-mark)
-        (when orig-mark-active
-          (activate-mark)
-          (setq deactivate-mark nil)))
-      (goto-char orig-point))))
+        (style "LLVM"))
+    (if mark-active
+        (setq beg (1- (region-beginning))
+              end (1- (region-end)))
+      (setq beg (1- (line-beginning-position))
+            end (1- (line-end-position))))
+    (call-process-region (point-min) (point-max) "clang-format" t t nil
+                         "-offset" (number-to-string beg)
+                         "-length" (number-to-string (- end beg))
+                         "-style" style)
+    (goto-char orig-point)
+    (set-window-start (selected-window) orig-window-start)))
