@@ -112,11 +112,53 @@ namespace MachOFormat {
     MachOInt32 Reserved3;
   };
 
+  struct MachOInt24 {
+    uint8_t bytes[3];
+    operator uint32_t() const {
+      return (bytes[2] << 24) | (bytes[1] << 16) | bytes[0];
+    }
+  };
+
   template<endianness TargetEndianness>
   struct RelocationEntry {
     LLVM_MACHOB_IMPORT_TYPES(TargetEndianness)
-    MachOInt32 Word0;
-    MachOInt32 Word1;
+    MachOInt32 Address;
+    MachOInt24 SymbolNum;
+    uint8_t Bits;
+
+    unsigned getPCRel() const {
+      return Bits & 0x1;
+    }
+    unsigned getLength() const {
+      return (Bits >> 1) & 0x3;
+    }
+    unsigned getExternal() const {
+      return (Bits >> 3) & 0x1;
+    }
+    unsigned getType() const {
+      return Bits >> 4;
+    }
+  };
+
+  template<endianness TargetEndianness>
+  struct ScatteredRelocationEntry {
+    LLVM_MACHOB_IMPORT_TYPES(TargetEndianness)
+    MachOInt24 Address;
+    uint8_t Bits;
+    MachOInt32 Value;
+
+    unsigned getType() const {
+      return Bits & 0xf;
+    }
+    unsigned getLength() const {
+      return (Bits >> 4) & 0x3;
+    }
+    unsigned getPCRel() const {
+      return (Bits >> 6) & 0x1;
+    }
+    unsigned getScattered() const {
+      return Bits >> 7;
+    }
   };
 
   template<endianness TargetEndianness>
@@ -206,6 +248,8 @@ public:
     SymbolTableEntryBase;
   typedef MachOFormat::SymtabLoadCommand<support::little> SymtabLoadCommand;
   typedef MachOFormat::RelocationEntry<support::little> RelocationEntry;
+  typedef MachOFormat::ScatteredRelocationEntry<support::little>
+    ScatteredRelocationEntry;
   typedef MachOFormat::SectionBase SectionBase;
   typedef MachOFormat::LoadCommand<support::little> LoadCommand;
   typedef MachOFormat::Header<support::little> Header;
@@ -243,6 +287,11 @@ public:
   const Header *getHeader() const;
   unsigned getHeaderSize() const;
   StringRef getData(size_t Offset, size_t Size) const;
+  const RelocationEntry *getRelocation(DataRefImpl Rel) const;
+  bool isScattered(const RelocationEntry *RE) const;
+  bool isPCRel(const RelocationEntry *RE) const;
+  unsigned getLength(const RelocationEntry *RE) const;
+  unsigned getType(const RelocationEntry *RE) const;
 
   static inline bool classof(const Binary *v) {
     return v->isMachO();
@@ -479,15 +528,12 @@ MachOObjectFile<MachOT>::getRelocationAddress(DataRefImpl Rel,
   const Section *Sect = getSection(Sections[Rel.d.b]);
   uint64_t SectAddress = Sect->Address;
   const RelocationEntry *RE = getRelocation(Rel);
-  unsigned Arch = getArch();
-  bool isScattered = (Arch != Triple::x86_64) &&
-                     (RE->Word0 & macho::RF_Scattered);
 
   uint64_t RelAddr;
-  if (isScattered)
-    RelAddr = RE->Word0 & 0xFFFFFF;
+  if (isScattered(RE))
+    RelAddr = RE->Address & 0xFFFFFF;
   else
-    RelAddr = RE->Word0;
+    RelAddr = RE->Address;
 
   Res = SectAddress + RelAddr;
   return object_error::success;
@@ -498,14 +544,10 @@ error_code
 MachOObjectFile<MachOT>::getRelocationOffset(DataRefImpl Rel,
                                              uint64_t &Res) const {
   const RelocationEntry *RE = getRelocation(Rel);
-
-  unsigned Arch = getArch();
-  bool isScattered = (Arch != Triple::x86_64) &&
-                     (RE->Word0 & macho::RF_Scattered);
-  if (isScattered)
-    Res = RE->Word0 & 0xFFFFFF;
+  if (isScattered(RE))
+    Res = RE->Address & 0xFFFFFF;
   else
-    Res = RE->Word0;
+    Res = RE->Address;
   return object_error::success;
 }
 
@@ -514,8 +556,8 @@ error_code
 MachOObjectFile<MachOT>::getRelocationSymbol(DataRefImpl Rel,
                                              SymbolRef &Res) const {
   const RelocationEntry *RE = getRelocation(Rel);
-  uint32_t SymbolIdx = RE->Word1 & 0xffffff;
-  bool isExtern = (RE->Word1 >> 27) & 1;
+  uint32_t SymbolIdx = RE->SymbolNum;
+  bool isExtern = RE->getExternal();
 
   DataRefImpl Sym;
   moveToNextSymbol(Sym);
@@ -535,9 +577,7 @@ template<class MachOT>
 error_code MachOObjectFile<MachOT>::getRelocationType(DataRefImpl Rel,
                                                       uint64_t &Res) const {
   const RelocationEntry *RE = getRelocation(Rel);
-  Res = RE->Word0;
-  Res <<= 32;
-  Res |= RE->Word1;
+  Res = getType(RE);
   return object_error::success;
 }
 
@@ -550,14 +590,8 @@ MachOObjectFile<MachOT>::getRelocationTypeName(DataRefImpl Rel,
   const RelocationEntry *RE = getRelocation(Rel);
 
   unsigned Arch = getArch();
-  bool isScattered = (Arch != Triple::x86_64) &&
-                     (RE->Word0 & macho::RF_Scattered);
 
-  unsigned r_type;
-  if (isScattered)
-    r_type = (RE->Word0 >> 24) & 0xF;
-  else
-    r_type = (RE->Word1 >> 28) & 0xF;
+  unsigned r_type = getType(RE);
 
   switch (Arch) {
     case Triple::x86: {
@@ -650,30 +684,20 @@ MachOObjectFile<MachOT>::getRelocationValueString(DataRefImpl Rel,
   const RelocationEntry *RE = getRelocation(Rel);
 
   unsigned Arch = getArch();
-  bool isScattered = (Arch != Triple::x86_64) &&
-                     (RE->Word0 & macho::RF_Scattered);
+  bool IsScattered = isScattered(RE);
 
   std::string fmtbuf;
   raw_string_ostream fmt(fmtbuf);
 
-  unsigned Type;
-  if (isScattered)
-    Type = (RE->Word0 >> 24) & 0xF;
-  else
-    Type = (RE->Word1 >> 28) & 0xF;
-
-  bool isPCRel;
-  if (isScattered)
-    isPCRel = ((RE->Word0 >> 30) & 1);
-  else
-    isPCRel = ((RE->Word1 >> 24) & 1);
+  unsigned Type = getType(RE);
+  bool IsPCRel = isPCRel(RE);
 
   // Determine any addends that should be displayed with the relocation.
   // These require decoding the relocation type, which is triple-specific.
 
   // X86_64 has entirely custom relocation types.
   if (Arch == Triple::x86_64) {
-    bool isPCRel = ((RE->Word1 >> 24) & 1);
+    bool isPCRel = RE->getPCRel();
 
     switch (Type) {
       case macho::RIT_X86_64_GOTLoad:   // X86_64_RELOC_GOT_LOAD
@@ -691,7 +715,7 @@ MachOObjectFile<MachOT>::getRelocationValueString(DataRefImpl Rel,
         // X86_64_SUBTRACTOR must be followed by a relocation of type
         // X86_64_RELOC_UNSIGNED.
         // NOTE: Scattered relocations don't exist on x86_64.
-        unsigned RType = (RENext->Word1 >> 28) & 0xF;
+        unsigned RType = RENext->getType();
         if (RType != 0)
           report_fatal_error("Expected X86_64_RELOC_UNSIGNED after "
                              "X86_64_RELOC_SUBTRACTOR.");
@@ -738,12 +762,12 @@ MachOObjectFile<MachOT>::getRelocationValueString(DataRefImpl Rel,
         // X86 sect diff's must be followed by a relocation of type
         // GENERIC_RELOC_PAIR.
         bool isNextScattered = (Arch != Triple::x86_64) &&
-                               (RENext->Word0 & macho::RF_Scattered);
+                               (RENext->Address & macho::RF_Scattered);
         unsigned RType;
         if (isNextScattered)
-          RType = (RENext->Word0 >> 24) & 0xF;
+          RType = (RENext->Address >> 24) & 0xF;
         else
-          RType = (RENext->Word1 >> 28) & 0xF;
+          RType = RENext->getType();
         if (RType != 1)
           report_fatal_error("Expected GENERIC_RELOC_PAIR after "
                              "GENERIC_RELOC_SECTDIFF.");
@@ -767,12 +791,12 @@ MachOObjectFile<MachOT>::getRelocationValueString(DataRefImpl Rel,
           // X86 sect diff's must be followed by a relocation of type
           // GENERIC_RELOC_PAIR.
           bool isNextScattered = (Arch != Triple::x86_64) &&
-                               (RENext->Word0 & macho::RF_Scattered);
+                               (RENext->Address & macho::RF_Scattered);
           unsigned RType;
           if (isNextScattered)
-            RType = (RENext->Word0 >> 24) & 0xF;
+            RType = (RENext->Address >> 24) & 0xF;
           else
-            RType = (RENext->Word1 >> 28) & 0xF;
+            RType = RENext->getType();
           if (RType != 1)
             report_fatal_error("Expected GENERIC_RELOC_PAIR after "
                                "GENERIC_RELOC_LOCAL_SECTDIFF.");
@@ -785,7 +809,7 @@ MachOObjectFile<MachOT>::getRelocationValueString(DataRefImpl Rel,
         case macho::RIT_Generic_TLV: {
           printRelocationTargetName(RE, fmt);
           fmt << "@TLV";
-          if (isPCRel) fmt << "P";
+          if (IsPCRel) fmt << "P";
           break;
         }
         default:
@@ -798,10 +822,10 @@ MachOObjectFile<MachOT>::getRelocationValueString(DataRefImpl Rel,
           // Half relocations steal a bit from the length field to encode
           // whether this is an upper16 or a lower16 relocation.
           bool isUpper;
-          if (isScattered)
-            isUpper = (RE->Word0 >> 28) & 1;
+          if (IsScattered)
+            isUpper = (RE->Address >> 28) & 1;
           else
-            isUpper = (RE->Word1 >> 25) & 1;
+            isUpper = (RE->getLength() >> 1) & 1;
 
           if (isUpper)
             fmt << ":upper16:(";
@@ -816,12 +840,12 @@ MachOObjectFile<MachOT>::getRelocationValueString(DataRefImpl Rel,
           // ARM half relocs must be followed by a relocation of type
           // ARM_RELOC_PAIR.
           bool isNextScattered = (Arch != Triple::x86_64) &&
-                                 (RENext->Word0 & macho::RF_Scattered);
+                                 (RENext->Address & macho::RF_Scattered);
           unsigned RType;
           if (isNextScattered)
-            RType = (RENext->Word0 >> 24) & 0xF;
+            RType = (RENext->Address >> 24) & 0xF;
           else
-            RType = (RENext->Word1 >> 28) & 0xF;
+            RType = RENext->getType();
 
           if (RType != 1)
             report_fatal_error("Expected ARM_RELOC_PAIR after "
@@ -860,15 +884,8 @@ error_code
 MachOObjectFile<MachOT>::getRelocationHidden(DataRefImpl Rel,
                                              bool &Result) const {
   const RelocationEntry *RE = getRelocation(Rel);
-
   unsigned Arch = getArch();
-  bool isScattered = (Arch != Triple::x86_64) &&
-                     (RE->Word0 & macho::RF_Scattered);
-  unsigned Type;
-  if (isScattered)
-    Type = (RE->Word0 >> 24) & 0xF;
-  else
-    Type = (RE->Word1 >> 28) & 0xF;
+  unsigned Type = getType(RE);
 
   Result = false;
 
@@ -884,7 +901,7 @@ MachOObjectFile<MachOT>::getRelocationHidden(DataRefImpl Rel,
       RelPrev.d.a--;
       const RelocationEntry *REPrev = getRelocation(RelPrev);
 
-      unsigned PrevType = (REPrev->Word1 >> 28) & 0xF;
+      unsigned PrevType = REPrev->getType();
 
       if (PrevType == macho::RIT_X86_64_Subtractor) Result = true;
     }
