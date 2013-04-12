@@ -17,7 +17,6 @@
 #define LLVM_CODEGEN_REGALLOCPBQP_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/PBQP/Graph.h"
 #include "llvm/CodeGen/PBQP/Solution.h"
@@ -124,10 +123,11 @@ namespace llvm {
 
     /// Build a PBQP instance to represent the register allocation problem for
     /// the given MachineFunction.
-    virtual OwningPtr<PBQPRAProblem> build(MachineFunction *mf,
-                                           const LiveIntervals *lis,
-                                           const MachineLoopInfo *loopInfo,
-                                           const RegSet &vregs);
+    virtual std::auto_ptr<PBQPRAProblem> build(
+                                              MachineFunction *mf,
+                                              const LiveIntervals *lis,
+                                              const MachineLoopInfo *loopInfo,
+                                              const RegSet &vregs);
   private:
 
     void addSpillCosts(PBQP::Vector &costVec, PBQP::PBQPNum spillCost);
@@ -144,10 +144,11 @@ namespace llvm {
  
     /// Build a PBQP instance to represent the register allocation problem for
     /// the given MachineFunction.
-    virtual OwningPtr<PBQPRAProblem> build(MachineFunction *mf,
-                                           const LiveIntervals *lis,
-                                           const MachineLoopInfo *loopInfo,
-                                           const RegSet &vregs);   
+    virtual std::auto_ptr<PBQPRAProblem> build(
+                                              MachineFunction *mf,
+                                              const LiveIntervals *lis,
+                                              const MachineLoopInfo *loopInfo,
+                                              const RegSet &vregs);   
 
   private:
 
@@ -160,7 +161,7 @@ namespace llvm {
                             PBQP::PBQPNum benefit);
   };
 
-  FunctionPass* createPBQPRegisterAllocator(OwningPtr<PBQPBuilder> builder,
+  FunctionPass* createPBQPRegisterAllocator(std::auto_ptr<PBQPBuilder> builder,
                                             char *customPassID=0);
 }
 
