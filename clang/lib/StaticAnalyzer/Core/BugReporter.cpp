@@ -1026,7 +1026,8 @@ public:
     PrevLoc = PathDiagnosticLocation();
   }
   
-  void addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd = false);
+  void addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd = false,
+               bool IsPostJump = false);
 
   void rawAddEdge(PathDiagnosticLocation NewLoc);
 
@@ -1122,7 +1123,8 @@ void EdgeBuilder::rawAddEdge(PathDiagnosticLocation NewLoc) {
   PrevLoc = NewLoc;
 }
 
-void EdgeBuilder::addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd) {
+void EdgeBuilder::addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd,
+                          bool IsPostJump) {
 
   if (!alwaysAdd && NewLoc.asLocation().isMacroID())
     return;
@@ -1135,13 +1137,14 @@ void EdgeBuilder::addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd) {
     // Is the top location context the same as the one for the new location?
     if (TopContextLoc == CLoc) {
       if (alwaysAdd) {
-        if (IsConsumedExpr(TopContextLoc) &&
-            !IsControlFlowExpr(TopContextLoc.asStmt()))
-            TopContextLoc.markDead();
+        if (IsConsumedExpr(TopContextLoc))
+          TopContextLoc.markDead();
 
         rawAddEdge(NewLoc);
       }
 
+      if (IsPostJump)
+        TopContextLoc.markDead();
       return;
     }
 
@@ -1149,13 +1152,13 @@ void EdgeBuilder::addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd) {
       if (alwaysAdd) {
         rawAddEdge(NewLoc);
 
-        if (IsConsumedExpr(CLoc) && !IsControlFlowExpr(CLoc.asStmt())) {
-          CLocs.push_back(ContextLocation(CLoc, true));
+        if (IsConsumedExpr(CLoc)) {
+          CLocs.push_back(ContextLocation(CLoc, /*IsDead=*/true));
           return;
         }
       }
 
-      CLocs.push_back(CLoc);
+      CLocs.push_back(ContextLocation(CLoc, /*IsDead=*/IsPostJump));
       return;
     }
 
@@ -1409,7 +1412,7 @@ static bool GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         GRBugReporter& BR = PDB.getBugReporter();
         BR.addCallPieceLocationContextPair(C, CE->getCalleeContext());
 
-        EB.addEdge(C->callReturn, true);
+        EB.addEdge(C->callReturn, /*AlwaysAdd=*/true, /*IsPostJump=*/true);
         EB.flushLocations();
 
         PD.getActivePath().push_front(C);
