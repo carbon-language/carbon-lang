@@ -1343,6 +1343,8 @@ void ConvergingScheduler::SchedBoundary::setLatencyPolicy(CandPolicy &Policy) {
   for (ReadyQueue::iterator I = Available.begin(), E = Available.end();
        I != E; ++I) {
     unsigned L = getUnscheduledLatency(*I);
+    DEBUG(dbgs() << "  " << Available.getName()
+          << " RemLatency SU(" << (*I)->NodeNum << ") " << L << '\n');
     if (L > RemLatency)
       RemLatency = L;
   }
@@ -1353,10 +1355,13 @@ void ConvergingScheduler::SchedBoundary::setLatencyPolicy(CandPolicy &Policy) {
       RemLatency = L;
   }
   unsigned CriticalPathLimit = Rem->CriticalPath + SchedModel->getILPWindow();
+  DEBUG(dbgs() << "  " << Available.getName()
+        << " ExpectedLatency " << ExpectedLatency
+        << " CP Limit " << CriticalPathLimit << '\n');
   if (RemLatency + ExpectedLatency >= CriticalPathLimit
       && RemLatency > Rem->getMaxRemainingCount(SchedModel)) {
     Policy.ReduceLatency = true;
-    DEBUG(dbgs() << "Increase ILP: " << Available.getName() << '\n');
+    DEBUG(dbgs() << "  Increase ILP: " << Available.getName() << '\n');
   }
 }
 
@@ -1573,7 +1578,8 @@ void ConvergingScheduler::balanceZones(
   if ((int)(Rem->getMaxRemainingCount(SchedModel) - RemainingCritCount)
       > (int)SchedModel->getLatencyFactor()) {
     CriticalCand.Policy.ReduceResIdx = CriticalZone.CritResIdx;
-    DEBUG(dbgs() << "Balance " << CriticalZone.Available.getName() << " reduce "
+    DEBUG(dbgs() << "  Balance " << CriticalZone.Available.getName()
+          << " reduce "
           << SchedModel->getProcResource(CriticalZone.CritResIdx)->Name
           << '\n');
   }
@@ -1584,7 +1590,8 @@ void ConvergingScheduler::balanceZones(
   if ((int)(OppositeZone.ExpectedCount - OppositeCount)
       > (int)SchedModel->getLatencyFactor()) {
     OppositeCand.Policy.DemandResIdx = CriticalZone.CritResIdx;
-    DEBUG(dbgs() << "Balance " << OppositeZone.Available.getName() << " demand "
+    DEBUG(dbgs() << "  Balance " << OppositeZone.Available.getName()
+          << " demand "
           << SchedModel->getProcResource(OppositeZone.CritResIdx)->Name
           << '\n');
   }
@@ -1608,7 +1615,7 @@ void ConvergingScheduler::checkResourceLimits(
     if (Top.CritResIdx != Rem.CritResIdx) {
       TopCand.Policy.ReduceResIdx = Top.CritResIdx;
       BotCand.Policy.ReduceResIdx = Bot.CritResIdx;
-      DEBUG(dbgs() << "Reduce scheduled "
+      DEBUG(dbgs() << "  Reduce scheduled "
             << SchedModel->getProcResource(Top.CritResIdx)->Name << '\n');
     }
     return;
@@ -1625,7 +1632,7 @@ void ConvergingScheduler::checkResourceLimits(
         && (Rem.CriticalPath > Top.CurrCycle + Bot.CurrCycle)) {
       TopCand.Policy.ReduceLatency = true;
       BotCand.Policy.ReduceLatency = true;
-      DEBUG(dbgs() << "Reduce scheduled latency " << Top.ExpectedLatency
+      DEBUG(dbgs() << "  Reduce scheduled latency " << Top.ExpectedLatency
             << " + " << Bot.ExpectedLatency << '\n');
     }
     return;
@@ -1863,20 +1870,20 @@ static bool compareRPDelta(const RegPressureDelta &LHS,
 
   // Avoid increasing the max critical pressure in the scheduled region.
   if (LHS.Excess.UnitIncrease != RHS.Excess.UnitIncrease) {
-    DEBUG(dbgs() << "RP excess top - bot: "
+    DEBUG(dbgs() << "  RP excess top - bot: "
           << (LHS.Excess.UnitIncrease - RHS.Excess.UnitIncrease) << '\n');
     return LHS.Excess.UnitIncrease < RHS.Excess.UnitIncrease;
   }
   // Avoid increasing the max critical pressure in the scheduled region.
   if (LHS.CriticalMax.UnitIncrease != RHS.CriticalMax.UnitIncrease) {
-    DEBUG(dbgs() << "RP critical top - bot: "
+    DEBUG(dbgs() << "  RP critical top - bot: "
           << (LHS.CriticalMax.UnitIncrease - RHS.CriticalMax.UnitIncrease)
           << '\n');
     return LHS.CriticalMax.UnitIncrease < RHS.CriticalMax.UnitIncrease;
   }
   // Avoid increasing the max pressure of the entire region.
   if (LHS.CurrentMax.UnitIncrease != RHS.CurrentMax.UnitIncrease) {
-    DEBUG(dbgs() << "RP current top - bot: "
+    DEBUG(dbgs() << "  RP current top - bot: "
           << (LHS.CurrentMax.UnitIncrease - RHS.CurrentMax.UnitIncrease)
           << '\n');
     return LHS.CurrentMax.UnitIncrease < RHS.CurrentMax.UnitIncrease;
@@ -1992,8 +1999,7 @@ void ConvergingScheduler::pickNodeFromQueue(SchedBoundary &Zone,
 
 static void tracePick(const ConvergingScheduler::SchedCandidate &Cand,
                       bool IsTop) {
-  DEBUG(dbgs() << "Pick " << (IsTop ? "Top" : "Bot")
-        << " SU(" << Cand.SU->NodeNum << ") "
+  DEBUG(dbgs() << "Pick " << (IsTop ? "Top " : "Bot ")
         << ConvergingScheduler::getReasonStr(Cand.Reason) << '\n');
 }
 
@@ -2003,10 +2009,12 @@ SUnit *ConvergingScheduler::pickNodeBidirectional(bool &IsTopNode) {
   // efficient, but also provides the best heuristics for CriticalPSets.
   if (SUnit *SU = Bot.pickOnlyChoice()) {
     IsTopNode = false;
+    DEBUG(dbgs() << "Pick Top NOCAND\n");
     return SU;
   }
   if (SUnit *SU = Top.pickOnlyChoice()) {
     IsTopNode = true;
+    DEBUG(dbgs() << "Pick Bot NOCAND\n");
     return SU;
   }
   CandPolicy NoPolicy;
@@ -2104,7 +2112,7 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
   if (SU->isBottomReady())
     Bot.removeReady(SU);
 
-  DEBUG(dbgs() << "Scheduling " << *SU->getInstr());
+  DEBUG(dbgs() << "Scheduling SU(" << SU->NodeNum << ") " << *SU->getInstr());
   return SU;
 }
 
@@ -2250,12 +2258,12 @@ public:
     SUnit *SU = ReadyQ.back();
     ReadyQ.pop_back();
     IsTopNode = false;
-    DEBUG(dbgs() << "*** Scheduling " << "SU(" << SU->NodeNum << "): "
-          << *SU->getInstr()
+    DEBUG(dbgs() << "Pick node " << "SU(" << SU->NodeNum << ") "
           << " ILP: " << DAG->getDFSResult()->getILP(SU)
           << " Tree: " << DAG->getDFSResult()->getSubtreeID(SU) << " @"
           << DAG->getDFSResult()->getSubtreeLevel(
-            DAG->getDFSResult()->getSubtreeID(SU)) << '\n');
+            DAG->getDFSResult()->getSubtreeID(SU)) << '\n'
+          << "Scheduling " << *SU->getInstr());
     return SU;
   }
 
