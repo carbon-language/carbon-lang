@@ -4,7 +4,7 @@ int outer1; // expected-note{{previous definition is here}}
 extern int outer2; // expected-note{{previous definition is here}}
 int outer4;
 int outer4; // expected-note{{previous definition is here}}
-int outer5;
+int outer5; // expected-note{{previous definition is here}}
 int outer6(float); // expected-note{{previous definition is here}}
 int outer7(float);
 
@@ -13,7 +13,7 @@ void outer_test() {
   extern float outer2; // expected-error{{redefinition of 'outer2' with a different type}}
   extern float outer3; // expected-note{{previous definition is here}}
   double outer4;
-  extern int outer5; // expected-note{{previous definition is here}}
+  extern int outer5;
   extern int outer6; // expected-error{{redefinition of 'outer6' as different kind of symbol}}
   int outer7;
   extern int outer8; // expected-note{{previous definition is here}}

@@ -33,3 +33,12 @@ void test3declarer() {
   extern int test3_array[];
   int x = sizeof(test3_array); // expected-error {{invalid application of 'sizeof' to an incomplete type 'int []'}}
 }
+
+void test4() {
+  extern int test4_array[];
+  {
+    extern int test4_array[100];
+    int x = sizeof(test4_array); // fine
+  }
+  int x = sizeof(test4_array); // expected-error {{invalid application of 'sizeof' to an incomplete type 'int []'}}
+}

@@ -62,7 +62,7 @@ void test2() {
 // <rdar://problem/6127293>
 int outer1(int); // expected-note{{previous declaration is here}}
 struct outer3 { };
-int outer4(int);
+int outer4(int); // expected-note{{previous declaration is here}}
 int outer5; // expected-note{{previous definition is here}}
 int *outer7(int);
 
@@ -70,7 +70,7 @@ void outer_test() {
   int outer1(float); // expected-error{{conflicting types for 'outer1'}}
   int outer2(int); // expected-note{{previous declaration is here}}
   int outer3(int); // expected-note{{previous declaration is here}}
-  int outer4(int); // expected-note{{previous declaration is here}}
+  int outer4(int);
   int outer5(int); // expected-error{{redefinition of 'outer5' as different kind of symbol}}
   int* outer6(int); // expected-note{{previous declaration is here}}
   int *outer7(int);

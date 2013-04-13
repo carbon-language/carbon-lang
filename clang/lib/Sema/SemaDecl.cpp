@@ -4328,34 +4328,6 @@ Sema::RegisterLocallyScopedExternCDecl(NamedDecl *ND,
          "Decl is not a locally-scoped decl!");
   // Note that we have a locally-scoped external with this name.
   LocallyScopedExternCDecls[ND->getDeclName()] = ND;
-
-  if (!Previous.isSingleResult())
-    return;
-
-  NamedDecl *PrevDecl = Previous.getFoundDecl();
-
-  // If there was a previous declaration of this entity, it may be in
-  // our identifier chain. Update the identifier chain with the new
-  // declaration.
-  if (S && IdResolver.ReplaceDecl(PrevDecl, ND)) {
-    // The previous declaration was found on the identifer resolver
-    // chain, so remove it from its scope.
-
-    if (S->isDeclScope(PrevDecl)) {
-      // Special case for redeclarations in the SAME scope.
-      // Because this declaration is going to be added to the identifier chain
-      // later, we should temporarily take it OFF the chain.
-      IdResolver.RemoveDecl(ND);
-
-    } else {
-      // Find the scope for the original declaration.
-      while (S && !S->isDeclScope(PrevDecl))
-        S = S->getParent();
-    }
-
-    if (S)
-      S->RemoveDecl(PrevDecl);
-  }
 }
 
 llvm::DenseMap<DeclarationName, NamedDecl *>::iterator
