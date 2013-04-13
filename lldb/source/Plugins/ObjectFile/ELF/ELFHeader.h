@@ -244,6 +244,16 @@ struct ELFSymbol
         st_info = (binding << 4) + (type & 0x0F);
     }
 
+    static const char *
+    bindingToCString(unsigned char binding);
+
+    static const char *
+    typeToCString(unsigned char type);
+
+    static const char *
+    sectionIndexToCString(elf_half shndx,
+                          const lldb_private::SectionList *section_list);
+
     /// Parse an ELFSymbol entry from the given DataExtractor starting at
     /// position \p offset.  The address size of the DataExtractor determines if
     /// a 32 or 64 bit object is to be parsed.
@@ -260,6 +270,12 @@ struct ELFSymbol
     ///    True if the ELFSymbol was successfully read and false otherwise.
     bool
     Parse(const lldb_private::DataExtractor &data, lldb::offset_t *offset);
+    
+    void
+    Dump (lldb_private::Stream *s,
+          uint32_t idx,
+          const lldb_private::DataExtractor *strtab_data,
+          const lldb_private::SectionList *section_list);
 };
 
 //------------------------------------------------------------------------------

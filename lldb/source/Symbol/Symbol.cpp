@@ -53,6 +53,7 @@ Symbol::Symbol
     const lldb::SectionSP &section_sp,
     addr_t offset,
     addr_t size,
+    bool size_is_valid,
     uint32_t flags
 ) :
     SymbolContextScope (),
@@ -65,7 +66,7 @@ Symbol::Symbol
     m_is_external (external),
     m_size_is_sibling (false),
     m_size_is_synthesized (false),
-    m_calculated_size (size > 0),
+    m_calculated_size (size_is_valid || size > 0),
     m_demangled_is_synthesized (false),
     m_type (type),
     m_flags (flags),
@@ -84,6 +85,7 @@ Symbol::Symbol
     bool is_trampoline,
     bool is_artificial,
     const AddressRange &range,
+    bool size_is_valid,
     uint32_t flags
 ) :
     SymbolContextScope (),
@@ -96,7 +98,7 @@ Symbol::Symbol
     m_is_external (external),
     m_size_is_sibling (false),
     m_size_is_synthesized (false),
-    m_calculated_size (range.GetByteSize() > 0),
+    m_calculated_size (size_is_valid || range.GetByteSize() > 0),
     m_demangled_is_synthesized (false),
     m_type (type),
     m_flags (flags),

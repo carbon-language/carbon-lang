@@ -725,11 +725,20 @@ ParseSymbols(Symtab *symtab,
     static ConstString data2_section_name(".data1");
     static ConstString bss_section_name(".bss");
 
+    //StreamFile strm(stdout, false);
     unsigned i;
     for (i = 0; i < num_symbols; ++i)
     {
         if (symbol.Parse(symtab_data, &offset) == false)
             break;
+        
+        const char *symbol_name = strtab_data.PeekCStr(symbol.st_name);
+
+        // No need to add symbols that have no names
+        if (symbol_name == NULL || symbol_name[0] == '\0')
+            continue;
+
+        //symbol.Dump (&strm, i, &strtab_data, section_list);
 
         SectionSP symbol_section_sp;
         SymbolType symbol_type = eSymbolTypeInvalid;
@@ -780,7 +789,7 @@ ParseSymbols(Symtab *symtab,
                 // file associated with the object file. A file symbol has STB_LOCAL
                 // binding, its section index is SHN_ABS, and it precedes the other
                 // STB_LOCAL symbols for the file, if it is present.
-                symbol_type = eSymbolTypeObjectFile;
+                symbol_type = eSymbolTypeSourceFile;
                 break;
 
             case STT_GNU_IFUNC:
@@ -818,7 +827,6 @@ ParseSymbols(Symtab *symtab,
         uint64_t symbol_value = symbol.st_value;
         if (symbol_section_sp)
             symbol_value -= symbol_section_sp->GetFileAddress();
-        const char *symbol_name = strtab_data.PeekCStr(symbol.st_name);
         bool is_global = symbol.getBinding() == STB_GLOBAL;
         uint32_t flags = symbol.st_other << 8 | symbol.st_info;
         bool is_mangled = symbol_name ? (symbol_name[0] == '_' && symbol_name[1] == 'Z') : false;
@@ -834,6 +842,7 @@ ParseSymbols(Symtab *symtab,
             symbol_section_sp,  // Section in which this symbol is defined or null.
             symbol_value,       // Offset in section or symbol value.
             symbol.st_size,     // Size in bytes of this symbol.
+            true,               // Size is valid
             flags);             // Symbol flags.
         symtab->AddSymbol(dc_symbol);
     }
@@ -1027,6 +1036,7 @@ ParsePLTRelocations(Symtab *symbol_table,
             plt_section_sp,  // Section in which this symbol is defined or null.
             plt_index,       // Offset in section or symbol value.
             plt_entsize,     // Size in bytes of this symbol.
+            true,            // Size is valid
             0);              // Symbol flags.
 
         symbol_table->AddSymbol(jump_symbol);

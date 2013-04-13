@@ -947,14 +947,7 @@ Symtab::InitAddressIndexes()
     if (!m_addr_indexes_computed && !m_symbols.empty())
     {
         m_addr_indexes_computed = true;
-#if 0
-        // The old was to add only code, trampoline or data symbols...
-        AppendSymbolIndexesWithType (eSymbolTypeCode, m_addr_indexes);
-        AppendSymbolIndexesWithType (eSymbolTypeTrampoline, m_addr_indexes);
-        AppendSymbolIndexesWithType (eSymbolTypeData, m_addr_indexes);
-#else
-        // The new way adds all symbols with valid addresses that are section
-        // offset.
+
         const_iterator begin = m_symbols.begin();
         const_iterator end = m_symbols.end();
         for (const_iterator pos = m_symbols.begin(); pos != end; ++pos)
@@ -962,7 +955,7 @@ Symtab::InitAddressIndexes()
             if (pos->ValueIsAddress())
                 m_addr_indexes.push_back (std::distance(begin, pos));
         }
-#endif
+
         SortSymbolIndexesByValue (m_addr_indexes, false);
         m_addr_indexes.push_back (UINT32_MAX);   // Terminator for bsearch since we might need to look at the next symbol
     }
@@ -1045,27 +1038,6 @@ Symtab::CalculateSymbolSize (Symbol *symbol)
     }
     return byte_size;
 }
-
-Symbol *
-Symtab::FindSymbolWithFileAddress (addr_t file_addr)
-{
-    Mutex::Locker locker (m_mutex);
-
-    if (!m_addr_indexes_computed)
-        InitAddressIndexes();
-
-    SymbolSearchInfo info = { this, file_addr, NULL, NULL, 0 };
-
-    uint32_t* match = (uint32_t*)::bsearch (&info, 
-                                            &m_addr_indexes[0], 
-                                            m_addr_indexes.size(), 
-                                            sizeof(uint32_t), 
-                                            (ComparisonFunction)SymbolWithFileAddress);
-    if (match)
-        return SymbolAtIndex (*match);
-    return NULL;
-}
-
 
 Symbol *
 Symtab::FindSymbolContainingFileAddress (addr_t file_addr, const uint32_t* indexes, uint32_t num_indexes)

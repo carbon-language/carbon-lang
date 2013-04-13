@@ -38,6 +38,7 @@ public:
             const lldb::SectionSP &section_sp,
             lldb::addr_t value,
             lldb::addr_t size,
+            bool size_is_valid,
             uint32_t flags);
 
     Symbol (uint32_t symID,
@@ -49,6 +50,7 @@ public:
             bool is_trampoline,
             bool is_artificial,
             const AddressRange &range,
+            bool size_is_valid,
             uint32_t flags);
 
     Symbol (const Symbol& rhs);

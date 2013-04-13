@@ -10,6 +10,8 @@
 #include <cstring>
 
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/Section.h"
+#include "lldb/Core/Stream.h"
 
 #include "ELFHeader.h"
 
@@ -231,6 +233,90 @@ ELFSectionHeader::Parse(const lldb_private::DataExtractor &data,
 ELFSymbol::ELFSymbol() 
 {
     memset(this, 0, sizeof(ELFSymbol));
+}
+
+#define ENUM_TO_CSTR(e) case e: return #e
+
+const char *
+ELFSymbol::bindingToCString(unsigned char binding)
+{
+    switch (binding)
+    {
+    ENUM_TO_CSTR(STB_LOCAL);
+    ENUM_TO_CSTR(STB_GLOBAL);
+    ENUM_TO_CSTR(STB_WEAK);
+    ENUM_TO_CSTR(STB_LOOS);
+    ENUM_TO_CSTR(STB_HIOS);
+    ENUM_TO_CSTR(STB_LOPROC);
+    ENUM_TO_CSTR(STB_HIPROC);
+    }
+    return "";
+}
+
+const char *
+ELFSymbol::typeToCString(unsigned char type)
+{
+    switch (type)
+    {
+    ENUM_TO_CSTR(STT_NOTYPE);
+    ENUM_TO_CSTR(STT_OBJECT);
+    ENUM_TO_CSTR(STT_FUNC);
+    ENUM_TO_CSTR(STT_SECTION);
+    ENUM_TO_CSTR(STT_FILE);
+    ENUM_TO_CSTR(STT_COMMON);
+    ENUM_TO_CSTR(STT_TLS);
+    ENUM_TO_CSTR(STT_LOOS);
+    ENUM_TO_CSTR(STT_HIOS);
+    ENUM_TO_CSTR(STT_GNU_IFUNC);
+    ENUM_TO_CSTR(STT_LOPROC);
+    ENUM_TO_CSTR(STT_HIPROC);
+    }
+    return "";
+}
+
+const char *
+ELFSymbol::sectionIndexToCString (elf_half shndx,
+                                  const lldb_private::SectionList *section_list)
+{
+    switch (shndx)
+    {
+    ENUM_TO_CSTR(SHN_UNDEF);
+    ENUM_TO_CSTR(SHN_LOPROC);
+    ENUM_TO_CSTR(SHN_HIPROC);
+    ENUM_TO_CSTR(SHN_LOOS);
+    ENUM_TO_CSTR(SHN_HIOS);
+    ENUM_TO_CSTR(SHN_ABS);
+    ENUM_TO_CSTR(SHN_COMMON);
+    ENUM_TO_CSTR(SHN_XINDEX);
+    default:
+        {
+            const lldb_private::Section *section = section_list->GetSectionAtIndex(shndx).get();
+            if (section)
+                return section->GetName().AsCString("");
+        }
+        break;
+    }
+    return "";
+}
+
+void
+ELFSymbol::Dump (lldb_private::Stream *s,
+                 uint32_t idx,
+                 const lldb_private::DataExtractor *strtab_data,
+                 const lldb_private::SectionList *section_list)
+{
+    s->Printf("[%3u] 0x%16.16llx 0x%16.16llx 0x%8.8x 0x%2.2x (%-10s %-13s) 0x%2.2x 0x%4.4x (%-10s) %s\n",
+              idx,
+              st_value,
+              st_size,
+              st_name,
+              st_info,
+              bindingToCString (getBinding()),
+              typeToCString (getType()),
+              st_other,
+              st_shndx,
+              sectionIndexToCString (st_shndx, section_list),
+              strtab_data ? strtab_data->PeekCStr(st_name) : "");
 }
 
 bool
