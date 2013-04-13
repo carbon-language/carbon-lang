@@ -1167,9 +1167,9 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
 
   // Custom legalize GlobalAddress nodes into LO/HI parts.
-  setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
-  setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
-  setOperationAction(ISD::ConstantPool , MVT::i32, Custom);
+  setOperationAction(ISD::GlobalAddress, getPointerTy(), Custom);
+  setOperationAction(ISD::GlobalTLSAddress, getPointerTy(), Custom);
+  setOperationAction(ISD::ConstantPool, getPointerTy(), Custom);
 
   // Sparc doesn't have sext_inreg, replace them with shl/sra
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);

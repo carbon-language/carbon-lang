@@ -50,14 +50,42 @@ static MCSubtargetInfo *createSparcMCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
+// Code models. Some only make sense for 64-bit code.
+//
+// SunCC  Reloc   CodeModel  Constraints
+// abs32  Static  Small      text+data+bss linked below 2^32 bytes
+// abs44  Static  Medium     text+data+bss linked below 2^44 bytes
+// abs64  Static  Large      text smaller than 2^31 bytes
+// pic13  PIC_    Small      GOT < 2^13 bytes
+// pic32  PIC_    Medium     GOT < 2^32 bytes
+//
+// All code models require that the text segment is smaller than 2GB.
+
 static MCCodeGenInfo *createSparcMCCodeGenInfo(StringRef TT, Reloc::Model RM,
                                                CodeModel::Model CM,
                                                CodeGenOpt::Level OL) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
+
+  // The default 32-bit code model is abs32/pic32.
+  if (CM == CodeModel::Default)
+    CM = RM == Reloc::PIC_ ? CodeModel::Medium : CodeModel::Small;
+
   X->InitMCCodeGenInfo(RM, CM, OL);
   return X;
 }
 
+static MCCodeGenInfo *createSparcV9MCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                                 CodeModel::Model CM,
+                                                 CodeGenOpt::Level OL) {
+  MCCodeGenInfo *X = new MCCodeGenInfo();
+
+  // The default 64-bit code model is abs44/pic32.
+  if (CM == CodeModel::Default)
+    CM = CodeModel::Medium;
+
+  X->InitMCCodeGenInfo(RM, CM, OL);
+  return X;
+}
 extern "C" void LLVMInitializeSparcTargetMC() {
   // Register the MC asm info.
   RegisterMCAsmInfo<SparcELFMCAsmInfo> X(TheSparcTarget);
@@ -67,7 +95,7 @@ extern "C" void LLVMInitializeSparcTargetMC() {
   TargetRegistry::RegisterMCCodeGenInfo(TheSparcTarget,
                                        createSparcMCCodeGenInfo);
   TargetRegistry::RegisterMCCodeGenInfo(TheSparcV9Target,
-                                       createSparcMCCodeGenInfo);
+                                       createSparcV9MCCodeGenInfo);
 
   // Register the MC instruction info.
   TargetRegistry::RegisterMCInstrInfo(TheSparcTarget, createSparcMCInstrInfo);
