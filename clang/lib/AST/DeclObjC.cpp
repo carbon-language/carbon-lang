@@ -959,26 +959,6 @@ static void collectOverriddenMethodsSlow(const ObjCMethodDecl *Method,
   }
 }
 
-static void collectOnCategoriesAfterLocation(SourceLocation Loc,
-                                             const ObjCInterfaceDecl *Class,
-                                             SourceManager &SM,
-                                             const ObjCMethodDecl *Method,
-                             SmallVectorImpl<const ObjCMethodDecl *> &Methods) {
-  if (!Class)
-    return;
-
-  for (ObjCInterfaceDecl::known_categories_iterator
-         Cat = Class->known_categories_begin(),
-         CatEnd = Class->known_categories_end();
-       Cat != CatEnd; ++Cat) {
-    if (SM.isBeforeInTranslationUnit(Loc, Cat->getLocation()))
-      CollectOverriddenMethodsRecurse(*Cat, Method, Methods, true);
-  }
-  
-  collectOnCategoriesAfterLocation(Loc, Class->getSuperClass(), SM,
-                                   Method, Methods);
-}
-
 /// \brief Faster collection that is enabled when ObjCMethodDecl::isOverriding()
 /// returns false.
 /// You'd think that in that case there are no overrides but categories can
@@ -988,7 +968,7 @@ static void collectOnCategoriesAfterLocation(SourceLocation Loc,
 /// further in super classes.
 /// Methods in an implementation can overide methods in super class's category
 /// but not in current class's category. But, such methods
-static void collectOverriddenMethodsFast(SourceManager &SM,
+static void collectOverriddenMethodsFast(ASTContext &Ctx,
                                          const ObjCMethodDecl *Method,
                              SmallVectorImpl<const ObjCMethodDecl *> &Methods) {
   assert(!Method->isOverriding());
@@ -1001,8 +981,11 @@ static void collectOverriddenMethodsFast(SourceManager &SM,
   if (!Class)
     return;
 
-  collectOnCategoriesAfterLocation(Class->getLocation(), Class->getSuperClass(),
-                                   SM, Method, Methods);
+  SmallVector<const ObjCCategoryDecl *, 32> Cats;
+  Ctx.getBaseObjCCategoriesAfterInterface(Class, Cats);
+  for (SmallVectorImpl<const ObjCCategoryDecl *>::iterator
+         I = Cats.begin(), E = Cats.end(); I != E; ++I)
+    CollectOverriddenMethodsRecurse(*I, Method, Methods, true);
 }
 
 void ObjCMethodDecl::getOverriddenMethods(
@@ -1015,8 +998,7 @@ void ObjCMethodDecl::getOverriddenMethods(
   }
 
   if (!Method->isOverriding()) {
-    collectOverriddenMethodsFast(getASTContext().getSourceManager(),
-                                 Method, Overridden);
+    collectOverriddenMethodsFast(getASTContext(), Method, Overridden);
   } else {
     collectOverriddenMethodsSlow(Method, Overridden);
     assert(!Overridden.empty() &&

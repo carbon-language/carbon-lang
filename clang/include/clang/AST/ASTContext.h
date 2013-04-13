@@ -328,6 +328,10 @@ class ASTContext : public RefCountedBase<ASTContext> {
   typedef llvm::TinyPtrVector<const CXXMethodDecl*> CXXMethodVector;
   llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector> OverriddenMethods;
 
+  /// \brief Used to cache results from \c getBaseObjCCategoriesAfterInterface.
+  mutable llvm::DenseMap<const ObjCInterfaceDecl *,
+            llvm::SmallVector<const ObjCCategoryDecl *, 2> > CatsAfterInterface;
+
   /// \brief Mapping from each declaration context to its corresponding lambda 
   /// mangling context.
   llvm::DenseMap<const DeclContext *, LambdaMangleContext> LambdaMangleContexts;
@@ -682,7 +686,12 @@ public:
   void getOverriddenMethods(
                         const NamedDecl *Method,
                         SmallVectorImpl<const NamedDecl *> &Overridden) const;
-  
+
+  /// \brief Returns the ObjC categories of base classes, that were declared
+  /// after the given interface declaration.
+  void getBaseObjCCategoriesAfterInterface(const ObjCInterfaceDecl *D,
+                         SmallVectorImpl<const ObjCCategoryDecl *> &Cats) const;
+
   /// \brief Notify the AST context that a new import declaration has been
   /// parsed or implicitly created within this translation unit.
   void addedLocalImportDecl(ImportDecl *Import);
