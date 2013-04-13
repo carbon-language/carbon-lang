@@ -10,7 +10,7 @@
 ;
 ; CHECK:      *** Final schedule for BB#1 ***
 ; CHECK-NEXT: %EAX<def> = COPY
-; CHECK:      MUL32r %vreg{{[0-6]+}}, %EAX<imp-def>, %EDX<imp-def>, %EFLAGS<imp-def,dead>, %EAX<imp-use>;
+; CHECK:      MUL32r %vreg{{[0-9]+}}, %EAX<imp-def>, %EDX<imp-def>, %EFLAGS<imp-def,dead>, %EAX<imp-use>;
 ; CHECK-NEXT: COPY %EAX;
 ; CHECK-NEXT: COPY %EDX;
 ; CHECK:      DIVSSrm
