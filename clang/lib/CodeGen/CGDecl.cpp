@@ -198,7 +198,7 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
   if (Linkage != llvm::GlobalValue::InternalLinkage)
     GV->setVisibility(CurFn->getVisibility());
 
-  if (D.isThreadSpecified())
+  if (D.getTLSKind())
     CGM.setTLSMode(GV, D);
 
   return GV;

@@ -92,6 +92,9 @@ class TestCXXRecordDeclPack : public T... {
 // CHECK-NEXT:   public 'T'...
 // CHECK-NEXT:   CXXRecordDecl{{.*}} class TestCXXRecordDeclPack
 
+thread_local int TestThreadLocalInt;
+// CHECK: TestThreadLocalInt {{.*}} tls_dynamic
+
 __module_private__ class TestCXXRecordDeclPrivate;
 // CHECK: CXXRecordDecl{{.*}} class TestCXXRecordDeclPrivate __module_private__
 

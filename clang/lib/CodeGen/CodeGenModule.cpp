@@ -333,7 +333,7 @@ static llvm::GlobalVariable::ThreadLocalMode GetLLVMTLSModel(
 
 void CodeGenModule::setTLSMode(llvm::GlobalVariable *GV,
                                const VarDecl &D) const {
-  assert(D.isThreadSpecified() && "setting TLS mode on non-TLS var!");
+  assert(D.getTLSKind() && "setting TLS mode on non-TLS var!");
 
   llvm::GlobalVariable::ThreadLocalMode TLM;
   TLM = GetLLVMTLSModel(CodeGenOpts.getDefaultTLSModel());
@@ -1485,7 +1485,7 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
         GV->setVisibility(GetLLVMVisibility(LV.getVisibility()));
     }
 
-    if (D->isThreadSpecified())
+    if (D->getTLSKind())
       setTLSMode(GV, *D);
   }
 
@@ -1915,7 +1915,7 @@ CodeGenModule::GetLLVMLinkageVarDefinition(const VarDecl *D,
            ((!CodeGenOpts.NoCommon && !D->getAttr<NoCommonAttr>()) ||
              D->getAttr<CommonAttr>()) &&
            !D->hasExternalStorage() && !D->getInit() &&
-           !D->getAttr<SectionAttr>() && !D->isThreadSpecified() &&
+           !D->getAttr<SectionAttr>() && !D->getTLSKind() &&
            !D->getAttr<WeakImportAttr>()) {
     // Thread local vars aren't considered common linkage.
     return llvm::GlobalVariable::CommonLinkage;

@@ -339,7 +339,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
                                  D->getLocation(), D->getIdentifier(),
                                  DI->getType(), DI,
                                  D->getStorageClass());
-  Var->setThreadSpecified(D->isThreadSpecified());
+  Var->setTLSKind(D->getTLSKind());
   Var->setInitStyle(D->getInitStyle());
   Var->setCXXForRangeDecl(D->isCXXForRangeDecl());
   Var->setConstexpr(D->isConstexpr());

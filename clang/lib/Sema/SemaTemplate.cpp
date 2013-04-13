@@ -3842,8 +3842,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
     }
 
     // A template argument must have static storage duration.
-    // FIXME: Ensure this works for thread_local as well as __thread.
-    if (Var->isThreadSpecified()) {
+    if (Var->getTLSKind()) {
       S.Diag(Arg->getLocStart(), diag::err_template_arg_thread_local)
         << Arg->getSourceRange();
       S.Diag(Var->getLocation(), diag::note_template_arg_refers_here);

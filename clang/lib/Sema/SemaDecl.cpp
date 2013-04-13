@@ -2953,12 +2953,22 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous,
     return New->setInvalidDecl();
   }
 
-  if (New->isThreadSpecified() && !Old->isThreadSpecified()) {
-    Diag(New->getLocation(), diag::err_thread_non_thread) << New->getDeclName();
-    Diag(Old->getLocation(), diag::note_previous_definition);
-  } else if (!New->isThreadSpecified() && Old->isThreadSpecified()) {
-    Diag(New->getLocation(), diag::err_non_thread_thread) << New->getDeclName();
-    Diag(Old->getLocation(), diag::note_previous_definition);
+  if (New->getTLSKind() != Old->getTLSKind()) {
+    if (!Old->getTLSKind()) {
+      Diag(New->getLocation(), diag::err_thread_non_thread) << New->getDeclName();
+      Diag(Old->getLocation(), diag::note_previous_declaration);
+    } else if (!New->getTLSKind()) {
+      Diag(New->getLocation(), diag::err_non_thread_thread) << New->getDeclName();
+      Diag(Old->getLocation(), diag::note_previous_declaration);
+    } else {
+      // Do not allow redeclaration to change the variable between requiring
+      // static and dynamic initialization.
+      // FIXME: GCC allows this, but uses the TLS keyword on the first
+      // declaration to determine the kind. Do we need to be compatible here?
+      Diag(New->getLocation(), diag::err_thread_thread_different_kind)
+        << New->getDeclName() << (New->getTLSKind() == VarDecl::TLS_Dynamic);
+      Diag(Old->getLocation(), diag::note_previous_declaration);
+    }
   }
 
   // C++ doesn't have tentative definitions, so go right ahead and check here.
@@ -4577,7 +4587,7 @@ bool Sema::inferObjCARCLifetime(ValueDecl *decl) {
   if (VarDecl *var = dyn_cast<VarDecl>(decl)) {
     // Thread-local variables cannot have lifetime.
     if (lifetime && lifetime != Qualifiers::OCL_ExplicitNone &&
-        var->isThreadSpecified()) {
+        var->getTLSKind()) {
       Diag(var->getLocation(), diag::err_arc_thread_ownership)
         << var->getType();
       return true;
@@ -4851,9 +4861,9 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       Diag(D.getDeclSpec().getThreadStorageClassSpecLoc(),
            diag::err_thread_unsupported);
     else
-      // FIXME: Track which thread specifier was used; they have different
-      // semantics.
-      NewVD->setThreadSpecified(true);
+      NewVD->setTLSKind(TSCS == DeclSpec::TSCS_thread_local
+                          ? VarDecl::TLS_Dynamic
+                          : VarDecl::TLS_Static);
   }
 
   // C99 6.7.4p3

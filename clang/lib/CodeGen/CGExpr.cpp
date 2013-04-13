@@ -1667,7 +1667,7 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
     if (const VarDecl *VD = dyn_cast<VarDecl>(Exp->getDecl())) {
       if (VD->hasGlobalStorage()) {
         LV.setGlobalObjCRef(true);
-        LV.setThreadLocalRef(VD->isThreadSpecified());
+        LV.setThreadLocalRef(VD->getTLSKind() != VarDecl::TLS_None);
       }
     }
     LV.setObjCArray(E->getType()->isArrayType());

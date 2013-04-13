@@ -165,8 +165,8 @@ OMPThreadPrivateDecl *Sema::CheckOMPThreadPrivateDecl(
       continue;
     }
 
-    // Check if threadspecified is set.
-    if (VD->isThreadSpecified()) {
+    // Check if this is a TLS variable.
+    if (VD->getTLSKind()) {
       Diag(ILoc, diag::err_omp_var_thread_local) << VD;
       Diag(VD->getLocation(), diag::note_forward_declaration) << VD;
       continue;

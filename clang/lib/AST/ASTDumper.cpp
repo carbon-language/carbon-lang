@@ -853,8 +853,11 @@ void ASTDumper::VisitVarDecl(const VarDecl *D) {
   StorageClass SC = D->getStorageClass();
   if (SC != SC_None)
     OS << ' ' << VarDecl::getStorageClassSpecifierString(SC);
-  if (D->isThreadSpecified())
-    OS << " __thread";
+  switch (D->getTLSKind()) {
+  case VarDecl::TLS_None: break;
+  case VarDecl::TLS_Static: OS << " tls"; break;
+  case VarDecl::TLS_Dynamic: OS << " tls_dynamic"; break;
+  }
   if (D->isModulePrivate())
     OS << " __module_private__";
   if (D->isNRVOVariable())

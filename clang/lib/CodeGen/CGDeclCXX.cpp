@@ -39,7 +39,7 @@ static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
     CodeGenModule &CGM = CGF.CGM;
     if (lv.isObjCStrong())
       CGM.getObjCRuntime().EmitObjCGlobalAssign(CGF, CGF.EmitScalarExpr(Init),
-                                                DeclPtr, D.isThreadSpecified());
+                                                DeclPtr, D.getTLSKind());
     else if (lv.isObjCWeak())
       CGM.getObjCRuntime().EmitObjCWeakAssign(CGF, CGF.EmitScalarExpr(Init),
                                               DeclPtr);
@@ -218,6 +218,9 @@ void CodeGenFunction::EmitCXXGuardedInit(const VarDecl &D,
               "this initialization requires a guard variable, which "
               "the kernel does not support");
 
+  if (D.getTLSKind())
+    CGM.ErrorUnsupported(D.getInit(), "dynamic TLS initialization");
+
   CGM.getCXXABI().EmitGuardedInit(*this, D, DeclPtr, PerformInit);
 }
 
@@ -254,6 +257,9 @@ void
 CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
                                             llvm::GlobalVariable *Addr,
                                             bool PerformInit) {
+  if (D->getTLSKind())
+    ErrorUnsupported(D->getInit(), "dynamic TLS initialization");
+
   llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
 
   // Create a variable initialization function.

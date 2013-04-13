@@ -641,14 +641,25 @@ void DeclPrinter::VisitLabelDecl(LabelDecl *D) {
 
 
 void DeclPrinter::VisitVarDecl(VarDecl *D) {
-  StorageClass SC = D->getStorageClass();
-  if (!Policy.SuppressSpecifiers && SC != SC_None)
-    Out << VarDecl::getStorageClassSpecifierString(SC) << " ";
+  if (!Policy.SuppressSpecifiers) {
+    StorageClass SC = D->getStorageClass();
+    if (SC != SC_None)
+      Out << VarDecl::getStorageClassSpecifierString(SC) << " ";
 
-  if (!Policy.SuppressSpecifiers && D->isThreadSpecified())
-    Out << "__thread ";
-  if (!Policy.SuppressSpecifiers && D->isModulePrivate())
-    Out << "__module_private__ ";
+    switch (D->getTLSKind()) {
+    case VarDecl::TLS_None:
+      break;
+    case VarDecl::TLS_Static:
+      Out << "_Thread_local ";
+      break;
+    case VarDecl::TLS_Dynamic:
+      Out << "thread_local ";
+      break;
+    }
+
+    if (D->isModulePrivate())
+      Out << "__module_private__ ";
+  }
 
   QualType T = D->getType();
   if (ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D))

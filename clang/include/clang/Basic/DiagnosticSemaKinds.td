@@ -3369,6 +3369,9 @@ def err_non_thread_thread : Error<
   "non-thread-local declaration of %0 follows thread-local declaration">;
 def err_thread_non_thread : Error<
   "thread-local declaration of %0 follows non-thread-local declaration">;
+def err_thread_thread_different_kind : Error<
+  "thread-local declaration of %0 with %select{static|dynamic}1 initialization "
+  "follows declaration with %select{dynamic|static}1 initialization">;
 def err_redefinition_different_type : Error<
   "redefinition of %0 with a different type%diff{: $ vs $|}1,2">;
 def err_redefinition_different_kind : Error<

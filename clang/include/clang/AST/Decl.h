@@ -641,6 +641,13 @@ public:
     ListInit  ///< Direct list-initialization (C++11)
   };
 
+  /// \brief Kinds of thread-local storage.
+  enum TLSKind {
+    TLS_None,   ///< Not a TLS variable.
+    TLS_Static, ///< TLS with a known-constant initializer.
+    TLS_Dynamic ///< TLS with a dynamic initializer.
+  };
+
 protected:
   /// \brief Placeholder type used in Init to denote an unparsed C++ default
   /// argument.
@@ -664,7 +671,7 @@ private:
     friend class ASTDeclReader;
 
     unsigned SClass : 3;
-    unsigned ThreadSpecified : 1;
+    unsigned TLSKind : 2;
     unsigned InitStyle : 2;
 
     /// \brief Whether this variable is the exception variable in a C++ catch
@@ -687,7 +694,7 @@ private:
     /// \brief Whether this variable is (C++0x) constexpr.
     unsigned IsConstexpr : 1;
   };
-  enum { NumVarDeclBits = 14 };
+  enum { NumVarDeclBits = 12 };
 
   friend class ASTDeclReader;
   friend class StmtIteratorBase;
@@ -771,9 +778,9 @@ public:
   }
   void setStorageClass(StorageClass SC);
 
-  void setThreadSpecified(bool T) { VarDeclBits.ThreadSpecified = T; }
-  bool isThreadSpecified() const {
-    return VarDeclBits.ThreadSpecified;
+  void setTLSKind(TLSKind TLS) { VarDeclBits.TLSKind = TLS; }
+  TLSKind getTLSKind() const {
+    return static_cast<TLSKind>(VarDeclBits.TLSKind);
   }
 
   /// hasLocalStorage - Returns true if a variable with function scope

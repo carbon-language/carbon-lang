@@ -284,7 +284,7 @@ static bool mayBeSharedVariable(const Decl *D) {
   if (isa<FieldDecl>(D))
     return true;
   if (const VarDecl *vd = dyn_cast<VarDecl>(D))
-    return (vd->hasGlobalStorage() && !(vd->isThreadSpecified()));
+    return vd->hasGlobalStorage() && !vd->getTLSKind();
 
   return false;
 }
@@ -1656,7 +1656,7 @@ static void handleTLSModelAttr(Sema &S, Decl *D,
     return;
   }
 
-  if (!isa<VarDecl>(D) || !cast<VarDecl>(D)->isThreadSpecified()) {
+  if (!isa<VarDecl>(D) || !cast<VarDecl>(D)->getTLSKind()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
       << Attr.getName() << ExpectedTLSVar;
     return;
