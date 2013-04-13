@@ -307,10 +307,9 @@ class CodeGenModule : public CodeGenTypeCache {
 
   /// Map used to track internal linkage functions declared within
   /// extern "C" regions.
-  typedef llvm::DenseMap<IdentifierInfo *,
-                         llvm::GlobalValue *> StaticExternCMap;
+  typedef llvm::MapVector<IdentifierInfo *,
+                          llvm::GlobalValue *> StaticExternCMap;
   StaticExternCMap StaticExternCValues;
-  std::vector<IdentifierInfo*> StaticExternCIdents;
 
   /// CXXGlobalInits - Global variables with initializers that need to run
   /// before main.

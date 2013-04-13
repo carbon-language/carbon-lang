@@ -1748,8 +1748,6 @@ void CodeGenModule::MaybeHandleStaticInExternC(const SomeDecl *D,
   // in extern "C" regions, none of them gets that name.
   if (!R.second)
     R.first->second = 0;
-  else
-    StaticExternCIdents.push_back(D->getIdentifier());
 }
 
 void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
@@ -2958,9 +2956,11 @@ static void EmitGlobalDeclMetadata(CodeGenModule &CGM,
 /// to such functions with an unmangled name from inline assembly within the
 /// same translation unit.
 void CodeGenModule::EmitStaticExternCAliases() {
-  for (unsigned I = 0, N = StaticExternCIdents.size(); I != N; ++I) {
-    IdentifierInfo *Name = StaticExternCIdents[I];
-    llvm::GlobalValue *Val = StaticExternCValues[Name];
+  for (StaticExternCMap::iterator I = StaticExternCValues.begin(),
+                                  E = StaticExternCValues.end();
+       I != E; ++I) {
+    IdentifierInfo *Name = I->first;
+    llvm::GlobalValue *Val = I->second;
     if (Val && !getModule().getNamedValue(Name->getName()))
       AddUsedGlobal(new llvm::GlobalAlias(Val->getType(), Val->getLinkage(),
                                           Name->getName(), Val, &getModule()));
