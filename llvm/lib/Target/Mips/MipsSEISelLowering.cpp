@@ -45,11 +45,16 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
       for (unsigned Opc = 0; Opc < ISD::BUILTIN_OP_END; ++Opc)
         setOperationAction(Opc, VecTys[i], Expand);
 
+      setOperationAction(ISD::ADD, VecTys[i], Legal);
+      setOperationAction(ISD::SUB, VecTys[i], Legal);
       setOperationAction(ISD::LOAD, VecTys[i], Legal);
       setOperationAction(ISD::STORE, VecTys[i], Legal);
       setOperationAction(ISD::BITCAST, VecTys[i], Legal);
     }
   }
+
+  if (Subtarget->hasDSPR2())
+    setOperationAction(ISD::MUL, MVT::v2i16, Legal);
 
   if (!TM.Options.UseSoftFloat) {
     addRegisterClass(MVT::f32, &Mips::FGR32RegClass);
