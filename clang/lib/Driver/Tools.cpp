@@ -901,8 +901,6 @@ static StringRef getGnuCompatibleMipsABIName(StringRef ABI) {
 // Select the MIPS float ABI as determined by -msoft-float, -mhard-float,
 // and -mfloat-abi=.
 static StringRef getMipsFloatABI(const Driver &D, const ArgList &Args) {
-  // Select the float ABI as determined by -msoft-float, -mhard-float,
-  // and -mfloat-abi=.
   StringRef FloatABI;
   if (Arg *A = Args.getLastArg(options::OPT_msoft_float,
                                options::OPT_mhard_float,
