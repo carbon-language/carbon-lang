@@ -906,13 +906,20 @@ __num_get_float(const char* __a, const char* __a_end, ios_base::iostate& __err)
 {
     if (__a != __a_end)
     {
+        typename remove_reference<decltype(errno)>::type __save_errno = errno;
+        errno = 0;
         char *__p2;
         long double __ld = strtold_l(__a, &__p2, _LIBCPP_GET_C_LOCALE);
+        typename remove_reference<decltype(errno)>::type __current_errno = errno;
+        if (__current_errno == 0)
+            errno = __save_errno;
         if (__p2 != __a_end)
         {
             __err = ios_base::failbit;
             return 0;
         }
+        else if (__current_errno == ERANGE)
+            __err = ios_base::failbit;
         return static_cast<_Tp>(__ld);
     }
     __err = ios_base::failbit;

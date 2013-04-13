@@ -168,4 +168,52 @@ int main()
         assert(err == ios.goodbit);
         assert(std::isnan(v));
     }
+    {
+        const char str[] = "1.189731495357231765021264e+49321";
+        std::ios_base::iostate err = ios.goodbit;
+        v = 0;
+        input_iterator<const char*> iter =
+            f.get(input_iterator<const char*>(str),
+                  input_iterator<const char*>(str+sizeof(str)),
+                  ios, err, v);
+        assert(iter.base() == str+sizeof(str)-1);
+        assert(err == ios.failbit);
+        assert(v == INFINITY);
+    }
+    {
+        const char str[] = "1.189731495357231765021264e+49329";
+        std::ios_base::iostate err = ios.goodbit;
+        v = 0;
+        input_iterator<const char*> iter =
+            f.get(input_iterator<const char*>(str),
+                  input_iterator<const char*>(str+sizeof(str)),
+                  ios, err, v);
+        assert(iter.base() == str+sizeof(str)-1);
+        assert(err == ios.failbit);
+        assert(v == INFINITY);
+    }
+    {
+        const char str[] = "11.189731495357231765021264e+4932";
+        std::ios_base::iostate err = ios.goodbit;
+        v = 0;
+        input_iterator<const char*> iter =
+            f.get(input_iterator<const char*>(str),
+                  input_iterator<const char*>(str+sizeof(str)),
+                  ios, err, v);
+        assert(iter.base() == str+sizeof(str)-1);
+        assert(err == ios.failbit);
+        assert(v == INFINITY);
+    }
+    {
+        const char str[] = "91.189731495357231765021264e+4932";
+        std::ios_base::iostate err = ios.goodbit;
+        v = 0;
+        input_iterator<const char*> iter =
+            f.get(input_iterator<const char*>(str),
+                  input_iterator<const char*>(str+sizeof(str)),
+                  ios, err, v);
+        assert(iter.base() == str+sizeof(str)-1);
+        assert(err == ios.failbit);
+        assert(v == INFINITY);
+    }
 }
