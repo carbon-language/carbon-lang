@@ -1720,7 +1720,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadArith(SDNode *Node, EVT NVT) {
       Op = ADD;
       break;
   }
-  
+
   Val = getAtomicLoadArithTargetConstant(CurDAG, dl, Op, NVT, Val);
   bool isUnOp = !Val.getNode();
   bool isCN = Val.getNode() && (Val.getOpcode() == ISD::TargetConstant);
@@ -2342,6 +2342,9 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       ReplaceUses(SDValue(Node, 1), ResHi);
       DEBUG(dbgs() << "=> "; ResHi.getNode()->dump(CurDAG); dbgs() << '\n');
     }
+
+    // Propagate ordering to the last node, for now.
+    CurDAG->AssignOrdering(InFlag.getNode(), CurDAG->GetOrdering(Node));
 
     return NULL;
   }
