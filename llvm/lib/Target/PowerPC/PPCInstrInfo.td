@@ -1618,11 +1618,7 @@ def MFOCRF: XFXForm_5a<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
             PPC970_DGroup_First, PPC970_Unit_CRU;
 } // neverHasSideEffects = 1
 
-// MFCR uses all CR registers, but marking that explicitly causes 
-// problems because some of them appear to be undefined. Because
-// this form is used only in prologue code, just mark it as having
-// side effects.
-let /* Uses = [CR0, CR1, CR2, CR3, CR4, CR5, CR6] */ hasSideEffects = 1 in
+let neverHasSideEffects = 1 in
 def MFCR : XFXForm_3<31, 19, (outs GPRC:$rT), (ins),
                      "mfcr $rT", SprMFCR>,
                      PPC970_MicroCode, PPC970_Unit_CRU;

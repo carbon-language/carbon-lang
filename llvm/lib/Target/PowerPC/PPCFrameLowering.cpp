@@ -1122,17 +1122,20 @@ PPCFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     *static_cast<const PPCInstrInfo*>(MF->getTarget().getInstrInfo());
   DebugLoc DL;
   bool CRSpilled = false;
+  MachineInstrBuilder CRMIB;
   
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
     // CR2 through CR4 are the nonvolatile CR fields.
     bool IsCRField = PPC::CR2 <= Reg && Reg <= PPC::CR4;
 
-    if (CRSpilled && IsCRField)
-      continue;
-
     // Add the callee-saved register as live-in; it's killed at the spill.
     MBB.addLiveIn(Reg);
+
+    if (CRSpilled && IsCRField) {
+      CRMIB.addReg(Reg, RegState::ImplicitKill);
+      continue;
+    }
 
     // Insert the spill to the stack frame.
     if (IsCRField) {
@@ -1143,7 +1146,10 @@ PPCFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 	// 64-bit:  SP+8
         bool is31 = needsFP(*MF);
         unsigned FP8Reg = is31 ? PPC::X31 : PPC::X1;
-	MBB.insert(MI, BuildMI(*MF, DL, TII.get(PPC::MFCR8), PPC::X12));
+        CRMIB = BuildMI(*MF, DL, TII.get(PPC::MFCR8), PPC::X12)
+                  .addReg(Reg, RegState::ImplicitKill);
+
+	MBB.insert(MI, CRMIB);
 	MBB.insert(MI, BuildMI(*MF, DL, TII.get(PPC::STW8))
 			       .addReg(PPC::X12,
 				       getKillRegState(true))
@@ -1152,7 +1158,10 @@ PPCFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
       } else {
 	// 32-bit:  FP-relative.  Note that we made sure CR2-CR4 all have
 	// the same frame index in PPCRegisterInfo::hasReservedSpillSlot.
-	MBB.insert(MI, BuildMI(*MF, DL, TII.get(PPC::MFCR), PPC::R12));
+	CRMIB = BuildMI(*MF, DL, TII.get(PPC::MFCR), PPC::R12)
+                  .addReg(Reg, RegState::ImplicitKill);
+
+	MBB.insert(MI, CRMIB);
 	MBB.insert(MI, addFrameReference(BuildMI(*MF, DL, TII.get(PPC::STW))
 					 .addReg(PPC::R12,
 						 getKillRegState(true)),
