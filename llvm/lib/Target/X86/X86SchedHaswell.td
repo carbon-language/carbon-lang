@@ -18,7 +18,7 @@ def HaswellModel : SchedMachineModel {
   let IssueWidth = 4;
   let MinLatency = 0; // 0 = Out-of-order execution.
   let LoadLatency = 4;
-  let ILPWindow = 40;
+  let ILPWindow = 30;
   let MispredictPenalty = 16;
 }
 
