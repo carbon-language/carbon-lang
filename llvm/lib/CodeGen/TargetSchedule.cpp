@@ -128,6 +128,8 @@ resolveSchedClass(const MachineInstr *MI) const {
   // Get the definition's scheduling class descriptor from this machine model.
   unsigned SchedClass = MI->getDesc().getSchedClass();
   const MCSchedClassDesc *SCDesc = SchedModel.getSchedClassDesc(SchedClass);
+  if (!SCDesc->isValid())
+    return SCDesc;
 
 #ifndef NDEBUG
   unsigned NIter = 0;
