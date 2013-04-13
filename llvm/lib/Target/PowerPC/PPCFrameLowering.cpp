@@ -1141,12 +1141,14 @@ PPCFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
       // save slot via GPR12 (available in the prolog for 32- and 64-bit).
       if (Subtarget.isPPC64()) {
 	// 64-bit:  SP+8
+        bool is31 = needsFP(*MF);
+        unsigned FP8Reg = is31 ? PPC::X31 : PPC::X1;
 	MBB.insert(MI, BuildMI(*MF, DL, TII.get(PPC::MFCR8), PPC::X12));
 	MBB.insert(MI, BuildMI(*MF, DL, TII.get(PPC::STW8))
 			       .addReg(PPC::X12,
 				       getKillRegState(true))
 			       .addImm(8)
-			       .addReg(PPC::X1));
+			       .addReg(FP8Reg));
       } else {
 	// 32-bit:  FP-relative.  Note that we made sure CR2-CR4 all have
 	// the same frame index in PPCRegisterInfo::hasReservedSpillSlot.
@@ -1170,7 +1172,8 @@ PPCFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 }
 
 static void
-restoreCRs(bool isPPC64, bool CR2Spilled, bool CR3Spilled, bool CR4Spilled,
+restoreCRs(bool isPPC64, bool is31,
+           bool CR2Spilled, bool CR3Spilled, bool CR4Spilled,
 	   MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
 	   const std::vector<CalleeSavedInfo> &CSI, unsigned CSIIndex) {
 
@@ -1182,9 +1185,10 @@ restoreCRs(bool isPPC64, bool CR2Spilled, bool CR3Spilled, bool CR4Spilled,
 
   if (isPPC64) {
     // 64-bit:  SP+8
+    unsigned FP8Reg = is31 ? PPC::X31 : PPC::X1;
     MBB.insert(MI, BuildMI(*MF, DL, TII.get(PPC::LWZ8), PPC::X12)
 	       .addImm(8)
-	       .addReg(PPC::X1));
+	       .addReg(FP8Reg));
     RestoreOp = PPC::MTCRF8;
     MoveReg = PPC::X12;
   } else {
@@ -1297,7 +1301,9 @@ PPCFrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
       // least one CR register, restore all spilled CRs together.
       if ((CR2Spilled || CR3Spilled || CR4Spilled)
 	  && !(PPC::CR2 <= Reg && Reg <= PPC::CR4)) {
-	restoreCRs(Subtarget.isPPC64(), CR2Spilled, CR3Spilled, CR4Spilled,
+        bool is31 = needsFP(*MF);
+        restoreCRs(Subtarget.isPPC64(), is31,
+                   CR2Spilled, CR3Spilled, CR4Spilled,
 		   MBB, I, CSI, CSIIndex);
 	CR2Spilled = CR3Spilled = CR4Spilled = false;
       }
@@ -1320,9 +1326,11 @@ PPCFrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   }
 
   // If we haven't yet spilled the CRs, do so now.
-  if (CR2Spilled || CR3Spilled || CR4Spilled)
-    restoreCRs(Subtarget.isPPC64(), CR2Spilled, CR3Spilled, CR4Spilled,
+  if (CR2Spilled || CR3Spilled || CR4Spilled) {
+    bool is31 = needsFP(*MF); 
+    restoreCRs(Subtarget.isPPC64(), is31, CR2Spilled, CR3Spilled, CR4Spilled,
 	       MBB, I, CSI, CSIIndex);
+  }
 
   return true;
 }
