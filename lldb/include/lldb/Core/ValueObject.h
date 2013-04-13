@@ -998,6 +998,9 @@ public:
     
     virtual uint64_t
     GetData (DataExtractor& data);
+    
+    virtual bool
+    SetData (DataExtractor &data, Error &error);
 
     bool
     GetIsConstant () const

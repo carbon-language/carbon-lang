@@ -1868,6 +1868,70 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, size_t by
     return error;
 }
 
+Error
+Scalar::SetValueFromData (DataExtractor &data, lldb::Encoding encoding, size_t byte_size)
+{
+    Error error;
+    
+    switch (encoding)
+    {
+    case lldb::eEncodingInvalid:
+        error.SetErrorString ("invalid encoding");
+        break;
+    case lldb::eEncodingVector:
+        error.SetErrorString ("vector encoding unsupported");
+        break;
+    case lldb::eEncodingUint:
+        {
+            lldb::offset_t offset;
+            
+            switch (byte_size)
+            {
+            case 1: operator=((uint8_t)data.GetU8(&offset)); break;
+            case 2: operator=((uint16_t)data.GetU16(&offset)); break;
+            case 4: operator=((uint32_t)data.GetU32(&offset)); break;
+            case 8: operator=((uint64_t)data.GetU64(&offset)); break;
+            default:
+                error.SetErrorStringWithFormat ("unsupported unsigned integer byte size: %zu", byte_size);
+                break;
+            }
+        }
+        break;
+    case lldb::eEncodingSint:
+        {
+            lldb::offset_t offset;
+            
+            switch (byte_size)
+            {
+            case 1: operator=((int8_t)data.GetU8(&offset)); break;
+            case 2: operator=((int16_t)data.GetU16(&offset)); break;
+            case 4: operator=((int32_t)data.GetU32(&offset)); break;
+            case 8: operator=((int64_t)data.GetU64(&offset)); break;
+            default:
+                error.SetErrorStringWithFormat ("unsupported signed integer byte size: %zu", byte_size);
+                break;
+            }
+        }
+        break;
+    case lldb::eEncodingIEEE754:
+        {
+            lldb::offset_t offset;
+            
+            if (byte_size == sizeof (float))
+                operator=((float)data.GetFloat(&offset));
+            else if (byte_size == sizeof (double))
+                operator=((double)data.GetDouble(&offset));
+            else if (byte_size == sizeof (long double))
+                operator=((long double)data.GetLongDouble(&offset));
+            else
+                error.SetErrorStringWithFormat ("unsupported float byte size: %zu", byte_size);
+        }
+        break;
+    }
+    
+    return error;
+}
+
 bool
 Scalar::SignExtend (uint32_t sign_bit_pos)
 {

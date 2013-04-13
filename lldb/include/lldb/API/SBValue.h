@@ -290,6 +290,9 @@ public:
     lldb::SBData
     GetData ();
     
+    bool
+    SetData (lldb::SBData &data, lldb::SBError& error);
+    
     lldb::SBDeclaration
     GetDeclaration ();
     

@@ -1880,6 +1880,65 @@ SBValue::GetData ()
     return sb_data;
 }
 
+bool
+SBValue::SetData (lldb::SBData &data, SBError &error)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    lldb::ValueObjectSP value_sp(GetSP());
+    bool ret = true;
+    
+    if (value_sp)
+    {
+        ProcessSP process_sp(value_sp->GetProcessSP());
+        Process::StopLocker stop_locker;
+        if (process_sp && !stop_locker.TryLock(&process_sp->GetRunLock()))
+        {
+            if (log)
+                log->Printf ("SBValue(%p)::SetData() => error: process is running", value_sp.get());
+            
+            error.SetErrorString("Process is running");
+            ret = false;
+        }
+        else
+        {
+            DataExtractor *data_extractor = data.get();
+            
+            if (!data_extractor)
+            {
+                if (log)
+                    log->Printf ("SBValue(%p)::SetData() => error: no data to set", value_sp.get());
+                
+                error.SetErrorString("No data to set");
+                ret = false;
+            }
+            else
+            {
+                Error set_error;
+                
+                value_sp->SetData(*data_extractor, set_error);
+                
+                if (!set_error.Success())
+                {
+                    error.SetErrorStringWithFormat("Couldn't set data: %s", set_error.AsCString());
+                    ret = false;
+                }
+            }
+        }
+    }
+    else
+    {
+        error.SetErrorString("Couldn't set data: invalid SBValue");
+        ret = false;
+    }
+    
+    if (log)
+        log->Printf ("SBValue(%p)::SetData (%p) => %s",
+                     value_sp.get(),
+                     data.get(),
+                     ret ? "true" : "false");
+    return ret;
+}
+
 lldb::SBDeclaration
 SBValue::GetDeclaration ()
 {

@@ -1013,6 +1013,84 @@ ValueObject::GetData (DataExtractor& data)
     return data.GetByteSize();
 }
 
+bool
+ValueObject::SetData (DataExtractor &data, Error &error)
+{
+    error.Clear();
+    // Make sure our value is up to date first so that our location and location
+    // type is valid.
+    if (!UpdateValueIfNeeded(false))
+    {
+        error.SetErrorString("unable to read value");
+        return false;
+    }
+    
+    uint64_t count = 0;
+    Encoding encoding = ClangASTType::GetEncoding (GetClangType(), count);
+    
+    const size_t byte_size = GetByteSize();
+    
+    Value::ValueType value_type = m_value.GetValueType();
+    
+    switch (value_type)
+    {
+    case Value::eValueTypeScalar:
+        {
+            Error set_error = m_value.GetScalar().SetValueFromData(data, encoding, byte_size);
+            
+            if (!set_error.Success())
+            {
+                error.SetErrorStringWithFormat("unable to set scalar value: %s", set_error.AsCString());
+                return false;
+            }
+        }
+        break;
+    case Value::eValueTypeLoadAddress:
+        {
+            // If it is a load address, then the scalar value is the storage location
+            // of the data, and we have to shove this value down to that load location.
+            ExecutionContext exe_ctx (GetExecutionContextRef());
+            Process *process = exe_ctx.GetProcessPtr();
+            if (process)
+            {
+                addr_t target_addr = m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
+                size_t bytes_written = process->WriteMemory(target_addr,
+                                                            data.GetDataStart(),
+                                                            byte_size,
+                                                            error);
+                if (!error.Success())
+                    return false;
+                if (bytes_written != byte_size)
+                {
+                    error.SetErrorString("unable to write value to memory");
+                    return false;
+                }
+            }
+        }
+        break;
+    case Value::eValueTypeHostAddress:
+        {
+            // If it is a host address, then we stuff the scalar as a DataBuffer into the Value's data.            
+            DataBufferSP buffer_sp (new DataBufferHeap(byte_size, 0));
+            m_data.SetData(buffer_sp, 0);
+            data.CopyByteOrderedData (0,
+                                      byte_size,
+                                      const_cast<uint8_t *>(m_data.GetDataStart()),
+                                      byte_size,
+                                      m_data.GetByteOrder());
+            m_value.GetScalar() = (uintptr_t)m_data.GetDataStart();
+        }
+        break;
+    case Value::eValueTypeFileAddress:
+    case Value::eValueTypeVector:
+        break;
+    }
+    
+    // If we have reached this point, then we have successfully changed the value.
+    SetNeedsUpdate();
+    return true;
+}
+
 // will compute strlen(str), but without consuming more than
 // maxlen bytes out of str (this serves the purpose of reading
 // chunks of a string without having to worry about

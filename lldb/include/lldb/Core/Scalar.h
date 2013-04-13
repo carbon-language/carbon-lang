@@ -220,6 +220,9 @@ public:
 
     Error
     SetValueFromCString (const char *s, lldb::Encoding encoding, size_t byte_size);
+    
+    Error
+    SetValueFromData (DataExtractor &data, lldb::Encoding encoding, size_t byte_size);
 
     static bool
     UIntValueIsValidForSize (uint64_t uval64, size_t total_byte_size)

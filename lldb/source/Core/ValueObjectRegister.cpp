@@ -423,6 +423,24 @@ ValueObjectRegister::SetValueFromCString (const char *value_str, Error& error)
 }
 
 bool
+ValueObjectRegister::SetData (DataExtractor &data, Error &error)
+{
+    error = m_reg_value.SetValueFromData(&m_reg_info, data, 0, false);
+    if (error.Success())
+    {
+        if (m_reg_ctx_sp->WriteRegister (&m_reg_info, m_reg_value))
+        {
+            SetNeedsUpdate();
+            return true;
+        }
+        else
+            return false;
+    }
+    else
+        return false;
+}
+
+bool
 ValueObjectRegister::ResolveValue (Scalar &scalar)
 {
     if (UpdateValueIfNeeded(false)) // make sure that you are up to date before returning anything
