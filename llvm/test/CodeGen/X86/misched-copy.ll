@@ -1,3 +1,4 @@
+; REQUIRES: asserts
 ; RUN: llc %s -march=x86 -mcpu=core2 -pre-RA-sched=source -enable-misched -verify-misched -debug-only=misched 2>&1 | FileCheck %s
 ;
 ; Test scheduling of copy instructions.
