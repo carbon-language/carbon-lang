@@ -91,7 +91,7 @@ public:
     SetValueFromCString (const char *value_str, Error& error);
     
     virtual bool
-    SetData (DataExtractor &data, Error &error)
+    SetData (DataExtractor &data, Error &error);
     
 protected:
     virtual bool
