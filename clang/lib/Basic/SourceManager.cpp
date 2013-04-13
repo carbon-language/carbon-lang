@@ -1848,23 +1848,42 @@ SourceManager::getMacroArgExpandedLocation(SourceLocation Loc) const {
   return Loc;
 }
 
+std::pair<FileID, unsigned>
+SourceManager::getDecomposedIncludedLoc(FileID FID) const {
+  // Uses IncludedLocMap to retrieve/cache the decomposed loc.
+
+  typedef std::pair<FileID, unsigned> DecompTy;
+  typedef llvm::DenseMap<FileID, DecompTy> MapTy;
+  std::pair<MapTy::iterator, bool>
+    InsertOp = IncludedLocMap.insert(std::make_pair(FID, DecompTy()));
+  DecompTy &DecompLoc = InsertOp.first->second;
+  if (!InsertOp.second)
+    return DecompLoc; // already in map.
+
+  SourceLocation UpperLoc;
+  const SrcMgr::SLocEntry &Entry = getSLocEntry(FID);
+  if (Entry.isExpansion())
+    UpperLoc = Entry.getExpansion().getExpansionLocStart();
+  else
+    UpperLoc = Entry.getFile().getIncludeLoc();
+
+  if (UpperLoc.isValid())
+    DecompLoc = getDecomposedLoc(UpperLoc);
+
+  return DecompLoc;
+}
+
 /// Given a decomposed source location, move it up the include/expansion stack
 /// to the parent source location.  If this is possible, return the decomposed
 /// version of the parent in Loc and return false.  If Loc is the top-level
 /// entry, return true and don't modify it.
 static bool MoveUpIncludeHierarchy(std::pair<FileID, unsigned> &Loc,
                                    const SourceManager &SM) {
-  SourceLocation UpperLoc;
-  const SrcMgr::SLocEntry &Entry = SM.getSLocEntry(Loc.first);
-  if (Entry.isExpansion())
-    UpperLoc = Entry.getExpansion().getExpansionLocStart();
-  else
-    UpperLoc = Entry.getFile().getIncludeLoc();
-  
-  if (UpperLoc.isInvalid())
+  std::pair<FileID, unsigned> UpperLoc = SM.getDecomposedIncludedLoc(Loc.first);
+  if (UpperLoc.first.isInvalid())
     return true; // We reached the top.
-  
-  Loc = SM.getDecomposedLoc(UpperLoc);
+
+  Loc = UpperLoc;
   return false;
 }
 
@@ -1929,7 +1948,7 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   // of the other looking for a match.
   // We use a map from FileID to Offset to store the chain. Easier than writing
   // a custom set hash info that only depends on the first part of a pair.
-  typedef llvm::DenseMap<FileID, unsigned> LocSet;
+  typedef llvm::SmallDenseMap<FileID, unsigned, 16> LocSet;
   LocSet LChain;
   do {
     LChain.insert(LOffs);
