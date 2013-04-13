@@ -31,6 +31,11 @@ namespace llvm {
     virtual MachineBasicBlock *
     EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const;
 
+    virtual bool isShuffleMaskLegal(const SmallVectorImpl<int> &Mask,
+                                    EVT VT) const {
+      return false;
+    }
+
     virtual const TargetRegisterClass *getRepRegClassFor(MVT VT) const {
       if (VT == MVT::Untyped)
         return Subtarget->hasDSP() ? &Mips::ACRegsDSPRegClass :
