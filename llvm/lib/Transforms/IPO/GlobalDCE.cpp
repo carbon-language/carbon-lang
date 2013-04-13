@@ -197,8 +197,8 @@ void GlobalDCE::MarkUsedGlobalsAsNeeded(Constant *C) {
   // use to the list of needed globals.
   for (User::op_iterator I = C->op_begin(), E = C->op_end(); I != E; ++I) {
     // If we've already processed this constant there's no need to do it again.
-    Constant *Op = cast<Constant>(*I);
-    if (SeenConstants.insert(Op))
+    Constant *Op = dyn_cast<Constant>(*I);
+    if (Op && SeenConstants.insert(Op))
       MarkUsedGlobalsAsNeeded(Op);
   }
 }
