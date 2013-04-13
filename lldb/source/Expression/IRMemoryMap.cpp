@@ -535,8 +535,56 @@ IRMemoryMap::ReadScalarFromMemory (Scalar &scalar, lldb::addr_t process_address,
     else
     {
         error.SetErrorToGenericError();
-        error.SetErrorString ("Couldn't write scalar: its size was zero");
+        error.SetErrorString ("Couldn't read scalar: its size was zero");
     }
     return;
 }
+
+void
+IRMemoryMap::GetMemoryData (DataExtractor &extractor, lldb::addr_t process_address, size_t size, Error &error)
+{
+    if (size > 0)
+    {
+        AllocationMap::iterator iter = FindAllocation(process_address, size);
+        
+        if (iter == m_allocations.end())
+        {
+            error.SetErrorToGenericError();
+            error.SetErrorStringWithFormat("Couldn't find an allocation containing [0x%llx..0x%llx)", (unsigned long long)process_address, (unsigned long long)(process_address + size));
+            return;
+        }
+        
+        Allocation &allocation = iter->second;
+        
+        switch (allocation.m_policy)
+        {
+        default:
+            error.SetErrorToGenericError();
+            error.SetErrorString("Couldn't get memory data: invalid allocation policy");
+            return;
+        case eAllocationPolicyProcessOnly:
+            error.SetErrorToGenericError();
+            error.SetErrorString("Couldn't get memory data: memory is only in the target");
+            return;
+        case eAllocationPolicyHostOnly:
+        case eAllocationPolicyMirror:
+            if (!allocation.m_data.get())
+            {
+                error.SetErrorToGenericError();
+                error.SetErrorString("Couldn't get memory data: data buffer is empty");
+                return;
+            }
+            uint64_t offset = process_address - allocation.m_process_start;
+            extractor = DataExtractor(allocation.m_data->GetBytes() + offset, size, GetByteOrder(), GetAddressByteSize());
+            return;
+        }
+    }
+    else
+    {
+        error.SetErrorToGenericError();
+        error.SetErrorString ("Couldn't get memory data: its size was zero");
+        return;
+    }
+}
+
 

@@ -59,6 +59,8 @@ public:
     void ReadMemory (uint8_t *bytes, lldb::addr_t process_address, size_t size, Error &error);
     void ReadScalarFromMemory (Scalar &scalar, lldb::addr_t process_address, size_t size, Error &error);
     
+    void GetMemoryData (DataExtractor &extractor, lldb::addr_t process_address, size_t size, Error &error);
+    
     lldb::ByteOrder GetByteOrder();
     uint32_t GetAddressByteSize();
     

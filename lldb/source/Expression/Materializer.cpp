@@ -467,7 +467,29 @@ public:
                 return;
             }
             
-            // TODO Write to the ValueObject
+            lldb_private::DataExtractor data;
+            
+            Error extract_error;
+            
+            map.GetMemoryData(data, m_temporary_allocation, valobj_sp->GetByteSize(), extract_error);
+            
+            if (!extract_error.Success())
+            {
+                err.SetErrorToGenericError();
+                err.SetErrorStringWithFormat("Couldn't get the data for variable %s", m_variable_sp->GetName().AsCString());
+                return;
+            }
+            
+            Error set_error;
+            
+            valobj_sp->SetData(data, set_error);
+            
+            if (!set_error.Success())
+            {
+                err.SetErrorToGenericError();
+                err.SetErrorStringWithFormat("Couldn't write the new contents of %s back into the variable", m_variable_sp->GetName().AsCString());
+                return;
+            }
             
             Error free_error;
             
