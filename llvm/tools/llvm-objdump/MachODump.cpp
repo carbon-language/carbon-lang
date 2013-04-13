@@ -27,6 +27,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Object/MachO.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
@@ -183,11 +184,14 @@ static void emitDOTFile(const char *FileName, const MCFunction &f,
   Out << "}\n";
 }
 
-static void getSectionsAndSymbols(const MachOObjectFileBase::Header *Header,
-                                  MachOObjectFileBase *MachOObj,
-                                  std::vector<SectionRef> &Sections,
-                                  std::vector<SymbolRef> &Symbols,
-                                  SmallVectorImpl<uint64_t> &FoundFns) {
+template<endianness E>
+static void
+getSectionsAndSymbols(const typename MachOObjectFileMiddle<E>::Header *Header,
+                      const MachOObjectFileMiddle<E> *MachOObj,
+                      std::vector<SectionRef> &Sections,
+                      std::vector<SymbolRef> &Symbols,
+                      SmallVectorImpl<uint64_t> &FoundFns) {
+  typedef MachOObjectFileMiddle<E> ObjType;
   error_code ec;
   for (symbol_iterator SI = MachOObj->begin_symbols(),
        SE = MachOObj->end_symbols(); SI != SE; SI.increment(ec))
@@ -202,18 +206,22 @@ static void getSectionsAndSymbols(const MachOObjectFileBase::Header *Header,
   }
 
   for (unsigned i = 0; i != Header->NumLoadCommands; ++i) {
-    const MachOObjectFileBase::LoadCommand *Command =
+    const typename ObjType::LoadCommand *Command =
       MachOObj->getLoadCommandInfo(i);
     if (Command->Type == macho::LCT_FunctionStarts) {
       // We found a function starts segment, parse the addresses for later
       // consumption.
-      const MachOObjectFileBase::LinkeditDataLoadCommand *LLC =
- reinterpret_cast<const MachOObjectFileBase::LinkeditDataLoadCommand*>(Command);
+      const typename ObjType::LinkeditDataLoadCommand *LLC =
+    reinterpret_cast<const typename ObjType::LinkeditDataLoadCommand*>(Command);
 
       MachOObj->ReadULEB128s(LLC->DataOffset, FoundFns);
     }
   }
 }
+
+template<endianness E>
+static void DisassembleInputMachO2(StringRef Filename,
+                                   MachOObjectFileMiddle<E> *MachOOF);
 
 void llvm::DisassembleInputMachO(StringRef Filename) {
   OwningPtr<MemoryBuffer> Buff;
@@ -226,7 +234,18 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
   OwningPtr<MachOObjectFileBase> MachOOF(static_cast<MachOObjectFileBase*>(
         ObjectFile::createMachOObjectFile(Buff.take())));
 
-  const Target *TheTarget = GetTarget(MachOOF.get());
+  if (MachOObjectFileLE *O = dyn_cast<MachOObjectFileLE>(MachOOF.get())) {
+    DisassembleInputMachO2(Filename, O);
+    return;
+  }
+  MachOObjectFileBE *O = cast<MachOObjectFileBE>(MachOOF.get());
+  DisassembleInputMachO2(Filename, O);
+}
+
+template<endianness E>
+static void DisassembleInputMachO2(StringRef Filename,
+                                   MachOObjectFileMiddle<E> *MachOOF) {
+  const Target *TheTarget = GetTarget(MachOOF);
   if (!TheTarget) {
     // GetTarget prints out stuff.
     return;
@@ -254,13 +273,14 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
 
   outs() << '\n' << Filename << ":\n\n";
 
-  const MachOObjectFileBase::Header *Header = MachOOF->getHeader();
+  const typename MachOObjectFileMiddle<E>::Header *Header =
+    MachOOF->getHeader();
 
   std::vector<SectionRef> Sections;
   std::vector<SymbolRef> Symbols;
   SmallVector<uint64_t, 8> FoundFns;
 
-  getSectionsAndSymbols(Header, MachOOF.get(), Sections, Symbols, FoundFns);
+  getSectionsAndSymbols(Header, MachOOF, Sections, Symbols, FoundFns);
 
   // Make a copy of the unsorted symbol list. FIXME: duplication
   std::vector<SymbolRef> UnsortedSymbols(Symbols);
@@ -274,7 +294,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
 #endif
 
   OwningPtr<DIContext> diContext;
-  ObjectFile *DbgObj = MachOOF.get();
+  ObjectFile *DbgObj = MachOOF;
   // Try to find debug info and set up the DIContext for it.
   if (UseDbg) {
     // A separate DSym file path was specified, parse it as a macho file,
@@ -563,7 +583,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
                 Relocs[j].second.getName(SymName);
 
                 outs() << "\t# " << SymName << ' ';
-                DumpAddress(Addr, Sections, MachOOF.get(), outs());
+                DumpAddress(Addr, Sections, MachOOF, outs());
               }
 
             // If this instructions contains an address, see if we can evaluate
@@ -572,7 +592,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
                                                           Inst.Address,
                                                           Inst.Size);
             if (targ != -1ULL)
-              DumpAddress(targ, Sections, MachOOF.get(), outs());
+              DumpAddress(targ, Sections, MachOOF, outs());
 
             // Print debug info.
             if (diContext) {

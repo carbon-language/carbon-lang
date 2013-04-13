@@ -27,7 +27,7 @@ namespace {
 
 class MachODumper : public ObjDumper {
 public:
-  MachODumper(const llvm::object::MachOObjectFileBase *Obj, StreamWriter& Writer)
+  MachODumper(const MachOObjectFileBase *Obj, StreamWriter& Writer)
     : ObjDumper(Writer)
     , Obj(Obj) { }
 
@@ -43,7 +43,14 @@ private:
 
   void printRelocation(section_iterator SecI, relocation_iterator RelI);
 
-  const llvm::object::MachOObjectFileBase *Obj;
+  template<support::endianness E>
+  void printRelocation(const MachOObjectFileMiddle<E> *Obj,
+                       section_iterator SecI, relocation_iterator RelI);
+
+  template<support::endianness E>
+  void printSections(const MachOObjectFileMiddle<E> *Obj);
+
+  const MachOObjectFileBase *Obj;
 };
 
 } // namespace
@@ -157,58 +164,59 @@ namespace {
   };
 }
 
+template<class MachOT>
+static void getSection(const MachOObjectFile<MachOT> *Obj,
+                       DataRefImpl DRI,
+                       MachOSection &Section) {
+  const typename MachOObjectFile<MachOT>::Section *Sect = Obj->getSection(DRI);
+  Section.Address     = Sect->Address;
+  Section.Size        = Sect->Size;
+  Section.Offset      = Sect->Offset;
+  Section.Alignment   = Sect->Align;
+  Section.RelocationTableOffset = Sect->RelocationTableOffset;
+  Section.NumRelocationTableEntries = Sect->NumRelocationTableEntries;
+  Section.Flags       = Sect->Flags;
+  Section.Reserved1   = Sect->Reserved1;
+  Section.Reserved2   = Sect->Reserved2;
+}
+
 static void getSection(const MachOObjectFileBase *Obj,
                        DataRefImpl DRI,
                        MachOSection &Section) {
-  if (const MachOObjectFile64Le *O = dyn_cast<MachOObjectFile64Le>(Obj)) {
-    const MachOObjectFile64Le::Section *Sect = O->getSection(DRI);
+  if (const MachOObjectFileLE32 *O = dyn_cast<MachOObjectFileLE32>(Obj))
+    return getSection(O, DRI, Section);
+  if (const MachOObjectFileLE64 *O = dyn_cast<MachOObjectFileLE64>(Obj))
+    return getSection(O, DRI, Section);
+  if (const MachOObjectFileBE32 *O = dyn_cast<MachOObjectFileBE32>(Obj))
+    return getSection(O, DRI, Section);
+  const MachOObjectFileBE64 *O = cast<MachOObjectFileBE64>(Obj);
+  getSection(O, DRI, Section);
+}
 
-    Section.Address     = Sect->Address;
-    Section.Size        = Sect->Size;
-    Section.Offset      = Sect->Offset;
-    Section.Alignment   = Sect->Align;
-    Section.RelocationTableOffset = Sect->RelocationTableOffset;
-    Section.NumRelocationTableEntries = Sect->NumRelocationTableEntries;
-    Section.Flags       = Sect->Flags;
-    Section.Reserved1   = Sect->Reserved1;
-    Section.Reserved2   = Sect->Reserved2;
-  } else {
-    const MachOObjectFile32Le *O2 = cast<MachOObjectFile32Le>(Obj);
-    const MachOObjectFile32Le::Section *Sect = O2->getSection(DRI);
-
-    Section.Address     = Sect->Address;
-    Section.Size        = Sect->Size;
-    Section.Offset      = Sect->Offset;
-    Section.Alignment   = Sect->Align;
-    Section.RelocationTableOffset = Sect->RelocationTableOffset;
-    Section.NumRelocationTableEntries = Sect->NumRelocationTableEntries;
-    Section.Flags       = Sect->Flags;
-    Section.Reserved1   = Sect->Reserved1;
-    Section.Reserved2   = Sect->Reserved2;
-  }
+template<class MachOT>
+static void getSymbol(const MachOObjectFile<MachOT> *Obj,
+                      DataRefImpl DRI,
+                      MachOSymbol &Symbol) {
+  const typename MachOObjectFile<MachOT>::SymbolTableEntry *Entry =
+    Obj->getSymbolTableEntry(DRI);
+  Symbol.StringIndex  = Entry->StringIndex;
+  Symbol.Type         = Entry->Type;
+  Symbol.SectionIndex = Entry->SectionIndex;
+  Symbol.Flags        = Entry->Flags;
+  Symbol.Value        = Entry->Value;
 }
 
 static void getSymbol(const MachOObjectFileBase *Obj,
                       DataRefImpl DRI,
                       MachOSymbol &Symbol) {
-  if (const MachOObjectFile64Le *O = dyn_cast<MachOObjectFile64Le>(Obj)) {
-    const MachOObjectFile64Le::SymbolTableEntry *Entry =
-      O->getSymbolTableEntry(DRI);
-    Symbol.StringIndex  = Entry->StringIndex;
-    Symbol.Type         = Entry->Type;
-    Symbol.SectionIndex = Entry->SectionIndex;
-    Symbol.Flags        = Entry->Flags;
-    Symbol.Value        = Entry->Value;
-  } else {
-    const MachOObjectFile32Le *O2 = cast<MachOObjectFile32Le>(Obj);
-    const MachOObjectFile32Le::SymbolTableEntry *Entry =
-      O2->getSymbolTableEntry(DRI);
-    Symbol.StringIndex  = Entry->StringIndex;
-    Symbol.Type         = Entry->Type;
-    Symbol.SectionIndex = Entry->SectionIndex;
-    Symbol.Flags        = Entry->Flags;
-    Symbol.Value        = Entry->Value;
-  }
+  if (const MachOObjectFileLE32 *O = dyn_cast<MachOObjectFileLE32>(Obj))
+    return getSymbol(O, DRI, Symbol);
+  if (const MachOObjectFileLE64 *O = dyn_cast<MachOObjectFileLE64>(Obj))
+    return getSymbol(O, DRI, Symbol);
+  if (const MachOObjectFileBE32 *O = dyn_cast<MachOObjectFileBE32>(Obj))
+    return getSymbol(O, DRI, Symbol);
+  const MachOObjectFileBE64 *O = cast<MachOObjectFileBE64>(Obj);
+  getSymbol(O, DRI, Symbol);
 }
 
 void MachODumper::printFileHeaders() {
@@ -216,6 +224,14 @@ void MachODumper::printFileHeaders() {
 }
 
 void MachODumper::printSections() {
+  if (const MachOObjectFileLE *O = dyn_cast<MachOObjectFileLE>(Obj))
+    return printSections(O);
+  const MachOObjectFileBE *O = cast<MachOObjectFileBE>(Obj);
+  return printSections(O);
+}
+
+template<support::endianness E>
+void MachODumper::printSections(const MachOObjectFileMiddle<E> *Obj) {
   ListScope Group(W, "Sections");
 
   int SectionIndex = -1;
@@ -328,6 +344,16 @@ void MachODumper::printRelocations() {
 
 void MachODumper::printRelocation(section_iterator SecI,
                                   relocation_iterator RelI) {
+  if (const MachOObjectFileLE *O = dyn_cast<MachOObjectFileLE>(Obj))
+    return printRelocation(O, SecI, RelI);
+  const MachOObjectFileBE *O = cast<MachOObjectFileBE>(Obj);
+  return printRelocation(O, SecI, RelI);
+}
+
+template<support::endianness E>
+void MachODumper::printRelocation(const MachOObjectFileMiddle<E> *Obj,
+                                  section_iterator SecI,
+                                  relocation_iterator RelI) {
   uint64_t Offset;
   SmallString<32> RelocName;
   StringRef SymbolName;
@@ -338,14 +364,15 @@ void MachODumper::printRelocation(section_iterator SecI,
   if (error(Symbol.getName(SymbolName))) return;
 
   DataRefImpl DR = RelI->getRawDataRefImpl();
-  const MachOObjectFileBase::RelocationEntry *RE = Obj->getRelocation(DR);
-  bool IsScattered = Obj->isScattered(RE);
+  const typename MachOObjectFileMiddle<E>::RelocationEntry *RE =
+    Obj->getRelocation(DR);
+  bool IsScattered = Obj->isRelocationScattered(RE);
 
   if (opts::ExpandRelocs) {
     DictScope Group(W, "Relocation");
     W.printHex("Offset", Offset);
-    W.printNumber("PCRel", Obj->isPCRel(RE));
-    W.printNumber("Length", Obj->getLength(RE));
+    W.printNumber("PCRel", Obj->isRelocationPCRel(RE));
+    W.printNumber("Length", Obj->getRelocationLength(RE));
     if (IsScattered)
       W.printString("Extern", StringRef("N/A"));
     else
@@ -356,8 +383,8 @@ void MachODumper::printRelocation(section_iterator SecI,
   } else {
     raw_ostream& OS = W.startLine();
     OS << W.hex(Offset)
-       << " " << Obj->isPCRel(RE)
-       << " " << Obj->getLength(RE);
+       << " " << Obj->isRelocationPCRel(RE)
+       << " " << Obj->getRelocationLength(RE);
     if (IsScattered)
       OS << " n/a";
     else
@@ -399,6 +426,7 @@ void MachODumper::printSymbol(symbol_iterator SymI) {
   StringRef SectionName;
   section_iterator SecI(Obj->end_sections());
   if (error(SymI->getSection(SecI)) ||
+      SecI == Obj->end_sections() ||
       error(SecI->getName(SectionName)))
     SectionName = "";
 

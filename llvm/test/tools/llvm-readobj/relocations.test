@@ -6,6 +6,10 @@ RUN: llvm-readobj -r %p/Inputs/trivial.obj.macho-i386 \
 RUN:   | FileCheck %s -check-prefix MACHO-I386
 RUN: llvm-readobj -r %p/Inputs/trivial.obj.macho-x86-64 \
 RUN:   | FileCheck %s -check-prefix MACHO-X86-64
+RUN: llvm-readobj -r %p/Inputs/trivial.obj.macho-ppc \
+RUN:   | FileCheck %s -check-prefix MACHO-PPC
+RUN: llvm-readobj -r %p/Inputs/trivial.obj.macho-ppc64 \
+RUN:   | FileCheck %s -check-prefix MACHO-PPC64
 
 COFF:      Relocations [
 COFF-NEXT:   Section (1) .text {
@@ -40,3 +44,41 @@ MACHO-X86-64-NEXT:    0x9 1 2 1 X86_64_RELOC_BRANCH 0 _puts
 MACHO-X86-64-NEXT:    0x4 1 2 1 X86_64_RELOC_SIGNED 0 L_.str
 MACHO-X86-64-NEXT:  }
 MACHO-X86-64-NEXT:]
+
+MACHO-PPC: Relocations [
+MACHO-PPC-NEXT:   Section __text {
+MACHO-PPC-NEXT:     0x24 0 2 n/a PPC_RELOC_LO16_SECTDIFF 1 _b
+MACHO-PPC-NEXT:     0x0 0 2 n/a PPC_RELOC_PAIR 1 _b
+MACHO-PPC-NEXT:     0x1C 0 2 n/a PPC_RELOC_HA16_SECTDIFF 1 _b
+MACHO-PPC-NEXT:     0x58 0 2 n/a PPC_RELOC_PAIR 1 _b
+MACHO-PPC-NEXT:     0x18 1 2 0 PPC_RELOC_BR24 0 _b
+MACHO-PPC-NEXT:   }
+MACHO-PPC-NEXT:   Section __picsymbolstub1 {
+MACHO-PPC-NEXT:     0x14 0 2 n/a PPC_RELOC_LO16_SECTDIFF 1 _b
+MACHO-PPC-NEXT:     0x0 0 2 n/a PPC_RELOC_PAIR 1 _b
+MACHO-PPC-NEXT:     0xC 0 2 n/a PPC_RELOC_HA16_SECTDIFF 1 _b
+MACHO-PPC-NEXT:     0x20 0 2 n/a PPC_RELOC_PAIR 1 _b
+MACHO-PPC-NEXT:   }
+MACHO-PPC-NEXT:   Section __la_symbol_ptr {
+MACHO-PPC-NEXT:     0x0 0 2 1 PPC_RELOC_VANILLA 0 dyld_stub_binding_helper
+MACHO-PPC-NEXT:   }
+MACHO-PPC-NEXT: ]
+
+MACHO-PPC64: Relocations [
+MACHO-PPC64-NEXT:   Section __text {
+MACHO-PPC64-NEXT:     0x24 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:     0x0 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:     0x1C 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:     0x58 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:     0x18 1 2 0 0 _b
+MACHO-PPC64-NEXT:   }
+MACHO-PPC64-NEXT:   Section __picsymbolstub1 {
+MACHO-PPC64-NEXT:     0x14 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:     0x0 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:     0xC 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:     0x24 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:   }
+MACHO-PPC64-NEXT:   Section __la_symbol_ptr {
+MACHO-PPC64-NEXT:     0x0 0 3 1 0 dyld_stub_binding_helper
+MACHO-PPC64-NEXT:   }
+MACHO-PPC64-NEXT: ]

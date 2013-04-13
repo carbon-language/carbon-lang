@@ -191,6 +191,14 @@ bool llvm::RelocAddressLess(RelocationRef a, RelocationRef b) {
   return a_addr < b_addr;
 }
 
+StringRef
+getSectionFinalSegmentName(const MachOObjectFileBase *MachO, DataRefImpl DR) {
+  if (const MachOObjectFileLE *O = dyn_cast<MachOObjectFileLE>(MachO))
+    return O->getSectionFinalSegmentName(DR);
+  const MachOObjectFileBE *O = dyn_cast<MachOObjectFileBE>(MachO);
+  return O->getSectionFinalSegmentName(DR);
+}
+
 static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   const Target *TheTarget = getTarget(Obj);
   // getTarget() will have already issued a diagnostic if necessary, so
@@ -255,9 +263,10 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     std::sort(Rels.begin(), Rels.end(), RelocAddressLess);
 
     StringRef SegmentName = "";
-    if (const MachOObjectFileBase *MachO = dyn_cast<const MachOObjectFileBase>(Obj)) {
+    if (const MachOObjectFileBase *MachO =
+        dyn_cast<const MachOObjectFileBase>(Obj)) {
       DataRefImpl DR = i->getRawDataRefImpl();
-      SegmentName = MachO->getSectionFinalSegmentName(DR);
+      SegmentName = getSectionFinalSegmentName(MachO, DR);
     }
     StringRef name;
     if (error(i->getName(name))) break;
@@ -591,9 +600,10 @@ static void PrintSymbolTable(const ObjectFile *o) {
       else if (Section == o->end_sections())
         outs() << "*UND*";
       else {
-        if (const MachOObjectFileBase *MachO = dyn_cast<const MachOObjectFileBase>(o)) {
+        if (const MachOObjectFileBase *MachO =
+            dyn_cast<const MachOObjectFileBase>(o)) {
           DataRefImpl DR = Section->getRawDataRefImpl();
-          StringRef SegmentName = MachO->getSectionFinalSegmentName(DR);
+          StringRef SegmentName = getSectionFinalSegmentName(MachO, DR);
           outs() << SegmentName << ",";
         }
         StringRef SectionName;

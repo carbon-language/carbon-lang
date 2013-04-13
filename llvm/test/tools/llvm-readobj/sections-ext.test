@@ -6,6 +6,10 @@ RUN: llvm-readobj -s -st -sr -sd %p/Inputs/trivial.obj.macho-i386 \
 RUN:   | FileCheck %s -check-prefix MACHO-I386
 RUN: llvm-readobj -s -st -sr -sd %p/Inputs/trivial.obj.macho-x86-64 \
 RUN:   | FileCheck %s -check-prefix MACHO-X86-64
+RUN: llvm-readobj -s -st -sr -sd %p/Inputs/trivial.obj.macho-ppc \
+RUN:   | FileCheck %s -check-prefix MACHO-PPC
+RUN: llvm-readobj -s -st -sr -sd %p/Inputs/trivial.obj.macho-ppc64 \
+RUN:   | FileCheck %s -check-prefix MACHO-PPC64
 
 COFF:      Sections [
 COFF-NEXT:   Section {
@@ -249,3 +253,312 @@ MACHO-X86-64-NEXT:      0000: 48656C6C 6F20576F 726C640A 00        |Hello World.
 MACHO-X86-64-NEXT:    )
 MACHO-X86-64-NEXT:  }
 MACHO-X86-64-NEXT:]
+
+MACHO-PPC: Sections [
+MACHO-PPC-NEXT:   Section {
+MACHO-PPC-NEXT:     Index: 0
+MACHO-PPC-NEXT:     Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
+MACHO-PPC-NEXT:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+MACHO-PPC-NEXT:     Address: 0x0
+MACHO-PPC-NEXT:     Size: 0x3C
+MACHO-PPC-NEXT:     Offset: 528
+MACHO-PPC-NEXT:     Alignment: 2
+MACHO-PPC-NEXT:     RelocationOffset: 0x27C
+MACHO-PPC-NEXT:     RelocationCount: 5
+MACHO-PPC-NEXT:     Type: 0x0
+MACHO-PPC-NEXT:     Attributes [ (0x800004)
+MACHO-PPC-NEXT:       PureInstructions (0x800000)
+MACHO-PPC-NEXT:       SomeInstructions (0x4)
+MACHO-PPC-NEXT:     ]
+MACHO-PPC-NEXT:     Reserved1: 0x0
+MACHO-PPC-NEXT:     Reserved2: 0x0
+MACHO-PPC-NEXT:     Relocations [
+MACHO-PPC-NEXT:       0x24 0 2 n/a PPC_RELOC_LO16_SECTDIFF 1 _b
+MACHO-PPC-NEXT:       0x0 0 2 n/a PPC_RELOC_PAIR 1 _b
+MACHO-PPC-NEXT:       0x1C 0 2 n/a PPC_RELOC_HA16_SECTDIFF 1 _b
+MACHO-PPC-NEXT:       0x58 0 2 n/a PPC_RELOC_PAIR 1 _b
+MACHO-PPC-NEXT:       0x18 1 2 0 PPC_RELOC_BR24 0 _b
+MACHO-PPC-NEXT:     ]
+MACHO-PPC-NEXT:     Symbols [
+MACHO-PPC-NEXT:       Symbol {
+MACHO-PPC-NEXT:         Name: _f (4)
+MACHO-PPC-NEXT:         Type: 0xF
+MACHO-PPC-NEXT:         Section: __text (0x1)
+MACHO-PPC-NEXT:         RefType: UndefinedNonLazy (0x0)
+MACHO-PPC-NEXT:         Flags [ (0x0)
+MACHO-PPC-NEXT:         ]
+MACHO-PPC-NEXT:         Value: 0x0
+MACHO-PPC-NEXT:       }
+MACHO-PPC-NEXT:     ]
+MACHO-PPC-NEXT:     SectionData (
+MACHO-PPC-NEXT:       0000: 7C0802A6 93E1FFFC 429F0005 7FE802A6  ||.......B.......|
+MACHO-PPC-NEXT:       0010: 90010008 9421FFB0 48000029 3C5F0000  |.....!..H..)<_..|
+MACHO-PPC-NEXT:       0020: 38210050 80420058 80010008 83E1FFFC  |8!.P.B.X........|
+MACHO-PPC-NEXT:       0030: 7C0803A6 80620000 4E800020           ||....b..N.. |
+MACHO-PPC-NEXT:     )
+MACHO-PPC-NEXT:   }
+MACHO-PPC-NEXT:   Section {
+MACHO-PPC-NEXT:     Index: 1
+MACHO-PPC-NEXT:     Name: __picsymbolstub1 (5F 5F 70 69 63 73 79 6D 62 6F 6C 73 74 75 62 31)
+MACHO-PPC-NEXT:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+MACHO-PPC-NEXT:     Address: 0x40
+MACHO-PPC-NEXT:     Size: 0x20
+MACHO-PPC-NEXT:     Offset: 592
+MACHO-PPC-NEXT:     Alignment: 5
+MACHO-PPC-NEXT:     RelocationOffset: 0x2A4
+MACHO-PPC-NEXT:     RelocationCount: 4
+MACHO-PPC-NEXT:     Type: 0x8
+MACHO-PPC-NEXT:     Attributes [ (0x800004)
+MACHO-PPC-NEXT:       PureInstructions (0x800000)
+MACHO-PPC-NEXT:       SomeInstructions (0x4)
+MACHO-PPC-NEXT:     ]
+MACHO-PPC-NEXT:     Reserved1: 0x0
+MACHO-PPC-NEXT:     Reserved2: 0x20
+MACHO-PPC-NEXT:     Relocations [
+MACHO-PPC-NEXT:       0x14 0 2 n/a PPC_RELOC_LO16_SECTDIFF 1 _b
+MACHO-PPC-NEXT:       0x0 0 2 n/a PPC_RELOC_PAIR 1 _b
+MACHO-PPC-NEXT:       0xC 0 2 n/a PPC_RELOC_HA16_SECTDIFF 1 _b
+MACHO-PPC-NEXT:       0x20 0 2 n/a PPC_RELOC_PAIR 1 _b
+MACHO-PPC-NEXT:     ]
+MACHO-PPC-NEXT:     Symbols [
+MACHO-PPC-NEXT:     ]
+MACHO-PPC-NEXT:     SectionData (
+MACHO-PPC-NEXT:       0000: 7C0802A6 429F0005 7D6802A6 3D6B0000  ||...B...}h..=k..|
+MACHO-PPC-NEXT:       0010: 7C0803A6 858B0020 7D8903A6 4E800420  ||...... }...N.. |
+MACHO-PPC-NEXT:     )
+MACHO-PPC-NEXT:   }
+MACHO-PPC-NEXT:   Section {
+MACHO-PPC-NEXT:     Index: 2
+MACHO-PPC-NEXT:     Name: __data (5F 5F 64 61 74 61 00 00 00 00 00 00 00 00 00 00)
+MACHO-PPC-NEXT:     Segment: __DATA (5F 5F 44 41 54 41 00 00 00 00 00 00 00 00 00 00)
+MACHO-PPC-NEXT:     Address: 0x60
+MACHO-PPC-NEXT:     Size: 0x4
+MACHO-PPC-NEXT:     Offset: 624
+MACHO-PPC-NEXT:     Alignment: 2
+MACHO-PPC-NEXT:     RelocationOffset: 0x0
+MACHO-PPC-NEXT:     RelocationCount: 0
+MACHO-PPC-NEXT:     Type: 0x0
+MACHO-PPC-NEXT:     Attributes [ (0x0)
+MACHO-PPC-NEXT:     ]
+MACHO-PPC-NEXT:     Reserved1: 0x0
+MACHO-PPC-NEXT:     Reserved2: 0x0
+MACHO-PPC-NEXT:     Relocations [
+MACHO-PPC-NEXT:     ]
+MACHO-PPC-NEXT:     Symbols [
+MACHO-PPC-NEXT:       Symbol {
+MACHO-PPC-NEXT:         Name: _b (1)
+MACHO-PPC-NEXT:         Type: 0xF
+MACHO-PPC-NEXT:         Section: __data (0x3)
+MACHO-PPC-NEXT:         RefType: UndefinedNonLazy (0x0)
+MACHO-PPC-NEXT:         Flags [ (0x0)
+MACHO-PPC-NEXT:         ]
+MACHO-PPC-NEXT:         Value: 0x60
+MACHO-PPC-NEXT:       }
+MACHO-PPC-NEXT:     ]
+MACHO-PPC-NEXT:     SectionData (
+MACHO-PPC-NEXT:       0000: 0000002A                             |...*|
+MACHO-PPC-NEXT:     )
+MACHO-PPC-NEXT:   }
+MACHO-PPC-NEXT:   Section {
+MACHO-PPC-NEXT:     Index: 3
+MACHO-PPC-NEXT:     Name: __nl_symbol_ptr (5F 5F 6E 6C 5F 73 79 6D 62 6F 6C 5F 70 74 72 00)
+MACHO-PPC-NEXT:     Segment: __DATA (5F 5F 44 41 54 41 00 00 00 00 00 00 00 00 00 00)
+MACHO-PPC-NEXT:     Address: 0x64
+MACHO-PPC-NEXT:     Size: 0x4
+MACHO-PPC-NEXT:     Offset: 628
+MACHO-PPC-NEXT:     Alignment: 2
+MACHO-PPC-NEXT:     RelocationOffset: 0x0
+MACHO-PPC-NEXT:     RelocationCount: 0
+MACHO-PPC-NEXT:     Type: 0x6
+MACHO-PPC-NEXT:     Attributes [ (0x0)
+MACHO-PPC-NEXT:     ]
+MACHO-PPC-NEXT:     Reserved1: 0x1
+MACHO-PPC-NEXT:     Reserved2: 0x0
+MACHO-PPC-NEXT:     Relocations [
+MACHO-PPC-NEXT:     ]
+MACHO-PPC-NEXT:     Symbols [
+MACHO-PPC-NEXT:     ]
+MACHO-PPC-NEXT:     SectionData (
+MACHO-PPC-NEXT:       0000: 00000000                             |....|
+MACHO-PPC-NEXT:     )
+MACHO-PPC-NEXT:   }
+MACHO-PPC-NEXT:   Section {
+MACHO-PPC-NEXT:     Index: 4
+MACHO-PPC-NEXT:     Name: __la_symbol_ptr (5F 5F 6C 61 5F 73 79 6D 62 6F 6C 5F 70 74 72 00)
+MACHO-PPC-NEXT:     Segment: __DATA (5F 5F 44 41 54 41 00 00 00 00 00 00 00 00 00 00)
+MACHO-PPC-NEXT:     Address: 0x68
+MACHO-PPC-NEXT:     Size: 0x4
+MACHO-PPC-NEXT:     Offset: 632
+MACHO-PPC-NEXT:     Alignment: 2
+MACHO-PPC-NEXT:     RelocationOffset: 0x2C4
+MACHO-PPC-NEXT:     RelocationCount: 1
+MACHO-PPC-NEXT:     Type: 0x7
+MACHO-PPC-NEXT:     Attributes [ (0x0)
+MACHO-PPC-NEXT:     ]
+MACHO-PPC-NEXT:     Reserved1: 0x2
+MACHO-PPC-NEXT:     Reserved2: 0x0
+MACHO-PPC-NEXT:     Relocations [
+MACHO-PPC-NEXT:       0x0 0 2 1 PPC_RELOC_VANILLA 0 dyld_stub_binding_helper
+MACHO-PPC-NEXT:     ]
+MACHO-PPC-NEXT:     Symbols [
+MACHO-PPC-NEXT:     ]
+MACHO-PPC-NEXT:     SectionData (
+MACHO-PPC-NEXT:       0000: 00000000                             |....|
+MACHO-PPC-NEXT:     )
+MACHO-PPC-NEXT:   }
+MACHO-PPC-NEXT: ]
+
+
+MACHO-PPC64:  Sections [
+MACHO-PPC64-NEXT:   Section {
+MACHO-PPC64-NEXT:     Index: 0
+MACHO-PPC64-NEXT:     Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
+MACHO-PPC64-NEXT:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+MACHO-PPC64-NEXT:     Address: 0x0
+MACHO-PPC64-NEXT:     Size: 0x3C
+MACHO-PPC64-NEXT:     Offset: 608
+MACHO-PPC64-NEXT:     Alignment: 2
+MACHO-PPC64-NEXT:     RelocationOffset: 0x2D4
+MACHO-PPC64-NEXT:     RelocationCount: 5
+MACHO-PPC64-NEXT:     Type: 0x0
+MACHO-PPC64-NEXT:     Attributes [ (0x800004)
+MACHO-PPC64-NEXT:       PureInstructions (0x800000)
+MACHO-PPC64-NEXT:       SomeInstructions (0x4)
+MACHO-PPC64-NEXT:     ]
+MACHO-PPC64-NEXT:     Reserved1: 0x0
+MACHO-PPC64-NEXT:     Reserved2: 0x0
+MACHO-PPC64-NEXT:     Relocations [
+MACHO-PPC64-NEXT:       0x24 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:       0x0 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:       0x1C 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:       0x58 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:       0x18 1 2 0 0 _b
+MACHO-PPC64-NEXT:     ]
+MACHO-PPC64-NEXT:     Symbols [
+MACHO-PPC64-NEXT:       Symbol {
+MACHO-PPC64-NEXT:         Name: _f (4)
+MACHO-PPC64-NEXT:         Type: 0xF
+MACHO-PPC64-NEXT:         Section: __text (0x1)
+MACHO-PPC64-NEXT:         RefType: UndefinedNonLazy (0x0)
+MACHO-PPC64-NEXT:         Flags [ (0x0)
+MACHO-PPC64-NEXT:         ]
+MACHO-PPC64-NEXT:         Value: 0x0
+MACHO-PPC64-NEXT:       }
+MACHO-PPC64-NEXT:     ]
+MACHO-PPC64-NEXT:     SectionData (
+MACHO-PPC64-NEXT:       0000: 7C0802A6 FBE1FFF8 429F0005 7FE802A6  ||.......B.......|
+MACHO-PPC64-NEXT:       0010: F8010010 F821FF81 48000029 3C5F0000  |.....!..H..)<_..|
+MACHO-PPC64-NEXT:       0020: 38210080 E8420058 E8010010 EBE1FFF8  |8!...B.X........|
+MACHO-PPC64-NEXT:       0030: 7C0803A6 E8620002 4E800020           ||....b..N.. |
+MACHO-PPC64-NEXT:     )
+MACHO-PPC64-NEXT:   }
+MACHO-PPC64-NEXT:   Section {
+MACHO-PPC64-NEXT:     Index: 1
+MACHO-PPC64-NEXT:     Name: __picsymbolstub1 (5F 5F 70 69 63 73 79 6D 62 6F 6C 73 74 75 62 31)
+MACHO-PPC64-NEXT:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+MACHO-PPC64-NEXT:     Address: 0x40
+MACHO-PPC64-NEXT:     Size: 0x20
+MACHO-PPC64-NEXT:     Offset: 672
+MACHO-PPC64-NEXT:     Alignment: 5
+MACHO-PPC64-NEXT:     RelocationOffset: 0x2FC
+MACHO-PPC64-NEXT:     RelocationCount: 4
+MACHO-PPC64-NEXT:     Type: 0x8
+MACHO-PPC64-NEXT:     Attributes [ (0x800004)
+MACHO-PPC64-NEXT:       PureInstructions (0x800000)
+MACHO-PPC64-NEXT:       SomeInstructions (0x4)
+MACHO-PPC64-NEXT:     ]
+MACHO-PPC64-NEXT:     Reserved1: 0x0
+MACHO-PPC64-NEXT:     Reserved2: 0x20
+MACHO-PPC64-NEXT:     Relocations [
+MACHO-PPC64-NEXT:       0x14 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:       0x0 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:       0xC 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:       0x24 0 2 n/a 1 _b
+MACHO-PPC64-NEXT:     ]
+MACHO-PPC64-NEXT:     Symbols [
+MACHO-PPC64-NEXT:     ]
+MACHO-PPC64-NEXT:     SectionData (
+MACHO-PPC64-NEXT:       0000: 7C0802A6 429F0005 7D6802A6 3D6B0000  ||...B...}h..=k..|
+MACHO-PPC64-NEXT:       0010: 7C0803A6 E98B0025 7D8903A6 4E800420  ||......%}...N.. |
+MACHO-PPC64-NEXT:     )
+MACHO-PPC64-NEXT:   }
+MACHO-PPC64-NEXT:   Section {
+MACHO-PPC64-NEXT:     Index: 2
+MACHO-PPC64-NEXT:     Name: __data (5F 5F 64 61 74 61 00 00 00 00 00 00 00 00 00 00)
+MACHO-PPC64-NEXT:     Segment: __DATA (5F 5F 44 41 54 41 00 00 00 00 00 00 00 00 00 00)
+MACHO-PPC64-NEXT:     Address: 0x60
+MACHO-PPC64-NEXT:     Size: 0x4
+MACHO-PPC64-NEXT:     Offset: 704
+MACHO-PPC64-NEXT:     Alignment: 2
+MACHO-PPC64-NEXT:     RelocationOffset: 0x0
+MACHO-PPC64-NEXT:     RelocationCount: 0
+MACHO-PPC64-NEXT:     Type: 0x0
+MACHO-PPC64-NEXT:     Attributes [ (0x0)
+MACHO-PPC64-NEXT:     ]
+MACHO-PPC64-NEXT:     Reserved1: 0x0
+MACHO-PPC64-NEXT:     Reserved2: 0x0
+MACHO-PPC64-NEXT:     Relocations [
+MACHO-PPC64-NEXT:     ]
+MACHO-PPC64-NEXT:     Symbols [
+MACHO-PPC64-NEXT:       Symbol {
+MACHO-PPC64-NEXT:         Name: _b (1)
+MACHO-PPC64-NEXT:         Type: 0xF
+MACHO-PPC64-NEXT:         Section: __data (0x3)
+MACHO-PPC64-NEXT:         RefType: UndefinedNonLazy (0x0)
+MACHO-PPC64-NEXT:         Flags [ (0x0)
+MACHO-PPC64-NEXT:         ]
+MACHO-PPC64-NEXT:         Value: 0x60
+MACHO-PPC64-NEXT:       }
+MACHO-PPC64-NEXT:     ]
+MACHO-PPC64-NEXT:     SectionData (
+MACHO-PPC64-NEXT:       0000: 0000002A                             |...*|
+MACHO-PPC64-NEXT:     )
+MACHO-PPC64-NEXT:   }
+MACHO-PPC64-NEXT:   Section {
+MACHO-PPC64-NEXT:     Index: 3
+MACHO-PPC64-NEXT:     Name: __nl_symbol_ptr (5F 5F 6E 6C 5F 73 79 6D 62 6F 6C 5F 70 74 72 00)
+MACHO-PPC64-NEXT:     Segment: __DATA (5F 5F 44 41 54 41 00 00 00 00 00 00 00 00 00 00)
+MACHO-PPC64-NEXT:     Address: 0x64
+MACHO-PPC64-NEXT:     Size: 0x8
+MACHO-PPC64-NEXT:     Offset: 708
+MACHO-PPC64-NEXT:     Alignment: 2
+MACHO-PPC64-NEXT:     RelocationOffset: 0x0
+MACHO-PPC64-NEXT:     RelocationCount: 0
+MACHO-PPC64-NEXT:     Type: 0x6
+MACHO-PPC64-NEXT:     Attributes [ (0x0)
+MACHO-PPC64-NEXT:     ]
+MACHO-PPC64-NEXT:     Reserved1: 0x1
+MACHO-PPC64-NEXT:     Reserved2: 0x0
+MACHO-PPC64-NEXT:     Relocations [
+MACHO-PPC64-NEXT:     ]
+MACHO-PPC64-NEXT:     Symbols [
+MACHO-PPC64-NEXT:     ]
+MACHO-PPC64-NEXT:     SectionData (
+MACHO-PPC64-NEXT:       0000: 00000000 00000000                    |........|
+MACHO-PPC64-NEXT:     )
+MACHO-PPC64-NEXT:   }
+MACHO-PPC64-NEXT:   Section {
+MACHO-PPC64-NEXT:     Index: 4
+MACHO-PPC64-NEXT:     Name: __la_symbol_ptr (5F 5F 6C 61 5F 73 79 6D 62 6F 6C 5F 70 74 72 00)
+MACHO-PPC64-NEXT:     Segment: __DATA (5F 5F 44 41 54 41 00 00 00 00 00 00 00 00 00 00)
+MACHO-PPC64-NEXT:     Address: 0x6C
+MACHO-PPC64-NEXT:     Size: 0x8
+MACHO-PPC64-NEXT:     Offset: 716
+MACHO-PPC64-NEXT:     Alignment: 2
+MACHO-PPC64-NEXT:     RelocationOffset: 0x31C
+MACHO-PPC64-NEXT:     RelocationCount: 1
+MACHO-PPC64-NEXT:     Type: 0x7
+MACHO-PPC64-NEXT:     Attributes [ (0x0)
+MACHO-PPC64-NEXT:     ]
+MACHO-PPC64-NEXT:     Reserved1: 0x2
+MACHO-PPC64-NEXT:     Reserved2: 0x0
+MACHO-PPC64-NEXT:     Relocations [
+MACHO-PPC64-NEXT:       0x0 0 3 1 0 dyld_stub_binding_helper
+MACHO-PPC64-NEXT:     ]
+MACHO-PPC64-NEXT:     Symbols [
+MACHO-PPC64-NEXT:     ]
+MACHO-PPC64-NEXT:     SectionData (
+MACHO-PPC64-NEXT:       0000: 00000000 00000000                    |........|
+MACHO-PPC64-NEXT:     )
+MACHO-PPC64-NEXT:   }
+MACHO-PPC64-NEXT: ]
