@@ -604,7 +604,7 @@ bool
 MachOObjectFileMiddle<E>::isRelocationPCRel(const RelocationEntry *RE) const {
   typedef MachOObjectFileMiddle<E> ObjType;
   if (isRelocationScattered(RE)) {
-    const ObjType::ScatteredRelocationEntry *SRE =
+    const typename MachOObjectFileMiddle<E>::ScatteredRelocationEntry *SRE =
       reinterpret_cast<const typename ObjType::ScatteredRelocationEntry *>(RE);
     return SRE->getPCRel();
   }
@@ -616,7 +616,7 @@ unsigned
 MachOObjectFileMiddle<E>::getRelocationLength(const RelocationEntry *RE) const {
   typedef MachOObjectFileMiddle<E> ObjType;
   if (isRelocationScattered(RE)) {
-    const ObjType::ScatteredRelocationEntry *SRE =
+    const typename ObjType::ScatteredRelocationEntry *SRE =
       reinterpret_cast<const typename ObjType::ScatteredRelocationEntry *>(RE);
     return SRE->getLength();
   }
@@ -629,7 +629,7 @@ MachOObjectFileMiddle<E>::getRelocationTypeImpl(const RelocationEntry *RE)
                                                                          const {
   typedef MachOObjectFileMiddle<E> ObjType;
   if (isRelocationScattered(RE)) {
-    const ObjType::ScatteredRelocationEntry *SRE =
+    const typename ObjType::ScatteredRelocationEntry *SRE =
       reinterpret_cast<const typename ObjType::ScatteredRelocationEntry *>(RE);
     return SRE->getType();
   }
