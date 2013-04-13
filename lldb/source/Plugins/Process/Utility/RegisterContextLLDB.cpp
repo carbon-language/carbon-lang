@@ -978,12 +978,14 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
             UnwindPlan::RowSP active_row = m_full_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
             unwindplan_registerkind = m_full_unwind_plan_sp->GetRegisterKind ();
             uint32_t row_regnum;
+            bool row_register_rewritten_to_return_address_reg = false;
 
             // If we're fetching the saved pc and this UnwindPlan defines a ReturnAddress register (e.g. lr on arm),
             // look for the return address register number in the UnwindPlan's row.
             if (lldb_regnum == pc_regnum && m_full_unwind_plan_sp->GetReturnAddressRegister() != LLDB_INVALID_REGNUM)
             {
                row_regnum = m_full_unwind_plan_sp->GetReturnAddressRegister();
+               row_register_rewritten_to_return_address_reg = true;
                UnwindLogMsg ("requested caller's saved PC but this UnwindPlan uses a RA reg; getting reg %d instead",
                        row_regnum);
             }
@@ -1005,6 +1007,28 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
                 have_unwindplan_regloc = true;
                 UnwindLogMsg ("supplying caller's saved reg %d's location using %s UnwindPlan", lldb_regnum,
                               m_full_unwind_plan_sp->GetSourceName().GetCString());
+            }
+
+            // This is frame 0 and we're retrieving the PC and it's saved in a Return Address register and
+            // it hasn't been saved anywhere yet -- that is, it's still live in the actual register.
+            // Handle this specially.
+
+            if (have_unwindplan_regloc == false 
+                && row_register_rewritten_to_return_address_reg == true 
+                && IsFrameZero()
+                && row_regnum != LLDB_INVALID_REGNUM)
+            {
+                uint32_t ra_regnum_in_lldb_reg_numbering;
+                if (m_thread.GetRegisterContext()->ConvertBetweenRegisterKinds (unwindplan_registerkind, row_regnum, eRegisterKindLLDB, ra_regnum_in_lldb_reg_numbering))
+                {
+                    lldb_private::UnwindLLDB::RegisterLocation new_regloc;
+                    new_regloc.type = UnwindLLDB::RegisterLocation::eRegisterInRegister;
+                    new_regloc.location.register_number = ra_regnum_in_lldb_reg_numbering;
+                    m_registers[lldb_regnum] = new_regloc;
+                    regloc = new_regloc;
+                    UnwindLogMsg ("supplying caller's register %d from the live RegisterContext at frame 0, saved in %d", lldb_regnum, ra_regnum_in_lldb_reg_numbering);
+                    return UnwindLLDB::RegisterSearchResult::eRegisterFound;
+                }
             }
 
             // If this architecture stores the return address in a register (it defines a Return Address register)
