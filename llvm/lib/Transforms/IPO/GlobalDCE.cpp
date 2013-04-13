@@ -42,6 +42,7 @@ namespace {
 
   private:
     SmallPtrSet<GlobalValue*, 32> AliveGlobals;
+    SmallPtrSet<Constant *, 8> SeenConstants;
 
     /// GlobalIsNeeded - mark the specific global value as needed, and
     /// recursively mark anything that it uses as also needed.
@@ -151,6 +152,7 @@ bool GlobalDCE::runOnModule(Module &M) {
 
   // Make sure that all memory is released
   AliveGlobals.clear();
+  SeenConstants.clear();
 
   return Changed;
 }
@@ -190,12 +192,15 @@ void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
 void GlobalDCE::MarkUsedGlobalsAsNeeded(Constant *C) {
   if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
     return GlobalIsNeeded(GV);
-  
+
   // Loop over all of the operands of the constant, adding any globals they
   // use to the list of needed globals.
-  for (User::op_iterator I = C->op_begin(), E = C->op_end(); I != E; ++I)
-    if (Constant *OpC = dyn_cast<Constant>(*I))
-      MarkUsedGlobalsAsNeeded(OpC);
+  for (User::op_iterator I = C->op_begin(), E = C->op_end(); I != E; ++I) {
+    // If we've already processed this constant there's no need to do it again.
+    Constant *Op = cast<Constant>(*I);
+    if (SeenConstants.insert(Op))
+      MarkUsedGlobalsAsNeeded(Op);
+  }
 }
 
 // RemoveUnusedGlobalValue - Loop over all of the uses of the specified

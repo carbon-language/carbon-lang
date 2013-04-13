@@ -237,18 +237,21 @@ void Constant::destroyConstantImpl() {
   delete this;
 }
 
-/// canTrap - Return true if evaluation of this constant could trap.  This is
-/// true for things like constant expressions that could divide by zero.
-bool Constant::canTrap() const {
-  assert(getType()->isFirstClassType() && "Cannot evaluate aggregate vals!");
+static bool canTrapImpl(const Constant *C,
+                        SmallPtrSet<const ConstantExpr *, 4> &NonTrappingOps) {
+  assert(C->getType()->isFirstClassType() && "Cannot evaluate aggregate vals!");
   // The only thing that could possibly trap are constant exprs.
-  const ConstantExpr *CE = dyn_cast<ConstantExpr>(this);
-  if (!CE) return false;
+  const ConstantExpr *CE = dyn_cast<ConstantExpr>(C);
+  if (!CE)
+    return false;
 
   // ConstantExpr traps if any operands can trap.
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    if (CE->getOperand(i)->canTrap())
-      return true;
+  for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i) {
+    if (ConstantExpr *Op = dyn_cast<ConstantExpr>(CE->getOperand(i))) {
+      if (NonTrappingOps.insert(Op) && canTrapImpl(Op, NonTrappingOps))
+        return true;
+    }
+  }
 
   // Otherwise, only specific operations can trap.
   switch (CE->getOpcode()) {
@@ -265,6 +268,13 @@ bool Constant::canTrap() const {
       return true;
     return false;
   }
+}
+
+/// canTrap - Return true if evaluation of this constant could trap.  This is
+/// true for things like constant expressions that could divide by zero.
+bool Constant::canTrap() const {
+  SmallPtrSet<const ConstantExpr *, 4> NonTrappingOps;
+  return canTrapImpl(this, NonTrappingOps);
 }
 
 /// isThreadDependent - Return true if the value can vary between threads.
