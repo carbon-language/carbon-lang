@@ -67,11 +67,17 @@ struct MachODataTypeTypedefHelperCommon {
   typedef MachOInt24Impl<TargetEndianness> MachOInt24;
 };
 
-#define LLVM_MACHOB_IMPORT_TYPES(E)                                          \
+#define LLVM_MACHOB_IMPORT_TYPES_TYPENAME(E)                                 \
 typedef typename MachODataTypeTypedefHelperCommon<E>::MachOInt16 MachOInt16; \
 typedef typename MachODataTypeTypedefHelperCommon<E>::MachOInt32 MachOInt32; \
 typedef typename MachODataTypeTypedefHelperCommon<E>::MachOInt64 MachOInt64; \
 typedef typename MachODataTypeTypedefHelperCommon<E>::MachOInt24 MachOInt24;
+
+#define LLVM_MACHOB_IMPORT_TYPES(E)                                          \
+typedef MachODataTypeTypedefHelperCommon<E>::MachOInt16 MachOInt16; \
+typedef MachODataTypeTypedefHelperCommon<E>::MachOInt32 MachOInt32; \
+typedef MachODataTypeTypedefHelperCommon<E>::MachOInt64 MachOInt64; \
+typedef MachODataTypeTypedefHelperCommon<E>::MachOInt24 MachOInt24;
 
 template<class MachOT>
 struct MachODataTypeTypedefHelper;
@@ -89,7 +95,7 @@ struct MachODataTypeTypedefHelper<MachOType<TargetEndianness, true> > {
 };
 
 #define LLVM_MACHO_IMPORT_TYPES(MachOT, E, B)                        \
-LLVM_MACHOB_IMPORT_TYPES(E)                                          \
+LLVM_MACHOB_IMPORT_TYPES_TYPENAME(E)                                 \
 typedef typename                                                     \
   MachODataTypeTypedefHelper <MachOT<E, B> >::MachOIntPtr MachOIntPtr;
 
@@ -104,7 +110,7 @@ namespace MachOFormat {
 
   template<endianness TargetEndianness>
   struct Section<MachOType<TargetEndianness, false> > {
-    LLVM_MACHOB_IMPORT_TYPES(TargetEndianness)
+    LLVM_MACHOB_IMPORT_TYPES_TYPENAME(TargetEndianness)
     char Name[16];
     char SegmentName[16];
     MachOInt32 Address;
@@ -120,7 +126,7 @@ namespace MachOFormat {
 
   template<endianness TargetEndianness>
   struct Section<MachOType<TargetEndianness, true> > {
-    LLVM_MACHOB_IMPORT_TYPES(TargetEndianness)
+    LLVM_MACHOB_IMPORT_TYPES_TYPENAME(TargetEndianness)
     char Name[16];
     char SegmentName[16];
     MachOInt64 Address;
@@ -233,7 +239,7 @@ namespace MachOFormat {
 
   template<endianness TargetEndianness>
   struct SymbolTableEntryBase {
-    LLVM_MACHOB_IMPORT_TYPES(TargetEndianness)
+    LLVM_MACHOB_IMPORT_TYPES_TYPENAME(TargetEndianness)
     MachOInt32 StringIndex;
     uint8_t Type;
     uint8_t SectionIndex;
@@ -255,14 +261,14 @@ namespace MachOFormat {
 
   template<endianness TargetEndianness>
   struct LoadCommand {
-    LLVM_MACHOB_IMPORT_TYPES(TargetEndianness)
+    LLVM_MACHOB_IMPORT_TYPES_TYPENAME(TargetEndianness)
     MachOInt32 Type;
     MachOInt32 Size;
   };
 
   template<endianness TargetEndianness>
   struct SymtabLoadCommand {
-    LLVM_MACHOB_IMPORT_TYPES(TargetEndianness)
+    LLVM_MACHOB_IMPORT_TYPES_TYPENAME(TargetEndianness)
     MachOInt32 Type;
     MachOInt32 Size;
     MachOInt32 SymbolTableOffset;
@@ -292,7 +298,7 @@ namespace MachOFormat {
 
   template<endianness TargetEndianness>
   struct LinkeditDataLoadCommand {
-    LLVM_MACHOB_IMPORT_TYPES(TargetEndianness)
+    LLVM_MACHOB_IMPORT_TYPES_TYPENAME(TargetEndianness)
     MachOInt32 Type;
     MachOInt32 Size;
     MachOInt32 DataOffset;
@@ -301,7 +307,7 @@ namespace MachOFormat {
 
   template<endianness TargetEndianness>
   struct Header {
-    LLVM_MACHOB_IMPORT_TYPES(TargetEndianness)
+    LLVM_MACHOB_IMPORT_TYPES_TYPENAME(TargetEndianness)
     MachOInt32 Magic;
     MachOInt32 CPUType;
     MachOInt32 CPUSubtype;
