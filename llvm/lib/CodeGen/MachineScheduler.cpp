@@ -404,6 +404,8 @@ void ScheduleDAGMI::releasePredecessors(SUnit *SU) {
   }
 }
 
+/// This is normally called from the main scheduler loop but may also be invoked
+/// by the scheduling strategy to perform additional code motion.
 void ScheduleDAGMI::moveInstruction(MachineInstr *MI,
                                     MachineBasicBlock::iterator InsertPos) {
   // Advance RegionBegin if the first instruction moves down.
@@ -916,7 +918,7 @@ public:
   /// Represent the type of SchedCandidate found within a single queue.
   /// pickNodeBidirectional depends on these listed by decreasing priority.
   enum CandReason {
-    NoCand, SingleExcess, SingleCritical, Cluster,
+    NoCand, PhysRegCopy, SingleExcess, SingleCritical, Cluster,
     ResourceReduce, ResourceDemand, BotHeightReduce, BotPathReduce,
     TopDepthReduce, TopPathReduce, SingleMax, MultiPressure, NextDefUse,
     NodeOrder};
@@ -1190,6 +1192,8 @@ protected:
   void pickNodeFromQueue(SchedBoundary &Zone,
                          const RegPressureTracker &RPTracker,
                          SchedCandidate &Candidate);
+
+  void reschedulePhysRegCopies(SUnit *SU, bool isTop);
 
 #ifndef NDEBUG
   void traceCandidate(const SchedCandidate &Cand);
@@ -1696,6 +1700,34 @@ static unsigned getWeakLeft(const SUnit *SU, bool isTop) {
   return (isTop) ? SU->WeakPredsLeft : SU->WeakSuccsLeft;
 }
 
+/// Minimize physical register live ranges. Regalloc wants them adjacent to
+/// their physreg def/use.
+///
+/// FIXME: This is an unnecessary check on the critical path. Most are root/leaf
+/// copies which can be prescheduled. The rest (e.g. x86 MUL) could be bundled
+/// with the operation that produces or consumes the physreg. We'll do this when
+/// regalloc has support for parallel copies.
+static int biasPhysRegCopy(const SUnit *SU, bool isTop) {
+  const MachineInstr *MI = SU->getInstr();
+  if (!MI->isCopy())
+    return 0;
+
+  unsigned ScheduledOper = isTop ? 1 : 0;
+  unsigned UnscheduledOper = isTop ? 0 : 1;
+  // If we have already scheduled the physreg produce/consumer, immediately
+  // schedule the copy.
+  if (TargetRegisterInfo::isPhysicalRegister(
+        MI->getOperand(ScheduledOper).getReg()))
+    return 1;
+  // If the physreg is at the boundary, defer it. Otherwise schedule it
+  // immediately to free the dependent. We can hoist the copy later.
+  bool AtBoundary = isTop ? !SU->NumSuccsLeft : !SU->NumPredsLeft;
+  if (TargetRegisterInfo::isPhysicalRegister(
+        MI->getOperand(UnscheduledOper).getReg()))
+    return AtBoundary ? -1 : 1;
+  return 0;
+}
+
 /// Apply a set of heursitics to a new candidate. Heuristics are currently
 /// hierarchical. This may be more efficient than a graduated cost model because
 /// we don't need to evaluate all aspects of the model for each node in the
@@ -1723,6 +1755,12 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
     TryCand.Reason = NodeOrder;
     return;
   }
+
+  if (tryGreater(biasPhysRegCopy(TryCand.SU, Zone.isTop()),
+                 biasPhysRegCopy(Cand.SU, Zone.isTop()),
+                 TryCand, Cand, PhysRegCopy))
+    return;
+
   // Avoid exceeding the target's limit.
   if (tryLess(TryCand.RPDelta.Excess.UnitIncrease,
               Cand.RPDelta.Excess.UnitIncrease, TryCand, Cand, SingleExcess))
@@ -1851,6 +1889,7 @@ const char *ConvergingScheduler::getReasonStr(
   ConvergingScheduler::CandReason Reason) {
   switch (Reason) {
   case NoCand:         return "NOCAND    ";
+  case PhysRegCopy:    return "PREG-COPY";
   case SingleExcess:   return "REG-EXCESS";
   case SingleCritical: return "REG-CRIT  ";
   case Cluster:        return "CLUSTER   ";
@@ -2069,17 +2108,49 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
   return SU;
 }
 
+void ConvergingScheduler::reschedulePhysRegCopies(SUnit *SU, bool isTop) {
+
+  MachineBasicBlock::iterator InsertPos = SU->getInstr();
+  if (!isTop)
+    ++InsertPos;
+  SmallVectorImpl<SDep> &Deps = isTop ? SU->Preds : SU->Succs;
+
+  // Find already scheduled copies with a single physreg dependence and move
+  // them just above the scheduled instruction.
+  for (SmallVectorImpl<SDep>::iterator I = Deps.begin(), E = Deps.end();
+       I != E; ++I) {
+    if (I->getKind() != SDep::Data || !TRI->isPhysicalRegister(I->getReg()))
+      continue;
+    SUnit *DepSU = I->getSUnit();
+    if (isTop ? DepSU->Succs.size() > 1 : DepSU->Preds.size() > 1)
+      continue;
+    MachineInstr *Copy = DepSU->getInstr();
+    if (!Copy->isCopy())
+      continue;
+    DEBUG(dbgs() << "  Rescheduling physreg copy ";
+          I->getSUnit()->dump(DAG));
+    DAG->moveInstruction(Copy, InsertPos);
+  }
+}
+
 /// Update the scheduler's state after scheduling a node. This is the same node
 /// that was just returned by pickNode(). However, ScheduleDAGMI needs to update
 /// it's state based on the current cycle before MachineSchedStrategy does.
+///
+/// FIXME: Eventually, we may bundle physreg copies rather than rescheduling
+/// them here. See comments in biasPhysRegCopy.
 void ConvergingScheduler::schedNode(SUnit *SU, bool IsTopNode) {
   if (IsTopNode) {
     SU->TopReadyCycle = Top.CurrCycle;
     Top.bumpNode(SU);
+    if (SU->hasPhysRegUses)
+      reschedulePhysRegCopies(SU, true);
   }
   else {
     SU->BotReadyCycle = Bot.CurrCycle;
     Bot.bumpNode(SU);
+    if (SU->hasPhysRegDefs)
+      reschedulePhysRegCopies(SU, false);
   }
 }
 

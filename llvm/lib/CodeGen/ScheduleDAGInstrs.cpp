@@ -262,6 +262,9 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU, unsigned OperIdx) {
       if (UseOp < 0)
         Dep = SDep(SU, SDep::Artificial);
       else {
+        // Set the hasPhysRegDefs only for physreg defs that have a use within
+        // the scheduling region.
+        SU->hasPhysRegDefs = true;
         Dep = SDep(SU, SDep::Data, *Alias);
         RegUse = UseSU->getInstr();
         Dep.setMinLatency(
@@ -318,6 +321,7 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
   }
 
   if (!MO.isDef()) {
+    SU->hasPhysRegUses = true;
     // Either insert a new Reg2SUnits entry with an empty SUnits list, or
     // retrieve the existing SUnits list for this register's uses.
     // Push this SUnit on the use list.

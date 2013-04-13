@@ -297,6 +297,10 @@ public:
   /// reorderable instructions.
   virtual void schedule();
 
+  /// Change the position of an instruction within the basic block and update
+  /// live ranges and region boundary iterators.
+  void moveInstruction(MachineInstr *MI, MachineBasicBlock::iterator InsertPos);
+
   /// Get current register pressure for the top scheduled instructions.
   const IntervalPressure &getTopPressure() const { return TopPressure; }
   const RegPressureTracker &getTopRPTracker() const { return TopRPTracker; }
@@ -362,7 +366,6 @@ protected:
 
   void updateScheduledPressure(const std::vector<unsigned> &NewMaxPressure);
 
-  void moveInstruction(MachineInstr *MI, MachineBasicBlock::iterator InsertPos);
   bool checkSchedLimit();
 
   void findRootsAndBiasEdges(SmallVectorImpl<SUnit*> &TopRoots,
