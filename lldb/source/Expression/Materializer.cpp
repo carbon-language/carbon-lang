@@ -569,11 +569,42 @@ public:
     
     virtual void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
     {
+        Address &sym_address = m_symbol.GetAddress();
+
+        ExecutionContextScope *exe_scope = map.GetBestExecutionContextScope();
+        
+        lldb::TargetSP target_sp;
+        
+        if (exe_scope)
+            target_sp = map.GetBestExecutionContextScope()->CalculateTarget();
+        
+        if (!target_sp)
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat("Couldn't resolve symbol %s because there is no target", m_symbol.GetName().AsCString());
+            return;
+        }
+        
+        lldb::addr_t resolved_address = sym_address.GetLoadAddress(target_sp.get());
+        
+        if (resolved_address == LLDB_INVALID_ADDRESS)
+            resolved_address = sym_address.GetFileAddress();
+        
+        Error pointer_write_error;
+        
+        map.WritePointerToMemory(process_address + m_offset, resolved_address, pointer_write_error);
+        
+        if (!pointer_write_error.Success())
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat("Couldn't write the address of symbol %s: %s", m_symbol.GetName().AsCString(), pointer_write_error.AsCString());
+        }
     }
     
     virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address,
                                 lldb::addr_t frame_top, lldb::addr_t frame_bottom, Error &err)
     {
+        // no work needs to be done
     }
 private:
     Symbol m_symbol;
