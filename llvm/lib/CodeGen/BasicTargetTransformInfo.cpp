@@ -205,11 +205,13 @@ unsigned BasicTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
   std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Ty);
 
   bool IsFloat = Ty->getScalarType()->isFloatingPointTy();
+  // Assume that floating point arithmetic operations cost twice as much as
+  // integer operations.
   unsigned OpCost = (IsFloat ? 2 : 1);
 
   if (TLI->isOperationLegalOrPromote(ISD, LT.second)) {
     // The operation is legal. Assume it costs 1.
-    // If the type is split to multiple registers, assume that thre is some
+    // If the type is split to multiple registers, assume that there is some
     // overhead to this.
     // TODO: Once we have extract/insert subvector cost we need to use them.
     if (LT.first > 1)
