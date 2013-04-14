@@ -1,6 +1,7 @@
 ; RUN: llc < %s -march=sparc   -relocation-model=static -code-model=small  | FileCheck --check-prefix=abs32 %s
 ; RUN: llc < %s -march=sparcv9 -relocation-model=static -code-model=small  | FileCheck --check-prefix=abs32 %s
 ; RUN: llc < %s -march=sparc   -relocation-model=pic    -code-model=medium | FileCheck --check-prefix=v8pic32 %s
+; RUN: llc < %s -march=sparcv9 -relocation-model=pic    -code-model=medium | FileCheck --check-prefix=v9pic32 %s
 
 @G = external global i8
 
@@ -21,3 +22,11 @@ define zeroext i8 @loadG() {
 ; v8pic32: ld [%[[GOT:[gilo][0-7]]]+%[[Goffs]]], %[[Gaddr:[gilo][0-7]]]
 ; v8pic32: ldub [%[[Gaddr]]], %i0
 ; v8pic32: jmp %i7+8
+
+; v9pic32: loadG
+; v9pic32: _GLOBAL_OFFSET_TABLE_
+; v9pic32: sethi %hi(G), %[[R1:[gilo][0-7]]]
+; v9pic32: add %[[R1]], %lo(G), %[[Goffs:[gilo][0-7]]]
+; v9pic32: ldx [%[[GOT:[gilo][0-7]]]+%[[Goffs]]], %[[Gaddr:[gilo][0-7]]]
+; v9pic32: ldub [%[[Gaddr]]], %i0
+; v9pic32: jmp %i7+8
