@@ -15,6 +15,7 @@
 #include "SparcISelLowering.h"
 #include "SparcMachineFunctionInfo.h"
 #include "SparcTargetMachine.h"
+#include "MCTargetDesc/SparcBaseInfo.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -1354,24 +1355,39 @@ static void LookThroughSetCC(SDValue &LHS, SDValue &RHS,
   }
 }
 
+// Convert to a target node and set target flags.
+SDValue SparcTargetLowering::withTargetFlags(SDValue Op, unsigned TF,
+                                             SelectionDAG &DAG) const {
+  if (const GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op))
+    return DAG.getTargetGlobalAddress(GA->getGlobal(),
+                                      GA->getDebugLoc(),
+                                      GA->getValueType(0),
+                                      GA->getOffset(), TF);
+  llvm_unreachable("Unhandled address SDNode");
+}
+
+// Split Op into high and low parts according to HiTF and LoTF.
+// Return an ADD node combining the parts.
+SDValue SparcTargetLowering::makeHiLoPair(SDValue Op,
+                                          unsigned HiTF, unsigned LoTF,
+                                          SelectionDAG &DAG) const {
+  DebugLoc DL = Op.getDebugLoc();
+  EVT VT = Op.getValueType();
+  SDValue Hi = DAG.getNode(SPISD::Hi, DL, VT, withTargetFlags(Op, HiTF, DAG));
+  SDValue Lo = DAG.getNode(SPISD::Lo, DL, VT, withTargetFlags(Op, LoTF, DAG));
+  return DAG.getNode(ISD::ADD, DL, VT, Hi, Lo);
+}
+
 SDValue SparcTargetLowering::LowerGlobalAddress(SDValue Op,
                                                 SelectionDAG &DAG) const {
-  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-  // FIXME there isn't really any debug info here
-  DebugLoc dl = Op.getDebugLoc();
-  SDValue GA = DAG.getTargetGlobalAddress(GV, dl, MVT::i32);
-  SDValue Hi = DAG.getNode(SPISD::Hi, dl, MVT::i32, GA);
-  SDValue Lo = DAG.getNode(SPISD::Lo, dl, MVT::i32, GA);
-
+  SDValue HiLo = makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_)
-    return DAG.getNode(ISD::ADD, dl, MVT::i32, Lo, Hi);
+    return HiLo;
 
-  SDValue GlobalBase = DAG.getNode(SPISD::GLOBAL_BASE_REG, dl,
-                                   getPointerTy());
-  SDValue RelAddr = DAG.getNode(ISD::ADD, dl, MVT::i32, Lo, Hi);
-  SDValue AbsAddr = DAG.getNode(ISD::ADD, dl, MVT::i32,
-                                GlobalBase, RelAddr);
-  return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
+  DebugLoc DL = Op.getDebugLoc();
+  SDValue GlobalBase = DAG.getNode(SPISD::GLOBAL_BASE_REG, DL, getPointerTy());
+  SDValue AbsAddr = DAG.getNode(ISD::ADD, DL, getPointerTy(), GlobalBase, HiLo);
+  return DAG.getLoad(getPointerTy(), DL, DAG.getEntryNode(),
                      AbsAddr, MachinePointerInfo(), false, false, false, 0);
 }
 

@@ -121,6 +121,9 @@ namespace llvm {
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
 
     unsigned getSRetArgSize(SelectionDAG &DAG, SDValue Callee) const;
+    SDValue withTargetFlags(SDValue Op, unsigned TF, SelectionDAG &DAG) const;
+    SDValue makeHiLoPair(SDValue Op, unsigned HiTF, unsigned LoTF,
+                         SelectionDAG &DAG) const;
   };
 } // end namespace llvm
 
