@@ -16,6 +16,7 @@
 #include "Sparc.h"
 #include "SparcInstrInfo.h"
 #include "SparcTargetMachine.h"
+#include "MCTargetDesc/SparcBaseInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -72,15 +73,39 @@ namespace {
 void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
                                    raw_ostream &O) {
   const MachineOperand &MO = MI->getOperand (opNum);
-  bool CloseParen = false;
-  if (MI->getOpcode() == SP::SETHIi && !MO.isReg() && !MO.isImm()) {
-    O << "%hi(";
-    CloseParen = true;
-  } else if ((MI->getOpcode() == SP::ORri || MI->getOpcode() == SP::ADDri) &&
-             !MO.isReg() && !MO.isImm()) {
-    O << "%lo(";
-    CloseParen = true;
+  unsigned TF = MO.getTargetFlags();
+#ifndef NDEBUG
+  // Verify the target flags.
+  if (MO.isGlobal() || MO.isSymbol() || MO.isCPI()) {
+    if (MI->getOpcode() == SP::CALL)
+      assert(TF == SPII::MO_NO_FLAG &&
+             "Cannot handle target flags on call address");
+    else if (MI->getOpcode() == SP::SETHIi)
+      assert((TF == SPII::MO_HI || TF == SPII::MO_H44 || TF == SPII::MO_HH) &&
+             "Invalid target flags for address operand on sethi");
+    else
+      assert((TF == SPII::MO_LO || TF == SPII::MO_M44 || TF == SPII::MO_L44 ||
+              TF == SPII::MO_HM) &&
+             "Invalid target flags for small address operand");
   }
+#endif
+
+  bool CloseParen = true;
+  switch (TF) {
+  default:
+      llvm_unreachable("Unknown target flags on operand");
+  case SPII::MO_NO_FLAG:
+    CloseParen = false;
+    break;
+  case SPII::MO_LO:  O << "%lo(";  break;
+  case SPII::MO_HI:  O << "%hi(";  break;
+  case SPII::MO_H44: O << "%h44("; break;
+  case SPII::MO_M44: O << "%m44("; break;
+  case SPII::MO_L44: O << "%l44("; break;
+  case SPII::MO_HH:  O << "%hh(";  break;
+  case SPII::MO_HM:  O << "%hm(";  break;
+  }
+
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
     O << "%" << StringRef(getRegisterName(MO.getReg())).lower();
@@ -127,14 +152,7 @@ void SparcAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
     return;   // don't print "+0"
 
   O << "+";
-  if (MI->getOperand(opNum+1).isGlobal() ||
-      MI->getOperand(opNum+1).isCPI()) {
-    O << "%lo(";
-    printOperand(MI, opNum+1, O);
-    O << ")";
-  } else {
-    printOperand(MI, opNum+1, O);
-  }
+  printOperand(MI, opNum+1, O);
 }
 
 bool SparcAsmPrinter::printGetPCX(const MachineInstr *MI, unsigned opNum,
