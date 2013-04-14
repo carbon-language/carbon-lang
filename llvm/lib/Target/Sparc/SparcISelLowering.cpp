@@ -1363,6 +1363,17 @@ SDValue SparcTargetLowering::withTargetFlags(SDValue Op, unsigned TF,
                                       GA->getDebugLoc(),
                                       GA->getValueType(0),
                                       GA->getOffset(), TF);
+
+  if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Op))
+    return DAG.getTargetConstantPool(CP->getConstVal(),
+                                     CP->getValueType(0),
+                                     CP->getAlignment(),
+                                     CP->getOffset(), TF);
+
+  if (const ExternalSymbolSDNode *ES = dyn_cast<ExternalSymbolSDNode>(Op))
+    return DAG.getTargetExternalSymbol(ES->getSymbol(),
+                                       ES->getValueType(0), TF);
+
   llvm_unreachable("Unhandled address SDNode");
 }
 
@@ -1378,38 +1389,36 @@ SDValue SparcTargetLowering::makeHiLoPair(SDValue Op,
   return DAG.getNode(ISD::ADD, DL, VT, Hi, Lo);
 }
 
+// Build SDNodes for producing an address from a GlobalAddress, ConstantPool,
+// or ExternalSymbol SDNode.
+SDValue SparcTargetLowering::makeAddress(SDValue Op, SelectionDAG &DAG) const {
+  // Handle PIC mode first.
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+    // This is the pic32 code model, the GOT is known to be smaller than 4GB.
+    SDValue HiLo = makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
+    DebugLoc DL = Op.getDebugLoc();
+    EVT VT = getPointerTy();
+    SDValue GlobalBase = DAG.getNode(SPISD::GLOBAL_BASE_REG, DL, VT);
+    SDValue AbsAddr = DAG.getNode(ISD::ADD, DL, VT, GlobalBase, HiLo);
+    return DAG.getLoad(VT, DL, DAG.getEntryNode(), AbsAddr,
+                       MachinePointerInfo::getGOT(), false, false, false, 0);
+  }
+
+  // This is one of the absolute code models.
+  assert(getTargetMachine().getCodeModel() == CodeModel::Small &&
+         "Only the abs32 code model is supported");
+
+  return makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
+}
+
 SDValue SparcTargetLowering::LowerGlobalAddress(SDValue Op,
                                                 SelectionDAG &DAG) const {
-  SDValue HiLo = makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
-  if (getTargetMachine().getRelocationModel() != Reloc::PIC_)
-    return HiLo;
-
-  DebugLoc DL = Op.getDebugLoc();
-  SDValue GlobalBase = DAG.getNode(SPISD::GLOBAL_BASE_REG, DL, getPointerTy());
-  SDValue AbsAddr = DAG.getNode(ISD::ADD, DL, getPointerTy(), GlobalBase, HiLo);
-  return DAG.getLoad(getPointerTy(), DL, DAG.getEntryNode(),
-                     AbsAddr, MachinePointerInfo(), false, false, false, 0);
+  return makeAddress(Op, DAG);
 }
 
 SDValue SparcTargetLowering::LowerConstantPool(SDValue Op,
                                                SelectionDAG &DAG) const {
-  ConstantPoolSDNode *N = cast<ConstantPoolSDNode>(Op);
-  // FIXME there isn't really any debug info here
-  DebugLoc dl = Op.getDebugLoc();
-  const Constant *C = N->getConstVal();
-  SDValue CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment());
-  SDValue Hi = DAG.getNode(SPISD::Hi, dl, MVT::i32, CP);
-  SDValue Lo = DAG.getNode(SPISD::Lo, dl, MVT::i32, CP);
-  if (getTargetMachine().getRelocationModel() != Reloc::PIC_)
-    return DAG.getNode(ISD::ADD, dl, MVT::i32, Lo, Hi);
-
-  SDValue GlobalBase = DAG.getNode(SPISD::GLOBAL_BASE_REG, dl,
-                                   getPointerTy());
-  SDValue RelAddr = DAG.getNode(ISD::ADD, dl, MVT::i32, Lo, Hi);
-  SDValue AbsAddr = DAG.getNode(ISD::ADD, dl, MVT::i32,
-                                GlobalBase, RelAddr);
-  return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
-                     AbsAddr, MachinePointerInfo(), false, false, false, 0);
+  return makeAddress(Op, DAG);
 }
 
 static SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) {

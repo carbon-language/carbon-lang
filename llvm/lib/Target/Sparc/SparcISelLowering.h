@@ -124,6 +124,7 @@ namespace llvm {
     SDValue withTargetFlags(SDValue Op, unsigned TF, SelectionDAG &DAG) const;
     SDValue makeHiLoPair(SDValue Op, unsigned HiTF, unsigned LoTF,
                          SelectionDAG &DAG) const;
+    SDValue makeAddress(SDValue Op, SelectionDAG &DAG) const;
   };
 } // end namespace llvm
 
