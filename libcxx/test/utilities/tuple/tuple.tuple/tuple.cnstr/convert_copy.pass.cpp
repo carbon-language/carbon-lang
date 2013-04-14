@@ -67,4 +67,13 @@ int main()
         assert(std::get<1>(t1) == int('a'));
         assert(std::get<2>(t1).id_ == 2);
     }
+    {
+        typedef std::tuple<double, char, int> T0;
+        typedef std::tuple<int, int, B> T1;
+        T0 t0(2.5, 'a', 3);
+        T1 t1(t0);
+        assert(std::get<0>(t1) == 2);
+        assert(std::get<1>(t1) == int('a'));
+        assert(std::get<2>(t1).id_ == 3);
+    }
 }
