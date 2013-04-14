@@ -2697,21 +2697,31 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
     // Fall through to diagnose conflicting types.
   }
 
-  // A function that has already been declared has been redeclared or defined
-  // with a different type- show appropriate diagnostic
-  if (unsigned BuiltinID = Old->getBuiltinID()) {
-    // The user has declared a builtin function with an incompatible
-    // signature.
+  // A function that has already been declared has been redeclared or
+  // defined with a different type; show an appropriate diagnostic.
+
+  // If the previous declaration was an implicitly-generated builtin
+  // declaration, then at the very least we should use a specialized note.
+  unsigned BuiltinID;
+  if (Old->isImplicit() && (BuiltinID = Old->getBuiltinID())) {
+    // If it's actually a library-defined builtin function like 'malloc'
+    // or 'printf', just warn about the incompatible redeclaration.
     if (Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID)) {
-      // The function the user is redeclaring is a library-defined
-      // function like 'malloc' or 'printf'. Warn about the
-      // redeclaration, then pretend that we don't know about this
-      // library built-in.
       Diag(New->getLocation(), diag::warn_redecl_library_builtin) << New;
       Diag(Old->getLocation(), diag::note_previous_builtin_declaration)
         << Old << Old->getType();
-      New->getIdentifier()->setBuiltinID(Builtin::NotBuiltin);
-      Old->setInvalidDecl();
+
+      // If this is a global redeclaration, just forget hereafter
+      // about the "builtin-ness" of the function.
+      //
+      // Doing this for local extern declarations is problematic.  If
+      // the builtin declaration remains visible, a second invalid
+      // local declaration will produce a hard error; if it doesn't
+      // remain visible, a single bogus local redeclaration (which is
+      // actually only a warning) could break all the downstream code.
+      if (!New->getDeclContext()->isFunctionOrMethod())
+        New->getIdentifier()->setBuiltinID(Builtin::NotBuiltin);
+
       return false;
     }
 
