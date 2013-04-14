@@ -110,6 +110,7 @@ bool BoUpSLP::vectorizeStoreChain(ValueList &Chain, int CostThreshold) {
   if (!isPowerOf2_32(Sz) || VF < 2) return false;
 
   bool Changed = false;
+  // Look for profitable vectorizable trees at all offsets, starting at zero.
   for (unsigned i = 0, e = Chain.size(); i < e; ++i) {
     if (i + VF > e) return Changed;
     DEBUG(dbgs()<<"SLP: Analyzing " << VF << " stores at offset "<< i << "\n");
@@ -166,7 +167,10 @@ bool BoUpSLP::vectorizeStores(StoreList &Stores, int costThreshold) {
     }
 
     bool Vectorized = vectorizeStoreChain(Operands, costThreshold);
-    if (Vectorized) VectorizedStores.insert(Operands.begin(), Operands.end());
+
+    // Mark the vectorized stores so that we don't vectorize them again.
+    if (Vectorized)
+      VectorizedStores.insert(Operands.begin(), Operands.end());
     Changed |= Vectorized;
   }
 
@@ -174,12 +178,12 @@ bool BoUpSLP::vectorizeStores(StoreList &Stores, int costThreshold) {
 }
 
 int BoUpSLP::getScalarizationCost(ValueList &VL) {
+  // Find the type of the operands in VL.
   Type *ScalarTy = VL[0]->getType();
-
   if (StoreInst *SI = dyn_cast<StoreInst>(VL[0]))
     ScalarTy = SI->getValueOperand()->getType();
-
   VectorType *VecTy = VectorType::get(ScalarTy, VL.size());
+  // Find the cost of inserting/extracting values from the vector.
   return getScalarizationCost(VecTy);
 }
 
@@ -222,6 +226,9 @@ void BoUpSLP::vectorizeArith(ValueList &Operands) {
   Value *Vec = vectorizeTree(Operands, Operands.size());
   BasicBlock::iterator Loc = cast<Instruction>(Vec);
   IRBuilder<> Builder(++Loc);
+  // After vectorizing the operands we need to generate extractelement
+  // instructions and replace all of the uses of the scalar values with
+  // the values that we extracted from the vectorized tree.
   for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
     Value *S = Builder.CreateExtractElement(Vec, Builder.getInt32(i));
     Operands[i]->replaceAllUsesWith(S);
