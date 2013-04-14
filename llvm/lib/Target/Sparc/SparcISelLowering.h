@@ -71,6 +71,7 @@ namespace llvm {
     getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const;
 
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
+    virtual MVT getScalarShiftAmountTy(EVT LHSTy) const { return MVT::i32; }
 
     virtual SDValue
       LowerFormalArguments(SDValue Chain,

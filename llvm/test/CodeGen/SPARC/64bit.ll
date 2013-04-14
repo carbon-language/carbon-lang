@@ -144,3 +144,13 @@ define void @stores(i64* %p, i32* %q, i16* %r, i8* %s) {
 
   ret void
 }
+
+; CHECK: promote_shifts
+; CHECK: ldub [%i0], [[R:%[goli][0-7]]]
+; CHECK: sll [[R]], [[R]], %i0
+define i8 @promote_shifts(i8* %p) {
+  %L24 = load i8* %p
+  %L32 = load i8* %p
+  %B36 = shl i8 %L24, %L32
+  ret i8 %B36
+}

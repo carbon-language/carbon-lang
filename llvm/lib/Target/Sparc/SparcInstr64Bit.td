@@ -133,7 +133,7 @@ def HM10 : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(Val, MVT::i32);
 }]>;
 def : Pat<(i64 imm:$val),
-          (ORrr (SLLXri (ORri (SETHIi (HH22 $val)), (HM10 $val)), (i64 32)),
+          (ORrr (SLLXri (ORri (SETHIi (HH22 $val)), (HM10 $val)), (i32 32)),
                 (ORri (SETHIi (HI22 $val)), (LO10 $val)))>,
       Requires<[Is64Bit]>;
 

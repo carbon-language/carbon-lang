@@ -142,10 +142,10 @@ class F3_Si<bits<2> opVal, bits<6> op3val, bit xVal, dag outs, dag ins,
 // Define rr and ri shift instructions with patterns.
 multiclass F3_S<string OpcStr, bits<6> Op3Val, bit XVal, SDNode OpNode,
                 ValueType VT, RegisterClass RC> {
-  def rr : F3_Sr<2, Op3Val, XVal, (outs RC:$rd), (ins RC:$rs, RC:$rs2),
+  def rr : F3_Sr<2, Op3Val, XVal, (outs RC:$rd), (ins RC:$rs, IntRegs:$rs2),
                  !strconcat(OpcStr, " $rs, $rs2, $rd"),
-                 [(set VT:$rd, (OpNode VT:$rs, VT:$rs2))]>;
-  def ri : F3_Si<2, Op3Val, XVal, (outs RC:$rd), (ins RC:$rs, unknown:$shcnt),
+                 [(set VT:$rd, (OpNode VT:$rs, i32:$rs2))]>;
+  def ri : F3_Si<2, Op3Val, XVal, (outs RC:$rd), (ins RC:$rs, i32imm:$shcnt),
                  !strconcat(OpcStr, " $rs, $shcnt, $rd"),
-                 [(set VT:$rd, (OpNode VT:$rs, (VT imm:$shcnt)))]>;
+                 [(set VT:$rd, (OpNode VT:$rs, (i32 imm:$shcnt)))]>;
 }

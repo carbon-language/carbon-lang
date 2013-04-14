@@ -1415,7 +1415,7 @@ SDValue SparcTargetLowering::makeAddress(SDValue Op, SelectionDAG &DAG) const {
   case CodeModel::Medium: {
     // abs44.
     SDValue H44 = makeHiLoPair(Op, SPII::MO_H44, SPII::MO_M44, DAG);
-    H44 = DAG.getNode(ISD::SHL, DL, VT, H44, DAG.getIntPtrConstant(12));
+    H44 = DAG.getNode(ISD::SHL, DL, VT, H44, DAG.getConstant(12, MVT::i32));
     SDValue L44 = withTargetFlags(Op, SPII::MO_L44, DAG);
     L44 = DAG.getNode(SPISD::Lo, DL, VT, L44);
     return DAG.getNode(ISD::ADD, DL, VT, H44, L44);
@@ -1423,7 +1423,7 @@ SDValue SparcTargetLowering::makeAddress(SDValue Op, SelectionDAG &DAG) const {
   case CodeModel::Large: {
     // abs64.
     SDValue Hi = makeHiLoPair(Op, SPII::MO_HH, SPII::MO_HM, DAG);
-    Hi = DAG.getNode(ISD::SHL, DL, VT, Hi, DAG.getIntPtrConstant(32));
+    Hi = DAG.getNode(ISD::SHL, DL, VT, Hi, DAG.getConstant(32, MVT::i32));
     SDValue Lo = makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
     return DAG.getNode(ISD::ADD, DL, VT, Hi, Lo);
   }
