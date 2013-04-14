@@ -392,6 +392,9 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
   // Not sure whether we want thread-safe static local variables as VS
   // doesn't make them thread-safe.
 
+  if (D.getTLSKind())
+    CGM.ErrorUnsupported(&D, "dynamic TLS initialization");
+
   // Emit the initializer and add a global destructor if appropriate.
   CGF.EmitCXXGlobalVarDeclInit(D, DeclPtr, PerformInit);
 }

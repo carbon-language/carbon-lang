@@ -1627,6 +1627,7 @@ CodeGenModule::MaybeEmitGlobalStdInitializerListInitializer(const VarDecl *D,
                                           D->getLocStart(), D->getLocation(),
                                           name, arrayType, sourceInfo,
                                           SC_Static);
+  backingArray->setTLSKind(D->getTLSKind());
 
   // Now clone the InitListExpr to initialize the array instead.
   // Incredible hack: we want to use the existing InitListExpr here, so we need

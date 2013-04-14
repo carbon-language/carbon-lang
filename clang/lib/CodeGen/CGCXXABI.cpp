@@ -220,8 +220,12 @@ void CGCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
 }
 
 void CGCXXABI::registerGlobalDtor(CodeGenFunction &CGF,
+                                  const VarDecl &D,
                                   llvm::Constant *dtor,
                                   llvm::Constant *addr) {
+  if (D.getTLSKind())
+    CGM.ErrorUnsupported(&D, "non-trivial TLS destruction");
+
   // The default behavior is to use atexit.
   CGF.registerGlobalDtorWithAtExit(dtor, addr);
 }

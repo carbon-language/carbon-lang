@@ -80,6 +80,7 @@ static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
   case QualType::DK_objc_strong_lifetime:
   case QualType::DK_objc_weak_lifetime:
     // We don't care about releasing objects during process teardown.
+    assert(!D.getTLSKind() && "should have rejected this");
     return;
   }
 
@@ -105,7 +106,7 @@ static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
     argument = llvm::Constant::getNullValue(CGF.Int8PtrTy);
   }
 
-  CGM.getCXXABI().registerGlobalDtor(CGF, function, argument);
+  CGM.getCXXABI().registerGlobalDtor(CGF, D, function, argument);
 }
 
 /// Emit code to cause the variable at the given address to be considered as
@@ -217,9 +218,6 @@ void CodeGenFunction::EmitCXXGuardedInit(const VarDecl &D,
     CGM.Error(D.getLocation(),
               "this initialization requires a guard variable, which "
               "the kernel does not support");
-
-  if (D.getTLSKind())
-    CGM.ErrorUnsupported(D.getInit(), "dynamic TLS initialization");
 
   CGM.getCXXABI().EmitGuardedInit(*this, D, DeclPtr, PerformInit);
 }

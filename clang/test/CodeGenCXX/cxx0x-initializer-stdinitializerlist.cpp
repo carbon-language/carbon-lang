@@ -51,6 +51,12 @@ struct wantslist1 {
 // CHECK: @globalInitList1 = global %{{[^ ]+}} { i32* getelementptr inbounds ([3 x i32]* @_ZL25globalInitList1__initlist, i32 0, i32 0), i{{32|64}} 3 }
 std::initializer_list<int> globalInitList1 = {1, 2, 3};
 
+namespace thread_local_global_array {
+  // CHECK: @_ZN25thread_local_global_arrayL11x__initlistE = internal thread_local global [4 x i32] [i32 1, i32 2, i32 3, i32 4]
+  // CHECK: @_ZN25thread_local_global_array1xE = thread_local global {{.*}} @_ZN25thread_local_global_arrayL11x__initlistE, {{.*}} i64 4
+  std::initializer_list<int> thread_local x = { 1, 2, 3, 4 };
+}
+
 // CHECK: @_ZL25globalInitList2__initlist = internal global [2 x %{{[^ ]*}}] zeroinitializer
 // CHECK: @globalInitList2 = global %{{[^ ]+}} { %[[WITHARG:[^ *]+]]* getelementptr inbounds ([2 x
 // CHECK: appending global

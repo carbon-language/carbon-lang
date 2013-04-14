@@ -130,8 +130,8 @@ public:
 
   void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
                        llvm::GlobalVariable *DeclPtr, bool PerformInit);
-  void registerGlobalDtor(CodeGenFunction &CGF, llvm::Constant *dtor,
-                          llvm::Constant *addr);
+  void registerGlobalDtor(CodeGenFunction &CGF, const VarDecl &D,
+                          llvm::Constant *dtor, llvm::Constant *addr);
 };
 
 class ARMCXXABI : public ItaniumCXXABI {
@@ -1042,10 +1042,10 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
                                     bool shouldPerformInit) {
   CGBuilderTy &Builder = CGF.Builder;
 
-  // We only need to use thread-safe statics for local variables;
+  // We only need to use thread-safe statics for local non-TLS variables;
   // global initialization is always single-threaded.
-  bool threadsafe =
-    (getContext().getLangOpts().ThreadsafeStatics && D.isLocalVarDecl());
+  bool threadsafe = getContext().getLangOpts().ThreadsafeStatics &&
+                    D.isLocalVarDecl() && !D.getTLSKind();
 
   // If we have a global variable with internal linkage and thread-safe statics
   // are disabled, we can just let the guard variable be of type i8.
@@ -1080,6 +1080,8 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
                                      llvm::ConstantInt::get(guardTy, 0),
                                      guardName.str());
     guard->setVisibility(var->getVisibility());
+    // If the variable is thread-local, so is its guard variable.
+    guard->setThreadLocalMode(var->getThreadLocalMode());
 
     CGM.setStaticLocalDeclGuardAddress(&D, guard);
   }
@@ -1180,7 +1182,10 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
 /// Register a global destructor using __cxa_atexit.
 static void emitGlobalDtorWithCXAAtExit(CodeGenFunction &CGF,
                                         llvm::Constant *dtor,
-                                        llvm::Constant *addr) {
+                                        llvm::Constant *addr,
+                                        bool TLS) {
+  const char *Name = TLS ? "__cxa_thread_atexit" : "__cxa_atexit";
+
   // We're assuming that the destructor function is something we can
   // reasonably call with the default CC.  Go ahead and cast it to the
   // right prototype.
@@ -1193,8 +1198,7 @@ static void emitGlobalDtorWithCXAAtExit(CodeGenFunction &CGF,
     llvm::FunctionType::get(CGF.IntTy, paramTys, false);
 
   // Fetch the actual function.
-  llvm::Constant *atexit =
-    CGF.CGM.CreateRuntimeFunction(atexitTy, "__cxa_atexit");
+  llvm::Constant *atexit = CGF.CGM.CreateRuntimeFunction(atexitTy, Name);
   if (llvm::Function *fn = dyn_cast<llvm::Function>(atexit))
     fn->setDoesNotThrow();
 
@@ -1212,12 +1216,15 @@ static void emitGlobalDtorWithCXAAtExit(CodeGenFunction &CGF,
 
 /// Register a global destructor as best as we know how.
 void ItaniumCXXABI::registerGlobalDtor(CodeGenFunction &CGF,
+                                       const VarDecl &D,
                                        llvm::Constant *dtor,
                                        llvm::Constant *addr) {
   // Use __cxa_atexit if available.
-  if (CGM.getCodeGenOpts().CXAAtExit) {
-    return emitGlobalDtorWithCXAAtExit(CGF, dtor, addr);
-  }
+  if (CGM.getCodeGenOpts().CXAAtExit)
+    return emitGlobalDtorWithCXAAtExit(CGF, dtor, addr, D.getTLSKind());
+
+  if (D.getTLSKind())
+    CGM.ErrorUnsupported(&D, "non-trivial TLS destruction");
 
   // In Apple kexts, we want to add a global destructor entry.
   // FIXME: shouldn't this be guarded by some variable?

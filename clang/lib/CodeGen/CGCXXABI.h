@@ -330,8 +330,8 @@ public:
   ///
   /// \param dtor - a function taking a single pointer argument
   /// \param addr - a pointer to pass to the destructor function.
-  virtual void registerGlobalDtor(CodeGenFunction &CGF, llvm::Constant *dtor,
-                                  llvm::Constant *addr);
+  virtual void registerGlobalDtor(CodeGenFunction &CGF, const VarDecl &D,
+                                  llvm::Constant *dtor, llvm::Constant *addr);
 };
 
 // Create an instance of a C++ ABI class:
