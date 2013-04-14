@@ -14,6 +14,18 @@
 // RUN:   | FileCheck --check-prefix=CHECK-NOMIPS16 %s
 // CHECK-NOMIPS16: "-target-feature" "-mips16"
 //
+// -mmicromips
+// RUN: %clang -target mips-linux-gnu -### -c %s \
+// RUN:     -mno-micromips -mmicromips 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MICROMIPS %s
+// CHECK-MICROMIPS: "-target-feature" "+micromips"
+//
+// -mno-micromips
+// RUN: %clang -target mips-linux-gnu -### -c %s \
+// RUN:     -mmicromips -mno-micromips 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NOMICROMIPS %s
+// CHECK-NOMICROMIPS: "-target-feature" "-micromips"
+//
 // -mdsp
 // RUN: %clang -target mips-linux-gnu -### -c %s \
 // RUN:     -mno-dsp -mdsp 2>&1 \

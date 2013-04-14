@@ -991,6 +991,9 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
                    options::OPT_mips16, options::OPT_mno_mips16,
                    "mips16");
   AddTargetFeature(Args, CmdArgs,
+                   options::OPT_mmicromips, options::OPT_mno_micromips,
+                   "micromips");
+  AddTargetFeature(Args, CmdArgs,
                    options::OPT_mdsp, options::OPT_mno_dsp,
                    "dsp");
   AddTargetFeature(Args, CmdArgs,

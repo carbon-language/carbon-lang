@@ -1168,6 +1168,16 @@
 // RUN:   | FileCheck -check-prefix NOMIPS16 %s
 // NOMIPS16-NOT:#define __mips16 1
 //
+// RUN: %clang_cc1 -target-feature +micromips \
+// RUN:   -E -dM -triple=mips-none-none < /dev/null \
+// RUN:   | FileCheck -check-prefix MICROMIPS %s
+// MICROMIPS:#define __mips_micromips 1
+//
+// RUN: %clang_cc1 -target-feature -micromips \
+// RUN:   -E -dM -triple=mips-none-none < /dev/null \
+// RUN:   | FileCheck -check-prefix NOMICROMIPS %s
+// NOMICROMIPS-NOT:#define __mips_micromips 1
+//
 // RUN: %clang_cc1 -target-feature +dsp \
 // RUN:   -E -dM -triple=mips-none-none < /dev/null \
 // RUN:   | FileCheck -check-prefix MIPS-DSP %s
