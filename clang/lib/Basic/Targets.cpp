@@ -4405,8 +4405,9 @@ class MipsTargetInfoBase : public TargetInfo {
   static const Builtin::Info BuiltinInfo[];
   std::string CPU;
   bool IsMips16;
+  bool IsSingleFloat;
   enum MipsFloatABI {
-    HardFloat, SingleFloat, SoftFloat
+    HardFloat, SoftFloat
   } FloatABI;
   enum DspRevEnum {
     NoDSP, DSP1, DSP2
@@ -4422,6 +4423,7 @@ public:
     : TargetInfo(triple),
       CPU(CPUStr),
       IsMips16(false),
+      IsSingleFloat(false),
       FloatABI(HardFloat),
       DspRev(NoDSP),
       ABI(ABIStr)
@@ -4448,14 +4450,13 @@ public:
     case HardFloat:
       Builder.defineMacro("__mips_hard_float", Twine(1));
       break;
-    case SingleFloat:
-      Builder.defineMacro("__mips_hard_float", Twine(1));
-      Builder.defineMacro("__mips_single_float", Twine(1));
-      break;
     case SoftFloat:
       Builder.defineMacro("__mips_soft_float", Twine(1));
       break;
     }
+
+    if (IsSingleFloat)
+      Builder.defineMacro("__mips_single_float", Twine(1));
 
     if (IsMips16)
       Builder.defineMacro("__mips16", Twine(1));
@@ -4564,13 +4565,14 @@ public:
 
   virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
     IsMips16 = false;
+    IsSingleFloat = false;
     FloatABI = HardFloat;
     DspRev = NoDSP;
 
     for (std::vector<std::string>::iterator it = Features.begin(),
          ie = Features.end(); it != ie; ++it) {
       if (*it == "+single-float")
-        FloatABI = SingleFloat;
+        IsSingleFloat = true;
       else if (*it == "+soft-float")
         FloatABI = SoftFloat;
       else if (*it == "+mips16")

@@ -1150,6 +1150,12 @@
 // MIPS-FABI-SINGLE:#define __mips_hard_float 1
 // MIPS-FABI-SINGLE:#define __mips_single_float 1
 //
+// RUN: %clang_cc1 -target-feature +soft-float -target-feature +single-float \
+// RUN:   -E -dM -ffreestanding -triple=mips-none-none < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-FABI-SINGLE-SOFT %s
+// MIPS-FABI-SINGLE-SOFT:#define __mips_single_float 1
+// MIPS-FABI-SINGLE-SOFT:#define __mips_soft_float 1
+//
 // Check MIPS features macros
 //
 // RUN: %clang_cc1 -target-feature +mips16 \
