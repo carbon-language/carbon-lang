@@ -483,15 +483,6 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
       Args.add(RValue::get(EmitCastToVoidPtr(Dest)),
                getContext().VoidPtrTy);
       break;
-#if 0
-    // These are only defined for 1-16 byte integers.  It is not clear what
-    // their semantics would be on anything else...
-    case AtomicExpr::Add:   LibCallName = "__atomic_fetch_add_generic"; break;
-    case AtomicExpr::Sub:   LibCallName = "__atomic_fetch_sub_generic"; break;
-    case AtomicExpr::And:   LibCallName = "__atomic_fetch_and_generic"; break;
-    case AtomicExpr::Or:    LibCallName = "__atomic_fetch_or_generic"; break;
-    case AtomicExpr::Xor:   LibCallName = "__atomic_fetch_xor_generic"; break;
-#endif
     default: return EmitUnsupportedRValue(E, "atomic library call");
     }
     // order is always the last parameter
