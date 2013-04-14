@@ -329,3 +329,33 @@ into vector operations.
   }
 
 
+.. _slp-vectorizer:
+
+The SLP Vectorizer
+==========================
+
+The SLP vectorizer (superword-level parallelism) is a new experimental 
+infrastructure for vectorizing code and rolling loops. 
+A major focus of the work on the SLP vectorizer is to make it fast and
+flexible. It is designed as a library that can be used by other passes.
+
+The SLP vectorizer is in early development stages but can already vectorize
+and accelerate many programs in the LLVM test suite.
+
+=======================   ============
+Benchmark Name              Gain
+=======================   ============
+Misc/flops-7               -32.70%
+Misc/matmul_f64_4x4        -23.23%
+Olden/power                -21.45%
+Misc/flops-4               -14.90%
+ASC_Sequoia/AMGmk          -13.85%
+TSVC/LoopRerolling-flt     -11.76%
+Misc/flops-6               -9.70%
+Misc/flops-5               -8.54%
+Misc/flops                 -8.12%
+TSVC/NodeSplitting-dbl     -6.96%
+Misc-C++/sphereflake       -6.74%
+Ptrdist/yacr2              -6.31%
+=======================   ============
+
