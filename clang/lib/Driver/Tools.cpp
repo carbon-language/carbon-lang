@@ -984,16 +984,9 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
     CmdArgs.push_back("hard");
   }
 
-  if (Arg *A = Args.getLastArg(options::OPT_msingle_float,
-                               options::OPT_mdouble_float)) {
-    if (A->getOption().matches(options::OPT_msingle_float)) {
-      // Restrict the use of hardware floating-point
-      // instructions to 32-bit operations.
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("+single-float");
-    }
-  }
-
+  AddTargetFeature(Args, CmdArgs,
+                   options::OPT_msingle_float, options::OPT_mdouble_float,
+                   "single-float");
   AddTargetFeature(Args, CmdArgs,
                    options::OPT_mips16, options::OPT_mno_mips16,
                    "mips16");
