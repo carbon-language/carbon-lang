@@ -100,8 +100,8 @@ define i1 @test8(i32 %X) {
   %S = icmp eq i16 %R, 0
   ret i1 %S
 ; CHECK: @test8
-; CHECK-NEXT: add i32 %X, -8
-; CHECK-NEXT: icmp ult i32 {{.*}}, 2
+; CHECK-NEXT: and i32 %X, -2
+; CHECK-NEXT: icmp eq i32 {{.*}}, 8
 ; CHECK-NEXT: ret i1
 }
 

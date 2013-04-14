@@ -178,12 +178,12 @@ define i1 @test18(i32 %A) {
 define i1 @test19(i32 %A) {
         %B = icmp eq i32 %A, 50
         %C = icmp eq i32 %A, 51
-        ;; (A-50) < 2
+        ;; (A&-2) == 50
         %D = or i1 %B, %C
         ret i1 %D
 ; CHECK: @test19
-; CHECK: add i32
-; CHECK: icmp ult 
+; CHECK: and i32
+; CHECK: icmp eq 
 ; CHECK: ret i1
 }
 

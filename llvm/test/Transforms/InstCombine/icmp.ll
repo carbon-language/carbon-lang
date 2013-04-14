@@ -964,3 +964,15 @@ define i1 @icmp_and_shl_neg_eq_0(i32 %A, i32 %B) {
   %cmp = icmp eq i32 %and, 0
   ret i1 %cmp
 }
+
+; CHECK: @icmp_add_and_shr_ne_0
+; CHECK-NEXT: [[AND:%[a-z0-9]+]] = and i32 %X, 240
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ne i32 [[AND]], 224
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_add_and_shr_ne_0(i32 %X) {
+  %shr = lshr i32 %X, 4
+  %and = and i32 %shr, 15
+  %add = add i32 %and, -14
+  %tobool = icmp ne i32 %add, 0
+  ret i1 %tobool
+}

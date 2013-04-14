@@ -1547,14 +1547,6 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
     switch (RHSCC) {
     default: llvm_unreachable("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:
-      if (LHSCst == SubOne(RHSCst)) {
-        // (X == 13 | X == 14) -> X-13 <u 2
-        Constant *AddCST = ConstantExpr::getNeg(LHSCst);
-        Value *Add = Builder->CreateAdd(Val, AddCST, Val->getName()+".off");
-        AddCST = ConstantExpr::getSub(AddOne(RHSCst), LHSCst);
-        return Builder->CreateICmpULT(Add, AddCST);
-      }
-
       if (LHS->getOperand(0) == RHS->getOperand(0)) {
         // if LHSCst and RHSCst differ only by one bit:
         // (A == C1 || A == C2) -> (A & ~(C1 ^ C2)) == C1
@@ -1566,6 +1558,14 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
           Value *And = Builder->CreateAnd(LHS->getOperand(0), NegCst);
           return Builder->CreateICmp(ICmpInst::ICMP_EQ, And, LHSCst);
         }
+      }
+
+      if (LHSCst == SubOne(RHSCst)) {
+        // (X == 13 | X == 14) -> X-13 <u 2
+        Constant *AddCST = ConstantExpr::getNeg(LHSCst);
+        Value *Add = Builder->CreateAdd(Val, AddCST, Val->getName()+".off");
+        AddCST = ConstantExpr::getSub(AddOne(RHSCst), LHSCst);
+        return Builder->CreateICmpULT(Add, AddCST);
       }
 
       break;                         // (X == 13 | X == 15) -> no change
