@@ -85,14 +85,16 @@ struct SLPVectorizer : public BasicBlockPass {
     return true;
   }
 
-  bool tryToVectorizePair(BinaryOperator *A, BinaryOperator *B,  BoUpSLP &R) {
+  bool tryToVectorizePair(Value *A, Value *B,  BoUpSLP &R) {
     if (!A || !B) return false;
     BoUpSLP::ValueList VL;
     VL.push_back(A);
     VL.push_back(B);
     int Cost = R.getTreeCost(VL);
-    DEBUG(dbgs()<<"SLP: Cost of pair:" << Cost << ".\n");
-    if (Cost >= -SLPCostThreshold) return false;
+    int ExtrCost = R.getScalarizationCost(VL);
+    DEBUG(dbgs()<<"SLP: Cost of pair:" << Cost <<
+                  " Cost of extract:" << ExtrCost << ".\n");
+    if ((Cost+ExtrCost) >= -SLPCostThreshold) return false;
     DEBUG(dbgs()<<"SLP: Vectorizing pair.\n");
     R.vectorizeArith(VL);
     return true;
@@ -100,11 +102,12 @@ struct SLPVectorizer : public BasicBlockPass {
 
   bool tryToVectorizeCandidate(BinaryOperator *V,  BoUpSLP &R) {
     if (!V) return false;
+    // Try to vectorize V.
+    if (tryToVectorizePair(V->getOperand(0), V->getOperand(1), R))
+      return true;
+
     BinaryOperator *A = dyn_cast<BinaryOperator>(V->getOperand(0));
     BinaryOperator *B = dyn_cast<BinaryOperator>(V->getOperand(1));
-    // Try to vectorize V.
-    if (tryToVectorizePair(A, B, R)) return true;
-
     // Try to skip B.
     if (B && B->hasOneUse()) {
       BinaryOperator *B0 = dyn_cast<BinaryOperator>(B->getOperand(0));

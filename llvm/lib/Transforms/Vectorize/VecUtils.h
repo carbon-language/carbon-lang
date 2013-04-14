@@ -61,6 +61,11 @@ struct BoUpSLP  {
   /// A negative number means that this is profitable.
   int getTreeCost(ValueList &VL);
 
+  /// \returns the scalarization cost for this ValueList. Assuming that this
+  /// subtree gets vectorized, we may need to extract the values from the
+  /// roots. This method calculates the cost of extracting the values.
+  int getScalarizationCost(ValueList &VL);
+
   /// \brief Attempts to order and vectorize a sequence of stores. This
   /// function does a quadratic scan of the given stores.
   /// \returns true if the basic block was modified.
@@ -118,7 +123,7 @@ private:
   /// by multiple lanes, or by users outside the tree.
   /// NOTICE: The vectorization methods also use this set.
   ValueSet MustScalarize;
-  
+
   // Contains a list of values that are used outside the current tree. This
   // set must be reset between runs.
   ValueSet MultiUserVals;

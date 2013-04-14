@@ -173,6 +173,16 @@ bool BoUpSLP::vectorizeStores(StoreList &Stores, int costThreshold) {
   return Changed;
 }
 
+int BoUpSLP::getScalarizationCost(ValueList &VL) {
+  Type *ScalarTy = VL[0]->getType();
+
+  if (StoreInst *SI = dyn_cast<StoreInst>(VL[0]))
+    ScalarTy = SI->getValueOperand()->getType();
+
+  VectorType *VecTy = VectorType::get(ScalarTy, VL.size());
+  return getScalarizationCost(VecTy);
+}
+
 int BoUpSLP::getScalarizationCost(Type *Ty) {
   int Cost = 0;
   for (unsigned i = 0, e = cast<VectorType>(Ty)->getNumElements(); i < e; ++i)
