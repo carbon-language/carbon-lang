@@ -18,13 +18,18 @@
 
 <h1>Checker Developer Manual</h1>
 
-<p>The static analyzer engine performs symbolic execution of the program and 
+<p>The static analyzer engine performs path-sensitive exploration of the program and 
 relies on a set of checkers to implement the logic for detecting and 
-constructing bug reports. This page provides hints and guidelines for anyone 
-who is interested in implementing their own checker. The static analyzer is a 
+constructing specific bug reports. Anyone who is interested in implementing their own 
+checker, should check out the Building a Checker in 24 Hours talk 
+(<a href="http://llvm.org/devmtg/2012-11/Zaks-Rose-Checker24Hours.pdf">slides</a>
+ <a href="http://llvm.org/devmtg/2012-11/videos/Zaks-Rose-Checker24Hours.mp4">video</a>) 
+and refer to this page for additional information on writing a checker. The static analyzer is a 
 part of the Clang project, so consult <a href="http://clang.llvm.org/hacking.html">Hacking on Clang</a> 
-and <a href="http://llvm.org/docs/ProgrammersManual.html">LLVM Programmer's Manual</a>
-for general developer guidelines and information. </p>
+and <a href="http://llvm.org/docs/ProgrammersManual.html">LLVM Programmer's Manual</a> 
+for developer guidelines and send your questions and proposals to 
+<a href=http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev>cfe-dev mailing list</a>. 
+</p>
 
     <ul>
       <li><a href="#start">Getting Started</a></li>
