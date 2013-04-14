@@ -245,6 +245,22 @@
 // CHECK-UBUNTU-12-04-ARM-HF: "{{.*}}/usr/lib/gcc/arm-linux-gnueabihf/4.6.3/crtend.o"
 // CHECK-UBUNTU-12-04-ARM-HF: "{{.*}}/usr/lib/gcc/arm-linux-gnueabihf/4.6.3/../../../arm-linux-gnueabihf/crtn.o"
 //
+// Check fedora 18 on arm.
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target armv7-unknown-linux-gnueabihf \
+// RUN:     --sysroot=%S/Inputs/fedora_18_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-FEDORA-18-ARM-HF %s
+// CHECK-FEDORA-18-ARM-HF: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-FEDORA-18-ARM-HF: "{{.*}}/usr/lib/gcc/armv7hl-redhat-linux-gnueabi/4.7.2/../../../crt1.o"
+// CHECK-FEDORA-18-ARM-HF: "{{.*}}/usr/lib/gcc/armv7hl-redhat-linux-gnueabi/4.7.2/../../../crti.o"
+// CHECK-FEDORA-18-ARM-HF: "{{.*}}/usr/lib/gcc/armv7hl-redhat-linux-gnueabi/4.7.2/crtbegin.o"
+// CHECK-FEDORA-18-ARM-HF: "-L[[SYSROOT]]/usr/lib/gcc/armv7hl-redhat-linux-gnueabi/4.7.2"
+// CHECK-FEDORA-18-ARM-HF: "-L[[SYSROOT]]/usr/lib/gcc/armv7hl-redhat-linux-gnueabi/4.7.2/../../.."
+// CHECK-FEDORA-18-ARM-HF: "-L[[SYSROOT]]/lib"
+// CHECK-FEDORA-18-ARM-HF: "-L[[SYSROOT]]/usr/lib"
+// CHECK-FEDORA-18-ARM-HF: "{{.*}}/usr/lib/gcc/armv7hl-redhat-linux-gnueabi/4.7.2/crtend.o"
+// CHECK-FEDORA-18-ARM-HF: "{{.*}}/usr/lib/gcc/armv7hl-redhat-linux-gnueabi/4.7.2/../../../crtn.o"
+//
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target arm-unknown-linux-gnueabi \
 // RUN:     --sysroot=%S/Inputs/ubuntu_12.04_LTS_multiarch_tree \

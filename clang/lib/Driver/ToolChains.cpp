@@ -1086,6 +1086,7 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
   };
   static const char *const ARMHFTriples[] = {
     "arm-linux-gnueabihf",
+    "armv7hl-redhat-linux-gnueabi"
   };
 
   static const char *const X86_64LibDirs[] = { "/lib64", "/lib" };
