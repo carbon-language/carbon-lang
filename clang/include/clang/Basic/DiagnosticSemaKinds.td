@@ -5418,6 +5418,13 @@ def ext_in_class_initializer_non_constant : Extension<
   "in-class initializer for static data member is not a constant expression; "
   "folding it to a constant is a GNU extension">, InGroup<GNU>;
 
+def err_thread_dynamic_init : Error<
+  "initializer for thread-local variable must be a constant expression">;
+def err_thread_nontrivial_dtor : Error<
+  "type of thread-local variable has non-trivial destruction">;
+def note_use_thread_local : Note<
+  "use 'thread_local' to allow this">;
+
 // C++ anonymous unions and GNU anonymous structs/unions
 def ext_anonymous_union : Extension<
   "anonymous unions are a C11 extension">, InGroup<C11>;

@@ -7627,6 +7627,18 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     // C99 6.7.8p4. All file scoped initializers need to be constant.
     if (!getLangOpts().CPlusPlus && !VDecl->isInvalidDecl())
       CheckForConstantInitializer(Init, DclT);
+    else if (VDecl->getTLSKind() == VarDecl::TLS_Static &&
+             !VDecl->isInvalidDecl() && !DclT->isDependentType() &&
+             !Init->isValueDependent() && !VDecl->isConstexpr() &&
+             !Init->isEvaluatable(Context)) {
+      // GNU C++98 edits for __thread, [basic.start.init]p4:
+      //   An object of thread storage duration shall not require dynamic
+      //   initialization.
+      // FIXME: Need strict checking here.
+      Diag(VDecl->getLocation(), diag::err_thread_dynamic_init);
+      if (getLangOpts().CPlusPlus11)
+        Diag(VDecl->getLocation(), diag::note_use_thread_local);
+    }
   }
 
   // We will represent direct-initialization similarly to copy-initialization:
@@ -7970,6 +7982,16 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
 
     if (!prev)
       Diag(var->getLocation(), diag::warn_missing_variable_declarations) << var;
+  }
+
+  if (var->getTLSKind() == VarDecl::TLS_Static &&
+      var->getType().isDestructedType()) {
+    // GNU C++98 edits for __thread, [basic.start.term]p3:
+    //   The type of an object with thread storage duration shall not
+    //   have a non-trivial destructor.
+    Diag(var->getLocation(), diag::err_thread_nontrivial_dtor);
+    if (getLangOpts().CPlusPlus11)
+      Diag(var->getLocation(), diag::note_use_thread_local);
   }
 
   // All the following checks are C++ only.

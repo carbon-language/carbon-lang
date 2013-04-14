@@ -3,6 +3,7 @@
 // RUN: %clang_cc1 -triple i686-pc-linux-gnu -fsyntax-only -Wno-private-extern -verify -pedantic %s -DC11 -D__thread=_Thread_local
 // RUN: %clang_cc1 -triple i686-pc-linux-gnu -fsyntax-only -Wno-private-extern -verify -pedantic -x c++ %s -DC11 -D__thread=_Thread_local
 // RUN: %clang_cc1 -triple i686-pc-linux-gnu -fsyntax-only -Wno-private-extern -verify -pedantic -x c++ %s -DCXX11 -D__thread=thread_local -std=c++11
+// RUN: %clang_cc1 -triple i686-pc-linux-gnu -fsyntax-only -Wno-private-extern -verify -pedantic -x c++ %s -DC11 -D__thread=_Thread_local -std=c++11
 
 #ifdef __cplusplus
 // In C++, we define __private_extern__ to extern.
@@ -51,8 +52,8 @@ int f(__thread int t7) { // expected-error {{' is only allowed on variable decla
   __thread auto int t12a; // expected-error-re {{cannot combine with previous '(__thread|_Thread_local)' declaration specifier}}
   auto __thread int t12b; // expected-error {{cannot combine with previous 'auto' declaration specifier}}
 #else
-  __thread auto t12a = 0; // expected-error {{'thread_local' variables must have global storage}}
-  auto __thread t12b = 0; // expected-error {{'thread_local' variables must have global storage}}
+  __thread auto t12a = 0; // expected-error-re {{'(t|_T)hread_local' variables must have global storage}}
+  auto __thread t12b = 0; // expected-error-re {{'(t|_T)hread_local' variables must have global storage}}
 #endif
   __thread register int t13a; // expected-error-re {{cannot combine with previous '(__thread|_Thread_local|thread_local)' declaration specifier}}
   register __thread int t13b; // expected-error {{cannot combine with previous 'register' declaration specifier}}
@@ -82,4 +83,28 @@ void g() {
 }
 #if __cplusplus >= 201103L
 constexpr int *thread_int_ptr_2 = &thread_int; // expected-error {{must be initialized by a constant expression}}
+#endif
+
+int non_const();
+__thread int non_const_init = non_const();
+#if !defined(__cplusplus)
+// expected-error@-2 {{initializer element is not a compile-time constant}}
+#elif !defined(CXX11)
+// expected-error@-4 {{initializer for thread-local variable must be a constant expression}}
+#if __cplusplus >= 201103L
+// expected-note@-6 {{use 'thread_local' to allow this}}
+#endif
+#endif
+
+#ifdef __cplusplus
+struct S {
+  ~S();
+};
+__thread S s;
+#if !defined(CXX11)
+// expected-error@-2 {{type of thread-local variable has non-trivial destruction}}
+#if __cplusplus >= 201103L
+// expected-note@-4 {{use 'thread_local' to allow this}}
+#endif
+#endif
 #endif
