@@ -36,7 +36,6 @@
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/SystemUtils.h"
@@ -530,8 +529,9 @@ static TargetMachine* GetTargetMachine(Triple TheTriple) {
   const Target *TheTarget = TargetRegistry::lookupTarget(MArch, TheTriple,
                                                          Error);
   // Some modules don't specify a triple, and this is okay.
-  if (!TheTarget)
+  if (!TheTarget) {
     return 0;
+  }
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
@@ -598,12 +598,9 @@ int main(int argc, char **argv) {
   }
 
   // If we are supposed to override the target triple, do so now.
-  const DataLayout *TD;
-  if (!TargetTriple.empty()) {
+  if (!TargetTriple.empty())
     M->setTargetTriple(Triple::normalize(TargetTriple));
-    TD = GetTargetMachine(Triple(TargetTriple))->getDataLayout();
-  }
-  
+
   // Figure out what stream we are supposed to write to...
   OwningPtr<tool_output_file> Out;
   if (NoOutput) {
@@ -644,16 +641,16 @@ int main(int argc, char **argv) {
     TLI->disableAllFunctions();
   Passes.add(TLI);
 
-  // If we don't have a data layout by now go ahead and set it if we can.
-  if (!TD) {
-    const std::string &ModuleDataLayout = M.get()->getDataLayout();
-    if (!ModuleDataLayout.empty())
-      TD = new DataLayout(ModuleDataLayout);
-    else if (!DefaultDataLayout.empty())
-      TD = new DataLayout(DefaultDataLayout);
-  }
+  // Add an appropriate DataLayout instance for this module.
+  DataLayout *TD = 0;
+  const std::string &ModuleDataLayout = M.get()->getDataLayout();
+  if (!ModuleDataLayout.empty())
+    TD = new DataLayout(ModuleDataLayout);
+  else if (!DefaultDataLayout.empty())
+    TD = new DataLayout(DefaultDataLayout);
+
   if (TD)
-    Passes.add(new DataLayout(*TD));
+    Passes.add(TD);
 
   Triple ModuleTriple(M->getTargetTriple());
   TargetMachine *Machine = 0;
