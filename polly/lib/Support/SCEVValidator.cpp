@@ -202,6 +202,8 @@ public:
   class ValidatorResult visitMulExpr(const SCEVMulExpr *Expr) {
     ValidatorResult Return(SCEVType::INT);
 
+    bool HasMultipleParams = false;
+
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
       ValidatorResult Op = visit(Expr->getOperand(i));
 
@@ -209,7 +211,7 @@ public:
         continue;
 
       if (Op.isPARAM() && Return.isPARAM()) {
-        Return.merge(Op);
+        HasMultipleParams  = true;
         continue;
       }
 
@@ -225,6 +227,9 @@ public:
 
       Return.merge(Op);
     }
+
+    if (HasMultipleParams)
+      return ValidatorResult(SCEVType::PARAM, Expr);
 
     // TODO: Check for NSW and NUW.
     return Return;
