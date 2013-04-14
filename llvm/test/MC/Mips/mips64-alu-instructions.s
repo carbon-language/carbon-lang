@@ -1,7 +1,6 @@
 # RUN: llvm-mc %s -triple=mipsel-unknown-linux -show-encoding -mcpu=mips64r2 | FileCheck %s
 # Check that the assembler can handle the documented syntax
 # for arithmetic and logical instructions.
-# CHECK: .section __TEXT,__text,regular,pure_instructions
 #------------------------------------------------------------------------------
 # Logical instructions
 #------------------------------------------------------------------------------

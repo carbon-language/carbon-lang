@@ -131,12 +131,7 @@ public:
   }
 
   virtual void InitToTextSection() {
-    // FIXME, this is MachO specific, but the testsuite
-    // expects this.
-    SwitchSection(getContext().getMachOSection(
-                                      "__TEXT", "__text",
-                                      MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
-                                      0, SectionKind::getText()));
+    SwitchSection(getContext().getObjectFileInfo()->getTextSection());
   }
 
   virtual void EmitLabel(MCSymbol *Symbol);

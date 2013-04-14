@@ -1,5 +1,4 @@
 # RUN: llvm-mc --disassemble %s -triple=mips-unknown-linux -mcpu=mips32r2 | FileCheck %s
-# CHECK: .section        __TEXT,__text,regular,pure_instructions
 # CHECK: abs.d $f12, $f14
 0x46 0x20 0x73 0x05
 

@@ -12,9 +12,8 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectStreamer.h"
-// FIXME: Remove this.
-#include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -113,10 +112,7 @@ void MCPureStreamer::InitSections() {
 }
 
 void MCPureStreamer::InitToTextSection() {
-  // FIMXE: To what!?
-  SwitchSection(getContext().getMachOSection("__TEXT", "__text",
-                                    MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
-                                    0, SectionKind::getText()));
+  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
 }
 
 void MCPureStreamer::EmitLabel(MCSymbol *Symbol) {

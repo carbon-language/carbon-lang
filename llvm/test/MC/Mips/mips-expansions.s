@@ -1,7 +1,6 @@
 # RUN: llvm-mc %s -triple=mipsel-unknown-linux -show-encoding -mcpu=mips32r2 | FileCheck %s
 # Check that the assembler can handle the documented syntax
 # for macro instructions
-# CHECK: .section __TEXT,__text,regular,pure_instructions
 #------------------------------------------------------------------------------
 # Load immediate instructions
 #------------------------------------------------------------------------------

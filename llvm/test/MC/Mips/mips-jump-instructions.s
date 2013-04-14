@@ -2,7 +2,6 @@
 # RUN: FileCheck %s
 # Check that the assembler can handle the documented syntax
 # for jumps and branches.
-# CHECK: .section __TEXT,__text,regular,pure_instructions
 #------------------------------------------------------------------------------
 # Branch instructions
 #------------------------------------------------------------------------------

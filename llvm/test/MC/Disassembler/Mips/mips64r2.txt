@@ -1,5 +1,4 @@
 # RUN: llvm-mc --disassemble %s -triple=mips64-unknown-linux -mattr +mips64r2 | FileCheck %s
-# CHECK: .section	 __TEXT,__text,regular,pure_instructions
 # CHECK: daddiu $11, $26, 31949
 0x67 0x4b 0x7c 0xcd
 

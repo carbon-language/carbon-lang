@@ -8,7 +8,6 @@
 # RUN: -mcpu=mips64r2 -arch=mips64 | \
 # RUN: FileCheck %s
 
-# CHECK: .section    __TEXT,__text,regular,pure_instructions
     .text
 foo:
 

@@ -1,7 +1,6 @@
 # RUN: llvm-mc %s -triple=mipsel-unknown-linux -show-encoding -mcpu=mips32r2 | FileCheck %s
 # Check that the assembler can handle the documented syntax
 # for relocations.
-# CHECK: .section __TEXT,__text,regular,pure_instructions
 # CHECK:  lui   $2, %hi(_gp_disp)     # encoding: [A,A,0x02,0x3c]
 # CHECK:                              #   fixup A - offset: 0, value: _gp_disp@ABS_HI, kind: fixup_Mips_HI16
 # CHECK:  addiu $2, $2, %lo(_gp_disp) # encoding: [A,A,0x42,0x24]
