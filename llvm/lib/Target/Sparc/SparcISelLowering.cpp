@@ -1392,12 +1392,13 @@ SDValue SparcTargetLowering::makeHiLoPair(SDValue Op,
 // Build SDNodes for producing an address from a GlobalAddress, ConstantPool,
 // or ExternalSymbol SDNode.
 SDValue SparcTargetLowering::makeAddress(SDValue Op, SelectionDAG &DAG) const {
+  DebugLoc DL = Op.getDebugLoc();
+  EVT VT = getPointerTy();
+
   // Handle PIC mode first.
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
     // This is the pic32 code model, the GOT is known to be smaller than 4GB.
     SDValue HiLo = makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
-    DebugLoc DL = Op.getDebugLoc();
-    EVT VT = getPointerTy();
     SDValue GlobalBase = DAG.getNode(SPISD::GLOBAL_BASE_REG, DL, VT);
     SDValue AbsAddr = DAG.getNode(ISD::ADD, DL, VT, GlobalBase, HiLo);
     return DAG.getLoad(VT, DL, DAG.getEntryNode(), AbsAddr,
@@ -1405,10 +1406,19 @@ SDValue SparcTargetLowering::makeAddress(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // This is one of the absolute code models.
-  assert(getTargetMachine().getCodeModel() == CodeModel::Small &&
-         "Only the abs32 code model is supported");
-
-  return makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
+  switch(getTargetMachine().getCodeModel()) {
+  default:
+    llvm_unreachable("Unsupported absolute code model");
+  case CodeModel::Small:
+    return makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
+  case CodeModel::Medium: {
+    SDValue H44 = makeHiLoPair(Op, SPII::MO_H44, SPII::MO_M44, DAG);
+    H44 = DAG.getNode(ISD::SHL, DL, VT, H44, DAG.getIntPtrConstant(12));
+    SDValue L44 = withTargetFlags(Op, SPII::MO_L44, DAG);
+    L44 = DAG.getNode(SPISD::Lo, DL, VT, L44);
+    return DAG.getNode(ISD::ADD, DL, VT, H44, L44);
+  }
+  }
 }
 
 SDValue SparcTargetLowering::LowerGlobalAddress(SDValue Op,
