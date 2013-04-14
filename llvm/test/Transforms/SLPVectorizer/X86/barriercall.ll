@@ -6,35 +6,27 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;CHECK: @foo
 ;CHECK: store <4 x i32>
 ;CHECK: ret
-define i32 @foo(i32* nocapture %A, i32 %n) #0 {
+define i32 @foo(i32* nocapture %A, i32 %n) {
 entry:
   %call = tail call i32 (...)* @bar() #2
   %mul = mul nsw i32 %n, 5
   %add = add nsw i32 %mul, 9
-  store i32 %add, i32* %A, align 4, !tbaa !0
+  store i32 %add, i32* %A, align 4
   %mul1 = mul nsw i32 %n, 9
   %add2 = add nsw i32 %mul1, 9
   %arrayidx3 = getelementptr inbounds i32* %A, i64 1
-  store i32 %add2, i32* %arrayidx3, align 4, !tbaa !0
+  store i32 %add2, i32* %arrayidx3, align 4
   %mul4 = shl i32 %n, 3
   %add5 = add nsw i32 %mul4, 9
   %arrayidx6 = getelementptr inbounds i32* %A, i64 2
-  store i32 %add5, i32* %arrayidx6, align 4, !tbaa !0
+  store i32 %add5, i32* %arrayidx6, align 4
   %mul7 = mul nsw i32 %n, 10
   %add8 = add nsw i32 %mul7, 9
   %arrayidx9 = getelementptr inbounds i32* %A, i64 3
-  store i32 %add8, i32* %arrayidx9, align 4, !tbaa !0
+  store i32 %add8, i32* %arrayidx9, align 4
   ret i32 undef
 }
 
   ; We can still vectorize the stores below.
 
-declare i32 @bar(...) #1
-
-attributes #0 = { nounwind ssp uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf"="true" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf"="true" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #2 = { nounwind }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
+declare i32 @bar(...)

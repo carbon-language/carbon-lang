@@ -17,7 +17,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 ;CHECK: add <4 x i32>
 ;CHECK: store <4 x i32>
 ;CHECK: ret
-define i32 @foo(i32* nocapture %A, i32 %n) nounwind ssp uwtable {
+define i32 @foo(i32* nocapture %A, i32 %n) {
   %1 = mul nsw i32 %n, 5
   %2 = add nsw i32 %1, 7
   %3 = load i32* %A, align 4

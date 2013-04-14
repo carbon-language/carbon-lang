@@ -14,7 +14,7 @@ target triple = "i386-apple-macosx10.8.0"
 ;CHECK: load <2 x double>
 ;CHECK: fmul <2 x double>
 ;CHECK: ret
-define i32 @reduce(double* nocapture %A, i32 %n, i32 %m) #0 {
+define i32 @reduce(double* nocapture %A, i32 %n, i32 %m) {
 entry:
   %cmp13 = icmp sgt i32 %n, 0
   br i1 %cmp13, label %for.body, label %for.end
@@ -24,11 +24,11 @@ for.body:                                         ; preds = %entry, %for.body
   %sum.014 = phi double [ %add6, %for.body ], [ 0.000000e+00, %entry ]
   %mul = shl nsw i32 %i.015, 1
   %arrayidx = getelementptr inbounds double* %A, i32 %mul
-  %0 = load double* %arrayidx, align 4, !tbaa !0
+  %0 = load double* %arrayidx, align 4
   %mul1 = fmul double %0, 7.000000e+00
   %add12 = or i32 %mul, 1
   %arrayidx3 = getelementptr inbounds double* %A, i32 %add12
-  %1 = load double* %arrayidx3, align 4, !tbaa !0
+  %1 = load double* %arrayidx3, align 4
   %mul4 = fmul double %1, 7.000000e+00
   %add5 = fadd double %mul1, %mul4
   %add6 = fadd double %sum.014, %add5
@@ -45,8 +45,3 @@ for.end:                                          ; preds = %for.cond.for.end_cr
   ret i32 %sum.0.lcssa
 }
 
-attributes #0 = { nounwind readonly ssp "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf"="true" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
-
-!0 = metadata !{metadata !"double", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

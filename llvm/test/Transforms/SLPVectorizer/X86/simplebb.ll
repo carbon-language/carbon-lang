@@ -7,7 +7,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ; CHECK: test1
 ; CHECK: store <2 x double>
 ; CHECK: ret
-define void @test1(double* %a, double* %b, double* %c) nounwind uwtable readonly {
+define void @test1(double* %a, double* %b, double* %c) {
 entry:
   %i0 = load double* %a, align 8
   %i1 = load double* %b, align 8
