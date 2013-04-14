@@ -66,6 +66,9 @@ struct BoUpSLP  {
   /// \returns true if the basic block was modified.
   bool vectorizeStores(StoreList &Stores, int costThreshold);
 
+  /// \brief Vectorize a group of scalars into a vector tree.
+  void vectorizeArith(ValueList &Operands);
+
 private:
   /// \returns This method contains the recursive part of getTreeCost.
   int getTreeCost_rec(ValueList &VL, unsigned Depth);

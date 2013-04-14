@@ -208,6 +208,16 @@ Value *BoUpSLP::isUnsafeToSink(Instruction *Src, Instruction *Dst) {
   return 0;
 }
 
+void BoUpSLP::vectorizeArith(ValueList &Operands) {
+  Value *Vec = vectorizeTree(Operands, Operands.size());
+  BasicBlock::iterator Loc = cast<Instruction>(Vec);
+  IRBuilder<> Builder(++Loc);
+  for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
+    Value *S = Builder.CreateExtractElement(Vec, Builder.getInt32(i));
+    Operands[i]->replaceAllUsesWith(S);
+  }
+}
+
 int BoUpSLP::getTreeCost(ValueList &VL) {
   // Get rid of the list of stores that were removed, and from the
   // lists of instructions with multiple users.

@@ -26,6 +26,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
@@ -38,7 +39,7 @@
 using namespace llvm;
 
 static cl::opt<int>
-SLPCostThreshold("slp-threshold", cl::init(1), cl::Hidden,
+SLPCostThreshold("slp-threshold", cl::init(0), cl::Hidden,
                  cl::desc("Only vectorize trees if the gain is above this "
                           "number. (gain = -cost of vectorization)"));
 namespace {
@@ -63,7 +64,7 @@ struct SLPVectorizer : public BasicBlockPass {
   /// object. We sort the stores to their base objects to reduce the cost of the
   /// quadratic search on the stores. TODO: We can further reduce this cost
   /// if we flush the chain creation every time we run into a memory barrier.
-  bool CollectStores(BasicBlock *BB, BoUpSLP &R) {
+  bool collectStores(BasicBlock *BB, BoUpSLP &R) {
     for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
       StoreInst *SI = dyn_cast<StoreInst>(it);
       if (!SI)
@@ -84,7 +85,79 @@ struct SLPVectorizer : public BasicBlockPass {
     return true;
   }
 
-  bool RollStoreChains(BoUpSLP &R) {
+  bool tryToVectorizePair(BinaryOperator *A, BinaryOperator *B,  BoUpSLP &R) {
+    if (!A || !B) return false;
+    BoUpSLP::ValueList VL;
+    VL.push_back(A);
+    VL.push_back(B);
+    int Cost = R.getTreeCost(VL);
+    DEBUG(dbgs()<<"SLP: Cost of pair:" << Cost << ".\n");
+    if (Cost >= -SLPCostThreshold) return false;
+    DEBUG(dbgs()<<"SLP: Vectorizing pair.\n");
+    R.vectorizeArith(VL);
+    return true;
+  }
+
+  bool tryToVectorizeCandidate(BinaryOperator *V,  BoUpSLP &R) {
+    if (!V) return false;
+    BinaryOperator *A = dyn_cast<BinaryOperator>(V->getOperand(0));
+    BinaryOperator *B = dyn_cast<BinaryOperator>(V->getOperand(1));
+    // Try to vectorize V.
+    if (tryToVectorizePair(A, B, R)) return true;
+
+    // Try to skip B.
+    if (B && B->hasOneUse()) {
+      BinaryOperator *B0 = dyn_cast<BinaryOperator>(B->getOperand(0));
+      BinaryOperator *B1 = dyn_cast<BinaryOperator>(B->getOperand(1));
+      if (tryToVectorizePair(A, B0, R)) {
+        B->moveBefore(V);
+        return true;
+      }
+      if (tryToVectorizePair(A, B1, R)) {
+        B->moveBefore(V);
+        return true;
+      }
+    }
+
+    // Try to slip A.
+    if (A && A->hasOneUse()) {
+      BinaryOperator *A0 = dyn_cast<BinaryOperator>(A->getOperand(0));
+      BinaryOperator *A1 = dyn_cast<BinaryOperator>(A->getOperand(1));
+      if (tryToVectorizePair(A0, B, R)) {
+        A->moveBefore(V);
+        return true;
+      }
+      if (tryToVectorizePair(A1, B, R)) {
+        A->moveBefore(V);
+        return true;
+      }
+    }
+    return 0;
+  }
+
+  bool vectorizeReductions(BasicBlock *BB, BoUpSLP &R) {
+    bool Changed = false;
+    for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
+      if (isa<DbgInfoIntrinsic>(it)) continue;
+      PHINode *P = dyn_cast<PHINode>(it);
+      if (!P) return Changed;
+      // Check that the PHI is a reduction PHI.
+      if (P->getNumIncomingValues() != 2) return Changed;
+      Value *Rdx = (P->getIncomingBlock(0) == BB ? P->getIncomingValue(0) :
+                   (P->getIncomingBlock(1) == BB ? P->getIncomingValue(1) : 0));
+      // Check if this is a Binary Operator.
+      BinaryOperator *BI = dyn_cast_or_null<BinaryOperator>(Rdx);
+      if (!BI) continue;
+
+      Value *Inst = BI->getOperand(0);
+      if (Inst == P) Inst = BI->getOperand(1);
+      Changed |= tryToVectorizeCandidate(dyn_cast<BinaryOperator>(Inst), R);
+    }
+
+    return Changed;
+  }
+
+  bool rollStoreChains(BoUpSLP &R) {
     bool Changed = false;
     // Attempt to sort and vectorize each of the store-groups.
     for (StoreListMap::iterator it = StoreRefs.begin(), e = StoreRefs.end();
@@ -116,13 +189,15 @@ struct SLPVectorizer : public BasicBlockPass {
     // he store instructions.
     BoUpSLP R(&BB, SE, DL, TTI, AA);
 
-    if (!CollectStores(&BB, R))
-      return false;
+    bool Changed = vectorizeReductions(&BB, R);
 
-    bool Changed = RollStoreChains(R);
-    if (Changed) {
+    if (!collectStores(&BB, R))
+      return Changed;
+
+    if (rollStoreChains(R)) {
       DEBUG(dbgs()<<"SLP: vectorized in \""<<BB.getParent()->getName()<<"\"\n");
       DEBUG(verifyFunction(*BB.getParent()));
+      Changed |= true;
     }
 
     return Changed;
