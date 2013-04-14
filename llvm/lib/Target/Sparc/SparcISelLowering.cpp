@@ -1410,13 +1410,22 @@ SDValue SparcTargetLowering::makeAddress(SDValue Op, SelectionDAG &DAG) const {
   default:
     llvm_unreachable("Unsupported absolute code model");
   case CodeModel::Small:
+    // abs32.
     return makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
   case CodeModel::Medium: {
+    // abs44.
     SDValue H44 = makeHiLoPair(Op, SPII::MO_H44, SPII::MO_M44, DAG);
     H44 = DAG.getNode(ISD::SHL, DL, VT, H44, DAG.getIntPtrConstant(12));
     SDValue L44 = withTargetFlags(Op, SPII::MO_L44, DAG);
     L44 = DAG.getNode(SPISD::Lo, DL, VT, L44);
     return DAG.getNode(ISD::ADD, DL, VT, H44, L44);
+  }
+  case CodeModel::Large: {
+    // abs64.
+    SDValue Hi = makeHiLoPair(Op, SPII::MO_HH, SPII::MO_HM, DAG);
+    Hi = DAG.getNode(ISD::SHL, DL, VT, Hi, DAG.getIntPtrConstant(32));
+    SDValue Lo = makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
+    return DAG.getNode(ISD::ADD, DL, VT, Hi, Lo);
   }
   }
 }

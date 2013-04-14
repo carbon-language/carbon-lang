@@ -1,6 +1,7 @@
 ; RUN: llc < %s -march=sparc   -relocation-model=static -code-model=small  | FileCheck --check-prefix=abs32 %s
 ; RUN: llc < %s -march=sparcv9 -relocation-model=static -code-model=small  | FileCheck --check-prefix=abs32 %s
 ; RUN: llc < %s -march=sparcv9 -relocation-model=static -code-model=medium | FileCheck --check-prefix=abs44 %s
+; RUN: llc < %s -march=sparcv9 -relocation-model=static -code-model=large  | FileCheck --check-prefix=abs64 %s
 ; RUN: llc < %s -march=sparc   -relocation-model=pic    -code-model=medium | FileCheck --check-prefix=v8pic32 %s
 ; RUN: llc < %s -march=sparcv9 -relocation-model=pic    -code-model=medium | FileCheck --check-prefix=v9pic32 %s
 
@@ -22,6 +23,15 @@ define zeroext i8 @loadG() {
 ; abs44: sllx %[[R2]], 12, %[[R3:[gilo][0-7]]]
 ; abs44: ldub [%[[R3]]+%l44(G)], %i0
 ; abs44: jmp %i7+8
+
+; abs64: loadG
+; abs64: sethi %hi(G), %[[R1:[gilo][0-7]]]
+; abs64: add %[[R1]], %lo(G), %[[R2:[gilo][0-7]]]
+; abs64: sethi %hh(G), %[[R3:[gilo][0-7]]]
+; abs64: add %[[R3]], %hm(G), %[[R4:[gilo][0-7]]]
+; abs64: sllx %[[R4]], 32, %[[R5:[gilo][0-7]]]
+; abs64: ldub [%[[R5]]+%[[R2]]], %i0
+; abs64: jmp %i7+8
 
 ; v8pic32: loadG
 ; v8pic32: _GLOBAL_OFFSET_TABLE_
