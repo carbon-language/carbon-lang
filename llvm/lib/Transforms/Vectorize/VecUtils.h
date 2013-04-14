@@ -12,17 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_VECTORIZE_AOSVECTORIZER_H
-#define  LLVM_TRANSFORMS_VECTORIZE_AOSVECTORIZER_H
+#ifndef LLVM_TRANSFORMS_VECTORIZE_VECUTILS_H
+#define LLVM_TRANSFORMS_VECTORIZE_VECUTILS_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include <vector>
-
-using namespace llvm;
 
 namespace llvm {
 
@@ -75,10 +72,10 @@ struct BoUpSLP  {
   void vectorizeArith(ValueList &Operands);
 
 private:
-  /// \returns This method contains the recursive part of getTreeCost.
+  /// \brief This method contains the recursive part of getTreeCost.
   int getTreeCost_rec(ValueList &VL, unsigned Depth);
 
-  /// \returns This recursive method looks for vectorization hazards such as
+  /// \brief This recursive method looks for vectorization hazards such as
   /// values that are used by multiple users and checks that values are used
   /// by only one vector lane. It updates the variables LaneMap, MultiUserVals.
   void getTreeUses_rec(ValueList &VL, unsigned Depth);
@@ -132,7 +129,7 @@ private:
   std::map<Value*, int> LaneMap;
   // A list of instructions to ignore while sinking
   // memory instructions. This map must be reset between runs of getCost.
-  SmallSet<Value*, 8> MemBarrierIgnoreList;
+  SmallPtrSet<Value *, 8> MemBarrierIgnoreList;
 
   // -- containers that are used during vectorizeTree -- //
   // Maps between the first scalar to the vector. This map must be reset between
@@ -148,5 +145,5 @@ private:
 };
 
 } // end of namespace
-# endif  //LLVM_TRANSFORMS_VECTORIZE_AOSVECTORIZER_H
 
+#endif // LLVM_TRANSFORMS_VECTORIZE_VECUTILS_H
