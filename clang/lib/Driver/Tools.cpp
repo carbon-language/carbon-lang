@@ -911,7 +911,7 @@ static StringRef getMipsFloatABI(const Driver &D, const ArgList &Args) {
       FloatABI = "hard";
     else {
       FloatABI = A->getValue();
-      if (FloatABI != "soft" && FloatABI != "single" && FloatABI != "hard") {
+      if (FloatABI != "soft" && FloatABI != "hard") {
         D.Diag(diag::err_drv_invalid_mfloat_abi) << A->getAsString(Args);
         FloatABI = "hard";
       }
@@ -977,17 +977,21 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
       CmdArgs.push_back("-mips16-hard-float");
     }
   }
-  else if (FloatABI == "single") {
-    // Restrict the use of hardware floating-point
-    // instructions to 32-bit operations.
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back("+single-float");
-  }
   else {
     // Floating point operations and argument passing are hard.
     assert(FloatABI == "hard" && "Invalid float abi!");
     CmdArgs.push_back("-mfloat-abi");
     CmdArgs.push_back("hard");
+  }
+
+  if (Arg *A = Args.getLastArg(options::OPT_msingle_float,
+                               options::OPT_mdouble_float)) {
+    if (A->getOption().matches(options::OPT_msingle_float)) {
+      // Restrict the use of hardware floating-point
+      // instructions to 32-bit operations.
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("+single-float");
+    }
   }
 
   AddTargetFeature(Args, CmdArgs,
