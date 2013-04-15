@@ -5,9 +5,9 @@ Auto-Vectorization in LLVM
 .. contents::
    :local:
 
-LLVM has two vectorizers: The :ref:`Loop Vectorizer <loop-vectorizer>`,
-which operates on Loops, and the :ref:`Basic Block Vectorizer
-<bb-vectorizer>`, which optimizes straight-line code. These vectorizers
+LLVM has two kind vectorizers: The :ref:`Loop Vectorizer <loop-vectorizer>`,
+which operates on Loops, and the :ref:`SLP Vectorizer
+<slp-vectorizer>`, which optimizes straight-line code. These vectorizers
 focus on different optimization opportunities and use different techniques.
 The BB vectorizer merges multiple scalars that are found in the code into
 vectors while the Loop Vectorizer widens instructions in the original loop
