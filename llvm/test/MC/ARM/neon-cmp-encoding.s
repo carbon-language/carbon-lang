@@ -174,3 +174,24 @@
 @ CHECK: vcge.u16	q8, q9, q8      @ encoding: [0xf0,0x03,0x52,0xf3]
 @ CHECK: vcge.u32	q8, q9, q8      @ encoding: [0xf0,0x03,0x62,0xf3]
 @ CHECK: vcge.f32	q8, q9, q8      @ encoding: [0xe0,0x0e,0x42,0xf3]
+
+
+@ VACLT is an alias for VACGT w/ the source operands reversed.
+@ VACLE is an alias for VACGE w/ the source operands reversed.
+	vaclt.f32 q9, q11, q12
+	vaclt.f32 d9, d11, d12
+	vaclt.f32 q11, q12
+	vaclt.f32 d11, d12
+	vacle.f32 q9, q11, q12
+	vacle.f32 d9, d11, d12
+	vacle.f32 q11, q12
+	vacle.f32 d11, d12
+
+@ CHECK: vacgt.f32	q9, q12, q11    @ encoding: [0xf6,0x2e,0x68,0xf3]
+@ CHECK: vacgt.f32	d9, d12, d11    @ encoding: [0x1b,0x9e,0x2c,0xf3]
+@ CHECK: vacgt.f32	q11, q12, q11   @ encoding: [0xf6,0x6e,0x68,0xf3]
+@ CHECK: vacgt.f32	d11, d12, d11   @ encoding: [0x1b,0xbe,0x2c,0xf3]
+@ CHECK: vacge.f32	q9, q12, q11    @ encoding: [0xf6,0x2e,0x48,0xf3]
+@ CHECK: vacge.f32	d9, d12, d11    @ encoding: [0x1b,0x9e,0x0c,0xf3]
+@ CHECK: vacge.f32	q11, q12, q11   @ encoding: [0xf6,0x6e,0x48,0xf3]
+@ CHECK: vacge.f32	d11, d12, d11   @ encoding: [0x1b,0xbe,0x0c,0xf3]

@@ -4316,6 +4316,24 @@ def  VACGTq   : N3VQInt<1, 0, 0b10, 0b1110, 1, N3RegFrm, IIC_VBINQ, "vacgt",
 defm VTST     : N3V_QHS<0, 0, 0b1000, 1, IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q,
                         IIC_VBINi4Q, "vtst", "", NEONvtst, 1>;
 
+def: NEONInstAlias<"vaclt${p}.f32 $Vd, $Vn, $Vm",
+                   (VACGTd DPR:$Vd, DPR:$Vm, DPR:$Vn, pred:$p)>;
+def: NEONInstAlias<"vaclt${p}.f32 $Vd, $Vn, $Vm",
+                   (VACGTq QPR:$Vd, QPR:$Vm, QPR:$Vn, pred:$p)>;
+def: NEONInstAlias<"vacle${p}.f32 $Vd, $Vn, $Vm",
+                   (VACGEd DPR:$Vd, DPR:$Vm, DPR:$Vn, pred:$p)>;
+def: NEONInstAlias<"vacle${p}.f32 $Vd, $Vn, $Vm",
+                   (VACGEq QPR:$Vd, QPR:$Vm, QPR:$Vn, pred:$p)>;
+
+def: NEONInstAlias<"vaclt${p}.f32 $Vd, $Vm",
+                   (VACGTd DPR:$Vd, DPR:$Vm, DPR:$Vd, pred:$p)>;
+def: NEONInstAlias<"vaclt${p}.f32 $Vd, $Vm",
+                   (VACGTq QPR:$Vd, QPR:$Vm, QPR:$Vd, pred:$p)>;
+def: NEONInstAlias<"vacle${p}.f32 $Vd, $Vm",
+                   (VACGEd DPR:$Vd, DPR:$Vm, DPR:$Vd, pred:$p)>;
+def: NEONInstAlias<"vacle${p}.f32 $Vd, $Vm",
+                   (VACGEq QPR:$Vd, QPR:$Vm, QPR:$Vd, pred:$p)>;
+
 // Vector Bitwise Operations.
 
 def vnotd : PatFrag<(ops node:$in),

@@ -4745,6 +4745,7 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
       Mnemonic == "mls"   || Mnemonic == "smmls"  || Mnemonic == "vcls"  ||
       Mnemonic == "vmls"  || Mnemonic == "vnmls"  || Mnemonic == "vacge" ||
       Mnemonic == "vcge"  || Mnemonic == "vclt"   || Mnemonic == "vacgt" ||
+      Mnemonic == "vaclt" || Mnemonic == "vacle"  ||
       Mnemonic == "vcgt"  || Mnemonic == "vcle"   || Mnemonic == "smlal" ||
       Mnemonic == "umaal" || Mnemonic == "umlal"  || Mnemonic == "vabal" ||
       Mnemonic == "vmlal" || Mnemonic == "vpadal" || Mnemonic == "vqdmlal" ||
