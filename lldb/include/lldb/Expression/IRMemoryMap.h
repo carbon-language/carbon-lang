@@ -57,6 +57,7 @@ public:
     void WritePointerToMemory (lldb::addr_t process_address, lldb::addr_t address, Error &error);
     void ReadMemory (uint8_t *bytes, lldb::addr_t process_address, size_t size, Error &error);
     void ReadScalarFromMemory (Scalar &scalar, lldb::addr_t process_address, size_t size, Error &error);
+    void ReadPointerFromMemory (lldb::addr_t *address, lldb::addr_t process_address, Error &error);
     
     void GetMemoryData (DataExtractor &extractor, lldb::addr_t process_address, size_t size, Error &error);
     

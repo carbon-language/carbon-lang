@@ -69,7 +69,7 @@ public:
     {
         return m_current_offset;
     }
-
+    
     class Entity
     {
     public:
@@ -87,6 +87,7 @@ public:
         virtual void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err) = 0;
         virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address,
                                     lldb::addr_t frame_top, lldb::addr_t frame_bottom, Error &err) = 0;
+        virtual void DumpToLog (IRMemoryMap &map, lldb::addr_t process_address, Log *log) = 0;
         
         uint32_t GetAlignment ()
         {

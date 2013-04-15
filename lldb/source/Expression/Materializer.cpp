@@ -302,6 +302,68 @@ public:
                 return;
         }
     }
+    
+    void DumpToLog (IRMemoryMap &map, lldb::addr_t process_address, Log *log)
+    {
+        StreamString dump_stream;
+        
+        Error err;
+        
+        dump_stream.Printf("0x%llx: EntityPersistentVariable (%s)\n", (unsigned long long)process_address + m_offset, m_persistent_variable_sp->GetName().AsCString());
+        
+        {
+            dump_stream.Printf("Pointer:\n");
+            
+            DataBufferHeap data (m_size, 0);
+            
+            map.ReadMemory(data.GetBytes(), process_address + m_offset, m_size, err);
+            
+            if (!err.Success())
+            {
+                dump_stream.Printf("  <could not be read>\n");
+            }
+            else
+            {
+                DataExtractor extractor (data.GetBytes(), data.GetByteSize(), map.GetByteOrder(), map.GetAddressByteSize());
+                
+                extractor.DumpHexBytes(&dump_stream, data.GetBytes(), data.GetByteSize(), 16, process_address + m_offset);
+            }
+        }
+        
+        {
+            dump_stream.Printf("Target:\n");
+            
+            lldb::addr_t target_address;
+            
+            map.ReadPointerFromMemory (&target_address, process_address + m_offset, err);
+                        
+            if (!err.Success())
+            {
+                dump_stream.Printf("  <could not be read>\n");
+            }
+            else
+            {
+                DataBufferHeap data (m_persistent_variable_sp->GetByteSize(), 0);
+            
+                map.ReadMemory(data.GetBytes(), target_address, m_persistent_variable_sp->GetByteSize(), err);
+                
+                if (!err.Success())
+                {
+                    dump_stream.Printf("  <could not be read>\n");
+                }
+                else
+                {
+                    DataExtractor extractor (data.GetBytes(), data.GetByteSize(), map.GetByteOrder(), map.GetAddressByteSize());
+                    
+                    extractor.DumpHexBytes(&dump_stream, data.GetBytes(), data.GetByteSize(), 16, target_address);
+                }
+            }
+        }
+        
+        log->PutCString(dump_stream.GetData());
+    }
+    
+    
 private:
     lldb::ClangExpressionVariableSP m_persistent_variable_sp;
 };
@@ -323,7 +385,8 @@ public:
         Entity(),
         m_variable_sp(variable_sp),
         m_is_reference(false),
-        m_temporary_allocation(LLDB_INVALID_ADDRESS)
+        m_temporary_allocation(LLDB_INVALID_ADDRESS),
+        m_temporary_allocation_size(0)
     {
         // Hard-coding to maximum size of a pointer since all variables are materialized by reference
         m_size = 8;
@@ -419,6 +482,7 @@ public:
                 Error alloc_error;
                 
                 m_temporary_allocation = map.Malloc(data.GetByteSize(), byte_align, lldb::ePermissionsReadable | lldb::ePermissionsWritable, IRMemoryMap::eAllocationPolicyMirror, alloc_error);
+                m_temporary_allocation_size = data.GetByteSize();
                 
                 if (!alloc_error.Success())
                 {
@@ -515,12 +579,75 @@ public:
             }
             
             m_temporary_allocation = LLDB_INVALID_ADDRESS;
+            m_temporary_allocation_size = 0;
         }
+    }
+    
+    void DumpToLog (IRMemoryMap &map, lldb::addr_t process_address, Log *log)
+    {
+        StreamString dump_stream;
+        
+        Error err;
+        
+        dump_stream.Printf("0x%llx: EntityVariable (%s)\n", (unsigned long long)process_address + m_offset, m_variable_sp->GetName().AsCString());
+        
+        {
+            dump_stream.Printf("Pointer:\n");
+            
+            DataBufferHeap data (m_size, 0);
+            
+            map.ReadMemory(data.GetBytes(), process_address + m_offset, m_size, err);
+            
+            if (!err.Success())
+            {
+                dump_stream.Printf("  <could not be read>\n");
+            }
+            else
+            {
+                DataExtractor extractor (data.GetBytes(), data.GetByteSize(), map.GetByteOrder(), map.GetAddressByteSize());
+                
+                extractor.DumpHexBytes(&dump_stream, data.GetBytes(), data.GetByteSize(), 16, process_address + m_offset);
+            }
+        }
+        
+        if (m_is_reference)
+        {
+            dump_stream.Printf("Points to process memory.\n");
+        }
+        else
+        {
+            dump_stream.Printf("Temporary allocation:\n");
+            
+            if (m_temporary_allocation == LLDB_INVALID_ADDRESS)
+            {
+                dump_stream.Printf("  <could not be read>\n");
+            }
+            else
+            {
+                DataBufferHeap data (m_temporary_allocation_size, 0);
+                
+                map.ReadMemory(data.GetBytes(), m_temporary_allocation, m_temporary_allocation_size, err);
+                
+                if (!err.Success())
+                {
+                    dump_stream.Printf("  <could not be read>\n");
+                }
+                else
+                {
+                    DataExtractor extractor (data.GetBytes(), data.GetByteSize(), map.GetByteOrder(), map.GetAddressByteSize());
+                    
+                    extractor.DumpHexBytes(&dump_stream, data.GetBytes(), data.GetByteSize(), 16, process_address + m_offset);
+                }
+            }
+        }
+        
+        log->PutCString(dump_stream.GetData());
     }
 private:
     lldb::VariableSP    m_variable_sp;
     bool                m_is_reference;
     lldb::addr_t        m_temporary_allocation;
+    size_t              m_temporary_allocation_size;
 };
 
 uint32_t
@@ -551,6 +678,15 @@ public:
     virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address,
                                 lldb::addr_t frame_top, lldb::addr_t frame_bottom, Error &err)
     {
+    }
+    
+    void DumpToLog (IRMemoryMap &map, lldb::addr_t process_address, Log *log)
+    {
+        StreamString dump_stream;
+                
+        dump_stream.Printf("0x%llx: EntityResultVariable\n", (unsigned long long)process_address + m_offset);
+        
+        log->PutCString(dump_stream.GetData());
     }
 private:
     ClangASTType    m_type;
@@ -636,6 +772,36 @@ public:
         }
         
         // no work needs to be done
+    }
+    
+    void DumpToLog (IRMemoryMap &map, lldb::addr_t process_address, Log *log)
+    {
+        StreamString dump_stream;
+        
+        Error err;
+        
+        dump_stream.Printf("0x%llx: EntitySymbol (%s)\n", (unsigned long long)process_address + m_offset, m_symbol.GetName().AsCString());
+        
+        {
+            dump_stream.Printf("Pointer:\n");
+            
+            DataBufferHeap data (m_size, 0);
+            
+            map.ReadMemory(data.GetBytes(), process_address + m_offset, m_size, err);
+            
+            if (!err.Success())
+            {
+                dump_stream.Printf("  <could not be read>\n");
+            }
+            else
+            {
+                DataExtractor extractor (data.GetBytes(), data.GetByteSize(), map.GetByteOrder(), map.GetAddressByteSize());
+                
+                extractor.DumpHexBytes(&dump_stream, data.GetBytes(), data.GetByteSize(), 16, process_address + m_offset);
+            }
+        }
+        
+        log->PutCString(dump_stream.GetData());
     }
 private:
     Symbol m_symbol;
@@ -763,6 +929,36 @@ public:
             return;
         }
     }
+    
+    void DumpToLog (IRMemoryMap &map, lldb::addr_t process_address, Log *log)
+    {
+        StreamString dump_stream;
+        
+        Error err;
+        
+        dump_stream.Printf("0x%llx: EntityRegister (%s)\n", (unsigned long long)process_address + m_offset, m_register_info.name);
+        
+        {
+            dump_stream.Printf("Value:\n");
+            
+            DataBufferHeap data (m_size, 0);
+            
+            map.ReadMemory(data.GetBytes(), process_address + m_offset, m_size, err);
+            
+            if (!err.Success())
+            {
+                dump_stream.Printf("  <could not be read>\n");
+            }
+            else
+            {
+                DataExtractor extractor (data.GetBytes(), data.GetByteSize(), map.GetByteOrder(), map.GetAddressByteSize());
+                
+                extractor.DumpHexBytes(&dump_stream, data.GetBytes(), data.GetByteSize(), 16, process_address + m_offset);
+            }
+        }
+        
+        log->PutCString(dump_stream.GetData());
+    }
 private:
     RegisterInfo m_register_info;
 };
@@ -807,6 +1003,13 @@ Materializer::Materialize (lldb::StackFrameSP &frame_sp, lldb::ClangExpressionVa
             return Dematerializer (*this, frame_sp, map, LLDB_INVALID_ADDRESS);
     }
     
+    if (Log *log =lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS))
+    {
+        log->Printf("Materializer::Materialize (frame_sp = %p, process_address = 0x%llx) materialized:", frame_sp.get(), process_address);
+        for (EntityUP &entity_up : m_entities)
+            entity_up->DumpToLog(map, process_address, log);
+    }
+        
     m_needs_dematerialize.Lock();
     
     return Dematerializer (*this, frame_sp, map, process_address);
@@ -826,6 +1029,13 @@ Materializer::Dematerializer::Dematerialize (Error &error, lldb::addr_t frame_to
     }
     else
     {
+        if (Log *log =lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS))
+        {
+            log->Printf("Materializer::Dematerialize (frame_sp = %p, process_address = 0x%llx) about to dematerialize:", frame_sp.get(), m_process_address);
+            for (EntityUP &entity_up : m_materializer.m_entities)
+                entity_up->DumpToLog(m_map, m_process_address, log);
+        }
+        
         for (EntityUP &entity_up : m_materializer.m_entities)
         {
             entity_up->Dematerialize (frame_sp, m_map, m_process_address, frame_top, frame_bottom, error);
