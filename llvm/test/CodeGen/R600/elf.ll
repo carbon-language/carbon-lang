@@ -1,7 +1,12 @@
-; RUN: llc < %s -march=r600 -mcpu=SI -filetype=obj | llvm-readobj -s - | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=SI -filetype=obj | llvm-readobj -s - | FileCheck --check-prefix=ELF-CHECK %s
+; RUN: llc < %s -march=r600 -mcpu=SI -o - | FileCheck --check-prefix=CONFIG-CHECK %s
 
-; CHECK: Format: ELF32
-; CHECK: Name: .AMDGPU.config
+; ELF-CHECK: Format: ELF32
+; ELF-CHECK: Name: .AMDGPU.config
+
+; CONFIG-CHECK: .section .AMDGPU.config
+; CONFIG-CHECK-NEXT: .long   45096
+; CONFIG-CHECK-NEXT: .long   0
 define void @test(i32 %p) {
    %i = add i32 %p, 2
    %r = bitcast i32 %i to float

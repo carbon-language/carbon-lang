@@ -19,6 +19,7 @@
 
 #include "AMDGPUAsmPrinter.h"
 #include "AMDGPU.h"
+#include "SIDefines.h"
 #include "SIMachineFunctionInfo.h"
 #include "SIRegisterInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -150,7 +151,19 @@ void AMDGPUAsmPrinter::EmitProgramInfo(MachineFunction &MF) {
     MaxSGPR += 2;
   }
   SIMachineFunctionInfo * MFI = MF.getInfo<SIMachineFunctionInfo>();
-  OutStreamer.EmitIntValue(MaxSGPR + 1, 4);
-  OutStreamer.EmitIntValue(MaxVGPR + 1, 4);
-  OutStreamer.EmitIntValue(MFI->PSInputAddr, 4);
+  unsigned RsrcReg;
+  switch (MFI->ShaderType) {
+  default: // Fall through
+  case ShaderType::COMPUTE:  RsrcReg = R_00B848_COMPUTE_PGM_RSRC1; break;
+  case ShaderType::GEOMETRY: RsrcReg = R_00B228_SPI_SHADER_PGM_RSRC1_GS; break;
+  case ShaderType::PIXEL:    RsrcReg = R_00B028_SPI_SHADER_PGM_RSRC1_PS; break;
+  case ShaderType::VERTEX:   RsrcReg = R_00B128_SPI_SHADER_PGM_RSRC1_VS; break;
+  }
+
+  OutStreamer.EmitIntValue(RsrcReg, 4);
+  OutStreamer.EmitIntValue(S_00B028_VGPRS(MaxVGPR / 4) | S_00B028_SGPRS(MaxSGPR / 8), 4);
+  if (MFI->ShaderType == ShaderType::PIXEL) {
+    OutStreamer.EmitIntValue(R_0286CC_SPI_PS_INPUT_ENA, 4);
+    OutStreamer.EmitIntValue(MFI->PSInputAddr, 4);
+  }
 }
