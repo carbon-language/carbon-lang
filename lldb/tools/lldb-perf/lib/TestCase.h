@@ -31,6 +31,7 @@ public:
 			eContinue,
             eStepOut,
             eRelaunch,
+            eCallNext,
 			eKill
 		} type;
 		lldb::SBThread thread;
@@ -76,6 +77,13 @@ public:
         Kill ()
         {
             type = Type::eKill;
+            thread = lldb::SBThread();
+        }
+        
+        void
+        CallNext ()
+        {
+            type = Type::eCallNext;
             thread = lldb::SBThread();
         }
 	};

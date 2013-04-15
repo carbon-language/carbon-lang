@@ -255,6 +255,7 @@ TestCase::Loop ()
 
         if (call_test_step)
         {
+        do_the_call:
             if (m_verbose)
                 printf("RUNNING STEP %d\n",m_step);
             ActionWanted action;
@@ -305,6 +306,9 @@ TestCase::Loop ()
                     printf("kill\n");
                 m_process.Kill();
                 return;
+            case ActionWanted::Type::eCallNext:
+                goto do_the_call;
+                break;
             }
         }
 
