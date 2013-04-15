@@ -1011,6 +1011,10 @@ void SigactionHandler(int signo, siginfo_t* si, void* uc) {
 TEST(MemorySanitizer, sigaction) {
   struct sigaction act = {};
   struct sigaction oldact = {};
+  struct sigaction origact = {};
+
+  sigaction(SIGPROF, 0, &origact);
+
   act.sa_flags |= SA_SIGINFO;
   act.sa_sigaction = &SigactionHandler;
   sigaction(SIGPROF, &act, 0);
@@ -1041,6 +1045,8 @@ TEST(MemorySanitizer, sigaction) {
   EXPECT_TRUE(oldact.sa_flags & SA_SIGINFO);
   EXPECT_EQ(&SigactionHandler, oldact.sa_sigaction);
   EXPECT_EQ(2, cnt);
+
+  sigaction(SIGPROF, &origact, 0);
 }
 
 } // namespace
