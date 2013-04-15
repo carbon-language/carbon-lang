@@ -616,8 +616,12 @@ void FieldRegion::printPretty(raw_ostream &os) const {
   return;
 }
 
-bool FieldRegion::canPrintPrettyAsExpr() const {
+bool CXXBaseObjectRegion::canPrintPrettyAsExpr() const {
   return superRegion->canPrintPrettyAsExpr();
+}
+
+void CXXBaseObjectRegion::printPrettyAsExpr(raw_ostream &os) const {
+  superRegion->printPrettyAsExpr(os);
 }
 
 //===----------------------------------------------------------------------===//

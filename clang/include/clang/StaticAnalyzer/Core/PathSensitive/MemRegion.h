@@ -1095,6 +1095,10 @@ public:
   static bool classof(const MemRegion *region) {
     return region->getKind() == CXXBaseObjectRegionKind;
   }
+
+  bool canPrintPrettyAsExpr() const;
+  
+  void printPrettyAsExpr(raw_ostream &os) const;
 };
 
 template<typename RegionTy>
