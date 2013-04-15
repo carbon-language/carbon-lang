@@ -4687,8 +4687,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
          "Parser allowed 'typedef' as storage class VarDecl.");
   VarDecl::StorageClass SC = StorageClassSpecToVarDeclStorageClass(SCSpec);
 
-  if (getLangOpts().OpenCL && !getOpenCLOptions().cl_khr_fp16)
-  {
+  if (getLangOpts().OpenCL && !getOpenCLOptions().cl_khr_fp16) {
     // OpenCL v1.2 s6.1.1.1: reject declaring variables of the half and
     // half array type (unless the cl_khr_fp16 extension is enabled).
     if (Context.getBaseElementType(R)->isHalfType()) {
@@ -4704,6 +4703,16 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     D.setInvalidType();
     SC = SC_None;
   }
+
+  // C++11 [dcl.stc]p4:
+  //   When thread_local is applied to a variable of block scope the
+  //   storage-class-specifier static is implied if it does not appear
+  //   explicitly.
+  // Core issue: 'static' is not implied if the variable is declared 'extern'.
+  if (SCSpec == DeclSpec::SCS_unspecified &&
+      D.getDeclSpec().getThreadStorageClassSpec() ==
+          DeclSpec::TSCS_thread_local && DC->isFunctionOrMethod())
+    SC = SC_Static;
 
   IdentifierInfo *II = Name.getAsIdentifierInfo();
   if (!II) {

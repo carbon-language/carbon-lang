@@ -42,8 +42,6 @@ int f(__thread int t7) { // expected-error {{' is only allowed on variable decla
   // expected-error@-2 {{'__thread' variables must have global storage}}
 #elif defined(C11)
   // expected-error@-4 {{'_Thread_local' variables must have global storage}}
-#else
-  // expected-error@-6 {{'thread_local' variables must have global storage}}
 #endif
   extern __thread int t9;
   static __thread int t10;
@@ -51,9 +49,9 @@ int f(__thread int t7) { // expected-error {{' is only allowed on variable decla
 #if __cplusplus < 201103L
   __thread auto int t12a; // expected-error-re {{cannot combine with previous '(__thread|_Thread_local)' declaration specifier}}
   auto __thread int t12b; // expected-error {{cannot combine with previous 'auto' declaration specifier}}
-#else
-  __thread auto t12a = 0; // expected-error-re {{'(t|_T)hread_local' variables must have global storage}}
-  auto __thread t12b = 0; // expected-error-re {{'(t|_T)hread_local' variables must have global storage}}
+#elif !defined(CXX11)
+  __thread auto t12a = 0; // expected-error-re {{'_Thread_local' variables must have global storage}}
+  auto __thread t12b = 0; // expected-error-re {{'_Thread_local' variables must have global storage}}
 #endif
   __thread register int t13a; // expected-error-re {{cannot combine with previous '(__thread|_Thread_local|thread_local)' declaration specifier}}
   register __thread int t13b; // expected-error {{cannot combine with previous 'register' declaration specifier}}
