@@ -634,8 +634,7 @@ __num_get<_CharT>::__stage2_int_loop(_CharT __ct, int __base, char* __a, char*& 
         }
         return -1;
     }
-    if (__a_end-__a < __num_get_buf_sz - 1)
-        *__a_end++ = __src[__f];
+    *__a_end++ = __src[__f];
     ++__dc;
     return 0;
 }
@@ -646,8 +645,6 @@ __num_get<_CharT>::__stage2_float_loop(_CharT __ct, bool& __in_units, char& __ex
                     _CharT __decimal_point, _CharT __thousands_sep, const string& __grouping,
                     unsigned* __g, unsigned*& __g_end, unsigned& __dc, _CharT* __atoms)
 {
-    if (__a_end-__a >= __num_get_buf_sz - 1)
-        return -1;
     if (__ct == __decimal_point)
     {
         if (!__in_units)
@@ -694,8 +691,7 @@ __num_get<_CharT>::__stage2_float_loop(_CharT __ct, bool& __in_units, char& __ex
                 *__g_end++ = __dc;
         }
     }
-    if (__a_end-__a < __num_get_buf_sz - ((__exp & 0x80) ? 1 : 11))
-        *__a_end++ = __x;
+    *__a_end++ = __x;
     if (__f >= 22)
         return 0;
     ++__dc;
@@ -975,16 +971,28 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     char_type __atoms[26];
     char_type __thousands_sep;
     string __grouping = this->__stage2_int_prep(__iob, __atoms, __thousands_sep);
-    char __a[__num_get_base::__num_get_buf_sz] = {0};
+    string __buf;
+    __buf.resize(__buf.capacity());
+    char* __a = &__buf[0];
     char* __a_end = __a;
     unsigned __g[__num_get_base::__num_get_buf_sz];
     unsigned* __g_end = __g;
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
+    {
+        if (__a_end - __a == __buf.size())
+        {
+            size_t __tmp = __buf.size();
+            __buf.resize(2*__buf.size());
+            __buf.resize(__buf.capacity());
+            __a = &__buf[0];
+            __a_end = __a + __tmp;
+        }
         if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
                                     __thousands_sep, __grouping, __g, __g_end,
                                     __atoms))
             break;
+    }
     if (__grouping.size() != 0 && __g_end-__g < __num_get_base::__num_get_buf_sz)
         *__g_end++ = __dc;
     // Stage 3
@@ -1010,16 +1018,28 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     char_type __atoms[26];
     char_type __thousands_sep;
     string __grouping = this->__stage2_int_prep(__iob, __atoms, __thousands_sep);
-    char __a[__num_get_base::__num_get_buf_sz] = {0};
+    string __buf;
+    __buf.resize(__buf.capacity());
+    char* __a = &__buf[0];
     char* __a_end = __a;
     unsigned __g[__num_get_base::__num_get_buf_sz];
     unsigned* __g_end = __g;
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
+    {
+        if (__a_end - __a == __buf.size())
+        {
+            size_t __tmp = __buf.size();
+            __buf.resize(2*__buf.size());
+            __buf.resize(__buf.capacity());
+            __a = &__buf[0];
+            __a_end = __a + __tmp;
+        }
         if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
                                     __thousands_sep, __grouping, __g, __g_end,
                                     __atoms))
             break;
+    }
     if (__grouping.size() != 0 && __g_end-__g < __num_get_base::__num_get_buf_sz)
         *__g_end++ = __dc;
     // Stage 3
@@ -1045,16 +1065,28 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     char_type __atoms[26];
     char_type __thousands_sep;
     string __grouping = this->__stage2_int_prep(__iob, __atoms, __thousands_sep);
-    char __a[__num_get_base::__num_get_buf_sz] = {0};
+    string __buf;
+    __buf.resize(__buf.capacity());
+    char* __a = &__buf[0];
     char* __a_end = __a;
     unsigned __g[__num_get_base::__num_get_buf_sz];
     unsigned* __g_end = __g;
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
+    {
+        if (__a_end - __a == __buf.size())
+        {
+            size_t __tmp = __buf.size();
+            __buf.resize(2*__buf.size());
+            __buf.resize(__buf.capacity());
+            __a = &__buf[0];
+            __a_end = __a + __tmp;
+        }
         if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
                                     __thousands_sep, __grouping, __g, __g_end,
                                     __atoms))
             break;
+    }
     if (__grouping.size() != 0 && __g_end-__g < __num_get_base::__num_get_buf_sz)
         *__g_end++ = __dc;
     // Stage 3
@@ -1080,16 +1112,28 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     char_type __atoms[26];
     char_type __thousands_sep;
     string __grouping = this->__stage2_int_prep(__iob, __atoms, __thousands_sep);
-    char __a[__num_get_base::__num_get_buf_sz] = {0};
+    string __buf;
+    __buf.resize(__buf.capacity());
+    char* __a = &__buf[0];
     char* __a_end = __a;
     unsigned __g[__num_get_base::__num_get_buf_sz];
     unsigned* __g_end = __g;
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
+    {
+        if (__a_end - __a == __buf.size())
+        {
+            size_t __tmp = __buf.size();
+            __buf.resize(2*__buf.size());
+            __buf.resize(__buf.capacity());
+            __a = &__buf[0];
+            __a_end = __a + __tmp;
+        }
         if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
                                     __thousands_sep, __grouping, __g, __g_end,
                                     __atoms))
             break;
+    }
     if (__grouping.size() != 0 && __g_end-__g < __num_get_base::__num_get_buf_sz)
         *__g_end++ = __dc;
     // Stage 3
@@ -1115,16 +1159,28 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     char_type __atoms[26];
     char_type __thousands_sep;
     string __grouping = this->__stage2_int_prep(__iob, __atoms, __thousands_sep);
-    char __a[__num_get_base::__num_get_buf_sz] = {0};
+    string __buf;
+    __buf.resize(__buf.capacity());
+    char* __a = &__buf[0];
     char* __a_end = __a;
     unsigned __g[__num_get_base::__num_get_buf_sz];
     unsigned* __g_end = __g;
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
+    {
+        if (__a_end - __a == __buf.size())
+        {
+            size_t __tmp = __buf.size();
+            __buf.resize(2*__buf.size());
+            __buf.resize(__buf.capacity());
+            __a = &__buf[0];
+            __a_end = __a + __tmp;
+        }
         if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
                                     __thousands_sep, __grouping, __g, __g_end,
                                     __atoms))
             break;
+    }
     if (__grouping.size() != 0 && __g_end-__g < __num_get_base::__num_get_buf_sz)
         *__g_end++ = __dc;
     // Stage 3
@@ -1150,16 +1206,28 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     char_type __atoms[26];
     char_type __thousands_sep;
     string __grouping = this->__stage2_int_prep(__iob, __atoms, __thousands_sep);
-    char __a[__num_get_base::__num_get_buf_sz] = {0};
+    string __buf;
+    __buf.resize(__buf.capacity());
+    char* __a = &__buf[0];
     char* __a_end = __a;
     unsigned __g[__num_get_base::__num_get_buf_sz];
     unsigned* __g_end = __g;
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
+    {
+        if (__a_end - __a == __buf.size())
+        {
+            size_t __tmp = __buf.size();
+            __buf.resize(2*__buf.size());
+            __buf.resize(__buf.capacity());
+            __a = &__buf[0];
+            __a_end = __a + __tmp;
+        }
         if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
                                     __thousands_sep, __grouping, __g, __g_end,
                                     __atoms))
             break;
+    }
     if (__grouping.size() != 0 && __g_end-__g < __num_get_base::__num_get_buf_sz)
         *__g_end++ = __dc;
     // Stage 3
@@ -1187,7 +1255,9 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     string __grouping = this->__stage2_float_prep(__iob, __atoms,
                                                   __decimal_point,
                                                   __thousands_sep);
-    char __a[__num_get_base::__num_get_buf_sz] = {0};
+    string __buf;
+    __buf.resize(__buf.capacity());
+    char* __a = &__buf[0];
     char* __a_end = __a;
     unsigned __g[__num_get_base::__num_get_buf_sz];
     unsigned* __g_end = __g;
@@ -1195,11 +1265,21 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     bool __in_units = true;
     char __exp = 'E';
     for (; __b != __e; ++__b)
+    {
+        if (__a_end - __a == __buf.size())
+        {
+            size_t __tmp = __buf.size();
+            __buf.resize(2*__buf.size());
+            __buf.resize(__buf.capacity());
+            __a = &__buf[0];
+            __a_end = __a + __tmp;
+        }
         if (this->__stage2_float_loop(*__b, __in_units, __exp, __a, __a_end,
                                       __decimal_point, __thousands_sep,
                                       __grouping, __g, __g_end,
                                       __dc, __atoms))
             break;
+    }
     if (__grouping.size() != 0 && __in_units && __g_end-__g < __num_get_base::__num_get_buf_sz)
         *__g_end++ = __dc;
     // Stage 3
@@ -1227,7 +1307,9 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     string __grouping = this->__stage2_float_prep(__iob, __atoms,
                                                   __decimal_point,
                                                   __thousands_sep);
-    char __a[__num_get_base::__num_get_buf_sz] = {0};
+    string __buf;
+    __buf.resize(__buf.capacity());
+    char* __a = &__buf[0];
     char* __a_end = __a;
     unsigned __g[__num_get_base::__num_get_buf_sz];
     unsigned* __g_end = __g;
@@ -1235,11 +1317,21 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     bool __in_units = true;
     char __exp = 'E';
     for (; __b != __e; ++__b)
+    {
+        if (__a_end - __a == __buf.size())
+        {
+            size_t __tmp = __buf.size();
+            __buf.resize(2*__buf.size());
+            __buf.resize(__buf.capacity());
+            __a = &__buf[0];
+            __a_end = __a + __tmp;
+        }
         if (this->__stage2_float_loop(*__b, __in_units, __exp, __a, __a_end,
                                       __decimal_point, __thousands_sep,
                                       __grouping, __g, __g_end,
                                       __dc, __atoms))
             break;
+    }
     if (__grouping.size() != 0 && __in_units && __g_end-__g < __num_get_base::__num_get_buf_sz)
         *__g_end++ = __dc;
     // Stage 3
@@ -1267,7 +1359,9 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     string __grouping = this->__stage2_float_prep(__iob, __atoms,
                                                   __decimal_point,
                                                   __thousands_sep);
-    char __a[__num_get_base::__num_get_buf_sz] = {0};
+    string __buf;
+    __buf.resize(__buf.capacity());
+    char* __a = &__buf[0];
     char* __a_end = __a;
     unsigned __g[__num_get_base::__num_get_buf_sz];
     unsigned* __g_end = __g;
@@ -1275,11 +1369,21 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     bool __in_units = true;
     char __exp = 'E';
     for (; __b != __e; ++__b)
+    {
+        if (__a_end - __a == __buf.size())
+        {
+            size_t __tmp = __buf.size();
+            __buf.resize(2*__buf.size());
+            __buf.resize(__buf.capacity());
+            __a = &__buf[0];
+            __a_end = __a + __tmp;
+        }
         if (this->__stage2_float_loop(*__b, __in_units, __exp, __a, __a_end,
                                       __decimal_point, __thousands_sep,
                                       __grouping, __g, __g_end,
                                       __dc, __atoms))
             break;
+    }
     if (__grouping.size() != 0 && __in_units && __g_end-__g < __num_get_base::__num_get_buf_sz)
         *__g_end++ = __dc;
     // Stage 3
@@ -1307,16 +1411,28 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     string __grouping;
     use_facet<ctype<_CharT> >(__iob.getloc()).widen(__num_get_base::__src,
                                                     __num_get_base::__src + 26, __atoms);
-    char __a[__num_get_base::__num_get_buf_sz] = {0};
+    string __buf;
+    __buf.resize(__buf.capacity());
+    char* __a = &__buf[0];
     char* __a_end = __a;
     unsigned __g[__num_get_base::__num_get_buf_sz];
     unsigned* __g_end = __g;
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
+    {
+        if (__a_end - __a == __buf.size())
+        {
+            size_t __tmp = __buf.size();
+            __buf.resize(2*__buf.size());
+            __buf.resize(__buf.capacity());
+            __a = &__buf[0];
+            __a_end = __a + __tmp;
+        }
         if (this->__stage2_int_loop(*__b, __base, __a, __a_end, __dc,
                                     __thousands_sep, __grouping,
                                     __g, __g_end, __atoms))
             break;
+    }
     // Stage 3
     __a[sizeof(__a)-1] = 0;
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS

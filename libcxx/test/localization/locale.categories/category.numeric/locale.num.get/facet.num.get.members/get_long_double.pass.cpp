@@ -216,4 +216,16 @@ int main()
         assert(err == ios.failbit);
         assert(v == INFINITY);
     }
+    {
+        const char str[] = "304888344611713860501504000000";
+        std::ios_base::iostate err = ios.goodbit;
+        v = 0;
+        input_iterator<const char*> iter =
+            f.get(input_iterator<const char*>(str),
+                  input_iterator<const char*>(str+sizeof(str)),
+                  ios, err, v);
+        assert(iter.base() == str+sizeof(str)-1);
+        assert(err != ios.failbit);
+        assert(v == 304888344611713860501504000000.0L);
+    }
 }
