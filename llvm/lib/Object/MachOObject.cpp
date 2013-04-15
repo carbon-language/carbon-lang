@@ -61,7 +61,7 @@ static void ReadInMemoryStruct(const MachOObject &MOO,
 MachOObject::MachOObject(MemoryBuffer *Buffer_, bool IsLittleEndian_,
                          bool Is64Bit_)
   : Buffer(Buffer_), IsLittleEndian(IsLittleEndian_), Is64Bit(Is64Bit_),
-    IsSwappedEndian(IsLittleEndian != sys::isLittleEndianHost()),
+    IsSwappedEndian(IsLittleEndian != sys::IsLittleEndianHost),
     HasStringTable(false), LoadCommands(0), NumLoadedCommands(0) {
   // Load the common header.
   memcpy(&Header, Buffer->getBuffer().data(), sizeof(Header));

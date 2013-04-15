@@ -37,7 +37,7 @@ namespace detail {
 namespace endian {
 template<typename value_type, endianness endian>
 inline value_type byte_swap(value_type value) {
-  if (endian != native && sys::isBigEndianHost() != (endian == big))
+  if (endian != native && sys::IsBigEndianHost != (endian == big))
     return sys::SwapByteOrder(value);
   return value;
 }

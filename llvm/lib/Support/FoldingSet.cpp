@@ -101,7 +101,7 @@ void FoldingSetNodeID::AddString(StringRef String) {
     // Otherwise do it the hard way.
     // To be compatible with above bulk transfer, we need to take endianness
     // into account.
-    if (sys::isBigEndianHost()) {
+    if (sys::IsBigEndianHost) {
       for (Pos += 4; Pos <= Size; Pos += 4) {
         unsigned V = ((unsigned char)String[Pos - 4] << 24) |
                      ((unsigned char)String[Pos - 3] << 16) |
@@ -110,7 +110,7 @@ void FoldingSetNodeID::AddString(StringRef String) {
         Bits.push_back(V);
       }
     } else {
-      assert(sys::isLittleEndianHost() && "Unexpected host endianness");
+      assert(sys::IsLittleEndianHost && "Unexpected host endianness");
       for (Pos += 4; Pos <= Size; Pos += 4) {
         unsigned V = ((unsigned char)String[Pos - 1] << 24) |
                      ((unsigned char)String[Pos - 2] << 16) |

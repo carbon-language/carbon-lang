@@ -15,22 +15,30 @@
 #define LLVM_SUPPORT_HOST_H
 
 #include "llvm/ADT/StringMap.h"
+
+#if defined(__linux__)
+#include <endian.h>
+#else
+#ifndef _MSC_VER
+#include <machine/endian.h>
+#endif
+#endif
+
 #include <string>
 
 namespace llvm {
 namespace sys {
 
-  inline bool isLittleEndianHost() {
-    union {
-      int i;
-      char c;
-    };
-    i = 1;
-    return c;
-  }
+#if BYTE_ORDER == BIG_ENDIAN
+  static const bool IsBigEndianHost = true;
+#else
+  static const bool IsBigEndianHost = false;
+#endif
+
+  static const bool IsLittleEndianHost = !IsBigEndianHost;
 
   inline bool isBigEndianHost() {
-    return !isLittleEndianHost();
+    return IsBigEndianHost;
   }
 
   /// getDefaultTargetTriple() - Return the default target triple the compiler

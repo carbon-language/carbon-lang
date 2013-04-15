@@ -20,7 +20,7 @@ static T getU(uint32_t *offset_ptr, const DataExtractor *de,
   uint32_t offset = *offset_ptr;
   if (de->isValidOffsetForDataOfSize(offset, sizeof(val))) {
     std::memcpy(&val, &Data[offset], sizeof(val));
-    if (sys::isLittleEndianHost() != isLittleEndian)
+    if (sys::IsLittleEndianHost != isLittleEndian)
       val = sys::SwapByteOrder(val);
 
     // Advance the offset
