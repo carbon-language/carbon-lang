@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/Log.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
@@ -17,6 +18,7 @@
 #include "lldb/Symbol/Type.h"
 #include "lldb/Symbol/Variable.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
 
 using namespace lldb_private;
@@ -579,6 +581,15 @@ public:
     
     virtual void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
     {
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+        if (log)
+        {
+            log->Printf("EntitySymbol::Materialize [process_address = 0x%llx, m_symbol = %s]",
+                        (uint64_t)process_address,
+                        m_symbol.GetName().AsCString());
+        }
+        
         Address &sym_address = m_symbol.GetAddress();
 
         ExecutionContextScope *exe_scope = map.GetBestExecutionContextScope();
@@ -608,12 +619,22 @@ public:
         {
             err.SetErrorToGenericError();
             err.SetErrorStringWithFormat("Couldn't write the address of symbol %s: %s", m_symbol.GetName().AsCString(), pointer_write_error.AsCString());
+            return;
         }
     }
     
     virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address,
                                 lldb::addr_t frame_top, lldb::addr_t frame_bottom, Error &err)
     {
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+        if (log)
+        {
+            log->Printf("EntitySymbol::Dematerialize [process_address = 0x%llx, m_symbol = %s]",
+                        (uint64_t)process_address,
+                        m_symbol.GetName().AsCString());
+        }
+        
         // no work needs to be done
     }
 private:
@@ -644,11 +665,103 @@ public:
     
     virtual void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
     {
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+        
+        if (log)
+        {
+            log->Printf("EntityRegister::Materialize [process_address = 0x%llx, m_register_info = %s]",
+                        (uint64_t)process_address,
+                        m_register_info.name);
+        }
+
+        RegisterValue reg_value;
+        
+        if (!frame_sp.get())
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat("Couldn't materialize register %s without a stack frame", m_register_info.name);
+            return;
+        }
+        
+        lldb::RegisterContextSP reg_context_sp = frame_sp->GetRegisterContext();
+        
+        if (!reg_context_sp->ReadRegister(&m_register_info, reg_value))
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat("Couldn't read the value of register %s", m_register_info.name);
+            return;
+        }
+        
+        DataExtractor register_data;
+        
+        if (!reg_value.GetData(register_data))
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat("Couldn't get the data for register %s", m_register_info.name);
+            return;
+        }
+        
+        if (register_data.GetByteSize() != m_register_info.byte_size)
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat("Data for register %s had size %llu but we expected %llu", m_register_info.name, (unsigned long long)register_data.GetByteSize(), (unsigned long long)m_register_info.byte_size);
+            return;
+        }
+        
+        Error write_error;
+        
+        map.WriteMemory(process_address + m_offset, register_data.GetDataStart(), register_data.GetByteSize(), write_error);
+        
+        if (!write_error.Success())
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat("Couldn't write the contents of register %s: %s", m_register_info.name, write_error.AsCString());
+            return;
+        }
     }
     
     virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address,
                                 lldb::addr_t frame_top, lldb::addr_t frame_bottom, Error &err)
     {
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+        
+        if (log)
+        {
+            log->Printf("EntityRegister::Dematerialize [process_address = 0x%llx, m_register_info = %s]",
+                        (uint64_t)process_address,
+                        m_register_info.name);
+        }
+        
+        Error extract_error;
+        
+        DataExtractor register_data;
+        
+        if (!frame_sp.get())
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat("Couldn't dematerialize register %s without a stack frame", m_register_info.name);
+            return;
+        }
+        
+        lldb::RegisterContextSP reg_context_sp = frame_sp->GetRegisterContext();
+        
+        map.GetMemoryData(register_data, process_address + m_offset, m_register_info.byte_size, extract_error);
+        
+        if (!extract_error.Success())
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat("Couldn't get the data for register %s: %s", m_register_info.name, extract_error.AsCString());
+            return;
+        }
+        
+        RegisterValue register_value (const_cast<uint8_t*>(register_data.GetDataStart()), register_data.GetByteSize(), register_data.GetByteOrder());
+        
+        if (!reg_context_sp->WriteRegister(&m_register_info, register_value))
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorStringWithFormat("Couldn't write the value of register %s", m_register_info.name);
+            return;
+        }
     }
 private:
     RegisterInfo m_register_info;
