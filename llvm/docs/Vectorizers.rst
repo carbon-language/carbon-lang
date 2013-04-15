@@ -22,6 +22,7 @@ Usage
 -----
 
 LLVM's Loop Vectorizer is now enabled by default for -O3.
+We plan to enable parts of the Loop Vectorizer on -O2 and -Os in future releases.
 The vectorizer can be disabled using the command line:
 
 .. code-block:: console
