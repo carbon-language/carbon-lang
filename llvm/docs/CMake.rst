@@ -168,8 +168,8 @@ LLVM-specific variables
 
 **LLVM_TARGETS_TO_BUILD**:STRING
   Semicolon-separated list of targets to build, or *all* for building all
-  targets. Case-sensitive. For Visual C++ defaults to *X86*. On the other cases
-  defaults to *all*. Example: ``-DLLVM_TARGETS_TO_BUILD="X86;PowerPC"``.
+  targets. Case-sensitive. Defaults to *all*. Example:
+  ``-DLLVM_TARGETS_TO_BUILD="X86;PowerPC"``.
 
 **LLVM_BUILD_TOOLS**:BOOL
   Build LLVM tools. Defaults to ON. Targets for building each tool are generated
