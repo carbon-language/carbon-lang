@@ -14,8 +14,11 @@ extern FILE *__stdinp;
 extern FILE *__stdoutp;
 extern FILE *__stderrp;
 
-
+int scanf(const char *restrict format, ...);
 int fscanf(FILE *restrict, const char *restrict, ...);
+int printf(const char *restrict format, ...);
+int fprintf(FILE *restrict, const char *restrict, ...);
+int getchar(void);
 
 // Note, on some platforms errno macro gets replaced with a function call.
 extern int errno;
@@ -37,6 +40,8 @@ typedef __darwin_off_t fpos_t;
 void setbuf(FILE * restrict, char * restrict);
 int setvbuf(FILE * restrict, char * restrict, int, size_t);
 
+FILE *fopen(const char * restrict, const char * restrict);
+int fclose(FILE *);
 FILE *funopen(const void *,
                  int (*)(void *, char *, int),
                  int (*)(void *, const char *, int),
