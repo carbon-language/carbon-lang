@@ -558,16 +558,20 @@ bool MemRegion::canPrintPretty() const {
   return false;
 }
 
+bool MemRegion::canPrintPrettyAsExpr() const {
+  return canPrintPretty();
+}
+
 void MemRegion::printPretty(raw_ostream &os) const {
   assert(canPrintPretty() && "This region cannot be printed pretty.");
   os << "'";
-  printPrettyNoQuotes(os);
+  printPrettyAsExpr(os);
   os << "'";
   return;
 }
 
-void MemRegion::printPrettyNoQuotes(raw_ostream &os) const {
-  assert(canPrintPretty() && "This region cannot be printed pretty.");
+void MemRegion::printPrettyAsExpr(raw_ostream &os) const {
+  llvm_unreachable("This region cannot be printed pretty.");
   return;
 }
 
@@ -575,7 +579,7 @@ bool VarRegion::canPrintPretty() const {
   return true;
 }
 
-void VarRegion::printPrettyNoQuotes(raw_ostream &os) const {
+void VarRegion::printPrettyAsExpr(raw_ostream &os) const {
   os << getDecl()->getName();
 }
 
@@ -583,7 +587,7 @@ bool ObjCIvarRegion::canPrintPretty() const {
   return true;
 }
 
-void ObjCIvarRegion::printPrettyNoQuotes(raw_ostream &os) const {
+void ObjCIvarRegion::printPrettyAsExpr(raw_ostream &os) const {
   os << getDecl()->getName();
 }
 
@@ -591,24 +595,29 @@ bool FieldRegion::canPrintPretty() const {
   return true;
 }
 
-void FieldRegion::printPrettyNoQuotes(raw_ostream &os) const {
-  if (superRegion->canPrintPretty()) {
-    superRegion->printPrettyNoQuotes(os);
-    os << "." << getDecl()->getName();
-  } else {
-    os << "field " << "\'" << getDecl()->getName() << "'";
-  }
+bool FieldRegion::canPrintPrettyAsExpr() const {
+  return superRegion->canPrintPrettyAsExpr();
+}
+
+void FieldRegion::printPrettyAsExpr(raw_ostream &os) const {
+  assert(canPrintPrettyAsExpr());
+  superRegion->printPrettyAsExpr(os);
+  os << "." << getDecl()->getName();
 }
 
 void FieldRegion::printPretty(raw_ostream &os) const {
-  if (superRegion->canPrintPretty()) {
+  if (canPrintPrettyAsExpr()) {
     os << "\'";
-    printPrettyNoQuotes(os);
+    printPrettyAsExpr(os);
     os << "'";
   } else {
-    printPrettyNoQuotes(os);
+    os << "field " << "\'" << getDecl()->getName() << "'";
   }
   return;
+}
+
+bool FieldRegion::canPrintPrettyAsExpr() const {
+  return superRegion->canPrintPrettyAsExpr();
 }
 
 //===----------------------------------------------------------------------===//
