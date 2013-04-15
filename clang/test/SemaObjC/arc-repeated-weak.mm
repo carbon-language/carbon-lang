@@ -327,6 +327,28 @@ void doWhileLoop(Test *a) {
 }
 @end
 
+@interface Base1
+@end
+@interface Sub1 : Base1
+@end
+@interface Sub1(cat)
+-(id)prop;
+@end
+
+void test1(Sub1 *s) {
+  use([s prop]);
+  use([s prop]);
+}
+
+@interface Base1(cat)
+@property (weak) id prop;
+@end
+
+void test2(Sub1 *s) {
+  use([s prop]); // expected-warning{{weak property 'prop' is accessed multiple times}}
+  use([s prop]); // expected-note{{also accessed here}}
+}
+
 
 class Wrapper {
   Test *a;
