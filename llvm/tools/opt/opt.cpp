@@ -403,7 +403,7 @@ struct BreakpointPrinter : public ModulePass {
     AU.setPreservesAll();
   }
 };
-
+ 
 } // anonymous namespace
 
 char BreakpointPrinter::ID = 0;
@@ -446,7 +446,7 @@ static void AddOptimizationPasses(PassManagerBase &MPM,FunctionPassManager &FPM,
   Builder.DisableUnitAtATime = !UnitAtATime;
   Builder.DisableUnrollLoops = OptLevel == 0;
   Builder.DisableSimplifyLibCalls = DisableSimplifyLibCalls;
-
+  
   Builder.populateFunctionPassManager(FPM);
   Builder.populateModulePassManager(MPM);
 }
@@ -529,8 +529,9 @@ static TargetMachine* GetTargetMachine(Triple TheTriple) {
   const Target *TheTarget = TargetRegistry::lookupTarget(MArch, TheTriple,
                                                          Error);
   // Some modules don't specify a triple, and this is okay.
-  if (!TheTarget)
+  if (!TheTarget) {
     return 0;
+  }
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
@@ -597,11 +598,8 @@ int main(int argc, char **argv) {
   }
 
   // If we are supposed to override the target triple, do so now.
-  const DataLayout *TD = 0;
-  if (!TargetTriple.empty()) {
+  if (!TargetTriple.empty())
     M->setTargetTriple(Triple::normalize(TargetTriple));
-    TD = GetTargetMachine(Triple(TargetTriple))->getDataLayout();
-  }
 
   // Figure out what stream we are supposed to write to...
   OwningPtr<tool_output_file> Out;
@@ -643,16 +641,16 @@ int main(int argc, char **argv) {
     TLI->disableAllFunctions();
   Passes.add(TLI);
 
-  // If we don't have a data layout by now go ahead and set it if we can.
-  if (!TD) {
-    const std::string &ModuleDataLayout = M.get()->getDataLayout();
-    if (!ModuleDataLayout.empty())
-      TD = new DataLayout(ModuleDataLayout);
-    else if (!DefaultDataLayout.empty())
-      TD = new DataLayout(DefaultDataLayout);
-  }
+  // Add an appropriate DataLayout instance for this module.
+  DataLayout *TD = 0;
+  const std::string &ModuleDataLayout = M.get()->getDataLayout();
+  if (!ModuleDataLayout.empty())
+    TD = new DataLayout(ModuleDataLayout);
+  else if (!DefaultDataLayout.empty())
+    TD = new DataLayout(DefaultDataLayout);
+
   if (TD)
-    Passes.add(new DataLayout(*TD));
+    Passes.add(TD);
 
   Triple ModuleTriple(M->getTargetTriple());
   TargetMachine *Machine = 0;
