@@ -5,6 +5,10 @@
 // suppressed.
 #pragma clang system_header
 
+#ifdef __cplusplus
+#define restrict /*restrict*/
+#endif
+
 typedef struct _FILE FILE;
 extern FILE *stdin;
 extern FILE *stdout;

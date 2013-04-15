@@ -44,7 +44,10 @@ int testErrnoSystem() {
     fscanf(stdin, "%d", &i); // errno gets invalidated here.
     return 5 / errno; // no-warning
   }
-  return 0;
+
+  errno = 0;
+  fscanf(stdin, "%d", &i); // errno gets invalidated here.
+  return 5 / errno; // no-warning
 }
 
 // Test that errno gets invalidated by internal calls.

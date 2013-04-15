@@ -490,8 +490,7 @@ public: // Part of public interface to class.
 
   SVal getBindingForFieldOrElementCommon(RegionBindingsConstRef B,
                                          const TypedValueRegion *R,
-                                         QualType Ty,
-                                         const MemRegion *superR);
+                                         QualType Ty);
   
   SVal getLazyBinding(const SubRegion *LazyBindingRegion,
                       RegionBindingsRef LazyBinding);
@@ -1546,7 +1545,7 @@ SVal RegionStoreManager::getBindingForElement(RegionBindingsConstRef B,
       }
     }
   }
-  return getBindingForFieldOrElementCommon(B, R, R->getElementType(),superR);
+  return getBindingForFieldOrElementCommon(B, R, R->getElementType());
 }
 
 SVal RegionStoreManager::getBindingForField(RegionBindingsConstRef B,
@@ -1557,7 +1556,7 @@ SVal RegionStoreManager::getBindingForField(RegionBindingsConstRef B,
     return *V;
 
   QualType Ty = R->getValueType();
-  return getBindingForFieldOrElementCommon(B, R, Ty, R->getSuperRegion());
+  return getBindingForFieldOrElementCommon(B, R, Ty);
 }
 
 Optional<SVal>
@@ -1620,8 +1619,7 @@ SVal RegionStoreManager::getLazyBinding(const SubRegion *LazyBindingRegion,
 SVal
 RegionStoreManager::getBindingForFieldOrElementCommon(RegionBindingsConstRef B,
                                                       const TypedValueRegion *R,
-                                                      QualType Ty,
-                                                      const MemRegion *superR) {
+                                                      QualType Ty) {
 
   // At this point we have already checked in either getBindingForElement or
   // getBindingForField if 'R' has a direct binding.
@@ -1654,8 +1652,9 @@ RegionStoreManager::getBindingForFieldOrElementCommon(RegionBindingsConstRef B,
   // quickly result in a warning.
   bool hasPartialLazyBinding = false;
 
-  const SubRegion *Base = dyn_cast<SubRegion>(superR);
-  while (Base) {
+  const SubRegion *SR = dyn_cast<SubRegion>(R);
+  while (SR) {
+    const MemRegion *Base = SR->getSuperRegion();
     if (Optional<SVal> D = getBindingForDerivedDefaultValue(B, Base, R, Ty)) {
       if (D->getAs<nonloc::LazyCompoundVal>()) {
         hasPartialLazyBinding = true;
@@ -1673,7 +1672,7 @@ RegionStoreManager::getBindingForFieldOrElementCommon(RegionBindingsConstRef B,
     
     // If our super region is a field or element itself, walk up the region
     // hierarchy to see if there is a default value installed in an ancestor.
-    Base = dyn_cast<SubRegion>(Base->getSuperRegion());
+    SR = dyn_cast<SubRegion>(Base);
   }
 
   if (R->hasStackNonParametersStorage()) {
@@ -1681,7 +1680,7 @@ RegionStoreManager::getBindingForFieldOrElementCommon(RegionBindingsConstRef B,
       // Currently we don't reason specially about Clang-style vectors.  Check
       // if superR is a vector and if so return Unknown.
       if (const TypedValueRegion *typedSuperR = 
-            dyn_cast<TypedValueRegion>(superR)) {
+            dyn_cast<TypedValueRegion>(R->getSuperRegion())) {
         if (typedSuperR->getValueType()->isVectorType())
           return UnknownVal();
       }
