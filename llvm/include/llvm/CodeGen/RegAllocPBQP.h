@@ -29,6 +29,7 @@ namespace llvm {
   class MachineFunction;
   class MachineLoopInfo;
   class TargetRegisterInfo;
+  template<class T> class OwningPtr;
 
   /// This class wraps up a PBQP instance representing a register allocation
   /// problem, plus the structures necessary to map back from the PBQP solution
@@ -123,11 +124,9 @@ namespace llvm {
 
     /// Build a PBQP instance to represent the register allocation problem for
     /// the given MachineFunction.
-    virtual std::auto_ptr<PBQPRAProblem> build(
-                                              MachineFunction *mf,
-                                              const LiveIntervals *lis,
-                                              const MachineLoopInfo *loopInfo,
-                                              const RegSet &vregs);
+    virtual PBQPRAProblem *build(MachineFunction *mf, const LiveIntervals *lis,
+                                 const MachineLoopInfo *loopInfo,
+                                 const RegSet &vregs);
   private:
 
     void addSpillCosts(PBQP::Vector &costVec, PBQP::PBQPNum spillCost);
@@ -144,11 +143,9 @@ namespace llvm {
  
     /// Build a PBQP instance to represent the register allocation problem for
     /// the given MachineFunction.
-    virtual std::auto_ptr<PBQPRAProblem> build(
-                                              MachineFunction *mf,
-                                              const LiveIntervals *lis,
-                                              const MachineLoopInfo *loopInfo,
-                                              const RegSet &vregs);   
+    virtual PBQPRAProblem *build(MachineFunction *mf, const LiveIntervals *lis,
+                                 const MachineLoopInfo *loopInfo,
+                                 const RegSet &vregs);   
 
   private:
 
@@ -161,7 +158,7 @@ namespace llvm {
                             PBQP::PBQPNum benefit);
   };
 
-  FunctionPass* createPBQPRegisterAllocator(std::auto_ptr<PBQPBuilder> builder,
+  FunctionPass* createPBQPRegisterAllocator(OwningPtr<PBQPBuilder> &builder,
                                             char *customPassID=0);
 }
 
