@@ -88,7 +88,7 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     MCCodeEmitter *_Emitter,
                                     bool RelaxAll,
                                     bool NoExecStack) {
-  return createPureStreamer(Ctx, MAB, _OS, _Emitter);
+  return createELFStreamer(Ctx, MAB, _OS, _Emitter, false, false);
 }
 
 extern "C" void LLVMInitializeR600TargetMC() {
