@@ -171,18 +171,23 @@ public:
         {
             exit(1);
         }
-        
+        lldb::SBLaunchInfo launch_info = GetLaunchInfo();
         m_target = m_debugger.CreateTarget(m_app_path.c_str());
-        const char* file_arg = m_doc_path.c_str(); 
-        const char* persist_arg = "-ApplePersistenceIgnoreState";
-        const char* persist_skip = "YES";
-        const char* empty = nullptr;
-        const char* args[] = {file_arg,persist_arg,persist_skip,empty};
-        SBLaunchInfo launch_info (args);
         m_file_line_bp_measurement("SKTDocument.m",245);
         m_file_line_bp_measurement("SKTDocument.m",283);
         m_file_line_bp_measurement("SKTText.m",326);
         return Launch (launch_info);
+    }
+    
+    lldb::SBLaunchInfo
+    GetLaunchInfo ()
+    {
+        const char* file_arg = m_doc_path.c_str();
+        const char* persist_arg = "-ApplePersistenceIgnoreState";
+        const char* persist_skip = "YES";
+        const char* empty = nullptr;
+        const char* args[] = {file_arg,persist_arg,persist_skip,empty};
+        return SBLaunchInfo(args);
     }
     
     void
@@ -199,14 +204,17 @@ public:
         switch (counter)
         {
         case 0:
+        case 10:
             {
                 DoTest ();
-                m_file_line_bp_measurement("SKTDocument.m",254);
+                if (counter == 0)
+                    m_file_line_bp_measurement("SKTDocument.m",254);
                 next_action.Continue();
             }
             break;
                 
         case 1:
+            case 11:
             {
                 DoTest ();
                 m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"properties");
@@ -219,6 +227,7 @@ public:
             break;
 
         case 2:
+            case 12:
             {
                 DoTest ();
                 next_action.Continue();
@@ -226,6 +235,7 @@ public:
             break;
 
         case 3:
+            case 13:
             {
                 DoTest ();
                 next_action.StepOver(m_thread);
@@ -233,6 +243,8 @@ public:
             break;
 
         case 4:
+            case 14:
+                
             {
                 DoTest ();
                 m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"layoutManager");
@@ -242,6 +254,7 @@ public:
             break;
         
         case 5:
+            case 15:
             {
                 DoTest ();
                 next_action.StepOver(m_thread);
@@ -249,6 +262,7 @@ public:
             break;
 
         case 6:
+            case 16:
             {
                 DoTest ();
                 next_action.StepOver(m_thread);
@@ -256,6 +270,7 @@ public:
             break;
 
         case 7:
+            case 17:
             {
                 DoTest ();
                 m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"@\"an NSString\"");
@@ -266,15 +281,20 @@ public:
             break;
 
         case 8:
+            case 18:
             {
                 DoTest ();
                 m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"[graphics description]");
                 m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"[selectionIndexes description]");
                 m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"(BOOL)NSIntersectsRect(rect, graphicDrawingBounds)");
-                next_action.Kill();
             }
             break;
-        
+        case 9:
+            {
+                next_action.Relaunch(GetLaunchInfo());
+                break;
+            }
+                
         default:
             {
                 next_action.Kill();

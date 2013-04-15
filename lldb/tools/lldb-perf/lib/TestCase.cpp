@@ -292,6 +292,14 @@ TestCase::Loop ()
                 m_process.SetSelectedThread(action.thread);
                 action.thread.StepOver();
                 break;
+            case ActionWanted::Type::eRelaunch:
+                if (m_process.IsValid())
+                {
+                    m_process.Kill();
+                    m_process.Clear();
+                }
+                Launch(action.launch_info);
+                break;
             case ActionWanted::Type::eKill:
                 if (m_verbose)
                     printf("kill\n");

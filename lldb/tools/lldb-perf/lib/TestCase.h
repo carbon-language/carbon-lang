@@ -30,13 +30,16 @@ public:
 			eStepOver,
 			eContinue,
             eStepOut,
+            eRelaunch,
 			eKill
 		} type;
 		lldb::SBThread thread;
+        lldb::SBLaunchInfo launch_info;
         
         ActionWanted () :
             type (Type::eContinue),
-            thread ()
+            thread (),
+            launch_info (NULL)
         {
         }
         
@@ -59,6 +62,14 @@ public:
         {
             type = Type::eStepOut;
             thread = t;
+        }
+        
+        void
+        Relaunch (lldb::SBLaunchInfo l)
+        {
+            type = Type::eRelaunch;
+            thread = lldb::SBThread();
+            launch_info = l;
         }
         
         void
