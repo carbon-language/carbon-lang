@@ -660,9 +660,10 @@ private:
                              Whitespaces);
         }
         TailOffset += Split.first + Split.second;
-        unsigned OldRemainingLength = RemainingLength;
-        RemainingLength = Token->getLineLengthAfterSplit(LineIndex, TailOffset);
-        assert(RemainingLength < OldRemainingLength);
+        unsigned NewRemainingLength =
+            Token->getLineLengthAfterSplit(LineIndex, TailOffset);
+        assert(NewRemainingLength < RemainingLength);
+        RemainingLength = NewRemainingLength;
         Penalty += Style.PenaltyExcessCharacter;
         BreakInserted = true;
       }
