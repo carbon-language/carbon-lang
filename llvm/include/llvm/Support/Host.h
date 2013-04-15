@@ -37,10 +37,6 @@ namespace sys {
 
   static const bool IsLittleEndianHost = !IsBigEndianHost;
 
-  inline bool isBigEndianHost() {
-    return IsBigEndianHost;
-  }
-
   /// getDefaultTargetTriple() - Return the default target triple the compiler
   /// has been configured to produce code for.
   ///
