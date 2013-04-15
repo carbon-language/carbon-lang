@@ -18,16 +18,11 @@
 
 using namespace lldb_private;
 
-IRMemoryMap::IRMemoryMap (lldb::ProcessSP process_sp) :
-    m_process_wp(process_sp),
-    m_target_wp(process_sp->GetTarget().shared_from_this())
-{
-}
-
 IRMemoryMap::IRMemoryMap (lldb::TargetSP target_sp) :
-    m_process_wp(),
     m_target_wp(target_sp)
 {
+    if (target_sp)
+        m_process_wp = target_sp->GetProcessSP();
 }
 
 IRMemoryMap::~IRMemoryMap ()

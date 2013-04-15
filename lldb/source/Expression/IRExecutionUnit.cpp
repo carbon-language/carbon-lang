@@ -27,9 +27,9 @@ using namespace lldb_private;
 
 IRExecutionUnit::IRExecutionUnit (std::auto_ptr<llvm::Module> &module_ap,
                                   ConstString &name,
-                                  lldb::ProcessSP process_sp,
+                                  const lldb::TargetSP &target_sp,
                                   std::vector<std::string> &cpu_features) :
-    IRMemoryMap(process_sp),
+    IRMemoryMap(target_sp),
     m_module_ap(module_ap),
     m_module(m_module_ap.get()),
     m_cpu_features(cpu_features),

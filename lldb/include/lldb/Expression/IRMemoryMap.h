@@ -37,7 +37,6 @@ namespace lldb_private
 class IRMemoryMap
 {
 public:
-    IRMemoryMap (lldb::ProcessSP process_sp);
     IRMemoryMap (lldb::TargetSP target_sp);
     ~IRMemoryMap ();
     
@@ -64,9 +63,12 @@ public:
     lldb::ByteOrder GetByteOrder();
     uint32_t GetAddressByteSize();
     
+    // This function can return NULL.
     ExecutionContextScope *GetBestExecutionContextScope();
 
 protected:
+    // This function should only be used if you know you are using the JIT.
+    // Any other cases should use GetBestExecutionContextScope().
     lldb::ProcessWP GetProcessWP ()
     {
         return m_process_wp;

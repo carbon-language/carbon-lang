@@ -340,7 +340,12 @@ public:
                         m_variable_sp->GetName().AsCString());
         }
         
-        lldb::ValueObjectSP valobj_sp = ValueObjectVariable::Create(frame_sp.get(), m_variable_sp);
+        ExecutionContextScope *scope = frame_sp.get();
+        
+        if (!scope)
+            scope = map.GetBestExecutionContextScope();
+        
+        lldb::ValueObjectSP valobj_sp = ValueObjectVariable::Create(scope, m_variable_sp);
         
         if (!valobj_sp)
         {
@@ -458,7 +463,12 @@ public:
         
         if (m_temporary_allocation != LLDB_INVALID_ADDRESS)
         {
-            lldb::ValueObjectSP valobj_sp = ValueObjectVariable::Create(frame_sp.get(), m_variable_sp);
+            ExecutionContextScope *scope = frame_sp.get();
+            
+            if (!scope)
+                scope = map.GetBestExecutionContextScope();
+            
+            lldb::ValueObjectSP valobj_sp = ValueObjectVariable::Create(scope, m_variable_sp);
             
             if (!valobj_sp)
             {
@@ -665,6 +675,17 @@ Materializer::Materializer () :
 Materializer::Dematerializer
 Materializer::Materialize (lldb::StackFrameSP &frame_sp, lldb::ClangExpressionVariableSP &result_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &error)
 {
+    ExecutionContextScope *exe_scope = frame_sp.get();
+    
+    if (!exe_scope)
+        exe_scope = map.GetBestExecutionContextScope();
+    
+    if (!exe_scope)
+    {
+        error.SetErrorToGenericError();
+        error.SetErrorString("Couldn't dematerialize: target doesn't exist");
+    }
+    
     for (EntityUP &entity_up : m_entities)
     {
         entity_up->Materialize(frame_sp, map, process_address, error);
@@ -683,10 +704,12 @@ Materializer::Dematerializer::Dematerialize (Error &error, lldb::addr_t frame_to
 {
     lldb::StackFrameSP frame_sp = m_frame_wp.lock();
     
-    if (!frame_sp)
+    ExecutionContextScope *exe_scope = m_map.GetBestExecutionContextScope();
+    
+    if (!exe_scope)
     {
         error.SetErrorToGenericError();
-        error.SetErrorString("Couldn't dematerialize: frame is gone");
+        error.SetErrorString("Couldn't dematerialize: target is gone");
     }
     else
     {

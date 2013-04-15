@@ -503,7 +503,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
     
     m_execution_unit.reset(new IRExecutionUnit(module_ap, // handed off here
                                                function_name,
-                                               exe_ctx.GetProcessSP(),
+                                               exe_ctx.GetTargetSP(),
                                                m_compiler->getTargetOpts().Features));
         
     ClangExpressionDeclMap *decl_map = m_expr.DeclMap(); // result can be NULL

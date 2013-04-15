@@ -66,7 +66,7 @@ public:
     //------------------------------------------------------------------
     IRExecutionUnit (std::auto_ptr<llvm::Module> &module_ap,
                      ConstString &name,
-                     lldb::ProcessSP process_sp,
+                     const lldb::TargetSP &target_sp,
                      std::vector<std::string> &cpu_features);
     
     //------------------------------------------------------------------
