@@ -56,8 +56,8 @@
 // RUN: %clang -### -S -fno-tree-slp-vectorize -fslp-vectorize %s 2>&1 | FileCheck -check-prefix=CHECK-SLP-VECTORIZE %s
 // RUN: %clang -### -S -fno-tree-slp-vectorize %s 2>&1 | FileCheck -check-prefix=CHECK-NO-SLP-VECTORIZE %s
 // RUN: %clang -### -S -ftree-slp-vectorize -fno-slp-vectorize %s 2>&1 | FileCheck -check-prefix=CHECK-NO-SLP-VECTORIZE %s
-// CHECK-SLP-VECTORIZE: "-vectorize"
-// CHECK-NO-SLP-VECTORIZE-NOT: "-vectorize"
+// CHECK-SLP-VECTORIZE: "-vectorize-slp"
+// CHECK-NO-SLP-VECTORIZE-NOT: "-vectorize-slp"
 
 // RUN: %clang -### -S -fextended-identifiers %s 2>&1 | FileCheck -check-prefix=CHECK-EXTENDED-IDENTIFIERS %s
 // RUN: %clang -### -S -fno-extended-identifiers %s 2>&1 | FileCheck -check-prefix=CHECK-NO-EXTENDED-IDENTIFIERS %s

@@ -3230,7 +3230,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasFlag(options::OPT_fslp_vectorize,
                    options::OPT_fno_slp_vectorize, false)) {
     CmdArgs.push_back("-backend-option");
-    CmdArgs.push_back("-vectorize");
+    CmdArgs.push_back("-vectorize-slp");
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_fshow_overloads_EQ))
