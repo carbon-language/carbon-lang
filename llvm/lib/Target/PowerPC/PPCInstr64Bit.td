@@ -451,14 +451,16 @@ defm MULHDU : XOForm_1r<31, 9, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
 }
 } // Interpretation64Bit
 
-def CMPD   : XForm_16_ext<31, 0, (outs CRRC:$crD), (ins G8RC:$rA, G8RC:$rB),
-                          "cmpd $crD, $rA, $rB", IntCompare>, isPPC64;
-def CMPLD  : XForm_16_ext<31, 32, (outs CRRC:$crD), (ins G8RC:$rA, G8RC:$rB),
-                          "cmpld $crD, $rA, $rB", IntCompare>, isPPC64;
-def CMPDI  : DForm_5_ext<11, (outs CRRC:$crD), (ins G8RC:$rA, s16imm:$imm),
-                         "cmpdi $crD, $rA, $imm", IntCompare>, isPPC64;
-def CMPLDI : DForm_6_ext<10, (outs CRRC:$dst), (ins G8RC:$src1, u16imm:$src2),
-                         "cmpldi $dst, $src1, $src2", IntCompare>, isPPC64;
+let isCompare = 1, neverHasSideEffects = 1 in {
+  def CMPD   : XForm_16_ext<31, 0, (outs CRRC:$crD), (ins G8RC:$rA, G8RC:$rB),
+                            "cmpd $crD, $rA, $rB", IntCompare>, isPPC64;
+  def CMPLD  : XForm_16_ext<31, 32, (outs CRRC:$crD), (ins G8RC:$rA, G8RC:$rB),
+                            "cmpld $crD, $rA, $rB", IntCompare>, isPPC64;
+  def CMPDI  : DForm_5_ext<11, (outs CRRC:$crD), (ins G8RC:$rA, s16imm:$imm),
+                           "cmpdi $crD, $rA, $imm", IntCompare>, isPPC64;
+  def CMPLDI : DForm_6_ext<10, (outs CRRC:$dst), (ins G8RC:$src1, u16imm:$src2),
+                           "cmpldi $dst, $src1, $src2", IntCompare>, isPPC64;
+}
 
 let neverHasSideEffects = 1 in {
 defm SLD  : XForm_6r<31,  27, (outs G8RC:$rA), (ins G8RC:$rS, GPRC:$rB),

@@ -1318,10 +1318,12 @@ def XORIS : DForm_4<27, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
                     [(set i32:$dst, (xor i32:$src1, imm16ShiftedZExt:$src2))]>;
 def NOP   : DForm_4_zero<24, (outs), (ins), "nop", IntSimple,
                          []>;
-def CMPWI : DForm_5_ext<11, (outs CRRC:$crD), (ins GPRC:$rA, s16imm:$imm),
-                        "cmpwi $crD, $rA, $imm", IntCompare>;
-def CMPLWI : DForm_6_ext<10, (outs CRRC:$dst), (ins GPRC:$src1, u16imm:$src2),
-                         "cmplwi $dst, $src1, $src2", IntCompare>;
+let isCompare = 1, neverHasSideEffects = 1 in {
+  def CMPWI : DForm_5_ext<11, (outs CRRC:$crD), (ins GPRC:$rA, s16imm:$imm),
+                          "cmpwi $crD, $rA, $imm", IntCompare>;
+  def CMPLWI : DForm_6_ext<10, (outs CRRC:$dst), (ins GPRC:$src1, u16imm:$src2),
+                           "cmplwi $dst, $src1, $src2", IntCompare>;
+}
 }
 
 let PPC970_Unit = 1, neverHasSideEffects = 1 in {  // FXU Operations.
@@ -1375,18 +1377,22 @@ defm EXTSH  : XForm_11r<31, 922, (outs GPRC:$rA), (ins GPRC:$rS),
                         "extsh", "$rA, $rS", IntSimple,
                         [(set i32:$rA, (sext_inreg i32:$rS, i16))]>;
 }
-def CMPW   : XForm_16_ext<31, 0, (outs CRRC:$crD), (ins GPRC:$rA, GPRC:$rB),
-                          "cmpw $crD, $rA, $rB", IntCompare>;
-def CMPLW  : XForm_16_ext<31, 32, (outs CRRC:$crD), (ins GPRC:$rA, GPRC:$rB),
-                          "cmplw $crD, $rA, $rB", IntCompare>;
+let isCompare = 1, neverHasSideEffects = 1 in {
+  def CMPW   : XForm_16_ext<31, 0, (outs CRRC:$crD), (ins GPRC:$rA, GPRC:$rB),
+                            "cmpw $crD, $rA, $rB", IntCompare>;
+  def CMPLW  : XForm_16_ext<31, 32, (outs CRRC:$crD), (ins GPRC:$rA, GPRC:$rB),
+                            "cmplw $crD, $rA, $rB", IntCompare>;
+}
 }
 let PPC970_Unit = 3 in {  // FPU Operations.
 //def FCMPO  : XForm_17<63, 32, (outs CRRC:$crD), (ins FPRC:$fA, FPRC:$fB),
 //                      "fcmpo $crD, $fA, $fB", FPCompare>;
-def FCMPUS : XForm_17<63, 0, (outs CRRC:$crD), (ins F4RC:$fA, F4RC:$fB),
-                      "fcmpu $crD, $fA, $fB", FPCompare>;
-def FCMPUD : XForm_17<63, 0, (outs CRRC:$crD), (ins F8RC:$fA, F8RC:$fB),
-                      "fcmpu $crD, $fA, $fB", FPCompare>;
+let isCompare = 1, neverHasSideEffects = 1 in {
+  def FCMPUS : XForm_17<63, 0, (outs CRRC:$crD), (ins F4RC:$fA, F4RC:$fB),
+                        "fcmpu $crD, $fA, $fB", FPCompare>;
+  def FCMPUD : XForm_17<63, 0, (outs CRRC:$crD), (ins F8RC:$fA, F8RC:$fB),
+                        "fcmpu $crD, $fA, $fB", FPCompare>;
+}
 
 let Uses = [RM] in {
   let neverHasSideEffects = 1 in {
