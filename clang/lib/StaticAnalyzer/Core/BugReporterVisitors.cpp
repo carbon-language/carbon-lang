@@ -526,7 +526,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
                                      "Initializing to ";
     } else if (isa<BlockExpr>(S)) {
       action = R->canPrintPretty() ? "captured by block as " :
-                                     "Capturing by block as ";
+                                     "Captured by block as ";
       if (VR) {
         // See if we can get the BlockVarRegion.
         ProgramStateRef State = StoreSite->getState();
@@ -580,7 +580,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
           }
         }
         else {
-          os << (R->canPrintPretty() ? "initialized" : "Initializing")
+          os << (R->canPrintPretty() ? "initialized" : "Initialized")
              << " here";
         }
       }
@@ -626,19 +626,33 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
           }
         }
       }
+      if (!b) {
+        if (R->canPrintPretty())
+          os << "Null pointer value stored";
+        else
+          os << "Storing null pointer value";
+      }
 
-      if (!b)
-        os << "Null pointer value stored";
-    }
-    else if (V.isUndef()) {
-      os << "Uninitialized value stored";
+    } else if (V.isUndef()) {
+      if (R->canPrintPretty())
+        os << "Uninitialized value stored";
+      else
+        os << "Storing uninitialized value";
+
     } else if (Optional<nonloc::ConcreteInt> CV =
                    V.getAs<nonloc::ConcreteInt>()) {
-      os << "The value " << CV->getValue() << " is assigned";
-    }
-    else
-      os << "Value assigned";
+      if (R->canPrintPretty())
+        os << "The value " << CV->getValue() << " is assigned";
+      else
+        os << "Assigning " << CV->getValue();
 
+    } else {
+      if (R->canPrintPretty())
+        os << "Value assigned";
+      else
+        os << "Assigning value";
+    }
+    
     if (R->canPrintPretty()) {
       os << " to ";
       R->printPretty(os);

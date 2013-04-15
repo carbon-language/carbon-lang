@@ -208,7 +208,7 @@ void testPathNoteOnInitializer() {
 
 int testNonPrintableAssignment(int **p) {
   int *&y = *p; // expected-note {{'y' initialized here}}
-  y = 0;        // expected-note {{Null pointer value stored}}
+  y = 0;        // expected-note {{Storing null pointer value}}
   return *y; // expected-warning {{Dereference of null pointer (loaded from variable 'y')}}
              // expected-note@-1 {{Dereference of null pointer (loaded from variable 'y')}}
 }
@@ -3704,9 +3704,9 @@ int testNonPrintableAssignment(int **p) {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Null pointer value stored</string>
+// CHECK-NEXT:      <string>Storing null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Null pointer value stored</string>
+// CHECK-NEXT:      <string>Storing null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
