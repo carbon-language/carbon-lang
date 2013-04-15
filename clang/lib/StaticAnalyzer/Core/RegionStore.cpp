@@ -1040,7 +1040,13 @@ void invalidateRegionsWorker::VisitCluster(const MemRegion *baseR,
   const TypedValueRegion *TR = cast<TypedValueRegion>(baseR);
   QualType T = TR->getValueType();
 
-    // Invalidate the binding.
+  if (isInitiallyIncludedGlobalRegion(baseR)) {
+    // If the region is a global and we are invalidating all globals,
+    // erasing the entry is good enough.  This causes all globals to be lazily
+    // symbolicated from the same base symbol.
+    return;
+  }
+
   if (T->isStructureOrClassType()) {
     // Invalidate the region by setting its default value to
     // conjured symbol. The type of the symbol is irrelavant.
@@ -1058,15 +1064,6 @@ void invalidateRegionsWorker::VisitCluster(const MemRegion *baseR,
     B = B.addBinding(baseR, BindingKey::Default, V);
     return;
   }
-  
-  if (isInitiallyIncludedGlobalRegion(baseR)) {
-    // If the region is a global and we are invalidating all globals,
-    // just erase the entry.  This causes all globals to be lazily
-    // symbolicated from the same base symbol.
-    B = B.removeBinding(baseR);
-    return;
-  }
-  
 
   DefinedOrUnknownSVal V = svalBuilder.conjureSymbolVal(baseR, Ex, LCtx,
                                                         T,Count);
