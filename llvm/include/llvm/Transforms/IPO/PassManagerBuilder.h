@@ -103,7 +103,7 @@ public:
   bool DisableSimplifyLibCalls;
   bool DisableUnitAtATime;
   bool DisableUnrollLoops;
-  bool Vectorize;
+  bool SLPVectorize;
   bool LoopVectorize;
 
 private:
