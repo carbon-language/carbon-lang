@@ -1258,20 +1258,7 @@ bool CXXRecordDecl::mayBeAbstract() const {
 void CXXMethodDecl::anchor() { }
 
 bool CXXMethodDecl::isStatic() const {
-  const CXXMethodDecl *MD = this;
-  for (;;) {
-    const CXXMethodDecl *C = MD->getCanonicalDecl();
-    if (C != MD) {
-      MD = C;
-      continue;
-    }
-
-    FunctionTemplateSpecializationInfo *Info =
-      MD->getTemplateSpecializationInfo();
-    if (!Info)
-      break;
-    MD = cast<CXXMethodDecl>(Info->getTemplate()->getTemplatedDecl());
-  }
+  const CXXMethodDecl *MD = getCanonicalDecl();
 
   if (MD->getStorageClass() == SC_Static)
     return true;
