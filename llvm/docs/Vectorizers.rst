@@ -292,25 +292,15 @@ And Linpack-pc with the same configuration. Result is Mflops, higher is better.
 
 .. image:: linpack-pc.png
 
-.. _bb-vectorizer:
+.. _slp-vectorizer:
 
-The Basic Block Vectorizer
-==========================
-
-Usage
-------
-
-The Basic Block Vectorizer is not enabled by default, but it can be enabled
-through clang using the command line flag:
-
-.. code-block:: console
-
-   $ clang -fslp-vectorize file.c
+The SLP Vectorizer
+==================
 
 Details
 -------
 
-The goal of basic-block vectorization (a.k.a. superword-level parallelism) is
+The goal of SLP vectorization (a.k.a. superword-level parallelism) is
 to combine similar independent instructions within simple control-flow regions
 into vector instructions. Memory accesses, arithemetic operations, comparison
 operations and some math functions can all be vectorized using this technique
@@ -322,22 +312,30 @@ into vector operations.
 
 .. code-block:: c++
 
-  int foo(int a1, int a2, int b1, int b2) {
-    int r1 = a1*(a1 + b1)/b1 + 50*b1/a1;
-    int r2 = a2*(a2 + b2)/b2 + 50*b2/a2;
-    return r1 + r2;
+  void foo(int a1, int a2, int b1, int b2, int *A) {
+    A[0] = a1*(a1 + b1)/b1 + 50*b1/a1;
+    A[1] = a2*(a2 + b2)/b2 + 50*b2/a2;
   }
 
 
-.. _slp-vectorizer:
+Usage
+------
 
-The SLP Vectorizer
-==========================
+The SLP Vectorizer is not enabled by default, but it can be enabled
+through clang using the command line flag:
 
-The SLP vectorizer (superword-level parallelism) is a new experimental 
-infrastructure for vectorizing code and rolling loops. 
-A major focus of the work on the SLP vectorizer is to make it fast and
-flexible. It is designed as a library that can be used by other passes.
+.. code-block:: console
+
+   $ clang -fslp-vectorize file.c
+
+LLVM has a second phase basic block vectorization phase
+which is more compile-time intensive (The BB vectorizer). This optimization
+can be enabled through clang using the command line flag:
+
+.. code-block:: console
+
+   $ clang -fslp-vectorize-aggressive file.c
+
 
 The SLP vectorizer is in early development stages but can already vectorize
 and accelerate many programs in the LLVM test suite.
