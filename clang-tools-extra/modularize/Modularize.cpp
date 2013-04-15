@@ -23,7 +23,7 @@
 // Usage:   modularize [-prefix (optional header path prefix)]
 //   (include-files_list) [(front-end-options) ...]
 //
-// Note that unless a "-prefex (header path)" option is specified,
+// Note that unless a "-prefix (header path)" option is specified,
 // non-absolute file paths in the header list file will be relative
 // to the header list file directory.  Use -prefix to specify a different
 // directory.
@@ -35,8 +35,9 @@
 // Modularize will do normal parsing, reporting normal errors and warnings,
 // but will also report special error messages like the following:
 //
-// error: '(symbol)' defined at both (file):(row):(column) and
-//  (file):(row):(column)
+// error: '(symbol)' defined at multiple locations:
+//     (file):(row):(column)
+//     (file):(row):(column)
 //
 // error: header '(file)' has different contents dependening on how it was
 //   included
