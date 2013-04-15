@@ -1,6 +1,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=SI -filetype=obj | llvm-readobj -s - | FileCheck %s
 
 ; CHECK: Format: ELF32
+; CHECK: Name: .AMDGPU.config
 define void @test(i32 %p) {
    %i = add i32 %p, 2
    %r = bitcast i32 %i to float

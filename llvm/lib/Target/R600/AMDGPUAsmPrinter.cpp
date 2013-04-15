@@ -21,7 +21,10 @@
 #include "AMDGPU.h"
 #include "SIMachineFunctionInfo.h"
 #include "SIRegisterInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/Support/ELF.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 
@@ -50,10 +53,15 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (OutStreamer.hasRawTextSupport()) {
     OutStreamer.EmitRawText("@" + MF.getName() + ":");
   }
-  OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
   if (STM.device()->getGeneration() > AMDGPUDeviceInfo::HD6XXX) {
+    const MCSectionELF *ConfigSection = getObjFileLowering().getContext()
+                                                .getELFSection(".AMDGPU.config",
+                                                ELF::SHT_NULL, 0,
+                                                SectionKind::getReadOnly());
+    OutStreamer.SwitchSection(ConfigSection);
     EmitProgramInfo(MF);
   }
+  OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
   EmitFunctionBody();
   return false;
 }
