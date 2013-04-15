@@ -44,13 +44,13 @@ def v4i8   : ValueType<32 , 20>;   //  4 x i8  vector value
 def v8i8   : ValueType<64 , 21>;   //  8 x i8  vector value
 def v16i8  : ValueType<128, 22>;   // 16 x i8  vector value
 def v32i8  : ValueType<256, 23>;   // 32 x i8 vector value
-def v64i8  : ValueType<256, 24>;   // 64 x i8 vector value
+def v64i8  : ValueType<512, 24>;   // 64 x i8 vector value
 def v1i16  : ValueType<16 , 25>;   //  1 x i16 vector value
 def v2i16  : ValueType<32 , 26>;   //  2 x i16 vector value
 def v4i16  : ValueType<64 , 27>;   //  4 x i16 vector value
 def v8i16  : ValueType<128, 28>;   //  8 x i16 vector value
 def v16i16 : ValueType<256, 29>;   // 16 x i16 vector value
-def v32i16 : ValueType<256, 30>;   // 32 x i16 vector value
+def v32i16 : ValueType<512, 30>;   // 32 x i16 vector value
 def v1i32  : ValueType<32 , 31>;   //  1 x i32 vector value
 def v2i32  : ValueType<64 , 32>;   //  2 x i32 vector value
 def v4i32  : ValueType<128, 33>;   //  4 x i32 vector value
