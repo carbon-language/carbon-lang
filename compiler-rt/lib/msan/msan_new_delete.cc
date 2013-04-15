@@ -14,6 +14,8 @@
 
 #include "msan.h"
 
+#if MSAN_REPLACE_OPERATORS_NEW_AND_DELETE
+
 #include <stddef.h>
 
 namespace __msan {
@@ -49,3 +51,5 @@ void operator delete(void *ptr, std::nothrow_t const&) { OPERATOR_DELETE_BODY; }
 void operator delete[](void *ptr, std::nothrow_t const&) {
   OPERATOR_DELETE_BODY;
 }
+
+#endif // MSAN_REPLACE_OPERATORS_NEW_AND_DELETE
