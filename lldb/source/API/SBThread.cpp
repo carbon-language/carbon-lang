@@ -16,6 +16,7 @@
 #include "lldb/API/SBStream.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/State.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -988,6 +989,15 @@ SBThread::IsSuspended()
     ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
         return exe_ctx.GetThreadPtr()->GetResumeState () == eStateSuspended;
+    return false;
+}
+
+bool
+SBThread::IsStopped()
+{
+    ExecutionContext exe_ctx (m_opaque_sp.get());
+    if (exe_ctx.HasThreadScope())
+        return StateIsStoppedState(exe_ctx.GetThreadPtr()->GetState(), true);
     return false;
 }
 

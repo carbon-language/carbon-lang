@@ -178,6 +178,9 @@ public:
     bool
     IsSuspended();
 
+    bool
+    IsStopped();
+
     uint32_t
     GetNumFrames ();
 
@@ -258,6 +261,9 @@ public:
 
         __swig_getmethods__["is_suspended"] = IsSuspended
         if _newclass: is_suspended = property(IsSuspended, None, doc='''A read only property that returns a boolean value that indicates if this thread is suspended.''')
+
+        __swig_getmethods__["is_stopped"] = IsStopped
+        if _newclass: is_stopped = property(IsStopped, None, doc='''A read only property that returns a boolean value that indicates if this thread is stopped but not exited.''')
     %}
 
 };

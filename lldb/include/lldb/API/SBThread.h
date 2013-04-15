@@ -151,6 +151,9 @@ public:
     bool
     IsSuspended();
 
+    bool
+    IsStopped();
+
     uint32_t
     GetNumFrames ();
 
