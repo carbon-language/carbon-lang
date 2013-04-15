@@ -7630,7 +7630,8 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     else if (VDecl->getTLSKind() == VarDecl::TLS_Static &&
              !VDecl->isInvalidDecl() && !DclT->isDependentType() &&
              !Init->isValueDependent() && !VDecl->isConstexpr() &&
-             !Init->isEvaluatable(Context)) {
+             !Init->isConstantInitializer(
+                 Context, VDecl->getType()->isReferenceType())) {
       // GNU C++98 edits for __thread, [basic.start.init]p4:
       //   An object of thread storage duration shall not require dynamic
       //   initialization.

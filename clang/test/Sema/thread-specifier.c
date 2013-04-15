@@ -108,3 +108,5 @@ __thread S s;
 #endif
 #endif
 #endif
+
+__thread int aggregate[10] = {0};
