@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -pedantic-errors -std=c++11 -emit-pch %s -o %t
-// RUN: %clang_cc1 -pedantic-errors -std=c++11 -include-pch %t -verify %s
+// RUN: %clang_cc1 -pedantic-errors -std=c++11 -triple x86_64-linux-gnu -emit-pch %s -o %t
+// RUN: %clang_cc1 -pedantic-errors -std=c++11 -triple x86_64-linux-gnu -include-pch %t -verify %s
 
 #ifndef HEADER_INCLUDED
 

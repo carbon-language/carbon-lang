@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 %s -verify
+// RUN: %clang_cc1 -std=c++11 %s -verify -triple x86_64-linux-gnu
 
 namespace std {
   typedef decltype(nullptr) nullptr_t;
