@@ -406,7 +406,9 @@ private:
       for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
         State.Stack[i].BreakBeforeParameter = true;
       }
-      if (Current.isOneOf(tok::period, tok::arrow))
+      const AnnotatedToken *TokenBefore = Current.getPreviousNoneComment();
+      if (TokenBefore && !TokenBefore->isOneOf(tok::comma, tok::semi) &&
+          !TokenBefore->opensScope())
         State.Stack.back().BreakBeforeParameter = true;
 
       // If we break after {, we should also break before the corresponding }.

@@ -1740,6 +1740,12 @@ TEST_F(FormatTest, BreaksFunctionDeclarations) {
                "    Cccccccccccccc cccccccccc, Cccccccccccccc cccccccccc,\n"
                "    Cccccccccccccc cccccccccc, Cccccccccccccc cccccccccc,\n"
                "    Cccccccccccccc cccccccccc, Cccccccccccccc cccccccccc);");
+
+  // Break after multi-line parameters.
+  verifyFormat("void aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+               "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "    bbbb bbbb);");
 }
 
 TEST_F(FormatTest, BreaksDesireably) {
