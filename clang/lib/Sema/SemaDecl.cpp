@@ -1613,20 +1613,7 @@ static void filterNonConflictingPreviousDecls(ASTContext &context,
     if (!old->isHidden())
       continue;
 
-    // If either has no-external linkage, ignore the old declaration.
-    // If this declaration would have external linkage if it were the first
-    // declaration of this name, then it may in fact be a redeclaration of
-    // some hidden declaration, so include those too. We don't need to worry
-    // about some previous visible declaration giving this declaration external
-    // linkage, because in that case, we'll mark this declaration as a redecl
-    // of the visible decl, and that decl will already be a redecl of the
-    // hidden declaration if that's appropriate.
-    //
-    // Don't cache this linkage computation, because it's not yet correct: we
-    // may later give this declaration a previous declaration which changes
-    // its linkage.
-    if (old->getLinkage() != ExternalLinkage ||
-        !decl->hasExternalLinkageUncached())
+    if (old->getLinkage() != ExternalLinkage)
       filter.erase();
   }
 
@@ -2880,6 +2867,9 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous,
          diag::note_previous_definition);
     return New->setInvalidDecl();
   }
+
+  if (!shouldLinkPossiblyHiddenDecl(Old, New))
+    return;
 
   // C++ [class.mem]p1:
   //   A member shall not be declared twice in the member-specification [...]
@@ -6687,8 +6677,11 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
     // there's no more work to do here; we'll just add the new
     // function to the scope.
     if (!AllowOverloadingOfFunction(Previous, Context)) {
-      Redeclaration = true;
-      OldDecl = Previous.getFoundDecl();
+      NamedDecl *Candidate = Previous.getFoundDecl();
+      if (shouldLinkPossiblyHiddenDecl(Candidate, NewFD)) {
+        Redeclaration = true;
+        OldDecl = Candidate;
+      }
     } else {
       switch (CheckOverload(S, NewFD, Previous, OldDecl,
                             /*NewIsUsingDecl*/ false)) {

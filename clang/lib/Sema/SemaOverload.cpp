@@ -940,6 +940,9 @@ Sema::CheckOverload(Scope *S, FunctionDecl *New, const LookupResult &Old,
           continue;
         }
 
+        if (!shouldLinkPossiblyHiddenDecl(*I, New))
+          continue;
+
         Match = *I;
         return Ovl_Match;
       }

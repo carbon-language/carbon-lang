@@ -203,6 +203,17 @@ class Sema {
 
   static bool mightHaveNonExternalLinkage(const DeclaratorDecl *FD);
 
+  static bool
+  shouldLinkPossiblyHiddenDecl(const NamedDecl *Old, const NamedDecl *New) {
+    // We are about to link these. It is now safe to compute the linkage of
+    // the new decl. If the new decl has external linkage, we will
+    // link it with the hidden decl (which also has external linkage) and
+    // it will keep having external linkage. If it has internal linkage, we
+    // will not link it. Since it has no previous decls, it will remain
+    // with internal linkage.
+    return !Old->isHidden() || New->hasExternalLinkage();
+  }
+
 public:
   typedef OpaquePtr<DeclGroupRef> DeclGroupPtrTy;
   typedef OpaquePtr<TemplateName> TemplateTy;

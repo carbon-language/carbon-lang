@@ -219,10 +219,6 @@ public:
     return getLinkage() == ExternalLinkage;
   }
 
-  /// \brief True if this decl has external linkage. Don't cache the linkage,
-  /// because we are not finished setting up the redecl chain for the decl.
-  bool hasExternalLinkageUncached() const;
-
   /// \brief Determines the visibility of this entity.
   Visibility getVisibility() const {
     return getLinkageAndVisibility().getVisibility();
