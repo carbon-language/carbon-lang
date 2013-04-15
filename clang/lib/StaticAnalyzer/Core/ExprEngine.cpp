@@ -181,7 +181,8 @@ ExprEngine::createTemporaryRegionIfNeeded(ProgramStateRef State,
   } else {
     // We need to create a region no matter what. For sanity, make sure we don't
     // try to stuff a Loc into a non-pointer temporary region.
-    assert(!V.getAs<Loc>() || Loc::isLocType(Result->getType()));
+    assert(!V.getAs<Loc>() || Loc::isLocType(Result->getType()) ||
+           Result->getType()->isMemberPointerType());
   }
 
   ProgramStateManager &StateMgr = State->getStateManager();
