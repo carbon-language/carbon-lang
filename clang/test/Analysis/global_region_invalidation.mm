@@ -19,27 +19,37 @@ void testGlobalRef() {
 }
 
 extern int globalInt;
+extern struct {
+  int value;
+} globalStruct;
 extern void invalidateGlobals();
 
 void testGlobalInvalidation() {
+  clang_analyzer_eval(globalInt == 42); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(globalStruct.value == 43); // expected-warning{{UNKNOWN}}
+
   if (globalInt != 42)
     return;
+  if (globalStruct.value != 43)
+    return;
   clang_analyzer_eval(globalInt == 42); // expected-warning{{TRUE}}
+  clang_analyzer_eval(globalStruct.value == 43); // expected-warning{{TRUE}}
 
   invalidateGlobals();
   clang_analyzer_eval(globalInt == 42); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(globalStruct.value == 43); // expected-warning{{UNKNOWN}}
 }
 
-
-//---------------------------------
-// False negatives
-//---------------------------------
-
 void testGlobalInvalidationWithDirectBinding() {
+  clang_analyzer_eval(globalInt == 42); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(globalStruct.value == 43); // expected-warning{{UNKNOWN}}
+
   globalInt = 42;
+  globalStruct.value = 43;
   clang_analyzer_eval(globalInt == 42); // expected-warning{{TRUE}}
+  clang_analyzer_eval(globalStruct.value == 43); // expected-warning{{TRUE}}
 
   invalidateGlobals();
-  // FIXME: Should be UNKNOWN.
-  clang_analyzer_eval(globalInt == 42); // expected-warning{{TRUE}}
+  clang_analyzer_eval(globalInt == 42); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(globalStruct.value == 43); // expected-warning{{UNKNOWN}}
 }
