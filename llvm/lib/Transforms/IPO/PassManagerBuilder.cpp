@@ -33,7 +33,12 @@ RunLoopVectorization("vectorize-loops",
                      cl::desc("Run the Loop vectorization passes"));
 
 static cl::opt<bool>
-RunSLPVectorization("vectorize-slp", cl::desc("Run the SLP vectorization passes"));
+RunSLPVectorization("vectorize-slp",
+                    cl::desc("Run the SLP vectorization passes"));
+
+static cl::opt<bool>
+RunBBVectorization("vectorize-slp-aggressive",
+                    cl::desc("Run the BB vectorization passes"));
 
 static cl::opt<bool>
 UseGVNAfterVectorization("use-gvn-after-vectorization",
@@ -52,6 +57,7 @@ PassManagerBuilder::PassManagerBuilder() {
     DisableSimplifyLibCalls = false;
     DisableUnitAtATime = false;
     DisableUnrollLoops = false;
+    BBVectorize = RunBBVectorization;
     SLPVectorize = RunSLPVectorization;
     LoopVectorize = RunLoopVectorization;
 }
@@ -208,6 +214,11 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   addExtensionsToPM(EP_ScalarOptimizerLate, MPM);
 
   if (SLPVectorize) {
+    MPM.add(createSLPVectorizerPass());
+    MPM.add(createEarlyCSEPass());
+  }
+
+  if (BBVectorize) {
     MPM.add(createBBVectorizePass());
     MPM.add(createInstructionCombiningPass());
     if (OptLevel > 1 && UseGVNAfterVectorization)
