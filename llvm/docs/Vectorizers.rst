@@ -5,11 +5,11 @@ Auto-Vectorization in LLVM
 .. contents::
    :local:
 
-LLVM has two kind vectorizers: The :ref:`Loop Vectorizer <loop-vectorizer>`,
+LLVM has two vectorizers: The :ref:`Loop Vectorizer <loop-vectorizer>`,
 which operates on Loops, and the :ref:`SLP Vectorizer
 <slp-vectorizer>`, which optimizes straight-line code. These vectorizers
 focus on different optimization opportunities and use different techniques.
-The BB vectorizer merges multiple scalars that are found in the code into
+The SLP vectorizer merges multiple scalars that are found in the code into
 vectors while the Loop Vectorizer widens instructions in the original loop
 to operate on multiple consecutive loop iterations.
 
@@ -318,6 +318,8 @@ into vector operations.
     A[1] = a2*(a2 + b2)/b2 + 50*b2/a2;
   }
 
+The SLP-vectorizer has two phases, bottom-up, and top-down. The top-down vectorization
+phase is more aggressive, but takes more time to run.
 
 Usage
 ------
@@ -329,7 +331,7 @@ through clang using the command line flag:
 
    $ clang -fslp-vectorize file.c
 
-LLVM has a second phase basic block vectorization phase
+LLVM has a second basic block vectorization phase
 which is more compile-time intensive (The BB vectorizer). This optimization
 can be enabled through clang using the command line flag:
 
