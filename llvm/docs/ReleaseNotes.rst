@@ -119,6 +119,15 @@ has the following features:
 - Vectorization of function calls
 - Partial unrolling during vectorization
 
+The loop vectorizer is now enabled by default for -O3.
+
+SLP Vectorizer
+--------------
+
+LLVM now has a new SLP vectorizer. The new SLP vectorizer is not enabled by
+default but can be enabled using the clang flag -fslp-vectorize. The BB-vectorizer
+can also be enabled using the command line flag -fslp-vectorize-aggressive.
+
 R600 Backend
 ------------
 
