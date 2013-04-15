@@ -376,8 +376,8 @@ void MachODumper::printRelocation(const MachOObjectFileMiddle<E> *Obj,
     if (IsScattered)
       W.printString("Extern", StringRef("N/A"));
     else
-      W.printNumber("Extern", RE->getExternal());
-    W.printNumber("Type", RelocName, RE->getType());
+      W.printNumber("Extern", RE->External);
+    W.printNumber("Type", RelocName, RE->Type);
     W.printString("Symbol", SymbolName.size() > 0 ? SymbolName : "-");
     W.printNumber("Scattered", IsScattered);
   } else {
@@ -388,7 +388,7 @@ void MachODumper::printRelocation(const MachOObjectFileMiddle<E> *Obj,
     if (IsScattered)
       OS << " n/a";
     else
-      OS << " " << RE->getExternal();
+      OS << " " << RE->External;
     OS << " " << RelocName
        << " " << IsScattered
        << " " << (SymbolName.size() > 0 ? SymbolName : "-")

@@ -148,91 +148,96 @@ namespace MachOFormat {
     }
   };
 
-  template<endianness TargetEndianness>
+  template<bool HostIsLittleEndian, endianness TargetEndianness>
   struct RelocationEntry;
 
   template<>
-  struct RelocationEntry<support::little> {
+  struct RelocationEntry<true, support::little> {
     LLVM_MACHOB_IMPORT_TYPES(support::little)
     MachOInt32 Address;
     MachOInt24 SymbolNum;
-    uint8_t Bits;
-
-    unsigned getPCRel() const {
-      return Bits & 0x1;
-    }
-    unsigned getLength() const {
-      return (Bits >> 1) & 0x3;
-    }
-    unsigned getExternal() const {
-      return (Bits >> 3) & 0x1;
-    }
-    unsigned getType() const {
-      return Bits >> 4;
-    }
+    unsigned PCRel : 1;
+    unsigned Length : 2;
+    unsigned External : 1;
+    unsigned Type : 4;
   };
 
   template<>
-  struct RelocationEntry<support::big> {
+  struct RelocationEntry<false, support::little> {
+    LLVM_MACHOB_IMPORT_TYPES(support::little)
+    MachOInt32 Address;
+    MachOInt24 SymbolNum;
+    unsigned Type : 4;
+    unsigned External : 1;
+    unsigned Length : 2;
+    unsigned PCRel : 1;
+  };
+
+  template<>
+  struct RelocationEntry<true, support::big> {
     LLVM_MACHOB_IMPORT_TYPES(support::big)
     MachOInt32 Address;
     MachOInt24 SymbolNum;
-    uint8_t Bits;
-
-    unsigned getType() const {
-      return Bits &0xf;
-    }
-    unsigned getExternal() const {
-      return (Bits >> 4) & 0x1;
-    }
-    unsigned getLength() const {
-      return (Bits >> 5) & 0x3;
-    }
-    unsigned getPCRel() const {
-      return Bits >> 7;
-    }
+    unsigned Type : 4;
+    unsigned External : 1;
+    unsigned Length : 2;
+    unsigned PCRel : 1;
   };
 
-  template<endianness TargetEndianness>
+  template<>
+  struct RelocationEntry<false, support::big> {
+    LLVM_MACHOB_IMPORT_TYPES(support::big)
+    MachOInt32 Address;
+    MachOInt24 SymbolNum;
+    unsigned PCRel : 1;
+    unsigned Length : 2;
+    unsigned External : 1;
+    unsigned Type : 4;
+  };
+
+  template<bool HostIsLittleEndian, endianness TargetEndianness>
   struct ScatteredRelocationEntry;
 
   template<>
-  struct ScatteredRelocationEntry<support::little> {
+  struct ScatteredRelocationEntry<true, support::little> {
     LLVM_MACHOB_IMPORT_TYPES(support::little)
     MachOInt24 Address;
-    uint8_t Bits;
+    unsigned Type : 4;
+    unsigned Length : 2;
+    unsigned PCRel : 1;
+    unsigned Scattered : 1;
     MachOInt32 Value;
-
-    unsigned getType() const {
-      return Bits & 0xf;
-    }
-    unsigned getLength() const {
-      return (Bits >> 4) & 0x3;
-    }
-    unsigned getPCRel() const {
-      return (Bits >> 6) & 0x1;
-    }
-    unsigned getScattered() const {
-      return Bits >> 7;
-    }
   };
 
   template<>
-  struct ScatteredRelocationEntry<support::big> {
+  struct ScatteredRelocationEntry<false, support::little> {
+    LLVM_MACHOB_IMPORT_TYPES(support::little)
+    MachOInt24 Address;
+    unsigned Scattered : 1;
+    unsigned PCRel : 1;
+    unsigned Length : 2;
+    unsigned Type : 4;
+    MachOInt32 Value;
+  };
+
+  template<>
+  struct ScatteredRelocationEntry<true, support::big> {
     LLVM_MACHOB_IMPORT_TYPES(support::big)
-    uint8_t Bits;
-    unsigned getType() const {
-      return Bits & 0xf;
-    }
-    unsigned getLength() const {
-      return (Bits >> 4) & 0x3;
-    }
-    unsigned getPCRel() const {
-      return (Bits >> 6) & 0x1;
-    }
-    unsigned getScattered() const {
-      return Bits >> 7;
-    }
+    unsigned Type : 4;
+    unsigned Length : 2;
+    unsigned PCRel : 1;
+    unsigned Scattered : 1;
+    MachOInt24 Address;
+    MachOInt32 Value;
+  };
+
+  template<>
+  struct ScatteredRelocationEntry<false, support::big> {
+    LLVM_MACHOB_IMPORT_TYPES(support::big)
+    unsigned Scattered : 1;
+    unsigned PCRel : 1;
+    unsigned Length : 2;
+    unsigned Type : 4;
     MachOInt24 Address;
     MachOInt32 Value;
   };
@@ -378,8 +383,8 @@ public:
     LinkeditDataLoadCommand;
   typedef MachOFormat::Header<TargetEndianness> Header;
   typedef MachOFormat::SymtabLoadCommand<TargetEndianness> SymtabLoadCommand;
-  typedef MachOFormat::RelocationEntry<TargetEndianness> RelocationEntry;
-  typedef MachOFormat::ScatteredRelocationEntry<TargetEndianness>
+  typedef MachOFormat::RelocationEntry<sys::IsLittleEndianHost, TargetEndianness> RelocationEntry;
+  typedef MachOFormat::ScatteredRelocationEntry<sys::IsLittleEndianHost, TargetEndianness>
     ScatteredRelocationEntry;
   typedef MachOFormat::LoadCommand<TargetEndianness> LoadCommand;
 
@@ -606,9 +611,9 @@ MachOObjectFileMiddle<E>::isRelocationPCRel(const RelocationEntry *RE) const {
   if (isRelocationScattered(RE)) {
     const typename MachOObjectFileMiddle<E>::ScatteredRelocationEntry *SRE =
       reinterpret_cast<const typename ObjType::ScatteredRelocationEntry *>(RE);
-    return SRE->getPCRel();
+    return SRE->PCRel;
   }
-  return RE->getPCRel();
+  return RE->PCRel;
 }
 
 template<endianness E>
@@ -618,9 +623,9 @@ MachOObjectFileMiddle<E>::getRelocationLength(const RelocationEntry *RE) const {
   if (isRelocationScattered(RE)) {
     const typename ObjType::ScatteredRelocationEntry *SRE =
       reinterpret_cast<const typename ObjType::ScatteredRelocationEntry *>(RE);
-    return SRE->getLength();
+    return SRE->Length;
   }
-  return RE->getLength();
+  return RE->Length;
 }
 
 template<endianness E>
@@ -631,9 +636,9 @@ MachOObjectFileMiddle<E>::getRelocationTypeImpl(const RelocationEntry *RE)
   if (isRelocationScattered(RE)) {
     const typename ObjType::ScatteredRelocationEntry *SRE =
       reinterpret_cast<const typename ObjType::ScatteredRelocationEntry *>(RE);
-    return SRE->getType();
+    return SRE->Type;
   }
-  return RE->getType();
+  return RE->Type;
 }
 
 // Helper to advance a section or symbol iterator multiple increments at a time.
@@ -707,7 +712,7 @@ MachOObjectFileMiddle<E>::printRelocationTargetName(const RelocationEntry *RE,
   }
 
   StringRef S;
-  bool isExtern = RE->getExternal();
+  bool isExtern = RE->External;
   uint64_t Val = RE->Address;
 
   if (isExtern) {
@@ -1137,7 +1142,7 @@ MachOObjectFile<MachOT>::getRelocationSymbol(DataRefImpl Rel,
                                              SymbolRef &Res) const {
   const RelocationEntry *RE = getRelocation(Rel);
   uint32_t SymbolIdx = RE->SymbolNum;
-  bool isExtern = RE->getExternal();
+  bool isExtern = RE->External;
 
   DataRefImpl Sym;
   this->moveToNextSymbol(Sym);
@@ -1277,7 +1282,7 @@ MachOObjectFile<MachOT>::getRelocationValueString(DataRefImpl Rel,
 
   // X86_64 has entirely custom relocation types.
   if (Arch == Triple::x86_64) {
-    bool isPCRel = RE->getPCRel();
+    bool isPCRel = RE->PCRel;
 
     switch (Type) {
       case macho::RIT_X86_64_GOTLoad:   // X86_64_RELOC_GOT_LOAD
@@ -1295,7 +1300,7 @@ MachOObjectFile<MachOT>::getRelocationValueString(DataRefImpl Rel,
         // X86_64_SUBTRACTOR must be followed by a relocation of type
         // X86_64_RELOC_UNSIGNED.
         // NOTE: Scattered relocations don't exist on x86_64.
-        unsigned RType = RENext->getType();
+        unsigned RType = RENext->Type;
         if (RType != 0)
           report_fatal_error("Expected X86_64_RELOC_UNSIGNED after "
                              "X86_64_RELOC_SUBTRACTOR.");
@@ -1347,7 +1352,7 @@ MachOObjectFile<MachOT>::getRelocationValueString(DataRefImpl Rel,
         if (isNextScattered)
           RType = (RENext->Address >> 24) & 0xF;
         else
-          RType = RENext->getType();
+          RType = RENext->Type;
         if (RType != 1)
           report_fatal_error("Expected GENERIC_RELOC_PAIR after "
                              "GENERIC_RELOC_SECTDIFF.");
@@ -1376,7 +1381,7 @@ MachOObjectFile<MachOT>::getRelocationValueString(DataRefImpl Rel,
           if (isNextScattered)
             RType = (RENext->Address >> 24) & 0xF;
           else
-            RType = RENext->getType();
+            RType = RENext->Type;
           if (RType != 1)
             report_fatal_error("Expected GENERIC_RELOC_PAIR after "
                                "GENERIC_RELOC_LOCAL_SECTDIFF.");
@@ -1405,7 +1410,7 @@ MachOObjectFile<MachOT>::getRelocationValueString(DataRefImpl Rel,
           if (IsScattered)
             isUpper = (RE->Address >> 28) & 1;
           else
-            isUpper = (RE->getLength() >> 1) & 1;
+            isUpper = (RE->Length >> 1) & 1;
 
           if (isUpper)
             fmt << ":upper16:(";
@@ -1425,7 +1430,7 @@ MachOObjectFile<MachOT>::getRelocationValueString(DataRefImpl Rel,
           if (isNextScattered)
             RType = (RENext->Address >> 24) & 0xF;
           else
-            RType = RENext->getType();
+            RType = RENext->Type;
 
           if (RType != 1)
             report_fatal_error("Expected ARM_RELOC_PAIR after "
@@ -1481,7 +1486,7 @@ MachOObjectFile<MachOT>::getRelocationHidden(DataRefImpl Rel,
       RelPrev.d.a--;
       const RelocationEntry *REPrev = this->getRelocation(RelPrev);
 
-      unsigned PrevType = REPrev->getType();
+      unsigned PrevType = REPrev->Type;
 
       if (PrevType == macho::RIT_X86_64_Subtractor) Result = true;
     }
