@@ -103,7 +103,7 @@ inline uint32_t ReadLE32(const unsigned char *&Data) {
   // Hosts that directly support little-endian 32-bit loads can just
   // use them.  Big-endian hosts need a bswap.
   uint32_t V = *((const uint32_t*)Data);
-  if (llvm::sys::isBigEndianHost())
+  if (llvm::sys::IsBigEndianHost)
     V = llvm::ByteSwap_32(V);
   Data += 4;
   return V;
