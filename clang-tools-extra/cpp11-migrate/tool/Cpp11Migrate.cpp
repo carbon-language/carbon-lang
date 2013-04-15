@@ -50,6 +50,17 @@ static cl::opt<bool>
 SummaryMode("summary", cl::desc("Print transform summary"),
             cl::init(false));
 
+// TODO: Remove cl::Hidden when functionality for acknowledging include/exclude
+// options are implemented in the tool.
+static cl::opt<std::string>
+IncludePaths("include", cl::Hidden,
+             cl::desc("Comma seperated list of filepaths to consider to be "
+                      "transformed"));
+static cl::opt<std::string>
+ExcludePaths("exclude", cl::Hidden,
+             cl::desc("Comma seperated list of filepaths that can not "
+                      "be transformed"));
+
 class EndSyntaxArgumentsAdjuster : public ArgumentsAdjuster {
   CommandLineArguments Adjust(const CommandLineArguments &Args) {
     CommandLineArguments AdjustedArgs = Args;
