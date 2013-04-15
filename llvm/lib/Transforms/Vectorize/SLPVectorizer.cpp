@@ -100,7 +100,7 @@ struct SLPVectorizer : public BasicBlockPass {
     return true;
   }
 
-  bool tryToVectorizeCandidate(BinaryOperator *V,  BoUpSLP &R) {
+  bool tryToVectorize(BinaryOperator *V,  BoUpSLP &R) {
     if (!V) return false;
     // Try to vectorize V.
     if (tryToVectorizePair(V->getOperand(0), V->getOperand(1), R))
@@ -142,25 +142,42 @@ struct SLPVectorizer : public BasicBlockPass {
     bool Changed = false;
     for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
       if (isa<DbgInfoIntrinsic>(it)) continue;
-      PHINode *P = dyn_cast<PHINode>(it);
-      if (!P) return Changed;
-      // Check that the PHI is a reduction PHI.
-      if (P->getNumIncomingValues() != 2) return Changed;
-      Value *Rdx = (P->getIncomingBlock(0) == BB ? P->getIncomingValue(0) :
-                   (P->getIncomingBlock(1) == BB ? P->getIncomingValue(1) : 0));
-      // Check if this is a Binary Operator.
-      BinaryOperator *BI = dyn_cast_or_null<BinaryOperator>(Rdx);
-      if (!BI) continue;
 
-      Value *Inst = BI->getOperand(0);
-      if (Inst == P) Inst = BI->getOperand(1);
-      Changed |= tryToVectorizeCandidate(dyn_cast<BinaryOperator>(Inst), R);
+      // Try to vectorize reductions that use PHINodes.
+      if (PHINode *P = dyn_cast<PHINode>(it)) {
+        // Check that the PHI is a reduction PHI.
+        if (P->getNumIncomingValues() != 2) return Changed;
+        Value *Rdx = (P->getIncomingBlock(0) == BB ? P->getIncomingValue(0) :
+                     (P->getIncomingBlock(1) == BB ? P->getIncomingValue(1) :
+                      0));
+        // Check if this is a Binary Operator.
+        BinaryOperator *BI = dyn_cast_or_null<BinaryOperator>(Rdx);
+        if (!BI)
+          continue;
+
+        Value *Inst = BI->getOperand(0);
+        if (Inst == P) Inst = BI->getOperand(1);
+        Changed |= tryToVectorize(dyn_cast<BinaryOperator>(Inst), R);
+        continue;
+      }
+
+      // Try to vectorize trees that start at compare instructions.
+      if (CmpInst *CI = dyn_cast<CmpInst>(it)) {
+        if (tryToVectorizePair(CI->getOperand(0), CI->getOperand(1), R)) {
+          Changed |= true;
+          continue;
+        }
+        for (int i = 0; i < 2; ++i)
+          if (BinaryOperator *BI = dyn_cast<BinaryOperator>(CI->getOperand(i)))
+            Changed |= tryToVectorize(BI, R);
+        continue;
+      }
     }
 
     return Changed;
   }
 
-  bool rollStoreChains(BoUpSLP &R) {
+  bool vectorizeStoreChains(BoUpSLP &R) {
     bool Changed = false;
     // Attempt to sort and vectorize each of the store-groups.
     for (StoreListMap::iterator it = StoreRefs.begin(), e = StoreRefs.end();
@@ -192,17 +209,19 @@ struct SLPVectorizer : public BasicBlockPass {
     // he store instructions.
     BoUpSLP R(&BB, SE, DL, TTI, AA);
 
+    // Vectorize trees that end at reductions.
     bool Changed = vectorizeReductions(&BB, R);
 
-    if (!collectStores(&BB, R))
-      return Changed;
-
-    if (rollStoreChains(R)) {
-      DEBUG(dbgs()<<"SLP: vectorized in \""<<BB.getParent()->getName()<<"\"\n");
-      DEBUG(verifyFunction(*BB.getParent()));
-      Changed |= true;
+    // Vectorize trees that end at stores.
+    if (collectStores(&BB, R)) {
+      DEBUG(dbgs()<<"SLP: Found stores to vectorize.\n");
+      Changed |= vectorizeStoreChains(R);
     }
 
+    if (Changed) {
+      DEBUG(dbgs()<<"SLP: vectorized \""<<BB.getParent()->getName()<<"\"\n");
+      DEBUG(verifyFunction(*BB.getParent()));
+    }
     return Changed;
   }
 
