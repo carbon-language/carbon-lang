@@ -113,6 +113,17 @@ public:
     }
     
     void
+    WriteAverageAndStandardDeviation (Results &results)
+    {
+        auto metric = GetMetric ();
+        auto dictionary = (Results::Dictionary*)results.GetDictionary().Add(metric.GetName(), metric.GetDescription(), lldb_perf::GetResult<typename GaugeType::ValueType> (NULL, metric.GetAverage())).get();
+        if (dictionary)
+        {
+            dictionary->Add("stddev", NULL, lldb_perf::GetResult<typename GaugeType::ValueType> (NULL, metric.GetStandardDeviation()));
+        }
+    }
+    
+    void
     WriteStandardDeviation (Results &results)
     {
         auto metric = GetMetric ();

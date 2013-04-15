@@ -176,7 +176,7 @@ Results::Write (const char *out_path)
 #endif
 }
 
-void
+Results::ResultSP
 Results::Dictionary::AddUnsigned (const char *name, const char *description, uint64_t value)
 {
     assert (name && name[0]);
@@ -189,9 +189,10 @@ Results::Dictionary::AddUnsigned (const char *name, const char *description, uin
     }
     else
         m_dictionary[std::string(name)] = ResultSP (new Unsigned (name, description, value));
+    return m_dictionary[std::string(name)];
 }
 
-void
+Results::ResultSP
 Results::Dictionary::AddDouble (const char *name, const char *description, double value)
 {
     assert (name && name[0]);
@@ -205,8 +206,9 @@ Results::Dictionary::AddDouble (const char *name, const char *description, doubl
     }
     else
         m_dictionary[std::string(name)] = ResultSP (new Double (name, description, value));
+    return m_dictionary[std::string(name)];
 }
-void
+Results::ResultSP
 Results::Dictionary::AddString (const char *name, const char *description, const char *value)
 {
     assert (name && name[0]);
@@ -219,9 +221,10 @@ Results::Dictionary::AddString (const char *name, const char *description, const
     }
     else
         m_dictionary[std::string(name)] = ResultSP (new String (name, description, value));
+    return m_dictionary[std::string(name)];
 }
 
-void
+Results::ResultSP
 Results::Dictionary::Add (const char *name, const char *description, const ResultSP &result_sp)
 {
     assert (name && name[0]);
@@ -234,6 +237,7 @@ Results::Dictionary::Add (const char *name, const char *description, const Resul
     }
     else
         m_dictionary[std::string(name)] = result_sp;
+    return m_dictionary[std::string(name)];
 }
 
 void
@@ -249,10 +253,11 @@ Results::Dictionary::ForEach (const std::function <bool (const std::string &, co
 
 
 
-void
+Results::ResultSP
 Results::Array::Append (const ResultSP &result_sp)
 {
     m_array.push_back (result_sp);
+    return result_sp;
 }
 
 void

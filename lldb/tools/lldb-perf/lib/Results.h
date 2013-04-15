@@ -138,7 +138,7 @@ public:
         {
         }
         
-        void
+        ResultSP
         Append (const ResultSP &result_sp);
 
         void
@@ -179,16 +179,16 @@ public:
         void
         ForEach (const std::function <bool (const std::string &, const ResultSP &)> &callback);
     
-        void
+        ResultSP
         Add (const char *name, const char *description, const ResultSP &result_sp);
         
-        void
+        ResultSP
         AddDouble (const char *name, const char *descriptiorn, double value);
         
-        void
+        ResultSP
         AddUnsigned (const char *name, const char *description, uint64_t value);
 
-        void
+        ResultSP
         AddString (const char *name, const char *description, const char *value);
 
     protected:

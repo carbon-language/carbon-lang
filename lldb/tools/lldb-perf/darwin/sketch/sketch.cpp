@@ -204,7 +204,8 @@ public:
         switch (counter)
         {
         case 0:
-        case 10:
+            case 10:
+            case 20:
             {
                 DoTest ();
                 if (counter == 0)
@@ -215,6 +216,7 @@ public:
                 
         case 1:
             case 11:
+            case 21:
             {
                 DoTest ();
                 m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"properties");
@@ -228,6 +230,7 @@ public:
 
         case 2:
             case 12:
+            case 22:
             {
                 DoTest ();
                 next_action.Continue();
@@ -236,6 +239,7 @@ public:
 
         case 3:
             case 13:
+            case 23:
             {
                 DoTest ();
                 next_action.StepOver(m_thread);
@@ -244,6 +248,7 @@ public:
 
         case 4:
             case 14:
+            case 24:
                 
             {
                 DoTest ();
@@ -255,6 +260,7 @@ public:
         
         case 5:
             case 15:
+            case 25:
             {
                 DoTest ();
                 next_action.StepOver(m_thread);
@@ -263,6 +269,7 @@ public:
 
         case 6:
             case 16:
+            case 26:
             {
                 DoTest ();
                 next_action.StepOver(m_thread);
@@ -271,6 +278,7 @@ public:
 
         case 7:
             case 17:
+            case 27:
             {
                 DoTest ();
                 m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"@\"an NSString\"");
@@ -282,6 +290,7 @@ public:
 
         case 8:
             case 18:
+            case 28:
             {
                 DoTest ();
                 m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"[graphics description]");
@@ -290,6 +299,7 @@ public:
             }
             break;
         case 9:
+            case 19:
             {
                 next_action.Relaunch(GetLaunchInfo());
                 break;
@@ -306,11 +316,11 @@ public:
     virtual void
     WriteResults (Results &results)
     {
-        m_fetch_frames_measurement.WriteAverageValue(results);
-        m_file_line_bp_measurement.WriteAverageValue(results);
-        m_fetch_modules_measurement.WriteAverageValue(results);
-        m_fetch_vars_measurement.WriteAverageValue(results);
-        m_run_expr_measurement.WriteAverageValue(results);
+        m_fetch_frames_measurement.WriteAverageAndStandardDeviation(results);
+        m_file_line_bp_measurement.WriteAverageAndStandardDeviation(results);
+        m_fetch_modules_measurement.WriteAverageAndStandardDeviation(results);
+        m_fetch_vars_measurement.WriteAverageAndStandardDeviation(results);
+        m_run_expr_measurement.WriteAverageAndStandardDeviation(results);
         results.Write(GetResultFilePath());
     }
     
