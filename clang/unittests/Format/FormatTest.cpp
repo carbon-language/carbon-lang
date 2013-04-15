@@ -845,10 +845,7 @@ TEST_F(FormatTest, SplitsLongLinesInCommentsInPreprocessor) {
             "   Macro comment   \\\n"
             "   with a long     \\\n"
             "   line            \\\n"
-            // FIXME: We should look at the length of the last line of the token
-            // instead of the full token's length.
-            //"  */               \\\n"
-            "   */\\\n"
+            "   */              \\\n"
             "  A + B",
             format("#define X \\\n"
                    "  /*\n"
@@ -860,10 +857,7 @@ TEST_F(FormatTest, SplitsLongLinesInCommentsInPreprocessor) {
   EXPECT_EQ("#define X          \\\n"
             "  /* Macro comment \\\n"
             "     with a long   \\\n"
-            // FIXME: We should look at the length of the last line of the token
-            // instead of the full token's length.
-            //"   line */         \\\n"
-            "     line */\\\n"
+            "     line */       \\\n"
             "  A + B",
             format("#define X \\\n"
                    "  /* Macro comment with a long\n"
@@ -873,10 +867,7 @@ TEST_F(FormatTest, SplitsLongLinesInCommentsInPreprocessor) {
   EXPECT_EQ("#define X          \\\n"
             "  /* Macro comment \\\n"
             "   * with a long   \\\n"
-            // FIXME: We should look at the length of the last line of the token
-            // instead of the full token's length.
-            //"   * line */       \\\n"
-            "   * line */\\\n"
+            "   * line */       \\\n"
             "  A + B",
             format("#define X \\\n"
                    "  /* Macro comment with a long  line */ \\\n"
@@ -3697,7 +3688,8 @@ TEST_F(FormatTest, BreakStringLiterals) {
             "\"text\"",
             format("\"some text\"", getLLVMStyleWithColumns(7)));
   EXPECT_EQ("\"some\"\n"
-            "\" text\"",
+            "\" tex\"\n"
+            "\"t\"",
             format("\"some text\"", getLLVMStyleWithColumns(6)));
   EXPECT_EQ("\"some\"\n"
             "\" tex\"\n"
@@ -3790,7 +3782,8 @@ TEST_F(FormatTest, DoNotBreakStringLiteralsInEscapeSequence) {
             "\"000001\"",
             format("\"test\\000000000001\"", getLLVMStyleWithColumns(9)));
   EXPECT_EQ("\"test\\000\"\n"
-            "\"000000001\"",
+            "\"00000000\"\n"
+            "\"1\"",
             format("\"test\\000000000001\"", getLLVMStyleWithColumns(10)));
   EXPECT_EQ("R\"(\\x\\x00)\"\n",
             format("R\"(\\x\\x00)\"\n", getLLVMStyleWithColumns(7)));
