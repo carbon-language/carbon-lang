@@ -325,8 +325,16 @@ IRMemoryMap::WriteMemory (lldb::addr_t process_address, const uint8_t *bytes, si
     
     if (iter == m_allocations.end())
     {
+        lldb::ProcessSP process_sp = m_process_wp.lock();
+        
+        if (process_sp)
+        {
+            process_sp->WriteMemory(process_address, bytes, size, error);
+            return;
+        }
+        
         error.SetErrorToGenericError();
-        error.SetErrorString("Couldn't write: no allocation contains the target range");
+        error.SetErrorString("Couldn't write: no allocation contains the target range and the process doesn't exist");
         return;
     }
     
@@ -433,8 +441,25 @@ IRMemoryMap::ReadMemory (uint8_t *bytes, lldb::addr_t process_address, size_t si
     
     if (iter == m_allocations.end())
     {
+        lldb::ProcessSP process_sp = m_process_wp.lock();
+        
+        if (process_sp)
+        {
+            process_sp->ReadMemory(process_address, bytes, size, error);
+            return;
+        }
+        
+        lldb::TargetSP target_sp = m_target_wp.lock();
+        
+        if (target_sp)
+        {
+            Address absolute_address(process_address);
+            target_sp->ReadMemory(absolute_address, false, bytes, size, error);
+            return;
+        }
+        
         error.SetErrorToGenericError();
-        error.SetErrorString("Couldn't read: no allocation contains the target range");
+        error.SetErrorString("Couldn't read: no allocation contains the target range, and neither the process nor the target exist");
         return;
     }
     
@@ -561,8 +586,27 @@ IRMemoryMap::GetMemoryData (DataExtractor &extractor, lldb::addr_t process_addre
             error.SetErrorToGenericError();
             error.SetErrorString("Couldn't get memory data: memory is only in the target");
             return;
-        case eAllocationPolicyHostOnly:
         case eAllocationPolicyMirror:
+            {
+                lldb::ProcessSP process_sp = m_process_wp.lock();
+
+                if (!allocation.m_data.get())
+                {
+                    error.SetErrorToGenericError();
+                    error.SetErrorString("Couldn't get memory data: data buffer is empty");
+                    return;
+                }
+                if (process_sp)
+                {
+                    process_sp->ReadMemory(allocation.m_process_start, allocation.m_data->GetBytes(), allocation.m_data->GetByteSize(), error);
+                    if (!error.Success())
+                        return;
+                    uint64_t offset = process_address - allocation.m_process_start;
+                    extractor = DataExtractor(allocation.m_data->GetBytes() + offset, size, GetByteOrder(), GetAddressByteSize());
+                    return;
+                }
+            }
+        case eAllocationPolicyHostOnly:
             if (!allocation.m_data.get())
             {
                 error.SetErrorToGenericError();
