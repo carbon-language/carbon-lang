@@ -156,6 +156,8 @@
 # CHECK:  mtc0    $9, $8, 3               # encoding: [0x03,0x40,0x89,0x40]
 # CHECK:  mfc2    $5, $7, 4               # encoding: [0x04,0x38,0x05,0x48]
 # CHECK:  mtc2    $9, $4, 5               # encoding: [0x05,0x20,0x89,0x48]
+# CHECK:  movf    $2, $1, $fcc0           # encoding: [0x01,0x10,0x20,0x00]
+# CHECK:  movt    $2, $1, $fcc0           # encoding: [0x01,0x10,0x21,0x00]
 
    cfc1    $a2,$0
    mfc1    $a2,$f7
@@ -175,3 +177,5 @@
    mtc0    $9, $8, 3
    mfc2    $5, $7, 4
    mtc2    $9, $4, 5
+   movf    $2, $1, $fcc0
+   movt    $2, $1, $fcc0

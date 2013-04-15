@@ -778,6 +778,9 @@ int MipsAsmParser::matchCPURegisterName(StringRef Name) {
 }
 int MipsAsmParser::matchRegisterName(StringRef Name, bool is64BitReg) {
 
+  if (Name.equals("fcc0"))
+    return Mips::FCC0;
+
   int CC;
   CC = matchCPURegisterName(Name);
   if (CC != -1)
