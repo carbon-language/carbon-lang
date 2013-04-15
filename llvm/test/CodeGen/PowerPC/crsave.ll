@@ -1,5 +1,4 @@
 ; RUN: llc -O0 -disable-fp-elim -mtriple=powerpc-unknown-linux-gnu < %s | FileCheck %s -check-prefix=PPC32
-; RUN: llc -O0 -disable-fp-elim -mtriple=powerpc64-unknown-linux-gnu < %s | FileCheck %s -check-prefix=PPC64-FP
 ; RUN: llc -O0 -mtriple=powerpc64-unknown-linux-gnu < %s | FileCheck %s -check-prefix=PPC64
 
 declare void @foo()
@@ -20,14 +19,11 @@ entry:
 ; PPC32-NEXT: mtcrf 32, 12
 
 ; PPC64: mfcr 12
-; PPC64-NEXT: stw 12, 8(1)
+; PPC64: stw 12, 8(1)
+; PPC64: stdu 1, -[[AMT:[0-9]+]](1)
+; PPC64: addi 1, 1, [[AMT]]
 ; PPC64: lwz 12, 8(1)
-; PPC64-NEXT: mtcrf 32, 12
-
-; PPC64-FP: mfcr 12
-; PPC64-FP-NEXT: stw 12, 8(31)
-; PPC64-FP: lwz 12, 8(31)
-; PPC64-FP-NEXT: mtcrf 32, 12
+; PPC64: mtcrf 32, 12
 
 define i32 @test_cr234() nounwind {
 entry:
@@ -47,16 +43,11 @@ entry:
 ; PPC32-NEXT: mtcrf 8, 12
 
 ; PPC64: mfcr 12
-; PPC64-NEXT: stw 12, 8(1)
+; PPC64: stw 12, 8(1)
+; PPC64: stdu 1, -[[AMT:[0-9]+]](1)
+; PPC64: addi 1, 1, [[AMT]]
 ; PPC64: lwz 12, 8(1)
-; PPC64-NEXT: mtcrf 32, 12
-; PPC64-NEXT: mtcrf 16, 12
-; PPC64-NEXT: mtcrf 8, 12
-
-; PPC64-FP: mfcr 12
-; PPC64-FP-NEXT: stw 12, 8(31)
-; PPC64-FP: lwz 12, 8(31)
-; PPC64-FP-NEXT: mtcrf 32, 12
-; PPC64-FP-NEXT: mtcrf 16, 12
-; PPC64-FP-NEXT: mtcrf 8, 12
+; PPC64: mtcrf 32, 12
+; PPC64: mtcrf 16, 12
+; PPC64: mtcrf 8, 12
 

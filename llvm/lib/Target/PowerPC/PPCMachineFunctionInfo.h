@@ -84,6 +84,11 @@ class PPCFunctionInfo : public MachineFunctionInfo {
   /// CRSpillFrameIndex - FrameIndex for CR spill slot for 32-bit SVR4.
   int CRSpillFrameIndex;
 
+  /// If any of CR[2-4] need to be saved in the prologue and restored in the
+  /// epilogue then they are added to this array. This is used for the
+  /// 64-bit SVR4 ABI.
+  SmallVector<unsigned, 3> MustSaveCRs;
+
 public:
   explicit PPCFunctionInfo(MachineFunction &MF) 
     : FramePointerSaveIndex(0),
@@ -154,6 +159,10 @@ public:
 
   int getCRSpillFrameIndex() const { return CRSpillFrameIndex; }
   void setCRSpillFrameIndex(int idx) { CRSpillFrameIndex = idx; }
+
+  const SmallVector<unsigned, 3> &
+    getMustSaveCRs() const { return MustSaveCRs; }
+  void addMustSaveCR(unsigned Reg) { MustSaveCRs.push_back(Reg); }
 };
 
 } // end of namespace llvm
