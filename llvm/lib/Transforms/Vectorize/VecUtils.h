@@ -71,6 +71,11 @@ struct BoUpSLP  {
   /// \brief Vectorize a group of scalars into a vector tree.
   void vectorizeArith(ValueList &Operands);
 
+  /// \returns the list of new instructions that were added in order to collect
+  /// scalars into vectors. This list can be used to further optimize the gather
+  /// sequences.
+  ValueList &getGatherSeqInstructions() {return GatherInstructions; }
+
 private:
   /// \brief This method contains the recursive part of getTreeCost.
   int getTreeCost_rec(ValueList &VL, unsigned Depth);
@@ -107,11 +112,11 @@ private:
 
   /// \returns a vector from a collection of scalars in \p VL.
   Value *Scalarize(ValueList &VL, VectorType *Ty);
-
+  
 private:
-  // Maps instructions to numbers and back.
+  /// Maps instructions to numbers and back.
   SmallDenseMap<Value*, int> InstrIdx;
-  // Maps integers to Instructions.
+  /// Maps integers to Instructions.
   std::vector<Instruction*> InstrVec;
 
   // -- containers that are used during getTreeCost -- //
@@ -121,20 +126,28 @@ private:
   /// NOTICE: The vectorization methods also use this set.
   ValueSet MustScalarize;
 
-  // Contains a list of values that are used outside the current tree. This
-  // set must be reset between runs.
+  /// Contains a list of values that are used outside the current tree. This
+  /// set must be reset between runs.
   ValueSet MultiUserVals;
-  // Maps values in the tree to the vector lanes that uses them. This map must
-  // be reset between runs of getCost.
+  /// Maps values in the tree to the vector lanes that uses them. This map must
+  /// be reset between runs of getCost.
   std::map<Value*, int> LaneMap;
-  // A list of instructions to ignore while sinking
-  // memory instructions. This map must be reset between runs of getCost.
+  /// A list of instructions to ignore while sinking
+  /// memory instructions. This map must be reset between runs of getCost.
   SmallPtrSet<Value *, 8> MemBarrierIgnoreList;
 
-  // -- containers that are used during vectorizeTree -- //
-  // Maps between the first scalar to the vector. This map must be reset between
-  // runs.
+  // -- Containers that are used during vectorizeTree -- //
+
+  /// Maps between the first scalar to the vector. This map must be reset
+  ///between runs.
   DenseMap<Value*, Value*> VectorizedValues;
+
+  // -- Containers that are used after vectorization by the caller -- //
+
+  /// A list of instructions that are used when gathering scalars into vectors.
+  /// In many cases these instructions can be hoisted outside of the BB.
+  /// Iterating over this list is faster than calling LICM.
+  ValueList GatherInstructions;
 
   // Analysis and block reference.
   BasicBlock *BB;

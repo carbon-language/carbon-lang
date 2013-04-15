@@ -511,8 +511,15 @@ Instruction *BoUpSLP::GetLastInstr(ValueList &VL, unsigned VF) {
 Value *BoUpSLP::Scalarize(ValueList &VL, VectorType *Ty) {
   IRBuilder<> Builder(GetLastInstr(VL, Ty->getNumElements()));
   Value *Vec = UndefValue::get(Ty);
-  for (unsigned i=0; i < Ty->getNumElements(); ++i)
+  for (unsigned i=0; i < Ty->getNumElements(); ++i) {
+    // Generate the 'InsertElement' instruction.
     Vec = Builder.CreateInsertElement(Vec, VL[i], Builder.getInt32(i));
+    // Remember that this instruction is used as part of a 'gather' sequence.
+    // The caller of the bottom-up slp vectorizer can try to hoist the sequence
+    // if the users are outside of the basic block.
+    GatherInstructions.push_back(Vec);
+  }
+
   return Vec;
 }
 
