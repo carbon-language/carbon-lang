@@ -1761,7 +1761,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
   if (!DefIsLiveOut)
     return false;
 
-  // Make sure non of the uses are PHI nodes.
+  // Make sure none of the uses are PHI nodes.
   for (Value::use_iterator UI = Src->use_begin(), E = Src->use_end();
        UI != E; ++UI) {
     Instruction *User = cast<Instruction>(*UI);
