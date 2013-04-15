@@ -67,14 +67,12 @@ class DeclarationVerbatimLineCommand<string name> :
 }
 
 class FunctionDeclarationVerbatimLineCommand<string name> :
-      VerbatimLineCommand<name> {
-  let IsDeclarationCommand = 1;
+      DeclarationVerbatimLineCommand<name> {
   let IsFunctionDeclarationCommand = 1;
 }
 
 class RecordLikeDeclarationVerbatimLineCommand<string name> :
-      VerbatimLineCommand<name> {
-  let IsDeclarationCommand = 1;
+      DeclarationVerbatimLineCommand<name> {
   let IsRecordLikeDeclarationCommand = 1;
 }
 
