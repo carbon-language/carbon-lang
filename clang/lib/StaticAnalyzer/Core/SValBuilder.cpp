@@ -106,12 +106,19 @@ SValBuilder::getRegionValueSymbolVal(const TypedValueRegion* region) {
   return nonloc::SymbolVal(sym);
 }
 
-DefinedOrUnknownSVal SValBuilder::conjureSymbolVal(const void *symbolTag,
-                                                   const Expr *expr,
+DefinedOrUnknownSVal SValBuilder::conjureSymbolVal(const void *SymbolTag,
+                                                   const Expr *Ex,
                                                    const LocationContext *LCtx,
-                                                   unsigned count) {
-  QualType T = expr->getType();
-  return conjureSymbolVal(symbolTag, expr, LCtx, T, count);
+                                                   unsigned Count) {
+  QualType T = Ex->getType();
+
+  // Compute the type of the result. If the expression is not an R-value, the
+  // result should be a location.
+  QualType ExType = Ex->getType();
+  if (Ex->isGLValue())
+    T = LCtx->getAnalysisDeclContext()->getASTContext().getPointerType(ExType);
+
+  return conjureSymbolVal(SymbolTag, Ex, LCtx, T, Count);
 }
 
 DefinedOrUnknownSVal SValBuilder::conjureSymbolVal(const void *symbolTag,

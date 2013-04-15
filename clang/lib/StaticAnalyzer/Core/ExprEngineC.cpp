@@ -617,11 +617,15 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
                                   const Expr *R,
                                   ExplodedNode *Pred,
                                   ExplodedNodeSet &Dst) {
+  assert(L && R);
+
   StmtNodeBuilder B(Pred, Dst, *currBldrCtx);
   ProgramStateRef state = Pred->getState();
   const LocationContext *LCtx = Pred->getLocationContext();
   const CFGBlock *SrcBlock = 0;
 
+  // Find the predecessor block.
+  ProgramStateRef SrcState = state;
   for (const ExplodedNode *N = Pred ; N ; N = *N->pred_begin()) {
     ProgramPoint PP = N->getLocation();
     if (PP.getAs<PreStmtPurgeDeadSymbols>() || PP.getAs<BlockEntrance>()) {
@@ -629,6 +633,7 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
       continue;
     }
     SrcBlock = PP.castAs<BlockEdge>().getSrc();
+    SrcState = N->getState();
     break;
   }
 
@@ -644,14 +649,25 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
     CFGElement CE = *I;
     if (Optional<CFGStmt> CS = CE.getAs<CFGStmt>()) {
       const Expr *ValEx = cast<Expr>(CS->getStmt());
-      hasValue = true;
-      V = state->getSVal(ValEx, LCtx);
+      ValEx = ValEx->IgnoreParens();
+
+      // For GNU extension '?:' operator, the left hand side will be an
+      // OpaqueValueExpr, so get the underlying expression.
+      if (const OpaqueValueExpr *OpaqueEx = dyn_cast<OpaqueValueExpr>(L))
+        L = OpaqueEx->getSourceExpr();
+
+      // If the last expression in the predecessor block matches true or false
+      // subexpression, get its the value.
+      if (ValEx == L->IgnoreParens() || ValEx == R->IgnoreParens()) {
+        hasValue = true;
+        V = SrcState->getSVal(ValEx, LCtx);
+      }
       break;
     }
   }
 
-  assert(hasValue);
-  (void) hasValue;
+  if (!hasValue)
+    V = svalBuilder.conjureSymbolVal(0, Ex, LCtx, currBldrCtx->blockCount());
 
   // Generate a new node with the binding from the appropriate path.
   B.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, V, true));
