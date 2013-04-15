@@ -1,9 +1,9 @@
 // XFAIL: hexagon
 // Test this without pch.
-// RUN: %clang -include %S/cxx-typeid.h -fsyntax-only -Xclang -verify %s
+// RUN: %clang_cc1 -include %S/cxx-typeid.h -fsyntax-only -verify %s
 
-// RUN: %clang -ccc-pch-is-pch -x c++-header -o %t.gch %S/cxx-typeid.h
-// RUN: %clang -ccc-pch-is-pch -include %t -fsyntax-only -Xclang -verify %s 
+// RUN: %clang_cc1 -x c++-header -emit-pch -o %t.pch %S/cxx-typeid.h
+// RUN: %clang_cc1 -include-pch %t.pch -fsyntax-only -verify %s
 
 // expected-no-diagnostics
 
