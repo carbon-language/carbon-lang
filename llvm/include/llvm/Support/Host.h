@@ -29,7 +29,7 @@
 namespace llvm {
 namespace sys {
 
-#if defined(BYTBYTE_ORDER) && defined(BIG_ENDIAN) && BYTE_ORDER == BIG_ENDIAN
+#if defined(BYTE_ORDER) && defined(BIG_ENDIAN) && BYTE_ORDER == BIG_ENDIAN
   static const bool IsBigEndianHost = true;
 #else
   static const bool IsBigEndianHost = false;
