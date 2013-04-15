@@ -185,7 +185,7 @@ private:
   }
 
   /// Compare two Types, treating all pointer types as equal.
-  bool isEquivalentType(Type *Ty1, Type *Ty2) const;
+  bool isEquivalentType(Type *Ty1, Type *Ty2, bool isReturnType = false) const;
 
   // The two functions undergoing comparison.
   const Function *F1, *F2;
@@ -200,12 +200,12 @@ private:
 
 // Any two pointers in the same address space are equivalent, intptr_t and
 // pointers are equivalent. Otherwise, standard type equivalence rules apply.
-bool FunctionComparator::isEquivalentType(Type *Ty1,
-                                          Type *Ty2) const {
+bool FunctionComparator::isEquivalentType(Type *Ty1, Type *Ty2,
+                                          bool isReturnType) const {
   if (Ty1 == Ty2)
     return true;
   if (Ty1->getTypeID() != Ty2->getTypeID()) {
-    if (TD) {
+    if (TD && !isReturnType) {
       LLVMContext &Ctx = Ty1->getContext();
       if (isa<PointerType>(Ty1) && Ty2 == TD->getIntPtrType(Ctx)) return true;
       if (isa<PointerType>(Ty2) && Ty1 == TD->getIntPtrType(Ctx)) return true;
@@ -261,7 +261,7 @@ bool FunctionComparator::isEquivalentType(Type *Ty1,
         FTy1->isVarArg() != FTy2->isVarArg())
       return false;
 
-    if (!isEquivalentType(FTy1->getReturnType(), FTy2->getReturnType()))
+    if (!isEquivalentType(FTy1->getReturnType(), FTy2->getReturnType(), true))
       return false;
 
     for (unsigned i = 0, e = FTy1->getNumParams(); i != e; ++i) {
