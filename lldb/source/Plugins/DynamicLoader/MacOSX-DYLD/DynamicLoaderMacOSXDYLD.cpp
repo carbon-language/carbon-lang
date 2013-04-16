@@ -709,7 +709,10 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
                                  addr_size +         // errorClientOfDylibPath
                                  addr_size +         // errorTargetDylibPath
                                  addr_size;          // errorSymbol
-        assert (sizeof (buf) >= count_v11);
+        const size_t count_v13 = count_v11 +
+                                 addr_size +         // sharedCacheSlide
+                                 sizeof (uuid_t);    // sharedCacheUUID
+        assert (sizeof (buf) >= count_v13);
 
         Error error;
         if (m_process->ReadMemory (m_dyld_all_image_infos_addr, buf, 4, error) == 4)
