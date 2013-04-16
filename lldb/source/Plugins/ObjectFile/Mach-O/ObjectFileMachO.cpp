@@ -1395,6 +1395,10 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     if (lldb_shared_cache.IsValid() && process_shared_cache.IsValid() && lldb_shared_cache != process_shared_cache)
                     {
                             use_lldb_cache = false;
+                            ModuleSP module_sp (GetModule());
+                            if (module_sp)
+                                module_sp->ReportWarning ("shared cache in process does not match lldb's own shared cache, startup will be slow.");
+
                     }
 
                     PlatformSP platform_sp (target.GetPlatform());
@@ -1722,6 +1726,9 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         // The on-disk dyld_shared_cache file is not the same as the one in this
                         // process' memory, don't use it.
                         uuid_match = false;
+                        ModuleSP module_sp (GetModule());
+                        if (module_sp)
+                            module_sp->ReportWarning ("process shared cache does not match on-disk dyld_shared_cache file, some symbol names will be missing.");
                     }
                 }
 
@@ -4035,12 +4042,10 @@ ObjectFileMachO::GetLLDBSharedCacheUUID ()
         uint8_t *dyld_all_image_infos_address = dyld_get_all_image_infos();
         if (dyld_all_image_infos_address)
         {
-            uint32_t version;
-            memcpy (&version, dyld_all_image_infos_address, 4);
-            if (version >= 13)
+            uint32_t *version = (uint32_t*) dyld_all_image_infos_address;              // version <mach-o/dyld_images.h>
+            if (*version >= 13)
             {
-                uint8_t *sharedCacheUUID_address = 0;
-                sharedCacheUUID_address = dyld_all_image_infos_address + 84;  // sharedCacheUUID <mach-o/dyld_images.h>
+                uuid_t *sharedCacheUUID_address = (uuid_t*) dyld_all_image_infos_address + 84; // sharedCacheUUID <mach-o/dyld_images.h>
                 uuid.SetBytes (sharedCacheUUID_address);
             }
         }
