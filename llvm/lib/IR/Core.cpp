@@ -1443,6 +1443,17 @@ void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
   Func->setAttributes(PALnew);
 }
 
+void LLVMAddTargetDependentFunctionAttr(LLVMValueRef Fn, const char *A,
+                                        const char *V) {
+  Function *Func = unwrap<Function>(Fn);
+  int Idx = AttributeSet::FunctionIndex;
+  AttrBuilder B;
+
+  B.addAttribute(A, V);
+  AttributeSet Set = AttributeSet::get(Func->getContext(), Idx, B);
+  Func->addAttributes(Idx, Set);
+}
+
 void LLVMRemoveFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
   Function *Func = unwrap<Function>(Fn);
   const AttributeSet PAL = Func->getAttributes();
