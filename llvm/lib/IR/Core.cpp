@@ -2455,6 +2455,9 @@ LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRangeCopy(
       StringRef(BufferName)));
 }
 
+const char* LLVMGetBufferStart(LLVMMemoryBufferRef MemBuf) {
+  return unwrap(MemBuf)->getBufferStart();
+}
 
 void LLVMDisposeMemoryBuffer(LLVMMemoryBufferRef MemBuf) {
   delete unwrap(MemBuf);

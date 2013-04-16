@@ -2579,6 +2579,7 @@ LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRange(const char *InputData,
 LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRangeCopy(const char *InputData,
                                                               size_t InputDataLength,
                                                               const char *BufferName);
+const char* LLVMGetBufferStart(LLVMMemoryBufferRef MemBuf);
 void LLVMDisposeMemoryBuffer(LLVMMemoryBufferRef MemBuf);
 
 /**
