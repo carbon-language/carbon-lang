@@ -1634,8 +1634,8 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
     else {
       llvm::APFloat F(static_cast<float>(amount));
       bool ignored;
-      F.convert(CGF.Target.getLongDoubleFormat(), llvm::APFloat::rmTowardZero,
-                &ignored);
+      F.convert(CGF.getTarget().getLongDoubleFormat(),
+                llvm::APFloat::rmTowardZero, &ignored);
       amt = llvm::ConstantFP::get(VMContext, F);
     }
     value = Builder.CreateFAdd(value, amt, isInc ? "inc" : "dec");

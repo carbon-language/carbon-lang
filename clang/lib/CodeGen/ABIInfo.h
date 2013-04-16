@@ -22,6 +22,7 @@ namespace llvm {
 
 namespace clang {
   class ASTContext;
+  class TargetInfo;
 
   namespace CodeGen {
     class CGFunctionInfo;
@@ -196,6 +197,7 @@ namespace clang {
     ASTContext &getContext() const;
     llvm::LLVMContext &getVMContext() const;
     const llvm::DataLayout &getDataLayout() const;
+    const TargetInfo &getTarget() const;
 
     /// Return the calling convention to use for system runtime
     /// functions.

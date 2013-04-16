@@ -296,7 +296,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::cttz, ArgType);
 
     llvm::Type *ResultType = ConvertType(E->getType());
-    Value *ZeroUndef = Builder.getInt1(Target.isCLZForZeroUndef());
+    Value *ZeroUndef = Builder.getInt1(getTarget().isCLZForZeroUndef());
     Value *Result = Builder.CreateCall2(F, ArgValue, ZeroUndef);
     if (Result->getType() != ResultType)
       Result = Builder.CreateIntCast(Result, ResultType, /*isSigned*/true,
@@ -313,7 +313,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::ctlz, ArgType);
 
     llvm::Type *ResultType = ConvertType(E->getType());
-    Value *ZeroUndef = Builder.getInt1(Target.isCLZForZeroUndef());
+    Value *ZeroUndef = Builder.getInt1(getTarget().isCLZForZeroUndef());
     Value *Result = Builder.CreateCall2(F, ArgValue, ZeroUndef);
     if (Result->getType() != ResultType)
       Result = Builder.CreateIntCast(Result, ResultType, /*isSigned*/true,
@@ -1430,7 +1430,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   const char *Name = getContext().BuiltinInfo.GetName(BuiltinID);
   Intrinsic::ID IntrinsicID = Intrinsic::not_intrinsic;
   if (const char *Prefix =
-      llvm::Triple::getArchTypePrefix(Target.getTriple().getArch()))
+      llvm::Triple::getArchTypePrefix(getTarget().getTriple().getArch()))
     IntrinsicID = Intrinsic::getIntrinsicForGCCBuiltin(Prefix, Name);
 
   if (IntrinsicID != Intrinsic::not_intrinsic) {
@@ -1501,7 +1501,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 
 Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
                                               const CallExpr *E) {
-  switch (Target.getTriple().getArch()) {
+  switch (getTarget().getTriple().getArch()) {
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
     return EmitARMBuiltinExpr(BuiltinID, E);
@@ -1852,7 +1852,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     // Generate target-independent intrinsic; also need to add second argument
     // for whether or not clz of zero is undefined; on ARM it isn't.
     Function *F = CGM.getIntrinsic(Intrinsic::ctlz, Ty);
-    Ops.push_back(Builder.getInt1(Target.isCLZForZeroUndef()));
+    Ops.push_back(Builder.getInt1(getTarget().isCLZForZeroUndef()));
     return EmitNeonCall(F, Ops, "vclz");
   }
   case ARM::BI__builtin_neon_vcnt_v:

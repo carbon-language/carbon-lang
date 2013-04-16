@@ -900,7 +900,7 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
       CharUnits allocaAlignment = alignment;
       if (isByRef)
         allocaAlignment = std::max(allocaAlignment,
-            getContext().toCharUnitsFromBits(Target.getPointerAlign(0)));
+            getContext().toCharUnitsFromBits(getTarget().getPointerAlign(0)));
       Alloc->setAlignment(allocaAlignment.getQuantity());
       DeclPtr = Alloc;
 

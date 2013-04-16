@@ -837,12 +837,11 @@ bool CodeGenModule::ReturnTypeUsesFPRet(QualType ResultType) {
     default:
       return false;
     case BuiltinType::Float:
-      return getContext().getTargetInfo().useObjCFPRetForRealType(TargetInfo::Float);
+      return getTarget().useObjCFPRetForRealType(TargetInfo::Float);
     case BuiltinType::Double:
-      return getContext().getTargetInfo().useObjCFPRetForRealType(TargetInfo::Double);
+      return getTarget().useObjCFPRetForRealType(TargetInfo::Double);
     case BuiltinType::LongDouble:
-      return getContext().getTargetInfo().useObjCFPRetForRealType(
-        TargetInfo::LongDouble);
+      return getTarget().useObjCFPRetForRealType(TargetInfo::LongDouble);
     }
   }
 
@@ -853,7 +852,7 @@ bool CodeGenModule::ReturnTypeUsesFP2Ret(QualType ResultType) {
   if (const ComplexType *CT = ResultType->getAs<ComplexType>()) {
     if (const BuiltinType *BT = CT->getElementType()->getAs<BuiltinType>()) {
       if (BT->getKind() == BuiltinType::LongDouble)
-        return getContext().getTargetInfo().useObjCFP2RetForComplexLongDouble();
+        return getTarget().useObjCFP2RetForComplexLongDouble();
     }
   }
 

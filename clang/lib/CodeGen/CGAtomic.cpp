@@ -327,7 +327,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
   CharUnits alignChars = getContext().getTypeAlignInChars(AtomicTy);
   unsigned Align = alignChars.getQuantity();
   unsigned MaxInlineWidthInBits =
-    getContext().getTargetInfo().getMaxAtomicInlineWidth();
+    getTarget().getMaxAtomicInlineWidth();
   bool UseLibcall = (Size != Align ||
                      getContext().toBits(sizeChars) > MaxInlineWidthInBits);
 

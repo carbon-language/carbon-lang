@@ -31,8 +31,7 @@ using namespace clang;
 using namespace CodeGen;
 
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
-  : CodeGenTypeCache(cgm), CGM(cgm),
-    Target(CGM.getContext().getTargetInfo()),
+  : CodeGenTypeCache(cgm), CGM(cgm), Target(cgm.getTarget()),
     Builder(cgm.getModule().getContext()),
     SanitizePerformTypeCheck(CGM.getSanOpts().Null |
                              CGM.getSanOpts().Alignment |
@@ -279,8 +278,8 @@ void CodeGenFunction::EmitFunctionInstrumentation(const char *Fn) {
 void CodeGenFunction::EmitMCountInstrumentation() {
   llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
 
-  llvm::Constant *MCountFn = CGM.CreateRuntimeFunction(FTy,
-                                                       Target.getMCountName());
+  llvm::Constant *MCountFn =
+    CGM.CreateRuntimeFunction(FTy, getTarget().getMCountName());
   EmitNounwindRuntimeCall(MCountFn);
 }
 

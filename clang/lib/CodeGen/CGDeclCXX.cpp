@@ -232,7 +232,7 @@ CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
   if (!CGM.getLangOpts().AppleKext) {
     // Set the section if needed.
     if (const char *Section = 
-          CGM.getContext().getTargetInfo().getStaticInitSectionSpecifier())
+          CGM.getTarget().getStaticInitSectionSpecifier())
       Fn->setSection(Section);
   }
 

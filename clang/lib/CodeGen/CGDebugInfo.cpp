@@ -642,7 +642,7 @@ llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
   // Size is always the size of a pointer. We can't use getTypeSize here
   // because that does not return the correct value for references.
   unsigned AS = CGM.getContext().getTargetAddressSpace(PointeeTy);
-  uint64_t Size = CGM.getContext().getTargetInfo().getPointerWidth(AS);
+  uint64_t Size = CGM.getTarget().getPointerWidth(AS);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
 
   return DBuilder.createPointerType(CreatePointeeType(PointeeTy, Unit),
@@ -984,7 +984,7 @@ llvm::DIType CGDebugInfo::getOrCreateInstanceMethodType(
     const PointerType *ThisPtrTy = cast<PointerType>(ThisPtr);
     QualType PointeeTy = ThisPtrTy->getPointeeType();
     unsigned AS = CGM.getContext().getTargetAddressSpace(PointeeTy);
-    uint64_t Size = CGM.getContext().getTargetInfo().getPointerWidth(AS);
+    uint64_t Size = CGM.getTarget().getPointerWidth(AS);
     uint64_t Align = CGM.getContext().getTypeAlign(ThisPtrTy);
     llvm::DIType PointeeType = getOrCreateType(PointeeTy, Unit);
     llvm::DIType ThisPtrType = DBuilder.createPointerType(PointeeType, Size, Align);
@@ -2398,7 +2398,7 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const VarDecl *VD,
   
   CharUnits Align = CGM.getContext().getDeclAlign(VD);
   if (Align > CGM.getContext().toCharUnitsFromBits(
-        CGM.getContext().getTargetInfo().getPointerAlign(0))) {
+        CGM.getTarget().getPointerAlign(0))) {
     CharUnits FieldOffsetInBytes 
       = CGM.getContext().toCharUnitsFromBits(FieldOffset);
     CharUnits AlignedOffsetInBytes
@@ -2494,7 +2494,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
       addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
       // offset of __forwarding field
       offset = CGM.getContext().toCharUnitsFromBits(
-        CGM.getContext().getTargetInfo().getPointerWidth(0));
+        CGM.getTarget().getPointerWidth(0));
       addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
       addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpDeref));
       addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));

@@ -60,14 +60,17 @@ namespace CodeGen {
 class CodeGenTypes {
 public:
   // Some of this stuff should probably be left on the CGM.
+  CodeGenModule &CGM;
   ASTContext &Context;
-  const TargetInfo &Target;
   llvm::Module &TheModule;
   const llvm::DataLayout &TheDataLayout;
-  const ABIInfo &TheABIInfo;
+  const TargetInfo &Target;
   CGCXXABI &TheCXXABI;
   const CodeGenOptions &CodeGenOpts;
-  CodeGenModule &CGM;
+
+  // This should not be moved earlier, since its initialization depends on some
+  // of the previous reference members being already initialized
+  const ABIInfo &TheABIInfo;
 
 private:
   /// The opaque type map for Objective-C interfaces. All direct
@@ -107,14 +110,14 @@ private:
   llvm::DenseMap<const Type *, llvm::Type *> TypeCache;
 
 public:
-  CodeGenTypes(CodeGenModule &CGM);
+  CodeGenTypes(CodeGenModule &cgm);
   ~CodeGenTypes();
 
   const llvm::DataLayout &getDataLayout() const { return TheDataLayout; }
-  const TargetInfo &getTarget() const { return Target; }
   ASTContext &getContext() const { return Context; }
   const ABIInfo &getABIInfo() const { return TheABIInfo; }
   const CodeGenOptions &getCodeGenOpts() const { return CodeGenOpts; }
+  const TargetInfo &getTarget() const { return Target; }
   CGCXXABI &getCXXABI() const { return TheCXXABI; }
   llvm::LLVMContext &getLLVMContext() { return TheModule.getContext(); }
 

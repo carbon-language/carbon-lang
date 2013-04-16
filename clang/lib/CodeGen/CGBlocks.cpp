@@ -2082,7 +2082,8 @@ llvm::Type *CodeGenFunction::BuildByRefType(const VarDecl *D) {
 
   bool Packed = false;
   CharUnits Align = getContext().getDeclAlign(D);
-  if (Align > getContext().toCharUnitsFromBits(Target.getPointerAlign(0))) {
+  if (Align >
+      getContext().toCharUnitsFromBits(getTarget().getPointerAlign(0))) {
     // We have to insert padding.
     
     // The struct above has 2 32-bit integers.

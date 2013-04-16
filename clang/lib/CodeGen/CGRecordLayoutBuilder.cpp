@@ -276,7 +276,7 @@ bool CGRecordLayoutBuilder::LayoutBitfields(const ASTRecordLayout &Layout,
   uint64_t FirstFieldOffset = Layout.getFieldOffset(FirstFieldNo);
   uint64_t NextFieldOffsetInBits = Types.getContext().toBits(NextFieldOffset);
 
-  unsigned CharAlign = Types.getContext().getTargetInfo().getCharAlign();
+  unsigned CharAlign = Types.getTarget().getCharAlign();
   assert(FirstFieldOffset % CharAlign == 0 &&
          "First field offset is misaligned");
   CharUnits FirstFieldOffsetInBytes
@@ -352,7 +352,7 @@ bool CGRecordLayoutBuilder::LayoutBitfields(const ASTRecordLayout &Layout,
   assert(EndOffset >= (FirstFieldOffset + TotalBits) &&
          "End offset is not past the end of the known storage bits.");
   uint64_t SpaceBits = EndOffset - FirstFieldOffset;
-  uint64_t LongBits = Types.getContext().getTargetInfo().getLongWidth();
+  uint64_t LongBits = Types.getTarget().getLongWidth();
   uint64_t WidenedBits = (StorageBits / LongBits) * LongBits +
                          llvm::NextPowerOf2(StorageBits % LongBits - 1);
   assert(WidenedBits >= StorageBits && "Widening shrunk the bits!");
@@ -455,7 +455,7 @@ CGRecordLayoutBuilder::LayoutUnionField(const FieldDecl *Field,
       return 0;
 
     unsigned StorageBits = llvm::RoundUpToAlignment(
-      FieldSize, Types.getContext().getTargetInfo().getCharAlign());
+      FieldSize, Types.getTarget().getCharAlign());
     CharUnits NumBytesToAppend
       = Types.getContext().toCharUnitsFromBits(StorageBits);
 
@@ -814,7 +814,7 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
 
     // Lay out the virtual bases.  The MS ABI uses a different
     // algorithm here due to the lack of primary virtual bases.
-    if (Types.getContext().getTargetInfo().getCXXABI().hasPrimaryVBases()) {
+    if (Types.getTarget().getCXXABI().hasPrimaryVBases()) {
       RD->getIndirectPrimaryBases(IndirectPrimaryBases);
       if (Layout.isPrimaryBaseVirtual())
         IndirectPrimaryBases.insert(Layout.getPrimaryBase());

@@ -1300,6 +1300,7 @@ public:
     return getInvokeDestImpl();
   }
 
+  const TargetInfo &getTarget() const { return Target; }
   llvm::LLVMContext &getLLVMContext() { return CGM.getLLVMContext(); }
 
   //===--------------------------------------------------------------------===//

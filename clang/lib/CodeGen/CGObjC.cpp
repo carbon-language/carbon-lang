@@ -714,7 +714,7 @@ PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
   }
 
   llvm::Triple::ArchType arch =
-    CGM.getContext().getTargetInfo().getTriple().getArch();
+    CGM.getTarget().getTriple().getArch();
 
   // Most architectures require memory to fit within a single cache
   // line, so the alignment has to be at least the size of the access.
