@@ -6488,6 +6488,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXDynamicCastExprClass:
   case Expr::CXXTypeidExprClass:
   case Expr::CXXUuidofExprClass:
+  case Expr::MSPropertyRefExprClass:
   case Expr::CXXNullPtrLiteralExprClass:
   case Expr::UserDefinedLiteralClass:
   case Expr::CXXThisExprClass:

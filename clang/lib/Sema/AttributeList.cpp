@@ -23,6 +23,8 @@ size_t AttributeList::allocated_size() const {
   if (IsAvailability) return AttributeFactory::AvailabilityAllocSize;
   else if (IsTypeTagForDatatype)
     return AttributeFactory::TypeTagForDatatypeAllocSize;
+  else if (IsProperty)
+    return AttributeFactory::PropertyAllocSize;
   return (sizeof(AttributeList) + NumArgs * sizeof(Expr*));
 }
 

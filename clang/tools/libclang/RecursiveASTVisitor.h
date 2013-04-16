@@ -1614,6 +1614,10 @@ DEF_TRAVERSE_DECL(FieldDecl, {
       TRY_TO(TraverseStmt(D->getInClassInitializer()));
   })
 
+DEF_TRAVERSE_DECL(MSPropertyDecl, {
+    TRY_TO(TraverseDeclaratorHelper(D));
+  })
+
 DEF_TRAVERSE_DECL(ObjCAtDefsFieldDecl, {
     TRY_TO(TraverseDeclaratorHelper(D));
     if (D->isBitField())
@@ -2133,6 +2137,7 @@ DEF_TRAVERSE_STMT(UnresolvedMemberExpr, {
   }
 })
 
+DEF_TRAVERSE_STMT(MSPropertyRefExpr, {})
 DEF_TRAVERSE_STMT(SEHTryStmt, {})
 DEF_TRAVERSE_STMT(SEHExceptStmt, {})
 DEF_TRAVERSE_STMT(SEHFinallyStmt,{})

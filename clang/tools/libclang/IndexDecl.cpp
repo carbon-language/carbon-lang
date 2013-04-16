@@ -105,6 +105,11 @@ public:
     return true;
   }
 
+  bool VisitMSPropertyDecl(const MSPropertyDecl *D) {
+    handleDeclarator(D);
+    return true;
+  }
+
   bool VisitEnumConstantDecl(const EnumConstantDecl *D) {
     IndexCtx.handleEnumerator(D);
     IndexCtx.indexBody(D->getInitExpr(), D);

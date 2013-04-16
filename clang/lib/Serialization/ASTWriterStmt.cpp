@@ -1534,6 +1534,16 @@ void ASTStmtWriter::VisitAsTypeExpr(AsTypeExpr *E) {
 //===----------------------------------------------------------------------===//
 // Microsoft Expressions and Statements.
 //===----------------------------------------------------------------------===//
+void ASTStmtWriter::VisitMSPropertyRefExpr(MSPropertyRefExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->isArrow());
+  Writer.AddStmt(E->getBaseExpr());
+  Writer.AddNestedNameSpecifierLoc(E->getQualifierLoc(), Record);
+  Writer.AddSourceLocation(E->getMemberLoc(), Record);
+  Writer.AddDeclRef(E->getPropertyDecl(), Record);
+  Code = serialization::EXPR_CXX_PROPERTY_REF_EXPR;
+}
+
 void ASTStmtWriter::VisitCXXUuidofExpr(CXXUuidofExpr *E) {
   VisitExpr(E);
   Writer.AddSourceRange(E->getSourceRange(), Record);

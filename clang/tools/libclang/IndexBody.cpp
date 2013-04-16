@@ -89,6 +89,12 @@ public:
     return true;
   }
 
+  bool VisitMSPropertyRefExpr(MSPropertyRefExpr *E) {
+    IndexCtx.handleReference(E->getPropertyDecl(), E->getMemberLoc(), Parent,
+                             ParentDC, E, CXIdxEntityRef_Direct);
+    return true;
+  }
+
   bool VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
     IndexCtx.handleReference(E->getProtocol(), E->getProtocolIdLoc(),
                              Parent, ParentDC, E, CXIdxEntityRef_Direct);

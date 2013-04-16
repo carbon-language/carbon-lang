@@ -1238,6 +1238,18 @@ void StmtPrinter::VisitCXXUuidofExpr(CXXUuidofExpr *Node) {
   OS << ")";
 }
 
+void StmtPrinter::VisitMSPropertyRefExpr(MSPropertyRefExpr *Node) {
+  PrintExpr(Node->getBaseExpr());
+  if (Node->isArrow())
+    OS << "->";
+  else
+    OS << ".";
+  if (NestedNameSpecifier *Qualifier =
+      Node->getQualifierLoc().getNestedNameSpecifier())
+    Qualifier->print(OS, Policy);
+  OS << Node->getPropertyDecl()->getDeclName();
+}
+
 void StmtPrinter::VisitUserDefinedLiteral(UserDefinedLiteral *Node) {
   switch (Node->getLiteralOperatorKind()) {
   case UserDefinedLiteral::LOK_Raw:

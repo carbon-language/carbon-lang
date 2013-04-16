@@ -2789,6 +2789,7 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
     return false;
 
   case CallExprClass:
+  case MSPropertyRefExprClass:
   case CompoundAssignOperatorClass:
   case VAArgExprClass:
   case AtomicExprClass:

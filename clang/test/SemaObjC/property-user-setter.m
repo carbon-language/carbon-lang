@@ -85,7 +85,7 @@ static int g_val;
 - (void)setFoo:(int)value;
 @end
 
-void g(int); // expected-note {{passing argument to parameter here}}
+void g(int);
 
 void f(C *c) {
     c.Foo = 17; // OK 

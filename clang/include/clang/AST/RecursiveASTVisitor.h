@@ -1671,6 +1671,10 @@ bool RecursiveASTVisitor<Derived>::TraverseDeclaratorHelper(DeclaratorDecl *D) {
   return true;
 }
 
+DEF_TRAVERSE_DECL(MSPropertyDecl, {
+    TRY_TO(TraverseDeclaratorHelper(D));
+  })
+
 DEF_TRAVERSE_DECL(FieldDecl, {
     TRY_TO(TraverseDeclaratorHelper(D));
     if (D->isBitField())
@@ -2057,6 +2061,10 @@ DEF_TRAVERSE_STMT(CXXTypeidExpr, {
     if (S->isTypeOperand())
       TRY_TO(TraverseTypeLoc(S->getTypeOperandSourceInfo()->getTypeLoc()));
   })
+
+DEF_TRAVERSE_STMT(MSPropertyRefExpr, {
+  TRY_TO(TraverseNestedNameSpecifierLoc(S->getQualifierLoc()));
+})
 
 DEF_TRAVERSE_STMT(CXXUuidofExpr, {
     // The child-iterator will pick up the arg if it's an expression,

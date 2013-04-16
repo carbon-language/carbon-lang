@@ -1293,7 +1293,7 @@ bool NamedDecl::isCXXInstanceMember() const {
   if (isa<UsingShadowDecl>(D))
     D = cast<UsingShadowDecl>(D)->getTargetDecl();
 
-  if (isa<FieldDecl>(D) || isa<IndirectFieldDecl>(D))
+  if (isa<FieldDecl>(D) || isa<IndirectFieldDecl>(D) || isa<MSPropertyDecl>(D))
     return true;
   if (isa<CXXMethodDecl>(D))
     return cast<CXXMethodDecl>(D)->isInstance();
@@ -3224,6 +3224,14 @@ BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {
 BlockDecl *BlockDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   void *Mem = AllocateDeserializedDecl(C, ID, sizeof(BlockDecl));
   return new (Mem) BlockDecl(0, SourceLocation());
+}
+
+MSPropertyDecl *MSPropertyDecl::CreateDeserialized(ASTContext &C,
+                                                   unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(MSPropertyDecl));
+  return new (Mem) MSPropertyDecl(0, SourceLocation(), DeclarationName(),
+                                  QualType(), 0, SourceLocation(),
+                                  0, 0);
 }
 
 EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,

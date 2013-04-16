@@ -1810,6 +1810,19 @@ def err_attribute_section_local_variable : Error<
 def warn_mismatched_section : Warning<
   "section does not match previous declaration">, InGroup<Section>;
 
+def err_anonymous_property: Error<
+  "anonymous property is not supported">;
+def err_property_is_variably_modified: Error<
+  "property '%0' has a variably modified type">;
+def err_no_getter_for_property : Error<
+  "no getter defined for property '%0'">;
+def err_no_setter_for_property : Error<
+  "no setter defined for property '%0'">;
+def error_cannot_find_suitable_getter : Error<
+  "cannot find suitable getter for property '%0'">;
+def error_cannot_find_suitable_setter : Error<
+  "cannot find suitable setter for property '%0'">;
+
 def err_attribute_aligned_not_power_of_two : Error<
   "requested alignment is not a power of 2">;
 def err_attribute_aligned_greater_than_8192 : Error<

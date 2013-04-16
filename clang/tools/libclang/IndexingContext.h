@@ -16,6 +16,7 @@
 
 namespace clang {
   class FileEntry;
+  class MSPropertyDecl;
   class ObjCPropertyDecl;
   class ClassTemplateDecl;
   class FunctionTemplateDecl;
@@ -403,6 +404,8 @@ public:
   bool handleVar(const VarDecl *D);
 
   bool handleField(const FieldDecl *D);
+
+  bool handleMSProperty(const MSPropertyDecl *D);
 
   bool handleEnumerator(const EnumConstantDecl *D);
 

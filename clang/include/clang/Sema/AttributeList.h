@@ -96,6 +96,10 @@ private:
   /// type_tag_for_datatype attribute.
   unsigned IsTypeTagForDatatype : 1;
 
+  /// True if this has extra information associated with a
+  /// Microsoft __delcspec(property) attribute.
+  unsigned IsProperty : 1;
+
   unsigned AttrKind : 8;
 
   /// \brief The location of the 'unavailable' keyword in an
@@ -134,6 +138,11 @@ public:
     unsigned LayoutCompatible : 1;
     unsigned MustBeNull : 1;
   };
+  struct PropertyData {
+    IdentifierInfo *GetterId, *SetterId;
+    PropertyData(IdentifierInfo *getterId, IdentifierInfo *setterId)
+    : GetterId(getterId), SetterId(setterId) {}
+  };
 
 private:
   TypeTagForDatatypeData &getTypeTagForDatatypeDataSlot() {
@@ -150,6 +159,16 @@ private:
 
   const ParsedType &getTypeBuffer() const {
     return *reinterpret_cast<const ParsedType *>(this + 1);
+  }
+
+  PropertyData &getPropertyDataBuffer() {
+    assert(IsProperty);
+    return *reinterpret_cast<PropertyData*>(this + 1);
+  }
+
+  const PropertyData &getPropertyDataBuffer() const {
+    assert(IsProperty);
+    return *reinterpret_cast<const PropertyData*>(this + 1);
   }
 
   AttributeList(const AttributeList &) LLVM_DELETED_FUNCTION;
@@ -169,7 +188,8 @@ private:
       AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(parmLoc),
       EllipsisLoc(ellipsisLoc), NumArgs(numArgs), SyntaxUsed(syntaxUsed),
       Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
-      IsTypeTagForDatatype(false), NextInPosition(0), NextInPool(0) {
+      IsTypeTagForDatatype(false), IsProperty(false), NextInPosition(0),
+      NextInPool(0) {
     if (numArgs) memcpy(getArgsBuffer(), args, numArgs * sizeof(Expr*));
     AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
   }
@@ -188,7 +208,7 @@ private:
       AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(parmLoc), EllipsisLoc(),
       NumArgs(0), SyntaxUsed(syntaxUsed),
       Invalid(false), UsedAsTypeAttr(false), IsAvailability(true),
-      IsTypeTagForDatatype(false),
+      IsTypeTagForDatatype(false), IsProperty(false),
       UnavailableLoc(unavailable), MessageExpr(messageExpr),
       NextInPosition(0), NextInPool(0) {
     new (&getAvailabilitySlot(IntroducedSlot)) AvailabilityChange(introduced);
@@ -208,7 +228,8 @@ private:
       AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(argumentKindLoc),
       EllipsisLoc(), NumArgs(0), SyntaxUsed(syntaxUsed),
       Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
-      IsTypeTagForDatatype(true), NextInPosition(NULL), NextInPool(NULL) {
+      IsTypeTagForDatatype(true), IsProperty(false), NextInPosition(NULL),
+      NextInPool(NULL) {
     TypeTagForDatatypeData &ExtraData = getTypeTagForDatatypeDataSlot();
     new (&ExtraData.MatchingCType) ParsedType(matchingCType);
     ExtraData.LayoutCompatible = layoutCompatible;
@@ -225,8 +246,25 @@ private:
         AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(parmLoc),
         EllipsisLoc(), NumArgs(1), SyntaxUsed(syntaxUsed), Invalid(false),
         UsedAsTypeAttr(false), IsAvailability(false),
-        IsTypeTagForDatatype(false), NextInPosition(0), NextInPool(0) {
+        IsTypeTagForDatatype(false), IsProperty(false), NextInPosition(0),
+        NextInPool(0) {
     new (&getTypeBuffer()) ParsedType(typeArg);
+    AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
+  }
+
+  /// Constructor for microsoft __declspec(property) attribute.
+  AttributeList(IdentifierInfo *attrName, SourceRange attrRange,
+                IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                IdentifierInfo *parmName, SourceLocation parmLoc,
+                IdentifierInfo *getterId, IdentifierInfo *setterId,
+                Syntax syntaxUsed)
+    : AttrName(attrName), ScopeName(scopeName), ParmName(parmName),
+      AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(parmLoc),
+      SyntaxUsed(syntaxUsed),
+      Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
+      IsTypeTagForDatatype(false), IsProperty(true), NextInPosition(0),
+      NextInPool(0) {
+    new (&getPropertyDataBuffer()) PropertyData(getterId, setterId);
     AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
   }
 
@@ -252,6 +290,11 @@ public:
   
   IdentifierInfo *getParameterName() const { return ParmName; }
   SourceLocation getParameterLoc() const { return ParmLoc; }
+
+  /// Is this the Microsoft __declspec(property) attribute?
+  bool isDeclspecPropertyAttribute() const  {
+    return IsProperty;
+  }
 
   bool isAlignasAttribute() const {
     // FIXME: Use a better mechanism to determine this.
@@ -379,6 +422,11 @@ public:
     return getTypeBuffer();
   }
 
+  const PropertyData &getPropertyData() const {
+    assert(isDeclspecPropertyAttribute() && "Not a __delcspec(property) attribute");
+    return getPropertyDataBuffer();
+  }
+
   /// \brief Get an index into the attribute spelling list
   /// defined in Attr.td. This index is used by an attribute
   /// to pretty print itself.
@@ -402,6 +450,10 @@ public:
     TypeTagForDatatypeAllocSize =
       sizeof(AttributeList)
       + (sizeof(AttributeList::TypeTagForDatatypeData) + sizeof(void *) - 1)
+        / sizeof(void*) * sizeof(void*),
+    PropertyAllocSize =
+      sizeof(AttributeList)
+      + (sizeof(AttributeList::PropertyData) + sizeof(void *) - 1)
         / sizeof(void*) * sizeof(void*)
   };
 
@@ -547,6 +599,20 @@ public:
                                           scopeName, scopeLoc,
                                           parmName, parmLoc,
                                           typeArg, syntaxUsed));
+  }
+
+  AttributeList *createPropertyAttribute(
+                    IdentifierInfo *attrName, SourceRange attrRange,
+                    IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                    IdentifierInfo *parmName, SourceLocation parmLoc,
+                    IdentifierInfo *getterId, IdentifierInfo *setterId,
+                    AttributeList::Syntax syntaxUsed) {
+    void *memory = allocate(AttributeFactory::PropertyAllocSize);
+    return add(new (memory) AttributeList(attrName, attrRange,
+                                          scopeName, scopeLoc,
+                                          parmName, parmLoc,
+                                          getterId, setterId,
+                                          syntaxUsed));
   }
 };
 
@@ -699,6 +765,21 @@ public:
     AttributeList *attr =
         pool.createTypeAttribute(attrName, attrRange, scopeName, scopeLoc,
                                  parmName, parmLoc, typeArg, syntaxUsed);
+    add(attr);
+    return attr;
+  }
+
+  /// Add microsoft __delspec(property) attribute.
+  AttributeList *
+  addNewPropertyAttr(IdentifierInfo *attrName, SourceRange attrRange,
+                 IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                 IdentifierInfo *parmName, SourceLocation parmLoc,
+                 IdentifierInfo *getterId, IdentifierInfo *setterId,
+                 AttributeList::Syntax syntaxUsed) {
+    AttributeList *attr =
+        pool.createPropertyAttribute(attrName, attrRange, scopeName, scopeLoc,
+                                     parmName, parmLoc, getterId, setterId,
+                                     syntaxUsed);
     add(attr);
     return attr;
   }

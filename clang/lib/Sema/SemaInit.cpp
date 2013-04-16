@@ -4136,6 +4136,21 @@ InitializationSequence::InitializationSequence(Sema &S,
     : FailedCandidateSet(Kind.getLocation()) {
   ASTContext &Context = S.Context;
 
+  // Eliminate non-overload placeholder types in the arguments.  We
+  // need to do this before checking whether types are dependent
+  // because lowering a pseudo-object expression might well give us
+  // something of dependent type.
+  for (unsigned I = 0; I != NumArgs; ++I)
+    if (Args[I]->getType()->isNonOverloadPlaceholderType()) {
+      // FIXME: should we be doing this here?
+      ExprResult result = S.CheckPlaceholderExpr(Args[I]);
+      if (result.isInvalid()) {
+        SetFailed(FK_PlaceholderType);
+        return;
+      }
+      Args[I] = result.take();
+    }
+
   // C++0x [dcl.init]p16:
   //   The semantics of initializers are as follows. The destination type is
   //   the type of the object or reference being initialized and the source
@@ -4152,18 +4167,6 @@ InitializationSequence::InitializationSequence(Sema &S,
 
   // Almost everything is a normal sequence.
   setSequenceKind(NormalSequence);
-
-  for (unsigned I = 0; I != NumArgs; ++I)
-    if (Args[I]->getType()->isNonOverloadPlaceholderType()) {
-      // FIXME: should we be doing this here?
-      ExprResult result = S.CheckPlaceholderExpr(Args[I]);
-      if (result.isInvalid()) {
-        SetFailed(FK_PlaceholderType);
-        return;
-      }
-      Args[I] = result.take();
-    }
-
 
   QualType SourceType;
   Expr *Initializer = 0;

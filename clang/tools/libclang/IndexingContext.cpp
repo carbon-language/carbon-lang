@@ -396,6 +396,12 @@ bool IndexingContext::handleField(const FieldDecl *D) {
   return handleDecl(D, D->getLocation(), getCursor(D), DInfo);
 }
 
+bool IndexingContext::handleMSProperty(const MSPropertyDecl *D) {
+  DeclInfo DInfo(/*isRedeclaration=*/false, /*isDefinition=*/true,
+                 /*isContainer=*/false);
+  return handleDecl(D, D->getLocation(), getCursor(D), DInfo);
+}
+
 bool IndexingContext::handleEnumerator(const EnumConstantDecl *D) {
   DeclInfo DInfo(/*isRedeclaration=*/false, /*isDefinition=*/true,
                  /*isContainer=*/false);

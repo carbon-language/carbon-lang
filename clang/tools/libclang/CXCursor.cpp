@@ -442,6 +442,7 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::CXXDependentScopeMemberExprClass:
   case Stmt::CXXPseudoDestructorExprClass:
   case Stmt::MemberExprClass:            
+  case Stmt::MSPropertyRefExprClass:
   case Stmt::ObjCIsaExprClass:
   case Stmt::ObjCIvarRefExprClass:    
   case Stmt::ObjCPropertyRefExprClass: 

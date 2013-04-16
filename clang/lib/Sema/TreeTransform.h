@@ -6029,6 +6029,32 @@ TreeTransform<Derived>::TransformMSDependentExistsStmt(
 }
 
 template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformMSPropertyRefExpr(MSPropertyRefExpr *E) {
+  NestedNameSpecifierLoc QualifierLoc;
+  if (E->getQualifierLoc()) {
+    QualifierLoc
+    = getDerived().TransformNestedNameSpecifierLoc(E->getQualifierLoc());
+    if (!QualifierLoc)
+      return ExprError();
+  }
+
+  MSPropertyDecl *PD = cast_or_null<MSPropertyDecl>(
+    getDerived().TransformDecl(E->getMemberLoc(), E->getPropertyDecl()));
+  if (!PD)
+    return ExprError();
+
+  ExprResult Base = getDerived().TransformExpr(E->getBaseExpr());
+  if (Base.isInvalid())
+    return ExprError();
+
+  return new (SemaRef.getASTContext())
+      MSPropertyRefExpr(Base.get(), PD, E->isArrow(),
+                        SemaRef.getASTContext().PseudoObjectTy, VK_LValue,
+                        QualifierLoc, E->getMemberLoc());
+}
+
+template<typename Derived>
 StmtResult
 TreeTransform<Derived>::TransformSEHTryStmt(SEHTryStmt *S) {
   StmtResult TryBlock; //  = getDerived().TransformCompoundStmt(S->getTryBlock());

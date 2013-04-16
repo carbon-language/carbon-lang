@@ -493,6 +493,7 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case NonTypeTemplateParm:
     case ObjCMethod:
     case ObjCProperty:
+    case MSProperty:
       return IDNS_Ordinary;
     case Label:
       return IDNS_Label;

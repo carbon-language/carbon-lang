@@ -527,6 +527,22 @@ def err_ms_declspec_type : Error<
   "__declspec attributes must be an identifier or string literal">;
 def warn_ms_declspec_unknown : Warning<
   "unknown __declspec attribute %0 ignored">, InGroup<UnknownAttributes>;
+def err_ms_property_no_getter_or_putter : Error<
+  "property does not specify a getter or a putter">;
+def err_ms_property_unknown_accessor : Error<
+  "expected 'get' or 'put' in property declaration">;
+def err_ms_property_has_set_accessor : Error<
+  "putter for property must be specified as 'put', not 'set'">;
+def err_ms_property_missing_accessor_kind : Error<
+  "missing 'get=' or 'put='">;
+def err_ms_property_expected_equal : Error<
+  "expected '=' after '%0'">;
+def err_ms_property_duplicate_accessor : Error<
+  "property declaration specifies '%0' accessor twice">;
+def err_ms_property_expected_accessor_name : Error<
+  "expected name of accessor method">;
+def err_ms_property_expected_comma_or_rparen : Error<
+  "expected ',' or ')' at end of property accessor list">;
 
 /// C++ Templates
 def err_expected_template : Error<"expected template">;

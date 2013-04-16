@@ -928,6 +928,10 @@ def TypeTagForDatatype : InheritableAttr {
 
 // Microsoft-related attributes
 
+def MsProperty : Attr {
+  let Spellings = [Declspec<"property">];
+}
+
 def MsStruct : InheritableAttr {
   let Spellings = [Declspec<"ms_struct">];
 }

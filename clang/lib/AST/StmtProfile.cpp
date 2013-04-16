@@ -766,6 +766,11 @@ void StmtProfiler::VisitCXXUuidofExpr(const CXXUuidofExpr *S) {
     VisitType(S->getTypeOperand());
 }
 
+void StmtProfiler::VisitMSPropertyRefExpr(const MSPropertyRefExpr *S) {
+  VisitExpr(S);
+  VisitDecl(S->getPropertyDecl());
+}
+
 void StmtProfiler::VisitCXXThisExpr(const CXXThisExpr *S) {
   VisitExpr(S);
   ID.AddBoolean(S->isImplicit());

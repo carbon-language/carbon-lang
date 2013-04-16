@@ -29,6 +29,7 @@ class CXXConstructorDecl;
 class CXXDestructorDecl;
 class CXXMethodDecl;
 class CXXTemporary;
+class MSPropertyDecl;
 class TemplateArgumentListInfo;
 class UuidAttr;
 
@@ -558,6 +559,64 @@ public:
     Stmt **begin = reinterpret_cast<Stmt**>(&Operand);
     return child_range(begin, begin + 1);
   }
+};
+
+/// A member reference to an MSPropertyDecl.  This expression always
+/// has pseudo-object type, and therefore it is typically not
+/// encountered in a fully-typechecked expression except within the
+/// syntactic form of a PseudoObjectExpr.
+class MSPropertyRefExpr : public Expr {
+  Expr *BaseExpr;
+  MSPropertyDecl *TheDecl;
+  SourceLocation MemberLoc;
+  bool IsArrow;
+  NestedNameSpecifierLoc QualifierLoc;
+
+public:
+  MSPropertyRefExpr(Expr *baseExpr, MSPropertyDecl *decl, bool isArrow,
+                    QualType ty, ExprValueKind VK,
+                    NestedNameSpecifierLoc qualifierLoc,
+                    SourceLocation nameLoc)
+  : Expr(MSPropertyRefExprClass, ty, VK, OK_Ordinary,
+         /*type-dependent*/ false, baseExpr->isValueDependent(),
+         baseExpr->isInstantiationDependent(),
+         baseExpr->containsUnexpandedParameterPack()),
+    BaseExpr(baseExpr), TheDecl(decl),
+    MemberLoc(nameLoc), IsArrow(isArrow),
+    QualifierLoc(qualifierLoc) {}
+
+  MSPropertyRefExpr(EmptyShell Empty) : Expr(MSPropertyRefExprClass, Empty) {}
+
+  SourceRange getSourceRange() const LLVM_READONLY {
+    return SourceRange(getLocStart(), getLocEnd());
+  }
+  bool isImplicitAccess() const {
+    return getBaseExpr() && getBaseExpr()->isImplicitCXXThis();
+  }
+  SourceLocation getLocStart() const {
+    if (!isImplicitAccess())
+      return BaseExpr->getLocStart();
+    else if (QualifierLoc)
+      return QualifierLoc.getBeginLoc();
+    else
+        return MemberLoc;
+  }
+  SourceLocation getLocEnd() const { return getMemberLoc(); }
+
+  child_range children() {
+    return child_range((Stmt**)&BaseExpr, (Stmt**)&BaseExpr + 1);
+  }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == MSPropertyRefExprClass;
+  }
+
+  Expr *getBaseExpr() const { return BaseExpr; }
+  MSPropertyDecl *getPropertyDecl() const { return TheDecl; }
+  bool isArrow() const { return IsArrow; }
+  SourceLocation getMemberLoc() const { return MemberLoc; }
+  NestedNameSpecifierLoc getQualifierLoc() const { return QualifierLoc; }
+
+  friend class ASTStmtReader;
 };
 
 /// CXXUuidofExpr - A microsoft C++ @c __uuidof expression, which gets

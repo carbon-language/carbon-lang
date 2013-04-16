@@ -401,6 +401,7 @@ namespace clang {
     Decl *VisitVarDecl(VarDecl *D);
     Decl *VisitAccessSpecDecl(AccessSpecDecl *D);
     Decl *VisitFieldDecl(FieldDecl *D);
+    Decl *VisitMSPropertyDecl(MSPropertyDecl *D);
     Decl *VisitIndirectFieldDecl(IndirectFieldDecl *D);
     Decl *VisitStaticAssertDecl(StaticAssertDecl *D);
     Decl *VisitEnumDecl(EnumDecl *D);

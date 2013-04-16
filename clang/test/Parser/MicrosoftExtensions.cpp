@@ -331,3 +331,32 @@ namespace Inheritance {
   class __multiple_inheritance B;
   class __virtual_inheritance C;
 }
+
+struct StructWithProperty {
+  __declspec(property) int V0; // expected-error {{expected '(' after 'property'}}
+  __declspec(property()) int V1; // expected-error {{property does not specify a getter or a putter}}
+  __declspec(property(set)) int V2; // expected-error {{putter for property must be specified as 'put', not 'set'}} expected-error {{expected '=' after 'set'}}
+  __declspec(property(ptu)) int V3; // expected-error {{missing 'get=' or 'put='}}
+  __declspec(property(ptu=PutV)) int V4; // expected-error {{expected 'get' or 'put' in property declaration}}
+  __declspec(property(get)) int V5; // expected-error {{expected '=' after 'get'}}
+  __declspec(property(get&)) int V6; // expected-error {{expected '=' after 'get'}}
+  __declspec(property(get=)) int V7; // expected-error {{expected name of accessor method}}
+  __declspec(property(get=GetV)) int V8; // no-warning
+  __declspec(property(get=GetV=)) int V9; // expected-error {{expected ',' or ')' at end of property accessor list}}
+  __declspec(property(get=GetV,)) int V10; // expected-error {{expected 'get' or 'put' in property declaration}}
+  __declspec(property(get=GetV,put=SetV)) int V11; // no-warning
+  __declspec(property(get=GetV,put=SetV,get=GetV)) int V12; // expected-error {{property declaration specifies 'get' accessor twice}}
+
+  int GetV() { return 123; }
+  void SetV(int v) {}
+};
+void TestProperty() {
+  StructWithProperty sp;
+  sp.V8;
+  sp.V8 = 0; // expected-error {{no setter defined for property 'V8'}}
+  int i = sp.V11;
+  sp.V11 = i++;
+  sp.V11 += 8;
+  sp.V11++;
+  ++sp.V11;
+}

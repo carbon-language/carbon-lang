@@ -394,17 +394,119 @@ void Parser::ParseComplexMicrosoftDeclSpec(IdentifierInfo *Ident,
     // The property declspec is more complex in that it can take one or two
     // assignment expressions as a parameter, but the lhs of the assignment
     // must be named get or put.
-    //
-    // For right now, we will just skip to the closing right paren of the
-    // property expression.
-    //
-    // FIXME: we should deal with __declspec(property) at some point because it
-    // is used in the platform SDK headers for the Parallel Patterns Library
-    // and ATL.
-    BalancedDelimiterTracker T(*this, tok::l_paren);
-    if (T.expectAndConsume(diag::err_expected_lparen_after,
-                           Ident->getNameStart(), tok::r_paren))
+    if (Tok.isNot(tok::l_paren)) {
+      Diag(Tok.getLocation(), diag::err_expected_lparen_after)
+        << Ident->getNameStart();
       return;
+    }
+    BalancedDelimiterTracker T(*this, tok::l_paren);
+    T.expectAndConsume(diag::err_expected_lparen_after,
+                       Ident->getNameStart(), tok::r_paren);
+
+    enum AccessorKind {
+      AK_Invalid = -1,
+      AK_Put = 0, AK_Get = 1 // indices into AccessorNames
+    };
+    IdentifierInfo *AccessorNames[] = { 0, 0 };
+    bool HasInvalidAccessor = false;
+
+    // Parse the accessor specifications.
+    while (true) {
+      // Stop if this doesn't look like an accessor spec.
+      if (!Tok.is(tok::identifier)) {
+        // If the user wrote a completely empty list, use a special diagnostic.
+        if (Tok.is(tok::r_paren) && !HasInvalidAccessor &&
+            AccessorNames[AK_Put] == 0 && AccessorNames[AK_Get] == 0) {
+          Diag(Loc, diag::err_ms_property_no_getter_or_putter);
+          break;
+        }
+
+        Diag(Tok.getLocation(), diag::err_ms_property_unknown_accessor);
+        break;
+      }
+
+      AccessorKind Kind;
+      SourceLocation KindLoc = Tok.getLocation();
+      StringRef KindStr = Tok.getIdentifierInfo()->getName();
+      if (KindStr == "get") {
+        Kind = AK_Get;
+      } else if (KindStr == "put") {
+        Kind = AK_Put;
+
+      // Recover from the common mistake of using 'set' instead of 'put'.
+      } else if (KindStr == "set") {
+        Diag(KindLoc, diag::err_ms_property_has_set_accessor)
+          << FixItHint::CreateReplacement(KindLoc, "put");
+        Kind = AK_Put;
+
+      // Handle the mistake of forgetting the accessor kind by skipping
+      // this accessor.
+      } else if (NextToken().is(tok::comma) || NextToken().is(tok::r_paren)) {
+        Diag(KindLoc, diag::err_ms_property_missing_accessor_kind);
+        ConsumeToken();
+        HasInvalidAccessor = true;
+        goto next_property_accessor;
+
+      // Otherwise, complain about the unknown accessor kind.
+      } else {
+        Diag(KindLoc, diag::err_ms_property_unknown_accessor);
+        HasInvalidAccessor = true;
+        Kind = AK_Invalid;
+
+        // Try to keep parsing unless it doesn't look like an accessor spec.
+        if (!NextToken().is(tok::equal)) break;
+      }
+
+      // Consume the identifier.
+      ConsumeToken();
+
+      // Consume the '='.
+      if (Tok.is(tok::equal)) {
+        ConsumeToken();
+      } else {
+        Diag(Tok.getLocation(), diag::err_ms_property_expected_equal)
+          << KindStr;
+        break;
+      }
+
+      // Expect the method name.
+      if (!Tok.is(tok::identifier)) {
+        Diag(Tok.getLocation(), diag::err_ms_property_expected_accessor_name);
+        break;
+      }
+
+      if (Kind == AK_Invalid) {
+        // Just drop invalid accessors.
+      } else if (AccessorNames[Kind] != NULL) {
+        // Complain about the repeated accessor, ignore it, and keep parsing.
+        Diag(KindLoc, diag::err_ms_property_duplicate_accessor) << KindStr;
+      } else {
+        AccessorNames[Kind] = Tok.getIdentifierInfo();
+      }
+      ConsumeToken();
+
+    next_property_accessor:
+      // Keep processing accessors until we run out.
+      if (Tok.is(tok::comma)) {
+        ConsumeAnyToken();
+        continue;
+
+      // If we run into the ')', stop without consuming it.
+      } else if (Tok.is(tok::r_paren)) {
+        break;
+      } else {
+        Diag(Tok.getLocation(), diag::err_ms_property_expected_comma_or_rparen);
+        break;
+      }
+    }
+
+    // Only add the property attribute if it was well-formed.
+    if (!HasInvalidAccessor) {
+      Attrs.addNewPropertyAttr(Ident, Loc, 0, SourceLocation(), 0,
+                               SourceLocation(),
+                               AccessorNames[AK_Get], AccessorNames[AK_Put],
+                               AttributeList::AS_Declspec);
+    }
     T.skipToEnd();
   } else {
     // We don't recognize this as a valid declspec, but instead of creating the

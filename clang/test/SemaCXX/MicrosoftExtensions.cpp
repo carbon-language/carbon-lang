@@ -208,3 +208,127 @@ void ::f(); // expected-warning{{extra qualification on member 'f'}}
 class C {
   C::C(); // expected-warning{{extra qualification on member 'C'}}
 };
+
+struct StructWithProperty {
+  __declspec(property(get=GetV)) int V1;
+  __declspec(property(put=SetV)) int V2;
+  __declspec(property(get=GetV, put=SetV_NotExist)) int V3;
+  __declspec(property(get=GetV_NotExist, put=SetV)) int V4;
+  __declspec(property(get=GetV, put=SetV)) int V5;
+
+  int GetV() { return 123; }
+  void SetV(int i) {}
+};
+void TestProperty() {
+  StructWithProperty sp;
+  int i = sp.V2; // expected-error{{no getter defined for property 'V2'}}
+  sp.V1 = 12; // expected-error{{no setter defined for property 'V1'}}
+  int j = sp.V4; // expected-error{{no member named 'GetV_NotExist' in 'StructWithProperty'}} expected-error{{cannot find suitable getter for property 'V4'}}
+  sp.V3 = 14; // expected-error{{no member named 'SetV_NotExist' in 'StructWithProperty'}} expected-error{{cannot find suitable setter for property 'V3'}}
+  int k = sp.V5;
+  sp.V5 = k++;
+}
+
+/* 4 tests for PseudoObject, begin */
+struct SP1
+{
+  bool operator()() { return true; }
+};
+struct SP2
+{
+  __declspec(property(get=GetV)) SP1 V;
+  SP1 GetV() { return SP1(); }
+};
+void TestSP2() {
+  SP2 sp2;
+  bool b = sp2.V();
+}
+
+struct SP3 {
+  template <class T>
+  void f(T t) {}
+};
+template <class T>
+struct SP4
+{
+  __declspec(property(get=GetV)) int V;
+  int GetV() { return 123; }
+  void f() { SP3 s2; s2.f(V); }
+};
+void TestSP4() {
+  SP4<int> s;
+  s.f();
+}
+
+template <class T>
+struct SP5
+{
+  __declspec(property(get=GetV)) T V;
+  int GetV() { return 123; }
+  void f() { int *p = new int[V]; }
+};
+
+template <class T>
+struct SP6
+{
+public:
+  __declspec(property(get=GetV)) T V;
+  T GetV() { return 123; }
+  void f() { int t = V; }
+};
+void TestSP6() {
+  SP6<int> c;
+  c.f();
+}
+/* 4 tests for PseudoObject, end */
+
+// Property access: explicit, implicit, with Qualifier
+struct SP7 {
+  __declspec(property(get=GetV, put=SetV)) int V;
+  int GetV() { return 123; }
+  void SetV(int v) {}
+
+  void ImplicitAccess() { int i = V; V = i; }
+  void ExplicitAccess() { int i = this->V; this->V = i; }
+};
+struct SP8: public SP7 {
+  void AccessWithQualifier() { int i = SP7::V; SP7::V = i; }
+};
+
+// Property usage
+template <class T>
+struct SP9 {
+  __declspec(property(get=GetV, put=SetV)) T V;
+  T GetV() { return 0; }
+  void SetV(T v) {}
+  void f() { V = this->V; V < this->V; }
+  //void g() { V++; }
+  //void h() { V*=2; }
+};
+struct SP10 {
+  SP10(int v) {}
+  bool operator<(const SP10& v) { return true; }
+  SP10 operator*(int v) { return *this; }
+  SP10& operator=(const SP10& v) { return *this; }
+};
+void TestSP9() {
+  SP9<int> c;
+  int i = c.V; // Decl initializer
+  i = c.V; // Binary op operand
+  c.SetV(c.V); // CallExpr arg
+  int *p = new int[c.V + 1]; // Array size
+  p[c.V] = 1; // Array index
+
+  c.V = 123; // Setter
+
+  c.V++; // Unary op operand
+  c.V *= 2; // Unary op operand
+
+  SP9<int*> c2;
+  c2.V[0] = 123; // Array
+
+  SP9<SP10> c3;
+  c3.f(); // Overloaded binary op operand
+  //c3.g(); // Overloaded incdec op operand
+  //c3.h(); // Overloaded unary op operand
+}

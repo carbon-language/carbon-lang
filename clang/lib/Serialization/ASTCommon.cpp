@@ -180,6 +180,7 @@ bool serialization::isRedeclarableDeclKind(unsigned Kind) {
   case Decl::UnresolvedUsingValue:
   case Decl::IndirectField:
   case Decl::Field:
+  case Decl::MSProperty:
   case Decl::ObjCIvar:
   case Decl::ObjCAtDefsField:
   case Decl::ImplicitParam:

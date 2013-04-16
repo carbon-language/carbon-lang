@@ -2636,6 +2636,10 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
       break;
     }
 
+    case Decl::MSProperty:
+      valueKind = VK_LValue;
+      break;
+
     case Decl::CXXMethod:
       // If we're referring to a method with an __unknown_anytype
       // result type, make the entire expression __unknown_anytype.
@@ -4023,6 +4027,63 @@ Sema::CheckStaticArrayArgument(SourceLocation CallLoc,
 /// to have a function type.
 static ExprResult rebuildUnknownAnyFunction(Sema &S, Expr *fn);
 
+/// Is the given type a placeholder that we need to lower out
+/// immediately during argument processing?
+static bool isPlaceholderToRemoveAsArg(QualType type) {
+  // Placeholders are never sugared.
+  const BuiltinType *placeholder = dyn_cast<BuiltinType>(type);
+  if (!placeholder) return false;
+
+  switch (placeholder->getKind()) {
+  // Ignore all the non-placeholder types.
+#define PLACEHOLDER_TYPE(ID, SINGLETON_ID)
+#define BUILTIN_TYPE(ID, SINGLETON_ID) case BuiltinType::ID:
+#include "clang/AST/BuiltinTypes.def"
+    return false;
+
+  // We cannot lower out overload sets; they might validly be resolved
+  // by the call machinery.
+  case BuiltinType::Overload:
+    return false;
+
+  // Unbridged casts in ARC can be handled in some call positions and
+  // should be left in place.
+  case BuiltinType::ARCUnbridgedCast:
+    return false;
+
+  // Pseudo-objects should be converted as soon as possible.
+  case BuiltinType::PseudoObject:
+    return true;
+
+  // The debugger mode could theoretically but currently does not try
+  // to resolve unknown-typed arguments based on known parameter types.
+  case BuiltinType::UnknownAny:
+    return true;
+
+  // These are always invalid as call arguments and should be reported.
+  case BuiltinType::BoundMember:
+  case BuiltinType::BuiltinFn:
+    return true;
+  }
+  llvm_unreachable("bad builtin type kind");
+}
+
+/// Check an argument list for placeholders that we won't try to
+/// handle later.
+static bool checkArgsForPlaceholders(Sema &S, MultiExprArg args) {
+  // Apply this processing to all the arguments at once instead of
+  // dying at the first failure.
+  bool hasInvalid = false;
+  for (size_t i = 0, e = args.size(); i != e; i++) {
+    if (isPlaceholderToRemoveAsArg(args[i]->getType())) {
+      ExprResult result = S.CheckPlaceholderExpr(args[i]);
+      if (result.isInvalid()) hasInvalid = true;
+      else args[i] = result.take();
+    }
+  }
+  return hasInvalid;
+}
+
 /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
 /// This provides the location of the left/right parens and a list of comma
 /// locations.
@@ -4034,6 +4095,9 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
   ExprResult Result = MaybeConvertParenListExprToParenExpr(S, Fn);
   if (Result.isInvalid()) return ExprError();
   Fn = Result.take();
+
+  if (checkArgsForPlaceholders(*this, ArgExprs))
+    return ExprError();
 
   if (getLangOpts().CPlusPlus) {
     // If this is a pseudo-destructor expression, build the call immediately.
@@ -4049,6 +4113,11 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
       return Owned(new (Context) CallExpr(Context, Fn, MultiExprArg(),
                                           Context.VoidTy, VK_RValue,
                                           RParenLoc));
+    }
+    if (Fn->getType() == Context.PseudoObjectTy) {
+      ExprResult result = CheckPlaceholderExpr(Fn);
+      if (result.isInvalid()) return ExprError();
+      Fn = result.take();
     }
 
     // Determine whether this is a dependent call inside a C++ template,

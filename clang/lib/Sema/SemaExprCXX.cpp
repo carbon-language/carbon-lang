@@ -1170,6 +1170,11 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
 
   QualType ResultType = Context.getPointerType(AllocType);
     
+  if (ArraySize && ArraySize->getType()->isNonOverloadPlaceholderType()) {
+    ExprResult result = CheckPlaceholderExpr(ArraySize);
+    if (result.isInvalid()) return ExprError();
+    ArraySize = result.take();
+  }
   // C++98 5.3.4p6: "The expression in a direct-new-declarator shall have
   //   integral or enumeration type with a non-negative value."
   // C++11 [expr.new]p6: The expression [...] shall be of integral or unscoped

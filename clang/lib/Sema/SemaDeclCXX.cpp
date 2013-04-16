@@ -1603,6 +1603,13 @@ static bool InitializationHasSideEffects(const FieldDecl &FD) {
   return false;
 }
 
+static AttributeList *getMSPropertyAttr(AttributeList *list) {
+  for (AttributeList* it = list; it != 0; it = it->getNext())
+    if (it->isDeclspecPropertyAttribute())
+      return it;
+  return 0;
+}
+
 /// ActOnCXXMemberDeclarator - This is invoked when a C++ class member
 /// declarator is parsed. 'AS' is the access specifier, 'BW' specifies the
 /// bitfield width if there is one, 'InitExpr' specifies the initializer if
@@ -1782,8 +1789,16 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       SS.clear();
     }
 
-    Member = HandleField(S, cast<CXXRecordDecl>(CurContext), Loc, D, BitWidth,
-                         InitStyle, AS);
+    AttributeList *MSPropertyAttr =
+      getMSPropertyAttr(D.getDeclSpec().getAttributes().getList());
+    if (MSPropertyAttr) {
+      Member = HandleMSProperty(S, cast<CXXRecordDecl>(CurContext), Loc, D,
+                                BitWidth, InitStyle, AS, MSPropertyAttr);
+      isInstField = false;
+    } else {
+      Member = HandleField(S, cast<CXXRecordDecl>(CurContext), Loc, D,
+                                BitWidth, InitStyle, AS);
+    }
     assert(Member && "HandleField never returns null");
   } else {
     assert(InitStyle == ICIS_NoInit || D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static);
@@ -12095,4 +12110,95 @@ bool Sema::CheckCUDATarget(CUDAFunctionTarget CallerTarget,
     return true;
 
   return false;
+}
+
+/// HandleMSProperty - Analyze a __delcspec(property) field of a C++ class.
+///
+MSPropertyDecl *Sema::HandleMSProperty(Scope *S, RecordDecl *Record,
+                                       SourceLocation DeclStart,
+                                       Declarator &D, Expr *BitWidth,
+                                       InClassInitStyle InitStyle,
+                                       AccessSpecifier AS,
+                                       AttributeList *MSPropertyAttr) {
+  IdentifierInfo *II = D.getIdentifier();
+  if (!II) {
+    Diag(DeclStart, diag::err_anonymous_property);
+    return NULL;
+  }
+  SourceLocation Loc = D.getIdentifierLoc();
+
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
+  QualType T = TInfo->getType();
+  if (getLangOpts().CPlusPlus) {
+    CheckExtraCXXDefaultArguments(D);
+
+    if (DiagnoseUnexpandedParameterPack(D.getIdentifierLoc(), TInfo,
+                                        UPPC_DataMemberType)) {
+      D.setInvalidType();
+      T = Context.IntTy;
+      TInfo = Context.getTrivialTypeSourceInfo(T, Loc);
+    }
+  }
+
+  DiagnoseFunctionSpecifiers(D.getDeclSpec());
+
+  if (DeclSpec::TSCS TSCS = D.getDeclSpec().getThreadStorageClassSpec())
+    Diag(D.getDeclSpec().getThreadStorageClassSpecLoc(),
+         diag::err_invalid_thread)
+      << DeclSpec::getSpecifierName(TSCS);
+
+  // Check to see if this name was declared as a member previously
+  NamedDecl *PrevDecl = 0;
+  LookupResult Previous(*this, II, Loc, LookupMemberName, ForRedeclaration);
+  LookupName(Previous, S);
+  switch (Previous.getResultKind()) {
+  case LookupResult::Found:
+  case LookupResult::FoundUnresolvedValue:
+    PrevDecl = Previous.getAsSingle<NamedDecl>();
+    break;
+
+  case LookupResult::FoundOverloaded:
+    PrevDecl = Previous.getRepresentativeDecl();
+    break;
+
+  case LookupResult::NotFound:
+  case LookupResult::NotFoundInCurrentInstantiation:
+  case LookupResult::Ambiguous:
+    break;
+  }
+
+  if (PrevDecl && PrevDecl->isTemplateParameter()) {
+    // Maybe we will complain about the shadowed template parameter.
+    DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
+    // Just pretend that we didn't see the previous declaration.
+    PrevDecl = 0;
+  }
+
+  if (PrevDecl && !isDeclInScope(PrevDecl, Record, S))
+    PrevDecl = 0;
+
+  SourceLocation TSSL = D.getLocStart();
+  MSPropertyDecl *NewPD;
+  const AttributeList::PropertyData &Data = MSPropertyAttr->getPropertyData();
+  NewPD = new (Context) MSPropertyDecl(Record, Loc,
+                                       II, T, TInfo, TSSL,
+                                       Data.GetterId, Data.SetterId);
+  ProcessDeclAttributes(TUScope, NewPD, D);
+  NewPD->setAccess(AS);
+
+  if (NewPD->isInvalidDecl())
+    Record->setInvalidDecl();
+
+  if (D.getDeclSpec().isModulePrivateSpecified())
+    NewPD->setModulePrivate();
+
+  if (NewPD->isInvalidDecl() && PrevDecl) {
+    // Don't introduce NewFD into scope; there's already something
+    // with the same name in the same scope.
+  } else if (II) {
+    PushOnScopeChains(NewPD, S);
+  } else
+    Record->addDecl(NewPD);
+
+  return NewPD;
 }
