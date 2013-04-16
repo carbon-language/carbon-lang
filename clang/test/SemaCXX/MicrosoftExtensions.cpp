@@ -302,13 +302,14 @@ struct SP9 {
   T GetV() { return 0; }
   void SetV(T v) {}
   void f() { V = this->V; V < this->V; }
-  //void g() { V++; }
-  //void h() { V*=2; }
+  void g() { V++; }
+  void h() { V*=2; }
 };
 struct SP10 {
   SP10(int v) {}
   bool operator<(const SP10& v) { return true; }
   SP10 operator*(int v) { return *this; }
+  SP10 operator+(int v) { return *this; }
   SP10& operator=(const SP10& v) { return *this; }
 };
 void TestSP9() {
@@ -329,6 +330,6 @@ void TestSP9() {
 
   SP9<SP10> c3;
   c3.f(); // Overloaded binary op operand
-  //c3.g(); // Overloaded incdec op operand
-  //c3.h(); // Overloaded unary op operand
+  c3.g(); // Overloaded incdec op operand
+  c3.h(); // Overloaded unary op operand
 }

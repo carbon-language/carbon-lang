@@ -441,7 +441,8 @@ PseudoOpBuilder::buildIncDecOperation(Scope *Sc, SourceLocation opcLoc,
   QualType resultType = result.get()->getType();
 
   // That's the postfix result.
-  if (UnaryOperator::isPostfix(opcode) && CanCaptureValueOfType(resultType)) {
+  if (UnaryOperator::isPostfix(opcode) &&
+      (result.get()->isTypeDependent() || CanCaptureValueOfType(resultType))) {
     result = capture(result.take());
     setResultToLastSemantic();
   }
