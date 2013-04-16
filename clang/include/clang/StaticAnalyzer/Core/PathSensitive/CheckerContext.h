@@ -110,10 +110,6 @@ public:
   StoreManager &getStoreManager() {
     return Eng.getStoreManager();
   }
-
-  const AnalyzerOptions::ConfigTable &getConfig() const {
-    return Eng.getAnalysisManager().options.Config;
-  }
   
   /// \brief Returns the previous node in the exploded graph, which includes
   /// the state of the program before the checker ran. Note, checkers should
