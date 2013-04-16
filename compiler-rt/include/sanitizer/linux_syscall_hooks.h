@@ -29,11 +29,15 @@ void __sanitizer_syscall_pre_rt_sigpending(void *p, size_t s);
 void __sanitizer_syscall_pre_getdents(int fd, void *dirp, int count);
 void __sanitizer_syscall_pre_getdents64(int fd, void *dirp, int count);
 void __sanitizer_syscall_pre_recvmsg(int sockfd, void *msg, int flags);
+void __sanitizer_syscall_pre_wait4(int pid, int* status, int options, void* r);
+void __sanitizer_syscall_pre_waitpid(int pid, int *status, int options);
 
 void __sanitizer_syscall_post_rt_sigpending(long res, void *p, size_t s);
 void __sanitizer_syscall_post_getdents(long res, int fd, void *dirp, int count);
 void __sanitizer_syscall_post_getdents64(long res, int fd, void *dirp, int count);
 void __sanitizer_syscall_post_recvmsg(long res, int sockfd, void *msg, int flags);
+void __sanitizer_syscall_post_wait4(long res, int pid, int* status, int options, void* r);
+void __sanitizer_syscall_post_waitpid(long res, int pid, int *status, int options);
 
 // And now a few syscalls we don't handle yet.
 
@@ -408,11 +412,10 @@ void __sanitizer_syscall_post_recvmsg(long res, int sockfd, void *msg, int flags
 #define __sanitizer_syscall_pre_vm86old(...)
 #define __sanitizer_syscall_pre_vmsplice(...)
 #define __sanitizer_syscall_pre_vserver(...)
-#define __sanitizer_syscall_pre_wait4(...)
 #define __sanitizer_syscall_pre_waitid(...)
-#define __sanitizer_syscall_pre_waitpid(...)
 #define __sanitizer_syscall_pre_write(...)
 #define __sanitizer_syscall_pre_writev(...)
+
 #define __sanitizer_syscall_post_accept4(res, ...)
 #define __sanitizer_syscall_post_accept(res, ...)
 #define __sanitizer_syscall_post_access(res, ...)
@@ -784,9 +787,7 @@ void __sanitizer_syscall_post_recvmsg(long res, int sockfd, void *msg, int flags
 #define __sanitizer_syscall_post_vm86(res, ...)
 #define __sanitizer_syscall_post_vmsplice(res, ...)
 #define __sanitizer_syscall_post_vserver(res, ...)
-#define __sanitizer_syscall_post_wait4(res, ...)
 #define __sanitizer_syscall_post_waitid(res, ...)
-#define __sanitizer_syscall_post_waitpid(res, ...)
 #define __sanitizer_syscall_post_write(res, ...)
 #define __sanitizer_syscall_post_writev(res, ...)
 

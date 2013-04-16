@@ -56,6 +56,16 @@ struct sanitizer_kernel_msghdr {
   unsigned msg_flags;
 };
 
+struct sanitizer_kernel_timeval {
+  long tv_sec;
+  long tv_usec;
+};
+
+struct sanitizer_kernel_rusage {
+  struct sanitizer_kernel_timeval ru_timeval[2];
+  long ru_long[14];
+};
+
 PRE_SYSCALL(recvmsg)(int sockfd, struct sanitizer_kernel_msghdr *msg,
                      int flags) {
   PRE_READ(msg, sizeof(*msg));
@@ -90,6 +100,34 @@ PRE_SYSCALL(getdents64)(int fd, void *dirp, int count) {
 POST_SYSCALL(getdents64)(long res, int fd, void *dirp, int count) {
   if (res > 0)
     POST_WRITE(dirp, res);
+}
+
+PRE_SYSCALL(wait4)(int pid, int *status, int options,
+                   struct sanitizer_kernel_rusage *r) {
+  if (status)
+    PRE_WRITE(status, sizeof(*status));
+  if (r)
+    PRE_WRITE(r, sizeof(*r));
+}
+
+POST_SYSCALL(wait4)(long res, int pid, int *status, int options,
+                    struct sanitizer_kernel_rusage *r) {
+  if (res > 0) {
+    if (status)
+      POST_WRITE(status, sizeof(*status));
+    if (r)
+      POST_WRITE(r, sizeof(*r));
+  }
+}
+
+PRE_SYSCALL(waitpid)(int pid, int *status, int options) {
+  if (status)
+    PRE_WRITE(status, sizeof(*status));
+}
+
+POST_SYSCALL(waitpid)(long res, int pid, int *status, int options) {
+  if (res > 0 && status)
+    POST_WRITE(status, sizeof(*status));
 }
 
 }  // extern "C"
