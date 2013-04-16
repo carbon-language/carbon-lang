@@ -19,8 +19,17 @@ struct A
     void operator&() const {}
 };
 
+struct nothing {
+    operator char&()
+    {
+        static char c;
+        return c;
+    }
+};
+
 int main()
 {
+    {
     int i;
     double d;
     assert(std::addressof(i) == &i);
@@ -30,4 +39,13 @@ int main()
     assert(std::addressof(*tp) == tp);
     assert(std::addressof(*ctp) == tp);
     delete tp;
+    }
+    {
+    union
+    {
+        nothing n;
+        int i;
+    };
+    assert(std::addressof(n) == (void*)std::addressof(i));
+    }
 }

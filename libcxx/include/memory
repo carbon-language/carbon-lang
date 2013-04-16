@@ -621,7 +621,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 _Tp*
 addressof(_Tp& __x) _NOEXCEPT
 {
-    return (_Tp*)&(char&)__x;
+    return (_Tp*)&reinterpret_cast<const volatile char&>(__x);
 }
 
 #if defined(_LIBCPP_HAS_OBJC_ARC) && !defined(_LIBCPP_PREDEFINED_OBJC_ARC_ADDRESSOF)
