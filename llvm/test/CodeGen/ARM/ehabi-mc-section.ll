@@ -1,8 +1,14 @@
-; RUN: llc -mtriple arm-unknown-linux-gnueabi \
+; RUN: llc -mtriple armv7-unknown-linux-gnueabi \
+; RUN:     -arm-enable-ehabi -arm-enable-ehabi-descriptors \
+; RUN:     -disable-fp-elim -filetype=obj -o - %s \
+; RUN:   | llvm-objdump -s - \
+; RUN:   | FileCheck %s --check-prefix=CHECK
+
+; RUN: llc -mtriple armv7-unknown-linux-gnueabi \
 ; RUN:     -arm-enable-ehabi -arm-enable-ehabi-descriptors \
 ; RUN:     -filetype=obj -o - %s \
 ; RUN:   | llvm-objdump -s - \
-; RUN:   | FileCheck %s
+; RUN:   | FileCheck %s --check-prefix=CHECK-FP-ELIM
 
 define void @_Z4testiiiiiddddd(i32 %u1, i32 %u2, i32 %u3, i32 %u4, i32 %u5, double %v1, double %v2, double %v3, double %v4, double %v5) section ".test_section" {
 entry:
@@ -54,6 +60,12 @@ declare void @_ZSt9terminatev()
 
 ; CHECK: section .test_section
 ; CHECK: section .ARM.extab.test_section
-; CHECK-NEXT: 0000 00000000 b0b0b000
+; CHECK-NEXT: 0000 00000000 c9409b01 b0818484
 ; CHECK: section .ARM.exidx.test_section
 ; CHECK-NEXT: 0000 00000000 00000000
+
+; CHECK-FP-ELIM: section .test_section
+; CHECK-FP-ELIM: section .ARM.extab.test_section
+; CHECK-FP-ELIM-NEXT: 0000 00000000 84c90501 b0b0b0a8
+; CHECK-FP-ELIM: section .ARM.exidx.test_section
+; CHECK-FP-ELIM-NEXT: 0000 00000000 00000000

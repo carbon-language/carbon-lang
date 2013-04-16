@@ -8,6 +8,7 @@ add_llvm_library(LLVMARMDesc
   ARMMCTargetDesc.cpp
   ARMMachObjectWriter.cpp
   ARMELFObjectWriter.cpp
+  ARMUnwindOpAsm.cpp
   )
 add_dependencies(LLVMARMDesc ARMCommonTableGen)
 

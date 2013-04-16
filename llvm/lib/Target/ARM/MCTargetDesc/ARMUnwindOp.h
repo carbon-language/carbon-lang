@@ -107,6 +107,19 @@ namespace llvm {
     UNWIND_OPCODE_POP_VFP_REG_RANGE_FSTMFDD_D8 = 0xd0
   };
 
+  /// ARM-defined Personality Routine Index
+  enum ARMPersonalityRoutineIndex {
+    // To make the exception handling table become more compact, ARM defined
+    // several personality routines in EHABI.  There are 3 different
+    // personality routines in ARM EHABI currently.  It is possible to have 16
+    // pre-defined personality routines at most.
+    AEABI_UNWIND_CPP_PR0 = 0,
+    AEABI_UNWIND_CPP_PR1 = 1,
+    AEABI_UNWIND_CPP_PR2 = 2,
+
+    NUM_PERSONALITY_INDEX
+  };
+
 }
 
 #endif // ARM_UNWIND_OP_H

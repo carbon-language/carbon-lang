@@ -72,17 +72,17 @@ declare void @_ZSt9terminatev()
 ; CHECK:          Index: 1
 ; CHECK-NEXT:     Name: .group (47)
 ; CHECK:          SectionData (
-; CHECK-NEXT:       0000: 01000000 0A000000 0C000000 0E000000
+; CHECK-NEXT:       0000: 01000000 09000000 0B000000 0D000000
 ; CHECK-NEXT:     )
 
 ; CHECK:        Section {
-; CHECK:          Index: 10
-; CHECK-NEXT:     Name: .text._Z4testIidEvT_S0_S0_S0_S0_T0_S1_S1_S1_S1_ (225)
+; CHECK:          Index: 9
+; CHECK-NEXT:     Name: .text._Z4testIidEvT_S0_S0_S0_S0_T0_S1_S1_S1_S1_ (214)
 
 ; CHECK:        Section {
-; CHECK:          Index: 12
-; CHECK-NEXT:     Name: .ARM.extab.text._Z4testIidEvT_S0_S0_S0_S0_T0_S1_S1_S1_S1_ (215)
+; CHECK:          Index: 11
+; CHECK-NEXT:     Name: .ARM.extab.text._Z4testIidEvT_S0_S0_S0_S0_T0_S1_S1_S1_S1_ (204)
 
 ; CHECK:        Section {
-; CHECK:          Index: 14
-; CHECK-NEXT:     Name: .ARM.exidx.text._Z4testIidEvT_S0_S0_S0_S0_T0_S1_S1_S1_S1_ (101)
+; CHECK:          Index: 13
+; CHECK-NEXT:     Name: .ARM.exidx.text._Z4testIidEvT_S0_S0_S0_S0_T0_S1_S1_S1_S1_ (90)
