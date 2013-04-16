@@ -147,6 +147,9 @@ SDNode *SparcDAGToDAGISel::Select(SDNode *N) {
 
   case ISD::SDIV:
   case ISD::UDIV: {
+    // sdivx / udivx handle 64-bit divides.
+    if (N->getValueType(0) == MVT::i64)
+      break;
     // FIXME: should use a custom expander to expose the SRA to the dag.
     SDValue DivLHS = N->getOperand(0);
     SDValue DivRHS = N->getOperand(1);

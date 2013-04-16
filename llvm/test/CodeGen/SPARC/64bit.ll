@@ -154,3 +154,24 @@ define i8 @promote_shifts(i8* %p) {
   %B36 = shl i8 %L24, %L32
   ret i8 %B36
 }
+
+; CHECK: multiply
+; CHECK: mulx %i0, %i1, %i0
+define i64 @multiply(i64 %a, i64 %b) {
+  %r = mul i64 %a, %b
+  ret i64 %r
+}
+
+; CHECK: signed_divide
+; CHECK: sdivx %i0, %i1, %i0
+define i64 @signed_divide(i64 %a, i64 %b) {
+  %r = sdiv i64 %a, %b
+  ret i64 %r
+}
+
+; CHECK: unsigned_divide
+; CHECK: udivx %i0, %i1, %i0
+define i64 @unsigned_divide(i64 %a, i64 %b) {
+  %r = udiv i64 %a, %b
+  ret i64 %r
+}
