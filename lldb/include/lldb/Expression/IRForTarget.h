@@ -37,6 +37,7 @@ namespace llvm {
 namespace lldb_private {
     class ClangExpressionDeclMap;
     class IRExecutionUnit;
+    class IRMemoryMap;
 }
 
 //----------------------------------------------------------------------
@@ -672,6 +673,7 @@ private:
     std::auto_ptr<llvm::DataLayout>         m_target_data;              ///< The target data for the module being processed, or NULL if there is no module.
     lldb_private::ClangExpressionDeclMap   *m_decl_map;                 ///< The DeclMap containing the Decls 
     StaticDataAllocator                     m_data_allocator;           ///< The allocator to use for constant strings
+    lldb_private::IRMemoryMap              &m_memory_map;               ///< The memory map to pass to the IR interpreter
     llvm::Constant                         *m_CFStringCreateWithBytes;  ///< The address of the function CFStringCreateWithBytes, cast to the appropriate function pointer type
     llvm::Constant                         *m_sel_registerName;         ///< The address of the function sel_registerName, cast to the appropriate function pointer type
     lldb::ClangExpressionVariableSP        &m_const_result;             ///< This value should be set to the return value of the expression if it is constant and the expression has no side effects

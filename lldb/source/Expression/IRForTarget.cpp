@@ -76,6 +76,7 @@ IRForTarget::IRForTarget (lldb_private::ClangExpressionDeclMap *decl_map,
     m_module(NULL),
     m_decl_map(decl_map),
     m_data_allocator(execution_unit),
+    m_memory_map(execution_unit),
     m_CFStringCreateWithBytes(NULL),
     m_sel_registerName(NULL),
     m_const_result(const_result),
@@ -2806,6 +2807,7 @@ IRForTarget::runOnModule (Module &llvm_module)
     if (m_decl_map && m_execution_policy != lldb_private::eExecutionPolicyAlways)
     {
         IRInterpreter interpreter (*m_decl_map,
+                                   m_memory_map,
                                    m_error_stream);
 
         interpreter.maybeRunOnFunction(m_const_result, m_result_name, m_result_type, *function, llvm_module, m_interpreter_error);

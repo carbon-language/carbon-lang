@@ -27,8 +27,10 @@
 using namespace llvm;
 
 IRInterpreter::IRInterpreter(lldb_private::ClangExpressionDeclMap &decl_map,
-                                           lldb_private::Stream *error_stream) :
-    m_decl_map(decl_map)
+                             lldb_private::IRMemoryMap &memory_map,
+                             lldb_private::Stream *error_stream) :
+    m_decl_map(decl_map),
+    m_memory_map(memory_map)
 {
     
 }
@@ -409,6 +411,7 @@ public:
     Memory                                 &m_memory;
     DataLayout                             &m_target_data;
     lldb_private::ClangExpressionDeclMap   &m_decl_map;
+    lldb_private::IRMemoryMap              &m_memory_map;
     const BasicBlock                       *m_bb;
     BasicBlock::const_iterator              m_ii;
     BasicBlock::const_iterator              m_ie;
@@ -418,10 +421,12 @@ public:
     
     InterpreterStackFrame (DataLayout &target_data,
                            Memory &memory,
-                           lldb_private::ClangExpressionDeclMap &decl_map) :
+                           lldb_private::ClangExpressionDeclMap &decl_map,
+                           lldb_private::IRMemoryMap &memory_map) :
         m_memory (memory),
         m_target_data (target_data),
-        m_decl_map (decl_map)
+        m_decl_map (decl_map),
+        m_memory_map (memory_map)
     {
         m_byte_order = (target_data.isLittleEndian() ? lldb::eByteOrderLittle : lldb::eByteOrderBig);
         m_addr_byte_size = (target_data.getPointerSize(0));
@@ -1125,7 +1130,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
     }
     
     Memory memory(target_data, m_decl_map, alloc_min, alloc_max);
-    InterpreterStackFrame frame(target_data, memory, m_decl_map);
+    InterpreterStackFrame frame(target_data, memory, m_decl_map, m_memory_map);
 
     uint32_t num_insts = 0;
     

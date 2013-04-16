@@ -24,6 +24,7 @@ namespace llvm {
 namespace lldb_private {
 
 class ClangExpressionDeclMap;
+class IRMemoryMap;
     
 }
 
@@ -51,6 +52,7 @@ public:
     ///     If non-NULL, a stream on which errors can be printed.
     //------------------------------------------------------------------
     IRInterpreter(lldb_private::ClangExpressionDeclMap &decl_map,
+                  lldb_private::IRMemoryMap &memory_map,
                   lldb_private::Stream *error_stream);
     
     //------------------------------------------------------------------
@@ -93,8 +95,8 @@ public:
                         llvm::Module &llvm_module,
                         lldb_private::Error &err);
 private:
-    /// Flags
-    lldb_private::ClangExpressionDeclMap &m_decl_map;       ///< The DeclMap containing the Decls 
+    lldb_private::ClangExpressionDeclMap   &m_decl_map;     ///< The DeclMap containing the Decls
+    lldb_private::IRMemoryMap              &m_memory_map;   ///< The IRMemoryMap to use when accessing memory
     
     bool
     supportsFunction (llvm::Function &llvm_function,
