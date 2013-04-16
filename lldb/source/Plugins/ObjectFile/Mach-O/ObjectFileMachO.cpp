@@ -4045,7 +4045,7 @@ ObjectFileMachO::GetLLDBSharedCacheUUID ()
             uint32_t *version = (uint32_t*) dyld_all_image_infos_address;              // version <mach-o/dyld_images.h>
             if (*version >= 13)
             {
-                uuid_t *sharedCacheUUID_address = (uuid_t*) dyld_all_image_infos_address + 84; // sharedCacheUUID <mach-o/dyld_images.h>
+                uuid_t *sharedCacheUUID_address = (uuid_t*) ((uint8_t*) dyld_all_image_infos_address + 84);  // sharedCacheUUID <mach-o/dyld_images.h>
                 uuid.SetBytes (sharedCacheUUID_address);
             }
         }
