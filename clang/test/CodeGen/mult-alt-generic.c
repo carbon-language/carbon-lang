@@ -7,6 +7,7 @@
 // RUN: %clang_cc1 -triple powerpc %s -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 -triple powerpc64 %s -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 -triple sparc %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -triple sparcv9 %s -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 -triple thumb %s -emit-llvm -o - | FileCheck %s
 
 int mout0;

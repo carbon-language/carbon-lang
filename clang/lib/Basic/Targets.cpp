@@ -4111,16 +4111,14 @@ const Builtin::Info HexagonTargetInfo::BuiltinInfo[] = {
 
 
 namespace {
-class SparcV8TargetInfo : public TargetInfo {
+// Shared base class for SPARC v8 (32-bit) and SPARC v9 (64-bit).
+class SparcTargetInfo : public TargetInfo {
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
   static const char * const GCCRegNames[];
   bool SoftFloat;
 public:
-  SparcV8TargetInfo(const std::string& triple) : TargetInfo(triple) {
-    // FIXME: Support Sparc quad-precision long double?
-    DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
-                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32";
-  }
+  SparcTargetInfo(const std::string &triple) : TargetInfo(triple) {}
+
   virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
                                  StringRef Name,
                                  bool Enabled) const {
@@ -4140,7 +4138,6 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
     DefineStd(Builder, "sparc", Opts);
-    Builder.defineMacro("__sparcv8");
     Builder.defineMacro("__REGISTER_PREFIX__", "");
 
     if (SoftFloat)
@@ -4176,20 +4173,20 @@ public:
   }
 };
 
-const char * const SparcV8TargetInfo::GCCRegNames[] = {
+const char * const SparcTargetInfo::GCCRegNames[] = {
   "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
   "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
   "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
   "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31"
 };
 
-void SparcV8TargetInfo::getGCCRegNames(const char * const *&Names,
-                                       unsigned &NumNames) const {
+void SparcTargetInfo::getGCCRegNames(const char * const *&Names,
+                                     unsigned &NumNames) const {
   Names = GCCRegNames;
   NumNames = llvm::array_lengthof(GCCRegNames);
 }
 
-const TargetInfo::GCCRegAlias SparcV8TargetInfo::GCCRegAliases[] = {
+const TargetInfo::GCCRegAlias SparcTargetInfo::GCCRegAliases[] = {
   { { "g0" }, "r0" },
   { { "g1" }, "r1" },
   { { "g2" }, "r2" },
@@ -4224,11 +4221,44 @@ const TargetInfo::GCCRegAlias SparcV8TargetInfo::GCCRegAliases[] = {
   { { "i7" }, "r31" },
 };
 
-void SparcV8TargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
-                                         unsigned &NumAliases) const {
+void SparcTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                       unsigned &NumAliases) const {
   Aliases = GCCRegAliases;
   NumAliases = llvm::array_lengthof(GCCRegAliases);
 }
+
+// SPARC v8 is the 32-bit mode selected by Triple::sparc.
+class SparcV8TargetInfo : public SparcTargetInfo {
+public:
+  SparcV8TargetInfo(const std::string& triple) : SparcTargetInfo(triple) {
+    // FIXME: Support Sparc quad-precision long double?
+    DescriptionString = "E-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32-S64";
+  }
+
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    SparcTargetInfo::getTargetDefines(Opts, Builder);
+    Builder.defineMacro("__sparcv8");
+  }
+};
+
+// SPARC v9 is the 64-bit mode selected by Triple::sparcv9.
+class SparcV9TargetInfo : public SparcTargetInfo {
+public:
+  SparcV9TargetInfo(const std::string& triple) : SparcTargetInfo(triple) {
+    // FIXME: Support Sparc quad-precision long double?
+    DescriptionString = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32:64-S128";
+  }
+
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    SparcTargetInfo::getTargetDefines(Opts, Builder);
+    Builder.defineMacro("__sparcv9");
+  }
+};
+
 } // end anonymous namespace.
 
 namespace {
@@ -5197,6 +5227,24 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new RTEMSTargetInfo<SparcV8TargetInfo>(T);
     default:
       return new SparcV8TargetInfo(T);
+    }
+
+  case llvm::Triple::sparcv9:
+    switch (os) {
+    case llvm::Triple::Linux:
+      return new LinuxTargetInfo<SparcV9TargetInfo>(T);
+    case llvm::Triple::AuroraUX:
+      return new AuroraUXTargetInfo<SparcV9TargetInfo>(T);
+    case llvm::Triple::Solaris:
+      return new SolarisTargetInfo<SparcV9TargetInfo>(T);
+    case llvm::Triple::NetBSD:
+      return new NetBSDTargetInfo<SparcV9TargetInfo>(T);
+    case llvm::Triple::OpenBSD:
+      return new OpenBSDTargetInfo<SparcV9TargetInfo>(T);
+    case llvm::Triple::FreeBSD:
+      return new FreeBSDTargetInfo<SparcV9TargetInfo>(T);
+    default:
+      return new SparcV9TargetInfo(T);
     }
 
   case llvm::Triple::tce:
