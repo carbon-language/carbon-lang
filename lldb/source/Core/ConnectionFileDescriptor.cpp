@@ -25,6 +25,7 @@
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/termios.h>
 #include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>
@@ -270,6 +271,26 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
                 if (error_ptr)
                     error_ptr->SetErrorToErrno();
                 return eConnectionStatusError;
+            }
+
+            if (::isatty(m_fd_send))
+            {
+                // Set up serial terminal emulation
+                struct termios options;
+                ::tcgetattr (m_fd_send, &options);
+
+                // Set port speed to maximum
+                ::cfsetospeed (&options, B115200);
+                ::cfsetispeed (&options, B115200);
+
+                // Raw input, disable echo and signals
+                options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+
+                // Make sure only one character is needed to return from a read
+                options.c_cc[VMIN]  = 1;
+                options.c_cc[VTIME] = 0;
+
+                ::tcsetattr (m_fd_send, TCSANOW, &options);
             }
 
             int flags = ::fcntl (m_fd_send, F_GETFL, 0);
