@@ -114,6 +114,9 @@ LLVMTargetDataRef LLVMGetTargetMachineData(LLVMTargetMachineRef T);
 LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M,
   char *Filename, LLVMCodeGenFileType codegen, char **ErrorMessage);
 
+/** Compile the LLVM IR stored in \p M and store the result in \p OutMemBuf. */
+LLVMBool LLVMTargetMachineEmitToMemoryBuffer(LLVMTargetMachineRef T, LLVMModuleRef M,
+  LLVMCodeGenFileType codegen, char** ErrorMessage, LLVMMemoryBufferRef *OutMemBuf);
 
 
 
