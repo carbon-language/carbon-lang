@@ -428,7 +428,9 @@ void ARMELFStreamer::EmitSetFP(unsigned NewFPReg,
   const MCRegisterInfo &MRI = getContext().getRegisterInfo();
 
   uint16_t NewFPRegEncVal = MRI.getEncodingValue(NewFPReg);
+#ifndef NDEBUG
   uint16_t NewSPRegEncVal = MRI.getEncodingValue(NewSPReg);
+#endif
 
   assert((NewSPReg == ARM::SP || NewSPRegEncVal == FPReg) &&
          "the operand of .setfp directive should be either $sp or $fp");
@@ -446,7 +448,9 @@ void ARMELFStreamer::EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
                                  bool IsVector) {
   const MCRegisterInfo &MRI = getContext().getRegisterInfo();
 
+#ifndef NDEBUG
   unsigned Max = IsVector ? 32 : 16;
+#endif
   uint32_t &RegMask = IsVector ? VFPRegSave : RegSave;
 
   for (size_t i = 0; i < RegList.size(); ++i) {
