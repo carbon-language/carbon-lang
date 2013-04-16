@@ -15,7 +15,9 @@
 #include "clang/Rewrite/Frontend/Rewriters.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/PreprocessorOutputOptions.h"
+#include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -74,6 +76,9 @@ private:
   void CommentOutDirective(Lexer &DirectivesLex, const Token &StartToken,
                            const MemoryBuffer &FromFile, StringRef EOL,
                            unsigned &NextToWrite, int &Lines);
+  bool HandleHasInclude(FileID FileId, Lexer &RawLex,
+                        const DirectoryLookup *Lookup, Token &Tok,
+                        bool &FileExists);
   const FileChange *FindFileChangeLocation(SourceLocation Loc) const;
   StringRef NextIdentifierName(Lexer &RawLex, Token &RawToken);
 };
@@ -254,6 +259,75 @@ StringRef InclusionRewriter::NextIdentifierName(Lexer &RawLex,
   return StringRef();
 }
 
+// Expand __has_include and __has_include_next if possible. If there's no
+// definitive answer return false.
+bool InclusionRewriter::HandleHasInclude(
+    FileID FileId, Lexer &RawLex, const DirectoryLookup *Lookup, Token &Tok,
+    bool &FileExists) {
+  // Lex the opening paren.
+  RawLex.LexFromRawLexer(Tok);
+  if (Tok.isNot(tok::l_paren))
+    return false;
+
+  RawLex.LexFromRawLexer(Tok);
+
+  SmallString<128> FilenameBuffer;
+  StringRef Filename;
+  // Since the raw lexer doesn't give us angle_literals we have to parse them
+  // ourselves.
+  // FIXME: What to do if the file name is a macro?
+  if (Tok.is(tok::less)) {
+    RawLex.LexFromRawLexer(Tok);
+
+    FilenameBuffer += '<';
+    do {
+      if (Tok.is(tok::eod)) // Sanity check.
+        return false;
+
+      if (Tok.is(tok::raw_identifier))
+        PP.LookUpIdentifierInfo(Tok);
+
+      // Get the string piece.
+      SmallVector<char, 128> TmpBuffer;
+      bool Invalid = false;
+      StringRef TmpName = PP.getSpelling(Tok, TmpBuffer, &Invalid);
+      if (Invalid)
+        return false;
+
+      FilenameBuffer += TmpName;
+
+      RawLex.LexFromRawLexer(Tok);
+    } while (Tok.isNot(tok::greater));
+
+    FilenameBuffer += '>';
+    Filename = FilenameBuffer;
+  } else {
+    if (Tok.isNot(tok::string_literal))
+      return false;
+
+    bool Invalid = false;
+    Filename = PP.getSpelling(Tok, FilenameBuffer, &Invalid);
+    if (Invalid)
+      return false;
+  }
+
+  // Lex the closing paren.
+  RawLex.LexFromRawLexer(Tok);
+  if (Tok.isNot(tok::r_paren))
+    return false;
+
+  // Now ask HeaderInfo if it knows about the header.
+  // FIXME: Subframeworks aren't handled here. Do we care?
+  bool isAngled = PP.GetIncludeFilenameSpelling(Tok.getLocation(), Filename);
+  const DirectoryLookup *CurDir;
+  const FileEntry *File = PP.getHeaderSearchInfo().LookupFile(
+      Filename, isAngled, 0, CurDir,
+      PP.getSourceManager().getFileEntryForID(FileId), 0, 0, 0, false);
+
+  FileExists = File != 0;
+  return true;
+}
+
 /// Use a raw lexer to analyze \p FileId, inccrementally copying parts of it
 /// and including content of included files recursively.
 bool InclusionRewriter::Process(FileID FileId,
@@ -291,7 +365,7 @@ bool InclusionRewriter::Process(FileID FileId,
       RawLex.LexFromRawLexer(RawToken);
       if (RawToken.is(tok::raw_identifier))
         PP.LookUpIdentifierInfo(RawToken);
-      if (RawToken.is(tok::identifier)) {
+      if (RawToken.is(tok::identifier) || RawToken.is(tok::kw_if)) {
         switch (RawToken.getIdentifierInfo()->getPPKeywordID()) {
           case tok::pp_include:
           case tok::pp_include_next:
@@ -337,6 +411,50 @@ bool InclusionRewriter::Process(FileID FileId,
             }
             break;
           }
+          case tok::pp_if:
+          case tok::pp_elif:
+            // Rewrite special builtin macros to avoid pulling in host details.
+            do {
+              // Walk over the directive.
+              RawLex.LexFromRawLexer(RawToken);
+              if (RawToken.is(tok::raw_identifier))
+                PP.LookUpIdentifierInfo(RawToken);
+
+              if (RawToken.is(tok::identifier)) {
+                bool HasFile;
+                SourceLocation Loc = RawToken.getLocation();
+
+                // Rewrite __has_include(x)
+                if (RawToken.getIdentifierInfo()->isStr("__has_include")) {
+                  if (!HandleHasInclude(FileId, RawLex, 0, RawToken, HasFile))
+                    continue;
+                  // Rewrite __has_include_next(x)
+                } else if (RawToken.getIdentifierInfo()->isStr(
+                               "__has_include_next")) {
+                  const DirectoryLookup *Lookup = PP.GetCurDirLookup();
+                  if (Lookup)
+                    ++Lookup;
+
+                  if (!HandleHasInclude(FileId, RawLex, Lookup, RawToken,
+                                        HasFile))
+                    continue;
+                } else {
+                  continue;
+                }
+                // Replace the macro with (0) or (1), followed by the commented
+                // out macro for reference.
+                OutputContentUpTo(FromFile, NextToWrite, SM.getFileOffset(Loc),
+                                  EOL, Line);
+                OS << '(' << (int) HasFile << ")/*";
+                OutputContentUpTo(FromFile, NextToWrite,
+                                  SM.getFileOffset(RawToken.getLocation()) +
+                                  RawToken.getLength(),
+                                  EOL, Line);
+                OS << "*/";
+              }
+            } while (RawToken.isNot(tok::eod));
+
+            break;
           default:
             break;
         }
