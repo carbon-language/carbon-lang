@@ -145,6 +145,23 @@ public:
     GetVersion (uint32_t *versions, uint32_t num_versions);
 
 protected:
+
+    // Intended for same-host arm device debugging where lldb needs to 
+    // detect libraries in the shared cache and augment the nlist entries
+    // with an on-disk dyld_shared_cache file.  The process will record
+    // the shared cache UUID so the on-disk cache can be matched or rejected
+    // correctly.
+    lldb_private::UUID
+    GetProcessSharedCacheUUID (lldb_private::Process *);
+
+    // Intended for same-host arm device debugging where lldb will read
+    // shared cache libraries out of its own memory instead of the remote
+    // process' memory as an optimization.  If lldb's shared cache UUID 
+    // does not match the process' shared cache UUID, this optimization
+    // should not be used.
+    lldb_private::UUID
+    GetLLDBSharedCacheUUID ();
+
     llvm::MachO::mach_header m_header;
     static const lldb_private::ConstString &GetSegmentNameTEXT();
     static const lldb_private::ConstString &GetSegmentNameDATA();

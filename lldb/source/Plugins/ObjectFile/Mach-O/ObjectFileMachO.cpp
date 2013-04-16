@@ -38,6 +38,11 @@
 #include "Plugins/Process/Utility/RegisterContextDarwin_i386.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_x86_64.h"
 
+#if defined (__APPLE__) && defined (__arm__)
+// GetLLDBSharedCacheUUID() needs to call dlsym()
+#include <dlfcn.h>
+#endif
+
 using namespace lldb;
 using namespace lldb_private;
 using namespace llvm::MachO;
@@ -1372,8 +1377,17 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     // symbol and string table. Reading all of this symbol and string table
                     // data across can slow down debug launch times, so we optimize this by
                     // reading the memory for the __LINKEDIT section from this process.
+
+                    UUID lldb_shared_cache(GetLLDBSharedCacheUUID());
+                    UUID process_shared_cache(GetProcessSharedCacheUUID(process));
+                    bool use_lldb_cache = true;
+                    if (lldb_shared_cache.IsValid() && process_shared_cache.IsValid() && lldb_shared_cache != process_shared_cache)
+                    {
+                            use_lldb_cache = false;
+                    }
+
                     PlatformSP platform_sp (target.GetPlatform());
-                    if (platform_sp && platform_sp->IsHost())
+                    if (platform_sp && platform_sp->IsHost() && use_lldb_cache)
                     {
                         data_was_read = true;
                         nlist_data.SetData((void *)symoff_addr, nlist_data_byte_size, eByteOrderLittle);
@@ -1571,16 +1585,6 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             // Before we can start mapping the DSC, we need to make certain the target process is actually
             // using the cache we can find.
 
-            /*
-             * TODO (FIXME!)
-             *
-             * Consider the case of testing with a separate DSC file.
-             * If we go through the normal code paths, we will give symbols for the wrong DSC, and
-             * that is bad.  We need to read the target process' all_image_infos struct, and look
-             * at the values of the processDetachedFromSharedRegion field. If that is set, we should skip
-             * this code section.
-             */
-
             // Next we need to determine the correct path for the dyld shared cache.
 
             ArchSpec header_arch(eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
@@ -1688,14 +1692,35 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     }
                 }
 
+                UUID dsc_uuid;
+                if (version >= 1)
+                {
+                    offset = offsetof (struct lldb_copy_dyld_cache_header_v1, uuid);
+                    uint8_t uuid_bytes[sizeof (uuid_t)];
+                    memcpy (uuid_bytes, dsc_header_data.GetData (&offset, sizeof (uuid_t)), sizeof (uuid_t));
+                    dsc_uuid.SetBytes (uuid_bytes);
+                }
+
+                bool uuid_match = true;
+                if (dsc_uuid.IsValid() && process)
+                {
+                    UUID shared_cache_uuid(GetProcessSharedCacheUUID(process));
+
+                    if (shared_cache_uuid.IsValid() && dsc_uuid != shared_cache_uuid)
+                    {
+                        // The on-disk dyld_shared_cache file is not the same as the one in this
+                        // process' memory, don't use it.
+                        uuid_match = false;
+                    }
+                }
+
                 offset = offsetof (struct lldb_copy_dyld_cache_header_v1, mappingOffset);
 
                 uint32_t mappingOffset = dsc_header_data.GetU32(&offset);
 
                 // If the mappingOffset points to a location inside the header, we've
                 // opened an old dyld shared cache, and should not proceed further.
-                if ((version == 0 && mappingOffset >= sizeof(struct lldb_copy_dyld_cache_header_v0))
-                    || (version >= 1 && mappingOffset >= sizeof(struct lldb_copy_dyld_cache_header_v1)))
+                if (uuid_match && mappingOffset >= sizeof(struct lldb_copy_dyld_cache_header_v0))
                 {
 
                     DataBufferSP dsc_mapping_info_data_sp = dsc_filespec.MemoryMapFileContents(mappingOffset, sizeof (struct lldb_copy_dyld_cache_mapping_info));
@@ -3939,6 +3964,78 @@ ObjectFileMachO::GetArchitecture (ArchSpec &arch)
         return true;
     }
     return false;
+}
+
+
+UUID
+ObjectFileMachO::GetProcessSharedCacheUUID (Process *process)
+{
+    UUID uuid;
+    if (process)
+    {
+        addr_t all_image_infos = process->GetImageInfoAddress();
+
+        // The address returned by GetImageInfoAddress may be the address of dyld (don't want)
+        // or it may be the address of the dyld_all_image_infos structure (want).  The first four
+        // bytes will be either the version field (all_image_infos) or a Mach-O file magic constant.
+        // Version 13 and higher of dyld_all_image_infos is required to get the sharedCacheUUID field.
+
+        Error err;
+        uint32_t version_or_magic = process->ReadUnsignedIntegerFromMemory (all_image_infos, 4, -1, err);
+        if (version_or_magic != -1 
+            && version_or_magic != HeaderMagic32
+            && version_or_magic != HeaderMagic32Swapped
+            && version_or_magic != HeaderMagic64
+            && version_or_magic != HeaderMagic64Swapped
+            && version_or_magic >= 13)
+        {
+            addr_t sharedCacheUUID_address = LLDB_INVALID_ADDRESS;
+            int wordsize = process->GetAddressByteSize();
+            if (wordsize == 8)
+            {
+                sharedCacheUUID_address = all_image_infos + 160;  // sharedCacheUUID <mach-o/dyld_images.h>
+            }
+            if (wordsize == 4)
+            {
+                sharedCacheUUID_address = all_image_infos + 84;   // sharedCacheUUID <mach-o/dyld_images.h>
+            }
+            if (sharedCacheUUID_address != LLDB_INVALID_ADDRESS)
+            {
+                uuid_t shared_cache_uuid;
+                if (process->ReadMemory (sharedCacheUUID_address, shared_cache_uuid, sizeof (uuid_t), err) == sizeof (uuid_t))
+                {
+                    uuid.SetBytes (shared_cache_uuid);
+                }
+            }
+        }
+    }
+    return uuid;
+}
+
+UUID
+ObjectFileMachO::GetLLDBSharedCacheUUID ()
+{
+    UUID uuid;
+#if defined (__APPLE__) && defined (__arm__)
+    uint8_t *(*dyld_get_all_image_infos)(void);
+    dyld_get_all_image_infos = (uint8_t*(*)()) dlsym (RTLD_DEFAULT, "_dyld_get_all_image_infos");
+    if (dyld_get_all_image_infos)
+    {
+        uint8_t *dyld_all_image_infos_address = dyld_get_all_image_infos();
+        if (dyld_all_image_infos_address)
+        {
+            uint32_t version;
+            memcpy (&version, dyld_all_image_infos_address, 4);
+            if (version >= 13)
+            {
+                uint8_t *sharedCacheUUID_address = 0;
+                sharedCacheUUID_address = dyld_all_image_infos_address + 84;  // sharedCacheUUID <mach-o/dyld_images.h>
+                uuid.SetBytes (sharedCacheUUID_address);
+            }
+        }
+    }
+#endif
+    return uuid;
 }
 
 
