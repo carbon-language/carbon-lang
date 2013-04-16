@@ -159,6 +159,12 @@ public:
                              const std::string &Str) {
   }
 
+  /// \brief Callback invoked when a \#pragma clang __debug directive is read.
+  /// \param Loc The location of the debug directive.
+  /// \param DebugType The identifier following __debug.
+  virtual void PragmaDebug(SourceLocation Loc, StringRef DebugType) {
+  }
+
   /// \brief Callback invoked when a \#pragma message directive is read.
   /// \param Loc The location of the message directive.
   /// \param Str The text of the message directive.

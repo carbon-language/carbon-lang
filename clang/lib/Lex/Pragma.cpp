@@ -995,10 +995,40 @@ struct PragmaDebugHandler : public PragmaHandler {
       llvm::CrashRecoveryContext *CRC =llvm::CrashRecoveryContext::GetCurrent();
       if (CRC)
         CRC->HandleCrash();
+    } else if (II->isStr("captured")) {
+      HandleCaptured(PP);
     } else {
       PP.Diag(Tok, diag::warn_pragma_debug_unexpected_command)
         << II->getName();
     }
+
+    PPCallbacks *Callbacks = PP.getPPCallbacks();
+    if (Callbacks)
+      Callbacks->PragmaDebug(Tok.getLocation(), II->getName());
+  }
+
+  void HandleCaptured(Preprocessor &PP) {
+    // Skip if emitting preprocessed output.
+    if (PP.isPreprocessedOutput())
+      return;
+
+    Token Tok;
+    PP.LexUnexpandedToken(Tok);
+
+    if (Tok.isNot(tok::eod)) {
+      PP.Diag(Tok, diag::ext_pp_extra_tokens_at_eol)
+        << "pragma clang __debug captured";
+      return;
+    }
+
+    SourceLocation NameLoc = Tok.getLocation();
+    Token *Toks = PP.getPreprocessorAllocator().Allocate<Token>(1);
+    Toks->startToken();
+    Toks->setKind(tok::annot_pragma_captured);
+    Toks->setLocation(NameLoc);
+
+    PP.EnterTokenStream(Toks, 1, /*DisableMacroExpansion=*/true,
+                        /*OwnsTokens=*/false);
   }
 
 // Disable MSVC warning about runtime stack overflow.

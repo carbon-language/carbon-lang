@@ -615,6 +615,11 @@ ANNOTATION(pragma_pack)
 // handles them.
 ANNOTATION(pragma_parser_crash)
 
+// Annotation for #pragma clang __debug captured...
+// The lexer produces these so that they only take effect when the parser
+// handles them.
+ANNOTATION(pragma_captured)
+
 // Annotation for #pragma ms_struct...
 // The lexer produces these so that they only take effect when the parser
 // handles them.

@@ -289,6 +289,9 @@ Retry:
     HandlePragmaOpenCLExtension();
     return StmtEmpty();
 
+  case tok::annot_pragma_captured:
+    return HandlePragmaCaptured();
+
   case tok::annot_pragma_openmp:
     SourceLocation DeclStart = Tok.getLocation();
     DeclGroupPtrTy Res = ParseOpenMPDeclarativeDirective();

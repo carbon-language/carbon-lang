@@ -122,6 +122,19 @@ void Parser::HandlePragmaFPContract() {
   ConsumeToken(); // The annotation token.
 }
 
+StmtResult Parser::HandlePragmaCaptured()
+{
+  assert(Tok.is(tok::annot_pragma_captured));
+  ConsumeToken();
+
+  if (Tok.isNot(tok::l_brace)) {
+    PP.Diag(Tok, diag::err_expected_lbrace);
+    return StmtError();
+  }
+
+  return StmtEmpty();
+}
+
 namespace {
   typedef llvm::PointerIntPair<IdentifierInfo *, 1, bool> OpenCLExtData;
 }
@@ -150,6 +163,8 @@ void Parser::HandlePragmaOpenCLExtension() {
     return;
   }
 }
+
+
 
 // #pragma GCC visibility comes in two variants:
 //   'push' '(' [visibility] ')'

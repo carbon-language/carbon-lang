@@ -140,6 +140,7 @@ public:
   virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind,
                              const std::string &Str);
   virtual void PragmaMessage(SourceLocation Loc, StringRef Str);
+  virtual void PragmaDebug(SourceLocation Loc, StringRef DebugType);
   virtual void PragmaDiagnosticPush(SourceLocation Loc,
                                     StringRef Namespace);
   virtual void PragmaDiagnosticPop(SourceLocation Loc,
@@ -416,6 +417,17 @@ void PrintPPOutputPPCallbacks::PragmaMessage(SourceLocation Loc,
   OS << '"';
 
   OS << ')';
+  setEmittedDirectiveOnThisLine();
+}
+
+void PrintPPOutputPPCallbacks::PragmaDebug(SourceLocation Loc,
+                                           StringRef DebugType) {
+  startNewLineIfNeeded();
+  MoveToLine(Loc);
+
+  OS << "#pragma clang __debug ";
+  OS << DebugType;
+
   setEmittedDirectiveOnThisLine();
 }
 
