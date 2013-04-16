@@ -1,4 +1,4 @@
-// RUN: %clang --analyze %s -o /dev/null -Xclang -analyzer-checker=debug.ConfigDumper > %t 2>&1
+// RUN: %clang -target x86_64-apple-darwin10 --analyze %s -o /dev/null -Xclang -analyzer-checker=debug.ConfigDumper > %t 2>&1
 // RUN: FileCheck --input-file=%t %s
 
 void bar() {}
