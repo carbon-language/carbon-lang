@@ -171,13 +171,13 @@ public:
   /// Initialize target data from properties stored in the module.
   explicit DataLayout(const Module *M);
 
-  DataLayout(const DataLayout &TD) :
+  DataLayout(const DataLayout &DL) :
     ImmutablePass(ID),
-    LittleEndian(TD.isLittleEndian()),
-    StackNaturalAlign(TD.StackNaturalAlign),
-    LegalIntWidths(TD.LegalIntWidths),
-    Alignments(TD.Alignments),
-    Pointers(TD.Pointers),
+    LittleEndian(DL.isLittleEndian()),
+    StackNaturalAlign(DL.StackNaturalAlign),
+    LegalIntWidths(DL.LegalIntWidths),
+    Alignments(DL.Alignments),
+    Pointers(DL.Pointers),
     LayoutMap(0)
   { }
 
@@ -426,7 +426,7 @@ public:
 
 private:
   friend class DataLayout;   // Only DataLayout can create this class
-  StructLayout(StructType *ST, const DataLayout &TD);
+  StructLayout(StructType *ST, const DataLayout &DL);
 };
 
 
