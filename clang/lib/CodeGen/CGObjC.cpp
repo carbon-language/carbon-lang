@@ -21,6 +21,7 @@
 #include "clang/AST/StmtObjC.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InlineAsm.h"
 using namespace clang;
@@ -2256,7 +2257,8 @@ void CodeGenFunction::EmitObjCAutoreleasePoolPop(llvm::Value *value) {
     fn = createARCRuntimeFunction(CGM, fnType, "objc_autoreleasePoolPop");
   }
 
-  EmitNounwindRuntimeCall(fn, value);
+  // objc_autoreleasePoolPop can throw.
+  EmitRuntimeCallOrInvoke(fn, value);
 }
 
 /// Produce the code to do an MRR version objc_autoreleasepool_push.
