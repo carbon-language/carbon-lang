@@ -11,6 +11,10 @@
 
 // void splice(const_iterator position, list<T,Allocator>& x, iterator i);
 
+#if _LIBCPP_DEBUG2 >= 1
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <list>
 #include <cassert>
 
@@ -174,4 +178,12 @@ int main()
         ++i;
         assert(*i == 2);
     }
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        std::list<int> v1(3);
+        std::list<int> v2(3);
+        v1.splice(v1.begin(), v2, v1.begin());
+        assert(false);
+    }
+#endif
 }
