@@ -232,7 +232,18 @@ ThreadList::ShouldStop (Event *event_ptr)
     }
 
     bool did_anybody_stop_for_a_reason = false;
-    bool should_stop = false;    
+    bool should_stop = false;
+    
+    // Now we run through all the threads and get their stop info's.  We want to make sure to do this first before
+    // we start running the ShouldStop, because one thread's ShouldStop could destroy information (like deleting a
+    // thread specific breakpoint another thread had stopped at) which could lead us to compute the StopInfo incorrectly.
+    // We don't need to use it here, we just want to make sure it gets computed.
+    
+    for (pos = threads_copy.begin(); pos != end; ++pos)
+    {
+        ThreadSP thread_sp(*pos);
+        thread_sp->GetStopInfo();
+    }
     
     for (pos = threads_copy.begin(); pos != end; ++pos)
     {
