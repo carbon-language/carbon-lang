@@ -1023,3 +1023,105 @@ SEHFinallyStmt* SEHFinallyStmt::Create(ASTContext &C,
                                        Stmt *Block) {
   return new(C)SEHFinallyStmt(Loc,Block);
 }
+
+CapturedStmt::Capture *CapturedStmt::getStoredCaptures() const {
+  unsigned Size = sizeof(CapturedStmt) + sizeof(Stmt *) * (NumCaptures + 1);
+
+  // Offset of the first Capture object.
+  unsigned FirstCaptureOffset =
+    llvm::RoundUpToAlignment(Size, llvm::alignOf<Capture>());
+
+  return reinterpret_cast<Capture *>(
+      reinterpret_cast<char *>(const_cast<CapturedStmt *>(this))
+      + FirstCaptureOffset);
+}
+
+CapturedStmt::CapturedStmt(Stmt *S, ArrayRef<Capture> Captures,
+                           ArrayRef<Expr *> CaptureInits,
+                           FunctionDecl *FD,
+                           RecordDecl *RD)
+  : Stmt(CapturedStmtClass), NumCaptures(Captures.size()),
+    TheFuncDecl(FD), TheRecordDecl(RD) {
+  assert( S && "null captured statement");
+  assert(FD && "null function declaration for captured statement");
+  assert(RD && "null record declaration for captured statement");
+
+  // Copy initialization expressions.
+  Stmt **Stored = getStoredStmts();
+  for (unsigned I = 0, N = NumCaptures; I != N; ++I)
+    *Stored++ = CaptureInits[I];
+
+  // Copy the statement being captured.
+  *Stored = S;
+
+  // Copy all Capture objects.
+  Capture *Buffer = getStoredCaptures();
+  std::copy(Captures.begin(), Captures.end(), Buffer);
+}
+
+CapturedStmt::CapturedStmt(EmptyShell Empty, unsigned NumCaptures)
+  : Stmt(CapturedStmtClass, Empty), NumCaptures(NumCaptures),
+    TheFuncDecl(0), TheRecordDecl(0) {
+  getStoredStmts()[NumCaptures] = 0;
+}
+
+CapturedStmt *CapturedStmt::Create(ASTContext &Context, Stmt *S,
+                                   ArrayRef<Capture> Captures,
+                                   ArrayRef<Expr *> CaptureInits,
+                                   FunctionDecl *FD,
+                                   RecordDecl *RD) {
+  // The layout is
+  //
+  // -----------------------------------------------------------
+  // | CapturedStmt, Init, ..., Init, S, Capture, ..., Capture |
+  // ----------------^-------------------^----------------------
+  //                 getStoredStmts()    getStoredCaptures()
+  //
+  // where S is the statement being captured.
+  //
+  assert(CaptureInits.size() == Captures.size() && "wrong number of arguments");
+
+  unsigned Size = sizeof(CapturedStmt) + sizeof(Stmt *) * (Captures.size() + 1);
+  if (!Captures.empty()) {
+    // Realign for the following Capture array.
+    Size = llvm::RoundUpToAlignment(Size, llvm::alignOf<Capture>());
+    Size += sizeof(Capture) * Captures.size();
+  }
+
+  void *Mem = Context.Allocate(Size);
+  return new (Mem) CapturedStmt(S, Captures, CaptureInits, FD, RD);
+}
+
+CapturedStmt *CapturedStmt::CreateDeserialized(ASTContext &Context,
+                                               unsigned NumCaptures) {
+  unsigned Size = sizeof(CapturedStmt) + sizeof(Stmt *) * (NumCaptures + 1);
+  if (NumCaptures > 0) {
+    // Realign for the following Capture array.
+    Size = llvm::RoundUpToAlignment(Size, llvm::alignOf<Capture>());
+    Size += sizeof(Capture) * NumCaptures;
+  }
+
+  void *Mem = Context.Allocate(Size);
+  return new (Mem) CapturedStmt(EmptyShell(), NumCaptures);
+}
+
+Stmt::child_range CapturedStmt::children() {
+  // Children are captured field initilizers and the statement being captured.
+  return child_range(getStoredStmts(), getStoredStmts() + NumCaptures + 1);
+}
+
+bool CapturedStmt::capturesVariable(const VarDecl *Var) const {
+  for (capture_iterator I = capture_begin(),
+                        E = capture_end(); I != E; ++I) {
+    if (I->capturesThis())
+      continue;
+
+    // This does not handle variable redeclarations. This should be
+    // extended to capture variables with redeclarations, for example
+    // a thread-private variable in OpenMP.
+    if (I->getCapturedVar() == Var)
+      return true;
+  }
+
+  return false;
+}

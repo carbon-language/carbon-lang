@@ -270,6 +270,10 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
     K = CXCursor_DeclStmt;
     break;
 
+  case Stmt::CapturedStmtClass:
+    K = CXCursor_UnexposedStmt;
+    break;
+
   case Stmt::IntegerLiteralClass:
     K = CXCursor_IntegerLiteral;
     break;

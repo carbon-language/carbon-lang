@@ -255,6 +255,13 @@ void ASTStmtWriter::VisitMSAsmStmt(MSAsmStmt *S) {
   Code = serialization::STMT_MSASM;
 }
 
+void ASTStmtWriter::VisitCapturedStmt(CapturedStmt *S) {
+  VisitStmt(S);
+  Code = serialization::STMT_CAPTURED;
+
+  llvm_unreachable("not implemented yet");
+}
+
 void ASTStmtWriter::VisitExpr(Expr *E) {
   VisitStmt(E);
   Writer.AddTypeRef(E->getType(), Record);

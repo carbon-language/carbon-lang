@@ -324,6 +324,10 @@ void ASTStmtReader::VisitMSAsmStmt(MSAsmStmt *S) {
   VisitStmt(S);
 }
 
+void ASTStmtReader::VisitCapturedStmt(CapturedStmt *S) {
+  llvm_unreachable("not implemented yet");
+}
+
 void ASTStmtReader::VisitExpr(Expr *E) {
   VisitStmt(E);
   E->setType(Reader.readType(F, Record, Idx));
@@ -1722,6 +1726,10 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case STMT_MSASM:
       S = new (Context) MSAsmStmt(Empty);
+      break;
+
+    case STMT_CAPTURED:
+      llvm_unreachable("not implemented yet");
       break;
 
     case EXPR_PREDEFINED:

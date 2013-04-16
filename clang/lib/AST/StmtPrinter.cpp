@@ -450,6 +450,10 @@ void StmtPrinter::VisitMSAsmStmt(MSAsmStmt *Node) {
     Indent() << "}\n";
 }
 
+void StmtPrinter::VisitCapturedStmt(CapturedStmt *Node) {
+  PrintStmt(Node->getCapturedStmt());
+}
+
 void StmtPrinter::VisitObjCAtTryStmt(ObjCAtTryStmt *Node) {
   Indent() << "@try";
   if (CompoundStmt *TS = dyn_cast<CompoundStmt>(Node->getTryBody())) {
