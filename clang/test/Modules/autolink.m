@@ -1,5 +1,6 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -emit-llvm -o - -fmodules-cache-path=%t -fmodules -fmodules-autolink -F %S/Inputs -I %S/Inputs %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -o - -fmodules-cache-path=%t -fmodules -F %S/Inputs -I %S/Inputs %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -fno-autolink -o - -fmodules-cache-path=%t -fmodules -F %S/Inputs -I %S/Inputs %s | FileCheck --check-prefix=CHECK-AUTOLINK-DISABLED %s
 
 @import autolink.sub2;
 
@@ -38,3 +39,6 @@ int use_no_umbrella() {
 // CHECK: ![[DEPENDSONMODULE]] = metadata !{metadata !"-framework", metadata !"DependsOnModule"}
 // CHECK: ![[MODULE]] = metadata !{metadata !"-framework", metadata !"Module"}
 // CHECK: ![[NOUMBRELLA]] = metadata !{metadata !"-framework", metadata !"NoUmbrella"}
+
+// CHECK-AUTOLINK-DISABLED: !llvm.module.flags
+// CHECK-AUTOLINK-DISABLED-NOT: "Linker Options"

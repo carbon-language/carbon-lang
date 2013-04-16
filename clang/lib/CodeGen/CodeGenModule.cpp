@@ -189,7 +189,7 @@ void CodeGenModule::Release() {
   EmitStaticExternCAliases();
   EmitLLVMUsed();
 
-  if (CodeGenOpts.ModulesAutolink) {
+  if (CodeGenOpts.Autolink && Context.getLangOpts().Modules) {
     EmitModuleLinkOptions();
   }
 

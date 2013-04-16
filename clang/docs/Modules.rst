@@ -168,8 +168,8 @@ Command-line parameters
 ``-fmodules-cache-path=<directory>``
   Specify the path to the modules cache. If not provided, Clang will select a system-appropriate default.
 
-``-f[no-]modules-autolink``
-  Enable of disable automatic linking against the libraries associated with imported modules.
+``-fno-autolink``
+  Disable automatic linking against the libraries associated with imported modules.
 
 ``-fmodules-ignore-macro=macroname``
   Instruct modules to ignore the named macro when selecting an appropriate module variant. Use this for macros defined on the command line that don't affect how modules are built, to improve sharing of compiled module files.
