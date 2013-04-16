@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>Open Projects</title>
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
+  <script type="text/javascript" src="scripts/menu.js"></script>  
+</head>
+<body>
+
+<div id="page">
+<!--#include virtual="menu.html.incl"-->
+<div id="content">
+
+<h1>Open Projects</h1>
+
+<p>This page lists several projects that would boost analyzer's usability and 
+power. Most of the projects listed here are infrastructure-related so this list 
+is an addition to the <A href="potential_checkers.html">potential checkers list</A>.
+ If you are interested in tackling one of these, please send an email to 
+<a href=http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev>cfe-dev mailing list</a> 
+to notify other members of the community.</p>
+<p>
+<ul>  
+  <li>Core Analyzer Infrastructure
+  <ul>
+    <li>Explicitly model C++ standard library functions with <tt>BodyFarm</tt>.
+    <p><tt><a href="http://clang.llvm.org/doxygen/classclang_1_1BodyFarm.html">BodyFarm</a></tt> 
+    allows the analyzer to explicitly model functions, whose definitions are 
+    not available during analysis. Modeling more of the widely used functions 
+    (such as <tt>std::string</tt>) will improve precision of the analysis. 
+    <i>(Difficulty: Easy)</i><p>
+    </li>
+    
+    <li>Implement generalized loop execution modeling.
+    <p>Currently, the analyzer simply unrolls each loop <tt>N</tt> times. This 
+    means that it will not execute any code after the loop if the loop is 
+    guaranteed to execute more than <tt>N</tt> times. This results in lost 
+    basic block coverage. We could continue exploring the path if we could 
+    model a generic <tt>i</tt>-th iteration of a loop.
+    <i> (Difficulty: Hard)</i></p>
+    </li>
+
+    <li>Enhance CFG to model C++ destructors and/or exceptions.
+    <p><i>(Difficulty: Medium)</i></p>    
+    
+    <li>Design and Implement alpha-renaming.
+    <p>Implement unifying two symbolic values along a path after they are 
+    determined to be equal via comparison. This would allow us to reduce the 
+    number of false positives and would be a building step to more advanced 
+    analyzes, such as summary-based interprocedural and cross-translation-unit 
+    analysis. 
+    <i>(Difficulty: Hard)</i></p>
+    </li>    
+  </ul>
+  </li>
+
+  <li>Bug Reporting 
+  <ul>
+    <li>Add support for displaying multi-file path in scan-build output.
+    <p>Currently scan-build output does not display reports that span multiple 
+    files. The main problem is that we do not have the infrastructure to 
+    display such paths in HTML output. <i>(Difficulty: Medium)</i> </p>
+    </li>
+    
+    <li>Relate bugs to checkers.
+    <p>We need to come up with bug reports API, which will relate bug reports 
+    to the checkers that produce them and refactor the existing code to use the 
+    new API. This would allow us to identify the checker from the bug report. 
+    <i>(Difficulty: Medium-easy)</i></p>
+    </li>
+    
+    <li>Refactor <a href="http://clang.llvm.org/doxygen/BugReporter_8cpp_source.html">BugReporter.cpp</a>.
+    <p>It would be great to have more code reuse between "Minimal" and 
+    "Extensive" PathDiagnostic generation algorithms. One idea is to create an 
+    IR for representing path diagnostics, which would be later be used to 
+    generate minimal or extensive report output. <i>(Difficulty: Medium)</i></p>
+    </li>
+  </ul>
+  </li>
+
+  <li>Other Infrastructure 
+  <ul>
+    <li>Create 'analyzer_annotate' attribute for the analyzer annotations.<p>
+    We would like to put all analyzer attributes behind a fence so that we 
+    could add/remove them without worrying that compiler (not analyzer) users 
+    depend on them. Design and implement such a generic analyzer attribute in 
+    the compiler. <i>(Difficulty: Medium)</i></p>
+    </li>
+
+    <li>Rewrite scan-build (in python). <p><i>(Difficulty: Easy)</i></p>
+    </li>    
+  </ul>
+  </li>
+
+  <li>Enhanced Checks
+  <ul>
+    <li>Implement a production-ready StreamChecker.
+    <p>A SimpleStreamChecker has been presented in the Building a Checker in 24 
+    Hours talk 
+    (<a href="http://llvm.org/devmtg/2012-11/Zaks-Rose-Checker24Hours.pdf">slides</a>
+    <a href="http://llvm.org/devmtg/2012-11/videos/Zaks-Rose-Checker24Hours.mp4">video</a>). 
+    We need to implement a production version of the checker with richer set of 
+    APIs and evaluate it by running on real codebases. 
+    <i>(Difficulty: Easy)</i></p>
+    </li>
+
+    <li>Extend Malloc checker with reasoning about custom allocator, 
+    deallocator, and ownership-transfer functions.
+    <p>This would require extending MallocPessimistic checker with reasoning 
+    about annotated functions. It is strongly desired that one would rely on 
+    the 'analyzer_annotate' attribute, as described in one of the items above. 
+    <i>(Difficulty: Easy)</i></p>
+    </li>
+
+    <li>Implement iterators invalidation checker.
+    <p><i>(Difficulty: Easy)</i></p>
+    </li>
+    
+    <li>Write checkers which catch Copy and Paste errors.
+    <p>Take a look at the following paper for inspiration 
+    <a href="http://pages.cs.wisc.edu/~shanlu/paper/TSE-CPMiner.pdf">CP-Miner</a>. 
+    <i>(Difficulty: Medium-hard)</i></p>
+    </li>  
+  </ul>
+  </li>
+</ul>
+
+</div>
+</div>
+</body>
+</html>
+
