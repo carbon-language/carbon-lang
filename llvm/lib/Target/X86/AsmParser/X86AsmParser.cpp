@@ -1261,9 +1261,6 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
   // Parse [ Symbol + ImmDisp ] and [ BaseReg + Scale*IndexReg + ImmDisp ].  We
   // may have already parsed an immediate displacement before the bracketed
   // expression.
-
-  StringRef SymName;
-
   IntelExprStateMachine SM(ImmDisp);
   if (X86Operand *Err = ParseIntelExpression(SM, End))
     return Err;
