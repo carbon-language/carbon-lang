@@ -1605,6 +1605,29 @@ void AssemblyWriter::printFunction(const Function *F) {
   if (F->isMaterializable())
     Out << "; Materializable\n";
 
+  const AttributeSet &Attrs = F->getAttributes();
+  if (Attrs.hasAttributes(AttributeSet::FunctionIndex)) {
+    AttributeSet AS = Attrs.getFnAttributes();
+    std::string AttrStr;
+
+    unsigned Idx = 0;
+    for (unsigned E = AS.getNumSlots(); Idx != E; ++Idx)
+      if (AS.getSlotIndex(Idx) == AttributeSet::FunctionIndex)
+        break;
+
+    for (AttributeSet::iterator I = AS.begin(Idx), E = AS.end(Idx);
+         I != E; ++I) {
+      Attribute Attr = *I;
+      if (!Attr.isStringAttribute()) {
+        if (!AttrStr.empty()) AttrStr += ' ';
+        AttrStr += Attr.getAsString();
+      }
+    }
+
+    if (!AttrStr.empty())
+      Out << "; Function Attrs: " << AttrStr << '\n';
+  }
+
   if (F->isDeclaration())
     Out << "declare ";
   else
@@ -1620,7 +1643,6 @@ void AssemblyWriter::printFunction(const Function *F) {
   }
 
   FunctionType *FT = F->getFunctionType();
-  const AttributeSet &Attrs = F->getAttributes();
   if (Attrs.hasAttributes(AttributeSet::ReturnIndex))
     Out <<  Attrs.getAsString(AttributeSet::ReturnIndex) << ' ';
   TypePrinter.print(F->getReturnType(), Out);
@@ -1761,10 +1783,8 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
 /// which slot it occupies.
 ///
 void AssemblyWriter::printInfoComment(const Value &V) {
-  if (AnnotationWriter) {
+  if (AnnotationWriter)
     AnnotationWriter->printInfoComment(V, Out);
-    return;
-  }
 }
 
 // This member is called for each Instruction in a function..
