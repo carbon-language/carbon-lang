@@ -1297,8 +1297,8 @@ TEST(MemorySanitizer, StructByVal) {
 
 
 #if MSAN_HAS_M128
-NOINLINE __m128i m128Eq(__m128i *a, __m128i *b) { return *a == *b; }
-NOINLINE __m128i m128Lt(__m128i *a, __m128i *b) { return *a < *b; }
+NOINLINE __m128i m128Eq(__m128i *a, __m128i *b) { return _mm_cmpeq_epi16(*a, *b); }
+NOINLINE __m128i m128Lt(__m128i *a, __m128i *b) { return _mm_cmplt_epi16(*a, *b); }
 TEST(MemorySanitizer, m128) {
   __m128i a = _mm_set1_epi16(0x1234);
   __m128i b = _mm_set1_epi16(0x7890);
@@ -1744,14 +1744,17 @@ TEST(MemorySanitizer, ICmpRelational) {
 
 #if MSAN_HAS_M128
 TEST(MemorySanitizer, ICmpVectorRelational) {
-  EXPECT_NOT_POISONED(poisoned(_mm_set1_epi16(0), _mm_set1_epi16(0)) <
-                      poisoned(_mm_set1_epi16(0), _mm_set1_epi16(0)));
-  EXPECT_NOT_POISONED(poisoned(_mm_set1_epi32(0), _mm_set1_epi32(0)) <
-                      poisoned(_mm_set1_epi32(0), _mm_set1_epi32(0)));
-  EXPECT_POISONED(poisoned(_mm_set1_epi16(0), _mm_set1_epi16(0xFFFF)) <
-                  poisoned(_mm_set1_epi16(0), _mm_set1_epi16(0xFFFF)));
-  EXPECT_POISONED(poisoned(_mm_set1_epi16(6), _mm_set1_epi16(0xF)) >
-                  poisoned(_mm_set1_epi16(7), _mm_set1_epi16(0)));
+  EXPECT_NOT_POISONED(
+      _mm_cmplt_epi16(poisoned(_mm_set1_epi16(0), _mm_set1_epi16(0)),
+                   poisoned(_mm_set1_epi16(0), _mm_set1_epi16(0))));
+  EXPECT_NOT_POISONED(
+      _mm_cmplt_epi16(poisoned(_mm_set1_epi32(0), _mm_set1_epi32(0)),
+                   poisoned(_mm_set1_epi32(0), _mm_set1_epi32(0))));
+  EXPECT_POISONED(
+      _mm_cmplt_epi16(poisoned(_mm_set1_epi16(0), _mm_set1_epi16(0xFFFF)),
+                   poisoned(_mm_set1_epi16(0), _mm_set1_epi16(0xFFFF))));
+  EXPECT_POISONED(_mm_cmpgt_epi16(poisoned(_mm_set1_epi16(6), _mm_set1_epi16(0xF)),
+                               poisoned(_mm_set1_epi16(7), _mm_set1_epi16(0))));
 }
 #endif
 
