@@ -67,7 +67,6 @@ namespace clang {
   class VarDecl;
   class LangOptions;
   class CodeGenOptions;
-  class TargetOptions;
   class DiagnosticsEngine;
   class AnnotateAttr;
   class CXXDestructorDecl;
@@ -408,8 +407,8 @@ class CodeGenModule : public CodeGenTypeCache {
   /// @}
 public:
   CodeGenModule(ASTContext &C, const CodeGenOptions &CodeGenOpts,
-                const TargetOptions &TargetOpts, llvm::Module &M,
-                const llvm::DataLayout &TD, DiagnosticsEngine &Diags);
+                llvm::Module &M, const llvm::DataLayout &TD,
+                DiagnosticsEngine &Diags);
 
   ~CodeGenModule();
 
