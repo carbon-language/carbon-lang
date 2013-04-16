@@ -2092,7 +2092,7 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
     } else if (isReleased(RS, RSPrev, S)) {
       Msg = "Memory is released";
       StackHint = new StackHintGeneratorForSymbol(Sym,
-                                                  "Returned released memory");
+                                             "Returning; memory was released");
     } else if (isRelinquished(RS, RSPrev, S)) {
       Msg = "Memory ownership is transfered";
       StackHint = new StackHintGeneratorForSymbol(Sym, "");

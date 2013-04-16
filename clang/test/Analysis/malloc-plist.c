@@ -1740,9 +1740,9 @@ void testMyMalloc() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>1</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Returned released memory via 1st parameter</string>
+// CHECK-NEXT:      <string>Returning; memory was released via 1st parameter</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Returned released memory via 1st parameter</string>
+// CHECK-NEXT:      <string>Returning; memory was released via 1st parameter</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1803,9 +1803,9 @@ void testMyMalloc() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Returned released memory via 1st parameter</string>
+// CHECK-NEXT:      <string>Returning; memory was released via 1st parameter</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Returned released memory via 1st parameter</string>
+// CHECK-NEXT:      <string>Returning; memory was released via 1st parameter</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
