@@ -1761,7 +1761,8 @@ static std::string GenTest(const std::string &name,
 void NeonEmitter::runTests(raw_ostream &OS) {
   OS <<
     "// RUN: %clang_cc1 -triple thumbv7-apple-darwin \\\n"
-    "// RUN:  -target-cpu cortex-a9 -ffreestanding -S -o - %s | FileCheck %s\n"
+    "// RUN:  -target-cpu swift -ffreestanding -Os -S -o - %s\\\n"
+    "// RUN:  | FileCheck %s\n"
     "\n"
     "#include <arm_neon.h>\n"
     "\n";
