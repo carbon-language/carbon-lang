@@ -1191,20 +1191,12 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
     return ErrorOperand(BracLoc, "Expected '[' token!");
   Parser.Lex(); // Eat '['
 
-  unsigned TmpReg = 0;
   SMLoc StartInBrac = Tok.getLoc();
   // Parse [ Symbol + ImmDisp ] and [ BaseReg + Scale*IndexReg + ImmDisp ].  We
   // may have already parsed an immediate displacement before the bracketed
   // expression.
   bool Done = false;
   IntelBracExprStateMachine SM(Parser, ImmDisp);
-
-  // If we parsed a register, then the end loc has already been set and
-  // the identifier has already been lexed.  We also need to update the
-  // state.
-  if (TmpReg)
-    SM.onRegister(TmpReg);
-
   while (!Done) {
     bool UpdateLocLex = true;
 
