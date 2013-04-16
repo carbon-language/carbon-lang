@@ -1,0 +1,44 @@
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -o - %s | FileCheck %s
+// rdar://13598026
+
+@interface NSObject @end
+
+@class NSString;
+
+int __CFConstantStringClassReference[24];
+
+@interface Bar : NSObject
++(void)format:(NSString *)format,...;
+@end
+
+@interface Foo : NSObject
+@end
+
+
+static inline void _inlineFunction() {
+    [Bar format:@" "];
+}
+
+@implementation Foo
+
+
++(NSString *)someMethod {
+   return @"";
+}
+
+-(void)someMethod {
+   _inlineFunction();
+}
+@end
+
+// CHECK: @__CFConstantStringClassReference = common global [24 x i32] zeroinitializer, align 16
+// CHECK: @_unnamed_cfstring_{{.*}} = private constant %struct.NSConstantString { i32* getelementptr inbounds ([24 x i32]* @__CFConstantStringClassReference, i32 0, i32 0)
+
+// CHECK: define internal void @_inlineFunction()
+// CHECK-NEXT: entry:
+// CHECK-NEXT:  [[ZERO:%.*]] = load %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_
+// CHECK-NEXT:   [[ONE:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_"
+// CHECK-NEXT:   [[TWO:%.*]] = bitcast %struct._class_t* [[ZERO]] to i8*
+// CHECK-NEXT:   call{{.*}}@objc_msgSend{{.*}}(i8* [[TWO]], i8* [[ONE]], [[ZERO]]* bitcast (%struct.NSConstantString* @_unnamed_cfstring_{{.*}}
+// CHECK-NEXT:   ret void
+

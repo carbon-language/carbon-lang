@@ -2279,7 +2279,8 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
 
   llvm::Constant *Zero = llvm::Constant::getNullValue(Int32Ty);
   llvm::Constant *Zeros[] = { Zero, Zero };
-
+  llvm::Value *V;
+  
   // If we don't already have it, get __CFConstantStringClassReference.
   if (!CFConstantStringClassRef) {
     llvm::Type *Ty = getTypes().ConvertType(getContext().IntTy);
@@ -2287,9 +2288,11 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
     llvm::Constant *GV = CreateRuntimeVariable(Ty,
                                            "__CFConstantStringClassReference");
     // Decay array -> ptr
-    CFConstantStringClassRef =
-      llvm::ConstantExpr::getGetElementPtr(GV, Zeros);
+    V = llvm::ConstantExpr::getGetElementPtr(GV, Zeros);
+    CFConstantStringClassRef = V;
   }
+  else
+    V = CFConstantStringClassRef;
 
   QualType CFTy = getContext().getCFConstantStringType();
 
@@ -2299,7 +2302,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   llvm::Constant *Fields[4];
 
   // Class pointer.
-  Fields[0] = CFConstantStringClassRef;
+  Fields[0] = cast<llvm::ConstantExpr>(V);
 
   // Flags.
   llvm::Type *Ty = getTypes().ConvertType(getContext().UnsignedIntTy);
@@ -2386,7 +2389,7 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   
   llvm::Constant *Zero = llvm::Constant::getNullValue(Int32Ty);
   llvm::Constant *Zeros[] = { Zero, Zero };
-  
+  llvm::Value *V;
   // If we don't already have it, get _NSConstantStringClassReference.
   if (!ConstantStringClassRef) {
     std::string StringClass(getLangOpts().ObjCConstantStringClass);
@@ -2399,8 +2402,8 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
       GV = getObjCRuntime().GetClassGlobal(str);
       // Make sure the result is of the correct type.
       llvm::Type *PTy = llvm::PointerType::getUnqual(Ty);
-      ConstantStringClassRef =
-        llvm::ConstantExpr::getBitCast(GV, PTy);
+      V = llvm::ConstantExpr::getBitCast(GV, PTy);
+      ConstantStringClassRef = V;
     } else {
       std::string str =
         StringClass.empty() ? "_NSConstantStringClassReference"
@@ -2408,10 +2411,12 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
       llvm::Type *PTy = llvm::ArrayType::get(Ty, 0);
       GV = CreateRuntimeVariable(PTy, str);
       // Decay array -> ptr
-      ConstantStringClassRef = 
-        llvm::ConstantExpr::getGetElementPtr(GV, Zeros);
+      V = llvm::ConstantExpr::getGetElementPtr(GV, Zeros);
+      ConstantStringClassRef = V;
     }
   }
+  else
+    V = ConstantStringClassRef;
 
   if (!NSConstantStringType) {
     // Construct the type for a constant NSString.
@@ -2450,7 +2455,7 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   llvm::Constant *Fields[3];
   
   // Class pointer.
-  Fields[0] = ConstantStringClassRef;
+  Fields[0] = cast<llvm::ConstantExpr>(V);
   
   // String pointer.
   llvm::Constant *C =

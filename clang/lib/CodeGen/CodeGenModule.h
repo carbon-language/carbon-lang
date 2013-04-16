@@ -346,11 +346,11 @@ class CodeGenModule : public CodeGenTypeCache {
 
   /// CFConstantStringClassRef - Cached reference to the class for constant
   /// strings. This value has type int * but is actually an Obj-C class pointer.
-  llvm::Constant *CFConstantStringClassRef;
+  llvm::WeakVH CFConstantStringClassRef;
 
   /// ConstantStringClassRef - Cached reference to the class for constant
   /// strings. This value has type int * but is actually an Obj-C class pointer.
-  llvm::Constant *ConstantStringClassRef;
+  llvm::WeakVH ConstantStringClassRef;
 
   /// \brief The LLVM type corresponding to NSConstantString.
   llvm::StructType *NSConstantStringType;
