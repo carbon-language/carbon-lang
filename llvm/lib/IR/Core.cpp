@@ -2459,6 +2459,10 @@ const char* LLVMGetBufferStart(LLVMMemoryBufferRef MemBuf) {
   return unwrap(MemBuf)->getBufferStart();
 }
 
+size_t LLVMGetBufferSize(LLVMMemoryBufferRef MemBuf) {
+  return unwrap(MemBuf)->getBufferSize();
+}
+
 void LLVMDisposeMemoryBuffer(LLVMMemoryBufferRef MemBuf) {
   delete unwrap(MemBuf);
 }
