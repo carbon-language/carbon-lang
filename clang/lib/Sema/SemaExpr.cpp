@@ -10851,6 +10851,34 @@ diagnoseUncapturableValueReference(Sema &S, SourceLocation loc,
   // capture.
 }
 
+/// \brief Capture the given variable in the captured region.
+static ExprResult captureInCapturedRegion(Sema &S, CapturedRegionScopeInfo *RSI,
+                                          VarDecl *Var, QualType FieldType,
+                                          QualType DeclRefType,
+                                          SourceLocation Loc,
+                                          bool RefersToEnclosingLocal) {
+  // The current implemention assumes that all variables are captured
+  // by references. Since there is no capture by copy, no expression evaluation
+  // will be needed.
+  //
+  RecordDecl *RD = RSI->TheRecordDecl;
+
+  FieldDecl *Field
+    = FieldDecl::Create(S.Context, RD, Loc, Loc, 0, FieldType,
+                        S.Context.getTrivialTypeSourceInfo(FieldType, Loc),
+                        0, false, ICIS_NoInit);
+  Field->setImplicit(true);
+  Field->setAccess(AS_private);
+  RD->addDecl(Field);
+
+  Expr *Ref = new (S.Context) DeclRefExpr(Var, RefersToEnclosingLocal,
+                                          DeclRefType, VK_LValue, Loc);
+  Var->setReferenced(true);
+  Var->setUsed(true);
+
+  return Ref;
+}
+
 /// \brief Capture the given variable in the given lambda expression.
 static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
                                   VarDecl *Var, QualType FieldType, 
@@ -10991,10 +11019,10 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
   bool Explicit = (Kind != TryCapture_Implicit);
   unsigned FunctionScopesIndex = FunctionScopes.size() - 1;
   do {
-    // Only block literals and lambda expressions can capture; other
-    // scopes don't work.
+    // Only block literals, captured statements, and lambda expressions can
+    // capture; other scopes don't work.
     DeclContext *ParentDC;
-    if (isa<BlockDecl>(DC))
+    if (isa<BlockDecl>(DC) || isa<CapturedDecl>(DC))
       ParentDC = DC->getParent();
     else if (isa<CXXMethodDecl>(DC) &&
              cast<CXXMethodDecl>(DC)->getOverloadedOperator() == OO_Call &&
@@ -11028,7 +11056,7 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
     }
 
     bool IsBlock = isa<BlockScopeInfo>(CSI);
-    bool IsLambda = !IsBlock;
+    bool IsLambda = isa<LambdaScopeInfo>(CSI);
 
     // Lambdas are not allowed to capture unnamed variables
     // (e.g. anonymous unions).
@@ -11188,8 +11216,31 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
                         SourceLocation(), CaptureType, CopyExpr);
       Nested = true;
       continue;
-    } 
-    
+    }
+
+    if (CapturedRegionScopeInfo *RSI = dyn_cast<CapturedRegionScopeInfo>(CSI)) {
+      // By default, capture variables by reference.
+      bool ByRef = true;
+      // Using an LValue reference type is consistent with Lambdas (see below).
+      CaptureType = Context.getLValueReferenceType(DeclRefType);
+
+      Expr *CopyExpr = 0;
+      if (BuildAndDiagnose) {
+        ExprResult Result = captureInCapturedRegion(*this, RSI, Var,
+                                                    CaptureType, DeclRefType,
+                                                    Loc, Nested);
+        if (!Result.isInvalid())
+          CopyExpr = Result.take();
+      }
+
+      // Actually capture the variable.
+      if (BuildAndDiagnose)
+        CSI->addCapture(Var, /*isBlock*/false, ByRef, Nested, Loc,
+                        SourceLocation(), CaptureType, CopyExpr);
+      Nested = true;
+      continue;
+    }
+
     LambdaScopeInfo *LSI = cast<LambdaScopeInfo>(CSI);
     
     // Determine whether we are capturing by reference or by value.

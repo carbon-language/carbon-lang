@@ -802,7 +802,7 @@ DeclContext *Sema::getFunctionLevelDeclContext() {
   DeclContext *DC = CurContext;
 
   while (true) {
-    if (isa<BlockDecl>(DC) || isa<EnumDecl>(DC)) {
+    if (isa<BlockDecl>(DC) || isa<EnumDecl>(DC) || isa<CapturedDecl>(DC)) {
       DC = DC->getParent();
     } else if (isa<CXXMethodDecl>(DC) &&
                cast<CXXMethodDecl>(DC)->getOverloadedOperator() == OO_Call &&
@@ -1313,4 +1313,19 @@ IdentifierInfo *Sema::getSuperIdentifier() const {
   if (!Ident_super)
     Ident_super = &Context.Idents.get("super");
   return Ident_super;
+}
+
+void Sema::PushCapturedRegionScope(Scope *S, CapturedDecl *CD, RecordDecl *RD,
+                                   CapturedRegionScopeInfo::CapturedRegionKind K) {
+  CapturingScopeInfo *CSI = new CapturedRegionScopeInfo(getDiagnostics(),
+                                                        S, CD, RD, K);
+  CSI->ReturnType = Context.VoidTy;
+  FunctionScopes.push_back(CSI);
+}
+
+CapturedRegionScopeInfo *Sema::getCurCapturedRegion() {
+  if (FunctionScopes.empty())
+    return 0;
+
+  return dyn_cast<CapturedRegionScopeInfo>(FunctionScopes.back());
 }

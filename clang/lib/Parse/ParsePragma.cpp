@@ -15,6 +15,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Parser.h"
+#include "clang/Sema/Scope.h"
 using namespace clang;
 
 /// \brief Handle the annotation token produced for #pragma unused(...)
@@ -132,7 +133,21 @@ StmtResult Parser::HandlePragmaCaptured()
     return StmtError();
   }
 
-  return StmtEmpty();
+  SourceLocation Loc = Tok.getLocation();
+
+  ParseScope CapturedRegionScope(this, Scope::FnScope | Scope::DeclScope);
+  Actions.ActOnCapturedRegionStart(Loc, getCurScope(),
+                                   sema::CapturedRegionScopeInfo::CR_Default);
+
+  StmtResult R = ParseCompoundStatement();
+  CapturedRegionScope.Exit();
+
+  if (R.isInvalid()) {
+    Actions.ActOnCapturedRegionError();
+    return StmtError();
+  }
+
+  return Actions.ActOnCapturedRegionEnd(R.get());
 }
 
 namespace {

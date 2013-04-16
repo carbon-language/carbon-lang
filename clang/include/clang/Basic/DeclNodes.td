@@ -73,6 +73,7 @@ def Friend : Decl;
 def FriendTemplate : Decl;
 def StaticAssert : Decl;
 def Block : Decl, DeclContext;
+def Captured : Decl, DeclContext;
 def ClassScopeFunctionSpecialization : Decl;
 def Import : Decl;
 def OMPThreadPrivate : Decl;

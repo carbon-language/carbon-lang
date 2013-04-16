@@ -3234,6 +3234,10 @@ MSPropertyDecl *MSPropertyDecl::CreateDeserialized(ASTContext &C,
                                   0, 0);
 }
 
+CapturedDecl *CapturedDecl::Create(ASTContext &C, DeclContext *DC) {
+  return new (C) CapturedDecl(DC);
+}
+
 EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
                                            SourceLocation L,
                                            IdentifierInfo *Id, QualType T,

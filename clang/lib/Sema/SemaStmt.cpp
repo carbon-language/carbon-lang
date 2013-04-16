@@ -2403,6 +2403,10 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       Diag(ReturnLoc, diag::err_noreturn_block_has_return_expr);
       return StmtError();
     }
+  } else if (CapturedRegionScopeInfo *CurRegion =
+                 dyn_cast<CapturedRegionScopeInfo>(CurCap)) {
+    Diag(ReturnLoc, diag::err_return_in_captured_stmt) << CurRegion->getRegionName();
+    return StmtError();
   } else {
     LambdaScopeInfo *LSI = cast<LambdaScopeInfo>(CurCap);
     if (LSI->CallOperator->getType()->getAs<FunctionType>()->getNoReturnAttr()){
@@ -2913,4 +2917,111 @@ StmtResult Sema::ActOnMSDependentExistsStmt(SourceLocation KeywordLoc,
                                     SS.getWithLocInContext(Context),
                                     GetNameFromUnqualifiedId(Name),
                                     Nested);
+}
+
+RecordDecl*
+Sema::CreateCapturedStmtRecordDecl(CapturedDecl *&CD, SourceLocation Loc)
+{
+  DeclContext *DC = CurContext;
+  while (!(DC->isFunctionOrMethod() || DC->isRecord() || DC->isFileContext()))
+    DC = DC->getParent();
+
+  RecordDecl *RD = 0;
+  if (getLangOpts().CPlusPlus)
+    RD = CXXRecordDecl::Create(Context, TTK_Struct, DC, Loc, Loc, /*Id=*/0);
+  else
+    RD = RecordDecl::Create(Context, TTK_Struct, DC, Loc, Loc, /*Id=*/0);
+
+  DC->addDecl(RD);
+  RD->setImplicit();
+  RD->startDefinition();
+
+  CD = CapturedDecl::Create(Context, CurContext);
+  DC->addDecl(CD);
+
+  return RD;
+}
+
+static void buildCapturedStmtCaptureList(
+    SmallVectorImpl<CapturedStmt::Capture> &Captures,
+    SmallVectorImpl<Expr *> &CaptureInits,
+    ArrayRef<CapturingScopeInfo::Capture> Candidates) {
+
+  typedef ArrayRef<CapturingScopeInfo::Capture>::const_iterator CaptureIter;
+  for (CaptureIter Cap = Candidates.begin(); Cap != Candidates.end(); ++Cap) {
+
+    if (Cap->isThisCapture()) {
+      Captures.push_back(CapturedStmt::Capture(Cap->getLocation(),
+                                               CapturedStmt::VCK_This));
+      CaptureInits.push_back(Cap->getCopyExpr());
+      continue;
+    }
+
+    assert(Cap->isReferenceCapture() &&
+           "non-reference capture not yet implemented");
+
+    Captures.push_back(CapturedStmt::Capture(Cap->getLocation(),
+                                             CapturedStmt::VCK_ByRef,
+                                             Cap->getVariable()));
+    CaptureInits.push_back(Cap->getCopyExpr());
+  }
+}
+
+void Sema::ActOnCapturedRegionStart(SourceLocation Loc, Scope *CurScope,
+                                    CapturedRegionScopeInfo::CapturedRegionKind Kind) {
+  CapturedDecl *CD = 0;
+  RecordDecl *RD = CreateCapturedStmtRecordDecl(CD, Loc);
+
+  // Enter the capturing scope for this captured region.
+  PushCapturedRegionScope(CurScope, CD, RD, Kind);
+
+  if (CurScope)
+    PushDeclContext(CurScope, CD);
+  else
+    CurContext = CD;
+
+  PushExpressionEvaluationContext(PotentiallyEvaluated);
+}
+
+void Sema::ActOnCapturedRegionError(bool IsInstantiation) {
+  DiscardCleanupsInEvaluationContext();
+  PopExpressionEvaluationContext();
+
+  if (!IsInstantiation)
+    PopDeclContext();
+
+  CapturedRegionScopeInfo *RSI = getCurCapturedRegion();
+  RecordDecl *Record = RSI->TheRecordDecl;
+  Record->setInvalidDecl();
+
+  SmallVector<Decl*, 4> Fields;
+  for (RecordDecl::field_iterator I = Record->field_begin(),
+                                  E = Record->field_end(); I != E; ++I)
+    Fields.push_back(*I);
+  ActOnFields(/*Scope=*/0, Record->getLocation(), Record, Fields,
+              SourceLocation(), SourceLocation(), /*AttributeList=*/0);
+
+  PopFunctionScopeInfo();
+}
+
+StmtResult Sema::ActOnCapturedRegionEnd(Stmt *S) {
+  CapturedRegionScopeInfo *RSI = getCurCapturedRegion();
+
+  SmallVector<CapturedStmt::Capture, 4> Captures;
+  SmallVector<Expr *, 4> CaptureInits;
+  buildCapturedStmtCaptureList(Captures, CaptureInits, RSI->Captures);
+
+  CapturedDecl *CD = RSI->TheCapturedDecl;
+  RecordDecl *RD = RSI->TheRecordDecl;
+
+  CapturedStmt *Res = CapturedStmt::Create(getASTContext(), S, Captures,
+                                           CaptureInits, CD, RD);
+
+  CD->setBody(Res->getCapturedStmt());
+  RD->completeDefinition();
+
+  PopDeclContext();
+  PopFunctionScopeInfo();
+
+  return Owned(Res);
 }

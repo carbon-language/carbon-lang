@@ -24,6 +24,7 @@ namespace clang {
 
 class Decl;
 class BlockDecl;
+class CapturedDecl;
 class CXXMethodDecl;
 class ObjCPropertyDecl;
 class IdentifierInfo;
@@ -73,7 +74,8 @@ protected:
   enum ScopeKind {
     SK_Function,
     SK_Block,
-    SK_Lambda
+    SK_Lambda,
+    SK_CapturedRegion
   };
   
 public:
@@ -319,7 +321,8 @@ public:
 class CapturingScopeInfo : public FunctionScopeInfo {
 public:
   enum ImplicitCaptureStyle {
-    ImpCap_None, ImpCap_LambdaByval, ImpCap_LambdaByref, ImpCap_Block
+    ImpCap_None, ImpCap_LambdaByval, ImpCap_LambdaByref, ImpCap_Block,
+    ImpCap_CapturedRegion
   };
 
   ImplicitCaptureStyle ImpCaptureStyle;
@@ -461,7 +464,8 @@ public:
   }
 
   static bool classof(const FunctionScopeInfo *FSI) { 
-    return FSI->Kind == SK_Block || FSI->Kind == SK_Lambda; 
+    return FSI->Kind == SK_Block || FSI->Kind == SK_Lambda
+                                 || FSI->Kind == SK_CapturedRegion;
   }
 };
 
@@ -489,6 +493,46 @@ public:
 
   static bool classof(const FunctionScopeInfo *FSI) { 
     return FSI->Kind == SK_Block; 
+  }
+};
+
+/// \brief Retains information about a captured region.
+class CapturedRegionScopeInfo: public CapturingScopeInfo {
+public:
+
+  enum CapturedRegionKind {
+    CR_Default
+  };
+
+  /// \brief The CapturedDecl for this statement.
+  CapturedDecl *TheCapturedDecl;
+  /// \brief The captured record type.
+  RecordDecl *TheRecordDecl;
+  /// \brief This is the enclosing scope of the captured region.
+  Scope *TheScope;
+  /// \brief The kind of captured region.
+  CapturedRegionKind CapRegionKind;
+
+  CapturedRegionScopeInfo(DiagnosticsEngine &Diag, Scope *S, CapturedDecl *CD,
+                          RecordDecl *RD, CapturedRegionKind K)
+    : CapturingScopeInfo(Diag, ImpCap_CapturedRegion),
+      TheCapturedDecl(CD), TheRecordDecl(RD), TheScope(S), CapRegionKind(K)
+  {
+    Kind = SK_CapturedRegion;
+  }
+
+  virtual ~CapturedRegionScopeInfo();
+
+  /// \brief A descriptive name for the kind of captured region this is.
+  StringRef getRegionName() const {
+    switch (CapRegionKind) {
+    case CR_Default:
+      return "default captured statement";
+    }
+  }
+
+  static bool classof(const FunctionScopeInfo *FSI) {
+    return FSI->Kind == SK_CapturedRegion;
   }
 };
 

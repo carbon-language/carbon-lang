@@ -187,3 +187,4 @@ void FunctionScopeInfo::markSafeWeakUse(const Expr *E) {
 FunctionScopeInfo::~FunctionScopeInfo() { }
 BlockScopeInfo::~BlockScopeInfo() { }
 LambdaScopeInfo::~LambdaScopeInfo() { }
+CapturedRegionScopeInfo::~CapturedRegionScopeInfo() { }

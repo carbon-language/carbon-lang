@@ -3165,6 +3165,32 @@ public:
   }
 };
 
+/// \brief This represents the body of a CapturedStmt, and serves as its
+/// DeclContext.
+class CapturedDecl : public Decl, public DeclContext {
+private:
+  Stmt *Body;
+
+  explicit CapturedDecl(DeclContext *DC)
+    : Decl(Captured, DC, SourceLocation()), DeclContext(Captured) { }
+
+public:
+  static CapturedDecl *Create(ASTContext &C, DeclContext *DC);
+
+  Stmt *getBody() const { return Body; }
+  void setBody(Stmt *B) { Body = B; }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) { return K == Captured; }
+  static DeclContext *castToDeclContext(const CapturedDecl *D) {
+    return static_cast<DeclContext *>(const_cast<CapturedDecl *>(D));
+  }
+  static CapturedDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<CapturedDecl *>(const_cast<DeclContext *>(DC));
+  }
+};
+
 /// \brief Describes a module import declaration, which makes the contents
 /// of the named module visible in the current translation unit.
 ///

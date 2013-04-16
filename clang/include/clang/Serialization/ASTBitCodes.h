@@ -963,6 +963,8 @@ namespace clang {
       DECL_FILE_SCOPE_ASM,
       /// \brief A BlockDecl record.
       DECL_BLOCK,
+      /// \brief A CapturedDecl record.
+      DECL_CAPTURED,
       /// \brief A record that stores the set of declarations that are
       /// lexically stored within a given DeclContext.
       ///

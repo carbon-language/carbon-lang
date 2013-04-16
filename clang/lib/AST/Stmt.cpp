@@ -1038,12 +1038,12 @@ CapturedStmt::Capture *CapturedStmt::getStoredCaptures() const {
 
 CapturedStmt::CapturedStmt(Stmt *S, ArrayRef<Capture> Captures,
                            ArrayRef<Expr *> CaptureInits,
-                           FunctionDecl *FD,
+                           CapturedDecl *CD,
                            RecordDecl *RD)
   : Stmt(CapturedStmtClass), NumCaptures(Captures.size()),
-    TheFuncDecl(FD), TheRecordDecl(RD) {
+    TheCapturedDecl(CD), TheRecordDecl(RD) {
   assert( S && "null captured statement");
-  assert(FD && "null function declaration for captured statement");
+  assert(CD && "null captured declaration for captured statement");
   assert(RD && "null record declaration for captured statement");
 
   // Copy initialization expressions.
@@ -1061,14 +1061,14 @@ CapturedStmt::CapturedStmt(Stmt *S, ArrayRef<Capture> Captures,
 
 CapturedStmt::CapturedStmt(EmptyShell Empty, unsigned NumCaptures)
   : Stmt(CapturedStmtClass, Empty), NumCaptures(NumCaptures),
-    TheFuncDecl(0), TheRecordDecl(0) {
+    TheCapturedDecl(0), TheRecordDecl(0) {
   getStoredStmts()[NumCaptures] = 0;
 }
 
 CapturedStmt *CapturedStmt::Create(ASTContext &Context, Stmt *S,
                                    ArrayRef<Capture> Captures,
                                    ArrayRef<Expr *> CaptureInits,
-                                   FunctionDecl *FD,
+                                   CapturedDecl *CD,
                                    RecordDecl *RD) {
   // The layout is
   //
@@ -1089,7 +1089,7 @@ CapturedStmt *CapturedStmt::Create(ASTContext &Context, Stmt *S,
   }
 
   void *Mem = Context.Allocate(Size);
-  return new (Mem) CapturedStmt(S, Captures, CaptureInits, FD, RD);
+  return new (Mem) CapturedStmt(S, Captures, CaptureInits, CD, RD);
 }
 
 CapturedStmt *CapturedStmt::CreateDeserialized(ASTContext &Context,
@@ -1106,8 +1106,8 @@ CapturedStmt *CapturedStmt::CreateDeserialized(ASTContext &Context,
 }
 
 Stmt::child_range CapturedStmt::children() {
-  // Children are captured field initilizers and the statement being captured.
-  return child_range(getStoredStmts(), getStoredStmts() + NumCaptures + 1);
+  // Children are captured field initilizers.
+  return child_range(getStoredStmts(), getStoredStmts() + NumCaptures);
 }
 
 bool CapturedStmt::capturesVariable(const VarDecl *Var) const {

@@ -451,7 +451,7 @@ void StmtPrinter::VisitMSAsmStmt(MSAsmStmt *Node) {
 }
 
 void StmtPrinter::VisitCapturedStmt(CapturedStmt *Node) {
-  PrintStmt(Node->getCapturedStmt());
+  PrintStmt(Node->getCapturedDecl()->getBody());
 }
 
 void StmtPrinter::VisitObjCAtTryStmt(ObjCAtTryStmt *Node) {

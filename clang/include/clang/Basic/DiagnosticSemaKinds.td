@@ -4804,6 +4804,9 @@ let CategoryName = "Lambda Issue" in {
     "here">;
 }
 
+def err_return_in_captured_stmt : Error<
+  "cannot return from %0">;
+
 def err_operator_arrow_circular : Error<
   "circular pointer delegation detected">;
 def err_pseudo_dtor_base_not_scalar : Error<

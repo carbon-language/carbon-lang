@@ -31,9 +31,9 @@ namespace llvm {
 namespace clang {
   class ASTContext;
   class Attr;
+  class CapturedDecl;
   class Decl;
   class Expr;
-  class FunctionDecl;
   class IdentifierInfo;
   class LabelDecl;
   class ParmVarDecl;
@@ -1959,7 +1959,7 @@ private:
   unsigned NumCaptures;
 
   /// \brief The implicit outlined function.
-  FunctionDecl *TheFuncDecl;
+  CapturedDecl *TheCapturedDecl;
 
   /// \brief The record for captured variables, a RecordDecl or CXXRecordDecl.
   RecordDecl *TheRecordDecl;
@@ -1967,7 +1967,7 @@ private:
   /// \brief Construct a captured statement.
   CapturedStmt(Stmt *S, ArrayRef<Capture> Captures,
                ArrayRef<Expr *> CaptureInits,
-               FunctionDecl *FD, RecordDecl *RD);
+               CapturedDecl *CD, RecordDecl *RD);
 
   /// \brief Construct an empty captured statement.
   CapturedStmt(EmptyShell Empty, unsigned NumCaptures);
@@ -1982,7 +1982,7 @@ public:
   static CapturedStmt *Create(ASTContext &Context, Stmt *S,
                               ArrayRef<Capture> Captures,
                               ArrayRef<Expr *> CaptureInits,
-                              FunctionDecl *FD, RecordDecl *RD);
+                              CapturedDecl *CD, RecordDecl *RD);
 
   static CapturedStmt *CreateDeserialized(ASTContext &Context,
                                           unsigned NumCaptures);
@@ -1994,7 +1994,7 @@ public:
   }
 
   /// \brief Retrieve the outlined function declaration.
-  const FunctionDecl *getCapturedFunctionDecl() const { return TheFuncDecl; }
+  CapturedDecl *getCapturedDecl() const { return TheCapturedDecl; }
 
   /// \brief Retrieve the record declaration for captured variables.
   const RecordDecl *getCapturedRecordDecl() const { return TheRecordDecl; }

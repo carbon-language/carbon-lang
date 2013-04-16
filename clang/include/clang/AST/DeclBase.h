@@ -1046,6 +1046,7 @@ public:
   bool isFunctionOrMethod() const {
     switch (DeclKind) {
     case Decl::Block:
+    case Decl::Captured:
     case Decl::ObjCMethod:
       return true;
     default:
