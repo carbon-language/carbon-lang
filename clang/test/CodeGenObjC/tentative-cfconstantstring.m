@@ -35,8 +35,7 @@ static inline void _inlineFunction() {
 // CHECK: @_unnamed_cfstring_{{.*}} = private constant %struct.NSConstantString { i32* getelementptr inbounds ([24 x i32]* @__CFConstantStringClassReference, i32 0, i32 0)
 
 // CHECK: define internal void @_inlineFunction()
-// CHECK-NEXT: entry:
-// CHECK-NEXT:  [[ZERO:%.*]] = load %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_
+// CHECK:  [[ZERO:%.*]] = load %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_
 // CHECK-NEXT:   [[ONE:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_"
 // CHECK-NEXT:   [[TWO:%.*]] = bitcast %struct._class_t* [[ZERO]] to i8*
 // CHECK-NEXT:   call{{.*}}@objc_msgSend{{.*}}(i8* [[TWO]], i8* [[ONE]], [[ZERO]]* bitcast (%struct.NSConstantString* @_unnamed_cfstring_{{.*}}
