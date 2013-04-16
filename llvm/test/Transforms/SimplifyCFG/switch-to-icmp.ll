@@ -37,3 +37,21 @@ lor.end:
 ; CHECK: @test2
 ; CHECK: %switch = icmp ult i32 %x, 2
 }
+
+define i32 @test3(i1 %flag) {
+entry:
+ switch i1 %flag, label %bad [
+   i1 true, label %good
+   i1 false, label %good
+ ]
+
+good:
+ ret i32 0
+
+bad:
+ ret i32 1
+
+; CHECK: @test3
+; CHECK: entry:
+; CHECK-NEXT: ret i32 0
+}

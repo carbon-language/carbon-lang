@@ -3073,7 +3073,12 @@ static bool TurnSwitchRangeIntoICmp(SwitchInst *SI, IRBuilder<> &Builder) {
   Value *Sub = SI->getCondition();
   if (!Offset->isNullValue())
     Sub = Builder.CreateAdd(Sub, Offset, Sub->getName()+".off");
-  Value *Cmp = Builder.CreateICmpULT(Sub, NumCases, "switch");
+  Value *Cmp;
+  // If NumCases overflowed, then all possible values jump to the successor.
+  if (NumCases->isNullValue() && SI->getNumCases() != 0)
+    Cmp = ConstantInt::getTrue(SI->getContext());
+  else
+    Cmp = Builder.CreateICmpULT(Sub, NumCases, "switch");
   BranchInst *NewBI = Builder.CreateCondBr(
       Cmp, SI->case_begin().getCaseSuccessor(), SI->getDefaultDest());
 
