@@ -1480,7 +1480,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
         // lldb works best if it knows the start addresss of all functions in a module.
         // Linker symbols or debug info are normally the best source of information for start addr / size but
         // they may be stripped in a released binary.
-        // Two additional sources of information exist in Mach-O binaries:  
+        // Two additional sources of information exist in Mach-O binaries:
         //    LC_FUNCTION_STARTS - a list of ULEB128 encoded offsets of each function's start address in the
         //                         binary, relative to the text section.
         //    eh_frame           - the eh_frame FDEs have the start addr & size of each function
@@ -1500,7 +1500,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 function_start_entry.addr += delta;
                 function_starts.Append(function_start_entry);
             }
-        } 
+        }
         else
         {
             // If m_type is eTypeDebugInfo, then this is a dSYM - it will have the load command claiming an eh_frame
@@ -1594,11 +1594,11 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             FileSpec dsc_filespec(dsc_path, false);
 
             // We need definitions of two structures in the on-disk DSC, copy them here manually
-           struct lldb_copy_dyld_cache_header_v0
+            struct lldb_copy_dyld_cache_header_v0
             {
-               char        magic[16];            // e.g. "dyld_v0    i386", "dyld_v1   armv7", etc.
-               uint32_t    mappingOffset;        // file offset to first dyld_cache_mapping_info
-               uint32_t    mappingCount;         // number of dyld_cache_mapping_info entries
+                char        magic[16];            // e.g. "dyld_v0    i386", "dyld_v1   armv7", etc.
+                uint32_t    mappingOffset;        // file offset to first dyld_cache_mapping_info
+                uint32_t    mappingCount;         // number of dyld_cache_mapping_info entries
                 uint32_t    imagesOffset;
                 uint32_t    imagesCount;
                 uint64_t    dyldBaseAddress;
@@ -1606,49 +1606,49 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 uint64_t    codeSignatureSize;
                 uint64_t    slideInfoOffset;
                 uint64_t    slideInfoSize;
-               uint64_t    localSymbolsOffset;   // file offset of where local symbols are stored
-               uint64_t    localSymbolsSize;     // size of local symbols information
-           };
-           struct lldb_copy_dyld_cache_header_v1
-           {
-               char        magic[16];            // e.g. "dyld_v0    i386", "dyld_v1   armv7", etc.
-               uint32_t    mappingOffset;        // file offset to first dyld_cache_mapping_info
-               uint32_t    mappingCount;         // number of dyld_cache_mapping_info entries
-               uint32_t    imagesOffset;
-               uint32_t    imagesCount;
-               uint64_t    dyldBaseAddress;
-               uint64_t    codeSignatureOffset;
-               uint64_t    codeSignatureSize;
-               uint64_t    slideInfoOffset;
-               uint64_t    slideInfoSize;
+                uint64_t    localSymbolsOffset;   // file offset of where local symbols are stored
+                uint64_t    localSymbolsSize;     // size of local symbols information
+            };
+            struct lldb_copy_dyld_cache_header_v1
+            {
+                char        magic[16];            // e.g. "dyld_v0    i386", "dyld_v1   armv7", etc.
+                uint32_t    mappingOffset;        // file offset to first dyld_cache_mapping_info
+                uint32_t    mappingCount;         // number of dyld_cache_mapping_info entries
+                uint32_t    imagesOffset;
+                uint32_t    imagesCount;
+                uint64_t    dyldBaseAddress;
+                uint64_t    codeSignatureOffset;
+                uint64_t    codeSignatureSize;
+                uint64_t    slideInfoOffset;
+                uint64_t    slideInfoSize;
                 uint64_t    localSymbolsOffset;
                 uint64_t    localSymbolsSize;
-               uint8_t     uuid[16];             // v1 and above, also recorded in dyld_all_image_infos v13 and later
+                uint8_t     uuid[16];             // v1 and above, also recorded in dyld_all_image_infos v13 and later
             };
 
-           struct lldb_copy_dyld_cache_mapping_info
-           {
-               uint64_t        address;
-               uint64_t        size;
-               uint64_t        fileOffset;
-               uint32_t        maxProt;
-               uint32_t        initProt;
-           };
+            struct lldb_copy_dyld_cache_mapping_info
+            {
+                uint64_t        address;
+                uint64_t        size;
+                uint64_t        fileOffset;
+                uint32_t        maxProt;
+                uint32_t        initProt;
+            };
 
             struct lldb_copy_dyld_cache_local_symbols_info
             {
-                    uint32_t        nlistOffset;
-                    uint32_t        nlistCount;
-                    uint32_t        stringsOffset;
-                    uint32_t        stringsSize;
-                    uint32_t        entriesOffset;
-                    uint32_t        entriesCount;
+                uint32_t        nlistOffset;
+                uint32_t        nlistCount;
+                uint32_t        stringsOffset;
+                uint32_t        stringsSize;
+                uint32_t        entriesOffset;
+                uint32_t        entriesCount;
             };
             struct lldb_copy_dyld_cache_local_symbols_entry
             {
-                    uint32_t        dylibOffset;
-                    uint32_t        nlistStartIndex;
-                    uint32_t        nlistCount;
+                uint32_t        dylibOffset;
+                uint32_t        nlistStartIndex;
+                uint32_t        nlistCount;
             };
 
             /* The dyld_cache_header has a pointer to the dyld_cache_local_symbols_info structure (localSymbolsOffset).
