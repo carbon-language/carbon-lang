@@ -133,7 +133,7 @@ BADSCOP_STAT(FuncCall, "Function call with side effects appeared");
 BADSCOP_STAT(AffFunc, "Expression not affine");
 BADSCOP_STAT(Scalar, "Found scalar dependency");
 BADSCOP_STAT(Alias, "Found base address alias");
-BADSCOP_STAT(SimpleRegion, "Region not simple");
+BADSCOP_STAT(SimpleLoop, "Loop not in -loop-simplify form");
 BADSCOP_STAT(Other, "Others");
 
 //===----------------------------------------------------------------------===//
@@ -549,14 +549,16 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
     return false;
   }
 
+  if (!R.getEnteringBlock()){
+    Loop *L = LI->getLoopFor(R.getEntry());
+    if (L && !L->isLoopSimplifyForm())
+      INVALID(SimpleLoop, "Loop not in simplify form is invalid!");
+  }
+
   // SCoP cannot contain the entry block of the function, because we need
   // to insert alloca instruction there when translate scalar to array.
   if (R.getEntry() == &(R.getEntry()->getParent()->getEntryBlock()))
     INVALID(Other, "Region containing entry block of function is invalid!");
-
-  // Only regions that have a single entry are allowed.
-  if (!R.getEnteringBlock())
-    INVALID(SimpleRegion, "Region has multiple entries: " << R.getNameStr());
 
   if (!isValidExit(Context))
     return false;

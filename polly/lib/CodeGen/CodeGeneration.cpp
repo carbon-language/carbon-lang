@@ -986,16 +986,10 @@ public:
   bool runOnScop(Scop &S) {
     ParallelLoops.clear();
 
-    Region &R = S.getRegion();
+    assert(!S.getRegion().isTopLevelRegion()
+           && "Top level regions are not supported");
 
-    assert(!R.isTopLevelRegion() && "Top level regions are not supported");
-    assert(R.getEnteringBlock() && "Only support regions with a single entry");
-
-    if (!R.getExitingBlock()) {
-      BasicBlock *newExit = createSingleExitEdge(&R, this);
-      for (Region::const_iterator RI = R.begin(), RE = R.end(); RI != RE; ++RI)
-        (*RI)->replaceExitRecursive(newExit);
-    }
+    simplifyRegion(&S, this);
 
     BasicBlock *StartBlock = executeScopConditionally(S, this);
 
