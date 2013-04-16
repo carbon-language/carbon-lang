@@ -588,6 +588,70 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
   return quad ? "V16Sc" : "V8Sc";
 }
 
+/// InstructionTypeCode - Computes the ARM argument character code and
+/// quad status for a specific type string and ClassKind.
+static void InstructionTypeCode(const StringRef &typeStr,
+                                const ClassKind ck,
+                                bool &quad,
+                                std::string &typeCode) {
+  bool poly = false;
+  bool usgn = false;
+  char type = ClassifyType(typeStr, quad, poly, usgn);
+
+  switch (type) {
+  case 'c':
+    switch (ck) {
+    case ClassS: typeCode = poly ? "p8" : usgn ? "u8" : "s8"; break;
+    case ClassI: typeCode = "i8"; break;
+    case ClassW: typeCode = "8"; break;
+    default: break;
+    }
+    break;
+  case 's':
+    switch (ck) {
+    case ClassS: typeCode = poly ? "p16" : usgn ? "u16" : "s16"; break;
+    case ClassI: typeCode = "i16"; break;
+    case ClassW: typeCode = "16"; break;
+    default: break;
+    }
+    break;
+  case 'i':
+    switch (ck) {
+    case ClassS: typeCode = usgn ? "u32" : "s32"; break;
+    case ClassI: typeCode = "i32"; break;
+    case ClassW: typeCode = "32"; break;
+    default: break;
+    }
+    break;
+  case 'l':
+    switch (ck) {
+    case ClassS: typeCode = usgn ? "u64" : "s64"; break;
+    case ClassI: typeCode = "i64"; break;
+    case ClassW: typeCode = "64"; break;
+    default: break;
+    }
+    break;
+  case 'h':
+    switch (ck) {
+    case ClassS:
+    case ClassI: typeCode = "f16"; break;
+    case ClassW: typeCode = "16"; break;
+    default: break;
+    }
+    break;
+  case 'f':
+    switch (ck) {
+    case ClassS:
+    case ClassI: typeCode = "f32"; break;
+    case ClassW: typeCode = "32"; break;
+    default: break;
+    }
+    break;
+  default:
+    PrintFatalError("unhandled type!");
+  }
+}
+
 /// MangleName - Append a type or width suffix to a base neon function name,
 /// and insert a 'q' in the appropriate location if the operation works on
 /// 128b rather than 64b.   E.g. turn "vst2_lane" into "vst2q_lane_f32", etc.
@@ -597,64 +661,16 @@ static std::string MangleName(const std::string &name, StringRef typestr,
     return name;
 
   bool quad = false;
-  bool poly = false;
-  bool usgn = false;
-  char type = ClassifyType(typestr, quad, poly, usgn);
+  std::string typeCode = "";
+
+  InstructionTypeCode(typestr, ck, quad, typeCode);
 
   std::string s = name;
 
-  switch (type) {
-  case 'c':
-    switch (ck) {
-    case ClassS: s += poly ? "_p8" : usgn ? "_u8" : "_s8"; break;
-    case ClassI: s += "_i8"; break;
-    case ClassW: s += "_8"; break;
-    default: break;
-    }
-    break;
-  case 's':
-    switch (ck) {
-    case ClassS: s += poly ? "_p16" : usgn ? "_u16" : "_s16"; break;
-    case ClassI: s += "_i16"; break;
-    case ClassW: s += "_16"; break;
-    default: break;
-    }
-    break;
-  case 'i':
-    switch (ck) {
-    case ClassS: s += usgn ? "_u32" : "_s32"; break;
-    case ClassI: s += "_i32"; break;
-    case ClassW: s += "_32"; break;
-    default: break;
-    }
-    break;
-  case 'l':
-    switch (ck) {
-    case ClassS: s += usgn ? "_u64" : "_s64"; break;
-    case ClassI: s += "_i64"; break;
-    case ClassW: s += "_64"; break;
-    default: break;
-    }
-    break;
-  case 'h':
-    switch (ck) {
-    case ClassS:
-    case ClassI: s += "_f16"; break;
-    case ClassW: s += "_16"; break;
-    default: break;
-    }
-    break;
-  case 'f':
-    switch (ck) {
-    case ClassS:
-    case ClassI: s += "_f32"; break;
-    case ClassW: s += "_32"; break;
-    default: break;
-    }
-    break;
-  default:
-    PrintFatalError("unhandled type!");
+  if (typeCode.size() > 0) {
+    s += "_" + typeCode;
   }
+
   if (ck == ClassB)
     s += "_v";
 
