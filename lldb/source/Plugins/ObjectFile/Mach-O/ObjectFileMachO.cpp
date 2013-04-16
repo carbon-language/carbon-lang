@@ -844,25 +844,36 @@ ObjectFileMachO::ParseSections ()
                 load_cmd.filesize = m_data.GetAddress(&offset);
                 if (m_length != 0 && load_cmd.filesize != 0)
                 {
+                    if (load_cmd.fileoff > m_length)
+                    {
+                        // We have a load command that says it extends past the end of hte file.  This is likely
+                        // a corrupt file.  We don't have any way to return an error condition here (this method
+                        // was likely invokved from something like ObjectFile::GetSectionList()) -- all we can do
+                        // is null out the SectionList vector and if a process has been set up, dump a message
+                        // to stdout.  The most common case here is core file debugging with a truncated file.
+                        const char *lc_segment_name = load_cmd.cmd == LoadCommandSegment64 ? "LC_SEGMENT_64" : "LC_SEGMENT";
+                        GetModule()->ReportError("is a corrupt mach-o file: load command %u %s has a fileoff (0x%" PRIx64 ") that extends beyond the end of the file (0x%" PRIx64 ")",
+                                                 i,
+                                                 lc_segment_name,
+                                                 load_cmd.fileoff,
+                                                 m_length);
+                        m_sections_ap->Clear();
+                        return 0;
+                    }
+                    
                     if (load_cmd.fileoff + load_cmd.filesize > m_length)
                     {
                         // We have a load command that says it extends past the end of hte file.  This is likely
                         // a corrupt file.  We don't have any way to return an error condition here (this method
                         // was likely invokved from something like ObjectFile::GetSectionList()) -- all we can do
                         // is null out the SectionList vector and if a process has been set up, dump a message
-                        // to stdout.  The most common case here is core file debugging with a truncated file - and
-                        // in that case we don't have a Process yet so nothing will be printed.  Not really ideal;
-                        // the ObjectFile needs some way of reporting an error message for methods like GetSectionList
-                        // which fail.
-                        ProcessSP process_sp (m_process_wp.lock());
-                        if (process_sp)
-                        {
-                            Stream *s = &process_sp->GetTarget().GetDebugger().GetOutputStream();
-                            if (s)
-                            {
-                                s->Printf ("Corrupt/invalid Mach-O object file -- a load command extends past the end of the file.\n");
-                            }
-                        }
+                        // to stdout.  The most common case here is core file debugging with a truncated file.
+                        const char *lc_segment_name = load_cmd.cmd == LoadCommandSegment64 ? "LC_SEGMENT_64" : "LC_SEGMENT";
+                        GetModule()->ReportError("is a corrupt mach-o file: load command %u %s has a fileoff + filesize (0x%" PRIx64 ") that extends beyond the end of the file (0x%" PRIx64 ")",
+                                                 i,
+                                                 lc_segment_name,
+                                                 load_cmd.fileoff + load_cmd.filesize,
+                                                 m_length);
                         m_sections_ap->Clear();
                         return 0;
                     }
