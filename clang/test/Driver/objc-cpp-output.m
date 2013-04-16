@@ -1,4 +1,4 @@
-// RUN: %clang -x objc-cpp-output -c %s -o /dev/null
+// RUN: %clang -emit-llvm -x objc-cpp-output -S %s -o /dev/null
 
 // PR13820
 // REQUIRES: LP64
