@@ -232,6 +232,7 @@ private:
   /// \sa getMaxNodesPerTopLevelFunction
   Optional<unsigned> MaxNodesPerTopLevelFunction;
 
+public:
   /// Interprets an option's string value as a boolean.
   ///
   /// Accepts the strings "true" and "false".
@@ -244,7 +245,6 @@ private:
   /// Interprets an option's string value as an integer value.
   int getOptionAsInteger(StringRef Name, int DefaultVal);
 
-public:
   /// \brief Retrieves and sets the UserMode. This is a high-level option,
   /// which is used to set other low-level options. It is not accessible
   /// outside of AnalyzerOptions.

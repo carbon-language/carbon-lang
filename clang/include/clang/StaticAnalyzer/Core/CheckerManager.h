@@ -17,6 +17,7 @@
 #include "clang/Analysis/ProgramPoint.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
+#include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -134,9 +135,13 @@ enum PointerEscapeKind {
 
 class CheckerManager {
   const LangOptions LangOpts;
-
+  AnalyzerOptionsRef AOptions;
 public:
-  CheckerManager(const LangOptions &langOpts) : LangOpts(langOpts) { }
+  CheckerManager(const LangOptions &langOpts,
+                 AnalyzerOptionsRef AOptions)
+    : LangOpts(langOpts),
+      AOptions(AOptions) {}
+
   ~CheckerManager();
 
   bool hasPathSensitiveCheckers() const;
@@ -144,6 +149,7 @@ public:
   void finishedCheckerRegistration();
 
   const LangOptions &getLangOpts() const { return LangOpts; }
+  AnalyzerOptions &getAnalyzerOptions() { return *AOptions; }
 
   typedef CheckerBase *CheckerRef;
   typedef const void *CheckerTag;
@@ -164,6 +170,20 @@ public:
       return static_cast<CHECKER *>(ref); // already registered.
 
     CHECKER *checker = new CHECKER();
+    CheckerDtors.push_back(CheckerDtor(checker, destruct<CHECKER>));
+    CHECKER::_register(checker, *this);
+    ref = checker;
+    return checker;
+  }
+
+  template <typename CHECKER>
+  CHECKER *registerChecker(AnalyzerOptions &AOpts) {
+    CheckerTag tag = getTag<CHECKER>();
+    CheckerRef &ref = CheckerTags[tag];
+    if (ref)
+      return static_cast<CHECKER *>(ref); // already registered.
+
+    CHECKER *checker = new CHECKER(AOpts);
     CheckerDtors.push_back(CheckerDtor(checker, destruct<CHECKER>));
     CHECKER::_register(checker, *this);
     ref = checker;
