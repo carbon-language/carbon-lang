@@ -1301,6 +1301,53 @@ void LLVMSetGlobalConstant(LLVMValueRef GlobalVar, LLVMBool IsConstant) {
   unwrap<GlobalVariable>(GlobalVar)->setConstant(IsConstant != 0);
 }
 
+LLVMThreadLocalMode LLVMGetThreadLocalMode(LLVMValueRef GlobalVar) {
+  switch (unwrap<GlobalVariable>(GlobalVar)->getThreadLocalMode()) {
+  case GlobalVariable::NotThreadLocal:
+    return LLVMNotThreadLocal;
+  case GlobalVariable::GeneralDynamicTLSModel:
+    return LLVMGeneralDynamicTLSModel;
+  case GlobalVariable::LocalDynamicTLSModel:
+    return LLVMLocalDynamicTLSModel;
+  case GlobalVariable::InitialExecTLSModel:
+    return LLVMInitialExecTLSModel;
+  case GlobalVariable::LocalExecTLSModel:
+    return LLVMLocalExecTLSModel;
+  }
+
+  llvm_unreachable("Invalid GlobalVariable thread local mode");
+}
+
+void LLVMSetThreadLocalMode(LLVMValueRef GlobalVar, LLVMThreadLocalMode Mode) {
+  GlobalVariable *GV = unwrap<GlobalVariable>(GlobalVar);
+
+  switch (Mode) {
+  case LLVMNotThreadLocal:
+    GV->setThreadLocalMode(GlobalVariable::NotThreadLocal);
+    break;
+  case LLVMGeneralDynamicTLSModel:
+    GV->setThreadLocalMode(GlobalVariable::GeneralDynamicTLSModel);
+    break;
+  case LLVMLocalDynamicTLSModel:
+    GV->setThreadLocalMode(GlobalVariable::LocalDynamicTLSModel);
+    break;
+  case LLVMInitialExecTLSModel:
+    GV->setThreadLocalMode(GlobalVariable::InitialExecTLSModel);
+    break;
+  case LLVMLocalExecTLSModel:
+    GV->setThreadLocalMode(GlobalVariable::LocalExecTLSModel);
+    break;
+  }
+}
+
+LLVMBool LLVMIsExternallyInitialized(LLVMValueRef GlobalVar) {
+  return unwrap<GlobalVariable>(GlobalVar)->isExternallyInitialized();
+}
+
+void LLVMSetExternallyInitialized(LLVMValueRef GlobalVar, LLVMBool IsExtInit) {
+  unwrap<GlobalVariable>(GlobalVar)->setExternallyInitialized(IsExtInit);
+}
+
 /*--.. Operations on aliases ......................................--*/
 
 LLVMValueRef LLVMAddAlias(LLVMModuleRef M, LLVMTypeRef Ty, LLVMValueRef Aliasee,

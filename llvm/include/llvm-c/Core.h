@@ -352,6 +352,14 @@ typedef enum {
   LLVMLandingPadFilter    /**< A filter clause  */
 } LLVMLandingPadClauseTy;
 
+typedef enum {
+  LLVMNotThreadLocal = 0,
+  LLVMGeneralDynamicTLSModel,
+  LLVMLocalDynamicTLSModel,
+  LLVMInitialExecTLSModel,
+  LLVMLocalExecTLSModel
+} LLVMThreadLocalMode;
+
 /**
  * @}
  */
@@ -1606,6 +1614,10 @@ LLVMBool LLVMIsThreadLocal(LLVMValueRef GlobalVar);
 void LLVMSetThreadLocal(LLVMValueRef GlobalVar, LLVMBool IsThreadLocal);
 LLVMBool LLVMIsGlobalConstant(LLVMValueRef GlobalVar);
 void LLVMSetGlobalConstant(LLVMValueRef GlobalVar, LLVMBool IsConstant);
+LLVMThreadLocalMode LLVMGetThreadLocalMode(LLVMValueRef GlobalVar);
+void LLVMSetThreadLocalMode(LLVMValueRef GlobalVar, LLVMThreadLocalMode Mode);
+LLVMBool LLVMIsExternallyInitialized(LLVMValueRef GlobalVar);
+void LLVMSetExternallyInitialized(LLVMValueRef GlobalVar, LLVMBool IsExtInit);
 
 /**
  * @}
