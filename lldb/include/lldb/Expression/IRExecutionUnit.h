@@ -64,7 +64,8 @@ public:
     //------------------------------------------------------------------
     /// Constructor
     //------------------------------------------------------------------
-    IRExecutionUnit (std::auto_ptr<llvm::Module> &module_ap,
+    IRExecutionUnit (std::auto_ptr<llvm::LLVMContext> &context_ap,
+                     std::auto_ptr<llvm::Module> &module_ap,
                      ConstString &name,
                      const lldb::TargetSP &target_sp,
                      std::vector<std::string> &cpu_features);
@@ -491,6 +492,7 @@ private:
     typedef std::vector<AllocationRecord>   RecordVector;
     RecordVector                            m_records;
 
+    std::auto_ptr<llvm::LLVMContext>        m_context_ap;
     std::auto_ptr<llvm::ExecutionEngine>    m_execution_engine_ap;
     std::auto_ptr<llvm::Module>             m_module_ap;            ///< Holder for the module until it's been handed off
     llvm::Module                           *m_module;               ///< Owned by the execution engine

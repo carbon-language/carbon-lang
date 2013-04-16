@@ -29,6 +29,7 @@
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Expression/ExpressionSourceCode.h"
+#include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Expression/Materializer.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Symbol/Block.h"
@@ -551,7 +552,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
             }
         }
                 
-        if (!m_expr_decl_map->Materialize(struct_address, materialize_error))
+        if (!m_expr_decl_map->Materialize(*m_execution_unit_ap, struct_address, materialize_error))
         {
             error_stream.Printf("Couldn't materialize struct: %s\n", materialize_error.AsCString());
             return false;
@@ -654,7 +655,7 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
     lldb::addr_t function_stack_bottom = function_stack_pointer - Host::GetPageSize();
     
         
-    if (!m_expr_decl_map->Dematerialize(result, function_stack_pointer, function_stack_bottom, expr_error))
+    if (!m_expr_decl_map->Dematerialize(result, *m_execution_unit_ap, function_stack_pointer, function_stack_bottom, expr_error))
     {
         error_stream.Printf ("Couldn't dematerialize struct : %s\n", expr_error.AsCString("unknown error"));
         return false;

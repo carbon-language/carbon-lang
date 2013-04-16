@@ -629,44 +629,11 @@ ClangExpressionDeclMap::DoStructLayout ()
     if (m_struct_vars->m_struct_laid_out)
         return true;
     
-    if (m_parser_vars->m_materializer)
-    {
-        m_struct_vars->m_struct_alignment = m_parser_vars->m_materializer->GetStructAlignment();
-        m_struct_vars->m_struct_size = m_parser_vars->m_materializer->GetStructByteSize();
-        m_struct_vars->m_struct_laid_out = true;
-        return true;
-    }
+    if (!m_parser_vars->m_materializer)
+        return false;
     
-    off_t cursor = 0;
-    
-    m_struct_vars->m_struct_alignment = 0;
-    m_struct_vars->m_struct_size = 0;
-    
-    for (size_t member_index = 0, num_members = m_struct_members.GetSize();
-         member_index < num_members;
-         ++member_index)
-    {
-        ClangExpressionVariableSP member_sp(m_struct_members.GetVariableAtIndex(member_index));
-        if (!member_sp)
-            return false;
-        
-        ClangExpressionVariable::JITVars *jit_vars = member_sp->GetJITVars(GetParserID());
-
-        if (!jit_vars)
-            return false;
-        
-        if (member_index == 0)
-            m_struct_vars->m_struct_alignment = jit_vars->m_alignment;
-        
-        if (cursor % jit_vars->m_alignment)
-            cursor += (jit_vars->m_alignment - (cursor % jit_vars->m_alignment));
-        
-        jit_vars->m_offset = cursor;
-        cursor += jit_vars->m_size;
-    }
-    
-    m_struct_vars->m_struct_size = cursor;
-    
+    m_struct_vars->m_struct_alignment = m_parser_vars->m_materializer->GetStructAlignment();
+    m_struct_vars->m_struct_size = m_parser_vars->m_materializer->GetStructByteSize();
     m_struct_vars->m_struct_laid_out = true;
     return true;
 }
@@ -1315,6 +1282,7 @@ ClangExpressionDeclMap::GetSpecialValue (const ConstString &name)
 bool 
 ClangExpressionDeclMap::Materialize 
 (
+    IRMemoryMap &map,
     lldb::addr_t &struct_address,
     Error &err
 )
@@ -1326,7 +1294,8 @@ ClangExpressionDeclMap::Materialize
     
     m_material_vars->m_process = m_parser_vars->m_exe_ctx.GetProcessPtr();
     
-    bool result = DoMaterialize(false /* dematerialize */, 
+    bool result = DoMaterialize(false /* dematerialize */,
+                                map,
                                 LLDB_INVALID_ADDRESS /* top of stack frame */, 
                                 LLDB_INVALID_ADDRESS /* bottom of stack frame */, 
                                 NULL, /* result SP */
@@ -1453,12 +1422,13 @@ bool
 ClangExpressionDeclMap::Dematerialize 
 (
     ClangExpressionVariableSP &result_sp,
+    IRMemoryMap &map,
     lldb::addr_t stack_frame_top,
     lldb::addr_t stack_frame_bottom,
     Error &err
 )
 {
-    return DoMaterialize(true, stack_frame_top, stack_frame_bottom, &result_sp, err);
+    return DoMaterialize(true, map, stack_frame_top, stack_frame_bottom, &result_sp, err);
     
     DidDematerialize();
 }
@@ -1567,6 +1537,7 @@ bool
 ClangExpressionDeclMap::DoMaterialize 
 (
     bool dematerialize,
+    IRMemoryMap &map,
     lldb::addr_t stack_frame_top,
     lldb::addr_t stack_frame_bottom,
     lldb::ClangExpressionVariableSP *result_sp_ptr,
@@ -1606,873 +1577,103 @@ ClangExpressionDeclMap::DoMaterialize
         return true;
     }
     
-    const SymbolContext &sym_ctx(frame->GetSymbolContext(lldb::eSymbolContextEverything));
-    
-    if (!dematerialize)
+    if (!m_parser_vars->m_materializer)
     {
-        Process *process = m_parser_vars->m_exe_ctx.GetProcessPtr();
-        if (m_material_vars->m_materialized_location)
-        {
-            process->DeallocateMemory(m_material_vars->m_materialized_location);
-            m_material_vars->m_materialized_location = 0;
-        }
+        err.SetErrorString("No materializer");
         
-        if (log)
-            log->PutCString("Allocating memory for materialized argument struct");
-        
-        lldb::addr_t mem = process->AllocateMemory(m_struct_vars->m_struct_alignment + m_struct_vars->m_struct_size, 
-                                                   lldb::ePermissionsReadable | lldb::ePermissionsWritable,
-                                                   err);
-        
-        if (mem == LLDB_INVALID_ADDRESS)
-        {
-            err.SetErrorStringWithFormat("Couldn't allocate 0x%llx bytes for materialized argument struct",
-                                         (unsigned long long)(m_struct_vars->m_struct_alignment + m_struct_vars->m_struct_size));
-            return false;
-        }
-            
-        m_material_vars->m_allocated_area = mem;
-    }
-    
-    m_material_vars->m_materialized_location = m_material_vars->m_allocated_area;
-    
-    if (m_material_vars->m_materialized_location % m_struct_vars->m_struct_alignment)
-        m_material_vars->m_materialized_location += (m_struct_vars->m_struct_alignment - (m_material_vars->m_materialized_location % m_struct_vars->m_struct_alignment));
-    
-    for (uint64_t member_index = 0, num_members = m_struct_members.GetSize();
-         member_index < num_members;
-         ++member_index)
-    {
-        ClangExpressionVariableSP member_sp(m_struct_members.GetVariableAtIndex(member_index));
-        
-        ClangExpressionVariable::JITVars *jit_vars = member_sp->GetJITVars(GetParserID());
-        
-        if (!jit_vars)
-        {
-            err.SetErrorString("Variable being materialized doesn't have JIT state");
-            return false;
-        }
-        
-        if (m_found_entities.ContainsVariable (member_sp))
-        {
-            if (!member_sp->GetValueObject())
-            {
-                err.SetErrorString("Variable being materialized doesn't have a frozen version");
-                return false;
-            }
-            
-            RegisterInfo *reg_info = member_sp->GetRegisterInfo ();
-            if (reg_info)
-            {
-                // This is a register variable
-                
-                RegisterContext *reg_ctx = m_parser_vars->m_exe_ctx.GetRegisterContext();
-                
-                if (!reg_ctx)
-                {
-                    err.SetErrorString("Couldn't get register context");
-                    return false;
-                }
-                    
-                if (!DoMaterializeOneRegister (dematerialize, 
-                                               *reg_ctx, 
-                                               *reg_info, 
-                                               m_material_vars->m_materialized_location + jit_vars->m_offset,
-                                               err))
-                    return false;
-            }
-            else
-            {                
-                if (!DoMaterializeOneVariable (dematerialize, 
-                                               sym_ctx,
-                                               member_sp,
-                                               m_material_vars->m_materialized_location + jit_vars->m_offset,
-                                               err))
-                    return false;
-            }
-        }
-        else
-        {
-            // No need to look for presistent variables if the name doesn't start 
-            // with with a '$' character...
-            if (member_sp->GetName().AsCString ("!")[0] == '$' && persistent_vars.ContainsVariable(member_sp))
-            {
-                
-                if (member_sp->GetName() == m_struct_vars->m_result_name)
-                {
-                    if (log)
-                        log->PutCString("Found result member in the struct");
-
-                    if (result_sp_ptr)
-                        *result_sp_ptr = member_sp;
-                    
-                }
-
-                if (!DoMaterializeOnePersistentVariable (dematerialize, 
-                                                         member_sp, 
-                                                         m_material_vars->m_materialized_location + jit_vars->m_offset,
-                                                         stack_frame_top,
-                                                         stack_frame_bottom,
-                                                         err))
-                    return false;
-            }
-            else
-            {
-                err.SetErrorStringWithFormat("Unexpected variable %s", member_sp->GetName().GetCString());
-                return false;
-            }
-        }
-    }
-    
-    return true;
-}
-
-bool
-ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
-(
-    bool dematerialize,
-    ClangExpressionVariableSP &var_sp,
-    lldb::addr_t addr,
-    lldb::addr_t stack_frame_top,
-    lldb::addr_t stack_frame_bottom,
-    Error &err
-)
-{
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-
-    if (!var_sp)
-    {
-        err.SetErrorString("Invalid persistent variable");
-        return LLDB_INVALID_ADDRESS;
-    }
-    
-    const size_t pvar_byte_size = var_sp->GetByteSize();
-    
-    uint8_t *pvar_data = var_sp->GetValueBytes();
-    if (pvar_data == NULL)
-    {
-        err.SetErrorString("Persistent variable being materialized contains no data");
         return false;
     }
     
-    Error error;
-    Process *process = m_parser_vars->m_exe_ctx.GetProcessPtr();
-
-    lldb::addr_t mem; // The address of a spare memory area used to hold the persistent variable.
+    lldb::StackFrameSP frame_sp = frame->shared_from_this();
+    ClangExpressionVariableSP result_sp;
     
     if (dematerialize)
     {
-        if (log)
-            log->Printf("Dematerializing persistent variable with flags 0x%hx", var_sp->m_flags);
+        Error dematerialize_error;
         
-        if ((var_sp->m_flags & ClangExpressionVariable::EVIsLLDBAllocated) ||
-            (var_sp->m_flags & ClangExpressionVariable::EVIsProgramReference))
+        bool ret = true;
+        
+        m_material_vars->m_dematerializer_sp->Dematerialize(dematerialize_error, stack_frame_top, stack_frame_bottom);
+        m_material_vars->m_dematerializer_sp.reset();
+        
+        if (!dematerialize_error.Success())
         {
-            // Get the location of the target out of the struct.
-            
-            Error read_error;
-            mem = process->ReadPointerFromMemory (addr, read_error);
-            
-            if (mem == LLDB_INVALID_ADDRESS)
-            {
-                err.SetErrorStringWithFormat("Couldn't read address of %s from struct: %s", var_sp->GetName().GetCString(), error.AsCString());
-                return false;
-            }
-            
-            if (var_sp->m_flags & ClangExpressionVariable::EVIsProgramReference &&
-                !var_sp->m_live_sp)
-            {
-                // If the reference comes from the program, then the ClangExpressionVariable's
-                // live variable data hasn't been set up yet.  Do this now.
-                
-                var_sp->m_live_sp = ValueObjectConstResult::Create (m_parser_vars->m_exe_ctx.GetBestExecutionContextScope (),
-                                                                    var_sp->GetTypeFromUser().GetASTContext(),
-                                                                    var_sp->GetTypeFromUser().GetOpaqueQualType(),
-                                                                    var_sp->GetName(),
-                                                                    mem,
-                                                                    eAddressTypeLoad,
-                                                                    pvar_byte_size);
-            }
-            
-            if (!var_sp->m_live_sp)
-            {
-                err.SetErrorStringWithFormat("Couldn't find the memory area used to store %s", var_sp->GetName().GetCString());
-                return false;
-            }
-            
-            if (var_sp->m_live_sp->GetValue().GetValueAddressType() != eAddressTypeLoad)
-            {
-                err.SetErrorStringWithFormat("The address of the memory area for %s is in an incorrect format", var_sp->GetName().GetCString());
-                return false;
-            }
-            
-            if (var_sp->m_flags & ClangExpressionVariable::EVNeedsFreezeDry ||
-                var_sp->m_flags & ClangExpressionVariable::EVKeepInTarget)
-            {
-                mem = var_sp->m_live_sp->GetValue().GetScalar().ULongLong();
-                
-                if (log)
-                    log->Printf("Dematerializing %s from 0x%" PRIx64 " (size = %u)", var_sp->GetName().GetCString(), (uint64_t)mem, (unsigned)pvar_byte_size);
-                
-                // Read the contents of the spare memory area
-                                
-                var_sp->ValueUpdated ();
-                if (process->ReadMemory (mem, pvar_data, pvar_byte_size, error) != pvar_byte_size)
-                {
-                    err.SetErrorStringWithFormat ("Couldn't read a composite type from the target: %s", error.AsCString());
-                    return false;
-                }
-                
-                if (stack_frame_top != LLDB_INVALID_ADDRESS &&
-                    stack_frame_bottom != LLDB_INVALID_ADDRESS &&
-                    mem >= stack_frame_bottom &&
-                    mem <= stack_frame_top)
-                {
-                    // If the variable is resident in the stack frame created by the expression,
-                    // then it cannot be relied upon to stay around.  We treat it as needing
-                    // reallocation.
-                    
-                    var_sp->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
-                    var_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
-                    var_sp->m_flags &= ~ClangExpressionVariable::EVIsProgramReference;
-                }
-                
-                var_sp->m_flags &= ~ClangExpressionVariable::EVNeedsFreezeDry;
-            }
-            
-            if (var_sp->m_flags & ClangExpressionVariable::EVNeedsAllocation &&
-                !(var_sp->m_flags & ClangExpressionVariable::EVKeepInTarget))
-            {
-                if (m_keep_result_in_memory)
-                {
-                    var_sp->m_flags |= ClangExpressionVariable::EVKeepInTarget;
-                }
-                else
-                {
-                    Error deallocate_error = process->DeallocateMemory(mem);
-                    
-                    if (!err.Success())
-                    {
-                        err.SetErrorStringWithFormat ("Couldn't deallocate memory for %s: %s", var_sp->GetName().GetCString(), deallocate_error.AsCString());
-                        return false;
-                    }
-                }
-            }
+            err.SetErrorStringWithFormat("Couldn't dematerialize: %s", dematerialize_error.AsCString());
+            ret = false;
         }
         else
         {
-            err.SetErrorStringWithFormat("Persistent variables without separate allocations are not currently supported.");
-            return false;
-        }
-    }
-    else 
-    {
-        if (log)
-            log->Printf("Materializing persistent variable with flags 0x%hx", var_sp->m_flags);
-        
-        if (var_sp->m_flags & ClangExpressionVariable::EVNeedsAllocation)
-        {
-            // Allocate a spare memory area to store the persistent variable's contents.
-            
-            Error allocate_error;
-            
-            mem = process->AllocateMemory(pvar_byte_size, 
-                                          lldb::ePermissionsReadable | lldb::ePermissionsWritable, 
-                                          allocate_error);
-            
-            if (mem == LLDB_INVALID_ADDRESS)
+            Error free_error;
+            map.Free(m_material_vars->m_materialized_location, free_error);
+            if (!free_error.Success())
             {
-                err.SetErrorStringWithFormat("Couldn't allocate a memory area to store %s: %s", var_sp->GetName().GetCString(), allocate_error.AsCString());
-                return false;
-            }
-            
-            if (log)
-                log->Printf("Allocated %s (0x%" PRIx64 ") sucessfully", var_sp->GetName().GetCString(), mem);
-            
-            // Put the location of the spare memory into the live data of the ValueObject.
-            
-            var_sp->m_live_sp = ValueObjectConstResult::Create (m_parser_vars->m_exe_ctx.GetBestExecutionContextScope(),
-                                                                var_sp->GetTypeFromUser().GetASTContext(),
-                                                                var_sp->GetTypeFromUser().GetOpaqueQualType(),
-                                                                var_sp->GetName(),
-                                                                mem,
-                                                                eAddressTypeLoad,
-                                                                pvar_byte_size);
-            
-            // Clear the flag if the variable will never be deallocated.
-            
-            if (var_sp->m_flags & ClangExpressionVariable::EVKeepInTarget)
-                var_sp->m_flags &= ~ClangExpressionVariable::EVNeedsAllocation;
-            
-            // Write the contents of the variable to the area.
-            
-            if (process->WriteMemory (mem, pvar_data, pvar_byte_size, error) != pvar_byte_size)
-            {
-                err.SetErrorStringWithFormat ("Couldn't write a composite type to the target: %s", error.AsCString());
-                return false;
+                err.SetErrorStringWithFormat("Couldn't free struct from materialization: %s", free_error.AsCString());
+                ret = false;
             }
         }
         
-        if ((var_sp->m_flags & ClangExpressionVariable::EVIsProgramReference && var_sp->m_live_sp) ||
-            var_sp->m_flags & ClangExpressionVariable::EVIsLLDBAllocated)
+        if (ret)
         {
-            // Now write the location of the area into the struct.
-            Error write_error;
-            if (!process->WriteScalarToMemory (addr, 
-                                               var_sp->m_live_sp->GetValue().GetScalar(), 
-                                               process->GetAddressByteSize(), 
-                                               write_error))
+            for (uint64_t member_index = 0, num_members = m_struct_members.GetSize();
+                 member_index < num_members;
+                 ++member_index)
             {
-                err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", var_sp->GetName().GetCString(), write_error.AsCString());
-                return false;
+                ClangExpressionVariableSP member_sp(m_struct_members.GetVariableAtIndex(member_index));
+
+                if (!m_found_entities.ContainsVariable (member_sp))
+                {
+                    // No need to look for presistent variables if the name doesn't start
+                    // with with a '$' character...
+                    if (member_sp->GetName().AsCString ("!")[0] == '$' && persistent_vars.ContainsVariable(member_sp))
+                    {
+                        if (member_sp->GetName() == m_struct_vars->m_result_name)
+                        {
+                            if (log)
+                                log->PutCString("Found result member in the struct");
+                            
+                            if (result_sp_ptr)
+                                *result_sp_ptr = member_sp;
+                            
+                            break;
+                        }
+                    }
+                }
             }
-            
-            if (log)
-                log->Printf("Materialized %s into 0x%llx", var_sp->GetName().GetCString(), var_sp->m_live_sp->GetValue().GetScalar().ULongLong());
-        }
-        else if (!(var_sp->m_flags & ClangExpressionVariable::EVIsProgramReference))
-        {
-            err.SetErrorStringWithFormat("Persistent variables without separate allocations are not currently supported.");
-            return false;
-        }
-    }
-    
-    return true;
-}
-
-bool
-ClangExpressionDeclMap::CreateLiveMemoryForExpressionVariable
-(
-    Process &process,
-    ClangExpressionVariableSP &expr_var,
-    Error &err
-)
-{
-    Error allocate_error;
-    TypeFromUser type(expr_var->GetTypeFromUser());
-    const ConstString &name(expr_var->GetName());
-    
-    size_t value_bit_size = ClangASTType::GetClangTypeBitWidth(type.GetASTContext(), type.GetOpaqueQualType());
-    size_t value_byte_size = value_bit_size % 8 ? ((value_bit_size + 8) / 8) : (value_bit_size / 8);
-
-    Scalar val_addr (process.AllocateMemory (value_byte_size,
-                                             lldb::ePermissionsReadable | lldb::ePermissionsWritable,
-                                             allocate_error));
-    
-    if (val_addr.ULongLong() == LLDB_INVALID_ADDRESS)
-    {
-        err.SetErrorStringWithFormat ("Couldn't allocate a memory area to store %s: %s",
-                                      name.GetCString(),
-                                      allocate_error.AsCString());
-        return false;
-    }
-    
-    // Put the location of the spare memory into the live data of the ValueObject.
-    
-    expr_var->m_live_sp = ValueObjectConstResult::Create (m_parser_vars->m_exe_ctx.GetBestExecutionContextScope(),
-                                                          type.GetASTContext(),
-                                                          type.GetOpaqueQualType(),
-                                                          name,
-                                                          val_addr.ULongLong(),
-                                                          eAddressTypeLoad,
-                                                          value_byte_size);
-    
-    return true;
-}
-
-bool
-ClangExpressionDeclMap::DeleteLiveMemoryForExpressionVariable
-(
-    Process &process,
-    ClangExpressionVariableSP &expr_var,
-    Error &err
-)
-{
-    const ConstString &name(expr_var->GetName());
-    
-    Scalar &val_addr = expr_var->m_live_sp->GetValue().GetScalar();
-    
-    Error deallocate_error = process.DeallocateMemory(val_addr.ULongLong());
-    
-    if (!deallocate_error.Success())
-    {
-        err.SetErrorStringWithFormat ("Couldn't deallocate spare memory area for %s: %s",
-                                      name.GetCString(),
-                                      deallocate_error.AsCString());
-        return false;
-    }
-    
-    expr_var->m_live_sp.reset();
-    
-    return true;
-}
-
-bool
-ClangExpressionDeclMap::DoMaterializeOneVariable
-(
-    bool dematerialize,
-    const SymbolContext &sym_ctx,
-    ClangExpressionVariableSP &expr_var,
-    lldb::addr_t addr,
-    Error &err
-)
-{
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-    Target *target = m_parser_vars->m_exe_ctx.GetTargetPtr();
-    Process *process = m_parser_vars->m_exe_ctx.GetProcessPtr();
-    StackFrame *frame = m_parser_vars->m_exe_ctx.GetFramePtr();
-    
-    ClangExpressionVariable::ParserVars *var_parser_vars = expr_var->GetParserVars(GetParserID());
-
-    if (!frame || !process || !target || !m_parser_vars.get() || !var_parser_vars)
-    {
-        err.SetErrorString("Necessary state for variable materialization isn't present");
-        return false;
-    }
-    
-    // Vital information about the value
-    
-    const ConstString &name(expr_var->GetName());
-    TypeFromUser type(expr_var->GetTypeFromUser());
-    
-    VariableSP &var(var_parser_vars->m_lldb_var);
-    const lldb_private::Symbol *symbol = var_parser_vars->m_lldb_sym;
-    
-    bool is_reference(expr_var->m_flags & ClangExpressionVariable::EVTypeIsReference);
-    
-    std::auto_ptr<lldb_private::Value> location_value;
-
-    if (var)
-    {
-        location_value.reset(GetVariableValue(var,
-                                              NULL));
-    }
-    else if (symbol)
-    {
-        addr_t location_load_addr = GetSymbolAddress(*target, process, name, lldb::eSymbolTypeAny);
-        
-        if (location_load_addr == LLDB_INVALID_ADDRESS)
-        {
-            if (log)
-                err.SetErrorStringWithFormat ("Couldn't find value for global symbol %s", 
-                                              name.GetCString());
         }
         
-        location_value.reset(new Value);
-        
-        location_value->SetValueType(Value::eValueTypeLoadAddress);
-        location_value->GetScalar() = location_load_addr;
+        return ret;
     }
     else
     {
-        err.SetErrorStringWithFormat ("Couldn't find %s with appropriate type", 
-                                      name.GetCString());
-        return false;
-    }
-    
-    if (log)
-    {
-        StreamString my_stream_string;
+        Error malloc_error;
         
-        ClangASTType::DumpTypeDescription (type.GetASTContext(),
-                                           type.GetOpaqueQualType(),
-                                           &my_stream_string);
+        m_material_vars->m_allocated_area = LLDB_INVALID_ADDRESS;
+        m_material_vars->m_materialized_location = map.Malloc(m_parser_vars->m_materializer->GetStructByteSize(),
+                                                              m_parser_vars->m_materializer->GetStructAlignment(),
+                                                              lldb::ePermissionsReadable | lldb::ePermissionsWritable,
+                                                              IRMemoryMap::eAllocationPolicyMirror,
+                                                              malloc_error);
         
-        log->Printf ("%s %s with type %s", 
-                     dematerialize ? "Dematerializing" : "Materializing", 
-                     name.GetCString(), 
-                     my_stream_string.GetString().c_str());
-    }
-    
-    if (!location_value.get())
-    {
-        err.SetErrorStringWithFormat("Couldn't get value for %s", name.GetCString());
-        return false;
-    }
-
-    // The size of the type contained in addr
-    
-    size_t value_bit_size = ClangASTType::GetClangTypeBitWidth(type.GetASTContext(), type.GetOpaqueQualType());
-    size_t value_byte_size = value_bit_size % 8 ? ((value_bit_size + 8) / 8) : (value_bit_size / 8);
-    
-    Value::ValueType value_type = location_value->GetValueType();
-    
-    switch (value_type)
-    {
-    default:
+        if (!malloc_error.Success())
         {
-            StreamString ss;
+            err.SetErrorStringWithFormat("Couldn't malloc struct for materialization: %s", malloc_error.AsCString());
             
-            location_value->Dump(&ss);
+            return false;
+        }
+        
+        Error materialize_error;
+        
+        m_material_vars->m_dematerializer_sp = m_parser_vars->m_materializer->Materialize(frame_sp, result_sp, map, m_material_vars->m_materialized_location, materialize_error);
+        
+        if (!materialize_error.Success())
+        {
+            err.SetErrorStringWithFormat("Couldn't materialize: %s", materialize_error.AsCString());
             
-            err.SetErrorStringWithFormat ("%s has a value of unhandled type: %s", 
-                                          name.GetCString(), 
-                                          ss.GetString().c_str());
-            return false;
-        }
-        break;
-    case Value::eValueTypeHostAddress:
-        {
-            if (dematerialize)
-            {
-                if (!DeleteLiveMemoryForExpressionVariable(*process, expr_var, err))
-                    return false;
-            }
-            else
-            {                
-                DataExtractor value_data_extractor;
-                
-                if (location_value->GetData(value_data_extractor))
-                {
-                    if (value_byte_size != value_data_extractor.GetByteSize())
-                    {
-                        err.SetErrorStringWithFormat ("Size mismatch for %s: %" PRIu64 " versus %" PRIu64,
-                                                      name.GetCString(),
-                                                      (uint64_t)value_data_extractor.GetByteSize(),
-                                                      (uint64_t)value_byte_size);
-                        return false;
-                    }
-                    
-                    if (!CreateLiveMemoryForExpressionVariable(*process, expr_var, err))
-                        return false;
-                    
-                    Scalar &buf_addr = expr_var->m_live_sp->GetValue().GetScalar();
-
-                    Error write_error;
-                    
-                    if (!process->WriteMemory(buf_addr.ULongLong(),
-                                              value_data_extractor.GetDataStart(),
-                                              value_data_extractor.GetByteSize(),
-                                              write_error))
-                    {
-                        err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s",
-                                                      name.GetCString(),
-                                                      write_error.AsCString());
-                        return false;
-                    }
-                    
-                    if (!process->WriteScalarToMemory(addr,
-                                                      buf_addr,
-                                                      process->GetAddressByteSize(),
-                                                      write_error))
-                    {
-                        err.SetErrorStringWithFormat ("Couldn't write the address of %s to the target: %s",
-                                                      name.GetCString(),
-                                                      write_error.AsCString());
-                        return false;
-                    }
-                }
-                else
-                {
-                    err.SetErrorStringWithFormat ("%s is marked as a host address but doesn't contain any data",
-                                                  name.GetCString());
-                    return false;
-                }
-            }
-        }
-        break;
-    case Value::eValueTypeLoadAddress:
-        {
-            if (!dematerialize)
-            {
-                Error write_error;
-
-                if (is_reference)
-                {
-                    Error read_error;
-                    
-                    addr_t ref_value = process->ReadPointerFromMemory(location_value->GetScalar().ULongLong(), read_error);
-                    
-                    if (!read_error.Success())
-                    {
-                        err.SetErrorStringWithFormat ("Couldn't read reference to %s from the target: %s",
-                                                      name.GetCString(),
-                                                      read_error.AsCString());
-                        return false;
-                    }
-                    
-                    if (!process->WritePointerToMemory(addr,
-                                                       ref_value,
-                                                       write_error))
-                    {
-                        err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", 
-                                                      name.GetCString(), 
-                                                      write_error.AsCString());
-                        return false;
-                    }
-                }
-                else
-                {
-                    if (!process->WriteScalarToMemory (addr, 
-                                                       location_value->GetScalar(), 
-                                                       process->GetAddressByteSize(), 
-                                                       write_error))
-                    {
-                        err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", 
-                                                      name.GetCString(), 
-                                                      write_error.AsCString());
-                        return false;
-                    }
-                }
-            }
-        }
-        break;
-    case Value::eValueTypeScalar:
-        {
-            if (location_value->GetContextType() == Value::eContextTypeRegisterInfo)
-            {
-                RegisterInfo *reg_info = location_value->GetRegisterInfo();
-                
-                if (!reg_info)
-                {
-                    err.SetErrorStringWithFormat ("Couldn't get the register information for %s", 
-                                                  name.GetCString());
-                    return false;
-                }
-                
-                RegisterValue reg_value;
-
-                RegisterContext *reg_ctx = m_parser_vars->m_exe_ctx.GetRegisterContext();
-                
-                if (!reg_ctx)
-                {
-                    err.SetErrorStringWithFormat ("Couldn't read register context to read %s from %s", 
-                                                  name.GetCString(), 
-                                                  reg_info->name);
-                    return false;
-                }
-                
-                uint32_t register_byte_size = reg_info->byte_size;
-                
-                if (dematerialize)
-                {
-                    if (is_reference)
-                        return true; // reference types don't need demateralizing
-                    
-                    // Get the location of the spare memory area out of the variable's live data.
-                    
-                    if (!expr_var->m_live_sp)
-                    {
-                        err.SetErrorStringWithFormat("Couldn't find the memory area used to store %s", name.GetCString());
-                        return false;
-                    }
-                    
-                    if (expr_var->m_live_sp->GetValue().GetValueAddressType() != eAddressTypeLoad)
-                    {
-                        err.SetErrorStringWithFormat("The address of the memory area for %s is in an incorrect format", name.GetCString());
-                        return false;
-                    }
-                    
-                    Scalar &reg_addr = expr_var->m_live_sp->GetValue().GetScalar();
-                    
-                    err = reg_ctx->ReadRegisterValueFromMemory (reg_info, 
-                                                                reg_addr.ULongLong(), 
-                                                                value_byte_size, 
-                                                                reg_value);
-                    if (err.Fail())
-                        return false;
-
-                    if (!reg_ctx->WriteRegister (reg_info, reg_value))
-                    {
-                        err.SetErrorStringWithFormat ("Couldn't write %s to register %s", 
-                                                      name.GetCString(), 
-                                                      reg_info->name);
-                        return false;
-                    }
-                    
-                    if (!DeleteLiveMemoryForExpressionVariable(*process, expr_var, err))
-                        return false;
-                }
-                else
-                {
-                    Error write_error;
-                    
-                    RegisterValue reg_value;
-                    
-                    if (!reg_ctx->ReadRegister (reg_info, reg_value))
-                    {
-                        err.SetErrorStringWithFormat ("Couldn't read %s from %s", 
-                                                      name.GetCString(), 
-                                                      reg_info->name);
-                        return false;
-                    }
-
-                    if (is_reference)
-                    {
-                        write_error = reg_ctx->WriteRegisterValueToMemory(reg_info, 
-                                                                          addr,
-                                                                          process->GetAddressByteSize(), 
-                                                                          reg_value);
-                        
-                        if (!write_error.Success())
-                        {
-                            err.SetErrorStringWithFormat ("Couldn't write %s from register %s to the target: %s", 
-                                                          name.GetCString(),
-                                                          reg_info->name,
-                                                          write_error.AsCString());
-                            return false;
-                        }
-                        
-                        return true;
-                    }
-                    
-                    // Allocate a spare memory area to place the register's contents into.  This memory area will be pointed to by the slot in the
-                    // struct.
-                    
-                    if (!CreateLiveMemoryForExpressionVariable (*process, expr_var, err))
-                        return false;
-                    
-                    // Now write the location of the area into the struct.
-                    
-                    Scalar &reg_addr = expr_var->m_live_sp->GetValue().GetScalar();
-                    
-                    if (!process->WriteScalarToMemory (addr, 
-                                                      reg_addr, 
-                                                      process->GetAddressByteSize(), 
-                                                      write_error))
-                    {
-                        err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", 
-                                                      name.GetCString(), 
-                                                      write_error.AsCString());
-                        return false;
-                    }
-                    
-                    if (value_byte_size > register_byte_size)
-                    {
-                        err.SetErrorStringWithFormat ("%s is too big to store in %s", 
-                                                      name.GetCString(), 
-                                                      reg_info->name);
-                        return false;
-                    }
-
-                    if (!reg_ctx->ReadRegister (reg_info, reg_value))
-                    {
-                        err.SetErrorStringWithFormat ("Couldn't read %s from %s", 
-                                                      name.GetCString(), 
-                                                      reg_info->name);
-                        return false;
-                    }
-                    
-                    err = reg_ctx->WriteRegisterValueToMemory (reg_info, 
-                                                              reg_addr.ULongLong(), 
-                                                              value_byte_size, 
-                                                              reg_value);
-                    if (err.Fail())
-                        return false;
-                }
-            }
-            else
-            {
-                // The location_value is a scalar. We need to make space for it
-                // or delete the space we made previously.
-                if (dematerialize)
-                {
-                    if (!DeleteLiveMemoryForExpressionVariable(*process, expr_var, err))
-                        return false;
-                }
-                else
-                {
-                    DataExtractor value_data_extractor;
-
-                    if (location_value->GetData(value_data_extractor))
-                    {
-                        if (value_byte_size != value_data_extractor.GetByteSize())
-                        {
-                            err.SetErrorStringWithFormat ("Size mismatch for %s: %" PRIu64 " versus %" PRIu64,
-                                                          name.GetCString(),
-                                                          (uint64_t)value_data_extractor.GetByteSize(),
-                                                          (uint64_t)value_byte_size);
-                            return false;
-                        }
-
-                        if (!CreateLiveMemoryForExpressionVariable(*process, expr_var, err))
-                            return false;
-
-                        Scalar &buf_addr = expr_var->m_live_sp->GetValue().GetScalar();
-
-                        Error write_error;
-
-                        if (!process->WriteMemory(buf_addr.ULongLong(),
-                                                  value_data_extractor.GetDataStart(),
-                                                  value_data_extractor.GetByteSize(),
-                                                  write_error))
-                        {
-                            err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s",
-                                                          name.GetCString(),
-                                                          write_error.AsCString());
-                            return false;
-                        }
-
-                        if (!process->WriteScalarToMemory(addr,
-                                                          buf_addr,
-                                                          process->GetAddressByteSize(),
-                                                          write_error))
-                        {
-                            err.SetErrorStringWithFormat ("Couldn't write the address of %s to the target: %s",
-                                                          name.GetCString(),
-                                                          write_error.AsCString());
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        err.SetErrorStringWithFormat ("%s is marked as a scalar value but doesn't contain any data",
-                                                      name.GetCString());
-                        return false;
-                    }
-                }
-            }
-        }
-    }
-    
-    return true;
-}
-
-bool 
-ClangExpressionDeclMap::DoMaterializeOneRegister
-(
-    bool dematerialize,
-    RegisterContext &reg_ctx,
-    const RegisterInfo &reg_info,
-    lldb::addr_t addr, 
-    Error &err
-)
-{
-    uint32_t register_byte_size = reg_info.byte_size;
-    RegisterValue reg_value;
-    if (dematerialize)
-    {
-        Error read_error (reg_ctx.ReadRegisterValueFromMemory(&reg_info, addr, register_byte_size, reg_value));
-        if (read_error.Fail())
-        {
-            err.SetErrorStringWithFormat ("Couldn't read %s from the target: %s", reg_info.name, read_error.AsCString());
             return false;
         }
         
-        if (!reg_ctx.WriteRegister (&reg_info, reg_value))
-        {
-            err.SetErrorStringWithFormat("Couldn't write register %s (dematerialize)", reg_info.name);
-            return false;
-        }
+        return true;
     }
-    else
-    {
-        
-        if (!reg_ctx.ReadRegister(&reg_info, reg_value))
-        {
-            err.SetErrorStringWithFormat("Couldn't read %s (materialize)", reg_info.name);
-            return false;
-        }
-        
-        Error write_error (reg_ctx.WriteRegisterValueToMemory(&reg_info, addr, register_byte_size, reg_value));
-        if (write_error.Fail())
-        {
-            err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", reg_info.name, write_error.AsCString());
-            return false;
-        }
-    }
-    
-    return true;
 }
 
 lldb::VariableSP

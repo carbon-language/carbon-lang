@@ -25,11 +25,13 @@
 
 using namespace lldb_private;
 
-IRExecutionUnit::IRExecutionUnit (std::auto_ptr<llvm::Module> &module_ap,
+IRExecutionUnit::IRExecutionUnit (std::auto_ptr<llvm::LLVMContext> &context_ap,
+                                  std::auto_ptr<llvm::Module> &module_ap,
                                   ConstString &name,
                                   const lldb::TargetSP &target_sp,
                                   std::vector<std::string> &cpu_features) :
     IRMemoryMap(target_sp),
+    m_context_ap(context_ap),
     m_module_ap(module_ap),
     m_module(m_module_ap.get()),
     m_cpu_features(cpu_features),
@@ -400,6 +402,9 @@ IRExecutionUnit::GetRunnableInfo(Error &error,
 
 IRExecutionUnit::~IRExecutionUnit ()
 {
+    m_module_ap.reset();
+    m_execution_engine_ap.reset();
+    m_context_ap.reset();
 }
 
 IRExecutionUnit::MemoryManager::MemoryManager (IRExecutionUnit &parent) :

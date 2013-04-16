@@ -27,6 +27,7 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
+#include "lldb/Expression/Materializer.h"
 #include "lldb/Symbol/TaggedASTType.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -541,7 +542,8 @@ public:
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
     bool 
-    Materialize (lldb::addr_t &struct_address,
+    Materialize (IRMemoryMap &map,
+                 lldb::addr_t &struct_address,
                  Error &error);
     
     //------------------------------------------------------------------
@@ -618,6 +620,7 @@ public:
     //------------------------------------------------------------------
     bool 
     Dematerialize (lldb::ClangExpressionVariableSP &result_sp,
+                   IRMemoryMap &map,
                    lldb::addr_t stack_frame_top,
                    lldb::addr_t stack_frame_bottom,
                    Error &error);
@@ -781,6 +784,8 @@ private:
             m_materialized_location(0)
         {
         }
+        
+        Materializer::DematerializerSP  m_dematerializer_sp;    ///< The dematerializer to use.
         
         Process                    *m_process;                  ///< The process that the struct is materialized into.
         lldb::addr_t                m_allocated_area;           ///< The base of the memory allocated for the struct.  Starts on a potentially unaligned address and may therefore be larger than the struct.
@@ -1074,6 +1079,7 @@ private:
     //------------------------------------------------------------------
     bool 
     DoMaterialize (bool dematerialize,
+                   IRMemoryMap &map,
                    lldb::addr_t stack_frame_top,
                    lldb::addr_t stack_frame_bottom,
                    lldb::ClangExpressionVariableSP *result_sp_ptr,
@@ -1084,151 +1090,6 @@ private:
     //------------------------------------------------------------------
     void 
     DidDematerialize ();
-
-    //------------------------------------------------------------------
-    /// Actually do the task of materializing or dematerializing a persistent
-    /// variable.
-    ///
-    /// @param[in] dematerialize
-    ///     True if the variable is to be dematerialized; false if it is to
-    ///     be materialized.
-    ///
-    /// @param[in] var_sp
-    ///     The persistent variable to materialize
-    ///
-    /// @param[in] addr
-    ///     The address at which to materialize the variable.
-    ///
-    /// @param[in] stack_frame_top, stack_frame_bottom
-    ///     If not LLDB_INVALID_ADDRESS, the bounds for the stack frame
-    ///     in which the expression ran.  A result whose address falls
-    ///     inside this stack frame is dematerialized as a value
-    ///     requiring rematerialization.
-    ///
-    /// @param[in] err
-    ///     An Error to populate with any messages related to
-    ///     (de)materializing the persistent variable.
-    ///
-    /// @return
-    ///     True on success; false otherwise.
-    //------------------------------------------------------------------
-    bool 
-    DoMaterializeOnePersistentVariable (bool dematerialize,
-                                        lldb::ClangExpressionVariableSP &var_sp,
-                                        lldb::addr_t addr,
-                                        lldb::addr_t stack_frame_top,
-                                        lldb::addr_t stack_frame_bottom,
-                                        Error &err);
-    
-    //------------------------------------------------------------------
-    /// Create a temporary buffer in the target process to store the value
-    /// of a persistent variable that would otherwise not be accessible in
-    /// memory (e.g., register values or constants).
-    ///
-    /// @param[in] process
-    ///     The process to use when allocating the memory.
-    ///
-    /// @param[in] expr_var
-    ///     The variable whose live data will hold this buffer.
-    ///
-    /// @param[in] err
-    ///     An Error to populate with any messages related to
-    ///     allocating the memory.
-    ///
-    /// @return
-    ///     True on success; false otherwise.
-    //------------------------------------------------------------------
-    bool
-    CreateLiveMemoryForExpressionVariable (Process &process,
-                                           lldb::ClangExpressionVariableSP &expr_var,
-                                           Error &err);
-    
-    //------------------------------------------------------------------
-    /// Delete a temporary buffer created with
-    /// CreateLiveMemoryForExpressionVariable.
-    ///
-    /// @param[in] process
-    ///     The process to use when deallocating the memory.
-    ///
-    /// @param[in] expr_var
-    ///     The variable whose live data will hold this buffer.
-    ///
-    /// @param[in] err
-    ///     An Error to populate with any messages related to
-    ///     allocating the memory.
-    ///
-    /// @return
-    ///     True on success; false otherwise.
-    //------------------------------------------------------------------
-    bool
-    DeleteLiveMemoryForExpressionVariable (Process &process,
-                                           lldb::ClangExpressionVariableSP &expr_var,
-                                           Error &err);
-    
-    //------------------------------------------------------------------
-    /// Actually do the task of materializing or dematerializing a 
-    /// variable.
-    ///
-    /// @param[in] dematerialize
-    ///     True if the variable is to be dematerialized; false if it is to
-    ///     be materialized.
-    ///
-    /// @param[in] sym_ctx
-    ///     The symbol context to use (for looking the variable up).
-    ///
-    /// @param[in] expr_var
-    ///     The entity that the expression parser uses for the variable.
-    ///     In case the variable needs to be copied into the target's
-    ///     memory, this location is stored in the variable during
-    ///     materialization and cleared when it is demateralized.
-    ///
-    /// @param[in] addr
-    ///     The address at which to materialize the variable.
-    ///
-    /// @param[in] err
-    ///     An Error to populate with any messages related to
-    ///     (de)materializing the persistent variable.
-    ///
-    /// @return
-    ///     True on success; false otherwise.
-    //------------------------------------------------------------------
-    bool 
-    DoMaterializeOneVariable (bool dematerialize,
-                              const SymbolContext &sym_ctx,
-                              lldb::ClangExpressionVariableSP &expr_var,
-                              lldb::addr_t addr, 
-                              Error &err);
-    
-    //------------------------------------------------------------------
-    /// Actually do the task of materializing or dematerializing a 
-    /// register variable.
-    ///
-    /// @param[in] dematerialize
-    ///     True if the variable is to be dematerialized; false if it is to
-    ///     be materialized.
-    ///
-    /// @param[in] reg_ctx
-    ///     The register context to use.
-    ///
-    /// @param[in] reg_info
-    ///     The information for the register to read/write.
-    ///
-    /// @param[in] addr
-    ///     The address at which to materialize the variable.
-    ///
-    /// @param[in] err
-    ///     An Error to populate with any messages related to
-    ///     (de)materializing the persistent variable.
-    ///
-    /// @return
-    ///     True on success; false otherwise.
-    //------------------------------------------------------------------
-    bool 
-    DoMaterializeOneRegister (bool dematerialize,
-                              RegisterContext &reg_ctx,
-                              const RegisterInfo &reg_info,
-                              lldb::addr_t addr, 
-                              Error &err);
 };
     
 } // namespace lldb_private

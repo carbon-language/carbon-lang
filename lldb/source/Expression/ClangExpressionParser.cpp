@@ -501,7 +501,8 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
             log->Printf("Found function %s for %s", function_name.AsCString(), m_expr.FunctionName());
     }
     
-    m_execution_unit.reset(new IRExecutionUnit(module_ap, // handed off here
+    m_execution_unit.reset(new IRExecutionUnit(m_llvm_context, // handed off here
+                                               module_ap, // handed off here
                                                function_name,
                                                exe_ctx.GetTargetSP(),
                                                m_compiler->getTargetOpts().Features));

@@ -87,10 +87,8 @@ IRMemoryMap::FindAllocation (lldb::addr_t addr, size_t size)
 {
     AllocationMap::iterator iter = m_allocations.lower_bound (addr);
     
-    if (iter == m_allocations.end())
-        return iter;
-    
-    if (iter->first > addr)
+    if (iter == m_allocations.end() ||
+        iter->first > addr)
     {
         if (iter == m_allocations.begin())
             return m_allocations.end();
