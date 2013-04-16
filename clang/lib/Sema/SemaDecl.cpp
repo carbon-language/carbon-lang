@@ -1219,7 +1219,10 @@ bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
         return false;
     } else {
       // 'static inline' functions are used in headers; don't warn.
-      if (FD->getStorageClass() == SC_Static &&
+      // Make sure we get the storage class from the canonical declaration,
+      // since otherwise we will get spurious warnings on specialized
+      // static template functions.
+      if (FD->getCanonicalDecl()->getStorageClass() == SC_Static &&
           FD->isInlineSpecified())
         return false;
     }

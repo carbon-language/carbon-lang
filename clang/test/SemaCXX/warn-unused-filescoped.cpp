@@ -133,6 +133,27 @@ namespace test6 {
   };
 }
 
+namespace test7
+{
+  template<typename T>
+  static inline void foo(T) { }
+
+  // This should not emit an unused-function warning since it inherits
+  // the static storage type from the base template.
+  template<>
+  inline void foo(int) {  }
+
+  // Partial specialization
+  template<typename T, typename U>
+  static inline void bar(T, U) { }
+
+  template<typename U>
+  inline void bar(int, U) { }
+
+  template<>
+  inline void bar(int, int) { }
+};
+
 namespace pr14776 {
   namespace {
     struct X {};
