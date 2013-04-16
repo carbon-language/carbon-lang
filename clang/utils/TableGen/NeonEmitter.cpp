@@ -680,7 +680,455 @@ static std::string MangleName(const std::string &name, StringRef typestr,
     size_t pos = s.find('_');
     s = s.insert(pos, "q");
   }
+
   return s;
+}
+
+static void PreprocessInstruction(const StringRef &Name,
+                                  const std::string &InstName,
+                                  std::string &Prefix,
+                                  bool &HasNPostfix,
+                                  bool &HasLanePostfix,
+                                  bool &HasDupPostfix,
+                                  bool &IsSpecialVCvt,
+                                  size_t &TBNumber) {
+  // All of our instruction name fields from arm_neon.td are of the form
+  //   <instructionname>_...
+  // Thus we grab our instruction name via computation of said Prefix.
+  const size_t PrefixEnd = Name.find_first_of('_');
+  // If InstName is passed in, we use that instead of our name Prefix.
+  Prefix = InstName.size() == 0? Name.slice(0, PrefixEnd).str() : InstName;
+
+  const StringRef Postfix = Name.slice(PrefixEnd, Name.size());
+
+  HasNPostfix = Postfix.count("_n");
+  HasLanePostfix = Postfix.count("_lane");
+  HasDupPostfix = Postfix.count("_dup");
+  IsSpecialVCvt = Postfix.size() != 0 && Name.count("vcvt");
+
+  if (InstName.compare("vtbl") == 0 ||
+      InstName.compare("vtbx") == 0) {
+    // If we have a vtblN/vtbxN instruction, use the instruction's ASCII
+    // encoding to get its true value.
+    TBNumber = Name[Name.size()-1] - 48;
+  }
+}
+
+/// GenerateRegisterCheckPatternsForLoadStores - Given a bunch of data we have
+/// extracted, generate a FileCheck pattern for a Load Or Store
+static void
+GenerateRegisterCheckPatternForLoadStores(const StringRef &NameRef,
+                                          const std::string& OutTypeCode,
+                                          const bool &IsQuad,
+                                          const bool &HasDupPostfix,
+                                          const bool &HasLanePostfix,
+                                          const size_t Count,
+                                          std::string &RegisterSuffix) {
+  const bool IsLDSTOne = NameRef.count("vld1") || NameRef.count("vst1");
+  // If N == 3 || N == 4 and we are dealing with a quad instruction, Clang
+  // will output a series of v{ld,st}1s, so we have to handle it specially.
+  if ((Count == 3 || Count == 4) && IsQuad) {
+    RegisterSuffix += "{";
+    for (size_t i = 0; i < Count; i++) {
+      RegisterSuffix += "d{{[0-9]+}}";
+      if (HasDupPostfix) {
+        RegisterSuffix += "[]";
+      }
+      if (HasLanePostfix) {
+        RegisterSuffix += "[{{[0-9]+}}]";
+      }
+      if (i < Count-1) {
+        RegisterSuffix += ", ";
+      }
+    }
+    RegisterSuffix += "}";
+  } else {
+
+    // Handle normal loads and stores.
+    RegisterSuffix += "{";
+    for (size_t i = 0; i < Count; i++) {
+      RegisterSuffix += "d{{[0-9]+}}";
+      if (HasDupPostfix) {
+        RegisterSuffix += "[]";
+      }
+      if (HasLanePostfix) {
+        RegisterSuffix += "[{{[0-9]+}}]";
+      }
+      if (IsQuad && !HasLanePostfix) {
+        RegisterSuffix += ", d{{[0-9]+}}";
+        if (HasDupPostfix) {
+          RegisterSuffix += "[]";
+        }
+      }
+      if (i < Count-1) {
+        RegisterSuffix += ", ";
+      }
+    }
+    RegisterSuffix += "}, [r{{[0-9]+}}";
+
+    // We only include the alignment hint if we have a vld1.*64 or
+    // a dup/lane instruction.
+    if (IsLDSTOne) {
+      if ((HasLanePostfix || HasDupPostfix) && OutTypeCode != "8") {
+        RegisterSuffix += ", :" + OutTypeCode;
+      } else if (OutTypeCode == "64") {
+        RegisterSuffix += ", :64";
+      }
+    }
+
+    RegisterSuffix += "]";
+  }
+}
+
+static bool HasNPostfixAndScalarArgs(const StringRef &NameRef,
+                                     const bool &HasNPostfix) {
+  return (NameRef.count("vmla") ||
+          NameRef.count("vmlal") ||
+          NameRef.count("vmlsl") ||
+          NameRef.count("vmull") ||
+          NameRef.count("vqdmlal") ||
+          NameRef.count("vqdmlsl") ||
+          NameRef.count("vqdmulh") ||
+          NameRef.count("vqdmull") ||
+          NameRef.count("vqrdmulh")) && HasNPostfix;
+}
+
+static bool IsFiveOperandLaneAccumulator(const StringRef &NameRef,
+                                         const bool &HasLanePostfix) {
+  return (NameRef.count("vmla") ||
+          NameRef.count("vmls") ||
+          NameRef.count("vmlal") ||
+          NameRef.count("vmlsl") ||
+          (NameRef.count("vmul") && NameRef.size() == 3)||
+          NameRef.count("vqdmlal") ||
+          NameRef.count("vqdmlsl") ||
+          NameRef.count("vqdmulh") ||
+          NameRef.count("vqrdmulh")) && HasLanePostfix;
+}
+
+static bool IsSpecialLaneMultiply(const StringRef &NameRef,
+                                  const bool &HasLanePostfix,
+                                  const bool &IsQuad) {
+  const bool IsVMulOrMulh = (NameRef.count("vmul") || NameRef.count("mulh"))
+                               && IsQuad;
+  const bool IsVMull = NameRef.count("mull") && !IsQuad;
+  return (IsVMulOrMulh || IsVMull) && HasLanePostfix;
+}
+
+static void NormalizeProtoForRegisterPatternCreation(const std::string &Name,
+                                                     const std::string &Proto,
+                                                     const bool &HasNPostfix,
+                                                     const bool &IsQuad,
+                                                     const bool &HasLanePostfix,
+                                                     const bool &HasDupPostfix,
+                                                     std::string &NormedProto) {
+  // Handle generic case.
+  const StringRef NameRef(Name);
+  for (size_t i = 0, end = Proto.size(); i < end; i++) {
+    switch (Proto[i]) {
+    case 'u':
+    case 'f':
+    case 'd':
+    case 's':
+    case 'x':
+    case 't':
+    case 'n':
+      NormedProto += IsQuad? 'q' : 'd';
+      break;
+    case 'w':
+    case 'k':
+      NormedProto += 'q';
+      break;
+    case 'g':
+    case 'h':
+    case 'e':
+      NormedProto += 'd';
+      break;
+    case 'i':
+      NormedProto += HasLanePostfix? 'a' : 'i';
+      break;
+    case 'a':
+      if (HasLanePostfix) {
+        NormedProto += 'a';
+      } else if (HasNPostfixAndScalarArgs(NameRef, HasNPostfix)) {
+        NormedProto += IsQuad? 'q' : 'd';
+      } else {
+        NormedProto += 'i';
+      }
+      break;
+    }
+  }
+
+  // Handle Special Cases.
+  const bool IsNotVExt = !NameRef.count("vext");
+  const bool IsVPADAL = NameRef.count("vpadal");
+  const bool Is5OpLaneAccum = IsFiveOperandLaneAccumulator(NameRef,
+                                                           HasLanePostfix);
+  const bool IsSpecialLaneMul = IsSpecialLaneMultiply(NameRef, HasLanePostfix,
+                                                      IsQuad);
+
+  if (IsSpecialLaneMul) {
+    // If
+    NormedProto[2] = NormedProto[3];
+    NormedProto.erase(3);
+  } else if (NormedProto.size() == 4 &&
+             NormedProto[0] == NormedProto[1] &&
+             IsNotVExt) {
+    // If NormedProto.size() == 4 and the first two proto characters are the
+    // same, ignore the first.
+    NormedProto = NormedProto.substr(1, 3);
+  } else if (Is5OpLaneAccum) {
+    // If we have a 5 op lane accumulator operation, we take characters 1,2,4
+    std::string tmp = NormedProto.substr(1,2);
+    tmp += NormedProto[4];
+    NormedProto = tmp;
+  } else if (IsVPADAL) {
+    // If we have VPADAL, ignore the first character.
+    NormedProto = NormedProto.substr(0, 2);
+  } else if (NameRef.count("vdup") && NormedProto.size() > 2) {
+    // If our instruction is a dup instruction, keep only the first and
+    // last characters.
+    std::string tmp = "";
+    tmp += NormedProto[0];
+    tmp += NormedProto[NormedProto.size()-1];
+    NormedProto = tmp;
+  }
+}
+
+/// GenerateRegisterCheckPatterns - Given a bunch of data we have
+/// extracted, generate a FileCheck pattern to check that an
+/// instruction's arguments are correct.
+static void GenerateRegisterCheckPattern(const std::string &Name,
+                                         const std::string &Proto,
+                                         const std::string &OutTypeCode,
+                                         const bool &HasNPostfix,
+                                         const bool &IsQuad,
+                                         const bool &HasLanePostfix,
+                                         const bool &HasDupPostfix,
+                                         const size_t &TBNumber,
+                                         std::string &RegisterSuffix) {
+
+  RegisterSuffix = "";
+
+  const StringRef NameRef(Name);
+  const StringRef ProtoRef(Proto);
+
+  if ((NameRef.count("vdup") || NameRef.count("vmov")) && HasNPostfix) {
+    return;
+  }
+
+  const bool IsLoadStore = NameRef.count("vld") || NameRef.count("vst");
+  const bool IsTBXOrTBL = NameRef.count("vtbl") || NameRef.count("vtbx");
+
+  if (IsLoadStore) {
+    // Grab N value from  v{ld,st}N using its ascii representation.
+    const size_t Count = NameRef[3] - 48;
+
+    GenerateRegisterCheckPatternForLoadStores(NameRef, OutTypeCode, IsQuad,
+                                              HasDupPostfix, HasLanePostfix,
+                                              Count, RegisterSuffix);
+  } else if (IsTBXOrTBL) {
+    RegisterSuffix += "d{{[0-9]+}}, {";
+    for (size_t i = 0; i < TBNumber-1; i++) {
+      RegisterSuffix += "d{{[0-9]+}}, ";
+    }
+    RegisterSuffix += "d{{[0-9]+}}}, d{{[0-9]+}}";
+  } else {
+    // Handle a normal instruction.
+    if (NameRef.count("vget") || NameRef.count("vset"))
+      return;
+
+    // We first normalize our proto, since we only need to emit 4
+    // different types of checks, yet have more than 4 proto types
+    // that map onto those 4 patterns.
+    std::string NormalizedProto("");
+    NormalizeProtoForRegisterPatternCreation(Name, Proto, HasNPostfix, IsQuad,
+                                             HasLanePostfix, HasDupPostfix,
+                                             NormalizedProto);
+
+    for (size_t i = 0, end = NormalizedProto.size(); i < end; i++) {
+      const char &c = NormalizedProto[i];
+      switch (c) {
+      case 'q':
+        RegisterSuffix += "q{{[0-9]+}}, ";
+        break;
+
+      case 'd':
+        RegisterSuffix += "d{{[0-9]+}}, ";
+        break;
+
+      case 'i':
+        RegisterSuffix += "#{{[0-9]+}}, ";
+        break;
+
+      case 'a':
+        RegisterSuffix += "d{{[0-9]+}}[{{[0-9]}}], ";
+        break;
+      }
+    }
+
+    // Remove extra ", ".
+    RegisterSuffix = RegisterSuffix.substr(0, RegisterSuffix.size()-2);
+  }
+}
+
+/// GenerateChecksForIntrinsic - Given a specific instruction name +
+/// typestr + class kind, generate the proper set of FileCheck
+/// Patterns to check for. We could just return a string, but instead
+/// use a vector since it provides us with the extra flexibility of
+/// emitting multiple checks, which comes in handy for certain cases
+/// like mla where we want to check for 2 different instructions.
+static void GenerateChecksForIntrinsic(const std::string &Name,
+                                       const std::string &Proto,
+                                       StringRef &OutTypeStr,
+                                       StringRef &InTypeStr,
+                                       ClassKind Ck,
+                                       const std::string &InstName,
+                                       bool IsHiddenLOp,
+                                       std::vector<std::string>& Result) {
+
+  // If Ck is a ClassNoTest instruction, just return so no test is
+  // emitted.
+  if(Ck == ClassNoTest)
+    return;
+
+  if (Name == "vcvt_f32_f16") {
+    Result.push_back("vcvt.f32.f16");
+    return;
+  }
+
+
+  // Now we preprocess our instruction given the data we have to get the
+  // data that we need.
+  // Create a StringRef for String Manipulation of our Name.
+  const StringRef NameRef(Name);
+  // Instruction Prefix.
+  std::string Prefix;
+  // The type code for our out type string.
+  std::string OutTypeCode;
+  // To handle our different cases, we need to check for different postfixes.
+  // Is our instruction a quad instruction.
+  bool IsQuad = false;
+  // Our instruction is of the form <instructionname>_n.
+  bool HasNPostfix = false;
+  // Our instruction is of the form <instructionname>_lane.
+  bool HasLanePostfix = false;
+  // Our instruction is of the form <instructionname>_dup.
+  bool HasDupPostfix  = false;
+  // Our instruction is a vcvt instruction which requires special handling.
+  bool IsSpecialVCvt = false;
+  // If we have a vtbxN or vtblN instruction, this is set to N.
+  size_t TBNumber = -1;
+  // Register Suffix
+  std::string RegisterSuffix;
+
+  PreprocessInstruction(NameRef, InstName, Prefix,
+                        HasNPostfix, HasLanePostfix, HasDupPostfix,
+                        IsSpecialVCvt, TBNumber);
+
+  InstructionTypeCode(OutTypeStr, Ck, IsQuad, OutTypeCode);
+  GenerateRegisterCheckPattern(Name, Proto, OutTypeCode, HasNPostfix, IsQuad,
+                               HasLanePostfix, HasDupPostfix, TBNumber,
+                               RegisterSuffix);
+
+  // In the following section, we handle a bunch of special cases. You can tell
+  // a special case by the fact we are returning early.
+
+  // If our instruction is a logical instruction without postfix or a
+  // hidden LOp just return the current Prefix.
+  if (Ck == ClassL || IsHiddenLOp) {
+    Result.push_back(Prefix + " " + RegisterSuffix);
+    return;
+  }
+
+  // If we have a vmov, due to the many different cases, some of which
+  // vary within the different intrinsics generated for a single
+  // instruction type, just output a vmov. (e.g. given an instruction
+  // A, A.u32 might be vmov and A.u8 might be vmov.8).
+  //
+  // FIXME: Maybe something can be done about this. The two cases that we care
+  // about are vmov as an LType and vmov as a WType.
+  if (Prefix == "vmov") {
+    Result.push_back(Prefix + " " + RegisterSuffix);
+    return;
+  }
+
+  // In the following section, we handle special cases.
+
+  if (OutTypeCode == "64") {
+    // If we have a 64 bit vdup/vext and are handling an uint64x1_t
+    // type, the intrinsic will be optimized away, so just return
+    // nothing.  On the other hand if we are handling an uint64x2_t
+    // (i.e. quad instruction), vdup/vmov instructions should be
+    // emitted.
+    if (Prefix == "vdup" || Prefix == "vext") {
+      if (IsQuad) {
+        Result.push_back("{{vmov|vdup}}");
+      }
+      return;
+    }
+
+    // v{st,ld}{2,3,4}_{u,s}64 emit v{st,ld}1.64 instructions with
+    // multiple register operands.
+    bool MultiLoadPrefix = Prefix == "vld2" || Prefix == "vld3"
+                            || Prefix == "vld4";
+    bool MultiStorePrefix = Prefix == "vst2" || Prefix == "vst3"
+                            || Prefix == "vst4";
+    if (MultiLoadPrefix || MultiStorePrefix) {
+      Result.push_back(NameRef.slice(0, 3).str() + "1.64");
+      return;
+    }
+
+    // v{st,ld}1_{lane,dup}_{u64,s64} use vldr/vstr/vmov/str instead of
+    // emitting said instructions. So return a check for
+    // vldr/vstr/vmov/str instead.
+    if (HasLanePostfix || HasDupPostfix) {
+      if (Prefix == "vst1") {
+        Result.push_back("{{str|vstr|vmov}}");
+        return;
+      } else if (Prefix == "vld1") {
+        Result.push_back("{{ldr|vldr|vmov}}");
+        return;
+      }
+    }
+  }
+
+  // vzip.32/vuzp.32 are the same instruction as vtrn.32 and are
+  // sometimes disassembled as vtrn.32. We use a regex to handle both
+  // cases.
+  if ((Prefix == "vzip" || Prefix == "vuzp") && OutTypeCode == "32") {
+    Result.push_back("{{vtrn|" + Prefix + "}}.32 " + RegisterSuffix);
+    return;
+  }
+
+  // Currently on most ARM processors, we do not use vmla/vmls for
+  // quad floating point operations. Instead we output vmul + vadd. So
+  // check if we have one of those instructions and just output a
+  // check for vmul.
+  if (OutTypeCode == "f32") {
+    if (Prefix == "vmls") {
+      Result.push_back("vmul." + OutTypeCode + " " + RegisterSuffix);
+      Result.push_back("vsub." + OutTypeCode);
+      return;
+    } else if (Prefix == "vmla") {
+      Result.push_back("vmul." + OutTypeCode + " " + RegisterSuffix);
+      Result.push_back("vadd." + OutTypeCode);
+      return;
+    }
+  }
+
+  // If we have vcvt, get the input type from the instruction name
+  // (which should be of the form instname_inputtype) and append it
+  // before the output type.
+  if (Prefix == "vcvt") {
+    const std::string inTypeCode = NameRef.substr(NameRef.find_last_of("_")+1);
+    Prefix += "." + inTypeCode;
+  }
+
+  // Append output type code to get our final mangled instruction.
+  Prefix += "." + OutTypeCode;
+
+  Result.push_back(Prefix + " " + RegisterSuffix);
 }
 
 /// UseMacro - Examine the prototype string to determine if the intrinsic
@@ -1716,9 +2164,22 @@ static std::string GenTest(const std::string &name,
     mangledName = MangleName(mangledName, inTypeNoQuad, ClassS);
   }
 
+  std::vector<std::string> FileCheckPatterns;
+  GenerateChecksForIntrinsic(name, proto, outTypeStr, inTypeStr, ck, InstName,
+                             isHiddenLOp, FileCheckPatterns);
+
   // Emit the FileCheck patterns.
   s += "// CHECK: test_" + mangledName + "\n";
-  // s += "// CHECK: \n"; // FIXME: + expected instruction opcode.
+  // If for any reason we do not want to emit a check, mangledInst
+  // will be the empty string.
+  if (FileCheckPatterns.size()) {
+    for (std::vector<std::string>::const_iterator i = FileCheckPatterns.begin(),
+                                                  e = FileCheckPatterns.end();
+         i != e;
+         ++i) {
+      s += "// CHECK: " + *i + "\n";
+    }
+  }
 
   // Emit the start of the test function.
   s += TypeString(proto[0], outTypeStr) + " test_" + mangledName + "(";
