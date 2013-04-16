@@ -111,8 +111,9 @@ uint32_t MachOTargetInfo::getCPUType() const {
   case MachOTargetInfo::arch_armv7s:
     return mach_o::CPU_TYPE_ARM;
   case MachOTargetInfo::arch_unknown:
-    llvm_unreachable("Unknown arch type");
+    break;
   }
+  llvm_unreachable("Unknown arch type");
 }
 
 uint32_t MachOTargetInfo::getCPUSubType() const {
@@ -128,8 +129,9 @@ uint32_t MachOTargetInfo::getCPUSubType() const {
   case MachOTargetInfo::arch_armv7s:
     return mach_o::CPU_SUBTYPE_ARM_V7S;
   case MachOTargetInfo::arch_unknown:
-    llvm_unreachable("Unknown arch type");
+    break;
   }
+  llvm_unreachable("Unknown arch type");
 }
 
 
