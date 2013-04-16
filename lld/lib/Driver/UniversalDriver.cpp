@@ -125,10 +125,10 @@ bool UniversalDriver::link(int argc, const char *argv[],
   case Flavor::core:
     return CoreDriver::link(args.size(), args.data(), diagnostics);
   case Flavor::win_link:
-    break;
+    llvm_unreachable("Unsupported flavor");
   case Flavor::invalid:
     return true;
   }
-  llvm_unreachable("Unsupported flavor");
+  llvm_unreachable("Unrecognised flavor");
 }
 } // end namespace lld
