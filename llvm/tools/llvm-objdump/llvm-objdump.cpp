@@ -468,11 +468,19 @@ static void PrintSectionContents(const ObjectFile *o) {
     StringRef Name;
     StringRef Contents;
     uint64_t BaseAddr;
+    bool BSS;
     if (error(si->getName(Name))) continue;
     if (error(si->getContents(Contents))) continue;
     if (error(si->getAddress(BaseAddr))) continue;
+    if (error(si->isBSS(BSS))) continue;
 
     outs() << "Contents of section " << Name << ":\n";
+    if (BSS) {
+      outs() << format("<skipping contents of bss section at [%04" PRIx64
+                       ", %04" PRIx64 ")>\n", BaseAddr,
+                       BaseAddr + Contents.size());
+      continue;
+    }
 
     // Dump out the content as hex and printable ascii characters.
     for (std::size_t addr = 0, end = Contents.size(); addr < end; addr += 16) {

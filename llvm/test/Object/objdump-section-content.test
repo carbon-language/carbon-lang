@@ -1,6 +1,8 @@
 RUN: yaml2obj %p/Inputs/COFF/i386.yaml | llvm-objdump -s - | FileCheck %s -check-prefix COFF-i386
 RUN: llvm-objdump -s %p/Inputs/trivial-object-test.elf-i386 \
 RUN:              | FileCheck %s -check-prefix ELF-i386
+RUN: llvm-objdump -s %p/Inputs/shared-object-test.elf-i386 \
+RUN:              | FileCheck %s -check-prefix BSS
 
 COFF-i386: file format
 COFF-i386: Contents of section .text:
@@ -17,3 +19,6 @@ ELF-i386:  0010 0000e8fc ffffffe8 fcffffff 8b442408  .............D$.
 ELF-i386:  0020 83c40cc3                             ....
 ELF-i386: Contents of section .rodata.str1.1:
 ELF-i386:  0024 48656c6c 6f20576f 726c6421 00        Hello World!.
+
+BSS: Contents of section .bss:
+BSS-NEXT: <skipping contents of bss section at [12c8, 12cc)>
