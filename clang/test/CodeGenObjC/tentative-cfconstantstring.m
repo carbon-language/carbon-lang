@@ -38,6 +38,6 @@ static inline void _inlineFunction() {
 // CHECK:  [[ZERO:%.*]] = load %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_
 // CHECK-NEXT:   [[ONE:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_"
 // CHECK-NEXT:   [[TWO:%.*]] = bitcast %struct._class_t* [[ZERO]] to i8*
-// CHECK-NEXT:   call{{.*}}@objc_msgSend{{.*}}(i8* [[TWO]], i8* [[ONE]], [[ZERO]]* bitcast (%struct.NSConstantString* @_unnamed_cfstring_{{.*}}
+// CHECK-NEXT:   call void (i8*, i8*, [[T:%.*]]*, ...)* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, [[T:%.*]]*, ...)*)(i8* [[TWO]], i8* [[ONE]], [[T:%.*]]* bitcast (%struct.NSConstantString* @_unnamed_cfstring_{{.*}} to [[T:%.*]]*))
 // CHECK-NEXT:   ret void
 
