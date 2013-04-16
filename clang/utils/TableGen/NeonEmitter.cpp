@@ -98,7 +98,12 @@ enum ClassKind {
   ClassI,           // generic integer instruction, e.g., "i8" suffix
   ClassS,           // signed/unsigned/poly, e.g., "s8", "u8" or "p8" suffix
   ClassW,           // width-specific instruction, e.g., "8" suffix
-  ClassB            // bitcast arguments with enum argument to specify type
+  ClassB,           // bitcast arguments with enum argument to specify type
+  ClassL,           // Logical instructions which are op instructions
+                    // but we need to not emit any suffix for in our
+                    // tests.
+  ClassNoTest       // Instructions which we do not test since they are
+                    // not TRUE instructions.
 };
 
 /// NeonTypeFlags - Flags to identify the types for overloaded Neon
@@ -204,9 +209,20 @@ public:
     Record *SI = R.getClass("SInst");
     Record *II = R.getClass("IInst");
     Record *WI = R.getClass("WInst");
+    Record *SOpI = R.getClass("SOpInst");
+    Record *IOpI = R.getClass("IOpInst");
+    Record *WOpI = R.getClass("WOpInst");
+    Record *LOpI = R.getClass("LOpInst");
+    Record *NoTestOpI = R.getClass("NoTestOpInst");
+
     ClassMap[SI] = ClassS;
     ClassMap[II] = ClassI;
     ClassMap[WI] = ClassW;
+    ClassMap[SOpI] = ClassS;
+    ClassMap[IOpI] = ClassI;
+    ClassMap[WOpI] = ClassW;
+    ClassMap[LOpI] = ClassL;
+    ClassMap[NoTestOpI] = ClassNoTest;
   }
 
   // run - Emit arm_neon.h.inc
