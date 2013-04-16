@@ -1591,35 +1591,42 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
     MaybeParseGNUAttributes(D, &LateParsedAttrs);
 
   // Check to see if we have a function *definition* which must have a body.
-  if (AllowFunctionDefinitions && D.isFunctionDeclarator() &&
+  if (D.isFunctionDeclarator() &&
       // Look at the next token to make sure that this isn't a function
       // declaration.  We have to check this because __attribute__ might be the
       // start of a function definition in GCC-extended K&R C.
       !isDeclarationAfterDeclarator()) {
 
-    if (isStartOfFunctionDefinition(D)) {
-      if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
-        Diag(Tok, diag::err_function_declared_typedef);
+    if (AllowFunctionDefinitions) {
+      if (isStartOfFunctionDefinition(D)) {
+        if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
+          Diag(Tok, diag::err_function_declared_typedef);
 
-        // Recover by treating the 'typedef' as spurious.
-        DS.ClearStorageClassSpecs();
+          // Recover by treating the 'typedef' as spurious.
+          DS.ClearStorageClassSpecs();
+        }
+
+        Decl *TheDecl =
+          ParseFunctionDefinition(D, ParsedTemplateInfo(), &LateParsedAttrs);
+        return Actions.ConvertDeclToDeclGroup(TheDecl);
       }
 
-      Decl *TheDecl =
-        ParseFunctionDefinition(D, ParsedTemplateInfo(), &LateParsedAttrs);
-      return Actions.ConvertDeclToDeclGroup(TheDecl);
-    }
-
-    if (isDeclarationSpecifier()) {
-      // If there is an invalid declaration specifier right after the function
-      // prototype, then we must be in a missing semicolon case where this isn't
-      // actually a body.  Just fall through into the code that handles it as a
-      // prototype, and let the top-level code handle the erroneous declspec
-      // where it would otherwise expect a comma or semicolon.
+      if (isDeclarationSpecifier()) {
+        // If there is an invalid declaration specifier right after the function
+        // prototype, then we must be in a missing semicolon case where this isn't
+        // actually a body.  Just fall through into the code that handles it as a
+        // prototype, and let the top-level code handle the erroneous declspec
+        // where it would otherwise expect a comma or semicolon.
+      } else {
+        Diag(Tok, diag::err_expected_fn_body);
+        SkipUntil(tok::semi);
+        return DeclGroupPtrTy();
+      }
     } else {
-      Diag(Tok, diag::err_expected_fn_body);
-      SkipUntil(tok::semi);
-      return DeclGroupPtrTy();
+      if (Tok.is(tok::l_brace)) {
+        Diag(Tok, diag::err_function_definition_not_allowed);
+        SkipUntil(tok::r_brace, true, true);
+      }
     }
   }
 

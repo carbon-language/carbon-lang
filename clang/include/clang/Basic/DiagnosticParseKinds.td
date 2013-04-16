@@ -352,6 +352,8 @@ def warn_cxx98_compat_static_assert : Warning<
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_paren_after_colon_colon : Error<
   "unexpected parenthesis after '::'">;
+def err_function_definition_not_allowed : Error<
+  "function definition is not allowed here">;
 
 /// Objective-C parser diagnostics
 def err_expected_minus_or_plus : Error<

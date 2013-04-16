@@ -92,3 +92,14 @@ void t20(int i...) { } // expected-error {{requires a comma}}
 
 int n;
 void t21(int n, int (*array)[n]);
+
+int func_e(int x) {
+  int func_n(int y) { // expected-error {{function definition is not allowed here}}
+    if (y > 22) {
+      return y+2;
+    } else {
+      return y-2;
+    }
+  }
+  return x + 3;
+}
