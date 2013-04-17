@@ -1,4 +1,6 @@
-add_subdirectory(Darwin-Kernel)
-add_subdirectory(MacOSX-DYLD)
+if ( CMAKE_SYSTEM_NAME MATCHES "Darwin" )
+  add_subdirectory(Darwin-Kernel)
+  add_subdirectory(MacOSX-DYLD)
+endif ()
 add_subdirectory(POSIX-DYLD)
 add_subdirectory(Static)

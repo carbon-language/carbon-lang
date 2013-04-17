@@ -39,24 +39,20 @@ set( LLDB_USED_LIBS
   lldbPluginSymbolFileSymtab
   lldbPluginDynamicLoaderStatic
   
-  lldbPluginObjectFileMachO
-  lldbPluginObjectFileELF
   lldbPluginObjectContainerBSDArchive
   lldbPluginObjectContainerMachOArchive
+  lldbPluginObjectFileELF
   lldbPluginProcessGDBRemote  
   lldbPluginProcessUtility
   lldbPluginPlatformGDB
   lldbPluginPlatformFreeBSD
   lldbPluginPlatformLinux
-  lldbPluginObjectFileMachO
   lldbPluginObjectContainerMachOArchive
   lldbPluginObjectContainerBSDArchive
   lldbPluginPlatformMacOSX
-  lldbPluginDynamicLoaderMacOSXDYLD
   lldbPluginDynamicLoaderPosixDYLD
   lldbPluginUnwindAssemblyInstEmulation
   lldbPluginUnwindAssemblyX86
-  lldbPluginDynamicLoaderDarwinKernel
   lldbPluginAppleObjCRuntime
   lldbPluginCXXItaniumABI
   lldbPluginABIMacOSX_arm
@@ -84,6 +80,15 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Linux" )
     lldbPluginProcessPOSIX
     )
 endif ()
+
+# Mac-only libraries
+if ( CMAKE_SYSTEM_NAME MATCHES "Darwin" )
+  list(APPEND LLDB_USED_LIBS
+    lldbPluginDynamicLoaderMacOSXDYLD
+    lldbPluginObjectFileMachO
+    lldbPluginDynamicLoaderDarwinKernel
+  )
+endif()
 
 set( CLANG_USED_LIBS
   clangAnalysis

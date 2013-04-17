@@ -30,6 +30,10 @@
 
 #include "DynamicLoaderMacOSXDYLD.h"
 
+#if defined(__linux__)
+#include <linux/uuid.h>
+#endif
+
 //#define ENABLE_DEBUG_PRINTF // COMMENT THIS LINE OUT PRIOR TO CHECKIN
 #ifdef ENABLE_DEBUG_PRINTF
 #include <stdio.h>
