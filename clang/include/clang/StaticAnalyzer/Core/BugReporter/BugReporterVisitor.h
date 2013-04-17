@@ -134,10 +134,15 @@ class TrackConstraintBRVisitor
   bool IsSatisfied;
   bool IsZeroCheck;
 
+  /// We should start tracking from the last node along the path in which the
+  /// value is constrained.
+  bool IsTrackingTurnedOn;
+
 public:
   TrackConstraintBRVisitor(DefinedSVal constraint, bool assumption)
   : Constraint(constraint), Assumption(assumption), IsSatisfied(false),
-    IsZeroCheck(!Assumption && Constraint.getAs<Loc>()) {}
+    IsZeroCheck(!Assumption && Constraint.getAs<Loc>()),
+    IsTrackingTurnedOn(false) {}
 
   void Profile(llvm::FoldingSetNodeID &ID) const;
 

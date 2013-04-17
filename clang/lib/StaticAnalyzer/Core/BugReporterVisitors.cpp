@@ -699,6 +699,14 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
   if (IsSatisfied)
     return NULL;
 
+  // Start tracking after we see the first state in which the value is
+  // constrained.
+  if (!IsTrackingTurnedOn)
+    if (!isUnderconstrained(N))
+      IsTrackingTurnedOn = true;
+  if (!IsTrackingTurnedOn)
+    return 0;
+
   // Check if in the previous state it was feasible for this constraint
   // to *not* be true.
   if (isUnderconstrained(PrevN)) {
@@ -708,8 +716,7 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
     // As a sanity check, make sure that the negation of the constraint
     // was infeasible in the current state.  If it is feasible, we somehow
     // missed the transition point.
-    if (isUnderconstrained(N))
-      return NULL;
+    assert(!isUnderconstrained(N));
 
     // We found the transition point for the constraint.  We now need to
     // pretty-print the constraint. (work-in-progress)
