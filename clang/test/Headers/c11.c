@@ -21,12 +21,12 @@ _Static_assert(__alignof(c) == 4, "");
 
 #define __STDC_WANT_LIB_EXT1__ 1
 #include <stddef.h>
-#include <stdint.h>
 rsize_t x = 0;
 
 // If we are freestanding, then also check RSIZE_MAX (in a hosted implementation
 // we will use the host stdint.h, which may not yet have C11 support).
 #ifndef __STDC_HOSTED__
+#include <stdint.h>
 rsize_t x2 = RSIZE_MAX;
 #endif
 
