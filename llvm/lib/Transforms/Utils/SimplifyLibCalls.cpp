@@ -1518,6 +1518,12 @@ struct FPrintFOpt : public LibCallOptimization {
     if (!getConstantStringInfo(CI->getArgOperand(1), FormatStr))
       return 0;
 
+    // Do not do any of the following transformations if the fprintf return
+    // value is used, in general the fprintf return value is not compatible
+    // with fwrite(), fputc() or fputs().
+    if (!CI->use_empty())
+      return 0;
+
     // fprintf(F, "foo") --> fwrite("foo", 3, 1, F)
     if (CI->getNumArgOperands() == 2) {
       for (unsigned i = 0, e = FormatStr.size(); i != e; ++i)
@@ -1527,11 +1533,10 @@ struct FPrintFOpt : public LibCallOptimization {
       // These optimizations require DataLayout.
       if (!TD) return 0;
 
-      Value *NewCI = EmitFWrite(CI->getArgOperand(1),
-                                ConstantInt::get(TD->getIntPtrType(*Context),
-                                                 FormatStr.size()),
-                                CI->getArgOperand(0), B, TD, TLI);
-      return NewCI ? ConstantInt::get(CI->getType(), FormatStr.size()) : 0;
+      return EmitFWrite(CI->getArgOperand(1),
+                        ConstantInt::get(TD->getIntPtrType(*Context),
+                                         FormatStr.size()),
+                        CI->getArgOperand(0), B, TD, TLI);
     }
 
     // The remaining optimizations require the format string to be "%s" or "%c"
@@ -1544,14 +1549,12 @@ struct FPrintFOpt : public LibCallOptimization {
     if (FormatStr[1] == 'c') {
       // fprintf(F, "%c", chr) --> fputc(chr, F)
       if (!CI->getArgOperand(2)->getType()->isIntegerTy()) return 0;
-      Value *NewCI = EmitFPutC(CI->getArgOperand(2), CI->getArgOperand(0), B,
-                               TD, TLI);
-      return NewCI ? ConstantInt::get(CI->getType(), 1) : 0;
+      return EmitFPutC(CI->getArgOperand(2), CI->getArgOperand(0), B, TD, TLI);
     }
 
     if (FormatStr[1] == 's') {
       // fprintf(F, "%s", str) --> fputs(str, F)
-      if (!CI->getArgOperand(2)->getType()->isPointerTy() || !CI->use_empty())
+      if (!CI->getArgOperand(2)->getType()->isPointerTy())
         return 0;
       return EmitFPutS(CI->getArgOperand(2), CI->getArgOperand(0), B, TD, TLI);
     }

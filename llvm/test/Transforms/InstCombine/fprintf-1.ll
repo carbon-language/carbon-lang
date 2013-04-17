@@ -78,3 +78,12 @@ define void @test_no_simplify2(%FILE* %fp, double %d) {
   ret void
 ; CHECK-NEXT: ret void
 }
+
+define i32 @test_no_simplify3(%FILE* %fp) {
+; CHECK: @test_no_simplify3
+  %fmt = getelementptr [13 x i8]* @hello_world, i32 0, i32 0
+  %1 = call i32 (%FILE*, i8*, ...)* @fprintf(%FILE* %fp, i8* %fmt)
+; CHECK-NEXT: call i32 (%FILE*, i8*, ...)* @fprintf(%FILE* %fp, i8* getelementptr inbounds ([13 x i8]* @hello_world, i32 0, i32 0))
+  ret i32 %1
+; CHECK-NEXT: ret i32 %1
+}
