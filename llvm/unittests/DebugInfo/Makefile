@@ -1,4 +1,4 @@
-##===- unittests/Makefile ----------------------------------*- Makefile -*-===##
+##===- unittests/DebugInfo/Makefile ------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,12 +7,10 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ..
+LEVEL = ../..
+TESTNAME = DebugInfo
+LINK_COMPONENTS := debuginfo object support
 
-PARALLEL_DIRS = ADT ExecutionEngine Support Transforms IR Analysis Bitcode \
-								DebugInfo
+include $(LEVEL)/Makefile.config
 
-include $(LEVEL)/Makefile.common
-
-clean::
-	$(Verb) $(RM) -f *Tests
+include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest

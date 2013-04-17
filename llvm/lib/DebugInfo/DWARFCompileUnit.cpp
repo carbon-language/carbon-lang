@@ -9,7 +9,7 @@
 
 #include "DWARFCompileUnit.h"
 #include "DWARFContext.h"
-#include "DWARFFormValue.h"
+#include "llvm/DebugInfo/DWARFFormValue.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"

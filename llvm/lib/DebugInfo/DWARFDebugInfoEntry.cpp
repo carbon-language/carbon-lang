@@ -11,7 +11,7 @@
 #include "DWARFCompileUnit.h"
 #include "DWARFContext.h"
 #include "DWARFDebugAbbrev.h"
-#include "DWARFFormValue.h"
+#include "llvm/DebugInfo/DWARFFormValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Format.h"
