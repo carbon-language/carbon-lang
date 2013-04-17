@@ -47,9 +47,7 @@ STATISTIC(NumCacheCompleteNonLocalPtr,
           "Number of block queries that were completely cached");
 
 // Limit for the number of instructions to scan in a block.
-// FIXME: Figure out what a sane value is for this.
-//        (500 is relatively insane.)
-static const int BlockScanLimit = 500;
+static const int BlockScanLimit = 100;
 
 char MemoryDependenceAnalysis::ID = 0;
 
