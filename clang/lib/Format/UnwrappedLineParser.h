@@ -34,7 +34,7 @@ struct FormatToken {
   FormatToken()
       : NewlinesBefore(0), HasUnescapedNewline(false), WhiteSpaceLength(0),
         LastNewlineOffset(0), TokenLength(0), IsFirst(false),
-        MustBreakBefore(false) {}
+        MustBreakBefore(false), TrailingWhiteSpaceLength(0) {}
 
   /// \brief The \c Token.
   Token Tok;
@@ -76,6 +76,18 @@ struct FormatToken {
   /// This happens for example when a preprocessor directive ended directly
   /// before the token.
   bool MustBreakBefore;
+
+  /// \brief Number of characters of trailing whitespace.
+  unsigned TrailingWhiteSpaceLength;
+
+  /// \brief Returns actual token start location without leading escaped
+  /// newlines and whitespace.
+  ///
+  /// This can be different to Tok.getLocation(), which includes leading escaped
+  /// newlines.
+  SourceLocation getStartOfNonWhitespace() const {
+    return WhiteSpaceStart.getLocWithOffset(WhiteSpaceLength);
+  }
 };
 
 /// \brief An unwrapped line is a sequence of \c Token, that we would like to

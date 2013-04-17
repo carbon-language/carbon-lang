@@ -14,25 +14,69 @@
 //===----------------------------------------------------------------------===//
 
 #include "BreakableToken.h"
+#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 
 namespace clang {
 namespace format {
 
+BreakableToken::Split BreakableComment::getSplit(unsigned LineIndex,
+                                                 unsigned TailOffset,
+                                                 unsigned ColumnLimit) const {
+  StringRef Text = getLine(LineIndex).substr(TailOffset);
+  unsigned ContentStartColumn = getContentStartColumn(LineIndex, TailOffset);
+  if (ColumnLimit <= ContentStartColumn + 1)
+    return Split(StringRef::npos, 0);
+
+  unsigned MaxSplit = ColumnLimit - ContentStartColumn + 1;
+  StringRef::size_type SpaceOffset = Text.rfind(' ', MaxSplit);
+  if (SpaceOffset == StringRef::npos ||
+      Text.find_last_not_of(' ', SpaceOffset) == StringRef::npos) {
+    SpaceOffset = Text.find(' ', MaxSplit);
+  }
+  if (SpaceOffset != StringRef::npos && SpaceOffset != 0) {
+    StringRef BeforeCut = Text.substr(0, SpaceOffset).rtrim();
+    StringRef AfterCut = Text.substr(SpaceOffset).ltrim();
+    return BreakableToken::Split(BeforeCut.size(),
+                                 AfterCut.begin() - BeforeCut.end());
+  }
+  return BreakableToken::Split(StringRef::npos, 0);
+}
+
+void BreakableComment::insertBreak(unsigned LineIndex, unsigned TailOffset,
+                                   Split Split, bool InPPDirective,
+                                   WhitespaceManager &Whitespaces) {
+  StringRef Text = getLine(LineIndex).substr(TailOffset);
+  StringRef AdditionalPrefix = Decoration;
+  if (Text.size() == Split.first + Split.second) {
+    // For all but the last line handle trailing space in trimLine.
+    if (LineIndex < Lines.size() - 1)
+      return;
+    // For the last line we need to break before "*/", but not to add "* ".
+    AdditionalPrefix = "";
+  }
+
+  unsigned WhitespaceStartColumn =
+      getContentStartColumn(LineIndex, TailOffset) + Split.first;
+  unsigned BreakOffset = Text.data() - TokenText.data() + Split.first;
+  unsigned CharsToRemove = Split.second;
+  Whitespaces.breakToken(Tok, BreakOffset, CharsToRemove, "", AdditionalPrefix,
+                         InPPDirective, IndentAtLineBreak,
+                         WhitespaceStartColumn);
+}
+
 BreakableBlockComment::BreakableBlockComment(const SourceManager &SourceMgr,
                                              const AnnotatedToken &Token,
                                              unsigned StartColumn)
-    : Tok(Token.FormatTok), StartColumn(StartColumn) {
-
-  SourceLocation TokenLoc = Tok.Tok.getLocation();
-  TokenText = StringRef(SourceMgr.getCharacterData(TokenLoc), Tok.TokenLength);
+    : BreakableComment(SourceMgr, Token.FormatTok, StartColumn + 2) {
   assert(TokenText.startswith("/*") && TokenText.endswith("*/"));
 
-  OriginalStartColumn = SourceMgr.getSpellingColumnNumber(TokenLoc) - 1;
+  OriginalStartColumn =
+      SourceMgr.getSpellingColumnNumber(Tok.getStartOfNonWhitespace()) - 1;
 
   TokenText.substr(2, TokenText.size() - 4).split(Lines, "\n");
 
-  NeedsStar = true;
+  bool NeedsStar = true;
   CommonPrefixLength = UINT_MAX;
   if (Lines.size() == 1) {
     if (Token.Parent == 0) {
@@ -60,13 +104,15 @@ BreakableBlockComment::BreakableBlockComment(const SourceManager &SourceMgr,
   if (CommonPrefixLength == UINT_MAX)
     CommonPrefixLength = 0;
 
+  Decoration = NeedsStar ? "* " : "";
+
   IndentAtLineBreak =
       std::max<int>(StartColumn - OriginalStartColumn + CommonPrefixLength, 0);
 }
 
 void BreakableBlockComment::alignLines(WhitespaceManager &Whitespaces) {
-  SourceLocation TokenLoc = Tok.Tok.getLocation();
-  int IndentDelta = StartColumn - OriginalStartColumn;
+  SourceLocation TokenLoc = Tok.getStartOfNonWhitespace();
+  int IndentDelta = (StartColumn - 2) - OriginalStartColumn;
   if (IndentDelta > 0) {
     std::string WhiteSpace(IndentDelta, ' ');
     for (size_t i = 1; i < Lines.size(); ++i) {
@@ -89,54 +135,7 @@ void BreakableBlockComment::alignLines(WhitespaceManager &Whitespaces) {
   }
 
   for (unsigned i = 1; i < Lines.size(); ++i)
-    Lines[i] = Lines[i].substr(CommonPrefixLength + (NeedsStar ? 2 : 0));
-}
-
-BreakableToken::Split BreakableBlockComment::getSplit(unsigned LineIndex,
-                                                      unsigned TailOffset,
-                                                      unsigned ColumnLimit) {
-  StringRef Text = getLine(LineIndex).substr(TailOffset);
-  unsigned DecorationLength =
-      (TailOffset == 0 && LineIndex == 0) ? StartColumn + 2 : getPrefixLength();
-  if (ColumnLimit <= DecorationLength + 1)
-    return Split(StringRef::npos, 0);
-
-  unsigned MaxSplit = ColumnLimit - DecorationLength + 1;
-  StringRef::size_type SpaceOffset = Text.rfind(' ', MaxSplit);
-  if (SpaceOffset == StringRef::npos ||
-      Text.find_last_not_of(' ', SpaceOffset) == StringRef::npos) {
-    SpaceOffset = Text.find(' ', MaxSplit);
-  }
-  if (SpaceOffset != StringRef::npos && SpaceOffset != 0) {
-    StringRef BeforeCut = Text.substr(0, SpaceOffset).rtrim();
-    StringRef AfterCut = Text.substr(SpaceOffset).ltrim();
-    return BreakableToken::Split(BeforeCut.size(),
-                                 AfterCut.begin() - BeforeCut.end());
-  }
-  return BreakableToken::Split(StringRef::npos, 0);
-}
-
-void BreakableBlockComment::insertBreak(unsigned LineIndex, unsigned TailOffset,
-                                        Split Split, bool InPPDirective,
-                                        WhitespaceManager &Whitespaces) {
-  StringRef Text = getLine(LineIndex).substr(TailOffset);
-  StringRef AdditionalPrefix = NeedsStar ? "* " : "";
-  if (Text.size() == Split.first + Split.second) {
-    // For all but the last line handle trailing space separately.
-    if (LineIndex < Lines.size() - 1)
-      return;
-    // For the last line we need to break before "*/", but not to add "* ".
-    AdditionalPrefix = "";
-  }
-
-  unsigned WhitespaceStartColumn =
-      Split.first +
-      (LineIndex == 0 && TailOffset == 0 ? StartColumn + 2 : getPrefixLength());
-  unsigned BreakOffset = Text.data() - TokenText.data() + Split.first;
-  unsigned CharsToRemove = Split.second;
-  Whitespaces.breakToken(Tok, BreakOffset, CharsToRemove, "", AdditionalPrefix,
-                         InPPDirective, IndentAtLineBreak,
-                         WhitespaceStartColumn);
+    Lines[i] = Lines[i].substr(CommonPrefixLength + Decoration.size());
 }
 
 void BreakableBlockComment::trimLine(unsigned LineIndex, unsigned TailOffset,
@@ -155,6 +154,25 @@ void BreakableBlockComment::trimLine(unsigned LineIndex, unsigned TailOffset,
   unsigned CharsToRemove = Text.size() - TrimmedLine.size() + 1;
   Whitespaces.breakToken(Tok, BreakOffset, CharsToRemove, "", "", InPPDirective,
                          0, WhitespaceStartColumn);
+}
+
+BreakableLineComment::BreakableLineComment(const SourceManager &SourceMgr,
+                                           const AnnotatedToken &Token,
+                                           unsigned StartColumn)
+    : BreakableComment(SourceMgr, Token.FormatTok, StartColumn) {
+  assert(TokenText.startswith("//"));
+  Decoration = getLineCommentPrefix(TokenText);
+  Lines.push_back(TokenText.substr(Decoration.size()));
+  IndentAtLineBreak = StartColumn;
+  this->StartColumn += Decoration.size(); // Start column of the contents.
+}
+
+StringRef BreakableLineComment::getLineCommentPrefix(StringRef Comment) {
+  const char *KnownPrefixes[] = { "/// ", "///", "// ", "//" };
+  for (size_t i = 0; i < llvm::array_lengthof(KnownPrefixes); ++i)
+    if (Comment.startswith(KnownPrefixes[i]))
+      return KnownPrefixes[i];
+  return "";
 }
 
 } // namespace format

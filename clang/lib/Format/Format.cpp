@@ -617,23 +617,22 @@ private:
     unsigned StartColumn = State.Column - Current.FormatTok.TokenLength;
     if (Current.is(tok::string_literal)) {
       // Only break up default narrow strings.
-      const char *LiteralData = Current.FormatTok.Tok.getLiteralData();
+      const char *LiteralData = SourceMgr.getCharacterData(
+          Current.FormatTok.getStartOfNonWhitespace());
       if (!LiteralData || *LiteralData != '"')
         return 0;
 
-      Token.reset(new BreakableStringLiteral(Current.FormatTok, StartColumn));
+      Token.reset(new BreakableStringLiteral(SourceMgr, Current.FormatTok,
+                                             StartColumn));
     } else if (Current.Type == TT_BlockComment) {
       BreakableBlockComment *BBC =
           new BreakableBlockComment(SourceMgr, Current, StartColumn);
       if (!DryRun)
         BBC->alignLines(Whitespaces);
       Token.reset(BBC);
+    } else if (Current.Type == TT_LineComment) {
+      Token.reset(new BreakableLineComment(SourceMgr, Current, StartColumn));
     } else {
-      return 0;
-    }
-
-    if (Token->getPrefixLength() + Token->getSuffixLength(0) >
-        getColumnLimit()) {
       return 0;
     }
 
@@ -641,30 +640,24 @@ private:
     unsigned Penalty = 0;
     for (unsigned LineIndex = 0; LineIndex < Token->getLineCount();
          ++LineIndex) {
-      unsigned TokenLineSize = Token->getLineSize(LineIndex);
       unsigned TailOffset = 0;
       unsigned RemainingLength =
           Token->getLineLengthAfterSplit(LineIndex, TailOffset);
       while (RemainingLength > getColumnLimit()) {
-        unsigned DecorationLength =
-            RemainingLength - (TokenLineSize - TailOffset);
-        if (DecorationLength + 1 > getColumnLimit()) {
-          // Can't reduce line length by splitting here.
-          break;
-        }
         BreakableToken::Split Split =
             Token->getSplit(LineIndex, TailOffset, getColumnLimit());
         if (Split.first == StringRef::npos)
           break;
         assert(Split.first != 0);
+        unsigned NewRemainingLength = Token->getLineLengthAfterSplit(
+            LineIndex, TailOffset + Split.first + Split.second);
+        if (NewRemainingLength >= RemainingLength)
+          break;
         if (!DryRun) {
           Token->insertBreak(LineIndex, TailOffset, Split, Line.InPPDirective,
                              Whitespaces);
         }
         TailOffset += Split.first + Split.second;
-        unsigned NewRemainingLength =
-            Token->getLineLengthAfterSplit(LineIndex, TailOffset);
-        assert(NewRemainingLength < RemainingLength);
         RemainingLength = NewRemainingLength;
         Penalty += Style.PenaltyExcessCharacter;
         BreakInserted = true;
@@ -925,6 +918,11 @@ public:
     // Now FormatTok is the next non-whitespace token.
     FormatTok.TokenLength = Text.size();
 
+    if (FormatTok.Tok.is(tok::comment)) {
+      FormatTok.TrailingWhiteSpaceLength = Text.size() - Text.rtrim().size();
+      FormatTok.TokenLength -= FormatTok.TrailingWhiteSpaceLength;
+    }
+
     // In case the token starts with escaped newlines, we want to
     // take them into account as whitespace - this pattern is quite frequent
     // in macro definitions.
@@ -950,11 +948,6 @@ public:
       FormatTok.TokenLength = 1;
       GreaterStashed = true;
     }
-
-    // If we reformat comments, we remove trailing whitespace. Update the length
-    // accordingly.
-    if (FormatTok.Tok.is(tok::comment))
-      FormatTok.TokenLength = Text.rtrim().size();
 
     return FormatTok;
   }

@@ -635,7 +635,7 @@ TEST_F(FormatTest, UnderstandsMultiLineComments) {
   EXPECT_EQ(
       "f(aaaaaaaaaaaaaaaaaaaaaaaaa, /* Trailing comment for aa... */\n"
       "  bbbbbbbbbbbbbbbbbbbbbbbbb);",
-      format("f(aaaaaaaaaaaaaaaaaaaaaaaaa ,  /* Trailing comment for aa... */\n"
+      format("f(aaaaaaaaaaaaaaaaaaaaaaaaa ,   \\\n/* Trailing comment for aa... */\n"
              "  bbbbbbbbbbbbbbbbbbbbbbbbb);"));
   EXPECT_EQ(
       "f(aaaaaaaaaaaaaaaaaaaaaaaaa,\n"
@@ -701,6 +701,16 @@ TEST_F(FormatTest, SplitsLongCxxComments) {
             "// one line",
             format("// A comment that doesn't fit on one line",
                    getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("// a b c d\n"
+            "// e f  g\n"
+            "// h i j k",
+            format("// a b c d e f  g h i j k",
+                   getLLVMStyleWithColumns(10)));
+  EXPECT_EQ("// a b c d\n"
+            "// e f  g\n"
+            "// h i j k",
+            format("\\\n// a b c d e f  g h i j k",
+                   getLLVMStyleWithColumns(10)));
   EXPECT_EQ("if (true) // A comment that\n"
             "          // doesn't fit on\n"
             "          // one line",
@@ -743,6 +753,18 @@ TEST_F(FormatTest, SplitsLongLinesInComments) {
                    "doesn't                                    "
                    "fit on one line.  */",
                    getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("/* a b c d\n"
+            " * e f  g\n"
+            " * h i j k\n"
+            " */",
+            format("/* a b c d e f  g h i j k */",
+                   getLLVMStyleWithColumns(10)));
+  EXPECT_EQ("/* a b c d\n"
+            " * e f  g\n"
+            " * h i j k\n"
+            " */",
+            format("\\\n/* a b c d e f  g h i j k */",
+                   getLLVMStyleWithColumns(10)));
   EXPECT_EQ("/*\n"
             "This is a long\n"
             "comment that doesn't\n"
@@ -3670,6 +3692,9 @@ TEST_F(FormatTest, BreakStringLiterals) {
   EXPECT_EQ("\"some text \"\n"
             "\"other\";",
             format("\"some text other\";", getLLVMStyleWithColumns(12)));
+  EXPECT_EQ("\"some text \"\n"
+            "\"other\";",
+            format("\\\n\"some text other\";", getLLVMStyleWithColumns(12)));
   EXPECT_EQ(
       "#define A  \\\n"
       "  \"some \"  \\\n"

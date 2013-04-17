@@ -67,21 +67,6 @@ public:
   void addUntouchableComment(unsigned Column);
 
 private:
-  static StringRef getLineCommentPrefix(StringRef Comment);
-
-  /// \brief Splits one line in a line comment, if it doesn't fit to
-  /// provided column limit. Removes trailing whitespace in each line.
-  ///
-  /// \param Line points to the line contents without leading // or /*.
-  ///
-  /// \param StartColumn is the column where the first character of Line will be
-  /// located after formatting.
-  ///
-  /// \param LinePrefix is inserted after each line break.
-  void splitLineComment(const FormatToken &Tok, StringRef Line,
-                        size_t StartColumn, StringRef LinePrefix,
-                        const char *WhiteSpaceChars = " ");
-
   std::string getNewLineText(unsigned NewLines, unsigned Spaces);
 
   std::string getNewLineText(unsigned NewLines, unsigned Spaces,

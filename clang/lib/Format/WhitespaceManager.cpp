@@ -25,20 +25,19 @@ void WhitespaceManager::replaceWhitespace(const AnnotatedToken &Tok,
   if (NewLines >= 2)
     alignComments();
 
-  SourceLocation TokenLoc = Tok.FormatTok.Tok.getLocation();
-  bool LineExceedsColumnLimit =
-      Spaces + WhitespaceStartColumn + Tok.FormatTok.TokenLength >
-      Style.ColumnLimit;
-
   // Align line comments if they are trailing or if they continue other
   // trailing comments.
   if (Tok.isTrailingComment()) {
+    SourceLocation TokenEndLoc = Tok.FormatTok.getStartOfNonWhitespace()
+        .getLocWithOffset(Tok.FormatTok.TokenLength);
     // Remove the comment's trailing whitespace.
-    if (Tok.FormatTok.Tok.getLength() != Tok.FormatTok.TokenLength)
+    if (Tok.FormatTok.TrailingWhiteSpaceLength != 0)
       Replaces.insert(tooling::Replacement(
-          SourceMgr, TokenLoc.getLocWithOffset(Tok.FormatTok.TokenLength),
-          Tok.FormatTok.Tok.getLength() - Tok.FormatTok.TokenLength, ""));
+          SourceMgr, TokenEndLoc, Tok.FormatTok.TrailingWhiteSpaceLength, ""));
 
+    bool LineExceedsColumnLimit =
+        Spaces + WhitespaceStartColumn + Tok.FormatTok.TokenLength >
+        Style.ColumnLimit;
     // Align comment with other comments.
     if ((Tok.Parent != NULL || !Comments.empty()) && !LineExceedsColumnLimit) {
       StoredComment Comment;
@@ -57,16 +56,6 @@ void WhitespaceManager::replaceWhitespace(const AnnotatedToken &Tok,
   // If this line does not have a trailing comment, align the stored comments.
   if (Tok.Children.empty() && !Tok.isTrailingComment())
     alignComments();
-
-  if (Tok.Type == TT_LineComment && LineExceedsColumnLimit) {
-    StringRef Line(SourceMgr.getCharacterData(TokenLoc),
-                   Tok.FormatTok.TokenLength);
-    int StartColumn = Spaces + (NewLines == 0 ? WhitespaceStartColumn : 0);
-    StringRef Prefix = getLineCommentPrefix(Line);
-    std::string NewPrefix = std::string(StartColumn, ' ') + Prefix.str();
-    splitLineComment(Tok.FormatTok, Line.substr(Prefix.size()),
-                     StartColumn + Prefix.size(), NewPrefix);
-  }
 
   storeReplacement(Tok.FormatTok, getNewLineText(NewLines, Spaces));
 }
@@ -89,7 +78,8 @@ void WhitespaceManager::breakToken(const FormatToken &Tok, unsigned Offset,
   else
     NewLineText = getNewLineText(1, Spaces, WhitespaceStartColumn);
   std::string ReplacementText = (Prefix + NewLineText + Postfix).str();
-  SourceLocation Location = Tok.Tok.getLocation().getLocWithOffset(Offset);
+  SourceLocation Location =
+      Tok.getStartOfNonWhitespace().getLocWithOffset(Offset);
   Replaces.insert(
       tooling::Replacement(SourceMgr, Location, ReplaceChars, ReplacementText));
 }
@@ -111,50 +101,6 @@ void WhitespaceManager::addUntouchableComment(unsigned Column) {
   Comment.MaxColumn = Column;
   Comment.Untouchable = true;
   Comments.push_back(Comment);
-}
-
-StringRef WhitespaceManager::getLineCommentPrefix(StringRef Comment) {
-  const char *KnownPrefixes[] = { "/// ", "///", "// ", "//" };
-  for (size_t i = 0; i < llvm::array_lengthof(KnownPrefixes); ++i)
-    if (Comment.startswith(KnownPrefixes[i]))
-      return KnownPrefixes[i];
-  return "";
-}
-
-void
-WhitespaceManager::splitLineComment(const FormatToken &Tok, StringRef Line,
-                                    size_t StartColumn, StringRef LinePrefix,
-                                    const char *WhiteSpaceChars /*= " "*/) {
-  const char *TokenStart = SourceMgr.getCharacterData(Tok.Tok.getLocation());
-
-  StringRef TrimmedLine = Line.rtrim();
-  // Don't touch leading whitespace.
-  Line = TrimmedLine.ltrim();
-  StartColumn += TrimmedLine.size() - Line.size();
-
-  while (Line.size() + StartColumn > Style.ColumnLimit) {
-    // Try to break at the last whitespace before the column limit.
-    size_t SpacePos =
-        Line.find_last_of(WhiteSpaceChars, Style.ColumnLimit - StartColumn + 1);
-    if (SpacePos == StringRef::npos) {
-      // Try to find any whitespace in the line.
-      SpacePos = Line.find_first_of(WhiteSpaceChars);
-      if (SpacePos == StringRef::npos) // No whitespace found, give up.
-        break;
-    }
-
-    StringRef NextCut = Line.substr(0, SpacePos).rtrim();
-    StringRef RemainingLine = Line.substr(SpacePos).ltrim();
-    if (RemainingLine.empty())
-      break;
-
-    Line = RemainingLine;
-
-    size_t ReplaceChars = Line.begin() - NextCut.end();
-    breakToken(Tok, NextCut.end() - TokenStart, ReplaceChars, "", LinePrefix,
-               false, 0, 0);
-    StartColumn = LinePrefix.size();
-  }
 }
 
 std::string WhitespaceManager::getNewLineText(unsigned NewLines,
