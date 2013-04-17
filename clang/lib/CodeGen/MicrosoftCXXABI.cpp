@@ -28,6 +28,17 @@ class MicrosoftCXXABI : public CGCXXABI {
 public:
   MicrosoftCXXABI(CodeGenModule &CGM) : CGCXXABI(CGM) {}
 
+  bool isReturnTypeIndirect(const CXXRecordDecl *RD) const {
+    // Structures that are not C++03 PODs are always indirect.
+    return !RD->isPOD();
+  }
+
+  RecordArgABI getRecordArgABI(const CXXRecordDecl *RD) const {
+    if (RD->hasNonTrivialCopyConstructor())
+      return RAA_DirectInMemory;
+    return RAA_Default;
+  }
+
   StringRef GetPureVirtualCallName() { return "_purecall"; }
   // No known support for deleted functions in MSVC yet, so this choice is
   // arbitrary.

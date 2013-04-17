@@ -41,6 +41,20 @@ public:
   ItaniumCXXABI(CodeGen::CodeGenModule &CGM, bool IsARM = false) :
     CGCXXABI(CGM), IsARM(IsARM) { }
 
+  bool isReturnTypeIndirect(const CXXRecordDecl *RD) const {
+    // Structures with either a non-trivial destructor or a non-trivial
+    // copy constructor are always indirect.
+    return !RD->hasTrivialDestructor() || RD->hasNonTrivialCopyConstructor();
+  }
+
+  RecordArgABI getRecordArgABI(const CXXRecordDecl *RD) const {
+    // Structures with either a non-trivial destructor or a non-trivial
+    // copy constructor are always indirect.
+    if (!RD->hasTrivialDestructor() || RD->hasNonTrivialCopyConstructor())
+      return RAA_Indirect;
+    return RAA_Default;
+  }
+
   bool isZeroInitializable(const MemberPointerType *MPT);
 
   llvm::Type *ConvertMemberPointerType(const MemberPointerType *MPT);
