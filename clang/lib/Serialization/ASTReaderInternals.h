@@ -152,6 +152,8 @@ class ASTSelectorLookupTrait {
 public:
   struct data_type {
     SelectorID ID;
+    unsigned InstanceBits;
+    unsigned FactoryBits;
     SmallVector<ObjCMethodDecl *, 2> Instance;
     SmallVector<ObjCMethodDecl *, 2> Factory;
   };

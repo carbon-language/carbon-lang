@@ -2692,11 +2692,11 @@ public:
     clang::io::Emit16(Out, KeyLen);
     unsigned DataLen = 4 + 2 + 2; // 2 bytes for each of the method counts
     for (const ObjCMethodList *Method = &Methods.Instance; Method;
-         Method = Method->Next)
+         Method = Method->getNext())
       if (Method->Method)
         DataLen += 4;
     for (const ObjCMethodList *Method = &Methods.Factory; Method;
-         Method = Method->Next)
+         Method = Method->getNext())
       if (Method->Method)
         DataLen += 4;
     clang::io::Emit16(Out, DataLen);
@@ -2722,24 +2722,31 @@ public:
     clang::io::Emit32(Out, Methods.ID);
     unsigned NumInstanceMethods = 0;
     for (const ObjCMethodList *Method = &Methods.Instance; Method;
-         Method = Method->Next)
+         Method = Method->getNext())
       if (Method->Method)
         ++NumInstanceMethods;
 
     unsigned NumFactoryMethods = 0;
     for (const ObjCMethodList *Method = &Methods.Factory; Method;
-         Method = Method->Next)
+         Method = Method->getNext())
       if (Method->Method)
         ++NumFactoryMethods;
 
-    clang::io::Emit16(Out, NumInstanceMethods);
-    clang::io::Emit16(Out, NumFactoryMethods);
+    unsigned InstanceBits = Methods.Instance.getBits();
+    assert(InstanceBits < 4);
+    unsigned NumInstanceMethodsAndBits =
+        (NumInstanceMethods << 2) | InstanceBits;
+    unsigned FactoryBits = Methods.Factory.getBits();
+    assert(FactoryBits < 4);
+    unsigned NumFactoryMethodsAndBits = (NumFactoryMethods << 2) | FactoryBits;
+    clang::io::Emit16(Out, NumInstanceMethodsAndBits);
+    clang::io::Emit16(Out, NumFactoryMethodsAndBits);
     for (const ObjCMethodList *Method = &Methods.Instance; Method;
-         Method = Method->Next)
+         Method = Method->getNext())
       if (Method->Method)
         clang::io::Emit32(Out, Writer.getDeclID(Method->Method));
     for (const ObjCMethodList *Method = &Methods.Factory; Method;
-         Method = Method->Next)
+         Method = Method->getNext())
       if (Method->Method)
         clang::io::Emit32(Out, Writer.getDeclID(Method->Method));
 
@@ -2788,12 +2795,12 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
         // Selector already exists. Did it change?
         bool changed = false;
         for (ObjCMethodList *M = &Data.Instance; !changed && M && M->Method;
-             M = M->Next) {
+             M = M->getNext()) {
           if (!M->Method->isFromASTFile())
             changed = true;
         }
         for (ObjCMethodList *M = &Data.Factory; !changed && M && M->Method;
-             M = M->Next) {
+             M = M->getNext()) {
           if (!M->Method->isFromASTFile())
             changed = true;
         }

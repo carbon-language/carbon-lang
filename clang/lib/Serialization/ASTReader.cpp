@@ -428,8 +428,12 @@ ASTSelectorLookupTrait::ReadData(Selector, const unsigned char* d,
   data_type Result;
 
   Result.ID = Reader.getGlobalSelectorID(F, ReadUnalignedLE32(d));
-  unsigned NumInstanceMethods = ReadUnalignedLE16(d);
-  unsigned NumFactoryMethods = ReadUnalignedLE16(d);
+  unsigned NumInstanceMethodsAndBits = ReadUnalignedLE16(d);
+  unsigned NumFactoryMethodsAndBits = ReadUnalignedLE16(d);
+  Result.InstanceBits = NumInstanceMethodsAndBits & 0x3;
+  Result.FactoryBits = NumFactoryMethodsAndBits & 0x3;
+  unsigned NumInstanceMethods = NumInstanceMethodsAndBits >> 2;
+  unsigned NumFactoryMethods = NumFactoryMethodsAndBits >> 2;
 
   // Load instance methods
   for (unsigned I = 0; I != NumInstanceMethods; ++I) {
@@ -2736,7 +2740,7 @@ static void moveMethodToBackOfGlobalList(Sema &S, ObjCMethodDecl *Method) {
   ObjCMethodList &Start = Method->isInstanceMethod()? Known->second.first
                                                     : Known->second.second;
   bool Found = false;
-  for (ObjCMethodList *List = &Start; List; List = List->Next) {
+  for (ObjCMethodList *List = &Start; List; List = List->getNext()) {
     if (!Found) {
       if (List->Method == Method) {
         Found = true;
@@ -2746,8 +2750,8 @@ static void moveMethodToBackOfGlobalList(Sema &S, ObjCMethodDecl *Method) {
       }
     }
 
-    if (List->Next)
-      List->Method = List->Next->Method;
+    if (List->getNext())
+      List->Method = List->getNext()->Method;
     else
       List->Method = Method;
   }
@@ -6114,13 +6118,16 @@ namespace clang { namespace serialization {
     ASTReader &Reader;
     Selector Sel;
     unsigned PriorGeneration;
+    unsigned InstanceBits;
+    unsigned FactoryBits;
     SmallVector<ObjCMethodDecl *, 4> InstanceMethods;
     SmallVector<ObjCMethodDecl *, 4> FactoryMethods;
 
   public:
     ReadMethodPoolVisitor(ASTReader &Reader, Selector Sel, 
                           unsigned PriorGeneration)
-      : Reader(Reader), Sel(Sel), PriorGeneration(PriorGeneration) { }
+      : Reader(Reader), Sel(Sel), PriorGeneration(PriorGeneration),
+        InstanceBits(0), FactoryBits(0) { }
     
     static bool visit(ModuleFile &M, void *UserData) {
       ReadMethodPoolVisitor *This
@@ -6153,6 +6160,8 @@ namespace clang { namespace serialization {
       
       This->InstanceMethods.append(Data.Instance.begin(), Data.Instance.end());
       This->FactoryMethods.append(Data.Factory.begin(), Data.Factory.end());
+      This->InstanceBits = Data.InstanceBits;
+      This->FactoryBits = Data.FactoryBits;
       return true;
     }
     
@@ -6165,6 +6174,9 @@ namespace clang { namespace serialization {
     ArrayRef<ObjCMethodDecl *> getFactoryMethods() const { 
       return FactoryMethods;
     }
+
+    unsigned getInstanceBits() const { return InstanceBits; }
+    unsigned getFactoryBits() const { return FactoryBits; }
   };
 } } // end namespace clang::serialization
 
@@ -6202,6 +6214,8 @@ void ASTReader::ReadMethodPool(Selector Sel) {
   
   addMethodsToPool(S, Visitor.getInstanceMethods(), Pos->second.first);
   addMethodsToPool(S, Visitor.getFactoryMethods(), Pos->second.second);
+  Pos->second.first.setBits(Visitor.getInstanceBits());
+  Pos->second.second.setBits(Visitor.getFactoryBits());
 }
 
 void ASTReader::ReadKnownNamespaces(

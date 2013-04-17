@@ -2085,17 +2085,23 @@ bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *left,
 }
 
 void Sema::addMethodToGlobalList(ObjCMethodList *List, ObjCMethodDecl *Method) {
+  // Record at the head of the list whether there were 0, 1, or >= 2 methods
+  // inside categories.
+  if (isa<ObjCCategoryDecl>(Method->getDeclContext()))
+    if (List->getBits() < 2)
+      List->setBits(List->getBits()+1);
+
   // If the list is empty, make it a singleton list.
   if (List->Method == 0) {
     List->Method = Method;
-    List->Next = 0;
+    List->setNext(0);
     return;
   }
   
   // We've seen a method with this name, see if we have already seen this type
   // signature.
   ObjCMethodList *Previous = List;
-  for (; List; Previous = List, List = List->Next) {
+  for (; List; Previous = List, List = List->getNext()) {
     if (!MatchTwoMethodDeclarations(Method, List->Method))
       continue;
     
@@ -2124,7 +2130,7 @@ void Sema::addMethodToGlobalList(ObjCMethodList *List, ObjCMethodDecl *Method) {
   // We have a new signature for an existing method - add it.
   // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
   ObjCMethodList *Mem = BumpAlloc.Allocate<ObjCMethodList>();
-  Previous->Next = new (Mem) ObjCMethodList(Method, 0);
+  Previous->setNext(new (Mem) ObjCMethodList(Method, 0));
 }
 
 /// \brief Read the contents of the method pool for a given selector from
@@ -2186,7 +2192,7 @@ ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
   // Gather the non-hidden methods.
   ObjCMethodList &MethList = instance ? Pos->second.first : Pos->second.second;
   llvm::SmallVector<ObjCMethodDecl *, 4> Methods;
-  for (ObjCMethodList *M = &MethList; M; M = M->Next) {
+  for (ObjCMethodList *M = &MethList; M; M = M->getNext()) {
     if (M->Method && !M->Method->isHidden()) {
       // If we're not supposed to warn about mismatches, we're done.
       if (!warn)

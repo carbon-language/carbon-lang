@@ -5471,7 +5471,7 @@ static void AddClassMessageCompletions(Sema &SemaRef, Scope *S,
          M != MEnd; ++M) {
       for (ObjCMethodList *MethList = &M->second.second;
            MethList && MethList->Method; 
-           MethList = MethList->Next) {
+           MethList = MethList->getNext()) {
         if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents, 
                                     NumSelIdents))
           continue;
@@ -5644,7 +5644,7 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, Expr *Receiver,
          M != MEnd; ++M) {
       for (ObjCMethodList *MethList = &M->second.first;
            MethList && MethList->Method; 
-           MethList = MethList->Next) {
+           MethList = MethList->getNext()) {
         if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents, 
                                     NumSelIdents))
           continue;
@@ -7085,7 +7085,7 @@ void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S,
     for (ObjCMethodList *MethList = IsInstanceMethod ? &M->second.first :
                                                        &M->second.second;
          MethList && MethList->Method; 
-         MethList = MethList->Next) {
+         MethList = MethList->getNext()) {
       if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents, 
                                   NumSelIdents))
         continue;
