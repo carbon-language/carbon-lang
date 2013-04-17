@@ -7,7 +7,7 @@ clang - the Clang C, C++, and Objective-C compiler
 =head1 SYNOPSIS
 
 B<clang> [B<-c>|B<-S>|B<-E>] B<-std=>I<standard> B<-g>
-  [B<-O0>|B<-O1>|B<-O2>|B<-Os>|B<-Oz>|B<-O3>|B<-O4>]
+  [B<-O0>|B<-O1>|B<-O2>|B<-Os>|B<-Oz>|B<-O3>|B<-Ofast>|B<-O4>]
   B<-W>I<warnings...> B<-pedantic>
   B<-I>I<dir...> B<-L>I<dir...>
   B<-D>I<macro[=defn]>
@@ -263,7 +263,7 @@ may not exist on earlier ones.
 
 =over
 
-=item B<-O0> B<-O1> B<-O2> B<-Os> B<-Oz> B<-O3> B<-O4>
+=item B<-O0> B<-O1> B<-O2> B<-Os> B<-Oz> B<-O3> B<-Ofast> B<-O4>
 
 Specify which optimization level to use.  B<-O0> means "no optimization": this
 level compiles the fastest and generates the most debuggable code.  B<-O2> is a
@@ -271,7 +271,9 @@ moderate level of optimization which enables most optimizations.  B<-Os> is like
 B<-O2> with extra optimizations to reduce code size.  B<-Oz> is like B<-Os> 
 (and thus B<-O2>), but reduces code size further.  B<-O3> is like B<-O2>,
 except that it enables optimizations that take longer to perform or that may
-generate larger code (in an attempt to make the program run faster).  On
+generate larger code (in an attempt to make the program run faster).
+B<-Ofast> enables all the optimizations from B<-O3> along with other aggressive
+optimizations that may violate strict compliance with language standards. On
 supported platforms, B<-O4> enables link-time optimization; object files are
 stored in the LLVM bitcode file format and whole program optimization is done at
 link time. B<-O1> is somewhere between B<-O0> and B<-O2>.
