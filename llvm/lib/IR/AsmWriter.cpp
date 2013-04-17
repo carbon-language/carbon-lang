@@ -33,6 +33,7 @@
 #include "llvm/IR/TypeFinder.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -41,6 +42,12 @@
 #include <algorithm>
 #include <cctype>
 using namespace llvm;
+
+static cl::opt<bool>
+OldStyleAttrSyntax("enable-old-style-attr-syntax",
+    cl::desc("Output attributes on functions rather than in attribute groups"),
+    cl::Hidden,
+    cl::init(false));
 
 // Make virtual table appear in this compilation unit.
 AssemblyAnnotationWriter::~AssemblyAnnotationWriter() {}
@@ -1378,7 +1385,7 @@ void AssemblyWriter::printModule(const Module *M) {
     printFunction(I);
 
   // Output all attribute groups.
-  if (!Machine.as_empty()) {
+  if (!OldStyleAttrSyntax && !Machine.as_empty()) {
     Out << '\n';
     writeAllAttributeGroups();
   }
@@ -1606,24 +1613,9 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << "; Materializable\n";
 
   const AttributeSet &Attrs = F->getAttributes();
-  if (Attrs.hasAttributes(AttributeSet::FunctionIndex)) {
+  if (!OldStyleAttrSyntax && Attrs.hasAttributes(AttributeSet::FunctionIndex)) {
     AttributeSet AS = Attrs.getFnAttributes();
-    std::string AttrStr;
-
-    unsigned Idx = 0;
-    for (unsigned E = AS.getNumSlots(); Idx != E; ++Idx)
-      if (AS.getSlotIndex(Idx) == AttributeSet::FunctionIndex)
-        break;
-
-    for (AttributeSet::iterator I = AS.begin(Idx), E = AS.end(Idx);
-         I != E; ++I) {
-      Attribute Attr = *I;
-      if (!Attr.isStringAttribute()) {
-        if (!AttrStr.empty()) AttrStr += ' ';
-        AttrStr += Attr.getAsString();
-      }
-    }
-
+    std::string AttrStr = AS.getAsString(AttributeSet::FunctionIndex, true);
     if (!AttrStr.empty())
       Out << "; Function Attrs: " << AttrStr << '\n';
   }
@@ -1685,8 +1677,15 @@ void AssemblyWriter::printFunction(const Function *F) {
   Out << ')';
   if (F->hasUnnamedAddr())
     Out << " unnamed_addr";
-  if (Attrs.hasAttributes(AttributeSet::FunctionIndex))
-    Out << " #" << Machine.getAttributeGroupSlot(Attrs.getFnAttributes());
+  if (!OldStyleAttrSyntax) {
+    if (Attrs.hasAttributes(AttributeSet::FunctionIndex))
+      Out << " #" << Machine.getAttributeGroupSlot(Attrs.getFnAttributes());
+  } else {
+    AttributeSet AS = Attrs.getFnAttributes();
+    std::string AttrStr = AS.getAsString(AttributeSet::FunctionIndex, true);
+    if (!AttrStr.empty())
+      Out << ' ' << AttrStr;
+  }
   if (F->hasSection()) {
     Out << " section \"";
     PrintEscapedString(F->getSection(), Out);
@@ -2157,7 +2156,8 @@ void AssemblyWriter::writeAllAttributeGroups() {
   for (std::vector<std::pair<AttributeSet, unsigned> >::iterator
          I = asVec.begin(), E = asVec.end(); I != E; ++I)
     Out << "attributes #" << I->second << " = { "
-        << I->first.getAsString(AttributeSet::FunctionIndex, true) << " }\n";
+        << I->first.getAsString(AttributeSet::FunctionIndex, false, true)
+        << " }\n";
 }
 
 //===----------------------------------------------------------------------===//

@@ -480,12 +480,17 @@ unsigned AttributeSetNode::getStackAlignment() const {
   return 0;
 }
 
-std::string AttributeSetNode::getAsString(bool InAttrGrp) const {
+std::string AttributeSetNode::getAsString(bool TargetIndependent,
+                                          bool InAttrGrp) const {
   std::string Str = "";
   for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
          E = AttrList.end(); I != E; ) {
-    Str += I->getAsString(InAttrGrp);
-    if (++I != E) Str += " ";
+    if (!TargetIndependent || !I->isStringAttribute()) {
+      Str += I->getAsString(InAttrGrp);
+      if (++I != E) Str += " ";
+    } else {
+      ++I;
+    }
   }
   return Str;
 }
@@ -841,10 +846,11 @@ unsigned AttributeSet::getStackAlignment(unsigned Index) const {
   return ASN ? ASN->getStackAlignment() : 0;
 }
 
-std::string AttributeSet::getAsString(unsigned Index,
+std::string AttributeSet::getAsString(unsigned Index, bool TargetIndependent,
                                       bool InAttrGrp) const {
   AttributeSetNode *ASN = getAttributes(Index);
-  return ASN ? ASN->getAsString(InAttrGrp) : std::string("");
+  return ASN ? ASN->getAsString(TargetIndependent, InAttrGrp) :
+    std::string("");
 }
 
 /// \brief The attributes for the specified index are returned.
