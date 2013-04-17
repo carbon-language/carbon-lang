@@ -7827,13 +7827,16 @@ private:
     //   constructor templates that results from omitting any ellipsis parameter
     //   specification and successively omitting parameters with a default
     //   argument from the end of the parameter-type-list
-    for (unsigned Params = std::max(minParamsToInherit(Ctor),
-                                    Ctor->getMinRequiredArguments()),
-                  MaxParams = Ctor->getNumParams();
-         Params <= MaxParams; ++Params)
-      declareCtor(UsingLoc, Ctor,
-                  SemaRef.Context.getFunctionType(
-                      Ctor->getResultType(), ArgTypes.slice(0, Params), EPI));
+    unsigned MinParams = minParamsToInherit(Ctor);
+    unsigned Params = Ctor->getNumParams();
+    if (Params >= MinParams) {
+      do
+        declareCtor(UsingLoc, Ctor,
+                    SemaRef.Context.getFunctionType(
+                        Ctor->getResultType(), ArgTypes.slice(0, Params), EPI));
+      while (Params > MinParams &&
+             Ctor->getParamDecl(--Params)->hasDefaultArg());
+    }
   }
 
   /// Find the using-declaration which specified that we should inherit the

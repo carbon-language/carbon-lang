@@ -49,3 +49,16 @@ B b8{c,0,1};
 B b9{"foo"};
 // FIXME: explain why the inheriting constructor was deleted
 // expected-error@-2 {{call to deleted constructor of 'B'}}
+
+namespace PR15755 {
+  struct X {
+    template<typename...Ts> X(int, Ts...);
+  };
+  struct Y : X {
+    using X::X;
+  };
+  struct Z : Y {
+    using Y::Y;
+  };
+  Z z(0);
+}
