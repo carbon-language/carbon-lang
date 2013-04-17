@@ -61,7 +61,7 @@ IRMemoryMap::FindSpace (size_t size)
             remote_address + size <= allocation.second.m_process_start)
             return remote_address;
         
-        remote_address = allocation.second.m_process_start = allocation.second.m_size;
+        remote_address = allocation.second.m_process_start + allocation.second.m_size;
     }
     
     if (remote_address + size < remote_address)
@@ -112,7 +112,7 @@ IRMemoryMap::GetByteOrder()
     lldb::TargetSP target_sp = m_target_wp.lock();
     
     if (target_sp)
-        return target_sp->GetDefaultArchitecture().GetByteOrder();
+        return target_sp->GetArchitecture().GetByteOrder();
     
     return lldb::eByteOrderInvalid;
 }
@@ -128,7 +128,7 @@ IRMemoryMap::GetAddressByteSize()
     lldb::TargetSP target_sp = m_target_wp.lock();
     
     if (target_sp)
-        return target_sp->GetDefaultArchitecture().GetAddressByteSize();
+        return target_sp->GetArchitecture().GetAddressByteSize();
     
     return UINT32_MAX;
 }
@@ -152,6 +152,8 @@ IRMemoryMap::GetBestExecutionContextScope()
 lldb::addr_t
 IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, AllocationPolicy policy, Error &error)
 {
+    error.Clear();
+    
     lldb::ProcessSP process_sp;
     lldb::addr_t    allocation_address  = LLDB_INVALID_ADDRESS;
     lldb::addr_t    aligned_address     = LLDB_INVALID_ADDRESS;
@@ -282,6 +284,8 @@ IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, Alloc
 void
 IRMemoryMap::Free (lldb::addr_t process_address, Error &error)
 {
+    error.Clear();
+    
     AllocationMap::iterator iter = m_allocations.find(process_address);
     
     if (iter == m_allocations.end())
@@ -319,6 +323,8 @@ IRMemoryMap::Free (lldb::addr_t process_address, Error &error)
 void
 IRMemoryMap::WriteMemory (lldb::addr_t process_address, const uint8_t *bytes, size_t size, Error &error)
 {
+    error.Clear();
+    
     AllocationMap::iterator iter = FindAllocation(process_address, size);
     
     if (iter == m_allocations.end())
@@ -397,7 +403,9 @@ IRMemoryMap::WriteMemory (lldb::addr_t process_address, const uint8_t *bytes, si
 
 void
 IRMemoryMap::WriteScalarToMemory (lldb::addr_t process_address, Scalar &scalar, size_t size, Error &error)
-{    
+{
+    error.Clear();
+    
     if (size == UINT32_MAX)
         size = scalar.GetByteSize();
     
@@ -426,6 +434,8 @@ IRMemoryMap::WriteScalarToMemory (lldb::addr_t process_address, Scalar &scalar, 
 void
 IRMemoryMap::WritePointerToMemory (lldb::addr_t process_address, lldb::addr_t address, Error &error)
 {
+    error.Clear();
+    
     Scalar scalar(address);
     
     WriteScalarToMemory(process_address, scalar, GetAddressByteSize(), error);
@@ -434,6 +444,8 @@ IRMemoryMap::WritePointerToMemory (lldb::addr_t process_address, lldb::addr_t ad
 void
 IRMemoryMap::ReadMemory (uint8_t *bytes, lldb::addr_t process_address, size_t size, Error &error)
 {
+    error.Clear();
+    
     AllocationMap::iterator iter = FindAllocation(process_address, size);
     
     if (iter == m_allocations.end())
@@ -524,7 +536,9 @@ IRMemoryMap::ReadMemory (uint8_t *bytes, lldb::addr_t process_address, size_t si
 
 void
 IRMemoryMap::ReadScalarFromMemory (Scalar &scalar, lldb::addr_t process_address, size_t size, Error &error)
-{ 
+{
+    error.Clear();
+    
     if (size > 0)
     {
         DataBufferHeap buf(size, 0);
@@ -560,6 +574,8 @@ IRMemoryMap::ReadScalarFromMemory (Scalar &scalar, lldb::addr_t process_address,
 void
 IRMemoryMap::ReadPointerFromMemory (lldb::addr_t *address, lldb::addr_t process_address, Error &error)
 {
+    error.Clear();
+    
     Scalar pointer_scalar;
     ReadScalarFromMemory(pointer_scalar, process_address, GetAddressByteSize(), error);
     
@@ -574,6 +590,8 @@ IRMemoryMap::ReadPointerFromMemory (lldb::addr_t *address, lldb::addr_t process_
 void
 IRMemoryMap::GetMemoryData (DataExtractor &extractor, lldb::addr_t process_address, size_t size, Error &error)
 {
+    error.Clear();
+    
     if (size > 0)
     {
         AllocationMap::iterator iter = FindAllocation(process_address, size);

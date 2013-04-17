@@ -419,7 +419,8 @@ public:
     ///     True if the write could be performed; false otherwise.
     //------------------------------------------------------------------
     bool
-    WriteTarget (lldb_private::Value &value,
+    WriteTarget (lldb_private::IRMemoryMap &map,
+                 lldb_private::Value &value,
                  const uint8_t *data,
                  size_t length);
     
@@ -439,7 +440,8 @@ public:
     ///     True if the read could be performed; false otherwise.
     //------------------------------------------------------------------
     bool
-    ReadTarget (uint8_t *data,
+    ReadTarget (lldb_private::IRMemoryMap &map,
+                uint8_t *data,
                 lldb_private::Value &value,
                 size_t length);
 
@@ -515,7 +517,8 @@ public:
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
     bool
-    CompleteResultVariable (lldb::ClangExpressionVariableSP &valobj, 
+    CompleteResultVariable (lldb::ClangExpressionVariableSP &valobj,
+                            lldb_private::IRMemoryMap &map,
                             lldb_private::Value &value,
                             const ConstString &name,
                             lldb_private::TypeFromParser type,

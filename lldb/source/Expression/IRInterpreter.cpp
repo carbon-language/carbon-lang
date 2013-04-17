@@ -71,344 +71,31 @@ PrintType(const Type *type, bool truncate = false)
     return s;
 }
 
-typedef STD_SHARED_PTR(lldb_private::DataEncoder) DataEncoderSP;
-typedef STD_SHARED_PTR(lldb_private::DataExtractor) DataExtractorSP;
-
-class Memory
-{
-public:
-    typedef uint32_t                    index_t;
-    
-    struct Allocation
-    {
-        // m_virtual_address is always the address of the variable in the virtual memory
-        // space provided by Memory.
-        //
-        // m_origin is always non-NULL and describes the source of the data (possibly
-        // m_data if this allocation is the authoritative source).
-        //
-        // Possible value configurations:
-        //
-        // Allocation type  getValueType()          getContextType()            m_origin->GetScalar()       m_data
-        // =========================================================================================================================
-        // FileAddress      eValueTypeFileAddress   eContextTypeInvalid         A location in a binary      NULL
-        //                                                                      image
-        //                                                      
-        // LoadAddress      eValueTypeLoadAddress   eContextTypeInvalid         A location in the target's  NULL
-        //                                                                      virtual memory
-        //
-        // Alloca           eValueTypeHostAddress   eContextTypeInvalid         == m_data->GetBytes()       Deleted at end of 
-        //                                                                                                  execution
-        //
-        // PersistentVar    eValueTypeHostAddress   eContextTypeClangType       A persistent variable's     NULL
-        //                                                                      location in LLDB's memory
-        //
-        // Register         [ignored]               eContextTypeRegister        [ignored]                   Flushed to the register
-        //                                                                                                  at the end of execution
-        
-        lldb::addr_t        m_virtual_address;
-        size_t              m_extent;
-        lldb_private::Value m_origin;
-        lldb::DataBufferSP  m_data;
-        
-        Allocation (lldb::addr_t virtual_address,
-                    size_t extent,
-                    lldb::DataBufferSP data) :
-            m_virtual_address(virtual_address),
-            m_extent(extent),
-            m_data(data)
-        {
-        }
-        
-        Allocation (const Allocation &allocation) :
-            m_virtual_address(allocation.m_virtual_address),
-            m_extent(allocation.m_extent),
-            m_origin(allocation.m_origin),
-            m_data(allocation.m_data)
-        {
-        }
-    };
-    
-    typedef STD_SHARED_PTR(Allocation)  AllocationSP;
-    
-    struct Region
-    {
-        AllocationSP m_allocation;
-        uint64_t m_base;
-        uint64_t m_extent;
-        
-        Region () :
-            m_allocation(),
-            m_base(0),
-            m_extent(0)
-        {
-        }
-        
-        Region (AllocationSP allocation, uint64_t base, uint64_t extent) :
-            m_allocation(allocation),
-            m_base(base),
-            m_extent(extent)
-        {
-        }
-        
-        Region (const Region &region) :
-            m_allocation(region.m_allocation),
-            m_base(region.m_base),
-            m_extent(region.m_extent)
-        {
-        }
-        
-        bool IsValid ()
-        {
-            return (bool) m_allocation;
-        }
-        
-        bool IsInvalid ()
-        {
-            return !m_allocation;
-        }
-    };
-    
-    typedef std::vector <AllocationSP>          MemoryMap;
-
-private:
-    lldb::addr_t        m_addr_base;
-    lldb::addr_t        m_addr_max;
-    MemoryMap           m_memory;
-    lldb::ByteOrder     m_byte_order;
-    lldb::addr_t        m_addr_byte_size;
-    DataLayout         &m_target_data;
-    
-    lldb_private::ClangExpressionDeclMap   &m_decl_map;
-    
-    MemoryMap::iterator LookupInternal (lldb::addr_t addr)
-    {
-        for (MemoryMap::iterator i = m_memory.begin(), e = m_memory.end();
-             i != e;
-             ++i)
-        {
-            if ((*i)->m_virtual_address <= addr &&
-                (*i)->m_virtual_address + (*i)->m_extent > addr)
-                return i;
-        }
-        
-        return m_memory.end();
-    }
-    
-public:
-    Memory (DataLayout &target_data,
-            lldb_private::ClangExpressionDeclMap &decl_map,
-            lldb::addr_t alloc_start,
-            lldb::addr_t alloc_max) :
-        m_addr_base(alloc_start),
-        m_addr_max(alloc_max),
-        m_target_data(target_data),
-        m_decl_map(decl_map)
-    {
-        m_byte_order = (target_data.isLittleEndian() ? lldb::eByteOrderLittle : lldb::eByteOrderBig);
-        m_addr_byte_size = (target_data.getPointerSize(0));
-    }
-    
-    Region Malloc (size_t size, size_t align)
-    {
-        lldb::DataBufferSP data(new lldb_private::DataBufferHeap(size, 0));
-        
-        if (data)
-        {
-            index_t index = m_memory.size();
-            
-            const size_t mask = (align - 1);
-            
-            m_addr_base += mask;
-            m_addr_base &= ~mask;
-            
-            if (m_addr_base + size < m_addr_base ||
-                m_addr_base + size > m_addr_max)
-                return Region();
-            
-            uint64_t base = m_addr_base;
-                        
-            m_memory.push_back(AllocationSP(new Allocation(base, size, data)));
-            
-            m_addr_base += size;
-            
-            AllocationSP alloc = m_memory[index];
-            
-            alloc->m_origin.GetScalar() = (unsigned long long)data->GetBytes();
-            alloc->m_origin.SetContext(lldb_private::Value::eContextTypeInvalid, NULL);
-            alloc->m_origin.SetValueType(lldb_private::Value::eValueTypeHostAddress);
-            
-            return Region(alloc, base, size);
-        }
-        
-        return Region();
-    }
-    
-    Region Malloc (Type *type)
-    {
-        return Malloc (m_target_data.getTypeAllocSize(type),
-                       m_target_data.getPrefTypeAlignment(type));
-    }
-    
-    Region Place (Type *type, lldb::addr_t base, lldb_private::Value &value)
-    {
-        index_t index = m_memory.size();
-        size_t size = m_target_data.getTypeAllocSize(type);
-        
-        m_memory.push_back(AllocationSP(new Allocation(base, size, lldb::DataBufferSP())));
-        
-        AllocationSP alloc = m_memory[index];
-        
-        alloc->m_origin = value;
-        
-        return Region(alloc, base, size);
-    }
-    
-    void Free (lldb::addr_t addr)
-    {
-        MemoryMap::iterator i = LookupInternal (addr);
-        
-        if (i != m_memory.end())
-            m_memory.erase(i);
-    }
-    
-    Region Lookup (lldb::addr_t addr, Type *type)
-    {
-        MemoryMap::iterator i = LookupInternal(addr);
-        
-        if (i == m_memory.end() || !type->isSized())
-            return Region();
-    
-        size_t size = m_target_data.getTypeStoreSize(type);
-                
-        return Region(*i, addr, size);
-    }
-        
-    DataEncoderSP GetEncoder (Region region)
-    {
-        if (region.m_allocation->m_origin.GetValueType() != lldb_private::Value::eValueTypeHostAddress)
-            return DataEncoderSP();
-        
-        lldb::DataBufferSP buffer = region.m_allocation->m_data;
-        
-        if (!buffer)
-            return DataEncoderSP();
-        
-        size_t base_offset = (size_t)(region.m_base - region.m_allocation->m_virtual_address);
-                
-        return DataEncoderSP(new lldb_private::DataEncoder(buffer->GetBytes() + base_offset, region.m_extent, m_byte_order, m_addr_byte_size));
-    }
-    
-    DataExtractorSP GetExtractor (Region region)
-    {
-        if (region.m_allocation->m_origin.GetValueType() != lldb_private::Value::eValueTypeHostAddress)
-            return DataExtractorSP();
-        
-        lldb::DataBufferSP buffer = region.m_allocation->m_data;
-        size_t base_offset = (size_t)(region.m_base - region.m_allocation->m_virtual_address);
-
-        if (buffer)
-            return DataExtractorSP(new lldb_private::DataExtractor(buffer->GetBytes() + base_offset, region.m_extent, m_byte_order, m_addr_byte_size));
-        else
-            return DataExtractorSP(new lldb_private::DataExtractor((uint8_t*)region.m_allocation->m_origin.GetScalar().ULongLong() + base_offset, region.m_extent, m_byte_order, m_addr_byte_size));
-    }
-    
-    lldb_private::Value GetAccessTarget(lldb::addr_t addr)
-    {
-        MemoryMap::iterator i = LookupInternal(addr);
-        
-        if (i == m_memory.end())
-            return lldb_private::Value();
-        
-        lldb_private::Value target = (*i)->m_origin;
-        
-        if (target.GetContextType() == lldb_private::Value::eContextTypeRegisterInfo)
-        {
-            target.SetContext(lldb_private::Value::eContextTypeInvalid, NULL);
-            target.SetValueType(lldb_private::Value::eValueTypeHostAddress);
-            target.GetScalar() = (unsigned long long)(*i)->m_data->GetBytes();
-        }
-        
-        target.GetScalar() += (addr - (*i)->m_virtual_address);
-        
-        return target;
-    }
-    
-    bool Write (lldb::addr_t addr, const uint8_t *data, size_t length)
-    {
-        lldb_private::Value target = GetAccessTarget(addr);
-        
-        return m_decl_map.WriteTarget(target, data, length);
-    }
-    
-    bool Read (uint8_t *data, lldb::addr_t addr, size_t length)
-    {
-        lldb_private::Value source = GetAccessTarget(addr);
-        
-        return m_decl_map.ReadTarget(data, source, length);
-    }
-    
-    bool WriteToRawPtr (lldb::addr_t addr, const uint8_t *data, size_t length)
-    {
-        lldb_private::Value target = m_decl_map.WrapBareAddress(addr);
-        
-        return m_decl_map.WriteTarget(target, data, length);
-    }
-    
-    bool ReadFromRawPtr (uint8_t *data, lldb::addr_t addr, size_t length)
-    {
-        lldb_private::Value source = m_decl_map.WrapBareAddress(addr);
-        
-        return m_decl_map.ReadTarget(data, source, length);
-    }
-    
-    std::string PrintData (lldb::addr_t addr, size_t length)
-    {
-        lldb_private::Value target = GetAccessTarget(addr);
-        
-        lldb_private::DataBufferHeap buf(length, 0);
-        
-        if (!m_decl_map.ReadTarget(buf.GetBytes(), target, length))
-            return std::string("<couldn't read data>");
-        
-        lldb_private::StreamString ss;
-        
-        for (size_t i = 0; i < length; i++)
-        {
-            if ((!(i & 0xf)) && i)
-                ss.Printf("%02hhx - ", buf.GetBytes()[i]);
-            else
-                ss.Printf("%02hhx ", buf.GetBytes()[i]);
-        }
-        
-        return ss.GetString();
-    }
-    
-    std::string SummarizeRegion (Region &region)
-    {
-        lldb_private::StreamString ss;
-
-        lldb_private::Value base = GetAccessTarget(region.m_base);
-        
-        ss.Printf("%" PRIx64 " [%s - %s %llx]",
-                  region.m_base,
-                  lldb_private::Value::GetValueTypeAsCString(base.GetValueType()),
-                  lldb_private::Value::GetContextTypeAsCString(base.GetContextType()),
-                  base.GetScalar().ULongLong());
-        
-        ss.Printf(" %s", PrintData(region.m_base, region.m_extent).c_str());
-        
-        return ss.GetString();
-    }
-};
-
 class InterpreterStackFrame
 {
 public:
-    typedef std::map <const Value*, Memory::Region> ValueMap;
+    typedef std::map <const Value*, lldb::addr_t> ValueMap;
+    
+    struct PlacedValue
+    {
+        lldb_private::Value     lldb_value;
+        lldb::addr_t            process_address;
+        size_t                  size;
+        
+        PlacedValue (lldb_private::Value &_lldb_value,
+                     lldb::addr_t _process_address,
+                     size_t _size) :
+            lldb_value(_lldb_value),
+            process_address(_process_address),
+            size(_size)
+        {
+        }
+    };
+    
+    typedef std::vector <PlacedValue> PlacedValueVector;
 
     ValueMap                                m_values;
-    Memory                                 &m_memory;
+    PlacedValueVector                       m_placed_values;
     DataLayout                             &m_target_data;
     lldb_private::ClangExpressionDeclMap   &m_decl_map;
     lldb_private::IRMemoryMap              &m_memory_map;
@@ -420,10 +107,8 @@ public:
     size_t                                  m_addr_byte_size;
     
     InterpreterStackFrame (DataLayout &target_data,
-                           Memory &memory,
                            lldb_private::ClangExpressionDeclMap &decl_map,
                            lldb_private::IRMemoryMap &memory_map) :
-        m_memory (memory),
         m_target_data (target_data),
         m_decl_map (decl_map),
         m_memory_map (memory_map)
@@ -439,14 +124,6 @@ public:
         m_ie = m_bb->end();
     }
     
-    bool Cache (Memory::AllocationSP allocation, Type *type)
-    {
-        if (allocation->m_origin.GetContextType() != lldb_private::Value::eContextTypeRegisterInfo)
-            return false;
-        
-        return m_decl_map.ReadTarget(allocation->m_data->GetBytes(), allocation->m_origin, allocation->m_data->GetByteSize());
-    }
-    
     std::string SummarizeValue (const Value *value)
     {
         lldb_private::StreamString ss;
@@ -457,9 +134,9 @@ public:
 
         if (i != m_values.end())
         {
-            Memory::Region region = i->second;
+            lldb::addr_t addr = i->second;
             
-            ss.Printf(" %s", m_memory.SummarizeRegion(region).c_str());
+            ss.Printf(" 0x%llx", (unsigned long long)addr);
         }
         
         return ss.GetString();
@@ -503,16 +180,19 @@ public:
         }
         else
         {
-            Memory::Region region = ResolveValue(value, module);
-            DataExtractorSP value_extractor = m_memory.GetExtractor(region);
+            lldb::addr_t process_address = ResolveValue(value, module);
+            size_t value_size = m_target_data.getTypeStoreSize(value->getType());
+        
+            lldb_private::DataExtractor value_extractor;
+            lldb_private::Error extract_error;
             
-            if (!value_extractor)
+            m_memory_map.GetMemoryData(value_extractor, process_address, value_size, extract_error);
+            
+            if (!extract_error.Success())
                 return false;
             
-            size_t value_size = m_target_data.getTypeStoreSize(value->getType());
-                        
             lldb::offset_t offset = 0;
-            uint64_t u64value = value_extractor->GetMaxU64(&offset, value_size);
+            uint64_t u64value = value_extractor.GetMaxU64(&offset, value_size);
                     
             return AssignToMatchType(scalar, u64value, value->getType());
         }
@@ -522,28 +202,30 @@ public:
     
     bool AssignValue (const Value *value, lldb_private::Scalar &scalar, Module &module)
     {
-        Memory::Region region = ResolveValue (value, module);
+        lldb::addr_t process_address = ResolveValue (value, module);
+        
+        if (process_address == LLDB_INVALID_ADDRESS)
+            return false;
     
         lldb_private::Scalar cast_scalar;
         
         if (!AssignToMatchType(cast_scalar, scalar.GetRawBits64(0), value->getType()))
             return false;
+                
+        size_t value_byte_size = m_target_data.getTypeStoreSize(value->getType());
         
-        lldb_private::DataBufferHeap buf(region.m_extent, 0);
+        lldb_private::DataBufferHeap buf(value_byte_size, 0);
         
-        lldb_private::Error err;
+        lldb_private::Error get_data_error;
         
-        if (!cast_scalar.GetAsMemoryData(buf.GetBytes(), buf.GetByteSize(), m_byte_order, err))
+        if (!cast_scalar.GetAsMemoryData(buf.GetBytes(), buf.GetByteSize(), m_byte_order, get_data_error))
             return false;
         
-        DataEncoderSP region_encoder = m_memory.GetEncoder(region);
+        lldb_private::Error write_error;
         
-        if (buf.GetByteSize() > region_encoder->GetByteSize())
-            return false; // This should not happen
+        m_memory_map.WriteMemory(process_address, buf.GetBytes(), buf.GetByteSize(), write_error);
         
-        memcpy(region_encoder->GetDataStart(), buf.GetBytes(), buf.GetByteSize());
-        
-        return true;
+        return write_error.Success();
     }
     
     bool ResolveConstantValue (APInt &value, const Constant *constant)
@@ -601,7 +283,7 @@ public:
         return false;
     }
     
-    bool ResolveConstant (Memory::Region &region, const Constant *constant)
+    bool ResolveConstant (lldb::addr_t process_address, const Constant *constant)
     {
         APInt resolved_value;
         
@@ -611,10 +293,123 @@ public:
         const uint64_t *raw_data = resolved_value.getRawData();
             
         size_t constant_size = m_target_data.getTypeStoreSize(constant->getType());
-        return m_memory.Write(region.m_base, (const uint8_t*)raw_data, constant_size);
-    }
         
-    Memory::Region ResolveValue (const Value *value, Module &module)
+        lldb_private::Error write_error;
+        
+        m_memory_map.WriteMemory(process_address, (uint8_t*)raw_data, constant_size, write_error);
+        
+        return write_error.Success();
+    }
+    
+    lldb::addr_t MallocPointer ()
+    {
+        lldb_private::Error alloc_error;
+
+        lldb::addr_t ret = m_memory_map.Malloc(m_target_data.getPointerSize(), m_target_data.getPointerPrefAlignment(), lldb::ePermissionsReadable | lldb::ePermissionsWritable, lldb_private::IRMemoryMap::eAllocationPolicyMirror, alloc_error);
+        
+        if (alloc_error.Success())
+            return ret;
+        else
+            return LLDB_INVALID_ADDRESS;
+    }
+    
+    lldb::addr_t Malloc (llvm::Type *type, size_t override_byte_size = 0)
+    {
+        lldb_private::Error alloc_error;
+        
+        if (!override_byte_size)
+            override_byte_size = m_target_data.getTypeStoreSize(type);
+        
+        lldb::addr_t ret = m_memory_map.Malloc(override_byte_size, m_target_data.getPrefTypeAlignment(type), lldb::ePermissionsReadable | lldb::ePermissionsWritable, lldb_private::IRMemoryMap::eAllocationPolicyMirror, alloc_error);
+        
+        if (alloc_error.Success())
+            return ret;
+        else
+            return LLDB_INVALID_ADDRESS;
+    }
+    
+    lldb::addr_t PlaceLLDBValue (const llvm::Value *value, lldb_private::Value lldb_value)
+    {
+        lldb_private::Error alloc_error;
+        lldb_private::RegisterInfo *reg_info = lldb_value.GetRegisterInfo();
+                
+        lldb::addr_t ret;
+        
+        size_t value_size = m_target_data.getTypeStoreSize(value->getType());
+        
+        if (reg_info && (reg_info->encoding == lldb::eEncodingVector))
+            value_size = reg_info->byte_size;
+        
+        if (!reg_info && (lldb_value.GetValueType() == lldb_private::Value::eValueTypeLoadAddress))
+            return lldb_value.GetScalar().ULongLong();
+        
+        ret = Malloc(value->getType(), value_size);
+        
+        if (ret == LLDB_INVALID_ADDRESS)
+            return LLDB_INVALID_ADDRESS;
+        
+        lldb_private::DataBufferHeap buf(value_size, 0);
+        
+        m_decl_map.ReadTarget(m_memory_map, buf.GetBytes(), lldb_value, value_size);
+        
+        lldb_private::Error write_error;
+        
+        m_memory_map.WriteMemory(ret, buf.GetBytes(), buf.GetByteSize(), write_error);
+        
+        if (!write_error.Success())
+        {
+            lldb_private::Error free_error;
+            m_memory_map.Free(ret, free_error);
+            return LLDB_INVALID_ADDRESS;
+        }
+        
+        m_placed_values.push_back(PlacedValue(lldb_value, ret, value_size));
+        
+        return ret;
+    }
+    
+    void RestoreLLDBValues ()
+    {
+        for (PlacedValue &placed_value : m_placed_values)
+        {
+            lldb_private::DataBufferHeap buf(placed_value.size, 0);
+            
+            lldb_private::Error read_error;
+            
+            m_memory_map.ReadMemory(buf.GetBytes(), placed_value.process_address, buf.GetByteSize(), read_error);
+            
+            if (read_error.Success())
+                m_decl_map.WriteTarget(m_memory_map, placed_value.lldb_value, buf.GetBytes(), buf.GetByteSize());
+        }
+    }
+    
+    std::string PrintData (lldb::addr_t addr, llvm::Type *type)
+    {
+        size_t length = m_target_data.getTypeStoreSize(type);
+        
+        lldb_private::DataBufferHeap buf(length, 0);
+        
+        lldb_private::Error read_error;
+        
+        m_memory_map.ReadMemory(buf.GetBytes(), addr, length, read_error);
+        
+        if (!read_error.Success())
+            return std::string("<couldn't read data>");
+        
+        lldb_private::StreamString ss;
+        
+        for (size_t i = 0; i < length; i++)
+        {
+            if ((!(i & 0xf)) && i)
+                ss.Printf("%02hhx - ", buf.GetBytes()[i]);
+            else
+                ss.Printf("%02hhx ", buf.GetBytes()[i]);
+        }
+        
+        return ss.GetString();
+    }
+    
+    lldb::addr_t ResolveValue (const Value *value, Module &module)
     {
         ValueMap::iterator i = m_values.find(value);
         
@@ -681,160 +476,217 @@ public:
                 if (resolved_value.GetContextType() == lldb_private::Value::eContextTypeRegisterInfo)
                 {
                     if (variable_is_this)
-                    {
-                        Memory::Region data_region = m_memory.Place(value->getType(), resolved_value.GetScalar().ULongLong(), resolved_value);
+                    {                                                
+                        lldb_private::Error alloc_error;
+                        lldb::addr_t ref_addr = Malloc(value->getType());
                         
-                        lldb_private::Value origin;
+                        if (ref_addr == LLDB_INVALID_ADDRESS)
+                            return LLDB_INVALID_ADDRESS;
                         
-                        origin.SetValueType(lldb_private::Value::eValueTypeLoadAddress);
-                        origin.SetContext(lldb_private::Value::eContextTypeInvalid, NULL);
-                        origin.GetScalar() = resolved_value.GetScalar();
+                        lldb_private::Error write_error;
+                        m_memory_map.WritePointerToMemory(ref_addr, resolved_value.GetScalar().ULongLong(), write_error);
                         
-                        data_region.m_allocation->m_origin = origin;
-                        
-                        Memory::Region ref_region = m_memory.Malloc(value->getType());
-                         
-                        if (ref_region.IsInvalid())
-                            return Memory::Region();
-                        
-                        DataEncoderSP ref_encoder = m_memory.GetEncoder(ref_region);
-                        
-                        if (ref_encoder->PutAddress(0, data_region.m_base) == UINT32_MAX)
-                            return Memory::Region();
+                        if (!write_error.Success())
+                            return LLDB_INVALID_ADDRESS;
                         
                         if (log)
                         {
                             log->Printf("Made an allocation for \"this\" register variable %s", PrintValue(value).c_str());
-                            log->Printf("  Data region    : %llx", (unsigned long long)data_region.m_base);
-                            log->Printf("  Ref region     : %llx", (unsigned long long)ref_region.m_base);
+                            log->Printf("  Data region    : %llx", (unsigned long long)resolved_value.GetScalar().ULongLong());
+                            log->Printf("  Ref region     : %llx", (unsigned long long)ref_addr);
                         }
                         
-                        m_values[value] = ref_region;
-                        return ref_region;
+                        m_values[value] = ref_addr;
+                        return ref_addr;
                     }
                     else if (flags & lldb_private::ClangExpressionVariable::EVBareRegister)
-                    {                        
-                        lldb_private::RegisterInfo *reg_info = resolved_value.GetRegisterInfo();
-                        Memory::Region data_region = (reg_info->encoding == lldb::eEncodingVector) ?
-                        m_memory.Malloc(reg_info->byte_size, m_target_data.getPrefTypeAlignment(value->getType())) :
-                        m_memory.Malloc(value->getType());
+                    {                                                
+                        lldb::addr_t data_address = PlaceLLDBValue(value, resolved_value);
                         
-                        data_region.m_allocation->m_origin = resolved_value;
-                        Memory::Region ref_region = m_memory.Malloc(value->getType());
+                        if (!data_address)
+                            return LLDB_INVALID_ADDRESS;
                         
-                        if (!Cache(data_region.m_allocation, value->getType()))
-                            return Memory::Region();
+                        lldb::addr_t ref_address = MallocPointer();
                         
-                        if (ref_region.IsInvalid())
-                            return Memory::Region();
+                        if (ref_address == LLDB_INVALID_ADDRESS)
+                        {
+                            lldb_private::Error free_error;
+                            m_memory_map.Free(data_address, free_error);
+                            return LLDB_INVALID_ADDRESS;
+                        }
                         
-                        DataEncoderSP ref_encoder = m_memory.GetEncoder(ref_region);
+                        lldb_private::Error write_error;
+
+                        m_memory_map.WritePointerToMemory(ref_address, data_address, write_error);
                         
-                        if (ref_encoder->PutAddress(0, data_region.m_base) == UINT32_MAX)
-                            return Memory::Region();
+                        if (!write_error.Success())
+                        {
+                            lldb_private::Error free_error;
+                            m_memory_map.Free(data_address, free_error);
+                            m_memory_map.Free(ref_address, free_error);
+                            return LLDB_INVALID_ADDRESS;
+                        }
                         
                         if (log)
                         {
                             log->Printf("Made an allocation for bare register variable %s", PrintValue(value).c_str());
-                            log->Printf("  Data contents  : %s", m_memory.PrintData(data_region.m_base, data_region.m_extent).c_str());
-                            log->Printf("  Data region    : %llx", (unsigned long long)data_region.m_base);
-                            log->Printf("  Ref region     : %llx", (unsigned long long)ref_region.m_base);
+                            log->Printf("  Data contents  : %s", PrintData(data_address, value->getType()).c_str());
+                            log->Printf("  Data region    : 0x%llx", (unsigned long long)data_address);
+                            log->Printf("  Ref region     : 0x%llx", (unsigned long long)ref_address);
                         }
                         
-                        m_values[value] = ref_region;
-                        return ref_region;
+                        m_values[value] = ref_address;
+                        return ref_address;
                     }
                     else
-                    {                        
-                        lldb_private::RegisterInfo *reg_info = resolved_value.GetRegisterInfo();
-                        Memory::Region data_region = (reg_info->encoding == lldb::eEncodingVector) ?
-                        m_memory.Malloc(reg_info->byte_size, m_target_data.getPrefTypeAlignment(value->getType())) :
-                        m_memory.Malloc(value->getType());
+                    {                                               
+                        lldb::addr_t data_address = PlaceLLDBValue(value, resolved_value);
                         
-                        data_region.m_allocation->m_origin = resolved_value;
-                        Memory::Region ref_region = m_memory.Malloc(value->getType());
-                        Memory::Region pointer_region;
+                        if (data_address == LLDB_INVALID_ADDRESS)
+                            return LLDB_INVALID_ADDRESS;
                         
-                        pointer_region = m_memory.Malloc(value->getType());
+                        lldb::addr_t ref_address = MallocPointer();
                         
-                        if (!Cache(data_region.m_allocation, value->getType()))
-                            return Memory::Region();
+                        if (ref_address == LLDB_INVALID_ADDRESS)
+                        {
+                            lldb_private::Error free_error;
+                            m_memory_map.Free(data_address, free_error);
+                            return LLDB_INVALID_ADDRESS;
+                        }
                         
-                        if (ref_region.IsInvalid())
-                            return Memory::Region();
+                        lldb::addr_t pointer_address = MallocPointer();
                         
-                        if (pointer_region.IsInvalid())
-                            return Memory::Region();
+                        if (pointer_address == LLDB_INVALID_ADDRESS)
+                        {
+                            lldb_private::Error free_error;
+                            m_memory_map.Free(data_address, free_error);
+                            m_memory_map.Free(ref_address, free_error);
+                            return LLDB_INVALID_ADDRESS;
+                        }
+                                                
+                        lldb_private::Error write_error;
                         
-                        DataEncoderSP ref_encoder = m_memory.GetEncoder(ref_region);
+                        m_memory_map.WritePointerToMemory(ref_address, data_address, write_error);
                         
-                        if (ref_encoder->PutAddress(0, data_region.m_base) == UINT32_MAX)
-                            return Memory::Region();
+                        if (!write_error.Success())
+                        {
+                            lldb_private::Error free_error;
+                            m_memory_map.Free(data_address, free_error);
+                            m_memory_map.Free(ref_address, free_error);
+                            m_memory_map.Free(pointer_address, free_error);
+                            return LLDB_INVALID_ADDRESS;
+                        }
+                        
+                        write_error.Clear();
+                        
+                        m_memory_map.WritePointerToMemory(pointer_address, ref_address, write_error);
+                        
+                        if (!write_error.Success())
+                        {
+                            lldb_private::Error free_error;
+                            m_memory_map.Free(data_address, free_error);
+                            m_memory_map.Free(ref_address, free_error);
+                            m_memory_map.Free(pointer_address, free_error);
+                            return LLDB_INVALID_ADDRESS;
+                        }
                         
                         if (log)
                         {
                             log->Printf("Made an allocation for ordinary register variable %s", PrintValue(value).c_str());
-                            log->Printf("  Data contents  : %s", m_memory.PrintData(data_region.m_base, data_region.m_extent).c_str());
-                            log->Printf("  Data region    : %llx", (unsigned long long)data_region.m_base);
-                            log->Printf("  Ref region     : %llx", (unsigned long long)ref_region.m_base);
-                            log->Printf("  Pointer region : %llx", (unsigned long long)pointer_region.m_base);
+                            log->Printf("  Data contents  : %s", PrintData(data_address, value->getType()).c_str());
+                            log->Printf("  Data region    : 0x%llx", (unsigned long long)data_address);
+                            log->Printf("  Ref region     : 0x%llx", (unsigned long long)ref_address);
+                            log->Printf("  Pointer region : 0x%llx", (unsigned long long)pointer_address);
                         }
                         
-                        DataEncoderSP pointer_encoder = m_memory.GetEncoder(pointer_region);
-                            
-                        if (pointer_encoder->PutAddress(0, ref_region.m_base) == UINT32_MAX)
-                            return Memory::Region();
-                        
-                        m_values[value] = pointer_region;
-                        return pointer_region;
+                        m_values[value] = pointer_address;
+                        return pointer_address;
                     }
                 }
                 else
                 {
                     bool no_extra_redirect = (variable_is_this || variable_is_function_address);
                     
-                    Memory::Region data_region = m_memory.Place(value->getType(), resolved_value.GetScalar().ULongLong(), resolved_value);
-                    Memory::Region ref_region = m_memory.Malloc(value->getType());
-                    Memory::Region pointer_region;
+                    lldb::addr_t data_address = PlaceLLDBValue(value, resolved_value);
                     
-                    if (!no_extra_redirect)
-                        pointer_region = m_memory.Malloc(value->getType());
-                           
-                    if (ref_region.IsInvalid())
-                        return Memory::Region();
+                    if (data_address == LLDB_INVALID_ADDRESS)
+                        return LLDB_INVALID_ADDRESS;
                     
-                    if (pointer_region.IsInvalid() && !no_extra_redirect)
-                        return Memory::Region();
+                    lldb::addr_t ref_address = MallocPointer();
                     
-                    DataEncoderSP ref_encoder = m_memory.GetEncoder(ref_region);
-                    
-                    if (ref_encoder->PutAddress(0, data_region.m_base) == UINT32_MAX)
-                        return Memory::Region();
+                    if (ref_address == LLDB_INVALID_ADDRESS)
+                    {
+                        lldb_private::Error free_error;
+                        m_memory_map.Free(data_address, free_error);
+                        return LLDB_INVALID_ADDRESS;
+                    }
+
+                    lldb::addr_t pointer_address = LLDB_INVALID_ADDRESS;
                     
                     if (!no_extra_redirect)
                     {
-                        DataEncoderSP pointer_encoder = m_memory.GetEncoder(pointer_region);
-                    
-                        if (pointer_encoder->PutAddress(0, ref_region.m_base) == UINT32_MAX)
-                            return Memory::Region();
+                        pointer_address = MallocPointer();
                         
-                        m_values[value] = pointer_region;
+                        if (pointer_address == LLDB_INVALID_ADDRESS)
+                        {
+                            lldb_private::Error free_error;
+                            m_memory_map.Free(data_address, free_error);
+                            m_memory_map.Free(ref_address, free_error);
+                            return LLDB_INVALID_ADDRESS;
+                        }
+                    }
+                    
+                    lldb_private::Error write_error;
+                    
+                    m_memory_map.WritePointerToMemory(ref_address, data_address, write_error);
+                    
+                    if (!write_error.Success())
+                    {
+                        lldb_private::Error free_error;
+                        m_memory_map.Free(data_address, free_error);
+                        m_memory_map.Free(ref_address, free_error);
+                        if (pointer_address != LLDB_INVALID_ADDRESS)
+                            m_memory_map.Free(pointer_address, free_error);
+                        return LLDB_INVALID_ADDRESS;
+                    }
+                                        
+                    if (!no_extra_redirect)
+                    {
+                        write_error.Clear();
+                        
+                        m_memory_map.WritePointerToMemory(pointer_address, ref_address, write_error);
+                        
+                        if (!write_error.Success())
+                        {
+                            lldb_private::Error free_error;
+                            m_memory_map.Free(data_address, free_error);
+                            m_memory_map.Free(ref_address, free_error);
+                            if (pointer_address != LLDB_INVALID_ADDRESS)
+                                m_memory_map.Free(pointer_address, free_error);
+                            return LLDB_INVALID_ADDRESS;
+                        }
                     }
                     
                     if (log)
                     {
                         log->Printf("Made an allocation for %s", PrintValue(value).c_str());
-                        log->Printf("  Data contents  : %s", m_memory.PrintData(data_region.m_base, data_region.m_extent).c_str());
-                        log->Printf("  Data region    : %llx", (unsigned long long)data_region.m_base);
-                        log->Printf("  Ref region     : %llx", (unsigned long long)ref_region.m_base);
+                        log->Printf("  Data contents  : %s", PrintData(data_address, value->getType()).c_str());
+                        log->Printf("  Data region    : %llx", (unsigned long long)data_address);
+                        log->Printf("  Ref region     : %llx", (unsigned long long)ref_address);
                         if (!variable_is_this)
-                            log->Printf("  Pointer region : %llx", (unsigned long long)pointer_region.m_base);
+                            log->Printf("  Pointer region : %llx", (unsigned long long)pointer_address);
                     }
                     
                     if (no_extra_redirect)
-                        return ref_region;
+                    {
+                        m_values[value] = ref_address;
+                        return ref_address;
+                    }
                     else
-                        return pointer_region;
+                    {
+                        m_values[value] = pointer_address;
+                        return pointer_address;
+                    }
                 }
             }
         }
@@ -842,27 +694,20 @@ public:
         
         // Fall back and allocate space [allocation type Alloca]
         
-        Type *type = value->getType();
-                        
-        Memory::Region data_region = m_memory.Malloc(type);
-        data_region.m_allocation->m_origin.GetScalar() = (unsigned long long)data_region.m_allocation->m_data->GetBytes();
-        data_region.m_allocation->m_origin.SetContext(lldb_private::Value::eContextTypeInvalid, NULL);
-        data_region.m_allocation->m_origin.SetValueType(lldb_private::Value::eValueTypeHostAddress);
-        
-        const Constant *constant = dyn_cast<Constant>(value);
-        
-        do
+        lldb::addr_t data_address = Malloc(value->getType());
+                
+        if (const Constant *constant = dyn_cast<Constant>(value))
         {
-            if (!constant)
-                break;
-            
-            if (!ResolveConstant (data_region, constant))
-                return Memory::Region();
+            if (!ResolveConstant (data_address, constant))
+            {
+                lldb_private::Error free_error;
+                m_memory_map.Free(data_address, free_error);
+                return LLDB_INVALID_ADDRESS;
+            }
         }
-        while(0);
         
-        m_values[value] = data_region;
-        return data_region;
+        m_values[value] = data_address;
+        return data_address;
     }
     
     bool ConstructResult (lldb::ClangExpressionVariableSP &result,
@@ -882,11 +727,7 @@ public:
         if (i == m_values.end())
             return false; // There was a slot for the result, but we didn't write into it.
         
-        Memory::Region P = i->second;
-        DataExtractorSP P_extractor = m_memory.GetExtractor(P);
-        
-        if (!P_extractor)
-            return false;
+        lldb::addr_t P = i->second;
         
         Type *pointer_ty = result_value->getType();
         PointerType *pointer_ptr_ty = dyn_cast<PointerType>(pointer_ty);
@@ -894,13 +735,10 @@ public:
             return false;
         Type *R_ty = pointer_ptr_ty->getElementType();
                 
-        lldb::offset_t offset = 0;
-        lldb::addr_t pointer = P_extractor->GetAddress(&offset);
-        
-        Memory::Region R = m_memory.Lookup(pointer, R_ty);
-        
-        if (R.m_allocation->m_origin.GetValueType() != lldb_private::Value::eValueTypeHostAddress ||
-            !R.m_allocation->m_data)
+        lldb_private::Error read_error;
+        lldb::addr_t R;
+        m_memory_map.ReadPointerFromMemory(&R, P, read_error);
+        if (!read_error.Success())
             return false;
         
         lldb_private::Value base;
@@ -913,32 +751,31 @@ public:
             PointerType *R_ptr_ty = dyn_cast<PointerType>(R_ty);           
             if (!R_ptr_ty)
                 return false;
-            Type *R_final_ty = R_ptr_ty->getElementType();
             
-            DataExtractorSP R_extractor = m_memory.GetExtractor(R);
-            
-            if (!R_extractor)
+            read_error.Clear();
+            lldb::addr_t R_pointer;
+            m_memory_map.ReadPointerFromMemory(&R_pointer, R, read_error);
+            if (!read_error.Success())
                 return false;
             
-            offset = 0;
-            lldb::addr_t R_pointer = R_extractor->GetAddress(&offset);
+            // We got a bare pointer.  We are going to treat it as a load address
+            // or a file address, letting decl_map make the choice based on whether
+            // or not a process exists.
             
-            Memory::Region R_final = m_memory.Lookup(R_pointer, R_final_ty);
+            bool was_placed = false;
             
-            if (R_final.m_allocation)
-            {            
-                if (R_final.m_allocation->m_data)
-                    transient = true; // this is a stack allocation
-            
-                base = R_final.m_allocation->m_origin;
-                base.GetScalar() += (R_final.m_base - R_final.m_allocation->m_virtual_address);
-            }
-            else
+            for (PlacedValue &value : m_placed_values)
             {
-                // We got a bare pointer.  We are going to treat it as a load address
-                // or a file address, letting decl_map make the choice based on whether
-                // or not a process exists.
-                
+                if (value.process_address == R_pointer)
+                {
+                    base = value.lldb_value;
+                    was_placed = true;
+                    break;
+                }
+            }
+            
+            if (!was_placed)
+            {
                 base.SetContext(lldb_private::Value::eContextTypeInvalid, NULL);
                 base.SetValueType(lldb_private::Value::eValueTypeFileAddress);
                 base.GetScalar() = (unsigned long long)R_pointer;
@@ -948,11 +785,11 @@ public:
         else
         {
             base.SetContext(lldb_private::Value::eContextTypeInvalid, NULL);
-            base.SetValueType(lldb_private::Value::eValueTypeHostAddress);
-            base.GetScalar() = (unsigned long long)R.m_allocation->m_data->GetBytes() + (R.m_base - R.m_allocation->m_virtual_address);
+            base.SetValueType(lldb_private::Value::eValueTypeLoadAddress);
+            base.GetScalar() = (unsigned long long)R;
         }                     
                         
-        return m_decl_map.CompleteResultVariable (result, base, result_name, result_type, transient, maybe_make_load);
+        return m_decl_map.CompleteResultVariable (result, m_memory_map, base, result_name, result_type, transient, maybe_make_load);
     }
 };
 
@@ -1129,8 +966,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
         return false;
     }
     
-    Memory memory(target_data, m_decl_map, alloc_min, alloc_max);
-    InterpreterStackFrame frame(target_data, memory, m_decl_map, m_memory_map);
+    InterpreterStackFrame frame(target_data, m_decl_map, m_memory_map);
 
     uint32_t num_insts = 0;
     
@@ -1285,9 +1121,9 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 Type *T = alloca_inst->getAllocatedType();
                 Type *Tptr = alloca_inst->getType();
                 
-                Memory::Region R = memory.Malloc(T);
-                
-                if (R.IsInvalid())
+                lldb::addr_t R = frame.Malloc(T);
+                                
+                if (R == LLDB_INVALID_ADDRESS)
                 {
                     if (log)
                         log->Printf("Couldn't allocate memory for an AllocaInst");
@@ -1296,9 +1132,9 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     return false;
                 }
                 
-                Memory::Region P = memory.Malloc(Tptr);
+                lldb::addr_t P = frame.Malloc(Tptr);
                 
-                if (P.IsInvalid())
+                if (P == LLDB_INVALID_ADDRESS)
                 {
                     if (log)
                         log->Printf("Couldn't allocate the result pointer for an AllocaInst");
@@ -1307,14 +1143,19 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     return false;
                 }
                 
-                DataEncoderSP P_encoder = memory.GetEncoder(P);
+                lldb_private::Error write_error;
                 
-                if (P_encoder->PutAddress(0, R.m_base) == UINT32_MAX)
+                m_memory_map.WritePointerToMemory(P, R, write_error);
+                
+                if (!write_error.Success())
                 {
                     if (log)
                         log->Printf("Couldn't write the result pointer for an AllocaInst");
                     err.SetErrorToGenericError();
                     err.SetErrorString(memory_write_error);
+                    lldb_private::Error free_error;
+                    m_memory_map.Free(P, free_error);
+                    m_memory_map.Free(R, free_error);
                     return false;
                 }
                 
@@ -1323,8 +1164,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 if (log)
                 {
                     log->Printf("Interpreted an AllocaInst");
-                    log->Printf("  R : %s", memory.SummarizeRegion(R).c_str());
-                    log->Printf("  P : %s", frame.SummarizeValue(alloca_inst).c_str());
+                    log->Printf("  R : 0x%llx", R);
+                    log->Printf("  P : 0x%llx", P);
                 }
             }
             break;
@@ -1678,10 +1519,10 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 }
                 Type *target_ty = pointer_ptr_ty->getElementType();
                 
-                Memory::Region D = frame.ResolveValue(load_inst, llvm_module);
-                Memory::Region P = frame.ResolveValue(pointer_operand, llvm_module);
+                lldb::addr_t D = frame.ResolveValue(load_inst, llvm_module);
+                lldb::addr_t P = frame.ResolveValue(pointer_operand, llvm_module);
                 
-                if (D.IsInvalid())
+                if (D == LLDB_INVALID_ADDRESS)
                 {
                     if (log)
                         log->Printf("LoadInst's value doesn't resolve to anything");
@@ -1690,7 +1531,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     return false;
                 }
                 
-                if (P.IsInvalid())
+                if (P == LLDB_INVALID_ADDRESS)
                 {
                     if (log)
                         log->Printf("LoadInst's pointer doesn't resolve to anything");
@@ -1699,51 +1540,57 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     return false;
                 }
                 
-                DataExtractorSP P_extractor(memory.GetExtractor(P));
-                DataEncoderSP D_encoder(memory.GetEncoder(D));
-
-                lldb::offset_t offset = 0;
-                lldb::addr_t pointer = P_extractor->GetAddress(&offset);
+                lldb::addr_t R;
+                lldb_private::Error read_error;
+                m_memory_map.ReadPointerFromMemory(&R, P, read_error);
                 
-                Memory::Region R = memory.Lookup(pointer, target_ty);
-                
-                if (R.IsValid())
+                if (!read_error.Success())
                 {
-                    if (!memory.Read(D_encoder->GetDataStart(), R.m_base, target_data.getTypeStoreSize(target_ty)))
-                    {
-                        if (log)
-                            log->Printf("Couldn't read from a region on behalf of a LoadInst");
-                        err.SetErrorToGenericError();
-                        err.SetErrorString(memory_read_error);
-                        return false;
-                    }
+                    if (log)
+                        log->Printf("Couldn't read the address to be loaded for a LoadInst");
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(memory_read_error);
+                    return false;
                 }
-                else
+                
+                size_t target_size = target_data.getTypeStoreSize(target_ty);
+                lldb_private::DataBufferHeap buffer(target_size, 0);
+                
+                read_error.Clear();
+                m_memory_map.ReadMemory(buffer.GetBytes(), R, buffer.GetByteSize(), read_error);
+                if (!read_error.Success())
                 {
-                    if (!memory.ReadFromRawPtr(D_encoder->GetDataStart(), pointer, target_data.getTypeStoreSize(target_ty)))
-                    {
-                        if (log)
-                            log->Printf("Couldn't read from a raw pointer on behalf of a LoadInst");
-                        err.SetErrorToGenericError();
-                        err.SetErrorString(memory_read_error);
-                        return false;
-                    }
+                    if (log)
+                        log->Printf("Couldn't read from a region on behalf of a LoadInst");
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(memory_read_error);
+                    return false;
+                }
+                
+                lldb_private::Error write_error;
+                m_memory_map.WriteMemory(D, buffer.GetBytes(), buffer.GetByteSize(), write_error);
+                if (!write_error.Success())
+                {
+                    if (log)
+                        log->Printf("Couldn't write to a region on behalf of a LoadInst");
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(memory_read_error);
+                    return false;
                 }
                 
                 if (log)
                 {
                     log->Printf("Interpreted a LoadInst");
-                    log->Printf("  P : %s", frame.SummarizeValue(pointer_operand).c_str());
-                    if (R.IsValid())
-                        log->Printf("  R : %s", memory.SummarizeRegion(R).c_str());
-                    else
-                        log->Printf("  R : raw pointer 0x%llx", (unsigned long long)pointer);
-                    log->Printf("  D : %s", frame.SummarizeValue(load_inst).c_str());
+                    log->Printf("  P : 0x%llx", P);
+                    log->Printf("  R : 0x%llx", R);
+                    log->Printf("  D : 0x%llx", D);
                 }
             }
             break;
         case Instruction::Ret:
             {
+                frame.RestoreLLDBValues();
+
                 if (result_name.IsEmpty())
                     return true;
                 
@@ -1788,10 +1635,10 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     return false;
                 Type *target_ty = pointer_ptr_ty->getElementType();
                 
-                Memory::Region D = frame.ResolveValue(value_operand, llvm_module);
-                Memory::Region P = frame.ResolveValue(pointer_operand, llvm_module);
+                lldb::addr_t D = frame.ResolveValue(value_operand, llvm_module);
+                lldb::addr_t P = frame.ResolveValue(pointer_operand, llvm_module);
                 
-                if (D.IsInvalid())
+                if (D == LLDB_INVALID_ADDRESS)
                 {
                     if (log)
                         log->Printf("StoreInst's value doesn't resolve to anything");
@@ -1800,7 +1647,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     return false;
                 }
                 
-                if (P.IsInvalid())
+                if (P == LLDB_INVALID_ADDRESS)
                 {
                     if (log)
                         log->Printf("StoreInst's pointer doesn't resolve to anything");
@@ -1809,47 +1656,50 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     return false;
                 }
                 
-                DataExtractorSP P_extractor(memory.GetExtractor(P));
-                DataExtractorSP D_extractor(memory.GetExtractor(D));
-
-                if (!P_extractor || !D_extractor)
+                lldb::addr_t R;
+                lldb_private::Error read_error;
+                m_memory_map.ReadPointerFromMemory(&R, P, read_error);
+                
+                if (!read_error.Success())
+                {
+                    if (log)
+                        log->Printf("Couldn't read the address to be loaded for a LoadInst");
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(memory_read_error);
                     return false;
-                
-                lldb::offset_t offset = 0;
-                lldb::addr_t pointer = P_extractor->GetAddress(&offset);
-                
-                Memory::Region R = memory.Lookup(pointer, target_ty);
-                
-                if (R.IsValid())
-                {
-                    if (!memory.Write(R.m_base, D_extractor->GetDataStart(), target_data.getTypeStoreSize(target_ty)))
-                    {
-                        if (log)
-                            log->Printf("Couldn't write to a region on behalf of a LoadInst");
-                        err.SetErrorToGenericError();
-                        err.SetErrorString(memory_write_error);
-                        return false;
-                    }
-                }
-                else
-                {
-                    if (!memory.WriteToRawPtr(pointer, D_extractor->GetDataStart(), target_data.getTypeStoreSize(target_ty)))
-                    {
-                        if (log)
-                            log->Printf("Couldn't write to a raw pointer on behalf of a LoadInst");
-                        err.SetErrorToGenericError();
-                        err.SetErrorString(memory_write_error);
-                        return false;
-                    }
                 }
                 
+                size_t target_size = target_data.getTypeStoreSize(target_ty);
+                lldb_private::DataBufferHeap buffer(target_size, 0);
+                
+                read_error.Clear();
+                m_memory_map.ReadMemory(buffer.GetBytes(), D, buffer.GetByteSize(), read_error);
+                if (!read_error.Success())
+                {
+                    if (log)
+                        log->Printf("Couldn't read from a region on behalf of a StoreInst");
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(memory_read_error);
+                    return false;
+                }
+                
+                lldb_private::Error write_error;
+                m_memory_map.WriteMemory(R, buffer.GetBytes(), buffer.GetByteSize(), write_error);
+                if (!write_error.Success())
+                {
+                    if (log)
+                        log->Printf("Couldn't write to a region on behalf of a StoreInst");
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(memory_read_error);
+                    return false;
+                }
                 
                 if (log)
                 {
                     log->Printf("Interpreted a StoreInst");
-                    log->Printf("  D : %s", frame.SummarizeValue(value_operand).c_str());
-                    log->Printf("  P : %s", frame.SummarizeValue(pointer_operand).c_str());
-                    log->Printf("  R : %s", memory.SummarizeRegion(R).c_str());
+                    log->Printf("  D : 0x%llx", D);
+                    log->Printf("  P : 0x%llx", P);
+                    log->Printf("  R : 0x%llx", R);
                 }
             }
             break;

@@ -379,7 +379,8 @@ ClangExpressionDeclMap::ResultIsReference (const ConstString &name)
 }
 
 bool
-ClangExpressionDeclMap::CompleteResultVariable (lldb::ClangExpressionVariableSP &valobj, 
+ClangExpressionDeclMap::CompleteResultVariable (lldb::ClangExpressionVariableSP &valobj,
+                                                IRMemoryMap &map,
                                                 lldb_private::Value &value,
                                                 const ConstString &name,
                                                 lldb_private::TypeFromParser type,
@@ -425,7 +426,7 @@ ClangExpressionDeclMap::CompleteResultVariable (lldb::ClangExpressionVariableSP 
         const size_t pvar_byte_size = pvar_sp->GetByteSize();
         uint8_t *pvar_data = pvar_sp->GetValueBytes();
         
-        if (!ReadTarget(pvar_data, value, pvar_byte_size))
+        if (!ReadTarget(map, pvar_data, value, pvar_byte_size))
             return false;
         
         pvar_sp->m_flags &= ~(ClangExpressionVariable::EVNeedsFreezeDry);
@@ -928,7 +929,8 @@ ClangExpressionDeclMap::WrapBareAddress (lldb::addr_t addr)
 }
 
 bool
-ClangExpressionDeclMap::WriteTarget (lldb_private::Value &value,
+ClangExpressionDeclMap::WriteTarget (lldb_private::IRMemoryMap &map,
+                                     lldb_private::Value &value,
                                      const uint8_t *data,
                                      size_t length)
 {
@@ -976,7 +978,7 @@ ClangExpressionDeclMap::WriteTarget (lldb_private::Value &value,
                 lldb::addr_t load_addr = file_addr.GetLoadAddress(target);
                 
                 Error err;
-                process->WriteMemory(load_addr, data, length, err);
+                map.WriteMemory(load_addr, data, length, err);
                 
                 return err.Success();
             }
@@ -986,7 +988,7 @@ ClangExpressionDeclMap::WriteTarget (lldb_private::Value &value,
                     return false;
                 
                 Error err;
-                process->WriteMemory((lldb::addr_t)value.GetScalar().ULongLong(), data, length, err);
+                map.WriteMemory((lldb::addr_t)value.GetScalar().ULongLong(), data, length, err);
     
                 return err.Success();
             }
@@ -1004,7 +1006,8 @@ ClangExpressionDeclMap::WriteTarget (lldb_private::Value &value,
 }
 
 bool
-ClangExpressionDeclMap::ReadTarget (uint8_t *data,
+ClangExpressionDeclMap::ReadTarget (IRMemoryMap &map,
+                                    uint8_t *data,
                                     lldb_private::Value &value,
                                     size_t length)
 {
@@ -1057,11 +1060,8 @@ ClangExpressionDeclMap::ReadTarget (uint8_t *data,
             }
             case Value::eValueTypeLoadAddress:
             {
-                if (!process)
-                    return false;
-                
                 Error err;
-                process->ReadMemory((lldb::addr_t)value.GetScalar().ULongLong(), data, length, err);
+                map.ReadMemory(data, (lldb::addr_t)value.GetScalar().ULongLong(), length, err);
                 
                 return err.Success();
             }
