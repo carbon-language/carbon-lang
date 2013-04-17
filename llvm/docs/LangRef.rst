@@ -4618,10 +4618,10 @@ The '``store``' instruction is used to write to memory.
 Arguments:
 """"""""""
 
-There are two arguments to the '``store``' instruction: a value to store
-and an address at which to store it. The type of the '``<pointer>``'
+There are two arguments to the ``store`` instruction: a value to store
+and an address at which to store it. The type of the ``<pointer>``
 operand must be a pointer to the :ref:`first class <t_firstclass>` type of
-the '``<value>``' operand. If the ``store`` is marked as ``volatile``,
+the ``<value>`` operand. If the ``store`` is marked as ``volatile``,
 then the optimizer is not allowed to modify the number or order of
 execution of this ``store`` with other :ref:`volatile
 operations <volatile>`.
@@ -4638,18 +4638,18 @@ has undefined behavior if the alignment is not set to a value which is
 at least the size in bytes of the pointee. ``!nontemporal`` does not
 have any defined semantics for atomic stores.
 
-The optional constant "align" argument specifies the alignment of the
+The optional constant ``align`` argument specifies the alignment of the
 operation (that is, the alignment of the memory address). A value of 0
-or an omitted "align" argument means that the operation has the abi
+or an omitted ``align`` argument means that the operation has the ABI
 alignment for the target. It is the responsibility of the code emitter
 to ensure that the alignment information is correct. Overestimating the
-alignment results in an undefined behavior. Underestimating the
+alignment results in undefined behavior. Underestimating the
 alignment may produce less efficient code. An alignment of 1 is always
 safe.
 
-The optional !nontemporal metadata must reference a single metatadata
-name <index> corresponding to a metadata node with one i32 entry of
-value 1. The existence of the !nontemporal metatadata on the instruction
+The optional ``!nontemporal`` metadata must reference a single metatadata
+name ``<index>`` corresponding to a metadata node with one ``i32`` entry of
+value 1. The existence of the ``!nontemporal`` metatadata on the instruction
 tells the optimizer and code generator that this load is not expected to
 be reused in the cache. The code generator may select special
 instructions to save cache bandwidth, such as the MOVNT instruction on
@@ -4658,8 +4658,8 @@ x86.
 Semantics:
 """"""""""
 
-The contents of memory are updated to contain '``<value>``' at the
-location specified by the '``<pointer>``' operand. If '``<value>``' is
+The contents of memory are updated to contain ``<value>`` at the
+location specified by the ``<pointer>`` operand. If ``<value>`` is
 of scalar type then the number of bytes written does not exceed the
 minimum number of bytes needed to hold all bits of the type. For
 example, storing an ``i24`` writes at most three bytes. When writing a
