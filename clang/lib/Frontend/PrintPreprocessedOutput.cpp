@@ -270,11 +270,12 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
     if (IncludeLoc.isValid())
       MoveToLine(IncludeLoc);
   } else if (Reason == PPCallbacks::SystemHeaderPragma) {
-    MoveToLine(NewLine);
-
-    // TODO GCC emits the # directive for this directive on the line AFTER the
-    // directive and emits a bunch of spaces that aren't needed.  Emulate this
-    // strange behavior.
+    // GCC emits the # directive for this directive on the line AFTER the
+    // directive and emits a bunch of spaces that aren't needed. This is because
+    // otherwise we will emit a line marker for THIS line, which requires an
+    // extra blank line after the directive to avoid making all following lines
+    // off by one. We can do better by simply incrementing NewLine here.
+    NewLine += 1;
   }
   
   CurLine = NewLine;
