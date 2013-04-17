@@ -38,6 +38,10 @@
 #define DEBUG_PRINTF(fmt, ...)
 #endif
 
+#ifndef __APPLE__
+#include "Utility/UuidCompatibility.h"
+#endif
+
 using namespace lldb;
 using namespace lldb_private;
 

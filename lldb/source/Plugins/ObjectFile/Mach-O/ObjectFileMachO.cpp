@@ -43,6 +43,10 @@
 #include <dlfcn.h>
 #endif
 
+#ifndef __APPLE__
+#include "Utility/UuidCompatibility.h"
+#endif
+
 using namespace lldb;
 using namespace lldb_private;
 using namespace llvm::MachO;
