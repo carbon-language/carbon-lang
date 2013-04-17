@@ -27,6 +27,8 @@ guide <http://llvm.org/docs/GettingStarted.html>`_.
       git clone http://llvm.org/git/llvm.git
       cd llvm/tools
       git clone http://llvm.org/git/clang.git
+      cd clang/tools
+      git clone http://llvm.org/git/clang-tools-extra.git extra
 
 Next you need to obtain the CMake build system and Ninja build tool. You
 may already have CMake installed, but current binary versions of CMake
@@ -163,7 +165,7 @@ You should now be able to run the syntax checker, which is located in
 
 .. code-block:: console
 
-      cat "void main() {}" > test.cpp
+      cat "int main() { return 0; }" > test.cpp
       bin/loop-convert test.cpp --
 
 Note the two dashes after we specify the source file. The additional
@@ -275,8 +277,9 @@ Add the following to ``LoopConvert.cpp``:
       class LoopPrinter : public MatchFinder::MatchCallback {
       public :
         virtual void run(const MatchFinder::MatchResult &Result) {
-        if (const ForStmt *FS = Result.Nodes.getNodeAs<clang::ForStmt>("forLoop"))
-          FS->dump();
+          if (const ForStmt *FS = Result.Nodes.getNodeAs<clang::ForStmt>("forLoop"))
+            FS->dump();
+        }
       };
 
 And change ``main()`` to:
