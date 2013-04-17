@@ -738,7 +738,9 @@ multiclass SteamOutputExportPattern<Instruction ExportInst,
       4095, imm:$mask, buf3inst, 0)>;
 }
 
-let usesCustomInserter = 1 in {
+// Export Instructions should not be duplicated by TailDuplication pass
+// (which assumes that duplicable instruction are affected by exec mask)
+let usesCustomInserter = 1, isNotDuplicable = 1 in {
 
 class ExportSwzInst : InstR600ISA<(
     outs),

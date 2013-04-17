@@ -1,6 +1,8 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
-; CHECK: JUMP @4
+; CHECK: JUMP @3
+; CHECK: EXPORT
+; CHECK-NOT: EXPORT
 
 define void @main() #0 {
 main_body:
