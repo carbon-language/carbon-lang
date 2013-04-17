@@ -485,11 +485,11 @@ private:
   X86Operand *ParseIntelOperand();
   X86Operand *ParseIntelOffsetOfOperator();
   X86Operand *ParseIntelOperator(unsigned OpKind);
-  X86Operand *ParseIntelMemOperand(unsigned SegReg, uint64_t ImmDisp,
+  X86Operand *ParseIntelMemOperand(unsigned SegReg, int64_t ImmDisp,
                                    SMLoc StartLoc);
   X86Operand *ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End);
   X86Operand *ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
-                                       uint64_t ImmDisp, unsigned Size);
+                                       int64_t ImmDisp, unsigned Size);
   X86Operand *ParseIntelVarWithQualifier(const MCExpr *&Disp,
                                          StringRef &Identifier);
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
@@ -1293,7 +1293,7 @@ X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
 }
 
 X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
-                                                   uint64_t ImmDisp,
+                                                   int64_t ImmDisp,
                                                    unsigned Size) {
   const AsmToken &Tok = Parser.getTok();
   SMLoc BracLoc = Tok.getLoc(), End = Tok.getEndLoc();
@@ -1397,7 +1397,7 @@ X86Operand *X86AsmParser::ParseIntelVarWithQualifier(const MCExpr *&Disp,
 
 /// ParseIntelMemOperand - Parse intel style memory operand.
 X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg,
-                                               uint64_t ImmDisp,
+                                               int64_t ImmDisp,
                                                SMLoc Start) {
   const AsmToken &Tok = Parser.getTok();
   SMLoc End;
@@ -1415,7 +1415,7 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg,
     if (isParsingInlineAsm())
       InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_ImmPrefix,
                                                   Tok.getLoc()));
-    uint64_t ImmDisp = Tok.getIntVal();
+    int64_t ImmDisp = Tok.getIntVal();
     Parser.Lex(); // Eat the integer.
     if (getLexer().isNot(AsmToken::LBrac))
       return ErrorOperand(Start, "Expected '[' token!");
@@ -1455,7 +1455,7 @@ bool X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp,
                                          const MCExpr **NewDisp,
                                          SmallString<64> &Err) {
   const AsmToken &Tok = Parser.getTok();
-  uint64_t OrigDispVal, DotDispVal;
+  int64_t OrigDispVal, DotDispVal;
 
   // FIXME: Handle non-constant expressions.
   if (const MCConstantExpr *OrigDisp = dyn_cast<MCConstantExpr>(Disp)) {
