@@ -122,11 +122,11 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
 
   // isSymbolLinkerVisible uses the section.
-  Symbol->setSection(*getCurrentSection());
+  Symbol->setSection(*getCurrentSection().first);
   // We have to create a new fragment if this is an atom defining symbol,
   // fragments cannot span atoms.
   if (getAssembler().isSymbolLinkerVisible(*Symbol))
-    new MCDataFragment(getCurrentSectionData());
+    insert(new MCDataFragment());
 
   MCObjectStreamer::EmitLabel(Symbol);
 

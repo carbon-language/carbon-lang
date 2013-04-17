@@ -83,14 +83,15 @@ public:
   virtual void EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
                            bool isVector);
 
-  virtual void ChangeSection(const MCSection *Section) {
+  virtual void ChangeSection(const MCSection *Section,
+                             const MCExpr *Subsection) {
     // We have to keep track of the mapping symbol state of any sections we
     // use. Each one should start off as EMS_None, which is provided as the
     // default constructor by DenseMap::lookup.
-    LastMappingSymbols[getPreviousSection()] = LastEMS;
+    LastMappingSymbols[getPreviousSection().first] = LastEMS;
     LastEMS = LastMappingSymbols.lookup(Section);
 
-    MCELFStreamer::ChangeSection(Section);
+    MCELFStreamer::ChangeSection(Section, Subsection);
   }
 
   /// This function is the one used to emit instruction data into the ELF
@@ -183,7 +184,7 @@ private:
     MCELF::SetType(SD, ELF::STT_NOTYPE);
     MCELF::SetBinding(SD, ELF::STB_LOCAL);
     SD.setExternal(false);
-    Symbol->setSection(*getCurrentSection());
+    Symbol->setSection(*getCurrentSection().first);
 
     const MCExpr *Value = MCSymbolRefExpr::Create(Start, getContext());
     Symbol->setVariableValue(Value);

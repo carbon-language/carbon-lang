@@ -109,14 +109,15 @@ void MCELFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   llvm_unreachable("invalid assembler flag!");
 }
 
-void MCELFStreamer::ChangeSection(const MCSection *Section) {
+void MCELFStreamer::ChangeSection(const MCSection *Section,
+                                  const MCExpr *Subsection) {
   MCSectionData *CurSection = getCurrentSectionData();
   if (CurSection && CurSection->isBundleLocked())
     report_fatal_error("Unterminated .bundle_lock when changing a section");
   const MCSymbol *Grp = static_cast<const MCSectionELF *>(Section)->getGroup();
   if (Grp)
     getAssembler().getOrCreateSymbolData(*Grp);
-  this->MCObjectStreamer::ChangeSection(Section);
+  this->MCObjectStreamer::ChangeSection(Section, Subsection);
 }
 
 void MCELFStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {
@@ -318,7 +319,7 @@ void MCELFStreamer::EmitValueToAlignment(unsigned ByteAlignment,
 // entry in the module's symbol table (the first being the null symbol).
 void MCELFStreamer::EmitFileDirective(StringRef Filename) {
   MCSymbol *Symbol = getAssembler().getContext().GetOrCreateSymbol(Filename);
-  Symbol->setSection(*getCurrentSection());
+  Symbol->setSection(*getCurrentSection().first);
   Symbol->setAbsolute();
 
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
@@ -434,11 +435,13 @@ void MCELFStreamer::EmitInstToData(const MCInst &Inst) {
       // Optimize memory usage by emitting the instruction to a
       // MCCompactEncodedInstFragment when not in a bundle-locked group and
       // there are no fixups registered.
-      MCCompactEncodedInstFragment *CEIF = new MCCompactEncodedInstFragment(SD);
+      MCCompactEncodedInstFragment *CEIF = new MCCompactEncodedInstFragment();
+      insert(CEIF);
       CEIF->getContents().append(Code.begin(), Code.end());
       return;
     } else {
-      DF = new MCDataFragment(SD);
+      DF = new MCDataFragment();
+      insert(DF);
       if (SD->getBundleLockState() == MCSectionData::BundleLockedAlignToEnd) {
         // If this is a new fragment created for a bundle-locked group, and the
         // group was marked as "align_to_end", set a flag in the fragment.

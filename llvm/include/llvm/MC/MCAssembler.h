@@ -82,7 +82,7 @@ private:
   /// @}
 
 protected:
-  MCFragment(FragmentType _Kind, MCSectionData *_Parent);
+  MCFragment(FragmentType _Kind, MCSectionData *_Parent = 0);
 
 public:
   // Only for sentinel.
@@ -92,6 +92,7 @@ public:
   FragmentType getKind() const { return Kind; }
 
   MCSectionData *getParent() const { return Parent; }
+  void setParent(MCSectionData *Value) { Parent = Value; }
 
   MCSymbolData *getAtom() const { return Atom; }
   void setAtom(MCSymbolData *Value) { Atom = Value; }
@@ -132,7 +133,7 @@ class MCEncodedFragment : public MCFragment {
 
   uint8_t BundlePadding;
 public:
-  MCEncodedFragment(MCFragment::FragmentType FType, MCSectionData *SD)
+  MCEncodedFragment(MCFragment::FragmentType FType, MCSectionData *SD = 0)
     : MCFragment(FType, SD), BundlePadding(0)
   {
   }
@@ -347,7 +348,7 @@ class MCAlignFragment : public MCFragment {
 
 public:
   MCAlignFragment(unsigned _Alignment, int64_t _Value, unsigned _ValueSize,
-                  unsigned _MaxBytesToEmit, MCSectionData *SD)
+                  unsigned _MaxBytesToEmit, MCSectionData *SD = 0)
     : MCFragment(FT_Align, SD), Alignment(_Alignment),
       Value(_Value),ValueSize(_ValueSize),
       MaxBytesToEmit(_MaxBytesToEmit), EmitNops(false) {}
@@ -388,7 +389,7 @@ class MCFillFragment : public MCFragment {
 
 public:
   MCFillFragment(int64_t _Value, unsigned _ValueSize, uint64_t _Size,
-                 MCSectionData *SD)
+                 MCSectionData *SD = 0)
     : MCFragment(FT_Fill, SD),
       Value(_Value), ValueSize(_ValueSize), Size(_Size) {
     assert((!ValueSize || (Size % ValueSize) == 0) &&
@@ -421,7 +422,7 @@ class MCOrgFragment : public MCFragment {
   int8_t Value;
 
 public:
-  MCOrgFragment(const MCExpr &_Offset, int8_t _Value, MCSectionData *SD)
+  MCOrgFragment(const MCExpr &_Offset, int8_t _Value, MCSectionData *SD = 0)
     : MCFragment(FT_Org, SD),
       Offset(&_Offset), Value(_Value) {}
 
@@ -450,7 +451,7 @@ class MCLEBFragment : public MCFragment {
 
   SmallString<8> Contents;
 public:
-  MCLEBFragment(const MCExpr &Value_, bool IsSigned_, MCSectionData *SD)
+  MCLEBFragment(const MCExpr &Value_, bool IsSigned_, MCSectionData *SD = 0)
     : MCFragment(FT_LEB, SD),
       Value(&Value_), IsSigned(IsSigned_) { Contents.push_back(0); }
 
@@ -486,7 +487,7 @@ class MCDwarfLineAddrFragment : public MCFragment {
 
 public:
   MCDwarfLineAddrFragment(int64_t _LineDelta, const MCExpr &_AddrDelta,
-                      MCSectionData *SD)
+                      MCSectionData *SD = 0)
     : MCFragment(FT_Dwarf, SD),
       LineDelta(_LineDelta), AddrDelta(&_AddrDelta) { Contents.push_back(0); }
 
@@ -517,7 +518,7 @@ class MCDwarfCallFrameFragment : public MCFragment {
   SmallString<8> Contents;
 
 public:
-  MCDwarfCallFrameFragment(const MCExpr &_AddrDelta,  MCSectionData *SD)
+  MCDwarfCallFrameFragment(const MCExpr &_AddrDelta,  MCSectionData *SD = 0)
     : MCFragment(FT_DwarfFrame, SD),
       AddrDelta(&_AddrDelta) { Contents.push_back(0); }
 
@@ -589,6 +590,10 @@ private:
   /// it.
   unsigned HasInstructions : 1;
 
+  /// Mapping from subsection number to insertion point for subsection numbers
+  /// below that number.
+  SmallVector<std::pair<unsigned, MCFragment *>, 1> SubsectionFragmentMap;
+
   /// @}
 
 public:
@@ -631,6 +636,8 @@ public:
   size_t size() const { return Fragments.size(); }
 
   bool empty() const { return Fragments.empty(); }
+
+  iterator getSubsectionInsertionPoint(unsigned Subsection);
 
   bool isBundleLocked() const {
     return BundleLockState != NotBundleLocked;

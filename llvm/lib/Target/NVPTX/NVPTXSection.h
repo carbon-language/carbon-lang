@@ -32,7 +32,8 @@ public:
   /// Override this as NVPTX has its own way of printing switching
   /// to a section.
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
-                                    raw_ostream &OS) const {}
+                                    raw_ostream &OS,
+                                    const MCExpr *Subsection) const {}
 
   /// Base address of PTX sections is zero.
   virtual bool isBaseAddressKnownZero() const { return true; }

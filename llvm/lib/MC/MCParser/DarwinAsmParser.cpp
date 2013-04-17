@@ -566,10 +566,10 @@ bool DarwinAsmParser::ParseDirectivePopSection(StringRef, SMLoc) {
 /// ParseDirectivePrevious:
 ///   ::= .previous
 bool DarwinAsmParser::ParseDirectivePrevious(StringRef DirName, SMLoc) {
-  const MCSection *PreviousSection = getStreamer().getPreviousSection();
-  if (PreviousSection == NULL)
+  MCSectionSubPair PreviousSection = getStreamer().getPreviousSection();
+  if (PreviousSection.first == NULL)
       return TokError(".previous without corresponding .section");
-  getStreamer().SwitchSection(PreviousSection);
+  getStreamer().SwitchSection(PreviousSection.first, PreviousSection.second);
   return false;
 }
 

@@ -76,6 +76,7 @@ public:
       &ELFAsmParser::ParseDirectiveSymbolAttribute>(".internal");
     addDirectiveHandler<
       &ELFAsmParser::ParseDirectiveSymbolAttribute>(".hidden");
+    addDirectiveHandler<&ELFAsmParser::ParseDirectiveSubsection>(".subsection");
   }
 
   // FIXME: Part of this logic is duplicated in the MCELFStreamer. What is
@@ -147,9 +148,11 @@ public:
   bool ParseDirectiveVersion(StringRef, SMLoc);
   bool ParseDirectiveWeakref(StringRef, SMLoc);
   bool ParseDirectiveSymbolAttribute(StringRef, SMLoc);
+  bool ParseDirectiveSubsection(StringRef, SMLoc);
 
 private:
   bool ParseSectionName(StringRef &SectionName);
+  bool ParseSectionArguments(bool IsPush);
 };
 
 }
@@ -191,12 +194,15 @@ bool ELFAsmParser::ParseDirectiveSymbolAttribute(StringRef Directive, SMLoc) {
 
 bool ELFAsmParser::ParseSectionSwitch(StringRef Section, unsigned Type,
                                       unsigned Flags, SectionKind Kind) {
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return TokError("unexpected token in section switching directive");
-  Lex();
+  const MCExpr *Subsection = 0;
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    if (getParser().parseExpression(Subsection))
+      return true;
+  }
 
   getStreamer().SwitchSection(getContext().getELFSection(
-                                Section, Type, Flags, Kind));
+                                Section, Type, Flags, Kind),
+                              Subsection);
 
   return false;
 }
@@ -316,7 +322,7 @@ static int parseSectionFlags(StringRef flagsStr) {
 bool ELFAsmParser::ParseDirectivePushSection(StringRef s, SMLoc loc) {
   getStreamer().PushSection();
 
-  if (ParseDirectiveSection(s, loc)) {
+  if (ParseSectionArguments(/*IsPush=*/true)) {
     getStreamer().PopSection();
     return true;
   }
@@ -332,6 +338,10 @@ bool ELFAsmParser::ParseDirectivePopSection(StringRef, SMLoc) {
 
 // FIXME: This is a work in progress.
 bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
+  return ParseSectionArguments(/*IsPush=*/false);
+}
+
+bool ELFAsmParser::ParseSectionArguments(bool IsPush) {
   StringRef SectionName;
 
   if (ParseSectionName(SectionName))
@@ -341,6 +351,7 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   int64_t Size = 0;
   StringRef GroupName;
   unsigned Flags = 0;
+  const MCExpr *Subsection = 0;
 
   // Set the defaults first.
   if (SectionName == ".fini" || SectionName == ".init" ||
@@ -352,6 +363,14 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   if (getLexer().is(AsmToken::Comma)) {
     Lex();
 
+    if (IsPush && getLexer().isNot(AsmToken::String)) {
+      if (getParser().parseExpression(Subsection))
+        return true;
+      if (getLexer().isNot(AsmToken::Comma))
+        goto EndStmt;
+      Lex();
+    }
+   
     if (getLexer().isNot(AsmToken::String))
       return TokError("expected string in directive");
 
@@ -408,6 +427,7 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
     }
   }
 
+EndStmt:
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in directive");
 
@@ -444,15 +464,16 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   SectionKind Kind = computeSectionKind(Flags);
   getStreamer().SwitchSection(getContext().getELFSection(SectionName, Type,
                                                          Flags, Kind, Size,
-                                                         GroupName));
+                                                         GroupName),
+                              Subsection);
   return false;
 }
 
 bool ELFAsmParser::ParseDirectivePrevious(StringRef DirName, SMLoc) {
-  const MCSection *PreviousSection = getStreamer().getPreviousSection();
-  if (PreviousSection == NULL)
+  MCSectionSubPair PreviousSection = getStreamer().getPreviousSection();
+  if (PreviousSection.first == NULL)
       return TokError(".previous without corresponding .section");
-  getStreamer().SwitchSection(PreviousSection);
+  getStreamer().SwitchSection(PreviousSection.first, PreviousSection.second);
 
   return false;
 }
@@ -610,6 +631,20 @@ bool ELFAsmParser::ParseDirectiveWeakref(StringRef, SMLoc) {
   MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
 
   getStreamer().EmitWeakReference(Alias, Sym);
+  return false;
+}
+
+bool ELFAsmParser::ParseDirectiveSubsection(StringRef, SMLoc) {
+  const MCExpr *Subsection = 0;
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    if (getParser().parseExpression(Subsection))
+     return true;
+  }
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in directive");
+
+  getStreamer().SubSection(Subsection);
   return false;
 }
 

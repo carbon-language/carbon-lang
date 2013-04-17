@@ -37,6 +37,8 @@ namespace llvm {
   class raw_ostream;
   class formatted_raw_ostream;
 
+  typedef std::pair<const MCSection *, const MCExpr *> MCSectionSubPair;
+
   /// MCStreamer - Streaming machine code generation interface.  This interface
   /// is intended to provide a programatic interface that is very similar to the
   /// level that an assembler .s file provides.  It has callbacks to emit bytes,
@@ -86,8 +88,7 @@ namespace llvm {
 
     /// SectionStack - This is stack of current and previous section
     /// values saved by PushSection.
-    SmallVector<std::pair<const MCSection *,
-                const MCSection *>, 4> SectionStack;
+    SmallVector<std::pair<MCSectionSubPair, MCSectionSubPair>, 4> SectionStack;
 
     bool AutoInitSections;
 
@@ -174,25 +175,25 @@ namespace llvm {
 
     /// getCurrentSection - Return the current section that the streamer is
     /// emitting code to.
-    const MCSection *getCurrentSection() const {
+    MCSectionSubPair getCurrentSection() const {
       if (!SectionStack.empty())
         return SectionStack.back().first;
-      return NULL;
+      return MCSectionSubPair();
     }
 
     /// getPreviousSection - Return the previous section that the streamer is
     /// emitting code to.
-    const MCSection *getPreviousSection() const {
+    MCSectionSubPair getPreviousSection() const {
       if (!SectionStack.empty())
         return SectionStack.back().second;
-      return NULL;
+      return MCSectionSubPair();
     }
 
     /// ChangeSection - Update streamer for a new active section.
     ///
     /// This is called by PopSection and SwitchSection, if the current
     /// section changes.
-    virtual void ChangeSection(const MCSection *) = 0;
+    virtual void ChangeSection(const MCSection *, const MCExpr *) = 0;
 
     /// pushSection - Save the current and previous section on the
     /// section stack.
@@ -208,11 +209,19 @@ namespace llvm {
     bool PopSection() {
       if (SectionStack.size() <= 1)
         return false;
-      const MCSection *oldSection = SectionStack.pop_back_val().first;
-      const MCSection *curSection = SectionStack.back().first;
+      MCSectionSubPair oldSection = SectionStack.pop_back_val().first;
+      MCSectionSubPair curSection = SectionStack.back().first;
 
       if (oldSection != curSection)
-        ChangeSection(curSection);
+        ChangeSection(curSection.first, curSection.second);
+      return true;
+    }
+
+    bool SubSection(const MCExpr *Subsection) {
+      if (SectionStack.empty())
+        return false;
+
+      SwitchSection(SectionStack.back().first.first, Subsection);
       return true;
     }
 
@@ -220,25 +229,26 @@ namespace llvm {
     /// @p Section.  This is required to update CurSection.
     ///
     /// This corresponds to assembler directives like .section, .text, etc.
-    void SwitchSection(const MCSection *Section) {
+    void SwitchSection(const MCSection *Section, const MCExpr *Subsection = 0) {
       assert(Section && "Cannot switch to a null section!");
-      const MCSection *curSection = SectionStack.back().first;
+      MCSectionSubPair curSection = SectionStack.back().first;
       SectionStack.back().second = curSection;
-      if (Section != curSection) {
-        SectionStack.back().first = Section;
-        ChangeSection(Section);
+      if (MCSectionSubPair(Section, Subsection) != curSection) {
+        SectionStack.back().first = MCSectionSubPair(Section, Subsection);
+        ChangeSection(Section, Subsection);
       }
     }
 
     /// SwitchSectionNoChange - Set the current section where code is being
     /// emitted to @p Section.  This is required to update CurSection. This
     /// version does not call ChangeSection.
-    void SwitchSectionNoChange(const MCSection *Section) {
+    void SwitchSectionNoChange(const MCSection *Section,
+                               const MCExpr *Subsection = 0) {
       assert(Section && "Cannot switch to a null section!");
-      const MCSection *curSection = SectionStack.back().first;
+      MCSectionSubPair curSection = SectionStack.back().first;
       SectionStack.back().second = curSection;
-      if (Section != curSection)
-        SectionStack.back().first = Section;
+      if (MCSectionSubPair(Section, Subsection) != curSection)
+        SectionStack.back().first = MCSectionSubPair(Section, Subsection);
     }
 
     /// Initialize the streamer.

@@ -197,6 +197,8 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
   // actually a DW_LNE_end_sequence.
 
   // Switch to the section to be able to create a symbol at its end.
+  // TODO: keep track of the last subsection so that this symbol appears in the
+  // correct place.
   MCOS->SwitchSection(Section);
 
   MCContext &context = MCOS->getContext();
@@ -787,7 +789,7 @@ void MCGenDwarfLabelEntry::Make(MCSymbol *Symbol, MCStreamer *MCOS,
   if (Symbol->isTemporary())
     return;
   MCContext &context = MCOS->getContext();
-  if (context.getGenDwarfSection() != MCOS->getCurrentSection())
+  if (context.getGenDwarfSection() != MCOS->getCurrentSection().first)
     return;
 
   // The dwarf label's name does not have the symbol name's leading

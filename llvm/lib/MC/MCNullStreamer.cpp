@@ -30,13 +30,14 @@ namespace {
     virtual void InitSections() {
     }
 
-    virtual void ChangeSection(const MCSection *Section) {
+    virtual void ChangeSection(const MCSection *Section,
+                               const MCExpr *Subsection) {
     }
 
     virtual void EmitLabel(MCSymbol *Symbol) {
       assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
-      assert(getCurrentSection() && "Cannot emit before setting section!");
-      Symbol->setSection(*getCurrentSection());
+      assert(getCurrentSection().first &&"Cannot emit before setting section!");
+      Symbol->setSection(*getCurrentSection().first);
     }
     virtual void EmitDebugLabel(MCSymbol *Symbol) {
       EmitLabel(Symbol);

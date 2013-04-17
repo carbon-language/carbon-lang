@@ -20,6 +20,7 @@
 
 namespace llvm {
   class MCAsmInfo;
+  class MCExpr;
   class raw_ostream;
 
   /// MCSection - Instances of this class represent a uniqued identifier for a
@@ -48,7 +49,8 @@ namespace llvm {
     SectionVariant getVariant() const { return Variant; }
 
     virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
-                                      raw_ostream &OS) const = 0;
+                                      raw_ostream &OS,
+                                      const MCExpr *Subsection) const = 0;
 
     // Convenience routines to get label names for the beginning/end of a
     // section.

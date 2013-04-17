@@ -135,7 +135,7 @@ const DataLayout &AsmPrinter::getDataLayout() const {
 
 /// getCurrentSection() - Return the current section we are emitting to.
 const MCSection *AsmPrinter::getCurrentSection() const {
-  return OutStreamer.getCurrentSection();
+  return OutStreamer.getCurrentSection().first;
 }
 
 

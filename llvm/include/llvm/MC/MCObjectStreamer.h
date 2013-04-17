@@ -10,6 +10,7 @@
 #ifndef LLVM_MC_MCOBJECTSTREAMER_H
 #define LLVM_MC_MCOBJECTSTREAMER_H
 
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCStreamer.h"
 
 namespace llvm {
@@ -32,6 +33,7 @@ class raw_ostream;
 class MCObjectStreamer : public MCStreamer {
   MCAssembler *Assembler;
   MCSectionData *CurSectionData;
+  MCSectionData::iterator CurInsertionPoint;
 
   virtual void EmitInstToData(const MCInst &Inst) = 0;
   virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame);
@@ -56,6 +58,11 @@ protected:
 
   MCFragment *getCurrentFragment() const;
 
+  void insert(MCFragment *F) const {
+    CurSectionData->getFragmentList().insert(CurInsertionPoint, F);
+    F->setParent(CurSectionData);
+  }
+
   /// Get a data fragment to write into, creating a new one if the current
   /// fragment is not a data fragment.
   MCDataFragment *getOrCreateDataFragment() const;
@@ -76,7 +83,8 @@ public:
   virtual void EmitULEB128Value(const MCExpr *Value);
   virtual void EmitSLEB128Value(const MCExpr *Value);
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
-  virtual void ChangeSection(const MCSection *Section);
+  virtual void ChangeSection(const MCSection *Section,
+                             const MCExpr *Subsection);
   virtual void EmitInstruction(const MCInst &Inst);
 
   /// \brief Emit an instruction to a special fragment, because this instruction

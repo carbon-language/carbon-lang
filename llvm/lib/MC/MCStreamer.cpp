@@ -24,8 +24,7 @@ using namespace llvm;
 MCStreamer::MCStreamer(StreamerKind Kind, MCContext &Ctx)
     : Kind(Kind), Context(Ctx), EmitEHFrame(true), EmitDebugFrame(false),
       CurrentW64UnwindInfo(0), LastSymbol(0), AutoInitSections(false) {
-  const MCSection *section = 0;
-  SectionStack.push_back(std::make_pair(section, section));
+  SectionStack.push_back(std::pair<MCSectionSubPair, MCSectionSubPair>());
 }
 
 MCStreamer::~MCStreamer() {
@@ -40,9 +39,8 @@ void MCStreamer::reset() {
   EmitDebugFrame = false;
   CurrentW64UnwindInfo = 0;
   LastSymbol = 0;
-  const MCSection *section = 0;
   SectionStack.clear();
-  SectionStack.push_back(std::make_pair(section, section));
+  SectionStack.push_back(std::pair<MCSectionSubPair, MCSectionSubPair>());
 }
 
 const MCExpr *MCStreamer::BuildSymbolDiff(MCContext &Context,
@@ -188,15 +186,15 @@ void MCStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
 
 void MCStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
-  assert(getCurrentSection() && "Cannot emit before setting section!");
-  Symbol->setSection(*getCurrentSection());
+  assert(getCurrentSection().first && "Cannot emit before setting section!");
+  Symbol->setSection(*getCurrentSection().first);
   LastSymbol = Symbol;
 }
 
 void MCStreamer::EmitDebugLabel(MCSymbol *Symbol) {
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
-  assert(getCurrentSection() && "Cannot emit before setting section!");
-  Symbol->setSection(*getCurrentSection());
+  assert(getCurrentSection().first && "Cannot emit before setting section!");
+  Symbol->setSection(*getCurrentSection().first);
   LastSymbol = Symbol;
 }
 

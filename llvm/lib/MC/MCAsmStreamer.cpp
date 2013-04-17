@@ -124,7 +124,8 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
-  virtual void ChangeSection(const MCSection *Section);
+  virtual void ChangeSection(const MCSection *Section,
+                             const MCExpr *Subsection);
 
   virtual void InitSections() {
     InitToTextSection();
@@ -328,9 +329,10 @@ static inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
   return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
 }
 
-void MCAsmStreamer::ChangeSection(const MCSection *Section) {
+void MCAsmStreamer::ChangeSection(const MCSection *Section,
+                                  const MCExpr *Subsection) {
   assert(Section && "Cannot switch to a null section!");
-  Section->PrintSwitchToSection(MAI, OS);
+  Section->PrintSwitchToSection(MAI, OS, Subsection);
 }
 
 void MCAsmStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
@@ -637,7 +639,8 @@ static void PrintQuotedString(StringRef Data, raw_ostream &OS) {
 
 
 void MCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
-  assert(getCurrentSection() && "Cannot emit contents before setting section!");
+  assert(getCurrentSection().first &&
+         "Cannot emit contents before setting section!");
   if (Data.empty()) return;
 
   if (Data.size() == 1) {
@@ -668,7 +671,8 @@ void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size,
 
 void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
                                   unsigned AddrSpace) {
-  assert(getCurrentSection() && "Cannot emit contents before setting section!");
+  assert(getCurrentSection().first &&
+         "Cannot emit contents before setting section!");
   const char *Directive = 0;
   switch (Size) {
   default: break;
@@ -1363,7 +1367,8 @@ void MCAsmStreamer::EmitTCEntry(const MCSymbol &S) {
 }
 
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
-  assert(getCurrentSection() && "Cannot emit contents before setting section!");
+  assert(getCurrentSection().first &&
+         "Cannot emit contents before setting section!");
 
   // Show the encoding in a comment if we have a code emitter.
   if (Emitter)

@@ -70,7 +70,8 @@ public:
   const MCSymbol *getGroup() const { return Group; }
 
   void PrintSwitchToSection(const MCAsmInfo &MAI,
-                            raw_ostream &OS) const;
+                            raw_ostream &OS,
+                            const MCExpr *Subsection) const;
   virtual bool UseCodeAlign() const;
   virtual bool isVirtualSection() const;
 
