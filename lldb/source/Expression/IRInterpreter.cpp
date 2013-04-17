@@ -26,20 +26,6 @@
 
 using namespace llvm;
 
-IRInterpreter::IRInterpreter(lldb_private::ClangExpressionDeclMap *decl_map,
-                             lldb_private::IRMemoryMap &memory_map,
-                             lldb_private::Stream *error_stream) :
-    m_decl_map(decl_map),
-    m_memory_map(memory_map)
-{
-    
-}
-
-IRInterpreter::~IRInterpreter()
-{
-    
-}
-
 static std::string 
 PrintValue(const Value *value, bool truncate = false)
 {
@@ -806,7 +792,10 @@ public:
 };
 
 bool
-IRInterpreter::maybeRunOnFunction (lldb::ClangExpressionVariableSP &result,
+IRInterpreter::maybeRunOnFunction (lldb_private::ClangExpressionDeclMap *decl_map,
+                                   lldb_private::IRMemoryMap &memory_map,
+                                   lldb_private::Stream *error_stream,
+                                   lldb::ClangExpressionVariableSP &result,
                                    const lldb_private::ConstString &result_name,
                                    lldb_private::TypeFromParser result_type,
                                    Function &llvm_function,
@@ -814,7 +803,10 @@ IRInterpreter::maybeRunOnFunction (lldb::ClangExpressionVariableSP &result,
                                    lldb_private::Error &err)
 {
     if (supportsFunction (llvm_function, err))
-        return runOnFunction(result,
+        return runOnFunction(decl_map,
+                             memory_map,
+                             error_stream,
+                             result,
                              result_name, 
                              result_type, 
                              llvm_function,
@@ -927,7 +919,10 @@ IRInterpreter::supportsFunction (Function &llvm_function,
 }
 
 bool 
-IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
+IRInterpreter::runOnFunction (lldb_private::ClangExpressionDeclMap *decl_map,
+                              lldb_private::IRMemoryMap &memory_map,
+                              lldb_private::Stream *error_stream,
+                              lldb::ClangExpressionVariableSP &result,
                               const lldb_private::ConstString &result_name,
                               lldb_private::TypeFromParser result_type,
                               Function &llvm_function,
@@ -938,7 +933,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
     
     DataLayout target_data(&llvm_module);
     
-    InterpreterStackFrame frame(target_data, m_decl_map, m_memory_map);
+    InterpreterStackFrame frame(target_data, decl_map, memory_map);
 
     uint32_t num_insts = 0;
     
@@ -1117,7 +1112,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 
                 lldb_private::Error write_error;
                 
-                m_memory_map.WritePointerToMemory(P, R, write_error);
+                memory_map.WritePointerToMemory(P, R, write_error);
                 
                 if (!write_error.Success())
                 {
@@ -1126,8 +1121,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     err.SetErrorToGenericError();
                     err.SetErrorString(memory_write_error);
                     lldb_private::Error free_error;
-                    m_memory_map.Free(P, free_error);
-                    m_memory_map.Free(R, free_error);
+                    memory_map.Free(P, free_error);
+                    memory_map.Free(R, free_error);
                     return false;
                 }
                 
@@ -1514,7 +1509,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 
                 lldb::addr_t R;
                 lldb_private::Error read_error;
-                m_memory_map.ReadPointerFromMemory(&R, P, read_error);
+                memory_map.ReadPointerFromMemory(&R, P, read_error);
                 
                 if (!read_error.Success())
                 {
@@ -1529,7 +1524,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 lldb_private::DataBufferHeap buffer(target_size, 0);
                 
                 read_error.Clear();
-                m_memory_map.ReadMemory(buffer.GetBytes(), R, buffer.GetByteSize(), read_error);
+                memory_map.ReadMemory(buffer.GetBytes(), R, buffer.GetByteSize(), read_error);
                 if (!read_error.Success())
                 {
                     if (log)
@@ -1540,7 +1535,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 }
                 
                 lldb_private::Error write_error;
-                m_memory_map.WriteMemory(D, buffer.GetBytes(), buffer.GetByteSize(), write_error);
+                memory_map.WriteMemory(D, buffer.GetBytes(), buffer.GetByteSize(), write_error);
                 if (!write_error.Success())
                 {
                     if (log)
@@ -1630,7 +1625,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 
                 lldb::addr_t R;
                 lldb_private::Error read_error;
-                m_memory_map.ReadPointerFromMemory(&R, P, read_error);
+                memory_map.ReadPointerFromMemory(&R, P, read_error);
                 
                 if (!read_error.Success())
                 {
@@ -1645,7 +1640,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 lldb_private::DataBufferHeap buffer(target_size, 0);
                 
                 read_error.Clear();
-                m_memory_map.ReadMemory(buffer.GetBytes(), D, buffer.GetByteSize(), read_error);
+                memory_map.ReadMemory(buffer.GetBytes(), D, buffer.GetByteSize(), read_error);
                 if (!read_error.Success())
                 {
                     if (log)
@@ -1656,7 +1651,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 }
                 
                 lldb_private::Error write_error;
-                m_memory_map.WriteMemory(R, buffer.GetBytes(), buffer.GetByteSize(), write_error);
+                memory_map.WriteMemory(R, buffer.GetBytes(), buffer.GetByteSize(), write_error);
                 if (!write_error.Success())
                 {
                     if (log)

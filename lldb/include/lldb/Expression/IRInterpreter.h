@@ -41,26 +41,6 @@ class IRInterpreter
 {
 public:
     //------------------------------------------------------------------
-    /// Constructor
-    ///
-    /// @param[in] decl_map
-    ///     The list of externally-referenced variables for the expression,
-    ///     for use in looking up globals and allocating the argument
-    ///     struct.  See the documentation for ClangExpressionDeclMap.
-    ///
-    /// @param[in] error_stream
-    ///     If non-NULL, a stream on which errors can be printed.
-    //------------------------------------------------------------------
-    IRInterpreter(lldb_private::ClangExpressionDeclMap *decl_map,
-                  lldb_private::IRMemoryMap &memory_map,
-                  lldb_private::Stream *error_stream);
-    
-    //------------------------------------------------------------------
-    /// Destructor
-    //------------------------------------------------------------------
-    ~IRInterpreter();
-    
-    //------------------------------------------------------------------
     /// Run the IR interpreter on a single function
     ///
     /// @param[in] result
@@ -87,23 +67,26 @@ public:
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool 
-    maybeRunOnFunction (lldb::ClangExpressionVariableSP &result,
+    static bool
+    maybeRunOnFunction (lldb_private::ClangExpressionDeclMap *decl_map,
+                        lldb_private::IRMemoryMap &memory_map,
+                        lldb_private::Stream *error_stream,
+                        lldb::ClangExpressionVariableSP &result,
                         const lldb_private::ConstString &result_name,
                         lldb_private::TypeFromParser result_type,
                         llvm::Function &llvm_function,
                         llvm::Module &llvm_module,
                         lldb_private::Error &err);
-private:
-    lldb_private::ClangExpressionDeclMap   *m_decl_map;     ///< The DeclMap containing the Decls
-    lldb_private::IRMemoryMap              &m_memory_map;   ///< The IRMemoryMap to use when accessing memory
-    
-    bool
+private:   
+    static bool
     supportsFunction (llvm::Function &llvm_function,
                       lldb_private::Error &err);
     
-    bool 
-    runOnFunction (lldb::ClangExpressionVariableSP &result,
+    static bool
+    runOnFunction (lldb_private::ClangExpressionDeclMap *decl_map,
+                   lldb_private::IRMemoryMap &memory_map,
+                   lldb_private::Stream *error_stream,
+                   lldb::ClangExpressionVariableSP &result,
                    const lldb_private::ConstString &result_name,
                    lldb_private::TypeFromParser result_type,
                    llvm::Function &llvm_function,

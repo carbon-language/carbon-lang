@@ -2806,11 +2806,7 @@ IRForTarget::runOnModule (Module &llvm_module)
     
     if (m_decl_map && m_execution_policy != lldb_private::eExecutionPolicyAlways)
     {
-        IRInterpreter interpreter (m_decl_map,
-                                   m_memory_map,
-                                   m_error_stream);
-
-        interpreter.maybeRunOnFunction(m_const_result, m_result_name, m_result_type, *function, llvm_module, m_interpreter_error);
+        IRInterpreter::maybeRunOnFunction(m_decl_map, m_memory_map, m_error_stream,m_const_result, m_result_name, m_result_type, *function, llvm_module, m_interpreter_error);
         
         if (m_interpreter_error.Success())
             return true;
