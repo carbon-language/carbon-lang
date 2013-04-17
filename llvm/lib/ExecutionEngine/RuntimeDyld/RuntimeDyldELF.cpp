@@ -41,7 +41,7 @@ error_code check(error_code Err) {
 template<class ELFT>
 class DyldELFObject
   : public ELFObjectFile<ELFT> {
-  LLVM_ELF_IMPORT_TYPES(ELFT)
+  LLVM_ELF_IMPORT_TYPES_ELFT(ELFT)
 
   typedef Elf_Shdr_Impl<ELFT> Elf_Shdr;
   typedef Elf_Sym_Impl<ELFT> Elf_Sym;
