@@ -27,7 +27,7 @@ except KeyError,e:
 
 config.substitutions.append(('%loadPolly', '-load '
                              + config.polly_lib_dir + '/LLVMPolly@LLVM_SHLIBEXT@'))
-config.substitutions.append(('%defaultOpts', ' -basicaa -polly-prepare -polly-region-simplify'))
+config.substitutions.append(('%defaultOpts', ' -basicaa -polly-prepare'))
 config.substitutions.append(('%polybenchOpts', ' -O3 -loop-simplify -indvars '))
 config.substitutions.append(('%vector-opt', '-polly-vectorizer=polly'))
 

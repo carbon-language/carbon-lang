@@ -30,7 +30,6 @@ add_polly_loadable_module(LLVMPolly
   IndVarSimplify.cpp
   MayAliasSet.cpp
   Pocc.cpp
-  RegionSimplify.cpp
   RegisterPasses.cpp
   ScheduleOptimizer.cpp
   ${POLLY_SCOPLIB_FILES}

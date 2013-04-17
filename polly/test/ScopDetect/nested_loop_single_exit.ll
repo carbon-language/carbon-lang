@@ -1,7 +1,5 @@
 ; RUN: opt %loadPolly -polly-detect -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-region-simplify -polly-detect -analyze < %s | FileCheck %s
 ; RUN: opt %loadPolly -polly-detect -polly-codegen-isl -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-region-simplify -polly-detect -polly-codegen-isl -analyze < %s | FileCheck %s
 
 ; void f(long A[], long N) {
 ;   long i, j;

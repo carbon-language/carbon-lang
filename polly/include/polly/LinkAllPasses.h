@@ -45,7 +45,6 @@ llvm::Pass *createJSONImporterPass();
 #ifdef PLUTO_FOUND
 llvm::Pass *createPlutoOptimizerPass();
 #endif
-llvm::Pass *createRegionSimplifyPass();
 llvm::Pass *createScopDetectionPass();
 llvm::Pass *createScopInfoPass();
 llvm::Pass *createIslAstInfoPass();
@@ -96,7 +95,6 @@ struct PollyForcePassLinking {
     createIndVarSimplifyPass();
     createJSONExporterPass();
     createJSONImporterPass();
-    createRegionSimplifyPass();
     createScopDetectionPass();
     createScopInfoPass();
 #ifdef PLUTO_FOUND
@@ -141,7 +139,6 @@ void initializePlutoOptimizerPass(llvm::PassRegistry &);
 void initializePoccPass(llvm::PassRegistry &);
 #endif
 void initializePollyIndVarSimplifyPass(llvm::PassRegistry &);
-void initializeRegionSimplifyPass(llvm::PassRegistry &);
 }
 
 #endif
