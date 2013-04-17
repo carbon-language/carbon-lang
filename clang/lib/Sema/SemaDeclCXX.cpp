@@ -633,10 +633,6 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
   unsigned NumParams = FD->getNumParams();
   unsigned p;
 
-  bool IsLambda = FD->getOverloadedOperator() == OO_Call &&
-                  isa<CXXMethodDecl>(FD) &&
-                  cast<CXXMethodDecl>(FD)->getParent()->isLambda();
-
   // Find first parameter with a default argument
   for (p = 0; p < NumParams; ++p) {
     ParmVarDecl *Param = FD->getParamDecl(p);
