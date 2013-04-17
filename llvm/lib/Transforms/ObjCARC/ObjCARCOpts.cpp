@@ -709,10 +709,13 @@ void BBState::MergeSucc(const BBState &Other) {
 
 /// Enable/disable ARC sequence annotations.
 static cl::opt<bool>
-EnableARCAnnotations("enable-objc-arc-annotations", cl::init(false));
+EnableARCAnnotations("enable-objc-arc-annotations", cl::init(false),
+                     cl::desc("Enable emission of arc data flow analysis "
+                              "annotations"));
 static cl::opt<bool>
-EnableCheckForCFGHazards("enable-objc-arc-checkforcfghazards",
-                         cl::init(true));
+EnableCheckForCFGHazards("enable-objc-arc-checkforcfghazards", cl::init(true),
+                         cl::desc("Disable check for cfg hazards when "
+                                  "annotating"));
 
 /// This function appends a unique ARCAnnotationProvenanceSourceMDKind id to an
 /// instruction so that we can track backwards when post processing via the llvm
