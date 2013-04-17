@@ -193,15 +193,13 @@ private:
     IES_LPAREN,
     IES_RPAREN,
     IES_REGISTER,
-    IES_REGISTER_STAR,
     IES_INTEGER,
-    IES_INTEGER_STAR,
     IES_IDENTIFIER,
     IES_ERROR
   };
 
   class IntelExprStateMachine {
-    IntelExprState State;
+    IntelExprState State, PrevState;
     unsigned BaseReg, IndexReg, TmpReg, Scale;
     int64_t Imm;
     const MCExpr *Sym;
@@ -210,8 +208,9 @@ private:
     InfixCalculator IC;
   public:
     IntelExprStateMachine(int64_t imm, bool stoponlbrac, bool addimmprefix) :
-      State(IES_PLUS), BaseReg(0), IndexReg(0), TmpReg(0), Scale(1), Imm(imm),
-      Sym(0), StopOnLBrac(stoponlbrac), AddImmPrefix(addimmprefix) {}
+      State(IES_PLUS), PrevState(IES_ERROR), BaseReg(0), IndexReg(0), TmpReg(0),
+      Scale(1), Imm(imm), Sym(0), StopOnLBrac(stoponlbrac),
+      AddImmPrefix(addimmprefix) {}
     
     unsigned getBaseReg() { return BaseReg; }
     unsigned getIndexReg() { return IndexReg; }
@@ -222,61 +221,72 @@ private:
     bool isValidEndState() { return State == IES_RBRAC; }
     bool getStopOnLBrac() { return StopOnLBrac; }
     bool getAddImmPrefix() { return AddImmPrefix; }
+    bool hadError() { return State == IES_ERROR; }
 
     void onPlus() {
+      IntelExprState CurrState = State;
       switch (State) {
       default:
         State = IES_ERROR;
         break;
       case IES_INTEGER:
       case IES_RPAREN:
-        State = IES_PLUS;
-        IC.pushOperator(IC_PLUS);
-        break;
       case IES_REGISTER:
         State = IES_PLUS;
-        // If we already have a BaseReg, then assume this is the IndexReg with a
-        // scale of 1.
-        if (!BaseReg) {
-          BaseReg = TmpReg;
-        } else {
-          assert (!IndexReg && "BaseReg/IndexReg already set!");
-          IndexReg = TmpReg;
-          Scale = 1;
-        }
         IC.pushOperator(IC_PLUS);
+        if (CurrState == IES_REGISTER && PrevState != IES_MULTIPLY) {
+          // If we already have a BaseReg, then assume this is the IndexReg with
+          // a scale of 1.
+          if (!BaseReg) {
+            BaseReg = TmpReg;
+          } else {
+            assert (!IndexReg && "BaseReg/IndexReg already set!");
+            IndexReg = TmpReg;
+            Scale = 1;
+          }
+        }
         break;
       }
+      PrevState = CurrState;
     }
     void onMinus() {
+      IntelExprState CurrState = State;
       switch (State) {
       default:
         State = IES_ERROR;
         break;
       case IES_PLUS:
+      case IES_MULTIPLY:
+      case IES_DIVIDE:
       case IES_LPAREN:
-        IC.pushOperand(IC_IMM);
-      case IES_INTEGER:
       case IES_RPAREN:
-        State = IES_MINUS;
-        IC.pushOperator(IC_MINUS);
-        break;
+      case IES_LBRAC:
+      case IES_RBRAC:
+      case IES_INTEGER:
       case IES_REGISTER:
         State = IES_MINUS;
-        // If we already have a BaseReg, then assume this is the IndexReg with a
-        // scale of 1.
-        if (!BaseReg) {
-          BaseReg = TmpReg;
-        } else {
-          assert (!IndexReg && "BaseReg/IndexReg already set!");
-          IndexReg = TmpReg;
-          Scale = 1;
+        // Only push the minus operator if it is not a unary operator.
+        if (!(CurrState == IES_PLUS || CurrState == IES_MINUS ||
+              CurrState == IES_MULTIPLY || CurrState == IES_DIVIDE ||
+              CurrState == IES_LPAREN || CurrState == IES_LBRAC))
+          IC.pushOperator(IC_MINUS);
+        if (CurrState == IES_REGISTER && PrevState != IES_MULTIPLY) {
+          // If we already have a BaseReg, then assume this is the IndexReg with
+          // a scale of 1.
+          if (!BaseReg) {
+            BaseReg = TmpReg;
+          } else {
+            assert (!IndexReg && "BaseReg/IndexReg already set!");
+            IndexReg = TmpReg;
+            Scale = 1;
+          }
         }
-        IC.pushOperator(IC_MINUS);
         break;
       }
+      PrevState = CurrState;
     }
     void onRegister(unsigned Reg) {
+      IntelExprState CurrState = State;
       switch (State) {
       default:
         State = IES_ERROR;
@@ -287,17 +297,25 @@ private:
         TmpReg = Reg;
         IC.pushOperand(IC_REGISTER);
         break;
-      case IES_INTEGER_STAR:
-        assert (!IndexReg && "IndexReg already set!");
-        State = IES_INTEGER;
-        IndexReg = Reg;
-        Scale = IC.popOperand();
-        IC.pushOperand(IC_IMM);
-        IC.popOperator();
+      case IES_MULTIPLY:
+        // Index Register - Scale * Register
+        if (PrevState == IES_INTEGER) {
+          assert (!IndexReg && "IndexReg already set!");
+          State = IES_REGISTER;
+          IndexReg = Reg;
+          // Get the scale and replace the 'Scale * Register' with '0'.
+          Scale = IC.popOperand();
+          IC.pushOperand(IC_IMM);
+          IC.popOperator();
+        } else {
+          State = IES_ERROR;
+        }
         break;
       }
+      PrevState = CurrState;
     }
     void onDispExpr(const MCExpr *SymRef, StringRef SymRefName) {
+      IntelExprState CurrState = State;
       switch (State) {
       default:
         State = IES_ERROR;
@@ -310,61 +328,72 @@ private:
         IC.pushOperand(IC_IMM);
         break;
       }
+      PrevState = CurrState;
     }
     void onInteger(int64_t TmpInt) {
+      IntelExprState CurrState = State;
       switch (State) {
       default:
         State = IES_ERROR;
         break;
       case IES_PLUS:
       case IES_MINUS:
-      case IES_MULTIPLY:
       case IES_DIVIDE:
+      case IES_MULTIPLY:
       case IES_LPAREN:
-      case IES_INTEGER_STAR:
         State = IES_INTEGER;
-        IC.pushOperand(IC_IMM, TmpInt);
-        break;
-      case IES_REGISTER_STAR:
-        assert (!IndexReg && "IndexReg already set!");
-        State = IES_INTEGER;
-        IndexReg = TmpReg;
-        Scale = TmpInt;
-        IC.popOperator();
+        if (PrevState == IES_REGISTER && CurrState == IES_MULTIPLY) {
+          // Index Register - Register * Scale
+          assert (!IndexReg && "IndexReg already set!");
+          IndexReg = TmpReg;
+          Scale = TmpInt;
+          // Get the scale and replace the 'Register * Scale' with '0'.
+          IC.popOperator();
+        } else if ((PrevState == IES_PLUS || PrevState == IES_MINUS ||
+                    PrevState == IES_MULTIPLY || PrevState == IES_DIVIDE ||
+                    PrevState == IES_LPAREN || PrevState == IES_LBRAC) &&
+                   CurrState == IES_MINUS) {
+          // Unary minus.  No need to pop the minus operand because it was never
+          // pushed.
+          IC.pushOperand(IC_IMM, -TmpInt); // Push -Imm.
+        } else {
+          IC.pushOperand(IC_IMM, TmpInt);
+        }
         break;
       }
+      PrevState = CurrState;
     }
     void onStar() {
+      IntelExprState CurrState = State;
       switch (State) {
       default:
         State = IES_ERROR;
         break;
       case IES_INTEGER:
-        State = IES_INTEGER_STAR;
-        IC.pushOperator(IC_MULTIPLY);
-        break;
       case IES_REGISTER:
-        State = IES_REGISTER_STAR;
-        IC.pushOperator(IC_MULTIPLY);
-        break;
       case IES_RPAREN:
         State = IES_MULTIPLY;
         IC.pushOperator(IC_MULTIPLY);
         break;
       }
+      PrevState = CurrState;
     }
     void onDivide() {
+      IntelExprState CurrState = State;
       switch (State) {
       default:
         State = IES_ERROR;
         break;
       case IES_INTEGER:
+      case IES_RPAREN:
         State = IES_DIVIDE;
         IC.pushOperator(IC_DIVIDE);
         break;
       }
+      PrevState = CurrState;
     }
     void onLBrac() {
+      IntelExprState CurrState = State;
       switch (State) {
       default:
         State = IES_ERROR;
@@ -374,31 +403,35 @@ private:
         IC.pushOperator(IC_PLUS);
         break;
       }
+      PrevState = CurrState;
     }
     void onRBrac() {
+      IntelExprState CurrState = State;
       switch (State) {
       default:
         State = IES_ERROR;
         break;
-      case IES_RPAREN:
       case IES_INTEGER:
-        State = IES_RBRAC;
-        break;
       case IES_REGISTER:
+      case IES_RPAREN:
         State = IES_RBRAC;
-        // If we already have a BaseReg, then assume this is the IndexReg with a
-        // scale of 1.
-        if (!BaseReg) {
-          BaseReg = TmpReg;
-        } else {
-          assert (!IndexReg && "BaseReg/IndexReg already set!");
-          IndexReg = TmpReg;
-          Scale = 1;
+        if (CurrState == IES_REGISTER && PrevState != IES_MULTIPLY) {
+          // If we already have a BaseReg, then assume this is the IndexReg with
+          // a scale of 1.
+          if (!BaseReg) {
+            BaseReg = TmpReg;
+          } else {
+            assert (!IndexReg && "BaseReg/IndexReg already set!");
+            IndexReg = TmpReg;
+            Scale = 1;
+          }
         }
         break;
       }
+      PrevState = CurrState;
     }
     void onLParen() {
+      IntelExprState CurrState = State;
       switch (State) {
       default:
         State = IES_ERROR;
@@ -407,29 +440,27 @@ private:
       case IES_MINUS:
       case IES_MULTIPLY:
       case IES_DIVIDE:
-      case IES_INTEGER_STAR:
       case IES_LPAREN:
         State = IES_LPAREN;
         IC.pushOperator(IC_LPAREN);
         break;
       }
+      PrevState = CurrState;
     }
     void onRParen() {
+      IntelExprState CurrState = State;
       switch (State) {
       default:
         State = IES_ERROR;
         break;
-      case IES_REGISTER:
       case IES_INTEGER:
-      case IES_PLUS:
-      case IES_MINUS:
-      case IES_MULTIPLY:
-      case IES_DIVIDE:
+      case IES_REGISTER:
       case IES_RPAREN:
         State = IES_RPAREN;
         IC.pushOperator(IC_RPAREN);
         break;
       }
+      PrevState = CurrState;
     }
   };
 
@@ -1250,6 +1281,9 @@ X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
     case AsmToken::LParen:  SM.onLParen(); break;
     case AsmToken::RParen:  SM.onRParen(); break;
     }
+    if (SM.hadError())
+      return ErrorOperand(Tok.getLoc(), "Unexpected token!");
+
     if (!Done && UpdateLocLex) {
       End = Tok.getLoc();
       Parser.Lex(); // Consume the token.
@@ -1284,7 +1318,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
                                  ImmDisp, SM.getImm(), BracLoc, StartInBrac,
                                  End);
   } else {
-    // An immediate displacement only.
+    // An immediate displacement only.   
     Disp = MCConstantExpr::Create(SM.getImm(), getContext());
   }
 

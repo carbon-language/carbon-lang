@@ -283,5 +283,12 @@ _main:
     mov [((-2) * ((8 + 4) - 4)) + eax + ebx*4], ecx
 // CHECK: movl %ecx, -16(%eax,%ebx,4)
     mov [eax + ((-2) * ((8 + 4) - 4)) + ebx*4], ecx
-
+// CHECK: movl %ecx, 96(%eax,%ebx,4)
+    mov [eax + ((-2) * ((8 + 4) * -4)) + ebx*4], ecx
+// CHECK: movl %ecx, -8(%eax,%ebx,4)
+    mov [eax][-8][ebx*4], ecx
+// CHECK: movl %ecx, -2(%eax,%ebx,4)
+    mov [eax][16/-8][ebx*4], ecx
+// CHECK: movl %ecx, -2(%eax,%ebx,4)
+    mov [eax][(16)/-8][ebx*4], ecx
     ret
