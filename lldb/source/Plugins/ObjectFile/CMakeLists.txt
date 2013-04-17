@@ -1,5 +1,3 @@
 add_subdirectory(ELF)
-if ( CMAKE_SYSTEM_NAME MATCHES "Darwin" )
-  add_subdirectory(Mach-O)
-endif ()
+add_subdirectory(Mach-O)
 add_subdirectory(PECOFF)

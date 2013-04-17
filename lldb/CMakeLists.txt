@@ -93,13 +93,6 @@ else()
   set(CMAKE_CXX_FLAGS "-std=c++11")
 endif()
 
-# Disable Clang warnings
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  add_lldb_definitions(
-    -Wno-deprecated-declarations # Suppress "deprecated auto_ptr" warnings
-  )
-endif()
-
 # Disable MSVC warnings
 if( MSVC )
   add_lldb_definitions(
