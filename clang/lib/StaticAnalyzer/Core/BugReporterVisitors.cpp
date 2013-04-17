@@ -61,6 +61,10 @@ const Expr *bugreporter::getDerefExpr(const Stmt *S) {
     else if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
       if (ME->isArrow() || isDeclRefExprToReference(ME->getBase())) {
         return ME->getBase()->IgnoreParenCasts();
+      } else {
+        // If we have a member expr with a dot, the base must have been
+        // dereferenced.
+        return getDerefExpr(ME->getBase());
       }
     }
     else if (const ObjCIvarRefExpr *IvarRef = dyn_cast<ObjCIvarRefExpr>(E)) {
