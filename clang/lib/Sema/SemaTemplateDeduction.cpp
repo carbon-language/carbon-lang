@@ -52,7 +52,11 @@ namespace clang {
     TDF_SkipNonDependent = 0x08,
     /// \brief Whether we are performing template argument deduction for
     /// parameters and arguments in a top-level template argument
-    TDF_TopLevelParameterTypeList = 0x10
+    TDF_TopLevelParameterTypeList = 0x10,
+    /// \brief Within template argument deduction from overload resolution per
+    /// C++ [over.over] allow matching function types that are compatible in
+    /// terms of noreturn and default calling convention adjustments.
+    TDF_InOverloadResolution = 0x20
   };
 }
 
@@ -867,6 +871,32 @@ static bool hasInconsistentOrSupersetQualifiersOf(QualType ParamType,
                                                 == ParamQs.getCVRQualifiers());
 }
 
+/// \brief Compare types for equality with respect to possibly compatible
+/// function types (noreturn adjustment, implicit calling conventions). If any
+/// of parameter and argument is not a function, just perform type comparison.
+///
+/// \param Param the template parameter type.
+///
+/// \param Arg the argument type.
+bool Sema::isSameOrCompatibleFunctionType(CanQualType Param,
+                                          CanQualType Arg) {
+  const FunctionType *ParamFunction = Param->getAs<FunctionType>(),
+                     *ArgFunction   = Arg->getAs<FunctionType>();
+
+  // Just compare if not functions.
+  if (!ParamFunction || !ArgFunction)
+    return Param == Arg;
+
+  // Noreturn adjustment.
+  QualType AdjustedParam;
+  if (IsNoReturnConversion(Param, Arg, AdjustedParam))
+    return Arg == Context.getCanonicalType(AdjustedParam);
+
+  // FIXME: Compatible calling conventions.
+
+  return Param == Arg;
+}
+
 /// \brief Deduce the template arguments by comparing the parameter type and
 /// the argument type (C++ [temp.deduct.type]).
 ///
@@ -1103,6 +1133,8 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
     return Sema::TDK_Success;
 
   // Check the cv-qualifiers on the parameter and argument types.
+  CanQualType CanParam = S.Context.getCanonicalType(Param);
+  CanQualType CanArg = S.Context.getCanonicalType(Arg);
   if (!(TDF & TDF_IgnoreQualifiers)) {
     if (TDF & TDF_ParamWithReferenceType) {
       if (hasInconsistentOrSupersetQualifiersOf(Param, Arg))
@@ -1114,14 +1146,25 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
     
     // If the parameter type is not dependent, there is nothing to deduce.
     if (!Param->isDependentType()) {
-      if (!(TDF & TDF_SkipNonDependent) && Param != Arg)
-        return Sema::TDK_NonDeducedMismatch;
-      
+      if (!(TDF & TDF_SkipNonDependent)) {
+        bool NonDeduced = (TDF & TDF_InOverloadResolution)?
+                          !S.isSameOrCompatibleFunctionType(CanParam, CanArg) :
+                          Param != Arg;
+        if (NonDeduced) {
+          return Sema::TDK_NonDeducedMismatch;
+        }
+      }
       return Sema::TDK_Success;
     }
-  } else if (!Param->isDependentType() &&
-             Param.getUnqualifiedType() == Arg.getUnqualifiedType()) {
-    return Sema::TDK_Success;
+  } else if (!Param->isDependentType()) {
+    CanQualType ParamUnqualType = CanParam.getUnqualifiedType(),
+                ArgUnqualType = CanArg.getUnqualifiedType();
+    bool Success = (TDF & TDF_InOverloadResolution)?
+                   S.isSameOrCompatibleFunctionType(ParamUnqualType,
+                                                    ArgUnqualType) :
+                   ParamUnqualType == ArgUnqualType;
+    if (Success)
+      return Sema::TDK_Success;
   }
 
   switch (Param->getTypeClass()) {
@@ -3316,7 +3359,8 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                               TemplateArgumentListInfo *ExplicitTemplateArgs,
                               QualType ArgFunctionType,
                               FunctionDecl *&Specialization,
-                              TemplateDeductionInfo &Info) {
+                              TemplateDeductionInfo &Info,
+                              bool InOverloadResolution) {
   if (FunctionTemplate->isInvalidDecl())
     return TDK_Invalid;
 
@@ -3348,11 +3392,13 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
   Deduced.resize(TemplateParams->size());
 
   if (!ArgFunctionType.isNull()) {
+    unsigned TDF = TDF_TopLevelParameterTypeList;
+    if (InOverloadResolution) TDF |= TDF_InOverloadResolution;
     // Deduce template arguments from the function type.
     if (TemplateDeductionResult Result
           = DeduceTemplateArgumentsByTypeMatch(*this, TemplateParams,
-                                      FunctionType, ArgFunctionType, Info,
-                                      Deduced, TDF_TopLevelParameterTypeList))
+                                               FunctionType, ArgFunctionType,
+                                               Info, Deduced, TDF))
       return Result;
   }
 
@@ -3363,10 +3409,17 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     return Result;
 
   // If the requested function type does not match the actual type of the
-  // specialization, template argument deduction fails.
-  if (!ArgFunctionType.isNull() &&
-      !Context.hasSameType(ArgFunctionType, Specialization->getType()))
-    return TDK_MiscellaneousDeductionFailure;
+  // specialization with respect to arguments of compatible pointer to function
+  // types, template argument deduction fails.
+  if (!ArgFunctionType.isNull()) {
+    if (InOverloadResolution && !isSameOrCompatibleFunctionType(
+                           Context.getCanonicalType(Specialization->getType()),
+                           Context.getCanonicalType(ArgFunctionType)))
+      return TDK_MiscellaneousDeductionFailure;
+    else if(!InOverloadResolution &&
+            !Context.hasSameType(Specialization->getType(), ArgFunctionType))
+      return TDK_MiscellaneousDeductionFailure;
+  }
 
   return TDK_Success;
 }
@@ -3499,9 +3552,11 @@ Sema::TemplateDeductionResult
 Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                               TemplateArgumentListInfo *ExplicitTemplateArgs,
                               FunctionDecl *&Specialization,
-                              TemplateDeductionInfo &Info) {
+                              TemplateDeductionInfo &Info,
+                              bool InOverloadResolution) {
   return DeduceTemplateArguments(FunctionTemplate, ExplicitTemplateArgs,
-                                 QualType(), Specialization, Info);
+                                 QualType(), Specialization, Info,
+                                 InOverloadResolution);
 }
 
 namespace {

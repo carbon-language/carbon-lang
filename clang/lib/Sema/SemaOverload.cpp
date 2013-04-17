@@ -9134,17 +9134,19 @@ private:
           = S.DeduceTemplateArguments(FunctionTemplate, 
                                       &OvlExplicitTemplateArgs,
                                       TargetFunctionType, Specialization, 
-                                      Info)) {
+                                      Info, /*InOverloadResolution=*/true)) {
       // FIXME: make a note of the failed deduction for diagnostics.
       (void)Result;
       return false;
     } 
     
-    // Template argument deduction ensures that we have an exact match.
+    // Template argument deduction ensures that we have an exact match or
+    // compatible pointer-to-function arguments that would be adjusted by ICS.
     // This function template specicalization works.
     Specialization = cast<FunctionDecl>(Specialization->getCanonicalDecl());
-    assert(TargetFunctionType
-                      == Context.getCanonicalType(Specialization->getType()));
+    assert(S.isSameOrCompatibleFunctionType(
+              Context.getCanonicalType(Specialization->getType()),
+              Context.getCanonicalType(TargetFunctionType)));
     Matches.push_back(std::make_pair(CurAccessFunPair, Specialization));
     return true;
   }
@@ -9409,7 +9411,8 @@ Sema::ResolveSingleFunctionTemplateSpecialization(OverloadExpr *ovl,
     TemplateDeductionInfo Info(ovl->getNameLoc());
     if (TemplateDeductionResult Result
           = DeduceTemplateArguments(FunctionTemplate, &ExplicitTemplateArgs,
-                                    Specialization, Info)) {
+                                    Specialization, Info,
+                                    /*InOverloadResolution=*/true)) {
       // FIXME: make a note of the failed deduction for diagnostics.
       (void)Result;
       continue;
