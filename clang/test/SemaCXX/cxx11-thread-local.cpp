@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 -verify %s
+// REQUIRES: thread_local_storage
 
 struct S {
   static thread_local int a;
