@@ -997,7 +997,13 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
   if (Optional<loc::MemRegionVal> L = V.getAs<loc::MemRegionVal>()) {
     // At this point we are dealing with the region's LValue.
     // However, if the rvalue is a symbolic region, we should track it as well.
-    SVal RVal = state->getSVal(L->getRegion());
+    // Try to use the correct type when looking up the value.
+    SVal RVal;
+    if (const Expr *E = dyn_cast<Expr>(S))
+      RVal = state->getRawSVal(L.getValue(), E->getType());
+    else
+      RVal = state->getSVal(L->getRegion());
+
     const MemRegion *RegionRVal = RVal.getAsRegion();
     report.addVisitor(new UndefOrNullArgVisitor(L->getRegion()));
 
