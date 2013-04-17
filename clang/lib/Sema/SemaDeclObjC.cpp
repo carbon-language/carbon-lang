@@ -2809,10 +2809,46 @@ void Sema::CheckObjCMethodOverrides(ObjCMethodDecl *ObjCMethod,
          i = overrides.begin(), e = overrides.end(); i != e; ++i) {
     ObjCMethodDecl *overridden = *i;
 
-    if (isa<ObjCProtocolDecl>(overridden->getDeclContext()) ||
-        CurrentClass != overridden->getClassInterface() ||
-        overridden->isOverriding())
-      hasOverriddenMethodsInBaseOrProtocol = true;
+    if (!hasOverriddenMethodsInBaseOrProtocol) {
+      if (isa<ObjCProtocolDecl>(overridden->getDeclContext()) ||
+          CurrentClass != overridden->getClassInterface() ||
+          overridden->isOverriding()) {
+        hasOverriddenMethodsInBaseOrProtocol = true;
+
+      } else if (isa<ObjCImplDecl>(ObjCMethod->getDeclContext())) {
+        // OverrideSearch will return as "overridden" the same method in the
+        // interface. For hasOverriddenMethodsInBaseOrProtocol, we need to
+        // check whether a category of a base class introduced a method with the
+        // same selector, after the interface method declaration.
+        // To avoid unnecessary lookups in the majority of cases, we use the
+        // extra info bits in GlobalMethodPool to check whether there were any
+        // category methods with this selector.
+        GlobalMethodPool::iterator It =
+            MethodPool.find(ObjCMethod->getSelector());
+        if (It != MethodPool.end()) {
+          ObjCMethodList &List =
+            ObjCMethod->isInstanceMethod()? It->second.first: It->second.second;
+          unsigned CategCount = List.getBits();
+          if (CategCount > 0) {
+            // If the method is in a category we'll do lookup if there were at
+            // least 2 category methods recorded, otherwise only one will do.
+            if (CategCount > 1 ||
+                !isa<ObjCCategoryImplDecl>(overridden->getDeclContext())) {
+              OverrideSearch overrides(*this, overridden);
+              for (OverrideSearch::iterator
+                     OI= overrides.begin(), OE= overrides.end(); OI!=OE; ++OI) {
+                ObjCMethodDecl *SuperOverridden = *OI;
+                if (CurrentClass != SuperOverridden->getClassInterface()) {
+                  hasOverriddenMethodsInBaseOrProtocol = true;
+                  overridden->setOverriding(true);
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
 
     // Propagate down the 'related result type' bit from overridden methods.
     if (RTC != Sema::RTC_Incompatible && overridden->hasRelatedResultType())

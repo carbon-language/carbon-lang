@@ -345,8 +345,12 @@ void test1(Sub1 *s) {
 @end
 
 void test2(Sub1 *s) {
-  use([s prop]); // expected-warning{{weak property 'prop' is accessed multiple times}}
-  use([s prop]); // expected-note{{also accessed here}}
+  // This does not warn because the "prop" in "Base1(cat)" was introduced
+  // after the method declaration and we don't find it as overridden.
+  // Always looking for overridden methods after the method declaration is expensive
+  // and it's not clear it is worth it currently.
+  use([s prop]);
+  use([s prop]);
 }
 
 

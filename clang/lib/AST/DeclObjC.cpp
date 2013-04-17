@@ -959,52 +959,6 @@ static void collectOverriddenMethodsSlow(const ObjCMethodDecl *Method,
   }
 }
 
-static void collectOnCategoriesAfterLocation(SourceLocation Loc,
-                                             const ObjCInterfaceDecl *Class,
-                                             SourceManager &SM,
-                                             const ObjCMethodDecl *Method,
-                             SmallVectorImpl<const ObjCMethodDecl *> &Methods) {
-  if (!Class)
-    return;
-
-  for (ObjCInterfaceDecl::known_categories_iterator
-         Cat = Class->known_categories_begin(),
-         CatEnd = Class->known_categories_end();
-       Cat != CatEnd; ++Cat) {
-    if (SM.isBeforeInTranslationUnit(Loc, Cat->getLocation()))
-      CollectOverriddenMethodsRecurse(*Cat, Method, Methods, true);
-  }
-  
-  collectOnCategoriesAfterLocation(Loc, Class->getSuperClass(), SM,
-                                   Method, Methods);
-}
-
-/// \brief Faster collection that is enabled when ObjCMethodDecl::isOverriding()
-/// returns false.
-/// You'd think that in that case there are no overrides but categories can
-/// "introduce" new overridden methods that are missed by Sema because the
-/// overrides lookup that it does for methods, inside implementations, will
-/// stop at the interface level (if there is a method there) and not look
-/// further in super classes.
-/// Methods in an implementation can overide methods in super class's category
-/// but not in current class's category. But, such methods
-static void collectOverriddenMethodsFast(SourceManager &SM,
-                                         const ObjCMethodDecl *Method,
-                             SmallVectorImpl<const ObjCMethodDecl *> &Methods) {
-  assert(!Method->isOverriding());
-
-  const ObjCContainerDecl *
-    ContD = cast<ObjCContainerDecl>(Method->getDeclContext());
-  if (isa<ObjCInterfaceDecl>(ContD) || isa<ObjCProtocolDecl>(ContD))
-    return;
-  const ObjCInterfaceDecl *Class = Method->getClassInterface();
-  if (!Class)
-    return;
-
-  collectOnCategoriesAfterLocation(Class->getLocation(), Class->getSuperClass(),
-                                   SM, Method, Methods);
-}
-
 void ObjCMethodDecl::getOverriddenMethods(
                     SmallVectorImpl<const ObjCMethodDecl *> &Overridden) const {
   const ObjCMethodDecl *Method = this;
@@ -1014,10 +968,7 @@ void ObjCMethodDecl::getOverriddenMethods(
                    getMethod(Method->getSelector(), Method->isInstanceMethod());
   }
 
-  if (!Method->isOverriding()) {
-    collectOverriddenMethodsFast(getASTContext().getSourceManager(),
-                                 Method, Overridden);
-  } else {
+  if (Method->isOverriding()) {
     collectOverriddenMethodsSlow(Method, Overridden);
     assert(!Overridden.empty() &&
            "ObjCMethodDecl's overriding bit is not as expected");
