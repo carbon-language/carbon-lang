@@ -18,6 +18,8 @@
 #include <map>
 
 // Other libraries and framework includes
+#include "llvm/IR/Module.h"
+
 // Project includes
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-private.h"
