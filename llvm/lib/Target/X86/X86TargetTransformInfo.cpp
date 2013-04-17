@@ -371,6 +371,10 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
   EVT SrcTy = TLI->getValueType(Src);
   EVT DstTy = TLI->getValueType(Dst);
 
+  // The function getSimpleVT only handles simple value types.
+  if (!SrcTy.isSimple() || !DstTy.isSimple())
+    return TargetTransformInfo::getCastInstrCost(Opcode, Dst, Src);
+
   static const TypeConversionCostTblEntry<MVT> AVXConversionTbl[] = {
     { ISD::SIGN_EXTEND, MVT::v8i32, MVT::v8i16, 1 },
     { ISD::ZERO_EXTEND, MVT::v8i32, MVT::v8i16, 1 },
