@@ -53,7 +53,30 @@ mailing list</a> to notify other members of the community.</p>
     control structures are poorly modeled (to be conservative). This could be
     much improved for both C++ and Objective-C exceptions.
     <i>(Difficulty: Medium)</i></p>    
-    
+
+    <li>Enhance CFG to model C++ <code>new</code> more precisely.
+    <p>The current representation of <code>new</code> does not provide an easy
+    way for the analyzer to model the call to a memory allocation function
+    (<code>operator new</code>), then initialize the result with a constructor
+    call. The problem is discussed at length in
+    <a href="http://llvm.org/bugs/show_bug.cgi?id=12014">PR12014</a>.
+    <i>(Difficulty: Easy)</i></p>    
+
+    <li>Enhance CFG to model C++ <code>delete</code> more precisely.
+    <p>Similarly, the representation of <code>delete</code> does not include
+    the call to the destructor, followed by the call to the deallocation
+    function (<code>operator delete</code>). One particular issue 
+    (<tt>noreturn</tt> destructors) is discussed in
+    <a href="http://llvm.org/bugs/show_bug.cgi?id=15599">PR15599</a>
+    <i>(Difficulty: Easy)</i></p>    
+
+    <li>Track type info through casts more precisely.
+    <p>The DynamicTypePropagation checker is in charge of inferring a region's
+    dynamic type based on what operations the code is performing. Casts are a
+    rich source of type information that the analyzer currently ignores. They
+    are tricky to get right, but might have very useful consequences.
+    <i>(Difficulty: Medium)</i></p>    
+
     <li>Design and implement alpha-renaming.
     <p>Implement unifying two symbolic values along a path after they are 
     determined to be equal via comparison. This would allow us to reduce the 
@@ -93,6 +116,19 @@ mailing list</a> to notify other members of the community.</p>
 
   <li>Other Infrastructure 
   <ul>
+    <li>Rewrite <tt>scan-build</tt> (in Python).
+    <p><i>(Difficulty: Easy)</i></p>
+    </li>
+
+    <li>Do a better job interposing on a compilation.
+    <p>Currently, <tt>scan-build</tt> just sets the <tt>CC</tt> and <tt>CXX</tt>
+    environment variables to its wrapper scripts, which then call into an
+    underlying platform compiler. This is problematic for any project that
+    doesn't exclusively use <tt>CC</tt> and <tt>CXX</tt> to control its
+    compilers.
+    <p><i>(Difficulty: Medium-Hard)</i></p>
+    </li>
+
     <li>Create an <tt>analyzer_annotate</tt> attribute for the analyzer 
     annotations.
     <p>We would like to put all analyzer attributes behind a fence so that we 
@@ -100,10 +136,6 @@ mailing list</a> to notify other members of the community.</p>
     depend on them. Design and implement such a generic analyzer attribute in 
     the compiler. <i>(Difficulty: Medium)</i></p>
     </li>
-
-    <li>Rewrite <tt>scan-build</tt> (in Python).
-    <p><i>(Difficulty: Easy)</i></p>
-    </li>    
   </ul>
   </li>
 
