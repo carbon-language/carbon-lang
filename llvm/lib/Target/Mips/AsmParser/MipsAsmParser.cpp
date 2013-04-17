@@ -1022,6 +1022,8 @@ const MCExpr* MipsAsmParser::evaluateRelocExpr(const MCExpr *Expr,
       if (LoSign)
         Val++;
       Res = MCConstantExpr::Create(Val, getContext());
+    } else {
+      llvm_unreachable("Invalid RelocStr value");
     }
    return Res;
   }
