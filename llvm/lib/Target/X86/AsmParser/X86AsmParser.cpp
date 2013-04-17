@@ -203,23 +203,26 @@ private:
   class IntelExprStateMachine {
     IntelExprState State;
     unsigned BaseReg, IndexReg, TmpReg, Scale;
-    int64_t Disp;
+    int64_t Imm;
     const MCExpr *Sym;
     StringRef SymName;
+    bool StopOnLBrac, AddImmPrefix;
     InfixCalculator IC;
   public:
-    IntelExprStateMachine(int64_t disp) :
-      State(IES_PLUS), BaseReg(0), IndexReg(0), TmpReg(0), Scale(1), Disp(disp),
-      Sym(0) {}
+    IntelExprStateMachine(int64_t imm, bool stoponlbrac, bool addimmprefix) :
+      State(IES_PLUS), BaseReg(0), IndexReg(0), TmpReg(0), Scale(1), Imm(imm),
+      Sym(0), StopOnLBrac(stoponlbrac), AddImmPrefix(addimmprefix) {}
     
     unsigned getBaseReg() { return BaseReg; }
     unsigned getIndexReg() { return IndexReg; }
     unsigned getScale() { return Scale; }
     const MCExpr *getSym() { return Sym; }
     StringRef getSymName() { return SymName; }
-    int64_t getImm() { return Disp + IC.execute(); }
+    int64_t getImm() { return Imm + IC.execute(); }
     bool isValidEndState() { return State == IES_RBRAC; }
-    
+    bool getStopOnLBrac() { return StopOnLBrac; }
+    bool getAddImmPrefix() { return AddImmPrefix; }
+
     void onPlus() {
       switch (State) {
       default:
@@ -1144,7 +1147,8 @@ RewriteIntelBracExpression(SmallVectorImpl<AsmRewrite> *AsmRewrites,
              E = AsmRewrites->end(); I != E; ++I) {
         if ((*I).Loc.getPointer() > BracLoc.getPointer())
           continue;
-        if ((*I).Kind == AOK_ImmPrefix) {
+        if ((*I).Kind == AOK_ImmPrefix || (*I).Kind == AOK_Imm) {
+          assert (!Found && "ImmDisp already rewritten.");
           (*I).Kind = AOK_Imm;
           (*I).Len = BracLoc.getPointer() - (*I).Loc.getPointer();
           (*I).Val = FinalImmDisp;
@@ -1155,11 +1159,9 @@ RewriteIntelBracExpression(SmallVectorImpl<AsmRewrite> *AsmRewrites,
       assert (Found && "Unable to rewrite ImmDisp.");
     } else {
       // We have a symbolic and an immediate displacement, but no displacement
+      // before the bracketed expression.  Put the immediate displacement
       // before the bracketed expression.
-      
-      // Put the immediate displacement before the bracketed expression.
-      AsmRewrites->push_back(AsmRewrite(AOK_Imm, BracLoc, 0,
-                                        FinalImmDisp));
+      AsmRewrites->push_back(AsmRewrite(AOK_Imm, BracLoc, 0, FinalImmDisp));
     }
   }
   // Remove all the ImmPrefix rewrites within the brackets.
@@ -1196,6 +1198,10 @@ X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
     // identifier.  Don't try an parse it as a register.
     if (Tok.getString().startswith("."))
       break;
+    
+    // If we're parsing an immediate expression, we don't expect a '['.
+    if (SM.getStopOnLBrac() && getLexer().getKind() == AsmToken::LBrac)
+      break;
 
     switch (getLexer().getKind()) {
     default: {
@@ -1204,6 +1210,10 @@ X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
         break;
       }
       return ErrorOperand(Tok.getLoc(), "Unexpected token!");
+    }
+    case AsmToken::EndOfStatement: {
+      Done = true;
+      break;
     }
     case AsmToken::Identifier: {
       // This could be a register or a symbolic displacement.
@@ -1226,7 +1236,7 @@ X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
       return ErrorOperand(Tok.getLoc(), "Unexpected identifier!");
     }
     case AsmToken::Integer:
-      if (isParsingInlineAsm())
+      if (isParsingInlineAsm() && SM.getAddImmPrefix())
         InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_ImmPrefix,
                                                     Tok.getLoc()));
       SM.onInteger(Tok.getIntVal());
@@ -1261,7 +1271,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
   // Parse [ Symbol + ImmDisp ] and [ BaseReg + Scale*IndexReg + ImmDisp ].  We
   // may have already parsed an immediate displacement before the bracketed
   // expression.
-  IntelExprStateMachine SM(ImmDisp);
+  IntelExprStateMachine SM(ImmDisp, /*StopOnLBrac=*/false, /*AddImmPrefix=*/true);
   if (X86Operand *Err = ParseIntelExpression(SM, End))
     return Err;
 
@@ -1566,28 +1576,37 @@ X86Operand *X86AsmParser::ParseIntelOperand() {
   }
 
   // Immediate.
-  if (getLexer().is(AsmToken::Integer) || getLexer().is(AsmToken::Real) ||
-      getLexer().is(AsmToken::Minus)) {
-    const MCExpr *Val;
-    bool isInteger = getLexer().is(AsmToken::Integer);
-    if (!getParser().parseExpression(Val, End)) {
-      if (isParsingInlineAsm())
+  if (getLexer().is(AsmToken::Integer) || getLexer().is(AsmToken::Minus) ||
+      getLexer().is(AsmToken::LParen)) {    
+    AsmToken StartTok = Tok;
+    IntelExprStateMachine SM(/*Imm=*/0, /*StopOnLBrac=*/true,
+                             /*AddImmPrefix=*/false);
+    if (X86Operand *Err = ParseIntelExpression(SM, End))
+      return Err;
+
+    int64_t Imm = SM.getImm();
+    if (isParsingInlineAsm()) {
+      unsigned Len = Tok.getLoc().getPointer() - Start.getPointer();
+      if (StartTok.getString().size() == Len)
+        // Just add a prefix if this wasn't a complex immediate expression.
         InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_ImmPrefix, Start));
-      // Immediate.
-      if (getLexer().isNot(AsmToken::LBrac))
-        return X86Operand::CreateImm(Val, Start, End);
-
-      // Only positive immediates are valid.
-      if (!isInteger) {
-        Error(Tok.getLoc(), "expected a positive immediate "
-              "displacement before bracketed expr.");
-        return 0;
-      }
-
-      // Parse ImmDisp [ BaseReg + Scale*IndexReg + Disp ].
-      if (uint64_t ImmDisp = dyn_cast<MCConstantExpr>(Val)->getValue())
-        return ParseIntelMemOperand(/*SegReg=*/0, ImmDisp, Start);
+      else
+        // Otherwise, rewrite the complex expression as a single immediate.
+        InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Imm, Start, Len, Imm));
     }
+
+    if (getLexer().isNot(AsmToken::LBrac)) {
+      const MCExpr *ImmExpr = MCConstantExpr::Create(Imm, getContext());
+      return X86Operand::CreateImm(ImmExpr, Start, End);
+    }
+
+    // Only positive immediates are valid.
+    if (Imm < 0)
+      return ErrorOperand(Start, "expected a positive immediate displacement "
+                          "before bracketed expr.");
+
+    // Parse ImmDisp [ BaseReg + Scale*IndexReg + Disp ].
+    return ParseIntelMemOperand(/*SegReg=*/0, Imm, Start);
   }
 
   // Register.
