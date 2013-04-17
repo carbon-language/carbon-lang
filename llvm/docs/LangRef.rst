@@ -4534,7 +4534,7 @@ The '``load``' instruction is used to read from memory.
 Arguments:
 """"""""""
 
-The argument to the '``load``' instruction specifies the memory address
+The argument to the ``load`` instruction specifies the memory address
 from which to load. The pointer must point to a :ref:`first
 class <t_firstclass>` type. If the ``load`` is marked as ``volatile``,
 then the optimizer is not allowed to modify the number or order of
@@ -4555,14 +4555,14 @@ any defined semantics for atomic loads.
 
 The optional constant ``align`` argument specifies the alignment of the
 operation (that is, the alignment of the memory address). A value of 0
-or an omitted ``align`` argument means that the operation has the abi
+or an omitted ``align`` argument means that the operation has the ABI
 alignment for the target. It is the responsibility of the code emitter
 to ensure that the alignment information is correct. Overestimating the
 alignment results in undefined behavior. Underestimating the alignment
 may produce less efficient code. An alignment of 1 is always safe.
 
 The optional ``!nontemporal`` metadata must reference a single
-metatadata name <index> corresponding to a metadata node with one
+metatadata name ``<index>`` corresponding to a metadata node with one
 ``i32`` entry of value 1. The existence of the ``!nontemporal``
 metatadata on the instruction tells the optimizer and code generator
 that this load is not expected to be reused in the cache. The code
@@ -4570,7 +4570,7 @@ generator may select special instructions to save cache bandwidth, such
 as the ``MOVNT`` instruction on x86.
 
 The optional ``!invariant.load`` metadata must reference a single
-metatadata name <index> corresponding to a metadata node with no
+metatadata name ``<index>`` corresponding to a metadata node with no
 entries. The existence of the ``!invariant.load`` metatadata on the
 instruction tells the optimizer and code generator that this load
 address points to memory which does not change value during program
