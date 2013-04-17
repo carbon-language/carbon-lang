@@ -713,9 +713,9 @@ EnableARCAnnotations("enable-objc-arc-annotations", cl::init(false),
                      cl::desc("Enable emission of arc data flow analysis "
                               "annotations"));
 static cl::opt<bool>
-EnableCheckForCFGHazards("enable-objc-arc-checkforcfghazards", cl::init(true),
-                         cl::desc("Disable check for cfg hazards when "
-                                  "annotating"));
+DisableCheckForCFGHazards("disable-objc-arc-checkforcfghazards", cl::init(false),
+                          cl::desc("Disable check for cfg hazards when "
+                                   "annotating"));
 
 /// This function appends a unique ARCAnnotationProvenanceSourceMDKind id to an
 /// instruction so that we can track backwards when post processing via the llvm
@@ -2177,7 +2177,7 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
   ANNOTATE_TOPDOWN_BBEND(MyStates, BB);
 
 #ifdef ARC_ANNOTATIONS
-  if (EnableARCAnnotations && EnableCheckForCFGHazards)
+  if (!(EnableARCAnnotations && DisableCheckForCFGHazards))
 #endif
   CheckForCFGHazards(BB, BBStates, MyStates);
   return NestingDetected;
