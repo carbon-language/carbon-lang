@@ -97,7 +97,12 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
     if (ED->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
       return NULL;
   }
-
+  if (const TagDecl *TD = dyn_cast<TagDecl>(D)) {
+    // When tag declaration (but not definition!) is part of the
+    // decl-specifier-seq of some other declaration, it doesn't get comment
+    if (TD->isEmbeddedInDeclarator() && !TD->isCompleteDefinition())
+      return NULL;
+  }
   // TODO: handle comments for function parameters properly.
   if (isa<ParmVarDecl>(D))
     return NULL;
