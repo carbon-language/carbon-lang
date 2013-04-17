@@ -9,6 +9,7 @@
 
 #include "DWARFContext.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/Path.h"
@@ -495,49 +496,39 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
     i->getContents(data);
 
     name = name.substr(name.find_first_not_of("._")); // Skip . and _ prefixes.
-    if (name == "debug_info")
-      InfoSection = data;
-    else if (name == "debug_abbrev")
-      AbbrevSection = data;
-    else if (name == "debug_line")
-      LineSection = data;
-    else if (name == "debug_aranges")
-      ARangeSection = data;
-    else if (name == "debug_frame")
-      DebugFrameSection = data;
-    else if (name == "debug_str")
-      StringSection = data;
-    else if (name == "debug_ranges") {
+
+    StringRef *Section = StringSwitch<StringRef*>(name)
+        .Case("debug_info", &InfoSection)
+        .Case("debug_abbrev", &AbbrevSection)
+        .Case("debug_line", &LineSection)
+        .Case("debug_aranges", &ARangeSection)
+        .Case("debug_frame", &DebugFrameSection)
+        .Case("debug_str", &StringSection)
+        .Case("debug_ranges", &RangeSection)
+        .Case("debug_pubnames", &PubNamesSection)
+        .Case("debug_info.dwo", &InfoDWOSection)
+        .Case("debug_abbrev.dwo", &AbbrevDWOSection)
+        .Case("debug_str.dwo", &StringDWOSection)
+        .Case("debug_str_offsets.dwo", &StringOffsetDWOSection)
+        .Case("debug_addr", &AddrSection)
+        // Any more debug info sections go here.
+        .Default(0);
+    if (!Section)
+      continue;
+    *Section = data;
+    if (name == "debug_ranges") {
       // FIXME: Use the other dwo range section when we emit it.
       RangeDWOSection = data;
-      RangeSection = data;
     }
-    else if (name == "debug_pubnames")
-      PubNamesSection = data;
-    else if (name == "debug_info.dwo")
-      InfoDWOSection = data;
-    else if (name == "debug_abbrev.dwo")
-      AbbrevDWOSection = data;
-    else if (name == "debug_str.dwo")
-      StringDWOSection = data;
-    else if (name == "debug_str_offsets.dwo")
-      StringOffsetDWOSection = data;
-    else if (name == "debug_addr")
-      AddrSection = data;
-    // Any more debug info sections go here.
-    else
-      continue;
 
     // TODO: Add support for relocations in other sections as needed.
     // Record relocations for the debug_info and debug_line sections.
-    RelocAddrMap *Map;
-    if (name == "debug_info")
-      Map = &InfoRelocMap;
-    else if (name == "debug_info.dwo")
-      Map = &InfoDWORelocMap;
-    else if (name == "debug_line")
-      Map = &LineRelocMap;
-    else
+    RelocAddrMap *Map = StringSwitch<RelocAddrMap*>(name)
+        .Case("debug_info", &InfoRelocMap)
+        .Case("debug_info.dwo", &InfoDWORelocMap)
+        .Case("debug_line", &LineRelocMap)
+        .Default(0);
+    if (!Map)
       continue;
 
     if (i->begin_relocations() != i->end_relocations()) {
