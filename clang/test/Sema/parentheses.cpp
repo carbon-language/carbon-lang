@@ -29,6 +29,12 @@ void f(Stream& s, bool b) {
   (void)(s << b ? "foo" : "bar"); // expected-warning {{operator '?:' has lower precedence than '<<'}} \
                                   // expected-note {{place parentheses around the '?:' expression to evaluate it first}} \
                                   // expected-note {{place parentheses around the '<<' expression to silence this warning}}
+  (void)(s << 5 == 1); // expected-warning {{overloaded operator << has lower precedence than comparison operator}} \
+                       // expected-note {{place parentheses around the '<<' expression to silence this warning}} \
+                       // expected-note {{place parentheses around comparison expression to evaluate it first}}
+  (void)(s >> 5 == 1); // expected-warning {{overloaded operator >> has lower precedence than comparison operator}} \
+                       // expected-note {{place parentheses around the '>>' expression to silence this warning}} \
+                       // expected-note {{place parentheses around comparison expression to evaluate it first}}
 }
 
 struct S {

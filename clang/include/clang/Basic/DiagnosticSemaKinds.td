@@ -4041,6 +4041,13 @@ def warn_bitwise_and_in_bitwise_or : Warning<
 def warn_logical_and_in_logical_or : Warning<
   "'&&' within '||'">, InGroup<LogicalOpParentheses>;
 
+def warn_overloaded_shift_in_comparison :Warning<
+  "overloaded operator %select{>>|<<}0 has lower precedence than "
+  "comparison operator">,
+  InGroup<OverloadedShiftOpParentheses>;
+def note_evaluate_comparison_first :Note<
+  "place parentheses around comparison expression to evaluate it first">;
+
 def warn_addition_in_bitshift : Warning<
   "operator '%0' has lower precedence than '%1'; "
   "'%1' will be evaluated first">, InGroup<ShiftOpParentheses>;
