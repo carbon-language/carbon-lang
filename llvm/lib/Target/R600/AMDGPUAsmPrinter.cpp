@@ -22,6 +22,7 @@
 #include "SIDefines.h"
 #include "SIMachineFunctionInfo.h"
 #include "SIRegisterInfo.h"
+#include "R600RegisterInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
@@ -54,20 +55,51 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (OutStreamer.hasRawTextSupport()) {
     OutStreamer.EmitRawText("@" + MF.getName() + ":");
   }
+
+  const MCSectionELF *ConfigSection = getObjFileLowering().getContext()
+                                              .getELFSection(".AMDGPU.config",
+                                              ELF::SHT_NULL, 0,
+                                              SectionKind::getReadOnly());
+  OutStreamer.SwitchSection(ConfigSection);
   if (STM.device()->getGeneration() > AMDGPUDeviceInfo::HD6XXX) {
-    const MCSectionELF *ConfigSection = getObjFileLowering().getContext()
-                                                .getELFSection(".AMDGPU.config",
-                                                ELF::SHT_NULL, 0,
-                                                SectionKind::getReadOnly());
-    OutStreamer.SwitchSection(ConfigSection);
-    EmitProgramInfo(MF);
+    EmitProgramInfoSI(MF);
+  } else {
+    EmitProgramInfoR600(MF);
   }
   OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
   EmitFunctionBody();
   return false;
 }
 
-void AMDGPUAsmPrinter::EmitProgramInfo(MachineFunction &MF) {
+void AMDGPUAsmPrinter::EmitProgramInfoR600(MachineFunction &MF) {
+  unsigned MaxGPR = 0;
+  const R600RegisterInfo * RI =
+                static_cast<const R600RegisterInfo*>(TM.getRegisterInfo());
+
+  for (MachineFunction::iterator BB = MF.begin(), BB_E = MF.end();
+                                                  BB != BB_E; ++BB) {
+    MachineBasicBlock &MBB = *BB;
+    for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
+                                                    I != E; ++I) {
+      MachineInstr &MI = *I;
+      unsigned numOperands = MI.getNumOperands();
+      for (unsigned op_idx = 0; op_idx < numOperands; op_idx++) {
+        MachineOperand & MO = MI.getOperand(op_idx);
+        if (!MO.isReg())
+          continue;
+        unsigned HWReg = RI->getEncodingValue(MO.getReg()) & 0xff;
+
+        // Register with value > 127 aren't GPR
+        if (HWReg > 127)
+          continue;
+        MaxGPR = std::max(MaxGPR, HWReg);
+      }
+    }
+  }
+  OutStreamer.EmitIntValue(MaxGPR + 1, 4);
+}
+
+void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF) {
   unsigned MaxSGPR = 0;
   unsigned MaxVGPR = 0;
   bool VCCUsed = false;

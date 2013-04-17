@@ -33,7 +33,8 @@ public:
 
   /// \brief Emit register usage information so that the GPU driver
   /// can correctly setup the GPU state.
-  void EmitProgramInfo(MachineFunction &MF);
+  void EmitProgramInfoR600(MachineFunction &MF);
+  void EmitProgramInfoSI(MachineFunction &MF);
 
   /// Implemented in AMDGPUMCInstLower.cpp
   virtual void EmitInstruction(const MachineInstr *MI);
