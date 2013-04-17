@@ -554,62 +554,6 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
     Callbacks->PragmaComment(CommentLoc, II, ArgumentString);
 }
 
-/// HandlePragmaMessage - Handle the microsoft and gcc \#pragma message
-/// extension.  The syntax is:
-/// \code
-///   #pragma message(string)
-/// \endcode
-/// OR, in GCC mode:
-/// \code
-///   #pragma message string
-/// \endcode
-/// string is a string, which is fully macro expanded, and permits string
-/// concatenation, embedded escape characters, etc... See MSDN for more details.
-void Preprocessor::HandlePragmaMessage(Token &Tok) {
-  SourceLocation MessageLoc = Tok.getLocation();
-  Lex(Tok);
-  bool ExpectClosingParen = false;
-  switch (Tok.getKind()) {
-  case tok::l_paren:
-    // We have a MSVC style pragma message.
-    ExpectClosingParen = true;
-    // Read the string.
-    Lex(Tok);
-    break;
-  case tok::string_literal:
-    // We have a GCC style pragma message, and we just read the string.
-    break;
-  default:
-    Diag(MessageLoc, diag::err_pragma_message_malformed);
-    return;
-  }
-
-  std::string MessageString;
-  if (!FinishLexStringLiteral(Tok, MessageString, "pragma message",
-                              /*MacroExpansion=*/true))
-    return;
-
-  if (ExpectClosingParen) {
-    if (Tok.isNot(tok::r_paren)) {
-      Diag(Tok.getLocation(), diag::err_pragma_message_malformed);
-      return;
-    }
-    Lex(Tok);  // eat the r_paren.
-  }
-
-  if (Tok.isNot(tok::eod)) {
-    Diag(Tok.getLocation(), diag::err_pragma_message_malformed);
-    return;
-  }
-
-  // Output the message.
-  Diag(MessageLoc, diag::warn_pragma_message) << MessageString;
-
-  // If the pragma is lexically sound, notify any interested PPCallbacks.
-  if (Callbacks)
-    Callbacks->PragmaMessage(MessageLoc, MessageString);
-}
-
 /// ParsePragmaPushOrPopMacro - Handle parsing of pragma push_macro/pop_macro.  
 /// Return the IdentifierInfo* associated with the macro to push or pop.
 IdentifierInfo *Preprocessor::ParsePragmaPushOrPopMacro(Token &Tok) {
@@ -1134,12 +1078,88 @@ struct PragmaIncludeAliasHandler : public PragmaHandler {
   }
 };
 
-/// PragmaMessageHandler - "\#pragma message("...")".
+/// PragmaMessageHandler - Handle the microsoft and gcc \#pragma message
+/// extension.  The syntax is:
+/// \code
+///   #pragma message(string)
+/// \endcode
+/// OR, in GCC mode:
+/// \code
+///   #pragma message string
+/// \endcode
+/// string is a string, which is fully macro expanded, and permits string
+/// concatenation, embedded escape characters, etc... See MSDN for more details.
+/// Also handles \#pragma GCC warning and \#pragma GCC error which take the same
+/// form as \#pragma message.
 struct PragmaMessageHandler : public PragmaHandler {
-  PragmaMessageHandler() : PragmaHandler("message") {}
+private:
+  const PPCallbacks::PragmaMessageKind Kind;
+  const StringRef Namespace;
+
+  static const char* PragmaKind(PPCallbacks::PragmaMessageKind Kind,
+                                bool PragmaNameOnly = false) {
+    switch (Kind) {
+      case PPCallbacks::PMK_Message:
+        return PragmaNameOnly ? "message" : "pragma message";
+      case PPCallbacks::PMK_Warning:
+        return PragmaNameOnly ? "warning" : "pragma warning";
+      case PPCallbacks::PMK_Error:
+        return PragmaNameOnly ? "error" : "pragma error";
+    }
+    llvm_unreachable("Unknown PragmaMessageKind!");
+  }
+
+public:
+  PragmaMessageHandler(PPCallbacks::PragmaMessageKind Kind,
+                       StringRef Namespace = StringRef())
+    : PragmaHandler(PragmaKind(Kind, true)), Kind(Kind), Namespace(Namespace) {}
+
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
-                            Token &CommentTok) {
-    PP.HandlePragmaMessage(CommentTok);
+                            Token &Tok) {
+    SourceLocation MessageLoc = Tok.getLocation();
+    PP.Lex(Tok);
+    bool ExpectClosingParen = false;
+    switch (Tok.getKind()) {
+    case tok::l_paren:
+      // We have a MSVC style pragma message.
+      ExpectClosingParen = true;
+      // Read the string.
+      PP.Lex(Tok);
+      break;
+    case tok::string_literal:
+      // We have a GCC style pragma message, and we just read the string.
+      break;
+    default:
+      PP.Diag(MessageLoc, diag::err_pragma_message_malformed) << Kind;
+      return;
+    }
+
+    std::string MessageString;
+    if (!PP.FinishLexStringLiteral(Tok, MessageString, PragmaKind(Kind),
+                                   /*MacroExpansion=*/true))
+      return;
+
+    if (ExpectClosingParen) {
+      if (Tok.isNot(tok::r_paren)) {
+        PP.Diag(Tok.getLocation(), diag::err_pragma_message_malformed) << Kind;
+        return;
+      }
+      PP.Lex(Tok);  // eat the r_paren.
+    }
+
+    if (Tok.isNot(tok::eod)) {
+      PP.Diag(Tok.getLocation(), diag::err_pragma_message_malformed) << Kind;
+      return;
+    }
+
+    // Output the message.
+    PP.Diag(MessageLoc, (Kind == PPCallbacks::PMK_Error)
+                          ? diag::err_pragma_message
+                          : diag::warn_pragma_message) << MessageString;
+
+    // If the pragma is lexically sound, notify any interested PPCallbacks.
+    if (PPCallbacks *Callbacks = PP.getPPCallbacks())
+      Callbacks->PragmaMessage(MessageLoc, Namespace, Kind, MessageString);
   }
 };
 
@@ -1287,13 +1307,17 @@ void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler(new PragmaMarkHandler());
   AddPragmaHandler(new PragmaPushMacroHandler());
   AddPragmaHandler(new PragmaPopMacroHandler());
-  AddPragmaHandler(new PragmaMessageHandler());
+  AddPragmaHandler(new PragmaMessageHandler(PPCallbacks::PMK_Message));
 
   // #pragma GCC ...
   AddPragmaHandler("GCC", new PragmaPoisonHandler());
   AddPragmaHandler("GCC", new PragmaSystemHeaderHandler());
   AddPragmaHandler("GCC", new PragmaDependencyHandler());
   AddPragmaHandler("GCC", new PragmaDiagnosticHandler("GCC"));
+  AddPragmaHandler("GCC", new PragmaMessageHandler(PPCallbacks::PMK_Warning,
+                                                   "GCC"));
+  AddPragmaHandler("GCC", new PragmaMessageHandler(PPCallbacks::PMK_Error,
+                                                   "GCC"));
   // #pragma clang ...
   AddPragmaHandler("clang", new PragmaPoisonHandler());
   AddPragmaHandler("clang", new PragmaSystemHeaderHandler());

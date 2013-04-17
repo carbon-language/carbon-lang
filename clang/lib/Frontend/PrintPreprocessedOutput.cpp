@@ -140,7 +140,8 @@ public:
   virtual void PragmaCaptured(SourceLocation Loc, StringRef Str);
   virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind,
                              const std::string &Str);
-  virtual void PragmaMessage(SourceLocation Loc, StringRef Str);
+  virtual void PragmaMessage(SourceLocation Loc, StringRef Namespace,
+                             PragmaMessageKind Kind, StringRef Str);
   virtual void PragmaDebug(SourceLocation Loc, StringRef DebugType);
   virtual void PragmaDiagnosticPush(SourceLocation Loc,
                                     StringRef Namespace);
@@ -407,12 +408,25 @@ void PrintPPOutputPPCallbacks::PragmaComment(SourceLocation Loc,
 }
 
 void PrintPPOutputPPCallbacks::PragmaMessage(SourceLocation Loc,
+                                             StringRef Namespace,
+                                             PragmaMessageKind Kind,
                                              StringRef Str) {
   startNewLineIfNeeded();
   MoveToLine(Loc);
-  OS << "#pragma message(";
-
-  OS << '"';
+  OS << "#pragma ";
+  if (!Namespace.empty())
+    OS << Namespace << ' ';
+  switch (Kind) {
+    case PMK_Message:
+      OS << "message(\"";
+      break;
+    case PMK_Warning:
+      OS << "warning(\"";
+      break;
+    case PMK_Error:
+      OS << "error(\"";
+      break;
+  }
 
   for (unsigned i = 0, e = Str.size(); i != e; ++i) {
     unsigned char Char = Str[i];

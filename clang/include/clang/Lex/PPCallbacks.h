@@ -165,10 +165,25 @@ public:
   virtual void PragmaDebug(SourceLocation Loc, StringRef DebugType) {
   }
 
+  /// \brief Determines the kind of \#pragma invoking a call to PragmaMessage.
+  enum PragmaMessageKind {
+    /// \brief \#pragma message has been invoked.
+    PMK_Message,
+
+    /// \brief \#pragma GCC warning has been invoked.
+    PMK_Warning,
+
+    /// \brief \#pragma GCC error has been invoked.
+    PMK_Error
+  };
+
   /// \brief Callback invoked when a \#pragma message directive is read.
   /// \param Loc The location of the message directive.
+  /// \param Namespace The namespace of the message directive.
+  /// \param Kind The type of the message directive.
   /// \param Str The text of the message directive.
-  virtual void PragmaMessage(SourceLocation Loc, StringRef Str) {
+  virtual void PragmaMessage(SourceLocation Loc, StringRef Namespace,
+                             PragmaMessageKind Kind, StringRef Str) {
   }
 
   /// \brief Callback invoked when a \#pragma gcc dianostic push directive
@@ -336,9 +351,10 @@ public:
     Second->PragmaComment(Loc, Kind, Str);
   }
 
-  virtual void PragmaMessage(SourceLocation Loc, StringRef Str) {
-    First->PragmaMessage(Loc, Str);
-    Second->PragmaMessage(Loc, Str);
+  virtual void PragmaMessage(SourceLocation Loc, StringRef Namespace,
+                             PragmaMessageKind Kind, StringRef Str) {
+    First->PragmaMessage(Loc, Namespace, Kind, Str);
+    Second->PragmaMessage(Loc, Namespace, Kind, Str);
   }
 
   virtual void PragmaDiagnosticPush(SourceLocation Loc,
