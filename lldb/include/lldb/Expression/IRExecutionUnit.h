@@ -80,6 +80,14 @@ public:
         return m_module;
     }
     
+    llvm::Function *GetFunction()
+    {
+        if (m_module)
+            return m_module->getFunction (m_name.AsCString());
+        else
+            return NULL;
+    }
+    
     void GetRunnableInfo(Error &error,
                          lldb::addr_t &func_addr,
                          lldb::addr_t &func_end);

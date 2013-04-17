@@ -77,6 +77,20 @@ public:
                         llvm::Function &llvm_function,
                         llvm::Module &llvm_module,
                         lldb_private::Error &err);
+    
+    // new api
+    
+    static bool
+    CanInterpret (llvm::Module &module,
+                  llvm::Function &function,
+                  lldb_private::Error &error);
+    
+    static bool
+    Interpret (llvm::Module &module,
+               llvm::Function &function,
+               lldb_private::IRMemoryMap &memory_map,
+               lldb_private::Error &error);
+                  
 private:   
     static bool
     supportsFunction (llvm::Function &llvm_function,
