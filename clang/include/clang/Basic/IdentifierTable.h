@@ -394,7 +394,7 @@ public:
   ///
   /// \returns A new iterator into the set of known identifiers. The
   /// caller is responsible for deleting this iterator.
-  virtual IdentifierIterator *getIdentifiers() const;
+  virtual IdentifierIterator *getIdentifiers();
 };
 
 /// \brief An abstract class used to resolve numerical identifier

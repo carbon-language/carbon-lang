@@ -146,6 +146,11 @@ public:
   static std::pair<GlobalModuleIndex *, ErrorCode>
   readIndex(StringRef Path);
 
+  /// \brief Returns an iterator for identifiers stored in the index table.
+  ///
+  /// The caller accepts ownership of the returned object.
+  IdentifierIterator *createIdentifierIterator() const;
+
   /// \brief Retrieve the set of modules that have up-to-date indexes.
   ///
   /// \param ModuleFiles Will be populated with the set of module files that

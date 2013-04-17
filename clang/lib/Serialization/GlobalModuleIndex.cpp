@@ -818,3 +818,34 @@ GlobalModuleIndex::writeIndex(FileManager &FileMgr, StringRef Path) {
   // We're done.
   return EC_None;
 }
+
+namespace {
+  class GlobalIndexIdentifierIterator : public IdentifierIterator {
+    /// \brief The current position within the identifier lookup table.
+    IdentifierIndexTable::key_iterator Current;
+
+    /// \brief The end position within the identifier lookup table.
+    IdentifierIndexTable::key_iterator End;
+
+  public:
+    explicit GlobalIndexIdentifierIterator(IdentifierIndexTable &Idx) {
+      Current = Idx.key_begin();
+      End = Idx.key_end();
+    }
+
+    virtual StringRef Next() {
+      if (Current == End)
+        return StringRef();
+
+      StringRef Result = *Current;
+      ++Current;
+      return Result;
+    }
+  };
+}
+
+IdentifierIterator *GlobalModuleIndex::createIdentifierIterator() const {
+  IdentifierIndexTable &Table =
+    *static_cast<IdentifierIndexTable *>(IdentifierIndex);
+  return new GlobalIndexIdentifierIterator(Table);
+}

@@ -6109,7 +6109,10 @@ StringRef ASTIdentifierIterator::Next() {
   return Result;
 }
 
-IdentifierIterator *ASTReader::getIdentifiers() const {
+IdentifierIterator *ASTReader::getIdentifiers() {
+  if (!loadGlobalIndex())
+    return GlobalIndex->createIdentifierIterator();
+
   return new ASTIdentifierIterator(*this);
 }
 

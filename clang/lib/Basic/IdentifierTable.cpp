@@ -65,7 +65,7 @@ namespace {
   };
 }
 
-IdentifierIterator *IdentifierInfoLookup::getIdentifiers() const {
+IdentifierIterator *IdentifierInfoLookup::getIdentifiers() {
   return new EmptyLookupIterator();
 }
 

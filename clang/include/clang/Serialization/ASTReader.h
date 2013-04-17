@@ -1558,7 +1558,7 @@ public:
 
   /// \brief Retrieve an iterator into the set of all identifiers
   /// in all loaded AST files.
-  virtual IdentifierIterator *getIdentifiers() const;
+  virtual IdentifierIterator *getIdentifiers();
 
   /// \brief Load the contents of the global method pool for a given
   /// selector.
