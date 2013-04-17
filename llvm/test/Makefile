@@ -100,13 +100,6 @@ check-local-all:: lit.site.cfg Unit/lit.site.cfg extra-site-cfgs
 clean::
 	$(RM) -rf `find $(LLVM_OBJ_ROOT)/test -name Output -type d -print`
 
-# dsymutil is used on the Darwin to manipulate DWARF debugging information.
-ifeq ($(TARGET_OS),Darwin)
-DSYMUTIL=dsymutil
-else
-DSYMUTIL=true
-endif
-
 ifneq ($(OCAMLOPT),)
 CC_FOR_OCAMLOPT := $(shell $(OCAMLOPT) -config | grep native_c_compiler | sed -e 's/native_c_compiler: //')
 CXX_FOR_OCAMLOPT := $(subst gcc,g++,$(CC_FOR_OCAMLOPT))
