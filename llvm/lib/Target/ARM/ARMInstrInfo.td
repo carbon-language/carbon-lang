@@ -581,6 +581,13 @@ def imm0_1 : Operand<i32> { let ParserMatchClass = Imm0_1AsmOperand; }
 def Imm0_3AsmOperand: ImmAsmOperand { let Name = "Imm0_3"; }
 def imm0_3 : Operand<i32> { let ParserMatchClass = Imm0_3AsmOperand; }
 
+/// imm0_4 predicate - Immediate in the range [0,4].
+def Imm0_4AsmOperand : ImmAsmOperand { let Name = "Imm0_4"; }
+def imm0_4 : Operand<i32>, ImmLeaf<i32, [{ return Imm >= 0 && Imm < 5; }]> {
+  let ParserMatchClass = Imm0_4AsmOperand;
+  let DecoderMethod = "DecodeImm0_4";
+}
+
 /// imm0_7 predicate - Immediate in the range [0,7].
 def Imm0_7AsmOperand: ImmAsmOperand { let Name = "Imm0_7"; }
 def imm0_7 : Operand<i32>, ImmLeaf<i32, [{
@@ -1695,11 +1702,11 @@ def ATOMUMAX6432  : PseudoInst<(outs GPR:$dst1, GPR:$dst2),
                               NoItinerary, []>;
 }
 
-def HINT : AI<(outs), (ins imm0_255:$imm), MiscFrm, NoItinerary,
+def HINT : AI<(outs), (ins imm0_4:$imm), MiscFrm, NoItinerary,
               "hint", "\t$imm", []>, Requires<[IsARM, HasV6]> {
-  bits<8> imm;
-  let Inst{27-8} = 0b00110010000011110000;
-  let Inst{7-0} = imm;
+  bits<3> imm;
+  let Inst{27-3} = 0b0011001000001111000000000;
+  let Inst{2-0} = imm;
 }
 
 def : InstAlias<"nop$p", (HINT 0, pred:$p)>, Requires<[IsARM, HasV6T2]>;

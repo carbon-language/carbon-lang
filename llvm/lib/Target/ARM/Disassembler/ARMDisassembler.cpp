@@ -308,6 +308,8 @@ static DecodeStatus DecodeVCVTD(MCInst &Inst, unsigned Insn,
                                 uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeVCVTQ(MCInst &Inst, unsigned Insn,
                                 uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeImm0_4(MCInst &Inst, unsigned Insn, uint64_t Address,
+                                 const void *Decoder);
 
 
 static DecodeStatus DecodeThumbAddSpecialReg(MCInst &Inst, uint16_t Insn,
@@ -4494,6 +4496,15 @@ static DecodeStatus DecodeVCVTQ(MCInst &Inst, unsigned Insn,
   Inst.addOperand(MCOperand::CreateImm(64 - imm));
 
   return S;
+}
+
+static DecodeStatus DecodeImm0_4(MCInst &Inst, unsigned Insn, uint64_t Address,
+                                 const void *Decoder)
+{
+  unsigned Imm = fieldFromInstruction(Insn, 0, 3);
+  if (Imm > 4) return MCDisassembler::Fail;
+  Inst.addOperand(MCOperand::CreateImm(Imm));
+  return MCDisassembler::Success;
 }
 
 static DecodeStatus DecodeLDR(MCInst &Inst, unsigned Val,

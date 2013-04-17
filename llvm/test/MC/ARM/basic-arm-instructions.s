@@ -2883,7 +2883,7 @@ Lforward:
 @ CHECK: wfilt                          @ encoding: [0x03,0xf0,0x20,0xb3]
 @ CHECK: yield                          @ encoding: [0x01,0xf0,0x20,0xe3]
 @ CHECK: yieldne                        @ encoding: [0x01,0xf0,0x20,0x13]
-@ CHECK: hint	#5                      @ encoding: [0x05,0xf0,0x20,0xe3]
+@ CHECK-NOT: hint	#5
 @ CHECK: sev                            @ encoding: [0x04,0xf0,0x20,0xe3]
 @ CHECK: wfi                            @ encoding: [0x03,0xf0,0x20,0xe3]
 @ CHECK: wfe                            @ encoding: [0x02,0xf0,0x20,0xe3]

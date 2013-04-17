@@ -610,6 +610,13 @@ public:
     int64_t Value = CE->getValue();
     return ((Value & 3) == 0) && Value >= -1020 && Value <= 1020;
   }
+  bool isImm0_4() const {
+    if (!isImm()) return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return Value >= 0 && Value < 5;
+  }
   bool isImm0_1020s4() const {
     if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
