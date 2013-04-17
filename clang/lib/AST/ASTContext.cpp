@@ -1127,8 +1127,8 @@ void ASTContext::getOverriddenMethods(
   assert(D);
 
   if (const CXXMethodDecl *CXXMethod = dyn_cast<CXXMethodDecl>(D)) {
-    Overridden.append(CXXMethod->begin_overridden_methods(),
-                      CXXMethod->end_overridden_methods());
+    Overridden.append(overridden_methods_begin(CXXMethod),
+                      overridden_methods_end(CXXMethod));
     return;
   }
 
