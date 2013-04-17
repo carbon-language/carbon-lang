@@ -3200,9 +3200,42 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Color diagnostics are the default, unless the terminal doesn't support
   // them.
-  if (Args.hasFlag(options::OPT_fcolor_diagnostics,
-                   options::OPT_fno_color_diagnostics,
-                   llvm::sys::Process::StandardErrHasColors()))
+  // Support both clang's -f[no-]color-diagnostics and gcc's
+  // -f[no-]diagnostics-colors[=never|always|auto].
+  enum { Colors_On, Colors_Off, Colors_Auto } ShowColors = Colors_Auto;
+  for (ArgList::const_iterator it = Args.begin(), ie = Args.end();
+       it != ie; ++it) {
+    const Option &O = (*it)->getOption();
+    if (!O.matches(options::OPT_fcolor_diagnostics) &&
+        !O.matches(options::OPT_fdiagnostics_color) &&
+        !O.matches(options::OPT_fno_color_diagnostics) &&
+        !O.matches(options::OPT_fno_diagnostics_color) &&
+        !O.matches(options::OPT_fdiagnostics_color_EQ))
+      continue;
+
+    (*it)->claim();
+    if (O.matches(options::OPT_fcolor_diagnostics) ||
+        O.matches(options::OPT_fdiagnostics_color)) {
+      ShowColors = Colors_On;
+    } else if (O.matches(options::OPT_fno_color_diagnostics) ||
+               O.matches(options::OPT_fno_diagnostics_color)) {
+      ShowColors = Colors_Off;
+    } else {
+      assert(O.matches(options::OPT_fdiagnostics_color_EQ));
+      StringRef value((*it)->getValue());
+      if (value == "always")
+        ShowColors = Colors_On;
+      else if (value == "never")
+        ShowColors = Colors_Off;
+      else if (value == "auto")
+        ShowColors = Colors_Auto;
+      else
+        getToolChain().getDriver().Diag(diag::err_drv_clang_unsupported)
+          << ("-fdiagnostics-color=" + value).str();
+    }
+  }
+  if (ShowColors == Colors_On ||
+      (ShowColors == Colors_Auto && llvm::sys::Process::StandardErrHasColors()))
     CmdArgs.push_back("-fcolor-diagnostics");
 
   if (!Args.hasFlag(options::OPT_fshow_source_location,

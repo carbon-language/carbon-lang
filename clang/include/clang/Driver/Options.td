@@ -333,6 +333,8 @@ def fcatch_undefined_behavior : Flag<["-"], "fcatch-undefined-behavior">, Group<
 def fclasspath_EQ : Joined<["-"], "fclasspath=">, Group<f_Group>;
 def fcolor_diagnostics : Flag<["-"], "fcolor-diagnostics">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Use colors in diagnostics">;
+def fdiagnostics_color : Flag<["-"], "fdiagnostics-color">, Group<f_Group>;
+def fdiagnostics_color_EQ : Joined<["-"], "fdiagnostics-color=">, Group<f_Group>;
 def fcomment_block_commands : CommaJoined<["-"], "fcomment-block-commands=">, Group<f_clang_Group>, Flags<[CC1Option]>,
   HelpText<"Treat each comma separated argument in <arg> as a documentation comment block command">,
   MetaVarName<"<arg>">;
@@ -539,6 +541,7 @@ def fno_builtin : Flag<["-"], "fno-builtin">, Group<f_Group>, Flags<[CC1Option]>
 def fno_caret_diagnostics : Flag<["-"], "fno-caret-diagnostics">, Group<f_Group>,
  Flags<[CC1Option]>;
 def fno_color_diagnostics : Flag<["-"], "fno-color-diagnostics">, Group<f_Group>;
+def fno_diagnostics_color : Flag<["-"], "fno-diagnostics-color">, Group<f_Group>;
 def fno_common : Flag<["-"], "fno-common">, Group<f_Group>, Flags<[CC1Option]>,
     HelpText<"Compile common globals like normal definitions">;
 def fno_constant_cfstrings : Flag<["-"], "fno-constant-cfstrings">, Group<f_Group>,
