@@ -8,10 +8,10 @@ define void @main() nounwind {
 
 .start:
   %indvar15 = phi i64 [ 0, %.split ], [ %indvar.next16, %.loopexit ]
+  %tmp25 = add i64 %indvar15, 1
   br i1 true, label %.preheader, label %.loop2
 
 .preheader:
-  %tmp25 = add i64 %indvar15, 1
   br label %.loop1
 
 .loop1:
