@@ -85,7 +85,8 @@ def main():
                                    'Reformat changed lines in diff')
   parser.add_argument('-p', default=1,
                       help='strip the smallest prefix containing P slashes')
-  parser.add_argument('-style', help='formatting style to apply (LLVM, Google)')
+  parser.add_argument('-style',
+                      help='formatting style to apply (LLVM, Google, Chromium)')
   args = parser.parse_args()
 
   filename = None

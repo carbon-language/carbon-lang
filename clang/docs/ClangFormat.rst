@@ -18,7 +18,6 @@ to format C/C++/Obj-C code.
   $ clang-format --help
   OVERVIEW: A tool to format C/C++/Obj-C code.
 
-  Currently supports LLVM and Google style guides.
   If no arguments are specified, it formats the code from standard input
   and writes the result to the standard output.
   If <file> is given, it reformats the file. If -i is specified together
@@ -66,6 +65,22 @@ It operates on the current, potentially unsaved buffer and does not create
 or save any files. To revert a formatting, just undo.
 
 
+Emacs Integration
+=================
+
+Similar to the integration for :program:`vim`, there is an integration for
+:program:`emacs`. It can be found at `clang/tools/clang-format/clang-format.el`
+and used by adding this to your `.emacs`:
+
+.. code-block:: common-lisp
+
+  (load "<path-to-clang>/tools/clang-format/clang-format.el")
+  (global-set-key [C-M-tab] 'clang-format-region)
+
+This binds the function `clang-format-region` to C-M-tab, which then formats the
+current line or selected region.
+
+
 Script for patch reformatting
 =============================
 
@@ -81,7 +96,7 @@ a unified diff and reformats all contained lines with :program:`clang-format`.
   optional arguments:
     -h, --help    show this help message and exit
     -p P          strip the smallest prefix containing P slashes
-    -style STYLE  formatting style to apply (LLVM, Google)
+    -style STYLE  formatting style to apply (LLVM, Google, Chromium)
 
 So to reformat all the lines in the latest :program:`git` commit, just do:
 
