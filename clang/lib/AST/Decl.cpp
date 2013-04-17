@@ -1892,6 +1892,11 @@ SourceRange ParmVarDecl::getSourceRange() const {
       return SourceRange(getOuterLocStart(), ArgRange.getEnd());
   }
 
+  // DeclaratorDecl considers the range of postfix types as overlapping with the
+  // declaration name, but this is not the case with parameters in ObjC methods.
+  if (isa<ObjCMethodDecl>(getDeclContext()))
+    return SourceRange(DeclaratorDecl::getLocStart(), getLocation());
+
   return DeclaratorDecl::getSourceRange();
 }
 
