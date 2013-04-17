@@ -250,15 +250,6 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       Emit(Word2, OS);
       break;
     }
-    case AMDGPU::EG_ExportSwz:
-    case AMDGPU::R600_ExportSwz:
-    case AMDGPU::EG_ExportBuf:
-    case AMDGPU::R600_ExportBuf: {
-      uint64_t Inst = getBinaryCodeForInstr(MI, Fixups);
-      EmitByte(INSTR_EXPORT, OS);
-      Emit(Inst, OS);
-      break;
-    }
     case AMDGPU::CF_ALU:
     case AMDGPU::CF_ALU_PUSH_BEFORE: {
       uint64_t Inst = getBinaryCodeForInstr(MI, Fixups);
@@ -286,7 +277,11 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     case AMDGPU::CF_CONTINUE_R600:
     case AMDGPU::CF_JUMP_R600:
     case AMDGPU::CF_ELSE_R600:
-    case AMDGPU::POP_R600: {
+    case AMDGPU::POP_R600:
+    case AMDGPU::EG_ExportSwz:
+    case AMDGPU::R600_ExportSwz:
+    case AMDGPU::EG_ExportBuf:
+    case AMDGPU::R600_ExportBuf: {
       uint64_t Inst = getBinaryCodeForInstr(MI, Fixups);
       EmitByte(INSTR_NATIVE, OS);
       Emit(Inst, OS);
