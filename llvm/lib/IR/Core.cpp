@@ -1446,7 +1446,8 @@ void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
 void LLVMAddTargetDependentFunctionAttr(LLVMValueRef Fn, const char *A,
                                         const char *V) {
   Function *Func = unwrap<Function>(Fn);
-  AttributeSet::AttrIndex Idx = AttributeSet::FunctionIndex;
+  AttributeSet::AttrIndex Idx =
+    AttributeSet::AttrIndex(AttributeSet::FunctionIndex);
   AttrBuilder B;
 
   B.addAttribute(A, V);
