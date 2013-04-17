@@ -282,9 +282,7 @@ CommandInterpreter::Initialize ()
     
     cmd_obj_sp = GetCommandSPExact ("expression", false);
     if (cmd_obj_sp)
-    {
-        AddAlias ("expr", cmd_obj_sp);
-        
+    {        
         ProcessAliasOptionsArgs (cmd_obj_sp, "--", alias_arguments_vector_sp);
         AddAlias ("p", cmd_obj_sp);
         AddAlias ("print", cmd_obj_sp);
