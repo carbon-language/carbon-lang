@@ -716,6 +716,12 @@ static cl::opt<bool>
 DisableCheckForCFGHazards("disable-objc-arc-checkforcfghazards", cl::init(false),
                           cl::desc("Disable check for cfg hazards when "
                                    "annotating"));
+static cl::opt<std::string>
+ARCAnnotationTargetIdentifier("objc-arc-annotation-target-identifier",
+                              cl::init(""),
+                              cl::desc("filter out all data flow annotations "
+                                       "but those that apply to the given "
+                                       "target llvm identifier."));
 
 /// This function appends a unique ARCAnnotationProvenanceSourceMDKind id to an
 /// instruction so that we can track backwards when post processing via the llvm
@@ -800,6 +806,12 @@ static void AppendMDNodeToInstForPtr(unsigned NodeId,
 /// state of a pointer at the entrance to a basic block.
 static void GenerateARCBBEntranceAnnotation(const char *Name, BasicBlock *BB,
                                             Value *Ptr, Sequence Seq) {
+  // If we have a target identifier, make sure that we match it before
+  // continuing.
+  if(!ARCAnnotationTargetIdentifier.empty() &&
+     !Ptr->getName().equals(ARCAnnotationTargetIdentifier))
+    return;
+  
   Module *M = BB->getParent()->getParent();
   LLVMContext &C = M->getContext();
   Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
@@ -837,6 +849,12 @@ static void GenerateARCBBEntranceAnnotation(const char *Name, BasicBlock *BB,
 /// of the pointer at the bottom of the basic block.
 static void GenerateARCBBTerminatorAnnotation(const char *Name, BasicBlock *BB,
                                               Value *Ptr, Sequence Seq) {
+  // If we have a target identifier, make sure that we match it before emitting
+  // an annotation.
+  if(!ARCAnnotationTargetIdentifier.empty() &&
+     !Ptr->getName().equals(ARCAnnotationTargetIdentifier))
+    return;
+  
   Module *M = BB->getParent()->getParent();
   LLVMContext &C = M->getContext();
   Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
@@ -878,6 +896,12 @@ static void GenerateARCAnnotation(unsigned InstMDId,
                                   Sequence OldSeq,
                                   Sequence NewSeq) {
   if (EnableARCAnnotations) {
+    // If we have a target identifier, make sure that we match it before
+    // emitting an annotation.
+    if(!ARCAnnotationTargetIdentifier.empty() &&
+       !Ptr->getName().equals(ARCAnnotationTargetIdentifier))
+      return;
+    
     // First generate the source annotation on our pointer. This will return an
     // MDString* if Ptr actually comes from an instruction implying we can put
     // in a source annotation. If AppendMDNodeToSourcePtr returns 0 (i.e. NULL),
