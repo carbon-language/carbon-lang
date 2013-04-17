@@ -1054,8 +1054,13 @@ void DIScope::printInternal(raw_ostream &OS) const {
 
 void DICompileUnit::printInternal(raw_ostream &OS) const {
   DIScope::printInternal(OS);
-  if (const char *Lang = dwarf::LanguageString(getLanguage()))
-    OS << " [" << Lang << ']';
+  OS << " [";
+  unsigned Lang = getLanguage();
+  if (const char *LangStr = dwarf::LanguageString(Lang))
+    OS << LangStr;
+  else
+    (OS << "lang 0x").write_hex(Lang);
+  OS << ']';
 }
 
 void DIEnumerator::printInternal(raw_ostream &OS) const {
