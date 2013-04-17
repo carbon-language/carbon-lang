@@ -26,7 +26,7 @@
 
 using namespace llvm;
 
-IRInterpreter::IRInterpreter(lldb_private::ClangExpressionDeclMap &decl_map,
+IRInterpreter::IRInterpreter(lldb_private::ClangExpressionDeclMap *decl_map,
                              lldb_private::IRMemoryMap &memory_map,
                              lldb_private::Stream *error_stream) :
     m_decl_map(decl_map),
@@ -97,7 +97,7 @@ public:
     ValueMap                                m_values;
     PlacedValueVector                       m_placed_values;
     DataLayout                             &m_target_data;
-    lldb_private::ClangExpressionDeclMap   &m_decl_map;
+    lldb_private::ClangExpressionDeclMap   *m_decl_map;
     lldb_private::IRMemoryMap              &m_memory_map;
     const BasicBlock                       *m_bb;
     BasicBlock::const_iterator              m_ii;
@@ -107,7 +107,7 @@ public:
     size_t                                  m_addr_byte_size;
     
     InterpreterStackFrame (DataLayout &target_data,
-                           lldb_private::ClangExpressionDeclMap &decl_map,
+                           lldb_private::ClangExpressionDeclMap *decl_map,
                            lldb_private::IRMemoryMap &memory_map) :
         m_target_data (target_data),
         m_decl_map (decl_map),
@@ -330,6 +330,9 @@ public:
     
     lldb::addr_t PlaceLLDBValue (const llvm::Value *value, lldb_private::Value lldb_value)
     {
+        if (!m_decl_map)
+            return false;
+        
         lldb_private::Error alloc_error;
         lldb_private::RegisterInfo *reg_info = lldb_value.GetRegisterInfo();
                 
@@ -350,7 +353,7 @@ public:
         
         lldb_private::DataBufferHeap buf(value_size, 0);
         
-        m_decl_map.ReadTarget(m_memory_map, buf.GetBytes(), lldb_value, value_size);
+        m_decl_map->ReadTarget(m_memory_map, buf.GetBytes(), lldb_value, value_size);
         
         lldb_private::Error write_error;
         
@@ -370,6 +373,9 @@ public:
     
     void RestoreLLDBValues ()
     {
+        if (!m_decl_map)
+            return;
+        
         for (PlacedValue &placed_value : m_placed_values)
         {
             lldb_private::DataBufferHeap buf(placed_value.size, 0);
@@ -379,7 +385,7 @@ public:
             m_memory_map.ReadMemory(buf.GetBytes(), placed_value.process_address, buf.GetByteSize(), read_error);
             
             if (read_error.Success())
-                m_decl_map.WriteTarget(m_memory_map, placed_value.lldb_value, buf.GetBytes(), buf.GetByteSize());
+                m_decl_map->WriteTarget(m_memory_map, placed_value.lldb_value, buf.GetBytes(), buf.GetByteSize());
         }
     }
     
@@ -411,6 +417,9 @@ public:
     
     lldb::addr_t ResolveValue (const Value *value, Module &module)
     {
+        if (!m_decl_map)
+            return LLDB_INVALID_ADDRESS;
+        
         ValueMap::iterator i = m_values.find(value);
         
         if (i != m_values.end())
@@ -454,7 +463,7 @@ public:
                 if (isa<clang::FunctionDecl>(decl))
                     variable_is_function_address = true;
                 
-                resolved_value = m_decl_map.LookupDecl(decl, flags);
+                resolved_value = m_decl_map->LookupDecl(decl, flags);
             }
             else
             {
@@ -466,7 +475,7 @@ public:
                     name_str == "self" ||
                     name_str == "_cmd")
                 {
-                    resolved_value = m_decl_map.GetSpecialValue(lldb_private::ConstString(name_str.c_str()));
+                    resolved_value = m_decl_map->GetSpecialValue(lldb_private::ConstString(name_str.c_str()));
                     variable_is_this = true;
                 }
             }
@@ -716,6 +725,9 @@ public:
                           lldb_private::TypeFromParser result_type,
                           Module &module)
     {
+        if (!m_decl_map)
+            return false;
+        
         // The result_value resolves to P, a pointer to a region R containing the result data.
         // If the result variable is a reference, the region R contains a pointer to the result R_final in the original process.
         
@@ -746,7 +758,7 @@ public:
         bool transient = false;
         bool maybe_make_load = false;
         
-        if (m_decl_map.ResultIsReference(result_name))
+        if (m_decl_map->ResultIsReference(result_name))
         {
             PointerType *R_ptr_ty = dyn_cast<PointerType>(R_ty);           
             if (!R_ptr_ty)
@@ -789,7 +801,7 @@ public:
             base.GetScalar() = (unsigned long long)R;
         }                     
                         
-        return m_decl_map.CompleteResultVariable (result, m_memory_map, base, result_name, result_type, transient, maybe_make_load);
+        return m_decl_map->CompleteResultVariable (result, m_memory_map, base, result_name, result_type, transient, maybe_make_load);
     }
 };
 
@@ -924,47 +936,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
 {
     lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    lldb_private::ClangExpressionDeclMap::TargetInfo target_info = m_decl_map.GetTargetInfo();
-    
-    if (!target_info.IsValid())
-    {
-        err.SetErrorToGenericError();
-        err.SetErrorString(interpreter_initialization_error);
-        return false;
-    }
-    
-    lldb::addr_t alloc_min;
-    lldb::addr_t alloc_max;
-    
-    switch (target_info.address_byte_size)
-    {
-    default:
-        err.SetErrorToGenericError();
-        err.SetErrorString(interpreter_initialization_error);
-        return false;    
-    case 4:
-        alloc_min = 0x00001000llu;
-        alloc_max = 0x0000ffffllu;
-        break;
-    case 8:
-        alloc_min = 0x0000000000001000llu;
-        alloc_max = 0x000000000000ffffllu;
-        break;
-    }
-    
     DataLayout target_data(&llvm_module);
-    if (target_data.getPointerSize(0) != target_info.address_byte_size)
-    {
-        err.SetErrorToGenericError();
-        err.SetErrorString(interpreter_initialization_error);
-        return false;
-    }
-    if (target_data.isLittleEndian() != (target_info.byte_order == lldb::eByteOrderLittle))
-    {
-        err.SetErrorToGenericError();
-        err.SetErrorString(interpreter_initialization_error);
-        return false;
-    }
     
     InterpreterStackFrame frame(target_data, m_decl_map, m_memory_map);
 

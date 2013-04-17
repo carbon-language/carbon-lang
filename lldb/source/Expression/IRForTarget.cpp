@@ -2806,7 +2806,7 @@ IRForTarget::runOnModule (Module &llvm_module)
     
     if (m_decl_map && m_execution_policy != lldb_private::eExecutionPolicyAlways)
     {
-        IRInterpreter interpreter (*m_decl_map,
+        IRInterpreter interpreter (m_decl_map,
                                    m_memory_map,
                                    m_error_stream);
 

@@ -51,7 +51,7 @@ public:
     /// @param[in] error_stream
     ///     If non-NULL, a stream on which errors can be printed.
     //------------------------------------------------------------------
-    IRInterpreter(lldb_private::ClangExpressionDeclMap &decl_map,
+    IRInterpreter(lldb_private::ClangExpressionDeclMap *decl_map,
                   lldb_private::IRMemoryMap &memory_map,
                   lldb_private::Stream *error_stream);
     
@@ -95,7 +95,7 @@ public:
                         llvm::Module &llvm_module,
                         lldb_private::Error &err);
 private:
-    lldb_private::ClangExpressionDeclMap   &m_decl_map;     ///< The DeclMap containing the Decls
+    lldb_private::ClangExpressionDeclMap   *m_decl_map;     ///< The DeclMap containing the Decls
     lldb_private::IRMemoryMap              &m_memory_map;   ///< The IRMemoryMap to use when accessing memory
     
     bool
