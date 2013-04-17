@@ -58,7 +58,7 @@ bool polly::canSynthesize(const Instruction *I, const llvm::LoopInfo *LI,
   }
 
   Loop *L = LI->getLoopFor(I->getParent());
-  return L && I == L->getCanonicalInductionVariable();
+  return L && I == L->getCanonicalInductionVariable() && R->contains(L);
 }
 
 // Helper class to generate memory location.
