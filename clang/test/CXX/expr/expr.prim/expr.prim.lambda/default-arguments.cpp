@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++11 %s -Wno-lambda-extensions -verify
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 %s -verify
 
 void defargs() {
   auto l1 = [](int i, int j = 17, int k = 18) { return i + j + k; };

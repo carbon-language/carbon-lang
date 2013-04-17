@@ -254,7 +254,6 @@ def : DiagGroup<"strict-overflow=5">;
 def : DiagGroup<"strict-overflow">;
 
 def InvalidOffsetof : DiagGroup<"invalid-offsetof">;
-def LambdaExtensions : DiagGroup<"lambda-extensions">;
 def : DiagGroup<"strict-prototypes">;
 def StrictSelector : DiagGroup<"strict-selector-match">;
 def MethodDuplicate : DiagGroup<"duplicate-method-match">;

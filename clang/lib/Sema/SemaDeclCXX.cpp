@@ -636,22 +636,12 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
   bool IsLambda = FD->getOverloadedOperator() == OO_Call &&
                   isa<CXXMethodDecl>(FD) &&
                   cast<CXXMethodDecl>(FD)->getParent()->isLambda();
-              
+
   // Find first parameter with a default argument
   for (p = 0; p < NumParams; ++p) {
     ParmVarDecl *Param = FD->getParamDecl(p);
-    if (Param->hasDefaultArg()) {
-      // C++11 [expr.prim.lambda]p5:
-      //   [...] Default arguments (8.3.6) shall not be specified in the 
-      //   parameter-declaration-clause of a lambda-declarator.
-      //
-      // FIXME: Core issue 974 strikes this sentence, we only provide an
-      // extension warning.
-      if (IsLambda)
-        Diag(Param->getLocation(), diag::ext_lambda_default_arguments)
-          << Param->getDefaultArgRange();
+    if (Param->hasDefaultArg())
       break;
-    }
   }
 
   // C++ [dcl.fct.default]p4:
