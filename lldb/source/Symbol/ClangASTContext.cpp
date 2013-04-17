@@ -1794,8 +1794,9 @@ ClangASTContext::AddMethodToCXXRecordType
     }
     else
     {   
-    
+        clang::StorageClass SC = is_static ? SC_Static : SC_None; 
         OverloadedOperatorKind op_kind = NUM_OVERLOADED_OPERATORS;
+
         if (IsOperator (name, op_kind))
         {
             if (op_kind != NUM_OVERLOADED_OPERATORS)
@@ -1813,7 +1814,7 @@ ClangASTContext::AddMethodToCXXRecordType
                                                          DeclarationNameInfo (ast->DeclarationNames.getCXXOperatorName (op_kind), SourceLocation()),
                                                          method_qual_type,
                                                          NULL, // TypeSourceInfo *
-                                                         SC_None,
+                                                         SC,
                                                          is_inline,
                                                          false /*is_constexpr*/,
                                                          SourceLocation());
@@ -1842,7 +1843,7 @@ ClangASTContext::AddMethodToCXXRecordType
                                                      DeclarationNameInfo (decl_name, SourceLocation()),
                                                      method_qual_type,
                                                      NULL, // TypeSourceInfo *
-                                                     SC_None,
+                                                     SC,
                                                      is_inline,
                                                      false /*is_constexpr*/,
                                                      SourceLocation());
