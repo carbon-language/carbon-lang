@@ -7,4 +7,4 @@
 
 int g(int, float); // expected-error{{conflicting types}}
 
-// expected-note{{previous declaration}}
+// expected-note@nonvisible-external-defs.h:10{{previous declaration}}

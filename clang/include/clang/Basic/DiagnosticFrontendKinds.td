@@ -67,6 +67,8 @@ def warn_fe_serialized_diag_failure : Warning<
 
 def err_verify_missing_line : Error<
     "missing or invalid line number following '@' in expected %0">;
+def err_verify_missing_file : Error<
+    "file '%0' could not be located in expected %1">;
 def err_verify_invalid_range : Error<
     "invalid range following '-' in expected %0">;
 def err_verify_missing_start : Error<

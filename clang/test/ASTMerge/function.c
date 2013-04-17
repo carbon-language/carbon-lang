@@ -9,7 +9,7 @@
 // CHECK: function1.c:4:6: note: declared here with type 'void (void)'
 // CHECK: 2 errors generated
 
-// expected-error@3 {{external function 'f1' declared with incompatible types}}
-// expected-note@2 {{declared here}}
-// expected-error@5 {{external function 'f3' declared with incompatible types}}
-// expected-note@4 {{declared here}}
+// expected-error@Inputs/function2.c:3 {{external function 'f1' declared with incompatible types}}
+// expected-note@Inputs/function1.c:2 {{declared here}}
+// expected-error@Inputs/function2.c:5 {{external function 'f3' declared with incompatible types}}
+// expected-note@Inputs/function1.c:4 {{declared here}}

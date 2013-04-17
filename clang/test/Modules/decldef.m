@@ -1,8 +1,7 @@
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -fmodules -fobjc-arc -I %S/Inputs -fmodules-cache-path=%t %s -verify
 
-
-// In other file: expected-note {{previous definition is here}}
+// expected-note@Inputs/def.h:5 {{previous definition is here}}
 
 @class Def;
 Def *def;

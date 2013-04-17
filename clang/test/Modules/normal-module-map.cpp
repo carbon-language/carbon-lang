@@ -1,5 +1,3 @@
-// Note: inside the module. expected-note{{'nested_umbrella_a' declared here}}
-
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -x objective-c -fmodules-cache-path=%t -fmodules -I %S/Inputs/normal-module-map %s -verify
 #include "Umbrella/umbrella_sub.h"
@@ -25,7 +23,9 @@ int testNestedUmbrellaA() {
 }
 
 int testNestedUmbrellaBFail() {
-  return nested_umbrella_b; // expected-error{{use of undeclared identifier 'nested_umbrella_b'; did you mean 'nested_umbrella_a'?}}
+  return nested_umbrella_b;
+  // expected-error@-1{{use of undeclared identifier 'nested_umbrella_b'; did you mean 'nested_umbrella_a'?}}
+  // expected-note@Inputs/normal-module-map/nested_umbrella/a.h:1{{'nested_umbrella_a' declared here}}
 }
 
 @import nested_umbrella.b;

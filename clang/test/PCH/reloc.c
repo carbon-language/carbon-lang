@@ -10,5 +10,5 @@ int x = 2; // expected-error{{redefinition}}
 int y = 5; // expected-error{{redefinition}}
 
 
-// expected-note{{previous definition}}
-// expected-note{{previous definition}}
+// expected-note@libroot/usr/include/reloc.h:13{{previous definition}}
+// expected-note@libroot/usr/include/reloc2.h:14{{previous definition}}

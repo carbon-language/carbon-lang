@@ -61,6 +61,18 @@ class FileEntry;
 /// The line number may be absolute (as above), or relative to the current
 /// line by prefixing the number with either '+' or '-'.
 ///
+/// If the diagnostic is generated in a separate file, for example in a shared
+/// header file, it may be beneficial to be able to declare the file in which
+/// the diagnostic will appear, rather than placing the expected-* directive in
+/// the actual file itself.  This can be done using the following syntax:
+///
+/// \code
+///   // expected-error@path/include.h:15 {{error message}}
+/// \endcode
+///
+/// The path can be absolute or relative and the same search paths will be used
+/// as for #include directives.
+///
 /// The simple syntax above allows each specification to match exactly one
 /// error.  You can use the extended syntax to customize this. The extended
 /// syntax is "expected-<type> <n> {{diag text}}", where \<type> is one of

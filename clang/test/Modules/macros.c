@@ -8,13 +8,13 @@
 // FIXME: When we have a syntax for modules in C, use that.
 // These notes come from headers in modules, and are bogus.
 
-// FIXME: expected-note{{previous definition is here}}
-// FIXME: expected-note{{previous definition is here}} expected-note{{expanding this definition of 'LEFT_RIGHT_DIFFERENT'}}
-// expected-note{{other definition of 'TOP_RIGHT_REDEF'}} expected-note{{expanding this definition of 'LEFT_RIGHT_DIFFERENT2'}}
-// expected-note{{other definition of 'LEFT_RIGHT_DIFFERENT'}}
-
-
-// expected-note{{expanding this definition of 'TOP_RIGHT_REDEF'}}
+// FIXME: expected-note@Inputs/macros_left.h:11{{previous definition is here}}
+// FIXME: expected-note@Inputs/macros_right.h:12{{previous definition is here}}
+// expected-note@Inputs/macros_right.h:12{{expanding this definition of 'LEFT_RIGHT_DIFFERENT'}}
+// expected-note@Inputs/macros_top.h:13{{other definition of 'TOP_RIGHT_REDEF'}}
+// expected-note@Inputs/macros_right.h:13{{expanding this definition of 'LEFT_RIGHT_DIFFERENT2'}}
+// expected-note@Inputs/macros_left.h:14{{other definition of 'LEFT_RIGHT_DIFFERENT'}}
+// expected-note@Inputs/macros_right.h:17{{expanding this definition of 'TOP_RIGHT_REDEF'}}
 
 @import macros;
 

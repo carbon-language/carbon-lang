@@ -124,3 +124,19 @@ unexpected b; // expected-error@33 1-1 {{unknown type}}
 // CHECK7-NEXT:   Line 2: 2
 // CHECK7-NEXT: 2 errors generated.
 #endif
+
+#ifdef TEST8
+// RUN: %clang_cc1 -DTEST8 -verify %s 2>&1 | FileCheck -check-prefix=CHECK8 %s
+
+// expected-warning@nonexistant-file:1 {{ }}
+// expected-error@-1 {{file 'nonexistant-file' could not be located}}
+
+// expected-warning@verify-directive.h: {{ }}
+// expected-error@-1 {{missing or invalid line number}}
+
+// expected-warning@verify-directive.h:1 {{diagnostic}}
+
+//      CHECK8: error: 'warning' diagnostics expected but not seen:
+// CHECK8-NEXT:   File {{.*}}verify-directive.h Line 1 (directive at {{.*}}verify.c:137): diagnostic
+// CHECK8-NEXT: 1 error generated.
+#endif

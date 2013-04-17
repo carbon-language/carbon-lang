@@ -1,9 +1,9 @@
-// other file: expected-note{{'no_umbrella_A_private' declared here}}
-
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -Wauto-import -fmodules-cache-path=%t -fmodules -F %S/Inputs %s -verify
 
 #include <DependsOnModule/DependsOnModule.h> // expected-warning{{treating #include as an import of module 'DependsOnModule'}}
+
+// expected-note@Inputs/NoUmbrella.framework/PrivateHeaders/A_Private.h:1{{'no_umbrella_A_private' declared here}}
 
 #ifdef MODULE_H_MACRO
 #  error MODULE_H_MACRO should have been hidden

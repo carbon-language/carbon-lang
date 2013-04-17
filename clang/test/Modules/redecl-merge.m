@@ -27,8 +27,8 @@ int *call_eventually_noreturn_again(void) {
 int *call_eventually_noreturn2_again(void) {
   // noreturn and non-noreturn functions have different types
   eventually_noreturn2(); // expected-error{{call to 'eventually_noreturn2' is ambiguous}}
-  // expected-note@93{{candidate function}}
-  // expected-note@90{{candidate function}}
+  // expected-note@Inputs/redecl-merge-left.h:93{{candidate function}}
+  // expected-note@Inputs/redecl-merge-right.h:90{{candidate function}}
 }
 
 @implementation A
@@ -79,24 +79,26 @@ void testTypedefMerge(int i, double d) {
   T1 *ip = &i;
   // FIXME: Typedefs aren't actually merged in the sense of other merges, because
   // we should only merge them when the types are identical.
-  // in other file: expected-note@60{{candidate found by name lookup is 'T2'}}
-  // in other file: expected-note@63{{candidate found by name lookup is 'T2'}}
+  // expected-note@Inputs/redecl-merge-left.h:60{{candidate found by name lookup is 'T2'}}
+  // expected-note@Inputs/redecl-merge-right.h:63{{candidate found by name lookup is 'T2'}}
   T2 *dp = &d; // expected-error{{reference to 'T2' is ambiguous}}
 }
 
 void testFuncMerge(int i) {
   func0(i);
   func1(i);
-  // in other file: expected-note@64{{candidate function}}
-  // in other file: expected-note@70{{candidate function}}
+  // expected-note@Inputs/redecl-merge-left.h:64{{candidate function}}
+  // expected-note@Inputs/redecl-merge-right.h:70{{candidate function}}
   func2(i); // expected-error{{call to 'func2' is ambiguous}}
 }
 
 void testVarMerge(int i) {
   var1 = i;
-  // in other files: expected-note@77 2{{candidate found by name lookup is 'var2'}}
+  // expected-note@Inputs/redecl-merge-left.h:77{{candidate found by name lookup is 'var2'}}
+  // expected-note@Inputs/redecl-merge-right.h:77{{candidate found by name lookup is 'var2'}}
   var2 = i; // expected-error{{reference to 'var2' is ambiguous}}
-  // in other files: expected-note@79 2{{candidate found by name lookup is 'var3'}}
+  // expected-note@Inputs/redecl-merge-left.h:79{{candidate found by name lookup is 'var3'}}
+  // expected-note@Inputs/redecl-merge-right.h:79{{candidate found by name lookup is 'var3'}}
   var3 = i; // expected-error{{reference to 'var3' is ambiguous}}
 }
 

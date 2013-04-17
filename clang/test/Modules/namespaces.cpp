@@ -73,5 +73,5 @@ void testAnonymousNotMerged() {
   N12::consumeFoo(N12::getFoo()); // expected-error{{cannot initialize a parameter of type 'N12::<anonymous>::Foo *' with an rvalue of type 'N12::<anonymous>::Foo *'}}  
 }
 
-// namespaces-right.h: expected-note@60 {{passing argument to parameter here}}
-// namespaces-right.h: expected-note@67 {{passing argument to parameter here}}
+// expected-note@Inputs/namespaces-right.h:60 {{passing argument to parameter here}}
+// expected-note@Inputs/namespaces-right.h:67 {{passing argument to parameter here}}

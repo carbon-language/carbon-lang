@@ -23,7 +23,7 @@ CXXOnly cxxonly;
 
 @import HasSubModules;
 
-// expected-warning@1{{treating #include as an import of module 'HasSubModules.Sub.Types'}}
+// expected-warning@Inputs/HasSubModules.framework/Frameworks/Sub.framework/PrivateHeaders/SubPriv.h:1{{treating #include as an import of module 'HasSubModules.Sub.Types'}}
 #import <HasSubModules/HasSubModulesPriv.h>
 
 struct FrameworkSubStruct ss;

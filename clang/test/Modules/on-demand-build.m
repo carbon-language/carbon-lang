@@ -7,7 +7,7 @@
 @interface OtherClass
 @end
 
-// in module: expected-note@17{{class method 'alloc' is assumed to return an instance of its receiver type ('Module *')}}
+// expected-note@Inputs/Module.framework/Headers/Module.h:17{{class method 'alloc' is assumed to return an instance of its receiver type ('Module *')}}
 void test_getModuleVersion() {
   const char *version = getModuleVersion();
   const char *version2 = [Module version];
