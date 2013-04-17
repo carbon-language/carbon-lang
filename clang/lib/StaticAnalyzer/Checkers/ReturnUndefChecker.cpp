@@ -55,8 +55,17 @@ void ReturnUndefChecker::checkPreStmt(const ReturnStmt *RS,
     //   void test() {
     //     return foo();
     //   }
-    if (RT.isNull() || !RT->isVoidType())
-      emitUndef(C, RetE);
+    if (!RT.isNull() && RT->isVoidType())
+      return;
+
+    // Not all blocks have explicitly-specified return types; if the return type
+    // is not available, but the return value expression has 'void' type, assume
+    // Sema already checked it.
+    if (RT.isNull() && isa<BlockDecl>(SFC->getDecl()) &&
+        RetE->getType()->isVoidType())
+      return;
+
+    emitUndef(C, RetE);
     return;
   }
 

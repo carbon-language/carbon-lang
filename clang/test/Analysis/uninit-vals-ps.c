@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=region -fblocks -verify %s
 
 struct FPRec {
   void (*my_func)(int * x);  
@@ -122,6 +122,8 @@ int pr4631_f1_b(void)
   return x;  // no-warning
 }
 
+// <rdar://problem/12278788> - FP when returning a void-valued expression from
+// a void function...or block.
 void foo_radar12278788() { return; }
 void test_radar12278788() {
   return foo_radar12278788(); // no-warning
@@ -133,4 +135,17 @@ typedef void (*RetVoidFuncType)();
 int test_radar12278788_FP() {
   RetVoidFuncType f = foo_radar12278788_fp;
   return ((RetIntFuncType)f)(); //expected-warning {{Undefined or garbage value returned to caller}}
+}
+
+void rdar13665798() {
+  ^() {
+    return foo_radar12278788(); // no-warning
+  }();
+  ^void() {
+    return foo_radar12278788(); // no-warning
+  }();
+  ^int() {
+    RetVoidFuncType f = foo_radar12278788_fp;
+    return ((RetIntFuncType)f)(); //expected-warning {{Undefined or garbage value returned to caller}}
+  }();
 }
