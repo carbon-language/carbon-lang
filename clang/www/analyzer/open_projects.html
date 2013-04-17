@@ -17,19 +17,20 @@
 
 <p>This page lists several projects that would boost analyzer's usability and 
 power. Most of the projects listed here are infrastructure-related so this list 
-is an addition to the <A href="potential_checkers.html">potential checkers list</A>.
- If you are interested in tackling one of these, please send an email to 
-<a href=http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev>cfe-dev mailing list</a> 
-to notify other members of the community.</p>
-<p>
+is an addition to the <a href="potential_checkers.html">potential checkers 
+list</a>. If you are interested in tackling one of these, please send an email 
+to the <a href=http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev>cfe-dev
+mailing list</a> to notify other members of the community.</p>
+
 <ul>  
   <li>Core Analyzer Infrastructure
   <ul>
-    <li>Explicitly model C++ standard library functions with <tt>BodyFarm</tt>.
+    <li>Explicitly model standard library functions with <tt>BodyFarm</tt>.
     <p><tt><a href="http://clang.llvm.org/doxygen/classclang_1_1BodyFarm.html">BodyFarm</a></tt> 
-    allows the analyzer to explicitly model functions, whose definitions are 
+    allows the analyzer to explicitly model functions whose definitions are 
     not available during analysis. Modeling more of the widely used functions 
-    (such as <tt>std::string</tt>) will improve precision of the analysis. 
+    (such as the members of <tt>std::string</tt>) will improve precision of the
+    analysis. 
     <i>(Difficulty: Easy)</i><p>
     </li>
     
@@ -42,14 +43,22 @@ to notify other members of the community.</p>
     <i> (Difficulty: Hard)</i></p>
     </li>
 
-    <li>Enhance CFG to model C++ destructors and/or exceptions.
-    <p><i>(Difficulty: Medium)</i></p>    
+    <li>Enhance CFG to model C++ temporaries properly.
+    <p>There is an existing implementation of this, but it's not complete and
+    is disabled in the analyzer.
+    <i>(Difficulty: Medium)</i></p>    
+
+    <li>Enhance CFG to model exception-handling properly.
+    <p>Currently exceptions are treated as "black holes", and exception-handling
+    control structures are poorly modeled (to be conservative). This could be
+    much improved for both C++ and Objective-C exceptions.
+    <i>(Difficulty: Medium)</i></p>    
     
-    <li>Design and Implement alpha-renaming.
+    <li>Design and implement alpha-renaming.
     <p>Implement unifying two symbolic values along a path after they are 
     determined to be equal via comparison. This would allow us to reduce the 
     number of false positives and would be a building step to more advanced 
-    analyzes, such as summary-based interprocedural and cross-translation-unit 
+    analyses, such as summary-based interprocedural and cross-translation-unit 
     analysis. 
     <i>(Difficulty: Hard)</i></p>
     </li>    
@@ -58,20 +67,22 @@ to notify other members of the community.</p>
 
   <li>Bug Reporting 
   <ul>
-    <li>Add support for displaying multi-file path in scan-build output.
-    <p>Currently scan-build output does not display reports that span multiple 
-    files. The main problem is that we do not have the infrastructure to 
+    <li>Add support for displaying cross-file diagnostic paths in HTML output
+    (used by <tt>scan-build</tt>).
+    <p>Currently <tt>scan-build</tt> output does not display reports that span 
+    multiple files. The main problem is that we do not have a good format to
     display such paths in HTML output. <i>(Difficulty: Medium)</i> </p>
     </li>
     
-    <li>Relate bugs to checkers.
-    <p>We need to come up with bug reports API, which will relate bug reports 
+    <li>Relate bugs to checkers / "bug types"
+    <p>We need to come up with an API which will relate bug reports 
     to the checkers that produce them and refactor the existing code to use the 
-    new API. This would allow us to identify the checker from the bug report. 
-    <i>(Difficulty: Medium-easy)</i></p>
+    new API. This would allow us to identify the checker from the bug report,
+    which paves the way for selective control of certain checks.
+    <i>(Difficulty: Easy-Medium)</i></p>
     </li>
     
-    <li>Refactor <a href="http://clang.llvm.org/doxygen/BugReporter_8cpp_source.html">BugReporter.cpp</a>.
+    <li>Refactor path diagnostic generation in <a href="http://clang.llvm.org/doxygen/BugReporter_8cpp_source.html">BugReporter.cpp</a>.
     <p>It would be great to have more code reuse between "Minimal" and 
     "Extensive" PathDiagnostic generation algorithms. One idea is to create an 
     IR for representing path diagnostics, which would be later be used to 
@@ -82,14 +93,16 @@ to notify other members of the community.</p>
 
   <li>Other Infrastructure 
   <ul>
-    <li>Create 'analyzer_annotate' attribute for the analyzer annotations.<p>
-    We would like to put all analyzer attributes behind a fence so that we 
+    <li>Create an <tt>analyzer_annotate</tt> attribute for the analyzer 
+    annotations.
+    <p>We would like to put all analyzer attributes behind a fence so that we 
     could add/remove them without worrying that compiler (not analyzer) users 
     depend on them. Design and implement such a generic analyzer attribute in 
     the compiler. <i>(Difficulty: Medium)</i></p>
     </li>
 
-    <li>Rewrite scan-build (in python). <p><i>(Difficulty: Easy)</i></p>
+    <li>Rewrite <tt>scan-build</tt> (in Python).
+    <p><i>(Difficulty: Easy)</i></p>
     </li>    
   </ul>
   </li>
@@ -108,9 +121,9 @@ to notify other members of the community.</p>
 
     <li>Extend Malloc checker with reasoning about custom allocator, 
     deallocator, and ownership-transfer functions.
-    <p>This would require extending MallocPessimistic checker with reasoning 
+    <p>This would require extending the MallocPessimistic checker to reason 
     about annotated functions. It is strongly desired that one would rely on 
-    the 'analyzer_annotate' attribute, as described in one of the items above. 
+    the <tt>analyzer_annotate</tt> attribute, as described above. 
     <i>(Difficulty: Easy)</i></p>
     </li>
 
@@ -119,9 +132,10 @@ to notify other members of the community.</p>
     </li>
     
     <li>Write checkers which catch Copy and Paste errors.
-    <p>Take a look at the following paper for inspiration 
-    <a href="http://pages.cs.wisc.edu/~shanlu/paper/TSE-CPMiner.pdf">CP-Miner</a>. 
-    <i>(Difficulty: Medium-hard)</i></p>
+    <p>Take a look at the
+    <a href="http://pages.cs.wisc.edu/~shanlu/paper/TSE-CPMiner.pdf">CP-Miner</a>
+    paper for inspiration. 
+    <i>(Difficulty: Medium-Hard)</i></p>
     </li>  
   </ul>
   </li>
