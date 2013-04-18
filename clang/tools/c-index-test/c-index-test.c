@@ -809,6 +809,22 @@ static void PrintCursor(CXCursor Cursor,
         printf("]");
       }
     }
+
+    {
+      unsigned QT = clang_Cursor_getObjCDeclQualifiers(Cursor);
+      if (QT != CXObjCDeclQualifier_None) {
+        printf(" [");
+        #define PRINT_OBJC_QUAL(A) \
+          if (QT & CXObjCDeclQualifier_##A) printf(#A ",")
+        PRINT_OBJC_QUAL(In);
+        PRINT_OBJC_QUAL(Inout);
+        PRINT_OBJC_QUAL(Out);
+        PRINT_OBJC_QUAL(Bycopy);
+        PRINT_OBJC_QUAL(Byref);
+        PRINT_OBJC_QUAL(Oneway);
+        printf("]");
+      }
+    }
   }
 }
 

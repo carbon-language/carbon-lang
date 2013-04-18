@@ -5948,6 +5948,30 @@ unsigned clang_Cursor_getObjCPropertyAttributes(CXCursor C, unsigned reserved) {
   return Result;
 }
 
+unsigned clang_Cursor_getObjCDeclQualifiers(CXCursor C) {
+  if (!clang_isDeclaration(C.kind))
+    return CXObjCDeclQualifier_None;
+
+  Decl::ObjCDeclQualifier QT = Decl::OBJC_TQ_None;
+  const Decl *D = getCursorDecl(C);
+  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
+    QT = MD->getObjCDeclQualifier();
+  else if (const ParmVarDecl *PD = dyn_cast<ParmVarDecl>(D))
+    QT = PD->getObjCDeclQualifier();
+  if (QT == Decl::OBJC_TQ_None)
+    return CXObjCDeclQualifier_None;
+
+  unsigned Result = CXObjCDeclQualifier_None;
+  if (QT & Decl::OBJC_TQ_In) Result |= CXObjCDeclQualifier_In;
+  if (QT & Decl::OBJC_TQ_Inout) Result |= CXObjCDeclQualifier_Inout;
+  if (QT & Decl::OBJC_TQ_Out) Result |= CXObjCDeclQualifier_Out;
+  if (QT & Decl::OBJC_TQ_Bycopy) Result |= CXObjCDeclQualifier_Bycopy;
+  if (QT & Decl::OBJC_TQ_Byref) Result |= CXObjCDeclQualifier_Byref;
+  if (QT & Decl::OBJC_TQ_Oneway) Result |= CXObjCDeclQualifier_Oneway;
+
+  return Result;
+}
+
 CXSourceRange clang_Cursor_getCommentRange(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return clang_getNullRange();

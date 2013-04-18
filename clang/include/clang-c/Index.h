@@ -3389,6 +3389,27 @@ CINDEX_LINKAGE unsigned clang_Cursor_getObjCPropertyAttributes(CXCursor C,
                                                              unsigned reserved);
 
 /**
+ * \brief 'Qualifiers' written next to the return and parameter types in
+ * ObjC method declarations.
+ */
+typedef enum {
+  CXObjCDeclQualifier_None = 0x0,
+  CXObjCDeclQualifier_In = 0x1,
+  CXObjCDeclQualifier_Inout = 0x2,
+  CXObjCDeclQualifier_Out = 0x4,
+  CXObjCDeclQualifier_Bycopy = 0x8,
+  CXObjCDeclQualifier_Byref = 0x10,
+  CXObjCDeclQualifier_Oneway = 0x20
+} CXObjCDeclQualifierKind;
+
+/**
+ * \brief Given a cursor that represents an ObjC method or parameter
+ * declaration, return the associated ObjC qualifiers for the return type or the
+ * parameter respectively. The bits are formed from CXObjCPropertyAttrKind.
+ */
+CINDEX_LINKAGE unsigned clang_Cursor_getObjCDeclQualifiers(CXCursor C);
+
+/**
  * \brief Given a cursor that represents a declaration, return the associated
  * comment's source range.  The range may include multiple consecutive comments
  * with whitespace in between.
