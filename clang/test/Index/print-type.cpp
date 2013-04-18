@@ -26,6 +26,9 @@ struct Bar {
 template <typename T>
 T tbar(int);
 
+template <typename T>
+T tbar(int[5]);
+
 // RUN: c-index-test -test-print-type %s | FileCheck %s
 // CHECK: Namespace=outer:1:11 (Definition) [type=] [typekind=Invalid] [isPOD=0]
 // CHECK: ClassTemplate=Foo:4:8 (Definition) [type=] [typekind=Invalid] [isPOD=0]
@@ -59,3 +62,5 @@ T tbar(int);
 // CHECK: TypedefDecl=ArrayType:20:15 (Definition) [type=ArrayType] [typekind=Typedef] [canonicaltype=int [5]] [canonicaltypekind=ConstantArray] [isPOD=1]
 // CHECK: FunctionTemplate=tbar:27:3 [type=T (int)] [typekind=FunctionProto] [canonicaltype=type-parameter-0-0 (int)] [canonicaltypekind=FunctionProto] [resulttype=T] [resulttypekind=Unexposed] [isPOD=0]
 // CHECK: TemplateTypeParameter=T:26:20 (Definition) [type=T] [typekind=Unexposed] [canonicaltype=type-parameter-0-0] [canonicaltypekind=Unexposed] [isPOD=0]
+// CHECK: FunctionTemplate=tbar:30:3 [type=T (int *)] [typekind=FunctionProto] [canonicaltype=type-parameter-0-0 (int *)] [canonicaltypekind=FunctionProto] [resulttype=T] [resulttypekind=Unexposed] [isPOD=0]
+// CHECK: ParmDecl=:30:11 (Definition) [type=int [5]] [typekind=ConstantArray] [isPOD=1]
