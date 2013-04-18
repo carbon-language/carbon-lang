@@ -373,7 +373,7 @@ bool TargetInfo::validateOutputConstraint(ConstraintInfo &Info) const {
     Name++;
   }
 
-  return true;
+  return Info.allowsMemory() || Info.allowsRegister();
 }
 
 bool TargetInfo::resolveSymbolicName(const char *&Name,
