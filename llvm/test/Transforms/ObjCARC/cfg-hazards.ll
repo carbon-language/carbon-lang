@@ -8,6 +8,7 @@ declare void @use_pointer(i8*)
 declare i8* @objc_retain(i8*)
 declare void @objc_release(i8*)
 declare void @callee()
+declare void @block_callee(void ()*)
 
 ; CHECK: define void @test0(
 ; CHECK:   call i8* @objc_retain(
@@ -390,6 +391,41 @@ more:
 
 exit:
   call void @objc_release(i8* %a) nounwind
+  call void @objc_release(i8* %a) nounwind, !clang.imprecise_release !0
+  ret void
+}
+
+; Do not improperly pair retains in a for loop with releases outside of a for
+; loop when the proper pairing is disguised by a separate provenance represented
+; by an alloca.
+; rdar://12969722
+
+; CHECK: define void @test13(i8* %a) [[NUW]] {
+; CHECK: entry:
+; CHECK:   tail call i8* @objc_retain(i8* %a) [[NUW]]
+; CHECK: loop:
+; CHECK:   tail call i8* @objc_retain(i8* %a) [[NUW]]
+; CHECK:   call void @block_callee
+; CHECK:   call void @objc_release(i8* %reloaded_a) [[NUW]]
+; CHECK: exit:
+; CHECK:   call void @objc_release(i8* %a) [[NUW]]
+; CHECK: }
+define void @test13(i8* %a) nounwind {
+entry:
+  %block = alloca i8*
+  %a1 = tail call i8* @objc_retain(i8* %a) nounwind
+  br label %loop
+
+loop:
+  %a2 = tail call i8* @objc_retain(i8* %a) nounwind
+  store i8* %a, i8** %block, align 8
+  %casted_block = bitcast i8** %block to void ()*
+  call void @block_callee(void ()* %casted_block)
+  %reloaded_a = load i8** %block, align 8
+  call void @objc_release(i8* %reloaded_a) nounwind, !clang.imprecise_release !0
+  br i1 undef, label %loop, label %exit
+  
+exit:
   call void @objc_release(i8* %a) nounwind, !clang.imprecise_release !0
   ret void
 }

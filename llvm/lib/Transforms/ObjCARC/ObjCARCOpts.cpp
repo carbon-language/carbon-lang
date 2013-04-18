@@ -1660,6 +1660,65 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
   }
 }
 
+/// If we have a top down pointer in the S_Use state, make sure that there are
+/// no CFG hazards by checking the states of various bottom up pointers.
+static void CheckForUseCFGHazard(const Sequence SuccSSeq,
+                                 const bool SuccSRRIKnownSafe,
+                                 PtrState &S,
+                                 bool &SomeSuccHasSame,
+                                 bool &AllSuccsHaveSame,
+                                 bool &ShouldContinue) {
+  switch (SuccSSeq) {
+  case S_CanRelease: {
+    if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe) {
+      S.ClearSequenceProgress();
+      break;
+    }
+    ShouldContinue = true;
+    break;
+  }
+  case S_Use:
+    SomeSuccHasSame = true;
+    break;
+  case S_Stop:
+  case S_Release:
+  case S_MovableRelease:
+    if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe)
+      AllSuccsHaveSame = false;
+    break;
+  case S_Retain:
+    llvm_unreachable("bottom-up pointer in retain state!");
+  case S_None:
+    llvm_unreachable("This should have been handled earlier.");
+  }
+}
+
+/// If we have a Top Down pointer in the S_CanRelease state, make sure that
+/// there are no CFG hazards by checking the states of various bottom up
+/// pointers.
+static void CheckForCanReleaseCFGHazard(const Sequence SuccSSeq,
+                                        const bool SuccSRRIKnownSafe,
+                                        PtrState &S,
+                                        bool &SomeSuccHasSame,
+                                        bool &AllSuccsHaveSame) {
+  switch (SuccSSeq) {
+  case S_CanRelease:
+    SomeSuccHasSame = true;
+    break;
+  case S_Stop:
+  case S_Release:
+  case S_MovableRelease:
+  case S_Use:
+    if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe)
+      AllSuccsHaveSame = false;
+    break;
+  case S_Retain:
+    llvm_unreachable("bottom-up pointer in retain state!");
+  case S_None:
+    llvm_unreachable("This should have been handled earlier.");
+  }
+}
+
 /// Check for critical edges, loop boundaries, irreducible control flow, or
 /// other CFG structures where moving code across the edge would result in it
 /// being executed more.
@@ -1670,106 +1729,82 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
   // If any top-down local-use or possible-dec has a succ which is earlier in
   // the sequence, forget it.
   for (BBState::ptr_iterator I = MyStates.top_down_ptr_begin(),
-       E = MyStates.top_down_ptr_end(); I != E; ++I)
-    switch (I->second.GetSeq()) {
-    default: break;
-    case S_Use: {
-      const Value *Arg = I->first;
-      const TerminatorInst *TI = cast<TerminatorInst>(&BB->back());
-      bool SomeSuccHasSame = false;
-      bool AllSuccsHaveSame = true;
-      PtrState &S = I->second;
-      succ_const_iterator SI(TI), SE(TI, false);
+         E = MyStates.top_down_ptr_end(); I != E; ++I) {
+    PtrState &S = I->second;
+    const Sequence Seq = I->second.GetSeq();
 
-      for (; SI != SE; ++SI) {
-        Sequence SuccSSeq = S_None;
-        bool SuccSRRIKnownSafe = false;
-        // If VisitBottomUp has pointer information for this successor, take
-        // what we know about it.
-        DenseMap<const BasicBlock *, BBState>::iterator BBI =
-          BBStates.find(*SI);
-        assert(BBI != BBStates.end());
-        const PtrState &SuccS = BBI->second.getPtrBottomUpState(Arg);
-        SuccSSeq = SuccS.GetSeq();
-        SuccSRRIKnownSafe = SuccS.RRI.KnownSafe;
-        switch (SuccSSeq) {
-        case S_None:
-        case S_CanRelease: {
-          if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe) {
-            S.ClearSequenceProgress();
-            break;
-          }
-          continue;
-        }
-        case S_Use:
-          SomeSuccHasSame = true;
-          break;
-        case S_Stop:
-        case S_Release:
-        case S_MovableRelease:
-          if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe)
-            AllSuccsHaveSame = false;
-          break;
-        case S_Retain:
-          llvm_unreachable("bottom-up pointer in retain state!");
-        }
-      }
-      // If the state at the other end of any of the successor edges
-      // matches the current state, require all edges to match. This
-      // guards against loops in the middle of a sequence.
-      if (SomeSuccHasSame && !AllSuccsHaveSame)
-        S.ClearSequenceProgress();
-      break;
-    }
-    case S_CanRelease: {
-      const Value *Arg = I->first;
-      const TerminatorInst *TI = cast<TerminatorInst>(&BB->back());
-      bool SomeSuccHasSame = false;
-      bool AllSuccsHaveSame = true;
-      PtrState &S = I->second;
-      succ_const_iterator SI(TI), SE(TI, false);
+    // We only care about S_Retain, S_CanRelease, and S_Use.
+    if (Seq == S_None)
+      continue;
 
-      for (; SI != SE; ++SI) {
-        Sequence SuccSSeq = S_None;
-        bool SuccSRRIKnownSafe = false;
-        // If VisitBottomUp has pointer information for this successor, take
-        // what we know about it.
-        DenseMap<const BasicBlock *, BBState>::iterator BBI =
-          BBStates.find(*SI);
-        assert(BBI != BBStates.end());
-        const PtrState &SuccS = BBI->second.getPtrBottomUpState(Arg);
-        SuccSSeq = SuccS.GetSeq();
-        SuccSRRIKnownSafe = SuccS.RRI.KnownSafe;
-        switch (SuccSSeq) {
-        case S_None: {
-          if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe) {
-            S.ClearSequenceProgress();
-            break;
-          }
-          continue;
-        }
-        case S_CanRelease:
-          SomeSuccHasSame = true;
-          break;
-        case S_Stop:
-        case S_Release:
-        case S_MovableRelease:
-        case S_Use:
-          if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe)
-            AllSuccsHaveSame = false;
-          break;
-        case S_Retain:
-          llvm_unreachable("bottom-up pointer in retain state!");
-        }
-      }
-      // If the state at the other end of any of the successor edges
-      // matches the current state, require all edges to match. This
-      // guards against loops in the middle of a sequence.
-      if (SomeSuccHasSame && !AllSuccsHaveSame)
+    // Make sure that if extra top down states are added in the future that this
+    // code is updated to handle it.
+    assert((Seq == S_Retain || Seq == S_CanRelease || Seq == S_Use) &&
+           "Unknown top down sequence state.");
+
+    const Value *Arg = I->first;
+    const TerminatorInst *TI = cast<TerminatorInst>(&BB->back());
+    bool SomeSuccHasSame = false;
+    bool AllSuccsHaveSame = true;
+
+    succ_const_iterator SI(TI), SE(TI, false);
+
+    for (; SI != SE; ++SI) {
+      // If VisitBottomUp has pointer information for this successor, take
+      // what we know about it.
+      const DenseMap<const BasicBlock *, BBState>::iterator BBI =
+        BBStates.find(*SI);
+      assert(BBI != BBStates.end());
+      const PtrState &SuccS = BBI->second.getPtrBottomUpState(Arg);
+      const Sequence SuccSSeq = SuccS.GetSeq();
+
+      // If bottom up, the pointer is in an S_None state, clear the sequence
+      // progress since the sequence in the bottom up state finished
+      // suggesting a mismatch in between retains/releases. This is true for
+      // all three cases that we are handling here: S_Retain, S_Use, and
+      // S_CanRelease.
+      if (SuccSSeq == S_None) {
         S.ClearSequenceProgress();
-      break;
+        continue;
+      }
+
+      // If we have S_Use or S_CanRelease, perform our check for cfg hazard
+      // checks.
+      const bool SuccSRRIKnownSafe = SuccS.RRI.KnownSafe;
+
+      // *NOTE* We do not use Seq from above here since we are allowing for
+      // S.GetSeq() to change while we are visiting basic blocks.
+      switch(S.GetSeq()) {
+      case S_Use: {
+        bool ShouldContinue = false;
+        CheckForUseCFGHazard(SuccSSeq, SuccSRRIKnownSafe, S,
+                             SomeSuccHasSame, AllSuccsHaveSame,
+                             ShouldContinue);
+        if (ShouldContinue)
+          continue;
+        break;
+      }
+      case S_CanRelease: {
+        CheckForCanReleaseCFGHazard(SuccSSeq, SuccSRRIKnownSafe,
+                                    S, SomeSuccHasSame,
+                                    AllSuccsHaveSame);
+        break;
+      }
+      case S_Retain:
+      case S_None:
+      case S_Stop:
+      case S_Release:
+      case S_MovableRelease:
+        break;
+      }
     }
-    }
+
+    // If the state at the other end of any of the successor edges
+    // matches the current state, require all edges to match. This
+    // guards against loops in the middle of a sequence.
+    if (SomeSuccHasSame && !AllSuccsHaveSame)
+      S.ClearSequenceProgress();
+  }
 }
 
 bool
