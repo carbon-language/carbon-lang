@@ -878,8 +878,9 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
 
     // Target-independent attributes:
     case lltok::kw_align: {
-      // As a hack, we allow "align 2" on functions as a synonym for "alignstack
-      // 2".
+      // As a hack, we allow function alignment to be initially parsed as an
+      // attribute on a function declaration/definition or added to an attribute
+      // group and later moved to the alignment field.
       unsigned Alignment;
       if (inAttrGrp) {
         Lex.Lex();
