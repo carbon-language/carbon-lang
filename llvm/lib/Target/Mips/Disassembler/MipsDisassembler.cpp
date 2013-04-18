@@ -143,6 +143,16 @@ static DecodeStatus DecodeACRegsDSPRegisterClass(MCInst &Inst,
                                                  uint64_t Address,
                                                  const void *Decoder);
 
+static DecodeStatus DecodeHIRegsDSPRegisterClass(MCInst &Inst,
+                                                 unsigned RegNo,
+                                                 uint64_t Address,
+                                                 const void *Decoder);
+
+static DecodeStatus DecodeLORegsDSPRegisterClass(MCInst &Inst,
+                                                 unsigned RegNo,
+                                                 uint64_t Address,
+                                                 const void *Decoder);
+
 static DecodeStatus DecodeBranchTarget(MCInst &Inst,
                                        unsigned Offset,
                                        uint64_t Address,
@@ -492,6 +502,30 @@ static DecodeStatus DecodeACRegsDSPRegisterClass(MCInst &Inst,
     return MCDisassembler::Fail;
 
   unsigned Reg = getReg(Decoder, Mips::ACRegsDSPRegClassID, RegNo);
+  Inst.addOperand(MCOperand::CreateReg(Reg));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeHIRegsDSPRegisterClass(MCInst &Inst,
+                                                 unsigned RegNo,
+                                                 uint64_t Address,
+                                                 const void *Decoder) {
+  if (RegNo >= 4)
+    return MCDisassembler::Fail;
+
+  unsigned Reg = getReg(Decoder, Mips::HIRegsDSPRegClassID, RegNo);
+  Inst.addOperand(MCOperand::CreateReg(Reg));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeLORegsDSPRegisterClass(MCInst &Inst,
+                                                 unsigned RegNo,
+                                                 uint64_t Address,
+                                                 const void *Decoder) {
+  if (RegNo >= 4)
+    return MCDisassembler::Fail;
+
+  unsigned Reg = getReg(Decoder, Mips::LORegsDSPRegClassID, RegNo);
   Inst.addOperand(MCOperand::CreateReg(Reg));
   return MCDisassembler::Success;
 }

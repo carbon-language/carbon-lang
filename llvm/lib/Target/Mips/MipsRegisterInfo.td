@@ -229,14 +229,14 @@ let Namespace = "Mips" in {
   def D31_64  : AFPR64<31, "f31", [F31]>, DwarfRegNum<[63]>;
 
   // Hi/Lo registers
-  def HI  : Register<"hi">, DwarfRegNum<[64]>;
-  def HI1 : Register<"hi1">, DwarfRegNum<[176]>;
-  def HI2 : Register<"hi2">, DwarfRegNum<[178]>;
-  def HI3 : Register<"hi3">, DwarfRegNum<[180]>;
-  def LO  : Register<"lo">, DwarfRegNum<[65]>;
-  def LO1 : Register<"lo1">, DwarfRegNum<[177]>;
-  def LO2 : Register<"lo2">, DwarfRegNum<[179]>;
-  def LO3 : Register<"lo3">, DwarfRegNum<[181]>;
+  def HI  : Register<"ac0">, DwarfRegNum<[64]>;
+  def HI1 : Register<"ac1">, DwarfRegNum<[176]>;
+  def HI2 : Register<"ac2">, DwarfRegNum<[178]>;
+  def HI3 : Register<"ac3">, DwarfRegNum<[180]>;
+  def LO  : Register<"ac0">, DwarfRegNum<[65]>;
+  def LO1 : Register<"ac1">, DwarfRegNum<[177]>;
+  def LO2 : Register<"ac2">, DwarfRegNum<[179]>;
+  def LO3 : Register<"ac3">, DwarfRegNum<[181]>;
 
   let SubRegIndices = [sub_32] in {
   def HI64  : RegisterWithSubRegs<"hi", [HI]>;
@@ -342,6 +342,8 @@ def CCR  : RegisterClass<"Mips", [i32], 32, (add FCR31,FCC0)>, Unallocatable;
 // Hi/Lo Registers
 def HILO : RegisterClass<"Mips", [i32], 32, (add HI, LO)>, Unallocatable;
 def HILO64 : RegisterClass<"Mips", [i64], 64, (add HI64, LO64)>, Unallocatable;
+def LORegsDSP : RegisterClass<"Mips", [i32], 32, (add LO, LO1, LO2, LO3)>;
+def HIRegsDSP : RegisterClass<"Mips", [i32], 32, (add HI, HI1, HI2, HI3)>;
 
 // Hardware registers
 def HWRegs : RegisterClass<"Mips", [i32], 32, (add HWR29)>, Unallocatable;

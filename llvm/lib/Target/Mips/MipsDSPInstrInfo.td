@@ -145,6 +145,10 @@ class MAQ_S_W_PHL_ENC : DPA_W_PH_FMT<0b10100>;
 class MAQ_S_W_PHR_ENC : DPA_W_PH_FMT<0b10110>;
 class MAQ_SA_W_PHL_ENC : DPA_W_PH_FMT<0b10000>;
 class MAQ_SA_W_PHR_ENC : DPA_W_PH_FMT<0b10010>;
+class MFHI_ENC : MFHI_FMT<0b010000>;
+class MFLO_ENC : MFHI_FMT<0b010010>;
+class MTHI_ENC : MTHI_FMT<0b010001>;
+class MTLO_ENC : MTHI_FMT<0b010011>;
 class DPAU_H_QBL_ENC : DPA_W_PH_FMT<0b00011>;
 class DPAU_H_QBR_ENC : DPA_W_PH_FMT<0b00111>;
 class DPSU_H_QBL_ENC : DPA_W_PH_FMT<0b01011>;
@@ -482,6 +486,20 @@ class MADD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   string Constraints = "$acin = $ac";
 }
 
+class MFHI_DESC_BASE<string instr_asm, RegisterClass RC, InstrItinClass itin> {
+  dag OutOperandList = (outs CPURegs:$rd);
+  dag InOperandList = (ins RC:$ac);
+  string AsmString = !strconcat(instr_asm, "\t$rd, $ac");
+  InstrItinClass Itinerary = itin;
+}
+
+class MTHI_DESC_BASE<string instr_asm, RegisterClass RC, InstrItinClass itin> {
+  dag OutOperandList = (outs RC:$ac);
+  dag InOperandList = (ins CPURegs:$rs);
+  string AsmString = !strconcat(instr_asm, "\t$rs, $ac");
+  InstrItinClass Itinerary = itin;
+}
+
 class BPOSGE32_PSEUDO_DESC_BASE<SDPatternOperator OpNode, InstrItinClass itin> :
   MipsPseudo<(outs CPURegs:$dst), (ins), [(set CPURegs:$dst, (OpNode))]> {
   list<Register> Uses = [DSPCtrl];
@@ -724,6 +742,12 @@ class MAQ_S_W_PHR_DESC : DPA_W_PH_DESC_BASE<"maq_s.w.phr", MipsMAQ_S_W_PHR>;
 class MAQ_SA_W_PHL_DESC : DPA_W_PH_DESC_BASE<"maq_sa.w.phl", MipsMAQ_SA_W_PHL>;
 
 class MAQ_SA_W_PHR_DESC : DPA_W_PH_DESC_BASE<"maq_sa.w.phr", MipsMAQ_SA_W_PHR>;
+
+// Move from/to hi/lo.
+class MFHI_DESC : MFHI_DESC_BASE<"mfhi", HIRegsDSP, NoItinerary>;
+class MFLO_DESC : MFHI_DESC_BASE<"mflo", LORegsDSP, NoItinerary>;
+class MTHI_DESC : MTHI_DESC_BASE<"mthi", HIRegsDSP, NoItinerary>;
+class MTLO_DESC : MTHI_DESC_BASE<"mtlo", LORegsDSP, NoItinerary>;
 
 // Dot product with accumulate/subtract
 class DPAU_H_QBL_DESC : DPA_W_PH_DESC_BASE<"dpau.h.qbl", MipsDPAU_H_QBL>;
@@ -1094,6 +1118,10 @@ def MAQ_S_W_PHL : MAQ_S_W_PHL_ENC, MAQ_S_W_PHL_DESC;
 def MAQ_S_W_PHR : MAQ_S_W_PHR_ENC, MAQ_S_W_PHR_DESC;
 def MAQ_SA_W_PHL : MAQ_SA_W_PHL_ENC, MAQ_SA_W_PHL_DESC;
 def MAQ_SA_W_PHR : MAQ_SA_W_PHR_ENC, MAQ_SA_W_PHR_DESC;
+def MFHI_DSP : MFHI_ENC, MFHI_DESC;
+def MFLO_DSP : MFLO_ENC, MFLO_DESC;
+def MTHI_DSP : MTHI_ENC, MTHI_DESC;
+def MTLO_DSP : MTLO_ENC, MTLO_DESC;
 def DPAU_H_QBL : DPAU_H_QBL_ENC, DPAU_H_QBL_DESC;
 def DPAU_H_QBR : DPAU_H_QBR_ENC, DPAU_H_QBR_DESC;
 def DPSU_H_QBL : DPSU_H_QBL_ENC, DPSU_H_QBL_DESC;
