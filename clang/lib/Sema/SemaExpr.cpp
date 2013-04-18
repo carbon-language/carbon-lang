@@ -8894,14 +8894,14 @@ static void DiagnoseShiftCompare(Sema &S, SourceLocation OpLoc,
   S.Diag(OpLoc, diag::warn_overloaded_shift_in_comparison)
       << LHSExpr->getSourceRange() << RHSExpr->getSourceRange()
       << (Kind == OO_LessLess);
-  SuggestParentheses(S, OpLoc,
-                     S.PDiag(diag::note_evaluate_comparison_first),
-                     SourceRange(OCE->getArg(1)->getLocStart(),
-                                 RHSExpr->getLocEnd()));
   SuggestParentheses(S, OCE->getOperatorLoc(),
                      S.PDiag(diag::note_precedence_silence)
                          << (Kind == OO_LessLess ? "<<" : ">>"),
                      OCE->getSourceRange());
+  SuggestParentheses(S, OpLoc,
+                     S.PDiag(diag::note_evaluate_comparison_first),
+                     SourceRange(OCE->getArg(1)->getLocStart(),
+                                 RHSExpr->getLocEnd()));
 }
 
 /// DiagnoseBinOpPrecedence - Emit warnings for expressions with tricky

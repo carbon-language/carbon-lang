@@ -48,16 +48,20 @@ void f(Stream& s, bool b) {
   // CHECK: fix-it:"{{.*}}":{[[@LINE-6]]:32-[[@LINE-6]]:32}:")"
 
   (void)(s << 5 == 1); // expected-warning {{overloaded operator << has lower precedence than comparison operator}} \
-                       // expected-note {{place parentheses around comparison expression to evaluate it first}} \
-                       // expected-note {{place parentheses around the '<<' expression to silence this warning}}
+                       // expected-note {{place parentheses around the '<<' expression to silence this warning}} \
+                       // expected-note {{place parentheses around comparison expression to evaluate it first}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:10-[[@LINE-3]]:10}:"("
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:16-[[@LINE-4]]:16}:")"
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-5]]:15-[[@LINE-5]]:15}:"("
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-6]]:21-[[@LINE-6]]:21}:")"
 
   (void)(s >> 5 == 1); // expected-warning {{overloaded operator >> has lower precedence than comparison operator}} \
-                       // expected-note {{place parentheses around comparison expression to evaluate it first}} \
-                       // expected-note {{place parentheses around the '>>' expression to silence this warning}}
-  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:15-[[@LINE-3]]:15}:"("
-  // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:21-[[@LINE-4]]:21}:")"
-  // CHECK: fix-it:"{{.*}}":{[[@LINE-5]]:10-[[@LINE-5]]:10}:"("
-  // CHECK: fix-it:"{{.*}}":{[[@LINE-6]]:16-[[@LINE-6]]:16}:")"
+                       // expected-note {{place parentheses around the '>>' expression to silence this warning}} \
+                       // expected-note {{place parentheses around comparison expression to evaluate it first}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:10-[[@LINE-3]]:10}:"("
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:16-[[@LINE-4]]:16}:")"
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-5]]:15-[[@LINE-5]]:15}:"("
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-6]]:21-[[@LINE-6]]:21}:")"
 }
 
 struct S {
