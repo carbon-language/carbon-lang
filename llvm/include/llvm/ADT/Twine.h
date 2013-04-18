@@ -236,7 +236,7 @@ namespace llvm {
     /// getLHSKind - Get the NodeKind of the left-hand side.
     NodeKind getLHSKind() const { return (NodeKind) LHSKind; }
 
-    /// getRHSKind - Get the NodeKind of the left-hand side.
+    /// getRHSKind - Get the NodeKind of the right-hand side.
     NodeKind getRHSKind() const { return (NodeKind) RHSKind; }
 
     /// printOneChild - Print one child from a twine.
