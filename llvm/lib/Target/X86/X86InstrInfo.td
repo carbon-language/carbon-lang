@@ -1833,95 +1833,95 @@ include "X86InstrCompiler.td"
 // Assembler Mnemonic Aliases
 //===----------------------------------------------------------------------===//
 
-def : MnemonicAlias<"call", "calll">, Requires<[In32BitMode]>;
-def : MnemonicAlias<"call", "callq">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"call", "calll", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"call", "callq", "att">, Requires<[In64BitMode]>;
 
-def : MnemonicAlias<"cbw",  "cbtw">;
-def : MnemonicAlias<"cwde", "cwtl">;
-def : MnemonicAlias<"cwd",  "cwtd">;
-def : MnemonicAlias<"cdq", "cltd">;
-def : MnemonicAlias<"cdqe", "cltq">;
-def : MnemonicAlias<"cqo", "cqto">;
+def : MnemonicAlias<"cbw",  "cbtw", "att">;
+def : MnemonicAlias<"cwde", "cwtl", "att">;
+def : MnemonicAlias<"cwd",  "cwtd", "att">;
+def : MnemonicAlias<"cdq",  "cltd", "att">;
+def : MnemonicAlias<"cdqe", "cltq", "att">;
+def : MnemonicAlias<"cqo",  "cqto", "att">;
 
 // lret maps to lretl, it is not ambiguous with lretq.
-def : MnemonicAlias<"lret", "lretl">;
+def : MnemonicAlias<"lret", "lretl", "att">;
 
-def : MnemonicAlias<"leavel", "leave">, Requires<[In32BitMode]>;
-def : MnemonicAlias<"leaveq", "leave">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"leavel", "leave", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"leaveq", "leave", "att">, Requires<[In64BitMode]>;
 
-def : MnemonicAlias<"loopz", "loope">;
-def : MnemonicAlias<"loopnz", "loopne">;
+def : MnemonicAlias<"loopz",  "loope",  "att">;
+def : MnemonicAlias<"loopnz", "loopne", "att">;
 
-def : MnemonicAlias<"pop", "popl">, Requires<[In32BitMode]>;
-def : MnemonicAlias<"pop", "popq">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"popf", "popfl">, Requires<[In32BitMode]>;
-def : MnemonicAlias<"popf", "popfq">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"popfd",  "popfl">;
+def : MnemonicAlias<"pop",   "popl",  "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"pop",   "popq",  "att">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"popf",  "popfl", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"popf",  "popfq", "att">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"popfd", "popfl", "att">;
 
 // FIXME: This is wrong for "push reg".  "push %bx" should turn into pushw in
 // all modes.  However: "push (addr)" and "push $42" should default to
 // pushl/pushq depending on the current mode.  Similar for "pop %bx"
-def : MnemonicAlias<"push", "pushl">, Requires<[In32BitMode]>;
-def : MnemonicAlias<"push", "pushq">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"pushf", "pushfl">, Requires<[In32BitMode]>;
-def : MnemonicAlias<"pushf", "pushfq">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"pushfd", "pushfl">;
+def : MnemonicAlias<"push",   "pushl",  "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"push",   "pushq",  "att">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"pushf",  "pushfl", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"pushf",  "pushfq", "att">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"pushfd", "pushfl", "att">;
 
-def : MnemonicAlias<"repe", "rep">;
-def : MnemonicAlias<"repz", "rep">;
-def : MnemonicAlias<"repnz", "repne">;
+def : MnemonicAlias<"repe",  "rep",   "att">;
+def : MnemonicAlias<"repz",  "rep",   "att">;
+def : MnemonicAlias<"repnz", "repne", "att">;
 
-def : MnemonicAlias<"retl", "ret">, Requires<[In32BitMode]>;
-def : MnemonicAlias<"retq", "ret">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"retl", "ret", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"retq", "ret", "att">, Requires<[In64BitMode]>;
 
-def : MnemonicAlias<"salb", "shlb">;
-def : MnemonicAlias<"salw", "shlw">;
-def : MnemonicAlias<"sall", "shll">;
-def : MnemonicAlias<"salq", "shlq">;
+def : MnemonicAlias<"salb", "shlb", "att">;
+def : MnemonicAlias<"salw", "shlw", "att">;
+def : MnemonicAlias<"sall", "shll", "att">;
+def : MnemonicAlias<"salq", "shlq", "att">;
 
-def : MnemonicAlias<"smovb", "movsb">;
-def : MnemonicAlias<"smovw", "movsw">;
-def : MnemonicAlias<"smovl", "movsl">;
-def : MnemonicAlias<"smovq", "movsq">;
+def : MnemonicAlias<"smovb", "movsb", "att">;
+def : MnemonicAlias<"smovw", "movsw", "att">;
+def : MnemonicAlias<"smovl", "movsl", "att">;
+def : MnemonicAlias<"smovq", "movsq", "att">;
 
-def : MnemonicAlias<"ud2a", "ud2">;
-def : MnemonicAlias<"verrw", "verr">;
+def : MnemonicAlias<"ud2a",  "ud2",  "att">;
+def : MnemonicAlias<"verrw", "verr", "att">;
 
 // System instruction aliases.
-def : MnemonicAlias<"iret", "iretl">;
-def : MnemonicAlias<"sysret", "sysretl">;
-def : MnemonicAlias<"sysexit", "sysexitl">;
+def : MnemonicAlias<"iret",    "iretl",    "att">;
+def : MnemonicAlias<"sysret",  "sysretl",  "att">;
+def : MnemonicAlias<"sysexit", "sysexitl", "att">;
 
-def : MnemonicAlias<"lgdtl", "lgdt">, Requires<[In32BitMode]>;
-def : MnemonicAlias<"lgdtq", "lgdt">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"lidtl", "lidt">, Requires<[In32BitMode]>;
-def : MnemonicAlias<"lidtq", "lidt">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"sgdtl", "sgdt">, Requires<[In32BitMode]>;
-def : MnemonicAlias<"sgdtq", "sgdt">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"sidtl", "sidt">, Requires<[In32BitMode]>;
-def : MnemonicAlias<"sidtq", "sidt">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"lgdtl", "lgdt", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"lgdtq", "lgdt", "att">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"lidtl", "lidt", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"lidtq", "lidt", "att">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"sgdtl", "sgdt", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"sgdtq", "sgdt", "att">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"sidtl", "sidt", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"sidtq", "sidt", "att">, Requires<[In64BitMode]>;
 
 
 // Floating point stack aliases.
-def : MnemonicAlias<"fcmovz",   "fcmove">;
-def : MnemonicAlias<"fcmova",   "fcmovnbe">;
-def : MnemonicAlias<"fcmovnae", "fcmovb">;
-def : MnemonicAlias<"fcmovna",  "fcmovbe">;
-def : MnemonicAlias<"fcmovae",  "fcmovnb">;
-def : MnemonicAlias<"fcomip",   "fcompi">;
-def : MnemonicAlias<"fildq",    "fildll">;
-def : MnemonicAlias<"fistpq",   "fistpll">;
-def : MnemonicAlias<"fisttpq",  "fisttpll">;
-def : MnemonicAlias<"fldcww",   "fldcw">;
-def : MnemonicAlias<"fnstcww", "fnstcw">;
-def : MnemonicAlias<"fnstsww", "fnstsw">;
-def : MnemonicAlias<"fucomip",  "fucompi">;
-def : MnemonicAlias<"fwait",    "wait">;
+def : MnemonicAlias<"fcmovz",   "fcmove",   "att">;
+def : MnemonicAlias<"fcmova",   "fcmovnbe", "att">;
+def : MnemonicAlias<"fcmovnae", "fcmovb",   "att">;
+def : MnemonicAlias<"fcmovna",  "fcmovbe",  "att">;
+def : MnemonicAlias<"fcmovae",  "fcmovnb",  "att">;
+def : MnemonicAlias<"fcomip",   "fcompi",   "att">;
+def : MnemonicAlias<"fildq",    "fildll",   "att">;
+def : MnemonicAlias<"fistpq",   "fistpll",  "att">;
+def : MnemonicAlias<"fisttpq",  "fisttpll", "att">;
+def : MnemonicAlias<"fldcww",   "fldcw",    "att">;
+def : MnemonicAlias<"fnstcww",  "fnstcw",   "att">;
+def : MnemonicAlias<"fnstsww",  "fnstsw",   "att">;
+def : MnemonicAlias<"fucomip",  "fucompi",  "att">;
+def : MnemonicAlias<"fwait",    "wait",     "att">;
 
 
 class CondCodeAlias<string Prefix,string Suffix, string OldCond, string NewCond>
   : MnemonicAlias<!strconcat(Prefix, OldCond, Suffix),
-                  !strconcat(Prefix, NewCond, Suffix)>;
+                  !strconcat(Prefix, NewCond, Suffix), "att">;
 
 /// IntegerCondCodeMnemonicAlias - This multiclass defines a bunch of
 /// MnemonicAlias's that canonicalize the condition code in a mnemonic, for

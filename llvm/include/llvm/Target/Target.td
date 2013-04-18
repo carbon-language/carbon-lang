@@ -807,6 +807,9 @@ class AsmParserVariant {
   // assembly language.
   int Variant = 0;
 
+  // Name - The AsmParser variant name (e.g., AT&T vs Intel).
+  string Name = "";
+
   // CommentDelimiter - If given, the delimiter string used to recognize
   // comments which are hard coded in the .td assembler strings for individual
   // instructions.
@@ -860,9 +863,16 @@ class TokenAlias<string From, string To> {
 ///  def : MnemonicAlias<"pushf", "pushfq">, Requires<[In64BitMode]>;
 ///  def : MnemonicAlias<"pushf", "pushfl">, Requires<[In32BitMode]>;
 ///
-class MnemonicAlias<string From, string To> {
+/// Mnemonic aliases can also be constrained to specific variants, e.g.:
+///
+///  def : MnemonicAlias<"pushf", "pushfq", "att">, Requires<[In64BitMode]>;
+///
+/// If no variant (e.g., "att" or "intel") is specified then the alias is
+/// applied unconditionally.
+class MnemonicAlias<string From, string To, string VariantName = ""> {
   string FromMnemonic = From;
   string ToMnemonic = To;
+  string AsmVariantName = VariantName;
 
   // Predicates - Predicates that must be true for this remapping to happen.
   list<Predicate> Predicates = [];

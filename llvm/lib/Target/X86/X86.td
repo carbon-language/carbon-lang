@@ -300,6 +300,9 @@ def ATTAsmParser : AsmParser {
 def ATTAsmParserVariant : AsmParserVariant {
   int Variant = 0;
 
+  // Variant name.
+  string Name = "att";
+
   // Discard comments in assembly strings.
   string CommentDelimiter = "#";
 
@@ -309,6 +312,9 @@ def ATTAsmParserVariant : AsmParserVariant {
 
 def IntelAsmParserVariant : AsmParserVariant {
   int Variant = 1;
+
+  // Variant name.
+  string Name = "intel";
 
   // Discard comments in assembly strings.
   string CommentDelimiter = ";";
