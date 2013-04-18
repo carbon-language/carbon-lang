@@ -129,6 +129,7 @@ def Date       : BlockCommand<"date">;
 def Invariant  : BlockCommand<"invariant">;
 def Li         : BlockCommand<"li">;
 def Note       : BlockCommand<"note">;
+def Par        : BlockCommand<"par">;
 def Post       : BlockCommand<"post">;
 def Pre        : BlockCommand<"pre">;
 def Remark     : BlockCommand<"remark">;

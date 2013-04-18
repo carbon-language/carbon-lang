@@ -71,3 +71,40 @@ struct S {
 // CHECK-NEXT:    (CXComment_Text Text=[ right alignment.])))
 // CHECK:       (CXComment_Paragraph
 // CHECK-NEXT:    (CXComment_Text Text=[  No other types of alignment are supported.]))
+
+// rdar://12379053
+/*! \struct Test
+ * Normal text.
+ *
+ * \par User defined paragraph:
+ * Contents of the paragraph.
+ *
+ * \par
+ * New paragraph under the same heading.
+ *
+ * \note
+ * This note consists of two paragraphs.
+ * This is the first paragraph.
+ *
+ * \par
+ * And this is the second paragraph.
+ *
+ * More normal text.
+ */
+  
+struct Test {int filler;};
+
+// CHECK:       (CXComment_BlockCommand CommandName=[par]
+// CHECK-NEXT:     (CXComment_Paragraph
+// CHECK-NEXT:        (CXComment_Text Text=[ User defined paragraph:] HasTrailingNewline)
+// CHECK-NEXT:        (CXComment_Text Text=[ Contents of the paragraph.])))
+// CHECK:       (CXComment_BlockCommand CommandName=[par]
+// CHECK-NEXT:     (CXComment_Paragraph
+// CHECK-NEXT:        (CXComment_Text Text=[ New paragraph under the same heading.])))
+// CHECK:       (CXComment_BlockCommand CommandName=[note]
+// CHECK-NEXT:     (CXComment_Paragraph
+// CHECK-NEXT:        (CXComment_Text Text=[ This note consists of two paragraphs.] HasTrailingNewline)
+// CHECK-NEXT:        (CXComment_Text Text=[ This is the first paragraph.])))
+// CHECK:       (CXComment_BlockCommand CommandName=[par]
+// CHECK-NEXT:     (CXComment_Paragraph
+// CHECK-NEXT:     (CXComment_Text Text=[ And this is the second paragraph.])))
