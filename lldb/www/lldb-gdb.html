@@ -1103,6 +1103,33 @@
                         </td>
                     </tr>
 
+                    <tr><td class="header" colspan="2">Find full souce line information.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(gdb)</b> info line 0x1ec4<br>
+                        </td>
+                        <td class="content">
+                          This one is a bit messy at present.  Do:<br><br>
+                            <b>(lldb)</b> image lookup -v --address 0x1ec4<br><br>
+                          and look for the LineEntry line, which will have the full source path and
+                          line range information.<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Look up functions matching a regular expression in a binary.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(gdb)</b> info function &lt;FUNC_REGEX&gt;<br>
+                        </td>
+                        <td class="content">
+                            This one finds debug symbols:<br>
+                            <b>(lldb)</b> image lookup -r -n &lt;FUNC_REGEX&gt;<br><br>
+                            This one finds non-debug symbols:<br>
+                            <b>(lldb)</b> image lookup -r -s &lt;FUNC_REGEX&gt;<br><br>
+                            Provide a list of binaries as arguments to limit the search.
+                        </td>
+                    </tr>
+
                     <tr><td class="header" colspan="2">Look up information for an address in <b>a.out</a> only.</td></tr>
                     <tr>
                         <td class="content">
