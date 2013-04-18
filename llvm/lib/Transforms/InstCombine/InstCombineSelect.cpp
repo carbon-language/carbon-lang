@@ -350,64 +350,6 @@ static Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
   return 0;
 }
 
-/// foldSelectICmpAndOr - We want to turn:
-///   (select (icmp eq (and X, C1), 0), Y, (or Y, C2))
-/// into:
-///   (or (shl (and X, C1), C3), y)
-/// iff:
-///   C1 and C2 are both powers of 2
-/// where:
-///   C3 = Log(C2) - Log(C1)
-///
-/// This transform handles cases where:
-/// 1. The icmp predicate is inverted
-/// 2. The select operands are reversed
-/// 3. The magnitude of C2 and C1 are flipped
-static Value *foldSelectICmpAndOr(const SelectInst &SI, Value *TrueVal,
-                                  Value *FalseVal,
-                                  InstCombiner::BuilderTy *Builder) {
-  const ICmpInst *IC = dyn_cast<ICmpInst>(SI.getCondition());
-  if (!IC || !IC->isEquality())
-    return 0;
-
-  Value *CmpLHS = IC->getOperand(0);
-  Value *CmpRHS = IC->getOperand(1);
-
-  if (!match(CmpRHS, m_Zero()))
-    return 0;
-
-  Value *X;
-  const APInt *C1;
-  if (!match(CmpLHS, m_And(m_Value(X), m_Power2(C1))))
-    return 0;
-
-  const APInt *C2;
-  bool OrOnTrueVal = false;
-  bool OrOnFalseVal = match(FalseVal, m_Or(m_Specific(TrueVal), m_Power2(C2)));
-  if (!OrOnFalseVal)
-    OrOnTrueVal = match(TrueVal, m_Or(m_Specific(FalseVal), m_Power2(C2)));
-
-  if (!OrOnFalseVal && !OrOnTrueVal)
-    return 0;
-
-  Value *V = CmpLHS;
-
-  unsigned C1Log = C1->logBase2();
-  unsigned C2Log = C2->logBase2();
-  if (C2Log > C1Log)
-    V = Builder->CreateShl(V, C2Log - C1Log);
-  else if (C1Log > C2Log)
-    V = Builder->CreateLShr(V, C1Log - C2Log);
-
-  ICmpInst::Predicate Pred = IC->getPredicate();
-  if ((Pred == ICmpInst::ICMP_NE && OrOnFalseVal) ||
-      (Pred == ICmpInst::ICMP_EQ && OrOnTrueVal))
-    V = Builder->CreateXor(V, *C2);
-
-  Value *Y = OrOnFalseVal ? TrueVal : FalseVal;
-  return Builder->CreateOr(V, Y);
-}
-
 /// visitSelectInstWithICmp - Visit a SelectInst that has an
 /// ICmpInst as its first operand.
 ///
@@ -578,9 +520,6 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
       Changed = true;
     }
   }
-
-  if (Value *V = foldSelectICmpAndOr(SI, TrueVal, FalseVal, Builder))
-    return ReplaceInstUsesWith(SI, V);
 
   return Changed ? &SI : 0;
 }
