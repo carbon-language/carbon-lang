@@ -485,7 +485,7 @@ std::string AttributeSetNode::getAsString(bool TargetIndependent,
   std::string Str = "";
   for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
          E = AttrList.end(); I != E; ) {
-    if (!TargetIndependent || !I->isStringAttribute()) {
+    if (TargetIndependent || !I->isStringAttribute()) {
       Str += I->getAsString(InAttrGrp);
       if (++I != E) Str += " ";
     } else {

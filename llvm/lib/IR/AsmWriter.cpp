@@ -1615,7 +1615,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   const AttributeSet &Attrs = F->getAttributes();
   if (!OldStyleAttrSyntax && Attrs.hasAttributes(AttributeSet::FunctionIndex)) {
     AttributeSet AS = Attrs.getFnAttributes();
-    std::string AttrStr = AS.getAsString(AttributeSet::FunctionIndex, true);
+    std::string AttrStr = AS.getAsString(AttributeSet::FunctionIndex, false);
     if (!AttrStr.empty())
       Out << "; Function Attrs: " << AttrStr << '\n';
   }
@@ -1682,7 +1682,7 @@ void AssemblyWriter::printFunction(const Function *F) {
       Out << " #" << Machine.getAttributeGroupSlot(Attrs.getFnAttributes());
   } else {
     AttributeSet AS = Attrs.getFnAttributes();
-    std::string AttrStr = AS.getAsString(AttributeSet::FunctionIndex, true);
+    std::string AttrStr = AS.getAsString(AttributeSet::FunctionIndex, false);
     if (!AttrStr.empty())
       Out << ' ' << AttrStr;
   }
@@ -2156,7 +2156,7 @@ void AssemblyWriter::writeAllAttributeGroups() {
   for (std::vector<std::pair<AttributeSet, unsigned> >::iterator
          I = asVec.begin(), E = asVec.end(); I != E; ++I)
     Out << "attributes #" << I->second << " = { "
-        << I->first.getAsString(AttributeSet::FunctionIndex, false, true)
+        << I->first.getAsString(AttributeSet::FunctionIndex, true, true)
         << " }\n";
 }
 
