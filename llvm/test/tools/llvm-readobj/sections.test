@@ -10,6 +10,8 @@ RUN: llvm-readobj -s %p/Inputs/trivial.obj.macho-ppc \
 RUN:   | FileCheck %s -check-prefix MACHO-PPC
 RUN: llvm-readobj -s %p/Inputs/trivial.obj.macho-ppc64 \
 RUN:   | FileCheck %s -check-prefix MACHO-PPC64
+RUN: llvm-readobj -s %p/Inputs/trivial.obj.macho-arm \
+RUN:   | FileCheck %s -check-prefix MACHO-ARM
 
 COFF:      Sections [
 COFF-NEXT:   Section {
@@ -329,3 +331,122 @@ MACHO-PPC64-NEXT:     Reserved1: 0x2
 MACHO-PPC64-NEXT:     Reserved2: 0x0
 MACHO-PPC64-NEXT:   }
 MACHO-PPC64-NEXT: ]
+
+MACHO-ARM:      Sections [
+MACHO-ARM-NEXT:   Section {
+MACHO-ARM-NEXT:    Index: 0
+MACHO-ARM-NEXT:    Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
+MACHO-ARM-NEXT:    Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+MACHO-ARM-NEXT:    Address: 0x0
+MACHO-ARM-NEXT:    Size: 0x3C
+MACHO-ARM-NEXT:    Offset: 664
+MACHO-ARM-NEXT:    Alignment: 2
+MACHO-ARM-NEXT:    RelocationOffset: 0x2E0
+MACHO-ARM-NEXT:    RelocationCount: 9
+MACHO-ARM-NEXT:    Type: 0x0
+MACHO-ARM-NEXT:    Attributes [ (0x800004)
+MACHO-ARM-NEXT:      PureInstructions (0x800000)
+MACHO-ARM-NEXT:      SomeInstructions (0x4)
+MACHO-ARM-NEXT:    ]
+MACHO-ARM-NEXT:    Reserved1: 0x0
+MACHO-ARM-NEXT:    Reserved2: 0x0
+MACHO-ARM-NEXT:  }
+MACHO-ARM-NEXT:  Section {
+MACHO-ARM-NEXT:    Index: 1
+MACHO-ARM-NEXT:    Name: __textcoal_nt (5F 5F 74 65 78 74 63 6F 61 6C 5F 6E 74 00 00 00)
+MACHO-ARM-NEXT:    Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+MACHO-ARM-NEXT:    Address: 0x3C
+MACHO-ARM-NEXT:    Size: 0x0
+MACHO-ARM-NEXT:    Offset: 724
+MACHO-ARM-NEXT:    Alignment: 0
+MACHO-ARM-NEXT:    RelocationOffset: 0x0
+MACHO-ARM-NEXT:    RelocationCount: 0
+MACHO-ARM-NEXT:    Type: 0xB
+MACHO-ARM-NEXT:    Attributes [ (0x800000)
+MACHO-ARM-NEXT:      PureInstructions (0x800000)
+MACHO-ARM-NEXT:    ]
+MACHO-ARM-NEXT:    Reserved1: 0x0
+MACHO-ARM-NEXT:    Reserved2: 0x0
+MACHO-ARM-NEXT:  }
+MACHO-ARM-NEXT:  Section {
+MACHO-ARM-NEXT:    Index: 2
+MACHO-ARM-NEXT:    Name: __const_coal (5F 5F 63 6F 6E 73 74 5F 63 6F 61 6C 00 00 00 00)
+MACHO-ARM-NEXT:    Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+MACHO-ARM-NEXT:    Address: 0x3C
+MACHO-ARM-NEXT:    Size: 0x0
+MACHO-ARM-NEXT:    Offset: 724
+MACHO-ARM-NEXT:    Alignment: 0
+MACHO-ARM-NEXT:    RelocationOffset: 0x0
+MACHO-ARM-NEXT:    RelocationCount: 0
+MACHO-ARM-NEXT:    Type: 0xB
+MACHO-ARM-NEXT:    Attributes [ (0x0)
+MACHO-ARM-NEXT:    ]
+MACHO-ARM-NEXT:    Reserved1: 0x0
+MACHO-ARM-NEXT:    Reserved2: 0x0
+MACHO-ARM-NEXT:  }
+MACHO-ARM-NEXT:  Section {
+MACHO-ARM-NEXT:    Index: 3
+MACHO-ARM-NEXT:    Name: __picsymbolstub4 (5F 5F 70 69 63 73 79 6D 62 6F 6C 73 74 75 62 34)
+MACHO-ARM-NEXT:    Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+MACHO-ARM-NEXT:    Address: 0x3C
+MACHO-ARM-NEXT:    Size: 0x0
+MACHO-ARM-NEXT:    Offset: 724
+MACHO-ARM-NEXT:    Alignment: 0
+MACHO-ARM-NEXT:    RelocationOffset: 0x0
+MACHO-ARM-NEXT:    RelocationCount: 0
+MACHO-ARM-NEXT:    Type: 0x8
+MACHO-ARM-NEXT:    Attributes [ (0x0)
+MACHO-ARM-NEXT:    ]
+MACHO-ARM-NEXT:    Reserved1: 0x0
+MACHO-ARM-NEXT:    Reserved2: 0x10
+MACHO-ARM-NEXT:  }
+MACHO-ARM-NEXT:  Section {
+MACHO-ARM-NEXT:    Index: 4
+MACHO-ARM-NEXT:    Name: __StaticInit (5F 5F 53 74 61 74 69 63 49 6E 69 74 00 00 00 00)
+MACHO-ARM-NEXT:    Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+MACHO-ARM-NEXT:    Address: 0x3C
+MACHO-ARM-NEXT:    Size: 0x0
+MACHO-ARM-NEXT:    Offset: 724
+MACHO-ARM-NEXT:    Alignment: 0
+MACHO-ARM-NEXT:    RelocationOffset: 0x0
+MACHO-ARM-NEXT:    RelocationCount: 0
+MACHO-ARM-NEXT:    Type: 0x0
+MACHO-ARM-NEXT:    Attributes [ (0x800000)
+MACHO-ARM-NEXT:      PureInstructions (0x800000)
+MACHO-ARM-NEXT:    ]
+MACHO-ARM-NEXT:    Reserved1: 0x0
+MACHO-ARM-NEXT:    Reserved2: 0x0
+MACHO-ARM-NEXT:  }
+MACHO-ARM-NEXT:  Section {
+MACHO-ARM-NEXT:    Index: 5
+MACHO-ARM-NEXT:    Name: __data (5F 5F 64 61 74 61 00 00 00 00 00 00 00 00 00 00)
+MACHO-ARM-NEXT:    Segment: __DATA (5F 5F 44 41 54 41 00 00 00 00 00 00 00 00 00 00)
+MACHO-ARM-NEXT:    Address: 0x3C
+MACHO-ARM-NEXT:    Size: 0x4
+MACHO-ARM-NEXT:    Offset: 724
+MACHO-ARM-NEXT:    Alignment: 2
+MACHO-ARM-NEXT:    RelocationOffset: 0x0
+MACHO-ARM-NEXT:    RelocationCount: 0
+MACHO-ARM-NEXT:    Type: 0x0
+MACHO-ARM-NEXT:    Attributes [ (0x0)
+MACHO-ARM-NEXT:    ]
+MACHO-ARM-NEXT:    Reserved1: 0x0
+MACHO-ARM-NEXT:    Reserved2: 0x0
+MACHO-ARM-NEXT:  }
+MACHO-ARM-NEXT:  Section {
+MACHO-ARM-NEXT:    Index: 6
+MACHO-ARM-NEXT:    Name: __nl_symbol_ptr (5F 5F 6E 6C 5F 73 79 6D 62 6F 6C 5F 70 74 72 00)
+MACHO-ARM-NEXT:    Segment: __DATA (5F 5F 44 41 54 41 00 00 00 00 00 00 00 00 00 00)
+MACHO-ARM-NEXT:    Address: 0x40
+MACHO-ARM-NEXT:    Size: 0x8
+MACHO-ARM-NEXT:    Offset: 728
+MACHO-ARM-NEXT:    Alignment: 2
+MACHO-ARM-NEXT:    RelocationOffset: 0x0
+MACHO-ARM-NEXT:    RelocationCount: 0
+MACHO-ARM-NEXT:    Type: 0x6
+MACHO-ARM-NEXT:    Attributes [ (0x0)
+MACHO-ARM-NEXT:    ]
+MACHO-ARM-NEXT:    Reserved1: 0x0
+MACHO-ARM-NEXT:    Reserved2: 0x0
+MACHO-ARM-NEXT:  }
+MACHO-ARM-NEXT:]

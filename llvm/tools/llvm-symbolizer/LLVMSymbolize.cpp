@@ -233,7 +233,7 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
     // On Darwin we may find DWARF in separate object file in
     // resource directory.
     ObjectFile *DbgObj = Obj;
-    if (isa<MachOObjectFileBase>(Obj)) {
+    if (isa<MachOObjectFile>(Obj)) {
       const std::string &ResourceName =
           getDarwinDWARFResourceForModule(ModuleName);
       ObjectFile *ResourceObj = getObjectFile(ResourceName);

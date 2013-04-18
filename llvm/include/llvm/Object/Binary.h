@@ -100,7 +100,8 @@ public:
   }
 
   bool isLittleEndian() const {
-    return !(TypeID == ID_ELF32B || TypeID == ID_ELF64B);
+    return !(TypeID == ID_ELF32B || TypeID == ID_ELF64B ||
+             TypeID == ID_MachO32B || TypeID == ID_MachO64B);
   }
 };
 

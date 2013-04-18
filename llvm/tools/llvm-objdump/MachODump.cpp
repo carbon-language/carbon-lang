@@ -53,7 +53,7 @@ static cl::opt<bool>
 static cl::opt<std::string>
   DSYMFile("dsym", cl::desc("Use .dSYM file for debug info"));
 
-static const Target *GetTarget(const MachOObjectFileBase *MachOObj) {
+static const Target *GetTarget(const MachOObjectFile *MachOObj) {
   // Figure out the target triple.
   if (TripleName.empty()) {
     llvm::Triple TT("unknown-unknown-unknown");
@@ -93,7 +93,7 @@ struct SymbolSorter {
 
 // Print additional information about an address, if available.
 static void DumpAddress(uint64_t Address, ArrayRef<SectionRef> Sections,
-                        const MachOObjectFileBase *MachOObj, raw_ostream &OS) {
+                        const MachOObjectFile *MachOObj, raw_ostream &OS) {
   for (unsigned i = 0; i != Sections.size(); ++i) {
     uint64_t SectAddr = 0, SectSize = 0;
     Sections[i].getAddress(SectAddr);
@@ -184,14 +184,12 @@ static void emitDOTFile(const char *FileName, const MCFunction &f,
   Out << "}\n";
 }
 
-template<endianness E>
 static void
-getSectionsAndSymbols(const typename MachOObjectFileMiddle<E>::Header *Header,
-                      const MachOObjectFileMiddle<E> *MachOObj,
+getSectionsAndSymbols(const macho::Header Header,
+                      MachOObjectFile *MachOObj,
                       std::vector<SectionRef> &Sections,
                       std::vector<SymbolRef> &Symbols,
                       SmallVectorImpl<uint64_t> &FoundFns) {
-  typedef MachOObjectFileMiddle<E> ObjType;
   error_code ec;
   for (symbol_iterator SI = MachOObj->begin_symbols(),
        SE = MachOObj->end_symbols(); SI != SE; SI.increment(ec))
@@ -205,23 +203,23 @@ getSectionsAndSymbols(const typename MachOObjectFileMiddle<E>::Header *Header,
     Sections.push_back(*SI);
   }
 
-  for (unsigned i = 0; i != Header->NumLoadCommands; ++i) {
-    const typename ObjType::LoadCommand *Command =
-      MachOObj->getLoadCommandInfo(i);
-    if (Command->Type == macho::LCT_FunctionStarts) {
+  MachOObjectFile::LoadCommandInfo Command =
+    MachOObj->getFirstLoadCommandInfo();
+  for (unsigned i = 0; i != Header.NumLoadCommands; ++i) {
+    if (Command.C.Type == macho::LCT_FunctionStarts) {
       // We found a function starts segment, parse the addresses for later
       // consumption.
-      const typename ObjType::LinkeditDataLoadCommand *LLC =
-    reinterpret_cast<const typename ObjType::LinkeditDataLoadCommand*>(Command);
+      macho::LinkeditDataLoadCommand LLC =
+        MachOObj->getLinkeditDataLoadCommand(Command);
 
-      MachOObj->ReadULEB128s(LLC->DataOffset, FoundFns);
+      MachOObj->ReadULEB128s(LLC.DataOffset, FoundFns);
     }
+    Command = MachOObj->getNextLoadCommandInfo(Command);
   }
 }
 
-template<endianness E>
 static void DisassembleInputMachO2(StringRef Filename,
-                                   MachOObjectFileMiddle<E> *MachOOF);
+                                   MachOObjectFile *MachOOF);
 
 void llvm::DisassembleInputMachO(StringRef Filename) {
   OwningPtr<MemoryBuffer> Buff;
@@ -231,20 +229,14 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
     return;
   }
 
-  OwningPtr<MachOObjectFileBase> MachOOF(static_cast<MachOObjectFileBase*>(
+  OwningPtr<MachOObjectFile> MachOOF(static_cast<MachOObjectFile*>(
         ObjectFile::createMachOObjectFile(Buff.take())));
 
-  if (MachOObjectFileLE *O = dyn_cast<MachOObjectFileLE>(MachOOF.get())) {
-    DisassembleInputMachO2(Filename, O);
-    return;
-  }
-  MachOObjectFileBE *O = cast<MachOObjectFileBE>(MachOOF.get());
-  DisassembleInputMachO2(Filename, O);
+  DisassembleInputMachO2(Filename, MachOOF.get());
 }
 
-template<endianness E>
 static void DisassembleInputMachO2(StringRef Filename,
-                                   MachOObjectFileMiddle<E> *MachOOF) {
+                                   MachOObjectFile *MachOOF) {
   const Target *TheTarget = GetTarget(MachOOF);
   if (!TheTarget) {
     // GetTarget prints out stuff.
@@ -273,8 +265,7 @@ static void DisassembleInputMachO2(StringRef Filename,
 
   outs() << '\n' << Filename << ":\n\n";
 
-  const typename MachOObjectFileMiddle<E>::Header *Header =
-    MachOOF->getHeader();
+  macho::Header Header = MachOOF->getHeader();
 
   std::vector<SectionRef> Sections;
   std::vector<SymbolRef> Symbols;

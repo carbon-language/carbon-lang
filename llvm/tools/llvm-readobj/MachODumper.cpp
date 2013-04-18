@@ -27,7 +27,7 @@ namespace {
 
 class MachODumper : public ObjDumper {
 public:
-  MachODumper(const MachOObjectFileBase *Obj, StreamWriter& Writer)
+  MachODumper(const MachOObjectFile *Obj, StreamWriter& Writer)
     : ObjDumper(Writer)
     , Obj(Obj) { }
 
@@ -43,14 +43,12 @@ private:
 
   void printRelocation(section_iterator SecI, relocation_iterator RelI);
 
-  template<support::endianness E>
-  void printRelocation(const MachOObjectFileMiddle<E> *Obj,
+  void printRelocation(const MachOObjectFile *Obj,
                        section_iterator SecI, relocation_iterator RelI);
 
-  template<support::endianness E>
-  void printSections(const MachOObjectFileMiddle<E> *Obj);
+  void printSections(const MachOObjectFile *Obj);
 
-  const MachOObjectFileBase *Obj;
+  const MachOObjectFile *Obj;
 };
 
 } // namespace
@@ -61,7 +59,7 @@ namespace llvm {
 error_code createMachODumper(const object::ObjectFile *Obj,
                              StreamWriter& Writer,
                              OwningPtr<ObjDumper> &Result) {
-  const MachOObjectFileBase *MachOObj = dyn_cast<MachOObjectFileBase>(Obj);
+  const MachOObjectFile *MachOObj = dyn_cast<MachOObjectFile>(Obj);
   if (!MachOObj)
     return readobj_error::unsupported_obj_file_format;
 
@@ -164,59 +162,53 @@ namespace {
   };
 }
 
-template<class MachOT>
-static void getSection(const MachOObjectFile<MachOT> *Obj,
-                       DataRefImpl DRI,
+static void getSection(const MachOObjectFile *Obj,
+                       DataRefImpl Sec,
                        MachOSection &Section) {
-  const typename MachOObjectFile<MachOT>::Section *Sect = Obj->getSection(DRI);
-  Section.Address     = Sect->Address;
-  Section.Size        = Sect->Size;
-  Section.Offset      = Sect->Offset;
-  Section.Alignment   = Sect->Align;
-  Section.RelocationTableOffset = Sect->RelocationTableOffset;
-  Section.NumRelocationTableEntries = Sect->NumRelocationTableEntries;
-  Section.Flags       = Sect->Flags;
-  Section.Reserved1   = Sect->Reserved1;
-  Section.Reserved2   = Sect->Reserved2;
+  if (!Obj->is64Bit()) {
+    macho::Section Sect = Obj->getSection(Sec);
+    Section.Address     = Sect.Address;
+    Section.Size        = Sect.Size;
+    Section.Offset      = Sect.Offset;
+    Section.Alignment   = Sect.Align;
+    Section.RelocationTableOffset = Sect.RelocationTableOffset;
+    Section.NumRelocationTableEntries = Sect.NumRelocationTableEntries;
+    Section.Flags       = Sect.Flags;
+    Section.Reserved1   = Sect.Reserved1;
+    Section.Reserved2   = Sect.Reserved2;
+    return;
+  }
+  macho::Section64 Sect = Obj->getSection64(Sec);
+  Section.Address     = Sect.Address;
+  Section.Size        = Sect.Size;
+  Section.Offset      = Sect.Offset;
+  Section.Alignment   = Sect.Align;
+  Section.RelocationTableOffset = Sect.RelocationTableOffset;
+  Section.NumRelocationTableEntries = Sect.NumRelocationTableEntries;
+  Section.Flags       = Sect.Flags;
+  Section.Reserved1   = Sect.Reserved1;
+  Section.Reserved2   = Sect.Reserved2;
 }
 
-static void getSection(const MachOObjectFileBase *Obj,
-                       DataRefImpl DRI,
-                       MachOSection &Section) {
-  if (const MachOObjectFileLE32 *O = dyn_cast<MachOObjectFileLE32>(Obj))
-    return getSection(O, DRI, Section);
-  if (const MachOObjectFileLE64 *O = dyn_cast<MachOObjectFileLE64>(Obj))
-    return getSection(O, DRI, Section);
-  if (const MachOObjectFileBE32 *O = dyn_cast<MachOObjectFileBE32>(Obj))
-    return getSection(O, DRI, Section);
-  const MachOObjectFileBE64 *O = cast<MachOObjectFileBE64>(Obj);
-  getSection(O, DRI, Section);
-}
 
-template<class MachOT>
-static void getSymbol(const MachOObjectFile<MachOT> *Obj,
+static void getSymbol(const MachOObjectFile *Obj,
                       DataRefImpl DRI,
                       MachOSymbol &Symbol) {
-  const typename MachOObjectFile<MachOT>::SymbolTableEntry *Entry =
-    Obj->getSymbolTableEntry(DRI);
-  Symbol.StringIndex  = Entry->StringIndex;
-  Symbol.Type         = Entry->Type;
-  Symbol.SectionIndex = Entry->SectionIndex;
-  Symbol.Flags        = Entry->Flags;
-  Symbol.Value        = Entry->Value;
-}
-
-static void getSymbol(const MachOObjectFileBase *Obj,
-                      DataRefImpl DRI,
-                      MachOSymbol &Symbol) {
-  if (const MachOObjectFileLE32 *O = dyn_cast<MachOObjectFileLE32>(Obj))
-    return getSymbol(O, DRI, Symbol);
-  if (const MachOObjectFileLE64 *O = dyn_cast<MachOObjectFileLE64>(Obj))
-    return getSymbol(O, DRI, Symbol);
-  if (const MachOObjectFileBE32 *O = dyn_cast<MachOObjectFileBE32>(Obj))
-    return getSymbol(O, DRI, Symbol);
-  const MachOObjectFileBE64 *O = cast<MachOObjectFileBE64>(Obj);
-  getSymbol(O, DRI, Symbol);
+  if (!Obj->is64Bit()) {
+    macho::SymbolTableEntry Entry = Obj->getSymbolTableEntry(DRI);
+    Symbol.StringIndex  = Entry.StringIndex;
+    Symbol.Type         = Entry.Type;
+    Symbol.SectionIndex = Entry.SectionIndex;
+    Symbol.Flags        = Entry.Flags;
+    Symbol.Value        = Entry.Value;
+    return;
+  }
+  macho::Symbol64TableEntry Entry = Obj->getSymbol64TableEntry(DRI);
+  Symbol.StringIndex  = Entry.StringIndex;
+  Symbol.Type         = Entry.Type;
+  Symbol.SectionIndex = Entry.SectionIndex;
+  Symbol.Flags        = Entry.Flags;
+  Symbol.Value        = Entry.Value;
 }
 
 void MachODumper::printFileHeaders() {
@@ -224,14 +216,10 @@ void MachODumper::printFileHeaders() {
 }
 
 void MachODumper::printSections() {
-  if (const MachOObjectFileLE *O = dyn_cast<MachOObjectFileLE>(Obj))
-    return printSections(O);
-  const MachOObjectFileBE *O = cast<MachOObjectFileBE>(Obj);
-  return printSections(O);
+  return printSections(Obj);
 }
 
-template<support::endianness E>
-void MachODumper::printSections(const MachOObjectFileMiddle<E> *Obj) {
+void MachODumper::printSections(const MachOObjectFile *Obj) {
   ListScope Group(W, "Sections");
 
   int SectionIndex = -1;
@@ -344,14 +332,10 @@ void MachODumper::printRelocations() {
 
 void MachODumper::printRelocation(section_iterator SecI,
                                   relocation_iterator RelI) {
-  if (const MachOObjectFileLE *O = dyn_cast<MachOObjectFileLE>(Obj))
-    return printRelocation(O, SecI, RelI);
-  const MachOObjectFileBE *O = cast<MachOObjectFileBE>(Obj);
-  return printRelocation(O, SecI, RelI);
+  return printRelocation(Obj, SecI, RelI);
 }
 
-template<support::endianness E>
-void MachODumper::printRelocation(const MachOObjectFileMiddle<E> *Obj,
+void MachODumper::printRelocation(const MachOObjectFile *Obj,
                                   section_iterator SecI,
                                   relocation_iterator RelI) {
   uint64_t Offset;
@@ -364,31 +348,30 @@ void MachODumper::printRelocation(const MachOObjectFileMiddle<E> *Obj,
   if (error(Symbol.getName(SymbolName))) return;
 
   DataRefImpl DR = RelI->getRawDataRefImpl();
-  const typename MachOObjectFileMiddle<E>::RelocationEntry *RE =
-    Obj->getRelocation(DR);
+  macho::RelocationEntry RE = Obj->getRelocation(DR);
   bool IsScattered = Obj->isRelocationScattered(RE);
 
   if (opts::ExpandRelocs) {
     DictScope Group(W, "Relocation");
     W.printHex("Offset", Offset);
-    W.printNumber("PCRel", Obj->isRelocationPCRel(RE));
-    W.printNumber("Length", Obj->getRelocationLength(RE));
+    W.printNumber("PCRel", Obj->getAnyRelocationPCRel(RE));
+    W.printNumber("Length", Obj->getAnyRelocationLength(RE));
     if (IsScattered)
       W.printString("Extern", StringRef("N/A"));
     else
-      W.printNumber("Extern", RE->External);
-    W.printNumber("Type", RelocName, RE->Type);
+      W.printNumber("Extern", Obj->getPlainRelocationExternal(RE));
+    W.printNumber("Type", RelocName, Obj->getAnyRelocationType(RE));
     W.printString("Symbol", SymbolName.size() > 0 ? SymbolName : "-");
     W.printNumber("Scattered", IsScattered);
   } else {
     raw_ostream& OS = W.startLine();
     OS << W.hex(Offset)
-       << " " << Obj->isRelocationPCRel(RE)
-       << " " << Obj->getRelocationLength(RE);
+       << " " << Obj->getAnyRelocationPCRel(RE)
+       << " " << Obj->getAnyRelocationLength(RE);
     if (IsScattered)
       OS << " n/a";
     else
-      OS << " " << RE->External;
+      OS << " " << Obj->getPlainRelocationExternal(RE);
     OS << " " << RelocName
        << " " << IsScattered
        << " " << (SymbolName.size() > 0 ? SymbolName : "-")
