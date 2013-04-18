@@ -1170,8 +1170,7 @@ void FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   //   .quad except_tab1
 
   uint32_t Encoding = Frame.CompactUnwindEncoding;
-  if (!Encoding) return;
-
+  assert(Encoding && "There should never be a null compact unwind encoding!");
   bool DwarfEHFrameOnly = (Encoding == MOFI->getCompactUnwindDwarfEHFrameOnly());
 
   // The encoding needs to know we have an LSDA.
@@ -1486,8 +1485,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
   if (IsEH && MOFI->getCompactUnwindSection())
     for (unsigned i = 0, n = Streamer.getNumFrameInfos(); i < n; ++i) {
       const MCDwarfFrameInfo &Frame = Streamer.getFrameInfo(i);
-      if (Frame.CompactUnwindEncoding)
-        Emitter.EmitCompactUnwind(Streamer, Frame);
+      Emitter.EmitCompactUnwind(Streamer, Frame);
     }
 
   const MCSection &Section = IsEH ? *MOFI->getEHFrameSection() :
