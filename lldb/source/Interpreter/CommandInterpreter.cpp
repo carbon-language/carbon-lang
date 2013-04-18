@@ -391,7 +391,7 @@ CommandInterpreter::LoadCommandDictionary ()
     
     size_t num_regexes = sizeof break_regexes/sizeof(char *[2]);
         
-    STD_UNIQUE_PTR(CommandObjectRegexCommand)
+    std::unique_ptr<CommandObjectRegexCommand>
     break_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                       "_regexp-break",
                                                       "Set a breakpoint using a regular expression to specify the location, where <linenum> is in decimal and <address> is in hex.",
@@ -418,7 +418,7 @@ CommandInterpreter::LoadCommandDictionary ()
         }
     }
 
-    STD_UNIQUE_PTR(CommandObjectRegexCommand)
+    std::unique_ptr<CommandObjectRegexCommand>
     tbreak_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                       "_regexp-tbreak",
                                                       "Set a one shot breakpoint using a regular expression to specify the location, where <linenum> is in decimal and <address> is in hex.",
@@ -449,7 +449,7 @@ CommandInterpreter::LoadCommandDictionary ()
         }
     }
 
-    STD_UNIQUE_PTR(CommandObjectRegexCommand)
+    std::unique_ptr<CommandObjectRegexCommand>
     attach_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                        "_regexp-attach",
                                                        "Attach to a process id if in decimal, otherwise treat the argument as a process name to attach to.",
@@ -467,7 +467,7 @@ CommandInterpreter::LoadCommandDictionary ()
         }
     }
     
-    STD_UNIQUE_PTR(CommandObjectRegexCommand)
+    std::unique_ptr<CommandObjectRegexCommand>
     down_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                      "_regexp-down",
                                                      "Go down \"n\" frames in the stack (1 frame by default).",
@@ -482,7 +482,7 @@ CommandInterpreter::LoadCommandDictionary ()
         }
     }
     
-    STD_UNIQUE_PTR(CommandObjectRegexCommand)
+    std::unique_ptr<CommandObjectRegexCommand>
     up_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                    "_regexp-up",
                                                    "Go up \"n\" frames in the stack (1 frame by default).",
@@ -497,7 +497,7 @@ CommandInterpreter::LoadCommandDictionary ()
         }
     }
 
-    STD_UNIQUE_PTR(CommandObjectRegexCommand)
+    std::unique_ptr<CommandObjectRegexCommand>
     display_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                         "_regexp-display",
                                                         "Add an expression evaluation stop-hook.",
@@ -511,7 +511,7 @@ CommandInterpreter::LoadCommandDictionary ()
         }
     }
 
-    STD_UNIQUE_PTR(CommandObjectRegexCommand)
+    std::unique_ptr<CommandObjectRegexCommand>
     undisplay_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                           "_regexp-undisplay",
                                                           "Remove an expression evaluation stop-hook.",
@@ -525,7 +525,7 @@ CommandInterpreter::LoadCommandDictionary ()
         }
     }
 
-    STD_UNIQUE_PTR(CommandObjectRegexCommand)
+    std::unique_ptr<CommandObjectRegexCommand>
     connect_gdb_remote_cmd_ap(new CommandObjectRegexCommand (*this,
                                                              "gdb-remote",
                                                              "Connect to a remote GDB server.  If no hostname is provided, localhost is assumed.",
@@ -540,7 +540,7 @@ CommandInterpreter::LoadCommandDictionary ()
         }
     }
 
-    STD_UNIQUE_PTR(CommandObjectRegexCommand)
+    std::unique_ptr<CommandObjectRegexCommand>
     connect_kdp_remote_cmd_ap(new CommandObjectRegexCommand (*this,
                                                              "kdp-remote",
                                                              "Connect to a remote KDP server.  udp port 41139 is the default port number.",
@@ -555,7 +555,7 @@ CommandInterpreter::LoadCommandDictionary ()
         }
     }
 
-    STD_UNIQUE_PTR(CommandObjectRegexCommand)
+    std::unique_ptr<CommandObjectRegexCommand>
     bt_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                      "_regexp-bt",
                                                      "Show a backtrace.  An optional argument is accepted; if that argument is a number, it specifies the number of frames to display.  If that argument is 'all', full backtraces of all threads are displayed.",
@@ -575,7 +575,7 @@ CommandInterpreter::LoadCommandDictionary ()
         }
     }
 
-    STD_UNIQUE_PTR(CommandObjectRegexCommand)
+    std::unique_ptr<CommandObjectRegexCommand>
     list_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                      "_regexp-list",
                                                      "Implements the GDB 'list' command in all of its forms except FILE:FUNCTION and maps them to the appropriate 'source list' commands.",
@@ -597,7 +597,7 @@ CommandInterpreter::LoadCommandDictionary ()
         }
     }
 
-    STD_UNIQUE_PTR(CommandObjectRegexCommand)
+    std::unique_ptr<CommandObjectRegexCommand>
     env_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                     "_regexp-env",
                                                     "Implements a shortcut to viewing and setting environment variables.",

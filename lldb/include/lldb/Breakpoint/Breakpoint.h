@@ -74,7 +74,7 @@ namespace lldb_private {
 /// not by the breakpoint.
 //----------------------------------------------------------------------
 class Breakpoint:
-    public STD_ENABLE_SHARED_FROM_THIS(Breakpoint),
+    public std::enable_shared_from_this<Breakpoint>,
     public Stoppoint
 {
 public:

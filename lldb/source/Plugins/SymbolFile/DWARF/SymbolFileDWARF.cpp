@@ -880,7 +880,7 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
                 func_name.SetValue(ConstString(name), false);
 
             FunctionSP func_sp;
-            STD_UNIQUE_PTR(Declaration) decl_ap;
+            std::unique_ptr<Declaration> decl_ap;
             if (decl_file != 0 || decl_line != 0 || decl_column != 0)
                 decl_ap.reset(new Declaration (sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(decl_file), 
                                                decl_line, 
@@ -995,7 +995,7 @@ SymbolFileDWARF::ParseCompileUnitSupportFiles (const SymbolContext& sc, FileSpec
 struct ParseDWARFLineTableCallbackInfo
 {
     LineTable* line_table;
-    STD_UNIQUE_PTR(LineSequence) sequence_ap;
+    std::unique_ptr<LineSequence> sequence_ap;
 };
 
 //----------------------------------------------------------------------
@@ -1060,7 +1060,7 @@ SymbolFileDWARF::ParseCompileUnitLineTable (const SymbolContext &sc)
             const dw_offset_t cu_line_offset = dwarf_cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_stmt_list, DW_INVALID_OFFSET);
             if (cu_line_offset != DW_INVALID_OFFSET)
             {
-                STD_UNIQUE_PTR(LineTable) line_table_ap(new LineTable(sc.comp_unit));
+                std::unique_ptr<LineTable> line_table_ap(new LineTable(sc.comp_unit));
                 if (line_table_ap.get())
                 {
                     ParseDWARFLineTableCallbackInfo info;
@@ -1170,12 +1170,12 @@ SymbolFileDWARF::ParseFunctionBlocks
 
                     if (tag != DW_TAG_subprogram && (name != NULL || mangled_name != NULL))
                     {
-                        STD_UNIQUE_PTR(Declaration) decl_ap;
+                        std::unique_ptr<Declaration> decl_ap;
                         if (decl_file != 0 || decl_line != 0 || decl_column != 0)
                             decl_ap.reset(new Declaration(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(decl_file), 
                                                           decl_line, decl_column));
 
-                        STD_UNIQUE_PTR(Declaration) call_ap;
+                        std::unique_ptr<Declaration> call_ap;
                         if (call_file != 0 || call_line != 0 || call_column != 0)
                             call_ap.reset(new Declaration(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(call_file), 
                                                           call_line, call_column));
@@ -1435,7 +1435,7 @@ private:
     const char             *m_property_setter_name;
     const char             *m_property_getter_name;
     uint32_t                m_property_attributes;
-    STD_UNIQUE_PTR(ClangASTMetadata) m_metadata_ap;
+    std::unique_ptr<ClangASTMetadata> m_metadata_ap;
 };
 
 struct BitfieldInfo

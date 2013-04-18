@@ -133,7 +133,7 @@ namespace lldb_private {
         TypeFormatImpl (lldb::Format f = lldb::eFormatInvalid,
                         const Flags& flags = Flags());
         
-        typedef STD_SHARED_PTR(TypeFormatImpl) SharedPointer;
+        typedef std::shared_ptr<TypeFormatImpl> SharedPointer;
         typedef bool(*ValueCallback)(void*, ConstString, const lldb::TypeFormatImplSP&);
         
         ~TypeFormatImpl ()

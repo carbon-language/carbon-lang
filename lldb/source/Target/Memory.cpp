@@ -178,7 +178,7 @@ MemoryCache::Read (addr_t addr,
             if (bytes_left > 0)
             {
                 assert ((curr_addr % cache_line_byte_size) == 0);
-                STD_UNIQUE_PTR(DataBufferHeap) data_buffer_heap_ap(new DataBufferHeap (cache_line_byte_size, 0));
+                std::unique_ptr<DataBufferHeap> data_buffer_heap_ap(new DataBufferHeap (cache_line_byte_size, 0));
                 size_t process_bytes_read = m_process.ReadMemoryFromInferior (curr_addr, 
                                                                               data_buffer_heap_ap->GetBytes(), 
                                                                               data_buffer_heap_ap->GetByteSize(), 

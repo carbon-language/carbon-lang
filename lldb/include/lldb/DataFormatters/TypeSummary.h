@@ -331,7 +331,7 @@ namespace lldb_private {
             return m_my_revision;
         }
         
-        typedef STD_SHARED_PTR(TypeSummaryImpl) SharedPointer;
+        typedef std::shared_ptr<TypeSummaryImpl> SharedPointer;
         typedef bool(*SummaryCallback)(void*, ConstString, const lldb::TypeSummaryImplSP&);
         typedef bool(*RegexSummaryCallback)(void*, lldb::RegularExpressionSP, const lldb::TypeSummaryImplSP&);
         
@@ -461,7 +461,7 @@ namespace lldb_private {
             return TypeSummaryImpl::eTypeCallback;
         }
         
-        typedef STD_SHARED_PTR(CXXFunctionSummaryFormat) SharedPointer;
+        typedef std::shared_ptr<CXXFunctionSummaryFormat> SharedPointer;
         
     private:
         DISALLOW_COPY_AND_ASSIGN(CXXFunctionSummaryFormat);
@@ -535,7 +535,7 @@ namespace lldb_private {
             return TypeSummaryImpl::eTypeScript;
         }
         
-        typedef STD_SHARED_PTR(ScriptSummaryFormat) SharedPointer;
+        typedef std::shared_ptr<ScriptSummaryFormat> SharedPointer;
         
         
     private:

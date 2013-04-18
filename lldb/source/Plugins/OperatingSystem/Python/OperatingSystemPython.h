@@ -101,7 +101,7 @@ protected:
     GetDynamicRegisterInfo ();
 
     lldb::ValueObjectSP m_thread_list_valobj_sp;
-    STD_UNIQUE_PTR(DynamicRegisterInfo) m_register_info_ap;
+    std::unique_ptr<DynamicRegisterInfo> m_register_info_ap;
     lldb_private::ScriptInterpreter *m_interpreter;
     lldb::ScriptInterpreterObjectSP m_python_object_sp;
     

@@ -254,7 +254,7 @@ Module::GetMemoryObjectFile (const lldb::ProcessSP &process_sp, lldb::addr_t hea
         if (process_sp)
         {
             m_did_load_objfile = true;
-            STD_UNIQUE_PTR(DataBufferHeap) data_ap (new DataBufferHeap (512, 0));
+            std::unique_ptr<DataBufferHeap> data_ap (new DataBufferHeap (512, 0));
             Error readmem_error;
             const size_t bytes_read = process_sp->ReadMemory (header_addr, 
                                                               data_ap->GetBytes(), 

@@ -167,8 +167,8 @@ public:
     }
     
 private:
-    STD_UNIQUE_PTR(ClangExpressionDeclMap)  m_expr_decl_map;    ///< The map to use when parsing and materializing the expression.
-    STD_UNIQUE_PTR(IRExecutionUnit)         m_execution_unit_ap;
+    std::unique_ptr<ClangExpressionDeclMap>  m_expr_decl_map;    ///< The map to use when parsing and materializing the expression.
+    std::unique_ptr<IRExecutionUnit>         m_execution_unit_ap;
     
     std::string                             m_function_text;    ///< The text of the function.  Must be a well-formed translation unit.
     std::string                             m_function_name;    ///< The name of the function.

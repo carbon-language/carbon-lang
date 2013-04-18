@@ -16,6 +16,7 @@
 
 #include "DNBDefs.h"
 #include <mach/thread_info.h>
+#include <string>
 
 #define DNB_EXPORT __attribute__((visibility("default")))
 

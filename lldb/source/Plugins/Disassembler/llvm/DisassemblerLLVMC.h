@@ -55,13 +55,13 @@ class DisassemblerLLVMC : public lldb_private::Disassembler
         
     private:
         bool                                    m_is_valid;
-        STD_UNIQUE_PTR(llvm::MCContext)         m_context_ap;
-        STD_UNIQUE_PTR(llvm::MCAsmInfo)         m_asm_info_ap;
-        STD_UNIQUE_PTR(llvm::MCSubtargetInfo)   m_subtarget_info_ap;
-        STD_UNIQUE_PTR(llvm::MCInstrInfo)       m_instr_info_ap;
-        STD_UNIQUE_PTR(llvm::MCRegisterInfo)    m_reg_info_ap;
-        STD_UNIQUE_PTR(llvm::MCInstPrinter)     m_instr_printer_ap;
-        STD_UNIQUE_PTR(llvm::MCDisassembler)    m_disasm_ap;
+        std::unique_ptr<llvm::MCContext>         m_context_ap;
+        std::unique_ptr<llvm::MCAsmInfo>         m_asm_info_ap;
+        std::unique_ptr<llvm::MCSubtargetInfo>   m_subtarget_info_ap;
+        std::unique_ptr<llvm::MCInstrInfo>       m_instr_info_ap;
+        std::unique_ptr<llvm::MCRegisterInfo>    m_reg_info_ap;
+        std::unique_ptr<llvm::MCInstPrinter>     m_instr_printer_ap;
+        std::unique_ptr<llvm::MCDisassembler>    m_disasm_ap;
     };
 
 public:
@@ -164,8 +164,8 @@ protected:
     lldb_private::Mutex m_mutex;
     bool m_data_from_file;
     
-    STD_UNIQUE_PTR(LLVMCDisassembler) m_disasm_ap;
-    STD_UNIQUE_PTR(LLVMCDisassembler) m_alternate_disasm_ap;
+    std::unique_ptr<LLVMCDisassembler> m_disasm_ap;
+    std::unique_ptr<LLVMCDisassembler> m_alternate_disasm_ap;
 };
 
 #endif  // liblldb_DisassemblerLLVM_h_

@@ -744,7 +744,7 @@ DataBufferSP
 FileSpec::MemoryMapFileContents(off_t file_offset, size_t file_size) const
 {
     DataBufferSP data_sp;
-    STD_UNIQUE_PTR(DataBufferMemoryMap) mmap_data(new DataBufferMemoryMap());
+    std::unique_ptr<DataBufferMemoryMap> mmap_data(new DataBufferMemoryMap());
     if (mmap_data.get())
     {
         if (mmap_data->MemoryMapFromFileSpec (this, file_offset, file_size) >= file_size)

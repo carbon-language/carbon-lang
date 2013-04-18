@@ -141,7 +141,7 @@ protected:
 
 private:
 
-    STD_UNIQUE_PTR(lldb_private::Address) m_opaque_ap;
+    std::unique_ptr<lldb_private::Address> m_opaque_ap;
 };
 
 

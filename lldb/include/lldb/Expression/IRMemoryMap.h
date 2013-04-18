@@ -83,7 +83,7 @@ private:
         size_t          m_size;             ///< The size of the requested allocation
         uint32_t        m_permissions;      ///< The access permissions on the memory in the process.  In the host, the memory is always read/write.
         uint8_t         m_alignment;        ///< The alignment of the requested allocation
-        STD_UNIQUE_PTR(DataBufferHeap) m_data_ap;
+        std::unique_ptr<DataBufferHeap> m_data_ap;
         AllocationPolicy    m_policy;
         
         Allocation () :

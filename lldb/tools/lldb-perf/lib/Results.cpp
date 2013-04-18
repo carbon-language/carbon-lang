@@ -182,7 +182,7 @@ Results::Dictionary::AddUnsigned (const char *name, const char *description, uin
     assert (name && name[0]);
     if (description && description[0])
     {
-        STD_UNIQUE_PTR(Results::Dictionary) value_dict_ap (new Results::Dictionary ());
+        std::unique_ptr<Results::Dictionary> value_dict_ap (new Results::Dictionary ());
         value_dict_ap->AddString("description", NULL, description);
         value_dict_ap->AddUnsigned("value", NULL, value);
         m_dictionary[std::string(name)] = ResultSP (value_dict_ap.release());
@@ -199,7 +199,7 @@ Results::Dictionary::AddDouble (const char *name, const char *description, doubl
     
     if (description && description[0])
     {
-        STD_UNIQUE_PTR(Results::Dictionary) value_dict_ap (new Results::Dictionary ());
+        std::unique_ptr<Results::Dictionary> value_dict_ap (new Results::Dictionary ());
         value_dict_ap->AddString("description", NULL, description);
         value_dict_ap->AddDouble("value", NULL, value);
         m_dictionary[std::string(name)] = ResultSP (value_dict_ap.release());
@@ -214,7 +214,7 @@ Results::Dictionary::AddString (const char *name, const char *description, const
     assert (name && name[0]);
     if (description && description[0])
     {
-        STD_UNIQUE_PTR(Results::Dictionary) value_dict_ap (new Results::Dictionary ());
+        std::unique_ptr<Results::Dictionary> value_dict_ap (new Results::Dictionary ());
         value_dict_ap->AddString("description", NULL, description);
         value_dict_ap->AddString("value", NULL, value);
         m_dictionary[std::string(name)] = ResultSP (value_dict_ap.release());
@@ -230,7 +230,7 @@ Results::Dictionary::Add (const char *name, const char *description, const Resul
     assert (name && name[0]);
     if (description && description[0])
     {
-        STD_UNIQUE_PTR(Results::Dictionary) value_dict_ap (new Results::Dictionary ());
+        std::unique_ptr<Results::Dictionary> value_dict_ap (new Results::Dictionary ());
         value_dict_ap->AddString("description", NULL, description);
         value_dict_ap->Add("value", NULL, result_sp);
         m_dictionary[std::string(name)] = ResultSP (value_dict_ap.release());

@@ -173,7 +173,7 @@ protected:
     //------------------------------------------------------------------
     Terminal        m_tty;          ///< A terminal
     int             m_tflags;       ///< Cached tflags information.
-    STD_UNIQUE_PTR(struct termios) m_termios_ap; ///< Cached terminal state information.
+    std::unique_ptr<struct termios> m_termios_ap; ///< Cached terminal state information.
     lldb::pid_t     m_process_group;///< Cached process group information.
 
 };

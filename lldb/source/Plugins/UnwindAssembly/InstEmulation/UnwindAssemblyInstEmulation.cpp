@@ -298,7 +298,7 @@ UnwindAssemblyInstEmulation::FirstNonPrologueInsn (AddressRange& func,
 UnwindAssembly *
 UnwindAssemblyInstEmulation::CreateInstance (const ArchSpec &arch)
 {
-    STD_UNIQUE_PTR(EmulateInstruction) inst_emulator_ap (EmulateInstruction::FindPlugin (arch, eInstructionTypePrologueEpilogue, NULL));
+    std::unique_ptr<EmulateInstruction> inst_emulator_ap (EmulateInstruction::FindPlugin (arch, eInstructionTypePrologueEpilogue, NULL));
     // Make sure that all prologue instructions are handled
     if (inst_emulator_ap.get())
         return new UnwindAssemblyInstEmulation (arch, inst_emulator_ap.release());

@@ -1164,7 +1164,7 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl, ClangExpressionVaria
 
         if (parser_vars->m_lldb_var)
         {
-            STD_UNIQUE_PTR(Value) value(GetVariableValue(parser_vars->m_lldb_var, NULL));
+            std::unique_ptr<Value> value(GetVariableValue(parser_vars->m_lldb_var, NULL));
             
             if (is_reference && value.get() && value->GetValueType() == Value::eValueTypeLoadAddress)
             {
@@ -1299,7 +1299,7 @@ ClangExpressionDeclMap::GetSpecialValue (const ConstString &name)
         !var->LocationIsValidForFrame (frame))
         return Value();
     
-    STD_UNIQUE_PTR(Value) value(GetVariableValue(var, NULL));
+    std::unique_ptr<Value> value(GetVariableValue(var, NULL));
     
     if (value.get() && value->GetValueType() == Value::eValueTypeLoadAddress)
     {
@@ -1394,7 +1394,7 @@ ClangExpressionDeclMap::GetObjectPointer
         return false;
     }
     
-    STD_UNIQUE_PTR(lldb_private::Value) location_value(GetVariableValue(object_ptr_var,
+    std::unique_ptr<lldb_private::Value> location_value(GetVariableValue(object_ptr_var,
                                                                        NULL));
     
     if (!location_value.get())
@@ -2583,7 +2583,7 @@ ClangExpressionDeclMap::GetVariableValue
     
     DWARFExpression &var_location_expr = var->LocationExpression();
     
-    STD_UNIQUE_PTR(Value) var_location(new Value);
+    std::unique_ptr<Value> var_location(new Value);
     
     lldb::addr_t loclist_base_load_addr = LLDB_INVALID_ADDRESS;
     
@@ -2805,7 +2805,7 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
                                                                       m_parser_vars->m_target_info.address_byte_size));
     assert (entity.get());
     
-    STD_UNIQUE_PTR(Value) symbol_location(new Value);
+    std::unique_ptr<Value> symbol_location(new Value);
     
     const Address &symbol_address = symbol.GetAddress();
     lldb::addr_t symbol_load_addr = symbol_address.GetLoadAddress(target);
@@ -2949,7 +2949,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     NamedDecl *fun_decl = NULL;
-    STD_UNIQUE_PTR(Value) fun_location(new Value);
+    std::unique_ptr<Value> fun_location(new Value);
     const Address *fun_address = NULL;
     
     // only valid for Functions, not for Symbols

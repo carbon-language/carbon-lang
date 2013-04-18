@@ -224,7 +224,7 @@ public:
     ListCategories (Stream *strm) = 0;
 
 protected:
-    STD_UNIQUE_PTR(Log) m_log_ap;
+    std::unique_ptr<Log> m_log_ap;
 
 private:
     DISALLOW_COPY_AND_ASSIGN (LogChannel);

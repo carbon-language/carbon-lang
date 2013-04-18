@@ -15,6 +15,7 @@
 #define __RNBDefs_h__
 
 #include "DNBDefs.h"
+#include <memory>
 
 extern "C" const unsigned char debugserverVersionString[];
 extern "C" const double debugserverVersionNumber;
@@ -49,7 +50,7 @@ extern "C" const double debugserverVersionNumber;
 #endif
 
 class RNBRemote;
-typedef STD_SHARED_PTR(RNBRemote) RNBRemoteSP;
+typedef std::shared_ptr<RNBRemote> RNBRemoteSP;
 
 typedef enum
 {

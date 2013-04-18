@@ -181,7 +181,7 @@ public:
     virtual lldb::ScriptInterpreterObjectSP
     MakeScriptObject (void* object);
     
-    virtual STD_UNIQUE_PTR(ScriptInterpreterLocker)
+    virtual std::unique_ptr<ScriptInterpreterLocker>
     AcquireInterpreterLock ();
     
     void

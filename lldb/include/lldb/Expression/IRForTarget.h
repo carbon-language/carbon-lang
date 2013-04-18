@@ -654,7 +654,7 @@ private:
     lldb_private::ConstString               m_result_name;              ///< The name of the result variable ($0, $1, ...)
     lldb_private::TypeFromParser            m_result_type;              ///< The type of the result variable.
     llvm::Module                           *m_module;                   ///< The module being processed, or NULL if that has not been determined yet.
-    STD_UNIQUE_PTR(llvm::DataLayout)        m_target_data;              ///< The target data for the module being processed, or NULL if there is no module.
+    std::unique_ptr<llvm::DataLayout>        m_target_data;              ///< The target data for the module being processed, or NULL if there is no module.
     lldb_private::ClangExpressionDeclMap   *m_decl_map;                 ///< The DeclMap containing the Decls 
     StaticDataAllocator                     m_data_allocator;           ///< The allocator to use for constant strings
     lldb_private::IRMemoryMap              &m_memory_map;               ///< The memory map to pass to the IR interpreter

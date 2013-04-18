@@ -180,7 +180,7 @@ namespace lldb_private {
                     const char** matching_category = NULL,
                     FormatCategoryItems* matching_type = NULL);
         
-        typedef STD_SHARED_PTR(TypeCategoryImpl) SharedPointer;
+        typedef std::shared_ptr<TypeCategoryImpl> SharedPointer;
         
     private:
         SummaryNavigator::SharedPointer m_summary_nav;

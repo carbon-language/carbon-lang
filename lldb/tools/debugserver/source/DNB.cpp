@@ -36,7 +36,7 @@
 #include "CFBundle.h"
 
 
-typedef STD_SHARED_PTR(MachProcess) MachProcessSP;
+typedef std::shared_ptr<MachProcess> MachProcessSP;
 typedef std::map<nub_process_t, MachProcessSP> ProcessMap;
 typedef ProcessMap::iterator ProcessMapIter;
 typedef ProcessMap::const_iterator ProcessMapConstIter;

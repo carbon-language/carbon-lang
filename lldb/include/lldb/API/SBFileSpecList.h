@@ -63,7 +63,7 @@ friend class SBTarget;
     const lldb_private::FileSpecList &
     ref() const;
 
-    STD_UNIQUE_PTR(lldb_private::FileSpecList) m_opaque_ap;
+    std::unique_ptr<lldb_private::FileSpecList> m_opaque_ap;
 };
 
 

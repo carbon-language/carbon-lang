@@ -50,7 +50,7 @@ namespace lldb_private {
 /// this abstract class.
 //----------------------------------------------------------------------
 class ObjectFile:
-    public STD_ENABLE_SHARED_FROM_THIS(ObjectFile),
+    public std::enable_shared_from_this<ObjectFile>,
     public PluginInterface,
     public ModuleChild
 {
@@ -621,8 +621,8 @@ protected:
     lldb_private::UnwindTable m_unwind_table; /// < Table of FuncUnwinders objects created for this ObjectFile's functions
     lldb::ProcessWP m_process_wp;
     const lldb::addr_t m_memory_addr;
-    STD_UNIQUE_PTR(lldb_private::SectionList) m_sections_ap;
-    STD_UNIQUE_PTR(lldb_private::Symtab) m_symtab_ap;
+    std::unique_ptr<lldb_private::SectionList> m_sections_ap;
+    std::unique_ptr<lldb_private::Symtab> m_symtab_ap;
     
     //------------------------------------------------------------------
     /// Sets the architecture for a module.  At present the architecture

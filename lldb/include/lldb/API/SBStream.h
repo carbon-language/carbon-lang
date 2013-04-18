@@ -100,7 +100,7 @@ protected:
 private:
 
     DISALLOW_COPY_AND_ASSIGN (SBStream);
-    STD_UNIQUE_PTR(lldb_private::Stream) m_opaque_ap;
+    std::unique_ptr<lldb_private::Stream> m_opaque_ap;
     bool m_is_file;
 };
 

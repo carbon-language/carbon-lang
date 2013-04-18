@@ -206,7 +206,7 @@ one command per line.\n" );
                                              CommandReturnObject &result)
     {
         InputReaderSP reader_sp (new InputReader(m_interpreter.GetDebugger()));
-        STD_UNIQUE_PTR(BreakpointOptions::CommandData) data_ap(new BreakpointOptions::CommandData());
+        std::unique_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
         if (reader_sp && data_ap.get())
         {
             BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
@@ -242,7 +242,7 @@ one command per line.\n" );
     SetBreakpointCommandCallback (BreakpointOptions *bp_options,
                                   const char *oneliner)
     {
-        STD_UNIQUE_PTR(BreakpointOptions::CommandData) data_ap(new BreakpointOptions::CommandData());
+        std::unique_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
 
         // It's necessary to set both user_source and script_source to the oneliner.
         // The former is used to generate callback description (as in breakpoint command list)

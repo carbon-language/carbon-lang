@@ -247,7 +247,7 @@ private:
     WatchpointHitCallback m_callback; // This is the callback function pointer
     lldb::BatonSP m_callback_baton_sp; // This is the client data for the callback
     bool m_callback_is_synchronous;
-    STD_UNIQUE_PTR(ThreadSpec) m_thread_spec_ap; // Thread for which this watchpoint will take
+    std::unique_ptr<ThreadSpec> m_thread_spec_ap; // Thread for which this watchpoint will take
 };
 
 } // namespace lldb_private

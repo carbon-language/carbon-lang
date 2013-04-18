@@ -294,7 +294,7 @@ Host::GetAuxvData(lldb_private::Process *process)
    struct ps_strings ps_strings;
    struct ptrace_io_desc pid;
    DataBufferSP buf_sp;
-   STD_UNIQUE_PTR(DataBufferHeap) buf_ap(new DataBufferHeap(1024, 0));
+   std::unique_ptr<DataBufferHeap> buf_ap(new DataBufferHeap(1024, 0));
 
    if (::sysctl(mib, 2, &ps_strings_addr, &ps_strings_size, NULL, 0) == 0) {
            pid.piod_op = PIOD_READ_D;

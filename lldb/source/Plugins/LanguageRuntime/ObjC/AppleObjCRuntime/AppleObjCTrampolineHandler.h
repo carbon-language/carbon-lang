@@ -197,14 +197,14 @@ private:
     MsgsendMap m_msgSend_map;
     lldb::ProcessSP m_process_sp;
     lldb::ModuleSP m_objc_module_sp;
-    STD_UNIQUE_PTR(ClangFunction) m_impl_function;
-    STD_UNIQUE_PTR(ClangUtilityFunction) m_impl_code;
+    std::unique_ptr<ClangFunction> m_impl_function;
+    std::unique_ptr<ClangUtilityFunction> m_impl_code;
     Mutex m_impl_function_mutex;
     lldb::addr_t m_impl_fn_addr;
     lldb::addr_t m_impl_stret_fn_addr;
     lldb::addr_t m_msg_forward_addr;
     lldb::addr_t m_msg_forward_stret_addr;
-    STD_UNIQUE_PTR(AppleObjCVTables) m_vtables_ap;
+    std::unique_ptr<AppleObjCVTables> m_vtables_ap;
     
      
 };

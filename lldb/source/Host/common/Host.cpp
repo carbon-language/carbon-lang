@@ -1313,7 +1313,7 @@ Host::RunShellCommand (const char *command,
     }
     
     // The process monitor callback will delete the 'shell_info_ptr' below...
-    STD_UNIQUE_PTR(ShellInfo) shell_info_ap (new ShellInfo());
+    std::unique_ptr<ShellInfo> shell_info_ap (new ShellInfo());
     
     const bool monitor_signals = false;
     launch_info.SetMonitorProcessCallback(MonitorShellCommand, shell_info_ap.get(), monitor_signals);

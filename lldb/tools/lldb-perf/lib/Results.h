@@ -123,7 +123,7 @@ public:
         Type m_type;
     };
     
-    typedef STD_SHARED_PTR(Result) ResultSP;
+    typedef std::shared_ptr<Result> ResultSP;
 
     class Array : public Result
     {

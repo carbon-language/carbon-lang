@@ -142,7 +142,7 @@ protected:
         }
     };
     
-    typedef STD_SHARED_PTR(OSOInfo) OSOInfoSP;
+    typedef std::shared_ptr<OSOInfo> OSOInfoSP;
 
     typedef lldb_private::RangeDataVector<lldb::addr_t, lldb::addr_t, lldb::addr_t> FileRangeMap;
 

@@ -81,10 +81,10 @@ ScriptInterpreter::LanguageToString (lldb::ScriptLanguage language)
     return return_value;
 }
 
-STD_UNIQUE_PTR(ScriptInterpreterLocker)
+std::unique_ptr<ScriptInterpreterLocker>
 ScriptInterpreter::AcquireInterpreterLock ()
 {
-    return STD_UNIQUE_PTR(ScriptInterpreterLocker)(new ScriptInterpreterLocker());
+    return std::unique_ptr<ScriptInterpreterLocker>(new ScriptInterpreterLocker());
 }
 
 void

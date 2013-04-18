@@ -30,7 +30,7 @@ namespace lldb_private {
 typedef std::pair<int, std::string> OptionArgValue;
 typedef std::pair<std::string, OptionArgValue> OptionArgPair;
 typedef std::vector<OptionArgPair> OptionArgVector;
-typedef STD_SHARED_PTR(OptionArgVector) OptionArgVectorSP;
+typedef std::shared_ptr<OptionArgVector> OptionArgVectorSP;
 
 struct OptionArgElement
 {

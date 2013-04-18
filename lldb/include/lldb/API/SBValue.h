@@ -440,7 +440,7 @@ protected:
     SetSP (const lldb::ValueObjectSP &sp, lldb::DynamicValueType use_dynamic, bool use_synthetic);
     
 private:
-    typedef STD_SHARED_PTR(ValueImpl) ValueImplSP;
+    typedef std::shared_ptr<ValueImpl> ValueImplSP;
     ValueImplSP m_opaque_sp;
     
     void

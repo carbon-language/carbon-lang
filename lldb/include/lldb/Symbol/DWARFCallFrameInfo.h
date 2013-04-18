@@ -98,7 +98,7 @@ private:
                                   inst_length (0), ptr_encoding (0), initial_row() {}
     };
 
-    typedef STD_SHARED_PTR(CIE) CIESP;
+    typedef std::shared_ptr<CIE> CIESP;
 
     typedef std::map<off_t, CIESP> cie_map_t;
 

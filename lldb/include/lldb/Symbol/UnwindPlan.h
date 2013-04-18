@@ -342,7 +342,7 @@ public:
 
 public:
 
-    typedef STD_SHARED_PTR(Row) RowSP;
+    typedef std::shared_ptr<Row> RowSP;
 
     UnwindPlan (lldb::RegisterKind reg_kind) : 
         m_row_list (), 

@@ -425,7 +425,7 @@ public:
         return lldb::ScriptInterpreterObjectSP(new ScriptInterpreterObject(object));
     }
     
-    virtual STD_UNIQUE_PTR(ScriptInterpreterLocker)
+    virtual std::unique_ptr<ScriptInterpreterLocker>
     AcquireInterpreterLock ();
     
     const char *

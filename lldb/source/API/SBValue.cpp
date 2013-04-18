@@ -708,7 +708,7 @@ SBValue::GetTypeFilter ()
                     
                     if (synthetic_sp && !synthetic_sp->IsScripted())
                     {
-                        TypeFilterImplSP filter_sp = STD_STATIC_POINTER_CAST(TypeFilterImpl,synthetic_sp);
+                        TypeFilterImplSP filter_sp = std::static_pointer_cast<TypeFilterImpl>(synthetic_sp);
                         filter.SetSP(filter_sp);
                     }
                 }
@@ -746,7 +746,7 @@ SBValue::GetTypeSynthetic ()
                     
                     if (children_sp && children_sp->IsScripted())
                     {
-                        ScriptedSyntheticChildrenSP synth_sp = STD_STATIC_POINTER_CAST(ScriptedSyntheticChildren,children_sp);
+                        ScriptedSyntheticChildrenSP synth_sp = std::static_pointer_cast<ScriptedSyntheticChildren>(children_sp);
                         synthetic.SetSP(synth_sp);
                     }
                 }

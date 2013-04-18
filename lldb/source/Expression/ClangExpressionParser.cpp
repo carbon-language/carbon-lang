@@ -352,7 +352,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     m_selector_table.reset(new SelectorTable());
     m_builtin_context.reset(new Builtin::Context());
     
-    STD_UNIQUE_PTR(clang::ASTContext) ast_context(new ASTContext(m_compiler->getLangOpts(),
+    std::unique_ptr<clang::ASTContext> ast_context(new ASTContext(m_compiler->getLangOpts(),
                                                                  m_compiler->getSourceManager(),
                                                                  &m_compiler->getTarget(),
                                                                  m_compiler->getPreprocessor().getIdentifierTable(),
@@ -463,7 +463,7 @@ static bool FindFunctionInModule (ConstString &mangled_name,
 Error
 ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr, 
                                             lldb::addr_t &func_end,
-                                            STD_UNIQUE_PTR(IRExecutionUnit) &execution_unit_ap,
+                                            std::unique_ptr<IRExecutionUnit> &execution_unit_ap,
                                             ExecutionContext &exe_ctx,
                                             bool &can_interpret,
                                             ExecutionPolicy execution_policy)
@@ -472,11 +472,11 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
 	func_end = LLDB_INVALID_ADDRESS;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
-    STD_UNIQUE_PTR(llvm::ExecutionEngine) execution_engine_ap;
+    std::unique_ptr<llvm::ExecutionEngine> execution_engine_ap;
     
     Error err;
     
-    STD_UNIQUE_PTR(llvm::Module) module_ap (m_code_generator->ReleaseModule());
+    std::unique_ptr<llvm::Module> module_ap (m_code_generator->ReleaseModule());
 
     if (!module_ap.get())
     {

@@ -32,7 +32,7 @@ namespace lldb_private {
 /// files), and a line table.
 //----------------------------------------------------------------------
 class CompileUnit :
-    public STD_ENABLE_SHARED_FROM_THIS(CompileUnit),
+    public std::enable_shared_from_this<CompileUnit>,
     public ModuleChild,
     public FileSpec,
     public UserID,
@@ -401,7 +401,7 @@ protected:
     std::vector<lldb::FunctionSP> m_functions; ///< The sparsely populated list of shared pointers to functions
                                          ///< that gets populated as functions get partially parsed.
     FileSpecList m_support_files; ///< Files associated with this compile unit's line table and declarations.
-    STD_UNIQUE_PTR(LineTable) m_line_table_ap; ///< Line table that will get parsed on demand.
+    std::unique_ptr<LineTable> m_line_table_ap; ///< Line table that will get parsed on demand.
     lldb::VariableListSP m_variables; ///< Global and static variable list that will get parsed on demand.
 
 private:

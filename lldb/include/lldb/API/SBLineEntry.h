@@ -90,7 +90,7 @@ private:
     void
     SetLineEntry (const lldb_private::LineEntry &lldb_object_ref);
 
-    STD_UNIQUE_PTR(lldb_private::LineEntry) m_opaque_ap;
+    std::unique_ptr<lldb_private::LineEntry> m_opaque_ap;
 };
 
 

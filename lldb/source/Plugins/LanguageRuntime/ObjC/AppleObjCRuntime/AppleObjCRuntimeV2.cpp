@@ -820,9 +820,9 @@ public:
 
             if (process)
             {
-                STD_UNIQUE_PTR(objc_class_t) objc_class;
-                STD_UNIQUE_PTR(class_ro_t) class_ro;
-                STD_UNIQUE_PTR(class_rw_t) class_rw;
+                std::unique_ptr<objc_class_t> objc_class;
+                std::unique_ptr<class_ro_t> class_ro;
+                std::unique_ptr<class_rw_t> class_rw;
                 
                 if (!Read_objc_class(process, objc_class))
                     return m_name;
@@ -843,7 +843,7 @@ public:
         if (!process)
             return ObjCLanguageRuntime::ClassDescriptorSP();
         
-        STD_UNIQUE_PTR(objc_class_t) objc_class;
+        std::unique_ptr<objc_class_t> objc_class;
 
         if (!Read_objc_class(process, objc_class))
             return ObjCLanguageRuntime::ClassDescriptorSP();
@@ -872,9 +872,9 @@ public:
         
         if (process)
         {
-            STD_UNIQUE_PTR(objc_class_t) objc_class;
-            STD_UNIQUE_PTR(class_ro_t) class_ro;
-            STD_UNIQUE_PTR(class_rw_t) class_rw;
+            std::unique_ptr<objc_class_t> objc_class;
+            std::unique_ptr<class_ro_t> class_ro;
+            std::unique_ptr<class_rw_t> class_rw;
             
             if (!Read_objc_class(process, objc_class))
                 return 0;
@@ -901,9 +901,9 @@ public:
     {
         lldb_private::Process *process = m_runtime.GetProcess();
 
-        STD_UNIQUE_PTR(objc_class_t) objc_class;
-        STD_UNIQUE_PTR(class_ro_t) class_ro;
-        STD_UNIQUE_PTR(class_rw_t) class_rw;
+        std::unique_ptr<objc_class_t> objc_class;
+        std::unique_ptr<class_ro_t> class_ro;
+        std::unique_ptr<class_rw_t> class_rw;
         
         if (!Read_objc_class(process, objc_class))
             return 0;
@@ -917,7 +917,7 @@ public:
         
         if (instance_method_func)
         {
-            STD_UNIQUE_PTR(method_list_t) base_method_list;
+            std::unique_ptr<method_list_t> base_method_list;
             
             base_method_list.reset(new method_list_t);
             if (!base_method_list->Read(process, class_ro->m_baseMethods_ptr))
@@ -926,7 +926,7 @@ public:
             if (base_method_list->m_entsize != method_t::GetSize(process))
                 return false;
             
-            STD_UNIQUE_PTR(method_t) method;
+            std::unique_ptr<method_t> method;
             method.reset(new method_t);
             
             for (uint32_t i = 0, e = base_method_list->m_count; i < e; ++i)
@@ -1354,7 +1354,7 @@ private:
         }
     };
     
-    bool Read_objc_class (Process* process, STD_UNIQUE_PTR(objc_class_t) &objc_class)
+    bool Read_objc_class (Process* process, std::unique_ptr<objc_class_t> &objc_class)
     {
         objc_class.reset(new objc_class_t);
         
@@ -1366,7 +1366,7 @@ private:
         return ret;
     }
     
-    bool Read_class_row (Process* process, const objc_class_t &objc_class, STD_UNIQUE_PTR(class_ro_t) &class_ro, STD_UNIQUE_PTR(class_rw_t) &class_rw)
+    bool Read_class_row (Process* process, const objc_class_t &objc_class, std::unique_ptr<class_ro_t> &class_ro, std::unique_ptr<class_rw_t> &class_rw)
     {
         class_ro.reset();
         class_rw.reset();

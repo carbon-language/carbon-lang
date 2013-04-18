@@ -224,7 +224,7 @@ public:
     }
 };
 
-typedef STD_SHARED_PTR(PlatformDarwinKernelProperties) PlatformDarwinKernelPropertiesSP;
+typedef std::shared_ptr<PlatformDarwinKernelProperties> PlatformDarwinKernelPropertiesSP;
 
 static const PlatformDarwinKernelPropertiesSP &
 GetGlobalProperties()

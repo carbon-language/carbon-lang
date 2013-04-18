@@ -100,7 +100,7 @@ protected:
 
 
 class Section :
-    public STD_ENABLE_SHARED_FROM_THIS(Section),
+    public std::enable_shared_from_this<Section>,
     public ModuleChild,
     public UserID,
     public Flags

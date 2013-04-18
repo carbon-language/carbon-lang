@@ -25,8 +25,8 @@
 
 using namespace lldb_private;
 
-IRExecutionUnit::IRExecutionUnit (STD_UNIQUE_PTR(llvm::LLVMContext) &context_ap,
-                                  STD_UNIQUE_PTR(llvm::Module) &module_ap,
+IRExecutionUnit::IRExecutionUnit (std::unique_ptr<llvm::LLVMContext> &context_ap,
+                                  std::unique_ptr<llvm::Module> &module_ap,
                                   ConstString &name,
                                   const lldb::TargetSP &target_sp,
                                   std::vector<std::string> &cpu_features) :

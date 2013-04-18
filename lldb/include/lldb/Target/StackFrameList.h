@@ -98,7 +98,7 @@ protected:
     SetFrameAtIndex (uint32_t idx, lldb::StackFrameSP &frame_sp);
 
     static void
-    Merge (STD_UNIQUE_PTR(StackFrameList)& curr_ap,
+    Merge (std::unique_ptr<StackFrameList>& curr_ap,
            lldb::StackFrameListSP& prev_sp);
 
     void

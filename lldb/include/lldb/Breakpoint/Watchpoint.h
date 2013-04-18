@@ -28,7 +28,7 @@
 namespace lldb_private {
 
 class Watchpoint :
-    public STD_ENABLE_SHARED_FROM_THIS(Watchpoint),
+    public std::enable_shared_from_this<Watchpoint>,
     public StoppointLocation
 {
 public:
@@ -234,7 +234,7 @@ private:
                                        // the callback machinery.
     bool        m_being_created;
 
-    STD_UNIQUE_PTR(ClangUserExpression) m_condition_ap;  // The condition to test.
+    std::unique_ptr<ClangUserExpression> m_condition_ap;  // The condition to test.
 
     void SetID(lldb::watch_id_t id) { m_loc_id = id; }
     

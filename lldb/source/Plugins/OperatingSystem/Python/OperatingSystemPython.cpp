@@ -60,7 +60,7 @@ OperatingSystemPython::CreateInstance (Process *process, bool force)
     FileSpec python_os_plugin_spec (process->GetPythonOSPluginPath());
     if (python_os_plugin_spec && python_os_plugin_spec.Exists())
     {
-        STD_UNIQUE_PTR(OperatingSystemPython) os_ap (new OperatingSystemPython (process, python_os_plugin_spec));
+        std::unique_ptr<OperatingSystemPython> os_ap (new OperatingSystemPython (process, python_os_plugin_spec));
         if (os_ap.get() && os_ap->IsValid())
             return os_ap.release();
     }

@@ -248,7 +248,7 @@ public:
     void
     TransferAddress (bool force = false);
 
-    typedef STD_SHARED_PTR(ValueObjectConstResult) ValueObjectConstResultSP;
+    typedef std::shared_ptr<ValueObjectConstResult> ValueObjectConstResultSP;
 
     //----------------------------------------------------------------------
     /// Members

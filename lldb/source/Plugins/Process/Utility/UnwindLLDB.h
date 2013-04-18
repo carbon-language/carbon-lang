@@ -77,7 +77,7 @@ protected:
     lldb::RegisterContextSP
     DoCreateRegisterContextForFrame (lldb_private::StackFrame *frame);
 
-    typedef STD_SHARED_PTR(RegisterContextLLDB) RegisterContextLLDBSP;
+    typedef std::shared_ptr<RegisterContextLLDB> RegisterContextLLDBSP;
 
     // Needed to retrieve the "next" frame (e.g. frame 2 needs to retrieve frame 1's RegisterContextLLDB)
     // The RegisterContext for frame_num must already exist or this returns an empty shared pointer.
@@ -104,7 +104,7 @@ private:
         DISALLOW_COPY_AND_ASSIGN (Cursor);
     };
 
-    typedef STD_SHARED_PTR(Cursor) CursorSP;
+    typedef std::shared_ptr<Cursor> CursorSP;
     std::vector<CursorSP> m_frames;
     bool m_unwind_complete; // If this is true, we've enumerated all the frames in the stack, and m_frames.size() is the 
                             // number of frames, etc.  Otherwise we've only gone as far as directly asked, and m_frames.size()

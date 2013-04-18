@@ -4882,7 +4882,7 @@ protected:
             target->AddStopHook (new_hook_sp);
 
             //  First step, make the specifier.
-            STD_UNIQUE_PTR(SymbolContextSpecifier) specifier_ap;
+            std::unique_ptr<SymbolContextSpecifier> specifier_ap;
             if (m_options.m_sym_ctx_specified)
             {
                 specifier_ap.reset(new SymbolContextSpecifier(m_interpreter.GetDebugger().GetSelectedTarget()));

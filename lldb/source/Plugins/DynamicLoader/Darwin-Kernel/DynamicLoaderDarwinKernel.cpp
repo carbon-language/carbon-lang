@@ -116,7 +116,7 @@ public:
 
 };
 
-typedef STD_SHARED_PTR(DynamicLoaderDarwinKernelProperties) DynamicLoaderDarwinKernelPropertiesSP;
+typedef std::shared_ptr<DynamicLoaderDarwinKernelProperties> DynamicLoaderDarwinKernelPropertiesSP;
 
 static const DynamicLoaderDarwinKernelPropertiesSP &
 GetGlobalProperties()

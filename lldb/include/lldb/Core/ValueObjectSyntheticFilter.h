@@ -151,7 +151,7 @@ protected:
 
     // we need to hold on to the SyntheticChildren because someone might delete the type binding while we are alive
     lldb::SyntheticChildrenSP m_synth_sp;
-    STD_UNIQUE_PTR(SyntheticChildrenFrontEnd) m_synth_filter_ap;
+    std::unique_ptr<SyntheticChildrenFrontEnd> m_synth_filter_ap;
     
     typedef std::map<uint32_t, ValueObject*> ByIndexMap;
     typedef std::map<const char*, uint32_t> NameToIndexMap;

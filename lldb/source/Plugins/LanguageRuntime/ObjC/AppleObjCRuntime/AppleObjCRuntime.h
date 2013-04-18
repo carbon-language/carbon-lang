@@ -104,9 +104,9 @@ protected:
     Address *
     GetPrintForDebuggerAddr();
     
-    STD_UNIQUE_PTR(Address)  m_PrintForDebugger_addr;
+    std::unique_ptr<Address>  m_PrintForDebugger_addr;
     bool m_read_objc_library;
-    STD_UNIQUE_PTR(lldb_private::AppleObjCTrampolineHandler) m_objc_trampoline_handler_ap;
+    std::unique_ptr<lldb_private::AppleObjCTrampolineHandler> m_objc_trampoline_handler_ap;
     lldb::BreakpointSP m_objc_exception_bp_sp;
     lldb::ModuleWP m_objc_module_wp;
 

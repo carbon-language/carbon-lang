@@ -1066,7 +1066,7 @@ protected:
     }
 
 private:
-    STD_UNIQUE_PTR(CommandObjectRegexCommand) m_regex_cmd_ap;
+    std::unique_ptr<CommandObjectRegexCommand> m_regex_cmd_ap;
 
      class CommandOptions : public Options
      {

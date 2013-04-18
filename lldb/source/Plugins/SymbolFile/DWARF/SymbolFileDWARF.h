@@ -568,13 +568,13 @@ protected:
 
     // The unique pointer items below are generated on demand if and when someone accesses
     // them through a non const version of this class.
-    STD_UNIQUE_PTR(DWARFDebugAbbrev)     m_abbr;
-    STD_UNIQUE_PTR(DWARFDebugInfo)       m_info;
-    STD_UNIQUE_PTR(DWARFDebugLine)       m_line;
-    STD_UNIQUE_PTR(DWARFMappedHash::MemoryTable) m_apple_names_ap;
-    STD_UNIQUE_PTR(DWARFMappedHash::MemoryTable) m_apple_types_ap;
-    STD_UNIQUE_PTR(DWARFMappedHash::MemoryTable) m_apple_namespaces_ap;
-    STD_UNIQUE_PTR(DWARFMappedHash::MemoryTable) m_apple_objc_ap;
+    std::unique_ptr<DWARFDebugAbbrev>     m_abbr;
+    std::unique_ptr<DWARFDebugInfo>       m_info;
+    std::unique_ptr<DWARFDebugLine>       m_line;
+    std::unique_ptr<DWARFMappedHash::MemoryTable> m_apple_names_ap;
+    std::unique_ptr<DWARFMappedHash::MemoryTable> m_apple_types_ap;
+    std::unique_ptr<DWARFMappedHash::MemoryTable> m_apple_namespaces_ap;
+    std::unique_ptr<DWARFMappedHash::MemoryTable> m_apple_objc_ap;
     NameToDIE                           m_function_basename_index;  // All concrete functions
     NameToDIE                           m_function_fullname_index;  // All concrete functions
     NameToDIE                           m_function_method_index;    // All inlined functions
@@ -588,7 +588,7 @@ protected:
                                         m_using_apple_tables:1;
     lldb_private::LazyBool              m_supports_DW_AT_APPLE_objc_complete_type;
 
-    STD_UNIQUE_PTR(DWARFDebugRanges)     m_ranges;
+    std::unique_ptr<DWARFDebugRanges>     m_ranges;
     UniqueDWARFASTTypeMap m_unique_ast_type_map;
     typedef llvm::SmallPtrSet<const DWARFDebugInfoEntry *, 4> DIEPointerSet;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *> DIEToDeclContextMap;

@@ -567,7 +567,7 @@ DisassemblerLLVMC::CreateInstance (const ArchSpec &arch, const char *flavor)
 {
     if (arch.GetTriple().getArch() != llvm::Triple::UnknownArch)
     {
-        STD_UNIQUE_PTR(DisassemblerLLVMC) disasm_ap (new DisassemblerLLVMC(arch, flavor));
+        std::unique_ptr<DisassemblerLLVMC> disasm_ap (new DisassemblerLLVMC(arch, flavor));
     
         if (disasm_ap.get() && disasm_ap->IsValid())
             return disasm_ap.release();

@@ -396,7 +396,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     ApplyObjcCastHack(m_expr_text);
     //ApplyUnicharHack(m_expr_text);
 
-    STD_UNIQUE_PTR(ExpressionSourceCode) source_code (ExpressionSourceCode::CreateWrapped(m_expr_prefix.c_str(), m_expr_text.c_str()));
+    std::unique_ptr<ExpressionSourceCode> source_code (ExpressionSourceCode::CreateWrapped(m_expr_prefix.c_str(), m_expr_text.c_str()));
     
     lldb::LanguageType lang_type;
     

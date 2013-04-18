@@ -348,8 +348,8 @@ private:
     bool m_enabled;
     bool m_one_shot;
     uint32_t m_ignore_count; // Number of times to ignore this breakpoint
-    STD_UNIQUE_PTR(ThreadSpec) m_thread_spec_ap; // Thread for which this breakpoint will take
-    STD_UNIQUE_PTR(ClangUserExpression) m_condition_ap;  // The condition to test.
+    std::unique_ptr<ThreadSpec> m_thread_spec_ap; // Thread for which this breakpoint will take
+    std::unique_ptr<ClangUserExpression> m_condition_ap;  // The condition to test.
 
 };
 

@@ -112,7 +112,7 @@ public:
     Error
     PrepareForExecution (lldb::addr_t &func_addr,
                          lldb::addr_t &func_end,
-                         STD_UNIQUE_PTR(IRExecutionUnit) &execution_unit_ap,
+                         std::unique_ptr<IRExecutionUnit> &execution_unit_ap,
                          ExecutionContext &exe_ctx,
                          bool &can_interpret,
                          lldb_private::ExecutionPolicy execution_policy);
@@ -136,14 +136,14 @@ public:
     
 private:
     ClangExpression &                       m_expr;                 ///< The expression to be parsed
-    STD_UNIQUE_PTR(llvm::LLVMContext)       m_llvm_context;         ///< The LLVM context to generate IR into
-    STD_UNIQUE_PTR(clang::FileManager)      m_file_manager;         ///< The Clang file manager object used by the compiler
-    STD_UNIQUE_PTR(clang::CompilerInstance) m_compiler;             ///< The Clang compiler used to parse expressions into IR
-    STD_UNIQUE_PTR(clang::Builtin::Context) m_builtin_context;      ///< Context for Clang built-ins
-    STD_UNIQUE_PTR(clang::SelectorTable)    m_selector_table;       ///< Selector table for Objective-C methods
-    STD_UNIQUE_PTR(clang::ASTContext)       m_ast_context;          ///< The AST context used to hold types and names for the parser
-    STD_UNIQUE_PTR(clang::CodeGenerator)    m_code_generator;       ///< The Clang object that generates IR
-    STD_UNIQUE_PTR(IRExecutionUnit)         m_execution_unit;       ///< The container for the finished Module
+    std::unique_ptr<llvm::LLVMContext>       m_llvm_context;         ///< The LLVM context to generate IR into
+    std::unique_ptr<clang::FileManager>      m_file_manager;         ///< The Clang file manager object used by the compiler
+    std::unique_ptr<clang::CompilerInstance> m_compiler;             ///< The Clang compiler used to parse expressions into IR
+    std::unique_ptr<clang::Builtin::Context> m_builtin_context;      ///< Context for Clang built-ins
+    std::unique_ptr<clang::SelectorTable>    m_selector_table;       ///< Selector table for Objective-C methods
+    std::unique_ptr<clang::ASTContext>       m_ast_context;          ///< The AST context used to hold types and names for the parser
+    std::unique_ptr<clang::CodeGenerator>    m_code_generator;       ///< The Clang object that generates IR
+    std::unique_ptr<IRExecutionUnit>         m_execution_unit;       ///< The container for the finished Module
 };
     
 }

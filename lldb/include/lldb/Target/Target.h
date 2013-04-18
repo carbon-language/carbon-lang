@@ -149,7 +149,7 @@ public:
     
 };
 
-typedef STD_SHARED_PTR(TargetProperties) TargetPropertiesSP;
+typedef std::shared_ptr<TargetProperties> TargetPropertiesSP;
 
 class EvaluateExpressionOptions
 {
@@ -285,7 +285,7 @@ private:
 // Target
 //----------------------------------------------------------------------
 class Target :
-    public STD_ENABLE_SHARED_FROM_THIS(Target),
+    public std::enable_shared_from_this<Target>,
     public TargetProperties,
     public Broadcaster,
     public ExecutionContextScope,
@@ -1023,7 +1023,7 @@ public:
         lldb::TargetSP m_target_sp;
         StringList   m_commands;
         lldb::SymbolContextSpecifierSP m_specifier_sp;
-        STD_UNIQUE_PTR(ThreadSpec) m_thread_spec_ap;
+        std::unique_ptr<ThreadSpec> m_thread_spec_ap;
         bool m_active;
         
         // Use AddStopHook to make a new empty stop hook.  The GetCommandPointer and fill it with commands,
@@ -1031,7 +1031,7 @@ public:
         StopHook (lldb::TargetSP target_sp, lldb::user_id_t uid);
         friend class Target;
     };
-    typedef STD_SHARED_PTR(StopHook) StopHookSP;
+    typedef std::shared_ptr<StopHook> StopHookSP;
     
     // Add an empty stop hook to the Target's stop hook list, and returns a shared pointer to it in new_hook.  
     // Returns the id of the new hook.        
@@ -1159,12 +1159,12 @@ protected:
     bool m_valid;
     lldb::SearchFilterSP  m_search_filter_sp;
     PathMappingList m_image_search_paths;
-    STD_UNIQUE_PTR(ClangASTContext) m_scratch_ast_context_ap;
-    STD_UNIQUE_PTR(ClangASTSource) m_scratch_ast_source_ap;
-    STD_UNIQUE_PTR(ClangASTImporter) m_ast_importer_ap;
+    std::unique_ptr<ClangASTContext> m_scratch_ast_context_ap;
+    std::unique_ptr<ClangASTSource> m_scratch_ast_source_ap;
+    std::unique_ptr<ClangASTImporter> m_ast_importer_ap;
     ClangPersistentVariables m_persistent_variables;      ///< These are the persistent variables associated with this process for the expression parser.
 
-    STD_UNIQUE_PTR(SourceManager) m_source_manager_ap;
+    std::unique_ptr<SourceManager> m_source_manager_ap;
 
     typedef std::map<lldb::user_id_t, StopHookSP> StopHookCollection;
     StopHookCollection      m_stop_hooks;

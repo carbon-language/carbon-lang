@@ -61,7 +61,7 @@ public:
     {
     }
     
-    typedef STD_SHARED_PTR(ScriptAddOptions) SharedPointer;
+    typedef std::shared_ptr<ScriptAddOptions> SharedPointer;
     
 };
 
@@ -94,7 +94,7 @@ public:
     {
     }
     
-    typedef STD_SHARED_PTR(SynthAddOptions) SharedPointer;
+    typedef std::shared_ptr<SynthAddOptions> SharedPointer;
     
 };
 

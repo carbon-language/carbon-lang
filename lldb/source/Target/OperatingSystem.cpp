@@ -28,7 +28,7 @@ OperatingSystem::FindPlugin (Process *process, const char *plugin_name)
         create_callback  = PluginManager::GetOperatingSystemCreateCallbackForPluginName (plugin_name);
         if (create_callback)
         {
-            STD_UNIQUE_PTR(OperatingSystem) instance_ap(create_callback(process, true));
+            std::unique_ptr<OperatingSystem> instance_ap(create_callback(process, true));
             if (instance_ap.get())
                 return instance_ap.release();
         }
@@ -37,7 +37,7 @@ OperatingSystem::FindPlugin (Process *process, const char *plugin_name)
     {
         for (uint32_t idx = 0; (create_callback = PluginManager::GetOperatingSystemCreateCallbackAtIndex(idx)) != NULL; ++idx)
         {
-            STD_UNIQUE_PTR(OperatingSystem) instance_ap(create_callback(process, false));
+            std::unique_ptr<OperatingSystem> instance_ap(create_callback(process, false));
             if (instance_ap.get())
                 return instance_ap.release();
         }

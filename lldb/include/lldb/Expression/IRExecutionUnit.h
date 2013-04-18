@@ -66,8 +66,8 @@ public:
     //------------------------------------------------------------------
     /// Constructor
     //------------------------------------------------------------------
-    IRExecutionUnit (STD_UNIQUE_PTR(llvm::LLVMContext) &context_ap,
-                     STD_UNIQUE_PTR(llvm::Module) &module_ap,
+    IRExecutionUnit (std::unique_ptr<llvm::LLVMContext> &context_ap,
+                     std::unique_ptr<llvm::Module> &module_ap,
                      ConstString &name,
                      const lldb::TargetSP &target_sp,
                      std::vector<std::string> &cpu_features);
@@ -422,7 +422,7 @@ private:
             return m_default_mm_ap->getPointerToNamedFunction(Name, AbortOnFailure);
         }
     private:
-        STD_UNIQUE_PTR(JITMemoryManager)    m_default_mm_ap;    ///< The memory allocator to use in actually creating space.  All calls are passed through to it.
+        std::unique_ptr<JITMemoryManager>    m_default_mm_ap;    ///< The memory allocator to use in actually creating space.  All calls are passed through to it.
         IRExecutionUnit                    &m_parent;           ///< The execution unit this is a proxy for.
     };
     
@@ -502,9 +502,9 @@ private:
     typedef std::vector<AllocationRecord>   RecordVector;
     RecordVector                            m_records;
 
-    STD_UNIQUE_PTR(llvm::LLVMContext)       m_context_ap;
-    STD_UNIQUE_PTR(llvm::ExecutionEngine)   m_execution_engine_ap;
-    STD_UNIQUE_PTR(llvm::Module)            m_module_ap;            ///< Holder for the module until it's been handed off
+    std::unique_ptr<llvm::LLVMContext>       m_context_ap;
+    std::unique_ptr<llvm::ExecutionEngine>   m_execution_engine_ap;
+    std::unique_ptr<llvm::Module>            m_module_ap;            ///< Holder for the module until it's been handed off
     llvm::Module                           *m_module;               ///< Owned by the execution engine
     std::vector<std::string>                m_cpu_features;
     llvm::SmallVector<JittedFunction, 1>    m_jitted_functions;     ///< A vector of all functions that have been JITted into machine code

@@ -256,11 +256,7 @@ public:
     typedef typename MapType::key_type MapKeyType;
     typedef typename MapType::mapped_type MapValueType;
     typedef typename BackEndType::CallbackType CallbackType;
-#ifdef _LIBCPP_VERSION
     typedef typename std::shared_ptr<FormatNavigator<KeyType, ValueType> > SharedPointer;
-#else
-    typedef typename std::tr1::shared_ptr<FormatNavigator<KeyType, ValueType> > SharedPointer;
-#endif
     
     friend class TypeCategoryImpl;
 

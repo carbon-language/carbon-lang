@@ -138,7 +138,7 @@ public:
     typedef lldb::addr_t ObjCISA;
     
     class ClassDescriptor;
-    typedef STD_SHARED_PTR(ClassDescriptor) ClassDescriptorSP;
+    typedef std::shared_ptr<ClassDescriptor> ClassDescriptorSP;
     
     // the information that we want to support retrieving from an ObjC class
     // this needs to be pure virtual since there are at least 2 different implementations

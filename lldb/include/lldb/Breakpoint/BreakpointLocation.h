@@ -46,7 +46,7 @@ namespace lldb_private {
 //----------------------------------------------------------------------
 
 class BreakpointLocation : 
-    public STD_ENABLE_SHARED_FROM_THIS(BreakpointLocation),
+    public std::enable_shared_from_this<BreakpointLocation>,
     public StoppointLocation
 {
 public:
@@ -379,7 +379,7 @@ private:
     bool m_being_created;
     Address m_address; ///< The address defining this location.
     Breakpoint &m_owner; ///< The breakpoint that produced this object.
-    STD_UNIQUE_PTR(BreakpointOptions) m_options_ap; ///< Breakpoint options pointer, NULL if we're using our breakpoint's options.
+    std::unique_ptr<BreakpointOptions> m_options_ap; ///< Breakpoint options pointer, NULL if we're using our breakpoint's options.
     lldb::BreakpointSiteSP m_bp_site_sp; ///< Our breakpoint site (it may be shared by more than one location.)
 
     void

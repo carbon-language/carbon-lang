@@ -46,7 +46,7 @@ namespace lldb_private
 class ClangUserExpression : public ClangExpression
 {
 public:
-    typedef STD_SHARED_PTR(ClangUserExpression) ClangUserExpressionSP;
+    typedef std::shared_ptr<ClangUserExpression> ClangUserExpressionSP;
     
     enum { kDefaultTimeout = 500000u };
     //------------------------------------------------------------------
@@ -420,10 +420,10 @@ private:
     std::string                                 m_transformed_text;     ///< The text of the expression, as send to the parser
     ResultType                                  m_desired_type;         ///< The type to coerce the expression's result to.  If eResultTypeAny, inferred from the expression.
     
-    STD_UNIQUE_PTR(ClangExpressionDeclMap)      m_expr_decl_map;        ///< The map to use when parsing the expression.
-    STD_UNIQUE_PTR(IRExecutionUnit)             m_execution_unit_ap;    ///< The execution unit the expression is stored in.
-    STD_UNIQUE_PTR(Materializer)                m_materializer_ap;      ///< The materializer to use when running the expression.
-    STD_UNIQUE_PTR(ASTResultSynthesizer)        m_result_synthesizer;   ///< The result synthesizer, if one is needed.
+    std::unique_ptr<ClangExpressionDeclMap>      m_expr_decl_map;        ///< The map to use when parsing the expression.
+    std::unique_ptr<IRExecutionUnit>             m_execution_unit_ap;    ///< The execution unit the expression is stored in.
+    std::unique_ptr<Materializer>                m_materializer_ap;      ///< The materializer to use when running the expression.
+    std::unique_ptr<ASTResultSynthesizer>        m_result_synthesizer;   ///< The result synthesizer, if one is needed.
     
     bool                                        m_enforce_valid_object; ///< True if the expression parser should enforce the presence of a valid class pointer in order to generate the expression as a method.
     bool                                        m_cplusplus;            ///< True if the expression is compiled as a C++ member function (true if it was parsed when exe_ctx was in a C++ method).

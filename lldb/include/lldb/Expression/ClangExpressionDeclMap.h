@@ -714,7 +714,7 @@ private:
         DISALLOW_COPY_AND_ASSIGN (ParserVars);
     };
     
-    STD_UNIQUE_PTR(ParserVars) m_parser_vars;
+    std::unique_ptr<ParserVars> m_parser_vars;
     
     //----------------------------------------------------------------------
     /// Activate parser-specific variables
@@ -756,7 +756,7 @@ private:
         TypeFromUser                m_object_pointer_type;      ///< The type of the "this" variable, if one exists
     };
     
-    STD_UNIQUE_PTR(StructVars) m_struct_vars;
+    std::unique_ptr<StructVars> m_struct_vars;
     
     //----------------------------------------------------------------------
     /// Activate struct variables
@@ -795,7 +795,7 @@ private:
         lldb::addr_t                m_materialized_location;    ///< The address at which the struct is placed.  Falls inside the allocated area.
     };
     
-    STD_UNIQUE_PTR(MaterialVars) m_material_vars;
+    std::unique_ptr<MaterialVars> m_material_vars;
     
     //----------------------------------------------------------------------
     /// Activate materialization-specific variables

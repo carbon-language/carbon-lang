@@ -717,7 +717,7 @@ StackFrameList::InvalidateFrames (uint32_t start_idx)
 }
 
 void
-StackFrameList::Merge (STD_UNIQUE_PTR(StackFrameList)& curr_ap, lldb::StackFrameListSP& prev_sp)
+StackFrameList::Merge (std::unique_ptr<StackFrameList>& curr_ap, lldb::StackFrameListSP& prev_sp)
 {
     Mutex::Locker curr_locker (curr_ap.get() ? &curr_ap->m_mutex : NULL);
     Mutex::Locker prev_locker (prev_sp.get() ? &prev_sp->m_mutex : NULL);

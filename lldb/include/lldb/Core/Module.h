@@ -41,7 +41,7 @@ namespace lldb_private {
 /// made.
 //----------------------------------------------------------------------
 class Module :
-    public STD_ENABLE_SHARED_FROM_THIS(Module),
+    public std::enable_shared_from_this<Module>,
     public SymbolContextScope
 {
 public:
@@ -941,7 +941,7 @@ protected:
     ConstString                 m_object_name;  ///< The name an object within this module that is selected, or empty of the module is represented by \a m_file.
     uint64_t                    m_object_offset;
     lldb::ObjectFileSP          m_objfile_sp;   ///< A shared pointer to the object file parser for this module as it may or may not be shared with the SymbolFile
-    STD_UNIQUE_PTR(SymbolVendor) m_symfile_ap;   ///< A pointer to the symbol vendor for this module.
+    std::unique_ptr<SymbolVendor> m_symfile_ap;   ///< A pointer to the symbol vendor for this module.
     ClangASTContext             m_ast;          ///< The AST context for this module.
     PathMappingList             m_source_mappings; ///< Module specific source remappings for when you have debug info for a module that doesn't match where the sources currently are
 

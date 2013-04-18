@@ -65,7 +65,7 @@ protected:
     const lldb_private::TypeMemberImpl &
     ref () const;
 
-    STD_UNIQUE_PTR(lldb_private::TypeMemberImpl) m_opaque_ap;
+    std::unique_ptr<lldb_private::TypeMemberImpl> m_opaque_ap;
 };
 
 class SBType
@@ -234,7 +234,7 @@ public:
     
     
 private:
-    STD_UNIQUE_PTR(lldb_private::TypeListImpl) m_opaque_ap;
+    std::unique_ptr<lldb_private::TypeListImpl> m_opaque_ap;
 };
     
 

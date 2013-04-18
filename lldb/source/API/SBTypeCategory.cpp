@@ -169,7 +169,7 @@ SBTypeCategory::GetFilterForType (SBTypeNameSpecifier spec)
     if (!children_sp)
         return lldb::SBTypeFilter();
     
-    TypeFilterImplSP filter_sp = STD_STATIC_POINTER_CAST(TypeFilterImpl,children_sp);
+    TypeFilterImplSP filter_sp = std::static_pointer_cast<TypeFilterImpl>(children_sp);
     
     return lldb::SBTypeFilter(filter_sp);
 
@@ -233,7 +233,7 @@ SBTypeCategory::GetSyntheticForType (SBTypeNameSpecifier spec)
     if (!children_sp)
         return lldb::SBTypeSynthetic();
     
-    ScriptedSyntheticChildrenSP synth_sp = STD_STATIC_POINTER_CAST(ScriptedSyntheticChildren,children_sp);
+    ScriptedSyntheticChildrenSP synth_sp = std::static_pointer_cast<ScriptedSyntheticChildren>(children_sp);
     
     return lldb::SBTypeSynthetic(synth_sp);
 }
@@ -250,7 +250,7 @@ SBTypeCategory::GetFilterAtIndex (uint32_t index)
     if (!children_sp.get())
         return lldb::SBTypeFilter();
     
-    TypeFilterImplSP filter_sp = STD_STATIC_POINTER_CAST(TypeFilterImpl,children_sp);
+    TypeFilterImplSP filter_sp = std::static_pointer_cast<TypeFilterImpl>(children_sp);
     
     return lldb::SBTypeFilter(filter_sp);
 }
@@ -285,7 +285,7 @@ SBTypeCategory::GetSyntheticAtIndex (uint32_t index)
     if (!children_sp.get())
         return lldb::SBTypeSynthetic();
     
-    ScriptedSyntheticChildrenSP synth_sp = STD_STATIC_POINTER_CAST(ScriptedSyntheticChildren,children_sp);
+    ScriptedSyntheticChildrenSP synth_sp = std::static_pointer_cast<ScriptedSyntheticChildren>(children_sp);
     
     return lldb::SBTypeSynthetic(synth_sp);
 }

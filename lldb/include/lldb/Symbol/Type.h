@@ -21,7 +21,7 @@
 namespace lldb_private {
 
 class SymbolFileType :
-    public STD_ENABLE_SHARED_FROM_THIS(SymbolFileType),
+    public std::enable_shared_from_this<SymbolFileType>,
     public UserID
     {
     public:
@@ -50,7 +50,7 @@ class SymbolFileType :
     };
     
 class Type :
-    public STD_ENABLE_SHARED_FROM_THIS(Type),
+    public std::enable_shared_from_this<Type>,
     public UserID
 {
 public:

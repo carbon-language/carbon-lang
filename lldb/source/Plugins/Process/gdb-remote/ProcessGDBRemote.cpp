@@ -738,7 +738,7 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
 {
     Error error;
     // Sleep and wait a bit for debugserver to start to listen...
-    STD_UNIQUE_PTR(ConnectionFileDescriptor) conn_ap(new ConnectionFileDescriptor());
+    std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
     if (conn_ap.get())
     {
         const uint32_t max_retry_count = 50;

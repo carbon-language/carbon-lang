@@ -150,17 +150,17 @@ private:
     lldb::addr_t
     GetSharedCacheReadOnlyAddress();
     
-    STD_UNIQUE_PTR(ClangFunction)       m_get_class_info_function;
-    STD_UNIQUE_PTR(ClangUtilityFunction) m_get_class_info_code;
+    std::unique_ptr<ClangFunction>       m_get_class_info_function;
+    std::unique_ptr<ClangUtilityFunction> m_get_class_info_code;
     lldb::addr_t                        m_get_class_info_args;
     Mutex                               m_get_class_info_args_mutex;
 
-    STD_UNIQUE_PTR(ClangFunction)        m_get_shared_cache_class_info_function;
-    STD_UNIQUE_PTR(ClangUtilityFunction) m_get_shared_cache_class_info_code;
+    std::unique_ptr<ClangFunction>        m_get_shared_cache_class_info_function;
+    std::unique_ptr<ClangUtilityFunction> m_get_shared_cache_class_info_code;
     lldb::addr_t                        m_get_shared_cache_class_info_args;
     Mutex                               m_get_shared_cache_class_info_args_mutex;
 
-    STD_UNIQUE_PTR(TypeVendor)           m_type_vendor_ap;
+    std::unique_ptr<TypeVendor>           m_type_vendor_ap;
     lldb::addr_t                        m_isa_hash_table_ptr;
     HashTableSignature                  m_hash_signature;
     bool                                m_has_object_getClass;

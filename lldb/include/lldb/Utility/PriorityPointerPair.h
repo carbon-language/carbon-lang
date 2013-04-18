@@ -30,7 +30,7 @@ public:
     typedef T& reference_type;
     typedef T* pointer_type;
     
-    typedef typename STD_SHARED_PTR(T) T_SP;
+    typedef typename std::shared_ptr<T> T_SP;
     
     PriorityPointerPair() : 
     m_high(),
