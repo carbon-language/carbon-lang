@@ -315,7 +315,7 @@ private:
       PrevState = CurrState;
     }
     void onDispExpr(const MCExpr *SymRef, StringRef SymRefName) {
-      IntelExprState CurrState = State;
+      PrevState = State;
       switch (State) {
       default:
         State = IES_ERROR;
@@ -328,7 +328,6 @@ private:
         IC.pushOperand(IC_IMM);
         break;
       }
-      PrevState = CurrState;
     }
     void onInteger(int64_t TmpInt) {
       IntelExprState CurrState = State;
@@ -364,7 +363,7 @@ private:
       PrevState = CurrState;
     }
     void onStar() {
-      IntelExprState CurrState = State;
+      PrevState = State;
       switch (State) {
       default:
         State = IES_ERROR;
@@ -376,10 +375,9 @@ private:
         IC.pushOperator(IC_MULTIPLY);
         break;
       }
-      PrevState = CurrState;
     }
     void onDivide() {
-      IntelExprState CurrState = State;
+      PrevState = State;
       switch (State) {
       default:
         State = IES_ERROR;
@@ -390,10 +388,9 @@ private:
         IC.pushOperator(IC_DIVIDE);
         break;
       }
-      PrevState = CurrState;
     }
     void onLBrac() {
-      IntelExprState CurrState = State;
+      PrevState = State;
       switch (State) {
       default:
         State = IES_ERROR;
@@ -403,7 +400,6 @@ private:
         IC.pushOperator(IC_PLUS);
         break;
       }
-      PrevState = CurrState;
     }
     void onRBrac() {
       IntelExprState CurrState = State;
@@ -441,6 +437,14 @@ private:
       case IES_MULTIPLY:
       case IES_DIVIDE:
       case IES_LPAREN:
+        // FIXME: We don't handle this type of unary minus, yet.
+        if ((PrevState == IES_PLUS || PrevState == IES_MINUS ||
+            PrevState == IES_MULTIPLY || PrevState == IES_DIVIDE ||
+            PrevState == IES_LPAREN || PrevState == IES_LBRAC) &&
+            CurrState == IES_MINUS) {
+          State = IES_ERROR;
+          break;
+        }
         State = IES_LPAREN;
         IC.pushOperator(IC_LPAREN);
         break;
@@ -448,7 +452,7 @@ private:
       PrevState = CurrState;
     }
     void onRParen() {
-      IntelExprState CurrState = State;
+      PrevState = State;
       switch (State) {
       default:
         State = IES_ERROR;
@@ -460,7 +464,6 @@ private:
         IC.pushOperator(IC_RPAREN);
         break;
       }
-      PrevState = CurrState;
     }
   };
 
