@@ -2955,6 +2955,7 @@ Process::Attach (ProcessAttachInfo &attach_info)
                 {
                     if (m_public_run_lock.WriteTryLock())
                     {
+                        m_private_run_lock.WriteLock();
                         m_should_detach = true;
                         SetPublicState (eStateAttaching);
                         // Now attach using these arguments.
@@ -3032,6 +3033,7 @@ Process::Attach (ProcessAttachInfo &attach_info)
 
             if (m_public_run_lock.WriteTryLock())
             {
+                m_private_run_lock.WriteLock();
                 // Now attach using these arguments.
                 m_should_detach = true;
                 SetPublicState (eStateAttaching);
@@ -4086,8 +4088,11 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
             }
         }
 
-        
-        if (m_process_sp->GetPrivateState() != eStateRunning)
+        const lldb::StateType state = m_process_sp->GetPrivateState();
+        if (state != eStateRunning &&
+            state != eStateCrashed &&
+            state != eStateDetached &&
+            state != eStateExited)
         {
             if (!still_should_stop)
             {
