@@ -27,3 +27,21 @@ bb5:                                              ; preds = %bb4, %bb1
 bb11:                                             ; preds = %bb5
   ret void
 }
+
+; PR15748
+define void @test2() {
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i32 [ 0, %bb ], [ %tmp5, %bb1 ]
+  %tmp2 = phi i32 [ 0, %bb ], [ 1, %bb1 ]
+  %tmp3 = phi i32 [ 0, %bb ], [ %tmp4, %bb1 ]
+  %tmp4 = or i32 %tmp2, %tmp3
+  %tmp5 = add nsw i32 %tmp, 1
+  %tmp6 = icmp eq i32 %tmp5, 0
+  br i1 %tmp6, label %bb7, label %bb1
+
+bb7:                                              ; preds = %bb1
+  ret void
+}

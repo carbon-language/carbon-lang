@@ -2733,7 +2733,10 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
   // used as reduction variables (such as ADD). We may have a single
   // out-of-block user. The cycle must end with the original PHI.
   Instruction *Iter = Phi;
-  while (true) {
+
+  // Avoid cycles in the chain.
+  SmallPtrSet<Instruction *, 8> VisitedInsts;
+  while (VisitedInsts.insert(Iter)) {
     // If the instruction has no users then this is a broken
     // chain and can't be a reduction variable.
     if (Iter->use_empty())
@@ -2746,9 +2749,6 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
 
     // Is this a bin op ?
     FoundBinOp |= !isa<PHINode>(Iter);
-
-    // Remember the current instruction.
-    Instruction *OldIter = Iter;
 
     // For each of the *users* of iter.
     for (Value::use_iterator it = Iter->use_begin(), e = Iter->use_end();
@@ -2795,10 +2795,6 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
       Iter = U;
     }
 
-    // If all uses were skipped this can't be a reduction variable.
-    if (Iter == OldIter)
-      return false;
-
     // We found a reduction var if we have reached the original
     // phi node and we only have a single instruction with out-of-loop
     // users.
@@ -2814,6 +2810,8 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
       return FoundBinOp && ExitInstruction;
     }
   }
+
+  return false;
 }
 
 bool
