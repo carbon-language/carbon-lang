@@ -530,6 +530,10 @@ private:
     setAvailableFeatures(FB);
   }
 
+  bool isParsingIntelSyntax() {
+    return getParser().getAssemblerDialect();
+  }
+
   /// @name Auto-generated Matcher Functions
   /// {
 
@@ -552,10 +556,6 @@ public:
                                 SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   virtual bool ParseDirective(AsmToken DirectiveID);
-
-  bool isParsingIntelSyntax() {
-    return getParser().getAssemblerDialect();
-  }
 };
 } // end anonymous namespace
 
