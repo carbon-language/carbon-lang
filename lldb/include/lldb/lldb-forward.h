@@ -18,12 +18,14 @@
 #include <memory>
 #define STD_SHARED_PTR(T) std::shared_ptr<T>
 #define STD_WEAK_PTR(T) std::weak_ptr<T>
+#define STD_UNIQUE_PTR(T) std::unique_ptr<T>
 #define STD_ENABLE_SHARED_FROM_THIS(T) std::enable_shared_from_this<T>
 #define STD_STATIC_POINTER_CAST(T,V) std::static_pointer_cast<T>(V)
 #else
 #include <tr1/memory>
 #define STD_SHARED_PTR(T) std::tr1::shared_ptr<T>
 #define STD_WEAK_PTR(T) std::tr1::weak_ptr<T>
+#define STD_UNIQUE_PTR(T) std::auto_ptr<T>
 #define STD_ENABLE_SHARED_FROM_THIS(T) std::tr1::enable_shared_from_this<T>
 #define STD_STATIC_POINTER_CAST(T,V) std::tr1::static_pointer_cast<T>(V)
 #endif

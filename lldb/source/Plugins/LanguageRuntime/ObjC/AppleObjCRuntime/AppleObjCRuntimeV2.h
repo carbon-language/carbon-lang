@@ -29,7 +29,7 @@ class AppleObjCRuntimeV2 :
         public AppleObjCRuntime
 {
 public:
-    virtual ~AppleObjCRuntimeV2() { }
+    virtual ~AppleObjCRuntimeV2();
     
     // These are generic runtime functions:
     virtual bool
@@ -150,17 +150,17 @@ private:
     lldb::addr_t
     GetSharedCacheReadOnlyAddress();
     
-    std::auto_ptr<ClangFunction>        m_get_class_info_function;
-    std::auto_ptr<ClangUtilityFunction> m_get_class_info_code;
+    STD_UNIQUE_PTR(ClangFunction)       m_get_class_info_function;
+    STD_UNIQUE_PTR(ClangUtilityFunction) m_get_class_info_code;
     lldb::addr_t                        m_get_class_info_args;
     Mutex                               m_get_class_info_args_mutex;
 
-    std::auto_ptr<ClangFunction>        m_get_shared_cache_class_info_function;
-    std::auto_ptr<ClangUtilityFunction> m_get_shared_cache_class_info_code;
+    STD_UNIQUE_PTR(ClangFunction)        m_get_shared_cache_class_info_function;
+    STD_UNIQUE_PTR(ClangUtilityFunction) m_get_shared_cache_class_info_code;
     lldb::addr_t                        m_get_shared_cache_class_info_args;
     Mutex                               m_get_shared_cache_class_info_args_mutex;
 
-    std::auto_ptr<TypeVendor>           m_type_vendor_ap;
+    STD_UNIQUE_PTR(TypeVendor)           m_type_vendor_ap;
     lldb::addr_t                        m_isa_hash_table_ptr;
     HashTableSignature                  m_hash_signature;
     bool                                m_has_object_getClass;

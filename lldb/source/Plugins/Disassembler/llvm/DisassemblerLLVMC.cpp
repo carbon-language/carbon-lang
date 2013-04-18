@@ -472,6 +472,10 @@ DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, uns
         m_is_valid = false;
 }
 
+DisassemblerLLVMC::LLVMCDisassembler::~LLVMCDisassembler()
+{
+}
+
 namespace {
     // This is the memory object we use in GetInstruction.
     class LLDBDisasmMemoryObject : public llvm::MemoryObject {
@@ -563,7 +567,7 @@ DisassemblerLLVMC::CreateInstance (const ArchSpec &arch, const char *flavor)
 {
     if (arch.GetTriple().getArch() != llvm::Triple::UnknownArch)
     {
-        std::auto_ptr<DisassemblerLLVMC> disasm_ap (new DisassemblerLLVMC(arch, flavor));
+        STD_UNIQUE_PTR(DisassemblerLLVMC) disasm_ap (new DisassemblerLLVMC(arch, flavor));
     
         if (disasm_ap.get() && disasm_ap->IsValid())
             return disasm_ap.release();

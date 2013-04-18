@@ -3588,9 +3588,9 @@ protected:
     std::vector<lldb::addr_t>   m_image_tokens;
     Listener                    &m_listener;
     BreakpointSiteList          m_breakpoint_site_list; ///< This is the list of breakpoint locations we intend to insert in the target.
-    std::auto_ptr<DynamicLoader> m_dyld_ap;
-    std::auto_ptr<DynamicCheckerFunctions> m_dynamic_checkers_ap; ///< The functions used by the expression parser to validate data that expressions use.
-    std::auto_ptr<OperatingSystem> m_os_ap;
+    STD_UNIQUE_PTR(DynamicLoader) m_dyld_ap;
+    STD_UNIQUE_PTR(DynamicCheckerFunctions) m_dynamic_checkers_ap; ///< The functions used by the expression parser to validate data that expressions use.
+    STD_UNIQUE_PTR(OperatingSystem) m_os_ap;
     UnixSignals                 m_unix_signals;         /// This is the current signal set for this process.
     lldb::ABISP                 m_abi_sp;
     lldb::InputReaderSP         m_process_input_reader;
@@ -3604,7 +3604,7 @@ protected:
     AllocatedMemoryCache        m_allocated_memory_cache;
     bool                        m_should_detach;   /// Should we detach if the process object goes away with an explicit call to Kill or Detach?
     LanguageRuntimeCollection   m_language_runtimes;
-    std::auto_ptr<NextEventAction> m_next_event_action_ap;
+    STD_UNIQUE_PTR(NextEventAction) m_next_event_action_ap;
     std::vector<PreResumeCallbackAndBaton> m_pre_resume_actions;
     ReadWriteLock               m_public_run_lock;
 #if defined(__APPLE__)

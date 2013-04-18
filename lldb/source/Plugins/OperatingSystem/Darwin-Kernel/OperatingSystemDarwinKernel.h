@@ -84,7 +84,7 @@ protected:
     GetDynamicRegisterInfo ();
 
     lldb::ValueObjectSP m_thread_list_valobj_sp;
-    std::auto_ptr<DynamicRegisterInfo> m_register_info_ap;
+    STD_UNIQUE_PTR(DynamicRegisterInfo) m_register_info_ap;
     
 };
 

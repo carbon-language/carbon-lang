@@ -185,7 +185,7 @@ main (int argc, char *argv[])
     GDBRemoteCommunicationServer gdb_server (true);
     if (!listen_host_port.empty())
     {
-        std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
+        STD_UNIQUE_PTR(ConnectionFileDescriptor) conn_ap(new ConnectionFileDescriptor());
         if (conn_ap.get())
         {
             std::string connect_url ("listen://");

@@ -80,7 +80,7 @@ namespace lldb {
         void
         SetDeclaration (const lldb_private::Declaration &lldb_object_ref);
         
-        std::auto_ptr<lldb_private::Declaration> m_opaque_ap;
+        STD_UNIQUE_PTR(lldb_private::Declaration) m_opaque_ap;
     };
     
     

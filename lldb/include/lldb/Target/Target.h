@@ -1023,7 +1023,7 @@ public:
         lldb::TargetSP m_target_sp;
         StringList   m_commands;
         lldb::SymbolContextSpecifierSP m_specifier_sp;
-        std::auto_ptr<ThreadSpec> m_thread_spec_ap;
+        STD_UNIQUE_PTR(ThreadSpec) m_thread_spec_ap;
         bool m_active;
         
         // Use AddStopHook to make a new empty stop hook.  The GetCommandPointer and fill it with commands,
@@ -1159,12 +1159,12 @@ protected:
     bool m_valid;
     lldb::SearchFilterSP  m_search_filter_sp;
     PathMappingList m_image_search_paths;
-    std::auto_ptr<ClangASTContext> m_scratch_ast_context_ap;
-    std::auto_ptr<ClangASTSource> m_scratch_ast_source_ap;
-    std::auto_ptr<ClangASTImporter> m_ast_importer_ap;
+    STD_UNIQUE_PTR(ClangASTContext) m_scratch_ast_context_ap;
+    STD_UNIQUE_PTR(ClangASTSource) m_scratch_ast_source_ap;
+    STD_UNIQUE_PTR(ClangASTImporter) m_ast_importer_ap;
     ClangPersistentVariables m_persistent_variables;      ///< These are the persistent variables associated with this process for the expression parser.
 
-    std::auto_ptr<SourceManager> m_source_manager_ap;
+    STD_UNIQUE_PTR(SourceManager) m_source_manager_ap;
 
     typedef std::map<lldb::user_id_t, StopHookSP> StopHookCollection;
     StopHookCollection      m_stop_hooks;

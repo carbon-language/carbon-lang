@@ -359,10 +359,10 @@ protected:
     TargetList m_target_list;
     PlatformList m_platform_list;
     Listener m_listener;
-    std::auto_ptr<SourceManager> m_source_manager_ap;    // This is a scratch source manager that we return if we have no targets.
+    STD_UNIQUE_PTR(SourceManager) m_source_manager_ap;    // This is a scratch source manager that we return if we have no targets.
     SourceManager::SourceFileCache m_source_file_cache; // All the source managers for targets created in this debugger used this shared
                                                         // source file cache.
-    std::auto_ptr<CommandInterpreter> m_command_interpreter_ap;
+    STD_UNIQUE_PTR(CommandInterpreter) m_command_interpreter_ap;
 
     InputReaderStack m_input_reader_stack;
     std::string m_input_reader_data;

@@ -191,7 +191,7 @@ protected:
     TypeList m_type_list; // Uniqued types for all parsers owned by this module
     CompileUnits m_compile_units; // The current compile units
     lldb::ObjectFileSP m_objfile_sp;    // Keep a reference to the object file in case it isn't the same as the module object file (debug symbols in a separate file)
-    std::auto_ptr<SymbolFile> m_sym_file_ap; // A single symbol file. Suclasses can add more of these if needed.
+    STD_UNIQUE_PTR(SymbolFile) m_sym_file_ap; // A single symbol file. Suclasses can add more of these if needed.
 
 private:
     //------------------------------------------------------------------

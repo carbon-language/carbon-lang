@@ -67,7 +67,7 @@ ObjectContainerUniversalMachO::CreateInstance
         data.SetData (data_sp, data_offset, length);
         if (ObjectContainerUniversalMachO::MagicBytesMatch(data))
         {
-            std::auto_ptr<ObjectContainerUniversalMachO> container_ap(new ObjectContainerUniversalMachO (module_sp, data_sp, data_offset, file, file_offset, length));
+            STD_UNIQUE_PTR(ObjectContainerUniversalMachO) container_ap(new ObjectContainerUniversalMachO (module_sp, data_sp, data_offset, file, file_offset, length));
             if (container_ap->ParseHeader())
             {
                 return container_ap.release();

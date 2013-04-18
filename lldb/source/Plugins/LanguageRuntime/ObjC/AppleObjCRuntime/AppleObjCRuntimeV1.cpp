@@ -150,7 +150,7 @@ struct BufStruct {
 ClangUtilityFunction *
 AppleObjCRuntimeV1::CreateObjectChecker(const char *name)
 {
-    std::auto_ptr<BufStruct> buf(new BufStruct);
+    STD_UNIQUE_PTR(BufStruct) buf(new BufStruct);
     
     assert(snprintf(&buf->contents[0], sizeof(buf->contents),
                     "struct __objc_class                                                    \n"

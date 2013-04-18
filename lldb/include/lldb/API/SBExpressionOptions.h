@@ -12,7 +12,6 @@
 
 #include "lldb/API/SBDefines.h"
 
-#include <memory>
 #include <vector>
 
 namespace lldb {
@@ -82,7 +81,7 @@ protected:
 
 private:
     // This auto_pointer is made in the constructor and is always valid.
-    mutable std::auto_ptr<lldb_private::EvaluateExpressionOptions> m_opaque_ap;
+    mutable STD_UNIQUE_PTR(lldb_private::EvaluateExpressionOptions) m_opaque_ap;
 };
 
 } // namespace lldb

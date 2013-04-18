@@ -234,7 +234,7 @@ private:
                                        // the callback machinery.
     bool        m_being_created;
 
-    std::auto_ptr<ClangUserExpression> m_condition_ap;  // The condition to test.
+    STD_UNIQUE_PTR(ClangUserExpression) m_condition_ap;  // The condition to test.
 
     void SetID(lldb::watch_id_t id) { m_loc_id = id; }
     

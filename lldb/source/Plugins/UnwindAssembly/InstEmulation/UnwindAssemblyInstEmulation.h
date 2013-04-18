@@ -160,7 +160,7 @@ private:
     GetRegisterValue (const lldb_private::RegisterInfo &reg_info, 
                       lldb_private::RegisterValue &reg_value);
 
-    std::auto_ptr<lldb_private::EmulateInstruction> m_inst_emulator_ap;    
+    STD_UNIQUE_PTR(lldb_private::EmulateInstruction) m_inst_emulator_ap;    
     lldb_private::AddressRange* m_range_ptr; 
     lldb_private::Thread* m_thread_ptr;
     lldb_private::UnwindPlan* m_unwind_plan_ptr;

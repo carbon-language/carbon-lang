@@ -463,7 +463,7 @@ private:
     OptionArgMap m_alias_options;               // Stores any options (with or without arguments) that go with any alias.
     std::vector<std::string> m_command_history;
     std::string m_repeat_command;               // Stores the command that will be executed for an empty command string.
-    std::auto_ptr<ScriptInterpreter> m_script_interpreter_ap;
+    STD_UNIQUE_PTR(ScriptInterpreter) m_script_interpreter_ap;
     char m_comment_char;
     char m_repeat_char;
     bool m_batch_command_mode;

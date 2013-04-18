@@ -205,7 +205,7 @@ private:
 
     Broadcaster *   m_broadcaster;  // The broadcaster that sent this event
     uint32_t        m_type;         // The bit describing this event
-    std::auto_ptr<EventData> m_data_ap;         // User specific data for this event
+    STD_UNIQUE_PTR(EventData) m_data_ap;         // User specific data for this event
 
 
     DISALLOW_COPY_AND_ASSIGN (Event);

@@ -109,7 +109,7 @@ Platform::FindPlugin (Process *process, const char *plugin_name)
             {
                 arch = process->GetTarget().GetArchitecture();
             }
-            std::auto_ptr<Platform> instance_ap(create_callback(process, &arch));
+            STD_UNIQUE_PTR(Platform) instance_ap(create_callback(process, &arch));
             if (instance_ap.get())
                 return instance_ap.release();
         }
@@ -118,7 +118,7 @@ Platform::FindPlugin (Process *process, const char *plugin_name)
     {
         for (uint32_t idx = 0; (create_callback = PluginManager::GetPlatformCreateCallbackAtIndex(idx)) != NULL; ++idx)
         {
-            std::auto_ptr<Platform> instance_ap(create_callback(process, false));
+            STD_UNIQUE_PTR(Platform) instance_ap(create_callback(process, false));
             if (instance_ap.get())
                 return instance_ap.release();
         }

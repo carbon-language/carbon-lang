@@ -14,7 +14,6 @@
 
 // C++ Includes
 #include <list>
-#include <memory>
 
 // Other libraries and framework includes
 
@@ -380,7 +379,7 @@ private:
     bool m_being_created;
     Address m_address; ///< The address defining this location.
     Breakpoint &m_owner; ///< The breakpoint that produced this object.
-    std::auto_ptr<BreakpointOptions> m_options_ap; ///< Breakpoint options pointer, NULL if we're using our breakpoint's options.
+    STD_UNIQUE_PTR(BreakpointOptions) m_options_ap; ///< Breakpoint options pointer, NULL if we're using our breakpoint's options.
     lldb::BreakpointSiteSP m_bp_site_sp; ///< Our breakpoint site (it may be shared by more than one location.)
 
     void

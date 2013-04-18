@@ -160,7 +160,7 @@ private:
     lldb_utility::PseudoTerminal m_editline_pty;
     FILE *m_editline_slave_fh;
     lldb::SBInputReader m_editline_reader;
-    std::auto_ptr<IOChannel> m_io_channel_ap;
+    STD_UNIQUE_PTR(IOChannel) m_io_channel_ap;
     OptionData m_option_data;
     bool m_waiting_for_command;
     bool m_done;

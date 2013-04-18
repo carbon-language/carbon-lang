@@ -102,8 +102,8 @@ FuncUnwinders::GetUnwindPlanAtNonCallSite (Thread& thread)
     // information. We want to make sure if someone requests an unwind
     // plan, that they get one and don't run into a race condition where one
     // thread has started to create the unwind plan and has put it into 
-    // the auto_ptr member variable, and have another thread enter this function
-    // and return the partially filled pointer contained in the auto_ptr.
+    // the unique pointer member variable, and have another thread enter this function
+    // and return the partially filled pointer contained in the unique pointer.
     // We also want to make sure that we lock out other unwind plans from
     // being accessed until this one is done creating itself in case someone
     // had some code like:
@@ -128,8 +128,8 @@ FuncUnwinders::GetUnwindPlanFastUnwind (Thread& thread)
     // information. We want to make sure if someone requests an unwind
     // plan, that they get one and don't run into a race condition where one
     // thread has started to create the unwind plan and has put it into 
-    // the auto_ptr member variable, and have another thread enter this function
-    // and return the partially filled pointer contained in the auto_ptr.
+    // the unique pointer member variable, and have another thread enter this function
+    // and return the partially filled pointer contained in the unique pointer.
     // We also want to make sure that we lock out other unwind plans from
     // being accessed until this one is done creating itself in case someone
     // had some code like:
@@ -154,8 +154,8 @@ FuncUnwinders::GetUnwindPlanArchitectureDefault (Thread& thread)
     // information. We want to make sure if someone requests an unwind
     // plan, that they get one and don't run into a race condition where one
     // thread has started to create the unwind plan and has put it into 
-    // the auto_ptr member variable, and have another thread enter this function
-    // and return the partially filled pointer contained in the auto_ptr.
+    // the unique pointer member variable, and have another thread enter this function
+    // and return the partially filled pointer contained in the unique pointer.
     // We also want to make sure that we lock out other unwind plans from
     // being accessed until this one is done creating itself in case someone
     // had some code like:
@@ -190,8 +190,8 @@ FuncUnwinders::GetUnwindPlanArchitectureDefaultAtFunctionEntry (Thread& thread)
     // information. We want to make sure if someone requests an unwind
     // plan, that they get one and don't run into a race condition where one
     // thread has started to create the unwind plan and has put it into 
-    // the auto_ptr member variable, and have another thread enter this function
-    // and return the partially filled pointer contained in the auto_ptr.
+    // the unique pointer member variable, and have another thread enter this function
+    // and return the partially filled pointer contained in the unique pointer.
     // We also want to make sure that we lock out other unwind plans from
     // being accessed until this one is done creating itself in case someone
     // had some code like:

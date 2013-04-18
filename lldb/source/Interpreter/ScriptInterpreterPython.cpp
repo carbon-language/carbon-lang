@@ -1321,7 +1321,7 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
     case eInputReaderDone:
         {
             BreakpointOptions *bp_options = (BreakpointOptions *)baton;
-            std::auto_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
+            STD_UNIQUE_PTR(BreakpointOptions::CommandData) data_ap(new BreakpointOptions::CommandData());
             data_ap->user_source.AppendList (commands_in_progress);
             if (data_ap.get())
             {
@@ -1427,7 +1427,7 @@ ScriptInterpreterPython::GenerateWatchpointOptionsCommandCallback
     case eInputReaderDone:
         {
             WatchpointOptions *wp_options = (WatchpointOptions *)baton;
-            std::auto_ptr<WatchpointOptions::CommandData> data_ap(new WatchpointOptions::CommandData());
+            STD_UNIQUE_PTR(WatchpointOptions::CommandData) data_ap(new WatchpointOptions::CommandData());
             data_ap->user_source.AppendList (commands_in_progress);
             if (data_ap.get())
             {
@@ -1534,7 +1534,7 @@ void
 ScriptInterpreterPython::SetBreakpointCommandCallback (BreakpointOptions *bp_options,
                                                        const char *oneliner)
 {
-    std::auto_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
+    STD_UNIQUE_PTR(BreakpointOptions::CommandData) data_ap(new BreakpointOptions::CommandData());
 
     // It's necessary to set both user_source and script_source to the oneliner.
     // The former is used to generate callback description (as in breakpoint command list)
@@ -1557,7 +1557,7 @@ void
 ScriptInterpreterPython::SetWatchpointCommandCallback (WatchpointOptions *wp_options,
                                                        const char *oneliner)
 {
-    std::auto_ptr<WatchpointOptions::CommandData> data_ap(new WatchpointOptions::CommandData());
+    STD_UNIQUE_PTR(WatchpointOptions::CommandData) data_ap(new WatchpointOptions::CommandData());
 
     // It's necessary to set both user_source and script_source to the oneliner.
     // The former is used to generate callback description (as in watchpoint command list)
@@ -2807,10 +2807,10 @@ ScriptInterpreterPython::GetDocumentationForItem(const char* item, std::string& 
     }
 }
 
-std::auto_ptr<ScriptInterpreterLocker>
+STD_UNIQUE_PTR(ScriptInterpreterLocker)
 ScriptInterpreterPython::AcquireInterpreterLock ()
 {
-    std::auto_ptr<ScriptInterpreterLocker> py_lock(new Locker(this,
+    STD_UNIQUE_PTR(ScriptInterpreterLocker) py_lock(new Locker(this,
                                                               Locker::AcquireLock | Locker::InitSession,
                                                               Locker::FreeLock | Locker::TearDownSession));
     return py_lock;

@@ -190,7 +190,7 @@ but do NOT enter more than one command per line. \n" );
                                              CommandReturnObject &result)
     {
         InputReaderSP reader_sp (new InputReader(m_interpreter.GetDebugger()));
-        std::auto_ptr<WatchpointOptions::CommandData> data_ap(new WatchpointOptions::CommandData());
+        STD_UNIQUE_PTR(WatchpointOptions::CommandData) data_ap(new WatchpointOptions::CommandData());
         if (reader_sp && data_ap.get())
         {
             BatonSP baton_sp (new WatchpointOptions::CommandBaton (data_ap.release()));
@@ -226,7 +226,7 @@ but do NOT enter more than one command per line. \n" );
     SetWatchpointCommandCallback (WatchpointOptions *wp_options,
                                   const char *oneliner)
     {
-        std::auto_ptr<WatchpointOptions::CommandData> data_ap(new WatchpointOptions::CommandData());
+        STD_UNIQUE_PTR(WatchpointOptions::CommandData) data_ap(new WatchpointOptions::CommandData());
 
         // It's necessary to set both user_source and script_source to the oneliner.
         // The former is used to generate callback description (as in watchpoint command list)

@@ -84,7 +84,7 @@ private:
     const lldb_private::FileSpec &
     ref() const;
 
-    std::auto_ptr <lldb_private::FileSpec> m_opaque_ap;
+    STD_UNIQUE_PTR(lldb_private::FileSpec) m_opaque_ap;
 };
 
 

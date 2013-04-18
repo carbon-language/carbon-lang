@@ -526,12 +526,7 @@ public:
     }
     
     void
-    SetSymbolFileFileSpec (const FileSpec &file)
-    {
-        m_symfile_spec = file;
-        m_symfile_ap.reset();
-        m_did_load_symbol_vendor = false;
-    }
+    SetSymbolFileFileSpec (const FileSpec &file);
 
     const TimeValue &
     GetModificationTime () const;
@@ -946,7 +941,7 @@ protected:
     ConstString                 m_object_name;  ///< The name an object within this module that is selected, or empty of the module is represented by \a m_file.
     uint64_t                    m_object_offset;
     lldb::ObjectFileSP          m_objfile_sp;   ///< A shared pointer to the object file parser for this module as it may or may not be shared with the SymbolFile
-    std::auto_ptr<SymbolVendor> m_symfile_ap;   ///< A pointer to the symbol vendor for this module.
+    STD_UNIQUE_PTR(SymbolVendor) m_symfile_ap;   ///< A pointer to the symbol vendor for this module.
     ClangASTContext             m_ast;          ///< The AST context for this module.
     PathMappingList             m_source_mappings; ///< Module specific source remappings for when you have debug info for a module that doesn't match where the sources currently are
 

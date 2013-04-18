@@ -59,7 +59,7 @@ ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp,
                 {
                     for (uint32_t idx = 0; (create_object_container_callback = PluginManager::GetObjectContainerCreateCallbackAtIndex(idx)) != NULL; ++idx)
                     {
-                        std::auto_ptr<ObjectContainer> object_container_ap(create_object_container_callback(module_sp, data_sp, data_offset, file, file_offset, file_size));
+                        STD_UNIQUE_PTR(ObjectContainer) object_container_ap(create_object_container_callback(module_sp, data_sp, data_offset, file, file_offset, file_size));
                         
                         if (object_container_ap.get())
                             object_file_sp = object_container_ap->GetObjectFile(file);
@@ -101,7 +101,7 @@ ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp,
                         // (like BSD archives caching the contained objects within an file).
                         for (uint32_t idx = 0; (create_object_container_callback = PluginManager::GetObjectContainerCreateCallbackAtIndex(idx)) != NULL; ++idx)
                         {
-                            std::auto_ptr<ObjectContainer> object_container_ap(create_object_container_callback(module_sp, data_sp, data_offset, file, file_offset, file_size));
+                            STD_UNIQUE_PTR(ObjectContainer) object_container_ap(create_object_container_callback(module_sp, data_sp, data_offset, file, file_offset, file_size));
                             
                             if (object_container_ap.get())
                                 object_file_sp = object_container_ap->GetObjectFile(file);
@@ -133,7 +133,7 @@ ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp,
                 // an object file from the container.
                 for (uint32_t idx = 0; (create_object_container_callback = PluginManager::GetObjectContainerCreateCallbackAtIndex(idx)) != NULL; ++idx)
                 {
-                    std::auto_ptr<ObjectContainer> object_container_ap(create_object_container_callback(module_sp, data_sp, data_offset, file, file_offset, file_size));
+                    STD_UNIQUE_PTR(ObjectContainer) object_container_ap(create_object_container_callback(module_sp, data_sp, data_offset, file, file_offset, file_size));
 
                     if (object_container_ap.get())
                         object_file_sp = object_container_ap->GetObjectFile(file);
@@ -392,7 +392,7 @@ ObjectFile::ReadMemory (const ProcessSP &process_sp, lldb::addr_t addr, size_t b
     DataBufferSP data_sp;
     if (process_sp)
     {
-        std::auto_ptr<DataBufferHeap> data_ap (new DataBufferHeap (byte_size, 0));
+        STD_UNIQUE_PTR(DataBufferHeap) data_ap (new DataBufferHeap (byte_size, 0));
         Error error;
         const size_t bytes_read = process_sp->ReadMemory (addr, 
                                                           data_ap->GetBytes(), 

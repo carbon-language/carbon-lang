@@ -76,9 +76,9 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_valid (true),
     m_search_filter_sp (),
     m_image_search_paths (ImageSearchPathsChanged, this),
-    m_scratch_ast_context_ap (NULL),
-    m_scratch_ast_source_ap (NULL),
-    m_ast_importer_ap (NULL),
+    m_scratch_ast_context_ap (),
+    m_scratch_ast_source_ap (),
+    m_ast_importer_ap (),
     m_persistent_variables (),
     m_source_manager_ap(),
     m_stop_hooks (),
@@ -2143,7 +2143,7 @@ Target::StopHook::StopHook (lldb::TargetSP target_sp, lldb::user_id_t uid) :
         m_target_sp (target_sp),
         m_commands (),
         m_specifier_sp (),
-        m_thread_spec_ap(NULL),
+        m_thread_spec_ap(),
         m_active (true)
 {
 }
@@ -2153,7 +2153,7 @@ Target::StopHook::StopHook (const StopHook &rhs) :
         m_target_sp (rhs.m_target_sp),
         m_commands (rhs.m_commands),
         m_specifier_sp (rhs.m_specifier_sp),
-        m_thread_spec_ap (NULL),
+        m_thread_spec_ap (),
         m_active (rhs.m_active)
 {
     if (rhs.m_thread_spec_ap.get() != NULL)

@@ -14,7 +14,6 @@
 // C++ Includes
 #include <string>
 #include <vector>
-#include <memory>
 #include <stdint.h>
 
 // Other libraries and framework includes

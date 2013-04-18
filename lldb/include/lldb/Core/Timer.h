@@ -13,7 +13,6 @@
 
 #include <stdarg.h>
 #include <stdio.h>
-#include <memory>
 #include <string>
 #include "lldb/lldb-private.h"
 #include "lldb/Host/TimeValue.h"

@@ -11,7 +11,6 @@
 #define utility_PythonPointer_h_
 
 #include <algorithm>
-#include <memory>
 
 #if defined (__APPLE__)
 #include <Python/Python.h>

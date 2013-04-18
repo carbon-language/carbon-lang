@@ -45,7 +45,7 @@ protected:
 
 private:
 
-    std::auto_ptr<lldb_private::SourceManagerImpl> m_opaque_ap;
+    STD_UNIQUE_PTR(lldb_private::SourceManagerImpl) m_opaque_ap;
 };
 
 } // namespace lldb

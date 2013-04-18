@@ -190,7 +190,7 @@ protected:
     const DWARFAbbreviationDeclarationSet *m_abbrevs;
     void *              m_user_data;
     DWARFDebugInfoEntry::collection m_die_array;    // The compile unit debug information entry item
-    std::auto_ptr<DWARFDebugAranges> m_func_aranges_ap;   // A table similar to the .debug_aranges table, but this one points to the exact DW_TAG_subprogram DIEs
+    STD_UNIQUE_PTR(DWARFDebugAranges) m_func_aranges_ap;   // A table similar to the .debug_aranges table, but this one points to the exact DW_TAG_subprogram DIEs
     dw_addr_t           m_base_addr;
     dw_offset_t         m_offset;
     uint32_t            m_length;

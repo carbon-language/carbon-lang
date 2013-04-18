@@ -130,7 +130,7 @@ protected:
     int32_t                         m_suspend_count; // The current suspend count > 0 means we have suspended m_suspendCount times,
                                                     //                           < 0 means we have resumed it m_suspendCount times.
     MachException::Data             m_stop_exception; // The best exception that describes why this thread is stopped
-    std::auto_ptr<DNBArchProtocol>  m_arch_ap;      // Arch specific information for register state and more
+    STD_UNIQUE_PTR(DNBArchProtocol) m_arch_ap;      // Arch specific information for register state and more
     const DNBRegisterSetInfo *      m_reg_sets;      // Register set information for this thread
     nub_size_t                      m_num_reg_sets;
     thread_identifier_info_data_t   m_ident_info;

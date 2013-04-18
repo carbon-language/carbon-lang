@@ -81,7 +81,7 @@ private:
         return (RegisterContextPOSIX *)m_reg_context_sp.get();
     }
     
-    std::auto_ptr<lldb_private::StackFrame> m_frame_ap;
+    STD_UNIQUE_PTR(lldb_private::StackFrame) m_frame_ap;
 
     lldb::BreakpointSiteSP m_breakpoint;
     lldb::StopInfoSP m_stop_info;

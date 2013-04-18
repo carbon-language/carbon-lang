@@ -155,7 +155,7 @@ private:
 
     /// List of file specifications corresponding to the modules (shared
     /// libraries) on which this object file depends.
-    mutable std::auto_ptr<lldb_private::FileSpecList> m_filespec_ap;
+    mutable STD_UNIQUE_PTR(lldb_private::FileSpecList) m_filespec_ap;
 
     /// Data extractor holding the string table used to resolve section names.
     lldb_private::DataExtractor m_shstr_data;

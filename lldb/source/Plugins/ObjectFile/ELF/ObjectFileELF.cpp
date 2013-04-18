@@ -198,7 +198,7 @@ ObjectFileELF::CreateInstance (const lldb::ModuleSP &module_sp,
             unsigned address_size = ELFHeader::AddressSizeInBytes(magic);
             if (address_size == 4 || address_size == 8)
             {
-                std::auto_ptr<ObjectFileELF> objfile_ap(new ObjectFileELF(module_sp, data_sp, data_offset, file, file_offset, length));
+                STD_UNIQUE_PTR(ObjectFileELF) objfile_ap(new ObjectFileELF(module_sp, data_sp, data_offset, file, file_offset, length));
                 ArchSpec spec;
                 if (objfile_ap->GetArchitecture(spec) &&
                     objfile_ap->SetModulesArchitecture(spec))

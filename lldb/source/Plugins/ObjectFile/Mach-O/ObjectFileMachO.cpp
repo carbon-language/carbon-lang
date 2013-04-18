@@ -411,7 +411,7 @@ ObjectFileMachO::CreateInstance (const lldb::ModuleSP &module_sp,
             data_sp = file->MemoryMapFileContents(file_offset, length);
             data_offset = 0;
         }
-        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFileMachO (module_sp, data_sp, data_offset, file, file_offset, length));
+        STD_UNIQUE_PTR(ObjectFile) objfile_ap(new ObjectFileMachO (module_sp, data_sp, data_offset, file, file_offset, length));
         if (objfile_ap.get() && objfile_ap->ParseHeader())
             return objfile_ap.release();
     }
@@ -426,7 +426,7 @@ ObjectFileMachO::CreateMemoryInstance (const lldb::ModuleSP &module_sp,
 {
     if (ObjectFileMachO::MagicBytesMatch(data_sp, 0, data_sp->GetByteSize()))
     {
-        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFileMachO (module_sp, data_sp, process_sp, header_addr));
+        STD_UNIQUE_PTR(ObjectFile) objfile_ap(new ObjectFileMachO (module_sp, data_sp, process_sp, header_addr));
         if (objfile_ap.get() && objfile_ap->ParseHeader())
             return objfile_ap.release();
     }

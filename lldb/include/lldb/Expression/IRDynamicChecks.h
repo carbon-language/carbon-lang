@@ -77,8 +77,8 @@ public:
     
     bool DoCheckersExplainStop (lldb::addr_t addr, Stream &message);
     
-    std::auto_ptr<ClangUtilityFunction> m_valid_pointer_check;
-    std::auto_ptr<ClangUtilityFunction> m_objc_object_check;
+    STD_UNIQUE_PTR(ClangUtilityFunction) m_valid_pointer_check;
+    STD_UNIQUE_PTR(ClangUtilityFunction) m_objc_object_check;
 };
 
 //----------------------------------------------------------------------

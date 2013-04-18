@@ -25,6 +25,7 @@
 #include "lldb/Expression/ASTStructExtractor.h"
 #include "lldb/Expression/ClangExpressionParser.h"
 #include "lldb/Expression/ClangFunction.h"
+#include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/State.h"

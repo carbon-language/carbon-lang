@@ -98,7 +98,7 @@ DynamicLoaderPOSIXDYLD::DynamicLoaderPOSIXDYLD(Process *process)
       m_rendezvous(process),
       m_load_offset(LLDB_INVALID_ADDRESS),
       m_entry_point(LLDB_INVALID_ADDRESS),
-      m_auxv(NULL)
+      m_auxv()
 {
 }
 

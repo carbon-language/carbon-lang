@@ -23,6 +23,7 @@
 #include "lldb/Expression/ClangExpressionParser.h"
 #include "lldb/Expression/ClangUtilityFunction.h"
 #include "lldb/Expression/ExpressionSourceCode.h"
+#include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Target.h"

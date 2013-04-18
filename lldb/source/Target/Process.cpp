@@ -4440,7 +4440,7 @@ Process::SetSTDIOFileDescriptor (int file_descriptor)
 {
     // First set up the Read Thread for reading/handling process I/O
     
-    std::auto_ptr<ConnectionFileDescriptor> conn_ap (new ConnectionFileDescriptor (file_descriptor, true));
+    STD_UNIQUE_PTR(ConnectionFileDescriptor) conn_ap (new ConnectionFileDescriptor (file_descriptor, true));
     
     if (conn_ap.get())
     {

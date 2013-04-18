@@ -93,7 +93,7 @@ protected:
     lldb::addr_t m_entry_point;
 
     /// Auxiliary vector of the inferior process.
-    std::auto_ptr<AuxVector> m_auxv;
+    STD_UNIQUE_PTR(AuxVector) m_auxv;
 
     /// Enables a breakpoint on a function called by the runtime
     /// linker each time a module is loaded or unloaded.

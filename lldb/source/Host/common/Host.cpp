@@ -1313,7 +1313,7 @@ Host::RunShellCommand (const char *command,
     }
     
     // The process monitor callback will delete the 'shell_info_ptr' below...
-    std::auto_ptr<ShellInfo> shell_info_ap (new ShellInfo());
+    STD_UNIQUE_PTR(ShellInfo) shell_info_ap (new ShellInfo());
     
     const bool monitor_signals = false;
     launch_info.SetMonitorProcessCallback(MonitorShellCommand, shell_info_ap.get(), monitor_signals);
@@ -1324,7 +1324,7 @@ Host::RunShellCommand (const char *command,
     {
         // The process successfully launched, so we can defer ownership of
         // "shell_info" to the MonitorShellCommand callback function that will
-        // get called when the process dies. We release the std::auto_ptr as it
+        // get called when the process dies. We release the unique pointer as it
         // doesn't need to delete the ShellInfo anymore.
         ShellInfo *shell_info = shell_info_ap.release();
         TimeValue timeout_time(TimeValue::Now());

@@ -1,9 +1,6 @@
 #ifndef liblldb_FuncUnwinders_h
 #define liblldb_FuncUnwinders_h
 
-
-#include <memory>
-
 #include "lldb/Core/AddressRange.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/AddressRange.h"

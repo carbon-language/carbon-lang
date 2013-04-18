@@ -11,11 +11,11 @@
 #define liblldb_ClangASTContext_h_
 
 // C Includes
+#include <stdint.h>
+
 // C++ Includes
 #include <string>
 #include <vector>
-#include <memory>
-#include <stdint.h>
 
 // Other libraries and framework includes
 #include "llvm/ADT/OwningPtr.h"
@@ -1013,22 +1013,22 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from ClangASTContext can see and modify these
     //------------------------------------------------------------------
-    std::string                             m_target_triple;
-    std::auto_ptr<clang::ASTContext>        m_ast_ap;
-    std::auto_ptr<clang::LangOptions>       m_language_options_ap;
-    std::auto_ptr<clang::FileManager>       m_file_manager_ap;
-    std::auto_ptr<clang::FileSystemOptions> m_file_system_options_ap;
-    std::auto_ptr<clang::SourceManager>     m_source_manager_ap;
-    std::auto_ptr<clang::DiagnosticsEngine>  m_diagnostics_engine_ap;
-    std::auto_ptr<clang::DiagnosticConsumer> m_diagnostic_consumer_ap;
+    std::string                                     m_target_triple;
+    STD_UNIQUE_PTR(clang::ASTContext)               m_ast_ap;
+    STD_UNIQUE_PTR(clang::LangOptions)              m_language_options_ap;
+    STD_UNIQUE_PTR(clang::FileManager)              m_file_manager_ap;
+    STD_UNIQUE_PTR(clang::FileSystemOptions)        m_file_system_options_ap;
+    STD_UNIQUE_PTR(clang::SourceManager)            m_source_manager_ap;
+    STD_UNIQUE_PTR(clang::DiagnosticsEngine)        m_diagnostics_engine_ap;
+    STD_UNIQUE_PTR(clang::DiagnosticConsumer)       m_diagnostic_consumer_ap;
     llvm::IntrusiveRefCntPtr<clang::TargetOptions>  m_target_options_rp;
-    std::auto_ptr<clang::TargetInfo>        m_target_info_ap;
-    std::auto_ptr<clang::IdentifierTable>   m_identifier_table_ap;
-    std::auto_ptr<clang::SelectorTable>     m_selector_table_ap;
-    std::auto_ptr<clang::Builtin::Context>  m_builtins_ap;
-    CompleteTagDeclCallback                 m_callback_tag_decl;
-    CompleteObjCInterfaceDeclCallback       m_callback_objc_decl;
-    void *                                  m_callback_baton;
+    STD_UNIQUE_PTR(clang::TargetInfo)               m_target_info_ap;
+    STD_UNIQUE_PTR(clang::IdentifierTable)          m_identifier_table_ap;
+    STD_UNIQUE_PTR(clang::SelectorTable)            m_selector_table_ap;
+    STD_UNIQUE_PTR(clang::Builtin::Context)         m_builtins_ap;
+    CompleteTagDeclCallback                         m_callback_tag_decl;
+    CompleteObjCInterfaceDeclCallback               m_callback_objc_decl;
+    void *                                          m_callback_baton;
 private:
     //------------------------------------------------------------------
     // For ClangASTContext only

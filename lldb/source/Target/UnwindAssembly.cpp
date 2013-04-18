@@ -24,7 +24,7 @@ UnwindAssembly::FindPlugin (const ArchSpec &arch)
          (create_callback = PluginManager::GetUnwindAssemblyCreateCallbackAtIndex(idx)) != NULL;
          ++idx)
     {
-        std::auto_ptr<UnwindAssembly> assembly_profiler_ap (create_callback (arch));
+        STD_UNIQUE_PTR(UnwindAssembly) assembly_profiler_ap (create_callback (arch));
         if (assembly_profiler_ap.get ())
             return assembly_profiler_ap.release ();
     }

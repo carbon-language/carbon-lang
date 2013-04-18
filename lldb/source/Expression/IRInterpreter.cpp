@@ -817,7 +817,7 @@ IRInterpreter::maybeRunOnFunction (lldb_private::ClangExpressionDeclMap *decl_ma
 }
 
 static const char *unsupported_opcode_error         = "Interpreter doesn't handle one of the expression's opcodes";
-static const char *interpreter_initialization_error = "Interpreter couldn't be initialized";
+//static const char *interpreter_initialization_error = "Interpreter couldn't be initialized";
 static const char *interpreter_internal_error       = "Interpreter encountered an internal error";
 static const char *bad_value_error                  = "Interpreter couldn't resolve a value during execution";
 static const char *memory_allocation_error          = "Interpreter couldn't allocate memory";

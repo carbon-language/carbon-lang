@@ -188,7 +188,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
                                               ClangExpression &expr) :
     m_expr (expr),
     m_compiler (),
-    m_code_generator (NULL)
+    m_code_generator ()
 {
     // Initialize targets first, so that --version shows registered targets.
     static struct InitializeLLVM {
@@ -351,13 +351,13 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     m_selector_table.reset(new SelectorTable());
     m_builtin_context.reset(new Builtin::Context());
     
-    std::auto_ptr<clang::ASTContext> ast_context(new ASTContext(m_compiler->getLangOpts(),
-                                                                m_compiler->getSourceManager(),
-                                                                &m_compiler->getTarget(),
-                                                                m_compiler->getPreprocessor().getIdentifierTable(),
-                                                                *m_selector_table.get(),
-                                                                *m_builtin_context.get(),
-                                                                0));
+    STD_UNIQUE_PTR(clang::ASTContext) ast_context(new ASTContext(m_compiler->getLangOpts(),
+                                                                 m_compiler->getSourceManager(),
+                                                                 &m_compiler->getTarget(),
+                                                                 m_compiler->getPreprocessor().getIdentifierTable(),
+                                                                 *m_selector_table.get(),
+                                                                 *m_builtin_context.get(),
+                                                                 0));
     
     ClangExpressionDeclMap *decl_map = m_expr.DeclMap();
     
@@ -462,7 +462,7 @@ static bool FindFunctionInModule (ConstString &mangled_name,
 Error
 ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr, 
                                             lldb::addr_t &func_end,
-                                            std::auto_ptr<IRExecutionUnit> &execution_unit_ap,
+                                            STD_UNIQUE_PTR(IRExecutionUnit) &execution_unit_ap,
                                             ExecutionContext &exe_ctx,
                                             bool &evaluated_statically,
                                             lldb::ClangExpressionVariableSP &const_result,
@@ -472,11 +472,11 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
 	func_end = LLDB_INVALID_ADDRESS;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
-    std::auto_ptr<llvm::ExecutionEngine> execution_engine_ap;
+    STD_UNIQUE_PTR(llvm::ExecutionEngine) execution_engine_ap;
     
     Error err;
     
-    std::auto_ptr<llvm::Module> module_ap (m_code_generator->ReleaseModule());
+    STD_UNIQUE_PTR(llvm::Module) module_ap (m_code_generator->ReleaseModule());
 
     if (!module_ap.get())
     {
@@ -596,7 +596,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
     
     m_execution_unit->GetRunnableInfo(err, func_addr, func_end);
     
-    execution_unit_ap = m_execution_unit;
+    execution_unit_ap.reset (m_execution_unit.release());
         
     return err;
 }

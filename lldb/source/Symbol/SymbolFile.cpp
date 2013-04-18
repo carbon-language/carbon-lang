@@ -21,7 +21,7 @@ using namespace lldb_private;
 SymbolFile*
 SymbolFile::FindPlugin (ObjectFile* obj_file)
 {
-    std::auto_ptr<SymbolFile> best_symfile_ap;
+    STD_UNIQUE_PTR(SymbolFile) best_symfile_ap;
     if (obj_file != NULL)
     {
         // TODO: Load any plug-ins in the appropriate plug-in search paths and
@@ -32,7 +32,7 @@ SymbolFile::FindPlugin (ObjectFile* obj_file)
         SymbolFileCreateInstance create_callback;
         for (uint32_t idx = 0; (create_callback = PluginManager::GetSymbolFileCreateCallbackAtIndex(idx)) != NULL; ++idx)
         {
-            std::auto_ptr<SymbolFile> curr_symfile_ap(create_callback(obj_file));
+            STD_UNIQUE_PTR(SymbolFile) curr_symfile_ap(create_callback(obj_file));
 
             if (curr_symfile_ap.get())
             {
@@ -40,7 +40,7 @@ SymbolFile::FindPlugin (ObjectFile* obj_file)
                 if (sym_file_abilities > best_symfile_abilities)
                 {
                     best_symfile_abilities = sym_file_abilities;
-                    best_symfile_ap = curr_symfile_ap;
+                    best_symfile_ap.reset (curr_symfile_ap.release());
                     // If any symbol file parser has all of the abilities, then
                     // we should just stop looking.
                     if ((kAllAbilities & sym_file_abilities) == kAllAbilities)

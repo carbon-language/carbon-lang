@@ -77,7 +77,7 @@ protected:
     SymbolFileDWARF* m_dwarf2Data;
     typedef std::vector<DWARFCompileUnitSP>     CompileUnitColl;
     CompileUnitColl m_compile_units;
-    std::auto_ptr<DWARFDebugAranges> m_cu_aranges_ap; // A quick address to compile unit table
+    STD_UNIQUE_PTR(DWARFDebugAranges) m_cu_aranges_ap; // A quick address to compile unit table
 
 private:
     // All parsing needs to be done partially any managed by this class as accessors are called.

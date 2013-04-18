@@ -638,7 +638,7 @@ Instruction::Dump (lldb_private::Stream *s,
 bool
 Instruction::DumpEmulation (const ArchSpec &arch)
 {
-	std::auto_ptr<EmulateInstruction> insn_emulator_ap (EmulateInstruction::FindPlugin (arch, eInstructionTypeAny, NULL));
+	STD_UNIQUE_PTR(EmulateInstruction) insn_emulator_ap (EmulateInstruction::FindPlugin (arch, eInstructionTypeAny, NULL));
 	if (insn_emulator_ap.get())
 	{
         insn_emulator_ap->SetInstruction (GetOpcode(), GetAddress(), NULL);
@@ -904,7 +904,7 @@ Instruction::TestEmulation (Stream *out_stream, const char *file_name)
     arch.SetTriple (llvm::Triple (value_sp->GetStringValue()));
 
     bool success = false;
-    std::auto_ptr<EmulateInstruction> insn_emulator_ap (EmulateInstruction::FindPlugin (arch, eInstructionTypeAny, NULL));
+    STD_UNIQUE_PTR(EmulateInstruction) insn_emulator_ap (EmulateInstruction::FindPlugin (arch, eInstructionTypeAny, NULL));
     if (insn_emulator_ap.get())
         success = insn_emulator_ap->TestEmulation (out_stream, arch, data_dictionary);
 
@@ -925,7 +925,7 @@ Instruction::Emulate (const ArchSpec &arch,
                       EmulateInstruction::ReadRegisterCallback read_reg_callback,
                       EmulateInstruction::WriteRegisterCallback write_reg_callback)
 {
-	std::auto_ptr<EmulateInstruction> insn_emulator_ap (EmulateInstruction::FindPlugin (arch, eInstructionTypeAny, NULL));
+	STD_UNIQUE_PTR(EmulateInstruction) insn_emulator_ap (EmulateInstruction::FindPlugin (arch, eInstructionTypeAny, NULL));
 	if (insn_emulator_ap.get())
 	{
 		insn_emulator_ap->SetBaton (baton);

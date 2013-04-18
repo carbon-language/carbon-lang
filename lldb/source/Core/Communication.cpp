@@ -108,7 +108,7 @@ Communication::Disconnect (Error *error_ptr)
         // don't want to pay for the overhead it might cause if every time we
         // access the connection we have to take a lock.
         //
-        // This auto_ptr will cleanup after itself when this object goes away,
+        // This unique pointer will cleanup after itself when this object goes away,
         // so there is no need to currently have it destroy itself immediately
         // upon disconnnect.
         //connection_sp.reset();

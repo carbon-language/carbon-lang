@@ -1062,8 +1062,8 @@ DWARFExpression::Update_DW_OP_addr (lldb::addr_t file_addr)
             // we then replace the data for this expression
             
             // So first we copy the data into a heap buffer
-            std::auto_ptr<DataBufferHeap> head_data_ap (new DataBufferHeap (m_data.GetDataStart(), 
-                                                                            m_data.GetByteSize()));
+            STD_UNIQUE_PTR(DataBufferHeap) head_data_ap (new DataBufferHeap (m_data.GetDataStart(),
+                                                                             m_data.GetByteSize()));
             
             // Make en encoder so we can write the address into the buffer using
             // the correct byte order (endianness)

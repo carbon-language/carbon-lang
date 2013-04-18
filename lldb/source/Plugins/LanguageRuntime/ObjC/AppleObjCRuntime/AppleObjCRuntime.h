@@ -104,17 +104,19 @@ protected:
     Address *
     GetPrintForDebuggerAddr();
     
-    std::auto_ptr<Address>  m_PrintForDebugger_addr;
+    STD_UNIQUE_PTR(Address)  m_PrintForDebugger_addr;
     bool m_read_objc_library;
-    std::auto_ptr<lldb_private::AppleObjCTrampolineHandler> m_objc_trampoline_handler_ap;
+    STD_UNIQUE_PTR(lldb_private::AppleObjCTrampolineHandler) m_objc_trampoline_handler_ap;
     lldb::BreakpointSP m_objc_exception_bp_sp;
     lldb::ModuleWP m_objc_module_wp;
 
     AppleObjCRuntime(Process *process) :
         lldb_private::ObjCLanguageRuntime(process),
         m_read_objc_library (false),
-        m_objc_trampoline_handler_ap(NULL)
-     { } // Call CreateInstance instead.
+        m_objc_trampoline_handler_ap ()
+     {
+         // Call CreateInstance instead.
+     }
 };
     
 } // namespace lldb_private

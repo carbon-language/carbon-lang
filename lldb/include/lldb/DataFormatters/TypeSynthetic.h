@@ -69,7 +69,7 @@ namespace lldb_private {
         MightHaveChildren () = 0;
         
         typedef STD_SHARED_PTR(SyntheticChildrenFrontEnd) SharedPointer;
-        typedef std::auto_ptr<SyntheticChildrenFrontEnd> AutoPointer;
+        typedef STD_UNIQUE_PTR(SyntheticChildrenFrontEnd) AutoPointer;
         
     private:
         DISALLOW_COPY_AND_ASSIGN(SyntheticChildrenFrontEnd);

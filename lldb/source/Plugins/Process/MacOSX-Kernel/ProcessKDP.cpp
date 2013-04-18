@@ -196,7 +196,7 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
         return error;
     }
 
-    std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
+    STD_UNIQUE_PTR(ConnectionFileDescriptor) conn_ap(new ConnectionFileDescriptor());
     if (conn_ap.get())
     {
         // Only try once for now.

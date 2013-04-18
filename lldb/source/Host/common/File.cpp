@@ -556,7 +556,7 @@ File::Read (size_t &num_bytes, off_t &offset, bool null_terminate, DataBufferSP 
                     if (num_bytes > bytes_left)
                         num_bytes = bytes_left;
                         
-                    std::auto_ptr<DataBufferHeap> data_heap_ap;
+                    STD_UNIQUE_PTR(DataBufferHeap) data_heap_ap;
                     data_heap_ap.reset(new DataBufferHeap(num_bytes + (null_terminate ? 1 : 0), '\0'));
                         
                     if (data_heap_ap.get())

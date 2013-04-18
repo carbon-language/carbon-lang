@@ -16,7 +16,7 @@
 
 #include <sys/time.h>
 #include <stdint.h>
-#include <memory>
+#include "DNBDefs.h"
 #include "PThreadMutex.h"
 
 class DNBTimer
@@ -155,7 +155,7 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from DNBTimer can see and modify these
     //------------------------------------------------------------------
-        std::auto_ptr<PThreadMutex> m_mutexAP;
+        STD_UNIQUE_PTR(PThreadMutex) m_mutexAP;
         struct timeval  m_timeval;
 };
 

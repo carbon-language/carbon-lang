@@ -38,7 +38,7 @@ WatchpointOptions::WatchpointOptions() :
     m_callback (WatchpointOptions::NullCallback),
     m_callback_baton_sp (),
     m_callback_is_synchronous (false),
-    m_thread_spec_ap (NULL)
+    m_thread_spec_ap ()
 {
 }
 
@@ -49,7 +49,7 @@ WatchpointOptions::WatchpointOptions(const WatchpointOptions& rhs) :
     m_callback (rhs.m_callback),
     m_callback_baton_sp (rhs.m_callback_baton_sp),
     m_callback_is_synchronous (rhs.m_callback_is_synchronous),
-    m_thread_spec_ap (NULL)
+    m_thread_spec_ap ()
 {
     if (rhs.m_thread_spec_ap.get() != NULL)
         m_thread_spec_ap.reset (new ThreadSpec(*rhs.m_thread_spec_ap.get()));

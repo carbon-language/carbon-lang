@@ -296,12 +296,12 @@ ObjectContainerBSDArchive::CreateInstance
                 lldb::offset_t archive_data_offset = 0;
 
                 Archive::shared_ptr archive_sp (Archive::FindCachedArchive (*file, module_sp->GetArchitecture(), module_sp->GetModificationTime()));
-                std::auto_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module_sp,
-                                                                                                     archive_data_sp,
-                                                                                                     archive_data_offset,
-                                                                                                     file,
-                                                                                                     file_offset,
-                                                                                                     length));
+                STD_UNIQUE_PTR(ObjectContainerBSDArchive) container_ap(new ObjectContainerBSDArchive (module_sp,
+                                                                                                      archive_data_sp,
+                                                                                                      archive_data_offset,
+                                                                                                      file,
+                                                                                                      file_offset,
+                                                                                                      length));
 
                 if (container_ap.get())
                 {
@@ -322,7 +322,7 @@ ObjectContainerBSDArchive::CreateInstance
             Archive::shared_ptr archive_sp (Archive::FindCachedArchive (*file, module_sp->GetArchitecture(), module_sp->GetModificationTime()));
             if (archive_sp)
             {
-                std::auto_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module_sp, data_sp, data_offset, file, file_offset, length));
+                STD_UNIQUE_PTR(ObjectContainerBSDArchive) container_ap(new ObjectContainerBSDArchive (module_sp, data_sp, data_offset, file, file_offset, length));
                 
                 if (container_ap.get())
                 {

@@ -41,7 +41,7 @@ BreakpointOptions::BreakpointOptions() :
     m_enabled (true),
     m_one_shot (false),
     m_ignore_count (0),
-    m_thread_spec_ap (NULL),
+    m_thread_spec_ap (),
     m_condition_ap()
 {
 }
@@ -56,8 +56,8 @@ BreakpointOptions::BreakpointOptions(const BreakpointOptions& rhs) :
     m_enabled (rhs.m_enabled),
     m_one_shot (rhs.m_one_shot),
     m_ignore_count (rhs.m_ignore_count),
-    m_thread_spec_ap (NULL),
-    m_condition_ap (NULL)
+    m_thread_spec_ap (),
+    m_condition_ap ()
 {
     if (rhs.m_thread_spec_ap.get() != NULL)
         m_thread_spec_ap.reset (new ThreadSpec(*rhs.m_thread_spec_ap.get()));

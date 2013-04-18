@@ -901,7 +901,7 @@ Options::HandleOptionArgumentCompletion
 )
 {
     const OptionDefinition *opt_defs = GetDefinitions();
-    std::auto_ptr<SearchFilter> filter_ap;
+    STD_UNIQUE_PTR(SearchFilter) filter_ap;
 
     int opt_arg_pos = opt_element_vector[opt_element_index].opt_arg_pos;
     int opt_defs_index = opt_element_vector[opt_element_index].opt_defs_index;

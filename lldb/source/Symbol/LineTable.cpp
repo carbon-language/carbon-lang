@@ -489,7 +489,7 @@ LineTable::GetContiguousFileAddressRanges (FileAddressRanges &file_ranges, bool 
 LineTable *
 LineTable::LinkLineTable (const FileRangeMap &file_range_map)
 {
-    std::auto_ptr<LineTable> line_table_ap (new LineTable (m_comp_unit));
+    STD_UNIQUE_PTR(LineTable) line_table_ap (new LineTable (m_comp_unit));
     LineSequenceImpl sequence;
     const size_t count = m_entries.size();
     LineEntry line_entry;

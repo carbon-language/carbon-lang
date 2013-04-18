@@ -118,7 +118,7 @@ protected:
     SetLLDBObjectPtr (lldb_private::CommandReturnObject *ptr);
 
  private:
-    std::auto_ptr<lldb_private::CommandReturnObject> m_opaque_ap;
+    STD_UNIQUE_PTR(lldb_private::CommandReturnObject) m_opaque_ap;
 };
 
 } // namespace lldb

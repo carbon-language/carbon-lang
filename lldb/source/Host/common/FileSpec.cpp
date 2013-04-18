@@ -35,7 +35,6 @@
 
 using namespace lldb;
 using namespace lldb_private;
-using namespace std;
 
 static bool
 GetFileStats (const FileSpec *file_spec, struct stat *stats_ptr)
@@ -745,7 +744,7 @@ DataBufferSP
 FileSpec::MemoryMapFileContents(off_t file_offset, size_t file_size) const
 {
     DataBufferSP data_sp;
-    auto_ptr<DataBufferMemoryMap> mmap_data(new DataBufferMemoryMap());
+    STD_UNIQUE_PTR(DataBufferMemoryMap) mmap_data(new DataBufferMemoryMap());
     if (mmap_data.get())
     {
         if (mmap_data->MemoryMapFromFileSpec (this, file_offset, file_size) >= file_size)
@@ -863,7 +862,7 @@ FileSpec::ReadFileLines (STLStringArray &lines)
     char path[PATH_MAX];
     if (GetPath(path, sizeof(path)))
     {
-        ifstream file_stream (path);
+        std::ifstream file_stream (path);
 
         if (file_stream)
         {

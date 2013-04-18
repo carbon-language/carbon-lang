@@ -254,7 +254,7 @@ Module::GetMemoryObjectFile (const lldb::ProcessSP &process_sp, lldb::addr_t hea
         if (process_sp)
         {
             m_did_load_objfile = true;
-            std::auto_ptr<DataBufferHeap> data_ap (new DataBufferHeap (512, 0));
+            STD_UNIQUE_PTR(DataBufferHeap) data_ap (new DataBufferHeap (512, 0));
             Error readmem_error;
             const size_t bytes_read = process_sp->ReadMemory (header_addr, 
                                                               data_ap->GetBytes(), 
@@ -1184,6 +1184,15 @@ Module::GetModificationTime () const
 {
     return m_mod_time;
 }
+
+void
+Module::SetSymbolFileFileSpec (const FileSpec &file)
+{
+    m_symfile_spec = file;
+    m_symfile_ap.reset();
+    m_did_load_symbol_vendor = false;
+}
+
 
 bool
 Module::IsExecutable ()
