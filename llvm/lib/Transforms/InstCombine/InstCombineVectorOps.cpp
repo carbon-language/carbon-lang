@@ -105,6 +105,75 @@ static Value *FindScalarElement(Value *V, unsigned EltNo) {
   return 0;
 }
 
+// If we have a PHI node with a vector type that has only 2 uses: feed
+// itself and be an operand of extractelemnt at a constant location,
+// try to replace the PHI of the vector type with a PHI of a scalar type
+Instruction *InstCombiner::scalarizePHI(ExtractElementInst &EI, PHINode *PN) {
+  // Verify that the PHI node has exactly 2 uses. Otherwise return NULL.
+  if (!PN->hasNUses(2))
+    return NULL;
+
+  // If so, it's known at this point that one operand is PHI and the other is
+  // an extractelement node. Find the PHI user that is not the extractelement
+  // node.
+  Value::use_iterator iu = PN->use_begin();
+  Instruction *PHIUser = dyn_cast<Instruction>(*iu);
+  if (PHIUser == cast<Instruction>(&EI))
+    PHIUser = cast<Instruction>(*(++iu));
+
+  // Verify that this PHI user has one use, which is the PHI itself,
+  // and that it is a binary operation which is cheap to scalarize.
+  // otherwise return NULL.
+  if (!PHIUser->hasOneUse() || !(PHIUser->use_back() == PN) ||
+    !(isa<BinaryOperator>(PHIUser)) ||
+    !CheapToScalarize(PHIUser, true))
+    return NULL;
+
+  // Create a scalar PHI node that will replace the vector PHI node
+  // just before the current PHI node.
+  PHINode * scalarPHI = cast<PHINode>(
+    InsertNewInstWith(PHINode::Create(EI.getType(),
+    PN->getNumIncomingValues(), ""), *PN));
+  // Scalarize each PHI operand.
+  for (unsigned i=0; i < PN->getNumIncomingValues(); i++) {
+    Value *PHIInVal = PN->getIncomingValue(i);
+    BasicBlock *inBB = PN->getIncomingBlock(i);
+    Value *Elt = EI.getIndexOperand();
+    // If the operand is the PHI induction variable:
+    if (PHIInVal == PHIUser) {
+      // Scalarize the binary operation. Its first operand is the
+      // scalar PHI and the second operand is extracted from the other
+      // vector operand.
+      BinaryOperator *B0 = cast<BinaryOperator>(PHIUser);
+      unsigned opId = (B0->getOperand(0) == PN) ? 1: 0;
+      Value *Op = Builder->CreateExtractElement(
+        B0->getOperand(opId), Elt, B0->getOperand(opId)->getName()+".Elt");
+      Value *newPHIUser = InsertNewInstWith(
+        BinaryOperator::Create(B0->getOpcode(), scalarPHI,Op),
+        *B0);
+      scalarPHI->addIncoming(newPHIUser, inBB);
+    } else {
+      // Scalarize PHI input:
+      Instruction *newEI =
+        ExtractElementInst::Create(PHIInVal, Elt, "");
+      // Insert the new instruction into the predecessor basic block.
+      Instruction *pos = dyn_cast<Instruction>(PHIInVal);
+      BasicBlock::iterator InsertPos;
+      if (pos && !isa<PHINode>(pos)) {
+        InsertPos = pos;
+        ++InsertPos;
+      } else {
+        InsertPos = inBB->getFirstInsertionPt();
+      }
+
+      InsertNewInstWith(newEI, *InsertPos);
+
+      scalarPHI->addIncoming(newEI, inBB);
+    }
+  }
+  return ReplaceInstUsesWith(EI, scalarPHI);
+}
+
 Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
   // If vector val is constant with all elements the same, replace EI with
   // that element.  We handle a known element # below.
@@ -148,6 +217,14 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
         if (VT->getNumElements() == VectorWidth)
           if (Value *Elt = FindScalarElement(BCI->getOperand(0), IndexVal))
             return new BitCastInst(Elt, EI.getType());
+    }
+
+    // If there's a vector PHI feeding a scalar use through this extractelement
+    // instruction, try to scalarize the PHI.
+    if (PHINode *PN = dyn_cast<PHINode>(EI.getOperand(0))) {
+    	Instruction *scalarPHI = scalarizePHI(EI, PN);
+    	if (scalarPHI)
+    		return (scalarPHI);
     }
   }
 
