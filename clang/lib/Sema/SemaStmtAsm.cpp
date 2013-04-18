@@ -622,7 +622,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
   llvm::SourceMgr SrcMgr;
   llvm::MCContext Ctx(*MAI, *MRI, MOFI.get(), &SrcMgr);
   llvm::MemoryBuffer *Buffer =
-    llvm::MemoryBuffer::getMemBuffer(AsmString, "<inline asm>");
+    llvm::MemoryBuffer::getMemBuffer(AsmString, "<MS inline asm>");
 
   // Tell SrcMgr about this buffer, which is what the parser will pick up.
   SrcMgr.AddNewSourceBuffer(Buffer, llvm::SMLoc());
