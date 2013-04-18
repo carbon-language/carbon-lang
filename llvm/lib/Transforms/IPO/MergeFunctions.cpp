@@ -185,7 +185,7 @@ private:
   }
 
   /// Compare two Types, treating all pointer types as equal.
-  bool isEquivalentType(Type *Ty1, Type *Ty2, bool isReturnType = false) const;
+  bool isEquivalentType(Type *Ty1, Type *Ty2) const;
 
   // The two functions undergoing comparison.
   const Function *F1, *F2;
@@ -200,12 +200,11 @@ private:
 
 // Any two pointers in the same address space are equivalent, intptr_t and
 // pointers are equivalent. Otherwise, standard type equivalence rules apply.
-bool FunctionComparator::isEquivalentType(Type *Ty1, Type *Ty2,
-                                          bool isReturnType) const {
+bool FunctionComparator::isEquivalentType(Type *Ty1, Type *Ty2) const {
   if (Ty1 == Ty2)
     return true;
   if (Ty1->getTypeID() != Ty2->getTypeID()) {
-    if (TD && !isReturnType) {
+    if (TD) {
       LLVMContext &Ctx = Ty1->getContext();
       if (isa<PointerType>(Ty1) && Ty2 == TD->getIntPtrType(Ctx)) return true;
       if (isa<PointerType>(Ty2) && Ty1 == TD->getIntPtrType(Ctx)) return true;
@@ -261,7 +260,7 @@ bool FunctionComparator::isEquivalentType(Type *Ty1, Type *Ty2,
         FTy1->isVarArg() != FTy2->isVarArg())
       return false;
 
-    if (!isEquivalentType(FTy1->getReturnType(), FTy2->getReturnType(), true))
+    if (!isEquivalentType(FTy1->getReturnType(), FTy2->getReturnType()))
       return false;
 
     for (unsigned i = 0, e = FTy1->getNumParams(); i != e; ++i) {
@@ -740,7 +739,13 @@ void MergeFunctions::writeThunk(Function *F, Function *G) {
   if (NewG->getReturnType()->isVoidTy()) {
     Builder.CreateRetVoid();
   } else {
-    Builder.CreateRet(Builder.CreateBitCast(CI, NewG->getReturnType()));
+    Type *RetTy = NewG->getReturnType();
+    if (CI->getType()->isIntegerTy() && RetTy->isPointerTy())
+      Builder.CreateRet(Builder.CreateIntToPtr(CI, RetTy));
+    else if (CI->getType()->isPointerTy() && RetTy->isIntegerTy())
+      Builder.CreateRet(Builder.CreatePtrToInt(CI, RetTy));
+    else
+      Builder.CreateRet(Builder.CreateBitCast(CI, RetTy));
   }
 
   NewG->copyAttributesFrom(G);
