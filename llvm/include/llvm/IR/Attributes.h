@@ -474,9 +474,6 @@ public:
 
   bool td_empty() const              { return TargetDepAttrs.empty(); }
 
-  /// \brief Remove attributes that are used on functions only.
-  void removeFunctionOnlyAttrs();
-
   bool operator==(const AttrBuilder &B);
   bool operator!=(const AttrBuilder &B) {
     return !(*this == B);

@@ -1115,33 +1115,6 @@ bool AttrBuilder::operator==(const AttrBuilder &B) {
   return Alignment == B.Alignment && StackAlignment == B.StackAlignment;
 }
 
-void AttrBuilder::removeFunctionOnlyAttrs() {
-  removeAttribute(Attribute::NoReturn)
-    .removeAttribute(Attribute::NoUnwind)
-    .removeAttribute(Attribute::ReadNone)
-    .removeAttribute(Attribute::ReadOnly)
-    .removeAttribute(Attribute::NoInline)
-    .removeAttribute(Attribute::AlwaysInline)
-    .removeAttribute(Attribute::OptimizeForSize)
-    .removeAttribute(Attribute::StackProtect)
-    .removeAttribute(Attribute::StackProtectReq)
-    .removeAttribute(Attribute::StackProtectStrong)
-    .removeAttribute(Attribute::NoRedZone)
-    .removeAttribute(Attribute::NoImplicitFloat)
-    .removeAttribute(Attribute::Naked)
-    .removeAttribute(Attribute::InlineHint)
-    .removeAttribute(Attribute::StackAlignment)
-    .removeAttribute(Attribute::UWTable)
-    .removeAttribute(Attribute::NonLazyBind)
-    .removeAttribute(Attribute::ReturnsTwice)
-    .removeAttribute(Attribute::SanitizeAddress)
-    .removeAttribute(Attribute::SanitizeThread)
-    .removeAttribute(Attribute::SanitizeMemory)
-    .removeAttribute(Attribute::MinSize)
-    .removeAttribute(Attribute::NoDuplicate)
-    .removeAttribute(Attribute::NoBuiltin);
-}
-
 AttrBuilder &AttrBuilder::addRawValue(uint64_t Val) {
   // FIXME: Remove this in 4.0.
   if (!Val) return *this;
