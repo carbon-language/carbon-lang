@@ -744,21 +744,21 @@ protected:
 OptionDefinition
 CommandObjectPlatformProcessList::CommandOptions::g_option_table[] =
 {
-{   LLDB_OPT_SET_1, false, "pid"              , 'p', required_argument, NULL, 0, eArgTypePid          , "List the process info for a specific process ID." },
-{   LLDB_OPT_SET_2, true , "name"             , 'n', required_argument, NULL, 0, eArgTypeProcessName  , "Find processes with executable basenames that match a string." },
-{   LLDB_OPT_SET_3, true , "ends-with"        , 'e', required_argument, NULL, 0, eArgTypeNone         , "Find processes with executable basenames that end with a string." },
-{   LLDB_OPT_SET_4, true , "starts-with"      , 's', required_argument, NULL, 0, eArgTypeNone         , "Find processes with executable basenames that start with a string." },
-{   LLDB_OPT_SET_5, true , "contains"         , 'c', required_argument, NULL, 0, eArgTypeNone         , "Find processes with executable basenames that contain a string." },
-{   LLDB_OPT_SET_6, true , "regex"            , 'r', required_argument, NULL, 0, eArgTypeNone         , "Find processes with executable basenames that match a regular expression." },
-{  ~LLDB_OPT_SET_1, false, "parent"           , 'P', required_argument, NULL, 0, eArgTypePid          , "Find processes that have a matching parent process ID." },
-{  ~LLDB_OPT_SET_1, false, "uid"              , 'u', required_argument, NULL, 0, eArgTypeNone         , "Find processes that have a matching user ID." },
-{  ~LLDB_OPT_SET_1, false, "euid"             , 'U', required_argument, NULL, 0, eArgTypeNone         , "Find processes that have a matching effective user ID." },
-{  ~LLDB_OPT_SET_1, false, "gid"              , 'g', required_argument, NULL, 0, eArgTypeNone         , "Find processes that have a matching group ID." },
-{  ~LLDB_OPT_SET_1, false, "egid"             , 'G', required_argument, NULL, 0, eArgTypeNone         , "Find processes that have a matching effective group ID." },
-{  ~LLDB_OPT_SET_1, false, "arch"             , 'a', required_argument, NULL, 0, eArgTypeArchitecture , "Find processes that have a matching architecture." },
-{ LLDB_OPT_SET_ALL, false, "show-args"        , 'A', no_argument      , NULL, 0, eArgTypeNone         , "Show process arguments instead of the process executable basename." },
-{ LLDB_OPT_SET_ALL, false, "verbose"          , 'v', no_argument      , NULL, 0, eArgTypeNone         , "Enable verbose output." },
-{  0              , false, NULL               ,  0 , 0                , NULL, 0, eArgTypeNone         , NULL }
+{ LLDB_OPT_SET_1            , true , "pid"        , 'p', required_argument, NULL, 0, eArgTypePid              , "List the process info for a specific process ID." },
+{ LLDB_OPT_SET_2            , true , "name"       , 'n', required_argument, NULL, 0, eArgTypeProcessName      , "Find processes with executable basenames that match a string." },
+{ LLDB_OPT_SET_3            , true , "ends-with"  , 'e', required_argument, NULL, 0, eArgTypeProcessName      , "Find processes with executable basenames that end with a string." },
+{ LLDB_OPT_SET_4            , true , "starts-with", 's', required_argument, NULL, 0, eArgTypeProcessName      , "Find processes with executable basenames that start with a string." },
+{ LLDB_OPT_SET_5            , true , "contains"   , 'c', required_argument, NULL, 0, eArgTypeProcessName      , "Find processes with executable basenames that contain a string." },
+{ LLDB_OPT_SET_6            , true , "regex"      , 'r', required_argument, NULL, 0, eArgTypeRegularExpression, "Find processes with executable basenames that match a regular expression." },
+{ LLDB_OPT_SET_FROM_TO(2, 6), false, "parent"     , 'P', required_argument, NULL, 0, eArgTypePid              , "Find processes that have a matching parent process ID." },
+{ LLDB_OPT_SET_FROM_TO(2, 6), false, "uid"        , 'u', required_argument, NULL, 0, eArgTypeUnsignedInteger  , "Find processes that have a matching user ID." },
+{ LLDB_OPT_SET_FROM_TO(2, 6), false, "euid"       , 'U', required_argument, NULL, 0, eArgTypeUnsignedInteger  , "Find processes that have a matching effective user ID." },
+{ LLDB_OPT_SET_FROM_TO(2, 6), false, "gid"        , 'g', required_argument, NULL, 0, eArgTypeUnsignedInteger  , "Find processes that have a matching group ID." },
+{ LLDB_OPT_SET_FROM_TO(2, 6), false, "egid"       , 'G', required_argument, NULL, 0, eArgTypeUnsignedInteger  , "Find processes that have a matching effective group ID." },
+{ LLDB_OPT_SET_FROM_TO(2, 6), false, "arch"       , 'a', required_argument, NULL, 0, eArgTypeArchitecture     , "Find processes that have a matching architecture." },
+{ LLDB_OPT_SET_FROM_TO(1, 6), false, "show-args"  , 'A', no_argument      , NULL, 0, eArgTypeNone             , "Show process arguments instead of the process executable basename." },
+{ LLDB_OPT_SET_FROM_TO(1, 6), false, "verbose"    , 'v', no_argument      , NULL, 0, eArgTypeNone             , "Enable verbose output." },
+{ 0                         , false, NULL         ,  0 , 0                , NULL, 0, eArgTypeNone             , NULL }
 };
 
 //----------------------------------------------------------------------
