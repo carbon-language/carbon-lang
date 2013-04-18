@@ -123,8 +123,8 @@ the file format is below:
    boolean_property_name = 1 (or 0)
 
 LLVMBuild files are expected to define a strict set of sections and
-properties. An typical component description file for a library
-component would look typically look like the following example:
+properties. A typical component description file for a library
+component would look like the following example:
 
 .. code-block:: ini
 
