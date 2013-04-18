@@ -14,6 +14,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/TaggedASTType.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Pass.h"
 
 namespace llvm {
@@ -88,6 +89,7 @@ public:
     static bool
     Interpret (llvm::Module &module,
                llvm::Function &function,
+               llvm::ArrayRef<lldb::addr_t> args,
                lldb_private::IRMemoryMap &memory_map,
                lldb_private::Error &error);
                   

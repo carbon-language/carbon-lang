@@ -90,8 +90,6 @@ public:
     //------------------------------------------------------------------
     IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
                 bool resolve_vars,
-                lldb_private::ExecutionPolicy execution_policy,
-                lldb::ClangExpressionVariableSP &const_result,
                 lldb_private::IRExecutionUnit &execution_unit,
                 lldb_private::Stream *error_stream,
                 const char* func_name = "$__lldb_expr");
@@ -139,18 +137,6 @@ public:
     //------------------------------------------------------------------
     virtual llvm::PassManagerType 
     getPotentialPassManagerType() const;
-    
-    //------------------------------------------------------------------
-    /// Checks whether the IR interpreter successfully interpreted the
-    /// expression.
-    ///
-    /// Returns true if it did; false otherwise.
-    //------------------------------------------------------------------
-    lldb_private::Error &
-    getInterpreterError ()
-    {
-        return m_interpreter_error;
-    }
 
 private:
     //------------------------------------------------------------------
@@ -664,8 +650,6 @@ private:
     
     /// Flags
     bool                                    m_resolve_vars;             ///< True if external variable references and persistent variable references should be resolved
-    lldb_private::ExecutionPolicy           m_execution_policy;         ///< True if the interpreter should be used to attempt to get a static result
-    bool                                    m_interpret_success;        ///< True if the interpreter successfully handled the whole expression
     std::string                             m_func_name;                ///< The name of the function to translate
     lldb_private::ConstString               m_result_name;              ///< The name of the result variable ($0, $1, ...)
     lldb_private::TypeFromParser            m_result_type;              ///< The type of the result variable.
@@ -676,9 +660,7 @@ private:
     lldb_private::IRMemoryMap              &m_memory_map;               ///< The memory map to pass to the IR interpreter
     llvm::Constant                         *m_CFStringCreateWithBytes;  ///< The address of the function CFStringCreateWithBytes, cast to the appropriate function pointer type
     llvm::Constant                         *m_sel_registerName;         ///< The address of the function sel_registerName, cast to the appropriate function pointer type
-    lldb::ClangExpressionVariableSP        &m_const_result;             ///< This value should be set to the return value of the expression if it is constant and the expression has no side effects
     lldb_private::Stream                   *m_error_stream;             ///< If non-NULL, the stream on which errors should be printed
-    lldb_private::Error                     m_interpreter_error;        ///< The error result from the IR interpreter
     
     bool                                    m_has_side_effects;         ///< True if the function's result cannot be simply determined statically
     llvm::StoreInst                        *m_result_store;             ///< If non-NULL, the store instruction that writes to the result variable.  If m_has_side_effects is true, this is NULL.

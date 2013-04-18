@@ -89,6 +89,10 @@ public:
     BasicBlock::const_iterator              m_ii;
     BasicBlock::const_iterator              m_ie;
     
+    lldb::addr_t                            m_frame_process_address;
+    size_t                                  m_frame_size;
+    lldb::addr_t                            m_stack_pointer;
+    
     lldb::ByteOrder                         m_byte_order;
     size_t                                  m_addr_byte_size;
     
@@ -101,6 +105,36 @@ public:
     {
         m_byte_order = (target_data.isLittleEndian() ? lldb::eByteOrderLittle : lldb::eByteOrderBig);
         m_addr_byte_size = (target_data.getPointerSize(0));
+        
+        m_frame_size = 512 * 1024;
+        
+        lldb_private::Error alloc_error;
+        
+        m_frame_process_address = memory_map.Malloc(m_frame_size,
+                                                    m_addr_byte_size,
+                                                    lldb::ePermissionsReadable | lldb::ePermissionsWritable,
+                                                    lldb_private::IRMemoryMap::eAllocationPolicyMirror,
+                                                    alloc_error);
+        
+        if (alloc_error.Success())
+        {
+            m_stack_pointer = m_frame_process_address + m_frame_size;
+        }
+        else
+        {
+            m_frame_process_address = LLDB_INVALID_ADDRESS;
+            m_stack_pointer = LLDB_INVALID_ADDRESS;
+        }    
+    }
+    
+    ~InterpreterStackFrame ()
+    {
+        if (m_frame_process_address != LLDB_INVALID_ADDRESS)
+        {
+            lldb_private::Error free_error;
+            m_memory_map.Free(m_frame_process_address, free_error);
+            m_frame_process_address = LLDB_INVALID_ADDRESS;
+        }
     }
     
     void Jump (const BasicBlock *bb)
@@ -216,57 +250,106 @@ public:
     
     bool ResolveConstantValue (APInt &value, const Constant *constant)
     {
-        if (const ConstantInt *constant_int = dyn_cast<ConstantInt>(constant))
+        switch (constant->getValueID())
         {
-            value = constant_int->getValue();
-            return true;
-        }
-        else if (const ConstantFP *constant_fp = dyn_cast<ConstantFP>(constant))
-        {
-            value = constant_fp->getValueAPF().bitcastToAPInt();
-            return true;
-        }
-        else if (const ConstantExpr *constant_expr = dyn_cast<ConstantExpr>(constant))
-        {
-            switch (constant_expr->getOpcode())
+        default:
+            break;
+        case Value::ConstantIntVal:
+            if (const ConstantInt *constant_int = dyn_cast<ConstantInt>(constant))
             {
-                default:
-                    return false;
-                case Instruction::IntToPtr:
-                case Instruction::PtrToInt:
-                case Instruction::BitCast:
-                    return ResolveConstantValue(value, constant_expr->getOperand(0));
-                case Instruction::GetElementPtr:
+                value = constant_int->getValue();
+                return true;
+            }
+            break;
+        case Value::ConstantFPVal:
+            if (const ConstantFP *constant_fp = dyn_cast<ConstantFP>(constant))
+            {
+                value = constant_fp->getValueAPF().bitcastToAPInt();
+                return true;
+            }
+            break;
+        case Value::ConstantExprVal:
+            if (const ConstantExpr *constant_expr = dyn_cast<ConstantExpr>(constant))
+            {
+                switch (constant_expr->getOpcode())
                 {
-                    ConstantExpr::const_op_iterator op_cursor = constant_expr->op_begin();
-                    ConstantExpr::const_op_iterator op_end = constant_expr->op_end();
-                                    
-                    Constant *base = dyn_cast<Constant>(*op_cursor);
-                    
-                    if (!base)
+                    default:
                         return false;
-                    
-                    if (!ResolveConstantValue(value, base))
-                        return false;
-                    
-                    op_cursor++;
-                    
-                    if (op_cursor == op_end)
-                        return true; // no offset to apply!
-                    
-                    SmallVector <Value *, 8> indices (op_cursor, op_end);
-                    
-                    uint64_t offset = m_target_data.getIndexedOffset(base->getType(), indices);
-                    
-                    const bool is_signed = true;
-                    value += APInt(value.getBitWidth(), offset, is_signed);
-                    
-                    return true;
+                    case Instruction::IntToPtr:
+                    case Instruction::PtrToInt:
+                    case Instruction::BitCast:
+                        return ResolveConstantValue(value, constant_expr->getOperand(0));
+                    case Instruction::GetElementPtr:
+                    {
+                        ConstantExpr::const_op_iterator op_cursor = constant_expr->op_begin();
+                        ConstantExpr::const_op_iterator op_end = constant_expr->op_end();
+                        
+                        Constant *base = dyn_cast<Constant>(*op_cursor);
+                        
+                        if (!base)
+                            return false;
+                        
+                        if (!ResolveConstantValue(value, base))
+                            return false;
+                        
+                        op_cursor++;
+                        
+                        if (op_cursor == op_end)
+                            return true; // no offset to apply!
+                        
+                        SmallVector <Value *, 8> indices (op_cursor, op_end);
+                        
+                        uint64_t offset = m_target_data.getIndexedOffset(base->getType(), indices);
+                        
+                        const bool is_signed = true;
+                        value += APInt(value.getBitWidth(), offset, is_signed);
+                        
+                        return true;
+                    }
                 }
             }
+            break;
+        case Value::ConstantPointerNullVal:
+            if (isa<ConstantPointerNull>(constant))
+            {
+                value = APInt(m_target_data.getPointerSizeInBits(), 0);
+                return true;
+            }
+            break;
+        }
+        return false;
+    }
+    
+    bool MakeArgument(const Argument *value, uint64_t address)
+    {
+        lldb::addr_t data_address = Malloc(value->getType());
+        
+        if (data_address == LLDB_INVALID_ADDRESS)
+            return false;
+        
+        lldb_private::Error write_error;
+        
+        m_memory_map.WritePointerToMemory(data_address, address, write_error);
+        
+        if (!write_error.Success())
+        {
+            lldb_private::Error free_error;
+            m_memory_map.Free(data_address, free_error);
+            return false;
         }
         
-        return false;
+        m_values[value] = data_address;
+        
+        lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+        if (log)
+        {
+            log->Printf("Made an allocation for argument %s", PrintValue(value).c_str());
+            log->Printf("  Data region    : %llx", (unsigned long long)address);
+            log->Printf("  Ref region     : %llx", (unsigned long long)data_address);
+        }
+        
+        return true;
     }
     
     bool ResolveConstant (lldb::addr_t process_address, const Constant *constant)
@@ -287,31 +370,30 @@ public:
         return write_error.Success();
     }
     
+    lldb::addr_t Malloc (size_t size, uint8_t byte_alignment)
+    {
+        lldb::addr_t ret = m_stack_pointer;
+        
+        ret -= size;
+        ret -= (ret % byte_alignment);
+        
+        if (ret < m_frame_process_address)
+            return LLDB_INVALID_ADDRESS;
+        
+        m_stack_pointer = ret;
+        return ret;
+    }
+        
     lldb::addr_t MallocPointer ()
     {
-        lldb_private::Error alloc_error;
-
-        lldb::addr_t ret = m_memory_map.Malloc(m_target_data.getPointerSize(), m_target_data.getPointerPrefAlignment(), lldb::ePermissionsReadable | lldb::ePermissionsWritable, lldb_private::IRMemoryMap::eAllocationPolicyMirror, alloc_error);
-        
-        if (alloc_error.Success())
-            return ret;
-        else
-            return LLDB_INVALID_ADDRESS;
+        return Malloc(m_target_data.getPointerSize(), m_target_data.getPointerPrefAlignment());
     }
     
-    lldb::addr_t Malloc (llvm::Type *type, size_t override_byte_size = 0)
+    lldb::addr_t Malloc (llvm::Type *type)
     {
         lldb_private::Error alloc_error;
         
-        if (!override_byte_size)
-            override_byte_size = m_target_data.getTypeStoreSize(type);
-        
-        lldb::addr_t ret = m_memory_map.Malloc(override_byte_size, m_target_data.getPrefTypeAlignment(type), lldb::ePermissionsReadable | lldb::ePermissionsWritable, lldb_private::IRMemoryMap::eAllocationPolicyMirror, alloc_error);
-        
-        if (alloc_error.Success())
-            return ret;
-        else
-            return LLDB_INVALID_ADDRESS;
+        return Malloc(m_target_data.getTypeAllocSize(type), m_target_data.getPrefTypeAlignment(type));
     }
     
     lldb::addr_t PlaceLLDBValue (const llvm::Value *value, lldb_private::Value lldb_value)
@@ -325,6 +407,7 @@ public:
         lldb::addr_t ret;
         
         size_t value_size = m_target_data.getTypeStoreSize(value->getType());
+        size_t value_align = m_target_data.getPrefTypeAlignment(value->getType());
         
         if (reg_info && (reg_info->encoding == lldb::eEncodingVector))
             value_size = reg_info->byte_size;
@@ -332,7 +415,7 @@ public:
         if (!reg_info && (lldb_value.GetValueType() == lldb_private::Value::eValueTypeLoadAddress))
             return lldb_value.GetScalar().ULongLong();
         
-        ret = Malloc(value->getType(), value_size);
+        ret = Malloc(value_size, value_align);
         
         if (ret == LLDB_INVALID_ADDRESS)
             return LLDB_INVALID_ADDRESS;
@@ -403,13 +486,27 @@ public:
     
     lldb::addr_t ResolveValue (const Value *value, Module &module)
     {
-        if (!m_decl_map)
-            return LLDB_INVALID_ADDRESS;
-        
         ValueMap::iterator i = m_values.find(value);
         
         if (i != m_values.end())
             return i->second;
+        
+        // Fall back and allocate space [allocation type Alloca]
+        
+        lldb::addr_t data_address = Malloc(value->getType());
+        
+        if (const Constant *constant = dyn_cast<Constant>(value))
+        {
+            if (!ResolveConstant (data_address, constant))
+            {
+                lldb_private::Error free_error;
+                m_memory_map.Free(data_address, free_error);
+                return LLDB_INVALID_ADDRESS;
+            }
+        }
+        
+        m_values[value] = data_address;
+        return data_address;
         
         const GlobalValue *global_value = dyn_cast<GlobalValue>(value);
         
@@ -686,23 +783,6 @@ public:
             }
         }
         while(0);
-        
-        // Fall back and allocate space [allocation type Alloca]
-        
-        lldb::addr_t data_address = Malloc(value->getType());
-                
-        if (const Constant *constant = dyn_cast<Constant>(value))
-        {
-            if (!ResolveConstant (data_address, constant))
-            {
-                lldb_private::Error free_error;
-                m_memory_map.Free(data_address, free_error);
-                return LLDB_INVALID_ADDRESS;
-            }
-        }
-        
-        m_values[value] = data_address;
-        return data_address;
     }
     
     bool ConstructResult (lldb::ClangExpressionVariableSP &result,
@@ -1698,14 +1778,49 @@ IRInterpreter::CanInterpret (llvm::Module &module,
 bool
 IRInterpreter::Interpret (llvm::Module &module,
                           llvm::Function &function,
+                          llvm::ArrayRef<lldb::addr_t> args,
                           lldb_private::IRMemoryMap &memory_map,
                           lldb_private::Error &error)
 {
     lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
+    if (log)
+    {
+        std::string s;
+        raw_string_ostream oss(s);
+        
+        module.print(oss, NULL);
+        
+        oss.flush();
+        
+        log->Printf("Module as passed in to IRInterpreter::Interpret: \n\"%s\"", s.c_str());
+    }
+    
     DataLayout data_layout(&module);
     
     InterpreterStackFrame frame(data_layout, NULL, memory_map);
+    
+    if (frame.m_frame_process_address == LLDB_INVALID_ADDRESS)
+    {
+        error.SetErrorString("Couldn't allocate stack frame");
+    }
+    
+    int arg_index = 0;
+    
+    for (llvm::Function::arg_iterator ai = function.arg_begin(), ae = function.arg_end();
+         ai != ae;
+         ++ai, ++arg_index)
+    {
+        if (args.size() < arg_index)
+        {
+            error.SetErrorString ("Not enough arguments passed in to function");
+            return false;
+        }
+        
+        lldb::addr_t ptr = args[arg_index];
+
+        frame.MakeArgument(ai, ptr);
+    }
     
     uint32_t num_insts = 0;
     

@@ -85,6 +85,9 @@ IRMemoryMap::ContainsHostOnlyAllocations ()
 IRMemoryMap::AllocationMap::iterator
 IRMemoryMap::FindAllocation (lldb::addr_t addr, size_t size)
 {
+    if (addr == LLDB_INVALID_ADDRESS)
+        return m_allocations.end();
+    
     AllocationMap::iterator iter = m_allocations.lower_bound (addr);
     
     if (iter == m_allocations.end() ||

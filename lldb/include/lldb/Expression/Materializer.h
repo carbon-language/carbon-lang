@@ -43,6 +43,7 @@ public:
         }
         
         void Dematerialize (Error &err,
+                            lldb::ClangExpressionVariableSP &result_sp,
                             lldb::addr_t frame_top,
                             lldb::addr_t frame_bottom);
         
@@ -75,11 +76,11 @@ public:
     typedef STD_SHARED_PTR(Dematerializer) DematerializerSP;
     typedef STD_WEAK_PTR(Dematerializer) DematerializerWP;
     
-    DematerializerSP Materialize (lldb::StackFrameSP &frame_sp, lldb::ClangExpressionVariableSP &result_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err);
+    DematerializerSP Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err);
     
     uint32_t AddPersistentVariable (lldb::ClangExpressionVariableSP &persistent_variable_sp, Error &err);
     uint32_t AddVariable (lldb::VariableSP &variable_sp, Error &err);
-    uint32_t AddResultVariable (const ClangASTType &type, bool keep_in_memory, Error &err);
+    uint32_t AddResultVariable (const TypeFromUser &type, bool is_lvalue, bool keep_in_memory, Error &err);
     uint32_t AddSymbol (const Symbol &symbol_sp, Error &err);
     uint32_t AddRegister (const RegisterInfo &register_info, Error &err);
     
@@ -91,6 +92,14 @@ public:
     uint32_t GetStructByteSize ()
     {
         return m_current_offset;
+    }
+    
+    uint32_t GetResultOffset ()
+    {
+        if (m_result_entity)
+            return m_result_entity->GetOffset();
+        else
+            return UINT32_MAX;
     }
     
     class Entity
@@ -149,6 +158,7 @@ private:
     unsigned                        m_result_index;
     DematerializerWP                m_dematerializer_wp;
     EntityVector                    m_entities;
+    Entity                         *m_result_entity;
     uint32_t                        m_current_offset;
     uint32_t                        m_struct_alignment;
 };

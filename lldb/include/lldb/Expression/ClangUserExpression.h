@@ -25,6 +25,7 @@
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
 #include "lldb/Expression/IRForTarget.h"
+#include "lldb/Expression/Materializer.h"
 #include "lldb/Symbol/TaggedASTType.h"
 #include "lldb/Target/ExecutionContext.h"
 
@@ -104,6 +105,12 @@ public:
            ExecutionContext &exe_ctx,
            lldb_private::ExecutionPolicy execution_policy,
            bool keep_result_in_memory);
+    
+    bool
+    CanInterpret ()
+    {
+        return m_can_interpret;
+    }
     
     //------------------------------------------------------------------
     /// Execute the parsed expression
@@ -375,12 +382,6 @@ private:
                                    lldb::addr_t &object_ptr,
                                    lldb::addr_t &cmd_ptr);
     
-    bool
-    EvaluatedStatically ()
-    {
-        return m_evaluated_statically;
-    }
-    
     void
     InstallContext (ExecutionContext &exe_ctx)
     {
@@ -432,8 +433,9 @@ private:
     bool                                        m_const_object;         ///< True if "this" is const.
     Target                                     *m_target;               ///< The target for storing persistent data like types and variables.
     
-    bool                                        m_evaluated_statically; ///< True if the expression could be evaluated statically; false otherwise.
-    lldb::ClangExpressionVariableSP             m_const_result;         ///< The statically-computed result of the expression.  NULL if it could not be computed statically or the expression has side effects.
+    bool                                        m_can_interpret;        ///< True if the expression could be evaluated statically; false otherwise.
+    lldb::addr_t                                m_materialized_address; ///< The address at which the arguments to the expression have been materialized.
+    Materializer::DematerializerSP              m_dematerializer_sp;    ///< The dematerializer.
 };
     
 } // namespace lldb_private

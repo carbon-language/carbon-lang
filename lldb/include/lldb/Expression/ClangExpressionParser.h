@@ -114,8 +114,7 @@ public:
                          lldb::addr_t &func_end,
                          STD_UNIQUE_PTR(IRExecutionUnit) &execution_unit_ap,
                          ExecutionContext &exe_ctx,
-                         bool &evaluated_statically,
-                         lldb::ClangExpressionVariableSP &const_result,
+                         bool &can_interpret,
                          lldb_private::ExecutionPolicy execution_policy);
         
     //------------------------------------------------------------------

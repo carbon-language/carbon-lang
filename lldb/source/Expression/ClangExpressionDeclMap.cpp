@@ -459,6 +459,51 @@ ClangExpressionDeclMap::AddPersistentVariable
 {
     assert (m_parser_vars.get());
     
+    if (m_parser_vars->m_materializer && is_result)
+    {
+        Error err;
+        
+        ExecutionContext &exe_ctx = m_parser_vars->m_exe_ctx;
+        Target *target = exe_ctx.GetTargetPtr();
+        if (target == NULL)
+            return false;
+        
+        ASTContext *context(target->GetScratchClangASTContext()->getASTContext());
+        
+        TypeFromUser user_type(m_ast_importer->DeportType(context,
+                                                          parser_type.GetASTContext(),
+                                                          parser_type.GetOpaqueQualType()),
+                               context);
+        
+        uint32_t offset = m_parser_vars->m_materializer->AddResultVariable(user_type, is_lvalue, m_keep_result_in_memory, err);
+        
+        m_found_entities.CreateVariable(exe_ctx.GetBestExecutionContextScope(),
+                                        name,
+                                        user_type,
+                                        m_parser_vars->m_target_info.byte_order,
+                                        m_parser_vars->m_target_info.address_byte_size);
+        
+        ClangExpressionVariableSP var_sp (m_found_entities.GetVariable(name));
+        
+        if (!var_sp)
+            return false;
+        
+        var_sp->EnableParserVars(GetParserID());
+        
+        ClangExpressionVariable::ParserVars *parser_vars = var_sp->GetParserVars(GetParserID());
+
+        parser_vars->m_named_decl = decl;
+        parser_vars->m_parser_type = parser_type;
+        
+        var_sp->EnableJITVars(GetParserID());
+        
+        ClangExpressionVariable::JITVars *jit_vars = var_sp->GetJITVars(GetParserID());
+        
+        jit_vars->m_offset = offset;
+        
+        return true;
+    }
+    
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     ExecutionContext &exe_ctx = m_parser_vars->m_exe_ctx;
     Target *target = exe_ctx.GetTargetPtr();
@@ -526,12 +571,6 @@ ClangExpressionDeclMap::AddPersistentVariable
     parser_vars->m_named_decl = decl;
     parser_vars->m_parser_type = parser_type;
     
-    if (m_parser_vars->m_materializer)
-    {
-        Error err;
-        m_parser_vars->m_materializer->AddResultVariable(user_type, m_keep_result_in_memory, err);
-    }
-    
     return true;
 }
 
@@ -580,6 +619,14 @@ ClangExpressionDeclMap::AddValueToStruct
     ClangExpressionVariable::ParserVars *parser_vars = var_sp->GetParserVars(GetParserID());
 
     parser_vars->m_llvm_value = value;
+    
+    if (ClangExpressionVariable::JITVars *jit_vars = var_sp->GetJITVars(GetParserID()))
+    {
+        // We already laid this out; do not touch
+        
+        if (log)
+            log->Printf("Already placed at 0x%llx", (unsigned long long)jit_vars->m_offset);
+    }
     
     var_sp->EnableJITVars(GetParserID());
     
@@ -1593,7 +1640,9 @@ ClangExpressionDeclMap::DoMaterialize
         
         bool ret = true;
         
-        m_material_vars->m_dematerializer_sp->Dematerialize(dematerialize_error, stack_frame_top, stack_frame_bottom);
+        ClangExpressionVariableSP result;
+        
+        m_material_vars->m_dematerializer_sp->Dematerialize(dematerialize_error, result, stack_frame_top, stack_frame_bottom);
         m_material_vars->m_dematerializer_sp.reset();
         
         if (!dematerialize_error.Success())
@@ -1663,7 +1712,7 @@ ClangExpressionDeclMap::DoMaterialize
         
         Error materialize_error;
         
-        m_material_vars->m_dematerializer_sp = m_parser_vars->m_materializer->Materialize(frame_sp, result_sp, map, m_material_vars->m_materialized_location, materialize_error);
+        m_material_vars->m_dematerializer_sp = m_parser_vars->m_materializer->Materialize(frame_sp, map, m_material_vars->m_materialized_location, materialize_error);
         
         if (!materialize_error.Success())
         {

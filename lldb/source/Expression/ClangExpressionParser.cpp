@@ -22,6 +22,7 @@
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Expression/IRDynamicChecks.h"
+#include "lldb/Expression/IRInterpreter.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
@@ -464,8 +465,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
                                             lldb::addr_t &func_end,
                                             STD_UNIQUE_PTR(IRExecutionUnit) &execution_unit_ap,
                                             ExecutionContext &exe_ctx,
-                                            bool &evaluated_statically,
-                                            lldb::ClangExpressionVariableSP &const_result,
+                                            bool &can_interpret,
                                             ExecutionPolicy execution_policy)
 {
 	func_addr = LLDB_INVALID_ADDRESS;
@@ -518,50 +518,39 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
     
         IRForTarget ir_for_target(decl_map,
                                   m_expr.NeedsVariableResolution(),
-                                  execution_policy,
-                                  const_result,
                                   *m_execution_unit,
                                   error_stream,
                                   function_name.AsCString());
         
         bool ir_can_run = ir_for_target.runOnModule(*m_execution_unit->GetModule());
         
-        Error &interpreter_error(ir_for_target.getInterpreterError());
+        Error interpret_error;
         
-        if (execution_policy != eExecutionPolicyAlways && interpreter_error.Success())
-        {
-            if (const_result)
-                const_result->TransferAddress();
-            evaluated_statically = true;
-            err.Clear();
-            return err;
-        }
+        can_interpret = IRInterpreter::CanInterpret(*m_execution_unit->GetModule(), *m_execution_unit->GetFunction(), interpret_error);
         
         Process *process = exe_ctx.GetProcessPtr();
-
-        if (!process || execution_policy == eExecutionPolicyNever)
+        
+        if (!ir_can_run)
         {
-            err.SetErrorToGenericError();
-            if (execution_policy == eExecutionPolicyAlways)
-                err.SetErrorString("Execution needed to run in the target, but the target can't be run");
-            else
-                err.SetErrorStringWithFormat("Interpreting the expression locally failed: %s", interpreter_error.AsCString());
-
-            return err;
-        }
-        else if (!ir_can_run)
-        {
-            err.SetErrorToGenericError();
             err.SetErrorString("The expression could not be prepared to run in the target");
-            
             return err;
         }
         
-        if (execution_policy != eExecutionPolicyNever &&
-            m_expr.NeedsValidation() && 
-            process)
+        if (!can_interpret && execution_policy == eExecutionPolicyNever)
         {
-            if (!process->GetDynamicCheckers())
+            err.SetErrorStringWithFormat("Can't run the expression locally: %s", interpret_error.AsCString());
+            return err;
+        }
+        
+        if (!process && execution_policy == eExecutionPolicyAlways)
+        {
+            err.SetErrorString("Expression needed to run in the target, but the target can't be run");
+            return err;
+        }
+        
+        if (execution_policy == eExecutionPolicyAlways || !can_interpret)
+        {
+            if (!process->GetDynamicCheckers() && m_expr.NeedsValidation())
             {                
                 DynamicCheckerFunctions *dynamic_checkers = new DynamicCheckerFunctions();
                 
@@ -581,20 +570,24 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
                 
                 if (log)
                     log->Printf("== [ClangUserExpression::Evaluate] Finished installing dynamic checkers ==");
+                
+                IRDynamicChecks ir_dynamic_checks(*process->GetDynamicCheckers(), function_name.AsCString());
+                
+                if (!ir_dynamic_checks.runOnModule(*m_execution_unit->GetModule()))
+                {
+                    err.SetErrorToGenericError();
+                    err.SetErrorString("Couldn't add dynamic checks to the expression");
+                    return err;
+                }
             }
             
-            IRDynamicChecks ir_dynamic_checks(*process->GetDynamicCheckers(), function_name.AsCString());
-        
-            if (!ir_dynamic_checks.runOnModule(*m_execution_unit->GetModule()))
-            {
-                err.SetErrorToGenericError();
-                err.SetErrorString("Couldn't add dynamic checks to the expression");
-                return err;
-            }
+            m_execution_unit->GetRunnableInfo(err, func_addr, func_end);
         }
     }
-    
-    m_execution_unit->GetRunnableInfo(err, func_addr, func_end);
+    else
+    {
+        m_execution_unit->GetRunnableInfo(err, func_addr, func_end);
+    }
     
     execution_unit_ap.reset (m_execution_unit.release());
         

@@ -260,17 +260,14 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
 
     if (m_JITted)
         return true;
-    
-    lldb::ClangExpressionVariableSP const_result;
-    
-    bool evaluated_statically = false; // should stay that way
+        
+    bool can_interpret = false; // should stay that way
     
     Error jit_error (m_parser->PrepareForExecution (m_jit_start_addr,
                                                     m_jit_end_addr,
                                                     m_execution_unit_ap,
                                                     exe_ctx, 
-                                                    evaluated_statically,
-                                                    const_result,
+                                                    can_interpret,
                                                     eExecutionPolicyAlways));
     
     if (!jit_error.Success())
