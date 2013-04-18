@@ -65,3 +65,139 @@ define <2 x i64> @test6(<2 x i64> %A, <2 x i64> %B) nounwind {
 	%D = sext <2 x i1> %C to <2 x i64>
 	ret <2 x i64> %D
 }
+
+define <2 x i64> @test7(<2 x i64> %A, <2 x i64> %B) nounwind {
+; CHECK: test7:
+; CHECK: pcmpgtd %xmm1
+; CHECK: pshufd $-96
+; CHECK: pcmpeqd
+; CHECK: pshufd $-11
+; CHECK: pand
+; CHECK: pshufd $-11
+; CHECK: por
+; CHECK: ret
+	%C = icmp sgt <2 x i64> %A, %B
+	%D = sext <2 x i1> %C to <2 x i64>
+	ret <2 x i64> %D
+}
+
+define <2 x i64> @test8(<2 x i64> %A, <2 x i64> %B) nounwind {
+; CHECK: test8:
+; CHECK: pcmpgtd %xmm0
+; CHECK: pshufd $-96
+; CHECK: pcmpeqd
+; CHECK: pshufd $-11
+; CHECK: pand
+; CHECK: pshufd $-11
+; CHECK: por
+; CHECK: ret
+	%C = icmp slt <2 x i64> %A, %B
+	%D = sext <2 x i1> %C to <2 x i64>
+	ret <2 x i64> %D
+}
+
+define <2 x i64> @test9(<2 x i64> %A, <2 x i64> %B) nounwind {
+; CHECK: test9:
+; CHECK: pcmpgtd %xmm0
+; CHECK: pshufd $-96
+; CHECK: pcmpeqd
+; CHECK: pshufd $-11
+; CHECK: pand
+; CHECK: pshufd $-11
+; CHECK: por
+; CHECK: pcmpeqd
+; CHECK: pxor
+; CHECK: ret
+	%C = icmp sge <2 x i64> %A, %B
+	%D = sext <2 x i1> %C to <2 x i64>
+	ret <2 x i64> %D
+}
+
+define <2 x i64> @test10(<2 x i64> %A, <2 x i64> %B) nounwind {
+; CHECK: test10:
+; CHECK: pcmpgtd %xmm1
+; CHECK: pshufd $-96
+; CHECK: pcmpeqd
+; CHECK: pshufd $-11
+; CHECK: pand
+; CHECK: pshufd $-11
+; CHECK: por
+; CHECK: pcmpeqd
+; CHECK: pxor
+; CHECK: ret
+	%C = icmp sle <2 x i64> %A, %B
+	%D = sext <2 x i1> %C to <2 x i64>
+	ret <2 x i64> %D
+}
+
+define <2 x i64> @test11(<2 x i64> %A, <2 x i64> %B) nounwind {
+; CHECK: test11:
+; CHECK: pxor
+; CHECK: pxor
+; CHECK: pcmpgtd %xmm1
+; CHECK: pshufd $-96
+; CHECK: pcmpeqd
+; CHECK: pshufd $-11
+; CHECK: pand
+; CHECK: pshufd $-11
+; CHECK: por
+; CHECK: ret
+	%C = icmp ugt <2 x i64> %A, %B
+	%D = sext <2 x i1> %C to <2 x i64>
+	ret <2 x i64> %D
+}
+
+define <2 x i64> @test12(<2 x i64> %A, <2 x i64> %B) nounwind {
+; CHECK: test12:
+; CHECK: pxor
+; CHECK: pxor
+; CHECK: pcmpgtd %xmm0
+; CHECK: pshufd $-96
+; CHECK: pcmpeqd
+; CHECK: pshufd $-11
+; CHECK: pand
+; CHECK: pshufd $-11
+; CHECK: por
+; CHECK: ret
+	%C = icmp ult <2 x i64> %A, %B
+	%D = sext <2 x i1> %C to <2 x i64>
+	ret <2 x i64> %D
+}
+
+define <2 x i64> @test13(<2 x i64> %A, <2 x i64> %B) nounwind {
+; CHECK: test13:
+; CHECK: pxor
+; CHECK: pxor
+; CHECK: pcmpgtd %xmm0
+; CHECK: pshufd $-96
+; CHECK: pcmpeqd
+; CHECK: pshufd $-11
+; CHECK: pand
+; CHECK: pshufd $-11
+; CHECK: por
+; CHECK: pcmpeqd
+; CHECK: pxor
+; CHECK: ret
+	%C = icmp uge <2 x i64> %A, %B
+	%D = sext <2 x i1> %C to <2 x i64>
+	ret <2 x i64> %D
+}
+
+define <2 x i64> @test14(<2 x i64> %A, <2 x i64> %B) nounwind {
+; CHECK: test14:
+; CHECK: pxor
+; CHECK: pxor
+; CHECK: pcmpgtd %xmm1
+; CHECK: pshufd $-96
+; CHECK: pcmpeqd
+; CHECK: pshufd $-11
+; CHECK: pand
+; CHECK: pshufd $-11
+; CHECK: por
+; CHECK: pcmpeqd
+; CHECK: pxor
+; CHECK: ret
+	%C = icmp ule <2 x i64> %A, %B
+	%D = sext <2 x i1> %C to <2 x i64>
+	ret <2 x i64> %D
+}
