@@ -720,11 +720,6 @@ Currently, only the following parameter attributes are defined:
     This indicates that the pointer parameter can be excised using the
     :ref:`trampoline intrinsics <int_trampoline>`. This is not a valid
     attribute for return values.
-``nobuiltin``
-    This indicates that the callee function at a call site is not
-    recognized as a built-in function. LLVM will retain the original call
-    and not replace it with equivalent code based on the semantics of the
-    built-in function.
 
 .. _gc:
 
@@ -764,10 +759,10 @@ inlined, has a stack alignment of 4, and which shouldn't use SSE instructions:
 .. code-block:: llvm
 
    ; Target-independent attributes:
-   #0 = attributes { alwaysinline alignstack=4 }
+   attributes #0 = { alwaysinline alignstack=4 }
 
    ; Target-dependent attributes:
-   #1 = attributes { "no-sse" }
+   attributes #1 = { "no-sse" }
 
    ; Function @f has attributes: alwaysinline, alignstack=4, and "no-sse".
    define void @f() #0 #1 { ... }
@@ -814,6 +809,12 @@ example:
 ``naked``
     This attribute disables prologue / epilogue emission for the
     function. This can have very system-specific consequences.
+``nobuiltin``
+    This indicates that the callee function at a call site is not
+    recognized as a built-in function. LLVM will retain the original call
+    and not replace it with equivalent code based on the semantics of the
+    built-in function. This is only valid at call sites, not on function
+    declarations or definitions.
 ``noduplicate``
     This attribute indicates that calls to the function cannot be
     duplicated. A call to a ``noduplicate`` function may be moved
