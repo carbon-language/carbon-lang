@@ -787,6 +787,28 @@ static void PrintCursor(CXCursor Cursor,
     }
 
     PrintCursorComments(Cursor, ValidationData);
+
+    {
+      unsigned PropAttrs = clang_Cursor_getObjCPropertyAttributes(Cursor, 0);
+      if (PropAttrs != CXObjCPropertyAttr_noattr) {
+        printf(" [");
+        #define PRINT_PROP_ATTR(A) \
+          if (PropAttrs & CXObjCPropertyAttr_##A) printf(#A ",")
+        PRINT_PROP_ATTR(readonly);
+        PRINT_PROP_ATTR(getter);
+        PRINT_PROP_ATTR(assign);
+        PRINT_PROP_ATTR(readwrite);
+        PRINT_PROP_ATTR(retain);
+        PRINT_PROP_ATTR(copy);
+        PRINT_PROP_ATTR(nonatomic);
+        PRINT_PROP_ATTR(setter);
+        PRINT_PROP_ATTR(atomic);
+        PRINT_PROP_ATTR(weak);
+        PRINT_PROP_ATTR(strong);
+        PRINT_PROP_ATTR(unsafe_unretained);
+        printf("]");
+      }
+    }
   }
 }
 

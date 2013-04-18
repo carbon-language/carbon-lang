@@ -169,7 +169,7 @@ struct X0  {};
 // CHECK: c-index-api-loadTU-test.m:71:8: StructDecl=X0:71:8 (Definition) Extent=[71:1 - 71:14]
 // CHECK: c-index-api-loadTU-test.m:73:12: ObjCCategoryDecl=:73:12 Extent=[73:1 - 76:5]
 // CHECK: c-index-api-loadTU-test.m:73:12: ObjCClassRef=TestAttributes:62:12 Extent=[73:12 - 73:26]
-// CHECK: c-index-api-loadTU-test.m:75:32: ObjCPropertyDecl=anotherOutlet:75:32 Extent=[75:1 - 75:45]
+// CHECK: c-index-api-loadTU-test.m:75:32: ObjCPropertyDecl=anotherOutlet:75:32 [retain,] Extent=[75:1 - 75:45]
 // CHECK: <invalid loc>:0:0: attribute(iboutlet)= Extent=[75:20 - 75:28]
 // CHECK: c-index-api-loadTU-test.m:75:29: TypeRef=id:0:0 Extent=[75:29 - 75:31]
 // CHECK: c-index-api-loadTU-test.m:75:32: ObjCInstanceMethodDecl=anotherOutlet:75:32 Extent=[75:32 - 75:45]

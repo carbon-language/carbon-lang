@@ -5919,6 +5919,35 @@ CXFile clang_getIncludedFile(CXCursor cursor) {
   return const_cast<FileEntry *>(ID->getFile());
 }
 
+unsigned clang_Cursor_getObjCPropertyAttributes(CXCursor C, unsigned reserved) {
+  if (C.kind != CXCursor_ObjCPropertyDecl)
+    return CXObjCPropertyAttr_noattr;
+
+  unsigned Result = CXObjCPropertyAttr_noattr;
+  const ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(getCursorDecl(C));
+  ObjCPropertyDecl::PropertyAttributeKind Attr =
+      PD->getPropertyAttributesAsWritten();
+
+#define SET_CXOBJCPROP_ATTR(A) \
+  if (Attr & ObjCPropertyDecl::OBJC_PR_##A) \
+    Result |= CXObjCPropertyAttr_##A
+  SET_CXOBJCPROP_ATTR(readonly);
+  SET_CXOBJCPROP_ATTR(getter);
+  SET_CXOBJCPROP_ATTR(assign);
+  SET_CXOBJCPROP_ATTR(readwrite);
+  SET_CXOBJCPROP_ATTR(retain);
+  SET_CXOBJCPROP_ATTR(copy);
+  SET_CXOBJCPROP_ATTR(nonatomic);
+  SET_CXOBJCPROP_ATTR(setter);
+  SET_CXOBJCPROP_ATTR(atomic);
+  SET_CXOBJCPROP_ATTR(weak);
+  SET_CXOBJCPROP_ATTR(strong);
+  SET_CXOBJCPROP_ATTR(unsafe_unretained);
+#undef SET_CXOBJCPROP_ATTR
+
+  return Result;
+}
+
 CXSourceRange clang_Cursor_getCommentRange(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return clang_getNullRange();
