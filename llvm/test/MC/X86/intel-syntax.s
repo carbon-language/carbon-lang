@@ -291,4 +291,34 @@ _main:
     mov [eax][16/-8][ebx*4], ecx
 // CHECK: movl %ecx, -2(%eax,%ebx,4)
     mov [eax][(16)/-8][ebx*4], ecx
+
+// CHECK: setb %al
+    setc al
+// CHECK: sete %al
+    setz al
+// CHECK: setbe %al
+    setna al
+// CHECK: setae %al
+    setnb al
+// CHECK: setae %al
+    setnc al
+// CHECK: setle %al
+    setng al
+// CHECK: setge %al
+    setnl al
+// CHECK: setne %al
+    setnz al
+// CHECK: setp %al
+    setpe al
+// CHECK: setnp %al
+    setpo al
+// CHECK: setb %al
+    setnae al
+// CHECK: seta %al
+    setnbe al
+// CHECK: setl %al
+    setnge al
+// CHECK: setg %al
+    setnle al
+
     ret

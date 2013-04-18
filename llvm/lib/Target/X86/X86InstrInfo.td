@@ -1921,7 +1921,7 @@ def : MnemonicAlias<"fwait",    "wait",     "att">;
 
 class CondCodeAlias<string Prefix,string Suffix, string OldCond, string NewCond>
   : MnemonicAlias<!strconcat(Prefix, OldCond, Suffix),
-                  !strconcat(Prefix, NewCond, Suffix), "att">;
+                  !strconcat(Prefix, NewCond, Suffix)>;
 
 /// IntegerCondCodeMnemonicAlias - This multiclass defines a bunch of
 /// MnemonicAlias's that canonicalize the condition code in a mnemonic, for
