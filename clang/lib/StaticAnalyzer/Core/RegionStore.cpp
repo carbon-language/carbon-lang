@@ -19,10 +19,12 @@
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SubEngine.h"
 #include "llvm/ADT/ImmutableList.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/Optional.h"
@@ -323,6 +325,7 @@ class invalidateRegionsWorker;
 class RegionStoreManager : public StoreManager {
 public:
   const RegionStoreFeatures Features;
+
   RegionBindings::Factory RBFactory;
   mutable ClusterBindings::Factory CBFactory;
 
@@ -331,6 +334,16 @@ private:
   typedef llvm::DenseMap<const LazyCompoundValData *,
                          SValListTy> LazyBindingsMapTy;
   LazyBindingsMapTy LazyBindingsMap;
+
+  /// The largest number of fields a struct can have and still be
+  /// considered "small".
+  ///
+  /// This is currently used to decide whether or not it is worth "forcing" a
+  /// LazyCompoundVal on bind.
+  ///
+  /// This is controlled by 'region-store-small-struct-limit' option.
+  /// To disable all small-struct-dependent behavior, set the option to "0".
+  unsigned SmallStructLimit;
 
   /// \brief A helper used to populate the work list with the given set of
   /// regions.
@@ -342,7 +355,14 @@ private:
 public:
   RegionStoreManager(ProgramStateManager& mgr, const RegionStoreFeatures &f)
     : StoreManager(mgr), Features(f),
-      RBFactory(mgr.getAllocator()), CBFactory(mgr.getAllocator()) {}
+      RBFactory(mgr.getAllocator()), CBFactory(mgr.getAllocator()),
+      SmallStructLimit(0) {
+    if (SubEngine *Eng = StateMgr.getOwningEngine()) {
+      AnalyzerOptions &Options = Eng->getAnalysisManager().options;
+      SmallStructLimit =
+        Options.getOptionAsInteger("region-store-small-struct-limit", 2);
+    }
+  }
 
 
   /// setImplicitDefaultValue - Set the default binding for the provided
@@ -422,6 +442,21 @@ public: // Part of public interface to class.
   StoreRef bindCompoundLiteral(Store ST,
                                const CompoundLiteralExpr *CL,
                                const LocationContext *LC, SVal V);
+
+  /// Attempt to extract the fields of \p LCV and bind them to the struct region
+  /// \p R.
+  ///
+  /// This path is used when it seems advantageous to "force" loading the values
+  /// within a LazyCompoundVal to bind memberwise to the struct region, rather
+  /// than using a Default binding at the base of the entire region. This is a
+  /// heuristic attempting to avoid building long chains of LazyCompoundVals.
+  ///
+  /// \returns The updated store bindings, or \c None if binding non-lazily
+  ///          would be too expensive.
+  Optional<RegionBindingsRef> tryBindSmallStruct(RegionBindingsConstRef B,
+                                                 const TypedValueRegion *R,
+                                                 const RecordDecl *RD,
+                                                 nonloc::LazyCompoundVal LCV);
 
   /// BindStruct - Bind a compound value to a structure.
   RegionBindingsRef bindStruct(RegionBindingsConstRef B,
@@ -2013,7 +2048,7 @@ RegionStoreManager::bindArray(RegionBindingsConstRef B,
     else if (ElementTy->isArrayType())
       NewB = bindArray(NewB, ER, *VI);
     else
-      NewB = bind(NewB, svalBuilder.makeLoc(ER), *VI);
+      NewB = bind(NewB, loc::MemRegionVal(ER), *VI);
   }
 
   // If the init list is shorter than the array length, set the
@@ -2054,14 +2089,56 @@ RegionBindingsRef RegionStoreManager::bindVector(RegionBindingsConstRef B,
     
     NonLoc Idx = svalBuilder.makeArrayIndex(index);
     const ElementRegion *ER = MRMgr.getElementRegion(ElemType, Idx, R, Ctx);
-    
+
     if (ElemType->isArrayType())
       NewB = bindArray(NewB, ER, *VI);
     else if (ElemType->isStructureOrClassType())
       NewB = bindStruct(NewB, ER, *VI);
     else
-      NewB = bind(NewB, svalBuilder.makeLoc(ER), *VI);
+      NewB = bind(NewB, loc::MemRegionVal(ER), *VI);
   }
+  return NewB;
+}
+
+Optional<RegionBindingsRef>
+RegionStoreManager::tryBindSmallStruct(RegionBindingsConstRef B,
+                                       const TypedValueRegion *R,
+                                       const RecordDecl *RD,
+                                       nonloc::LazyCompoundVal LCV) {
+  FieldVector Fields;
+
+  if (const CXXRecordDecl *Class = dyn_cast<CXXRecordDecl>(RD))
+    if (Class->getNumBases() != 0 || Class->getNumVBases() != 0)
+      return None;
+
+  for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
+       I != E; ++I) {
+    const FieldDecl *FD = *I;
+    if (FD->isUnnamedBitfield())
+      continue;
+
+    // If there are too many fields, or if any of the fields are aggregates,
+    // just use the LCV as a default binding.
+    if (Fields.size() == SmallStructLimit)
+      return None;
+
+    QualType Ty = FD->getType();
+    if (!(Ty->isScalarType() || Ty->isReferenceType()))
+      return None;
+
+    Fields.push_back(*I);
+  }
+
+  RegionBindingsRef NewB = B;
+  
+  for (FieldVector::iterator I = Fields.begin(), E = Fields.end(); I != E; ++I){
+    const FieldRegion *SourceFR = MRMgr.getFieldRegion(*I, LCV.getRegion());
+    SVal V = getBindingForField(getRegionBindings(LCV.getStore()), SourceFR);
+
+    const FieldRegion *DestFR = MRMgr.getFieldRegion(*I, R);
+    NewB = bind(NewB, loc::MemRegionVal(DestFR), V);
+  }
+
   return NewB;
 }
 
@@ -2075,13 +2152,19 @@ RegionBindingsRef RegionStoreManager::bindStruct(RegionBindingsConstRef B,
   assert(T->isStructureOrClassType());
 
   const RecordType* RT = T->getAs<RecordType>();
-  RecordDecl *RD = RT->getDecl();
+  const RecordDecl *RD = RT->getDecl();
 
   if (!RD->isCompleteDefinition())
     return B;
 
   // Handle lazy compound values and symbolic values.
-  if (V.getAs<nonloc::LazyCompoundVal>() || V.getAs<nonloc::SymbolVal>())
+  if (Optional<nonloc::LazyCompoundVal> LCV =
+        V.getAs<nonloc::LazyCompoundVal>()) {
+    if (Optional<RegionBindingsRef> NewB = tryBindSmallStruct(B, R, RD, *LCV))
+      return *NewB;
+    return bindAggregate(B, R, V);
+  }
+  if (V.getAs<nonloc::SymbolVal>())
     return bindAggregate(B, R, V);
 
   // We may get non-CompoundVal accidentally due to imprecise cast logic or
@@ -2113,7 +2196,7 @@ RegionBindingsRef RegionStoreManager::bindStruct(RegionBindingsConstRef B,
     else if (FTy->isStructureOrClassType())
       NewB = bindStruct(NewB, FR, *VI);
     else
-      NewB = bind(NewB, svalBuilder.makeLoc(FR), *VI);
+      NewB = bind(NewB, loc::MemRegionVal(FR), *VI);
     ++VI;
   }
 

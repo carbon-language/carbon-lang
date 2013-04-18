@@ -16,6 +16,7 @@ void foo() { bar(); }
 // CHECK-NEXT: max-nodes = 150000
 // CHECK-NEXT: max-times-inline-large = 32
 // CHECK-NEXT: mode = deep
+// CHECK-NEXT: region-store-small-struct-limit = 2
 // CHECK-NEXT: [stats]
-// CHECK-NEXT: num-entries = 11
+// CHECK-NEXT: num-entries = 12
 
