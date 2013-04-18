@@ -47,4 +47,11 @@ int main()
         assert(distance(l1.cbegin(), l1.cend()) == 0);
         assert(i == l1.begin());
     }
+    {
+        std::vector<std::vector<int> > outer(2, std::vector<int>(1));
+        outer.erase(outer.begin(), outer.begin());
+        assert(outer.size() == 2);
+        assert(outer[0].size() == 1);
+        assert(outer[1].size() == 1);
+    }
 }

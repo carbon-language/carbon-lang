@@ -1615,7 +1615,8 @@ vector<_Tp, _Allocator>::erase(const_iterator __first, const_iterator __last)
     _LIBCPP_ASSERT(__first <= __last, "vector::erase(first, last) called with invalid range");
     pointer __p = this->__begin_ + (__first - begin());
     iterator __r = __make_iter(__p);
-    this->__destruct_at_end(_VSTD::move(__p + (__last - __first), this->__end_, __p));
+    if (__first != __last)
+        this->__destruct_at_end(_VSTD::move(__p + (__last - __first), this->__end_, __p));
     return __r;
 }
 
