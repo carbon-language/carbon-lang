@@ -1462,8 +1462,8 @@ bool SROA::ShouldAttemptScalarRepl(AllocaInst *AI) {
 }
 
 // performScalarRepl - This algorithm is a simple worklist driven algorithm,
-// which runs on all of the alloca instructions in the function, removing them
-// if they are only used by getelementptr instructions.
+// which runs on all of the alloca instructions in the entry block, removing
+// them if they are only used by getelementptr instructions.
 //
 bool SROA::performScalarRepl(Function &F) {
   std::vector<AllocaInst*> WorkList;
