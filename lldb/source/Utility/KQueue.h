@@ -20,7 +20,7 @@
 #include <sys/event.h>
 #include <sys/time.h>
 
-#include "lldb-defines.h"
+#include "lldb/lldb-defines.h"
 
 namespace lldb_private {
 
