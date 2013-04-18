@@ -190,16 +190,66 @@ static void CallPrintfAndReportCallback(const char *str) {
     PrintfAndReportCallback(str);
 }
 
-void Printf(const char *format, ...) {
+static void SharedPrintfCode(bool append_pid, const char *format,
+                             va_list args) {
   const int kLen = 16 * 1024;
-  InternalScopedBuffer<char> buffer(kLen);
+  // |local_buffer| is small enough not to overflow the stack and/or violate
+  // the stack limit enforced by TSan (-Wframe-larger-than=512). On the other
+  // hand, the bigger the buffer is, the more the chance the error report will
+  // fit into it.
+  char local_buffer[400];
+  int needed_length;
+  char *buffer = local_buffer;
+  int buffer_size = ARRAY_SIZE(local_buffer);
+  // First try to print a message using a local buffer, and then fall back to
+  // mmaped buffer.
+  for (int use_mmap = 0; use_mmap < 2; use_mmap++) {
+    if (use_mmap) {
+      buffer = (char*)MmapOrDie(kLen, "Report");
+      buffer_size = kLen;
+    }
+    needed_length = 0;
+    if (append_pid) {
+      int pid = GetPid();
+      needed_length += internal_snprintf(buffer, buffer_size, "==%d==", pid);
+      if (needed_length >= buffer_size) {
+        // The pid doesn't fit into the current buffer.
+        if (!use_mmap)
+          continue;
+        RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
+      }
+    }
+    needed_length += VSNPrintf(buffer + needed_length,
+                               buffer_size - needed_length, format, args);
+    if (needed_length >= buffer_size) {
+      // The message doesn't fit into the current buffer.
+      if (!use_mmap)
+        continue;
+      RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
+    }
+    // If the message fit into the buffer, print it and exit.
+    break;
+  }
+  RawWrite(buffer);
+  CallPrintfAndReportCallback(buffer);
+  // If we had mapped any memory, clean up.
+  if (buffer != local_buffer)
+    UnmapOrDie((void *)buffer, buffer_size);
+}
+
+void Printf(const char *format, ...) {
   va_list args;
   va_start(args, format);
-  int needed_length = VSNPrintf(buffer.data(), kLen, format, args);
+  SharedPrintfCode(false, format, args);
   va_end(args);
-  RAW_CHECK_MSG(needed_length < kLen, "Buffer in Printf is too short!\n");
-  RawWrite(buffer.data());
-  CallPrintfAndReportCallback(buffer.data());
+}
+
+// Like Printf, but prints the current PID before the output string.
+void Report(const char *format, ...) {
+  va_list args;
+  va_start(args, format);
+  SharedPrintfCode(true, format, args);
+  va_end(args);
 }
 
 // Writes at most "length" symbols to "buffer" (including trailing '\0').
@@ -212,56 +262,6 @@ int internal_snprintf(char *buffer, uptr length, const char *format, ...) {
   int needed_length = VSNPrintf(buffer, length, format, args);
   va_end(args);
   return needed_length;
-}
-
-// Like Printf, but prints the current PID before the output string.
-void Report(const char *format, ...) {
-  const int kLen = 16 * 1024;
-  // |local_buffer| is small enough not to overflow the stack and/or violate
-  // the stack limit enforced by TSan (-Wframe-larger-than=512). On the other
-  // hand, the bigger the buffer is, the more the chance the error report will
-  // fit into it.
-  char local_buffer[400];
-  int needed_length;
-  int pid = GetPid();
-  char *buffer = local_buffer;
-  int cur_size = sizeof(local_buffer) / sizeof(char);
-  for (int use_mmap = 0; use_mmap < 2; use_mmap++) {
-    needed_length = internal_snprintf(buffer, cur_size,
-                                      "==%d==", pid);
-    if (needed_length >= cur_size) {
-      if (use_mmap) {
-        RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
-      } else {
-        // The pid doesn't fit into the local buffer.
-        continue;
-      }
-    }
-    va_list args;
-    va_start(args, format);
-    needed_length += VSNPrintf(buffer + needed_length,
-                               cur_size - needed_length, format, args);
-    va_end(args);
-    if (needed_length >= cur_size) {
-      if (use_mmap) {
-        RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
-      } else {
-        // The error message doesn't fit into the local buffer - allocate a
-        // bigger one.
-        buffer = (char*)MmapOrDie(kLen, "Report");
-        cur_size = kLen;
-        continue;
-      }
-    } else {
-      RawWrite(buffer);
-      CallPrintfAndReportCallback(buffer);
-      // Don't do anything for the second time if the first iteration
-      // succeeded.
-      break;
-    }
-  }
-  // If we had mapped any memory, clean up.
-  if (buffer != local_buffer) UnmapOrDie((void*)buffer, cur_size);
 }
 
 }  // namespace __sanitizer
