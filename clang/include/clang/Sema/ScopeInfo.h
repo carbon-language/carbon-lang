@@ -529,6 +529,7 @@ public:
     case CR_Default:
       return "default captured statement";
     }
+    llvm_unreachable("Invalid captured region kind!");
   }
 
   static bool classof(const FunctionScopeInfo *FSI) {
