@@ -3457,10 +3457,7 @@ public:
     ReadWriteLock &
     GetRunLock ()
     {
-        if (Host::GetCurrentThread() == m_private_state_thread)
-            return m_private_run_lock;
-        else
-            return m_public_run_lock;
+        return m_run_lock;
     }
 
 protected:
@@ -3599,8 +3596,7 @@ protected:
     LanguageRuntimeCollection   m_language_runtimes;
     std::auto_ptr<NextEventAction> m_next_event_action_ap;
     std::vector<PreResumeCallbackAndBaton> m_pre_resume_actions;
-    ReadWriteLock               m_public_run_lock;
-    ReadWriteLock               m_private_run_lock;
+    ReadWriteLock               m_run_lock;
     Predicate<bool>             m_currently_handling_event;
     bool                        m_finalize_called;
     lldb::StateType             m_last_broadcast_state;   /// This helps with the Public event coalescing in ShouldBroadcastEvent.

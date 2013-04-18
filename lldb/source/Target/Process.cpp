@@ -1019,8 +1019,7 @@ Process::Process(Target &target, Listener &listener) :
     m_allocated_memory_cache (*this),
     m_should_detach (false),
     m_next_event_action_ap(),
-    m_public_run_lock (),
-    m_private_run_lock (),
+    m_run_lock (),
     m_currently_handling_event(false),
     m_finalize_called(false),
     m_last_broadcast_state (eStateInvalid),
@@ -1139,8 +1138,6 @@ Process::Finalize()
     // contain events that have ProcessSP values in them which can keep this
     // process around forever. These events need to be cleared out.
     m_private_state_listener.Clear();
-    m_public_run_lock.WriteUnlock();
-    m_private_run_lock.WriteUnlock();
     m_finalize_called = true;
 }
 
@@ -1622,7 +1619,7 @@ Process::SetPublicState (StateType new_state)
         {
             if (log)
                 log->Printf("Process::SetPublicState (%s) -- unlocking run lock for detach", StateAsCString(new_state));
-            m_public_run_lock.WriteUnlock();
+            m_run_lock.WriteUnlock();
         }
         else
         {
@@ -1634,7 +1631,7 @@ Process::SetPublicState (StateType new_state)
                 {
                     if (log)
                         log->Printf("Process::SetPublicState (%s) -- unlocking run lock", StateAsCString(new_state));
-                    m_public_run_lock.WriteUnlock();
+                    m_run_lock.WriteUnlock();
                 }
             }
         }
@@ -1647,7 +1644,7 @@ Process::Resume ()
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STATE | LIBLLDB_LOG_PROCESS));
     if (log)
         log->Printf("Process::Resume -- locking run lock");
-    if (!m_public_run_lock.WriteTryLock())
+    if (!m_run_lock.WriteTryLock())
     {
         Error error("Resume request failed - process still running.");
         if (log)
@@ -2769,7 +2766,7 @@ Process::Launch (const ProcessLaunchInfo &launch_info)
                 SetPublicState (eStateLaunching);
                 m_should_detach = false;
 
-                if (m_public_run_lock.WriteTryLock())
+                if (m_run_lock.WriteTryLock())
                 {
                     // Now launch using these arguments.
                     error = DoLaunch (exe_module, launch_info);
@@ -2953,9 +2950,8 @@ Process::Attach (ProcessAttachInfo &attach_info)
                 error = WillAttachToProcessWithName(process_name, wait_for_launch);
                 if (error.Success())
                 {
-                    if (m_public_run_lock.WriteTryLock())
+                    if (m_run_lock.WriteTryLock())
                     {
-                        m_private_run_lock.WriteLock();
                         m_should_detach = true;
                         SetPublicState (eStateAttaching);
                         // Now attach using these arguments.
@@ -3031,9 +3027,8 @@ Process::Attach (ProcessAttachInfo &attach_info)
         if (error.Success())
         {
 
-            if (m_public_run_lock.WriteTryLock())
+            if (m_run_lock.WriteTryLock())
             {
-                m_private_run_lock.WriteLock();
                 // Now attach using these arguments.
                 m_should_detach = true;
                 SetPublicState (eStateAttaching);
@@ -3200,7 +3195,6 @@ Process::PrivateResume ()
             else
             {
                 m_mod_id.BumpResumeID();
-                m_private_run_lock.WriteLock();
                 error = DoResume();
                 if (error.Success())
                 {
@@ -3208,10 +3202,6 @@ Process::PrivateResume ()
                     m_thread_list.DidResume();
                     if (log)
                         log->Printf ("Process thinks the process has resumed.");
-                }
-                else
-                {
-                    m_private_run_lock.WriteUnlock();
                 }
             }
         }
@@ -3420,7 +3410,7 @@ Process::Detach ()
     // the last events through the event system, in which case we might strand the write lock.  Unlock
     // it here so when we do to tear down the process we don't get an error destroying the lock.
     
-    m_public_run_lock.WriteUnlock();
+    m_run_lock.WriteUnlock();
     return error;
 }
 
@@ -3478,7 +3468,7 @@ Process::Destroy ()
         // If we have been interrupted (to kill us) in the middle of running, we may not end up propagating
         // the last events through the event system, in which case we might strand the write lock.  Unlock
         // it here so when we do to tear down the process we don't get an error destroying the lock.
-        m_public_run_lock.WriteUnlock();
+        m_run_lock.WriteUnlock();
     }
     
     m_destroy_in_process = false;
@@ -3581,8 +3571,6 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
             // If we aren't going to stop, let the thread plans decide if we're going to report this event.
             // If no thread has an opinion, we don't report it.
             
-            m_private_run_lock.WriteUnlock();
-
             RefreshStateAfterStop ();
             if (ProcessEventData::GetInterruptedFromEvent (event_ptr))
             {
@@ -3946,7 +3934,6 @@ Process::RunPrivateStateThread ()
     if (log)
         log->Printf ("Process::%s (arg = %p, pid = %" PRIu64 ") thread exiting...", __FUNCTION__, this, GetID());
 
-    m_public_run_lock.WriteUnlock();
     m_private_state_control_wait.SetValue (true, eBroadcastAlways);
     m_private_state_thread = LLDB_INVALID_HOST_THREAD;
     return NULL;
@@ -4088,11 +4075,8 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
             }
         }
 
-        const lldb::StateType state = m_process_sp->GetPrivateState();
-        if (state != eStateRunning &&
-            state != eStateCrashed &&
-            state != eStateDetached &&
-            state != eStateExited)
+        
+        if (m_process_sp->GetPrivateState() != eStateRunning)
         {
             if (!still_should_stop)
             {
