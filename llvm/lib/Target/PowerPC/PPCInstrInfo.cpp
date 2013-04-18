@@ -42,6 +42,9 @@ static cl::
 opt<bool> DisableCTRLoopAnal("disable-ppc-ctrloop-analysis", cl::Hidden,
             cl::desc("Disable analysis for CTR loops"));
 
+static cl::opt<bool> DisableCmpOpt("disable-ppc-cmp-opt", cl::init(true),
+cl::desc("Disable compare instruction optimization"), cl::Hidden);
+
 PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
   : PPCGenInstrInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
     TM(tm), RI(*TM.getSubtargetImpl(), *this) {}
@@ -1088,6 +1091,9 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
                                         unsigned SrcReg, unsigned SrcReg2,
                                         int Mask, int Value,
                                         const MachineRegisterInfo *MRI) const {
+  if (DisableCmpOpt)
+    return false;
+
   int OpC = CmpInstr->getOpcode();
   unsigned CRReg = CmpInstr->getOperand(0).getReg();
   bool isFP = OpC == PPC::FCMPUS || OpC == PPC::FCMPUD;
