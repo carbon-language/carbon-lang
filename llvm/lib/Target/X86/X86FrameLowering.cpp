@@ -528,11 +528,11 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
     if (!MI.getFlag(MachineInstr::FrameSetup)) break;
 
     // We don't exect any more prolog instructions.
-    if (ExpectEnd) return 0;
+    if (ExpectEnd) return 0x04000000;
 
     if (Opc == PushInstr) {
       // If there are too many saved registers, we cannot use compact encoding.
-      if (SavedRegIdx >= CU_NUM_SAVED_REGS) return 0;
+      if (SavedRegIdx >= CU_NUM_SAVED_REGS) return 0x04000000;
 
       SavedRegs[SavedRegIdx++] = MI.getOperand(0).getReg();
       StackAdjust += OffsetSize;
@@ -542,7 +542,7 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
       unsigned DstReg = MI.getOperand(0).getReg();
 
       if (DstReg != FramePtr || SrcReg != StackPtr)
-        return 0;
+        return 0x04000000;
 
       StackAdjust = 0;
       memset(SavedRegs, 0, sizeof(SavedRegs));
@@ -552,7 +552,7 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
                Opc == X86::SUB32ri || Opc == X86::SUB32ri8) {
       if (StackSize)
         // We already have a stack size.
-        return 0;
+        return 0x04000000;
 
       if (!MI.getOperand(0).isReg() ||
           MI.getOperand(0).getReg() != MI.getOperand(1).getReg() ||
@@ -560,7 +560,7 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
         // We need this to be a stack adjustment pointer. Something like:
         //
         //   %RSP<def> = SUB64ri8 %RSP, 48
-        return 0;
+        return 0x04000000;
 
       StackSize = MI.getOperand(2).getImm() / StackDivide;
       SubtractInstrIdx += InstrOffset;
@@ -574,11 +574,11 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
   if (HasFP) {
     if ((StackAdjust & 0xFF) != StackAdjust)
       // Offset was too big for compact encoding.
-      return 0;
+      return 0x04000000;
 
     // Get the encoding of the saved registers when we have a frame pointer.
     uint32_t RegEnc = encodeCompactUnwindRegistersWithFrame(SavedRegs, Is64Bit);
-    if (RegEnc == ~0U) return 0;
+    if (RegEnc == ~0U) return 0x04000000;
 
     CompactUnwindEncoding |= 0x01000000;
     CompactUnwindEncoding |= (StackAdjust & 0xFF) << 16;
@@ -595,7 +595,7 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
     } else {
       if ((StackAdjust & 0x7) != StackAdjust)
         // The extra stack adjustments are too big for us to handle.
-        return 0;
+        return 0x04000000;
 
       // Frameless stack with an offset too large for us to encode compactly.
       CompactUnwindEncoding |= 0x03000000;
@@ -616,7 +616,7 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
     uint32_t RegEnc =
       encodeCompactUnwindRegistersWithoutFrame(SavedRegs, SavedRegIdx,
                                                Is64Bit);
-    if (RegEnc == ~0U) return 0;
+    if (RegEnc == ~0U) return 0x04000000;
 
     // Encode the register encoding.
     CompactUnwindEncoding |= RegEnc & 0x3FF;
