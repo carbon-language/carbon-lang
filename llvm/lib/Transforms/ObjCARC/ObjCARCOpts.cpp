@@ -811,7 +811,7 @@ static void GenerateARCBBEntranceAnnotation(const char *Name, BasicBlock *BB,
   if(!ARCAnnotationTargetIdentifier.empty() &&
      !Ptr->getName().equals(ARCAnnotationTargetIdentifier))
     return;
-  
+
   Module *M = BB->getParent()->getParent();
   LLVMContext &C = M->getContext();
   Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
@@ -854,7 +854,7 @@ static void GenerateARCBBTerminatorAnnotation(const char *Name, BasicBlock *BB,
   if(!ARCAnnotationTargetIdentifier.empty() &&
      !Ptr->getName().equals(ARCAnnotationTargetIdentifier))
     return;
-  
+
   Module *M = BB->getParent()->getParent();
   LLVMContext &C = M->getContext();
   Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
@@ -901,7 +901,7 @@ static void GenerateARCAnnotation(unsigned InstMDId,
     if(!ARCAnnotationTargetIdentifier.empty() &&
        !Ptr->getName().equals(ARCAnnotationTargetIdentifier))
       return;
-    
+
     // First generate the source annotation on our pointer. This will return an
     // MDString* if Ptr actually comes from an instruction implying we can put
     // in a source annotation. If AppendMDNodeToSourcePtr returns 0 (i.e. NULL),
