@@ -778,7 +778,8 @@ CommandObjectMultiwordSource::CommandObjectMultiwordSource (CommandInterpreter &
                             "A set of commands for accessing source file information",
                             "source <subcommand> [<subcommand-options>]")
 {
-    LoadSubCommand ("info",   CommandObjectSP (new CommandObjectSourceInfo (interpreter)));
+    // "source info" isn't implemented yet...
+    //LoadSubCommand ("info",   CommandObjectSP (new CommandObjectSourceInfo (interpreter)));
     LoadSubCommand ("list",   CommandObjectSP (new CommandObjectSourceList (interpreter)));
 }
 
