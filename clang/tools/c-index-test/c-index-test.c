@@ -694,6 +694,9 @@ static void PrintCursor(CXCursor Cursor,
       printf(" (static)");
     if (clang_CXXMethod_isVirtual(Cursor))
       printf(" (virtual)");
+
+    if (clang_Cursor_isVariadic(Cursor))
+      printf(" (variadic)");
     
     if (Cursor.kind == CXCursor_IBOutletCollectionAttr) {
       CXType T =

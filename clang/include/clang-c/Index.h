@@ -3410,6 +3410,11 @@ typedef enum {
 CINDEX_LINKAGE unsigned clang_Cursor_getObjCDeclQualifiers(CXCursor C);
 
 /**
+ * \brief Returns non-zero if the given cursor is a variadic function or method.
+ */
+CINDEX_LINKAGE unsigned clang_Cursor_isVariadic(CXCursor C);
+
+/**
  * \brief Given a cursor that represents a declaration, return the associated
  * comment's source range.  The range may include multiple consecutive comments
  * with whitespace in between.
