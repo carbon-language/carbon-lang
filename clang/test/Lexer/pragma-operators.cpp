@@ -32,6 +32,6 @@ B(foo)
 // CHECK: #pragma comment(lib, "libfoo")
 // CHECK: #pragma clang diagnostic ignored "-Wunused"
 // CHECK: #pragma clang diagnostic error "-Wunused"
-// CHECK: #pragma message("\042Hello\042, world!")
+// CHECK: #pragma message "\042Hello\042, world!"
 // CHECK: 0;
 int n = pragma_L pragma_u8 pragma_u pragma_U pragma_R pragma_UR pragma_hello 0;
