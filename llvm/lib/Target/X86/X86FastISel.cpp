@@ -693,11 +693,6 @@ bool X86FastISel::X86SelectStore(const Instruction *I) {
   if (S->isAtomic())
     return false;
 
-  unsigned SABIAlignment =
-    TD.getABITypeAlignment(S->getValueOperand()->getType());
-  if (S->getAlignment() != 0 && S->getAlignment() < SABIAlignment)
-    return false;
-
   MVT VT;
   if (!isTypeLegal(I->getOperand(0)->getType(), VT, /*AllowI1=*/true))
     return false;
