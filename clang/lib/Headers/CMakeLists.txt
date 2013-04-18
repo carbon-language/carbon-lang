@@ -98,6 +98,7 @@ set_target_properties(clang-headers PROPERTIES FOLDER "Misc")
 if (other_output_dir)
 	if(UNIX)
 		add_custom_command(TARGET clang-headers POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${LLVM_BINARY_DIR}/lib/${CMAKE_CFG_INTDIR}"
 	    	COMMAND ${CMAKE_COMMAND} -E create_symlink "${LLVM_BINARY_DIR}/bin/lib/clang" "${LLVM_BINARY_DIR}/lib/${CMAKE_CFG_INTDIR}/clang")
 	endif()
 endif ()
