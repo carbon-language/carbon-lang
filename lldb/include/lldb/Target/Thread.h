@@ -56,9 +56,6 @@ class Thread :
     public ExecutionContextScope,
     public Broadcaster
 {
-friend class ThreadEventData;
-friend class ThreadList;
-
 public:
     //------------------------------------------------------------------
     /// Broadcaster event bits definitions.
@@ -899,6 +896,7 @@ protected:
 
     friend class ThreadPlan;
     friend class ThreadList;
+    friend class ThreadEventData;
     friend class StackFrameList;
     friend class StackFrame;
     
