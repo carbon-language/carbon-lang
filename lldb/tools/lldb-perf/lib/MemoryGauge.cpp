@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MemoryGauge.h"
+#include "lldb/lldb-forward.h"
 #include <assert.h>
 #include <cmath>
 #include <mach/mach.h>
@@ -91,7 +92,7 @@ MemoryStats::operator * (const MemoryStats& rhs)
 Results::ResultSP
 MemoryStats::GetResult (const char *name, const char *description) const
 {
-    std::unique_ptr<Results::Dictionary> dict_ap (new Results::Dictionary (name, NULL));
+    STD_UNIQUE_PTR(Results::Dictionary) dict_ap (new Results::Dictionary (name, NULL));
     dict_ap->AddUnsigned("resident", NULL, GetResidentSize());
     dict_ap->AddUnsigned("max_resident", NULL, GetMaxResidentSize());
     return Results::ResultSP(dict_ap.release());

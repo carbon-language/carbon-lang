@@ -72,8 +72,8 @@ public:
         lldb::addr_t        m_process_address;
     };
     
-    typedef std::shared_ptr<Dematerializer> DematerializerSP;
-    typedef std::weak_ptr<Dematerializer> DematerializerWP;
+    typedef STD_SHARED_PTR(Dematerializer) DematerializerSP;
+    typedef STD_WEAK_PTR(Dematerializer) DematerializerWP;
     
     DematerializerSP Materialize (lldb::StackFrameSP &frame_sp, lldb::ClangExpressionVariableSP &result_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err);
     
@@ -143,7 +143,7 @@ public:
 private:
     uint32_t AddStructMember (Entity &entity);
     
-    typedef std::unique_ptr<Entity> EntityUP;
+    typedef STD_UNIQUE_PTR(Entity)  EntityUP;
     typedef std::vector<EntityUP>   EntityVector;
     
     unsigned                        m_result_index;

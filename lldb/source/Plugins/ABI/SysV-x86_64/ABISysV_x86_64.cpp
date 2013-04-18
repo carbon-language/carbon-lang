@@ -792,7 +792,7 @@ ABISysV_x86_64::GetReturnValueObjectSimple (Thread &thread,
                     ProcessSP process_sp (thread.GetProcess());
                     if (process_sp)
                     {
-                        std::unique_ptr<DataBufferHeap> heap_data_ap (new DataBufferHeap(byte_size, 0));
+                        STD_UNIQUE_PTR(DataBufferHeap) heap_data_ap (new DataBufferHeap(byte_size, 0));
                         const ByteOrder byte_order = process_sp->GetByteOrder();
                         RegisterValue reg_value;
                         if (reg_ctx->ReadRegister(altivec_reg, reg_value))

@@ -10,7 +10,7 @@
 #ifndef __PerfTestDriver_Results_h__
 #define __PerfTestDriver_Results_h__
 
-#include <memory>
+#include "lldb/lldb-forward.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -123,7 +123,7 @@ public:
         Type m_type;
     };
     
-    typedef std::shared_ptr<Result> ResultSP;
+    typedef STD_SHARED_PTR(Result) ResultSP;
 
     class Array : public Result
     {

@@ -84,7 +84,7 @@ private:
         uint32_t        m_permissions;      ///< The access permissions on the memory in the process.  In the host, the memory is always read/write.
         uint8_t         m_alignment;        ///< The alignment of the requested allocation
         
-        std::unique_ptr<DataBufferHeap> m_data;
+        STD_UNIQUE_PTR(DataBufferHeap) m_data;
         
         AllocationPolicy    m_policy;
     };
