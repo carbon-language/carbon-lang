@@ -428,7 +428,7 @@ void t38() {
   __asm mov eax, 4*4[64 + arr + (2*32)]
   __asm mov eax, 4*(4-2)[64 + arr - 2*32]
   __asm mov eax, 32*(4-2)[arr - 2*32]
-// CHECH: t38
+// CHECK: t38
 // CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $$8$0", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"([4 x i32]* %{{.*}})
 // CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $$12$0", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"([4 x i32]* %{{.*}})
 // CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $$80$0", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"([4 x i32]* %{{.*}})
