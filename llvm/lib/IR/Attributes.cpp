@@ -597,7 +597,7 @@ AttributeSet AttributeSet::get(LLVMContext &C,
   return getImpl(C, Attrs);
 }
 
-AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx, AttrBuilder &B) {
+AttributeSet AttributeSet::get(LLVMContext &C, unsigned Index, AttrBuilder &B) {
   if (!B.hasAttributes())
     return AttributeSet();
 
@@ -609,29 +609,29 @@ AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx, AttrBuilder &B) {
       continue;
 
     if (Kind == Attribute::Alignment)
-      Attrs.push_back(std::make_pair(Idx, Attribute::
+      Attrs.push_back(std::make_pair(Index, Attribute::
                                      getWithAlignment(C, B.getAlignment())));
     else if (Kind == Attribute::StackAlignment)
-      Attrs.push_back(std::make_pair(Idx, Attribute::
+      Attrs.push_back(std::make_pair(Index, Attribute::
                               getWithStackAlignment(C, B.getStackAlignment())));
     else
-      Attrs.push_back(std::make_pair(Idx, Attribute::get(C, Kind)));
+      Attrs.push_back(std::make_pair(Index, Attribute::get(C, Kind)));
   }
 
   // Add target-dependent (string) attributes.
   for (AttrBuilder::td_iterator I = B.td_begin(), E = B.td_end();
        I != E; ++I)
-    Attrs.push_back(std::make_pair(Idx, Attribute::get(C, I->first,I->second)));
+    Attrs.push_back(std::make_pair(Index, Attribute::get(C, I->first,I->second)));
 
   return get(C, Attrs);
 }
 
-AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx,
+AttributeSet AttributeSet::get(LLVMContext &C, unsigned Index,
                                ArrayRef<Attribute::AttrKind> Kind) {
   SmallVector<std::pair<unsigned, Attribute>, 8> Attrs;
   for (ArrayRef<Attribute::AttrKind>::iterator I = Kind.begin(),
          E = Kind.end(); I != E; ++I)
-    Attrs.push_back(std::make_pair(Idx, Attribute::get(C, *I)));
+    Attrs.push_back(std::make_pair(Index, Attribute::get(C, *I)));
   return get(C, Attrs);
 }
 
@@ -648,20 +648,20 @@ AttributeSet AttributeSet::get(LLVMContext &C, ArrayRef<AttributeSet> Attrs) {
   return getImpl(C, AttrNodeVec);
 }
 
-AttributeSet AttributeSet::addAttribute(LLVMContext &C, unsigned Idx,
+AttributeSet AttributeSet::addAttribute(LLVMContext &C, unsigned Index,
                                         Attribute::AttrKind Attr) const {
-  if (hasAttribute(Idx, Attr)) return *this;
-  return addAttributes(C, Idx, AttributeSet::get(C, Idx, Attr));
+  if (hasAttribute(Index, Attr)) return *this;
+  return addAttributes(C, Index, AttributeSet::get(C, Index, Attr));
 }
 
-AttributeSet AttributeSet::addAttribute(LLVMContext &C, unsigned Idx,
+AttributeSet AttributeSet::addAttribute(LLVMContext &C, unsigned Index,
                                         StringRef Kind) const {
   llvm::AttrBuilder B;
   B.addAttribute(Kind);
-  return addAttributes(C, Idx, AttributeSet::get(C, Idx, B));
+  return addAttributes(C, Index, AttributeSet::get(C, Index, B));
 }
 
-AttributeSet AttributeSet::addAttributes(LLVMContext &C, unsigned Idx,
+AttributeSet AttributeSet::addAttributes(LLVMContext &C, unsigned Index,
                                          AttributeSet Attrs) const {
   if (!pImpl) return Attrs;
   if (!Attrs.pImpl) return *this;
@@ -669,8 +669,8 @@ AttributeSet AttributeSet::addAttributes(LLVMContext &C, unsigned Idx,
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment. For now, say
   // we can't change a known alignment.
-  unsigned OldAlign = getParamAlignment(Idx);
-  unsigned NewAlign = Attrs.getParamAlignment(Idx);
+  unsigned OldAlign = getParamAlignment(Index);
+  unsigned NewAlign = Attrs.getParamAlignment(Index);
   assert((!OldAlign || !NewAlign || OldAlign == NewAlign) &&
          "Attempt to change alignment!");
 #endif
@@ -681,8 +681,8 @@ AttributeSet AttributeSet::addAttributes(LLVMContext &C, unsigned Idx,
   AttributeSet AS;
   uint64_t LastIndex = 0;
   for (unsigned I = 0, E = NumAttrs; I != E; ++I) {
-    if (getSlotIndex(I) >= Idx) {
-      if (getSlotIndex(I) == Idx) AS = getSlotAttributes(LastIndex++);
+    if (getSlotIndex(I) >= Index) {
+      if (getSlotIndex(I) == Index) AS = getSlotAttributes(LastIndex++);
       break;
     }
     LastIndex = I + 1;
@@ -691,17 +691,17 @@ AttributeSet AttributeSet::addAttributes(LLVMContext &C, unsigned Idx,
 
   // Now add the attribute into the correct slot. There may already be an
   // AttributeSet there.
-  AttrBuilder B(AS, Idx);
+  AttrBuilder B(AS, Index);
 
   for (unsigned I = 0, E = Attrs.pImpl->getNumAttributes(); I != E; ++I)
-    if (Attrs.getSlotIndex(I) == Idx) {
+    if (Attrs.getSlotIndex(I) == Index) {
       for (AttributeSetImpl::const_iterator II = Attrs.pImpl->begin(I),
              IE = Attrs.pImpl->end(I); II != IE; ++II)
         B.addAttribute(*II);
       break;
     }
 
-  AttrSet.push_back(AttributeSet::get(C, Idx, B));
+  AttrSet.push_back(AttributeSet::get(C, Index, B));
 
   // Add the remaining attribute slots.
   for (unsigned I = LastIndex, E = NumAttrs; I < E; ++I)
@@ -710,13 +710,13 @@ AttributeSet AttributeSet::addAttributes(LLVMContext &C, unsigned Idx,
   return get(C, AttrSet);
 }
 
-AttributeSet AttributeSet::removeAttribute(LLVMContext &C, unsigned Idx,
+AttributeSet AttributeSet::removeAttribute(LLVMContext &C, unsigned Index,
                                            Attribute::AttrKind Attr) const {
-  if (!hasAttribute(Idx, Attr)) return *this;
-  return removeAttributes(C, Idx, AttributeSet::get(C, Idx, Attr));
+  if (!hasAttribute(Index, Attr)) return *this;
+  return removeAttributes(C, Index, AttributeSet::get(C, Index, Attr));
 }
 
-AttributeSet AttributeSet::removeAttributes(LLVMContext &C, unsigned Idx,
+AttributeSet AttributeSet::removeAttributes(LLVMContext &C, unsigned Index,
                                             AttributeSet Attrs) const {
   if (!pImpl) return AttributeSet();
   if (!Attrs.pImpl) return *this;
@@ -724,7 +724,7 @@ AttributeSet AttributeSet::removeAttributes(LLVMContext &C, unsigned Idx,
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
   // For now, say we can't pass in alignment, which no current use does.
-  assert(!Attrs.hasAttribute(Idx, Attribute::Alignment) &&
+  assert(!Attrs.hasAttribute(Index, Attribute::Alignment) &&
          "Attempt to change alignment!");
 #endif
 
@@ -734,8 +734,8 @@ AttributeSet AttributeSet::removeAttributes(LLVMContext &C, unsigned Idx,
   AttributeSet AS;
   uint64_t LastIndex = 0;
   for (unsigned I = 0, E = NumAttrs; I != E; ++I) {
-    if (getSlotIndex(I) >= Idx) {
-      if (getSlotIndex(I) == Idx) AS = getSlotAttributes(LastIndex++);
+    if (getSlotIndex(I) >= Index) {
+      if (getSlotIndex(I) == Index) AS = getSlotAttributes(LastIndex++);
       break;
     }
     LastIndex = I + 1;
@@ -744,15 +744,15 @@ AttributeSet AttributeSet::removeAttributes(LLVMContext &C, unsigned Idx,
 
   // Now remove the attribute from the correct slot. There may already be an
   // AttributeSet there.
-  AttrBuilder B(AS, Idx);
+  AttrBuilder B(AS, Index);
 
   for (unsigned I = 0, E = Attrs.pImpl->getNumAttributes(); I != E; ++I)
-    if (Attrs.getSlotIndex(I) == Idx) {
-      B.removeAttributes(Attrs.pImpl->getSlotAttributes(I), Idx);
+    if (Attrs.getSlotIndex(I) == Index) {
+      B.removeAttributes(Attrs.pImpl->getSlotAttributes(I), Index);
       break;
     }
 
-  AttrSet.push_back(AttributeSet::get(C, Idx, B));
+  AttrSet.push_back(AttributeSet::get(C, Index, B));
 
   // Add the remaining attribute slots.
   for (unsigned I = LastIndex, E = NumAttrs; I < E; ++I)
@@ -769,11 +769,11 @@ LLVMContext &AttributeSet::getContext() const {
   return pImpl->getContext();
 }
 
-AttributeSet AttributeSet::getParamAttributes(unsigned Idx) const {
-  return pImpl && hasAttributes(Idx) ?
+AttributeSet AttributeSet::getParamAttributes(unsigned Index) const {
+  return pImpl && hasAttributes(Index) ?
     AttributeSet::get(pImpl->getContext(),
                       ArrayRef<std::pair<unsigned, AttributeSetNode*> >(
-                        std::make_pair(Idx, getAttributes(Idx)))) :
+                        std::make_pair(Index, getAttributes(Index)))) :
     AttributeSet();
 }
 
@@ -854,27 +854,27 @@ std::string AttributeSet::getAsString(unsigned Index, bool TargetIndependent,
 }
 
 /// \brief The attributes for the specified index are returned.
-AttributeSetNode *AttributeSet::getAttributes(unsigned Idx) const {
+AttributeSetNode *AttributeSet::getAttributes(unsigned Index) const {
   if (!pImpl) return 0;
 
   // Loop through to find the attribute node we want.
   for (unsigned I = 0, E = pImpl->getNumAttributes(); I != E; ++I)
-    if (pImpl->getSlotIndex(I) == Idx)
+    if (pImpl->getSlotIndex(I) == Index)
       return pImpl->getSlotNode(I);
 
   return 0;
 }
 
-AttributeSet::iterator AttributeSet::begin(unsigned Idx) const {
+AttributeSet::iterator AttributeSet::begin(unsigned Slot) const {
   if (!pImpl)
     return ArrayRef<Attribute>().begin();
-  return pImpl->begin(Idx);
+  return pImpl->begin(Slot);
 }
 
-AttributeSet::iterator AttributeSet::end(unsigned Idx) const {
+AttributeSet::iterator AttributeSet::end(unsigned Slot) const {
   if (!pImpl)
     return ArrayRef<Attribute>().end();
-  return pImpl->end(Idx);
+  return pImpl->end(Slot);
 }
 
 //===----------------------------------------------------------------------===//
@@ -925,13 +925,13 @@ void AttributeSet::dump() const {
 // AttrBuilder Method Implementations
 //===----------------------------------------------------------------------===//
 
-AttrBuilder::AttrBuilder(AttributeSet AS, unsigned Idx)
+AttrBuilder::AttrBuilder(AttributeSet AS, unsigned Index)
   : Attrs(0), Alignment(0), StackAlignment(0) {
   AttributeSetImpl *pImpl = AS.pImpl;
   if (!pImpl) return;
 
   for (unsigned I = 0, E = pImpl->getNumAttributes(); I != E; ++I) {
-    if (pImpl->getSlotIndex(I) != Idx) continue;
+    if (pImpl->getSlotIndex(I) != Index) continue;
 
     for (AttributeSetImpl::const_iterator II = pImpl->begin(I),
            IE = pImpl->end(I); II != IE; ++II)
@@ -988,16 +988,16 @@ AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
 }
 
 AttrBuilder &AttrBuilder::removeAttributes(AttributeSet A, uint64_t Index) {
-  unsigned Idx = ~0U;
+  unsigned Slot = ~0U;
   for (unsigned I = 0, E = A.getNumSlots(); I != E; ++I)
     if (A.getSlotIndex(I) == Index) {
-      Idx = I;
+      Slot = I;
       break;
     }
 
-  assert(Idx != ~0U && "Couldn't find index in AttributeSet!");
+  assert(Slot != ~0U && "Couldn't find index in AttributeSet!");
 
-  for (AttributeSet::iterator I = A.begin(Idx), E = A.end(Idx); I != E; ++I) {
+  for (AttributeSet::iterator I = A.begin(Slot), E = A.end(Slot); I != E; ++I) {
     Attribute Attr = *I;
     if (Attr.isEnumAttribute() || Attr.isAlignAttribute()) {
       Attribute::AttrKind Kind = I->getKindAsEnum();
@@ -1075,16 +1075,16 @@ bool AttrBuilder::hasAttributes() const {
 }
 
 bool AttrBuilder::hasAttributes(AttributeSet A, uint64_t Index) const {
-  unsigned Idx = ~0U;
+  unsigned Slot = ~0U;
   for (unsigned I = 0, E = A.getNumSlots(); I != E; ++I)
     if (A.getSlotIndex(I) == Index) {
-      Idx = I;
+      Slot = I;
       break;
     }
 
-  assert(Idx != ~0U && "Couldn't find the index!");
+  assert(Slot != ~0U && "Couldn't find the index!");
 
-  for (AttributeSet::iterator I = A.begin(Idx), E = A.end(Idx);
+  for (AttributeSet::iterator I = A.begin(Slot), E = A.end(Slot);
        I != E; ++I) {
     Attribute Attr = *I;
     if (Attr.isEnumAttribute() || Attr.isAlignAttribute()) {
