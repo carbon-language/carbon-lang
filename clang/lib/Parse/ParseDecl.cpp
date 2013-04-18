@@ -3230,6 +3230,16 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       continue;
     }
 
+    if (Tok.is(tok::annot_pragma_pack)) {
+      HandlePragmaPack();
+      continue;
+    }
+
+    if (Tok.is(tok::annot_pragma_align)) {
+      HandlePragmaAlign();
+      continue;
+    }
+
     if (!Tok.is(tok::at)) {
       struct CFieldCallback : FieldCallback {
         Parser &P;

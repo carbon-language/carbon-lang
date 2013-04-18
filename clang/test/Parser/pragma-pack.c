@@ -30,3 +30,17 @@
 
 _Pragma("pack(push)")
 /* expected-warning {{expected integer or identifier in '#pragma pack'}}*/ _Pragma("pack(push,)") 
+
+// PR13580
+struct S
+{
+  char a[3];
+#pragma pack(1)
+  struct T
+  {
+    char b;
+    int c;
+  } d;
+#pragma pack()
+  int e;
+};

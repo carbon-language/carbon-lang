@@ -20,3 +20,15 @@
 #pragma align=reset
 #pragma align=mac68k
 #pragma align=power
+
+// PR13580
+struct S
+{
+  char a[3];
+#pragma align=packed
+  struct T
+  {
+    char b;
+    int c;
+  } d;
+};
