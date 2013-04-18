@@ -41,7 +41,7 @@ bool bugreporter::isDeclRefExprToReference(const Expr *E) {
 }
 
 const Expr *bugreporter::getDerefExpr(const Stmt *S) {
-  // Pattern match for a few useful cases (do something smarter later):
+  // Pattern match for a few useful cases:
   //   a[0], p->f, *p
   const Expr *E = dyn_cast<Expr>(S);
   if (!E)
@@ -72,6 +72,9 @@ const Expr *bugreporter::getDerefExpr(const Stmt *S) {
     }
     else if (const ArraySubscriptExpr *AE = dyn_cast<ArraySubscriptExpr>(E)) {
       return AE->getBase();
+    }
+    else if (isDeclRefExprToReference(E)) {
+      return E;
     }
     break;
   }
