@@ -13,7 +13,7 @@ void dispatch_sync(dispatch_queue_t, dispatch_block_t);
 
 int *getZeroIfNil(Test *x) {
   return x.p;
-  // expected-note@-1 {{No method is called because the receiver is nil}}
+  // expected-note@-1 {{'p' not called because the receiver is nil}}
   // expected-note@-2 {{Returning null pointer}}
 }
 
@@ -303,9 +303,9 @@ int testDispatchSyncInliningNoPruning(int coin) {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>1</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>No method is called because the receiver is nil</string>
+// CHECK-NEXT:      <string>&apos;p&apos; not called because the receiver is nil</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>No method is called because the receiver is nil</string>
+// CHECK-NEXT:      <string>&apos;p&apos; not called because the receiver is nil</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>

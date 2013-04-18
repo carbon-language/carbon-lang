@@ -1046,9 +1046,21 @@ PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
   if (!P)
     return 0;
 
-  const Expr *Receiver = getNilReceiver(P->getStmt(), N);
+  const Stmt *S = P->getStmt();
+  const Expr *Receiver = getNilReceiver(S, N);
   if (!Receiver)
     return 0;
+
+  llvm::SmallString<256> Buf;
+  llvm::raw_svector_ostream OS(Buf);
+
+  if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S)) {
+    OS << "'" << ME->getSelector().getAsString() << "' not called";
+  }
+  else {
+    OS << "No method is called";
+  }
+  OS << " because the receiver is nil";
 
   // The receiver was nil, and hence the method was skipped.
   // Register a BugReporterVisitor to issue a message telling us how
@@ -1058,8 +1070,7 @@ PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
   // Issue a message saying that the method was skipped.
   PathDiagnosticLocation L(Receiver, BRC.getSourceManager(),
                                      N->getLocationContext());
-  return new PathDiagnosticEventPiece(L, "No method is called "
-      "because the receiver is nil");
+  return new PathDiagnosticEventPiece(L, OS.str());
 }
 
 // Registers every VarDecl inside a Stmt with a last store visitor.
