@@ -24,3 +24,11 @@ id missing_parentheses() {
     return @(5;             // expected-error {{expected ')'}} \
                             // expected-note {{to match this '('}}
 }
+
+// rdar://10679157
+void bar(id p);
+void foo(id p) {
+        bar(@{p, p}); // expected-error {{expected ':'}}
+        bar(0);
+        bar(0);
+}

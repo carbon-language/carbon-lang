@@ -2747,7 +2747,9 @@ ExprResult Parser::ParseObjCDictionaryLiteral(SourceLocation AtLoc) {
     if (Tok.is(tok::colon)) {
       ConsumeToken();
     } else {
-      return ExprError(Diag(Tok, diag::err_expected_colon));
+      Diag(Tok, diag::err_expected_colon);
+      SkipUntil(tok::r_brace);
+      return ExprError();
     }
     
     ExprResult ValueExpr(ParseAssignmentExpression());
