@@ -42,7 +42,7 @@ static cl::
 opt<bool> DisableCTRLoopAnal("disable-ppc-ctrloop-analysis", cl::Hidden,
             cl::desc("Disable analysis for CTR loops"));
 
-static cl::opt<bool> DisableCmpOpt("disable-ppc-cmp-opt", cl::init(true),
+static cl::opt<bool> DisableCmpOpt("disable-ppc-cmp-opt",
 cl::desc("Disable compare instruction optimization"), cl::Hidden);
 
 PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
@@ -1086,7 +1086,23 @@ bool PPCInstrInfo::analyzeCompare(const MachineInstr *MI,
     return true;
   }
 }
-  
+
+/// Assume the flags are set by MI(a,b), return the condition code if we modify
+/// the instructions such that flags are set by MI(b,a).
+PPC::Predicate static getSwappedPredicate(PPC::Predicate Opcode) {
+  switch (Opcode) {
+  case PPC::PRED_EQ: return PPC::PRED_EQ;
+  case PPC::PRED_NE: return PPC::PRED_NE;
+  case PPC::PRED_LT: return PPC::PRED_GT;
+  case PPC::PRED_GE: return PPC::PRED_LE;
+  case PPC::PRED_GT: return PPC::PRED_LT;
+  case PPC::PRED_LE: return PPC::PRED_GE;
+  case PPC::PRED_NU: return PPC::PRED_NU;
+  case PPC::PRED_UN: return PPC::PRED_UN;
+  }
+  llvm_unreachable("Unknown PPC branch opcode!");
+}
+ 
 bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
                                         unsigned SrcReg, unsigned SrcReg2,
                                         int Mask, int Value,
@@ -1276,10 +1292,8 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
   if (NewOpC == -1)
     return false;
 
-  SmallVector<std::pair<MachineOperand*, PPC::Predicate>, 4>
-      OperandsToUpdate;
-  SmallVector<std::pair<MachineOperand*, MachineOperand*>, 4>
-      OperandsToSwap;
+  SmallVector<std::pair<MachineOperand*, PPC::Predicate>, 4> PredsToUpdate;
+  SmallVector<std::pair<MachineOperand*, unsigned>, 4> SubRegsToUpdate;
 
   // If we have SUB(r1, r2) and CMP(r2, r1), the condition code based on CMP
   // needs to be updated to be based on SUB.  Push the condition code
@@ -1302,14 +1316,24 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
       MachineInstr *UseMI = &*I;
       if (UseMI->getOpcode() == PPC::BCC) {
         PPC::Predicate Pred = (PPC::Predicate) UseMI->getOperand(0).getImm();
-        if (ShouldSwap)
-          OperandsToUpdate.push_back(std::make_pair(&((*I).getOperand(0)),
-                                     PPC::InvertPredicate(Pred)));
+        assert((!equalityOnly ||
+                Pred == PPC::PRED_EQ || Pred == PPC::PRED_NE) &&
+               "Invalid predicate for equality-only optimization");
+        PredsToUpdate.push_back(std::make_pair(&((*I).getOperand(0)),
+                                getSwappedPredicate(Pred)));
       } else if (UseMI->getOpcode() == PPC::ISEL ||
                  UseMI->getOpcode() == PPC::ISEL8) {
-        if (ShouldSwap)
-          OperandsToSwap.push_back(std::make_pair(&((*I).getOperand(1)),
-                                                  &((*I).getOperand(2))));
+        unsigned NewSubReg = UseMI->getOperand(3).getSubReg();
+        assert((!equalityOnly || NewSubReg == PPC::sub_eq) &&
+               "Invalid CR bit for equality-only optimization");
+
+        if (NewSubReg == PPC::sub_lt)
+          NewSubReg = PPC::sub_gt;
+        else if (NewSubReg == PPC::sub_gt)
+          NewSubReg = PPC::sub_lt;
+
+        SubRegsToUpdate.push_back(std::make_pair(&((*I).getOperand(3)),
+                                                 NewSubReg));
       } else // We need to abort on a user we don't understand.
         return false;
     }
@@ -1352,11 +1376,11 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
   // Modify the condition code of operands in OperandsToUpdate.
   // Since we have SUB(r1, r2) and CMP(r2, r1), the condition code needs to
   // be changed from r2 > r1 to r1 < r2, from r2 < r1 to r1 > r2, etc.
-  for (unsigned i = 0, e = OperandsToUpdate.size(); i < e; i++)
-    OperandsToUpdate[i].first->setImm(OperandsToUpdate[i].second);
+  for (unsigned i = 0, e = PredsToUpdate.size(); i < e; i++)
+    PredsToUpdate[i].first->setImm(PredsToUpdate[i].second);
 
-  for (unsigned i = 0, e = OperandsToSwap.size(); i < e; i++)
-    std::swap(*OperandsToSwap[i].first, *OperandsToSwap[i].second);
+  for (unsigned i = 0, e = SubRegsToUpdate.size(); i < e; i++)
+    SubRegsToUpdate[i].first->setSubReg(SubRegsToUpdate[i].second);
 
   return true;
 }

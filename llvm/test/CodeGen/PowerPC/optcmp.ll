@@ -54,6 +54,48 @@ entry:
 ; CHECK: std [[REG]], 0(5)
 }
 
+define i64 @foolc(i64 %a, i64 %b, i64* nocapture %c) #0 {
+entry:
+  %sub = sub nsw i64 %b, %a
+  store i64 %sub, i64* %c, align 8, !tbaa !3
+  %cmp = icmp sgt i64 %a, %b
+  %cond = select i1 %cmp, i64 %a, i64 %b
+  ret i64 %cond
+
+; CHECK: @foolc
+; CHECK: subf. [[REG:[0-9]+]], 3, 4
+; CHECK: isel 3, 3, 4, 0
+; CHECK: std [[REG]], 0(5)
+}
+
+define i64 @foold(i64 %a, i64 %b, i64* nocapture %c) #0 {
+entry:
+  %sub = sub nsw i64 %b, %a
+  store i64 %sub, i64* %c, align 8, !tbaa !3
+  %cmp = icmp eq i64 %a, %b
+  %cond = select i1 %cmp, i64 %a, i64 %b
+  ret i64 %cond
+
+; CHECK: @foold
+; CHECK: subf. [[REG:[0-9]+]], 3, 4
+; CHECK: isel 3, 3, 4, 2
+; CHECK: std [[REG]], 0(5)
+}
+
+define i64 @foold2(i64 %a, i64 %b, i64* nocapture %c) #0 {
+entry:
+  %sub = sub nsw i64 %a, %b
+  store i64 %sub, i64* %c, align 8, !tbaa !3
+  %cmp = icmp eq i64 %a, %b
+  %cond = select i1 %cmp, i64 %a, i64 %b
+  ret i64 %cond
+
+; CHECK: @foold2
+; CHECK: subf. [[REG:[0-9]+]], 4, 3
+; CHECK: isel 3, 3, 4, 2
+; CHECK: std [[REG]], 0(5)
+}
+
 define i64 @foo2l(i64 %a, i64 %b, i64* nocapture %c) #0 {
 entry:
   %shl = shl i64 %a, %b
