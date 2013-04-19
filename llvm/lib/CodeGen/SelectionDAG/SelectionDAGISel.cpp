@@ -63,12 +63,16 @@ STATISTIC(NumFastIselSuccess, "Number of instructions fast isel selected");
 STATISTIC(NumFastIselBlocks, "Number of blocks selected entirely by fast isel");
 STATISTIC(NumDAGBlocks, "Number of blocks selected using DAG");
 STATISTIC(NumDAGIselRetries,"Number of times dag isel has to try another path");
+STATISTIC(NumEntryBlocks, "Number of entry blocks encountered");
+STATISTIC(NumFastIselFailLowerArguments,
+          "Number of entry blocks where fast isel failed to lower arguments");
 
 #ifndef NDEBUG
 static cl::opt<bool>
 EnableFastISelVerbose2("fast-isel-verbose2", cl::Hidden,
           cl::desc("Enable extra verbose messages in the \"fast\" "
                    "instruction selector"));
+
   // Terminators
 STATISTIC(NumFastIselFailRet,"Fast isel fails on Ret");
 STATISTIC(NumFastIselFailBr,"Fast isel fails on Br");
@@ -1054,9 +1058,12 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       // Emit code for any incoming arguments. This must happen before
       // beginning FastISel on the entry block.
       if (LLVMBB == &Fn.getEntryBlock()) {
+        ++NumEntryBlocks;
+
         // Lower any arguments needed in this block if this is the entry block.
         if (!FastIS->LowerArguments()) {
           // Fast isel failed to lower these arguments
+          ++NumFastIselFailLowerArguments;
           if (EnableFastISelAbortArgs)
             llvm_unreachable("FastISel didn't lower all arguments");
 
@@ -1178,8 +1185,10 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       FastIS->recomputeInsertPt();
     } else {
       // Lower any arguments needed in this block if this is the entry block.
-      if (LLVMBB == &Fn.getEntryBlock())
+      if (LLVMBB == &Fn.getEntryBlock()) {
+        ++NumEntryBlocks;
         LowerArguments(Fn);
+      }
     }
 
     if (Begin != BI)
