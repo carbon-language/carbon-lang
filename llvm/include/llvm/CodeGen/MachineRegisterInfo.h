@@ -157,6 +157,12 @@ public:
   // Strictly for use by MachineInstr.cpp.
   void moveOperands(MachineOperand *Dst, MachineOperand *Src, unsigned NumOps);
 
+  /// Verify the sanity of the use list for Reg.
+  void verifyUseList(unsigned Reg) const;
+
+  /// Verify the use list of all registers.
+  void verifyUseLists() const;
+
   /// reg_begin/reg_end - Provide iteration support to walk over all definitions
   /// and uses of a register within the MachineFunction that corresponds to this
   /// MachineRegisterInfo object.

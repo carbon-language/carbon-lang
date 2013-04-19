@@ -472,6 +472,9 @@ void MachineVerifier::visitMachineFunctionBefore() {
     if (MInfo.Succs.size() != I->succ_size())
       report("MBB has duplicate entries in its successor list.", I);
   }
+
+  // Check that the register use lists are sane.
+  MRI->verifyUseLists();
 }
 
 // Does iterator point to a and b as the first two elements?
