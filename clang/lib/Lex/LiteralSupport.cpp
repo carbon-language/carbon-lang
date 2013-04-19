@@ -686,8 +686,13 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
 
   // Handle simple binary numbers 0b01010
   if (*s == 'b' || *s == 'B') {
-    // 0b101010 is a GCC extension.
-    PP.Diag(TokLoc, diag::ext_binary_literal);
+    // 0b101010 is a C++1y / GCC extension.
+    PP.Diag(TokLoc,
+            PP.getLangOpts().CPlusPlus1y
+              ? diag::warn_cxx11_compat_binary_literal
+              : PP.getLangOpts().CPlusPlus
+                ? diag::ext_binary_literal_cxx1y
+                : diag::ext_binary_literal);
     ++s;
     radix = 2;
     DigitsBegin = s;

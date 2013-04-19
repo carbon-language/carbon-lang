@@ -174,6 +174,11 @@ def ext_hexconstant_invalid : Extension<
   "hexadecimal floating constants are a C99 feature">, InGroup<C99>;
 def ext_binary_literal : Extension<
   "binary integer literals are a GNU extension">, InGroup<GNU>;
+def ext_binary_literal_cxx1y : Extension<
+  "binary integer literals are a C++1y extension">, InGroup<CXX1y>;
+def warn_cxx11_compat_binary_literal : Warning<
+  "binary integer literals are incompatible with C++ standards before C++1y">,
+  InGroup<CXXPre1yCompatPedantic>, DefaultIgnore;
 def err_pascal_string_too_long : Error<"Pascal string is too long">;
 def warn_octal_escape_too_large : ExtWarn<"octal escape sequence out of range">;
 def warn_hex_escape_too_large : ExtWarn<"hex escape sequence out of range">;

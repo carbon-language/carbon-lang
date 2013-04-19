@@ -1,3 +1,5 @@
+// RUN: %clang_cc1 -fsyntax-only -std=c++1y -DCXX1Y -Wc++98-compat-pedantic -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++1y -DCXX1Y -Wc++98-compat -Werror %s
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 -Wc++98-compat-pedantic -verify %s
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 -Wc++98-compat -Werror %s
 // RUN: %clang_cc1 -fsyntax-only -std=c++98 -Werror %s
@@ -38,3 +40,7 @@ long long ll1 = // expected-warning {{'long long' is incompatible with C++98}}
 unsigned long long ull1 = // expected-warning {{'long long' is incompatible with C++98}}
                    42ULL; // expected-warning {{'long long' is incompatible with C++98}}
 
+int k = 0b1001;
+#ifdef CXX1Y
+// expected-warning@-2 {{binary integer literals are incompatible with C++ standards before C++1y}}
+#endif
