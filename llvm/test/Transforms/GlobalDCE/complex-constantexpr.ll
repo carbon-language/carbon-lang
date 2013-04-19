@@ -1,4 +1,4 @@
-; RUN: opt -O2 -disable-output < %s
+; RUN: opt -globaldce -disable-output < %s
 ; PR15714
 
 %struct.ham = type { i32 }
