@@ -405,7 +405,7 @@ MachOObjectFile::MachOObjectFile(MemoryBuffer *Object,
     macho::LCT_Segment64 : macho::LCT_Segment;
 
   MachOObjectFile::LoadCommandInfo Load = getFirstLoadCommandInfo();
-  for (unsigned I = 0; I < LoadCommandCount; ++I) {
+  for (unsigned I = 0; ; ++I) {
     if (Load.C.Type == macho::LCT_Symtab) {
       assert(!SymtabLoadCmd && "Multiple symbol tables");
       SymtabLoadCmd = Load.Ptr;
@@ -418,7 +418,11 @@ MachOObjectFile::MachOObjectFile(MemoryBuffer *Object,
         Sections.push_back(reinterpret_cast<const char*>(Sec));
       }
     }
-    Load = getNextLoadCommandInfo(Load);
+
+    if (I == LoadCommandCount - 1)
+      break;
+    else
+      Load = getNextLoadCommandInfo(Load);
   }
 }
 

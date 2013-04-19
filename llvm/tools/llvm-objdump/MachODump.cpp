@@ -205,7 +205,7 @@ getSectionsAndSymbols(const macho::Header Header,
 
   MachOObjectFile::LoadCommandInfo Command =
     MachOObj->getFirstLoadCommandInfo();
-  for (unsigned i = 0; i != Header.NumLoadCommands; ++i) {
+  for (unsigned i = 0; ; ++i) {
     if (Command.C.Type == macho::LCT_FunctionStarts) {
       // We found a function starts segment, parse the addresses for later
       // consumption.
@@ -214,7 +214,11 @@ getSectionsAndSymbols(const macho::Header Header,
 
       MachOObj->ReadULEB128s(LLC.DataOffset, FoundFns);
     }
-    Command = MachOObj->getNextLoadCommandInfo(Command);
+
+    if (i == Header.NumLoadCommands - 1)
+      break;
+    else
+      Command = MachOObj->getNextLoadCommandInfo(Command);
   }
 }
 
