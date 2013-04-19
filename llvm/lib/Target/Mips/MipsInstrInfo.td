@@ -1067,10 +1067,10 @@ def : InstAlias<"negu $rt, $rs",
 def : InstAlias<"slt $rs, $rt, $imm",
                 (SLTi CPURegsOpnd:$rs, CPURegs:$rt, simm16:$imm), 0>;
 def : InstAlias<"xor $rs, $rt, $imm",
-                (XORi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm), 0>,
+                (XORi CPURegsOpnd:$rs, CPURegsOpnd:$rt, uimm16:$imm), 1>,
       Requires<[NotMips64]>;
 def : InstAlias<"or $rs, $rt, $imm",
-                (ORi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm), 0>,
+                (ORi CPURegsOpnd:$rs, CPURegsOpnd:$rt, uimm16:$imm), 1>,
                  Requires<[NotMips64]>;
 def : InstAlias<"nop", (SLL ZERO, ZERO, 0), 1>;
 def : InstAlias<"mfc0 $rt, $rd",
