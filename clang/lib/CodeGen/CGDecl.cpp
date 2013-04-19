@@ -80,7 +80,6 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::CXXRecord: // struct/union/class X; [C++]
   case Decl::Using:          // using X; [C++]
   case Decl::UsingShadow:
-  case Decl::UsingDirective: // using namespace X; [C++]
   case Decl::NamespaceAlias:
   case Decl::StaticAssert: // static_assert(X, ""); [C++0x]
   case Decl::Label:        // __label__ x;
@@ -90,6 +89,10 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
     // None of these decls require codegen support.
     return;
 
+  case Decl::UsingDirective: // using namespace X; [C++]
+    if (CGDebugInfo *DI = getDebugInfo())
+      DI->EmitUsingDirective(cast<UsingDirectiveDecl>(D));
+    return;
   case Decl::Var: {
     const VarDecl &VD = cast<VarDecl>(D);
     assert(VD.isLocalVarDecl() &&
