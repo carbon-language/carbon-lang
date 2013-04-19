@@ -3405,7 +3405,7 @@ typedef enum {
 /**
  * \brief Given a cursor that represents an ObjC method or parameter
  * declaration, return the associated ObjC qualifiers for the return type or the
- * parameter respectively. The bits are formed from CXObjCPropertyAttrKind.
+ * parameter respectively. The bits are formed from CXObjCDeclQualifierKind.
  */
 CINDEX_LINKAGE unsigned clang_Cursor_getObjCDeclQualifiers(CXCursor C);
 
