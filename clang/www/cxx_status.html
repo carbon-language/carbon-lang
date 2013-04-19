@@ -22,7 +22,7 @@
 <div id="content">
 
 <!--*************************************************************************-->
-<h1>C++98 and C++11 Support in Clang</h1>
+<h1>C++98, C++11, and C++14 Support in Clang</h1>
 <!--*************************************************************************-->
 <p>Last updated: $Date$</p>
 
@@ -397,6 +397,80 @@ strong compare-exchanges.</span><br>
 integer type, because changing <code>intmax_t</code> would be an
 ABI-incompatible change.</span>
 </p>
+
+<h2 id="cxx14">C++1y implementation status</h2>
+
+<p>Clang is introducing support for the upcoming C++ language standard,
+provisionally named C++1y.  The following table describes which C++1y features
+have been implemented in Clang and in which Clang version they became
+available.</p>
+
+<table width="689" border="1" cellspacing="0">
+ <tr>
+    <th>Language Feature</th>
+    <th>C++1y Proposal</th>
+    <th>Available in Clang?</th>
+ </tr>
+    <tr>
+      <td>Tweak to certain C++ contextual conversions</td>
+      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3323.pdf">N3323</a></td>
+      <td class="none" align="center">No</td>
+    </tr>
+    <tr>
+      <td>[PROVISIONAL] Binary literals</td>
+      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3472.pdf">N3472</a></td>
+      <td class="none" align="center">No</td>
+    </tr>
+    <tr>
+      <td>[PROVISIONAL] Return type deduction for normal functions</td>
+      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3638.html">N3638</a></td>
+      <td class="none" align="center">No</td>
+    </tr>
+    <!--
+    <tr>
+      <td>Runtime-sized arrays with automatic storage duration</td>
+      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3639.html">N3639</a></td>
+      <td class="none" align="center">No</td>
+    </tr>
+    -->
+    <tr>
+      <td>[PROVISIONAL] Initialized lambda captures</td>
+      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3648.html">N3648</a></td>
+      <td class="none" align="center">No</td>
+    </tr>
+    <tr>
+      <td>[PROVISIONAL] Generic lambdas</td>
+      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3649.html">N3649</a></td>
+      <td class="none" align="center">No</td>
+    </tr>
+    <tr>
+      <td>[PROVISIONAL] Variable templates</td>
+      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3651.pdf">N3651</a></td>
+      <td class="none" align="center">No</td>
+    </tr>
+    <tr>
+      <td>[PROVISIONAL] Relaxing requirements on constexpr functions</td>
+      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3652.html">N3652</a></td>
+      <td class="none" align="center">No</td>
+    </tr>
+    <tr>
+      <td>[PROVISIONAL] Member initializers and aggregates</td>
+      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3653.html">N3653</a></td>
+      <td class="none" align="center">No</td>
+    </tr>
+    <!--
+    <tr>
+      <td>Digit separators</td>
+      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3661.html">N3661</a></td>
+      <td class="none" align="center">No</td>
+    </tr>
+    -->
+    <tr>
+      <td>[PROVISIONAL] Clarifying memory allocation</td>
+      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3664.html">N3664</a></td>
+      <td class="na" align="center">N/A</td>
+    </tr>
+</table>
 
 </div>
 </body>
