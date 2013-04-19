@@ -419,7 +419,7 @@ void PrintPPOutputPPCallbacks::PragmaMessage(SourceLocation Loc,
     OS << Namespace << ' ';
   switch (Kind) {
     case PMK_Message:
-      OS << "message \"";
+      OS << "message(\"";
       break;
     case PMK_Warning:
       OS << "warning \"";
@@ -440,6 +440,8 @@ void PrintPPOutputPPCallbacks::PragmaMessage(SourceLocation Loc,
          << (char)('0'+ ((Char >> 0) & 7));
   }
   OS << '"';
+  if (Kind == PMK_Message)
+    OS << ')';
   setEmittedDirectiveOnThisLine();
 }
 
