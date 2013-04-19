@@ -1341,20 +1341,20 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
   int BaseReg = SM.getBaseReg();
   int IndexReg = SM.getIndexReg();
   int Scale = SM.getScale();
-
-  if (isParsingInlineAsm())
-    return CreateMemForInlineAsm(SegReg, Disp, BaseReg, IndexReg, Scale, Start,
-                                 End, Size, SM.getSymName());
-
-  // handle [-42]
-  if (!BaseReg && !IndexReg) {
-    if (!SegReg)
-      return X86Operand::CreateMem(Disp, Start, End, Size);
-    else
-      return X86Operand::CreateMem(SegReg, Disp, 0, 0, 1, Start, End, Size);
+  if (!isParsingInlineAsm()) {
+    // handle [-42]
+    if (!BaseReg && !IndexReg) {
+      if (!SegReg)
+        return X86Operand::CreateMem(Disp, Start, End, Size);
+      else
+        return X86Operand::CreateMem(SegReg, Disp, 0, 0, 1, Start, End, Size);
+    }
+    return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale, Start,
+                                 End, Size);
   }
-  return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale, Start,
-                               End, Size);
+
+  return CreateMemForInlineAsm(SegReg, Disp, BaseReg, IndexReg, Scale, Start,
+                               End, Size, SM.getSymName());
 }
 
 // Inline assembly may use variable names with namespace alias qualifiers.
