@@ -1498,7 +1498,6 @@ X86Operand *X86AsmParser::ParseIntelOffsetOfOperator() {
   const AsmToken &Tok = Parser.getTok();
   SMLoc OffsetOfLoc = Tok.getLoc();
   Parser.Lex(); // Eat offset.
-  assert (Tok.is(AsmToken::Identifier) && "Expected an identifier");
 
   const MCExpr *Val;
   SMLoc Start = Tok.getLoc(), End;
@@ -1537,7 +1536,6 @@ X86Operand *X86AsmParser::ParseIntelOperator(unsigned OpKind) {
   const AsmToken &Tok = Parser.getTok();
   SMLoc TypeLoc = Tok.getLoc();
   Parser.Lex(); // Eat operator.
-  assert (Tok.is(AsmToken::Identifier) && "Expected an identifier");
 
   const MCExpr *Val;
   AsmToken StartTok = Tok;
