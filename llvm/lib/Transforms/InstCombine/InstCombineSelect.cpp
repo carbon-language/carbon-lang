@@ -676,7 +676,8 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       // Change: A = select B, false, C --> A = and !B, C
       Value *NotCond = Builder->CreateNot(CondVal, "not."+CondVal->getName());
       return BinaryOperator::CreateAnd(NotCond, FalseVal);
-    } else if (ConstantInt *C = dyn_cast<ConstantInt>(FalseVal)) {
+    }
+    if (ConstantInt *C = dyn_cast<ConstantInt>(FalseVal)) {
       if (C->getZExtValue() == false) {
         // Change: A = select B, C, false --> A = and B, C
         return BinaryOperator::CreateAnd(CondVal, TrueVal);
@@ -690,14 +691,14 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     // select a, a, b  -> a|b
     if (CondVal == TrueVal)
       return BinaryOperator::CreateOr(CondVal, FalseVal);
-    else if (CondVal == FalseVal)
+    if (CondVal == FalseVal)
       return BinaryOperator::CreateAnd(CondVal, TrueVal);
 
     // select a, ~a, b -> (~a)&b
     // select a, b, ~a -> (~a)|b
     if (match(TrueVal, m_Not(m_Specific(CondVal))))
       return BinaryOperator::CreateAnd(TrueVal, FalseVal);
-    else if (match(FalseVal, m_Not(m_Specific(CondVal))))
+    if (match(FalseVal, m_Not(m_Specific(CondVal))))
       return BinaryOperator::CreateOr(TrueVal, FalseVal);
   }
 
