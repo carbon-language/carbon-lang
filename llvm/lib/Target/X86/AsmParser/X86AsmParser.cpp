@@ -1404,10 +1404,10 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg,
 
   unsigned Size = getIntelMemOperandSize(Tok.getString());
   if (Size) {
-    Parser.Lex();
-    assert ((Tok.getString() == "PTR" || Tok.getString() == "ptr") &&
-            "Unexpected token!");
-    Parser.Lex();
+    Parser.Lex(); // Eat operand size (e.g., byte, word).
+    if (Tok.getString() != "PTR" && Tok.getString() != "ptr")
+      return ErrorOperand(Start, "Expected 'PTR' or 'ptr' token!");
+    Parser.Lex(); // Eat ptr.
   }
 
   // Parse ImmDisp [ BaseReg + Scale*IndexReg + Disp ].
