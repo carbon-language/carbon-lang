@@ -165,28 +165,25 @@ void SwapStruct(macho::Segment64LoadCommand &C) {
   SwapValue(C.Flags);
 }
 
-static bool isSwappedEndian(const MachOObjectFile *O) {
-  return O->isLittleEndian() != sys::IsLittleEndianHost;
+template<typename T>
+T getStruct(const MachOObjectFile *O, const char *P) {
+  T Cmd;
+  memcpy(&Cmd, P, sizeof(T));
+  if (O->isLittleEndian() != sys::IsLittleEndianHost)
+    SwapStruct(Cmd);
+  return Cmd;
 }
 
 static macho::SegmentLoadCommand
 getSegmentLoadCommand(const MachOObjectFile *O,
                       const MachOObjectFile::LoadCommandInfo &L) {
-  macho::SegmentLoadCommand Cmd;
-  memcpy(&Cmd, L.Ptr, sizeof(macho::SegmentLoadCommand));
-  if (isSwappedEndian(O))
-    SwapStruct(Cmd);
-  return Cmd;
+  return getStruct<macho::SegmentLoadCommand>(O, L.Ptr);
 }
 
 static macho::Segment64LoadCommand
 getSegment64LoadCommand(const MachOObjectFile *O,
                         const MachOObjectFile::LoadCommandInfo &L) {
-  macho::Segment64LoadCommand Cmd;
-  memcpy(&Cmd, L.Ptr, sizeof(macho::Segment64LoadCommand));
-  if (isSwappedEndian(O))
-    SwapStruct(Cmd);
-  return Cmd;
+  return getStruct<macho::Segment64LoadCommand>(O, L.Ptr);
 }
 
 static uint32_t
@@ -236,12 +233,7 @@ static const char *getSymbolTableEntryPtr(const MachOObjectFile *O,
 static SymbolTableEntryBase
 getSymbolTableEntryBase(const MachOObjectFile *O, DataRefImpl DRI) {
   const char *P = getSymbolTableEntryPtr(O, DRI);
-  SymbolTableEntryBase Ret;
-  memcpy(&Ret, P, sizeof(SymbolTableEntryBase));
-  if (isSwappedEndian(O))
-    SwapStruct(Ret);
-
-  return Ret;
+  return getStruct<SymbolTableEntryBase>(O, P);
 }
 
 static StringRef parseSegmentOrSectionName(const char *P) {
@@ -1366,9 +1358,7 @@ MachOObjectFile::getFirstLoadCommandInfo() const {
 
   unsigned HeaderSize = is64Bit() ? macho::Header64Size : macho::Header32Size;
   Load.Ptr = getPtr(this, HeaderSize);
-  memcpy(&Load.C, Load.Ptr, sizeof(macho::LoadCommand));
-  if (isSwappedEndian(this))
-    SwapStruct(Load.C);
+  Load.C = getStruct<macho::LoadCommand>(this, Load.Ptr);
   return Load;
 }
 
@@ -1376,59 +1366,33 @@ MachOObjectFile::LoadCommandInfo
 MachOObjectFile::getNextLoadCommandInfo(const LoadCommandInfo &L) const {
   MachOObjectFile::LoadCommandInfo Next;
   Next.Ptr = L.Ptr + L.C.Size;
-  memcpy(&Next.C, Next.Ptr, sizeof(macho::LoadCommand));
-  if (isSwappedEndian(this))
-    SwapStruct(Next.C);
+  Next.C = getStruct<macho::LoadCommand>(this, Next.Ptr);
   return Next;
 }
 
 macho::Section MachOObjectFile::getSection(DataRefImpl DRI) const {
-  const SectionBase *Addr =
-    reinterpret_cast<const SectionBase*>(Sections[DRI.d.a]);
-  macho::Section Ret;
-  memcpy(&Ret, Addr, sizeof(macho::Section));
-  if (isSwappedEndian(this))
-    SwapStruct(Ret);
-  return Ret;
+  return getStruct<macho::Section>(this, Sections[DRI.d.a]);
 }
 
 macho::Section64 MachOObjectFile::getSection64(DataRefImpl DRI) const {
-  const SectionBase *Addr =
-    reinterpret_cast<const SectionBase*>(Sections[DRI.d.a]);
-  macho::Section64 Ret;
-  memcpy(&Ret, Addr, sizeof(macho::Section64));
-  if (isSwappedEndian(this))
-    SwapStruct(Ret);
-  return Ret;
+  return getStruct<macho::Section64>(this, Sections[DRI.d.a]);
 }
 
 macho::SymbolTableEntry
 MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI) const {
   const char *P = getSymbolTableEntryPtr(this, DRI);
-  macho::SymbolTableEntry Ret;
-  memcpy(&Ret, P, sizeof(macho::SymbolTableEntry));
-  if (isSwappedEndian(this))
-    SwapStruct(Ret);
-  return Ret;
+  return getStruct<macho::SymbolTableEntry>(this, P);
 }
 
 macho::Symbol64TableEntry
 MachOObjectFile::getSymbol64TableEntry(DataRefImpl DRI) const {
   const char *P = getSymbolTableEntryPtr(this, DRI);
-  macho::Symbol64TableEntry Ret;
-  memcpy(&Ret, P, sizeof(macho::Symbol64TableEntry));
-  if (isSwappedEndian(this))
-    SwapStruct(Ret);
-  return Ret;
+  return getStruct<macho::Symbol64TableEntry>(this, P);
 }
 
 macho::LinkeditDataLoadCommand
 MachOObjectFile::getLinkeditDataLoadCommand(const MachOObjectFile::LoadCommandInfo &L) const {
-  macho::LinkeditDataLoadCommand Cmd;
-  memcpy(&Cmd, L.Ptr, sizeof(macho::LinkeditDataLoadCommand));
-  if (isSwappedEndian(this))
-    SwapStruct(Cmd);
-  return Cmd;
+  return getStruct<macho::LinkeditDataLoadCommand>(this, L.Ptr);
 }
 
 macho::RelocationEntry
@@ -1445,30 +1409,16 @@ MachOObjectFile::getRelocation(DataRefImpl Rel) const {
   }
 
   uint64_t Offset = RelOffset + Rel.d.a * sizeof(macho::RelocationEntry);
-
-  macho::RelocationEntry Ret;
-  memcpy(&Ret, getPtr(this, Offset), sizeof(macho::RelocationEntry));
-  if (isSwappedEndian(this))
-    SwapStruct(Ret);
-
-  return Ret;
+  return getStruct<macho::RelocationEntry>(this, getPtr(this, Offset));
 }
 
 macho::Header MachOObjectFile::getHeader() const {
-  macho::Header H;
-  memcpy(&H, getPtr(this, 0), sizeof(macho::Header));
-  if (isSwappedEndian(this))
-    SwapStruct(H);
-  return H;
+  return getStruct<macho::Header>(this, getPtr(this, 0));
 }
 
 macho::SymtabLoadCommand
 MachOObjectFile::getSymtabLoadCommand() const {
-  macho::SymtabLoadCommand Cmd;
-  memcpy(&Cmd, SymtabLoadCmd, sizeof(macho::SymtabLoadCommand));
-  if (isSwappedEndian(this))
-    SwapStruct(Cmd);
-  return Cmd;
+  return getStruct<macho::SymtabLoadCommand>(this, SymtabLoadCmd);
 }
 
 bool MachOObjectFile::is64Bit() const {
