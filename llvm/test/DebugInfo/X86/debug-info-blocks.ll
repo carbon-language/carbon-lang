@@ -260,7 +260,7 @@ attributes #3 = { nounwind }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!56, !57, !58, !59}
 
-!0 = metadata !{i32 786449, metadata !1, i32 16, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 2, metadata !2, metadata !3, metadata !12, metadata !2,  metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [llvm/tools/clang/test/CodeGenObjC/<unknown>] [DW_LANG_ObjC]
+!0 = metadata !{i32 786449, metadata !1, i32 16, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 2, metadata !2, metadata !3, metadata !12, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [llvm/tools/clang/test/CodeGenObjC/<unknown>] [DW_LANG_ObjC]
 !1 = metadata !{metadata !"llvm/tools/clang/test/CodeGenObjC/<unknown>", metadata !"llvm/_build.ninja.Debug"}
 !2 = metadata !{i32 0}
 !3 = metadata !{metadata !4}

@@ -37,13 +37,11 @@ namespace llvm {
   class DIType;
   class DIArray;
   class DIGlobalVariable;
-  class DIImportedModule;
   class DINameSpace;
   class DIVariable;
   class DISubrange;
   class DILexicalBlockFile;
   class DILexicalBlock;
-  class DIScope;
   class DISubprogram;
   class DITemplateTypeParameter;
   class DITemplateValueParameter;
@@ -59,7 +57,6 @@ namespace llvm {
     MDNode *TempRetainTypes;
     MDNode *TempSubprograms;
     MDNode *TempGVs;
-    MDNode *TempImportedModules;
 
     Function *DeclareFn;     // llvm.dbg.declare
     Function *ValueFn;       // llvm.dbg.value
@@ -68,7 +65,6 @@ namespace llvm {
     SmallVector<Value *, 4> AllRetainTypes;
     SmallVector<Value *, 4> AllSubprograms;
     SmallVector<Value *, 4> AllGVs;
-    SmallVector<Value *, 4> AllImportedModules;
 
     DIBuilder(const DIBuilder &) LLVM_DELETED_FUNCTION;
     void operator=(const DIBuilder &) LLVM_DELETED_FUNCTION;
@@ -569,13 +565,6 @@ namespace llvm {
     /// @param Col         Column number
     DILexicalBlock createLexicalBlock(DIDescriptor Scope, DIFile File,
                                       unsigned Line, unsigned Col);
-
-    /// \brief Create a descriptor for an imported module.
-    /// @param Context The scope this module is imported into
-    /// @param NS The namespace being imported here
-    /// @param LineNumber Line number
-    DIImportedModule createImportedModule(DIScope Context, DINameSpace NS,
-                                          unsigned Line);
 
     /// insertDeclare - Insert a new llvm.dbg.declare intrinsic call.
     /// @param Storage     llvm::Value of the variable

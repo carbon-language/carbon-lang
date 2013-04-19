@@ -27,7 +27,7 @@ entry:
 
 !0 = metadata !{i32 786478, metadata !1, metadata !"__OpenCL_test_kernel", metadata !"__OpenCL_test_kernel", metadata !"__OpenCL_test_kernel", metadata !1, i32 2, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 0, i1 false, null} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 786473, metadata !19} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 786449, i32 1, metadata !1, metadata !"clc", i1 false, metadata !"", i32 0, null, null, metadata !18, null,  null, null} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{i32 786449, i32 1, metadata !1, metadata !"clc", i1 false, metadata !"", i32 0, null, null, metadata !18, null, null} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{null, metadata !5}
 !5 = metadata !{i32 786447, metadata !2, metadata !"", null, i32 0, i64 32, i64 32, i64 0, i32 0, metadata !6} ; [ DW_TAG_pointer_type ]

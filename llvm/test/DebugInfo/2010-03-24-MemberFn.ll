@@ -43,7 +43,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !2 = metadata !{i32 786443, metadata !3, i32 3, i32 0} ; [ DW_TAG_lexical_block ]
 !3 = metadata !{i32 786478, metadata !4, metadata !4, metadata !"bar", metadata !"bar", metadata !"_Z3barv", i32 3, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i1 false, i32 ()* @_Z3barv, null, null, null, i32 3} ; [ DW_TAG_subprogram ]
 !4 = metadata !{i32 786473, metadata !25} ; [ DW_TAG_file_type ]
-!5 = metadata !{i32 786449, i32 4, metadata !4, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 false, metadata !"", i32 0, null, null, metadata !24, null,  null, metadata !""} ; [ DW_TAG_compile_unit ]
+!5 = metadata !{i32 786449, i32 4, metadata !4, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 false, metadata !"", i32 0, null, null, metadata !24, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !6 = metadata !{i32 786453, metadata !25, metadata !4, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !7, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !7 = metadata !{metadata !8}
 !8 = metadata !{i32 786468, metadata !25, metadata !4, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]

@@ -763,23 +763,6 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
     TheCU->addGlobalName(SP.getName(), SubprogramDie);
 }
 
-void DwarfDebug::constructImportedModuleDIE(CompileUnit *TheCU,
-                                            const MDNode *N) {
-  DIImportedModule Module(N);
-  if (!Module.Verify())
-    return;
-  DIE *IMDie = new DIE(dwarf::DW_TAG_imported_module);
-  TheCU->insertDIE(Module, IMDie);
-  DIE *NSDie = TheCU->getOrCreateNameSpace(Module.getNameSpace());
-  unsigned FileID = getOrCreateSourceID(Module.getContext().getFilename(),
-                                        Module.getContext().getDirectory(),
-                                        TheCU->getUniqueID());
-  TheCU->addUInt(IMDie, dwarf::DW_AT_decl_file, 0, FileID);
-  TheCU->addUInt(IMDie, dwarf::DW_AT_decl_line, 0, Module.getLineNumber());
-  TheCU->addDIEEntry(IMDie, dwarf::DW_AT_import, dwarf::DW_FORM_ref4, NSDie);
-  TheCU->addToContextOwner(IMDie, Module.getContext());
-}
-
 // Emit all Dwarf sections that should come prior to the content. Create
 // global DIEs and emit initial debug info sections. This is invoked by
 // the target AsmPrinter.
@@ -813,11 +796,6 @@ void DwarfDebug::beginModule() {
     DIArray RetainedTypes = CUNode.getRetainedTypes();
     for (unsigned i = 0, e = RetainedTypes.getNumElements(); i != e; ++i)
       CU->getOrCreateTypeDIE(RetainedTypes.getElement(i));
-    // Emit imported_modules last so that the relevant context is already
-    // available.
-    DIArray ImportedModules = CUNode.getImportedModules();
-    for (unsigned i = 0, e = ImportedModules.getNumElements(); i != e; ++i)
-      constructImportedModuleDIE(CU, ImportedModules.getElement(i));
     // If we're splitting the dwarf out now that we've got the entire
     // CU then construct a skeleton CU based upon it.
     if (useSplitDwarf()) {

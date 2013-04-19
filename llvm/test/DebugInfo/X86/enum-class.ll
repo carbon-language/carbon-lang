@@ -7,7 +7,7 @@
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, metadata !22, i32 4, metadata !"clang version 3.2 (trunk 157269) (llvm/trunk 157264)", i1 false, metadata !"", i32 0, metadata !1, metadata !15, metadata !15, metadata !17,  metadata !17, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, metadata !22, i32 4, metadata !"clang version 3.2 (trunk 157269) (llvm/trunk 157264)", i1 false, metadata !"", i32 0, metadata !1, metadata !15, metadata !15, metadata !17, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{metadata !3, metadata !8, metadata !12}
 !3 = metadata !{i32 786436, metadata !4, null, metadata !"A", i32 1, i64 32, i64 32, i32 0, i32 0, metadata !5, metadata !6, i32 0, i32 0} ; [ DW_TAG_enumeration_type ]
 !4 = metadata !{i32 786473, metadata !22} ; [ DW_TAG_file_type ]
