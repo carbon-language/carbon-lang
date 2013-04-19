@@ -188,7 +188,12 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   
   // If this global has a name, handle it simply.
   if (GV->hasName()) {
-    getNameWithPrefix(OutName, GV->getName(), PrefixTy);
+    StringRef Name = GV->getName();
+    getNameWithPrefix(OutName, Name, PrefixTy);
+    // No need to do anything else if the global has the special "do not mangle"
+    // flag in the name.
+    if (Name[0] == 1)
+      return;
   } else {
     // Get the ID for the global, assigning a new one if we haven't got one
     // already.
