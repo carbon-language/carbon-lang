@@ -259,14 +259,14 @@ multiclass VOPC_64 <bits<8> op, string opName,
 class VOP3_32 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
   op, (outs VReg_32:$dst),
   (ins VSrc_32:$src0, VSrc_32:$src1, VSrc_32:$src2,
-   i32imm:$abs, i32imm:$clamp, i32imm:$omod, i32imm:$neg),
+   InstFlag:$abs, InstFlag:$clamp, InstFlag:$omod, InstFlag:$neg),
   opName#" $dst, $src0, $src1, $src2, $abs, $clamp, $omod, $neg", pattern
 >, VOP <opName>;
 
 class VOP3_64 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
   op, (outs VReg_64:$dst),
   (ins VSrc_64:$src0, VSrc_64:$src1, VSrc_64:$src2,
-   i32imm:$abs, i32imm:$clamp, i32imm:$omod, i32imm:$neg),
+   InstFlag:$abs, InstFlag:$clamp, InstFlag:$omod, InstFlag:$neg),
   opName#" $dst, $src0, $src1, $src2, $abs, $clamp, $omod, $neg", pattern
 >, VOP <opName>;
 
