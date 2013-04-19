@@ -494,9 +494,40 @@ public:
 
 }
 
+// FIXME: Temporary hack until the frontend parser is hooked up to parse 
+// variables.
+static bool isIdentifierChar(char c) {
+  return isalnum(c) || c == '_' || c == '$' || c == '.' || c == '@';
+}
+
+static void lexIdentifier(const char *&CurPtr) {
+  while (isIdentifierChar(*CurPtr))
+    ++CurPtr;
+}
+
+static StringRef parseIdentifier(StringRef Identifier) {
+  const char *StartPtr = Identifier.data(), *EndPtr, *CurPtr;
+  EndPtr = StartPtr + Identifier.size();
+  CurPtr = StartPtr;
+  while(CurPtr <= EndPtr) {
+    if (isIdentifierChar(*CurPtr))
+      lexIdentifier(CurPtr);
+    else if (CurPtr[0] == ':' && CurPtr[1] == ':')
+      CurPtr += 2;
+    else
+      break;
+  }
+  return StringRef(StartPtr, CurPtr - StartPtr);
+}
+
 NamedDecl *Sema::LookupInlineAsmIdentifier(StringRef Name, SourceLocation Loc,
                                            unsigned &Length, unsigned &Size, 
                                            unsigned &Type, bool &IsVarDecl) {
+  // FIXME: Temporary hack until the frontend parser is hooked up to parse 
+  // variables.
+  StringRef ParsedName = parseIdentifier(Name);
+  assert (ParsedName == Name && "Identifier not parsed correctly!");
+
   Length = 1;
   Size = 0;
   Type = 0;
