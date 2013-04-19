@@ -113,6 +113,9 @@ struct Flags {
   // If true, assume that memcmp(p1, p2, n) always reads n bytes before
   // comparing p1 and p2.
   bool strict_memcmp;
+  // If true, assume that dynamic initializers can never access globals from
+  // other modules, even if the latter are already initialized.
+  bool strict_init_order;
 };
 
 extern Flags asan_flags_dont_use_directly;
