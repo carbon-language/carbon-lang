@@ -746,7 +746,7 @@ public:
 } // end anonymous namespace
 
 void SelectionDAGISel::DoInstructionSelection() {
-  DEBUG(errs() << "===== Instruction selection begins: BB#"
+  DEBUG(dbgs() << "===== Instruction selection begins: BB#"
         << FuncInfo->MBB->getNumber()
         << " '" << FuncInfo->MBB->getName() << "'\n");
 
@@ -805,7 +805,7 @@ void SelectionDAGISel::DoInstructionSelection() {
     CurDAG->setRoot(Dummy.getValue());
   }
 
-  DEBUG(errs() << "===== Instruction selection ends:\n");
+  DEBUG(dbgs() << "===== Instruction selection ends:\n");
 
   PostprocessISelDAG();
 }
@@ -1780,7 +1780,7 @@ UpdateChainsAndGlue(SDNode *NodeToMatch, SDValue InputChain,
   if (!NowDeadNodes.empty())
     CurDAG->RemoveDeadNodes(NowDeadNodes);
 
-  DEBUG(errs() << "ISEL: Match complete!\n");
+  DEBUG(dbgs() << "ISEL: Match complete!\n");
 }
 
 enum ChainResult {
@@ -2285,9 +2285,9 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
   SmallVector<SDNode*, 3> ChainNodesMatched;
   SmallVector<SDNode*, 3> GlueResultNodesMatched;
 
-  DEBUG(errs() << "ISEL: Starting pattern match on root node: ";
+  DEBUG(dbgs() << "ISEL: Starting pattern match on root node: ";
         NodeToMatch->dump(CurDAG);
-        errs() << '\n');
+        dbgs() << '\n');
 
   // Determine where to start the interpreter.  Normally we start at opcode #0,
   // but if the state machine starts with an OPC_SwitchOpcode, then we
@@ -2299,7 +2299,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     // Already computed the OpcodeOffset table, just index into it.
     if (N.getOpcode() < OpcodeOffset.size())
       MatcherIndex = OpcodeOffset[N.getOpcode()];
-    DEBUG(errs() << "  Initial Opcode index to " << MatcherIndex << "\n");
+    DEBUG(dbgs() << "  Initial Opcode index to " << MatcherIndex << "\n");
 
   } else if (MatcherTable[0] == OPC_SwitchOpcode) {
     // Otherwise, the table isn't computed, but the state machine does start
@@ -2366,7 +2366,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         if (!Result)
           break;
 
-        DEBUG(errs() << "  Skipped scope entry (due to false predicate) at "
+        DEBUG(dbgs() << "  Skipped scope entry (due to false predicate) at "
                      << "index " << MatcherIndexOfPredicate
                      << ", continuing at " << FailIndex << "\n");
         ++NumDAGIselRetries;
@@ -2496,7 +2496,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (CaseSize == 0) break;
 
       // Otherwise, execute the case we found.
-      DEBUG(errs() << "  OpcodeSwitch from " << SwitchStart
+      DEBUG(dbgs() << "  OpcodeSwitch from " << SwitchStart
                    << " to " << MatcherIndex << "\n");
       continue;
     }
@@ -2528,7 +2528,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (CaseSize == 0) break;
 
       // Otherwise, execute the case we found.
-      DEBUG(errs() << "  TypeSwitch[" << EVT(CurNodeVT).getEVTString()
+      DEBUG(dbgs() << "  TypeSwitch[" << EVT(CurNodeVT).getEVTString()
                    << "] from " << SwitchStart << " to " << MatcherIndex<<'\n');
       continue;
     }
@@ -2872,9 +2872,9 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
           ->setMemRefs(MemRefs, MemRefs + NumMemRefs);
       }
 
-      DEBUG(errs() << "  "
+      DEBUG(dbgs() << "  "
                    << (Opcode == OPC_MorphNodeTo ? "Morphed" : "Created")
-                   << " node: "; Res->dump(CurDAG); errs() << "\n");
+                   << " node: "; Res->dump(CurDAG); dbgs() << "\n");
 
       // If this was a MorphNodeTo then we're completely done!
       if (Opcode == OPC_MorphNodeTo) {
@@ -2949,7 +2949,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     // If the code reached this point, then the match failed.  See if there is
     // another child to try in the current 'Scope', otherwise pop it until we
     // find a case to check.
-    DEBUG(errs() << "  Match failed at index " << CurrentOpcodeIndex << "\n");
+    DEBUG(dbgs() << "  Match failed at index " << CurrentOpcodeIndex << "\n");
     ++NumDAGIselRetries;
     while (1) {
       if (MatchScopes.empty()) {
@@ -2969,7 +2969,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         MatchedMemRefs.resize(LastScope.NumMatchedMemRefs);
       MatcherIndex = LastScope.FailIndex;
 
-      DEBUG(errs() << "  Continuing at " << MatcherIndex << "\n");
+      DEBUG(dbgs() << "  Continuing at " << MatcherIndex << "\n");
 
       InputChain = LastScope.InputChain;
       InputGlue = LastScope.InputGlue;
