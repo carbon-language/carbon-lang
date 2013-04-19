@@ -1007,7 +1007,17 @@ ValueObject::GetData (DataExtractor& data)
     ExecutionContext exe_ctx (GetExecutionContextRef());
     Error error = m_value.GetValueAsData(&exe_ctx, GetClangAST(), data, 0, GetModule().get());
     if (error.Fail())
-        return 0;
+    {
+        if (m_data.GetByteSize())
+        {
+            data = m_data;
+            return data.GetByteSize();
+        }
+        else
+        {
+            return 0;
+        }
+    }
     data.SetAddressByteSize(m_data.GetAddressByteSize());
     data.SetByteOrder(m_data.GetByteOrder());
     return data.GetByteSize();
@@ -3832,6 +3842,13 @@ ValueObject::AddressOf (Error &error)
             break;
         }
     }
+    else
+    {
+        StreamString expr_path_strm;
+        GetExpressionPath(expr_path_strm, true);
+        error.SetErrorStringWithFormat("'%s' doesn't have a valid address", expr_path_strm.GetString().c_str());
+    }
+    
     return m_addr_of_valobj_sp;
 }
 

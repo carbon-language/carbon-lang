@@ -521,7 +521,7 @@ public:
     }
     
     void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address,
-                                lldb::addr_t frame_top, lldb::addr_t frame_bottom, Error &err)
+                        lldb::addr_t frame_top, lldb::addr_t frame_bottom, Error &err)
     {
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
