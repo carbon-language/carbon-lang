@@ -317,6 +317,14 @@ class CodeGenModule : public CodeGenTypeCache {
                           llvm::GlobalValue *> StaticExternCMap;
   StaticExternCMap StaticExternCValues;
 
+  /// \brief thread_local variables defined or used in this TU.
+  std::vector<std::pair<const VarDecl *, llvm::GlobalVariable *> >
+    CXXThreadLocals;
+
+  /// \brief thread_local variables with initializers that need to run
+  /// before any thread_local variable in this TU is odr-used.
+  std::vector<llvm::Constant*> CXXThreadLocalInits;
+
   /// CXXGlobalInits - Global variables with initializers that need to run
   /// before main.
   std::vector<llvm::Constant*> CXXGlobalInits;
@@ -1025,6 +1033,9 @@ private:
   /// EmitCXXDestructor - Emit a single destructor with the given type from
   /// a C++ destructor Decl.
   void EmitCXXDestructor(const CXXDestructorDecl *D, CXXDtorType Type);
+
+  /// \brief Emit the function that initializes C++ thread_local variables.
+  void EmitCXXThreadLocalInitFunc();
 
   /// EmitCXXGlobalInitFunc - Emit the function that initializes C++ globals.
   void EmitCXXGlobalInitFunc();

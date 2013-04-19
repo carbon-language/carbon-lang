@@ -146,6 +146,14 @@ public:
                        llvm::GlobalVariable *DeclPtr, bool PerformInit);
   void registerGlobalDtor(CodeGenFunction &CGF, const VarDecl &D,
                           llvm::Constant *dtor, llvm::Constant *addr);
+
+  llvm::Function *getOrCreateThreadLocalWrapper(const VarDecl *VD,
+                                                llvm::GlobalVariable *Var);
+  void EmitThreadLocalInitFuncs(
+      llvm::ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *> > Decls,
+      llvm::Function *InitFunc);
+  LValue EmitThreadLocalDeclRefExpr(CodeGenFunction &CGF,
+                                    const DeclRefExpr *DRE);
 };
 
 class ARMCXXABI : public ItaniumCXXABI {
@@ -1248,4 +1256,139 @@ void ItaniumCXXABI::registerGlobalDtor(CodeGenFunction &CGF,
   }
 
   CGF.registerGlobalDtorWithAtExit(dtor, addr);
+}
+
+/// Get the appropriate linkage for the wrapper function. This is essentially
+/// the weak form of the variable's linkage; every translation unit which wneeds
+/// the wrapper emits a copy, and we want the linker to merge them.
+static llvm::GlobalValue::LinkageTypes getThreadLocalWrapperLinkage(
+    llvm::GlobalValue::LinkageTypes VarLinkage) {
+  if (llvm::GlobalValue::isLinkerPrivateLinkage(VarLinkage))
+    return llvm::GlobalValue::LinkerPrivateWeakLinkage;
+  // For internal linkage variables, we don't need an external or weak wrapper.
+  if (llvm::GlobalValue::isLocalLinkage(VarLinkage))
+    return VarLinkage;
+  return llvm::GlobalValue::WeakODRLinkage;
+}
+
+llvm::Function *
+ItaniumCXXABI::getOrCreateThreadLocalWrapper(const VarDecl *VD,
+                                             llvm::GlobalVariable *Var) {
+  // Mangle the name for the thread_local wrapper function.
+  SmallString<256> WrapperName;
+  {
+    llvm::raw_svector_ostream Out(WrapperName);
+    getMangleContext().mangleItaniumThreadLocalWrapper(VD, Out);
+    Out.flush();
+  }
+
+  if (llvm::Value *V = Var->getParent()->getNamedValue(WrapperName))
+    return cast<llvm::Function>(V);
+
+  llvm::Type *RetTy = Var->getType();
+  if (VD->getType()->isReferenceType())
+    RetTy = RetTy->getPointerElementType();
+
+  llvm::FunctionType *FnTy = llvm::FunctionType::get(RetTy, false);
+  llvm::Function *Wrapper = llvm::Function::Create(
+      FnTy, getThreadLocalWrapperLinkage(Var->getLinkage()), WrapperName.str(),
+      &CGM.getModule());
+  // Always resolve references to the wrapper at link time.
+  Wrapper->setVisibility(llvm::GlobalValue::HiddenVisibility);
+  return Wrapper;
+}
+
+void ItaniumCXXABI::EmitThreadLocalInitFuncs(
+    llvm::ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *> > Decls,
+    llvm::Function *InitFunc) {
+  for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
+    const VarDecl *VD = Decls[I].first;
+    llvm::GlobalVariable *Var = Decls[I].second;
+
+    // Mangle the name for the thread_local initialization function.
+    SmallString<256> InitFnName;
+    {
+      llvm::raw_svector_ostream Out(InitFnName);
+      getMangleContext().mangleItaniumThreadLocalInit(VD, Out);
+      Out.flush();
+    }
+
+    // If we have a definition for the variable, emit the initialization
+    // function as an alias to the global Init function (if any). Otherwise,
+    // produce a declaration of the initialization function.
+    llvm::GlobalValue *Init = 0;
+    bool InitIsInitFunc = false;
+    if (VD->hasDefinition()) {
+      InitIsInitFunc = true;
+      if (InitFunc)
+        Init =
+            new llvm::GlobalAlias(InitFunc->getType(), Var->getLinkage(),
+                                  InitFnName.str(), InitFunc, &CGM.getModule());
+    } else {
+      // Emit a weak global function referring to the initialization function.
+      // This function will not exist if the TU defining the thread_local
+      // variable in question does not need any dynamic initialization for
+      // its thread_local variables.
+      llvm::FunctionType *FnTy = llvm::FunctionType::get(CGM.VoidTy, false);
+      Init = llvm::Function::Create(
+          FnTy, llvm::GlobalVariable::ExternalWeakLinkage, InitFnName.str(),
+          &CGM.getModule());
+    }
+
+    if (Init)
+      Init->setVisibility(Var->getVisibility());
+
+    llvm::Function *Wrapper = getOrCreateThreadLocalWrapper(VD, Var);
+    llvm::LLVMContext &Context = CGM.getModule().getContext();
+    llvm::BasicBlock *Entry = llvm::BasicBlock::Create(Context, "", Wrapper);
+    CGBuilderTy Builder(Entry);
+    if (InitIsInitFunc) {
+      if (Init)
+        Builder.CreateCall(Init);
+    } else {
+      // Don't know whether we have an init function. Call it if it exists.
+      llvm::Value *Have = Builder.CreateIsNotNull(Init);
+      llvm::BasicBlock *InitBB = llvm::BasicBlock::Create(Context, "", Wrapper);
+      llvm::BasicBlock *ExitBB = llvm::BasicBlock::Create(Context, "", Wrapper);
+      Builder.CreateCondBr(Have, InitBB, ExitBB);
+
+      Builder.SetInsertPoint(InitBB);
+      Builder.CreateCall(Init);
+      Builder.CreateBr(ExitBB);
+
+      Builder.SetInsertPoint(ExitBB);
+    }
+
+    // For a reference, the result of the wrapper function is a pointer to
+    // the referenced object.
+    llvm::Value *Val = Var;
+    if (VD->getType()->isReferenceType()) {
+      llvm::LoadInst *LI = Builder.CreateLoad(Val);
+      LI->setAlignment(CGM.getContext().getDeclAlign(VD).getQuantity());
+      Val = LI;
+    }
+
+    Builder.CreateRet(Val);
+  }
+}
+
+LValue ItaniumCXXABI::EmitThreadLocalDeclRefExpr(CodeGenFunction &CGF,
+                                                 const DeclRefExpr *DRE) {
+  const VarDecl *VD = cast<VarDecl>(DRE->getDecl());
+  QualType T = VD->getType();
+  llvm::Type *Ty = CGF.getTypes().ConvertTypeForMem(T);
+  llvm::Value *Val = CGF.CGM.GetAddrOfGlobalVar(VD, Ty);
+  llvm::Function *Wrapper =
+      getOrCreateThreadLocalWrapper(VD, cast<llvm::GlobalVariable>(Val));
+
+  Val = CGF.Builder.CreateCall(Wrapper);
+
+  LValue LV;
+  if (VD->getType()->isReferenceType())
+    LV = CGF.MakeNaturalAlignAddrLValue(Val, T);
+  else
+    LV = CGF.MakeAddrLValue(Val, DRE->getType(),
+                            CGF.getContext().getDeclAlign(VD));
+  // FIXME: need setObjCGCLValueClass?
+  return LV;
 }

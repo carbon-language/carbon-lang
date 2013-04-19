@@ -259,3 +259,14 @@ llvm::BasicBlock *CGCXXABI::EmitCtorCompleteObjectHandler(
   ErrorUnsupportedABI(CGF, "complete object detection in ctor");
   return 0;
 }
+
+void CGCXXABI::EmitThreadLocalInitFuncs(
+    llvm::ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *> > Decls,
+    llvm::Function *InitFunc) {
+}
+
+LValue CGCXXABI::EmitThreadLocalDeclRefExpr(CodeGenFunction &CGF,
+                                          const DeclRefExpr *DRE) {
+  ErrorUnsupportedABI(CGF, "odr-use of thread_local global");
+  return LValue();
+}

@@ -156,7 +156,8 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
 static llvm::Function *
 CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
                                    llvm::FunctionType *ty,
-                                   const Twine &name);
+                                   const Twine &name,
+                                   bool TLS = false);
 
 /// Create a stub function, suitable for being passed to atexit,
 /// which passes the given address to the given destructor function.
@@ -225,11 +226,11 @@ void CodeGenFunction::EmitCXXGuardedInit(const VarDecl &D,
 static llvm::Function *
 CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
                                    llvm::FunctionType *FTy,
-                                   const Twine &Name) {
+                                   const Twine &Name, bool TLS) {
   llvm::Function *Fn =
     llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
                            Name, &CGM.getModule());
-  if (!CGM.getLangOpts().AppleKext) {
+  if (!CGM.getLangOpts().AppleKext && !TLS) {
     // Set the section if needed.
     if (const char *Section = 
           CGM.getTarget().getStaticInitSectionSpecifier())
@@ -255,9 +256,6 @@ void
 CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
                                             llvm::GlobalVariable *Addr,
                                             bool PerformInit) {
-  if (D->getTLSKind())
-    ErrorUnsupported(D->getInit(), "dynamic TLS initialization");
-
   llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
 
   // Create a variable initialization function.
@@ -267,12 +265,20 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
   CodeGenFunction(*this).GenerateCXXGlobalVarDeclInitFunc(Fn, D, Addr,
                                                           PerformInit);
 
-  if (D->hasAttr<InitPriorityAttr>()) {
+  if (D->getTLSKind()) {
+    // FIXME: Should we support init_priority for thread_local?
+    // FIXME: Ideally, initialization of instantiated thread_local static data
+    // members of class templates should not trigger initialization of other
+    // entities in the TU.
+    // FIXME: We only need to register one __cxa_thread_atexit function for the
+    // entire TU.
+    CXXThreadLocalInits.push_back(Fn);
+  } else if (D->hasAttr<InitPriorityAttr>()) {
     unsigned int order = D->getAttr<InitPriorityAttr>()->getPriority();
     OrderGlobalInits Key(order, PrioritizedCXXGlobalInits.size());
     PrioritizedCXXGlobalInits.push_back(std::make_pair(Key, Fn));
     DelayedCXXInitPosition.erase(D);
-  }  else {
+  } else {
     llvm::DenseMap<const Decl *, unsigned>::iterator I =
       DelayedCXXInitPosition.find(D);
     if (I == DelayedCXXInitPosition.end()) {
@@ -283,6 +289,27 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
       DelayedCXXInitPosition.erase(I);
     }
   }
+}
+
+void CodeGenModule::EmitCXXThreadLocalInitFunc() {
+  llvm::Function *InitFn = 0;
+  if (!CXXThreadLocalInits.empty()) {
+    // Generate a guarded initialization function.
+    llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
+    InitFn = CreateGlobalInitOrDestructFunction(
+        *this, FTy, "__tls_init", /*TLS*/ true);
+    llvm::GlobalVariable *Guard = new llvm::GlobalVariable(
+        getModule(), Int8Ty, false, llvm::GlobalVariable::InternalLinkage,
+        llvm::ConstantInt::get(Int8Ty, 0), "__tls_guard");
+    Guard->setThreadLocal(true);
+    CodeGenFunction(*this).GenerateCXXGlobalInitFunc(
+        InitFn, CXXThreadLocalInits.data(), CXXThreadLocalInits.size(), Guard);
+  }
+
+  getCXXABI().EmitThreadLocalInitFuncs(CXXThreadLocals, InitFn);
+
+  CXXThreadLocalInits.clear();
+  CXXThreadLocals.clear();
 }
 
 void
@@ -385,13 +412,30 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
 
 void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
                                                 llvm::Constant **Decls,
-                                                unsigned NumDecls) {
+                                                unsigned NumDecls,
+                                                llvm::GlobalVariable *Guard) {
   // Initialize debug info if needed.
   maybeInitializeDebugInfo();
 
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
                 getTypes().arrangeNullaryFunction(),
                 FunctionArgList(), SourceLocation());
+
+  llvm::BasicBlock *ExitBlock = 0;
+  if (Guard) {
+    // If we have a guard variable, check whether we've already performed these
+    // initializations. This happens for TLS initialization functions.
+    llvm::Value *GuardVal = Builder.CreateLoad(Guard);
+    llvm::Value *Uninit = Builder.CreateIsNull(GuardVal, "guard.uninitialized");
+    // Mark as initialized before initializing anything else. If the
+    // initializers use previously-initialized thread_local vars, that's
+    // probably supposed to be OK, but the standard doesn't say.
+    Builder.CreateStore(llvm::ConstantInt::get(GuardVal->getType(), 1), Guard);
+    llvm::BasicBlock *InitBlock = createBasicBlock("init");
+    ExitBlock = createBasicBlock("exit");
+    Builder.CreateCondBr(Uninit, InitBlock, ExitBlock);
+    EmitBlock(InitBlock);
+  }
 
   RunCleanupsScope Scope(*this);
 
@@ -407,7 +451,12 @@ void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
       EmitRuntimeCall(Decls[i]);
 
   Scope.ForceCleanup();
-  
+
+  if (ExitBlock) {
+    Builder.CreateBr(ExitBlock);
+    EmitBlock(ExitBlock);
+  }
+
   FinishFunction();
 }
 

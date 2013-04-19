@@ -2628,7 +2628,8 @@ public:
   /// variables.
   void GenerateCXXGlobalInitFunc(llvm::Function *Fn,
                                  llvm::Constant **Decls,
-                                 unsigned NumDecls);
+                                 unsigned NumDecls,
+                                 llvm::GlobalVariable *Guard = 0);
 
   /// GenerateCXXGlobalDtorsFunc - Generates code for destroying global
   /// variables.

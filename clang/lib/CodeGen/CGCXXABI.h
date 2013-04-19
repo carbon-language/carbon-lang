@@ -353,6 +353,25 @@ public:
   /// \param addr - a pointer to pass to the destructor function.
   virtual void registerGlobalDtor(CodeGenFunction &CGF, const VarDecl &D,
                                   llvm::Constant *dtor, llvm::Constant *addr);
+
+  /*************************** thread_local initialization ********************/
+
+  /// Emits ABI-required functions necessary to initialize thread_local
+  /// variables in this translation unit.
+  ///
+  /// \param Decls The thread_local declarations in this translation unit.
+  /// \param InitFunc If this translation unit contains any non-constant
+  ///        initialization or non-trivial destruction for thread_local
+  ///        variables, a function to perform the initialization. Otherwise, 0.
+  virtual void EmitThreadLocalInitFuncs(
+      llvm::ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *> > Decls,
+      llvm::Function *InitFunc);
+
+  /// Emit a reference to a non-local thread_local variable (including
+  /// triggering the initialization of all thread_local variables in its
+  /// translation unit).
+  virtual LValue EmitThreadLocalDeclRefExpr(CodeGenFunction &CGF,
+                                            const DeclRefExpr *DRE);
 };
 
 // Create an instance of a C++ ABI class:
