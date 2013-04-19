@@ -157,7 +157,11 @@ TargetList::CreateTarget (Debugger &debugger,
     if (!arch.IsValid())
         arch = specified_arch;
 
-    FileSpec file (user_exe_path, true);
+    FileSpec file (user_exe_path, false);
+    if (!file.Exists() && user_exe_path && user_exe_path[0] == '~')
+    {
+        file = FileSpec(user_exe_path, true);
+    }
     bool user_exe_path_is_bundle = false;
     char resolved_bundle_exe_path[PATH_MAX];
     resolved_bundle_exe_path[0] = '\0';
