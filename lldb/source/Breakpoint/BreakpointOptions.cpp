@@ -42,7 +42,8 @@ BreakpointOptions::BreakpointOptions() :
     m_one_shot (false),
     m_ignore_count (0),
     m_thread_spec_ap (),
-    m_condition_ap()
+    m_condition_text (),
+    m_condition_text_hash (0)
 {
 }
 
@@ -56,13 +57,12 @@ BreakpointOptions::BreakpointOptions(const BreakpointOptions& rhs) :
     m_enabled (rhs.m_enabled),
     m_one_shot (rhs.m_one_shot),
     m_ignore_count (rhs.m_ignore_count),
-    m_thread_spec_ap (),
-    m_condition_ap ()
+    m_thread_spec_ap ()
 {
     if (rhs.m_thread_spec_ap.get() != NULL)
         m_thread_spec_ap.reset (new ThreadSpec(*rhs.m_thread_spec_ap.get()));
-    if (rhs.m_condition_ap.get())
-        m_condition_ap.reset (new ClangUserExpression (rhs.m_condition_ap->GetUserText(), NULL, lldb::eLanguageTypeUnknown, ClangUserExpression::eResultTypeAny));
+    m_condition_text = rhs.m_condition_text;
+    m_condition_text_hash = rhs.m_condition_text_hash;
 }
 
 //----------------------------------------------------------------------
@@ -79,8 +79,8 @@ BreakpointOptions::operator=(const BreakpointOptions& rhs)
     m_ignore_count = rhs.m_ignore_count;
     if (rhs.m_thread_spec_ap.get() != NULL)
         m_thread_spec_ap.reset(new ThreadSpec(*rhs.m_thread_spec_ap.get()));
-    if (rhs.m_condition_ap.get())
-        m_condition_ap.reset (new ClangUserExpression (rhs.m_condition_ap->GetUserText(), NULL, lldb::eLanguageTypeUnknown, ClangUserExpression::eResultTypeAny));
+    m_condition_text = rhs.m_condition_text;
+    m_condition_text_hash = rhs.m_condition_text_hash;
     return *this;
 }
 
@@ -162,24 +162,25 @@ BreakpointOptions::HasCallback ()
 void 
 BreakpointOptions::SetCondition (const char *condition)
 {
-    if (condition == NULL || condition[0] == '\0')
-    {
-        if (m_condition_ap.get())
-            m_condition_ap.reset();
-    }
-    else
-    {
-        m_condition_ap.reset(new ClangUserExpression (condition, NULL, lldb::eLanguageTypeUnknown, ClangUserExpression::eResultTypeAny));
-    }
+    m_condition_text.assign(condition);
+    std::hash<std::string> hasher;
+    m_condition_text_hash = hasher(m_condition_text);
 }
 
 const char *
-BreakpointOptions::GetConditionText () const
+BreakpointOptions::GetConditionText (size_t *hash) const
 {
-    if (m_condition_ap.get())
-        return m_condition_ap->GetUserText();
+    if (!m_condition_text.empty())
+    {
+        if (hash)
+            *hash = m_condition_text_hash;
+        
+        return m_condition_text.c_str();
+    }
     else
+    {
         return NULL;
+    }
 }
 
 const ThreadSpec *
@@ -250,12 +251,12 @@ BreakpointOptions::GetDescription (Stream *s, lldb::DescriptionLevel level) cons
             m_callback_baton_sp->GetDescription (s, level);
         }
     }
-    if (m_condition_ap.get())
+    if (!m_condition_text.empty())
     {
        if (level != eDescriptionLevelBrief)
        {
             s->EOL();
-            s->Printf("Condition: %s\n", m_condition_ap->GetUserText());
+            s->Printf("Condition: %s\n", m_condition_text.c_str());
         }
     }    
 }

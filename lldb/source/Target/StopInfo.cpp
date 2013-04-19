@@ -387,79 +387,36 @@ protected:
                     // First run the condition for the breakpoint.  If that says we should stop, then we'll run
                     // the callback for the breakpoint.  If the callback says we shouldn't stop that will win.                    
                     
-                    bool condition_says_stop = true;
                     if (bp_loc_sp->GetConditionText() != NULL)
                     {
-                        // We need to make sure the user sees any parse errors in their condition, so we'll hook the
-                        // constructor errors up to the debugger's Async I/O.
+                        Error condition_error;
+                        bool condition_says_stop = bp_loc_sp->ConditionSaysStop(exe_ctx, condition_error);
                         
-                        ValueObjectSP result_valobj_sp;
-                        
-                        ExecutionResults result_code;
-                        ValueObjectSP result_value_sp;
-                        const bool unwind_on_error = true;
-                        const bool ignore_breakpoints = true;
-                        Error error;
-                        result_code = ClangUserExpression::EvaluateWithError (exe_ctx,
-                                                                              eExecutionPolicyOnlyWhenNeeded,
-                                                                              lldb::eLanguageTypeUnknown,
-                                                                              ClangUserExpression::eResultTypeAny,
-                                                                              unwind_on_error,
-                                                                              ignore_breakpoints,
-                                                                              bp_loc_sp->GetConditionText(),
-                                                                              NULL,
-                                                                              result_value_sp,
-                                                                              error,
-                                                                              true,
-                                                                              ClangUserExpression::kDefaultTimeout);
-                        if (result_code == eExecutionCompleted)
-                        {
-                            if (result_value_sp)
-                            {
-                                Scalar scalar_value;
-                                if (result_value_sp->ResolveValue (scalar_value))
-                                {
-                                    if (scalar_value.ULongLong(1) == 0)
-                                        condition_says_stop = false;
-                                    else
-                                        condition_says_stop = true;
-                                    if (log)
-                                        log->Printf("Condition successfully evaluated, result is %s.\n", 
-                                                    m_should_stop ? "true" : "false");
-                                }
-                                else
-                                {
-                                    condition_says_stop = true;
-                                    if (log)
-                                        log->Printf("Failed to get an integer result from the expression.");
-                                }
-                            }
-                        }
-                        else
+                        if (!condition_error.Success())
                         {
                             Debugger &debugger = exe_ctx.GetTargetRef().GetDebugger();
                             StreamSP error_sp = debugger.GetAsyncErrorStream ();
                             error_sp->Printf ("Stopped due to an error evaluating condition of breakpoint ");
                             bp_loc_sp->GetDescription (error_sp.get(), eDescriptionLevelBrief);
-                            error_sp->Printf (": \"%s\"", 
+                            error_sp->Printf (": \"%s\"",
                                               bp_loc_sp->GetConditionText());
                             error_sp->EOL();
-                            const char *err_str = error.AsCString("<Unknown Error>");
+                            const char *err_str = condition_error.AsCString("<Unknown Error>");
                             if (log)
                                 log->Printf("Error evaluating condition: \"%s\"\n", err_str);
                             
                             error_sp->PutCString (err_str);
-                            error_sp->EOL();                       
+                            error_sp->EOL();
                             error_sp->Flush();
                             // If the condition fails to be parsed or run, we should stop.
                             condition_says_stop = true;
                         }
+                        else
+                        {
+                            if (!condition_says_stop)
+                                continue;
+                        }
                     }
-                                            
-                    // If this location's condition says we should aren't going to stop, 
-                    // then don't run the callback for this location.
-                    if (!condition_says_stop)
-                        continue;
                                 
                     bool callback_says_stop;
                     

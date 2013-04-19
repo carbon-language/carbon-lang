@@ -21,6 +21,7 @@
 
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-private.h"
+#include "lldb/Core/Address.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
@@ -111,6 +112,9 @@ public:
     {
         return m_can_interpret;
     }
+    
+    bool
+    MatchesContext (ExecutionContext &exe_ctx);
     
     //------------------------------------------------------------------
     /// Execute the parsed expression
@@ -383,34 +387,16 @@ private:
                                    lldb::addr_t &cmd_ptr);
     
     void
-    InstallContext (ExecutionContext &exe_ctx)
-    {
-        m_process_wp = exe_ctx.GetProcessSP();
-        m_target_wp = exe_ctx.GetTargetSP();
-        m_frame_wp = exe_ctx.GetFrameSP();
-    }
+    InstallContext (ExecutionContext &exe_ctx);
     
     bool
     LockAndCheckContext (ExecutionContext &exe_ctx,
                          lldb::TargetSP &target_sp,
                          lldb::ProcessSP &process_sp,
-                         lldb::StackFrameSP &frame_sp)
-    {
-        target_sp = m_target_wp.lock();
-        process_sp = m_process_wp.lock();
-        frame_sp = m_frame_wp.lock();
-        
-        if ((target_sp && target_sp.get() != exe_ctx.GetTargetPtr()) || 
-            (process_sp && process_sp.get() != exe_ctx.GetProcessPtr()) ||
-            (frame_sp && frame_sp.get() != exe_ctx.GetFramePtr()))
-            return false;
-        
-        return true;
-    }
+                         lldb::StackFrameSP &frame_sp);
     
-    lldb::TargetWP                              m_target_wp;            ///< The target used as the context for the expression.
     lldb::ProcessWP                             m_process_wp;           ///< The process used as the context for the expression.
-    lldb::StackFrameWP                          m_frame_wp;             ///< The stack frame used as context for the expression.
+    Address                                     m_address;              ///< The address the process is stopped in.
     
     std::string                                 m_expr_text;            ///< The text of the expression, as typed by the user
     std::string                                 m_expr_prefix;          ///< The text of the translation-level definitions, as provided by the user

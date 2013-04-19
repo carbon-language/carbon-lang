@@ -329,6 +329,54 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
     }
 }
 
+void
+ClangUserExpression::InstallContext (ExecutionContext &exe_ctx)
+{
+    m_process_wp = exe_ctx.GetProcessSP();
+    
+    lldb::StackFrameSP frame_sp = exe_ctx.GetFrameSP();
+    
+    if (frame_sp)
+        m_address = frame_sp->GetFrameCodeAddress();
+}
+
+bool
+ClangUserExpression::LockAndCheckContext (ExecutionContext &exe_ctx,
+                                          lldb::TargetSP &target_sp,
+                                          lldb::ProcessSP &process_sp,
+                                          lldb::StackFrameSP &frame_sp)
+{
+    lldb::ProcessSP expected_process_sp = m_process_wp.lock();
+    process_sp = exe_ctx.GetProcessSP();
+
+    if (process_sp != expected_process_sp)
+        return false;
+    
+    process_sp = exe_ctx.GetProcessSP();
+    target_sp = exe_ctx.GetTargetSP();
+    frame_sp = exe_ctx.GetFrameSP();
+    
+    if (m_address.IsValid())
+    {
+        if (!frame_sp)
+            return false;
+        else
+            return (0 == Address::CompareLoadAddress(m_address, frame_sp->GetFrameCodeAddress(), target_sp.get()));
+    }
+    
+    return true;
+}
+
+bool
+ClangUserExpression::MatchesContext (ExecutionContext &exe_ctx)
+{
+    lldb::TargetSP target_sp;
+    lldb::ProcessSP process_sp;
+    lldb::StackFrameSP frame_sp;
+    
+    return LockAndCheckContext(exe_ctx, target_sp, process_sp, frame_sp);
+}
+
 // This is a really nasty hack, meant to fix Objective-C expressions of the form
 // (int)[myArray count].  Right now, because the type information for count is
 // not available, [myArray count] returns id, which can't be directly cast to
@@ -545,7 +593,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
                              process, 
                              frame))
     {
-        error_stream.Printf("The context has changed before we could JIT the expression!");
+        error_stream.Printf("The context has changed before we could JIT the expression!\n");
         return false;
     }
     
