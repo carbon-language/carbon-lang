@@ -848,7 +848,7 @@ public:
         if (!Read_objc_class(process, objc_class))
             return ObjCLanguageRuntime::ClassDescriptorSP();
 
-        return m_runtime.ObjCLanguageRuntime::GetClassDescriptor(objc_class->m_superclass);
+        return m_runtime.ObjCLanguageRuntime::GetClassDescriptorFromISA(objc_class->m_superclass);
     }
     
     virtual bool
@@ -1642,7 +1642,7 @@ AppleObjCRuntimeV2::GetClassDescriptor (ValueObject& valobj)
                 ObjCISA isa = process->ReadPointerFromMemory(isa_pointer, error);
                 if (isa != LLDB_INVALID_ADDRESS)
                 {
-                    objc_class_sp = ObjCLanguageRuntime::GetClassDescriptor (isa);
+                    objc_class_sp = ObjCLanguageRuntime::GetClassDescriptorFromISA (isa);
                     if (isa && !objc_class_sp)
                     {
                         Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
@@ -2325,7 +2325,7 @@ AppleObjCRuntimeV2::LookupRuntimeSymbol (const ConstString &name)
             if (class_and_ivar.first.size() && class_and_ivar.second.size())
             {
                 const ConstString class_name_cs(class_and_ivar.first);
-                ClassDescriptorSP descriptor = ObjCLanguageRuntime::GetClassDescriptor(class_name_cs);
+                ClassDescriptorSP descriptor = ObjCLanguageRuntime::GetClassDescriptorFromClassName(class_name_cs);
                                 
                 if (descriptor)
                 {

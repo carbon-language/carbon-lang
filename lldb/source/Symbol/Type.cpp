@@ -59,6 +59,7 @@ Type::Type
     clang_type_t clang_type,
     ResolveState clang_type_resolve_state
 ) :
+    std::enable_shared_from_this<Type> (),
     UserID (uid),
     m_name (name),
     m_symbol_file (symbol_file),
@@ -75,6 +76,7 @@ Type::Type
 }
 
 Type::Type () :
+    std::enable_shared_from_this<Type> (),
     UserID (0),
     m_name ("<INVALID TYPE>"),
     m_symbol_file (NULL),
@@ -92,6 +94,7 @@ Type::Type () :
 
 
 Type::Type (const Type &rhs) :
+    std::enable_shared_from_this<Type> (rhs),
     UserID (rhs),
     m_name (rhs.m_name),
     m_symbol_file (rhs.m_symbol_file),

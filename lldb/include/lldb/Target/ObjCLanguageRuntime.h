@@ -258,10 +258,10 @@ public:
     GetNonKVOClassDescriptor (ValueObject& in_value);
 
     virtual ClassDescriptorSP
-    GetClassDescriptor (const ConstString &class_name);
+    GetClassDescriptorFromClassName (const ConstString &class_name);
 
     virtual ClassDescriptorSP
-    GetClassDescriptor (ObjCISA isa);
+    GetClassDescriptorFromISA (ObjCISA isa);
 
     ClassDescriptorSP
     GetNonKVOClassDescriptor (ObjCISA isa);

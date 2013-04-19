@@ -765,7 +765,7 @@ ClangUserExpression::Execute (Stream &error_stream,
             return eExecutionSetupError;
         }
         
-        lldb::addr_t function_stack_pointer = NULL;
+        lldb::addr_t function_stack_pointer = 0;
         
         if (m_can_interpret)
         {            

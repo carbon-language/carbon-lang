@@ -52,10 +52,7 @@ public:
         eContextTypeVariable            // lldb_private::Variable *
     };
 
-    enum
-    {
-        kMaxByteSize = 32u
-    };
+    const static size_t kMaxByteSize = 32u;
 
     struct Vector
     {
@@ -76,12 +73,12 @@ public:
         const Vector& 
 		operator=(const Vector& vector) 
 		{
-            SetBytes((uint8_t *)vector.bytes, vector.length, vector.byte_order);
+            SetBytes(vector.bytes, vector.length, vector.byte_order);
             return *this;
         }
 
         bool 
-		SetBytes(uint8_t *bytes, size_t length, lldb::ByteOrder byte_order)
+		SetBytes(const void *bytes, size_t length, lldb::ByteOrder byte_order)
 		{
             this->length = length;
             this->byte_order = byte_order;

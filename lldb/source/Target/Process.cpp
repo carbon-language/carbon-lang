@@ -4747,7 +4747,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 one_thread_timeout.OffsetWithMicroSeconds(default_one_thread_timeout_usec);
             else
             {
-                uint64_t computed_timeout = computed_timeout = timeout_usec / 2;
+                uint64_t computed_timeout = timeout_usec / 2;
                 if (computed_timeout > default_one_thread_timeout_usec)
                     computed_timeout = default_one_thread_timeout_usec;
                 one_thread_timeout.OffsetWithMicroSeconds(computed_timeout);

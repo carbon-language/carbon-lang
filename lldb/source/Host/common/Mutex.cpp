@@ -238,8 +238,7 @@ Mutex::Mutex (Mutex::Type type) :
 //----------------------------------------------------------------------
 Mutex::~Mutex()
 {
-    int err;
-    err = ::pthread_mutex_destroy (&m_mutex);
+    int err = ::pthread_mutex_destroy (&m_mutex);
 #if ENABLE_MUTEX_ERROR_CHECKING
     if (err == 0)
         error_check_mutex (&m_mutex, eMutexActionDestroyed);

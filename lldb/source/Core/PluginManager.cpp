@@ -35,11 +35,15 @@ enum PluginAction
     ePluginGetInstanceAtIndex
 };
 
+
+typedef bool (*PluginInitCallback) (void);
+typedef void (*PluginTermCallback) (void);
+
 struct PluginInfo
 {
     void *plugin_handle;
-    void *plugin_init_callback;
-    void *plugin_term_callback;
+    PluginInitCallback plugin_init_callback;
+    PluginTermCallback plugin_term_callback;
 };
 
 typedef std::map<FileSpec, PluginInfo> PluginTerminateMap;
@@ -111,17 +115,17 @@ LoadPluginCallback
             if (plugin_info.plugin_handle)
             {
                 bool success = false;
-                plugin_info.plugin_init_callback = Host::DynamicLibraryGetSymbol (plugin_info.plugin_handle, "LLDBPluginInitialize", error);
+                plugin_info.plugin_init_callback = (PluginInitCallback)Host::DynamicLibraryGetSymbol (plugin_info.plugin_handle, "LLDBPluginInitialize", error);
                 if (plugin_info.plugin_init_callback)
                 {
                     // Call the plug-in "bool LLDBPluginInitialize(void)" function
-                    success = ((bool (*)(void))plugin_info.plugin_init_callback)();
+                    success = plugin_info.plugin_init_callback();
                 }
 
                 if (success)
                 {
                     // It is ok for the "LLDBPluginTerminate" symbol to be NULL
-                    plugin_info.plugin_term_callback = Host::DynamicLibraryGetSymbol (plugin_info.plugin_handle, "LLDBPluginTerminate", error);
+                    plugin_info.plugin_term_callback = (PluginTermCallback)Host::DynamicLibraryGetSymbol (plugin_info.plugin_handle, "LLDBPluginTerminate", error);
                 }
                 else 
                 {
@@ -209,7 +213,7 @@ PluginManager::Terminate ()
         if (pos->second.plugin_handle)
         {
             if (pos->second.plugin_term_callback)
-                ((void (*)(void))pos->second.plugin_term_callback)();
+                pos->second.plugin_term_callback();
             Host::DynamicLibraryClose (pos->second.plugin_handle);
         }
     }

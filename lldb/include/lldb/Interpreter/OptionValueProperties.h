@@ -32,7 +32,9 @@ public:
     //---------------------------------------------------------------------
     OptionValueProperties () :
         OptionValue(),
-        m_name ()
+        m_name (),
+        m_properties (),
+        m_name_to_index ()
     {
     }
 

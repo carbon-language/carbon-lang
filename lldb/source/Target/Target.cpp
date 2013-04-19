@@ -296,11 +296,14 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
     {
         filter_sp = GetSearchFilterForModuleList (containingModules);
     }
+    if (skip_prologue == eLazyBoolCalculate)
+        skip_prologue = GetSkipPrologue() ? eLazyBoolYes : eLazyBoolNo;
+
     BreakpointResolverSP resolver_sp(new BreakpointResolverFileLine (NULL,
                                                                      file,
                                                                      line_no,
                                                                      check_inlines,
-                                                                     skip_prologue == eLazyBoolCalculate ? GetSkipPrologue() : skip_prologue));
+                                                                     skip_prologue));
     return CreateBreakpoint (filter_sp, resolver_sp, internal);
 }
 
@@ -343,12 +346,15 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
     if (func_name)
     {
         SearchFilterSP filter_sp(GetSearchFilterForModuleAndCUList (containingModules, containingSourceFiles));
-        
+
+        if (skip_prologue == eLazyBoolCalculate)
+            skip_prologue = GetSkipPrologue() ? eLazyBoolYes : eLazyBoolNo;
+
         BreakpointResolverSP resolver_sp (new BreakpointResolverName (NULL, 
                                                                       func_name, 
                                                                       func_name_type_mask, 
                                                                       Breakpoint::Exact, 
-                                                                      skip_prologue == eLazyBoolCalculate ? GetSkipPrologue() : skip_prologue));
+                                                                      skip_prologue));
         bp_sp = CreateBreakpoint (filter_sp, resolver_sp, internal);
     }
     return bp_sp;
@@ -367,11 +373,14 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
     if (num_names > 0)
     {
         SearchFilterSP filter_sp(GetSearchFilterForModuleAndCUList (containingModules, containingSourceFiles));
-        
-        BreakpointResolverSP resolver_sp (new BreakpointResolverName (NULL, 
+
+        if (skip_prologue == eLazyBoolCalculate)
+            skip_prologue = GetSkipPrologue() ? eLazyBoolYes : eLazyBoolNo;
+
+        BreakpointResolverSP resolver_sp (new BreakpointResolverName (NULL,
                                                                       func_names,
                                                                       func_name_type_mask,
-                                                                      skip_prologue == eLazyBoolCalculate ? GetSkipPrologue() : skip_prologue));
+                                                                      skip_prologue));
         bp_sp = CreateBreakpoint (filter_sp, resolver_sp, internal);
     }
     return bp_sp;
@@ -391,11 +400,14 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
     {
         SearchFilterSP filter_sp(GetSearchFilterForModuleAndCUList (containingModules, containingSourceFiles));
         
-        BreakpointResolverSP resolver_sp (new BreakpointResolverName (NULL, 
+        if (skip_prologue == eLazyBoolCalculate)
+            skip_prologue = GetSkipPrologue() ? eLazyBoolYes : eLazyBoolNo;
+
+        BreakpointResolverSP resolver_sp (new BreakpointResolverName (NULL,
                                                                       func_names,
                                                                       num_names, 
                                                                       func_name_type_mask,
-                                                                      skip_prologue == eLazyBoolCalculate ? GetSkipPrologue() : skip_prologue));
+                                                                      skip_prologue));
         bp_sp = CreateBreakpoint (filter_sp, resolver_sp, internal);
     }
     return bp_sp;

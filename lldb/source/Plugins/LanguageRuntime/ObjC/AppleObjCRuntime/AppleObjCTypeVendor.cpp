@@ -182,7 +182,7 @@ AppleObjCTypeVendor::GetDeclForISA(ObjCLanguageRuntime::ObjCISA isa)
     
     clang::ASTContext *ast_ctx = m_ast_ctx.getASTContext();
     
-    ObjCLanguageRuntime::ClassDescriptorSP descriptor = m_runtime.GetClassDescriptor(isa);
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor = m_runtime.GetClassDescriptorFromISA(isa);
     
     if (!descriptor)
         return NULL;
@@ -513,7 +513,7 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
     interface_decl->setHasExternalVisibleStorage(false);
     interface_decl->setHasExternalLexicalStorage(false);
     
-    ObjCLanguageRuntime::ClassDescriptorSP descriptor = m_runtime.GetClassDescriptor(objc_isa);
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor = m_runtime.GetClassDescriptorFromISA(objc_isa);
     
     if (!descriptor)
         return false;

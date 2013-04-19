@@ -576,7 +576,7 @@ lldb_private::formatters::ObjCClassSummaryProvider (ValueObject& valobj, Stream&
     if (!runtime)
         return false;
     
-    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(valobj.GetValueAsUnsigned(0)));
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptorFromISA(valobj.GetValueAsUnsigned(0)));
     
     if (!descriptor.get() || !descriptor->IsValid())
         return false;

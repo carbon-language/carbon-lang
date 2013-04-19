@@ -522,8 +522,7 @@ Options::GenerateOptionUsage
 
         std::set<int> options;
         std::set<int>::const_iterator options_pos, options_end;
-        bool first;
-        for (i = 0, first = true; i < num_options; ++i)
+        for (i = 0; i < num_options; ++i)
         {
             if (opt_defs[i].usage_mask & opt_set_mask && isprint8(opt_defs[i].short_option))
             {

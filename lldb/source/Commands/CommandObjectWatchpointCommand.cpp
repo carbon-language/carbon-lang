@@ -830,7 +830,6 @@ CommandObjectWatchpointCommand::CommandObjectWatchpointCommand (CommandInterpret
                             "A set of commands for adding, removing and examining bits of code to be executed when the watchpoint is hit (watchpoint 'commmands').",
                             "command <sub-command> [<sub-command-options>] <watchpoint-id>")
 {
-    bool status;
     CommandObjectSP add_command_object (new CommandObjectWatchpointCommandAdd (interpreter));
     CommandObjectSP delete_command_object (new CommandObjectWatchpointCommandDelete (interpreter));
     CommandObjectSP list_command_object (new CommandObjectWatchpointCommandList (interpreter));
@@ -839,9 +838,9 @@ CommandObjectWatchpointCommand::CommandObjectWatchpointCommand (CommandInterpret
     delete_command_object->SetCommandName ("watchpoint command delete");
     list_command_object->SetCommandName ("watchpoint command list");
 
-    status = LoadSubCommand ("add",    add_command_object);
-    status = LoadSubCommand ("delete", delete_command_object);
-    status = LoadSubCommand ("list",   list_command_object);
+    LoadSubCommand ("add",    add_command_object);
+    LoadSubCommand ("delete", delete_command_object);
+    LoadSubCommand ("list",   list_command_object);
 }
 
 CommandObjectWatchpointCommand::~CommandObjectWatchpointCommand ()
