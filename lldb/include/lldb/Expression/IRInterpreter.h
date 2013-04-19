@@ -41,46 +41,6 @@ class IRMemoryMap;
 class IRInterpreter
 {
 public:
-    //------------------------------------------------------------------
-    /// Run the IR interpreter on a single function
-    ///
-    /// @param[in] result
-    ///     This variable is populated with the return value of the
-    ///     function, if it could be interpreted completely.
-    ///
-    /// @param[in] result_name
-    ///     The name of the result in the IR.  If this name got a
-    ///     value written to it as part of execution, then that value
-    ///     will be used to create the result variable.
-    ///
-    /// @param[in] result_type
-    ///     The type of the result.
-    ///
-    /// @param[in] llvm_function
-    ///     The function to interpret.
-    ///
-    /// @param[in] llvm_module
-    ///     The module containing the function.
-    ///
-    /// @param[in] error
-    ///     If the expression fails to interpret, a reason why.
-    ///
-    /// @return
-    ///     True on success; false otherwise
-    //------------------------------------------------------------------
-    static bool
-    maybeRunOnFunction (lldb_private::ClangExpressionDeclMap *decl_map,
-                        lldb_private::IRMemoryMap &memory_map,
-                        lldb_private::Stream *error_stream,
-                        lldb::ClangExpressionVariableSP &result,
-                        const lldb_private::ConstString &result_name,
-                        lldb_private::TypeFromParser result_type,
-                        llvm::Function &llvm_function,
-                        llvm::Module &llvm_module,
-                        lldb_private::Error &err);
-    
-    // new api
-    
     static bool
     CanInterpret (llvm::Module &module,
                   llvm::Function &function,
@@ -97,17 +57,6 @@ private:
     static bool
     supportsFunction (llvm::Function &llvm_function,
                       lldb_private::Error &err);
-    
-    static bool
-    runOnFunction (lldb_private::ClangExpressionDeclMap *decl_map,
-                   lldb_private::IRMemoryMap &memory_map,
-                   lldb_private::Stream *error_stream,
-                   lldb::ClangExpressionVariableSP &result,
-                   const lldb_private::ConstString &result_name,
-                   lldb_private::TypeFromParser result_type,
-                   llvm::Function &llvm_function,
-                   llvm::Module &llvm_module,
-                   lldb_private::Error &err);
 };
 
 #endif
