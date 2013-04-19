@@ -196,6 +196,37 @@ IRMemoryMap::GetBestExecutionContextScope()
     return NULL;
 }
 
+IRMemoryMap::Allocation::Allocation (lldb::addr_t process_alloc,
+                                     lldb::addr_t process_start,
+                                     size_t size,
+                                     uint32_t permissions,
+                                     uint8_t alignment,
+                                     AllocationPolicy policy)
+{
+    m_process_alloc = process_alloc;
+    m_process_start = process_start;
+    m_size = size;
+    m_permissions = permissions;
+    m_alignment = alignment;
+    m_policy = policy;
+    
+    switch (policy)
+    {
+        default:
+            assert (0 && "We cannot reach this!");
+        case eAllocationPolicyHostOnly:
+            m_data.SetByteSize(size);
+            memset(m_data.GetBytes(), 0, size);
+            break;
+        case eAllocationPolicyProcessOnly:
+            break;
+        case eAllocationPolicyMirror:
+            m_data.SetByteSize(size);
+            memset(m_data.GetBytes(), 0, size);
+            break;
+    }
+}
+
 lldb::addr_t
 IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, AllocationPolicy policy, Error &error)
 {
@@ -272,28 +303,12 @@ IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, Alloc
     lldb::addr_t mask = alignment - 1;
     aligned_address = (allocation_address + mask) & (~mask);
 
-    Allocation &allocation(m_allocations[aligned_address]);
-    
-    allocation.m_process_alloc = allocation_address;
-    allocation.m_process_start = aligned_address;
-    allocation.m_size = size;
-    allocation.m_permissions = permissions;
-    allocation.m_alignment = alignment;
-    allocation.m_policy = policy;
-    
-    switch (policy)
-    {
-    default:
-        assert (0 && "We cannot reach this!");
-    case eAllocationPolicyHostOnly:
-        allocation.m_data_ap.reset(new DataBufferHeap(size, 0));
-        break;
-    case eAllocationPolicyProcessOnly:
-        break;
-    case eAllocationPolicyMirror:
-        allocation.m_data_ap.reset(new DataBufferHeap(size, 0));
-        break;
-    }
+    m_allocations[aligned_address] = Allocation(allocation_address,
+                                                aligned_address,
+                                                size,
+                                                permissions,
+                                                alignment,
+                                                policy);
     
     if (lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS))
     {
@@ -400,22 +415,22 @@ IRMemoryMap::WriteMemory (lldb::addr_t process_address, const uint8_t *bytes, si
         error.SetErrorString("Couldn't write: invalid allocation policy");
         return;
     case eAllocationPolicyHostOnly:
-        if (!allocation.m_data_ap.get())
+        if (!allocation.m_data.GetByteSize())
         {
             error.SetErrorToGenericError();
             error.SetErrorString("Couldn't write: data buffer is empty");
             return;
         }
-        ::memcpy (allocation.m_data_ap->GetBytes() + offset, bytes, size);
+        ::memcpy (allocation.m_data.GetBytes() + offset, bytes, size);
         break;
     case eAllocationPolicyMirror:
-        if (!allocation.m_data_ap.get())
+        if (!allocation.m_data.GetByteSize())
         {
             error.SetErrorToGenericError();
             error.SetErrorString("Couldn't write: data buffer is empty");
             return;
         }
-        ::memcpy (allocation.m_data_ap->GetBytes() + offset, bytes, size);
+        ::memcpy (allocation.m_data.GetBytes() + offset, bytes, size);
         process_sp = m_process_wp.lock();
         if (process_sp)
         {
@@ -530,13 +545,13 @@ IRMemoryMap::ReadMemory (uint8_t *bytes, lldb::addr_t process_address, size_t si
         error.SetErrorString("Couldn't read: invalid allocation policy");
         return;
     case eAllocationPolicyHostOnly:
-        if (!allocation.m_data_ap.get())
+        if (!allocation.m_data.GetByteSize())
         {
             error.SetErrorToGenericError();
             error.SetErrorString("Couldn't read: data buffer is empty");
             return;
         }
-        ::memcpy (bytes, allocation.m_data_ap->GetBytes() + offset, size);
+        ::memcpy (bytes, allocation.m_data.GetBytes() + offset, size);
         break;
     case eAllocationPolicyMirror:
         process_sp = m_process_wp.lock();
@@ -548,13 +563,13 @@ IRMemoryMap::ReadMemory (uint8_t *bytes, lldb::addr_t process_address, size_t si
         }
         else
         {
-            if (!allocation.m_data_ap.get())
+            if (!allocation.m_data.GetByteSize())
             {
                 error.SetErrorToGenericError();
                 error.SetErrorString("Couldn't read: data buffer is empty");
                 return;
             }
-            ::memcpy (bytes, allocation.m_data_ap->GetBytes() + offset, size);
+            ::memcpy (bytes, allocation.m_data.GetBytes() + offset, size);
         }
         break;
     case eAllocationPolicyProcessOnly:
@@ -664,7 +679,7 @@ IRMemoryMap::GetMemoryData (DataExtractor &extractor, lldb::addr_t process_addre
             {
                 lldb::ProcessSP process_sp = m_process_wp.lock();
 
-                if (!allocation.m_data_ap.get())
+                if (!allocation.m_data.GetByteSize())
                 {
                     error.SetErrorToGenericError();
                     error.SetErrorString("Couldn't get memory data: data buffer is empty");
@@ -672,23 +687,23 @@ IRMemoryMap::GetMemoryData (DataExtractor &extractor, lldb::addr_t process_addre
                 }
                 if (process_sp)
                 {
-                    process_sp->ReadMemory(allocation.m_process_start, allocation.m_data_ap->GetBytes(), allocation.m_data_ap->GetByteSize(), error);
+                    process_sp->ReadMemory(allocation.m_process_start, allocation.m_data.GetBytes(), allocation.m_data.GetByteSize(), error);
                     if (!error.Success())
                         return;
                     uint64_t offset = process_address - allocation.m_process_start;
-                    extractor = DataExtractor(allocation.m_data_ap->GetBytes() + offset, size, GetByteOrder(), GetAddressByteSize());
+                    extractor = DataExtractor(allocation.m_data.GetBytes() + offset, size, GetByteOrder(), GetAddressByteSize());
                     return;
                 }
             }
         case eAllocationPolicyHostOnly:
-            if (!allocation.m_data_ap.get())
+            if (!allocation.m_data.GetByteSize())
             {
                 error.SetErrorToGenericError();
                 error.SetErrorString("Couldn't get memory data: data buffer is empty");
                 return;
             }
             uint64_t offset = process_address - allocation.m_process_start;
-            extractor = DataExtractor(allocation.m_data_ap->GetBytes() + offset, size, GetByteOrder(), GetAddressByteSize());
+            extractor = DataExtractor(allocation.m_data.GetBytes() + offset, size, GetByteOrder(), GetAddressByteSize());
             return;
         }
     }

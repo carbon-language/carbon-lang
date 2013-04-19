@@ -83,16 +83,23 @@ private:
         size_t          m_size;             ///< The size of the requested allocation
         uint32_t        m_permissions;      ///< The access permissions on the memory in the process.  In the host, the memory is always read/write.
         uint8_t         m_alignment;        ///< The alignment of the requested allocation
-        std::unique_ptr<DataBufferHeap> m_data_ap;
+        DataBufferHeap  m_data;
         AllocationPolicy    m_policy;
-        
+    public:
+        Allocation (lldb::addr_t process_alloc,
+                    lldb::addr_t process_start,
+                    size_t size,
+                    uint32_t permissions,
+                    uint8_t alignment,
+                    AllocationPolicy m_policy);
+
         Allocation () :
             m_process_alloc (LLDB_INVALID_ADDRESS),
             m_process_start (LLDB_INVALID_ADDRESS),
             m_size (0),
             m_permissions (0),
             m_alignment (0),
-            m_data_ap (),
+            m_data (),
             m_policy (eAllocationPolicyInvalid)
         {
         }
