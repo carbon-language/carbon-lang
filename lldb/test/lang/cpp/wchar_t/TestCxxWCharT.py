@@ -20,7 +20,6 @@ class CxxWCharTTestCase(TestBase):
         self.buildDsym()
         self.wchar_t()
 
-    @expectedFailureLinux # bugzilla 15038: missing wide char support on Linux
     @dwarf_test
     def test_with_dwarf(self):
         """Test that C++ supports wchar_t correctly."""

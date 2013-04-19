@@ -264,7 +264,8 @@ ReadUTFBufferAndDumpToStream (ConversionResult (*ConvertFunction) (const SourceD
     if (!process_sp)
         return false;
 
-    const int origin_encoding = 8*sizeof(SourceDataType);
+    const int type_width = sizeof(SourceDataType);
+    const int origin_encoding = 8 * type_width ;
     if (origin_encoding != 8 && origin_encoding != 16 && origin_encoding != 32)
         return false;
     // if not UTF8, I need a conversion function to return proper UTF8
@@ -276,15 +277,17 @@ ReadUTFBufferAndDumpToStream (ConversionResult (*ConvertFunction) (const SourceD
     else
         sourceSize = std::min(sourceSize,process_sp->GetTarget().GetMaximumSizeOfStringSummary());
     
-    const int bufferSPSize = sourceSize * (origin_encoding >> 2);
+    const int bufferSPSize = sourceSize * type_width;
 
-    Error error;
     lldb::DataBufferSP buffer_sp(new DataBufferHeap(bufferSPSize,0));
     
     if (!buffer_sp->GetBytes())
         return false;
     
-    size_t data_read = process_sp->ReadMemoryFromInferior(location, (char*)buffer_sp->GetBytes(), bufferSPSize, error);
+    Error error;
+    char *buffer = reinterpret_cast<char *>(buffer_sp->GetBytes()); 
+
+    size_t data_read = process_sp->ReadStringFromMemory(location, buffer, bufferSPSize, error, type_width);
     if (error.Fail() || data_read == 0)
     {
         stream.Printf("unable to read data");

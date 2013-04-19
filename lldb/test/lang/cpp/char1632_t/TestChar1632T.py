@@ -20,7 +20,6 @@ class Char1632TestCase(TestBase):
         self.buildDsym()
         self.char1632()
 
-    @expectedFailureLinux # bugzilla 15038: missing wide char support on Linux
     @dwarf_test
     def test_with_dwarf(self):
         """Test that the C++11 support for char16_t and char32_t works correctly."""
