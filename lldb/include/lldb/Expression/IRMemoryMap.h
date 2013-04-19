@@ -106,6 +106,7 @@ private:
     lldb::addr_t FindSpace (size_t size);
     bool ContainsHostOnlyAllocations ();
     AllocationMap::iterator FindAllocation (lldb::addr_t addr, size_t size);
+    bool IntersectsAllocation (lldb::addr_t addr, size_t size);
 };
     
 }
