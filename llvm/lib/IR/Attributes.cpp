@@ -482,14 +482,13 @@ unsigned AttributeSetNode::getStackAlignment() const {
 
 std::string AttributeSetNode::getAsString(bool TargetIndependent,
                                           bool InAttrGrp) const {
-  std::string Str = "";
+  std::string Str;
   for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
-         E = AttrList.end(); I != E; ) {
+         E = AttrList.end(); I != E; ++I) {
     if (TargetIndependent || !I->isStringAttribute()) {
+      if (I != AttrList.begin())
+        Str += ' ';
       Str += I->getAsString(InAttrGrp);
-      if (++I != E) Str += " ";
-    } else {
-      ++I;
     }
   }
   return Str;
