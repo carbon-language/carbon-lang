@@ -197,6 +197,9 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::MADDU_DSP:         return "MipsISD::MADDU_DSP";
   case MipsISD::MSUB_DSP:          return "MipsISD::MSUB_DSP";
   case MipsISD::MSUBU_DSP:         return "MipsISD::MSUBU_DSP";
+  case MipsISD::SHLL_DSP:          return "MipsISD::SHLL_DSP";
+  case MipsISD::SHRA_DSP:          return "MipsISD::SHRA_DSP";
+  case MipsISD::SHRL_DSP:          return "MipsISD::SHRL_DSP";
   default:                         return NULL;
   }
 }

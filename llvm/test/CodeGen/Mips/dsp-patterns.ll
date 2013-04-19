@@ -128,3 +128,78 @@ entry:
   ret i64 %add
 }
 
+; R1: shift1_v2i16_shl_:
+; R1: shll.ph ${{[0-9]+}}, ${{[0-9]+}}, 15
+
+define { i32 } @shift1_v2i16_shl_(i32 %a0.coerce) {
+entry:
+  %0 = bitcast i32 %a0.coerce to <2 x i16>
+  %shl = shl <2 x i16> %0, <i16 15, i16 15>
+  %1 = bitcast <2 x i16> %shl to i32
+  %.fca.0.insert = insertvalue { i32 } undef, i32 %1, 0
+  ret { i32 } %.fca.0.insert
+}
+
+; R1: shift1_v2i16_sra_:
+; R1: shra.ph ${{[0-9]+}}, ${{[0-9]+}}, 15
+
+define { i32 } @shift1_v2i16_sra_(i32 %a0.coerce) {
+entry:
+  %0 = bitcast i32 %a0.coerce to <2 x i16>
+  %shr = ashr <2 x i16> %0, <i16 15, i16 15>
+  %1 = bitcast <2 x i16> %shr to i32
+  %.fca.0.insert = insertvalue { i32 } undef, i32 %1, 0
+  ret { i32 } %.fca.0.insert
+}
+
+; R1: shift1_v2ui16_srl_:
+; R1-NOT: shrl.ph
+; R2: shift1_v2ui16_srl_:
+; R2: shrl.ph ${{[0-9]+}}, ${{[0-9]+}}, 15
+
+define { i32 } @shift1_v2ui16_srl_(i32 %a0.coerce) {
+entry:
+  %0 = bitcast i32 %a0.coerce to <2 x i16>
+  %shr = lshr <2 x i16> %0, <i16 15, i16 15>
+  %1 = bitcast <2 x i16> %shr to i32
+  %.fca.0.insert = insertvalue { i32 } undef, i32 %1, 0
+  ret { i32 } %.fca.0.insert
+}
+
+; R1: shift1_v4i8_shl_:
+; R1: shll.qb ${{[0-9]+}}, ${{[0-9]+}}, 7
+
+define { i32 } @shift1_v4i8_shl_(i32 %a0.coerce) {
+entry:
+  %0 = bitcast i32 %a0.coerce to <4 x i8>
+  %shl = shl <4 x i8> %0, <i8 7, i8 7, i8 7, i8 7>
+  %1 = bitcast <4 x i8> %shl to i32
+  %.fca.0.insert = insertvalue { i32 } undef, i32 %1, 0
+  ret { i32 } %.fca.0.insert
+}
+
+; R1: shift1_v4i8_sra_:
+; R1-NOT: shra.qb
+; R2: shift1_v4i8_sra_:
+; R2: shra.qb ${{[0-9]+}}, ${{[0-9]+}}, 7
+
+define { i32 } @shift1_v4i8_sra_(i32 %a0.coerce) {
+entry:
+  %0 = bitcast i32 %a0.coerce to <4 x i8>
+  %shr = ashr <4 x i8> %0, <i8 7, i8 7, i8 7, i8 7>
+  %1 = bitcast <4 x i8> %shr to i32
+  %.fca.0.insert = insertvalue { i32 } undef, i32 %1, 0
+  ret { i32 } %.fca.0.insert
+}
+
+; R1: shift1_v4ui8_srl_:
+; R1: shrl.qb ${{[0-9]+}}, ${{[0-9]+}}, 7
+
+define { i32 } @shift1_v4ui8_srl_(i32 %a0.coerce) {
+entry:
+  %0 = bitcast i32 %a0.coerce to <4 x i8>
+  %shr = lshr <4 x i8> %0, <i8 7, i8 7, i8 7, i8 7>
+  %1 = bitcast <4 x i8> %shr to i32
+  %.fca.0.insert = insertvalue { i32 } undef, i32 %1, 0
+  ret { i32 } %.fca.0.insert
+}

@@ -143,6 +143,11 @@ namespace llvm {
       MSUB_DSP,
       MSUBU_DSP,
 
+      // DSP shift nodes.
+      SHLL_DSP,
+      SHRA_DSP,
+      SHRL_DSP,
+
       // Load/Store Left/Right nodes.
       LWL = ISD::FIRST_TARGET_MEMORY_OPCODE,
       LWR,
