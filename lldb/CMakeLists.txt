@@ -83,14 +83,32 @@ include_directories(/usr/include/python2.7)
 include_directories(../clang/include)
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/../clang/include")
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.7")
-    set(CMAKE_CXX_FLAGS "-std=c++0x")
-  else()
-    set(CMAKE_CXX_FLAGS "-std=c++11")
+# lldb requires c++11 to build. Make sure that we have a compiler and standard
+# library combination that can do that.
+if (MSVC11)
+  # Do nothing, we're good.
+elseif (NOT MSVC)
+  # gcc and clang require the -std=c++0x or -std=c++11 flag.
+  if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR
+      "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    if (NOT ("${CMAKE_CXX_FLAGS}" MATCHES "-std=c\\+\\+0x" OR
+             "${CMAKE_CXX_FLAGS}" MATCHES "-std=gnu\\+\\+0x" OR
+             "${CMAKE_CXX_FLAGS}" MATCHES "-std=c\\+\\+11" OR
+             "${CMAKE_CXX_FLAGS}" MATCHES "-std=gnu\\+\\+11"))
+      if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.7")
+          set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+        else()
+          set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+        endif()
+      else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+      endif()
+    endif()
   endif()
 else()
-  set(CMAKE_CXX_FLAGS "-std=c++11")
+  message(FATAL_ERROR "The selected compiler does not support c++11 which is "
+          "required to build lldb.")
 endif()
 
 # Disable Clang warnings
@@ -152,7 +170,9 @@ macro(add_lldb_library name)
   #endif()
 
   if(LLDB_USED_LIBS)
-    target_link_libraries(${name} -Wl,--start-group ${LLDB_USED_LIBS} -Wl,--end-group)
+    if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+      target_link_libraries(${name} -Wl,--start-group ${LLDB_USED_LIBS} -Wl,--end-group)
+    endif()
   endif()
   target_link_libraries(${name} ${CLANG_USED_LIBS})
   target_link_libraries(${name} ${LLVM_USED_LIBS})
