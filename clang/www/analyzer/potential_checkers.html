@@ -62,43 +62,6 @@ void test() {
 </pre></td><td class="aligned"><a href="http://llvm.org/bugs/show_bug.cgi?id=15238">PR15238</a>
 </td></tr>
 
-<tr><td><span class="name">memory.MismatchedDelete
-<br>(C, C++)</span><br><br>
-Mismatched deallocation function is used
-</td><td><pre>
-#include &lt;stdlib.h&gt;
-
-void test() {
-  int *p1 = new int;
-  int *p2 = new int[1];
-  int *p3 = (int*)malloc(sizeof(int));
-
-  delete[] p1; // warn
-  delete p2; // warn
-  delete p3; // warn
-}
-</pre></td><td class="aligned"><a href="http://llvm.org/bugs/show_bug.cgi?id=15238">PR15238</a>
-</td></tr>
-
-<tr><td><span class="name">memory.MultipleDelete
-<br>(C++)</span><br><br>
-Attempt to deallocate released memory
-</td><td><pre>
-#include &lt;new&gt;
-
-void test() {
-  int *p1 = new int;
-  int *p2 = new(p1) int;
-  int *p3 = p1;
-  delete p1;
-  delete p1; // warn
-  delete p2; // warn
-  delete p3; // warn
-}
-</pre></td><td class="aligned"><a href="http://llvm.org/bugs/show_bug.cgi?id=15237">PR15237</a>
-</td></tr>
-
-
 <tr><td><span class="name">memory.LeakPtrValChanged
 <br>enhancement to unix.Malloc<br>(C, C++)</span><br><br>
 Potential memory leak: a pointer to newly allocated data loses its original 
@@ -123,31 +86,6 @@ void test() {
 }
 </pre></td><td class="aligned">done at r174678 (C case)
 </td></tr>
-
-
-<tr><td><span class="name">memory.DeallocateNonPtr
-<br>enhancement to unix.Malloc<br>(C, C++)</span><br><br>
-Deallocation function is applied to non-pointer
-</td><td><pre>
-#include &lt;stdlib.h&gt;
-
-class A {
-  int *p;
-public:
-  operator int *() { return p; }  
-};
-
-void test() {
-  A a;
-  delete a; // warn
-  free(a); // warn
-  const char *s = "text";
-  delete s; // warn
-  free(s); // warn
-}
-</pre></td><td class="aligned"><a href="http://llvm.org/bugs/show_bug.cgi?id=15237">PR15237</a>
-</td></tr>
-
 
 <tr><td><span class="name">memory.LeakEvalOrder<br>
 (C, C++)</span><br><br>
@@ -231,6 +169,17 @@ class A {
   ~A() { f(); } // warn
 };
 </pre></td><td class="aligned"></td></tr>
+
+<tr><td><span class="name">ctordtor.PlacementSelfCopy<br>
+(C++11)</span><br><br>
+For a placement copy or move, it is almost certainly an error if the constructed object is also the object being copied from.
+</td><td><pre>
+class A {};
+
+void test(A *dst, A *src) {
+  ::new (dst) A(*dst); // warn (should be 'src')
+}
+</pre></td><td class="aligned"><!--rdar://problem/13688366--></td></tr>
 
 </table>
 
@@ -1273,16 +1222,6 @@ The return expressions of the '?:' operator are identical
 void test() {
   unsigned a;
   a = a > 5 ? a : a; // warn
-}
-</pre></td><td class="aligned"></td></tr>
-
-<tr><td><span class="name">different.UnaryPlusWithUnsigned
-<br>(C)</span><br><br>
-Using 'unary +' with unsigned is meaningless
-</td><td><pre>
-void test() {
-  unsigned a;
-  a = +a; // warn
 }
 </pre></td><td class="aligned"></td></tr>
 
