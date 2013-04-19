@@ -4,7 +4,7 @@
 Run the test suite using a separate process for each test file.
 """
 
-import os, sys
+import os, sys, platform
 from optparse import OptionParser
 
 # Command template of the invocation of the test driver.
@@ -48,15 +48,15 @@ Run lldb test suite using a separate process for each test file.
     opts, args = parser.parse_args()
     dotest_options = opts.dotest_options
 
-    print "dotest.py options:", dotest_options
-
+    system_info = " ".join(platform.uname())
     (failed, passed) = walk_and_invoke(test_root, dotest_options)
     num_tests = len(failed) + len(passed)
+
     print "Ran %d tests." % num_tests
     if len(failed) > 0:
         print "Failing Tests (%d)" % len(failed)
         for f in failed:
-          print "FAIL: LLDB :: (%s)" % f
+          print "FAIL: LLDB (suite) :: %s (%s)" % (f, system_info)
         sys.exit(1)
     sys.exit(0)
 
