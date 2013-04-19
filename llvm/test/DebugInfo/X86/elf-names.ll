@@ -58,7 +58,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, metadata !53, i32 4, metadata !"clang version 3.2 (trunk 167506) (llvm/trunk 167505)", i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/foo.cpp] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, metadata !53, i32 4, metadata !"clang version 3.2 (trunk 167506) (llvm/trunk 167505)", i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/foo.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5, metadata !31}
 !5 = metadata !{i32 786478, metadata !6, null, metadata !"D", metadata !"D", metadata !"_ZN1DC2Ev", i32 12, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, void (%class.D*)* @_ZN1DC2Ev, null, metadata !17, metadata !27, i32 12} ; [ DW_TAG_subprogram ] [line 12] [def] [D]

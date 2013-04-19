@@ -14,7 +14,7 @@ entry:
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 12, metadata !6, metadata !"clang version 3.2 (trunk 160143)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ] [/home/probinson/PR13303.c] [DW_LANG_C99]
+!0 = metadata !{i32 786449, i32 12, metadata !6, metadata !"clang version 3.2 (trunk 160143)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ] [/home/probinson/PR13303.c] [DW_LANG_C99]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, metadata !6, metadata !"main", metadata !"main", metadata !"", metadata !6, i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, i32 ()* @main, null, null, metadata !1, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [main]

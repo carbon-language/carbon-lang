@@ -555,6 +555,9 @@ private:
   /// \brief Construct subprogram DIE.
   void constructSubprogramDIE(CompileUnit *TheCU, const MDNode *N);
 
+  /// \brief Construct import_module DIE.
+  void constructImportedModuleDIE(CompileUnit *TheCU, const MDNode *N);
+
   /// \brief Register a source line with debug info. Returns the unique
   /// label that was emitted and which provides correspondence to the
   /// source line list.

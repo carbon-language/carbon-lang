@@ -8,7 +8,7 @@ entry:
   ret void
 }
 !llvm.dbg.cu = !{!2}
-!2 = metadata !{i32 786449, metadata !4, i32 32769, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 0, metadata !3, metadata !3, metadata !3, metadata !3, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/blaikie/dev/scratch/scratch.cpp] [lang 0x8001]
+!2 = metadata !{i32 786449, metadata !4, i32 32769, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 0, metadata !3, metadata !3, metadata !3, metadata !3,  metadata !3, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/blaikie/dev/scratch/scratch.cpp] [lang 0x8001]
 !3 = metadata !{}
 !0 = metadata !{i32 662302, i32 26, metadata !1, null}
 !1 = metadata !{i32 4, metadata !"foo"}
