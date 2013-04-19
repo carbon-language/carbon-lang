@@ -294,21 +294,19 @@ DynamicLoaderDarwinKernel::SearchForKernelNearPC (Process *process)
     if (pc == LLDB_INVALID_ADDRESS)
         return LLDB_INVALID_ADDRESS;
 
-    addr_t kernel_range_low, kernel_range_high;
+    addr_t kernel_range_low;
     if (process->GetTarget().GetArchitecture().GetAddressByteSize() == 8)
     {
         kernel_range_low = 1ULL << 63;
-        kernel_range_high = UINT64_MAX;
     }
     else
     {
         kernel_range_low = 1ULL << 31;
-        kernel_range_high = UINT32_MAX;
     }
 
     // Outside the normal kernel address range, this is probably userland code running right now
     if (pc < kernel_range_low)
-        LLDB_INVALID_ADDRESS;
+        return LLDB_INVALID_ADDRESS;
 
     // The kernel will load at at one megabyte boundary (0x100000), or at that boundary plus 
     // an offset of one page (0x1000) or two, depending on the device.
