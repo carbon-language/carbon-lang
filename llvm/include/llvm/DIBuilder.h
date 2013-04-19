@@ -349,19 +349,20 @@ namespace llvm {
     DIType createVectorType(uint64_t Size, uint64_t AlignInBits, 
                             DIType Ty, DIArray Subscripts);
 
-    /// createEnumerationType - Create debugging information entry for an 
+    /// createEnumerationType - Create debugging information entry for an
     /// enumeration.
-    /// @param Scope        Scope in which this enumeration is defined.
-    /// @param Name         Union name.
-    /// @param File         File where this member is defined.
-    /// @param LineNumber   Line number.
-    /// @param SizeInBits   Member size.
-    /// @param AlignInBits  Member alignment.
-    /// @param Elements     Enumeration elements.
+    /// @param Scope          Scope in which this enumeration is defined.
+    /// @param Name           Union name.
+    /// @param File           File where this member is defined.
+    /// @param LineNumber     Line number.
+    /// @param SizeInBits     Member size.
+    /// @param AlignInBits    Member alignment.
+    /// @param Elements       Enumeration elements.
+    /// @param UnderlyingType Underlying type of a C++11/ObjC fixed enum.
     DICompositeType createEnumerationType(
         DIDescriptor Scope, StringRef Name, DIFile File, unsigned LineNumber,
         uint64_t SizeInBits, uint64_t AlignInBits, DIArray Elements,
-        DIType ClassType);
+        DIType UnderlyingType);
 
     /// createSubroutineType - Create subroutine type.
     /// @param File           File in which this subroutine is defined.

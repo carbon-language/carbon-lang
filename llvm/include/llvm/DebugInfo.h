@@ -342,7 +342,10 @@ namespace llvm {
 
   /// DICompositeType - This descriptor holds a type that can refer to multiple
   /// other types, like a function or struct.
-  /// FIXME: Why is this a DIDerivedType??
+  /// DICompositeType is derived from DIDerivedType because some
+  /// composite types (such as enums) can be derived from basic types
+  // FIXME: Make this derive from DIType directly & just store the
+  // base type in a single DIType field.
   class DICompositeType : public DIDerivedType {
     friend class DIDescriptor;
     void printInternal(raw_ostream &OS) const;
