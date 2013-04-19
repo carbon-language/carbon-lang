@@ -5,7 +5,7 @@
 %class.ImageLoader = type { i32 (...)**, i8*, i8*, i32, i64, i64, i32, i32, %"struct.ImageLoader::recursive_lock"*, i16, i16, [4 x i8] }
 %"struct.ImageLoader::recursive_lock" = type { i32, i32 }
 
-@_ZN4dyldL18sMappedRangesStartE = external hidden global %"struct.dyld::MappedRanges", align 8
+@G1 = external hidden global %"struct.dyld::MappedRanges", align 8
 
 declare void @OSMemoryBarrier() optsize
 
@@ -14,17 +14,17 @@ declare void @OSMemoryBarrier() optsize
 ; DWARF EH frame.
 ;
 ; CHECK: .section __LD,__compact_unwind,regular,debug
-; CHECK: .quad __ZN4dyld19removedMappedRangesEP11ImageLoader
+; CHECK: .quad _func
 ; CHECK: .long 67108864                ## Compact Unwind Encoding: 0x4000000
 ; CHECK: .quad 0                       ## Personality Function
 ; CHECK: .quad 0                       ## LSDA
 ;
-define void @_ZN4dyld19removedMappedRangesEP11ImageLoader(%class.ImageLoader* %image) optsize ssp uwtable {
+define void @func(%class.ImageLoader* %image) optsize ssp uwtable {
 entry:
   br label %for.cond1.preheader
 
 for.cond1.preheader:                              ; preds = %for.inc10, %entry
-  %p.019 = phi %"struct.dyld::MappedRanges"* [ @_ZN4dyldL18sMappedRangesStartE, %entry ], [ %1, %for.inc10 ]
+  %p.019 = phi %"struct.dyld::MappedRanges"* [ @G1, %entry ], [ %1, %for.inc10 ]
   br label %for.body3
 
 for.body3:                                        ; preds = %for.inc, %for.cond1.preheader
