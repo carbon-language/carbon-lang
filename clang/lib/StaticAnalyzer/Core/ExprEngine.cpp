@@ -1811,7 +1811,8 @@ ExprEngine::notifyCheckersOfPointerEscape(ProgramStateRef State,
     return getCheckerManager().runCheckersForPointerEscape(State,
                                                            *Invalidated,
                                                            0,
-                                                           PSK_EscapeOther);
+                                                           PSK_EscapeOther,
+                                                           IsConst);
 
   // Note: Due to current limitations of RegionStore, we only process the top
   // level const pointers correctly. The lower level const pointers are
