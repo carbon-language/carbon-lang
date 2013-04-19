@@ -948,6 +948,7 @@ def V_CUBEMA_F32 : VOP3_32 <0x00000147, "V_CUBEMA_F32", []>;
 def V_BFE_U32 : VOP3_32 <0x00000148, "V_BFE_U32", []>;
 def V_BFE_I32 : VOP3_32 <0x00000149, "V_BFE_I32", []>;
 def V_BFI_B32 : VOP3_32 <0x0000014a, "V_BFI_B32", []>;
+defm : BFIPatterns <V_BFI_B32>;
 def V_FMA_F32 : VOP3_32 <0x0000014b, "V_FMA_F32", []>;
 def V_FMA_F64 : VOP3_64 <0x0000014c, "V_FMA_F64", []>;
 //def V_LERP_U8 : VOP3_U8 <0x0000014d, "V_LERP_U8", []>;

@@ -1570,6 +1570,9 @@ let Predicates = [isEGorCayman] in {
     VecALU
   >;
 
+  def BFI_INT_eg : R600_3OP <0x06, "BFI_INT", []>;
+  defm : BFIPatterns <BFI_INT_eg>;
+
   def BIT_ALIGN_INT_eg : R600_3OP <0xC, "BIT_ALIGN_INT",
     [(set R600_Reg32:$dst, (AMDGPUbitalign R600_Reg32:$src0, R600_Reg32:$src1,
                                           R600_Reg32:$src2))],
