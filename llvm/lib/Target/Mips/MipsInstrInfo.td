@@ -375,11 +375,9 @@ class ArithLogicR<string opstr, RegisterOperand RO, bit isComm = 0,
                   SDPatternOperator OpNode = null_frag>:
   InstSE<(outs RO:$rd), (ins RO:$rs, RO:$rt),
          !strconcat(opstr, "\t$rd, $rs, $rt"),
-         [(set RO:$rd, (OpNode RO:$rs, RO:$rt))], Itin, FrmR> {
+         [(set RO:$rd, (OpNode RO:$rs, RO:$rt))], Itin, FrmR, opstr> {
   let isCommutable = isComm;
   let isReMaterializable = 1;
-  string BaseOpcode;
-  string Arch;
 }
 
 // Arithmetic and logical instructions with 2 register operands.
@@ -388,7 +386,8 @@ class ArithLogicI<string opstr, Operand Od, RegisterOperand RO,
                   SDPatternOperator OpNode = null_frag> :
   InstSE<(outs RO:$rt), (ins RO:$rs, Od:$imm16),
          !strconcat(opstr, "\t$rt, $rs, $imm16"),
-         [(set RO:$rt, (OpNode RO:$rs, imm_type:$imm16))], IIAlu, FrmI> {
+         [(set RO:$rt, (OpNode RO:$rs, imm_type:$imm16))],
+         IIAlu, FrmI, opstr> {
   let isReMaterializable = 1;
 }
 
@@ -405,7 +404,7 @@ class MArithR<string opstr, bit isComm = 0> :
 class LogicNOR<string opstr, RegisterOperand RC>:
   InstSE<(outs RC:$rd), (ins RC:$rs, RC:$rt),
          !strconcat(opstr, "\t$rd, $rs, $rt"),
-         [(set RC:$rd, (not (or RC:$rs, RC:$rt)))], IIAlu, FrmR> {
+         [(set RC:$rd, (not (or RC:$rs, RC:$rt)))], IIAlu, FrmR, opstr> {
   let isCommutable = 1;
 }
 
@@ -543,14 +542,15 @@ class CBranchZero<string opstr, PatFrag cond_op, RegisterClass RC> :
 class SetCC_R<string opstr, PatFrag cond_op, RegisterClass RC> :
   InstSE<(outs CPURegsOpnd:$rd), (ins RC:$rs, RC:$rt),
          !strconcat(opstr, "\t$rd, $rs, $rt"),
-         [(set CPURegsOpnd:$rd, (cond_op RC:$rs, RC:$rt))], IIAlu, FrmR>;
+         [(set CPURegsOpnd:$rd, (cond_op RC:$rs, RC:$rt))],
+         IIAlu, FrmR, opstr>;
 
 class SetCC_I<string opstr, PatFrag cond_op, Operand Od, PatLeaf imm_type,
               RegisterClass RC>:
   InstSE<(outs CPURegsOpnd:$rt), (ins RC:$rs, Od:$imm16),
          !strconcat(opstr, "\t$rt, $rs, $imm16"),
          [(set CPURegsOpnd:$rt, (cond_op RC:$rs, imm_type:$imm16))],
-         IIAlu, FrmI>;
+         IIAlu, FrmI, opstr>;
 
 // Jump
 class JumpFJ<DAGOperand opnd, string opstr, SDPatternOperator operator,
@@ -637,7 +637,7 @@ class SYNC_FT :
 class Mult<string opstr, InstrItinClass itin, RegisterOperand RO,
            list<Register> DefRegs> :
   InstSE<(outs), (ins RO:$rs, RO:$rt), !strconcat(opstr, "\t$rs, $rt"), [],
-         itin, FrmR> {
+         itin, FrmR, opstr> {
   let isCommutable = 1;
   let Defs = DefRegs;
   let neverHasSideEffects = 1;
@@ -849,31 +849,39 @@ def COPY_AC64 : PseudoSE<(outs ACRegs:$dst), (ins ACRegs:$src), []>;
 //===----------------------------------------------------------------------===//
 
 /// Arithmetic Instructions (ALU Immediate)
-def ADDiu : ArithLogicI<"addiu", simm16, CPURegsOpnd, immSExt16, add>,
+def ADDiu : MMRel, ArithLogicI<"addiu", simm16, CPURegsOpnd, immSExt16, add>,
             ADDI_FM<0x9>, IsAsCheapAsAMove;
-def ADDi  : ArithLogicI<"addi", simm16, CPURegsOpnd>, ADDI_FM<0x8>;
-def SLTi  : SetCC_I<"slti", setlt, simm16, immSExt16, CPURegs>, SLTI_FM<0xa>;
-def SLTiu : SetCC_I<"sltiu", setult, simm16, immSExt16, CPURegs>, SLTI_FM<0xb>;
-def ANDi  : ArithLogicI<"andi", uimm16, CPURegsOpnd, immZExt16, and>,
+def ADDi  : MMRel, ArithLogicI<"addi", simm16, CPURegsOpnd>, ADDI_FM<0x8>;
+def SLTi  : MMRel, SetCC_I<"slti", setlt, simm16, immSExt16, CPURegs>,
+            SLTI_FM<0xa>;
+def SLTiu : MMRel, SetCC_I<"sltiu", setult, simm16, immSExt16, CPURegs>,
+            SLTI_FM<0xb>;
+def ANDi  : MMRel, ArithLogicI<"andi", uimm16, CPURegsOpnd, immZExt16, and>,
             ADDI_FM<0xc>;
-def ORi   : ArithLogicI<"ori", uimm16, CPURegsOpnd, immZExt16, or>,
+def ORi   : MMRel, ArithLogicI<"ori", uimm16, CPURegsOpnd, immZExt16, or>,
             ADDI_FM<0xd>;
-def XORi  : ArithLogicI<"xori", uimm16, CPURegsOpnd, immZExt16, xor>,
+def XORi  : MMRel, ArithLogicI<"xori", uimm16, CPURegsOpnd, immZExt16, xor>,
             ADDI_FM<0xe>;
-def LUi   : LoadUpper<"lui", CPURegs, uimm16>, LUI_FM;
+def LUi   : MMRel, LoadUpper<"lui", CPURegs, uimm16>, LUI_FM;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
-def ADDu : ArithLogicR<"addu", CPURegsOpnd, 1, IIAlu, add>, ADD_FM<0, 0x21>;
-def SUBu : ArithLogicR<"subu", CPURegsOpnd, 0, IIAlu, sub>, ADD_FM<0, 0x23>;
-def MUL  : ArithLogicR<"mul", CPURegsOpnd, 1, IIImul, mul>, ADD_FM<0x1c, 2>;
-def ADD  : ArithLogicR<"add", CPURegsOpnd>, ADD_FM<0, 0x20>;
-def SUB  : ArithLogicR<"sub", CPURegsOpnd>, ADD_FM<0, 0x22>;
-def SLT  : SetCC_R<"slt", setlt, CPURegs>, ADD_FM<0, 0x2a>;
-def SLTu : SetCC_R<"sltu", setult, CPURegs>, ADD_FM<0, 0x2b>;
-def AND  : ArithLogicR<"and", CPURegsOpnd, 1, IIAlu, and>, ADD_FM<0, 0x24>;
-def OR   : ArithLogicR<"or", CPURegsOpnd, 1, IIAlu, or>, ADD_FM<0, 0x25>;
-def XOR  : ArithLogicR<"xor", CPURegsOpnd, 1, IIAlu, xor>, ADD_FM<0, 0x26>;
-def NOR  : LogicNOR<"nor", CPURegsOpnd>, ADD_FM<0, 0x27>;
+def ADDu  : MMRel, ArithLogicR<"addu", CPURegsOpnd, 1, IIAlu, add>,
+            ADD_FM<0, 0x21>;
+def SUBu  : MMRel, ArithLogicR<"subu", CPURegsOpnd, 0, IIAlu, sub>,
+            ADD_FM<0, 0x23>;
+def MUL   : MMRel, ArithLogicR<"mul", CPURegsOpnd, 1, IIImul, mul>,
+            ADD_FM<0x1c, 2>;
+def ADD   : MMRel, ArithLogicR<"add", CPURegsOpnd>, ADD_FM<0, 0x20>;
+def SUB   : MMRel, ArithLogicR<"sub", CPURegsOpnd>, ADD_FM<0, 0x22>;
+def SLT   : MMRel, SetCC_R<"slt", setlt, CPURegs>, ADD_FM<0, 0x2a>;
+def SLTu  : MMRel, SetCC_R<"sltu", setult, CPURegs>, ADD_FM<0, 0x2b>;
+def AND   : MMRel, ArithLogicR<"and", CPURegsOpnd, 1, IIAlu, and>,
+            ADD_FM<0, 0x24>;
+def OR    : MMRel, ArithLogicR<"or", CPURegsOpnd, 1, IIAlu, or>,
+            ADD_FM<0, 0x25>;
+def XOR   : MMRel, ArithLogicR<"xor", CPURegsOpnd, 1, IIAlu, xor>,
+            ADD_FM<0, 0x26>;
+def NOR   : MMRel, LogicNOR<"nor", CPURegsOpnd>, ADD_FM<0, 0x27>;
 
 /// Shift Instructions
 def SLL  : shift_rotate_imm<"sll", shamt, CPURegsOpnd, shl, immZExt5>,
@@ -969,8 +977,10 @@ let Uses = [V0, V1], isTerminator = 1, isReturn = 1, isBarrier = 1 in {
 }
 
 /// Multiply and Divide Instructions.
-def MULT  : Mult<"mult", IIImul, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x18>;
-def MULTu : Mult<"multu", IIImul, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x19>;
+def MULT  : MMRel, Mult<"mult", IIImul, CPURegsOpnd, [HI, LO]>,
+            MULT_FM<0, 0x18>;
+def MULTu : MMRel, Mult<"multu", IIImul, CPURegsOpnd, [HI, LO]>,
+            MULT_FM<0, 0x19>;
 def PseudoMULT  : MultDivPseudo<MULT, ACRegs, CPURegsOpnd, MipsMult, IIImul>;
 def PseudoMULTu : MultDivPseudo<MULTu, ACRegs, CPURegsOpnd, MipsMultu, IIImul>;
 def SDIV  : Div<"div", IIIdiv, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x1a>;
@@ -1329,3 +1339,6 @@ include "Mips16InstrInfo.td"
 include "MipsDSPInstrFormats.td"
 include "MipsDSPInstrInfo.td"
 
+// Micromips
+include "MicroMipsInstrFormats.td"
+include "MicroMipsInstrInfo.td"

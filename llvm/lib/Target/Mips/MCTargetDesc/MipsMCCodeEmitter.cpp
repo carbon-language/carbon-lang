@@ -27,6 +27,9 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/raw_ostream.h"
 
+#define GET_INSTRMAP_INFO
+#include "MipsGenInstrInfo.inc"
+
 using namespace llvm;
 
 namespace {
@@ -35,12 +38,13 @@ class MipsMCCodeEmitter : public MCCodeEmitter {
   void operator=(const MipsMCCodeEmitter &) LLVM_DELETED_FUNCTION;
   const MCInstrInfo &MCII;
   MCContext &Ctx;
+  const MCSubtargetInfo &STI;
   bool IsLittleEndian;
 
 public:
   MipsMCCodeEmitter(const MCInstrInfo &mcii, MCContext &Ctx_,
                     const MCSubtargetInfo &sti, bool IsLittle) :
-    MCII(mcii), Ctx(Ctx_), IsLittleEndian(IsLittle) {}
+    MCII(mcii), Ctx(Ctx_), STI (sti), IsLittleEndian(IsLittle) {}
 
   ~MipsMCCodeEmitter() {}
 
@@ -143,6 +147,15 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   unsigned Opcode = TmpInst.getOpcode();
   if ((Opcode != Mips::NOP) && (Opcode != Mips::SLL) && !Binary)
     llvm_unreachable("unimplemented opcode in EncodeInstruction()");
+
+  if (STI.getFeatureBits() & Mips::FeatureMicroMips) {
+    int NewOpcode = Mips::Std2MicroMips (Opcode, Mips::Arch_micromips);
+    if (NewOpcode != -1) {
+      Opcode = NewOpcode;
+      TmpInst.setOpcode (NewOpcode);
+      Binary = getBinaryCodeForInstr(TmpInst, Fixups);
+    }
+  }
 
   const MCInstrDesc &Desc = MCII.get(TmpInst.getOpcode());
 

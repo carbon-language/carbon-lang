@@ -36,6 +36,24 @@ def FrmFR     : Format<4>;
 def FrmFI     : Format<5>;
 def FrmOther  : Format<6>; // Instruction w/ a custom format
 
+class MMRel;
+
+def Std2MicroMips : InstrMapping {
+  let FilterClass = "MMRel";
+  // Instructions with the same BaseOpcode and isNVStore values form a row.
+  let RowFields = ["BaseOpcode"];
+  // Instructions with the same predicate sense form a column.
+  let ColFields = ["Arch"];
+  // The key column is the unpredicated instructions.
+  let KeyCol = ["se"];
+  // Value columns are PredSense=true and PredSense=false
+  let ValueCols = [["se"], ["micromips"]];
+}
+
+class StdArch {
+  string Arch = "se";
+}
+
 // Generic Mips Format
 class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
                InstrItinClass itin, Format f>: Instruction
@@ -74,9 +92,11 @@ class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
 
 // Mips32/64 Instruction Format
 class InstSE<dag outs, dag ins, string asmstr, list<dag> pattern,
-             InstrItinClass itin, Format f>:
+             InstrItinClass itin, Format f, string opstr = ""> :
   MipsInst<outs, ins, asmstr, pattern, itin, f> {
   let Predicates = [HasStdEnc];
+  string BaseOpcode = opstr;
+  string Arch;
 }
 
 // Mips Pseudo Instructions Format
@@ -192,7 +212,7 @@ class MFC3OP_FM<bits<6> op, bits<5> mfmt>
   let Inst{2-0}   = sel;
 }
 
-class ADD_FM<bits<6> op, bits<6> funct> {
+class ADD_FM<bits<6> op, bits<6> funct> : StdArch {
   bits<5> rd;
   bits<5> rs;
   bits<5> rt;
@@ -207,7 +227,7 @@ class ADD_FM<bits<6> op, bits<6> funct> {
   let Inst{5-0}   = funct;
 }
 
-class ADDI_FM<bits<6> op> {
+class ADDI_FM<bits<6> op> : StdArch {
   bits<5>  rs;
   bits<5>  rt;
   bits<16> imm16;
@@ -288,7 +308,7 @@ class B_FM {
   let Inst{15-0}  = offset;
 }
 
-class SLTI_FM<bits<6> op> {
+class SLTI_FM<bits<6> op> : StdArch {
   bits<5> rt;
   bits<5> rs;
   bits<16> imm16;
@@ -413,7 +433,7 @@ class SYNC_FM {
   let Inst{5-0}   = 0xf;
 }
 
-class MULT_FM<bits<6> op, bits<6> funct> {
+class MULT_FM<bits<6> op, bits<6> funct> : StdArch {
   bits<5>  rs;
   bits<5>  rt;
 
