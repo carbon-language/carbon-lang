@@ -3573,7 +3573,7 @@ static DecodeStatus DecodeDoubleRegStore(MCInst &Inst, unsigned Insn,
   unsigned Rn = fieldFromInstruction(Insn, 16, 4);
   unsigned pred = fieldFromInstruction(Insn, 28, 4);
 
-  if (!Check(S, DecoderGPRRegisterClass(Inst, Rd, Address, Decoder)))
+  if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rd, Address, Decoder)))
     return MCDisassembler::Fail;
 
   if ((Rt & 1) || Rt == 0xE || Rn == 0xF) return MCDisassembler::Fail;
