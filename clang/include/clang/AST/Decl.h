@@ -2783,17 +2783,17 @@ public:
     NumNegativeBits = Num;
   }
 
-  /// \brief Returns true if this is a C++0x scoped enumeration.
+  /// \brief Returns true if this is a C++11 scoped enumeration.
   bool isScoped() const {
     return IsScoped;
   }
 
-  /// \brief Returns true if this is a C++0x scoped enumeration.
+  /// \brief Returns true if this is a C++11 scoped enumeration.
   bool isScopedUsingClassTag() const {
     return IsScopedUsingClassTag;
   }
 
-  /// \brief Returns true if this is a C++0x enumeration with fixed underlying
+  /// \brief Returns true if this is a C++11 enumeration with fixed underlying
   /// type.
   bool isFixed() const {
     return IsFixed;
