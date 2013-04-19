@@ -72,6 +72,15 @@ STATISTIC(NumThunksWritten, "Number of thunks generated");
 STATISTIC(NumAliasesWritten, "Number of aliases generated");
 STATISTIC(NumDoubleWeak, "Number of new functions created");
 
+/// Returns the type id for a type to be hashed. We turn pointer types into
+/// integers here because the actual compare logic below considers pointers and
+/// integers of the same size as equal.
+static Type::TypeID getTypeIDForHash(Type *Ty) {
+  if (Ty->isPointerTy())
+    return Type::IntegerTyID;
+  return Ty->getTypeID();
+}
+
 /// Creates a hash-code for the function which is the same for any two
 /// functions that will compare equal, without looking at the instructions
 /// inside the function.
@@ -83,9 +92,9 @@ static unsigned profileFunction(const Function *F) {
   ID.AddInteger(F->getCallingConv());
   ID.AddBoolean(F->hasGC());
   ID.AddBoolean(FTy->isVarArg());
-  ID.AddInteger(FTy->getReturnType()->getTypeID());
+  ID.AddInteger(getTypeIDForHash(FTy->getReturnType()));
   for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
-    ID.AddInteger(FTy->getParamType(i)->getTypeID());
+    ID.AddInteger(getTypeIDForHash(FTy->getParamType(i)));
   return ID.ComputeHash();
 }
 
