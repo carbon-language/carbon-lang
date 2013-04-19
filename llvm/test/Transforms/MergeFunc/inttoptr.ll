@@ -46,9 +46,9 @@ bb:
 
 define internal hidden i8* @func35(%.qux.2585* nocapture %this) align 2 {
 bb:
-; CHECK: %2 = bitcast %.qux.2585* %0 to %.qux.2496*
-; CHECK: %3 = tail call i32 @func10(%.qux.2496* %2)
-; CHECK: %4 = inttoptr i32 %3 to i8*
+; CHECK: %[[V2:[0-9]+]] = bitcast %.qux.2585* %{{.*}} to %.qux.2496*
+; CHECK: %[[V3:[0-9]+]] = tail call i32 @func10(%.qux.2496* %[[V2]])
+; CHECK: %{{.*}} = inttoptr i32 %[[V3]] to i8*
   %tmp = getelementptr inbounds %.qux.2585* %this, i32 0, i32 2
   %tmp1 = load i8** %tmp, align 4
   ret i8* %tmp1
