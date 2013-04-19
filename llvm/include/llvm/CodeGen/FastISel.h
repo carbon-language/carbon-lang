@@ -123,7 +123,7 @@ public:
   /// index value.
   std::pair<unsigned, bool> getRegForGEPIndex(const Value *V);
 
-  /// \brief We're checking to see if we can fold \p LI the \p FoldInst.
+  /// \brief We're checking to see if we can fold \p LI into \p FoldInst.
   /// Note that we could have a sequence where multiple LLVM IR instructions
   /// are folded into the same machineinstr.  For example we could have:
   ///   A: x = load i32 *P
