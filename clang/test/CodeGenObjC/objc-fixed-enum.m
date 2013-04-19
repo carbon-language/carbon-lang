@@ -1,7 +1,8 @@
-// RUN: %clang_cc1 -triple armv7-apple-darwin10 -g -emit-llvm -Werror -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple armv7-apple-darwin10 -g -emit-llvm -o - %s | FileCheck %s
 
 // The DWARF standard says the underlying data type of an enum may be
-// stored in an DW_AT_type() entry in the enum DIE.
+// stored in an DW_AT_type entry in the enum DIE. This is useful to have
+// so the debugger knows about the signedness of the underlying type.
 
 typedef long NSInteger;
 #define NS_ENUM(_type, _name) enum _name : _type _name; enum _name : _type
