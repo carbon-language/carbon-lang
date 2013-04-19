@@ -1998,9 +1998,10 @@ static DecodeStatus DecodeArmMOVTWInstruction(MCInst &Inst, unsigned Insn,
   imm |= (fieldFromInstruction(Insn, 16, 4) << 12);
 
   if (Inst.getOpcode() == ARM::MOVTi16)
-    if (!Check(S, DecoderGPRRegisterClass(Inst, Rd, Address, Decoder)))
+    if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rd, Address, Decoder)))
       return MCDisassembler::Fail;
-  if (!Check(S, DecoderGPRRegisterClass(Inst, Rd, Address, Decoder)))
+
+  if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rd, Address, Decoder)))
     return MCDisassembler::Fail;
 
   if (!tryAddingSymbolicOperand(Address, imm, false, 4, Inst, Decoder))
