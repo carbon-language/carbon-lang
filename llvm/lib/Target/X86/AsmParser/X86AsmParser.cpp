@@ -487,6 +487,7 @@ private:
   X86Operand *ParseATTOperand();
   X86Operand *ParseIntelOperand();
   X86Operand *ParseIntelOffsetOfOperator();
+  X86Operand *ParseIntelDotOperator(const MCExpr *Disp, const MCExpr *&NewDisp);
   X86Operand *ParseIntelOperator(unsigned OpKind);
   X86Operand *ParseIntelMemOperand(unsigned SegReg, int64_t ImmDisp,
                                    SMLoc StartLoc);
@@ -501,9 +502,6 @@ private:
                                     unsigned BaseReg, unsigned IndexReg,
                                     unsigned Scale, SMLoc Start, SMLoc End,
                                     unsigned Size, StringRef SymName);
-
-  bool ParseIntelDotOperator(const MCExpr *Disp, const MCExpr **NewDisp,
-                             SmallString<64> &Err);
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
   bool ParseDirectiveCode(StringRef IDVal, SMLoc L);
@@ -1327,10 +1325,9 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
 
   // Parse the dot operator (e.g., [ebx].foo.bar).
   if (Tok.getString().startswith(".")) {
-    SmallString<64> Err;
     const MCExpr *NewDisp;
-    if (ParseIntelDotOperator(Disp, &NewDisp, Err))
-      return ErrorOperand(Tok.getLoc(), Err);
+    if (X86Operand *Err = ParseIntelDotOperator(Disp, NewDisp))
+      return Err;
     
     End = Tok.getEndLoc();
     Parser.Lex();  // Eat the field.
@@ -1454,19 +1451,16 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg,
 }
 
 /// Parse the '.' operator.
-bool X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp,
-                                         const MCExpr **NewDisp,
-                                         SmallString<64> &Err) {
+X86Operand *X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp,
+                                                const MCExpr *&NewDisp) {
   const AsmToken &Tok = Parser.getTok();
   int64_t OrigDispVal, DotDispVal;
 
   // FIXME: Handle non-constant expressions.
-  if (const MCConstantExpr *OrigDisp = dyn_cast<MCConstantExpr>(Disp)) {
+  if (const MCConstantExpr *OrigDisp = dyn_cast<MCConstantExpr>(Disp))
     OrigDispVal = OrigDisp->getValue();
-  } else {
-    Err = "Non-constant offsets are not supported!";
-    return true;
-  }
+  else
+    return ErrorOperand(Tok.getLoc(), "Non-constant offsets are not supported!");
 
   // Drop the '.'.
   StringRef DotDispStr = Tok.getString().drop_front(1);
@@ -1476,23 +1470,15 @@ bool X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp,
     APInt DotDisp;
     DotDispStr.getAsInteger(10, DotDisp);
     DotDispVal = DotDisp.getZExtValue();
-  } else if (Tok.is(AsmToken::Identifier)) {
-    // We should only see an identifier when parsing the original inline asm.
-    // The front-end should rewrite this in terms of immediates.
-    assert (isParsingInlineAsm() && "Unexpected field name!");
-
+  } else if (isParsingInlineAsm() && Tok.is(AsmToken::Identifier)) {
     unsigned DotDisp;
     std::pair<StringRef, StringRef> BaseMember = DotDispStr.split('.');
     if (SemaCallback->LookupInlineAsmField(BaseMember.first, BaseMember.second,
-                                           DotDisp)) {
-      Err = "Unable to lookup field reference!";
-      return true;
-    }
+                                           DotDisp))
+      return ErrorOperand(Tok.getLoc(), "Unable to lookup field reference!");
     DotDispVal = DotDisp;
-  } else {
-    Err = "Unexpected token type!";
-    return true;
-  }
+  } else
+    return ErrorOperand(Tok.getLoc(), "Unexpected token type!");
 
   if (isParsingInlineAsm() && Tok.is(AsmToken::Identifier)) {
     SMLoc Loc = SMLoc::getFromPointer(DotDispStr.data());
@@ -1502,8 +1488,8 @@ bool X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp,
                                                 Val));
   }
 
-  *NewDisp = MCConstantExpr::Create(OrigDispVal + DotDispVal, getContext());
-  return false;
+  NewDisp = MCConstantExpr::Create(OrigDispVal + DotDispVal, getContext());
+  return 0;
 }
 
 /// Parse the 'offset' operator.  This operator is used to specify the
