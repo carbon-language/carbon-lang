@@ -37,7 +37,10 @@
 
 <h2 id="cxx11">C++11 implementation status</h2>
 
-  <p>Clang provides support for a number of features included in the new <a href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=50372">ISO C++ Standard, ISO/IEC 14882:2011</a>. The following table describes which C++11 features have been implemented in Clang and in which Clang versions they became available.</p>
+  <p>Clang implements all of the <a
+    href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=50372">ISO
+    C++ 2011 standard</a>. The following table describes the Clang version
+  in which each feature became available.</p>
 
 <p>By default, Clang builds C++ code according to the C++98 standard, with many
 C++11 features accepted as extensions. You can use Clang in C++11 mode with the
@@ -47,7 +50,8 @@ patches are needed to make <a href="libstdc++4.4-clang0x.patch">libstdc++-4.4</a
 work with Clang in C++11 mode. Patches are also needed to make
 <a href="libstdc++4.6-clang11.patch">libstdc++-4.6</a>,
 and <a href="libstdc++4.7-clang11.patch">libstdc++-4.7</a> work with Clang
-releases prior to version 3.2 in C++11 mode.</p>
+releases prior to version 3.2 in C++11 mode. <tt>thread_local</tt> support
+currently requires g++-4.8's C++ runtime library.</p>
 
 <table width="689" border="1" cellspacing="0">
  <tr>
@@ -349,7 +353,7 @@ releases prior to version 3.2 in C++11 mode.</p>
     <tr>
       <td>Thread-local storage</td>
       <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2659.htm">N2659</a></td>
-      <td class="none" align="center">No</td>
+      <td class="svn" align="center">SVN</td>
     </tr>
     <tr>
       <td>Dynamic initialization and destruction with concurrency</td>

@@ -272,3 +272,21 @@ int no_local_type_template_args();
 
 // CHECK-0X: has_local_type_template_args
 // CHECK-NO-0X: no_local_type_template_args
+
+#if __has_feature(cxx_inheriting_constructors)
+int has_inheriting_constructors();
+#else
+int no_inheriting_constructors();
+#endif
+
+// CHECK-0X: has_inheriting_constructors
+// CHECK-NO-0X: no_inheriting_constructors
+
+#if __has_feature(cxx_thread_local)
+int has_thread_local();
+#else
+int no_thread_local();
+#endif
+
+// CHECK-0X: has_thread_local
+// CHECK-NO-0X: no_thread_local

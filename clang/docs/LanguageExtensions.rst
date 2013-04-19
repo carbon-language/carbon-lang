@@ -645,8 +645,7 @@ C++11 inheriting constructors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Use ``__has_feature(cxx_inheriting_constructors)`` to determine if support for
-inheriting constructors is enabled.  Clang does not currently implement this
-feature.
+inheriting constructors is enabled.
 
 C++11 inline namespaces
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -726,6 +725,12 @@ C++11 ``static_assert()``
 Use ``__has_feature(cxx_static_assert)`` or
 ``__has_extension(cxx_static_assert)`` to determine if support for compile-time
 assertions using ``static_assert`` is enabled.
+
+C++11 ``thread_local``
+^^^^^^^^^^^^^^^^^^^^^^
+
+Use ``__has_feature(cxx_thread_local)`` to determine if support for
+``thread_local`` variables is enabled.
 
 C++11 type inference
 ^^^^^^^^^^^^^^^^^^^^
@@ -817,6 +822,12 @@ C11 ``_Static_assert()``
 Use ``__has_feature(c_static_assert)`` or ``__has_extension(c_static_assert)``
 to determine if support for compile-time assertions using ``_Static_assert`` is
 enabled.
+
+C11 ``_Thread_local``
+^^^^^^^^^^^^^^^^^^^^^
+
+Use ``__has_feature(c_thread_local)`` to determine if support for
+``_Thread_local`` variables is enabled.
 
 Checks for Type Traits
 ======================
