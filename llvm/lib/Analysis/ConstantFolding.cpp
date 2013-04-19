@@ -551,7 +551,7 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
 
 
   if (Opc == Instruction::And && DL) {
-    unsigned BitWidth = DL->getTypeSizeInBits(Op0->getType());
+    unsigned BitWidth = DL->getTypeSizeInBits(Op0->getType()->getScalarType());
     APInt KnownZero0(BitWidth, 0), KnownOne0(BitWidth, 0);
     APInt KnownZero1(BitWidth, 0), KnownOne1(BitWidth, 0);
     ComputeMaskedBits(Op0, KnownZero0, KnownOne0, DL);
