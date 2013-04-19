@@ -1379,39 +1379,39 @@ _mm_movemask_pd(__m128d __a)
   __builtin_shufflevector(__a, __b, (i) & 1, (((i) & 2) >> 1) + 2); })
 
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_castpd_ps(__m128d __in)
+_mm_castpd_ps(__m128d __a)
 {
-  return (__m128)__in;
+  return (__m128)__a;
 }
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
-_mm_castpd_si128(__m128d __in)
+_mm_castpd_si128(__m128d __a)
 {
-  return (__m128i)__in;
+  return (__m128i)__a;
 }
 
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
-_mm_castps_pd(__m128 __in)
+_mm_castps_pd(__m128 __a)
 {
-  return (__m128d)__in;
+  return (__m128d)__a;
 }
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
-_mm_castps_si128(__m128 __in)
+_mm_castps_si128(__m128 __a)
 {
-  return (__m128i)__in;
+  return (__m128i)__a;
 }
 
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_castsi128_ps(__m128i __in)
+_mm_castsi128_ps(__m128i __a)
 {
-  return (__m128)__in;
+  return (__m128)__a;
 }
 
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
-_mm_castsi128_pd(__m128i __in)
+_mm_castsi128_pd(__m128i __a)
 {
-  return (__m128d)__in;
+  return (__m128d)__a;
 }
 
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
