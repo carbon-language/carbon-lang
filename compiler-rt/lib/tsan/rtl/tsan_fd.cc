@@ -74,13 +74,14 @@ static FdDesc *fddesc(ThreadState *thr, uptr pc, int fd) {
   uptr l1 = atomic_load(pl1, memory_order_consume);
   if (l1 == 0) {
     uptr size = kTableSizeL2 * sizeof(FdDesc);
-    void *p = internal_alloc(MBlockFD, size);
+    // We need this to reside in user memory to properly catch races on it.
+    void *p = user_alloc(thr, pc, size);
     internal_memset(p, 0, size);
     MemoryResetRange(thr, (uptr)&fddesc, (uptr)p, size);
     if (atomic_compare_exchange_strong(pl1, &l1, (uptr)p, memory_order_acq_rel))
       l1 = (uptr)p;
     else
-      internal_free(p);
+      user_free(thr, pc, p);
   }
   return &((FdDesc*)l1)[fd % kTableSizeL2];  // NOLINT
 }
