@@ -1584,10 +1584,10 @@ X86Operand *X86AsmParser::ParseIntelOperator(unsigned OpKind) {
 X86Operand *X86AsmParser::ParseIntelOperand() {
   const AsmToken &Tok = Parser.getTok();
   SMLoc Start = Tok.getLoc(), End;
-  StringRef AsmTokStr = Tok.getString();
 
   // Offset, length, type and size operators.
   if (isParsingInlineAsm()) {
+    StringRef AsmTokStr = Tok.getString();
     if (AsmTokStr == "offset" || AsmTokStr == "OFFSET")
       return ParseIntelOffsetOfOperator();
     if (AsmTokStr == "length" || AsmTokStr == "LENGTH")
