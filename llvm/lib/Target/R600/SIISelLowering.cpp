@@ -702,7 +702,7 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
 
   // Create a complete new instruction
   return DAG.getMachineNode(Desc->Opcode, Node->getDebugLoc(),
-                            Node->getVTList(), Ops.data(), Ops.size());
+                            Node->getVTList(), Ops);
 }
 
 /// \brief Helper function for adjustWritemask

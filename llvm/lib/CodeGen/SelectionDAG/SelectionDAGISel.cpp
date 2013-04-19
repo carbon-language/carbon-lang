@@ -2796,7 +2796,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         // If this is a normal EmitNode command, just create the new node and
         // add the results to the RecordedNodes list.
         Res = CurDAG->getMachineNode(TargetOpc, NodeToMatch->getDebugLoc(),
-                                     VTList, Ops.data(), Ops.size());
+                                     VTList, Ops);
 
         // Add all the non-glue/non-chain results to the RecordedNodes list.
         for (unsigned i = 0, e = VTs.size(); i != e; ++i) {

@@ -211,7 +211,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     const SDValue Ops[] = { RC, N->getOperand(0), SubReg0,
                             N->getOperand(1), SubReg1 };
     return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE,
-                                  N->getDebugLoc(), N->getValueType(0), Ops, 5);
+                                  N->getDebugLoc(), N->getValueType(0), Ops);
   }
 
   case ISD::ConstantFP:

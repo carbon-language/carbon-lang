@@ -810,31 +810,32 @@ public:
   MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT,
                                 SDValue Op1, SDValue Op2);
   MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT,
-                         SDValue Op1, SDValue Op2, SDValue Op3);
+                                SDValue Op1, SDValue Op2, SDValue Op3);
   MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT,
-                         const SDValue *Ops, unsigned NumOps);
+                                ArrayRef<SDValue> Ops);
   MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2);
   MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
-                         SDValue Op1);
-  MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1,
-                         EVT VT2, SDValue Op1, SDValue Op2);
-  MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1,
-                         EVT VT2, SDValue Op1, SDValue Op2, SDValue Op3);
+                                SDValue Op1);
   MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
-                         const SDValue *Ops, unsigned NumOps);
+                                SDValue Op1, SDValue Op2);
   MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
-                         EVT VT3, SDValue Op1, SDValue Op2);
+                                SDValue Op1, SDValue Op2, SDValue Op3);
   MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
-                         EVT VT3, SDValue Op1, SDValue Op2, SDValue Op3);
+                                ArrayRef<SDValue> Ops);
   MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
-                         EVT VT3, const SDValue *Ops, unsigned NumOps);
+                                EVT VT3, SDValue Op1, SDValue Op2);
   MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
-                         EVT VT3, EVT VT4, const SDValue *Ops, unsigned NumOps);
+                                EVT VT3, SDValue Op1, SDValue Op2,
+                                SDValue Op3);
+  MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
+                                EVT VT3, ArrayRef<SDValue> Ops);
+  MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
+                                EVT VT3, EVT VT4, ArrayRef<SDValue> Ops);
   MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl,
-                         ArrayRef<EVT> ResultTys, const SDValue *Ops,
-                         unsigned NumOps);
+                                ArrayRef<EVT> ResultTys,
+                                ArrayRef<SDValue> Ops);
   MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, SDVTList VTs,
-                         const SDValue *Ops, unsigned NumOps);
+                                ArrayRef<SDValue> Ops);
 
   /// getTargetExtractSubreg - A convenience function for creating
   /// TargetInstrInfo::EXTRACT_SUBREG nodes.

@@ -185,36 +185,36 @@ SDNode *XCoreDAGToDAGISel::Select(SDNode *N) {
     SDValue Ops[] = { N->getOperand(0), N->getOperand(1),
                         N->getOperand(2) };
     return CurDAG->getMachineNode(XCore::LADD_l5r, dl, MVT::i32, MVT::i32,
-                                  Ops, 3);
+                                  Ops);
   }
   case XCoreISD::LSUB: {
     SDValue Ops[] = { N->getOperand(0), N->getOperand(1),
                         N->getOperand(2) };
     return CurDAG->getMachineNode(XCore::LSUB_l5r, dl, MVT::i32, MVT::i32,
-                                  Ops, 3);
+                                  Ops);
   }
   case XCoreISD::MACCU: {
     SDValue Ops[] = { N->getOperand(0), N->getOperand(1),
                       N->getOperand(2), N->getOperand(3) };
     return CurDAG->getMachineNode(XCore::MACCU_l4r, dl, MVT::i32, MVT::i32,
-                                  Ops, 4);
+                                  Ops);
   }
   case XCoreISD::MACCS: {
     SDValue Ops[] = { N->getOperand(0), N->getOperand(1),
                       N->getOperand(2), N->getOperand(3) };
     return CurDAG->getMachineNode(XCore::MACCS_l4r, dl, MVT::i32, MVT::i32,
-                                  Ops, 4);
+                                  Ops);
   }
   case XCoreISD::LMUL: {
     SDValue Ops[] = { N->getOperand(0), N->getOperand(1),
                       N->getOperand(2), N->getOperand(3) };
     return CurDAG->getMachineNode(XCore::LMUL_l6r, dl, MVT::i32, MVT::i32,
-                                  Ops, 4);
+                                  Ops);
   }
   case XCoreISD::CRC8: {
     SDValue Ops[] = { N->getOperand(0), N->getOperand(1), N->getOperand(2) };
     return CurDAG->getMachineNode(XCore::CRC8_l4r, dl, MVT::i32, MVT::i32,
-                                  Ops, 3);
+                                  Ops);
   }
   case ISD::BRIND:
     if (SDNode *ResNode = SelectBRIND(N))

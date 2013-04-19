@@ -697,7 +697,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedStore(StoreSDNode *ST, DebugLoc dl) {
 
     // Build post increment store.
     SDNode* Result = CurDAG->getMachineNode(Opcode, dl, MVT::i32,
-                                            MVT::Other, Ops, 4);
+                                            MVT::Other, Ops);
     MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
     MemOp[0] = ST->getMemOperand();
     cast<MachineSDNode>(Result)->setMemRefs(MemOp, MemOp + 1);
@@ -723,8 +723,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedStore(StoreSDNode *ST, DebugLoc dl) {
 
   // Build regular store.
   SDValue TargetConstVal = CurDAG->getTargetConstant(Val, MVT::i32);
-  SDNode* Result_1 = CurDAG->getMachineNode(Opcode, dl, MVT::Other, Ops,
-                                            4);
+  SDNode* Result_1 = CurDAG->getMachineNode(Opcode, dl, MVT::Other, Ops);
   // Build splitted incriment instruction.
   SDNode* Result_2 = CurDAG->getMachineNode(Hexagon::ADD_ri, dl, MVT::i32,
                                             Base,
@@ -780,7 +779,7 @@ SDNode *HexagonDAGToDAGISel::SelectBaseOffsetStore(StoreSDNode *ST,
                          Value, Chain};
         // build indexed store
         SDNode* Result = CurDAG->getMachineNode(Opcode, dl,
-                                                MVT::Other, Ops, 4);
+                                                MVT::Other, Ops);
         MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
         MemOp[0] = ST->getMemOperand();
         cast<MachineSDNode>(Result)->setMemRefs(MemOp, MemOp + 1);
@@ -1230,8 +1229,7 @@ SDNode *HexagonDAGToDAGISel::SelectIntrinsicWOChain(SDNode *N) {
     }
     EVT ReturnValueVT = N->getValueType(0);
     SDNode *Result = CurDAG->getMachineNode(IntrinsicWithPred, dl,
-                                            ReturnValueVT,
-                                            Ops.data(), Ops.size());
+                                            ReturnValueVT, Ops);
     ReplaceUses(N, Result);
     return Result;
   }

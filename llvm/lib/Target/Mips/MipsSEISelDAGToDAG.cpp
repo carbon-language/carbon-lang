@@ -195,7 +195,7 @@ SDNode *MipsSEDAGToDAGISel::selectAddESubE(unsigned MOp, SDValue InFlag,
   SDValue LHS = Node->getOperand(0), RHS = Node->getOperand(1);
   EVT VT = LHS.getValueType();
 
-  SDNode *Carry = CurDAG->getMachineNode(Mips::SLTu, DL, VT, Ops, 2);
+  SDNode *Carry = CurDAG->getMachineNode(Mips::SLTu, DL, VT, Ops);
   SDNode *AddCarry = CurDAG->getMachineNode(Mips::ADDu, DL, VT,
                                             SDValue(Carry, 0), RHS);
   return CurDAG->SelectNodeTo(Node, MOp, VT, MVT::Glue, LHS,
@@ -404,7 +404,7 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
     const SDValue Ops[] = { RegClass, Node->getOperand(0), LoIdx,
                             Node->getOperand(1), HiIdx };
     SDNode *Res = CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, DL,
-                                         MVT::Untyped, Ops, 5);
+                                         MVT::Untyped, Ops);
     return std::make_pair(true, Res);
   }
   }
