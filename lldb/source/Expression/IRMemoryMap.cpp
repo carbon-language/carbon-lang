@@ -272,7 +272,7 @@ IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, Alloc
     lldb::addr_t mask = alignment - 1;
     aligned_address = (allocation_address + mask) & (~mask);
 
-    Allocation allocation;
+    Allocation &allocation(m_allocations[aligned_address]);
     
     allocation.m_process_alloc = allocation_address;
     allocation.m_process_start = aligned_address;
@@ -281,8 +281,6 @@ IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, Alloc
     allocation.m_alignment = alignment;
     allocation.m_policy = policy;
     
-    m_allocations[aligned_address] = std::move(allocation);
-
     switch (policy)
     {
     default:
