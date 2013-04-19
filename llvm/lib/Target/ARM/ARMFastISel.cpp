@@ -144,8 +144,8 @@ class ARMFastISel : public FastISel {
     virtual bool TargetSelectInstruction(const Instruction *I);
     virtual unsigned TargetMaterializeConstant(const Constant *C);
     virtual unsigned TargetMaterializeAlloca(const AllocaInst *AI);
-    virtual bool TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
-                               const LoadInst *LI);
+    virtual bool tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
+                                     const LoadInst *LI);
     virtual bool FastLowerArguments();
   private:
   #include "ARMGenFastISel.inc"
@@ -2797,12 +2797,12 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
   return false;
 }
 
-/// TryToFoldLoad - The specified machine instr operand is a vreg, and that
+/// \brief The specified machine instr operand is a vreg, and that
 /// vreg is being provided by the specified load instruction.  If possible,
 /// try to fold the load as an operand to the instruction, returning true if
 /// successful.
-bool ARMFastISel::TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
-                                const LoadInst *LI) {
+bool ARMFastISel::tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
+                                      const LoadInst *LI) {
   // Verify we have a legal type before going any further.
   MVT VT;
   if (!isLoadTypeLegal(LI->getType(), VT))

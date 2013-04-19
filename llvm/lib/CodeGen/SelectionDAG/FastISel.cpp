@@ -1505,3 +1505,68 @@ bool FastISel::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
 
   return true;
 }
+
+bool FastISel::tryToFoldLoad(const LoadInst *LI, const Instruction *FoldInst) {
+  // We know that the load has a single use, but don't know what it is.  If it
+  // isn't one of the folded instructions, then we can't succeed here.  Handle
+  // this by scanning the single-use users of the load until we get to FoldInst.
+  unsigned MaxUsers = 6;  // Don't scan down huge single-use chains of instrs.
+
+  const Instruction *TheUser = LI->use_back();
+  while (TheUser != FoldInst &&   // Scan up until we find FoldInst.
+         // Stay in the right block.
+         TheUser->getParent() == FoldInst->getParent() &&
+         --MaxUsers) {  // Don't scan too far.
+    // If there are multiple or no uses of this instruction, then bail out.
+    if (!TheUser->hasOneUse())
+      return false;
+
+    TheUser = TheUser->use_back();
+  }
+
+  // If we didn't find the fold instruction, then we failed to collapse the
+  // sequence.
+  if (TheUser != FoldInst)
+    return false;
+
+  // Don't try to fold volatile loads.  Target has to deal with alignment
+  // constraints.
+  if (LI->isVolatile()) return false;
+
+  // Figure out which vreg this is going into.  If there is no assigned vreg yet
+  // then there actually was no reference to it.  Perhaps the load is referenced
+  // by a dead instruction.
+  unsigned LoadReg = getRegForValue(LI);
+  if (LoadReg == 0)
+    return false;
+
+  // Check to see what the uses of this vreg are.  If it has no uses, or more
+  // than one use (at the machine instr level) then we can't fold it.
+  MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(LoadReg);
+  if (RI == MRI.reg_end())
+    return false;
+
+  // See if there is exactly one use of the vreg.  If there are multiple uses,
+  // then the instruction got lowered to multiple machine instructions or the
+  // use of the loaded value ended up being multiple operands of the result, in
+  // either case, we can't fold this.
+  MachineRegisterInfo::reg_iterator PostRI = RI; ++PostRI;
+  if (PostRI != MRI.reg_end())
+    return false;
+
+  assert(RI.getOperand().isUse() &&
+         "The only use of the vreg must be a use, we haven't emitted the def!");
+
+  MachineInstr *User = &*RI;
+
+  // Set the insertion point properly.  Folding the load can cause generation of
+  // other random instructions (like sign extends) for addressing modes, make
+  // sure they get inserted in a logical place before the new instruction.
+  FuncInfo.InsertPt = User;
+  FuncInfo.MBB = User->getParent();
+
+  // Ask the target to try folding the load.
+  return tryToFoldLoadIntoMI(User, RI.getOperandNo(), LI);
+}
+
+

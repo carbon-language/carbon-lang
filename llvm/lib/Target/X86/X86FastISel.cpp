@@ -68,12 +68,12 @@ public:
 
   virtual bool TargetSelectInstruction(const Instruction *I);
 
-  /// TryToFoldLoad - The specified machine instr operand is a vreg, and that
+  /// \brief The specified machine instr operand is a vreg, and that
   /// vreg is being provided by the specified load instruction.  If possible,
   /// try to fold the load as an operand to the instruction, returning true if
   /// possible.
-  virtual bool TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
-                             const LoadInst *LI);
+  virtual bool tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
+                                   const LoadInst *LI);
 
   virtual bool FastLowerArguments();
 
@@ -2395,12 +2395,8 @@ unsigned X86FastISel::TargetMaterializeFloatZero(const ConstantFP *CF) {
 }
 
 
-/// TryToFoldLoad - The specified machine instr operand is a vreg, and that
-/// vreg is being provided by the specified load instruction.  If possible,
-/// try to fold the load as an operand to the instruction, returning true if
-/// possible.
-bool X86FastISel::TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
-                                const LoadInst *LI) {
+bool X86FastISel::tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
+                                      const LoadInst *LI) {
   X86AddressMode AM;
   if (!X86SelectAddress(LI->getOperand(0), AM))
     return false;

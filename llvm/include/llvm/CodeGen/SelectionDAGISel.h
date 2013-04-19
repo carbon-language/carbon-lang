@@ -259,9 +259,6 @@ private:
   void SelectBasicBlock(BasicBlock::const_iterator Begin,
                         BasicBlock::const_iterator End,
                         bool &HadTailCall);
-
-  bool TryToFoldFastISelLoad(const LoadInst *LI, const Instruction *FoldInst,
-                             FastISel *FastIS);
   void FinishBasicBlock();
 
   void CodeGenAndEmitDAG();

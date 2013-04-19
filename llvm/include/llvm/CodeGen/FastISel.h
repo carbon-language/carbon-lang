@@ -123,12 +123,28 @@ public:
   /// index value.
   std::pair<unsigned, bool> getRegForGEPIndex(const Value *V);
 
-  /// TryToFoldLoad - The specified machine instr operand is a vreg, and that
+  /// \brief We're checking to see if we can fold \p LI the \p FoldInst.
+  /// Note that we could have a sequence where multiple LLVM IR instructions
+  /// are folded into the same machineinstr.  For example we could have:
+  ///   A: x = load i32 *P
+  ///   B: y = icmp A, 42
+  ///   C: br y, ...
+  ///
+  /// In this scenario, \p LI is "A", and \p FoldInst is "C".  We know
+  /// about "B" (and any other folded instructions) because it is between
+  /// A and C.
+  ///
+  /// If we succeed folding, return true.
+  ///
+  bool tryToFoldLoad(const LoadInst *LI, const Instruction *FoldInst);
+
+  /// \brief The specified machine instr operand is a vreg, and that
   /// vreg is being provided by the specified load instruction.  If possible,
   /// try to fold the load as an operand to the instruction, returning true if
   /// possible.
-  virtual bool TryToFoldLoad(MachineInstr * /*MI*/, unsigned /*OpNo*/,
-                             const LoadInst * /*LI*/) {
+  /// This method should be implemented by targets.
+  virtual bool tryToFoldLoadIntoMI(MachineInstr * /*MI*/, unsigned /*OpNo*/,
+                                   const LoadInst * /*LI*/) {
     return false;
   }
 
