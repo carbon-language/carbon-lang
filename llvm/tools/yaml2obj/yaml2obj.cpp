@@ -114,16 +114,10 @@ static bool hexStringToByteArray(StringRef Str, ContainerOut &Out) {
 // The structure of the yaml files is not an exact 1:1 match to COFF. In order
 // to use yaml::IO, we use these structures which are closer to the source.
 namespace COFFYAML {
-  struct Relocation {
-    uint32_t VirtualAddress;
-    uint32_t SymbolTableIndex;
-    COFF::RelocationTypeX86 Type;
-  };
-
   struct Section {
     COFF::SectionCharacteristics Characteristics;
     StringRef SectionData;
-    std::vector<Relocation> Relocations;
+    std::vector<COFF::relocation> Relocations;
     StringRef Name;
   };
 
@@ -407,7 +401,7 @@ void writeCOFF(COFFParser &CP, raw_ostream &OS) {
   OS.write(&CP.StringTable[0], CP.StringTable.size());
 }
 
-LLVM_YAML_IS_SEQUENCE_VECTOR(COFFYAML::Relocation)
+LLVM_YAML_IS_SEQUENCE_VECTOR(COFF::relocation)
 LLVM_YAML_IS_SEQUENCE_VECTOR(COFFYAML::Section)
 LLVM_YAML_IS_SEQUENCE_VECTOR(COFFYAML::Symbol)
 
@@ -646,9 +640,23 @@ struct MappingTraits<COFFYAML::Header> {
 };
 
 template <>
-struct MappingTraits<COFFYAML::Relocation> {
-  static void mapping(IO &IO, COFFYAML::Relocation &Rel) {
-    IO.mapRequired("Type", Rel.Type);
+struct MappingTraits<COFF::relocation> {
+  struct NormalizedType {
+  public:
+    NormalizedType(IO &) : Type(COFF::RelocationTypeX86(0)) {
+    }
+    NormalizedType(IO &, uint16_t T) : Type(COFF::RelocationTypeX86(T)) {
+    }
+    uint16_t denormalize(IO &) {
+      return Type;
+    }
+
+    COFF::RelocationTypeX86 Type;
+  };
+  static void mapping(IO &IO, COFF::relocation &Rel) {
+    MappingNormalization<NormalizedType, uint16_t> foo(IO, Rel.Type);
+
+    IO.mapRequired("Type", foo->Type);
     IO.mapRequired("VirtualAddress", Rel.VirtualAddress);
     IO.mapRequired("SymbolTableIndex", Rel.SymbolTableIndex);
   }
