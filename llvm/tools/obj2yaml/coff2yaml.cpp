@@ -235,10 +235,6 @@ const char *nameLookup(const pod_pair<T, const char *> (&Arr)[N],
 
 static void yamlCOFFHeader(const object::coff_file_header *Header,
                            raw_ostream &Out) {
-  COFF::header H;
-  H.Machine = Header->Machine;
-  H.Characteristics = Header->Characteristics;
-
   Out << "header: !Header\n";
   Out << "  Machine: ";
   Out << nameLookup(MachineTypePairs, Header->Machine, "# Unknown_MachineTypes")
