@@ -1978,6 +1978,8 @@ Sema::BuildCXXForRangeStmt(SourceLocation ForLoc, SourceLocation ColonLoc,
                                                  RangeLoc));
       else if (const VariableArrayType *VAT =
                dyn_cast<VariableArrayType>(UnqAT))
+        // FIXME: Need to build an OpaqueValueExpr for this rather than
+        // recomputing it!
         BoundExpr = VAT->getSizeExpr();
       else {
         // Can't be a DependentSizedArrayType or an IncompleteArrayType since

@@ -1572,6 +1572,7 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
   if (!getLangOpts().C99) {
     if (T->isVariableArrayType()) {
       // Prohibit the use of non-POD types in VLAs.
+      // FIXME: C++1y allows this.
       QualType BaseT = Context.getBaseElementType(T);
       if (!T->isDependentType() &&
           !BaseT.isPODType(Context) &&
@@ -1587,7 +1588,9 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
       }
       // Just extwarn about VLAs.
       else
-        Diag(Loc, diag::ext_vla);
+        Diag(Loc, getLangOpts().CPlusPlus1y
+                      ? diag::warn_cxx11_compat_array_of_runtime_bound
+                      : diag::ext_vla);
     } else if (ASM != ArrayType::Normal || Quals != 0)
       Diag(Loc,
            getLangOpts().CPlusPlus? diag::err_c99_array_usage_cxx
