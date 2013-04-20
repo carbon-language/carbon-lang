@@ -555,11 +555,11 @@ void StackLocalsSpaceRegion::dumpToStream(raw_ostream &os) const {
 }
 
 bool MemRegion::canPrintPretty() const {
-  return false;
+  return canPrintPrettyAsExpr();
 }
 
 bool MemRegion::canPrintPrettyAsExpr() const {
-  return canPrintPretty();
+  return false;
 }
 
 void MemRegion::printPretty(raw_ostream &os) const {
@@ -575,7 +575,7 @@ void MemRegion::printPrettyAsExpr(raw_ostream &os) const {
   return;
 }
 
-bool VarRegion::canPrintPretty() const {
+bool VarRegion::canPrintPrettyAsExpr() const {
   return true;
 }
 
@@ -583,7 +583,7 @@ void VarRegion::printPrettyAsExpr(raw_ostream &os) const {
   os << getDecl()->getName();
 }
 
-bool ObjCIvarRegion::canPrintPretty() const {
+bool ObjCIvarRegion::canPrintPrettyAsExpr() const {
   return true;
 }
 

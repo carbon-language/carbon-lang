@@ -884,7 +884,7 @@ public:
     return R->getKind() == VarRegionKind;
   }
 
-  bool canPrintPretty() const;
+  bool canPrintPrettyAsExpr() const;
 
   void printPrettyAsExpr(raw_ostream &os) const;
 };
@@ -965,7 +965,7 @@ public:
   const ObjCIvarDecl *getDecl() const;
   QualType getValueType() const;
 
-  bool canPrintPretty() const;
+  bool canPrintPrettyAsExpr() const;
   void printPrettyAsExpr(raw_ostream &os) const;
 
   void dumpToStream(raw_ostream &os) const;
