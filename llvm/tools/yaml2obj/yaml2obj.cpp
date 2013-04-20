@@ -121,11 +121,6 @@ namespace COFFYAML {
     StringRef Name;
   };
 
-  struct Header {
-    COFF::MachineTypes Machine;
-    COFF::Characteristics Characteristics;
-  };
-
   struct Symbol {
     COFF::SymbolBaseType SimpleType;
     uint8_t NumberOfAuxSymbols;
@@ -138,7 +133,7 @@ namespace COFFYAML {
   };
 
   struct Object {
-    Header HeaderData;
+    COFF::header HeaderData;
     std::vector<Section> Sections;
     std::vector<Symbol> Symbols;
   };
@@ -632,31 +627,57 @@ struct MappingTraits<COFFYAML::Symbol> {
 };
 
 template <>
-struct MappingTraits<COFFYAML::Header> {
-  static void mapping(IO &IO, COFFYAML::Header &H) {
-    IO.mapRequired("Machine", H.Machine);
-    IO.mapOptional("Characteristics", H.Characteristics);
+struct MappingTraits<COFF::header> {
+  struct NMachine {
+    NMachine(IO&) : Machine(COFF::MachineTypes(0)) {
+    }
+    NMachine(IO&, uint16_t M) : Machine(COFF::MachineTypes(M)) {
+    }
+    uint16_t denormalize(IO &) {
+      return Machine;
+    }
+    COFF::MachineTypes Machine;
+  };
+
+  struct NCharacteristics {
+    NCharacteristics(IO&) : Characteristics(COFF::Characteristics(0)) {
+    }
+    NCharacteristics(IO&, uint16_t C) :
+      Characteristics(COFF::Characteristics(C)) {
+    }
+    uint16_t denormalize(IO &) {
+      return Characteristics;
+    }
+
+    COFF::Characteristics Characteristics;
+  };
+
+  static void mapping(IO &IO, COFF::header &H) {
+    MappingNormalization<NMachine, uint16_t> NM(IO, H.Machine);
+    MappingNormalization<NCharacteristics, uint16_t> NC(IO, H.Characteristics);
+
+    IO.mapRequired("Machine", NM->Machine);
+    IO.mapOptional("Characteristics", NC->Characteristics);
   }
 };
 
 template <>
 struct MappingTraits<COFF::relocation> {
-  struct NormalizedType {
-  public:
-    NormalizedType(IO &) : Type(COFF::RelocationTypeX86(0)) {
+  struct NType {
+    NType(IO &) : Type(COFF::RelocationTypeX86(0)) {
     }
-    NormalizedType(IO &, uint16_t T) : Type(COFF::RelocationTypeX86(T)) {
+    NType(IO &, uint16_t T) : Type(COFF::RelocationTypeX86(T)) {
     }
     uint16_t denormalize(IO &) {
       return Type;
     }
-
     COFF::RelocationTypeX86 Type;
   };
-  static void mapping(IO &IO, COFF::relocation &Rel) {
-    MappingNormalization<NormalizedType, uint16_t> foo(IO, Rel.Type);
 
-    IO.mapRequired("Type", foo->Type);
+  static void mapping(IO &IO, COFF::relocation &Rel) {
+    MappingNormalization<NType, uint16_t> NT(IO, Rel.Type);
+
+    IO.mapRequired("Type", NT->Type);
     IO.mapRequired("VirtualAddress", Rel.VirtualAddress);
     IO.mapRequired("SymbolTableIndex", Rel.SymbolTableIndex);
   }
