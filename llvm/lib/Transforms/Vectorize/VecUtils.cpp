@@ -557,7 +557,7 @@ Value *BoUpSLP::vectorizeTree_rec(ArrayRef<Value *> VL, int VF) {
   bool AllConst = true;
   bool AllSameScalar = true;
   for (unsigned i = 0, e = VF; i < e; ++i) {
-    AllConst &= !!dyn_cast<Constant>(VL[i]);
+    AllConst &= isa<Constant>(VL[i]);
     AllSameScalar &= (VL[0] == VL[i]);
     // The instruction must be in the same BB, and it must be vectorizable.
     Instruction *I = dyn_cast<Instruction>(VL[i]);
@@ -609,13 +609,13 @@ Value *BoUpSLP::vectorizeTree_rec(ArrayRef<Value *> VL, int VF) {
     Value *RHS = vectorizeTree_rec(RHSVL, VF);
     Value *LHS = vectorizeTree_rec(LHSVL, VF);
     IRBuilder<> Builder(GetLastInstr(VL, VF));
-    BinaryOperator *BinOp = dyn_cast<BinaryOperator>(VL0);
+    BinaryOperator *BinOp = cast<BinaryOperator>(VL0);
     Value *V = Builder.CreateBinOp(BinOp->getOpcode(), RHS,LHS);
     VectorizedValues[VL0] = V;
     return V;
   }
   case Instruction::Load: {
-    LoadInst *LI = dyn_cast<LoadInst>(VL0);
+    LoadInst *LI = cast<LoadInst>(VL0);
     unsigned Alignment = LI->getAlignment();
 
     // Check if all of the loads are consecutive.
@@ -632,7 +632,7 @@ Value *BoUpSLP::vectorizeTree_rec(ArrayRef<Value *> VL, int VF) {
     return LI;
   }
   case Instruction::Store: {
-    StoreInst *SI = dyn_cast<StoreInst>(VL0);
+    StoreInst *SI = cast<StoreInst>(VL0);
     unsigned Alignment = SI->getAlignment();
 
     ValueList ValueOp;
