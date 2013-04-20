@@ -1,4 +1,4 @@
-//===- VecUtils.cpp - Vectorization Utilities -----------------------------===//
+//===- VecUtils.h - Vectorization Utilities -------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
