@@ -4462,8 +4462,6 @@ def : ADRP_ADD<A64WrapperSmall, tjumptable>;
 // GOT access patterns
 //===----------------------------------------------------------------------===//
 
-// FIXME: Wibble
-
 class GOTLoadSmall<SDNode addrfrag>
   : Pat<(A64GOTLoad (A64WrapperSmall addrfrag:$Hi, addrfrag:$Lo12, 8)),
         (LS64_LDR (ADRPxi addrfrag:$Hi), addrfrag:$Lo12)>;
