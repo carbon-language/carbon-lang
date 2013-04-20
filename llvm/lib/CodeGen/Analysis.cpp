@@ -201,62 +201,135 @@ ISD::CondCode llvm::getICmpCondCode(ICmpInst::Predicate Pred) {
   }
 }
 
-
-/// getNoopInput - If V is a noop (i.e., lowers to no machine code), look
-/// through it (and any transitive noop operands to it) and return its input
-/// value.  This is used to determine if a tail call can be formed.
-///
-static const Value *getNoopInput(const Value *V, const TargetLowering &TLI) {
-  // If V is not an instruction, it can't be looked through.
-  const Instruction *I = dyn_cast<Instruction>(V);
-  if (I == 0 || !I->hasOneUse() || I->getNumOperands() == 0) return V;
-  
-  Value *Op = I->getOperand(0);
-
-  // Look through truly no-op truncates.
-  if (isa<TruncInst>(I) &&
-      TLI.isTruncateFree(I->getOperand(0)->getType(), I->getType()))
-    return getNoopInput(I->getOperand(0), TLI);
-  
-  // Look through truly no-op bitcasts.
-  if (isa<BitCastInst>(I)) {
-    // No type change at all.
-    if (Op->getType() == I->getType())
-      return getNoopInput(Op, TLI);
-
-    // Pointer to pointer cast.
-    if (Op->getType()->isPointerTy() && I->getType()->isPointerTy())
-      return getNoopInput(Op, TLI);
-    
-    if (isa<VectorType>(Op->getType()) && isa<VectorType>(I->getType()) &&
-        TLI.isTypeLegal(EVT::getEVT(Op->getType())) &&
-        TLI.isTypeLegal(EVT::getEVT(I->getType())))
-      return getNoopInput(Op, TLI);
-  }
-  
-  // Look through inttoptr.
-  if (isa<IntToPtrInst>(I) && !isa<VectorType>(I->getType())) {
-    // Make sure this isn't a truncating or extending cast.  We could support
-    // this eventually, but don't bother for now.
-    if (TLI.getPointerTy().getSizeInBits() == 
-          cast<IntegerType>(Op->getType())->getBitWidth())
-      return getNoopInput(Op, TLI);
-  }
-
-  // Look through ptrtoint.
-  if (isa<PtrToIntInst>(I) && !isa<VectorType>(I->getType())) {
-    // Make sure this isn't a truncating or extending cast.  We could support
-    // this eventually, but don't bother for now.
-    if (TLI.getPointerTy().getSizeInBits() == 
-        cast<IntegerType>(I->getType())->getBitWidth())
-      return getNoopInput(Op, TLI);
-  }
-
-
-  // Otherwise it's not something we can look through.
-  return V;
+static bool isNoopBitcast(Type *T1, Type *T2,
+                          const TargetLowering& TLI) {
+  return T1 == T2 || (T1->isPointerTy() && T2->isPointerTy()) ||
+         (isa<VectorType>(T1) && isa<VectorType>(T2) &&
+          TLI.isTypeLegal(EVT::getEVT(T1)) && TLI.isTypeLegal(EVT::getEVT(T2)));
 }
 
+/// sameNoopInput - Return true if V1 == V2, else if either V1 or V2 is a noop
+/// (i.e., lowers to no machine code), look through it (and any transitive noop
+/// operands to it) and check if it has the same noop input value.  This is
+/// used to determine if a tail call can be formed.
+static bool sameNoopInput(const Value *V1, const Value *V2,
+                          SmallVectorImpl<unsigned> &Els1,
+                          SmallVectorImpl<unsigned> &Els2,
+                          const TargetLowering &TLI) {
+  using std::swap;
+  bool swapParity = false;
+  bool equalEls = Els1 == Els2;
+  while (true) {
+    if ((equalEls && V1 == V2) || isa<UndefValue>(V1) || isa<UndefValue>(V2)) {
+      if (swapParity)
+        // Revert to original Els1 and Els2 to avoid confusing recursive calls
+        swap(Els1, Els2);
+      return true;
+    }
+
+    // Try to look through V1; if V1 is not an instruction, it can't be looked
+    // through.
+    const Instruction *I = dyn_cast<Instruction>(V1);
+    const Value *NoopInput = 0;
+    if (I != 0 && I->getNumOperands() > 0) {
+     Value *Op = I->getOperand(0);
+      if (isa<TruncInst>(I)) {
+        // Look through truly no-op truncates.
+        if (TLI.isTruncateFree(Op->getType(), I->getType()))
+          NoopInput = Op;
+      } else if (isa<BitCastInst>(I)) {
+        // Look through truly no-op bitcasts.
+        if (isNoopBitcast(Op->getType(), I->getType(), TLI))
+          NoopInput = Op;
+      } else if (isa<GetElementPtrInst>(I)) {
+        // Look through getelementptr
+        if (cast<GetElementPtrInst>(I)->hasAllZeroIndices())
+          NoopInput = Op;
+      } else if (isa<IntToPtrInst>(I)) {
+        // Look through inttoptr.
+        // Make sure this isn't a truncating or extending cast.  We could
+        // support this eventually, but don't bother for now.
+        if (!isa<VectorType>(I->getType()) &&
+            TLI.getPointerTy().getSizeInBits() == 
+              cast<IntegerType>(Op->getType())->getBitWidth())
+          NoopInput = Op;
+      } else if (isa<PtrToIntInst>(I)) {
+        // Look through ptrtoint.
+        // Make sure this isn't a truncating or extending cast.  We could
+        // support this eventually, but don't bother for now.
+        if (!isa<VectorType>(I->getType()) &&
+            TLI.getPointerTy().getSizeInBits() == 
+              cast<IntegerType>(I->getType())->getBitWidth())
+          NoopInput = Op;
+      }
+    }
+
+    if (NoopInput) {
+      V1 = NoopInput;
+      continue;
+    }
+
+    // If we already swapped, avoid infinite loop
+    if (swapParity)
+      break;
+
+    // Otherwise, swap V1<->V2, Els1<->Els2
+    swap(V1, V2);
+    swap(Els1, Els2);
+    swapParity = !swapParity;
+  }
+
+  for (unsigned n = 0; n < 2; ++n) {
+    if (isa<InsertValueInst>(V1)) {
+      if (isa<StructType>(V1->getType())) {
+        // Look through insertvalue
+        unsigned i, e;
+        for (i = 0, e = cast<StructType>(V1->getType())->getNumElements();
+             i != e; ++i) {
+          const Value *InScalar = FindInsertedValue(const_cast<Value*>(V1), i);
+          if (InScalar == 0)
+            break;
+          Els1.push_back(i);
+          if (!sameNoopInput(InScalar, V2, Els1, Els2, TLI)) {
+            Els1.pop_back();
+            break;
+          }
+          Els1.pop_back();
+        }
+        if (i == e) {
+          if (swapParity)
+            swap(Els1, Els2);
+          return true;
+        }
+      }
+    } else if (!Els1.empty() && isa<ExtractValueInst>(V1)) {
+      const ExtractValueInst *EVI = cast<ExtractValueInst>(V1);
+      unsigned i = Els1.back();
+      // If the scalar value being inserted is an extractvalue of the right
+      // index from the call, then everything is good.
+      if (isa<StructType>(EVI->getOperand(0)->getType()) &&
+          EVI->getNumIndices() == 1 && EVI->getIndices()[0] == i) {
+        // Look through extractvalue
+        Els1.pop_back();
+        if (sameNoopInput(EVI->getOperand(0), V2, Els1, Els2, TLI)) {
+          Els1.push_back(i);
+          if (swapParity)
+            swap(Els1, Els2);
+          return true;
+        }
+        Els1.push_back(i);
+      }
+    }
+
+    swap(V1, V2);
+    swap(Els1, Els2);
+    swapParity = !swapParity;
+  }
+
+  if (swapParity)
+    swap(Els1, Els2);
+  return false;
+}
 
 /// Test if the given instruction is in a position to be optimized
 /// with a tail-call. This roughly means that it's in a block with
@@ -264,7 +337,8 @@ static const Value *getNoopInput(const Value *V, const TargetLowering &TLI) {
 /// between it and the return.
 ///
 /// This function only tests target-independent requirements.
-bool llvm::isInTailCallPosition(ImmutableCallSite CS,const TargetLowering &TLI){
+bool llvm::isInTailCallPosition(ImmutableCallSite CS,
+                                const TargetLowering &TLI) {
   const Instruction *I = CS.getInstruction();
   const BasicBlock *ExitBB = I->getParent();
   const TerminatorInst *Term = ExitBB->getTerminator();
@@ -322,28 +396,7 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS,const TargetLowering &TLI){
       CallerAttrs.hasAttribute(AttributeSet::ReturnIndex, Attribute::SExt))
     return false;
 
-  // Otherwise, make sure the unmodified return value of I is the return value.
-  // We handle two cases: multiple return values + scalars.
-  Value *RetVal = Ret->getOperand(0);
-  if (!isa<InsertValueInst>(RetVal) || !isa<StructType>(RetVal->getType()))
-    // Handle scalars first.
-    return getNoopInput(Ret->getOperand(0), TLI) == I;
-  
-  // If this is an aggregate return, look through the insert/extract values and
-  // see if each is transparent.
-  for (unsigned i = 0, e =cast<StructType>(RetVal->getType())->getNumElements();
-       i != e; ++i) {
-    const Value *InScalar = FindInsertedValue(RetVal, i);
-    if (InScalar == 0) return false;
-    InScalar = getNoopInput(InScalar, TLI);
-    
-    // If the scalar value being inserted is an extractvalue of the right index
-    // from the call, then everything is good.
-    const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(InScalar);
-    if (EVI == 0 || EVI->getOperand(0) != I || EVI->getNumIndices() != 1 ||
-        EVI->getIndices()[0] != i)
-      return false;
-  }
-  
-  return true;
+  // Otherwise, make sure the return value and I have the same value
+  SmallVector<unsigned, 4> Els1, Els2;
+  return sameNoopInput(Ret->getOperand(0), I, Els1, Els2, TLI);
 }
