@@ -127,6 +127,9 @@ private:
   /// \brief Try to vectorize a chain that starts at two arithmetic instrs.
   bool tryToVectorizePair(Value *A, Value *B,  BoUpSLP &R);
 
+  /// \brief Try to vectorize a list of operands.
+  bool tryToVectorizeList(BoUpSLP::ValueList &VL, BoUpSLP &R);
+
   /// \brief Try to vectorize a chain that may start at the operands of \V;
   bool tryToVectorize(BinaryOperator *V,  BoUpSLP &R);
 
@@ -174,6 +177,11 @@ bool SLPVectorizer::tryToVectorizePair(Value *A, Value *B,  BoUpSLP &R) {
   BoUpSLP::ValueList VL;
   VL.push_back(A);
   VL.push_back(B);
+  return tryToVectorizeList(VL, R);
+}
+
+bool SLPVectorizer::tryToVectorizeList(BoUpSLP::ValueList &VL,  BoUpSLP &R) {
+  DEBUG(dbgs()<<"SLP: Vectorizing a list of length = " << VL.size() << ".\n");
   int Cost = R.getTreeCost(VL);
   int ExtrCost = R.getScalarizationCost(VL);
   DEBUG(dbgs()<<"SLP: Cost of pair:" << Cost <<
