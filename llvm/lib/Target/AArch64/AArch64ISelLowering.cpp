@@ -59,10 +59,6 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
 
   computeRegisterProperties();
 
-  // We have particularly efficient implementations of atomic fences if they can
-  // be combined with nearby atomic loads and stores.
-  setShouldFoldAtomicFences(true);
-
   // We combine OR nodes for bitfield and NEON BSL operations.
   setTargetDAGCombine(ISD::OR);
 

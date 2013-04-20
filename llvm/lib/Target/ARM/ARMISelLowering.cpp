@@ -763,8 +763,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     // Unordered/Monotonic case.
     setOperationAction(ISD::ATOMIC_LOAD, MVT::i32, Custom);
     setOperationAction(ISD::ATOMIC_STORE, MVT::i32, Custom);
-    // Since the libcalls include locking, fold in the fences
-    setShouldFoldAtomicFences(true);
   }
 
   setOperationAction(ISD::PREFETCH,         MVT::Other, Custom);

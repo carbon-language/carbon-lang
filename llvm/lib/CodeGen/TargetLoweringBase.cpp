@@ -647,7 +647,6 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm,
   PrefFunctionAlignment = 0;
   PrefLoopAlignment = 0;
   MinStackArgumentAlignment = 1;
-  ShouldFoldAtomicFences = false;
   InsertFencesForAtomic = false;
   SupportJumpTables = true;
   MinimumJumpTableEntries = 4;
