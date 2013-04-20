@@ -12,6 +12,7 @@
 
 // C Includes
 // C++ Includes
+#include <initializer_list>
 #include <map>
 #include <vector>
 // Other libraries and framework includes
