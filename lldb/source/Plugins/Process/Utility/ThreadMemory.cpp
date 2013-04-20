@@ -57,10 +57,10 @@ bool
 ThreadMemory::WillResume (StateType resume_state)
 {
     ClearStackFrames();
-    // Call the Thread::WillResume first. If we stop at a signal, the stop info
-    // class for signal will set the resume signal that we need below. The signal
-    // stuff obeys the Process::UnixSignal defaults. 
     Thread::WillResume(resume_state);
+
+    if (m_backing_thread_sp)
+        return m_backing_thread_sp->WillResume(resume_state);
     return true;
 }
 

@@ -101,6 +101,12 @@ public:
         m_backing_thread_sp = thread_sp;
         return (bool)thread_sp;
     }
+    
+    virtual lldb::ThreadSP
+    GetBackingThread () const
+    {
+        return m_backing_thread_sp;
+    }
 
 protected:
     //------------------------------------------------------------------

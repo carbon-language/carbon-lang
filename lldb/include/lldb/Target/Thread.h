@@ -418,6 +418,12 @@ public:
     {
         return false;
     }
+    
+    virtual lldb::ThreadSP
+    GetBackingThread () const
+    {
+        return lldb::ThreadSP();
+    }
 
     virtual void
     ClearBackingThread ()

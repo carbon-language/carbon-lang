@@ -1045,58 +1045,68 @@ ProcessGDBRemote::DoResume ()
     {
         listener.StartListeningForEvents (&m_async_broadcaster, ProcessGDBRemote::eBroadcastBitAsyncThreadDidExit);
         
+        const size_t num_threads = GetThreadList().GetSize();
+
         StreamString continue_packet;
         bool continue_packet_error = false;
         if (m_gdb_comm.HasAnyVContSupport ())
         {
-            continue_packet.PutCString ("vCont");
-        
-            if (!m_continue_c_tids.empty())
+            if (m_continue_c_tids.size() == num_threads)
             {
-                if (m_gdb_comm.GetVContSupported ('c'))
-                {
-                    for (tid_collection::const_iterator t_pos = m_continue_c_tids.begin(), t_end = m_continue_c_tids.end(); t_pos != t_end; ++t_pos)
-                        continue_packet.Printf(";c:%4.4" PRIx64, *t_pos);
-                }
-                else 
-                    continue_packet_error = true;
+                // All threads are continuing, just send a "c" packet
+                continue_packet.PutCString ("c");
             }
+            else
+            {
+                continue_packet.PutCString ("vCont");
             
-            if (!continue_packet_error && !m_continue_C_tids.empty())
-            {
-                if (m_gdb_comm.GetVContSupported ('C'))
+                if (!m_continue_c_tids.empty())
                 {
-                    for (tid_sig_collection::const_iterator s_pos = m_continue_C_tids.begin(), s_end = m_continue_C_tids.end(); s_pos != s_end; ++s_pos)
-                        continue_packet.Printf(";C%2.2x:%4.4" PRIx64, s_pos->second, s_pos->first);
+                    if (m_gdb_comm.GetVContSupported ('c'))
+                    {
+                        for (tid_collection::const_iterator t_pos = m_continue_c_tids.begin(), t_end = m_continue_c_tids.end(); t_pos != t_end; ++t_pos)
+                            continue_packet.Printf(";c:%4.4" PRIx64, *t_pos);
+                    }
+                    else 
+                        continue_packet_error = true;
                 }
-                else 
-                    continue_packet_error = true;
-            }
+                
+                if (!continue_packet_error && !m_continue_C_tids.empty())
+                {
+                    if (m_gdb_comm.GetVContSupported ('C'))
+                    {
+                        for (tid_sig_collection::const_iterator s_pos = m_continue_C_tids.begin(), s_end = m_continue_C_tids.end(); s_pos != s_end; ++s_pos)
+                            continue_packet.Printf(";C%2.2x:%4.4" PRIx64, s_pos->second, s_pos->first);
+                    }
+                    else 
+                        continue_packet_error = true;
+                }
 
-            if (!continue_packet_error && !m_continue_s_tids.empty())
-            {
-                if (m_gdb_comm.GetVContSupported ('s'))
+                if (!continue_packet_error && !m_continue_s_tids.empty())
                 {
-                    for (tid_collection::const_iterator t_pos = m_continue_s_tids.begin(), t_end = m_continue_s_tids.end(); t_pos != t_end; ++t_pos)
-                        continue_packet.Printf(";s:%4.4" PRIx64, *t_pos);
+                    if (m_gdb_comm.GetVContSupported ('s'))
+                    {
+                        for (tid_collection::const_iterator t_pos = m_continue_s_tids.begin(), t_end = m_continue_s_tids.end(); t_pos != t_end; ++t_pos)
+                            continue_packet.Printf(";s:%4.4" PRIx64, *t_pos);
+                    }
+                    else 
+                        continue_packet_error = true;
                 }
-                else 
-                    continue_packet_error = true;
-            }
-            
-            if (!continue_packet_error && !m_continue_S_tids.empty())
-            {
-                if (m_gdb_comm.GetVContSupported ('S'))
+                
+                if (!continue_packet_error && !m_continue_S_tids.empty())
                 {
-                    for (tid_sig_collection::const_iterator s_pos = m_continue_S_tids.begin(), s_end = m_continue_S_tids.end(); s_pos != s_end; ++s_pos)
-                        continue_packet.Printf(";S%2.2x:%4.4" PRIx64, s_pos->second, s_pos->first);
+                    if (m_gdb_comm.GetVContSupported ('S'))
+                    {
+                        for (tid_sig_collection::const_iterator s_pos = m_continue_S_tids.begin(), s_end = m_continue_S_tids.end(); s_pos != s_end; ++s_pos)
+                            continue_packet.Printf(";S%2.2x:%4.4" PRIx64, s_pos->second, s_pos->first);
+                    }
+                    else
+                        continue_packet_error = true;
                 }
-                else
-                    continue_packet_error = true;
+                
+                if (continue_packet_error)
+                    continue_packet.GetString().clear();
             }
-            
-            if (continue_packet_error)
-                continue_packet.GetString().clear();
         }
         else
             continue_packet_error = true;
@@ -1106,7 +1116,6 @@ ProcessGDBRemote::DoResume ()
             // Either no vCont support, or we tried to use part of the vCont
             // packet that wasn't supported by the remote GDB server.
             // We need to try and make a simple packet that can do our continue
-            const size_t num_threads = GetThreadList().GetSize();
             const size_t num_continue_c_tids = m_continue_c_tids.size();
             const size_t num_continue_C_tids = m_continue_C_tids.size();
             const size_t num_continue_s_tids = m_continue_s_tids.size();
@@ -1392,6 +1401,29 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     // and the m_thread_list.AddThread(...) so it doesn't change on us
                     Mutex::Locker locker (m_thread_list.GetMutex ());
                     thread_sp = m_thread_list.FindThreadByID(tid, false);
+                    if (!thread_sp)
+                    {
+                        // If there is an operating system plug-in it might hiding the actual API
+                        // thread inside a ThreadMemory...
+                        if (GetOperatingSystem())
+                        {
+                            bool found_backing_thread = false;
+                            const uint32_t num_threads = m_thread_list.GetSize();
+                            for (uint32_t thread_idx = 0; thread_idx < num_threads; ++thread_idx)
+                            {
+                                thread_sp = m_thread_list.GetThreadAtIndex(thread_idx)->GetBackingThread();
+                                if (thread_sp && thread_sp->GetID() == tid)
+                                {
+                                    found_backing_thread = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!found_backing_thread)
+                                thread_sp.reset();
+                        }
+                    }
+                    
                     if (!thread_sp)
                     {
                         // Create the thread if we need to

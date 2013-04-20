@@ -542,20 +542,24 @@ Thread::WillResume (StateType resume_state)
     // We distinguish between the plan on the top of the stack and the lower
     // plans in case a plan needs to do any special business before it runs.
     
+    bool need_to_resume = false;
     ThreadPlan *plan_ptr = GetCurrentPlan();
-    bool need_to_resume = plan_ptr->WillResume(resume_state, true);
+    if (plan_ptr)
+    {
+        need_to_resume = plan_ptr->WillResume(resume_state, true);
 
-    while ((plan_ptr = GetPreviousPlan(plan_ptr)) != NULL)
-    {
-        plan_ptr->WillResume (resume_state, false);
-    }
-    
-    // If the WillResume for the plan says we are faking a resume, then it will have set an appropriate stop info.
-    // In that case, don't reset it here.
-    
-    if (need_to_resume && resume_state != eStateSuspended)
-    {
-        m_actual_stop_info_sp.reset();
+        while ((plan_ptr = GetPreviousPlan(plan_ptr)) != NULL)
+        {
+            plan_ptr->WillResume (resume_state, false);
+        }
+        
+        // If the WillResume for the plan says we are faking a resume, then it will have set an appropriate stop info.
+        // In that case, don't reset it here.
+        
+        if (need_to_resume && resume_state != eStateSuspended)
+        {
+            m_actual_stop_info_sp.reset();
+        }
     }
 
     return need_to_resume;
@@ -571,6 +575,7 @@ bool
 Thread::ShouldStop (Event* event_ptr)
 {
     ThreadPlan *current_plan = GetCurrentPlan();
+    
     bool should_stop = true;
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
@@ -955,8 +960,8 @@ Thread::GetCurrentPlan ()
 {
     // There will always be at least the base plan.  If somebody is mucking with a
     // thread with an empty plan stack, we should assert right away.
-    assert (!m_plan_stack.empty());
-
+    if (m_plan_stack.empty())
+        return NULL;
     return m_plan_stack.back().get();
 }
 
