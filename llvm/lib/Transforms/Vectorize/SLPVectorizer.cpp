@@ -261,7 +261,7 @@ bool SLPVectorizer::vectorizeReductions(BasicBlock *BB, BoUpSLP &R) {
       }
       for (int i = 0; i < 2; ++i)
         if (BinaryOperator *BI = dyn_cast<BinaryOperator>(CI->getOperand(i)))
-          Changed |= tryToVectorize(BI, R);
+          Changed |= tryToVectorizePair(BI->getOperand(0), BI->getOperand(1), R);
       continue;
     }
   }
