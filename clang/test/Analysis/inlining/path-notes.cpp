@@ -253,10 +253,9 @@ public:
 const A& testDeclRefExprToReferenceInGetDerefExpr(const A *ptr) {
   const A& val = *ptr; //expected-note {{'val' initialized here}}
 
-  // This is not valid C++; dynamic_cast with a reference type will throw an
-  // exception if the pointer does not match the expected type. However, our
-  // implementation of dynamic_cast will pass through a null pointer...or a
-  // "null reference"! So this branch is actually possible.
+  // This is not valid C++; if 'ptr' were null, creating 'ref' would be illegal.
+  // However, this is not checked at runtime, so this branch is actually
+  // possible.
   if (&val == 0) { //expected-note {{Assuming pointer value is null}}
                    // expected-note@-1 {{Taking true branch}}
     val.bar(); // expected-warning {{Called C++ object pointer is null}}
@@ -4285,12 +4284,12 @@ const A& testDeclRefExprToReferenceInGetDerefExpr(const A *ptr) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>260</integer>
+// CHECK-NEXT:            <key>line</key><integer>259</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>260</integer>
+// CHECK-NEXT:            <key>line</key><integer>259</integer>
 // CHECK-NEXT:            <key>col</key><integer>4</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -4306,12 +4305,12 @@ const A& testDeclRefExprToReferenceInGetDerefExpr(const A *ptr) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>260</integer>
+// CHECK-NEXT:            <key>line</key><integer>259</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>260</integer>
+// CHECK-NEXT:            <key>line</key><integer>259</integer>
 // CHECK-NEXT:            <key>col</key><integer>4</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -4319,12 +4318,12 @@ const A& testDeclRefExprToReferenceInGetDerefExpr(const A *ptr) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>260</integer>
+// CHECK-NEXT:            <key>line</key><integer>259</integer>
 // CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>260</integer>
+// CHECK-NEXT:            <key>line</key><integer>259</integer>
 // CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -4336,7 +4335,7 @@ const A& testDeclRefExprToReferenceInGetDerefExpr(const A *ptr) {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>260</integer>
+// CHECK-NEXT:       <key>line</key><integer>259</integer>
 // CHECK-NEXT:       <key>col</key><integer>7</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -4344,12 +4343,12 @@ const A& testDeclRefExprToReferenceInGetDerefExpr(const A *ptr) {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>260</integer>
+// CHECK-NEXT:          <key>line</key><integer>259</integer>
 // CHECK-NEXT:          <key>col</key><integer>7</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>260</integer>
+// CHECK-NEXT:          <key>line</key><integer>259</integer>
 // CHECK-NEXT:          <key>col</key><integer>15</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -4369,12 +4368,12 @@ const A& testDeclRefExprToReferenceInGetDerefExpr(const A *ptr) {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>260</integer>
+// CHECK-NEXT:            <key>line</key><integer>259</integer>
 // CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>260</integer>
+// CHECK-NEXT:            <key>line</key><integer>259</integer>
 // CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -4382,12 +4381,12 @@ const A& testDeclRefExprToReferenceInGetDerefExpr(const A *ptr) {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>262</integer>
+// CHECK-NEXT:            <key>line</key><integer>261</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>262</integer>
+// CHECK-NEXT:            <key>line</key><integer>261</integer>
 // CHECK-NEXT:            <key>col</key><integer>7</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -4399,7 +4398,7 @@ const A& testDeclRefExprToReferenceInGetDerefExpr(const A *ptr) {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>262</integer>
+// CHECK-NEXT:       <key>line</key><integer>261</integer>
 // CHECK-NEXT:       <key>col</key><integer>5</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -4407,12 +4406,12 @@ const A& testDeclRefExprToReferenceInGetDerefExpr(const A *ptr) {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>262</integer>
+// CHECK-NEXT:          <key>line</key><integer>261</integer>
 // CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>262</integer>
+// CHECK-NEXT:          <key>line</key><integer>261</integer>
 // CHECK-NEXT:          <key>col</key><integer>7</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -4430,10 +4429,10 @@ const A& testDeclRefExprToReferenceInGetDerefExpr(const A *ptr) {
 // CHECK-NEXT:    <key>type</key><string>Called C++ object pointer is null</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testDeclRefExprToReferenceInGetDerefExpr</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>9</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>8</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
-// CHECK-NEXT:    <key>line</key><integer>262</integer>
+// CHECK-NEXT:    <key>line</key><integer>261</integer>
 // CHECK-NEXT:    <key>col</key><integer>5</integer>
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>
