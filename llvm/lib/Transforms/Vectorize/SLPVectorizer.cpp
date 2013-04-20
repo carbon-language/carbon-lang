@@ -90,6 +90,7 @@ struct SLPVectorizer : public FunctionPass {
 
       // Vectorize trees that end at stores.
       if (unsigned count = collectStores(BB, R)) {
+        (void)count;
         DEBUG(dbgs()<<"SLP: Found " << count << " stores to vectorize.\n");
         BBChanged |= vectorizeStoreChains(R);
       }
