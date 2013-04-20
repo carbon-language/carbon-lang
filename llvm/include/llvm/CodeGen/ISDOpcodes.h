@@ -602,14 +602,6 @@ namespace ISD {
     /// specifier.
     PREFETCH,
 
-    /// OUTCHAIN = MEMBARRIER(INCHAIN, load-load, load-store, store-load,
-    ///                       store-store, device)
-    /// This corresponds to the memory.barrier intrinsic.
-    /// it takes an input chain, 4 operands to specify the type of barrier, an
-    /// operand specifying if the barrier applies to device and uncached memory
-    /// and produces an output chain.
-    MEMBARRIER,
-
     /// OUTCHAIN = ATOMIC_FENCE(INCHAIN, ordering, scope)
     /// This corresponds to the fence instruction. It takes an input chain, and
     /// two integer constants: an AtomicOrdering and a SynchronizationScope.

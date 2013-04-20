@@ -1221,7 +1221,6 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
 
   // FIXME: There are instructions available for ATOMIC_FENCE
   // on SparcV8 and later.
-  setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
   setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Expand);
 
   setOperationAction(ISD::FSIN , MVT::f64, Expand);

@@ -1964,14 +1964,6 @@ def : Pat<(f64 (extloadf32 xaddr:$src)),
 def : Pat<(f64 (fextend f32:$src)),
           (COPY_TO_REGCLASS $src, F8RC)>;
 
-// Memory barriers
-def : Pat<(membarrier (i32 imm /*ll*/),
-                      (i32 imm /*ls*/),
-                      (i32 imm /*sl*/),
-                      (i32 imm /*ss*/),
-                      (i32 imm /*device*/)),
-           (SYNC)>;
-
 def : Pat<(atomic_fence (imm), (imm)), (SYNC)>;
 
 // Additional FNMSUB patterns: -a*c + b == -(a*c - b)

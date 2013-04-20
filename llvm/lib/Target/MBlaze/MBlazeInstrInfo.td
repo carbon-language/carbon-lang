@@ -724,8 +724,7 @@ let usesCustomInserter=1 in {
     [(set GPR:$dst, (atomic_load_nand_32 GPR:$ptr, GPR:$val))]>;
 
   def MEMBARRIER : MBlazePseudo<(outs), (ins),
-    "# memory barrier",
-    [(membarrier (i32 imm), (i32 imm), (i32 imm), (i32 imm), (i32 imm))]>;
+    "# memory barrier", []>;
 }
 
 //===----------------------------------------------------------------------===//

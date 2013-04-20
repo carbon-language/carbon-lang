@@ -414,9 +414,6 @@ def prefetch   : SDNode<"ISD::PREFETCH"   , SDTPrefetch,
 def readcyclecounter : SDNode<"ISD::READCYCLECOUNTER", SDTIntLeaf,
                      [SDNPHasChain, SDNPSideEffect]>;
 
-def membarrier : SDNode<"ISD::MEMBARRIER" , SDTMemBarrier,
-                        [SDNPHasChain, SDNPSideEffect]>;
-
 def atomic_fence : SDNode<"ISD::ATOMIC_FENCE" , SDTAtomicFence,
                           [SDNPHasChain, SDNPSideEffect]>;
 

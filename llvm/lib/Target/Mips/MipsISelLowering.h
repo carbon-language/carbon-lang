@@ -343,7 +343,6 @@ namespace llvm {
     SDValue lowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const;
-    SDValue lowerMEMBARRIER(SDValue Op, SelectionDAG& DAG) const;
     SDValue lowerATOMIC_FENCE(SDValue Op, SelectionDAG& DAG) const;
     SDValue lowerShiftLeftParts(SDValue Op, SelectionDAG& DAG) const;
     SDValue lowerShiftRightParts(SDValue Op, SelectionDAG& DAG,

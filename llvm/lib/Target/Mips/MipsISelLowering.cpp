@@ -738,7 +738,6 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
   case ISD::FRAMEADDR:          return lowerFRAMEADDR(Op, DAG);
   case ISD::RETURNADDR:         return lowerRETURNADDR(Op, DAG);
   case ISD::EH_RETURN:          return lowerEH_RETURN(Op, DAG);
-  case ISD::MEMBARRIER:         return lowerMEMBARRIER(Op, DAG);
   case ISD::ATOMIC_FENCE:       return lowerATOMIC_FENCE(Op, DAG);
   case ISD::SHL_PARTS:          return lowerShiftLeftParts(Op, DAG);
   case ISD::SRA_PARTS:          return lowerShiftRightParts(Op, DAG, true);
@@ -1822,15 +1821,6 @@ SDValue MipsTargetLowering::lowerEH_RETURN(SDValue Op, SelectionDAG &DAG)
                      DAG.getRegister(OffsetReg, Ty),
                      DAG.getRegister(AddrReg, getPointerTy()),
                      Chain.getValue(1));
-}
-
-// TODO: set SType according to the desired memory barrier behavior.
-SDValue
-MipsTargetLowering::lowerMEMBARRIER(SDValue Op, SelectionDAG &DAG) const {
-  unsigned SType = 0;
-  DebugLoc DL = Op.getDebugLoc();
-  return DAG.getNode(MipsISD::Sync, DL, MVT::Other, Op.getOperand(0),
-                     DAG.getConstant(SType, MVT::i32));
 }
 
 SDValue MipsTargetLowering::lowerATOMIC_FENCE(SDValue Op,

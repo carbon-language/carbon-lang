@@ -91,7 +91,6 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
   setOperationAction(ISD::SDIVREM, MVT::i64, Custom);
   setOperationAction(ISD::UDIVREM, MVT::i64, Custom);
-  setOperationAction(ISD::MEMBARRIER,         MVT::Other, Custom);
   setOperationAction(ISD::ATOMIC_FENCE,       MVT::Other, Custom);
   setOperationAction(ISD::LOAD,               MVT::i32, Custom);
   setOperationAction(ISD::STORE,              MVT::i32, Custom);

@@ -53,7 +53,6 @@ Mips16TargetLowering::Mips16TargetLowering(MipsTargetMachine &TM)
   if (Mips16HardFloat)
     setMips16HardFloatLibCalls();
 
-  setOperationAction(ISD::MEMBARRIER,         MVT::Other, Expand);
   setOperationAction(ISD::ATOMIC_FENCE,       MVT::Other, Expand);
   setOperationAction(ISD::ATOMIC_CMP_SWAP,    MVT::i32,   Expand);
   setOperationAction(ISD::ATOMIC_SWAP,        MVT::i32,   Expand);
