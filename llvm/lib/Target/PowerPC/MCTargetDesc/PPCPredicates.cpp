@@ -29,3 +29,18 @@ PPC::Predicate PPC::InvertPredicate(PPC::Predicate Opcode) {
   }
   llvm_unreachable("Unknown PPC branch opcode!");
 }
+
+PPC::Predicate PPC::getSwappedPredicate(PPC::Predicate Opcode) {
+  switch (Opcode) {
+  case PPC::PRED_EQ: return PPC::PRED_EQ;
+  case PPC::PRED_NE: return PPC::PRED_NE;
+  case PPC::PRED_LT: return PPC::PRED_GT;
+  case PPC::PRED_GE: return PPC::PRED_LE;
+  case PPC::PRED_GT: return PPC::PRED_LT;
+  case PPC::PRED_LE: return PPC::PRED_GE;
+  case PPC::PRED_NU: return PPC::PRED_NU;
+  case PPC::PRED_UN: return PPC::PRED_UN;
+  }
+  llvm_unreachable("Unknown PPC branch opcode!");
+}
+

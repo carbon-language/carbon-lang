@@ -1087,22 +1087,6 @@ bool PPCInstrInfo::analyzeCompare(const MachineInstr *MI,
   }
 }
 
-/// Assume the flags are set by MI(a,b), return the condition code if we modify
-/// the instructions such that flags are set by MI(b,a).
-PPC::Predicate static getSwappedPredicate(PPC::Predicate Opcode) {
-  switch (Opcode) {
-  case PPC::PRED_EQ: return PPC::PRED_EQ;
-  case PPC::PRED_NE: return PPC::PRED_NE;
-  case PPC::PRED_LT: return PPC::PRED_GT;
-  case PPC::PRED_GE: return PPC::PRED_LE;
-  case PPC::PRED_GT: return PPC::PRED_LT;
-  case PPC::PRED_LE: return PPC::PRED_GE;
-  case PPC::PRED_NU: return PPC::PRED_NU;
-  case PPC::PRED_UN: return PPC::PRED_UN;
-  }
-  llvm_unreachable("Unknown PPC branch opcode!");
-}
- 
 bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
                                         unsigned SrcReg, unsigned SrcReg2,
                                         int Mask, int Value,
@@ -1320,7 +1304,7 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
                 Pred == PPC::PRED_EQ || Pred == PPC::PRED_NE) &&
                "Invalid predicate for equality-only optimization");
         PredsToUpdate.push_back(std::make_pair(&((*I).getOperand(0)),
-                                getSwappedPredicate(Pred)));
+                                PPC::getSwappedPredicate(Pred)));
       } else if (UseMI->getOpcode() == PPC::ISEL ||
                  UseMI->getOpcode() == PPC::ISEL8) {
         unsigned NewSubReg = UseMI->getOperand(3).getSubReg();
