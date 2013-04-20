@@ -135,6 +135,8 @@ public:
         Error deallocate_error;
         
         map.Free((lldb::addr_t)m_persistent_variable_sp->m_live_sp->GetValue().GetScalar().ULongLong(), deallocate_error);
+        
+        m_persistent_variable_sp->m_live_sp.reset();
             
         if (!deallocate_error.Success())
         {
@@ -158,6 +160,8 @@ public:
         if (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVNeedsAllocation)
         {
             MakeAllocation(map, err);
+            m_persistent_variable_sp->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
+            
             if (!err.Success())
                 return;
         }
@@ -166,10 +170,10 @@ public:
             m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVIsLLDBAllocated)
         {
             Error write_error;
-            
+                        
             map.WriteScalarToMemory(process_address + m_offset,
                                     m_persistent_variable_sp->m_live_sp->GetValue().GetScalar(),
-                                    m_persistent_variable_sp->m_live_sp->GetProcessSP()->GetAddressByteSize(),
+                                    map.GetAddressByteSize(),
                                     write_error);
             
             if (!write_error.Success())
@@ -293,8 +297,20 @@ public:
             return;
         }
         
-        if (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVNeedsAllocation &&
-            !(m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVKeepInTarget))
+        lldb::ProcessSP process_sp = map.GetBestExecutionContextScope()->CalculateProcess();
+        if (!process_sp ||
+            !process_sp->CanJIT())
+        {
+            // Allocations are not persistent so persistent variables cannot stay materialized.
+            
+            m_persistent_variable_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
+
+            DestroyAllocation(map, err);
+            if (!err.Success())
+                return;
+        }
+        else if (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVNeedsAllocation &&
+                 !(m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVKeepInTarget))
         {
             DestroyAllocation(map, err);
             if (!err.Success())
@@ -804,13 +820,20 @@ public:
             return;
         }
         
-        ret->m_live_sp = ValueObjectConstResult::Create(exe_scope,
-                                                        m_type.GetASTContext(),
-                                                        m_type.GetOpaqueQualType(),
-                                                        name,
-                                                        address,
-                                                        eAddressTypeLoad,
-                                                        ret->GetByteSize());
+        lldb::ProcessSP process_sp = map.GetBestExecutionContextScope()->CalculateProcess();
+        
+        bool can_persist = (process_sp && process_sp->CanJIT());
+
+        if (can_persist && m_keep_in_memory)
+        {
+            ret->m_live_sp = ValueObjectConstResult::Create(exe_scope,
+                                                            m_type.GetASTContext(),
+                                                            m_type.GetOpaqueQualType(),
+                                                            name,
+                                                            address,
+                                                            eAddressTypeLoad,
+                                                            ret->GetByteSize());
+        }
         
         ret->ValueUpdated();
         
@@ -828,13 +851,15 @@ public:
                 
         result_variable_sp = ret;
         
-        if (!m_keep_in_memory && m_temporary_allocation != LLDB_INVALID_ADDRESS)
+        if (!can_persist || !m_keep_in_memory)
         {
             ret->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
             
-            Error free_error;
-            
-            map.Free(m_temporary_allocation, free_error);
+            if (m_temporary_allocation != LLDB_INVALID_ADDRESS)
+            {
+                Error free_error;
+                map.Free(m_temporary_allocation, free_error);
+            }
         }
         else
         {
