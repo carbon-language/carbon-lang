@@ -6018,13 +6018,15 @@ void Sema::AddMemberOperatorCandidates(OverloadedOperatorKind Op,
   //   constructed as follows:
   QualType T1 = Args[0]->getType();
 
-  //     -- If T1 is a class type, the set of member candidates is the
-  //        result of the qualified lookup of T1::operator@
-  //        (13.3.1.1.1); otherwise, the set of member candidates is
-  //        empty.
+  //     -- If T1 is a complete class type or a class currently being
+  //        defined, the set of member candidates is the result of the
+  //        qualified lookup of T1::operator@ (13.3.1.1.1); otherwise,
+  //        the set of member candidates is empty.
   if (const RecordType *T1Rec = T1->getAs<RecordType>()) {
-    // Complete the type if it can be completed. Otherwise, we're done.
-    if (RequireCompleteType(OpLoc, T1, 0))
+    // Complete the type if it can be completed.
+    RequireCompleteType(OpLoc, T1, 0);
+    // If the type is neither complete nor being defined, bail out now.
+    if (!T1Rec->getDecl()->getDefinition())
       return;
 
     LookupResult Operators(*this, OpName, OpLoc, LookupOrdinaryName);

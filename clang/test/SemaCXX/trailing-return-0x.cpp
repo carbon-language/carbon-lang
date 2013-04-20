@@ -85,3 +85,12 @@ namespace PR12053 {
     f2(0); // expected-error{{no matching function for call to 'f2'}}
   }
 }
+
+namespace DR1608 {
+  struct S {
+    void operator+();
+    int operator[](int);
+    auto f() -> decltype(+*this); // expected-note {{here}}
+    auto f() -> decltype((*this)[0]); // expected-error {{cannot be overloaded}}
+  };
+}
