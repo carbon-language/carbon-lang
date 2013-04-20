@@ -978,7 +978,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       unsigned LdmOpc = AFI->isThumbFunction() ? ARM::t2LDMIA : ARM::LDMIA;
       MachineInstrBuilder MIB =
         AddDefaultPred(BuildMI(MBB, I, DL, get(LdmOpc))
-                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
+                    .addFrameIndex(FI).addMemOperand(MMO));
       MIB = AddDReg(MIB, DestReg, ARM::gsub_0, RegState::DefineNoRead, TRI);
       MIB = AddDReg(MIB, DestReg, ARM::gsub_1, RegState::DefineNoRead, TRI);
       if (TargetRegisterInfo::isPhysicalRegister(DestReg))
