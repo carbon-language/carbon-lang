@@ -37,11 +37,12 @@ class StackFrameContext;
 
 namespace ento {
 
+class CodeTextRegion;
 class MemRegionManager;
 class MemSpaceRegion;
 class SValBuilder;
+class SymbolicRegion;
 class VarRegion;
-class CodeTextRegion;
 
 /// Represent a region's offset within the top level base region.
 class RegionOffset {
@@ -144,6 +145,10 @@ public:
   virtual bool isSubRegionOf(const MemRegion *R) const;
 
   const MemRegion *StripCasts(bool StripBaseCasts = true) const;
+
+  /// \brief If this is a symbolic region, returns the region. Otherwise,
+  /// goes up the base chain looking for the first symbolic base region.
+  const SymbolicRegion *getSymbolicBase() const;
 
   bool hasGlobalsOrParametersStorage() const;
 

@@ -1080,6 +1080,17 @@ const MemRegion *MemRegion::StripCasts(bool StripBaseCasts) const {
   }
 }
 
+const SymbolicRegion *MemRegion::getSymbolicBase() const {
+  const SubRegion *SubR = dyn_cast<SubRegion>(this);
+
+  while (SubR) {
+    if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(SubR))
+      return SymR;
+    SubR = dyn_cast<SubRegion>(SubR->getSuperRegion());
+  }
+  return 0;
+}
+
 // FIXME: Merge with the implementation of the same method in Store.cpp
 static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
   if (const RecordType *RT = Ty->getAs<RecordType>()) {

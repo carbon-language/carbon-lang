@@ -144,16 +144,24 @@ public:
   /// Otherwise return 0.
   const FunctionDecl *getAsFunctionDecl() const;
 
-  /// If this SVal is a location (subclasses Loc) and
-  /// wraps a symbol, return that SymbolRef.  Otherwise return 0.
-  SymbolRef getAsLocSymbol() const;
+  /// \brief If this SVal is a location and wraps a symbol, return that
+  ///  SymbolRef. Otherwise return 0.
+  ///
+  /// Casts are ignored during lookup.
+  /// \param IncludeBaseRegions The boolean that controls whether the search
+  /// should continue to the base regions if the region is not symbolic.
+  SymbolRef getAsLocSymbol(bool IncludeBaseRegions = false) const;
 
   /// Get the symbol in the SVal or its base region.
   SymbolRef getLocSymbolInBase() const;
 
-  /// If this SVal wraps a symbol return that SymbolRef.
+  /// \brief If this SVal wraps a symbol return that SymbolRef.
   /// Otherwise, return 0.
-  SymbolRef getAsSymbol() const;
+  ///
+  /// Casts are ignored during lookup.
+  /// \param IncludeBaseRegions The boolean that controls whether the search
+  /// should continue to the base regions if the region is not symbolic.
+  SymbolRef getAsSymbol(bool IncludeBaseRegions = false) const;
 
   /// getAsSymbolicExpression - If this Sval wraps a symbolic expression then
   ///  return that expression.  Otherwise return NULL.

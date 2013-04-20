@@ -90,20 +90,15 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
 
   case loc::MemRegionKind: {
     // FIXME: Should this go into the storemanager?
-
     const MemRegion *R = Cond.castAs<loc::MemRegionVal>().getRegion();
-    const SubRegion *SubR = dyn_cast<SubRegion>(R);
 
-    while (SubR) {
-      // FIXME: now we only find the first symbolic region.
-      if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(SubR)) {
-        const llvm::APSInt &zero = getBasicVals().getZeroWithPtrWidth();
-        if (Assumption)
-          return assumeSymNE(state, SymR->getSymbol(), zero, zero);
-        else
-          return assumeSymEQ(state, SymR->getSymbol(), zero, zero);
-      }
-      SubR = dyn_cast<SubRegion>(SubR->getSuperRegion());
+    // FIXME: now we only find the first symbolic region.
+    if (const SymbolicRegion *SymR = R->getSymbolicBase()) {
+      const llvm::APSInt &zero = getBasicVals().getZeroWithPtrWidth();
+      if (Assumption)
+        return assumeSymNE(state, SymR->getSymbol(), zero, zero);
+      else
+        return assumeSymEQ(state, SymR->getSymbol(), zero, zero);
     }
 
     // FALL-THROUGH.

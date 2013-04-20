@@ -383,7 +383,7 @@ ConditionTruthVal ProgramState::isNull(SVal V) const {
   if (V.isConstant())
     return false;
   
-  SymbolRef Sym = V.getAsSymbol();
+  SymbolRef Sym = V.getAsSymbol(/* IncludeBaseRegion */ true);
   if (!Sym)
     return ConditionTruthVal();
   

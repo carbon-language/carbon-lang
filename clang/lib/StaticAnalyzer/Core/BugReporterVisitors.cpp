@@ -964,7 +964,7 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
       report.addVisitor(new UndefOrNullArgVisitor(R));
 
       // If the contents are symbolic, find out when they became null.
-      if (V.getAsLocSymbol()) {
+      if (V.getAsLocSymbol(/*IncludeBaseRegions*/ true)) {
         BugReporterVisitor *ConstraintTracker =
           new TrackConstraintBRVisitor(V.castAs<DefinedSVal>(), false);
         report.addVisitor(ConstraintTracker);

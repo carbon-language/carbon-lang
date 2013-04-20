@@ -64,14 +64,18 @@ const FunctionDecl *SVal::getAsFunctionDecl() const {
 ///
 /// Implicit casts (ex: void* -> char*) can turn Symbolic region into Element
 /// region. If that is the case, gets the underlining region.
-SymbolRef SVal::getAsLocSymbol() const {
+/// When IncludeBaseRegions is set to true and the SubRegion is non-symbolic,
+/// the first symbolic parent region is returned.
+SymbolRef SVal::getAsLocSymbol(bool IncludeBaseRegions) const {
   // FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
   if (Optional<nonloc::LocAsInteger> X = getAs<nonloc::LocAsInteger>())
     return X->getLoc().getAsLocSymbol();
 
   if (Optional<loc::MemRegionVal> X = getAs<loc::MemRegionVal>()) {
-    const MemRegion *R = X->stripCasts();
-    if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(R))
+    const MemRegion *R = X->getRegion();
+    if (const SymbolicRegion *SymR = IncludeBaseRegions ?
+                                      R->getSymbolicBase() :
+                                      dyn_cast<SymbolicRegion>(R->StripCasts()))
       return SymR->getSymbol();
   }
   return 0;
@@ -99,13 +103,17 @@ SymbolRef SVal::getLocSymbolInBase() const {
 // TODO: The next 3 functions have to be simplified.
 
 /// \brief If this SVal wraps a symbol return that SymbolRef.
-///  Otherwise return 0.
-SymbolRef SVal::getAsSymbol() const {
+/// Otherwise, return 0.
+///
+/// Casts are ignored during lookup.
+/// \param IncludeBaseRegions The boolean that controls whether the search
+/// should continue to the base regions if the region is not symbolic.
+SymbolRef SVal::getAsSymbol(bool IncludeBaseRegion) const {
   // FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
   if (Optional<nonloc::SymbolVal> X = getAs<nonloc::SymbolVal>())
     return X->getSymbol();
 
-  return getAsLocSymbol();
+  return getAsLocSymbol(IncludeBaseRegion);
 }
 
 /// getAsSymbolicExpression - If this Sval wraps a symbolic expression then

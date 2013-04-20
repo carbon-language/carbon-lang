@@ -97,3 +97,16 @@ void test24(char *buffer) {
   use(buffer);
   buffer[1] = 'b';
 }
+
+// Ensure idc works on pointers with constant offset.
+void idcchar(const char *s2) {
+  if(s2)
+    ;
+}
+void testConstantOffset(char *value) {
+  char *cursor = value + 5;
+  idcchar(cursor);
+  if (*cursor) {
+    cursor++;
+  }
+}
