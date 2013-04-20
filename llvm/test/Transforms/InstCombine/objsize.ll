@@ -256,3 +256,23 @@ xpto:
 return:
   ret i32 7
 }
+
+@globalalias = alias internal [60 x i8]* @a
+
+; CHECK: @test18
+; CHECK-NEXT: ret i32 60
+define i32 @test18() {
+  %bc = bitcast [60 x i8]* @globalalias to i8*
+  %1 = call i32 @llvm.objectsize.i32(i8* %bc, i1 false)
+  ret i32 %1
+}
+
+@globalalias2 = alias weak [60 x i8]* @a
+
+; CHECK: @test19
+; CHECK: llvm.objectsize
+define i32 @test19() {
+  %bc = bitcast [60 x i8]* @globalalias2 to i8*
+  %1 = call i32 @llvm.objectsize.i32(i8* %bc, i1 false)
+  ret i32 %1
+}
