@@ -202,8 +202,6 @@ RelocationTypesARMPairs [] = {
 };
 #undef STRING_PAIR
 
-namespace yaml {  // COFF-specific yaml-writing specific routines
-
 static raw_ostream &writeName(raw_ostream &Out,
                               const char *Name, std::size_t NameSize) {
   for (std::size_t i = 0; i < NameSize; ++i) {
@@ -224,8 +222,6 @@ static raw_ostream &writeBitMask(raw_ostream &Out,
   return Out;
 }
 
-} // end of yaml namespace
-
 // Given an array of pod_pair<enum, const char *>, look up a value
 template <typename T, std::size_t N>
 const char *nameLookup(const pod_pair<T, const char *> (&Arr)[N],
@@ -237,9 +233,11 @@ const char *nameLookup(const pod_pair<T, const char *> (&Arr)[N],
   return NotFound;
 }
 
-
 static raw_ostream &yamlCOFFHeader(const object::coff_file_header *Header,
                                    raw_ostream &Out) {
+  COFF::header H;
+  H.Machine = Header->Machine;
+  H.Characteristics = Header->Characteristics;
 
   Out << "header: !Header\n";
   Out << "  Machine: ";
@@ -260,14 +258,14 @@ static raw_ostream &yamlCOFFSections(object::COFFObjectFile &Obj,
 
     Out << "  - !Section\n";
     Out << "    Name: ";
-    yaml::writeName(Out, sect->Name, sizeof(sect->Name)) << '\n';
+    writeName(Out, sect->Name, sizeof(sect->Name)) << '\n';
 
     Out << "    Characteristics: [";
-    yaml::writeBitMask(Out, SectionCharacteristicsPairs1, sect->Characteristics);
+    writeBitMask(Out, SectionCharacteristicsPairs1, sect->Characteristics);
     Out << nameLookup(SectionCharacteristicsPairsAlignment,
         sect->Characteristics & 0x00F00000, "# Unrecognized_IMAGE_SCN_ALIGN")
         << ", ";
-    yaml::writeBitMask(Out, SectionCharacteristicsPairs2, sect->Characteristics);
+    writeBitMask(Out, SectionCharacteristicsPairs2, sect->Characteristics);
     Out << "] # ";
     yaml::writeHexNumber(Out, sect->Characteristics) << '\n';
 
