@@ -19,6 +19,7 @@
 #include "clang/Driver/Options.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileSystem.h"
 using namespace clang::driver;
 using namespace clang;
 
@@ -331,6 +332,13 @@ ToolChain::CXXStdlibType ToolChain::GetCXXStdlibType(const ArgList &Args) const{
                                                    const Twine &Path) {
   CC1Args.push_back("-internal-externc-isystem");
   CC1Args.push_back(DriverArgs.MakeArgString(Path));
+}
+
+void ToolChain::addExternCSystemIncludeIfExists(const ArgList &DriverArgs,
+                                                ArgStringList &CC1Args,
+                                                const Twine &Path) {
+  if (llvm::sys::fs::exists(Path))
+    addExternCSystemInclude(DriverArgs, CC1Args, Path);
 }
 
 /// \brief Utility function to add a list of system include directories to CC1.

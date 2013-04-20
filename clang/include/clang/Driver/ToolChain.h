@@ -82,6 +82,9 @@ protected:
   static void addExternCSystemInclude(const ArgList &DriverArgs,
                                       ArgStringList &CC1Args,
                                       const Twine &Path);
+  static void addExternCSystemIncludeIfExists(const ArgList &DriverArgs,
+                                              ArgStringList &CC1Args,
+                                              const Twine &Path);
   static void addSystemIncludes(const ArgList &DriverArgs,
                                 ArgStringList &CC1Args,
                                 ArrayRef<StringRef> Paths);

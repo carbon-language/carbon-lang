@@ -530,6 +530,8 @@ private:
   static bool addLibStdCXXIncludePaths(Twine Base, Twine TargetArchDir,
                                        const ArgList &DriverArgs,
                                        ArgStringList &CC1Args);
+
+  std::string computeSysRoot(const ArgList &Args) const;
 };
 
 class LLVM_LIBRARY_VISIBILITY Hexagon_TC : public Linux {
