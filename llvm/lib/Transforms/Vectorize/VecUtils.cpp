@@ -18,6 +18,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
@@ -44,8 +45,8 @@ static const unsigned RecursionMaxDepth = 6;
 namespace llvm {
 
 BoUpSLP::BoUpSLP(BasicBlock *Bb, ScalarEvolution *S, DataLayout *Dl,
-                             TargetTransformInfo *Tti, AliasAnalysis *Aa) :
-                             BB(Bb), SE(S), DL(Dl), TTI(Tti), AA(Aa) {
+                 TargetTransformInfo *Tti, AliasAnalysis *Aa, Loop *Lp) :
+  BB(Bb), SE(S), DL(Dl), TTI(Tti), AA(Aa), L(Lp)  {
   numberInstructions();
 }
 
@@ -121,7 +122,7 @@ bool BoUpSLP::vectorizeStoreChain(ValueList &Chain, int CostThreshold) {
     if (Cost < CostThreshold) {
       DEBUG(dbgs() << "SLP: Decided to vectorize cost=" << Cost << "\n");
       vectorizeTree(Operands, VF);
-      i += VF;
+      i += VF - 1;
       Changed = true;
     }
   }
@@ -381,13 +382,15 @@ int BoUpSLP::getTreeCost_rec(ValueList &VL, unsigned Depth) {
   // Check if all of the operands are constants.
   bool AllConst = true;
   bool AllSameScalar = true;
+  bool MustScalarizeFlag = false;
   for (unsigned i = 0, e = VL.size(); i < e; ++i) {
     AllConst &= isa<Constant>(VL[i]);
     AllSameScalar &= (VL[0] == VL[i]);
     // Must have a single use.
     Instruction *I = dyn_cast<Instruction>(VL[i]);
-    // This instruction is outside the basic block or if it is a known hazard.
-    if (MustScalarize.count(VL[i]) || (I && I->getParent() != BB))
+    MustScalarizeFlag |= MustScalarize.count(VL[i]);
+    // This instruction is outside the basic block.
+    if (I && I->getParent() != BB)
       return getScalarizationCost(VecTy);
   }
 
@@ -395,11 +398,23 @@ int BoUpSLP::getTreeCost_rec(ValueList &VL, unsigned Depth) {
   if (AllConst) return 0;
 
   // If all of the operands are identical we can broadcast them.
-  if (AllSameScalar)
-    return TTI->getShuffleCost(TargetTransformInfo::SK_Broadcast, VecTy, 0);
-
-  // Scalarize unknown structures.
   Instruction *VL0 = dyn_cast<Instruction>(VL[0]);
+  if (AllSameScalar) {
+    // If we are in a loop, and this is not an instruction (e.g. constant or
+    // argument) or the instruction is defined outside the loop then assume
+    // that the cost is zero.
+    if (L && (!VL0 || !L->contains(VL0)))
+      return 0;
+
+    // We need to broadcast the scalar.
+    return TTI->getShuffleCost(TargetTransformInfo::SK_Broadcast, VecTy, 0);
+  }
+
+  // If this is not a constant, or a scalar from outside the loop then we
+  // need to scalarize it.
+  if (MustScalarizeFlag)
+    return getScalarizationCost(VecTy);
+
   if (!VL0) return getScalarizationCost(VecTy);
   assert(VL0->getParent() == BB && "Wrong BB");
 

@@ -83,7 +83,7 @@ struct SLPVectorizer : public FunctionPass {
 
       // Use the bollom up slp vectorizer to construct chains that start with
       // he store instructions.
-      BoUpSLP R(BB, SE, DL, TTI, AA);
+      BoUpSLP R(BB, SE, DL, TTI, AA, LI->getLoopFor(BB));
 
       // Vectorize trees that end at reductions.
       BBChanged |= vectorizeReductions(BB, R);

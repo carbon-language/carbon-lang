@@ -27,6 +27,7 @@ class BasicBlock; class Instruction; class Type;
 class VectorType; class StoreInst; class Value;
 class ScalarEvolution; class DataLayout;
 class TargetTransformInfo; class AliasAnalysis;
+class Loop;
 
 /// Bottom Up SLP vectorization utility class.
 struct BoUpSLP  {
@@ -37,7 +38,7 @@ struct BoUpSLP  {
 
   // \brief C'tor.
   BoUpSLP(BasicBlock *Bb, ScalarEvolution *Se, DataLayout *Dl,
-         TargetTransformInfo *Tti, AliasAnalysis *Aa);
+         TargetTransformInfo *Tti, AliasAnalysis *Aa, Loop *Lp);
 
   /// \brief Take the pointer operand from the Load/Store instruction.
   /// \returns NULL if this is not a valid Load/Store instruction.
@@ -112,7 +113,7 @@ private:
 
   /// \returns a vector from a collection of scalars in \p VL.
   Value *Scalarize(ValueList &VL, VectorType *Ty);
-  
+
 private:
   /// Maps instructions to numbers and back.
   SmallDenseMap<Value*, int> InstrIdx;
@@ -155,6 +156,7 @@ private:
   DataLayout *DL;
   TargetTransformInfo *TTI;
   AliasAnalysis *AA;
+  Loop *L;
 };
 
 } // end of namespace
