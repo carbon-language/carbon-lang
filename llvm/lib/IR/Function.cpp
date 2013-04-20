@@ -124,6 +124,13 @@ bool Argument::hasStructRetAttr() const {
     hasAttribute(1, Attribute::StructRet);
 }
 
+/// hasReturnedAttr - Return true if this argument has the returned attribute on
+/// it in its containing function.
+bool Argument::hasReturnedAttr() const {
+  return getParent()->getAttributes().
+    hasAttribute(getArgNo()+1, Attribute::Returned);
+}
+
 /// addAttr - Add attributes to an argument.
 void Argument::addAttr(AttributeSet AS) {
   assert(AS.getNumSlots() <= 1 &&

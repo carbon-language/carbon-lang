@@ -944,6 +944,7 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
     case lltok::kw_nest:
     case lltok::kw_noalias:
     case lltok::kw_nocapture:
+    case lltok::kw_returned:
     case lltok::kw_sret:
       HaveError |=
         Error(Lex.getLoc(),
@@ -1156,6 +1157,7 @@ bool LLParser::ParseOptionalParamAttrs(AttrBuilder &B) {
     case lltok::kw_nest:            B.addAttribute(Attribute::Nest); break;
     case lltok::kw_noalias:         B.addAttribute(Attribute::NoAlias); break;
     case lltok::kw_nocapture:       B.addAttribute(Attribute::NoCapture); break;
+    case lltok::kw_returned:        B.addAttribute(Attribute::Returned); break;
     case lltok::kw_signext:         B.addAttribute(Attribute::SExt); break;
     case lltok::kw_sret:            B.addAttribute(Attribute::StructRet); break;
     case lltok::kw_zeroext:         B.addAttribute(Attribute::ZExt); break;
@@ -1199,6 +1201,7 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
     case lltok::kw_byval:
     case lltok::kw_nest:
     case lltok::kw_nocapture:
+    case lltok::kw_returned:
     case lltok::kw_sret:
       HaveError |= Error(Lex.getLoc(), "invalid use of parameter-only attribute");
       break;

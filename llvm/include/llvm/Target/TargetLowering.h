@@ -1910,16 +1910,18 @@ public:
   struct ArgListEntry {
     SDValue Node;
     Type* Ty;
-    bool isSExt  : 1;
-    bool isZExt  : 1;
-    bool isInReg : 1;
-    bool isSRet  : 1;
-    bool isNest  : 1;
-    bool isByVal : 1;
+    bool isSExt     : 1;
+    bool isZExt     : 1;
+    bool isInReg    : 1;
+    bool isSRet     : 1;
+    bool isNest     : 1;
+    bool isByVal    : 1;
+    bool isReturned : 1;
     uint16_t Alignment;
 
     ArgListEntry() : isSExt(false), isZExt(false), isInReg(false),
-      isSRet(false), isNest(false), isByVal(false), Alignment(0) { }
+      isSRet(false), isNest(false), isByVal(false), isReturned(false),
+      Alignment(0) { }
   };
   typedef std::vector<ArgListEntry> ArgListTy;
 

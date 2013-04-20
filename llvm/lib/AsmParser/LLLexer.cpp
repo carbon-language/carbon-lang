@@ -582,6 +582,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(optsize);
   KEYWORD(readnone);
   KEYWORD(readonly);
+  KEYWORD(returned);
   KEYWORD(returns_twice);
   KEYWORD(signext);
   KEYWORD(sret);

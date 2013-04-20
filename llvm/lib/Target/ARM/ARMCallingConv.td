@@ -195,9 +195,20 @@ def CSR_NoRegs : CalleeSavedRegs<(add)>;
 def CSR_AAPCS : CalleeSavedRegs<(add LR, R11, R10, R9, R8, R7, R6, R5, R4,
                                      (sequence "D%u", 15, 8))>;
 
+// Constructors and destructors return 'this' in the ARM C++ ABI; since 'this'
+// and the pointer return value are both passed in R0 in these cases, this can
+// be partially modelled by treating R0 as a callee-saved register
+// Only the resulting RegMask is used; the SaveList is ignored
+def CSR_AAPCS_ThisReturn : CalleeSavedRegs<(add LR, R11, R10, R9, R8, R7, R6,
+                                            R5, R4, (sequence "D%u", 15, 8),
+                                            R0)>;
+
 // iOS ABI deviates from ARM standard ABI. R9 is not a callee-saved register.
 // Also save R7-R4 first to match the stack frame fixed spill areas.
 def CSR_iOS : CalleeSavedRegs<(add LR, R7, R6, R5, R4, (sub CSR_AAPCS, R9))>;
+
+def CSR_iOS_ThisReturn : CalleeSavedRegs<(add LR, R7, R6, R5, R4,
+                                          (sub CSR_AAPCS_ThisReturn, R9))>;
 
 // GHC set of callee saved regs is empty as all those regs are
 // used for passing STG regs around

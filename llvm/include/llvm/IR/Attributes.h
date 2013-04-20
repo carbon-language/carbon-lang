@@ -87,6 +87,7 @@ public:
     OptimizeForSize,       ///< opt_size
     ReadNone,              ///< Function does not access memory
     ReadOnly,              ///< Function only reads from memory
+    Returned,              ///< Return value is always equal to this argument
     ReturnsTwice,          ///< Function can return twice
     SExt,                  ///< Sign extended before/after call
     StackAlignment,        ///< Alignment of stack for function (3 bits)

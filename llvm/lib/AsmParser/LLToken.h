@@ -114,6 +114,7 @@ namespace lltok {
     kw_optsize,
     kw_readnone,
     kw_readonly,
+    kw_returned,
     kw_returns_twice,
     kw_signext,
     kw_ssp,

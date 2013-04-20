@@ -261,6 +261,32 @@ static bool sameNoopInput(const Value *V1, const Value *V2,
             TLI.getPointerTy().getSizeInBits() == 
               cast<IntegerType>(I->getType())->getBitWidth())
           NoopInput = Op;
+      } else if (isa<CallInst>(I)) {
+        // Look through call
+        for (User::const_op_iterator i = I->op_begin(),
+                                     // Skip Callee
+                                     e = I->op_end() - 1;
+             i != e; ++i) {
+          unsigned attrInd = i - I->op_begin() + 1;
+          if (cast<CallInst>(I)->paramHasAttr(attrInd, Attribute::Returned) &&
+              isNoopBitcast((*i)->getType(), I->getType(), TLI)) {
+            NoopInput = *i;
+            break;
+          }
+        }
+      } else if (isa<InvokeInst>(I)) {
+        // Look through invoke
+        for (User::const_op_iterator i = I->op_begin(),
+                                     // Skip BB, BB, Callee
+                                     e = I->op_end() - 3;
+             i != e; ++i) {
+          unsigned attrInd = i - I->op_begin() + 1;
+          if (cast<InvokeInst>(I)->paramHasAttr(attrInd, Attribute::Returned) &&
+              isNoopBitcast((*i)->getType(), I->getType(), TLI)) {
+            NoopInput = *i;
+            break;
+          }
+        }
       }
     }
 

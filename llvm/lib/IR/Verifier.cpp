@@ -694,8 +694,9 @@ void Verifier::VerifyParameterAttrs(AttributeSet Attrs, unsigned Idx, Type *Ty,
     Assert1(!Attrs.hasAttribute(Idx, Attribute::ByVal) &&
             !Attrs.hasAttribute(Idx, Attribute::Nest) &&
             !Attrs.hasAttribute(Idx, Attribute::StructRet) &&
-            !Attrs.hasAttribute(Idx, Attribute::NoCapture),
-            "Attribute 'byval', 'nest', 'sret', and 'nocapture' "
+            !Attrs.hasAttribute(Idx, Attribute::NoCapture) &&
+            !Attrs.hasAttribute(Idx, Attribute::Returned),
+            "Attribute 'byval', 'nest', 'sret', 'nocapture', and 'returned' "
             "do not apply to return values!", V);
 
   // Check for mutually incompatible attributes.
@@ -750,6 +751,7 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
     return;
 
   bool SawNest = false;
+  bool SawReturned = false;
 
   for (unsigned i = 0, e = Attrs.getNumSlots(); i != e; ++i) {
     unsigned Idx = Attrs.getSlotIndex(i);
@@ -764,9 +766,20 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
 
     VerifyParameterAttrs(Attrs, Idx, Ty, Idx == 0, V);
 
-    if (Attrs.hasAttribute(i, Attribute::Nest)) {
+    if (Idx == 0)
+      continue;
+
+    if (Attrs.hasAttribute(Idx, Attribute::Nest)) {
       Assert1(!SawNest, "More than one parameter has attribute nest!", V);
       SawNest = true;
+    }
+
+    if (Attrs.hasAttribute(Idx, Attribute::Returned)) {
+      Assert1(!SawReturned, "More than one parameter has attribute returned!",
+              V);
+      Assert1(Ty->canLosslesslyBitCastTo(FT->getReturnType()), "Incompatible "
+              "argument and return types for 'returned' attribute", V);
+      SawReturned = true;
     }
 
     if (Attrs.hasAttribute(Idx, Attribute::StructRet))
@@ -1348,15 +1361,41 @@ void Verifier::VerifyCallSite(CallSite CS) {
   // Verify call attributes.
   VerifyFunctionAttrs(FTy, Attrs, I);
 
-  if (FTy->isVarArg())
+  if (FTy->isVarArg()) {
+    // FIXME? is 'nest' even legal here?
+    bool SawNest = false;
+    bool SawReturned = false;
+
+    for (unsigned Idx = 1; Idx < 1 + FTy->getNumParams(); ++Idx) {
+      if (Attrs.hasAttribute(Idx, Attribute::Nest))
+        SawNest = true;
+      if (Attrs.hasAttribute(Idx, Attribute::Returned))
+        SawReturned = true;
+    }
+
     // Check attributes on the varargs part.
     for (unsigned Idx = 1 + FTy->getNumParams(); Idx <= CS.arg_size(); ++Idx) {
-      VerifyParameterAttrs(Attrs, Idx, CS.getArgument(Idx-1)->getType(),
-                           false, I);
+      Type *Ty = CS.getArgument(Idx-1)->getType(); 
+      VerifyParameterAttrs(Attrs, Idx, Ty, false, I);
+      
+      if (Attrs.hasAttribute(Idx, Attribute::Nest)) {
+        Assert1(!SawNest, "More than one parameter has attribute nest!", I);
+        SawNest = true;
+      }
+
+      if (Attrs.hasAttribute(Idx, Attribute::Returned)) {
+        Assert1(!SawReturned, "More than one parameter has attribute returned!",
+                I);
+        Assert1(Ty->canLosslesslyBitCastTo(FTy->getReturnType()),
+                "Incompatible argument and return types for 'returned' "
+                "attribute", I);
+        SawReturned = true;
+      }
 
       Assert1(!Attrs.hasAttribute(Idx, Attribute::StructRet),
               "Attribute 'sret' cannot be used for vararg call arguments!", I);
     }
+  }
 
   // Verify that there's no metadata unless it's a direct call to an intrinsic.
   if (CS.getCalledFunction() == 0 ||

@@ -78,6 +78,10 @@ public:
   /// containing function.
   bool hasStructRetAttr() const;
 
+  /// \brief Return true if this argument has the returned attribute on it in
+  /// its containing function.
+  bool hasReturnedAttr() const;
+
   /// \brief Add a Attribute to an argument.
   void addAttr(AttributeSet AS);
 

@@ -5232,6 +5232,7 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
     Entry.isSRet = true;
     Entry.isNest = false;
     Entry.isByVal = false;
+    Entry.isReturned = false;
     Entry.Alignment = Align;
     Args.push_back(Entry);
     RetTy = Type::getVoidTy(FTy->getContext());
@@ -5249,13 +5250,14 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
     Entry.Node = ArgNode; Entry.Ty = V->getType();
 
     unsigned attrInd = i - CS.arg_begin() + 1;
-    Entry.isSExt  = CS.paramHasAttr(attrInd, Attribute::SExt);
-    Entry.isZExt  = CS.paramHasAttr(attrInd, Attribute::ZExt);
-    Entry.isInReg = CS.paramHasAttr(attrInd, Attribute::InReg);
-    Entry.isSRet  = CS.paramHasAttr(attrInd, Attribute::StructRet);
-    Entry.isNest  = CS.paramHasAttr(attrInd, Attribute::Nest);
-    Entry.isByVal = CS.paramHasAttr(attrInd, Attribute::ByVal);
-    Entry.Alignment = CS.getParamAlignment(attrInd);
+    Entry.isSExt     = CS.paramHasAttr(attrInd, Attribute::SExt);
+    Entry.isZExt     = CS.paramHasAttr(attrInd, Attribute::ZExt);
+    Entry.isInReg    = CS.paramHasAttr(attrInd, Attribute::InReg);
+    Entry.isSRet     = CS.paramHasAttr(attrInd, Attribute::StructRet);
+    Entry.isNest     = CS.paramHasAttr(attrInd, Attribute::Nest);
+    Entry.isByVal    = CS.paramHasAttr(attrInd, Attribute::ByVal);
+    Entry.isReturned = CS.paramHasAttr(attrInd, Attribute::Returned);
+    Entry.Alignment  = CS.getParamAlignment(attrInd);
     Args.push_back(Entry);
   }
 
@@ -6430,6 +6432,8 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
       }
       if (Args[i].isNest)
         Flags.setNest();
+      if (Args[i].isReturned)
+        Flags.setReturned();
       Flags.setOrigAlign(OriginalAlignment);
 
       MVT PartVT = getRegisterType(CLI.RetTy->getContext(), VT);

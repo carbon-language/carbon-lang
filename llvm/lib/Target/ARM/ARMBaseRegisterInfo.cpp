@@ -75,6 +75,12 @@ ARMBaseRegisterInfo::getCallPreservedMask(CallingConv::ID) const {
 }
 
 const uint32_t*
+ARMBaseRegisterInfo::getThisReturnPreservedMask(CallingConv::ID) const {
+  return (STI.isTargetIOS() && !STI.isAAPCS_ABI())
+    ? CSR_iOS_ThisReturn_RegMask : CSR_AAPCS_ThisReturn_RegMask;
+}
+
+const uint32_t*
 ARMBaseRegisterInfo::getNoPreservedMask() const {
   return CSR_NoRegs_RegMask;
 }

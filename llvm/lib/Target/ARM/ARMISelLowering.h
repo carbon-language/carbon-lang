@@ -464,7 +464,8 @@ namespace llvm {
                             CallingConv::ID CallConv, bool isVarArg,
                             const SmallVectorImpl<ISD::InputArg> &Ins,
                             DebugLoc dl, SelectionDAG &DAG,
-                            SmallVectorImpl<SDValue> &InVals) const;
+                            SmallVectorImpl<SDValue> &InVals,
+                            bool isThisReturn, SDValue ThisVal) const;
 
     virtual SDValue
       LowerFormalArguments(SDValue Chain,

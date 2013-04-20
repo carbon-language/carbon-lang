@@ -1238,7 +1238,8 @@ ARMTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
                                    CallingConv::ID CallConv, bool isVarArg,
                                    const SmallVectorImpl<ISD::InputArg> &Ins,
                                    DebugLoc dl, SelectionDAG &DAG,
-                                   SmallVectorImpl<SDValue> &InVals) const {
+                                   SmallVectorImpl<SDValue> &InVals,
+                                   bool isThisReturn, SDValue ThisVal) const {
 
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
@@ -1251,6 +1252,14 @@ ARMTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
     CCValAssign VA = RVLocs[i];
+
+    // Pass 'this' value directly from the argument to return value, to avoid
+    // reg unit interference
+    if (i == 0 && isThisReturn) {
+      assert(!VA.needsCustom() && VA.getLocVT() == MVT::i32);
+      InVals.push_back(ThisVal);
+      continue;
+    }
 
     SDValue Val;
     if (VA.needsCustom()) {
@@ -1364,7 +1373,8 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   MachineFunction &MF = DAG.getMachineFunction();
   bool IsStructRet    = (Outs.empty()) ? false : Outs[0].Flags.isSRet();
-  bool IsSibCall = false;
+  bool IsThisReturn   = false;
+  bool IsSibCall      = false;
   // Disable tail calls if they're not supported.
   if (!EnableARMTailCalls && !Subtarget->supportsTailCall())
     isTailCall = false;
@@ -1460,6 +1470,11 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                          StackPtr, MemOpChains, Flags);
       }
     } else if (VA.isRegLoc()) {
+      if (realArgIdx == 0 && Flags.isReturned() && VA.getLocVT() == MVT::i32) {
+        assert(!Ins.empty() && Ins[0].VT == Outs[0].VT &&
+               "unexpected use of 'returned'");
+        IsThisReturn = true;
+      }
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
     } else if (isByVal) {
       assert(VA.isMemLoc());
@@ -1680,8 +1695,15 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                   RegsToPass[i].second.getValueType()));
 
   // Add a register mask operand representing the call-preserved registers.
+  const uint32_t *Mask;
   const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
-  const uint32_t *Mask = TRI->getCallPreservedMask(CallConv);
+  const ARMBaseRegisterInfo *ARI = static_cast<const ARMBaseRegisterInfo*>(TRI);
+  if (IsThisReturn)
+    // For 'this' returns, use the R0-preserving mask
+    Mask = ARI->getThisReturnPreservedMask(CallConv);
+  else
+    Mask = ARI->getCallPreservedMask(CallConv);
+
   assert(Mask && "Missing call preserved mask for calling convention");
   Ops.push_back(DAG.getRegisterMask(Mask));
 
@@ -1703,8 +1725,9 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.
-  return LowerCallResult(Chain, InFlag, CallConv, isVarArg, Ins,
-                         dl, DAG, InVals);
+  return LowerCallResult(Chain, InFlag, CallConv, isVarArg, Ins, dl, DAG,
+                         InVals, IsThisReturn,
+                         IsThisReturn ? OutVals[0] : SDValue());
 }
 
 /// HandleByVal - Every parameter *after* a byval parameter is passed

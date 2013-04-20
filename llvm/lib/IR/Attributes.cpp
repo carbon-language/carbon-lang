@@ -195,6 +195,8 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
     return "readnone";
   if (hasAttribute(Attribute::ReadOnly))
     return "readonly";
+  if (hasAttribute(Attribute::Returned))
+    return "returned";
   if (hasAttribute(Attribute::ReturnsTwice))
     return "returns_twice";
   if (hasAttribute(Attribute::SExt))
@@ -393,6 +395,7 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   case Attribute::SanitizeThread:  return 1ULL << 36;
   case Attribute::SanitizeMemory:  return 1ULL << 37;
   case Attribute::NoBuiltin:       return 1ULL << 38;
+  case Attribute::Returned:        return 1ULL << 39;
   }
   llvm_unreachable("Unsupported attribute type");
 }
