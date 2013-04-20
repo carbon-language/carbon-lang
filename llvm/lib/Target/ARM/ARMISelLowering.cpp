@@ -1539,7 +1539,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                RegsToPass[i].second, InFlag);
       InFlag = Chain.getValue(1);
     }
-    InFlag =SDValue();
+    InFlag = SDValue();
   }
 
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
