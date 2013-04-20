@@ -472,6 +472,7 @@ namespace {
     }
 
     void ResetSequenceProgress(Sequence NewSeq) {
+      DEBUG(dbgs() << "Resetting sequence progress.\n");
       SetSeq(NewSeq);
       Partial = false;
       RRI.clear();
