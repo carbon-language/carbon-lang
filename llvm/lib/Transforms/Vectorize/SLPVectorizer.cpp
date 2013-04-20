@@ -157,7 +157,8 @@ unsigned SLPVectorizer::collectStores(BasicBlock *BB, BoUpSLP &R) {
       continue;
 
     // Check that the pointer points to scalars.
-    if (SI->getValueOperand()->getType()->isAggregateType())
+    Type *Ty = SI->getValueOperand()->getType();
+    if (Ty->isAggregateType() || Ty->isVectorTy())
       return 0;
 
     // Find the base of the GEP.
@@ -180,6 +181,14 @@ bool SLPVectorizer::tryToVectorizePair(Value *A, Value *B,  BoUpSLP &R) {
 
 bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R) {
   DEBUG(dbgs()<<"SLP: Vectorizing a list of length = " << VL.size() << ".\n");
+
+  // Check that all of the parts are scalar.
+  for (int i = 0, e = VL.size(); i < e; ++i) {
+    Type *Ty = VL[i]->getType();
+    if (Ty->isAggregateType() || Ty->isVectorTy())
+      return 0;
+  }
+
   int Cost = R.getTreeCost(VL);
   int ExtrCost = R.getScalarizationCost(VL);
   DEBUG(dbgs()<<"SLP: Cost of pair:" << Cost <<
