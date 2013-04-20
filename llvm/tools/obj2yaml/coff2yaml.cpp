@@ -10,6 +10,7 @@
 #include "obj2yaml.h"
 #include "llvm/Object/COFF.h"
 
+using namespace llvm;
 
 template <typename One, typename Two>
 struct pod_pair { // I'd much rather use std::pair, but it's not a POD
@@ -17,8 +18,8 @@ struct pod_pair { // I'd much rather use std::pair, but it's not a POD
   Two second;
 };
 
-#define STRING_PAIR(x)  {llvm::COFF::x, #x}
-static const pod_pair<llvm::COFF::MachineTypes, const char *> 
+#define STRING_PAIR(x)  {COFF::x, #x}
+static const pod_pair<COFF::MachineTypes, const char *>
 MachineTypePairs [] = {
   STRING_PAIR(IMAGE_FILE_MACHINE_UNKNOWN),
   STRING_PAIR(IMAGE_FILE_MACHINE_AM33),
@@ -43,7 +44,7 @@ MachineTypePairs [] = {
   STRING_PAIR(IMAGE_FILE_MACHINE_WCEMIPSV2)
 };
 
-static const pod_pair<llvm::COFF::SectionCharacteristics, const char *> 
+static const pod_pair<COFF::SectionCharacteristics, const char *>
 SectionCharacteristicsPairs1 [] = {
   STRING_PAIR(IMAGE_SCN_TYPE_NO_PAD),
   STRING_PAIR(IMAGE_SCN_CNT_CODE),
@@ -60,7 +61,7 @@ SectionCharacteristicsPairs1 [] = {
   STRING_PAIR(IMAGE_SCN_MEM_PRELOAD)
 };
 
-static const pod_pair<llvm::COFF::SectionCharacteristics, const char *> 
+static const pod_pair<COFF::SectionCharacteristics, const char *>
 SectionCharacteristicsPairsAlignment [] = {
   STRING_PAIR(IMAGE_SCN_ALIGN_1BYTES),
   STRING_PAIR(IMAGE_SCN_ALIGN_2BYTES),
@@ -78,7 +79,7 @@ SectionCharacteristicsPairsAlignment [] = {
   STRING_PAIR(IMAGE_SCN_ALIGN_8192BYTES)
 };
 
-static const pod_pair<llvm::COFF::SectionCharacteristics, const char *> 
+static const pod_pair<COFF::SectionCharacteristics, const char *>
 SectionCharacteristicsPairs2 [] = {
   STRING_PAIR(IMAGE_SCN_LNK_NRELOC_OVFL),
   STRING_PAIR(IMAGE_SCN_MEM_DISCARDABLE),
@@ -89,8 +90,8 @@ SectionCharacteristicsPairs2 [] = {
   STRING_PAIR(IMAGE_SCN_MEM_READ),
   STRING_PAIR(IMAGE_SCN_MEM_WRITE)
 };
-  
-static const pod_pair<llvm::COFF::SymbolBaseType, const char *> 
+
+static const pod_pair<COFF::SymbolBaseType, const char *>
 SymbolBaseTypePairs [] = {
   STRING_PAIR(IMAGE_SYM_TYPE_NULL),
   STRING_PAIR(IMAGE_SYM_TYPE_VOID),
@@ -110,15 +111,15 @@ SymbolBaseTypePairs [] = {
   STRING_PAIR(IMAGE_SYM_TYPE_DWORD)
 };
 
-static const pod_pair<llvm::COFF::SymbolComplexType, const char *> 
+static const pod_pair<COFF::SymbolComplexType, const char *>
 SymbolComplexTypePairs [] = {
   STRING_PAIR(IMAGE_SYM_DTYPE_NULL),
   STRING_PAIR(IMAGE_SYM_DTYPE_POINTER),
   STRING_PAIR(IMAGE_SYM_DTYPE_FUNCTION),
   STRING_PAIR(IMAGE_SYM_DTYPE_ARRAY),
 };
-  
-static const pod_pair<llvm::COFF::SymbolStorageClass, const char *> 
+
+static const pod_pair<COFF::SymbolStorageClass, const char *>
 SymbolStorageClassPairs [] = {
   STRING_PAIR(IMAGE_SYM_CLASS_END_OF_FUNCTION),
   STRING_PAIR(IMAGE_SYM_CLASS_NULL),
@@ -149,7 +150,7 @@ SymbolStorageClassPairs [] = {
   STRING_PAIR(IMAGE_SYM_CLASS_CLR_TOKEN),
 };
 
-static const pod_pair<llvm::COFF::RelocationTypeX86, const char *> 
+static const pod_pair<COFF::RelocationTypeX86, const char *>
 RelocationTypeX86Pairs [] = {
   STRING_PAIR(IMAGE_REL_I386_ABSOLUTE),
   STRING_PAIR(IMAGE_REL_I386_DIR16),
@@ -181,7 +182,7 @@ RelocationTypeX86Pairs [] = {
   STRING_PAIR(IMAGE_REL_AMD64_SSPAN32)
 };
 
-static const pod_pair<llvm::COFF::RelocationTypesARM, const char *> 
+static const pod_pair<COFF::RelocationTypesARM, const char *>
 RelocationTypesARMPairs [] = {
   STRING_PAIR(IMAGE_REL_ARM_ABSOLUTE),
   STRING_PAIR(IMAGE_REL_ARM_ADDR32),
@@ -203,8 +204,8 @@ RelocationTypesARMPairs [] = {
 
 namespace yaml {  // COFF-specific yaml-writing specific routines
 
-static llvm::raw_ostream &writeName(llvm::raw_ostream &Out, 
-                             const char *Name, std::size_t NameSize) {
+static raw_ostream &writeName(raw_ostream &Out,
+                              const char *Name, std::size_t NameSize) {
   for (std::size_t i = 0; i < NameSize; ++i) {
     if (!Name[i]) break;
     Out << Name[i];
@@ -214,8 +215,9 @@ static llvm::raw_ostream &writeName(llvm::raw_ostream &Out,
 
 // Given an array of pod_pair<enum, const char *>, write all enums that match
 template <typename T, std::size_t N>
-static llvm::raw_ostream &writeBitMask(llvm::raw_ostream &Out, 
-              const pod_pair<T, const char *> (&Arr)[N], unsigned long Val) {
+static raw_ostream &writeBitMask(raw_ostream &Out,
+                                 const pod_pair<T, const char *> (&Arr)[N],
+                                 unsigned long Val) {
   for (std::size_t i = 0; i < N; ++i)
     if (Val & Arr[i].first)
       Out << Arr[i].second << ", ";
@@ -226,8 +228,8 @@ static llvm::raw_ostream &writeBitMask(llvm::raw_ostream &Out,
 
 // Given an array of pod_pair<enum, const char *>, look up a value
 template <typename T, std::size_t N>
-const char *nameLookup(const pod_pair<T, const char *> (&Arr)[N], 
-                           unsigned long Val, const char *NotFound = NULL) {
+const char *nameLookup(const pod_pair<T, const char *> (&Arr)[N],
+                       unsigned long Val, const char *NotFound = NULL) {
   T n = static_cast<T>(Val);
   for (std::size_t i = 0; i < N; ++i)
     if (n == Arr[i].first)
@@ -236,8 +238,8 @@ const char *nameLookup(const pod_pair<T, const char *> (&Arr)[N],
 }
 
 
-static llvm::raw_ostream &yamlCOFFHeader(
-          const llvm::object::coff_file_header *Header,llvm::raw_ostream &Out) {
+static raw_ostream &yamlCOFFHeader(const object::coff_file_header *Header,
+                                   raw_ostream &Out) {
 
   Out << "header: !Header\n";
   Out << "  Machine: ";
@@ -247,94 +249,96 @@ static llvm::raw_ostream &yamlCOFFHeader(
 }
 
 
-static llvm::raw_ostream &yamlCOFFSections(llvm::object::COFFObjectFile &Obj, 
-                            std::size_t NumSections, llvm::raw_ostream &Out) {
-  llvm::error_code ec;
+static raw_ostream &yamlCOFFSections(object::COFFObjectFile &Obj,
+                                     std::size_t NumSections,
+                                     raw_ostream &Out) {
+  error_code ec;
   Out << "sections:\n";
-  for (llvm::object::section_iterator iter = Obj.begin_sections(); 
-                             iter != Obj.end_sections(); iter.increment(ec)) {
-    const llvm::object::coff_section *sect = Obj.getCOFFSection(iter);
-  
+  for (object::section_iterator iter = Obj.begin_sections();
+       iter != Obj.end_sections(); iter.increment(ec)) {
+    const object::coff_section *sect = Obj.getCOFFSection(iter);
+
     Out << "  - !Section\n";
     Out << "    Name: ";
     yaml::writeName(Out, sect->Name, sizeof(sect->Name)) << '\n';
 
     Out << "    Characteristics: [";
     yaml::writeBitMask(Out, SectionCharacteristicsPairs1, sect->Characteristics);
-    Out << nameLookup(SectionCharacteristicsPairsAlignment, 
-        sect->Characteristics & 0x00F00000, "# Unrecognized_IMAGE_SCN_ALIGN") 
+    Out << nameLookup(SectionCharacteristicsPairsAlignment,
+        sect->Characteristics & 0x00F00000, "# Unrecognized_IMAGE_SCN_ALIGN")
         << ", ";
     yaml::writeBitMask(Out, SectionCharacteristicsPairs2, sect->Characteristics);
     Out << "] # ";
     yaml::writeHexNumber(Out, sect->Characteristics) << '\n';
 
-    llvm::ArrayRef<uint8_t> sectionData;
-    Obj.getSectionContents(sect, sectionData);    
+    ArrayRef<uint8_t> sectionData;
+    Obj.getSectionContents(sect, sectionData);
     Out << "    SectionData: ";
     yaml::writeHexStream(Out, sectionData) << '\n';
     if (iter->begin_relocations() != iter->end_relocations())
       Out << "    Relocations:\n";
-    for (llvm::object::relocation_iterator rIter = iter->begin_relocations();
+    for (object::relocation_iterator rIter = iter->begin_relocations();
                        rIter != iter->end_relocations(); rIter.increment(ec)) {
-      const llvm::object::coff_relocation *reloc = Obj.getCOFFRelocation(rIter);
+      const object::coff_relocation *reloc = Obj.getCOFFRelocation(rIter);
 
         Out << "      - !Relocation\n";
         Out << "        VirtualAddress: " ;
         yaml::writeHexNumber(Out, reloc->VirtualAddress) << '\n';
         Out << "        SymbolTableIndex: " << reloc->SymbolTableIndex << '\n';
-        Out << "        Type: " 
+        Out << "        Type: "
             << nameLookup(RelocationTypeX86Pairs, reloc->Type) << '\n';
     // TODO: Use the correct reloc type for the machine.
         Out << '\n';
       }
 
-  } 
+  }
   return Out;
 }
 
-static llvm::raw_ostream& yamlCOFFSymbols(llvm::object::COFFObjectFile &Obj, 
-                              std::size_t NumSymbols, llvm::raw_ostream &Out) {
-  llvm::error_code ec;
+static raw_ostream& yamlCOFFSymbols(object::COFFObjectFile &Obj,
+                                    std::size_t NumSymbols,
+                                    raw_ostream &Out) {
+  error_code ec;
   Out << "symbols:\n";
-  for (llvm::object::symbol_iterator iter = Obj.begin_symbols(); 
-                             iter != Obj.end_symbols(); iter.increment(ec)) {
+  for (object::symbol_iterator iter = Obj.begin_symbols();
+       iter != Obj.end_symbols(); iter.increment(ec)) {
  // Gather all the info that we need
-    llvm::StringRef str;
-    const llvm::object::coff_symbol *symbol = Obj.getCOFFSymbol(iter);
+    StringRef str;
+    const object::coff_symbol *symbol = Obj.getCOFFSymbol(iter);
     Obj.getSymbolName(symbol, str);
     std::size_t  simpleType  = symbol->getBaseType();
     std::size_t complexType  = symbol->getComplexType();
     std::size_t storageClass = symbol->StorageClass;
-    
+
     Out << "  - !Symbol\n";
-    Out << "    Name: " << str << '\n'; 
+    Out << "    Name: " << str << '\n';
 
     Out << "    Value: "         << symbol->Value << '\n';
     Out << "    SectionNumber: " << symbol->SectionNumber << '\n';
 
-    Out << "    SimpleType: " 
-        << nameLookup(SymbolBaseTypePairs, simpleType, 
-            "# Unknown_SymbolBaseType") 
+    Out << "    SimpleType: "
+        << nameLookup(SymbolBaseTypePairs, simpleType,
+            "# Unknown_SymbolBaseType")
         << " # (" << simpleType << ")\n";
-    
-    Out << "    ComplexType: " 
-        << nameLookup(SymbolComplexTypePairs, complexType, 
-                "# Unknown_SymbolComplexType") 
+
+    Out << "    ComplexType: "
+        << nameLookup(SymbolComplexTypePairs, complexType,
+                "# Unknown_SymbolComplexType")
         << " # (" << complexType << ")\n";
-    
-    Out << "    StorageClass: " 
+
+    Out << "    StorageClass: "
         << nameLookup(SymbolStorageClassPairs, storageClass,
-              "# Unknown_StorageClass") 
+              "# Unknown_StorageClass")
         << " # (" << (int) storageClass << ")\n";
 
     if (symbol->NumberOfAuxSymbols > 0) {
-      llvm::ArrayRef<uint8_t> aux = Obj.getSymbolAuxData(symbol);
-      Out << "    NumberOfAuxSymbols: " 
+      ArrayRef<uint8_t> aux = Obj.getSymbolAuxData(symbol);
+      Out << "    NumberOfAuxSymbols: "
           << (int) symbol->NumberOfAuxSymbols << '\n';
       Out << "    AuxillaryData: ";
       yaml::writeHexStream(Out, aux);
     }
-      
+
     Out << '\n';
   }
 
@@ -342,17 +346,20 @@ static llvm::raw_ostream& yamlCOFFSymbols(llvm::object::COFFObjectFile &Obj,
 }
 
 
-llvm::error_code coff2yaml(llvm::raw_ostream &Out, llvm::MemoryBuffer *TheObj) {
-  llvm::error_code ec;
-  llvm::object::COFFObjectFile obj(TheObj, ec);
-  if (!ec) {
-    const llvm::object::coff_file_header *hd;
-    ec = obj.getHeader(hd);
-    if (!ec) {
-      yamlCOFFHeader(hd, Out);
-      yamlCOFFSections(obj, hd->NumberOfSections, Out);
-      yamlCOFFSymbols(obj, hd->NumberOfSymbols, Out);
-    }
-  }
+error_code coff2yaml(raw_ostream &Out, MemoryBuffer *TheObj) {
+  error_code ec;
+  object::COFFObjectFile obj(TheObj, ec);
+  if (ec)
+    return ec;
+
+  const object::coff_file_header *hd;
+  ec = obj.getHeader(hd);
+  if (ec)
+    return ec;
+
+  yamlCOFFHeader(hd, Out);
+  yamlCOFFSections(obj, hd->NumberOfSections, Out);
+  yamlCOFFSymbols(obj, hd->NumberOfSymbols, Out);
+
   return ec;
 }
