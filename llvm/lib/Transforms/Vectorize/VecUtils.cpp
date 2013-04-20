@@ -103,7 +103,7 @@ bool BoUpSLP::isConsecutiveAccess(Value *A, Value *B) {
   return ((-Offset) == Sz);
 }
 
-bool BoUpSLP::vectorizeStoreChain(ValueList &Chain, int CostThreshold) {
+bool BoUpSLP::vectorizeStoreChain(ArrayRef<Value *> Chain, int CostThreshold) {
   Type *StoreTy = cast<StoreInst>(Chain[0])->getValueOperand()->getType();
   unsigned Sz = DL->getTypeSizeInBits(StoreTy);
   unsigned VF = MinVecRegSize / Sz;
@@ -115,7 +115,7 @@ bool BoUpSLP::vectorizeStoreChain(ValueList &Chain, int CostThreshold) {
   for (unsigned i = 0, e = Chain.size(); i < e; ++i) {
     if (i + VF > e) return Changed;
     DEBUG(dbgs()<<"SLP: Analyzing " << VF << " stores at offset "<< i << "\n");
-    ValueList Operands(&Chain[i], &Chain[i] + VF);
+    ArrayRef<Value *> Operands = Chain.slice(i, VF);
 
     int Cost = getTreeCost(Operands);
     DEBUG(dbgs() << "SLP: Found cost=" << Cost << " for VF=" << VF << "\n");
@@ -130,7 +130,7 @@ bool BoUpSLP::vectorizeStoreChain(ValueList &Chain, int CostThreshold) {
   return Changed;
 }
 
-bool BoUpSLP::vectorizeStores(StoreList &Stores, int costThreshold) {
+bool BoUpSLP::vectorizeStores(ArrayRef<StoreInst *> Stores, int costThreshold) {
   ValueSet Heads, Tails;
   SmallDenseMap<Value*, Value*> ConsecutiveChain;
 
@@ -178,7 +178,7 @@ bool BoUpSLP::vectorizeStores(StoreList &Stores, int costThreshold) {
   return Changed;
 }
 
-int BoUpSLP::getScalarizationCost(ValueList &VL) {
+int BoUpSLP::getScalarizationCost(ArrayRef<Value *> VL) {
   // Find the type of the operands in VL.
   Type *ScalarTy = VL[0]->getType();
   if (StoreInst *SI = dyn_cast<StoreInst>(VL[0]))
@@ -223,7 +223,7 @@ Value *BoUpSLP::isUnsafeToSink(Instruction *Src, Instruction *Dst) {
   return 0;
 }
 
-void BoUpSLP::vectorizeArith(ValueList &Operands) {
+void BoUpSLP::vectorizeArith(ArrayRef<Value *> Operands) {
   Value *Vec = vectorizeTree(Operands, Operands.size());
   BasicBlock::iterator Loc = cast<Instruction>(Vec);
   IRBuilder<> Builder(++Loc);
@@ -236,7 +236,7 @@ void BoUpSLP::vectorizeArith(ValueList &Operands) {
   }
 }
 
-int BoUpSLP::getTreeCost(ValueList &VL) {
+int BoUpSLP::getTreeCost(ArrayRef<Value *> VL) {
   // Get rid of the list of stores that were removed, and from the
   // lists of instructions with multiple users.
   MemBarrierIgnoreList.clear();
@@ -278,7 +278,7 @@ int BoUpSLP::getTreeCost(ValueList &VL) {
   return getTreeCost_rec(VL, 0);
 }
 
-void BoUpSLP::getTreeUses_rec(ValueList &VL, unsigned Depth) {
+void BoUpSLP::getTreeUses_rec(ArrayRef<Value *> VL, unsigned Depth) {
   if (Depth == RecursionMaxDepth) return;
 
   // Don't handle vectors.
@@ -367,7 +367,7 @@ void BoUpSLP::getTreeUses_rec(ValueList &VL, unsigned Depth) {
   }
 }
 
-int BoUpSLP::getTreeCost_rec(ValueList &VL, unsigned Depth) {
+int BoUpSLP::getTreeCost_rec(ArrayRef<Value *> VL, unsigned Depth) {
   Type *ScalarTy = VL[0]->getType();
 
   if (StoreInst *SI = dyn_cast<StoreInst>(VL[0]))
@@ -516,14 +516,14 @@ int BoUpSLP::getTreeCost_rec(ValueList &VL, unsigned Depth) {
   }
 }
 
-Instruction *BoUpSLP::GetLastInstr(ValueList &VL, unsigned VF) {
+Instruction *BoUpSLP::GetLastInstr(ArrayRef<Value *> VL, unsigned VF) {
   int MaxIdx = InstrIdx[BB->getFirstNonPHI()];
   for (unsigned i = 0; i < VF; ++i )
     MaxIdx = std::max(MaxIdx, InstrIdx[VL[i]]);
   return InstrVec[MaxIdx + 1];
 }
 
-Value *BoUpSLP::Scalarize(ValueList &VL, VectorType *Ty) {
+Value *BoUpSLP::Scalarize(ArrayRef<Value *> VL, VectorType *Ty) {
   IRBuilder<> Builder(GetLastInstr(VL, Ty->getNumElements()));
   Value *Vec = UndefValue::get(Ty);
   for (unsigned i=0; i < Ty->getNumElements(); ++i) {
@@ -538,7 +538,7 @@ Value *BoUpSLP::Scalarize(ValueList &VL, VectorType *Ty) {
   return Vec;
 }
 
-Value *BoUpSLP::vectorizeTree(ValueList &VL, int VF) {
+Value *BoUpSLP::vectorizeTree(ArrayRef<Value *> VL, int VF) {
   Value *V = vectorizeTree_rec(VL, VF);
   // We moved some instructions around. We have to number them again
   // before we can do any analysis.
@@ -547,7 +547,7 @@ Value *BoUpSLP::vectorizeTree(ValueList &VL, int VF) {
   return V;
 }
 
-Value *BoUpSLP::vectorizeTree_rec(ValueList &VL, int VF) {
+Value *BoUpSLP::vectorizeTree_rec(ArrayRef<Value *> VL, int VF) {
   Type *ScalarTy = VL[0]->getType();
   if (StoreInst *SI = dyn_cast<StoreInst>(VL[0]))
     ScalarTy = SI->getValueOperand()->getType();

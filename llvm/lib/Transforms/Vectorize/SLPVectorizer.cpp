@@ -128,7 +128,7 @@ private:
   bool tryToVectorizePair(Value *A, Value *B,  BoUpSLP &R);
 
   /// \brief Try to vectorize a list of operands.
-  bool tryToVectorizeList(BoUpSLP::ValueList &VL, BoUpSLP &R);
+  bool tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R);
 
   /// \brief Try to vectorize a chain that may start at the operands of \V;
   bool tryToVectorize(BinaryOperator *V,  BoUpSLP &R);
@@ -174,13 +174,11 @@ unsigned SLPVectorizer::collectStores(BasicBlock *BB, BoUpSLP &R) {
 
 bool SLPVectorizer::tryToVectorizePair(Value *A, Value *B,  BoUpSLP &R) {
   if (!A || !B) return false;
-  BoUpSLP::ValueList VL;
-  VL.push_back(A);
-  VL.push_back(B);
+  Value *VL[] = { A, B };
   return tryToVectorizeList(VL, R);
 }
 
-bool SLPVectorizer::tryToVectorizeList(BoUpSLP::ValueList &VL,  BoUpSLP &R) {
+bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R) {
   DEBUG(dbgs()<<"SLP: Vectorizing a list of length = " << VL.size() << ".\n");
   int Cost = R.getTreeCost(VL);
   int ExtrCost = R.getScalarizationCost(VL);

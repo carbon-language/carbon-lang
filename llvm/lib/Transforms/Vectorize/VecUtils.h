@@ -53,24 +53,24 @@ struct BoUpSLP  {
 
   /// \brief Vectorize the tree that starts with the elements in \p VL.
   /// \returns the vectorized value.
-  Value *vectorizeTree(ValueList &VL, int VF);
+  Value *vectorizeTree(ArrayRef<Value *> VL, int VF);
 
   /// \returns the vectorization cost of the subtree that starts at \p VL.
   /// A negative number means that this is profitable.
-  int getTreeCost(ValueList &VL);
+  int getTreeCost(ArrayRef<Value *> VL);
 
-  /// \returns the scalarization cost for this ValueList. Assuming that this
-  /// subtree gets vectorized, we may need to extract the values from the
+  /// \returns the scalarization cost for this list of values. Assuming that
+  /// this subtree gets vectorized, we may need to extract the values from the
   /// roots. This method calculates the cost of extracting the values.
-  int getScalarizationCost(ValueList &VL);
+  int getScalarizationCost(ArrayRef<Value *> VL);
 
   /// \brief Attempts to order and vectorize a sequence of stores. This
   /// function does a quadratic scan of the given stores.
   /// \returns true if the basic block was modified.
-  bool vectorizeStores(StoreList &Stores, int costThreshold);
+  bool vectorizeStores(ArrayRef<StoreInst *> Stores, int costThreshold);
 
   /// \brief Vectorize a group of scalars into a vector tree.
-  void vectorizeArith(ValueList &Operands);
+  void vectorizeArith(ArrayRef<Value *> Operands);
 
   /// \returns the list of new instructions that were added in order to collect
   /// scalars into vectors. This list can be used to further optimize the gather
@@ -79,21 +79,21 @@ struct BoUpSLP  {
 
 private:
   /// \brief This method contains the recursive part of getTreeCost.
-  int getTreeCost_rec(ValueList &VL, unsigned Depth);
+  int getTreeCost_rec(ArrayRef<Value *> VL, unsigned Depth);
 
   /// \brief This recursive method looks for vectorization hazards such as
   /// values that are used by multiple users and checks that values are used
   /// by only one vector lane. It updates the variables LaneMap, MultiUserVals.
-  void getTreeUses_rec(ValueList &VL, unsigned Depth);
+  void getTreeUses_rec(ArrayRef<Value *> VL, unsigned Depth);
 
   /// \brief This method contains the recursive part of vectorizeTree.
-  Value *vectorizeTree_rec(ValueList &VL, int VF);
+  Value *vectorizeTree_rec(ArrayRef<Value *> VL, int VF);
 
   /// \brief Number all of the instructions in the block.
   void numberInstructions();
 
   ///  \brief Vectorize a sorted sequence of stores.
-  bool vectorizeStoreChain(ValueList &Chain, int CostThreshold);
+  bool vectorizeStoreChain(ArrayRef<Value *> Chain, int CostThreshold);
 
   /// \returns the scalarization cost for this type. Scalarization in this
   /// context means the creation of vectors from a group of scalars.
@@ -109,10 +109,10 @@ private:
 
   /// \returns the instruction that appears last in the BB from \p VL.
   /// Only consider the first \p VF elements.
-  Instruction *GetLastInstr(ValueList &VL, unsigned VF);
+  Instruction *GetLastInstr(ArrayRef<Value *> VL, unsigned VF);
 
   /// \returns a vector from a collection of scalars in \p VL.
-  Value *Scalarize(ValueList &VL, VectorType *Ty);
+  Value *Scalarize(ArrayRef<Value *> VL, VectorType *Ty);
 
 private:
   /// Maps instructions to numbers and back.
