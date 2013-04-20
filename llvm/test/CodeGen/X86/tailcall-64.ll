@@ -61,7 +61,7 @@ define {i64, i64} @test_pair_notail() {
 ; CHECK: test_pair_notail:
 ; CHECK-NOT: jmp	_testi
 
-define {i64, i64} @test_pair_trivial_extract() {
+define {i64, i64} @test_pair_extract_trivial() {
   %A = tail call { i64, i64} @testp()
   %x = extractvalue { i64, i64} %A, 0
   %y = extractvalue { i64, i64} %A, 1
@@ -72,10 +72,10 @@ define {i64, i64} @test_pair_trivial_extract() {
   ret { i64, i64} %c
 }
 
-; CHECK: test_pair_trivial_extract:
+; CHECK: test_pair_extract_trivial:
 ; CHECK: jmp	_testp                  ## TAILCALL
 
-define {i64, i64} @test_pair_notail_extract() {
+define {i64, i64} @test_pair_extract_notail() {
   %A = tail call { i64, i64} @testp()
   %x = extractvalue { i64, i64} %A, 0
   %y = extractvalue { i64, i64} %A, 1
@@ -86,10 +86,10 @@ define {i64, i64} @test_pair_notail_extract() {
   ret { i64, i64} %c
 }
 
-; CHECK: test_pair_notail_extract:
+; CHECK: test_pair_extract_notail:
 ; CHECK-NOT: jmp	_testp
 
-define {i8*, i64} @test_pair_conv_extract() {
+define {i8*, i64} @test_pair_extract_conv() {
   %A = tail call { i64, i64} @testp()
   %x = extractvalue { i64, i64} %A, 0
   %y = extractvalue { i64, i64} %A, 1
@@ -102,10 +102,10 @@ define {i8*, i64} @test_pair_conv_extract() {
   ret { i8*, i64} %c
 }
 
-; CHECK: test_pair_conv_extract:
+; CHECK: test_pair_extract_conv:
 ; CHECK: jmp	_testp                  ## TAILCALL
 
-define {i64, i64} @test_pair_multiple_extract() {
+define {i64, i64} @test_pair_extract_multiple() {
   %A = tail call { i64, i64} @testp()
   %x = extractvalue { i64, i64} %A, 0
   %y = extractvalue { i64, i64} %A, 1
@@ -122,10 +122,10 @@ define {i64, i64} @test_pair_multiple_extract() {
   ret { i64, i64} %e
 }
 
-; CHECK: test_pair_multiple_extract:
+; CHECK: test_pair_extract_multiple:
 ; CHECK: jmp	_testp                  ## TAILCALL
 
-define {i64, i64} @test_pair_undef_extract() {
+define {i64, i64} @test_pair_extract_undef() {
   %A = tail call { i64, i64} @testp()
   %x = extractvalue { i64, i64} %A, 0
   
@@ -134,7 +134,7 @@ define {i64, i64} @test_pair_undef_extract() {
   ret { i64, i64} %b
 }
 
-; CHECK: test_pair_undef_extract:
+; CHECK: test_pair_extract_undef:
 ; CHECK: jmp	_testp                  ## TAILCALL
 
 declare { i64, { i32, i32 } } @testn()
