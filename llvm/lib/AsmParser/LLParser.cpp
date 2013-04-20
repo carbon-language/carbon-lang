@@ -1162,17 +1162,30 @@ bool LLParser::ParseOptionalParamAttrs(AttrBuilder &B) {
     case lltok::kw_sret:            B.addAttribute(Attribute::StructRet); break;
     case lltok::kw_zeroext:         B.addAttribute(Attribute::ZExt); break;
 
-    case lltok::kw_alignstack:      case lltok::kw_nounwind:
-    case lltok::kw_alwaysinline:    case lltok::kw_optsize:
-    case lltok::kw_inlinehint:      case lltok::kw_readnone:
-    case lltok::kw_minsize:         case lltok::kw_readonly:
-    case lltok::kw_naked:           case lltok::kw_returns_twice:
-    case lltok::kw_nobuiltin:       case lltok::kw_sanitize_address:
-    case lltok::kw_noimplicitfloat: case lltok::kw_sanitize_memory:
-    case lltok::kw_noinline:        case lltok::kw_sanitize_thread:
-    case lltok::kw_nonlazybind:     case lltok::kw_ssp:
-    case lltok::kw_noredzone:       case lltok::kw_sspreq:
-    case lltok::kw_noreturn:        case lltok::kw_uwtable:
+    case lltok::kw_alignstack:
+    case lltok::kw_alwaysinline:
+    case lltok::kw_inlinehint:
+    case lltok::kw_minsize:
+    case lltok::kw_naked:
+    case lltok::kw_nobuiltin:
+    case lltok::kw_noduplicate:
+    case lltok::kw_noimplicitfloat:
+    case lltok::kw_noinline:
+    case lltok::kw_nonlazybind:
+    case lltok::kw_noredzone:
+    case lltok::kw_noreturn:
+    case lltok::kw_nounwind:
+    case lltok::kw_optsize:
+    case lltok::kw_readnone:
+    case lltok::kw_readonly:
+    case lltok::kw_returns_twice:
+    case lltok::kw_sanitize_address:
+    case lltok::kw_sanitize_memory:
+    case lltok::kw_sanitize_thread:
+    case lltok::kw_ssp:
+    case lltok::kw_sspreq:
+    case lltok::kw_sspstrong:
+    case lltok::kw_uwtable:
       HaveError |= Error(Lex.getLoc(), "invalid use of function-only attribute");
       break;
     }
@@ -1198,6 +1211,7 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
     case lltok::kw_zeroext:         B.addAttribute(Attribute::ZExt); break;
 
     // Error handling.
+    case lltok::kw_align:
     case lltok::kw_byval:
     case lltok::kw_nest:
     case lltok::kw_nocapture:
@@ -1206,7 +1220,6 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
       HaveError |= Error(Lex.getLoc(), "invalid use of parameter-only attribute");
       break;
 
-    case lltok::kw_align:
     case lltok::kw_alignstack:
     case lltok::kw_alwaysinline:
     case lltok::kw_inlinehint:
