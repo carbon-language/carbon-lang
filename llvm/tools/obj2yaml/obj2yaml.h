@@ -18,7 +18,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 
-namespace yaml {  // routines for writing YAML
+namespace objyaml {  // routines for writing YAML
 // Write a hex stream:
 //    <Prefix> !hex: "<hex digits>" #|<ASCII chars>\n
   llvm::raw_ostream &writeHexStream

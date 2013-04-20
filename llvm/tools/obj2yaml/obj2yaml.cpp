@@ -18,7 +18,7 @@
 
 using namespace llvm;
 
-namespace yaml {  // generic yaml-writing specific routines
+namespace objyaml {  // generic yaml-writing specific routines
 
 unsigned char printable(unsigned char Ch) {
   return Ch >= ' ' && Ch <= '~' ? Ch : '.';

@@ -243,7 +243,7 @@ static raw_ostream &yamlCOFFHeader(const object::coff_file_header *Header,
   Out << "  Machine: ";
   Out << nameLookup(MachineTypePairs, Header->Machine, "# Unknown_MachineTypes")
       << " # (";
-  return yaml::writeHexNumber(Out, Header->Machine) << ")\n\n";
+  return objyaml::writeHexNumber(Out, Header->Machine) << ")\n\n";
 }
 
 
@@ -267,12 +267,12 @@ static raw_ostream &yamlCOFFSections(object::COFFObjectFile &Obj,
         << ", ";
     writeBitMask(Out, SectionCharacteristicsPairs2, sect->Characteristics);
     Out << "] # ";
-    yaml::writeHexNumber(Out, sect->Characteristics) << '\n';
+    objyaml::writeHexNumber(Out, sect->Characteristics) << '\n';
 
     ArrayRef<uint8_t> sectionData;
     Obj.getSectionContents(sect, sectionData);
     Out << "    SectionData: ";
-    yaml::writeHexStream(Out, sectionData) << '\n';
+    objyaml::writeHexStream(Out, sectionData) << '\n';
     if (iter->begin_relocations() != iter->end_relocations())
       Out << "    Relocations:\n";
     for (object::relocation_iterator rIter = iter->begin_relocations();
@@ -281,7 +281,7 @@ static raw_ostream &yamlCOFFSections(object::COFFObjectFile &Obj,
 
         Out << "      - !Relocation\n";
         Out << "        VirtualAddress: " ;
-        yaml::writeHexNumber(Out, reloc->VirtualAddress) << '\n';
+        objyaml::writeHexNumber(Out, reloc->VirtualAddress) << '\n';
         Out << "        SymbolTableIndex: " << reloc->SymbolTableIndex << '\n';
         Out << "        Type: "
             << nameLookup(RelocationTypeX86Pairs, reloc->Type) << '\n';
@@ -334,7 +334,7 @@ static raw_ostream& yamlCOFFSymbols(object::COFFObjectFile &Obj,
       Out << "    NumberOfAuxSymbols: "
           << (int) symbol->NumberOfAuxSymbols << '\n';
       Out << "    AuxillaryData: ";
-      yaml::writeHexStream(Out, aux);
+      objyaml::writeHexStream(Out, aux);
     }
 
     Out << '\n';
