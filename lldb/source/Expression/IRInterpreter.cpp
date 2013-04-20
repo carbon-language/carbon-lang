@@ -1300,7 +1300,7 @@ IRInterpreter::Interpret (llvm::Module &module,
                     if (log)
                         log->Printf("Couldn't write to a region on behalf of a StoreInst");
                     error.SetErrorToGenericError();
-                    error.SetErrorString(memory_read_error);
+                    error.SetErrorString(memory_write_error);
                     return false;
                 }
                 
