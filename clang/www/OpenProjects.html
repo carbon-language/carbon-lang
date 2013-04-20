@@ -21,13 +21,10 @@ intended to be comprehensive.  Please ask on cfe-dev for more specifics or to
 verify that one of these isn't already completed. :)</p>
 
 <ul>
-<li><b>Undefined behavior checking</b>: CodeGen could
-insert runtime checks for all sorts of different undefined behaviors, from 
-reading uninitialized variables, buffer overflows, and many other things.  This
-checking would be expensive, but the optimizers could eliminate many of the 
-checks in some cases, and it would be very interesting to test code in this mode
-for certain crowds of people.  Because the inserted code is coming from clang,
-the "abort" message could be very detailed about exactly what went wrong.</li>
+<li><b>Undefined behavior checking</b>:
+Improve and extend the runtime checks for undefined behavior which CodeGen
+inserts for the various <tt>-fsanitize=</tt> modes. A lot of issues can already
+be caught, but there is more to do here.</li>
 
 <li><b>Improve target support</b>: The current target interfaces are heavily
 stubbed out and need to be implemented fully.  See the FIXME's in TargetInfo.
@@ -40,7 +37,8 @@ about source code. One great application of Clang would be to build an
 auto-documentation system like doxygen that generates code documentation from
 source code. The advantage of using Clang for such a tool is that the tool would
 use the same preprocessor/parser/ASTs as the compiler itself, giving it a very
-rich understanding of the code.</li> 
+rich understanding of the code. Clang is already able to read and understand
+doxygen markup, but cannot yet generate documentation from it.</li>
 
 <li><b>Use clang libraries to implement better versions of existing tools</b>:
 Clang is built as a set of libraries, which means that it is possible to
@@ -51,9 +49,9 @@ href="http://delta.tigris.org/">delta testcase reduction tool</a>, and the
 "indent" source reformatting tool.
 distcc can be improved to scale better and be more efficient.  Delta could be
 faster and more efficient at reducing C-family programs if built on the clang
-preprocessor, indent could do proper formatting for complex C++ features, and it
-would be straight-forward to extend a clang-based implementation to handle
-simple structural rules like those in <a
+preprocessor. The clang-based indent replacement,
+<a href="http://clang.llvm.org/docs/ClangFormat.html">clang-format</a>,
+could be taught to handle simple structural rules like those in <a
 href="http://llvm.org/docs/CodingStandards.html#hl_earlyexit">the LLVM coding
 standards</a>.</li>
 
