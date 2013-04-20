@@ -94,11 +94,11 @@ bool BoUpSLP::isConsecutiveAccess(Value *A, Value *B) {
   // Non constant distance.
   if (!ConstOffSCEV) return false;
 
-  unsigned Offset = ConstOffSCEV->getValue()->getSExtValue();
+  int64_t Offset = ConstOffSCEV->getValue()->getSExtValue();
   Type *Ty = cast<PointerType>(PtrA->getType())->getElementType();
   // The Instructions are connsecutive if the size of the first load/store is
   // the same as the offset.
-  unsigned Sz = DL->getTypeStoreSize(Ty);
+  int64_t Sz = DL->getTypeStoreSize(Ty);
   return ((-Offset) == Sz);
 }
 
