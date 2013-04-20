@@ -747,7 +747,8 @@ FileSpec::MemoryMapFileContents(off_t file_offset, size_t file_size) const
     std::unique_ptr<DataBufferMemoryMap> mmap_data(new DataBufferMemoryMap());
     if (mmap_data.get())
     {
-        if (mmap_data->MemoryMapFromFileSpec (this, file_offset, file_size) >= file_size)
+        const size_t mapped_length = mmap_data->MemoryMapFromFileSpec (this, file_offset, file_size);
+        if (((file_size == SIZE_MAX) && (mapped_length > 0)) || (mapped_length >= file_size))
             data_sp.reset(mmap_data.release());
     }
     return data_sp;
