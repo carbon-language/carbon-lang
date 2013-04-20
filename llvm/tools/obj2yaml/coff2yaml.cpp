@@ -233,8 +233,8 @@ const char *nameLookup(const pod_pair<T, const char *> (&Arr)[N],
   return NotFound;
 }
 
-static raw_ostream &yamlCOFFHeader(const object::coff_file_header *Header,
-                                   raw_ostream &Out) {
+static void yamlCOFFHeader(const object::coff_file_header *Header,
+                           raw_ostream &Out) {
   COFF::header H;
   H.Machine = Header->Machine;
   H.Characteristics = Header->Characteristics;
@@ -243,13 +243,12 @@ static raw_ostream &yamlCOFFHeader(const object::coff_file_header *Header,
   Out << "  Machine: ";
   Out << nameLookup(MachineTypePairs, Header->Machine, "# Unknown_MachineTypes")
       << " # (";
-  return objyaml::writeHexNumber(Out, Header->Machine) << ")\n\n";
+  objyaml::writeHexNumber(Out, Header->Machine) << ")\n\n";
 }
 
 
-static raw_ostream &yamlCOFFSections(object::COFFObjectFile &Obj,
-                                     std::size_t NumSections,
-                                     raw_ostream &Out) {
+static void yamlCOFFSections(object::COFFObjectFile &Obj,
+                             std::size_t NumSections, raw_ostream &Out) {
   error_code ec;
   Out << "sections:\n";
   for (object::section_iterator iter = Obj.begin_sections();
@@ -290,12 +289,10 @@ static raw_ostream &yamlCOFFSections(object::COFFObjectFile &Obj,
       }
 
   }
-  return Out;
 }
 
-static raw_ostream& yamlCOFFSymbols(object::COFFObjectFile &Obj,
-                                    std::size_t NumSymbols,
-                                    raw_ostream &Out) {
+static void yamlCOFFSymbols(object::COFFObjectFile &Obj, std::size_t NumSymbols,
+                            raw_ostream &Out) {
   error_code ec;
   Out << "symbols:\n";
   for (object::symbol_iterator iter = Obj.begin_symbols();
@@ -339,8 +336,6 @@ static raw_ostream& yamlCOFFSymbols(object::COFFObjectFile &Obj,
 
     Out << '\n';
   }
-
-  return Out;
 }
 
 
