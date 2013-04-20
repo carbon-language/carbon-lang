@@ -89,8 +89,8 @@ struct SLPVectorizer : public FunctionPass {
       BBChanged |= vectorizeReductions(BB, R);
 
       // Vectorize trees that end at stores.
-      if (collectStores(BB, R)) {
-        DEBUG(dbgs()<<"SLP: Found stores to vectorize.\n");
+      if (unsigned count = collectStores(BB, R)) {
+        DEBUG(dbgs()<<"SLP: Found " << count << " stores to vectorize.\n");
         BBChanged |= vectorizeStoreChains(R);
       }
 
@@ -121,7 +121,7 @@ private:
   /// object. We sort the stores to their base objects to reduce the cost of the
   /// quadratic search on the stores. TODO: We can further reduce this cost
   /// if we flush the chain creation every time we run into a memory barrier.
-  bool collectStores(BasicBlock *BB, BoUpSLP &R);
+  unsigned collectStores(BasicBlock *BB, BoUpSLP &R);
 
   /// \brief Try to vectorize a chain that starts at two arithmetic instrs.
   bool tryToVectorizePair(Value *A, Value *B,  BoUpSLP &R);
@@ -144,7 +144,8 @@ private:
   StoreListMap StoreRefs;
 };
 
-bool SLPVectorizer::collectStores(BasicBlock *BB, BoUpSLP &R) {
+unsigned SLPVectorizer::collectStores(BasicBlock *BB, BoUpSLP &R) {
+  unsigned count = 0;
   StoreRefs.clear();
   for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
     StoreInst *SI = dyn_cast<StoreInst>(it);
@@ -153,7 +154,7 @@ bool SLPVectorizer::collectStores(BasicBlock *BB, BoUpSLP &R) {
 
     // Check that the pointer points to scalars.
     if (SI->getValueOperand()->getType()->isAggregateType())
-      return false;
+      return 0;
 
     // Find the base of the GEP.
     Value *Ptr = SI->getPointerOperand();
@@ -162,8 +163,9 @@ bool SLPVectorizer::collectStores(BasicBlock *BB, BoUpSLP &R) {
 
     // Save the store locations.
     StoreRefs[Ptr].push_back(SI);
+    count++;
   }
-  return true;
+  return count;
 }
 
 bool SLPVectorizer::tryToVectorizePair(Value *A, Value *B,  BoUpSLP &R) {
