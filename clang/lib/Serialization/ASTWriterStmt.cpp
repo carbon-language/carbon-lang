@@ -1223,6 +1223,13 @@ void ASTStmtWriter::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
   Code = serialization::EXPR_CXX_DEFAULT_ARG;
 }
 
+void ASTStmtWriter::VisitCXXDefaultInitExpr(CXXDefaultInitExpr *E) {
+  VisitExpr(E);
+  Writer.AddDeclRef(E->getField(), Record);
+  Writer.AddSourceLocation(E->getExprLoc(), Record);
+  Code = serialization::EXPR_CXX_DEFAULT_INIT;
+}
+
 void ASTStmtWriter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   VisitExpr(E);
   Writer.AddCXXTemporary(E->getTemporary(), Record);

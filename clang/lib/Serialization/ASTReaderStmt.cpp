@@ -1230,6 +1230,12 @@ void ASTStmtReader::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
   E->Loc = ReadSourceLocation(Record, Idx);
 }
 
+void ASTStmtReader::VisitCXXDefaultInitExpr(CXXDefaultInitExpr *E) {
+  VisitExpr(E);
+  E->Field = ReadDeclAs<FieldDecl>(Record, Idx);
+  E->Loc = ReadSourceLocation(Record, Idx);
+}
+
 void ASTStmtReader::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   VisitExpr(E);
   E->setTemporary(Reader.ReadCXXTemporary(F, Record, Idx));
@@ -2111,6 +2117,9 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
         S = new (Context) CXXDefaultArgExpr(Empty);
       break;
     }
+    case EXPR_CXX_DEFAULT_INIT:
+      S = new (Context) CXXDefaultInitExpr(Empty);
+      break;
     case EXPR_CXX_BIND_TEMPORARY:
       S = new (Context) CXXBindTemporaryExpr(Empty);
       break;

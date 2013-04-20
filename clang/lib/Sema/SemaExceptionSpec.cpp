@@ -1011,7 +1011,6 @@ CanThrowResult Sema::canThrow(const Expr *E) {
   case Expr::ConditionalOperatorClass:
   case Expr::CompoundLiteralExprClass:
   case Expr::CXXConstCastExprClass:
-  case Expr::CXXDefaultArgExprClass:
   case Expr::CXXReinterpretCastExprClass:
   case Expr::DesignatedInitExprClass:
   case Expr::ExprWithCleanupsClass:
@@ -1043,6 +1042,12 @@ CanThrowResult Sema::canThrow(const Expr *E) {
     // FIXME: We should handle StmtExpr, but that opens a MASSIVE can of worms.
   case Expr::StmtExprClass:
     return CT_Can;
+
+  case Expr::CXXDefaultArgExprClass:
+    return canThrow(cast<CXXDefaultArgExpr>(E)->getExpr());
+
+  case Expr::CXXDefaultInitExprClass:
+    return canThrow(cast<CXXDefaultInitExpr>(E)->getExpr());
 
   case Expr::ChooseExprClass:
     if (E->isTypeDependent() || E->isValueDependent())

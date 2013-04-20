@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++1y %s -DCXX1Y
 
 // An aggregate is an array or a class...
 struct Aggr {
@@ -18,9 +19,6 @@ struct NonAggr1a { // expected-note 2 {{candidate constructor}}
   NonAggr1a(int, int); // expected-note {{candidate constructor}}
   int k;
 };
-// In C++0x, 'user-provided' is only defined for special member functions, so
-// this type is considered to be an aggregate. This is considered to be
-// a language defect.
 NonAggr1a na1a = { 42 }; // expected-error {{no matching constructor for initialization of 'NonAggr1a'}}
 
 struct NonAggr1b {
@@ -30,10 +28,15 @@ struct NonAggr1b {
 NonAggr1b na1b = { 42 }; // expected-error {{no matching constructor for initialization of 'NonAggr1b'}}
 
 // no brace-or-equal-initializers for non-static data members, ...
-struct NonAggr2 { // expected-note 3 {{candidate constructor}}
+// Note, this bullet was removed in C++1y.
+struct NonAggr2 {
   int m = { 123 };
 };
-NonAggr2 na2 = { 42 }; // expected-error {{no matching constructor for initialization of 'NonAggr2'}}
+NonAggr2 na2 = { 42 };
+#ifndef CXX1Y
+// expected-error@-2 {{no matching constructor for initialization of 'NonAggr2'}}
+// expected-note@-6 3 {{candidate constructor}}
+#endif
 
 // no private...
 struct NonAggr3 { // expected-note 3 {{candidate constructor}}

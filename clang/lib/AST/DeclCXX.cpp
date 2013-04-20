@@ -505,7 +505,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
     // C++ [dcl.init.aggr]p1:
     //   An aggregate is an array or a class with no user-declared
     //   constructors [...].
-    // C++0x [dcl.init.aggr]p1:
+    // C++11 [dcl.init.aggr]p1:
     //   An aggregate is an array or a class with no user-provided
     //   constructors [...].
     if (getASTContext().getLangOpts().CPlusPlus11
@@ -690,7 +690,10 @@ void CXXRecordDecl::addedMember(Decl *D) {
       // C++11 [dcl.init.aggr]p1:
       //   An aggregate is a [...] class with [...] no
       //   brace-or-equal-initializers for non-static data members.
-      data().Aggregate = false;
+      //
+      // This rule was removed in C++1y.
+      if (!getASTContext().getLangOpts().CPlusPlus1y)
+        data().Aggregate = false;
 
       // C++11 [class]p10:
       //   A POD struct is [...] a trivial class.

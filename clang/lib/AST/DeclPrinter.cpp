@@ -487,7 +487,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
       for (CXXConstructorDecl::init_const_iterator B = CDecl->init_begin(),
            E = CDecl->init_end();
            B != E; ++B) {
-        CXXCtorInitializer * BMInitializer = (*B);
+        CXXCtorInitializer *BMInitializer = (*B);
         if (BMInitializer->isInClassMemberInitializer())
           continue;
 

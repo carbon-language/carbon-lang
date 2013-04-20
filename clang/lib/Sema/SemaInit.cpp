@@ -293,6 +293,21 @@ void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
   InitializedEntity MemberEntity
     = InitializedEntity::InitializeMember(Field, &ParentEntity);
   if (Init >= NumInits || !ILE->getInit(Init)) {
+    // If there's no explicit initializer but we have a default initializer, use
+    // that. This only happens in C++1y, since classes with default
+    // initializers are not aggregates in C++11.
+    if (Field->hasInClassInitializer()) {
+      Expr *DIE = CXXDefaultInitExpr::Create(SemaRef.Context,
+                                             ILE->getRBraceLoc(), Field);
+      if (Init < NumInits)
+        ILE->setInit(Init, DIE);
+      else {
+        ILE->updateInit(SemaRef.Context, Init, DIE);
+        RequiresSecondPass = true;
+      }
+      return;
+    }
+
     // FIXME: We probably don't need to handle references
     // specially here, since value-initialization of references is
     // handled in InitializationSequence.
@@ -358,15 +373,24 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
     Loc = ILE->getSyntacticForm()->getLocStart();
 
   if (const RecordType *RType = ILE->getType()->getAs<RecordType>()) {
-    if (RType->getDecl()->isUnion() &&
-        ILE->getInitializedFieldInUnion())
+    const RecordDecl *RDecl = RType->getDecl();
+    if (RDecl->isUnion() && ILE->getInitializedFieldInUnion())
       FillInValueInitForField(0, ILE->getInitializedFieldInUnion(),
                               Entity, ILE, RequiresSecondPass);
-    else {
+    else if (RDecl->isUnion() && isa<CXXRecordDecl>(RDecl) &&
+             cast<CXXRecordDecl>(RDecl)->hasInClassInitializer()) {
+      for (RecordDecl::field_iterator Field = RDecl->field_begin(),
+                                      FieldEnd = RDecl->field_end();
+           Field != FieldEnd; ++Field) {
+        if (Field->hasInClassInitializer()) {
+          FillInValueInitForField(0, *Field, Entity, ILE, RequiresSecondPass);
+          break;
+        }
+      }
+    } else {
       unsigned Init = 0;
-      for (RecordDecl::field_iterator
-             Field = RType->getDecl()->field_begin(),
-             FieldEnd = RType->getDecl()->field_end();
+      for (RecordDecl::field_iterator Field = RDecl->field_begin(),
+                                      FieldEnd = RDecl->field_end();
            Field != FieldEnd; ++Field) {
         if (Field->isUnnamedBitfield())
           continue;
@@ -381,7 +405,7 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
         ++Init;
 
         // Only look at the first initialization of a union.
-        if (RType->getDecl()->isUnion())
+        if (RDecl->isUnion())
           break;
       }
     }
@@ -1323,8 +1347,23 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
   }
 
   if (DeclType->isUnionType() && IList->getNumInits() == 0) {
-    // Value-initialize the first named member of the union.
     RecordDecl *RD = DeclType->getAs<RecordType>()->getDecl();
+
+    // If there's a default initializer, use it.
+    if (isa<CXXRecordDecl>(RD) && cast<CXXRecordDecl>(RD)->hasInClassInitializer()) {
+      if (VerifyOnly)
+        return;
+      for (RecordDecl::field_iterator FieldEnd = RD->field_end();
+           Field != FieldEnd; ++Field) {
+        if (Field->hasInClassInitializer()) {
+          StructuredList->setInitializedFieldInUnion(*Field);
+          // FIXME: Actually build a CXXDefaultInitExpr?
+          return;
+        }
+      }
+    }
+
+    // Value-initialize the first named member of the union.
     for (RecordDecl::field_iterator FieldEnd = RD->field_end();
          Field != FieldEnd; ++Field) {
       if (Field->getDeclName()) {
@@ -1428,7 +1467,7 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
     // Find first (if any) named field and emit warning.
     for (RecordDecl::field_iterator it = Field, end = RD->field_end();
          it != end; ++it) {
-      if (!it->isUnnamedBitfield()) {
+      if (!it->isUnnamedBitfield() && !it->hasInClassInitializer()) {
         SemaRef.Diag(IList->getSourceRange().getEnd(),
                      diag::warn_missing_field_initializers) << it->getName();
         break;
@@ -1441,7 +1480,7 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
       !Field->getType()->isIncompleteArrayType()) {
     // FIXME: Should check for holes left by designated initializers too.
     for (; Field != FieldEnd && !hadError; ++Field) {
-      if (!Field->isUnnamedBitfield())
+      if (!Field->isUnnamedBitfield() && !Field->hasInClassInitializer())
         CheckValueInitializable(
             InitializedEntity::InitializeMember(*Field, &Entity));
     }

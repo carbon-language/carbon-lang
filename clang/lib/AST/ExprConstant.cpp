@@ -301,6 +301,22 @@ namespace {
     ~CallStackFrame();
   };
 
+  /// Temporarily override 'this'.
+  class ThisOverrideRAII {
+  public:
+    ThisOverrideRAII(CallStackFrame &Frame, const LValue *NewThis, bool Enable)
+        : Frame(Frame), OldThis(Frame.This) {
+      if (Enable)
+        Frame.This = NewThis;
+    }
+    ~ThisOverrideRAII() {
+      Frame.This = OldThis;
+    }
+  private:
+    CallStackFrame &Frame;
+    const LValue *OldThis;
+  };
+
   /// A partial diagnostic which we might know in advance that we are not going
   /// to emit.
   class OptionalDiagnostic {
@@ -2397,6 +2413,8 @@ public:
     { return StmtVisitorTy::Visit(E->getReplacement()); }
   RetTy VisitCXXDefaultArgExpr(const CXXDefaultArgExpr *E)
     { return StmtVisitorTy::Visit(E->getExpr()); }
+  RetTy VisitCXXDefaultInitExpr(const CXXDefaultInitExpr *E)
+    { return StmtVisitorTy::Visit(E->getExpr()); }
   // We cannot create any objects for which cleanups are required, so there is
   // nothing to do here; all cleanups must come from unevaluated subexpressions.
   RetTy VisitExprWithCleanups(const ExprWithCleanups *E)
@@ -3398,12 +3416,20 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
 
     // If the initializer list for a union does not contain any elements, the
     // first element of the union is value-initialized.
+    // FIXME: The element should be initialized from an initializer list.
+    //        Is this difference ever observable for initializer lists which
+    //        we don't build?
     ImplicitValueInitExpr VIE(Field->getType());
     const Expr *InitExpr = E->getNumInits() ? E->getInit(0) : &VIE;
 
     LValue Subobject = This;
     if (!HandleLValueMember(Info, InitExpr, Subobject, Field, &Layout))
       return false;
+
+    // Temporarily override This, in case there's a CXXDefaultInitExpr in here.
+    ThisOverrideRAII ThisOverride(*Info.CurrentCall, &This,
+                                  isa<CXXDefaultInitExpr>(InitExpr));
+
     return EvaluateInPlace(Result.getUnionValue(), Info, Subobject, InitExpr);
   }
 
@@ -3433,10 +3459,14 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
     // Perform an implicit value-initialization for members beyond the end of
     // the initializer list.
     ImplicitValueInitExpr VIE(HaveInit ? Info.Ctx.IntTy : Field->getType());
+    const Expr *Init = HaveInit ? E->getInit(ElementNo++) : &VIE;
 
-    if (!EvaluateInPlace(
-          Result.getStructField(Field->getFieldIndex()),
-          Info, Subobject, HaveInit ? E->getInit(ElementNo++) : &VIE)) {
+    // Temporarily override This, in case there's a CXXDefaultInitExpr in here.
+    ThisOverrideRAII ThisOverride(*Info.CurrentCall, &This,
+                                  isa<CXXDefaultInitExpr>(Init));
+
+    if (!EvaluateInPlace(Result.getStructField(Field->getFieldIndex()), Info,
+                         Subobject, Init)) {
       if (!Info.keepEvaluatingAfterFailure())
         return false;
       Success = false;
@@ -6807,6 +6837,8 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   }
   case Expr::CXXDefaultArgExprClass:
     return CheckICE(cast<CXXDefaultArgExpr>(E)->getExpr(), Ctx);
+  case Expr::CXXDefaultInitExprClass:
+    return CheckICE(cast<CXXDefaultInitExpr>(E)->getExpr(), Ctx);
   case Expr::ChooseExprClass: {
     return CheckICE(cast<ChooseExpr>(E)->getChosenSubExpr(Ctx), Ctx);
   }

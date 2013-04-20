@@ -170,6 +170,10 @@ public:
   void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
     Visit(DAE->getExpr());
   }
+  void VisitCXXDefaultInitExpr(CXXDefaultInitExpr *DIE) {
+    CodeGenFunction::CXXDefaultInitExprScope Scope(CGF);
+    Visit(DIE->getExpr());
+  }
   void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
   void VisitCXXConstructExpr(const CXXConstructExpr *E);
   void VisitLambdaExpr(LambdaExpr *E);
@@ -1189,7 +1193,10 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   // the optimizer, especially with bitfields.
   unsigned NumInitElements = E->getNumInits();
   RecordDecl *record = E->getType()->castAs<RecordType>()->getDecl();
-  
+
+  // Prepare a 'this' for CXXDefaultInitExprs.
+  CodeGenFunction::FieldConstructionScope FCS(CGF, Dest.getAddr());
+
   if (record->isUnion()) {
     // Only initialize one field of a union. The field itself is
     // specified by the initializer list.

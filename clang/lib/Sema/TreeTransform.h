@@ -1980,6 +1980,17 @@ public:
                                                      Param));
   }
 
+  /// \brief Build a new C++11 default-initialization expression.
+  ///
+  /// By default, builds a new default field initialization expression, which
+  /// does not require any semantic analysis. Subclasses may override this
+  /// routine to provide different behavior.
+  ExprResult RebuildCXXDefaultInitExpr(SourceLocation Loc,
+                                       FieldDecl *Field) {
+    return getSema().Owned(CXXDefaultInitExpr::Create(getSema().Context, Loc,
+                                                      Field));
+  }
+
   /// \brief Build a new C++ zero-initialization expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -7258,6 +7269,21 @@ TreeTransform<Derived>::TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
     return SemaRef.Owned(E);
 
   return getDerived().RebuildCXXDefaultArgExpr(E->getUsedLocation(), Param);
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformCXXDefaultInitExpr(CXXDefaultInitExpr *E) {
+  FieldDecl *Field
+    = cast_or_null<FieldDecl>(getDerived().TransformDecl(E->getLocStart(),
+                                                         E->getField()));
+  if (!Field)
+    return ExprError();
+
+  if (!getDerived().AlwaysRebuild() && Field == E->getField())
+    return SemaRef.Owned(E);
+
+  return getDerived().RebuildCXXDefaultInitExpr(E->getExprLoc(), Field);
 }
 
 template<typename Derived>

@@ -884,6 +884,53 @@ public:
   friend class ASTStmtWriter;
 };
 
+/// \brief This wraps a use of a C++ default initializer (technically,
+/// a brace-or-equal-initializer for a non-static data member) when it
+/// is implicitly used in a mem-initializer-list in a constructor
+/// (C++11 [class.base.init]p8) or in aggregate initialization
+/// (C++1y [dcl.init.aggr]p7).
+class CXXDefaultInitExpr : public Expr {
+  /// \brief The field whose default is being used.
+  FieldDecl *Field;
+
+  /// \brief The location where the default initializer expression was used.
+  SourceLocation Loc;
+
+  CXXDefaultInitExpr(ASTContext &C, SourceLocation Loc, FieldDecl *Field,
+                     QualType T);
+
+  CXXDefaultInitExpr(EmptyShell Empty) : Expr(CXXDefaultInitExprClass, Empty) {}
+
+public:
+  // Field is the non-static data member whose default initializer is used
+  // by this expression.
+  static CXXDefaultInitExpr *Create(ASTContext &C, SourceLocation Loc,
+                                    FieldDecl *Field) {
+    return new (C) CXXDefaultInitExpr(C, Loc, Field, Field->getType());
+  }
+
+  // Get the field whose initializer will be used.
+  FieldDecl *getField() { return Field; }
+  const FieldDecl *getField() const { return Field; }
+
+  // Get the initialization expression that will be used.
+  const Expr *getExpr() const { return Field->getInClassInitializer(); }
+  Expr *getExpr() { return Field->getInClassInitializer(); }
+
+  SourceLocation getLocStart() const LLVM_READONLY { return Loc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return Loc; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CXXDefaultInitExprClass;
+  }
+
+  // Iterators
+  child_range children() { return child_range(); }
+
+  friend class ASTReader;
+  friend class ASTStmtReader;
+};
+
 /// CXXTemporary - Represents a C++ temporary.
 class CXXTemporary {
   /// Destructor - The destructor that needs to be called.

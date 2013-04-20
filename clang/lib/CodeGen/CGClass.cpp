@@ -1139,6 +1139,7 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
   InitializeVTablePointers(ClassDecl);
 
   // And finally, initialize class members.
+  FieldConstructionScope FCS(*this, CXXThisValue);
   ConstructorMemcpyizer CM(*this, CD, Args);
   for (; B != E; B++) {
     CXXCtorInitializer *Member = (*B);

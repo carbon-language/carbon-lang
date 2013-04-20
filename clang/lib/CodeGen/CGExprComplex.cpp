@@ -182,6 +182,10 @@ public:
   ComplexPairTy VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
     return Visit(DAE->getExpr());
   }
+  ComplexPairTy VisitCXXDefaultInitExpr(CXXDefaultInitExpr *DIE) {
+    CodeGenFunction::CXXDefaultInitExprScope Scope(CGF);
+    return Visit(DIE->getExpr());
+  }
   ComplexPairTy VisitExprWithCleanups(ExprWithCleanups *E) {
     CGF.enterFullExpression(E);
     CodeGenFunction::RunCleanupsScope Scope(CGF);

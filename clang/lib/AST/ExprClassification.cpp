@@ -298,6 +298,10 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   case Expr::CXXDefaultArgExprClass:
     return ClassifyInternal(Ctx, cast<CXXDefaultArgExpr>(E)->getExpr());
 
+    // Same idea for default initializers.
+  case Expr::CXXDefaultInitExprClass:
+    return ClassifyInternal(Ctx, cast<CXXDefaultInitExpr>(E)->getExpr());
+
     // Same idea for temporary binding.
   case Expr::CXXBindTemporaryExprClass:
     return ClassifyInternal(Ctx, cast<CXXBindTemporaryExpr>(E)->getSubExpr());

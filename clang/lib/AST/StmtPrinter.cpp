@@ -1314,7 +1314,11 @@ void StmtPrinter::VisitCXXThrowExpr(CXXThrowExpr *Node) {
 }
 
 void StmtPrinter::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *Node) {
-  // Nothing to print: we picked up the default argument
+  // Nothing to print: we picked up the default argument.
+}
+
+void StmtPrinter::VisitCXXDefaultInitExpr(CXXDefaultInitExpr *Node) {
+  // Nothing to print: we picked up the default initializer.
 }
 
 void StmtPrinter::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node) {

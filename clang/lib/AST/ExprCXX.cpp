@@ -704,6 +704,17 @@ CXXDefaultArgExpr::Create(ASTContext &C, SourceLocation Loc,
                                      SubExpr);
 }
 
+CXXDefaultInitExpr::CXXDefaultInitExpr(ASTContext &C, SourceLocation Loc,
+                                       FieldDecl *Field, QualType T)
+    : Expr(CXXDefaultInitExprClass, T.getNonLValueExprType(C),
+           T->isLValueReferenceType() ? VK_LValue : T->isRValueReferenceType()
+                                                        ? VK_XValue
+                                                        : VK_RValue,
+           /*FIXME*/ OK_Ordinary, false, false, false, false),
+      Field(Field), Loc(Loc) {
+  assert(Field->hasInClassInitializer());
+}
+
 CXXTemporary *CXXTemporary::Create(ASTContext &C,
                                    const CXXDestructorDecl *Destructor) {
   return new (C) CXXTemporary(Destructor);

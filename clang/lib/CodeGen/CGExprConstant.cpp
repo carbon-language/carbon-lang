@@ -757,6 +757,12 @@ public:
     return Visit(DAE->getExpr());
   }
 
+  llvm::Constant *VisitCXXDefaultInitExpr(CXXDefaultInitExpr *DIE) {
+    // No need for a DefaultInitExprScope: we don't handle 'this' in a
+    // constant expression.
+    return Visit(DIE->getExpr());
+  }
+
   llvm::Constant *VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E) {
     return Visit(E->GetTemporaryExpr());
   }

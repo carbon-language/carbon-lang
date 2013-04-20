@@ -100,11 +100,20 @@ Expr::skipRValueSubobjectAdjustments(
 const Expr *
 Expr::findMaterializedTemporary(const MaterializeTemporaryExpr *&MTE) const {
   const Expr *E = this;
+
+  // This might be a default initializer for a reference member. Walk over the
+  // wrapper node for that.
+  if (const CXXDefaultInitExpr *DAE = dyn_cast<CXXDefaultInitExpr>(E))
+    E = DAE->getExpr();
+
   // Look through single-element init lists that claim to be lvalues. They're
   // just syntactic wrappers in this case.
   if (const InitListExpr *ILE = dyn_cast<InitListExpr>(E)) {
-    if (ILE->getNumInits() == 1 && ILE->isGLValue())
+    if (ILE->getNumInits() == 1 && ILE->isGLValue()) {
       E = ILE->getInit(0);
+      if (const CXXDefaultInitExpr *DAE = dyn_cast<CXXDefaultInitExpr>(E))
+        E = DAE->getExpr();
+    }
   }
 
   // Look through expressions for materialized temporaries (for now).
@@ -2174,6 +2183,9 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
   case CXXDefaultArgExprClass:
     return (cast<CXXDefaultArgExpr>(this)
             ->getExpr()->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx));
+  case CXXDefaultInitExprClass:
+    return (cast<CXXDefaultInitExpr>(this)
+            ->getExpr()->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx));
 
   case CXXNewExprClass:
     // FIXME: In theory, there might be new expressions that don't have side
@@ -2851,6 +2863,12 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)->getExpr()->HasSideEffects(Ctx);
 
+  case CXXDefaultInitExprClass:
+    if (const Expr *E = cast<CXXDefaultInitExpr>(this)->getExpr())
+      return E->HasSideEffects(Ctx);
+    // If we've not yet parsed the initializer, assume it has side-effects.
+    return true;
+
   case CXXDynamicCastExprClass: {
     // A dynamic_cast expression has side-effects if it can throw.
     const CXXDynamicCastExpr *DCE = cast<CXXDynamicCastExpr>(this);
@@ -3038,8 +3056,12 @@ Expr::isNullPointerConstant(ASTContext &Ctx,
     return GE->getResultExpr()->isNullPointerConstant(Ctx, NPC);
   } else if (const CXXDefaultArgExpr *DefaultArg
                = dyn_cast<CXXDefaultArgExpr>(this)) {
-    // See through default argument expressions
+    // See through default argument expressions.
     return DefaultArg->getExpr()->isNullPointerConstant(Ctx, NPC);
+  } else if (const CXXDefaultInitExpr *DefaultInit
+               = dyn_cast<CXXDefaultInitExpr>(this)) {
+    // See through default initializer expressions.
+    return DefaultInit->getExpr()->isNullPointerConstant(Ctx, NPC);
   } else if (isa<GNUNullExpr>(this)) {
     // The GNU __null extension is always a null pointer constant.
     return NPCK_GNUNull;

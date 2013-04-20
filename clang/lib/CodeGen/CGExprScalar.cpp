@@ -344,6 +344,10 @@ public:
   Value *VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
     return Visit(DAE->getExpr());
   }
+  Value *VisitCXXDefaultInitExpr(CXXDefaultInitExpr *DIE) {
+    CodeGenFunction::CXXDefaultInitExprScope Scope(CGF);
+    return Visit(DIE->getExpr());
+  }
   Value *VisitCXXThisExpr(CXXThisExpr *TE) {
     return CGF.LoadCXXThis();
   }

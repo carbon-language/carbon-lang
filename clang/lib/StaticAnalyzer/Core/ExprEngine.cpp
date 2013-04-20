@@ -604,6 +604,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
   switch (S->getStmtClass()) {
     // C++ and ARC stuff we don't support yet.
     case Expr::ObjCIndirectCopyRestoreExprClass:
+    case Stmt::CXXDefaultInitExprClass:
     case Stmt::CXXDependentScopeMemberExprClass:
     case Stmt::CXXPseudoDestructorExprClass:
     case Stmt::CXXTryStmtClass:

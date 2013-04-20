@@ -3054,7 +3054,7 @@ struct BaseAndFieldInfo {
     AllToInit.push_back(Init);
 
     // Check whether this initializer makes the field "used".
-    if (Init->getInit() && Init->getInit()->HasSideEffects(S.Context))
+    if (Init->getInit()->HasSideEffects(S.Context))
       S.UnusedPrivateFields.remove(Init->getAnyMember());
 
     return false;
@@ -3103,16 +3103,18 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
   // has a brace-or-equal-initializer, the entity is initialized as specified
   // in [dcl.init].
   if (Field->hasInClassInitializer() && !Info.isImplicitCopyOrMove()) {
+    Expr *DIE = CXXDefaultInitExpr::Create(SemaRef.Context,
+                                           Info.Ctor->getLocation(), Field);
     CXXCtorInitializer *Init;
     if (Indirect)
       Init = new (SemaRef.Context) CXXCtorInitializer(SemaRef.Context, Indirect,
                                                       SourceLocation(),
-                                                      SourceLocation(), 0,
+                                                      SourceLocation(), DIE,
                                                       SourceLocation());
     else
       Init = new (SemaRef.Context) CXXCtorInitializer(SemaRef.Context, Field,
                                                       SourceLocation(),
-                                                      SourceLocation(), 0,
+                                                      SourceLocation(), DIE,
                                                       SourceLocation());
     return Info.addFieldInitializer(Init);
   }

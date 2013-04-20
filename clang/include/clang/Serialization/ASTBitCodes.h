@@ -1267,6 +1267,7 @@ namespace clang {
       EXPR_CXX_THIS,              // CXXThisExpr
       EXPR_CXX_THROW,             // CXXThrowExpr
       EXPR_CXX_DEFAULT_ARG,       // CXXDefaultArgExpr
+      EXPR_CXX_DEFAULT_INIT,      // CXXDefaultInitExpr
       EXPR_CXX_BIND_TEMPORARY,    // CXXBindTemporaryExpr
 
       EXPR_CXX_SCALAR_VALUE_INIT, // CXXScalarValueInitExpr
