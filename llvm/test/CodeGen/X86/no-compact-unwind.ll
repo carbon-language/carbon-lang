@@ -30,13 +30,13 @@ for.cond1.preheader:                              ; preds = %for.inc10, %entry
 for.body3:                                        ; preds = %for.inc, %for.cond1.preheader
   %indvars.iv = phi i64 [ 0, %for.cond1.preheader ], [ %indvars.iv.next, %for.inc ]
   %image4 = getelementptr inbounds %"struct.dyld::MappedRanges"* %p.019, i64 0, i32 0, i64 %indvars.iv, i32 0
-  %0 = load %class.ImageLoader** %image4, align 8, !tbaa !0
+  %0 = load %class.ImageLoader** %image4, align 8
   %cmp5 = icmp eq %class.ImageLoader* %0, %image
   br i1 %cmp5, label %if.then, label %for.inc
 
 if.then:                                          ; preds = %for.body3
   tail call void @OSMemoryBarrier() optsize
-  store %class.ImageLoader* null, %class.ImageLoader** %image4, align 8, !tbaa !0
+  store %class.ImageLoader* null, %class.ImageLoader** %image4, align 8
   br label %for.inc
 
 for.inc:                                          ; preds = %if.then, %for.body3
@@ -47,14 +47,10 @@ for.inc:                                          ; preds = %if.then, %for.body3
 
 for.inc10:                                        ; preds = %for.inc
   %next = getelementptr inbounds %"struct.dyld::MappedRanges"* %p.019, i64 0, i32 1
-  %1 = load %"struct.dyld::MappedRanges"** %next, align 8, !tbaa !0
+  %1 = load %"struct.dyld::MappedRanges"** %next, align 8
   %cmp = icmp eq %"struct.dyld::MappedRanges"* %1, null
   br i1 %cmp, label %for.end11, label %for.cond1.preheader
 
 for.end11:                                        ; preds = %for.inc10
   ret void
 }
-
-!0 = metadata !{metadata !"any pointer", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
