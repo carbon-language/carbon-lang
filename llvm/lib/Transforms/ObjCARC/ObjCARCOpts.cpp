@@ -2965,34 +2965,39 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
       FindPredecessorAutoreleaseWithSafePath(Arg, BB, Ret,
                                              DependingInstructions, Visited,
                                              PA);
-    if (Autorelease) {
-      DependingInstructions.clear();
-      Visited.clear();
-
-      CallInst *Retain =
-        FindPredecessorRetainWithSafePath(Arg, BB, Autorelease,
-                                          DependingInstructions, Visited, PA);
-      if (Retain) {
-        DependingInstructions.clear();
-        Visited.clear();
-
-        // Check that there is nothing that can affect the reference count
-        // between the retain and the call.  Note that Retain need not be in BB.
-        if (HasSafePathToPredecessorCall(Arg, Retain, DependingInstructions,
-                                         Visited, PA)) {
-          // If so, we can zap the retain and autorelease.
-          Changed = true;
-          ++NumRets;
-          DEBUG(dbgs() << "Erasing: " << *Retain << "\nErasing: "
-                       << *Autorelease << "\n");
-          EraseInstruction(Retain);
-          EraseInstruction(Autorelease);
-        }
-      }
-    }
-
     DependingInstructions.clear();
     Visited.clear();
+
+    if (!Autorelease)
+      continue;
+
+    CallInst *Retain =
+      FindPredecessorRetainWithSafePath(Arg, BB, Autorelease,
+                                        DependingInstructions, Visited, PA);
+    DependingInstructions.clear();
+    Visited.clear();
+
+    if (!Retain)
+      continue;
+
+    // Check that there is nothing that can affect the reference count
+    // between the retain and the call.  Note that Retain need not be in BB.
+    bool HasSafePathToCall = HasSafePathToPredecessorCall(Arg, Retain,
+                                                          DependingInstructions,
+                                                          Visited, PA);
+    DependingInstructions.clear();
+    Visited.clear();
+
+    if (!HasSafePathToCall)
+      continue;
+
+    // If so, we can zap the retain and autorelease.
+    Changed = true;
+    ++NumRets;
+    DEBUG(dbgs() << "Erasing: " << *Retain << "\nErasing: "
+          << *Autorelease << "\n");
+    EraseInstruction(Retain);
+    EraseInstruction(Autorelease);
   }
 }
 
