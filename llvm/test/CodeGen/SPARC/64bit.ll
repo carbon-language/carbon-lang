@@ -66,6 +66,12 @@ define i64 @ret_bigimm() {
   ret i64 6800754272627607872
 }
 
+; CHECK: ret_bigimm2
+; CHECK: sethi 1048576
+define i64 @ret_bigimm2() {
+  ret i64 4611686018427387904 ; 0x4000000000000000
+}
+
 ; CHECK: reg_reg_alu
 ; CHECK: add %i0, %i1, [[R0:%[goli][0-7]]]
 ; CHECK: sub [[R0]], %i2, [[R1:%[goli][0-7]]]

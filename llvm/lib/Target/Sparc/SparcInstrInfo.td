@@ -64,8 +64,7 @@ def HI22 : SDNodeXForm<imm, [{
 }]>;
 
 def SETHIimm : PatLeaf<(imm), [{
-  return (((unsigned)N->getZExtValue() >> 10) << 10) ==
-         (unsigned)N->getZExtValue();
+  return isShiftedUInt<22, 10>(N->getZExtValue());
 }], HI22>;
 
 // Addressing modes.
