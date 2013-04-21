@@ -354,6 +354,7 @@ void BoUpSLP::getTreeUses_rec(ArrayRef<Value *> VL, unsigned Depth) {
 
         getTreeUses_rec(Operands, Depth+1);
       }
+      return;
     }
     case Instruction::Store: {
       ValueList Operands;
