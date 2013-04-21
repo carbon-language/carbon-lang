@@ -747,10 +747,10 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     Mov->addRegisterKilled(SrcReg, TRI);
 }
 
-static const
-MachineInstrBuilder &AddDReg(MachineInstrBuilder &MIB,
-                             unsigned Reg, unsigned SubIdx, unsigned State,
-                             const TargetRegisterInfo *TRI) {
+const MachineInstrBuilder &
+ARMBaseInstrInfo::AddDReg(MachineInstrBuilder &MIB, unsigned Reg,
+                          unsigned SubIdx, unsigned State,
+                          const TargetRegisterInfo *TRI) const {
   if (!SubIdx)
     return MIB.addReg(Reg, State);
 
@@ -795,12 +795,22 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                    .addReg(SrcReg, getKillRegState(isKill))
                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
       } else if (ARM::GPRPairRegClass.hasSubClassEq(RC)) {
-        MachineInstrBuilder MIB =
-          AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::STMIA))
-                       .addFrameIndex(FI))
-                       .addMemOperand(MMO);
-          MIB = AddDReg(MIB, SrcReg, ARM::gsub_0, getKillRegState(isKill), TRI);
-                AddDReg(MIB, SrcReg, ARM::gsub_1, 0, TRI);
+        if (Subtarget.hasV5TEOps()) {
+          MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(ARM::STRD));
+          AddDReg(MIB, SrcReg, ARM::gsub_0, getKillRegState(isKill), TRI);
+          AddDReg(MIB, SrcReg, ARM::gsub_1, 0, TRI);
+          MIB.addFrameIndex(FI).addReg(0).addImm(0).addMemOperand(MMO);
+
+          AddDefaultPred(MIB);
+        } else {
+          // Fallback to STM instruction, which has existed since the dawn of
+          // time.
+          MachineInstrBuilder MIB =
+            AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::STMIA))
+                             .addFrameIndex(FI).addMemOperand(MMO));
+          AddDReg(MIB, SrcReg, ARM::gsub_0, getKillRegState(isKill), TRI);
+          AddDReg(MIB, SrcReg, ARM::gsub_1, 0, TRI);
+        }
       } else
         llvm_unreachable("Unknown reg class!");
       break;
@@ -948,7 +958,6 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
   MachineFunction &MF = *MBB.getParent();
-  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   MachineFrameInfo &MFI = *MF.getFrameInfo();
   unsigned Align = MFI.getObjectAlignment(FI);
   MachineMemOperand *MMO =
@@ -975,12 +984,24 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDRD), DestReg)
                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
     } else if (ARM::GPRPairRegClass.hasSubClassEq(RC)) {
-      unsigned LdmOpc = AFI->isThumbFunction() ? ARM::t2LDMIA : ARM::LDMIA;
-      MachineInstrBuilder MIB =
-        AddDefaultPred(BuildMI(MBB, I, DL, get(LdmOpc))
-                    .addFrameIndex(FI).addMemOperand(MMO));
-      MIB = AddDReg(MIB, DestReg, ARM::gsub_0, RegState::DefineNoRead, TRI);
-      MIB = AddDReg(MIB, DestReg, ARM::gsub_1, RegState::DefineNoRead, TRI);
+      MachineInstrBuilder MIB;
+
+      if (Subtarget.hasV5TEOps()) {
+        MIB = BuildMI(MBB, I, DL, get(ARM::LDRD));
+        AddDReg(MIB, DestReg, ARM::gsub_0, RegState::DefineNoRead, TRI);
+        AddDReg(MIB, DestReg, ARM::gsub_1, RegState::DefineNoRead, TRI);
+        MIB.addFrameIndex(FI).addReg(0).addImm(0).addMemOperand(MMO);
+
+        AddDefaultPred(MIB);
+      } else {
+        // Fallback to LDM instruction, which has existed since the dawn of
+        // time.
+        MIB = AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::LDMIA))
+                                 .addFrameIndex(FI).addMemOperand(MMO));
+        MIB = AddDReg(MIB, DestReg, ARM::gsub_0, RegState::DefineNoRead, TRI);
+        MIB = AddDReg(MIB, DestReg, ARM::gsub_1, RegState::DefineNoRead, TRI);
+      }
+
       if (TargetRegisterInfo::isPhysicalRegister(DestReg))
         MIB.addReg(DestReg, RegState::ImplicitDefine);
     } else

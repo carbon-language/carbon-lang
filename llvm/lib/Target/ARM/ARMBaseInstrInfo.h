@@ -141,6 +141,10 @@ public:
 
   MachineInstr *commuteInstruction(MachineInstr*, bool=false) const;
 
+  const MachineInstrBuilder &AddDReg(MachineInstrBuilder &MIB, unsigned Reg,
+                                     unsigned SubIdx, unsigned State,
+                                     const TargetRegisterInfo *TRI) const;
+
   virtual bool produceSameValue(const MachineInstr *MI0,
                                 const MachineInstr *MI1,
                                 const MachineRegisterInfo *MRI) const;
