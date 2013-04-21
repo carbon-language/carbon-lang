@@ -2384,7 +2384,7 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
     Call->setDoesNotThrow();
     Call->setTailCall();
 
-    DEBUG(dbgs() << "Inserting new Release: " << *Call << "\n"
+    DEBUG(dbgs() << "Inserting new Retain: " << *Call << "\n"
                     "At insertion point: " << *InsertPt << "\n");
   }
   for (SmallPtrSet<Instruction *, 2>::const_iterator
