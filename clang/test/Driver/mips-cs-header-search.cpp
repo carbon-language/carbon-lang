@@ -16,8 +16,6 @@
 // CHECK-BE-HF-32: "-internal-externc-isystem"
 // CHECK-BE-HF-32: "[[TC]]/include"
 // CHECK-BE-HF-32: "-internal-externc-isystem"
-// CHECK-BE-HF-32: "[[TC]]/include-fixed"
-// CHECK-BE-HF-32: "-internal-externc-isystem"
 // CHECK-BE-HF-32: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
 //
 // = Big-endian, hard float, mips16
@@ -33,8 +31,6 @@
 // CHECK-BE-HF-16: "[[TC]]/../../../../mips-linux-gnu/include/c++/4.6.3/backward"
 // CHECK-BE-HF-16: "-internal-externc-isystem"
 // CHECK-BE-HF-16: "[[TC]]/include"
-// CHECK-BE-HF-16: "-internal-externc-isystem"
-// CHECK-BE-HF-16: "[[TC]]/include-fixed/mips16"
 // CHECK-BE-HF-16: "-internal-externc-isystem"
 // CHECK-BE-HF-16: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
 //
@@ -52,8 +48,6 @@
 // CHECK-BE-HF-MICRO: "-internal-externc-isystem"
 // CHECK-BE-HF-MICRO: "[[TC]]/include"
 // CHECK-BE-HF-MICRO: "-internal-externc-isystem"
-// CHECK-BE-HF-MICRO: "[[TC]]/include-fixed/micromips"
-// CHECK-BE-HF-MICRO: "-internal-externc-isystem"
 // CHECK-BE-HF-MICRO: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
 //
 // = Big-endian, soft float
@@ -69,8 +63,6 @@
 // CHECK-BE-SF-32: "[[TC]]/../../../../mips-linux-gnu/include/c++/4.6.3/backward"
 // CHECK-BE-SF-32: "-internal-externc-isystem"
 // CHECK-BE-SF-32: "[[TC]]/include"
-// CHECK-BE-SF-32: "-internal-externc-isystem"
-// CHECK-BE-SF-32: "[[TC]]/include-fixed/soft-float"
 // CHECK-BE-SF-32: "-internal-externc-isystem"
 // CHECK-BE-SF-32: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
 //
@@ -88,8 +80,6 @@
 // CHECK-BE-SF-16: "-internal-externc-isystem"
 // CHECK-BE-SF-16: "[[TC]]/include"
 // CHECK-BE-SF-16: "-internal-externc-isystem"
-// CHECK-BE-SF-16: "[[TC]]/include-fixed/mips16/soft-float"
-// CHECK-BE-SF-16: "-internal-externc-isystem"
 // CHECK-BE-SF-16: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
 //
 // = Big-endian, soft float, micromips
@@ -105,8 +95,6 @@
 // CHECK-BE-SF-MICRO: "[[TC]]/../../../../mips-linux-gnu/include/c++/4.6.3/backward"
 // CHECK-BE-SF-MICRO: "-internal-externc-isystem"
 // CHECK-BE-SF-MICRO: "[[TC]]/include"
-// CHECK-BE-SF-MICRO: "-internal-externc-isystem"
-// CHECK-BE-SF-MICRO: "[[TC]]/include-fixed/micromips/soft-float"
 // CHECK-BE-SF-MICRO: "-internal-externc-isystem"
 // CHECK-BE-SF-MICRO: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
 //
@@ -124,8 +112,6 @@
 // CHECK-BE-HF-64: "-internal-externc-isystem"
 // CHECK-BE-HF-64: "[[TC]]/include"
 // CHECK-BE-HF-64: "-internal-externc-isystem"
-// CHECK-BE-HF-64: "[[TC]]/include-fixed/64"
-// CHECK-BE-HF-64: "-internal-externc-isystem"
 // CHECK-BE-HF-64: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
 //
 // = Big-endian, soft float, 64-bit
@@ -141,8 +127,6 @@
 // CHECK-BE-SF-64: "[[TC]]/../../../../mips-linux-gnu/include/c++/4.6.3/backward"
 // CHECK-BE-SF-64: "-internal-externc-isystem"
 // CHECK-BE-SF-64: "[[TC]]/include"
-// CHECK-BE-SF-64: "-internal-externc-isystem"
-// CHECK-BE-SF-64: "[[TC]]/include-fixed/soft-float/64"
 // CHECK-BE-SF-64: "-internal-externc-isystem"
 // CHECK-BE-SF-64: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
 //
@@ -160,8 +144,6 @@
 // CHECK-EL-HF-32: "-internal-externc-isystem"
 // CHECK-EL-HF-32: "[[TC]]/include"
 // CHECK-EL-HF-32: "-internal-externc-isystem"
-// CHECK-EL-HF-32: "[[TC]]/include-fixed/el"
-// CHECK-EL-HF-32: "-internal-externc-isystem"
 // CHECK-EL-HF-32: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
 //
 // = Little-endian, hard float, mips16
@@ -177,8 +159,6 @@
 // CHECK-EL-HF-16: "[[TC]]/../../../../mips-linux-gnu/include/c++/4.6.3/backward"
 // CHECK-EL-HF-16: "-internal-externc-isystem"
 // CHECK-EL-HF-16: "[[TC]]/include"
-// CHECK-EL-HF-16: "-internal-externc-isystem"
-// CHECK-EL-HF-16: "[[TC]]/include-fixed/mips16/el"
 // CHECK-EL-HF-16: "-internal-externc-isystem"
 // CHECK-EL-HF-16: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
 //
@@ -196,8 +176,6 @@
 // CHECK-EL-HF-MICRO: "-internal-externc-isystem"
 // CHECK-EL-HF-MICRO: "[[TC]]/include"
 // CHECK-EL-HF-MICRO: "-internal-externc-isystem"
-// CHECK-EL-HF-MICRO: "[[TC]]/include-fixed/micromips/el"
-// CHECK-EL-HF-MICRO: "-internal-externc-isystem"
 // CHECK-EL-HF-MICRO: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
 //
 // = Little-endian, soft float
@@ -213,8 +191,6 @@
 // CHECK-EL-SF-32: "[[TC]]/../../../../mips-linux-gnu/include/c++/4.6.3/backward"
 // CHECK-EL-SF-32: "-internal-externc-isystem"
 // CHECK-EL-SF-32: "[[TC]]/include"
-// CHECK-EL-SF-32: "-internal-externc-isystem"
-// CHECK-EL-SF-32: "[[TC]]/include-fixed/soft-float/el"
 // CHECK-EL-SF-32: "-internal-externc-isystem"
 // CHECK-EL-SF-32: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
 //
@@ -232,8 +208,6 @@
 // CHECK-EL-SF-16: "-internal-externc-isystem"
 // CHECK-EL-SF-16: "[[TC]]/include"
 // CHECK-EL-SF-16: "-internal-externc-isystem"
-// CHECK-EL-SF-16: "[[TC]]/include-fixed/mips16/soft-float/el"
-// CHECK-EL-SF-16: "-internal-externc-isystem"
 // CHECK-EL-SF-16: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
 //
 // = Little-endian, soft float, micromips
@@ -249,8 +223,6 @@
 // CHECK-EL-SF-MICRO: "[[TC]]/../../../../mips-linux-gnu/include/c++/4.6.3/backward"
 // CHECK-EL-SF-MICRO: "-internal-externc-isystem"
 // CHECK-EL-SF-MICRO: "[[TC]]/include"
-// CHECK-EL-SF-MICRO: "-internal-externc-isystem"
-// CHECK-EL-SF-MICRO: "[[TC]]/include-fixed/micromips/soft-float/el"
 // CHECK-EL-SF-MICRO: "-internal-externc-isystem"
 // CHECK-EL-SF-MICRO: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
 //
@@ -268,8 +240,6 @@
 // CHECK-EL-HF-64: "-internal-externc-isystem"
 // CHECK-EL-HF-64: "[[TC]]/include"
 // CHECK-EL-HF-64: "-internal-externc-isystem"
-// CHECK-EL-HF-64: "[[TC]]/include-fixed/el/64"
-// CHECK-EL-HF-64: "-internal-externc-isystem"
 // CHECK-EL-HF-64: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"
 //
 // = Little-endian, soft float, 64-bit
@@ -285,7 +255,5 @@
 // CHECK-EL-SF-64: "[[TC]]/../../../../mips-linux-gnu/include/c++/4.6.3/backward"
 // CHECK-EL-SF-64: "-internal-externc-isystem"
 // CHECK-EL-SF-64: "[[TC]]/include"
-// CHECK-EL-SF-64: "-internal-externc-isystem"
-// CHECK-EL-SF-64: "[[TC]]/include-fixed/soft-float/el/64"
 // CHECK-EL-SF-64: "-internal-externc-isystem"
 // CHECK-EL-SF-64: "[[TC]]/../../../../mips-linux-gnu/libc/usr/include"

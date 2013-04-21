@@ -2382,11 +2382,6 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
 
     addExternCSystemIncludeIfExists(DriverArgs, CC1Args,
                                     GCCInstallation.getInstallPath() +
-                                    "/include-fixed" +
-                                    GCCInstallation.getMultiarchSuffix());
-
-    addExternCSystemIncludeIfExists(DriverArgs, CC1Args,
-                                    GCCInstallation.getInstallPath() +
                                     "/../../../../" +
                                     GCCInstallation.getTriple().str() +
                                     "/libc/usr/include");
