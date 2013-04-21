@@ -1469,7 +1469,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
       break;
     }
     case IC_RetainBlock:
-      // If we strength reduce an objc_retainBlock to amn objc_retain, continue
+      // If we strength reduce an objc_retainBlock to an objc_retain, continue
       // onto the objc_retain peephole optimizations. Otherwise break.
       if (!OptimizeRetainBlockCall(F, Inst, Class))
         break;
