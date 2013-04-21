@@ -1272,8 +1272,8 @@ SDValue DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
 SDValue DAGTypeLegalizer::SplitVecOp_CONCAT_VECTORS(SDNode *N) {
   DebugLoc DL = N->getDebugLoc();
 
-  // The input operands all must have the same type, and we know the result the
-  // result type is valid.  Convert this to a buildvector which extracts all the
+  // The input operands all must have the same type, and we know the result
+  // type is valid.  Convert this to a buildvector which extracts all the
   // input elements.
   // TODO: If the input elements are power-two vectors, we could convert this to
   // a new CONCAT_VECTORS node with elements that are half-wide.
