@@ -931,6 +931,49 @@ SparcTargetLowering::getSRetArgSize(SelectionDAG &DAG, SDValue Callee) const
   return getDataLayout()->getTypeAllocSize(ElementTy);
 }
 
+
+// Fixup floating point arguments in the ... part of a varargs call.
+//
+// The SPARC v9 ABI requires that floating point arguments are treated the same
+// as integers when calling a varargs function. This does not apply to the
+// fixed arguments that are part of the function's prototype.
+//
+// This function post-processes a CCValAssign array created by
+// AnalyzeCallOperands().
+static void fixupVariableFloatArgs(SmallVectorImpl<CCValAssign> &ArgLocs,
+                                   ArrayRef<ISD::OutputArg> Outs) {
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    const CCValAssign &VA = ArgLocs[i];
+    // FIXME: What about f32 arguments? C promotes them to f64 when calling
+    // varargs functions.
+    if (!VA.isRegLoc() || VA.getLocVT() != MVT::f64)
+      continue;
+    // The fixed arguments to a varargs function still go in FP registers.
+    if (Outs[VA.getValNo()].IsFixed)
+      continue;
+
+    // This floating point argument should be reassigned.
+    CCValAssign NewVA;
+
+    // Determine the offset into the argument array.
+    unsigned Offset = 8 * (VA.getLocReg() - SP::D0);
+    assert(Offset < 16*8 && "Offset out of range, bad register enum?");
+
+    if (Offset < 6*8) {
+      // This argument should go in %i0-%i5.
+      unsigned IReg = SP::I0 + Offset/8;
+      // Full register, just bitconvert into i64.
+      NewVA = CCValAssign::getReg(VA.getValNo(), VA.getValVT(),
+                                  IReg, MVT::i64, CCValAssign::BCvt);
+    } else {
+      // This needs to go to memory, we're out of integer registers.
+      NewVA = CCValAssign::getMem(VA.getValNo(), VA.getValVT(),
+                                  Offset, VA.getLocVT(), VA.getLocInfo());
+    }
+    ArgLocs[i] = NewVA;
+  }
+}
+
 // Lower a call for the 64-bit ABI.
 SDValue
 SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
@@ -953,6 +996,10 @@ SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
 
   // Keep stack frames 16-byte aligned.
   ArgsSize = RoundUpToAlignment(ArgsSize, 16);
+
+  // Varargs calls require special treatment.
+  if (CLI.IsVarArg)
+    fixupVariableFloatArgs(ArgLocs, CLI.Outs);
 
   // Adjust the stack pointer to make room for the arguments.
   // FIXME: Use hasReservedCallFrame to avoid %sp adjustments around all calls
