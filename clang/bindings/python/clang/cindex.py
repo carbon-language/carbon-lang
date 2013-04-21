@@ -3075,7 +3075,7 @@ functionList = [
 
   ("clang_Cursor_isBitField",
    [Cursor],
-   c_long),
+   bool),
 
   ("clang_Type_getAlignOf",
    [Type],
