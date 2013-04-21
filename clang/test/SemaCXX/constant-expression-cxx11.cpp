@@ -21,7 +21,7 @@ template<typename T, size_t N> constexpr T *begin(T (&xs)[N]) { return xs; }
 template<typename T, size_t N> constexpr T *end(T (&xs)[N]) { return xs + N; }
 
 struct MemberZero {
-  constexpr int zero() { return 0; }
+  constexpr int zero() const { return 0; }
 };
 
 namespace DerivedToVBaseCast {
@@ -486,7 +486,7 @@ static_assert(CountZero(arr, arr + 40) == 36, "");
 struct ArrayElem {
   constexpr ArrayElem() : n(0) {}
   int n;
-  constexpr int f() { return n; }
+  constexpr int f() const { return n; }
 };
 struct ArrayRVal {
   constexpr ArrayRVal() {}
@@ -731,14 +731,14 @@ namespace ConversionOperators {
 
 struct T {
   constexpr T(int n) : k(5*n - 3) {}
-  constexpr operator int() { return k; }
+  constexpr operator int() const { return k; }
   int k;
 };
 
 struct S {
   constexpr S(int n) : k(2*n + 1) {}
-  constexpr operator int() { return k; }
-  constexpr operator T() { return T(k); }
+  constexpr operator int() const { return k; }
+  constexpr operator T() const { return T(k); }
   int k;
 };
 
@@ -750,7 +750,7 @@ static_assert(check(S(5), 11), "");
 namespace PR14171 {
 
 struct X {
-  constexpr (operator int)() { return 0; }
+  constexpr (operator int)() const { return 0; }
 };
 static_assert(X() == 0, "");
 
@@ -764,13 +764,13 @@ namespace Temporaries {
 
 struct S {
   constexpr S() {}
-  constexpr int f();
+  constexpr int f() const;
 };
 struct T : S {
   constexpr T(int n) : S(), n(n) {}
   int n;
 };
-constexpr int S::f() {
+constexpr int S::f() const {
   // 'this' must be the postfix-expression in a class member access expression,
   // so we can't just use
   //   return static_cast<T*>(this)->n;
@@ -825,7 +825,7 @@ namespace MemberPointer {
   struct A {
     constexpr A(int n) : n(n) {}
     int n;
-    constexpr int f() { return n + 3; }
+    constexpr int f() const { return n + 3; }
   };
   constexpr A a(7);
   static_assert(A(5).*&A::n == 5, "");
@@ -836,7 +836,7 @@ namespace MemberPointer {
   struct B : A {
     constexpr B(int n, int m) : A(n), m(m) {}
     int m;
-    constexpr int g() { return n + m + 1; }
+    constexpr int g() const { return n + m + 1; }
   };
   constexpr B b(9, 13);
   static_assert(B(4, 11).*&A::n == 4, "");
@@ -857,7 +857,7 @@ namespace MemberPointer {
       m(m), n(n), pf(pf), pn(pn) {}
     constexpr S() : m(), n(), pf(&S::f), pn(&S::n) {}
 
-    constexpr int f() { return this->*pn; }
+    constexpr int f() const { return this->*pn; }
     virtual int g() const;
 
     int m, n;
@@ -938,7 +938,7 @@ namespace ArrayBaseDerived {
   };
   struct Derived : Base {
     constexpr Derived() {}
-    constexpr const int *f() { return &n; }
+    constexpr const int *f() const { return &n; }
   };
 
   constexpr Derived a[10];
@@ -1038,7 +1038,7 @@ static_assert(makeComplexWrap(1,0) != complex(0, 1), "");
 }
 
 namespace PR11595 {
-  struct A { constexpr bool operator==(int x) { return true; } };
+  struct A { constexpr bool operator==(int x) const { return true; } };
   struct B { B(); A& x; };
   static_assert(B().x == 3, "");  // expected-error {{constant expression}} expected-note {{non-literal type 'PR11595::B' cannot be used in a constant expression}}
 

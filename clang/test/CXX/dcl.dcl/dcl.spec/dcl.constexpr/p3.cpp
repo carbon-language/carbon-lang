@@ -28,41 +28,41 @@ struct SS : S {
 // constraints:
 struct T : SS, NonLiteral { // expected-note {{base class 'NonLiteral' of non-literal type}}
   constexpr T();
-  constexpr int f(); // expected-error {{non-literal type 'T' cannot have constexpr members}}
+  constexpr int f() const; // expected-error {{non-literal type 'T' cannot have constexpr members}}
 
   //  - it shall not be virtual;
-  virtual constexpr int ExplicitlyVirtual() { return 0; } // expected-error {{virtual function cannot be constexpr}}
+  virtual constexpr int ExplicitlyVirtual() const { return 0; } // expected-error {{virtual function cannot be constexpr}}
 
-  constexpr int ImplicitlyVirtual() { return 0; } // expected-error {{virtual function cannot be constexpr}}
+  constexpr int ImplicitlyVirtual() const { return 0; } // expected-error {{virtual function cannot be constexpr}}
 
   //  - its return type shall be a literal type;
-  constexpr NonLiteral NonLiteralReturn() { return {}; } // expected-error {{constexpr function's return type 'NonLiteral' is not a literal type}}
-  constexpr void VoidReturn() { return; } // expected-error {{constexpr function's return type 'void' is not a literal type}}
+  constexpr NonLiteral NonLiteralReturn() const { return {}; } // expected-error {{constexpr function's return type 'NonLiteral' is not a literal type}}
+  constexpr void VoidReturn() const { return; } // expected-error {{constexpr function's return type 'void' is not a literal type}}
   constexpr ~T(); // expected-error {{destructor cannot be marked constexpr}}
-  typedef NonLiteral F();
+  typedef NonLiteral F() const;
   constexpr F NonLiteralReturn2; // ok until definition
 
   //  - each of its parameter types shall be a literal type;
-  constexpr int NonLiteralParam(NonLiteral) { return 0; } // expected-error {{constexpr function's 1st parameter type 'NonLiteral' is not a literal type}}
-  typedef int G(NonLiteral);
+  constexpr int NonLiteralParam(NonLiteral) const { return 0; } // expected-error {{constexpr function's 1st parameter type 'NonLiteral' is not a literal type}}
+  typedef int G(NonLiteral) const;
   constexpr G NonLiteralParam2; // ok until definition
 
   //  - its function-body shall be = delete, = default,
-  constexpr int Deleted() = delete;
+  constexpr int Deleted() const = delete;
   // It's not possible for the function-body to legally be "= default" here.
   // Other than constructors, only the copy- and move-assignment operators and
   // destructor can be defaulted. Destructors can't be constexpr since they
   // don't have a literal return type. Defaulted assignment operators can't be
   // constexpr since they can't be const.
-  constexpr T &operator=(const T&) = default; // expected-error {{an explicitly-defaulted copy assignment operator may not have 'const', 'constexpr' or 'volatile' qualifiers}}
+  constexpr T &operator=(const T&) = default; // expected-error {{an explicitly-defaulted copy assignment operator may not have 'const', 'constexpr' or 'volatile' qualifiers}} expected-warning {{C++1y}}
 };
 struct U {
-  constexpr U SelfReturn();
-  constexpr int SelfParam(U);
+  constexpr U SelfReturn() const;
+  constexpr int SelfParam(U) const;
 };
 
 struct V : virtual U { // expected-note {{here}}
-  constexpr int F() { return 0; } // expected-error {{constexpr member function not allowed in struct with virtual base class}}
+  constexpr int F() const { return 0; } // expected-error {{constexpr member function not allowed in struct with virtual base class}}
 };
 
 //  or a compound-statememt that contains only

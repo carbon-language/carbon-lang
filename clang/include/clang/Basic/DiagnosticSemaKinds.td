@@ -1550,6 +1550,11 @@ def note_for_range_begin_end : Note<
 def warn_cxx98_compat_constexpr : Warning<
   "'constexpr' specifier is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
+// FIXME: Maybe this should also go in -Wc++1y-compat?
+def warn_cxx1y_compat_constexpr_not_const : Warning<
+  "'constexpr' non-static member function will not be implicitly 'const' "
+  "in C++1y; add 'const' to avoid a change in behavior">,
+  InGroup<DiagGroup<"constexpr-not-const">>;
 def err_invalid_constexpr : Error<
   "%select{function parameter|typedef|non-static data member}0 "
   "cannot be constexpr">;

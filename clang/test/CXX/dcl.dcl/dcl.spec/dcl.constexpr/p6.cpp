@@ -24,7 +24,7 @@ struct S {
 struct T {};
 
 template<typename T> struct ImplicitVirtualFromDependentBase : T {
-  constexpr int ImplicitlyVirtual() { return 0; }
+  constexpr int ImplicitlyVirtual() const { return 0; }
 };
 
 constexpr int a = ImplicitVirtualFromDependentBase<S>().ImplicitlyVirtual(); // expected-error {{constant expression}} expected-note {{cannot evaluate virtual function call}}
@@ -32,7 +32,7 @@ constexpr int b = ImplicitVirtualFromDependentBase<T>().ImplicitlyVirtual(); // 
 constexpr int c = ImplicitVirtualFromDependentBase<S>().ImplicitVirtualFromDependentBase<S>::ImplicitlyVirtual();
 
 template<typename R> struct ConstexprMember {
-  constexpr R F() { return 0; }
+  constexpr R F() const { return 0; }
 };
 constexpr int d = ConstexprMember<int>().F(); // ok
 constexpr int e = ConstexprMember<NonLiteral>().F(); // expected-error {{constant expression}}

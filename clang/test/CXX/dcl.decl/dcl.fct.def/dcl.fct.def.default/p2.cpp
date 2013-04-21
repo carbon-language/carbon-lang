@@ -6,8 +6,8 @@ struct S1 {
   constexpr S1() = default; // expected-error {{defaulted definition of default constructor is not constexpr}}
   constexpr S1(const S1&) = default;
   constexpr S1(S1&&) = default;
-  constexpr S1 &operator=(const S1&) = default; // expected-error {{explicitly-defaulted copy assignment operator may not have}}
-  constexpr S1 &operator=(S1&&) = default; // expected-error {{explicitly-defaulted move assignment operator may not have}}
+  constexpr S1 &operator=(const S1&) const = default; // expected-error {{explicitly-defaulted copy assignment operator may not have}}
+  constexpr S1 &operator=(S1&&) const = default; // expected-error {{explicitly-defaulted move assignment operator may not have}}
   constexpr ~S1() = default; // expected-error {{destructor cannot be marked constexpr}}
   int n;
 };

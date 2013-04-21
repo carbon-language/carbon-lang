@@ -5,8 +5,8 @@ struct Base {
 };
 template<typename T> struct S : Base {
   enum E : int;
-  constexpr int f();
-  constexpr int g(); // expected-note {{declared here}}
+  constexpr int f() const;
+  constexpr int g() const; // expected-note {{declared here}}
   void h();
 };
 template<> enum S<char>::E : int {}; // expected-note {{enum 'S<char>::E' was explicitly specialized here}}
@@ -16,13 +16,13 @@ template<typename T> enum S<T>::E : int { b = 8 };
 
 // The unqualified-id here names a member of the non-dependent base class Base
 // and not the injected enumerator name 'a' from the specialization.
-template<typename T> constexpr int S<T>::f() { return a; }
+template<typename T> constexpr int S<T>::f() const { return a; }
 static_assert(S<char>().f() == 1, "");
 static_assert(S<int>().f() == 1, "");
 
 // The unqualified-id here names a member of the current instantiation, which
 // bizarrely might not exist in some instantiations.
-template<typename T> constexpr int S<T>::g() { return b; } // expected-error {{enumerator 'b' does not exist in instantiation of 'S<char>'}}
+template<typename T> constexpr int S<T>::g() const { return b; } // expected-error {{enumerator 'b' does not exist in instantiation of 'S<char>'}}
 static_assert(S<char>().g() == 1, ""); // expected-note {{here}} expected-error {{not an integral constant expression}} expected-note {{undefined}}
 static_assert(S<short>().g() == 2, "");
 static_assert(S<long>().g() == 8, "");

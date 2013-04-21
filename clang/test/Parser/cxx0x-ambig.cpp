@@ -38,8 +38,8 @@ namespace bitfield {
     constexpr T() {}
     constexpr T(int) {}
     constexpr T(T, T, T, T) {}
-    constexpr T operator=(T) { return *this; }
-    constexpr operator int() { return 4; }
+    constexpr T operator=(T) const { return *this; }
+    constexpr operator int() const { return 4; }
   };
   constexpr T a, b, c, d;
 
@@ -68,7 +68,7 @@ namespace bitfield {
   };
 
   struct U {
-    constexpr operator T() { return T(); } // expected-note 2{{candidate}}
+    constexpr operator T() const { return T(); } // expected-note 2{{candidate}}
   };
   // This could be a bit-field.
   struct S7 {

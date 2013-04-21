@@ -5015,7 +5015,8 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
       Sema::CXXThisScopeRAII ThisScope(Actions,
                                dyn_cast<CXXRecordDecl>(Actions.CurContext),
                                DS.getTypeQualifiers() |
-                               (D.getDeclSpec().isConstexprSpecified()
+                               (D.getDeclSpec().isConstexprSpecified() &&
+                                !getLangOpts().CPlusPlus1y
                                   ? Qualifiers::Const : 0),
                                IsCXX11MemberFunction);
 

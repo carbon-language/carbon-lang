@@ -2,15 +2,15 @@
 
 struct S {
   constexpr S(bool b) : b(b) {}
-  constexpr explicit operator bool() { return b; }
+  constexpr explicit operator bool() const { return b; }
   bool b;
 };
 struct T {
-  constexpr operator int() { return 1; }
+  constexpr operator int() const { return 1; }
 };
 struct U {
-  constexpr operator int() { return 1; } // expected-note {{candidate}}
-  constexpr operator long() { return 0; } // expected-note {{candidate}}
+  constexpr operator int() const { return 1; } // expected-note {{candidate}}
+  constexpr operator long() const { return 0; } // expected-note {{candidate}}
 };
 
 static_assert(S(true), "");

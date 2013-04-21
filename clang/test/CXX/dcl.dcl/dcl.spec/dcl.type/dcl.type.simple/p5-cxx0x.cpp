@@ -76,7 +76,7 @@ namespace libcxx_example {
   template<typename T> struct swappable {
     typedef decltype(swap(declval<T&>(), declval<T&>())) type;
     static const bool value = !is_same<type, nat>::value;
-    constexpr operator bool() { return value; }
+    constexpr operator bool() const { return value; }
   };
 
   static_assert(swappable<int>(), "");

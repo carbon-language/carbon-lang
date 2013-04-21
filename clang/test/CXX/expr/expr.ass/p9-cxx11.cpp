@@ -24,8 +24,8 @@ struct S {
   int a, b;
 };
 struct T {
-  constexpr int operator=(S s) { return s.a; }
-  constexpr int operator+=(S s) { return s.b; }
+  constexpr int operator=(S s) const { return s.a; }
+  constexpr int operator+=(S s) const { return s.b; }
 };
 static_assert((T() = {4, 9}) == 4, "");
 static_assert((T() += {4, 9}) == 9, "");

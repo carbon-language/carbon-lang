@@ -46,7 +46,7 @@ using PR14855 = int S::; // expected-error {{expected ';' after alias declaratio
 // a constexpr function.
 struct ConstexprTrailingReturn {
   int n;
-  constexpr auto f() -> decltype((n));
+  constexpr auto f() const -> decltype((n));
 };
 constexpr const int &ConstexprTrailingReturn::f() const { return n; }
 

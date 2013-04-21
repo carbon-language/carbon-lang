@@ -101,7 +101,7 @@ int n = Val<bool, &S::operator int>::value; // expected-error {{conversion from 
 
 namespace NonConstLValue {
   struct S {
-    constexpr operator int() { return 10; }
+    constexpr operator int() const { return 10; }
   };
   S s; // not constexpr
   // Under the FDIS, this is not a converted constant expression.
