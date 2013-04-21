@@ -36,7 +36,7 @@ namespace ISD {
     static const uint64_t ByValOffs      = 4;
     static const uint64_t Nest           = 1ULL<<5;  ///< Nested fn static chain
     static const uint64_t NestOffs       = 5;
-    static const uint64_t Returned       = 1ULL<<6;
+    static const uint64_t Returned       = 1ULL<<6;  ///< Always returned
     static const uint64_t ReturnedOffs   = 6;
     static const uint64_t ByValAlign     = 0xFULL<<7; ///< Struct alignment
     static const uint64_t ByValAlignOffs = 7;
@@ -44,7 +44,7 @@ namespace ISD {
     static const uint64_t SplitOffs      = 11;
     static const uint64_t OrigAlign      = 0x1FULL<<27;
     static const uint64_t OrigAlignOffs  = 27;
-    static const uint64_t ByValSize      = 0xffffffffULL << 32; ///< Struct size
+    static const uint64_t ByValSize      = 0xffffffffULL<<32; ///< Struct size
     static const uint64_t ByValSizeOffs  = 32;
 
     static const uint64_t One            = 1ULL; ///< 1 of this type, for shifts
@@ -101,9 +101,6 @@ namespace ISD {
     void setByValSize(unsigned S) {
       Flags = (Flags & ~ByValSize) | (uint64_t(S) << ByValSizeOffs);
     }
-
-    /// getArgFlagsString - Returns the flags as a string, eg: "zext align:4".
-    std::string getArgFlagsString();
 
     /// getRawBits - Represent the flags as a bunch of bits.
     uint64_t getRawBits() const { return Flags; }
