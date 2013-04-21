@@ -223,9 +223,9 @@ unsigned ARMTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
     { ISD::SIGN_EXTEND, MVT::v16i32, MVT::v16i8, 6 },
     { ISD::ZERO_EXTEND, MVT::v16i32, MVT::v16i8, 6 },
 
-    // Operations that we legalize using load/stores to the stack.
-    { ISD::TRUNCATE,    MVT::v16i8, MVT::v16i32, 4*1 + 16*2 + 2*1 },
-    { ISD::TRUNCATE,    MVT::v8i8, MVT::v8i32, 2*1 + 8*2 + 1 },
+    // Operations that we legalize using splitting.
+    { ISD::TRUNCATE,    MVT::v16i8, MVT::v16i32, 6 },
+    { ISD::TRUNCATE,    MVT::v8i8, MVT::v8i32, 3 },
 
     // Vector float <-> i32 conversions.
     { ISD::SINT_TO_FP,  MVT::v4f32, MVT::v4i32, 1 },

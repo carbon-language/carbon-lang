@@ -1046,6 +1046,7 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
     case ISD::EXTRACT_SUBVECTOR: Res = SplitVecOp_EXTRACT_SUBVECTOR(N); break;
     case ISD::EXTRACT_VECTOR_ELT:Res = SplitVecOp_EXTRACT_VECTOR_ELT(N); break;
     case ISD::CONCAT_VECTORS:    Res = SplitVecOp_CONCAT_VECTORS(N); break;
+    case ISD::TRUNCATE:          Res = SplitVecOp_TRUNCATE(N); break;
     case ISD::FP_ROUND:          Res = SplitVecOp_FP_ROUND(N); break;
     case ISD::STORE:
       Res = SplitVecOp_STORE(cast<StoreSDNode>(N), OpNo);
@@ -1062,7 +1063,6 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
     case ISD::SINT_TO_FP:
     case ISD::UINT_TO_FP:
     case ISD::FTRUNC:
-    case ISD::TRUNCATE:
     case ISD::SIGN_EXTEND:
     case ISD::ZERO_EXTEND:
     case ISD::ANY_EXTEND:
@@ -1291,6 +1291,66 @@ SDValue DAGTypeLegalizer::SplitVecOp_CONCAT_VECTORS(SDNode *N) {
 
   return DAG.getNode(ISD::BUILD_VECTOR, DL, N->getValueType(0),
                      &Elts[0], Elts.size());
+}
+
+SDValue DAGTypeLegalizer::SplitVecOp_TRUNCATE(SDNode *N) {
+  // The result type is legal, but the input type is illegal.  If splitting
+  // ends up with the result type of each half still being legal, just
+  // do that.  If, however, that would result in an illegal result type,
+  // we can try to get more clever with power-two vectors. Specifically,
+  // split the input type, but also widen the result element size, then
+  // concatenate the halves and truncate again.  For example, consider a target
+  // where v8i8 is legal and v8i32 is not (ARM, which doesn't have 256-bit
+  // vectors). To perform a "%res = v8i8 trunc v8i32 %in" we do:
+  //   %inlo = v4i32 extract_subvector %in, 0
+  //   %inhi = v4i32 extract_subvector %in, 4
+  //   %lo16 = v4i16 trunc v4i32 %inlo
+  //   %hi16 = v4i16 trunc v4i32 %inhi
+  //   %in16 = v8i16 concat_vectors v4i16 %lo16, v4i16 %hi16
+  //   %res = v8i8 trunc v8i16 %in16
+  //
+  // Without this transform, the original truncate would end up being
+  // scalarized, which is pretty much always a last resort.
+  SDValue InVec = N->getOperand(0);
+  EVT InVT = InVec->getValueType(0);
+  EVT OutVT = N->getValueType(0);
+  unsigned NumElements = OutVT.getVectorNumElements();
+  // Widening should have already made sure this is a power-two vector
+  // if we're trying to split it at all. assert() that's true, just in case.
+  assert(!(NumElements & 1) && "Splitting vector, but not in half!");
+
+  unsigned InElementSize = InVT.getVectorElementType().getSizeInBits();
+  unsigned OutElementSize = OutVT.getVectorElementType().getSizeInBits();
+
+  // If the input elements are only 1/2 the width of the result elements,
+  // just use the normal splitting. Our trick only work if there's room
+  // to split more than once.
+  if (InElementSize <= OutElementSize * 2)
+    return SplitVecOp_UnaryOp(N);
+  DebugLoc DL = N->getDebugLoc();
+
+  // Extract the halves of the input via extract_subvector.
+  EVT SplitVT = EVT::getVectorVT(*DAG.getContext(),
+                                 InVT.getVectorElementType(), NumElements/2);
+  SDValue InLoVec = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SplitVT, InVec,
+                                DAG.getIntPtrConstant(0));
+  SDValue InHiVec = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SplitVT, InVec,
+                                DAG.getIntPtrConstant(NumElements/2));
+  // Truncate them to 1/2 the element size.
+  EVT HalfElementVT = EVT::getIntegerVT(*DAG.getContext(), InElementSize/2);
+  EVT HalfVT = EVT::getVectorVT(*DAG.getContext(), HalfElementVT,
+                                NumElements/2);
+  SDValue HalfLo = DAG.getNode(ISD::TRUNCATE, DL, HalfVT, InLoVec);
+  SDValue HalfHi = DAG.getNode(ISD::TRUNCATE, DL, HalfVT, InHiVec);
+  // Concatenate them to get the full intermediate truncation result.
+  EVT InterVT = EVT::getVectorVT(*DAG.getContext(), HalfElementVT, NumElements);
+  SDValue InterVec = DAG.getNode(ISD::CONCAT_VECTORS, DL, InterVT, HalfLo,
+                                 HalfHi);
+  // Now finish up by truncating all the way down to the original result
+  // type. This should normally be something that ends up being legal directly,
+  // but in theory if a target has very wide vectors and an annoyingly
+  // restricted set of legal types, this split can chain to build things up.
+  return DAG.getNode(ISD::TRUNCATE, DL, OutVT, InterVec);
 }
 
 SDValue DAGTypeLegalizer::SplitVecOp_VSETCC(SDNode *N) {

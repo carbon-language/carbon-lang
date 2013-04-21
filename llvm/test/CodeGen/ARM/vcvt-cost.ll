@@ -32,29 +32,22 @@ define void @func_cvt1(%TA0_5* %loadaddr, %TA1_5* %storeaddr) {
   store %TA1_5 %r, %TA1_5* %storeaddr
   ret void
 }
-;; We currently estimate the cost of this instruction as expensive. If lowering
-;; is improved the cost needs to change.
+
 %T0_51 = type <8 x i32>
 %T1_51 = type <8 x i8>
 ; CHECK: func_cvt51:
 define void @func_cvt51(%T0_51* %loadaddr, %T1_51* %storeaddr) {
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
+; CHECK: vmovn.i32
+; CHECK: vmovn.i32
+; CHECK: vmovn.i16
   %v0 = load %T0_51* %loadaddr
 ; COST: func_cvt51
-; COST: cost of 19 {{.*}} trunc
+; COST: cost of 3 {{.*}} trunc
   %r = trunc %T0_51 %v0 to %T1_51
   store %T1_51 %r, %T1_51* %storeaddr
   ret void
 }
-;; We currently estimate the cost of this instruction as expensive. If lowering
-;; is improved the cost needs to change.
+
 %TT0_5 = type <16 x i8>
 %TT1_5 = type <16 x i32>
 ; CHECK: func_cvt52:
@@ -87,31 +80,20 @@ define void @func_cvt12(%TTA0_5* %loadaddr, %TTA1_5* %storeaddr) {
   store %TTA1_5 %r, %TTA1_5* %storeaddr
   ret void
 }
-;; We currently estimate the cost of this instruction as expensive. If lowering
-;; is improved the cost needs to change.
+
 %TT0_51 = type <16 x i32>
 %TT1_51 = type <16 x i8>
 ; CHECK: func_cvt512:
 define void @func_cvt512(%TT0_51* %loadaddr, %TT1_51* %storeaddr) {
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
-; CHECK: strb
+; CHECK: vmovn.i32
+; CHECK: vmovn.i32
+; CHECK: vmovn.i32
+; CHECK: vmovn.i32
+; CHECK: vmovn.i16
+; CHECK: vmovn.i16
   %v0 = load %TT0_51* %loadaddr
 ; COST: func_cvt512
-; COST: cost of 38 {{.*}} trunc
+; COST: cost of 6 {{.*}} trunc
   %r = trunc %TT0_51 %v0 to %TT1_51
   store %TT1_51 %r, %TT1_51* %storeaddr
   ret void

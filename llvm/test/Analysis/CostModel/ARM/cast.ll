@@ -175,9 +175,9 @@ define i32 @casts() {
   %rext_5 = zext <4 x i16> undef to <4 x i64>
 
   ; Vector cast cost of instructions lowering the cast to the stack.
-  ; CHECK: cost of 19 {{.*}} trunc
+  ; CHECK: cost of 3 {{.*}} trunc
   %r74 = trunc <8 x i32> undef to <8 x i8>
-  ; CHECK: cost of 38 {{.*}} trunc
+  ; CHECK: cost of 6 {{.*}} trunc
   %r75 = trunc <16 x i32> undef to <16 x i8>
 
   ; Floating point truncation costs.
