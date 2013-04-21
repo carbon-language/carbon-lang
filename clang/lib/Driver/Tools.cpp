@@ -853,8 +853,15 @@ static void getMipsCPUAndABI(const ArgList &Args,
       CPUName = A->getValue();
   }
 
-  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ))
+  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
     ABIName = A->getValue();
+    // Convert a GNU style Mips ABI name to the name
+    // accepted by LLVM Mips backend.
+    ABIName = llvm::StringSwitch<llvm::StringRef>(ABIName)
+      .Case("32", "o32")
+      .Case("64", "n64")
+      .Default(ABIName);
+  }
 
   // Setup default CPU and ABI names.
   if (CPUName.empty() && ABIName.empty()) {
