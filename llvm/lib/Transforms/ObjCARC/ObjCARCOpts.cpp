@@ -2958,7 +2958,7 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
 
     const Value *Arg = StripPointerCastsAndObjCCalls(Ret->getOperand(0));
 
-    // Look for an ``autorelease'' instruction that is a predecssor of Ret and
+    // Look for an ``autorelease'' instruction that is a predecessor of Ret and
     // dependent on Arg such that there are no instructions dependent on Arg
     // that need a positive ref count in between the autorelease and Ret.
     CallInst *Autorelease =
