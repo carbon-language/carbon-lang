@@ -1383,12 +1383,17 @@ ObjCARCOpt::OptimizeRetainBlockCall(Function &F, Instruction *Inst,
   if (!IsRetainBlockOptimizable(Inst))
     return false;
 
+  Changed = true;
+  ++NumPeeps;
+
+  DEBUG(dbgs() << "Strength reduced retainBlock => retain.\n");
+  DEBUG(dbgs() << "Old: " << *Inst << "\n");
   CallInst *RetainBlock = cast<CallInst>(Inst);
   RetainBlock->setCalledFunction(getRetainCallee(F.getParent()));
   // Remove copy_on_escape metadata.
   RetainBlock->setMetadata(CopyOnEscapeMDKind, 0);
   Class = IC_Retain;
-
+  DEBUG(dbgs() << "New: " << *Inst << "\n");
   return true;
 }
 
