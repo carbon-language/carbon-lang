@@ -1306,3 +1306,14 @@ end:
 ; CHECK: ret void
 }
 
+define void @PR15805(i1 %a, i1 %b) {
+; CHECK: @PR15805
+; CHECK: select i1 undef, i64* %c, i64* %c
+; CHECK: ret void
+
+  %c = alloca i64, align 8
+  %p.0.c = select i1 undef, i64* %c, i64* %c
+  %cond.in = select i1 undef, i64* %p.0.c, i64* %c
+  %cond = load i64* %cond.in, align 8
+  ret void
+}

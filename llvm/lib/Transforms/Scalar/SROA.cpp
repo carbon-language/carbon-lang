@@ -3051,16 +3051,16 @@ private:
 
   bool visitSelectInst(SelectInst &SI) {
     DEBUG(dbgs() << "    original: " << SI << "\n");
-
-    // Find the operand we need to rewrite here.
-    bool IsTrueVal = SI.getTrueValue() == OldPtr;
-    if (IsTrueVal)
-      assert(SI.getFalseValue() != OldPtr && "Pointer is both operands!");
-    else
-      assert(SI.getFalseValue() == OldPtr && "Pointer isn't an operand!");
+    assert((SI.getTrueValue() == OldPtr || SI.getFalseValue() == OldPtr) &&
+           "Pointer isn't an operand!");
 
     Value *NewPtr = getAdjustedAllocaPtr(IRB, OldPtr->getType());
-    SI.setOperand(IsTrueVal ? 1 : 2, NewPtr);
+    // Replace the operands which were using the old pointer.
+    if (SI.getOperand(1) == OldPtr)
+      SI.setOperand(1, NewPtr);
+    if (SI.getOperand(2) == OldPtr)
+      SI.setOperand(2, NewPtr);
+
     DEBUG(dbgs() << "          to: " << SI << "\n");
     deleteIfTriviallyDead(OldPtr);
     return false;
