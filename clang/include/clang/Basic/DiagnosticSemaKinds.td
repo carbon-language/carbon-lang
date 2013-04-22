@@ -642,6 +642,10 @@ def warn_objc_isa_use : Warning<
 def warn_objc_isa_assign : Warning<
   "assignment to Objective-C's isa is deprecated in favor of "
   "object_setClass()">, InGroup<DeprecatedObjCIsaUsage>;
+def warn_objc_pointer_masking : Warning<
+  "bitmasking for introspection of Objective-C object pointers is strongly "
+  "discouraged in favor of using runtime APIs">,
+  InGroup<DiagGroup<"deprecated-objc-pointer-introspection">>;
 def warn_objc_property_default_assign_on_object : Warning<
   "default property attribute 'assign' not appropriate for non-GC object">,
   InGroup<ObjCPropertyNoAttribute>;
