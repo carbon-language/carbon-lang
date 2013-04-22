@@ -43,7 +43,7 @@ public:
   enum ArchType {
     UnknownArch,
 
-    arm,     // ARM; arm, armv.*, xscale
+    arm,     // ARM: arm, armv.*, xscale
     aarch64, // AArch64: aarch64
     hexagon, // Hexagon: hexagon
     mips,    // MIPS: mips, mipsallegrex
