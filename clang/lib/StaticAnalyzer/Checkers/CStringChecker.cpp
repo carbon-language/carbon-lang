@@ -114,6 +114,8 @@ public:
                         bool isBounded = false,
                         bool ignoreCase = false) const;
 
+  void evalStrsep(CheckerContext &C, const CallExpr *CE) const;
+
   // Utility methods
   std::pair<ProgramStateRef , ProgramStateRef >
   static assumeZero(CheckerContext &C,
@@ -1752,6 +1754,63 @@ void CStringChecker::evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
   C.addTransition(state);
 }
 
+void CStringChecker::evalStrsep(CheckerContext &C, const CallExpr *CE) const {
+  //char *strsep(char **stringp, const char *delim);
+  if (CE->getNumArgs() < 2)
+    return;
+
+  // Sanity: does the search string parameter match the return type?
+  const Expr *SearchStrPtr = CE->getArg(0);
+  QualType CharPtrTy = SearchStrPtr->getType()->getPointeeType();
+  if (CharPtrTy.isNull() ||
+      CE->getType().getUnqualifiedType() != CharPtrTy.getUnqualifiedType())
+    return;
+
+  CurrentFunctionDescription = "strsep()";
+  ProgramStateRef State = C.getState();
+  const LocationContext *LCtx = C.getLocationContext();
+
+  // Check that the search string pointer is non-null (though it may point to
+  // a null string).
+  SVal SearchStrVal = State->getSVal(SearchStrPtr, LCtx);
+  State = checkNonNull(C, State, SearchStrPtr, SearchStrVal);
+  if (!State)
+    return;
+
+  // Check that the delimiter string is non-null.
+  const Expr *DelimStr = CE->getArg(1);
+  SVal DelimStrVal = State->getSVal(DelimStr, LCtx);
+  State = checkNonNull(C, State, DelimStr, DelimStrVal);
+  if (!State)
+    return;
+
+  SValBuilder &SVB = C.getSValBuilder();
+  SVal Result;
+  if (Optional<Loc> SearchStrLoc = SearchStrVal.getAs<Loc>()) {
+    // Get the current value of the search string pointer, as a char*.
+    Result = State->getSVal(*SearchStrLoc, CharPtrTy);
+
+    // Invalidate the search string, representing the change of one delimiter
+    // character to NUL.
+    State = InvalidateBuffer(C, State, SearchStrPtr, Result);
+
+    // Overwrite the search string pointer. The new value is either an address
+    // further along in the same string, or NULL if there are no more tokens.
+    State = State->bindLoc(*SearchStrLoc,
+                           SVB.conjureSymbolVal(getTag(), CE, LCtx, CharPtrTy,
+                                                C.blockCount()));
+  } else {
+    assert(SearchStrVal.isUnknown());
+    // Conjure a symbolic value. It's the best we can do.
+    Result = SVB.conjureSymbolVal(0, CE, LCtx, C.blockCount());
+  }
+
+  // Set the return value, and finish.
+  State = State->BindExpr(CE, LCtx, Result);
+  C.addTransition(State);
+}
+
+
 //===----------------------------------------------------------------------===//
 // The driver method, and other Checker callbacks.
 //===----------------------------------------------------------------------===//
@@ -1762,6 +1821,7 @@ bool CStringChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
   if (!FDecl)
     return false;
 
+  // FIXME: Poorly-factored string switches are slow.
   FnCheck evalFunction = 0;
   if (C.isCLibraryFunction(FDecl, "memcpy"))
     evalFunction =  &CStringChecker::evalMemcpy;
@@ -1793,6 +1853,8 @@ bool CStringChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
     evalFunction =  &CStringChecker::evalStrcasecmp;
   else if (C.isCLibraryFunction(FDecl, "strncasecmp"))
     evalFunction =  &CStringChecker::evalStrncasecmp;
+  else if (C.isCLibraryFunction(FDecl, "strsep"))
+    evalFunction =  &CStringChecker::evalStrsep;
   else if (C.isCLibraryFunction(FDecl, "bcopy"))
     evalFunction =  &CStringChecker::evalBcopy;
   else if (C.isCLibraryFunction(FDecl, "bcmp"))
