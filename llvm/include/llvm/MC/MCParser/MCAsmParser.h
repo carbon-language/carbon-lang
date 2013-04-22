@@ -53,6 +53,8 @@ public:
                                     unsigned &Offset) = 0;
 };
 
+typedef MCAsmParserSemaCallback::InlineAsmIdentifierInfo
+  InlineAsmIdentifierInfo;
 
 /// MCAsmParser - Generic assembler parser interface, for use by target specific
 /// assembly parsers.
