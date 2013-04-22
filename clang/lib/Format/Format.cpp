@@ -116,7 +116,7 @@ public:
     State.NextToken = &RootToken;
     State.Stack.push_back(
         ParenState(FirstIndent, FirstIndent, !Style.BinPackParameters,
-                   /*HasMultiParameterLine=*/ false));
+                   /*NoLineBreak=*/ false));
     State.LineContainsContinuedForLoopSection = false;
     State.ParenLevel = 0;
     State.StartOfStringLiteral = 0;
@@ -156,13 +156,13 @@ private:
 
   struct ParenState {
     ParenState(unsigned Indent, unsigned LastSpace, bool AvoidBinPacking,
-               bool HasMultiParameterLine)
+               bool NoLineBreak)
         : Indent(Indent), LastSpace(LastSpace), FirstLessLess(0),
           BreakBeforeClosingBrace(false), QuestionColumn(0),
           AvoidBinPacking(AvoidBinPacking), BreakBeforeParameter(false),
-          HasMultiParameterLine(HasMultiParameterLine), ColonPos(0),
-          StartOfFunctionCall(0), NestedNameSpecifierContinuation(0),
-          CallContinuation(0), VariablePos(0) {}
+          NoLineBreak(NoLineBreak), ColonPos(0), StartOfFunctionCall(0),
+          NestedNameSpecifierContinuation(0), CallContinuation(0),
+          VariablePos(0) {}
 
     /// \brief The position to which a specific parenthesis level needs to be
     /// indented.
@@ -199,8 +199,8 @@ private:
     /// \c AvoidBinPacking is \c true).
     bool BreakBeforeParameter;
 
-    /// \brief This context already has a line with more than one parameter.
-    bool HasMultiParameterLine;
+    /// \brief Line breaking in this context would break a formatting rule.
+    bool NoLineBreak;
 
     /// \brief The position of the colon in an ObjC method declaration/call.
     unsigned ColonPos;
@@ -236,8 +236,8 @@ private:
         return AvoidBinPacking;
       if (BreakBeforeParameter != Other.BreakBeforeParameter)
         return BreakBeforeParameter;
-      if (HasMultiParameterLine != Other.HasMultiParameterLine)
-        return HasMultiParameterLine;
+      if (NoLineBreak != Other.NoLineBreak)
+        return NoLineBreak;
       if (ColonPos != Other.ColonPos)
         return ColonPos < Other.ColonPos;
       if (StartOfFunctionCall != Other.StartOfFunctionCall)
@@ -460,8 +460,9 @@ private:
       if (Previous.opensScope() && Previous.Type != TT_ObjCMethodExpr &&
           Current.Type != TT_LineComment)
         State.Stack.back().Indent = State.Column + Spaces;
-      if (Previous.is(tok::comma) && !Current.isTrailingComment())
-        State.Stack.back().HasMultiParameterLine = true;
+      if (Previous.is(tok::comma) && !Current.isTrailingComment() &&
+          State.Stack.back().AvoidBinPacking)
+        State.Stack.back().NoLineBreak = true;
 
       State.Column += Spaces;
       if (Current.is(tok::l_paren) && Previous.isOneOf(tok::kw_if, tok::kw_for))
@@ -560,12 +561,11 @@ private:
       } else {
         NewIndent = 4 + std::max(State.Stack.back().LastSpace,
                                  State.Stack.back().StartOfFunctionCall);
-        AvoidBinPacking =
-            !Style.BinPackParameters || State.Stack.back().AvoidBinPacking;
+        AvoidBinPacking = !Style.BinPackParameters;
       }
       State.Stack.push_back(
           ParenState(NewIndent, State.Stack.back().LastSpace, AvoidBinPacking,
-                     State.Stack.back().HasMultiParameterLine));
+                     State.Stack.back().NoLineBreak));
       ++State.ParenLevel;
     }
 
@@ -802,12 +802,7 @@ private:
         !(State.NextToken->is(tok::r_brace) &&
           State.Stack.back().BreakBeforeClosingBrace))
       return false;
-    // Trying to insert a parameter on a new line if there are already more than
-    // one parameter on the current line is bin packing.
-    if (State.Stack.back().HasMultiParameterLine &&
-        State.Stack.back().AvoidBinPacking)
-      return false;
-    return true;
+    return !State.Stack.back().NoLineBreak;
   }
 
   /// \brief Returns \c true, if a line break after \p State is mandatory.
