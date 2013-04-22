@@ -74,9 +74,15 @@ static bool f64AssignAAPCS(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   static const uint16_t HiRegList[] = { ARM::R0, ARM::R2 };
   static const uint16_t LoRegList[] = { ARM::R1, ARM::R3 };
   static const uint16_t ShadowRegList[] = { ARM::R0, ARM::R1 };
+  static const uint16_t GPRArgRegs[] = { ARM::R0, ARM::R1, ARM::R2, ARM::R3 };
 
   unsigned Reg = State.AllocateReg(HiRegList, ShadowRegList, 2);
   if (Reg == 0) {
+
+    // If we had R3 unallocated only, now we still must to waste it.
+    Reg = State.AllocateReg(GPRArgRegs, 4);
+    assert((!Reg || Reg == ARM::R3) && "Wrong GPRs usage for f64");
+
     // For the 2nd half of a v2f64, do not just fail.
     if (CanFail)
       return false;

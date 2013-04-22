@@ -111,8 +111,7 @@ def CC_ARM_AAPCS_Common : CallingConv<[
   // i64 is 8-aligned i32 here, so we may need to eat R1 as a pad register
   // (and the same is true for f64 if VFP is not enabled)
   CCIfType<[i32], CCIfAlign<"8", CCAssignToRegWithShadow<[R0, R2], [R0, R1]>>>,
-  CCIfType<[i32], CCIf<"State.getNextStackOffset() == 0 &&"
-                       "ArgFlags.getOrigAlign() != 8",
+  CCIfType<[i32], CCIf<"ArgFlags.getOrigAlign() != 8",
                        CCAssignToReg<[R0, R1, R2, R3]>>>,
 
   CCIfType<[i32], CCIfAlign<"8", CCAssignToStackWithShadow<4, 8, R3>>>,

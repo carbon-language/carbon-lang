@@ -1738,6 +1738,7 @@ ARMTargetLowering::HandleByVal(
           State->getCallOrPrologue() == Call) &&
          "unhandled ParmContext");
   if ((!State->isFirstByValRegValid()) &&
+      (!Subtarget->isAAPCS_ABI() || State->getNextStackOffset() == 0) &&
       (ARM::R0 <= reg) && (reg <= ARM::R3)) {
     if (Subtarget->isAAPCS_ABI() && Align > 4) {
       unsigned AlignInRegs = Align / 4;
