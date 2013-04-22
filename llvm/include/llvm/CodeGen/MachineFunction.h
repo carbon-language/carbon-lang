@@ -352,8 +352,8 @@ public:
   // Internal functions used to automatically number MachineBasicBlocks
   //
 
-  /// getNextMBBNumber - Returns the next unique number to be assigned
-  /// to a MachineBasicBlock in this MachineFunction.
+  /// \brief Adds the MBB to the internal numbering. Returns the unique number
+  /// assigned to the MBB.
   ///
   unsigned addToMBBNumbering(MachineBasicBlock *MBB) {
     MBBNumbering.push_back(MBB);
