@@ -77,11 +77,11 @@ static void write_int32(uint32_t i) {
   fwrite(&i, 4, 1, output_file);
 }
 
-static void write_int64(uint64_t i) {
-  uint32_t lo = i >>  0;
-  uint32_t hi = i >> 32;
-  write_int32(lo);
-  write_int32(hi);
+static uint64_t write_from_buffer(uint64_t *buffer, size_t size) {
+  if (fwrite(buffer, 8, size, output_file) != size)
+    return (uint64_t)-1;
+
+  return 0;
 }
 
 static uint32_t length_of_string(const char *s) {
@@ -104,13 +104,11 @@ static uint32_t read_int32() {
   return tmp;
 }
 
-static uint64_t read_int64() {
-  uint64_t tmp;
-
-  if (fread(&tmp, 1, 8, output_file) != 8)
+static uint64_t read_into_buffer(uint64_t *buffer, size_t size) {
+  if (fread(buffer, 8, size, output_file) != size)
     return (uint64_t)-1;
 
-  return tmp;
+  return 0;
 }
 
 static char *mangle_filename(const char *orig_filename) {
@@ -269,23 +267,24 @@ void llvm_gcda_emit_arcs(uint32_t num_counters, uint64_t *counters) {
 
   if (val != (uint32_t)-1) {
     /* There are counters present in the file. Merge them. */
-    uint32_t j;
-
     if (val != 0x01a10000) {
-      fprintf(stderr, "profiling: invalid magic number (0x%08x)\n", val);
+      fprintf(stderr, "profiling:invalid magic number (0x%08x)\n", val);
       return;
     }
 
     val = read_int32();
     if (val == (uint32_t)-1 || val / 2 != num_counters) {
-      fprintf(stderr, "profiling: invalid number of counters (%d)\n", val);
+      fprintf(stderr, "profiling:invalid number of counters (%d)\n", val);
       return;
     }
 
     old_ctrs = malloc(sizeof(uint64_t) * num_counters);
 
-    for (j = 0; j < num_counters; ++j)
-      old_ctrs[j] = read_int64();
+    if (read_into_buffer(old_ctrs, num_counters) == (uint64_t)-1) {
+      fprintf(stderr, "profiling:invalid number of counters (%d)\n",
+              num_counters);
+      return;
+    }
   }
 
   /* Reset for writing. */
@@ -295,7 +294,12 @@ void llvm_gcda_emit_arcs(uint32_t num_counters, uint64_t *counters) {
   fwrite("\0\0\xa1\1", 4, 1, output_file);
   write_int32(num_counters * 2);
   for (i = 0; i < num_counters; ++i)
-    write_int64(counters[i] + (old_ctrs ? old_ctrs[i] : 0));
+    counters[i] += (old_ctrs ? old_ctrs[i] : 0);
+
+  if (write_from_buffer(counters, num_counters) == (uint64_t)-1) {
+    fprintf(stderr, "profiling:cannot write to output file\n");
+    return;
+  }
 
   free(old_ctrs);
 
