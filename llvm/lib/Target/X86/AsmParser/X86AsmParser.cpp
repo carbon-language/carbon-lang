@@ -1130,7 +1130,7 @@ X86AsmParser::CreateMemForInlineAsm(unsigned SegReg, const MCExpr *Disp,
                                     InlineAsmIdentifierInfo &Info){
 
 
-  if (const MCSymbolRefExpr *SymRef = dyn_cast<MCSymbolRefExpr>(Disp)) {
+  if (Disp && isa<MCSymbolRefExpr>(Disp)) {
     // If this is not a VarDecl then assume it is a FuncDecl or some other label
     // reference.  We need an 'r' constraint here, so we need to create register
     // operand to ensure proper matching.  Just pick a GPR based on the size of
