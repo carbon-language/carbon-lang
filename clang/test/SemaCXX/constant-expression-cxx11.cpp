@@ -1455,3 +1455,21 @@ namespace PR14203 {
   // constructor here.
   int n = sizeof(short{duration(duration())});
 }
+
+namespace ArrayEltInit {
+  struct A {
+    constexpr A() : p(&p) {}
+    void *p;
+  };
+  constexpr A a[10];
+  static_assert(a[0].p == &a[0].p, "");
+  static_assert(a[9].p == &a[9].p, "");
+  static_assert(a[0].p != &a[9].p, "");
+  static_assert(a[9].p != &a[0].p, "");
+
+  constexpr A b[10] = {};
+  static_assert(b[0].p == &b[0].p, "");
+  static_assert(b[9].p == &b[9].p, "");
+  static_assert(b[0].p != &b[9].p, "");
+  static_assert(b[9].p != &b[0].p, "");
+}

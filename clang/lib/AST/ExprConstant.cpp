@@ -3794,6 +3794,9 @@ namespace {
 
     bool VisitInitListExpr(const InitListExpr *E);
     bool VisitCXXConstructExpr(const CXXConstructExpr *E);
+    bool VisitCXXConstructExpr(const CXXConstructExpr *E,
+                               const LValue &Subobject,
+                               APValue *Value, QualType Type);
   };
 } // end anonymous namespace
 
@@ -3827,8 +3830,16 @@ bool ArrayExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
   if (Result.isArray() && Result.hasArrayFiller())
     Filler = Result.getArrayFiller();
 
-  Result = APValue(APValue::UninitArray(), E->getNumInits(),
-                   CAT->getSize().getZExtValue());
+  unsigned NumEltsToInit = E->getNumInits();
+  unsigned NumElts = CAT->getSize().getZExtValue();
+  const Expr *FillerExpr = E->hasArrayFiller() ? E->getArrayFiller() : 0;
+
+  // If the initializer might depend on the array index, run it for each
+  // array element. For now, just whitelist non-class value-initialization.
+  if (NumEltsToInit != NumElts && !isa<ImplicitValueInitExpr>(FillerExpr))
+    NumEltsToInit = NumElts;
+
+  Result = APValue(APValue::UninitArray(), NumEltsToInit, NumElts);
 
   // If the array was previously zero-initialized, preserve the
   // zero-initialized values.
@@ -3841,12 +3852,12 @@ bool ArrayExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
 
   LValue Subobject = This;
   Subobject.addArray(Info, E, CAT);
-  unsigned Index = 0;
-  for (InitListExpr::const_iterator I = E->begin(), End = E->end();
-       I != End; ++I, ++Index) {
+  for (unsigned Index = 0; Index != NumEltsToInit; ++Index) {
+    const Expr *Init =
+        Index < E->getNumInits() ? E->getInit(Index) : FillerExpr;
     if (!EvaluateInPlace(Result.getArrayInitializedElt(Index),
-                         Info, Subobject, cast<Expr>(*I)) ||
-        !HandleLValueArrayAdjustment(Info, cast<Expr>(*I), Subobject,
+                         Info, Subobject, Init) ||
+        !HandleLValueArrayAdjustment(Info, Init, Subobject,
                                      CAT->getElementType(), 1)) {
       if (!Info.keepEvaluatingAfterFailure())
         return false;
@@ -3854,39 +3865,54 @@ bool ArrayExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
     }
   }
 
-  if (!Result.hasArrayFiller()) return Success;
-  assert(E->hasArrayFiller() && "no array filler for incomplete init list");
-  // FIXME: The Subobject here isn't necessarily right. This rarely matters,
-  // but sometimes does:
-  //   struct S { constexpr S() : p(&p) {} void *p; };
-  //   S s[10] = {};
-  return EvaluateInPlace(Result.getArrayFiller(), Info,
-                         Subobject, E->getArrayFiller()) && Success;
+  if (!Result.hasArrayFiller())
+    return Success;
+
+  // If we get here, we have a trivial filler, which we can just evaluate
+  // once and splat over the rest of the array elements.
+  assert(FillerExpr && "no array filler for incomplete init list");
+  return EvaluateInPlace(Result.getArrayFiller(), Info, Subobject,
+                         FillerExpr) && Success;
 }
 
 bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
-  // FIXME: The Subobject here isn't necessarily right. This rarely matters,
-  // but sometimes does:
-  //   struct S { constexpr S() : p(&p) {} void *p; };
-  //   S s[10];
-  LValue Subobject = This;
+  return VisitCXXConstructExpr(E, This, &Result, E->getType());
+}
 
-  APValue *Value = &Result;
-  bool HadZeroInit = true;
-  QualType ElemTy = E->getType();
-  while (const ConstantArrayType *CAT =
-           Info.Ctx.getAsConstantArrayType(ElemTy)) {
-    Subobject.addArray(Info, E, CAT);
-    HadZeroInit &= !Value->isUninit();
-    if (!HadZeroInit)
-      *Value = APValue(APValue::UninitArray(), 0, CAT->getSize().getZExtValue());
-    if (!Value->hasArrayFiller())
-      return true;
-    Value = &Value->getArrayFiller();
-    ElemTy = CAT->getElementType();
+bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E,
+                                               const LValue &Subobject,
+                                               APValue *Value,
+                                               QualType Type) {
+  bool HadZeroInit = !Value->isUninit();
+
+  if (const ConstantArrayType *CAT = Info.Ctx.getAsConstantArrayType(Type)) {
+    unsigned N = CAT->getSize().getZExtValue();
+
+    // Preserve the array filler if we had prior zero-initialization.
+    APValue Filler =
+      HadZeroInit && Value->hasArrayFiller() ? Value->getArrayFiller()
+                                             : APValue();
+
+    *Value = APValue(APValue::UninitArray(), N, N);
+
+    if (HadZeroInit)
+      for (unsigned I = 0; I != N; ++I)
+        Value->getArrayInitializedElt(I) = Filler;
+
+    // Initialize the elements.
+    LValue ArrayElt = Subobject;
+    ArrayElt.addArray(Info, E, CAT);
+    for (unsigned I = 0; I != N; ++I)
+      if (!VisitCXXConstructExpr(E, ArrayElt, &Value->getArrayInitializedElt(I),
+                                 CAT->getElementType()) ||
+          !HandleLValueArrayAdjustment(Info, E, ArrayElt,
+                                       CAT->getElementType(), 1))
+        return false;
+
+    return true;
   }
 
-  if (!ElemTy->isRecordType())
+  if (!Type->isRecordType())
     return Error(E);
 
   const CXXConstructorDecl *FD = E->getConstructor();
@@ -3897,7 +3923,7 @@ bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
       return true;
 
     if (ZeroInit) {
-      ImplicitValueInitExpr VIE(ElemTy);
+      ImplicitValueInitExpr VIE(Type);
       return EvaluateInPlace(*Value, Info, Subobject, &VIE);
     }
 
@@ -3918,7 +3944,7 @@ bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
     return false;
 
   if (ZeroInit && !HadZeroInit) {
-    ImplicitValueInitExpr VIE(ElemTy);
+    ImplicitValueInitExpr VIE(Type);
     if (!EvaluateInPlace(*Value, Info, Subobject, &VIE))
       return false;
   }
