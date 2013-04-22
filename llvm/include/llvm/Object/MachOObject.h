@@ -135,6 +135,8 @@ public:
   /// @name Object Structure Access
   /// @{
 
+  // TODO: Would be useful to have an iterator based version
+  // of this.
   /// \brief Retrieve the information for the given load command.
   const LoadCommandInfo &getLoadCommandInfo(unsigned Index) const;
 
