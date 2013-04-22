@@ -1119,29 +1119,26 @@ X86Operand *
 X86AsmParser::CreateMemForInlineAsm(unsigned SegReg, const MCExpr *Disp,
                                     unsigned BaseReg, unsigned IndexReg,
                                     unsigned Scale, SMLoc Start, SMLoc End,
-                                    unsigned Size, StringRef SymName) {
+                                    unsigned Size, StringRef Identifier) {
   bool NeedSizeDir = false;
   if (const MCSymbolRefExpr *SymRef = dyn_cast<MCSymbolRefExpr>(Disp)) {
     const MCSymbol &Sym = SymRef->getSymbol();
-    // FIXME: The SemaLookup will fail if the name is anything other then an
-    // identifier.
-    // FIXME: Pass a valid SMLoc.
-    bool IsVarDecl = false;
-    unsigned tLength, tSize, tType;
-    SemaCallback->LookupInlineAsmIdentifier(Sym.getName(), NULL, tLength, tSize,
-                                            tType, IsVarDecl);
+    StringRef SymName = Sym.getName();
+    MCAsmParserSemaCallback::InlineAsmIdentifierInfo Info;
+    SemaCallback->LookupInlineAsmIdentifier(SymName, Info);
+
     if (!Size) {
-      Size = tType * 8; // Size is in terms of bits in this context.
+      Size = Info.Type * 8; // Size is in terms of bits in this context.
       NeedSizeDir = Size > 0;
     }
     // If this is not a VarDecl then assume it is a FuncDecl or some other label
     // reference.  We need an 'r' constraint here, so we need to create register
     // operand to ensure proper matching.  Just pick a GPR based on the size of
     // a pointer.
-    if (!IsVarDecl) {
+    if (!Info.IsVarDecl) {
       unsigned RegNo = is64BitMode() ? X86::RBX : X86::EBX;
       return X86Operand::CreateReg(RegNo, Start, End, /*AddressOf=*/true,
-                                   SMLoc(), SymName);
+                                   SMLoc(), Identifier);
     }
   }
 
@@ -1154,7 +1151,7 @@ X86AsmParser::CreateMemForInlineAsm(unsigned SegReg, const MCExpr *Disp,
   // get the matching correct in some cases.
   BaseReg = BaseReg ? BaseReg : 1;
   return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale, Start,
-                               End, Size, SymName);
+                               End, Size, Identifier);
 }
 
 static void
@@ -1368,7 +1365,6 @@ X86Operand *X86AsmParser::ParseIntelIdentifier(const MCExpr *&Val,
   const AsmToken &Tok = Parser.getTok();
   AsmToken IdentEnd = Tok;
   while (!Done) {
-    End = Tok.getLoc();
     switch (getLexer().getKind()) {
     default:
       Done = true; 
@@ -1388,7 +1384,7 @@ X86Operand *X86AsmParser::ParseIntelIdentifier(const MCExpr *&Val,
       break;
     }
   }
-
+  End = IdentEnd.getEndLoc();
   unsigned Len = IdentEnd.getLoc().getPointer() - Identifier.data();
   Identifier = StringRef(Identifier.data(), Len + IdentEnd.getString().size());
   MCSymbol *Sym = getContext().GetOrCreateSymbol(Identifier);
@@ -1536,33 +1532,26 @@ X86Operand *X86AsmParser::ParseIntelOperator(unsigned OpKind) {
   Parser.Lex(); // Eat operator.
 
   const MCExpr *Val = 0;
-  AsmToken StartTok = Tok;
   SMLoc Start = Tok.getLoc(), End;
   StringRef Identifier = Tok.getString();
   if (X86Operand *Err = ParseIntelIdentifier(Val, Identifier, End))
     return Err;
 
-  unsigned Length = 0, Size = 0, Type = 0;
+  unsigned CVal = 0;
   if (const MCSymbolRefExpr *SymRef = dyn_cast<MCSymbolRefExpr>(Val)) {
     const MCSymbol &Sym = SymRef->getSymbol();
-    // FIXME: The SemaLookup will fail if the name is anything other then an
-    // identifier.
-    // FIXME: Pass a valid SMLoc.
-    bool IsVarDecl;
-    if (!SemaCallback->LookupInlineAsmIdentifier(Sym.getName(), NULL, Length,
-                                                 Size, Type, IsVarDecl))
-      // FIXME: We don't warn on variables with namespace alias qualifiers
-      // because support still needs to be added in the frontend.
-      if (Identifier.equals(StartTok.getString()))
-        return ErrorOperand(Start, "Unable to lookup expr!");
-  }
-  unsigned CVal;
-  switch(OpKind) {
-  default: llvm_unreachable("Unexpected operand kind!");
-  case IOK_LENGTH: CVal = Length; break;
-  case IOK_SIZE: CVal = Size; break;
-  case IOK_TYPE: CVal = Type; break;
-  }
+    StringRef SymName = Sym.getName();
+    MCAsmParserSemaCallback::InlineAsmIdentifierInfo Info;
+    SemaCallback->LookupInlineAsmIdentifier(SymName, Info);
+
+    switch(OpKind) {
+    default: llvm_unreachable("Unexpected operand kind!");
+    case IOK_LENGTH: CVal = Info.Length; break;
+    case IOK_SIZE: CVal = Info.Size; break;
+    case IOK_TYPE: CVal = Info.Type; break;
+    }
+  } else
+    return ErrorOperand(Start, "Expected a MCSymbolRefExpr!");
 
   // Rewrite the type operator and the C or C++ type or variable in terms of an
   // immediate.  E.g. TYPE foo -> $$4

@@ -4115,15 +4115,12 @@ AsmParser::parseMSInlineAsm(void *AsmLoc, std::string &AsmString,
       }
 
       // Expr/Input or Output.
-      bool IsVarDecl;
-      unsigned Length, Size, Type;
       StringRef SymName = Operand->getSymName();
       if (SymName.empty())
         continue;
 
-      void *OpDecl = SI.LookupInlineAsmIdentifier(SymName, AsmLoc,
-                                                  Length, Size, Type,
-                                                  IsVarDecl);
+      MCAsmParserSemaCallback::InlineAsmIdentifierInfo Info;
+      void *OpDecl = SI.LookupInlineAsmIdentifier(SymName, Info);
       if (!OpDecl)
         continue;
 
