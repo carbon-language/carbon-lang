@@ -212,7 +212,6 @@ DWARFFormValue::skipValue(uint16_t form, DataExtractor debug_info_data,
                           uint32_t *offset_ptr, const DWARFCompileUnit *cu) {
   bool indirect = false;
   do {
-    indirect = false;
     switch (form) {
     // Blocks if inlined data that have a length field and the data bytes
     // inlined in the .debug_info
