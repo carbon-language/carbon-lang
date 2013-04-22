@@ -614,6 +614,7 @@ struct X86Operand : public MCParsedAsmOperand {
   SMLoc StartLoc, EndLoc;
   SMLoc OffsetOfLoc;
   StringRef SymName;
+  void *OpDecl;
   bool AddressOf;
 
   struct TokOp {
@@ -649,6 +650,7 @@ struct X86Operand : public MCParsedAsmOperand {
     : Kind(K), StartLoc(Start), EndLoc(End) {}
 
   StringRef getSymName() { return SymName; }
+  void *getOpDecl() { return OpDecl; }
 
   /// getStartLoc - Get the location of the first token of this operand.
   SMLoc getStartLoc() const { return StartLoc; }
@@ -914,12 +916,14 @@ struct X86Operand : public MCParsedAsmOperand {
   static X86Operand *CreateReg(unsigned RegNo, SMLoc StartLoc, SMLoc EndLoc,
                                bool AddressOf = false,
                                SMLoc OffsetOfLoc = SMLoc(),
-                               StringRef SymName = StringRef()) {
+                               StringRef SymName = StringRef(),
+                               void *OpDecl = 0) {
     X86Operand *Res = new X86Operand(Register, StartLoc, EndLoc);
     Res->Reg.RegNo = RegNo;
     Res->AddressOf = AddressOf;
     Res->OffsetOfLoc = OffsetOfLoc;
     Res->SymName = SymName;
+    Res->OpDecl = OpDecl;
     return Res;
   }
 
@@ -931,8 +935,8 @@ struct X86Operand : public MCParsedAsmOperand {
 
   /// Create an absolute memory operand.
   static X86Operand *CreateMem(const MCExpr *Disp, SMLoc StartLoc, SMLoc EndLoc,
-                               unsigned Size = 0,
-                               StringRef SymName = StringRef()) {
+                               unsigned Size = 0, StringRef SymName = StringRef(),
+                               void *OpDecl = 0) {
     X86Operand *Res = new X86Operand(Memory, StartLoc, EndLoc);
     Res->Mem.SegReg   = 0;
     Res->Mem.Disp     = Disp;
@@ -940,8 +944,9 @@ struct X86Operand : public MCParsedAsmOperand {
     Res->Mem.IndexReg = 0;
     Res->Mem.Scale    = 1;
     Res->Mem.Size     = Size;
-    Res->SymName = SymName;
-    Res->AddressOf = false;
+    Res->SymName      = SymName;
+    Res->OpDecl       = OpDecl;
+    Res->AddressOf    = false;
     return Res;
   }
 
@@ -950,7 +955,8 @@ struct X86Operand : public MCParsedAsmOperand {
                                unsigned BaseReg, unsigned IndexReg,
                                unsigned Scale, SMLoc StartLoc, SMLoc EndLoc,
                                unsigned Size = 0,
-                               StringRef SymName = StringRef()) {
+                               StringRef SymName = StringRef(),
+                               void *OpDecl = 0) {
     // We should never just have a displacement, that should be parsed as an
     // absolute memory operand.
     assert((SegReg || BaseReg || IndexReg) && "Invalid memory operand!");
@@ -965,8 +971,9 @@ struct X86Operand : public MCParsedAsmOperand {
     Res->Mem.IndexReg = IndexReg;
     Res->Mem.Scale    = Scale;
     Res->Mem.Size     = Size;
-    Res->SymName = SymName;
-    Res->AddressOf = false;
+    Res->SymName      = SymName;
+    Res->OpDecl       = OpDecl;
+    Res->AddressOf    = false;
     return Res;
   }
 };
@@ -1128,8 +1135,6 @@ X86AsmParser::CreateMemForInlineAsm(unsigned SegReg, const MCExpr *Disp,
                                     unsigned Scale, SMLoc Start, SMLoc End,
                                     unsigned Size, StringRef Identifier,
                                     InlineAsmIdentifierInfo &Info){
-
-
   if (Disp && isa<MCSymbolRefExpr>(Disp)) {
     // If this is not a VarDecl then assume it is a FuncDecl or some other label
     // reference.  We need an 'r' constraint here, so we need to create register
@@ -1138,7 +1143,7 @@ X86AsmParser::CreateMemForInlineAsm(unsigned SegReg, const MCExpr *Disp,
     if (!Info.IsVarDecl) {
       unsigned RegNo = is64BitMode() ? X86::RBX : X86::EBX;
       return X86Operand::CreateReg(RegNo, Start, End, /*AddressOf=*/true,
-                                   SMLoc(), Identifier);
+                                   SMLoc(), Identifier, Info.OpDecl);
     }
     if (!Size) {
       Size = Info.Type * 8; // Size is in terms of bits in this context.
@@ -1153,7 +1158,7 @@ X86AsmParser::CreateMemForInlineAsm(unsigned SegReg, const MCExpr *Disp,
   // get the matching correct in some cases.
   BaseReg = BaseReg ? BaseReg : 1;
   return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale, Start,
-                               End, Size, Identifier);
+                               End, Size, Identifier, Info.OpDecl);
 }
 
 static void
@@ -1512,7 +1517,7 @@ X86Operand *X86AsmParser::ParseIntelOffsetOfOperator() {
   // the size of a pointer.
   unsigned RegNo = is64BitMode() ? X86::RBX : X86::EBX;
   return X86Operand::CreateReg(RegNo, Start, End, /*GetAddress=*/true,
-                               OffsetOfLoc, Identifier);
+                               OffsetOfLoc, Identifier, Info.OpDecl);
 }
 
 enum IntelOperatorKind {

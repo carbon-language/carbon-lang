@@ -38,6 +38,7 @@ public:
   unsigned getMCOperandNum() { return MCOperandNum; }
 
   virtual StringRef getSymName() { return StringRef(); }
+  virtual void *getOpDecl() { return 0; }
 
   /// isToken - Is this a token operand?
   virtual bool isToken() const = 0;

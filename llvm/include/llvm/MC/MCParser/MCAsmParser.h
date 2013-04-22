@@ -34,10 +34,12 @@ class Twine;
 class MCAsmParserSemaCallback {
 public:
   typedef struct {
+    void *OpDecl;
     bool IsVarDecl;
     unsigned Length, Size, Type;
 
     void clear() {
+      OpDecl = 0;
       IsVarDecl = false;
       Length = 1;
       Size = 0;
