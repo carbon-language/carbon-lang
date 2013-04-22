@@ -69,6 +69,14 @@ End-user Options
 
    llvm-as < /dev/null | llc -march=xyz -mcpu=help
 
+.. option:: -filetype=<output file type>
+
+ Specify what kind of output ``llc`` should generated.  Options are: ``asm``
+ for textual assembly ( ``'.s'``), ``obj`` for native object files (``'.o'``)
+ and ``null`` for not emitting anything (for performance testing).
+
+ Note that not all targets support all options.
+
 .. option:: -mattr=a1,+a2,-a3,...
 
  Override or control specific attributes of the target, such as whether SIMD
