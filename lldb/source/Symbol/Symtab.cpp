@@ -1125,7 +1125,31 @@ Symtab::FindFunctionSymbols (const ConstString &name,
 
     if (name_type_mask & (eFunctionNameTypeBase | eFunctionNameTypeFull))
     {
-        FindAllSymbolsWithNameAndType (name, eSymbolTypeCode, symbol_indexes);
+        std::vector<uint32_t> temp_symbol_indexes;
+        FindAllSymbolsWithNameAndType (name, eSymbolTypeAny, temp_symbol_indexes);
+
+        unsigned temp_symbol_indexes_size = temp_symbol_indexes.size();
+        if (temp_symbol_indexes_size > 0)
+        {
+            Mutex::Locker locker (m_mutex);
+            for (unsigned i = 0; i < temp_symbol_indexes_size; i++)
+            {
+                SymbolContext sym_ctx;
+                sym_ctx.symbol = SymbolAtIndex (temp_symbol_indexes[i]);
+                if (sym_ctx.symbol)
+                {
+                    switch (sym_ctx.symbol->GetType())
+                    {
+                    case eSymbolTypeCode:
+                    case eSymbolTypeResolver:
+                        symbol_indexes.push_back(temp_symbol_indexes[i]);
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+        }
     }
     
     if (name_type_mask & eFunctionNameTypeBase)
