@@ -376,7 +376,7 @@ bool TypeBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc,
 
   // If this is an "immutable" type, we can assume the pointer is pointing
   // to constant memory.
-  if (TBAANode(M).TypeIsImmutable())
+  if (!EnableStructPathTBAA && TBAANode(M).TypeIsImmutable())
     return true;
 
   return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
@@ -392,7 +392,7 @@ TypeBasedAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
   // If this is an "immutable" type, we can assume the call doesn't write
   // to memory.
   if (const MDNode *M = CS.getInstruction()->getMetadata(LLVMContext::MD_tbaa))
-    if (TBAANode(M).TypeIsImmutable())
+    if (!EnableStructPathTBAA && TBAANode(M).TypeIsImmutable())
       Min = OnlyReadsMemory;
 
   return ModRefBehavior(AliasAnalysis::getModRefBehavior(CS) & Min);
@@ -433,4 +433,62 @@ TypeBasedAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
         return NoModRef;
 
   return AliasAnalysis::getModRefInfo(CS1, CS2);
+}
+
+MDNode *MDNode::getMostGenericTBAA(MDNode *A, MDNode *B) {
+  if (!A || !B)
+    return NULL;
+
+  if (A == B)
+    return A;
+
+  // For struct-path aware TBAA, we use the access type of the tag.
+  if (EnableStructPathTBAA) {
+    A = cast_or_null<MDNode>(A->getOperand(1));
+    if (!A) return 0;
+    B = cast_or_null<MDNode>(B->getOperand(1));
+    if (!B) return 0;
+  }
+
+  SmallVector<MDNode *, 4> PathA;
+  MDNode *T = A;
+  while (T) {
+    PathA.push_back(T);
+    if (EnableStructPathTBAA)
+      T = T->getNumOperands() >= 3 ? cast_or_null<MDNode>(T->getOperand(2)) : 0;
+    else
+      T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1)) : 0;
+  }
+
+  SmallVector<MDNode *, 4> PathB;
+  T = B;
+  while (T) {
+    PathB.push_back(T);
+    if (EnableStructPathTBAA)
+      T = T->getNumOperands() >= 3 ? cast_or_null<MDNode>(T->getOperand(2)) : 0;
+    else
+      T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1)) : 0;
+  }
+
+  int IA = PathA.size() - 1;
+  int IB = PathB.size() - 1;
+
+  MDNode *Ret = 0;
+  while (IA >= 0 && IB >=0) {
+    if (PathA[IA] == PathB[IB])
+      Ret = PathA[IA];
+    else
+      break;
+    --IA;
+    --IB;
+  }
+  if (!EnableStructPathTBAA)
+    return Ret;
+
+  if (!Ret)
+    return 0;
+  // We need to convert from a type node to a tag node.
+  Type *Int64 = IntegerType::get(A->getContext(), 64);
+  Value *Ops[3] = { Ret, Ret, ConstantInt::get(Int64, 0) };
+  return MDNode::get(A->getContext(), Ops);
 }

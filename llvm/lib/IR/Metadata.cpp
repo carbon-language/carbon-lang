@@ -403,42 +403,6 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
   }
 }
 
-MDNode *MDNode::getMostGenericTBAA(MDNode *A, MDNode *B) {
-  if (!A || !B)
-    return NULL;
-
-  if (A == B)
-    return A;
-
-  SmallVector<MDNode *, 4> PathA;
-  MDNode *T = A;
-  while (T) {
-    PathA.push_back(T);
-    T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1)) : 0;
-  }
-
-  SmallVector<MDNode *, 4> PathB;
-  T = B;
-  while (T) {
-    PathB.push_back(T);
-    T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1)) : 0;
-  }
-
-  int IA = PathA.size() - 1;
-  int IB = PathB.size() - 1;
-
-  MDNode *Ret = 0;
-  while (IA >= 0 && IB >=0) {
-    if (PathA[IA] == PathB[IB])
-      Ret = PathA[IA];
-    else
-      break;
-    --IA;
-    --IB;
-  }
-  return Ret;
-}
-
 MDNode *MDNode::getMostGenericFPMath(MDNode *A, MDNode *B) {
   if (!A || !B)
     return NULL;
