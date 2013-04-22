@@ -1,4 +1,4 @@
-//===---- MipsOs16.cpp for Mips Option -Os16                         --------===//
+//===---- MipsOs16.cpp for Mips Option -Os16                       --------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

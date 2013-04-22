@@ -131,7 +131,8 @@ SDValue MipsSETargetLowering::LowerOperation(SDValue Op,
   case ISD::MULHU:     return lowerMulDiv(Op, MipsISD::Multu, false, true, DAG);
   case ISD::MUL:       return lowerMulDiv(Op, MipsISD::Mult, true, false, DAG);
   case ISD::SDIVREM:   return lowerMulDiv(Op, MipsISD::DivRem, true, true, DAG);
-  case ISD::UDIVREM:   return lowerMulDiv(Op, MipsISD::DivRemU, true, true, DAG);
+  case ISD::UDIVREM:   return lowerMulDiv(Op, MipsISD::DivRemU, true, true,
+                                          DAG);
   case ISD::INTRINSIC_WO_CHAIN: return lowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::INTRINSIC_W_CHAIN:  return lowerINTRINSIC_W_CHAIN(Op, DAG);
   }
@@ -328,8 +329,8 @@ static SDValue performDSPShiftCombine(unsigned Opc, SDNode *N, EVT Ty,
   BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(N->getOperand(1));
 
   if (!BV ||
-      !BV->isConstantSplat(SplatValue, SplatUndef, SplatBitSize, HasAnyUndefs, EltSize,
-                           !Subtarget->isLittle()) ||
+      !BV->isConstantSplat(SplatValue, SplatUndef, SplatBitSize, HasAnyUndefs,
+                           EltSize,!Subtarget->isLittle()) ||
       (SplatBitSize != EltSize) ||
       !isUIntN(Log2_32(EltSize), SplatValue.getZExtValue()))
     return SDValue();
