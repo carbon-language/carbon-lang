@@ -326,8 +326,7 @@ void MachineModuleInfo::AnalyzeModule(const Module &M) {
   if (!GV || !GV->hasInitializer()) return;
 
   // Should be an array of 'i8*'.
-  const ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
-  if (InitList == 0) return;
+  const ConstantArray *InitList = cast<ConstantArray>(GV->getInitializer());
 
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
     if (const Function *F =

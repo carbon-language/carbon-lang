@@ -25,6 +25,7 @@ namespace llvm {
   class BlockAddress;
   class GCStrategy;
   class Constant;
+  class ConstantArray;
   class GCMetadataPrinter;
   class GlobalValue;
   class GlobalVariable;
@@ -480,7 +481,7 @@ namespace llvm {
     void EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
                             const MachineBasicBlock *MBB,
                             unsigned uid) const;
-    void EmitLLVMUsedList(const Constant *List);
+    void EmitLLVMUsedList(const ConstantArray *InitList);
     void EmitXXStructorList(const Constant *List, bool isCtor);
     GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
   };

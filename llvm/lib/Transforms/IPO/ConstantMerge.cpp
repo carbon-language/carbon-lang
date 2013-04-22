@@ -66,9 +66,8 @@ ModulePass *llvm::createConstantMergePass() { return new ConstantMerge(); }
 static void FindUsedValues(GlobalVariable *LLVMUsed,
                            SmallPtrSet<const GlobalValue*, 8> &UsedValues) {
   if (LLVMUsed == 0) return;
-  ConstantArray *Inits = dyn_cast<ConstantArray>(LLVMUsed->getInitializer());
-  if (Inits == 0) return;
-  
+  ConstantArray *Inits = cast<ConstantArray>(LLVMUsed->getInitializer());
+
   for (unsigned i = 0, e = Inits->getNumOperands(); i != e; ++i)
     if (GlobalValue *GV = 
         dyn_cast<GlobalValue>(Inits->getOperand(i)->stripPointerCasts()))
