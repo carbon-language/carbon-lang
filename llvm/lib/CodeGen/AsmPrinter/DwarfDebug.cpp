@@ -822,7 +822,8 @@ void DwarfDebug::beginModule() {
     // CU then construct a skeleton CU based upon it.
     if (useSplitDwarf()) {
     // This should be a unique identifier when we want to build .dwp files.
-      CU->addUInt(CU->getCUDie(), dwarf::DW_AT_GNU_dwo_id, dwarf::DW_FORM_data8, 0);
+      CU->addUInt(CU->getCUDie(), dwarf::DW_AT_GNU_dwo_id,
+                  dwarf::DW_FORM_data8, 0);
       // Now construct the skeleton CU associated.
       constructSkeletonCU(CUNode);
     }
@@ -2544,13 +2545,14 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
   // This should be a unique identifier when we want to build .dwp files.
   NewCU->addUInt(Die, dwarf::DW_AT_GNU_dwo_id, dwarf::DW_FORM_data8, 0);
 
-  // Relocate to the beginning of the addr_base section, else 0 for the beginning
-  // of the one for this compile unit.
+  // Relocate to the beginning of the addr_base section, else 0 for the
+  // beginning of the one for this compile unit.
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
     NewCU->addLabel(Die, dwarf::DW_AT_GNU_addr_base, dwarf::DW_FORM_sec_offset,
                     DwarfAddrSectionSym);
   else
-    NewCU->addUInt(Die, dwarf::DW_AT_GNU_addr_base, dwarf::DW_FORM_sec_offset, 0);
+    NewCU->addUInt(Die, dwarf::DW_AT_GNU_addr_base,
+                   dwarf::DW_FORM_sec_offset, 0);
 
   // 2.17.1 requires that we use DW_AT_low_pc for a single entry point
   // into an entity. We're using 0, or a NULL label for this.
