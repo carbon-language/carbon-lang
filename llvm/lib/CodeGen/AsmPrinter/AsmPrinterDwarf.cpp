@@ -141,7 +141,7 @@ void AsmPrinter::EmitTTypeReference(const GlobalValue *GV,
 void AsmPrinter::EmitSectionOffset(const MCSymbol *Label,
                                    const MCSymbol *SectionLabel) const {
   // On COFF targets, we have to emit the special .secrel32 directive.
-  if (MAI->getDwarfSectionOffsetDirective()) {
+  if (MAI->needsDwarfSectionOffsetDirective()) {
     OutStreamer.EmitCOFFSecRel32(Label);
     return;
   }

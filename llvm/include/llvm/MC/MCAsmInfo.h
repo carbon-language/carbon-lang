@@ -217,6 +217,8 @@ namespace llvm {
     /// convention.
     bool HasMicrosoftFastStdCallMangling;    // Defaults to false.
 
+    bool NeedsDwarfSectionOffsetDirective;
+
     //===--- Alignment Information ----------------------------------------===//
 
     /// AlignDirective - The directive used to emit round up to an alignment
@@ -320,9 +322,6 @@ namespace llvm {
     /// encode inline subroutine information.
     bool DwarfUsesInlineInfoSection;         // Defaults to false.
 
-    /// DwarfSectionOffsetDirective - Special section offset directive.
-    const char* DwarfSectionOffsetDirective; // Defaults to NULL
-
     /// DwarfUsesRelocationsAcrossSections - True if Dwarf2 output generally
     /// uses relocations for references to other .debug_* sections.
     bool DwarfUsesRelocationsAcrossSections;
@@ -410,6 +409,10 @@ namespace llvm {
 
     bool hasMicrosoftFastStdCallMangling() const {
       return HasMicrosoftFastStdCallMangling;
+    }
+
+    bool needsDwarfSectionOffsetDirective() const {
+      return NeedsDwarfSectionOffsetDirective;
     }
 
     // Accessors.
@@ -556,9 +559,6 @@ namespace llvm {
     }
     bool doesDwarfUseInlineInfoSection() const {
       return DwarfUsesInlineInfoSection;
-    }
-    const char *getDwarfSectionOffsetDirective() const {
-      return DwarfSectionOffsetDirective;
     }
     bool doesDwarfUseRelocationsAcrossSections() const {
       return DwarfUsesRelocationsAcrossSections;

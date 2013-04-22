@@ -87,10 +87,10 @@ MCAsmInfo::MCAsmInfo() {
   SupportsDebugInformation = false;
   ExceptionsType = ExceptionHandling::None;
   DwarfUsesInlineInfoSection = false;
-  DwarfSectionOffsetDirective = 0;
   DwarfUsesRelocationsAcrossSections = true;
   DwarfRegNumForCFI = false;
   HasMicrosoftFastStdCallMangling = false;
+  NeedsDwarfSectionOffsetDirective = false;
 }
 
 MCAsmInfo::~MCAsmInfo() {
