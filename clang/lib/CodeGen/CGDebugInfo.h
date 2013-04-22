@@ -262,6 +262,9 @@ public:
   /// EmitGlobalVariable - Emit global variable's debug info.
   void EmitGlobalVariable(const ValueDecl *VD, llvm::Constant *Init);
 
+  /// \brief - Emit C++ using directive.
+  void EmitUsingDirective(const UsingDirectiveDecl &UD);
+
   /// getOrCreateRecordType - Emit record type's standalone debug info. 
   llvm::DIType getOrCreateRecordType(QualType Ty, SourceLocation L);
 

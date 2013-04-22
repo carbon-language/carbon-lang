@@ -2929,6 +2929,13 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
                                 getStaticDataMemberDeclaration(VD));
 }
 
+void CGDebugInfo::EmitUsingDirective(const UsingDirectiveDecl &UD) {
+  DBuilder.createImportedModule(
+      getContextDescriptor(cast<Decl>(UD.getDeclContext())),
+      getOrCreateNameSpace(UD.getNominatedNamespace()),
+      getLineNumber(UD.getLocation()));
+}
+
 /// getOrCreateNamesSpace - Return namespace descriptor for the given
 /// namespace decl.
 llvm::DINameSpace 
