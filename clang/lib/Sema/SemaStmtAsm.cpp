@@ -445,14 +445,10 @@ public:
     : SemaRef(Ref), AsmLoc(Loc), AsmToks(Toks), TokOffsets(Offsets) { }
   ~MCAsmParserSemaCallbackImpl() {}
 
-  void *LookupInlineAsmIdentifier(StringRef Name, void *SrcLoc,
-                                  unsigned &Length, unsigned &Size,
-                                  unsigned &Type, bool &IsVarDecl){
-    SourceLocation Loc = SourceLocation::getFromPtrEncoding(SrcLoc);
-
-    NamedDecl *OpDecl = SemaRef.LookupInlineAsmIdentifier(Name, Loc, Length,
-                                                          Size, Type,
-                                                          IsVarDecl);
+  void *LookupInlineAsmIdentifier(StringRef &LineBuf,
+                                  InlineAsmIdentifierInfo &Info) {
+    SourceLocation Loc = SourceLocation::getFromPtrEncoding(LineBuf.data());
+    NamedDecl *OpDecl = SemaRef.LookupInlineAsmIdentifier(LineBuf, Loc, Info);
     return static_cast<void *>(OpDecl);
   }
 
@@ -520,19 +516,13 @@ static StringRef parseIdentifier(StringRef Identifier) {
   return StringRef(StartPtr, CurPtr - StartPtr);
 }
 
-NamedDecl *Sema::LookupInlineAsmIdentifier(StringRef Name, SourceLocation Loc,
-                                           unsigned &Length, unsigned &Size, 
-                                           unsigned &Type, bool &IsVarDecl) {
+NamedDecl *Sema::LookupInlineAsmIdentifier(StringRef &LineBuf, SourceLocation Loc,
+                                           InlineAsmIdentifierInfo &Info) {
+  Info.clear();
   // FIXME: Temporary hack until the frontend parser is hooked up to parse 
   // variables.
-  StringRef ParsedName = parseIdentifier(Name);
-  assert (ParsedName == Name && "Identifier not parsed correctly!");
-
-  Length = 1;
-  Size = 0;
-  Type = 0;
-  IsVarDecl = false;
-  LookupResult Result(*this, &Context.Idents.get(Name), Loc,
+  LineBuf = parseIdentifier(LineBuf);
+  LookupResult Result(*this, &Context.Idents.get(LineBuf), Loc,
                       Sema::LookupOrdinaryName);
 
   if (!LookupName(Result, getCurScope())) {
@@ -551,13 +541,13 @@ NamedDecl *Sema::LookupInlineAsmIdentifier(StringRef Name, SourceLocation Loc,
     return FoundDecl;
   if (VarDecl *Var = dyn_cast<VarDecl>(FoundDecl)) {
     QualType Ty = Var->getType();
-    Type = Size = Context.getTypeSizeInChars(Ty).getQuantity();
+    Info.Type = Info.Size = Context.getTypeSizeInChars(Ty).getQuantity();
     if (Ty->isArrayType()) {
       const ArrayType *ATy = Context.getAsArrayType(Ty);
-      Type = Context.getTypeSizeInChars(ATy->getElementType()).getQuantity();
-      Length = Size / Type;
+      Info.Type = Context.getTypeSizeInChars(ATy->getElementType()).getQuantity();
+      Info.Length = Info.Size / Info.Type;
     }
-    IsVarDecl = true;
+    Info.IsVarDecl = true;
     return FoundDecl;
   }
 
