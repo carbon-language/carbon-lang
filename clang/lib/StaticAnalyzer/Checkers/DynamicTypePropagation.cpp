@@ -27,7 +27,8 @@ namespace {
 class DynamicTypePropagation:
     public Checker< check::PreCall,
                     check::PostCall,
-                    check::PostStmt<ImplicitCastExpr> > {
+                    check::PostStmt<ImplicitCastExpr>,
+                    check::PostStmt<CXXNewExpr> > {
   const ObjCObjectType *getObjectTypeForAllocAndNew(const ObjCMessageExpr *MsgE,
                                                     CheckerContext &C) const;
 
@@ -38,6 +39,7 @@ public:
   void checkPreCall(const CallEvent &Call, CheckerContext &C) const;
   void checkPostCall(const CallEvent &Call, CheckerContext &C) const;
   void checkPostStmt(const ImplicitCastExpr *CastE, CheckerContext &C) const;
+  void checkPostStmt(const CXXNewExpr *NewE, CheckerContext &C) const;
 };
 }
 
@@ -188,6 +190,20 @@ void DynamicTypePropagation::checkPostStmt(const ImplicitCastExpr *CastE,
     break;
   }
   return;
+}
+
+void DynamicTypePropagation::checkPostStmt(const CXXNewExpr *NewE,
+                                           CheckerContext &C) const {
+  if (NewE->isArray())
+    return;
+
+  // We only track dynamic type info for regions.
+  const MemRegion *MR = C.getSVal(NewE).getAsRegion();
+  if (!MR)
+    return;
+  
+  C.addTransition(C.getState()->setDynamicTypeInfo(MR, NewE->getType(),
+                                                   /*CanBeSubclass=*/false));
 }
 
 const ObjCObjectType *

@@ -16,6 +16,11 @@ void testKnown() {
   clang_analyzer_eval(a.get() == 0); // expected-warning{{TRUE}}
 }
 
+void testNew() {
+  A *a = new A();
+  clang_analyzer_eval(a->get() == 0); // expected-warning{{TRUE}}
+}
+
 
 namespace ReinterpretDisruptsDynamicTypeInfo {
   class Parent {};
