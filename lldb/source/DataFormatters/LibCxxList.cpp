@@ -181,26 +181,44 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::CalculateNumChildren (
         return m_count;
     if (!m_head || !m_tail || m_node_address == 0)
         return 0;
-    uint64_t next_val = m_head->GetValueAsUnsigned(0);
-    uint64_t prev_val = m_tail->GetValueAsUnsigned(0);
-    if (next_val == 0 || prev_val == 0)
-        return 0;
-    if (next_val == m_node_address)
-        return 0;
-    if (next_val == prev_val)
-        return 1;
-    if (HasLoop())
-        return 0;
-    uint64_t size = 2;
-    ListEntry current(m_head);
-    while (current.next() && current.next()->GetValueAsUnsigned(0) != m_node_address)
+    ValueObjectSP size_alloc(m_backend.GetChildMemberWithName(ConstString("__size_alloc_"), true));
+    if (size_alloc)
     {
-        size++;
-        current.SetEntry(current.next());
-        if (size > m_list_capping_size)
-            break;
+        ValueObjectSP first(size_alloc->GetChildMemberWithName(ConstString("__first_"), true));
+        if (first)
+        {
+            m_count = first->GetValueAsUnsigned(UINT32_MAX);
+        }
     }
-    return m_count = (size-1);
+    if (m_count != UINT32_MAX)
+    {
+        if (!HasLoop())
+            return m_count;
+        return m_count = 0;
+    }
+    else
+    {
+        uint64_t next_val = m_head->GetValueAsUnsigned(0);
+        uint64_t prev_val = m_tail->GetValueAsUnsigned(0);
+        if (next_val == 0 || prev_val == 0)
+            return 0;
+        if (next_val == m_node_address)
+            return 0;
+        if (next_val == prev_val)
+            return 1;
+        if (HasLoop())
+            return 0;
+        uint64_t size = 2;
+        ListEntry current(m_head);
+        while (current.next() && current.next()->GetValueAsUnsigned(0) != m_node_address)
+        {
+            size++;
+            current.SetEntry(current.next());
+            if (size > m_list_capping_size)
+                break;
+        }
+        return m_count = (size-1);
+    }
 }
 
 lldb::ValueObjectSP
