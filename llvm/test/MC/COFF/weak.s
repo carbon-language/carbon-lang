@@ -29,6 +29,9 @@ LBB0_2:                                 # %return
 
     .weak   _test_weak
 
+    .weak   _test_weak_alias
+    _test_weak_alias=_main
+
 // CHECK: Symbols [
 
 // CHECK:      Symbol {
@@ -54,4 +57,19 @@ LBB0_2:                                 # %return
 // CHECK-NEXT:   ComplexType:         Null
 // CHECK-NEXT:   StorageClass:        External
 // CHECK-NEXT:   AuxSymbolCount:      0
+// CHECK-NEXT: }
+
+// CHECK:      Symbol {
+// CHECK:        Name:           _test_weak_alias
+// CHECK-NEXT:   Value:          0
+// CHECK-NEXT:   Section:        (0)
+// CHECK-NEXT:   BaseType:       Null
+// CHECK-NEXT:   ComplexType:    Null
+// CHECK-NEXT:   StorageClass:   WeakExternal
+// CHECK-NEXT:   AuxSymbolCount: 1
+// CHECK-NEXT:   AuxWeakExternal {
+// CHECK-NEXT:     Linked: _main
+// CHECK-NEXT:      Search: Library
+// CHECK-NEXT:      Unused: (00 00 00 00 00 00 00 00 00 00)
+// CHECK-NEXT:   }
 // CHECK-NEXT: }

@@ -147,8 +147,7 @@ public:
   object_t *createCOFFEntity(StringRef Name, list_t &List);
 
   void DefineSection(MCSectionData const &SectionData);
-  void DefineSymbol(MCSymbol const &Symbol,
-                    MCSymbolData const &SymbolData,
+  void DefineSymbol(MCSymbolData const &SymbolData,
                     MCAssembler &Assembler);
 
   void MakeSymbolReal(COFFSymbol &S, size_t Index);
@@ -410,25 +409,23 @@ void WinCOFFObjectWriter::DefineSection(MCSectionData const &SectionData) {
 
 /// This function takes a section data object from the assembler
 /// and creates the associated COFF symbol staging object.
-void WinCOFFObjectWriter::DefineSymbol(MCSymbol const &Symbol,
-                                       MCSymbolData const &SymbolData,
+void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
                                        MCAssembler &Assembler) {
+  MCSymbol const &Symbol = SymbolData.getSymbol();
   COFFSymbol *coff_symbol = GetOrCreateCOFFSymbol(&Symbol);
-
-  coff_symbol->Data.Type         = (SymbolData.getFlags() & 0x0000FFFF) >>  0;
-  coff_symbol->Data.StorageClass = (SymbolData.getFlags() & 0x00FF0000) >> 16;
+  SymbolMap[&Symbol] = coff_symbol;
 
   if (SymbolData.getFlags() & COFF::SF_WeakExternal) {
     coff_symbol->Data.StorageClass = COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL;
 
     if (Symbol.isVariable()) {
-      coff_symbol->Data.StorageClass = COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL;
+      const MCSymbolRefExpr *SymRef =
+        dyn_cast<MCSymbolRefExpr>(Symbol.getVariableValue());
 
-      // FIXME: This assert message isn't very good.
-      assert(Symbol.getVariableValue()->getKind() == MCExpr::SymbolRef &&
-              "Value must be a SymbolRef!");
+      if (!SymRef)
+        report_fatal_error("Weak externals may only alias symbols");
 
-      coff_symbol->Other = GetOrCreateCOFFSymbol(&Symbol);
+      coff_symbol->Other = GetOrCreateCOFFSymbol(&SymRef->getSymbol());
     } else {
       std::string WeakName = std::string(".weak.")
                            +  Symbol.getName().str()
@@ -448,23 +445,29 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbol const &Symbol,
     coff_symbol->Aux[0].Aux.WeakExternal.TagIndex = 0;
     coff_symbol->Aux[0].Aux.WeakExternal.Characteristics =
       COFF::IMAGE_WEAK_EXTERN_SEARCH_LIBRARY;
+
+    coff_symbol->MCData = &SymbolData;
+  } else {
+    const MCSymbolData &ResSymData =
+      Assembler.getSymbolData(Symbol.AliasedSymbol());
+
+    coff_symbol->Data.Type         = (ResSymData.getFlags() & 0x0000FFFF) >>  0;
+    coff_symbol->Data.StorageClass = (ResSymData.getFlags() & 0x00FF0000) >> 16;
+
+    // If no storage class was specified in the streamer, define it here.
+    if (coff_symbol->Data.StorageClass == 0) {
+      bool external = ResSymData.isExternal() || (ResSymData.Fragment == NULL);
+
+      coff_symbol->Data.StorageClass =
+       external ? COFF::IMAGE_SYM_CLASS_EXTERNAL : COFF::IMAGE_SYM_CLASS_STATIC;
+    }
+
+    if (ResSymData.Fragment != NULL)
+      coff_symbol->Section =
+        SectionMap[&ResSymData.Fragment->getParent()->getSection()];
+
+    coff_symbol->MCData = &ResSymData;
   }
-
-  // If no storage class was specified in the streamer, define it here.
-  if (coff_symbol->Data.StorageClass == 0) {
-    bool external = SymbolData.isExternal() || (SymbolData.Fragment == NULL);
-
-    coff_symbol->Data.StorageClass =
-      external ? COFF::IMAGE_SYM_CLASS_EXTERNAL : COFF::IMAGE_SYM_CLASS_STATIC;
-  }
-
-  if (SymbolData.Fragment != NULL)
-    coff_symbol->Section =
-      SectionMap[&SymbolData.Fragment->getParent()->getSection()];
-
-  // Bind internal COFF symbol to MC symbol.
-  coff_symbol->MCData = &SymbolData;
-  SymbolMap[&Symbol] = coff_symbol;
 }
 
 /// making a section real involves assigned it a number and putting
@@ -620,9 +623,7 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   for (MCAssembler::const_symbol_iterator i = Asm.symbol_begin(),
                                           e = Asm.symbol_end(); i != e; i++) {
     if (ExportSymbol(*i, Asm)) {
-      const MCSymbol &Alias = i->getSymbol();
-      const MCSymbol &Symbol = Alias.AliasedSymbol();
-      DefineSymbol(Alias, Asm.getSymbolData(Symbol), Asm);
+      DefineSymbol(*i, Asm);
     }
   }
 }
