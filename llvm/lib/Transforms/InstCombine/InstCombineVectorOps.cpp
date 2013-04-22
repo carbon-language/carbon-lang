@@ -279,9 +279,9 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
       // Canonicalize extractelement(cast) -> cast(extractelement)
       // bitcasts can change the number of vector elements and they cost nothing
       if (CI->hasOneUse() && (CI->getOpcode() != Instruction::BitCast)) {
-        Value *EE = InsertNewInstWith(
-       	  ExtractElementInst::Create(CI->getOperand(0), EI.getIndexOperand()),
-          *CI);
+        Value *EE = Builder->CreateExtractElement(CI->getOperand(0),
+                                                  EI.getIndexOperand());
+        Worklist.AddValue(EE);
         return CastInst::Create(CI->getOpcode(), EE, EI.getType());
       }
     }
