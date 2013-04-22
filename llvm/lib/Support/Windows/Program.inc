@@ -126,15 +126,46 @@ static bool ArgNeedsQuotes(const char *Str) {
   return Str[0] == '\0' || strpbrk(Str, "\t \"&\'()*<>\\`^|") != 0;
 }
 
+/// CountPrecedingBackslashes - Returns the number of backslashes preceding Cur
+/// in the C string Start.
+static unsigned int CountPrecedingBackslashes(const char *Start,
+                                              const char *Cur) {
+  unsigned int Count = 0;
+  --Cur;
+  while (Cur >= Start && *Cur == '\\') {
+    ++Count;
+    --Cur;
+  }
+  return Count;
+}
+
+/// EscapePrecedingEscapes - Append a backslash to Dst for every backslash
+/// preceding Cur in the Start string.  Assumes Dst has enough space.
+static char *EscapePrecedingEscapes(char *Dst, const char *Start,
+                                    const char *Cur) {
+  unsigned PrecedingEscapes = CountPrecedingBackslashes(Start, Cur);
+  while (PrecedingEscapes > 0) {
+    *Dst++ = '\\';
+    --PrecedingEscapes;
+  }
+  return Dst;
+}
 
 /// ArgLenWithQuotes - Check whether argument needs to be quoted when calling
 /// CreateProcess and returns length of quoted arg with escaped quotes
 static unsigned int ArgLenWithQuotes(const char *Str) {
+  const char *Start = Str;
   unsigned int len = ArgNeedsQuotes(Str) ? 2 : 0;
 
   while (*Str != '\0') {
-    if (*Str == '\"')
-      ++len;
+    if (*Str == '\"') {
+      // We need to add a backslash, but ensure that it isn't escaped.
+      unsigned PrecedingEscapes = CountPrecedingBackslashes(Start, Str);
+      len += PrecedingEscapes + 1;
+    }
+    // Note that we *don't* need to escape runs of backslashes that don't
+    // precede a double quote!  See MSDN:
+    // http://msdn.microsoft.com/en-us/library/17w5ykft%28v=vs.85%29.aspx
 
     ++len;
     ++Str;
@@ -180,20 +211,27 @@ Program::Execute(const Path& path,
 
   for (unsigned i = 0; args[i]; i++) {
     const char *arg = args[i];
+    const char *start = arg;
 
     bool needsQuoting = ArgNeedsQuotes(arg);
     if (needsQuoting)
       *p++ = '"';
 
     while (*arg != '\0') {
-      if (*arg == '\"')
+      if (*arg == '\"') {
+        // Escape all preceding escapes (if any), and then escape the quote.
+        p = EscapePrecedingEscapes(p, start, arg);
         *p++ = '\\';
+      }
 
       *p++ = *arg++;
     }
 
-    if (needsQuoting)
+    if (needsQuoting) {
+      // Make sure our quote doesn't get escaped by a trailing backslash.
+      p = EscapePrecedingEscapes(p, start, arg);
       *p++ = '"';
+    }
     *p++ = ' ';
   }
 

@@ -23,6 +23,7 @@ add_llvm_unittest(SupportTests
   MemoryTest.cpp
   Path.cpp
   ProcessTest.cpp
+  ProgramTest.cpp
   RegexTest.cpp
   SwapByteOrderTest.cpp
   TimeValue.cpp
