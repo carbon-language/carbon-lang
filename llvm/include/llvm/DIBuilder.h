@@ -576,7 +576,7 @@ namespace llvm {
     /// \brief Create a descriptor for an imported module.
     /// @param Context The scope this module is imported into
     /// @param NS The namespace being imported here
-    /// @param LineNumber Line number
+    /// @param Line Line number
     DIImportedModule createImportedModule(DIScope Context, DINameSpace NS,
                                           unsigned Line);
 
