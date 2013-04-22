@@ -1462,6 +1462,11 @@ public:
     int compare(size_type __pos1, size_type __n1, const_pointer __s, size_type __n2) const;
 
     _LIBCPP_INLINE_VISIBILITY bool __invariants() const;
+
+    _LIBCPP_INLINE_VISIBILITY
+    bool __is_long() const _NOEXCEPT
+        {return bool(__r_.first().__s.__size_ & __short_mask);}
+
 private:
     _LIBCPP_INLINE_VISIBILITY
     allocator_type& __alloc() _NOEXCEPT
@@ -1469,10 +1474,6 @@ private:
     _LIBCPP_INLINE_VISIBILITY
     const allocator_type& __alloc() const _NOEXCEPT
         {return __r_.second();}
-
-    _LIBCPP_INLINE_VISIBILITY
-    bool __is_long() const _NOEXCEPT
-        {return bool(__r_.first().__s.__size_ & __short_mask);}
 
     _LIBCPP_INLINE_VISIBILITY
     void __set_short_size(size_type __s) _NOEXCEPT
@@ -3561,9 +3562,29 @@ bool
 operator==(const basic_string<_CharT, _Traits, _Allocator>& __lhs,
            const basic_string<_CharT, _Traits, _Allocator>& __rhs) _NOEXCEPT
 {
-    return __lhs.size() == __rhs.size() && _Traits::compare(__lhs.data(),
-                                                            __rhs.data(),
-                                                            __lhs.size()) == 0;
+    size_t __lhs_sz = __lhs.size();
+    return __lhs_sz == __rhs.size() && _Traits::compare(__lhs.data(),
+                                                        __rhs.data(),
+                                                        __lhs_sz) == 0;
+}
+
+template<class _Allocator>
+_LIBCPP_INLINE_VISIBILITY inline
+bool
+operator==(const basic_string<char, char_traits<char>, _Allocator>& __lhs,
+           const basic_string<char, char_traits<char>, _Allocator>& __rhs) _NOEXCEPT
+{
+    size_t __lhs_sz = __lhs.size();
+    if (__lhs_sz != __rhs.size())
+        return false;
+    const char* __lp = __lhs.data();
+    const char* __rp = __rhs.data();
+    if (__lhs.__is_long())
+        return char_traits<char>::compare(__lp, __rp, __lhs_sz) == 0;
+    for (; __lhs_sz != 0; --__lhs_sz, ++__lp, ++__rp)
+        if (*__lp != *__rp)
+            return false;
+    return true;
 }
 
 template<class _CharT, class _Traits, class _Allocator>
