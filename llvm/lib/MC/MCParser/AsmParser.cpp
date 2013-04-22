@@ -2636,12 +2636,10 @@ bool AsmParser::ParseDirectiveLoc() {
             Flags |= DWARF2_FLAG_IS_STMT;
           else
             return Error(Loc, "is_stmt value not 0 or 1");
-        }
-        else {
+        } else {
           return Error(Loc, "is_stmt value not the constant value of 0 or 1");
         }
-      }
-      else if (Name == "isa") {
+      } else if (Name == "isa") {
         Loc = getTok().getLoc();
         const MCExpr *Value;
         if (parseExpression(Value))
@@ -2652,16 +2650,13 @@ bool AsmParser::ParseDirectiveLoc() {
           if (Value < 0)
             return Error(Loc, "isa number less than zero");
           Isa = Value;
-        }
-        else {
+        } else {
           return Error(Loc, "isa number not a constant value");
         }
-      }
-      else if (Name == "discriminator") {
+      } else if (Name == "discriminator") {
         if (parseAbsoluteExpression(Discriminator))
           return true;
-      }
-      else {
+      } else {
         return Error(Loc, "unknown sub-directive in '.loc' directive");
       }
 
@@ -3630,8 +3625,7 @@ bool AsmParser::ParseDirectiveElseIf(SMLoc DirectiveLoc) {
   if (LastIgnoreState || TheCondState.CondMet) {
     TheCondState.Ignore = true;
     eatToEndOfStatement();
-  }
-  else {
+  } else {
     int64_t ExprValue;
     if (parseAbsoluteExpression(ExprValue))
       return true;
