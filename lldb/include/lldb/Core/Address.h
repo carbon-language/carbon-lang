@@ -12,6 +12,7 @@
 
 // C Includes
 // C++ Includes
+#include <atomic>
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
@@ -115,7 +116,7 @@ public:
     //------------------------------------------------------------------
     Address (const Address& rhs) :
         m_section_wp (rhs.m_section_wp),
-        m_offset (rhs.m_offset)
+        m_offset(rhs.m_offset.load())
     {
     }
 
@@ -538,7 +539,7 @@ protected:
     // Member variables.
     //------------------------------------------------------------------
     lldb::SectionWP m_section_wp;   ///< The section for the address, can be NULL.
-    lldb::addr_t m_offset;      ///< Offset into section if \a m_section_wp is valid...
+    std::atomic<lldb::addr_t> m_offset;      ///< Offset into section if \a m_section_wp is valid...
 };
 
 
