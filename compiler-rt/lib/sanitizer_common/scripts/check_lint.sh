@@ -31,6 +31,7 @@ TSAN_TEST_LINT_FILTER=${TSAN_RTL_LINT_FILTER},-runtime/threadsafe_fn,-runtime/in
 TSAN_LIT_TEST_LINT_FILTER=${TSAN_TEST_LINT_FILTER},-whitespace/line_length
 MSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER}
 COMMON_RTL_INC_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int,-runtime/sizeof,-runtime/printf
+SANITIZER_INCLUDES_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
 
 cd ${LLVM_CHECKOUT}
 
@@ -44,7 +45,7 @@ COMPILER_RT=projects/compiler-rt
 
 # Headers
 SANITIZER_INCLUDES=${COMPILER_RT}/include/sanitizer
-${CPPLINT} --filter=${TSAN_RTL_LINT_FILTER} ${SANITIZER_INCLUDES}/*.h
+${CPPLINT} --filter=${SANITIZER_INCLUDES_LINT_FILTER} ${SANITIZER_INCLUDES}/*.h
 
 # Sanitizer_common
 COMMON_RTL=${COMPILER_RT}/lib/sanitizer_common

@@ -40,7 +40,6 @@
 // FIXME: do some kind of PRE_READ for all syscall arguments (int(s) and such).
 
 extern "C" {
-
 struct sanitizer_kernel_iovec {
   void *iov_base;
   unsigned long iov_len;
@@ -139,7 +138,6 @@ POST_SYSCALL(waitpid)(long res, int pid, int *status, int options) {
     POST_WRITE(status, sizeof(*status));
   }
 }
-
 }  // extern "C"
 
 #undef PRE_SYSCALL

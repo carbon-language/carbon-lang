@@ -29,15 +29,19 @@ void __sanitizer_syscall_pre_rt_sigpending(void *p, size_t s);
 void __sanitizer_syscall_pre_getdents(int fd, void *dirp, int count);
 void __sanitizer_syscall_pre_getdents64(int fd, void *dirp, int count);
 void __sanitizer_syscall_pre_recvmsg(int sockfd, void *msg, int flags);
-void __sanitizer_syscall_pre_wait4(int pid, int* status, int options, void* r);
+void __sanitizer_syscall_pre_wait4(int pid, int *status, int options, void *r);
 void __sanitizer_syscall_pre_waitpid(int pid, int *status, int options);
 
 void __sanitizer_syscall_post_rt_sigpending(long res, void *p, size_t s);
 void __sanitizer_syscall_post_getdents(long res, int fd, void *dirp, int count);
-void __sanitizer_syscall_post_getdents64(long res, int fd, void *dirp, int count);
-void __sanitizer_syscall_post_recvmsg(long res, int sockfd, void *msg, int flags);
-void __sanitizer_syscall_post_wait4(long res, int pid, int* status, int options, void* r);
-void __sanitizer_syscall_post_waitpid(long res, int pid, int *status, int options);
+void __sanitizer_syscall_post_getdents64(long res, int fd, void *dirp,
+                                         int count);
+void __sanitizer_syscall_post_recvmsg(long res, int sockfd, void *msg,
+                                      int flags);
+void __sanitizer_syscall_post_wait4(long res, int pid, int *status, int options,
+                                    void *r);
+void __sanitizer_syscall_post_waitpid(long res, int pid, int *status,
+                                      int options);
 
 // And now a few syscalls we don't handle yet.
 
