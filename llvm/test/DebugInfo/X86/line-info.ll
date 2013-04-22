@@ -37,7 +37,7 @@ attributes #1 = { nounwind readnone }
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/blaikie/dev/scratch/list0.c] [DW_LANG_C99]
+!0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2,  metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/blaikie/dev/scratch/list0.c] [DW_LANG_C99]
 !1 = metadata !{metadata !"list0.c", metadata !"/usr/local/google/home/blaikie/dev/scratch"}
 !2 = metadata !{i32 0}
 !3 = metadata !{metadata !4, metadata !10}

@@ -62,7 +62,7 @@ declare i32 @__objc_personality_v0(...)
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!35, !36, !37, !38}
 
-!0 = metadata !{i32 786449, metadata !63, i32 16, metadata !"clang version 3.1 (trunk 151227)", i1 false, metadata !"", i32 2, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, metadata !63, i32 16, metadata !"clang version 3.1 (trunk 151227)", i1 false, metadata !"", i32 2, metadata !1, metadata !1, metadata !3, metadata !1,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5, metadata !28, metadata !31, metadata !34}
 !5 = metadata !{i32 786478, metadata !6, metadata !6, metadata !"foo", metadata !"foo", metadata !"", i32 5, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, null, null, null, metadata !26, i32 5} ; [ DW_TAG_subprogram ]

@@ -14,7 +14,7 @@ entry:
 !llvm.dbg.cu = !{!0}
 !llvm.gcov = !{!9}
 
-!0 = metadata !{i32 786449, i32 4, metadata !1, metadata !"clang version 3.3 (trunk 177323)", i1 false, metadata !"", i32 0, metadata !3, metadata !3, metadata !4, metadata !3, metadata !""} ; [ DW_TAG_compile_unit ] [/home/nlewycky/hello.cc] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, i32 4, metadata !1, metadata !"clang version 3.3 (trunk 177323)", i1 false, metadata !"", i32 0, metadata !3, metadata !3, metadata !4, metadata !3,  metadata !3, metadata !""} ; [ DW_TAG_compile_unit ] [/home/nlewycky/hello.cc] [DW_LANG_C_plus_plus]
 !1 = metadata !{i32 786473, metadata !2}          ; [ DW_TAG_file_type ] [/home/nlewycky/hello.cc]
 !2 = metadata !{metadata !"hello.cc", metadata !"/home/nlewycky"}
 !3 = metadata !{i32 0}

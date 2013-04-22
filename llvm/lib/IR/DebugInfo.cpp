@@ -64,7 +64,8 @@ bool DIDescriptor::Verify() const {
           DISubrange(DbgNode).Verify() || DIEnumerator(DbgNode).Verify() ||
           DIObjCProperty(DbgNode).Verify() ||
           DITemplateTypeParameter(DbgNode).Verify() ||
-          DITemplateValueParameter(DbgNode).Verify());
+          DITemplateValueParameter(DbgNode).Verify() ||
+          DIImportedModule(DbgNode).Verify());
 }
 
 static Value *getField(const MDNode *DbgNode, unsigned Elt) {
@@ -336,6 +337,12 @@ bool DIDescriptor::isEnumerator() const {
 bool DIDescriptor::isObjCProperty() const {
   return DbgNode && getTag() == dwarf::DW_TAG_APPLE_property;
 }
+
+/// \brief Return true if the specified tag is DW_TAG_imported_module.
+bool DIDescriptor::isImportedModule() const {
+  return DbgNode && getTag() == dwarf::DW_TAG_imported_module;
+}
+
 //===----------------------------------------------------------------------===//
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//
@@ -418,7 +425,7 @@ bool DICompileUnit::Verify() const {
   if (N.empty())
     return false;
   // It is possible that directory and produce string is empty.
-  return DbgNode->getNumOperands() == 12;
+  return DbgNode->getNumOperands() == 13;
 }
 
 /// Verify - Verify that an ObjC property is well formed.
@@ -580,6 +587,11 @@ bool DITemplateValueParameter::Verify() const {
   return isTemplateValueParameter() && DbgNode->getNumOperands() == 8;
 }
 
+/// \brief Verify that the imported module descriptor is well formed.
+bool DIImportedModule::Verify() const {
+  return isImportedModule() && DbgNode->getNumOperands() == 4;
+}
+
 /// getOriginalTypeSize - If this type is derived from a base type then
 /// return base type size.
 uint64_t DIDerivedType::getOriginalTypeSize() const {
@@ -694,7 +706,7 @@ StringRef DIScope::getDirectory() const {
 }
 
 DIArray DICompileUnit::getEnumTypes() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 12)
+  if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(7)))
@@ -703,7 +715,7 @@ DIArray DICompileUnit::getEnumTypes() const {
 }
 
 DIArray DICompileUnit::getRetainedTypes() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 12)
+  if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(8)))
@@ -712,7 +724,7 @@ DIArray DICompileUnit::getRetainedTypes() const {
 }
 
 DIArray DICompileUnit::getSubprograms() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 12)
+  if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(9)))
@@ -722,10 +734,19 @@ DIArray DICompileUnit::getSubprograms() const {
 
 
 DIArray DICompileUnit::getGlobalVariables() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 12)
+  if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(10)))
+    return DIArray(N);
+  return DIArray();
+}
+
+DIArray DICompileUnit::getImportedModules() const {
+  if (!DbgNode || DbgNode->getNumOperands() < 13)
+    return DIArray();
+
+  if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(11)))
     return DIArray(N);
   return DIArray();
 }

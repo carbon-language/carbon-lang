@@ -61,6 +61,9 @@ void DIBuilder::finalize() {
 
   DIArray GVs = getOrCreateArray(AllGVs);
   DIType(TempGVs).replaceAllUsesWith(GVs);
+
+  DIArray IMs = getOrCreateArray(AllImportedModules);
+  DIType(TempImportedModules).replaceAllUsesWith(IMs);
 }
 
 /// getNonCompileUnitScope - If N is compile unit return NULL otherwise return
@@ -101,6 +104,8 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
 
   TempGVs = MDNode::getTemporary(VMContext, TElts);
 
+  TempImportedModules = MDNode::getTemporary(VMContext, TElts);
+
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_compile_unit),
     createFilePathPair(VMContext, Filename, Directory),
@@ -113,6 +118,7 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
     TempRetainTypes,
     TempSubprograms,
     TempGVs,
+    TempImportedModules,
     MDString::get(VMContext, SplitName)
   };
   TheCU = DICompileUnit(MDNode::get(VMContext, Elts));
@@ -120,6 +126,21 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
   // Create a named metadata so that it is easier to find cu in a module.
   NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.cu");
   NMD->addOperand(TheCU);
+}
+
+DIImportedModule DIBuilder::createImportedModule(DIScope Context,
+                                                 DINameSpace NS,
+                                                 unsigned Line) {
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_imported_module),
+    Context,
+    NS,
+    ConstantInt::get(Type::getInt32Ty(VMContext), Line),
+  };
+  DIImportedModule M(MDNode::get(VMContext, Elts));
+  assert(M.Verify() && "Imported module should be valid");
+  AllImportedModules.push_back(M);
+  return M;
 }
 
 /// createFile - Create a file descriptor to hold debugging information
