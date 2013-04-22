@@ -37,7 +37,7 @@ using namespace llvm;
 
 MachineBasicBlock::MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb)
   : BB(bb), Number(-1), xParent(&mf), Alignment(0), IsLandingPad(false),
-    AddressTaken(false) {
+    AddressTaken(false), CachedMCSymbol(NULL) {
   Insts.Parent = this;
 }
 
@@ -48,12 +48,16 @@ MachineBasicBlock::~MachineBasicBlock() {
 /// getSymbol - Return the MCSymbol for this basic block.
 ///
 MCSymbol *MachineBasicBlock::getSymbol() const {
-  const MachineFunction *MF = getParent();
-  MCContext &Ctx = MF->getContext();
-  const char *Prefix = Ctx.getAsmInfo().getPrivateGlobalPrefix();
-  return Ctx.GetOrCreateSymbol(Twine(Prefix) + "BB" +
-                               Twine(MF->getFunctionNumber()) + "_" +
-                               Twine(getNumber()));
+  if (!CachedMCSymbol) {
+    const MachineFunction *MF = getParent();
+    MCContext &Ctx = MF->getContext();
+    const char *Prefix = Ctx.getAsmInfo().getPrivateGlobalPrefix();
+    CachedMCSymbol = Ctx.GetOrCreateSymbol(Twine(Prefix) + "BB" +
+                                           Twine(MF->getFunctionNumber()) +
+                                           "_" + Twine(getNumber()));
+  }
+
+  return CachedMCSymbol;
 }
 
 
