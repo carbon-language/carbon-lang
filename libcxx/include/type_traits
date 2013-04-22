@@ -129,6 +129,7 @@ namespace std
     template <class T> struct alignment_of;
     template <size_t Len, size_t Align = most_stringent_alignment_requirement>
         struct aligned_storage;
+    template <size_t Len, class... Types> struct aligned_union;
 
     template <class T> struct decay;
     template <class... T> struct common_type;
@@ -828,10 +829,8 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS has_virtual_destructor
 
 // alignment_of
 
-template <class _Tp> struct __alignment_of {_Tp __lx;};
-
 template <class _Tp> struct _LIBCPP_TYPE_VIS alignment_of
-    : public integral_constant<size_t, __alignof__(__alignment_of<typename remove_all_extents<_Tp>::type>)> {};
+    : public integral_constant<size_t, __alignof__(_Tp)> {};
 
 // aligned_storage
 
@@ -959,6 +958,38 @@ _CREATE_ALIGNED_STORAGE_SPECIALIZATION(0x4000);
 #endif // !_MSC_VER
 
 #undef _CREATE_ALIGNED_STORAGE_SPECIALIZATION
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
+// aligned_union
+
+template <size_t _I0, size_t ..._In>
+struct __static_max;
+
+template <size_t _I0>
+struct __static_max<_I0>
+{
+    static const size_t value = _I0;
+};
+
+template <size_t _I0, size_t _I1, size_t ..._In>
+struct __static_max<_I0, _I1, _In...>
+{
+    static const size_t value = _I0 >= _I1 ? __static_max<_I0, _In...>::value :
+                                             __static_max<_I1, _In...>::value;
+};
+
+template <size_t _Len, class _Type0, class ..._Types>
+struct aligned_union
+{
+    static const size_t alignment_value = __static_max<__alignof__(_Type0),
+                                                       __alignof__(_Types)...>::value;
+    static const size_t __len = __static_max<_Len, sizeof(_Type0),
+                                             sizeof(_Types)...>::value;
+    typedef typename aligned_storage<__len, alignment_value>::type type;
+};
+
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 // __promote
 

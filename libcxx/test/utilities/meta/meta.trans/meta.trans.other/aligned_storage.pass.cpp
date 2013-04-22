@@ -92,17 +92,17 @@ int main()
     }
     {
     typedef std::aligned_storage<8>::type T1;
-    static_assert(std::alignment_of<T1>::value == (sizeof(long) == 4 ? 4 : 8), "");
+    static_assert(std::alignment_of<T1>::value == 8, "");
     static_assert(sizeof(T1) == 8, "");
     }
     {
     typedef std::aligned_storage<9>::type T1;
-    static_assert(std::alignment_of<T1>::value == (sizeof(long) == 4 ? 4 : 8), "");
-    static_assert(sizeof(T1) == (sizeof(long) == 4 ? 12 : 16), "");
+    static_assert(std::alignment_of<T1>::value == 8, "");
+    static_assert(sizeof(T1) == 16, "");
     }
     {
     typedef std::aligned_storage<15>::type T1;
-    static_assert(std::alignment_of<T1>::value == (sizeof(long) == 4 ? 4 : 8), "");
+    static_assert(std::alignment_of<T1>::value == 8, "");
     static_assert(sizeof(T1) == 16, "");
     }
     {
@@ -117,7 +117,7 @@ int main()
     }
     {
     typedef std::aligned_storage<10>::type T1;
-    static_assert(std::alignment_of<T1>::value == (sizeof(long) == 4 ? 4 : 8), "");
-    static_assert(sizeof(T1) == (sizeof(long) == 4 ? 12 : 16), "");
+    static_assert(std::alignment_of<T1>::value == 8, "");
+    static_assert(sizeof(T1) == 16, "");
     }
 }
