@@ -320,5 +320,6 @@ _main:
     setnge al
 // CHECK: setg %al
     setnle al
-
+// CHECK: jne _foo
+    jnz _foo
     ret
