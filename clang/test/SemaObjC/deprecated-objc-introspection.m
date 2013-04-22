@@ -1,4 +1,10 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple=x86_64-apple-darwin -fsyntax-only -verify %s
+
+//====------------------------------------------------------------====//
+// Test deprecated direct usage of the 'isa' pointer.
+//====------------------------------------------------------------====//
+
+typedef unsigned long NSUInteger;
 
 typedef struct objc_object {
   struct objc_class *isa;
