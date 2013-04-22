@@ -817,6 +817,9 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                         func_methods.Insert (ConstString(name), die.GetOffset());
                     else
                         func_basenames.Insert (ConstString(name), die.GetOffset());
+
+                    if (!is_method && !mangled_cstr && !objc_method.IsValid(true))
+                        func_fullnames.Insert (ConstString(name), die.GetOffset());
                 }
                 if (mangled_cstr)
                 {
@@ -854,6 +857,8 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                             func_fullnames.Insert (mangled.GetDemangledName(), die.GetOffset());
                     }
                 }
+                else
+                    func_fullnames.Insert (ConstString(name), die.GetOffset());
             }
             break;
         
