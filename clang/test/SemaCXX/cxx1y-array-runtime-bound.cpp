@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++1y %s -verify -pedantic-errors
+// RUN: %clang_cc1 -std=c++1y %s -verify -triple=x86_64-linux-gnu -pedantic-errors
 
 // FIXME: many diagnostics here say 'variably modified type'.
 //        catch this case and say 'array of runtime bound' instead.
