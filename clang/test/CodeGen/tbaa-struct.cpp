@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o - -O1 %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm -o - -O1 %s | FileCheck %s
 //
 // Check that we generate !tbaa.struct metadata for struct copies.
 struct A {
