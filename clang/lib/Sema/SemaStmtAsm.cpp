@@ -449,6 +449,7 @@ public:
                                   InlineAsmIdentifierInfo &Info) {
     SourceLocation Loc = SourceLocation::getFromPtrEncoding(LineBuf.data());
     NamedDecl *OpDecl = SemaRef.LookupInlineAsmIdentifier(LineBuf, Loc, Info);
+    Info.OpDecl = static_cast<void *>(OpDecl);
     return static_cast<void *>(OpDecl);
   }
 
