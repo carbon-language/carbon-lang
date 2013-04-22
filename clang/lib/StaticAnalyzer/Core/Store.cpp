@@ -289,62 +289,82 @@ SVal StoreManager::evalDerivedToBase(SVal Derived, QualType BaseType,
   return loc::MemRegionVal(BaseReg);
 }
 
-SVal StoreManager::evalDynamicCast(SVal Base, QualType DerivedType,
+/// Returns the static type of the given region, if it represents a C++ class
+/// object.
+///
+/// This handles both fully-typed regions, where the dynamic type is known, and
+/// symbolic regions, where the dynamic type is merely bounded (and even then,
+/// only ostensibly!), but does not take advantage of any dynamic type info.
+static const CXXRecordDecl *getCXXRecordType(const MemRegion *MR) {
+  if (const TypedValueRegion *TVR = dyn_cast<TypedValueRegion>(MR))
+    return TVR->getValueType()->getAsCXXRecordDecl();
+  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(MR))
+    return SR->getSymbol()->getType()->getPointeeCXXRecordDecl();
+  return 0;
+}
+
+SVal StoreManager::evalDynamicCast(SVal Base, QualType TargetType,
                                    bool &Failed) {
   Failed = false;
 
-  Optional<loc::MemRegionVal> BaseRegVal = Base.getAs<loc::MemRegionVal>();
-  if (!BaseRegVal)
+  const MemRegion *MR = Base.getAsRegion();
+  if (!MR)
     return UnknownVal();
-  const MemRegion *BaseRegion = BaseRegVal->stripCasts(/*StripBases=*/false);
 
   // Assume the derived class is a pointer or a reference to a CXX record.
-  DerivedType = DerivedType->getPointeeType();
-  assert(!DerivedType.isNull());
-  const CXXRecordDecl *DerivedDecl = DerivedType->getAsCXXRecordDecl();
-  if (!DerivedDecl && !DerivedType->isVoidType())
+  TargetType = TargetType->getPointeeType();
+  assert(!TargetType.isNull());
+  const CXXRecordDecl *TargetClass = TargetType->getAsCXXRecordDecl();
+  if (!TargetClass && !TargetType->isVoidType())
     return UnknownVal();
 
   // Drill down the CXXBaseObject chains, which represent upcasts (casts from
   // derived to base).
-  const MemRegion *SR = BaseRegion;
-  while (const TypedRegion *TSR = dyn_cast_or_null<TypedRegion>(SR)) {
-    QualType BaseType = TSR->getLocationType()->getPointeeType();
-    assert(!BaseType.isNull());
-    const CXXRecordDecl *SRDecl = BaseType->getAsCXXRecordDecl();
-    if (!SRDecl)
-      return UnknownVal();
-
+  while (const CXXRecordDecl *MRClass = getCXXRecordType(MR)) {
     // If found the derived class, the cast succeeds.
-    if (SRDecl == DerivedDecl)
-      return loc::MemRegionVal(TSR);
+    if (MRClass == TargetClass)
+      return loc::MemRegionVal(MR);
 
-    if (!DerivedType->isVoidType()) {
+    if (!TargetType->isVoidType()) {
       // Static upcasts are marked as DerivedToBase casts by Sema, so this will
       // only happen when multiple or virtual inheritance is involved.
       CXXBasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/true,
                          /*DetectVirtual=*/false);
-      if (SRDecl->isDerivedFrom(DerivedDecl, Paths))
-        return evalDerivedToBase(loc::MemRegionVal(TSR), Paths.front());
+      if (MRClass->isDerivedFrom(TargetClass, Paths))
+        return evalDerivedToBase(loc::MemRegionVal(MR), Paths.front());
     }
 
-    if (const CXXBaseObjectRegion *R = dyn_cast<CXXBaseObjectRegion>(TSR))
+    if (const CXXBaseObjectRegion *BaseR = dyn_cast<CXXBaseObjectRegion>(MR)) {
       // Drill down the chain to get the derived classes.
-      SR = R->getSuperRegion();
-    else {
-      // We reached the bottom of the hierarchy.
-
-      // If this is a cast to void*, return the region.
-      if (DerivedType->isVoidType())
-        return loc::MemRegionVal(TSR);
-
-      // We did not find the derived class. We we must be casting the base to
-      // derived, so the cast should fail.
-      Failed = true;
-      return UnknownVal();
+      MR = BaseR->getSuperRegion();
+      continue;
     }
+
+    // If this is a cast to void*, return the region.
+    if (TargetType->isVoidType())
+      return loc::MemRegionVal(MR);
+
+    // Strange use of reinterpret_cast can give us paths we don't reason
+    // about well, by putting in ElementRegions where we'd expect
+    // CXXBaseObjectRegions. If it's a valid reinterpret_cast (i.e. if the
+    // derived class has a zero offset from the base class), then it's safe
+    // to strip the cast; if it's invalid, -Wreinterpret-base-class should
+    // catch it. In the interest of performance, the analyzer will silently
+    // do the wrong thing in the invalid case (because offsets for subregions
+    // will be wrong).
+    const MemRegion *Uncasted = MR->StripCasts(/*IncludeBaseCasts=*/false);
+    if (Uncasted == MR) {
+      // We reached the bottom of the hierarchy and did not find the derived
+      // class. We we must be casting the base to derived, so the cast should
+      // fail.
+      break;
+    }
+
+    MR = Uncasted;
   }
-  
+
+  // We failed if the region we ended up with has perfect type info.
+  Failed = isa<TypedValueRegion>(MR);
   return UnknownVal();
 }
 

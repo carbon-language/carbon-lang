@@ -2,6 +2,7 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -DCONSTRUCTORS=1 -analyzer-config c++-inlining=constructors -verify %s
 
 void clang_analyzer_eval(bool);
+void clang_analyzer_checkInlined(bool);
 
 class A {
 protected:
@@ -360,6 +361,92 @@ namespace Redeclaration {
     d.value = 42; // don't crash
     clang_analyzer_eval(d.get() == 42); // expected-warning{{TRUE}}
     clang_analyzer_eval(b.get() == 42); // expected-warning{{TRUE}}
+  }
+};
+
+namespace PR15394 {
+  namespace Original {
+    class Base {
+    public:
+      virtual int f() = 0;
+      int i;
+    };
+
+    class Derived1 : public Base {
+    public:
+      int j;
+    };
+
+    class Derived2 : public Derived1 {
+    public:
+      virtual int f() {
+        clang_analyzer_checkInlined(true); // expected-warning{{TRUE}}
+        return i + j;
+      }
+    };
+
+    void testXXX() {
+      Derived1 *d1p = reinterpret_cast<Derived1*>(new Derived2);
+      d1p->i = 1;
+      d1p->j = 2;
+      clang_analyzer_eval(d1p->f() == 3); // expected-warning{{TRUE}}
+    }
+  }
+
+  namespace VirtualInDerived {
+    class Base {
+    public:
+      int i;
+    };
+
+    class Derived1 : public Base {
+    public:
+      virtual int f() = 0;
+      int j;
+    };
+
+    class Derived2 : public Derived1 {
+    public:
+      virtual int f() {
+        clang_analyzer_checkInlined(true); // expected-warning{{TRUE}}
+        return i + j;
+      }
+    };
+
+    void test() {
+      Derived1 *d1p = reinterpret_cast<Derived1*>(new Derived2);
+      d1p->i = 1;
+      d1p->j = 2;
+      clang_analyzer_eval(d1p->f() == 3); // expected-warning{{TRUE}}
+    }
+  }
+
+  namespace NoCast {
+    class Base {
+    public:
+      int i;
+    };
+
+    class Derived1 : public Base {
+    public:
+      virtual int f() = 0;
+      int j;
+    };
+
+    class Derived2 : public Derived1 {
+    public:
+      virtual int f() {
+        clang_analyzer_checkInlined(true); // expected-warning{{TRUE}}
+        return i + j;
+      }
+    };
+
+    void test() {
+      Derived1 *d1p = new Derived2;
+      d1p->i = 1;
+      d1p->j = 2;
+      clang_analyzer_eval(d1p->f() == 3); // expected-warning{{TRUE}}
+    }
   }
 };
 
