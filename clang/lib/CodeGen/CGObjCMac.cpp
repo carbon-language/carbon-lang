@@ -2393,7 +2393,7 @@ llvm::Constant *CGObjCCommonMac::getBitmapBlockLayout(bool ComputeByrefLayout) {
         printf("\n Inline instruction for BYREF variable layout: ");
       else
         printf("\n Inline instruction for block variable layout: ");
-      printf("0x0%llx\n", (unsigned long long)Result);
+      printf("0x0%" PRIx64 "\n", Result);
     }
     if (WordSizeInBytes == 8) {
       const llvm::APInt Instruction(64, Result);
