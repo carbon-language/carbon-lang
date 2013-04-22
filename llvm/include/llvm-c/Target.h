@@ -235,29 +235,6 @@ void LLVMDisposeTargetData(LLVMTargetDataRef);
 
 #ifdef __cplusplus
 }
-
-namespace llvm {
-  class DataLayout;
-  class TargetLibraryInfo;
-
-  inline DataLayout *unwrap(LLVMTargetDataRef P) {
-    return reinterpret_cast<DataLayout*>(P);
-  }
-  
-  inline LLVMTargetDataRef wrap(const DataLayout *P) {
-    return reinterpret_cast<LLVMTargetDataRef>(const_cast<DataLayout*>(P));
-  }
-
-  inline TargetLibraryInfo *unwrap(LLVMTargetLibraryInfoRef P) {
-    return reinterpret_cast<TargetLibraryInfo*>(P);
-  }
-
-  inline LLVMTargetLibraryInfoRef wrap(const TargetLibraryInfo *P) {
-    TargetLibraryInfo *X = const_cast<TargetLibraryInfo*>(P);
-    return reinterpret_cast<LLVMTargetLibraryInfoRef>(X);
-  }
-}
-
 #endif /* defined(__cplusplus) */
 
 #endif

@@ -19,6 +19,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/PassManager.h"
+#include "llvm/Wrap.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Target/TargetLibraryInfo.h"
@@ -328,6 +329,14 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
 
   // Now that we have optimized the program, discard unreachable functions.
   PM.add(createGlobalDCEPass());
+}
+
+inline PassManagerBuilder *unwrap(LLVMPassManagerBuilderRef P) {
+    return reinterpret_cast<PassManagerBuilder*>(P);
+}
+
+inline LLVMPassManagerBuilderRef wrap(PassManagerBuilder *P) {
+  return reinterpret_cast<LLVMPassManagerBuilderRef>(P);
 }
 
 LLVMPassManagerBuilderRef LLVMPassManagerBuilderCreate() {

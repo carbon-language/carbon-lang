@@ -137,27 +137,7 @@ void *LLVMGetPointerToGlobal(LLVMExecutionEngineRef EE, LLVMValueRef Global);
  */
 
 #ifdef __cplusplus
-}
-
-namespace llvm {
-  struct GenericValue;
-  class ExecutionEngine;
-  
-  #define DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ty, ref)   \
-    inline ty *unwrap(ref P) {                          \
-      return reinterpret_cast<ty*>(P);                  \
-    }                                                   \
-                                                        \
-    inline ref wrap(const ty *P) {                      \
-      return reinterpret_cast<ref>(const_cast<ty*>(P)); \
-    }
-  
-  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(GenericValue,    LLVMGenericValueRef   )
-  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ExecutionEngine, LLVMExecutionEngineRef)
-  
-  #undef DEFINE_SIMPLE_CONVERSION_FUNCTIONS
-}
-  
+}  
 #endif /* defined(__cplusplus) */
 
 #endif

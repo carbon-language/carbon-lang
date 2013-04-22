@@ -18,10 +18,28 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/PassManager.h"
+#include "llvm/Wrap.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include <cstring>
 
 using namespace llvm;
+
+inline DataLayout *unwrap(LLVMTargetDataRef P) {
+  return reinterpret_cast<DataLayout*>(P);
+}
+
+inline LLVMTargetDataRef wrap(const DataLayout *P) {
+  return reinterpret_cast<LLVMTargetDataRef>(const_cast<DataLayout*>(P));
+}
+
+inline TargetLibraryInfo *unwrap(LLVMTargetLibraryInfoRef P) {
+  return reinterpret_cast<TargetLibraryInfo*>(P);
+}
+
+inline LLVMTargetLibraryInfoRef wrap(const TargetLibraryInfo *P) {
+  TargetLibraryInfo *X = const_cast<TargetLibraryInfo*>(P);
+  return reinterpret_cast<LLVMTargetLibraryInfoRef>(X);
+}
 
 void llvm::initializeTarget(PassRegistry &Registry) {
   initializeDataLayoutPass(Registry);

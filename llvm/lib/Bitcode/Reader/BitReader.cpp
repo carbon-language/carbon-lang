@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-c/BitReader.h"
+#include "llvm/Wrap.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/MemoryBuffer.h"

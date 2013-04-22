@@ -32,6 +32,7 @@ class MCContext;
 class PassManagerBase;
 class Target;
 class DataLayout;
+class TargetLibraryInfo;
 class TargetFrameLowering;
 class TargetInstrInfo;
 class TargetIntrinsicInfo;

@@ -53,6 +53,7 @@
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Wrap.h"
 #include <algorithm>
 #include <climits>
 using namespace llvm;

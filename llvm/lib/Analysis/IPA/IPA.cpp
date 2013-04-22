@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/InitializePasses.h"
+#include "llvm/Wrap.h"
 #include "llvm-c/Initialization.h"
 
 using namespace llvm;

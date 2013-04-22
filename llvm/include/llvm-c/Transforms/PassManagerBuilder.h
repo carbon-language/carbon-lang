@@ -86,16 +86,6 @@ void LLVMPassManagerBuilderPopulateLTOPassManager(LLVMPassManagerBuilderRef PMB,
 
 #ifdef __cplusplus
 }
-
-namespace llvm {
-  inline PassManagerBuilder *unwrap(LLVMPassManagerBuilderRef P) {
-    return reinterpret_cast<PassManagerBuilder*>(P);
-  }
-
-  inline LLVMPassManagerBuilderRef wrap(PassManagerBuilder *P) {
-    return reinterpret_cast<LLVMPassManagerBuilderRef>(P);
-  }
-}
 #endif
 
 #endif

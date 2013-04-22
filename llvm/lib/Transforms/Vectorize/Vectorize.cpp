@@ -20,6 +20,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/PassManager.h"
+#include "llvm/Wrap.h"
 
 using namespace llvm;
 
