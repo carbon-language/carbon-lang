@@ -24,7 +24,7 @@ ProgramTestStringArg1("program-test-string-arg1");
 static cl::opt<std::string>
 ProgramTestStringArg2("program-test-string-arg2");
 
-static void CopyEnvironment(std::vector<const char *> out) {
+static void CopyEnvironment(std::vector<const char *> &out) {
   // environ appears to be pretty portable.
   char **envp = environ;
   while (*envp != 0) {
