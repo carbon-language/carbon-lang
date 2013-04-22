@@ -203,3 +203,59 @@ entry:
   %.fca.0.insert = insertvalue { i32 } undef, i32 %1, 0
   ret { i32 } %.fca.0.insert
 }
+
+; Check that shift node is expanded if splat element size is not 16-bit.
+;
+; R1: test_vector_splat_imm_v2q15:
+; R1-NOT: shll.ph
+
+define { i32 } @test_vector_splat_imm_v2q15(i32 %a.coerce) {
+entry:
+  %0 = bitcast i32 %a.coerce to <2 x i16>
+  %shl = shl <2 x i16> %0, <i16 0, i16 2>
+  %1 = bitcast <2 x i16> %shl to i32
+  %.fca.0.insert = insertvalue { i32 } undef, i32 %1, 0
+  ret { i32 } %.fca.0.insert
+}
+
+; Check that shift node is expanded if splat element size is not 8-bit.
+;
+; R1: test_vector_splat_imm_v4i8:
+; R1-NOT: shll.qb
+
+define { i32 } @test_vector_splat_imm_v4i8(i32 %a.coerce) {
+entry:
+  %0 = bitcast i32 %a.coerce to <4 x i8>
+  %shl = shl <4 x i8> %0, <i8 0, i8 2, i8 0, i8 2>
+  %1 = bitcast <4 x i8> %shl to i32
+  %.fca.0.insert = insertvalue { i32 } undef, i32 %1, 0
+  ret { i32 } %.fca.0.insert
+}
+
+; Check that shift node is expanded if shift amount doesn't fit in 4-bit sa field.
+;
+; R1: test_shift_amount_v2q15:
+; R1-NOT: shll.ph
+
+define { i32 } @test_shift_amount_v2q15(i32 %a.coerce) {
+entry:
+  %0 = bitcast i32 %a.coerce to <2 x i16>
+  %shl = shl <2 x i16> %0, <i16 16, i16 16>
+  %1 = bitcast <2 x i16> %shl to i32
+  %.fca.0.insert = insertvalue { i32 } undef, i32 %1, 0
+  ret { i32 } %.fca.0.insert
+}
+
+; Check that shift node is expanded if shift amount doesn't fit in 3-bit sa field.
+;
+; R1: test_shift_amount_v4i8:
+; R1-NOT: shll.qb
+
+define { i32 } @test_shift_amount_v4i8(i32 %a.coerce) {
+entry:
+  %0 = bitcast i32 %a.coerce to <4 x i8>
+  %shl = shl <4 x i8> %0, <i8 8, i8 8, i8 8, i8 8>
+  %1 = bitcast <4 x i8> %shl to i32
+  %.fca.0.insert = insertvalue { i32 } undef, i32 %1, 0
+  ret { i32 } %.fca.0.insert
+}

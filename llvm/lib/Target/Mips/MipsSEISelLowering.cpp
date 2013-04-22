@@ -327,9 +327,11 @@ static SDValue performDSPShiftCombine(unsigned Opc, SDNode *N, EVT Ty,
   unsigned EltSize = Ty.getVectorElementType().getSizeInBits();
   BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(N->getOperand(1));
 
-  if (!BV || !BV->isConstantSplat(SplatValue, SplatUndef, SplatBitSize,
-                                  HasAnyUndefs, EltSize,
-                                  !Subtarget->isLittle()))
+  if (!BV ||
+      !BV->isConstantSplat(SplatValue, SplatUndef, SplatBitSize, HasAnyUndefs, EltSize,
+                           !Subtarget->isLittle()) ||
+      (SplatBitSize != EltSize) ||
+      !isUIntN(Log2_32(EltSize), SplatValue.getZExtValue()))
     return SDValue();
 
   return DAG.getNode(Opc, N->getDebugLoc(), Ty, N->getOperand(0),

@@ -1288,18 +1288,18 @@ def : DSPBinPat<ADDWC, i32, adde>;
 
 // Shift immediate patterns.
 class DSPShiftPat<Instruction Inst, ValueType ValTy, SDPatternOperator Node,
-                  ImmLeaf Imm, Predicate Pred = HasDSP> :
+                  SDPatternOperator Imm, Predicate Pred = HasDSP> :
   DSPPat<(Node ValTy:$a, Imm:$shamt), (Inst ValTy:$a, Imm:$shamt), Pred>;
 
-def : DSPShiftPat<SHLL_PH, v2i16, MipsSHLL_DSP, immZExt4>;
-def : DSPShiftPat<SHRA_PH, v2i16, MipsSHRA_DSP, immZExt4>;
-def : DSPShiftPat<SHRL_PH, v2i16, MipsSHRL_DSP, immZExt4, HasDSPR2>;
+def : DSPShiftPat<SHLL_PH, v2i16, MipsSHLL_DSP, imm>;
+def : DSPShiftPat<SHRA_PH, v2i16, MipsSHRA_DSP, imm>;
+def : DSPShiftPat<SHRL_PH, v2i16, MipsSHRL_DSP, imm, HasDSPR2>;
 def : DSPShiftPat<SHLL_PH, v2i16, int_mips_shll_ph, immZExt4>;
 def : DSPShiftPat<SHRA_PH, v2i16, int_mips_shra_ph, immZExt4>;
 def : DSPShiftPat<SHRL_PH, v2i16, int_mips_shrl_ph, immZExt4, HasDSPR2>;
-def : DSPShiftPat<SHLL_QB, v4i8, MipsSHLL_DSP, immZExt3>;
-def : DSPShiftPat<SHRA_QB, v4i8, MipsSHRA_DSP, immZExt3, HasDSPR2>;
-def : DSPShiftPat<SHRL_QB, v4i8, MipsSHRL_DSP, immZExt3>;
+def : DSPShiftPat<SHLL_QB, v4i8, MipsSHLL_DSP, imm>;
+def : DSPShiftPat<SHRA_QB, v4i8, MipsSHRA_DSP, imm, HasDSPR2>;
+def : DSPShiftPat<SHRL_QB, v4i8, MipsSHRL_DSP, imm>;
 def : DSPShiftPat<SHLL_QB, v4i8, int_mips_shll_qb, immZExt3>;
 def : DSPShiftPat<SHRA_QB, v4i8, int_mips_shra_qb, immZExt3, HasDSPR2>;
 def : DSPShiftPat<SHRL_QB, v4i8, int_mips_shrl_qb, immZExt3>;
