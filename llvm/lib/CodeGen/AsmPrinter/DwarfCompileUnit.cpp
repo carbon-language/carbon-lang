@@ -685,7 +685,7 @@ bool CompileUnit::addConstantValue(DIE *Die, const APInt &Val,
   return true;
 }
 
-/// addTemplateParams - Add template parameters in buffer.
+/// addTemplateParams - Add template parameters into buffer.
 void CompileUnit::addTemplateParams(DIE &Buffer, DIArray TParams) {
   // Add template parameters.
   for (unsigned i = 0, e = TParams.getNumElements(); i != e; ++i) {
@@ -707,7 +707,7 @@ DIE *CompileUnit::getOrCreateContextDIE(DIDescriptor Context) {
     return getOrCreateNameSpace(DINameSpace(Context));
   else if (Context.isSubprogram())
     return getOrCreateSubprogramDIE(DISubprogram(Context));
-  else 
+  else
     return getDIE(Context);
 }
 
