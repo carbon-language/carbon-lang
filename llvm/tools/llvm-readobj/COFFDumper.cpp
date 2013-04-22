@@ -785,7 +785,12 @@ void COFFDumper::printSymbol(symbol_iterator SymI) {
       if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
         break;
 
-    } else if (Symbol->StorageClass == COFF::IMAGE_SYM_CLASS_STATIC) {
+      DictScope AS(W, "AuxFileRecord");
+      W.printString("FileName", StringRef(Aux->FileName));
+
+    } else if (Symbol->StorageClass == COFF::IMAGE_SYM_CLASS_STATIC ||
+               (Symbol->StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
+                Symbol->SectionNumber != COFF::IMAGE_SYM_UNDEFINED)) {
       const coff_aux_section_definition *Aux;
       if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
         break;
