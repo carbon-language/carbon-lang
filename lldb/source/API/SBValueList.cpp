@@ -19,72 +19,69 @@
 using namespace lldb;
 using namespace lldb_private;
 
-namespace {
-    class ValueListImpl
+class ValueListImpl
+{
+public:
+    ValueListImpl () :
+    m_values()
     {
-    public:
-        ValueListImpl () :
-        m_values()
-        {
-        }
-        
-        ValueListImpl (const ValueListImpl& rhs) :
-        m_values(rhs.m_values)
-        {
-        }
-        
-        ValueListImpl&
-        operator = (const ValueListImpl& rhs)
-        {
-            if (this == &rhs)
-                return *this;
-            m_values = rhs.m_values;
+    }
+    
+    ValueListImpl (const ValueListImpl& rhs) :
+    m_values(rhs.m_values)
+    {
+    }
+    
+    ValueListImpl&
+    operator = (const ValueListImpl& rhs)
+    {
+        if (this == &rhs)
             return *this;
-        };
-        
-        uint32_t
-        GetSize ()
-        {
-            return m_values.size();
-        }
-        
-        void
-        Append (const lldb::SBValue& sb_value)
-        {
-            m_values.push_back(sb_value);
-        }
-        
-        void
-        Append (const ValueListImpl& list)
-        {
-            for (auto val : list.m_values)
-                Append (val);
-        }
-        
-        lldb::SBValue
-        GetValueAtIndex (uint32_t index)
-        {
-            if (index >= GetSize())
-                return lldb::SBValue();
-            return m_values[index];
-        }
-        
-        lldb::SBValue
-        FindValueByUID (lldb::user_id_t uid)
-        {
-            for (auto val : m_values)
-            {
-                if (val.IsValid() && val.GetID() == uid)
-                    return val;
-            }
-            return lldb::SBValue();
-        }
-
-    private:
-        std::vector<lldb::SBValue> m_values;
+        m_values = rhs.m_values;
+        return *this;
     };
-}
+    
+    uint32_t
+    GetSize ()
+    {
+        return m_values.size();
+    }
+    
+    void
+    Append (const lldb::SBValue& sb_value)
+    {
+        m_values.push_back(sb_value);
+    }
+    
+    void
+    Append (const ValueListImpl& list)
+    {
+        for (auto val : list.m_values)
+            Append (val);
+    }
+    
+    lldb::SBValue
+    GetValueAtIndex (uint32_t index)
+    {
+        if (index >= GetSize())
+            return lldb::SBValue();
+        return m_values[index];
+    }
+    
+    lldb::SBValue
+    FindValueByUID (lldb::user_id_t uid)
+    {
+        for (auto val : m_values)
+        {
+            if (val.IsValid() && val.GetID() == uid)
+                return val;
+        }
+        return lldb::SBValue();
+    }
 
+private:
+    std::vector<lldb::SBValue> m_values;
+};
 
 SBValueList::SBValueList () :
     m_opaque_ap ()

@@ -14,9 +14,7 @@
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBType.h"
 
-namespace {
-    class ValueImpl;
-}
+class ValueImpl;
 
 namespace lldb {
 

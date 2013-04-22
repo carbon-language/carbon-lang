@@ -52,103 +52,101 @@
 using namespace lldb;
 using namespace lldb_private;
 
-namespace {
-    class ValueImpl
+class ValueImpl
+{
+public:
+    ValueImpl ()
     {
-    public:
-        ValueImpl ()
+    }
+    
+    ValueImpl (lldb::ValueObjectSP opaque_sp,
+               lldb::DynamicValueType use_dynamic,
+               bool use_synthetic) :
+        m_opaque_sp(opaque_sp),
+        m_use_dynamic(use_dynamic),
+        m_use_synthetic(use_synthetic)
+    {
+    }
+    
+    ValueImpl (const ValueImpl& rhs) :
+        m_opaque_sp(rhs.m_opaque_sp),
+        m_use_dynamic(rhs.m_use_dynamic),
+        m_use_synthetic(rhs.m_use_synthetic)
+    {
+    }
+    
+    ValueImpl &
+    operator = (const ValueImpl &rhs)
+    {
+        if (this != &rhs)
         {
+            m_opaque_sp = rhs.m_opaque_sp;
+            m_use_dynamic = rhs.m_use_dynamic;
+            m_use_synthetic = rhs.m_use_synthetic;
         }
-        
-        ValueImpl (lldb::ValueObjectSP opaque_sp,
-                   lldb::DynamicValueType use_dynamic,
-                   bool use_synthetic) :
-            m_opaque_sp(opaque_sp),
-            m_use_dynamic(use_dynamic),
-            m_use_synthetic(use_synthetic)
-        {
-        }
-        
-        ValueImpl (const ValueImpl& rhs) :
-            m_opaque_sp(rhs.m_opaque_sp),
-            m_use_dynamic(rhs.m_use_dynamic),
-            m_use_synthetic(rhs.m_use_synthetic)
-        {
-        }
-        
-        ValueImpl &
-        operator = (const ValueImpl &rhs)
-        {
-            if (this != &rhs)
-            {
-                m_opaque_sp = rhs.m_opaque_sp;
-                m_use_dynamic = rhs.m_use_dynamic;
-                m_use_synthetic = rhs.m_use_synthetic;
-            }
-            return *this;
-        }
-        
-        bool
-        IsValid ()
-        {
-            return m_opaque_sp.get() != NULL;
-        }
-        
-        lldb::ValueObjectSP
-        GetRootSP ()
-        {
+        return *this;
+    }
+    
+    bool
+    IsValid ()
+    {
+        return m_opaque_sp.get() != NULL;
+    }
+    
+    lldb::ValueObjectSP
+    GetRootSP ()
+    {
+        return m_opaque_sp;
+    }
+    
+    lldb::ValueObjectSP
+    GetSP ()
+    {
+        if (!m_opaque_sp)
             return m_opaque_sp;
-        }
+        lldb::ValueObjectSP value_sp = m_opaque_sp;
         
-        lldb::ValueObjectSP
-        GetSP ()
-        {
-            if (!m_opaque_sp)
-                return m_opaque_sp;
-            lldb::ValueObjectSP value_sp = m_opaque_sp;
-            
-            Mutex::Locker api_lock;
-            Target *target = value_sp->GetTargetSP().get();
-            if (target)
-                api_lock.Lock(target->GetAPIMutex());
-            
-            if (value_sp->GetDynamicValue(m_use_dynamic))
-                value_sp = value_sp->GetDynamicValue(m_use_dynamic);
-            if (value_sp->GetSyntheticValue(m_use_synthetic))
-                value_sp = value_sp->GetSyntheticValue(m_use_synthetic);
-            return value_sp;
-        }
+        Mutex::Locker api_lock;
+        Target *target = value_sp->GetTargetSP().get();
+        if (target)
+            api_lock.Lock(target->GetAPIMutex());
         
-        void
-        SetUseDynamic (lldb::DynamicValueType use_dynamic)
-        {
-            m_use_dynamic = use_dynamic;
-        }
-        
-        void
-        SetUseSynthetic (bool use_synthetic)
-        {
-            m_use_synthetic = use_synthetic;
-        }
-        
-        lldb::DynamicValueType
-        GetUseDynamic ()
-        {
-            return m_use_dynamic;
-        }
-        
-        bool
-        GetUseSynthetic ()
-        {
-            return m_use_synthetic;
-        }
-        
-    private:
-        lldb::ValueObjectSP m_opaque_sp;
-        lldb::DynamicValueType m_use_dynamic;
-        bool m_use_synthetic;
-    };
-}
+        if (value_sp->GetDynamicValue(m_use_dynamic))
+            value_sp = value_sp->GetDynamicValue(m_use_dynamic);
+        if (value_sp->GetSyntheticValue(m_use_synthetic))
+            value_sp = value_sp->GetSyntheticValue(m_use_synthetic);
+        return value_sp;
+    }
+    
+    void
+    SetUseDynamic (lldb::DynamicValueType use_dynamic)
+    {
+        m_use_dynamic = use_dynamic;
+    }
+    
+    void
+    SetUseSynthetic (bool use_synthetic)
+    {
+        m_use_synthetic = use_synthetic;
+    }
+    
+    lldb::DynamicValueType
+    GetUseDynamic ()
+    {
+        return m_use_dynamic;
+    }
+    
+    bool
+    GetUseSynthetic ()
+    {
+        return m_use_synthetic;
+    }
+    
+private:
+    lldb::ValueObjectSP m_opaque_sp;
+    lldb::DynamicValueType m_use_dynamic;
+    bool m_use_synthetic;
+};
 
 SBValue::SBValue () :
     m_opaque_sp ()
