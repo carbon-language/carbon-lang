@@ -10,6 +10,9 @@
 // CHECK: @i = thread_local(initialexec) global
 // CHECK: @j = thread_local(localexec) global
 
+// CHECK-NOT: @_ZTW
+// CHECK-NOT: @_ZTH
+
 __thread int a;
 extern __thread int b;
 int c() { return *&b; }
