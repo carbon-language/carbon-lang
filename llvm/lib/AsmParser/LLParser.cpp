@@ -4263,7 +4263,9 @@ int LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
 
   if (ParseTypeAndValue(Ptr, Loc, PFS)) return true;
 
-  if (!Ptr->getType()->getScalarType()->isPointerTy())
+  Type *BaseType = Ptr->getType();
+  PointerType *BasePointerType = dyn_cast<PointerType>(BaseType->getScalarType());
+  if (!BasePointerType)
     return Error(Loc, "base of getelementptr must be a pointer");
 
   SmallVector<Value*, 16> Indices;
@@ -4288,7 +4290,10 @@ int LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
     Indices.push_back(Val);
   }
 
-  if (!GetElementPtrInst::getIndexedType(Ptr->getType(), Indices))
+  if (!Indices.empty() && !BasePointerType->getElementType()->isSized())
+    return Error(Loc, "base element of getelementptr must be sized");
+
+  if (!GetElementPtrInst::getIndexedType(BaseType, Indices))
     return Error(Loc, "invalid getelementptr indices");
   Inst = GetElementPtrInst::Create(Ptr, Indices);
   if (InBounds)
