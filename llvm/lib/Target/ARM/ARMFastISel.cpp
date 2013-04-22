@@ -2605,7 +2605,7 @@ unsigned ARMFastISel::ARMEmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
 
   unsigned Opc;
   bool isBoolZext = false;
-  const TargetRegisterClass *RC = 0;
+  const TargetRegisterClass *RC;
   switch (SrcVT.SimpleTy) {
   default: return 0;
   case MVT::i16:
