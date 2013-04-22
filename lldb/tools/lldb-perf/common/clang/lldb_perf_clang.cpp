@@ -46,15 +46,15 @@ public:
         m_expr_first_evaluate([this] (SBFrame frame) -> void
                           {
                               frame.EvaluateExpression("Diags.DiagArgumentsStr[0].size()").GetError();
-                          }, "time-expr", "Elapsed time it takes evaluate an expression for the first time."),
+                          }, "time-expr", "Elapsed time it takes to evaluate an expression for the first time."),
         m_expr_frame_zero ([this] (SBFrame frame) -> void
                        {
                            frame.EvaluateExpression("Diags.DiagArgumentsStr[0].size()").GetError();
-                       }, "time-expr-frame-zero", "Elapsed time it takes evaluate an expression 3 times at frame zero."),
+                       }, "time-expr-frame-zero", "Elapsed time it takes to evaluate an expression 3 times at frame zero."),
         m_expr_frame_non_zero ([this] (SBFrame frame) -> void
                            {
                                frame.EvaluateExpression("Diags.DiagArgumentsStr[0].size()").GetError();
-                           }, "time-expr-frame-non-zero", "Elapsed time it takes evaluate an expression 3 times at a non-zero frame."),
+                           }, "time-expr-frame-non-zero", "Elapsed time it takes to evaluate an expression 3 times at a non-zero frame."),
         m_exe_path(),
         m_out_path(),
         m_launch_info (NULL),
