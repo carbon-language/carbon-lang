@@ -33,6 +33,7 @@
 #include "lldb/Target/ThreadList.h"
 #include "lldb/Target/Thread.h"
 #include "Plugins/Process/Utility/DynamicRegisterInfo.h"
+#include "Plugins/Process/Utility/RegisterContextDummy.h"
 #include "Plugins/Process/Utility/RegisterContextMemory.h"
 #include "Plugins/Process/Utility/ThreadMemory.h"
 
@@ -332,6 +333,13 @@ OperatingSystemPython::CreateRegisterContextForThread (Thread *thread, addr_t re
                 }
             }
         }
+    }
+    // if we still have no register data, fallback on a dummy context to avoid crashing
+    if (!reg_ctx_sp)
+    {
+        if (log)
+            log->Printf ("OperatingSystemPython::CreateRegisterContextForThread (tid = 0x%" PRIx64 ") forcing a dummy register context", thread->GetID());
+        reg_ctx_sp.reset(new RegisterContextDummy(*thread,0,target.GetArchitecture().GetAddressByteSize()));
     }
     return reg_ctx_sp;
 }

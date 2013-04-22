@@ -522,6 +522,8 @@
 		941BCC8014E48C4000BB969C /* SBTypeFormat.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568714E355F2003A195C /* SBTypeFormat.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		941BCC8114E48C4000BB969C /* SBTypeSummary.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568814E355F2003A195C /* SBTypeSummary.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		941BCC8214E48C4000BB969C /* SBTypeSynthetic.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568914E355F2003A195C /* SBTypeSynthetic.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		944372DC171F6B4300E57C32 /* RegisterContextDummy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 944372DA171F6B4300E57C32 /* RegisterContextDummy.cpp */; };
+		944372DD171F6B4300E57C32 /* RegisterContextDummy.h in Headers */ = {isa = PBXBuildFile; fileRef = 944372DB171F6B4300E57C32 /* RegisterContextDummy.h */; };
 		9443B122140C18C40013457C /* SBData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9443B121140C18C10013457C /* SBData.cpp */; };
 		9443B123140C26AB0013457C /* SBData.h in Headers */ = {isa = PBXBuildFile; fileRef = 9443B120140C18A90013457C /* SBData.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9452573A16262D0200325455 /* SBDeclaration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9452573916262D0200325455 /* SBDeclaration.cpp */; };
@@ -1557,6 +1559,8 @@
 		940DB8E116EA674000D3C2F1 /* Xcode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Xcode.cpp; sourceTree = "<group>"; };
 		940DB8E216EA674000D3C2F1 /* Xcode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Xcode.h; sourceTree = "<group>"; };
 		940DB8E616EA709400D3C2F1 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		944372DA171F6B4300E57C32 /* RegisterContextDummy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextDummy.cpp; path = Utility/RegisterContextDummy.cpp; sourceTree = "<group>"; };
+		944372DB171F6B4300E57C32 /* RegisterContextDummy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextDummy.h; path = Utility/RegisterContextDummy.h; sourceTree = "<group>"; };
 		9443B120140C18A90013457C /* SBData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBData.h; path = include/lldb/API/SBData.h; sourceTree = "<group>"; };
 		9443B121140C18C10013457C /* SBData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBData.cpp; path = source/API/SBData.cpp; sourceTree = "<group>"; };
 		9452573616262CD000325455 /* SBDeclaration.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBDeclaration.i; sourceTree = "<group>"; };
@@ -2511,6 +2515,8 @@
 				26957D9513D381C900670048 /* RegisterContextDarwin_i386.h */,
 				26957D9613D381C900670048 /* RegisterContextDarwin_x86_64.cpp */,
 				26957D9713D381C900670048 /* RegisterContextDarwin_x86_64.h */,
+				944372DA171F6B4300E57C32 /* RegisterContextDummy.cpp */,
+				944372DB171F6B4300E57C32 /* RegisterContextDummy.h */,
 				AF68D2541255416E002FF25B /* RegisterContextLLDB.cpp */,
 				AF68D2551255416E002FF25B /* RegisterContextLLDB.h */,
 				262D24E413FB8710002D1960 /* RegisterContextMemory.cpp */,
@@ -3599,6 +3605,7 @@
 				260D9B2715EC369500960137 /* ModuleSpec.h in Headers */,
 				947A1D651616476B0017C8D1 /* CommandObjectPlugin.h in Headers */,
 				262ED0051631FA2800879631 /* OptionGroupString.h in Headers */,
+				944372DD171F6B4300E57C32 /* RegisterContextDummy.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4146,6 +4153,7 @@
 				268900CB13353E5F00698AC0 /* LogChannelDWARF.cpp in Sources */,
 				268900CC13353E5F00698AC0 /* SymbolFileDWARFDebugMap.cpp in Sources */,
 				268900CD13353E5F00698AC0 /* UniqueDWARFASTType.cpp in Sources */,
+				944372DC171F6B4300E57C32 /* RegisterContextDummy.cpp in Sources */,
 				268900CE13353E5F00698AC0 /* SymbolFileSymtab.cpp in Sources */,
 				268900CF13353E5F00698AC0 /* SymbolVendorMacOSX.cpp in Sources */,
 				268900D013353E6F00698AC0 /* Block.cpp in Sources */,
