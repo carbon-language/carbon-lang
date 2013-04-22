@@ -799,7 +799,7 @@ void COFFDumper::printSymbol(symbol_iterator SymI) {
       W.printEnum("Selection", Aux->Selection, makeArrayRef(ImageCOMDATSelect));
       W.printBinary("Unused", makeArrayRef(Aux->Unused));
 
-      if (Section->Characteristics & COFF::IMAGE_SCN_LNK_COMDAT
+      if (Section && Section->Characteristics & COFF::IMAGE_SCN_LNK_COMDAT
           && Aux->Selection == COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
         const coff_section *Assoc;
         StringRef AssocName;
