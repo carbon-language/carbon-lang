@@ -84,6 +84,9 @@ public:
   virtual error_code getLibraryNext(DataRefImpl LibData, LibraryRef &Res) const;
   virtual error_code getLibraryPath(DataRefImpl LibData, StringRef &Res) const;
 
+  // TODO: Would be useful to have an iterator based version
+  // of the load command interface too.
+
   virtual symbol_iterator begin_symbols() const;
   virtual symbol_iterator end_symbols() const;
 
