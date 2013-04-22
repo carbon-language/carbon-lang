@@ -4119,8 +4119,7 @@ AsmParser::parseMSInlineAsm(void *AsmLoc, std::string &AsmString,
       if (SymName.empty())
         continue;
 
-      MCAsmParserSemaCallback::InlineAsmIdentifierInfo Info;
-      void *OpDecl = SI.LookupInlineAsmIdentifier(SymName, Info);
+      void *OpDecl = Operand->getOpDecl();
       if (!OpDecl)
         continue;
 
