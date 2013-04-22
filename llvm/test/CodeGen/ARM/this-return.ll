@@ -5,6 +5,7 @@
 %struct.B = type { i32 }
 %struct.C = type { %struct.B }
 %struct.D = type { %struct.B }
+%struct.E = type { %struct.B, %struct.B }
 
 declare %struct.A* @A_ctor_base(%struct.A* returned)
 declare %struct.B* @B_ctor_base(%struct.B* returned, i32)
@@ -88,4 +89,17 @@ entry:
   %call = tail call %struct.B* @B_ctor_complete(%struct.B* %b, i32 %x)
   %call2 = tail call %struct.B* @B_ctor_complete(%struct.B* %b, i32 %x)
   ret %struct.D* %this
+}
+
+define %struct.E* @E_ctor_base(%struct.E* %this, i32 %x) {
+entry:
+; CHECKELF: E_ctor_base:
+; CHECKELF-NOT: b B_ctor_complete
+; CHECKT2D: E_ctor_base:
+; CHECKT2D-NOT: b.w _B_ctor_complete
+  %b = getelementptr inbounds %struct.E* %this, i32 0, i32 0
+  %call = tail call %struct.B* @B_ctor_complete(%struct.B* %b, i32 %x)
+  %b2 = getelementptr inbounds %struct.E* %this, i32 0, i32 1
+  %call2 = tail call %struct.B* @B_ctor_complete(%struct.B* %b2, i32 %x)
+  ret %struct.E* %this
 }
