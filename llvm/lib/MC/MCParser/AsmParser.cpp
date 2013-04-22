@@ -1984,7 +1984,6 @@ static bool IsUsedIn(const MCSymbol *Sym, const MCExpr *Value) {
   case MCExpr::Binary: {
     const MCBinaryExpr *BE = static_cast<const MCBinaryExpr*>(Value);
     return IsUsedIn(Sym, BE->getLHS()) || IsUsedIn(Sym, BE->getRHS());
-    break;
   }
   case MCExpr::Target:
   case MCExpr::Constant:
