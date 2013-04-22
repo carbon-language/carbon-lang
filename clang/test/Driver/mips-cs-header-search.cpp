@@ -1,5 +1,3 @@
-// REQUIRES: mips-registered-target
-//
 // Check frontend invocations on Mentor Graphics MIPS toolchain.
 //
 // = Big-endian, hard float

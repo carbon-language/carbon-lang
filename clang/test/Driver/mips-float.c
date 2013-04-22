@@ -1,4 +1,3 @@
-// REQUIRES: mips-registered-target
 // Check handling -mhard-float / -msoft-float / -mfloat-abi options
 // when build for MIPS platforms.
 //

@@ -1,5 +1,3 @@
-// REQUIRES: mips-registered-target
-//
 // Check that -EL/-EB options adjust the toolchain flags.
 //
 // RUN: %clang -target mips-unknown-linux-gnu -### \
