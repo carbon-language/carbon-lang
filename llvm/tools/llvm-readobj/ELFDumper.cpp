@@ -643,9 +643,9 @@ void ELFDumper<ELFT>::printSymbol(symbol_iterator SymI, bool IsDynamic) {
   if (SymI->getName(SymbolName))
     SymbolName = "";
 
-  StringRef SectionName;
-  if (Section && Obj->getSectionName(Section, SectionName))
-    SectionName = "";
+  StringRef SectionName = "";
+  if (Section)
+    Obj->getSectionName(Section, SectionName);
 
   std::string FullSymbolName(SymbolName);
   if (IsDynamic) {

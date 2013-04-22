@@ -406,12 +406,11 @@ void MachODumper::printSymbol(symbol_iterator SymI) {
   MachOSymbol Symbol;
   getSymbol(Obj, SymI->getRawDataRefImpl(), Symbol);
 
-  StringRef SectionName;
+  StringRef SectionName = "";
   section_iterator SecI(Obj->end_sections());
-  if (error(SymI->getSection(SecI)) ||
-      SecI == Obj->end_sections() ||
-      error(SecI->getName(SectionName)))
-    SectionName = "";
+  if (!error(SymI->getSection(SecI)) &&
+      SecI != Obj->end_sections())
+      error(SecI->getName(SectionName));
 
   DictScope D(W, "Symbol");
   W.printNumber("Name", SymbolName, Symbol.StringIndex);

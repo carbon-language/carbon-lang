@@ -726,9 +726,9 @@ void COFFDumper::printSymbol(symbol_iterator SymI) {
   if (Obj->getSymbolName(Symbol, SymbolName))
     SymbolName = "";
 
-  StringRef SectionName;
-  if (Section && Obj->getSectionName(Section, SectionName))
-    SectionName = "";
+  StringRef SectionName = "";
+  if (Section)
+    Obj->getSectionName(Section, SectionName);
 
   W.printString("Name", SymbolName);
   W.printNumber("Value", Symbol->Value);
