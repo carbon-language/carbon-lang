@@ -8,6 +8,7 @@ add_lldb_library(lldbPluginProcessUtility
   RegisterContextDarwin_arm.cpp
   RegisterContextDarwin_i386.cpp
   RegisterContextDarwin_x86_64.cpp
+  RegisterContextDummy.cpp
   RegisterContextLLDB.cpp
   RegisterContextMach_arm.cpp
   RegisterContextMach_i386.cpp
