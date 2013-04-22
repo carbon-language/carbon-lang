@@ -26,6 +26,8 @@ def note_constexpr_lshift_discards : Note<"signed left shift discards bits">;
 def note_constexpr_invalid_function : Note<
   "%select{non-constexpr|undefined}0 %select{function|constructor}1 %2 cannot "
   "be used in a constant expression">;
+def note_constexpr_no_return : Note<
+  "control reached end of constexpr function">;
 def note_constexpr_virtual_call : Note<
   "cannot evaluate virtual function call in a constant expression">;
 def note_constexpr_virtual_base : Note<

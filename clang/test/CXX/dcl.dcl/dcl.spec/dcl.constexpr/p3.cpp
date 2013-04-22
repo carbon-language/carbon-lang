@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -verify -std=c++11 %s
+// RUN: %clang_cc1 -verify -fcxx-exceptions -triple=x86_64-linux-gnu -std=c++11 -Werror=c++1y-extensions %s
+// RUN: %clang_cc1 -verify -fcxx-exceptions -triple=x86_64-linux-gnu -std=c++1y -DCXX1Y %s
 
 namespace N {
   typedef char C;
@@ -8,7 +9,7 @@ namespace M {
   typedef double D;
 }
 
-struct NonLiteral { // expected-note 2{{no constexpr constructors}}
+struct NonLiteral { // expected-note 3{{no constexpr constructors}}
   NonLiteral() {}
   NonLiteral(int) {}
 };
@@ -37,7 +38,10 @@ struct T : SS, NonLiteral { // expected-note {{base class 'NonLiteral' of non-li
 
   //  - its return type shall be a literal type;
   constexpr NonLiteral NonLiteralReturn() const { return {}; } // expected-error {{constexpr function's return type 'NonLiteral' is not a literal type}}
-  constexpr void VoidReturn() const { return; } // expected-error {{constexpr function's return type 'void' is not a literal type}}
+  constexpr void VoidReturn() const { return; }
+#ifndef CXX1Y
+  // expected-error@-2 {{constexpr function's return type 'void' is not a literal type}}
+#endif
   constexpr ~T(); // expected-error {{destructor cannot be marked constexpr}}
   typedef NonLiteral F() const;
   constexpr F NonLiteralReturn2; // ok until definition
@@ -49,12 +53,17 @@ struct T : SS, NonLiteral { // expected-note {{base class 'NonLiteral' of non-li
 
   //  - its function-body shall be = delete, = default,
   constexpr int Deleted() const = delete;
-  // It's not possible for the function-body to legally be "= default" here.
+  // It's not possible for the function-body to legally be "= default" here
+  // (that is, for a non-constructor function) in C++11.
   // Other than constructors, only the copy- and move-assignment operators and
   // destructor can be defaulted. Destructors can't be constexpr since they
   // don't have a literal return type. Defaulted assignment operators can't be
   // constexpr since they can't be const.
-  constexpr T &operator=(const T&) = default; // expected-error {{an explicitly-defaulted copy assignment operator may not have 'const', 'constexpr' or 'volatile' qualifiers}} expected-warning {{C++1y}}
+  constexpr T &operator=(const T&) = default;
+#ifndef CXX1Y
+  // expected-error@-2 {{an explicitly-defaulted copy assignment operator may not have 'const', 'constexpr' or 'volatile' qualifiers}}
+  // expected-warning@-3 {{C++1y}}
+#endif
 };
 struct U {
   constexpr U SelfReturn() const;
@@ -65,8 +74,8 @@ struct V : virtual U { // expected-note {{here}}
   constexpr int F() const { return 0; } // expected-error {{constexpr member function not allowed in struct with virtual base class}}
 };
 
-//  or a compound-statememt that contains only
-constexpr int AllowedStmts() {
+//  or a compound-statememt that contains only [CXX11]
+constexpr int AllowedStmtsCXX11() {
   //  - null statements
   ;
 
@@ -91,34 +100,122 @@ constexpr int AllowedStmts() {
   //  - and exactly one return statement
   return sizeof(K) + sizeof(C) + sizeof(K);
 }
+
+//  or a compound-statement that does not contain [CXX1Y]
+constexpr int DisallowedStmtsCXX1Y_1() {
+  //  - an asm-definition
+  asm("int3"); // expected-error {{statement not allowed in constexpr function}}
+  return 0;
+}
+constexpr int DisallowedStmtsCXX1Y_2() {
+  //  - a goto statement
+  goto x; // expected-error {{statement not allowed in constexpr function}}
+x:
+  return 0;
+}
+constexpr int DisallowedStmtsCXX1Y_3() {
+  //  - a try-block,
+  try {} catch (...) {} // expected-error {{statement not allowed in constexpr function}}
+  return 0;
+}
+constexpr int DisallowedStmtsCXX1Y_4() {
+  //  - a definition of a variable of non-literal type
+  NonLiteral nl; // expected-error {{variable of non-literal type 'NonLiteral' cannot be defined in a constexpr function}}
+  return 0;
+}
+constexpr int DisallowedStmtsCXX1Y_5() {
+  //  - a definition of a variable of static storage duration
+  static constexpr int n = 123; // expected-error {{static variable not permitted in a constexpr function}}
+  return n;
+}
+constexpr int DisallowedStmtsCXX1Y_6() {
+  //  - a definition of a variable of thread storage duration
+  thread_local constexpr int n = 123; // expected-error {{thread_local variable not permitted in a constexpr function}}
+  return n;
+}
+constexpr int DisallowedStmtsCXX1Y_7() {
+  //  - a definition of a variable for which no initialization is performed
+  int n; // expected-error {{variables defined in a constexpr function must be initialized}}
+  return 0;
+}
+
 constexpr int ForStmt() {
-  for (int n = 0; n < 10; ++n) // expected-error {{statement not allowed in constexpr function}}
+  for (int n = 0; n < 10; ++n)
+#ifndef CXX1Y
+  // expected-error@-2 {{statement not allowed in constexpr function}}
+#else
+  // FIXME: Once we support evaluating a for-statement, this diagnostic should disappear.
+  // expected-error@-6 {{never produces a constant expression}}
+  // expected-note@-6 {{subexpression}}
+#endif
     return 0;
 }
 constexpr int VarDecl() {
-  constexpr int a = 0; // expected-error {{variables cannot be declared in a constexpr function}}
+  int a = 0;
+#ifndef CXX1Y
+  // expected-error@-2 {{variable declaration in a constexpr function is a C++1y extension}}
+#endif
   return 0;
 }
+constexpr int ConstexprVarDecl() {
+  constexpr int a = 0;
+#ifndef CXX1Y
+  // expected-error@-2 {{variable declaration in a constexpr function is a C++1y extension}}
+#endif
+  return 0;
+}
+constexpr int VarWithCtorDecl() {
+  Literal a;
+#ifndef CXX1Y
+  // expected-error@-2 {{variable declaration in a constexpr function is a C++1y extension}}
+#endif
+  return 0;
+}
+NonLiteral nl;
+constexpr NonLiteral &ExternNonLiteralVarDecl() {
+  extern NonLiteral nl;
+#ifndef CXX1Y
+  // expected-error@-2 {{variable declaration in a constexpr function is a C++1y extension}}
+#endif
+  return nl;
+}
+static_assert(&ExternNonLiteralVarDecl() == &nl, "");
 constexpr int FuncDecl() {
-  constexpr int ForwardDecl(int); // expected-error {{statement not allowed in constexpr function}}
+  constexpr int ForwardDecl(int);
+#ifndef CXX1Y
+  // expected-error@-2 {{use of this statement in a constexpr function is a C++1y extension}}
+#endif
   return ForwardDecl(42);
 }
 constexpr int ClassDecl1() {
-  typedef struct { } S1; // expected-error {{types cannot be defined in a constexpr function}}
+  typedef struct { } S1;
+#ifndef CXX1Y
+  // expected-error@-2 {{type definition in a constexpr function is a C++1y extension}}
+#endif
   return 0;
 }
 constexpr int ClassDecl2() {
-  using S2 = struct { }; // expected-error {{types cannot be defined in a constexpr function}}
+  using S2 = struct { };
+#ifndef CXX1Y
+  // expected-error@-2 {{type definition in a constexpr function is a C++1y extension}}
+#endif
   return 0;
 }
 constexpr int ClassDecl3() {
-  struct S3 { }; // expected-error {{types cannot be defined in a constexpr function}}
+  struct S3 { };
+#ifndef CXX1Y
+  // expected-error@-2 {{type definition in a constexpr function is a C++1y extension}}
+#endif
   return 0;
 }
 constexpr int NoReturn() {} // expected-error {{no return statement in constexpr function}}
 constexpr int MultiReturn() {
-  return 0; // expected-note {{return statement}}
-  return 0; // expected-error {{multiple return statements in constexpr function}}
+  return 0;
+  return 0;
+#ifndef CXX1Y
+  // expected-error@-2 {{multiple return statements in constexpr function}}
+  // expected-note@-4 {{return statement}}
+#endif
 }
 
 //  - every constructor call and implicit conversion used in initializing the
@@ -152,4 +249,47 @@ namespace rdar13584715 {
       break;
     }
   }
+}
+
+namespace std_example {
+  constexpr int square(int x) {
+    return x * x;
+  }
+  constexpr long long_max() {
+    return 2147483647;
+  }
+  constexpr int abs(int x) {
+    if (x < 0)
+#ifndef CXX1Y
+      // expected-error@-2 {{C++1y}}
+#endif
+      x = -x;
+    return x;
+  }
+  constexpr int first(int n) {
+    static int value = n; // expected-error {{static variable not permitted}}
+    return value;
+  }
+  constexpr int uninit() {
+    int a; // expected-error {{must be initialized}}
+    return a;
+  }
+  // FIXME: Once we support variable mutation, this can produce a
+  // constant expression.
+  constexpr int prev(int x) { // expected-error {{never produces a constant expression}}
+    return --x; // expected-note {{subexpression}}
+  }
+  constexpr int g(int x, int n) {
+    int r = 1;
+    while (--n > 0) r *= x;
+    return r;
+  }
+#ifndef CXX1Y
+    // expected-error@-5 {{C++1y}}
+    // expected-error@-5 {{statement not allowed}}
+#else
+    // FIXME: This should be allowed.
+    // expected-error@-10 {{never produces a constant}}
+    // expected-note@-9 {{subexpression}}
+#endif
 }

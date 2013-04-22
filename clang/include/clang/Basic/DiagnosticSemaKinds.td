@@ -1593,20 +1593,54 @@ def err_constexpr_non_literal_param : Error<
   "not a literal type">;
 def err_constexpr_body_invalid_stmt : Error<
   "statement not allowed in constexpr %select{function|constructor}0">;
-def err_constexpr_type_definition : Error<
-  "types cannot be defined in a constexpr %select{function|constructor}0">;
+def ext_constexpr_body_invalid_stmt : ExtWarn<
+  "use of this statement in a constexpr %select{function|constructor}0 "
+  "is a C++1y extension">, InGroup<CXX1y>;
+def warn_cxx11_compat_constexpr_body_invalid_stmt : Warning<
+  "use of this statement in a constexpr %select{function|constructor}0 "
+  "is incompatible with C++ standards before C++1y">,
+  InGroup<CXXPre1yCompat>, DefaultIgnore;
+def ext_constexpr_type_definition : ExtWarn<
+  "type definition in a constexpr %select{function|constructor}0 "
+  "is a C++1y extension">, InGroup<CXX1y>;
+def warn_cxx11_compat_constexpr_type_definition : Warning<
+  "type definition in a constexpr %select{function|constructor}0 "
+  "is incompatible with C++ standards before C++1y">,
+  InGroup<CXXPre1yCompat>, DefaultIgnore;
 def err_constexpr_vla : Error<
   "variably-modified type %0 cannot be used in a constexpr "
   "%select{function|constructor}1">;
-def err_constexpr_var_declaration : Error<
-  "variables cannot be declared in a constexpr %select{function|constructor}0">;
+def ext_constexpr_local_var : ExtWarn<
+  "variable declaration in a constexpr %select{function|constructor}0 "
+  "is a C++1y extension">, InGroup<CXX1y>;
+def warn_cxx11_compat_constexpr_local_var : Warning<
+  "variable declaration in a constexpr %select{function|constructor}0 "
+  "is incompatible with C++ standards before C++1y">,
+  InGroup<CXXPre1yCompat>, DefaultIgnore;
+def err_constexpr_local_var_static : Error<
+  "%select{static|thread_local}1 variable not permitted in a constexpr "
+  "%select{function|constructor}0">;
+def err_constexpr_local_var_non_literal_type : Error<
+  "variable of non-literal type %1 cannot be defined in a constexpr "
+  "%select{function|constructor}0">;
+def err_constexpr_local_var_no_init : Error<
+  "variables defined in a constexpr %select{function|constructor}0 must be "
+  "initialized">;
 def ext_constexpr_function_never_constant_expr : ExtWarn<
   "constexpr %select{function|constructor}0 never produces a "
   "constant expression">, InGroup<DiagGroup<"invalid-constexpr">>, DefaultError;
 def err_constexpr_body_no_return : Error<
   "no return statement in constexpr function">;
-def err_constexpr_body_multiple_return : Error<
-  "multiple return statements in constexpr function">;
+def warn_cxx11_compat_constexpr_body_no_return : Warning<
+  "constexpr function with no return statements is incompatible with C++ "
+  "standards before C++1y">, InGroup<CXXPre1yCompat>, DefaultIgnore;
+def ext_constexpr_body_multiple_return : ExtWarn<
+  "multiple return statements in constexpr function is a C++1y extension">,
+  InGroup<CXX1y>;
+def warn_cxx11_compat_constexpr_body_multiple_return : Warning<
+  "multiple return statements in constexpr function "
+  "is incompatible with C++ standards before C++1y">,
+  InGroup<CXXPre1yCompat>, DefaultIgnore;
 def note_constexpr_body_previous_return : Note<
   "previous return statement is here">;
 def err_constexpr_function_try_block : Error<

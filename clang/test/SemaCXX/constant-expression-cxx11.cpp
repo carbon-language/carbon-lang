@@ -1312,6 +1312,13 @@ namespace InvalidClasses {
   }
 }
 
+namespace NamespaceAlias {
+  constexpr int f() {
+    namespace NS = NamespaceAlias; // expected-warning {{use of this statement in a constexpr function is a C++1y extension}}
+    return &NS::f != nullptr;
+  }
+}
+
 // Constructors can be implicitly constexpr, even for a non-literal type.
 namespace ImplicitConstexpr {
   struct Q { Q() = default; Q(const Q&) = default; Q(Q&&) = default; ~Q(); }; // expected-note 3{{here}}

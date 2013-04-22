@@ -775,12 +775,13 @@ bool Sema::CheckConstexprFunctionDecl(const FunctionDecl *NewFD) {
 }
 
 /// Check the given declaration statement is legal within a constexpr function
-/// body. C++0x [dcl.constexpr]p3,p4.
+/// body. C++11 [dcl.constexpr]p3,p4, and C++1y [dcl.constexpr]p3.
 ///
-/// \return true if the body is OK, false if we have diagnosed a problem.
+/// \return true if the body is OK (maybe only as an extension), false if we
+///         have diagnosed a problem.
 static bool CheckConstexprDeclStmt(Sema &SemaRef, const FunctionDecl *Dcl,
-                                   DeclStmt *DS) {
-  // C++0x [dcl.constexpr]p3 and p4:
+                                   DeclStmt *DS, SourceLocation &Cxx1yLoc) {
+  // C++11 [dcl.constexpr]p3 and p4:
   //  The definition of a constexpr function(p3) or constructor(p4) [...] shall
   //  contain only
   for (DeclStmt::decl_iterator DclIt = DS->decl_begin(),
@@ -791,6 +792,7 @@ static bool CheckConstexprDeclStmt(Sema &SemaRef, const FunctionDecl *Dcl,
     case Decl::UsingShadow:
     case Decl::UsingDirective:
     case Decl::UnresolvedUsingTypename:
+    case Decl::UnresolvedUsingValue:
       //   - static_assert-declarations
       //   - using-declarations,
       //   - using-directives,
@@ -814,20 +816,62 @@ static bool CheckConstexprDeclStmt(Sema &SemaRef, const FunctionDecl *Dcl,
 
     case Decl::Enum:
     case Decl::CXXRecord:
-      // As an extension, we allow the declaration (but not the definition) of
-      // classes and enumerations in all declarations, not just in typedef and
-      // alias declarations.
-      if (cast<TagDecl>(*DclIt)->isThisDeclarationADefinition()) {
-        SemaRef.Diag(DS->getLocStart(), diag::err_constexpr_type_definition)
+      // C++1y allows types to be defined, not just declared.
+      if (cast<TagDecl>(*DclIt)->isThisDeclarationADefinition())
+        SemaRef.Diag(DS->getLocStart(),
+                     SemaRef.getLangOpts().CPlusPlus1y
+                       ? diag::warn_cxx11_compat_constexpr_type_definition
+                       : diag::ext_constexpr_type_definition)
           << isa<CXXConstructorDecl>(Dcl);
-        return false;
-      }
       continue;
 
-    case Decl::Var:
-      SemaRef.Diag(DS->getLocStart(), diag::err_constexpr_var_declaration)
+    case Decl::EnumConstant:
+    case Decl::IndirectField:
+    case Decl::ParmVar:
+      // These can only appear with other declarations which are banned in
+      // C++11 and permitted in C++1y, so ignore them.
+      continue;
+
+    case Decl::Var: {
+      // C++1y [dcl.constexpr]p3 allows anything except:
+      //   a definition of a variable of non-literal type or of static or
+      //   thread storage duration or for which no initialization is performed.
+      VarDecl *VD = cast<VarDecl>(*DclIt);
+      if (VD->isThisDeclarationADefinition()) {
+        if (VD->isStaticLocal()) {
+          SemaRef.Diag(VD->getLocation(),
+                       diag::err_constexpr_local_var_static)
+            << isa<CXXConstructorDecl>(Dcl)
+            << (VD->getTLSKind() == VarDecl::TLS_Dynamic);
+          return false;
+        }
+        if (SemaRef.RequireLiteralType(
+              VD->getLocation(), VD->getType(),
+              diag::err_constexpr_local_var_non_literal_type,
+              isa<CXXConstructorDecl>(Dcl)))
+          return false;
+        if (!VD->hasInit()) {
+          SemaRef.Diag(VD->getLocation(),
+                       diag::err_constexpr_local_var_no_init)
+            << isa<CXXConstructorDecl>(Dcl);
+          return false;
+        }
+      }
+      SemaRef.Diag(VD->getLocation(),
+                   SemaRef.getLangOpts().CPlusPlus1y
+                    ? diag::warn_cxx11_compat_constexpr_local_var
+                    : diag::ext_constexpr_local_var)
         << isa<CXXConstructorDecl>(Dcl);
-      return false;
+      continue;
+    }
+
+    case Decl::NamespaceAlias:
+    case Decl::Function:
+      // These are disallowed in C++11 and permitted in C++1y. Allow them
+      // everywhere as an extension.
+      if (!Cxx1yLoc.isValid())
+        Cxx1yLoc = DS->getLocStart();
+      continue;
 
     default:
       SemaRef.Diag(DS->getLocStart(), diag::err_constexpr_body_invalid_stmt)
@@ -876,6 +920,124 @@ static void CheckConstexprCtorInitializer(Sema &SemaRef,
   }
 }
 
+/// Check the provided statement is allowed in a constexpr function
+/// definition.
+static bool
+CheckConstexprFunctionStmt(Sema &SemaRef, const FunctionDecl *Dcl, Stmt *S,
+                           llvm::SmallVectorImpl<SourceLocation> &ReturnStmts,
+                           SourceLocation &Cxx1yLoc) {
+  // - its function-body shall be [...] a compound-statement that contains only
+  switch (S->getStmtClass()) {
+  case Stmt::NullStmtClass:
+    //   - null statements,
+    return true;
+
+  case Stmt::DeclStmtClass:
+    //   - static_assert-declarations
+    //   - using-declarations,
+    //   - using-directives,
+    //   - typedef declarations and alias-declarations that do not define
+    //     classes or enumerations,
+    if (!CheckConstexprDeclStmt(SemaRef, Dcl, cast<DeclStmt>(S), Cxx1yLoc))
+      return false;
+    return true;
+
+  case Stmt::ReturnStmtClass:
+    //   - and exactly one return statement;
+    if (isa<CXXConstructorDecl>(Dcl)) {
+      // C++1y allows return statements in constexpr constructors.
+      if (!Cxx1yLoc.isValid())
+        Cxx1yLoc = S->getLocStart();
+      return true;
+    }
+
+    ReturnStmts.push_back(S->getLocStart());
+    return true;
+
+  case Stmt::CompoundStmtClass: {
+    // C++1y allows compound-statements.
+    if (!Cxx1yLoc.isValid())
+      Cxx1yLoc = S->getLocStart();
+
+    CompoundStmt *CompStmt = cast<CompoundStmt>(S);
+    for (CompoundStmt::body_iterator BodyIt = CompStmt->body_begin(),
+           BodyEnd = CompStmt->body_end(); BodyIt != BodyEnd; ++BodyIt) {
+      if (!CheckConstexprFunctionStmt(SemaRef, Dcl, *BodyIt, ReturnStmts,
+                                      Cxx1yLoc))
+        return false;
+    }
+    return true;
+  }
+
+  case Stmt::AttributedStmtClass:
+    if (!Cxx1yLoc.isValid())
+      Cxx1yLoc = S->getLocStart();
+    return true;
+
+  case Stmt::IfStmtClass: {
+    // C++1y allows if-statements.
+    if (!Cxx1yLoc.isValid())
+      Cxx1yLoc = S->getLocStart();
+
+    IfStmt *If = cast<IfStmt>(S);
+    if (!CheckConstexprFunctionStmt(SemaRef, Dcl, If->getThen(), ReturnStmts,
+                                    Cxx1yLoc))
+      return false;
+    if (If->getElse() &&
+        !CheckConstexprFunctionStmt(SemaRef, Dcl, If->getElse(), ReturnStmts,
+                                    Cxx1yLoc))
+      return false;
+    return true;
+  }
+
+  case Stmt::WhileStmtClass:
+  case Stmt::DoStmtClass:
+  case Stmt::ForStmtClass:
+  case Stmt::CXXForRangeStmtClass:
+  case Stmt::ContinueStmtClass:
+    // C++1y allows all of these. We don't allow them as extensions in C++11,
+    // because they don't make sense without variable mutation.
+    if (!SemaRef.getLangOpts().CPlusPlus1y)
+      break;
+    if (!Cxx1yLoc.isValid())
+      Cxx1yLoc = S->getLocStart();
+    for (Stmt::child_range Children = S->children(); Children; ++Children)
+      if (*Children &&
+          !CheckConstexprFunctionStmt(SemaRef, Dcl, *Children, ReturnStmts,
+                                      Cxx1yLoc))
+        return false;
+    return true;
+
+  case Stmt::SwitchStmtClass:
+  case Stmt::CaseStmtClass:
+  case Stmt::DefaultStmtClass:
+  case Stmt::BreakStmtClass:
+    // C++1y allows switch-statements, and since they don't need variable
+    // mutation, we can reasonably allow them in C++11 as an extension.
+    if (!Cxx1yLoc.isValid())
+      Cxx1yLoc = S->getLocStart();
+    for (Stmt::child_range Children = S->children(); Children; ++Children)
+      if (*Children &&
+          !CheckConstexprFunctionStmt(SemaRef, Dcl, *Children, ReturnStmts,
+                                      Cxx1yLoc))
+        return false;
+    return true;
+
+  default:
+    if (!isa<Expr>(S))
+      break;
+
+    // C++1y allows expression-statements.
+    if (!Cxx1yLoc.isValid())
+      Cxx1yLoc = S->getLocStart();
+    return true;
+  }
+
+  SemaRef.Diag(S->getLocStart(), diag::err_constexpr_body_invalid_stmt)
+    << isa<CXXConstructorDecl>(Dcl);
+  return false;
+}
+
 /// Check the body for the given constexpr function declaration only contains
 /// the permitted types of statement. C++11 [dcl.constexpr]p3,p4.
 ///
@@ -896,43 +1058,24 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
     return false;
   }
 
-  // - its function-body shall be [...] a compound-statement that contains only
-  CompoundStmt *CompBody = cast<CompoundStmt>(Body);
-
   SmallVector<SourceLocation, 4> ReturnStmts;
+
+  // - its function-body shall be [...] a compound-statement that contains only
+  //   [... list of cases ...]
+  CompoundStmt *CompBody = cast<CompoundStmt>(Body);
+  SourceLocation Cxx1yLoc;
   for (CompoundStmt::body_iterator BodyIt = CompBody->body_begin(),
          BodyEnd = CompBody->body_end(); BodyIt != BodyEnd; ++BodyIt) {
-    switch ((*BodyIt)->getStmtClass()) {
-    case Stmt::NullStmtClass:
-      //   - null statements,
-      continue;
-
-    case Stmt::DeclStmtClass:
-      //   - static_assert-declarations
-      //   - using-declarations,
-      //   - using-directives,
-      //   - typedef declarations and alias-declarations that do not define
-      //     classes or enumerations,
-      if (!CheckConstexprDeclStmt(*this, Dcl, cast<DeclStmt>(*BodyIt)))
-        return false;
-      continue;
-
-    case Stmt::ReturnStmtClass:
-      //   - and exactly one return statement;
-      if (isa<CXXConstructorDecl>(Dcl))
-        break;
-
-      ReturnStmts.push_back((*BodyIt)->getLocStart());
-      continue;
-
-    default:
-      break;
-    }
-
-    Diag((*BodyIt)->getLocStart(), diag::err_constexpr_body_invalid_stmt)
-      << isa<CXXConstructorDecl>(Dcl);
-    return false;
+    if (!CheckConstexprFunctionStmt(*this, Dcl, *BodyIt, ReturnStmts, Cxx1yLoc))
+      return false;
   }
+
+  if (Cxx1yLoc.isValid())
+    Diag(Cxx1yLoc,
+         getLangOpts().CPlusPlus1y
+           ? diag::warn_cxx11_compat_constexpr_body_invalid_stmt
+           : diag::ext_constexpr_body_invalid_stmt)
+      << isa<CXXConstructorDecl>(Dcl);
 
   if (const CXXConstructorDecl *Constructor
         = dyn_cast<CXXConstructorDecl>(Dcl)) {
@@ -988,14 +1131,23 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
     }
   } else {
     if (ReturnStmts.empty()) {
-      Diag(Dcl->getLocation(), diag::err_constexpr_body_no_return);
+      // C++1y doesn't require constexpr functions to contain a 'return'
+      // statement. We still do, unless the return type is void, because
+      // otherwise if there's no return statement, the function cannot
+      // be used in a core constant expression.
+      Diag(Dcl->getLocation(),
+           getLangOpts().CPlusPlus1y && Dcl->getResultType()->isVoidType()
+             ? diag::warn_cxx11_compat_constexpr_body_no_return
+             : diag::err_constexpr_body_no_return);
       return false;
     }
     if (ReturnStmts.size() > 1) {
-      Diag(ReturnStmts.back(), diag::err_constexpr_body_multiple_return);
+      Diag(ReturnStmts.back(),
+           getLangOpts().CPlusPlus1y
+             ? diag::warn_cxx11_compat_constexpr_body_multiple_return
+             : diag::ext_constexpr_body_multiple_return);
       for (unsigned I = 0; I < ReturnStmts.size() - 1; ++I)
         Diag(ReturnStmts[I], diag::note_constexpr_body_previous_return);
-      return false;
     }
   }
 

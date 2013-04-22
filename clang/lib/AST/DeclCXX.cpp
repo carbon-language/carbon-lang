@@ -186,7 +186,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       data().IsStandardLayout = false;
 
     // Record if this base is the first non-literal field or base.
-    if (!hasNonLiteralTypeFieldsOrBases() && !BaseType->isLiteralType())
+    if (!hasNonLiteralTypeFieldsOrBases() && !BaseType->isLiteralType(C))
       data().HasNonLiteralTypeFieldsOrBases = true;
     
     // Now go through all virtual bases of this base and add them.
@@ -676,7 +676,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
     }
 
     // Record if this field is the first non-literal or volatile field or base.
-    if (!T->isLiteralType() || T.isVolatileQualified())
+    if (!T->isLiteralType(Context) || T.isVolatileQualified())
       data().HasNonLiteralTypeFieldsOrBases = true;
 
     if (Field->hasInClassInitializer()) {
@@ -845,7 +845,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
       }
     } else {
       // Base element type of field is a non-class type.
-      if (!T->isLiteralType() ||
+      if (!T->isLiteralType(Context) ||
           (!Field->hasInClassInitializer() && !isUnion()))
         data().DefaultedDefaultConstructorIsConstexpr = false;
 

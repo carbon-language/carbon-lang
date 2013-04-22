@@ -1443,8 +1443,8 @@ public:
   }
 
   /// isLiteralType - Return true if this is a literal type
-  /// (C++0x [basic.types]p10)
-  bool isLiteralType() const;
+  /// (C++11 [basic.types]p10)
+  bool isLiteralType(ASTContext &Ctx) const;
 
   /// \brief Test if this type is a standard-layout type.
   /// (C++0x [basic.type]p9)

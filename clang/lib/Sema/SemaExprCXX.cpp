@@ -3137,7 +3137,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
   case UTT_IsPOD:
     return T.isPODType(Self.Context);
   case UTT_IsLiteral:
-    return T->isLiteralType();
+    return T->isLiteralType(Self.Context);
   case UTT_IsEmpty:
     if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())
       return !RD->isUnion() && RD->isEmpty();

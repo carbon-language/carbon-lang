@@ -1,8 +1,15 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++1y %s -DCXX1Y
 
 struct NonLiteral { NonLiteral(); };
 
 // A type is a literal type if it is:
+
+// [C++1y] - void
+constexpr void f() {}
+#ifndef CXX1Y
+// expected-error@-2 {{'void' is not a literal type}}
+#endif
 
 // - a scalar type
 constexpr int f1(double) { return 0; }
@@ -11,7 +18,6 @@ constexpr int f1(double) { return 0; }
 struct S { S(); };
 constexpr int f2(S &) { return 0; }
 
-// FIXME: I'm not entirely sure whether the following is legal or not...
 struct BeingDefined;
 extern BeingDefined beingdefined;
 struct BeingDefined { 
@@ -117,7 +123,7 @@ struct MemberType {
 constexpr int f(MemberType<int>) { return 0; }
 constexpr int f(MemberType<NonLiteral>) { return 0; } // expected-error {{not a literal type}}
 
-// - an array of literal type
+// - an array of literal type [C++1y] other than an array of runtime bound
 struct ArrGood {
   Agg agg[24];
   double d[12];
@@ -130,3 +136,7 @@ struct ArrBad {
   S s[3]; // expected-note {{data member 's' of non-literal type 'S [3]'}}
 };
 constexpr int f(ArrBad) { return 0; } // expected-error {{1st parameter type 'ArrBad' is not a literal type}}
+
+constexpr int arb(int n) {
+  int a[n]; // expected-error {{variable of non-literal type 'int [n]' cannot be defined in a constexpr function}}
+}

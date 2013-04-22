@@ -1142,16 +1142,20 @@ bool QualType::isTriviallyCopyableType(ASTContext &Context) const {
 
 
 
-bool Type::isLiteralType() const {
+bool Type::isLiteralType(ASTContext &Ctx) const {
   if (isDependentType())
     return false;
 
-  // C++0x [basic.types]p10:
+  // C++1y [basic.types]p10:
+  //   A type is a literal type if it is:
+  //   -- cv void; or
+  if (Ctx.getLangOpts().CPlusPlus1y && isVoidType())
+    return true;
+
+  // C++11 [basic.types]p10:
   //   A type is a literal type if it is:
   //   [...]
-  //   -- an array of literal type.
-  // Extension: variable arrays cannot be literal types, since they're
-  // runtime-sized.
+  //   -- an array of literal type other than an array of runtime bound; or
   if (isVariableArrayType())
     return false;
   const Type *BaseTy = getBaseElementTypeUnsafe();
@@ -1162,7 +1166,7 @@ bool Type::isLiteralType() const {
   if (BaseTy->isIncompleteType())
     return false;
 
-  // C++0x [basic.types]p10:
+  // C++11 [basic.types]p10:
   //   A type is a literal type if it is:
   //    -- a scalar type; or
   // As an extension, Clang treats vector types and complex types as
