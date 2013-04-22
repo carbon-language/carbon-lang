@@ -3615,13 +3615,13 @@ bool AsmParser::ParseDirectiveIfdef(SMLoc DirectiveLoc, bool expect_defined) {
 bool AsmParser::ParseDirectiveElseIf(SMLoc DirectiveLoc) {
   if (TheCondState.TheCond != AsmCond::IfCond &&
       TheCondState.TheCond != AsmCond::ElseIfCond)
-      Error(DirectiveLoc, "Encountered a .elseif that doesn't follow a .if or "
-                          " an .elseif");
+    Error(DirectiveLoc, "Encountered a .elseif that doesn't follow a .if or "
+                        " an .elseif");
   TheCondState.TheCond = AsmCond::ElseIfCond;
 
   bool LastIgnoreState = false;
   if (!TheCondStack.empty())
-      LastIgnoreState = TheCondStack.back().Ignore;
+    LastIgnoreState = TheCondStack.back().Ignore;
   if (LastIgnoreState || TheCondState.CondMet) {
     TheCondState.Ignore = true;
     eatToEndOfStatement();
@@ -3651,8 +3651,8 @@ bool AsmParser::ParseDirectiveElse(SMLoc DirectiveLoc) {
 
   if (TheCondState.TheCond != AsmCond::IfCond &&
       TheCondState.TheCond != AsmCond::ElseIfCond)
-      Error(DirectiveLoc, "Encountered a .else that doesn't follow a .if or an "
-                          ".elseif");
+    Error(DirectiveLoc, "Encountered a .else that doesn't follow a .if or an "
+                        ".elseif");
   TheCondState.TheCond = AsmCond::ElseCond;
   bool LastIgnoreState = false;
   if (!TheCondStack.empty())
