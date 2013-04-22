@@ -533,6 +533,9 @@ uint32_t
 Listener::StartListeningForEventSpec (BroadcasterManager &manager, 
                              const BroadcastEventSpec &event_spec)
 {
+    // The BroadcasterManager mutex must be locked before m_broadcasters_mutex 
+    // to avoid violating the lock hierarchy (manager before broadcasters).
+    Mutex::Locker manager_locker(manager.m_manager_mutex);
     Mutex::Locker locker(m_broadcasters_mutex);
 
     uint32_t bits_acquired = manager.RegisterListenerForEvents(*this, event_spec);

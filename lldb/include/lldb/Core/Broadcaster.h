@@ -85,6 +85,8 @@ private:
 class BroadcasterManager
 {
 public:
+    friend class Listener;
+
     BroadcasterManager ();
 
     ~BroadcasterManager () {}
