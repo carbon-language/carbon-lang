@@ -848,9 +848,14 @@ CommandInterpreter::GetCommandObject (const char *cmd_cstr, StringList *matches)
         command_obj = GetCommandSP (cmd_cstr, true, true, matches).get();
     }
 
-    // Finally, if there wasn't an exact match among the aliases, look for an inexact match
-    // in both the commands and the aliases.
+    // If there wasn't an exact match among the aliases, look for an inexact match
+    // in just the commands.
 
+    if (command_obj == NULL)
+        command_obj = GetCommandSP(cmd_cstr, false, false, matches).get();
+
+    // Finally, if there wasn't an inexact match among the commands, look for an inexact
+    // match in both the commands and aliases.
     if (command_obj == NULL)
         command_obj = GetCommandSP(cmd_cstr, true, false, matches).get();
 
