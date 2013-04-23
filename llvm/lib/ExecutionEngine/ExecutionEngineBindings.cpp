@@ -23,7 +23,6 @@ using namespace llvm;
 
 // Wrapping the C bindings types.
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(GenericValue,       LLVMGenericValueRef  )
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ExecutionEngine,    LLVMExecutionEngineRef)
 
 inline DataLayout *unwrap(LLVMTargetDataRef P) {
   return reinterpret_cast<DataLayout*>(P);

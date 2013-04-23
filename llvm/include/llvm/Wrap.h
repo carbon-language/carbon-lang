@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-c/Core.h"
+#include "llvm-c/ExecutionEngine.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
@@ -67,6 +68,7 @@ namespace llvm {
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(MemoryBuffer,       LLVMMemoryBufferRef  )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LLVMContext,        LLVMContextRef       )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Use,                LLVMUseRef           )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ExecutionEngine,    LLVMExecutionEngineRef)
   DEFINE_STDCXX_CONVERSION_FUNCTIONS(PassManagerBase,    LLVMPassManagerRef   )
   DEFINE_STDCXX_CONVERSION_FUNCTIONS(PassRegistry,       LLVMPassRegistryRef  )
 
