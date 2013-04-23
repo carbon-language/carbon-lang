@@ -9,7 +9,7 @@
 ; This was fixed by adding an additional pattern in R600Instructions.td to
 ; match this pattern with a CNDGE_INT.
 
-; CHECK: RETURN
+; CHECK: CF_END
 
 define void @test(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
   %den_ptr = getelementptr i32 addrspace(1)* %in, i32 1

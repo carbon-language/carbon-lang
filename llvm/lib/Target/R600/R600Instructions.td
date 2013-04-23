@@ -897,6 +897,7 @@ class CF_WORD1_EG {
   bits<2> COND;
   bits<6> COUNT;
   bits<1> VALID_PIXEL_MODE;
+  bits<1> END_OF_PROGRAM;
   bits<8> CF_INST;
   bits<1> BARRIER;
 
@@ -919,6 +920,7 @@ ins, AsmPrint, [] >, CF_WORD0_EG, CF_WORD1_EG {
   let CF_CONST = 0;
   let VALID_PIXEL_MODE = 0;
   let COND = 0;
+  let END_OF_PROGRAM = 0;
 
   let Inst{31-0} = Word0;
   let Inst{63-32} = Word1;
@@ -932,6 +934,10 @@ def STACK_SIZE : AMDGPUInst <(outs),
   field bits<8> Inst;
   bits<8> num;
   let Inst = num;
+}
+
+def PAD : AMDGPUInst <(outs), (ins), "PAD", [] > {
+  field bits<64> Inst;
 }
 
 let Predicates = [isR600toCayman] in {
@@ -1486,6 +1492,12 @@ let Predicates = [isR600] in {
   "POP @$ADDR POP:$POP_COUNT"> {
     let COUNT = 0;
   }
+  def CF_END_R600 : CF_CLAUSE_R600<0, (ins), "CF_END"> {
+    let COUNT = 0;
+    let POP_COUNT = 0;
+    let ADDR = 0;
+    let END_OF_PROGRAM = 1;
+  }
 
 }
 
@@ -1690,7 +1702,12 @@ let hasSideEffects = 1 in {
   "POP @$ADDR POP:$POP_COUNT"> {
     let COUNT = 0;
   }
-
+  def CF_END_EG :  CF_CLAUSE_EG<0, (ins), "CF_END"> {
+    let COUNT = 0;
+    let POP_COUNT = 0;
+    let ADDR = 0;
+    let END_OF_PROGRAM = 1;
+  }
 
 //===----------------------------------------------------------------------===//
 // Memory read/write instructions
@@ -1935,6 +1952,11 @@ def : Pat <
                             (MOV_IMM_I32 CONST.FP_UINT_MAX_PLUS_1)))
 >;
 
+  def CF_END_CM : CF_CLAUSE_EG<32, (ins), "CF_END"> {
+    let ADDR = 0;
+    let POP_COUNT = 0;
+    let COUNT = 0;
+  }
 
 def : Pat<(fsqrt R600_Reg32:$src),
   (MUL R600_Reg32:$src, (RECIPSQRT_CLAMPED_cm R600_Reg32:$src))>;

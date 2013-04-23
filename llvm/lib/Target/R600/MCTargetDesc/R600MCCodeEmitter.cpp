@@ -281,7 +281,11 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     case AMDGPU::EG_ExportSwz:
     case AMDGPU::R600_ExportSwz:
     case AMDGPU::EG_ExportBuf:
-    case AMDGPU::R600_ExportBuf: {
+    case AMDGPU::R600_ExportBuf:
+    case AMDGPU::PAD:
+    case AMDGPU::CF_END_R600:
+    case AMDGPU::CF_END_EG:
+    case AMDGPU::CF_END_CM: {
       uint64_t Inst = getBinaryCodeForInstr(MI, Fixups);
       EmitByte(INSTR_NATIVE, OS);
       Emit(Inst, OS);

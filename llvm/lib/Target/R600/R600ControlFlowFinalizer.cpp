@@ -39,7 +39,8 @@ private:
     CF_LOOP_CONTINUE,
     CF_JUMP,
     CF_ELSE,
-    CF_POP
+    CF_POP,
+    CF_END
   };
 
   static char ID;
@@ -91,49 +92,46 @@ private:
   }
 
   const MCInstrDesc &getHWInstrDesc(ControlFlowInstruction CFI) const {
-    if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD4XXX) {
-      switch (CFI) {
-      case CF_TC:
-        return TII->get(AMDGPU::CF_TC_R600);
-      case CF_CALL_FS:
-        return TII->get(AMDGPU::CF_CALL_FS_R600);
-      case CF_WHILE_LOOP:
-        return TII->get(AMDGPU::WHILE_LOOP_R600);
-      case CF_END_LOOP:
-        return TII->get(AMDGPU::END_LOOP_R600);
-      case CF_LOOP_BREAK:
-        return TII->get(AMDGPU::LOOP_BREAK_R600);
-      case CF_LOOP_CONTINUE:
-        return TII->get(AMDGPU::CF_CONTINUE_R600);
-      case CF_JUMP:
-        return TII->get(AMDGPU::CF_JUMP_R600);
-      case CF_ELSE:
-        return TII->get(AMDGPU::CF_ELSE_R600);
-      case CF_POP:
-        return TII->get(AMDGPU::POP_R600);
+    unsigned Opcode = 0;
+    bool isEg = (ST.device()->getGeneration() >= AMDGPUDeviceInfo::HD5XXX);
+    switch (CFI) {
+    case CF_TC:
+      Opcode = isEg ? AMDGPU::CF_TC_EG : AMDGPU::CF_TC_R600;
+      break;
+    case CF_CALL_FS:
+      Opcode = isEg ? AMDGPU::CF_CALL_FS_EG : AMDGPU::CF_CALL_FS_R600;
+      break;
+    case CF_WHILE_LOOP:
+      Opcode = isEg ? AMDGPU::WHILE_LOOP_EG : AMDGPU::WHILE_LOOP_R600;
+      break;
+    case CF_END_LOOP:
+      Opcode = isEg ? AMDGPU::END_LOOP_EG : AMDGPU::END_LOOP_R600;
+      break;
+    case CF_LOOP_BREAK:
+      Opcode = isEg ? AMDGPU::LOOP_BREAK_EG : AMDGPU::LOOP_BREAK_R600;
+      break;
+    case CF_LOOP_CONTINUE:
+      Opcode = isEg ? AMDGPU::CF_CONTINUE_EG : AMDGPU::CF_CONTINUE_R600;
+      break;
+    case CF_JUMP:
+      Opcode = isEg ? AMDGPU::CF_JUMP_EG : AMDGPU::CF_JUMP_R600;
+      break;
+    case CF_ELSE:
+      Opcode = isEg ? AMDGPU::CF_ELSE_EG : AMDGPU::CF_ELSE_R600;
+      break;
+    case CF_POP:
+      Opcode = isEg ? AMDGPU::POP_EG : AMDGPU::POP_R600;
+      break;
+    case CF_END:
+      if (ST.device()->getGeneration() == AMDGPUDeviceInfo::HD6XXX) {
+        Opcode = AMDGPU::CF_END_CM;
+        break;
       }
-    } else {
-      switch (CFI) {
-      case CF_TC:
-        return TII->get(AMDGPU::CF_TC_EG);
-      case CF_CALL_FS:
-        return TII->get(AMDGPU::CF_CALL_FS_EG);
-      case CF_WHILE_LOOP:
-        return TII->get(AMDGPU::WHILE_LOOP_EG);
-      case CF_END_LOOP:
-        return TII->get(AMDGPU::END_LOOP_EG);
-      case CF_LOOP_BREAK:
-        return TII->get(AMDGPU::LOOP_BREAK_EG);
-      case CF_LOOP_CONTINUE:
-        return TII->get(AMDGPU::CF_CONTINUE_EG);
-      case CF_JUMP:
-        return TII->get(AMDGPU::CF_JUMP_EG);
-      case CF_ELSE:
-        return TII->get(AMDGPU::CF_ELSE_EG);
-      case CF_POP:
-        return TII->get(AMDGPU::POP_EG);
-      }
+      Opcode = isEg ? AMDGPU::CF_END_EG : AMDGPU::CF_END_R600;
+      break;
     }
+    assert (Opcode && "No opcode selected");
+    return TII->get(Opcode);
   }
 
   MachineBasicBlock::iterator
@@ -309,6 +307,15 @@ public:
           MI->eraseFromParent();
           CfCount++;
           break;
+        }
+        case AMDGPU::RETURN: {
+          BuildMI(MBB, MI, MBB.findDebugLoc(MI), getHWInstrDesc(CF_END));
+          CfCount++;
+          MI->eraseFromParent();
+          if (CfCount % 2) {
+            BuildMI(MBB, I, MBB.findDebugLoc(MI), TII->get(AMDGPU::PAD));
+            CfCount++;
+          }
         }
         default:
           break;
