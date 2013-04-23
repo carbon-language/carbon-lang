@@ -115,27 +115,33 @@ static bool hexStringToByteArray(StringRef Str, ContainerOut &Out) {
 // to use yaml::IO, we use these structures which are closer to the source.
 namespace COFFYAML {
   struct Section {
-    COFF::SectionCharacteristics Characteristics;
+    COFF::section Header;
     StringRef SectionData;
     std::vector<COFF::relocation> Relocations;
     StringRef Name;
+    Section() {
+      memset(&Header, 0, sizeof(COFF::section));
+    }
   };
 
   struct Symbol {
+    COFF::symbol Header;
     COFF::SymbolBaseType SimpleType;
-    uint8_t NumberOfAuxSymbols;
-    StringRef Name;
-    COFF::SymbolStorageClass StorageClass;
-    StringRef AuxillaryData;
     COFF::SymbolComplexType ComplexType;
-    uint32_t Value;
-    uint16_t SectionNumber;
+    StringRef AuxillaryData;
+    StringRef Name;
+    Symbol() {
+      memset(&Header, 0, sizeof(COFF::symbol));
+    }
   };
 
   struct Object {
-    COFF::header HeaderData;
+    COFF::header Header;
     std::vector<Section> Sections;
     std::vector<Symbol> Symbols;
+    Object() {
+      memset(&Header, 0, sizeof(COFF::header));
+    }
   };
 }
 
@@ -143,28 +149,20 @@ namespace COFFYAML {
 /// See docs/yaml2obj for the yaml scheema.
 struct COFFParser {
   COFFParser(COFFYAML::Object &Obj) : Obj(Obj) {
-    std::memset(&Header, 0, sizeof(Header));
     // A COFF string table always starts with a 4 byte size field. Offsets into
     // it include this size, so allocate it now.
     StringTable.append(4, 0);
   }
 
-  void parseHeader() {
-    Header.Machine = Obj.HeaderData.Machine;
-    Header.Characteristics = Obj.HeaderData.Characteristics;
-  }
-
   bool parseSections() {
     for (std::vector<COFFYAML::Section>::iterator i = Obj.Sections.begin(),
            e = Obj.Sections.end(); i != e; ++i) {
-      const COFFYAML::Section &YamlSection = *i;
-      Section Sec;
-      std::memset(&Sec.Header, 0, sizeof(Sec.Header));
+      COFFYAML::Section &Sec = *i;
 
       // If the name is less than 8 bytes, store it in place, otherwise
       // store it in the string table.
-      StringRef Name = YamlSection.Name;
-      std::fill_n(Sec.Header.Name, unsigned(COFF::NameSize), 0);
+      StringRef Name = Sec.Name;
+
       if (Name.size() <= COFF::NameSize) {
         std::copy(Name.begin(), Name.end(), Sec.Header.Name);
       } else {
@@ -178,16 +176,6 @@ struct COFFParser {
         Sec.Header.Name[0] = '/';
         std::copy(str.begin(), str.end(), Sec.Header.Name + 1);
       }
-
-      Sec.Header.Characteristics = YamlSection.Characteristics;
-
-      StringRef Data = YamlSection.SectionData;
-      if (!hexStringToByteArray(Data, Sec.Data)) {
-        errs() << "SectionData must be a collection of pairs of hex bytes";
-        return false;
-      }
-      Sec.Relocations = YamlSection.Relocations;
-      Sections.push_back(Sec);
     }
     return true;
   }
@@ -195,14 +183,11 @@ struct COFFParser {
   bool parseSymbols() {
     for (std::vector<COFFYAML::Symbol>::iterator i = Obj.Symbols.begin(),
            e = Obj.Symbols.end(); i != e; ++i) {
-      COFFYAML::Symbol YamlSymbol = *i;
-      Symbol Sym;
-      std::memset(&Sym.Header, 0, sizeof(Sym.Header));
+      COFFYAML::Symbol &Sym = *i;
 
       // If the name is less than 8 bytes, store it in place, otherwise
       // store it in the string table.
-      StringRef Name = YamlSymbol.Name;
-      std::fill_n(Sym.Header.Name, unsigned(COFF::NameSize), 0);
+      StringRef Name = Sym.Name;
       if (Name.size() <= COFF::NameSize) {
         std::copy(Name.begin(), Name.end(), Sym.Header.Name);
       } else {
@@ -212,24 +197,13 @@ struct COFFParser {
             Sym.Header.Name + 4) = Index;
       }
 
-      Sym.Header.Value = YamlSymbol.Value;
-      Sym.Header.Type |= YamlSymbol.SimpleType;
-      Sym.Header.Type |= YamlSymbol.ComplexType << COFF::SCT_COMPLEX_TYPE_SHIFT;
-      Sym.Header.StorageClass = YamlSymbol.StorageClass;
-      Sym.Header.SectionNumber = YamlSymbol.SectionNumber;
-
-      StringRef Data = YamlSymbol.AuxillaryData;
-      if (!hexStringToByteArray(Data, Sym.AuxSymbols)) {
-        errs() << "AuxillaryData must be a collection of pairs of hex bytes";
-        return false;
-      }
-      Symbols.push_back(Sym);
+      Sym.Header.Type = Sym.SimpleType;
+      Sym.Header.Type |= Sym.ComplexType << COFF::SCT_COMPLEX_TYPE_SHIFT;
     }
     return true;
   }
 
   bool parse() {
-    parseHeader();
     if (!parseSections())
       return false;
     if (!parseSymbols())
@@ -250,21 +224,7 @@ struct COFFParser {
   }
 
   COFFYAML::Object &Obj;
-  COFF::header Header;
 
-  struct Section {
-    COFF::section Header;
-    std::vector<uint8_t> Data;
-    std::vector<COFF::relocation> Relocations;
-  };
-
-  struct Symbol {
-    COFF::symbol Header;
-    std::vector<uint8_t> AuxSymbols;
-  };
-
-  std::vector<Section> Sections;
-  std::vector<Symbol> Symbols;
   StringMap<unsigned> StringTableMap;
   std::string StringTable;
 };
@@ -277,17 +237,17 @@ static bool layoutCOFF(COFFParser &CP) {
 
   // The section table starts immediately after the header, including the
   // optional header.
-  SectionTableStart = sizeof(COFF::header) + CP.Header.SizeOfOptionalHeader;
-  SectionTableSize = sizeof(COFF::section) * CP.Sections.size();
+  SectionTableStart = sizeof(COFF::header) + CP.Obj.Header.SizeOfOptionalHeader;
+  SectionTableSize = sizeof(COFF::section) * CP.Obj.Sections.size();
 
   uint32_t CurrentSectionDataOffset = SectionTableStart + SectionTableSize;
 
   // Assign each section data address consecutively.
-  for (std::vector<COFFParser::Section>::iterator i = CP.Sections.begin(),
-                                                  e = CP.Sections.end();
-                                                  i != e; ++i) {
-    if (!i->Data.empty()) {
-      i->Header.SizeOfRawData = i->Data.size();
+  for (std::vector<COFFYAML::Section>::iterator i = CP.Obj.Sections.begin(),
+                                                e = CP.Obj.Sections.end();
+                                                i != e; ++i) {
+    if (!i->SectionData.empty()) {
+      i->Header.SizeOfRawData = i->SectionData.size()/2;
       i->Header.PointerToRawData = CurrentSectionDataOffset;
       CurrentSectionDataOffset += i->Header.SizeOfRawData;
       if (!i->Relocations.empty()) {
@@ -307,21 +267,22 @@ static bool layoutCOFF(COFFParser &CP) {
 
   // Calculate number of symbols.
   uint32_t NumberOfSymbols = 0;
-  for (std::vector<COFFParser::Symbol>::iterator i = CP.Symbols.begin(),
-                                                 e = CP.Symbols.end();
-                                                 i != e; ++i) {
-    if (i->AuxSymbols.size() % COFF::SymbolSize != 0) {
+  for (std::vector<COFFYAML::Symbol>::iterator i = CP.Obj.Symbols.begin(),
+                                               e = CP.Obj.Symbols.end();
+                                               i != e; ++i) {
+    unsigned AuxBytes = i->AuxillaryData.size() / 2;
+    if (AuxBytes % COFF::SymbolSize != 0) {
       errs() << "AuxillaryData size not a multiple of symbol size!\n";
       return false;
     }
-    i->Header.NumberOfAuxSymbols = i->AuxSymbols.size() / COFF::SymbolSize;
+    i->Header.NumberOfAuxSymbols = AuxBytes / COFF::SymbolSize;
     NumberOfSymbols += 1 + i->Header.NumberOfAuxSymbols;
   }
 
   // Store all the allocated start addresses in the header.
-  CP.Header.NumberOfSections = CP.Sections.size();
-  CP.Header.NumberOfSymbols = NumberOfSymbols;
-  CP.Header.PointerToSymbolTable = SymbolTableStart;
+  CP.Obj.Header.NumberOfSections = CP.Obj.Sections.size();
+  CP.Obj.Header.NumberOfSymbols = NumberOfSymbols;
+  CP.Obj.Header.PointerToSymbolTable = SymbolTableStart;
 
   *reinterpret_cast<support::ulittle32_t *>(&CP.StringTable[0])
     = CP.StringTable.size();
@@ -350,19 +311,19 @@ binary_le_impl<value_type> binary_le(value_type V) {
   return binary_le_impl<value_type>(V);
 }
 
-void writeCOFF(COFFParser &CP, raw_ostream &OS) {
-  OS << binary_le(CP.Header.Machine)
-     << binary_le(CP.Header.NumberOfSections)
-     << binary_le(CP.Header.TimeDateStamp)
-     << binary_le(CP.Header.PointerToSymbolTable)
-     << binary_le(CP.Header.NumberOfSymbols)
-     << binary_le(CP.Header.SizeOfOptionalHeader)
-     << binary_le(CP.Header.Characteristics);
+bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
+  OS << binary_le(CP.Obj.Header.Machine)
+     << binary_le(CP.Obj.Header.NumberOfSections)
+     << binary_le(CP.Obj.Header.TimeDateStamp)
+     << binary_le(CP.Obj.Header.PointerToSymbolTable)
+     << binary_le(CP.Obj.Header.NumberOfSymbols)
+     << binary_le(CP.Obj.Header.SizeOfOptionalHeader)
+     << binary_le(CP.Obj.Header.Characteristics);
 
   // Output section table.
-  for (std::vector<COFFParser::Section>::const_iterator i = CP.Sections.begin(),
-                                                        e = CP.Sections.end();
-                                                        i != e; ++i) {
+  for (std::vector<COFFYAML::Section>::iterator i = CP.Obj.Sections.begin(),
+                                                e = CP.Obj.Sections.end();
+                                                i != e; ++i) {
     OS.write(i->Header.Name, COFF::NameSize);
     OS << binary_le(i->Header.VirtualSize)
        << binary_le(i->Header.VirtualAddress)
@@ -376,11 +337,18 @@ void writeCOFF(COFFParser &CP, raw_ostream &OS) {
   }
 
   // Output section data.
-  for (std::vector<COFFParser::Section>::const_iterator i = CP.Sections.begin(),
-                                                        e = CP.Sections.end();
-                                                        i != e; ++i) {
-    if (!i->Data.empty())
-      OS.write(reinterpret_cast<const char*>(&i->Data[0]), i->Data.size());
+  for (std::vector<COFFYAML::Section>::iterator i = CP.Obj.Sections.begin(),
+                                                e = CP.Obj.Sections.end();
+                                                i != e; ++i) {
+    if (!i->SectionData.empty()) {
+      std::vector<uint8_t> Data;
+      if (!hexStringToByteArray(i->SectionData, Data)) {
+        errs() << "SectionData must be a collection of pairs of hex bytes";
+        return false;
+      }
+
+      OS.write(reinterpret_cast<const char*>(&Data[0]), Data.size());
+    }
     for (unsigned I2 = 0, E2 = i->Relocations.size(); I2 != E2; ++I2) {
       const COFF::relocation &R = i->Relocations[I2];
       OS << binary_le(R.VirtualAddress)
@@ -391,22 +359,30 @@ void writeCOFF(COFFParser &CP, raw_ostream &OS) {
 
   // Output symbol table.
 
-  for (std::vector<COFFParser::Symbol>::const_iterator i = CP.Symbols.begin(),
-                                                       e = CP.Symbols.end();
-                                                       i != e; ++i) {
+  for (std::vector<COFFYAML::Symbol>::const_iterator i = CP.Obj.Symbols.begin(),
+                                                     e = CP.Obj.Symbols.end();
+                                                     i != e; ++i) {
     OS.write(i->Header.Name, COFF::NameSize);
     OS << binary_le(i->Header.Value)
        << binary_le(i->Header.SectionNumber)
        << binary_le(i->Header.Type)
        << binary_le(i->Header.StorageClass)
        << binary_le(i->Header.NumberOfAuxSymbols);
-    if (!i->AuxSymbols.empty())
-      OS.write( reinterpret_cast<const char*>(&i->AuxSymbols[0])
-              , i->AuxSymbols.size());
+    if (!i->AuxillaryData.empty()) {
+      std::vector<uint8_t> AuxSymbols;
+      if (!hexStringToByteArray(i->AuxillaryData, AuxSymbols)) {
+        errs() << "AuxillaryData must be a collection of pairs of hex bytes";
+        return false;
+      }
+
+      OS.write(reinterpret_cast<const char*>(&AuxSymbols[0]),
+               AuxSymbols.size());
+    }
   }
 
   // Output string table.
   OS.write(&CP.StringTable[0], CP.StringTable.size());
+  return true;
 }
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(COFF::relocation)
@@ -627,15 +603,29 @@ struct ScalarEnumerationTraits<COFF::RelocationTypeX86> {
 
 template <>
 struct MappingTraits<COFFYAML::Symbol> {
+  struct NStorageClass {
+    NStorageClass(IO&) : StorageClass(COFF::SymbolStorageClass(0)) {
+    }
+    NStorageClass(IO&, uint8_t S) : StorageClass(COFF::SymbolStorageClass(S)) {
+    }
+    uint8_t denormalize(IO &) {
+      return StorageClass;
+    }
+
+    COFF::SymbolStorageClass StorageClass;
+  };
+
   static void mapping(IO &IO, COFFYAML::Symbol &S) {
+    MappingNormalization<NStorageClass, uint8_t> NS(IO, S.Header.StorageClass);
+
     IO.mapRequired("SimpleType", S.SimpleType);
-    IO.mapOptional("NumberOfAuxSymbols", S.NumberOfAuxSymbols);
+    IO.mapOptional("NumberOfAuxSymbols", S.Header.NumberOfAuxSymbols);
     IO.mapRequired("Name", S.Name);
-    IO.mapRequired("StorageClass", S.StorageClass);
+    IO.mapRequired("StorageClass", NS->StorageClass);
     IO.mapOptional("AuxillaryData", S.AuxillaryData); // FIXME: typo
     IO.mapRequired("ComplexType", S.ComplexType);
-    IO.mapRequired("Value", S.Value);
-    IO.mapRequired("SectionNumber", S.SectionNumber);
+    IO.mapRequired("Value", S.Header.Value);
+    IO.mapRequired("SectionNumber", S.Header.SectionNumber);
   }
 };
 
@@ -698,10 +688,24 @@ struct MappingTraits<COFF::relocation> {
 
 template <>
 struct MappingTraits<COFFYAML::Section> {
+  struct NCharacteristics {
+    NCharacteristics(IO &) : Characteristics(COFF::SectionCharacteristics(0)) {
+    }
+    NCharacteristics(IO &, uint32_t C) :
+      Characteristics(COFF::SectionCharacteristics(C)) {
+    }
+    uint32_t denormalize(IO &) {
+      return Characteristics;
+    }
+    COFF::SectionCharacteristics Characteristics;
+  };
+
   static void mapping(IO &IO, COFFYAML::Section &Sec) {
+    MappingNormalization<NCharacteristics, uint32_t> NC(IO,
+                                                    Sec.Header.Characteristics);
     IO.mapOptional("Relocations", Sec.Relocations);
     IO.mapRequired("SectionData", Sec.SectionData);
-    IO.mapRequired("Characteristics", Sec.Characteristics);
+    IO.mapRequired("Characteristics", NC->Characteristics);
     IO.mapRequired("Name", Sec.Name);
   }
 };
@@ -710,7 +714,7 @@ template <>
 struct MappingTraits<COFFYAML::Object> {
   static void mapping(IO &IO, COFFYAML::Object &Obj) {
     IO.mapRequired("sections", Obj.Sections);
-    IO.mapRequired("header", Obj.HeaderData);
+    IO.mapRequired("header", Obj.Header);
     IO.mapRequired("symbols", Obj.Symbols);
   }
 };
@@ -745,5 +749,8 @@ int main(int argc, char **argv) {
     errs() << "yaml2obj: Failed to layout COFF file!\n";
     return 1;
   }
-  writeCOFF(CP, outs());
+  if (!writeCOFF(CP, outs())) {
+    errs() << "yaml2obj: Failed to write COFF file!\n";
+    return 1;
+  }
 }
