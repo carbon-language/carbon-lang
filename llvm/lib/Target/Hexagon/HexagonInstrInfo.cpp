@@ -746,11 +746,6 @@ bool HexagonInstrInfo::isNewValueStore(const MachineInstr *MI) const {
     case Hexagon::STrib_abs_cdnPt_nv_V4:
     case Hexagon::STrib_abs_cNotPt_nv_V4:
     case Hexagon::STrib_abs_cdnNotPt_nv_V4:
-    case Hexagon::STrib_imm_abs_nv_V4:
-    case Hexagon::STrib_imm_abs_cPt_nv_V4:
-    case Hexagon::STrib_imm_abs_cdnPt_nv_V4:
-    case Hexagon::STrib_imm_abs_cNotPt_nv_V4:
-    case Hexagon::STrib_imm_abs_cdnNotPt_nv_V4:
 
     // Store Halfword
     case Hexagon::STrih_nv_V4:
@@ -784,11 +779,6 @@ bool HexagonInstrInfo::isNewValueStore(const MachineInstr *MI) const {
     case Hexagon::STrih_abs_cdnPt_nv_V4:
     case Hexagon::STrih_abs_cNotPt_nv_V4:
     case Hexagon::STrih_abs_cdnNotPt_nv_V4:
-    case Hexagon::STrih_imm_abs_nv_V4:
-    case Hexagon::STrih_imm_abs_cPt_nv_V4:
-    case Hexagon::STrih_imm_abs_cdnPt_nv_V4:
-    case Hexagon::STrih_imm_abs_cNotPt_nv_V4:
-    case Hexagon::STrih_imm_abs_cdnNotPt_nv_V4:
 
     // Store Word
     case Hexagon::STriw_nv_V4:
@@ -822,11 +812,6 @@ bool HexagonInstrInfo::isNewValueStore(const MachineInstr *MI) const {
     case Hexagon::STriw_abs_cdnPt_nv_V4:
     case Hexagon::STriw_abs_cNotPt_nv_V4:
     case Hexagon::STriw_abs_cdnNotPt_nv_V4:
-    case Hexagon::STriw_imm_abs_nv_V4:
-    case Hexagon::STriw_imm_abs_cPt_nv_V4:
-    case Hexagon::STriw_imm_abs_cdnPt_nv_V4:
-    case Hexagon::STriw_imm_abs_cNotPt_nv_V4:
-    case Hexagon::STriw_imm_abs_cdnNotPt_nv_V4:
       return true;
   }
 }
