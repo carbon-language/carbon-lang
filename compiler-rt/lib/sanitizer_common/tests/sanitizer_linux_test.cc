@@ -20,6 +20,7 @@
 
 #include <pthread.h>
 #include <sched.h>
+#include <stdlib.h>
 
 #include <algorithm>
 #include <vector>
@@ -183,6 +184,14 @@ TEST_F(ThreadListerTest, ResetMakesNewThreadsKnown) {
 
   std::vector<pid_t> threads_after_extra = ReadTidsToVector(&thread_lister);
   ASSERT_TRUE(HasElement(threads_after_extra, extra_tid));
+}
+
+TEST(SanitizerCommon, SetEnvTest) {
+  const char kEnvName[] = "ENV_FOO";
+  SetEnv(kEnvName, "value");
+  EXPECT_STREQ("value", getenv(kEnvName));
+  unsetenv(kEnvName);
+  EXPECT_EQ(0, getenv(kEnvName));
 }
 
 }  // namespace __sanitizer
