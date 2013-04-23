@@ -688,11 +688,47 @@ RegisterContext_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg_info
                                            const lldb_private::RegisterValue &value)
 {
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
-    if (IsAVX(reg))
-        return false;
+    if (IsGPR(reg)) {
+        ProcessMonitor &monitor = GetMonitor();
+        return monitor.WriteRegisterValue(m_thread.GetID(), GetRegOffset(reg), value);
+    }
 
-    ProcessMonitor &monitor = GetMonitor();
-    return monitor.WriteRegisterValue(m_thread.GetID(), GetRegOffset(reg), value);
+    if (IsFPR(reg)) {
+        // Note that lldb uses slightly different naming conventions from sys/user.h
+        switch (reg)
+        {
+        default:
+            return false;
+        case fpu_dp:
+            user.i387.dp = value.GetAsUInt64();
+            break;
+        case fpu_fcw:
+            user.i387.fcw = value.GetAsUInt16();
+            break;
+        case fpu_fsw:
+            user.i387.fsw = value.GetAsUInt16();
+            break;
+        case fpu_ip:
+            user.i387.ip = value.GetAsUInt64();
+            break;
+        case fpu_fop:
+            user.i387.fop = value.GetAsUInt16();
+            break;
+        case fpu_ftw:
+            user.i387.ftw = value.GetAsUInt16();
+            break;
+        case fpu_mxcsr:
+            user.i387.mxcsr = value.GetAsUInt32();
+            break;
+        case fpu_mxcsrmask:
+            user.i387.mxcsrmask = value.GetAsUInt32();
+            break;
+        }
+        if (WriteFPR()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool
