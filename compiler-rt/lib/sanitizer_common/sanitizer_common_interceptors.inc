@@ -492,7 +492,7 @@ INTERCEPTOR(int, clock_getres, u32 clk_id, void *tp) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, clock_getres, clk_id, tp);
   int res = REAL(clock_getres)(clk_id, tp);
-  if (!res) {
+  if (!res && tp) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, tp, struct_timespec_sz);
   }
   return res;

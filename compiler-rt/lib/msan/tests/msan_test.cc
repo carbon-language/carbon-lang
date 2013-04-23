@@ -880,6 +880,18 @@ TEST(MemorySanitizer, clock_gettime) {
   EXPECT_NOT_POISONED(tp.tv_nsec);
 }
 
+TEST(MemorySanitizer, clock_getres) {
+  struct timespec tp;
+  EXPECT_POISONED(tp.tv_sec);
+  EXPECT_POISONED(tp.tv_nsec);
+  assert(0 == clock_getres(CLOCK_REALTIME, 0));
+  EXPECT_POISONED(tp.tv_sec);
+  EXPECT_POISONED(tp.tv_nsec);
+  assert(0 == clock_getres(CLOCK_REALTIME, &tp));
+  EXPECT_NOT_POISONED(tp.tv_sec);
+  EXPECT_NOT_POISONED(tp.tv_nsec);
+}
+
 TEST(MemorySanitizer, getitimer) {
   struct itimerval it1, it2;
   int res;
