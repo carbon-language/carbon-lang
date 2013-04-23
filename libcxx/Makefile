@@ -1,5 +1,5 @@
 ##
-# libcpp Makefile
+# libc++ Makefile
 ##
 
 SRCDIRS = .
