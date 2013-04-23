@@ -15,6 +15,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #if LLVM_ENABLE_ZLIB == 1 && HAVE_ZLIB_H
@@ -55,9 +56,12 @@ zlib::Status zlib::compress(StringRef InputBuffer,
   Status Res = encodeZlibReturnValue(::compress2(
       (Bytef *)TmpBuffer.get(), &CompressedSize,
       (const Bytef *)InputBuffer.data(), InputBuffer.size(), CLevel));
-  if (Res == StatusOK)
+  if (Res == StatusOK) {
     CompressedBuffer.reset(MemoryBuffer::getMemBufferCopy(
         StringRef(TmpBuffer.get(), CompressedSize)));
+    // Tell MSan that memory initialized by zlib is valid.
+    __msan_unpoison(CompressedBuffer.data(), CompressedBuffer.size());
+  }
   return Res;
 }
 
@@ -68,9 +72,12 @@ zlib::Status zlib::uncompress(StringRef InputBuffer,
   Status Res = encodeZlibReturnValue(
       ::uncompress((Bytef *)TmpBuffer.get(), (uLongf *)&UncompressedSize,
                    (const Bytef *)InputBuffer.data(), InputBuffer.size()));
-  if (Res == StatusOK)
+  if (Res == StatusOK) {
     UncompressedBuffer.reset(MemoryBuffer::getMemBufferCopy(
         StringRef(TmpBuffer.get(), UncompressedSize)));
+    // Tell MSan that memory initialized by zlib is valid.
+    __msan_unpoison(UncompressedBuffer.data(), UncompressedBuffer.size());
+  }
   return Res;
 }
 
