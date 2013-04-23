@@ -105,6 +105,10 @@ namespace llvm {
     MachineBasicBlock::iterator RegionEnd;
 
     /// The index in BB of RegionEnd.
+    ///
+    /// This is the instruction number from the top of the current block, not
+    /// the SlotIndex. It is only used by the AntiDepBreaker and should be
+    /// removed once that client is obsolete.
     unsigned EndIndex;
 
     /// After calling BuildSchedGraph, each machine instruction in the current
