@@ -255,8 +255,6 @@ m_data_32(NULL),
 m_data_64(NULL),
 m_pair_type()
 {
-    if (valobj_sp)
-        Update();
 }
 
 lldb_private::formatters::NSDictionaryISyntheticFrontEnd::~NSDictionaryISyntheticFrontEnd ()
@@ -297,23 +295,15 @@ lldb_private::formatters::NSDictionaryISyntheticFrontEnd::Update()
     ValueObjectSP valobj_sp = m_backend.GetSP();
     if (!valobj_sp)
         return false;
-    if (!valobj_sp)
-        return false;
     m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
     Error error;
-    if (valobj_sp->IsPointerType())
-    {
-        valobj_sp = valobj_sp->Dereference(error);
-        if (error.Fail() || !valobj_sp)
-            return false;
-    }
     error.Clear();
     lldb::ProcessSP process_sp(valobj_sp->GetProcessSP());
     if (!process_sp)
         return false;
     m_ptr_size = process_sp->GetAddressByteSize();
     m_order = process_sp->GetByteOrder();
-    uint64_t data_location = valobj_sp->GetAddressOf() + m_ptr_size;
+    uint64_t data_location = valobj_sp->GetValueAsUnsigned(0) + m_ptr_size;
     if (m_ptr_size == 4)
     {
         m_data_32 = new DataDescriptor_32();
@@ -427,8 +417,6 @@ m_data_32(NULL),
 m_data_64(NULL),
 m_pair_type()
 {
-    if (valobj_sp)
-        Update ();
 }
 
 lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::~NSDictionaryMSyntheticFrontEnd ()
@@ -469,23 +457,15 @@ lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::Update()
     m_data_64 = NULL;
     if (!valobj_sp)
         return false;
-    if (!valobj_sp)
-        return false;
     m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
     Error error;
-    if (valobj_sp->IsPointerType())
-    {
-        valobj_sp = valobj_sp->Dereference(error);
-        if (error.Fail() || !valobj_sp)
-            return false;
-    }
     error.Clear();
     lldb::ProcessSP process_sp(valobj_sp->GetProcessSP());
     if (!process_sp)
         return false;
     m_ptr_size = process_sp->GetAddressByteSize();
     m_order = process_sp->GetByteOrder();
-    uint64_t data_location = valobj_sp->GetAddressOf() + m_ptr_size;
+    uint64_t data_location = valobj_sp->GetValueAsUnsigned(0) + m_ptr_size;
     if (m_ptr_size == 4)
     {
         m_data_32 = new DataDescriptor_32();
