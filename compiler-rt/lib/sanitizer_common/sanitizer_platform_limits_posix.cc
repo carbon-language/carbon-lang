@@ -20,6 +20,7 @@
 #include "sanitizer_platform_limits_posix.h"
 
 #include <dirent.h>
+#include <grp.h>
 #include <pthread.h>
 #include <pwd.h>
 #include <signal.h>
@@ -47,6 +48,7 @@ namespace __sanitizer {
   unsigned struct_rusage_sz = sizeof(struct rusage);
   unsigned struct_tm_sz = sizeof(struct tm);
   unsigned struct_passwd_sz = sizeof(struct passwd);
+  unsigned struct_group_sz = sizeof(struct group);
   unsigned siginfo_t_sz = sizeof(siginfo_t);
   unsigned struct_sigaction_sz = sizeof(struct sigaction);
   unsigned struct_itimerval_sz = sizeof(struct itimerval);

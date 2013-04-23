@@ -24,6 +24,7 @@ namespace __sanitizer {
   extern unsigned struct_rusage_sz;
   extern unsigned struct_tm_sz;
   extern unsigned struct_passwd_sz;
+  extern unsigned struct_group_sz;
   extern unsigned struct_sigaction_sz;
   extern unsigned siginfo_t_sz;
   extern unsigned struct_itimerval_sz;

@@ -27,6 +27,7 @@
 #include <math.h>
 
 #include <dlfcn.h>
+#include <grp.h>
 #include <unistd.h>
 #include <limits.h>
 #include <sys/time.h>
@@ -1676,6 +1677,18 @@ TEST(MemorySanitizer, getpwnam_r_positive) {
   char buf[10000];
   int res;
   EXPECT_UMR(res = getpwnam_r(s, &pwd, buf, sizeof(buf), &pwdres));
+}
+
+TEST(MemorySanitizer, getgrnam_r) {
+  struct group grp;
+  struct group *grpres;
+  char buf[10000];
+  int res = getgrnam_r("root", &grp, buf, sizeof(buf), &grpres);
+  assert(!res);
+  EXPECT_NOT_POISONED(grp.gr_name);
+  assert(grp.gr_name);
+  EXPECT_NOT_POISONED(grp.gr_name[0]);
+  EXPECT_NOT_POISONED(grp.gr_gid);
 }
 
 template<class T>

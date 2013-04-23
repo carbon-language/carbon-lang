@@ -289,8 +289,12 @@ void StatOutput(u64 *stat) {
   name[StatInt_frexpl]                   = "  frexpl                          ";
   name[StatInt_getpwnam]                 = "  getpwnam                        ";
   name[StatInt_getpwuid]                 = "  getpwuid                        ";
+  name[StatInt_getgrnam]                 = "  getgrnam                        ";
+  name[StatInt_getgrgid]                 = "  getgrgid                        ";
   name[StatInt_getpwnam_r]               = "  getpwnam_r                      ";
   name[StatInt_getpwuid_r]               = "  getpwuid_r                      ";
+  name[StatInt_getgrnam_r]               = "  getgrnam_r                      ";
+  name[StatInt_getgrgid_r]               = "  getgrgid_r                      ";
   name[StatInt_clock_getres]             = "  clock_getres                    ";
   name[StatInt_clock_gettime]            = "  clock_gettime                   ";
   name[StatInt_clock_settime]            = "  clock_settime                   ";

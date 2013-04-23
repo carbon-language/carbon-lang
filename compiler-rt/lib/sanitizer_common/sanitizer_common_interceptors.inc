@@ -429,7 +429,7 @@ SCANF_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
 #define INIT_SCANF
 #endif
 
-#if SANITIZER_INTERCEPT_GETPWNAM_GETPWUID
+#if SANITIZER_INTERCEPT_GETPWNAM_AND_FRIENDS
 INTERCEPTOR(void *, getpwnam, const char *name) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getpwnam, name);
@@ -447,15 +447,34 @@ INTERCEPTOR(void *, getpwuid, u32 uid) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_passwd_sz);
   return res;
 }
-#define INIT_GETPWNAM_GETPWUID                  \
-  INTERCEPT_FUNCTION(getpwnam);                 \
-  INTERCEPT_FUNCTION(getpwuid);
+INTERCEPTOR(void *, getgrnam, const char *name) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getgrnam, name);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, name, REAL(strlen)(name) + 1);
+  void *res = REAL(getgrnam)(name);
+  if (res != 0)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_group_sz);
+  return res;
+}
+INTERCEPTOR(void *, getgrgid, u32 gid) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getgrgid, gid);
+  void *res = REAL(getgrgid)(gid);
+  if (res != 0)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_group_sz);
+  return res;
+}
+#define INIT_GETPWNAM_AND_FRIENDS                  \
+  INTERCEPT_FUNCTION(getpwnam);                    \
+  INTERCEPT_FUNCTION(getpwuid);                    \
+  INTERCEPT_FUNCTION(getgrnam);                    \
+  INTERCEPT_FUNCTION(getgrgid);
 #else
-#define INIT_GETPWNAM_GETPWUID
+#define INIT_GETPWNAM_AND_FRIENDS
 #endif
 
 
-#if SANITIZER_INTERCEPT_GETPWNAM_R_GETPWUID_R
+#if SANITIZER_INTERCEPT_GETPWNAM_R_AND_FRIENDS
 INTERCEPTOR(int, getpwnam_r, const char *name, void *pwd,
     char *buf, SIZE_T buflen, void **result) {
   void *ctx;
@@ -479,11 +498,36 @@ INTERCEPTOR(int, getpwuid_r, u32 uid, void *pwd,
   }
   return res;
 }
-#define INIT_GETPWNAM_R_GETPWUID_R                \
-  INTERCEPT_FUNCTION(getpwnam_r);                 \
-  INTERCEPT_FUNCTION(getpwuid_r);
+INTERCEPTOR(int, getgrnam_r, const char *name, void *grp,
+    char *buf, SIZE_T buflen, void **result) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getgrnam_r, name, grp, buf, buflen, result);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, name, REAL(strlen)(name) + 1);
+  int res = REAL(getgrnam_r)(name, grp, buf, buflen, result);
+  if (!res) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, grp, struct_group_sz);
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
+  }
+  return res;
+}
+INTERCEPTOR(int, getgrgid_r, u32 gid, void *grp,
+    char *buf, SIZE_T buflen, void **result) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getgrgid_r, gid, grp, buf, buflen, result);
+  int res = REAL(getgrgid_r)(gid, grp, buf, buflen, result);
+  if (!res) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, grp, struct_group_sz);
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
+  }
+  return res;
+}
+#define INIT_GETPWNAM_R_AND_FRIENDS                \
+  INTERCEPT_FUNCTION(getpwnam_r);                  \
+  INTERCEPT_FUNCTION(getpwuid_r);                  \
+  INTERCEPT_FUNCTION(getgrnam_r);                  \
+  INTERCEPT_FUNCTION(getgrgid_r);
 #else
-#define INIT_GETPWNAM_R_GETPWUID_R
+#define INIT_GETPWNAM_R_AND_FRIENDS
 #endif
 
 
@@ -667,8 +711,8 @@ INTERCEPTOR(int, wait4, int pid, int *status, int options, void *rusage) {
   INIT_SCANF;                                                                  \
   INIT_FREXP;                                                                  \
   INIT_FREXPF_FREXPL;                                                          \
-  INIT_GETPWNAM_GETPWUID;                                                      \
-  INIT_GETPWNAM_R_GETPWUID_R;                                                  \
+  INIT_GETPWNAM_AND_FRIENDS;                                                   \
+  INIT_GETPWNAM_R_AND_FRIENDS;                                                 \
   INIT_CLOCK_GETTIME;                                                          \
   INIT_GETITIMER;                                                              \
   INIT_TIME;                                                                   \
