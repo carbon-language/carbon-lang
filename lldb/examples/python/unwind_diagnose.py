@@ -1,49 +1,13 @@
-#!/usr/bin/python
-
-# This implements the unwind-diagnose command, usually installed in the debug session like
+# This implements the "unwind-diagnose" command, usually installed in the debug session like
 #   script import lldb.macosx
 # it is used when lldb's backtrace fails -- it collects and prints information about the stack frames,
 # and tries an alternate unwind algorithm, that will help to understand why lldb's unwind algorithm did
 # not succeed.
 
-import commands
 import optparse
-import os
-import platform
+import lldb
 import re
 import shlex
-import sys
-
-try: 
-    # Just try for LLDB in case PYTHONPATH is already correctly setup
-    import lldb
-except ImportError:
-    lldb_python_dirs = list()
-    # lldb is not in the PYTHONPATH, try some defaults for the current platform
-    platform_system = platform.system()
-    if platform_system == 'Darwin':
-        # On Darwin, try the currently selected Xcode directory
-        xcode_dir = commands.getoutput("xcode-select --print-path")
-        if xcode_dir:
-            lldb_python_dirs.append(os.path.realpath(xcode_dir + '/../SharedFrameworks/LLDB.framework/Resources/Python'))
-            lldb_python_dirs.append(xcode_dir + '/Library/PrivateFrameworks/LLDB.framework/Resources/Python')
-        lldb_python_dirs.append('/System/Library/PrivateFrameworks/LLDB.framework/Resources/Python')
-    success = False
-    for lldb_python_dir in lldb_python_dirs:
-        if os.path.exists(lldb_python_dir):
-            if not (sys.path.__contains__(lldb_python_dir)):
-                sys.path.append(lldb_python_dir)
-                try: 
-                    import lldb
-                except ImportError:
-                    pass
-                else:
-                    print 'imported lldb from: "%s"' % (lldb_python_dir)
-                    success = True
-                    break
-    if not success:
-        print "error: couldn't locate the 'lldb' module, please set PYTHONPATH correctly"
-        sys.exit(1)
 
 # Print the frame number, pc, frame pointer, module UUID and function name
 def backtrace_print_frame (target, frame_num, addr, fp):
@@ -134,13 +98,13 @@ def unwind_diagnose(debugger, command, result, dict):
     if process:
       thread = process.GetSelectedThread()
       if thread:
-        lldb_versions_match = re.search(r'lldb-(\d+)([.](\d+))?([.](\d+))?', debugger.GetVersionString())
+        lldb_versions_match = re.search(r'[lL][lL][dD][bB]-(\d+)([.](\d+))?([.](\d+))?', debugger.GetVersionString())
         lldb_version = 0
         lldb_minor = 0
-        if len(lldb_versions_match.groups()) >= 1:
-          lldb_major = lldb_versions_match.groups(1)
-        if len(lldb_versions_match.groups()) >= 5:
-          lldb_minor = lldb_versions_match.groups(5)
+        if len(lldb_versions_match.groups()) >= 1 and lldb_versions_match.groups()[0]:
+          lldb_major = int(lldb_versions_match.groups()[0])
+        if len(lldb_versions_match.groups()) >= 5 and lldb_versions_match.groups()[4]:
+          lldb_minor = int(lldb_versions_match.groups()[4])
 
         print 'Unwind diagnostics for thread %d' % thread.GetIndexID()
         print ""
@@ -193,8 +157,6 @@ def create_unwind_diagnose_options():
   parser = optparse.OptionParser(description=description, prog='unwind_diagnose',usage=usage)
   return parser
 
-if __name__ == '__main__':
-    print 'This is not meant to be run from the command line, import it into lldb with a command like "script import lldb.macosx"'
-elif getattr(lldb, 'debugger', None):
-    lldb.debugger.HandleCommand('command script add -f lldb.macosx.unwind_diagnose.unwind_diagnose unwind-diagnose')
-    print 'The "unwind-diagnose" command has been installed, type "help unwind-diagnose" for detailed help.'
+#def __lldb_init_module (debugger, dict):
+lldb.debugger.HandleCommand('command script add -f %s.unwind_diagnose unwind-diagnose' % __name__)
+print 'The "unwind-diagnose" command has been installed, type "help unwind-diagnose" for detailed help.'
