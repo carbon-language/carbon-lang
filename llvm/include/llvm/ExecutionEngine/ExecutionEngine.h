@@ -42,6 +42,7 @@ class JITMemoryManager;
 class MachineCodeInfo;
 class Module;
 class MutexGuard;
+class ObjectCache;
 class DataLayout;
 class Triple;
 class Type;
@@ -370,6 +371,12 @@ public:
   /// which case these functions do nothing.
   virtual void RegisterJITEventListener(JITEventListener *) {}
   virtual void UnregisterJITEventListener(JITEventListener *) {}
+
+  /// Sets the pre-compiled object cache.  The ownership of the ObjectCache is
+  /// not changed.  Supported by MCJIT by not JIT.
+  virtual void setObjectCache(ObjectCache *) {
+    llvm_unreachable("No support for an object cache");
+  }
 
   /// DisableLazyCompilation - When lazy compilation is off (the default), the
   /// JIT will eagerly compile every function reachable from the argument to
