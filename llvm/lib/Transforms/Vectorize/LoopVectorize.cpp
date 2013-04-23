@@ -1085,10 +1085,10 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
   // Create a new entry in the WidenMap and initialize it to Undef or Null.
   VectorParts &VecResults = WidenMap.splat(Instr, UndefVec);
 
-  // For each scalar that we create:
-  for (unsigned Width = 0; Width < VF; ++Width) {
-    // For each vector unroll 'part':
-    for (unsigned Part = 0; Part < UF; ++Part) {
+  // For each vector unroll 'part':
+  for (unsigned Part = 0; Part < UF; ++Part) {
+    // For each scalar that we create:
+    for (unsigned Width = 0; Width < VF; ++Width) {
       Instruction *Cloned = Instr->clone();
       if (!IsVoidRetTy)
         Cloned->setName(Instr->getName() + ".cloned");
