@@ -23,7 +23,7 @@
 
 using namespace llvm;
 
-#if LLVM_ENABLE_ZLIB == 1
+#if LLVM_ENABLE_ZLIB == 1 && HAVE_LIBZ
 static int encodeZlibCompressionLevel(zlib::CompressionLevel Level) {
   switch (Level) {
     case zlib::NoCompression: return 0;

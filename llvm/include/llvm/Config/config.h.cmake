@@ -230,6 +230,9 @@
 /* Define to 1 if you have the `udis86' library (-ludis86). */
 #undef HAVE_LIBUDIS86
 
+/* Define to 1 if you have the 'z' library (-lz). */
+#cmakedefine HAVE_LIBZ ${HAVE_LIBZ}
+
 /* Define to 1 if you have the <limits.h> header file. */
 #cmakedefine HAVE_LIMITS_H ${HAVE_LIMITS_H}
 

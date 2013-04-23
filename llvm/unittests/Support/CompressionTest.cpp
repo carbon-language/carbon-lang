@@ -22,7 +22,7 @@ using namespace llvm;
 
 namespace {
 
-#if LLVM_ENABLE_ZLIB == 1
+#if LLVM_ENABLE_ZLIB == 1 && HAVE_LIBZ
 
 void TestZlibCompression(StringRef Input, zlib::CompressionLevel Level) {
   OwningPtr<MemoryBuffer> Compressed;
