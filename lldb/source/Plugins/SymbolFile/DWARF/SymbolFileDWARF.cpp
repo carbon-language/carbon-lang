@@ -1273,15 +1273,26 @@ SymbolFileDWARF::ParseTemplateDIE (DWARFCompileUnit* dwarf_cu,
                     }
                 }
                 
-                if (name && lldb_type && clang_type)
+                clang::ASTContext *ast = GetClangASTContext().getASTContext();
+                if (!clang_type)
+                    clang_type = ast->VoidTy.getAsOpaquePtr();
+
+                if (clang_type)
                 {
                     bool is_signed = false;
-                    template_param_infos.names.push_back(name);
+                    if (name && name[0])
+                        template_param_infos.names.push_back(name);
+                    else
+                        template_param_infos.names.push_back(NULL);
+    
                     clang::QualType clang_qual_type (clang::QualType::getFromOpaquePtr (clang_type));
-                    if (tag == DW_TAG_template_value_parameter && ClangASTContext::IsIntegerType (clang_type, is_signed) && uval64_valid)
+                    if (tag == DW_TAG_template_value_parameter &&
+                        lldb_type != NULL &&
+                        ClangASTContext::IsIntegerType (clang_type, is_signed) &&
+                        uval64_valid)
                     {
                         llvm::APInt apint (lldb_type->GetByteSize() * 8, uval64, is_signed);
-                        template_param_infos.args.push_back (clang::TemplateArgument (*GetClangASTContext().getASTContext(),
+                        template_param_infos.args.push_back (clang::TemplateArgument (*ast,
                                                                                       llvm::APSInt(apint),
                                                                                       clang_qual_type));
                     }

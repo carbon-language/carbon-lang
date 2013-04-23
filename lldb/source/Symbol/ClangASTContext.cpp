@@ -1193,6 +1193,10 @@ CreateTemplateParameterList (ASTContext *ast,
     for (size_t i=0; i<num_template_params; ++i)
     {
         const char *name = template_param_infos.names[i];
+        
+        IdentifierInfo *identifier_info = NULL;
+        if (name && name[0])
+            identifier_info = &ast->Idents.get(name);
         if (template_param_infos.args[i].getKind() == TemplateArgument::Integral)
         {
             template_param_decls.push_back (NonTypeTemplateParmDecl::Create (*ast,
@@ -1201,7 +1205,7 @@ CreateTemplateParameterList (ASTContext *ast,
                                                                              SourceLocation(), 
                                                                              depth, 
                                                                              i,
-                                                                             &ast->Idents.get(name), 
+                                                                             identifier_info,
                                                                              template_param_infos.args[i].getIntegralType(), 
                                                                              parameter_pack, 
                                                                              NULL));
@@ -1215,7 +1219,7 @@ CreateTemplateParameterList (ASTContext *ast,
                                                                           SourceLocation(),
                                                                           depth, 
                                                                           i,
-                                                                          &ast->Idents.get(name), 
+                                                                          identifier_info,
                                                                           is_typename,
                                                                           parameter_pack));
         }
