@@ -348,7 +348,7 @@ typedef enum {
   LLVMLocalExecTLSModel
 } LLVMThreadLocalMode;
 
-enum LLVMAtomicOrdering {
+typedef enum {
   LLVMAtomicOrderingNotAtomic = 0, /**< A load or store which is not atomic */
   LLVMAtomicOrderingUnordered = 1, /**< Lowest level of atomicity, guarantees
                                      somewhat sane results, lock free. */
@@ -373,9 +373,9 @@ enum LLVMAtomicOrdering {
                                                  between all 
                                                  SequentiallyConsistent 
                                                  operations. */
-};
+} LLVMAtomicOrdering;
 
-enum LLVMAtomicRMWBinOp {
+typedef enum {
     LLVMAtomicRMWBinOpXchg, /**< Set the new value and return the one old */
     LLVMAtomicRMWBinOpAdd, /**< Add a value and return the old one */
     LLVMAtomicRMWBinOpSub, /**< Subtract a value and return the old one */
@@ -395,7 +395,7 @@ enum LLVMAtomicRMWBinOp {
     LLVMAtomicRMWBinOpUMin /**< Sets the value if it's greater than the
                              original using an unsigned comparison  and return 
                              the old one */
-};
+} LLVMAtomicRMWBinOp;
 
 /**
  * @}
