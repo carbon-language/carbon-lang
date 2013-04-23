@@ -2755,6 +2755,7 @@ def : Pat<(store (i64 DoubleRegs:$src1),
 // mem[bhwd](#global)=Rt
 // if ([!]Pv[.new]) mem[bhwd](##global) = Rt
 //===----------------------------------------------------------------------===//
+let mayStore = 1, isNVStorable = 1 in
 multiclass ST_GP<string mnemonic, string BaseOp, RegisterClass RC> {
   let BaseOpcode = BaseOp, isPredicable = 1 in
   def NAME#_V4 : STInst2<(outs),
@@ -2789,15 +2790,16 @@ multiclass ST_GP_nv<string mnemonic, string BaseOp, RegisterClass RC> {
   }
 }
 
-let validSubTargets = HasV4SubT,  validSubTargets = HasV4SubT in {
-defm STd_GP : ST_GP <"memd", "STd_GP", DoubleRegs>,
-              ST_GP_nv<"memd", "STd_GP", DoubleRegs>, NewValueRel ;
-defm STb_GP : ST_GP<"memb",  "STb_GP", IntRegs>,
-              ST_GP_nv<"memb", "STb_GP", IntRegs>, NewValueRel ;
-defm STh_GP : ST_GP<"memh",  "STh_GP", IntRegs>,
-              ST_GP_nv<"memh", "STh_GP", IntRegs>, NewValueRel ;
-defm STw_GP : ST_GP<"memw",  "STw_GP", IntRegs>,
-              ST_GP_nv<"memw", "STw_GP", IntRegs>, NewValueRel ;
+let validSubTargets = HasV4SubT, neverHasSideEffects = 1 in {
+  let isNVStorable = 0 in
+  defm STd_GP : ST_GP <"memd", "STd_GP", DoubleRegs>, PredNewRel;
+
+  defm STb_GP : ST_GP<"memb",  "STb_GP", IntRegs>,
+                ST_GP_nv<"memb", "STb_GP", IntRegs>, NewValueRel;
+  defm STh_GP : ST_GP<"memh",  "STh_GP", IntRegs>,
+                ST_GP_nv<"memh", "STh_GP", IntRegs>, NewValueRel;
+  defm STw_GP : ST_GP<"memw",  "STw_GP", IntRegs>,
+                ST_GP_nv<"memw", "STw_GP", IntRegs>, NewValueRel;
 }
 
 // 64 bit atomic store
@@ -2942,12 +2944,12 @@ multiclass LD_GP<string mnemonic, string BaseOp, RegisterClass RC> {
   }
 }
 
-defm LDd_GP  : LD_GP<"memd",  "LDd_GP",  DoubleRegs>;
-defm LDb_GP  : LD_GP<"memb",  "LDb_GP",  IntRegs>;
-defm LDub_GP : LD_GP<"memub", "LDub_GP", IntRegs>;
-defm LDh_GP  : LD_GP<"memh",  "LDh_GP",  IntRegs>;
-defm LDuh_GP : LD_GP<"memuh", "LDuh_GP", IntRegs>;
-defm LDw_GP  : LD_GP<"memw",  "LDw_GP",  IntRegs>;
+defm LDd_GP  : LD_GP<"memd",  "LDd_GP",  DoubleRegs>, PredNewRel;
+defm LDb_GP  : LD_GP<"memb",  "LDb_GP",  IntRegs>, PredNewRel;
+defm LDub_GP : LD_GP<"memub", "LDub_GP", IntRegs>, PredNewRel;
+defm LDh_GP  : LD_GP<"memh",  "LDh_GP",  IntRegs>, PredNewRel;
+defm LDuh_GP : LD_GP<"memuh", "LDuh_GP", IntRegs>, PredNewRel;
+defm LDw_GP  : LD_GP<"memw",  "LDw_GP",  IntRegs>, PredNewRel;
 
 def : Pat <(atomic_load_64 (HexagonCONST32_GP tglobaladdr:$global)),
            (i64 (LDd_GP_V4 tglobaladdr:$global))>;
