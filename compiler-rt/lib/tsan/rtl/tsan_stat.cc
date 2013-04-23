@@ -308,6 +308,8 @@ void StatOutput(u64 *stat) {
   name[StatInt_waitpid]                  = "  waitpid                         ";
   name[StatInt_wait3]                    = "  wait3                           ";
   name[StatInt_wait4]                    = "  wait4                           ";
+  name[StatInt_inet_ntop]                = "  inet_ntop                       ";
+  name[StatInt_inet_pton]                = "  inet_pton                       ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

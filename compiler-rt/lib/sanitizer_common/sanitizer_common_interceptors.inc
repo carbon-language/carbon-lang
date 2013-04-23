@@ -696,6 +696,36 @@ INTERCEPTOR(int, wait4, int pid, int *status, int options, void *rusage) {
 #define INIT_WAIT
 #endif
 
+#if SANITIZER_INTERCEPT_INET
+INTERCEPTOR(char *, inet_ntop, int af, const void *src, char *dst, u32 size) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, inet_ntop, af, src, dst, size);
+  uptr sz = __sanitizer_in_addr_sz(af);
+  if (sz) COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sz);
+  // FIXME: figure out read size based on the address family.
+  char *res = REAL(inet_ntop)(af, src, dst, size);
+  if (res)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  return res;
+}
+INTERCEPTOR(int, inet_pton, int af, const char *src, void *dst) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, inet_pton, af, src, dst);
+  // FIXME: figure out read size based on the address family.
+  int res = REAL(inet_pton)(af, src, dst);
+  if (res == 1) {
+    uptr sz = __sanitizer_in_addr_sz(af);
+    if (sz) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, sz);
+  }
+  return res;
+}
+#define INIT_INET                                \
+  INTERCEPT_FUNCTION(inet_ntop);                 \
+  INTERCEPT_FUNCTION(inet_pton);
+#else
+#define INIT_INET
+#endif
+
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT                                     \
   INIT_STRCASECMP;                                                             \
@@ -717,4 +747,5 @@ INTERCEPTOR(int, wait4, int pid, int *status, int options, void *rusage) {
   INIT_GETITIMER;                                                              \
   INIT_TIME;                                                                   \
   INIT_GLOB;                                                                   \
-  INIT_WAIT;
+  INIT_WAIT;                                                                   \
+  INIT_INET;

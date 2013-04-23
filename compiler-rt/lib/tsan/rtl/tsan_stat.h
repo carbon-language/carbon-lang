@@ -303,6 +303,8 @@ enum StatType {
   StatInt_waitpid,
   StatInt_wait3,
   StatInt_wait4,
+  StatInt_inet_ntop,
+  StatInt_inet_pton,
 
   // Dynamic annotations.
   StatAnnotation,

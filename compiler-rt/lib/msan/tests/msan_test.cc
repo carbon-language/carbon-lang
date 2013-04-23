@@ -26,6 +26,7 @@
 #include <wchar.h>
 #include <math.h>
 
+#include <arpa/inet.h>
 #include <dlfcn.h>
 #include <grp.h>
 #include <unistd.h>
@@ -1634,6 +1635,21 @@ TEST(MemorySanitizer, posix_memalign) {
   ASSERT_EQ(0, res);
   EXPECT_NOT_POISONED(p);
   free(p);
+}
+
+TEST(MemorySanitizer, inet_pton) {
+  const char *s = "1:0:0:0:0:0:0:8";
+  unsigned char buf[sizeof(struct in6_addr)];
+  int res = inet_pton(AF_INET6, s, buf);
+  ASSERT_EQ(1, res);
+  EXPECT_NOT_POISONED(buf[0]);
+  EXPECT_NOT_POISONED(buf[sizeof(struct in6_addr) - 1]);
+
+  char s_out[INET6_ADDRSTRLEN];
+  EXPECT_POISONED(s_out[3]);
+  const char *q = inet_ntop(AF_INET6, buf, s_out, INET6_ADDRSTRLEN);
+  ASSERT_NE((void*)0, q);
+  EXPECT_NOT_POISONED(s_out[3]);
 }
 
 TEST(MemorySanitizer, uname) {

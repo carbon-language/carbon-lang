@@ -72,6 +72,8 @@ namespace __sanitizer {
 
   extern uptr sig_ign;
   extern uptr sig_dfl;
+
+  uptr __sanitizer_in_addr_sz(int af);
 }  // namespace __sanitizer
 
 #endif

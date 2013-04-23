@@ -19,6 +19,7 @@
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_platform_limits_posix.h"
 
+#include <arpa/inet.h>
 #include <dirent.h>
 #include <grp.h>
 #include <pthread.h>
@@ -104,6 +105,15 @@ namespace __sanitizer {
   bool __sanitizer_get_sigaction_sa_siginfo(void *act) {
     struct sigaction *a = (struct sigaction *)act;
     return a->sa_flags & SA_SIGINFO;
+  }
+
+  uptr __sanitizer_in_addr_sz(int af) {
+    if (af == AF_INET)
+      return sizeof(struct in_addr);
+    else if (af == AF_INET6)
+      return sizeof(struct in6_addr);
+    else
+      return 0;
   }
 }  // namespace __sanitizer
 
