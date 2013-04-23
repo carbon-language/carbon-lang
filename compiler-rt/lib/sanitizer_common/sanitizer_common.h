@@ -130,7 +130,6 @@ void DisableCoreDumper();
 void DumpProcessMap();
 bool FileExists(const char *filename);
 const char *GetEnv(const char *name);
-bool SetEnv(const char *name, const char *value);
 const char *GetPwd();
 u32 GetUid();
 void ReExec();
