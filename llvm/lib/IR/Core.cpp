@@ -2391,6 +2391,42 @@ LLVMValueRef LLVMBuildPtrDiff(LLVMBuilderRef B, LLVMValueRef LHS,
   return wrap(unwrap(B)->CreatePtrDiff(unwrap(LHS), unwrap(RHS), Name));
 }
 
+LLVMValueRef LLVMBuildAtomicRMW(LLVMBuilderRef B,LLVMAtomicRMWBinOp op, 
+                               LLVMValueRef PTR, LLVMValueRef Val, 
+                               LLVMAtomicOrdering ordering, 
+                               LLVMBool singleThread) {
+  AtomicRMWInst::BinOp intop;
+  switch (op) {
+    case LLVMAtomicRMWBinOpXchg: intop = AtomicRMWInst::Xchg; break;
+    case LLVMAtomicRMWBinOpAdd: intop = AtomicRMWInst::Add; break;
+    case LLVMAtomicRMWBinOpSub: intop = AtomicRMWInst::Sub; break;
+    case LLVMAtomicRMWBinOpAnd: intop = AtomicRMWInst::And; break;
+    case LLVMAtomicRMWBinOpNand: intop = AtomicRMWInst::Nand; break;
+    case LLVMAtomicRMWBinOpOr: intop = AtomicRMWInst::Or; break;
+    case LLVMAtomicRMWBinOpXor: intop = AtomicRMWInst::Xor; break;
+    case LLVMAtomicRMWBinOpMax: intop = AtomicRMWInst::Max; break;
+    case LLVMAtomicRMWBinOpMin: intop = AtomicRMWInst::Min; break;
+    case LLVMAtomicRMWBinOpUMax: intop = AtomicRMWInst::UMax; break;
+    case LLVMAtomicRMWBinOpUMin: intop = AtomicRMWInst::UMin; break;
+  }
+  AtomicOrdering intordering;
+  switch (ordering) {
+    case LLVMAtomicOrderingNotAtomic: intordering = NotAtomic; break;
+    case LLVMAtomicOrderingUnordered: intordering = Unordered; break;
+    case LLVMAtomicOrderingMonotonic: intordering = Monotonic; break;
+    case LLVMAtomicOrderingAcquire: intordering = Acquire; break;
+    case LLVMAtomicOrderingRelease: intordering = Release; break;
+    case LLVMAtomicOrderingAcquireRelease: 
+      intordering = AcquireRelease; 
+      break;
+    case LLVMAtomicOrderingSequentiallyConsistent: 
+      intordering = SequentiallyConsistent; 
+      break;
+  }
+  return wrap(unwrap(B)->CreateAtomicRMW(intop, unwrap(PTR), unwrap(Val), 
+    intordering, singleThread ? SingleThread : CrossThread));
+}
+
 
 /*===-- Module providers --------------------------------------------------===*/
 

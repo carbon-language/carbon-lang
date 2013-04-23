@@ -348,6 +348,55 @@ typedef enum {
   LLVMLocalExecTLSModel
 } LLVMThreadLocalMode;
 
+enum LLVMAtomicOrdering {
+  LLVMAtomicOrderingNotAtomic = 0, /**< A load or store which is not atomic */
+  LLVMAtomicOrderingUnordered = 1, /**< Lowest level of atomicity, guarantees
+                                     somewhat sane results, lock free. */
+  LLVMAtomicOrderingMonotonic = 2, /**< guarantees that if you take all the 
+                                     operations affecting a specific address, 
+                                     a consistent ordering exists */
+  LLVMAtomicOrderingAcquire = 4, /**< Acquire provides a barrier of the sort 
+                                   necessary to acquire a lock to access other 
+                                   memory with normal loads and stores. */
+  LLVMAtomicOrderingRelease = 5, /**< Release is similar to Acquire, but with 
+                                   a barrier of the sort necessary to release 
+                                   a lock. */
+  LLVMAtomicOrderingAcquireRelease = 6, /**< provides both an Acquire and a 
+                                          Release barrier (for fences and 
+                                          operations which both read and write
+                                           memory). */
+  LLVMAtomicOrderingSequentiallyConsistent = 7 /**< provides Acquire semantics 
+                                                 for loads and Release 
+                                                 semantics for stores. 
+                                                 Additionally, it guarantees 
+                                                 that a total ordering exists 
+                                                 between all 
+                                                 SequentiallyConsistent 
+                                                 operations. */
+};
+
+enum LLVMAtomicRMWBinOp {
+    LLVMAtomicRMWBinOpXchg, /**< Set the new value and return the one old */
+    LLVMAtomicRMWBinOpAdd, /**< Add a value and return the old one */
+    LLVMAtomicRMWBinOpSub, /**< Subtract a value and return the old one */
+    LLVMAtomicRMWBinOpAnd, /**< And a value and return the old one */
+    LLVMAtomicRMWBinOpNand, /**< Not-And a value and return the old one */
+    LLVMAtomicRMWBinOpOr, /**< OR a value and return the old one */
+    LLVMAtomicRMWBinOpXor, /**< Xor a value and return the old one */
+    LLVMAtomicRMWBinOpMax, /**< Sets the value if it's greater than the
+                             original using a signed comparison and return 
+                             the old one */
+    LLVMAtomicRMWBinOpMin, /**< Sets the value if it's Smaller than the
+                             original using a signed comparison and return 
+                             the old one */
+    LLVMAtomicRMWBinOpUMax, /**< Sets the value if it's greater than the
+                             original using an unsigned comparison and return 
+                             the old one */
+    LLVMAtomicRMWBinOpUMin /**< Sets the value if it's greater than the
+                             original using an unsigned comparison  and return 
+                             the old one */
+};
+
 /**
  * @}
  */
@@ -2522,6 +2571,10 @@ LLVMValueRef LLVMBuildIsNotNull(LLVMBuilderRef, LLVMValueRef Val,
                                 const char *Name);
 LLVMValueRef LLVMBuildPtrDiff(LLVMBuilderRef, LLVMValueRef LHS,
                               LLVMValueRef RHS, const char *Name);
+LLVMValueRef LLVMBuildAtomicRMW(LLVMBuilderRef B,LLVMAtomicRMWBinOp op,  
+                                LLVMValueRef PTR, LLVMValueRef Val, 
+                                LLVMAtomicOrdering ordering, 
+                                LLVMBool singleThread);
 
 /**
  * @}
