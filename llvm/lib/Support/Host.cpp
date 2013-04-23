@@ -119,7 +119,7 @@ static bool OSHasAVXSupport() {
   // there is no easy way to conditionally compile based on the assembler used.
   int rEAX, rEDX;
   __asm__ (".byte 0x0f, 0x01, 0xd0" : "=a" (rEAX), "=d" (rEDX) : "c" (0));
-#elif defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 160040219
+#elif defined(_MSC_FULL_VER) && defined(_XCR_XFEATURE_ENABLED_MASK)
   unsigned long long rEAX = _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
 #else
   int rEAX = 0; // Ensures we return false
