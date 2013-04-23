@@ -1367,6 +1367,56 @@ void CodeGenSchedModels::inferFromRW(const IdxVec &OperWrites,
   inferFromTransitions(LastTransitions, FromClassIdx, *this);
 }
 
+// Check if any processor resource group contains all resource records in
+// SubUnits.
+bool CodeGenSchedModels::hasSuperGroup(RecVec &SubUnits, CodeGenProcModel &PM) {
+  for (unsigned i = 0, e = PM.ProcResourceDefs.size(); i < e; ++i) {
+    if (!PM.ProcResourceDefs[i]->isSubClassOf("ProcResGroup"))
+      continue;
+    RecVec SuperUnits =
+      PM.ProcResourceDefs[i]->getValueAsListOfDefs("Resources");
+    RecIter RI = SubUnits.begin(), RE = SubUnits.end();
+    for ( ; RI != RE; ++RI) {
+      if (std::find(SuperUnits.begin(), SuperUnits.end(), *RI)
+          == SuperUnits.end()) {
+        break;
+      }
+    }
+    if (RI == RE)
+      return true;
+  }
+  return false;
+}
+
+// Verify that overlapping groups have a common supergroup.
+void CodeGenSchedModels::verifyProcResourceGroups(CodeGenProcModel &PM) {
+  for (unsigned i = 0, e = PM.ProcResourceDefs.size(); i < e; ++i) {
+    if (!PM.ProcResourceDefs[i]->isSubClassOf("ProcResGroup"))
+      continue;
+    RecVec CheckUnits =
+      PM.ProcResourceDefs[i]->getValueAsListOfDefs("Resources");
+    for (unsigned j = i+1; j < e; ++j) {
+      if (!PM.ProcResourceDefs[j]->isSubClassOf("ProcResGroup"))
+        continue;
+      RecVec OtherUnits =
+        PM.ProcResourceDefs[j]->getValueAsListOfDefs("Resources");
+      if (std::find_first_of(CheckUnits.begin(), CheckUnits.end(),
+                             OtherUnits.begin(), OtherUnits.end())
+          != CheckUnits.end()) {
+        // CheckUnits and OtherUnits overlap
+        OtherUnits.insert(OtherUnits.end(), CheckUnits.begin(),
+                          CheckUnits.end());
+        if (!hasSuperGroup(OtherUnits, PM)) {
+          PrintFatalError((PM.ProcResourceDefs[i])->getLoc(),
+                          "proc resource group overlaps with "
+                          + PM.ProcResourceDefs[j]->getName()
+                          + " but no supergroup contains both.");
+        }
+      }
+    }
+  }
+}
+
 // Collect and sort WriteRes, ReadAdvance, and ProcResources.
 void CodeGenSchedModels::collectProcResources() {
   // Add any subtarget-specific SchedReadWrites that are directly associated
@@ -1437,6 +1487,7 @@ void CodeGenSchedModels::collectProcResources() {
         dbgs() << (*RI)->getName() << " ";
       }
       dbgs() << '\n');
+    verifyProcResourceGroups(PM);
   }
 }
 

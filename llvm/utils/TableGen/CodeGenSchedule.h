@@ -380,6 +380,9 @@ private:
   void inferFromItinClass(Record *ItinClassDef, unsigned FromClassIdx);
   void inferFromInstRWs(unsigned SCIdx);
 
+  bool hasSuperGroup(RecVec &SubUnits, CodeGenProcModel &PM);
+  void verifyProcResourceGroups(CodeGenProcModel &PM);
+
   void collectProcResources();
 
   void collectItinProcResources(Record *ItinClassDef);
