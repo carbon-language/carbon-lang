@@ -166,6 +166,22 @@ private:
     }
   }
 
+  unsigned getHWStackSize(unsigned StackSubEntry, bool hasPush) const {
+    switch (ST.device()->getGeneration()) {
+    case AMDGPUDeviceInfo::HD4XXX:
+      if (hasPush)
+        StackSubEntry += 2;
+      break;
+    case AMDGPUDeviceInfo::HD5XXX:
+      if (hasPush)
+        StackSubEntry ++;
+    case AMDGPUDeviceInfo::HD6XXX:
+      StackSubEntry += 2;
+      break;
+    }
+    return (StackSubEntry + 3)/4; // Need ceil value of StackSubEntry/4
+  }
+
 public:
   R600ControlFlowFinalizer(TargetMachine &tm) : MachineFunctionPass(ID),
     TII (static_cast<const R600InstrInfo *>(tm.getInstrInfo())),
@@ -180,6 +196,7 @@ public:
   virtual bool runOnMachineFunction(MachineFunction &MF) {
     unsigned MaxStack = 0;
     unsigned CurrentStack = 0;
+    bool hasPush;
     for (MachineFunction::iterator MB = MF.begin(), ME = MF.end(); MB != ME;
         ++MB) {
       MachineBasicBlock &MBB = *MB;
@@ -207,6 +224,7 @@ public:
         case AMDGPU::CF_ALU_PUSH_BEFORE:
           CurrentStack++;
           MaxStack = std::max(MaxStack, CurrentStack);
+          hasPush = true;
         case AMDGPU::CF_ALU:
         case AMDGPU::EG_ExportBuf:
         case AMDGPU::EG_ExportSwz:
@@ -218,7 +236,7 @@ public:
           CfCount++;
           break;
         case AMDGPU::WHILELOOP: {
-          CurrentStack++;
+          CurrentStack+=4;
           MaxStack = std::max(MaxStack, CurrentStack);
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
               getHWInstrDesc(CF_WHILE_LOOP))
@@ -232,7 +250,7 @@ public:
           break;
         }
         case AMDGPU::ENDLOOP: {
-          CurrentStack--;
+          CurrentStack-=4;
           std::pair<unsigned, std::set<MachineInstr *> > Pair =
               LoopStack.back();
           LoopStack.pop_back();
@@ -321,9 +339,7 @@ public:
           break;
         }
       }
-      BuildMI(MBB, MBB.begin(), MBB.findDebugLoc(MBB.begin()),
-          TII->get(AMDGPU::STACK_SIZE))
-          .addImm(MaxStack);
+      MFI->StackSize = getHWStackSize(MaxStack, hasPush);
     }
 
     return false;

@@ -929,13 +929,6 @@ ins, AsmPrint, [] >, CF_WORD0_EG, CF_WORD1_EG {
 def CF_ALU : ALU_CLAUSE<8, "ALU">;
 def CF_ALU_PUSH_BEFORE : ALU_CLAUSE<9, "ALU_PUSH_BEFORE">;
 
-def STACK_SIZE : AMDGPUInst <(outs),
-(ins i32imm:$num), "nstack $num", [] > {
-  field bits<8> Inst;
-  bits<8> num;
-  let Inst = num;
-}
-
 def PAD : AMDGPUInst <(outs), (ins), "PAD", [] > {
   field bits<64> Inst;
 }

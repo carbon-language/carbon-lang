@@ -22,6 +22,7 @@
 #include "SIDefines.h"
 #include "SIMachineFunctionInfo.h"
 #include "SIRegisterInfo.h"
+#include "R600MachineFunctionInfo.h"
 #include "R600RegisterInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionELF.h"
@@ -75,6 +76,7 @@ void AMDGPUAsmPrinter::EmitProgramInfoR600(MachineFunction &MF) {
   unsigned MaxGPR = 0;
   const R600RegisterInfo * RI =
                 static_cast<const R600RegisterInfo*>(TM.getRegisterInfo());
+  R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
 
   for (MachineFunction::iterator BB = MF.begin(), BB_E = MF.end();
                                                   BB != BB_E; ++BB) {
@@ -97,6 +99,7 @@ void AMDGPUAsmPrinter::EmitProgramInfoR600(MachineFunction &MF) {
     }
   }
   OutStreamer.EmitIntValue(MaxGPR + 1, 4);
+  OutStreamer.EmitIntValue(MFI->StackSize, 4);
 }
 
 void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF) {
