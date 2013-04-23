@@ -94,6 +94,11 @@ void SetThreadName(const char *name) {
     asanThreadRegistry().SetThreadName(t->tid(), name);
 }
 
+static void DisableStrictInitOrderChecker() {
+  if (flags()->strict_init_order)
+    flags()->check_initialization_order = false;
+}
+
 }  // namespace __asan
 
 // ---------------------- Wrappers ---------------- {{{1
@@ -132,6 +137,8 @@ extern "C" int pthread_attr_getdetachstate(void *attr, int *v);
 
 INTERCEPTOR(int, pthread_create, void *thread,
     void *attr, void *(*start_routine)(void*), void *arg) {
+  // Strict init-order checking in thread-hostile.
+  DisableStrictInitOrderChecker();
   GET_STACK_TRACE_THREAD;
   int detached = 0;
   if (attr != 0)
@@ -639,6 +646,8 @@ INTERCEPTOR_WINAPI(DWORD, CreateThread,
                    void* security, uptr stack_size,
                    DWORD (__stdcall *start_routine)(void*), void* arg,
                    DWORD flags, void* tid) {
+  // Strict init-order checking in thread-hostile.
+  DisableStrictInitOrderChecker();
   GET_STACK_TRACE_THREAD;
   u32 current_tid = GetCurrentTidOrInvalid();
   AsanThread *t = AsanThread::Create(start_routine, arg);

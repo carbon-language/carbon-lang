@@ -4,7 +4,7 @@
 // RUN: %clangxx_asan -m64 -O0 %p/SharedLibs/init-order-dlopen-so.cc \
 // RUN:     -fPIC -shared -o %t-so.so
 // RUN: %clangxx_asan -m64 -O0 %s -o %t -Wl,--export-dynamic
-// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1 | FileCheck %s
+// RUN: ASAN_OPTIONS=check_initialization_order=true:strict_init_order=true %t 2>&1 | FileCheck %s
 #include <dlfcn.h>
 #include <pthread.h>
 #include <stdio.h>
