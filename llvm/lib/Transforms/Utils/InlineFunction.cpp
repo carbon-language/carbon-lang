@@ -758,8 +758,10 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
 
     // If the call site was an invoke instruction, add a branch to the normal
     // destination.
-    if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall))
-      BranchInst::Create(II->getNormalDest(), TheCall);
+    if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
+      BranchInst *NewBr = BranchInst::Create(II->getNormalDest(), TheCall);
+      NewBr->setDebugLoc(Returns[0]->getDebugLoc());
+    }
 
     // If the return instruction returned a value, replace uses of the call with
     // uses of the returned value.
@@ -787,15 +789,16 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
   // "starter" and "ender" blocks.  How we accomplish this depends on whether
   // this is an invoke instruction or a call instruction.
   BasicBlock *AfterCallBB;
+  BranchInst *CreatedBranchToNormalDest = NULL;
   if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
 
     // Add an unconditional branch to make this look like the CallInst case...
-    BranchInst *NewBr = BranchInst::Create(II->getNormalDest(), TheCall);
+    CreatedBranchToNormalDest = BranchInst::Create(II->getNormalDest(), TheCall);
 
     // Split the basic block.  This guarantees that no PHI nodes will have to be
     // updated due to new incoming edges, and make the invoke case more
     // symmetric to the call case.
-    AfterCallBB = OrigBB->splitBasicBlock(NewBr,
+    AfterCallBB = OrigBB->splitBasicBlock(CreatedBranchToNormalDest,
                                           CalledFunc->getName()+".exit");
 
   } else {  // It's a call
@@ -873,6 +876,9 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
     // to, which contains the code that was after the call.
     AfterCallBB->getInstList().splice(AfterCallBB->begin(),
                                       ReturnBB->getInstList());
+
+    if (CreatedBranchToNormalDest)
+      CreatedBranchToNormalDest->setDebugLoc(Returns[0]->getDebugLoc());
 
     // Delete the return instruction now and empty ReturnBB now.
     Returns[0]->eraseFromParent();
