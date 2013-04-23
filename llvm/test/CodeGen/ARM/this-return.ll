@@ -103,3 +103,67 @@ entry:
   %call2 = tail call %struct.B* @B_ctor_complete(%struct.B* %b2, i32 %x)
   ret %struct.E* %this
 }
+
+declare i16 @identity16(i16 returned %x)
+declare zeroext i16 @zeroext16(i16 returned %x)
+declare i32 @identity32(i32 returned %x)
+
+define i16 @test_identity(i16 %x) {
+entry:
+; CHECKELF: test_identity:
+; CHECKELF: mov [[SAVEX:r[0-9]+]], r0
+; CHECKELF: bl identity16
+; CHECKELF: uxth r0, [[SAVEX]]
+; CHECKELF: bl identity32
+; CHECKELF: mov r0, [[SAVEX]]
+; CHECKT2D: test_identity:
+; CHECKT2D: mov [[SAVEX:r[0-9]+]], r0
+; CHECKT2D: blx _identity16
+; CHECKT2D: uxth r0, [[SAVEX]]
+; CHECKT2D: blx _identity32
+; CHECKT2D: mov r0, [[SAVEX]]
+  %call = tail call i16 @identity16(i16 %x)
+  %b = zext i16 %x to i32
+  %call2 = tail call i32 @identity32(i32 %b)
+  ret i16 %call
+}
+
+define i16 @test_matched_ext(i16 %x) {
+entry:
+; CHECKELF: test_matched_ext:
+; CHECKELF-NOT: mov {{r[0-9]+}}, r0
+; CHECKELF: bl zeroext16
+; CHECKELF-NOT: uxth r0, {{r[0-9]+}}
+; CHECKELF: bl identity32
+; CHECKELF-NOT: mov r0, {{r[0-9]+}}
+; CHECKT2D: test_matched_ext:
+; CHECKT2D-NOT: mov {{r[0-9]+}}, r0
+; CHECKT2D: blx _zeroext16
+; CHECKT2D-NOT: uxth r0, {{r[0-9]+}}
+; CHECKT2D: blx _identity32
+; CHECKT2D-NOT: mov r0, {{r[0-9]+}}
+  %call = tail call i16 @zeroext16(i16 %x)
+  %b = zext i16 %call to i32
+  %call2 = tail call i32 @identity32(i32 %b)
+  ret i16 %call
+}
+
+define i16 @test_mismatched_ext(i16 %x) {
+entry:
+; CHECKELF: test_mismatched_ext:
+; CHECKELF: mov [[SAVEX:r[0-9]+]], r0
+; CHECKELF: bl zeroext16
+; CHECKELF: sxth r0, [[SAVEX]]
+; CHECKELF: bl identity32
+; CHECKELF: mov r0, [[SAVEX]]
+; CHECKT2D: test_mismatched_ext:
+; CHECKT2D: mov [[SAVEX:r[0-9]+]], r0
+; CHECKT2D: blx _zeroext16
+; CHECKT2D: sxth r0, [[SAVEX]]
+; CHECKT2D: blx _identity32
+; CHECKT2D: mov r0, [[SAVEX]]
+  %call = tail call i16 @zeroext16(i16 %x)
+  %b = sext i16 %call to i32
+  %call2 = tail call i32 @identity32(i32 %b)
+  ret i16 %call
+}

@@ -1252,7 +1252,8 @@ ARMTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
     // Pass 'this' value directly from the argument to return value, to avoid
     // reg unit interference
     if (i == 0 && isThisReturn) {
-      assert(!VA.needsCustom() && VA.getLocVT() == MVT::i32);
+      assert(!VA.needsCustom() && VA.getLocVT() == MVT::i32 &&
+             "unexpected return calling convention register assignment");
       InVals.push_back(ThisVal);
       continue;
     }
@@ -1466,8 +1467,10 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                          StackPtr, MemOpChains, Flags);
       }
     } else if (VA.isRegLoc()) {
-      if (realArgIdx == 0 && Flags.isReturned() && VA.getLocVT() == MVT::i32) {
-        assert(!Ins.empty() && Ins[0].VT == Outs[0].VT &&
+      if (realArgIdx == 0 && Flags.isReturned() && Outs[0].VT == MVT::i32) {
+        assert(VA.getLocVT() == MVT::i32 &&
+               "unexpected calling convention register assignment");
+        assert(!Ins.empty() && Ins[0].VT == MVT::i32 &&
                "unexpected use of 'returned'");
         isThisReturn = true;
       }
