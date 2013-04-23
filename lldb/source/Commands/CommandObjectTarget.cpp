@@ -3474,16 +3474,21 @@ public:
             switch (short_option)
             {
                 case 'a':
+                {
+                    ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
                     m_type = eLookupTypeAddress;
-                    m_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS);
+                    m_addr = Args::StringToAddress(&exe_ctx, option_arg, LLDB_INVALID_ADDRESS, &error);
                     if (m_addr == LLDB_INVALID_ADDRESS)
                         error.SetErrorStringWithFormat ("invalid address string '%s'", option_arg);
                     break;
+                }
 
                 case 'n':
+                {
                     m_str = option_arg;
                     m_type = eLookupTypeFunctionOrSymbol;
                     break;
+                }
             }
 
             return error;
@@ -3573,78 +3578,94 @@ protected:
             return false;
         }
 
+        SymbolContextList sc_list;
+        
         if (m_options.m_type == eLookupTypeFunctionOrSymbol)
         {
-            SymbolContextList sc_list;
-            size_t num_matches;
             ConstString function_name (m_options.m_str.c_str());
-            num_matches = target->GetImages().FindFunctions (function_name, eFunctionNameTypeAuto, true, false, true, sc_list);
-            for (uint32_t idx = 0; idx < num_matches; idx++)
+            target->GetImages().FindFunctions (function_name, eFunctionNameTypeAuto, true, false, true, sc_list);
+        }
+        else if (m_options.m_type == eLookupTypeAddress && target)
+        {
+            Address addr;
+            if (target->GetSectionLoadList().ResolveLoadAddress (m_options.m_addr, addr))
             {
                 SymbolContext sc;
-                sc_list.GetContextAtIndex(idx, sc);
-                if (sc.symbol == NULL && sc.function == NULL)
-                    continue;
-                if (sc.module_sp.get() == NULL || sc.module_sp->GetObjectFile() == NULL)
-                    continue;
-                AddressRange range;
-                if (!sc.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false, range))
-                    continue;
-                if (!range.GetBaseAddress().IsValid())
-                    continue;
-                ConstString funcname(sc.GetFunctionName());
-                if (funcname.IsEmpty())
-                    continue;
-                addr_t start_addr = range.GetBaseAddress().GetLoadAddress(target);
-                if (abi)
-                    start_addr = abi->FixCodeAddress(start_addr);
-
-                FuncUnwindersSP func_unwinders_sp (sc.module_sp->GetObjectFile()->GetUnwindTable().GetUncachedFuncUnwindersContainingAddress(start_addr, sc));
-                if (func_unwinders_sp.get() == NULL)
-                    continue;
-
-                Address first_non_prologue_insn (func_unwinders_sp->GetFirstNonPrologueInsn(*target));
-                if (first_non_prologue_insn.IsValid())
+                ModuleSP module_sp (addr.GetModule());
+                module_sp->ResolveSymbolContextForAddress (addr, eSymbolContextEverything, sc);
+                if (sc.function || sc.symbol)
                 {
-                    result.GetOutputStream().Printf("First non-prologue instruction is at address 0x%" PRIx64 " or offset %" PRId64 " into the function.\n", first_non_prologue_insn.GetLoadAddress(target), first_non_prologue_insn.GetLoadAddress(target) - start_addr);
-                    result.GetOutputStream().Printf ("\n");
+                    sc_list.Append(sc);
                 }
+            }
+        }
 
-                UnwindPlanSP non_callsite_unwind_plan = func_unwinders_sp->GetUnwindPlanAtNonCallSite(*thread.get());
-                if (non_callsite_unwind_plan.get())
-                {
-                    result.GetOutputStream().Printf("Asynchronous (not restricted to call-sites) UnwindPlan for %s`%s (start addr 0x%" PRIx64 "):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
-                    non_callsite_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
-                    result.GetOutputStream().Printf ("\n");
-                }
+        size_t num_matches = sc_list.GetSize();
+        for (uint32_t idx = 0; idx < num_matches; idx++)
+        {
+            SymbolContext sc;
+            sc_list.GetContextAtIndex(idx, sc);
+            if (sc.symbol == NULL && sc.function == NULL)
+                continue;
+            if (sc.module_sp.get() == NULL || sc.module_sp->GetObjectFile() == NULL)
+                continue;
+            AddressRange range;
+            if (!sc.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false, range))
+                continue;
+            if (!range.GetBaseAddress().IsValid())
+                continue;
+            ConstString funcname(sc.GetFunctionName());
+            if (funcname.IsEmpty())
+                continue;
+            addr_t start_addr = range.GetBaseAddress().GetLoadAddress(target);
+            if (abi)
+                start_addr = abi->FixCodeAddress(start_addr);
 
-                UnwindPlanSP callsite_unwind_plan = func_unwinders_sp->GetUnwindPlanAtCallSite(-1);
-                if (callsite_unwind_plan.get())
-                {
-                    result.GetOutputStream().Printf("Synchronous (restricted to call-sites) UnwindPlan for %s`%s (start addr 0x%" PRIx64 "):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
-                    callsite_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
-                    result.GetOutputStream().Printf ("\n");
-                }
+            FuncUnwindersSP func_unwinders_sp (sc.module_sp->GetObjectFile()->GetUnwindTable().GetUncachedFuncUnwindersContainingAddress(start_addr, sc));
+            if (func_unwinders_sp.get() == NULL)
+                continue;
 
-                UnwindPlanSP arch_default_unwind_plan = func_unwinders_sp->GetUnwindPlanArchitectureDefault(*thread.get());
-                if (arch_default_unwind_plan.get())
-                {
-                    result.GetOutputStream().Printf("Architecture default UnwindPlan for %s`%s (start addr 0x%" PRIx64 "):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
-                    arch_default_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
-                    result.GetOutputStream().Printf ("\n");
-                }
-
-                UnwindPlanSP fast_unwind_plan = func_unwinders_sp->GetUnwindPlanFastUnwind(*thread.get());
-                if (fast_unwind_plan.get())
-                {
-                    result.GetOutputStream().Printf("Fast UnwindPlan for %s`%s (start addr 0x%" PRIx64 "):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
-                    fast_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
-                    result.GetOutputStream().Printf ("\n");
-                }
-
-
+            Address first_non_prologue_insn (func_unwinders_sp->GetFirstNonPrologueInsn(*target));
+            if (first_non_prologue_insn.IsValid())
+            {
+                result.GetOutputStream().Printf("First non-prologue instruction is at address 0x%" PRIx64 " or offset %" PRId64 " into the function.\n", first_non_prologue_insn.GetLoadAddress(target), first_non_prologue_insn.GetLoadAddress(target) - start_addr);
                 result.GetOutputStream().Printf ("\n");
             }
+
+            UnwindPlanSP non_callsite_unwind_plan = func_unwinders_sp->GetUnwindPlanAtNonCallSite(*thread.get());
+            if (non_callsite_unwind_plan.get())
+            {
+                result.GetOutputStream().Printf("Asynchronous (not restricted to call-sites) UnwindPlan for %s`%s (start addr 0x%" PRIx64 "):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
+                non_callsite_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
+                result.GetOutputStream().Printf ("\n");
+            }
+
+            UnwindPlanSP callsite_unwind_plan = func_unwinders_sp->GetUnwindPlanAtCallSite(-1);
+            if (callsite_unwind_plan.get())
+            {
+                result.GetOutputStream().Printf("Synchronous (restricted to call-sites) UnwindPlan for %s`%s (start addr 0x%" PRIx64 "):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
+                callsite_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
+                result.GetOutputStream().Printf ("\n");
+            }
+
+            UnwindPlanSP arch_default_unwind_plan = func_unwinders_sp->GetUnwindPlanArchitectureDefault(*thread.get());
+            if (arch_default_unwind_plan.get())
+            {
+                result.GetOutputStream().Printf("Architecture default UnwindPlan for %s`%s (start addr 0x%" PRIx64 "):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
+                arch_default_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
+                result.GetOutputStream().Printf ("\n");
+            }
+
+            UnwindPlanSP fast_unwind_plan = func_unwinders_sp->GetUnwindPlanFastUnwind(*thread.get());
+            if (fast_unwind_plan.get())
+            {
+                result.GetOutputStream().Printf("Fast UnwindPlan for %s`%s (start addr 0x%" PRIx64 "):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
+                fast_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
+                result.GetOutputStream().Printf ("\n");
+            }
+
+
+            result.GetOutputStream().Printf ("\n");
         }
         return result.Succeeded();
     }
@@ -3655,7 +3676,8 @@ protected:
 OptionDefinition
 CommandObjectTargetModulesShowUnwind::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1,   true,  "name",       'n', required_argument, NULL, 0, eArgTypeFunctionName, "Lookup a function or symbol by name in one or more target modules."},
+    { LLDB_OPT_SET_1,   false,  "name",       'n', required_argument, NULL, 0, eArgTypeFunctionName, "Show unwind instructions for a function or symbol name."},
+    { LLDB_OPT_SET_2,   false,  "address",    'a', required_argument, NULL, 0, eArgTypeAddressOrExpression, "Show unwind instructions for a function or symbol containing an address"},
     { 0,                false, NULL,           0, 0,                 NULL, 0, eArgTypeNone, NULL }
 };
 

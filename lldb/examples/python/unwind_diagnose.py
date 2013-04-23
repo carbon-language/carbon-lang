@@ -182,7 +182,10 @@ def unwind_diagnose(debugger, command, result, dict):
             print ""
             print "Unwind instructions for %s, frame %d" % (frame.GetFunctionName(), frame.GetFrameID())
             print ""
-            debugger.HandleCommand('image show-unwind -n "%s"' % frame.GetFunctionName())
+            if lldb_major > 300 or (lldb_major == 300 and lldb_minor >= 20):
+              debugger.HandleCommand('image show-unwind -a "0x%x"' % frame.GetPC())
+            else:
+              debugger.HandleCommand('image show-unwind -n "%s"' % frame.GetFunctionName())
 
 def create_unwind_diagnose_options():
   usage = "usage: %prog"
