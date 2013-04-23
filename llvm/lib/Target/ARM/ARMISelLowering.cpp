@@ -1368,22 +1368,22 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   bool isVarArg                         = CLI.IsVarArg;
 
   MachineFunction &MF = DAG.getMachineFunction();
-  bool IsStructRet    = (Outs.empty()) ? false : Outs[0].Flags.isSRet();
-  bool IsThisReturn   = false;
-  bool IsSibCall      = false;
+  bool isStructRet    = (Outs.empty()) ? false : Outs[0].Flags.isSRet();
+  bool isThisReturn   = false;
+  bool isSibCall      = false;
   // Disable tail calls if they're not supported.
   if (!EnableARMTailCalls && !Subtarget->supportsTailCall())
     isTailCall = false;
   if (isTailCall) {
     // Check if it's really possible to do a tail call.
     isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv,
-                    isVarArg, IsStructRet, MF.getFunction()->hasStructRetAttr(),
+                    isVarArg, isStructRet, MF.getFunction()->hasStructRetAttr(),
                                                    Outs, OutVals, Ins, DAG);
     // We don't support GuaranteedTailCallOpt for ARM, only automatically
     // detected sibcalls.
     if (isTailCall) {
       ++NumTailCalls;
-      IsSibCall = true;
+      isSibCall = true;
     }
   }
 
@@ -1399,12 +1399,12 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   unsigned NumBytes = CCInfo.getNextStackOffset();
 
   // For tail calls, memory operands are available in our caller's stack.
-  if (IsSibCall)
+  if (isSibCall)
     NumBytes = 0;
 
   // Adjust the stack pointer for the new arguments...
   // These operations are automatically eliminated by the prolog/epilog pass
-  if (!IsSibCall)
+  if (!isSibCall)
     Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumBytes, true));
 
   SDValue StackPtr = DAG.getCopyFromReg(Chain, dl, ARM::SP, getPointerTy());
@@ -1469,7 +1469,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       if (realArgIdx == 0 && Flags.isReturned() && VA.getLocVT() == MVT::i32) {
         assert(!Ins.empty() && Ins[0].VT == Outs[0].VT &&
                "unexpected use of 'returned'");
-        IsThisReturn = true;
+        isThisReturn = true;
       }
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
     } else if (isByVal) {
@@ -1510,7 +1510,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         MemOpChains.push_back(DAG.getNode(ARMISD::COPY_STRUCT_BYVAL, dl, VTs,
                                           Ops, array_lengthof(Ops)));
       }
-    } else if (!IsSibCall) {
+    } else if (!isSibCall) {
       assert(VA.isMemLoc());
 
       MemOpChains.push_back(LowerMemOpCallTo(Chain, StackPtr, Arg,
@@ -1694,7 +1694,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   const uint32_t *Mask;
   const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
   const ARMBaseRegisterInfo *ARI = static_cast<const ARMBaseRegisterInfo*>(TRI);
-  if (IsThisReturn)
+  if (isThisReturn)
     // For 'this' returns, use the R0-preserving mask
     Mask = ARI->getThisReturnPreservedMask(CallConv);
   else
@@ -1722,8 +1722,8 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Handle result values, copying them out of physregs into vregs that we
   // return.
   return LowerCallResult(Chain, InFlag, CallConv, isVarArg, Ins, dl, DAG,
-                         InVals, IsThisReturn,
-                         IsThisReturn ? OutVals[0] : SDValue());
+                         InVals, isThisReturn,
+                         isThisReturn ? OutVals[0] : SDValue());
 }
 
 /// HandleByVal - Every parameter *after* a byval parameter is passed
