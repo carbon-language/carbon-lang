@@ -367,9 +367,8 @@ AArch64FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // shoving a base register and an offset into the instruction then we may well
   // need to scavenge registers. We should either specifically add an
   // callee-save register for this purpose or allocate an extra spill slot.
-
   bool BigStack =
-    (RS && MFI->estimateStackSize(MF) >= TII.estimateRSStackLimit(MF))
+    MFI->estimateStackSize(MF) >= TII.estimateRSStackLimit(MF)
     || MFI->hasVarSizedObjects() // Access will be from X29: messes things up
     || (MFI->adjustsStack() && !hasReservedCallFrame(MF));
 
@@ -392,6 +391,8 @@ AArch64FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   if (ExtraReg != 0) {
     MF.getRegInfo().setPhysRegUsed(ExtraReg);
   } else {
+    assert(RS && "Expect register scavenger to be available");
+
     // Create a stack slot for scavenging purposes. PrologEpilogInserter
     // helpfully places it near either SP or FP for us to avoid
     // infinitely-regression during scavenging.
