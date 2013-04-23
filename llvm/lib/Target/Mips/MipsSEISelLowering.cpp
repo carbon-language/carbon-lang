@@ -330,9 +330,9 @@ static SDValue performDSPShiftCombine(unsigned Opc, SDNode *N, EVT Ty,
 
   if (!BV ||
       !BV->isConstantSplat(SplatValue, SplatUndef, SplatBitSize, HasAnyUndefs,
-                           EltSize,!Subtarget->isLittle()) ||
+                           EltSize, !Subtarget->isLittle()) ||
       (SplatBitSize != EltSize) ||
-      !isUIntN(Log2_32(EltSize), SplatValue.getZExtValue()))
+      (SplatValue.getZExtValue() >= EltSize))
     return SDValue();
 
   return DAG.getNode(Opc, N->getDebugLoc(), Ty, N->getOperand(0),
