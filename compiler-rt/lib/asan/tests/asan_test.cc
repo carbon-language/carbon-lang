@@ -1082,7 +1082,9 @@ TEST(AddressSanitizer, AttributeNoAddressSafetyTest) {
 }
 
 // It doesn't work on Android, as calls to new/delete go through malloc/free.
-#if !defined(ANDROID) && !defined(__ANDROID__)
+// Neither it does on OS X, see
+// https://code.google.com/p/address-sanitizer/issues/detail?id=131.
+#if !defined(ANDROID) && !defined(__ANDROID__) && !defined(__APPLE__)
 static string MismatchStr(const string &str) {
   return string("AddressSanitizer: alloc-dealloc-mismatch \\(") + str;
 }
