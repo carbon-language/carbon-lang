@@ -29,7 +29,6 @@ class CommandLineCompletionTestCase(TestBase):
         """Test that 'de' completes to 'detach '."""
         self.complete_from_to('de', 'detach ')
 
-    @expectedFailureLinux # PR-14425: completion broken for strings that begin with --
     def test_process_attach_dash_dash_con(self):
         """Test that 'process attach --con' completes to 'process attach --continue '."""
         self.complete_from_to('process attach --con', 'process attach --continue ')
