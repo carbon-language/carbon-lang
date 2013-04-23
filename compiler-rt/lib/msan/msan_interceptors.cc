@@ -114,8 +114,10 @@ INTERCEPTOR(void *, memset, void *s, int c, SIZE_T n) {
 INTERCEPTOR(int, posix_memalign, void **memptr, SIZE_T alignment, SIZE_T size) {
   GET_MALLOC_STACK_TRACE;
   CHECK_EQ(alignment & (alignment - 1), 0);
-  *memptr = MsanReallocate(&stack, 0, size, alignment, false);
   CHECK_NE(memptr, 0);
+  *memptr = MsanReallocate(&stack, 0, size, alignment, false);
+  CHECK_NE(*memptr, 0);
+  __msan_unpoison(memptr, sizeof(*memptr));
   return 0;
 }
 

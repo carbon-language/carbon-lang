@@ -1627,6 +1627,15 @@ TEST(MemorySanitizer, PreAllocatedStackThread) {
   ASSERT_EQ(0, res);
 }
 
+TEST(MemorySanitizer, posix_memalign) {
+  void *p;
+  EXPECT_POISONED(p);
+  int res = posix_memalign(&p, 4096, 13);
+  ASSERT_EQ(0, res);
+  EXPECT_NOT_POISONED(p);
+  free(p);
+}
+
 TEST(MemorySanitizer, uname) {
   struct utsname u;
   int res = uname(&u);
