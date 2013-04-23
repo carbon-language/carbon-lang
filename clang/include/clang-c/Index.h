@@ -32,7 +32,7 @@
  * compatible, thus CINDEX_VERSION_MAJOR is expected to remain stable.
  */
 #define CINDEX_VERSION_MAJOR 0
-#define CINDEX_VERSION_MINOR 18
+#define CINDEX_VERSION_MINOR 19
 
 #define CINDEX_VERSION_ENCODE(major, minor) ( \
       ((major) * 10000)                       \
@@ -1903,7 +1903,11 @@ enum CXCursorKind {
    */
   CXCursor_ObjCBoolLiteralExpr           = 145,
 
-  CXCursor_LastExpr                      = CXCursor_ObjCBoolLiteralExpr,
+  /** \brief Represents the "self" expression in a ObjC method.
+   */
+  CXCursor_ObjCSelfExpr                  = 146,
+
+  CXCursor_LastExpr                      = CXCursor_ObjCSelfExpr,
 
   /* Statements */
   CXCursor_FirstStmt                     = 200,

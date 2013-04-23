@@ -281,7 +281,7 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Punctuation: ")" [40:19 - 40:20] CallExpr=ibaction_test:36:12
 // CHECK: Punctuation: ";" [40:20 - 40:21] CompoundStmt=
 // CHECK: Punctuation: "[" [41:5 - 41:6] ObjCMessageExpr=foo::34:9
-// CHECK: Identifier: "self" [41:6 - 41:10] DeclRefExpr=self:0:0
+// CHECK: Identifier: "self" [41:6 - 41:10] ObjCSelfExpr=self:0:0
 // CHECK: Identifier: "foo" [41:11 - 41:14] ObjCMessageExpr=foo::34:9
 // CHECK: Punctuation: ":" [41:14 - 41:15] ObjCMessageExpr=foo::34:9
 // CHECK: Literal: "0" [41:15 - 41:16] IntegerLiteral=
@@ -391,7 +391,7 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Identifier: "local" [76:9 - 76:14] VarDecl=local:76:9 (Definition)
 // CHECK: Punctuation: "=" [76:15 - 76:16] VarDecl=local:76:9 (Definition)
 // CHECK: Punctuation: "[" [76:17 - 76:18] ObjCMessageExpr=foo::66:9
-// CHECK: Identifier: "self" [76:18 - 76:22] DeclRefExpr=self:0:0
+// CHECK: Identifier: "self" [76:18 - 76:22] ObjCSelfExpr=self:0:0
 // CHECK: Identifier: "foo" [76:23 - 76:26] ObjCMessageExpr=foo::66:9
 // CHECK: Punctuation: ":" [76:26 - 76:27] ObjCMessageExpr=foo::66:9
 // CHECK: Identifier: "VAL" [76:27 - 76:30] macro expansion=VAL:63:9
@@ -401,7 +401,7 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Identifier: "second" [77:9 - 77:15] VarDecl=second:77:9 (Definition)
 // CHECK: Punctuation: "=" [77:16 - 77:17] VarDecl=second:77:9 (Definition)
 // CHECK: Punctuation: "[" [77:18 - 77:19] ObjCMessageExpr=foo::66:9
-// CHECK: Identifier: "self" [77:19 - 77:23] DeclRefExpr=self:0:0
+// CHECK: Identifier: "self" [77:19 - 77:23] ObjCSelfExpr=self:0:0
 // CHECK: Identifier: "foo" [77:24 - 77:27] ObjCMessageExpr=foo::66:9
 // CHECK: Punctuation: ":" [77:27 - 77:28] ObjCMessageExpr=foo::66:9
 // CHECK: Literal: "0" [77:28 - 77:29] IntegerLiteral=
@@ -518,7 +518,7 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK-INSIDE_BLOCK: Identifier: "result" [127:9 - 127:15] VarDecl=result:127:9 (Definition)
 // CHECK-INSIDE_BLOCK: Punctuation: "=" [127:16 - 127:17] VarDecl=result:127:9 (Definition)
 // CHECK-INSIDE_BLOCK: Punctuation: "[" [127:18 - 127:19] ObjCMessageExpr=blah::124:8
-// CHECK-INSIDE_BLOCK: Identifier: "self" [127:19 - 127:23] DeclRefExpr=self:0:0
+// CHECK-INSIDE_BLOCK: Identifier: "self" [127:19 - 127:23] ObjCSelfExpr=self:0:0
 // CHECK-INSIDE_BLOCK: Identifier: "blah" [127:24 - 127:28] ObjCMessageExpr=blah::124:8
 // CHECK-INSIDE_BLOCK: Punctuation: ":" [127:28 - 127:29] ObjCMessageExpr=blah::124:8
 // CHECK-INSIDE_BLOCK: Literal: "5" [127:29 - 127:30] IntegerLiteral=
@@ -530,7 +530,7 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK-INSIDE_BLOCK: Punctuation: "*" [128:17 - 128:18] VarDecl=a:128:18 (Definition)
 // CHECK-INSIDE_BLOCK: Identifier: "a" [128:18 - 128:19] VarDecl=a:128:18 (Definition)
 // CHECK-INSIDE_BLOCK: Punctuation: "=" [128:20 - 128:21] VarDecl=a:128:18 (Definition)
-// CHECK-INSIDE_BLOCK: Identifier: "self" [128:22 - 128:26] DeclRefExpr=self:0:0
+// CHECK-INSIDE_BLOCK: Identifier: "self" [128:22 - 128:26] ObjCSelfExpr=self:0:0
 
 // RUN: c-index-test -test-annotate-tokens=%s:134:1:138:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck -check-prefix=CHECK-PROP-AFTER-METHOD %s
 // CHECK-PROP-AFTER-METHOD: Punctuation: "@" [134:1 - 134:2] ObjCInterfaceDecl=Rdar8062781:134:12

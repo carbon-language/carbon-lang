@@ -3588,6 +3588,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return cxstring::createRef("ObjCStringLiteral");
   case CXCursor_ObjCBoolLiteralExpr:
       return cxstring::createRef("ObjCBoolLiteralExpr");
+  case CXCursor_ObjCSelfExpr:
+      return cxstring::createRef("ObjCSelfExpr");
   case CXCursor_ObjCEncodeExpr:
       return cxstring::createRef("ObjCEncodeExpr");
   case CXCursor_ObjCSelectorExpr:
