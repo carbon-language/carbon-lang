@@ -83,21 +83,30 @@ let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 8 in
 //===----------------------------------------------------------------------===//
 // ALU32/ALU (Instructions with register-register form)
 //===----------------------------------------------------------------------===//
-multiclass ALU32_Pbase<string mnemonic, bit isNot,
+def SDTHexagonI64I32I32 : SDTypeProfile<1, 2,
+  [SDTCisVT<0, i64>, SDTCisVT<1, i32>, SDTCisSameAs<1, 2>]>;
+
+def HexagonWrapperCombineII :
+  SDNode<"HexagonISD::WrapperCombineII", SDTHexagonI64I32I32>;
+
+def HexagonWrapperCombineRR :
+  SDNode<"HexagonISD::WrapperCombineRR", SDTHexagonI64I32I32>;
+
+multiclass ALU32_Pbase<string mnemonic, RegisterClass RC, bit isNot,
                        bit isPredNew> {
   let isPredicatedNew = isPredNew in
-  def NAME : ALU32_rr<(outs IntRegs:$dst),
+  def NAME : ALU32_rr<(outs RC:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs: $src3),
             !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew,".new) $dst = ",
             ") $dst = ")#mnemonic#"($src2, $src3)",
             []>;
 }
 
-multiclass ALU32_Pred<string mnemonic, bit PredNot> {
+multiclass ALU32_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
   let isPredicatedFalse = PredNot in {
-    defm _c#NAME : ALU32_Pbase<mnemonic, PredNot, 0>;
+    defm _c#NAME : ALU32_Pbase<mnemonic, RC, PredNot, 0>;
     // Predicate new
-    defm _cdn#NAME : ALU32_Pbase<mnemonic, PredNot, 1>;
+    defm _cdn#NAME : ALU32_Pbase<mnemonic, RC, PredNot, 1>;
   }
 }
 
@@ -112,8 +121,8 @@ multiclass ALU32_base<string mnemonic, string CextOp, SDNode OpNode> {
                                               (i32 IntRegs:$src2)))]>;
 
     let neverHasSideEffects = 1, isPredicated = 1 in {
-      defm Pt : ALU32_Pred<mnemonic, 0>;
-      defm NotPt : ALU32_Pred<mnemonic, 1>;
+      defm Pt : ALU32_Pred<mnemonic, IntRegs, 0>;
+      defm NotPt : ALU32_Pred<mnemonic, IntRegs, 1>;
     }
   }
 }
@@ -126,6 +135,37 @@ let isCommutable = 1 in {
 }
 
 defm SUB_rr : ALU32_base<"sub", "SUB", sub>, ImmRegRel, PredNewRel;
+
+// Combines the two integer registers SRC1 and SRC2 into a double register.
+let isPredicable = 1 in
+class T_Combine : ALU32_rr<(outs DoubleRegs:$dst),
+                           (ins IntRegs:$src1, IntRegs:$src2),
+            "$dst = combine($src1, $src2)",
+            [(set (i64 DoubleRegs:$dst),
+              (i64 (HexagonWrapperCombineRR (i32 IntRegs:$src1),
+                                            (i32 IntRegs:$src2))))]>;
+
+multiclass Combine_base {
+  let BaseOpcode = "combine" in {
+    def NAME : T_Combine;
+    let neverHasSideEffects = 1, isPredicated = 1 in {
+      defm Pt : ALU32_Pred<"combine", DoubleRegs, 0>;
+      defm NotPt : ALU32_Pred<"combine", DoubleRegs, 1>;
+    }
+  }
+}
+
+defm COMBINE_rr : Combine_base, PredNewRel;
+
+// Combines the two immediates SRC1 and SRC2 into a double register.
+class COMBINE_imm<Operand imm1, Operand imm2, PatLeaf pat1, PatLeaf pat2> :
+  ALU32_ii<(outs DoubleRegs:$dst), (ins imm1:$src1, imm2:$src2),
+  "$dst = combine(#$src1, #$src2)",
+  [(set (i64 DoubleRegs:$dst),
+        (i64 (HexagonWrapperCombineII (i32 pat1:$src1), (i32 pat2:$src2))))]>;
+
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 8 in
+def COMBINE_Ii : COMBINE_imm<s8Ext, s8Imm, s8ExtPred, s8ImmPred>;
 
 //===----------------------------------------------------------------------===//
 // ALU32/ALU (ADD with register-immediate form)
@@ -344,52 +384,6 @@ def TFCR : CRInst<(outs CRRegs:$dst), (ins IntRegs:$src1),
 // ALU32/PERM +
 //===----------------------------------------------------------------------===//
 
-// Combine.
-
-def SDTHexagonI64I32I32 : SDTypeProfile<1, 2,
-  [SDTCisVT<0, i64>, SDTCisVT<1, i32>, SDTCisSameAs<1, 2>]>;
-
-def HexagonWrapperCombineII :
-  SDNode<"HexagonISD::WrapperCombineII", SDTHexagonI64I32I32>;
-def HexagonWrapperCombineRR :
-  SDNode<"HexagonISD::WrapperCombineRR", SDTHexagonI64I32I32>;
-
-// Combines the two integer registers SRC1 and SRC2 into a double register.
-let isPredicable = 1 in
-def COMBINE_rr : ALU32_rr<(outs DoubleRegs:$dst), (ins IntRegs:$src1,
-                                                       IntRegs:$src2),
-  "$dst = combine($src1, $src2)",
-  [(set (i64 DoubleRegs:$dst),
-        (i64 (HexagonWrapperCombineRR (i32 IntRegs:$src1),
-                                      (i32 IntRegs:$src2))))]>;
-
-// Rd=combine(Rt.[HL], Rs.[HL])
-class COMBINE_halves<string A, string B>: ALU32_rr<(outs IntRegs:$dst),
-                                                   (ins IntRegs:$src1,
-                                                        IntRegs:$src2),
-  "$dst = combine($src1."# A #", $src2."# B #")", []>;
-
-let isPredicable = 1 in {
-  def COMBINE_hh : COMBINE_halves<"H", "H">;
-  def COMBINE_hl : COMBINE_halves<"H", "L">;
-  def COMBINE_lh : COMBINE_halves<"L", "H">;
-  def COMBINE_ll : COMBINE_halves<"L", "L">;
-}
-
-def : Pat<(i32 (trunc (i64 (srl (i64 DoubleRegs:$a), (i32 16))))),
-  (COMBINE_lh (EXTRACT_SUBREG (i64 DoubleRegs:$a), subreg_hireg),
-              (EXTRACT_SUBREG (i64 DoubleRegs:$a), subreg_loreg))>;
-
-// Combines the two immediates SRC1 and SRC2 into a double register.
-class COMBINE_imm<Operand imm1, Operand imm2, PatLeaf pat1, PatLeaf pat2> :
-  ALU32_ii<(outs DoubleRegs:$dst), (ins imm1:$src1, imm2:$src2),
-  "$dst = combine(#$src1, #$src2)",
-  [(set (i64 DoubleRegs:$dst),
-        (i64 (HexagonWrapperCombineII (i32 pat1:$src1), (i32 pat2:$src2))))]>;
-
-let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 8 in
-def COMBINE_Ii : COMBINE_imm<s8Ext, s8Imm, s8ExtPred, s8ImmPred>;
-
 // Mux.
 def VMUX_prr64 : ALU64_rr<(outs DoubleRegs:$dst), (ins PredRegs:$src1,
                                                    DoubleRegs:$src2,
@@ -491,32 +485,6 @@ def : Pat <(sext_inreg (i32 IntRegs:$src1), i16),
 //===----------------------------------------------------------------------===//
 // ALU32/PRED +
 //===----------------------------------------------------------------------===//
-
-// Conditional combine.
-let neverHasSideEffects = 1, isPredicated = 1 in {
-def COMBINE_rr_cPt : ALU32_rr<(outs DoubleRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if ($src1) $dst = combine($src2, $src3)",
-            []>;
-
-let isPredicatedFalse = 1 in
-def COMBINE_rr_cNotPt : ALU32_rr<(outs DoubleRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if (!$src1) $dst = combine($src2, $src3)",
-            []>;
-
-let isPredicatedNew = 1 in
-def COMBINE_rr_cdnPt : ALU32_rr<(outs DoubleRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if ($src1.new) $dst = combine($src2, $src3)",
-            []>;
-
-let isPredicatedNew = 1, isPredicatedFalse = 1 in
-def COMBINE_rr_cdnNotPt : ALU32_rr<(outs DoubleRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "if (!$src1.new) $dst = combine($src2, $src3)",
-            []>;
-}
 
 // Compare.
 defm CMPGTU : CMP32_rr_ri_u9<"cmp.gtu", "CMPGTU", setugt>, ImmRegRel;
@@ -2162,6 +2130,13 @@ def : Pat <(brcond (not (i1 PredRegs:$src1)), bb:$offset),
 def : Pat <(and (i1 PredRegs:$src1), (not (i1 PredRegs:$src2))),
       (i1 (AND_pnotp (i1 PredRegs:$src1), (i1 PredRegs:$src2)))>;
 
+
+let AddedComplexity = 100 in
+def : Pat <(i64 (zextloadi1 (HexagonCONST32 tglobaladdr:$global))),
+      (i64 (COMBINE_rr (TFRI 0),
+                       (LDriub_indexed (CONST32_set tglobaladdr:$global), 0)))>,
+      Requires<[NoV4T]>;
+
 // Map from i1 loads to 32 bits. This assumes that the i1* is byte aligned.
 let AddedComplexity = 10 in
 def : Pat <(i32 (zextloadi1 ADDRriS11_0:$addr)),
@@ -2492,6 +2467,13 @@ def:  Pat <(i64 (zextloadi32 ADDRriS11_2:$src1)),
       (i64 (COMBINE_rr (TFRI 0), (LDriw ADDRriS11_2:$src1)))>,
       Requires<[NoV4T]>;
 
+let AddedComplexity = 100 in
+def:  Pat <(i64 (zextloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
+      (i64 (COMBINE_rr (TFRI 0), (LDriw_indexed IntRegs:$src1,
+                                  s11_2ExtPred:$offset)))>,
+      Requires<[NoV4T]>;
+
+let AddedComplexity = 10 in
 def:  Pat <(i32 (zextloadi1 ADDRriS11_0:$src1)),
       (i32 (LDriw ADDRriS11_0:$src1))>;
 
@@ -2507,6 +2489,27 @@ def : Pat <(i32 (anyext (i1 PredRegs:$src1))),
 def : Pat <(i64 (anyext (i1 PredRegs:$src1))),
       (i64 (SXTW (i32 (MUX_ii (i1 PredRegs:$src1), 1, 0))))>;
 
+
+let AddedComplexity = 100 in
+def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
+                           (i32 32))),
+               (i64 (zextloadi32 (i32 (add IntRegs:$src2,
+                                         s11_2ExtPred:$offset2)))))),
+        (i64 (COMBINE_rr (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
+                        (LDriw_indexed IntRegs:$src2,
+                                       s11_2ExtPred:$offset2)))>;
+
+def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
+                           (i32 32))),
+               (i64 (zextloadi32 ADDRriS11_2:$srcLow)))),
+        (i64 (COMBINE_rr (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
+                        (LDriw ADDRriS11_2:$srcLow)))>;
+
+def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
+                           (i32 32))),
+               (i64 (zext (i32 IntRegs:$srcLow))))),
+        (i64 (COMBINE_rr (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
+                        IntRegs:$srcLow))>;
 
 // Any extended 64-bit load.
 // anyext i32 -> i64

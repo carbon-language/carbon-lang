@@ -588,16 +588,58 @@ def : Pat<(store (i64 DoubleRegs:$src4),
                                 u2ImmPred:$src3, DoubleRegs:$src4)>;
 }
 
-// memd(Ru<<#u2+#U6)=Rtt
-let isExtended = 1, opExtendable = 2, AddedComplexity = 10,
-validSubTargets = HasV4SubT in
-def STrid_shl_V4 : STInst<(outs),
-            (ins IntRegs:$src1, u2Imm:$src2, u0AlwaysExt:$src3, DoubleRegs:$src4),
-            "memd($src1<<#$src2+#$src3) = $src4",
-            [(store (i64 DoubleRegs:$src4),
+let isExtended = 1, opExtendable = 2 in
+class T_ST_LongOff <string mnemonic, PatFrag stOp, RegisterClass RC, ValueType VT> :
+            STInst<(outs),
+            (ins IntRegs:$src1, u2Imm:$src2, u0AlwaysExt:$src3, RC:$src4),
+            mnemonic#"($src1<<#$src2+##$src3) = $src4",
+            [(stOp (VT RC:$src4),
                     (add (shl (i32 IntRegs:$src1), u2ImmPred:$src2),
                          u0AlwaysExtPred:$src3))]>,
             Requires<[HasV4T]>;
+
+let isExtended = 1, opExtendable = 2, mayStore = 1, isNVStore = 1 in
+class T_ST_LongOff_nv <string mnemonic> :
+            NVInst_V4<(outs),
+            (ins IntRegs:$src1, u2Imm:$src2, u0AlwaysExt:$src3, IntRegs:$src4),
+            mnemonic#"($src1<<#$src2+##$src3) = $src4.new",
+            []>,
+            Requires<[HasV4T]>;
+
+multiclass ST_LongOff <string mnemonic, string BaseOp, PatFrag stOp> {
+  let  BaseOpcode = BaseOp#"_shl" in {
+    let isNVStorable = 1 in
+    def NAME#_V4 : T_ST_LongOff<mnemonic, stOp, IntRegs, i32>;
+
+    def NAME#_nv_V4 : T_ST_LongOff_nv<mnemonic>;
+  }
+}
+
+let AddedComplexity = 10, validSubTargets = HasV4SubT in {
+  def STrid_shl_V4 : T_ST_LongOff<"memd", store, DoubleRegs, i64>;
+  defm STrib_shl   : ST_LongOff <"memb", "STrib", truncstorei8>, NewValueRel;
+  defm STrih_shl   : ST_LongOff <"memh", "Strih", truncstorei16>, NewValueRel;
+  defm STriw_shl   : ST_LongOff <"memw", "STriw", store>, NewValueRel;
+}
+
+let AddedComplexity = 40 in
+multiclass T_ST_LOff_Pats <InstHexagon I, RegisterClass RC, ValueType VT,
+                           PatFrag stOp> {
+ def : Pat<(stOp (VT RC:$src4),
+           (add (shl IntRegs:$src1, u2ImmPred:$src2),
+               (NumUsesBelowThresCONST32 tglobaladdr:$src3))),
+           (I IntRegs:$src1, u2ImmPred:$src2, tglobaladdr:$src3, RC:$src4)>;
+
+ def : Pat<(stOp (VT RC:$src4),
+           (add IntRegs:$src1,
+               (NumUsesBelowThresCONST32 tglobaladdr:$src3))),
+           (I IntRegs:$src1, 0, tglobaladdr:$src3, RC:$src4)>;
+}
+
+defm : T_ST_LOff_Pats<STrid_shl_V4, DoubleRegs, i64, store>;
+defm : T_ST_LOff_Pats<STriw_shl_V4, IntRegs, i32, store>;
+defm : T_ST_LOff_Pats<STrib_shl_V4, IntRegs, i32, truncstorei8>;
+defm : T_ST_LOff_Pats<STrih_shl_V4, IntRegs, i32, truncstorei16>;
 
 // memd(Rx++#s4:3)=Rtt
 // memd(Rx++#s4:3:circ(Mu))=Rtt
@@ -676,17 +718,6 @@ def : Pat <(truncstorei8 s8ExtPred:$src2, (i32 IntRegs:$src1)),
            (STrib_imm_V4 IntRegs:$src1, 0, s8ExtPred:$src2)>,
            Requires<[HasV4T]>;
 
-// memb(Ru<<#u2+#U6)=Rt
-let isExtended = 1, opExtendable = 2, AddedComplexity = 10, isNVStorable = 1,
-validSubTargets = HasV4SubT in
-def STrib_shl_V4 : STInst<(outs),
-            (ins IntRegs:$src1, u2Imm:$src2, u0AlwaysExt:$src3, IntRegs:$src4),
-            "memb($src1<<#$src2+#$src3) = $src4",
-            [(truncstorei8 (i32 IntRegs:$src4),
-                           (add (shl (i32 IntRegs:$src1), u2ImmPred:$src2),
-                                u0AlwaysExtPred:$src3))]>,
-            Requires<[HasV4T]>;
-
 // memb(Rx++#s4:0:circ(Mu))=Rt
 // memb(Rx++I:circ(Mu))=Rt
 // memb(Rx++Mu)=Rt
@@ -707,17 +738,6 @@ def : Pat <(truncstorei16 s8ExtPred:$src2, (i32 IntRegs:$src1)),
 // TODO: needs to be implemented.
 
 // memh(Ru<<#u2+#U6)=Rt.H
-// memh(Ru<<#u2+#U6)=Rt
-let isExtended = 1, opExtendable = 2, AddedComplexity = 10, isNVStorable = 1,
-validSubTargets = HasV4SubT in
-def STrih_shl_V4 : STInst<(outs),
-            (ins IntRegs:$src1, u2Imm:$src2, u0AlwaysExt:$src3, IntRegs:$src4),
-            "memh($src1<<#$src2+#$src3) = $src4",
-            [(truncstorei16 (i32 IntRegs:$src4),
-                            (add (shl (i32 IntRegs:$src1), u2ImmPred:$src2),
-                                 u0AlwaysExtPred:$src3))]>,
-            Requires<[HasV4T]>;
-
 // memh(Rx++#s4:1:circ(Mu))=Rt.H
 // memh(Rx++#s4:1:circ(Mu))=Rt
 // memh(Rx++I:circ(Mu))=Rt.H
@@ -753,17 +773,6 @@ let AddedComplexity = 6 in
 def : Pat <(store s8ExtPred:$src2, (i32 IntRegs:$src1)),
            (STriw_imm_V4 IntRegs:$src1, 0, s8ExtPred:$src2)>,
            Requires<[HasV4T]>;
-
-// memw(Ru<<#u2+#U6)=Rt
-let isExtended = 1, opExtendable = 2, AddedComplexity = 10, isNVStorable = 1,
-validSubTargets = HasV4SubT in
-def STriw_shl_V4 : STInst<(outs),
-            (ins IntRegs:$src1, u2Imm:$src2, u0AlwaysExt:$src3, IntRegs:$src4),
-            "memw($src1<<#$src2+#$src3) = $src4",
-            [(store (i32 IntRegs:$src4),
-                    (add (shl (i32 IntRegs:$src1), u2ImmPred:$src2),
-                              u0AlwaysExtPred:$src3))]>,
-            Requires<[HasV4T]>;
 
 // memw(Rx++#s4:2)=Rt
 // memw(Rx++#s4:2:circ(Mu))=Rt
@@ -883,15 +892,6 @@ mayStore = 1 in {
   defm STriw: ST_MEMri_nv<"memw", "STriw", IntRegs, 13, 8>, AddrModeRel;
 }
 
-// memb(Ru<<#u2+#U6)=Nt.new
-let isExtended = 1, opExtendable = 2, mayStore = 1, AddedComplexity = 10,
-isNVStore = 1, validSubTargets = HasV4SubT in
-def STrib_shl_nv_V4 : NVInst_V4<(outs),
-            (ins IntRegs:$src1, u2Imm:$src2, u0AlwaysExt:$src3, IntRegs:$src4),
-            "memb($src1<<#$src2+#$src3) = $src4.new",
-            []>,
-            Requires<[HasV4T]>;
-
 //===----------------------------------------------------------------------===//
 // Post increment store
 // mem[bhwd](Rx++#s4:[0123])=Nt.new
@@ -949,28 +949,10 @@ defm POST_STwri: ST_PostInc_nv <"memw", "STriw", IntRegs, s4_2Imm>, AddrModeRel;
 // memb(Rx++I:circ(Mu))=Nt.new
 // memb(Rx++Mu)=Nt.new
 // memb(Rx++Mu:brev)=Nt.new
-// memh(Ru<<#u2+#U6)=Nt.new
-let isExtended = 1, opExtendable = 2, mayStore = 1, AddedComplexity = 10,
-isNVStore = 1, validSubTargets = HasV4SubT in
-def STrih_shl_nv_V4 : NVInst_V4<(outs),
-            (ins IntRegs:$src1, u2Imm:$src2, u0AlwaysExt:$src3, IntRegs:$src4),
-            "memh($src1<<#$src2+#$src3) = $src4.new",
-            []>,
-            Requires<[HasV4T]>;
-
 // memh(Rx++#s4:1:circ(Mu))=Nt.new
 // memh(Rx++I:circ(Mu))=Nt.new
 // memh(Rx++Mu)=Nt.new
 // memh(Rx++Mu:brev)=Nt.new
-
-// memw(Ru<<#u2+#U6)=Nt.new
-let isExtended = 1, opExtendable = 2, mayStore = 1, AddedComplexity = 10,
-isNVStore = 1, validSubTargets = HasV4SubT in
-def STriw_shl_nv_V4 : NVInst_V4<(outs),
-            (ins IntRegs:$src1, u2Imm:$src2, u0AlwaysExt:$src3, IntRegs:$src4),
-            "memw($src1<<#$src2+#$src3) = $src4.new",
-            []>,
-            Requires<[HasV4T]>;
 
 // memw(Rx++#s4:2:circ(Mu))=Nt.new
 // memw(Rx++I:circ(Mu))=Nt.new
@@ -3071,19 +3053,21 @@ def : Pat<(HexagonCONST32_GP tglobaladdr:$src1),
 
 // Load - Indirect with long offset: These instructions take global address
 // as an operand
-let AddedComplexity = 10 in
+let isExtended = 1, opExtendable = 3, AddedComplexity = 40,
+validSubTargets = HasV4SubT in
 def LDrid_ind_lo_V4 : LDInst<(outs DoubleRegs:$dst),
-            (ins IntRegs:$src1, u2Imm:$src2, globaladdress:$offset),
+            (ins IntRegs:$src1, u2Imm:$src2, globaladdressExt:$offset),
             "$dst=memd($src1<<#$src2+##$offset)",
             [(set (i64 DoubleRegs:$dst),
                   (load (add (shl IntRegs:$src1, u2ImmPred:$src2),
                         (HexagonCONST32 tglobaladdr:$offset))))]>,
             Requires<[HasV4T]>;
 
-let AddedComplexity = 10 in
+let AddedComplexity = 40 in
 multiclass LD_indirect_lo<string OpcStr, PatFrag OpNode> {
+let isExtended = 1, opExtendable = 3, validSubTargets = HasV4SubT in
   def _lo_V4 : LDInst<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, u2Imm:$src2, globaladdress:$offset),
+            (ins IntRegs:$src1, u2Imm:$src2, globaladdressExt:$offset),
             !strconcat("$dst = ",
             !strconcat(OpcStr, "($src1<<#$src2+##$offset)")),
             [(set IntRegs:$dst,
@@ -3094,37 +3078,23 @@ multiclass LD_indirect_lo<string OpcStr, PatFrag OpNode> {
 
 defm LDrib_ind : LD_indirect_lo<"memb", sextloadi8>;
 defm LDriub_ind : LD_indirect_lo<"memub", zextloadi8>;
+defm LDriub_ind_anyext : LD_indirect_lo<"memub", extloadi8>;
 defm LDrih_ind : LD_indirect_lo<"memh", sextloadi16>;
 defm LDriuh_ind : LD_indirect_lo<"memuh", zextloadi16>;
+defm LDriuh_ind_anyext : LD_indirect_lo<"memuh", extloadi16>;
 defm LDriw_ind : LD_indirect_lo<"memw", load>;
 
-// Store - Indirect with long offset: These instructions take global address
-// as an operand
-let AddedComplexity = 10 in
-def STrid_ind_lo_V4 : STInst<(outs),
-            (ins IntRegs:$src1, u2Imm:$src2, globaladdress:$src3,
-                 DoubleRegs:$src4),
-            "memd($src1<<#$src2+#$src3) = $src4",
-            [(store (i64 DoubleRegs:$src4),
-                 (add (shl IntRegs:$src1, u2ImmPred:$src2),
-                      (HexagonCONST32 tglobaladdr:$src3)))]>,
-             Requires<[HasV4T]>;
+let AddedComplexity = 40 in
+def : Pat <(i32 (sextloadi8 (add IntRegs:$src1,
+                                 (NumUsesBelowThresCONST32 tglobaladdr:$offset)))),
+           (i32 (LDrib_ind_lo_V4 IntRegs:$src1, 0, tglobaladdr:$offset))>,
+           Requires<[HasV4T]>;
 
-let AddedComplexity = 10 in
-multiclass ST_indirect_lo<string OpcStr, PatFrag OpNode> {
-  def _lo_V4 : STInst<(outs),
-            (ins IntRegs:$src1, u2Imm:$src2, globaladdress:$src3,
-                 IntRegs:$src4),
-            !strconcat(OpcStr, "($src1<<#$src2+##$src3) = $src4"),
-            [(OpNode (i32 IntRegs:$src4),
-                 (add (shl IntRegs:$src1, u2ImmPred:$src2),
-                      (HexagonCONST32 tglobaladdr:$src3)))]>,
-             Requires<[HasV4T]>;
-}
-
-defm STrib_ind : ST_indirect_lo<"memb", truncstorei8>;
-defm STrih_ind : ST_indirect_lo<"memh", truncstorei16>;
-defm STriw_ind : ST_indirect_lo<"memw", store>;
+let AddedComplexity = 40 in
+def : Pat <(i32 (zextloadi8 (add IntRegs:$src1,
+                                 (NumUsesBelowThresCONST32 tglobaladdr:$offset)))),
+           (i32 (LDriub_ind_lo_V4 IntRegs:$src1, 0, tglobaladdr:$offset))>,
+           Requires<[HasV4T]>;
 
 let Predicates = [HasV4T], AddedComplexity  = 30 in {
 def : Pat<(truncstorei8 (i32 IntRegs:$src1), u0AlwaysExtPred:$src2),
