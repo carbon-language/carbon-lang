@@ -60,7 +60,7 @@ zlib::Status zlib::compress(StringRef InputBuffer,
     CompressedBuffer.reset(MemoryBuffer::getMemBufferCopy(
         StringRef(TmpBuffer.get(), CompressedSize)));
     // Tell MSan that memory initialized by zlib is valid.
-    __msan_unpoison(CompressedBuffer.data(), CompressedBuffer.size());
+    __msan_unpoison(CompressedBuffer->getBufferStart(), CompressedSize);
   }
   return Res;
 }
@@ -76,7 +76,7 @@ zlib::Status zlib::uncompress(StringRef InputBuffer,
     UncompressedBuffer.reset(MemoryBuffer::getMemBufferCopy(
         StringRef(TmpBuffer.get(), UncompressedSize)));
     // Tell MSan that memory initialized by zlib is valid.
-    __msan_unpoison(UncompressedBuffer.data(), UncompressedBuffer.size());
+    __msan_unpoison(UncompressedBuffer->getBufferStart(), UncompressedSize);
   }
   return Res;
 }
