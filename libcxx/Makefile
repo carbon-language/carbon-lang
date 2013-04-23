@@ -35,7 +35,6 @@ installheaders::
 	mkdir -p $(HEADER_DIR)/c++/v1/ext
 	rsync -r --exclude=".*" --exclude="support" $(SRCDIRS)/include/* \
 	  $(HEADER_DIR)/c++/v1/
-	chown -R root:wheel $(HEADER_DIR)/c++
 	chmod 755 $(HEADER_DIR)/c++/v1
 	chmod 644 $(HEADER_DIR)/c++/v1/*
 	chmod 755 $(HEADER_DIR)/c++/v1/ext
