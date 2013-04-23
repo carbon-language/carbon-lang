@@ -394,6 +394,12 @@ PlatformDarwinKernel::GetMacDirectoriesToSearch (std::vector<lldb_private::FileS
         directories.push_back(sle);
     }
 
+    FileSpec le("/Library/Extensions", true);
+    if (le.Exists() && le.GetFileType() == FileSpec::eFileTypeDirectory)
+    {
+        directories.push_back(le);
+    }
+
     FileSpec kdk("/Volumes/KernelDebugKit", true);
     if (kdk.Exists() && kdk.GetFileType() == FileSpec::eFileTypeDirectory)
     {
