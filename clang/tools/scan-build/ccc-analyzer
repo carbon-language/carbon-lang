@@ -491,7 +491,7 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     while ($Cnt > 0) { ++$i; --$Cnt; push @CompileOpts, $ARGV[$i]; }
     next;
   }
-  if ($Arg =~ /-msse.*/) {
+  if ($Arg =~ /-m.*/) {
     push @CompileOpts,$Arg;
     next;
   }
