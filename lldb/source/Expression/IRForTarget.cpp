@@ -281,6 +281,10 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
                         m_error_stream->Printf("error: call to a function '%s' (alternate name '%s') that is not present in the target\n",
                                                mangled_name.GetName().GetCString(),
                                                alt_mangled_name.GetName().GetCString());
+                    else if (mangled_name.GetMangledName())
+                        m_error_stream->Printf("error: call to a function '%s' ('%s') that is not present in the target\n",
+                                               mangled_name.GetName().GetCString(),
+                                               mangled_name.GetMangledName().GetCString());
                     else
                         m_error_stream->Printf("error: call to a function '%s' that is not present in the target\n",
                                                mangled_name.GetName().GetCString());
