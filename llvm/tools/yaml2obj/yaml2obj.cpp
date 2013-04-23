@@ -186,6 +186,7 @@ struct COFFParser {
         errs() << "SectionData must be a collection of pairs of hex bytes";
         return false;
       }
+      Sec.Relocations = YamlSection.Relocations;
       Sections.push_back(Sec);
     }
     return true;
@@ -289,6 +290,12 @@ static bool layoutCOFF(COFFParser &CP) {
       i->Header.SizeOfRawData = i->Data.size();
       i->Header.PointerToRawData = CurrentSectionDataOffset;
       CurrentSectionDataOffset += i->Header.SizeOfRawData;
+      if (!i->Relocations.empty()) {
+        i->Header.PointerToRelocations = CurrentSectionDataOffset;
+        i->Header.NumberOfRelocations = i->Relocations.size();
+        CurrentSectionDataOffset += i->Header.NumberOfRelocations *
+          COFF::RelocationSize;
+      }
       // TODO: Handle alignment.
     } else {
       i->Header.SizeOfRawData = 0;
@@ -374,6 +381,12 @@ void writeCOFF(COFFParser &CP, raw_ostream &OS) {
                                                         i != e; ++i) {
     if (!i->Data.empty())
       OS.write(reinterpret_cast<const char*>(&i->Data[0]), i->Data.size());
+    for (unsigned I2 = 0, E2 = i->Relocations.size(); I2 != E2; ++I2) {
+      const COFF::relocation &R = i->Relocations[I2];
+      OS << binary_le(R.VirtualAddress)
+         << binary_le(R.SymbolTableIndex)
+         << binary_le(R.Type);
+    }
   }
 
   // Output symbol table.

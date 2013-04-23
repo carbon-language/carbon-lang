@@ -1,5 +1,25 @@
-RUN: yaml2obj %p/Inputs/COFF/i386.yaml | llvm-readobj -file-headers - | FileCheck %s --check-prefix COFF-I386
+RUN: yaml2obj %p/Inputs/COFF/i386.yaml | llvm-readobj -file-headers -relocations -expand-relocs - | FileCheck %s --check-prefix COFF-I386
 
 // COFF-I386:  Characteristics [ (0x200)
 // COFF-I386-NEXT:    IMAGE_FILE_DEBUG_STRIPPED (0x200)
 // COFF-I386-NEXT:  ]
+
+// COFF-I386:      Relocations [
+// COFF-I386-NEXT:   Section (1) .text {
+// COFF-I386-NEXT:     Relocation {
+// COFF-I386-NEXT:       Offset: 0xE
+// COFF-I386-NEXT:       Type: IMAGE_REL_I386_DIR32 (6)
+// COFF-I386-NEXT:       Symbol: L_.str
+// COFF-I386-NEXT:     }
+// COFF-I386-NEXT:     Relocation {
+// COFF-I386-NEXT:       Offset: 0x13
+// COFF-I386-NEXT:       Type: IMAGE_REL_I386_REL32 (20)
+// COFF-I386-NEXT:       Symbol: _puts
+// COFF-I386-NEXT:     }
+// COFF-I386-NEXT:     Relocation {
+// COFF-I386-NEXT:       Offset: 0x18
+// COFF-I386-NEXT:       Type: IMAGE_REL_I386_REL32 (20)
+// COFF-I386-NEXT:       Symbol: _SomeOtherFunction
+// COFF-I386-NEXT:     }
+// COFF-I386-NEXT:   }
+// COFF-I386-NEXT: ]
