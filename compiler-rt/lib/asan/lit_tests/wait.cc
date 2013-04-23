@@ -35,8 +35,8 @@
 
 
 #include <assert.h>
+#include <sys/wait.h>
 #include <unistd.h>
-#include <wait.h>
 
 int main(int argc, char **argv) {
   pid_t pid = fork();
@@ -67,9 +67,9 @@ int main(int argc, char **argv) {
     // CHECK: stack-buffer-overflow
     // CHECK: {{WRITE of size .* at 0x.* thread T0}}
     // CHECK: {{in .*wait}}
-    // CHECK: {{in main .*wait.cc:}}
+    // CHECK: {{in _?main .*wait.cc:}}
     // CHECK: is located in stack of thread T0 at offset
-    // CHECK: in main
+    // CHECK: {{in _?main}}
     return res != -1;
   }
   // child
