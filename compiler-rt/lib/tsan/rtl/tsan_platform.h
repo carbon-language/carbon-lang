@@ -65,11 +65,11 @@ namespace __tsan {
 
 #if defined(TSAN_GO)
 static const uptr kLinuxAppMemBeg = 0x000000000000ULL;
-static const uptr kLinuxAppMemEnd = 0x00dfffffffffULL;
+static const uptr kLinuxAppMemEnd = 0x04dfffffffffULL;
 # if SANITIZER_WINDOWS
 static const uptr kLinuxShadowMsk = 0x010000000000ULL;
 # else
-static const uptr kLinuxShadowMsk = 0x100000000000ULL;
+static const uptr kLinuxShadowMsk = 0x200000000000ULL;
 # endif
 // TSAN_COMPAT_SHADOW is intended for COMPAT virtual memory layout,
 // when memory addresses are of the 0x2axxxxxxxxxx form.
