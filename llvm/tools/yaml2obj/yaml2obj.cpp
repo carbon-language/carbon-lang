@@ -128,7 +128,7 @@ namespace COFFYAML {
     COFF::symbol Header;
     COFF::SymbolBaseType SimpleType;
     COFF::SymbolComplexType ComplexType;
-    StringRef AuxillaryData;
+    StringRef AuxiliaryData;
     StringRef Name;
     Symbol() {
       memset(&Header, 0, sizeof(COFF::symbol));
@@ -270,9 +270,9 @@ static bool layoutCOFF(COFFParser &CP) {
   for (std::vector<COFFYAML::Symbol>::iterator i = CP.Obj.Symbols.begin(),
                                                e = CP.Obj.Symbols.end();
                                                i != e; ++i) {
-    unsigned AuxBytes = i->AuxillaryData.size() / 2;
+    unsigned AuxBytes = i->AuxiliaryData.size() / 2;
     if (AuxBytes % COFF::SymbolSize != 0) {
-      errs() << "AuxillaryData size not a multiple of symbol size!\n";
+      errs() << "AuxiliaryData size not a multiple of symbol size!\n";
       return false;
     }
     i->Header.NumberOfAuxSymbols = AuxBytes / COFF::SymbolSize;
@@ -368,10 +368,10 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
        << binary_le(i->Header.Type)
        << binary_le(i->Header.StorageClass)
        << binary_le(i->Header.NumberOfAuxSymbols);
-    if (!i->AuxillaryData.empty()) {
+    if (!i->AuxiliaryData.empty()) {
       std::vector<uint8_t> AuxSymbols;
-      if (!hexStringToByteArray(i->AuxillaryData, AuxSymbols)) {
-        errs() << "AuxillaryData must be a collection of pairs of hex bytes";
+      if (!hexStringToByteArray(i->AuxiliaryData, AuxSymbols)) {
+        errs() << "AuxiliaryData must be a collection of pairs of hex bytes";
         return false;
       }
 
@@ -622,7 +622,7 @@ struct MappingTraits<COFFYAML::Symbol> {
     IO.mapOptional("NumberOfAuxSymbols", S.Header.NumberOfAuxSymbols);
     IO.mapRequired("Name", S.Name);
     IO.mapRequired("StorageClass", NS->StorageClass);
-    IO.mapOptional("AuxillaryData", S.AuxillaryData); // FIXME: typo
+    IO.mapOptional("AuxiliaryData", S.AuxiliaryData);
     IO.mapRequired("ComplexType", S.ComplexType);
     IO.mapRequired("Value", S.Header.Value);
     IO.mapRequired("SectionNumber", S.Header.SectionNumber);

@@ -37,7 +37,7 @@ symbols:
     ComplexType: IMAGE_SYM_DTYPE_NULL # (0)
     StorageClass: IMAGE_SYM_CLASS_STATIC # (3)
     NumberOfAuxSymbols: 1
-    AuxillaryData:  !hex "260000000300000000000000010000000000" # |&.................|
+    AuxiliaryData:  !hex "260000000300000000000000010000000000" # |&.................|
 
   - !Symbol
     Name: .data
@@ -47,7 +47,7 @@ symbols:
     ComplexType: IMAGE_SYM_DTYPE_NULL # (0)
     StorageClass: IMAGE_SYM_CLASS_STATIC # (3)
     NumberOfAuxSymbols: 1
-    AuxillaryData:  !hex "0D0000000000000000000000020000000000" # |..................|
+    AuxiliaryData:  !hex "0D0000000000000000000000020000000000" # |..................|
 
   - !Symbol
     Name: main
