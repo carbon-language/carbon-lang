@@ -269,6 +269,8 @@ static bool sameNoopInput(const Value *V1, const Value *V2,
              i != e; ++i) {
           unsigned attrInd = i - I->op_begin() + 1;
           if (cast<CallInst>(I)->paramHasAttr(attrInd, Attribute::Returned) &&
+              !cast<CallInst>(I)->paramHasAttr(attrInd, Attribute::ZExt) &&
+              !cast<CallInst>(I)->paramHasAttr(attrInd, Attribute::SExt) &&
               isNoopBitcast((*i)->getType(), I->getType(), TLI)) {
             NoopInput = *i;
             break;
@@ -282,6 +284,8 @@ static bool sameNoopInput(const Value *V1, const Value *V2,
              i != e; ++i) {
           unsigned attrInd = i - I->op_begin() + 1;
           if (cast<InvokeInst>(I)->paramHasAttr(attrInd, Attribute::Returned) &&
+              !cast<InvokeInst>(I)->paramHasAttr(attrInd, Attribute::ZExt) &&
+              !cast<InvokeInst>(I)->paramHasAttr(attrInd, Attribute::SExt) &&
               isNoopBitcast((*i)->getType(), I->getType(), TLI)) {
             NoopInput = *i;
             break;

@@ -740,6 +740,10 @@ void Verifier::VerifyParameterAttrs(AttributeSet Attrs, unsigned Idx, Type *Ty,
              Attrs.hasAttribute(Idx, Attribute::InReg))), "Attributes "
           "'byval, nest, and inreg' are incompatible!", V);
 
+  Assert1(!(Attrs.hasAttribute(Idx, Attribute::StructRet) &&
+            Attrs.hasAttribute(Idx, Attribute::Returned)), "Attributes "
+          "'sret and returned' are incompatible!", V);
+
   Assert1(!(Attrs.hasAttribute(Idx, Attribute::ZExt) &&
             Attrs.hasAttribute(Idx, Attribute::SExt)), "Attributes "
           "'zeroext and signext' are incompatible!", V);
