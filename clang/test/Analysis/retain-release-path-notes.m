@@ -86,15 +86,15 @@ void implicitDealloc () {
 
 void overAutorelease () {
   id object = [[NSObject alloc] init]; // expected-note{{Method returns an Objective-C object with a +1 retain count}}
-  [object autorelease]; // expected-note{{Object sent -autorelease message}}
-  [object autorelease]; // expected-note{{Object sent -autorelease message}} 
-  return; // expected-warning{{Object sent -autorelease too many times}} expected-note{{Object over-autoreleased: object was sent -autorelease 2 times but the object has a +1 retain count}} 
+  [object autorelease]; // expected-note{{Object autoreleased}}
+  [object autorelease]; // expected-note{{Object autoreleased}} 
+  return; // expected-warning{{Object autoreleased too many times}} expected-note{{Object was autoreleased 2 times but the object has a +1 retain count}} 
 }
 
 void autoreleaseUnowned (Foo *foo) {
   id object = foo.propertyValue; // expected-note{{Property returns an Objective-C object with a +0 retain count}}
-  [object autorelease]; // expected-note{{Object sent -autorelease message}} 
-  return; // expected-warning{{Object sent -autorelease too many times}} expected-note{{Object over-autoreleased: object was sent -autorelease but the object has a +0 retain count}}
+  [object autorelease]; // expected-note{{Object autoreleased}} 
+  return; // expected-warning{{Object autoreleased too many times}} expected-note{{Object was autoreleased but has a +0 retain count}}
 }
 
 void makeCollectableIgnored () {
@@ -137,7 +137,7 @@ CFTypeRef CFGetRuleViolation () {
 
 - (id)copyAutorelease {
   id result = [[Foo alloc] init]; // expected-note{{Method returns an Objective-C object with a +1 retain count}}
-  [result autorelease]; // expected-note{{Object sent -autorelease message}}
+  [result autorelease]; // expected-note{{Object autoreleased}}
   return result; // expected-warning{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}} expected-note{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}}
 }
 @end
@@ -1906,9 +1906,9 @@ static int Cond;
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Object sent -autorelease message</string>
+// CHECK-NEXT:      <string>Object autoreleased</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Object sent -autorelease message</string>
+// CHECK-NEXT:      <string>Object autoreleased</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1981,9 +1981,9 @@ static int Cond;
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Object sent -autorelease message</string>
+// CHECK-NEXT:      <string>Object autoreleased</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Object sent -autorelease message</string>
+// CHECK-NEXT:      <string>Object autoreleased</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2044,14 +2044,14 @@ static int Cond;
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Object over-autoreleased: object was sent -autorelease 2 times but the object has a +1 retain count</string>
+// CHECK-NEXT:      <string>Object was autoreleased 2 times but the object has a +1 retain count</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Object over-autoreleased: object was sent -autorelease 2 times but the object has a +1 retain count</string>
+// CHECK-NEXT:      <string>Object was autoreleased 2 times but the object has a +1 retain count</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Object sent -autorelease too many times</string>
+// CHECK-NEXT:    <key>description</key><string>Object autoreleased too many times</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
-// CHECK-NEXT:    <key>type</key><string>Object sent -autorelease too many times</string>
+// CHECK-NEXT:    <key>type</key><string>Object autoreleased too many times</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>overAutorelease</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>4</string>
@@ -2199,9 +2199,9 @@ static int Cond;
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Object sent -autorelease message</string>
+// CHECK-NEXT:      <string>Object autoreleased</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Object sent -autorelease message</string>
+// CHECK-NEXT:      <string>Object autoreleased</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2262,14 +2262,14 @@ static int Cond;
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Object over-autoreleased: object was sent -autorelease but the object has a +0 retain count</string>
+// CHECK-NEXT:      <string>Object was autoreleased but has a +0 retain count</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Object over-autoreleased: object was sent -autorelease but the object has a +0 retain count</string>
+// CHECK-NEXT:      <string>Object was autoreleased but has a +0 retain count</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Object sent -autorelease too many times</string>
+// CHECK-NEXT:    <key>description</key><string>Object autoreleased too many times</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
-// CHECK-NEXT:    <key>type</key><string>Object sent -autorelease too many times</string>
+// CHECK-NEXT:    <key>type</key><string>Object autoreleased too many times</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>autoreleaseUnowned</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>
@@ -3814,9 +3814,9 @@ static int Cond;
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Object sent -autorelease message</string>
+// CHECK-NEXT:      <string>Object autoreleased</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Object sent -autorelease message</string>
+// CHECK-NEXT:      <string>Object autoreleased</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>

@@ -39,9 +39,9 @@ typedef unsigned int NSUInteger;
 // <rdar://problem/8824416> for subscripting
 - (id)getDoesNotRetain:(BOOL)keyed {
   if (keyed)
-    return [self[self] autorelease]; // expected-warning{{Object sent -autorelease too many times}}
+    return [self[self] autorelease]; // expected-warning{{Object autoreleased too many times}}
   else
-    return [self[0] autorelease]; // expected-warning{{Object sent -autorelease too many times}}
+    return [self[0] autorelease]; // expected-warning{{Object autoreleased too many times}}
 }
 
 // <rdar://problem/9241180> for subscripting

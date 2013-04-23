@@ -326,7 +326,7 @@ void RefVal::print(raw_ostream &Out) const {
       break;
 
     case RefVal::ErrorOverAutorelease:
-      Out << "Over autoreleased";
+      Out << "Over-autoreleased";
       break;
 
     case RefVal::ErrorReturnedNotOwned:
@@ -1662,10 +1662,10 @@ namespace {
   class OverAutorelease : public CFRefBug {
   public:
     OverAutorelease()
-    : CFRefBug("Object sent -autorelease too many times") {}
+    : CFRefBug("Object autoreleased too many times") {}
 
     const char *getDescription() const {
-      return "Object sent -autorelease too many times";
+      return "Object autoreleased too many times";
     }
   };
 
@@ -2050,7 +2050,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
               return 0;
 
             assert(PrevV.getAutoreleaseCount() < CurrV.getAutoreleaseCount());
-            os << "Object sent -autorelease message";
+            os << "Object autoreleased";
             break;
           }
 
@@ -3554,10 +3554,12 @@ RetainCountChecker::handleAutoreleaseCounts(ProgramStateRef state,
   if (N) {
     SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
-    os << "Object over-autoreleased: object was sent -autorelease ";
+    os << "Object was autoreleased ";
     if (V.getAutoreleaseCount() > 1)
-      os << V.getAutoreleaseCount() << " times ";
-    os << "but the object has a +" << V.getCount() << " retain count";
+      os << V.getAutoreleaseCount() << " times but the object ";
+    else
+      os << "but ";
+    os << "has a +" << V.getCount() << " retain count";
 
     if (!overAutorelease)
       overAutorelease.reset(new OverAutorelease());

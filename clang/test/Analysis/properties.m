@@ -102,7 +102,7 @@ typedef struct _NSZone NSZone;
   else 
     value = [[NSNumber alloc] initWithInteger:0];
   
-  return [value autorelease]; // expected-warning {{Object sent -autorelease too many times}}
+  return [value autorelease]; // expected-warning {{Object autoreleased too many times}}
 }
 
 @end
@@ -111,7 +111,7 @@ NSNumber* numberFromMyNumberProperty(MyNumber* aMyNumber)
 {
   NSNumber* result = aMyNumber.myNumber;
     
-  return [result autorelease]; // expected-warning {{Object sent -autorelease too many times}}
+  return [result autorelease]; // expected-warning {{Object autoreleased too many times}}
 }
 
 
