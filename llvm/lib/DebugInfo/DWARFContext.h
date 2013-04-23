@@ -161,8 +161,11 @@ class DWARFContextInMemory : public DWARFContext {
   StringRef RangeDWOSection;
   StringRef AddrSection;
 
+  SmallVector<MemoryBuffer*, 4> UncompressedSections;
+
 public:
   DWARFContextInMemory(object::ObjectFile *);
+  ~DWARFContextInMemory();
   virtual bool isLittleEndian() const { return IsLittleEndian; }
   virtual uint8_t getAddressSize() const { return AddressSize; }
   virtual const RelocAddrMap &infoRelocMap() const { return InfoRelocMap; }

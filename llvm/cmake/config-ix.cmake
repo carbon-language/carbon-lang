@@ -105,7 +105,11 @@ if( NOT PURE_WINDOWS )
   endif()
   check_library_exists(dl dlopen "" HAVE_LIBDL)
   check_library_exists(rt clock_gettime "" HAVE_LIBRT)
-  check_library_exists(z compress2 "" HAVE_LIBZ)
+  if (LLVM_ENABLE_ZLIB)
+    check_library_exists(z compress2 "" HAVE_LIBZ)
+  else()
+    set(HAVE_LIBZ 0)
+  endif()
 endif()
 
 # function checks
