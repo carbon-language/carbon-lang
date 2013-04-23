@@ -157,6 +157,5 @@ def create_unwind_diagnose_options():
   parser = optparse.OptionParser(description=description, prog='unwind_diagnose',usage=usage)
   return parser
 
-#def __lldb_init_module (debugger, dict):
 lldb.debugger.HandleCommand('command script add -f %s.unwind_diagnose unwind-diagnose' % __name__)
 print 'The "unwind-diagnose" command has been installed, type "help unwind-diagnose" for detailed help.'
