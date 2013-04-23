@@ -3367,9 +3367,9 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   bool IsScopedUsingClassTag = false;
 
   // In C++11, recognize 'enum class' and 'enum struct'.
-  if (getLangOpts().CPlusPlus11 &&
-      (Tok.is(tok::kw_class) || Tok.is(tok::kw_struct))) {
-    Diag(Tok, diag::warn_cxx98_compat_scoped_enum);
+  if (Tok.is(tok::kw_class) || Tok.is(tok::kw_struct)) {
+    Diag(Tok, getLangOpts().CPlusPlus11 ? diag::warn_cxx98_compat_scoped_enum
+                                        : diag::ext_scoped_enum);
     IsScopedUsingClassTag = Tok.is(tok::kw_class);
     ScopedEnumKWLoc = ConsumeToken();
 

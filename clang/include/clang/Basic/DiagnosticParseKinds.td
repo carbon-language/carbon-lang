@@ -688,6 +688,8 @@ def err_duplicate_virt_specifier : Error<
 
 def err_scoped_enum_missing_identifier : Error<
   "scoped enumeration requires a name">;
+def ext_scoped_enum : ExtWarn<
+  "scoped enumerations are a C++11 extension">, InGroup<CXX11>;
 def warn_cxx98_compat_scoped_enum : Warning<
   "scoped enumerations are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
