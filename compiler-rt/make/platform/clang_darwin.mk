@@ -118,9 +118,9 @@ CFLAGS := -Wall -Werror -O3 -fomit-frame-pointer
 # supported deployment target -- nothing in the compiler-rt libraries should
 # actually depend on the deployment target.
 OSX_DEPLOYMENT_ARGS := -mmacosx-version-min=10.4
-IOS_DEPLOYMENT_ARGS := -miphoneos-version-min=1.0
-IOS6_DEPLOYMENT_ARGS := -miphoneos-version-min=6.0
-IOSSIM_DEPLOYMENT_ARGS := -miphoneos-version-min=1.0
+IOS_DEPLOYMENT_ARGS := -mios-version-min=1.0
+IOS6_DEPLOYMENT_ARGS := -mios-version-min=6.0
+IOSSIM_DEPLOYMENT_ARGS := -mios-simulator-version-min=1.0
 
 # Use our stub SDK as the sysroot to support more portable building.
 OSX_DEPLOYMENT_ARGS += -isysroot $(ProjSrcRoot)/SDKs/darwin
