@@ -514,7 +514,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::ATOMIC_STORE, MVT::i64, Expand);
 
   setBooleanContents(ZeroOrOneBooleanContent);
-  setBooleanVectorContents(ZeroOrOneBooleanContent); // FIXME: Is this correct?
+  setBooleanVectorContents(ZeroOrNegativeOneBooleanContent); // FIXME: Is this correct?
 
   if (isPPC64) {
     setStackPointerRegisterToSaveRestore(PPC::X1);
