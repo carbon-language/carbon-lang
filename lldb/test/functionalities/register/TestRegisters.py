@@ -91,6 +91,14 @@ class RegisterCommandsTestCase(TestBase):
         self.expect("register read " + register,
             substrs = [register + ' = 0x'])
 
+    def vector_write_and_read(self, frame, register, new_value):
+        value = frame.FindValue(register, lldb.eValueTypeRegister)
+        self.assertTrue(value.IsValid(), "finding a value for register " + register)
+
+        self.runCmd("register write " + register + " \'" + new_value + "\'")
+        self.expect("register read " + register,
+            substrs = [register + ' = ', new_value])
+
     def fp_register_write(self):
         exe = os.path.join(os.getcwd(), "a.out")
 
@@ -121,7 +129,16 @@ class RegisterCommandsTestCase(TestBase):
         self.write_and_restore(currentFrame, "mxcsr")
         self.write_and_restore(currentFrame, "mxcsrmask")
 
-    @expectedFailureLinux # bugzilla 14661 - Expressions involving XMM registers fail on Linux
+        new_value = "{0x01 0x02 0x03 0x00 0x00 0x00 0x00 0x00 0x00 0x00}"
+        self.vector_write_and_read(currentFrame, "stmm0", new_value)
+        new_value = "{0x01 0x02 0x03 0x00 0x00 0x00 0x00 0x00 0x09 0x0a}"
+        self.vector_write_and_read(currentFrame, "stmm7", new_value)
+
+        new_value = "{0x01 0x02 0x03 0x00 0x00 0x00 0x00 0x00 0x09 0x0a 0x2f 0x2f 0x2f 0x2f 0x2f 0x2f}"
+        self.vector_write_and_read(currentFrame, "xmm0", new_value)
+        new_value = "{0x01 0x02 0x03 0x00 0x00 0x00 0x00 0x00 0x09 0x0a 0x2f 0x2f 0x2f 0x2f 0x0e 0x0f}"
+        self.vector_write_and_read(currentFrame, "xmm15", new_value)
+
     def register_expressions(self):
         """Test expression evaluation with commands related to registers."""
         self.common_setup()

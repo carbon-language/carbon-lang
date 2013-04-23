@@ -698,7 +698,15 @@ RegisterContext_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg_info
         switch (reg)
         {
         default:
-            return false;
+            if (reg_info->encoding != eEncodingVector)
+                return false;
+
+            if (reg >= fpu_stmm0 && reg <= fpu_stmm7)
+               ::memcpy (user.i387.stmm[reg - fpu_stmm0].bytes, value.GetBytes(), value.GetByteSize());
+            
+            if (reg >= fpu_xmm0 && reg <= fpu_xmm15)
+               ::memcpy (user.i387.xmm[reg - fpu_xmm0].bytes, value.GetBytes(), value.GetByteSize());
+            break;
         case fpu_dp:
             user.i387.dp = value.GetAsUInt64();
             break;
