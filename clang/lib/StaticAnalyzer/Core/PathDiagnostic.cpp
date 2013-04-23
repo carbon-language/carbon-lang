@@ -608,31 +608,73 @@ PathDiagnosticLocation
   return PathDiagnosticLocation(S, SMng, P.getLocationContext());
 }
 
-PathDiagnosticLocation
-  PathDiagnosticLocation::createEndOfPath(const ExplodedNode* N,
-                                          const SourceManager &SM) {
-  assert(N && "Cannot create a location with a null node.");
+const Stmt *PathDiagnosticLocation::getStmt(const ExplodedNode *N) {
+  ProgramPoint P = N->getLocation();
+  if (Optional<StmtPoint> SP = P.getAs<StmtPoint>())
+    return SP->getStmt();
+  if (Optional<BlockEdge> BE = P.getAs<BlockEdge>())
+    return BE->getSrc()->getTerminator();
+  if (Optional<CallEnter> CE = P.getAs<CallEnter>())
+    return CE->getCallExpr();
+  if (Optional<CallExitEnd> CEE = P.getAs<CallExitEnd>())
+    return CEE->getCalleeContext()->getCallSite();
+  if (Optional<PostInitializer> PIPP = P.getAs<PostInitializer>())
+    return PIPP->getInitializer()->getInit();
 
-  const ExplodedNode *NI = N;
-  const Stmt *S = 0;
+  return 0;
+}
 
-  while (NI) {
-    ProgramPoint P = NI->getLocation();
-    if (Optional<StmtPoint> PS = P.getAs<StmtPoint>()) {
-      S = PS->getStmt();
-      if (P.getAs<PostStmtPurgeDeadSymbols>())
-        return PathDiagnosticLocation::createEnd(S, SM,
-                                                 NI->getLocationContext());
-      break;
-    } else if (Optional<BlockEdge> BE = P.getAs<BlockEdge>()) {
-      S = BE->getSrc()->getTerminator();
-      break;
+const Stmt *PathDiagnosticLocation::getNextStmt(const ExplodedNode *N) {
+  for (N = N->getFirstSucc(); N; N = N->getFirstSucc()) {
+    if (const Stmt *S = getStmt(N)) {
+      // Check if the statement is '?' or '&&'/'||'.  These are "merges",
+      // not actual statement points.
+      switch (S->getStmtClass()) {
+        case Stmt::ChooseExprClass:
+        case Stmt::BinaryConditionalOperatorClass:
+        case Stmt::ConditionalOperatorClass:
+          continue;
+        case Stmt::BinaryOperatorClass: {
+          BinaryOperatorKind Op = cast<BinaryOperator>(S)->getOpcode();
+          if (Op == BO_LAnd || Op == BO_LOr)
+            continue;
+          break;
+        }
+        default:
+          break;
+      }
+      // We found the statement, so return it.
+      return S;
     }
-    NI = NI->succ_empty() ? 0 : *(NI->succ_begin());
   }
 
+  return 0;
+}
+
+PathDiagnosticLocation
+  PathDiagnosticLocation::createEndOfPath(const ExplodedNode *N,
+                                          const SourceManager &SM) {
+  assert(N && "Cannot create a location with a null node.");
+  const Stmt *S = getStmt(N);
+
+  if (!S)
+    S = getNextStmt(N);
+
   if (S) {
-    const LocationContext *LC = NI->getLocationContext();
+    ProgramPoint P = N->getLocation();
+    const LocationContext *LC = N->getLocationContext();
+
+    // For member expressions, return the location of the '.' or '->'.
+    if (const MemberExpr *ME = dyn_cast<MemberExpr>(S))
+      return PathDiagnosticLocation::createMemberLoc(ME, SM);
+
+    // For binary operators, return the location of the operator.
+    if (const BinaryOperator *B = dyn_cast<BinaryOperator>(S))
+      return PathDiagnosticLocation::createOperatorLoc(B, SM);
+
+    if (P.getAs<PostStmtPurgeDeadSymbols>())
+      return PathDiagnosticLocation::createEnd(S, SM, LC);
+
     if (S->getLocStart().isValid())
       return PathDiagnosticLocation(S, SM, LC);
     return PathDiagnosticLocation(getValidSourceLocation(S, LC), SM);

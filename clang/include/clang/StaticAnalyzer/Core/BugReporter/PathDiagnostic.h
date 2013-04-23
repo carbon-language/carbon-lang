@@ -283,6 +283,13 @@ public:
   const SourceManager& getManager() const { assert(isValid()); return *SM; }
   
   void Profile(llvm::FoldingSetNodeID &ID) const;
+
+  /// \brief Given an exploded node, retrieve the statement that should be used 
+  /// for the diagnostic location.
+  static const Stmt *getStmt(const ExplodedNode *N);
+
+  /// \brief Retrieve the statement corresponding to the sucessor node.
+  static const Stmt *getNextStmt(const ExplodedNode *N);
 };
 
 class PathDiagnosticLocationPair {

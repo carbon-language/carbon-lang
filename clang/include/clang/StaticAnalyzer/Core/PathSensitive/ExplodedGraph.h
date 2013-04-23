@@ -196,6 +196,10 @@ public:
     return const_cast<ExplodedNode*>(this)->getFirstPred();
   }
 
+  const ExplodedNode *getFirstSucc() const {
+    return succ_empty() ? NULL : *(succ_begin());
+  }
+
   // Iterators over successor and predecessor vertices.
   typedef ExplodedNode*       const *       succ_iterator;
   typedef const ExplodedNode* const * const_succ_iterator;

@@ -52,75 +52,20 @@ void BugReporterContext::anchor() {}
 // Helper routines for walking the ExplodedGraph and fetching statements.
 //===----------------------------------------------------------------------===//
 
-static inline const Stmt *GetStmt(const ProgramPoint &P) {
-  if (Optional<StmtPoint> SP = P.getAs<StmtPoint>())
-    return SP->getStmt();
-  if (Optional<BlockEdge> BE = P.getAs<BlockEdge>())
-    return BE->getSrc()->getTerminator();
-  if (Optional<CallEnter> CE = P.getAs<CallEnter>())
-    return CE->getCallExpr();
-  if (Optional<CallExitEnd> CEE = P.getAs<CallExitEnd>())
-    return CEE->getCalleeContext()->getCallSite();
-
-  return 0;
-}
-
-static inline const ExplodedNode*
-GetPredecessorNode(const ExplodedNode *N) {
-  return N->pred_empty() ? NULL : *(N->pred_begin());
-}
-
-static inline const ExplodedNode*
-GetSuccessorNode(const ExplodedNode *N) {
-  return N->succ_empty() ? NULL : *(N->succ_begin());
-}
-
 static const Stmt *GetPreviousStmt(const ExplodedNode *N) {
-  for (N = GetPredecessorNode(N); N; N = GetPredecessorNode(N))
-    if (const Stmt *S = GetStmt(N->getLocation()))
+  for (N = N->getFirstPred(); N; N = N->getFirstPred())
+    if (const Stmt *S = PathDiagnosticLocation::getStmt(N))
       return S;
-
-  return 0;
-}
-
-static const Stmt *GetNextStmt(const ExplodedNode *N) {
-  for (N = GetSuccessorNode(N); N; N = GetSuccessorNode(N))
-    if (const Stmt *S = GetStmt(N->getLocation())) {
-      // Check if the statement is '?' or '&&'/'||'.  These are "merges",
-      // not actual statement points.
-      switch (S->getStmtClass()) {
-        case Stmt::ChooseExprClass:
-        case Stmt::BinaryConditionalOperatorClass: continue;
-        case Stmt::ConditionalOperatorClass: continue;
-        case Stmt::BinaryOperatorClass: {
-          BinaryOperatorKind Op = cast<BinaryOperator>(S)->getOpcode();
-          if (Op == BO_LAnd || Op == BO_LOr)
-            continue;
-          break;
-        }
-        default:
-          break;
-      }
-      return S;
-    }
 
   return 0;
 }
 
 static inline const Stmt*
 GetCurrentOrPreviousStmt(const ExplodedNode *N) {
-  if (const Stmt *S = GetStmt(N->getLocation()))
+  if (const Stmt *S = PathDiagnosticLocation::getStmt(N))
     return S;
 
   return GetPreviousStmt(N);
-}
-
-static inline const Stmt*
-GetCurrentOrNextStmt(const ExplodedNode *N) {
-  if (const Stmt *S = GetStmt(N->getLocation()))
-    return S;
-
-  return GetNextStmt(N);
 }
 
 //===----------------------------------------------------------------------===//
@@ -355,7 +300,7 @@ public:
 
 PathDiagnosticLocation
 PathDiagnosticBuilder::ExecutionContinues(const ExplodedNode *N) {
-  if (const Stmt *S = GetNextStmt(N))
+  if (const Stmt *S = PathDiagnosticLocation::getNextStmt(N))
     return PathDiagnosticLocation(S, getSourceManager(), LC);
 
   return PathDiagnosticLocation::createDeclEnd(N->getLocationContext(),
@@ -578,7 +523,7 @@ static bool GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
   while (NextNode) {
     N = NextNode;
     PDB.LC = N->getLocationContext();
-    NextNode = GetPredecessorNode(N);
+    NextNode = N->getFirstPred();
 
     ProgramPoint P = N->getLocation();
 
@@ -640,7 +585,7 @@ static bool GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
 
         case Stmt::GotoStmtClass:
         case Stmt::IndirectGotoStmtClass: {
-          const Stmt *S = GetNextStmt(N);
+          const Stmt *S = PathDiagnosticLocation::getNextStmt(N);
 
           if (!S)
             break;
@@ -1343,7 +1288,7 @@ static const Stmt *getStmtBeforeCond(ParentMap &PM, const Stmt *Term,
       if (!isContainedByStmt(PM, Term, S))
         return S;
     }
-    N = GetPredecessorNode(N);
+    N = N->getFirstPred();
   }
   return 0;
 }
@@ -1388,7 +1333,7 @@ static bool GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
   const ExplodedNode *NextNode = N->pred_empty() ? NULL : *(N->pred_begin());
   while (NextNode) {
     N = NextNode;
-    NextNode = GetPredecessorNode(N);
+    NextNode = N->getFirstPred();
     ProgramPoint P = N->getLocation();
 
     do {
@@ -1761,7 +1706,7 @@ const Stmt *BugReport::getStmt() const {
       S = GetPreviousStmt(ErrorNode);
   }
   if (!S)
-    S = GetStmt(ProgP);
+    S = PathDiagnosticLocation::getStmt(ErrorNode);
 
   return S;
 }
@@ -1788,22 +1733,7 @@ PathDiagnosticLocation BugReport::getLocation(const SourceManager &SM) const {
   if (ErrorNode) {
     assert(!Location.isValid() &&
      "Either Location or ErrorNode should be specified but not both.");
-
-    if (const Stmt *S = GetCurrentOrPreviousStmt(ErrorNode)) {
-      const LocationContext *LC = ErrorNode->getLocationContext();
-
-      // For member expressions, return the location of the '.' or '->'.
-      if (const MemberExpr *ME = dyn_cast<MemberExpr>(S))
-        return PathDiagnosticLocation::createMemberLoc(ME, SM);
-      // For binary operators, return the location of the operator.
-      if (const BinaryOperator *B = dyn_cast<BinaryOperator>(S))
-        return PathDiagnosticLocation::createOperatorLoc(B, SM);
-
-      if (ErrorNode->getLocation().getAs<PostStmtPurgeDeadSymbols>())
-        return PathDiagnosticLocation::createEnd(S, SM, LC);
-
-      return PathDiagnosticLocation::createBegin(S, SM, LC);
-    }
+    return PathDiagnosticLocation::createEndOfPath(ErrorNode, SM);
   } else {
     assert(Location.isValid());
     return Location;
