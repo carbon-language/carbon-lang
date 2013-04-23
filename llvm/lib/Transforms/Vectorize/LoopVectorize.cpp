@@ -2548,13 +2548,6 @@ LoopVectorizationLegality::hasPossibleGlobalWriteReorder(
 
 bool LoopVectorizationLegality::canVectorizeMemory() {
 
-  if (TheLoop->isAnnotatedParallel()) {
-    DEBUG(dbgs()
-          << "LV: A loop annotated parallel, ignore memory dependency "
-          << "checks.\n");
-    return true;
-  }
-
   typedef SmallVector<Value*, 16> ValueVector;
   typedef SmallPtrSet<Value*, 16> ValueSet;
   // Holds the Load and Store *instructions*.
@@ -2577,7 +2570,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
       if (it->mayReadFromMemory()) {
         LoadInst *Ld = dyn_cast<LoadInst>(it);
         if (!Ld) return false;
-        if (!Ld->isSimple()) {
+        if (!Ld->isSimple() && !TheLoop->isAnnotatedParallel()) {
           DEBUG(dbgs() << "LV: Found a non-simple load.\n");
           return false;
         }
@@ -2589,7 +2582,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
       if (it->mayWriteToMemory()) {
         StoreInst *St = dyn_cast<StoreInst>(it);
         if (!St) return false;
-        if (!St->isSimple()) {
+        if (!St->isSimple() && !TheLoop->isAnnotatedParallel()) {
           DEBUG(dbgs() << "LV: Found a non-simple store.\n");
           return false;
         }
@@ -2634,6 +2627,13 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     // the read-write list. At this phase it is only a 'write' list.
     if (Seen.insert(Ptr))
       ReadWrites.insert(std::make_pair(Ptr, ST));
+  }
+
+  if (TheLoop->isAnnotatedParallel()) {
+    DEBUG(dbgs()
+          << "LV: A loop annotated parallel, ignore memory dependency "
+          << "checks.\n");
+    return true;
   }
 
   for (I = Loads.begin(), IE = Loads.end(); I != IE; ++I) {
