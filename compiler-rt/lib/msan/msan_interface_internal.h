@@ -38,7 +38,7 @@ SANITIZER_INTERFACE_ATTRIBUTE __attribute__((noreturn))
 void __msan_warning_noreturn();
 
 SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_unpoison(void *a, uptr size);
+void __msan_unpoison(const void *a, uptr size);
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_clear_and_unpoison(void *a, uptr size);
 SANITIZER_INTERFACE_ATTRIBUTE
@@ -54,7 +54,7 @@ void __msan_copy_origin(void *dst, const void *src, uptr size);
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_move_poison(void *dst, const void *src, uptr size);
 SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_poison(void *a, uptr size);
+void __msan_poison(const void *a, uptr size);
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_poison_stack(void *a, uptr size);
 
@@ -69,11 +69,11 @@ SANITIZER_INTERFACE_ATTRIBUTE
 sptr __msan_test_shadow(const void *x, uptr size);
 
 SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_set_origin(void *a, uptr size, u32 origin);
+void __msan_set_origin(const void *a, uptr size, u32 origin);
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_set_alloca_origin(void *a, uptr size, const char *descr);
 SANITIZER_INTERFACE_ATTRIBUTE
-u32 __msan_get_origin(void *a);
+u32 __msan_get_origin(const void *a);
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_clear_on_return();
@@ -114,12 +114,12 @@ u32 __msan_get_umr_origin();
 SANITIZER_INTERFACE_ATTRIBUTE
 const char *__msan_get_origin_descr_if_stack(u32 id);
 SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_partial_poison(void* data, void* shadow, uptr size);
+void __msan_partial_poison(const void* data, void* shadow, uptr size);
 
 // Tell MSan about newly allocated memory (ex.: custom allocator).
 // Memory will be marked uninitialized, with origin at the call site.
 SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_allocated_memory(void* data, uptr size);
+void __msan_allocated_memory(const void* data, uptr size);
 }  // extern "C"
 
 #endif  // MSAN_INTERFACE_INTERNAL_H

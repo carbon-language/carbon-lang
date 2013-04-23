@@ -27,10 +27,10 @@ extern "C" {
 
 
   /* Set raw origin for the memory range. */
-  void __msan_set_origin(void *a, size_t size, uint32_t origin);
+  void __msan_set_origin(const void *a, size_t size, uint32_t origin);
 
   /* Get raw origin for an address. */
-  uint32_t __msan_get_origin(void *a);
+  uint32_t __msan_get_origin(const void *a);
 
   /* Returns non-zero if tracking origins. */
   int __msan_get_track_origins();
@@ -39,14 +39,14 @@ extern "C" {
   uint32_t __msan_get_umr_origin();
 
   /* Make memory region fully initialized (without changing its contents). */
-  void __msan_unpoison(void *a, size_t size);
+  void __msan_unpoison(const void *a, size_t size);
 
   /* Make memory region fully uninitialized (without changing its contents). */
-  void __msan_poison(void *a, size_t size);
+  void __msan_poison(const void *a, size_t size);
 
   /* Make memory region partially uninitialized (without changing its contents).
    */
-  void __msan_partial_poison(void* data, void* shadow, size_t size);
+  void __msan_partial_poison(const void* data, void* shadow, size_t size);
 
   /* Returns the offset of the first (at least partially) poisoned byte in the
      memory range, or -1 if the whole range is good. */
@@ -76,7 +76,7 @@ extern "C" {
 
   /* Tell MSan about newly allocated memory (ex.: custom allocator).
      Memory will be marked uninitialized, with origin at the call site. */
-  void __msan_allocated_memory(void* data, size_t size);
+  void __msan_allocated_memory(const void* data, size_t size);
 
 #else  // __has_feature(memory_sanitizer)
 
