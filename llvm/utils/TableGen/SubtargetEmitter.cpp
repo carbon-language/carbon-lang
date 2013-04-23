@@ -797,7 +797,6 @@ void SubtargetEmitter::ExpandProcResources(RecVec &PRVec,
     RecVec SubResources;
     if (PRVec[i]->isSubClassOf("ProcResGroup")) {
       SubResources = PRVec[i]->getValueAsListOfDefs("Resources");
-      std::sort(SubResources.begin(), SubResources.end(), LessRecord());
     }
     else {
       SubResources.push_back(PRVec[i]);
@@ -808,15 +807,12 @@ void SubtargetEmitter::ExpandProcResources(RecVec &PRVec,
       if (*PRI == PRVec[i] || !(*PRI)->isSubClassOf("ProcResGroup"))
         continue;
       RecVec SuperResources = (*PRI)->getValueAsListOfDefs("Resources");
-      std::sort(SuperResources.begin(), SuperResources.end(), LessRecord());
       RecIter SubI = SubResources.begin(), SubE = SubResources.end();
-      RecIter SuperI = SuperResources.begin(), SuperE = SuperResources.end();
-      for ( ; SubI != SubE && SuperI != SuperE; ++SuperI) {
-        if (*SubI < *SuperI)
+      for( ; SubI != SubE; ++SubI) {
+        if (std::find(SuperResources.begin(), SuperResources.end(), *SubI)
+            == SuperResources.end()) {
           break;
-        else if (*SuperI < *SubI)
-          continue;
-        ++SubI;
+        }
       }
       if (SubI == SubE) {
         PRVec.push_back(*PRI);
