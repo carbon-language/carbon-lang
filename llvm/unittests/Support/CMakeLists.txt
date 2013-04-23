@@ -10,6 +10,7 @@ add_llvm_unittest(SupportTests
   BlockFrequencyTest.cpp
   Casting.cpp
   CommandLineTest.cpp
+  CompressionTest.cpp
   ConstantRangeTest.cpp
   DataExtractorTest.cpp
   EndianTest.cpp

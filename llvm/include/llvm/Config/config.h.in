@@ -226,6 +226,9 @@
 /* Define to 1 if you have the `udis86' library (-ludis86). */
 #undef HAVE_LIBUDIS86
 
+/* Define to 1 if you have the `z' library (-lz). */
+#undef HAVE_LIBZ
+
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
 
@@ -503,6 +506,9 @@
 /* Define if the xdot.py program is available */
 #undef HAVE_XDOT_PY
 
+/* Define to 1 if you have the <zlib.h> header file. */
+#undef HAVE_ZLIB_H
+
 /* Have host's _alloca */
 #undef HAVE__ALLOCA
 
@@ -574,6 +580,9 @@
 
 /* Define if threads enabled */
 #undef LLVM_ENABLE_THREADS
+
+/* Define if zlib is enabled */
+#undef LLVM_ENABLE_ZLIB
 
 /* Installation directory for config files */
 #undef LLVM_ETCDIR

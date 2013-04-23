@@ -229,6 +229,8 @@ uses the package and provides other details.
 +--------------------------------------------------------------+-----------------+---------------------------------------------+
 | `libtool <http://savannah.gnu.org/projects/libtool>`_        | 1.5.22          | Shared library manager\ :sup:`4`            |
 +--------------------------------------------------------------+-----------------+---------------------------------------------+
+| `zlib <http://zlib.net>`_                                    | >=1.2.3.4       | Compression library\ :sup:`5`               |
++--------------------------------------------------------------+-----------------+---------------------------------------------+
 
 .. note::
 
@@ -243,6 +245,8 @@ uses the package and provides other details.
    #. If you want to make changes to the configure scripts, you will need GNU
       autoconf (2.60), and consequently, GNU M4 (version 1.4 or higher). You
       will also need automake (1.9.6). We only use aclocal from that package.
+   #. Optional, adds compression/uncompression capabilities to selected LLVM
+      tools.
 
 Additionally, your compilation host is expected to have the usual plethora of
 Unix utilities. Specifically:

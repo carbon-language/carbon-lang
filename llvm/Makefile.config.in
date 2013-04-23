@@ -302,6 +302,9 @@ ENABLE_DOXYGEN = @ENABLE_DOXYGEN@
 # Do we want to enable threads?
 ENABLE_THREADS := @LLVM_ENABLE_THREADS@
 
+# Do we want to enable zlib?
+ENABLE_ZLIB := @LLVM_ENABLE_ZLIB@
+
 # Do we want to build with position independent code?
 ENABLE_PIC := @ENABLE_PIC@
 

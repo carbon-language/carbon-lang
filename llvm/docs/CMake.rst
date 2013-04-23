@@ -271,6 +271,10 @@ LLVM-specific variables
 **LLVM_USE_INTEL_JITEVENTS**:BOOL
   Enable building support for Intel JIT Events API. Defaults to OFF
 
+**LLVM_ENABLE_ZLIB**:BOOL
+  Build with zlib to support compression/uncompression in LLVM tools.
+  Defaults to ON.
+
 Executing the test suite
 ========================
 
