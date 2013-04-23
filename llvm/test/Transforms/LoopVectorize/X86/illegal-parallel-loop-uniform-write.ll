@@ -4,7 +4,8 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-unknown-linux-gnu"
 
 ;CHECK: @foo
-;CHECK-NOT: <4 x 
+;CHECK-NOT: <4 x i32>
+;CHECK: ret void
 
 ; Function Attrs: nounwind uwtable 
 define void @foo(i32* nocapture %a, i32* nocapture %b, i32 %k, i32 %m) #0 {

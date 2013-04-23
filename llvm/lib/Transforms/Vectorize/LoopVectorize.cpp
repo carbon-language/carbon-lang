@@ -2556,6 +2556,8 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
   PtrRtCheck.Pointers.clear();
   PtrRtCheck.Need = false;
 
+  const bool IsAnnotatedParallel = TheLoop->isAnnotatedParallel();
+
   // For each block.
   for (Loop::block_iterator bb = TheLoop->block_begin(),
        be = TheLoop->block_end(); bb != be; ++bb) {
@@ -2570,7 +2572,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
       if (it->mayReadFromMemory()) {
         LoadInst *Ld = dyn_cast<LoadInst>(it);
         if (!Ld) return false;
-        if (!Ld->isSimple() && !TheLoop->isAnnotatedParallel()) {
+        if (!Ld->isSimple() && !IsAnnotatedParallel) {
           DEBUG(dbgs() << "LV: Found a non-simple load.\n");
           return false;
         }
@@ -2582,7 +2584,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
       if (it->mayWriteToMemory()) {
         StoreInst *St = dyn_cast<StoreInst>(it);
         if (!St) return false;
-        if (!St->isSimple() && !TheLoop->isAnnotatedParallel()) {
+        if (!St->isSimple() && !IsAnnotatedParallel) {
           DEBUG(dbgs() << "LV: Found a non-simple store.\n");
           return false;
         }
@@ -2629,7 +2631,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
       ReadWrites.insert(std::make_pair(Ptr, ST));
   }
 
-  if (TheLoop->isAnnotatedParallel()) {
+  if (IsAnnotatedParallel) {
     DEBUG(dbgs()
           << "LV: A loop annotated parallel, ignore memory dependency "
           << "checks.\n");
