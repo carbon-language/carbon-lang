@@ -37,9 +37,9 @@ C++ COMPAT linux memory layout:
 Go linux and darwin memory layout:
 0000 0000 0000 - 0000 1000 0000: executable
 0000 1000 0000 - 00f8 0000 0000: -
-00f8 0000 0000 - 0118 0000 0000: heap
-0118 0000 0000 - 1000 0000 0000: -
-1000 0000 0000 - 1460 0000 0000: shadow
+00c0 0000 0000 - 00e0 0000 0000: heap
+00e0 0000 0000 - 1000 0000 0000: -
+1000 0000 0000 - 1380 0000 0000: shadow
 1460 0000 0000 - 6000 0000 0000: -
 6000 0000 0000 - 6200 0000 0000: traces
 6200 0000 0000 - 7fff ffff ffff: -
@@ -47,8 +47,8 @@ Go linux and darwin memory layout:
 Go windows memory layout:
 0000 0000 0000 - 0000 1000 0000: executable
 0000 1000 0000 - 00f8 0000 0000: -
-00f8 0000 0000 - 0118 0000 0000: heap
-0118 0000 0000 - 0100 0000 0000: -
+00c0 0000 0000 - 00e0 0000 0000: heap
+00e0 0000 0000 - 0100 0000 0000: -
 0100 0000 0000 - 0560 0000 0000: shadow
 0560 0000 0000 - 0760 0000 0000: traces
 0760 0000 0000 - 07ff ffff ffff: -
@@ -65,7 +65,7 @@ namespace __tsan {
 
 #if defined(TSAN_GO)
 static const uptr kLinuxAppMemBeg = 0x000000000000ULL;
-static const uptr kLinuxAppMemEnd = 0x00fcffffffffULL;
+static const uptr kLinuxAppMemEnd = 0x00dfffffffffULL;
 # if SANITIZER_WINDOWS
 static const uptr kLinuxShadowMsk = 0x010000000000ULL;
 # else
