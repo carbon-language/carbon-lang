@@ -31,6 +31,7 @@ static int encodeZlibCompressionLevel(zlib::CompressionLevel Level) {
     case zlib::DefaultCompression: return Z_DEFAULT_COMPRESSION;
     case zlib::BestSizeCompression: return 9;
   }
+  llvm_unreachable("Invalid zlib::CompressionLevel!");
 }
 
 static zlib::Status encodeZlibReturnValue(int ReturnValue) {
