@@ -541,12 +541,6 @@ CountValue *HexagonHardwareLoops::getLoopTripCount(MachineLoop *L,
     case Hexagon::CMPEQrr:
       Cmp = !Negated ? Comparison::EQ : Comparison::NE;
       break;
-    case Hexagon::CMPLTrr:
-      Cmp = !Negated ? Comparison::LTs : Comparison::GEs;
-      break;
-    case Hexagon::CMPLTUrr:
-      Cmp = !Negated ? Comparison::LTu : Comparison::GEu;
-      break;
     case Hexagon::CMPGTUri:
     case Hexagon::CMPGTUrr:
       Cmp = !Negated ? Comparison::GTu : Comparison::LEu;

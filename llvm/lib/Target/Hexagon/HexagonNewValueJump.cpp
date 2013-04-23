@@ -208,14 +208,10 @@ static bool canCompareBeNewValueJump(const HexagonInstrInfo *QII,
   // range specified by the arch.
   if (!secondReg) {
     int64_t v = MI->getOperand(2).getImm();
-    if (MI->getOpcode() == Hexagon::CMPGEri ||
-       (MI->getOpcode() == Hexagon::CMPGEUri && v > 0))
-      --v;
 
     if (!(isUInt<5>(v) ||
          ((MI->getOpcode() == Hexagon::CMPEQri ||
-           MI->getOpcode() == Hexagon::CMPGTri ||
-           MI->getOpcode() == Hexagon::CMPGEri) &&
+           MI->getOpcode() == Hexagon::CMPGTri) &&
           (v == -1))))
       return false;
   }
@@ -284,19 +280,11 @@ static unsigned getNewValueJumpOpcode(const MachineInstr *MI, int reg,
         return Hexagon::JMP_EQriPtneg_nv_V4;
     }
 
-    case Hexagon::CMPLTrr:
     case Hexagon::CMPGTrr: {
       if (secondRegNewified)
         return Hexagon::JMP_GTrrdnPt_nv_V4;
       else
         return Hexagon::JMP_GTrrPt_nv_V4;
-    }
-
-    case Hexagon::CMPGEri: {
-      if (reg >= 1)
-        return Hexagon::JMP_GTriPt_nv_V4;
-      else
-        return Hexagon::JMP_GTriPtneg_nv_V4;
     }
 
     case Hexagon::CMPGTri: {
@@ -306,7 +294,6 @@ static unsigned getNewValueJumpOpcode(const MachineInstr *MI, int reg,
         return Hexagon::JMP_GTriPtneg_nv_V4;
     }
 
-    case Hexagon::CMPLTUrr:
     case Hexagon::CMPGTUrr: {
       if (secondRegNewified)
         return Hexagon::JMP_GTUrrdnPt_nv_V4;
@@ -316,13 +303,6 @@ static unsigned getNewValueJumpOpcode(const MachineInstr *MI, int reg,
 
     case Hexagon::CMPGTUri:
       return Hexagon::JMP_GTUriPt_nv_V4;
-
-    case Hexagon::CMPGEUri: {
-      if (reg == 0)
-        return Hexagon::JMP_EQrrPt_nv_V4;
-      else
-        return Hexagon::JMP_GTUriPt_nv_V4;
-    }
 
     default:
        llvm_unreachable("Could not find matching New Value Jump instruction.");
@@ -525,10 +505,8 @@ bool HexagonNewValueJump::runOnMachineFunction(MachineFunction &MF) {
           if (isSecondOpReg) {
             // In case of CMPLT, or CMPLTU, or EQ with the second register
             // to newify, swap the operands.
-            if (cmpInstr->getOpcode() == Hexagon::CMPLTrr  ||
-                cmpInstr->getOpcode() == Hexagon::CMPLTUrr ||
-                (cmpInstr->getOpcode() == Hexagon::CMPEQrr &&
-                                     feederReg == (unsigned) cmpOp2)) {
+            if (cmpInstr->getOpcode() == Hexagon::CMPEQrr &&
+                                     feederReg == (unsigned) cmpOp2) {
               unsigned tmp = cmpReg1;
               bool tmpIsKill = MO1IsKill;
               cmpReg1 = cmpOp2;
@@ -586,38 +564,29 @@ bool HexagonNewValueJump::runOnMachineFunction(MachineFunction &MF) {
           if (invertPredicate)
             opc = QII->getInvertedPredicatedOpcode(opc);
 
-          // Manage the conversions from CMPGEUri to either CMPEQrr
-          // or CMPGTUri properly. See Arch spec for CMPGEUri instructions.
-          // This has to be after the getNewValueJumpOpcode function call as
-          // second operand of the compare could be modified in this logic.
-          if (cmpInstr->getOpcode() == Hexagon::CMPGEUri) {
-            if (cmpOp2 == 0) {
-              cmpOp2 = cmpReg1;
-              MO2IsKill = MO1IsKill;
-              isSecondOpReg = true;
-            } else
-              --cmpOp2;
-          }
-
-          // Manage the conversions from CMPGEri to CMPGTUri properly.
-          // See Arch spec for CMPGEri instructions.
-          if (cmpInstr->getOpcode() == Hexagon::CMPGEri)
-            --cmpOp2;
-
-          if (isSecondOpReg) {
+          if (isSecondOpReg)
             NewMI = BuildMI(*MBB, jmpPos, dl,
                                   QII->get(opc))
                                     .addReg(cmpReg1, getKillRegState(MO1IsKill))
                                     .addReg(cmpOp2, getKillRegState(MO2IsKill))
                                     .addMBB(jmpTarget);
-          }
-          else {
+
+          else if ((cmpInstr->getOpcode() == Hexagon::CMPEQri ||
+                    cmpInstr->getOpcode() == Hexagon::CMPGTri) &&
+                    cmpOp2 == -1 )
+            // Corresponding new-value compare jump instructions don't have the
+            // operand for -1 immediate value.
+            NewMI = BuildMI(*MBB, jmpPos, dl,
+                                  QII->get(opc))
+                                    .addReg(cmpReg1, getKillRegState(MO1IsKill))
+                                    .addMBB(jmpTarget);
+
+          else
             NewMI = BuildMI(*MBB, jmpPos, dl,
                                   QII->get(opc))
                                     .addReg(cmpReg1, getKillRegState(MO1IsKill))
                                     .addImm(cmpOp2)
                                     .addMBB(jmpTarget);
-          }
 
           assert(NewMI && "New Value Jump Instruction Not created!");
           if (cmpInstr->getOperand(0).isReg() &&

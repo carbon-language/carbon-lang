@@ -325,8 +325,6 @@ bool HexagonInstrInfo::analyzeCompare(const MachineInstr *MI,
     case Hexagon::CMPGTUrr:
     case Hexagon::CMPGTri:
     case Hexagon::CMPGTrr:
-    case Hexagon::CMPLTUrr:
-    case Hexagon::CMPLTrr:
       SrcReg = MI->getOperand(1).getReg();
       Mask = ~0;
       break;
@@ -366,8 +364,6 @@ bool HexagonInstrInfo::analyzeCompare(const MachineInstr *MI,
     case Hexagon::CMPhEQrr_xor_V4:
     case Hexagon::CMPhGTUrr_V4:
     case Hexagon::CMPhGTrr_shl_V4:
-    case Hexagon::CMPLTUrr:
-    case Hexagon::CMPLTrr:
       SrcReg2 = MI->getOperand(2).getReg();
       return true;
 
@@ -2114,14 +2110,10 @@ bool HexagonInstrInfo::isNewValueJumpCandidate(const MachineInstr *MI) const {
     default: return false;
     case Hexagon::CMPEQrr:
     case Hexagon::CMPEQri:
-    case Hexagon::CMPLTrr:
     case Hexagon::CMPGTrr:
     case Hexagon::CMPGTri:
-    case Hexagon::CMPLTUrr:
     case Hexagon::CMPGTUrr:
     case Hexagon::CMPGTUri:
-    case Hexagon::CMPGEri:
-    case Hexagon::CMPGEUri:
       return true;
   }
 }
