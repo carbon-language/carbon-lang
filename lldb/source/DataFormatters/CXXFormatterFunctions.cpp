@@ -488,7 +488,7 @@ lldb_private::formatters::Char32StringSummaryProvider (ValueObject& valobj, Stre
     options.SetConversionFunction(ConvertUTF32toUTF8);
     options.SetProcessSP(process_sp);
     options.SetStream(&stream);
-    options.SetPrefixToken('u');
+    options.SetPrefixToken('U');
     
     if (!ReadUTFBufferAndDumpToStream(options))
     {
