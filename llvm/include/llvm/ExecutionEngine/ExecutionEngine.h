@@ -15,6 +15,7 @@
 #ifndef LLVM_EXECUTIONENGINE_EXECUTIONENGINE_H
 #define LLVM_EXECUTIONENGINE_EXECUTIONENGINE_H
 
+#include "llvm-c/ExecutionEngine.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -25,6 +26,7 @@
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Wrap.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -631,6 +633,8 @@ public:
 
   ExecutionEngine *create(TargetMachine *TM);
 };
+
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ExecutionEngine,    LLVMExecutionEngineRef)
 
 } // End llvm namespace
 

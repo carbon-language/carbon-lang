@@ -16,7 +16,6 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Wrap.h"
 #include <cstring>
 
 using namespace llvm;
