@@ -22,7 +22,7 @@ int main()
 {
     std::locale l = std::locale::classic();
     const F& f = std::use_facet<F>(l);
-    std::mbstate_t mbs;
+    std::mbstate_t mbs = {0};
     const char from[10]= {0};
     assert(f.length(mbs, from, from+10, 0) == 0);
     assert(f.length(mbs, from, from+10, 9) == 9);

@@ -31,7 +31,7 @@ int main()
     {
         F::intern_type from[9] = {'s', 'o', 'm', 'e', ' ', 't', 'e', 'x', 't'};
         char to[9] = {0};
-        std::mbstate_t mbs;
+        std::mbstate_t mbs = {0};
         const F::intern_type* from_next = 0;
         char* to_next = 0;
         F::result r = f.out(mbs, from, from + 9, from_next,

@@ -29,7 +29,7 @@ int main()
     {
         const std::basic_string<F::intern_type> from(L"some text");
         std::vector<char> to(from.size()+1);
-        std::mbstate_t mbs;
+        std::mbstate_t mbs = {0};
         const F::intern_type* from_next = 0;
         char* to_next = 0;
         F::result r = f.out(mbs, from.data(), from.data() + from.size(), from_next,
@@ -43,7 +43,7 @@ int main()
         std::basic_string<F::intern_type> from(L"some text");
         from[4] = '\0';
         std::vector<char> to(from.size()+1);
-        std::mbstate_t mbs;
+        std::mbstate_t mbs = {0};
         const F::intern_type* from_next = 0;
         char* to_next = 0;
         F::result r = f.out(mbs, from.data(), from.data() + from.size(), from_next,
@@ -56,7 +56,7 @@ int main()
     {
         std::basic_string<F::intern_type> from(L"some text");
         std::vector<char> to(from.size()-1);
-        std::mbstate_t mbs;
+        std::mbstate_t mbs = {0};
         const F::intern_type* from_next = 0;
         char* to_next = 0;
         F::result r = f.out(mbs, from.data(), from.data() + from.size(), from_next,
