@@ -2946,6 +2946,17 @@ TEST_F(FormatTest, DoNotInterfereWithErrorAndWarning) {
   EXPECT_EQ("#warning 1", format("  #  warning 1"));
 }
 
+TEST_F(FormatTest, FormatHashIfExpressions) {
+  // FIXME: Come up with a better indentation for #elif.
+  verifyFormat(
+      "#if !defined(AAAAAAA) && (defined CCCCCC || defined DDDDDD) &&  \\\n"
+      "    defined(BBBBBBBB)\n"
+      "#elif !defined(AAAAAA) && (defined CCCCC || defined DDDDDD) &&  \\\n"
+      "    defined(BBBBBBBB)\n"
+      "#endif",
+      getLLVMStyleWithColumns(65));
+}
+
 TEST_F(FormatTest, MergeHandlingInTheFaceOfPreprocessorDirectives) {
   FormatStyle AllowsMergedIf = getGoogleStyle();
   AllowsMergedIf.AllowShortIfStatementsOnASingleLine = true;
