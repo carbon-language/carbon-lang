@@ -1362,7 +1362,7 @@ void rdar8331641(int x) {
 // CHECK-NEXT:    <key>type</key><string>Leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>rdar8331641</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>6</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>58</integer>

@@ -139,7 +139,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Call to function &apos;CFCreateSomething&apos; returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Call to function &apos;CFCreateSomething&apos; returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected</string>
+// CHECK-NEXT:      <string>Call to function &apos;CFCreateSomething&apos; returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -202,7 +202,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Object leaked: object allocated and stored into &apos;leaked&apos; is not referenced later in this execution path and has a retain count of +1</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Object leaked: object allocated and stored into &apos;leaked&apos; is not referenced later in this execution path and has a retain count of +1</string>
+// CHECK-NEXT:      <string>Object leaked: object allocated and stored into &apos;leaked&apos; is not referenced later in this execution path and has a retain count of +1</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Potential leak (when using garbage collection) of an object stored into &apos;leaked&apos;</string>
@@ -210,7 +210,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:    <key>type</key><string>Leak of object when using garbage collection</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>creationViaCFCreate</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>44</integer>
@@ -282,7 +282,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Call to function &apos;CFCreateSomething&apos; returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Call to function &apos;CFCreateSomething&apos; returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected</string>
+// CHECK-NEXT:      <string>Call to function &apos;CFCreateSomething&apos; returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -357,7 +357,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Reference count incremented. The object now has a +2 retain count</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Reference count incremented. The object now has a +2 retain count</string>
+// CHECK-NEXT:      <string>Reference count incremented. The object now has a +2 retain count</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -432,7 +432,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>In GC mode a call to &apos;CFMakeCollectable&apos; decrements an object&apos;s retain count and registers the object with the garbage collector. An object must have a 0 retain count to be garbage collected. After this call its retain count is +1</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>In GC mode a call to &apos;CFMakeCollectable&apos; decrements an object&apos;s retain count and registers the object with the garbage collector. An object must have a 0 retain count to be garbage collected. After this call its retain count is +1</string>
+// CHECK-NEXT:      <string>In GC mode a call to &apos;CFMakeCollectable&apos; decrements an object&apos;s retain count and registers the object with the garbage collector. An object must have a 0 retain count to be garbage collected. After this call its retain count is +1</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -507,7 +507,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>In GC mode a call to &apos;NSMakeCollectable&apos; decrements an object&apos;s retain count and registers the object with the garbage collector. Since it now has a 0 retain count the object can be automatically collected by the garbage collector</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>In GC mode a call to &apos;NSMakeCollectable&apos; decrements an object&apos;s retain count and registers the object with the garbage collector. Since it now has a 0 retain count the object can be automatically collected by the garbage collector</string>
+// CHECK-NEXT:      <string>In GC mode a call to &apos;NSMakeCollectable&apos; decrements an object&apos;s retain count and registers the object with the garbage collector. Since it now has a 0 retain count the object can be automatically collected by the garbage collector</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -582,7 +582,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Reference count incremented. The object now has a +1 retain count. The object is not eligible for garbage collection until the retain count reaches 0 again</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Reference count incremented. The object now has a +1 retain count. The object is not eligible for garbage collection until the retain count reaches 0 again</string>
+// CHECK-NEXT:      <string>Reference count incremented. The object now has a +1 retain count. The object is not eligible for garbage collection until the retain count reaches 0 again</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -645,7 +645,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Object leaked: object allocated and stored into &apos;leaked&apos; is not referenced later in this execution path and has a retain count of +1</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Object leaked: object allocated and stored into &apos;leaked&apos; is not referenced later in this execution path and has a retain count of +1</string>
+// CHECK-NEXT:      <string>Object leaked: object allocated and stored into &apos;leaked&apos; is not referenced later in this execution path and has a retain count of +1</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Potential leak (when using garbage collection) of an object stored into &apos;leaked&apos;</string>
@@ -653,7 +653,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:    <key>type</key><string>Leak of object when using garbage collection</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>makeCollectable</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>6</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>53</integer>
@@ -725,7 +725,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Method returns an Objective-C object with a +0 retain count</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Method returns an Objective-C object with a +0 retain count</string>
+// CHECK-NEXT:      <string>Method returns an Objective-C object with a +0 retain count</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -800,7 +800,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>In GC mode the &apos;retain&apos; message has no effect</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>In GC mode the &apos;retain&apos; message has no effect</string>
+// CHECK-NEXT:      <string>In GC mode the &apos;retain&apos; message has no effect</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -875,7 +875,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>In GC mode the &apos;release&apos; message has no effect</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>In GC mode the &apos;release&apos; message has no effect</string>
+// CHECK-NEXT:      <string>In GC mode the &apos;release&apos; message has no effect</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -950,7 +950,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>In GC mode an &apos;autorelease&apos; has no effect</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>In GC mode an &apos;autorelease&apos; has no effect</string>
+// CHECK-NEXT:      <string>In GC mode an &apos;autorelease&apos; has no effect</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1013,7 +1013,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Incorrect decrement of the reference count of an object that is not owned at this point by the caller</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Incorrect decrement of the reference count of an object that is not owned at this point by the caller</string>
+// CHECK-NEXT:      <string>Incorrect decrement of the reference count of an object that is not owned at this point by the caller</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Incorrect decrement of the reference count of an object that is not owned at this point by the caller</string>
@@ -1093,7 +1093,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Call to function &apos;CFCreateSomething&apos; returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Call to function &apos;CFCreateSomething&apos; returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected</string>
+// CHECK-NEXT:      <string>Call to function &apos;CFCreateSomething&apos; returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1168,7 +1168,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Object returned to caller as an owning reference (single retain count transferred to caller)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Object returned to caller as an owning reference (single retain count transferred to caller)</string>
+// CHECK-NEXT:      <string>Object returned to caller as an owning reference (single retain count transferred to caller)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -1197,7 +1197,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Object leaked: object allocated and stored into &apos;object&apos; and returned from method &apos;getViolation&apos; is potentially leaked when using garbage collection.  Callers of this method do not expect a returned object with a +1 retain count since they expect the object to be managed by the garbage collector</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Object leaked: object allocated and stored into &apos;object&apos; and returned from method &apos;getViolation&apos; is potentially leaked when using garbage collection.  Callers of this method do not expect a returned object with a +1 retain count since they expect the object to be managed by the garbage collector</string>
+// CHECK-NEXT:      <string>Object leaked: object allocated and stored into &apos;object&apos; and returned from method &apos;getViolation&apos; is potentially leaked when using garbage collection.  Callers of this method do not expect a returned object with a +1 retain count since they expect the object to be managed by the garbage collector</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Potential leak (when using garbage collection) of an object stored into &apos;object&apos;</string>
@@ -1205,7 +1205,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:    <key>type</key><string>Leak of returned object when using garbage collection</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>Objective-C method</string>
 // CHECK-NEXT:   <key>issue_context</key><string>getViolation</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>67</integer>
@@ -1277,7 +1277,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Call to function &apos;CFCreateSomething&apos; returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Call to function &apos;CFCreateSomething&apos; returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected</string>
+// CHECK-NEXT:      <string>Call to function &apos;CFCreateSomething&apos; returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1352,7 +1352,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Object returned to caller as an owning reference (single retain count transferred to caller)</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Object returned to caller as an owning reference (single retain count transferred to caller)</string>
+// CHECK-NEXT:      <string>Object returned to caller as an owning reference (single retain count transferred to caller)</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
@@ -1381,7 +1381,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:      <key>extended_message</key>
 // CHECK-NEXT:      <string>Object leaked: object allocated and stored into &apos;object&apos; and returned from method &apos;copyViolation&apos; is potentially leaked when using garbage collection.  Callers of this method do not expect a returned object with a +1 retain count since they expect the object to be managed by the garbage collector</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT: <string>Object leaked: object allocated and stored into &apos;object&apos; and returned from method &apos;copyViolation&apos; is potentially leaked when using garbage collection.  Callers of this method do not expect a returned object with a +1 retain count since they expect the object to be managed by the garbage collector</string>
+// CHECK-NEXT:      <string>Object leaked: object allocated and stored into &apos;object&apos; and returned from method &apos;copyViolation&apos; is potentially leaked when using garbage collection.  Callers of this method do not expect a returned object with a +1 retain count since they expect the object to be managed by the garbage collector</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Potential leak (when using garbage collection) of an object stored into &apos;object&apos;</string>
@@ -1389,7 +1389,7 @@ void retainReleaseIgnored () {
 // CHECK-NEXT:    <key>type</key><string>Leak of returned object when using garbage collection</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>Objective-C method</string>
 // CHECK-NEXT:   <key>issue_context</key><string>copyViolation</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>72</integer>
