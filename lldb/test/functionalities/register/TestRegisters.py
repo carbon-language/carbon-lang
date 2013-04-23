@@ -14,11 +14,18 @@ class RegisterCommandsTestCase(TestBase):
     mydir = os.path.join("functionalities", "register")
 
     def test_register_commands(self):
-        """Test commands related to registers, in particular xmm registers."""
+        """Test commands related to registers, in particular vector registers."""
         if not self.getArchitecture() in ['i386', 'x86_64']:
             self.skipTest("This test requires i386 or x86_64 as the architecture for the inferior")
         self.buildDefault()
         self.register_commands()
+
+    def test_register_expressions(self):
+        """Test expression evaluation with commands related to registers."""
+        if not self.getArchitecture() in ['i386', 'x86_64']:
+            self.skipTest("This test requires i386 or x86_64 as the architecture for the inferior")
+        self.buildDefault()
+        self.register_expressions()
 
     @expectedFailureLinux # bugzilla 14600 - Convenience registers not supported on Linux
     def test_convenience_registers(self):
@@ -36,9 +43,7 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.convenience_registers_with_process_attach()
 
-    @expectedFailureLinux # bugzilla 14661 - Expressions involving XMM registers fail on Linux
-    def register_commands(self):
-        """Test commands related to registers, in particular xmm registers."""
+    def common_setup(self):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -51,7 +56,9 @@ class RegisterCommandsTestCase(TestBase):
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['stopped', 'stop reason = breakpoint'])
 
-        # Test some register-related commands.
+    def register_commands(self):
+        """Test commands related to registers, in particular vector registers."""
+        self.common_setup()
 
         self.expect("register read -a", MISSING_EXPECTED_REGISTERS,
             substrs = ['registers were unavailable'], matching = False)
@@ -60,6 +67,11 @@ class RegisterCommandsTestCase(TestBase):
 
         self.expect("register read -s 3",
             substrs = ['invalid register set index: 3'], error = True)
+
+    @expectedFailureLinux # bugzilla 14661 - Expressions involving XMM registers fail on Linux
+    def register_expressions(self):
+        """Test expression evaluation with commands related to registers."""
+        self.common_setup()
 
         # rdar://problem/10611315
         # expression command doesn't handle xmm or stmm registers...
@@ -71,17 +83,7 @@ class RegisterCommandsTestCase(TestBase):
 
     def convenience_registers(self):
         """Test convenience registers."""
-        exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
-
-        # Break in main().
-        lldbutil.run_break_set_by_symbol (self, "main", num_expected_locations=-1)
-
-        self.runCmd("run", RUN_SUCCEEDED)
-
-        # The stop reason of the thread should be breakpoint.
-        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['stopped', 'stop reason = breakpoint'])
+        self.common_setup()
 
         # The vanilla "register read" command does not output derived register like eax.
         self.expect("register read", matching=False,
