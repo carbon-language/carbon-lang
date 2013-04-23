@@ -514,7 +514,8 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::ATOMIC_STORE, MVT::i64, Expand);
 
   setBooleanContents(ZeroOrOneBooleanContent);
-  setBooleanVectorContents(ZeroOrNegativeOneBooleanContent); // FIXME: Is this correct?
+  // Altivec instructions set fields to all zeros or all ones.
+  setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
 
   if (isPPC64) {
     setStackPointerRegisterToSaveRestore(PPC::X1);
