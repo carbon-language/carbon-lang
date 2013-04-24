@@ -87,9 +87,7 @@ public:
   /// explicit cache flush, otherwise JIT code manipulations (like resolved
   /// relocations) will get to the data cache but not to the instruction cache.
   ///
-  /// This method is not called by RuntimeDyld or MCJIT during the load
-  /// process.  Clients may call this function when needed.  See the lli
-  /// tool for example use.
+  /// This method is called from applyPermissions.
   virtual void invalidateInstructionCache();
 
 private:

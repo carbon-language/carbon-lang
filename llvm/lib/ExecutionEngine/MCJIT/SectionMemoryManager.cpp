@@ -138,6 +138,11 @@ bool SectionMemoryManager::applyPermissions(std::string *ErrMsg)
 
   // Read-write data memory already has the correct permissions
 
+  // Some platforms with separate data cache and instruction cache require
+  // explicit cache flush, otherwise JIT code manipulations (like resolved
+  // relocations) will get to the data cache but not to the instruction cache.
+  invalidateInstructionCache();
+
   return false;
 }
 
