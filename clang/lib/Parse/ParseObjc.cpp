@@ -1565,6 +1565,13 @@ Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
   
     if (Tok.is(tok::l_brace)) // we have ivars
       ParseObjCClassInstanceVariables(ObjCImpDecl, tok::objc_private, AtLoc);
+    else if (Tok.is(tok::less)) { // we have illegal '<' try to recover
+      Diag(Tok, diag::err_unexpected_protocol_qualifier);
+      // try to recover.
+      AttributeFactory attr;
+      DeclSpec DS(attr);
+      (void)ParseObjCProtocolQualifiers(DS);
+    }
   }
   assert(ObjCImpDecl);
 
