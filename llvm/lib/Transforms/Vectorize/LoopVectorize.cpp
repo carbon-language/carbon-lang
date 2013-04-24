@@ -707,6 +707,11 @@ struct LoopVectorize : public LoopPass {
     AA = getAnalysisIfAvailable<AliasAnalysis>();
     TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
 
+    if (DL == NULL) {
+      DEBUG(dbgs() << "LV: Not vectorizing because of missing data layout");
+      return false;
+    }
+
     DEBUG(dbgs() << "LV: Checking a loop in \"" <<
           L->getHeader()->getParent()->getName() << "\"\n");
 
