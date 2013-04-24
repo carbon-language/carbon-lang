@@ -128,6 +128,16 @@ getStorageClass now returns what is written it the source code for that decl.
 
 ...
 
+libclang
+--------
+
+The clang_CXCursorSet_contains() function previously incorrectly returned 0
+if it contained a CXCursor, contrary to what the documentation stated.  This
+has been fixed so that the function returns a non-zero value if the set
+contains a cursor.  This is API breaking change, but matches the intended
+original behavior.  Moreover, this also fixes the issue of an invalid CXCursorSet
+appearing to contain any CXCursor.
+
 Python Binding Changes
 ----------------------
 
