@@ -67,7 +67,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.BinPackParameters = true;
   GoogleStyle.AllowAllParametersOfDeclarationOnNextLine = true;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
-  GoogleStyle.AllowShortIfStatementsOnASingleLine = false;
+  GoogleStyle.AllowShortIfStatementsOnASingleLine = true;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
   GoogleStyle.PenaltyExcessCharacter = 1000000;
   GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 200;
@@ -77,6 +77,7 @@ FormatStyle getGoogleStyle() {
 FormatStyle getChromiumStyle() {
   FormatStyle ChromiumStyle = getGoogleStyle();
   ChromiumStyle.AllowAllParametersOfDeclarationOnNextLine = false;
+  ChromiumStyle.AllowShortIfStatementsOnASingleLine = false;
   ChromiumStyle.BinPackParameters = false;
   ChromiumStyle.Standard = FormatStyle::LS_Cpp03;
   ChromiumStyle.DerivePointerBinding = false;
