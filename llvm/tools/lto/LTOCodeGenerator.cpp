@@ -287,9 +287,7 @@ static void findUsedValues(GlobalVariable *LLVMUsed,
                            SmallPtrSet<GlobalValue*, 8> &UsedValues) {
   if (LLVMUsed == 0) return;
 
-  ConstantArray *Inits = dyn_cast<ConstantArray>(LLVMUsed->getInitializer());
-  if (Inits == 0) return;
-
+  ConstantArray *Inits = cast<ConstantArray>(LLVMUsed->getInitializer());
   for (unsigned i = 0, e = Inits->getNumOperands(); i != e; ++i)
     if (GlobalValue *GV =
         dyn_cast<GlobalValue>(Inits->getOperand(i)->stripPointerCasts()))
@@ -326,23 +324,25 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   if (LLVMCompilerUsed)
     LLVMCompilerUsed->eraseFromParent();
 
-  llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(_context);
-  std::vector<Constant*> asmUsed2;
-  for (SmallPtrSet<GlobalValue*, 16>::const_iterator i = asmUsed.begin(),
-         e = asmUsed.end(); i !=e; ++i) {
-    GlobalValue *GV = *i;
-    Constant *c = ConstantExpr::getBitCast(GV, i8PTy);
-    asmUsed2.push_back(c);
+  if (!asmUsed.empty()) {
+    llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(_context);
+    std::vector<Constant*> asmUsed2;
+    for (SmallPtrSet<GlobalValue*, 16>::const_iterator i = asmUsed.begin(),
+           e = asmUsed.end(); i !=e; ++i) {
+      GlobalValue *GV = *i;
+      Constant *c = ConstantExpr::getBitCast(GV, i8PTy);
+      asmUsed2.push_back(c);
+    }
+
+    llvm::ArrayType *ATy = llvm::ArrayType::get(i8PTy, asmUsed2.size());
+    LLVMCompilerUsed =
+      new llvm::GlobalVariable(*mergedModule, ATy, false,
+                               llvm::GlobalValue::AppendingLinkage,
+                               llvm::ConstantArray::get(ATy, asmUsed2),
+                               "llvm.compiler.used");
+
+    LLVMCompilerUsed->setSection("llvm.metadata");
   }
-
-  llvm::ArrayType *ATy = llvm::ArrayType::get(i8PTy, asmUsed2.size());
-  LLVMCompilerUsed =
-    new llvm::GlobalVariable(*mergedModule, ATy, false,
-                             llvm::GlobalValue::AppendingLinkage,
-                             llvm::ConstantArray::get(ATy, asmUsed2),
-                             "llvm.compiler.used");
-
-  LLVMCompilerUsed->setSection("llvm.metadata");
 
   passes.add(createInternalizePass(mustPreserveList));
 
