@@ -592,7 +592,7 @@ TARGETS_TO_BUILD=""
 AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
     [Build specific host targets: all or target1,target2,... Valid targets are:
      host, x86, x86_64, sparc, powerpc, arm, mips, spu, hexagon,
-     xcore, msp430, nvptx, cbe, and cpp (default=all)]),,
+     xcore, msp430, nvptx, and cpp (default=all)]),,
     enableval=all)
 if test "$enableval" = host-only ; then
   enableval=host
