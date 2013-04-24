@@ -2347,7 +2347,7 @@ AppleObjCRuntimeV2::LookupRuntimeSymbol (const ConstString &name)
         {
             llvm::StringRef class_skipped_prefix = name_strref.substr(class_prefix.size());
             const ConstString class_name_cs(class_skipped_prefix);
-            ClassDescriptorSP descriptor = ObjCLanguageRuntime::GetClassDescriptor(class_name_cs);
+            ClassDescriptorSP descriptor = GetClassDescriptorFromClassName(class_name_cs);
             
             if (descriptor)
                 ret = descriptor->GetISA();
