@@ -27,22 +27,25 @@ using namespace llvm;
 
 static cl::opt<bool> Help("h", cl::desc("Alias for -help"), cl::Hidden);
 
-static cl::list<int> Offsets(
-    "offset", cl::desc("Format a range starting at this file offset."));
-static cl::list<int> Lengths(
-    "length", cl::desc("Format a range of this length, -1 for end of file."));
+static cl::list<unsigned>
+Offsets("offset", cl::desc("Format a range starting at this file offset. Can "
+                           "only be used with one input file."));
+static cl::list<unsigned>
+Lengths("length", cl::desc("Format a range of this length. "
+                           "When it's not specified, end of file is used. "
+                           "Can only be used with one input file."));
 static cl::opt<std::string> Style(
     "style",
     cl::desc("Coding style, currently supports: LLVM, Google, Chromium."),
     cl::init("LLVM"));
 static cl::opt<bool> Inplace("i",
-                             cl::desc("Inplace edit <file>, if specified."));
+                             cl::desc("Inplace edit <file>s, if specified."));
 
 static cl::opt<bool> OutputXML(
     "output-replacements-xml", cl::desc("Output replacements as XML."));
 
-static cl::opt<std::string> FileName(cl::Positional, cl::desc("[<file>]"),
-                                     cl::init("-"));
+static cl::list<std::string> FileNames(cl::Positional,
+                                       cl::desc("[<file> ...]"));
 
 namespace clang {
 namespace format {
@@ -65,7 +68,8 @@ static FormatStyle getStyle() {
   return TheStyle;
 }
 
-static void format() {
+// Returns true on error.
+static bool format(std::string FileName) {
   FileManager Files((FileSystemOptions()));
   DiagnosticsEngine Diagnostics(
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
@@ -74,7 +78,7 @@ static void format() {
   OwningPtr<MemoryBuffer> Code;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(FileName, Code)) {
     llvm::errs() << ec.message() << "\n";
-    return;
+    return true;
   }
   FileID ID = createInMemoryFile(FileName, Code.get(), Sources, Files);
   Lexer Lex(ID, Sources.getBuffer(ID), Sources, getFormattingLangOpts());
@@ -82,15 +86,27 @@ static void format() {
     Offsets.push_back(0);
   if (Offsets.size() != Lengths.size() &&
       !(Offsets.size() == 1 && Lengths.empty())) {
-    llvm::errs() << "Number of -offset and -length arguments must match.\n";
-    return;
+    llvm::errs()
+        << "error: number of -offset and -length arguments must match.\n";
+    return true;
   }
   std::vector<CharSourceRange> Ranges;
-  for (cl::list<int>::size_type i = 0, e = Offsets.size(); i != e; ++i) {
+  for (unsigned i = 0, e = Offsets.size(); i != e; ++i) {
+    if (Offsets[i] >= Code->getBufferSize()) {
+      llvm::errs() << "error: offset " << Offsets[i]
+                   << " is outside the file\n";
+      return true;
+    }
     SourceLocation Start =
         Sources.getLocForStartOfFile(ID).getLocWithOffset(Offsets[i]);
     SourceLocation End;
     if (i < Lengths.size()) {
+      if (Offsets[i] + Lengths[i] > Code->getBufferSize()) {
+        llvm::errs() << "error: invalid length " << Lengths[i]
+                     << ", offset + length (" << Offsets[i] + Lengths[i]
+                     << ") is outside the file.\n";
+        return true;
+      }
       End = Start.getLocWithOffset(Lengths[i]);
     } else {
       End = Sources.getLocForEndOfFile(ID);
@@ -99,7 +115,8 @@ static void format() {
   }
   tooling::Replacements Replaces = reformat(getStyle(), Lex, Sources, Ranges);
   if (OutputXML) {
-    llvm::outs() << "<?xml version='1.0'?>\n<replacements xml:space='preserve'>\n";
+    llvm::outs()
+        << "<?xml version='1.0'?>\n<replacements xml:space='preserve'>\n";
     for (tooling::Replacements::const_iterator I = Replaces.begin(),
                                                E = Replaces.end();
          I != E; ++I) {
@@ -114,14 +131,14 @@ static void format() {
     tooling::applyAllReplacements(Replaces, Rewrite);
     if (Inplace) {
       if (Replaces.size() == 0)
-        return; // Nothing changed, don't touch the file.
+        return false; // Nothing changed, don't touch the file.
 
       std::string ErrorInfo;
       llvm::raw_fd_ostream FileStream(FileName.c_str(), ErrorInfo,
                                       llvm::raw_fd_ostream::F_Binary);
       if (!ErrorInfo.empty()) {
         llvm::errs() << "Error while writing file: " << ErrorInfo << "\n";
-        return;
+        return true;
       }
       Rewrite.getEditBuffer(ID).write(FileStream);
       FileStream.flush();
@@ -129,6 +146,7 @@ static void format() {
       Rewrite.getEditBuffer(ID).write(outs());
     }
   }
+  return false;
 }
 
 }  // namespace format
@@ -141,11 +159,30 @@ int main(int argc, const char **argv) {
       "A tool to format C/C++/Obj-C code.\n\n"
       "If no arguments are specified, it formats the code from standard input\n"
       "and writes the result to the standard output.\n"
-      "If <file> is given, it reformats the file. If -i is specified together\n"
-      "with <file>, the file is edited in-place. Otherwise, the result is\n"
-      "written to the standard output.\n");
+      "If <file>s are given, it reformats the files. If -i is specified \n"
+      "together with <file>s, the files are edited in-place. Otherwise, the \n"
+      "result is written to the standard output.\n");
+
   if (Help)
     cl::PrintHelpMessage();
-  clang::format::format();
-  return 0;
+
+  bool Error = false;
+  switch (FileNames.size()) {
+  case 0:
+    Error = clang::format::format("-");
+    break;
+  case 1:
+    Error = clang::format::format(FileNames[0]);
+    break;
+  default:
+    if (!Offsets.empty() || !Lengths.empty()) {
+      llvm::errs() << "error: \"-offset\" and \"-length\" can only be used for "
+                      "single file.\n";
+      return 1;
+    }
+    for (unsigned i = 0; i < FileNames.size(); ++i)
+      Error |= clang::format::format(FileNames[i]);
+    break;
+  }
+  return Error ? 1 : 0;
 }
