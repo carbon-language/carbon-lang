@@ -821,7 +821,7 @@ void DwarfDebug::beginModule() {
     // If we're splitting the dwarf out now that we've got the entire
     // CU then construct a skeleton CU based upon it.
     if (useSplitDwarf()) {
-    // This should be a unique identifier when we want to build .dwp files.
+      // This should be a unique identifier when we want to build .dwp files.
       CU->addUInt(CU->getCUDie(), dwarf::DW_AT_GNU_dwo_id,
                   dwarf::DW_FORM_data8, 0);
       // Now construct the skeleton CU associated.
