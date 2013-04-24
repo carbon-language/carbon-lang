@@ -933,6 +933,8 @@ namespace {
 class CopyConstrain : public ScheduleDAGMutation {
   // Transient state.
   SlotIndex RegionBeginIdx;
+  // RegionEndIdx is the slot index of the last non-debug instruction in the
+  // scheduling region. So we may have RegionBeginIdx == RegionEndIdx.
   SlotIndex RegionEndIdx;
 public:
   CopyConstrain(const TargetInstrInfo *, const TargetRegisterInfo *) {}
@@ -1082,8 +1084,10 @@ void CopyConstrain::constrainLocalCopy(SUnit *CopySU, ScheduleDAGMI *DAG) {
 /// \brief Callback from DAG postProcessing to create weak edges to encourage
 /// copy elimination.
 void CopyConstrain::apply(ScheduleDAGMI *DAG) {
-  RegionBeginIdx = DAG->getLIS()->getInstructionIndex(
-    &*nextIfDebug(DAG->begin(), DAG->end()));
+  MachineBasicBlock::iterator FirstPos = nextIfDebug(DAG->begin(), DAG->end());
+  if (FirstPos == DAG->end())
+    return;
+  RegionBeginIdx = DAG->getLIS()->getInstructionIndex(&*FirstPos);
   RegionEndIdx = DAG->getLIS()->getInstructionIndex(
     &*priorNonDebug(DAG->end(), DAG->begin()));
 
