@@ -100,13 +100,6 @@ static unsigned getOptimizationLevelSize(ArgList &Args) {
   return 0;
 }
 
-static bool isOptimizationLevelFast(ArgList &Args) {
-  if (Arg *A = Args.getLastArg(options::OPT_O_Group))
-    if (A->getOption().matches(options::OPT_Ofast))
-      return true;
-  return false;
-}
-
 static void addWarningArgs(ArgList &Args, std::vector<std::string> &Warnings) {
   for (arg_iterator I = Args.filtered_begin(OPT_W_Group),
          E = Args.filtered_end(); I != E; ++I) {
@@ -333,8 +326,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.ForbidGuardVariables = Args.hasArg(OPT_fforbid_guard_variables);
   Opts.UseRegisterSizedBitfieldAccess = Args.hasArg(
     OPT_fuse_register_sized_bitfield_access);
-  Opts.RelaxedAliasing = Args.hasArg(OPT_relaxed_aliasing) ||
-    isOptimizationLevelFast(Args);
+  Opts.RelaxedAliasing = Args.hasArg(OPT_relaxed_aliasing);
   Opts.StructPathTBAA = Args.hasArg(OPT_struct_path_tbaa);
   Opts.DwarfDebugFlags = Args.getLastArgValue(OPT_dwarf_debug_flags);
   Opts.MergeAllConstants = !Args.hasArg(OPT_fno_merge_all_constants);
@@ -1313,8 +1305,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   // inlining enabled.
   Opts.NoInlineDefine = !Opt || Args.hasArg(OPT_fno_inline);
 
-  Opts.FastMath = Args.hasArg(OPT_ffast_math) ||
-    isOptimizationLevelFast(Args);
+  Opts.FastMath = Args.hasArg(OPT_ffast_math);
   Opts.FiniteMathOnly = Args.hasArg(OPT_ffinite_math_only);
 
   Opts.RetainCommentsFromSystemHeaders =
