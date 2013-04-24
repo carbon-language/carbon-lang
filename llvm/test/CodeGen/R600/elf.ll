@@ -3,6 +3,7 @@
 
 ; ELF-CHECK: Format: ELF32
 ; ELF-CHECK: Name: .AMDGPU.config
+; ELF-CHECK: Type: SHT_PROGBITS
 
 ; CONFIG-CHECK: .section .AMDGPU.config
 ; CONFIG-CHECK-NEXT: .long   45096

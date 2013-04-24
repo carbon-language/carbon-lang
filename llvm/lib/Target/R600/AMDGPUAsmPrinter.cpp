@@ -59,7 +59,7 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   const MCSectionELF *ConfigSection = getObjFileLowering().getContext()
                                               .getELFSection(".AMDGPU.config",
-                                              ELF::SHT_NULL, 0,
+                                              ELF::SHT_PROGBITS, 0,
                                               SectionKind::getReadOnly());
   OutStreamer.SwitchSection(ConfigSection);
   if (STM.device()->getGeneration() > AMDGPUDeviceInfo::HD6XXX) {
