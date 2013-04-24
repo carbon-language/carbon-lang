@@ -315,17 +315,19 @@ bool Resolver::checkUndefines(bool final) {
     bool foundUndefines = false;
     for (const UndefinedAtom *undefAtom : undefinedAtoms) {
       const File &f = undefAtom->file();
-      bool isAtomUndefined = false;
-      if (isa<SharedLibraryFile>(f)) {
-        if (!_targetInfo.allowShlibUndefines()) {
-          foundUndefines = true;
-          isAtomUndefined = true;
-        }
-      } else if (undefAtom->canBeNull() == UndefinedAtom::canBeNullNever) {
-        foundUndefines = true;
-        isAtomUndefined = true;
-      }
-      if (isAtomUndefined && _targetInfo.printRemainingUndefines()) {
+
+      // Skip over a weak symbol.
+      if (undefAtom->canBeNull() != UndefinedAtom::canBeNullNever)
+        continue;
+
+      // If this is a library and undefined symbols are allowed on the
+      // target platform, skip over it.
+      if (isa<SharedLibraryFile>(f) && _targetInfo.allowShlibUndefines())
+        continue;
+
+      // Seems like this symbol is undefined. Warn that.
+      foundUndefines = true;
+      if (_targetInfo.printRemainingUndefines()) {
         llvm::errs() << "Undefined Symbol: " << undefAtom->file().path()
                      << " : " << undefAtom->name() << "\n";
       }

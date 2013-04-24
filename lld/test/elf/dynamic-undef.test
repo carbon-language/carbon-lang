@@ -25,3 +25,5 @@ RUN: FileCheck -check-prefix=SHLIB %s < %t2
 
 EXEC: Undefined Symbol: {{[-_A-Za-z0-9.\\/]+}}shared.so-x86-64 : puts
 SHLIB: Undefined Symbol: {{[-_A-Za-z0-9.\\/]+}}shared.so-x86-64 : puts
+EXEC-NOT: Undefined Symbol: {{[-_A-Za-z0-9.\\/]+}}shared.so-x86-64 : weakfoo
+SHLIB-NOT: Undefined Symbol: {{[-_A-Za-z0-9.\\/]+}}shared.so-x86-64 : weakfoo
