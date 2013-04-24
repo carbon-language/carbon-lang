@@ -584,6 +584,8 @@ void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size) {
   thr->is_freeing = true;
   MemoryAccessRange(thr, pc, addr, size, true);
   thr->is_freeing = false;
+  thr->fast_state.IncrementEpoch();
+  TraceAddEvent(thr, thr->fast_state, EventTypeMop, pc);
   Shadow s(thr->fast_state);
   s.ClearIgnoreBit();
   s.MarkAsFreed();
@@ -593,6 +595,8 @@ void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size) {
 }
 
 void MemoryRangeImitateWrite(ThreadState *thr, uptr pc, uptr addr, uptr size) {
+  thr->fast_state.IncrementEpoch();
+  TraceAddEvent(thr, thr->fast_state, EventTypeMop, pc);
   Shadow s(thr->fast_state);
   s.ClearIgnoreBit();
   s.SetWrite(true);
