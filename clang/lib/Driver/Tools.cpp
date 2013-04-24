@@ -3284,8 +3284,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    false))
     CmdArgs.push_back("-fasm-blocks");
 
+  // If -Ofast is the optimization level, then -fvectorize should be enabled.
+  // This alias option is being used to simplify the hasFlag logic.
+  OptSpecifier VectorizeAliasOption = OFastEnabled ? options::OPT_Ofast :
+    options::OPT_fvectorize;
+
   // -fvectorize is default.
-  if (Args.hasFlag(options::OPT_fvectorize,
+  if (Args.hasFlag(options::OPT_fvectorize, VectorizeAliasOption,
                    options::OPT_fno_vectorize, true)) {
     CmdArgs.push_back("-backend-option");
     CmdArgs.push_back("-vectorize-loops");
