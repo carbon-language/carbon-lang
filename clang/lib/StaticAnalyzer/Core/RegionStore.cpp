@@ -1011,6 +1011,7 @@ void invalidateRegionsWorker::VisitCluster(const MemRegion *baseR,
     for (ClusterBindings::iterator I = C->begin(), E = C->end(); I != E; ++I)
       VisitBinding(I.getData());
 
+    // Invalidate the contents of a non-const base region.
     if (!IsConst)
       B = B.remove(baseR);
   }
@@ -1043,18 +1044,19 @@ void invalidateRegionsWorker::VisitCluster(const MemRegion *baseR,
   }
 
   // Symbolic region?
-  SymbolRef RegionSym = 0;
-  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(baseR))
-    RegionSym = SR->getSymbol();
+  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(baseR)) {
+    SymbolRef RegionSym = SR->getSymbol();
 
-  if (IsConst) {
     // Mark that symbol touched by the invalidation.
-    ConstIS.insert(RegionSym);
-    return;
+    if (IsConst)
+      ConstIS.insert(RegionSym);
+    else
+      IS.insert(RegionSym);
   }
-  
-  // Mark that symbol touched by the invalidation.
-  IS.insert(RegionSym);
+
+  // Nothing else should be done for a const region.
+  if (IsConst)
+    return;
 
   // Otherwise, we have a normal data region. Record that we touched the region.
   if (Regions)
