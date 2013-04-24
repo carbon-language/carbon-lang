@@ -66,6 +66,9 @@ public:
 
   void addUntouchableComment(unsigned Column);
 
+  /// \brief Try to align all stashed comments.
+  void alignComments();
+
 private:
   std::string getNewLineText(unsigned NewLines, unsigned Spaces);
 
@@ -83,9 +86,6 @@ private:
   };
   SmallVector<StoredComment, 16> Comments;
   typedef SmallVector<StoredComment, 16>::iterator comment_iterator;
-
-  /// \brief Try to align all stashed comments.
-  void alignComments();
 
   /// \brief Put all the comments between \p I and \p E into \p Column.
   void alignComments(comment_iterator I, comment_iterator E, unsigned Column);

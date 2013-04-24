@@ -1069,6 +1069,8 @@ public:
         if (TheLine.Last->is(tok::comment))
           Whitespaces.addUntouchableComment(SourceMgr.getSpellingColumnNumber(
               TheLine.Last->FormatTok.Tok.getLocation()) - 1);
+        else
+          Whitespaces.alignComments();
       }
       PreviousLineLastToken = I->Last;
     }

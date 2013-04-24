@@ -621,6 +621,13 @@ TEST_F(FormatTest, CanFormatCommentsLocally) {
                    "            // line 2\n"
                    "int b;",
                    28, 0, getLLVMStyle()));
+  EXPECT_EQ("int aaaaaa; // comment\n"
+            "int b;\n"
+            "int c; // unrelated comment",
+            format("int aaaaaa; // comment\n"
+                   "int b;\n"
+                   "int   c; // unrelated comment",
+                   31, 0, getLLVMStyle()));
 }
 
 TEST_F(FormatTest, RemovesTrailingWhitespaceOfComments) {
