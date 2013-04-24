@@ -11,6 +11,8 @@
 // given library functions on a given platform.
 //
 //===----------------------------------------------------------------------===//
+#ifndef SANITIZER_PLATFORM_INTERCEPTORS_H
+#define SANITIZER_PLATFORM_INTERCEPTORS_H
 
 #include "sanitizer_internal_defs.h"
 
@@ -67,3 +69,5 @@
 # define SANITIZER_INTERCEPT_GLOB SI_LINUX_NOT_ANDROID
 # define SANITIZER_INTERCEPT_WAIT SI_NOT_WINDOWS
 # define SANITIZER_INTERCEPT_INET SI_NOT_WINDOWS
+
+#endif  // #ifndef SANITIZER_PLATFORM_INTERCEPTORS_H

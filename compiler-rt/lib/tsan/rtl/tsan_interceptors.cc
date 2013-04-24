@@ -10,7 +10,7 @@
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
 // FIXME: move as many interceptors as possible into
-// sanitizer_common/sanitizer_common_interceptors.h
+// sanitizer_common/sanitizer_common_interceptors.inc
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common/sanitizer_atomic.h"
@@ -1834,6 +1834,13 @@ struct TsanInterceptorContext {
   const uptr caller_pc;
   const uptr pc;
 };
+
+#include "sanitizer_common/sanitizer_platform_interceptors.h"
+// Causes interceptor recursion (getpwuid_r() calls fopen())
+#undef SANITIZER_INTERCEPT_GETPWNAM_AND_FRIENDS
+#undef SANITIZER_INTERCEPT_GETPWNAM_R_AND_FRIENDS
+// Causes interceptor recursion (glob64() calls lstat64())
+#undef SANITIZER_INTERCEPT_GLOB
 
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) \
     MemoryAccessRange(((TsanInterceptorContext*)ctx)->thr,  \
