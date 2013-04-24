@@ -63,6 +63,9 @@ class CStringsTestCase(TestBase):
                     substrs = ['(char *) $', ' = 0x',
                                'hello'])
 
+        self.expect("p (int)strlen(\"\")",
+                    substrs = ['(int) $', ' = 0'])
+
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

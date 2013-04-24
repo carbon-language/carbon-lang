@@ -1465,6 +1465,11 @@ IRForTarget::MaterializeInitializer (uint8_t *data, Constant *initializer)
         }
         return true;
     }
+    else if (isa<ConstantAggregateZero>(initializer))
+    {
+        memset(data, 0, m_target_data->getTypeStoreSize(initializer_type));
+        return true;
+    }
     return false;
 }
 
