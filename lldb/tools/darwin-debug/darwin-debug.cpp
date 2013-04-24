@@ -24,6 +24,7 @@
 //----------------------------------------------------------------------
 #if defined (__APPLE__)
 
+#include <crt_externs.h> // for _NSGetEnviron()
 #include <getopt.h>
 #include <limits.h>
 #include <mach/machine.h>
@@ -54,6 +55,7 @@ static struct option g_long_options[] =
 	{ "setsid",         no_argument,		NULL,           's'		},
 	{ "unix-socket",    required_argument,  NULL,           'u'		},
     { "working-dir",    required_argument,  NULL,           'w'     },
+    { "env",            required_argument,  NULL,           'E'     },
 	{ NULL,				0,					NULL,            0		}
 };
 
@@ -181,10 +183,10 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
     bool show_usage = false;
     int ch;
     int disable_aslr = 0; // By default we disable ASLR
-    int pass_env = 1;
+    bool pass_env = true;
     std::string unix_socket_name;
     std::string working_dir;
-	while ((ch = getopt_long_only(argc, argv, "a:dehsu:?", g_long_options, NULL)) != -1)
+	while ((ch = getopt_long_only(argc, argv, "a:deE:hsu:?", g_long_options, NULL)) != -1)
 	{
 		switch (ch) 
 		{
@@ -213,9 +215,29 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
             break;            
 
         case 'e':
-            pass_env = 0;
+            pass_env = false;
             break;
-        
+            
+        case 'E':
+            {
+                // Since we will exec this program into our new program, we can just set environment
+                // varaibles in this process and they will make it into the child process.
+                std::string name;
+                std::string value;
+                const char *equal_pos = strchr (optarg, '=');
+                if (equal_pos)
+                {
+                    name.assign (optarg, equal_pos - optarg);
+                    value.assign (equal_pos + 1);
+                }
+                else
+                {
+                    name = optarg;
+                }
+                ::setenv (name.c_str(), value.c_str(), 1);
+            }
+            break;
+            
         case 's':
             // Create a new session to avoid having control-C presses kill our current
             // terminal session when this program is launched from a .command file
@@ -309,8 +331,8 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
 
     // Now we posix spawn to exec this process into the inferior that we want
     // to debug.
-    posix_spawn_for_debug (argv, 
-                           pass_env ? envp : NULL, 
+    posix_spawn_for_debug (argv,
+                           pass_env ? *_NSGetEnviron() : NULL, // Pass current environment as we may have modified it if "--env" options was used, do NOT pass "envp" here
                            working_dir.empty() ? NULL : working_dir.c_str(),
                            cpu_type, 
                            disable_aslr);
