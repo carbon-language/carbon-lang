@@ -956,6 +956,12 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
   Value *Ptr = LI ? LI->getPointerOperand() : SI->getPointerOperand();
   unsigned Alignment = LI ? LI->getAlignment() : SI->getAlignment();
 
+  unsigned ScalarAllocatedSize = DL->getTypeAllocSize(ScalarDataTy);
+  unsigned VectorElementSize = DL->getTypeStoreSize(DataTy)/VF;
+
+  if (ScalarAllocatedSize != VectorElementSize)
+    return scalarizeInstruction(Instr);
+
   // If the pointer is loop invariant or if it is non consecutive,
   // scalarize the load.
   int Stride = Legal->isConsecutivePtr(Ptr);
@@ -3558,7 +3564,9 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     // Scalarized loads/stores.
     int Stride = Legal->isConsecutivePtr(Ptr);
     bool Reverse = Stride < 0;
-    if (0 == Stride) {
+    unsigned ScalarAllocatedSize = DL->getTypeAllocSize(ValTy);
+    unsigned VectorElementSize = DL->getTypeStoreSize(VectorTy)/VF;
+    if (0 == Stride || ScalarAllocatedSize != VectorElementSize) {
       unsigned Cost = 0;
       // The cost of extracting from the value vector and pointer vector.
       Type *PtrTy = ToVectorTy(Ptr->getType(), VF);
