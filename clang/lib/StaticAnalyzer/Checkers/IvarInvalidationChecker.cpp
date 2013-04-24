@@ -437,6 +437,7 @@ visit(const ObjCImplementationDecl *ImplD) const {
 
   // Remove ivars invalidated by the partial invalidation methods. They do not
   // need to be invalidated in the regular invalidation methods.
+  bool AtImplementationContainsAtLeastOnePartialInvalidationMethod = false;
   for (MethodSet::iterator
       I = PartialInfo.InvalidationMethods.begin(),
       E = PartialInfo.InvalidationMethods.end(); I != E; ++I) {
@@ -446,6 +447,8 @@ visit(const ObjCImplementationDecl *ImplD) const {
     const ObjCMethodDecl *D = ImplD->getMethod(InterfD->getSelector(),
                                                InterfD->isInstanceMethod());
     if (D && D->hasBody()) {
+      AtImplementationContainsAtLeastOnePartialInvalidationMethod = true;
+
       bool CalledAnotherInvalidationMethod = false;
       // The MethodCrowler is going to remove the invalidated ivars.
       MethodCrawler(Ivars,
@@ -471,7 +474,7 @@ visit(const ObjCImplementationDecl *ImplD) const {
   containsInvalidationMethod(InterfaceD, Info, /*LookForPartial*/ false);
 
   // Report an error in case none of the invalidation methods are declared.
-  if (!Info.needsInvalidation()) {
+  if (!Info.needsInvalidation() && !PartialInfo.needsInvalidation()) {
     if (Filter.check_MissingInvalidationMethod)
       reportNoInvalidationMethod(FirstIvarDecl, IvarToPopertyMap, InterfaceD,
                                  /*MissingDeclaration*/ true);
@@ -520,9 +523,19 @@ visit(const ObjCImplementationDecl *ImplD) const {
   }
 
   // Report an error in case none of the invalidation methods are implemented.
-  if (!AtImplementationContainsAtLeastOneInvalidationMethod)
-    reportNoInvalidationMethod(FirstIvarDecl, IvarToPopertyMap, InterfaceD,
-                               /*MissingDeclaration*/ false);
+  if (!AtImplementationContainsAtLeastOneInvalidationMethod) {
+    if (AtImplementationContainsAtLeastOnePartialInvalidationMethod) {
+      // Warn on the ivars that were not invalidated by the prrtial
+      // invalidation methods.
+      for (IvarSet::const_iterator
+           I = Ivars.begin(), E = Ivars.end(); I != E; ++I)
+        reportIvarNeedsInvalidation(I->first, IvarToPopertyMap, 0);
+    } else {
+      // Otherwise, no invalidation methods were implemented.
+      reportNoInvalidationMethod(FirstIvarDecl, IvarToPopertyMap, InterfaceD,
+                                 /*MissingDeclaration*/ false);
+    }
+  }
 }
 
 void IvarInvalidationCheckerImpl::
@@ -551,19 +564,27 @@ reportNoInvalidationMethod(const ObjCIvarDecl *FirstIvarDecl,
 
 void IvarInvalidationCheckerImpl::
 reportIvarNeedsInvalidation(const ObjCIvarDecl *IvarD,
-                                    const IvarToPropMapTy &IvarToPopertyMap,
-                                    const ObjCMethodDecl *MethodD) const {
+                            const IvarToPropMapTy &IvarToPopertyMap,
+                            const ObjCMethodDecl *MethodD) const {
   SmallString<128> sbuf;
   llvm::raw_svector_ostream os(sbuf);
   printIvar(os, IvarD, IvarToPopertyMap);
   os << "needs to be invalidated or set to nil";
-  PathDiagnosticLocation MethodDecLocation =
-                         PathDiagnosticLocation::createEnd(MethodD->getBody(),
-                         BR.getSourceManager(),
-                         Mgr.getAnalysisDeclContext(MethodD));
-  BR.EmitBasicReport(MethodD, "Incomplete invalidation",
-                     categories::CoreFoundationObjectiveC, os.str(),
-                     MethodDecLocation);
+  if (MethodD) {
+    PathDiagnosticLocation MethodDecLocation =
+                           PathDiagnosticLocation::createEnd(MethodD->getBody(),
+                           BR.getSourceManager(),
+                           Mgr.getAnalysisDeclContext(MethodD));
+    BR.EmitBasicReport(MethodD, "Incomplete invalidation",
+                       categories::CoreFoundationObjectiveC, os.str(),
+                       MethodDecLocation);
+  } else {
+    BR.EmitBasicReport(IvarD, "Incomplete invalidation",
+                       categories::CoreFoundationObjectiveC, os.str(),
+                       PathDiagnosticLocation::createBegin(IvarD,
+                                                        BR.getSourceManager()));
+                       
+  }
 }
 
 void IvarInvalidationCheckerImpl::MethodCrawler::markInvalidated(

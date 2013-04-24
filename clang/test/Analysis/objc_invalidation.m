@@ -322,6 +322,47 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 #endif
 @end
 
+@interface SomeNotInvalidatedInPartial : SomeInvalidationImplementingObject {
+  SomeInvalidationImplementingObject *Ivar1;
+  SomeInvalidationImplementingObject *Ivar2;
+#if RUN_IVAR_INVALIDATION
+  // expected-warning@-2 {{Instance variable Ivar2 needs to be invalidated or set to nil}}
+#endif
+}
+-(void)partialInvalidator __attribute__((annotate("objc_instance_variable_invalidator_partial")));
+-(void)partialInvalidatorCallsPartial __attribute__((annotate("objc_instance_variable_invalidator_partial")));
+@end
+@implementation SomeNotInvalidatedInPartial {
+  SomeInvalidationImplementingObject *Ivar3;
+#if RUN_IVAR_INVALIDATION
+  // expected-warning@-2 {{Instance variable Ivar3 needs to be invalidated or set to nil}}
+#endif
+}
+-(void)partialInvalidator {
+  Ivar1 = 0;
+}
+-(void)partialInvalidatorCallsPartial {
+  [self partialInvalidator];
+}
+@end
+
+@interface OnlyPartialDeclsBase : NSObject
+-(void)partialInvalidator __attribute__((annotate("objc_instance_variable_invalidator_partial")));
+@end
+@implementation OnlyPartialDeclsBase
+-(void)partialInvalidator {}
+@end
+
+@interface OnlyPartialDecls : OnlyPartialDeclsBase {
+  SomeInvalidationImplementingObject *Ivar1;
+#if RUN_IVAR_INVALIDATION
+  // expected-warning@-2 {{Instance variable Ivar1 needs to be invalidated; no invalidation method is defined in the @implementation for OnlyPartialDecls}}
+#endif
+}
+@end
+@implementation OnlyPartialDecls
+@end
+
 // False negative.
 @interface PartialCallsFull : SomeInvalidationImplementingObject {
   SomeInvalidationImplementingObject *Ivar1;
