@@ -1869,6 +1869,16 @@ IRForTarget::ResolveExternals (Function &llvm_function)
                 return false;
             }
         }
+        else if (global_name.find("OBJC_CLASSLIST_SUP_REFS_$") != global_name.npos)
+        {
+            if (!HandleObjCClass(global))
+            {
+                if (m_error_stream)
+                    m_error_stream->Printf("Error [IRForTarget]: Couldn't resolve the class for an Objective-C static method call\n");
+                
+                return false;
+            }
+        }
         else if (DeclForGlobal(global))
         {
             if (!MaybeHandleVariable (global))
