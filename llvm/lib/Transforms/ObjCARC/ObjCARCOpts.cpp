@@ -3065,7 +3065,7 @@ bool ObjCARCOpt::runOnFunction(Function &F) {
   // when compiling code that isn't ObjC, skip these if the relevant ObjC
   // library functions aren't declared.
 
-  // Preliminary optimizations. This also computs UsedInThisFunction.
+  // Preliminary optimizations. This also computes UsedInThisFunction.
   OptimizeIndividualCalls(F);
 
   // Optimizations for weak pointers.
