@@ -507,6 +507,14 @@ updateScheduledPressure(const std::vector<unsigned> &NewMaxPressure) {
     if ((int)NewMaxPressure[ID] > MaxUnits)
       MaxUnits = NewMaxPressure[ID];
   }
+  DEBUG(
+    for (unsigned i = 0, e = NewMaxPressure.size(); i < e; ++i) {
+      unsigned Limit = TRI->getRegPressureSetLimit(i);
+      if (NewMaxPressure[i] > Limit ) {
+        dbgs() << "  " << TRI->getRegPressureSetName(i) << ": "
+               << NewMaxPressure[i] << " > " << Limit << "\n";
+      }
+    });
 }
 
 /// schedule - Called back from MachineScheduler::runOnMachineFunction
