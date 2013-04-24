@@ -615,7 +615,7 @@ MachOObjectFile::getSymbolSection(DataRefImpl Symb,
 }
 
 error_code MachOObjectFile::getSymbolValue(DataRefImpl Symb,
-                                               uint64_t &Val) const {
+                                           uint64_t &Val) const {
   report_fatal_error("getSymbolValue unimplemented in MachOObjectFile");
 }
 
@@ -627,16 +627,14 @@ error_code MachOObjectFile::getSectionNext(DataRefImpl Sec,
 }
 
 error_code
-MachOObjectFile::getSectionName(DataRefImpl Sec,
-                                    StringRef &Result) const {
+MachOObjectFile::getSectionName(DataRefImpl Sec, StringRef &Result) const {
   ArrayRef<char> Raw = getSectionRawName(Sec);
   Result = parseSegmentOrSectionName(Raw.data());
   return object_error::success;
 }
 
 error_code
-MachOObjectFile::getSectionAddress(DataRefImpl Sec,
-                                   uint64_t &Res) const {
+MachOObjectFile::getSectionAddress(DataRefImpl Sec, uint64_t &Res) const {
   if (is64Bit()) {
     macho::Section64 Sect = getSection64(Sec);
     Res = Sect.Address;
@@ -648,8 +646,7 @@ MachOObjectFile::getSectionAddress(DataRefImpl Sec,
 }
 
 error_code
-MachOObjectFile::getSectionSize(DataRefImpl Sec,
-                                uint64_t &Res) const {
+MachOObjectFile::getSectionSize(DataRefImpl Sec, uint64_t &Res) const {
   if (is64Bit()) {
     macho::Section64 Sect = getSection64(Sec);
     Res = Sect.Size;
@@ -662,8 +659,7 @@ MachOObjectFile::getSectionSize(DataRefImpl Sec,
 }
 
 error_code
-MachOObjectFile::getSectionContents(DataRefImpl Sec,
-                                    StringRef &Res) const {
+MachOObjectFile::getSectionContents(DataRefImpl Sec, StringRef &Res) const {
   uint32_t Offset;
   uint64_t Size;
 
@@ -682,8 +678,7 @@ MachOObjectFile::getSectionContents(DataRefImpl Sec,
 }
 
 error_code
-MachOObjectFile::getSectionAlignment(DataRefImpl Sec,
-                                         uint64_t &Res) const {
+MachOObjectFile::getSectionAlignment(DataRefImpl Sec, uint64_t &Res) const {
   uint32_t Align;
   if (is64Bit()) {
     macho::Section64 Sect = getSection64(Sec);
@@ -704,15 +699,13 @@ MachOObjectFile::isSectionText(DataRefImpl Sec, bool &Res) const {
   return object_error::success;
 }
 
-error_code MachOObjectFile::isSectionData(DataRefImpl DRI,
-                                              bool &Result) const {
+error_code MachOObjectFile::isSectionData(DataRefImpl DRI, bool &Result) const {
   // FIXME: Unimplemented.
   Result = false;
   return object_error::success;
 }
 
-error_code MachOObjectFile::isSectionBSS(DataRefImpl DRI,
-                                             bool &Result) const {
+error_code MachOObjectFile::isSectionBSS(DataRefImpl DRI, bool &Result) const {
   // FIXME: Unimplemented.
   Result = false;
   return object_error::success;
@@ -720,14 +713,14 @@ error_code MachOObjectFile::isSectionBSS(DataRefImpl DRI,
 
 error_code
 MachOObjectFile::isSectionRequiredForExecution(DataRefImpl Sec,
-                                                   bool &Result) const {
+                                               bool &Result) const {
   // FIXME: Unimplemented.
   Result = true;
   return object_error::success;
 }
 
 error_code MachOObjectFile::isSectionVirtual(DataRefImpl Sec,
-                                                 bool &Result) const {
+                                             bool &Result) const {
   // FIXME: Unimplemented.
   Result = false;
   return object_error::success;
@@ -743,7 +736,7 @@ MachOObjectFile::isSectionZeroInit(DataRefImpl Sec, bool &Res) const {
 }
 
 error_code MachOObjectFile::isSectionReadOnlyData(DataRefImpl Sec,
-                                                      bool &Result) const {
+                                                  bool &Result) const {
   // Consider using the code from isSectionText to look for __const sections.
   // Alternately, emit S_ATTR_PURE_INSTRUCTIONS and/or S_ATTR_SOME_INSTRUCTIONS
   // to use section attributes to distinguish code from data.
@@ -754,8 +747,7 @@ error_code MachOObjectFile::isSectionReadOnlyData(DataRefImpl Sec,
 }
 
 error_code
-MachOObjectFile::sectionContainsSymbol(DataRefImpl Sec,
-                                       DataRefImpl Symb,
+MachOObjectFile::sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
                                        bool &Result) const {
   SymbolRef::Type ST;
   this->getSymbolType(Symb, ST);
@@ -823,8 +815,7 @@ error_code MachOObjectFile::getRelocationNext(DataRefImpl Rel,
 }
 
 error_code
-MachOObjectFile::getRelocationAddress(DataRefImpl Rel,
-                                      uint64_t &Res) const {
+MachOObjectFile::getRelocationAddress(DataRefImpl Rel, uint64_t &Res) const {
   uint64_t SectAddress;
   DataRefImpl Sec;
   Sec.d.a = Rel.d.b;
@@ -843,15 +834,14 @@ MachOObjectFile::getRelocationAddress(DataRefImpl Rel,
 }
 
 error_code MachOObjectFile::getRelocationOffset(DataRefImpl Rel,
-                                                    uint64_t &Res) const {
+                                                uint64_t &Res) const {
   macho::RelocationEntry RE = getRelocation(Rel);
   Res = getAnyRelocationAddress(RE);
   return object_error::success;
 }
 
 error_code
-MachOObjectFile::getRelocationSymbol(DataRefImpl Rel,
-                                         SymbolRef &Res) const {
+MachOObjectFile::getRelocationSymbol(DataRefImpl Rel, SymbolRef &Res) const {
   macho::RelocationEntry RE = getRelocation(Rel);
   uint32_t SymbolIdx = getPlainRelocationSymbolNum(RE);
   bool isExtern = getPlainRelocationExternal(RE);
@@ -865,7 +855,7 @@ MachOObjectFile::getRelocationSymbol(DataRefImpl Rel,
 }
 
 error_code MachOObjectFile::getRelocationType(DataRefImpl Rel,
-                                                  uint64_t &Res) const {
+                                              uint64_t &Res) const {
   macho::RelocationEntry RE = getRelocation(Rel);
   Res = getAnyRelocationType(RE);
   return object_error::success;
@@ -972,7 +962,7 @@ error_code MachOObjectFile::getRelocationAdditionalInfo(DataRefImpl Rel,
 
 error_code
 MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
-                                        SmallVectorImpl<char> &Result) const {
+                                          SmallVectorImpl<char> &Result) const {
   macho::RelocationEntry RE = getRelocation(Rel);
 
   unsigned Arch = this->getArch();
@@ -1148,8 +1138,7 @@ MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
 }
 
 error_code
-MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
-                                     bool &Result) const {
+MachOObjectFile::getRelocationHidden(DataRefImpl Rel, bool &Result) const {
   unsigned Arch = getArch();
   uint64_t Type;
   getRelocationType(Rel, Type);
@@ -1177,12 +1166,12 @@ MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
 }
 
 error_code MachOObjectFile::getLibraryNext(DataRefImpl LibData,
-                                               LibraryRef &Res) const {
+                                           LibraryRef &Res) const {
   report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
 }
 
 error_code MachOObjectFile::getLibraryPath(DataRefImpl LibData,
-                                               StringRef &Res) const {
+                                           StringRef &Res) const {
   report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
 }
 
