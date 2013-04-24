@@ -2485,6 +2485,7 @@ struct _LIBCPP_TYPE_VIS default_delete
     _LIBCPP_INLINE_VISIBILITY void operator() (_Tp* __ptr) const _NOEXCEPT
         {
             static_assert(sizeof(_Tp) > 0, "default_delete can not delete incomplete type");
+            static_assert(!is_void<_Tp>::value, "default_delete can not delete incomplete type");
             delete __ptr;
         }
 };
@@ -2507,6 +2508,7 @@ public:
                          typename enable_if<__same_or_less_cv_qualified<_Up*, _Tp*>::value>::type* = 0) const _NOEXCEPT
         {
             static_assert(sizeof(_Tp) > 0, "default_delete can not delete incomplete type");
+            static_assert(!is_void<_Tp>::value, "default_delete can not delete incomplete type");
             delete [] __ptr;
         }
 };
