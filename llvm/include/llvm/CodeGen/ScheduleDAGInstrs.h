@@ -150,6 +150,9 @@ namespace llvm {
 
     virtual ~ScheduleDAGInstrs() {}
 
+    /// \brief Expose LiveIntervals for use in DAG mutators and such.
+    LiveIntervals *getLIS() const { return LIS; }
+
     /// \brief Get the machine model for instruction scheduling.
     const TargetSchedModel *getSchedModel() const { return &SchedModel; }
 

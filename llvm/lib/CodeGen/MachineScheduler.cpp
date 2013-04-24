@@ -51,7 +51,11 @@ static cl::opt<unsigned> MISchedCutoff("misched-cutoff", cl::Hidden,
 static bool ViewMISchedDAGs = false;
 #endif // NDEBUG
 
-// Experimental heuristics
+// FIXME: remove this flag after initial testing. It should always be a good
+// thing.
+static cl::opt<bool> EnableCopyConstrain("misched-vcopy", cl::Hidden,
+    cl::desc("Constrain vreg copies."), cl::init(true));
+
 static cl::opt<bool> EnableLoadCluster("misched-cluster", cl::Hidden,
   cl::desc("Enable load clustering."), cl::init(true));
 
@@ -321,6 +325,10 @@ ScheduleDAGMI::~ScheduleDAGMI() {
   delete DFSResult;
   DeleteContainerPointers(Mutations);
   delete SchedImpl;
+}
+
+bool ScheduleDAGMI::canAddEdge(SUnit *SuccSU, SUnit *PredSU) {
+  return SuccSU == &ExitSU || !Topo.IsReachable(PredSU, SuccSU);
 }
 
 bool ScheduleDAGMI::addEdge(SUnit *SuccSU, const SDep &PredDep) {
@@ -915,6 +923,180 @@ void MacroFusion::apply(ScheduleDAGMI *DAG) {
 }
 
 //===----------------------------------------------------------------------===//
+// CopyConstrain - DAG post-processing to encourage copy elimination.
+//===----------------------------------------------------------------------===//
+
+namespace {
+/// \brief Post-process the DAG to create weak edges from all uses of a copy to
+/// the one use that defines the copy's source vreg, most likely an induction
+/// variable increment.
+class CopyConstrain : public ScheduleDAGMutation {
+  // Transient state.
+  SlotIndex RegionBeginIdx;
+  SlotIndex RegionEndIdx;
+public:
+  CopyConstrain(const TargetInstrInfo *, const TargetRegisterInfo *) {}
+
+  virtual void apply(ScheduleDAGMI *DAG);
+
+protected:
+  void constrainLocalCopy(SUnit *CopySU, ScheduleDAGMI *DAG);
+};
+} // anonymous
+
+/// constrainLocalCopy handles two possibilities:
+/// 1) Local src:
+/// I0:     = dst
+/// I1: src = ...
+/// I2:     = dst
+/// I3: dst = src (copy)
+/// (create pred->succ edges I0->I1, I2->I1)
+///
+/// 2) Local copy:
+/// I0: dst = src (copy)
+/// I1:     = dst
+/// I2: src = ...
+/// I3:     = dst
+/// (create pred->succ edges I1->I2, I3->I2)
+///
+/// Although the MachineScheduler is currently constrained to single blocks,
+/// this algorithm should handle extended blocks. An EBB is a set of
+/// contiguously numbered blocks such that the previous block in the EBB is
+/// always the single predecessor.
+void CopyConstrain::constrainLocalCopy(SUnit *CopySU, ScheduleDAGMI *DAG) {
+  LiveIntervals *LIS = DAG->getLIS();
+  MachineInstr *Copy = CopySU->getInstr();
+
+  // Check for pure vreg copies.
+  unsigned SrcReg = Copy->getOperand(1).getReg();
+  if (!TargetRegisterInfo::isVirtualRegister(SrcReg))
+    return;
+
+  unsigned DstReg = Copy->getOperand(0).getReg();
+  if (!TargetRegisterInfo::isVirtualRegister(DstReg))
+    return;
+
+  // Check if either the dest or source is local. If it's live across a back
+  // edge, it's not local. Note that if both vregs are live across the back
+  // edge, we cannot successfully contrain the copy without cyclic scheduling.
+  unsigned LocalReg = DstReg;
+  unsigned GlobalReg = SrcReg;
+  LiveInterval *LocalLI = &LIS->getInterval(LocalReg);
+  if (!LocalLI->isLocal(RegionBeginIdx, RegionEndIdx)) {
+    LocalReg = SrcReg;
+    GlobalReg = DstReg;
+    LocalLI = &LIS->getInterval(LocalReg);
+    if (!LocalLI->isLocal(RegionBeginIdx, RegionEndIdx))
+      return;
+  }
+  LiveInterval *GlobalLI = &LIS->getInterval(GlobalReg);
+
+  // Find the global segment after the start of the local LI.
+  LiveInterval::iterator GlobalSegment = GlobalLI->find(LocalLI->beginIndex());
+  // If GlobalLI does not overlap LocalLI->start, then a copy directly feeds a
+  // local live range. We could create edges from other global uses to the local
+  // start, but the coalescer should have already eliminated these cases, so
+  // don't bother dealing with it.
+  if (GlobalSegment == GlobalLI->end())
+    return;
+
+  // If GlobalSegment is killed at the LocalLI->start, the call to find()
+  // returned the next global segment. But if GlobalSegment overlaps with
+  // LocalLI->start, then advance to the next segement. If a hole in GlobalLI
+  // exists in LocalLI's vicinity, GlobalSegment will be the end of the hole.
+  if (GlobalSegment->contains(LocalLI->beginIndex()))
+    ++GlobalSegment;
+
+  if (GlobalSegment == GlobalLI->end())
+    return;
+
+  // Check if GlobalLI contains a hole in the vicinity of LocalLI.
+  if (GlobalSegment != GlobalLI->begin()) {
+    // Two address defs have no hole.
+    if (SlotIndex::isSameInstr(llvm::prior(GlobalSegment)->end,
+                               GlobalSegment->start)) {
+      return;
+    }
+    // If GlobalLI has a prior segment, it must be live into the EBB. Otherwise
+    // it would be a disconnected component in the live range.
+    assert(llvm::prior(GlobalSegment)->start < LocalLI->beginIndex() &&
+           "Disconnected LRG within the scheduling region.");
+  }
+  MachineInstr *GlobalDef = LIS->getInstructionFromIndex(GlobalSegment->start);
+  if (!GlobalDef)
+    return;
+
+  SUnit *GlobalSU = DAG->getSUnit(GlobalDef);
+  if (!GlobalSU)
+    return;
+
+  // GlobalDef is the bottom of the GlobalLI hole. Open the hole by
+  // constraining the uses of the last local def to precede GlobalDef.
+  SmallVector<SUnit*,8> LocalUses;
+  const VNInfo *LastLocalVN = LocalLI->getVNInfoBefore(LocalLI->endIndex());
+  MachineInstr *LastLocalDef = LIS->getInstructionFromIndex(LastLocalVN->def);
+  SUnit *LastLocalSU = DAG->getSUnit(LastLocalDef);
+  for (SUnit::const_succ_iterator
+         I = LastLocalSU->Succs.begin(), E = LastLocalSU->Succs.end();
+       I != E; ++I) {
+    if (I->getKind() != SDep::Data || I->getReg() != LocalReg)
+      continue;
+    if (I->getSUnit() == GlobalSU)
+      continue;
+    if (!DAG->canAddEdge(GlobalSU, I->getSUnit()))
+      return;
+    LocalUses.push_back(I->getSUnit());
+  }
+  // Open the top of the GlobalLI hole by constraining any earlier global uses
+  // to precede the start of LocalLI.
+  SmallVector<SUnit*,8> GlobalUses;
+  MachineInstr *FirstLocalDef =
+    LIS->getInstructionFromIndex(LocalLI->beginIndex());
+  SUnit *FirstLocalSU = DAG->getSUnit(FirstLocalDef);
+  for (SUnit::const_pred_iterator
+         I = GlobalSU->Preds.begin(), E = GlobalSU->Preds.end(); I != E; ++I) {
+    if (I->getKind() != SDep::Anti || I->getReg() != GlobalReg)
+      continue;
+    if (I->getSUnit() == FirstLocalSU)
+      continue;
+    if (!DAG->canAddEdge(FirstLocalSU, I->getSUnit()))
+      return;
+    GlobalUses.push_back(I->getSUnit());
+  }
+  DEBUG(dbgs() << "Constraining copy SU(" << CopySU->NodeNum << ")\n");
+  // Add the weak edges.
+  for (SmallVectorImpl<SUnit*>::const_iterator
+         I = LocalUses.begin(), E = LocalUses.end(); I != E; ++I) {
+    DEBUG(dbgs() << "  Local use SU(" << (*I)->NodeNum << ") -> SU("
+          << GlobalSU->NodeNum << ")\n");
+    DAG->addEdge(GlobalSU, SDep(*I, SDep::Weak));
+  }
+  for (SmallVectorImpl<SUnit*>::const_iterator
+         I = GlobalUses.begin(), E = GlobalUses.end(); I != E; ++I) {
+    DEBUG(dbgs() << "  Global use SU(" << (*I)->NodeNum << ") -> SU("
+          << FirstLocalSU->NodeNum << ")\n");
+    DAG->addEdge(FirstLocalSU, SDep(*I, SDep::Weak));
+  }
+}
+
+/// \brief Callback from DAG postProcessing to create weak edges to encourage
+/// copy elimination.
+void CopyConstrain::apply(ScheduleDAGMI *DAG) {
+  RegionBeginIdx = DAG->getLIS()->getInstructionIndex(
+    &*nextIfDebug(DAG->begin(), DAG->end()));
+  RegionEndIdx = DAG->getLIS()->getInstructionIndex(
+    &*priorNonDebug(DAG->end(), DAG->begin()));
+
+  for (unsigned Idx = 0, End = DAG->SUnits.size(); Idx != End; ++Idx) {
+    SUnit *SU = &DAG->SUnits[Idx];
+    if (!SU->getInstr()->isCopy())
+      continue;
+
+    constrainLocalCopy(SU, DAG);
+  }
+}
+
+//===----------------------------------------------------------------------===//
 // ConvergingScheduler - Implementation of the standard MachineSchedStrategy.
 //===----------------------------------------------------------------------===//
 
@@ -926,7 +1108,7 @@ public:
   /// Represent the type of SchedCandidate found within a single queue.
   /// pickNodeBidirectional depends on these listed by decreasing priority.
   enum CandReason {
-    NoCand, PhysRegCopy, SingleExcess, SingleCritical, Cluster,
+    NoCand, PhysRegCopy, SingleExcess, SingleCritical, Cluster, Weak,
     ResourceReduce, ResourceDemand, BotHeightReduce, BotPathReduce,
     TopDepthReduce, TopPathReduce, SingleMax, MultiPressure, NextDefUse,
     NodeOrder};
@@ -1802,13 +1984,11 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
   if (tryGreater(TryCand.SU == NextClusterSU, Cand.SU == NextClusterSU,
                  TryCand, Cand, Cluster))
     return;
-  // Currently, weak edges are for clustering, so we hard-code that reason.
-  // However, deferring the current TryCand will not change Cand's reason.
-  CandReason OrigReason = Cand.Reason;
+
+  // Weak edges are for clustering and other constraints.
   if (tryLess(getWeakLeft(TryCand.SU, Zone.isTop()),
               getWeakLeft(Cand.SU, Zone.isTop()),
-              TryCand, Cand, Cluster)) {
-    Cand.Reason = OrigReason;
+              TryCand, Cand, Weak)) {
     return;
   }
   // Avoid critical resource consumption and balance the schedule.
@@ -1908,6 +2088,7 @@ const char *ConvergingScheduler::getReasonStr(
   case SingleExcess:   return "REG-EXCESS";
   case SingleCritical: return "REG-CRIT  ";
   case Cluster:        return "CLUSTER   ";
+  case Weak:           return "WEAK      ";
   case SingleMax:      return "REG-MAX   ";
   case MultiPressure:  return "REG-MULTI ";
   case ResourceReduce: return "RES-REDUCE";
@@ -2177,6 +2358,12 @@ static ScheduleDAGInstrs *createConvergingSched(MachineSchedContext *C) {
          "-misched-topdown incompatible with -misched-bottomup");
   ScheduleDAGMI *DAG = new ScheduleDAGMI(C, new ConvergingScheduler());
   // Register DAG post-processors.
+  //
+  // FIXME: extend the mutation API to allow earlier mutations to instantiate
+  // data and pass it to later mutations. Have a single mutation that gathers
+  // the interesting nodes in one pass.
+  if (EnableCopyConstrain)
+    DAG->addMutation(new CopyConstrain(DAG->TII, DAG->TRI));
   if (EnableLoadCluster)
     DAG->addMutation(new LoadClusterMutation(DAG->TII, DAG->TRI));
   if (EnableMacroFusion)

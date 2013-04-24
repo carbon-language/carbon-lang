@@ -727,9 +727,8 @@ namespace llvm {
     /// IsReachable - Checks if SU is reachable from TargetSU.
     bool IsReachable(const SUnit *SU, const SUnit *TargetSU);
 
-    /// WillCreateCycle - Returns true if adding an edge from SU to TargetSU
-    /// will create a cycle.
-    bool WillCreateCycle(SUnit *SU, SUnit *TargetSU);
+    /// WillCreateCycle - Return true if addPred(TargetSU, SU) creates a cycle.
+    bool WillCreateCycle(SUnit *TargetSU, SUnit *SU);
 
     /// AddPred - Updates the topological ordering to accommodate an edge
     /// to be added from SUnit X to SUnit Y.

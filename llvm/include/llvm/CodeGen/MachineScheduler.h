@@ -274,6 +274,10 @@ public:
     Mutations.push_back(Mutation);
   }
 
+  /// \brief True if an edge can be added from PredSU to SuccSU without creating
+  /// a cycle.
+  bool canAddEdge(SUnit *SuccSU, SUnit *PredSU);
+
   /// \brief Add a DAG edge to the given SU with the given predecessor
   /// dependence data.
   ///

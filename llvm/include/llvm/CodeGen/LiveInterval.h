@@ -399,6 +399,15 @@ namespace llvm {
       return r != end() && r->containsRange(Start, End);
     }
 
+    /// True iff this live range is a single segment that lies between the
+    /// specified boundaries, exclusively. Vregs live across a backedge are not
+    /// considered local. The boundaries are expected to lie within an extended
+    /// basic block, so vregs that are not live out should contain no holes.
+    bool isLocal(SlotIndex Start, SlotIndex End) const {
+      return beginIndex() > Start.getBaseIndex() &&
+        endIndex() < End.getBoundaryIndex();
+    }
+
     /// removeRange - Remove the specified range from this interval.  Note that
     /// the range must be a single LiveRange in its entirety.
     void removeRange(SlotIndex Start, SlotIndex End,
