@@ -20,6 +20,12 @@ DynamicLibrary::DynamicLibrary (const FileSpec& spec, uint32_t options) : m_file
         m_handle = NULL;
 }
 
+bool
+DynamicLibrary::IsValid ()
+{
+    return m_handle != NULL;
+}
+
 DynamicLibrary::~DynamicLibrary ()
 {
     if (m_handle)

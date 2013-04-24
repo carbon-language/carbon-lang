@@ -330,7 +330,7 @@ public:
     typedef bool (*LLDBCommandPluginInit) (lldb::SBDebugger& debugger);
     
     bool
-    LoadPlugin (const FileSpec& spec);
+    LoadPlugin (const FileSpec& spec, Error& error);
 
 protected:
 

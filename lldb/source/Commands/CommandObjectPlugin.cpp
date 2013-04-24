@@ -96,10 +96,13 @@ protected:
         
         FileSpec dylib_fspec(path,true);
         
-        if (m_interpreter.GetDebugger().LoadPlugin(dylib_fspec))
+        if (m_interpreter.GetDebugger().LoadPlugin(dylib_fspec, error))
             result.SetStatus(eReturnStatusSuccessFinishResult);
         else
+        {
+            result.AppendError(error.AsCString());
             result.SetStatus(eReturnStatusFailed);
+        }
         
         return result.Succeeded();
     }

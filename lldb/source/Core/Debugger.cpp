@@ -344,20 +344,32 @@ Debugger::SettingsTerminate ()
 }
 
 bool
-Debugger::LoadPlugin (const FileSpec& spec)
+Debugger::LoadPlugin (const FileSpec& spec, Error& error)
 {
     lldb::DynamicLibrarySP dynlib_sp(new lldb_private::DynamicLibrary(spec));
+    if (!dynlib_sp || dynlib_sp->IsValid() == false)
+    {
+        if (spec.Exists())
+            error.SetErrorString("this file does not represent a loadable dylib");
+        else
+            error.SetErrorString("no such file");
+        return false;
+    }
     lldb::DebuggerSP debugger_sp(shared_from_this());
     lldb::SBDebugger debugger_sb(debugger_sp);
     // TODO: mangle this differently for your system - on OSX, the first underscore needs to be removed and the second one stays
     LLDBCommandPluginInit init_func = dynlib_sp->GetSymbol<LLDBCommandPluginInit>("_ZN4lldb16PluginInitializeENS_10SBDebuggerE");
     if (!init_func)
+    {
+        error.SetErrorString("cannot find the initialization function lldb::PluginInitialize(lldb::SBDebugger)");
         return false;
+    }
     if (init_func(debugger_sb))
     {
         m_loaded_plugins.push_back(dynlib_sp);
         return true;
     }
+    error.SetErrorString("dylib refused to be loaded");
     return false;
 }
 
@@ -392,7 +404,8 @@ LoadPluginCallback
         if (plugin_file_spec.GetFileNameExtension() != g_dylibext)
             return FileSpec::eEnumerateDirectoryResultNext;
 
-        debugger->LoadPlugin (plugin_file_spec);
+        Error plugin_load_error;
+        debugger->LoadPlugin (plugin_file_spec, plugin_load_error);
         
         return FileSpec::eEnumerateDirectoryResultNext;
     }

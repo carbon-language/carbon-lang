@@ -36,6 +36,9 @@ public:
         return (T)symbol;
     }
     
+    bool
+    IsValid ();
+    
 private:
     lldb_private::FileSpec m_filespec;
     void* m_handle;
