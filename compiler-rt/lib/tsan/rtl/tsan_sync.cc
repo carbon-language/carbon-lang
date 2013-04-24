@@ -82,6 +82,7 @@ SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
   // the hashmap anyway.
   if (PrimaryAllocator::PointerIsMine((void*)addr)) {
     MBlock *b = user_mblock(thr, (void*)addr);
+    CHECK_NE(b, 0);
     MBlock::ScopedLock l(b);
     SyncVar *res = 0;
     for (res = b->ListHead(); res; res = res->next) {
@@ -146,6 +147,7 @@ SyncVar* SyncTab::GetAndRemove(ThreadState *thr, uptr pc, uptr addr) {
   }
   if (PrimaryAllocator::PointerIsMine((void*)addr)) {
     MBlock *b = user_mblock(thr, (void*)addr);
+    CHECK_NE(b, 0);
     SyncVar *res = 0;
     {
       MBlock::ScopedLock l(b);

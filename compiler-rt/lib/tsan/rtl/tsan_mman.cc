@@ -149,6 +149,7 @@ void *user_realloc(ThreadState *thr, uptr pc, void *p, uptr sz) {
       return 0;
     if (p) {
       MBlock *b = user_mblock(thr, p);
+      CHECK_NE(b, 0);
       internal_memcpy(p2, p, min(b->Size(), sz));
     }
   }
@@ -166,10 +167,11 @@ uptr user_alloc_usable_size(ThreadState *thr, uptr pc, void *p) {
 }
 
 MBlock *user_mblock(ThreadState *thr, void *p) {
-  CHECK_NE(p, (void*)0);
+  CHECK_NE(p, 0);
   Allocator *a = allocator();
   void *b = a->GetBlockBegin(p);
-  CHECK_NE(b, 0);
+  if (b == 0)
+    return 0;
   return (MBlock*)a->GetMetaData(b);
 }
 

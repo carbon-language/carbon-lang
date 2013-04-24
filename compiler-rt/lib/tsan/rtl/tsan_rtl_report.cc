@@ -313,8 +313,9 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
       AddThread(tctx);
     return;
   }
-  if (allocator()->PointerIsMine((void*)addr)) {
-    MBlock *b = user_mblock(0, (void*)addr);
+  MBlock *b = 0;
+  if (allocator()->PointerIsMine((void*)addr)
+      && (b = user_mblock(0, (void*)addr))) {
     ThreadContext *tctx = FindThreadByTidLocked(b->Tid());
     void *mem = internal_alloc(MBlockReportLoc, sizeof(ReportLocation));
     ReportLocation *loc = new(mem) ReportLocation();
