@@ -3789,8 +3789,10 @@ def err_arc_unsupported_weak_class : Error<
 def err_arc_weak_unavailable_assign : Error<
   "assignment of a weak-unavailable object to a __weak object">;
 def err_arc_weak_unavailable_property : Error<
-  "synthesis of a weak-unavailable property is disallowed "
-  "because it requires synthesis of an instance variable of the __weak object">;
+  "synthesizing __weak instance variable of type %0, which does not "
+  "support weak references">;
+def note_implemented_by_class : Note<
+  "when implemented by class %0">;
 def err_arc_convesion_of_weak_unavailable : Error<
   "%select{implicit conversion|cast}0 of weak-unavailable object of type %1 to"
   " a __weak object of type %2">;

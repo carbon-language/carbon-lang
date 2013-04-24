@@ -996,8 +996,10 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                 PropertyIvarType->getAs<ObjCObjectPointerType>()) {
               const ObjCInterfaceDecl *ObjI = ObjT->getInterfaceDecl();
               if (ObjI && ObjI->isArcWeakrefUnavailable()) {
-                Diag(PropertyDiagLoc, diag::err_arc_weak_unavailable_property);
-                Diag(property->getLocation(), diag::note_property_declare);
+                Diag(property->getLocation(),
+                     diag::err_arc_weak_unavailable_property) << PropertyIvarType;
+                Diag(ClassImpDecl->getLocation(), diag::note_implemented_by_class)
+                  << ClassImpDecl->getName();
                 err = true;
               }
             }

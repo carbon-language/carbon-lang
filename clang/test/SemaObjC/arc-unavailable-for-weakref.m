@@ -56,9 +56,33 @@ __attribute__((objc_arc_weak_reference_unavailable))
 @interface I
 {
 }
-@property (weak) NSFont *font; // expected-note {{property declared here}}
+@property (weak) NSFont *font; // expected-error {{synthesizing __weak instance variable of type 'NSFont *', which does not support weak references}}
 @end
 
-@implementation I
-@synthesize font = _font; // expected-error {{synthesis of a weak-unavailable property is disallowed because it requires synthesis of an instance variable of the __weak object}}
+@implementation I // expected-note {{when implemented by class I}}
+@synthesize font = _font;
+@end
+
+// rdar://13676793
+@protocol MyProtocol
+@property (weak) NSFont *font; // expected-error {{synthesizing __weak instance variable of type 'NSFont *', which does not support weak references}}
+@end
+
+@interface I1 <MyProtocol>
+@end
+
+@implementation I1 // expected-note {{when implemented by class I1}}
+@synthesize font = _font;
+@end
+
+@interface Super
+@property (weak) NSFont *font;  // expected-error {{synthesizing __weak instance variable of type 'NSFont *', which does not support weak references}}
+@end
+
+
+@interface I2 : Super
+@end
+
+@implementation I2 // expected-note {{when implemented by class I2}}
+@synthesize font = _font;
 @end
