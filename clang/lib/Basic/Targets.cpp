@@ -4256,6 +4256,15 @@ public:
                                 MacroBuilder &Builder) const {
     SparcTargetInfo::getTargetDefines(Opts, Builder);
     Builder.defineMacro("__sparcv9");
+    Builder.defineMacro("__arch64__");
+    // Solaris and its derivative AuroraUX don't need these variants, but the
+    // BSDs do.
+    if (getTriple().getOS() != llvm::Triple::Solaris &&
+        getTriple().getOS() != llvm::Triple::AuroraUX) {
+      Builder.defineMacro("__sparc64__");
+      Builder.defineMacro("__sparc_v9__");
+      Builder.defineMacro("__sparcv9__");
+    }
   }
 };
 
