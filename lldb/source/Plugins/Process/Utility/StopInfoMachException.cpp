@@ -193,6 +193,8 @@ StopInfoMachException::GetDescription ()
                     case 0x101: code_desc = "EXC_ARM_DA_ALIGN"; break;
                     case 0x102: code_desc = "EXC_ARM_DA_DEBUG"; break;
                     case 1: code_desc = "EXC_ARM_BREAKPOINT"; break;
+                    // FIXME temporary workaround, exc_code 0 does not really mean EXC_ARM_BREAKPOINT
+                    case 0: code_desc = "EXC_ARM_BREAKPOINT"; break;
                     }
                     break;
 
@@ -416,6 +418,11 @@ StopInfoMachException::CreateStopReasonWithMachException
                             return StopInfo::CreateStopReasonToTrace(thread);
                     }
                     else if (exc_code == 1) // EXC_ARM_BREAKPOINT
+                    {
+                        is_actual_breakpoint = true;
+                        is_trace_if_actual_breakpoint_missing = true;
+                    }
+                    else if (exc_code == 0) // FIXME not EXC_ARM_BREAKPOINT but a kernel is currently returning this so accept it as indicating a breakpoint until the kernel is fixed
                     {
                         is_actual_breakpoint = true;
                         is_trace_if_actual_breakpoint_missing = true;
