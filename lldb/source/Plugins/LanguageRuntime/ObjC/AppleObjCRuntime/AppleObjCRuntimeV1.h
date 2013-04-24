@@ -49,7 +49,8 @@ public:
         // v1 does not support tagged pointers
         virtual bool
         GetTaggedPointerInfo (uint64_t* info_bits = NULL,
-                              uint64_t* value_bits = NULL)
+                              uint64_t* value_bits = NULL,
+                              uint64_t* payload = NULL)
         {
             return false;
         }

@@ -27,12 +27,14 @@
 #include "lldb/Core/Section.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/ClangUtilityFunction.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Symbol/TypeList.h"
+#include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
@@ -286,6 +288,52 @@ __lldb_apple_objc_v2_get_shared_cache_class_info (void *objc_opt_ro_ptr,
 
 )";
 
+static uint64_t
+ExtractRuntimeGlobalSymbol (Process* process,
+                            ConstString name,
+                            const ModuleSP &module_sp,
+                            Error& error,
+                            bool read_value = true,
+                            uint8_t byte_size = 0,
+                            uint64_t default_value = LLDB_INVALID_ADDRESS,
+                            SymbolType sym_type = lldb::eSymbolTypeData)
+{
+    if (!process)
+    {
+        error.SetErrorString("no process");
+        return default_value;
+    }
+    if (!module_sp)
+    {
+        error.SetErrorString("no module");
+        return default_value;
+    }
+    if (!byte_size)
+        byte_size = process->GetAddressByteSize();
+    const Symbol *symbol = module_sp->FindFirstSymbolWithNameAndType(name, lldb::eSymbolTypeData);
+    if (symbol)
+    {
+        lldb::addr_t symbol_load_addr = symbol->GetAddress().GetLoadAddress(&process->GetTarget());
+        if (symbol_load_addr != LLDB_INVALID_ADDRESS)
+        {
+            if (read_value)
+                return process->ReadUnsignedIntegerFromMemory(symbol_load_addr, byte_size, default_value, error);
+            else
+                return symbol_load_addr;
+        }
+        else
+        {
+            error.SetErrorString("symbol address invalid");
+            return default_value;
+        }
+    }
+    else
+    {
+        error.SetErrorString("no symbol");
+        return default_value;
+    }
+
+}
 
 AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process,
                                         const ModuleSP &objc_module_sp) :
@@ -302,7 +350,9 @@ AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process,
     m_isa_hash_table_ptr (LLDB_INVALID_ADDRESS),
     m_hash_signature (),
     m_has_object_getClass (false),
-    m_loaded_objc_opt (false)
+    m_loaded_objc_opt (false),
+    m_non_pointer_isa_cache_ap(NonPointerISACache::CreateInstance(*this,objc_module_sp)),
+    m_tagged_pointer_vendor_ap(TaggedPointerVendor::CreateInstance(*this,objc_module_sp))
 {
     static const ConstString g_gdb_object_getClass("gdb_object_getClass");
     m_has_object_getClass = (objc_module_sp->FindFirstSymbolWithNameAndType(g_gdb_object_getClass, eSymbolTypeCode) != NULL);
@@ -313,7 +363,7 @@ AppleObjCRuntimeV2::~AppleObjCRuntimeV2()
 }
 
 bool
-AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value, 
+AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
                                               DynamicValueType use_dynamic, 
                                               TypeAndOrName &class_type_or_name, 
                                               Address &address)
@@ -522,15 +572,16 @@ AppleObjCRuntimeV2::GetByteOffsetForIvar (ClangASTType &parent_ast_type, const c
     return ivar_offset;
 }
 
-// tagged pointers are marked by having their least-significant bit
-// set. this makes them "invalid" as pointers because they violate
-// the alignment requirements. of course, this detection algorithm
-// is not accurate (it might become better by incorporating further
-// knowledge about the internals of tagged pointers)
+
+// tagged pointers are special not-a-real-pointer values that contain both type and value information
+// this routine attempts to check with as little computational effort as possible whether something
+// could possibly be a tagged pointer - false positives are possible but false negatives shouldn't
 bool
 AppleObjCRuntimeV2::IsTaggedPointer(addr_t ptr)
 {
-    return (ptr & 1);
+    if (!m_tagged_pointer_vendor_ap)
+        return false;
+    return m_tagged_pointer_vendor_ap->IsPossibleTaggedPointer(ptr);
 }
 
 class RemoteNXMapTable
@@ -860,7 +911,8 @@ public:
     // a custom descriptor is used for tagged pointers
     virtual bool
     GetTaggedPointerInfo (uint64_t* info_bits = NULL,
-                          uint64_t* value_bits = NULL)
+                          uint64_t* value_bits = NULL,
+                          uint64_t* payload = NULL)
     {
         return false;
     }
@@ -1414,88 +1466,43 @@ private:
     ConstString         m_name;             // May be NULL
 };
 
+// tagged pointer descriptor
 class ClassDescriptorV2Tagged : public ObjCLanguageRuntime::ClassDescriptor
 {
 public:
-    ClassDescriptorV2Tagged (ValueObject &isa_pointer)
+    ClassDescriptorV2Tagged (ConstString class_name,
+                             uint64_t payload)
     {
-        m_valid = false;
-        uint64_t value = isa_pointer.GetValueAsUnsigned(0);
-        ProcessSP process_sp = isa_pointer.GetProcessSP();
-        if (process_sp)
-            m_pointer_size = process_sp->GetAddressByteSize();
-        else
+        m_name = class_name;
+        if (!m_name)
         {
-            m_name = ConstString("");
-            m_pointer_size = 0;
+            m_valid = false;
             return;
         }
-        
         m_valid = true;
-        m_class_bits = (value & 0xE) >> 1;
-        lldb::TargetSP target_sp = isa_pointer.GetTargetSP();
-        
-        uint32_t foundation_version = GetFoundationVersion(target_sp);
-        
-        // TODO: check for OSX version - for now assume Mtn Lion
-        if (foundation_version == UINT32_MAX)
+        m_payload = payload;
+        m_info_bits = (m_payload & 0xF0ULL) >> 4;
+        m_value_bits = (m_payload & ~0x0000000000000000FFULL) >> 8;
+    }
+    
+    ClassDescriptorV2Tagged (ObjCLanguageRuntime::ClassDescriptorSP actual_class_sp,
+                             uint64_t payload)
+    {
+        if (!actual_class_sp)
         {
-            // if we can't determine the matching table (e.g. we have no Foundation),
-            // assume this is not a valid tagged pointer
             m_valid = false;
+            return;
         }
-        else if (foundation_version >= 900)
+        m_name = actual_class_sp->GetClassName();
+        if (!m_name)
         {
-            switch (m_class_bits)
-            {
-                case 0:
-                    m_name = ConstString("NSAtom");
-                    break;
-                case 3:
-                    m_name = ConstString("NSNumber");
-                    break;
-                case 4:
-                    m_name = ConstString("NSDateTS");
-                    break;
-                case 5:
-                    m_name = ConstString("NSManagedObject");
-                    break;
-                case 6:
-                    m_name = ConstString("NSDate");
-                    break;
-                default:
-                    m_valid = false;
-                    break;
-            }
+            m_valid = false;
+            return;
         }
-        else
-        {
-            switch (m_class_bits)
-            {
-                case 1:
-                    m_name = ConstString("NSNumber");
-                    break;
-                case 5:
-                    m_name = ConstString("NSManagedObject");
-                    break;
-                case 6:
-                    m_name = ConstString("NSDate");
-                    break;
-                case 7:
-                    m_name = ConstString("NSDateTS");
-                    break;
-                default:
-                    m_valid = false;
-                    break;
-            }
-        }
-        if (!m_valid)
-            m_name = ConstString("");
-        else
-        {
-            m_info_bits = (value & 0xF0ULL) >> 4;
-            m_value_bits = (value & ~0x0000000000000000FFULL) >> 8;
-        }
+        m_valid = true;
+        m_payload = payload;
+        m_info_bits = (m_payload & 0x0FULL);
+        m_value_bits = (m_payload & ~0x0FULL) >> 4;
     }
     
     virtual ConstString
@@ -1533,12 +1540,15 @@ public:
     
     virtual bool
     GetTaggedPointerInfo (uint64_t* info_bits = NULL,
-                          uint64_t* value_bits = NULL)
+                          uint64_t* value_bits = NULL,
+                          uint64_t* payload = NULL)
     {
         if (info_bits)
             *info_bits = GetInfoBits();
         if (value_bits)
             *value_bits = GetValueBits();
+        if (payload)
+            *payload = GetPayload();
         return true;
     }
     
@@ -1554,12 +1564,6 @@ public:
         return 0; // tagged pointers have no ISA
     }
     
-    virtual uint64_t
-    GetClassBits ()
-    {
-        return (IsValid() ? m_class_bits : 0);
-    }
-    
     // these calls are not part of any formal tagged pointers specification
     virtual uint64_t
     GetValueBits ()
@@ -1573,41 +1577,36 @@ public:
         return (IsValid() ? m_info_bits : 0);
     }
     
+    virtual uint64_t
+    GetPayload ()
+    {
+        return (IsValid() ? m_payload : 0);
+    }
+    
     virtual
     ~ClassDescriptorV2Tagged ()
     {}
-    
-protected:
-    // we use the version of Foundation to make assumptions about the ObjC runtime on a target
-    uint32_t
-    GetFoundationVersion (lldb::TargetSP &target_sp)
-    {
-        if (!target_sp)
-            return eLazyBoolCalculate;
-        const ModuleList& modules = target_sp->GetImages();
-        uint32_t major = UINT32_MAX;
-        for (uint32_t idx = 0; idx < modules.GetSize(); idx++)
-        {
-            lldb::ModuleSP module_sp = modules.GetModuleAtIndex(idx);
-            if (!module_sp)
-                continue;
-            if (strcmp(module_sp->GetFileSpec().GetFilename().AsCString(""),"Foundation") == 0)
-            {
-                module_sp->GetVersion(&major,1);
-                break;
-            }
-        }
-        return major;
-    }
-    
+
 private:
     ConstString m_name;
     uint8_t m_pointer_size;
     bool m_valid;
-    uint64_t m_class_bits;
     uint64_t m_info_bits;
     uint64_t m_value_bits;
+    uint64_t m_payload;
+
 };
+
+ObjCLanguageRuntime::ClassDescriptorSP
+AppleObjCRuntimeV2::GetClassDescriptor (ObjCISA isa)
+{
+    ObjCLanguageRuntime::ClassDescriptorSP class_descriptor_sp;
+    if (m_non_pointer_isa_cache_ap.get())
+        class_descriptor_sp = m_non_pointer_isa_cache_ap->GetClassDescriptor(isa);
+    if (!class_descriptor_sp)
+        class_descriptor_sp = ObjCLanguageRuntime::GetClassDescriptorFromISA(isa);
+    return class_descriptor_sp;
+}
 
 ObjCLanguageRuntime::ClassDescriptorSP
 AppleObjCRuntimeV2::GetClassDescriptor (ValueObject& valobj)
@@ -1623,13 +1622,7 @@ AppleObjCRuntimeV2::GetClassDescriptor (ValueObject& valobj)
         // tagged pointer
         if (IsTaggedPointer(isa_pointer))
         {
-            objc_class_sp.reset (new ClassDescriptorV2Tagged(valobj));
-            
-            // probably an invalid tagged pointer - say it's wrong
-            if (objc_class_sp->IsValid())
-                return objc_class_sp;
-            else
-                objc_class_sp.reset();
+            return m_tagged_pointer_vendor_ap->GetClassDescriptor(isa_pointer);
         }
         else
         {
@@ -2352,4 +2345,300 @@ AppleObjCRuntimeV2::LookupRuntimeSymbol (const ConstString &name)
     } 
     
     return ret;
+}
+
+AppleObjCRuntimeV2::NonPointerISACache*
+AppleObjCRuntimeV2::NonPointerISACache::CreateInstance (AppleObjCRuntimeV2& runtime, const lldb::ModuleSP& objc_module_sp)
+{
+    Process* process(runtime.GetProcess());
+    
+    Error error;
+    
+    auto objc_debug_isa_magic_mask = ExtractRuntimeGlobalSymbol(process,
+                                                                ConstString("objc_debug_isa_magic_mask"),
+                                                                objc_module_sp,
+                                                                error);
+    if (error.Fail())
+        return NULL;
+
+    auto objc_debug_isa_magic_value = ExtractRuntimeGlobalSymbol(process,
+                                                                 ConstString("objc_debug_isa_magic_value"),
+                                                                 objc_module_sp,
+                                                                 error);
+    if (error.Fail())
+        return NULL;
+
+    auto objc_debug_isa_class_mask = ExtractRuntimeGlobalSymbol(process,
+                                                                ConstString("objc_debug_isa_class_mask"),
+                                                                objc_module_sp,
+                                                                error);
+    if (error.Fail())
+        return NULL;
+
+    // we might want to have some rules to outlaw these other values (e.g if the mask is zero but the value is non-zero, ...)
+    
+    return new NonPointerISACache(runtime,
+                                  objc_debug_isa_class_mask,
+                                  objc_debug_isa_magic_mask,
+                                  objc_debug_isa_magic_value);
+}
+
+AppleObjCRuntimeV2::TaggedPointerVendor*
+AppleObjCRuntimeV2::TaggedPointerVendor::CreateInstance (AppleObjCRuntimeV2& runtime, const lldb::ModuleSP& objc_module_sp)
+{
+    Process* process(runtime.GetProcess());
+    
+    Error error;
+    
+    auto objc_debug_taggedpointer_mask = ExtractRuntimeGlobalSymbol(process,
+                                                                    ConstString("objc_debug_taggedpointer_mask"),
+                                                                    objc_module_sp,
+                                                                    error);
+    if (error.Fail())
+        return new TaggedPointerVendorLegacy(runtime);
+    
+    auto objc_debug_taggedpointer_slot_shift = ExtractRuntimeGlobalSymbol(process,
+                                                                          ConstString("objc_debug_taggedpointer_slot_shift"),
+                                                                          objc_module_sp,
+                                                                          error,
+                                                                          true,
+                                                                          4);
+    if (error.Fail())
+        return new TaggedPointerVendorLegacy(runtime);
+    
+    auto objc_debug_taggedpointer_slot_mask = ExtractRuntimeGlobalSymbol(process,
+                                                                          ConstString("objc_debug_taggedpointer_slot_mask"),
+                                                                          objc_module_sp,
+                                                                          error,
+                                                                          true,
+                                                                          4);
+    if (error.Fail())
+        return new TaggedPointerVendorLegacy(runtime);
+
+    auto objc_debug_taggedpointer_payload_lshift = ExtractRuntimeGlobalSymbol(process,
+                                                                              ConstString("objc_debug_taggedpointer_payload_lshift"),
+                                                                              objc_module_sp,
+                                                                              error,
+                                                                              true,
+                                                                              4);
+    if (error.Fail())
+        return new TaggedPointerVendorLegacy(runtime);
+    
+    auto objc_debug_taggedpointer_payload_rshift = ExtractRuntimeGlobalSymbol(process,
+                                                                              ConstString("objc_debug_taggedpointer_payload_rshift"),
+                                                                              objc_module_sp,
+                                                                              error,
+                                                                              true,
+                                                                              4);
+    if (error.Fail())
+        return new TaggedPointerVendorLegacy(runtime);
+    
+    auto objc_debug_taggedpointer_classes = ExtractRuntimeGlobalSymbol(process,
+                                                                       ConstString("objc_debug_taggedpointer_classes"),
+                                                                       objc_module_sp,
+                                                                       error,
+                                                                       false);
+    if (error.Fail())
+        return new TaggedPointerVendorLegacy(runtime);
+
+    
+    // we might want to have some rules to outlaw these values (e.g if the table's address is zero)
+    
+    return new TaggedPointerVendorRuntimeAssisted(runtime,
+                                                  objc_debug_taggedpointer_mask,
+                                                  objc_debug_taggedpointer_slot_shift,
+                                                  objc_debug_taggedpointer_slot_mask,
+                                                  objc_debug_taggedpointer_payload_lshift,
+                                                  objc_debug_taggedpointer_payload_rshift,
+                                                  objc_debug_taggedpointer_classes);
+}
+
+bool
+AppleObjCRuntimeV2::TaggedPointerVendorLegacy::IsPossibleTaggedPointer (lldb::addr_t ptr)
+{
+    return (ptr & 1);
+}
+
+// we use the version of Foundation to make assumptions about the ObjC runtime on a target
+uint32_t
+AppleObjCRuntimeV2::TaggedPointerVendorLegacy::GetFoundationVersion (Target &target)
+{
+    const ModuleList& modules = target.GetImages();
+    uint32_t major = UINT32_MAX;
+    for (uint32_t idx = 0; idx < modules.GetSize(); idx++)
+    {
+        lldb::ModuleSP module_sp = modules.GetModuleAtIndex(idx);
+        if (!module_sp)
+            continue;
+        if (strcmp(module_sp->GetFileSpec().GetFilename().AsCString(""),"Foundation") == 0)
+        {
+            module_sp->GetVersion(&major,1);
+            break;
+        }
+    }
+    return major;
+}
+
+ObjCLanguageRuntime::ClassDescriptorSP
+AppleObjCRuntimeV2::TaggedPointerVendorLegacy::GetClassDescriptor (lldb::addr_t ptr)
+{
+    if (!IsPossibleTaggedPointer(ptr))
+        return ObjCLanguageRuntime::ClassDescriptorSP();
+
+    Process* process(m_runtime.GetProcess());
+    
+    if (m_Foundation_version == 0)
+        m_Foundation_version = GetFoundationVersion(process->GetTarget());
+    
+    if (m_Foundation_version == UINT32_MAX)
+        return ObjCLanguageRuntime::ClassDescriptorSP();
+    
+    uint64_t class_bits = (ptr & 0xE) >> 1;
+    ConstString name;
+    
+    // TODO: make a table
+    if (m_Foundation_version >= 900)
+    {
+        switch (class_bits)
+        {
+            case 0:
+                name = ConstString("NSAtom");
+                break;
+            case 3:
+                name = ConstString("NSNumber");
+                break;
+            case 4:
+                name = ConstString("NSDateTS");
+                break;
+            case 5:
+                name = ConstString("NSManagedObject");
+                break;
+            case 6:
+                name = ConstString("NSDate");
+                break;
+            default:
+                return ObjCLanguageRuntime::ClassDescriptorSP();
+        }
+    }
+    else
+    {
+        switch (class_bits)
+        {
+            case 1:
+                name = ConstString("NSNumber");
+                break;
+            case 5:
+                name = ConstString("NSManagedObject");
+                break;
+            case 6:
+                name = ConstString("NSDate");
+                break;
+            case 7:
+                name = ConstString("NSDateTS");
+                break;
+            default:
+                return ObjCLanguageRuntime::ClassDescriptorSP();
+        }
+    }
+    return ClassDescriptorSP(new ClassDescriptorV2Tagged(name,ptr));
+}
+
+AppleObjCRuntimeV2::TaggedPointerVendorRuntimeAssisted::TaggedPointerVendorRuntimeAssisted (AppleObjCRuntimeV2& runtime,
+                                                                                            uint64_t objc_debug_taggedpointer_mask,
+                                                                                            uint32_t objc_debug_taggedpointer_slot_shift,
+                                                                                            uint32_t objc_debug_taggedpointer_slot_mask,
+                                                                                            uint32_t objc_debug_taggedpointer_payload_lshift,
+                                                                                            uint32_t objc_debug_taggedpointer_payload_rshift,
+                                                                                            lldb::addr_t objc_debug_taggedpointer_classes) :
+TaggedPointerVendor(runtime),
+m_cache(),
+m_objc_debug_taggedpointer_mask(objc_debug_taggedpointer_mask),
+m_objc_debug_taggedpointer_slot_shift(objc_debug_taggedpointer_slot_shift),
+m_objc_debug_taggedpointer_slot_mask(objc_debug_taggedpointer_slot_mask),
+m_objc_debug_taggedpointer_payload_lshift(objc_debug_taggedpointer_payload_lshift),
+m_objc_debug_taggedpointer_payload_rshift(objc_debug_taggedpointer_payload_rshift),
+m_objc_debug_taggedpointer_classes(objc_debug_taggedpointer_classes)
+{
+}
+
+bool
+AppleObjCRuntimeV2::TaggedPointerVendorRuntimeAssisted::IsPossibleTaggedPointer (lldb::addr_t ptr)
+{
+    return (ptr & m_objc_debug_taggedpointer_mask) != 0;
+}
+
+ObjCLanguageRuntime::ClassDescriptorSP
+AppleObjCRuntimeV2::TaggedPointerVendorRuntimeAssisted::GetClassDescriptor (lldb::addr_t ptr)
+{
+    ClassDescriptorSP actual_class_descriptor_sp;
+    uint64_t data_payload;
+
+    if (!IsPossibleTaggedPointer(ptr))
+        return ObjCLanguageRuntime::ClassDescriptorSP();
+    
+    uintptr_t slot = (ptr >> m_objc_debug_taggedpointer_slot_shift) & m_objc_debug_taggedpointer_slot_mask;
+    
+    CacheIterator iterator = m_cache.find(slot),
+    end = m_cache.end();
+    if (iterator != end)
+    {
+        actual_class_descriptor_sp = iterator->second;
+    }
+    else
+    {
+        Process* process(m_runtime.GetProcess());
+        uintptr_t slot_ptr = slot*process->GetAddressByteSize()+m_objc_debug_taggedpointer_classes;
+        Error error;
+        uintptr_t slot_data = process->ReadPointerFromMemory(slot_ptr, error);
+        if (error.Fail() || slot_data == 0 || slot_data == LLDB_INVALID_ADDRESS)
+            return false;
+        actual_class_descriptor_sp = m_runtime.GetClassDescriptor(slot_data);
+        if (!actual_class_descriptor_sp)
+            return ObjCLanguageRuntime::ClassDescriptorSP();
+        m_cache[slot] = actual_class_descriptor_sp;
+    }
+    
+    data_payload = (((uint64_t)ptr << m_objc_debug_taggedpointer_payload_lshift) >> m_objc_debug_taggedpointer_payload_rshift);
+    
+    return ClassDescriptorSP(new ClassDescriptorV2Tagged(actual_class_descriptor_sp,data_payload));
+}
+
+AppleObjCRuntimeV2::NonPointerISACache::NonPointerISACache (AppleObjCRuntimeV2& runtime,
+                                                            uint64_t objc_debug_isa_class_mask,
+                                                            uint64_t objc_debug_isa_magic_mask,
+                                                            uint64_t objc_debug_isa_magic_value) :
+m_runtime(runtime),
+m_cache(),
+m_objc_debug_isa_class_mask(objc_debug_isa_class_mask),
+m_objc_debug_isa_magic_mask(objc_debug_isa_magic_mask),
+m_objc_debug_isa_magic_value(objc_debug_isa_magic_value)
+{
+}
+
+ObjCLanguageRuntime::ClassDescriptorSP
+AppleObjCRuntimeV2::NonPointerISACache::GetClassDescriptor (ObjCISA isa)
+{
+    ObjCISA real_isa = 0;
+    if (EvaluateNonPointerISA(isa, real_isa) == false)
+        return ObjCLanguageRuntime::ClassDescriptorSP();
+    auto cache_iter = m_cache.find(real_isa);
+    if (cache_iter != m_cache.end())
+        return cache_iter->second;
+    auto descriptor_sp = m_runtime.ObjCLanguageRuntime::GetClassDescriptorFromISA(real_isa);
+    if (descriptor_sp) // cache only positive matches since the table might grow
+        m_cache[real_isa] = descriptor_sp;
+    return descriptor_sp;
+}
+
+bool
+AppleObjCRuntimeV2::NonPointerISACache::EvaluateNonPointerISA (ObjCISA isa, ObjCISA& ret_isa)
+{
+    if ( (isa & ~m_objc_debug_isa_class_mask) == 0)
+        return false;
+    if ( (isa & m_objc_debug_isa_magic_mask) == m_objc_debug_isa_magic_value)
+    {
+        ret_isa = isa & m_objc_debug_isa_class_mask;
+        return (ret_isa != 0); // this is a pointer so 0 is not a valid value
+    }
+    return false;
 }

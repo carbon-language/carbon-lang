@@ -199,7 +199,8 @@ public:
         
         virtual bool
         GetTaggedPointerInfo (uint64_t* info_bits = NULL,
-                              uint64_t* value_bits = NULL) = 0;
+                              uint64_t* value_bits = NULL,
+                              uint64_t* payload = NULL) = 0;
         
         virtual uint64_t
         GetInstanceSize () = 0;
