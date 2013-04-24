@@ -1328,10 +1328,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                         if (dyn_cast<clang::CXXMethodDecl>(decl_ctx))
                             continue;
                         
-                        // TODO only do this if it's a C function; C++ functions may be
-                        // overloaded
-                        if (!context.m_found.function_with_type_info)
-                            AddOneFunction(context, sym_ctx.function, NULL, current_id);
+                        AddOneFunction(context, sym_ctx.function, NULL, current_id);
                         context.m_found.function_with_type_info = true;
                         context.m_found.function = true;
                     }
@@ -1859,6 +1856,18 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
         if (copied_type)
         {
             fun_decl = context.AddFunDecl(copied_type);
+            
+            if (!fun_decl)
+            {
+                if (log)
+                {
+                    log->Printf ("  Failed to create a function decl for '%s' {0x%8.8" PRIx64 "}",
+                                 fun_type->GetName().GetCString(),
+                                 fun_type->GetID());
+                }
+                
+                return;
+            }
         }
         else
         {

@@ -1724,6 +1724,11 @@ NameSearchContext::AddFunDecl (void *type)
 {
     assert (type && "Type for variable must be non-NULL!");
     
+    if (m_function_types.count(type))
+        return NULL;
+    
+    m_function_types.insert(type);
+    
     clang::FunctionDecl *func_decl = FunctionDecl::Create (*m_ast_source.m_ast_context,
                                                            const_cast<DeclContext*>(m_decl_context),
                                                            SourceLocation(),

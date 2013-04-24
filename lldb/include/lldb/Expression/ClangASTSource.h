@@ -17,6 +17,8 @@
 #include "lldb/Symbol/ClangASTImporter.h"
 #include "lldb/Target/Target.h"
 
+#include "llvm/ADT/SmallSet.h"
+
 namespace lldb_private {
     
 //----------------------------------------------------------------------
@@ -427,11 +429,12 @@ protected:
 /// Decls given appropriate type information.
 //----------------------------------------------------------------------
 struct NameSearchContext {
-    ClangASTSource &m_ast_source;                       ///< The AST source making the request
-    llvm::SmallVectorImpl<clang::NamedDecl*> &m_decls;  ///< The list of declarations already constructed
-    ClangASTImporter::NamespaceMapSP m_namespace_map;   ///< The mapping of all namespaces found for this request back to their modules
-    const clang::DeclarationName &m_decl_name;          ///< The name being looked for
-    const clang::DeclContext *m_decl_context;           ///< The DeclContext to put declarations into
+    ClangASTSource &m_ast_source;                               ///< The AST source making the request
+    llvm::SmallVectorImpl<clang::NamedDecl*> &m_decls;          ///< The list of declarations already constructed
+    ClangASTImporter::NamespaceMapSP m_namespace_map;           ///< The mapping of all namespaces found for this request back to their modules
+    const clang::DeclarationName &m_decl_name;                  ///< The name being looked for
+    const clang::DeclContext *m_decl_context;                   ///< The DeclContext to put declarations into
+    llvm::SmallSet <lldb::clang_type_t, 5> m_function_types;    ///< All the types of functions that have been reported, so we don't report conflicts
     
     struct {
         bool variable                   : 1;
