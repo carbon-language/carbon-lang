@@ -2309,6 +2309,7 @@ AppleObjCRuntimeV2::LookupRuntimeSymbol (const ConstString &name)
         llvm::StringRef name_strref(name_cstr);
         
         static const llvm::StringRef ivar_prefix("OBJC_IVAR_$_");
+        static const llvm::StringRef class_prefix("OBJC_CLASS_$_");
         
         if (name_strref.startswith(ivar_prefix))
         {
@@ -2342,7 +2343,16 @@ AppleObjCRuntimeV2::LookupRuntimeSymbol (const ConstString &name)
                 }
             }
         }
-    } 
+        else if (name_strref.startswith(class_prefix))
+        {
+            llvm::StringRef class_skipped_prefix = name_strref.substr(class_prefix.size());
+            const ConstString class_name_cs(class_skipped_prefix);
+            ClassDescriptorSP descriptor = ObjCLanguageRuntime::GetClassDescriptor(class_name_cs);
+            
+            if (descriptor)
+                ret = descriptor->GetISA();
+        }
+    }
     
     return ret;
 }
