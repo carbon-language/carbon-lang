@@ -43,6 +43,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/MC/MCInstrItineraries.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -57,6 +58,11 @@ STATISTIC(NumConvertedTo3Addr, "Number of instructions promoted to 3-address");
 STATISTIC(Num3AddrSunk,        "Number of 3-address instructions sunk");
 STATISTIC(NumReSchedUps,       "Number of instructions re-scheduled up");
 STATISTIC(NumReSchedDowns,     "Number of instructions re-scheduled down");
+
+// Temporary flag to disable rescheduling.
+static cl::opt<bool>
+EnableRescheduling("twoaddr-reschedule",
+                   cl::desc("Coalesce copies by rescheduling (default=true)"), cl::init(true), cl::Hidden);
 
 namespace {
 class TwoAddressInstructionPass : public MachineFunctionPass {
@@ -1144,7 +1150,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
 
   // If there is one more use of regB later in the same MBB, consider
   // re-schedule this MI below it.
-  if (rescheduleMIBelowKill(mi, nmi, regB)) {
+  if (EnableRescheduling && rescheduleMIBelowKill(mi, nmi, regB)) {
     ++NumReSchedDowns;
     return true;
   }
@@ -1163,7 +1169,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
 
   // If there is one more use of regB later in the same MBB, consider
   // re-schedule it before this MI if it's legal.
-  if (rescheduleKillAboveMI(mi, nmi, regB)) {
+  if (EnableRescheduling && rescheduleKillAboveMI(mi, nmi, regB)) {
     ++NumReSchedUps;
     return true;
   }
