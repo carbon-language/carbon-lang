@@ -345,7 +345,9 @@ void MachODumper::printRelocation(const MachOObjectFile *Obj,
   if (error(RelI->getOffset(Offset))) return;
   if (error(RelI->getTypeName(RelocName))) return;
   if (error(RelI->getSymbol(Symbol))) return;
-  if (error(Symbol.getName(SymbolName))) return;
+  if (symbol_iterator(Symbol) != Obj->end_symbols() &&
+      error(Symbol.getName(SymbolName)))
+    return;
 
   DataRefImpl DR = RelI->getRawDataRefImpl();
   macho::RelocationEntry RE = Obj->getRelocation(DR);
