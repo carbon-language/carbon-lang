@@ -13,9 +13,9 @@
 #include "gtest/gtest.h"
 
 #include <stdlib.h>
-#ifdef __APPLE__
+#if defined(__APPLE__)
 # include <crt_externs.h>
-#else
+#elif !defined(_MSC_VER)
 // Forward declare environ in case it's not provided by stdlib.h.
 extern char **environ;
 #endif
@@ -32,8 +32,6 @@ ProgramTestStringArg2("program-test-string-arg2");
 
 static void CopyEnvironment(std::vector<const char *> &out) {
 #ifdef __APPLE__
-  // _NSGetEnviron() only works from the main exe on Mac.  Fortunately the test
-  // should be in the executable.
   char **envp = *_NSGetEnviron();
 #else
   // environ seems to work for Windows and most other Unices.
