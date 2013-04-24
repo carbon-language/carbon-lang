@@ -1836,7 +1836,7 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
     if  (!(LangOpts.ObjCDefaultSynthProperties &&
            LangOpts.ObjCRuntime.isNonFragile()) ||
          IDecl->isObjCRequiresPropertyDefs())
-      DiagnoseUnimplementedProperties(S, IMPDecl, CDecl, InsMap);
+      DiagnoseUnimplementedProperties(S, IMPDecl, CDecl);
       
   SelectorSet ClsMap;
   for (ObjCImplementationDecl::classmeth_iterator
@@ -1883,17 +1883,7 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
            E = C->protocol_end(); PI != E; ++PI)
         CheckProtocolMethodDefs(IMPDecl->getLocation(), *PI, IncompleteImpl,
                                 InsMap, ClsMap, CDecl);
-      // Report unimplemented properties in the category as well.
-      // When reporting on missing setter/getters, do not report when
-      // setter/getter is implemented in category's primary class 
-      // implementation.
-      if (ObjCInterfaceDecl *ID = C->getClassInterface())
-        if (ObjCImplDecl *IMP = ID->getImplementation()) {
-          for (ObjCImplementationDecl::instmeth_iterator
-               I = IMP->instmeth_begin(), E = IMP->instmeth_end(); I!=E; ++I)
-            InsMap.insert((*I)->getSelector());
-        }
-      DiagnoseUnimplementedProperties(S, IMPDecl, CDecl, InsMap);      
+      DiagnoseUnimplementedProperties(S, IMPDecl, CDecl);
     } 
   } else
     llvm_unreachable("invalid ObjCContainerDecl type.");

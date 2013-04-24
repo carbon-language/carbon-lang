@@ -445,7 +445,8 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::lookupInheritedClass(
 /// the class, its categories, and its super classes (using a linear search).
 ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel, 
                                      bool isInstance,
-                                     bool shallowCategoryLookup) const {
+                                     bool shallowCategoryLookup,
+                                     bool CategoryLookup) const {
   // FIXME: Should make sure no callers ever do this.
   if (!hasDefinition())
     return 0;
@@ -468,23 +469,24 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
         return MethodDecl;
     
     // Didn't find one yet - now look through categories.
-    for (ObjCInterfaceDecl::visible_categories_iterator
+    if (CategoryLookup)
+      for (ObjCInterfaceDecl::visible_categories_iterator
            Cat = ClassDecl->visible_categories_begin(),
            CatEnd = ClassDecl->visible_categories_end();
-         Cat != CatEnd; ++Cat) {
-      if ((MethodDecl = Cat->getMethod(Sel, isInstance)))
-        return MethodDecl;
+           Cat != CatEnd; ++Cat) {
+        if ((MethodDecl = Cat->getMethod(Sel, isInstance)))
+          return MethodDecl;
 
-      if (!shallowCategoryLookup) {
-        // Didn't find one yet - look through protocols.
-        const ObjCList<ObjCProtocolDecl> &Protocols =
-          Cat->getReferencedProtocols();
-        for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-             E = Protocols.end(); I != E; ++I)
-          if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
-            return MethodDecl;
+        if (!shallowCategoryLookup) {
+          // Didn't find one yet - look through protocols.
+          const ObjCList<ObjCProtocolDecl> &Protocols =
+            Cat->getReferencedProtocols();
+          for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+               E = Protocols.end(); I != E; ++I)
+            if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
+              return MethodDecl;
+        }
       }
-    }
   
     ClassDecl = ClassDecl->getSuperClass();
   }

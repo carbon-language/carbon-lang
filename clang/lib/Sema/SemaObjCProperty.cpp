@@ -1660,8 +1660,7 @@ void Sema::DefaultSynthesizeProperties(Scope *S, Decl *D) {
 }
 
 void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
-                                      ObjCContainerDecl *CDecl,
-                                      const SelectorSet &InsMap) {
+                                      ObjCContainerDecl *CDecl) {
   ObjCContainerDecl::PropertyMap NoNeedToImplPropMap;
   ObjCInterfaceDecl *IDecl;
   // Gather properties which need not be implemented in this class
@@ -1690,6 +1689,26 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
        EI = IMPDecl->propimpl_end(); I != EI; ++I)
     PropImplMap.insert(I->getPropertyDecl());
 
+  SelectorSet InsMap;
+  // Collect property accessors implemented in current implementation.
+  for (ObjCImplementationDecl::instmeth_iterator
+       I = IMPDecl->instmeth_begin(), E = IMPDecl->instmeth_end(); I!=E; ++I)
+    InsMap.insert((*I)->getSelector());
+  
+  ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(CDecl);
+  ObjCInterfaceDecl *PrimaryClass = 0;
+  if (C && !C->IsClassExtension())
+    if ((PrimaryClass = C->getClassInterface()))
+      // Report unimplemented properties in the category as well.
+      if (ObjCImplDecl *IMP = PrimaryClass->getImplementation()) {
+        // When reporting on missing setter/getters, do not report when
+        // setter/getter is implemented in category's primary class
+        // implementation.
+        for (ObjCImplementationDecl::instmeth_iterator
+             I = IMP->instmeth_begin(), E = IMP->instmeth_end(); I!=E; ++I)
+          InsMap.insert((*I)->getSelector());
+      }
+
   for (ObjCContainerDecl::PropertyMap::iterator
        P = PropMap.begin(), E = PropMap.end(); P != E; ++P) {
     ObjCPropertyDecl *Prop = P->second;
@@ -1699,7 +1718,13 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
         PropImplMap.count(Prop) ||
         Prop->getAvailability() == AR_Unavailable)
       continue;
-    if (!InsMap.count(Prop->getGetterName())) {
+    // When reporting on missing property getter implementation in
+    // categories, do not report when they are declared in primary class,
+    // class's protocol, or one of it super classes. This is because,
+    // the class is going to implement them.
+    if (!InsMap.count(Prop->getGetterName()) &&
+        (PrimaryClass == 0 ||
+         !PrimaryClass->lookupPropertyAccessor(Prop->getGetterName()))) {
       Diag(IMPDecl->getLocation(),
            isa<ObjCCategoryDecl>(CDecl) ?
             diag::warn_setter_getter_impl_required_in_category :
@@ -1713,8 +1738,13 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
             Diag(RID->getLocation(), diag::note_suppressed_class_declare);
             
     }
-
-    if (!Prop->isReadOnly() && !InsMap.count(Prop->getSetterName())) {
+    // When reporting on missing property setter implementation in
+    // categories, do not report when they are declared in primary class,
+    // class's protocol, or one of it super classes. This is because,
+    // the class is going to implement them.
+    if (!Prop->isReadOnly() && !InsMap.count(Prop->getSetterName()) &&
+        (PrimaryClass == 0 ||
+         !PrimaryClass->lookupPropertyAccessor(Prop->getSetterName()))) {
       Diag(IMPDecl->getLocation(),
            isa<ObjCCategoryDecl>(CDecl) ?
            diag::warn_setter_getter_impl_required_in_category :
