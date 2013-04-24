@@ -206,6 +206,13 @@ bool ArgList::hasFlag(OptSpecifier Pos, OptSpecifier Neg, bool Default) const {
   return Default;
 }
 
+bool ArgList::hasFlag(OptSpecifier Pos, OptSpecifier PosAlias, OptSpecifier Neg,
+                      bool Default) const {
+  if (Arg *A = getLastArg(Pos, PosAlias, Neg))
+    return A->getOption().matches(Pos) || A->getOption().matches(PosAlias);
+  return Default;
+}
+
 StringRef ArgList::getLastArgValue(OptSpecifier Id,
                                          StringRef Default) const {
   if (Arg *A = getLastArg(Id))
