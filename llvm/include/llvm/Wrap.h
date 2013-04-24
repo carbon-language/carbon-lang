@@ -11,6 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_WRAP_H
+#define LLVM_WRAP_H
+
 #include "llvm-c/Core.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/IRBuilder.h"
@@ -117,3 +120,5 @@ namespace llvm {
     return reinterpret_cast<LLVMValueRef*>(const_cast<Value**>(Vals));
   }
 }
+
+#endif
