@@ -1177,8 +1177,6 @@ void FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   if (!DwarfEHFrameOnly && Frame.Lsda)
     Encoding |= 0x40000000;
 
-  Streamer.SwitchSection(MOFI->getCompactUnwindSection());
-
   // Range Start
   unsigned FDEEncoding = MOFI->getFDEEncoding(UsingCFI);
   unsigned Size = getSizeForEncoding(Streamer, FDEEncoding);
@@ -1421,7 +1419,6 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   }
 
   // Call Frame Instructions
-
   EmitCFIInstructions(streamer, frame.Instructions, frame.Begin);
 
   // Padding
@@ -1482,11 +1479,23 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
   ArrayRef<MCDwarfFrameInfo> FrameArray = Streamer.getFrameInfos();
 
   // Emit the compact unwind info if available.
-  if (IsEH && MOFI->getCompactUnwindSection())
-    for (unsigned i = 0, n = Streamer.getNumFrameInfos(); i < n; ++i) {
-      const MCDwarfFrameInfo &Frame = Streamer.getFrameInfo(i);
-      Emitter.EmitCompactUnwind(Streamer, Frame);
+  if (IsEH && MOFI->getCompactUnwindSection()) {
+    unsigned NumFrameInfos = Streamer.getNumFrameInfos();
+    bool SectionEmitted = false;
+
+    if (NumFrameInfos) {
+      for (unsigned i = 0; i < NumFrameInfos; ++i) {
+        const MCDwarfFrameInfo &Frame = Streamer.getFrameInfo(i);
+        if (Frame.CompactUnwindEncoding == 0) continue;
+        if (!SectionEmitted) {
+          Streamer.SwitchSection(MOFI->getCompactUnwindSection());
+          Streamer.EmitValueToAlignment(Context.getAsmInfo().getPointerSize());
+          SectionEmitted = true;
+        }
+        Emitter.EmitCompactUnwind(Streamer, Frame);
+      }
     }
+  }
 
   const MCSection &Section = IsEH ? *MOFI->getEHFrameSection() :
                                     *MOFI->getDwarfFrameSection();
