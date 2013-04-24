@@ -1,3 +1,5 @@
+clang_CXCursorSet_contains
+clang_CXCursorSet_insert
 clang_CXIndex_getGlobalOptions
 clang_CXIndex_setGlobalOptions
 clang_CXXMethod_isStatic
@@ -77,6 +79,7 @@ clang_constructUSR_ObjCIvar
 clang_constructUSR_ObjCMethod
 clang_constructUSR_ObjCProperty
 clang_constructUSR_ObjCProtocol
+clang_createCXCursorSet
 clang_createIndex
 clang_createTranslationUnit
 clang_createTranslationUnitFromSourceFile
@@ -85,6 +88,7 @@ clang_defaultDiagnosticDisplayOptions
 clang_defaultEditingTranslationUnitOptions
 clang_defaultReparseOptions
 clang_defaultSaveOptions
+clang_disposeCXCursorSet
 clang_disposeCXTUResourceUsage
 clang_disposeCodeCompleteResults
 clang_disposeDiagnostic
