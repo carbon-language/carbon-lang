@@ -19,6 +19,7 @@
 #include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RangeMap.h"
 #include "lldb/Core/Section.h"
@@ -367,7 +368,8 @@ ObjectFileMachO::Initialize()
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                    GetPluginDescriptionStatic(),
                                    CreateInstance,
-                                   CreateMemoryInstance);
+                                   CreateMemoryInstance,
+                                   GetModuleSpecifications);
 }
 
 void
@@ -432,6 +434,47 @@ ObjectFileMachO::CreateMemoryInstance (const lldb::ModuleSP &module_sp,
     }
     return NULL;
 }
+
+size_t
+ObjectFileMachO::GetModuleSpecifications (const lldb_private::FileSpec& file,
+                                          lldb::DataBufferSP& data_sp,
+                                          lldb::offset_t data_offset,
+                                          lldb::offset_t file_offset,
+                                          lldb::offset_t length,
+                                          lldb_private::ModuleSpecList &specs)
+{
+    const size_t initial_count = specs.GetSize();
+    
+    if (ObjectFileMachO::MagicBytesMatch(data_sp, 0, data_sp->GetByteSize()))
+    {
+        DataExtractor data;
+        data.SetData(data_sp);
+        llvm::MachO::mach_header header;
+        if (ParseHeader (data, &data_offset, header))
+        {
+            if (header.sizeofcmds >= data_sp->GetByteSize())
+            {
+                data_sp = file.ReadFileContents(file_offset, header.sizeofcmds);
+                data_offset = 0;
+            }
+            if (data_sp)
+            {
+                ModuleSpec spec;
+                spec.GetFileSpec() = file;
+                spec.GetArchitecture().SetArchitecture(eArchTypeMachO,
+                                                       header.cputype,
+                                                       header.cpusubtype);
+                if (spec.GetArchitecture().IsValid())
+                {
+                    GetUUID (header, data, data_offset, spec.GetUUID());
+                    specs.Append(spec);
+                }
+            }
+        }
+    }
+    return specs.GetSize() - initial_count;
+}
+
 
 
 const ConstString &
@@ -541,6 +584,61 @@ ObjectFileMachO::~ObjectFileMachO()
 {
 }
 
+bool
+ObjectFileMachO::ParseHeader (DataExtractor &data,
+                              lldb::offset_t *data_offset_ptr,
+                              llvm::MachO::mach_header &header)
+{
+    data.SetByteOrder (lldb::endian::InlHostByteOrder());
+    // Leave magic in the original byte order
+    header.magic = data.GetU32(data_offset_ptr);
+    bool can_parse = false;
+    bool is_64_bit = false;
+    switch (header.magic)
+    {
+        case HeaderMagic32:
+            data.SetByteOrder (lldb::endian::InlHostByteOrder());
+            data.SetAddressByteSize(4);
+            can_parse = true;
+            break;
+            
+        case HeaderMagic64:
+            data.SetByteOrder (lldb::endian::InlHostByteOrder());
+            data.SetAddressByteSize(8);
+            can_parse = true;
+            is_64_bit = true;
+            break;
+            
+        case HeaderMagic32Swapped:
+            data.SetByteOrder(lldb::endian::InlHostByteOrder() == eByteOrderBig ? eByteOrderLittle : eByteOrderBig);
+            data.SetAddressByteSize(4);
+            can_parse = true;
+            break;
+            
+        case HeaderMagic64Swapped:
+            data.SetByteOrder(lldb::endian::InlHostByteOrder() == eByteOrderBig ? eByteOrderLittle : eByteOrderBig);
+            data.SetAddressByteSize(8);
+            is_64_bit = true;
+            can_parse = true;
+            break;
+            
+        default:
+            break;
+    }
+    
+    if (can_parse)
+    {
+        data.GetU32(data_offset_ptr, &header.cputype, 6);
+        if (is_64_bit)
+            *data_offset_ptr += 4;
+        return true;
+    }
+    else
+    {
+        memset(&header, 0, sizeof(header));
+    }
+    return false;
+}
 
 bool
 ObjectFileMachO::ParseHeader ()
@@ -3481,6 +3579,49 @@ ObjectFileMachO::Dump (Stream *s)
     }
 }
 
+bool
+ObjectFileMachO::GetUUID (const llvm::MachO::mach_header &header,
+                          const lldb_private::DataExtractor &data,
+                          lldb::offset_t lc_offset,
+                          lldb_private::UUID& uuid)
+{
+    uint32_t i;
+    struct uuid_command load_cmd;
+
+    lldb::offset_t offset = lc_offset;
+    for (i=0; i<header.ncmds; ++i)
+    {
+        const lldb::offset_t cmd_offset = offset;
+        if (data.GetU32(&offset, &load_cmd, 2) == NULL)
+            break;
+        
+        if (load_cmd.cmd == LoadCommandUUID)
+        {
+            const uint8_t *uuid_bytes = data.PeekData(offset, 16);
+            
+            if (uuid_bytes)
+            {
+                // OpenCL on Mac OS X uses the same UUID for each of its object files.
+                // We pretend these object files have no UUID to prevent crashing.
+                
+                const uint8_t opencl_uuid[] = { 0x8c, 0x8e, 0xb3, 0x9b,
+                    0x3b, 0xa8,
+                    0x4b, 0x16,
+                    0xb6, 0xa4,
+                    0x27, 0x63, 0xbb, 0x14, 0xf0, 0x0d };
+                
+                if (!memcmp(uuid_bytes, opencl_uuid, 16))
+                    return false;
+                
+                uuid.SetBytes (uuid_bytes);
+                return true;
+            }
+            return false;
+        }
+        offset = cmd_offset + load_cmd.cmdsize;
+    }
+    return false;
+}
 
 bool
 ObjectFileMachO::GetUUID (lldb_private::UUID* uuid)
@@ -3489,40 +3630,8 @@ ObjectFileMachO::GetUUID (lldb_private::UUID* uuid)
     if (module_sp)
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
-        struct uuid_command load_cmd;
         lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
-        uint32_t i;
-        for (i=0; i<m_header.ncmds; ++i)
-        {
-            const lldb::offset_t cmd_offset = offset;
-            if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
-                break;
-
-            if (load_cmd.cmd == LoadCommandUUID)
-            {
-                const uint8_t *uuid_bytes = m_data.PeekData(offset, 16);
-
-                if (uuid_bytes)
-                {
-                    // OpenCL on Mac OS X uses the same UUID for each of its object files.
-                    // We pretend these object files have no UUID to prevent crashing.
-
-                    const uint8_t opencl_uuid[] = { 0x8c, 0x8e, 0xb3, 0x9b,
-                                                    0x3b, 0xa8,
-                                                    0x4b, 0x16,
-                                                    0xb6, 0xa4,
-                                                    0x27, 0x63, 0xbb, 0x14, 0xf0, 0x0d };
-
-                    if (!memcmp(uuid_bytes, opencl_uuid, 16))
-                        return false;
-
-                    uuid->SetBytes (uuid_bytes);
-                    return true;
-                }
-                return false;
-            }
-            offset = cmd_offset + load_cmd.cmdsize;
-        }
+        return GetUUID (m_header, m_data, offset, *uuid);
     }
     return false;
 }

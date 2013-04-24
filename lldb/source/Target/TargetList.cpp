@@ -17,11 +17,13 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/OptionGroupPlatform.h"
+#include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/TargetList.h"
@@ -80,8 +82,67 @@ TargetList::CreateTarget (Debugger &debugger,
             return error;
         }
     }
-
+    
     ArchSpec platform_arch(arch);
+
+    
+    if (user_exe_path && user_exe_path[0])
+    {
+        ModuleSpecList module_specs;
+        ModuleSpec module_spec;
+        module_spec.GetFileSpec().SetFile(user_exe_path, true);
+        lldb::offset_t file_offset = 0;
+        const size_t num_specs = ObjectFile::GetModuleSpecifications (module_spec.GetFileSpec(), file_offset, module_specs);
+        if (num_specs > 0)
+        {
+            ModuleSpec matching_module_spec;
+
+            if (num_specs == 1)
+            {
+                if (module_specs.GetModuleSpecAtIndex(0, matching_module_spec))
+                {
+                    if (platform_arch.IsValid())
+                    {
+                        if (!platform_arch.IsCompatibleMatch(matching_module_spec.GetArchitecture()))
+                        {
+                            error.SetErrorStringWithFormat("the specified architecture '%s' is not compatible with '%s' in '%s%s%s'",
+                                                           platform_arch.GetTriple().str().c_str(),
+                                                           matching_module_spec.GetArchitecture().GetTriple().str().c_str(),
+                                                           module_spec.GetFileSpec().GetDirectory() ? module_spec.GetFileSpec().GetDirectory().GetCString() : "",
+                                                           module_spec.GetFileSpec().GetDirectory() ? "/" : "",
+                                                           module_spec.GetFileSpec().GetFilename().GetCString());
+                            return error;
+                        }
+                    }
+                    else
+                    {
+                        // Only one arch and none was specified
+                        platform_arch = matching_module_spec.GetArchitecture();
+                    }
+                }
+            }
+            else
+            {
+                if (arch.IsValid())
+                {
+                    module_spec.GetArchitecture() = arch;
+                    if (module_specs.FindMatchingModuleSpec(module_spec, matching_module_spec))
+                    {
+                        platform_arch = matching_module_spec.GetArchitecture();
+                    }
+                }
+                else
+                {
+                    // No arch specified, select the first arch
+                    if (module_specs.GetModuleSpecAtIndex(0, matching_module_spec))
+                    {
+                        platform_arch = matching_module_spec.GetArchitecture();
+                    }
+                }
+            }
+        }
+    }
+
     CommandInterpreter &interpreter = debugger.GetCommandInterpreter();
     if (platform_options)
     {

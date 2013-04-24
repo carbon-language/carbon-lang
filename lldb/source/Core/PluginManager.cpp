@@ -870,7 +870,9 @@ struct ObjectFileInstance
     ObjectFileInstance() :
         name(),
         description(),
-        create_callback(NULL)
+        create_callback(NULL),
+        create_memory_callback (NULL),
+        get_module_specifications (NULL)
     {
     }
 
@@ -878,7 +880,7 @@ struct ObjectFileInstance
     std::string description;
     ObjectFileCreateInstance create_callback;
     ObjectFileCreateMemoryInstance create_memory_callback;
-
+    ObjectFileGetModuleSpecifications get_module_specifications;
 };
 
 typedef std::vector<ObjectFileInstance> ObjectFileInstances;
@@ -899,13 +901,11 @@ GetObjectFileInstances ()
 
 
 bool
-PluginManager::RegisterPlugin
-(
-    const char *name,
-    const char *description,
-    ObjectFileCreateInstance create_callback,
-    ObjectFileCreateMemoryInstance create_memory_callback
-)
+PluginManager::RegisterPlugin (const char *name,
+                               const char *description,
+                               ObjectFileCreateInstance create_callback,
+                               ObjectFileCreateMemoryInstance create_memory_callback,
+                               ObjectFileGetModuleSpecifications get_module_specifications)
 {
     if (create_callback)
     {
@@ -916,6 +916,7 @@ PluginManager::RegisterPlugin
             instance.description = description;
         instance.create_callback = create_callback;
         instance.create_memory_callback = create_memory_callback;
+        instance.get_module_specifications = get_module_specifications;
         Mutex::Locker locker (GetObjectFileMutex ());
         GetObjectFileInstances ().push_back (instance);
     }
@@ -961,6 +962,16 @@ PluginManager::GetObjectFileCreateMemoryCallbackAtIndex (uint32_t idx)
     ObjectFileInstances &instances = GetObjectFileInstances ();
     if (idx < instances.size())
         return instances[idx].create_memory_callback;
+    return NULL;
+}
+
+ObjectFileGetModuleSpecifications
+PluginManager::GetObjectFileGetModuleSpecificationsCallbackAtIndex (uint32_t idx)
+{
+    Mutex::Locker locker (GetObjectFileMutex ());
+    ObjectFileInstances &instances = GetObjectFileInstances ();
+    if (idx < instances.size())
+        return instances[idx].get_module_specifications;
     return NULL;
 }
 
@@ -1012,13 +1023,16 @@ struct ObjectContainerInstance
     ObjectContainerInstance() :
         name(),
         description(),
-        create_callback(NULL)
+        create_callback (NULL),
+        get_module_specifications (NULL)
     {
     }
 
     std::string name;
     std::string description;
     ObjectContainerCreateInstance create_callback;
+    ObjectFileGetModuleSpecifications get_module_specifications;
+
 };
 
 typedef std::vector<ObjectContainerInstance> ObjectContainerInstances;
@@ -1038,12 +1052,10 @@ GetObjectContainerInstances ()
 }
 
 bool
-PluginManager::RegisterPlugin
-(
-    const char *name,
-    const char *description,
-    ObjectContainerCreateInstance create_callback
-)
+PluginManager::RegisterPlugin (const char *name,
+                               const char *description,
+                               ObjectContainerCreateInstance create_callback,
+                               ObjectFileGetModuleSpecifications get_module_specifications)
 {
     if (create_callback)
     {
@@ -1053,6 +1065,7 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
+        instance.get_module_specifications = get_module_specifications;
         Mutex::Locker locker (GetObjectContainerMutex ());
         GetObjectContainerInstances ().push_back (instance);
     }
@@ -1106,6 +1119,16 @@ PluginManager::GetObjectContainerCreateCallbackForPluginName (const char *name)
                 return pos->create_callback;
         }
     }
+    return NULL;
+}
+
+ObjectFileGetModuleSpecifications
+PluginManager::GetObjectContainerGetModuleSpecificationsCallbackAtIndex (uint32_t idx)
+{
+    Mutex::Locker locker (GetObjectContainerMutex ());
+    ObjectContainerInstances &instances = GetObjectContainerInstances ();
+    if (idx < instances.size())
+        return instances[idx].get_module_specifications;
     return NULL;
 }
 

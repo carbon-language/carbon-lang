@@ -13,6 +13,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Section.h"
@@ -184,8 +185,51 @@ ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp,
     return object_file_sp;
 }
 
-ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp, 
-                        const FileSpec *file_spec_ptr, 
+size_t
+ObjectFile::GetModuleSpecifications (const FileSpec &file,
+                                     lldb::offset_t file_offset,
+                                     ModuleSpecList &specs)
+{
+    DataBufferSP data_sp (file.ReadFileContents(file_offset, 512));
+    if (data_sp)
+        return ObjectFile::GetModuleSpecifications (file,                    // file spec
+                                                    data_sp,                 // data bytes
+                                                    0,                       // data offset
+                                                    file_offset,             // file offset
+                                                    data_sp->GetByteSize(),  // data length
+                                                    specs);
+    return 0;
+}
+
+size_t
+ObjectFile::GetModuleSpecifications (const lldb_private::FileSpec& file,
+                                     lldb::DataBufferSP& data_sp,
+                                     lldb::offset_t data_offset,
+                                     lldb::offset_t file_offset,
+                                     lldb::offset_t length,
+                                     lldb_private::ModuleSpecList &specs)
+{
+    const size_t initial_count = specs.GetSize();
+    ObjectFileGetModuleSpecifications callback;
+    uint32_t i;
+    // Try the ObjectFile plug-ins
+    for (i = 0; (callback = PluginManager::GetObjectFileGetModuleSpecificationsCallbackAtIndex(i)) != NULL; ++i)
+    {
+        if (callback (file, data_sp, data_offset, file_offset, length, specs) > 0)
+            return specs.GetSize() - initial_count;
+    }
+
+    // Try the ObjectContainer plug-ins
+    for (i = 0; (callback = PluginManager::GetObjectContainerGetModuleSpecificationsCallbackAtIndex(i)) != NULL; ++i)
+    {
+        if (callback (file, data_sp, data_offset, file_offset, length, specs) > 0)
+            return specs.GetSize() - initial_count;
+    }
+    return 0;
+}
+
+ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp,
+                        const FileSpec *file_spec_ptr,
                         lldb::offset_t file_offset,
                         lldb::offset_t length,
                         lldb::DataBufferSP& data_sp,

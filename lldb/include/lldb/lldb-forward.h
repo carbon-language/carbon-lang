@@ -113,6 +113,7 @@ class   Materializer;
 class   Module;
 class   ModuleList;
 class   ModuleSpec;
+class   ModuleSpecList;
 class   Mutex;
 struct  NameSearchContext;
 class   ObjCLanguageRuntime;

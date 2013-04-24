@@ -58,6 +58,13 @@ public:
                           const lldb::ProcessSP &process_sp, 
                           lldb::addr_t header_addr);
 
+    static size_t
+    GetModuleSpecifications (const lldb_private::FileSpec& file,
+                             lldb::DataBufferSP& data_sp,
+                             lldb::offset_t data_offset,
+                             lldb::offset_t file_offset,
+                             lldb::offset_t length,
+                             lldb_private::ModuleSpecList &specs);
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------

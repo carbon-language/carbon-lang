@@ -55,6 +55,14 @@ public:
                           const lldb::ProcessSP &process_sp, 
                           lldb::addr_t header_addr);
 
+    static size_t
+    GetModuleSpecifications (const lldb_private::FileSpec& file,
+                             lldb::DataBufferSP& data_sp,
+                             lldb::offset_t data_offset,
+                             lldb::offset_t file_offset,
+                             lldb::offset_t length,
+                             lldb_private::ModuleSpecList &specs);
+
     static bool
     MagicBytesMatch (lldb::DataBufferSP& data_sp,
                      lldb::addr_t offset, 
@@ -146,7 +154,19 @@ public:
 
 protected:
 
-    // Intended for same-host arm device debugging where lldb needs to 
+    static bool
+    ParseHeader (lldb_private::DataExtractor &data,
+                 lldb::offset_t *data_offset_ptr,
+                 llvm::MachO::mach_header &header);
+    
+    
+    static bool
+    GetUUID (const llvm::MachO::mach_header &header,
+             const lldb_private::DataExtractor &data,
+             lldb::offset_t lc_offset, // Offset to the first load command
+             lldb_private::UUID& uuid);
+    
+    // Intended for same-host arm device debugging where lldb needs to
     // detect libraries in the shared cache and augment the nlist entries
     // with an on-disk dyld_shared_cache file.  The process will record
     // the shared cache UUID so the on-disk cache can be matched or rejected

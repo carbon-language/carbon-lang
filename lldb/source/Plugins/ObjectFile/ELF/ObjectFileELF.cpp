@@ -17,6 +17,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Stream.h"
@@ -149,7 +150,8 @@ ObjectFileELF::Initialize()
     PluginManager::RegisterPlugin(GetPluginNameStatic(),
                                   GetPluginDescriptionStatic(),
                                   CreateInstance,
-                                  CreateMemoryInstance);
+                                  CreateMemoryInstance,
+                                  GetModuleSpecifications);
 }
 
 void
@@ -219,6 +221,17 @@ ObjectFileELF::CreateMemoryInstance (const lldb::ModuleSP &module_sp,
     return NULL;
 }
 
+
+size_t
+ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
+                                        lldb::DataBufferSP& data_sp,
+                                        lldb::offset_t data_offset,
+                                        lldb::offset_t file_offset,
+                                        lldb::offset_t length,
+                                        lldb_private::ModuleSpecList &specs)
+{
+    return 0;
+}
 
 //------------------------------------------------------------------
 // PluginInterface protocol

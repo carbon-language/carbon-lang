@@ -138,7 +138,8 @@ public:
     RegisterPlugin (const char *name,
                     const char *description,
                     ObjectFileCreateInstance create_callback,
-                    ObjectFileCreateMemoryInstance create_memory_callback);
+                    ObjectFileCreateMemoryInstance create_memory_callback,
+                    ObjectFileGetModuleSpecifications get_module_specifications);
 
     static bool
     UnregisterPlugin (ObjectFileCreateInstance create_callback);
@@ -148,6 +149,9 @@ public:
     
     static ObjectFileCreateMemoryInstance
     GetObjectFileCreateMemoryCallbackAtIndex (uint32_t idx);
+
+    static ObjectFileGetModuleSpecifications
+    GetObjectFileGetModuleSpecificationsCallbackAtIndex (uint32_t idx);
 
     static ObjectFileCreateInstance
     GetObjectFileCreateCallbackForPluginName (const char *name);
@@ -162,7 +166,8 @@ public:
     static bool
     RegisterPlugin (const char *name,
                     const char *description,
-                    ObjectContainerCreateInstance create_callback);
+                    ObjectContainerCreateInstance create_callback,
+                    ObjectFileGetModuleSpecifications get_module_specifications);
 
     static bool
     UnregisterPlugin (ObjectContainerCreateInstance create_callback);
@@ -172,6 +177,9 @@ public:
 
     static ObjectContainerCreateInstance
     GetObjectContainerCreateCallbackForPluginName (const char *name);
+
+    static ObjectFileGetModuleSpecifications
+    GetObjectContainerGetModuleSpecificationsCallbackAtIndex (uint32_t idx);
 
     //------------------------------------------------------------------
     // LogChannel

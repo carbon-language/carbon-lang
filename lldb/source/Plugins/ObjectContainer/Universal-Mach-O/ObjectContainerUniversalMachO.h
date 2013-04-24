@@ -42,6 +42,14 @@ public:
                     lldb::offset_t offset,
                     lldb::offset_t length);
 
+    static size_t
+    GetModuleSpecifications (const lldb_private::FileSpec& file,
+                             lldb::DataBufferSP& data_sp,
+                             lldb::offset_t data_offset,
+                             lldb::offset_t file_offset,
+                             lldb::offset_t length,
+                             lldb_private::ModuleSpecList &specs);
+
     static bool
     MagicBytesMatch (const lldb_private::DataExtractor &data);
 
@@ -88,6 +96,12 @@ public:
 protected:
     llvm::MachO::fat_header m_header;
     std::vector<llvm::MachO::fat_arch> m_fat_archs;
+    
+    static bool
+    ParseHeader (lldb_private::DataExtractor &data,
+                 llvm::MachO::fat_header &header,
+                 std::vector<llvm::MachO::fat_arch> &fat_archs);
+
 };
 
 #endif  // liblldb_ObjectContainerUniversalMachO_h_
