@@ -418,6 +418,19 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
                                        SmallVectorImpl<MCInst> &Instructions) {
   const MCInstrDesc &MCID = getInstDesc(Inst.getOpcode());
   Inst.setLoc(IDLoc);
+  if (MCID.hasDelaySlot() && Options.isReorder()) {
+    // If this instruction has a delay slot and .set reorder is active,
+    // emit a NOP after it.
+    Instructions.push_back(Inst);
+    MCInst NopInst;
+    NopInst.setOpcode(Mips::SLL);
+    NopInst.addOperand(MCOperand::CreateReg(Mips::ZERO));
+    NopInst.addOperand(MCOperand::CreateReg(Mips::ZERO));
+    NopInst.addOperand(MCOperand::CreateImm(0));
+    Instructions.push_back(NopInst);
+    return false;
+  }
+
   if (MCID.mayLoad() || MCID.mayStore()) {
     // Check the offset of memory operand, if it is a symbol
     // reference or immediate we may have to expand instructions.
