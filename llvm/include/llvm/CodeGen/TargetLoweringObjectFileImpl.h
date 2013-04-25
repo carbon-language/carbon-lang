@@ -128,6 +128,12 @@ public:
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
+
+  /// emitModuleFlags - Emit Obj-C garbage collection and linker options.  Only
+  /// linker option emission is implemented for COFF.
+  virtual void emitModuleFlags(MCStreamer &Streamer,
+                               ArrayRef<Module::ModuleFlagEntry> ModuleFlags,
+                               Mangler *Mang, const TargetMachine &TM) const;
 };
 
 } // end namespace llvm

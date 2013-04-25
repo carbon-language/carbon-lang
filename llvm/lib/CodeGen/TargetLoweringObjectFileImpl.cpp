@@ -782,3 +782,49 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   return getDataSection();
 }
 
+void TargetLoweringObjectFileCOFF::
+emitModuleFlags(MCStreamer &Streamer,
+                ArrayRef<Module::ModuleFlagEntry> ModuleFlags,
+                Mangler *Mang, const TargetMachine &TM) const {
+  MDNode *LinkerOptions = 0;
+
+  // Look for the "Linker Options" flag, since it's the only one we support.
+  for (ArrayRef<Module::ModuleFlagEntry>::iterator
+       i = ModuleFlags.begin(), e = ModuleFlags.end(); i != e; ++i) {
+    const Module::ModuleFlagEntry &MFE = *i;
+    StringRef Key = MFE.Key->getString();
+    Value *Val = MFE.Val;
+    if (Key == "Linker Options") {
+      LinkerOptions = cast<MDNode>(Val);
+      break;
+    }
+  }
+  if (!LinkerOptions)
+    return;
+
+  // Emit the linker options to the linker .drectve section.  According to the
+  // spec, this section is a space-separated string containing flags for linker.
+  const MCSection *Sec = getDrectveSection();
+  Streamer.SwitchSection(Sec);
+  for (unsigned i = 0, e = LinkerOptions->getNumOperands(); i != e; ++i) {
+    MDNode *MDOptions = cast<MDNode>(LinkerOptions->getOperand(i));
+    for (unsigned ii = 0, ie = MDOptions->getNumOperands(); ii != ie; ++ii) {
+      MDString *MDOption = cast<MDString>(MDOptions->getOperand(ii));
+      StringRef Op = MDOption->getString();
+      // Lead with a space for consistency with our dllexport implementation.
+      std::string Escaped(" ");
+      if (Op.find(" ") != StringRef::npos) {
+        // The PE-COFF spec says args with spaces must be quoted.  It doesn't say
+        // how to escape quotes, but it probably uses this algorithm:
+        // http://msdn.microsoft.com/en-us/library/17w5ykft(v=vs.85).aspx
+        // FIXME: Reuse escaping code from Support/Windows/Program.inc
+        Escaped.push_back('\"');
+        Escaped.append(Op);
+        Escaped.push_back('\"');
+      } else {
+        Escaped.append(Op);
+      }
+      Streamer.EmitBytes(Escaped);
+    }
+  }
+}
