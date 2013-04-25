@@ -4094,6 +4094,12 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
         
         bool still_should_stop = false;
         
+        // Sometimes - for instance if we have a bug in the stub we are talking to, we stop but no thread has a
+        // valid stop reason.  In that case we should just stop, because we have no way of telling what the right
+        // thing to do is, and it's better to let the user decide than continue behind their backs.
+        
+        bool does_anybody_have_an_opinion = false;
+        
         for (idx = 0; idx < num_threads; ++idx)
         {
             curr_thread_list = m_process_sp->GetThreadList();
@@ -4121,6 +4127,7 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
             StopInfoSP stop_info_sp = thread_sp->GetStopInfo ();
             if (stop_info_sp && stop_info_sp->IsValid())
             {
+                does_anybody_have_an_opinion = true;
                 bool this_thread_wants_to_stop;
                 if (stop_info_sp->GetOverrideShouldStop())
                 {
@@ -4152,7 +4159,7 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
         
         if (m_process_sp->GetPrivateState() != eStateRunning)
         {
-            if (!still_should_stop)
+            if (!still_should_stop && does_anybody_have_an_opinion)
             {
                 // We've been asked to continue, so do that here.
                 SetRestarted(true);
