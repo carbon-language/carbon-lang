@@ -1,4 +1,4 @@
-/*===---- xopintrin.h - FMA4 intrinsics ------------------------------------===
+/*===---- xopintrin.h - XOP intrinsics -------------------------------------===
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
  */
 
 #ifndef __X86INTRIN_H
-#error "Never use <fma4intrin.h> directly; include <x86intrin.h> instead."
+#error "Never use <xopintrin.h> directly; include <x86intrin.h> instead."
 #endif
 
 #ifndef __XOPINTRIN_H
