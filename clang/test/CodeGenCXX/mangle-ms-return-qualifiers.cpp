@@ -155,6 +155,15 @@ const volatile struct S* f5() { return 0; }
 struct S& f6() { return *(struct S*)0; }
 // CHECK: "\01?f6@@YAAAUS@@XZ"
 
+struct S* const f7() { return 0; }
+// CHECK: "\01?f7@@YAQAUS@@XZ"
+
+int S::* f8() { return 0; }
+// CHECK: "\01?f8@@YAPQS@@HXZ"
+
+int S::* const f9() { return 0; }
+// CHECK: "\01?f9@@YAQQS@@HXZ"
+
 typedef int (*function_pointer)(int);
 
 function_pointer g1() { return 0; }

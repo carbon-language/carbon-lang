@@ -60,6 +60,51 @@ void foo_pcrbd(const char * volatile* x) {}
 void foo_pcrcd(volatile char * volatile* x) {}
 // CHECK: "\01?foo_pcrcd@@YAXPCRCD@Z"
 
+void foo_aad(char &x) {}
+// CHECK: "\01?foo_aad@@YAXAAD@Z"
+
+void foo_abd(const char &x) {}
+// CHECK: "\01?foo_abd@@YAXABD@Z"
+
+void foo_aapad(char *&x) {}
+// CHECK: "\01?foo_aapad@@YAXAAPAD@Z"
+
+void foo_aapbd(const char *&x) {}
+// CHECK: "\01?foo_aapbd@@YAXAAPBD@Z"
+
+void foo_abqad(char * const &x) {}
+// CHECK: "\01?foo_abqad@@YAXABQAD@Z"
+
+void foo_abqbd(const char * const &x) {}
+// CHECK: "\01?foo_abqbd@@YAXABQBD@Z"
+
+void foo_aay144h(int (&x)[5][5]) {}
+// CHECK: "\01?foo_aay144h@@YAXAAY144H@Z"
+
+void foo_aay144cbh(const int (&x)[5][5]) {}
+// CHECK: "\01?foo_aay144cbh@@YAXAAY144$$CBH@Z"
+
+void foo_qay144h(int (&&x)[5][5]) {}
+// CHECK: "\01?foo_qay144h@@YAX$$QAY144H@Z"
+
+void foo_qay144cbh(const int (&&x)[5][5]) {}
+// CHECK: "\01?foo_qay144cbh@@YAX$$QAY144$$CBH@Z"
+
+void foo_p6ahxz(int x()) {}
+// CHECK: "\01?foo_p6ahxz@@YAXP6AHXZ@Z"
+
+void foo_a6ahxz(int (&x)()) {}
+// CHECK: "\01?foo_a6ahxz@@YAXA6AHXZ@Z"
+
+void foo_q6ahxz(int (&&x)()) {}
+// CHECK: "\01?foo_q6ahxz@@YAX$$Q6AHXZ@Z"
+
+void foo_qay04h(int x[5][5]) {}
+// CHECK: "\01?foo_qay04h@@YAXQAY04H@Z"
+
+void foo_qay04cbh(const int x[5][5]) {}
+// CHECK: "\01?foo_qay04cbh@@YAXQAY04$$CBH@Z"
+
 typedef double Vector[3];
 
 void foo(Vector*) {}
