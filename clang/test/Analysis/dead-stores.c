@@ -547,3 +547,25 @@ int *radar11185138_baz() {
   return y;
 }
 
+int getInt();
+int *getPtr();
+void testBOComma() {
+  int x0 = (getInt(), 0); // expected-warning{{unused variable 'x0'}}
+  int x1 = (getInt(), getInt()); // expected-warning {{Value stored to 'x1' during its initialization is never read}} // expected-warning{{unused variable 'x1'}}
+  int x2 = (getInt(), getInt(), getInt()); //expected-warning{{Value stored to 'x2' during its initialization is never read}} // expected-warning{{unused variable 'x2'}}
+  int x3;
+  x3 = (getInt(), getInt(), 0); // expected-warning{{Value stored to 'x3' is never read}}
+  int x4 = (getInt(), (getInt(), 0)); // expected-warning{{unused variable 'x4'}}
+  int y;
+  int x5 = (getInt(), (y = 0)); // expected-warning{{unused variable 'x5'}}
+  int x6 = (getInt(), (y = getInt())); //expected-warning {{Value stored to 'x6' during its initialization is never read}} // expected-warning{{unused variable 'x6'}}
+  int x7 = 0, x8 = getInt(); //expected-warning {{Value stored to 'x8' during its initialization is never read}} // expected-warning{{unused variable 'x8'}} // expected-warning{{unused variable 'x7'}}
+  int x9 = getInt(), x10 = 0; //expected-warning {{Value stored to 'x9' during its initialization is never read}} // expected-warning{{unused variable 'x9'}}  // expected-warning{{unused variable 'x10'}}
+  int m = getInt(), mm, mmm; //expected-warning {{Value stored to 'm' during its initialization is never read}} // expected-warning{{unused variable 'm'}} // expected-warning{{unused variable 'mm'}} // expected-warning{{unused variable 'mmm'}}
+  int n, nn = getInt(); //expected-warning {{Value stored to 'nn' during its initialization is never read}} // expected-warning{{unused variable 'n'}} // expected-warning{{unused variable 'nn'}}
+
+  int *p;
+  p = (getPtr(), (int *)0); // no warning
+
+}
+

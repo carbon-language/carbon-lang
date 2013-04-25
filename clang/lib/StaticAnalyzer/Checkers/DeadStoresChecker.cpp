@@ -101,13 +101,18 @@ void ReachableCode::computeReachableBlocks() {
   }
 }
 
-static const Expr *LookThroughTransitiveAssignments(const Expr *Ex) {
+static const Expr *
+LookThroughTransitiveAssignmentsAndCommaOperators(const Expr *Ex) {
   while (Ex) {
     const BinaryOperator *BO =
       dyn_cast<BinaryOperator>(Ex->IgnoreParenCasts());
     if (!BO)
       break;
     if (BO->getOpcode() == BO_Assign) {
+      Ex = BO->getRHS();
+      continue;
+    }
+    if (BO->getOpcode() == BO_Comma) {
       Ex = BO->getRHS();
       continue;
     }
@@ -266,7 +271,9 @@ public:
         if (VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
           // Special case: check for assigning null to a pointer.
           //  This is a common form of defensive programming.
-          const Expr *RHS = LookThroughTransitiveAssignments(B->getRHS());
+          const Expr *RHS =
+            LookThroughTransitiveAssignmentsAndCommaOperators(B->getRHS());
+          RHS = RHS->IgnoreParenCasts();
           
           QualType T = VD->getType();
           if (T->isPointerType() || T->isObjCObjectPointerType()) {
@@ -274,7 +281,6 @@ public:
               return;
           }
 
-          RHS = RHS->IgnoreParenCasts();
           // Special case: self-assignments.  These are often used to shut up
           //  "unused variable" compiler warnings.
           if (const DeclRefExpr *RhsDR = dyn_cast<DeclRefExpr>(RHS))
@@ -326,7 +332,7 @@ public:
             
             // Look through transitive assignments, e.g.:
             // int x = y = 0;
-            E = LookThroughTransitiveAssignments(E);
+            E = LookThroughTransitiveAssignmentsAndCommaOperators(E);
             
             // Don't warn on C++ objects (yet) until we can show that their
             // constructors/destructors don't have side effects.
