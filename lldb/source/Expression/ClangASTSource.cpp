@@ -1776,7 +1776,8 @@ NameSearchContext::AddFunDecl (void *type)
     {
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
-        log->Printf("Function type wasn't a FunctionProtoType");
+        if (log)
+            log->Printf("Function type wasn't a FunctionProtoType");
     }
     
     m_decls.push_back(func_decl);
