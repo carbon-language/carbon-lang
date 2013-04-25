@@ -37,80 +37,6 @@ using namespace llvm;
 static cl::opt<std::string>
   Input(cl::Positional, cl::desc("<input>"), cl::init("-"));
 
-template<class T>
-typename llvm::enable_if_c<std::numeric_limits<T>::is_integer, bool>::type
-getAs(const llvm::yaml::ScalarNode *SN, T &Result) {
-  SmallString<4> Storage;
-  StringRef Value = SN->getValue(Storage);
-  if (Value.getAsInteger(0, Result))
-    return false;
-  return true;
-}
-
-// Given a container with begin and end with ::value_type of a character type.
-// Iterate through pairs of characters in the the set of [a-fA-F0-9] ignoring
-// all other characters.
-struct hex_pair_iterator {
-  StringRef::const_iterator Current, End;
-  typedef SmallVector<char, 2> value_type;
-  value_type Pair;
-  bool IsDone;
-
-  hex_pair_iterator(StringRef C)
-    : Current(C.begin()), End(C.end()), IsDone(false) {
-    // Initalize Pair.
-    ++*this;
-  }
-
-  // End iterator.
-  hex_pair_iterator() : Current(), End(), IsDone(true) {}
-
-  value_type operator *() const {
-    return Pair;
-  }
-
-  hex_pair_iterator operator ++() {
-    // We're at the end of the input.
-    if (Current == End) {
-      IsDone = true;
-      return *this;
-    }
-    Pair = value_type();
-    for (; Current != End && Pair.size() != 2; ++Current) {
-      // Is a valid hex digit.
-      if ((*Current >= '0' && *Current <= '9') ||
-          (*Current >= 'a' && *Current <= 'f') ||
-          (*Current >= 'A' && *Current <= 'F'))
-        Pair.push_back(*Current);
-    }
-    // Hit the end without getting 2 hex digits. Pair is invalid.
-    if (Pair.size() != 2)
-      IsDone = true;
-    return *this;
-  }
-
-  bool operator ==(const hex_pair_iterator Other) {
-    return (IsDone == Other.IsDone) ||
-           (Current == Other.Current && End == Other.End);
-  }
-
-  bool operator !=(const hex_pair_iterator Other) {
-    return !(*this == Other);
-  }
-};
-
-template <class ContainerOut>
-static bool hexStringToByteArray(StringRef Str, ContainerOut &Out) {
-  for (hex_pair_iterator I(Str), E; I != E; ++I) {
-    typename hex_pair_iterator::value_type Pair = *I;
-    typename ContainerOut::value_type Byte;
-    if (StringRef(Pair.data(), 2).getAsInteger(16, Byte))
-      return false;
-    Out.push_back(Byte);
-  }
-  return true;
-}
-
 // The structure of the yaml files is not an exact 1:1 match to COFF. In order
 // to use yaml::IO, we use these structures which are closer to the source.
 namespace COFFYAML {
@@ -311,6 +237,21 @@ binary_le_impl<value_type> binary_le(value_type V) {
   return binary_le_impl<value_type>(V);
 }
 
+static bool writeHexData(StringRef Data, raw_ostream &OS) {
+  unsigned Size = Data.size();
+  if (Size % 2)
+    return false;
+
+  for (unsigned I = 0; I != Size; I += 2) {
+    uint8_t Byte;
+    if (Data.substr(I,  2).getAsInteger(16, Byte))
+      return false;
+    OS.write(Byte);
+  }
+
+  return true;
+}
+
 bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
   OS << binary_le(CP.Obj.Header.Machine)
      << binary_le(CP.Obj.Header.NumberOfSections)
@@ -341,13 +282,10 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
                                                 e = CP.Obj.Sections.end();
                                                 i != e; ++i) {
     if (!i->SectionData.empty()) {
-      std::vector<uint8_t> Data;
-      if (!hexStringToByteArray(i->SectionData, Data)) {
+      if (!writeHexData(i->SectionData, OS)) {
         errs() << "SectionData must be a collection of pairs of hex bytes";
         return false;
       }
-
-      OS.write(reinterpret_cast<const char*>(&Data[0]), Data.size());
     }
     for (unsigned I2 = 0, E2 = i->Relocations.size(); I2 != E2; ++I2) {
       const COFF::relocation &R = i->Relocations[I2];
@@ -369,14 +307,10 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
        << binary_le(i->Header.StorageClass)
        << binary_le(i->Header.NumberOfAuxSymbols);
     if (!i->AuxiliaryData.empty()) {
-      std::vector<uint8_t> AuxSymbols;
-      if (!hexStringToByteArray(i->AuxiliaryData, AuxSymbols)) {
+      if (!writeHexData(i->AuxiliaryData, OS)) {
         errs() << "AuxiliaryData must be a collection of pairs of hex bytes";
         return false;
       }
-
-      OS.write(reinterpret_cast<const char*>(&AuxSymbols[0]),
-               AuxSymbols.size());
     }
   }
 
