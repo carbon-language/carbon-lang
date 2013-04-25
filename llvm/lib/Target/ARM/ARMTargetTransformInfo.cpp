@@ -125,6 +125,10 @@ public:
   unsigned getVectorInstrCost(unsigned Opcode, Type *Val, unsigned Index) const;
 
   unsigned getAddressComputationCost(Type *Val) const;
+
+  unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty,
+                                  OperandValueKind Op1Info = OK_AnyValue,
+                                  OperandValueKind Op2Info = OK_AnyValue) const;
   /// @}
 };
 
@@ -456,3 +460,67 @@ unsigned ARMTTI::getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,
 
   return LT.first * NEONShuffleTbl[Idx].Cost;
 }
+
+unsigned ARMTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty, OperandValueKind Op1Info,
+                                        OperandValueKind Op2Info) const {
+
+  int ISDOpcode = TLI->InstructionOpcodeToISD(Opcode);
+  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Ty);
+
+  const unsigned FunctionCallDivCost = 20;
+  const unsigned ReciprocalDivCost = 10;
+  static const CostTblEntry<MVT> CostTbl[] = {
+    // Division.
+    // These costs are somewhat random. Choose a cost of 20 to indicate that
+    // vectorizing devision (added function call) is going to be very expensive.
+    // Double registers types.
+    { ISD::SDIV, MVT::v1i64, 1 * FunctionCallDivCost},
+    { ISD::UDIV, MVT::v1i64, 1 * FunctionCallDivCost},
+    { ISD::SREM, MVT::v1i64, 1 * FunctionCallDivCost},
+    { ISD::UREM, MVT::v1i64, 1 * FunctionCallDivCost},
+    { ISD::SDIV, MVT::v2i32, 2 * FunctionCallDivCost},
+    { ISD::UDIV, MVT::v2i32, 2 * FunctionCallDivCost},
+    { ISD::SREM, MVT::v2i32, 2 * FunctionCallDivCost},
+    { ISD::UREM, MVT::v2i32, 2 * FunctionCallDivCost},
+    { ISD::SDIV, MVT::v4i16,     ReciprocalDivCost},
+    { ISD::UDIV, MVT::v4i16,     ReciprocalDivCost},
+    { ISD::SREM, MVT::v4i16, 4 * FunctionCallDivCost},
+    { ISD::UREM, MVT::v4i16, 4 * FunctionCallDivCost},
+    { ISD::SDIV, MVT::v8i8,      ReciprocalDivCost},
+    { ISD::UDIV, MVT::v8i8,      ReciprocalDivCost},
+    { ISD::SREM, MVT::v8i8,  8 * FunctionCallDivCost},
+    { ISD::UREM, MVT::v8i8,  8 * FunctionCallDivCost},
+    // Quad register types.
+    { ISD::SDIV, MVT::v2i64, 2 * FunctionCallDivCost},
+    { ISD::UDIV, MVT::v2i64, 2 * FunctionCallDivCost},
+    { ISD::SREM, MVT::v2i64, 2 * FunctionCallDivCost},
+    { ISD::UREM, MVT::v2i64, 2 * FunctionCallDivCost},
+    { ISD::SDIV, MVT::v4i32, 4 * FunctionCallDivCost},
+    { ISD::UDIV, MVT::v4i32, 4 * FunctionCallDivCost},
+    { ISD::SREM, MVT::v4i32, 4 * FunctionCallDivCost},
+    { ISD::UREM, MVT::v4i32, 4 * FunctionCallDivCost},
+    { ISD::SDIV, MVT::v8i16, 8 * FunctionCallDivCost},
+    { ISD::UDIV, MVT::v8i16, 8 * FunctionCallDivCost},
+    { ISD::SREM, MVT::v8i16, 8 * FunctionCallDivCost},
+    { ISD::UREM, MVT::v8i16, 8 * FunctionCallDivCost},
+    { ISD::SDIV, MVT::v16i8, 16 * FunctionCallDivCost},
+    { ISD::UDIV, MVT::v16i8, 16 * FunctionCallDivCost},
+    { ISD::SREM, MVT::v16i8, 16 * FunctionCallDivCost},
+    { ISD::UREM, MVT::v16i8, 16 * FunctionCallDivCost},
+    // Multiplication.
+  };
+
+  int Idx = -1;
+
+  if (ST->hasNEON())
+    Idx = CostTableLookup<MVT>(CostTbl, array_lengthof(CostTbl), ISDOpcode,
+                               LT.second);
+
+  if (Idx != -1)
+    return LT.first * CostTbl[Idx].Cost;
+
+
+  return TargetTransformInfo::getArithmeticInstrCost(Opcode, Ty, Op1Info,
+                                                     Op2Info);
+}
+
