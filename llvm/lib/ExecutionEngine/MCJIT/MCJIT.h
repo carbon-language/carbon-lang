@@ -12,7 +12,6 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/ObjectCache.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/PassManager.h"
 
@@ -35,22 +34,15 @@ class MCJIT : public ExecutionEngine {
   SmallVector<JITEventListener*, 2> EventListeners;
 
   // FIXME: Add support for multiple modules
-  bool IsLoaded;
+  bool isCompiled;
   Module *M;
   OwningPtr<ObjectImage> LoadedObject;
-
-  // An optional ObjectCache to be notified of compiled objects and used to
-  // perform lookup of pre-compiled code to avoid re-compilation.
-  ObjectCache *ObjCache;
 
 public:
   ~MCJIT();
 
   /// @name ExecutionEngine interface implementation
   /// @{
-
-  /// Sets the object manager that MCJIT should use to avoid compilation.
-  virtual void setObjectCache(ObjectCache *manager);
 
   virtual void finalizeObject();
 
@@ -110,9 +102,7 @@ protected:
   /// this function call is expected to be the contained module.  The module
   /// is passed as a parameter here to prepare for multiple module support in 
   /// the future.
-  ObjectBufferStream* emitObject(Module *M);
-
-  void loadObject(Module *M);
+  void emitObject(Module *M);
 
   void NotifyObjectEmitted(const ObjectImage& Obj);
   void NotifyFreeingObject(const ObjectImage& Obj);

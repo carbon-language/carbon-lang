@@ -52,7 +52,7 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
 MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM,
              bool AllocateGVsWithCode)
   : ExecutionEngine(m), TM(tm), Ctx(0), MemMgr(MM), Dyld(MM),
-    IsLoaded(false), M(m), ObjCache(0)  {
+    isCompiled(false), M(m)  {
 
   setDataLayout(TM->getDataLayout());
 }
@@ -64,11 +64,7 @@ MCJIT::~MCJIT() {
   delete TM;
 }
 
-void MCJIT::setObjectCache(ObjectCache* NewCache) {
-  ObjCache = NewCache;
-}
-
-ObjectBufferStream* MCJIT::emitObject(Module *m) {
+void MCJIT::emitObject(Module *m) {
   /// Currently, MCJIT only supports a single module and the module passed to
   /// this function call is expected to be the contained module.  The module
   /// is passed as a parameter here to prepare for multiple module support in
@@ -81,63 +77,30 @@ ObjectBufferStream* MCJIT::emitObject(Module *m) {
   // FIXME: Track compilation state on a per-module basis when multiple modules
   //        are supported.
   // Re-compilation is not supported
-  assert(!IsLoaded);
+  if (isCompiled)
+    return;
 
   PassManager PM;
 
   PM.add(new DataLayout(*TM->getDataLayout()));
 
   // The RuntimeDyld will take ownership of this shortly
-  OwningPtr<ObjectBufferStream> CompiledObject(new ObjectBufferStream());
+  OwningPtr<ObjectBufferStream> Buffer(new ObjectBufferStream());
 
   // Turn the machine code intermediate representation into bytes in memory
   // that may be executed.
-  if (TM->addPassesToEmitMC(PM, Ctx, CompiledObject->getOStream(), false)) {
+  if (TM->addPassesToEmitMC(PM, Ctx, Buffer->getOStream(), false)) {
     report_fatal_error("Target does not support MC emission!");
   }
 
   // Initialize passes.
   PM.run(*m);
   // Flush the output buffer to get the generated code into memory
-  CompiledObject->flush();
-
-  // If we have an object cache, tell it about the new object.
-  // Note that we're using the compiled image, not the loaded image (as below).
-  if (ObjCache) {
-    ObjCache->notifyObjectCompiled(m, CompiledObject->getMemBuffer());
-  }
-
-  return CompiledObject.take();
-}
-
-void MCJIT::loadObject(Module *M) {
-
-  // Get a thread lock to make sure we aren't trying to load multiple times
-  MutexGuard locked(lock);
-
-  // FIXME: Track compilation state on a per-module basis when multiple modules
-  //        are supported.
-  // Re-compilation is not supported
-  if (IsLoaded)
-    return;
-
-  OwningPtr<ObjectBuffer> ObjectToLoad;
-  // Try to load the pre-compiled object from cache if possible
-  if (0 != ObjCache) {
-    OwningPtr<MemoryBuffer> PreCompiledObject(ObjCache->getObjectCopy(M));
-    if (0 != PreCompiledObject.get())
-      ObjectToLoad.reset(new ObjectBuffer(PreCompiledObject.take()));
-  }
-
-  // If the cache did not contain a suitable object, compile the object
-  if (!ObjectToLoad) {
-    ObjectToLoad.reset(emitObject(M));
-    assert(ObjectToLoad.get() && "Compilation did not produce an object.");
-  }
+  Buffer->flush();
 
   // Load the object into the dynamic linker.
   // handing off ownership of the buffer
-  LoadedObject.reset(Dyld.loadObject(ObjectToLoad.take()));
+  LoadedObject.reset(Dyld.loadObject(Buffer.take()));
   if (!LoadedObject)
     report_fatal_error(Dyld.getErrorString());
 
@@ -150,7 +113,7 @@ void MCJIT::loadObject(Module *M) {
   NotifyObjectEmitted(*LoadedObject);
 
   // FIXME: Add support for per-module compilation state
-  IsLoaded = true;
+  isCompiled = true;
 }
 
 // FIXME: Add a parameter to identify which object is being finalized when
@@ -159,10 +122,10 @@ void MCJIT::loadObject(Module *M) {
 // protection in the interface.
 void MCJIT::finalizeObject() {
   // If the module hasn't been compiled, just do that.
-  if (!IsLoaded) {
-    // If the call to Dyld.resolveRelocations() is removed from loadObject()
+  if (!isCompiled) {
+    // If the call to Dyld.resolveRelocations() is removed from emitObject()
     // we'll need to do that here.
-    loadObject(M);
+    emitObject(M);
 
     // Set page permissions.
     MemMgr->applyPermissions();
@@ -188,8 +151,8 @@ void *MCJIT::getPointerToFunction(Function *F) {
   // dies.
 
   // FIXME: Add support for per-module compilation state
-  if (!IsLoaded)
-    loadObject(M);
+  if (!isCompiled)
+    emitObject(M);
 
   if (F->isDeclaration() || F->hasAvailableExternallyLinkage()) {
     bool AbortOnFailure = !F->hasExternalWeakLinkage();
@@ -321,8 +284,8 @@ GenericValue MCJIT::runFunction(Function *F,
 void *MCJIT::getPointerToNamedFunction(const std::string &Name,
                                        bool AbortOnFailure) {
   // FIXME: Add support for per-module compilation state
-  if (!IsLoaded)
-    loadObject(M);
+  if (!isCompiled)
+    emitObject(M);
 
   if (!isSymbolSearchingDisabled() && MemMgr) {
     void *ptr = MemMgr->getPointerToNamedFunction(Name, false);
