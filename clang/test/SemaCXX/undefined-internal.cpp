@@ -323,10 +323,3 @@ namespace test13 {
   }
 }
 
-namespace test14 {
-  extern "C" const int foo;
-
-  int f() {
-    return foo;
-  }
-}
