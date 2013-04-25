@@ -2785,7 +2785,7 @@ SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode, EVT VT,
   }
 
   // Handle the scalar case first.
-  if (Outputs.size() == 1)
+  if (Scalar1 && Scalar2)
     return Outputs.back();
 
   // Otherwise build a big vector out of the scalar elements we generated.
