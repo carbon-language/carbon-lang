@@ -108,7 +108,7 @@ ANDROID_COMMON_FLAGS := -target arm-linux-androideabi \
 	--sysroot=$(LLVM_ANDROID_TOOLCHAIN_DIR)/sysroot \
 	-B$(LLVM_ANDROID_TOOLCHAIN_DIR)
 CFLAGS.asan-arm-android := $(CFLAGS) -fPIC -fno-builtin \
-	$(ANDROID_COMMON_FLAGS) -mllvm -arm-enable-ehabi
+	$(ANDROID_COMMON_FLAGS) -mllvm -arm-enable-ehabi -fno-rtti
 LDFLAGS.asan-arm-android := $(LDFLAGS) $(ANDROID_COMMON_FLAGS) -ldl \
 	-Wl,-soname=libclang_rt.asan-arm-android.so
 
