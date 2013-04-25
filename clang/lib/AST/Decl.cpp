@@ -1572,17 +1572,20 @@ VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition(
   //   initializer, the declaration is an external definition for the identifier
   if (hasInit())
     return Definition;
-  // AST for 'extern "C" int foo;' is annotated with 'extern'.
+
   if (hasExternalStorage())
     return DeclarationOnly;
 
-  if (hasExternalStorage()) {
-    for (const VarDecl *PrevVar = getPreviousDecl();
-         PrevVar; PrevVar = PrevVar->getPreviousDecl()) {
-      if (PrevVar->getLinkage() == InternalLinkage)
-        return DeclarationOnly;
-    }
+  // [dcl.link] p7:
+  //   A declaration directly contained in a linkage-specification is treated
+  //   as if it contains the extern specifier for the purpose of determining
+  //   the linkage of the declared name and whether it is a definition.
+  const DeclContext *DC = getDeclContext();
+  if (const LinkageSpecDecl *SD = dyn_cast<LinkageSpecDecl>(DC)) {
+    if (SD->getLanguage() == LinkageSpecDecl::lang_c && !SD->hasBraces())
+      return DeclarationOnly;
   }
+
   // C99 6.9.2p2:
   //   A declaration of an object that has file scope without an initializer,
   //   and without a storage class specifier or the scs 'static', constitutes

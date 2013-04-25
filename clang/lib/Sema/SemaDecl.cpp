@@ -3350,10 +3350,16 @@ static bool InjectAnonymousStructOrUnionMembers(Sema &SemaRef, Scope *S,
 /// a VarDecl::StorageClass. Any error reporting is up to the caller:
 /// illegal input values are mapped to SC_None.
 static StorageClass
-StorageClassSpecToVarDeclStorageClass(DeclSpec::SCS StorageClassSpec) {
+StorageClassSpecToVarDeclStorageClass(const DeclSpec &DS) {
+  DeclSpec::SCS StorageClassSpec = DS.getStorageClassSpec();
+  assert(StorageClassSpec != DeclSpec::SCS_typedef &&
+         "Parser allowed 'typedef' as storage class VarDecl.");
   switch (StorageClassSpec) {
   case DeclSpec::SCS_unspecified:    return SC_None;
-  case DeclSpec::SCS_extern:         return SC_Extern;
+  case DeclSpec::SCS_extern:
+    if (DS.isExternInLinkageSpec())
+      return SC_None;
+    return SC_Extern;
   case DeclSpec::SCS_static:         return SC_Static;
   case DeclSpec::SCS_auto:           return SC_Auto;
   case DeclSpec::SCS_register:       return SC_Register;
@@ -3551,9 +3557,7 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
       FieldCollector->Add(cast<FieldDecl>(Anon));
   } else {
     DeclSpec::SCS SCSpec = DS.getStorageClassSpec();
-    assert(SCSpec != DeclSpec::SCS_typedef &&
-           "Parser allowed 'typedef' as storage class VarDecl.");
-    VarDecl::StorageClass SC = StorageClassSpecToVarDeclStorageClass(SCSpec);
+    VarDecl::StorageClass SC = StorageClassSpecToVarDeclStorageClass(DS);
     if (SCSpec == DeclSpec::SCS_mutable) {
       // mutable can only appear on non-static class members, so it's always
       // an error here
@@ -4676,9 +4680,8 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   DeclarationName Name = GetNameForDeclarator(D).getName();
 
   DeclSpec::SCS SCSpec = D.getDeclSpec().getStorageClassSpec();
-  assert(SCSpec != DeclSpec::SCS_typedef &&
-         "Parser allowed 'typedef' as storage class VarDecl.");
-  VarDecl::StorageClass SC = StorageClassSpecToVarDeclStorageClass(SCSpec);
+  VarDecl::StorageClass SC =
+    StorageClassSpecToVarDeclStorageClass(D.getDeclSpec());
 
   if (getLangOpts().OpenCL && !getOpenCLOptions().cl_khr_fp16) {
     // OpenCL v1.2 s6.1.1.1: reject declaring variables of the half and
@@ -5290,7 +5293,7 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD,
   // Filter out any non-conflicting previous declarations.
   filterNonConflictingPreviousDecls(Context, NewVD, Previous);
 
-  if (T->isVoidType() && !NewVD->hasExternalStorage()) {
+  if (T->isVoidType() && NewVD->isThisDeclarationADefinition()) {
     Diag(NewVD->getLocation(), diag::err_typecheck_decl_incomplete_type)
       << T;
     NewVD->setInvalidDecl();
@@ -5642,7 +5645,10 @@ static FunctionDecl::StorageClass getFunctionStorageClass(Sema &SemaRef,
     D.setInvalidType();
     break;
   case DeclSpec::SCS_unspecified: break;
-  case DeclSpec::SCS_extern: return SC_Extern;
+  case DeclSpec::SCS_extern:
+    if (D.getDeclSpec().isExternInLinkageSpec())
+      return SC_None;
+    return SC_Extern;
   case DeclSpec::SCS_static: {
     if (SemaRef.CurContext->getRedeclContext()->isFunctionOrMethod()) {
       // C99 6.7.1p5:
