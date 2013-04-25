@@ -36,4 +36,22 @@ let isCodeGenOnly = 1 in {
                  MULT_FM_MM<0x22c>;
   def MULTu_MM : MMRel, Mult<"multu", IIImul, CPURegsOpnd, [HI, LO]>,
                  MULT_FM_MM<0x26c>;
+
+  /// Shift Instructions
+  def SLL_MM   : MMRel, shift_rotate_imm<"sll", shamt, CPURegsOpnd>,
+                 SRA_FM_MM<0, 0>;
+  def SRL_MM   : MMRel, shift_rotate_imm<"srl", shamt, CPURegsOpnd>,
+                 SRA_FM_MM<0x40, 0>;
+  def SRA_MM   : MMRel, shift_rotate_imm<"sra", shamt, CPURegsOpnd>,
+                 SRA_FM_MM<0x80, 0>;
+  def SLLV_MM  : MMRel, shift_rotate_reg<"sllv", CPURegsOpnd>,
+                 SRLV_FM_MM<0x10, 0>;
+  def SRLV_MM  : MMRel, shift_rotate_reg<"srlv", CPURegsOpnd>,
+                 SRLV_FM_MM<0x50, 0>;
+  def SRAV_MM  : MMRel, shift_rotate_reg<"srav", CPURegsOpnd>,
+                 SRLV_FM_MM<0x90, 0>;
+  def ROTR_MM  : MMRel, shift_rotate_imm<"rotr", shamt, CPURegsOpnd>,
+                 SRA_FM_MM<0xc0, 0>;
+  def ROTRV_MM : MMRel, shift_rotate_reg<"rotrv", CPURegsOpnd>,
+                 SRLV_FM_MM<0xd0, 0>;
 }
