@@ -28,6 +28,11 @@
 using namespace lldb_private;
 using namespace lldb;
 
+// Support ptrace extensions even when compiled without required kernel support
+#ifndef NT_X86_XSTATE
+  #define NT_X86_XSTATE 0x202
+#endif
+
 // Internal codes for all x86_64 registers.
 enum
 {
