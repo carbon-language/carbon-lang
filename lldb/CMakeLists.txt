@@ -172,6 +172,8 @@ macro(add_lldb_library name)
   if(LLDB_USED_LIBS)
     if (CMAKE_SYSTEM_NAME MATCHES "Linux")
       target_link_libraries(${name} -Wl,--start-group ${LLDB_USED_LIBS} -Wl,--end-group)
+    else()
+      target_link_libraries(${name} ${LLDB_USED_LIBS})
     endif()
   endif()
   target_link_libraries(${name} ${CLANG_USED_LIBS})
@@ -221,6 +223,23 @@ install(DIRECTORY include/
   PATTERN "*.h"
   PATTERN ".svn" EXCLUDE
   )
+
+
+# Find libraries or frameworks that may be needed
+if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  find_library(CARBON_LIBRARY Carbon)
+  find_library(FOUNDATION_LIBRARY Foundation)
+  find_library(CORE_FOUNDATION_LIBRARY CoreFoundation)
+  find_library(CORE_SERVICES_LIBRARY CoreServices)
+  find_library(SECURITY_LIBRARY Security)
+  find_library(DEBUG_SYMBOLS_LIBRARY DebugSymbols PATHS "/System/Library/PrivateFrameworks")
+
+  set(LIBXML2_INCLUDE_DIR "/usr/include/libxml2")
+  list(APPEND system_libs xml2)
+  list(APPEND system_libs ${CARBON_LIBRARY} ${FOUNDATION_LIBRARY}
+  ${CORE_FOUNDATION_LIBRARY} ${CORE_SERVICES_LIBRARY} ${SECURITY_LIBRARY}
+  ${DEBUG_SYMBOLS_LIBRARY})
+endif()
 
 #add_subdirectory(include)
 add_subdirectory(scripts)
