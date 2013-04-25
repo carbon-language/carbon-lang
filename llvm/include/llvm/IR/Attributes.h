@@ -307,8 +307,7 @@ public:
   unsigned getStackAlignment(unsigned Index) const;
 
   /// \brief Return the attributes at the index as a string.
-  std::string getAsString(unsigned Index, bool TargetIndependent = true,
-                          bool InAttrGrp = false) const;
+  std::string getAsString(unsigned Index, bool InAttrGrp = false) const;
 
   typedef ArrayRef<Attribute>::iterator iterator;
 
