@@ -2221,7 +2221,7 @@ static std::string GenTest(const std::string &name,
 /// intrinsics.
 void NeonEmitter::runTests(raw_ostream &OS) {
   OS <<
-    "// RUN: %clang_cc1 -triple thumbv7-apple-darwin \\\n"
+    "// RUN: %clang_cc1 -triple thumbv7s-apple-darwin -target-abi apcs-gnu\\\n"
     "// RUN:  -target-cpu swift -ffreestanding -Os -S -o - %s\\\n"
     "// RUN:  | FileCheck %s\n"
     "\n"
