@@ -83,6 +83,7 @@ typedef UInt32 CFStringEncoding;
 enum {
 kCFStringEncodingMacRoman = 0,     kCFStringEncodingWindowsLatin1 = 0x0500,     kCFStringEncodingISOLatin1 = 0x0201,     kCFStringEncodingNextStepLatin = 0x0B01,     kCFStringEncodingASCII = 0x0600,     kCFStringEncodingUnicode = 0x0100,     kCFStringEncodingUTF8 = 0x08000100,     kCFStringEncodingNonLossyASCII = 0x0BFF      ,     kCFStringEncodingUTF16 = 0x0100,     kCFStringEncodingUTF16BE = 0x10000100,     kCFStringEncodingUTF16LE = 0x14000100,      kCFStringEncodingUTF32 = 0x0c000100,     kCFStringEncodingUTF32BE = 0x18000100,     kCFStringEncodingUTF32LE = 0x1c000100  };
 extern CFStringRef CFStringCreateWithCString(CFAllocatorRef alloc, const char *cStr, CFStringEncoding encoding);
+extern CFStringRef CFStringCreateCopy(CFAllocatorRef alloc, CFStringRef theString);
 typedef double CFTimeInterval;
 typedef CFTimeInterval CFAbsoluteTime;
 extern CFAbsoluteTime CFAbsoluteTimeGetCurrent(void);
@@ -269,7 +270,6 @@ extern void CGContextDrawLinearGradient(CGContextRef context,
     CGGradientRef gradient, CGPoint startPoint, CGPoint endPoint,
     CGGradientDrawingOptions options);
 extern CGColorSpaceRef CGColorSpaceCreateDeviceRGB(void);
-
 //===----------------------------------------------------------------------===//
 // Test cases.
 //===----------------------------------------------------------------------===//
@@ -407,4 +407,57 @@ void testCallback() {
     (void)[self test];
 }
 @end
+
+//===----------------------------------------------------------------------===//
+// Don't crash on getting a null expression from CallEnter corresponding to a
+// destructor.
+//===----------------------------------------------------------------------===//
+
+template <typename X>
+class Holder {
+public:
+	Holder() throw();
+	~Holder() throw() {}
+	X* get() const throw();
+	void reset(X* p) throw();
+private:
+	X* ptr_;
+};
+
+template<typename X>
+inline
+Holder<X>::Holder() throw()
+: ptr_(0){}
+
+template <typename X>
+inline
+X* Holder<X>::get() const throw() {
+	return ptr_;
+}
+
+template <typename X>
+inline
+void Holder<X>::reset(X* p) throw() {
+	if (ptr_ != p) {
+		if (ptr_ != 0) {
+			::CFRelease( ptr_ );
+		}
+		ptr_ = p;
+	}
+}
+
+class radar13722286 {
+public:
+  radar13722286() {}
+private:
+	void			PrepareBitmap();
+	Holder<const struct __CFString>	mStr;
+};
+
+void	radar13722286::PrepareBitmap() {
+	if (mStr.get() != 0) {
+		Holder<const struct __CFString> str1;
+		mStr.reset( CFStringCreateCopy( 0, str1.get() ) ); //expected-warning {{Potential leak of an object}}
+	}
+}
 

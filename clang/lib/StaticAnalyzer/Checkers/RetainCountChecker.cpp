@@ -2192,7 +2192,7 @@ GetAllocationSite(ProgramStateManager& StateMgr, const ExplodedNode *N,
     if (!InitMethodContext)
       if (Optional<CallEnter> CEP = N->getLocation().getAs<CallEnter>()) {
         const Stmt *CE = CEP->getCallExpr();
-        if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(CE)) {
+        if (const ObjCMessageExpr *ME = dyn_cast_or_null<ObjCMessageExpr>(CE)) {
           const Stmt *RecExpr = ME->getInstanceReceiver();
           if (RecExpr) {
             SVal RecV = St->getSVal(RecExpr, NContext);
