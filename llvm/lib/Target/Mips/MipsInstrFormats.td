@@ -549,7 +549,7 @@ class MFC1_FM<bits<5> funct> {
   let Inst{10-0}  = 0;
 }
 
-class LW_FM<bits<6> op> {
+class LW_FM<bits<6> op> : StdArch {
   bits<5> rt;
   bits<21> addr;
 

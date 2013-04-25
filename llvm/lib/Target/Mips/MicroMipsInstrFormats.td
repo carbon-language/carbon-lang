@@ -98,3 +98,15 @@ class SRLV_FM_MM<bits<10> funct, bit rotate> : MMArch {
   let Inst{10}    = rotate;
   let Inst{9-0}   = funct;
 }
+
+class LW_FM_MM<bits<6> op> : MMArch {
+  bits<5> rt;
+  bits<21> addr;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = op;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = addr{20-16};
+  let Inst{15-0}  = addr{15-0};
+}
