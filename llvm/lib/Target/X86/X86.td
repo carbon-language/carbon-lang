@@ -139,6 +139,8 @@ def FeaturePadShortFunctions : SubtargetFeature<"pad-short-functions",
 def FeatureCallRegIndirect : SubtargetFeature<"call-reg-indirect",
                                      "CallRegIndirect", "true",
                                      "Call register indirect">;
+def FeatureLEAUsesAG : SubtargetFeature<"lea-uses-ag", "LEAUsesAG", "true",
+                                   "LEA instruction needs inputs at AG stage">;
 
 //===----------------------------------------------------------------------===//
 // X86 processors supported.
@@ -188,6 +190,7 @@ def : ProcessorModel<"atom", AtomModel,
                       FeatureMOVBE, FeatureSlowBTMem, FeatureLeaForSP,
                       FeatureSlowDivide,
                       FeatureCallRegIndirect,
+                      FeatureLEAUsesAG,
                       FeaturePadShortFunctions]>;
 
 // "Arrandale" along with corei3 and corei5

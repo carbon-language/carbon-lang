@@ -69,6 +69,11 @@ ImmutablePass *createX86TargetTransformInfoPass(const X86TargetMachine *TM);
 /// createX86PadShortFunctions - Return a pass that pads short functions
 /// with NOOPs. This will prevent a stall when returning on the Atom.
 FunctionPass *createX86PadShortFunctions();
+/// createX86FixupLEAs - Return a a pass that selectively replaces
+/// certain instructions (like add, sub, inc, dec, some shifts,
+/// and some multiplies) by equivalent LEA instructions, in order
+/// to eliminate execution delays in some Atom processors.
+FunctionPass *createX86FixupLEAs();
 
 } // End llvm namespace
 

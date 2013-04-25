@@ -33,6 +33,7 @@ set(sources
   X86TargetObjectFile.cpp
   X86TargetTransformInfo.cpp
   X86VZeroUpper.cpp
+  X86FixupLEAs.cpp
   )
 
 if( CMAKE_CL_64 )
