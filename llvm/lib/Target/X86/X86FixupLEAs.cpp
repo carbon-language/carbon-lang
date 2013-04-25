@@ -34,44 +34,66 @@ namespace {
   class FixupLEAPass : public MachineFunctionPass {
     enum RegUsageState { RU_NotUsed, RU_Write, RU_Read };
     static char ID;
+    /// \brief Loop over all of the instructions in the basic block
+    /// replacing applicable instructions with LEA instructions,
+    /// where appropriate.
     bool processBasicBlock(MachineFunction &MF, MachineFunction::iterator MFI);
 
     virtual const char *getPassName() const { return "X86 Atom LEA Fixup";}
+
+    /// \brief Given a machine register, look for the instruction
+    /// which writes it in the current basic block. If found,
+    /// try to replace it with an equivalent LEA instruction.
+    /// If replacement succeeds, then also process the the newly created
+    /// instruction.
     void  seekLEAFixup(MachineOperand& p, MachineBasicBlock::iterator& I,
                       MachineFunction::iterator MFI);
+
+    /// \brief Given a memory access or LEA instruction
+    /// whose address mode uses a base and/or index register, look for
+    /// an opportunity to replace the instruction which sets the base or index
+    /// register with an equivalent LEA instruction.
     void processInstruction(MachineBasicBlock::iterator& I,
                             MachineFunction::iterator MFI);
+
+    /// \brief Determine if an instruction references a machine register
+    /// and, if so, whether it reads or writes the register.
     RegUsageState usesRegister(MachineOperand& p,
                                MachineBasicBlock::iterator I);
+
+    /// \brief Step backwards through a basic block, looking
+    /// for an instruction which writes a register within 
+    /// a maximum of INSTR_DISTANCE_THRESHOLD instruction latency cycles.
     MachineBasicBlock::iterator searchBackwards(MachineOperand& p,
                                                 MachineBasicBlock::iterator& I,
                                                 MachineFunction::iterator MFI);
+
+    /// \brief if an instruction can be converted to an 
+    /// equivalent LEA, insert the new instruction into the basic block
+    /// and return a pointer to it. Otherwise, return zero.
     MachineInstr* postRAConvertToLEA(MachineFunction::iterator &MFI,
-                                     MachineBasicBlock::iterator &MBBI,
-                                     LiveVariables *LV) const;
+                                     MachineBasicBlock::iterator &MBBI) const;
 
   public:
     FixupLEAPass() : MachineFunctionPass(ID) {}
 
+    /// \brief Loop over all of the basic blocks,
+    /// replacing instructions by equivalent LEA instructions
+    /// if needed and when possible.
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
   private:
     MachineFunction *MF;
     const TargetMachine *TM;
     const TargetInstrInfo *TII; // Machine instruction info.
-    LiveVariables *LV;
 
   };
   char FixupLEAPass::ID = 0;
 }
 
-/// postRAConvertToLEA - if an instruction can be converted to an 
-/// equivalent LEA, insert the new instruction into the basic block
-/// and return a pointer to it. Otherwise, return zero.
 MachineInstr *
 FixupLEAPass::postRAConvertToLEA(MachineFunction::iterator &MFI,
-                                 MachineBasicBlock::iterator &MBBI,
-                                 LiveVariables *LV) const {
+                                 MachineBasicBlock::iterator &MBBI) const {
   MachineInstr* MI = MBBI;
   MachineInstr* NewMI;
   switch (MI->getOpcode()) {
@@ -104,21 +126,17 @@ FixupLEAPass::postRAConvertToLEA(MachineFunction::iterator &MFI,
       return 0;
     }
   }
-  return TII->convertToThreeAddress(MFI, MBBI, LV);
+  return TII->convertToThreeAddress(MFI, MBBI, 0);
 }
 
 FunctionPass *llvm::createX86FixupLEAs() {
   return new FixupLEAPass();
 }
 
-/// runOnMachineFunction - Loop over all of the basic blocks,
-/// replacing instructions by equivalent LEA instructions
-/// if needed and when possible.
 bool FixupLEAPass::runOnMachineFunction(MachineFunction &Func) {
   MF = &Func;
   TII = Func.getTarget().getInstrInfo();
   TM = &MF->getTarget();
-  LV = getAnalysisIfAvailable<LiveVariables>();
 
   DEBUG(dbgs() << "Start X86FixupLEAs\n";);
   // Process all basic blocks.
@@ -129,8 +147,6 @@ bool FixupLEAPass::runOnMachineFunction(MachineFunction &Func) {
   return true;
 }
 
-/// usesRegister - Determine if an instruction references a machine register
-/// and, if so, whether it reads or writes the register.
 FixupLEAPass::RegUsageState FixupLEAPass::usesRegister(MachineOperand& p,
                                 MachineBasicBlock::iterator I) {
   RegUsageState RegUsage = RU_NotUsed;
@@ -165,9 +181,6 @@ static inline bool getPreviousInstr(MachineBasicBlock::iterator& I,
   return true;
 }
 
-/// searchBackwards - Step backwards through a basic block, looking
-/// for an instruction which writes a register within 
-/// a maximum of INSTR_DISTANCE_THRESHOLD instruction latency cycles.
 MachineBasicBlock::iterator FixupLEAPass::searchBackwards(MachineOperand& p,
                                    MachineBasicBlock::iterator& I,
                                    MachineFunction::iterator MFI) {
@@ -192,10 +205,6 @@ MachineBasicBlock::iterator FixupLEAPass::searchBackwards(MachineOperand& p,
   return 0;
 }
 
-/// processInstruction - Given a memory access or LEA instruction
-/// whose address mode uses a base and/or index register, look for
-/// an opportunity to replace the instruction which sets the base or index
-/// register with an equivalent LEA instruction.
 void FixupLEAPass::processInstruction(MachineBasicBlock::iterator& I,
                                       MachineFunction::iterator MFI) {
   // Process a load, store, or LEA instruction.
@@ -216,17 +225,12 @@ void FixupLEAPass::processInstruction(MachineBasicBlock::iterator& I,
   }
 }
 
-/// seekLEAFixup - Given a machine register, look for the instruction
-/// which writes it in the current basic block. If found,
-/// try to replace it with an equivalent LEA instruction.
-/// If replacement succeeds, then also process the the newly created
-/// instruction.
 void FixupLEAPass::seekLEAFixup(MachineOperand& p,
                                 MachineBasicBlock::iterator& I,
                                 MachineFunction::iterator MFI) {
   MachineBasicBlock::iterator MBI = searchBackwards(p, I, MFI);
   if (MBI) {
-    MachineInstr* NewMI = postRAConvertToLEA(MFI, MBI, LV);
+    MachineInstr* NewMI = postRAConvertToLEA(MFI, MBI);
     if (NewMI) {
       ++NumLEAs;
       DEBUG(dbgs() << "Candidate to replace:"; MBI->dump(););
@@ -240,8 +244,6 @@ void FixupLEAPass::seekLEAFixup(MachineOperand& p,
   }
 }
 
-/// processBasicBlock - Loop over all of the instructions in the basic block,
-/// replacing adds and shifts with LEA instructions, where appropriate.
 bool FixupLEAPass::processBasicBlock(MachineFunction &MF,
                                      MachineFunction::iterator MFI) {
 
