@@ -1726,7 +1726,7 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
     // the class is going to implement them.
     if (!InsMap.count(Prop->getGetterName()) &&
         (PrimaryClass == 0 ||
-         !PrimaryClass->lookupPropertyAccessor(Prop->getGetterName()))) {
+         !PrimaryClass->lookupPropertyAccessor(Prop->getGetterName(), C))) {
       Diag(IMPDecl->getLocation(),
            isa<ObjCCategoryDecl>(CDecl) ?
             diag::warn_setter_getter_impl_required_in_category :
@@ -1746,7 +1746,7 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
     // the class is going to implement them.
     if (!Prop->isReadOnly() && !InsMap.count(Prop->getSetterName()) &&
         (PrimaryClass == 0 ||
-         !PrimaryClass->lookupPropertyAccessor(Prop->getSetterName()))) {
+         !PrimaryClass->lookupPropertyAccessor(Prop->getSetterName(), C))) {
       Diag(IMPDecl->getLocation(),
            isa<ObjCCategoryDecl>(CDecl) ?
            diag::warn_setter_getter_impl_required_in_category :

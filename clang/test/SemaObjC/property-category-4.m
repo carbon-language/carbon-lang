@@ -85,3 +85,39 @@
 
 @implementation I(CAT)
 @end
+
+// Test5 
+@interface C @end
+
+@interface C (CAT)
+- (int) p;
+@end
+
+
+@interface C (Category)
+@property (readonly) int p;  // no warning for this property - a getter is declared in another category
+@property (readonly) int p1; // expected-note {{property declared here}}
+@property (readonly) int p2;  // no warning for this property - a getter is declared in this category
+- (int) p2;
+@end
+
+@implementation C (Category)  // expected-warning {{property 'p1' requires method 'p1' to be defined - use @dynamic or provide a method implementation in this category}}
+@end
+
+// Test6
+@protocol MyProtocol
+@property (readonly) float  anotherFloat; // expected-note {{property declared here}}
+@property (readonly) float  Float; // no warning for this property - a getter is declared in this protocol
+- (float) Float;
+@end
+
+@interface MyObject 
+{ float anotherFloat; }
+@end
+
+@interface MyObject (CAT) <MyProtocol>
+@end
+
+@implementation MyObject (CAT) // expected-warning {{property 'anotherFloat' requires method 'anotherFloat' to be defined - use @dynamic or provide a method implementation in this category}}
+@end
+

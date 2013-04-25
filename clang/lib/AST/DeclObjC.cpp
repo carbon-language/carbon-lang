@@ -443,10 +443,12 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::lookupInheritedClass(
 
 /// lookupMethod - This method returns an instance/class method by looking in
 /// the class, its categories, and its super classes (using a linear search).
+/// When argument category "C" is specified, any implicit method found
+/// in this category is ignored.
 ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel, 
                                      bool isInstance,
                                      bool shallowCategoryLookup,
-                                     bool CategoryLookup) const {
+                                     const ObjCCategoryDecl *C) const {
   // FIXME: Should make sure no callers ever do this.
   if (!hasDefinition())
     return 0;
@@ -469,24 +471,25 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
         return MethodDecl;
     
     // Didn't find one yet - now look through categories.
-    if (CategoryLookup)
-      for (ObjCInterfaceDecl::visible_categories_iterator
-           Cat = ClassDecl->visible_categories_begin(),
-           CatEnd = ClassDecl->visible_categories_end();
-           Cat != CatEnd; ++Cat) {
-        if ((MethodDecl = Cat->getMethod(Sel, isInstance)))
+    for (ObjCInterfaceDecl::visible_categories_iterator
+         Cat = ClassDecl->visible_categories_begin(),
+         CatEnd = ClassDecl->visible_categories_end();
+         Cat != CatEnd; ++Cat) {
+      if ((MethodDecl = Cat->getMethod(Sel, isInstance)))
+        if (C != (*Cat) || !MethodDecl->isImplicit())
           return MethodDecl;
 
-        if (!shallowCategoryLookup) {
-          // Didn't find one yet - look through protocols.
-          const ObjCList<ObjCProtocolDecl> &Protocols =
-            Cat->getReferencedProtocols();
-          for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-               E = Protocols.end(); I != E; ++I)
-            if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
+      if (!shallowCategoryLookup) {
+        // Didn't find one yet - look through protocols.
+        const ObjCList<ObjCProtocolDecl> &Protocols =
+        Cat->getReferencedProtocols();
+        for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+             E = Protocols.end(); I != E; ++I)
+          if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
+            if (C != (*Cat) || !MethodDecl->isImplicit())
               return MethodDecl;
-        }
       }
+    }
   
     ClassDecl = ClassDecl->getSuperClass();
   }
