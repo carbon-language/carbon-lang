@@ -138,6 +138,16 @@ contains a cursor.  This is API breaking change, but matches the intended
 original behavior.  Moreover, this also fixes the issue of an invalid CXCursorSet
 appearing to contain any CXCursor.
 
+Static Analyzer
+--------
+We've continued the work on improving the core analysis and added several new memory management checks:
+
+- Support for reasoning about constructors and destructors
+- New false positive suppression mechanisms that reduced the number of null pointer dereference warnings
+- Major performance enhancements to speed up interprocedural analysis
+- New memory error checks such as use-after-free with C++ 'delete', mismatched allocators and deallocators
+- Additional checks for misuse of Apple Foundation framework collection APIs
+
 Python Binding Changes
 ----------------------
 
