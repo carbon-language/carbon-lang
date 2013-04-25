@@ -237,6 +237,14 @@ StartsWithGlobalOffsetTable(const MCExpr *Expr) {
   return GOT_Normal;
 }
 
+static bool HasSecRelSymbolRef(const MCExpr *Expr) {
+  if (Expr->getKind() == MCExpr::SymbolRef) {
+    const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Expr);
+    return Ref->getKind() == MCSymbolRefExpr::VK_SECREL;
+  }
+  return false;
+}
+
 void X86MCCodeEmitter::
 EmitImmediate(const MCOperand &DispOp, SMLoc Loc, unsigned Size,
               MCFixupKind FixupKind, unsigned &CurByte, raw_ostream &OS,
@@ -268,8 +276,13 @@ EmitImmediate(const MCOperand &DispOp, SMLoc Loc, unsigned Size,
       if (Kind == GOT_Normal)
         ImmOffset = CurByte;
     } else if (Expr->getKind() == MCExpr::SymbolRef) {
-      const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Expr);
-      if (Ref->getKind() == MCSymbolRefExpr::VK_SECREL) {
+      if (HasSecRelSymbolRef(Expr)) {
+        FixupKind = MCFixupKind(FK_SecRel_4);
+      }
+    } else if (Expr->getKind() == MCExpr::Binary) {
+      const MCBinaryExpr *Bin = static_cast<const MCBinaryExpr*>(Expr);
+      if (HasSecRelSymbolRef(Bin->getLHS())
+          || HasSecRelSymbolRef(Bin->getRHS())) {
         FixupKind = MCFixupKind(FK_SecRel_4);
       }
     }

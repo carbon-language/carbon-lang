@@ -288,6 +288,8 @@ MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
     .Case("tlvp", VK_TLVP)
     .Case("IMGREL", VK_COFF_IMGREL32)
     .Case("imgrel", VK_COFF_IMGREL32)
+    .Case("SECREL32", VK_SECREL)
+    .Case("secrel32", VK_SECREL)
     .Default(VK_Invalid);
 }
 
