@@ -604,7 +604,7 @@ static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB,
       continue;
     }
 
-    // If current char is not a horizontal whitespace or if horizontal 
+    // If current char is not a horizontal whitespace or if horizontal
     // whitespace canonicalization is disabled, dump it to output as is.
     if (PreserveHorizontal || (*Ptr != ' ' && *Ptr != '\t')) {
       NewFile.push_back(*Ptr);
