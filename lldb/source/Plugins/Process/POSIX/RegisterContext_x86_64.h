@@ -79,6 +79,9 @@ public:
     bool
     UpdateAfterBreakpoint();
 
+    //---------------------------------------------------------------------------
+    // Generic floating-point registers
+    //---------------------------------------------------------------------------
     struct MMSReg
     {
         uint8_t bytes[10];
@@ -87,10 +90,10 @@ public:
 
     struct XMMReg
     {
-        uint8_t bytes[16];
+        uint8_t bytes[16]; // 128-bits for each XMM register
     };
 
-    struct FPU
+    struct FXSAVE
     {
         uint16_t fcw;
         uint16_t fsw;
@@ -105,12 +108,76 @@ public:
         uint32_t padding[24];
     };
 
+    //---------------------------------------------------------------------------
+    // Extended floating-point registers
+    //---------------------------------------------------------------------------
+    struct YMMHReg
+    {
+        uint8_t  bytes[16];     // 16 * 8 bits for the high bytes of each YMM register
+    };
+
+    struct YMMReg
+    {
+        uint8_t  bytes[32];     // 16 * 16 bits for each YMM register
+    };
+
+    struct YMM
+    {
+        YMMReg   ymm[16];       // assembled from ymmh and xmm registers
+    };
+
+    struct XSAVE_HDR
+    {
+        uint64_t  xstate_bv;    // OS enabled xstate mask to determine the extended states supported by the processor
+        uint64_t  reserved1[2];
+        uint64_t  reserved2[5];
+    } __attribute__((packed));
+
+    // x86 extensions to FXSAVE (i.e. for AVX processors) 
+    struct XSAVE 
+    {
+        FXSAVE    i387;         // floating point registers typical in i387_fxsave_struct
+        XSAVE_HDR header;       // The xsave_hdr_struct can be used to determine if the following extensions are usable
+        YMMHReg   ymmh[16];     // High 16 bytes of each of 16 YMM registers (the low bytes are in FXSAVE.xmm for compatibility with SSE)
+        // Slot any extensions to the register file here
+    } __attribute__((packed, aligned (64)));
+
+    struct IOVEC
+    {
+        void    *iov_base;      // pointer to XSAVE
+        size_t   iov_len;       // sizeof(XSAVE)
+    };
+
+    //---------------------------------------------------------------------------
+    // Note: prefer kernel definitions over user-land
+    //---------------------------------------------------------------------------
+    enum FPRType
+    {
+        eNotValid = 0,
+        eFSAVE,  // TODO
+        eFXSAVE,
+        eSOFT,   // TODO
+        eXSAVE
+    };
+
+    // Floating-point registers
+    struct FPR
+    {
+        // Thread state for the floating-point unit of the processor read by ptrace.
+        union XSTATE {
+            FXSAVE   fxsave;    // Generic floating-point registers.
+            XSAVE    xsave;     // x86 extended processor state.
+        } xstate;
+
+        YMM      ymm_set;       // Copy of ymmh and xmm register halves.
+    };
+
     struct UserArea
     {
         GPR      regs;          // General purpose registers.
-        int32_t  fpvalid;       // True if FPU is being used.
+        FPRType  fpr_type;      // Determines the type of data stored by union FPR, if any.
         int32_t  pad0;
-        FPU      i387;          // FPU registers.
+        FPR      i387;          // Floating point registers.
         uint64_t tsize;         // Text segment size.
         uint64_t dsize;         // Data segment size.
         uint64_t ssize;         // Stack segment size.
@@ -120,12 +187,13 @@ public:
         int32_t  reserved;      // Unused.
         int32_t  pad1;
         uint64_t ar0;           // Location of GPR's.
-        FPU*     fpstate;       // Location of FPR's.
+        FPR*     fpstate;       // Location of FPR's.
         uint64_t magic;         // Identifier for core dumps.
         char     u_comm[32];    // Command causing core dump.
         uint64_t u_debugreg[8]; // Debug registers (DR0 - DR7).
         uint64_t error_code;    // CPU error code.
         uint64_t fault_address; // Control register CR3.
+        IOVEC    iovec;         // wrapper for xsave
     };
 
 protected:
@@ -137,6 +205,9 @@ private:
     UserArea user;
 
     ProcessMonitor &GetMonitor();
+    lldb::ByteOrder GetByteOrder();
+
+    static bool IsFPR(unsigned reg, FPRType fpr_type);
 
     bool ReadGPR();
     bool ReadFPR();

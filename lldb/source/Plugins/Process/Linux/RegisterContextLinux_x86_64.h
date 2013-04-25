@@ -10,6 +10,10 @@
 #ifndef liblldb_RegisterContextLinux_x86_64_H_
 #define liblldb_RegisterContextLinux_x86_64_H_
 
+// Architecture specific register sets are described by the ELF core file format
+// for use with core dumps and PTRACE extensions like PTRACE_GETREGSET
+#include <linux/elf.h>
+
 typedef struct _GPR
 {
     uint64_t r15;

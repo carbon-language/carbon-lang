@@ -139,12 +139,25 @@ class RegisterCommandsTestCase(TestBase):
         new_value = "{0x01 0x02 0x03 0x00 0x00 0x00 0x00 0x00 0x09 0x0a 0x2f 0x2f 0x2f 0x2f 0x0e 0x0f}"
         self.vector_write_and_read(currentFrame, "xmm15", new_value)
 
+        has_avx = False 
+        registerSets = currentFrame.GetRegisters() # Returns an SBValueList.
+        for registerSet in registerSets:
+            if 'advanced vector extensions' in registerSet.GetName().lower():
+                has_avx = True
+                break
+
+        if has_avx:
+            new_value = "{0x01 0x02 0x03 0x00 0x00 0x00 0x00 0x00 0x09 0x0a 0x2f 0x2f 0x2f 0x2f 0x0e 0x0f 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x0c 0x0d 0x0e 0x0f}"
+            self.vector_write_and_read(currentFrame, "ymm0", new_value)
+            self.vector_write_and_read(currentFrame, "ymm15", new_value)
+            self.expect("expr $ymm0", substrs = ['vector_type'])
+        else:
+            self.runCmd("register read ymm0")
+
     def register_expressions(self):
         """Test expression evaluation with commands related to registers."""
         self.common_setup()
 
-        # rdar://problem/10611315
-        # expression command doesn't handle xmm or stmm registers...
         self.expect("expr $xmm0",
             substrs = ['vector_type'])
 
