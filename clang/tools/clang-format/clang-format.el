@@ -10,10 +10,12 @@
 ;; 'style' and 'binary' below.
 (defun clang-format-region ()
   (interactive)
-  (let ((orig-window-start (window-start))
-        (orig-point (point))
-        (binary "clang-format")
-        (style "LLVM"))
+
+  (let* ((orig-windows (get-buffer-window-list (current-buffer)))
+         (orig-window-starts (mapcar #'window-start orig-windows))
+         (orig-point (point))
+         (binary "clang-format")
+         (style "LLVM"))
     (if mark-active
         (setq beg (region-beginning)
               end (region-end))
@@ -24,4 +26,6 @@
                          "-length" (number-to-string (- end beg))
                          "-style" style)
     (goto-char orig-point)
-    (set-window-start (selected-window) orig-window-start)))
+    (dotimes (index (length orig-windows))
+      (set-window-start (nth index orig-windows)
+                        (nth index orig-window-starts)))))
