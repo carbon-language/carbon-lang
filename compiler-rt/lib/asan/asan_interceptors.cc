@@ -154,7 +154,7 @@ INTERCEPTOR(int, pthread_create, void *thread,
 
 #if ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
 INTERCEPTOR(void*, signal, int signum, void *handler) {
-  if (!AsanInterceptsSignal(signum)) {
+  if (!AsanInterceptsSignal(signum) || flags()->allow_user_segv_handler) {
     return REAL(signal)(signum, handler);
   }
   return 0;
@@ -162,7 +162,7 @@ INTERCEPTOR(void*, signal, int signum, void *handler) {
 
 INTERCEPTOR(int, sigaction, int signum, const struct sigaction *act,
                             struct sigaction *oldact) {
-  if (!AsanInterceptsSignal(signum)) {
+  if (!AsanInterceptsSignal(signum) || flags()->allow_user_segv_handler) {
     return REAL(sigaction)(signum, act, oldact);
   }
   return 0;
