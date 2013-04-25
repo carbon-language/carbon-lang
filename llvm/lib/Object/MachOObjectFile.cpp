@@ -758,31 +758,47 @@ MachOObjectFile::sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
 }
 
 relocation_iterator MachOObjectFile::getSectionRelBegin(DataRefImpl Sec) const {
-  DataRefImpl ret;
-  ret.d.b = Sec.d.a;
-  return relocation_iterator(RelocationRef(ret, this));
+  uint32_t Offset;
+  if (is64Bit()) {
+    macho::Section64 Sect = getSection64(Sec);
+    Offset = Sect.RelocationTableOffset;
+  } else {
+    macho::Section Sect = getSection(Sec);
+    Offset = Sect.RelocationTableOffset;
+  }
+
+  DataRefImpl Ret;
+  Ret.p = reinterpret_cast<uintptr_t>(getPtr(this, Offset));
+  return relocation_iterator(RelocationRef(Ret, this));
 }
 
 relocation_iterator
 MachOObjectFile::getSectionRelEnd(DataRefImpl Sec) const {
-  uint32_t LastReloc;
+  uint32_t Offset;
+  uint32_t Num;
   if (is64Bit()) {
     macho::Section64 Sect = getSection64(Sec);
-    LastReloc = Sect.NumRelocationTableEntries;
+    Offset = Sect.RelocationTableOffset;
+    Num = Sect.NumRelocationTableEntries;
   } else {
     macho::Section Sect = getSection(Sec);
-    LastReloc = Sect.NumRelocationTableEntries;
+    Offset = Sect.RelocationTableOffset;
+    Num = Sect.NumRelocationTableEntries;
   }
 
+  const macho::RelocationEntry *P =
+    reinterpret_cast<const macho::RelocationEntry*>(getPtr(this, Offset));
+
   DataRefImpl Ret;
-  Ret.d.a = LastReloc;
-  Ret.d.b = Sec.d.a;
+  Ret.p = reinterpret_cast<uintptr_t>(P + Num);
   return relocation_iterator(RelocationRef(Ret, this));
 }
 
-  error_code MachOObjectFile::getRelocationNext(DataRefImpl Rel,
-                                                RelocationRef &Res) const {
-  ++Rel.d.a;
+error_code MachOObjectFile::getRelocationNext(DataRefImpl Rel,
+                                              RelocationRef &Res) const {
+  const macho::RelocationEntry *P =
+    reinterpret_cast<const macho::RelocationEntry *>(Rel.p);
+  Rel.p = reinterpret_cast<uintptr_t>(P + 1);
   Res = RelocationRef(Rel, this);
   return object_error::success;
 }
@@ -1378,19 +1394,8 @@ MachOObjectFile::getLinkeditDataLoadCommand(const MachOObjectFile::LoadCommandIn
 
 macho::RelocationEntry
 MachOObjectFile::getRelocation(DataRefImpl Rel) const {
-  uint32_t RelOffset;
-  DataRefImpl Sec;
-  Sec.d.a = Rel.d.b;
-  if (is64Bit()) {
-    macho::Section64 Sect = getSection64(Sec);
-    RelOffset = Sect.RelocationTableOffset;
-  } else {
-    macho::Section Sect = getSection(Sec);
-    RelOffset = Sect.RelocationTableOffset;
-  }
-
-  uint64_t Offset = RelOffset + Rel.d.a * sizeof(macho::RelocationEntry);
-  return getStruct<macho::RelocationEntry>(this, getPtr(this, Offset));
+  const char *P = reinterpret_cast<const char *>(Rel.p);
+  return getStruct<macho::RelocationEntry>(this, P);
 }
 
 macho::Header MachOObjectFile::getHeader() const {
