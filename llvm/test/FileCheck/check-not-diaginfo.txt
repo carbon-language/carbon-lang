@@ -1,0 +1,7 @@
+; RUN: FileCheck -input-file %s %s 2>&1 | FileCheck -check-prefix DIAG %s
+
+CHECK-NOT: test
+
+DIAG:         CHECK-NOT: pattern specified here
+DIAG-NEXT:    CHECK-NOT: test
+DIAG-NEXT: {{^           \^}}

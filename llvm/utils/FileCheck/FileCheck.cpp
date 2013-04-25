@@ -85,6 +85,9 @@ public:
 
   Pattern(bool matchEOF = false) : MatchEOF(matchEOF) { }
 
+  /// getLoc - Return the location in source code.
+  SMLoc getLoc() const { return PatternLoc; }
+
   /// ParsePattern - Parse the given string into the Pattern.  SM provides the
   /// SourceMgr used for error reports, and LineNumber is the line number in
   /// the input file from which the pattern string was read.
@@ -581,7 +584,7 @@ struct CheckString {
   /// NotStrings - These are all of the strings that are disallowed from
   /// occurring between this match string and the previous one (or start of
   /// file).
-  std::vector<std::pair<SMLoc, Pattern> > NotStrings;
+  std::vector<Pattern> NotStrings;
 
   CheckString(const Pattern &P, SMLoc L, bool isCheckNext)
     : Pat(P), Loc(L), IsCheckNext(isCheckNext) {}
@@ -649,7 +652,7 @@ static bool ReadCheckFile(SourceMgr &SM,
 
   // Find all instances of CheckPrefix followed by : in the file.
   StringRef Buffer = F->getBuffer();
-  std::vector<std::pair<SMLoc, Pattern> > NotMatches;
+  std::vector<Pattern> NotMatches;
 
   // LineNumber keeps track of the line on which CheckPrefix instances are
   // found.
@@ -716,8 +719,7 @@ static bool ReadCheckFile(SourceMgr &SM,
 
     // Handle CHECK-NOT.
     if (IsCheckNot) {
-      NotMatches.push_back(std::make_pair(SMLoc::getFromPointer(Buffer.data()),
-                                          P));
+      NotMatches.push_back(P);
       continue;
     }
 
@@ -877,14 +879,13 @@ int main(int argc, char **argv) {
     for (unsigned ChunkNo = 0, e = CheckStr.NotStrings.size();
          ChunkNo != e; ++ChunkNo) {
       size_t MatchLen = 0;
-      size_t Pos = CheckStr.NotStrings[ChunkNo].second.Match(SkippedRegion,
-                                                             MatchLen,
-                                                             VariableTable);
+      size_t Pos = CheckStr.NotStrings[ChunkNo].Match(SkippedRegion, MatchLen,
+                                                      VariableTable);
       if (Pos == StringRef::npos) continue;
 
       SM.PrintMessage(SMLoc::getFromPointer(LastMatch+Pos), SourceMgr::DK_Error,
                       CheckPrefix+"-NOT: string occurred!");
-      SM.PrintMessage(CheckStr.NotStrings[ChunkNo].first, SourceMgr::DK_Note,
+      SM.PrintMessage(CheckStr.NotStrings[ChunkNo].getLoc(), SourceMgr::DK_Note,
                       CheckPrefix+"-NOT: pattern specified here");
       return 1;
     }
