@@ -7,20 +7,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Core/DataEncoder.h"
+#include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Core/ValueObjectConstResult.h"
-#include "lldb/Expression/ClangExpressionDeclMap.h"
-#include "lldb/Expression/ClangExpressionVariable.h"
-#include "lldb/Expression/IRForTarget.h"
+#include "lldb/Core/Scalar.h"
+#include "lldb/Core/StreamString.h"
+#include "lldb/Expression/IRMemoryMap.h"
 #include "lldb/Expression/IRInterpreter.h"
 
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/IR/DataLayout.h"
 
 #include <map>
 
@@ -62,26 +62,7 @@ class InterpreterStackFrame
 public:
     typedef std::map <const Value*, lldb::addr_t> ValueMap;
     
-    struct PlacedValue
-    {
-        lldb_private::Value     lldb_value;
-        lldb::addr_t            process_address;
-        size_t                  size;
-        
-        PlacedValue (lldb_private::Value &_lldb_value,
-                     lldb::addr_t _process_address,
-                     size_t _size) :
-            lldb_value(_lldb_value),
-            process_address(_process_address),
-            size(_size)
-        {
-        }
-    };
-    
-    typedef std::vector <PlacedValue> PlacedValueVector;
-
     ValueMap                                m_values;
-    PlacedValueVector                       m_placed_values;
     DataLayout                             &m_target_data;
     lldb_private::IRMemoryMap              &m_memory_map;
     const BasicBlock                       *m_bb;
