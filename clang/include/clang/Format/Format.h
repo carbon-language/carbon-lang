@@ -91,6 +91,10 @@ struct FormatStyle {
   /// \brief Add a space in front of an Objective-C protocol list, i.e. use
   /// Foo <Protocol> instead of Foo<Protocol>.
   bool ObjCSpaceBeforeProtocolList;
+
+  /// \brief If \c true, aligns escaped newlines as far left as possible.
+  /// Otherwise puts them into the right-most column.
+  bool AlignEscapedNewlinesLeft;
 };
 
 /// \brief Returns a format style complying with the LLVM coding standards:

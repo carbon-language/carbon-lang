@@ -2974,16 +2974,16 @@ TEST_F(FormatTest, MergeHandlingInTheFaceOfPreprocessorDirectives) {
             format("if (true)\nreturn 42;", AllowsMergedIf));
   FormatStyle ShortMergedIf = AllowsMergedIf;
   ShortMergedIf.ColumnLimit = 25;
-  verifyFormat("#define A               \\\n"
+  verifyFormat("#define A \\\n"
                "  if (true) return 42;",
                ShortMergedIf);
-  verifyFormat("#define A               \\\n"
-               "  f();                  \\\n"
+  verifyFormat("#define A \\\n"
+               "  f();    \\\n"
                "  if (true)\n"
                "#define B",
                ShortMergedIf);
-  verifyFormat("#define A               \\\n"
-               "  f();                  \\\n"
+  verifyFormat("#define A \\\n"
+               "  f();    \\\n"
                "  if (true)\n"
                "g();",
                ShortMergedIf);
@@ -3800,6 +3800,15 @@ TEST_F(FormatTest, BreakStringLiterals) {
       "\"pathat/\"\n"
       "\"slashes\"",
       format("\"split/pathat/slashes\"", getLLVMStyleWithColumns(10)));
+
+  FormatStyle AlignLeft = getLLVMStyleWithColumns(12);
+  AlignLeft.AlignEscapedNewlinesLeft = true;
+  EXPECT_EQ(
+      "#define A \\\n"
+      "  \"some \" \\\n"
+      "  \"text \" \\\n"
+      "  \"other\";",
+      format("#define A \"some text other\";", AlignLeft));
 }
 
 TEST_F(FormatTest, DoNotBreakStringLiteralsInEscapeSequence) {

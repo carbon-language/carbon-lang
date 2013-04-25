@@ -51,6 +51,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
   LLVMStyle.PenaltyExcessCharacter = 1000000;
   LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 75;
+  LLVMStyle.AlignEscapedNewlinesLeft = false;
   return LLVMStyle;
 }
 
@@ -71,6 +72,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
   GoogleStyle.PenaltyExcessCharacter = 1000000;
   GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 200;
+  GoogleStyle.AlignEscapedNewlinesLeft = true;
   return GoogleStyle;
 }
 
