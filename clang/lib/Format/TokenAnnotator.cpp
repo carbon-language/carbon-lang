@@ -155,6 +155,8 @@ private:
       }
 
       if (CurrentToken->is(tok::r_paren)) {
+        if (CurrentToken->Parent->closesScope())
+          CurrentToken->Parent->MatchingParen->NoMoreTokensOnLevel = true;
         Left->MatchingParen = CurrentToken;
         CurrentToken->MatchingParen = Left;
 
