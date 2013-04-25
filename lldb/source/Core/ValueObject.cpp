@@ -3410,7 +3410,13 @@ DumpValueObject_Impl (Stream &s,
                 show_type = options.m_show_types || (curr_depth == 0 && !options.m_flat_output);
             
             if (show_type)
-                s.Printf("(%s) ", valobj->GetQualifiedTypeName().AsCString("<invalid type>"));
+            {
+                // Some ValueObjects don't have types (like registers sets). Only print
+                // the type if there is one to print
+                ConstString qualified_type_name(valobj->GetQualifiedTypeName());
+                if (qualified_type_name)
+                    s.Printf("(%s) ", qualified_type_name.GetCString());
+            }
 
             if (options.m_flat_output)
             {
@@ -3543,9 +3549,8 @@ DumpValueObject_Impl (Stream &s,
                 
                 if (print_children && (!entry || entry->DoesPrintChildren() || !sum_cstr))
                 {
-                    ValueObject* synth_valobj;
                     ValueObjectSP synth_valobj_sp = valobj->GetSyntheticValue (options.m_use_synthetic);
-                    synth_valobj = (synth_valobj_sp ? synth_valobj_sp.get() : valobj);
+                    ValueObject* synth_valobj = (synth_valobj_sp ? synth_valobj_sp.get() : valobj);
                     
                     size_t num_children = synth_valobj->GetNumChildren();
                     bool print_dotdotdot = false;
