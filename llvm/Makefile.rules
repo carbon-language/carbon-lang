@@ -1515,6 +1515,8 @@ $(ToolBuildPath): $(ToolDir)/.dir
 endif
 
 ifdef CODESIGN_TOOLS
+TOOL_CODESIGN_IDENTITY ?= -
+
 $(ToolBuildPath): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) Linking $(BuildMode) executable $(TOOLNAME) $(StripWarnMsg)
 	$(Verb) $(Link) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
@@ -1522,7 +1524,7 @@ $(ToolBuildPath): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) ======= Finished Linking $(BuildMode) Executable $(TOOLNAME) \
           $(StripWarnMsg)
 	$(Echo) ======= Code-Signing $(BuildMode) Executable $(TOOLNAME)
-	$(Verb) codesign -s - $@
+	$(Verb) codesign -s $(TOOL_CODESIGN_IDENTITY) $@
 else
 $(ToolBuildPath): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) Linking $(BuildMode) executable $(TOOLNAME) $(StripWarnMsg)
