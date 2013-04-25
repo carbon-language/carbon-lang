@@ -789,21 +789,7 @@ MachOObjectFile::getSectionRelEnd(DataRefImpl Sec) const {
 
 error_code
 MachOObjectFile::getRelocationAddress(DataRefImpl Rel, uint64_t &Res) const {
-  uint64_t SectAddress;
-  DataRefImpl Sec;
-  Sec.d.a = Rel.d.b;
-  if (is64Bit()) {
-    macho::Section64 Sect = getSection64(Sec);
-    SectAddress = Sect.Address;
-  } else {
-    macho::Section Sect = getSection(Sec);
-    SectAddress = Sect.Address;
-  }
-
-  macho::RelocationEntry RE = getRelocation(Rel);
-  uint64_t RelAddr = getAnyRelocationAddress(RE);
-  Res = SectAddress + RelAddr;
-  return object_error::success;
+  report_fatal_error("getRelocationAddress not implemented in MachOObjectFile");
 }
 
 error_code MachOObjectFile::getRelocationOffset(DataRefImpl Rel,

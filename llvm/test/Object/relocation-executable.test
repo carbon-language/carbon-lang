@@ -1,0 +1,18 @@
+RUN: llvm-readobj -r -expand-relocs %p/Inputs/hello-world.elf-x86-64 \
+RUN:   | FileCheck %s
+
+// CHECK:     Relocations [
+// CHECK:       Section (11) .plt {
+// CHECK-NEXT:    Relocation {
+// CHECK-NEXT:      Offset: 0x4018F8
+// CHECK-NEXT:      Type: R_X86_64_JUMP_SLOT (7)
+// CHECK-NEXT:      Symbol: __libc_start_main
+// CHECK-NEXT:      Info: 0x0
+// CHECK-NEXT:    }
+// CHECK-NEXT:    Relocation {
+// CHECK-NEXT:      Offset: 0x401900
+// CHECK-NEXT:      Type: R_X86_64_JUMP_SLOT (7)
+// CHECK-NEXT:      Symbol: puts
+// CHECK-NEXT:      Info: 0x0
+// CHECK-NEXT:    }
+// CHECK-NEXT:  }

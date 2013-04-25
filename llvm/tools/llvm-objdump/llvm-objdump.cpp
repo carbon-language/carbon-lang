@@ -186,8 +186,8 @@ void llvm::DumpBytes(StringRef bytes) {
 
 bool llvm::RelocAddressLess(RelocationRef a, RelocationRef b) {
   uint64_t a_addr, b_addr;
-  if (error(a.getAddress(a_addr))) return false;
-  if (error(b.getAddress(b_addr))) return false;
+  if (error(a.getOffset(a_addr))) return false;
+  if (error(b.getOffset(b_addr))) return false;
   return a_addr < b_addr;
 }
 
@@ -378,7 +378,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
           if (error(rel_cur->getHidden(hidden))) goto skip_print_rel;
           if (hidden) goto skip_print_rel;
 
-          if (error(rel_cur->getAddress(addr))) goto skip_print_rel;
+          if (error(rel_cur->getOffset(addr))) goto skip_print_rel;
           // Stop when rel_cur's address is past the current instruction.
           if (addr >= Index + Size) break;
           if (error(rel_cur->getTypeName(name))) goto skip_print_rel;
@@ -417,7 +417,7 @@ static void PrintRelocations(const ObjectFile *o) {
       if (error(ri->getHidden(hidden))) continue;
       if (hidden) continue;
       if (error(ri->getTypeName(relocname))) continue;
-      if (error(ri->getAddress(address))) continue;
+      if (error(ri->getOffset(address))) continue;
       if (error(ri->getValueString(valuestr))) continue;
       outs() << address << " " << relocname << " " << valuestr << "\n";
     }

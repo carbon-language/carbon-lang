@@ -572,7 +572,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
              reloc_e = i->end_relocations();
            reloc_i != reloc_e; reloc_i.increment(ec)) {
         uint64_t Address;
-        reloc_i->getAddress(Address);
+        reloc_i->getOffset(Address);
         uint64_t Type;
         reloc_i->getType(Type);
         uint64_t SymAddr = 0;

@@ -133,7 +133,7 @@ private:
     int64_t Addend;
     R.getAdditionalInfo(Addend);
     uint64_t Address;
-    R.getAddress(Address);
+    R.getOffset(Address);
     return RelocToApply(Value + Addend - Address, 4);
   }
 
@@ -151,7 +151,7 @@ private:
     int64_t Addend;
     R.getAdditionalInfo(Addend);
     uint64_t Address;
-    R.getAddress(Address);
+    R.getOffset(Address);
     return RelocToApply(Value + Addend - Address, 4);
   }
   RelocToApply visitELF_X86_64_32(RelocationRef R, uint64_t Value) {

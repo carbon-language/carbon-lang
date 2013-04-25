@@ -343,7 +343,7 @@ static void DisassembleInputMachO2(StringRef Filename,
     for (relocation_iterator RI = Sections[SectIdx].begin_relocations(),
          RE = Sections[SectIdx].end_relocations(); RI != RE; RI.increment(ec)) {
       uint64_t RelocOffset, SectionAddress;
-      RI->getAddress(RelocOffset);
+      RI->getOffset(RelocOffset);
       Sections[SectIdx].getAddress(SectionAddress);
       RelocOffset -= SectionAddress;
 

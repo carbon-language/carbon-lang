@@ -582,7 +582,11 @@ void ELFDumper<ELFT>::printRelocation(section_iterator Sec,
   int64_t Info;
   StringRef SymbolName;
   SymbolRef Symbol;
-  if (error(RelI->getOffset(Offset))) return;
+  if (Obj->getElfHeader()->e_type == ELF::ET_REL){
+    if (error(RelI->getOffset(Offset))) return;
+  } else {
+    if (error(RelI->getAddress(Offset))) return;
+  }
   if (error(RelI->getType(RelocType))) return;
   if (error(RelI->getTypeName(RelocName))) return;
   if (error(RelI->getAdditionalInfo(Info))) return;

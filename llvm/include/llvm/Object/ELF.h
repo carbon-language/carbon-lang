@@ -607,6 +607,8 @@ private:
   mutable const char *dt_soname;
 
 private:
+  uint64_t getROffset(DataRefImpl Rel) const;
+
   // Records for each version index the corresponding Verdef or Vernaux entry.
   // This is filled the first time LoadVersionMap() is called.
   class VersionMapEntry : public PointerIntPair<const void*, 1> {
@@ -1521,45 +1523,32 @@ error_code ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel,
 template<class ELFT>
 error_code ELFObjectFile<ELFT>::getRelocationAddress(DataRefImpl Rel,
                                                      uint64_t &Result) const {
-  uint64_t offset;
-  const Elf_Shdr *sec = getSection(Rel.w.b);
-  switch (sec->sh_type) {
-    default :
-      report_fatal_error("Invalid section type in Rel!");
-    case ELF::SHT_REL : {
-      offset = getRel(Rel)->r_offset;
-      break;
-    }
-    case ELF::SHT_RELA : {
-      offset = getRela(Rel)->r_offset;
-      break;
-    }
-  }
-
-  Result = offset;
+  assert((Header->e_type == ELF::ET_EXEC || Header->e_type == ELF::ET_DYN) &&
+         "Only executable and shared objects files have addresses");
+  Result = getROffset(Rel);
   return object_error::success;
 }
 
 template<class ELFT>
 error_code ELFObjectFile<ELFT>::getRelocationOffset(DataRefImpl Rel,
                                                     uint64_t &Result) const {
-  uint64_t offset;
+  assert(Header->e_type == ELF::ET_REL &&
+         "Only relocatable object files have relocation offsets");
+  Result = getROffset(Rel);
+  return object_error::success;
+}
+
+template<class ELFT>
+uint64_t ELFObjectFile<ELFT>::getROffset(DataRefImpl Rel) const {
   const Elf_Shdr *sec = getSection(Rel.w.b);
   switch (sec->sh_type) {
-    default :
-      report_fatal_error("Invalid section type in Rel!");
-    case ELF::SHT_REL : {
-      offset = getRel(Rel)->r_offset;
-      break;
-    }
-    case ELF::SHT_RELA : {
-      offset = getRela(Rel)->r_offset;
-      break;
-    }
+  default:
+    report_fatal_error("Invalid section type in Rel!");
+  case ELF::SHT_REL:
+    return getRel(Rel)->r_offset;
+  case ELF::SHT_RELA:
+    return getRela(Rel)->r_offset;
   }
-
-  Result = offset - sec->sh_addr;
-  return object_error::success;
 }
 
 template<class ELFT>
