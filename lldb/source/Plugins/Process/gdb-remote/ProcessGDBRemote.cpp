@@ -1616,12 +1616,12 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                         }
                         if (!handled)
                             gdb_thread->SetStopInfo (StopInfo::CreateStopReasonWithSignal (*thread_sp, signo));
-                }
-                else
-                {
-                    StopInfoSP invalid_stop_info_sp;
-                    gdb_thread->SetStopInfo (invalid_stop_info_sp);
-                }
+                    }
+                    else
+                    {
+                        StopInfoSP invalid_stop_info_sp;
+                        gdb_thread->SetStopInfo (invalid_stop_info_sp);
+                    }
                     
                     if (!description.empty())
                     {
