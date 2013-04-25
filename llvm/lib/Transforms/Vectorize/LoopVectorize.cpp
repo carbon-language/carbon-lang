@@ -419,7 +419,7 @@ public:
     }
 
     /// Insert a pointer and calculate the start and end SCEVs.
-    void insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr);
+    void insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr, bool WritePtr);
 
     /// This flag indicates if we need to add the runtime check.
     bool Need;
@@ -429,6 +429,8 @@ public:
     SmallVector<const SCEV*, 2> Starts;
     /// Holds the pointer value at the end of the loop.
     SmallVector<const SCEV*, 2> Ends;
+    /// Holds the information if this pointer is used for writing to memory.
+    SmallVector<bool, 2> IsWritePtr;
   };
 
   /// A POD for saving information about induction variables.
@@ -787,7 +789,8 @@ struct LoopVectorize : public LoopPass {
 
 void
 LoopVectorizationLegality::RuntimePointerCheck::insert(ScalarEvolution *SE,
-                                                       Loop *Lp, Value *Ptr) {
+                                                       Loop *Lp, Value *Ptr,
+                                                       bool WritePtr) {
   const SCEV *Sc = SE->getSCEV(Ptr);
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Sc);
   assert(AR && "Invalid addrec expression");
@@ -796,6 +799,7 @@ LoopVectorizationLegality::RuntimePointerCheck::insert(ScalarEvolution *SE,
   Pointers.push_back(Ptr);
   Starts.push_back(AR->getStart());
   Ends.push_back(ScEnd);
+  IsWritePtr.push_back(WritePtr);
 }
 
 Value *InnerLoopVectorizer::getBroadcastInstrs(Value *V) {
@@ -1166,6 +1170,10 @@ InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
 
   for (unsigned i = 0; i < NumPointers; ++i) {
     for (unsigned j = i+1; j < NumPointers; ++j) {
+      // No need to check if two readonly pointers intersect.
+      if (!PtrRtCheck->IsWritePtr[i] && !PtrRtCheck->IsWritePtr[j])
+        continue;
+
       Value *Start0 = ChkBuilder.CreateBitCast(Starts[i], PtrArithTy, "bc");
       Value *Start1 = ChkBuilder.CreateBitCast(Starts[j], PtrArithTy, "bc");
       Value *End0 =   ChkBuilder.CreateBitCast(Ends[i],   PtrArithTy, "bc");
@@ -2678,7 +2686,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
   for (MI = ReadWrites.begin(), ME = ReadWrites.end(); MI != ME; ++MI) {
     Value *V = (*MI).first;
     if (hasComputableBounds(V)) {
-      PtrRtCheck.insert(SE, TheLoop, V);
+      PtrRtCheck.insert(SE, TheLoop, V, true);
       DEBUG(dbgs() << "LV: Found a runtime check ptr:" << *V <<"\n");
     } else {
       CanDoRT = false;
@@ -2688,7 +2696,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
   for (MI = Reads.begin(), ME = Reads.end(); MI != ME; ++MI) {
     Value *V = (*MI).first;
     if (hasComputableBounds(V)) {
-      PtrRtCheck.insert(SE, TheLoop, V);
+      PtrRtCheck.insert(SE, TheLoop, V, false);
       DEBUG(dbgs() << "LV: Found a runtime check ptr:" << *V <<"\n");
     } else {
       CanDoRT = false;
