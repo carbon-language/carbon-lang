@@ -344,7 +344,7 @@ ValueObjectRegister::GetTypeName()
 size_t
 ValueObjectRegister::CalculateNumChildren()
 {
-    return 0;
+    return ClangASTContext::GetNumChildren(GetClangAST(), GetClangType(), true);
 }
 
 clang::ASTContext *
