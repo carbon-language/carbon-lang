@@ -54,7 +54,7 @@ get_temp_file_name()
     std::string s(p);
     free( p );
 #else
-   std::string s("temp.XXXX");
+   std::string s("temp.XXXXXX");
    mktemp(&s[0]);
 #endif
    return s;
