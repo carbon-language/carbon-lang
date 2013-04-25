@@ -152,3 +152,15 @@ namespace test15 {
   const int a = 5; // expected-note {{previous definition is here}}
   static const int a; // expected-error {{redefinition of 'a'}}
 }
+
+namespace test16 {
+  extern "C" {
+    class Foo {
+      int x;
+      friend int bar(Foo *y);
+    };
+    int bar(Foo *y) {
+      return y->x;
+    }
+  }
+}

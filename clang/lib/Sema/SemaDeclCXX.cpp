@@ -11131,29 +11131,39 @@ NamedDecl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
 
     // Find the appropriate context according to the above.
     DC = CurContext;
-    while (true) {
-      // Skip class contexts.  If someone can cite chapter and verse
-      // for this behavior, that would be nice --- it's what GCC and
-      // EDG do, and it seems like a reasonable intent, but the spec
-      // really only says that checks for unqualified existing
-      // declarations should stop at the nearest enclosing namespace,
-      // not that they should only consider the nearest enclosing
-      // namespace.
-      while (DC->isRecord() || DC->isTransparentContext()) 
-        DC = DC->getParent();
 
-      LookupQualifiedName(Previous, DC);
+    // Skip class contexts.  If someone can cite chapter and verse
+    // for this behavior, that would be nice --- it's what GCC and
+    // EDG do, and it seems like a reasonable intent, but the spec
+    // really only says that checks for unqualified existing
+    // declarations should stop at the nearest enclosing namespace,
+    // not that they should only consider the nearest enclosing
+    // namespace.
+    while (DC->isRecord())
+      DC = DC->getParent();
+
+    DeclContext *LookupDC = DC;
+    while (LookupDC->isTransparentContext())
+      LookupDC = LookupDC->getParent();
+
+    while (true) {
+      LookupQualifiedName(Previous, LookupDC);
 
       // TODO: decide what we think about using declarations.
-      if (isLocal || !Previous.empty())
+      if (isLocal)
         break;
 
-      if (isTemplateId) {
-        if (isa<TranslationUnitDecl>(DC)) break;
-      } else {
-        if (DC->isFileContext()) break;
+      if (!Previous.empty()) {
+        DC = LookupDC;
+        break;
       }
-      DC = DC->getParent();
+
+      if (isTemplateId) {
+        if (isa<TranslationUnitDecl>(LookupDC)) break;
+      } else {
+        if (LookupDC->isFileContext()) break;
+      }
+      LookupDC = LookupDC->getParent();
     }
 
     DCScope = getScopeForDeclContext(S, DC);
