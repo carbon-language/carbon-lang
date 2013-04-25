@@ -209,9 +209,11 @@ public:
                 return false;
             
             lldb::offset_t offset = 0;
-            uint64_t u64value = value_extractor.GetMaxU64(&offset, value_size);
-                    
-            return AssignToMatchType(scalar, u64value, value->getType());
+            if (value_size <= 8)
+            {
+                uint64_t u64value = value_extractor.GetMaxU64(&offset, value_size);
+                return AssignToMatchType(scalar, u64value, value->getType());
+            }
         }
         
         return false;
