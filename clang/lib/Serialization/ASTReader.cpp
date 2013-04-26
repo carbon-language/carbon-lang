@@ -6005,8 +6005,8 @@ void ASTReader::InitializeSema(Sema &S) {
   // Makes sure any declarations that were deserialized "too early"
   // still get added to the identifier's declaration chains.
   for (unsigned I = 0, N = PreloadedDecls.size(); I != N; ++I) {
-    NamedDecl *ND = cast<NamedDecl>(PreloadedDecls[I]->getMostRecentDecl());
-    SemaObj->pushExternalDeclIntoScope(ND, PreloadedDecls[I]->getDeclName());
+    pushExternalDeclIntoScope(PreloadedDecls[I],
+                              PreloadedDecls[I]->getDeclName());
   }
   PreloadedDecls.clear();
 
@@ -6420,8 +6420,7 @@ ASTReader::SetGloballyVisibleDecls(IdentifierInfo *II,
       // Introduce this declaration into the translation-unit scope
       // and add it to the declaration chain for this identifier, so
       // that (unqualified) name lookup will find it.
-      NamedDecl *ND = cast<NamedDecl>(D->getMostRecentDecl());
-      SemaObj->pushExternalDeclIntoScope(ND, II);
+      pushExternalDeclIntoScope(D, II);
     } else {
       // Queue this declaration so that it will be added to the
       // translation unit scope and identifier's declaration chain
@@ -7208,8 +7207,7 @@ void ASTReader::finishPendingActions() {
          TLD != TLDEnd; ++TLD) {
       IdentifierInfo *II = TLD->first;
       for (unsigned I = 0, N = TLD->second.size(); I != N; ++I) {
-        NamedDecl *ND = cast<NamedDecl>(TLD->second[I]->getMostRecentDecl());
-        SemaObj->pushExternalDeclIntoScope(ND, II);
+        pushExternalDeclIntoScope(cast<NamedDecl>(TLD->second[I]), II);
       }
     }
 
@@ -7346,6 +7344,21 @@ void ASTReader::FinishedDeserializing() {
       InterestingDecls.pop_front();
       PassInterestingDeclToConsumer(D);
     }
+  }
+}
+
+void ASTReader::pushExternalDeclIntoScope(NamedDecl *D, DeclarationName Name) {
+  D = cast<NamedDecl>(D->getMostRecentDecl());
+
+  if (SemaObj->IdResolver.tryAddTopLevelDecl(D, Name) && SemaObj->TUScope) {
+    SemaObj->TUScope->AddDecl(D);
+  } else if (SemaObj->TUScope) {
+    // Adding the decl to IdResolver may have failed because it was already in
+    // (even though it was not added in scope). If it is already in, make sure
+    // it gets in the scope as well.
+    if (std::find(SemaObj->IdResolver.begin(Name),
+                  SemaObj->IdResolver.end(), D) != SemaObj->IdResolver.end())
+      SemaObj->TUScope->AddDecl(D);
   }
 }
 

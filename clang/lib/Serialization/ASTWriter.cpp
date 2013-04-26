@@ -3106,7 +3106,28 @@ public:
     for (SmallVector<Decl *, 16>::reverse_iterator D = Decls.rbegin(),
                                                 DEnd = Decls.rend();
          D != DEnd; ++D)
-      clang::io::Emit32(Out, Writer.getDeclID(*D));
+      clang::io::Emit32(Out, Writer.getDeclID(getMostRecentLocalDecl(*D)));
+  }
+
+  /// \brief Returns the most recent local decl or the given decl if there are
+  /// no local ones. The given decl is assumed to be the most recent one.
+  Decl *getMostRecentLocalDecl(Decl *Orig) {
+    // The only way a "from AST file" decl would be more recent from a local one
+    // is if it came from a module.
+    if (!PP.getLangOpts().Modules)
+      return Orig;
+
+    // Look for a local in the decl chain.
+    for (Decl *D = Orig; D; D = D->getPreviousDecl()) {
+      if (!D->isFromASTFile())
+        return D;
+      // If we come up a decl from a (chained-)PCH stop since we won't find a
+      // local one.
+      if (D->getOwningModuleID() == 0)
+        break;
+    }
+
+    return Orig;
   }
 };
 } // end anonymous namespace
