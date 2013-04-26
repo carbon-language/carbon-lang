@@ -1016,6 +1016,9 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     {
                         QualType class_type = class_pointer_type->getPointeeType();
                         
+                        if (!class_type.getAsOpaquePtr())
+                            return;
+                        
                         if (log)
                         {
                             ASTDumper ast_dumper(this_type->GetClangFullType());
@@ -1143,6 +1146,9 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                         const ObjCObjectPointerType *class_pointer_type = self_qual_type->getAs<ObjCObjectPointerType>();
                     
                         QualType class_type = class_pointer_type->getPointeeType();
+                        
+                        if (!class_type.getAsOpaquePtr())
+                            return;
                         
                         if (log)
                         {
