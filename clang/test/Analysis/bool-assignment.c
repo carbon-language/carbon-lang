@@ -1,8 +1,9 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core.BoolAssignment -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core.BoolAssignment -analyzer-store=region -verify -std=c99 -Dbool=_Bool %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core.BoolAssignment -analyzer-store=region -verify -x c++ %s
 
-// Test C++'s bool
+// Test C++'s bool and C's _Bool
 
-void test_cppbool_initialization(int y) {
+void test_stdbool_initialization(int y) {
   if (y < 0) {
     bool x = y; // expected-warning {{Assignment of a non-Boolean value}}
     return;
@@ -14,7 +15,7 @@ void test_cppbool_initialization(int y) {
   bool x = y; // no-warning
 }
 
-void test_cppbool_assignment(int y) {
+void test_stdbool_assignment(int y) {
   bool x = 0; // no-warning
   if (y < 0) {
     x = y; // expected-warning {{Assignment of a non-Boolean value}}
