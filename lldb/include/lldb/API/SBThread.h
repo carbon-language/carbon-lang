@@ -129,7 +129,7 @@ public:
     /// SBProcess::Continue() is called, any threads that aren't suspended will
     /// be allowed to run. If any of the SBThread functions for stepping are 
     /// called (StepOver, StepInto, StepOut, StepInstruction, RunToAddres), the
-    /// thread will now be allowed to run and these funtions will simply return.
+    /// thread will not be allowed to run and these funtions will simply return.
     ///
     /// Eventually we plan to add support for thread centric debugging where
     /// each thread is controlled individually and each thread would broadcast
