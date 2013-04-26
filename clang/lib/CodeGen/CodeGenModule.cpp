@@ -2819,7 +2819,6 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     // No code generation needed.
   case Decl::UsingShadow:
   case Decl::Using:
-  case Decl::UsingDirective:
   case Decl::ClassTemplate:
   case Decl::FunctionTemplate:
   case Decl::TypeAliasTemplate:
@@ -2827,6 +2826,10 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::Block:
   case Decl::Empty:
     break;
+  case Decl::UsingDirective: // using namespace X; [C++]
+    if (CGDebugInfo *DI = getModuleDebugInfo())
+      DI->EmitUsingDirective(cast<UsingDirectiveDecl>(*D));
+    return;
   case Decl::CXXConstructor:
     // Skip function templates
     if (cast<FunctionDecl>(D)->getDescribedFunctionTemplate() ||
