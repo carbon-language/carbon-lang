@@ -1407,7 +1407,7 @@ codecvt<wchar_t, char, mbstate_t>::do_out(state_type& st,
     to_nxt = to;
     for (frm_nxt = frm; frm != frm_end && to != to_end; frm = frm_nxt, to = to_nxt)
     {
-        // save state in case needed to reover to_nxt on error
+        // save state in case it is needed to recover to_nxt on error
         mbstate_t save_state = st;
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         size_t n = wcsnrtombs_l(to, &frm_nxt, static_cast<size_t>(fend-frm),
@@ -1476,7 +1476,7 @@ codecvt<wchar_t, char, mbstate_t>::do_in(state_type& st,
     to_nxt = to;
     for (frm_nxt = frm; frm != frm_end && to != to_end; frm = frm_nxt, to = to_nxt)
     {
-        // save state in case needed to reover to_nxt on error
+        // save state in case it is needed to recover to_nxt on error
         mbstate_t save_state = st;
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         size_t n = mbsnrtowcs_l(to, &frm_nxt, static_cast<size_t>(fend-frm),
