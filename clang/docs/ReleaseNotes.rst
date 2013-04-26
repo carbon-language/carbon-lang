@@ -139,14 +139,25 @@ original behavior.  Moreover, this also fixes the issue of an invalid CXCursorSe
 appearing to contain any CXCursor.
 
 Static Analyzer
---------
-We've continued the work on improving the core analysis and added several new memory management checks:
+---------------
 
-- Support for reasoning about constructors and destructors
-- New false positive suppression mechanisms that reduced the number of null pointer dereference warnings
+The static analyzer (which contains additional code checking beyond compiler
+warnings) has improved significantly in both in the core analysis engine and 
+also in the kinds of issues it can find.
+
+Core Analysis Improvements
+==========================
+
+- Support for interprocedural reasoning about constructors and destructors.
+- New false positive suppression mechanisms that reduced the number of false null pointer dereference warnings due to interprocedural analysis.
 - Major performance enhancements to speed up interprocedural analysis
-- New memory error checks such as use-after-free with C++ 'delete', mismatched allocators and deallocators
-- Additional checks for misuse of Apple Foundation framework collection APIs
+
+New Issues Found
+================
+
+- New memory error checks such as use-after-free with C++ 'delete'.
+- Detection of mismatched allocators and deallocators (e.g., using 'new' with 'free()', 'malloc()' with 'delete').
+- Additional checks for misuses of Apple Foundation framework collection APIs.
 
 Python Binding Changes
 ----------------------
