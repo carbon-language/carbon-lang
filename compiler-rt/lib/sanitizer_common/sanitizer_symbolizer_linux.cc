@@ -100,11 +100,6 @@ bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
     internal_close(infd[1]);
     for (int fd = getdtablesize(); fd > 2; fd--)
       internal_close(fd);
-    // If the parent tool is used as a preloadable library, do not apply it to
-    // the symbolizer.
-    // FIXME: If LD_PRELOAD contains more than one object, we should keep those
-    // that have nothing to do with us.
-    UnsetEnv("LD_PRELOAD");
     execl(path_to_symbolizer, path_to_symbolizer, (char*)0);
     internal__exit(1);
   }

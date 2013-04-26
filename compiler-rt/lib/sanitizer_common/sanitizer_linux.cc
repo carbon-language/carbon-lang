@@ -278,20 +278,6 @@ bool SetEnv(const char *name, const char *value) {
 }
 #endif
 
-void UnsetEnv(const char *name) {
-  uptr name_length = internal_strlen(name);
-  uptr last = 0;
-  while (environ[last]) last++;
-  for (uptr i = 0; environ[i]; i++)
-    if (internal_strlen(environ[i]) >= name_length + 1 &&
-        internal_strncmp(environ[i], name, name_length) == 0 &&
-        environ[i][name_length] == '=') {
-      last--;
-      environ[i] = environ[last];
-      environ[last] = 0;
-    }
-}
-
 #ifdef __GLIBC__
 
 extern "C" {
