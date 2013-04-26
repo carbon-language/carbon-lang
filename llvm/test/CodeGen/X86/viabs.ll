@@ -5,7 +5,7 @@
 define <4 x i32> @test1(<4 x i32> %a) nounwind {
 ; SSE2: test1:
 ; SSE2: movdqa
-; SSE2-NEXT: psrad $31
+; SSE2: psrad $31
 ; SSE2-NEXT: padd
 ; SSE2-NEXT: pxor
 ; SSE2-NEXT: ret
@@ -26,7 +26,7 @@ define <4 x i32> @test1(<4 x i32> %a) nounwind {
 define <4 x i32> @test2(<4 x i32> %a) nounwind {
 ; SSE2: test2:
 ; SSE2: movdqa
-; SSE2-NEXT: psrad $31
+; SSE2: psrad $31
 ; SSE2-NEXT: padd
 ; SSE2-NEXT: pxor
 ; SSE2-NEXT: ret
@@ -47,7 +47,7 @@ define <4 x i32> @test2(<4 x i32> %a) nounwind {
 define <8 x i16> @test3(<8 x i16> %a) nounwind {
 ; SSE2: test3:
 ; SSE2: movdqa
-; SSE2-NEXT: psraw $15
+; SSE2: psraw $15
 ; SSE2-NEXT: padd
 ; SSE2-NEXT: pxor
 ; SSE2-NEXT: ret
@@ -68,7 +68,7 @@ define <8 x i16> @test3(<8 x i16> %a) nounwind {
 define <16 x i8> @test4(<16 x i8> %a) nounwind {
 ; SSE2: test4:
 ; SSE2: pxor
-; SSE2-NEXT: pcmpgtb
+; SSE2: pcmpgtb
 ; SSE2-NEXT: padd
 ; SSE2-NEXT: pxor
 ; SSE2-NEXT: ret
@@ -89,7 +89,7 @@ define <16 x i8> @test4(<16 x i8> %a) nounwind {
 define <4 x i32> @test5(<4 x i32> %a) nounwind {
 ; SSE2: test5:
 ; SSE2: movdqa
-; SSE2-NEXT: psrad $31
+; SSE2: psrad $31
 ; SSE2-NEXT: padd
 ; SSE2-NEXT: pxor
 ; SSE2-NEXT: ret
@@ -114,7 +114,7 @@ define <8 x i32> @test6(<8 x i32> %a) nounwind {
 ; SSSE3-NEXT: ret
 
 ; AVX2: test6:
-; AVX2: vpabsd %ymm
+; AVX2: vpabsd {{.*}}%ymm
 ; AVX2-NEXT: ret
         %tmp1neg = sub <8 x i32> zeroinitializer, %a
         %b = icmp sgt <8 x i32> %a, <i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1>
@@ -129,7 +129,7 @@ define <8 x i32> @test7(<8 x i32> %a) nounwind {
 ; SSSE3-NEXT: ret
 
 ; AVX2: test7:
-; AVX2: vpabsd %ymm
+; AVX2: vpabsd {{.*}}%ymm
 ; AVX2-NEXT: ret
         %tmp1neg = sub <8 x i32> zeroinitializer, %a
         %b = icmp sge <8 x i32> %a, zeroinitializer
@@ -144,7 +144,7 @@ define <16 x i16> @test8(<16 x i16> %a) nounwind {
 ; SSSE3-NEXT: ret
 
 ; AVX2: test8:
-; AVX2: vpabsw %ymm
+; AVX2: vpabsw {{.*}}%ymm
 ; AVX2-NEXT: ret
         %tmp1neg = sub <16 x i16> zeroinitializer, %a
         %b = icmp sgt <16 x i16> %a, zeroinitializer
@@ -159,7 +159,7 @@ define <32 x i8> @test9(<32 x i8> %a) nounwind {
 ; SSSE3-NEXT: ret
 
 ; AVX2: test9:
-; AVX2: vpabsb %ymm
+; AVX2: vpabsb {{.*}}%ymm
 ; AVX2-NEXT: ret
         %tmp1neg = sub <32 x i8> zeroinitializer, %a
         %b = icmp slt <32 x i8> %a, zeroinitializer
@@ -174,7 +174,7 @@ define <8 x i32> @test10(<8 x i32> %a) nounwind {
 ; SSSE3-NEXT: ret
 
 ; AVX2: test10:
-; AVX2: vpabsd %ymm
+; AVX2: vpabsd {{.*}}%ymm
 ; AVX2-NEXT: ret
         %tmp1neg = sub <8 x i32> zeroinitializer, %a
         %b = icmp sle <8 x i32> %a, zeroinitializer
