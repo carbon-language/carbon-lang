@@ -663,35 +663,20 @@ This leaves your working directories on their master branches, so you'll need to
 ``checkout`` each working branch individually and ``rebase`` it on top of its
 parent branch.
 
-For those who wish to be able to update an llvm repo in a simpler fashion,
-consider placing the following Git script in your path under the name
-``git-svnup``:
+For those who wish to be able to update an llvm repo/revert patches easily using
+git-svn, please look in the directory for the scripts ``git-svnup`` and
+``git-svnrevert``.
 
-.. code-block:: bash
+To perform the aforementioned update steps go into your source directory and
+just type ``git-svnup`` or ``git svnup`` and everything will just work.
 
-  #!/bin/bash
+If one wishes to revert a commit with git-svn, but do not want the git hash to
+escape into the commit message, one can use the script ``git-svnrevert`` or
+``git svnrevert`` which will take in the git hash for the commit you want to
+revert, look up the appropriate svn revision, and output a message where all
+references to the git hash have been replaced with the svn revision.
 
-  STATUS=$(git status -s | grep -v "??")
-
-  if [ ! -z "$STATUS" ]; then
-      STASH="yes"
-      git stash >/dev/null
-  fi
-
-  git fetch
-  OLD_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-  git checkout master 2> /dev/null
-  git svn rebase -l
-  git checkout $OLD_BRANCH 2> /dev/null
-
-  if [ ! -z $STASH ]; then
-      git stash pop >/dev/null
-  fi
-
-Then to perform the aforementioned update steps go into your source directory
-and just type ``git-svnup`` or ``git svnup`` and everything will just work.
-
-To commit back changes via git-svn, use ``dcommit``:
+To commit back changes via git-svn, use ``git svn dcommit``:
 
 .. code-block:: console
 
