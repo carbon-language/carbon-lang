@@ -80,6 +80,7 @@ class BasicExprCommandsTestCase(TestBase):
                        "a.out"])
         # (const char *) $8 = 0x... "/Volumes/data/lldb/svn/trunk/test/expression_command/test/a.out"
 
+    @expectedFailureLinux # bugzilla 15854
     @python_api_test
     def test_evaluate_expression_python(self):
         """Test SBFrame.EvaluateExpression() API for evaluating an expression."""

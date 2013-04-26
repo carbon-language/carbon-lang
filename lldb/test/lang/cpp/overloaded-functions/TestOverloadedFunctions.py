@@ -17,6 +17,7 @@ class CPPStaticMethodsTestCase(TestBase):
         self.buildDsym()
         self.static_method_commands()
 
+    @expectedFailureLinux # bugzilla 15854
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that functions with the same name are resolved correctly"""
