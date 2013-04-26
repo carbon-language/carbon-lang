@@ -451,6 +451,51 @@ comments::FullComment *ASTContext::getCommentForDecl(
           if (comments::FullComment *FC = getCommentForDecl(TD, PP))
             return cloneFullComment(FC, D);
     }
+    else if (const ObjCInterfaceDecl *IC = dyn_cast<ObjCInterfaceDecl>(D)) {
+      while (IC->getSuperClass()) {
+        IC = IC->getSuperClass();
+        if (comments::FullComment *FC = getCommentForDecl(IC, PP))
+          return cloneFullComment(FC, D);
+      }
+    }
+    else if (const ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(D)) {
+      if (const ObjCInterfaceDecl *IC = CD->getClassInterface())
+        if (comments::FullComment *FC = getCommentForDecl(IC, PP))
+          return cloneFullComment(FC, D);
+    }
+    else if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
+      if (!(RD = RD->getDefinition()))
+        return NULL;
+      // Check non-virtual bases.
+      for (CXXRecordDecl::base_class_const_iterator I =
+           RD->bases_begin(), E = RD->bases_end(); I != E; ++I) {
+        if (I->isVirtual())
+          continue;
+        QualType Ty = I->getType();
+        if (Ty.isNull())
+          continue;
+        if (const CXXRecordDecl *NonVirtualBase = Ty->getAsCXXRecordDecl()) {
+          if (!(NonVirtualBase= NonVirtualBase->getDefinition()))
+            continue;
+        
+          if (comments::FullComment *FC = getCommentForDecl((NonVirtualBase), PP))
+            return cloneFullComment(FC, D);
+        }
+      }
+      // Check virtual bases.
+      for (CXXRecordDecl::base_class_const_iterator I =
+           RD->vbases_begin(), E = RD->vbases_end(); I != E; ++I) {
+        QualType Ty = I->getType();
+        if (Ty.isNull())
+          continue;
+        if (const CXXRecordDecl *VirtualBase = Ty->getAsCXXRecordDecl()) {
+          if (!(VirtualBase= VirtualBase->getDefinition()))
+            continue;
+          if (comments::FullComment *FC = getCommentForDecl((VirtualBase), PP))
+            return cloneFullComment(FC, D);
+        }
+      }
+    }
     return NULL;
   }
   
