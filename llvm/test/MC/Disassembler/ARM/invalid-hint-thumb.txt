@@ -1,0 +1,8 @@
+# RUN: llvm-mc -triple=thumbv7 -disassemble -show-encoding < %s 2>&1 | FileCheck %s
+
+#------------------------------------------------------------------------------
+# Undefined encoding space for hint instructions
+#------------------------------------------------------------------------------
+
+0xaf 0xf3 0x05 0x80
+# CHECK: invalid instruction encoding

@@ -582,7 +582,11 @@ def Imm0_3AsmOperand: ImmAsmOperand { let Name = "Imm0_3"; }
 def imm0_3 : Operand<i32> { let ParserMatchClass = Imm0_3AsmOperand; }
 
 /// imm0_4 predicate - Immediate in the range [0,4].
-def Imm0_4AsmOperand : ImmAsmOperand { let Name = "Imm0_4"; }
+def Imm0_4AsmOperand : ImmAsmOperand
+{ 
+  let Name = "Imm0_4"; 
+  let DiagnosticType = "ImmRange0_4";  
+}
 def imm0_4 : Operand<i32>, ImmLeaf<i32, [{ return Imm >= 0 && Imm < 5; }]> {
   let ParserMatchClass = Imm0_4AsmOperand;
   let DecoderMethod = "DecodeImm0_4";

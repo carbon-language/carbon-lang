@@ -3401,12 +3401,7 @@ class t2CPS<dag iops, string asm_op> : T2XI<(outs), iops, NoItinerary,
   bits<5> mode;
   bit M;
 
-  let Inst{31-27} = 0b11110;
-  let Inst{26}    = 0;
-  let Inst{25-20} = 0b111010;
-  let Inst{19-16} = 0b1111;
-  let Inst{15-14} = 0b10;
-  let Inst{12}    = 0;
+  let Inst{31-11} = 0b111100111010111110000;
   let Inst{10-9}  = imod;
   let Inst{8}     = M;
   let Inst{7-5}   = iflags;
@@ -3425,13 +3420,13 @@ let imod = 0, iflags = 0, M = 1 in
 
 // A6.3.4 Branches and miscellaneous control
 // Table A6-14 Change Processor State, and hint instructions
-def t2HINT : T2I<(outs), (ins imm0_255:$imm), NoItinerary, "hint", "\t$imm",[]>{
-  bits<8> imm;
-  let Inst{31-8} = 0b111100111010111110000000;
-  let Inst{7-0} = imm;
+def t2HINT : T2I<(outs), (ins imm0_4:$imm), NoItinerary, "hint", "\t$imm",[]> {
+  bits<3> imm;
+  let Inst{31-3} = 0b11110011101011111000000000000;
+  let Inst{2-0} = imm;
 }
 
-def : t2InstAlias<"hint$p.w $imm", (t2HINT imm0_255:$imm, pred:$p)>;
+def : t2InstAlias<"hint$p.w $imm", (t2HINT imm0_4:$imm, pred:$p)>;
 def : t2InstAlias<"nop$p.w", (t2HINT 0, pred:$p)>;
 def : t2InstAlias<"yield$p.w", (t2HINT 1, pred:$p)>;
 def : t2InstAlias<"wfe$p.w", (t2HINT 2, pred:$p)>;

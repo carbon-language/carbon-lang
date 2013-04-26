@@ -3486,8 +3486,6 @@ _func:
         wfelt
         wfige
         yieldlt
-        hint #5
-        hint.w #5
         hint.w #4
         hint #3
         hint #2
@@ -3501,8 +3499,6 @@ _func:
 @ CHECK: wfelt                          @ encoding: [0x20,0xbf]
 @ CHECK: wfige                          @ encoding: [0x30,0xbf]
 @ CHECK: yieldlt                        @ encoding: [0x10,0xbf]
-@ CHECK: hint	#5                      @ encoding: [0xaf,0xf3,0x05,0x80]
-@ CHECK: hint	#5                      @ encoding: [0xaf,0xf3,0x05,0x80]
 @ CHECK: sev.w                          @ encoding: [0xaf,0xf3,0x04,0x80]
 @ CHECK: wfi.w                          @ encoding: [0xaf,0xf3,0x03,0x80]
 @ CHECK: wfe.w                          @ encoding: [0xaf,0xf3,0x02,0x80]

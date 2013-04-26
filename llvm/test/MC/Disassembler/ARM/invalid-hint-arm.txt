@@ -1,0 +1,13 @@
+# RUN: llvm-mc -triple=armv7-apple-darwin -mcpu=cortex-a8 -disassemble < %s 2>&1 | FileCheck %s
+
+#------------------------------------------------------------------------------
+# Undefined encoding space for hint instructions
+#------------------------------------------------------------------------------
+
+0x05 0xf0 0x20 0xe3
+# CHECK: invalid instruction encoding
+0x41 0xf0 0x20 0xe3
+# CHECK: invalid instruction encoding
+0xfe 0xf0 0x20 0xe3
+# CHECK: invalid instruction encoding
+

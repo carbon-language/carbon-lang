@@ -1953,10 +1953,12 @@ static DecodeStatus DecodeT2CPSInstruction(MCInst &Inst, unsigned Insn,
     Inst.addOperand(MCOperand::CreateImm(mode));
     if (iflags) S = MCDisassembler::SoftFail;
   } else {
-    // imod == '00' && M == '0' --> UNPREDICTABLE
-    Inst.setOpcode(ARM::t2CPS1p);
-    Inst.addOperand(MCOperand::CreateImm(mode));
-    S = MCDisassembler::SoftFail;
+    // imod == '00' && M == '0' --> this is a HINT instruction
+    int imm = fieldFromInstruction(Insn, 0, 8);
+    // HINT are defined only for immediate in [0..4]
+    if(imm > 4) return MCDisassembler::Fail;
+    Inst.setOpcode(ARM::t2HINT);
+    Inst.addOperand(MCOperand::CreateImm(imm));
   }
 
   return S;
