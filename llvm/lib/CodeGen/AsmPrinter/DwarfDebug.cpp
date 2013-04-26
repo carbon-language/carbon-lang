@@ -1131,7 +1131,13 @@ static DotDebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
   }
   if (MI->getOperand(0).isReg() && MI->getOperand(1).isImm()) {
     MachineLocation MLoc;
-    MLoc.set(MI->getOperand(0).getReg(), MI->getOperand(1).getImm());
+    // TODO: Currently an offset of 0 in a DBG_VALUE means
+    // we need to generate a direct register value.
+    // There is no way to specify an indirect value with offset 0.
+    if (MI->getOperand(1).getImm() == 0)
+      MLoc.set(MI->getOperand(0).getReg());
+    else
+      MLoc.set(MI->getOperand(0).getReg(), MI->getOperand(1).getImm());
     return DotDebugLocEntry(FLabel, SLabel, MLoc, Var);
   }
   if (MI->getOperand(0).isImm())
