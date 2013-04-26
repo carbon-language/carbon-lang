@@ -304,16 +304,16 @@ struct Str {
     expected-note {{reinterpret_cast is not allowed in a constant expression}}
   int c : (S*)(long)(sptr) == (S*)(long)(sptr); // \
     expected-warning {{not an integral constant expression}} \
-    expected-note {{cast which performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
+    expected-note {{cast that performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
   int d : (S*)(42) == (S*)(42); // \
     expected-warning {{not an integral constant expression}} \
-    expected-note {{cast which performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
+    expected-note {{cast that performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
   int e : (Str*)(sptr) == (Str*)(sptr); // \
     expected-warning {{not an integral constant expression}} \
-    expected-note {{cast which performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
+    expected-note {{cast that performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
   int f : &(U&)(*sptr) == &(U&)(*sptr); // \
     expected-warning {{not an integral constant expression}} \
-    expected-note {{cast which performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
+    expected-note {{cast that performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
   int g : (S*)(void*)(sptr) == sptr; // \
     expected-warning {{not an integral constant expression}} \
     expected-note {{cast from 'void *' is not allowed in a constant expression}}
@@ -362,7 +362,7 @@ constexpr char c0 = "nought index"[0];
 constexpr char c1 = "nice index"[10];
 constexpr char c2 = "nasty index"[12]; // expected-error {{must be initialized by a constant expression}} expected-warning {{is past the end}} expected-note {{read of dereferenced one-past-the-end pointer}}
 constexpr char c3 = "negative index"[-1]; // expected-error {{must be initialized by a constant expression}} expected-warning {{is before the beginning}} expected-note {{cannot refer to element -1 of array of 15 elements}}
-constexpr char c4 = ((char*)(int*)"no reinterpret_casts allowed")[14]; // expected-error {{must be initialized by a constant expression}} expected-note {{cast which performs the conversions of a reinterpret_cast}}
+constexpr char c4 = ((char*)(int*)"no reinterpret_casts allowed")[14]; // expected-error {{must be initialized by a constant expression}} expected-note {{cast that performs the conversions of a reinterpret_cast}}
 
 constexpr const char *p = "test" + 2;
 static_assert(*p == 's', "");

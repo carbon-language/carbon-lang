@@ -60,7 +60,7 @@ int* y = reinterpret_cast<const char&>(x); // expected-error {{cannot initialize
 
 // This isn't an integral constant expression, but make sure it folds anyway.
 struct PR8836 { char _; long long a; }; // expected-warning {{long long}}
-int PR8836test[(__typeof(sizeof(int)))&reinterpret_cast<const volatile char&>((((PR8836*)0)->a))]; // expected-warning {{folded to constant array as an extension}} expected-note {{cast which performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
+int PR8836test[(__typeof(sizeof(int)))&reinterpret_cast<const volatile char&>((((PR8836*)0)->a))]; // expected-warning {{folded to constant array as an extension}} expected-note {{cast that performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
 
 const int nonconst = 1.0; // expected-note {{declared here}}
 int arr[nonconst]; // expected-warning {{folded to constant array as an extension}} expected-note {{initializer of 'nonconst' is not a constant expression}}

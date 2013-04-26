@@ -97,6 +97,7 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
     DeclT = S.Context.getConstantArrayType(IAT->getElementType(),
                                            ConstVal,
                                            ArrayType::Normal, 0);
+    Str->setType(DeclT);
     return;
   }
 

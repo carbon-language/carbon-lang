@@ -9,7 +9,7 @@ struct S {
   int n, m;
 };
 
-constexpr int extract(const S &s) { return s.n; } // expected-note {{read of uninitialized object is not allowed in a constant expression}}
+constexpr int extract(const S &s) { return s.n; } // expected-note {{read of object outside its lifetime is not allowed in a constant expression}}
 
 constexpr S s1; // ok
 void f() {

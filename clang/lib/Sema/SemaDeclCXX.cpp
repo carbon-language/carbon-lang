@@ -845,7 +845,8 @@ static bool CheckConstexprDeclStmt(Sema &SemaRef, const FunctionDecl *Dcl,
             << (VD->getTLSKind() == VarDecl::TLS_Dynamic);
           return false;
         }
-        if (SemaRef.RequireLiteralType(
+        if (!VD->getType()->isDependentType() &&
+            SemaRef.RequireLiteralType(
               VD->getLocation(), VD->getType(),
               diag::err_constexpr_local_var_non_literal_type,
               isa<CXXConstructorDecl>(Dcl)))
@@ -1135,11 +1136,11 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
       // statement. We still do, unless the return type is void, because
       // otherwise if there's no return statement, the function cannot
       // be used in a core constant expression.
+      bool OK = getLangOpts().CPlusPlus1y && Dcl->getResultType()->isVoidType();
       Diag(Dcl->getLocation(),
-           getLangOpts().CPlusPlus1y && Dcl->getResultType()->isVoidType()
-             ? diag::warn_cxx11_compat_constexpr_body_no_return
-             : diag::err_constexpr_body_no_return);
-      return false;
+           OK ? diag::warn_cxx11_compat_constexpr_body_no_return
+              : diag::err_constexpr_body_no_return);
+      return OK;
     }
     if (ReturnStmts.size() > 1) {
       Diag(ReturnStmts.back(),

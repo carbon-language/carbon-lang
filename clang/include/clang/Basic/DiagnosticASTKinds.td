@@ -12,7 +12,7 @@ let Component = "AST" in {
 // Constant expression diagnostics. These (and their users) belong in Sema.
 def note_expr_divide_by_zero : Note<"division by zero">;
 def note_constexpr_invalid_cast : Note<
-  "%select{reinterpret_cast|dynamic_cast|cast which performs the conversions of"
+  "%select{reinterpret_cast|dynamic_cast|cast that performs the conversions of"
   " a reinterpret_cast|cast from %1}0 is not allowed in a constant expression">;
 def note_constexpr_invalid_downcast : Note<
   "cannot cast object of dynamic type %0 to type %1">;
@@ -84,11 +84,20 @@ def note_constexpr_depth_limit_exceeded : Note<
 def note_constexpr_call_limit_exceeded : Note<
   "constexpr evaluation hit maximum call limit">;
 def note_constexpr_lifetime_ended : Note<
-  "read of %select{temporary|variable}0 whose lifetime has ended">;
-def note_constexpr_ltor_volatile_type : Note<
-  "read of volatile-qualified type %0 is not allowed in a constant expression">;
-def note_constexpr_ltor_volatile_obj : Note<
-  "read of volatile %select{temporary|object %1|member %1}0 is not allowed in "
+  "%select{read of|assignment to}0 %select{temporary|variable}1 "
+  "whose lifetime has ended">;
+def note_constexpr_access_uninit : Note<
+  "%select{read of|assignment to}0 object outside its lifetime "
+  "is not allowed in a constant expression">;
+def note_constexpr_modify_const_type : Note<
+  "modification of object of const-qualified type %0 is not allowed "
+  "in a constant expression">;
+def note_constexpr_access_volatile_type : Note<
+  "%select{read of|assignment to}0 volatile-qualified type %1 "
+  "is not allowed in a constant expression">;
+def note_constexpr_access_volatile_obj : Note<
+  "%select{read of|assignment to}0 volatile "
+  "%select{temporary|object %2|member %2}1 is not allowed in "
   "a constant expression">;
 def note_constexpr_ltor_mutable : Note<
   "read of mutable member %0 is not allowed in a constant expression">;
@@ -96,14 +105,19 @@ def note_constexpr_ltor_non_const_int : Note<
   "read of non-const variable %0 is not allowed in a constant expression">;
 def note_constexpr_ltor_non_constexpr : Note<
   "read of non-constexpr variable %0 is not allowed in a constant expression">;
-def note_constexpr_read_past_end : Note<
-  "read of dereferenced one-past-the-end pointer is not allowed in a "
-  "constant expression">;
-def note_constexpr_read_inactive_union_member : Note<
-  "read of member %0 of union with %select{active member %2|no active member}1 "
+def note_constexpr_access_null : Note<
+  "%select{read of|assignment to}0 dereferenced null pointer "
   "is not allowed in a constant expression">;
-def note_constexpr_read_uninit : Note<
-  "read of uninitialized object is not allowed in a constant expression">;
+def note_constexpr_access_past_end : Note<
+  "%select{read of|assignment to}0 dereferenced one-past-the-end pointer "
+  "is not allowed in a constant expression">;
+def note_constexpr_access_inactive_union_member : Note<
+  "%select{read of|assignment to}0 member %1 of union with "
+  "%select{active member %3|no active member}2 "
+  "is not allowed in a constant expression">;
+def note_constexpr_modify_global : Note<
+  "a constant expression cannot modify an object that is visible outside "
+  "that expression">;
 def note_constexpr_calls_suppressed : Note<
   "(skipping %0 call%s0 in backtrace; use -fconstexpr-backtrace-limit=0 to "
   "see all)">;
