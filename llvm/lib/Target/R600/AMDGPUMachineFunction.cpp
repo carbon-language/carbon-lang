@@ -1,4 +1,5 @@
 #include "AMDGPUMachineFunction.h"
+#include "AMDGPU.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 
@@ -8,6 +9,7 @@ const char *AMDGPUMachineFunction::ShaderTypeAttribute = "ShaderType";
 
 AMDGPUMachineFunction::AMDGPUMachineFunction(const MachineFunction &MF) :
     MachineFunctionInfo() {
+  ShaderType = ShaderType::COMPUTE;
   AttributeSet Set = MF.getFunction()->getAttributes();
   Attribute A = Set.getAttribute(AttributeSet::FunctionIndex,
                                  ShaderTypeAttribute);
