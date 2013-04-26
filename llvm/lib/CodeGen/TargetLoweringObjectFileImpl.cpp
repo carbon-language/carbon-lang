@@ -523,11 +523,6 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
 const MCSection *TargetLoweringObjectFileMachO::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler *Mang, const TargetMachine &TM) const {
-
-  // Handle thread local data.
-  if (Kind.isThreadBSS()) return TLSBSSSection;
-  if (Kind.isThreadData()) return TLSDataSection;
-
   if (Kind.isText())
     return GV->isWeakForLinker() ? TextCoalSection : TextSection;
 
@@ -579,6 +574,10 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   // with the .zerofill directive (aka .lcomm).
   if (Kind.isBSSLocal())
     return DataBSSSection;
+
+  // Handle thread local data.
+  if (Kind.isThreadBSS()) return TLSBSSSection;
+  if (Kind.isThreadData()) return TLSDataSection;
 
   // Otherwise, just drop the variable in the normal data section.
   return DataSection;
