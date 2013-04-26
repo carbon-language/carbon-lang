@@ -770,6 +770,11 @@ FormatManager::LoadObjCFormatters()
     AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCSELSummaryProvider<true>, "SEL summary provider", ConstString("SEL *"), objc_flags);
     
     AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCClassSummaryProvider, "Class summary provider", ConstString("Class"), objc_flags);
+    
+    SyntheticChildren::Flags class_synth_flags;
+    class_synth_flags.SetCascades(true).SetSkipPointers(false).SetSkipReferences(false);
+    
+    AddCXXSynthetic(objc_category_sp, lldb_private::formatters::ObjCClassSyntheticFrontEndCreator, "Class synthetic children", ConstString("Class"), class_synth_flags);
 #endif // LLDB_DISABLE_PYTHON
 
     objc_flags.SetSkipPointers(false);

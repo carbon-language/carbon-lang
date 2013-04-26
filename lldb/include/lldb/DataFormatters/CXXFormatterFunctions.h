@@ -81,6 +81,8 @@ namespace lldb_private {
         bool
         ObjCClassSummaryProvider (ValueObject& valobj, Stream& stream);
         
+        SyntheticChildrenFrontEnd* ObjCClassSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
+        
         template<bool name_entries>
         bool
         NSDictionarySummaryProvider (ValueObject& valobj, Stream& stream);

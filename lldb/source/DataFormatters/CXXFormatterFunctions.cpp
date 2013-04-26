@@ -761,6 +761,56 @@ lldb_private::formatters::ObjCClassSummaryProvider (ValueObject& valobj, Stream&
     return true;
 }
 
+class ObjCClassSyntheticChildrenFrontEnd : public SyntheticChildrenFrontEnd
+{
+public:
+    ObjCClassSyntheticChildrenFrontEnd (lldb::ValueObjectSP valobj_sp) :
+    SyntheticChildrenFrontEnd(*valobj_sp.get())
+    {
+    }
+    
+    virtual size_t
+    CalculateNumChildren ()
+    {
+        return 0;
+    }
+    
+    virtual lldb::ValueObjectSP
+    GetChildAtIndex (size_t idx)
+    {
+        return lldb::ValueObjectSP();
+    }
+    
+    virtual bool
+    Update()
+    {
+        return false;
+    }
+    
+    virtual bool
+    MightHaveChildren ()
+    {
+        return false;
+    }
+    
+    virtual size_t
+    GetIndexOfChildWithName (const ConstString &name)
+    {
+        return UINT32_MAX;
+    }
+    
+    virtual
+    ~ObjCClassSyntheticChildrenFrontEnd ()
+    {
+    }
+};
+
+SyntheticChildrenFrontEnd*
+lldb_private::formatters::ObjCClassSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp)
+{
+    return new ObjCClassSyntheticChildrenFrontEnd(valobj_sp);
+}
+
 template<bool needs_at>
 bool
 lldb_private::formatters::NSDataSummaryProvider (ValueObject& valobj, Stream& stream)
