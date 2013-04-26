@@ -234,7 +234,7 @@ lldb_private::ListLogCategories (Stream *strm)
                  "  all - turn on all available logging categories\n"
                  "  api - enable logging of API calls and return values\n"
                  "  break - log breakpoints\n"
-                 "  command - log command argument parsing\n"
+                 "  commands - log command argument parsing\n"
                  "  default - enable the default set of logging categories for liblldb\n"
                  "  dyld - log shared library related activities\n"
                  "  events - log broadcaster, listener and event queue activities\n"
