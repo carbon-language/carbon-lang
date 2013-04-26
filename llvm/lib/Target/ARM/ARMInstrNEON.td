@@ -4907,6 +4907,29 @@ def  VABSfq   : N2VQ<0b11, 0b11, 0b10, 0b01, 0b01110, 0,
                      "vabs", "f32",
                       v4f32, v4f32, fabs>;
 
+def : Pat<(xor (v2i32 (bitconvert (v8i8 (NEONvshrs DPR:$src, (i32 7))))),
+               (v2i32 (bitconvert (v8i8 (add DPR:$src,
+                                             (NEONvshrs DPR:$src, (i32 7))))))),
+          (VABSv8i8 DPR:$src)>;
+def : Pat<(xor (v2i32 (bitconvert (v4i16 (NEONvshrs DPR:$src, (i32 15))))),
+               (v2i32 (bitconvert (v4i16 (add DPR:$src,
+                                            (NEONvshrs DPR:$src, (i32 15))))))),
+          (VABSv4i16 DPR:$src)>;
+def : Pat<(xor (v2i32 (NEONvshrs DPR:$src, (i32 31))),
+               (v2i32 (add DPR:$src, (NEONvshrs DPR:$src, (i32 31))))),
+          (VABSv2i32 DPR:$src)>;
+def : Pat<(xor (v4i32 (bitconvert (v16i8 (NEONvshrs QPR:$src, (i32 7))))),
+               (v4i32 (bitconvert (v16i8 (add QPR:$src,
+                                             (NEONvshrs QPR:$src, (i32 7))))))),
+          (VABSv16i8 QPR:$src)>;
+def : Pat<(xor (v4i32 (bitconvert (v8i16 (NEONvshrs QPR:$src, (i32 15))))),
+               (v4i32 (bitconvert (v8i16 (add QPR:$src,
+                                            (NEONvshrs QPR:$src, (i32 15))))))),
+          (VABSv8i16 QPR:$src)>;
+def : Pat<(xor (v4i32 (NEONvshrs QPR:$src, (i32 31))),
+               (v4i32 (add QPR:$src, (NEONvshrs QPR:$src, (i32 31))))),
+          (VABSv4i32 QPR:$src)>;
+
 def : Pat<(v2f32 (int_arm_neon_vabs (v2f32 DPR:$src))), (VABSfd DPR:$src)>;
 def : Pat<(v4f32 (int_arm_neon_vabs (v4f32 QPR:$src))), (VABSfq QPR:$src)>;
 
