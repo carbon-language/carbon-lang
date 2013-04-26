@@ -849,7 +849,7 @@ static bool LdStHasDebugValue(DIVariable &DIVar, Instruction *I) {
   return false;
 }
 
-/// Inserts a llvm.dbg.value instrinsic before a store to an alloca'd value
+/// Inserts a llvm.dbg.value intrinsic before a store to an alloca'd value
 /// that has an associated llvm.dbg.decl intrinsic.
 bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                            StoreInst *SI, DIBuilder &Builder) {
@@ -883,7 +883,7 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
   return true;
 }
 
-/// Inserts a llvm.dbg.value instrinsic before a load of an alloca'd value
+/// Inserts a llvm.dbg.value intrinsic before a load of an alloca'd value
 /// that has an associated llvm.dbg.decl intrinsic.
 bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                            LoadInst *LI, DIBuilder &Builder) {
