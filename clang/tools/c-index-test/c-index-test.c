@@ -2105,14 +2105,19 @@ static int inspect_cursor_at(int argc, const char **argv) {
 
         {
           CXModule mod = clang_Cursor_getModule(Cursor);
-          CXString name;
+          CXFile astFile;
+          CXString name, astFilename;
           unsigned i, numHeaders;
           if (mod) {
+            astFile = clang_Module_getASTFile(mod);
+            astFilename = clang_getFileName(astFile);
             name = clang_Module_getFullName(mod);
             numHeaders = clang_Module_getNumTopLevelHeaders(TU, mod);
-            printf(" ModuleName=%s Headers(%d):",
-                   clang_getCString(name), numHeaders);
+            printf(" ModuleName=%s (%s) Headers(%d):",
+                   clang_getCString(name), clang_getCString(astFilename),
+                   numHeaders);
             clang_disposeString(name);
+            clang_disposeString(astFilename);
             for (i = 0; i < numHeaders; ++i) {
               CXFile file = clang_Module_getTopLevelHeader(TU, mod, i);
               CXString filename = clang_getFileName(file);

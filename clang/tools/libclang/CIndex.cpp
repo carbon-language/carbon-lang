@@ -6055,6 +6055,13 @@ CXModule clang_Cursor_getModule(CXCursor C) {
   return 0;
 }
 
+CXFile clang_Module_getASTFile(CXModule CXMod) {
+  if (!CXMod)
+    return 0;
+  Module *Mod = static_cast<Module*>(CXMod);
+  return const_cast<FileEntry *>(Mod->getASTFile());
+}
+
 CXModule clang_Module_getParent(CXModule CXMod) {
   if (!CXMod)
     return 0;

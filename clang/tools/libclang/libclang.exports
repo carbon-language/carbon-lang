@@ -21,6 +21,7 @@ clang_Cursor_isDynamicCall
 clang_Cursor_isNull
 clang_Cursor_isVariadic
 clang_Cursor_getModule
+clang_Module_getASTFile
 clang_Module_getParent
 clang_Module_getName
 clang_Module_getFullName

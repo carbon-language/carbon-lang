@@ -40,3 +40,10 @@ int glob;
 // CHECK-MOD-NEXT: Punctuation: "*" [2:5 - 2:6] VarDecl=Module_Sub:2:6
 // CHECK-MOD-NEXT: Identifier: "Module_Sub" [2:6 - 2:16] VarDecl=Module_Sub:2:6
 // CHECK-MOD-NEXT: Punctuation: ";" [2:16 - 2:17]
+
+// RUN: c-index-test -cursor-at=%s:3:11 %s -fmodules-cache-path=%t.cache -fmodules -F %S/../Modules/Inputs \
+// RUN:     | FileCheck %s -check-prefix=CHECK-CURSOR
+
+// CHECK-CURSOR:      3:1 ModuleImport=DependsOnModule:3:1 (Definition) Extent=[3:1 - 3:24] Spelling=DependsOnModule ([3:9 - 3:24]) ModuleName=DependsOnModule ({{.*}}DependsOnModule.pcm) Headers(2):
+// CHECK-CURSOR-NEXT: {{.*}}other.h
+// CHECK-CURSOR-NEXT: {{.*}}DependsOnModule.h

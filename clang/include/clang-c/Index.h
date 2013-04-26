@@ -3467,6 +3467,13 @@ CINDEX_LINKAGE CXModule clang_Cursor_getModule(CXCursor C);
 /**
  * \param Module a module object.
  *
+ * \returns the module file where the provided module object came from.
+ */
+CINDEX_LINKAGE CXFile clang_Module_getASTFile(CXModule Module);
+
+/**
+ * \param Module a module object.
+ *
  * \returns the parent of a sub-module or NULL if the given module is top-level,
  * e.g. for 'std.vector' it will return the 'std' module.
  */
