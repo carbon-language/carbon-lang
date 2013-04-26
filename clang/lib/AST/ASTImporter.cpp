@@ -839,6 +839,12 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     RecordDecl *D2 = Field2->getType()->castAs<RecordType>()->getDecl();
     return IsStructurallyEquivalent(Context, D1, D2);
   }
+    
+  // Check for equivalent field names.
+  IdentifierInfo *Name1 = Field1->getIdentifier();
+  IdentifierInfo *Name2 = Field2->getIdentifier();
+  if (!::IsStructurallyEquivalent(Name1, Name2))
+    return false;
 
   if (!IsStructurallyEquivalent(Context,
                                 Field1->getType(), Field2->getType())) {
