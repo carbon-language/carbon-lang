@@ -294,6 +294,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
       source.reset(ChainedIncludesSource::create(CI));
       if (!source)
         goto failure;
+      CI.setModuleManager(static_cast<ASTReader*>(
+         &static_cast<ChainedIncludesSource*>(source.get())->getFinalReader()));
       CI.getASTContext().setExternalSource(source);
 
     } else if (!CI.getPreprocessorOpts().ImplicitPCHInclude.empty()) {

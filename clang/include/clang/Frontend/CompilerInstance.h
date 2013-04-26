@@ -427,6 +427,7 @@ public:
   /// {
 
   ASTReader *getModuleManager() const { return ModuleManager; }
+  void setModuleManager(ASTReader *Reader) { ModuleManager = Reader; }
 
   /// }
   /// @name Code Completion

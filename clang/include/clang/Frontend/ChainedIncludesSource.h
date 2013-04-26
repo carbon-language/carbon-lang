@@ -26,9 +26,9 @@ public:
 
   static ChainedIncludesSource *create(CompilerInstance &CI);
 
-private:
   ExternalSemaSource &getFinalReader() const { return *FinalReader; }
 
+private:
   std::vector<CompilerInstance *> CIs;
   OwningPtr<ExternalSemaSource> FinalReader;
 

@@ -143,6 +143,7 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
         Clang->getASTConsumer().GetASTDeserializationListener()));
       if (!Reader)
         return 0;
+      Clang->setModuleManager(static_cast<ASTReader*>(Reader.get()));
       Clang->getASTContext().setExternalSource(Reader);
     }
     
