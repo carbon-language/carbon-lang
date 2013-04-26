@@ -14,10 +14,9 @@ fi
 
 COMMIT=$1
 
-SVN_REVISION=$(git log -1 $COMMIT | grep git-svn-id | tr -s "@" " " | cut -f 4 -d " ")
-
-if [ -z "$SVN_REVISION" ]; then
-    echo "Error! Given commit is not a git-svn revision!"
+SVN_REVISION=$(git svn find-rev "$COMMIT")
+if [ $? -ne 0 ]; then
+    echo "Error! Could not find an svn revision for commit $COMMIT!"
     exit 1
 fi
 
