@@ -469,7 +469,7 @@ comments::FullComment *ASTContext::getCommentForDecl(
       // Check non-virtual bases.
       for (CXXRecordDecl::base_class_const_iterator I =
            RD->bases_begin(), E = RD->bases_end(); I != E; ++I) {
-        if (I->isVirtual())
+        if (I->isVirtual() || (I->getAccessSpecifier() != AS_public))
           continue;
         QualType Ty = I->getType();
         if (Ty.isNull())
@@ -485,6 +485,8 @@ comments::FullComment *ASTContext::getCommentForDecl(
       // Check virtual bases.
       for (CXXRecordDecl::base_class_const_iterator I =
            RD->vbases_begin(), E = RD->vbases_end(); I != E; ++I) {
+        if (I->getAccessSpecifier() != AS_public)
+          continue;
         QualType Ty = I->getType();
         if (Ty.isNull())
           continue;
