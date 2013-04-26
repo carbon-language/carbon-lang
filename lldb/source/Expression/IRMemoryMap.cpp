@@ -235,8 +235,14 @@ IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, Alloc
     lldb::ProcessSP process_sp;
     lldb::addr_t    allocation_address  = LLDB_INVALID_ADDRESS;
     lldb::addr_t    aligned_address     = LLDB_INVALID_ADDRESS;
-    
-    size_t          allocation_size = (size ? size : 1) + alignment - 1;
+
+    size_t          alignment_mask = alignment - 1;
+    size_t          allocation_size;
+
+    if (size == 0)
+        allocation_size = alignment;
+    else
+        allocation_size = (size & alignment_mask) ? ((size + alignment) & (~alignment_mask)) : size;
     
     switch (policy)
     {
@@ -305,7 +311,7 @@ IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, Alloc
 
     m_allocations[aligned_address] = Allocation(allocation_address,
                                                 aligned_address,
-                                                size,
+                                                allocation_size,
                                                 permissions,
                                                 alignment,
                                                 policy);
@@ -331,7 +337,7 @@ IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, Alloc
         }
         
         log->Printf("IRMemoryMap::Malloc (%llu, 0x%llx, 0x%llx, %s) -> 0x%llx",
-                    (uint64_t)size,
+                    (uint64_t)allocation_size,
                     (uint64_t)alignment,
                     (uint64_t)permissions,
                     policy_string,
