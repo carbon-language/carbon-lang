@@ -257,7 +257,8 @@ static bool checkPreprocessorOptions(const PreprocessorOptions &PPOpts,
                                      const PreprocessorOptions &ExistingPPOpts,
                                      DiagnosticsEngine *Diags,
                                      FileManager &FileMgr,
-                                     std::string &SuggestedPredefines) {
+                                     std::string &SuggestedPredefines,
+                                     const LangOptions &LangOpts) {
   // Check macro definitions.
   MacroDefinitionsMap ASTFileMacros;
   collectMacroDefinitions(PPOpts, ASTFileMacros);
@@ -323,6 +324,15 @@ static bool checkPreprocessorOptions(const PreprocessorOptions &PPOpts,
     return true;
   }
 
+  // Detailed record is important since it is used for the module cache hash.
+  if (LangOpts.Modules &&
+      PPOpts.DetailedRecord != ExistingPPOpts.DetailedRecord) {
+    if (Diags) {
+      Diags->Report(diag::err_pch_pp_detailed_record) << PPOpts.DetailedRecord;
+    }
+    return true;
+  }
+
   // Compute the #include and #include_macros lines we need.
   for (unsigned I = 0, N = ExistingPPOpts.Includes.size(); I != N; ++I) {
     StringRef File = ExistingPPOpts.Includes[I];
@@ -363,7 +373,8 @@ bool PCHValidator::ReadPreprocessorOptions(const PreprocessorOptions &PPOpts,
   return checkPreprocessorOptions(PPOpts, ExistingPPOpts,
                                   Complain? &Reader.Diags : 0,
                                   PP.getFileManager(),
-                                  SuggestedPredefines);
+                                  SuggestedPredefines,
+                                  PP.getLangOpts());
 }
 
 void PCHValidator::ReadHeaderFileInfo(const HeaderFileInfo &HFI,
@@ -3427,7 +3438,7 @@ namespace {
                                          bool Complain,
                                          std::string &SuggestedPredefines) {
       return checkPreprocessorOptions(ExistingPPOpts, PPOpts, 0, FileMgr,
-                                      SuggestedPredefines);
+                                      SuggestedPredefines, ExistingLangOpts);
     }
   };
 }
@@ -4004,6 +4015,7 @@ bool ASTReader::ParsePreprocessorOptions(const RecordData &Record,
   }
 
   PPOpts.UsePredefines = Record[Idx++];
+  PPOpts.DetailedRecord = Record[Idx++];
   PPOpts.ImplicitPCHInclude = ReadString(Record, Idx);
   PPOpts.ImplicitPTHInclude = ReadString(Record, Idx);
   PPOpts.ObjCXXARCStandardLibrary =

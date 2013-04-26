@@ -82,10 +82,10 @@ int LocalVar2;
 // TOP: Identifier: "TARGETED_TOP_H" [2:9 - 2:23] preprocessing directive=
 // TOP: Punctuation: "#" [3:1 - 3:2] preprocessing directive=
 // TOP: Identifier: "define" [3:2 - 3:8] preprocessing directive=
-// TOP: Identifier: "TARGETED_TOP_H" [3:9 - 3:23] preprocessing directive=
-// TOP: Punctuation: "#" [5:1 - 5:2] preprocessing directive=
-// TOP: Identifier: "include" [5:2 - 5:9] preprocessing directive=
-// TOP: Literal: ""targeted-nested1.h"" [5:10 - 5:30] preprocessing directive=
+// TOP: Identifier: "TARGETED_TOP_H" [3:9 - 3:23] macro definition=TARGETED_TOP_H
+// TOP: Punctuation: "#" [5:1 - 5:2] inclusion directive=targeted-nested1.h
+// TOP: Identifier: "include" [5:2 - 5:9] inclusion directive=targeted-nested1.h
+// TOP: Literal: ""targeted-nested1.h"" [5:10 - 5:30] inclusion directive=targeted-nested1.h
 // TOP: Keyword: "enum" [7:1 - 7:5] EnumDecl=:7:1 (Definition)
 // TOP: Punctuation: "{" [7:6 - 7:7] EnumDecl=:7:1 (Definition)
 // TOP: Identifier: "VALUE" [8:3 - 8:8] EnumConstantDecl=VALUE:8:3 (Definition)

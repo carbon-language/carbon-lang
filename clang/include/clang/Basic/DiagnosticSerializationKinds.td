@@ -58,6 +58,10 @@ def err_pch_undef : Error<
     "%select{command line contains|precompiled header was built with}0 "
     "'-undef' but %select{precompiled header was not built with it|"
     "it is not present on the command line}0">;
+def err_pch_pp_detailed_record : Error<
+    "%select{command line contains|precompiled header was built with}0 "
+    "'-detailed-preprocessing-record' but %select{precompiled header was not "
+    "built with it|it is not present on the command line}0">;
 
 def err_not_a_pch_file : Error<
     "'%0' does not appear to be a precompiled header file">, DefaultFatal;

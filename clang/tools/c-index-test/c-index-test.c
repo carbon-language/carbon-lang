@@ -3508,6 +3508,7 @@ int write_pch_file(const char *filename, int argc, const char *argv[]) {
                                   unsaved_files,
                                   num_unsaved_files,
                                   CXTranslationUnit_Incomplete |
+                                  CXTranslationUnit_DetailedPreprocessingRecord|
                                     CXTranslationUnit_ForSerialization);
   if (!TU) {
     fprintf(stderr, "Unable to load translation unit!\n");
