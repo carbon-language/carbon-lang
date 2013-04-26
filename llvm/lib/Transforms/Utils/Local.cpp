@@ -832,13 +832,33 @@ unsigned llvm::getOrEnforceKnownAlignment(Value *V, unsigned PrefAlign,
 ///  Dbg Intrinsic utilities
 ///
 
-/// Inserts a llvm.dbg.value instrinsic before the stores to an alloca'd value
+/// See if there is a dbg.value intrinsic for DIVar before I.
+static bool LdStHasDebugValue(DIVariable &DIVar, Instruction *I) {
+  // Since we can't guarantee that the original dbg.declare instrinsic
+  // is removed by LowerDbgDeclare(), we need to make sure that we are
+  // not inserting the same dbg.value intrinsic over and over.
+  llvm::BasicBlock::InstListType::iterator PrevI(I);
+  if (PrevI != I->getParent()->getInstList().begin()) {
+    --PrevI;
+    if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(PrevI))
+      if (DVI->getValue() == I->getOperand(0) &&
+          DVI->getOffset() == 0 &&
+          DVI->getVariable() == DIVar)
+        return true;
+  }
+  return false;
+}
+
+/// Inserts a llvm.dbg.value instrinsic before a store to an alloca'd value
 /// that has an associated llvm.dbg.decl intrinsic.
 bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                            StoreInst *SI, DIBuilder &Builder) {
   DIVariable DIVar(DDI->getVariable());
   if (!DIVar.Verify())
     return false;
+
+  if (LdStHasDebugValue(DIVar, SI))
+    return true;
 
   Instruction *DbgVal = NULL;
   // If an argument is zero extended then use argument directly. The ZExt
@@ -863,13 +883,16 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
   return true;
 }
 
-/// Inserts a llvm.dbg.value instrinsic before the stores to an alloca'd value
+/// Inserts a llvm.dbg.value instrinsic before a load of an alloca'd value
 /// that has an associated llvm.dbg.decl intrinsic.
 bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                            LoadInst *LI, DIBuilder &Builder) {
   DIVariable DIVar(DDI->getVariable());
   if (!DIVar.Verify())
     return false;
+
+  if (LdStHasDebugValue(DIVar, LI))
+    return true;
 
   Instruction *DbgVal = 
     Builder.insertDbgValueIntrinsic(LI->getOperand(0), 0,
@@ -902,6 +925,8 @@ bool llvm::LowerDbgDeclare(Function &F) {
          E = Dbgs.end(); I != E; ++I) {
     DbgDeclareInst *DDI = *I;
     if (AllocaInst *AI = dyn_cast_or_null<AllocaInst>(DDI->getAddress())) {
+      // We only remove the dbg.declare intrinsic if all uses are
+      // converted to dbg.value intrinsics.
       bool RemoveDDI = true;
       for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
            UI != E; ++UI)
