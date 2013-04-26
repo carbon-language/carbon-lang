@@ -855,6 +855,25 @@ class MDForm_1<bits<6> opcode, bits<3> xo, dag OOL, dag IOL, string asmstr,
   let Inst{31}    = RC;
 }
 
+class MDSForm_1<bits<6> opcode, bits<4> xo, dag OOL, dag IOL, string asmstr,
+                InstrItinClass itin, list<dag> pattern>
+    : I<opcode, OOL, IOL, asmstr, itin> {
+  bits<5> RA;
+  bits<5> RS;
+  bits<5> RB;
+  bits<6> MBE;
+
+  let Pattern = pattern;
+
+  bit RC = 0;    // set by isDOT
+
+  let Inst{6-10}  = RS;
+  let Inst{11-15} = RA;
+  let Inst{16-20} = RB;
+  let Inst{21-26} = MBE{4,3,2,1,0,5};
+  let Inst{27-30} = xo;
+  let Inst{31}    = RC;
+}
 
 
 // E-1 VA-Form

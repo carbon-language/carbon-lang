@@ -587,6 +587,20 @@ multiclass MDForm_1r<bits<6> opcode, bits<3> xo, dag OOL, dag IOL,
   }
 }
 
+multiclass MDSForm_1r<bits<6> opcode, bits<4> xo, dag OOL, dag IOL,
+                     string asmbase, string asmstr, InstrItinClass itin,
+                     list<dag> pattern> {
+  let BaseName = asmbase in {
+    def NAME : MDSForm_1<opcode, xo, OOL, IOL,
+                        !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
+                        pattern>, RecFormRel;
+    let Defs = [CR0] in
+    def o    : MDSForm_1<opcode, xo, OOL, IOL,
+                        !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
+                        []>, isDOT, RecFormRel;
+  }
+}
+
 multiclass XSForm_1rc<bits<6> opcode, bits<9> xo, dag OOL, dag IOL,
                       string asmbase, string asmstr, InstrItinClass itin,
                       list<dag> pattern> {

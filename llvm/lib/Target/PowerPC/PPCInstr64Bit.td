@@ -526,14 +526,14 @@ defm MULLD : XOForm_1r<31, 233, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
 let neverHasSideEffects = 1 in {
 let isCommutable = 1 in {
 defm RLDIMI : MDForm_1r<30, 3, (outs G8RC:$rA),
-                        (ins G8RC:$rSi, G8RC:$rS, u6imm:$SH, u6imm:$MB),
-                        "rldimi", "$rA, $rS, $SH, $MB", IntRotateDI,
+                        (ins G8RC:$rSi, G8RC:$rS, u6imm:$SH, u6imm:$MBE),
+                        "rldimi", "$rA, $rS, $SH, $MBE", IntRotateDI,
                         []>, isPPC64, RegConstraint<"$rSi = $rA">,
                         NoEncode<"$rSi">;
 }
 
 // Rotate instructions.
-defm RLDCL  : MDForm_1r<30, 0,
+defm RLDCL  : MDSForm_1r<30, 8,
                         (outs G8RC:$rA), (ins G8RC:$rS, GPRC:$rB, u6imm:$MBE),
                         "rldcl", "$rA, $rS, $rB, $MBE", IntRotateD,
                         []>, isPPC64;
