@@ -114,9 +114,9 @@ TinyTripCountVectorThreshold("vectorizer-min-trip-count", cl::init(16),
 /// We don't unroll loops with a known constant trip count below this number.
 static const unsigned TinyTripCountUnrollThreshold = 128;
 
-/// When performing a runtime memory check, do not check more than this
-/// number of pointers. Notice that the check is quadratic!
-static const unsigned RuntimeMemoryCheckThreshold = 4;
+/// When performing memory disambiguation checks at runtime do not make more
+/// than this number of comparisons.
+static const unsigned RuntimeMemoryCheckThreshold = 8;
 
 /// We use a metadata with this name  to indicate that a scalar loop was
 /// vectorized and that we don't need to re-vectorize it if we run into it
@@ -2679,6 +2679,9 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     return true;
   }
 
+  unsigned NumReadPtrs = 0;
+  unsigned NumWritePtrs = 0;
+
   // Find pointers with computable bounds. We are going to use this information
   // to place a runtime bound check.
   bool CanDoRT = true;
@@ -2687,6 +2690,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     Value *V = (*MI).first;
     if (hasComputableBounds(V)) {
       PtrRtCheck.insert(SE, TheLoop, V, true);
+      NumWritePtrs++;
       DEBUG(dbgs() << "LV: Found a runtime check ptr:" << *V <<"\n");
     } else {
       CanDoRT = false;
@@ -2697,6 +2701,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     Value *V = (*MI).first;
     if (hasComputableBounds(V)) {
       PtrRtCheck.insert(SE, TheLoop, V, false);
+      NumReadPtrs++;
       DEBUG(dbgs() << "LV: Found a runtime check ptr:" << *V <<"\n");
     } else {
       CanDoRT = false;
@@ -2706,7 +2711,9 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
 
   // Check that we did not collect too many pointers or found a
   // unsizeable pointer.
-  if (!CanDoRT || PtrRtCheck.Pointers.size() > RuntimeMemoryCheckThreshold) {
+  unsigned NumComparisons = (NumWritePtrs * (NumReadPtrs + NumWritePtrs - 1));
+  DEBUG(dbgs() << "LV: We need to compare " << NumComparisons << " ptrs.\n");
+  if (!CanDoRT || NumComparisons > RuntimeMemoryCheckThreshold) {
     PtrRtCheck.reset();
     CanDoRT = false;
   }
