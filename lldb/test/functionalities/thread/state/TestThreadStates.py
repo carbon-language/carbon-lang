@@ -82,20 +82,6 @@ class StopThreadsTestCase(TestBase):
         self.assertFalse(thread.IsStopped(), "Thread state is \'stopped\' when it should be running.")
         self.assertFalse(thread.IsSuspended(), "Thread state is \'suspended\' when it should be running.")
 
-        # Suspend the thread
-        thread.Suspend()
-
-        # Make sure the thread is in the suspended state (which means it is also stopped).
-        self.assertTrue(thread.IsSuspended(), "Thread state isn't \'suspended\' during suspend.")
-        self.assertTrue(thread.IsStopped(), "Thread state isn't \'stopped\' during suspend.")
-
-        # Resume the thread
-        thread.Resume()
-
-        # Check the thread state. It should be running.
-        self.assertFalse(thread.IsStopped(), "Thread state is \'stopped\' after thread resume.")
-        self.assertFalse(thread.IsSuspended(), "Thread state is \'suspended\' after thread resume.")
-
         # Go back to synchronous interactions
         self.dbg.SetAsync(False)
 
