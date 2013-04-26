@@ -28,6 +28,11 @@ void isdoxy6(void);
 /** But there are other blocks that are part of the comment, too.  IS_DOXYGEN_END */
 void multi_line_comment_plus_ordinary(int);
 
+// MULTILINE COMMENT
+//
+// WITH EMPTY LINE
+void multi_line_comment_empty_line(int);
+
 #endif
 
 // RUN: rm -rf %t
@@ -54,3 +59,4 @@ void multi_line_comment_plus_ordinary(int);
 // CHECK: parse-all-comments.c:19:6: FunctionDecl=isdoxy5:{{.*}} isdoxy5 IS_DOXYGEN_SINGLE
 // CHECK: parse-all-comments.c:22:6: FunctionDecl=isdoxy6:{{.*}} isdoxy6 IS_DOXYGEN_SINGLE
 // CHECK: parse-all-comments.c:29:6: FunctionDecl=multi_line_comment_plus_ordinary:{{.*}} BLOCK_ORDINARY_COMMENT {{.*}} ORDINARY COMMENT {{.*}} IS_DOXYGEN_START {{.*}} IS_DOXYGEN_END
+// CHECK: parse-all-comments.c:34:6: FunctionDecl=multi_line_comment_empty_line:{{.*}} MULTILINE COMMENT{{.*}}\n{{.*}}\n{{.*}} WITH EMPTY LINE

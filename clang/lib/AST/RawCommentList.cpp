@@ -21,8 +21,10 @@ using namespace clang;
 
 namespace {
 /// Get comment kind and bool describing if it is a trailing comment.
-std::pair<RawComment::CommentKind, bool> getCommentKind(StringRef Comment) {
-  if (Comment.size() < 3 || Comment[0] != '/')
+std::pair<RawComment::CommentKind, bool> getCommentKind(StringRef Comment,
+                                                        bool ParseAllComments) {
+  const size_t MinCommentLength = ParseAllComments ? 2 : 3;
+  if ((Comment.size() < MinCommentLength) || Comment[0] != '/')
     return std::make_pair(RawComment::RCK_Invalid, false);
 
   RawComment::CommentKind K;
@@ -76,7 +78,7 @@ RawComment::RawComment(const SourceManager &SourceMgr, SourceRange SR,
 
   if (!Merged) {
     // Guess comment kind.
-    std::pair<CommentKind, bool> K = getCommentKind(RawText);
+    std::pair<CommentKind, bool> K = getCommentKind(RawText, ParseAllComments);
     Kind = K.first;
     IsTrailingComment = K.second;
 
