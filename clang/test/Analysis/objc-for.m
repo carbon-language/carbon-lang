@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=osx.cocoa.Loops,debug.ExprInspection -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.Loops,debug.ExprInspection -verify %s
 
 void clang_analyzer_eval(int);
 
@@ -54,5 +54,17 @@ void testWithVarInFor() {
     clang_analyzer_eval(x != nil); // expected-warning{{TRUE}}
   for (id x in [NSPointerArray testObject])
     clang_analyzer_eval(x != nil); // expected-warning{{UNKNOWN}}
+}
+
+void testNonNil(id a, id b) {
+  clang_analyzer_eval(a != nil); // expected-warning{{UNKNOWN}}
+  for (id x in a)
+    clang_analyzer_eval(a != nil); // expected-warning{{TRUE}}
+
+  if (b != nil)
+    return;
+  for (id x in b)
+    *(volatile int *)0 = 1; // no-warning
+  clang_analyzer_eval(b != nil); // expected-warning{{FALSE}}
 }
 
