@@ -2351,12 +2351,12 @@ public:
   };
 private:
   /// Language - The language for this linkage specification.
-  LanguageIDs Language;
+  unsigned Language : 3;
   /// True if this linkage spec has brances. This is needed so that hasBraces()
   /// returns the correct result while the linkage spec body is being parsed.
   /// Once RBraceLoc has been set this is not used, so it doesn't need to be
   /// serialized.
-  bool HasBraces;
+  unsigned HasBraces : 1;
   /// ExternLoc - The source location for the extern keyword.
   SourceLocation ExternLoc;
   /// RBraceLoc - The source location for the right brace (if valid).
@@ -2376,7 +2376,7 @@ public:
   static LinkageSpecDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
   /// \brief Return the language specified by this linkage specification.
-  LanguageIDs getLanguage() const { return Language; }
+  LanguageIDs getLanguage() const { return LanguageIDs(Language); }
   /// \brief Set the language specified by this linkage specification.
   void setLanguage(LanguageIDs L) { Language = L; }
 
