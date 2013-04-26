@@ -124,13 +124,15 @@ Ideas for new Tools
   ``foo.begin()`` into ``begin(foo)`` and similarly for ``end()``, where
   ``foo`` is a standard container.  We could also detect similar patterns for
   arrays.
-* ``make_shared`` / ``make_unique`` conversion.  This transformation can be
-  incorporated into the ``auto`` transformation.  Will convert
+* ``make_shared`` / ``make_unique`` conversion.  Part of this transformation
+can be incorporated into the ``auto`` transformation.  Will convert
 
   .. code-block:: c++
 
     std::shared_ptr<Foo> sp(new Foo);
     std::unique_ptr<Foo> up(new Foo);
+
+    func(std::shared_ptr<Foo>(new Foo), bar());
 
   into:
 
@@ -138,6 +140,10 @@ Ideas for new Tools
 
     auto sp = std::make_shared<Foo>();
     auto up = std::make_unique<Foo>(); // In C++14 mode.
+
+    // This also affects correctness.  For the cases where bar() throws,
+    // make_shared() is safe and the original code may leak.
+    func(std::make_shared<Foo>(), bar());
 
 * ``tr1`` removal tool.  Will migrate source code from using TR1 library
   features to C++11 library.  For example:
