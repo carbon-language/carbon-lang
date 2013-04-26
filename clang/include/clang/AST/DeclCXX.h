@@ -2352,22 +2352,27 @@ public:
 private:
   /// Language - The language for this linkage specification.
   LanguageIDs Language;
+  /// True if this linkage spec has brances. This is needed so that hasBraces()
+  /// returns the correct result while the linkage spec body is being parsed.
+  /// Once RBraceLoc has been set this is not used, so it doesn't need to be
+  /// serialized.
+  bool HasBraces;
   /// ExternLoc - The source location for the extern keyword.
   SourceLocation ExternLoc;
   /// RBraceLoc - The source location for the right brace (if valid).
   SourceLocation RBraceLoc;
 
   LinkageSpecDecl(DeclContext *DC, SourceLocation ExternLoc,
-                  SourceLocation LangLoc, LanguageIDs lang,
-                  SourceLocation RBLoc)
+                  SourceLocation LangLoc, LanguageIDs lang, bool HasBraces)
     : Decl(LinkageSpec, DC, LangLoc), DeclContext(LinkageSpec),
-      Language(lang), ExternLoc(ExternLoc), RBraceLoc(RBLoc) { }
+      Language(lang), HasBraces(HasBraces), ExternLoc(ExternLoc),
+      RBraceLoc(SourceLocation()) { }
 
 public:
   static LinkageSpecDecl *Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation ExternLoc,
                                  SourceLocation LangLoc, LanguageIDs Lang,
-                                 SourceLocation RBraceLoc = SourceLocation());
+                                 bool HasBraces);
   static LinkageSpecDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
   /// \brief Return the language specified by this linkage specification.
@@ -2377,12 +2382,18 @@ public:
 
   /// \brief Determines whether this linkage specification had braces in
   /// its syntactic form.
-  bool hasBraces() const { return RBraceLoc.isValid(); }
+  bool hasBraces() const {
+    assert(!RBraceLoc.isValid() || HasBraces);
+    return HasBraces;
+  }
 
   SourceLocation getExternLoc() const { return ExternLoc; }
   SourceLocation getRBraceLoc() const { return RBraceLoc; }
   void setExternLoc(SourceLocation L) { ExternLoc = L; }
-  void setRBraceLoc(SourceLocation L) { RBraceLoc = L; }
+  void setRBraceLoc(SourceLocation L) {
+    RBraceLoc = L;
+    HasBraces = RBraceLoc.isValid();
+  }
 
   SourceLocation getLocEnd() const LLVM_READONLY {
     if (hasBraces())

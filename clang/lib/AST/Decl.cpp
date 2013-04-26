@@ -476,6 +476,13 @@ template <typename T> static bool isInExternCContext(T *D) {
   return First->getDeclContext()->isExternCContext();
 }
 
+static bool isSingleLineExternC(const Decl &D) {
+  if (const LinkageSpecDecl *SD = dyn_cast<LinkageSpecDecl>(D.getDeclContext()))
+    if (SD->getLanguage() == LinkageSpecDecl::lang_c && !SD->hasBraces())
+      return true;
+  return false;
+}
+
 static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
                                               LVComputationKind computation) {
   assert(D->getDeclContext()->getRedeclContext()->isFileContext() &&
@@ -504,7 +511,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
         return PrevVar->getLinkageAndVisibility();
 
       if (Var->getStorageClass() != SC_Extern &&
-          Var->getStorageClass() != SC_PrivateExtern)
+          Var->getStorageClass() != SC_PrivateExtern &&
+          !isSingleLineExternC(*Var))
         return LinkageInfo::internal();
     }
 
@@ -1580,11 +1588,8 @@ VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition(
   //   A declaration directly contained in a linkage-specification is treated
   //   as if it contains the extern specifier for the purpose of determining
   //   the linkage of the declared name and whether it is a definition.
-  const DeclContext *DC = getDeclContext();
-  if (const LinkageSpecDecl *SD = dyn_cast<LinkageSpecDecl>(DC)) {
-    if (SD->getLanguage() == LinkageSpecDecl::lang_c && !SD->hasBraces())
-      return DeclarationOnly;
-  }
+  if (isSingleLineExternC(*this))
+    return DeclarationOnly;
 
   // C99 6.9.2p2:
   //   A declaration of an object that has file scope without an initializer,

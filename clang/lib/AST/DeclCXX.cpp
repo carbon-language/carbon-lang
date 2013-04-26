@@ -1816,14 +1816,14 @@ LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
                                          SourceLocation ExternLoc,
                                          SourceLocation LangLoc,
                                          LanguageIDs Lang,
-                                         SourceLocation RBraceLoc) {
-  return new (C) LinkageSpecDecl(DC, ExternLoc, LangLoc, Lang, RBraceLoc);
+                                         bool HasBraces) {
+  return new (C) LinkageSpecDecl(DC, ExternLoc, LangLoc, Lang, HasBraces);
 }
 
 LinkageSpecDecl *LinkageSpecDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   void *Mem = AllocateDeserializedDecl(C, ID, sizeof(LinkageSpecDecl));
   return new (Mem) LinkageSpecDecl(0, SourceLocation(), SourceLocation(),
-                                   lang_c, SourceLocation());
+                                   lang_c, false);
 }
 
 void UsingDirectiveDecl::anchor() { }

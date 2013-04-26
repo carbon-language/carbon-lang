@@ -10507,7 +10507,8 @@ Decl *Sema::ActOnStartLinkageSpecification(Scope *S, SourceLocation ExternLoc,
   // FIXME: Add all the various semantics of linkage specifications
 
   LinkageSpecDecl *D = LinkageSpecDecl::Create(Context, CurContext,
-                                               ExternLoc, LangLoc, Language);
+                                               ExternLoc, LangLoc, Language,
+                                               LBraceLoc.isValid());
   CurContext->addDecl(D);
   PushDeclContext(S, D);
   return D;
