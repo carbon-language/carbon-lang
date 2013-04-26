@@ -327,6 +327,22 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
   if (val.isUnknownOrUndef() || castTy == originalTy)
     return val;
 
+  if (castTy->isBooleanType()) {
+    if (val.isUnknownOrUndef())
+      return val;
+    if (val.isConstant())
+      return makeTruthVal(!val.isZeroConstant(), castTy);
+    if (SymbolRef Sym = val.getAsSymbol()) {
+      BasicValueFactory &BVF = getBasicValueFactory();
+      // FIXME: If we had a state here, we could see if the symbol is known to
+      // be zero, but we don't.
+      return makeNonLoc(Sym, BO_NE, BVF.getValue(0, Sym->getType()), castTy);
+    }
+
+    assert(val.getAs<Loc>());
+    return makeTruthVal(true, castTy);
+  }
+
   // For const casts, casts to void, just propagate the value.
   if (!castTy->isVariableArrayType() && !originalTy->isVariableArrayType())
     if (shouldBeModeledWithNoOp(Context, Context.getPointerType(castTy),
