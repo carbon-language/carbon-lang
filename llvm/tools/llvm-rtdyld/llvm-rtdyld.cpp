@@ -17,7 +17,7 @@
 #include "llvm/ExecutionEngine/ObjectBuffer.h"
 #include "llvm/ExecutionEngine/ObjectImage.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
-#include "llvm/Object/MachOObject.h"
+#include "llvm/Object/MachO.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Memory.h"

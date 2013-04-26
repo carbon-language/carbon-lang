@@ -16,7 +16,7 @@
 
 #include "RuntimeDyldImpl.h"
 #include "llvm/ADT/IndexedMap.h"
-#include "llvm/Object/MachOObject.h"
+#include "llvm/Object/MachO.h"
 #include "llvm/Support/Format.h"
 
 using namespace llvm;
