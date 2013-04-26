@@ -332,6 +332,26 @@ class NoEncode<string E> {
 //===----------------------------------------------------------------------===//
 // PowerPC Operand Definitions.
 
+// In the default PowerPC assembler syntax, registers are specified simply
+// by number, so they cannot be distinguished from immediate values (without
+// looking at the opcode).  This means that the default operand matching logic
+// for the asm parser does not work, and we need to specify custom matchers.
+// Since those can only be specified with RegisterOperand classes and not
+// directly on the RegisterClass, all instructions patterns used by the asm
+// parser need to use a RegisterOperand (instead of a RegisterClass) for
+// all their register operands.
+// For this purpose, we define one RegisterOperand for each RegisterClass,
+// using the same name as the class, just in lower case.
+def gprc : RegisterOperand<GPRC>;
+def g8rc : RegisterOperand<G8RC>;
+def gprc_nor0 : RegisterOperand<GPRC_NOR0>;
+def g8rc_nox0 : RegisterOperand<G8RC_NOX0>;
+def f8rc : RegisterOperand<F8RC>;
+def f4rc : RegisterOperand<F4RC>;
+def vrrc : RegisterOperand<VRRC>;
+def crbitrc : RegisterOperand<CRBITRC>;
+def crrc : RegisterOperand<CRRC>;
+
 def s5imm   : Operand<i32> {
   let PrintMethod = "printS5ImmOperand";
 }
@@ -404,7 +424,7 @@ def memr : Operand<iPTR> {
 // PowerPC Predicate operand.
 def pred : Operand<OtherVT> {
   let PrintMethod = "printPredicateOperand";
-  let MIOperandInfo = (ops i32imm:$bibo, CRRC:$reg);
+  let MIOperandInfo = (ops i32imm:$bibo, crrc:$reg);
 }
 
 // Define PowerPC specific addressing mode.
@@ -685,12 +705,12 @@ def ADJCALLSTACKUP   : Pseudo<(outs), (ins u16imm:$amt1, u16imm:$amt2), "#ADJCAL
                               [(callseq_end timm:$amt1, timm:$amt2)]>;
 }
 
-def UPDATE_VRSAVE    : Pseudo<(outs GPRC:$rD), (ins GPRC:$rS),
+def UPDATE_VRSAVE    : Pseudo<(outs gprc:$rD), (ins gprc:$rS),
                               "UPDATE_VRSAVE $rD, $rS", []>;
 }
 
 let Defs = [R1], Uses = [R1] in
-def DYNALLOC : Pseudo<(outs GPRC:$result), (ins GPRC:$negsize, memri:$fpsi), "#DYNALLOC",
+def DYNALLOC : Pseudo<(outs gprc:$result), (ins gprc:$negsize, memri:$fpsi), "#DYNALLOC",
                        [(set i32:$result,
                              (PPCdynalloc i32:$negsize, iaddr:$fpsi))]>;
                          
@@ -701,21 +721,21 @@ let usesCustomInserter = 1,    // Expanded after instruction selection.
   // Note that SELECT_CC_I4 and SELECT_CC_I8 use the no-r0 register classes
   // because either operand might become the first operand in an isel, and
   // that operand cannot be r0.
-  def SELECT_CC_I4 : Pseudo<(outs GPRC:$dst), (ins CRRC:$cond,
-                              GPRC_NOR0:$T, GPRC_NOR0:$F,
+  def SELECT_CC_I4 : Pseudo<(outs gprc:$dst), (ins crrc:$cond,
+                              gprc_nor0:$T, gprc_nor0:$F,
                               i32imm:$BROPC), "#SELECT_CC_I4",
                               []>;
-  def SELECT_CC_I8 : Pseudo<(outs G8RC:$dst), (ins CRRC:$cond,
-                              G8RC_NOX0:$T, G8RC_NOX0:$F,
+  def SELECT_CC_I8 : Pseudo<(outs g8rc:$dst), (ins crrc:$cond,
+                              g8rc_nox0:$T, g8rc_nox0:$F,
                               i32imm:$BROPC), "#SELECT_CC_I8",
                               []>;
-  def SELECT_CC_F4  : Pseudo<(outs F4RC:$dst), (ins CRRC:$cond, F4RC:$T, F4RC:$F,
+  def SELECT_CC_F4  : Pseudo<(outs f4rc:$dst), (ins crrc:$cond, f4rc:$T, f4rc:$F,
                               i32imm:$BROPC), "#SELECT_CC_F4",
                               []>;
-  def SELECT_CC_F8  : Pseudo<(outs F8RC:$dst), (ins CRRC:$cond, F8RC:$T, F8RC:$F,
+  def SELECT_CC_F8  : Pseudo<(outs f8rc:$dst), (ins crrc:$cond, f8rc:$T, f8rc:$F,
                               i32imm:$BROPC), "#SELECT_CC_F8",
                               []>;
-  def SELECT_CC_VRRC: Pseudo<(outs VRRC:$dst), (ins CRRC:$cond, VRRC:$T, VRRC:$F,
+  def SELECT_CC_VRRC: Pseudo<(outs vrrc:$dst), (ins crrc:$cond, vrrc:$T, vrrc:$F,
                               i32imm:$BROPC), "#SELECT_CC_VRRC",
                               []>;
 }
@@ -723,13 +743,13 @@ let usesCustomInserter = 1,    // Expanded after instruction selection.
 // SPILL_CR - Indicate that we're dumping the CR register, so we'll need to
 // scavenge a register for it.
 let mayStore = 1 in
-def SPILL_CR : Pseudo<(outs), (ins CRRC:$cond, memri:$F),
+def SPILL_CR : Pseudo<(outs), (ins crrc:$cond, memri:$F),
                      "#SPILL_CR", []>;
 
 // RESTORE_CR - Indicate that we're restoring the CR register (previously
 // spilled), so we'll need to scavenge a register for it.
 let mayLoad = 1 in
-def RESTORE_CR : Pseudo<(outs CRRC:$cond), (ins memri:$F),
+def RESTORE_CR : Pseudo<(outs crrc:$cond), (ins memri:$F),
                      "#RESTORE_CR", []>;
 
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
@@ -762,7 +782,7 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
   let isCodeGenOnly = 1 in {
     def BCC : BForm<16, 0, 0, (outs), (ins pred:$cond, condbrtarget:$dst),
                     "b${cond:cc} ${cond:reg}, $dst"
-                    /*[(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]*/>;
+                    /*[(PPCcondbranch crrc:$crS, imm:$opc, bb:$dst)]*/>;
     let isReturn = 1, Uses = [LR, RM] in
     def BCLR : XLForm_2_br<19, 16, 0, (outs), (ins pred:$cond),
                            "b${cond:cc}lr ${cond:reg}", BrB, []>;
@@ -852,7 +872,7 @@ def TAILBA   : IForm<18, 0, 0, (outs), (ins aaddr:$dst),
                   []>;
 
 let hasSideEffects = 1, isBarrier = 1, usesCustomInserter = 1 in {
-  def EH_SjLj_SetJmp32  : Pseudo<(outs GPRC:$dst), (ins memr:$buf),
+  def EH_SjLj_SetJmp32  : Pseudo<(outs gprc:$dst), (ins memr:$buf),
                             "#EH_SJLJ_SETJMP32",
                             [(set i32:$dst, (PPCeh_sjlj_setjmp addr:$buf))]>,
                           Requires<[In32BitMode]>;
@@ -901,89 +921,89 @@ def : Pat<(prefetch xoaddr:$dst, (i32 0), imm, (i32 1)),
 let usesCustomInserter = 1 in {
   let Defs = [CR0] in {
     def ATOMIC_LOAD_ADD_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_ADD_I8",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_ADD_I8",
       [(set i32:$dst, (atomic_load_add_8 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_SUB_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_SUB_I8",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_SUB_I8",
       [(set i32:$dst, (atomic_load_sub_8 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_AND_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_AND_I8",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_AND_I8",
       [(set i32:$dst, (atomic_load_and_8 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_OR_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_OR_I8",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_OR_I8",
       [(set i32:$dst, (atomic_load_or_8 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_XOR_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "ATOMIC_LOAD_XOR_I8",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "ATOMIC_LOAD_XOR_I8",
       [(set i32:$dst, (atomic_load_xor_8 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_NAND_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_NAND_I8",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_NAND_I8",
       [(set i32:$dst, (atomic_load_nand_8 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_ADD_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_ADD_I16",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_ADD_I16",
       [(set i32:$dst, (atomic_load_add_16 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_SUB_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_SUB_I16",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_SUB_I16",
       [(set i32:$dst, (atomic_load_sub_16 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_AND_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_AND_I16",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_AND_I16",
       [(set i32:$dst, (atomic_load_and_16 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_OR_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_OR_I16",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_OR_I16",
       [(set i32:$dst, (atomic_load_or_16 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_XOR_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_XOR_I16",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_XOR_I16",
       [(set i32:$dst, (atomic_load_xor_16 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_NAND_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_NAND_I16",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_NAND_I16",
       [(set i32:$dst, (atomic_load_nand_16 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_ADD_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_ADD_I32",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_ADD_I32",
       [(set i32:$dst, (atomic_load_add_32 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_SUB_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_SUB_I32",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_SUB_I32",
       [(set i32:$dst, (atomic_load_sub_32 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_AND_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_AND_I32",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_AND_I32",
       [(set i32:$dst, (atomic_load_and_32 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_OR_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_OR_I32",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_OR_I32",
       [(set i32:$dst, (atomic_load_or_32 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_XOR_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_XOR_I32",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_XOR_I32",
       [(set i32:$dst, (atomic_load_xor_32 xoaddr:$ptr, i32:$incr))]>;
     def ATOMIC_LOAD_NAND_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "#ATOMIC_LOAD_NAND_I32",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$incr), "#ATOMIC_LOAD_NAND_I32",
       [(set i32:$dst, (atomic_load_nand_32 xoaddr:$ptr, i32:$incr))]>;
 
     def ATOMIC_CMP_SWAP_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$old, GPRC:$new), "#ATOMIC_CMP_SWAP_I8",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$old, gprc:$new), "#ATOMIC_CMP_SWAP_I8",
       [(set i32:$dst, (atomic_cmp_swap_8 xoaddr:$ptr, i32:$old, i32:$new))]>;
     def ATOMIC_CMP_SWAP_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$old, GPRC:$new), "#ATOMIC_CMP_SWAP_I16 $dst $ptr $old $new",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$old, gprc:$new), "#ATOMIC_CMP_SWAP_I16 $dst $ptr $old $new",
       [(set i32:$dst, (atomic_cmp_swap_16 xoaddr:$ptr, i32:$old, i32:$new))]>;
     def ATOMIC_CMP_SWAP_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$old, GPRC:$new), "#ATOMIC_CMP_SWAP_I32 $dst $ptr $old $new",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$old, gprc:$new), "#ATOMIC_CMP_SWAP_I32 $dst $ptr $old $new",
       [(set i32:$dst, (atomic_cmp_swap_32 xoaddr:$ptr, i32:$old, i32:$new))]>;
 
     def ATOMIC_SWAP_I8 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new), "#ATOMIC_SWAP_i8",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$new), "#ATOMIC_SWAP_i8",
       [(set i32:$dst, (atomic_swap_8 xoaddr:$ptr, i32:$new))]>;
     def ATOMIC_SWAP_I16 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new), "#ATOMIC_SWAP_I16",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$new), "#ATOMIC_SWAP_I16",
       [(set i32:$dst, (atomic_swap_16 xoaddr:$ptr, i32:$new))]>;
     def ATOMIC_SWAP_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new), "#ATOMIC_SWAP_I32",
+      (outs gprc:$dst), (ins memrr:$ptr, gprc:$new), "#ATOMIC_SWAP_I32",
       [(set i32:$dst, (atomic_swap_32 xoaddr:$ptr, i32:$new))]>;
   }
 }
 
 // Instructions to support atomic operations
-def LWARX : XForm_1<31,  20, (outs GPRC:$rD), (ins memrr:$src),
+def LWARX : XForm_1<31,  20, (outs gprc:$rD), (ins memrr:$src),
                    "lwarx $rD, $src", LdStLWARX,
                    [(set i32:$rD, (PPClarx xoaddr:$src))]>;
 
 let Defs = [CR0] in
-def STWCX : XForm_1<31, 150, (outs), (ins GPRC:$rS, memrr:$dst),
+def STWCX : XForm_1<31, 150, (outs), (ins gprc:$rS, memrr:$dst),
                    "stwcx. $rS, $dst", LdStSTWCX,
                    [(PPCstcx i32:$rS, xoaddr:$dst)]>,
                    isDOT;
@@ -997,93 +1017,93 @@ def TRAP  : XForm_24<31, 4, (outs), (ins), "trap", LdStLoad, [(trap)]>;
 
 // Unindexed (r+i) Loads. 
 let canFoldAsLoad = 1, PPC970_Unit = 2 in {
-def LBZ : DForm_1<34, (outs GPRC:$rD), (ins memri:$src),
+def LBZ : DForm_1<34, (outs gprc:$rD), (ins memri:$src),
                   "lbz $rD, $src", LdStLoad,
                   [(set i32:$rD, (zextloadi8 iaddr:$src))]>;
-def LHA : DForm_1<42, (outs GPRC:$rD), (ins memri:$src),
+def LHA : DForm_1<42, (outs gprc:$rD), (ins memri:$src),
                   "lha $rD, $src", LdStLHA,
                   [(set i32:$rD, (sextloadi16 iaddr:$src))]>,
                   PPC970_DGroup_Cracked;
-def LHZ : DForm_1<40, (outs GPRC:$rD), (ins memri:$src),
+def LHZ : DForm_1<40, (outs gprc:$rD), (ins memri:$src),
                   "lhz $rD, $src", LdStLoad,
                   [(set i32:$rD, (zextloadi16 iaddr:$src))]>;
-def LWZ : DForm_1<32, (outs GPRC:$rD), (ins memri:$src),
+def LWZ : DForm_1<32, (outs gprc:$rD), (ins memri:$src),
                   "lwz $rD, $src", LdStLoad,
                   [(set i32:$rD, (load iaddr:$src))]>;
 
-def LFS : DForm_1<48, (outs F4RC:$rD), (ins memri:$src),
+def LFS : DForm_1<48, (outs f4rc:$rD), (ins memri:$src),
                   "lfs $rD, $src", LdStLFD,
                   [(set f32:$rD, (load iaddr:$src))]>;
-def LFD : DForm_1<50, (outs F8RC:$rD), (ins memri:$src),
+def LFD : DForm_1<50, (outs f8rc:$rD), (ins memri:$src),
                   "lfd $rD, $src", LdStLFD,
                   [(set f64:$rD, (load iaddr:$src))]>;
 
 
 // Unindexed (r+i) Loads with Update (preinc).
 let mayLoad = 1, neverHasSideEffects = 1 in {
-def LBZU : DForm_1<35, (outs GPRC:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr),
+def LBZU : DForm_1<35, (outs gprc:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr),
                    "lbzu $rD, $addr", LdStLoadUpd,
                    []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LHAU : DForm_1<43, (outs GPRC:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr),
+def LHAU : DForm_1<43, (outs gprc:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr),
                    "lhau $rD, $addr", LdStLHAU,
                    []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LHZU : DForm_1<41, (outs GPRC:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr),
+def LHZU : DForm_1<41, (outs gprc:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr),
                    "lhzu $rD, $addr", LdStLoadUpd,
                    []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LWZU : DForm_1<33, (outs GPRC:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr),
+def LWZU : DForm_1<33, (outs gprc:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr),
                    "lwzu $rD, $addr", LdStLoadUpd,
                    []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LFSU : DForm_1<49, (outs F4RC:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr),
+def LFSU : DForm_1<49, (outs f4rc:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr),
                   "lfsu $rD, $addr", LdStLFDU,
                   []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LFDU : DForm_1<51, (outs F8RC:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr),
+def LFDU : DForm_1<51, (outs f8rc:$rD, ptr_rc_nor0:$ea_result), (ins memri:$addr),
                   "lfdu $rD, $addr", LdStLFDU,
                   []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
 
 // Indexed (r+r) Loads with Update (preinc).
-def LBZUX : XForm_1<31, 119, (outs GPRC:$rD, ptr_rc_nor0:$ea_result),
+def LBZUX : XForm_1<31, 119, (outs gprc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
                    "lbzux $rD, $addr", LdStLoadUpd,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LHAUX : XForm_1<31, 375, (outs GPRC:$rD, ptr_rc_nor0:$ea_result),
+def LHAUX : XForm_1<31, 375, (outs gprc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
                    "lhaux $rD, $addr", LdStLHAU,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LHZUX : XForm_1<31, 311, (outs GPRC:$rD, ptr_rc_nor0:$ea_result),
+def LHZUX : XForm_1<31, 311, (outs gprc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
                    "lhzux $rD, $addr", LdStLoadUpd,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LWZUX : XForm_1<31, 55, (outs GPRC:$rD, ptr_rc_nor0:$ea_result),
+def LWZUX : XForm_1<31, 55, (outs gprc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
                    "lwzux $rD, $addr", LdStLoadUpd,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LFSUX : XForm_1<31, 567, (outs F4RC:$rD, ptr_rc_nor0:$ea_result),
+def LFSUX : XForm_1<31, 567, (outs f4rc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
                    "lfsux $rD, $addr", LdStLFDU,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LFDUX : XForm_1<31, 631, (outs F8RC:$rD, ptr_rc_nor0:$ea_result),
+def LFDUX : XForm_1<31, 631, (outs f8rc:$rD, ptr_rc_nor0:$ea_result),
                    (ins memrr:$addr),
                    "lfdux $rD, $addr", LdStLFDU,
                    []>, RegConstraint<"$addr.ptrreg = $ea_result">,
@@ -1094,39 +1114,39 @@ def LFDUX : XForm_1<31, 631, (outs F8RC:$rD, ptr_rc_nor0:$ea_result),
 // Indexed (r+r) Loads.
 //
 let canFoldAsLoad = 1, PPC970_Unit = 2 in {
-def LBZX : XForm_1<31,  87, (outs GPRC:$rD), (ins memrr:$src),
+def LBZX : XForm_1<31,  87, (outs gprc:$rD), (ins memrr:$src),
                    "lbzx $rD, $src", LdStLoad,
                    [(set i32:$rD, (zextloadi8 xaddr:$src))]>;
-def LHAX : XForm_1<31, 343, (outs GPRC:$rD), (ins memrr:$src),
+def LHAX : XForm_1<31, 343, (outs gprc:$rD), (ins memrr:$src),
                    "lhax $rD, $src", LdStLHA,
                    [(set i32:$rD, (sextloadi16 xaddr:$src))]>,
                    PPC970_DGroup_Cracked;
-def LHZX : XForm_1<31, 279, (outs GPRC:$rD), (ins memrr:$src),
+def LHZX : XForm_1<31, 279, (outs gprc:$rD), (ins memrr:$src),
                    "lhzx $rD, $src", LdStLoad,
                    [(set i32:$rD, (zextloadi16 xaddr:$src))]>;
-def LWZX : XForm_1<31,  23, (outs GPRC:$rD), (ins memrr:$src),
+def LWZX : XForm_1<31,  23, (outs gprc:$rD), (ins memrr:$src),
                    "lwzx $rD, $src", LdStLoad,
                    [(set i32:$rD, (load xaddr:$src))]>;
                    
                    
-def LHBRX : XForm_1<31, 790, (outs GPRC:$rD), (ins memrr:$src),
+def LHBRX : XForm_1<31, 790, (outs gprc:$rD), (ins memrr:$src),
                    "lhbrx $rD, $src", LdStLoad,
                    [(set i32:$rD, (PPClbrx xoaddr:$src, i16))]>;
-def LWBRX : XForm_1<31,  534, (outs GPRC:$rD), (ins memrr:$src),
+def LWBRX : XForm_1<31,  534, (outs gprc:$rD), (ins memrr:$src),
                    "lwbrx $rD, $src", LdStLoad,
                    [(set i32:$rD, (PPClbrx xoaddr:$src, i32))]>;
 
-def LFSX   : XForm_25<31, 535, (outs F4RC:$frD), (ins memrr:$src),
+def LFSX   : XForm_25<31, 535, (outs f4rc:$frD), (ins memrr:$src),
                       "lfsx $frD, $src", LdStLFD,
                       [(set f32:$frD, (load xaddr:$src))]>;
-def LFDX   : XForm_25<31, 599, (outs F8RC:$frD), (ins memrr:$src),
+def LFDX   : XForm_25<31, 599, (outs f8rc:$frD), (ins memrr:$src),
                       "lfdx $frD, $src", LdStLFD,
                       [(set f64:$frD, (load xaddr:$src))]>;
 
-def LFIWAX : XForm_25<31, 855, (outs F8RC:$frD), (ins memrr:$src),
+def LFIWAX : XForm_25<31, 855, (outs f8rc:$frD), (ins memrr:$src),
                       "lfiwax $frD, $src", LdStLFD,
                       [(set f64:$frD, (PPClfiwax xoaddr:$src))]>;
-def LFIWZX : XForm_25<31, 887, (outs F8RC:$frD), (ins memrr:$src),
+def LFIWZX : XForm_25<31, 887, (outs f8rc:$frD), (ins memrr:$src),
                       "lfiwzx $frD, $src", LdStLFD,
                       [(set f64:$frD, (PPClfiwzx xoaddr:$src))]>;
 }
@@ -1137,38 +1157,38 @@ def LFIWZX : XForm_25<31, 887, (outs F8RC:$frD), (ins memrr:$src),
 
 // Unindexed (r+i) Stores.
 let PPC970_Unit = 2 in {
-def STB  : DForm_1<38, (outs), (ins GPRC:$rS, memri:$src),
+def STB  : DForm_1<38, (outs), (ins gprc:$rS, memri:$src),
                    "stb $rS, $src", LdStStore,
                    [(truncstorei8 i32:$rS, iaddr:$src)]>;
-def STH  : DForm_1<44, (outs), (ins GPRC:$rS, memri:$src),
+def STH  : DForm_1<44, (outs), (ins gprc:$rS, memri:$src),
                    "sth $rS, $src", LdStStore,
                    [(truncstorei16 i32:$rS, iaddr:$src)]>;
-def STW  : DForm_1<36, (outs), (ins GPRC:$rS, memri:$src),
+def STW  : DForm_1<36, (outs), (ins gprc:$rS, memri:$src),
                    "stw $rS, $src", LdStStore,
                    [(store i32:$rS, iaddr:$src)]>;
-def STFS : DForm_1<52, (outs), (ins F4RC:$rS, memri:$dst),
+def STFS : DForm_1<52, (outs), (ins f4rc:$rS, memri:$dst),
                    "stfs $rS, $dst", LdStSTFD,
                    [(store f32:$rS, iaddr:$dst)]>;
-def STFD : DForm_1<54, (outs), (ins F8RC:$rS, memri:$dst),
+def STFD : DForm_1<54, (outs), (ins f8rc:$rS, memri:$dst),
                    "stfd $rS, $dst", LdStSTFD,
                    [(store f64:$rS, iaddr:$dst)]>;
 }
 
 // Unindexed (r+i) Stores with Update (preinc).
 let PPC970_Unit = 2, mayStore = 1 in {
-def STBU  : DForm_1<39, (outs ptr_rc_nor0:$ea_res), (ins GPRC:$rS, memri:$dst),
+def STBU  : DForm_1<39, (outs ptr_rc_nor0:$ea_res), (ins gprc:$rS, memri:$dst),
                     "stbu $rS, $dst", LdStStoreUpd, []>,
                     RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">;
-def STHU  : DForm_1<45, (outs ptr_rc_nor0:$ea_res), (ins GPRC:$rS, memri:$dst),
+def STHU  : DForm_1<45, (outs ptr_rc_nor0:$ea_res), (ins gprc:$rS, memri:$dst),
                     "sthu $rS, $dst", LdStStoreUpd, []>,
                     RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">;
-def STWU  : DForm_1<37, (outs ptr_rc_nor0:$ea_res), (ins GPRC:$rS, memri:$dst),
+def STWU  : DForm_1<37, (outs ptr_rc_nor0:$ea_res), (ins gprc:$rS, memri:$dst),
                     "stwu $rS, $dst", LdStStoreUpd, []>,
                     RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">;
-def STFSU : DForm_1<53, (outs ptr_rc_nor0:$ea_res), (ins F4RC:$rS, memri:$dst),
+def STFSU : DForm_1<53, (outs ptr_rc_nor0:$ea_res), (ins f4rc:$rS, memri:$dst),
                     "stfsu $rS, $dst", LdStSTFDU, []>,
                     RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">;
-def STFDU : DForm_1<55, (outs ptr_rc_nor0:$ea_res), (ins F8RC:$rS, memri:$dst),
+def STFDU : DForm_1<55, (outs ptr_rc_nor0:$ea_res), (ins f8rc:$rS, memri:$dst),
                     "stfdu $rS, $dst", LdStSTFDU, []>,
                     RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">;
 }
@@ -1189,59 +1209,59 @@ def : Pat<(pre_store f64:$rS, iPTR:$ptrreg, iaddroff:$ptroff),
 
 // Indexed (r+r) Stores.
 let PPC970_Unit = 2 in {
-def STBX  : XForm_8<31, 215, (outs), (ins GPRC:$rS, memrr:$dst),
+def STBX  : XForm_8<31, 215, (outs), (ins gprc:$rS, memrr:$dst),
                    "stbx $rS, $dst", LdStStore,
                    [(truncstorei8 i32:$rS, xaddr:$dst)]>,
                    PPC970_DGroup_Cracked;
-def STHX  : XForm_8<31, 407, (outs), (ins GPRC:$rS, memrr:$dst),
+def STHX  : XForm_8<31, 407, (outs), (ins gprc:$rS, memrr:$dst),
                    "sthx $rS, $dst", LdStStore,
                    [(truncstorei16 i32:$rS, xaddr:$dst)]>,
                    PPC970_DGroup_Cracked;
-def STWX  : XForm_8<31, 151, (outs), (ins GPRC:$rS, memrr:$dst),
+def STWX  : XForm_8<31, 151, (outs), (ins gprc:$rS, memrr:$dst),
                    "stwx $rS, $dst", LdStStore,
                    [(store i32:$rS, xaddr:$dst)]>,
                    PPC970_DGroup_Cracked;
  
-def STHBRX: XForm_8<31, 918, (outs), (ins GPRC:$rS, memrr:$dst),
+def STHBRX: XForm_8<31, 918, (outs), (ins gprc:$rS, memrr:$dst),
                    "sthbrx $rS, $dst", LdStStore,
                    [(PPCstbrx i32:$rS, xoaddr:$dst, i16)]>,
                    PPC970_DGroup_Cracked;
-def STWBRX: XForm_8<31, 662, (outs), (ins GPRC:$rS, memrr:$dst),
+def STWBRX: XForm_8<31, 662, (outs), (ins gprc:$rS, memrr:$dst),
                    "stwbrx $rS, $dst", LdStStore,
                    [(PPCstbrx i32:$rS, xoaddr:$dst, i32)]>,
                    PPC970_DGroup_Cracked;
 
-def STFIWX: XForm_28<31, 983, (outs), (ins F8RC:$frS, memrr:$dst),
+def STFIWX: XForm_28<31, 983, (outs), (ins f8rc:$frS, memrr:$dst),
                      "stfiwx $frS, $dst", LdStSTFD,
                      [(PPCstfiwx f64:$frS, xoaddr:$dst)]>;
                      
-def STFSX : XForm_28<31, 663, (outs), (ins F4RC:$frS, memrr:$dst),
+def STFSX : XForm_28<31, 663, (outs), (ins f4rc:$frS, memrr:$dst),
                      "stfsx $frS, $dst", LdStSTFD,
                      [(store f32:$frS, xaddr:$dst)]>;
-def STFDX : XForm_28<31, 727, (outs), (ins F8RC:$frS, memrr:$dst),
+def STFDX : XForm_28<31, 727, (outs), (ins f8rc:$frS, memrr:$dst),
                      "stfdx $frS, $dst", LdStSTFD,
                      [(store f64:$frS, xaddr:$dst)]>;
 }
 
 // Indexed (r+r) Stores with Update (preinc).
 let PPC970_Unit = 2, mayStore = 1 in {
-def STBUX : XForm_8<31, 247, (outs ptr_rc_nor0:$ea_res), (ins GPRC:$rS, memrr:$dst),
+def STBUX : XForm_8<31, 247, (outs ptr_rc_nor0:$ea_res), (ins gprc:$rS, memrr:$dst),
                     "stbux $rS, $dst", LdStStoreUpd, []>,
                     RegConstraint<"$dst.ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     PPC970_DGroup_Cracked;
-def STHUX : XForm_8<31, 439, (outs ptr_rc_nor0:$ea_res), (ins GPRC:$rS, memrr:$dst),
+def STHUX : XForm_8<31, 439, (outs ptr_rc_nor0:$ea_res), (ins gprc:$rS, memrr:$dst),
                     "sthux $rS, $dst", LdStStoreUpd, []>,
                     RegConstraint<"$dst.ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     PPC970_DGroup_Cracked;
-def STWUX : XForm_8<31, 183, (outs ptr_rc_nor0:$ea_res), (ins GPRC:$rS, memrr:$dst),
+def STWUX : XForm_8<31, 183, (outs ptr_rc_nor0:$ea_res), (ins gprc:$rS, memrr:$dst),
                     "stwux $rS, $dst", LdStStoreUpd, []>,
                     RegConstraint<"$dst.ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     PPC970_DGroup_Cracked;
-def STFSUX: XForm_8<31, 695, (outs ptr_rc_nor0:$ea_res), (ins F4RC:$rS, memrr:$dst),
+def STFSUX: XForm_8<31, 695, (outs ptr_rc_nor0:$ea_res), (ins f4rc:$rS, memrr:$dst),
                     "stfsux $rS, $dst", LdStSTFDU, []>,
                     RegConstraint<"$dst.ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     PPC970_DGroup_Cracked;
-def STFDUX: XForm_8<31, 759, (outs ptr_rc_nor0:$ea_res), (ins F8RC:$rS, memrr:$dst),
+def STFDUX: XForm_8<31, 759, (outs ptr_rc_nor0:$ea_res), (ins f8rc:$rS, memrr:$dst),
                     "stfdux $rS, $dst", LdStSTFDU, []>,
                     RegConstraint<"$dst.ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     PPC970_DGroup_Cracked;
@@ -1270,41 +1290,41 @@ def SYNC : XForm_24_sync<31, 598, (outs), (ins),
 //
 
 let PPC970_Unit = 1 in {  // FXU Operations.
-def ADDI   : DForm_2<14, (outs GPRC:$rD), (ins GPRC_NOR0:$rA, symbolLo:$imm),
+def ADDI   : DForm_2<14, (outs gprc:$rD), (ins gprc_nor0:$rA, symbolLo:$imm),
                      "addi $rD, $rA, $imm", IntSimple,
                      [(set i32:$rD, (add i32:$rA, immSExt16:$imm))]>;
 let BaseName = "addic" in {
 let Defs = [CARRY] in
-def ADDIC  : DForm_2<12, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
+def ADDIC  : DForm_2<12, (outs gprc:$rD), (ins gprc:$rA, s16imm:$imm),
                      "addic $rD, $rA, $imm", IntGeneral,
                      [(set i32:$rD, (addc i32:$rA, immSExt16:$imm))]>,
                      RecFormRel, PPC970_DGroup_Cracked;
 let Defs = [CARRY, CR0] in
-def ADDICo : DForm_2<13, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
+def ADDICo : DForm_2<13, (outs gprc:$rD), (ins gprc:$rA, s16imm:$imm),
                      "addic. $rD, $rA, $imm", IntGeneral,
                      []>, isDOT, RecFormRel;
 }
-def ADDIS  : DForm_2<15, (outs GPRC:$rD), (ins GPRC_NOR0:$rA, symbolHi:$imm),
+def ADDIS  : DForm_2<15, (outs gprc:$rD), (ins gprc_nor0:$rA, symbolHi:$imm),
                      "addis $rD, $rA, $imm", IntSimple,
                      [(set i32:$rD, (add i32:$rA, imm16ShiftedSExt:$imm))]>;
 let isCodeGenOnly = 1 in
-def LA     : DForm_2<14, (outs GPRC:$rD), (ins GPRC_NOR0:$rA, symbolLo:$sym),
+def LA     : DForm_2<14, (outs gprc:$rD), (ins gprc_nor0:$rA, symbolLo:$sym),
                      "la $rD, $sym($rA)", IntGeneral,
                      [(set i32:$rD, (add i32:$rA,
                                           (PPClo tglobaladdr:$sym, 0)))]>;
-def MULLI  : DForm_2< 7, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
+def MULLI  : DForm_2< 7, (outs gprc:$rD), (ins gprc:$rA, s16imm:$imm),
                      "mulli $rD, $rA, $imm", IntMulLI,
                      [(set i32:$rD, (mul i32:$rA, immSExt16:$imm))]>;
 let Defs = [CARRY] in
-def SUBFIC : DForm_2< 8, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
+def SUBFIC : DForm_2< 8, (outs gprc:$rD), (ins gprc:$rA, s16imm:$imm),
                      "subfic $rD, $rA, $imm", IntGeneral,
                      [(set i32:$rD, (subc immSExt16:$imm, i32:$rA))]>;
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in {
-  def LI  : DForm_2_r0<14, (outs GPRC:$rD), (ins symbolLo:$imm),
+  def LI  : DForm_2_r0<14, (outs gprc:$rD), (ins symbolLo:$imm),
                        "li $rD, $imm", IntSimple,
                        [(set i32:$rD, immSExt16:$imm)]>;
-  def LIS : DForm_2_r0<15, (outs GPRC:$rD), (ins symbolHi:$imm),
+  def LIS : DForm_2_r0<15, (outs gprc:$rD), (ins symbolHi:$imm),
                        "lis $rD, $imm", IntSimple,
                        [(set i32:$rD, imm16ShiftedSExt:$imm)]>;
 }
@@ -1312,92 +1332,92 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in {
 
 let PPC970_Unit = 1 in {  // FXU Operations.
 let Defs = [CR0] in {
-def ANDIo : DForm_4<28, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
+def ANDIo : DForm_4<28, (outs gprc:$dst), (ins gprc:$src1, u16imm:$src2),
                     "andi. $dst, $src1, $src2", IntGeneral,
                     [(set i32:$dst, (and i32:$src1, immZExt16:$src2))]>,
                     isDOT;
-def ANDISo : DForm_4<29, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
+def ANDISo : DForm_4<29, (outs gprc:$dst), (ins gprc:$src1, u16imm:$src2),
                     "andis. $dst, $src1, $src2", IntGeneral,
                     [(set i32:$dst, (and i32:$src1, imm16ShiftedZExt:$src2))]>,
                     isDOT;
 }
-def ORI   : DForm_4<24, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
+def ORI   : DForm_4<24, (outs gprc:$dst), (ins gprc:$src1, u16imm:$src2),
                     "ori $dst, $src1, $src2", IntSimple,
                     [(set i32:$dst, (or i32:$src1, immZExt16:$src2))]>;
-def ORIS  : DForm_4<25, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
+def ORIS  : DForm_4<25, (outs gprc:$dst), (ins gprc:$src1, u16imm:$src2),
                     "oris $dst, $src1, $src2", IntSimple,
                     [(set i32:$dst, (or i32:$src1, imm16ShiftedZExt:$src2))]>;
-def XORI  : DForm_4<26, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
+def XORI  : DForm_4<26, (outs gprc:$dst), (ins gprc:$src1, u16imm:$src2),
                     "xori $dst, $src1, $src2", IntSimple,
                     [(set i32:$dst, (xor i32:$src1, immZExt16:$src2))]>;
-def XORIS : DForm_4<27, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
+def XORIS : DForm_4<27, (outs gprc:$dst), (ins gprc:$src1, u16imm:$src2),
                     "xoris $dst, $src1, $src2", IntSimple,
                     [(set i32:$dst, (xor i32:$src1, imm16ShiftedZExt:$src2))]>;
 def NOP   : DForm_4_zero<24, (outs), (ins), "nop", IntSimple,
                          []>;
 let isCompare = 1, neverHasSideEffects = 1 in {
-  def CMPWI : DForm_5_ext<11, (outs CRRC:$crD), (ins GPRC:$rA, s16imm:$imm),
+  def CMPWI : DForm_5_ext<11, (outs crrc:$crD), (ins gprc:$rA, s16imm:$imm),
                           "cmpwi $crD, $rA, $imm", IntCompare>;
-  def CMPLWI : DForm_6_ext<10, (outs CRRC:$dst), (ins GPRC:$src1, u16imm:$src2),
+  def CMPLWI : DForm_6_ext<10, (outs crrc:$dst), (ins gprc:$src1, u16imm:$src2),
                            "cmplwi $dst, $src1, $src2", IntCompare>;
 }
 }
 
 let PPC970_Unit = 1, neverHasSideEffects = 1 in {  // FXU Operations.
-defm NAND : XForm_6r<31, 476, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
+defm NAND : XForm_6r<31, 476, (outs gprc:$rA), (ins gprc:$rS, gprc:$rB),
                      "nand", "$rA, $rS, $rB", IntSimple,
                      [(set i32:$rA, (not (and i32:$rS, i32:$rB)))]>;
-defm AND  : XForm_6r<31,  28, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
+defm AND  : XForm_6r<31,  28, (outs gprc:$rA), (ins gprc:$rS, gprc:$rB),
                      "and", "$rA, $rS, $rB", IntSimple,
                      [(set i32:$rA, (and i32:$rS, i32:$rB))]>;
-defm ANDC : XForm_6r<31,  60, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
+defm ANDC : XForm_6r<31,  60, (outs gprc:$rA), (ins gprc:$rS, gprc:$rB),
                      "andc", "$rA, $rS, $rB", IntSimple,
                      [(set i32:$rA, (and i32:$rS, (not i32:$rB)))]>;
-defm OR   : XForm_6r<31, 444, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
+defm OR   : XForm_6r<31, 444, (outs gprc:$rA), (ins gprc:$rS, gprc:$rB),
                      "or", "$rA, $rS, $rB", IntSimple,
                      [(set i32:$rA, (or i32:$rS, i32:$rB))]>;
-defm NOR  : XForm_6r<31, 124, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
+defm NOR  : XForm_6r<31, 124, (outs gprc:$rA), (ins gprc:$rS, gprc:$rB),
                      "nor", "$rA, $rS, $rB", IntSimple,
                      [(set i32:$rA, (not (or i32:$rS, i32:$rB)))]>;
-defm ORC  : XForm_6r<31, 412, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
+defm ORC  : XForm_6r<31, 412, (outs gprc:$rA), (ins gprc:$rS, gprc:$rB),
                      "orc", "$rA, $rS, $rB", IntSimple,
                      [(set i32:$rA, (or i32:$rS, (not i32:$rB)))]>;
-defm EQV  : XForm_6r<31, 284, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
+defm EQV  : XForm_6r<31, 284, (outs gprc:$rA), (ins gprc:$rS, gprc:$rB),
                      "eqv", "$rA, $rS, $rB", IntSimple,
                      [(set i32:$rA, (not (xor i32:$rS, i32:$rB)))]>;
-defm XOR  : XForm_6r<31, 316, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
+defm XOR  : XForm_6r<31, 316, (outs gprc:$rA), (ins gprc:$rS, gprc:$rB),
                      "xor", "$rA, $rS, $rB", IntSimple,
                      [(set i32:$rA, (xor i32:$rS, i32:$rB))]>;
-defm SLW  : XForm_6r<31,  24, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
+defm SLW  : XForm_6r<31,  24, (outs gprc:$rA), (ins gprc:$rS, gprc:$rB),
                      "slw", "$rA, $rS, $rB", IntGeneral,
                      [(set i32:$rA, (PPCshl i32:$rS, i32:$rB))]>;
-defm SRW  : XForm_6r<31, 536, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
+defm SRW  : XForm_6r<31, 536, (outs gprc:$rA), (ins gprc:$rS, gprc:$rB),
                      "srw", "$rA, $rS, $rB", IntGeneral,
                      [(set i32:$rA, (PPCsrl i32:$rS, i32:$rB))]>;
-defm SRAW : XForm_6rc<31, 792, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
+defm SRAW : XForm_6rc<31, 792, (outs gprc:$rA), (ins gprc:$rS, gprc:$rB),
                       "sraw", "$rA, $rS, $rB", IntShift,
                       [(set i32:$rA, (PPCsra i32:$rS, i32:$rB))]>;
 }
 
 let PPC970_Unit = 1 in {  // FXU Operations.
 let neverHasSideEffects = 1 in {
-defm SRAWI : XForm_10rc<31, 824, (outs GPRC:$rA), (ins GPRC:$rS, u5imm:$SH), 
+defm SRAWI : XForm_10rc<31, 824, (outs gprc:$rA), (ins gprc:$rS, u5imm:$SH),
                         "srawi", "$rA, $rS, $SH", IntShift,
                         [(set i32:$rA, (sra i32:$rS, (i32 imm:$SH)))]>;
-defm CNTLZW : XForm_11r<31,  26, (outs GPRC:$rA), (ins GPRC:$rS),
+defm CNTLZW : XForm_11r<31,  26, (outs gprc:$rA), (ins gprc:$rS),
                         "cntlzw", "$rA, $rS", IntGeneral,
                         [(set i32:$rA, (ctlz i32:$rS))]>;
-defm EXTSB  : XForm_11r<31, 954, (outs GPRC:$rA), (ins GPRC:$rS),
+defm EXTSB  : XForm_11r<31, 954, (outs gprc:$rA), (ins gprc:$rS),
                         "extsb", "$rA, $rS", IntSimple,
                         [(set i32:$rA, (sext_inreg i32:$rS, i8))]>;
-defm EXTSH  : XForm_11r<31, 922, (outs GPRC:$rA), (ins GPRC:$rS),
+defm EXTSH  : XForm_11r<31, 922, (outs gprc:$rA), (ins gprc:$rS),
                         "extsh", "$rA, $rS", IntSimple,
                         [(set i32:$rA, (sext_inreg i32:$rS, i16))]>;
 }
 let isCompare = 1, neverHasSideEffects = 1 in {
-  def CMPW   : XForm_16_ext<31, 0, (outs CRRC:$crD), (ins GPRC:$rA, GPRC:$rB),
+  def CMPW   : XForm_16_ext<31, 0, (outs crrc:$crD), (ins gprc:$rA, gprc:$rB),
                             "cmpw $crD, $rA, $rB", IntCompare>;
-  def CMPLW  : XForm_16_ext<31, 32, (outs CRRC:$crD), (ins GPRC:$rA, GPRC:$rB),
+  def CMPLW  : XForm_16_ext<31, 32, (outs crrc:$crD), (ins gprc:$rA, gprc:$rB),
                             "cmplw $crD, $rA, $rB", IntCompare>;
 }
 }
@@ -1405,28 +1425,28 @@ let PPC970_Unit = 3 in {  // FPU Operations.
 //def FCMPO  : XForm_17<63, 32, (outs CRRC:$crD), (ins FPRC:$fA, FPRC:$fB),
 //                      "fcmpo $crD, $fA, $fB", FPCompare>;
 let isCompare = 1, neverHasSideEffects = 1 in {
-  def FCMPUS : XForm_17<63, 0, (outs CRRC:$crD), (ins F4RC:$fA, F4RC:$fB),
+  def FCMPUS : XForm_17<63, 0, (outs crrc:$crD), (ins f4rc:$fA, f4rc:$fB),
                         "fcmpu $crD, $fA, $fB", FPCompare>;
-  def FCMPUD : XForm_17<63, 0, (outs CRRC:$crD), (ins F8RC:$fA, F8RC:$fB),
+  def FCMPUD : XForm_17<63, 0, (outs crrc:$crD), (ins f8rc:$fA, f8rc:$fB),
                         "fcmpu $crD, $fA, $fB", FPCompare>;
 }
 
 let Uses = [RM] in {
   let neverHasSideEffects = 1 in {
-  defm FCTIWZ : XForm_26r<63, 15, (outs F8RC:$frD), (ins F8RC:$frB),
+  defm FCTIWZ : XForm_26r<63, 15, (outs f8rc:$frD), (ins f8rc:$frB),
                           "fctiwz", "$frD, $frB", FPGeneral,
                           [(set f64:$frD, (PPCfctiwz f64:$frB))]>;
 
-  defm FRSP   : XForm_26r<63, 12, (outs F4RC:$frD), (ins F8RC:$frB),
+  defm FRSP   : XForm_26r<63, 12, (outs f4rc:$frD), (ins f8rc:$frB),
                           "frsp", "$frD, $frB", FPGeneral,
                           [(set f32:$frD, (fround f64:$frB))]>;
 
   // The frin -> nearbyint mapping is valid only in fast-math mode.
   let Interpretation64Bit = 1 in
-  defm FRIND  : XForm_26r<63, 392, (outs F8RC:$frD), (ins F8RC:$frB),
+  defm FRIND  : XForm_26r<63, 392, (outs f8rc:$frD), (ins f8rc:$frB),
                           "frin", "$frD, $frB", FPGeneral,
                           [(set f64:$frD, (fnearbyint f64:$frB))]>;
-  defm FRINS  : XForm_26r<63, 392, (outs F4RC:$frD), (ins F4RC:$frB),
+  defm FRINS  : XForm_26r<63, 392, (outs f4rc:$frD), (ins f4rc:$frB),
                           "frin", "$frD, $frB", FPGeneral,
                           [(set f32:$frD, (fnearbyint f32:$frB))]>;
   }
@@ -1434,39 +1454,39 @@ let Uses = [RM] in {
   // These pseudos expand to rint but also set FE_INEXACT when the result does
   // not equal the argument.
   let usesCustomInserter = 1, Defs = [RM] in { // FIXME: Model FPSCR!
-    def FRINDrint : Pseudo<(outs F8RC:$frD), (ins F8RC:$frB),
+    def FRINDrint : Pseudo<(outs f8rc:$frD), (ins f8rc:$frB),
                             "#FRINDrint", [(set f64:$frD, (frint f64:$frB))]>;
-    def FRINSrint : Pseudo<(outs F4RC:$frD), (ins F4RC:$frB),
+    def FRINSrint : Pseudo<(outs f4rc:$frD), (ins f4rc:$frB),
                             "#FRINSrint", [(set f32:$frD, (frint f32:$frB))]>;
   }
 
   let neverHasSideEffects = 1 in {
   let Interpretation64Bit = 1 in
-  defm FRIPD  : XForm_26r<63, 456, (outs F8RC:$frD), (ins F8RC:$frB),
+  defm FRIPD  : XForm_26r<63, 456, (outs f8rc:$frD), (ins f8rc:$frB),
                           "frip", "$frD, $frB", FPGeneral,
                           [(set f64:$frD, (fceil f64:$frB))]>;
-  defm FRIPS  : XForm_26r<63, 456, (outs F4RC:$frD), (ins F4RC:$frB),
+  defm FRIPS  : XForm_26r<63, 456, (outs f4rc:$frD), (ins f4rc:$frB),
                           "frip", "$frD, $frB", FPGeneral,
                           [(set f32:$frD, (fceil f32:$frB))]>;
   let Interpretation64Bit = 1 in
-  defm FRIZD  : XForm_26r<63, 424, (outs F8RC:$frD), (ins F8RC:$frB),
+  defm FRIZD  : XForm_26r<63, 424, (outs f8rc:$frD), (ins f8rc:$frB),
                           "friz", "$frD, $frB", FPGeneral,
                           [(set f64:$frD, (ftrunc f64:$frB))]>;
-  defm FRIZS  : XForm_26r<63, 424, (outs F4RC:$frD), (ins F4RC:$frB),
+  defm FRIZS  : XForm_26r<63, 424, (outs f4rc:$frD), (ins f4rc:$frB),
                           "friz", "$frD, $frB", FPGeneral,
                           [(set f32:$frD, (ftrunc f32:$frB))]>;
   let Interpretation64Bit = 1 in
-  defm FRIMD  : XForm_26r<63, 488, (outs F8RC:$frD), (ins F8RC:$frB),
+  defm FRIMD  : XForm_26r<63, 488, (outs f8rc:$frD), (ins f8rc:$frB),
                           "frim", "$frD, $frB", FPGeneral,
                           [(set f64:$frD, (ffloor f64:$frB))]>;
-  defm FRIMS  : XForm_26r<63, 488, (outs F4RC:$frD), (ins F4RC:$frB),
+  defm FRIMS  : XForm_26r<63, 488, (outs f4rc:$frD), (ins f4rc:$frB),
                           "frim", "$frD, $frB", FPGeneral,
                           [(set f32:$frD, (ffloor f32:$frB))]>;
 
-  defm FSQRT  : XForm_26r<63, 22, (outs F8RC:$frD), (ins F8RC:$frB),
+  defm FSQRT  : XForm_26r<63, 22, (outs f8rc:$frD), (ins f8rc:$frB),
                           "fsqrt", "$frD, $frB", FPSqrt,
                           [(set f64:$frD, (fsqrt f64:$frB))]>;
-  defm FSQRTS : XForm_26r<59, 22, (outs F4RC:$frD), (ins F4RC:$frB),
+  defm FSQRTS : XForm_26r<59, 22, (outs f4rc:$frD), (ins f4rc:$frB),
                           "fsqrts", "$frD, $frB", FPSqrt,
                           [(set f32:$frD, (fsqrt f32:$frB))]>;
   }
@@ -1478,46 +1498,46 @@ let Uses = [RM] in {
 /// that they will fill slots (which could cause the load of a LSU reject to
 /// sneak into a d-group with a store).
 let neverHasSideEffects = 1 in
-defm FMR   : XForm_26r<63, 72, (outs F4RC:$frD), (ins F4RC:$frB),
+defm FMR   : XForm_26r<63, 72, (outs f4rc:$frD), (ins f4rc:$frB),
                        "fmr", "$frD, $frB", FPGeneral,
                        []>,  // (set f32:$frD, f32:$frB)
                        PPC970_Unit_Pseudo;
 
 let PPC970_Unit = 3, neverHasSideEffects = 1 in {  // FPU Operations.
 // These are artificially split into two different forms, for 4/8 byte FP.
-defm FABSS  : XForm_26r<63, 264, (outs F4RC:$frD), (ins F4RC:$frB),
+defm FABSS  : XForm_26r<63, 264, (outs f4rc:$frD), (ins f4rc:$frB),
                         "fabs", "$frD, $frB", FPGeneral,
                         [(set f32:$frD, (fabs f32:$frB))]>;
 let Interpretation64Bit = 1 in
-defm FABSD  : XForm_26r<63, 264, (outs F8RC:$frD), (ins F8RC:$frB),
+defm FABSD  : XForm_26r<63, 264, (outs f8rc:$frD), (ins f8rc:$frB),
                         "fabs", "$frD, $frB", FPGeneral,
                         [(set f64:$frD, (fabs f64:$frB))]>;
-defm FNABSS : XForm_26r<63, 136, (outs F4RC:$frD), (ins F4RC:$frB),
+defm FNABSS : XForm_26r<63, 136, (outs f4rc:$frD), (ins f4rc:$frB),
                         "fnabs", "$frD, $frB", FPGeneral,
                         [(set f32:$frD, (fneg (fabs f32:$frB)))]>;
 let Interpretation64Bit = 1 in
-defm FNABSD : XForm_26r<63, 136, (outs F8RC:$frD), (ins F8RC:$frB),
+defm FNABSD : XForm_26r<63, 136, (outs f8rc:$frD), (ins f8rc:$frB),
                         "fnabs", "$frD, $frB", FPGeneral,
                         [(set f64:$frD, (fneg (fabs f64:$frB)))]>;
-defm FNEGS  : XForm_26r<63, 40, (outs F4RC:$frD), (ins F4RC:$frB),
+defm FNEGS  : XForm_26r<63, 40, (outs f4rc:$frD), (ins f4rc:$frB),
                         "fneg", "$frD, $frB", FPGeneral,
                         [(set f32:$frD, (fneg f32:$frB))]>;
 let Interpretation64Bit = 1 in
-defm FNEGD  : XForm_26r<63, 40, (outs F8RC:$frD), (ins F8RC:$frB),
+defm FNEGD  : XForm_26r<63, 40, (outs f8rc:$frD), (ins f8rc:$frB),
                         "fneg", "$frD, $frB", FPGeneral,
                         [(set f64:$frD, (fneg f64:$frB))]>;
 
 // Reciprocal estimates.
-defm FRE      : XForm_26r<63, 24, (outs F8RC:$frD), (ins F8RC:$frB),
+defm FRE      : XForm_26r<63, 24, (outs f8rc:$frD), (ins f8rc:$frB),
                           "fre", "$frD, $frB", FPGeneral,
                           [(set f64:$frD, (PPCfre f64:$frB))]>;
-defm FRES     : XForm_26r<59, 24, (outs F4RC:$frD), (ins F4RC:$frB),
+defm FRES     : XForm_26r<59, 24, (outs f4rc:$frD), (ins f4rc:$frB),
                           "fres", "$frD, $frB", FPGeneral,
                           [(set f32:$frD, (PPCfre f32:$frB))]>;
-defm FRSQRTE  : XForm_26r<63, 26, (outs F8RC:$frD), (ins F8RC:$frB),
+defm FRSQRTE  : XForm_26r<63, 26, (outs f8rc:$frD), (ins f8rc:$frB),
                           "frsqrte", "$frD, $frB", FPGeneral,
                           [(set f64:$frD, (PPCfrsqrte f64:$frB))]>;
-defm FRSQRTES : XForm_26r<59, 26, (outs F4RC:$frD), (ins F4RC:$frB),
+defm FRSQRTES : XForm_26r<59, 26, (outs f4rc:$frD), (ins f4rc:$frB),
                           "frsqrtes", "$frD, $frB", FPGeneral,
                           [(set f32:$frD, (PPCfrsqrte f32:$frB))]>;
 }
@@ -1525,26 +1545,26 @@ defm FRSQRTES : XForm_26r<59, 26, (outs F4RC:$frD), (ins F4RC:$frB),
 // XL-Form instructions.  condition register logical ops.
 //
 let neverHasSideEffects = 1 in
-def MCRF   : XLForm_3<19, 0, (outs CRRC:$BF), (ins CRRC:$BFA),
+def MCRF   : XLForm_3<19, 0, (outs crrc:$BF), (ins crrc:$BFA),
                       "mcrf $BF, $BFA", BrMCR>,
              PPC970_DGroup_First, PPC970_Unit_CRU;
 
-def CREQV  : XLForm_1<19, 289, (outs CRBITRC:$CRD),
-                               (ins CRBITRC:$CRA, CRBITRC:$CRB),
+def CREQV  : XLForm_1<19, 289, (outs crbitrc:$CRD),
+                               (ins crbitrc:$CRA, crbitrc:$CRB),
                       "creqv $CRD, $CRA, $CRB", BrCR,
                       []>;
 
-def CROR  : XLForm_1<19, 449, (outs CRBITRC:$CRD),
-                               (ins CRBITRC:$CRA, CRBITRC:$CRB),
+def CROR  : XLForm_1<19, 449, (outs crbitrc:$CRD),
+                               (ins crbitrc:$CRA, crbitrc:$CRB),
                       "cror $CRD, $CRA, $CRB", BrCR,
                       []>;
 
 let isCodeGenOnly = 1 in {
-def CRSET  : XLForm_1_ext<19, 289, (outs CRBITRC:$dst), (ins),
+def CRSET  : XLForm_1_ext<19, 289, (outs crbitrc:$dst), (ins),
               "creqv $dst, $dst, $dst", BrCR,
               []>;
 
-def CRUNSET: XLForm_1_ext<19, 193, (outs CRBITRC:$dst), (ins),
+def CRUNSET: XLForm_1_ext<19, 193, (outs crbitrc:$dst), (ins),
               "crxor $dst, $dst, $dst", BrCR,
               []>;
 
@@ -1562,23 +1582,23 @@ def CR6UNSET: XLForm_1_ext<19, 193, (outs), (ins),
 // XFX-Form instructions.  Instructions that deal with SPRs.
 //
 let Uses = [CTR] in {
-def MFCTR : XFXForm_1_ext<31, 339, 9, (outs GPRC:$rT), (ins),
+def MFCTR : XFXForm_1_ext<31, 339, 9, (outs gprc:$rT), (ins),
                           "mfctr $rT", SprMFSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
 }
 let Defs = [CTR], Pattern = [(PPCmtctr i32:$rS)] in {
-def MTCTR : XFXForm_7_ext<31, 467, 9, (outs), (ins GPRC:$rS),
+def MTCTR : XFXForm_7_ext<31, 467, 9, (outs), (ins gprc:$rS),
                           "mtctr $rS", SprMTSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
 }
 
 let Defs = [LR] in {
-def MTLR  : XFXForm_7_ext<31, 467, 8, (outs), (ins GPRC:$rS),
+def MTLR  : XFXForm_7_ext<31, 467, 8, (outs), (ins gprc:$rS),
                           "mtlr $rS", SprMTSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
 }
 let Uses = [LR] in {
-def MFLR  : XFXForm_1_ext<31, 339, 8, (outs GPRC:$rT), (ins),
+def MFLR  : XFXForm_1_ext<31, 339, 8, (outs gprc:$rT), (ins),
                           "mflr $rT", SprMFSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
 }
@@ -1586,19 +1606,19 @@ def MFLR  : XFXForm_1_ext<31, 339, 8, (outs GPRC:$rT), (ins),
 // Move to/from VRSAVE: despite being a SPR, the VRSAVE register is renamed like
 // a GPR on the PPC970.  As such, copies in and out have the same performance
 // characteristics as an OR instruction.
-def MTVRSAVE : XFXForm_7_ext<31, 467, 256, (outs), (ins GPRC:$rS),
+def MTVRSAVE : XFXForm_7_ext<31, 467, 256, (outs), (ins gprc:$rS),
                              "mtspr 256, $rS", IntGeneral>,
                PPC970_DGroup_Single, PPC970_Unit_FXU;
-def MFVRSAVE : XFXForm_1_ext<31, 339, 256, (outs GPRC:$rT), (ins),
+def MFVRSAVE : XFXForm_1_ext<31, 339, 256, (outs gprc:$rT), (ins),
                              "mfspr $rT, 256", IntGeneral>,
                PPC970_DGroup_First, PPC970_Unit_FXU;
 
 let isCodeGenOnly = 1 in {
   def MTVRSAVEv : XFXForm_7_ext<31, 467, 256,
-                                (outs VRSAVERC:$reg), (ins GPRC:$rS),
+                                (outs VRSAVERC:$reg), (ins gprc:$rS),
                                 "mtspr 256, $rS", IntGeneral>,
                   PPC970_DGroup_Single, PPC970_Unit_FXU;
-  def MFVRSAVEv : XFXForm_1_ext<31, 339, 256, (outs GPRC:$rT),
+  def MFVRSAVEv : XFXForm_1_ext<31, 339, 256, (outs gprc:$rT),
                                 (ins VRSAVERC:$reg),
                                 "mfspr $rT, 256", IntGeneral>,
                   PPC970_DGroup_First, PPC970_Unit_FXU;
@@ -1617,7 +1637,7 @@ def RESTORE_VRSAVE : Pseudo<(outs VRSAVERC:$vrsave), (ins memri:$F),
                      "#RESTORE_VRSAVE", []>;
 
 let neverHasSideEffects = 1 in {
-def MTCRF : XFXForm_5<31, 144, (outs crbitm:$FXM), (ins GPRC:$rS),
+def MTCRF : XFXForm_5<31, 144, (outs crbitm:$FXM), (ins gprc:$rS),
                       "mtcrf $FXM, $rS", BrMCRX>,
             PPC970_MicroCode, PPC970_Unit_CRU;
 
@@ -1632,23 +1652,23 @@ def MTCRF : XFXForm_5<31, 144, (outs crbitm:$FXM), (ins GPRC:$rS),
 //
 // FIXME: Make this a real Pseudo instruction when the JIT switches to MC.
 let isCodeGenOnly = 1 in
-def MFCRpseud: XFXForm_3<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
+def MFCRpseud: XFXForm_3<31, 19, (outs gprc:$rT), (ins crbitm:$FXM),
                        "#MFCRpseud", SprMFCR>,
             PPC970_MicroCode, PPC970_Unit_CRU;
 
-def MFOCRF: XFXForm_5a<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
+def MFOCRF: XFXForm_5a<31, 19, (outs gprc:$rT), (ins crbitm:$FXM),
                        "mfocrf $rT, $FXM", SprMFCR>,
             PPC970_DGroup_First, PPC970_Unit_CRU;
 } // neverHasSideEffects = 1
 
 let neverHasSideEffects = 1 in
-def MFCR : XFXForm_3<31, 19, (outs GPRC:$rT), (ins),
+def MFCR : XFXForm_3<31, 19, (outs gprc:$rT), (ins),
                      "mfcr $rT", SprMFCR>,
                      PPC970_MicroCode, PPC970_Unit_CRU;
 
 // Pseudo instruction to perform FADD in round-to-zero mode.
 let usesCustomInserter = 1, Uses = [RM] in {
-  def FADDrtz: Pseudo<(outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRB), "",
+  def FADDrtz: Pseudo<(outs f8rc:$FRT), (ins f8rc:$FRA, f8rc:$FRB), "",
                       [(set f64:$FRT, (PPCfaddrtz f64:$FRA, f64:$FRB))]>;
 }
 
@@ -1661,12 +1681,12 @@ let Uses = [RM], Defs = [RM] in {
   def MTFSB1 : XForm_43<63, 38, (outs), (ins u5imm:$FM),
                         "mtfsb1 $FM", IntMTFSB0, []>,
                PPC970_DGroup_Single, PPC970_Unit_FPU;
-  def MTFSF  : XFLForm<63, 711, (outs), (ins i32imm:$FM, F8RC:$rT),
+  def MTFSF  : XFLForm<63, 711, (outs), (ins i32imm:$FM, f8rc:$rT),
                        "mtfsf $FM, $rT", IntMTFSB0, []>,
                PPC970_DGroup_Single, PPC970_Unit_FPU;
 }
 let Uses = [RM] in {
-  def MFFS   : XForm_42<63, 583, (outs F8RC:$rT), (ins), 
+  def MFFS   : XForm_42<63, 583, (outs f8rc:$rT), (ins),
                          "mffs $rT", IntMFFS,
                          [(set f64:$rT, (PPCmffs))]>,
                PPC970_DGroup_Single, PPC970_Unit_FPU;
@@ -1676,57 +1696,57 @@ let Uses = [RM] in {
 let PPC970_Unit = 1, neverHasSideEffects = 1 in {  // FXU Operations.
 // XO-Form instructions.  Arithmetic instructions that can set overflow bit
 //
-defm ADD4  : XOForm_1r<31, 266, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
+defm ADD4  : XOForm_1r<31, 266, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
                        "add", "$rT, $rA, $rB", IntSimple,
                        [(set i32:$rT, (add i32:$rA, i32:$rB))]>;
-defm ADDC  : XOForm_1rc<31, 10, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
+defm ADDC  : XOForm_1rc<31, 10, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
                         "addc", "$rT, $rA, $rB", IntGeneral,
                         [(set i32:$rT, (addc i32:$rA, i32:$rB))]>,
                         PPC970_DGroup_Cracked;
-defm DIVW  : XOForm_1r<31, 491, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
+defm DIVW  : XOForm_1r<31, 491, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
                        "divw", "$rT, $rA, $rB", IntDivW,
                        [(set i32:$rT, (sdiv i32:$rA, i32:$rB))]>,
                        PPC970_DGroup_First, PPC970_DGroup_Cracked;
-defm DIVWU : XOForm_1r<31, 459, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
+defm DIVWU : XOForm_1r<31, 459, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
                        "divwu", "$rT, $rA, $rB", IntDivW,
                        [(set i32:$rT, (udiv i32:$rA, i32:$rB))]>,
                        PPC970_DGroup_First, PPC970_DGroup_Cracked;
-defm MULHW : XOForm_1r<31, 75, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
+defm MULHW : XOForm_1r<31, 75, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
                        "mulhw", "$rT, $rA, $rB", IntMulHW,
                        [(set i32:$rT, (mulhs i32:$rA, i32:$rB))]>;
-defm MULHWU : XOForm_1r<31, 11, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
+defm MULHWU : XOForm_1r<31, 11, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
                        "mulhwu", "$rT, $rA, $rB", IntMulHWU,
                        [(set i32:$rT, (mulhu i32:$rA, i32:$rB))]>;
-defm MULLW : XOForm_1r<31, 235, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
+defm MULLW : XOForm_1r<31, 235, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
                        "mullw", "$rT, $rA, $rB", IntMulHW,
                        [(set i32:$rT, (mul i32:$rA, i32:$rB))]>;
-defm SUBF  : XOForm_1r<31, 40, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
+defm SUBF  : XOForm_1r<31, 40, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
                        "subf", "$rT, $rA, $rB", IntGeneral,
                        [(set i32:$rT, (sub i32:$rB, i32:$rA))]>;
-defm SUBFC : XOForm_1rc<31, 8, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
+defm SUBFC : XOForm_1rc<31, 8, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
                         "subfc", "$rT, $rA, $rB", IntGeneral,
                         [(set i32:$rT, (subc i32:$rB, i32:$rA))]>,
                         PPC970_DGroup_Cracked;
-defm NEG    : XOForm_3r<31, 104, 0, (outs GPRC:$rT), (ins GPRC:$rA),
+defm NEG    : XOForm_3r<31, 104, 0, (outs gprc:$rT), (ins gprc:$rA),
                         "neg", "$rT, $rA", IntSimple,
                         [(set i32:$rT, (ineg i32:$rA))]>;
 let Uses = [CARRY] in {
-defm ADDE  : XOForm_1rc<31, 138, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
+defm ADDE  : XOForm_1rc<31, 138, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
                         "adde", "$rT, $rA, $rB", IntGeneral,
                         [(set i32:$rT, (adde i32:$rA, i32:$rB))]>;
-defm ADDME  : XOForm_3rc<31, 234, 0, (outs GPRC:$rT), (ins GPRC:$rA),
+defm ADDME  : XOForm_3rc<31, 234, 0, (outs gprc:$rT), (ins gprc:$rA),
                          "addme", "$rT, $rA", IntGeneral,
                          [(set i32:$rT, (adde i32:$rA, -1))]>;
-defm ADDZE  : XOForm_3rc<31, 202, 0, (outs GPRC:$rT), (ins GPRC:$rA),
+defm ADDZE  : XOForm_3rc<31, 202, 0, (outs gprc:$rT), (ins gprc:$rA),
                          "addze", "$rT, $rA", IntGeneral,
                          [(set i32:$rT, (adde i32:$rA, 0))]>;
-defm SUBFE : XOForm_1rc<31, 136, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
+defm SUBFE : XOForm_1rc<31, 136, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
                         "subfe", "$rT, $rA, $rB", IntGeneral,
                         [(set i32:$rT, (sube i32:$rB, i32:$rA))]>;
-defm SUBFME : XOForm_3rc<31, 232, 0, (outs GPRC:$rT), (ins GPRC:$rA),
+defm SUBFME : XOForm_3rc<31, 232, 0, (outs gprc:$rT), (ins gprc:$rA),
                          "subfme", "$rT, $rA", IntGeneral,
                          [(set i32:$rT, (sube -1, i32:$rA))]>;
-defm SUBFZE : XOForm_3rc<31, 200, 0, (outs GPRC:$rT), (ins GPRC:$rA),
+defm SUBFZE : XOForm_3rc<31, 200, 0, (outs gprc:$rT), (ins gprc:$rA),
                          "subfze", "$rT, $rA", IntGeneral,
                          [(set i32:$rT, (sube 0, i32:$rA))]>;
 }
@@ -1738,40 +1758,40 @@ defm SUBFZE : XOForm_3rc<31, 200, 0, (outs GPRC:$rT), (ins GPRC:$rA),
 let PPC970_Unit = 3, neverHasSideEffects = 1 in {  // FPU Operations.
 let Uses = [RM] in {
   defm FMADD : AForm_1r<63, 29, 
-                      (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
+                      (outs f8rc:$FRT), (ins f8rc:$FRA, f8rc:$FRC, f8rc:$FRB),
                       "fmadd", "$FRT, $FRA, $FRC, $FRB", FPFused,
                       [(set f64:$FRT, (fma f64:$FRA, f64:$FRC, f64:$FRB))]>;
   defm FMADDS : AForm_1r<59, 29,
-                      (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
+                      (outs f4rc:$FRT), (ins f4rc:$FRA, f4rc:$FRC, f4rc:$FRB),
                       "fmadds", "$FRT, $FRA, $FRC, $FRB", FPGeneral,
                       [(set f32:$FRT, (fma f32:$FRA, f32:$FRC, f32:$FRB))]>;
   defm FMSUB : AForm_1r<63, 28,
-                      (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
+                      (outs f8rc:$FRT), (ins f8rc:$FRA, f8rc:$FRC, f8rc:$FRB),
                       "fmsub", "$FRT, $FRA, $FRC, $FRB", FPFused,
                       [(set f64:$FRT,
                             (fma f64:$FRA, f64:$FRC, (fneg f64:$FRB)))]>;
   defm FMSUBS : AForm_1r<59, 28,
-                      (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
+                      (outs f4rc:$FRT), (ins f4rc:$FRA, f4rc:$FRC, f4rc:$FRB),
                       "fmsubs", "$FRT, $FRA, $FRC, $FRB", FPGeneral,
                       [(set f32:$FRT,
                             (fma f32:$FRA, f32:$FRC, (fneg f32:$FRB)))]>;
   defm FNMADD : AForm_1r<63, 31,
-                      (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
+                      (outs f8rc:$FRT), (ins f8rc:$FRA, f8rc:$FRC, f8rc:$FRB),
                       "fnmadd", "$FRT, $FRA, $FRC, $FRB", FPFused,
                       [(set f64:$FRT,
                             (fneg (fma f64:$FRA, f64:$FRC, f64:$FRB)))]>;
   defm FNMADDS : AForm_1r<59, 31,
-                      (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
+                      (outs f4rc:$FRT), (ins f4rc:$FRA, f4rc:$FRC, f4rc:$FRB),
                       "fnmadds", "$FRT, $FRA, $FRC, $FRB", FPGeneral,
                       [(set f32:$FRT,
                             (fneg (fma f32:$FRA, f32:$FRC, f32:$FRB)))]>;
   defm FNMSUB : AForm_1r<63, 30,
-                      (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
+                      (outs f8rc:$FRT), (ins f8rc:$FRA, f8rc:$FRC, f8rc:$FRB),
                       "fnmsub", "$FRT, $FRA, $FRC, $FRB", FPFused,
                       [(set f64:$FRT, (fneg (fma f64:$FRA, f64:$FRC,
                                                  (fneg f64:$FRB))))]>;
   defm FNMSUBS : AForm_1r<59, 30,
-                      (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
+                      (outs f4rc:$FRT), (ins f4rc:$FRA, f4rc:$FRC, f4rc:$FRB),
                       "fnmsubs", "$FRT, $FRA, $FRC, $FRB", FPGeneral,
                       [(set f32:$FRT, (fneg (fma f32:$FRA, f32:$FRC,
                                                  (fneg f32:$FRB))))]>;
@@ -1782,44 +1802,44 @@ let Uses = [RM] in {
 // and 4/8 byte forms for the result and operand type..
 let Interpretation64Bit = 1 in
 defm FSELD : AForm_1r<63, 23,
-                      (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
+                      (outs f8rc:$FRT), (ins f8rc:$FRA, f8rc:$FRC, f8rc:$FRB),
                       "fsel", "$FRT, $FRA, $FRC, $FRB", FPGeneral,
                       [(set f64:$FRT, (PPCfsel f64:$FRA, f64:$FRC, f64:$FRB))]>;
 defm FSELS : AForm_1r<63, 23,
-                      (outs F4RC:$FRT), (ins F8RC:$FRA, F4RC:$FRC, F4RC:$FRB),
+                      (outs f4rc:$FRT), (ins f8rc:$FRA, f4rc:$FRC, f4rc:$FRB),
                       "fsel", "$FRT, $FRA, $FRC, $FRB", FPGeneral,
                       [(set f32:$FRT, (PPCfsel f64:$FRA, f32:$FRC, f32:$FRB))]>;
 let Uses = [RM] in {
   defm FADD  : AForm_2r<63, 21,
-                        (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRB),
+                        (outs f8rc:$FRT), (ins f8rc:$FRA, f8rc:$FRB),
                         "fadd", "$FRT, $FRA, $FRB", FPAddSub,
                         [(set f64:$FRT, (fadd f64:$FRA, f64:$FRB))]>;
   defm FADDS : AForm_2r<59, 21,
-                        (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRB),
+                        (outs f4rc:$FRT), (ins f4rc:$FRA, f4rc:$FRB),
                         "fadds", "$FRT, $FRA, $FRB", FPGeneral,
                         [(set f32:$FRT, (fadd f32:$FRA, f32:$FRB))]>;
   defm FDIV  : AForm_2r<63, 18,
-                        (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRB),
+                        (outs f8rc:$FRT), (ins f8rc:$FRA, f8rc:$FRB),
                         "fdiv", "$FRT, $FRA, $FRB", FPDivD,
                         [(set f64:$FRT, (fdiv f64:$FRA, f64:$FRB))]>;
   defm FDIVS : AForm_2r<59, 18,
-                        (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRB),
+                        (outs f4rc:$FRT), (ins f4rc:$FRA, f4rc:$FRB),
                         "fdivs", "$FRT, $FRA, $FRB", FPDivS,
                         [(set f32:$FRT, (fdiv f32:$FRA, f32:$FRB))]>;
   defm FMUL  : AForm_3r<63, 25,
-                        (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC),
+                        (outs f8rc:$FRT), (ins f8rc:$FRA, f8rc:$FRC),
                         "fmul", "$FRT, $FRA, $FRC", FPFused,
                         [(set f64:$FRT, (fmul f64:$FRA, f64:$FRC))]>;
   defm FMULS : AForm_3r<59, 25,
-                        (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRC),
+                        (outs f4rc:$FRT), (ins f4rc:$FRA, f4rc:$FRC),
                         "fmuls", "$FRT, $FRA, $FRC", FPGeneral,
                         [(set f32:$FRT, (fmul f32:$FRA, f32:$FRC))]>;
   defm FSUB  : AForm_2r<63, 20,
-                        (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRB),
+                        (outs f8rc:$FRT), (ins f8rc:$FRA, f8rc:$FRB),
                         "fsub", "$FRT, $FRA, $FRB", FPAddSub,
                         [(set f64:$FRT, (fsub f64:$FRA, f64:$FRB))]>;
   defm FSUBS : AForm_2r<59, 20,
-                        (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRB),
+                        (outs f4rc:$FRT), (ins f4rc:$FRA, f4rc:$FRB),
                         "fsubs", "$FRT, $FRA, $FRB", FPGeneral,
                         [(set f32:$FRT, (fsub f32:$FRA, f32:$FRB))]>;
   }
@@ -1829,7 +1849,7 @@ let neverHasSideEffects = 1 in {
 let PPC970_Unit = 1 in {  // FXU Operations.
   let isSelect = 1 in
   def ISEL  : AForm_4<31, 15,
-                     (outs GPRC:$rT), (ins GPRC_NOR0:$rA, GPRC:$rB, CRBITRC:$cond),
+                     (outs gprc:$rT), (ins gprc_nor0:$rA, gprc:$rB, crbitrc:$cond),
                      "isel $rT, $rA, $rB, $cond", IntGeneral,
                      []>;
 }
@@ -1839,25 +1859,25 @@ let PPC970_Unit = 1 in {  // FXU Operations.
 //
 let isCommutable = 1 in {
 // RLWIMI can be commuted if the rotate amount is zero.
-defm RLWIMI : MForm_2r<20, (outs GPRC:$rA),
-                       (ins GPRC:$rSi, GPRC:$rS, u5imm:$SH, u5imm:$MB, 
+defm RLWIMI : MForm_2r<20, (outs gprc:$rA),
+                       (ins gprc:$rSi, gprc:$rS, u5imm:$SH, u5imm:$MB,
                        u5imm:$ME), "rlwimi", "$rA, $rS, $SH, $MB, $ME", IntRotate,
                        []>, PPC970_DGroup_Cracked, RegConstraint<"$rSi = $rA">,
                        NoEncode<"$rSi">;
 }
 let BaseName = "rlwinm" in {
 def RLWINM : MForm_2<21,
-                     (outs GPRC:$rA), (ins GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
+                     (outs gprc:$rA), (ins gprc:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
                      "rlwinm $rA, $rS, $SH, $MB, $ME", IntGeneral,
                      []>, RecFormRel;
 let Defs = [CR0] in
 def RLWINMo : MForm_2<21,
-                      (outs GPRC:$rA), (ins GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
+                      (outs gprc:$rA), (ins gprc:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
                       "rlwinm. $rA, $rS, $SH, $MB, $ME", IntGeneral,
                       []>, isDOT, RecFormRel, PPC970_DGroup_Cracked;
 }
-defm RLWNM  : MForm_2r<23, (outs GPRC:$rA),
-                       (ins GPRC:$rS, GPRC:$rB, u5imm:$MB, u5imm:$ME),
+defm RLWNM  : MForm_2r<23, (outs gprc:$rA),
+                       (ins gprc:$rS, gprc:$rB, u5imm:$MB, u5imm:$ME),
                        "rlwnm", "$rA, $rS, $rB, $MB, $ME", IntGeneral,
                        []>;
 }
