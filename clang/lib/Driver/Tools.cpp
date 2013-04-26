@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "Tools.h"
 #include "InputInfo.h"
 #include "SanitizerArgs.h"
@@ -1776,14 +1779,24 @@ static bool shouldUseLeafFramePointer(const ArgList &Args,
 /// If the PWD environment variable is set, add a CC1 option to specify the
 /// debug compilation directory.
 static void addDebugCompDirArg(const ArgList &Args, ArgStringList &CmdArgs) {
-  if (const char *pwd = ::getenv("PWD")) {
-    // GCC also verifies that stat(pwd) and stat(".") have the same inode
-    // number. Not doing those because stats are slow, but we could.
-    if (llvm::sys::path::is_absolute(pwd)) {
-      std::string CompDir = pwd;
-      CmdArgs.push_back("-fdebug-compilation-dir");
-      CmdArgs.push_back(Args.MakeArgString(CompDir));
-    }
+  struct stat StatPWDBuf, StatDotBuf;
+
+  const char *pwd;
+  if ((pwd = ::getenv("PWD")) != 0 &&
+      llvm::sys::path::is_absolute(pwd) &&
+      stat(pwd, &StatPWDBuf) == 0 &&
+      stat(".", &StatDotBuf) == 0 &&
+      StatPWDBuf.st_ino == StatDotBuf.st_ino &&
+      StatPWDBuf.st_dev == StatDotBuf.st_dev) {
+    CmdArgs.push_back("-fdebug-compilation-dir");
+    CmdArgs.push_back(Args.MakeArgString(pwd));
+    return;
+  }
+  // Fall back to using getcwd.
+  char cwd[MAXPATHLEN];
+  if (pwd && ::getcwd(cwd, MAXPATHLEN)) {
+    CmdArgs.push_back("-fdebug-compilation-dir");
+    CmdArgs.push_back(Args.MakeArgString(cwd));
   }
 }
 
