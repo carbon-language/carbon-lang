@@ -205,6 +205,7 @@ namespace {
     SDValue visitCTTZ_ZERO_UNDEF(SDNode *N);
     SDValue visitCTPOP(SDNode *N);
     SDValue visitSELECT(SDNode *N);
+    SDValue visitVSELECT(SDNode *N);
     SDValue visitSELECT_CC(SDNode *N);
     SDValue visitSETCC(SDNode *N);
     SDValue visitSIGN_EXTEND(SDNode *N);
@@ -1126,6 +1127,7 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::CTTZ_ZERO_UNDEF:    return visitCTTZ_ZERO_UNDEF(N);
   case ISD::CTPOP:              return visitCTPOP(N);
   case ISD::SELECT:             return visitSELECT(N);
+  case ISD::VSELECT:            return visitVSELECT(N);
   case ISD::SELECT_CC:          return visitSELECT_CC(N);
   case ISD::SETCC:              return visitSETCC(N);
   case ISD::SIGN_EXTEND:        return visitSIGN_EXTEND(N);
@@ -4157,6 +4159,46 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
                          N0.getOperand(0), N0.getOperand(1),
                          N1, N2, N0.getOperand(2));
     return SimplifySelect(N->getDebugLoc(), N0, N1, N2);
+  }
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitVSELECT(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  SDValue N2 = N->getOperand(2);
+  DebugLoc DL = N->getDebugLoc();
+
+  // Canonicalize integer abs.
+  // vselect (setg[te] X,  0),  X, -X ->
+  // vselect (setgt    X, -1),  X, -X ->
+  // vselect (setl[te] X,  0), -X,  X ->
+  // Y = sra (X, size(X)-1); xor (add (X, Y), Y)
+  if (N0.getOpcode() == ISD::SETCC) {
+    SDValue LHS = N0.getOperand(0), RHS = N0.getOperand(1);
+    ISD::CondCode CC = cast<CondCodeSDNode>(N0.getOperand(2))->get();
+    bool isAbs = false;
+    bool RHSIsAllZeros = ISD::isBuildVectorAllZeros(RHS.getNode());
+
+    if (((RHSIsAllZeros && (CC == ISD::SETGT || CC == ISD::SETGE)) ||
+         (ISD::isBuildVectorAllOnes(RHS.getNode()) && CC == ISD::SETGT)) &&
+        N1 == LHS && N2.getOpcode() == ISD::SUB && N1 == N2.getOperand(1))
+      isAbs = ISD::isBuildVectorAllZeros(N2.getOperand(0).getNode());
+    else if ((RHSIsAllZeros && (CC == ISD::SETLT || CC == ISD::SETLE)) &&
+             N2 == LHS && N1.getOpcode() == ISD::SUB && N2 == N1.getOperand(1))
+      isAbs = ISD::isBuildVectorAllZeros(N1.getOperand(0).getNode());
+
+    if (isAbs) {
+      EVT VT = LHS.getValueType();
+      SDValue Shift = DAG.getNode(
+          ISD::SRA, DL, VT, LHS,
+          DAG.getConstant(VT.getScalarType().getSizeInBits() - 1, VT));
+      SDValue Add = DAG.getNode(ISD::ADD, DL, VT, LHS, Shift);
+      AddToWorkList(Shift.getNode());
+      AddToWorkList(Add.getNode());
+      return DAG.getNode(ISD::XOR, DL, VT, Add, Shift);
+    }
   }
 
   return SDValue();
