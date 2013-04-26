@@ -131,6 +131,7 @@ void DumpProcessMap();
 bool FileExists(const char *filename);
 const char *GetEnv(const char *name);
 bool SetEnv(const char *name, const char *value);
+void UnsetEnv(const char *name);
 const char *GetPwd();
 u32 GetUid();
 void ReExec();
