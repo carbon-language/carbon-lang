@@ -296,14 +296,14 @@ void CodeGenModule::EmitCXXThreadLocalInitFunc() {
   if (!CXXThreadLocalInits.empty()) {
     // Generate a guarded initialization function.
     llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
-    InitFn = CreateGlobalInitOrDestructFunction(
-        *this, FTy, "__tls_init", /*TLS*/ true);
+    InitFn = CreateGlobalInitOrDestructFunction(*this, FTy, "__tls_init",
+                                                /*TLS*/ true);
     llvm::GlobalVariable *Guard = new llvm::GlobalVariable(
         getModule(), Int8Ty, false, llvm::GlobalVariable::InternalLinkage,
         llvm::ConstantInt::get(Int8Ty, 0), "__tls_guard");
     Guard->setThreadLocal(true);
-    CodeGenFunction(*this).GenerateCXXGlobalInitFunc(
-        InitFn, CXXThreadLocalInits.data(), CXXThreadLocalInits.size(), Guard);
+    CodeGenFunction(*this)
+        .GenerateCXXGlobalInitFunc(InitFn, CXXThreadLocalInits, Guard);
   }
 
   getCXXABI().EmitThreadLocalInitFuncs(CXXThreadLocals, InitFn);
@@ -351,9 +351,7 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
       for (; I < PrioE; ++I)
         LocalCXXGlobalInits.push_back(I->second);
 
-      CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn,
-                                                    &LocalCXXGlobalInits[0],
-                                                    LocalCXXGlobalInits.size());
+      CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn, LocalCXXGlobalInits);
       AddGlobalCtor(Fn, Priority);
     }
   }
@@ -361,9 +359,7 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
   llvm::Function *Fn = 
     CreateGlobalInitOrDestructFunction(*this, FTy, "_GLOBAL__I_a");
 
-  CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn,
-                                                   &CXXGlobalInits[0],
-                                                   CXXGlobalInits.size());
+  CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn, CXXGlobalInits);
   AddGlobalCtor(Fn);
 
   CXXGlobalInits.clear();
@@ -410,10 +406,10 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
   FinishFunction();
 }
 
-void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
-                                                llvm::Constant **Decls,
-                                                unsigned NumDecls,
-                                                llvm::GlobalVariable *Guard) {
+void
+CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
+                                           ArrayRef<llvm::Constant *> Decls,
+                                           llvm::GlobalVariable *Guard) {
   // Initialize debug info if needed.
   maybeInitializeDebugInfo();
 
@@ -445,8 +441,8 @@ void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
     llvm::Value *token = EmitObjCAutoreleasePoolPush();
     EmitObjCAutoreleasePoolCleanup(token);
   }
-  
-  for (unsigned i = 0; i != NumDecls; ++i)
+
+  for (unsigned i = 0, e = Decls.size(); i != e; ++i)
     if (Decls[i])
       EmitRuntimeCall(Decls[i]);
 
