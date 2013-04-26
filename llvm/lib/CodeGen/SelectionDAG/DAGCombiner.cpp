@@ -7152,25 +7152,40 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
     assert(OtherUses[i]->getOperand(!OffsetIdx).getNode() ==
            BasePtr.getNode() && "Expected BasePtr operand");
 
-    APInt OV =
-      cast<ConstantSDNode>(Offset)->getAPIntValue();
-    if (AM == ISD::PRE_DEC)
-      OV = -OV;
+    // We need to replace ptr0 in the following expression:
+    //   x0 * offset0 + y0 * ptr0 = t0
+    // knowing that
+    //   x1 * offset1 + y1 * ptr0 = t1 (the indexed load/store)
+    // 
+    // where x0, x1, y0 and y1 in {-1, 1} are given by the types of the
+    // indexed load/store and the expresion that needs to be re-written.
+    //
+    // Therefore, we have:
+    //   t0 = (x0 * offset0 - x1 * y0 * y1 *offset1) + (y0 * y1) * t1
 
     ConstantSDNode *CN =
       cast<ConstantSDNode>(OtherUses[i]->getOperand(OffsetIdx));
-    APInt CNV = CN->getAPIntValue();
-    if (OtherUses[i]->getOpcode() == ISD::SUB && OffsetIdx == 1)
-      CNV += OV;
-    else
-      CNV -= OV;
+    int X0, X1, Y0, Y1;
+    APInt Offset0 = CN->getAPIntValue();
+    APInt Offset1 = cast<ConstantSDNode>(Offset)->getAPIntValue();
 
-    SDValue NewOp1 = Result.getValue(isLoad ? 1 : 0);
-    SDValue NewOp2 = DAG.getConstant(CNV, CN->getValueType(0));
-    if (OffsetIdx == 0)
-      std::swap(NewOp1, NewOp2);
+    X0 = (OtherUses[i]->getOpcode() == ISD::SUB && OffsetIdx == 1) ? -1 : 1;
+    Y0 = (OtherUses[i]->getOpcode() == ISD::SUB && OffsetIdx == 0) ? -1 : 1;
+    X1 = (AM == ISD::PRE_DEC && !Swapped) ? -1 : 1;
+    Y1 = (AM == ISD::PRE_DEC && Swapped) ? -1 : 1;
 
-    SDValue NewUse = DAG.getNode(OtherUses[i]->getOpcode(),
+    unsigned Opcode = (Y0 * Y1 < 0) ? ISD::SUB : ISD::ADD;
+
+    APInt CNV = Offset0;
+    if (X0 < 0) CNV = -CNV;
+    if (X1 * Y0 * Y1 < 0) CNV = CNV + Offset1;
+    else CNV = CNV - Offset1;
+
+    // We can now generate the new expression.
+    SDValue NewOp1 = DAG.getConstant(CNV, CN->getValueType(0));
+    SDValue NewOp2 = Result.getValue(isLoad ? 1 : 0);
+
+    SDValue NewUse = DAG.getNode(Opcode,
                                  OtherUses[i]->getDebugLoc(),
                                  OtherUses[i]->getValueType(0), NewOp1, NewOp2);
     DAG.ReplaceAllUsesOfValueWith(SDValue(OtherUses[i], 0), NewUse);
