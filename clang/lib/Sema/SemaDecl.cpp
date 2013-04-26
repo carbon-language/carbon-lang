@@ -4844,8 +4844,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
     // If this decl has an auto type in need of deduction, make a note of the
     // Decl so we can diagnose uses of it in its own initializer.
-    if (D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto &&
-        R->getContainedAutoType())
+    if (D.getDeclSpec().containsPlaceholderType() && R->getContainedAutoType())
       ParsingInitForAutoVars.insert(NewVD);
 
     if (D.isInvalidType() || Invalid)
@@ -8166,7 +8165,7 @@ Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
       getASTContext().addUnnamedTag(Tag);
 
   return BuildDeclaratorGroup(Decls.data(), Decls.size(),
-                              DS.getTypeSpecType() == DeclSpec::TST_auto);
+                              DS.containsPlaceholderType());
 }
 
 /// BuildDeclaratorGroup - convert a list of declarations into a declaration

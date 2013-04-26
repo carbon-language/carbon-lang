@@ -38,8 +38,8 @@ namespace clang {
     TST_void,
     TST_char,
     TST_wchar,        // C++ wchar_t
-    TST_char16,       // C++0x char16_t
-    TST_char32,       // C++0x char32_t
+    TST_char16,       // C++11 char16_t
+    TST_char32,       // C++11 char32_t
     TST_int,
     TST_int128,
     TST_half,         // OpenCL half, ARM NEON __fp16
@@ -57,11 +57,12 @@ namespace clang {
     TST_typename,     // Typedef, C++ class-name or enum name, etc.
     TST_typeofType,
     TST_typeofExpr,
-    TST_decltype,     // C++0x decltype
-    TST_underlyingType, // __underlying_type for C++0x
-    TST_auto,         // C++0x auto
-    TST_unknown_anytype, // __unknown_anytype extension
-    TST_atomic,       // C11 _Atomic
+    TST_decltype,         // C++11 decltype
+    TST_underlyingType,   // __underlying_type for C++11
+    TST_auto,             // C++11 auto
+    TST_decltype_auto,    // C++1y decltype(auto)
+    TST_unknown_anytype,  // __unknown_anytype extension
+    TST_atomic,           // C11 _Atomic
     TST_image1d_t,        // OpenCL image1d_t
     TST_image1d_array_t,  // OpenCL image1d_array_t
     TST_image1d_buffer_t, // OpenCL image1d_buffer_t
@@ -145,7 +146,7 @@ namespace clang {
     TSK_ExplicitSpecialization,
     /// This template specialization was instantiated from a template
     /// due to an explicit instantiation declaration request
-    /// (C++0x [temp.explicit]).
+    /// (C++11 [temp.explicit]).
     TSK_ExplicitInstantiationDeclaration,
     /// This template specialization was instantiated from a template
     /// due to an explicit instantiation definition request

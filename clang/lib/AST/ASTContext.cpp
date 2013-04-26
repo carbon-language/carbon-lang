@@ -3516,17 +3516,19 @@ QualType ASTContext::getUnaryTransformType(QualType BaseType,
 }
 
 /// getAutoType - We only unique auto types after they've been deduced.
-QualType ASTContext::getAutoType(QualType DeducedType) const {
+QualType ASTContext::getAutoType(QualType DeducedType,
+                                 bool IsDecltypeAuto) const {
   void *InsertPos = 0;
   if (!DeducedType.isNull()) {
     // Look in the folding set for an existing type.
     llvm::FoldingSetNodeID ID;
-    AutoType::Profile(ID, DeducedType);
+    AutoType::Profile(ID, DeducedType, IsDecltypeAuto);
     if (AutoType *AT = AutoTypes.FindNodeOrInsertPos(ID, InsertPos))
       return QualType(AT, 0);
   }
 
-  AutoType *AT = new (*this, TypeAlignment) AutoType(DeducedType);
+  AutoType *AT = new (*this, TypeAlignment) AutoType(DeducedType,
+                                                     IsDecltypeAuto);
   Types.push_back(AT);
   if (InsertPos)
     AutoTypes.InsertNode(AT, InsertPos);
@@ -3564,7 +3566,7 @@ QualType ASTContext::getAtomicType(QualType T) const {
 /// getAutoDeductType - Get type pattern for deducing against 'auto'.
 QualType ASTContext::getAutoDeductType() const {
   if (AutoDeductTy.isNull())
-    AutoDeductTy = getAutoType(QualType());
+    AutoDeductTy = getAutoType(QualType(), false);
   assert(!AutoDeductTy.isNull() && "can't build 'auto' pattern");
   return AutoDeductTy;
 }

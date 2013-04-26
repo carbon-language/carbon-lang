@@ -1326,10 +1326,20 @@ protected:
     unsigned AttrKind : 32 - NumTypeBits;
   };
 
+  class AutoTypeBitfields {
+    friend class AutoType;
+
+    unsigned : NumTypeBits;
+
+    /// Was this placeholder type spelled as 'decltype(auto)'?
+    unsigned IsDecltypeAuto : 1;
+  };
+
   union {
     TypeBitfields TypeBits;
     ArrayTypeBitfields ArrayTypeBits;
     AttributedTypeBitfields AttributedTypeBits;
+    AutoTypeBitfields AutoTypeBits;
     BuiltinTypeBitfields BuiltinTypeBits;
     FunctionTypeBitfields FunctionTypeBits;
     ObjCObjectTypeBitfields ObjCObjectTypeBits;
@@ -3542,24 +3552,27 @@ public:
   }
 };
 
-/// \brief Represents a C++0x auto type.
+/// \brief Represents a C++11 auto or C++1y decltype(auto) type.
 ///
 /// These types are usually a placeholder for a deduced type. However, within
 /// templates and before the initializer is attached, there is no deduced type
 /// and an auto type is type-dependent and canonical.
 class AutoType : public Type, public llvm::FoldingSetNode {
-  AutoType(QualType DeducedType)
+  AutoType(QualType DeducedType, bool IsDecltypeAuto)
     : Type(Auto, DeducedType.isNull() ? QualType(this, 0) : DeducedType,
            /*Dependent=*/DeducedType.isNull(),
            /*InstantiationDependent=*/DeducedType.isNull(),
            /*VariablyModified=*/false, /*ContainsParameterPack=*/false) {
     assert((DeducedType.isNull() || !DeducedType->isDependentType()) &&
            "deduced a dependent type for auto");
+    AutoTypeBits.IsDecltypeAuto = IsDecltypeAuto;
   }
 
   friend class ASTContext;  // ASTContext creates these
 
 public:
+  bool isDecltypeAuto() const { return AutoTypeBits.IsDecltypeAuto; }
+
   bool isSugared() const { return isDeduced(); }
   QualType desugar() const { return getCanonicalTypeInternal(); }
 
@@ -3571,12 +3584,13 @@ public:
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getDeducedType());
+    Profile(ID, getDeducedType(), isDecltypeAuto());
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID,
-                      QualType Deduced) {
+                      QualType Deduced, bool IsDecltypeAuto) {
     ID.AddPointer(Deduced.getAsOpaquePtr());
+    ID.AddBoolean(IsDecltypeAuto);
   }
 
   static bool classof(const Type *T) {

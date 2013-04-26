@@ -458,19 +458,13 @@ private:
   /// \brief Read an already-translated primary expression out of an annotation
   /// token.
   static ExprResult getExprAnnotation(Token &Tok) {
-    if (Tok.getAnnotationValue())
-      return ExprResult((Expr *)Tok.getAnnotationValue());
-
-    return ExprResult(true);
+    return ExprResult::getFromOpaquePointer(Tok.getAnnotationValue());
   }
 
   /// \brief Set the primary expression corresponding to the given annotation
   /// token.
   static void setExprAnnotation(Token &Tok, ExprResult ER) {
-    if (ER.isInvalid())
-      Tok.setAnnotationValue(0);
-    else
-      Tok.setAnnotationValue(ER.get());
+    Tok.setAnnotationValue(ER.getAsOpaquePointer());
   }
 
 public:

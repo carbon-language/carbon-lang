@@ -2275,7 +2275,7 @@ void CXXNameMangler::mangleType(const AutoType *T) {
   QualType D = T->getDeducedType();
   // <builtin-type> ::= Da  # dependent auto
   if (D.isNull())
-    Out << "Da";
+    Out << (T->isDecltypeAuto() ? "Dc" : "Da");
   else
     mangleType(D);
 }

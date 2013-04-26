@@ -57,8 +57,7 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
     if (FnD) {
       Actions.ProcessDeclAttributeList(getCurScope(), FnD, AccessAttrs,
                                        false, true);
-      bool TypeSpecContainsAuto
-        = D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto;
+      bool TypeSpecContainsAuto = D.getDeclSpec().containsPlaceholderType();
       if (Init.isUsable())
         Actions.AddInitializerToDecl(FnD, Init.get(), false, 
                                      TypeSpecContainsAuto);

@@ -779,7 +779,7 @@ void TypePrinter::printAutoBefore(const AutoType *T, raw_ostream &OS) {
   if (T->isDeduced()) {
     printBefore(T->getDeducedType(), OS);
   } else {
-    OS << "auto";
+    OS << (T->isDecltypeAuto() ? "decltype(auto)" : "auto");
     spaceBeforePlaceHolder(OS);
   }
 }

@@ -674,15 +674,15 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
                                               T.getCloseLocation());
 }
 
-/// ParseDecltypeSpecifier - Parse a C++0x decltype specifier.
+/// ParseDecltypeSpecifier - Parse a C++11 decltype specifier.
 ///
 /// 'decltype' ( expression )
+/// 'decltype' ( 'auto' )      [C++1y]
 ///
 SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
   assert((Tok.is(tok::kw_decltype) || Tok.is(tok::annot_decltype))
            && "Not a decltype specifier");
   
-
   ExprResult Result;
   SourceLocation StartLoc = Tok.getLocation();
   SourceLocation EndLoc;
@@ -709,29 +709,44 @@ SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
              StartLoc : T.getOpenLocation();
     }
 
-    // Parse the expression
+    // Check for C++1y 'decltype(auto)'.
+    if (Tok.is(tok::kw_auto)) {
+      // No need to disambiguate here: an expression can't start with 'auto',
+      // because the typename-specifier in a function-style cast operation can't
+      // be 'auto'.
+      Diag(Tok.getLocation(),
+           getLangOpts().CPlusPlus1y
+             ? diag::warn_cxx11_compat_decltype_auto_type_specifier
+             : diag::ext_decltype_auto_type_specifier);
+      ConsumeToken();
+    } else {
+      // Parse the expression
 
-    // C++0x [dcl.type.simple]p4:
-    //   The operand of the decltype specifier is an unevaluated operand.
-    EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated,
-                                                 0, /*IsDecltype=*/true);
-    Result = ParseExpression();
-    if (Result.isInvalid()) {
-      DS.SetTypeSpecError();
-      if (SkipUntil(tok::r_paren, /*StopAtSemi=*/true, /*DontConsume=*/true)) {
-        EndLoc = ConsumeParen();
-      } else {
-        if (PP.isBacktrackEnabled() && Tok.is(tok::semi)) {
-          // Backtrack to get the location of the last token before the semi.
-          PP.RevertCachedTokens(2);
-          ConsumeToken(); // the semi.
-          EndLoc = ConsumeAnyToken();
-          assert(Tok.is(tok::semi));
+      // C++11 [dcl.type.simple]p4:
+      //   The operand of the decltype specifier is an unevaluated operand.
+      EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated,
+                                                   0, /*IsDecltype=*/true);
+      Result = ParseExpression();
+      if (Result.isInvalid()) {
+        DS.SetTypeSpecError();
+        if (SkipUntil(tok::r_paren, /*StopAtSemi=*/true,
+                      /*DontConsume=*/true)) {
+          EndLoc = ConsumeParen();
         } else {
-          EndLoc = Tok.getLocation();
+          if (PP.isBacktrackEnabled() && Tok.is(tok::semi)) {
+            // Backtrack to get the location of the last token before the semi.
+            PP.RevertCachedTokens(2);
+            ConsumeToken(); // the semi.
+            EndLoc = ConsumeAnyToken();
+            assert(Tok.is(tok::semi));
+          } else {
+            EndLoc = Tok.getLocation();
+          }
         }
+        return EndLoc;
       }
-      return EndLoc;
+
+      Result = Actions.ActOnDecltypeExpression(Result.take());
     }
 
     // Match the ')'
@@ -743,7 +758,6 @@ SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
       return T.getCloseLocation();
     }
 
-    Result = Actions.ActOnDecltypeExpression(Result.take());
     if (Result.isInvalid()) {
       DS.SetTypeSpecError();
       return T.getCloseLocation();
@@ -751,12 +765,16 @@ SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
 
     EndLoc = T.getCloseLocation();
   }
+  assert(!Result.isInvalid());
 
   const char *PrevSpec = 0;
   unsigned DiagID;
   // Check for duplicate type specifiers (e.g. "int decltype(a)").
-  if (DS.SetTypeSpecType(DeclSpec::TST_decltype, StartLoc, PrevSpec,
-                         DiagID, Result.release())) {
+  if (Result.get()
+        ? DS.SetTypeSpecType(DeclSpec::TST_decltype, StartLoc, PrevSpec,
+                             DiagID, Result.release())
+        : DS.SetTypeSpecType(DeclSpec::TST_decltype_auto, StartLoc, PrevSpec,
+                             DiagID)) {
     Diag(StartLoc, DiagID) << PrevSpec;
     DS.SetTypeSpecError();
   }
@@ -773,8 +791,10 @@ void Parser::AnnotateExistingDecltypeSpecifier(const DeclSpec& DS,
     PP.EnterToken(Tok);
 
   Tok.setKind(tok::annot_decltype);
-  setExprAnnotation(Tok, DS.getTypeSpecType() == TST_decltype ? 
-                         DS.getRepAsExpr() : ExprResult());
+  setExprAnnotation(Tok,
+                    DS.getTypeSpecType() == TST_decltype ? DS.getRepAsExpr() :
+                    DS.getTypeSpecType() == TST_decltype_auto ? ExprResult() :
+                    ExprError());
   Tok.setAnnotationEndLoc(EndLoc);
   Tok.setLocation(StartLoc);
   PP.AnnotateCachedTokens(Tok);
@@ -2267,11 +2287,10 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         SkipUntil(tok::comma, true, true);
       else if (ThisDecl)
         Actions.AddInitializerToDecl(ThisDecl, Init.get(), EqualLoc.isInvalid(),
-                                   DS.getTypeSpecType() == DeclSpec::TST_auto);      
+                                     DS.containsPlaceholderType());
     } else if (ThisDecl && DS.getStorageClassSpec() == DeclSpec::SCS_static) {
       // No initializer.
-      Actions.ActOnUninitializedDecl(ThisDecl, 
-                                   DS.getTypeSpecType() == DeclSpec::TST_auto);
+      Actions.ActOnUninitializedDecl(ThisDecl, DS.containsPlaceholderType());
     }
     
     if (ThisDecl) {

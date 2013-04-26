@@ -1465,6 +1465,17 @@ def warn_dangling_std_initializer_list : Warning<
   "%select{the full-expression|the constructor}0">,
   InGroup<DiagGroup<"dangling-initializer-list">>;
 
+// C++1y decltype(auto) type
+def err_decltype_auto_cannot_be_combined : Error<
+  "'decltype(auto)' cannot be combined with other type specifiers">;
+def err_decltype_auto_function_declarator_not_declaration : Error<
+  "'decltype(auto)' can only be used as a return type "
+  "in a function declaration">;
+def err_decltype_auto_compound_type : Error<
+  "cannot form %select{pointer to|reference to|array of}0 'decltype(auto)'">;
+def err_decltype_auto_initializer_list : Error<
+  "cannot deduce 'decltype(auto)' from initializer list">;
+
 // C++11 override control
 def override_keyword_only_allowed_on_virtual_member_functions : Error<
   "only virtual member functions can be marked '%0'">;

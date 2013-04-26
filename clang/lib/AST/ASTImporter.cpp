@@ -1680,7 +1680,7 @@ QualType ASTNodeImporter::VisitUnaryTransformType(const UnaryTransformType *T) {
 }
 
 QualType ASTNodeImporter::VisitAutoType(const AutoType *T) {
-  // FIXME: Make sure that the "to" context supports C++0x!
+  // FIXME: Make sure that the "to" context supports C++11!
   QualType FromDeduced = T->getDeducedType();
   QualType ToDeduced;
   if (!FromDeduced.isNull()) {
@@ -1689,7 +1689,7 @@ QualType ASTNodeImporter::VisitAutoType(const AutoType *T) {
       return QualType();
   }
   
-  return Importer.getToContext().getAutoType(ToDeduced);
+  return Importer.getToContext().getAutoType(ToDeduced, T->isDecltypeAuto());
 }
 
 QualType ASTNodeImporter::VisitRecordType(const RecordType *T) {

@@ -4626,8 +4626,11 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     return Context.getUnaryTransformType(BaseType, UnderlyingType, UKind);
   }
 
-  case TYPE_AUTO:
-    return Context.getAutoType(readType(*Loc.F, Record, Idx));
+  case TYPE_AUTO: {
+    QualType Deduced = readType(*Loc.F, Record, Idx);
+    bool IsDecltypeAuto = Record[Idx++];
+    return Context.getAutoType(Deduced, IsDecltypeAuto);
+  }
 
   case TYPE_RECORD: {
     if (Record.size() != 2) {

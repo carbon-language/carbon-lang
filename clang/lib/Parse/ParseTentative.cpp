@@ -942,6 +942,7 @@ bool Parser::isTentativelyDeclared(IdentifierInfo *II) {
 /// [GNU]     '_Complex'
 /// [C++11]   'auto'
 /// [C++11]   'decltype' ( expression )
+/// [C++1y]   'decltype' ( 'auto' )
 ///
 ///         type-name:
 ///           class-name
