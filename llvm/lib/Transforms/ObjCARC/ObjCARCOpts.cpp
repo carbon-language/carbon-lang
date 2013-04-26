@@ -30,7 +30,6 @@
 #include "ObjCARCAliasAnalysis.h"
 #include "ProvenanceAnalysis.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -986,13 +985,6 @@ namespace {
     /// A flag indicating whether this optimization pass should run.
     bool Run;
 
-    /// This set contains references to objc_autorelease calls that at one point
-    /// in time were objc_autoreleaseRV calls. Thus we can disambiguate
-    /// in between objc_autorelease that were inserted from the frontend (which
-    /// we must be very conservative with) and those as a result of strength
-    /// reducing objc_autoreleaseRV calls (which are more flexible).
-    DenseSet<Instruction *> ImpreciseAutoreleaseSet;
-
     /// Declarations for ObjC runtime functions, for use in creating calls to
     /// them. These are initialized lazily to avoid cluttering up the Module
     /// with unused declarations.
@@ -1041,27 +1033,6 @@ namespace {
     Constant *getAutoreleaseCallee(Module *M);
 
     bool IsRetainBlockOptimizable(const Instruction *Inst);
-
-    /// Erase an instruction.
-    ///
-    /// This is included separately from the EraseInstruction in ObjCARC.h
-    /// (which this uses internally) in order to make sure that state is cleaned
-    /// up. Currently this just means attempting to remove said instruction from
-    /// ImpreciseAutoreleaseSet if it is an autorelease instruction. This will
-    /// prevent bugs of the sort where we erase an instruction and forget to
-    /// remove any associated state.
-    ///
-    /// TODO: Maybe remove this, the ImpreciseAutoreleaseSet, the
-    /// MetadataKind/Callee variables into a separate class.
-    void EraseInstruction(Instruction *Inst) {
-      // If Inst is an autorelease instruction, erase it from
-      // ImpreciseAutoreleaseSet if it is contained there in.
-      if (GetBasicInstructionClass(Inst) == IC_Autorelease) {
-        ImpreciseAutoreleaseSet.erase(Inst);
-      }
-      // Invoke the normal EraseInstruction.
-      llvm::objcarc::EraseInstruction(Inst);
-    }
 
     void OptimizeRetainCall(Function &F, Instruction *Retain);
     bool OptimizeRetainRVCall(Function &F, Instruction *RetainRV);
@@ -1387,12 +1358,6 @@ ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV,
     setCalledFunction(getAutoreleaseCallee(F.getParent()));
   AutoreleaseRVCI->setTailCall(false); // Never tail call objc_autorelease.
   Class = IC_Autorelease;
-
-  // Stash the given instruction in the ImpreciseAutoreleaseSet so we can check
-  // later on that this instruction was an autoreleaseRV instruction that was
-  // converted to an autorelease instead of an autorelease inserted by the
-  // frontend (which we can not touch).
-  ImpreciseAutoreleaseSet.insert(AutoreleaseRVCI);
 
   DEBUG(dbgs() << "New: " << *AutoreleaseRV << "\n");
 
@@ -3129,14 +3094,11 @@ bool ObjCARCOpt::runOnFunction(Function &F) {
 
   DEBUG(dbgs() << "\n");
 
-  ImpreciseAutoreleaseSet.clear();
-
   return Changed;
 }
 
 void ObjCARCOpt::releaseMemory() {
   PA.clear();
-  ImpreciseAutoreleaseSet.clear();
 }
 
 /// @}
