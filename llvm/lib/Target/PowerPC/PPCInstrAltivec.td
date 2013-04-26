@@ -491,7 +491,7 @@ def VRFIP     : VX2_Int_SP<650, "vrfip",     int_ppc_altivec_vrfip>;
 def VRFIZ     : VX2_Int_SP<586, "vrfiz",     int_ppc_altivec_vrfiz>;
 def VRSQRTEFP : VX2_Int_SP<330, "vrsqrtefp", int_ppc_altivec_vrsqrtefp>;
 
-def VSUBCUW : VX1_Int_Ty<74, "vsubcuw", int_ppc_altivec_vsubcuw, v4i32>;
+def VSUBCUW : VX1_Int_Ty<1408, "vsubcuw", int_ppc_altivec_vsubcuw, v4i32>;
 
 def VSUBFP  : VXForm_1<74, (outs VRRC:$vD), (ins VRRC:$vA, VRRC:$vB),
                       "vsubfp $vD, $vA, $vB", VecGeneral,
@@ -516,7 +516,7 @@ def VSUBUWS : VX1_Int_Ty<1664, "vsubuws" , int_ppc_altivec_vsubuws, v4i32>;
 def VSUMSWS : VX1_Int_Ty<1928, "vsumsws" , int_ppc_altivec_vsumsws, v4i32>;
 def VSUM2SWS: VX1_Int_Ty<1672, "vsum2sws", int_ppc_altivec_vsum2sws, v4i32>;
 
-def VSUM4SBS: VX1_Int_Ty3<1672, "vsum4sbs", int_ppc_altivec_vsum4sbs,
+def VSUM4SBS: VX1_Int_Ty3<1800, "vsum4sbs", int_ppc_altivec_vsum4sbs,
                           v4i32, v16i8, v4i32>;
 def VSUM4SHS: VX1_Int_Ty3<1608, "vsum4shs", int_ppc_altivec_vsum4shs,
                           v4i32, v8i16, v4i32>;
