@@ -1165,10 +1165,10 @@ def STHU  : DForm_1<45, (outs ptr_rc_nor0:$ea_res), (ins GPRC:$rS, memri:$dst),
 def STWU  : DForm_1<37, (outs ptr_rc_nor0:$ea_res), (ins GPRC:$rS, memri:$dst),
                     "stwu $rS, $dst", LdStStoreUpd, []>,
                     RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">;
-def STFSU : DForm_1<37, (outs ptr_rc_nor0:$ea_res), (ins F4RC:$rS, memri:$dst),
+def STFSU : DForm_1<53, (outs ptr_rc_nor0:$ea_res), (ins F4RC:$rS, memri:$dst),
                     "stfsu $rS, $dst", LdStSTFDU, []>,
                     RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">;
-def STFDU : DForm_1<37, (outs ptr_rc_nor0:$ea_res), (ins F8RC:$rS, memri:$dst),
+def STFDU : DForm_1<55, (outs ptr_rc_nor0:$ea_res), (ins F8RC:$rS, memri:$dst),
                     "stfdu $rS, $dst", LdStSTFDU, []>,
                     RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">;
 }
