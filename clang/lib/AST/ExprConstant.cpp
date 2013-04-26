@@ -1764,6 +1764,7 @@ findSubobject(EvalInfo &Info, const Expr *E, APValue &Obj, QualType ObjType,
   return handler.found(*O, ObjType);
 }
 
+namespace {
 struct ExtractSubobjectHandler {
   EvalInfo &Info;
   APValue &Obj;
@@ -1855,6 +1856,7 @@ struct ModifySubobjectHandler {
   }
 };
 const AccessKinds ModifySubobjectHandler::AccessKind;
+} // end anonymous namespace
 
 /// Update the designated sub-object of an rvalue to the given value.
 static bool modifySubobject(EvalInfo &Info, const Expr *E,
