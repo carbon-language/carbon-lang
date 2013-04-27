@@ -23,6 +23,8 @@ file to read as input.
 OPTIONS
 -------
 
+.. program:: tblgen
+
 .. option:: -help
 
  Print a summary of command line options.
@@ -56,7 +58,7 @@ OPTIONS
 
 .. option:: -print-enums
 
- Print enumeration values for a class
+ Print enumeration values for a class.
 
 .. option:: -print-sets
 
