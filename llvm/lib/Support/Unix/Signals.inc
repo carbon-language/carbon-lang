@@ -28,7 +28,7 @@
 #include <sys/stat.h>
 #endif
 #if HAVE_CXXABI_H
-#include cxxabi.h>
+#include <cxxabi.h>
 #endif
 #if HAVE_DLFCN_H
 #include <dlfcn.h>
