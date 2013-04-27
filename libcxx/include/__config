@@ -135,6 +135,10 @@
 
 #endif // _WIN32
 
+#ifndef __has_attribute
+#define __has_attribute(__x) 0
+#endif
+
 #ifndef _LIBCPP_HIDDEN
 #define _LIBCPP_HIDDEN __attribute__ ((__visibility__("hidden")))
 #endif
