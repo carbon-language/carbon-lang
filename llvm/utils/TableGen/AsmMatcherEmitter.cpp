@@ -1322,27 +1322,6 @@ void AsmMatcherInfo::buildInfo() {
       if (CGI.TheDef->getValueAsBit("isCodeGenOnly"))
         continue;
 
-      // Validate the operand list to ensure we can handle this instruction.
-      for (unsigned i = 0, e = CGI.Operands.size(); i != e; ++i) {
-        const CGIOperandList::OperandInfo &OI = CGI.Operands[i];
-
-        // Validate tied operands.
-        if (OI.getTiedRegister() != -1) {
-          // If we have a tied operand that consists of multiple MCOperands,
-          // reject it.  We reject aliases and ignore instructions for now.
-          if (OI.MINumOperands != 1) {
-            // FIXME: Should reject these.  The ARM backend hits this with $lane
-            // in a bunch of instructions. The right answer is unclear.
-            DEBUG({
-                errs() << "warning: '" << CGI.TheDef->getName() << "': "
-                     << "ignoring instruction with multi-operand tied operand '"
-                     << OI.Name << "'\n";
-              });
-            continue;
-          }
-        }
-      }
-
       OwningPtr<MatchableInfo> II(new MatchableInfo(CGI));
 
       II->initialize(*this, SingletonRegisters, AsmVariantNo, RegisterPrefix);
@@ -1529,7 +1508,9 @@ buildInstructionOperandReference(MatchableInfo *II,
   // we want to canonicalize to:
   //   "inc $dst"
   // so that we know how to provide the $dst operand when filling in the result.
-  int OITied = Operands[Idx].getTiedRegister();
+  int OITied = -1;
+  if (Operands[Idx].MINumOperands == 1)
+    OITied = Operands[Idx].getTiedRegister();
   if (OITied != -1) {
     // The tied operand index is an MIOperand index, find the operand that
     // contains it.
@@ -1578,7 +1559,9 @@ void MatchableInfo::buildInstructionResultOperands() {
     const CGIOperandList::OperandInfo &OpInfo = ResultInst->Operands[i];
 
     // If this is a tied operand, just copy from the previously handled operand.
-    int TiedOp = OpInfo.getTiedRegister();
+    int TiedOp = -1;
+    if (OpInfo.MINumOperands == 1)
+      TiedOp = OpInfo.getTiedRegister();
     if (TiedOp != -1) {
       ResOperands.push_back(ResOperand::getTiedOp(TiedOp));
       continue;
@@ -1586,10 +1569,15 @@ void MatchableInfo::buildInstructionResultOperands() {
 
     // Find out what operand from the asmparser this MCInst operand comes from.
     int SrcOperand = findAsmOperandNamed(OpInfo.Name);
-    if (OpInfo.Name.empty() || SrcOperand == -1)
-      PrintFatalError(TheDef->getLoc(), "Instruction '" +
-                    TheDef->getName() + "' has operand '" + OpInfo.Name +
-                    "' that doesn't appear in asm string!");
+    if (OpInfo.Name.empty() || SrcOperand == -1) {
+      // This may happen for operands that are tied to a suboperand of a
+      // complex operand.  Simply use a dummy value here; nobody should
+      // use this operand slot.
+      // FIXME: The long term goal is for the MCOperand list to not contain
+      // tied operands at all.
+      ResOperands.push_back(ResOperand::getImmOp(0));
+      continue;
+    }
 
     // Check if the one AsmOperand populates the entire operand.
     unsigned NumOperands = OpInfo.MINumOperands;
@@ -1620,7 +1608,9 @@ void MatchableInfo::buildAliasResultOperands() {
     const CGIOperandList::OperandInfo *OpInfo = &ResultInst->Operands[i];
 
     // If this is a tied operand, just copy from the previously handled operand.
-    int TiedOp = OpInfo->getTiedRegister();
+    int TiedOp = -1;
+    if (OpInfo->MINumOperands == 1)
+      TiedOp = OpInfo->getTiedRegister();
     if (TiedOp != -1) {
       ResOperands.push_back(ResOperand::getTiedOp(TiedOp));
       continue;
@@ -1843,13 +1833,12 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
       case MatchableInfo::ResOperand::TiedOperand: {
         // If this operand is tied to a previous one, just copy the MCInst
         // operand from the earlier one.We can only tie single MCOperand values.
-        //assert(OpInfo.MINumOperands == 1 && "Not a singular MCOperand");
+        assert(OpInfo.MINumOperands == 1 && "Not a singular MCOperand");
         unsigned TiedOp = OpInfo.TiedOperandNum;
         assert(i > TiedOp && "Tied operand precedes its target!");
         Signature += "__Tie" + utostr(TiedOp);
         ConversionRow.push_back(CVT_Tied);
         ConversionRow.push_back(TiedOp);
-        // FIXME: Handle the operand number lookup for tied operands.
         break;
       }
       case MatchableInfo::ResOperand::ImmOperand: {
