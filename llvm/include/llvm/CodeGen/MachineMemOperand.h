@@ -34,22 +34,22 @@ struct MachinePointerInfo {
   /// If this is null, then the access is to a pointer in the default address
   /// space.
   const Value *V;
-  
+
   /// Offset - This is an offset from the base Value*.
   int64_t Offset;
-  
+
   explicit MachinePointerInfo(const Value *v = 0, int64_t offset = 0)
     : V(v), Offset(offset) {}
-  
+
   MachinePointerInfo getWithOffset(int64_t O) const {
     if (V == 0) return MachinePointerInfo(0, 0);
     return MachinePointerInfo(V, Offset+O);
   }
-  
+
   /// getAddrSpace - Return the LLVM IR address space number that this pointer
   /// points into.
   unsigned getAddrSpace() const;
-  
+
   /// getConstantPool - Return a MachinePointerInfo record that refers to the
   /// constant pool.
   static MachinePointerInfo getConstantPool();
@@ -57,20 +57,20 @@ struct MachinePointerInfo {
   /// getFixedStack - Return a MachinePointerInfo record that refers to the
   /// the specified FrameIndex.
   static MachinePointerInfo getFixedStack(int FI, int64_t offset = 0);
-  
+
   /// getJumpTable - Return a MachinePointerInfo record that refers to a
   /// jump table entry.
   static MachinePointerInfo getJumpTable();
-  
+
   /// getGOT - Return a MachinePointerInfo record that refers to a
   /// GOT entry.
   static MachinePointerInfo getGOT();
-  
+
   /// getStack - stack pointer relative access.
   static MachinePointerInfo getStack(int64_t Offset);
 };
-  
-  
+
+
 //===----------------------------------------------------------------------===//
 /// MachineMemOperand - A description of a memory reference used in the backend.
 /// Instead of holding a StoreInst or LoadInst, this class holds the address
@@ -110,7 +110,7 @@ public:
                     const MDNode *Ranges = 0);
 
   const MachinePointerInfo &getPointerInfo() const { return PtrInfo; }
-  
+
   /// getValue - Return the base address of the memory access. This may either
   /// be a normal LLVM IR Value, or one of the special values used in CodeGen.
   /// Special values are those obtained via
