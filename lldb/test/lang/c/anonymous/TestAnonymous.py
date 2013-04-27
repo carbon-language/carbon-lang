@@ -113,9 +113,6 @@ class AnonymousTestCase(TestBase):
         self.expect("expression c->grandchild.b", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["= 2"])
 
-        self.expect("expression z", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["dummy = 2"])
-
     def expr_grandchild(self):
         self.common_setup(self.line2)
 
@@ -135,6 +132,9 @@ class AnonymousTestCase(TestBase):
 
         self.expect("expression z.y", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["(type_y) $1 = {"])
+
+        self.expect("expression z", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["dummy = 2"])
 
     def expr_null(self):
         self.common_setup(self.line2)
