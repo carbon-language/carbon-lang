@@ -143,7 +143,7 @@ __libcpp_db::__insert_c(void* __c)
     if (__csz_ + 1 > static_cast<size_t>(__cend_ - __cbeg_))
     {
         size_t nc = __next_prime(2*static_cast<size_t>(__cend_ - __cbeg_) + 1);
-        __c_node** cbeg = (__c_node**)calloc(nc, sizeof(void*));
+        __c_node** cbeg = static_cast<__c_node**>(calloc(nc, sizeof(void*)));
         if (cbeg == nullptr)
 #ifndef _LIBCPP_NO_EXCEPTIONS
             throw bad_alloc();
@@ -168,7 +168,8 @@ __libcpp_db::__insert_c(void* __c)
     }
     size_t hc = hash<void*>()(__c) % static_cast<size_t>(__cend_ - __cbeg_);
     __c_node* p = __cbeg_[hc];
-    __c_node* r = __cbeg_[hc] = (__c_node*)malloc(sizeof(__c_node));
+    __c_node* r = __cbeg_[hc] =
+      static_cast<__c_node*>(malloc(sizeof(__c_node)));
     if (__cbeg_[hc] == nullptr)
 #ifndef _LIBCPP_NO_EXCEPTIONS
         throw bad_alloc();
@@ -407,7 +408,8 @@ __c_node::__add(__i_node* i)
         size_t nc = 2*static_cast<size_t>(cap_ - beg_);
         if (nc == 0)
             nc = 1;
-        __i_node** beg = (__i_node**)malloc(nc * sizeof(__i_node*));
+        __i_node** beg =
+           static_cast<__i_node**>(malloc(nc * sizeof(__i_node*)));
         if (beg == nullptr)
 #ifndef _LIBCPP_NO_EXCEPTIONS
             throw bad_alloc();
@@ -433,7 +435,7 @@ __libcpp_db::__insert_iterator(void* __i)
     if (__isz_ + 1 > static_cast<size_t>(__iend_ - __ibeg_))
     {
         size_t nc = __next_prime(2*static_cast<size_t>(__iend_ - __ibeg_) + 1);
-        __i_node** ibeg = (__i_node**)calloc(nc, sizeof(void*));
+        __i_node** ibeg = static_cast<__i_node**>(calloc(nc, sizeof(void*)));
         if (ibeg == nullptr)
 #ifndef _LIBCPP_NO_EXCEPTIONS
             throw bad_alloc();
@@ -458,7 +460,8 @@ __libcpp_db::__insert_iterator(void* __i)
     }
     size_t hi = hash<void*>()(__i) % static_cast<size_t>(__iend_ - __ibeg_);
     __i_node* p = __ibeg_[hi];
-    __i_node* r = __ibeg_[hi] = (__i_node*)malloc(sizeof(__i_node));
+    __i_node* r = __ibeg_[hi] =
+      static_cast<__i_node*>(malloc(sizeof(__i_node)));
     if (r == nullptr)
 #ifndef _LIBCPP_NO_EXCEPTIONS
         throw bad_alloc();
