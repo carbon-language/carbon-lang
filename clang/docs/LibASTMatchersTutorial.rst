@@ -420,7 +420,7 @@ previous iteration of loop-convert, shows us the answer:
             (DeclRefExpr 0x173b008 'const int' lvalue Var 0x170fa80 'N' 'const int')))
         (UnaryOperator 0x173b0b0 'int' lvalue prefix '++'
           (DeclRefExpr 0x173b088 'int' lvalue Var 0x173af50 'i' 'int'))
-        (CompoundStatement …
+        (CompoundStatement ...
 
 We already know that the declaration and increments both match, or this
 loop wouldn't have been dumped. The culprit lies in the implicit cast
