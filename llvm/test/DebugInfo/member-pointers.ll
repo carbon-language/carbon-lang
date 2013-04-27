@@ -7,7 +7,7 @@
 ; CHECK: [[TYPE:.*]]:   DW_TAG_subroutine_type
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK-NEXT: DW_AT_type
-; CHECK-NEXT: DW_AT_artificial [DW_FORM_flag_present]
+; CHECK-NEXT: DW_AT_artificial [DW_FORM_flag
 ; CHECK: DW_TAG_ptr_to_member_type
 ; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]       (cu + {{.*}} => {[[TYPE]]})
 ; IR generated from clang -g with the following source:

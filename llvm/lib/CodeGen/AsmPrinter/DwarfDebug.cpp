@@ -176,7 +176,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
 
   // Turn on accelerator tables and older gdb compatibility
   // for Darwin.
-  bool IsDarwin = Triple(M->getTargetTriple()).isOSDarwin();
+  bool IsDarwin = Triple(A->getTargetTriple()).isOSDarwin();
   if (DarwinGDBCompat == Default) {
     if (IsDarwin)
       IsDarwinGDBCompat = true;

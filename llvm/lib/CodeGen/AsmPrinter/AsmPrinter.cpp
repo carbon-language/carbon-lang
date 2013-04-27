@@ -133,6 +133,10 @@ const DataLayout &AsmPrinter::getDataLayout() const {
   return *TM.getDataLayout();
 }
 
+StringRef AsmPrinter::getTargetTriple() const {
+  return TM.getTargetTriple();
+}
+
 /// getCurrentSection() - Return the current section we are emitting to.
 const MCSection *AsmPrinter::getCurrentSection() const {
   return OutStreamer.getCurrentSection().first;

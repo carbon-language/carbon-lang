@@ -135,6 +135,9 @@ namespace llvm {
     /// getDataLayout - Return information about data layout.
     const DataLayout &getDataLayout() const;
 
+    /// getTargetTriple - Return the target triple string.
+    StringRef getTargetTriple() const;
+
     /// getCurrentSection() - Return the current section we are emitting to.
     const MCSection *getCurrentSection() const;
 
