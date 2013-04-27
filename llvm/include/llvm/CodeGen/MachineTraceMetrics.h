@@ -260,9 +260,13 @@ public:
     /// independent, exposing the maximum instruction-level parallelism.
     ///
     /// Any blocks in Extrablocks are included as if they were part of the
-    /// trace.
+    /// trace. Likewise, extra resources required by the specified scheduling
+    /// classes are included. For the caller to account for extra machine
+    /// instructions, it must first resolve each instruction's scheduling class.
     unsigned getResourceLength(ArrayRef<const MachineBasicBlock*> Extrablocks =
-                               ArrayRef<const MachineBasicBlock*>()) const;
+                               ArrayRef<const MachineBasicBlock*>(),
+                               ArrayRef<const MCSchedClassDesc*> ExtraInstrs =
+                               ArrayRef<const MCSchedClassDesc*>()) const;
 
     /// Return the length of the (data dependency) critical path through the
     /// trace.

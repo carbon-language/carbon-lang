@@ -1200,8 +1200,10 @@ unsigned MachineTraceMetrics::Trace::getResourceDepth(bool Bottom) const {
   return std::max(Instrs, PRMax);
 }
 
+
 unsigned MachineTraceMetrics::Trace::
-getResourceLength(ArrayRef<const MachineBasicBlock*> Extrablocks) const {
+getResourceLength(ArrayRef<const MachineBasicBlock*> Extrablocks,
+                  ArrayRef<const MCSchedClassDesc*> ExtraInstrs) const {
   // Add up resources above and below the center block.
   ArrayRef<unsigned> PRDepths = TE.getProcResourceDepths(getBlockNum());
   ArrayRef<unsigned> PRHeights = TE.getProcResourceHeights(getBlockNum());
@@ -1210,6 +1212,18 @@ getResourceLength(ArrayRef<const MachineBasicBlock*> Extrablocks) const {
     unsigned PRCycles = PRDepths[K] + PRHeights[K];
     for (unsigned I = 0; I != Extrablocks.size(); ++I)
       PRCycles += TE.MTM.getProcResourceCycles(Extrablocks[I]->getNumber())[K];
+    for (unsigned I = 0; I != ExtraInstrs.size(); ++I) {
+      const MCSchedClassDesc* SC = ExtraInstrs[I];
+      if (!SC->isValid())
+        continue;
+      for (TargetSchedModel::ProcResIter
+             PI = TE.MTM.SchedModel.getWriteProcResBegin(SC),
+             PE = TE.MTM.SchedModel.getWriteProcResEnd(SC); PI != PE; ++PI) {
+        if (PI->ProcResourceIdx != K)
+          continue;
+        PRCycles += (PI->Cycles * TE.MTM.SchedModel.getResourceFactor(K));
+      }
+    }
     PRMax = std::max(PRMax, PRCycles);
   }
   // Convert to cycle count.
