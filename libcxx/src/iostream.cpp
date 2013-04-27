@@ -54,13 +54,13 @@ ios_base::Init::Init()
 
 ios_base::Init::~Init()
 {
-    ostream* cout_ptr = (ostream*)cout;
-    ostream* clog_ptr = (ostream*)clog;
+    ostream* cout_ptr = reinterpret_cast<ostream*>(cout);
+    ostream* clog_ptr = reinterpret_cast<ostream*>(clog);
     cout_ptr->flush();
     clog_ptr->flush();
 
-    wostream* wcout_ptr = (wostream*)wcout;
-    wostream* wclog_ptr = (wostream*)wclog;
+    wostream* wcout_ptr = reinterpret_cast<wostream*>(wcout);
+    wostream* wclog_ptr = reinterpret_cast<wostream*>(wclog);
     wcout_ptr->flush();
     wclog_ptr->flush();
 }
