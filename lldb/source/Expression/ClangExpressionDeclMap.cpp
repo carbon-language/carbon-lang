@@ -1328,6 +1328,9 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     {
                         clang::DeclContext *decl_ctx = sym_ctx.function->GetClangDeclContext();
                         
+                        if (!decl_ctx)
+                            continue;
+                        
                         // Filter out class/instance methods.
                         if (dyn_cast<clang::ObjCMethodDecl>(decl_ctx))
                             continue;
