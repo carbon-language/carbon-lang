@@ -175,3 +175,17 @@ can be incorporated into the ``auto`` transformation.  Will convert
   that don't want to use ``auto`` because they are afraid that they might lose
   control over their code.
 
+* C++14: less verbose operator function objects (`N3421
+  <http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3421.htm>`_).
+  For example:
+
+  .. code-block:: c++
+
+    sort(v.begin(), v.end(), greater<ValueType>());
+
+  should be rewritten to:
+
+  .. code-block:: c++
+
+    sort(v.begin(), v.end(), greater<>());
+
