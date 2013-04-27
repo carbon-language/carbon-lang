@@ -134,6 +134,17 @@ namespace {
     uint64_t getOffset() const {
       return cast<ConstantInt>(Node->getOperand(2))->getZExtValue();
     }
+    /// TypeIsImmutable - Test if this TBAAStructTagNode represents a type for
+    /// objects which are not modified (by any means) in the context where this
+    /// AliasAnalysis is relevant.
+    bool TypeIsImmutable() const {
+      if (Node->getNumOperands() < 4)
+        return false;
+      ConstantInt *CI = dyn_cast<ConstantInt>(Node->getOperand(3));
+      if (!CI)
+        return false;
+      return CI->getValue()[0];
+    }
   };
 
   /// This is a simple wrapper around an MDNode which provides a
@@ -153,14 +164,24 @@ namespace {
     /// Get this TBAAStructTypeNode's field in the type DAG with
     /// given offset. Update the offset to be relative to the field type.
     TBAAStructTypeNode getParent(uint64_t &Offset) const {
+      // Parent can be omitted for the root node.
       if (Node->getNumOperands() < 2)
         return TBAAStructTypeNode();
+
+      // Special handling for a scalar type node. 
+      if (Node->getNumOperands() <= 3) {
+        MDNode *P = dyn_cast_or_null<MDNode>(Node->getOperand(1));
+        if (!P)
+          return TBAAStructTypeNode();
+        return TBAAStructTypeNode(P);
+      }
 
       // Assume the offsets are in order. We return the previous field if
       // the current offset is bigger than the given offset.
       unsigned TheIdx = 0;
       for (unsigned Idx = 1; Idx < Node->getNumOperands(); Idx += 2) {
-        uint64_t Cur = cast<ConstantInt>(Node->getOperand(Idx))->getZExtValue();
+        uint64_t Cur = cast<ConstantInt>(Node->getOperand(Idx + 1))->
+                         getZExtValue();
         if (Cur > Offset) {
           assert(Idx >= 3 &&
                  "TBAAStructTypeNode::getParent should have an offset match!");
@@ -171,10 +192,10 @@ namespace {
       // Move along the last field.
       if (TheIdx == 0)
         TheIdx = Node->getNumOperands() - 2;
-      uint64_t Cur = cast<ConstantInt>(Node->getOperand(TheIdx))->
+      uint64_t Cur = cast<ConstantInt>(Node->getOperand(TheIdx + 1))->
                        getZExtValue();
       Offset -= Cur;
-      MDNode *P = dyn_cast_or_null<MDNode>(Node->getOperand(TheIdx + 1));
+      MDNode *P = dyn_cast_or_null<MDNode>(Node->getOperand(TheIdx));
       if (!P)
         return TBAAStructTypeNode();
       return TBAAStructTypeNode(P);
@@ -376,7 +397,8 @@ bool TypeBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc,
 
   // If this is an "immutable" type, we can assume the pointer is pointing
   // to constant memory.
-  if (!EnableStructPathTBAA && TBAANode(M).TypeIsImmutable())
+  if ((!EnableStructPathTBAA && TBAANode(M).TypeIsImmutable()) ||
+      (EnableStructPathTBAA && TBAAStructTagNode(M).TypeIsImmutable()))
     return true;
 
   return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
@@ -392,7 +414,8 @@ TypeBasedAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
   // If this is an "immutable" type, we can assume the call doesn't write
   // to memory.
   if (const MDNode *M = CS.getInstruction()->getMetadata(LLVMContext::MD_tbaa))
-    if (!EnableStructPathTBAA && TBAANode(M).TypeIsImmutable())
+    if ((!EnableStructPathTBAA && TBAANode(M).TypeIsImmutable()) ||
+        (EnableStructPathTBAA && TBAAStructTagNode(M).TypeIsImmutable()))
       Min = OnlyReadsMemory;
 
   return ModRefBehavior(AliasAnalysis::getModRefBehavior(CS) & Min);
@@ -454,20 +477,14 @@ MDNode *MDNode::getMostGenericTBAA(MDNode *A, MDNode *B) {
   MDNode *T = A;
   while (T) {
     PathA.push_back(T);
-    if (EnableStructPathTBAA)
-      T = T->getNumOperands() >= 3 ? cast_or_null<MDNode>(T->getOperand(2)) : 0;
-    else
-      T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1)) : 0;
+    T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1)) : 0;
   }
 
   SmallVector<MDNode *, 4> PathB;
   T = B;
   while (T) {
     PathB.push_back(T);
-    if (EnableStructPathTBAA)
-      T = T->getNumOperands() >= 3 ? cast_or_null<MDNode>(T->getOperand(2)) : 0;
-    else
-      T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1)) : 0;
+    T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1)) : 0;
   }
 
   int IA = PathA.size() - 1;
