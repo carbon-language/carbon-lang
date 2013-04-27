@@ -200,7 +200,8 @@ public:
     FinalizeJITExecution (Stream &error_stream,
                           ExecutionContext &exe_ctx,
                           lldb::ClangExpressionVariableSP &result,
-                          lldb::addr_t function_stack_pointer = LLDB_INVALID_ADDRESS);
+                          lldb::addr_t function_stack_bottom = LLDB_INVALID_ADDRESS,
+                          lldb::addr_t function_stack_top = LLDB_INVALID_ADDRESS);
     
     //------------------------------------------------------------------
     /// Return the string that the parser should parse.  Must be a full
@@ -397,6 +398,8 @@ private:
     
     lldb::ProcessWP                             m_process_wp;           ///< The process used as the context for the expression.
     Address                                     m_address;              ///< The address the process is stopped in.
+    lldb::addr_t                                m_stack_frame_bottom;   ///< The bottom of the allocated stack frame.
+    lldb::addr_t                                m_stack_frame_top;      ///< The top of the allocated stack frame.
     
     std::string                                 m_expr_text;            ///< The text of the expression, as typed by the user
     std::string                                 m_expr_prefix;          ///< The text of the translation-level definitions, as provided by the user

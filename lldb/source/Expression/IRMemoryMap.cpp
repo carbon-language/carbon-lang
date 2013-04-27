@@ -34,7 +34,8 @@ IRMemoryMap::~IRMemoryMap ()
         for (AllocationMap::value_type &allocation : m_allocations)
         {
             if (allocation.second.m_policy == eAllocationPolicyMirror ||
-                allocation.second.m_policy == eAllocationPolicyHostOnly)
+                allocation.second.m_policy == eAllocationPolicyProcessOnly ||
+                (allocation.second.m_policy == eAllocationPolicyHostOnly && process_sp->CanJIT()))
                 process_sp->DeallocateMemory(allocation.second.m_process_alloc);
             
             if (lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS))
@@ -54,6 +55,18 @@ IRMemoryMap::FindSpace (size_t size)
     lldb::ProcessSP process_sp = m_process_wp.lock();
         
     lldb::addr_t ret = LLDB_INVALID_ADDRESS;
+    
+    if (process_sp && process_sp->CanJIT())
+    {
+        Error alloc_error;
+        
+        ret = process_sp->AllocateMemory(size, lldb::ePermissionsReadable | lldb::ePermissionsWritable, alloc_error);
+        
+        if (!alloc_error.Success())
+            return LLDB_INVALID_ADDRESS;
+        else
+            return ret;
+    }
     
     for (int iterations = 0; iterations < 16; ++iterations)
     {
@@ -367,12 +380,20 @@ IRMemoryMap::Free (lldb::addr_t process_address, Error &error)
     {
     default:
     case eAllocationPolicyHostOnly:
-        break;
+        {
+            lldb::ProcessSP process_sp = m_process_wp.lock();
+            if (process_sp && process_sp->CanJIT())
+                process_sp->DeallocateMemory(allocation.m_process_alloc); // FindSpace allocated this for real
+
+            break;
+        }
     case eAllocationPolicyMirror:
     case eAllocationPolicyProcessOnly:
-        lldb::ProcessSP process_sp = m_process_wp.lock();
-        if (process_sp)
-            process_sp->DeallocateMemory(allocation.m_process_alloc);
+        {
+            lldb::ProcessSP process_sp = m_process_wp.lock();
+            if (process_sp)
+                process_sp->DeallocateMemory(allocation.m_process_alloc);
+        }
     }
     
     if (lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS))

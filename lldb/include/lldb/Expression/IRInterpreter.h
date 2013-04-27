@@ -51,8 +51,10 @@ public:
                llvm::Function &function,
                llvm::ArrayRef<lldb::addr_t> args,
                lldb_private::IRMemoryMap &memory_map,
-               lldb_private::Error &error);
-                  
+               lldb_private::Error &error,
+               lldb::addr_t stack_frame_bottom,
+               lldb::addr_t stack_frame_top);
+    
 private:   
     static bool
     supportsFunction (llvm::Function &llvm_function,

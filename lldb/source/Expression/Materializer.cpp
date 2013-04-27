@@ -822,7 +822,7 @@ public:
         
         lldb::ProcessSP process_sp = map.GetBestExecutionContextScope()->CalculateProcess();
         
-        bool can_persist = (process_sp && process_sp->CanJIT());
+        bool can_persist = (m_is_program_reference && process_sp && process_sp->CanJIT() && !(address >= frame_bottom && address < frame_top));
 
         if (can_persist && m_keep_in_memory)
         {
@@ -1316,7 +1316,7 @@ Materializer::Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb:
 }
 
 void
-Materializer::Dematerializer::Dematerialize (Error &error, lldb::ClangExpressionVariableSP &result_sp, lldb::addr_t frame_top, lldb::addr_t frame_bottom)
+Materializer::Dematerializer::Dematerialize (Error &error, lldb::ClangExpressionVariableSP &result_sp, lldb::addr_t frame_bottom, lldb::addr_t frame_top)
 {
     lldb::StackFrameSP frame_sp = m_frame_wp.lock();
     

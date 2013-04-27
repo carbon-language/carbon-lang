@@ -77,42 +77,22 @@ public:
     size_t                                  m_addr_byte_size;
     
     InterpreterStackFrame (DataLayout &target_data,
-                           lldb_private::IRMemoryMap &memory_map) :
+                           lldb_private::IRMemoryMap &memory_map,
+                           lldb::addr_t stack_frame_bottom,
+                           lldb::addr_t stack_frame_top) :
         m_target_data (target_data),
         m_memory_map (memory_map)
     {
         m_byte_order = (target_data.isLittleEndian() ? lldb::eByteOrderLittle : lldb::eByteOrderBig);
         m_addr_byte_size = (target_data.getPointerSize(0));
-        
-        m_frame_size = 512 * 1024;
-        
-        lldb_private::Error alloc_error;
-        
-        m_frame_process_address = memory_map.Malloc(m_frame_size,
-                                                    m_addr_byte_size,
-                                                    lldb::ePermissionsReadable | lldb::ePermissionsWritable,
-                                                    lldb_private::IRMemoryMap::eAllocationPolicyMirror,
-                                                    alloc_error);
-        
-        if (alloc_error.Success())
-        {
-            m_stack_pointer = m_frame_process_address + m_frame_size;
-        }
-        else
-        {
-            m_frame_process_address = LLDB_INVALID_ADDRESS;
-            m_stack_pointer = LLDB_INVALID_ADDRESS;
-        }    
+                        
+        m_frame_process_address = stack_frame_bottom;
+        m_frame_size = stack_frame_top - stack_frame_bottom;
+        m_stack_pointer = stack_frame_top;
     }
     
     ~InterpreterStackFrame ()
     {
-        if (m_frame_process_address != LLDB_INVALID_ADDRESS)
-        {
-            lldb_private::Error free_error;
-            m_memory_map.Free(m_frame_process_address, free_error);
-            m_frame_process_address = LLDB_INVALID_ADDRESS;
-        }
     }
     
     void Jump (const BasicBlock *bb)
@@ -535,7 +515,9 @@ IRInterpreter::Interpret (llvm::Module &module,
                           llvm::Function &function,
                           llvm::ArrayRef<lldb::addr_t> args,
                           lldb_private::IRMemoryMap &memory_map,
-                          lldb_private::Error &error)
+                          lldb_private::Error &error,
+                          lldb::addr_t stack_frame_bottom,
+                          lldb::addr_t stack_frame_top)
 {
     lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
@@ -553,7 +535,7 @@ IRInterpreter::Interpret (llvm::Module &module,
     
     DataLayout data_layout(&module);
     
-    InterpreterStackFrame frame(data_layout, memory_map);
+    InterpreterStackFrame frame(data_layout, memory_map, stack_frame_bottom, stack_frame_top);
     
     if (frame.m_frame_process_address == LLDB_INVALID_ADDRESS)
     {
