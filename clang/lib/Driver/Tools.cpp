@@ -1775,9 +1775,6 @@ static bool shouldUseLeafFramePointer(const ArgList &Args,
   return true;
 }
 
-// FIXME: This is a temporary hack until I can find a fix that works for all
-// platforms.
-#define MAXPATHLEN 4096
 /// If the PWD environment variable is set, add a CC1 option to specify the
 /// debug compilation directory.
 static void addDebugCompDirArg(const ArgList &Args, ArgStringList &CmdArgs) {
@@ -1794,9 +1791,10 @@ static void addDebugCompDirArg(const ArgList &Args, ArgStringList &CmdArgs) {
     CmdArgs.push_back(Args.MakeArgString(pwd));
     return;
   }
+
   // Fall back to using getcwd.
-  char *cwd;
-  if (pwd && ::getcwd(cwd, MAXPATHLEN)) {
+  SmallString<128> cwd;
+  if (!llvm::sys::fs::current_path(cwd)) {
     CmdArgs.push_back("-fdebug-compilation-dir");
     CmdArgs.push_back(Args.MakeArgString(cwd));
   }
