@@ -2588,8 +2588,8 @@ LValue CodeGenFunction::EmitLValueForField(LValue base,
         getContext().getASTRecordLayout(field->getParent());
     // Set the base type to be the base type of the base LValue and
     // update offset to be relative to the base type.
-    LV.setTBAABaseType(base.getTBAABaseType());
-    LV.setTBAAOffset(base.getTBAAOffset() +
+    LV.setTBAABaseType(mayAlias ? getContext().CharTy : base.getTBAABaseType());
+    LV.setTBAAOffset(mayAlias ? 0 : base.getTBAAOffset() +
                      Layout.getFieldOffset(field->getFieldIndex()) /
                                            getContext().getCharWidth());
   }
