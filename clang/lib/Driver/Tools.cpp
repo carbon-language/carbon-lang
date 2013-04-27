@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include "Tools.h"
@@ -1793,8 +1792,8 @@ static void addDebugCompDirArg(const ArgList &Args, ArgStringList &CmdArgs) {
     return;
   }
   // Fall back to using getcwd.
-  char cwd[MAXPATHLEN];
-  if (pwd && ::getcwd(cwd, MAXPATHLEN)) {
+  const char *cwd = llvm::sys::Path::GetCurrentDirectory().c_str();
+  if (pwd && cwd) {
     CmdArgs.push_back("-fdebug-compilation-dir");
     CmdArgs.push_back(Args.MakeArgString(cwd));
   }
