@@ -2077,9 +2077,10 @@ bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *left,
 void Sema::addMethodToGlobalList(ObjCMethodList *List, ObjCMethodDecl *Method) {
   // Record at the head of the list whether there were 0, 1, or >= 2 methods
   // inside categories.
-  if (isa<ObjCCategoryDecl>(Method->getDeclContext()))
-    if (List->getBits() < 2)
-      List->setBits(List->getBits()+1);
+  if (ObjCCategoryDecl *
+        CD = dyn_cast<ObjCCategoryDecl>(Method->getDeclContext()))
+    if (!CD->IsClassExtension() && List->getBits() < 2)
+        List->setBits(List->getBits()+1);
 
   // If the list is empty, make it a singleton list.
   if (List->Method == 0) {
@@ -2828,7 +2829,8 @@ void Sema::CheckObjCMethodOverrides(ObjCMethodDecl *ObjCMethod,
               for (OverrideSearch::iterator
                      OI= overrides.begin(), OE= overrides.end(); OI!=OE; ++OI) {
                 ObjCMethodDecl *SuperOverridden = *OI;
-                if (CurrentClass != SuperOverridden->getClassInterface()) {
+                if (isa<ObjCProtocolDecl>(SuperOverridden->getDeclContext()) ||
+                    CurrentClass != SuperOverridden->getClassInterface()) {
                   hasOverriddenMethodsInBaseOrProtocol = true;
                   overridden->setOverriding(true);
                   break;
