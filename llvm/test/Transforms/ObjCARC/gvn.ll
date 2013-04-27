@@ -7,11 +7,12 @@ declare i8* @objc_retain(i8*)
 ; GVN should be able to eliminate this redundant load, with ARC-specific
 ; alias analysis.
 
-; CHECK: @foo
+; CHECK: define i8* @foo(i32 %n)
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: %s = load i8** @x
 ; CHECK-NOT: load
 ; CHECK: ret i8* %s
+; CHECK-NEXT: }
 define i8* @foo(i32 %n) nounwind {
 entry:
   %s = load i8** @x

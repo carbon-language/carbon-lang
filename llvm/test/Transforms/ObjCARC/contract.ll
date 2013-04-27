@@ -137,6 +137,7 @@ define i8* @test6() {
 ; CHECK: call void @use_pointer(i8* %1)
 ; CHECK: tail call i8* @objc_autoreleaseReturnValue(i8* %1)
 ; CHECK: ret i8* %2
+; CHECK-NEXT: }
 define i8* @test7(i8* %p) {
   %1 = tail call i8* @objc_retain(i8* %p)
   call void @use_pointer(i8* %p)

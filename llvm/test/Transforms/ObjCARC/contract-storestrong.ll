@@ -12,6 +12,7 @@ declare void @use_pointer(i8*)
 ; CHECK: entry:
 ; CHECK-NEXT: tail call void @objc_storeStrong(i8** @x, i8* %p) [[NUW:#[0-9]+]]
 ; CHECK-NEXT: ret void
+; CHECK-NEXT: }
 define void @test0(i8* %p) {
 entry:
   %0 = tail call i8* @objc_retain(i8* %p) nounwind
@@ -107,6 +108,7 @@ entry:
 ; CHECK: define i1 @test5(i8* %newValue, i8* %foo) {
 ; CHECK: %t = icmp eq i8* %x1, %foo
 ; CHECK: tail call void @objc_storeStrong(i8** @x, i8* %newValue) [[NUW]]
+; CHECK: }
 define i1 @test5(i8* %newValue, i8* %foo) {
 entry:
   %x0 = tail call i8* @objc_retain(i8* %newValue) nounwind
@@ -122,6 +124,7 @@ entry:
 ; CHECK: define i1 @test6(i8* %newValue, i8* %foo) {
 ; CHECK: %t = icmp eq i8* %x1, %foo
 ; CHECK: tail call void @objc_storeStrong(i8** @x, i8* %newValue) [[NUW]]
+; CHECK: }
 define i1 @test6(i8* %newValue, i8* %foo) {
 entry:
   %x0 = tail call i8* @objc_retain(i8* %newValue) nounwind

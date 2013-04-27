@@ -50,6 +50,7 @@ bb6:                                              ; preds = %bb5, %bb4, %bb4, %b
 ; CHECK: br i1 undef, label %bb7, label %bb7
 ; CHECK: bb7:
 ; CHECK: %tmp8 = phi %0* [ %0, %bb ], [ %0, %bb ]
+; CHECK: }
 define void @test1() {
 bb:
   %tmp = tail call %0* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to %0* ()*)()
@@ -70,6 +71,7 @@ bb7:                                              ; preds = %bb6, %bb6, %bb5
 ; CHECK: invoke.cont:                                      ; preds = %entry
 ; CHECK-NEXT: call void asm sideeffect "mov\09r7, r7\09\09@ marker for objc_retainAutoreleaseReturnValue", ""()
 ; CHECK-NEXT: %tmp = tail call i8* @objc_retainAutoreleasedReturnValue(i8* %call) [[NUW:#[0-9]+]]
+; CHECK: }
 define void @_Z6doTestP8NSString() {
 entry:
   %call = invoke i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* ()*)()

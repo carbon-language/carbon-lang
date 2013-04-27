@@ -29,7 +29,7 @@ declare i8* @objc_msgSend(i8*, i8*, ...)
 ; Simple retain+release pair deletion, with some intervening control
 ; flow and harmless instructions.
 
-; CHECK: define void @test0_precise(
+; CHECK: define void @test0_precise(i32* %x, i1 %p) [[NUW:#[0-9]+]] {
 ; CHECK: @objc_retain
 ; CHECK: @objc_release
 ; CHECK: }
@@ -55,7 +55,7 @@ return:
   ret void
 }
 
-; CHECK: define void @test0_imprecise(
+; CHECK: define void @test0_imprecise(i32* %x, i1 %p) [[NUW]] {
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test0_imprecise(i32* %x, i1 %p) nounwind {
@@ -85,7 +85,7 @@ return:
 
 ; TODO: Make the objc_release's argument be %0.
 
-; CHECK: define void @test1_precise(
+; CHECK: define void @test1_precise(i32* %x, i1 %p, i1 %q) [[NUW]] {
 ; CHECK: @objc_retain(i8* %a)
 ; CHECK: @objc_release
 ; CHECK: }
@@ -115,7 +115,7 @@ alt_return:
   ret void
 }
 
-; CHECK: define void @test1_imprecise(
+; CHECK: define void @test1_imprecise(i32* %x, i1 %p, i1 %q) [[NUW]] {
 ; CHECK: @objc_retain(i8* %a)
 ; CHECK: @objc_release
 ; CHECK: }
@@ -148,9 +148,9 @@ alt_return:
 
 ; Don't do partial elimination into two different CFG diamonds.
 
-; CHECK: define void @test1b_precise(
+; CHECK: define void @test1b_precise(i8* %x, i1 %p, i1 %q) {
 ; CHECK: entry:
-; CHECK:   tail call i8* @objc_retain(i8* %x) [[NUW:#[0-9]+]]
+; CHECK:   tail call i8* @objc_retain(i8* %x) [[NUW]]
 ; CHECK-NOT: @objc_
 ; CHECK: if.end5:
 ; CHECK:   tail call void @objc_release(i8* %x) [[NUW]]
@@ -943,6 +943,7 @@ entry:
 ; CHECK-NEXT: @use_pointer
 ; CHECK-NEXT: @use_pointer
 ; CHECK-NEXT: ret void
+; CHECK-NEXT: }
 define void @test13b(i8* %x, i64 %n) {
 entry:
   call i8* @objc_retain(i8* %x) nounwind
@@ -984,6 +985,7 @@ entry:
 ; CHECK-NEXT: @use_pointer
 ; CHECK-NEXT: @use_pointer
 ; CHECK-NEXT: ret void
+; CHECK-NEXT: }
 define void @test13d(i8* %x, i64 %n) {
 entry:
   call i8* @objc_retain(i8* %x) nounwind
@@ -1295,6 +1297,7 @@ entry:
 ; CHECK: define void @test20(
 ; CHECK: %tmp1 = tail call i8* @objc_retain(i8* %tmp) [[NUW]]
 ; CHECK-NEXT: invoke
+; CHECK: }
 define void @test20(double* %self) {
 if.then12:
   %tmp = bitcast double* %self to i8*
@@ -1322,6 +1325,7 @@ if.end:                                           ; preds = %invoke.cont23
 ; CHECK: define i8* @test21(
 ; CHECK: call i8* @returner()
 ; CHECK-NEXT: ret i8* %call
+; CHECK-NEXT: }
 define i8* @test21() {
 entry:
   %call = call i8* @returner()
@@ -1374,7 +1378,7 @@ entry:
 
 ; Don't optimize objc_retainBlock, but do strength reduce it.
 
-; CHECK: define void @test23b
+; CHECK: define void @test23b(i8* %p) {
 ; CHECK: @objc_retain
 ; CHECK: @objc_release
 ; CHECK: }
@@ -2064,6 +2068,7 @@ define void @test44(i8** %pp) {
 ; CHECK: call void @objc_release(i8* %q)
 ; CHECK: call void @use_pointer(i8* %p)
 ; CHECK: call void @objc_release(i8* %p)
+; CHECK: }
 define void @test45(i8** %pp, i8** %qq) {
   %p = load i8** %pp
   %q = load i8** %qq
@@ -2080,6 +2085,7 @@ define void @test45(i8** %pp, i8** %qq) {
 ; CHECK: tail call i8* @objc_retain(i8* %p) [[NUW]]
 ; CHECK: true:
 ; CHECK: call i8* @objc_autorelease(i8* %p) [[NUW]]
+; CHECK: }
 define void @test46(i8* %p, i1 %a) {
 entry:
   call i8* @objc_retain(i8* %p)
@@ -2099,6 +2105,7 @@ false:
 ; CHECK: define i8* @test47(
 ; CHECK-NOT: call
 ; CHECK: ret i8* %p
+; CHECK: }
 define i8* @test47(i8* %p) nounwind {
   %x = call i8* @objc_retainedObject(i8* %p)
   ret i8* %x
@@ -2109,6 +2116,7 @@ define i8* @test47(i8* %p) nounwind {
 ; CHECK: define i8* @test48(
 ; CHECK-NOT: call
 ; CHECK: ret i8* %p
+; CHECK: }
 define i8* @test48(i8* %p) nounwind {
   %x = call i8* @objc_unretainedObject(i8* %p)
   ret i8* %x
@@ -2119,6 +2127,7 @@ define i8* @test48(i8* %p) nounwind {
 ; CHECK: define i8* @test49(
 ; CHECK-NOT: call
 ; CHECK: ret i8* %p
+; CHECK: }
 define i8* @test49(i8* %p) nounwind {
   %x = call i8* @objc_unretainedPointer(i8* %p)
   ret i8* %x
@@ -2244,6 +2253,7 @@ define void @test53(void ()** %zz, i8** %pp) {
 ; CHECK: call i8* @returner()
 ; CHECK-NEXT: call void @objc_release(i8* %t) [[NUW]], !clang.imprecise_release !0
 ; CHECK-NEXT: ret void
+; CHECK: }
 define void @test54() {
   %t = call i8* @returner()
   call i8* @objc_autorelease(i8* %t)
@@ -2710,7 +2720,7 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 declare i32 @puts(i8* nocapture) nounwind
 @str = internal constant [16 x i8] c"-[ Top0 _getX ]\00"
 
-; CHECK: @"\01-[A z]"
+; CHECK: define { <2 x float>, <2 x float> } @"\01-[A z]"({}* %self, i8* nocapture %_cmd) [[NUW]] {
 ; CHECK-NOT: @objc_
 ; CHECK: }
 
@@ -2756,7 +2766,7 @@ invoke.cont:
   ret {<2 x float>, <2 x float>} %tmp35
 }
 
-; CHECK: @"\01-[Top0 _getX]"
+; CHECK: @"\01-[Top0 _getX]"({}* %self, i8* nocapture %_cmd) [[NUW]] {
 ; CHECK-NOT: @objc_
 ; CHECK: }
 
@@ -2775,12 +2785,13 @@ invoke.cont:
 
 ; A simple loop. Eliminate the retain and release inside of it!
 
-; CHECK: define void @loop
+; CHECK: define void @loop(i8* %x, i64 %n) {
 ; CHECK: for.body:
 ; CHECK-NOT: @objc_
 ; CHECK: @objc_msgSend
 ; CHECK-NOT: @objc_
 ; CHECK: for.end:
+; CHECK: }
 define void @loop(i8* %x, i64 %n) {
 entry:
   %0 = tail call i8* @objc_retain(i8* %x) nounwind
@@ -2804,7 +2815,7 @@ for.end:                                          ; preds = %for.body, %entry
 
 ; ObjCARCOpt can delete the retain,release on self.
 
-; CHECK: define void @TextEditTest
+; CHECK: define void @TextEditTest(%2* %self, %3* %pboard) {
 ; CHECK-NOT: call i8* @objc_retain(i8* %tmp7)
 ; CHECK: }
 

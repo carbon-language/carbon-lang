@@ -17,6 +17,7 @@ declare i8* @returner()
 ; CHECK: lpad:
 ; CHECK:   call void @objc_release(i8* %zipFile) [[NUW]], !clang.imprecise_release !0
 ; CHECK:   ret void
+; CHECK-NEXT: }
 define void @test0(i8* %zipFile) {
 entry:
   call i8* @objc_retain(i8* %zipFile) nounwind
@@ -48,6 +49,7 @@ lpad:                                             ; preds = %entry
 ; CHECK:   br label %done
 ; CHECK: done:
 ; CHECK-NEXT: ret void
+; CHECK-NEXT: }
 define void @test1(i8* %zipFile) {
 entry:
   call i8* @objc_retain(i8* %zipFile) nounwind
@@ -110,6 +112,7 @@ finally.rethrow:                                  ; preds = %invoke.cont, %entry
 ; CHECK: if.end:
 ; CHECK-NEXT: call void @objc_release(i8* %p) [[NUW]]
 ; CHECK-NEXT: ret void
+; CHECK-NEXT: }
 define void @test3(i8* %p, i1 %b) {
 entry:
   %0 = call i8* @objc_retain(i8* %p)
@@ -145,6 +148,7 @@ if.end:
 ; CHECK: if.end:
 ; CHECK-NEXT: call void @objc_release(i8* %p) [[NUW]]
 ; CHECK-NEXT: ret void
+; CHECK-NEXT: }
 define void @test4(i8* %p, i1 %b) {
 entry:
   %0 = call i8* @objc_retain(i8* %p)
