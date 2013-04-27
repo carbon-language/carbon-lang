@@ -847,7 +847,7 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP) {
        TypeSpecSign != TSS_unspecified ||
        TypeAltiVecVector || TypeAltiVecPixel || TypeAltiVecBool ||
        TypeQualifiers)) {
-    const int NumLocs = 8;
+    const unsigned NumLocs = 8;
     SourceLocation ExtraLocs[NumLocs] = {
       TSWLoc, TSCLoc, TSSLoc, AltiVecLoc,
       TQ_constLoc, TQ_restrictLoc, TQ_volatileLoc, TQ_atomicLoc
