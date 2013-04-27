@@ -3753,8 +3753,8 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
   MaybeParseGNUAttributes(attrs);
 
   Actions.ActOnEnumBody(StartLoc, T.getOpenLocation(), T.getCloseLocation(),
-                        EnumDecl, EnumConstantDecls.data(),
-                        EnumConstantDecls.size(), getCurScope(),
+                        EnumDecl, EnumConstantDecls,
+                        getCurScope(),
                         attrs.getList());
 
   EnumScope.Exit();
