@@ -464,6 +464,35 @@ namespace lldb_private {
             std::vector<SetItemDescriptor> m_children;
         };
         
+        class NSOrderedSetSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        private:
+            
+        public:
+            NSOrderedSetSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~NSOrderedSetSyntheticFrontEnd ();
+        private:
+            uint32_t m_count;
+            std::map<uint32_t,lldb::ValueObjectSP> m_children;
+        };
+        
         class NSSetMSyntheticFrontEnd : public SyntheticChildrenFrontEnd
         {
         private:
@@ -513,7 +542,7 @@ namespace lldb_private {
             DataDescriptor_64 *m_data_64;
             std::vector<SetItemDescriptor> m_children;
         };
-        
+                
         class NSSetCodeRunningSyntheticFrontEnd : public SyntheticChildrenFrontEnd
         {
         public:
