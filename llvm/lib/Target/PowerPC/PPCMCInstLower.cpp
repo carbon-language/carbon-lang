@@ -14,6 +14,7 @@
 
 #include "PPC.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
@@ -51,7 +52,14 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
   // before we return the symbol.
   if (MO.getTargetFlags() == PPCII::MO_DARWIN_STUB) {
     Name += "$stub";
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
+    const char *PGP = AP.MAI->getPrivateGlobalPrefix();
+    const char *Prefix = "";
+    if (!Name.startswith(PGP)) {
+      // http://llvm.org/bugs/show_bug.cgi?id=15763
+      // all stubs and lazy_ptrs should be local symbols, which need leading 'L'
+      Prefix = PGP;
+    }
+    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Twine(Prefix) + Twine(Name));
     MachineModuleInfoImpl::StubValueTy &StubSym =
       getMachOMMI(AP).getFnStubEntry(Sym);
     if (StubSym.getPointer())
