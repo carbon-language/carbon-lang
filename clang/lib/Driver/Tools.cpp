@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include <sys/stat.h>
-#include <unistd.h>
 #include "Tools.h"
 #include "InputInfo.h"
 #include "SanitizerArgs.h"
@@ -1780,9 +1779,11 @@ static bool shouldUseLeafFramePointer(const ArgList &Args,
 static void addDebugCompDirArg(const ArgList &Args, ArgStringList &CmdArgs) {
   struct stat StatPWDBuf, StatDotBuf;
 
-  const char *pwd;
-  if ((pwd = ::getenv("PWD")) != 0 &&
-      llvm::sys::path::is_absolute(pwd) &&
+  const char *pwd = ::getenv("PWD");
+  if (!pwd)
+    return;
+
+  if (llvm::sys::path::is_absolute(pwd) &&
       stat(pwd, &StatPWDBuf) == 0 &&
       stat(".", &StatDotBuf) == 0 &&
       StatPWDBuf.st_ino == StatDotBuf.st_ino &&
