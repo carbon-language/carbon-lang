@@ -164,3 +164,30 @@ define void @xor_bug1() {
   %3 = and i64 undef, %2
   ret void
 }
+
+; The bug was that when the compiler optimize "(x | c1)" ^ "(x & c2)", it may
+; swap the two xor-subexpressions if they are not in canoninical order; however,
+; when optimizer swaps two sub-expressions, if forgot to swap the cached value
+; of c1 and c2 accordingly, hence cause the problem.
+;
+define i32 @xor_bug2(i32, i32, i32, i32) {
+  %5 = mul i32 %0, 123
+  %6 = add i32 %2, 24
+  %7 = add i32 %1, 8
+  %8 = and i32 %1, 3456789
+  %9 = or i32 %8,  4567890
+  %10 = and i32 %1, 543210987
+  %11 = or i32 %1, 891034567
+  %12 = and i32 %2, 255
+  %13 = xor i32 %9, %10
+  %14 = xor i32 %11, %13
+  %15 = xor i32 %5, %14
+  %16 = and i32 %3, 255
+  %17 = xor i32 %16, 42
+  %18 = add i32 %6, %7
+  %19 = add i32 %18, %12
+  %20 = add i32 %19, %15
+  ret i32 %20
+;CHECK: @xor_bug2
+;CHECK: xor i32 %5, 891034567
+}
