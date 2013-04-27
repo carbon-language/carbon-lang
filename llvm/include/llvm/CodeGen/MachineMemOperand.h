@@ -99,8 +99,11 @@ public:
     MONonTemporal = 8,
     /// The memory access is invariant.
     MOInvariant = 16,
+    // Target hints allow target passes to annotate memory operations.
+    MOTargetStartBit = 5,
+    MOTargetNumBits = 3,
     // This is the number of bits we need to represent flags.
-    MOMaxBits = 5
+    MOMaxBits = 8
   };
 
   /// MachineMemOperand - Construct an MachineMemOperand object with the
@@ -122,6 +125,9 @@ public:
 
   /// getFlags - Return the raw flags of the source value, \see MemOperandFlags.
   unsigned int getFlags() const { return Flags & ((1 << MOMaxBits) - 1); }
+
+  /// Bitwise OR the current flags with the given flags.
+  void setFlags(unsigned f) { Flags |= (f & ((1 << MOMaxBits) - 1)); }
 
   /// getOffset - For normal values, this is a byte offset added to the base
   /// address. For PseudoSourceValue::FPRel values, this is the FrameIndex
