@@ -1792,8 +1792,8 @@ static void addDebugCompDirArg(const ArgList &Args, ArgStringList &CmdArgs) {
     return;
   }
   // Fall back to using getcwd.
-  const char *cwd = llvm::sys::Path::GetCurrentDirectory().c_str();
-  if (pwd && cwd) {
+  std::string cwd = llvm::sys::Path::GetCurrentDirectory().str();
+  if (pwd && !cwd.empty()) {
     CmdArgs.push_back("-fdebug-compilation-dir");
     CmdArgs.push_back(Args.MakeArgString(cwd));
   }
