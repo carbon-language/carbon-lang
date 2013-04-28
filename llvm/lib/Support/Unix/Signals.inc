@@ -292,9 +292,9 @@ void llvm::sys::PrintStackTrace(FILE *FD) {
             (int)(sizeof(void*) * 2) + 2, (unsigned long)StackTrace[i]);
 
     if (dlinfo.dli_sname != NULL) {
-      int res;
       fputc(' ', FD);
 #  if HAVE_CXXABI_H
+      int res;
       char* d = abi::__cxa_demangle(dlinfo.dli_sname, NULL, NULL, &res);
 #  else
       char* d = NULL;
