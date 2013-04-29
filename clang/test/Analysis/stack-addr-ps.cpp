@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=region -verify %s
 
-typedef __INTPTR_TYPE__ intptr_t;
-
+// FIXME: Only the stack-address checking in Sema catches this right now, and
+// the stack analyzer doesn't handle the ImplicitCastExpr (lvalue).
 const int& g() {
   int s;
   return s; // expected-warning{{Address of stack memory associated with local variable 's' returned}} expected-warning{{reference to stack memory associated with local variable 's' returned}}
@@ -94,42 +94,5 @@ int* f5() {
 void *radar13226577() {
     void *p = &p;
     return p; // expected-warning {{stack memory associated with local variable 'p' returned to caller}}
-}
-
-namespace rdar13296133 {
-  class ConvertsToBool {
-  public:
-    operator bool() const { return this; }
-  };
-
-  class ConvertsToIntptr {
-  public:
-    operator intptr_t() const { return reinterpret_cast<intptr_t>(this); }
-  };
-
-  class ConvertsToPointer {
-  public:
-    operator const void *() const { return this; }
-  };
-
-  intptr_t returnAsNonLoc() {
-    ConvertsToIntptr obj;
-    return obj; // expected-warning{{Address of stack memory associated with local variable 'obj' returned to caller}}
-  }
-
-  bool returnAsBool() {
-    ConvertsToBool obj;
-    return obj; // no-warning
-  }
-
-  intptr_t returnAsNonLocViaPointer() {
-    ConvertsToPointer obj;
-    return reinterpret_cast<intptr_t>(static_cast<const void *>(obj)); // expected-warning{{Address of stack memory associated with local variable 'obj' returned to caller}}
-  }
-
-  bool returnAsBoolViaPointer() {
-    ConvertsToPointer obj;
-    return obj; // no-warning
-  }
 }
 
