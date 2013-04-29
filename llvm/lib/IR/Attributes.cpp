@@ -851,8 +851,7 @@ unsigned AttributeSet::getStackAlignment(unsigned Index) const {
 std::string AttributeSet::getAsString(unsigned Index, bool TargetIndependent,
                                       bool InAttrGrp) const {
   AttributeSetNode *ASN = getAttributes(Index);
-  return ASN ? ASN->getAsString(TargetIndependent, InAttrGrp) :
-    std::string("");
+  return ASN ? ASN->getAsString(TargetIndependent, InAttrGrp) : std::string("");
 }
 
 /// \brief The attributes for the specified index are returned.
