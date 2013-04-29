@@ -2581,7 +2581,7 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
   // long as the existing imbalances are maintained.
   if (OldDelta != 0)
     return false;
-  
+
 #ifdef ARC_ANNOTATIONS
   // Do not move calls if ARC annotations are requested.
   if (EnableARCAnnotations)
