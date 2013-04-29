@@ -58,7 +58,7 @@ protected:
 
   // Build the atom to address map, this has to be called
   // before applying relocations
-  virtual void buildAtomToAddressMap();
+  virtual void buildAtomToAddressMap(const File &file);
 
   // Build the symbol table for static linking
   virtual void buildStaticSymbolTable(const File &file);
@@ -167,14 +167,25 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   _dynamicSymbolTable->addSymbolsToHashTable();
 }
 
-template <class ELFT> void OutputELFWriter<ELFT>::buildAtomToAddressMap() {
+template <class ELFT>
+void OutputELFWriter<ELFT>::buildAtomToAddressMap(const File &file) {
+  int64_t totalAbsAtoms = _layout->absoluteAtoms().size();
+  int64_t totalUndefinedAtoms = file.undefined().size();
+  int64_t totalDefinedAtoms = 0;
   for (auto sec : _layout->sections())
-    if (auto section = dyn_cast<AtomSection<ELFT>>(sec))
+    if (auto section = dyn_cast<AtomSection<ELFT> >(sec)) {
+      totalDefinedAtoms += section->atoms().size();
       for (const auto &atom : section->atoms())
         _atomToAddressMap[atom->_atom] = atom->_virtualAddr;
+    }
   // build the atomToAddressMap that contains absolute symbols too
   for (auto &atom : _layout->absoluteAtoms())
     _atomToAddressMap[atom->_atom] = atom->_virtualAddr;
+
+  // Set the total number of atoms in the symbol table, so that appropriate
+  // resizing of the string table can be done
+  _symtab->setNumEntries(totalDefinedAtoms + totalAbsAtoms +
+                         totalUndefinedAtoms);
 }
 
 template<class ELFT>
@@ -287,7 +298,7 @@ error_code OutputELFWriter<ELFT>::buildOutput(const File &file) {
   finalizeDefaultAtomValues();
 
   // Build the Atom To Address map for applying relocations
-  buildAtomToAddressMap();
+  buildAtomToAddressMap(file);
 
   // Create symbol table and section string table
   buildStaticSymbolTable(file);

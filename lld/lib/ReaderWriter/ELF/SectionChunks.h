@@ -510,6 +510,10 @@ public:
 
   virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
 
+  inline void setNumEntries(int64_t numEntries) {
+    _stringMap.resize(numEntries);
+  }
+
 private:
   std::vector<StringRef> _strings;
 
@@ -597,8 +601,15 @@ class SymbolTable : public Section<ELFT> {
 public:
   SymbolTable(const ELFTargetInfo &ti, const char *str, int32_t order);
 
-  void addSymbol(const Atom *atom, int32_t sectionIndex,
-                 uint64_t addr = 0, const AtomLayout *layout=nullptr);
+  /// \brief set the number of entries that would exist in the symbol
+  /// table for the current link
+  void setNumEntries(int64_t numEntries) const {
+    if (_stringSection)
+      _stringSection->setNumEntries(numEntries);
+  }
+
+  void addSymbol(const Atom *atom, int32_t sectionIndex, uint64_t addr = 0,
+                 const AtomLayout *layout = nullptr);
 
   /// \brief Get the symbol table index for an Atom. If it's not in the symbol
   /// table, return STN_UNDEF.
