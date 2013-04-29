@@ -123,7 +123,7 @@ static void removeRedundantMsgs(PathPieces &path) {
           break;
         
         if (PathDiagnosticEventPiece *nextEvent =
-            dyn_cast<PathDiagnosticEventPiece>(path.front().getPtr())) {
+            dyn_cast<PathDiagnosticEventPiece>(path.front())) {
           PathDiagnosticEventPiece *event =
             cast<PathDiagnosticEventPiece>(piece);
           // Check to see if we should keep one of the two pieces.  If we
@@ -210,10 +210,10 @@ bool BugReporter::RemoveUnneededCalls(PathPieces &pieces, BugReport *R) {
 static void adjustCallLocations(PathPieces &Pieces,
                                 PathDiagnosticLocation *LastCallLocation = 0) {
   for (PathPieces::iterator I = Pieces.begin(), E = Pieces.end(); I != E; ++I) {
-    PathDiagnosticCallPiece *Call = dyn_cast<PathDiagnosticCallPiece>(*I);
+    PathDiagnosticCallPiece *Call = dyn_cast<PathDiagnosticCallPiece>(&*I);
 
     if (!Call) {
-      assert((*I)->getLocation().asLocation().isValid());
+      assert(I->getLocation().asLocation().isValid());
       continue;
     }
 
@@ -946,7 +946,7 @@ public:
       // If the PathDiagnostic already has pieces, add the enclosing statement
       // of the first piece as a context as well.
       if (!PD.path.empty()) {
-        PrevLoc = (*PD.path.begin())->getLocation();
+        PrevLoc = PD.path.begin()->getLocation();
 
         if (const Stmt *S = PrevLoc.asStmt())
           addExtendedContext(PDB.getEnclosingStmtLocation(S).asStmt());
@@ -1987,10 +1987,10 @@ static void CompactPathDiagnostic(PathPieces &path, const SourceManager& SM) {
   MacroStackTy MacroStack;
   PiecesTy Pieces;
 
-  for (PathPieces::const_iterator I = path.begin(), E = path.end();
+  for (PathPieces::iterator I = path.begin(), E = path.end();
        I!=E; ++I) {
     
-    PathDiagnosticPiece *piece = I->getPtr();
+    PathDiagnosticPiece *piece = &*I;
 
     // Recursively compact calls.
     if (PathDiagnosticCallPiece *call=dyn_cast<PathDiagnosticCallPiece>(piece)){

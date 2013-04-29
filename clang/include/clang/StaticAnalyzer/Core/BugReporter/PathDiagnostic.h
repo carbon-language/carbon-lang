@@ -20,6 +20,8 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/ADT/ilist.h"
+#include "llvm/ADT/ilist_node.h"
 #include <deque>
 #include <iterator>
 #include <string>
@@ -386,12 +388,32 @@ public:
 
   virtual void Profile(llvm::FoldingSetNodeID &ID) const;
 };
-  
-  
-class PathPieces : public std::deque<IntrusiveRefCntPtr<PathDiagnosticPiece> > {
+
+/// \brief An ordered collection of PathDiagnosticPieces.
+///
+/// Multiple PathPieces are allowed to reference the same PathDiagnosticPieces.
+/// This sharing is needed for some clients that want "flattened" copies
+/// of the same pieces.
+class PathPieces {
+  /// A simple wrapper for PathDiagnosticPiece, allowing sharing of
+  /// the same pieces between different PathPieces.
+  struct Node : public llvm::ilist_node<Node> {
+    IntrusiveRefCntPtr<PathDiagnosticPiece> Data;
+    explicit Node(PathDiagnosticPiece *P) : Data(P) {}
+    explicit Node() {}
+  };
+  llvm::ilist<Node> L;
+
   void flattenTo(PathPieces &Primary, PathPieces &Current,
                  bool ShouldFlattenMacros) const;
+
 public:
+  PathPieces() {}
+  PathPieces &operator=(const PathPieces & X);
+  PathPieces(const PathPieces &X) {
+    *this = X;
+  }
+
   ~PathPieces();
 
   PathPieces flatten(bool ShouldFlattenMacros) const {
@@ -399,6 +421,63 @@ public:
     flattenTo(Result, Result, ShouldFlattenMacros);
     return Result;
   }
+
+  class iterator {
+    typedef llvm::ilist<Node>::iterator impl_iterator;
+    friend class PathPieces;
+    impl_iterator Impl;
+    iterator(const impl_iterator &Impl) : Impl(Impl) {}
+  public:
+    typedef PathDiagnosticPiece value_type;
+    typedef value_type* pointer;
+    typedef value_type& reference;
+    typedef ptrdiff_t difference_type;
+    typedef std::bidirectional_iterator_tag iterator_category;
+
+    bool operator==(const iterator &X) const {
+      return Impl == X.Impl;
+    }
+
+    bool operator!=(const iterator &X) const {
+      return Impl != X.Impl;
+    }
+
+    reference operator*() const { return *Impl->Data; }
+    pointer operator->() const { return Impl->Data.getPtr(); }
+
+    iterator &operator++() {
+      ++Impl;
+      return *this;
+    }
+
+    iterator &operator--() {
+      --Impl;
+      return *this;
+    }
+  };
+
+  typedef std::reverse_iterator<iterator> reverse_iterator;
+
+  iterator begin() const { return iterator(const_cast<PathPieces*>(this)->L.begin()); }
+  iterator end() const { return iterator(const_cast<PathPieces*>(this)->L.end()); }
+  reverse_iterator rbegin() { return reverse_iterator(end()); }
+  reverse_iterator rend() { return reverse_iterator(begin()); }
+
+  void push_front(PathDiagnosticPiece *P) {
+    L.push_front(new Node(P));
+  }
+  void pop_front() { L.pop_front(); }
+
+  void push_back(PathDiagnosticPiece *P) { L.push_back(new Node(P)); }
+  void push_back(const IntrusiveRefCntPtr<PathDiagnosticPiece> &P) {
+    push_back(P.getPtr());
+  }
+
+  PathDiagnosticPiece *front() const { return L.front().Data.getPtr(); }
+  PathDiagnosticPiece *back() const { return L.back().Data.getPtr(); }
+  void clear() { L.clear(); }
+  bool empty() const { return L.empty(); }
+  unsigned size() const { return L.size(); }
 };
 
 class PathDiagnosticSpotPiece : public PathDiagnosticPiece {
@@ -568,7 +647,7 @@ public:
     callEnter.flatten();
     callReturn.flatten();
     for (PathPieces::iterator I = path.begin(), 
-         E = path.end(); I != E; ++I) (*I)->flattenLocations();
+         E = path.end(); I != E; ++I) I->flattenLocations();
   }
   
   static PathDiagnosticCallPiece *construct(const ExplodedNode *N,
@@ -655,7 +734,7 @@ public:
   virtual void flattenLocations() {
     PathDiagnosticSpotPiece::flattenLocations();
     for (PathPieces::iterator I = subPieces.begin(), 
-         E = subPieces.end(); I != E; ++I) (*I)->flattenLocations();
+         E = subPieces.end(); I != E; ++I) I->flattenLocations();
   }
 
   static inline bool classof(const PathDiagnosticPiece *P) {
@@ -693,7 +772,7 @@ public:
 
   ~PathDiagnostic();
   
-  const PathPieces &path;
+  PathPieces &path;
 
   /// Return the path currently used by builders for constructing the 
   /// PathDiagnostic.
@@ -764,7 +843,7 @@ public:
   void flattenLocations() {
     Loc.flatten();
     for (PathPieces::iterator I = pathImpl.begin(), E = pathImpl.end(); 
-         I != E; ++I) (*I)->flattenLocations();
+         I != E; ++I) I->flattenLocations();
   }
 
   /// Profiles the diagnostic, independent of the path it references.

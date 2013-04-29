@@ -126,10 +126,10 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
 
   // The path as already been prechecked that all parts of the path are
   // from the same file and that it is non-empty.
-  const SourceManager &SMgr = (*path.begin())->getLocation().getManager();
+  const SourceManager &SMgr = path.begin()->getLocation().getManager();
   assert(!path.empty());
   FileID FID =
-    (*path.begin())->getLocation().asLocation().getExpansionLoc().getFileID();
+    path.begin()->getLocation().asLocation().getExpansionLoc().getFileID();
   assert(!FID.isInvalid());
 
   // Create a new rewriter to generate HTML.
@@ -139,10 +139,10 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   unsigned n = path.size();
   unsigned max = n;
 
-  for (PathPieces::const_reverse_iterator I = path.rbegin(), 
+  for (PathPieces::reverse_iterator I = path.rbegin(), 
        E = path.rend();
         I != E; ++I, --n)
-    HandlePiece(R, FID, **I, n, max);
+    HandlePiece(R, FID, *I, n, max);
 
   // Add line numbers, header, footer, etc.
 
@@ -185,9 +185,9 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
       << html::EscapeText(Entry->getName())
       << "</td></tr>\n<tr><td class=\"rowname\">Location:</td><td>"
          "<a href=\"#EndPath\">line "
-      << (*path.rbegin())->getLocation().asLocation().getExpansionLineNumber()
+      << path.rbegin()->getLocation().asLocation().getExpansionLineNumber()
       << ", column "
-      << (*path.rbegin())->getLocation().asLocation().getExpansionColumnNumber()
+      << path.rbegin()->getLocation().asLocation().getExpansionColumnNumber()
       << "</a></td></tr>\n"
          "<tr><td class=\"rowname\">Description:</td><td>"
       << D.getVerboseDescription() << "</td></tr>\n";
@@ -503,16 +503,16 @@ unsigned HTMLDiagnostics::ProcessMacroPiece(raw_ostream &os,
                                             const PathDiagnosticMacroPiece& P,
                                             unsigned num) {
 
-  for (PathPieces::const_iterator I = P.subPieces.begin(), E=P.subPieces.end();
+  for (PathPieces::iterator I = P.subPieces.begin(), E=P.subPieces.end();
         I!=E; ++I) {
 
     if (const PathDiagnosticMacroPiece *MP =
-          dyn_cast<PathDiagnosticMacroPiece>(*I)) {
+          dyn_cast<PathDiagnosticMacroPiece>(&*I)) {
       num = ProcessMacroPiece(os, *MP, num);
       continue;
     }
 
-    if (PathDiagnosticEventPiece *EP = dyn_cast<PathDiagnosticEventPiece>(*I)) {
+    if (PathDiagnosticEventPiece *EP = dyn_cast<PathDiagnosticEventPiece>(&*I)){
       os << "<div class=\"msg msgEvent\" style=\"width:94%; "
             "margin-left:5px\">"
             "<table class=\"msgT\"><tr>"

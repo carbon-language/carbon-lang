@@ -28,11 +28,11 @@ using namespace clang;
 using namespace ento;
 
 bool PathDiagnosticMacroPiece::containsEvent() const {
-  for (PathPieces::const_iterator I = subPieces.begin(), E = subPieces.end();
+  for (PathPieces::iterator I = subPieces.begin(), E = subPieces.end();
        I!=E; ++I) {
     if (isa<PathDiagnosticEventPiece>(*I))
       return true;
-    if (PathDiagnosticMacroPiece *MP = dyn_cast<PathDiagnosticMacroPiece>(*I))
+    if (PathDiagnosticMacroPiece *MP = dyn_cast<PathDiagnosticMacroPiece>(&*I))
       if (MP->containsEvent())
         return true;
   }
@@ -59,13 +59,21 @@ PathDiagnosticCallPiece::~PathDiagnosticCallPiece() {}
 PathDiagnosticControlFlowPiece::~PathDiagnosticControlFlowPiece() {}
 PathDiagnosticMacroPiece::~PathDiagnosticMacroPiece() {}
 
+PathPieces &PathPieces::operator=(const PathPieces & X) {
+  clear();
+  for (llvm::ilist<Node>::const_iterator I = X.L.begin(), E = X.L.end();
+       I != E; ++I) {
+    L.push_back(new Node(&*(I->Data)));
+  }
+  return *this;
+}
 
 PathPieces::~PathPieces() {}
 
 void PathPieces::flattenTo(PathPieces &Primary, PathPieces &Current,
                            bool ShouldFlattenMacros) const {
-  for (PathPieces::const_iterator I = begin(), E = end(); I != E; ++I) {
-    PathDiagnosticPiece *Piece = I->getPtr();
+  for (PathPieces::iterator I = begin(), E = end(); I != E; ++I) {
+    PathDiagnosticPiece *Piece = &*I;
 
     switch (Piece->getKind()) {
     case PathDiagnosticPiece::Call: {
@@ -145,7 +153,7 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
   if (!supportsCrossFileDiagnostics()) {
     // Verify that the entire path is from the same FileID.
     FileID FID;
-    const SourceManager &SMgr = (*D->path.begin())->getLocation().getManager();
+    const SourceManager &SMgr = D->path.begin()->getLocation().getManager();
     SmallVector<const PathPieces *, 5> WorkList;
     WorkList.push_back(&D->path);
 
@@ -153,9 +161,9 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
       const PathPieces &path = *WorkList.back();
       WorkList.pop_back();
 
-      for (PathPieces::const_iterator I = path.begin(), E = path.end();
+      for (PathPieces::iterator I = path.begin(), E = path.end();
            I != E; ++I) {
-        const PathDiagnosticPiece *piece = I->getPtr();
+        const PathDiagnosticPiece *piece = &*I;
         FullSourceLoc L = piece->getLocation().asLocation().getExpansionLoc();
       
         if (FID.isInvalid()) {
@@ -298,11 +306,11 @@ static Optional<bool> comparePath(const PathPieces &X, const PathPieces &Y) {
   if (X.size() != Y.size())
     return X.size() < Y.size();
 
-  PathPieces::const_iterator X_I = X.begin(), X_end = X.end();
-  PathPieces::const_iterator Y_I = Y.begin(), Y_end = Y.end();
+  PathPieces::iterator X_I = X.begin(), X_end = X.end();
+  PathPieces::iterator Y_I = Y.begin(), Y_end = Y.end();
 
   for ( ; X_I != X_end && Y_I != Y_end; ++X_I, ++Y_I) {
-    Optional<bool> b = comparePiece(**X_I, **Y_I);
+    Optional<bool> b = comparePiece(*X_I, *Y_I);
     if (b.hasValue())
       return b.getValue();
   }
@@ -954,9 +962,9 @@ PathDiagnosticCallPiece::getCallExitEvent() const {
 }
 
 static void compute_path_size(const PathPieces &pieces, unsigned &size) {
-  for (PathPieces::const_iterator it = pieces.begin(),
+  for (PathPieces::iterator it = pieces.begin(),
                                   et = pieces.end(); it != et; ++it) {
-    const PathDiagnosticPiece *piece = it->getPtr();
+    const PathDiagnosticPiece *piece = &*it;
     if (const PathDiagnosticCallPiece *cp = 
         dyn_cast<PathDiagnosticCallPiece>(piece)) {
       compute_path_size(cp->path, size);
@@ -998,9 +1006,9 @@ void PathDiagnosticPiece::Profile(llvm::FoldingSetNodeID &ID) const {
 
 void PathDiagnosticCallPiece::Profile(llvm::FoldingSetNodeID &ID) const {
   PathDiagnosticPiece::Profile(ID);
-  for (PathPieces::const_iterator it = path.begin(), 
+  for (PathPieces::iterator it = path.begin(), 
        et = path.end(); it != et; ++it) {
-    ID.Add(**it);
+    ID.Add(*it);
   }
 }
 
@@ -1017,9 +1025,9 @@ void PathDiagnosticControlFlowPiece::Profile(llvm::FoldingSetNodeID &ID) const {
 
 void PathDiagnosticMacroPiece::Profile(llvm::FoldingSetNodeID &ID) const {
   PathDiagnosticSpotPiece::Profile(ID);
-  for (PathPieces::const_iterator I = subPieces.begin(), E = subPieces.end();
+  for (PathPieces::iterator I = subPieces.begin(), E = subPieces.end();
        I != E; ++I)
-    ID.Add(**I);
+    ID.Add(*I);
 }
 
 void PathDiagnostic::Profile(llvm::FoldingSetNodeID &ID) const {
@@ -1031,8 +1039,8 @@ void PathDiagnostic::Profile(llvm::FoldingSetNodeID &ID) const {
 
 void PathDiagnostic::FullProfile(llvm::FoldingSetNodeID &ID) const {
   Profile(ID);
-  for (PathPieces::const_iterator I = path.begin(), E = path.end(); I != E; ++I)
-    ID.Add(**I);
+  for (PathPieces::iterator I = path.begin(), E = path.end(); I != E; ++I)
+    ID.Add(*I);
   for (meta_iterator I = meta_begin(), E = meta_end(); I != E; ++I)
     ID.AddString(*I);
 }

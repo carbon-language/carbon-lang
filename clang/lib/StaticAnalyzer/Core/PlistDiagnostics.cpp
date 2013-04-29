@@ -294,8 +294,8 @@ static void ReportCall(raw_ostream &o,
     ReportPiece(o, *callEnterWithinCaller, FM, SM, LangOpts,
                 indent, depth, true);
   
-  for (PathPieces::const_iterator I = P.path.begin(), E = P.path.end();I!=E;++I)
-    ReportPiece(o, **I, FM, SM, LangOpts, indent, depth, true);
+  for (PathPieces::iterator I = P.path.begin(), E = P.path.end();I!=E;++I)
+    ReportPiece(o, *I, FM, SM, LangOpts, indent, depth, true);
 
   --depth;
   
@@ -313,9 +313,9 @@ static void ReportMacro(raw_ostream &o,
                         unsigned indent,
                         unsigned depth) {
 
-  for (PathPieces::const_iterator I = P.subPieces.begin(), E=P.subPieces.end();
+  for (PathPieces::iterator I = P.subPieces.begin(), E=P.subPieces.end();
        I!=E; ++I) {
-    ReportPiece(o, **I, FM, SM, LangOpts, indent, depth, false);
+    ReportPiece(o, *I, FM, SM, LangOpts, indent, depth, false);
   }
 }
 
@@ -363,7 +363,7 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
   const SourceManager* SM = 0;
 
   if (!Diags.empty())
-    SM = &(*(*Diags.begin())->path.begin())->getLocation().getManager();
+    SM = &(*(*Diags.begin())->path.begin()).getLocation().getManager();
 
   
   for (std::vector<const PathDiagnostic*>::iterator DI = Diags.begin(),
@@ -378,9 +378,9 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
       const PathPieces &path = *WorkList.back();
       WorkList.pop_back();
     
-      for (PathPieces::const_iterator I = path.begin(), E = path.end();
+      for (PathPieces::iterator I = path.begin(), E = path.end();
            I!=E; ++I) {
-        const PathDiagnosticPiece *piece = I->getPtr();
+        const PathDiagnosticPiece *piece = &*I;
         AddFID(FM, Fids, SM, piece->getLocation().asLocation());
         ArrayRef<SourceRange> Ranges = piece->getRanges();
         for (ArrayRef<SourceRange>::iterator I = Ranges.begin(),
@@ -450,9 +450,9 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
 
     o << "   <array>\n";
 
-    for (PathPieces::const_iterator I = D->path.begin(), E = D->path.end(); 
+    for (PathPieces::iterator I = D->path.begin(), E = D->path.end(); 
          I != E; ++I)
-      ReportDiag(o, **I, FM, *SM, LangOpts);
+      ReportDiag(o, *I, FM, *SM, LangOpts);
 
     o << "   </array>\n";
 
