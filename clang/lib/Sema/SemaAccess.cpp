@@ -84,10 +84,10 @@ struct EffectiveContext {
     : Inner(DC),
       Dependent(DC->isDependentContext()) {
 
-    // C++ [class.access.nest]p1:
+    // C++11 [class.access.nest]p1:
     //   A nested class is a member and as such has the same access
     //   rights as any other member.
-    // C++ [class.access]p2:
+    // C++11 [class.access]p2:
     //   A member of a class can also access all the names to which
     //   the class has access.  A local class of a member function
     //   may access the same names that the member function itself
@@ -1476,18 +1476,18 @@ static Sema::AccessResult CheckAccess(Sema &S, SourceLocation Loc,
   llvm_unreachable("falling off end");
 }
 
-void Sema::HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *decl) {
+void Sema::HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *D) {
   // Access control for names used in the declarations of functions
   // and function templates should normally be evaluated in the context
   // of the declaration, just in case it's a friend of something.
   // However, this does not apply to local extern declarations.
 
-  DeclContext *DC = decl->getDeclContext();
-  if (FunctionDecl *fn = dyn_cast<FunctionDecl>(decl)) {
-    if (!DC->isFunctionOrMethod()) DC = fn;
-  } else if (FunctionTemplateDecl *fnt = dyn_cast<FunctionTemplateDecl>(decl)) {
-    // Never a local declaration.
-    DC = fnt->getTemplatedDecl();
+  DeclContext *DC = D->getDeclContext();
+  if (FunctionDecl *FN = dyn_cast<FunctionDecl>(D)) {
+    if (!DC->isFunctionOrMethod())
+      DC = FN;
+  } else if (TemplateDecl *TD = dyn_cast<TemplateDecl>(D)) {
+    DC = cast<DeclContext>(TD->getTemplatedDecl());
   }
 
   EffectiveContext EC(DC);
