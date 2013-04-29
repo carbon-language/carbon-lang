@@ -123,7 +123,7 @@ private:
       Opcode = isEg ? AMDGPU::POP_EG : AMDGPU::POP_R600;
       break;
     case CF_END:
-      if (ST.device()->getGeneration() == AMDGPUDeviceInfo::HD6XXX) {
+      if (ST.device()->getDeviceFlag() == OCL_DEVICE_CAYMAN) {
         Opcode = AMDGPU::CF_END_CM;
         break;
       }
