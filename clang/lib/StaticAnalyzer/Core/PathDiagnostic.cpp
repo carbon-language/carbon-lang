@@ -297,11 +297,16 @@ static Optional<bool> comparePiece(const PathDiagnosticPiece &X,
 static Optional<bool> comparePath(const PathPieces &X, const PathPieces &Y) {
   if (X.size() != Y.size())
     return X.size() < Y.size();
-  for (unsigned i = 0, n = X.size(); i != n; ++i) {
-    Optional<bool> b = comparePiece(*X[i], *Y[i]);
+
+  PathPieces::const_iterator X_I = X.begin(), X_end = X.end();
+  PathPieces::const_iterator Y_I = Y.begin(), Y_end = Y.end();
+
+  for ( ; X_I != X_end && Y_I != Y_end; ++X_I, ++Y_I) {
+    Optional<bool> b = comparePiece(**X_I, **Y_I);
     if (b.hasValue())
       return b.getValue();
   }
+
   return None;
 }
 
