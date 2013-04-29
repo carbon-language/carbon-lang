@@ -2581,6 +2581,11 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
   // long as the existing imbalances are maintained.
   if (OldDelta != 0)
     return false;
+  
+#ifdef ARC_ANNOTATIONS
+  // Do not move calls if ARC annotations are requested.
+  return false;
+#endif // ARC_ANNOTATIONS
 
   Changed = true;
   assert(OldCount != 0 && "Unreachable code?");
@@ -2643,12 +2648,6 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
                             NewReleases, DeadInsts, RetainsToMove,
                             ReleasesToMove, Arg, KnownSafe,
                             AnyPairsCompletelyEliminated);
-
-#ifdef ARC_ANNOTATIONS
-    // Do not move calls if ARC annotations are requested. If we were to move
-    // calls in this case, we would not be able
-    PerformMoveCalls = PerformMoveCalls && !EnableARCAnnotations;
-#endif // ARC_ANNOTATIONS
 
     if (PerformMoveCalls) {
       // Ok, everything checks out and we're all set. Let's move/delete some
