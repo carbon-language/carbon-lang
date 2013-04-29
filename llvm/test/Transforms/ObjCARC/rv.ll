@@ -136,17 +136,6 @@ define i8* @test7b() {
   ret i8* %p
 }
 
-; Turn objc_retain into objc_retainAutoreleasedReturnValue if its operand
-; is a return value.
-
-; CHECK: define void @test8()
-; CHECK: tail call i8* @objc_retainAutoreleasedReturnValue(i8* %p)
-define void @test8() {
-  %p = call i8* @returner()
-  call i8* @objc_retain(i8* %p)
-  ret void
-}
-
 ; Don't apply the RV optimization to autorelease if there's no retain.
 
 ; CHECK: define i8* @test9(i8* %p)
@@ -232,45 +221,6 @@ define void @test14(i8* %p) {
 define void @test15() {
   %y = call i8* @returner()
   call i8* @objc_retainAutoreleasedReturnValue(i8* %y)
-  ret void
-}
-
-; Convert objc_retain to objc_retainAutoreleasedReturnValue if its
-; argument is a return value.
-
-; CHECK: define void @test16(
-; CHECK-NEXT: %y = call i8* @returner()
-; CHECK-NEXT: tail call i8* @objc_retainAutoreleasedReturnValue(i8* %y) [[NUW]]
-; CHECK-NEXT: ret void
-define void @test16() {
-  %y = call i8* @returner()
-  call i8* @objc_retain(i8* %y)
-  ret void
-}
-
-; Don't convert objc_retain to objc_retainAutoreleasedReturnValue if its
-; argument is not a return value.
-
-; CHECK: define void @test17(
-; CHECK-NEXT: tail call i8* @objc_retain(i8* %y) [[NUW]]
-; CHECK-NEXT: ret void
-define void @test17(i8* %y) {
-  call i8* @objc_retain(i8* %y)
-  ret void
-}
-
-; Don't Convert objc_retain to objc_retainAutoreleasedReturnValue if it
-; isn't next to the call providing its return value.
-
-; CHECK: define void @test18(
-; CHECK-NEXT: %y = call i8* @returner()
-; CHECK-NEXT: call void @callee()
-; CHECK-NEXT: tail call i8* @objc_retain(i8* %y) [[NUW]]
-; CHECK-NEXT: ret void
-define void @test18() {
-  %y = call i8* @returner()
-  call void @callee()
-  call i8* @objc_retain(i8* %y)
   ret void
 }
 

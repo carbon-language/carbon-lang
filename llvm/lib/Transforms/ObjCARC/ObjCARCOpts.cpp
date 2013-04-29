@@ -997,9 +997,6 @@ namespace {
     /// them. These are initialized lazily to avoid cluttering up the Module
     /// with unused declarations.
 
-    /// Declaration for ObjC runtime function
-    /// objc_retainAutoreleasedReturnValue.
-    Constant *RetainRVCallee;
     /// Declaration for ObjC runtime function objc_autoreleaseReturnValue.
     Constant *AutoreleaseRVCallee;
     /// Declaration for ObjC runtime function objc_release.
@@ -1033,7 +1030,6 @@ namespace {
     unsigned ARCAnnotationProvenanceSourceMDKind;
 #endif // ARC_ANNOATIONS
 
-    Constant *getRetainRVCallee(Module *M);
     Constant *getAutoreleaseRVCallee(Module *M);
     Constant *getReleaseCallee(Module *M);
     Constant *getRetainCallee(Module *M);
@@ -1042,7 +1038,6 @@ namespace {
 
     bool IsRetainBlockOptimizable(const Instruction *Inst);
 
-    void OptimizeRetainCall(Function &F, Instruction *Retain);
     bool OptimizeRetainRVCall(Function &F, Instruction *RetainRV);
     void OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV,
                                    InstructionClass &Class);
@@ -1152,22 +1147,6 @@ bool ObjCARCOpt::IsRetainBlockOptimizable(const Instruction *Inst) {
   return true;
 }
 
-Constant *ObjCARCOpt::getRetainRVCallee(Module *M) {
-  if (!RetainRVCallee) {
-    LLVMContext &C = M->getContext();
-    Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-    Type *Params[] = { I8X };
-    FunctionType *FTy = FunctionType::get(I8X, Params, /*isVarArg=*/false);
-    AttributeSet Attribute =
-      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
-                                  Attribute::NoUnwind);
-    RetainRVCallee =
-      M->getOrInsertFunction("objc_retainAutoreleasedReturnValue", FTy,
-                             Attribute);
-  }
-  return RetainRVCallee;
-}
-
 Constant *ObjCARCOpt::getAutoreleaseRVCallee(Module *M) {
   if (!AutoreleaseRVCallee) {
     LLVMContext &C = M->getContext();
@@ -1245,35 +1224,6 @@ Constant *ObjCARCOpt::getAutoreleaseCallee(Module *M) {
         Attribute);
   }
   return AutoreleaseCallee;
-}
-
-/// Turn objc_retain into objc_retainAutoreleasedReturnValue if the operand is a
-/// return value.
-void
-ObjCARCOpt::OptimizeRetainCall(Function &F, Instruction *Retain) {
-  ImmutableCallSite CS(GetObjCArg(Retain));
-  const Instruction *Call = CS.getInstruction();
-  if (!Call) return;
-  if (Call->getParent() != Retain->getParent()) return;
-
-  // Check that the call is next to the retain.
-  BasicBlock::const_iterator I = Call;
-  ++I;
-  while (IsNoopInstruction(I)) ++I;
-  if (&*I != Retain)
-    return;
-
-  // Turn it to an objc_retainAutoreleasedReturnValue..
-  Changed = true;
-  ++NumPeeps;
-
-  DEBUG(dbgs() << "Transforming objc_retain => "
-                  "objc_retainAutoreleasedReturnValue since the operand is a "
-                  "return value.\nOld: "<< *Retain << "\n");
-
-  cast<CallInst>(Retain)->setCalledFunction(getRetainRVCallee(F.getParent()));
-
-  DEBUG(dbgs() << "New: " << *Retain << "\n");
 }
 
 /// Turn objc_retainAutoreleasedReturnValue into objc_retain if the operand is
@@ -1493,7 +1443,6 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
       // FALLTHROUGH
     case IC_Retain:
       ++NumRetainsBeforeOpt;
-      OptimizeRetainCall(F, Inst);
       break;
     case IC_RetainRV:
       if (OptimizeRetainRVCall(F, Inst))
@@ -3076,7 +3025,6 @@ bool ObjCARCOpt::doInitialization(Module &M) {
   // calls finalizers which can have arbitrary side effects.
 
   // These are initialized lazily.
-  RetainRVCallee = 0;
   AutoreleaseRVCallee = 0;
   ReleaseCallee = 0;
   RetainCallee = 0;

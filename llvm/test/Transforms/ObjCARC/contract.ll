@@ -10,6 +10,7 @@ declare i8* @objc_retainAutoreleasedReturnValue(i8*)
 
 declare void @use_pointer(i8*)
 declare i8* @returner()
+declare void @callee()
 
 ; CHECK: define void @test0
 ; CHECK: call void @use_pointer(i8* %0)
@@ -171,6 +172,60 @@ define void @test9(i8* %a, i8* %b) {
   call void (...)* @clang.arc.use(i8* %a, i8* %b) nounwind
   ret void
 }
+
+
+; Turn objc_retain into objc_retainAutoreleasedReturnValue if its operand
+; is a return value.
+
+; CHECK: define void @test10()
+; CHECK: tail call i8* @objc_retainAutoreleasedReturnValue(i8* %p)
+define void @test10() {
+  %p = call i8* @returner()
+  tail call i8* @objc_retain(i8* %p) nounwind
+  ret void
+}
+
+; Convert objc_retain to objc_retainAutoreleasedReturnValue if its
+; argument is a return value.
+
+; CHECK: define void @test11(
+; CHECK-NEXT: %y = call i8* @returner()
+; CHECK-NEXT: tail call i8* @objc_retainAutoreleasedReturnValue(i8* %y) [[NUW]]
+; CHECK-NEXT: ret void
+define void @test11() {
+  %y = call i8* @returner()
+  tail call i8* @objc_retain(i8* %y) nounwind
+  ret void
+}
+
+; Don't convert objc_retain to objc_retainAutoreleasedReturnValue if its
+; argument is not a return value.
+
+; CHECK: define void @test12(
+; CHECK-NEXT: tail call i8* @objc_retain(i8* %y) [[NUW]]
+; CHECK-NEXT: ret void
+; CHECK-NEXT: }
+define void @test12(i8* %y) {
+  tail call i8* @objc_retain(i8* %y) nounwind
+  ret void
+}
+
+; Don't Convert objc_retain to objc_retainAutoreleasedReturnValue if it
+; isn't next to the call providing its return value.
+
+; CHECK: define void @test13(
+; CHECK-NEXT: %y = call i8* @returner()
+; CHECK-NEXT: call void @callee()
+; CHECK-NEXT: tail call i8* @objc_retain(i8* %y) [[NUW]]
+; CHECK-NEXT: ret void
+; CHECK-NEXT: }
+define void @test13() {
+  %y = call i8* @returner()
+  call void @callee()
+  tail call i8* @objc_retain(i8* %y) nounwind
+  ret void
+}
+
 
 declare void @clang.arc.use(...) nounwind
 

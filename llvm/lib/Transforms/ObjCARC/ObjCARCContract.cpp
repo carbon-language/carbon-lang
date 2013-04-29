@@ -66,6 +66,8 @@ namespace {
     Constant *RetainAutoreleaseCallee;
     /// Declaration for objc_retainAutoreleaseReturnValue().
     Constant *RetainAutoreleaseRVCallee;
+    /// Declaration for objc_retainAutoreleasedReturnValue().
+    Constant *RetainRVCallee;
 
     /// The inline asm string to insert between calls and RetainRV calls to make
     /// the optimization work on targets which need it.
@@ -77,8 +79,11 @@ namespace {
     SmallPtrSet<CallInst *, 8> StoreStrongCalls;
 
     Constant *getStoreStrongCallee(Module *M);
+    Constant *getRetainRVCallee(Module *M);
     Constant *getRetainAutoreleaseCallee(Module *M);
     Constant *getRetainAutoreleaseRVCallee(Module *M);
+
+    bool OptimizeRetainCall(Function &F, Instruction *Retain);
 
     bool ContractAutorelease(Function &F, Instruction *Autorelease,
                              InstructionClass Class,
@@ -170,6 +175,57 @@ Constant *ObjCARCContract::getRetainAutoreleaseRVCallee(Module *M) {
                              Attribute);
   }
   return RetainAutoreleaseRVCallee;
+}
+
+Constant *ObjCARCContract::getRetainRVCallee(Module *M) {
+  if (!RetainRVCallee) {
+    LLVMContext &C = M->getContext();
+    Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
+    Type *Params[] = { I8X };
+    FunctionType *FTy = FunctionType::get(I8X, Params, /*isVarArg=*/false);
+    AttributeSet Attribute =
+      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
+                                  Attribute::NoUnwind);
+    RetainRVCallee =
+      M->getOrInsertFunction("objc_retainAutoreleasedReturnValue", FTy,
+                             Attribute);
+  }
+  return RetainRVCallee;
+}
+
+/// Turn objc_retain into objc_retainAutoreleasedReturnValue if the operand is a
+/// return value. We do this late so we do not disrupt the dataflow analysis in
+/// ObjCARCOpt.
+bool
+ObjCARCContract::OptimizeRetainCall(Function &F, Instruction *Retain) {
+  ImmutableCallSite CS(GetObjCArg(Retain));
+  const Instruction *Call = CS.getInstruction();
+  if (!Call)
+    return false;
+  if (Call->getParent() != Retain->getParent())
+    return false;
+
+  // Check that the call is next to the retain.
+  BasicBlock::const_iterator I = Call;
+  ++I;
+  while (IsNoopInstruction(I)) ++I;
+  if (&*I != Retain)
+    return false;
+
+  // Turn it to an objc_retainAutoreleasedReturnValue.
+  Changed = true;
+  ++NumPeeps;
+
+  DEBUG(dbgs() << "Transforming objc_retain => "
+                  "objc_retainAutoreleasedReturnValue since the operand is a "
+                  "return value.\nOld: "<< *Retain << "\n");
+
+  // We do not have to worry about tail calls/does not throw since
+  // retain/retainRV have the same properties.
+  cast<CallInst>(Retain)->setCalledFunction(getRetainRVCallee(F.getParent()));
+
+  DEBUG(dbgs() << "New: " << *Retain << "\n");
+  return true;
 }
 
 /// Merge an autorelease with a retain into a fused call.
@@ -329,6 +385,7 @@ bool ObjCARCContract::doInitialization(Module &M) {
   StoreStrongCallee = 0;
   RetainAutoreleaseCallee = 0;
   RetainAutoreleaseRVCallee = 0;
+  RetainRVCallee = 0;
 
   // Initialize RetainRVMarker.
   RetainRVMarker = 0;
@@ -380,7 +437,6 @@ bool ObjCARCContract::runOnFunction(Function &F) {
     // objc_retainBlock does not necessarily return its argument.
     InstructionClass Class = GetBasicInstructionClass(Inst);
     switch (Class) {
-    case IC_Retain:
     case IC_FusedRetainAutorelease:
     case IC_FusedRetainAutoreleaseRV:
       break;
@@ -389,6 +445,13 @@ bool ObjCARCContract::runOnFunction(Function &F) {
       if (ContractAutorelease(F, Inst, Class, DependingInstructions, Visited))
         continue;
       break;
+    case IC_Retain:
+      // Attempt to convert retains to retainrvs if they are next to function
+      // calls.
+      if (!OptimizeRetainCall(F, Inst))
+        break;
+      // If we succeed in our optimization, fall through.
+      // FALLTHROUGH
     case IC_RetainRV: {
       // If we're compiling for a target which needs a special inline-asm
       // marker to do the retainAutoreleasedReturnValue optimization,
