@@ -227,9 +227,6 @@ public:
   /// Get symbol flags (bitwise OR of SymbolRef::Flags)
   error_code getFlags(uint32_t &Result) const;
 
-  /// @brief Return true for common symbols such as uninitialized globals
-  error_code isCommon(bool &Result) const;
-
   /// @brief Get section this symbol is defined in reference to. Result is
   /// end_sections() if it is undefined or is an absolute symbol.
   error_code getSection(section_iterator &Result) const;
