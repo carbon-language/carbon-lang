@@ -307,10 +307,12 @@ STATISTIC(NumRetainsBeforeOpt,
           "Number of retains before optimization.");
 STATISTIC(NumReleasesBeforeOpt,
           "Number of releases before optimization.");
+#ifndef NDEBUG
 STATISTIC(NumRetainsAfterOpt,
           "Number of retains after optimization.");
 STATISTIC(NumReleasesAfterOpt,
           "Number of releases after optimization.");
+#endif
 
 namespace {
   /// \enum Sequence
