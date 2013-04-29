@@ -59,6 +59,10 @@ static cl::opt<bool>
 SinkCommon("simplifycfg-sink-common", cl::Hidden, cl::init(true),
        cl::desc("Sink common instructions down to the end block"));
 
+static cl::opt<bool>
+HoistCondStores("simplifycfg-hoist-cond-stores", cl::Hidden, cl::init(true),
+       cl::desc("Hoist conditional stores if an unconditional store preceeds"));
+
 STATISTIC(NumBitMaps, "Number of switch instructions turned into bitmaps");
 STATISTIC(NumLookupTables, "Number of switch instructions turned into lookup tables");
 STATISTIC(NumSinkCommons, "Number of common instructions sunk down to the end block");
@@ -1332,6 +1336,66 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
   return Changed;
 }
 
+/// \brief Determine if we can hoist sink a sole store instruction out of a
+/// conditional block.
+///
+/// We are looking for code like the following:
+///   BrBB:
+///     store i32 %add, i32* %arrayidx2
+///     ... // No other stores or function calls (we could be calling a memory
+///     ... // function).
+///     %cmp = icmp ult %x, %y
+///     br i1 %cmp, label %EndBB, label %ThenBB
+///   ThenBB:
+///     store i32 %add5, i32* %arrayidx2
+///     br label EndBB
+///   EndBB:
+///     ...
+///   We are going to transform this into:
+///   BrBB:
+///     store i32 %add, i32* %arrayidx2
+///     ... //
+///     %cmp = icmp ult %x, %y
+///     %add.add5 = select i1 %cmp, i32 %add, %add5
+///     store i32 %add.add5, i32* %arrayidx2
+///     ...
+///
+/// \return The pointer to the value of the previous store if the store can be
+///         hoisted into the predecessor block. 0 otherwise.
+Value *isSafeToSpeculateStore(Instruction *I, BasicBlock *BrBB,
+                              BasicBlock *StoreBB, BasicBlock *EndBB) {
+  StoreInst *StoreToHoist = dyn_cast<StoreInst>(I);
+  if (!StoreToHoist)
+    return 0;
+
+  // Volatile or atomic.
+  if (!StoreToHoist->isSimple())
+    return 0;
+
+  Value *StorePtr = StoreToHoist->getPointerOperand();
+
+  // Look for a store to the same pointer in BrBB.
+  unsigned MaxNumInstToLookAt = 10;
+  for (BasicBlock::reverse_iterator RI = BrBB->rbegin(),
+       RE = BrBB->rend(); RI != RE && (--MaxNumInstToLookAt); ++RI) {
+    Instruction *CurI = &*RI;
+
+    // Could be calling an instruction that effects memory like free().
+    if (CurI->mayHaveSideEffects() && !isa<StoreInst>(CurI))
+      return 0;
+
+    StoreInst *SI = dyn_cast<StoreInst>(CurI);
+    // Found the previous store make sure it stores to the same location.
+    if (SI && SI->getPointerOperand() == StorePtr)
+      // Found the previous store, return its value operand.
+      return SI->getValueOperand();
+    else if (SI)
+      return 0; // Unknown store.
+  }
+
+  return 0;
+}
+
 /// \brief Speculate a conditional basic block flattening the CFG.
 ///
 /// Note that this is a very risky transform currently. Speculating
@@ -1395,6 +1459,8 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
   SmallDenseMap<Instruction *, unsigned, 4> SinkCandidateUseCounts;
 
   unsigned SpeculationCost = 0;
+  Value *SpeculatedStoreValue = 0;
+  StoreInst *SpeculatedStore = 0;
   for (BasicBlock::iterator BBI = ThenBB->begin(),
                             BBE = llvm::prior(ThenBB->end());
        BBI != BBE; ++BBI) {
@@ -1410,13 +1476,21 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
       return false;
 
     // Don't hoist the instruction if it's unsafe or expensive.
-    if (!isSafeToSpeculativelyExecute(I))
+    if (!isSafeToSpeculativelyExecute(I) &&
+        !(HoistCondStores &&
+          (SpeculatedStoreValue = isSafeToSpeculateStore(I, BB, ThenBB,
+                                                         EndBB))))
       return false;
-    if (ComputeSpeculationCost(I) > PHINodeFoldingThreshold)
+    if (!SpeculatedStoreValue &&
+        ComputeSpeculationCost(I) > PHINodeFoldingThreshold)
       return false;
 
+    // Store the store speculation candidate.
+    if (SpeculatedStoreValue)
+      SpeculatedStore = cast<StoreInst>(I);
+
     // Do not hoist the instruction if any of its operands are defined but not
-    // used in this BB. The transformation will prevent the operand from
+    // used in BB. The transformation will prevent the operand from
     // being sunk into the use block.
     for (User::op_iterator i = I->op_begin(), e = I->op_end();
          i != e; ++i) {
@@ -1473,11 +1547,23 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
 
   // If there are no PHIs to process, bail early. This helps ensure idempotence
   // as well.
-  if (!HaveRewritablePHIs)
+  if (!HaveRewritablePHIs && !(HoistCondStores && SpeculatedStoreValue))
     return false;
 
   // If we get here, we can hoist the instruction and if-convert.
   DEBUG(dbgs() << "SPECULATIVELY EXECUTING BB" << *ThenBB << "\n";);
+
+  // Insert a select of the value of the speculated store.
+  if (SpeculatedStoreValue) {
+    IRBuilder<true, NoFolder> Builder(BI);
+    Value *TrueV = SpeculatedStore->getValueOperand();
+    Value *FalseV = SpeculatedStoreValue;
+    if (Invert)
+      std::swap(TrueV, FalseV);
+    Value *S = Builder.CreateSelect(BrCond, TrueV, FalseV, TrueV->getName() +
+                                    "." + FalseV->getName());
+    SpeculatedStore->setOperand(0, S);
+  }
 
   // Hoist the instructions.
   BB->getInstList().splice(BI, ThenBB->getInstList(), ThenBB->begin(),
