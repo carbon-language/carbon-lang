@@ -1399,15 +1399,13 @@ StackFrame::GetStatus (Stream& strm,
 
                 if (m_sc.comp_unit && m_sc.line_entry.IsValid())
                 {
-                    if (target->GetSourceManager().DisplaySourceLinesWithLineNumbers (m_sc.line_entry.file,
+                    have_source = true;
+                    target->GetSourceManager().DisplaySourceLinesWithLineNumbers (m_sc.line_entry.file,
                                                                                       m_sc.line_entry.line,
                                                                                       source_lines_before,
                                                                                       source_lines_after,
                                                                                       "->",
-                                                                                      &strm))
-                    {
-                        have_source = true;
-                    }
+                                                                                      &strm);
                 }
             }
             switch (disasm_display)
