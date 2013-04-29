@@ -17,8 +17,6 @@
 #ifndef MCJIT_TEST_BASE_H
 #define MCJIT_TEST_BASE_H
 
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/Config/config.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
@@ -28,21 +26,11 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/TypeBuilder.h"
 #include "llvm/Support/CodeGen.h"
-#include "llvm/Support/Host.h"
-#include "llvm/Support/TargetSelect.h"
-
-// Used to skip tests on unsupported architectures and operating systems.
-// To skip a test, add this macro at the top of a test-case in a suite that
-// inherits from MCJITTestBase. See MCJITTest.cpp for examples.
-#define SKIP_UNSUPPORTED_PLATFORM \
-  do \
-    if (!ArchSupportsMCJIT() || !OSSupportsMCJIT()) \
-      return; \
-  while(0);
+#include "MCJITTestAPICommon.h"
 
 namespace llvm {
 
-class MCJITTestBase {
+class MCJITTestBase : public MCJITTestAPICommon {
 protected:
 
   MCJITTestBase()
@@ -52,17 +40,7 @@ protected:
     , MArch("")
     , Builder(Context)
     , MM(new SectionMemoryManager)
-    , HostTriple(sys::getProcessTriple())
   {
-    InitializeNativeTarget();
-    InitializeNativeTargetAsmPrinter();
-
-#ifdef LLVM_ON_WIN32
-    // On Windows, generate ELF objects by specifying "-elf" in triple
-    HostTriple += "-elf";
-#endif // LLVM_ON_WIN32
-    HostTriple = Triple::normalize(HostTriple);
-
     // The architectures below are known to be compatible with MCJIT as they
     // are copied from test/ExecutionEngine/MCJIT/lit.local.cfg and should be
     // kept in sync.
@@ -76,26 +54,6 @@ protected:
     // should be kept in sync.
     UnsupportedOSs.push_back(Triple::Cygwin);
     UnsupportedOSs.push_back(Triple::Darwin);
-  }
-
-  /// Returns true if the host architecture is known to support MCJIT
-  bool ArchSupportsMCJIT() {
-    Triple Host(HostTriple);
-    if (std::find(SupportedArchs.begin(), SupportedArchs.end(), Host.getArch())
-        == SupportedArchs.end()) {
-      return false;
-    }
-    return true;
-  }
-
-  /// Returns true if the host OS is known to support MCJIT
-  bool OSSupportsMCJIT() {
-    Triple Host(HostTriple);
-    if (std::find(UnsupportedOSs.begin(), UnsupportedOSs.end(), Host.getOS())
-        == UnsupportedOSs.end()) {
-      return true;
-    }
-    return false;
   }
 
   Module *createEmptyModule(StringRef Name) {
@@ -231,10 +189,6 @@ protected:
   OwningPtr<ExecutionEngine> TheJIT;
   IRBuilder<> Builder;
   JITMemoryManager *MM;
-
-  std::string HostTriple;
-  SmallVector<Triple::ArchType, 4> SupportedArchs;
-  SmallVector<Triple::OSType, 4> UnsupportedOSs;
 
   OwningPtr<Module> M;
 };

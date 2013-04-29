@@ -152,6 +152,46 @@ LLVMBool LLVMCreateJITCompilerForModule(LLVMExecutionEngineRef *OutJIT,
   return 1;
 }
 
+LLVMBool LLVMCreateMCJITCompilerForModule(LLVMExecutionEngineRef *OutJIT,
+                                          LLVMModuleRef M,
+                                          LLVMMCJITCompilerOptions *PassedOptions,
+                                          size_t SizeOfPassedOptions,
+                                          char **OutError) {
+  LLVMMCJITCompilerOptions options;
+  // If the user passed a larger sized options struct, then they were compiled
+  // against a newer LLVM. Tell them that something is wrong.
+  if (SizeOfPassedOptions > sizeof(options)) {
+    *OutError = strdup(
+      "Refusing to use options struct that is larger than my own; assuming LLVM "
+      "library mismatch.");
+    return 1;
+  }
+  
+  // Defend against the user having an old version of the API by ensuring that
+  // any fields they didn't see are cleared. We must defend against fields being
+  // set to the bitwise equivalent of zero, and assume that this means "do the
+  // default" as if that option hadn't been available.
+  memset(&options, 0, sizeof(options));
+  memcpy(&options, PassedOptions, SizeOfPassedOptions);
+  
+  TargetOptions targetOptions;
+  targetOptions.NoFramePointerElim = options.NoFramePointerElim;
+
+  std::string Error;
+  EngineBuilder builder(unwrap(M));
+  builder.setEngineKind(EngineKind::JIT)
+         .setErrorStr(&Error)
+         .setUseMCJIT(true)
+         .setOptLevel((CodeGenOpt::Level)options.OptLevel)
+         .setTargetOptions(targetOptions);
+  if (ExecutionEngine *JIT = builder.create()) {
+    *OutJIT = wrap(JIT);
+    return 0;
+  }
+  *OutError = strdup(Error.c_str());
+  return 1;
+}
+
 LLVMBool LLVMCreateExecutionEngine(LLVMExecutionEngineRef *OutEE,
                                    LLVMModuleProviderRef MP,
                                    char **OutError) {
@@ -196,6 +236,8 @@ void LLVMRunStaticDestructors(LLVMExecutionEngineRef EE) {
 int LLVMRunFunctionAsMain(LLVMExecutionEngineRef EE, LLVMValueRef F,
                           unsigned ArgC, const char * const *ArgV,
                           const char * const *EnvP) {
+  unwrap(EE)->finalizeObject();
+  
   std::vector<std::string> ArgVec;
   for (unsigned I = 0; I != ArgC; ++I)
     ArgVec.push_back(ArgV[I]);
@@ -206,6 +248,8 @@ int LLVMRunFunctionAsMain(LLVMExecutionEngineRef EE, LLVMValueRef F,
 LLVMGenericValueRef LLVMRunFunction(LLVMExecutionEngineRef EE, LLVMValueRef F,
                                     unsigned NumArgs,
                                     LLVMGenericValueRef *Args) {
+  unwrap(EE)->finalizeObject();
+  
   std::vector<GenericValue> ArgVec;
   ArgVec.reserve(NumArgs);
   for (unsigned I = 0; I != NumArgs; ++I)
@@ -268,5 +312,7 @@ void LLVMAddGlobalMapping(LLVMExecutionEngineRef EE, LLVMValueRef Global,
 }
 
 void *LLVMGetPointerToGlobal(LLVMExecutionEngineRef EE, LLVMValueRef Global) {
+  unwrap(EE)->finalizeObject();
+  
   return unwrap(EE)->getPointerToGlobal(unwrap<GlobalValue>(Global));
 }
