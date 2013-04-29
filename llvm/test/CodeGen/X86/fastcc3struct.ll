@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86 -o %t
-; RUN: FileCheck %s -input-file %t
+; RUN: llc < %s -march=x86 | FileCheck %s
+
 ; CHECK: movl {{.}}12, %eax
 ; CHECK: movl {{.}}24, %edx
 ; CHECK: movl {{.}}48, %ecx

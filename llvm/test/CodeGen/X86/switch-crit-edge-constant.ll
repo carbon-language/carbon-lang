@@ -1,6 +1,8 @@
 ; PR925
-; RUN: llc < %s -march=x86 | \
-; RUN:   grep mov.*str1 | count 1
+; RUN: llc < %s -march=x86 | FileCheck %s
+
+; CHECK:      {{mov.*str1}}
+; CHECK-NOT:  {{mov.*str1}}
 
 target datalayout = "e-p:32:32"
 target triple = "i686-apple-darwin8.7.2"

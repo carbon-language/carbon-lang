@@ -1,4 +1,6 @@
-; RUN: llc < %s -march=x86-64 | grep imull
+; RUN: llc < %s -march=x86-64 | FileCheck %s
+
+; CHECK: imull
 
 ; Don't eliminate or coalesce away the explicit zero-extension!
 

@@ -1,5 +1,4 @@
-; RUN: llc < %s | grep "a:" | not grep ax
-; RUN: llc < %s | grep "b:" | not grep ax
+; RUN: llc < %s | FileCheck %s
 ; PR2078
 ; The clobber list says that "ax" is clobbered.  Make sure that eax isn't 
 ; allocated to the input/output register.
@@ -15,6 +14,10 @@ entry:
 	ret void
 }
 
+; CHECK: a:
+; CHECK-NOT: ax
+; CHECK: {{$}}
+
 define void @test2(i16* %block, i8* %pixels, i32 %line_size) nounwind  {
 entry:
 	%tmp1 = getelementptr i16* %block, i32 64		; <i16*> [#uses=1]
@@ -22,3 +25,6 @@ entry:
 	ret void
 }
 
+; CHECK: b:
+; CHECK-NOT: ax
+; CHECK: {{$}}

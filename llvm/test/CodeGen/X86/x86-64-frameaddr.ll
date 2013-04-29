@@ -1,4 +1,9 @@
-; RUN: llc < %s -march=x86-64 | grep movq | grep rbp
+; RUN: llc < %s -march=x86-64 | FileCheck %s
+
+; CHECK: stack_end_address
+; CHECK: {{movq.+rbp.*$}}
+; CHECK: {{movq.+rbp.*$}}
+; CHECK: ret
 
 define i64* @stack_end_address() nounwind  {
 entry:

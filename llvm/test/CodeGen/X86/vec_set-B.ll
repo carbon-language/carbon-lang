@@ -1,5 +1,7 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep movaps
+; RUN: llc < %s -march=x86 -mattr=+sse2 | FileCheck %s
 ; RUN: llc < %s -march=x86 -mattr=+sse2 | grep esp | count 2
+
+; CHECK-NOT: movaps
 
 ; These should both generate something like this:
 ;_test3:

@@ -1,5 +1,4 @@
 ; RUN: llc < %s -march=x86 -tailcallopt=false | FileCheck %s
-; CHECK: ret{{[^4]*$}}
 
 	%struct.foo = type { [4 x i32] }
 
@@ -10,6 +9,8 @@ entry:
 	store i32 1, i32* %tmp3, align 8
         ret void
 }
+; CHECK: bar
+; CHECK: ret{{[^4]*$}}
 
 @dst = external global i32
 
@@ -22,3 +23,5 @@ define void @foo() nounwind {
         store i32 %tmp6, i32* @dst
         ret void
 }
+; CHECK: foo
+; CHECK: ret{{[^4]*$}}

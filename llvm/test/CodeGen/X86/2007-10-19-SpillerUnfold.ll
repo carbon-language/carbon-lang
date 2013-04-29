@@ -1,4 +1,8 @@
-; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | grep inc | not grep PTR
+; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | FileCheck %s
+
+; CHECK: inc
+; CHECK-NOT: PTR
+; CHECK: {{$}}
 
 define signext   i16 @t(i32* %bitptr, i32* %source, i8** %byteptr, i32 %scale, i32 %round) {
 entry:

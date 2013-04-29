@@ -1,4 +1,7 @@
-; RUN: llc < %s -march=x86-64 | grep "leal	.*), %e.*" | count 1
+; RUN: llc < %s -march=x86-64 | FileCheck %s
+
+; CHECK:     {{leal	.*[)], %e.*}}
+; CHECK-NOT: {{leal	.*[)], %e.*}}
 
 ; Don't eliminate or coalesce away the explicit zero-extension!
 ; This is currently using an leal because of a 3-addressification detail,

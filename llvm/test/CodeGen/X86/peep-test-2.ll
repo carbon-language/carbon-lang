@@ -1,4 +1,6 @@
-; RUN: llc < %s -march=x86 | grep testl
+; RUN: llc < %s -march=x86 | FileCheck %s
+
+; CHECK: testl
 
 ; It's tempting to eliminate the testl instruction here and just use the
 ; EFLAGS value from the incl, however it can't be known whether the add

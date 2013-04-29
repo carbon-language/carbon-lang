@@ -1,6 +1,7 @@
 ; RUN: llc < %s -tailcallopt=false | FileCheck %s
 ; CHECK: movl 8(%esp), %eax 
 ; CHECK: movl 8(%esp), %eax 
+; CHECK-NOT: movl 8(%esp), %eax 
 
 ; PR3122
 ; rdar://6400815
