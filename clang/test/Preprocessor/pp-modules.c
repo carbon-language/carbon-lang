@@ -9,3 +9,7 @@ int bar();
 int foo();
 // CHECK: @import Module; /* clang -E: implicit import for "{{.*Headers[/\\]Module.h}}" */
 #include <Module/Module.h>
+
+#include "pp-modules.h" // CHECK: # 1 "{{.*}}pp-modules.h" 1
+// CHECK: @import Module; /* clang -E: implicit import for "{{.*}}Module.h" */{{$}}
+// CHECK: # 14 "{{.*}}pp-modules.c" 2

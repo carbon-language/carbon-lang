@@ -335,6 +335,7 @@ void PrintPPOutputPPCallbacks::InclusionDirective(SourceLocation HashLoc,
     MoveToLine(HashLoc);
     OS << "@import " << Imported->getFullModuleName() << ";"
        << " /* clang -E: implicit import for \"" << File->getName() << "\" */";
+    EmittedTokensOnThisLine = true;
   }
 }
 
