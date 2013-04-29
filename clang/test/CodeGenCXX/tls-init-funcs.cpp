@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin11 -std=c++11 -S -emit-llvm %s -o - | FileCheck -check-prefix=BITCODE %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin11 -std=c++11 -S %s -o - | FileCheck -check-prefix=ASM %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin11.0.0 -std=c++11 -emit-llvm %s -o - | FileCheck -check-prefix=BITCODE %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin11.0.0 -std=c++11 -S %s -o - | FileCheck -check-prefix=ASM %s
 
 // BITCODE: @llvm.tls_init_funcs = appending global [1 x void ()*] [void ()* @__tls_init]
 
