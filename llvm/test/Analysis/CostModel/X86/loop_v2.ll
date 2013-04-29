@@ -20,10 +20,10 @@ vector.body:                                      ; preds = %vector.body, %vecto
   ;CHECK: cost of 1 {{.*}} extract
   %6 = extractelement <2 x i64> %3, i32 1
   %7 = getelementptr inbounds i32* %A, i64 %6
-  %8 = load i32* %5, align 4, !tbaa !0
+  %8 = load i32* %5, align 4
   ;CHECK: cost of 1 {{.*}} insert
   %9 = insertelement <2 x i32> undef, i32 %8, i32 0
-  %10 = load i32* %7, align 4, !tbaa !0
+  %10 = load i32* %7, align 4
   ;CHECK: cost of 1 {{.*}} insert
   %11 = insertelement <2 x i32> %9, i32 %10, i32 1
   %12 = add nsw <2 x i32> %11, %vec.phi
@@ -37,7 +37,3 @@ for.end:                                          ; preds = %vector.body
   %16 = add i32 %14, %15
   ret i32 %16
 }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

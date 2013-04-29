@@ -22,13 +22,9 @@ declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, 
 define i32 @main() nounwind uwtable ssp {
 main_entry:
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* bitcast (%struct.anon* @b to i8*), i8* bitcast (%struct.anon* @a to i8*), i64 12, i32 4, i1 false)
-  %0 = load volatile i32* getelementptr inbounds (%struct.anon* @b, i64 0, i32 0), align 4, !tbaa !0
-  store i32 %0, i32* @c, align 4, !tbaa !0
+  %0 = load volatile i32* getelementptr inbounds (%struct.anon* @b, i64 0, i32 0), align 4
+  store i32 %0, i32* @c, align 4
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* bitcast (%struct.anon* @b to i8*), i8* bitcast (%struct.anon* @a to i8*), i64 12, i32 4, i1 false) nounwind
   %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32 %0) nounwind
   ret i32 0
 }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

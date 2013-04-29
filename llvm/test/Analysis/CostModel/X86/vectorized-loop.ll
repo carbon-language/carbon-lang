@@ -54,14 +54,14 @@ for.body:                                         ; preds = %middle.block, %for.
   %13 = add nsw i64 %indvars.iv, 2
   %arrayidx = getelementptr inbounds i32* %B, i64 %13
   ;CHECK: cost of 1 {{.*}} load
-  %14 = load i32* %arrayidx, align 4, !tbaa !0
+  %14 = load i32* %arrayidx, align 4
   ;CHECK: cost of 1 {{.*}} mul
   %mul = mul nsw i32 %14, 5
   %arrayidx2 = getelementptr inbounds i32* %A, i64 %indvars.iv
   ;CHECK: cost of 1 {{.*}} load
-  %15 = load i32* %arrayidx2, align 4, !tbaa !0
+  %15 = load i32* %arrayidx2, align 4
   %add3 = add nsw i32 %15, %mul
-  store i32 %add3, i32* %arrayidx2, align 4, !tbaa !0
+  store i32 %add3, i32* %arrayidx2, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
   ;CHECK: cost of 0 {{.*}} trunc
   %16 = trunc i64 %indvars.iv.next to i32
@@ -73,7 +73,3 @@ for.end:                                          ; preds = %middle.block, %for.
   ;CHECK: cost of 0 {{.*}} ret
   ret i32 undef
 }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
