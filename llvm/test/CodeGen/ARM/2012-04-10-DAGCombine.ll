@@ -20,12 +20,9 @@ bb5:                                              ; preds = %bb4
   %tmp15 = shufflevector <2 x float> %tmp14, <2 x float> undef, <4 x i32> zeroinitializer
   %tmp16 = fmul <4 x float> zeroinitializer, %tmp15
   %tmp17 = fadd <4 x float> %tmp16, %arg
-  store <4 x float> %tmp17, <4 x float>* undef, align 8, !tbaa !0
+  store <4 x float> %tmp17, <4 x float>* undef, align 8
   br label %bb18
 
 bb18:                                             ; preds = %bb5, %bb4
   ret void
 }
-
-!0 = metadata !{metadata !"omnipotent char", metadata !1}
-!1 = metadata !{metadata !"Simple C/C++ TBAA", null}

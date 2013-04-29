@@ -129,7 +129,7 @@ define arm_aapcs_vfpcc void @foo(float, i1 zeroext, i1 zeroext) nounwind uwtable
   %45 = fmul <4 x float> undef, undef
   %46 = fmul <4 x float> %45, %43
   %47 = fmul <4 x float> undef, %44
-  %48 = load <4 x float>* undef, align 8, !tbaa !1
+  %48 = load <4 x float>* undef, align 8
   %49 = bitcast <4 x float> %48 to <2 x i64>
   %50 = shufflevector <2 x i64> %49, <2 x i64> undef, <1 x i32> <i32 1>
   %51 = bitcast <1 x i64> %50 to <2 x float>
@@ -145,10 +145,10 @@ define arm_aapcs_vfpcc void @foo(float, i1 zeroext, i1 zeroext) nounwind uwtable
   %61 = fmul <4 x float> %59, %60
   %62 = fmul <4 x float> %61, <float 6.000000e+01, float 6.000000e+01, float 6.000000e+01, float 6.000000e+01>
   %63 = fadd <4 x float> %47, %62
-  store <4 x float> %46, <4 x float>* undef, align 8, !tbaa !1
+  store <4 x float> %46, <4 x float>* undef, align 8
   call arm_aapcs_vfpcc  void @bar(%0* undef, float 0.000000e+00) nounwind
   call arm_aapcs_vfpcc  void @bar(%0* undef, float 0.000000e+00) nounwind
-  store <4 x float> %63, <4 x float>* undef, align 8, !tbaa !1
+  store <4 x float> %63, <4 x float>* undef, align 8
   unreachable
 
 ; <label>:64                                      ; preds = %41, %40
@@ -170,5 +170,3 @@ define arm_aapcs_vfpcc void @foo(float, i1 zeroext, i1 zeroext) nounwind uwtable
 declare arm_aapcs_vfpcc void @bar(%0*, float)
 
 !0 = metadata !{metadata !"branch_weights", i32 64, i32 4}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

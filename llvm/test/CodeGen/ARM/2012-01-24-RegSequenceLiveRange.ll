@@ -7,7 +7,7 @@ target triple = "armv7-none-linux-eabi"
 ; This test case is exercising REG_SEQUENCE, and chains of REG_SEQUENCE.
 define arm_aapcs_vfpcc void @foo(i8* nocapture %arg, i8* %arg1) nounwind align 2 {
 bb:
-  %tmp = load <2 x float>* undef, align 8, !tbaa !0
+  %tmp = load <2 x float>* undef, align 8
   %tmp2 = extractelement <2 x float> %tmp, i32 0
   %tmp3 = insertelement <4 x float> undef, float %tmp2, i32 0
   %tmp4 = insertelement <4 x float> %tmp3, float 0.000000e+00, i32 1
@@ -70,6 +70,3 @@ entry:
 declare arm_aapcs_vfpcc void @bar(i8*, float, float, float)
 declare void @llvm.arm.neon.vst1.v4f32(i8*, <4 x float>, i32) nounwind
 declare void @llvm.arm.neon.vst2.v4f32(i8*, <4 x float>, <4 x float>, i32) nounwind
-
-!0 = metadata !{metadata !"omnipotent char", metadata !1}
-!1 = metadata !{metadata !"Simple C/C++ TBAA", null}

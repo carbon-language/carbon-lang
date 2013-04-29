@@ -9,16 +9,13 @@ define arm_aapcs_vfpcc void @foo() nounwind align 2 {
 ; <label>:1                                       ; preds = %0
   %2 = shufflevector <1 x i64> zeroinitializer, <1 x i64> undef, <2 x i32> <i32 0, i32 1>
   %3 = bitcast <2 x i64> %2 to <4 x float>
-  store <4 x float> zeroinitializer, <4 x float>* undef, align 16, !tbaa !0
-  store <4 x float> zeroinitializer, <4 x float>* undef, align 16, !tbaa !0
-  store <4 x float> %3, <4 x float>* undef, align 16, !tbaa !0
+  store <4 x float> zeroinitializer, <4 x float>* undef, align 16
+  store <4 x float> zeroinitializer, <4 x float>* undef, align 16
+  store <4 x float> %3, <4 x float>* undef, align 16
   %4 = insertelement <4 x float> %3, float 8.000000e+00, i32 2
-  store <4 x float> %4, <4 x float>* undef, align 16, !tbaa !0
+  store <4 x float> %4, <4 x float>* undef, align 16
   unreachable
 
 ; <label>:5                                       ; preds = %0
   ret void
 }
-
-!0 = metadata !{metadata !"omnipotent char", metadata !1}
-!1 = metadata !{metadata !"Simple C/C++ TBAA", null}

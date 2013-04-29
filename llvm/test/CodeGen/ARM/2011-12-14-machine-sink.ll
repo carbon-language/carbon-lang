@@ -15,13 +15,13 @@ for.cond:                                         ; preds = %for.body, %entry
 
 for.body:                                         ; preds = %for.cond
   %v.5 = select i1 undef, i32 undef, i32 0
-  %0 = load i8* undef, align 1, !tbaa !0
+  %0 = load i8* undef, align 1
   %conv88 = zext i8 %0 to i32
   %sub89 = sub nsw i32 0, %conv88
   %v.8 = select i1 undef, i32 undef, i32 %sub89
-  %1 = load i8* null, align 1, !tbaa !0
+  %1 = load i8* null, align 1
   %conv108 = zext i8 %1 to i32
-  %2 = load i8* undef, align 1, !tbaa !0
+  %2 = load i8* undef, align 1
   %conv110 = zext i8 %2 to i32
   %sub111 = sub nsw i32 %conv108, %conv110
   %cmp112 = icmp slt i32 %sub111, 0
@@ -44,6 +44,3 @@ if.end299:                                        ; preds = %for.body, %for.cond
   %s.10 = phi i32 [ %add172, %for.body ], [ 0, %for.cond ]
   ret i32 %s.10
 }
-
-!0 = metadata !{metadata !"omnipotent char", metadata !1}
-!1 = metadata !{metadata !"Simple C/C++ TBAA", null}

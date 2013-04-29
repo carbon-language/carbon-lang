@@ -32,7 +32,7 @@ for.body:                                         ; preds = %entry, %if.end8
   %BestCost.011 = phi i32 [ -1, %entry ], [ %BestCost.1, %if.end8 ]
   %BestIdx.010 = phi i32 [ 0, %entry ], [ %BestIdx.1, %if.end8 ]
   %arrayidx = getelementptr inbounds i32* %a, i32 %i.012
-  %0 = load i32* %arrayidx, align 4, !tbaa !0
+  %0 = load i32* %arrayidx, align 4
   %mul = mul i32 %0, %0
   %sub = add nsw i32 %i.012, -5
   %cmp2 = icmp eq i32 %sub, %Pref
@@ -53,7 +53,7 @@ if.else:                                          ; preds = %for.body
 if.end8:                                          ; preds = %if.else, %if.then
   %BestIdx.1 = phi i32 [ %i.0.BestIdx.0, %if.then ], [ %BestIdx.0.i.0, %if.else ]
   %BestCost.1 = phi i32 [ %mul.BestCost.0, %if.then ], [ %BestCost.0.mul, %if.else ]
-  store i32 %mul, i32* %arrayidx, align 4, !tbaa !0
+  store i32 %mul, i32* %arrayidx, align 4
   %inc = add i32 %i.012, 1
   %cmp = icmp eq i32 %inc, 11
   br i1 %cmp, label %for.end, label %for.body
@@ -61,7 +61,3 @@ if.end8:                                          ; preds = %if.else, %if.then
 for.end:                                          ; preds = %if.end8
   ret i32 %BestIdx.1
 }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}

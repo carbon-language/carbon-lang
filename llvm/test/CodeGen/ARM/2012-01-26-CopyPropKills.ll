@@ -56,9 +56,9 @@ bb3:                                              ; preds = %bb2
   %tmp39 = shufflevector <2 x i64> %tmp38, <2 x i64> undef, <1 x i32> zeroinitializer
   %tmp40 = bitcast <1 x i64> %tmp39 to <2 x float>
   %tmp41 = shufflevector <2 x float> %tmp40, <2 x float> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
-  %tmp42 = load <4 x float>* null, align 16, !tbaa !0
+  %tmp42 = load <4 x float>* null, align 16
   %tmp43 = fmul <4 x float> %tmp42, %tmp41
-  %tmp44 = load <4 x float>* undef, align 16, !tbaa !0
+  %tmp44 = load <4 x float>* undef, align 16
   %tmp45 = fadd <4 x float> undef, %tmp43
   %tmp46 = fadd <4 x float> undef, %tmp45
   %tmp47 = bitcast <4 x float> %tmp36 to <2 x i64>
@@ -108,7 +108,7 @@ bb3:                                              ; preds = %bb2
   %tmp89 = fmul <4 x float> undef, %tmp88
   %tmp90 = fadd <4 x float> %tmp89, undef
   %tmp91 = fadd <4 x float> undef, %tmp90
-  store <4 x float> %tmp91, <4 x float>* undef, align 16, !tbaa !0
+  store <4 x float> %tmp91, <4 x float>* undef, align 16
   unreachable
 
 bb92:                                             ; preds = %bb2
@@ -116,6 +116,3 @@ bb92:                                             ; preds = %bb2
 }
 
 declare arm_aapcs_vfpcc void @bar(i8* noalias nocapture sret, [8 x i64]) nounwind uwtable inlinehint
-
-!0 = metadata !{metadata !"omnipotent char", metadata !1}
-!1 = metadata !{metadata !"Simple C/C++ TBAA", null}

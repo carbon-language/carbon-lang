@@ -19,7 +19,7 @@ define i32 @main() {
 entry:
   %exception.i = tail call i8* @__cxa_allocate_exception(i32 4) nounwind
   %0 = bitcast i8* %exception.i to i32*
-  store i32 42, i32* %0, align 4, !tbaa !0
+  store i32 42, i32* %0, align 4
   invoke void @__cxa_throw(i8* %exception.i, i8* bitcast (i8** @_ZTIi to i8*), i8* null) noreturn
           to label %unreachable.i unwind label %lpad.i
 
@@ -71,7 +71,3 @@ declare i32 @llvm.eh.typeid.for(i8*) nounwind readnone
 declare i8* @__cxa_begin_catch(i8*)
 
 declare void @__cxa_end_catch()
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
