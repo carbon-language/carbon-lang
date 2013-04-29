@@ -955,15 +955,9 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
                     s->Printf ("Kernel slid 0x%" PRIx64 " in memory.\n", m_load_address - file_address);
                 }
             }
-            if (m_module_sp->GetFileSpec().GetDirectory().IsEmpty())
             {
-                s->Printf ("Loaded kernel file %s\n", m_module_sp->GetFileSpec().GetFilename().AsCString());
-            }
-            else
-            {
-                s->Printf ("Loaded kernel file %s/%s\n",
-                              m_module_sp->GetFileSpec().GetDirectory().AsCString(),
-                              m_module_sp->GetFileSpec().GetFilename().AsCString());
+                s->Printf ("Loaded kernel file %s\n",
+                           m_module_sp->GetFileSpec().GetPath().c_str());
             }
             s->Flush ();
         }

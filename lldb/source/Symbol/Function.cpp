@@ -315,11 +315,9 @@ Function::GetBlock (bool can_create)
         else
         {
             Host::SystemLog (Host::eSystemLogError, 
-                             "error: unable to find module shared pointer for function '%s' in %s%s%s\n", 
+                             "error: unable to find module shared pointer for function '%s' in %s\n", 
                              GetName().GetCString(),
-                             m_comp_unit->GetDirectory().GetCString(),
-                             m_comp_unit->GetDirectory() ? "/" : "",
-                             m_comp_unit->GetFilename().GetCString());
+                             m_comp_unit->GetPath().c_str());
         }
         m_block.SetBlockInfoHasBeenParsed (true, true);
     }

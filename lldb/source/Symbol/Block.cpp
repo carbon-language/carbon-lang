@@ -408,9 +408,8 @@ Block::AddRange (const Range& range)
             const Declaration &func_decl = func_type->GetDeclaration();
             if (func_decl.GetLine())
             {
-                log->Printf ("warning: %s/%s:%u block {0x%8.8" PRIx64 "} has range[%u] [0x%" PRIx64 " - 0x%" PRIx64 ") which is not contained in parent block {0x%8.8" PRIx64 "} in function {0x%8.8" PRIx64 "} from %s/%s",
-                             func_decl.GetFile().GetDirectory().GetCString(),
-                             func_decl.GetFile().GetFilename().GetCString(),
+                log->Printf ("warning: %s:%u block {0x%8.8" PRIx64 "} has range[%u] [0x%" PRIx64 " - 0x%" PRIx64 ") which is not contained in parent block {0x%8.8" PRIx64 "} in function {0x%8.8" PRIx64 "} from %s",
+                             func_decl.GetFile().GetPath().c_str(),
                              func_decl.GetLine(),
                              GetID(),
                              (uint32_t)m_ranges.GetSize(),
@@ -418,20 +417,18 @@ Block::AddRange (const Range& range)
                              block_end_addr,
                              parent_block->GetID(),
                              function->GetID(),
-                             module_sp->GetFileSpec().GetDirectory().GetCString(),
-                             module_sp->GetFileSpec().GetFilename().GetCString());
+                             module_sp->GetFileSpec().GetPath().c_str());
             }
             else
             {
-                log->Printf ("warning: block {0x%8.8" PRIx64 "} has range[%u] [0x%" PRIx64 " - 0x%" PRIx64 ") which is not contained in parent block {0x%8.8" PRIx64 "} in function {0x%8.8" PRIx64 "} from %s/%s",
+                log->Printf ("warning: block {0x%8.8" PRIx64 "} has range[%u] [0x%" PRIx64 " - 0x%" PRIx64 ") which is not contained in parent block {0x%8.8" PRIx64 "} in function {0x%8.8" PRIx64 "} from %s",
                              GetID(),
                              (uint32_t)m_ranges.GetSize(),
                              block_start_addr,
                              block_end_addr,
                              parent_block->GetID(),
                              function->GetID(),
-                             module_sp->GetFileSpec().GetDirectory().GetCString(),
-                             module_sp->GetFileSpec().GetFilename().GetCString());
+                             module_sp->GetFileSpec().GetPath().c_str());
             }
         }
         parent_block->AddRange (range);

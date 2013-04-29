@@ -59,13 +59,9 @@ SymbolFileDWARFDebugMap::CompileUnitInfo::GetFileRangeMap(SymbolFileDWARFDebugMa
     if (log)
     {
         ConstString object_name (oso_module->GetObjectName());
-        log->Printf("%p: SymbolFileDWARFDebugMap::CompileUnitInfo::GetFileRangeMap ('%s/%s%s%s%s')",
+        log->Printf("%p: SymbolFileDWARFDebugMap::CompileUnitInfo::GetFileRangeMap ('%s')",
                     this,
-                    oso_module->GetFileSpec().GetDirectory().GetCString(),
-                    oso_module->GetFileSpec().GetFilename().GetCString(),
-                    object_name ? "(" : "",
-                    object_name ? object_name.GetCString() : "",
-                    object_name ? ")" : "");
+                    oso_module->GetSpecificationDescription().c_str());
     }
     
 
@@ -1415,10 +1411,9 @@ SymbolFileDWARFDebugMap::FinalizeOSOFileRanges (CompileUnitInfo *cu_info)
 #if defined(DEBUG_OSO_DMAP)
     const FileRangeMap &oso_file_range_map = cu_info->GetFileRangeMap(this);
     const size_t n = oso_file_range_map.GetSize();
-    printf ("SymbolFileDWARFDebugMap::FinalizeOSOFileRanges (cu_info = %p) %s/%s\n",
+    printf ("SymbolFileDWARFDebugMap::FinalizeOSOFileRanges (cu_info = %p) %s\n",
             cu_info,
-            cu_info->oso_sp->module_sp->GetFileSpec().GetDirectory().GetCString(),
-            cu_info->oso_sp->module_sp->GetFileSpec().GetFilename().GetCString());
+            cu_info->oso_sp->module_sp->GetFileSpec().GetPath().c_str());
     for (size_t i=0; i<n; ++i)
     {
         const FileRangeMap::Entry &entry = oso_file_range_map.GetEntryRef(i);

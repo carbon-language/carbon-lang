@@ -159,9 +159,8 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
         return NULL;
 
     Timer scoped_timer (__PRETTY_FUNCTION__,
-                        "SymbolVendorMacOSX::CreateInstance (module = %s/%s)",
-                        module_sp->GetFileSpec().GetDirectory().AsCString(),
-                        module_sp->GetFileSpec().GetFilename().AsCString());
+                        "SymbolVendorMacOSX::CreateInstance (module = %s)",
+                        module_sp->GetFileSpec().GetPath().c_str());
     SymbolVendorMacOSX* symbol_vendor = new SymbolVendorMacOSX(module_sp);
     if (symbol_vendor)
     {
@@ -173,9 +172,8 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
         if (obj_file)
         {
             Timer scoped_timer2 ("SymbolVendorMacOSX::CreateInstance () locate dSYM",
-                                 "SymbolVendorMacOSX::CreateInstance (module = %s/%s) locate dSYM",
-                                 module_sp->GetFileSpec().GetDirectory().AsCString(),
-                                 module_sp->GetFileSpec().GetFilename().AsCString());
+                                 "SymbolVendorMacOSX::CreateInstance (module = %s) locate dSYM",
+                                 module_sp->GetFileSpec().GetPath().c_str());
 
             // First check to see if the module has a symbol file in mind already.
             // If it does, then we MUST use that.

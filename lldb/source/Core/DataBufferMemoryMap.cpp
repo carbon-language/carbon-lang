@@ -113,9 +113,8 @@ DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* filespec,
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MMAP));
         if (log)
         {
-            log->Printf("DataBufferMemoryMap::MemoryMapFromFileSpec(file=\"%s/%s\", offset=0x%" PRIx64 ", length=0x%" PRIx64 ", writeable=%i",
-                        filespec->GetDirectory().GetCString(),
-                        filespec->GetFilename().GetCString(),
+            log->Printf("DataBufferMemoryMap::MemoryMapFromFileSpec(file=\"%s\", offset=0x%" PRIx64 ", length=0x%" PRIx64 ", writeable=%i",
+                        filespec->GetPath().c_str(),
                         offset,
                         length,
                         writeable);

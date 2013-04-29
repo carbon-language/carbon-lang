@@ -2799,9 +2799,8 @@ SymbolFileDWARF::Index ()
 
 #if defined (ENABLE_DEBUG_PRINTF)
         StreamFile s(stdout, false);
-        s.Printf ("DWARF index for '%s/%s':", 
-                  GetObjectFile()->GetFileSpec().GetDirectory().AsCString(), 
-                  GetObjectFile()->GetFileSpec().GetFilename().AsCString());
+        s.Printf ("DWARF index for '%s':",
+                  GetObjectFile()->GetFileSpec().GetPath().c_str());
         s.Printf("\nFunction basenames:\n");    m_function_basename_index.Dump (&s);
         s.Printf("\nFunction fullnames:\n");    m_function_fullname_index.Dump (&s);
         s.Printf("\nFunction methods:\n");      m_function_method_index.Dump (&s);
@@ -6478,12 +6477,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                 {
                                                     clang::CXXMethodDecl *cxx_method_decl;
                                                     // REMOVE THE CRASH DESCRIPTION BELOW
-                                                    Host::SetCrashDescriptionWithFormat ("SymbolFileDWARF::ParseType() is adding a method %s to class %s in DIE 0x%8.8" PRIx64 " from %s/%s",
+                                                    Host::SetCrashDescriptionWithFormat ("SymbolFileDWARF::ParseType() is adding a method %s to class %s in DIE 0x%8.8" PRIx64 " from %s",
                                                                                          type_name_cstr, 
                                                                                          class_type->GetName().GetCString(),
                                                                                          MakeUserID(die->GetOffset()),
-                                                                                         m_obj_file->GetFileSpec().GetDirectory().GetCString(),
-                                                                                         m_obj_file->GetFileSpec().GetFilename().GetCString());
+                                                                                         m_obj_file->GetFileSpec().GetPath().c_str());
 
                                                     const bool is_attr_used = false;
                                                     
@@ -7568,10 +7566,9 @@ SymbolFileDWARF::DumpIndexes ()
 {
     StreamFile s(stdout, false);
     
-    s.Printf ("DWARF index for (%s) '%s/%s':", 
+    s.Printf ("DWARF index for (%s) '%s':",
               GetObjectFile()->GetModule()->GetArchitecture().GetArchitectureName(),
-              GetObjectFile()->GetFileSpec().GetDirectory().AsCString(), 
-              GetObjectFile()->GetFileSpec().GetFilename().AsCString());
+              GetObjectFile()->GetFileSpec().GetPath().c_str());
     s.Printf("\nFunction basenames:\n");    m_function_basename_index.Dump (&s);
     s.Printf("\nFunction fullnames:\n");    m_function_fullname_index.Dump (&s);
     s.Printf("\nFunction methods:\n");      m_function_method_index.Dump (&s);

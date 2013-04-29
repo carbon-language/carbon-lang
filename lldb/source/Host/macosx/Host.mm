@@ -502,9 +502,8 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &lau
         
     if (!darwin_debug_file_spec.Exists())
     {
-        error.SetErrorStringWithFormat ("the 'darwin-debug' executable doesn't exists at %s/%s", 
-                                        darwin_debug_file_spec.GetDirectory().GetCString(),
-                                        darwin_debug_file_spec.GetFilename().GetCString());
+        error.SetErrorStringWithFormat ("the 'darwin-debug' executable doesn't exists at '%s'", 
+                                        darwin_debug_file_spec.GetPath().c_str());
         return error;
     }
     

@@ -151,6 +151,29 @@ public:
                     lldb::DescriptionLevel level = lldb::eDescriptionLevelFull);
 
     //------------------------------------------------------------------
+    /// Get the module path and object name.
+    ///
+    /// Modules can refer to object files. In this case the specification
+    /// is simple and would return the path to the file:
+    ///
+    ///     "/usr/lib/foo.dylib"
+    ///
+    /// Modules can be .o files inside of a BSD archive (.a file). In
+    /// this case, the object specification will look like:
+    ///
+    ///     "/usr/lib/foo.a(bar.o)"
+    ///
+    /// There are many places where logging wants to log this fully
+    /// qualified specification, so we centralize this functionality
+    /// here.
+    ///
+    /// @return
+    ///     The object path + object name if there is one.
+    //------------------------------------------------------------------
+    std::string
+    GetSpecificationDescription () const;
+
+    //------------------------------------------------------------------
     /// Dump a description of this object to a Stream.
     ///
     /// Dump a description of the contents of this object to the

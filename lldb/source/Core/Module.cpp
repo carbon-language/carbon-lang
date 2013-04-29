@@ -156,11 +156,10 @@ Module::Module (const ModuleSpec &module_spec) :
     
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_OBJECT|LIBLLDB_LOG_MODULES));
     if (log)
-        log->Printf ("%p Module::Module((%s) '%s/%s%s%s%s')",
+        log->Printf ("%p Module::Module((%s) '%s%s%s%s')",
                      this,
                      m_arch.GetArchitectureName(),
-                     m_file.GetDirectory().AsCString(""),
-                     m_file.GetFilename().AsCString(""),
+                     m_file.GetPath().c_str(),
                      m_object_name.IsEmpty() ? "" : "(",
                      m_object_name.IsEmpty() ? "" : m_object_name.AsCString(""),
                      m_object_name.IsEmpty() ? "" : ")");
@@ -201,11 +200,10 @@ Module::Module(const FileSpec& file_spec,
         m_object_name = *object_name;
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_OBJECT|LIBLLDB_LOG_MODULES));
     if (log)
-        log->Printf ("%p Module::Module((%s) '%s/%s%s%s%s')",
+        log->Printf ("%p Module::Module((%s) '%s%s%s%s')",
                      this,
                      m_arch.GetArchitectureName(),
-                     m_file.GetDirectory().AsCString(""),
-                     m_file.GetFilename().AsCString(""),
+                     m_file.GetPath().c_str(),
                      m_object_name.IsEmpty() ? "" : "(",
                      m_object_name.IsEmpty() ? "" : m_object_name.AsCString(""),
                      m_object_name.IsEmpty() ? "" : ")");
@@ -224,11 +222,10 @@ Module::~Module()
     }
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_OBJECT|LIBLLDB_LOG_MODULES));
     if (log)
-        log->Printf ("%p Module::~Module((%s) '%s/%s%s%s%s')",
+        log->Printf ("%p Module::~Module((%s) '%s%s%s%s')",
                      this,
                      m_arch.GetArchitectureName(),
-                     m_file.GetDirectory().AsCString(""),
-                     m_file.GetFilename().AsCString(""),
+                     m_file.GetPath().c_str(),
                      m_object_name.IsEmpty() ? "" : "(",
                      m_object_name.IsEmpty() ? "" : m_object_name.AsCString(""),
                      m_object_name.IsEmpty() ? "" : ")");
@@ -511,10 +508,8 @@ Module::ResolveSymbolContextsForFileSpec (const FileSpec &file_spec, uint32_t li
 {
     Mutex::Locker locker (m_mutex);
     Timer scoped_timer(__PRETTY_FUNCTION__,
-                       "Module::ResolveSymbolContextForFilePath (%s%s%s:%u, check_inlines = %s, resolve_scope = 0x%8.8x)",
-                       file_spec.GetDirectory().AsCString(""),
-                       file_spec.GetDirectory() ? "/" : "",
-                       file_spec.GetFilename().AsCString(""),
+                       "Module::ResolveSymbolContextForFilePath (%s:%u, check_inlines = %s, resolve_scope = 0x%8.8x)",
+                       file_spec.GetPath().c_str(),
                        line,
                        check_inlines ? "yes" : "no",
                        resolve_scope);
@@ -844,6 +839,19 @@ Module::GetArchitecture () const
     return m_arch;
 }
 
+std::string
+Module::GetSpecificationDescription () const
+{
+    std::string spec(GetFileSpec().GetPath());
+    if (m_object_name)
+    {
+        spec += '(';
+        spec += m_object_name.GetCString();
+        spec += ')';
+    }
+    return spec;
+}
+
 void
 Module::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
@@ -1007,9 +1015,8 @@ Module::Dump(Stream *s)
     Mutex::Locker locker (m_mutex);
     //s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
-    s->Printf("Module %s/%s%s%s%s\n",
-              m_file.GetDirectory().AsCString(),
-              m_file.GetFilename().AsCString(),
+    s->Printf("Module %s%s%s%s\n",
+              m_file.GetPath().c_str(),
               m_object_name ? "(" : "",
               m_object_name ? m_object_name.GetCString() : "",
               m_object_name ? ")" : "");

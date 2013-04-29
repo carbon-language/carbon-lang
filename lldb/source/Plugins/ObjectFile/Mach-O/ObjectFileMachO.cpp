@@ -1916,11 +1916,10 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                 // string values should have an offset zero which points
                                                 // to an empty C-string
                                                 Host::SystemLog (Host::eSystemLogError,
-                                                                 "error: DSC unmapped local symbol[%u] has invalid string table offset 0x%x in %s/%s, ignoring symbol\n",
+                                                                 "error: DSC unmapped local symbol[%u] has invalid string table offset 0x%x in %s, ignoring symbol\n",
                                                                  entry_index,
                                                                  nlist.n_strx,
-                                                                 module_sp->GetFileSpec().GetDirectory().GetCString(),
-                                                                 module_sp->GetFileSpec().GetFilename().GetCString());
+                                                                 module_sp->GetFileSpec().GetPath().c_str());
                                                 continue;
                                             }
                                             if (symbol_name[0] == '\0')
@@ -2653,11 +2652,10 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     // string values should have an offset zero which points
                     // to an empty C-string
                     Host::SystemLog (Host::eSystemLogError,
-                                     "error: symbol[%u] has invalid string table offset 0x%x in %s/%s, ignoring symbol\n",
+                                     "error: symbol[%u] has invalid string table offset 0x%x in %s, ignoring symbol\n",
                                      nlist_idx,
                                      nlist.n_strx,
-                                     module_sp->GetFileSpec().GetDirectory().GetCString(),
-                                     module_sp->GetFileSpec().GetFilename().GetCString());
+                                     module_sp->GetFileSpec().GetPath().c_str());
                     continue;
                 }
                 if (symbol_name[0] == '\0')

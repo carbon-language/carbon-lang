@@ -90,9 +90,8 @@ Symtab::Dump (Stream *s, Target *target, SortOrder sort_order)
         object_name = m_objfile->GetModule()->GetObjectName().GetCString();
 
     if (file_spec)
-        s->Printf("Symtab, file = %s/%s%s%s%s, num_symbols = %lu",
-        file_spec.GetDirectory().AsCString(),
-        file_spec.GetFilename().AsCString(),
+        s->Printf("Symtab, file = %s%s%s%s, num_symbols = %lu",
+        file_spec.GetPath().c_str(),
         object_name ? "(" : "",
         object_name ? object_name : "",
         object_name ? ")" : "",

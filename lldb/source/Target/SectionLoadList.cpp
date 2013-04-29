@@ -64,12 +64,10 @@ SectionLoadList::SetSectionLoadAddress (const lldb::SectionSP &section, addr_t l
     if (log)
     {
         const FileSpec &module_file_spec (section->GetModule()->GetFileSpec());
-        log->Printf ("SectionLoadList::%s (section = %p (%s%s%s.%s), load_addr = 0x%16.16" PRIx64 ")",
+        log->Printf ("SectionLoadList::%s (section = %p (%s.%s), load_addr = 0x%16.16" PRIx64 ")",
                      __FUNCTION__,
                      section.get(),
-                     module_file_spec.GetDirectory().AsCString(),
-                     module_file_spec.GetDirectory() ? "/" : "",
-                     module_file_spec.GetFilename().AsCString(),
+                     module_file_spec.GetPath().c_str(),
                      section->GetName().AsCString(),
                      load_addr);
     }
@@ -141,12 +139,10 @@ SectionLoadList::SetSectionUnloaded (const lldb::SectionSP &section_sp)
         if (log)
         {
             const FileSpec &module_file_spec (section_sp->GetModule()->GetFileSpec());
-            log->Printf ("SectionLoadList::%s (section = %p (%s%s%s.%s))",
+            log->Printf ("SectionLoadList::%s (section = %p (%s.%s))",
                          __FUNCTION__,
                          section_sp.get(),
-                         module_file_spec.GetDirectory().AsCString(),
-                         module_file_spec.GetDirectory() ? "/" : "",
-                         module_file_spec.GetFilename().AsCString(),
+                         module_file_spec.GetPath().c_str(),
                          section_sp->GetName().AsCString());
         }
 
@@ -175,12 +171,10 @@ SectionLoadList::SetSectionUnloaded (const lldb::SectionSP &section_sp, addr_t l
     if (log)
     {
         const FileSpec &module_file_spec (section_sp->GetModule()->GetFileSpec());
-        log->Printf ("SectionLoadList::%s (section = %p (%s%s%s.%s), load_addr = 0x%16.16" PRIx64 ")",
+        log->Printf ("SectionLoadList::%s (section = %p (%s.%s), load_addr = 0x%16.16" PRIx64 ")",
                      __FUNCTION__,
                      section_sp.get(),
-                     module_file_spec.GetDirectory().AsCString(),
-                     module_file_spec.GetDirectory() ? "/" : "",
-                     module_file_spec.GetFilename().AsCString(),
+                     module_file_spec.GetPath().c_str(),
                      section_sp->GetName().AsCString(),
                      load_addr);
     }

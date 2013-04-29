@@ -139,12 +139,10 @@ SBModule::SetPlatformFileSpec (const lldb::SBFileSpec &platform_file)
     
     if (log)
     {
-        log->Printf ("SBModule(%p)::SetPlatformFileSpec (SBFileSpec(%p (%s%s%s)) => %i", 
+        log->Printf ("SBModule(%p)::SetPlatformFileSpec (SBFileSpec(%p (%s)) => %i", 
                      module_sp.get(), 
                      platform_file.get(),
-                     platform_file->GetDirectory().GetCString(),
-                     platform_file->GetDirectory() ? "/" : "",
-                     platform_file->GetFilename().GetCString(),
+                     platform_file->GetPath().c_str(),
                      result);
     }
     return result;

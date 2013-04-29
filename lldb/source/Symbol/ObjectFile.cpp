@@ -40,9 +40,8 @@ ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp,
     if (module_sp)
     {
         Timer scoped_timer (__PRETTY_FUNCTION__,
-                            "ObjectFile::FindPlugin (module = %s/%s, file = %p, file_offset = 0x%8.8" PRIx64 ", file_size = 0x%8.8" PRIx64 ")",
-                            module_sp->GetFileSpec().GetDirectory().AsCString(),
-                            module_sp->GetFileSpec().GetFilename().AsCString(),
+                            "ObjectFile::FindPlugin (module = %s, file = %p, file_offset = 0x%8.8" PRIx64 ", file_size = 0x%8.8" PRIx64 ")",
+                            module_sp->GetFileSpec().GetPath().c_str(),
                             file, (uint64_t) file_offset, (uint64_t) file_size);
         if (file)
         {
@@ -162,9 +161,8 @@ ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp,
     if (module_sp)
     {
         Timer scoped_timer (__PRETTY_FUNCTION__,
-                            "ObjectFile::FindPlugin (module = %s/%s, process = %p, header_addr = 0x%" PRIx64 ")",
-                            module_sp->GetFileSpec().GetDirectory().AsCString(),
-                            module_sp->GetFileSpec().GetFilename().AsCString(),
+                            "ObjectFile::FindPlugin (module = %s, process = %p, header_addr = 0x%" PRIx64 ")",
+                            module_sp->GetFileSpec().GetPath().c_str(),
                             process_sp.get(), header_addr);
         uint32_t idx;
         
@@ -255,30 +253,22 @@ ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp,
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
     {
-        const ConstString object_name (module_sp->GetObjectName());
         if (m_file)
         {
-            log->Printf ("%p ObjectFile::ObjectFile() module = %p (%s%s%s%s), file = %s/%s, file_offset = 0x%8.8" PRIx64 ", size = %" PRIu64,
+            log->Printf ("%p ObjectFile::ObjectFile() module = %p (%s), file = %s, file_offset = 0x%8.8" PRIx64 ", size = %" PRIu64,
                          this,
                          module_sp.get(),
-                         module_sp->GetFileSpec().GetFilename().AsCString(),
-                         object_name ? "(" : "",
-                         object_name ? object_name.GetCString() : "",
-                         object_name ? ")" : "",
-                         m_file.GetDirectory().AsCString(),
-                         m_file.GetFilename().AsCString(),
+                         module_sp->GetSpecificationDescription().c_str(),
+                         m_file.GetPath().c_str(),
                          m_file_offset,
                          m_length);
         }
         else
         {
-            log->Printf ("%p ObjectFile::ObjectFile() module = %p (%s%s%s%s), file = <NULL>, file_offset = 0x%8.8" PRIx64 ", size = %" PRIu64,
+            log->Printf ("%p ObjectFile::ObjectFile() module = %p (%s), file = <NULL>, file_offset = 0x%8.8" PRIx64 ", size = %" PRIu64,
                          this,
                          module_sp.get(),
-                         module_sp->GetFileSpec().GetFilename().AsCString(),
-                         object_name ? "(" : "",
-                         object_name ? object_name.GetCString() : "",
-                         object_name ? ")" : "",
+                         module_sp->GetSpecificationDescription().c_str(),
                          m_file_offset,
                          m_length);
         }
@@ -308,14 +298,10 @@ ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp,
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
     {
-        const ConstString object_name (module_sp->GetObjectName());
-        log->Printf ("%p ObjectFile::ObjectFile() module = %p (%s%s%s%s), process = %p, header_addr = 0x%" PRIx64,
+        log->Printf ("%p ObjectFile::ObjectFile() module = %p (%s), process = %p, header_addr = 0x%" PRIx64,
                      this,
                      module_sp.get(),
-                     module_sp->GetFileSpec().GetFilename().AsCString(),
-                     object_name ? "(" : "",
-                     object_name ? object_name.GetCString() : "",
-                     object_name ? ")" : "",
+                     module_sp->GetSpecificationDescription().c_str(),
                      process_sp.get(),
                      m_memory_addr);
     }

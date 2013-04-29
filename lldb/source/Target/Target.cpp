@@ -1004,9 +1004,8 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
     if (executable_sp.get())
     {
         Timer scoped_timer (__PRETTY_FUNCTION__,
-                            "Target::SetExecutableModule (executable = '%s/%s')",
-                            executable_sp->GetFileSpec().GetDirectory().AsCString(),
-                            executable_sp->GetFileSpec().GetFilename().AsCString());
+                            "Target::SetExecutableModule (executable = '%s')",
+                            executable_sp->GetFileSpec().GetPath().c_str());
 
         m_images.Append(executable_sp); // The first image is our exectuable file
 

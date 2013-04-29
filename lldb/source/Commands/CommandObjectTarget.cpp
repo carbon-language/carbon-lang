@@ -721,24 +721,20 @@ protected:
             {
                 if (sc.comp_unit)
                 {
-                    s.Printf ("Global variables for %s/%s in %s/%s:\n",
-                              sc.comp_unit->GetDirectory().GetCString(),
-                              sc.comp_unit->GetFilename().GetCString(),
-                              sc.module_sp->GetFileSpec().GetDirectory().GetCString(),
-                              sc.module_sp->GetFileSpec().GetFilename().GetCString());
+                    s.Printf ("Global variables for %s in %s:\n",
+                              sc.comp_unit->GetPath().c_str(),
+                              sc.module_sp->GetFileSpec().GetPath().c_str());
                 }
                 else
                 {
-                    s.Printf ("Global variables for %s/%s\n",
-                              sc.module_sp->GetFileSpec().GetDirectory().GetCString(),
-                              sc.module_sp->GetFileSpec().GetFilename().GetCString());
+                    s.Printf ("Global variables for %s\n",
+                              sc.module_sp->GetFileSpec().GetPath().c_str());
                 }
             }
             else if (sc.comp_unit)
             {
-                s.Printf ("Global variables for %s/%s\n",
-                          sc.comp_unit->GetDirectory().GetCString(),
-                          sc.comp_unit->GetFilename().GetCString());
+                s.Printf ("Global variables for %s\n",
+                          sc.comp_unit->GetPath().c_str());
             }
             
             for (uint32_t i=0; i<count; ++i)
@@ -858,9 +854,8 @@ protected:
                     if (frame)
                     {
                         if (comp_unit)
-                            result.AppendErrorWithFormat ("no global variables in current compile unit: %s/%s\n", 
-                                                          comp_unit->GetDirectory().GetCString(), 
-                                                          comp_unit->GetFilename().GetCString());
+                            result.AppendErrorWithFormat ("no global variables in current compile unit: %s\n",
+                                                          comp_unit->GetPath().c_str());
                         else
                             result.AppendErrorWithFormat ("no debug information for frame %u\n", frame->GetFrameIndex());
                     }                        
@@ -899,10 +894,8 @@ protected:
                         else
                         {
                             // Didn't find matching shlib/module in target...
-                            result.AppendErrorWithFormat ("target doesn't contain the specified shared library: %s%s%s\n",
-                                                          module_file.GetDirectory().GetCString(),
-                                                          module_file.GetDirectory() ? "/" : "",
-                                                          module_file.GetFilename().GetCString());
+                            result.AppendErrorWithFormat ("target doesn't contain the specified shared library: %s\n",
+                                                          module_file.GetPath().c_str());
                         }
                     }
                 }
@@ -1469,11 +1462,9 @@ DumpModuleSections (CommandInterpreter &interpreter, Stream &strm, Module *modul
             SectionList *section_list = objfile->GetSectionList();
             if (section_list)
             {
-                strm.PutCString ("Sections for '");
-                strm << module->GetFileSpec();
-                if (module->GetObjectName())
-                    strm << '(' << module->GetObjectName() << ')';
-                strm.Printf ("' (%s):\n", module->GetArchitecture().GetArchitectureName());
+                strm.Printf ("Sections for '%s' (%s):\n",
+                             module->GetSpecificationDescription().c_str(),
+                             module->GetArchitecture().GetArchitectureName());
                 strm.IndentMore();
                 section_list->Dump(&strm, interpreter.GetExecutionContext().GetTargetPtr(), true, UINT32_MAX);
                 strm.IndentLess();
@@ -2645,19 +2636,16 @@ protected:
                             {
                                 if (module_spec.GetSymbolFileSpec())
                                 {
-                                    result.AppendErrorWithFormat ("Unable to create the executable or symbol file with UUID %s with path %s/%s and symbol file %s/%s",
+                                    result.AppendErrorWithFormat ("Unable to create the executable or symbol file with UUID %s with path %s and symbol file %s",
                                                                   strm.GetString().c_str(),
-                                                                  module_spec.GetFileSpec().GetDirectory().GetCString(),
-                                                                  module_spec.GetFileSpec().GetFilename().GetCString(),
-                                                                  module_spec.GetSymbolFileSpec().GetDirectory().GetCString(),
-                                                                  module_spec.GetSymbolFileSpec().GetFilename().GetCString());
+                                                                  module_spec.GetFileSpec().GetPath().c_str(),
+                                                                  module_spec.GetSymbolFileSpec().GetPath().c_str());
                                 }
                                 else
                                 {
-                                    result.AppendErrorWithFormat ("Unable to create the executable or symbol file with UUID %s with path %s/%s",
+                                    result.AppendErrorWithFormat ("Unable to create the executable or symbol file with UUID %s with path %s",
                                                                   strm.GetString().c_str(),
-                                                                  module_spec.GetFileSpec().GetDirectory().GetCString(),
-                                                                  module_spec.GetFileSpec().GetFilename().GetCString());
+                                                                  module_spec.GetFileSpec().GetPath().c_str());
                                 }
                             }
                             else
@@ -4333,10 +4321,9 @@ protected:
                         {
                             // Provide feedback that the symfile has been successfully added.
                             const FileSpec &module_fs = module_sp->GetFileSpec();
-                            result.AppendMessageWithFormat("symbol file '%s' has been added to '%s/%s'\n",
+                            result.AppendMessageWithFormat("symbol file '%s' has been added to '%s'\n",
                                                            symfile_path,
-                                                           module_fs.GetDirectory().AsCString(),
-                                                           module_fs.GetFilename().AsCString());
+                                                           module_fs.GetPath().c_str());
                             
                             // Let clients know something changed in the module
                             // if it is currently loaded

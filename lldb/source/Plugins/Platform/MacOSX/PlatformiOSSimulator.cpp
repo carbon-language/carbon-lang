@@ -240,20 +240,16 @@ PlatformiOSSimulator::ResolveExecutable (const FileSpec &exe_file,
         
         if (error.Fail() || !exe_module_sp)
         {
-            error.SetErrorStringWithFormat ("'%s%s%s' doesn't contain any '%s' platform architectures: %s",
-                                            exe_file.GetDirectory().AsCString(""),
-                                            exe_file.GetDirectory() ? "/" : "",
-                                            exe_file.GetFilename().AsCString(""),
+            error.SetErrorStringWithFormat ("'%s' doesn't contain any '%s' platform architectures: %s",
+                                            exe_file.GetPath().c_str(),
                                             GetShortPluginName(),
                                             arch_names.GetString().c_str());
         }
     }
     else
     {
-        error.SetErrorStringWithFormat ("'%s%s%s' does not exist",
-                                        exe_file.GetDirectory().AsCString(""),
-                                        exe_file.GetDirectory() ? "/" : "",
-                                        exe_file.GetFilename().AsCString(""));
+        error.SetErrorStringWithFormat ("'%s' does not exist",
+                                        exe_file.GetPath().c_str());
     }
 
     return error;

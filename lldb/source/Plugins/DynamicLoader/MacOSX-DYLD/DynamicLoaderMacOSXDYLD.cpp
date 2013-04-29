@@ -493,11 +493,10 @@ DynamicLoaderMacOSXDYLD::UpdateImageLoadAddress (Module *module, DYLDImageInfo& 
                         else
                         {
                             Host::SystemLog (Host::eSystemLogWarning, 
-                                             "warning: unable to find and load segment named '%s' at 0x%" PRIx64 " in '%s/%s' in macosx dynamic loader plug-in.\n",
+                                             "warning: unable to find and load segment named '%s' at 0x%" PRIx64 " in '%s' in macosx dynamic loader plug-in.\n",
                                              info.segments[i].name.AsCString("<invalid>"),
                                              (uint64_t)new_section_load_addr,
-                                             image_object_file->GetFileSpec().GetDirectory().AsCString(),
-                                             image_object_file->GetFileSpec().GetFilename().AsCString());
+                                             image_object_file->GetFileSpec().GetPath().c_str());
                         }
                     }
                 }
@@ -573,10 +572,9 @@ DynamicLoaderMacOSXDYLD::UnloadImageLoadAddress (Module *module, DYLDImageInfo& 
                     else
                     {
                         Host::SystemLog (Host::eSystemLogWarning, 
-                                         "warning: unable to find and unload segment named '%s' in '%s/%s' in macosx dynamic loader plug-in.\n",
+                                         "warning: unable to find and unload segment named '%s' in '%s' in macosx dynamic loader plug-in.\n",
                                          info.segments[i].name.AsCString("<invalid>"),
-                                         image_object_file->GetFileSpec().GetDirectory().AsCString(),
-                                         image_object_file->GetFileSpec().GetFilename().AsCString());
+                                         image_object_file->GetFileSpec().GetPath().c_str());
                     }
                 }
             }
@@ -1440,42 +1438,38 @@ DynamicLoaderMacOSXDYLD::DYLDImageInfo::PutToLog (Log *log) const
     {
         if (u)
         {
-            log->Printf("\t                           modtime=0x%8.8" PRIx64 " uuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X path='%s/%s' (UNLOADED)",
+            log->Printf("\t                           modtime=0x%8.8" PRIx64 " uuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X path='%s' (UNLOADED)",
                         mod_date,
                         u[ 0], u[ 1], u[ 2], u[ 3],
                         u[ 4], u[ 5], u[ 6], u[ 7],
                         u[ 8], u[ 9], u[10], u[11],
                         u[12], u[13], u[14], u[15],
-                        file_spec.GetDirectory().AsCString(),
-                        file_spec.GetFilename().AsCString());
+                        file_spec.GetPath().c_str());
         }
         else
-            log->Printf("\t                           modtime=0x%8.8" PRIx64 " path='%s/%s' (UNLOADED)",
+            log->Printf("\t                           modtime=0x%8.8" PRIx64 " path='%s' (UNLOADED)",
                         mod_date,
-                        file_spec.GetDirectory().AsCString(),
-                        file_spec.GetFilename().AsCString());
+                        file_spec.GetPath().c_str());
     }
     else
     {
         if (u)
         {
-            log->Printf("\taddress=0x%16.16" PRIx64 " modtime=0x%8.8" PRIx64 " uuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X path='%s/%s'",
+            log->Printf("\taddress=0x%16.16" PRIx64 " modtime=0x%8.8" PRIx64 " uuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X path='%s'",
                         address,
                         mod_date,
                         u[ 0], u[ 1], u[ 2], u[ 3],
                         u[ 4], u[ 5], u[ 6], u[ 7],
                         u[ 8], u[ 9], u[10], u[11],
                         u[12], u[13], u[14], u[15],
-                        file_spec.GetDirectory().AsCString(),
-                        file_spec.GetFilename().AsCString());
+                        file_spec.GetPath().c_str());
         }
         else
         {
-            log->Printf("\taddress=0x%16.16" PRIx64 " modtime=0x%8.8" PRIx64 " path='%s/%s'",
+            log->Printf("\taddress=0x%16.16" PRIx64 " modtime=0x%8.8" PRIx64 " path='%s'",
                         address,
                         mod_date,
-                        file_spec.GetDirectory().AsCString(),
-                        file_spec.GetFilename().AsCString());
+                        file_spec.GetPath().c_str());
 
         }
         for (uint32_t i=0; i<segments.size(); ++i)

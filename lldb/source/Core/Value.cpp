@@ -494,18 +494,14 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
                         if (module)
                         {
                             if (variable)
-                                error.SetErrorStringWithFormat ("unable to resolve the module for file address 0x%" PRIx64 " for variable '%s' in %s%s%s",
+                                error.SetErrorStringWithFormat ("unable to resolve the module for file address 0x%" PRIx64 " for variable '%s' in %s",
                                                                 address, 
                                                                 variable->GetName().AsCString(""),
-                                                                module->GetFileSpec().GetDirectory().GetCString(),
-                                                                module->GetFileSpec().GetDirectory() ? "/" : "",
-                                                                module->GetFileSpec().GetFilename().GetCString());
+                                                                module->GetFileSpec().GetPath().c_str());
                             else
-                                error.SetErrorStringWithFormat ("unable to resolve the module for file address 0x%" PRIx64 " in %s%s%s",
+                                error.SetErrorStringWithFormat ("unable to resolve the module for file address 0x%" PRIx64 " in %s",
                                                                 address, 
-                                                                module->GetFileSpec().GetDirectory().GetCString(),
-                                                                module->GetFileSpec().GetDirectory() ? "/" : "",
-                                                                module->GetFileSpec().GetFilename().GetCString());
+                                                                module->GetFileSpec().GetPath().c_str());
                         }
                         else
                         {

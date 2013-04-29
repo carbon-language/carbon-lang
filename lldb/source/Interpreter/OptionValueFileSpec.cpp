@@ -64,17 +64,7 @@ OptionValueFileSpec::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, u
 
         if (m_current_value)
         {
-            if (m_current_value.GetDirectory())
-            {
-                strm << '"' << m_current_value.GetDirectory();
-                if (m_current_value.GetFilename())
-                    strm << '/' << m_current_value.GetFilename();
-                strm << '"';
-            }
-            else
-            {
-                strm << '"' << m_current_value.GetFilename() << '"';
-            }
+            strm << '"' << m_current_value.GetPath().c_str() << '"';
         }
     }
 }

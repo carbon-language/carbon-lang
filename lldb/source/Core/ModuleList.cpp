@@ -658,13 +658,12 @@ ModuleList::LogUUIDAndPaths (Log *log, const char *prefix_cstr)
             Module *module = pos->get();
             module->GetUUID().GetAsCString (uuid_cstr, sizeof(uuid_cstr));
             const FileSpec &module_file_spec = module->GetFileSpec();
-            log->Printf ("%s[%u] %s (%s) \"%s/%s\"",
+            log->Printf ("%s[%u] %s (%s) \"%s\"",
                          prefix_cstr ? prefix_cstr : "",
                          (uint32_t)std::distance (begin, pos),
                          uuid_cstr,
                          module->GetArchitecture().GetArchitectureName(),
-                         module_file_spec.GetDirectory().GetCString(),
-                         module_file_spec.GetFilename().GetCString());
+                         module_file_spec.GetPath().c_str());
         }
     }
 }

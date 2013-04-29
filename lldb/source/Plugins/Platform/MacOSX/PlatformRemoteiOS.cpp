@@ -205,10 +205,9 @@ PlatformRemoteiOS::GetStatus (Stream &strm)
     for (uint32_t i=0; i<num_sdk_infos; ++i)
     {
         const SDKDirectoryInfo &sdk_dir_info = m_sdk_directory_infos[i];
-        strm.Printf (" SDK Roots: [%2u] \"%s/%s\"\n",
+        strm.Printf (" SDK Roots: [%2u] \"%s\"\n",
                      i,
-                     sdk_dir_info.directory.GetDirectory().GetCString(),
-                     sdk_dir_info.directory.GetFilename().GetCString());
+                     sdk_dir_info.directory.GetPath().c_str());
     }
 }
 
@@ -278,20 +277,16 @@ PlatformRemoteiOS::ResolveExecutable (const FileSpec &exe_file,
         
         if (error.Fail() || !exe_module_sp)
         {
-            error.SetErrorStringWithFormat ("'%s%s%s' doesn't contain any '%s' platform architectures: %s",
-                                            exe_file.GetDirectory().AsCString(""),
-                                            exe_file.GetDirectory() ? "/" : "",
-                                            exe_file.GetFilename().AsCString(""),
+            error.SetErrorStringWithFormat ("'%s' doesn't contain any '%s' platform architectures: %s",
+                                            exe_file.GetPath().c_str(),
                                             GetShortPluginName(),
                                             arch_names.GetString().c_str());
         }
     }
     else
     {
-        error.SetErrorStringWithFormat ("'%s%s%s' does not exist",
-                                        exe_file.GetDirectory().AsCString(""),
-                                        exe_file.GetDirectory() ? "/" : "",
-                                        exe_file.GetFilename().AsCString(""));
+        error.SetErrorStringWithFormat ("'%s' does not exist",
+                                        exe_file.GetPath().c_str());
     }
 
     return error;
@@ -712,7 +707,7 @@ PlatformRemoteiOS::GetSharedModule (const ModuleSpec &module_spec,
             {
                 if (GetFileInSDK (platform_file_path, m_last_module_sdk_idx, local_file))
                 {
-                    //printf ("sdk[%u] last: '%s/%s'\n", m_last_module_sdk_idx, local_file.GetDirectory().GetCString(), local_file.GetFilename().GetCString());
+                    //printf ("sdk[%u] last: '%s'\n", m_last_module_sdk_idx, local_file.GetPath().c_str());
                     module_sp.reset();
                     error = ResolveExecutable (local_file,
                                                module_spec.GetArchitecture(),
@@ -738,7 +733,7 @@ PlatformRemoteiOS::GetSharedModule (const ModuleSpec &module_spec,
                 }
                 if (GetFileInSDK (platform_file_path, sdk_idx, local_file))
                 {
-                    //printf ("sdk[%u]: '%s/%s'\n", sdk_idx, local_file.GetDirectory().GetCString(), local_file.GetFilename().GetCString());
+                    //printf ("sdk[%u]: '%s'\n", sdk_idx, local_file.GetPath().c_str());
                     
                     error = ResolveExecutable (local_file,
                                                module_spec.GetArchitecture(),

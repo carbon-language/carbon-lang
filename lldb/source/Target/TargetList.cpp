@@ -105,12 +105,10 @@ TargetList::CreateTarget (Debugger &debugger,
                     {
                         if (!platform_arch.IsCompatibleMatch(matching_module_spec.GetArchitecture()))
                         {
-                            error.SetErrorStringWithFormat("the specified architecture '%s' is not compatible with '%s' in '%s%s%s'",
+                            error.SetErrorStringWithFormat("the specified architecture '%s' is not compatible with '%s' in '%s'",
                                                            platform_arch.GetTriple().str().c_str(),
                                                            matching_module_spec.GetArchitecture().GetTriple().str().c_str(),
-                                                           module_spec.GetFileSpec().GetDirectory() ? module_spec.GetFileSpec().GetDirectory().GetCString() : "",
-                                                           module_spec.GetFileSpec().GetDirectory() ? "/" : "",
-                                                           module_spec.GetFileSpec().GetFilename().GetCString());
+                                                           module_spec.GetFileSpec().GetPath().c_str());
                             return error;
                         }
                     }
@@ -266,18 +264,14 @@ TargetList::CreateTarget (Debugger &debugger,
             {
                 if (arch.IsValid())
                 {
-                    error.SetErrorStringWithFormat("\"%s%s%s\" doesn't contain architecture %s",
-                                                   file.GetDirectory().AsCString(),
-                                                   file.GetDirectory() ? "/" : "",
-                                                   file.GetFilename().AsCString(),
+                    error.SetErrorStringWithFormat("\"%s\" doesn't contain architecture %s",
+                                                   file.GetPath().c_str(),
                                                    arch.GetArchitectureName());
                 }
                 else
                 {
-                    error.SetErrorStringWithFormat("unsupported file type \"%s%s%s\"",
-                                                   file.GetDirectory().AsCString(),
-                                                   file.GetDirectory() ? "/" : "",
-                                                   file.GetFilename().AsCString());
+                    error.SetErrorStringWithFormat("unsupported file type \"%s\"",
+                                                   file.GetPath().c_str());
                 }
                 return error;
             }
