@@ -25,7 +25,6 @@ using namespace llvm::object;
 
 namespace llvm {
 class RuntimeDyldMachO : public RuntimeDyldImpl {
-protected:
   bool resolveI386Relocation(uint8_t *LocalAddress,
                              uint64_t FinalAddress,
                              uint64_t Value,
@@ -48,13 +47,6 @@ protected:
                             unsigned Size,
                             int64_t Addend);
 
-  virtual void processRelocationRef(unsigned SectionID,
-                                    RelocationRef RelI,
-                                    ObjectImage &Obj,
-                                    ObjSectionToIDMap &ObjSectionToID,
-                                    const SymbolTableMap &Symbols,
-                                    StubMap &Stubs);
-
   void resolveRelocation(const SectionEntry &Section,
                          uint64_t Offset,
                          uint64_t Value,
@@ -63,11 +55,16 @@ protected:
                          bool isPCRel,
                          unsigned Size);
 public:
-  virtual void resolveRelocation(const RelocationEntry &RE, uint64_t Value);
-
   RuntimeDyldMachO(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
 
-  bool isCompatibleFormat(const ObjectBuffer *Buffer) const;
+  virtual void resolveRelocation(const RelocationEntry &RE, uint64_t Value);
+  virtual void processRelocationRef(unsigned SectionID,
+                                    RelocationRef RelI,
+                                    ObjectImage &Obj,
+                                    ObjSectionToIDMap &ObjSectionToID,
+                                    const SymbolTableMap &Symbols,
+                                    StubMap &Stubs);
+  virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const;
 };
 
 } // end namespace llvm

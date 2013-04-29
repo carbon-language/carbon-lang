@@ -37,7 +37,6 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
                          uint32_t Type,
                          int64_t Addend);
 
-protected:
   void resolveX86_64Relocation(const SectionEntry &Section,
                                uint64_t Offset,
                                uint64_t Value,
@@ -68,18 +67,9 @@ protected:
                               uint32_t Type,
                               int64_t Addend);
 
-  virtual void resolveRelocation(const RelocationEntry &RE, uint64_t Value);
-
-  virtual void processRelocationRef(unsigned SectionID,
-                                    RelocationRef RelI,
-                                    ObjectImage &Obj,
-                                    ObjSectionToIDMap &ObjSectionToID,
-                                    const SymbolTableMap &Symbols,
-                                    StubMap &Stubs);
 
   unsigned getCommonSymbolAlignment(const SymbolRef &Sym);
 
-  virtual ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);
 
   uint64_t findPPC64TOC() const;
   void findOPDEntrySection(ObjectImage &Obj,
@@ -87,12 +77,18 @@ protected:
                            RelocationValueRef &Rel);
 
 public:
-  RuntimeDyldELF(RTDyldMemoryManager *mm)
-      : RuntimeDyldImpl(mm) {}
+  RuntimeDyldELF(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
 
+  virtual void resolveRelocation(const RelocationEntry &RE, uint64_t Value);
+  virtual void processRelocationRef(unsigned SectionID,
+                                    RelocationRef RelI,
+                                    ObjectImage &Obj,
+                                    ObjSectionToIDMap &ObjSectionToID,
+                                    const SymbolTableMap &Symbols,
+                                    StubMap &Stubs);
+  virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const;
+  virtual ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);
   virtual ~RuntimeDyldELF();
-
-  bool isCompatibleFormat(const ObjectBuffer *Buffer) const;
 };
 
 } // end namespace llvm
