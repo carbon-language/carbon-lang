@@ -194,13 +194,6 @@ protected:
     return (uint8_t*)Sections[SectionID].Address;
   }
 
-  // Subclasses can override this method to get the alignment requirement of
-  // a common symbol. Returns no alignment requirement if not implemented.
-  virtual unsigned getCommonSymbolAlignment(const SymbolRef &Sym) {
-    return 0;
-  }
-
-
   void writeInt16BE(uint8_t *Addr, uint16_t Value) {
     if (sys::IsLittleEndianHost)
       Value = sys::SwapByteOrder(Value);

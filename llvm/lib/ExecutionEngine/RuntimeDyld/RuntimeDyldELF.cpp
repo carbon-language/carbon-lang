@@ -848,13 +848,6 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
   }
 }
 
-unsigned RuntimeDyldELF::getCommonSymbolAlignment(const SymbolRef &Sym) {
-  // In ELF, the value of an SHN_COMMON symbol is its alignment requirement.
-  uint64_t Align;
-  Check(Sym.getValue(Align));
-  return Align;
-}
-
 bool RuntimeDyldELF::isCompatibleFormat(const ObjectBuffer *Buffer) const {
   if (Buffer->getBufferSize() < strlen(ELF::ElfMagic))
     return false;

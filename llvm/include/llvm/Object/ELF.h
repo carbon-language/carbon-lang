@@ -682,6 +682,7 @@ protected:
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;
   virtual error_code getSymbolFileOffset(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const;
+  virtual error_code getSymbolAlignment(DataRefImpl Symb, uint32_t &Res) const;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
   virtual error_code getSymbolFlags(DataRefImpl Symb, uint32_t &Res) const;
@@ -1112,6 +1113,21 @@ error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
     Result = UnknownAddressOrSize;
     return object_error::success;
   }
+}
+
+template<class ELFT>
+error_code ELFObjectFile<ELFT>::getSymbolAlignment(DataRefImpl Symb,
+                                                   uint32_t &Res) const {
+  uint32_t flags;
+  getSymbolFlags(Symb, flags);
+  if (flags & SymbolRef::SF_Common) {
+    uint64_t Value;
+    getSymbolValue(Symb, Value);
+    Res = Value;
+  } else {
+    Res = 0;
+  }
+  return object_error::success;
 }
 
 template<class ELFT>

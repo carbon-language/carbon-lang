@@ -68,9 +68,6 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
                               int64_t Addend);
 
 
-  unsigned getCommonSymbolAlignment(const SymbolRef &Sym);
-
-
   uint64_t findPPC64TOC() const;
   void findOPDEntrySection(ObjectImage &Obj,
                            ObjSectionToIDMap &LocalSections,

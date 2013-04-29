@@ -39,6 +39,7 @@ public:
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolFileOffset(DataRefImpl Symb, uint64_t &Res) const;
+  virtual error_code getSymbolAlignment(DataRefImpl Symb, uint32_t &Res) const;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolType(DataRefImpl Symb,
                                    SymbolRef::Type &Res) const;

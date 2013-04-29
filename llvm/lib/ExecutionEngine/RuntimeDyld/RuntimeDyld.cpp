@@ -96,7 +96,8 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectBuffer *InputBuffer) {
     bool isCommon = flags & SymbolRef::SF_Common;
     if (isCommon) {
       // Add the common symbols to a list.  We'll allocate them all below.
-      uint64_t Align = getCommonSymbolAlignment(*i);
+      uint32_t Align;
+      Check(i->getAlignment(Align));
       uint64_t Size = 0;
       Check(i->getSize(Size));
       CommonSize += Size + Align;

@@ -27,6 +27,12 @@ ObjectFile::ObjectFile(unsigned int Type, MemoryBuffer *source)
   : Binary(Type, source) {
 }
 
+error_code ObjectFile::getSymbolAlignment(DataRefImpl DRI,
+                                          uint32_t &Result) const {
+  Result = 0;
+  return object_error::success;
+}
+
 ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
   if (!Object || Object->getBufferSize() < 64)
     return 0;
