@@ -277,8 +277,6 @@ ScriptInterpreterPython::PythonInputReaderManager::InputReaderCallback (void *ba
     if (script_interpreter->m_script_lang != eScriptLanguagePython)
         return 0;
     
-    StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
-    
     switch (notification)
     {
         case eInputReaderActivate:
@@ -843,13 +841,12 @@ ScriptInterpreterPython::InputReaderCallback
     if (script_interpreter->m_script_lang != eScriptLanguagePython)
         return 0;
     
-    StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
-    bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
-    
     switch (notification)
     {
     case eInputReaderActivate:
         {
+            StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+            bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
             if (!batch_mode)
             {
                 out_stream->Printf ("Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.\n");
@@ -1263,13 +1260,13 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
 {
     static StringList commands_in_progress;
     
-    StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
-    bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
-    
     switch (notification)
     {
     case eInputReaderActivate:
         {
+            
+            StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+            bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
             commands_in_progress.Clear();
             if (!batch_mode)
             {
@@ -1285,10 +1282,14 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
         break;
 
     case eInputReaderReactivate:
-        if (reader.GetPrompt() && !batch_mode)
         {
-            out_stream->Printf ("%s", reader.GetPrompt());
-            out_stream->Flush ();
+            StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+            bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
+            if (reader.GetPrompt() && !batch_mode)
+            {
+                out_stream->Printf ("%s", reader.GetPrompt());
+                out_stream->Flush ();
+            }
         }
         break;
 
@@ -1297,6 +1298,8 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
         
     case eInputReaderGotToken:
         {
+            StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+            bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
             std::string temp_string (bytes, bytes_len);
             commands_in_progress.AppendString (temp_string.c_str());
             if (!reader.IsDone() && reader.GetPrompt() && !batch_mode)
@@ -1320,6 +1323,9 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
 
     case eInputReaderDone:
         {
+            bool batch_mode = notification == eInputReaderDone ? 
+                reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode() :
+                true;
             BreakpointOptions *bp_options = (BreakpointOptions *)baton;
             std::unique_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
             data_ap->user_source.AppendList (commands_in_progress);
@@ -1336,6 +1342,7 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
                     }
                     else if (!batch_mode)
                     {
+                        StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
                         out_stream->Printf ("Warning: No command attached to breakpoint.\n");
                         out_stream->Flush();
                     }
@@ -1344,6 +1351,7 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
                 {
 		            if (!batch_mode)
                     {
+                        StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
                         out_stream->Printf ("Warning:  Unable to find script intepreter; no command attached to breakpoint.\n");
                         out_stream->Flush();
                     }
@@ -1369,13 +1377,13 @@ ScriptInterpreterPython::GenerateWatchpointOptionsCommandCallback
 {
     static StringList commands_in_progress;
     
-    StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
-    bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
-    
     switch (notification)
     {
     case eInputReaderActivate:
         {
+            StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+            bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
+            
             commands_in_progress.Clear();
             if (!batch_mode)
             {
@@ -1391,10 +1399,14 @@ ScriptInterpreterPython::GenerateWatchpointOptionsCommandCallback
         break;
 
     case eInputReaderReactivate:
-        if (reader.GetPrompt() && !batch_mode)
         {
-            out_stream->Printf ("%s", reader.GetPrompt());
-            out_stream->Flush ();
+            StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+            bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
+            if (reader.GetPrompt() && !batch_mode)
+            {
+                out_stream->Printf ("%s", reader.GetPrompt());
+                out_stream->Flush ();
+            }
         }
         break;
 
@@ -1403,6 +1415,8 @@ ScriptInterpreterPython::GenerateWatchpointOptionsCommandCallback
         
     case eInputReaderGotToken:
         {
+            StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+            bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
             std::string temp_string (bytes, bytes_len);
             commands_in_progress.AppendString (temp_string.c_str());
             if (!reader.IsDone() && reader.GetPrompt() && !batch_mode)
@@ -1426,6 +1440,9 @@ ScriptInterpreterPython::GenerateWatchpointOptionsCommandCallback
 
     case eInputReaderDone:
         {
+            bool batch_mode = notification == eInputReaderDone ?
+                reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode() :
+                true;
             WatchpointOptions *wp_options = (WatchpointOptions *)baton;
             std::unique_ptr<WatchpointOptions::CommandData> data_ap(new WatchpointOptions::CommandData());
             data_ap->user_source.AppendList (commands_in_progress);
@@ -1442,6 +1459,7 @@ ScriptInterpreterPython::GenerateWatchpointOptionsCommandCallback
                     }
                     else if (!batch_mode)
                     {
+                        StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
                         out_stream->Printf ("Warning: No command attached to breakpoint.\n");
                         out_stream->Flush();
                     }
@@ -1450,6 +1468,7 @@ ScriptInterpreterPython::GenerateWatchpointOptionsCommandCallback
                 {
 		            if (!batch_mode)
                     {
+                        StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
                         out_stream->Printf ("Warning:  Unable to find script intepreter; no command attached to breakpoint.\n");
                         out_stream->Flush();
                     }
