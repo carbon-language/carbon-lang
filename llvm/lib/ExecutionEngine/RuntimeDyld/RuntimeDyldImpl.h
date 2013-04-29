@@ -93,18 +93,6 @@ public:
     : SectionID(id), Offset(offset), RelType(type), Addend(addend) {}
 };
 
-/// ObjRelocationInfo - relocation information as read from the object file.
-/// Used to pass around data taken from object::RelocationRef, together with
-/// the section to which the relocation points (represented by a SectionID).
-class ObjRelocationInfo {
-public:
-  unsigned  SectionID;
-  uint64_t  Offset;
-  SymbolRef Symbol;
-  uint64_t  Type;
-  int64_t   AdditionalInfo;
-};
-
 class RelocationValueRef {
 public:
   unsigned  SectionID;
@@ -286,7 +274,8 @@ protected:
 
   /// \brief Parses the object file relocation and stores it to Relocations
   ///        or SymbolRelocations (this depends on the object file type).
-  virtual void processRelocationRef(const ObjRelocationInfo &Rel,
+  virtual void processRelocationRef(unsigned SectionID,
+                                    relocation_iterator RelI,
                                     ObjectImage &Obj,
                                     ObjSectionToIDMap &ObjSectionToID,
                                     const SymbolTableMap &Symbols,

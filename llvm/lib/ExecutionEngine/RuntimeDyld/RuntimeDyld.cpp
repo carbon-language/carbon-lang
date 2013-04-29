@@ -154,18 +154,8 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectBuffer *InputBuffer) {
         isFirstRelocation = false;
       }
 
-      ObjRelocationInfo RI;
-      RI.SectionID = SectionID;
-      Check(i->getAdditionalInfo(RI.AdditionalInfo));
-      Check(i->getOffset(RI.Offset));
-      Check(i->getSymbol(RI.Symbol));
-      Check(i->getType(RI.Type));
-
-      DEBUG(dbgs() << "\t\tAddend: " << RI.AdditionalInfo
-                   << " Offset: " << format("%p", (uintptr_t)RI.Offset)
-                   << " Type: " << (uint32_t)(RI.Type & 0xffffffffL)
-                   << "\n");
-      processRelocationRef(RI, *obj, LocalSections, LocalSymbols, Stubs);
+      processRelocationRef(SectionID, i, *obj, LocalSections, LocalSymbols,
+			   Stubs);
     }
   }
 

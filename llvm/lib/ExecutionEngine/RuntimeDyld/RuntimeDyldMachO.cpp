@@ -205,21 +205,26 @@ bool RuntimeDyldMachO::resolveARMRelocation(uint8_t *LocalAddress,
   return false;
 }
 
-void RuntimeDyldMachO::processRelocationRef(const ObjRelocationInfo &Rel,
+void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
+                                            relocation_iterator RelI,
                                             ObjectImage &Obj,
                                             ObjSectionToIDMap &ObjSectionToID,
                                             const SymbolTableMap &Symbols,
                                             StubMap &Stubs) {
+  const ObjectFile *OF = Obj.getObjectFile();
+  const MachOObjectFile *MachO = static_cast<const MachOObjectFile*>(OF);
+  macho::RelocationEntry RE = MachO->getRelocation(RelI->getRawDataRefImpl());
 
-  uint32_t RelType = (uint32_t) (Rel.Type & 0xffffffffL);
+  uint32_t RelType = MachO->getAnyRelocationType(RE);
   RelocationValueRef Value;
-  SectionEntry &Section = Sections[Rel.SectionID];
+  SectionEntry &Section = Sections[SectionID];
 
-  bool isExtern = (RelType >> 27) & 1;
+  bool isExtern = MachO->getPlainRelocationExternal(RE);
   if (isExtern) {
     // Obtain the symbol name which is referenced in the relocation
+    SymbolRef Symbol;
+    RelI->getSymbol(Symbol);
     StringRef TargetName;
-    const SymbolRef &Symbol = Rel.Symbol;
     Symbol.getName(TargetName);
     // First search for the symbol in the local symbol table
     SymbolTableMap::const_iterator lsi = Symbols.find(TargetName.data());
@@ -261,13 +266,15 @@ void RuntimeDyldMachO::processRelocationRef(const ObjRelocationInfo &Rel,
     }
   }
 
+  uint64_t Offset;
+  RelI->getOffset(Offset);
   if (Arch == Triple::arm && (RelType & 0xf) == macho::RIT_ARM_Branch24Bit) {
     // This is an ARM branch relocation, need to use a stub function.
 
     //  Look up for existing stub.
     StubMap::const_iterator i = Stubs.find(Value);
     if (i != Stubs.end())
-      resolveRelocation(Section, Rel.Offset,
+      resolveRelocation(Section, Offset,
                         (uint64_t)Section.Address + i->second,
                         RelType, 0);
     else {
@@ -275,19 +282,19 @@ void RuntimeDyldMachO::processRelocationRef(const ObjRelocationInfo &Rel,
       Stubs[Value] = Section.StubOffset;
       uint8_t *StubTargetAddr = createStubFunction(Section.Address +
                                                    Section.StubOffset);
-      RelocationEntry RE(Rel.SectionID, StubTargetAddr - Section.Address,
+      RelocationEntry RE(SectionID, StubTargetAddr - Section.Address,
                          macho::RIT_Vanilla, Value.Addend);
       if (Value.SymbolName)
         addRelocationForSymbol(RE, Value.SymbolName);
       else
         addRelocationForSection(RE, Value.SectionID);
-      resolveRelocation(Section, Rel.Offset,
+      resolveRelocation(Section, Offset,
                         (uint64_t)Section.Address + Section.StubOffset,
                         RelType, 0);
       Section.StubOffset += getMaxStubSize();
     }
   } else {
-    RelocationEntry RE(Rel.SectionID, Rel.Offset, RelType, Value.Addend);
+    RelocationEntry RE(SectionID, Offset, RelType, Value.Addend);
     if (Value.SymbolName)
       addRelocationForSymbol(RE, Value.SymbolName);
     else

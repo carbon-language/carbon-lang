@@ -48,7 +48,8 @@ protected:
                             unsigned Size,
                             int64_t Addend);
 
-  virtual void processRelocationRef(const ObjRelocationInfo &Rel,
+  virtual void processRelocationRef(unsigned SectionID,
+                                    relocation_iterator RelI,
                                     ObjectImage &Obj,
                                     ObjSectionToIDMap &ObjSectionToID,
                                     const SymbolTableMap &Symbols,
