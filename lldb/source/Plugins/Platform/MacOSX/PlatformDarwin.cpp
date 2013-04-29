@@ -969,6 +969,43 @@ PlatformDarwin::GetDeveloperDirectory()
             }
         }
         
+        if (!developer_dir_path_valid)
+        {
+            FileSpec xcode_select_cmd ("/usr/bin/xcode-select", false);
+            if (xcode_select_cmd.Exists())
+            {
+                int exit_status = -1;
+                int signo = -1;
+                std::string command_output;
+                Error error = Host::RunShellCommand ("/usr/bin/xcode-select --print-path", 
+                                                     NULL,                                 // current working directory
+                                                     &exit_status,
+                                                     &signo,
+                                                     &command_output,
+                                                     2,                                     // short timeout
+                                                     NULL);                                 // don't run in a shell
+                if (error.Success() && exit_status == 0 && !command_output.empty())
+                {
+                    const char *cmd_output_ptr = command_output.c_str();
+                    developer_dir_path[sizeof (developer_dir_path) - 1] = '\0';
+                    int i;
+                    for (i = 0; i < sizeof (developer_dir_path) - 1; i++)
+                    {
+                        if (cmd_output_ptr[i] == '\r' || cmd_output_ptr[i] == '\n' || cmd_output_ptr[i] == '\0')
+                            break;
+                        developer_dir_path[i] = cmd_output_ptr[i];
+                    }
+                    developer_dir_path[i] = '\0';
+
+                    FileSpec devel_dir (developer_dir_path, false);
+                    if (devel_dir.Exists() && devel_dir.IsDirectory())
+                    {
+                        developer_dir_path_valid = true;
+                    }
+                }
+            }
+        }
+
         if (developer_dir_path_valid)
         {
             temp_file_spec.SetFile (developer_dir_path, false);
