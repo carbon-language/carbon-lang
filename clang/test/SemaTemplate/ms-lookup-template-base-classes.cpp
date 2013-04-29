@@ -8,7 +8,6 @@ public:
    void g();// expected-note {{must qualify identifier to find this declaration in dependent base class}}
 };
 
-
 template <class T>
 class B : public A<T> {
 public:
@@ -27,6 +26,31 @@ void test()
     B<int> b;
     b.z(3);
 }
+
+struct A2 {
+  template<class T> void f(T) {
+    XX; //expected-error {{use of undeclared identifier 'XX'}}
+    A2::XX; //expected-error {{no member named 'XX' in 'A2'}}
+  }
+};
+template void A2::f(int);
+
+template<class T0>
+struct A3 {
+  template<class T1> void f(T1) {
+    XX; //expected-error {{use of undeclared identifier 'XX'}}
+  }
+};
+template void A3<int>::f(int);
+
+template<class T0>
+struct A4 {
+  void f(char) {
+    XX; //expected-error {{use of undeclared identifier 'XX'}}
+  }
+};
+template class A4<int>;
+
 
 namespace lookup_dependent_bases_id_expr {
 
