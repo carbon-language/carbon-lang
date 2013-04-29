@@ -136,8 +136,7 @@ StmtResult Parser::HandlePragmaCaptured()
   SourceLocation Loc = Tok.getLocation();
 
   ParseScope CapturedRegionScope(this, Scope::FnScope | Scope::DeclScope);
-  Actions.ActOnCapturedRegionStart(Loc, getCurScope(),
-                                   sema::CapturedRegionScopeInfo::CR_Default);
+  Actions.ActOnCapturedRegionStart(Loc, getCurScope(), CR_Default);
 
   StmtResult R = ParseCompoundStatement();
   CapturedRegionScope.Exit();

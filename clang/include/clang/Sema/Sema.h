@@ -927,7 +927,7 @@ public:
   void PushLambdaScope(CXXRecordDecl *Lambda, CXXMethodDecl *CallOperator);
   void PushCapturedRegionScope(Scope *RegionScope, CapturedDecl *CD,
                                RecordDecl *RD,
-                               sema::CapturedRegionScopeInfo::CapturedRegionKind K);
+                               CapturedRegionKind K);
   void PopFunctionScopeInfo(const sema::AnalysisBasedWarnings::Policy *WP =0,
                             const Decl *D = 0, const BlockExpr *blkExpr = 0);
 
@@ -2782,7 +2782,7 @@ public:
   StmtResult ActOnBreakStmt(SourceLocation BreakLoc, Scope *CurScope);
 
   void ActOnCapturedRegionStart(SourceLocation Loc, Scope *CurScope,
-                                sema::CapturedRegionScopeInfo::CapturedRegionKind Kind);
+                                CapturedRegionKind Kind);
   StmtResult ActOnCapturedRegionEnd(Stmt *S);
   void ActOnCapturedRegionError(bool IsInstantiation = false);
   RecordDecl *CreateCapturedStmtRecordDecl(CapturedDecl *&CD,

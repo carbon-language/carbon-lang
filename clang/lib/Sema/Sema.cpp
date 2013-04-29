@@ -1316,7 +1316,7 @@ IdentifierInfo *Sema::getSuperIdentifier() const {
 }
 
 void Sema::PushCapturedRegionScope(Scope *S, CapturedDecl *CD, RecordDecl *RD,
-                                   CapturedRegionScopeInfo::CapturedRegionKind K) {
+                                   CapturedRegionKind K) {
   CapturingScopeInfo *CSI = new CapturedRegionScopeInfo(getDiagnostics(),
                                                         S, CD, RD, K);
   CSI->ReturnType = Context.VoidTy;

@@ -20,6 +20,7 @@
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <string>
@@ -1903,7 +1904,7 @@ public:
 
   /// \brief Describes the capture of either a variable or 'this'.
   class Capture {
-    VarDecl *Var;
+    llvm::PointerIntPair<VarDecl *, 1, VariableCaptureKind> VarAndKind;
     SourceLocation Loc;
 
   public:
@@ -1916,7 +1917,7 @@ public:
     /// \param Var The variable being captured, or null if capturing this.
     ///
     Capture(SourceLocation Loc, VariableCaptureKind Kind, VarDecl *Var = 0)
-      : Var(Var), Loc(Loc) {
+      : VarAndKind(Var, Kind), Loc(Loc) {
       switch (Kind) {
       case VCK_This:
         assert(Var == 0 && "'this' capture cannot have a variable!");
@@ -1928,29 +1929,24 @@ public:
     }
 
     /// \brief Determine the kind of capture.
-    VariableCaptureKind getCaptureKind() const {
-      if (capturesThis())
-        return VCK_This;
-
-      return VCK_ByRef;
-    }
+    VariableCaptureKind getCaptureKind() const { return VarAndKind.getInt(); }
 
     /// \brief Retrieve the source location at which the variable or 'this' was
     /// first used.
     SourceLocation getLocation() const { return Loc; }
 
     /// \brief Determine whether this capture handles the C++ 'this' pointer.
-    bool capturesThis() const { return Var == 0; }
+    bool capturesThis() const { return getCaptureKind() == VCK_This; }
 
     /// \brief Determine whether this capture handles a variable.
-    bool capturesVariable() const { return Var != 0; }
+    bool capturesVariable() const { return getCaptureKind() != VCK_This; }
 
     /// \brief Retrieve the declaration of the variable being captured.
     ///
     /// This operation is only valid if this capture does not capture 'this'.
     VarDecl *getCapturedVar() const {
       assert(!capturesThis() && "No variable available for 'this' capture");
-      return Var;
+      return VarAndKind.getPointer();
     }
   };
 

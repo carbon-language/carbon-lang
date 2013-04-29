@@ -16,6 +16,7 @@
 #define LLVM_CLANG_SEMA_SCOPE_INFO_H
 
 #include "clang/AST/Type.h"
+#include "clang/Basic/CapturedStmt.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -499,11 +500,6 @@ public:
 /// \brief Retains information about a captured region.
 class CapturedRegionScopeInfo: public CapturingScopeInfo {
 public:
-
-  enum CapturedRegionKind {
-    CR_Default
-  };
-
   /// \brief The CapturedDecl for this statement.
   CapturedDecl *TheCapturedDecl;
   /// \brief The captured record type.

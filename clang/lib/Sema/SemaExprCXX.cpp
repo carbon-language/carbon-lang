@@ -728,6 +728,18 @@ Sema::CXXThisScopeRAII::~CXXThisScopeRAII() {
   }
 }
 
+static Expr *captureThis(ASTContext &Context, RecordDecl *RD,
+                         QualType ThisTy, SourceLocation Loc) {
+  FieldDecl *Field
+    = FieldDecl::Create(Context, RD, Loc, Loc, 0, ThisTy,
+                        Context.getTrivialTypeSourceInfo(ThisTy, Loc),
+                        0, false, ICIS_NoInit);
+  Field->setImplicit(true);
+  Field->setAccess(AS_private);
+  RD->addDecl(Field);
+  return new (Context) CXXThisExpr(Loc, ThisTy, /*isImplicit*/true);
+}
+
 void Sema::CheckCXXThisCapture(SourceLocation Loc, bool Explicit) {
   // We don't need to capture this in an unevaluated context.
   if (ExprEvalContexts.back().Context == Unevaluated && !Explicit)
@@ -768,29 +780,12 @@ void Sema::CheckCXXThisCapture(SourceLocation Loc, bool Explicit) {
     CapturingScopeInfo *CSI = cast<CapturingScopeInfo>(FunctionScopes[idx]);
     Expr *ThisExpr = 0;
     QualType ThisTy = getCurrentThisType();
-    if (LambdaScopeInfo *LSI = dyn_cast<LambdaScopeInfo>(CSI)) {
+    if (LambdaScopeInfo *LSI = dyn_cast<LambdaScopeInfo>(CSI))
       // For lambda expressions, build a field and an initializing expression.
-      CXXRecordDecl *Lambda = LSI->Lambda;
-      FieldDecl *Field
-        = FieldDecl::Create(Context, Lambda, Loc, Loc, 0, ThisTy,
-                            Context.getTrivialTypeSourceInfo(ThisTy, Loc),
-                            0, false, ICIS_NoInit);
-      Field->setImplicit(true);
-      Field->setAccess(AS_private);
-      Lambda->addDecl(Field);
-      ThisExpr = new (Context) CXXThisExpr(Loc, ThisTy, /*isImplicit=*/true);
-    } else if (CapturedRegionScopeInfo *RSI =
-                   dyn_cast<CapturedRegionScopeInfo>(FunctionScopes[idx])) {
-      RecordDecl *RD = RSI->TheRecordDecl;
-      FieldDecl *Field
-        = FieldDecl::Create(Context, RD, Loc, Loc, 0, ThisTy,
-                            Context.getTrivialTypeSourceInfo(ThisTy, Loc),
-                            0, false, ICIS_NoInit);
-      Field->setImplicit(true);
-      Field->setAccess(AS_private);
-      RD->addDecl(Field);
-      ThisExpr = new (Context) CXXThisExpr(Loc, ThisTy, /*isImplicit*/true);
-    }
+      ThisExpr = captureThis(Context, LSI->Lambda, ThisTy, Loc);
+    else if (CapturedRegionScopeInfo *RSI
+        = dyn_cast<CapturedRegionScopeInfo>(FunctionScopes[idx]))
+      ThisExpr = captureThis(Context, RSI->TheRecordDecl, ThisTy, Loc);
 
     bool isNested = NumClosures > 1;
     CSI->addThisCapture(isNested, Loc, ThisTy, ThisExpr);

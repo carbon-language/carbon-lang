@@ -2970,7 +2970,7 @@ static void buildCapturedStmtCaptureList(
 }
 
 void Sema::ActOnCapturedRegionStart(SourceLocation Loc, Scope *CurScope,
-                                    CapturedRegionScopeInfo::CapturedRegionKind Kind) {
+                                    CapturedRegionKind Kind) {
   CapturedDecl *CD = 0;
   RecordDecl *RD = CreateCapturedStmtRecordDecl(CD, Loc);
 
