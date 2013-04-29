@@ -1682,7 +1682,7 @@ Decl *Parser::ParseObjCAtAliasDeclaration(SourceLocation atLoc) {
 ///
 Decl *Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_synthesize) &&
-         "ParseObjCPropertyDynamic(): Expected '@synthesize'");
+         "ParseObjCPropertySynthesize(): Expected '@synthesize'");
   ConsumeToken(); // consume synthesize
 
   while (true) {
