@@ -5703,12 +5703,14 @@ bool Sema::CheckParmsForFunctionDef(ParmVarDecl **P, ParmVarDecl **PEnd,
     //   notation in their sequences of declarator specifiers to specify
     //   variable length array types.
     QualType PType = Param->getOriginalType();
-    if (const ArrayType *AT = Context.getAsArrayType(PType)) {
+    while (const ArrayType *AT = Context.getAsArrayType(PType)) {
       if (AT->getSizeModifier() == ArrayType::Star) {
         // FIXME: This diagnostic should point the '[*]' if source-location
         // information is added for it.
         Diag(Param->getLocation(), diag::err_array_star_in_function_definition);
+        break;
       }
+      PType= AT->getElementType();
     }
   }
 
