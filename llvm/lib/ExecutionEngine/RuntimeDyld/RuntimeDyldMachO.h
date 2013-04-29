@@ -49,7 +49,7 @@ protected:
                             int64_t Addend);
 
   virtual void processRelocationRef(unsigned SectionID,
-                                    relocation_iterator RelI,
+                                    RelocationRef RelI,
                                     ObjectImage &Obj,
                                     ObjSectionToIDMap &ObjSectionToID,
                                     const SymbolTableMap &Symbols,

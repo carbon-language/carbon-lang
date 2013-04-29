@@ -600,17 +600,17 @@ void RuntimeDyldELF::resolveRelocation(const SectionEntry &Section,
 }
 
 void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
-                                          relocation_iterator RelI,
+                                          RelocationRef RelI,
                                           ObjectImage &Obj,
                                           ObjSectionToIDMap &ObjSectionToID,
                                           const SymbolTableMap &Symbols,
                                           StubMap &Stubs) {
   uint64_t RelType;
-  Check(RelI->getType(RelType));
+  Check(RelI.getType(RelType));
   int64_t Addend;
-  Check(RelI->getAdditionalInfo(Addend));
+  Check(RelI.getAdditionalInfo(Addend));
   SymbolRef Symbol;
-  Check(RelI->getSymbol(Symbol));
+  Check(RelI.getSymbol(Symbol));
 
   // Obtain the symbol name which is referenced in the relocation
   StringRef TargetName;
@@ -667,7 +667,7 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
     }
   }
   uint64_t Offset;
-  Check(RelI->getOffset(Offset));
+  Check(RelI.getOffset(Offset));
 
   DEBUG(dbgs() << "\t\tSectionID: " << SectionID
                << " Offset: " << Offset

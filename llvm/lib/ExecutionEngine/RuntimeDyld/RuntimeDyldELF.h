@@ -71,7 +71,7 @@ protected:
   virtual void resolveRelocation(const RelocationEntry &RE, uint64_t Value);
 
   virtual void processRelocationRef(unsigned SectionID,
-                                    relocation_iterator RelI,
+                                    RelocationRef RelI,
                                     ObjectImage &Obj,
                                     ObjSectionToIDMap &ObjSectionToID,
                                     const SymbolTableMap &Symbols,

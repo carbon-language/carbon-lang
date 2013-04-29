@@ -214,14 +214,14 @@ bool RuntimeDyldMachO::resolveARMRelocation(uint8_t *LocalAddress,
 }
 
 void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
-                                            relocation_iterator RelI,
+                                            RelocationRef RelI,
                                             ObjectImage &Obj,
                                             ObjSectionToIDMap &ObjSectionToID,
                                             const SymbolTableMap &Symbols,
                                             StubMap &Stubs) {
   const ObjectFile *OF = Obj.getObjectFile();
   const MachOObjectFile *MachO = static_cast<const MachOObjectFile*>(OF);
-  macho::RelocationEntry RE = MachO->getRelocation(RelI->getRawDataRefImpl());
+  macho::RelocationEntry RE = MachO->getRelocation(RelI.getRawDataRefImpl());
 
   uint32_t RelType = MachO->getAnyRelocationType(RE);
   RelocationValueRef Value;
@@ -233,7 +233,7 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
   if (isExtern) {
     // Obtain the symbol name which is referenced in the relocation
     SymbolRef Symbol;
-    RelI->getSymbol(Symbol);
+    RelI.getSymbol(Symbol);
     StringRef TargetName;
     Symbol.getName(TargetName);
     // First search for the symbol in the local symbol table
@@ -277,7 +277,7 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
   }
 
   uint64_t Offset;
-  RelI->getOffset(Offset);
+  RelI.getOffset(Offset);
   if (Arch == Triple::arm && (RelType & 0xf) == macho::RIT_ARM_Branch24Bit) {
     // This is an ARM branch relocation, need to use a stub function.
 
