@@ -381,6 +381,29 @@ public:
     GetPath (char *path, size_t max_path_length) const;
 
     //------------------------------------------------------------------
+    /// Extract the full path to the file.
+    ///
+    /// Extract the directory and path into a std::string, which is returned.
+    ///
+    /// @param[out] path
+    ///     The directory + filename returned in this std::string reference.
+    //------------------------------------------------------------------
+    void
+    GetPath (std::string &path) const;
+
+    //------------------------------------------------------------------
+    /// Extract the full path to the file.
+    ///
+    /// Extract the directory and path into a std::string, which is returned.
+    ///
+    /// @return
+    ///     Returns a std::string with the directory and filename 
+    ///     concatenated.
+    //------------------------------------------------------------------
+    std::string&
+    GetPath (void) const;
+
+    //------------------------------------------------------------------
     /// Extract the extension of the file.
     ///
     /// Returns a ConstString that represents the extension of the filename
@@ -410,6 +433,36 @@ public:
     
     FileType
     GetFileType () const;
+
+    bool
+    IsDirectory () const
+    {
+        return GetFileType() == FileSpec::eFileTypeDirectory;
+    }
+
+    bool
+    IsPipe () const
+    {
+        return GetFileType() == FileSpec::eFileTypePipe;
+    }
+
+    bool
+    IsRegularFile () const
+    {
+        return GetFileType() == FileSpec::eFileTypeRegular;
+    }
+
+    bool
+    IsSocket () const
+    {
+        return GetFileType() == FileSpec::eFileTypeSocket;
+    }
+
+    bool
+    IsSymbolicLink () const
+    {
+        return GetFileType() == FileSpec::eFileTypeSymbolicLink;
+    }
 
     //------------------------------------------------------------------
     /// Get the memory cost of this object.
