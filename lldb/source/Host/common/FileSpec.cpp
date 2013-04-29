@@ -702,12 +702,12 @@ FileSpec::GetPath(char *path, size_t path_max_len) const
     return 0;
 }
 
-void
-FileSpec::GetPath (std::string &path) const
+std::string
+FileSpec::GetPath (void) const
 {
+    std::string path;
     const char *dirname = m_directory.GetCString();
     const char *filename = m_filename.GetCString();
-    path.clear();
     if (dirname)
     {
         path.append (dirname);
@@ -715,17 +715,7 @@ FileSpec::GetPath (std::string &path) const
             path.append ("/");
     }
     if (filename)
-    {
         path.append (filename);
-    }
-}
-
-
-std::string&
-FileSpec::GetPath (void) const
-{
-    std::string path;
-    GetPath (path);
     return path;
 }
 

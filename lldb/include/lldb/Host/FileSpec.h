@@ -385,23 +385,12 @@ public:
     ///
     /// Extract the directory and path into a std::string, which is returned.
     ///
-    /// @param[out] path
-    ///     The directory + filename returned in this std::string reference.
-    //------------------------------------------------------------------
-    void
-    GetPath (std::string &path) const;
-
-    //------------------------------------------------------------------
-    /// Extract the full path to the file.
-    ///
-    /// Extract the directory and path into a std::string, which is returned.
-    ///
     /// @return
     ///     Returns a std::string with the directory and filename 
     ///     concatenated.
     //------------------------------------------------------------------
-    std::string&
-    GetPath (void) const;
+    std::string
+    GetPath () const;
 
     //------------------------------------------------------------------
     /// Extract the extension of the file.
