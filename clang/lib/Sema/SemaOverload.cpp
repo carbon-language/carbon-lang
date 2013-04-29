@@ -5476,7 +5476,7 @@ void Sema::AddFunctionCandidates(const UnresolvedSetImpl &Fns,
 void Sema::AddMethodCandidate(DeclAccessPair FoundDecl,
                               QualType ObjectType,
                               Expr::Classification ObjectClassification,
-                              Expr **Args, unsigned NumArgs,
+                              ArrayRef<Expr *> Args,
                               OverloadCandidateSet& CandidateSet,
                               bool SuppressUserConversions) {
   NamedDecl *Decl = FoundDecl.getDecl();
@@ -5491,12 +5491,12 @@ void Sema::AddMethodCandidate(DeclAccessPair FoundDecl,
     AddMethodTemplateCandidate(TD, FoundDecl, ActingContext,
                                /*ExplicitArgs*/ 0,
                                ObjectType, ObjectClassification,
-                               llvm::makeArrayRef(Args, NumArgs), CandidateSet,
+                               Args, CandidateSet,
                                SuppressUserConversions);
   } else {
     AddMethodCandidate(cast<CXXMethodDecl>(Decl), FoundDecl, ActingContext,
                        ObjectType, ObjectClassification,
-                       llvm::makeArrayRef(Args, NumArgs),
+                       Args,
                        CandidateSet, SuppressUserConversions);
   }
 }
@@ -6038,7 +6038,8 @@ void Sema::AddMemberOperatorCandidates(OverloadedOperatorKind Op,
          Oper != OperEnd;
          ++Oper)
       AddMethodCandidate(Oper.getPair(), Args[0]->getType(),
-                         Args[0]->Classify(Context), Args + 1, NumArgs - 1,
+                         Args[0]->Classify(Context), 
+                         llvm::makeArrayRef(Args + 1, NumArgs -1),
                          CandidateSet,
                          /* SuppressUserConversions = */ false);
   }
@@ -10986,7 +10987,8 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   for (LookupResult::iterator Oper = R.begin(), OperEnd = R.end();
        Oper != OperEnd; ++Oper) {
     AddMethodCandidate(Oper.getPair(), Object.get()->getType(),
-                       Object.get()->Classify(Context), Args, NumArgs, CandidateSet,
+                       Object.get()->Classify(Context), 
+                       llvm::makeArrayRef(Args, NumArgs), CandidateSet,
                        /*SuppressUserConversions=*/ false);
   }
 
@@ -11278,7 +11280,8 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
   for (LookupResult::iterator Oper = R.begin(), OperEnd = R.end();
        Oper != OperEnd; ++Oper) {
     AddMethodCandidate(Oper.getPair(), Base->getType(), Base->Classify(Context),
-                       0, 0, CandidateSet, /*SuppressUserConversions=*/false);
+                       ArrayRef<Expr *>(), CandidateSet, 
+                       /*SuppressUserConversions=*/false);
   }
 
   bool HadMultipleCandidates = (CandidateSet.size() > 1);

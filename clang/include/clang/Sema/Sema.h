@@ -2011,7 +2011,7 @@ public:
   void AddMethodCandidate(DeclAccessPair FoundDecl,
                           QualType ObjectType,
                           Expr::Classification ObjectClassification,
-                          Expr **Args, unsigned NumArgs,
+                          ArrayRef<Expr *> Args,
                           OverloadCandidateSet& CandidateSet,
                           bool SuppressUserConversion = false);
   void AddMethodCandidate(CXXMethodDecl *Method,
