@@ -1259,43 +1259,41 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
   Sema::ContextRAII GlobalSavedContext(Actions, Actions.CurContext);
 
   SmallVector<ParseScope*, 4> TemplateParamScopeStack;
-  DeclaratorDecl* Declarator = dyn_cast<DeclaratorDecl>(FD);
-  if (Declarator && Declarator->getNumTemplateParameterLists() != 0) {
-    TemplateParamScopeStack.push_back(new ParseScope(this, Scope::TemplateParamScope));
-    Actions.ActOnReenterDeclaratorTemplateScope(getCurScope(), Declarator);
-    Actions.ActOnReenterTemplateScope(getCurScope(), LMT.D);
-  } else {
-    // Get the list of DeclContext to reenter.
-    SmallVector<DeclContext*, 4> DeclContextToReenter;
-    DeclContext *DD = FD->getLexicalParent();
-    while (DD && !DD->isTranslationUnit()) {
-      DeclContextToReenter.push_back(DD);
-      DD = DD->getLexicalParent();
-    }
 
-    // Reenter template scopes from outmost to innermost.
-    SmallVector<DeclContext*, 4>::reverse_iterator II =
-    DeclContextToReenter.rbegin();
-    for (; II != DeclContextToReenter.rend(); ++II) {
-      if (ClassTemplatePartialSpecializationDecl* MD =
-                dyn_cast_or_null<ClassTemplatePartialSpecializationDecl>(*II)) {
-        TemplateParamScopeStack.push_back(new ParseScope(this,
-                                                   Scope::TemplateParamScope));
-        Actions.ActOnReenterTemplateScope(getCurScope(), MD);
-      } else if (CXXRecordDecl* MD = dyn_cast_or_null<CXXRecordDecl>(*II)) {
-        TemplateParamScopeStack.push_back(new ParseScope(this,
-                                                    Scope::TemplateParamScope,
-                                       MD->getDescribedClassTemplate() != 0 ));
-        Actions.ActOnReenterTemplateScope(getCurScope(),
-                                          MD->getDescribedClassTemplate());
-      }
-      TemplateParamScopeStack.push_back(new ParseScope(this, Scope::DeclScope));
-      Actions.PushDeclContext(Actions.getCurScope(), *II);
-    }
-    TemplateParamScopeStack.push_back(new ParseScope(this,
-                                      Scope::TemplateParamScope));
-    Actions.ActOnReenterTemplateScope(getCurScope(), LMT.D);
+  // Get the list of DeclContexts to reenter.
+  SmallVector<DeclContext*, 4> DeclContextsToReenter;
+  DeclContext *DD = FD->getLexicalParent();
+  while (DD && !DD->isTranslationUnit()) {
+    DeclContextsToReenter.push_back(DD);
+    DD = DD->getLexicalParent();
   }
+
+  // Reenter template scopes from outermost to innermost.
+  SmallVector<DeclContext*, 4>::reverse_iterator II =
+      DeclContextsToReenter.rbegin();
+  for (; II != DeclContextsToReenter.rend(); ++II) {
+    if (ClassTemplatePartialSpecializationDecl *MD =
+            dyn_cast_or_null<ClassTemplatePartialSpecializationDecl>(*II)) {
+      TemplateParamScopeStack.push_back(
+          new ParseScope(this, Scope::TemplateParamScope));
+      Actions.ActOnReenterTemplateScope(getCurScope(), MD);
+    } else if (CXXRecordDecl *MD = dyn_cast_or_null<CXXRecordDecl>(*II)) {
+      bool ManageScope = MD->getDescribedClassTemplate() != 0;
+      TemplateParamScopeStack.push_back(
+          new ParseScope(this, Scope::TemplateParamScope, ManageScope));
+      Actions.ActOnReenterTemplateScope(getCurScope(),
+                                        MD->getDescribedClassTemplate());
+    }
+    TemplateParamScopeStack.push_back(new ParseScope(this, Scope::DeclScope));
+    Actions.PushDeclContext(Actions.getCurScope(), *II);
+  }
+  TemplateParamScopeStack.push_back(
+      new ParseScope(this, Scope::TemplateParamScope));
+
+  DeclaratorDecl *Declarator = dyn_cast<DeclaratorDecl>(FD);
+  if (Declarator && Declarator->getNumTemplateParameterLists() != 0)
+    Actions.ActOnReenterDeclaratorTemplateScope(getCurScope(), Declarator);
+  Actions.ActOnReenterTemplateScope(getCurScope(), LMT.D);
 
   assert(!LMT.Toks.empty() && "Empty body!");
 

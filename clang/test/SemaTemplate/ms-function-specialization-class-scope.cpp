@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fms-extensions -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fms-extensions -fdelayed-template-parsing -fsyntax-only -verify %s
 
 
 class A {
