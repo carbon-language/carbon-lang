@@ -241,7 +241,8 @@ public:
   virtual void push_back(const T *element) {
     _atoms.push_back(element);
   }
-  std::vector<const T*>   _atoms;
+  virtual uint64_t size() const { return _atoms.size(); }
+  std::vector<const T *> _atoms;
 };
 
 /// Mapping of kind: field in yaml files.
@@ -301,11 +302,11 @@ struct ScalarTraits<RefKind> {
     default:
       if (auto relocStr = info->_targetInfo.stringFromRelocKind(value))
         out << *relocStr;
-      else 
+      else
         out << "<unknown>";
       break;
     }
-  } 
+  }
 
   static StringRef input(StringRef scalar, void *ctxt, RefKind &value) {
     assert(ctxt != nullptr);

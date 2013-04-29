@@ -104,6 +104,7 @@ public:
     virtual atom_iterator<T> end() const = 0;
     virtual const T *deref(const void *it) const = 0;
     virtual void next(const void *&it) const = 0;
+    virtual uint64_t size() const = 0;
   };
 
   /// \brief The class is the iterator type used to iterate through a File's
@@ -185,6 +186,8 @@ protected:
       it = reinterpret_cast<const void*>(p);
     }
 
+    virtual uint64_t size() const { return _atoms.size(); }
+
     std::vector<const T *> _atoms;
   };
 
@@ -207,6 +210,7 @@ protected:
     virtual void push_back(const T *element) {
       llvm_unreachable("empty collection should never be grown");
     }
+    virtual uint64_t size() const { return 0; }
   };
 
   static atom_collection_empty<DefinedAtom>       _noDefinedAtoms;

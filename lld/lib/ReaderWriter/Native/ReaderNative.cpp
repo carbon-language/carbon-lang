@@ -758,8 +758,9 @@ private:
       p += _elementSize;
       it = reinterpret_cast<const void*>(p);
     }
-    const uint8_t*     _arrayStart;
-    const uint8_t*     _arrayEnd;
+    virtual uint64_t size() const { return _elementCount; }
+    const uint8_t *_arrayStart;
+    const uint8_t *_arrayEnd;
     uint32_t           _elementSize;
     uint32_t           _elementCount;
   };
