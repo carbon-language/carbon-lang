@@ -26,7 +26,8 @@
 ; 21 }
 
 ; CHECK: _Z4testi.exit:
-; Make sure the branch instruction created during inlining has a debug location
+; Make sure the branch instruction created during inlining has a debug location,
+; so the range of the inlined function is correct.
 ; CHECK: br label %invoke.cont, !dbg ![[MD:[0-9]+]]
 ; The branch instruction has the source location of line 9 and its inlined location
 ; has the source location of line 14.
