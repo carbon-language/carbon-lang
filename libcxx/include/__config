@@ -423,7 +423,7 @@ template <unsigned> struct __static_assert_check {};
 #endif
 
 #ifdef __GNUC__
-#define _NOALIAS __attribute__((malloc))
+#define _NOALIAS __attribute__((__malloc__))
 #else
 #define _NOALIAS
 #endif
