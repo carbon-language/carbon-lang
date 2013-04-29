@@ -686,16 +686,8 @@ File Bug</h3>
         if components[-1] == '':
             components[-1] = 'index.html'
 
-        suffix = '/'.join(components)
-
-        # The summary may reference source files on disk using rooted
-        # paths. Make sure these resolve correctly for now.
-        # FIXME: This isn't a very good idea... we should probably
-        # mark rooted paths somehow.        
-        if os.path.exists(posixpath.join('/', suffix)):
-            path = posixpath.join('/', suffix)
-        else:
-            path = posixpath.join(self.server.root, suffix)
+        relpath = '/'.join(components)
+        path = posixpath.join(self.server.root, relpath)
 
         if self.server.options.debug > 1:
             print >>sys.stderr, '%s: SERVER: sending path "%s"'%(sys.argv[0],
@@ -708,8 +700,8 @@ File Bug</h3>
 
     def send_path(self, path):
         # If the requested path is outside the root directory, do not open it
-        rel = os.path.abspath(os.path.join(self.server.root, path))
-        if not rel.startswith(os.path.abspath(self.server.root) ):
+        rel = os.path.abspath(path)
+        if not rel.startswith(os.path.abspath(self.server.root)):
           return self.send_404()
         
         ctype = self.guess_type(path)
