@@ -1254,6 +1254,11 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
     return true;
   }
 
+  if (GV->getName() == "llvm.tls_init_funcs") {
+    EmitTLSInitFuncs(cast<ConstantArray>(GV->getInitializer()));
+    return true;
+  }
+
   return false;
 }
 
@@ -1318,6 +1323,16 @@ void AsmPrinter::EmitXXStructorList(const Constant *List, bool isCtor) {
       EmitAlignment(Align);
     EmitXXStructor(Structors[i].second);
   }
+}
+
+/// EmitTLSInitFuncs - Emit the TLS initialization functions.
+void AsmPrinter::EmitTLSInitFuncs(const ConstantArray *InitList) {
+  const DataLayout *TD = TM.getDataLayout();
+  OutStreamer.SwitchSection(getObjFileLowering().getTLSThreadInitSection());
+  EmitAlignment(Log2_32(TD->getPointerPrefAlignment()));
+  for (unsigned I = 0, E = InitList->getNumOperands(); I != E; ++I)
+    EmitGlobalConstant(
+      dyn_cast<Constant>(InitList->getOperand(I)->stripPointerCasts()));
 }
 
 //===--------------------------------------------------------------------===//
