@@ -135,10 +135,16 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
 ///    targetAtoms and its tree to the current chain
 void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
   ScopedTask task(getDefaultDomain(), "LayoutPass::buildFollowOnTable");
+  // Set the initial size of the followon and
+  // the followonNext hash to the number of atoms
+  // that we have
+  _followOnRoots.resize(range.size());
+  _followOnNexts.resize(range.size());
   for (auto ai : range) {
     for (const Reference *r : *ai) {
       if (r->kind() == lld::Reference::kindLayoutAfter) {
-        const DefinedAtom *targetAtom = llvm::dyn_cast<DefinedAtom>(r->target());
+        const DefinedAtom *targetAtom =
+            llvm::dyn_cast<DefinedAtom>(r->target());
         _followOnNexts[ai] = targetAtom;
         // If we find a followon for the first time, lets make that
         // atom as the root atom
@@ -441,32 +447,31 @@ void LayoutPass::perform(MutableFile &mergedFile) {
   // Build override maps
   buildOrdinalOverrideMap(atomRange);
 
-  DEBUG_WITH_TYPE("layout", { 
+  DEBUG_WITH_TYPE("layout", {
     llvm::dbgs() << "unsorted atoms:\n";
     for (const DefinedAtom *atom : atomRange) {
-      llvm::dbgs()  << "  file=" << atom->file().path()
-                    << ", name=" << atom->name()
-                    << ", size=" << atom->size()
-                    << ", type=" << atom->contentType()
-                    << ", ordinal=" << atom->ordinal()
-                    << "\n";
+      llvm::dbgs() << "  file=" << atom->file().path()
+                   << ", name=" << atom->name()
+                   << ", size=" << atom->size()
+                   << ", type=" << atom->contentType()
+                   << ", ordinal=" << atom->ordinal()
+                   << "\n";
     }
   });
-  
+
   // sort the atoms
   std::sort(atomRange.begin(), atomRange.end(), _compareAtoms);
-  
-  DEBUG_WITH_TYPE("layout", { 
+
+  DEBUG_WITH_TYPE("layout", {
     llvm::dbgs() << "sorted atoms:\n";
     for (const DefinedAtom *atom : atomRange) {
-      llvm::dbgs()  << "  file=" << atom->file().path()
-                    << ", name=" << atom->name()
-                    << ", size=" << atom->size()
-                    << ", type=" << atom->contentType()
-                    << ", ordinal=" << atom->ordinal()
-                    << "\n";
+      llvm::dbgs() << "  file=" << atom->file().path()
+                   << ", name=" << atom->name()
+                   << ", size=" << atom->size()
+                   << ", type=" << atom->contentType()
+                   << ", ordinal=" << atom->ordinal()
+                   << "\n";
     }
   });
-  
 
 }
