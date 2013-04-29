@@ -40,16 +40,10 @@ public:
     bool
     IsValid () const;
 
-    Thread &
-    GetThread()
-    {
-        return m_thread;
-    }
-
-    const Thread &
+    lldb::ThreadSP
     GetThread() const
     {
-        return m_thread;
+        return m_thread_wp.lock();
     }
 
     // The value of the StopInfo depends on the StopReason.
@@ -184,7 +178,7 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from StackID can see and modify these
     //------------------------------------------------------------------
-    Thread &        m_thread;   // The thread corresponding to the stop reason.
+    lldb::ThreadWP  m_thread_wp;   // The thread corresponding to the stop reason.
     uint32_t        m_stop_id;  // The process stop ID for which this stop info is valid
     uint32_t        m_resume_id; // This is the resume ID when we made this stop ID.
     uint64_t        m_value;    // A generic value that can be used for things pertaining to this stop info

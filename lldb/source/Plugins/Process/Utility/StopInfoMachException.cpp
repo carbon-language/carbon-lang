@@ -34,7 +34,7 @@ StopInfoMachException::GetDescription ()
 {
     if (m_description.empty() && m_value != 0)
     {
-        ExecutionContext exe_ctx (m_thread.shared_from_this());
+        ExecutionContext exe_ctx (m_thread_wp.lock());
         Target *target = exe_ctx.GetTargetPtr();
         const llvm::Triple::ArchType cpu = target ? target->GetArchitecture().GetMachine() : llvm::Triple::UnknownArch;
 
