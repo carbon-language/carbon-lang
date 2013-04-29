@@ -61,12 +61,12 @@ void TextPathDiagnostics::FlushDiagnosticsImpl(
     const PathDiagnostic *D = *it;
 
     PathPieces FlatPath = D->path.flatten(/*ShouldFlattenMacros=*/true);
-    for (PathPieces::iterator I = FlatPath.begin(), E = FlatPath.end(); 
+    for (PathPieces::const_iterator I = FlatPath.begin(), E = FlatPath.end(); 
          I != E; ++I) {
       unsigned diagID =
         Diag.getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Note,
-                                                 I->getString());
-      Diag.Report(I->getLocation().asLocation(), diagID);
+                                                 (*I)->getString());
+      Diag.Report((*I)->getLocation().asLocation(), diagID);
     }
   }
 }
