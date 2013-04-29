@@ -906,6 +906,7 @@ class CF_WORD1_EG {
   let Word1{9-8} = COND;
   let Word1{15-10} = COUNT;
   let Word1{20} = VALID_PIXEL_MODE;
+  let Word1{21} = END_OF_PROGRAM;
   let Word1{29-22} = CF_INST;
   let Word1{31} = BARRIER;
 }
