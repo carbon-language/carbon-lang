@@ -11,7 +11,6 @@ CLANG_LEVEL := ../../../..
 include $(CLANG_LEVEL)/../../Makefile.config
 
 TOOLNAME = cpp11-migrate
-NO_INSTALL = 1
 
 # No plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
