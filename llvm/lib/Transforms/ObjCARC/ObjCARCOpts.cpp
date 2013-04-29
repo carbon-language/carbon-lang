@@ -303,6 +303,14 @@ STATISTIC(NumRets,        "Number of return value forwarding "
                           "retain+autoreleaes eliminated");
 STATISTIC(NumRRs,         "Number of retain+release paths eliminated");
 STATISTIC(NumPeeps,       "Number of calls peephole-optimized");
+STATISTIC(NumRetainsBeforeOpt,
+          "Number of retains before optimization.");
+STATISTIC(NumReleasesBeforeOpt,
+          "Number of releases before optimization.");
+STATISTIC(NumRetainsAfterOpt,
+          "Number of retains after optimization.");
+STATISTIC(NumReleasesAfterOpt,
+          "Number of releases after optimization.");
 
 namespace {
   /// \enum Sequence
@@ -1093,6 +1101,10 @@ namespace {
 
     void OptimizeReturns(Function &F);
 
+#ifndef NDEBUG
+    void GatherStatistics(Function &F, bool AfterOptimization = false);
+#endif
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual bool doInitialization(Module &M);
     virtual bool runOnFunction(Function &F);
@@ -1480,6 +1492,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
         break;
       // FALLTHROUGH
     case IC_Retain:
+      ++NumRetainsBeforeOpt;
       OptimizeRetainCall(F, Inst);
       break;
     case IC_RetainRV:
@@ -1488,6 +1501,9 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
       break;
     case IC_AutoreleaseRV:
       OptimizeAutoreleaseRVCall(F, Inst, Class);
+      break;
+    case IC_Release:
+      ++NumReleasesBeforeOpt;
       break;
     }
 
@@ -3006,6 +3022,30 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
   }
 }
 
+#ifndef NDEBUG
+void
+ObjCARCOpt::GatherStatistics(Function &F, bool AfterOptimization) {
+  llvm::Statistic &NumRetains =
+    AfterOptimization? NumRetainsAfterOpt : NumRetainsBeforeOpt;
+  llvm::Statistic &NumReleases =
+    AfterOptimization? NumReleasesAfterOpt : NumReleasesBeforeOpt;
+
+  for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ) {
+    Instruction *Inst = &*I++;
+    switch (GetBasicInstructionClass(Inst)) {
+    default:
+      break;
+    case IC_Retain:
+      ++NumRetains;
+      break;
+    case IC_Release:
+      ++NumReleases;
+      break;
+    }
+  }
+}
+#endif
+
 bool ObjCARCOpt::doInitialization(Module &M) {
   if (!EnableARCOpts)
     return false;
@@ -3091,6 +3131,13 @@ bool ObjCARCOpt::runOnFunction(Function &F) {
   if (UsedInThisFunction & ((1 << IC_Autorelease) |
                             (1 << IC_AutoreleaseRV)))
     OptimizeReturns(F);
+
+  // Gather statistics after optimization.
+#ifndef NDEBUG
+  if (AreStatisticsEnabled()) {
+    GatherStatistics(F, true);
+  }
+#endif
 
   DEBUG(dbgs() << "\n");
 
