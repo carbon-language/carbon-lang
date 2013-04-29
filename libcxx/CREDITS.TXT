@@ -74,6 +74,10 @@ D: Implemented Cityhash as the string hash function on 64-bit machines
 N: Richard Smith
 D: Minor patches.
 
+N: Joerg Sonnenberger
+E: joerg@NetBSD.org
+D: NetBSD port.
+
 N: Michael van der Westhuizen
 E: r1mikey at gmail dot com
 
