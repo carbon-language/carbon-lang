@@ -278,8 +278,11 @@ void Parser::LateParsedMemberInitializer::ParseLexedMemberInitializers() {
 void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
   bool HasTemplateScope = !Class.TopLevelClass && Class.TemplateScope;
   ParseScope ClassTemplateScope(this, Scope::TemplateParamScope, HasTemplateScope);
-  if (HasTemplateScope)
+  TemplateParameterDepthRAII CurTemplateDepthTracker(TemplateParameterDepth);
+  if (HasTemplateScope) {
     Actions.ActOnReenterTemplateScope(getCurScope(), Class.TagOrTemplate);
+    ++CurTemplateDepthTracker;
+  }
 
   // The current scope is still active if we're the top-level class.
   // Otherwise we'll need to push and enter a new scope.
@@ -300,9 +303,11 @@ void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
 void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
   // If this is a member template, introduce the template parameter scope.
   ParseScope TemplateScope(this, Scope::TemplateParamScope, LM.TemplateScope);
-  if (LM.TemplateScope)
+  TemplateParameterDepthRAII CurTemplateDepthTracker(TemplateParameterDepth);
+  if (LM.TemplateScope) {
     Actions.ActOnReenterTemplateScope(getCurScope(), LM.Method);
-
+    ++CurTemplateDepthTracker;
+  }
   // Start the delayed C++ method declaration
   Actions.ActOnStartDelayedCXXMethodDeclaration(getCurScope(), LM.Method);
 
@@ -378,9 +383,11 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
 void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
   bool HasTemplateScope = !Class.TopLevelClass && Class.TemplateScope;
   ParseScope ClassTemplateScope(this, Scope::TemplateParamScope, HasTemplateScope);
-  if (HasTemplateScope)
+  TemplateParameterDepthRAII CurTemplateDepthTracker(TemplateParameterDepth);
+  if (HasTemplateScope) {
     Actions.ActOnReenterTemplateScope(getCurScope(), Class.TagOrTemplate);
-
+    ++CurTemplateDepthTracker;
+  }
   bool HasClassScope = !Class.TopLevelClass;
   ParseScope ClassScope(this, Scope::ClassScope|Scope::DeclScope,
                         HasClassScope);
@@ -393,9 +400,11 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
 void Parser::ParseLexedMethodDef(LexedMethod &LM) {
   // If this is a member template, introduce the template parameter scope.
   ParseScope TemplateScope(this, Scope::TemplateParamScope, LM.TemplateScope);
-  if (LM.TemplateScope)
+  TemplateParameterDepthRAII CurTemplateDepthTracker(TemplateParameterDepth);
+  if (LM.TemplateScope) {
     Actions.ActOnReenterTemplateScope(getCurScope(), LM.D);
-
+    ++CurTemplateDepthTracker;
+  }
   // Save the current token position.
   SourceLocation origLoc = Tok.getLocation();
 
@@ -440,6 +449,13 @@ void Parser::ParseLexedMethodDef(LexedMethod &LM) {
   } else
     Actions.ActOnDefaultCtorInitializers(LM.D);
 
+  assert((Actions.getDiagnostics().hasErrorOccurred() ||
+          !isa<FunctionTemplateDecl>(LM.D) ||
+          cast<FunctionTemplateDecl>(LM.D)->getTemplateParameters()->getDepth()
+            < TemplateParameterDepth) &&
+         "TemplateParameterDepth should be greater than the depth of "
+         "current template being instantiated!");
+
   ParseFunctionStatementBody(LM.D, FnScope);
 
   // Clear the late-template-parsed bit if we set it before.
@@ -465,9 +481,11 @@ void Parser::ParseLexedMemberInitializers(ParsingClass &Class) {
   bool HasTemplateScope = !Class.TopLevelClass && Class.TemplateScope;
   ParseScope ClassTemplateScope(this, Scope::TemplateParamScope,
                                 HasTemplateScope);
-  if (HasTemplateScope)
+  TemplateParameterDepthRAII CurTemplateDepthTracker(TemplateParameterDepth);
+  if (HasTemplateScope) {
     Actions.ActOnReenterTemplateScope(getCurScope(), Class.TagOrTemplate);
-
+    ++CurTemplateDepthTracker;
+  }
   // Set or update the scope flags.
   bool AlreadyHasClassScope = Class.TopLevelClass;
   unsigned ScopeFlags = Scope::ClassScope|Scope::DeclScope;

@@ -39,28 +39,7 @@ Parser::ParseDeclarationStartingWithTemplate(unsigned Context,
                                                   AccessAttrs);
 }
 
-/// \brief RAII class that manages the template parameter depth.
-namespace {
-  class TemplateParameterDepthCounter {
-    unsigned &Depth;
-    unsigned AddedLevels;
 
-  public:
-    explicit TemplateParameterDepthCounter(unsigned &Depth)
-      : Depth(Depth), AddedLevels(0) { }
-
-    ~TemplateParameterDepthCounter() {
-      Depth -= AddedLevels;
-    }
-
-    void operator++() {
-      ++Depth;
-      ++AddedLevels;
-    }
-
-    operator unsigned() const { return Depth; }
-  };
-}
 
 /// \brief Parse a template declaration or an explicit specialization.
 ///
@@ -117,7 +96,8 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
   bool isSpecialization = true;
   bool LastParamListWasEmpty = false;
   TemplateParameterLists ParamLists;
-  TemplateParameterDepthCounter Depth(TemplateParameterDepth);
+  TemplateParameterDepthRAII CurTemplateDepthTracker(TemplateParameterDepth);
+
   do {
     // Consume the 'export', if any.
     SourceLocation ExportLoc;
@@ -137,8 +117,8 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
     // Parse the '<' template-parameter-list '>'
     SourceLocation LAngleLoc, RAngleLoc;
     SmallVector<Decl*, 4> TemplateParams;
-    if (ParseTemplateParameters(Depth, TemplateParams, LAngleLoc,
-                                RAngleLoc)) {
+    if (ParseTemplateParameters(CurTemplateDepthTracker.getDepth(),
+                                TemplateParams, LAngleLoc, RAngleLoc)) {
       // Skip until the semi-colon or a }.
       SkipUntil(tok::r_brace, true, true);
       if (Tok.is(tok::semi))
@@ -147,14 +127,15 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
     }
 
     ParamLists.push_back(
-      Actions.ActOnTemplateParameterList(Depth, ExportLoc,
+      Actions.ActOnTemplateParameterList(CurTemplateDepthTracker.getDepth(), 
+                                         ExportLoc,
                                          TemplateLoc, LAngleLoc,
                                          TemplateParams.data(),
                                          TemplateParams.size(), RAngleLoc));
 
     if (!TemplateParams.empty()) {
       isSpecialization = false;
-      ++Depth;
+      ++CurTemplateDepthTracker;
     } else {
       LastParamListWasEmpty = true;
     }
@@ -1249,11 +1230,11 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
      return;
 
   // Get the FunctionDecl.
-  FunctionDecl *FD = 0;
-  if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(LMT.D))
-    FD = FunTmpl->getTemplatedDecl();
-  else
-    FD = cast<FunctionDecl>(LMT.D);
+  FunctionTemplateDecl *FunTmplD = dyn_cast<FunctionTemplateDecl>(LMT.D);
+  FunctionDecl *FunD =
+      FunTmplD ? FunTmplD->getTemplatedDecl() : cast<FunctionDecl>(LMT.D);
+  // Track template parameter depth.
+  TemplateParameterDepthRAII CurTemplateDepthTracker(TemplateParameterDepth);
 
   // To restore the context after late parsing.
   Sema::ContextRAII GlobalSavedContext(Actions, Actions.CurContext);
@@ -1262,7 +1243,7 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
 
   // Get the list of DeclContexts to reenter.
   SmallVector<DeclContext*, 4> DeclContextsToReenter;
-  DeclContext *DD = FD->getLexicalParent();
+  DeclContext *DD = FunD->getLexicalParent();
   while (DD && !DD->isTranslationUnit()) {
     DeclContextsToReenter.push_back(DD);
     DD = DD->getLexicalParent();
@@ -1277,12 +1258,14 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
       TemplateParamScopeStack.push_back(
           new ParseScope(this, Scope::TemplateParamScope));
       Actions.ActOnReenterTemplateScope(getCurScope(), MD);
+      ++CurTemplateDepthTracker;
     } else if (CXXRecordDecl *MD = dyn_cast_or_null<CXXRecordDecl>(*II)) {
       bool ManageScope = MD->getDescribedClassTemplate() != 0;
       TemplateParamScopeStack.push_back(
           new ParseScope(this, Scope::TemplateParamScope, ManageScope));
       Actions.ActOnReenterTemplateScope(getCurScope(),
                                         MD->getDescribedClassTemplate());
+      ++CurTemplateDepthTracker;
     }
     TemplateParamScopeStack.push_back(new ParseScope(this, Scope::DeclScope));
     Actions.PushDeclContext(Actions.getCurScope(), *II);
@@ -1290,10 +1273,13 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
   TemplateParamScopeStack.push_back(
       new ParseScope(this, Scope::TemplateParamScope));
 
-  DeclaratorDecl *Declarator = dyn_cast<DeclaratorDecl>(FD);
-  if (Declarator && Declarator->getNumTemplateParameterLists() != 0)
+  DeclaratorDecl *Declarator = dyn_cast<DeclaratorDecl>(FunD);
+  if (Declarator && Declarator->getNumTemplateParameterLists() != 0) {
     Actions.ActOnReenterDeclaratorTemplateScope(getCurScope(), Declarator);
+    ++CurTemplateDepthTracker;
+  }
   Actions.ActOnReenterTemplateScope(getCurScope(), LMT.D);
+  ++CurTemplateDepthTracker;
 
   assert(!LMT.Toks.empty() && "Empty body!");
 
@@ -1312,15 +1298,9 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
   ParseScope FnScope(this, Scope::FnScope|Scope::DeclScope);
 
   // Recreate the containing function DeclContext.
-  Sema::ContextRAII FunctionSavedContext(Actions, Actions.getContainingDC(FD));
+  Sema::ContextRAII FunctionSavedContext(Actions, Actions.getContainingDC(FunD));
 
-  if (FunctionTemplateDecl *FunctionTemplate
-        = dyn_cast_or_null<FunctionTemplateDecl>(LMT.D))
-    Actions.ActOnStartOfFunctionDef(getCurScope(),
-                                   FunctionTemplate->getTemplatedDecl());
-  if (FunctionDecl *Function = dyn_cast_or_null<FunctionDecl>(LMT.D))
-    Actions.ActOnStartOfFunctionDef(getCurScope(), Function);
-
+  Actions.ActOnStartOfFunctionDef(getCurScope(), FunD);
 
   if (Tok.is(tok::kw_try)) {
     ParseFunctionTryBlock(LMT.D, FnScope);
@@ -1331,8 +1311,12 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
       Actions.ActOnDefaultCtorInitializers(LMT.D);
 
     if (Tok.is(tok::l_brace)) {
+      assert((!FunTmplD || FunTmplD->getTemplateParameters()->getDepth() <
+                               TemplateParameterDepth) &&
+             "TemplateParameterDepth should be greater than the depth of "
+             "current template being instantiated!");
       ParseFunctionStatementBody(LMT.D, FnScope);
-      Actions.MarkAsLateParsedTemplate(FD, false);
+      Actions.MarkAsLateParsedTemplate(FunD, false);
     } else
       Actions.ActOnFinishFunctionBody(LMT.D, 0);
   }

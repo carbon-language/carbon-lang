@@ -172,6 +172,25 @@ class Parser : public CodeCompletionHandler {
   /// The "depth" of the template parameters currently being parsed.
   unsigned TemplateParameterDepth;
 
+  /// \brief RAII class that manages the template parameter depth.
+  class TemplateParameterDepthRAII {
+    unsigned &Depth;
+    unsigned AddedLevels;
+  public:
+    explicit TemplateParameterDepthRAII(unsigned &Depth)
+      : Depth(Depth), AddedLevels(0) {}
+
+    ~TemplateParameterDepthRAII() {
+      Depth -= AddedLevels;
+    }
+
+    void operator++() {
+      ++Depth;
+      ++AddedLevels;
+    }
+    unsigned getDepth() const { return Depth; }
+  };
+
   /// Factory object for creating AttributeList objects.
   AttributeFactory AttrFactory;
 
