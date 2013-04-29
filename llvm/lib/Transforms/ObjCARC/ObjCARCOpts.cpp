@@ -2584,7 +2584,8 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
   
 #ifdef ARC_ANNOTATIONS
   // Do not move calls if ARC annotations are requested.
-  return false;
+  if (EnableARCAnnotations)
+    return false;
 #endif // ARC_ANNOTATIONS
 
   Changed = true;
