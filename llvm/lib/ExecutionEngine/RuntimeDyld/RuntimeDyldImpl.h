@@ -271,12 +271,8 @@ protected:
   void resolveRelocationList(const RelocationList &Relocs, uint64_t Value);
 
   /// \brief A object file specific relocation resolver
-  /// \param Section The section where the relocation is being applied
-  /// \param Offset The offset into the section for this relocation
+  /// \param RE The relocation to be resolved
   /// \param Value Target symbol address to apply the relocation action
-  /// \param Type object file specific relocation type
-  /// \param Addend A constant addend used to compute the value to be stored
-  ///        into the relocatable field
   virtual void resolveRelocation(const RelocationEntry &RE, uint64_t Value) = 0;
 
   /// \brief Parses the object file relocation and stores it to Relocations
