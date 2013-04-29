@@ -182,6 +182,7 @@ void CodeGenModule::Release() {
       AddGlobalCtor(ObjCInitFunction);
   EmitCtorList(GlobalCtors, "llvm.global_ctors");
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
+  EmitTLSList(TLSInitFuncs);
   EmitGlobalAnnotations();
   EmitStaticExternCAliases();
   EmitLLVMUsed();
@@ -479,6 +480,12 @@ void CodeGenModule::AddGlobalDtor(llvm::Function * Dtor, int Priority) {
   GlobalDtors.push_back(std::make_pair(Dtor, Priority));
 }
 
+/// AddTLSInitFunc - Add a function to the list that will initialize TLS
+/// variables before main() runs.
+void CodeGenModule::AddTLSInitFunc(llvm::Function *Init) {
+  TLSInitFuncs.push_back(Init);
+}
+
 void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
   // Ctor function type is void()*.
   llvm::FunctionType* CtorFTy = llvm::FunctionType::get(VoidTy, false);
@@ -505,6 +512,25 @@ void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
                              llvm::ConstantArray::get(AT, Ctors),
                              GlobalName);
   }
+}
+
+void CodeGenModule::EmitTLSList(ArrayRef<llvm::Constant*> Fns) {
+  if (Fns.empty()) return;
+
+  // TLS init function types are void()*.
+  llvm::FunctionType* TLSFTy = llvm::FunctionType::get(VoidTy, false);
+  llvm::Type *TLSPFTy = llvm::PointerType::getUnqual(TLSFTy);
+
+  SmallVector<llvm::Constant*, 8> Inits;
+  for (ArrayRef<llvm::Constant*>::iterator I = Fns.begin(),
+         E = Fns.end(); I != E; ++I)
+    Inits.push_back(llvm::ConstantExpr::getBitCast(*I, TLSPFTy));
+
+  llvm::ArrayType *AT = llvm::ArrayType::get(TLSPFTy, Inits.size());
+  new llvm::GlobalVariable(TheModule, AT, false,
+                           llvm::GlobalValue::AppendingLinkage,
+                           llvm::ConstantArray::get(AT, Inits),
+                           "llvm.tls_init_funcs");
 }
 
 llvm::GlobalValue::LinkageTypes

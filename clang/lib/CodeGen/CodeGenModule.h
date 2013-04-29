@@ -293,6 +293,10 @@ class CodeGenModule : public CodeGenTypeCache {
   /// priorities to be emitted when the translation unit is complete.
   CtorList GlobalDtors;
 
+  /// TLSInitFuncs - Store the list of TLS initialization functions toe be
+  /// emitted with the translation unit is complete.
+  std::vector<llvm::Constant*> TLSInitFuncs;
+
   /// MangledDeclNames - A map of canonical GlobalDecls to their mangled names.
   llvm::DenseMap<GlobalDecl, StringRef> MangledDeclNames;
   llvm::BumpPtrAllocator MangledNamesAllocator;
@@ -1053,10 +1057,17 @@ private:
   void AddGlobalCtor(llvm::Function *Ctor, int Priority=65535);
   void AddGlobalDtor(llvm::Function *Dtor, int Priority=65535);
 
+  void AddTLSInitFunc(llvm::Function *Init);
+
   /// EmitCtorList - Generates a global array of functions and priorities using
   /// the given list and name. This array will have appending linkage and is
   /// suitable for use as a LLVM constructor or destructor array.
   void EmitCtorList(const CtorList &Fns, const char *GlobalName);
+
+  /// EmitTLSList - Generates a global array of functions with the name
+  /// `llvm.tls_init_funcs'. This array will have appending linkage and is meant
+  /// to hold initialization functions for TLS variables.
+  void EmitTLSList(ArrayRef<llvm::Constant*> Fns);
 
   /// EmitFundamentalRTTIDescriptor - Emit the RTTI descriptors for the
   /// given type.

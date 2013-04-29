@@ -304,6 +304,7 @@ void CodeGenModule::EmitCXXThreadLocalInitFunc() {
     Guard->setThreadLocal(true);
     CodeGenFunction(*this)
         .GenerateCXXGlobalInitFunc(InitFn, CXXThreadLocalInits, Guard);
+    AddTLSInitFunc(InitFn);
   }
 
   getCXXABI().EmitThreadLocalInitFuncs(CXXThreadLocals, InitFn);
