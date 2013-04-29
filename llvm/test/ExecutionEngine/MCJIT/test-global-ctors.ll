@@ -1,4 +1,5 @@
 ; RUN: %lli_mcjit %s > /dev/null
+; XFAIL: darwin
 @var = global i32 1, align 4
 @llvm.global_ctors = appending global [1 x { i32, void ()* }] [{ i32, void ()* } { i32 65535, void ()* @ctor_func }]
 @llvm.global_dtors = appending global [1 x { i32, void ()* }] [{ i32, void ()* } { i32 65535, void ()* @dtor_func }]

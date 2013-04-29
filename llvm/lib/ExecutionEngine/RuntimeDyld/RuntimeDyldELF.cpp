@@ -560,6 +560,12 @@ void RuntimeDyldELF::resolvePPC64Relocation(const SectionEntry &Section,
   }
 }
 
+void RuntimeDyldELF::resolveRelocation(const RelocationEntry &RE,
+				       uint64_t Value) {
+  const SectionEntry &Section = Sections[RE.SectionID];
+  return resolveRelocation(Section, RE.Offset, Value, RE.RelType, RE.Addend);
+}
+
 void RuntimeDyldELF::resolveRelocation(const SectionEntry &Section,
                                        uint64_t Offset,
                                        uint64_t Value,

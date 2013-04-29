@@ -55,12 +55,15 @@ protected:
                                     const SymbolTableMap &Symbols,
                                     StubMap &Stubs);
 
+  void resolveRelocation(const SectionEntry &Section,
+                         uint64_t Offset,
+                         uint64_t Value,
+                         uint32_t Type,
+                         int64_t Addend,
+                         bool isPCRel,
+                         unsigned Size);
 public:
-  virtual void resolveRelocation(const SectionEntry &Section,
-                                 uint64_t Offset,
-                                 uint64_t Value,
-                                 uint32_t Type,
-                                 int64_t Addend);
+  virtual void resolveRelocation(const RelocationEntry &RE, uint64_t Value);
 
   RuntimeDyldMachO(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
 

@@ -31,6 +31,12 @@ namespace {
 } // end anonymous namespace
 
 class RuntimeDyldELF : public RuntimeDyldImpl {
+  void resolveRelocation(const SectionEntry &Section,
+                         uint64_t Offset,
+                         uint64_t Value,
+                         uint32_t Type,
+                         int64_t Addend);
+
 protected:
   void resolveX86_64Relocation(const SectionEntry &Section,
                                uint64_t Offset,
@@ -62,11 +68,7 @@ protected:
                               uint32_t Type,
                               int64_t Addend);
 
-  virtual void resolveRelocation(const SectionEntry &Section,
-                                 uint64_t Offset,
-                                 uint64_t Value,
-                                 uint32_t Type,
-                                 int64_t Addend);
+  virtual void resolveRelocation(const RelocationEntry &RE, uint64_t Value);
 
   virtual void processRelocationRef(unsigned SectionID,
                                     relocation_iterator RelI,

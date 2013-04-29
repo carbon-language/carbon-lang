@@ -89,8 +89,20 @@ public:
   /// used to make a relocation section relative instead of symbol relative.
   intptr_t Addend;
 
+  /// True if this is a PCRel relocation (MachO specific).
+  bool IsPCRel;
+
+  /// The size of this relocation (MachO specific).
+  unsigned Size;
+
   RelocationEntry(unsigned id, uint64_t offset, uint32_t type, int64_t addend)
-    : SectionID(id), Offset(offset), RelType(type), Addend(addend) {}
+    : SectionID(id), Offset(offset), RelType(type), Addend(addend),
+      IsPCRel(false), Size(0) {}
+
+  RelocationEntry(unsigned id, uint64_t offset, uint32_t type, int64_t addend,
+                  bool IsPCRel, unsigned Size)
+    : SectionID(id), Offset(offset), RelType(type), Addend(addend),
+      IsPCRel(IsPCRel), Size(Size) {}
 };
 
 class RelocationValueRef {
@@ -257,7 +269,6 @@ protected:
 
   /// \brief Resolves relocations from Relocs list with address from Value.
   void resolveRelocationList(const RelocationList &Relocs, uint64_t Value);
-  void resolveRelocationEntry(const RelocationEntry &RE, uint64_t Value);
 
   /// \brief A object file specific relocation resolver
   /// \param Section The section where the relocation is being applied
@@ -266,11 +277,7 @@ protected:
   /// \param Type object file specific relocation type
   /// \param Addend A constant addend used to compute the value to be stored
   ///        into the relocatable field
-  virtual void resolveRelocation(const SectionEntry &Section,
-                                 uint64_t Offset,
-                                 uint64_t Value,
-                                 uint32_t Type,
-                                 int64_t Addend) = 0;
+  virtual void resolveRelocation(const RelocationEntry &RE, uint64_t Value) = 0;
 
   /// \brief Parses the object file relocation and stores it to Relocations
   ///        or SymbolRelocations (this depends on the object file type).

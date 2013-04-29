@@ -1,4 +1,5 @@
 ; RUN: %lli_mcjit -O0 %s
+; XFAIL: darwin
 
 ; This test checks that common symbols have been allocated addresses honouring
 ; the alignment requirement.

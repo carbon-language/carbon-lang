@@ -21,16 +21,24 @@ using namespace llvm::object;
 
 namespace llvm {
 
+void RuntimeDyldMachO::resolveRelocation(const RelocationEntry &RE,
+                                         uint64_t Value) {
+  const SectionEntry &Section = Sections[RE.SectionID];
+  return resolveRelocation(Section, RE.Offset, Value, RE.RelType, RE.Addend,
+                           RE.IsPCRel, RE.Size);
+}
+
 void RuntimeDyldMachO::resolveRelocation(const SectionEntry &Section,
                                          uint64_t Offset,
                                          uint64_t Value,
                                          uint32_t Type,
-                                         int64_t Addend) {
+                                         int64_t Addend,
+                                         bool isPCRel,
+                                         unsigned LogSize) {
   uint8_t *LocalAddress = Section.Address + Offset;
   uint64_t FinalAddress = Section.LoadAddress + Offset;
-  bool isPCRel = (Type >> 24) & 1;
-  unsigned MachoType = (Type >> 28) & 0xf;
-  unsigned Size = 1 << ((Type >> 25) & 3);
+  unsigned MachoType = Type;
+  unsigned Size = 1 << LogSize;
 
   DEBUG(dbgs() << "resolveRelocation LocalAddress: " 
         << format("%p", LocalAddress)
@@ -220,6 +228,8 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
   SectionEntry &Section = Sections[SectionID];
 
   bool isExtern = MachO->getPlainRelocationExternal(RE);
+  bool IsPCRel = MachO->getAnyRelocationPCRel(RE);
+  unsigned Size = MachO->getAnyRelocationLength(RE);
   if (isExtern) {
     // Obtain the symbol name which is referenced in the relocation
     SymbolRef Symbol;
@@ -276,7 +286,7 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
     if (i != Stubs.end())
       resolveRelocation(Section, Offset,
                         (uint64_t)Section.Address + i->second,
-                        RelType, 0);
+                        RelType, 0, IsPCRel, Size);
     else {
       // Create a new stub function.
       Stubs[Value] = Section.StubOffset;
@@ -290,11 +300,12 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
         addRelocationForSection(RE, Value.SectionID);
       resolveRelocation(Section, Offset,
                         (uint64_t)Section.Address + Section.StubOffset,
-                        RelType, 0);
+                        RelType, 0, IsPCRel, Size);
       Section.StubOffset += getMaxStubSize();
     }
   } else {
-    RelocationEntry RE(SectionID, Offset, RelType, Value.Addend);
+    RelocationEntry RE(SectionID, Offset, RelType, Value.Addend,
+                       IsPCRel, Size);
     if (Value.SymbolName)
       addRelocationForSymbol(RE, Value.SymbolName);
     else
