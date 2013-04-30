@@ -2158,7 +2158,7 @@ def warn_impcast_integer_precision_constant : Warning<
   InGroup<ConstantConversion>;
 def warn_impcast_bitfield_precision_constant : Warning<
   "implicit truncation from %2 to bitfield changes value from %0 to %1">,
-  InGroup<ConstantConversion>;
+  InGroup<BitFieldConstantConversion>;
 def warn_impcast_literal_float_to_integer : Warning<
   "implicit conversion from %0 to %1 changes value from %2 to %3">,
   InGroup<LiteralConversion>;
