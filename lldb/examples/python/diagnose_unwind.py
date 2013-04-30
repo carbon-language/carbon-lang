@@ -17,19 +17,22 @@ def backtrace_print_frame (target, frame_num, addr, fp):
     addr = addr - 1
 
   sbaddr = lldb.SBAddress()
-  sbaddr.SetLoadAddress(addr, target)
-  module_description = ""
-  if sbaddr.GetModule():
-    module_filename = ""
-    module_uuid_str = sbaddr.GetModule().GetUUIDString()
-    if module_uuid_str == None:
-      module_uuid_str = ""
-    if sbaddr.GetModule().GetFileSpec():
-      module_filename = sbaddr.GetModule().GetFileSpec().GetFilename()
-      if module_filename == None:
-        module_filename = ""
-    if module_uuid_str != "" or module_filename != "":
-      module_description = '%s %s' % (module_filename, module_uuid_str)
+  try:
+    sbaddr.SetLoadAddress(addr, target)
+    module_description = ""
+    if sbaddr.GetModule():
+      module_filename = ""
+      module_uuid_str = sbaddr.GetModule().GetUUIDString()
+      if module_uuid_str == None:
+        module_uuid_str = ""
+      if sbaddr.GetModule().GetFileSpec():
+        module_filename = sbaddr.GetModule().GetFileSpec().GetFilename()
+        if module_filename == None:
+          module_filename = ""
+      if module_uuid_str != "" or module_filename != "":
+        module_description = '%s %s' % (module_filename, module_uuid_str)
+  except Exception:
+    return
 
   addr_width = process.GetAddressByteSize() * 2
   sym_ctx = target.ResolveSymbolContextForAddress(sbaddr, lldb.eSymbolContextEverything)
