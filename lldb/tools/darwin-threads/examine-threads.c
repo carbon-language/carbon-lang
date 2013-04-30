@@ -274,11 +274,12 @@ main (int argc, char **argv)
   int arg_is_procname = 0;
   int do_loop = 0;
   int verbose = 0;
+  int resume_when_done = 0;
   mach_port_t mytask = mach_task_self ();
 
-  if (argc != 2 && argc != 3 && argc != 4)
+  if (argc != 2 && argc != 3 && argc != 4 && argc != 5)
     {
-      printf ("Usage: tdump [-l] [-v] pid/procname\n");
+      printf ("Usage: tdump [-l] [-v] [-r] pid/procname\n");
       exit (1);
     }
   
@@ -291,6 +292,8 @@ main (int argc, char **argv)
             do_loop = 1;
           if (strcmp (argv[i], "-v") == 0)
             verbose = 1;
+          if (strcmp (argv[i], "-r") == 0)
+            resume_when_done = 1;
           i++;
         }
     }
@@ -467,6 +470,10 @@ main (int argc, char **argv)
       nanosleep (rqtp, NULL);
     } while (do_loop);
   
+  kern_return_t err = task_resume (task);
+  if (err != KERN_SUCCESS)
+    printf ("Error resuming task: %d.", err);
+
   vm_deallocate (mytask, (vm_address_t) task, sizeof (task_t));
   free ((void *) process_name);
 
