@@ -7,7 +7,7 @@ template <typename T>
     void doIt() {
       int a; // expected-warning {{unused variable 'a'}}
 
-      for (auto& e : elements)
+      for (auto& e : elements) // expected-warning {{unused variable 'e'}}
         ;
     }
 
@@ -17,5 +17,5 @@ template <typename T>
 
 int main(int, char**) {
   Vector<int>    vector;
-  vector.doIt();
+  vector.doIt(); // expected-note {{here}}
 }

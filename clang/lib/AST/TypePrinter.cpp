@@ -776,7 +776,7 @@ void TypePrinter::printUnaryTransformAfter(const UnaryTransformType *T,
 
 void TypePrinter::printAutoBefore(const AutoType *T, raw_ostream &OS) { 
   // If the type has been deduced, do not print 'auto'.
-  if (T->isDeduced()) {
+  if (!T->getDeducedType().isNull()) {
     printBefore(T->getDeducedType(), OS);
   } else {
     OS << (T->isDecltypeAuto() ? "decltype(auto)" : "auto");
@@ -785,7 +785,7 @@ void TypePrinter::printAutoBefore(const AutoType *T, raw_ostream &OS) {
 }
 void TypePrinter::printAutoAfter(const AutoType *T, raw_ostream &OS) { 
   // If the type has been deduced, do not print 'auto'.
-  if (T->isDeduced())
+  if (!T->getDeducedType().isNull())
     printAfter(T->getDeducedType(), OS);
 }
 

@@ -2087,6 +2087,10 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType Ty) {
     case Type::Complex:
       break;
 
+    // Non-deduced auto types only get here for error cases.
+    case Type::Auto:
+      break;
+
     // If T is an Objective-C object or interface type, or a pointer to an 
     // object or interface type, the associated namespace is the global
     // namespace.

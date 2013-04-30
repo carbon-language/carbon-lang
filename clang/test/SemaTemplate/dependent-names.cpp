@@ -264,7 +264,7 @@ namespace PR10053 {
 }
 
 namespace PR10187 {
-  namespace A {
+  namespace A1 {
     template<typename T>
     struct S {
       void f() {
@@ -275,6 +275,25 @@ namespace PR10187 {
     };
     void g() {
       S<int>().f(); // expected-note {{here}}
+    }
+  }
+
+  namespace A2 {
+    template<typename T>
+    struct S {
+      void f() {
+        for (auto &a : e)
+          __range(a); // expected-error {{undeclared identifier '__range'}}
+      }
+      T e[10];
+    };
+    void g() {
+      S<int>().f(); // expected-note {{here}}
+    }
+    struct X {};
+    void __range(X);
+    void h() {
+      S<X>().f();
     }
   }
 

@@ -91,6 +91,9 @@ TypeEvaluationKind CodeGenFunction::getEvaluationKind(QualType type) {
 #include "clang/AST/TypeNodes.def"
       llvm_unreachable("non-canonical or dependent type in IR-generation");
 
+    case Type::Auto:
+      llvm_unreachable("undeduced auto type in IR-generation");
+
     // Various scalar types.
     case Type::Builtin:
     case Type::Pointer:

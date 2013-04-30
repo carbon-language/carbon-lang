@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s 
 
 void test() {
   int x;
@@ -6,7 +6,7 @@ void test() {
   if (int x=0) ++x;
 
   typedef int arr[10];
-  while (arr x=0) ; // expected-error {{an array type is not allowed here}} expected-error {{array initializer must be an initializer list}}
+  while (arr x={0}) ; // expected-error {{an array type is not allowed here}}
   while (int f()=0) ; // expected-error {{a function type is not allowed here}}
 
   struct S {} s;
@@ -19,9 +19,7 @@ void test() {
   while (struct NewS *x=0) ;
   while (struct S {} *x=0) ; // expected-error {{types may not be defined in conditions}}
   while (struct {} *x=0) ; // expected-error {{types may not be defined in conditions}}
-  switch (enum {E} x=0) ; // expected-error {{types may not be defined in conditions}} \
-  // expected-warning{{enumeration value 'E' not handled in switch}} expected-warning {{switch statement has empty body}} \
-  // expected-note{{put the semicolon on a separate line}}
+  switch (enum {E} x=0) ; // expected-error {{types may not be defined in conditions}}
 
   if (int x=0) { // expected-note 2 {{previous definition is here}}
     int x;  // expected-error {{redefinition of 'x'}}

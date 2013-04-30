@@ -2105,6 +2105,11 @@ static CachedProperties computeCachedProperties(const Type *T) {
     assert(T->isInstantiationDependentType());
     return CachedProperties(ExternalLinkage, false);
 
+  case Type::Auto:
+    // Give non-deduced 'auto' types external linkage. We should only see them
+    // here in error recovery.
+    return CachedProperties(ExternalLinkage, false);
+
   case Type::Builtin:
     // C++ [basic.link]p8:
     //   A type is said to have linkage if and only if:
@@ -2204,6 +2209,9 @@ static LinkageInfo computeLinkageInfo(const Type *T) {
     return LinkageInfo::external();
 
   case Type::Builtin:
+    return LinkageInfo::external();
+
+  case Type::Auto:
     return LinkageInfo::external();
 
   case Type::Record:
