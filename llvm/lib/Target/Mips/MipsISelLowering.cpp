@@ -2831,8 +2831,8 @@ getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const
       return std::make_pair((unsigned)Mips::T9_64, &Mips::CPU64RegsRegClass);
     case 'l': // register suitable for indirect jump
       if (VT == MVT::i32)
-        return std::make_pair((unsigned)Mips::LO, &Mips::HILORegClass);
-      return std::make_pair((unsigned)Mips::LO64, &Mips::HILO64RegClass);
+        return std::make_pair((unsigned)Mips::LO, &Mips::LORegsRegClass);
+      return std::make_pair((unsigned)Mips::LO64, &Mips::LORegs64RegClass);
     case 'x': // register suitable for indirect jump
       // Fixme: Not triggering the use of both hi and low
       // This will generate an error message

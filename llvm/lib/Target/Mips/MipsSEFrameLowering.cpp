@@ -42,7 +42,7 @@ private:
   bool expandInstr(MachineBasicBlock &MBB, Iter I);
   void expandLoad(MachineBasicBlock &MBB, Iter I, unsigned RegSize);
   void expandStore(MachineBasicBlock &MBB, Iter I, unsigned RegSize);
-  void expandCopy(MachineBasicBlock &MBB, Iter I, unsigned RegSize);
+  bool expandCopy(MachineBasicBlock &MBB, Iter I);
 
   MachineFunction &MF;
   const MipsSEInstrInfo &TII;
@@ -89,12 +89,9 @@ bool ExpandACCPseudo::expandInstr(MachineBasicBlock &MBB, Iter I) {
   case Mips::STORE_AC128_P8:
     expandStore(MBB, I, 8);
     break;
-  case Mips::COPY_AC64:
-  case Mips::COPY_AC_DSP:
-    expandCopy(MBB, I, 4);
-    break;
-  case Mips::COPY_AC128:
-    expandCopy(MBB, I, 8);
+  case TargetOpcode::COPY:
+    if (!expandCopy(MBB, I))
+      return false;
     break;
   default:
     return false;
@@ -152,8 +149,19 @@ void ExpandACCPseudo::expandStore(MachineBasicBlock &MBB, Iter I,
   TII.storeRegToStack(MBB, I, VR1, true, FI, RC, &RegInfo, RegSize);
 }
 
-void ExpandACCPseudo::expandCopy(MachineBasicBlock &MBB, Iter I,
-                                 unsigned RegSize) {
+bool ExpandACCPseudo::expandCopy(MachineBasicBlock &MBB, Iter I) {
+  unsigned Dst = I->getOperand(0).getReg(), Src = I->getOperand(1).getReg();
+  unsigned RegSize;
+
+  if (Mips::ACRegsDSPRegClass.contains(Dst) &&
+      Mips::ACRegsDSPRegClass.contains(Src))
+    RegSize = 4;
+  else if (Mips::ACRegs128RegClass.contains(Dst) &&
+           Mips::ACRegs128RegClass.contains(Src))
+    RegSize = 8;
+  else
+    return false;
+
   //  copy $vr0, src_lo
   //  copy dst_lo, $vr0
   //  copy $vr1, src_hi
@@ -162,7 +170,6 @@ void ExpandACCPseudo::expandCopy(MachineBasicBlock &MBB, Iter I,
   const TargetRegisterClass *RC = RegInfo.intRegClass(RegSize);
   unsigned VR0 = MRI.createVirtualRegister(RC);
   unsigned VR1 = MRI.createVirtualRegister(RC);
-  unsigned Dst = I->getOperand(0).getReg(), Src = I->getOperand(1).getReg();
   unsigned SrcKill = getKillRegState(I->getOperand(1).isKill());
   unsigned DstLo = RegInfo.getSubReg(Dst, Mips::sub_lo);
   unsigned DstHi = RegInfo.getSubReg(Dst, Mips::sub_hi);
@@ -176,6 +183,7 @@ void ExpandACCPseudo::expandCopy(MachineBasicBlock &MBB, Iter I,
   BuildMI(MBB, I, DL, TII.get(TargetOpcode::COPY), VR1).addReg(SrcHi, SrcKill);
   BuildMI(MBB, I, DL, TII.get(TargetOpcode::COPY), DstHi)
     .addReg(VR1, RegState::Kill);
+  return true;
 }
 
 unsigned MipsSEFrameLowering::ehDataReg(unsigned I) const {

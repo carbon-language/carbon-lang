@@ -66,13 +66,11 @@ let usesCustomInserter = 1, Predicates = [HasStdEnc],
   defm ATOMIC_CMP_SWAP_I64  : AtomicCmpSwap64<atomic_cmp_swap_64>;
 }
 
-/// Pseudo instructions for loading, storing and copying accumulator registers.
+/// Pseudo instructions for loading and storing accumulator registers.
 let isPseudo = 1 in {
   defm LOAD_AC128  : LoadM<"load_ac128", ACRegs128>;
   defm STORE_AC128 : StoreM<"store_ac128", ACRegs128>;
 }
-
-def COPY_AC128 : PseudoSE<(outs ACRegs128:$dst), (ins ACRegs128:$src), []>;
 
 //===----------------------------------------------------------------------===//
 // Instruction definition

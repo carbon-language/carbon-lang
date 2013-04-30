@@ -341,10 +341,12 @@ def FGR64 : RegisterClass<"Mips", [f64], 64, (sequence "D%u_64", 0, 31)>;
 def CCR  : RegisterClass<"Mips", [i32], 32, (add FCR31,FCC0)>, Unallocatable;
 
 // Hi/Lo Registers
-def HILO : RegisterClass<"Mips", [i32], 32, (add HI, LO)>, Unallocatable;
-def HILO64 : RegisterClass<"Mips", [i64], 64, (add HI64, LO64)>, Unallocatable;
+def LORegs : RegisterClass<"Mips", [i32], 32, (add LO)>;
+def HIRegs : RegisterClass<"Mips", [i32], 32, (add HI)>;
 def LORegsDSP : RegisterClass<"Mips", [i32], 32, (add LO, LO1, LO2, LO3)>;
 def HIRegsDSP : RegisterClass<"Mips", [i32], 32, (add HI, HI1, HI2, HI3)>;
+def LORegs64 : RegisterClass<"Mips", [i64], 64, (add LO64)>;
+def HIRegs64 : RegisterClass<"Mips", [i64], 64, (add HI64)>;
 
 // Hardware registers
 def HWRegs : RegisterClass<"Mips", [i32], 32, (add HWR29)>, Unallocatable;

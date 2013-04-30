@@ -837,13 +837,11 @@ let usesCustomInserter = 1 in {
   defm ATOMIC_CMP_SWAP_I32  : AtomicCmpSwap32<atomic_cmp_swap_32>;
 }
 
-/// Pseudo instructions for loading, storing and copying accumulator registers.
+/// Pseudo instructions for loading and storing accumulator registers.
 let isPseudo = 1 in {
   defm LOAD_AC64  : LoadM<"load_ac64", ACRegs>;
   defm STORE_AC64 : StoreM<"store_ac64", ACRegs>;
 }
-
-def COPY_AC64 : PseudoSE<(outs ACRegs:$dst), (ins ACRegs:$src), []>;
 
 //===----------------------------------------------------------------------===//
 // Instruction definition
