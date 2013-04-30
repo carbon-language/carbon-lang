@@ -678,13 +678,7 @@ InstrEmitter::EmitDbgValue(SDDbgValue *SD,
     MIB.addReg(0U);
   }
 
-  if (Offset != 0) // Indirect addressing.
-    MIB.addImm(Offset);
-  else
-    MIB.addReg(0U, RegState::Debug);
-
-  MIB.addMetadata(MDPtr);
-
+  MIB.addImm(Offset).addMetadata(MDPtr);
   return &*MIB;
 }
 

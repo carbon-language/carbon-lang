@@ -597,9 +597,7 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
     OS << AP.TM.getRegisterInfo()->getName(MI->getOperand(0).getReg());
   }
 
-  // It's only an offset if it's an immediate.
-  if (MI->getOperand(1).isImm())
-    OS << '+' << MI->getOperand(1).getImm();
+  OS << '+' << MI->getOperand(1).getImm();
   // NOTE: Want this comment at start of line, don't emit with AddComment.
   AP.OutStreamer.EmitRawText(OS.str());
   return true;

@@ -4413,9 +4413,8 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
     return false;
 
   MachineInstrBuilder MIB = BuildMI(MF, getCurDebugLoc(),
-                                    TII->get(TargetOpcode::DBG_VALUE),
-                                    Offset != 0,
-                                    Reg, Offset, Variable);
+                                    TII->get(TargetOpcode::DBG_VALUE))
+    .addReg(Reg, RegState::Debug).addImm(Offset).addMetadata(Variable);
   FuncInfo.ArgDbgValues.push_back(&*MIB);
   return true;
 }
