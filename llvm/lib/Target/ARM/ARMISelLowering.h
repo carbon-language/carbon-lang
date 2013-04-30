@@ -474,16 +474,21 @@ namespace llvm {
                            DebugLoc dl, SelectionDAG &DAG,
                            SmallVectorImpl<SDValue> &InVals) const;
 
+    int StoreByValRegs(CCState &CCInfo, SelectionDAG &DAG,
+                       DebugLoc dl, SDValue &Chain,
+                       const Value *OrigArg,
+                       unsigned OffsetFromOrigArg,
+                       unsigned ArgOffset,
+                       bool ForceMutable) const;
+
     void VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
                               DebugLoc dl, SDValue &Chain,
-                              const Value *OrigArg,
-                              unsigned OffsetFromOrigArg,
                               unsigned ArgOffset,
-                              bool ForceMutable = false)
-      const;
+                              bool ForceMutable = false) const;
 
     void computeRegArea(CCState &CCInfo, MachineFunction &MF,
-                        unsigned &VARegSize, unsigned &VARegSaveSize) const;
+                        unsigned &ArgRegsSize,
+                        unsigned &ArgRegsSaveSize) const;
 
     virtual SDValue
       LowerCall(TargetLowering::CallLoweringInfo &CLI,

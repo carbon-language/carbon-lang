@@ -141,7 +141,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   assert(!AFI->isThumb1OnlyFunction() &&
          "This emitPrologue does not support Thumb1!");
   bool isARM = !AFI->isThumbFunction();
-  unsigned VARegSaveSize = AFI->getVarArgsRegSaveSize();
+  unsigned ArgRegsSaveSize = AFI->getArgRegsSaveSize();
   unsigned NumBytes = MFI->getStackSize();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
@@ -159,8 +159,8 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
     return;
 
   // Allocate the vararg register save area. This is not counted in NumBytes.
-  if (VARegSaveSize)
-    emitSPUpdate(isARM, MBB, MBBI, dl, TII, -VARegSaveSize,
+  if (ArgRegsSaveSize)
+    emitSPUpdate(isARM, MBB, MBBI, dl, TII, -ArgRegsSaveSize,
                  MachineInstr::FrameSetup);
 
   if (!AFI->hasStackFrame()) {
@@ -357,7 +357,7 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
          "This emitEpilogue does not support Thumb1!");
   bool isARM = !AFI->isThumbFunction();
 
-  unsigned VARegSaveSize = AFI->getVarArgsRegSaveSize();
+  unsigned ArgRegsSaveSize = AFI->getArgRegsSaveSize();
   int NumBytes = (int)MFI->getStackSize();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
 
@@ -471,8 +471,8 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
     MBBI = NewMI;
   }
 
-  if (VARegSaveSize)
-    emitSPUpdate(isARM, MBB, MBBI, dl, TII, VARegSaveSize);
+  if (ArgRegsSaveSize)
+    emitSPUpdate(isARM, MBB, MBBI, dl, TII, ArgRegsSaveSize);
 }
 
 /// getFrameIndexReference - Provide a base+offset reference to an FI slot for
@@ -1003,7 +1003,7 @@ bool ARMFrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   MachineFunction &MF = *MBB.getParent();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  bool isVarArg = AFI->getVarArgsRegSaveSize() > 0;
+  bool isVarArg = AFI->getArgRegsSaveSize() > 0;
   unsigned NumAlignedDPRCS2Regs = AFI->getNumAlignedDPRCS2Regs();
 
   // The emitPopInst calls below do not insert reloads for the aligned DPRCS2
@@ -1174,7 +1174,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   if (AFI->isThumb1OnlyFunction()) {
     // Spill LR if Thumb1 function uses variable length argument lists.
-    if (AFI->getVarArgsRegSaveSize() > 0)
+    if (AFI->getArgRegsSaveSize() > 0)
       MRI.setPhysRegUsed(ARM::LR);
 
     // Spill R4 if Thumb1 epilogue has to restore SP from FP. We don't know

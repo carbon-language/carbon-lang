@@ -88,7 +88,7 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   const Thumb1InstrInfo &TII =
     *static_cast<const Thumb1InstrInfo*>(MF.getTarget().getInstrInfo());
 
-  unsigned VARegSaveSize = AFI->getVarArgsRegSaveSize();
+  unsigned ArgRegsSaveSize = AFI->getArgRegsSaveSize();
   unsigned NumBytes = MFI->getStackSize();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
@@ -104,8 +104,8 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   unsigned GPRCS1Size = 0, GPRCS2Size = 0, DPRCSSize = 0;
   int FramePtrSpillFI = 0;
 
-  if (VARegSaveSize)
-    emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -VARegSaveSize,
+  if (ArgRegsSaveSize)
+    emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -ArgRegsSaveSize,
                  MachineInstr::FrameSetup);
 
   if (!AFI->hasStackFrame()) {
@@ -249,7 +249,7 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
   const Thumb1InstrInfo &TII =
     *static_cast<const Thumb1InstrInfo*>(MF.getTarget().getInstrInfo());
 
-  unsigned VARegSaveSize = AFI->getVarArgsRegSaveSize();
+  unsigned ArgRegsSaveSize = AFI->getArgRegsSaveSize();
   int NumBytes = (int)MFI->getStackSize();
   const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
@@ -300,7 +300,7 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
     }
   }
 
-  if (VARegSaveSize) {
+  if (ArgRegsSaveSize) {
     // Unlike T2 and ARM mode, the T1 pop instruction cannot restore
     // to LR, and we can't pop the value directly to the PC since
     // we need to update the SP after popping the value. Therefore, we
@@ -313,7 +313,7 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
     AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tPOP)))
       .addReg(ARM::R3, RegState::Define);
 
-    emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, VARegSaveSize);
+    emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, ArgRegsSaveSize);
 
     MachineInstrBuilder MIB =
       BuildMI(MBB, MBBI, dl, TII.get(ARM::tBX_RET_vararg))
@@ -376,7 +376,7 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
 
-  bool isVarArg = AFI->getVarArgsRegSaveSize() > 0;
+  bool isVarArg = AFI->getArgRegsSaveSize() > 0;
   DebugLoc DL = MI->getDebugLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, TII.get(ARM::tPOP));
   AddDefaultPred(MIB);

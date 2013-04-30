@@ -1897,7 +1897,7 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   // local frame.
   const ARMFunctionInfo *AFI_Caller = DAG.getMachineFunction().
                                       getInfo<ARMFunctionInfo>();
-  if (AFI_Caller->getVarArgsRegSaveSize())
+  if (AFI_Caller->getArgRegsSaveSize())
     return false;
 
   // If the callee takes no arguments then go on to check the results of the
@@ -2580,7 +2580,8 @@ ARMTargetLowering::GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
 
 void
 ARMTargetLowering::computeRegArea(CCState &CCInfo, MachineFunction &MF,
-                                  unsigned &VARegSize, unsigned &VARegSaveSize)
+                                  unsigned &ArgRegsSize,
+                                  unsigned &ArgRegsSaveSize)
   const {
   unsigned NumGPRs;
   if (CCInfo.isFirstByValRegValid())
@@ -2594,8 +2595,8 @@ ARMTargetLowering::computeRegArea(CCState &CCInfo, MachineFunction &MF,
   }
 
   unsigned Align = MF.getTarget().getFrameLowering()->getStackAlignment();
-  VARegSize = NumGPRs * 4;
-  VARegSaveSize = (VARegSize + Align - 1) & ~(Align - 1);
+  ArgRegsSize = NumGPRs * 4;
+  ArgRegsSaveSize = (ArgRegsSize + Align - 1) & ~(Align - 1);
 }
 
 // The remaining GPRs hold either the beginning of variable-argument
@@ -2605,13 +2606,26 @@ ARMTargetLowering::computeRegArea(CCState &CCInfo, MachineFunction &MF,
 // If this is a variadic function, the va_list pointer will begin with
 // these values; otherwise, this reassembles a (byval) structure that
 // was split between registers and memory.
-void
-ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
-                                        DebugLoc dl, SDValue &Chain,
-                                        const Value *OrigArg,
-                                        unsigned OffsetFromOrigArg,
-                                        unsigned ArgOffset,
-                                        bool ForceMutable) const {
+// Return: The frame index registers were stored into.
+int
+ARMTargetLowering::StoreByValRegs(CCState &CCInfo, SelectionDAG &DAG,
+                                  DebugLoc dl, SDValue &Chain,
+                                  const Value *OrigArg,
+                                  unsigned OffsetFromOrigArg,
+                                  unsigned ArgOffset,
+                                  bool ForceMutable) const {
+
+  // Currently, two use-cases possible:
+  // Case #1. Non var-args function, and we meet first byval parameter.
+  //          Setup first unallocated register as first byval register;
+  //          eat all remained registers
+  //          (these two actions are performed by HandleByVal method).
+  //          Then, here, we initialize stack frame with
+  //          "store-reg" instructions.
+  // Case #2. Var-args function, that doesn't contain byval parameters.
+  //          The same: eat all remained unallocated registers,
+  //          initialize stack frame.
+
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
@@ -2623,19 +2637,22 @@ ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
       (GPRArgRegs, sizeof(GPRArgRegs) / sizeof(GPRArgRegs[0]));
   }
 
-  unsigned VARegSize, VARegSaveSize;
-  computeRegArea(CCInfo, MF, VARegSize, VARegSaveSize);
-  if (VARegSaveSize) {
-    // If this function is vararg, store any remaining integer argument regs
-    // to their spots on the stack so that they may be loaded by deferencing
-    // the result of va_next.
-    AFI->setVarArgsRegSaveSize(VARegSaveSize);
-    AFI->setVarArgsFrameIndex(MFI->CreateFixedObject(VARegSaveSize,
-                                                     ArgOffset + VARegSaveSize
-                                                     - VARegSize,
-                                                     false));
-    SDValue FIN = DAG.getFrameIndex(AFI->getVarArgsFrameIndex(),
-                                    getPointerTy());
+  unsigned ArgRegsSize, ArgRegsSaveSize;
+  computeRegArea(CCInfo, MF, ArgRegsSize, ArgRegsSaveSize);
+
+  // Store any by-val regs to their spots on the stack so that they may be
+  // loaded by deferencing the result of formal parameter pointer or va_next.
+  // Note: once stack area for byval/varargs registers
+  // was initialized, it can't be initialized again.
+  if (!AFI->getArgRegsSaveSize() && ArgRegsSaveSize) {
+
+    AFI->setArgRegsSaveSize(ArgRegsSaveSize);
+
+    int FrameIndex = MFI->CreateFixedObject(
+                      ArgRegsSaveSize,
+                      ArgOffset + ArgRegsSaveSize - ArgRegsSize,
+                      false);
+    SDValue FIN = DAG.getFrameIndex(FrameIndex, getPointerTy());
 
     SmallVector<SDValue, 4> MemOps;
     for (unsigned i = 0; firstRegToSaveIndex < 4; ++firstRegToSaveIndex, ++i) {
@@ -2658,10 +2675,30 @@ ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
     if (!MemOps.empty())
       Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                           &MemOps[0], MemOps.size());
+    return FrameIndex;
   } else
     // This will point to the next argument passed via stack.
-    AFI->setVarArgsFrameIndex(
-        MFI->CreateFixedObject(4, ArgOffset, !ForceMutable));
+    return MFI->CreateFixedObject(4, ArgOffset, !ForceMutable);
+}
+
+// Setup stack frame, the va_list pointer will start from.
+void
+ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
+                                        DebugLoc dl, SDValue &Chain,
+                                        unsigned ArgOffset,
+                                        bool ForceMutable) const {
+  MachineFunction &MF = DAG.getMachineFunction();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+
+  // Try to store any remaining integer argument regs
+  // to their spots on the stack so that they may be loaded by deferencing
+  // the result of va_next.
+  // If there is no regs to be stored, just point address after last
+  // argument passed via stack.
+  int FrameIndex =
+    StoreByValRegs(CCInfo, DAG, dl, Chain, 0, 0, ArgOffset, ForceMutable);
+
+  AFI->setVarArgsFrameIndex(FrameIndex);
 }
 
 SDValue
@@ -2787,20 +2824,12 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
           // Since they could be overwritten by lowering of arguments in case of
           // a tail call.
           if (Flags.isByVal()) {
-            ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-            if (!AFI->getVarArgsFrameIndex()) {
-              VarArgStyleRegisters(CCInfo, DAG,
-                                   dl, Chain, CurOrigArg,
-                                   Ins[VA.getValNo()].PartOffset,
-                                   VA.getLocMemOffset(),
-                                   true /*force mutable frames*/);
-              int VAFrameIndex = AFI->getVarArgsFrameIndex();
-              InVals.push_back(DAG.getFrameIndex(VAFrameIndex, getPointerTy()));
-            } else {
-              int FI = MFI->CreateFixedObject(Flags.getByValSize(),
-                                              VA.getLocMemOffset(), false);
-              InVals.push_back(DAG.getFrameIndex(FI, getPointerTy()));
-            }
+            int FrameIndex = StoreByValRegs(
+                                CCInfo, DAG, dl, Chain, CurOrigArg,
+                                Ins[VA.getValNo()].PartOffset,
+                                VA.getLocMemOffset(),
+                                true /*force mutable frames*/);
+            InVals.push_back(DAG.getFrameIndex(FrameIndex, getPointerTy()));
           } else {
             int FI = MFI->CreateFixedObject(VA.getLocVT().getSizeInBits()/8,
                                             VA.getLocMemOffset(), true);
@@ -2818,7 +2847,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
 
   // varargs
   if (isVarArg)
-    VarArgStyleRegisters(CCInfo, DAG, dl, Chain, 0, 0,
+    VarArgStyleRegisters(CCInfo, DAG, dl, Chain,
                          CCInfo.getNextStackOffset());
 
   return Chain;

@@ -38,7 +38,7 @@ class ARMFunctionInfo : public MachineFunctionInfo {
 
   /// VarArgsRegSaveSize - Size of the register save area for vararg functions.
   ///
-  unsigned VarArgsRegSaveSize;
+  unsigned ArgRegsSaveSize;
 
   /// HasStackFrame - True if this function has a stack frame. Set by
   /// processFunctionBeforeCalleeSavedScan().
@@ -117,7 +117,7 @@ public:
   ARMFunctionInfo() :
     isThumb(false),
     hasThumb2(false),
-    VarArgsRegSaveSize(0), HasStackFrame(false), RestoreSPFromFP(false),
+    ArgRegsSaveSize(0), HasStackFrame(false), RestoreSPFromFP(false),
     LRSpilledForFarJump(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
@@ -129,7 +129,7 @@ public:
   explicit ARMFunctionInfo(MachineFunction &MF) :
     isThumb(MF.getTarget().getSubtarget<ARMSubtarget>().isThumb()),
     hasThumb2(MF.getTarget().getSubtarget<ARMSubtarget>().hasThumb2()),
-    VarArgsRegSaveSize(0), HasStackFrame(false), RestoreSPFromFP(false),
+    ArgRegsSaveSize(0), HasStackFrame(false), RestoreSPFromFP(false),
     LRSpilledForFarJump(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
@@ -141,8 +141,8 @@ public:
   bool isThumb1OnlyFunction() const { return isThumb && !hasThumb2; }
   bool isThumb2Function() const { return isThumb && hasThumb2; }
 
-  unsigned getVarArgsRegSaveSize() const { return VarArgsRegSaveSize; }
-  void setVarArgsRegSaveSize(unsigned s) { VarArgsRegSaveSize = s; }
+  unsigned getArgRegsSaveSize() const { return ArgRegsSaveSize; }
+  void setArgRegsSaveSize(unsigned s) { ArgRegsSaveSize = s; }
 
   bool hasStackFrame() const { return HasStackFrame; }
   void setHasStackFrame(bool s) { HasStackFrame = s; }
