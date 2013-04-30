@@ -1414,6 +1414,16 @@ MachOObjectFile::getAnyRelocationType(const macho::RelocationEntry &RE) const {
   return getPlainRelocationType(this, RE);
 }
 
+SectionRef
+MachOObjectFile::getRelocationSection(const macho::RelocationEntry &RE) const {
+  if (isRelocationScattered(RE) || getPlainRelocationExternal(RE))
+    return *end_sections();
+  unsigned SecNum = getPlainRelocationSymbolNum(RE) - 1;
+  DataRefImpl DRI;
+  DRI.d.a = SecNum;
+  return SectionRef(DRI, this);
+}
+
 MachOObjectFile::LoadCommandInfo
 MachOObjectFile::getFirstLoadCommandInfo() const {
   MachOObjectFile::LoadCommandInfo Load;

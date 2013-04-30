@@ -130,6 +130,7 @@ public:
   unsigned getAnyRelocationPCRel(const macho::RelocationEntry &RE) const;
   unsigned getAnyRelocationLength(const macho::RelocationEntry &RE) const;
   unsigned getAnyRelocationType(const macho::RelocationEntry &RE) const;
+  SectionRef getRelocationSection(const macho::RelocationEntry &RE) const;
 
   // Walk load commands.
   LoadCommandInfo getFirstLoadCommandInfo() const;

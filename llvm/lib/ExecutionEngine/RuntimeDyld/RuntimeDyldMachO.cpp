@@ -232,12 +232,12 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
   unsigned Size = MachO->getAnyRelocationLength(RE);
   uint64_t Offset;
   RelI.getOffset(Offset);
-  if (isExtern) {
-    uint8_t *LocalAddress = Section.Address + Offset;
-    unsigned NumBytes = 1 << Size;
-    uint64_t Addend = 0;
-    memcpy(&Addend, LocalAddress, NumBytes);
+  uint8_t *LocalAddress = Section.Address + Offset;
+  unsigned NumBytes = 1 << Size;
+  uint64_t Addend = 0;
+  memcpy(&Addend, LocalAddress, NumBytes);
 
+  if (isExtern) {
     // Obtain the symbol name which is referenced in the relocation
     SymbolRef Symbol;
     RelI.getSymbol(Symbol);
@@ -260,29 +260,11 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
       }
     }
   } else {
-    error_code err;
-    uint8_t sectionIndex = static_cast<uint8_t>(RelType & 0xFF);
-    section_iterator si = Obj.begin_sections(),
-                     se = Obj.end_sections();
-    for (uint8_t i = 1; i < sectionIndex; i++) {
-      error_code err;
-      si.increment(err);
-      if (si == se)
-        break;
-    }
-    assert(si != se && "No section containing relocation!");
-    Value.SectionID = findOrEmitSection(Obj, *si, true, ObjSectionToID);
-    Value.Addend = 0;
-    // FIXME: The size and type of the relocation determines if we can
-    // encode an Addend in the target location itself, and if so, how many
-    // bytes we should read in order to get it. We don't yet support doing
-    // that, and just assuming it's sizeof(intptr_t) is blatantly wrong.
-    //Value.Addend = *(const intptr_t *)Target;
-    if (Value.Addend) {
-      // The MachO addend is an offset from the current section.  We need it
-      // to be an offset from the destination section
-      Value.Addend += Section.ObjAddress - Sections[Value.SectionID].ObjAddress;
-    }
+    SectionRef Sec = MachO->getRelocationSection(RE);
+    Value.SectionID = findOrEmitSection(Obj, Sec, true, ObjSectionToID);
+    uint64_t Addr;
+    Sec.getAddress(Addr);
+    Value.Addend = Addend - Addr;
   }
 
   if (Arch == Triple::arm && (RelType & 0xf) == macho::RIT_ARM_Branch24Bit) {
