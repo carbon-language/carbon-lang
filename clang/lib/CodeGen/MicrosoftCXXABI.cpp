@@ -149,6 +149,12 @@ public:
   virtual llvm::Constant *EmitMemberDataPointer(const MemberPointerType *MPT,
                                                 CharUnits offset);
 
+  virtual llvm::Value *EmitMemberPointerComparison(CodeGenFunction &CGF,
+                                                   llvm::Value *L,
+                                                   llvm::Value *R,
+                                                   const MemberPointerType *MPT,
+                                                   bool Inequality);
+
   virtual llvm::Value *EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
                                                   llvm::Value *MemPtr,
                                                   const MemberPointerType *MPT);
@@ -415,6 +421,10 @@ static bool hasVBPtrOffsetField(MSInheritanceModel Inheritance) {
   return Inheritance == MSIM_Unspecified;
 }
 
+static bool hasOnlyOneField(MSInheritanceModel Inheritance) {
+  return Inheritance <= MSIM_SinglePolymorphic;
+}
+
 // Only member pointers to functions need a this adjustment, since it can be
 // combined with the field offset for data pointers.
 static bool hasNonVirtualBaseAdjustmentField(const MemberPointerType *MPT,
@@ -529,6 +539,68 @@ MicrosoftCXXABI::EmitMemberDataPointer(const MemberPointerType *MPT,
   if (fields.size() == 1)
     return fields[0];
   return llvm::ConstantStruct::getAnon(fields);
+}
+
+/// Member pointers are the same if they're either bitwise identical *or* both
+/// null.  Null-ness for function members is determined by the first field,
+/// while for data member pointers we must compare all fields.
+llvm::Value *
+MicrosoftCXXABI::EmitMemberPointerComparison(CodeGenFunction &CGF,
+                                             llvm::Value *L,
+                                             llvm::Value *R,
+                                             const MemberPointerType *MPT,
+                                             bool Inequality) {
+  CGBuilderTy &Builder = CGF.Builder;
+
+  // Handle != comparisons by switching the sense of all boolean operations.
+  llvm::ICmpInst::Predicate Eq;
+  llvm::Instruction::BinaryOps And, Or;
+  if (Inequality) {
+    Eq = llvm::ICmpInst::ICMP_NE;
+    And = llvm::Instruction::Or;
+    Or = llvm::Instruction::And;
+  } else {
+    Eq = llvm::ICmpInst::ICMP_EQ;
+    And = llvm::Instruction::And;
+    Or = llvm::Instruction::Or;
+  }
+
+  // If this is a single field member pointer (single inheritance), this is a
+  // single icmp.
+  const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
+  MSInheritanceModel Inheritance = RD->getMSInheritanceModel();
+  if (hasOnlyOneField(Inheritance))
+    return Builder.CreateICmp(Eq, L, R);
+
+  // Compare the first field.
+  llvm::Value *L0 = Builder.CreateExtractValue(L, 0, "lhs.0");
+  llvm::Value *R0 = Builder.CreateExtractValue(R, 0, "rhs.0");
+  llvm::Value *Cmp0 = Builder.CreateICmp(Eq, L0, R0, "memptr.cmp.first");
+
+  // Compare everything other than the first field.
+  llvm::Value *Res = 0;
+  llvm::StructType *LType = cast<llvm::StructType>(L->getType());
+  for (unsigned I = 1, E = LType->getNumElements(); I != E; ++I) {
+    llvm::Value *LF = Builder.CreateExtractValue(L, I);
+    llvm::Value *RF = Builder.CreateExtractValue(R, I);
+    llvm::Value *Cmp = Builder.CreateICmp(Eq, LF, RF, "memptr.cmp.rest");
+    if (Res)
+      Res = Builder.CreateBinOp(And, Res, Cmp);
+    else
+      Res = Cmp;
+  }
+
+  // Check if the first field is 0 if this is a function pointer.
+  if (MPT->isMemberFunctionPointer()) {
+    // (l1 == r1 && ...) || l0 == 0
+    llvm::Value *Zero = llvm::Constant::getNullValue(L0->getType());
+    llvm::Value *IsZero = Builder.CreateICmp(Eq, L0, Zero, "memptr.cmp.iszero");
+    Res = Builder.CreateBinOp(Or, Res, IsZero);
+  }
+
+  // Combine the comparison of the first field, which must always be true for
+  // this comparison to succeeed.
+  return Builder.CreateBinOp(And, Res, Cmp0, "memptr.cmp");
 }
 
 llvm::Value *

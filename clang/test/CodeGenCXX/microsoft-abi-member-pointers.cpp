@@ -222,3 +222,91 @@ void callMemberPointerVirtualBase(Virtual *o, void (Virtual::*memptr)()) {
 // CHECK:   ret void
 // CHECK: }
 }
+
+bool compareSingleFunctionMemptr(void (Single::*l)(), void (Single::*r)()) {
+  return l == r;
+// Should only be one comparison here.
+// CHECK: define zeroext i1 @"\01?compareSingleFunctionMemptr@@YA_NP8Single@@AEXXZ0@Z"{{.*}} {
+// CHECK-NOT: icmp
+// CHECK:   %[[r:.*]] = icmp eq
+// CHECK-NOT: icmp
+// CHECK:   ret i1 %[[r]]
+// CHECK: }
+}
+
+bool compareNeqSingleFunctionMemptr(void (Single::*l)(), void (Single::*r)()) {
+  return l != r;
+// Should only be one comparison here.
+// CHECK: define zeroext i1 @"\01?compareNeqSingleFunctionMemptr@@YA_NP8Single@@AEXXZ0@Z"{{.*}} {
+// CHECK-NOT: icmp
+// CHECK:   %[[r:.*]] = icmp ne
+// CHECK-NOT: icmp
+// CHECK:   ret i1 %[[r]]
+// CHECK: }
+}
+
+bool unspecFuncMemptrEq(void (Unspecified::*l)(), void (Unspecified::*r)()) {
+  return l == r;
+// CHECK: define zeroext i1 @"\01?unspecFuncMemptrEq@@YA_NP8Unspecified@@AEXXZ0@Z"{{.*}} {
+// CHECK:   %[[lhs0:.*]] = extractvalue { i8*, i32, i32, i32 } %[[l:.*]], 0
+// CHECK:   %{{.*}} = extractvalue { i8*, i32, i32, i32 } %[[r:.*]], 0
+// CHECK:   %[[cmp0:.*]] = icmp eq i8* %[[lhs0]], %{{.*}}
+// CHECK:   %{{.*}} = extractvalue { i8*, i32, i32, i32 } %[[l]], 1
+// CHECK:   %{{.*}} = extractvalue { i8*, i32, i32, i32 } %[[r]], 1
+// CHECK:   %[[cmp1:.*]] = icmp eq i32
+// CHECK:   %{{.*}} = extractvalue { i8*, i32, i32, i32 } %[[l]], 2
+// CHECK:   %{{.*}} = extractvalue { i8*, i32, i32, i32 } %[[r]], 2
+// CHECK:   %[[cmp2:.*]] = icmp eq i32
+// CHECK:   %[[res12:.*]] = and i1 %[[cmp1]], %[[cmp2]]
+// CHECK:   %{{.*}} = extractvalue { i8*, i32, i32, i32 } %[[l]], 3
+// CHECK:   %{{.*}} = extractvalue { i8*, i32, i32, i32 } %[[r]], 3
+// CHECK:   %[[cmp3:.*]] = icmp eq i32
+// CHECK:   %[[res123:.*]] = and i1 %[[res12]], %[[cmp3]]
+// CHECK:   %[[iszero:.*]] = icmp eq i8* %[[lhs0]], null
+// CHECK:   %[[bits_or_null:.*]] = or i1 %[[res123]], %[[iszero]]
+// CHECK:   %{{.*}} = and i1 %[[bits_or_null]], %[[cmp0]]
+// CHECK:   ret i1 %{{.*}}
+// CHECK: }
+}
+
+bool unspecFuncMemptrNeq(void (Unspecified::*l)(), void (Unspecified::*r)()) {
+  return l != r;
+// CHECK: define zeroext i1 @"\01?unspecFuncMemptrNeq@@YA_NP8Unspecified@@AEXXZ0@Z"{{.*}} {
+// CHECK:   %[[lhs0:.*]] = extractvalue { i8*, i32, i32, i32 } %[[l:.*]], 0
+// CHECK:   %{{.*}} = extractvalue { i8*, i32, i32, i32 } %[[r:.*]], 0
+// CHECK:   %[[cmp0:.*]] = icmp ne i8* %[[lhs0]], %{{.*}}
+// CHECK:   %{{.*}} = extractvalue { i8*, i32, i32, i32 } %[[l]], 1
+// CHECK:   %{{.*}} = extractvalue { i8*, i32, i32, i32 } %[[r]], 1
+// CHECK:   %[[cmp1:.*]] = icmp ne i32
+// CHECK:   %{{.*}} = extractvalue { i8*, i32, i32, i32 } %[[l]], 2
+// CHECK:   %{{.*}} = extractvalue { i8*, i32, i32, i32 } %[[r]], 2
+// CHECK:   %[[cmp2:.*]] = icmp ne i32
+// CHECK:   %[[res12:.*]] = or i1 %[[cmp1]], %[[cmp2]]
+// CHECK:   %{{.*}} = extractvalue { i8*, i32, i32, i32 } %[[l]], 3
+// CHECK:   %{{.*}} = extractvalue { i8*, i32, i32, i32 } %[[r]], 3
+// CHECK:   %[[cmp3:.*]] = icmp ne i32
+// CHECK:   %[[res123:.*]] = or i1 %[[res12]], %[[cmp3]]
+// CHECK:   %[[iszero:.*]] = icmp ne i8* %[[lhs0]], null
+// CHECK:   %[[bits_or_null:.*]] = and i1 %[[res123]], %[[iszero]]
+// CHECK:   %{{.*}} = or i1 %[[bits_or_null]], %[[cmp0]]
+// CHECK:   ret i1 %{{.*}}
+// CHECK: }
+}
+
+bool unspecDataMemptrEq(int Unspecified::*l, int Unspecified::*r) {
+  return l == r;
+// CHECK: define zeroext i1 @"\01?unspecDataMemptrEq@@YA_NPQUnspecified@@H0@Z"{{.*}} {
+// CHECK:   extractvalue { i32, i32, i32 } %{{.*}}, 0
+// CHECK:   extractvalue { i32, i32, i32 } %{{.*}}, 0
+// CHECK:   icmp eq i32
+// CHECK:   extractvalue { i32, i32, i32 } %{{.*}}, 1
+// CHECK:   extractvalue { i32, i32, i32 } %{{.*}}, 1
+// CHECK:   icmp eq i32
+// CHECK:   extractvalue { i32, i32, i32 } %{{.*}}, 2
+// CHECK:   extractvalue { i32, i32, i32 } %{{.*}}, 2
+// CHECK:   icmp eq i32
+// CHECK:   and i1
+// CHECK:   and i1
+// CHECK:   ret i1
+// CHECK: }
+}
