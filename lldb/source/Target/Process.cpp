@@ -101,6 +101,7 @@ g_properties[] =
     { "unwind-on-error-in-expressions", OptionValue::eTypeBoolean, true, true, NULL, NULL, "If true, errors in expression evaluation will unwind the stack back to the state before the call." },
     { "python-os-plugin-path", OptionValue::eTypeFileSpec, false, true, NULL, NULL, "A path to a python OS plug-in module file that contains a OperatingSystemPlugIn class." },
     { "stop-on-sharedlibrary-events" , OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, stop when a shared library is loaded or unloaded." },
+    { "detach-keeps-stopped" , OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, detach will attempt to keep the process stopped." },
     {  NULL                  , OptionValue::eTypeInvalid, false, 0, NULL, NULL, NULL  }
 };
 
@@ -110,7 +111,8 @@ enum {
     ePropertyIgnoreBreakpointsInExpressions,
     ePropertyUnwindOnErrorInExpressions,
     ePropertyPythonOSPluginPath,
-    ePropertyStopOnSharedLibraryEvents
+    ePropertyStopOnSharedLibraryEvents,
+    ePropertyDetachKeepsStopped
 };
 
 ProcessProperties::ProcessProperties (bool is_global) :
@@ -210,6 +212,20 @@ void
 ProcessProperties::SetStopOnSharedLibraryEvents (bool stop)
 {
     const uint32_t idx = ePropertyStopOnSharedLibraryEvents;
+    m_collection_sp->SetPropertyAtIndexAsBoolean(NULL, idx, stop);
+}
+
+bool
+ProcessProperties::GetDetachKeepsStopped () const
+{
+    const uint32_t idx = ePropertyDetachKeepsStopped;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean(NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+    
+void
+ProcessProperties::SetDetachKeepsStopped (bool stop)
+{
+    const uint32_t idx = ePropertyDetachKeepsStopped;
     m_collection_sp->SetPropertyAtIndexAsBoolean(NULL, idx, stop);
 }
 
@@ -1096,7 +1112,11 @@ Process::Finalize()
         case eStateCrashed:
         case eStateSuspended:
             if (GetShouldDetach())
-                Detach();
+            {
+                // FIXME: This will have to be a process setting:
+                bool keep_stopped = false;
+                Detach(keep_stopped);
+            }
             else
                 Destroy();
             break;
@@ -3431,7 +3451,7 @@ Process::HaltForDestroyOrDetach(lldb::EventSP &exit_event_sp)
 }
 
 Error
-Process::Detach ()
+Process::Detach (bool keep_stopped)
 {
     EventSP exit_event_sp;
     Error error;
@@ -3458,11 +3478,15 @@ Process::Detach ()
             }
         }
     
-        error = DoDetach(); 
+        error = DoDetach(keep_stopped);
         if (error.Success())
         {
             DidDetach();
             StopPrivateStateThread();
+        }
+        else
+        {
+            return error;
         }
     }
     m_destroy_in_process = false;

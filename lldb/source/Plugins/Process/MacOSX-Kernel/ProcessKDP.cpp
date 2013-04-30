@@ -507,12 +507,12 @@ ProcessKDP::DoHalt (bool &caused_stop)
 }
 
 Error
-ProcessKDP::DoDetach()
+ProcessKDP::DoDetach(bool keep_stopped)
 {
     Error error;
     Log *log (ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
     if (log)
-        log->Printf ("ProcessKDP::DoDetach()");
+        log->Printf ("ProcessKDP::DoDetach(keep_stopped = %i)", keep_stopped);
     
     if (m_comm.IsRunning())
     {
@@ -525,7 +525,8 @@ ProcessKDP::DoDetach()
         
         m_thread_list.DiscardThreadPlans();
         
-        if (m_comm.IsConnected())
+        // If we are going to keep the target stopped, then don't send the disconnect message.
+        if (!keep_stopped && m_comm.IsConnected())
         {
 
             m_comm.SendRequestDisconnect();
@@ -554,7 +555,8 @@ Error
 ProcessKDP::DoDestroy ()
 {
     // For KDP there really is no difference between destroy and detach
-    return DoDetach();
+    bool keep_stopped = false;
+    return DoDetach(keep_stopped);
 }
 
 //------------------------------------------------------------------
