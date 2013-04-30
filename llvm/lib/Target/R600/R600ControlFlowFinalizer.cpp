@@ -48,6 +48,7 @@ private:
 
   static char ID;
   const R600InstrInfo *TII;
+  const R600RegisterInfo &TRI;
   unsigned MaxFetchInst;
   const AMDGPUSubtarget &ST;
 
@@ -107,6 +108,35 @@ private:
     return TII->get(Opcode);
   }
 
+  bool isCompatibleWithClause(const MachineInstr *MI,
+  std::set<unsigned> &DstRegs, std::set<unsigned> &SrcRegs) const {
+    unsigned DstMI, SrcMI;
+    for (MachineInstr::const_mop_iterator I = MI->operands_begin(),
+        E = MI->operands_end(); I != E; ++I) {
+      const MachineOperand &MO = *I;
+      if (!MO.isReg())
+        continue;
+      if (MO.isDef())
+        DstMI = MO.getReg();
+      if (MO.isUse()) {
+        unsigned Reg = MO.getReg();
+        if (AMDGPU::R600_Reg128RegClass.contains(Reg))
+          SrcMI = Reg;
+        else
+          SrcMI = TRI.getMatchingSuperReg(Reg,
+              TRI.getSubRegFromChannel(TRI.getHWRegChan(Reg)),
+              &AMDGPU::R600_Reg128RegClass);
+      }
+    }
+    if ((DstRegs.find(SrcMI) == DstRegs.end()) &&
+        (SrcRegs.find(DstMI) == SrcRegs.end())) {
+      SrcRegs.insert(SrcMI);
+      DstRegs.insert(DstMI);
+      return true;
+    } else
+      return false;
+  }
+
   ClauseFile
   MakeFetchClause(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I)
       const {
@@ -114,6 +144,7 @@ private:
     std::vector<MachineInstr *> ClauseContent;
     unsigned AluInstCount = 0;
     bool IsTex = TII->usesTextureCache(ClauseHead);
+    std::set<unsigned> DstRegs, SrcRegs;
     for (MachineBasicBlock::iterator E = MBB.end(); I != E; ++I) {
       if (IsTrivialInst(I))
         continue;
@@ -121,6 +152,8 @@ private:
         break;
       if ((IsTex && !TII->usesTextureCache(I)) ||
           (!IsTex && !TII->usesVertexCache(I)))
+        break;
+      if (!isCompatibleWithClause(I, DstRegs, SrcRegs))
         break;
       AluInstCount ++;
       ClauseContent.push_back(I);
@@ -176,6 +209,7 @@ private:
 public:
   R600ControlFlowFinalizer(TargetMachine &tm) : MachineFunctionPass(ID),
     TII (static_cast<const R600InstrInfo *>(tm.getInstrInfo())),
+    TRI(TII->getRegisterInfo()),
     ST(tm.getSubtarget<AMDGPUSubtarget>()) {
       const AMDGPUSubtarget &ST = tm.getSubtarget<AMDGPUSubtarget>();
       if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD4XXX)
