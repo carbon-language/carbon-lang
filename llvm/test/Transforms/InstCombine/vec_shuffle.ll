@@ -86,14 +86,14 @@ define <4 x i8> @test9(<16 x i8> %tmp6) nounwind {
 }
 
 ; Same as test9, but make sure that "undef" mask values are not confused with
-; mask values of 2*N, where N is the mask length.  These shuffles should not
-; be folded (because [8,9,4,8] may not be a mask supported by the target).
-define <4 x i8> @test9a(<16 x i8> %tmp6) nounwind {
+; mask values of 2*N, where N is the mask length of the result.  Make sure when
+; folding these shuffles that 'undef' mask values stay that way in the result
+; instead of getting mapped to the 2*N'th entry of the source.
+define <4 x i8> @test9a(<16 x i8> %in, <16 x i8> %in2) nounwind {
 ; CHECK: @test9a
-; CHECK-NEXT: shufflevector
-; CHECK-NEXT: shufflevector
+; CHECK-NEXT: shufflevector <16 x i8> %in, <16 x i8> %in2, <4 x i32> <i32 16, i32 9, i32 4, i32 undef>
 ; CHECK-NEXT: ret
-	%tmp7 = shufflevector <16 x i8> %tmp6, <16 x i8> undef, <4 x i32> < i32 undef, i32 9, i32 4, i32 8 >		; <<4 x i8>> [#uses=1]
+	%tmp7 = shufflevector <16 x i8> %in, <16 x i8> %in2, <4 x i32> < i32 undef, i32 9, i32 4, i32 16 >		; <<4 x i8>> [#uses=1]
 	%tmp9 = shufflevector <4 x i8> %tmp7, <4 x i8> undef, <4 x i32> < i32 3, i32 1, i32 2, i32 0 >		; <<4 x i8>> [#uses=1]
 	ret <4 x i8> %tmp9
 }
