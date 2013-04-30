@@ -39,7 +39,9 @@ namespace R600_InstFlag {
     //FlagOperand bits 7, 8
     NATIVE_OPERANDS = (1 << 9),
     OP1 = (1 << 10),
-    OP2 = (1 << 11)
+    OP2 = (1 << 11),
+    VTX_INST  = (1 << 12),
+    TEX_INST = (1 << 13)
   };
 }
 

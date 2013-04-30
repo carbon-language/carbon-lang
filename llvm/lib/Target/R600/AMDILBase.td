@@ -74,6 +74,10 @@ def FeatureR600ALUInst : SubtargetFeature<"R600ALUInst",
         "false",
         "Older version of ALU instructions encoding.">;
 
+def FeatureVertexCache : SubtargetFeature<"HasVertexCache",
+        "HasVertexCache",
+        "true",
+        "Specify use of dedicated vertex cache.">;
 
 //===----------------------------------------------------------------------===//
 // Register File, Calling Conv, Instruction Descriptions

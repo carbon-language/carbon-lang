@@ -25,6 +25,8 @@ class InstR600 <dag outs, dag ins, string asm, list<dag> pattern,
   bit Op1 = 0;
   bit Op2 = 0;
   bit HasNativeOperands = 0;
+  bit VTXInst = 0;
+  bit TEXInst = 0;
 
   let Namespace = "AMDGPU";
   let OutOperandList = outs;
@@ -43,6 +45,8 @@ class InstR600 <dag outs, dag ins, string asm, list<dag> pattern,
   let TSFlags{9} = HasNativeOperands;
   let TSFlags{10} = Op1;
   let TSFlags{11} = Op2;
+  let TSFlags{12} = VTXInst;
+  let TSFlags{13} = TEXInst;
 }
 
 class InstR600ISA <dag outs, dag ins, string asm, list<dag> pattern> :
@@ -478,6 +482,8 @@ class R600_TEX <bits<11> inst, string opName, list<dag> pattern,
     let COORD_TYPE_Y = 0;
     let COORD_TYPE_Z = 0;
     let COORD_TYPE_W = 0;
+
+    let TEXInst = 1;
   }
 
 } // End mayLoad = 1, mayStore = 0, hasSideEffects = 0
@@ -1784,6 +1790,8 @@ class VTX_READ_eg <string name, bits<8> buffer_id, dag outs, list<dag> pattern>
   // VTX_WORD3 (Padding)
   //
   // Inst{127-96} = 0;
+
+  let VTXInst = 1;
 }
 
 class VTX_READ_8_eg <bits<8> buffer_id, list<dag> pattern>
@@ -2012,15 +2020,17 @@ def TXD: InstR600 <
   (ins R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, i32imm:$resourceId, i32imm:$samplerId, i32imm:$textureTarget),
   "TXD $dst, $src0, $src1, $src2, $resourceId, $samplerId, $textureTarget",
   [(set R600_Reg128:$dst, (int_AMDGPU_txd R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, imm:$resourceId, imm:$samplerId, imm:$textureTarget))], NullALU> {
->;
+  let TEXInst = 1;
+}
 
 def TXD_SHADOW: InstR600 <
   (outs R600_Reg128:$dst),
   (ins R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, i32imm:$resourceId, i32imm:$samplerId, i32imm:$textureTarget),
   "TXD_SHADOW $dst, $src0, $src1, $src2, $resourceId, $samplerId, $textureTarget",
   [(set R600_Reg128:$dst, (int_AMDGPU_txd R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, imm:$resourceId, imm:$samplerId, TEX_SHADOW:$textureTarget))], NullALU
->;
-
+> {
+  let TEXInst = 1;
+}
 } // End isPseudo = 1
 } // End usesCustomInserter = 1
 
@@ -2106,6 +2116,7 @@ def TEX_VTX_CONSTBUF :
 // VTX_WORD3 (Padding)
 //
 // Inst{127-96} = 0;
+  let VTXInst = 1;
 }
 
 def TEX_VTX_TEXBUF:
@@ -2159,6 +2170,7 @@ let Inst{63-32} = Word1;
 // VTX_WORD3 (Padding)
 //
 // Inst{127-96} = 0;
+  let VTXInst = 1;
 }
 
 

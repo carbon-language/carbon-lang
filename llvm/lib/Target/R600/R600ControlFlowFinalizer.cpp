@@ -32,6 +32,7 @@ class R600ControlFlowFinalizer : public MachineFunctionPass {
 private:
   enum ControlFlowInstruction {
     CF_TC,
+    CF_VC,
     CF_CALL_FS,
     CF_WHILE_LOOP,
     CF_END_LOOP,
@@ -47,39 +48,6 @@ private:
   const R600InstrInfo *TII;
   unsigned MaxFetchInst;
   const AMDGPUSubtarget &ST;
-
-  bool isFetch(const MachineInstr *MI) const {
-    switch (MI->getOpcode()) {
-    case AMDGPU::TEX_VTX_CONSTBUF:
-    case AMDGPU::TEX_VTX_TEXBUF:
-    case AMDGPU::TEX_LD:
-    case AMDGPU::TEX_GET_TEXTURE_RESINFO:
-    case AMDGPU::TEX_GET_GRADIENTS_H:
-    case AMDGPU::TEX_GET_GRADIENTS_V:
-    case AMDGPU::TEX_SET_GRADIENTS_H:
-    case AMDGPU::TEX_SET_GRADIENTS_V:
-    case AMDGPU::TEX_SAMPLE:
-    case AMDGPU::TEX_SAMPLE_C:
-    case AMDGPU::TEX_SAMPLE_L:
-    case AMDGPU::TEX_SAMPLE_C_L:
-    case AMDGPU::TEX_SAMPLE_LB:
-    case AMDGPU::TEX_SAMPLE_C_LB:
-    case AMDGPU::TEX_SAMPLE_G:
-    case AMDGPU::TEX_SAMPLE_C_G:
-    case AMDGPU::TXD:
-    case AMDGPU::TXD_SHADOW:
-    case AMDGPU::VTX_READ_GLOBAL_8_eg:
-    case AMDGPU::VTX_READ_GLOBAL_32_eg:
-    case AMDGPU::VTX_READ_GLOBAL_128_eg:
-    case AMDGPU::VTX_READ_PARAM_8_eg:
-    case AMDGPU::VTX_READ_PARAM_16_eg:
-    case AMDGPU::VTX_READ_PARAM_32_eg:
-    case AMDGPU::VTX_READ_PARAM_128_eg:
-     return true;
-    default:
-      return false;
-    }
-  }
 
   bool IsTrivialInst(MachineInstr *MI) const {
     switch (MI->getOpcode()) {
@@ -97,6 +65,9 @@ private:
     switch (CFI) {
     case CF_TC:
       Opcode = isEg ? AMDGPU::CF_TC_EG : AMDGPU::CF_TC_R600;
+      break;
+    case CF_VC:
+      Opcode = isEg ? AMDGPU::CF_VC_EG : AMDGPU::CF_VC_R600;
       break;
     case CF_CALL_FS:
       Opcode = isEg ? AMDGPU::CF_CALL_FS_EG : AMDGPU::CF_CALL_FS_R600;
@@ -139,17 +110,19 @@ private:
       unsigned CfAddress) const {
     MachineBasicBlock::iterator ClauseHead = I;
     unsigned AluInstCount = 0;
+    bool IsTex = TII->usesTextureCache(ClauseHead);
     for (MachineBasicBlock::iterator E = MBB.end(); I != E; ++I) {
       if (IsTrivialInst(I))
         continue;
-      if (!isFetch(I))
+      if ((IsTex && !TII->usesTextureCache(I)) ||
+          (!IsTex && !TII->usesVertexCache(I)))
         break;
       AluInstCount ++;
       if (AluInstCount > MaxFetchInst)
         break;
     }
     BuildMI(MBB, ClauseHead, MBB.findDebugLoc(ClauseHead),
-        getHWInstrDesc(CF_TC))
+        getHWInstrDesc(IsTex?CF_TC:CF_VC))
         .addImm(CfAddress) // ADDR
         .addImm(AluInstCount); // COUNT
     return I;
@@ -211,7 +184,7 @@ public:
       }
       for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
           I != E;) {
-        if (isFetch(I)) {
+        if (TII->usesTextureCache(I) || TII->usesVertexCache(I)) {
           DEBUG(dbgs() << CfCount << ":"; I->dump(););
           I = MakeFetchClause(MBB, I, 0);
           CfCount++;

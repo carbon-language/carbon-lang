@@ -33,6 +33,7 @@ namespace llvm {
   class R600InstrInfo : public AMDGPUInstrInfo {
   private:
   const R600RegisterInfo RI;
+  const AMDGPUSubtarget &ST;
 
   int getBranchInstr(const MachineOperand &op) const;
 
@@ -52,6 +53,11 @@ namespace llvm {
 
   /// \returns true if this \p Opcode represents an ALU instruction.
   bool isALUInstr(unsigned Opcode) const;
+
+  bool usesVertexCache(unsigned Opcode) const;
+  bool usesVertexCache(const MachineInstr *MI) const;
+  bool usesTextureCache(unsigned Opcode) const;
+  bool usesTextureCache(const MachineInstr *MI) const;
 
   bool fitsConstReadLimitations(const std::vector<unsigned>&) const;
   bool canBundle(const std::vector<MachineInstr *> &) const;

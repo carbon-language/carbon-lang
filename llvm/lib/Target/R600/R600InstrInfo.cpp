@@ -29,7 +29,8 @@ using namespace llvm;
 
 R600InstrInfo::R600InstrInfo(AMDGPUTargetMachine &tm)
   : AMDGPUInstrInfo(tm),
-    RI(tm, *this)
+    RI(tm, *this),
+    ST(tm.getSubtarget<AMDGPUSubtarget>())
   { }
 
 const R600RegisterInfo &R600InstrInfo::getRegisterInfo() const {
@@ -137,6 +138,23 @@ bool R600InstrInfo::isALUInstr(unsigned Opcode) const {
   return ((TargetFlags & R600_InstFlag::OP1) |
           (TargetFlags & R600_InstFlag::OP2) |
           (TargetFlags & R600_InstFlag::OP3));
+}
+
+bool R600InstrInfo::usesVertexCache(unsigned Opcode) const {
+  return ST.hasVertexCache() && get(Opcode).TSFlags & R600_InstFlag::VTX_INST;
+}
+
+bool R600InstrInfo::usesVertexCache(const MachineInstr *MI) const {
+  return usesVertexCache(MI->getOpcode());
+}
+
+bool R600InstrInfo::usesTextureCache(unsigned Opcode) const {
+  return (!ST.hasVertexCache() && get(Opcode).TSFlags & R600_InstFlag::VTX_INST) ||
+      (get(Opcode).TSFlags & R600_InstFlag::TEX_INST);
+}
+
+bool R600InstrInfo::usesTextureCache(const MachineInstr *MI) const {
+  return usesTextureCache(MI->getOpcode());
 }
 
 bool
