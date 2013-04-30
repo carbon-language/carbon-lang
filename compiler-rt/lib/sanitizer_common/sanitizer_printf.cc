@@ -192,6 +192,8 @@ static void CallPrintfAndReportCallback(const char *str) {
 
 static void SharedPrintfCode(bool append_pid, const char *format,
                              va_list args) {
+  va_list args2;
+  va_copy(args2, args);
   const int kLen = 16 * 1024;
   // |local_buffer| is small enough not to overflow the stack and/or violate
   // the stack limit enforced by TSan (-Wframe-larger-than=512). On the other
@@ -205,6 +207,8 @@ static void SharedPrintfCode(bool append_pid, const char *format,
   // mmaped buffer.
   for (int use_mmap = 0; use_mmap < 2; use_mmap++) {
     if (use_mmap) {
+      va_end(args);
+      va_copy(args, args2);
       buffer = (char*)MmapOrDie(kLen, "Report");
       buffer_size = kLen;
     }
@@ -235,6 +239,7 @@ static void SharedPrintfCode(bool append_pid, const char *format,
   // If we had mapped any memory, clean up.
   if (buffer != local_buffer)
     UnmapOrDie((void *)buffer, buffer_size);
+  va_end(args2);
 }
 
 void Printf(const char *format, ...) {
