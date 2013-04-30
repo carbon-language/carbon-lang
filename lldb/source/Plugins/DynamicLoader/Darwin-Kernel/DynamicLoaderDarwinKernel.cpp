@@ -834,7 +834,7 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
                 Stream *s = &target.GetDebugger().GetOutputStream();
                 if (s)
                 {
-                    s->Printf ("WARNING: Unable to locate kernel binary on this system.\n");
+                    s->Printf ("WARNING: Unable to locate kernel binary on the debugger system.\n");
                 }
             }
         }
