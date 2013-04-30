@@ -1,4 +1,4 @@
-# This implements the "unwind-diagnose" command, usually installed in the debug session like
+# This implements the "diagnose-unwind" command, usually installed in the debug session like
 #   script import lldb.macosx
 # it is used when lldb's backtrace fails -- it collects and prints information about the stack frames,
 # and tries an alternate unwind algorithm, that will help to understand why lldb's unwind algorithm did
@@ -83,11 +83,11 @@ def simple_backtrace(debugger):
     cur_fp = next_fp
   backtrace_print_frame (target, frame_num, cur_pc, cur_fp)
 
-def unwind_diagnose(debugger, command, result, dict):
+def diagnose_unwind(debugger, command, result, dict):
   # Use the Shell Lexer to properly parse up command options just like a
   # shell would
   command_args = shlex.split(command)
-  parser = create_unwind_diagnose_options()
+  parser = create_diagnose_unwind_options()
   try:
     (options, args) = parser.parse_args(command_args)
   except:
@@ -151,11 +151,11 @@ def unwind_diagnose(debugger, command, result, dict):
             else:
               debugger.HandleCommand('image show-unwind -n "%s"' % frame.GetFunctionName())
 
-def create_unwind_diagnose_options():
+def create_diagnose_unwind_options():
   usage = "usage: %prog"
   description='''Print diagnostic information about a thread backtrace which will help to debug unwind problems'''
-  parser = optparse.OptionParser(description=description, prog='unwind_diagnose',usage=usage)
+  parser = optparse.OptionParser(description=description, prog='diagnose_unwind',usage=usage)
   return parser
 
-lldb.debugger.HandleCommand('command script add -f %s.unwind_diagnose unwind-diagnose' % __name__)
-print 'The "unwind-diagnose" command has been installed, type "help unwind-diagnose" for detailed help.'
+lldb.debugger.HandleCommand('command script add -f %s.diagnose_unwind diagnose-unwind' % __name__)
+print 'The "diagnose-unwind" command has been installed, type "help diagnose-unwind" for detailed help.'
