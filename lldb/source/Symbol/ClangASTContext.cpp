@@ -85,6 +85,8 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type, bool all
     switch (type_class)
     {
     case clang::Type::ConstantArray:
+    case clang::Type::IncompleteArray:
+    case clang::Type::VariableArray:
         {
             const clang::ArrayType *array_type = dyn_cast<clang::ArrayType>(qual_type.getTypePtr());
             
