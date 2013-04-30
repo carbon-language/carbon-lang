@@ -165,6 +165,97 @@ private:
     return ClauseFile(MIb, ClauseContent);
   }
 
+  void getLiteral(MachineInstr *MI, std::vector<unsigned> &Lits) const {
+    unsigned LiteralRegs[] = {
+      AMDGPU::ALU_LITERAL_X,
+      AMDGPU::ALU_LITERAL_Y,
+      AMDGPU::ALU_LITERAL_Z,
+      AMDGPU::ALU_LITERAL_W
+    };
+    for (unsigned i = 0, e = MI->getNumOperands(); i < e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (!MO.isReg())
+        continue;
+      if (MO.getReg() != AMDGPU::ALU_LITERAL_X)
+        continue;
+      unsigned ImmIdx = TII->getOperandIdx(MI->getOpcode(), R600Operands::IMM);
+      int64_t Imm = MI->getOperand(ImmIdx).getImm();
+      std::vector<unsigned>::iterator It =
+          std::find(Lits.begin(), Lits.end(), Imm);
+      if (It != Lits.end()) {
+        unsigned Index = It - Lits.begin();
+        MO.setReg(LiteralRegs[Index]);
+      } else {
+        assert(Lits.size() < 4 && "Too many literals in Instruction Group");
+        MO.setReg(LiteralRegs[Lits.size()]);
+        Lits.push_back(Imm);
+      }
+    }
+  }
+
+  MachineBasicBlock::iterator insertLiterals(
+      MachineBasicBlock::iterator InsertPos,
+      const std::vector<unsigned> &Literals) const {
+    MachineBasicBlock *MBB = InsertPos->getParent();
+    for (unsigned i = 0, e = Literals.size(); i < e; i+=2) {
+      unsigned LiteralPair0 = Literals[i];
+      unsigned LiteralPair1 = (i + 1 < e)?Literals[i + 1]:0;
+      InsertPos = BuildMI(MBB, InsertPos->getDebugLoc(),
+          TII->get(AMDGPU::LITERALS))
+          .addImm(LiteralPair0)
+          .addImm(LiteralPair1);
+    }
+    return InsertPos;
+  }
+
+  ClauseFile
+  MakeALUClause(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I)
+      const {
+    MachineBasicBlock::iterator ClauseHead = I;
+    std::vector<MachineInstr *> ClauseContent;
+    I++;
+    for (MachineBasicBlock::instr_iterator E = MBB.instr_end(); I != E;) {
+      if (IsTrivialInst(I)) {
+        ++I;
+        continue;
+      }
+      if (!I->isBundle() && !TII->isALUInstr(I->getOpcode()))
+        break;
+      std::vector<unsigned> Literals;
+      if (I->isBundle()) {
+        MachineInstr *DeleteMI = I;
+        MachineBasicBlock::instr_iterator BI = I.getInstrIterator();
+        while (++BI != E && BI->isBundledWithPred()) {
+          BI->unbundleFromPred();
+          for (unsigned i = 0, e = BI->getNumOperands(); i != e; ++i) {
+            MachineOperand &MO = BI->getOperand(i);
+            if (MO.isReg() && MO.isInternalRead())
+              MO.setIsInternalRead(false);
+          }
+          getLiteral(BI, Literals);
+          ClauseContent.push_back(BI);
+        }
+        I = BI;
+        DeleteMI->eraseFromParent();
+      } else {
+        getLiteral(I, Literals);
+        ClauseContent.push_back(I);
+        I++;
+      }
+      for (unsigned i = 0, e = Literals.size(); i < e; i+=2) {
+        unsigned literal0 = Literals[i];
+        unsigned literal2 = (i + 1 < e)?Literals[i + 1]:0;
+        MachineInstr *MILit = BuildMI(MBB, I, I->getDebugLoc(),
+            TII->get(AMDGPU::LITERALS))
+            .addImm(literal0)
+            .addImm(literal2);
+        ClauseContent.push_back(MILit);
+      }
+    }
+    ClauseHead->getOperand(7).setImm(ClauseContent.size() - 1);
+    return ClauseFile(ClauseHead, ClauseContent);
+  }
+
   void
   EmitFetchClause(MachineBasicBlock::iterator InsertPos, ClauseFile &Clause,
       unsigned &CfCount) {
@@ -176,6 +267,19 @@ private:
       BB->splice(InsertPos, BB, Clause.second[i]);
     }
     CfCount += 2 * Clause.second.size();
+  }
+
+  void
+  EmitALUClause(MachineBasicBlock::iterator InsertPos, ClauseFile &Clause,
+      unsigned &CfCount) {
+    CounterPropagateAddr(Clause.first, CfCount);
+    MachineBasicBlock *BB = Clause.first->getParent();
+    BuildMI(BB, InsertPos->getDebugLoc(), TII->get(AMDGPU::ALU_CLAUSE))
+        .addImm(CfCount);
+    for (unsigned i = 0, e = Clause.second.size(); i < e; ++i) {
+      BB->splice(InsertPos, BB, Clause.second[i]);
+    }
+    CfCount += Clause.second.size();
   }
 
   void CounterPropagateAddr(MachineInstr *MI, unsigned Addr) const {
@@ -234,7 +338,7 @@ public:
             getHWInstrDesc(CF_CALL_FS));
         CfCount++;
       }
-      std::vector<ClauseFile> FetchClauses;
+      std::vector<ClauseFile> FetchClauses, AluClauses;
       for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
           I != E;) {
         if (TII->usesTextureCache(I) || TII->usesVertexCache(I)) {
@@ -252,6 +356,8 @@ public:
           MaxStack = std::max(MaxStack, CurrentStack);
           hasPush = true;
         case AMDGPU::CF_ALU:
+          I = MI;
+          AluClauses.push_back(MakeALUClause(MBB, I));
         case AMDGPU::EG_ExportBuf:
         case AMDGPU::EG_ExportSwz:
         case AMDGPU::R600_ExportBuf:
@@ -362,6 +468,8 @@ public:
           }
           for (unsigned i = 0, e = FetchClauses.size(); i < e; i++)
             EmitFetchClause(I, FetchClauses[i], CfCount);
+          for (unsigned i = 0, e = AluClauses.size(); i < e; i++)
+            EmitALUClause(I, AluClauses[i], CfCount);
         }
         default:
           break;

@@ -944,6 +944,23 @@ def FETCH_CLAUSE : AMDGPUInst <(outs),
   let Inst = num;
 }
 
+def ALU_CLAUSE : AMDGPUInst <(outs),
+(ins i32imm:$addr), "ALU clause starting at $addr:", [] > {
+  field bits<8> Inst;
+  bits<8> num;
+  let Inst = num;
+}
+
+def LITERALS : AMDGPUInst <(outs),
+(ins LITERAL:$literal1, LITERAL:$literal2), "$literal1, $literal2", [] > {
+  field bits<64> Inst;
+  bits<32> literal1;
+  bits<32> literal2;
+
+  let Inst{31-0} = literal1;
+  let Inst{63-32} = literal2;
+}
+
 def PAD : AMDGPUInst <(outs), (ins), "PAD", [] > {
   field bits<64> Inst;
 }

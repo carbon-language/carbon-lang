@@ -143,6 +143,7 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitFCInstr(MI, OS);
   } else if (MI.getOpcode() == AMDGPU::RETURN ||
     MI.getOpcode() == AMDGPU::FETCH_CLAUSE ||
+    MI.getOpcode() == AMDGPU::ALU_CLAUSE ||
     MI.getOpcode() == AMDGPU::BUNDLE ||
     MI.getOpcode() == AMDGPU::KILL) {
     return;
@@ -255,7 +256,7 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     case AMDGPU::CF_ALU:
     case AMDGPU::CF_ALU_PUSH_BEFORE: {
       uint64_t Inst = getBinaryCodeForInstr(MI, Fixups);
-      EmitByte(INSTR_CFALU, OS);
+      EmitByte(INSTR_NATIVE, OS);
       Emit(Inst, OS);
       break;
     }
@@ -294,7 +295,9 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       break;
     }
     default:
-      EmitALUInstr(MI, Fixups, OS);
+      uint64_t Inst = getBinaryCodeForInstr(MI, Fixups);
+      EmitByte(INSTR_NATIVE, OS);
+      Emit(Inst, OS);
       break;
     }
   }

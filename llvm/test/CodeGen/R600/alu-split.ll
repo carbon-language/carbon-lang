@@ -4,6 +4,7 @@
 ;CHECK: ALU
 ;CHECK: ALU
 ;CHECK-NOT: ALU
+;CHECK: CF_END
 
 define void @main() #0 {
 main_body:
