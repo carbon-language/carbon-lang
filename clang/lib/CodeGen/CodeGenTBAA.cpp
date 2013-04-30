@@ -255,9 +255,11 @@ CodeGenTBAA::getTBAAStructInfo(QualType QTy) {
 static bool isTBAAPathStruct(QualType QTy) {
   if (const RecordType *TTy = QTy->getAs<RecordType>()) {
     const RecordDecl *RD = TTy->getDecl()->getDefinition();
+    if (RD->hasFlexibleArrayMember())
+      return false;
     // RD can be struct, union, class, interface or enum.
-    // For now, we only handle struct.
-    if (RD->isStruct() && !RD->hasFlexibleArrayMember())
+    // For now, we only handle struct and class.
+    if (RD->isStruct() || RD->isClass())
       return true;
   }
   return false;
