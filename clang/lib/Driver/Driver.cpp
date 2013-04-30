@@ -491,9 +491,8 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
       << "\n\n********************";
   } else {
     // Failure, remove preprocessed files.
-    if (!C.getArgs().hasArg(options::OPT_save_temps)) {
+    if (!C.getArgs().hasArg(options::OPT_save_temps))
       C.CleanupFileList(C.getTempFiles(), true);
-    }
 
     Diag(clang::diag::note_drv_command_failed_diag_msg)
       << "Error generating preprocessed source(s).";
@@ -824,17 +823,6 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
   // the architecture (to the default) so that -Xarch_ is handled correctly.
   if (!Archs.size())
     Archs.push_back(Args.MakeArgString(TC.getDefaultUniversalArchName()));
-
-  // FIXME: We killed off some others but these aren't yet detected in a
-  // functional manner. If we added information to jobs about which "auxiliary"
-  // files they wrote then we could detect the conflict these cause downstream.
-  if (Archs.size() > 1) {
-    // No recovery needed, the point of this is just to prevent
-    // overwriting the same files.
-    if (const Arg *A = Args.getLastArg(options::OPT_save_temps))
-      Diag(clang::diag::err_drv_invalid_opt_with_multiple_archs)
-        << A->getAsString(Args);
-  }
 
   ActionList SingleActions;
   BuildActions(TC, Args, BAInputs, SingleActions);
@@ -1221,6 +1209,17 @@ void Driver::BuildJobs(Compilation &C) const {
     }
   }
 
+  // Collect the list of architectures.
+  llvm::StringSet<> ArchNames;
+  if (C.getDefaultToolChain().getTriple().isOSDarwin()) {
+    for (ArgList::const_iterator it = C.getArgs().begin(), ie = C.getArgs().end();
+         it != ie; ++it) {
+      Arg *A = *it;
+      if (A->getOption().matches(options::OPT_arch))
+        ArchNames.insert(A->getValue());
+    }
+  }
+
   for (ActionList::const_iterator it = C.getActions().begin(),
          ie = C.getActions().end(); it != ie; ++it) {
     Action *A = *it;
@@ -1243,6 +1242,7 @@ void Driver::BuildJobs(Compilation &C) const {
     BuildJobsForAction(C, A, &C.getDefaultToolChain(),
                        /*BoundArch*/0,
                        /*AtTopLevel*/ true,
+                       /*MultipleArchs*/ ArchNames.size() > 1,
                        /*LinkingOutput*/ LinkingOutput,
                        II);
   }
@@ -1337,6 +1337,7 @@ void Driver::BuildJobsForAction(Compilation &C,
                                 const ToolChain *TC,
                                 const char *BoundArch,
                                 bool AtTopLevel,
+                                bool MultipleArchs,
                                 const char *LinkingOutput,
                                 InputInfo &Result) const {
   llvm::PrettyStackTraceString CrashInfo("Building compilation jobs");
@@ -1364,7 +1365,7 @@ void Driver::BuildJobsForAction(Compilation &C,
       TC = &C.getDefaultToolChain();
 
     BuildJobsForAction(C, *BAA->begin(), TC, BAA->getArchName(),
-                       AtTopLevel, LinkingOutput, Result);
+                       AtTopLevel, MultipleArchs, LinkingOutput, Result);
     return;
   }
 
@@ -1387,8 +1388,8 @@ void Driver::BuildJobsForAction(Compilation &C,
       SubJobAtTopLevel = true;
 
     InputInfo II;
-    BuildJobsForAction(C, *it, TC, BoundArch,
-                       SubJobAtTopLevel, LinkingOutput, II);
+    BuildJobsForAction(C, *it, TC, BoundArch, SubJobAtTopLevel, MultipleArchs,
+                       LinkingOutput, II);
     InputInfos.push_back(II);
   }
 
@@ -1404,7 +1405,8 @@ void Driver::BuildJobsForAction(Compilation &C,
   if (JA->getType() == types::TY_Nothing)
     Result = InputInfo(A->getType(), BaseInput);
   else
-    Result = InputInfo(GetNamedOutputPath(C, *JA, BaseInput, AtTopLevel),
+    Result = InputInfo(GetNamedOutputPath(C, *JA, BaseInput, BoundArch,
+                                          AtTopLevel, MultipleArchs),
                        A->getType(), BaseInput);
 
   if (CCCPrintBindings && !CCGenDiagnostics) {
@@ -1425,7 +1427,9 @@ void Driver::BuildJobsForAction(Compilation &C,
 const char *Driver::GetNamedOutputPath(Compilation &C,
                                        const JobAction &JA,
                                        const char *BaseInput,
-                                       bool AtTopLevel) const {
+                                       const char *BoundArch,
+                                       bool AtTopLevel,
+                                       bool MultipleArchs) const {
   llvm::PrettyStackTraceString CrashInfo("Computing output path");
   // Output to a user requested destination?
   if (AtTopLevel && !isa<DsymutilJobAction>(JA) &&
@@ -1460,8 +1464,14 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
 
   // Determine what the derived output name should be.
   const char *NamedOutput;
-  if (JA.getType() == types::TY_Image) {
-    NamedOutput = DefaultImageName.c_str();
+  if (JA.getType() == types::TY_Image) {    
+    if (MultipleArchs && BoundArch) {
+      SmallString<128> Output(DefaultImageName.c_str());
+      Output += "-";
+      Output.append(BoundArch);
+      NamedOutput = C.getArgs().MakeArgString(Output.c_str());
+    } else
+      NamedOutput = DefaultImageName.c_str();
   } else {
     const char *Suffix = types::getTypeTempSuffix(JA.getType());
     assert(Suffix && "All types used for output should have a suffix.");
@@ -1469,7 +1479,11 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
     std::string::size_type End = std::string::npos;
     if (!types::appendSuffixForType(JA.getType()))
       End = BaseName.rfind('.');
-    std::string Suffixed(BaseName.substr(0, End));
+    SmallString<128> Suffixed(BaseName.substr(0, End));
+    if (MultipleArchs && BoundArch) {
+      Suffixed += "-";
+      Suffixed.append(BoundArch);
+    }
     Suffixed += '.';
     Suffixed += Suffix;
     NamedOutput = C.getArgs().MakeArgString(Suffixed.c_str());
