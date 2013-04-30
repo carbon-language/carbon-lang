@@ -108,6 +108,7 @@ class LDVImpl;
 class UserValue {
   const MDNode *variable; ///< The debug info variable we are part of.
   unsigned offset;        ///< Byte offset into variable.
+  bool Indirect;          ///< true if this is a register-indirect+offset value.
   DebugLoc dl;            ///< The debug location for the variable. This is
                           ///< used by dwarf writer to find lexical scope.
   UserValue *leader;      ///< Equivalence class leader.
@@ -134,9 +135,10 @@ class UserValue {
 
 public:
   /// UserValue - Create a new UserValue.
-  UserValue(const MDNode *var, unsigned o, DebugLoc L,
+  UserValue(const MDNode *var, unsigned o, bool i, DebugLoc L,
             LocMap::Allocator &alloc)
-    : variable(var), offset(o), dl(L), leader(this), next(0), locInts(alloc)
+    : variable(var), offset(o), Indirect(i), dl(L), leader(this),
+      next(0), locInts(alloc)
   {}
 
   /// getLeader - Get the leader of this value's equivalence class.
@@ -299,7 +301,8 @@ class LDVImpl {
   UVMap userVarMap;
 
   /// getUserValue - Find or create a UserValue.
-  UserValue *getUserValue(const MDNode *Var, unsigned Offset, DebugLoc DL);
+  UserValue *getUserValue(const MDNode *Var, unsigned Offset,
+                          bool Indirect, DebugLoc DL);
 
   /// lookupVirtReg - Find the EC leader for VirtReg or null.
   UserValue *lookupVirtReg(unsigned VirtReg);
@@ -414,7 +417,7 @@ void UserValue::mapVirtRegs(LDVImpl *LDV) {
 }
 
 UserValue *LDVImpl::getUserValue(const MDNode *Var, unsigned Offset,
-                                 DebugLoc DL) {
+                                 bool Indirect, DebugLoc DL) {
   UserValue *&Leader = userVarMap[Var];
   if (Leader) {
     UserValue *UV = Leader->getLeader();
@@ -424,7 +427,7 @@ UserValue *LDVImpl::getUserValue(const MDNode *Var, unsigned Offset,
         return UV;
   }
 
-  UserValue *UV = new UserValue(Var, Offset, DL, allocator);
+  UserValue *UV = new UserValue(Var, Offset, Indirect, DL, allocator);
   userValues.push_back(UV);
   Leader = UserValue::merge(Leader, UV);
   return UV;
@@ -445,15 +448,17 @@ UserValue *LDVImpl::lookupVirtReg(unsigned VirtReg) {
 bool LDVImpl::handleDebugValue(MachineInstr *MI, SlotIndex Idx) {
   // DBG_VALUE loc, offset, variable
   if (MI->getNumOperands() != 3 ||
-      !MI->getOperand(1).isImm() || !MI->getOperand(2).isMetadata()) {
+      !(MI->getOperand(1).isReg() || MI->getOperand(1).isImm()) ||
+      !MI->getOperand(2).isMetadata()) {
     DEBUG(dbgs() << "Can't handle " << *MI);
     return false;
   }
 
   // Get or create the UserValue for (variable,offset).
-  unsigned Offset = MI->getOperand(1).getImm();
+  bool Indirect = MI->getOperand(1).isImm();
+  unsigned Offset = Indirect ? MI->getOperand(1).getImm() : 0;
   const MDNode *Var = MI->getOperand(2).getMetadata();
-  UserValue *UV = getUserValue(Var, Offset, MI->getDebugLoc());
+  UserValue *UV = getUserValue(Var, Offset, Indirect, MI->getDebugLoc());
   UV->addDef(Idx, MI->getOperand(0));
   return true;
 }
@@ -924,7 +929,8 @@ void UserValue::insertDebugValue(MachineBasicBlock *MBB, SlotIndex Idx,
   // Frame index locations may require a target callback.
   if (Loc.isFI()) {
     MachineInstr *MI = TII.emitFrameIndexDebugValue(*MBB->getParent(),
-                                          Loc.getIndex(), offset, variable, 
+                                                    Loc.getIndex(), 
+                                                    offset, variable, 
                                                     findDebugLoc());
     if (MI) {
       MBB->insert(I, MI);
@@ -932,8 +938,13 @@ void UserValue::insertDebugValue(MachineBasicBlock *MBB, SlotIndex Idx,
     }
   }
   // This is not a frame index, or the target is happy with a standard FI.
-  BuildMI(*MBB, I, findDebugLoc(), TII.get(TargetOpcode::DBG_VALUE))
-    .addOperand(Loc).addImm(offset).addMetadata(variable);
+
+  if (Loc.isReg())
+    BuildMI(*MBB, I, findDebugLoc(), TII.get(TargetOpcode::DBG_VALUE),
+            Indirect, Loc.getReg(), offset, variable);
+  else
+    BuildMI(*MBB, I, findDebugLoc(), TII.get(TargetOpcode::DBG_VALUE))
+      .addOperand(Loc).addImm(offset).addMetadata(variable);
 }
 
 void UserValue::emitDebugValues(VirtRegMap *VRM, LiveIntervals &LIS,

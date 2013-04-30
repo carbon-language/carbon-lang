@@ -40,7 +40,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !21 = metadata !{metadata !6, metadata !11}
 !22 = metadata !{metadata !"bar.c", metadata !"/private/tmp"}
 
-; Check that variable bar:b value range is appropriately trucated in debug info.
+; Check that variable bar:b value range is appropriately truncated in debug info.
 ; The variable is in %rdi which is clobbered by 'movl %ebx, %edi'
 ; Here Ltmp7 is the end of the location range.
 
@@ -54,7 +54,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 ;CHECK-NEXT: Lset{{.*}} = Ltmp{{.*}}-Ltmp{{.*}}
 ;CHECK-NEXT:    .short  Lset
 ;CHECK-NEXT: Ltmp
-;CHECK-NEXT:	.byte	85
+;CHECK-NEXT:	.byte	85 ## DW_OP_reg
 ;CHECK-NEXT: Ltmp
 ;CHECK-NEXT:	.quad	0
 ;CHECK-NEXT:	.quad	0

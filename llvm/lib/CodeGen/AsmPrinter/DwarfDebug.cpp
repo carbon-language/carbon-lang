@@ -1115,7 +1115,8 @@ static bool isDbgValueInDefinedReg(const MachineInstr *MI) {
   assert(MI->isDebugValue() && "Invalid DBG_VALUE machine instruction!");
   return MI->getNumOperands() == 3 &&
          MI->getOperand(0).isReg() && MI->getOperand(0).getReg() &&
-         MI->getOperand(1).isImm() && MI->getOperand(1).getImm() == 0;
+         (MI->getOperand(1).isImm() ||
+          (MI->getOperand(1).isReg() && MI->getOperand(1).getReg() == 0U));
 }
 
 // Get .debug_loc entry for the instruction range starting at MI.
@@ -1129,12 +1130,11 @@ static DotDebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
     MachineLocation MLoc = Asm->getDebugValueLocation(MI);
     return DotDebugLocEntry(FLabel, SLabel, MLoc, Var);
   }
-  if (MI->getOperand(0).isReg() && MI->getOperand(1).isImm()) {
+  if (MI->getOperand(0).isReg()) {
     MachineLocation MLoc;
-    // TODO: Currently an offset of 0 in a DBG_VALUE means
-    // we need to generate a direct register value.
-    // There is no way to specify an indirect value with offset 0.
-    if (MI->getOperand(1).getImm() == 0)
+    // If the second operand is an immediate, this is a
+    // register-indirect address.
+    if (!MI->getOperand(1).isImm())
       MLoc.set(MI->getOperand(0).getReg());
     else
       MLoc.set(MI->getOperand(0).getReg(), MI->getOperand(1).getImm());

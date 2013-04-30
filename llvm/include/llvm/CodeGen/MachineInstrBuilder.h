@@ -335,6 +335,51 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
   return BuildMI(*BB, BB->end(), DL, MCID, DestReg);
 }
 
+/// BuildMI - This version of the builder builds a DBG_VALUE intrinsic
+/// for either a value in a register or a register-indirect+offset
+/// address.  The convention is that a DBG_VALUE is indirect iff the
+/// second operand is an immediate.
+///
+inline MachineInstrBuilder BuildMI(MachineFunction &MF,
+                                   DebugLoc DL,
+                                   const MCInstrDesc &MCID,
+                                   bool IsIndirect,
+                                   unsigned Reg,
+                                   unsigned Offset,
+                                   const MDNode *MD) {
+  if (IsIndirect)
+    return BuildMI(MF, DL, MCID)
+      .addReg(Reg, RegState::Debug)
+      .addImm(Offset)
+      .addMetadata(MD);
+  else {
+    assert(Offset == 0 && "A direct address cannot have an offset.");
+    return BuildMI(MF, DL, MCID)
+      .addReg(Reg, RegState::Debug)
+      .addReg(0U, RegState::Debug)
+      .addMetadata(MD);
+  }
+}
+
+/// BuildMI - This version of the builder builds a DBG_VALUE intrinsic
+/// for either a value in a register or a register-indirect+offset
+/// address and inserts it at position I.
+///
+inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
+                                   MachineBasicBlock::iterator I,
+                                   DebugLoc DL,
+                                   const MCInstrDesc &MCID,
+                                   bool IsIndirect,
+                                   unsigned Reg,
+                                   unsigned Offset,
+                                   const MDNode *MD) {
+  MachineFunction &MF = *BB.getParent();
+  MachineInstr *MI = BuildMI(MF, DL, MCID, IsIndirect, Reg, Offset, MD);
+  BB.insert(I, MI);
+  return MachineInstrBuilder(MF, MI);
+}
+
+
 inline unsigned getDefRegState(bool B) {
   return B ? RegState::Define : 0;
 }

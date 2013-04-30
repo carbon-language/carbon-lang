@@ -641,11 +641,11 @@ bool FastISel::SelectCall(const User *I) {
       Reg = FuncInfo.InitializeRegForValue(Address);
 
     if (Reg)
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-              TII.get(TargetOpcode::DBG_VALUE))
-        .addReg(Reg, RegState::Debug).addImm(Offset)
-        .addMetadata(DI->getVariable());
-    else
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                TII.get(TargetOpcode::DBG_VALUE),
+                DI->getAddress()->getType()->isPointerTy(),
+                Reg, Offset, DI->getVariable());
+      else
       // We can't yet handle anything else here because it would require
       // generating code, thus altering codegen because of debug info.
       DEBUG(dbgs() << "Dropping debug info for " << DI);
@@ -676,9 +676,8 @@ bool FastISel::SelectCall(const User *I) {
         .addFPImm(CF).addImm(DI->getOffset())
         .addMetadata(DI->getVariable());
     } else if (unsigned Reg = lookUpRegForValue(V)) {
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
-        .addReg(Reg, RegState::Debug).addImm(DI->getOffset())
-        .addMetadata(DI->getVariable());
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, DI->getOffset() != 0,
+              Reg, DI->getOffset(), DI->getVariable());
     } else {
       // We can't yet handle anything else here because it would require
       // generating code, thus altering codegen because of debug info.
