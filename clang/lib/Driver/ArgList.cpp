@@ -248,6 +248,14 @@ void ArgList::AddLastArg(ArgStringList &Output, OptSpecifier Id) const {
   }
 }
 
+void ArgList::AddLastArg(ArgStringList &Output, OptSpecifier Id0,
+                         OptSpecifier Id1) const {
+  if (Arg *A = getLastArg(Id0, Id1)) {
+    A->claim();
+    A->render(*this, Output);
+  }
+}
+
 void ArgList::AddAllArgs(ArgStringList &Output, OptSpecifier Id0,
                          OptSpecifier Id1, OptSpecifier Id2) const {
   for (arg_iterator it = filtered_begin(Id0, Id1, Id2),

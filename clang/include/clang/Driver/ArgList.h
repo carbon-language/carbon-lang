@@ -248,6 +248,8 @@ namespace driver {
 
     /// AddLastArg - Render only the last argument match \p Id0, if present.
     void AddLastArg(ArgStringList &Output, OptSpecifier Id0) const;
+    void AddLastArg(ArgStringList &Output, OptSpecifier Id0,
+                    OptSpecifier Id1) const;
 
     /// AddAllArgs - Render all arguments matching the given ids.
     void AddAllArgs(ArgStringList &Output, OptSpecifier Id0,
