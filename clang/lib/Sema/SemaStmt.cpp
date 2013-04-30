@@ -1590,25 +1590,22 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
 
       // If the type contained 'auto', deduce the 'auto' to 'id'.
       if (FirstType->getContainedAutoType()) {
-        TypeSourceInfo *DeducedType = 0;
         OpaqueValueExpr OpaqueId(D->getLocation(), Context.getObjCIdType(),
                                  VK_RValue);
         Expr *DeducedInit = &OpaqueId;
-        if (DeduceAutoType(D->getTypeSourceInfo(), DeducedInit, DeducedType)
-              == DAR_Failed) {
+        if (DeduceAutoType(D->getTypeSourceInfo(), DeducedInit, FirstType) ==
+                DAR_Failed)
           DiagnoseAutoDeductionFailure(D, DeducedInit);
-        }
-        if (!DeducedType) {
+        if (FirstType.isNull()) {
           D->setInvalidDecl();
           return StmtError();
         }
 
-        D->setTypeSourceInfo(DeducedType);
-        D->setType(DeducedType->getType());
-        FirstType = DeducedType->getType();
+        D->setType(FirstType);
 
         if (ActiveTemplateInstantiations.empty()) {
-          SourceLocation Loc = DeducedType->getTypeLoc().getBeginLoc();
+          SourceLocation Loc =
+              D->getTypeSourceInfo()->getTypeLoc().getBeginLoc();
           Diag(Loc, diag::warn_auto_var_is_id)
             << D->getDeclName();
         }
@@ -1645,20 +1642,19 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
 /// Finish building a variable declaration for a for-range statement.
 /// \return true if an error occurs.
 static bool FinishForRangeVarDecl(Sema &SemaRef, VarDecl *Decl, Expr *Init,
-                                  SourceLocation Loc, int diag) {
+                                  SourceLocation Loc, int DiagID) {
   // Deduce the type for the iterator variable now rather than leaving it to
   // AddInitializerToDecl, so we can produce a more suitable diagnostic.
-  TypeSourceInfo *InitTSI = 0;
+  QualType InitType;
   if ((!isa<InitListExpr>(Init) && Init->getType()->isVoidType()) ||
-      SemaRef.DeduceAutoType(Decl->getTypeSourceInfo(), Init, InitTSI) ==
+      SemaRef.DeduceAutoType(Decl->getTypeSourceInfo(), Init, InitType) ==
           Sema::DAR_Failed)
-    SemaRef.Diag(Loc, diag) << Init->getType();
-  if (!InitTSI) {
+    SemaRef.Diag(Loc, DiagID) << Init->getType();
+  if (InitType.isNull()) {
     Decl->setInvalidDecl();
     return true;
   }
-  Decl->setTypeSourceInfo(InitTSI);
-  Decl->setType(InitTSI->getType());
+  Decl->setType(InitType);
 
   // In ARC, infer lifetime.
   // FIXME: ARC may want to turn this into 'const __unsafe_unretained' if

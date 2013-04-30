@@ -1133,16 +1133,14 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
                        << AllocType << TypeRange);
     }
     Expr *Deduce = Inits[0];
-    TypeSourceInfo *DeducedType = 0;
+    QualType DeducedType;
     if (DeduceAutoType(AllocTypeInfo, Deduce, DeducedType) == DAR_Failed)
       return ExprError(Diag(StartLoc, diag::err_auto_new_deduction_failure)
                        << AllocType << Deduce->getType()
                        << TypeRange << Deduce->getSourceRange());
-    if (!DeducedType)
+    if (DeducedType.isNull())
       return ExprError();
-
-    AllocTypeInfo = DeducedType;
-    AllocType = AllocTypeInfo->getType();
+    AllocType = DeducedType;
   }
 
   // Per C++0x [expr.new]p5, the type being constructed may be a
