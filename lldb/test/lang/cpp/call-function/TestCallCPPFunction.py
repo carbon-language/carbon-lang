@@ -17,6 +17,7 @@ class CallCPPFunctionTestCase(TestBase):
         self.buildDsym()
         self.call_cpp_function()
 
+    @expectedFailureLinux # bugzilla 15854
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test calling a function by basename"""
