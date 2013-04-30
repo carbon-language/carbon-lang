@@ -861,7 +861,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
       RI->eraseFromParent();
     }
     // We need to set the debug location to *somewhere* inside the
-    // inlined function. The line number may be nonsentical, but the
+    // inlined function. The line number may be nonsensical, but the
     // instruction will at least be associated with the right
     // function.
     if (CreatedBranchToNormalDest)
