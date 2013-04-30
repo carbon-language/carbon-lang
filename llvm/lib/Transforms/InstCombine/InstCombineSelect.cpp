@@ -401,7 +401,8 @@ static Value *foldSelectICmpAndOr(const SelectInst &SI, Value *TrueVal,
   } else if (C1Log > C2Log) {
     V = Builder->CreateLShr(V, C1Log - C2Log);
     V = Builder->CreateZExtOrTrunc(V, Y->getType());
-  }
+  } else
+    V = Builder->CreateZExtOrTrunc(V, Y->getType());
 
   ICmpInst::Predicate Pred = IC->getPredicate();
   if ((Pred == ICmpInst::ICMP_NE && OrOnFalseVal) ||
