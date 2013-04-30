@@ -107,8 +107,8 @@ void Test(bool main) {
     for (int sz1 = 0; sz1 < 3; sz1++) {
       for (int off2 = 0; off2 < accesssize(sz1); off2++) {
         for (int rw = 0; rw < 2; rw++) {
-          printf("thr=%d off=%d sz1=%d off2=%d rw=%d p=%p\n",
-                 main, off, sz1, off2, rw, obj);
+          // printf("thr=%d off=%d sz1=%d off2=%d rw=%d p=%p\n",
+          //        main, off, sz1, off2, rw, obj);
           access1(main, off, sz1, off2, rw, (char*)obj);
           obj += 2;
         }
@@ -129,9 +129,7 @@ int main() {
   pthread_create(&th, 0, Thread, 0);
   Test(true);
   pthread_join(th, 0);
-  printf("OK\n");
 }
 
-// WARNING: ThreadSanitizer: data race
+// CHECK: WARNING: ThreadSanitizer: data race
 // CHECK: ThreadSanitizer: reported 224 warnings
-// CHECK: OK
