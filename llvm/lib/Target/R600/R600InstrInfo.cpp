@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "R600InstrInfo.h"
+#include "AMDGPU.h"
 #include "AMDGPUSubtarget.h"
 #include "AMDGPUTargetMachine.h"
 #include "R600Defines.h"
@@ -153,7 +154,8 @@ bool R600InstrInfo::usesVertexCache(unsigned Opcode) const {
 }
 
 bool R600InstrInfo::usesVertexCache(const MachineInstr *MI) const {
-  return usesVertexCache(MI->getOpcode());
+  const R600MachineFunctionInfo *MFI = MI->getParent()->getParent()->getInfo<R600MachineFunctionInfo>();
+  return MFI->ShaderType != ShaderType::COMPUTE && usesVertexCache(MI->getOpcode());
 }
 
 bool R600InstrInfo::usesTextureCache(unsigned Opcode) const {
@@ -162,7 +164,9 @@ bool R600InstrInfo::usesTextureCache(unsigned Opcode) const {
 }
 
 bool R600InstrInfo::usesTextureCache(const MachineInstr *MI) const {
-  return usesTextureCache(MI->getOpcode());
+  const R600MachineFunctionInfo *MFI = MI->getParent()->getParent()->getInfo<R600MachineFunctionInfo>();
+  return (MFI->ShaderType == ShaderType::COMPUTE && usesVertexCache(MI->getOpcode())) ||
+         usesTextureCache(MI->getOpcode());
 }
 
 bool
