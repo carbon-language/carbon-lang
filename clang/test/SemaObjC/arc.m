@@ -756,3 +756,14 @@ void rdar12569201(id key, id value) {
 @interface C
 - (void)method:(id[])objects; // expected-error{{must explicitly describe intended ownership of an object array parameter}}
 @end
+
+// rdar://13752880
+@interface NSMutableArray : NSArray @end
+
+typedef __strong NSMutableArray * PSNS;
+
+void test(NSArray *x) {
+  NSMutableArray *y = x; // expected-warning {{incompatible pointer types initializing 'NSMutableArray *' with an expression of type 'NSArray *'}}
+  __strong NSMutableArray *y1 = x; // expected-warning {{incompatible pointer types initializing 'NSMutableArray *' with an expression of type 'NSArray *'}}
+  PSNS y2 = x; // expected-warning {{incompatible pointer types initializing 'NSMutableArray *' with an expression of type 'NSArray *'}}
+}

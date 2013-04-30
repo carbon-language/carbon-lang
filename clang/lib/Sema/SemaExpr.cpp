@@ -10170,6 +10170,10 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     if (Hint.isNull() && !CheckInferredResultType) {
       ConvHints.tryToFixConversion(SrcExpr, SrcType, DstType, *this);
     }
+    else if (CheckInferredResultType) {
+      SrcType = SrcType.getUnqualifiedType();
+      DstType = DstType.getUnqualifiedType();
+    }
     MayHaveConvFixit = true;
     break;
   case IncompatiblePointerSign:
