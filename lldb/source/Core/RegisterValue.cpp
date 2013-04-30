@@ -237,7 +237,17 @@ RegisterValue::GetScalarValue (Scalar &scalar) const
     switch (m_type)
     {
         case eTypeInvalid:      break;
-        case eTypeBytes:        break;
+        case eTypeBytes:
+        {
+            switch (m_data.buffer.length)
+            {
+            default:    break;
+            case 1:     scalar = m_data.uint8; return true;
+            case 2:     scalar = m_data.uint16; return true;
+            case 4:     scalar = m_data.uint32; return true;
+            case 8:     scalar = m_data.uint64; return true;
+            }
+        }
         case eTypeUInt8:        scalar = m_data.uint8; return true;
         case eTypeUInt16:       scalar = m_data.uint16; return true;
         case eTypeUInt32:       scalar = m_data.uint32; return true;
@@ -669,6 +679,16 @@ RegisterValue::GetAsUInt16 (uint16_t fail_value, bool *success_ptr) const
         default:            break;
         case eTypeUInt8:    return m_data.uint8;
         case eTypeUInt16:   return m_data.uint16;
+        case eTypeBytes:
+        {
+            switch (m_data.buffer.length)
+            {
+            default:    break;
+            case 1:     return m_data.uint8;
+            case 2:     return m_data.uint16;
+            }
+        }
+        break;
     }
     if (success_ptr)
         *success_ptr = false;
@@ -698,6 +718,17 @@ RegisterValue::GetAsUInt32 (uint32_t fail_value, bool *success_ptr) const
             if (sizeof(long double) == sizeof(uint32_t))
                 return m_data.uint32;
             break;
+        case eTypeBytes:
+        {
+            switch (m_data.buffer.length)
+            {
+            default:    break;
+            case 1:     return m_data.uint8;
+            case 2:     return m_data.uint16;
+            case 4:     return m_data.uint32;
+            }
+        }
+        break;
     }
     if (success_ptr)
         *success_ptr = false;
@@ -728,6 +759,18 @@ RegisterValue::GetAsUInt64 (uint64_t fail_value, bool *success_ptr) const
             if (sizeof(long double) == sizeof(uint64_t))
                 return m_data.uint64;
             break;
+        case eTypeBytes:
+        {
+            switch (m_data.buffer.length)
+            {
+            default:    break;
+            case 1:     return m_data.uint8;
+            case 2:     return m_data.uint16;
+            case 4:     return m_data.uint32;
+            case 8:     return m_data.uint64;
+            }
+        }
+        break;
     }
     if (success_ptr)
         *success_ptr = false;
@@ -760,6 +803,20 @@ RegisterValue::GetAsUInt128 (__uint128_t fail_value, bool *success_ptr) const
             if (sizeof(long double) == sizeof(__uint128_t))
                 return m_data.uint128;
             break;
+        case eTypeBytes:
+        {
+            switch (m_data.buffer.length)
+            {
+            default:
+                break;
+            case 1:     return m_data.uint8;
+            case 2:     return m_data.uint16;
+            case 4:     return m_data.uint32;
+            case 8:     return m_data.uint64;
+            case 16:    return m_data.uint128;
+            }
+        }
+        break;
     }
     if (success_ptr)
         *success_ptr = false;
