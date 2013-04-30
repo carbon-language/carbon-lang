@@ -853,11 +853,12 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
 
 
     // Add a branch to the merge points and remove return instructions.
-    ReturnInst *RI;
+    DebugLoc Loc;
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
-      RI = Returns[i];
+      ReturnInst *RI = Returns[i];
       BranchInst* BI = BranchInst::Create(AfterCallBB, RI);
-      BI->setDebugLoc(RI->getDebugLoc());
+      Loc = RI->getDebugLoc();
+      BI->setDebugLoc(Loc);
       RI->eraseFromParent();
     }
     // We need to set the debug location to *somewhere* inside the
@@ -865,7 +866,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
     // instruction will at least be associated with the right
     // function.
     if (CreatedBranchToNormalDest)
-      CreatedBranchToNormalDest->setDebugLoc(RI->getDebugLoc());
+      CreatedBranchToNormalDest->setDebugLoc(Loc);
   } else if (!Returns.empty()) {
     // Otherwise, if there is exactly one return value, just replace anything
     // using the return value of the call with the computed value.
