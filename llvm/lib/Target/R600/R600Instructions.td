@@ -477,6 +477,7 @@ class R600_TEX <bits<11> inst, string opName, list<dag> pattern,
     let FETCH_WHOLE_QUAD = 0;
     let ALT_CONST = 0;
     let SAMPLER_INDEX_MODE = 0;
+    let RESOURCE_INDEX_MODE = 0;
 
     let COORD_TYPE_X = 0;
     let COORD_TYPE_Y = 0;
@@ -927,6 +928,13 @@ ins, AsmPrint, [] >, CF_WORD0_EG, CF_WORD1_EG {
 
 def CF_ALU : ALU_CLAUSE<8, "ALU">;
 def CF_ALU_PUSH_BEFORE : ALU_CLAUSE<9, "ALU_PUSH_BEFORE">;
+
+def FETCH_CLAUSE : AMDGPUInst <(outs),
+(ins i32imm:$addr), "Fetch clause starting at $addr:", [] > {
+  field bits<8> Inst;
+  bits<8> num;
+  let Inst = num;
+}
 
 def PAD : AMDGPUInst <(outs), (ins), "PAD", [] > {
   field bits<64> Inst;

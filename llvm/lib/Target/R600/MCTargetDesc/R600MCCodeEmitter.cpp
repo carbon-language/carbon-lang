@@ -142,6 +142,7 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   if (isFCOp(MI.getOpcode())){
     EmitFCInstr(MI, OS);
   } else if (MI.getOpcode() == AMDGPU::RETURN ||
+    MI.getOpcode() == AMDGPU::FETCH_CLAUSE ||
     MI.getOpcode() == AMDGPU::BUNDLE ||
     MI.getOpcode() == AMDGPU::KILL) {
     return;
@@ -166,10 +167,13 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     case AMDGPU::TEX_VTX_TEXBUF : {
       uint64_t InstWord01 = getBinaryCodeForInstr(MI, Fixups);
       uint32_t InstWord2 = MI.getOperand(2).getImm(); // Offset
+      InstWord2 |= 1 << 19;
 
-      EmitByte(INSTR_VTX, OS);
+      EmitByte(INSTR_NATIVE, OS);
       Emit(InstWord01, OS);
+      EmitByte(INSTR_NATIVE, OS);
       Emit(InstWord2, OS);
+      Emit((u_int32_t) 0, OS);
       break;
     }
     case AMDGPU::TEX_LD:
@@ -241,9 +245,11 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
           SrcSelect[ELEMENT_W] << 29 | Offsets[0] << 0 | Offsets[1] << 5 |
           Offsets[2] << 10;
 
-      EmitByte(INSTR_TEX, OS);
+      EmitByte(INSTR_NATIVE, OS);
       Emit(Word01, OS);
+      EmitByte(INSTR_NATIVE, OS);
       Emit(Word2, OS);
+      Emit((u_int32_t) 0, OS);
       break;
     }
     case AMDGPU::CF_ALU:
@@ -253,13 +259,13 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       Emit(Inst, OS);
       break;
     }
-    case AMDGPU::CF_TC_EG:
-    case AMDGPU::CF_VC_EG:
     case AMDGPU::CF_CALL_FS_EG:
-    case AMDGPU::CF_TC_R600:
-    case AMDGPU::CF_VC_R600:
     case AMDGPU::CF_CALL_FS_R600:
       return;
+    case AMDGPU::CF_TC_EG:
+    case AMDGPU::CF_VC_EG:
+    case AMDGPU::CF_TC_R600:
+    case AMDGPU::CF_VC_R600:
     case AMDGPU::WHILE_LOOP_EG:
     case AMDGPU::END_LOOP_EG:
     case AMDGPU::LOOP_BREAK_EG:

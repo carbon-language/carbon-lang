@@ -30,6 +30,8 @@ namespace llvm {
 class R600ControlFlowFinalizer : public MachineFunctionPass {
 
 private:
+  typedef std::pair<MachineInstr *, std::vector<MachineInstr *> > ClauseFile;
+
   enum ControlFlowInstruction {
     CF_TC,
     CF_VC,
@@ -105,28 +107,44 @@ private:
     return TII->get(Opcode);
   }
 
-  MachineBasicBlock::iterator
-  MakeFetchClause(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-      unsigned CfAddress) const {
+  ClauseFile
+  MakeFetchClause(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I)
+      const {
     MachineBasicBlock::iterator ClauseHead = I;
+    std::vector<MachineInstr *> ClauseContent;
     unsigned AluInstCount = 0;
     bool IsTex = TII->usesTextureCache(ClauseHead);
     for (MachineBasicBlock::iterator E = MBB.end(); I != E; ++I) {
       if (IsTrivialInst(I))
         continue;
+      if (AluInstCount > MaxFetchInst)
+        break;
       if ((IsTex && !TII->usesTextureCache(I)) ||
           (!IsTex && !TII->usesVertexCache(I)))
         break;
       AluInstCount ++;
-      if (AluInstCount > MaxFetchInst)
-        break;
+      ClauseContent.push_back(I);
     }
-    BuildMI(MBB, ClauseHead, MBB.findDebugLoc(ClauseHead),
+    MachineInstr *MIb = BuildMI(MBB, ClauseHead, MBB.findDebugLoc(ClauseHead),
         getHWInstrDesc(IsTex?CF_TC:CF_VC))
-        .addImm(CfAddress) // ADDR
-        .addImm(AluInstCount); // COUNT
-    return I;
+        .addImm(0) // ADDR
+        .addImm(AluInstCount - 1); // COUNT
+    return ClauseFile(MIb, ClauseContent);
   }
+
+  void
+  EmitFetchClause(MachineBasicBlock::iterator InsertPos, ClauseFile &Clause,
+      unsigned &CfCount) {
+    CounterPropagateAddr(Clause.first, CfCount);
+    MachineBasicBlock *BB = Clause.first->getParent();
+    BuildMI(BB, InsertPos->getDebugLoc(), TII->get(AMDGPU::FETCH_CLAUSE))
+        .addImm(CfCount);
+    for (unsigned i = 0, e = Clause.second.size(); i < e; ++i) {
+      BB->splice(InsertPos, BB, Clause.second[i]);
+    }
+    CfCount += 2 * Clause.second.size();
+  }
+
   void CounterPropagateAddr(MachineInstr *MI, unsigned Addr) const {
     MI->getOperand(0).setImm(Addr + MI->getOperand(0).getImm());
   }
@@ -182,11 +200,12 @@ public:
             getHWInstrDesc(CF_CALL_FS));
         CfCount++;
       }
+      std::vector<ClauseFile> FetchClauses;
       for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
           I != E;) {
         if (TII->usesTextureCache(I) || TII->usesVertexCache(I)) {
           DEBUG(dbgs() << CfCount << ":"; I->dump(););
-          I = MakeFetchClause(MBB, I, 0);
+          FetchClauses.push_back(MakeFetchClause(MBB, I));
           CfCount++;
           continue;
         }
@@ -307,6 +326,8 @@ public:
             BuildMI(MBB, I, MBB.findDebugLoc(MI), TII->get(AMDGPU::PAD));
             CfCount++;
           }
+          for (unsigned i = 0, e = FetchClauses.size(); i < e; i++)
+            EmitFetchClause(I, FetchClauses[i], CfCount);
         }
         default:
           break;
