@@ -5780,7 +5780,7 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast,
     QualType pointee_qual_type;
     if (clang_type)
     {
-        QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+        QualType qual_type (QualType::getFromOpaquePtr(clang_type).getCanonicalType());
         const clang::Type::TypeClass type_class = qual_type->getTypeClass();
         bool success = false;
         switch (type_class)
@@ -5837,7 +5837,7 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast,
             // Check to make sure what we are pointing too is a possible dynamic C++ type
             // We currently accept any "void *" (in case we have a class that has been
             // watered down to an opaque pointer) and virtual C++ classes.
-            const clang::Type::TypeClass pointee_type_class = pointee_qual_type->getTypeClass();
+            const clang::Type::TypeClass pointee_type_class = pointee_qual_type.getCanonicalType()->getTypeClass();
             switch (pointee_type_class)
             {
                 case clang::Type::Builtin:
