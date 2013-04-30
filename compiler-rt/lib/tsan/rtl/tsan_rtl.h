@@ -641,6 +641,8 @@ void MemoryAccessRange(ThreadState *thr, uptr pc, uptr addr,
     uptr size, bool is_write);
 void MemoryAccessRangeStep(ThreadState *thr, uptr pc, uptr addr,
     uptr size, uptr step, bool is_write);
+void UnalignedMemoryAccess(ThreadState *thr, uptr pc, uptr addr,
+    int size, bool kAccessIsWrite, bool kIsAtomic);
 
 const int kSizeLog1 = 0;
 const int kSizeLog2 = 1;

@@ -462,6 +462,27 @@ void MemoryAccessImpl(ThreadState *thr, uptr addr,
   return;
 }
 
+void UnalignedMemoryAccess(ThreadState *thr, uptr pc, uptr addr,
+    int size, bool kAccessIsWrite, bool kIsAtomic) {
+  while (size) {
+    int size1 = 1;
+    int kAccessSizeLog = kSizeLog1;
+    if (size >= 8 && (addr & ~7) == ((addr + 8) & ~7)) {
+      size1 = 8;
+      kAccessSizeLog = kSizeLog8;
+    } else if (size >= 4 && (addr & ~7) == ((addr + 4) & ~7)) {
+      size1 = 4;
+      kAccessSizeLog = kSizeLog4;
+    } else if (size >= 2 && (addr & ~7) == ((addr + 2) & ~7)) {
+      size1 = 2;
+      kAccessSizeLog = kSizeLog2;
+    }
+    MemoryAccess(thr, pc, addr, kAccessSizeLog, kAccessIsWrite, kIsAtomic);
+    addr += size1;
+    size -= size1;
+  }
+}
+
 ALWAYS_INLINE USED
 void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
     int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic) {

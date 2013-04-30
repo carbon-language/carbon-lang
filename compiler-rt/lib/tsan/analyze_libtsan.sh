@@ -4,7 +4,7 @@ set -e
 set -u
 
 get_asm() {
-  grep tsan_$1.: -A 10000 libtsan.objdump | \
+  grep __tsan_$1.: -A 10000 libtsan.objdump | \
     awk "/[^:]$/ {print;} />:/ {c++; if (c == 2) {exit}}"
 }
 
@@ -27,7 +27,7 @@ for f in $list; do
   file=asm_$f.s
   get_asm $f > $file
   tot=$(wc -l < $file)
-  size=$(grep $f$ libtsan.nm | awk --non-decimal-data '{print ("0x"$2)+0}')
+  size=$(grep __tsan_$f$ libtsan.nm | awk --non-decimal-data '{print ("0x"$2)+0}')
   rsp=$(grep '(%rsp)' $file | wc -l)
   push=$(grep 'push' $file | wc -l)
   pop=$(grep 'pop' $file | wc -l)
