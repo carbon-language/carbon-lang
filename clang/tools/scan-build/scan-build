@@ -931,11 +931,13 @@ sub RunXcodebuild {
   if ($oldBehavior == 0) {
     my $OutputDir = $Options->{"OUTPUT_DIR"};
     my $CLANG = $Options->{"CLANG"};
+    my $OtherFlags = $Options->{"CCC_ANALYZER_ANALYSIS"};
     push @$Args,
         "RUN_CLANG_STATIC_ANALYZER=YES",
         "CLANG_ANALYZER_OUTPUT=plist-html",
         "CLANG_ANALYZER_EXEC=$CLANG",
-        "CLANG_ANALYZER_OUTPUT_DIR=$OutputDir";
+        "CLANG_ANALYZER_OUTPUT_DIR=$OutputDir",
+        "CLANG_ANALYZER_OTHER_FLAGS=$OtherFlags";
 
     return (system(@$Args) >> 8);
   }
