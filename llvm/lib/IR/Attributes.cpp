@@ -501,7 +501,7 @@ std::string AttributeSetNode::getAsString(bool TargetIndependent,
 // AttributeSetImpl Definition
 //===----------------------------------------------------------------------===//
 
-uint64_t AttributeSetImpl::Raw(uint64_t Index) const {
+uint64_t AttributeSetImpl::Raw(unsigned Index) const {
   for (unsigned I = 0, E = getNumAttributes(); I != E; ++I) {
     if (getSlotIndex(I) != Index) continue;
     const AttributeSetNode *ASN = AttrNodes[I].second;
@@ -889,7 +889,7 @@ unsigned AttributeSet::getNumSlots() const {
   return pImpl ? pImpl->getNumAttributes() : 0;
 }
 
-uint64_t AttributeSet::getSlotIndex(unsigned Slot) const {
+unsigned AttributeSet::getSlotIndex(unsigned Slot) const {
   assert(pImpl && Slot < pImpl->getNumAttributes() &&
          "Slot # out of range!");
   return pImpl->getSlotIndex(Slot);

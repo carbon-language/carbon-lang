@@ -346,7 +346,7 @@ public:
   unsigned getNumSlots() const;
 
   /// \brief Return the index for the given slot.
-  uint64_t getSlotIndex(unsigned Slot) const;
+  unsigned getSlotIndex(unsigned Slot) const;
 
   /// \brief Return the attributes at the given slot.
   AttributeSet getSlotAttributes(unsigned Slot) const;
