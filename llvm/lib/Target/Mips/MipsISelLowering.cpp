@@ -711,10 +711,7 @@ void
 MipsTargetLowering::ReplaceNodeResults(SDNode *N,
                                        SmallVectorImpl<SDValue> &Results,
                                        SelectionDAG &DAG) const {
-  SDValue Res = LowerOperation(SDValue(N, 0), DAG);
-
-  for (unsigned I = 0, E = Res->getNumValues(); I != E; ++I)
-    Results.push_back(Res.getValue(I));
+  return LowerOperationWrapper(N, Results, DAG);
 }
 
 SDValue MipsTargetLowering::
