@@ -209,10 +209,19 @@ R600InstrInfo::canBundle(const std::vector<MachineInstr *> &MIs) const {
       int SrcIdx = getOperandIdx(MI->getOpcode(), OpTable[j][0]);
       if (SrcIdx < 0)
         break;
-      if (MI->getOperand(SrcIdx).getReg() == AMDGPU::ALU_CONST) {
+      unsigned Reg = MI->getOperand(SrcIdx).getReg();
+      if (Reg == AMDGPU::ALU_CONST) {
         unsigned Const = MI->getOperand(
             getOperandIdx(MI->getOpcode(), OpTable[j][1])).getImm();
         Consts.push_back(Const);
+        continue;
+      }
+      if (AMDGPU::R600_KC0RegClass.contains(Reg) ||
+          AMDGPU::R600_KC1RegClass.contains(Reg)) {
+        unsigned Index = RI.getEncodingValue(Reg) & 0xff;
+        unsigned Chan = RI.getHWRegChan(Reg);
+        Consts.push_back((Index << 2) | Chan);
+        continue;
       }
     }
   }
