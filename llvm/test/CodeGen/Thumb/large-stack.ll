@@ -20,8 +20,8 @@ define void @test2() {
 
 define i32 @test3() {
 ; CHECK: test3:
-; CHECK: ldr.n r2, LCPI
-; CHECK: add sp, r2
+; CHECK: ldr.n r1, LCPI
+; CHECK: add sp, r1
 ; CHECK: ldr.n r1, LCPI
 ; CHECK: add r1, sp
 ; CHECK: subs r4, r7, #4
