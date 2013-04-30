@@ -1,10 +1,10 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
-;CHECK: VTX
+;CHECK: TEX
 ;CHECK: ALU_PUSH
 ;CHECK: JUMP @4
 ;CHECK: ELSE @16
-;CHECK: VTX
+;CHECK: TEX
 ;CHECK: LOOP_START_DX10 @15
 ;CHECK: LOOP_BREAK @14
 ;CHECK: POP @16
