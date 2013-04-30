@@ -1036,6 +1036,21 @@ _LIBCPP_EXTERN_TEMPLATE(class __basic_string_common<true>)
 #pragma warning( pop )
 #endif // _MSC_VER
 
+#ifdef _LIBCPP_ALTERNATE_STRING_LAYOUT
+
+template <class _CharT, size_t = sizeof(_CharT)>
+struct __padding
+{
+    unsigned char __xx[sizeof(_CharT)-1];
+};
+
+template <class _CharT>
+struct __padding<_CharT, 1>
+{
+};
+
+#endif  // _LIBCPP_ALTERNATE_STRING_LAYOUT
+
 template<class _CharT, class _Traits, class _Allocator>
 class _LIBCPP_TYPE_VIS basic_string
     : private __basic_string_common<true>
@@ -1069,6 +1084,39 @@ public:
     typedef _VSTD::reverse_iterator<const_iterator>       const_reverse_iterator;
 
 private:
+
+#ifdef _LIBCPP_ALTERNATE_STRING_LAYOUT
+
+    struct __long
+    {
+        pointer   __data_;
+        size_type __size_;
+        size_type __cap_;
+    };
+
+#if _LIBCPP_BIG_ENDIAN
+    enum {__short_mask = 0x01};
+    enum {__long_mask  = 0x1ul};
+#else  // _LIBCPP_BIG_ENDIAN
+    enum {__short_mask = 0x80};
+    enum {__long_mask  = ~(size_type(~0) >> 1)};
+#endif  // _LIBCPP_BIG_ENDIAN
+
+    enum {__min_cap = (sizeof(__long) - 1)/sizeof(value_type) > 2 ?
+                      (sizeof(__long) - 1)/sizeof(value_type) : 2};
+
+    struct __short
+    {
+        value_type __data_[__min_cap];
+        struct
+            : __padding<value_type>
+        {
+            unsigned char __size_;
+        };
+    };
+
+#else
+
     struct __long
     {
         size_type __cap_;
@@ -1084,8 +1132,6 @@ private:
     enum {__long_mask  = 0x1ul};
 #endif  // _LIBCPP_BIG_ENDIAN
 
-    enum {__mask = size_type(~0) >> 1};
-
     enum {__min_cap = (sizeof(__long) - 1)/sizeof(value_type) > 2 ?
                       (sizeof(__long) - 1)/sizeof(value_type) : 2};
 
@@ -1098,6 +1144,8 @@ private:
         };
         value_type __data_[__min_cap];
     };
+
+#endif  // _LIBCPP_ALTERNATE_STRING_LAYOUT
 
     union __lx{__long __lx; __short __lxx;};
 
@@ -1475,20 +1523,44 @@ private:
     const allocator_type& __alloc() const _NOEXCEPT
         {return __r_.second();}
 
+#ifdef _LIBCPP_ALTERNATE_STRING_LAYOUT
+
     _LIBCPP_INLINE_VISIBILITY
     void __set_short_size(size_type __s) _NOEXCEPT
-#if _LIBCPP_BIG_ENDIAN
-        {__r_.first().__s.__size_ = (unsigned char)(__s);}
-#else
+#   if _LIBCPP_BIG_ENDIAN
         {__r_.first().__s.__size_ = (unsigned char)(__s << 1);}
-#endif
+#   else
+        {__r_.first().__s.__size_ = (unsigned char)(__s);}
+#   endif
+
     _LIBCPP_INLINE_VISIBILITY
     size_type __get_short_size() const _NOEXCEPT
-#if _LIBCPP_BIG_ENDIAN
-        {return __r_.first().__s.__size_;}
-#else
+#   if _LIBCPP_BIG_ENDIAN
         {return __r_.first().__s.__size_ >> 1;}
-#endif
+#   else
+        {return __r_.first().__s.__size_;}
+#   endif
+
+#else  // _LIBCPP_ALTERNATE_STRING_LAYOUT
+
+    _LIBCPP_INLINE_VISIBILITY
+    void __set_short_size(size_type __s) _NOEXCEPT
+#   if _LIBCPP_BIG_ENDIAN
+        {__r_.first().__s.__size_ = (unsigned char)(__s);}
+#   else
+        {__r_.first().__s.__size_ = (unsigned char)(__s << 1);}
+#   endif
+
+    _LIBCPP_INLINE_VISIBILITY
+    size_type __get_short_size() const _NOEXCEPT
+#   if _LIBCPP_BIG_ENDIAN
+        {return __r_.first().__s.__size_;}
+#   else
+        {return __r_.first().__s.__size_ >> 1;}
+#   endif
+
+#endif  // _LIBCPP_ALTERNATE_STRING_LAYOUT
+
     _LIBCPP_INLINE_VISIBILITY
     void __set_long_size(size_type __s) _NOEXCEPT
         {__r_.first().__l.__size_ = __s;}
@@ -2316,14 +2388,37 @@ template <class _CharT, class _Traits, class _Allocator>
 void
 basic_string<_CharT, _Traits, _Allocator>::push_back(value_type __c)
 {
-    size_type __cap = capacity();
-    size_type __sz = size();
+    bool __is_short = !__is_long();
+    size_type __cap;
+    size_type __sz;
+    if (__is_short)
+    {
+        __cap = __min_cap - 1;
+        __sz = __get_short_size();
+    }
+    else
+    {
+        __cap = __get_long_cap() - 1;
+        __sz = __get_long_size();
+    }
     if (__sz == __cap)
+    {
         __grow_by(__cap, 1, __sz, __sz, 0);
-    pointer __p = __get_pointer() + __sz;
+        __is_short = !__is_long();
+    }
+    pointer __p;
+    if (__is_short)
+    {
+        __p = __get_short_pointer() + __sz;
+        __set_short_size(__sz+1);
+    }
+    else
+    {
+        __p = __get_long_pointer() + __sz;
+        __set_long_size(__sz+1);
+    }
     traits_type::assign(*__p, __c);
     traits_type::assign(*++__p, value_type());
-    __set_size(__sz+1);
 }
 
 template <class _CharT, class _Traits, class _Allocator>
