@@ -14,7 +14,7 @@ entry:
   %_M_header.i.i.i.i.i.i = getelementptr inbounds %class.spell_checker.21.103.513.538* %this, i64 0, i32 0, i32 0, i32 0, i32 1
   %0 = bitcast %"struct.std::_Rb_tree_node_base.17.99.509.534"* %_M_header.i.i.i.i.i.i to i8*
   call void @llvm.memset.p0i8.i64(i8* %0, i8 0, i64 40, i32 4, i1 false) nounwind
-  store %"struct.std::_Rb_tree_node_base.17.99.509.534"* %_M_header.i.i.i.i.i.i, %"struct.std::_Rb_tree_node_base.17.99.509.534"** undef, align 8, !tbaa !0
+  store %"struct.std::_Rb_tree_node_base.17.99.509.534"* %_M_header.i.i.i.i.i.i, %"struct.std::_Rb_tree_node_base.17.99.509.534"** undef, align 8
   unreachable
 }
 
@@ -22,7 +22,3 @@ entry:
 ; CHECK: stwu
 
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
-
-!0 = metadata !{metadata !"any pointer", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

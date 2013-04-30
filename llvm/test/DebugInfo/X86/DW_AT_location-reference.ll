@@ -49,7 +49,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 define void @f() nounwind {
 entry:
   %call = tail call i32 @g(i32 0, i32 0) nounwind, !dbg !8
-  store i32 %call, i32* @a, align 4, !dbg !8, !tbaa !9
+  store i32 %call, i32* @a, align 4, !dbg !8
   tail call void @llvm.dbg.value(metadata !12, i64 0, metadata !5), !dbg !13
   br label %while.body
 
@@ -63,7 +63,7 @@ while.body:                                       ; preds = %entry, %while.body
 while.end:                                        ; preds = %while.body
   tail call void @llvm.dbg.value(metadata !{i32 %mul}, i64 0, metadata !5), !dbg !14
   %call4 = tail call i32 @g(i32 %mul, i32 0) nounwind, !dbg !15
-  store i32 %call4, i32* @a, align 4, !dbg !15, !tbaa !9
+  store i32 %call4, i32* @a, align 4, !dbg !15
   tail call void @llvm.dbg.value(metadata !16, i64 0, metadata !5), !dbg !17
   br label %while.body9
 
@@ -77,7 +77,7 @@ while.body9:                                      ; preds = %while.end, %while.b
 while.end13:                                      ; preds = %while.body9
   tail call void @llvm.dbg.value(metadata !{i32 %mul12}, i64 0, metadata !5), !dbg !18
   %call15 = tail call i32 @g(i32 0, i32 %mul12) nounwind, !dbg !19
-  store i32 %call15, i32* @a, align 4, !dbg !19, !tbaa !9
+  store i32 %call15, i32* @a, align 4, !dbg !19
   ret void, !dbg !20
 }
 
@@ -96,9 +96,6 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !6 = metadata !{i32 786443, metadata !1, metadata !0, i32 4, i32 14, i32 0} ; [ DW_TAG_lexical_block ]
 !7 = metadata !{i32 786468, metadata !2, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !8 = metadata !{i32 6, i32 3, metadata !6, null}
-!9 = metadata !{metadata !"int", metadata !10}
-!10 = metadata !{metadata !"omnipotent char", metadata !11}
-!11 = metadata !{metadata !"Simple C/C++ TBAA", null}
 !12 = metadata !{i32 1}
 !13 = metadata !{i32 7, i32 3, metadata !6, null}
 !14 = metadata !{i32 8, i32 3, metadata !6, null}

@@ -29,7 +29,7 @@ entry:
 for.body.i:                                       ; preds = %entry, %for.body.i
   %__init.addr.05.i = phi i32 [ %add.i, %for.body.i ], [ 0, %entry ]
   %__first.addr.04.i = phi i32* [ %incdec.ptr.i, %for.body.i ], [ %A, %entry ]
-  %0 = load i32* %__first.addr.04.i, align 4, !tbaa !0
+  %0 = load i32* %__first.addr.04.i, align 4
   %add.i = add nsw i32 %0, %__init.addr.05.i
   %incdec.ptr.i = getelementptr inbounds i32* %__first.addr.04.i, i64 1
   %cmp.i = icmp eq i32* %incdec.ptr.i, %add.ptr
@@ -55,7 +55,7 @@ entry:
 for.body.i:                                       ; preds = %entry, %for.body.i
   %__init.addr.05.i = phi i32 [ %add.i, %for.body.i ], [ 0, %entry ]
   %__first.addr.04.i = phi i32* [ %incdec.ptr.i, %for.body.i ], [ %A, %entry ]
-  %0 = load i32* %__first.addr.04.i, align 4, !tbaa !0
+  %0 = load i32* %__first.addr.04.i, align 4
   %add.i = add nsw i32 %0, %__init.addr.05.i
   %incdec.ptr.i = getelementptr inbounds i32* %__first.addr.04.i, i64 1
   %cmp.i = icmp eq i32* %incdec.ptr.i, %add.ptr
@@ -68,8 +68,5 @@ _ZSt10accumulateIPiiET0_T_S2_S1_.exit:            ; preds = %for.body.i, %entry
 
 attributes #0 = { nounwind readonly ssp uwtable "fp-contract-model"="standard" "no-frame-pointer-elim" "no-frame-pointer-elim-non-leaf" "realign-stack" "relocation-model"="pic" "ssp-buffers-size"="8" }
 
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
 !3 = metadata !{}
 

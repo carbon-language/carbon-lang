@@ -17,9 +17,9 @@ entry:
   %arraydecay1 = getelementptr inbounds [8200 x i32]* %v, i64 0, i64 0
   %arraydecay2 = getelementptr inbounds [8200 x i32]* %w, i64 0, i64 0
   call void @bar(i32* %arraydecay, i32* %arraydecay1, i32* %arraydecay2) #0
-  %3 = load i32* %arraydecay2, align 4, !tbaa !0
+  %3 = load i32* %arraydecay2, align 4
   %arrayidx3 = getelementptr inbounds [8200 x i32]* %w, i64 0, i64 1
-  %4 = load i32* %arrayidx3, align 4, !tbaa !0
+  %4 = load i32* %arrayidx3, align 4
 
 ; CHECK: @foo
 ; CHECK-NOT: lwzx
@@ -41,8 +41,3 @@ declare void @bar(i32*, i32*, i32*)
 declare void @llvm.lifetime.end(i64, i8* nocapture) #0
 
 attributes #0 = { nounwind }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
-

@@ -33,7 +33,7 @@ for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
   %sum.05 = phi i32 [ %add, %for.body ], [ 0, %entry ]
   %x = getelementptr inbounds %struct.coordinate* %A, i64 %indvars.iv, i32 0
-  %0 = load i32* %x, align 4, !tbaa !0
+  %0 = load i32* %x, align 4
   %add = add nsw i32 %0, %sum.05
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
@@ -44,7 +44,3 @@ for.end:                                          ; preds = %for.body, %entry
   %sum.0.lcssa = phi i32 [ 0, %entry ], [ %add, %for.body ]
   ret i32 %sum.0.lcssa
 }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

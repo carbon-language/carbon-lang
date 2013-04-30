@@ -18,7 +18,7 @@ entry:
 
   %exception = tail call i8* @__cxa_allocate_exception(i32 8) nounwind
   %0 = bitcast i8* %exception to double*
-  store double 3.200000e+00, double* %0, align 8, !tbaa !0
+  store double 3.200000e+00, double* %0, align 8
   invoke void @__cxa_throw(i8* %exception, i8* bitcast (i8** @_ZTId to i8*), i8* null) noreturn
           to label %unreachable unwind label %lpad
 
@@ -39,7 +39,7 @@ catch:                                            ; preds = %lpad
   %4 = bitcast i8* %3 to double*
   %exn.scalar = load double* %4, align 8
   %add = fadd double %exn.scalar, %i2
-  store double %add, double* @g1, align 8, !tbaa !0
+  store double %add, double* @g1, align 8
   tail call void @__cxa_end_catch() nounwind
   ret void
 
@@ -61,7 +61,3 @@ declare void @__cxa_throw(i8*, i8*, i8*)
 declare i8* @__cxa_begin_catch(i8*)
 
 declare void @__cxa_end_catch()
-
-!0 = metadata !{metadata !"double", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}

@@ -47,11 +47,11 @@ for.body4.us:                                     ; preds = %for.body4.lr.ph.us,
   %sext = shl i64 %sub5.us, 32
   %idxprom.us = ashr exact i64 %sext, 32
   %arrayidx.us = getelementptr inbounds [32000 x float]* @b, i64 0, i64 %idxprom.us
-  %2 = load float* %arrayidx.us, align 4, !tbaa !5
+  %2 = load float* %arrayidx.us, align 4
   %arrayidx7.us = getelementptr inbounds [32000 x float]* @a, i64 0, i64 %indvars.iv
-  %3 = load float* %arrayidx7.us, align 4, !tbaa !5
+  %3 = load float* %arrayidx7.us, align 4
   %add8.us = fadd float %3, %2
-  store float %add8.us, float* %arrayidx7.us, align 4, !tbaa !5
+  store float %add8.us, float* %arrayidx7.us, align 4
   %indvars.iv.next = add i64 %indvars.iv, %1
   %4 = trunc i64 %indvars.iv.next to i32
   %cmp3.us = icmp slt i32 %4, 32000
@@ -82,11 +82,11 @@ for.body4.us.1:                                   ; preds = %for.body4.us.1, %fo
   %sext23 = shl i64 %sub5.us.1, 32
   %idxprom.us.1 = ashr exact i64 %sext23, 32
   %arrayidx.us.1 = getelementptr inbounds [32000 x float]* @b, i64 0, i64 %idxprom.us.1
-  %5 = load float* %arrayidx.us.1, align 4, !tbaa !5
+  %5 = load float* %arrayidx.us.1, align 4
   %arrayidx7.us.1 = getelementptr inbounds [32000 x float]* @a, i64 0, i64 %indvars.iv.1
-  %6 = load float* %arrayidx7.us.1, align 4, !tbaa !5
+  %6 = load float* %arrayidx7.us.1, align 4
   %add8.us.1 = fadd float %6, %5
-  store float %add8.us.1, float* %arrayidx7.us.1, align 4, !tbaa !5
+  store float %add8.us.1, float* %arrayidx7.us.1, align 4
   %indvars.iv.next.1 = add i64 %indvars.iv.1, %1
   %7 = trunc i64 %indvars.iv.next.1 to i32
   %cmp3.us.1 = icmp slt i32 %7, 32000
@@ -104,11 +104,11 @@ for.body4.us.2:                                   ; preds = %for.body4.us.2, %fo
   %sext24 = shl i64 %sub5.us.2, 32
   %idxprom.us.2 = ashr exact i64 %sext24, 32
   %arrayidx.us.2 = getelementptr inbounds [32000 x float]* @b, i64 0, i64 %idxprom.us.2
-  %8 = load float* %arrayidx.us.2, align 4, !tbaa !5
+  %8 = load float* %arrayidx.us.2, align 4
   %arrayidx7.us.2 = getelementptr inbounds [32000 x float]* @a, i64 0, i64 %indvars.iv.2
-  %9 = load float* %arrayidx7.us.2, align 4, !tbaa !5
+  %9 = load float* %arrayidx7.us.2, align 4
   %add8.us.2 = fadd float %9, %8
-  store float %add8.us.2, float* %arrayidx7.us.2, align 4, !tbaa !5
+  store float %add8.us.2, float* %arrayidx7.us.2, align 4
   %indvars.iv.next.2 = add i64 %indvars.iv.2, %1
   %10 = trunc i64 %indvars.iv.next.2 to i32
   %cmp3.us.2 = icmp slt i32 %10, 32000
@@ -126,11 +126,11 @@ for.body4.us.3:                                   ; preds = %for.body4.us.3, %fo
   %sext25 = shl i64 %sub5.us.3, 32
   %idxprom.us.3 = ashr exact i64 %sext25, 32
   %arrayidx.us.3 = getelementptr inbounds [32000 x float]* @b, i64 0, i64 %idxprom.us.3
-  %11 = load float* %arrayidx.us.3, align 4, !tbaa !5
+  %11 = load float* %arrayidx.us.3, align 4
   %arrayidx7.us.3 = getelementptr inbounds [32000 x float]* @a, i64 0, i64 %indvars.iv.3
-  %12 = load float* %arrayidx7.us.3, align 4, !tbaa !5
+  %12 = load float* %arrayidx7.us.3, align 4
   %add8.us.3 = fadd float %12, %11
-  store float %add8.us.3, float* %arrayidx7.us.3, align 4, !tbaa !5
+  store float %add8.us.3, float* %arrayidx7.us.3, align 4
   %indvars.iv.next.3 = add i64 %indvars.iv.3, %1
   %13 = trunc i64 %indvars.iv.next.3 to i32
   %cmp3.us.3 = icmp slt i32 %13, 32000
@@ -148,11 +148,11 @@ for.body4.us.4:                                   ; preds = %for.body4.us.4, %fo
   %sext26 = shl i64 %sub5.us.4, 32
   %idxprom.us.4 = ashr exact i64 %sext26, 32
   %arrayidx.us.4 = getelementptr inbounds [32000 x float]* @b, i64 0, i64 %idxprom.us.4
-  %14 = load float* %arrayidx.us.4, align 4, !tbaa !5
+  %14 = load float* %arrayidx.us.4, align 4
   %arrayidx7.us.4 = getelementptr inbounds [32000 x float]* @a, i64 0, i64 %indvars.iv.4
-  %15 = load float* %arrayidx7.us.4, align 4, !tbaa !5
+  %15 = load float* %arrayidx7.us.4, align 4
   %add8.us.4 = fadd float %15, %14
-  store float %add8.us.4, float* %arrayidx7.us.4, align 4, !tbaa !5
+  store float %add8.us.4, float* %arrayidx7.us.4, align 4
   %indvars.iv.next.4 = add i64 %indvars.iv.4, %1
   %16 = trunc i64 %indvars.iv.next.4 to i32
   %cmp3.us.4 = icmp slt i32 %16, 32000
@@ -183,9 +183,4 @@ declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, 
 
 declare i32 @puts(i8* nocapture) nounwind
 
-!0 = metadata !{metadata !"any pointer", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}
 !3 = metadata !{metadata !"branch_weights", i32 64, i32 4}
-!4 = metadata !{metadata !"int", metadata !1}
-!5 = metadata !{metadata !"float", metadata !1}

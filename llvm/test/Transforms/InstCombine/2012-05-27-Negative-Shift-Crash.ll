@@ -20,10 +20,10 @@ entry:
 
 define void @fn4() nounwind uwtable ssp {
 entry:
-  %0 = load i32* @d, align 4, !tbaa !0
+  %0 = load i32* @d, align 4
   %cmp = icmp eq i32 %0, 0
   %conv = zext i1 %cmp to i32
-  store i32 %conv, i32* @c, align 4, !tbaa !0
+  store i32 %conv, i32* @c, align 4
   tail call void @fn3(i32 %conv) nounwind
   ret void
 }
@@ -31,15 +31,15 @@ entry:
 define void @fn3(i32 %p1) nounwind uwtable ssp {
 entry:
   %and = and i32 %p1, 8
-  store i32 %and, i32* @e, align 4, !tbaa !0
+  store i32 %and, i32* @e, align 4
   %sub = add nsw i32 %and, -1
-  store i32 %sub, i32* @f, align 4, !tbaa !0
-  %0 = load i32* @a, align 4, !tbaa !0
+  store i32 %sub, i32* @f, align 4
+  %0 = load i32* @a, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %if.else, label %if.then
 
 if.then:                                          ; preds = %entry
-  %1 = load i32* @b, align 4, !tbaa !0
+  %1 = load i32* @b, align 4
   %.lobit = lshr i32 %1, 31
   %2 = trunc i32 %.lobit to i8
   %.not = xor i8 %2, 1
@@ -55,7 +55,3 @@ if.end:                                           ; preds = %if.else, %if.then
   store i32 %storemerge, i32* @b, align 4
   ret void
 }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

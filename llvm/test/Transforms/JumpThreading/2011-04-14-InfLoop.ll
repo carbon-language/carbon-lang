@@ -15,7 +15,7 @@ for.cond1177:
   br i1 %cmp1179, label %for.cond1177, label %land.rhs1320
 
 land.rhs1320:
-  %tmp1324 = load volatile i64* getelementptr inbounds (%0* @g_338, i64 0, i32 2), align 1, !tbaa !0
+  %tmp1324 = load volatile i64* getelementptr inbounds (%0* @g_338, i64 0, i32 2), align 1
   br label %if.end.i
 
 if.end.i:
@@ -25,7 +25,3 @@ if.end.i:
 return:
   ret void
 }
-
-!0 = metadata !{metadata !"long long", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}

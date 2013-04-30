@@ -19,8 +19,8 @@ for.body:                                         ; preds = %for.body, %entry
   %b.addr.01 = phi i32* [ %b, %entry ], [ %incdec.ptr, %for.body ]
   %incdec.ptr = getelementptr inbounds i32* %b.addr.01, i32 1, !dbg !21
   tail call void @llvm.dbg.value(metadata !{i32* %incdec.ptr}, i64 0, metadata !14), !dbg !21
-  %0 = load i32* %b.addr.01, align 4, !dbg !21, !tbaa !23
-  store i32 %0, i32* %arrayidx.phi, align 4, !dbg !21, !tbaa !23
+  %0 = load i32* %b.addr.01, align 4, !dbg !21
+  store i32 %0, i32* %arrayidx.phi, align 4, !dbg !21
   %inc = add nsw i32 %i.02, 1, !dbg !26
   tail call void @llvm.dbg.value(metadata !{i32 %inc}, i64 0, metadata !15), !dbg !26
   %exitcond = icmp eq i32 %inc, 10, !dbg !19
@@ -57,8 +57,5 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !20 = metadata !{i32 786443, metadata !16, i32 3, i32 3, metadata !6, i32 1} ; [ DW_TAG_lexical_block ] [/usr2/kparzysz/s.hex/t/hwloop-dbg.c]
 !21 = metadata !{i32 4, i32 5, metadata !22, null}
 !22 = metadata !{i32 786443, metadata !20, i32 3, i32 28, metadata !6, i32 2} ; [ DW_TAG_lexical_block ] [/usr2/kparzysz/s.hex/t/hwloop-dbg.c]
-!23 = metadata !{metadata !"int", metadata !24}
-!24 = metadata !{metadata !"omnipotent char", metadata !25}
-!25 = metadata !{metadata !"Simple C/C++ TBAA"}
 !26 = metadata !{i32 3, i32 23, metadata !20, null}
 !27 = metadata !{i32 6, i32 1, metadata !16, null}

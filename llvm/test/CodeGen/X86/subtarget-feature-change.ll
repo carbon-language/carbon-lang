@@ -14,12 +14,12 @@ entry:
 for.body:
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds float* %b, i64 %indvars.iv
-  %0 = load float* %arrayidx, align 4, !tbaa !0
+  %0 = load float* %arrayidx, align 4
   %arrayidx2 = getelementptr inbounds float* %c, i64 %indvars.iv
-  %1 = load float* %arrayidx2, align 4, !tbaa !0
+  %1 = load float* %arrayidx2, align 4
   %mul = fmul float %0, %1
   %arrayidx4 = getelementptr inbounds float* %a, i64 %indvars.iv
-  store float %mul, float* %arrayidx4, align 4, !tbaa !0
+  store float %mul, float* %arrayidx4, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
   %exitcond = icmp eq i32 %lftr.wideiv, %n
@@ -43,12 +43,12 @@ entry:
 for.body:
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds float* %b, i64 %indvars.iv
-  %0 = load float* %arrayidx, align 4, !tbaa !0
+  %0 = load float* %arrayidx, align 4
   %arrayidx2 = getelementptr inbounds float* %c, i64 %indvars.iv
-  %1 = load float* %arrayidx2, align 4, !tbaa !0
+  %1 = load float* %arrayidx2, align 4
   %mul = fmul float %0, %1
   %arrayidx4 = getelementptr inbounds float* %a, i64 %indvars.iv
-  store float %mul, float* %arrayidx4, align 4, !tbaa !0
+  store float %mul, float* %arrayidx4, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
   %exitcond = icmp eq i32 %lftr.wideiv, %n
@@ -60,7 +60,3 @@ for.end:
 
 attributes #0 = { nounwind optsize ssp uwtable "target-cpu"="core2" "target-features"="-sse4a,-avx2,-xop,-fma4,-bmi2,-3dnow,-3dnowa,-pclmul,-sse,-avx,-sse41,-ssse3,+mmx,-rtm,-sse42,-lzcnt,-f16c,-popcnt,-bmi,-aes,-fma,-rdrand,-sse2,-sse3" }
 attributes #1 = { nounwind optsize ssp uwtable "target-cpu"="core2" "target-features"="-sse4a,-avx2,-xop,-fma4,-bmi2,-3dnow,-3dnowa,-pclmul,+sse,-avx,-sse41,+ssse3,+mmx,-rtm,-sse42,-lzcnt,-f16c,-popcnt,-bmi,-aes,-fma,-rdrand,+sse2,+sse3" }
-
-!0 = metadata !{metadata !"float", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

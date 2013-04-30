@@ -26,8 +26,8 @@ outer.loop:                                 ; preds = %for.inc69, %entry
   %0 = phi i32 [ %inc71, %for.inc69 ], [ 0, %entry ]
   %offset = getelementptr %struct.partition_entry* %part, i32 %0, i32 2
   %len = getelementptr %struct.partition_entry* %part, i32 %0, i32 3
-  %tmp5 = load i64* %offset, align 4, !tbaa !0
-  %tmp15 = load i64* %len, align 4, !tbaa !0
+  %tmp5 = load i64* %offset, align 4
+  %tmp15 = load i64* %len, align 4
   %add = add nsw i64 %tmp15, %tmp5
   br label %inner.loop
 
@@ -40,8 +40,8 @@ inner.loop:                                       ; preds = %for.inc, %outer.loo
 if.end:                                           ; preds = %inner.loop
   %len39 = getelementptr %struct.partition_entry* %part, i32 %1, i32 3
   %offset28 = getelementptr %struct.partition_entry* %part, i32 %1, i32 2
-  %tmp29 = load i64* %offset28, align 4, !tbaa !0
-  %tmp40 = load i64* %len39, align 4, !tbaa !0
+  %tmp29 = load i64* %offset28, align 4
+  %tmp40 = load i64* %len39, align 4
   %add41 = add nsw i64 %tmp40, %tmp29
   %cmp44 = icmp sge i64 %tmp29, %tmp5
   %cmp47 = icmp slt i64 %tmp29, %add
@@ -74,7 +74,3 @@ for.end72:                                        ; preds = %for.inc69, %entry
   %overlap.0.lcssa = phi i32 [ 0, %entry ], [ %overlap.4, %for.inc69 ]
   ret i32 %overlap.0.lcssa
 }
-
-!0 = metadata !{metadata !"long long", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}

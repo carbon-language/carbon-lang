@@ -11,9 +11,9 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds float* %a, i64 %indvars.iv
-  %0 = load float* %arrayidx, align 4, !tbaa !0
+  %0 = load float* %arrayidx, align 4
   %add = fadd float %0, 1.000000e+00
-  store float %add, float* %arrayidx, align 4, !tbaa !0
+  store float %add, float* %arrayidx, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
   %exitcond = icmp eq i32 %lftr.wideiv, 8
@@ -22,7 +22,3 @@ for.body:                                         ; preds = %for.body, %entry
 for.end:                                          ; preds = %for.body
   ret void
 }
-
-!0 = metadata !{metadata !"float", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

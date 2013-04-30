@@ -11,19 +11,19 @@
 
 define i32 @fn(i32* nocapture %opcodes) nounwind readonly ssp {
 entry:
-  %0 = load i32* %opcodes, align 4, !tbaa !0
+  %0 = load i32* %opcodes, align 4
   %arrayidx = getelementptr inbounds [3 x i8*]* @fn.codetable, i32 0, i32 %0
   br label %indirectgoto
 
 INCREMENT:                                        ; preds = %indirectgoto
   %inc = add nsw i32 %result.0, 1
-  %1 = load i32* %opcodes.addr.0, align 4, !tbaa !0
+  %1 = load i32* %opcodes.addr.0, align 4
   %arrayidx2 = getelementptr inbounds [3 x i8*]* @fn.codetable, i32 0, i32 %1
   br label %indirectgoto
 
 DECREMENT:                                        ; preds = %indirectgoto
   %dec = add nsw i32 %result.0, -1
-  %2 = load i32* %opcodes.addr.0, align 4, !tbaa !0
+  %2 = load i32* %opcodes.addr.0, align 4
   %arrayidx4 = getelementptr inbounds [3 x i8*]* @fn.codetable, i32 0, i32 %2
   br label %indirectgoto
 
@@ -38,7 +38,3 @@ indirectgoto:                                     ; preds = %DECREMENT, %INCREME
 RETURN:                                           ; preds = %indirectgoto
   ret i32 %result.0
 }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}

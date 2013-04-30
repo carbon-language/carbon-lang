@@ -24,7 +24,7 @@ if.then:                                          ; preds = %for.body
   %idxprom = sext i32 %inc1 to i64
   %array_ = getelementptr inbounds %class.MyContainer.1.3.19.29* %this, i32 0, i32 0
   %arrayidx = getelementptr inbounds [6 x %class.MyMemVarClass.0.2.18.28*]* %array_, i32 0, i64 %idxprom
-  %tmp4 = load %class.MyMemVarClass.0.2.18.28** %arrayidx, align 8, !tbaa !0
+  %tmp4 = load %class.MyMemVarClass.0.2.18.28** %arrayidx, align 8
   %isnull = icmp eq %class.MyMemVarClass.0.2.18.28* %tmp4, null
   br i1 %isnull, label %for.inc, label %delete.notnull
 
@@ -61,7 +61,3 @@ declare void @_ZN13MyMemVarClassD1Ev(%class.MyMemVarClass.0.2.18.28*)
 declare i32 @__gxx_personality_v0(...)
 
 declare void @_ZdlPv(i8*) nounwind
-
-!0 = metadata !{metadata !"any pointer", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}

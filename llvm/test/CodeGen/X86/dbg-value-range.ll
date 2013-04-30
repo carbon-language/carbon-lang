@@ -6,7 +6,7 @@ define i32 @bar(%struct.a* nocapture %b) nounwind ssp {
 entry:
   tail call void @llvm.dbg.value(metadata !{%struct.a* %b}, i64 0, metadata !6), !dbg !13
   %tmp1 = getelementptr inbounds %struct.a* %b, i64 0, i32 0, !dbg !14
-  %tmp2 = load i32* %tmp1, align 4, !dbg !14, !tbaa !15
+  %tmp2 = load i32* %tmp1, align 4, !dbg !14
   tail call void @llvm.dbg.value(metadata !{i32 %tmp2}, i64 0, metadata !11), !dbg !14
   %call = tail call i32 (...)* @foo(i32 %tmp2) nounwind , !dbg !18
   %add = add nsw i32 %tmp2, 1, !dbg !19
@@ -34,9 +34,6 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !12 = metadata !{i32 786443, metadata !22, metadata !0, i32 5, i32 22, i32 0} ; [ DW_TAG_lexical_block ]
 !13 = metadata !{i32 5, i32 19, metadata !0, null}
 !14 = metadata !{i32 6, i32 14, metadata !12, null}
-!15 = metadata !{metadata !"int", metadata !16}
-!16 = metadata !{metadata !"omnipotent char", metadata !17}
-!17 = metadata !{metadata !"Simple C/C++ TBAA", null}
 !18 = metadata !{i32 7, i32 2, metadata !12, null}
 !19 = metadata !{i32 8, i32 2, metadata !12, null}
 !20 = metadata !{metadata !0}

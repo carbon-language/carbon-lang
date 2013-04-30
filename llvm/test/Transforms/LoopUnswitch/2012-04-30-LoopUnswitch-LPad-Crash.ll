@@ -45,10 +45,10 @@ for.end:                                          ; preds = %invoke.cont6
 define void @_ZN1DptEv(%class.D.22.42.66.102.138.158.178.198.238.242.246.250.262.294.302.338.346.379* %this) uwtable ssp align 2 {
 entry:
   %this.addr = alloca %class.D.22.42.66.102.138.158.178.198.238.242.246.250.262.294.302.338.346.379*, align 8
-  store %class.D.22.42.66.102.138.158.178.198.238.242.246.250.262.294.302.338.346.379* %this, %class.D.22.42.66.102.138.158.178.198.238.242.246.250.262.294.302.338.346.379** %this.addr, align 8, !tbaa !0
+  store %class.D.22.42.66.102.138.158.178.198.238.242.246.250.262.294.302.338.346.379* %this, %class.D.22.42.66.102.138.158.178.198.238.242.246.250.262.294.302.338.346.379** %this.addr, align 8
   %this1 = load %class.D.22.42.66.102.138.158.178.198.238.242.246.250.262.294.302.338.346.379** %this.addr
   %px = getelementptr inbounds %class.D.22.42.66.102.138.158.178.198.238.242.246.250.262.294.302.338.346.379* %this1, i32 0, i32 0
-  %0 = load %class.C.23.43.67.103.139.159.179.199.239.243.247.251.263.295.303.339.347.376** %px, align 8, !tbaa !0
+  %0 = load %class.C.23.43.67.103.139.159.179.199.239.243.247.251.263.295.303.339.347.376** %px, align 8
   %tobool = icmp ne %class.C.23.43.67.103.139.159.179.199.239.243.247.251.263.295.303.339.347.376* %0, null
   br i1 %tobool, label %cond.end, label %cond.false
 
@@ -95,7 +95,3 @@ entry:
 }
 
 declare void @_Z10__assert13v() noreturn
-
-!0 = metadata !{metadata !"any pointer", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}

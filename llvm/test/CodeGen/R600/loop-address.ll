@@ -22,7 +22,7 @@ for.body:                                         ; preds = %for.body, %entry
   %ai.06 = phi i32 [ %add, %for.body ], [ 0, %entry ]
   %i.07 = add nsw i32 %i.07.in, -1
   %arrayidx = getelementptr inbounds i32 addrspace(1)* %out, i32 %ai.06
-  store i32 %i.07, i32 addrspace(1)* %arrayidx, align 4, !tbaa !4
+  store i32 %i.07, i32 addrspace(1)* %arrayidx, align 4
   %add = add nsw i32 %ai.06, 1
   %exitcond = icmp eq i32 %add, %iterations
   br i1 %exitcond, label %for.end, label %for.body
@@ -39,6 +39,3 @@ attributes #0 = { nounwind "fp-contract-model"="standard" "relocation-model"="pi
 !1 = metadata !{null}
 !2 = metadata !{null}
 !3 = metadata !{null}
-!4 = metadata !{metadata !"int", metadata !5}
-!5 = metadata !{metadata !"omnipotent char", metadata !6}
-!6 = metadata !{metadata !"Simple C/C++ TBAA"}

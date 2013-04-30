@@ -46,17 +46,17 @@ for.body:                                         ; preds = %for.body, %entry
   %1 = trunc i64 %val.021 to i32
   %2 = trunc i64 %0 to i32
   %3 = tail call i32 @llvm.hexagon.C2.mux(i32 %conv3, i32 %1, i32 %2)
-  store i32 %3, i32* %lsr.iv3335, align 4, !tbaa !0
+  store i32 %3, i32* %lsr.iv3335, align 4
   %conv8 = sext i8 %predicate_1.023 to i32
   %4 = lshr i64 %val.021, 32
   %5 = trunc i64 %4 to i32
   %6 = lshr i64 %0, 32
   %7 = trunc i64 %6 to i32
   %8 = tail call i32 @llvm.hexagon.C2.mux(i32 %conv8, i32 %5, i32 %7)
-  store i32 %8, i32* %lsr.iv2931, align 4, !tbaa !0
+  store i32 %8, i32* %lsr.iv2931, align 4
   %srcval = load i64* %lsr.iv27, align 8
-  %9 = load i8* %lsr.iv40, align 1, !tbaa !1
-  %10 = load i8* %lsr.iv37, align 1, !tbaa !1
+  %9 = load i8* %lsr.iv40, align 1
+  %10 = load i8* %lsr.iv37, align 1
   %lftr.wideiv = trunc i32 %lsr.iv42 to i8
   %exitcond = icmp eq i8 %lftr.wideiv, 32
   %scevgep26 = getelementptr %union.vect64* %lsr.iv, i32 1
@@ -74,7 +74,3 @@ for.end:                                          ; preds = %for.body
 declare i64 @llvm.hexagon.A2.vsubhs(i64, i64) nounwind readnone
 
 declare i32 @llvm.hexagon.C2.mux(i32, i32, i32) nounwind readnone
-
-!0 = metadata !{metadata !"long", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}

@@ -109,7 +109,7 @@ bb49:                                             ; preds = %bb49, %bb48
   %tmp51 = add i32 %tmp50, undef
   %tmp52 = add i32 %tmp50, undef
   %tmp53 = getelementptr i32* %tmp13, i32 %tmp52
-  %tmp54 = load i32* %tmp53, align 4, !tbaa !0
+  %tmp54 = load i32* %tmp53, align 4
   %tmp55 = add i32 %tmp50, 1
   %tmp56 = icmp eq i32 %tmp55, %tmp8
   br i1 %tmp56, label %bb57, label %bb49
@@ -127,7 +127,7 @@ bb61:                                             ; preds = %bb61, %bb59
   %tmp62 = phi i32 [ %tmp65, %bb61 ], [ 0, %bb59 ]
   %tmp63 = add i32 %tmp62, %tmp14
   %tmp64 = getelementptr i32* %tmp13, i32 %tmp63
-  store i32 0, i32* %tmp64, align 4, !tbaa !0
+  store i32 0, i32* %tmp64, align 4
   %tmp65 = add i32 %tmp62, 1
   %tmp66 = icmp eq i32 %tmp65, %tmp8
   br i1 %tmp66, label %bb67, label %bb61
@@ -149,7 +149,3 @@ declare void @Pjii(i32*, i32, i32) optsize
 declare i32 @llvm.eh.typeid.for(i8*) nounwind readnone
 
 declare void @OnOverFlow() noreturn optsize ssp align 2
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}

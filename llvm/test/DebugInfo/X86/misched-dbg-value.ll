@@ -43,15 +43,15 @@ entry:
   tail call void @llvm.dbg.value(metadata !{i32 %add}, i64 0, metadata !27), !dbg !68
   %idxprom = sext i32 %add to i64, !dbg !69
   %arrayidx = getelementptr inbounds i32* %Array1Par, i64 %idxprom, !dbg !69
-  store i32 %IntParI2, i32* %arrayidx, align 4, !dbg !69, !tbaa !70
+  store i32 %IntParI2, i32* %arrayidx, align 4, !dbg !69
   %add3 = add nsw i32 %IntParI1, 6, !dbg !73
   %idxprom4 = sext i32 %add3 to i64, !dbg !73
   %arrayidx5 = getelementptr inbounds i32* %Array1Par, i64 %idxprom4, !dbg !73
-  store i32 %IntParI2, i32* %arrayidx5, align 4, !dbg !73, !tbaa !70
+  store i32 %IntParI2, i32* %arrayidx5, align 4, !dbg !73
   %add6 = add nsw i32 %IntParI1, 35, !dbg !74
   %idxprom7 = sext i32 %add6 to i64, !dbg !74
   %arrayidx8 = getelementptr inbounds i32* %Array1Par, i64 %idxprom7, !dbg !74
-  store i32 %add, i32* %arrayidx8, align 4, !dbg !74, !tbaa !70
+  store i32 %add, i32* %arrayidx8, align 4, !dbg !74
   tail call void @llvm.dbg.value(metadata !{i32 %add}, i64 0, metadata !28), !dbg !75
   br label %for.body, !dbg !75
 
@@ -59,7 +59,7 @@ for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ %idxprom, %entry ], [ %indvars.iv.next, %for.body ]
   %IntIndex.046 = phi i32 [ %add, %entry ], [ %inc, %for.body ]
   %arrayidx13 = getelementptr inbounds [51 x i32]* %Array2Par, i64 %idxprom, i64 %indvars.iv, !dbg !77
-  store i32 %add, i32* %arrayidx13, align 4, !dbg !77, !tbaa !70
+  store i32 %add, i32* %arrayidx13, align 4, !dbg !77
   %inc = add nsw i32 %IntIndex.046, 1, !dbg !75
   tail call void @llvm.dbg.value(metadata !{i32 %inc}, i64 0, metadata !28), !dbg !75
   %cmp = icmp sgt i32 %inc, %add3, !dbg !75
@@ -70,15 +70,15 @@ for.end:                                          ; preds = %for.body
   %sub = add nsw i32 %IntParI1, 4, !dbg !78
   %idxprom14 = sext i32 %sub to i64, !dbg !78
   %arrayidx17 = getelementptr inbounds [51 x i32]* %Array2Par, i64 %idxprom, i64 %idxprom14, !dbg !78
-  %0 = load i32* %arrayidx17, align 4, !dbg !78, !tbaa !70
+  %0 = load i32* %arrayidx17, align 4, !dbg !78
   %inc18 = add nsw i32 %0, 1, !dbg !78
-  store i32 %inc18, i32* %arrayidx17, align 4, !dbg !78, !tbaa !70
-  %1 = load i32* %arrayidx, align 4, !dbg !79, !tbaa !70
+  store i32 %inc18, i32* %arrayidx17, align 4, !dbg !78
+  %1 = load i32* %arrayidx, align 4, !dbg !79
   %add22 = add nsw i32 %IntParI1, 25, !dbg !79
   %idxprom23 = sext i32 %add22 to i64, !dbg !79
   %arrayidx25 = getelementptr inbounds [51 x i32]* %Array2Par, i64 %idxprom23, i64 %idxprom, !dbg !79
-  store i32 %1, i32* %arrayidx25, align 4, !dbg !79, !tbaa !70
-  store i32 5, i32* @IntGlob, align 4, !dbg !80, !tbaa !70
+  store i32 %1, i32* %arrayidx25, align 4, !dbg !79
+  store i32 5, i32* @IntGlob, align 4, !dbg !80
   ret void, !dbg !81
 }
 
@@ -159,9 +159,6 @@ attributes #1 = { nounwind readnone }
 !67 = metadata !{i32 184, i32 0, metadata !12, null}
 !68 = metadata !{i32 189, i32 0, metadata !12, null}
 !69 = metadata !{i32 190, i32 0, metadata !12, null}
-!70 = metadata !{metadata !"int", metadata !71}
-!71 = metadata !{metadata !"omnipotent char", metadata !72}
-!72 = metadata !{metadata !"Simple C/C++ TBAA"}
 !73 = metadata !{i32 191, i32 0, metadata !12, null}
 !74 = metadata !{i32 192, i32 0, metadata !12, null}
 !75 = metadata !{i32 193, i32 0, metadata !76, null}

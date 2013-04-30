@@ -130,8 +130,8 @@ define i32 @sel12(i32 %f0, i32 %f1) nounwind readonly {
 entry:
 ; CHECK: c.eq.d
 ; CHECK: movt
-  %tmp = load double* @d2, align 8, !tbaa !0
-  %tmp1 = load double* @d3, align 8, !tbaa !0
+  %tmp = load double* @d2, align 8
+  %tmp1 = load double* @d3, align 8
   %cmp = fcmp oeq double %tmp, %tmp1
   %cond = select i1 %cmp, i32 %f0, i32 %f1
   ret i32 %cond
@@ -141,8 +141,8 @@ define i32 @sel13(i32 %f0, i32 %f1) nounwind readonly {
 entry:
 ; CHECK: c.olt.d
 ; CHECK: movt
-  %tmp = load double* @d2, align 8, !tbaa !0
-  %tmp1 = load double* @d3, align 8, !tbaa !0
+  %tmp = load double* @d2, align 8
+  %tmp1 = load double* @d3, align 8
   %cmp = fcmp olt double %tmp, %tmp1
   %cond = select i1 %cmp, i32 %f0, i32 %f1
   ret i32 %cond
@@ -152,13 +152,9 @@ define i32 @sel14(i32 %f0, i32 %f1) nounwind readonly {
 entry:
 ; CHECK: c.ule.d
 ; CHECK: movf
-  %tmp = load double* @d2, align 8, !tbaa !0
-  %tmp1 = load double* @d3, align 8, !tbaa !0
+  %tmp = load double* @d2, align 8
+  %tmp1 = load double* @d3, align 8
   %cmp = fcmp ogt double %tmp, %tmp1
   %cond = select i1 %cmp, i32 %f0, i32 %f1
   ret i32 %cond
 }
-
-!0 = metadata !{metadata !"double", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}

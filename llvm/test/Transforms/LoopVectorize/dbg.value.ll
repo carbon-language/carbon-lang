@@ -18,12 +18,12 @@ for.body:
   ;CHECK: load <4 x i32>
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x i32]* @B, i64 0, i64 %indvars.iv, !dbg !19
-  %0 = load i32* %arrayidx, align 4, !dbg !19, !tbaa !21
+  %0 = load i32* %arrayidx, align 4, !dbg !19
   %arrayidx2 = getelementptr inbounds [1024 x i32]* @C, i64 0, i64 %indvars.iv, !dbg !19
-  %1 = load i32* %arrayidx2, align 4, !dbg !19, !tbaa !21
+  %1 = load i32* %arrayidx2, align 4, !dbg !19
   %add = add nsw i32 %1, %0, !dbg !19
   %arrayidx4 = getelementptr inbounds [1024 x i32]* @A, i64 0, i64 %indvars.iv, !dbg !19
-  store i32 %add, i32* %arrayidx4, align 4, !dbg !19, !tbaa !21
+  store i32 %add, i32* %arrayidx4, align 4, !dbg !19
   %indvars.iv.next = add i64 %indvars.iv, 1, !dbg !18
   tail call void @llvm.dbg.value(metadata !{null}, i64 0, metadata !9), !dbg !18
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32, !dbg !18
@@ -64,7 +64,4 @@ attributes #1 = { nounwind readnone }
 !18 = metadata !{i32 6, i32 0, metadata !10, null}
 !19 = metadata !{i32 7, i32 0, metadata !20, null}
 !20 = metadata !{i32 786443, metadata !10, i32 6, i32 0, metadata !4, i32 1}
-!21 = metadata !{metadata !"int", metadata !22}
-!22 = metadata !{metadata !"omnipotent char", metadata !23}
-!23 = metadata !{metadata !"Simple C/C++ TBAA"}
 !24 = metadata !{i32 9, i32 0, metadata !3, null}

@@ -10,9 +10,9 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %i.01 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
-  %0 = load volatile i32* @a, align 4, !tbaa !0
+  %0 = load volatile i32* @a, align 4
   %add = add nsw i32 %0, %c
-  store volatile i32 %add, i32* @a, align 4, !tbaa !0
+  store volatile i32 %add, i32* @a, align 4
   %inc = add nsw i32 %i.01, 1
   %exitcond = icmp eq i32 %inc, 2048
   br i1 %exitcond, label %for.end, label %for.body
@@ -34,9 +34,9 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i32 [ %inc, %for.body ], [ 0, %entry ]
-  %0 = load volatile i32* @a, align 4, !tbaa !0
+  %0 = load volatile i32* @a, align 4
   %add = add nsw i32 %0, %c
-  store volatile i32 %add, i32* @a, align 4, !tbaa !0
+  store volatile i32 %add, i32* @a, align 4
   %inc = add nsw i32 %i.02, 1
   %exitcond = icmp eq i32 %inc, %d
   br i1 %exitcond, label %for.end, label %for.body
@@ -58,9 +58,9 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %i.02 = phi i32 [ %inc, %for.body ], [ 0, %entry ]
   %mul = mul nsw i32 %i.02, %c
-  %0 = load volatile i32* @a, align 4, !tbaa !0
+  %0 = load volatile i32* @a, align 4
   %add = add nsw i32 %0, %mul
-  store volatile i32 %add, i32* @a, align 4, !tbaa !0
+  store volatile i32 %add, i32* @a, align 4
   %inc = add nsw i32 %i.02, 1
   %exitcond = icmp eq i32 %inc, %d
   br i1 %exitcond, label %for.end, label %for.body
@@ -73,7 +73,3 @@ for.end:                                          ; preds = %for.body, %entry
 ; CHECK-NOT: cmplwi
 ; CHECK: bdnz
 }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

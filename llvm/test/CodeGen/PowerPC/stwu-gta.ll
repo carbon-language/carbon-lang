@@ -8,15 +8,11 @@ target triple = "powerpc-unknown-linux"
 
 define void @_GLOBAL__I_a() nounwind section ".text.startup" {
 entry:
-  store i32 5, i32* getelementptr inbounds (%class.Two.0.5* @foo, i32 0, i32 0), align 4, !tbaa !0
-  store i32 6, i32* getelementptr inbounds (%class.Two.0.5* @foo, i32 0, i32 1), align 4, !tbaa !0
+  store i32 5, i32* getelementptr inbounds (%class.Two.0.5* @foo, i32 0, i32 0), align 4
+  store i32 6, i32* getelementptr inbounds (%class.Two.0.5* @foo, i32 0, i32 1), align 4
   ret void
 }
 
 ; CHECK: @_GLOBAL__I_a
 ; CHECK-NOT: stwux
 ; CHECK: stwu
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}

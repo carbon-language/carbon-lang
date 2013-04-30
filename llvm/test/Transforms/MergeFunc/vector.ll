@@ -22,7 +22,7 @@ target triple = "x86_64-unknown-linux-gnu"
 define linkonce_odr void @_ZNSt6vectorIlSaIlEED1Ev(%"class.std::vector"* nocapture %this) unnamed_addr align 2 {
 entry:
   %tmp2.i.i = bitcast %"class.std::vector"* %this to i64**
-  %tmp3.i.i = load i64** %tmp2.i.i, align 8, !tbaa !0
+  %tmp3.i.i = load i64** %tmp2.i.i, align 8
   %tobool.i.i.i = icmp eq i64* %tmp3.i.i, null
   br i1 %tobool.i.i.i, label %_ZNSt6vectorIlSaIlEED2Ev.exit, label %if.then.i.i.i
 
@@ -40,7 +40,7 @@ declare i32 @__cxa_atexit(void (i8*)*, i8*, i8*)
 define linkonce_odr void @_ZNSt6vectorIPvSaIS0_EED1Ev(%"class.std::vector"* nocapture %this) unnamed_addr align 2 {
 entry:
   %tmp2.i.i = bitcast %"class.std::vector"* %this to i8***
-  %tmp3.i.i = load i8*** %tmp2.i.i, align 8, !tbaa !0
+  %tmp3.i.i = load i8*** %tmp2.i.i, align 8
   %tobool.i.i.i = icmp eq i8** %tmp3.i.i, null
   br i1 %tobool.i.i.i, label %_ZNSt6vectorIPvSaIS0_EED2Ev.exit, label %if.then.i.i.i
 
@@ -70,8 +70,3 @@ declare void @_ZNSt6vectorIlSaIlEE13_M_insert_auxEN9__gnu_cxx17__normal_iterator
 declare void @_GLOBAL__I_a()
 
 declare %1 @llvm.uadd.with.overflow.i64(i64, i64) nounwind readnone
-
-!0 = metadata !{metadata !"any pointer", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}
-!3 = metadata !{metadata !"long", metadata !1}

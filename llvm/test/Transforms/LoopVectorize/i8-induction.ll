@@ -8,8 +8,8 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 define void @f() nounwind uwtable ssp {
 scalar.ph:
-  store i8 0, i8* inttoptr (i64 1 to i8*), align 1, !tbaa !0
-  %0 = load i8* @a, align 1, !tbaa !0
+  store i8 0, i8* inttoptr (i64 1 to i8*), align 1
+  %0 = load i8* @a, align 1
   br label %for.body
 
 for.body:
@@ -26,10 +26,6 @@ for.body:
   br i1 %phitmp14, label %for.body, label %for.end
 
 for.end:                                          ; preds = %for.body
-  store i8 %mul, i8* @b, align 1, !tbaa !0
+  store i8 %mul, i8* @b, align 1
   ret void
 }
-
-!0 = metadata !{metadata !"omnipotent char", metadata !1}
-!1 = metadata !{metadata !"Simple C/C++ TBAA"}
-

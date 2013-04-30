@@ -238,7 +238,7 @@ declare i64 @llvm.objectsize.i64(i8*, i1) nounwind readnone
 
 define void @_ZNK4llvm17MipsFrameLowering12emitPrologueERNS_15MachineFunctionE() ssp align 2 {
 bb:
-  %tmp = load %t9** undef, align 4, !tbaa !0
+  %tmp = load %t9** undef, align 4
   %tmp2 = getelementptr inbounds %t9* %tmp, i32 0, i32 0
   %tmp3 = getelementptr inbounds %t9* %tmp, i32 0, i32 0, i32 0, i32 0, i32 1
   br label %bb4

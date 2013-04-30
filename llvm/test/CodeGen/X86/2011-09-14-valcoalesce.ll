@@ -96,7 +96,7 @@ while.body.i188:                                  ; preds = %for.end173.i, %if.e
 while.body85.i:                                   ; preds = %while.body85.i, %while.body.i188
   %aFreq.0518.i = phi i32 [ %add93.i, %while.body85.i ], [ 0, %while.body.i188 ]
   %inc87.i = add nsw i32 0, 1
-  %tmp91.i = load i32* undef, align 4, !tbaa !0
+  %tmp91.i = load i32* undef, align 4
   %add93.i = add nsw i32 %tmp91.i, %aFreq.0518.i
   %or.cond514.i = and i1 undef, false
   br i1 %or.cond514.i, label %while.body85.i, label %while.end.i
@@ -168,7 +168,3 @@ if.end85:                                         ; preds = %entry
 }
 
 declare void @fprintf(...) nounwind
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}

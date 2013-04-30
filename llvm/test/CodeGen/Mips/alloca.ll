@@ -59,23 +59,23 @@ if.end:                                           ; preds = %if.else, %if.then
 ; CHECK: lw  $25, %call16(printf)
 
   %.pre-phi = phi i32* [ %2, %if.else ], [ %.pre, %if.then ]
-  %tmp7 = load i32* %0, align 4, !tbaa !0
+  %tmp7 = load i32* %0, align 4
   %arrayidx9 = getelementptr inbounds i8* %tmp1, i32 4
   %3 = bitcast i8* %arrayidx9 to i32*
-  %tmp10 = load i32* %3, align 4, !tbaa !0
+  %tmp10 = load i32* %3, align 4
   %arrayidx12 = getelementptr inbounds i8* %tmp1, i32 8
   %4 = bitcast i8* %arrayidx12 to i32*
-  %tmp13 = load i32* %4, align 4, !tbaa !0
-  %tmp16 = load i32* %.pre-phi, align 4, !tbaa !0
+  %tmp13 = load i32* %4, align 4
+  %tmp16 = load i32* %.pre-phi, align 4
   %arrayidx18 = getelementptr inbounds i8* %tmp1, i32 16
   %5 = bitcast i8* %arrayidx18 to i32*
-  %tmp19 = load i32* %5, align 4, !tbaa !0
+  %tmp19 = load i32* %5, align 4
   %arrayidx21 = getelementptr inbounds i8* %tmp1, i32 20
   %6 = bitcast i8* %arrayidx21 to i32*
-  %tmp22 = load i32* %6, align 4, !tbaa !0
+  %tmp22 = load i32* %6, align 4
   %arrayidx24 = getelementptr inbounds i8* %tmp1, i32 24
   %7 = bitcast i8* %arrayidx24 to i32*
-  %tmp25 = load i32* %7, align 4, !tbaa !0
+  %tmp25 = load i32* %7, align 4
   %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([22 x i8]* @.str, i32 0, i32 0), i32 %tmp7, i32 %tmp10, i32 %tmp13, i32 %tmp16, i32 %tmp19, i32 %tmp22, i32 %tmp25) nounwind
   ret i32 0
 }
@@ -83,7 +83,3 @@ if.end:                                           ; preds = %if.else, %if.then
 declare void @foo3(i32*)
 
 declare i32 @printf(i8* nocapture, ...) nounwind
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}

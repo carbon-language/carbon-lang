@@ -21,13 +21,13 @@ define void @_ZN1DC2Ev(%class.D* nocapture %this) unnamed_addr nounwind uwtable 
 entry:
   tail call void @llvm.dbg.value(metadata !{%class.D* %this}, i64 0, metadata !29), !dbg !36
   %c1 = getelementptr inbounds %class.D* %this, i64 0, i32 0, !dbg !37
-  store i32 1, i32* %c1, align 4, !dbg !37, !tbaa !39
+  store i32 1, i32* %c1, align 4, !dbg !37
   %c2 = getelementptr inbounds %class.D* %this, i64 0, i32 1, !dbg !42
-  store i32 2, i32* %c2, align 4, !dbg !42, !tbaa !39
+  store i32 2, i32* %c2, align 4, !dbg !42
   %c3 = getelementptr inbounds %class.D* %this, i64 0, i32 2, !dbg !43
-  store i32 3, i32* %c3, align 4, !dbg !43, !tbaa !39
+  store i32 3, i32* %c3, align 4, !dbg !43
   %c4 = getelementptr inbounds %class.D* %this, i64 0, i32 3, !dbg !44
-  store i32 4, i32* %c4, align 4, !dbg !44, !tbaa !39
+  store i32 4, i32* %c4, align 4, !dbg !44
   ret void, !dbg !45
 }
 
@@ -36,21 +36,21 @@ entry:
   tail call void @llvm.dbg.value(metadata !{%class.D* %this}, i64 0, metadata !34), !dbg !46
   tail call void @llvm.dbg.value(metadata !{%class.D* %d}, i64 0, metadata !35), !dbg !46
   %c1 = getelementptr inbounds %class.D* %d, i64 0, i32 0, !dbg !47
-  %0 = load i32* %c1, align 4, !dbg !47, !tbaa !39
+  %0 = load i32* %c1, align 4, !dbg !47
   %c12 = getelementptr inbounds %class.D* %this, i64 0, i32 0, !dbg !47
-  store i32 %0, i32* %c12, align 4, !dbg !47, !tbaa !39
+  store i32 %0, i32* %c12, align 4, !dbg !47
   %c2 = getelementptr inbounds %class.D* %d, i64 0, i32 1, !dbg !49
-  %1 = load i32* %c2, align 4, !dbg !49, !tbaa !39
+  %1 = load i32* %c2, align 4, !dbg !49
   %c23 = getelementptr inbounds %class.D* %this, i64 0, i32 1, !dbg !49
-  store i32 %1, i32* %c23, align 4, !dbg !49, !tbaa !39
+  store i32 %1, i32* %c23, align 4, !dbg !49
   %c3 = getelementptr inbounds %class.D* %d, i64 0, i32 2, !dbg !50
-  %2 = load i32* %c3, align 4, !dbg !50, !tbaa !39
+  %2 = load i32* %c3, align 4, !dbg !50
   %c34 = getelementptr inbounds %class.D* %this, i64 0, i32 2, !dbg !50
-  store i32 %2, i32* %c34, align 4, !dbg !50, !tbaa !39
+  store i32 %2, i32* %c34, align 4, !dbg !50
   %c4 = getelementptr inbounds %class.D* %d, i64 0, i32 3, !dbg !51
-  %3 = load i32* %c4, align 4, !dbg !51, !tbaa !39
+  %3 = load i32* %c4, align 4, !dbg !51
   %c45 = getelementptr inbounds %class.D* %this, i64 0, i32 3, !dbg !51
-  store i32 %3, i32* %c45, align 4, !dbg !51, !tbaa !39
+  store i32 %3, i32* %c45, align 4, !dbg !51
   ret void, !dbg !52
 }
 
@@ -95,9 +95,6 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !36 = metadata !{i32 12, i32 0, metadata !5, null}
 !37 = metadata !{i32 13, i32 0, metadata !38, null}
 !38 = metadata !{i32 786443, metadata !5, i32 12, i32 0, metadata !6, i32 0} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/foo.cpp]
-!39 = metadata !{metadata !"int", metadata !40}
-!40 = metadata !{metadata !"omnipotent char", metadata !41}
-!41 = metadata !{metadata !"Simple C/C++ TBAA"}
 !42 = metadata !{i32 14, i32 0, metadata !38, null}
 !43 = metadata !{i32 15, i32 0, metadata !38, null}
 !44 = metadata !{i32 16, i32 0, metadata !38, null}

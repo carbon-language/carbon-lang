@@ -15,9 +15,9 @@ entry:
 
 for.end.us:                                       ; preds = %for.body3.us
   %arrayidx9.us = getelementptr inbounds i32* %b, i64 %indvars.iv33
-  %0 = load i32* %arrayidx9.us, align 4, !tbaa !0, !llvm.mem.parallel_loop_access !3
+  %0 = load i32* %arrayidx9.us, align 4, !llvm.mem.parallel_loop_access !3
   %add10.us = add nsw i32 %0, 3
-  store i32 %add10.us, i32* %arrayidx9.us, align 4, !tbaa !0, !llvm.mem.parallel_loop_access !3
+  store i32 %add10.us, i32* %arrayidx9.us, align 4, !llvm.mem.parallel_loop_access !3
   %indvars.iv.next34 = add i64 %indvars.iv33, 1
   %lftr.wideiv35 = trunc i64 %indvars.iv.next34 to i32
   %exitcond36 = icmp eq i32 %lftr.wideiv35, %m
@@ -29,9 +29,9 @@ for.body3.us:                                     ; preds = %for.body3.us, %for.
   %add4.us = add i32 %add.us, %1
   %idxprom.us = sext i32 %add4.us to i64
   %arrayidx.us = getelementptr inbounds i32* %a, i64 %idxprom.us
-  %2 = load i32* %arrayidx.us, align 4, !tbaa !0, !llvm.mem.parallel_loop_access !3
+  %2 = load i32* %arrayidx.us, align 4, !llvm.mem.parallel_loop_access !3
   %add5.us = add nsw i32 %2, 1
-  store i32 %add5.us, i32* %arrayidx7.us, align 4, !tbaa !0, !llvm.mem.parallel_loop_access !3
+  store i32 %add5.us, i32* %arrayidx7.us, align 4, !llvm.mem.parallel_loop_access !3
   %indvars.iv.next30 = add i64 %indvars.iv29, 1
   %lftr.wideiv31 = trunc i64 %indvars.iv.next30 to i32
   %exitcond32 = icmp eq i32 %lftr.wideiv31, %m
@@ -50,9 +50,6 @@ for.end15:                                        ; preds = %for.end.us, %entry
 
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-frame-pointer-elim-non-leaf"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
 
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
 !3 = metadata !{metadata !4, metadata !5}
 !4 = metadata !{metadata !4}
 !5 = metadata !{metadata !5}
