@@ -83,13 +83,11 @@ UniversalArchs.ubsan_osx := $(call CheckArches,i386 x86_64,ubsan_osx)
 # object files. If we are on that platform, strip out all ARM archs. We still
 # build the libraries themselves so that Clang can find them where it expects
 # them, even though they might not have an expected slice.
-ifneq ($(shell which sw_vers),)
-ifneq ($(shell sw_vers -productVersion | grep 10.6),)
+ifneq ($(shell test -x /usr/bin/sw_vers && sw_vers -productVersion | grep 10.6),)
 UniversalArchs.ios := $(filter-out armv7, $(UniversalArchs.ios))
 UniversalArchs.cc_kext := $(filter-out armv7, $(UniversalArchs.cc_kext))
 UniversalArchs.cc_kext_ios5 := $(filter-out armv7, $(UniversalArchs.cc_kext_ios5))
 UniversalArchs.profile_ios := $(filter-out armv7, $(UniversalArchs.profile_ios))
-endif
 endif
 
 # If RC_SUPPORTED_ARCHS is defined, treat it as a list of the architectures we
