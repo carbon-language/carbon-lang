@@ -221,7 +221,7 @@ bool SLPVectorizer::tryToVectorize(BinaryOperator *V,  BoUpSLP &R) {
     }
   }
 
-  // Try to slip A.
+  // Try to skip A.
   if (A && A->hasOneUse()) {
     BinaryOperator *A0 = dyn_cast<BinaryOperator>(A->getOperand(0));
     BinaryOperator *A1 = dyn_cast<BinaryOperator>(A->getOperand(1));
