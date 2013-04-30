@@ -54,6 +54,9 @@ namespace llvm {
   /// \returns true if this \p Opcode represents an ALU instruction.
   bool isALUInstr(unsigned Opcode) const;
 
+  bool isTransOnly(unsigned Opcode) const;
+  bool isTransOnly(const MachineInstr *MI) const;
+
   bool usesVertexCache(unsigned Opcode) const;
   bool usesVertexCache(const MachineInstr *MI) const;
   bool usesTextureCache(unsigned Opcode) const;

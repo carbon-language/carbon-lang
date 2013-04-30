@@ -140,6 +140,14 @@ bool R600InstrInfo::isALUInstr(unsigned Opcode) const {
           (TargetFlags & R600_InstFlag::OP3));
 }
 
+bool R600InstrInfo::isTransOnly(unsigned Opcode) const {
+  return (get(Opcode).TSFlags & R600_InstFlag::TRANS_ONLY);
+}
+
+bool R600InstrInfo::isTransOnly(const MachineInstr *MI) const {
+  return isTransOnly(MI->getOpcode());
+}
+
 bool R600InstrInfo::usesVertexCache(unsigned Opcode) const {
   return ST.hasVertexCache() && get(Opcode).TSFlags & R600_InstFlag::VTX_INST;
 }
