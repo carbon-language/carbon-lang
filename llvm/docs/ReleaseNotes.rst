@@ -109,15 +109,16 @@ Loop Vectorizer
 We've continued the work on the loop vectorizer. The loop vectorizer now
 has the following features:
 
-- Loops with unknown trip count.
-- Runtime checks of pointers
-- Reductions, Inductions
-- If Conversion
-- Pointer induction variables
-- Reverse iterators
-- Vectorization of mixed types
-- Vectorization of function calls
-- Partial unrolling during vectorization
+- Loops with unknown trip counts.
+- Runtime checks of pointers.
+- Reductions, Inductions.
+- Min/Max reductions of integers.
+- If Conversion.
+- Pointer induction variables.
+- Reverse iterators.
+- Vectorization of mixed types.
+- Vectorization of function calls.
+- Partial unrolling during vectorization.
 
 The loop vectorizer is now enabled by default for -O3.
 
