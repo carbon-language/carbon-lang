@@ -786,11 +786,11 @@ class CMPU_EQ_QB_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmpu.eq.qb",
 
 class CMPU_LT_QB_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmpu.lt.qb",
                                                int_mips_cmpu_lt_qb, NoItinerary,
-                                               DSPRegs>, IsCommutable;
+                                               DSPRegs>;
 
 class CMPU_LE_QB_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmpu.le.qb",
                                                int_mips_cmpu_le_qb, NoItinerary,
-                                               DSPRegs>, IsCommutable;
+                                               DSPRegs>;
 
 class CMPGU_EQ_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgu.eq.qb",
                                                 int_mips_cmpgu_eq_qb,
@@ -799,25 +799,21 @@ class CMPGU_EQ_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgu.eq.qb",
 
 class CMPGU_LT_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgu.lt.qb",
                                                 int_mips_cmpgu_lt_qb,
-                                                NoItinerary, CPURegs, DSPRegs>,
-                         IsCommutable;
+                                                NoItinerary, CPURegs, DSPRegs>;
 
 class CMPGU_LE_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgu.le.qb",
                                                 int_mips_cmpgu_le_qb,
-                                                NoItinerary, CPURegs, DSPRegs>,
-                         IsCommutable;
+                                                NoItinerary, CPURegs, DSPRegs>;
 
 class CMP_EQ_PH_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmp.eq.ph", int_mips_cmp_eq_ph,
                                               NoItinerary, DSPRegs>,
                        IsCommutable;
 
 class CMP_LT_PH_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmp.lt.ph", int_mips_cmp_lt_ph,
-                                              NoItinerary, DSPRegs>,
-                       IsCommutable;
+                                              NoItinerary, DSPRegs>;
 
 class CMP_LE_PH_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmp.le.ph", int_mips_cmp_le_ph,
-                                              NoItinerary, DSPRegs>,
-                       IsCommutable;
+                                              NoItinerary, DSPRegs>;
 
 // Misc
 class BITREV_DESC : ABSQ_S_PH_R2_DESC_BASE<"bitrev", int_mips_bitrev,
@@ -968,13 +964,11 @@ class CMPGDU_EQ_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgdu.eq.qb",
 
 class CMPGDU_LT_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgdu.lt.qb",
                                                  int_mips_cmpgdu_lt_qb,
-                                                 NoItinerary, CPURegs, DSPRegs>,
-                          IsCommutable;
+                                                 NoItinerary, CPURegs, DSPRegs>;
 
 class CMPGDU_LE_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgdu.le.qb",
                                                  int_mips_cmpgdu_le_qb,
-                                                 NoItinerary, CPURegs, DSPRegs>,
-                          IsCommutable;
+                                                 NoItinerary, CPURegs, DSPRegs>;
 
 // Absolute
 class ABSQ_S_QB_DESC : ABSQ_S_PH_R2_DESC_BASE<"absq_s.qb", int_mips_absq_s_qb,
