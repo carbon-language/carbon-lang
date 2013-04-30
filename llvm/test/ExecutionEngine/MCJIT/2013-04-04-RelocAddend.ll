@@ -1,5 +1,4 @@
 ; RUN: %lli_mcjit %s
-; XFAIL: darwin
 ;
 ; Verify relocations to global symbols with addend work correctly.
 ;

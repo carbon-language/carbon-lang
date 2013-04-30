@@ -230,7 +230,14 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
   bool isExtern = MachO->getPlainRelocationExternal(RE);
   bool IsPCRel = MachO->getAnyRelocationPCRel(RE);
   unsigned Size = MachO->getAnyRelocationLength(RE);
+  uint64_t Offset;
+  RelI.getOffset(Offset);
   if (isExtern) {
+    uint8_t *LocalAddress = Section.Address + Offset;
+    unsigned NumBytes = 1 << Size;
+    uint64_t Addend = 0;
+    memcpy(&Addend, LocalAddress, NumBytes);
+
     // Obtain the symbol name which is referenced in the relocation
     SymbolRef Symbol;
     RelI.getSymbol(Symbol);
@@ -240,15 +247,17 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
     SymbolTableMap::const_iterator lsi = Symbols.find(TargetName.data());
     if (lsi != Symbols.end()) {
       Value.SectionID = lsi->second.first;
-      Value.Addend = lsi->second.second;
+      Value.Addend = lsi->second.second + Addend;
     } else {
       // Search for the symbol in the global symbol table
       SymbolTableMap::const_iterator gsi = GlobalSymbolTable.find(TargetName.data());
       if (gsi != GlobalSymbolTable.end()) {
         Value.SectionID = gsi->second.first;
-        Value.Addend = gsi->second.second;
-      } else
+        Value.Addend = gsi->second.second + Addend;
+      } else {
         Value.SymbolName = TargetName.data();
+        Value.Addend = Addend;
+      }
     }
   } else {
     error_code err;
@@ -276,8 +285,6 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
     }
   }
 
-  uint64_t Offset;
-  RelI.getOffset(Offset);
   if (Arch == Triple::arm && (RelType & 0xf) == macho::RIT_ARM_Branch24Bit) {
     // This is an ARM branch relocation, need to use a stub function.
 
