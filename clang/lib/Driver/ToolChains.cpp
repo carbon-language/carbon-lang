@@ -1298,20 +1298,20 @@ static bool hasMipsN32ABIArg(const ArgList &Args) {
   return A && (A->getValue() == StringRef("n32"));
 }
 
-static void appendMipsTargetSuffix(SmallVectorImpl<char> &Path,
+static void appendMipsTargetSuffix(std::string &Path,
                                    llvm::Triple::ArchType TargetArch,
                                    const ArgList &Args) {
   if (isMips16(Args))
-    llvm::sys::path::append(Path, "/mips16");
+    Path += "/mips16";
   else if (isMicroMips(Args))
-    llvm::sys::path::append(Path, "/micromips");
+    Path += "/micromips";
 
   if (isSoftFloatABI(Args))
-    llvm::sys::path::append(Path, "/soft-float");
+    Path += "/soft-float";
 
   if (TargetArch == llvm::Triple::mipsel ||
       TargetArch == llvm::Triple::mips64el)
-    llvm::sys::path::append(Path, "/el");
+    Path += "/el";
 }
 
 static StringRef getMipsTargetABISuffix(llvm::Triple::ArchType TargetArch,
@@ -1323,7 +1323,7 @@ static StringRef getMipsTargetABISuffix(llvm::Triple::ArchType TargetArch,
   return "/32";
 }
 
-static bool findTargetMultiarchSuffix(SmallString<32> &Suffix,
+static bool findTargetMultiarchSuffix(std::string &Suffix,
                                       StringRef Path,
                                       llvm::Triple::ArchType TargetArch,
                                       const ArgList &Args) {
@@ -1337,15 +1337,15 @@ static bool findTargetMultiarchSuffix(SmallString<32> &Suffix,
 
     if (TargetArch == llvm::Triple::mips64 ||
         TargetArch == llvm::Triple::mips64el)
-      llvm::sys::path::append(Suffix, ABISuffix);
+      Suffix += ABISuffix;
 
-    if (llvm::sys::fs::exists(Path + Suffix.str() + "/crtbegin.o"))
+    if (llvm::sys::fs::exists(Path + Suffix + "/crtbegin.o"))
       return true;
 
     // Then fall back and probe a simple case like
     // mips-linux-gnu/4.7/32/crtbegin.o
     Suffix = ABISuffix;
-    return llvm::sys::fs::exists(Path + Suffix.str() + "/crtbegin.o");
+    return llvm::sys::fs::exists(Path + Suffix + "/crtbegin.o");
   }
 
   if (TargetArch == llvm::Triple::x86_64 ||
@@ -1354,7 +1354,7 @@ static bool findTargetMultiarchSuffix(SmallString<32> &Suffix,
   else
     Suffix = "/32";
 
-  return llvm::sys::fs::exists(Path + Suffix.str() + "/crtbegin.o");
+  return llvm::sys::fs::exists(Path + Suffix + "/crtbegin.o");
 }
 
 void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
@@ -1407,10 +1407,10 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
       // we use that. If not, and if not a multiarch triple, we look for
       // crtbegin.o without the subdirectory.
 
-      SmallString<32> MultiarchSuffix;
+      std::string MultiarchSuffix;
       if (findTargetMultiarchSuffix(MultiarchSuffix,
                                     LI->path(), TargetArch, Args)) {
-        GCCMultiarchSuffix = MultiarchSuffix.str();
+        GCCMultiarchSuffix = MultiarchSuffix;
       } else {
         if (NeedsMultiarchSuffix ||
             !llvm::sys::fs::exists(LI->path() + "/crtbegin.o"))
@@ -2295,10 +2295,10 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     // Sourcery CodeBench MIPS toolchain holds some libraries under
     // the parent prefix of the GCC installation.
     if (IsMips) {
-      SmallString<128> Suffix;
+      std::string Suffix;
       appendMipsTargetSuffix(Suffix, Arch, Args);
       addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib/../" +
-                      Multilib + Suffix.str(),
+                      Multilib + Suffix,
                       Paths);
     }
   }
@@ -2363,14 +2363,12 @@ std::string Linux::computeSysRoot(const ArgList &Args) const {
   if (!GCCInstallation.isValid() || !isMipsArch(getTriple().getArch()))
     return std::string();
 
-  SmallString<128> Path;
-  llvm::sys::path::append(Path, GCCInstallation.getInstallPath(),
-                                "../../../..",
-                                GCCInstallation.getTriple().str(),
-                                "libc");
+  std::string Path =
+    (GCCInstallation.getInstallPath() +
+     "/../../../../" + GCCInstallation.getTriple().str() + "/libc").str();
   appendMipsTargetSuffix(Path, getTriple().getArch(), Args);
 
-  return llvm::sys::fs::exists(Path.str()) ? Path.str() : "";
+  return llvm::sys::fs::exists(Path) ? Path : "";
 }
 
 void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
