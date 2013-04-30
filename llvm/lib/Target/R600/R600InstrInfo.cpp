@@ -702,7 +702,8 @@ MachineInstrBuilder R600InstrInfo::buildDefaultInstruction(MachineBasicBlock &MB
   //scheduling to the backend, we can change the default to 0.
   MIB.addImm(1)        // $last
       .addReg(AMDGPU::PRED_SEL_OFF) // $pred_sel
-      .addImm(0);        // $literal
+      .addImm(0)         // $literal
+      .addImm(0);        // $bank_swizzle
 
   return MIB;
 }

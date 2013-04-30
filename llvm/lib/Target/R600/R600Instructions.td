@@ -75,6 +75,9 @@ class InstFlag<string PM = "printOperand", int Default = 0>
 def SEL : OperandWithDefaultOps <i32, (ops (i32 -1))> {
   let PrintMethod = "printSel";
 }
+def BANK_SWIZZLE : OperandWithDefaultOps <i32, (ops (i32 0))> {
+  let PrintMethod = "printSel";
+}
 
 def LITERAL : InstFlag<"printLiteral">;
 
@@ -138,7 +141,7 @@ class R600ALU_Word1 {
   field bits<32> Word1;
 
   bits<11> dst;
-  bits<3>  bank_swizzle = 0;
+  bits<3>  bank_swizzle;
   bits<1>  dst_rel;
   bits<1>  clamp;
 
@@ -350,7 +353,8 @@ class R600_1OP <bits<11> inst, string opName, list<dag> pattern,
     InstR600 <(outs R600_Reg32:$dst),
               (ins WRITE:$write, OMOD:$omod, REL:$dst_rel, CLAMP:$clamp,
                    R600_Reg32:$src0, NEG:$src0_neg, REL:$src0_rel, ABS:$src0_abs, SEL:$src0_sel,
-                   LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal),
+                   LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal,
+                   BANK_SWIZZLE:$bank_swizzle),
               !strconcat("  ", opName,
                    "$clamp $dst$write$dst_rel$omod, "
                    "$src0_neg$src0_abs$src0$src0_abs$src0_rel, "
@@ -390,7 +394,8 @@ class R600_2OP <bits<11> inst, string opName, list<dag> pattern,
                OMOD:$omod, REL:$dst_rel, CLAMP:$clamp,
                R600_Reg32:$src0, NEG:$src0_neg, REL:$src0_rel, ABS:$src0_abs, SEL:$src0_sel,
                R600_Reg32:$src1, NEG:$src1_neg, REL:$src1_rel, ABS:$src1_abs, SEL:$src1_sel,
-               LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal),
+               LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal,
+               BANK_SWIZZLE:$bank_swizzle),
           !strconcat("  ", opName,
                 "$clamp $update_exec_mask$update_pred$dst$write$dst_rel$omod, "
                 "$src0_neg$src0_abs$src0$src0_abs$src0_rel, "
@@ -427,7 +432,8 @@ class R600_3OP <bits<5> inst, string opName, list<dag> pattern,
                R600_Reg32:$src0, NEG:$src0_neg, REL:$src0_rel, SEL:$src0_sel,
                R600_Reg32:$src1, NEG:$src1_neg, REL:$src1_rel, SEL:$src1_sel,
                R600_Reg32:$src2, NEG:$src2_neg, REL:$src2_rel, SEL:$src2_sel,
-               LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal),
+               LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal,
+               BANK_SWIZZLE:$bank_swizzle),
           !strconcat("  ", opName, "$clamp $dst$dst_rel, "
                              "$src0_neg$src0$src0_rel, "
                              "$src1_neg$src1$src1_rel, "

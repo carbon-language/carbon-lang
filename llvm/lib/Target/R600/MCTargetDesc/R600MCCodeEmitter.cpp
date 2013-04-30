@@ -428,7 +428,7 @@ void R600MCCodeEmitter::EmitSrcISA(const MCInst &MI, unsigned RegOpIdx,
   }
 
   if (Reg == AMDGPU::ALU_LITERAL_X) {
-    unsigned ImmOpIndex = MI.getNumOperands() - 1;
+    unsigned ImmOpIndex = MI.getNumOperands() - 2;
     MCOperand ImmOp = MI.getOperand(ImmOpIndex);
     if (ImmOp.isFPImm()) {
       InlineConstant.f = ImmOp.getFPImm();
