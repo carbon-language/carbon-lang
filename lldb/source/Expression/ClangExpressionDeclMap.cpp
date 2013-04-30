@@ -620,7 +620,7 @@ ClangExpressionDeclMap::GetSymbolAddress (Target &target, Process *process, cons
         const Address *sym_address = &sym_ctx.symbol->GetAddress();
         
         if (!sym_address || !sym_address->IsValid())
-            return LLDB_INVALID_ADDRESS;
+            continue;
         
         if (sym_address)
         {
