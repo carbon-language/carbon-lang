@@ -74,6 +74,7 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 void AMDGPUAsmPrinter::EmitProgramInfoR600(MachineFunction &MF) {
   unsigned MaxGPR = 0;
+  bool killPixel = false;
   const R600RegisterInfo * RI =
                 static_cast<const R600RegisterInfo*>(TM.getRegisterInfo());
   R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
@@ -84,6 +85,8 @@ void AMDGPUAsmPrinter::EmitProgramInfoR600(MachineFunction &MF) {
     for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
                                                     I != E; ++I) {
       MachineInstr &MI = *I;
+      if (MI.getOpcode() == AMDGPU::KILLGT)
+        killPixel = true;
       unsigned numOperands = MI.getNumOperands();
       for (unsigned op_idx = 0; op_idx < numOperands; op_idx++) {
         MachineOperand & MO = MI.getOperand(op_idx);
@@ -100,6 +103,7 @@ void AMDGPUAsmPrinter::EmitProgramInfoR600(MachineFunction &MF) {
   }
   OutStreamer.EmitIntValue(MaxGPR + 1, 4);
   OutStreamer.EmitIntValue(MFI->StackSize, 4);
+  OutStreamer.EmitIntValue(killPixel, 4);
 }
 
 void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF) {
