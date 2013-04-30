@@ -341,6 +341,7 @@ public:
                                  content, 0, 0, _references);
         newAtom->setOrdinal(++ordinal);
         _definedAtoms._atoms.push_back(newAtom);
+        continue;
       }
 
       ELFDefinedAtom<ELFT> *previous_atom = nullptr;
