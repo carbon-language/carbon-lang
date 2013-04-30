@@ -25,8 +25,11 @@ int doNothing()
 {
     int temp = 0;   // Set first breakpoint here
 
-    while (!g_test)
-      ++temp;
+    while (!g_test && temp < 5)
+    {
+        ++temp;
+        sleep(1);
+    }
 
     return temp;    // Set second breakpoint here
 }
