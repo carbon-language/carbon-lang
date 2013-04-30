@@ -61,9 +61,12 @@ MacroInfo *Preprocessor::AllocateDeserializedMacroInfo(SourceLocation L,
                                                        unsigned SubModuleID) {
   LLVM_STATIC_ASSERT(llvm::AlignOf<MacroInfo>::Alignment >= sizeof(SubModuleID),
                      "alignment for MacroInfo is less than the ID");
-  MacroInfo *MI =
-      (MacroInfo*)BP.Allocate(sizeof(MacroInfo) + sizeof(SubModuleID),
-                              llvm::AlignOf<MacroInfo>::Alignment);
+  DeserializedMacroInfoChain *MIChain =
+      BP.Allocate<DeserializedMacroInfoChain>();
+  MIChain->Next = DeserialMIChainHead;
+  DeserialMIChainHead = MIChain;
+
+  MacroInfo *MI = &MIChain->MI;
   new (MI) MacroInfo(L);
   MI->FromASTFile = true;
   MI->setOwningModuleID(SubModuleID);

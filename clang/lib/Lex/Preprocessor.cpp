@@ -67,7 +67,8 @@ Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
       CodeComplete(0), CodeCompletionFile(0), CodeCompletionOffset(0),
       CodeCompletionReached(0), SkipMainFilePreamble(0, true), CurPPLexer(0),
       CurDirLookup(0), CurLexerKind(CLK_Lexer), Callbacks(0),
-      MacroArgCache(0), Record(0), MIChainHead(0), MICache(0) {
+      MacroArgCache(0), Record(0), MIChainHead(0), MICache(0),
+      DeserialMIChainHead(0) {
   OwnsHeaderSearch = OwnsHeaders;
   
   ScratchBuf = new ScratchBuffer(SourceMgr);
@@ -152,6 +153,9 @@ Preprocessor::~Preprocessor() {
   // Free any cached macro expanders.
   for (unsigned i = 0, e = NumCachedTokenLexers; i != e; ++i)
     delete TokenLexerCache[i];
+
+  for (DeserializedMacroInfoChain *I = DeserialMIChainHead ; I ; I = I->Next)
+    I->MI.Destroy();
 
   // Free any cached MacroArgs.
   for (MacroArgs *ArgList = MacroArgCache; ArgList; )
