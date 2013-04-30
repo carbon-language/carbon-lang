@@ -20,10 +20,15 @@
 # endif
 #endif
 
+const char *TestMainArgv0;
+
 int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   testing::InitGoogleTest(&argc, argv);
   llvm::cl::ParseCommandLineOptions(argc, argv);
+
+  // Make it easy for a test to re-execute itself by saving argv[0].
+  TestMainArgv0 = argv[0];
 
 # if defined(LLVM_ON_WIN32)
   // Disable all of the possible ways Windows conspires to make automated

@@ -20,6 +20,9 @@
 extern char **environ;
 #endif
 
+// From TestMain.cpp.
+extern const char *TestMainArgv0;
+
 namespace {
 
 using namespace llvm;
@@ -52,9 +55,7 @@ TEST(ProgramTest, CreateProcessTrailingSlash) {
     exit(1);
   }
 
-  // FIXME: Hardcoding argv0 here since I don't know a good cross-platform way
-  // to get it.  Maybe ParseCommandLineOptions() should save it?
-  Path my_exe = Path::GetMainExecutable("SupportTests", &ProgramTestStringArg1);
+  Path my_exe = Path::GetMainExecutable(TestMainArgv0, &ProgramTestStringArg1);
   const char *argv[] = {
     my_exe.c_str(),
     "--gtest_filter=ProgramTest.CreateProcessTrailingSlashChild",
