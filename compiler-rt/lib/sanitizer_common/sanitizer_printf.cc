@@ -21,6 +21,10 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#if SANITIZER_WINDOWS
+# define va_copy(dst, src) ((dst) = (src))
+#endif
+
 namespace __sanitizer {
 
 StaticSpinMutex CommonSanitizerReportMutex;
