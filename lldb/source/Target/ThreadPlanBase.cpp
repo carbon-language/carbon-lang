@@ -78,6 +78,22 @@ ThreadPlanBase::PlanExplainsStop (Event *event_ptr)
         return true;
 }
 
+Vote
+ThreadPlanBase::ShouldReportStop(Event *event_ptr)
+{
+    StopInfoSP stop_info_sp = GetPrivateStopReason();
+    if (stop_info_sp)
+    {
+        bool should_notify = stop_info_sp->ShouldNotify(event_ptr);
+        if (should_notify)
+            return eVoteYes;
+        else
+            return eVoteNoOpinion;
+    }
+    else
+        return eVoteNoOpinion;
+}
+
 bool
 ThreadPlanBase::ShouldStop (Event *event_ptr)
 {
