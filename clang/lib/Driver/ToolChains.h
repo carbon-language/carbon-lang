@@ -474,6 +474,11 @@ public:
   virtual bool IsMathErrnoDefault() const { return false; }
   virtual bool IsObjCNonFragileABIDefault() const { return true; }
 
+  virtual CXXStdlibType GetCXXStdlibType(const ArgList &Args) const;
+
+  virtual void AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
+                                            ArgStringList &CC1Args) const;
+
 protected:
   virtual Tool *buildAssembler() const;
   virtual Tool *buildLinker() const;
