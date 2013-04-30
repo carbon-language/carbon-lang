@@ -128,7 +128,7 @@ Value::GetValueAddressType () const
 }
 
 RegisterInfo *
-Value::GetRegisterInfo()
+Value::GetRegisterInfo() const
 {
     if (m_context_type == eContextTypeRegisterInfo)
         return static_cast<RegisterInfo *> (m_context);

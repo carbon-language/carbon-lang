@@ -794,7 +794,7 @@ public:
     virtual bool
     ResolveValue (Scalar &scalar);
     
-    const char *
+    virtual const char *
     GetLocationAsCString ();
 
     const char *
@@ -1339,6 +1339,10 @@ protected:
     
     virtual lldb::clang_type_t
     GetClangTypeImpl () = 0;
+    
+    const char *
+    GetLocationAsCStringImpl (const Value& value,
+                              const DataExtractor& data);
     
 private:
     //------------------------------------------------------------------

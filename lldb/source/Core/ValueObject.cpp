@@ -401,37 +401,49 @@ ValueObject::GetName() const
 const char *
 ValueObject::GetLocationAsCString ()
 {
+    return GetLocationAsCStringImpl(m_value,
+                                    m_data);
+}
+
+const char *
+ValueObject::GetLocationAsCStringImpl (const Value& value,
+                                       const DataExtractor& data)
+{
     if (UpdateValueIfNeeded(false))
     {
         if (m_location_str.empty())
         {
             StreamString sstr;
-
-            switch (m_value.GetValueType())
+            
+            Value::ValueType value_type = value.GetValueType();
+            
+            switch (value_type)
             {
             case Value::eValueTypeScalar:
             case Value::eValueTypeVector:
-                if (m_value.GetContextType() == Value::eContextTypeRegisterInfo)
+                if (value.GetContextType() == Value::eContextTypeRegisterInfo)
                 {
-                    RegisterInfo *reg_info = m_value.GetRegisterInfo();
+                    RegisterInfo *reg_info = value.GetRegisterInfo();
                     if (reg_info)
                     {
                         if (reg_info->name)
                             m_location_str = reg_info->name;
                         else if (reg_info->alt_name)
                             m_location_str = reg_info->alt_name;
-
-                        m_location_str = (reg_info->encoding == lldb::eEncodingVector) ? "vector" : "scalar";
+                        if (m_location_str.empty())
+                            m_location_str = (reg_info->encoding == lldb::eEncodingVector) ? "vector" : "scalar";
                     }
                 }
+                if (m_location_str.empty())
+                    m_location_str = (value_type == Value::eValueTypeVector) ? "vector" : "scalar";
                 break;
 
             case Value::eValueTypeLoadAddress:
             case Value::eValueTypeFileAddress:
             case Value::eValueTypeHostAddress:
                 {
-                    uint32_t addr_nibble_size = m_data.GetAddressByteSize() * 2;
-                    sstr.Printf("0x%*.*llx", addr_nibble_size, addr_nibble_size, m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS));
+                    uint32_t addr_nibble_size = data.GetAddressByteSize() * 2;
+                    sstr.Printf("0x%*.*llx", addr_nibble_size, addr_nibble_size, value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS));
                     m_location_str.swap(sstr.GetString());
                 }
                 break;

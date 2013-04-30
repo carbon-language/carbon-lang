@@ -57,7 +57,16 @@ public:
 
     virtual bool
     GetDeclaration (Declaration &decl);
+    
+    virtual const char *
+    GetLocationAsCString ();
+    
+    virtual bool
+    SetValueFromCString (const char *value_str, Error& error);
 
+    virtual bool
+    SetData (DataExtractor &data, Error &error);
+    
 protected:
     virtual bool
     UpdateValue ();
@@ -69,6 +78,7 @@ protected:
     GetClangTypeImpl ();
 
     lldb::VariableSP  m_variable_sp;  ///< The variable that this value object is based upon
+    Value m_resolved_value;           ///< The value that DWARFExpression resolves this variable to before we patch it up
 
 private:
     ValueObjectVariable (ExecutionContextScope *exe_scope, const lldb::VariableSP &var_sp);

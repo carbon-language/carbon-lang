@@ -165,7 +165,7 @@ public:
     }
 
     RegisterInfo *
-    GetRegisterInfo();
+    GetRegisterInfo() const;
 
     Type *
     GetType();
@@ -173,6 +173,18 @@ public:
     Scalar &
     ResolveValue (ExecutionContext *exe_ctx, clang::ASTContext *ast_context);
 
+    const Scalar &
+    GetScalar() const
+    {
+        return m_value;
+    }
+    
+    const Vector &
+    GetVector() const
+    {
+        return m_vector;
+    }
+    
     Scalar &
     GetScalar()
     {
