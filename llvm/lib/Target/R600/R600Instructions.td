@@ -13,7 +13,7 @@
 
 include "R600Intrinsics.td"
 
-class InstR600 <bits<11> inst, dag outs, dag ins, string asm, list<dag> pattern,
+class InstR600 <dag outs, dag ins, string asm, list<dag> pattern,
                 InstrItinClass itin>
     : AMDGPUInst <outs, ins, asm, pattern> {
 
@@ -26,8 +26,6 @@ class InstR600 <bits<11> inst, dag outs, dag ins, string asm, list<dag> pattern,
   bit Op2 = 0;
   bit HasNativeOperands = 0;
 
-  bits<11> op_code = inst;
-  //let Inst = inst;
   let Namespace = "AMDGPU";
   let OutOperandList = outs;
   let InOperandList = ins;
@@ -48,8 +46,7 @@ class InstR600 <bits<11> inst, dag outs, dag ins, string asm, list<dag> pattern,
 }
 
 class InstR600ISA <dag outs, dag ins, string asm, list<dag> pattern> :
-    AMDGPUInst <outs, ins, asm, pattern> {
-  field bits<64> Inst;
+    InstR600 <outs, ins, asm, pattern, NullALU> {
 
   let Namespace = "AMDGPU";
 }
@@ -346,8 +343,7 @@ let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in {
 // and R600InstrInfo::getOperandIdx().
 class R600_1OP <bits<11> inst, string opName, list<dag> pattern,
                 InstrItinClass itin = AnyALU> :
-    InstR600 <0,
-              (outs R600_Reg32:$dst),
+    InstR600 <(outs R600_Reg32:$dst),
               (ins WRITE:$write, OMOD:$omod, REL:$dst_rel, CLAMP:$clamp,
                    R600_Reg32:$src0, NEG:$src0_neg, REL:$src0_rel, ABS:$src0_abs, SEL:$src0_sel,
                    LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal),
@@ -385,8 +381,7 @@ class R600_1OP_Helper <bits<11> inst, string opName, SDPatternOperator node,
 // R600InstrInfo::buildDefaultInstruction(), and R600InstrInfo::getOperandIdx().
 class R600_2OP <bits<11> inst, string opName, list<dag> pattern,
                 InstrItinClass itin = AnyALU> :
-  InstR600 <inst,
-          (outs R600_Reg32:$dst),
+  InstR600 <(outs R600_Reg32:$dst),
           (ins UEM:$update_exec_mask, UP:$update_pred, WRITE:$write,
                OMOD:$omod, REL:$dst_rel, CLAMP:$clamp,
                R600_Reg32:$src0, NEG:$src0_neg, REL:$src0_rel, ABS:$src0_abs, SEL:$src0_sel,
@@ -423,8 +418,7 @@ class R600_2OP_Helper <bits<11> inst, string opName, SDPatternOperator node,
 // R600InstrInfo::getOperandIdx().
 class R600_3OP <bits<5> inst, string opName, list<dag> pattern,
                 InstrItinClass itin = AnyALU> :
-  InstR600 <0,
-          (outs R600_Reg32:$dst),
+  InstR600 <(outs R600_Reg32:$dst),
           (ins REL:$dst_rel, CLAMP:$clamp,
                R600_Reg32:$src0, NEG:$src0_neg, REL:$src0_rel, SEL:$src0_sel,
                R600_Reg32:$src1, NEG:$src1_neg, REL:$src1_rel, SEL:$src1_sel,
@@ -450,8 +444,7 @@ class R600_3OP <bits<5> inst, string opName, list<dag> pattern,
 
 class R600_REDUCTION <bits<11> inst, dag ins, string asm, list<dag> pattern,
                       InstrItinClass itin = VecALU> :
-  InstR600 <inst,
-          (outs R600_Reg32:$dst),
+  InstR600 <(outs R600_Reg32:$dst),
           ins,
           asm,
           pattern,
@@ -459,8 +452,7 @@ class R600_REDUCTION <bits<11> inst, dag ins, string asm, list<dag> pattern,
 
 class R600_TEX <bits<11> inst, string opName, list<dag> pattern,
                 InstrItinClass itin = AnyALU> :
-  InstR600 <inst,
-          (outs R600_Reg128:$DST_GPR),
+  InstR600 <(outs R600_Reg128:$DST_GPR),
           (ins R600_Reg128:$SRC_GPR, i32imm:$RESOURCE_ID, i32imm:$SAMPLER_ID, i32imm:$textureTarget),
           !strconcat(opName, "$DST_GPR, $SRC_GPR, $RESOURCE_ID, $SAMPLER_ID, $textureTarget"),
           pattern,
@@ -1274,7 +1266,6 @@ let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in {
 multiclass CUBE_Common <bits<11> inst> {
 
   def _pseudo : InstR600 <
-    inst,
     (outs R600_Reg128:$dst),
     (ins R600_Reg128:$src),
     "CUBE $dst $src",
@@ -1975,21 +1966,21 @@ def PREDICATED_BREAK : ILFormat<(outs), (ins GPRI32:$src),
 let isPseudo = 1 in {
 
 def PRED_X : InstR600 <
-  0, (outs R600_Predicate_Bit:$dst),
+  (outs R600_Predicate_Bit:$dst),
   (ins R600_Reg32:$src0, i32imm:$src1, i32imm:$flags),
   "", [], NullALU> {
   let FlagOperandIdx = 3;
 }
 
 let isTerminator = 1, isBranch = 1 in {
-def JUMP_COND : InstR600 <0x10,
+def JUMP_COND : InstR600 <
           (outs),
           (ins brtarget:$target, R600_Predicate_Bit:$p),
           "JUMP $target ($p)",
           [], AnyALU
   >;
 
-def JUMP : InstR600 <0x10,
+def JUMP : InstR600 <
           (outs),
           (ins brtarget:$target),
           "JUMP $target",
@@ -2016,18 +2007,18 @@ def MASK_WRITE : AMDGPUShaderInst <
 } // End mayLoad = 0, mayStore = 0, hasSideEffects = 1
 
 
-def TXD: AMDGPUShaderInst <
+def TXD: InstR600 <
   (outs R600_Reg128:$dst),
   (ins R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, i32imm:$resourceId, i32imm:$samplerId, i32imm:$textureTarget),
   "TXD $dst, $src0, $src1, $src2, $resourceId, $samplerId, $textureTarget",
-  [(set R600_Reg128:$dst, (int_AMDGPU_txd R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, imm:$resourceId, imm:$samplerId, imm:$textureTarget))]
+  [(set R600_Reg128:$dst, (int_AMDGPU_txd R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, imm:$resourceId, imm:$samplerId, imm:$textureTarget))], NullALU> {
 >;
 
-def TXD_SHADOW: AMDGPUShaderInst <
+def TXD_SHADOW: InstR600 <
   (outs R600_Reg128:$dst),
   (ins R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, i32imm:$resourceId, i32imm:$samplerId, i32imm:$textureTarget),
   "TXD_SHADOW $dst, $src0, $src1, $src2, $resourceId, $samplerId, $textureTarget",
-  [(set R600_Reg128:$dst, (int_AMDGPU_txd R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, imm:$resourceId, imm:$samplerId, TEX_SHADOW:$textureTarget))]
+  [(set R600_Reg128:$dst, (int_AMDGPU_txd R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, imm:$resourceId, imm:$samplerId, TEX_SHADOW:$textureTarget))], NullALU
 >;
 
 } // End isPseudo = 1
