@@ -1,4 +1,6 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+sse2 -relocation-model=static | not grep movaps
+; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+sse2 -relocation-model=static | FileCheck %s
+
+; CHECK-NOT: movaps
 
 @a = external global <2 x i64>		; <<2 x i64>*> [#uses=1]
 

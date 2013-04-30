@@ -1,5 +1,7 @@
-; RUN: llc < %s -march=x86 -mcpu=core2 -o %t
-; RUN: grep pshufb %t | count 1
+; RUN: llc < %s -march=x86 -mcpu=core2 | FileCheck %s
+
+; CHECK:     pshufb
+; CHECK-NOT: pshufb
 
 ; FIXME: this test has a superfluous punpcklqdq pre-pshufb currently.
 ;        Don't XFAIL it because it's still better than the previous code.

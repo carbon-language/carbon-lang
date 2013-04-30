@@ -1,7 +1,8 @@
-; RUN: llc < %s -march=x86 -o %t
-; RUN: not grep and %t
-; RUN: not grep shr %t
+; RUN: llc < %s -march=x86 | FileCheck %s
 ; rdar://6661955
+
+; CHECK-NOT: and
+; CHECK-NOT: shr
 
 @hello = internal constant [7 x i8] c"hello\0A\00"
 @world = internal constant [7 x i8] c"world\0A\00"

@@ -1,9 +1,12 @@
-; RUN: llc < %s -march=x86 | not grep and
-; RUN: llc < %s -march=x86-64 > %t
-; RUN: not grep and %t
-; RUN: not grep movzbq %t
-; RUN: not grep movzwq %t
-; RUN: not grep movzlq %t
+; RUN: llc < %s -march=x86 | FileCheck -check-prefix=X86 %s
+; RUN: llc < %s -march=x86-64 | FileCheck -check-prefix=X64 %s
+
+; X86-NOT: and
+
+; X64-NOT: and
+; X64-NOT: movzbq
+; X64-NOT: movzwq
+; X64-NOT: movzlq
 
 ; These should use movzbl instead of 'and 255'.
 ; This related to not having a ZERO_EXTEND_REG opcode.
