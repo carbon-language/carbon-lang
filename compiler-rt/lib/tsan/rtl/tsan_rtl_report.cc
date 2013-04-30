@@ -695,6 +695,11 @@ void PrintCurrentStackSlow() {
       sizeof(__sanitizer::StackTrace))) __sanitizer::StackTrace;
   ptrace->SlowUnwindStack(__sanitizer::StackTrace::GetCurrentPc(),
       kStackTraceMax);
+  for (uptr i = 0; i < ptrace->size / 2; i++) {
+    uptr tmp = ptrace->trace[i];
+    ptrace->trace[i] = ptrace->trace[ptrace->size - i - 1];
+    ptrace->trace[ptrace->size - i - 1] = tmp;
+  }
   StackTrace trace;
   trace.Init(ptrace->trace, ptrace->size);
   PrintStack(SymbolizeStack(trace));
