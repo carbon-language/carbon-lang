@@ -56,6 +56,8 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
     setTargetDAGCombine(ISD::SHL);
     setTargetDAGCombine(ISD::SRA);
     setTargetDAGCombine(ISD::SRL);
+    setTargetDAGCombine(ISD::SETCC);
+    setTargetDAGCombine(ISD::VSELECT);
   }
 
   if (Subtarget->hasDSPR2())
@@ -373,9 +375,57 @@ static SDValue performSRLCombine(SDNode *N, SelectionDAG &DAG,
   return performDSPShiftCombine(MipsISD::SHRL_DSP, N, Ty, DAG, Subtarget);
 }
 
+static bool isLegalDSPCondCode(EVT Ty, ISD::CondCode CC) {
+  bool IsV216 = (Ty == MVT::v2i16);
+
+  switch (CC) {
+  case ISD::SETEQ:
+  case ISD::SETNE:  return true;
+  case ISD::SETLT:
+  case ISD::SETLE:
+  case ISD::SETGT:
+  case ISD::SETGE:  return IsV216;
+  case ISD::SETULT:
+  case ISD::SETULE:
+  case ISD::SETUGT:
+  case ISD::SETUGE: return !IsV216;
+  default:          return false;
+  }
+}
+
+static SDValue performSETCCCombine(SDNode *N, SelectionDAG &DAG) {
+  EVT Ty = N->getValueType(0);
+
+  if ((Ty != MVT::v2i16) && (Ty != MVT::v4i8))
+    return SDValue();
+
+  if (!isLegalDSPCondCode(Ty, cast<CondCodeSDNode>(N->getOperand(2))->get()))
+    return SDValue();
+
+  return DAG.getNode(MipsISD::SETCC_DSP, N->getDebugLoc(), Ty, N->getOperand(0),
+                     N->getOperand(1), N->getOperand(2));
+}
+
+static SDValue performVSELECTCombine(SDNode *N, SelectionDAG &DAG) {
+  EVT Ty = N->getValueType(0);
+
+  if ((Ty != MVT::v2i16) && (Ty != MVT::v4i8))
+    return SDValue();
+
+  SDValue SetCC = N->getOperand(0);
+
+  if (SetCC.getOpcode() != MipsISD::SETCC_DSP)
+    return SDValue();
+
+  return DAG.getNode(MipsISD::SELECT_CC_DSP, N->getDebugLoc(), Ty,
+                     SetCC.getOperand(0), SetCC.getOperand(1), N->getOperand(1),
+                     N->getOperand(2), SetCC.getOperand(2));
+}
+
 SDValue
 MipsSETargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
+  SDValue Val;
 
   switch (N->getOpcode()) {
   case ISD::ADDE:
@@ -388,9 +438,18 @@ MipsSETargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {
     return performSRACombine(N, DAG, DCI, Subtarget);
   case ISD::SRL:
     return performSRLCombine(N, DAG, DCI, Subtarget);
-  default:
-    return MipsTargetLowering::PerformDAGCombine(N, DCI);
+  case ISD::VSELECT:
+    return performVSELECTCombine(N, DAG);
+  case ISD::SETCC: {
+    Val = performSETCCCombine(N, DAG);
+    break;
   }
+  }
+
+  if (Val.getNode())
+    return Val;
+
+  return MipsTargetLowering::PerformDAGCombine(N, DCI);
 }
 
 MachineBasicBlock *

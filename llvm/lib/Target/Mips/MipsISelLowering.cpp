@@ -200,6 +200,8 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::SHLL_DSP:          return "MipsISD::SHLL_DSP";
   case MipsISD::SHRA_DSP:          return "MipsISD::SHRA_DSP";
   case MipsISD::SHRL_DSP:          return "MipsISD::SHRL_DSP";
+  case MipsISD::SETCC_DSP:         return "MipsISD::SETCC_DSP";
+  case MipsISD::SELECT_CC_DSP:     return "MipsISD::SELECT_CC_DSP";
   default:                         return NULL;
   }
 }
@@ -213,7 +215,7 @@ MipsTargetLowering(MipsTargetMachine &TM)
   // Mips does not have i1 type, so use i32 for
   // setcc operations results (slt, sgt, ...).
   setBooleanContents(ZeroOrOneBooleanContent);
-  setBooleanVectorContents(ZeroOrOneBooleanContent); // FIXME: Is this correct?
+  setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
 
   // Load extented operations for i1 types must be promoted
   setLoadExtAction(ISD::EXTLOAD,  MVT::i1,  Promote);

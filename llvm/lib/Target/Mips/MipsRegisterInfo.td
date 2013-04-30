@@ -265,6 +265,7 @@ let Namespace = "Mips" in {
   def AC0_64 : ACC<0, "ac0", [LO64, HI64]>;
 
   def DSPCtrl : Register<"dspctrl">;
+  def DSPCCond : Register<"">;
 }
 
 //===----------------------------------------------------------------------===//
@@ -362,6 +363,9 @@ def ACRegsDSP : RegisterClass<"Mips", [untyped], 64, (sequence "AC%u", 0, 3)> {
   let Size = 64;
 }
 
+def DSPCC : RegisterClass<"Mips", [v4i8, v2i16], 32, (add DSPCCond)>;
+
+// Register Operands.
 def CPURegsAsmOperand : AsmOperandClass {
   let Name = "CPURegsAsm";
   let ParserMethod = "parseCPURegs";

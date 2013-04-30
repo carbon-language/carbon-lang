@@ -148,6 +148,10 @@ namespace llvm {
       SHRA_DSP,
       SHRL_DSP,
 
+      // DSP setcc and select_cc nodes.
+      SETCC_DSP,
+      SELECT_CC_DSP,
+
       // Load/Store Left/Right nodes.
       LWL = ISD::FIRST_TARGET_MEMORY_OPCODE,
       LWR,
