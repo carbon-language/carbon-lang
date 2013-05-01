@@ -2322,17 +2322,15 @@ static Value *insertVector(IRBuilderTy &IRB, Value *Old, Value *V,
   V = IRB.CreateShuffleVector(V, UndefValue::get(V->getType()),
                               ConstantVector::get(Mask),
                               Name + ".expand");
-  DEBUG(dbgs() << "    shuffle1: " << *V << "\n");
+  DEBUG(dbgs() << "    shuffle: " << *V << "\n");
 
   Mask.clear();
   for (unsigned i = 0; i != VecTy->getNumElements(); ++i)
-    if (i >= BeginIndex && i < EndIndex)
-      Mask.push_back(IRB.getInt32(i));
-    else
-      Mask.push_back(IRB.getInt32(i + VecTy->getNumElements()));
-  V = IRB.CreateShuffleVector(V, Old, ConstantVector::get(Mask),
-                              Name + "insert");
-  DEBUG(dbgs() << "    shuffle2: " << *V << "\n");
+    Mask.push_back(IRB.getInt1(i >= BeginIndex && i < EndIndex));
+
+  V = IRB.CreateSelect(ConstantVector::get(Mask), V, Old, Name + "blend");
+
+  DEBUG(dbgs() << "    blend: " << *V << "\n");
   return V;
 }
 

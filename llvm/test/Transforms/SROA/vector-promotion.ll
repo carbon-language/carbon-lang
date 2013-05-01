@@ -224,26 +224,26 @@ entry:
   %a.cast0 = bitcast i32* %a.gep0 to <2 x i32>*
   store <2 x i32> <i32 0, i32 0>, <2 x i32>* %a.cast0
 ; CHECK-NOT: store
-; CHECK:      %[[insert1:.*]] = shufflevector <4 x i32> <i32 0, i32 0, i32 undef, i32 undef>, <4 x i32> undef, <4 x i32> <i32 0, i32 1, {{.*}}>
+; CHECK:     select <4 x i1> <i1 true, i1 true, i1 false, i1 false> 
 
   %a.gep1 = getelementptr <4 x i32>* %a, i32 0, i32 1
   %a.cast1 = bitcast i32* %a.gep1 to <2 x i32>*
   store <2 x i32> <i32 1, i32 1>, <2 x i32>* %a.cast1
-; CHECK-NEXT: %[[insert2:.*]] = shufflevector <4 x i32> <i32 undef, i32 1, i32 1, i32 undef>, <4 x i32> %[[insert1]], <4 x i32> <i32 4, i32 1, i32 2, {{.*}}>
+; CHECK-NEXT: select <4 x i1> <i1 false, i1 true, i1 true, i1 false>
 
   %a.gep2 = getelementptr <4 x i32>* %a, i32 0, i32 2
   %a.cast2 = bitcast i32* %a.gep2 to <2 x i32>*
   store <2 x i32> <i32 2, i32 2>, <2 x i32>* %a.cast2
-; CHECK-NEXT: %[[insert3:.*]] = shufflevector <4 x i32> <i32 undef, i32 undef, i32 2, i32 2>, <4 x i32> %[[insert2]], <4 x i32> <i32 4, i32 5, i32 2, i32 3>
+; CHECK-NEXT: select <4 x i1> <i1 false, i1 false, i1 true, i1 true>
 
   %a.gep3 = getelementptr <4 x i32>* %a, i32 0, i32 3
   store i32 3, i32* %a.gep3
-; CHECK-NEXT: %[[insert4:.*]] = insertelement <4 x i32> %[[insert3]], i32 3, i32 3
+; CHECK-NEXT: insertelement <4 x i32>
 
   %ret = load <4 x i32>* %a
 
   ret <4 x i32> %ret
-; CHECK-NEXT: ret <4 x i32> %[[insert4]]
+; CHECK-NEXT: ret <4 x i32> 
 }
 
 define <4 x i32> @test_subvec_load() {
@@ -291,27 +291,27 @@ entry:
   %a.cast0 = bitcast float* %a.gep0 to i8*
   call void @llvm.memset.p0i8.i32(i8* %a.cast0, i8 0, i32 8, i32 0, i1 false)
 ; CHECK-NOT: store
-; CHECK:      %[[insert1:.*]] = shufflevector <4 x float> <float 0.000000e+00, float 0.000000e+00, float undef, float undef>, <4 x float> undef, <4 x i32> <i32 0, i32 1, {{.*}}>
+; CHECK: select <4 x i1> <i1 true, i1 true, i1 false, i1 false>
 
   %a.gep1 = getelementptr <4 x float>* %a, i32 0, i32 1
   %a.cast1 = bitcast float* %a.gep1 to i8*
   call void @llvm.memset.p0i8.i32(i8* %a.cast1, i8 1, i32 8, i32 0, i1 false)
-; CHECK-NEXT: %[[insert2:.*]] = shufflevector <4 x float> <float undef, float 0x3820202020000000, float 0x3820202020000000, float undef>, <4 x float> %[[insert1]], <4 x i32> <i32 4, i32 1, i32 2, {{.*}}>
+; CHECK-NEXT: select <4 x i1> <i1 false, i1 true, i1 true, i1 false>
 
   %a.gep2 = getelementptr <4 x float>* %a, i32 0, i32 2
   %a.cast2 = bitcast float* %a.gep2 to i8*
   call void @llvm.memset.p0i8.i32(i8* %a.cast2, i8 3, i32 8, i32 0, i1 false)
-; CHECK-NEXT: %[[insert3:.*]] = shufflevector <4 x float> <float undef, float undef, float 0x3860606060000000, float 0x3860606060000000>, <4 x float> %[[insert2]], <4 x i32> <i32 4, i32 5, i32 2, i32 3>
+; CHECK-NEXT: select <4 x i1> <i1 false, i1 false, i1 true, i1 true>
 
   %a.gep3 = getelementptr <4 x float>* %a, i32 0, i32 3
   %a.cast3 = bitcast float* %a.gep3 to i8*
   call void @llvm.memset.p0i8.i32(i8* %a.cast3, i8 7, i32 4, i32 0, i1 false)
-; CHECK-NEXT: %[[insert4:.*]] = insertelement <4 x float> %[[insert3]], float 0x38E0E0E0E0000000, i32 3
+; CHECK-NEXT: insertelement <4 x float> 
 
   %ret = load <4 x float>* %a
 
   ret <4 x float> %ret
-; CHECK-NEXT: ret <4 x float> %[[insert4]]
+; CHECK-NEXT: ret <4 x float> 
 }
 
 define <4 x float> @test_subvec_memcpy(i8* %x, i8* %y, i8* %z, i8* %f, i8* %out) {
@@ -326,7 +326,7 @@ entry:
 ; CHECK:      %[[xptr:.*]] = bitcast i8* %x to <2 x float>*
 ; CHECK-NEXT: %[[x:.*]] = load <2 x float>* %[[xptr]]
 ; CHECK-NEXT: %[[expand_x:.*]] = shufflevector <2 x float> %[[x]], <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
-; CHECK-NEXT: %[[insert_x:.*]] = shufflevector <4 x float> %[[expand_x]], <4 x float> undef, <4 x i32> <i32 0, i32 1, {{.*}}>
+; CHECK-NEXT: select <4 x i1> <i1 true, i1 true, i1 false, i1 false>  
 
   %a.gep1 = getelementptr <4 x float>* %a, i32 0, i32 1
   %a.cast1 = bitcast float* %a.gep1 to i8*
@@ -334,7 +334,7 @@ entry:
 ; CHECK-NEXT: %[[yptr:.*]] = bitcast i8* %y to <2 x float>*
 ; CHECK-NEXT: %[[y:.*]] = load <2 x float>* %[[yptr]]
 ; CHECK-NEXT: %[[expand_y:.*]] = shufflevector <2 x float> %[[y]], <2 x float> undef, <4 x i32> <i32 undef, i32 0, i32 1, i32 undef>
-; CHECK-NEXT: %[[insert_y:.*]] = shufflevector <4 x float> %[[expand_y]], <4 x float> %[[insert_x]], <4 x i32> <i32 4, i32 1, i32 2, {{.*}}>
+; CHECK-NEXT: select <4 x i1> <i1 false, i1 true, i1 true, i1 false>
 
   %a.gep2 = getelementptr <4 x float>* %a, i32 0, i32 2
   %a.cast2 = bitcast float* %a.gep2 to i8*
@@ -342,14 +342,14 @@ entry:
 ; CHECK-NEXT: %[[zptr:.*]] = bitcast i8* %z to <2 x float>*
 ; CHECK-NEXT: %[[z:.*]] = load <2 x float>* %[[zptr]]
 ; CHECK-NEXT: %[[expand_z:.*]] = shufflevector <2 x float> %[[z]], <2 x float> undef, <4 x i32> <i32 undef, i32 undef, i32 0, i32 1>
-; CHECK-NEXT: %[[insert_z:.*]] = shufflevector <4 x float> %[[expand_z]], <4 x float> %[[insert_y]], <4 x i32> <i32 4, i32 5, i32 2, i32 3>
+; CHECK-NEXT: select <4 x i1> <i1 false, i1 false, i1 true, i1 true>
 
   %a.gep3 = getelementptr <4 x float>* %a, i32 0, i32 3
   %a.cast3 = bitcast float* %a.gep3 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %a.cast3, i8* %f, i32 4, i32 0, i1 false)
 ; CHECK-NEXT: %[[fptr:.*]] = bitcast i8* %f to float*
 ; CHECK-NEXT: %[[f:.*]] = load float* %[[fptr]]
-; CHECK-NEXT: %[[insert_f:.*]] = insertelement <4 x float> %[[insert_z]], float %[[f]], i32 3
+; CHECK-NEXT: %[[insert_f:.*]] = insertelement <4 x float> 
 
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %out, i8* %a.cast2, i32 8, i32 0, i1 false)
 ; CHECK-NEXT: %[[outptr:.*]] = bitcast i8* %out to <2 x float>*
