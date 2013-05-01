@@ -66,12 +66,14 @@ TEST_F(MCJITCAPITest, simple_function) {
   LLVMMCJITCompilerOptions options;
   memset(&options, 0, sizeof(options));
   options.OptLevel = 2;
-  options.NoFramePointerElim = false; // Just ensure that this field still exists.
+  
+  // Just ensure that this field still exists.
+  options.NoFramePointerElim = false;
   
   LLVMExecutionEngineRef engine;
   ASSERT_EQ(
-    0, LLVMCreateMCJITCompilerForModule(&engine, module, &options, sizeof(options),
-                                        &error));
+    0, LLVMCreateMCJITCompilerForModule(&engine, module, &options,
+                                        sizeof(options), &error));
   
   LLVMPassManagerRef pass = LLVMCreatePassManager();
   LLVMAddTargetData(LLVMGetExecutionEngineTargetData(engine), pass);
