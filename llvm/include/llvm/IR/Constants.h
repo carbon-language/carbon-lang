@@ -26,6 +26,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/OperandTraits.h"
+#include "llvm/IR/DerivedTypes.h"
 
 namespace llvm {
 
@@ -138,7 +139,7 @@ public:
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
   inline IntegerType *getType() const {
-    return reinterpret_cast<IntegerType*>(Value::getType());
+    return cast<IntegerType>(Value::getType());
   }
 
   /// This static method returns true if the type Ty is big enough to
@@ -354,7 +355,7 @@ public:
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
   inline ArrayType *getType() const {
-    return reinterpret_cast<ArrayType*>(Value::getType());
+    return cast<ArrayType>(Value::getType());
   }
 
   virtual void destroyConstant();
@@ -412,7 +413,7 @@ public:
   /// getType() specialization - Reduce amount of casting...
   ///
   inline StructType *getType() const {
-    return reinterpret_cast<StructType*>(Value::getType());
+    return cast<StructType>(Value::getType());
   }
 
   virtual void destroyConstant();
@@ -455,7 +456,7 @@ public:
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
   inline VectorType *getType() const {
-    return reinterpret_cast<VectorType*>(Value::getType());
+    return cast<VectorType>(Value::getType());
   }
 
   /// getSplatValue - If this is a splat constant, meaning that all of the
@@ -486,7 +487,7 @@ class ConstantPointerNull : public Constant {
   ConstantPointerNull(const ConstantPointerNull &) LLVM_DELETED_FUNCTION;
 protected:
   explicit ConstantPointerNull(PointerType *T)
-    : Constant(reinterpret_cast<Type*>(T),
+    : Constant(T,
                Value::ConstantPointerNullVal, 0, 0) {}
 
 protected:
@@ -504,7 +505,7 @@ public:
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
   inline PointerType *getType() const {
-    return reinterpret_cast<PointerType*>(Value::getType());
+    return cast<PointerType>(Value::getType());
   }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -580,7 +581,7 @@ public:
   /// SequentialType, which reduces the amount of casting needed in parts of the
   /// compiler.
   inline SequentialType *getType() const {
-    return reinterpret_cast<SequentialType*>(Value::getType());
+    return cast<SequentialType>(Value::getType());
   }
 
   /// getElementType - Return the element type of the array/vector.
@@ -679,7 +680,7 @@ public:
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
   inline ArrayType *getType() const {
-    return reinterpret_cast<ArrayType*>(Value::getType());
+    return cast<ArrayType>(Value::getType());
   }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -732,7 +733,7 @@ public:
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
   inline VectorType *getType() const {
-    return reinterpret_cast<VectorType*>(Value::getType());
+    return cast<VectorType>(Value::getType());
   }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
