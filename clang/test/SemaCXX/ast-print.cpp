@@ -137,3 +137,14 @@ void test12() {
   ConstrWithCleanupsClass cwcExplicitArg(VirualDestrClass(56));
 }
 
+// CHECK: void test13() {
+// CHECK:   _Atomic(int) i;
+// CHECK:   __c11_atomic_init(&i, 0);
+// CHECK:   __c11_atomic_load(&i, 0);
+// CHECK: }
+void test13() {
+  _Atomic(int) i;
+  __c11_atomic_init(&i, 0);
+  __c11_atomic_load(&i, 0);
+}
+

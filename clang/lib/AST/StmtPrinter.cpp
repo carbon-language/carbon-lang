@@ -1113,24 +1113,25 @@ void StmtPrinter::VisitAtomicExpr(AtomicExpr *Node) {
 
   // AtomicExpr stores its subexpressions in a permuted order.
   PrintExpr(Node->getPtr());
-  OS << ", ";
   if (Node->getOp() != AtomicExpr::AO__c11_atomic_load &&
       Node->getOp() != AtomicExpr::AO__atomic_load_n) {
-    PrintExpr(Node->getVal1());
     OS << ", ";
+    PrintExpr(Node->getVal1());
   }
   if (Node->getOp() == AtomicExpr::AO__atomic_exchange ||
       Node->isCmpXChg()) {
-    PrintExpr(Node->getVal2());
     OS << ", ";
+    PrintExpr(Node->getVal2());
   }
   if (Node->getOp() == AtomicExpr::AO__atomic_compare_exchange ||
       Node->getOp() == AtomicExpr::AO__atomic_compare_exchange_n) {
-    PrintExpr(Node->getWeak());
     OS << ", ";
+    PrintExpr(Node->getWeak());
   }
-  if (Node->getOp() != AtomicExpr::AO__c11_atomic_init)
+  if (Node->getOp() != AtomicExpr::AO__c11_atomic_init) {
+    OS << ", ";
     PrintExpr(Node->getOrder());
+  }
   if (Node->isCmpXChg()) {
     OS << ", ";
     PrintExpr(Node->getOrderFail());
