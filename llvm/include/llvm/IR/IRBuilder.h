@@ -23,6 +23,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/ConstantFolder.h"
 
 namespace llvm {
@@ -1395,6 +1396,9 @@ public:
     return CreateShuffleVector(V, Undef, Zeros, Name + ".splat");
   }
 };
+
+// Create wrappers for C Binding types (see CBindingWrapping.h).
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(IRBuilder<>, LLVMBuilderRef)
 
 }
 

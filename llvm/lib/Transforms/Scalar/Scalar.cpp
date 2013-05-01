@@ -21,7 +21,6 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/PassManager.h"
-#include "llvm/Wrap.h"
 
 using namespace llvm;
 

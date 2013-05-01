@@ -20,6 +20,7 @@
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Metadata.h"
+#include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -584,6 +585,16 @@ inline raw_ostream &operator<<(raw_ostream &O, const Module &M) {
   return O;
 }
 
+// Create wrappers for C Binding types (see CBindingWrapping.h).
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Module, LLVMModuleRef)
+
+/* LLVMModuleProviderRef exists for historical reasons, but now just holds a
+ * Module.
+ */
+inline Module *unwrap(LLVMModuleProviderRef MP) {
+  return reinterpret_cast<Module*>(MP);
+}
+  
 } // End llvm namespace
 
 #endif

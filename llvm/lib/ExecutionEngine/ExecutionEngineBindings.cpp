@@ -15,13 +15,15 @@
 #include "llvm-c/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cstring>
 
 using namespace llvm;
 
 // Wrapping the C bindings types.
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(GenericValue,       LLVMGenericValueRef  )
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(GenericValue, LLVMGenericValueRef)
 
 inline DataLayout *unwrap(LLVMTargetDataRef P) {
   return reinterpret_cast<DataLayout*>(P);

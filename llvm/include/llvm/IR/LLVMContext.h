@@ -15,7 +15,9 @@
 #ifndef LLVM_IR_LLVMCONTEXT_H
 #define LLVM_IR_LLVMCONTEXT_H
 
+#include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm-c/Core.h"
 
 namespace llvm {
 
@@ -108,6 +110,19 @@ private:
 /// getGlobalContext - Returns a global context.  This is for LLVM clients that
 /// only care about operating on a single thread.
 extern LLVMContext &getGlobalContext();
+
+// Create wrappers for C Binding types (see CBindingWrapping.h).
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LLVMContext, LLVMContextRef)
+
+/* Specialized opaque context conversions.
+ */
+inline LLVMContext **unwrap(LLVMContextRef* Tys) {
+  return reinterpret_cast<LLVMContext**>(Tys);
+}
+
+inline LLVMContextRef *wrap(const LLVMContext **Tys) {
+  return reinterpret_cast<LLVMContextRef*>(const_cast<LLVMContext**>(Tys));
+}
 
 }
 

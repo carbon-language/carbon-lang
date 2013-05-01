@@ -26,7 +26,6 @@
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Wrap.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -634,7 +633,8 @@ public:
   ExecutionEngine *create(TargetMachine *TM);
 };
 
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ExecutionEngine,    LLVMExecutionEngineRef)
+// Create wrappers for C Binding types (see CBindingWrapping.h).
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ExecutionEngine, LLVMExecutionEngineRef)
 
 } // End llvm namespace
 

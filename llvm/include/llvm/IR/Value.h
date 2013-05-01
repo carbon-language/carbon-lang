@@ -16,7 +16,9 @@
 
 #include "llvm/IR/Use.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm-c/Core.h"
 
 namespace llvm {
 
@@ -405,6 +407,29 @@ public:
   }
   enum { NumLowBitsAvailable = 2 };
 };
+
+// Create wrappers for C Binding types (see CBindingWrapping.h).
+DEFINE_ISA_CONVERSION_FUNCTIONS(Value, LLVMValueRef)
+
+/* Specialized opaque value conversions.
+ */ 
+inline Value **unwrap(LLVMValueRef *Vals) {
+  return reinterpret_cast<Value**>(Vals);
+}
+
+template<typename T>
+inline T **unwrap(LLVMValueRef *Vals, unsigned Length) {
+#ifdef DEBUG
+  for (LLVMValueRef *I = Vals, *E = Vals + Length; I != E; ++I)
+    cast<T>(*I);
+#endif
+  (void)Length;
+  return reinterpret_cast<T**>(Vals);
+}
+
+inline LLVMValueRef *wrap(const Value **Vals) {
+  return reinterpret_cast<LLVMValueRef*>(const_cast<Value**>(Vals));
+}
 
 } // End llvm namespace
 

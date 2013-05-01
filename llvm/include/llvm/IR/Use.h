@@ -26,7 +26,9 @@
 #define LLVM_IR_USE_H
 
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm-c/Core.h"
 #include <cstddef>
 #include <iterator>
 
@@ -213,6 +215,9 @@ public:
   ///
   unsigned getOperandNo() const;
 };
+
+// Create wrappers for C Binding types (see CBindingWrapping.h).
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Use, LLVMUseRef)
 
 } // End llvm namespace
 

@@ -18,6 +18,7 @@
 #define LLVM_PASSMANAGER_H
 
 #include "llvm/Pass.h"
+#include "llvm/Support/CBindingWrapping.h"
 
 namespace llvm {
 
@@ -97,6 +98,9 @@ private:
   FunctionPassManagerImpl *FPM;
   Module *M;
 };
+
+// Create wrappers for C Binding types (see CBindingWrapping.h).
+DEFINE_STDCXX_CONVERSION_FUNCTIONS(PassManagerBase, LLVMPassManagerRef)
 
 } // End llvm namespace
 

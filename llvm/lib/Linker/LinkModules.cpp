@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Linker.h"
-#include "llvm/Wrap.h"
 #include "llvm-c/Linker.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Optional.h"

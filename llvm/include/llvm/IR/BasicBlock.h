@@ -18,6 +18,7 @@
 #include "llvm/ADT/ilist.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/SymbolTableListTraits.h"
+#include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -297,6 +298,9 @@ private:
     Value::setValueSubclassData(D);
   }
 };
+
+// Create wrappers for C Binding types (see CBindingWrapping.h).
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(BasicBlock, LLVMBasicBlockRef)
 
 } // End llvm namespace
 

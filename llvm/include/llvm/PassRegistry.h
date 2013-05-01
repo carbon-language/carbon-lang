@@ -18,6 +18,8 @@
 #define LLVM_PASSREGISTRY_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/CBindingWrapping.h"
+#include "llvm-c/Core.h"
 
 namespace llvm {
 
@@ -78,6 +80,9 @@ public:
   /// it no longer receives passRegistered() callbacks.
   void removeRegistrationListener(PassRegistrationListener *L);
 };
+
+// Create wrappers for C Binding types (see CBindingWrapping.h).
+DEFINE_STDCXX_CONVERSION_FUNCTIONS(PassRegistry, LLVMPassRegistryRef)
 
 }
 
