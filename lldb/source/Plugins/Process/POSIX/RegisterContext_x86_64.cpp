@@ -33,107 +33,6 @@ using namespace lldb;
   #define NT_X86_XSTATE 0x202
 #endif
 
-// Internal codes for all x86_64 registers.
-enum
-{
-    k_first_gpr,
-    gpr_rax = k_first_gpr,
-    gpr_rbx,
-    gpr_rcx,
-    gpr_rdx,
-    gpr_rdi,
-    gpr_rsi,
-    gpr_rbp,
-    gpr_rsp,
-    gpr_r8,
-    gpr_r9,
-    gpr_r10,
-    gpr_r11,
-    gpr_r12,
-    gpr_r13,
-    gpr_r14,
-    gpr_r15,
-    gpr_rip,
-    gpr_rflags,
-    gpr_cs,
-    gpr_fs,
-    gpr_gs,
-    gpr_ss,
-    gpr_ds,
-    gpr_es,
-    gpr_eax,
-    gpr_ebx,
-    gpr_ecx,
-    gpr_edx,
-    gpr_edi,
-    gpr_esi,
-    gpr_ebp,
-    gpr_esp,
-    gpr_eip,
-    gpr_eflags,
-    k_last_gpr = gpr_eflags, // eRegisterKindLLDB == 33
-
-    k_first_fpr,
-    fpu_fcw = k_first_fpr,
-    fpu_fsw,
-    fpu_ftw,
-    fpu_fop,
-    fpu_ip,
-    fpu_cs,
-    fpu_dp,
-    fpu_ds,
-    fpu_mxcsr,
-    fpu_mxcsrmask,
-    fpu_stmm0,
-    fpu_stmm1,
-    fpu_stmm2,
-    fpu_stmm3,
-    fpu_stmm4,
-    fpu_stmm5,
-    fpu_stmm6,
-    fpu_stmm7,
-    fpu_xmm0,
-    fpu_xmm1,
-    fpu_xmm2,
-    fpu_xmm3,
-    fpu_xmm4,
-    fpu_xmm5,
-    fpu_xmm6,
-    fpu_xmm7,
-    fpu_xmm8,
-    fpu_xmm9,
-    fpu_xmm10,
-    fpu_xmm11,
-    fpu_xmm12,
-    fpu_xmm13,
-    fpu_xmm14,
-    fpu_xmm15,
-    k_last_fpr = fpu_xmm15,
-    k_first_avx,
-    fpu_ymm0 = k_first_avx,
-    fpu_ymm1,
-    fpu_ymm2,
-    fpu_ymm3,
-    fpu_ymm4,
-    fpu_ymm5,
-    fpu_ymm6,
-    fpu_ymm7,
-    fpu_ymm8,
-    fpu_ymm9,
-    fpu_ymm10,
-    fpu_ymm11,
-    fpu_ymm12,
-    fpu_ymm13,
-    fpu_ymm14,
-    fpu_ymm15,
-    k_last_avx = fpu_ymm15,
-
-    k_num_registers,
-    k_num_gpr_registers = k_last_gpr - k_first_gpr + 1,
-    k_num_fpr_registers = k_last_fpr - k_first_fpr + 1,
-    k_num_avx_registers = k_last_avx - k_first_avx + 1
-};
-
 enum
 {
     gcc_dwarf_gpr_rax = 0,
@@ -386,11 +285,6 @@ g_reg_sets[k_num_register_sets] =
     { "Advanced Vector Extensions", "avx", k_num_avx_registers, g_avx_regnums }
 };
 
-// Computes the offset of the given GPR in the user data area.
-#define GPR_OFFSET(regname) \
-    (offsetof(RegisterContext_x86_64::UserArea, regs) + \
-     offsetof(GPR, regname))
-
 // Computes the offset of the given FPR in the user data area.
 #define FPR_OFFSET(regname) \
     (offsetof(RegisterContext_x86_64::UserArea, i387) + \
@@ -402,9 +296,6 @@ g_reg_sets[k_num_register_sets] =
     (offsetof(RegisterContext_x86_64::UserArea, i387) + \
      offsetof(RegisterContext_x86_64::FPR, ymm_set) + \
      offsetof(RegisterContext_x86_64::YMM, regname))
-
-// Number of bytes needed to represent a GPR.
-#define GPR_SIZE(reg) sizeof(((GPR*)NULL)->reg)
 
 // Number of bytes needed to represent a i386 GPR
 #define GPR_i386_SIZE(reg) sizeof(((RegisterContext_i386::GPR*)NULL)->reg)
@@ -421,16 +312,17 @@ g_reg_sets[k_num_register_sets] =
 // Number of bytes needed to represent a YMM register.
 #define YMM_SIZE sizeof(RegisterContext_x86_64::YMMReg)
 
-#define DEFINE_GPR(reg, alt, kind1, kind2, kind3, kind4)        \
-    { #reg, alt, GPR_SIZE(reg), GPR_OFFSET(reg), eEncodingUint, \
+// Note that the size and offset will be updated by platform-specific classes.
+#define DEFINE_GPR(reg, alt, kind1, kind2, kind3, kind4)           \
+    { #reg, alt, 0, 0, eEncodingUint,                              \
       eFormatHex, { kind1, kind2, kind3, kind4, gpr_##reg }, NULL, NULL }
 
 #define DEFINE_GPR_i386(reg_i386, reg_x86_64, alt, kind1, kind2, kind3, kind4) \
-    { #reg_i386, alt, GPR_i386_SIZE(reg_i386), GPR_OFFSET(reg_x86_64), eEncodingUint, \
+    { #reg_i386, alt, GPR_i386_SIZE(reg_i386), 0, eEncodingUint,   \
       eFormatHex, { kind1, kind2, kind3, kind4, gpr_##reg_i386 }, NULL, NULL }
 
-#define DEFINE_FPR(reg, kind1, kind2, kind3, kind4)              \
-    { #reg, NULL, FPR_SIZE(reg), FPR_OFFSET(reg), eEncodingUint, \
+#define DEFINE_FPR(reg, kind1, kind2, kind3, kind4)                \
+    { #reg, NULL, FPR_SIZE(reg), FPR_OFFSET(reg), eEncodingUint,   \
       eFormatHex, { kind1, kind2, kind3, kind4, fpu_##reg }, NULL, NULL }
 
 #define DEFINE_FP(reg, i)                                          \
@@ -445,13 +337,13 @@ g_reg_sets[k_num_register_sets] =
       { gcc_dwarf_fpu_##reg##i, gcc_dwarf_fpu_##reg##i,            \
         LLDB_INVALID_REGNUM, gdb_fpu_##reg##i, fpu_##reg##i }, NULL, NULL }
 
-#define DEFINE_YMM(reg, i)                                           \
+#define DEFINE_YMM(reg, i)                                         \
     { #reg#i, NULL, YMM_SIZE, YMM_OFFSET(reg[i]), eEncodingVector, \
-      eFormatVectorOfUInt8,                                          \
-      { gcc_dwarf_fpu_##reg##i, gcc_dwarf_fpu_##reg##i,              \
+      eFormatVectorOfUInt8,                                        \
+      { gcc_dwarf_fpu_##reg##i, gcc_dwarf_fpu_##reg##i,            \
         LLDB_INVALID_REGNUM, gdb_fpu_##reg##i, fpu_##reg##i }, NULL, NULL }
 
-#define REG_CONTEXT_SIZE (sizeof(GPR) + sizeof(RegisterContext_x86_64::FPR))
+#define REG_CONTEXT_SIZE (GetGPRSize() + sizeof(RegisterContext_x86_64::FPR))
 
 static RegisterInfo
 g_register_infos[k_num_registers] =
@@ -553,17 +445,7 @@ g_register_infos[k_num_registers] =
     DEFINE_YMM(ymm, 15)
 };
 
-static unsigned GetRegOffset(unsigned reg)
-{
-    assert(reg < k_num_registers && "Invalid register number.");
-    return g_register_infos[reg].byte_offset;
-}
-
-static unsigned GetRegSize(unsigned reg)
-{
-    assert(reg < k_num_registers && "Invalid register number.");
-    return g_register_infos[reg].byte_size;
-}
+RegisterInfo *RegisterContext_x86_64::m_register_infos = g_register_infos;
 
 static bool IsGPR(unsigned reg)
 {
@@ -629,6 +511,20 @@ RegisterContext_x86_64::InvalidateAllRegisters()
 {
 }
 
+unsigned
+RegisterContext_x86_64::GetRegisterOffset(unsigned reg)
+{
+    assert(reg < k_num_registers && "Invalid register number.");
+    return GetRegisterInfo()[reg].byte_offset;
+}
+
+unsigned
+RegisterContext_x86_64::GetRegisterSize(unsigned reg)
+{
+    assert(reg < k_num_registers && "Invalid register number.");
+    return GetRegisterInfo()[reg].byte_size;
+}
+
 size_t
 RegisterContext_x86_64::GetRegisterCount()
 {
@@ -639,10 +535,16 @@ RegisterContext_x86_64::GetRegisterCount()
 }
 
 const RegisterInfo *
+RegisterContext_x86_64::GetRegisterInfo()
+{
+    return m_register_infos;
+}
+
+const RegisterInfo *
 RegisterContext_x86_64::GetRegisterInfoAtIndex(size_t reg)
 {
     if (reg < k_num_registers)
-        return &g_register_infos[reg];
+        return &GetRegisterInfo()[reg];
     else
         return NULL;
 }
@@ -673,7 +575,7 @@ RegisterContext_x86_64::GetRegisterIndexFromOffset(unsigned offset)
     unsigned reg;
     for (reg = 0; reg < k_num_registers; reg++)
     {
-        if (g_register_infos[reg].byte_offset == offset)
+        if (m_register_infos[reg].byte_offset == offset)
             break;
     }
     assert(reg < k_num_registers && "Invalid register offset.");
@@ -684,7 +586,7 @@ const char *
 RegisterContext_x86_64::GetRegisterName(unsigned reg)
 {
     assert(reg < k_num_registers && "Invalid register offset.");
-    return g_register_infos[reg].name;
+    return m_register_infos[reg].name;
 }
 
 lldb::ByteOrder
@@ -776,7 +678,7 @@ RegisterContext_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue
     }
     else {
         ProcessMonitor &monitor = GetMonitor();
-        return monitor.ReadRegisterValue(m_thread.GetID(), GetRegOffset(reg), GetRegSize(reg), value);
+        return monitor.ReadRegisterValue(m_thread.GetID(), GetRegisterOffset(reg), GetRegisterSize(reg), value);
     }
 
     if (reg_info->encoding == eEncodingVector) {
@@ -845,8 +747,8 @@ RegisterContext_x86_64::ReadAllRegisterValues(DataBufferSP &data_sp)
         success = dst != 0;
 
         if (success) {
-            ::memcpy (dst, &user.regs, sizeof(user.regs));
-            dst += sizeof(user.regs);
+            ::memcpy (dst, &user.regs, GetGPRSize());
+            dst += GetGPRSize();
         }
         if (user.fpr_type == eFXSAVE)
             ::memcpy (dst, &user.i387.xstate.fxsave, sizeof(user.i387.xstate.fxsave));
@@ -874,7 +776,7 @@ RegisterContext_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg_info
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
     if (IsGPR(reg)) {
         ProcessMonitor &monitor = GetMonitor();
-        return monitor.WriteRegisterValue(m_thread.GetID(), GetRegOffset(reg), value);
+        return monitor.WriteRegisterValue(m_thread.GetID(), GetRegisterOffset(reg), value);
     }
 
     if (IsFPR(reg, user.fpr_type)) {
@@ -942,10 +844,10 @@ RegisterContext_x86_64::WriteAllRegisterValues(const DataBufferSP &data_sp)
     {
         uint8_t *src = data_sp->GetBytes();
         if (src) {
-            ::memcpy (&user.regs, src, sizeof(user.regs));
+            ::memcpy (&user.regs, src, GetGPRSize());
 
             if (WriteGPR()) {
-                src += sizeof(user.regs);
+                src += GetGPRSize();
                 if (user.fpr_type == eFXSAVE)
                     ::memcpy (&user.i387.xstate.fxsave, src, sizeof(user.i387.xstate.fxsave));
                 if (user.fpr_type == eXSAVE)
@@ -1310,7 +1212,7 @@ bool
 RegisterContext_x86_64::ReadGPR()
 {
      ProcessMonitor &monitor = GetMonitor();
-     return monitor.ReadGPR(m_thread.GetID(), &user.regs, sizeof(user.regs));
+     return monitor.ReadGPR(m_thread.GetID(), &user.regs, GetGPRSize());
 }
 
 bool
@@ -1329,7 +1231,7 @@ bool
 RegisterContext_x86_64::WriteGPR()
 {
     ProcessMonitor &monitor = GetMonitor();
-    return monitor.WriteGPR(m_thread.GetID(), &user.regs, sizeof(user.regs));
+    return monitor.WriteGPR(m_thread.GetID(), &user.regs, GetGPRSize());
 }
 
 bool

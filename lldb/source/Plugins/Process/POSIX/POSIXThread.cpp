@@ -28,6 +28,8 @@
 #include "RegisterContext_i386.h"
 #include "RegisterContext_x86_64.h"
 #include "RegisterContextPOSIX.h"
+#include "RegisterContextLinux_x86_64.h"
+#include "RegisterContextFreeBSD_x86_64.h"
 
 #include "UnwindLLDB.h"
 
@@ -97,7 +99,12 @@ POSIXThread::GetRegisterContext()
             break;
 
         case ArchSpec::eCore_x86_64_x86_64:
-            m_reg_context_sp.reset(new RegisterContext_x86_64(*this, 0));
+#ifdef __linux__
+            m_reg_context_sp.reset(new RegisterContextLinux_x86_64(*this, 0));
+#endif
+#ifdef __FreeBSD__
+            m_reg_context_sp.reset(new RegisterContextFreeBSD_x86_64(*this, 0));
+#endif
             break;
         }
     }

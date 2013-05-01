@@ -13,22 +13,115 @@
 #include "lldb/Core/Log.h"
 #include "RegisterContextPOSIX.h"
 
-#ifdef __FreeBSD__
-#include "RegisterContextFreeBSD_x86_64.h"
-#endif
-
-#ifdef __linux__
-#include "RegisterContextLinux_x86_64.h"
-#endif
-
 class ProcessMonitor;
+
+// Internal codes for all x86_64 registers.
+enum
+{
+    k_first_gpr,
+    gpr_rax = k_first_gpr,
+    gpr_rbx,
+    gpr_rcx,
+    gpr_rdx,
+    gpr_rdi,
+    gpr_rsi,
+    gpr_rbp,
+    gpr_rsp,
+    gpr_r8,
+    gpr_r9,
+    gpr_r10,
+    gpr_r11,
+    gpr_r12,
+    gpr_r13,
+    gpr_r14,
+    gpr_r15,
+    gpr_rip,
+    gpr_rflags,
+    gpr_cs,
+    gpr_fs,
+    gpr_gs,
+    gpr_ss,
+    gpr_ds,
+    gpr_es,
+    gpr_eax,
+    gpr_ebx,
+    gpr_ecx,
+    gpr_edx,
+    gpr_edi,
+    gpr_esi,
+    gpr_ebp,
+    gpr_esp,
+    gpr_eip,
+    gpr_eflags,
+    k_last_gpr = gpr_eflags, // eRegisterKindLLDB == 33
+
+    k_first_fpr,
+    fpu_fcw = k_first_fpr,
+    fpu_fsw,
+    fpu_ftw,
+    fpu_fop,
+    fpu_ip,
+    fpu_cs,
+    fpu_dp,
+    fpu_ds,
+    fpu_mxcsr,
+    fpu_mxcsrmask,
+    fpu_stmm0,
+    fpu_stmm1,
+    fpu_stmm2,
+    fpu_stmm3,
+    fpu_stmm4,
+    fpu_stmm5,
+    fpu_stmm6,
+    fpu_stmm7,
+    fpu_xmm0,
+    fpu_xmm1,
+    fpu_xmm2,
+    fpu_xmm3,
+    fpu_xmm4,
+    fpu_xmm5,
+    fpu_xmm6,
+    fpu_xmm7,
+    fpu_xmm8,
+    fpu_xmm9,
+    fpu_xmm10,
+    fpu_xmm11,
+    fpu_xmm12,
+    fpu_xmm13,
+    fpu_xmm14,
+    fpu_xmm15,
+    k_last_fpr = fpu_xmm15,
+    k_first_avx,
+    fpu_ymm0 = k_first_avx,
+    fpu_ymm1,
+    fpu_ymm2,
+    fpu_ymm3,
+    fpu_ymm4,
+    fpu_ymm5,
+    fpu_ymm6,
+    fpu_ymm7,
+    fpu_ymm8,
+    fpu_ymm9,
+    fpu_ymm10,
+    fpu_ymm11,
+    fpu_ymm12,
+    fpu_ymm13,
+    fpu_ymm14,
+    fpu_ymm15,
+    k_last_avx = fpu_ymm15,
+
+    k_num_registers,
+    k_num_gpr_registers = k_last_gpr - k_first_gpr + 1,
+    k_num_fpr_registers = k_last_fpr - k_first_fpr + 1,
+    k_num_avx_registers = k_last_avx - k_first_avx + 1
+};
 
 class RegisterContext_x86_64
   : public RegisterContextPOSIX
 {
 public:
     RegisterContext_x86_64 (lldb_private::Thread &thread,
-                                 uint32_t concrete_frame_idx);
+                            uint32_t concrete_frame_idx);
 
     ~RegisterContext_x86_64();
 
@@ -40,6 +133,15 @@ public:
 
     size_t
     GetRegisterCount();
+
+    virtual size_t
+    GetGPRSize() = 0;
+
+    virtual unsigned
+    GetRegisterSize(unsigned reg);
+
+    virtual unsigned
+    GetRegisterOffset(unsigned reg);
 
     const lldb_private::RegisterInfo *
     GetRegisterInfoAtIndex(size_t reg);
@@ -174,7 +276,7 @@ public:
 
     struct UserArea
     {
-        GPR      regs;          // General purpose registers.
+        uint64_t regs[k_last_gpr];// General purpose registers.
         FPRType  fpr_type;      // Determines the type of data stored by union FPR, if any.
         int32_t  pad0;
         FPR      i387;          // Floating point registers.
@@ -200,6 +302,12 @@ protected:
     // Determines if an extended register set is supported on the processor running the inferior process.
     virtual bool
     IsRegisterSetAvailable(size_t set_index);
+
+    virtual const lldb_private::RegisterInfo *
+    GetRegisterInfo();
+
+private:
+    static lldb_private::RegisterInfo *m_register_infos;
 
 private:
     UserArea user;
