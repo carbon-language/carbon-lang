@@ -150,6 +150,9 @@ MonitorChildProcessThreadFunction (void *arg)
     delete info;
 
     int status = -1;
+#if defined (__FreeBSD__)
+    #define __WALL 0
+#endif
     const int options = __WALL;
 
     while (1)
@@ -1392,7 +1395,7 @@ Host::GetNumberCPUS ()
     static uint32_t g_num_cores = UINT32_MAX;
     if (g_num_cores == UINT32_MAX)
     {
-#if defined(__APPLE__) or defined (__linux__)
+#if defined(__APPLE__) or defined (__linux__) or defined (__FreeBSD__)
 
         g_num_cores = ::sysconf(_SC_NPROCESSORS_ONLN);
         

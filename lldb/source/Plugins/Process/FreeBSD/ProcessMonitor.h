@@ -132,6 +132,14 @@ public:
     bool
     ReadFPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
+    /// Reads the specified register set into the specified buffer.
+    ///
+    /// This method is provided for use by RegisterContextFreeBSD derivatives.
+    /// FIXME: The FreeBSD implementation of this function should use tid in order
+    ///        to enable support for debugging threaded programs.
+    bool
+    ReadRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset);
+
     /// Writes all general purpose registers into the specified buffer.
     /// FIXME: The FreeBSD implementation of this function should use tid in order
     ///        to enable support for debugging threaded programs.
@@ -142,12 +150,20 @@ public:
     /// FIXME: The FreeBSD implementation of this function should use tid in order
     ///        to enable support for debugging threaded programs.
     bool
-    WriteFPR(lldb::tid_t tid, void *buf);
+    WriteFPR(lldb::tid_t tid, void *buf, size_t buf_size);
+
+    /// Writes the specified register set into the specified buffer.
+    ///
+    /// This method is provided for use by RegisterContextFreeBSD derivatives.
+    /// FIXME: The FreeBSD implementation of this function should use tid in order
+    ///        to enable support for debugging threaded programs.
+    bool
+    WriteRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset);
 
     /// Writes a siginfo_t structure corresponding to the given thread ID to the
     /// memory region pointed to by @p siginfo.
     bool
-    GetSignalInfo(lldb::tid_t tid, void *siginfo, int &errno);
+    GetSignalInfo(lldb::tid_t tid, void *siginfo, int &error_no);
 
     /// Writes the raw event message code (vis-a-vis PTRACE_GETEVENTMSG)
     /// corresponding to the given thread IDto the memory pointed to by @p

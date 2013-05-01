@@ -117,11 +117,11 @@ PtraceWrapper(int req, lldb::pid_t pid, void *addr, int data,
 // Wrapper for ptrace when logging is not required.
 // Sets errno to 0 prior to calling ptrace.
 extern long
-PtraceWrapper(__ptrace_request req, lldb::pid_t pid, void *addr, int data)
+PtraceWrapper(int req, lldb::pid_t pid, void *addr, int data)
 {
     long result = 0;
     errno = 0;
-    result = ptrace(req, pid, addr, data);
+    result = ptrace(req, pid, (caddr_t)addr, data);
     return result;
 }
 
@@ -980,7 +980,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
         goto FINISH;
 
     // Update the process thread list with this new thread.
-    inferior.reset(new POSIXThread(processSP, pid));
+    inferior.reset(new POSIXThread(*processSP, pid));
     process.GetThreadList().AddThread(inferior);
 
     // Let our process instance know the thread has stopped.
@@ -1066,7 +1066,7 @@ ProcessMonitor::Attach(AttachArgs *args)
     }
 
     // Update the process thread list with the attached thread.
-    inferior.reset(new POSIXThread(processSP, pid));
+    inferior.reset(new POSIXThread(*processSP, pid));
     tl.AddThread(inferior);
 
     // Let our process instance know the thread has stopped.
@@ -1455,6 +1455,19 @@ ProcessMonitor::WriteRegisterValue(lldb::tid_t tid, unsigned offset,
     DoOperation(&op);
     return result;
 }
+
+bool
+ProcessMonitor::ReadRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset)
+{
+    return false;
+}
+
+bool
+ProcessMonitor::WriteRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset)
+{
+    return false;
+}
+
 
 bool
 ProcessMonitor::ReadGPR(lldb::tid_t tid, void *buf, size_t buf_size)
