@@ -3215,14 +3215,12 @@ public:
 } // end anonymous namespace
 
 /// Evaluate an expression as an lvalue. This can be legitimately called on
-/// expressions which are not glvalues, in a few cases:
-///  * function designators in C,
-///  * "extern void" objects,
-///  * temporaries, if building with -Wno-address-of-temporary.
-static bool EvaluateLValue(const Expr* E, LValue& Result, EvalInfo &Info) {
-  assert((E->isGLValue() || E->getType()->isFunctionType() ||
-          E->getType()->isVoidType() || isa<CXXTemporaryObjectExpr>(E)) &&
-         "can't evaluate expression as an lvalue");
+/// expressions which are not glvalues, in two cases:
+///  * function designators in C, and
+///  * "extern void" objects
+static bool EvaluateLValue(const Expr *E, LValue &Result, EvalInfo &Info) {
+  assert(E->isGLValue() || E->getType()->isFunctionType() ||
+         E->getType()->isVoidType());
   return LValueExprEvaluator(Info, Result).Visit(E);
 }
 

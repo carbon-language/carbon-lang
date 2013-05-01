@@ -1480,3 +1480,13 @@ namespace ArrayEltInit {
   static_assert(b[0].p != &b[9].p, "");
   static_assert(b[9].p != &b[0].p, "");
 }
+
+namespace PR15884 {
+  struct S {};
+  constexpr S f() { return {}; }
+  constexpr S *p = &f();
+  // expected-error@-1 {{taking the address of a temporary}}
+  // expected-error@-2 {{constexpr variable 'p' must be initialized by a constant expression}}
+  // expected-note@-3 {{pointer to temporary is not a constant expression}}
+  // expected-note@-4 {{temporary created here}}
+}
