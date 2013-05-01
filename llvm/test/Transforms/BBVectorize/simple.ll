@@ -139,10 +139,11 @@ define <8 x i8> @test6(<8 x i8> %A1, <8 x i8> %A2, <8 x i8> %B1, <8 x i8> %B2) {
 ; CHECK: %Z1 = add <16 x i8> %Y1, %X1.v.i1
         %Q1 = shufflevector <8 x i8> %Z1, <8 x i8> %Z2, <8 x i32> <i32 15, i32 8, i32 6, i32 1, i32 13, i32 10, i32 4, i32 3>
         %Q2 = shufflevector <8 x i8> %Z2, <8 x i8> %Z2, <8 x i32> <i32 6, i32 7, i32 0, i32 1, i32 2, i32 4, i32 4, i32 1>
-        %R  = mul <8 x i8> %Q1, %Q2
-; CHECK:  %Q1.v.i1 = shufflevector <16 x i8> %Z1, <16 x i8> undef, <16 x i32> <i32 8, i32 undef, i32 10, i32 undef, i32 undef, i32 13, i32 undef, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-; CHECK:  %Q1.v.r1 = shufflevector <16 x i8> %Z1, <16 x i8> %Q1.v.i1, <8 x i32> <i32 23, i32 16, i32 6, i32 1, i32 21, i32 18, i32 4, i32 3>
-; CHECK:  %Q1.v.r2 = shufflevector <16 x i8> %Z1, <16 x i8> undef, <8 x i32> <i32 14, i32 15, i32 8, i32 9, i32 10, i32 12, i32 12, i32 9>
+; CHECK: %Q1.v.i1 = shufflevector <16 x i8> %Z1, <16 x i8> undef, <16 x i32> <i32 8, i32 undef, i32 10, i32 undef, i32 undef, i32 13, i32 undef, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+; CHECK: %Q1 = shufflevector <16 x i8> %Z1, <16 x i8> %Q1.v.i1, <16 x i32> <i32 23, i32 16, i32 6, i32 1, i32 21, i32 18, i32 4, i32 3, i32 14, i32 15, i32 8, i32 9, i32 10, i32 12, i32 12, i32 9>
+	%R  = mul <8 x i8> %Q1, %Q2
+; CHECK: %Q1.v.r1 = shufflevector <16 x i8> %Q1, <16 x i8> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+; CHECK: %Q1.v.r2 = shufflevector <16 x i8> %Q1, <16 x i8> undef, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 ; CHECK: %R = mul <8 x i8> %Q1.v.r1, %Q1.v.r2
 	ret <8 x i8> %R
 ; CHECK: ret <8 x i8> %R
