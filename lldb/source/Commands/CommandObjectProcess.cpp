@@ -75,8 +75,7 @@ protected:
                 {
                     if (process->GetShouldDetach())
                     {
-                        bool keep_stopped = false;
-                        Error detach_error (process->Detach(keep_stopped));
+                        Error detach_error (process->Detach());
                         if (detach_error.Success())
                         {
                             result.SetStatus (eReturnStatusSuccessFinishResult);
@@ -904,68 +903,6 @@ CommandObjectProcessContinue::CommandOptions::g_option_table[] =
 class CommandObjectProcessDetach : public CommandObjectParsed
 {
 public:
-    class CommandOptions : public Options
-    {
-    public:
-        
-        CommandOptions (CommandInterpreter &interpreter) :
-            Options (interpreter)
-        {
-            OptionParsingStarting ();
-        }
-
-        ~CommandOptions ()
-        {
-        }
-
-        Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
-        {
-            Error error;
-            const int short_option = m_getopt_table[option_idx].val;
-            
-            switch (short_option)
-            {
-                case 's':
-                    bool tmp_result;
-                    bool success;
-                    tmp_result = Args::StringToBoolean(option_arg, false, &success);
-                    if (!success)
-                        error.SetErrorStringWithFormat("invalid boolean option: \"%s\"", option_arg);
-                    else
-                    {
-                        if (tmp_result)
-                            m_keep_stopped = eLazyBoolYes;
-                        else
-                            m_keep_stopped = eLazyBoolNo;
-                    }
-                    break;
-                default:
-                    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
-                    break;
-            }
-            return error;
-        }
-
-        void
-        OptionParsingStarting ()
-        {
-            m_keep_stopped = eLazyBoolCalculate;
-        }
-
-        const OptionDefinition*
-        GetDefinitions ()
-        {
-            return g_option_table;
-        }
-
-        // Options table: Required for subclasses of Options.
-
-        static OptionDefinition g_option_table[];
-
-        // Instance variables to hold the values for command options.
-        LazyBool m_keep_stopped;
-    };
 
     CommandObjectProcessDetach (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
@@ -974,8 +911,7 @@ public:
                              "process detach",
                              eFlagRequiresProcess      |
                              eFlagTryTargetAPILock     |
-                             eFlagProcessMustBeLaunched),
-        m_options(interpreter)
+                             eFlagProcessMustBeLaunched)
     {
     }
 
@@ -983,35 +919,13 @@ public:
     {
     }
 
-    Options *
-    GetOptions ()
-    {
-        return &m_options;
-    }
-
-
 protected:
     bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
         Process *process = m_exe_ctx.GetProcessPtr();
         result.AppendMessageWithFormat ("Detaching from process %" PRIu64 "\n", process->GetID());
-        // FIXME: This will be a Command Option:
-        bool keep_stopped;
-        if (m_options.m_keep_stopped == eLazyBoolCalculate)
-        {
-            // Check the process default:
-            if (process->GetDetachKeepsStopped())
-                keep_stopped = true;
-            else
-                keep_stopped = false;
-        }
-        else if (m_options.m_keep_stopped == eLazyBoolYes)
-            keep_stopped = true;
-        else
-            keep_stopped = false;
-        
-        Error error (process->Detach(keep_stopped));
+        Error error (process->Detach());
         if (error.Success())
         {
             result.SetStatus (eReturnStatusSuccessFinishResult);
@@ -1024,15 +938,6 @@ protected:
         }
         return result.Succeeded();
     }
-
-    CommandOptions m_options;
-};
-
-OptionDefinition
-CommandObjectProcessDetach::CommandOptions::g_option_table[] =
-{
-{ LLDB_OPT_SET_1, false, "keep-stopped",   's', required_argument, NULL, 0, eArgTypeBoolean, "Whether or not the process should be kept stopped on detach (if possible)." },
-{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------

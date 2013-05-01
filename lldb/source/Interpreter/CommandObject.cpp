@@ -295,6 +295,7 @@ CommandObject::CheckRequirements (CommandReturnObject &result)
         else
         {
             StateType state = process->GetState();
+            
             switch (state)
             {
             case eStateInvalid:

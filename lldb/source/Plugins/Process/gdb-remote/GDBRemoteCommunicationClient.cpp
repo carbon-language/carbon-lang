@@ -52,7 +52,6 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_supports_alloc_dealloc_memory (eLazyBoolCalculate),
     m_supports_memory_region_info  (eLazyBoolCalculate),
     m_supports_watchpoint_support_info  (eLazyBoolCalculate),
-    m_supports_detach_stay_stopped (eLazyBoolCalculate),
     m_watchpoints_trigger_after_instruction(eLazyBoolCalculate),
     m_attach_or_wait_reply(eLazyBoolCalculate),
     m_prepare_for_reg_writing_reply (eLazyBoolCalculate),
@@ -1397,48 +1396,10 @@ GDBRemoteCommunicationClient::DeallocateMemory (addr_t addr)
     return false;
 }
 
-Error
-GDBRemoteCommunicationClient::Detach (bool keep_stopped)
+bool
+GDBRemoteCommunicationClient::Detach ()
 {
-    Error error;
-    
-    if (keep_stopped)
-    {
-        if (m_supports_detach_stay_stopped == eLazyBoolCalculate)
-        {
-            char packet[64];
-            const int packet_len = ::snprintf(packet, sizeof(packet), "qSupportsDetachAndStayStopped:");
-            assert (packet_len < sizeof(packet));
-            StringExtractorGDBRemote response;
-            if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
-            {
-                m_supports_detach_stay_stopped = eLazyBoolYes;        
-            }
-            else
-            {
-                m_supports_detach_stay_stopped = eLazyBoolNo;
-            }
-        }
-
-        if (m_supports_detach_stay_stopped == eLazyBoolNo)
-        {
-            error.SetErrorString("Stays stopped not supported by this target.");
-            return error;
-        }
-        else
-        {
-            size_t num_sent = SendPacket ("D1", 2);
-            if (num_sent == 0)
-                error.SetErrorString ("Sending extended disconnect packet failed.");
-        }
-    }
-    else
-    {
-        size_t num_sent = SendPacket ("D", 1);
-        if (num_sent == 0)
-            error.SetErrorString ("Sending disconnect packet failed.");
-    }
-    return error;
+    return SendPacket ("D", 1) > 0;
 }
 
 Error

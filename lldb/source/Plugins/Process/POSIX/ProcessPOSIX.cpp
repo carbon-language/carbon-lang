@@ -283,16 +283,9 @@ ProcessPOSIX::DoHalt(bool &caused_stop)
 }
 
 Error
-ProcessPOSIX::DoDetach(bool keep_stopped)
+ProcessPOSIX::DoDetach()
 {
     Error error;
-    if (keep_stopped)
-    {
-        // FIXME: If you want to implement keep_stopped on Linux,
-        // this would be the place to do it.
-        error.SetErrorString("Detaching with keep_stopped true is not currently supported on Linux.");
-        return error;
-    }
 
     error = m_monitor->Detach();
     if (error.Success())

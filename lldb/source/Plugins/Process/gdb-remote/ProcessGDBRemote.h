@@ -141,7 +141,7 @@ public:
     DoHalt (bool &caused_stop);
 
     virtual lldb_private::Error
-    DoDetach (bool keep_stopped);
+    DoDetach ();
     
     virtual bool
     DetachRequiresHalt() { return true; }

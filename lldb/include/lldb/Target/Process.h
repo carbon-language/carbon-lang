@@ -91,12 +91,6 @@ public:
     
     void
     SetStopOnSharedLibraryEvents (bool stop);
-    
-    bool
-    GetDetachKeepsStopped () const;
-    
-    void
-    SetDetachKeepsStopped (bool keep_stopped);
 };
 
 typedef std::shared_ptr<ProcessProperties> ProcessPropertiesSP;
@@ -1949,14 +1943,11 @@ public:
     /// This function is not meant to be overridden by Process
     /// subclasses.
     ///
-    /// @param[in] keep_stopped
-    ///     If true, don't resume the process on detach.
-    ///
     /// @return
     ///     Returns an error object.
     //------------------------------------------------------------------
     Error
-    Detach (bool keep_stopped);
+    Detach ();
 
     //------------------------------------------------------------------
     /// Kills the process and shuts down all threads that were spawned
@@ -2343,7 +2334,7 @@ public:
     ///     false otherwise.
     //------------------------------------------------------------------
     virtual Error
-    DoDetach (bool keep_stopped)
+    DoDetach ()
     {
         Error error;
         error.SetErrorStringWithFormat("error: %s does not support detaching from processes", GetShortPluginName());
