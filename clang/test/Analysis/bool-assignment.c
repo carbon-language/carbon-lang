@@ -1,15 +1,19 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core.BoolAssignment -analyzer-store=region -verify -std=c99 -Dbool=_Bool %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core.BoolAssignment -analyzer-store=region -verify -x c++ %s
 
-// Test C++'s bool and C's _Bool
+// Test C++'s bool and C's _Bool.
+// FIXME: We stopped warning on these when SValBuilder got smarter about
+// casts to bool. Arguably, however, these conversions are okay; the result
+// is always 'true' or 'false'.
 
 void test_stdbool_initialization(int y) {
+  bool constant = 2; // no-warning
   if (y < 0) {
-    bool x = y; // expected-warning {{Assignment of a non-Boolean value}}
+    bool x = y; // no-warning
     return;
   }
   if (y > 1) {
-    bool x = y; // expected-warning {{Assignment of a non-Boolean value}}
+    bool x = y; // no-warning
     return;
   }
   bool x = y; // no-warning
@@ -18,11 +22,11 @@ void test_stdbool_initialization(int y) {
 void test_stdbool_assignment(int y) {
   bool x = 0; // no-warning
   if (y < 0) {
-    x = y; // expected-warning {{Assignment of a non-Boolean value}}
+    x = y; // no-warning
     return;
   }
   if (y > 1) {
-    x = y; // expected-warning {{Assignment of a non-Boolean value}}
+    x = y; // no-warning
     return;
   }
   x = y; // no-warning
@@ -33,6 +37,7 @@ void test_stdbool_assignment(int y) {
 typedef signed char BOOL;
 
 void test_BOOL_initialization(int y) {
+  BOOL constant = 2; // expected-warning {{Assignment of a non-Boolean value}}
   if (y < 0) {
     BOOL x = y; // expected-warning {{Assignment of a non-Boolean value}}
     return;
@@ -63,6 +68,7 @@ void test_BOOL_assignment(int y) {
 typedef unsigned char Boolean;
 
 void test_Boolean_initialization(int y) {
+  Boolean constant = 2; // expected-warning {{Assignment of a non-Boolean value}}
   if (y < 0) {
     Boolean x = y; // expected-warning {{Assignment of a non-Boolean value}}
     return;

@@ -1,6 +1,7 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core,alpha.core -analyzer-store=region -verify %s
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,alpha.core -analyzer-store=region -verify %s
-// expected-no-diagnostics
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core,alpha.core,debug.ExprInspection -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,alpha.core,debug.ExprInspection -analyzer-store=region -verify %s
+
+extern void clang_analyzer_eval(_Bool);
 
 // Test if the 'storage' region gets properly initialized after it is cast to
 // 'struct sockaddr *'. 
@@ -84,4 +85,35 @@ int foo (int* p) {
       return 5/y; // This code should be unreachable: no-warning.
   }
   return 0;
+}
+
+void castsToBool() {
+  clang_analyzer_eval(0); // expected-warning{{FALSE}}
+  clang_analyzer_eval(0U); // expected-warning{{FALSE}}
+  clang_analyzer_eval((void *)0); // expected-warning{{FALSE}}
+
+  clang_analyzer_eval(1); // expected-warning{{TRUE}}
+  clang_analyzer_eval(1U); // expected-warning{{TRUE}}
+  clang_analyzer_eval(-1); // expected-warning{{TRUE}}
+  clang_analyzer_eval(0x100); // expected-warning{{TRUE}}
+  clang_analyzer_eval(0x100U); // expected-warning{{TRUE}}
+  clang_analyzer_eval((void *)0x100); // expected-warning{{TRUE}}
+
+  extern int symbolicInt;
+  clang_analyzer_eval(symbolicInt); // expected-warning{{UNKNOWN}}
+  if (symbolicInt)
+    clang_analyzer_eval(symbolicInt); // expected-warning{{TRUE}}
+
+  extern void *symbolicPointer;
+  clang_analyzer_eval(symbolicPointer); // expected-warning{{UNKNOWN}}
+  if (symbolicPointer)
+    clang_analyzer_eval(symbolicPointer); // expected-warning{{TRUE}}
+
+  int localInt;
+  clang_analyzer_eval(&localInt); // expected-warning{{TRUE}}
+  clang_analyzer_eval(&castsToBool); // expected-warning{{TRUE}}
+  clang_analyzer_eval("abc"); // expected-warning{{TRUE}}
+
+  extern float globalFloat;
+  clang_analyzer_eval(globalFloat); // expected-warning{{UNKNOWN}}
 }

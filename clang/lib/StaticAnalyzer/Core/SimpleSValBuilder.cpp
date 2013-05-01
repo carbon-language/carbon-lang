@@ -438,9 +438,13 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
           case BO_GE:
           case BO_EQ:
           case BO_NE:
+            assert(resultTy->isBooleanType() ||
+                   resultTy == getConditionType());
+            assert(symIntExpr->getType()->isBooleanType() ||
+                   getContext().hasSameUnqualifiedType(symIntExpr->getType(),
+                                                       getConditionType()));
             // Negate the comparison and make a value.
             opc = BinaryOperator::negateComparisonOp(opc);
-            assert(symIntExpr->getType() == resultTy);
             return makeNonLoc(symIntExpr->getLHS(), opc,
                 symIntExpr->getRHS(), resultTy);
           }
