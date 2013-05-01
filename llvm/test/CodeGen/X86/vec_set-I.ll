@@ -1,5 +1,8 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movd
-; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep xorp
+; RUN: llc < %s -march=x86 -mattr=+sse2 | FileCheck %s
+
+; CHECK-NOT: xorp
+; CHECK: movd
+; CHECK-NOT: xorp
 
 define void @t1() nounwind  {
 	%tmp298.i.i = load <4 x float>* null, align 16

@@ -4,7 +4,9 @@
 ; it makes a ton of annoying overlapping live ranges.  This code should not
 ; cause spills!
 ;
-; RUN: llc < %s -march=x86 -stats 2>&1 | not grep spilled
+; RUN: llc < %s -march=x86 -stats 2>&1 | FileCheck %s
+
+; CHECK-NOT: spilled
 
 target datalayout = "e-p:32:32"
 

@@ -1,5 +1,7 @@
-; RUN: llc < %s -march=x86-64 | not grep 4294967112
+; RUN: llc < %s -march=x86-64 | FileCheck %s
 ; PR1348
+
+; CHECK-NOT: 4294967112
 
 	%struct.md5_ctx = type { i32, i32, i32, i32, [2 x i32], i32, [128 x i8], [4294967288 x i8] }
 

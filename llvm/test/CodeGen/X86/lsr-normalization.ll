@@ -1,10 +1,13 @@
-; RUN: llc < %s -march=x86-64 | grep div | count 1
+; RUN: llc < %s -march=x86-64 | FileCheck %s
 ; rdar://8168938
 
 ; This testcase involves SCEV normalization with the exit value from
 ; one loop involved with the increment value for an addrec on another
 ; loop. The expression should be properly normalized and simplified,
 ; and require only a single division.
+
+; CHECK: div
+; CHECK-NOT: div
 
 %0 = type { %0*, %0* }
 

@@ -1,4 +1,6 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movq
+; RUN: llc < %s -march=x86 -mattr=+sse2 | FileCheck %s
+
+; CHECK: movq
 
 define <4 x i32> @t(i32 %x, i32 %y) nounwind  {
 	%tmp1 = insertelement <4 x i32> zeroinitializer, i32 %x, i32 0

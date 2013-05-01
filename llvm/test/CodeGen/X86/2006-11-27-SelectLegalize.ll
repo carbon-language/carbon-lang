@@ -1,5 +1,7 @@
-; RUN: llc < %s -march=x86 | grep test.*1
+; RUN: llc < %s -march=x86 | FileCheck %s
 ; PR1016
+
+; CHECK: {{test.*1}}
 
 define i32 @test(i32 %A, i32 %B, i32 %C) {
         %a = trunc i32 %A to i1         ; <i1> [#uses=1]

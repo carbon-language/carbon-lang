@@ -1,6 +1,7 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin > %t
-; RUN: not grep InlineAsm %t
-; RUN: FileCheck %s < %t
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck -check-prefix CHK %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
+
+; CHK-NOT: InlineAsm
 
 ; CHECK: foo:
 ; CHECK: bswapq

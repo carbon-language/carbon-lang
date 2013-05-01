@@ -1,4 +1,6 @@
-; RUN: llc < %s | grep movswl
+; RUN: llc < %s | FileCheck %s
+
+; CHECK: movswl
 
 target datalayout = "e-p:64:64"
 target triple = "x86_64-apple-darwin8"

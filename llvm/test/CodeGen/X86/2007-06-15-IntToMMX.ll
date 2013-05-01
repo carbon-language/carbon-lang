@@ -1,4 +1,7 @@
-; RUN: llc < %s -march=x86-64 -mattr=+mmx | grep paddusw
+; RUN: llc < %s -march=x86-64 -mattr=+mmx | FileCheck %s
+
+; CHECK: paddusw
+
 @R = external global x86_mmx          ; <x86_mmx*> [#uses=1]
 
 define void @foo(<1 x i64> %A, <1 x i64> %B) {

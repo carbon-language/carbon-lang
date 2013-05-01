@@ -1,6 +1,8 @@
 ; REQUIRES: asserts
-; RUN: llc < %s -march=x86 -mattr=+sse2 -stats 2>&1 | not grep commuted
+; RUN: llc < %s -march=x86 -mattr=+sse2 -stats 2>&1 | FileCheck %s
 ; rdar://6608609
+
+; CHECK-NOT: commuted
 
 define <2 x double> @t(<2 x double> %A, <2 x double> %B, <2 x double> %C) nounwind readnone {
 entry:

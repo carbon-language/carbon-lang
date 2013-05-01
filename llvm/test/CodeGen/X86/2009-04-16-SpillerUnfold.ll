@@ -1,7 +1,9 @@
 ; REQUIRES: asserts
-; RUN: llc < %s -mtriple=x86_64-apple-darwin10.0 -relocation-model=pic -disable-fp-elim -stats 2>&1 | grep "Number of modref unfolded"
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10.0 -relocation-model=pic -disable-fp-elim -stats 2>&1 | FileCheck %s
 ; XFAIL: *
 ; 69408 removed the opportunity for this optimization to work
+
+; CHECK: {{Number of modref unfolded}}
 
 	%struct.SHA512_CTX = type { [8 x i64], i64, i64, %struct.anon, i32, i32 }
 	%struct.anon = type { [16 x i64] }

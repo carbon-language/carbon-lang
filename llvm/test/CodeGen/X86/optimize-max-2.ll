@@ -1,6 +1,8 @@
-; RUN: llc < %s -march=x86-64 > %t
-; RUN: grep cmov %t | count 2
-; RUN: grep jne %t | count 1
+; RUN: llc < %s -march=x86-64 | grep cmov %t | count 2
+; RUN: llc < %s -march=x86-64 | FileCheck %s
+
+; CHECK: jne
+; CHECK-NOT: jne
 
 ; LSR's OptimizeMax function shouldn't try to eliminate this max, because
 ; it has three operands.
