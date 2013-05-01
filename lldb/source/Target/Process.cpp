@@ -2644,32 +2644,26 @@ Process::ReadScalarIntegerFromMemory (addr_t addr,
                                       Scalar &scalar, 
                                       Error &error)
 {
-    uint64_t uval;
-
-    if (byte_size <= sizeof(uval))
+    uint64_t uval = 0;
+    if (byte_size == 0)
     {
-        size_t bytes_read = ReadMemory (addr, &uval, byte_size, error);
+        error.SetErrorString ("byte size is zero");
+    }
+    else if (byte_size & (byte_size - 1))
+    {
+        error.SetErrorStringWithFormat ("byte size %u is not a power of 2", byte_size);
+    }
+    else if (byte_size <= sizeof(uval))
+    {
+        const size_t bytes_read = ReadMemory (addr, &uval, byte_size, error);
         if (bytes_read == byte_size)
         {
             DataExtractor data (&uval, sizeof(uval), GetByteOrder(), GetAddressByteSize());
             lldb::offset_t offset = 0;
-            
-            if (byte_size == 0)
-            {
-                error.SetErrorString ("byte size is zero");
-            }
-            else if (byte_size & (byte_size - 1))
-            {
-                error.SetErrorStringWithFormat ("byte size %u is not a power of 2", byte_size);
-            }
+            if (byte_size <= 4)
+                scalar = data.GetMaxU32 (&offset, byte_size);
             else
-            {
-                if (byte_size <= 4)
-                    scalar = data.GetMaxU32 (&offset, byte_size);
-                else
-                    scalar = data.GetMaxU64 (&offset, byte_size);
-            }
-
+                scalar = data.GetMaxU64 (&offset, byte_size);
             if (is_signed)
                 scalar.SignExtend(byte_size * 8);
             return bytes_read;
