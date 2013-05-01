@@ -13,6 +13,7 @@ import shlex
 def backtrace_print_frame (target, frame_num, addr, fp):
   process = target.GetProcess()
   addr_for_printing = addr
+  addr_width = process.GetAddressByteSize() * 2
   if frame_num > 0:
     addr = addr - 1
 
@@ -32,9 +33,9 @@ def backtrace_print_frame (target, frame_num, addr, fp):
       if module_uuid_str != "" or module_filename != "":
         module_description = '%s %s' % (module_filename, module_uuid_str)
   except Exception:
+    print '%2d: pc==0x%-*x fp==0x%-*x' % (frame_num, addr_width, addr_for_printing, addr_width, fp)
     return
 
-  addr_width = process.GetAddressByteSize() * 2
   sym_ctx = target.ResolveSymbolContextForAddress(sbaddr, lldb.eSymbolContextEverything)
   if sym_ctx.IsValid() and sym_ctx.GetSymbol().IsValid():
     function_start = sym_ctx.GetSymbol().GetStartAddress().GetLoadAddress(target)
