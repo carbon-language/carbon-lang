@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 | grep cmov %t | count 2
+; RUN: llc < %s -march=x86-64 | grep cmov | count 2
 ; RUN: llc < %s -march=x86-64 | FileCheck %s
 
 ; CHECK: jne
