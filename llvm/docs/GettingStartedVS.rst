@@ -137,15 +137,18 @@ Here's the short story for getting up and running quickly with LLVM:
 
      .. code-block:: bat
 
-        C:\..\llvm> llvm-lit test
+        C:\..\llvm> python ..\build\bin\llvm-lit --param build_config=Win32 --param build_mode=Debug --param llvm_site_config=../build/test/lit.site.cfg test
 
-     Note that quite a few of these test will fail.
+     This example assumes that Python is in your PATH variable, you
+     have built a Win32 Debug version of llvm with a standard out of
+     line build. You should not see any unexpected failures, but will
+     see many unsupported tests and expected failures.
 
      A specific test or test directory can be run with:
 
      .. code-block:: bat
 
-        C:\..\llvm> llvm-lit test/path/to/test
+        C:\..\llvm> python ..\build\bin\llvm-lit --param build_config=Win32 --param build_mode=Debug --param llvm_site_config=../build/test/lit.site.cfg test/path/to/test
 
 
 An Example Using the LLVM Tool Chain
