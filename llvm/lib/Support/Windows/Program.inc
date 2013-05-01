@@ -155,7 +155,8 @@ static char *EscapePrecedingEscapes(char *Dst, const char *Start,
 /// CreateProcess and returns length of quoted arg with escaped quotes
 static unsigned int ArgLenWithQuotes(const char *Str) {
   const char *Start = Str;
-  unsigned int len = ArgNeedsQuotes(Str) ? 2 : 0;
+  bool Quoted = ArgNeedsQuotes(Str);
+  unsigned int len = Quoted ? 2 : 0;
 
   while (*Str != '\0') {
     if (*Str == '\"') {
@@ -169,6 +170,12 @@ static unsigned int ArgLenWithQuotes(const char *Str) {
 
     ++len;
     ++Str;
+  }
+
+  if (Quoted) {
+    // Make sure the closing quote doesn't get escaped by a trailing backslash.
+    unsigned PrecedingEscapes = CountPrecedingBackslashes(Start, Str);
+    len += PrecedingEscapes + 1;
   }
 
   return len;
