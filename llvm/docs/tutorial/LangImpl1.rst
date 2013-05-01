@@ -55,7 +55,7 @@ in the various pieces. The structure of the tutorial is:
    - Because a lot of people are interested in using LLVM as a JIT,
    we'll dive right into it and show you the 3 lines it takes to add JIT
    support. LLVM is also useful in many other ways, but this is one
-   simple and "sexy" way to shows off its power. :)
+   simple and "sexy" way to show off its power. :)
 -  `Chapter #5 <LangImpl5.html>`_: Extending the Language: Control
    Flow - With the language up and running, we show how to extend it
    with control flow operations (if/then/else and a 'for' loop). This
