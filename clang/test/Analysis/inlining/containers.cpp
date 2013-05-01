@@ -78,7 +78,9 @@ void testWrappers(BeginOnlySet &w1, IteratorStructOnlySet &w2,
 }
 
 
-#else
+#else // HEADER
+
+#include "../Inputs/system-header-simulator-cxx.h"
 
 class MySet {
   int *storage;
@@ -152,8 +154,13 @@ class BeginOnlySet {
 public:
   struct IterImpl {
     MySet::iterator impl;
+    typedef std::forward_iterator_tag iterator_category;
+
     IterImpl(MySet::iterator i) : impl(i) {
-      clang_analyzer_checkInlined(true); // expected-warning {{TRUE}}
+      clang_analyzer_checkInlined(true);
+#if INLINE
+      // expected-warning@-2 {{TRUE}}
+#endif
     }
   };
 
@@ -231,4 +238,4 @@ public:
   }
 };
 
-#endif
+#endif // HEADER

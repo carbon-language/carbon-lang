@@ -676,46 +676,40 @@ static CallInlinePolicy mayInlineCallKind(const CallEvent &Call,
   return CIP_Allowed;
 }
 
-/// Returns true if the given C++ class is a container.
-///
-/// Our heuristic for this is whether it contains a method named 'begin()' or a
-/// nested type named 'iterator'.
-static bool isContainerClass(const ASTContext &Ctx, const CXXRecordDecl *RD) {
-  // Don't record any path information.
-  CXXBasePaths Paths(false, false, false);
+/// Returns true if the given C++ class contains a member with the given name.
+static bool hasMember(const ASTContext &Ctx, const CXXRecordDecl *RD,
+                      StringRef Name) {
+  const IdentifierInfo &II = Ctx.Idents.get(Name);
+  DeclarationName DeclName = Ctx.DeclarationNames.getIdentifier(&II);
+  if (!RD->lookup(DeclName).empty())
+    return true;
 
-  const IdentifierInfo &BeginII = Ctx.Idents.get("begin");
-  DeclarationName BeginName = Ctx.DeclarationNames.getIdentifier(&BeginII);
-  DeclContext::lookup_const_result BeginDecls = RD->lookup(BeginName);
-  if (!BeginDecls.empty())
-    return true;
+  CXXBasePaths Paths(false, false, false);
   if (RD->lookupInBases(&CXXRecordDecl::FindOrdinaryMember,
-                        BeginName.getAsOpaquePtr(),
-                        Paths))
-    return true;
-  
-  const IdentifierInfo &IterII = Ctx.Idents.get("iterator");
-  DeclarationName IteratorName = Ctx.DeclarationNames.getIdentifier(&IterII);
-  DeclContext::lookup_const_result IterDecls = RD->lookup(IteratorName);
-  if (!IterDecls.empty())
-    return true;
-  if (RD->lookupInBases(&CXXRecordDecl::FindOrdinaryMember,
-                        IteratorName.getAsOpaquePtr(),
+                        DeclName.getAsOpaquePtr(),
                         Paths))
     return true;
 
   return false;
 }
 
+/// Returns true if the given C++ class is a container or iterator.
+///
+/// Our heuristic for this is whether it contains a method named 'begin()' or a
+/// nested type named 'iterator' or 'iterator_category'.
+static bool isContainerClass(const ASTContext &Ctx, const CXXRecordDecl *RD) {
+  return hasMember(Ctx, RD, "begin") ||
+         hasMember(Ctx, RD, "iterator") ||
+         hasMember(Ctx, RD, "iterator_category");
+}
+
 /// Returns true if the given function refers to a constructor or destructor of
-/// a C++ container.
+/// a C++ container or iterator.
 ///
 /// We generally do a poor job modeling most containers right now, and would
-/// prefer not to inline their methods.
+/// prefer not to inline their setup and teardown.
 static bool isContainerCtorOrDtor(const ASTContext &Ctx,
                                   const FunctionDecl *FD) {
-  // Heuristic: a type is a container if it contains a "begin()" method
-  // or a type named "iterator".
   if (!(isa<CXXConstructorDecl>(FD) || isa<CXXDestructorDecl>(FD)))
     return false;
 
