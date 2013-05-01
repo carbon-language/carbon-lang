@@ -19,6 +19,7 @@
 #define LLVM_IR_GLOBALVALUE_H
 
 #include "llvm/IR/Constant.h"
+#include "llvm/IR/DerivedTypes.h"
 
 namespace llvm {
 
@@ -105,7 +106,7 @@ public:
 
   /// getType - Global values are always pointers.
   inline PointerType *getType() const {
-    return reinterpret_cast<PointerType*>(User::getType());
+    return cast<PointerType>(User::getType());
   }
 
   static LinkageTypes getLinkOnceLinkage(bool ODR) {
