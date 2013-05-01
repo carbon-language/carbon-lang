@@ -32,17 +32,19 @@ using namespace llvm;
 namespace {
 typedef MachineBasicBlock::iterator Iter;
 
-/// Helper class to expand accumulator pseudos.
-class ExpandACCPseudo {
+/// Helper class to expand pseudos.
+class ExpandPseudo {
 public:
-  ExpandACCPseudo(MachineFunction &MF);
+  ExpandPseudo(MachineFunction &MF);
   bool expand();
 
 private:
   bool expandInstr(MachineBasicBlock &MBB, Iter I);
-  void expandLoad(MachineBasicBlock &MBB, Iter I, unsigned RegSize);
-  void expandStore(MachineBasicBlock &MBB, Iter I, unsigned RegSize);
+  void expandLoadACC(MachineBasicBlock &MBB, Iter I, unsigned RegSize);
+  void expandStoreACC(MachineBasicBlock &MBB, Iter I, unsigned RegSize);
   bool expandCopy(MachineBasicBlock &MBB, Iter I);
+  bool expandCopyACC(MachineBasicBlock &MBB, Iter I, unsigned Dst,
+                     unsigned Src, unsigned RegSize);
 
   MachineFunction &MF;
   const MipsSEInstrInfo &TII;
@@ -51,12 +53,12 @@ private:
 };
 }
 
-ExpandACCPseudo::ExpandACCPseudo(MachineFunction &MF_)
+ExpandPseudo::ExpandPseudo(MachineFunction &MF_)
   : MF(MF_),
     TII(*static_cast<const MipsSEInstrInfo*>(MF.getTarget().getInstrInfo())),
     RegInfo(TII.getRegisterInfo()), MRI(MF.getRegInfo()) {}
 
-bool ExpandACCPseudo::expand() {
+bool ExpandPseudo::expand() {
   bool Expanded = false;
 
   for (MachineFunction::iterator BB = MF.begin(), BBEnd = MF.end();
@@ -67,27 +69,27 @@ bool ExpandACCPseudo::expand() {
   return Expanded;
 }
 
-bool ExpandACCPseudo::expandInstr(MachineBasicBlock &MBB, Iter I) {
+bool ExpandPseudo::expandInstr(MachineBasicBlock &MBB, Iter I) {
   switch(I->getOpcode()) {
   case Mips::LOAD_AC64:
   case Mips::LOAD_AC64_P8:
   case Mips::LOAD_AC_DSP:
   case Mips::LOAD_AC_DSP_P8:
-    expandLoad(MBB, I, 4);
+    expandLoadACC(MBB, I, 4);
     break;
   case Mips::LOAD_AC128:
   case Mips::LOAD_AC128_P8:
-    expandLoad(MBB, I, 8);
+    expandLoadACC(MBB, I, 8);
     break;
   case Mips::STORE_AC64:
   case Mips::STORE_AC64_P8:
   case Mips::STORE_AC_DSP:
   case Mips::STORE_AC_DSP_P8:
-    expandStore(MBB, I, 4);
+    expandStoreACC(MBB, I, 4);
     break;
   case Mips::STORE_AC128:
   case Mips::STORE_AC128_P8:
-    expandStore(MBB, I, 8);
+    expandStoreACC(MBB, I, 8);
     break;
   case TargetOpcode::COPY:
     if (!expandCopy(MBB, I))
@@ -101,7 +103,7 @@ bool ExpandACCPseudo::expandInstr(MachineBasicBlock &MBB, Iter I) {
   return true;
 }
 
-void ExpandACCPseudo::expandLoad(MachineBasicBlock &MBB, Iter I,
+void ExpandPseudo::expandLoadACC(MachineBasicBlock &MBB, Iter I,
                                  unsigned RegSize) {
   //  load $vr0, FI
   //  copy lo, $vr0
@@ -125,7 +127,7 @@ void ExpandACCPseudo::expandLoad(MachineBasicBlock &MBB, Iter I,
   BuildMI(MBB, I, DL, Desc, Hi).addReg(VR1, RegState::Kill);
 }
 
-void ExpandACCPseudo::expandStore(MachineBasicBlock &MBB, Iter I,
+void ExpandPseudo::expandStoreACC(MachineBasicBlock &MBB, Iter I,
                                   unsigned RegSize) {
   //  copy $vr0, lo
   //  store $vr0, FI
@@ -149,19 +151,20 @@ void ExpandACCPseudo::expandStore(MachineBasicBlock &MBB, Iter I,
   TII.storeRegToStack(MBB, I, VR1, true, FI, RC, &RegInfo, RegSize);
 }
 
-bool ExpandACCPseudo::expandCopy(MachineBasicBlock &MBB, Iter I) {
+bool ExpandPseudo::expandCopy(MachineBasicBlock &MBB, Iter I) {
   unsigned Dst = I->getOperand(0).getReg(), Src = I->getOperand(1).getReg();
-  unsigned RegSize;
 
-  if (Mips::ACRegsDSPRegClass.contains(Dst) &&
-      Mips::ACRegsDSPRegClass.contains(Src))
-    RegSize = 4;
-  else if (Mips::ACRegs128RegClass.contains(Dst) &&
-           Mips::ACRegs128RegClass.contains(Src))
-    RegSize = 8;
-  else
-    return false;
+  if (Mips::ACRegsDSPRegClass.contains(Dst, Src))
+    return expandCopyACC(MBB, I, Dst, Src, 4);
 
+  if (Mips::ACRegs128RegClass.contains(Dst, Src))
+    return expandCopyACC(MBB, I, Dst, Src, 8);
+
+  return false;
+}
+
+bool ExpandPseudo::expandCopyACC(MachineBasicBlock &MBB, Iter I, unsigned Dst,
+                                 unsigned Src, unsigned RegSize) {
   //  copy $vr0, src_lo
   //  copy dst_lo, $vr0
   //  copy $vr1, src_hi
@@ -446,7 +449,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   // Expand pseudo instructions which load, store or copy accumulators.
   // Add an emergency spill slot if a pseudo was expanded.
-  if (ExpandACCPseudo(MF).expand()) {
+  if (ExpandPseudo(MF).expand()) {
     // The spill slot should be half the size of the accumulator. If target is
     // mips64, it should be 64-bit, otherwise it should be 32-bt.
     const TargetRegisterClass *RC = STI.hasMips64() ?
