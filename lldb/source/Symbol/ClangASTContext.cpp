@@ -1769,6 +1769,9 @@ ClangASTContext::AddMethodToCXXRecordType
     CXXDestructorDecl *cxx_dtor_decl(NULL);
     CXXConstructorDecl *cxx_ctor_decl(NULL);
     
+    if (is_artificial)
+        return NULL; // skip everything artificial
+    
     if (name[0] == '~')
     {
         cxx_dtor_decl = CXXDestructorDecl::Create (*ast,
@@ -1783,9 +1786,6 @@ ClangASTContext::AddMethodToCXXRecordType
     }
     else if (decl_name == cxx_record_decl->getDeclName())
     {
-       if (is_artificial && method_function_prototype->getNumArgs() == 1)
-          return NULL; // skip artificial copy constructors
-        
        cxx_ctor_decl = CXXConstructorDecl::Create (*ast,
                                                    cxx_record_decl,
                                                    SourceLocation(),
