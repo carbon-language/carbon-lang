@@ -81,6 +81,10 @@ public:
     {
         return lldb::ThreadSP();
     }
+    
+    virtual bool
+    IsOperatingSystemPluginThread (const lldb::ThreadSP &thread_sp);
+
 protected:
     //------------------------------------------------------------------
     // Member variables.

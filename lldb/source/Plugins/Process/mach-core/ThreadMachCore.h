@@ -37,9 +37,6 @@ public:
     virtual lldb::RegisterContextSP
     CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
 
-    virtual void
-    ClearStackFrames ();
-
     static bool
     ThreadIDIsValid (lldb::tid_t thread);
 

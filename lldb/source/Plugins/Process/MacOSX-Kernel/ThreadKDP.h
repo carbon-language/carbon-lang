@@ -26,9 +26,6 @@ public:
     virtual
     ~ThreadKDP ();
 
-    virtual bool
-    WillResume (lldb::StateType resume_state);
-
     virtual void
     RefreshStateAfterStop();
 
@@ -43,9 +40,6 @@ public:
 
     virtual lldb::RegisterContextSP
     CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
-
-    virtual void
-    ClearStackFrames ();
 
     void
     Dump (lldb_private::Log *log, uint32_t index);

@@ -26,7 +26,7 @@ public:
     virtual
     ~ThreadGDBRemote ();
 
-    virtual bool
+    virtual void
     WillResume (lldb::StateType resume_state);
 
     virtual void
@@ -43,9 +43,6 @@ public:
 
     virtual lldb::RegisterContextSP
     CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
-
-    virtual void
-    ClearStackFrames ();
 
     void
     Dump (lldb_private::Log *log, uint32_t index);

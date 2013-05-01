@@ -73,16 +73,6 @@ ThreadMachCore::RefreshStateAfterStop()
     GetRegisterContext()->InvalidateIfNeeded (force);
 }
 
-void
-ThreadMachCore::ClearStackFrames ()
-{
-    Unwind *unwinder = GetUnwinder ();
-    if (unwinder)
-        unwinder->Clear();
-    Thread::ClearStackFrames();
-}
-
-
 bool
 ThreadMachCore::ThreadIDIsValid (lldb::tid_t thread)
 {

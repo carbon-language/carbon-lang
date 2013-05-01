@@ -247,8 +247,8 @@ OperatingSystemPython::CreateThreadFromThreadInfo (PythonDictionary &thread_dict
             PythonString core_pystr("core");
             PythonString name_pystr("name");
             PythonString queue_pystr("queue");
-            PythonString state_pystr("state");
-            PythonString stop_reason_pystr("stop_reason");
+            //PythonString state_pystr("state");
+            //PythonString stop_reason_pystr("stop_reason");
             PythonString reg_data_addr_pystr ("register_data_addr");
             
             const uint32_t core_number = thread_dict.GetItemForKeyAsInteger (core_pystr, UINT32_MAX);
@@ -258,7 +258,21 @@ OperatingSystemPython::CreateThreadFromThreadInfo (PythonDictionary &thread_dict
             //const char *state = thread_dict.GetItemForKeyAsString (state_pystr);
             //const char *stop_reason = thread_dict.GetItemForKeyAsString (stop_reason_pystr);
             
+            // See if a thread already exists for "tid"
             thread_sp = old_thread_list.FindThreadByID (tid, false);
+            if (thread_sp)
+            {
+                // A thread already does exist for "tid", make sure it was an operating system
+                // plug-in generated thread.
+                if (!IsOperatingSystemPluginThread(thread_sp))
+                {
+                    // We have thread ID overlap between the protocol threads and the
+                    // operating system threads, clear the thread so we create an
+                    // operating system thread for this.
+                    thread_sp.reset();
+                }
+            }
+    
             if (!thread_sp)
             {
                 if (did_create_ptr)
@@ -273,7 +287,19 @@ OperatingSystemPython::CreateThreadFromThreadInfo (PythonDictionary &thread_dict
             
             if (core_number < core_thread_list.GetSize(false))
             {
-                thread_sp->SetBackingThread(core_thread_list.GetThreadAtIndex(core_number, false));
+                ThreadSP core_thread_sp (core_thread_list.GetThreadAtIndex(core_number, false));
+                if (core_thread_sp)
+                {
+                    ThreadSP backing_core_thread_sp (core_thread_sp->GetBackingThread());
+                    if (backing_core_thread_sp)
+                    {
+                        thread_sp->SetBackingThread(backing_core_thread_sp);
+                    }
+                    else
+                    {
+                        thread_sp->SetBackingThread(core_thread_sp);
+                    }
+                }
             }
         }
     }
@@ -292,7 +318,10 @@ OperatingSystemPython::CreateRegisterContextForThread (Thread *thread, addr_t re
 {
     RegisterContextSP reg_ctx_sp;
     if (!m_interpreter || !m_python_object_sp || !thread)
-        return RegisterContextSP();
+        return reg_ctx_sp;
+
+    if (!IsOperatingSystemPluginThread(thread->shared_from_this()))
+        return reg_ctx_sp;
     
     // First thing we have to do is get the API lock, and the run lock.  We're going to change the thread
     // content of the process, and we're going to use python, which requires the API lock to do it.
@@ -308,7 +337,10 @@ OperatingSystemPython::CreateRegisterContextForThread (Thread *thread, addr_t re
         // The registers data is in contiguous memory, just create the register
         // context using the address provided
         if (log)
-            log->Printf ("OperatingSystemPython::CreateRegisterContextForThread (tid = 0x%" PRIx64 ", reg_data_addr = 0x%" PRIx64 ") creating memory register context", thread->GetID(), reg_data_addr);
+            log->Printf ("OperatingSystemPython::CreateRegisterContextForThread (tid = 0x%" PRIx64 ", 0x%" PRIx64 ", reg_data_addr = 0x%" PRIx64 ") creating memory register context",
+                         thread->GetID(),
+                         thread->GetProtocolID(),
+                         reg_data_addr);
         reg_ctx_sp.reset (new RegisterContextMemory (*thread, 0, *GetDynamicRegisterInfo (), reg_data_addr));
     }
     else
@@ -316,7 +348,9 @@ OperatingSystemPython::CreateRegisterContextForThread (Thread *thread, addr_t re
         // No register data address is provided, query the python plug-in to let
         // it make up the data as it sees fit
         if (log)
-            log->Printf ("OperatingSystemPython::CreateRegisterContextForThread (tid = 0x%" PRIx64 ") fetching register data from python", thread->GetID());
+            log->Printf ("OperatingSystemPython::CreateRegisterContextForThread (tid = 0x%" PRIx64 ", 0x%" PRIx64 ") fetching register data from python",
+                         thread->GetID(),
+                         thread->GetProtocolID());
 
         PythonString reg_context_data(m_interpreter->OSPlugin_RegisterContextData (m_python_object_sp, thread->GetID()));
         if (reg_context_data)

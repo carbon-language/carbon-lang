@@ -255,17 +255,22 @@ public:
         m_resume_state = state;
     }
 
-    // This function is called on all the threads before "WillResume" in case
-    // a thread needs to change its state before the ThreadList polls all the
-    // threads to figure out which ones actually will get to run and how.
+    // This function is called on all the threads before "ShouldResume" and
+    // "WillResume" in case a thread needs to change its state before the
+    // ThreadList polls all the threads to figure out which ones actually
+    // will get to run and how.
     void
     SetupForResume ();
     
-    // Override this to do platform specific tasks before resume, but always
-    // call the Thread::WillResume at the end of your work.
+    // Do not override this function, it is for thread plan logic only
+    bool
+    ShouldResume (lldb::StateType resume_state);
 
-    virtual bool
-    WillResume (lldb::StateType resume_state);
+    // Override this to do platform specific tasks before resume.
+    virtual void
+    WillResume (lldb::StateType resume_state)
+    {
+    }
 
     // This clears generic thread state after a resume.  If you subclass this,
     // be sure to call it.
@@ -820,13 +825,34 @@ public:
     void
     SetTracer (lldb::ThreadPlanTracerSP &tracer_sp);
     
-    // Get the thread index ID. The index ID that is guaranteed to not be
-    // re-used by a process. They start at 1 and increase with each new thread.
-    // This allows easy command line access by a unique ID that is easier to
-    // type than the actual system thread ID.
+    //------------------------------------------------------------------
+    // Get the thread index ID. The index ID that is guaranteed to not
+    // be re-used by a process. They start at 1 and increase with each
+    // new thread. This allows easy command line access by a unique ID
+    // that is easier to type than the actual system thread ID.
+    //------------------------------------------------------------------
     uint32_t
     GetIndexID () const;
     
+    
+    //------------------------------------------------------------------
+    // The API ID is often the same as the Thread::GetID(), but not in
+    // all cases. Thread::GetID() is the user visible thread ID that
+    // clients would want to see. The API thread ID is the thread ID
+    // that is used when sending data to/from the debugging protocol.
+    //------------------------------------------------------------------
+    virtual lldb::user_id_t
+    GetProtocolID () const
+    {
+        return m_protocol_tid.GetID();
+    }
+
+    virtual void
+    SetProtocolID (lldb::user_id_t api_tid)
+    {
+        return m_protocol_tid.SetID(api_tid);
+    }
+
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
@@ -881,7 +907,7 @@ public:
     // Gets the temporary resume state for a thread.
     //
     // This value gets set in each thread by complex debugger logic in
-    // Thread::WillResume() and an appropriate thread resume state will get
+    // Thread::ShouldResume() and an appropriate thread resume state will get
     // set in each thread every time the process is resumed prior to calling
     // Process::DoResume(). The lldb_private::Process subclass should adhere
     // to the thread resume state request which will be one of:
@@ -898,6 +924,9 @@ public:
         return m_temporary_resume_state;
     }
 
+    void
+    SetStopInfo (const lldb::StopInfoSP &stop_info_sp);
+
 protected:
 
     friend class ThreadPlan;
@@ -905,6 +934,7 @@ protected:
     friend class ThreadEventData;
     friend class StackFrameList;
     friend class StackFrame;
+    friend class OperatingSystem;
     
     // This is necessary to make sure thread assets get destroyed while the thread is still in good shape
     // to call virtual thread methods.  This must be called by classes that derive from Thread in their destructor.
@@ -923,9 +953,6 @@ protected:
 
     typedef std::vector<lldb::ThreadPlanSP> plan_stack;
 
-    void
-    SetStopInfo (const lldb::StopInfoSP &stop_info_sp);
-
     virtual bool
     SaveFrameZeroState (RegisterCheckpoint &checkpoint);
 
@@ -943,6 +970,17 @@ protected:
     virtual bool
     IsStillAtLastBreakpointHit();
 
+    // Some threads are threads that are made up by OperatingSystem plugins that
+    // are threads that exist and are context switched out into memory. The
+    // OperatingSystem plug-in need a ways to know if a thread is "real" or made
+    // up.
+    virtual bool
+    IsOperatingSystemPluginThread () const
+    {
+        return false;
+    }
+    
+
     lldb::StackFrameListSP
     GetStackFrameList ();
     
@@ -959,6 +997,7 @@ protected:
     lldb::ProcessWP     m_process_wp;           ///< The process that owns this thread.
     lldb::StopInfoSP    m_actual_stop_info_sp;  ///< The private stop reason for this thread
     const uint32_t      m_index_id;             ///< A unique 1 based index assigned to each thread for easy UI/command line access.
+    UserID              m_protocol_tid;         ///< The thread ID used in the system level debugging or protocol functions calls. This is usually the same as the Thread::GetID(), but not always.
     lldb::RegisterContextSP m_reg_context_sp;   ///< The register context for this thread's current register state.
     lldb::StateType     m_state;                ///< The state of our process.
     mutable Mutex       m_state_mutex;          ///< Multithreaded protection for m_state.
@@ -971,7 +1010,7 @@ protected:
     int                 m_resume_signal;        ///< The signal that should be used when continuing this thread.
     lldb::StateType     m_resume_state;         ///< This state is used to force a thread to be suspended from outside the ThreadPlan logic.
     lldb::StateType     m_temporary_resume_state; ///< This state records what the thread was told to do by the thread plan logic for the current resume.
-                                                  /// It gets set in Thread::WillResume.
+                                                  /// It gets set in Thread::ShoudResume.
     std::unique_ptr<lldb_private::Unwind> m_unwinder_ap;
     bool                m_destroy_called;       // This is used internally to make sure derived Thread classes call DestroyThread.
     uint32_t m_thread_stop_reason_stop_id;      // This is the stop id for which the StopInfo is valid.  Can use this so you know that

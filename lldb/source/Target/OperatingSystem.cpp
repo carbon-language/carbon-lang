@@ -13,7 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 #include "lldb/Core/PluginManager.h"
-
+#include "lldb/Target/Thread.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -54,3 +54,13 @@ OperatingSystem::OperatingSystem (Process *process) :
 OperatingSystem::~OperatingSystem()
 {
 }
+
+
+bool
+OperatingSystem::IsOperatingSystemPluginThread (const lldb::ThreadSP &thread_sp)
+{
+    if (thread_sp)
+        return thread_sp->IsOperatingSystemPluginThread();
+    return false;
+}
+

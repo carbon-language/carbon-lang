@@ -1964,6 +1964,11 @@ Debugger::FormatPrompt
                                             s.Printf("0x%4.4" PRIx64, thread->GetID());
                                             var_success = true;
                                         }
+                                        else if (::strncmp (var_name_begin, "protocol_id}", strlen("protocol_id}")) == 0)
+                                        {
+                                            s.Printf("0x%4.4" PRIx64, thread->GetProtocolID());
+                                            var_success = true;
+                                        }
                                         else if (::strncmp (var_name_begin, "index}", strlen("index}")) == 0)
                                         {
                                             s.Printf("%u", thread->GetIndexID());

@@ -132,6 +132,29 @@ ThreadList::FindThreadByID (lldb::tid_t tid, bool can_update)
 }
 
 ThreadSP
+ThreadList::FindThreadByProtocolID (lldb::tid_t tid, bool can_update)
+{
+    Mutex::Locker locker(m_threads_mutex);
+    
+    if (can_update)
+        m_process->UpdateThreadListIfNeeded();
+    
+    ThreadSP thread_sp;
+    uint32_t idx = 0;
+    const uint32_t num_threads = m_threads.size();
+    for (idx = 0; idx < num_threads; ++idx)
+    {
+        if (m_threads[idx]->GetProtocolID() == tid)
+        {
+            thread_sp = m_threads[idx];
+            break;
+        }
+    }
+    return thread_sp;
+}
+
+
+ThreadSP
 ThreadList::RemoveThreadByID (lldb::tid_t tid, bool can_update)
 {
     Mutex::Locker locker(m_threads_mutex);
@@ -145,6 +168,29 @@ ThreadList::RemoveThreadByID (lldb::tid_t tid, bool can_update)
     for (idx = 0; idx < num_threads; ++idx)
     {
         if (m_threads[idx]->GetID() == tid)
+        {
+            thread_sp = m_threads[idx];
+            m_threads.erase(m_threads.begin()+idx);
+            break;
+        }
+    }
+    return thread_sp;
+}
+
+ThreadSP
+ThreadList::RemoveThreadByProtocolID (lldb::tid_t tid, bool can_update)
+{
+    Mutex::Locker locker(m_threads_mutex);
+    
+    if (can_update)
+        m_process->UpdateThreadListIfNeeded();
+    
+    ThreadSP thread_sp;
+    uint32_t idx = 0;
+    const uint32_t num_threads = m_threads.size();
+    for (idx = 0; idx < num_threads; ++idx)
+    {
+        if (m_threads[idx]->GetProtocolID() == tid)
         {
             thread_sp = m_threads[idx];
             m_threads.erase(m_threads.begin()+idx);
@@ -522,9 +568,9 @@ ThreadList::WillResume ()
         {
             ThreadSP thread_sp(*pos);
             if (thread_sp.get() == immediate_thread_sp.get())
-                thread_sp->WillResume(thread_sp->GetCurrentPlan()->RunState());
+                thread_sp->ShouldResume(thread_sp->GetCurrentPlan()->RunState());
             else
-                thread_sp->WillResume (eStateSuspended);
+                thread_sp->ShouldResume (eStateSuspended);
         }
     }
     else if (run_me_only_list.GetSize (false) == 0)
@@ -538,7 +584,7 @@ ThreadList::WillResume ()
                 run_state = thread_sp->GetCurrentPlan()->RunState();
             else
                 run_state = eStateSuspended;
-            if (!thread_sp->WillResume(run_state))
+            if (!thread_sp->ShouldResume(run_state))
                 need_to_resume = false;
         }
     }
@@ -566,11 +612,11 @@ ThreadList::WillResume ()
             ThreadSP thread_sp(*pos);
             if (thread_sp == thread_to_run)
             {
-                if (!thread_sp->WillResume(thread_sp->GetCurrentPlan()->RunState()))
+                if (!thread_sp->ShouldResume(thread_sp->GetCurrentPlan()->RunState()))
                     need_to_resume = false;
             }
             else
-                thread_sp->WillResume (eStateSuspended);
+                thread_sp->ShouldResume (eStateSuspended);
         }
     }
 

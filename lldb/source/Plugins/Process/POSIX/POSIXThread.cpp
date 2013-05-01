@@ -150,19 +150,12 @@ POSIXThread::GetUnwinder()
     return m_unwinder_ap.get();
 }
 
-bool
+void
 POSIXThread::WillResume(lldb::StateType resume_state)
 {
+	// TODO: the line below shouldn't really be done, but
+    // the POSIXThread might rely on this so I will leave this in for now
     SetResumeState(resume_state);
-
-    if (!Thread::WillResume(resume_state))
-        return false;
-
-    if (m_unwinder_ap.get())
-        m_unwinder_ap->Clear();
-    Thread::ClearStackFrames();
-
-    return true;
 }
 
 bool

@@ -440,6 +440,8 @@
 		26BD407F135D2AE000237D80 /* FileLineResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BD407E135D2ADF00237D80 /* FileLineResolver.cpp */; };
 		26C72C94124322890068DC16 /* SBStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 26C72C93124322890068DC16 /* SBStream.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26C72C961243229A0068DC16 /* SBStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C72C951243229A0068DC16 /* SBStream.cpp */; };
+		26CA97A1172B1FD5005DC71B /* RegisterContextThreadMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26CA979F172B1FD5005DC71B /* RegisterContextThreadMemory.cpp */; };
+		26CA97A2172B1FD5005DC71B /* RegisterContextThreadMemory.h in Headers */ = {isa = PBXBuildFile; fileRef = 26CA97A0172B1FD5005DC71B /* RegisterContextThreadMemory.h */; };
 		26D1803E16CEBFD300EDFB5B /* KQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D1803C16CEBFD300EDFB5B /* KQueue.cpp */; };
 		26D1804216CEDF0700EDFB5B /* TimeSpecTimeout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D1804016CEDF0700EDFB5B /* TimeSpecTimeout.cpp */; };
 		26D1804516CEE12500EDFB5B /* KQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = 26D1804416CEE12500EDFB5B /* KQueue.h */; };
@@ -1333,6 +1335,8 @@
 		26C72C951243229A0068DC16 /* SBStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBStream.cpp; path = source/API/SBStream.cpp; sourceTree = "<group>"; };
 		26C81CA411335651004BDC5A /* UUID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UUID.h; path = include/lldb/Core/UUID.h; sourceTree = "<group>"; };
 		26C81CA511335651004BDC5A /* UUID.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UUID.cpp; path = source/Core/UUID.cpp; sourceTree = "<group>"; };
+		26CA979F172B1FD5005DC71B /* RegisterContextThreadMemory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextThreadMemory.cpp; path = Utility/RegisterContextThreadMemory.cpp; sourceTree = "<group>"; };
+		26CA97A0172B1FD5005DC71B /* RegisterContextThreadMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextThreadMemory.h; path = Utility/RegisterContextThreadMemory.h; sourceTree = "<group>"; };
 		26CF992414428766001E4138 /* AnsiTerminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnsiTerminal.h; path = include/lldb/Utility/AnsiTerminal.h; sourceTree = "<group>"; };
 		26D0DD5010FE554D00271C65 /* BreakpointResolverAddress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BreakpointResolverAddress.h; path = include/lldb/Breakpoint/BreakpointResolverAddress.h; sourceTree = "<group>"; };
 		26D0DD5110FE554D00271C65 /* BreakpointResolverFileLine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BreakpointResolverFileLine.h; path = include/lldb/Breakpoint/BreakpointResolverFileLine.h; sourceTree = "<group>"; };
@@ -2523,6 +2527,8 @@
 				262D24E513FB8710002D1960 /* RegisterContextMemory.h */,
 				26E3EEF811A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.h */,
 				26E3EEF711A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.cpp */,
+				26CA979F172B1FD5005DC71B /* RegisterContextThreadMemory.cpp */,
+				26CA97A0172B1FD5005DC71B /* RegisterContextThreadMemory.h */,
 				2615DBC91208B5FC0021781D /* StopInfoMachException.h */,
 				2615DBC81208B5FC0021781D /* StopInfoMachException.cpp */,
 				26F4A21A13FBA31A0064B613 /* ThreadMemory.cpp */,
@@ -3574,6 +3580,7 @@
 				4C6649A014EEE7F100B0316F /* StreamCallback.h in Headers */,
 				26B7564F14F89356008D9CB3 /* PlatformiOSSimulator.h in Headers */,
 				26FFC19A14FC072100087D58 /* AuxVector.h in Headers */,
+				26CA97A2172B1FD5005DC71B /* RegisterContextThreadMemory.h in Headers */,
 				26FFC19C14FC072100087D58 /* DYLDRendezvous.h in Headers */,
 				26FFC19E14FC072100087D58 /* DynamicLoaderPOSIXDYLD.h in Headers */,
 				AF254E32170CCC33007AE5C9 /* PlatformDarwinKernel.h in Headers */,
@@ -4214,6 +4221,7 @@
 				2689010713353E6F00698AC0 /* ThreadPlanStepThrough.cpp in Sources */,
 				2689010813353E6F00698AC0 /* ThreadPlanStepUntil.cpp in Sources */,
 				2689010A13353E6F00698AC0 /* ThreadPlanTracer.cpp in Sources */,
+				26CA97A1172B1FD5005DC71B /* RegisterContextThreadMemory.cpp in Sources */,
 				2689010B13353E6F00698AC0 /* ThreadSpec.cpp in Sources */,
 				2689010C13353E6F00698AC0 /* UnixSignals.cpp in Sources */,
 				2689011013353E8200698AC0 /* SharingPtr.cpp in Sources */,

@@ -66,23 +66,6 @@ ThreadKDP::GetQueueName ()
     return NULL;
 }
 
-bool
-ThreadKDP::WillResume (StateType resume_state)
-{
-    // Call the Thread::WillResume first. If we stop at a signal, the stop info
-    // class for signal will set the resume signal that we need below. The signal
-    // stuff obeys the Process::UnixSignal defaults. 
-    Thread::WillResume(resume_state);
-
-    ClearStackFrames();
-
-    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP));
-    if (log)
-        log->Printf ("Resuming thread: %4.4" PRIx64 " with state: %s.", GetID(), StateAsCString(resume_state));
-
-    return true;
-}
-
 void
 ThreadKDP::RefreshStateAfterStop()
 {
@@ -99,16 +82,6 @@ ThreadKDP::RefreshStateAfterStop()
     if (reg_ctx_sp)
         reg_ctx_sp->InvalidateIfNeeded (force);
 }
-
-void
-ThreadKDP::ClearStackFrames ()
-{
-    Unwind *unwinder = GetUnwinder ();
-    if (unwinder)
-        unwinder->Clear();
-    Thread::ClearStackFrames();
-}
-
 
 bool
 ThreadKDP::ThreadIDIsValid (lldb::tid_t thread)

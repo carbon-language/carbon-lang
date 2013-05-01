@@ -111,10 +111,10 @@ public:
     //------------------------------------------------------------------
     // Subclasses should not override these
     //------------------------------------------------------------------
-    lldb::tid_t
+    virtual lldb::tid_t
     GetThreadID() const;
 
-    Thread &
+    virtual Thread &
     GetThread ()
     {
         return m_thread;

@@ -40,6 +40,12 @@ public:
     bool
     IsValid () const;
 
+    void
+    SetThread (const lldb::ThreadSP &thread_sp)
+    {
+        m_thread_wp = thread_sp;
+    }
+
     lldb::ThreadSP
     GetThread() const
     {

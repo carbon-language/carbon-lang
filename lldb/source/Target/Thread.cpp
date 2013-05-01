@@ -13,6 +13,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/State.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/RegularExpression.h"
@@ -244,6 +245,7 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
     m_process_wp (process.shared_from_this()),
     m_actual_stop_info_sp (),
     m_index_id (process.GetNextThreadIndexID(tid)),
+    m_protocol_tid (tid),
     m_reg_context_sp (),
     m_state (eStateUnloaded),
     m_state_mutex (Mutex::eMutexTypeRecursive),
@@ -517,13 +519,16 @@ Thread::SetupForResume ()
 }
 
 bool
-Thread::WillResume (StateType resume_state)
+Thread::ShouldResume (StateType resume_state)
 {
     // At this point clear the completed plan stack.
     m_completed_plan_stack.clear();
     m_discarded_plan_stack.clear();
 
     m_temporary_resume_state = resume_state;
+    
+    // Make sure m_actual_stop_info_sp is valid
+    GetPrivateStopReason();
     
     // This is a little dubious, but we are trying to limit how often we actually fetch stop info from
     // the target, 'cause that slows down single stepping.  So assume that if we got to the point where
@@ -562,6 +567,13 @@ Thread::WillResume (StateType resume_state)
         }
     }
 
+    if (need_to_resume)
+    {
+        ClearStackFrames();
+        // Let Thread subclasses do any special work they need to prior to resuming
+        WillResume (resume_state);
+    }
+
     return need_to_resume;
 }
 
@@ -583,36 +595,40 @@ Thread::ShouldStop (Event* event_ptr)
     if (GetResumeState () == eStateSuspended)
     {
         if (log)
-            log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 ", should_stop = 0 (ignore since thread was suspended)",
+            log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 " 0x%4.4" PRIx64 ", should_stop = 0 (ignore since thread was suspended)",
                          __FUNCTION__, 
-                         GetID ());
+                         GetID (),
+                         GetProtocolID());
         return false;
     }
     
     if (GetTemporaryResumeState () == eStateSuspended)
     {
         if (log)
-            log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 ", should_stop = 0 (ignore since thread was suspended)",
+            log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 " 0x%4.4" PRIx64 ", should_stop = 0 (ignore since thread was suspended)",
                          __FUNCTION__, 
-                         GetID ());
+                         GetID (),
+                         GetProtocolID());
         return false;
     }
     
     if (ThreadStoppedForAReason() == false)
     {
         if (log)
-            log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 ", pc = 0x%16.16" PRIx64 ", should_stop = 0 (ignore since no stop reason)",
+            log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 " 0x%4.4" PRIx64 ", pc = 0x%16.16" PRIx64 ", should_stop = 0 (ignore since no stop reason)",
                          __FUNCTION__, 
-                         GetID (), 
+                         GetID (),
+                         GetProtocolID(),
                          GetRegisterContext() ? GetRegisterContext()->GetPC() : LLDB_INVALID_ADDRESS);
         return false;
     }
     
     if (log)
     {
-        log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 ", pc = 0x%16.16" PRIx64,
+        log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 " 0x%4.4" PRIx64 ", pc = 0x%16.16" PRIx64,
                      __FUNCTION__, 
-                     GetID (), 
+                     GetID (),
+                     GetProtocolID (),
                      GetRegisterContext() ? GetRegisterContext()->GetPC() : LLDB_INVALID_ADDRESS);
         log->Printf ("^^^^^^^^ Thread::ShouldStop Begin ^^^^^^^^");
         StreamString s;
@@ -807,21 +823,21 @@ Thread::ShouldReportStop (Event* event_ptr)
     if (thread_state == eStateSuspended || thread_state == eStateInvalid)
     {
         if (log)
-            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4" PRIx64 ": returning vote %i (state was suspended or invalid)\n", GetID(), eVoteNoOpinion);
+            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4" PRIx64 ": returning vote %i (state was suspended or invalid)", GetID(), eVoteNoOpinion);
         return eVoteNoOpinion;
     }
 
     if (temp_thread_state == eStateSuspended || temp_thread_state == eStateInvalid)
     {
         if (log)
-            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4" PRIx64 ": returning vote %i (temporary state was suspended or invalid)\n", GetID(), eVoteNoOpinion);
+            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4" PRIx64 ": returning vote %i (temporary state was suspended or invalid)", GetID(), eVoteNoOpinion);
         return eVoteNoOpinion;
     }
 
     if (!ThreadStoppedForAReason())
     {
         if (log)
-            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4" PRIx64 ": returning vote %i (thread didn't stop for a reason.)\n", GetID(), eVoteNoOpinion);
+            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4" PRIx64 ": returning vote %i (thread didn't stop for a reason.)", GetID(), eVoteNoOpinion);
         return eVoteNoOpinion;
     }
 
@@ -829,7 +845,7 @@ Thread::ShouldReportStop (Event* event_ptr)
     {
         // Don't use GetCompletedPlan here, since that suppresses private plans.
         if (log)
-            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4" PRIx64 ": returning vote  for complete stack's back plan\n", GetID());
+            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4" PRIx64 ": returning vote  for complete stack's back plan", GetID());
         return m_completed_plan_stack.back()->ShouldReportStop (event_ptr);
     }
     else
@@ -849,7 +865,7 @@ Thread::ShouldReportStop (Event* event_ptr)
                 plan_ptr = GetPreviousPlan(plan_ptr);
         }
         if (log)
-            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4" PRIx64 ": returning vote %i for current plan\n", GetID(), thread_vote);
+            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4" PRIx64 ": returning vote %i for current plan", GetID(), thread_vote);
 
         return thread_vote;
     }
@@ -871,9 +887,10 @@ Thread::ShouldReportRun (Event* event_ptr)
     {
         // Don't use GetCompletedPlan here, since that suppresses private plans.
         if (log)
-            log->Printf ("Current Plan for thread %d (0x%4.4" PRIx64 "): %s being asked whether we should report run.",
+            log->Printf ("Current Plan for thread %d (0x%4.4" PRIx64 ", %s): %s being asked whether we should report run.",
                          GetIndexID(), 
                          GetID(),
+                         StateAsCString(GetTemporaryResumeState()),
                          m_completed_plan_stack.back()->GetName());
                          
         return m_completed_plan_stack.back()->ShouldReportRun (event_ptr);
@@ -881,9 +898,10 @@ Thread::ShouldReportRun (Event* event_ptr)
     else
     {
         if (log)
-            log->Printf ("Current Plan for thread %d (0x%4.4" PRIx64 "): %s being asked whether we should report run.",
+            log->Printf ("Current Plan for thread %d (0x%4.4" PRIx64 ", %s): %s being asked whether we should report run.",
                          GetIndexID(), 
                          GetID(),
+                         StateAsCString(GetTemporaryResumeState()),
                          GetCurrentPlan()->GetName());
                          
         return GetCurrentPlan()->ShouldReportRun (event_ptr);
@@ -1501,6 +1519,10 @@ void
 Thread::ClearStackFrames ()
 {
     Mutex::Locker locker(m_frame_mutex);
+
+    Unwind *unwinder = GetUnwinder ();
+    if (unwinder)
+        unwinder->Clear();
 
     // Only store away the old "reference" StackFrameList if we got all its frames:
     // FIXME: At some point we can try to splice in the frames we have fetched into

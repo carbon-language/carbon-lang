@@ -36,7 +36,7 @@ public:
     void
     RefreshStateAfterStop();
 
-    bool
+    virtual void
     WillResume(lldb::StateType resume_state);
 
     const char *

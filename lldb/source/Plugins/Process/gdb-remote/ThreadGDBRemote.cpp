@@ -80,24 +80,14 @@ ThreadGDBRemote::GetQueueName ()
     return NULL;
 }
 
-bool
+void
 ThreadGDBRemote::WillResume (StateType resume_state)
 {
-    // Call the Thread::WillResume first. If we stop at a signal, the stop info
-    // class for signal will set the resume signal that we need below. The signal
-    // stuff obeys the Process::UnixSignal defaults. 
-    // If the thread's WillResume returns false, that means that we aren't going to actually resume,
-    // in which case we should not do the rest of our "resume" work.
-    
-    if (!Thread::WillResume(resume_state))
-        return false;
-    
-    ClearStackFrames();
-
     int signo = GetResumeSignal();
+    const lldb::user_id_t tid = GetProtocolID();
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (GDBR_LOG_THREAD));
     if (log)
-        log->Printf ("Resuming thread: %4.4" PRIx64 " with state: %s.", GetID(), StateAsCString(resume_state));
+        log->Printf ("Resuming thread: %4.4" PRIx64 " with state: %s.", tid, StateAsCString(resume_state));
 
     ProcessSP process_sp (GetProcess());
     if (process_sp)
@@ -112,24 +102,22 @@ ThreadGDBRemote::WillResume (StateType resume_state)
 
         case eStateRunning:
             if (gdb_process->GetUnixSignals().SignalIsValid (signo))
-                gdb_process->m_continue_C_tids.push_back(std::make_pair(GetID(), signo));
+                gdb_process->m_continue_C_tids.push_back(std::make_pair(tid, signo));
             else
-                gdb_process->m_continue_c_tids.push_back(GetID());
+                gdb_process->m_continue_c_tids.push_back(tid);
             break;
 
         case eStateStepping:
             if (gdb_process->GetUnixSignals().SignalIsValid (signo))
-                gdb_process->m_continue_S_tids.push_back(std::make_pair(GetID(), signo));
+                gdb_process->m_continue_S_tids.push_back(std::make_pair(tid, signo));
             else
-                gdb_process->m_continue_s_tids.push_back(GetID());
+                gdb_process->m_continue_s_tids.push_back(tid);
             break;
 
         default:
             break;
         }
-        return true;
     }
-    return false;
 }
 
 void
@@ -146,16 +134,6 @@ ThreadGDBRemote::RefreshStateAfterStop()
     const bool force = false;
     GetRegisterContext()->InvalidateIfNeeded (force);
 }
-
-void
-ThreadGDBRemote::ClearStackFrames ()
-{
-    Unwind *unwinder = GetUnwinder ();
-    if (unwinder)
-        unwinder->Clear();
-    Thread::ClearStackFrames();
-}
-
 
 bool
 ThreadGDBRemote::ThreadIDIsValid (lldb::tid_t thread)
@@ -245,7 +223,7 @@ ThreadGDBRemote::GetPrivateStopReason ()
 
             StringExtractorGDBRemote stop_packet;
             ProcessGDBRemote *gdb_process = static_cast<ProcessGDBRemote *>(process_sp.get());
-            if (gdb_process->GetGDBRemote().GetThreadStopInfo(GetID(), stop_packet))
+            if (gdb_process->GetGDBRemote().GetThreadStopInfo(GetProtocolID(), stop_packet))
                 gdb_process->SetThreadStopInfo (stop_packet);
         }
     }

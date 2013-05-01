@@ -70,7 +70,7 @@ public:
         return NULL;
     }
 
-    virtual bool
+    virtual void
     WillResume (lldb::StateType resume_state);
 
     virtual void
@@ -78,6 +78,14 @@ public:
     {
         if (m_backing_thread_sp)
             m_backing_thread_sp->DidResume();
+    }
+    
+    virtual lldb::user_id_t
+    GetProtocolID () const
+    {
+        if (m_backing_thread_sp)
+            return m_backing_thread_sp->GetProtocolID();
+        return Thread::GetProtocolID();
     }
 
     virtual void
@@ -90,6 +98,9 @@ public:
     }
     
     virtual void
+    ClearStackFrames ();
+
+    virtual void
     ClearBackingThread ()
     {
         m_backing_thread_sp.reset();
@@ -98,6 +109,7 @@ public:
     virtual bool
     SetBackingThread (const lldb::ThreadSP &thread_sp)
     {
+        //printf ("Thread 0x%llx is being backed by thread 0x%llx\n", GetID(), thread_sp->GetID());
         m_backing_thread_sp = thread_sp;
         return (bool)thread_sp;
     }
@@ -109,6 +121,14 @@ public:
     }
 
 protected:
+    
+    virtual bool
+    IsOperatingSystemPluginThread () const
+    {
+        return true;
+    }
+    
+
     //------------------------------------------------------------------
     // For ThreadMemory and subclasses
     //------------------------------------------------------------------
