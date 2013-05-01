@@ -25,7 +25,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-typedef struct LLVMTargetMachine *LLVMTargetMachineRef;
+typedef struct LLVMOpaqueTargetMachine *LLVMTargetMachineRef;
 typedef struct LLVMTarget *LLVMTargetRef;
 
 typedef enum {
