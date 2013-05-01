@@ -34,7 +34,6 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.register_expressions()
 
-    @expectedFailureLinux # bugzilla 14600 - Convenience registers not supported on Linux
     def test_convenience_registers(self):
         """Test convenience registers."""
         if not self.getArchitecture() in ['x86_64']:
@@ -42,7 +41,7 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.convenience_registers()
 
-    @expectedFailureLinux # bugzilla 14600 - Convenience registers not supported on Linux
+    @expectedFailureLinux # bugzilla 14600 - Convenience registers not fully supported on Linux
     def test_convenience_registers_with_process_attach(self):
         """Test convenience registers after a 'process attach'."""
         if not self.getArchitecture() in ['x86_64']:
@@ -168,23 +167,18 @@ class RegisterCommandsTestCase(TestBase):
         """Test convenience registers."""
         self.common_setup()
 
-        # The vanilla "register read" command does not output derived register like eax.
-        self.expect("register read", matching=False,
-            substrs = ['eax'])
-        # While "register read -a" does output derived register like eax.
+        # The command "register read -a" does output a derived register like eax.
         self.expect("register read -a", matching=True,
             substrs = ['eax'])
-        
+
         # Test reading of rax and eax.
         self.expect("register read rax eax",
             substrs = ['rax = 0x', 'eax = 0x'])
 
         # Now write rax with a unique bit pattern and test that eax indeed represents the lower half of rax.
         self.runCmd("register write rax 0x1234567887654321")
-        self.expect("expr -- ($rax & 0xffffffff) == $eax",
-            substrs = ['true'])
-        self.expect("expr -- $ax == (($ah << 8) | $al)",
-            substrs = ['true'])
+        self.expect("register read rax 0x1234567887654321",
+            substrs = ['0x1234567887654321'])
 
     def convenience_registers_with_process_attach(self):
         """Test convenience registers after a 'process attach'."""
@@ -202,6 +196,14 @@ class RegisterCommandsTestCase(TestBase):
         # Check that "register read eax" works.
         self.runCmd("register read eax")
 
+        # The vanilla "register read" command should not output derived registers like eax.
+        self.expect("register read", matching=False,
+            substrs = ['eax'])
+        
+        self.expect("expr -- ($rax & 0xffffffff) == $eax",
+            substrs = ['true'])
+        self.expect("expr -- $ax == (($ah << 8) | $al)",
+            substrs = ['true'])
 
 if __name__ == '__main__':
     import atexit
