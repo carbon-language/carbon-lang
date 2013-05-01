@@ -117,7 +117,7 @@ public:
   /// argument type.
   static bool isValidArgumentType(Type *ArgTy);
 
-  bool isVarArg() const { return getSubclassData(); }
+  bool isVarArg() const { return getSubclassData()!=0; }
   Type *getReturnType() const { return ContainedTys[0]; }
 
   typedef Type::subtype_iterator param_iterator;
