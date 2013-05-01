@@ -9122,6 +9122,45 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
   if (ISD::allOperandsUndef(N))
     return DAG.getUNDEF(N->getValueType(0));
 
+  // Type legalization of vectors and DAG canonicalization of SHUFFLE_VECTOR
+  // nodes often generate nop CONCAT_VECTOR nodes.
+  // Scan the CONCAT_VECTOR operands and look for a CONCAT operations that
+  // place the incoming vectors at the exact same location.
+  SDValue SingleSource = SDValue();
+  unsigned PartNumElem = N->getOperand(0).getValueType().getVectorNumElements();
+
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    SDValue Op = N->getOperand(i);
+
+    if (Op.getOpcode() == ISD::UNDEF)
+      continue;
+
+    // Check if this is the identity extract:
+    if (Op.getOpcode() != ISD::EXTRACT_SUBVECTOR)
+      return SDValue();
+
+    // Find the single incoming vector for the extract_subvector.
+    if (SingleSource.getNode()) {
+      if (Op.getOperand(0) != SingleSource)
+        return SDValue();
+    } else {
+      SingleSource = Op.getOperand(0);
+    }
+
+    unsigned IdentityIndex = i * PartNumElem;
+    ConstantSDNode *CS = dyn_cast<ConstantSDNode>(Op.getOperand(1));
+    // The extract index must be constant.
+    if (!CS)
+      return SDValue();
+    
+    // Check that we are reading from the identity index.
+    if (CS->getZExtValue() != IdentityIndex)
+      return SDValue();
+  }
+
+  if (SingleSource.getNode())
+    return SingleSource;
+  
   return SDValue();
 }
 
