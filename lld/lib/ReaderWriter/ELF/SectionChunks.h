@@ -775,6 +775,10 @@ template <class ELFT>
 void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
                                   uint64_t addr, const AtomLayout *atomLayout) {
   Elf_Sym symbol;
+
+  if (atom->name().empty())
+    return;
+
   symbol.st_name = _stringSection->addString(atom->name());
   symbol.st_size = 0;
   symbol.st_shndx = sectionIndex;

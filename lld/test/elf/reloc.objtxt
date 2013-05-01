@@ -1,10 +1,18 @@
 RUN: lld -flavor gnu --merge-strings -r -emit-yaml %p/Inputs/reloc-test.elf-i386 | FileCheck %s -check-prefix ELF-i386
 
 ELF-i386: defined-atoms:   
-ELF-i386:   - ref-name:        [[STRNAME:[-a-zA-Z0-9_]+]]
+ELF-i386:   - ref-name:        [[STRNAMEA:[-a-zA-Z0-9_]+]]
 ELF-i386:     type:            constant
 ELF-i386:     content:         [ 68, 65, 6C, 6C, 6F, 20, 77, 6F, 72, 6C, 64, 00 ]
 ELF-i386:     merge:           by-content
+ELF-i386:   - ref-name:        [[STRNAMEB:[-a-zA-Z0-9_]+]]
+ELF-i386:     alignment:       2^4
+ELF-i386:     section-choice:  custom-required
+ELF-i386:     section-name:    .text.startup
+ELF-i386:     references:      
+ELF-i386:       - kind:            layout-after
+ELF-i386:         offset:          0
+ELF-i386:         target:          main
 ELF-i386:   - name:            main
 ELF-i386:     scope:           global
 ELF-i386:     content:         [ 55, 89, E5, 83, E4, F0, 83, EC, 10, C7, 04, 24, 
@@ -16,14 +24,14 @@ ELF-i386:     section-name:    .text.startup
 ELF-i386:     references:      
 ELF-i386:       - kind:            R_X86_64_64
 ELF-i386:         offset:          12
-ELF-i386:         target:          [[STRNAME]]
+ELF-i386:         target:          [[STRNAMEA]]
 ELF-i386:       - kind:            R_X86_64_PC32
 ELF-i386:         offset:          17
 ELF-i386:         target:          puts
 ELF-i386:         addend:          252
 ELF-i386:       - kind:            layout-before
 ELF-i386:         offset:          0
-ELF-i386:         target:          .text.startup
+ELF-i386:         target:          [[STRNAMEB]]
 ELF-i386: undefined-atoms: 
 ELF-i386:   - name:            puts
 ELF-i386: absolute-atoms:  

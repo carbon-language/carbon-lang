@@ -9,8 +9,8 @@ RUN: FileCheck -check-prefix=WEAKATOMSORDER %s < %t2
 WEAKORDER: 0040020c T f
 WEAKORDER: 0040021c T g
 
-WEAKATOMSORDER:  - ref-name:        L002
-WEAKATOMSORDER:  - ref-name:        L003
+WEAKATOMSORDER:  - ref-name:        {{[A-Z0-9]+}}
+WEAKATOMSORDER:  - ref-name:        {{[A-Z0-9]+}}
 WEAKATOMSORDER:  - name:            f
 WEAKATOMSORDER:  - name:            g
 

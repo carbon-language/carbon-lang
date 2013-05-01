@@ -8,12 +8,12 @@ RUN: FileCheck -check-prefix=WEAKATOMSORDER %s < %t2
 
 WEAKORDER: 004001a4 T _start
 
-WEAKATOMSORDER:  - name:            .text
+WEAKATOMSORDER:  - ref-name:        [[TARGETA:[-a-zA-Z0-9_]+]]
 WEAKATOMSORDER:    alignment:       2^2
 WEAKATOMSORDER:    section-name:    .text
 WEAKATOMSORDER:      - kind:            layout-after
 WEAKATOMSORDER:        offset:          0
-WEAKATOMSORDER:        target:          L001
+WEAKATOMSORDER:        target:          [[TARGETB:[-a-zA-Z0-9_]+]]
 WEAKATOMSORDER:  - name:            _start
 WEAKATOMSORDER:    scope:           global
 WEAKATOMSORDER:    merge:           as-weak
@@ -22,8 +22,8 @@ WEAKATOMSORDER:    section-name:    .text
 WEAKATOMSORDER:    references:      
 WEAKATOMSORDER:      - kind:            layout-after
 WEAKATOMSORDER:        offset:          0
-WEAKATOMSORDER:        target:          L001
-WEAKATOMSORDER:  - ref-name:        L001
+WEAKATOMSORDER:        target:          [[TARGETB]]
+WEAKATOMSORDER:  - ref-name:        [[TARGETB]]
 WEAKATOMSORDER:    scope:           global
 WEAKATOMSORDER:    content:         [ C3 ]
 WEAKATOMSORDER:    alignment:       2^2
@@ -31,4 +31,4 @@ WEAKATOMSORDER:    section-name:    .text
 WEAKATOMSORDER:    references:      
 WEAKATOMSORDER:      - kind:            layout-before
 WEAKATOMSORDER:        offset:          0
-WEAKATOMSORDER:        target:          .text
+WEAKATOMSORDER:        target:          [[TARGETA]]

@@ -67,7 +67,7 @@ CHECKGOTPLT:        target:          fn2
 CHECKGOTPLT:      - kind:            R_HEX_32
 CHECKGOTPLT:        offset:          0
                     target:          .PLT0
-CHECKGOTPLT:  - name:            .text
+CHECKGOTPLT:  - ref-name:            {{[0-9A-Z]+}}
 CHECKGOTPLT:    alignment:       2^2
 CHECKGOTPLT:    section-name:    .text
 CHECKGOTPLT:    references:      
@@ -105,18 +105,18 @@ CHECKGOTPLT:        target:          _GLOBAL_OFFSET_TABLE_
 CHECKGOTPLT:        addend:          4
 CHECKGOTPLT:      - kind:            R_HEX_B32_PCREL_X
 CHECKGOTPLT:        offset:          16
-CHECKGOTPLT:        target:          .sbss.4
+CHECKGOTPLT:        target:          [[SBSS:[-a-zA-Z0-9_]+]]
 CHECKGOTPLT:      - kind:            R_HEX_6_PCREL_X
 CHECKGOTPLT:        offset:          20
-CHECKGOTPLT:        target:          .sbss.4
+CHECKGOTPLT:        target:          [[SBSS]]
 CHECKGOTPLT:        addend:          4
 CHECKGOTPLT:      - kind:            R_HEX_B32_PCREL_X
 CHECKGOTPLT:        offset:          28
-CHECKGOTPLT:        target:          .sbss.4
+CHECKGOTPLT:        target:          [[SBSS]]
 CHECKGOTPLT:        addend:          4
 CHECKGOTPLT:      - kind:            R_HEX_6_PCREL_X
 CHECKGOTPLT:        offset:          32
-CHECKGOTPLT:        target:          .sbss.4
+CHECKGOTPLT:        target:          [[SBSS]]
 CHECKGOTPLT:        addend:          8
 CHECKGOTPLT:      - kind:            R_HEX_GOT_32_6_X
 CHECKGOTPLT:        offset:          40

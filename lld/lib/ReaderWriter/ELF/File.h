@@ -336,9 +336,8 @@ public:
         sym->st_size = 0;
         ArrayRef<uint8_t> content((const uint8_t *)sectionContents.data(),
                                   sectionContents.size());
-        auto newAtom = new (_readerStorage)
-            ELFDefinedAtom<ELFT>(*this, sectionName, sectionName, sym, i.first,
-                                 content, 0, 0, _references);
+        auto newAtom = new (_readerStorage) ELFDefinedAtom<ELFT>(
+            *this, "", sectionName, sym, i.first, content, 0, 0, _references);
         newAtom->setOrdinal(++ordinal);
         _definedAtoms._atoms.push_back(newAtom);
         continue;
@@ -353,9 +352,10 @@ public:
 
       // i.first is the section the symbol lives in
       for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
-        StringRef symbolName;
-        if ((EC = _objFile->getSymbolName(i.first, *si, symbolName)))
-          return;
+        StringRef symbolName = "";
+        if ((*si)->getType() != llvm::ELF::STT_SECTION)
+          if ((EC = _objFile->getSymbolName(i.first, *si, symbolName)))
+            return;
 
         const Elf_Shdr *section = _objFile->getSection(*si);
 
