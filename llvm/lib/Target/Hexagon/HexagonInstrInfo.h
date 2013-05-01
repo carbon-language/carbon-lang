@@ -16,6 +16,7 @@
 
 #include "HexagonRegisterInfo.h"
 #include "MCTargetDesc/HexagonBaseInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
@@ -28,6 +29,8 @@ namespace llvm {
 class HexagonInstrInfo : public HexagonGenInstrInfo {
   const HexagonRegisterInfo RI;
   const HexagonSubtarget& Subtarget;
+  typedef unsigned Opcode_t;
+
 public:
   explicit HexagonInstrInfo(HexagonSubtarget &ST);
 
@@ -197,6 +200,9 @@ public:
   int getMaxValue(const MachineInstr *MI) const;
   bool NonExtEquivalentExists (const MachineInstr *MI) const;
   short getNonExtOpcode(const MachineInstr *MI) const;
+  bool PredOpcodeHasJMP_c(Opcode_t Opcode) const;
+  bool PredOpcodeHasNot(Opcode_t Opcode) const;
+
 private:
   int getMatchingCondBranchOpcode(int Opc, bool sense) const;
 

@@ -737,112 +737,153 @@ def XOR_pp : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1, PredRegs:$src2),
 // CR -
 //===----------------------------------------------------------------------===//
 
-
-//===----------------------------------------------------------------------===//
-// J +
-//===----------------------------------------------------------------------===//
-// Jump to address.
-let isBranch = 1, isTerminator=1, isBarrier = 1, isPredicable = 1 in {
-  def JMP : JInst< (outs),
-            (ins brtarget:$offset),
-            "jump $offset",
-            [(br bb:$offset)]>;
-}
-
-// if (p0) jump
-let isBranch = 1, isTerminator=1, Defs = [PC],
-    isPredicated = 1 in {
-  def JMP_c : JInst< (outs),
-                 (ins PredRegs:$src, brtarget:$offset),
-                 "if ($src) jump $offset",
-                 [(brcond (i1 PredRegs:$src), bb:$offset)]>;
-}
-
-// if (!p0) jump
-let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
-    isPredicated = 1 in {
-  def JMP_cNot : JInst< (outs),
-                    (ins PredRegs:$src, brtarget:$offset),
-                    "if (!$src) jump $offset",
-                    []>;
-}
-
-let isTerminator = 1, isBranch = 1, neverHasSideEffects = 1, Defs = [PC],
-    isPredicated = 1 in {
-  def BRCOND : JInst < (outs), (ins PredRegs:$pred, brtarget:$dst),
-               "if ($pred) jump $dst",
-               []>;
-}
-
-// Jump to address conditioned on new predicate.
-// if (p0) jump:t
-let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
-    isPredicated = 1 in {
-  def JMP_cdnPt : JInst< (outs),
-                   (ins PredRegs:$src, brtarget:$offset),
-                   "if ($src.new) jump:t $offset",
-                   []>;
-}
-
-// if (!p0) jump:t
-let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
-    isPredicated = 1 in {
-  def JMP_cdnNotPt : JInst< (outs),
-                      (ins PredRegs:$src, brtarget:$offset),
-                      "if (!$src.new) jump:t $offset",
-                      []>;
-}
-
-// Not taken.
-let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
-    isPredicated = 1 in {
-  def JMP_cdnPnt : JInst< (outs),
-                    (ins PredRegs:$src, brtarget:$offset),
-                    "if ($src.new) jump:nt $offset",
-                    []>;
-}
-
-// Not taken.
-let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
-    isPredicated = 1 in {
-  def JMP_cdnNotPnt : JInst< (outs),
-                       (ins PredRegs:$src, brtarget:$offset),
-                       "if (!$src.new) jump:nt $offset",
-                       []>;
-}
-//===----------------------------------------------------------------------===//
-// J -
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-// JR +
-//===----------------------------------------------------------------------===//
 def retflag : SDNode<"HexagonISD::RET_FLAG", SDTNone,
                                [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+def eh_return: SDNode<"HexagonISD::EH_RETURN", SDTNone,
+                      [SDNPHasChain]>;
 
-// Jump to address from register.
-let isPredicable =1, isReturn = 1, isTerminator = 1, isBarrier = 1,
-  Defs = [PC], Uses = [R31] in {
-  def JMPR: JRInst<(outs), (ins),
-                   "jumpr r31",
-                   [(retflag)]>;
+def SDHexagonBR_JT: SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
+def HexagonBR_JT: SDNode<"HexagonISD::BR_JT", SDHexagonBR_JT, [SDNPHasChain]>;
+
+let InputType = "imm", isBarrier = 1, isPredicable = 1,
+Defs = [PC], isExtendable = 1, opExtendable = 0, isExtentSigned = 1,
+opExtentBits = 24 in
+class T_JMP <dag InsDag, list<dag> JumpList = []>
+            : JInst<(outs), InsDag,
+            "jump $dst" , JumpList> {
+    bits<24> dst;
+
+    let IClass = 0b0101;
+
+    let Inst{27-25} = 0b100;
+    let Inst{24-16} = dst{23-15};
+    let Inst{13-1} = dst{14-2};
 }
 
-// Jump to address from register.
-let isReturn = 1, isTerminator = 1, isBarrier = 1, isPredicated = 1,
-  Defs = [PC], Uses = [R31] in {
-  def JMPR_cPt: JRInst<(outs), (ins PredRegs:$src1),
-                       "if ($src1) jumpr r31",
-                       []>;
+let InputType = "imm", isExtendable = 1, opExtendable = 1, isExtentSigned = 1,
+Defs = [PC], isPredicated = 1, opExtentBits = 17 in
+class T_JMP_c <bit PredNot, bit isPredNew, bit isTaken>:
+            JInst<(outs ), (ins PredRegs:$src, brtarget:$dst),
+            !if(PredNot, "if (!$src", "if ($src")#
+            !if(isPredNew, ".new) ", ") ")#"jump"#
+            !if(isPredNew, !if(isTaken, ":t ", ":nt "), " ")#"$dst"> {
+
+    let isBrTaken = !if(isPredNew, !if(isTaken, "true", "false"), "");
+    let isPredicatedFalse = PredNot;
+    let isPredicatedNew = isPredNew;
+    bits<2> src;
+    bits<17> dst;
+
+    let IClass = 0b0101;
+
+    let Inst{27-24} = 0b1100;
+    let Inst{21} = PredNot;
+    let Inst{12} = !if(isPredNew, isTaken, zero);
+    let Inst{11} = isPredNew;
+    let Inst{9-8} = src;
+    let Inst{23-22} = dst{16-15};
+    let Inst{20-16} = dst{14-10};
+    let Inst{13} = dst{9};
+    let Inst{7-1} = dst{8-2};
+  }
+
+let isBarrier = 1, Defs = [PC], isPredicable = 1, InputType = "reg" in
+class T_JMPr<dag InsDag = (ins IntRegs:$dst)>
+            : JRInst<(outs ), InsDag,
+            "jumpr $dst" ,
+            []> {
+    bits<5> dst;
+
+    let IClass = 0b0101;
+    let Inst{27-21} = 0b0010100;
+    let Inst{20-16} = dst;
 }
 
-// Jump to address from register.
-let isReturn = 1, isTerminator = 1, isBarrier = 1, isPredicated = 1,
-  Defs = [PC], Uses = [R31] in {
-  def JMPR_cNotPt: JRInst<(outs), (ins PredRegs:$src1),
-                          "if (!$src1) jumpr r31",
-                          []>;
+let Defs = [PC], isPredicated = 1, InputType = "reg" in
+class T_JMPr_c <bit PredNot, bit isPredNew, bit isTaken>:
+            JRInst <(outs ), (ins PredRegs:$src, IntRegs:$dst),
+            !if(PredNot, "if (!$src", "if ($src")#
+            !if(isPredNew, ".new) ", ") ")#"jumpr"#
+            !if(isPredNew, !if(isTaken, ":t ", ":nt "), " ")#"$dst"> {
+
+    let isBrTaken = !if(isPredNew, !if(isTaken, "true", "false"), "");
+    let isPredicatedFalse = PredNot;
+    let isPredicatedNew = isPredNew;
+    bits<2> src;
+    bits<5> dst;
+
+    let IClass = 0b0101;
+
+    let Inst{27-22} = 0b001101;
+    let Inst{21} = PredNot;
+    let Inst{20-16} = dst;
+    let Inst{12} = !if(isPredNew, isTaken, zero);
+    let Inst{11} = isPredNew;
+    let Inst{9-8} = src;
+    let Predicates = !if(isPredNew, [HasV3T], [HasV2T]);
+    let validSubTargets = !if(isPredNew, HasV3SubT, HasV2SubT);
 }
+
+multiclass JMP_Pred<bit PredNot> {
+  def _#NAME : T_JMP_c<PredNot, 0, 0>;
+  // Predicate new
+  def _#NAME#new_t  : T_JMP_c<PredNot, 1, 1>; // taken
+  def _#NAME#new_nt : T_JMP_c<PredNot, 1, 0>; // not taken
+}
+
+multiclass JMP_base<string BaseOp> {
+  let BaseOpcode = BaseOp in {
+    def NAME : T_JMP<(ins brtarget:$dst), [(br bb:$dst)]>;
+    defm t : JMP_Pred<0>;
+    defm f : JMP_Pred<1>;
+  }
+}
+
+multiclass JMPR_Pred<bit PredNot> {
+  def NAME: T_JMPr_c<PredNot, 0, 0>;
+  // Predicate new
+  def NAME#new_tV3  : T_JMPr_c<PredNot, 1, 1>; // taken
+  def NAME#new_ntV3 : T_JMPr_c<PredNot, 1, 0>; // not taken
+}
+
+multiclass JMPR_base<string BaseOp> {
+  let BaseOpcode = BaseOp in {
+    def NAME : T_JMPr;
+    defm _t : JMPR_Pred<0>;
+    defm _f : JMPR_Pred<1>;
+  }
+}
+
+let isTerminator = 1, neverHasSideEffects = 1 in {
+let isBranch = 1 in
+defm JMP : JMP_base<"JMP">, PredNewRel;
+
+let isBranch = 1, isIndirectBranch = 1 in
+defm JMPR : JMPR_base<"JMPr">, PredNewRel;
+
+let isReturn = 1, isCodeGenOnly = 1 in
+defm JMPret : JMPR_base<"JMPret">, PredNewRel;
+}
+
+def : Pat<(retflag),
+          (JMPret (i32 R31))>;
+
+def : Pat <(brcond (i1 PredRegs:$src1), bb:$offset),
+      (JMP_t (i1 PredRegs:$src1), bb:$offset)>;
+
+// A return through builtin_eh_return.
+let isReturn = 1, isTerminator = 1, isBarrier = 1, neverHasSideEffects = 1,
+isCodeGenOnly = 1, Defs = [PC], Uses = [R28], isPredicable = 0 in
+def EH_RETURN_JMPR : T_JMPr;
+
+def : Pat<(eh_return),
+          (EH_RETURN_JMPR (i32 R31))>;
+
+def : Pat<(HexagonBR_JT (i32 IntRegs:$dst)),
+          (JMPR (i32 IntRegs:$dst))>;
+
+def : Pat<(brind (i32 IntRegs:$dst)),
+          (JMPR (i32 IntRegs:$dst))>;
 
 //===----------------------------------------------------------------------===//
 // JR -
@@ -1986,20 +2027,18 @@ let isCall = 1, neverHasSideEffects = 1,
               []>;
  }
 
-// Tail Calls.
-let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1 in {
-  def TCRETURNtg : JInst<(outs), (ins calltarget:$dst),
-             "jump $dst // TAILCALL", []>;
-}
-let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1 in {
-  def TCRETURNtext : JInst<(outs), (ins calltarget:$dst),
-             "jump $dst // TAILCALL", []>;
+
+// Indirect tail-call.
+let isCodeGenOnly = 1, isCall = 1, isReturn = 1  in
+def TCRETURNR : T_JMPr;
+
+// Direct tail-calls.
+let isCall = 1, isReturn = 1, isBarrier = 1, isPredicable = 0,
+isTerminator = 1, isCodeGenOnly = 1 in {
+  def TCRETURNtg   : T_JMP<(ins calltarget:$dst)>;
+  def TCRETURNtext : T_JMP<(ins calltarget:$dst)>;
 }
 
-let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1 in {
-  def TCRETURNR : JInst<(outs), (ins IntRegs:$dst),
-             "jumpr $dst // TAILCALL", []>;
-}
 // Map call instruction.
 def : Pat<(call (i32 IntRegs:$dst)),
       (CALLR (i32 IntRegs:$dst))>, Requires<[HasV2TOnly]>;
@@ -2124,7 +2163,7 @@ def : Pat <(select (not (i1 PredRegs:$src1)), IntRegs:$src2, s12ImmPred:$src3),
 
 // Map from p0 = pnot(p0); if (p0) jump => if (!p0) jump.
 def : Pat <(brcond (not (i1 PredRegs:$src1)), bb:$offset),
-      (JMP_cNot (i1 PredRegs:$src1), bb:$offset)>;
+      (JMP_f (i1 PredRegs:$src1), bb:$offset)>;
 
 // Map from p2 = pnot(p2); p1 = and(p0, p2) => p1 = and(p0, !p2).
 def : Pat <(and (i1 PredRegs:$src1), (not (i1 PredRegs:$src2))),
@@ -2157,46 +2196,46 @@ def : Pat <(i64 (sext_inreg (i64 DoubleRegs:$src1), i8)),
                                                  subreg_loreg))))))>;
 
 // We want to prevent emitting pnot's as much as possible.
-// Map brcond with an unsupported setcc to a JMP_cNot.
+// Map brcond with an unsupported setcc to a JMP_f.
 def : Pat <(brcond (i1 (setne (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
                         bb:$offset),
-      (JMP_cNot (CMPEQrr (i32 IntRegs:$src1), (i32 IntRegs:$src2)),
+      (JMP_f (CMPEQrr (i32 IntRegs:$src1), (i32 IntRegs:$src2)),
                 bb:$offset)>;
 
 def : Pat <(brcond (i1 (setne (i32 IntRegs:$src1), s10ImmPred:$src2)),
                         bb:$offset),
-      (JMP_cNot (CMPEQri (i32 IntRegs:$src1), s10ImmPred:$src2), bb:$offset)>;
+      (JMP_f (CMPEQri (i32 IntRegs:$src1), s10ImmPred:$src2), bb:$offset)>;
 
 def : Pat <(brcond (i1 (setne (i1 PredRegs:$src1), (i1 -1))), bb:$offset),
-      (JMP_cNot (i1 PredRegs:$src1), bb:$offset)>;
+      (JMP_f (i1 PredRegs:$src1), bb:$offset)>;
 
 def : Pat <(brcond (i1 (setne (i1 PredRegs:$src1), (i1 0))), bb:$offset),
-      (JMP_c (i1 PredRegs:$src1), bb:$offset)>;
+      (JMP_t (i1 PredRegs:$src1), bb:$offset)>;
 
 // cmp.lt(Rs, Imm) -> !cmp.ge(Rs, Imm) -> !cmp.gt(Rs, Imm-1)
 def : Pat <(brcond (i1 (setlt (i32 IntRegs:$src1), s8ImmPred:$src2)),
                         bb:$offset),
-      (JMP_cNot (CMPGTri (i32 IntRegs:$src1),
+      (JMP_f (CMPGTri (i32 IntRegs:$src1),
                 (DEC_CONST_SIGNED s8ImmPred:$src2)), bb:$offset)>;
 
 // cmp.lt(r0, r1) -> cmp.gt(r1, r0)
 def : Pat <(brcond (i1 (setlt (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
                         bb:$offset),
-      (JMP_c (CMPGTrr (i32 IntRegs:$src2), (i32 IntRegs:$src1)), bb:$offset)>;
+      (JMP_t (CMPGTrr (i32 IntRegs:$src2), (i32 IntRegs:$src1)), bb:$offset)>;
 
 def : Pat <(brcond (i1 (setuge (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
                    bb:$offset),
-      (JMP_cNot (CMPGTU64rr (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1)),
+      (JMP_f (CMPGTU64rr (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1)),
                    bb:$offset)>;
 
 def : Pat <(brcond (i1 (setule (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
                         bb:$offset),
-      (JMP_cNot (CMPGTUrr (i32 IntRegs:$src1), (i32 IntRegs:$src2)),
+      (JMP_f (CMPGTUrr (i32 IntRegs:$src1), (i32 IntRegs:$src2)),
                 bb:$offset)>;
 
 def : Pat <(brcond (i1 (setule (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
                    bb:$offset),
-      (JMP_cNot (CMPGTU64rr (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
+      (JMP_f (CMPGTU64rr (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
                 bb:$offset)>;
 
 // Map from a 64-bit select to an emulated 64-bit mux.
@@ -2644,19 +2683,6 @@ def ARGEXTEND : ALU32_rr <(outs IntRegs:$dst), (ins IntRegs:$src1),
 let AddedComplexity = 100 in
 def : Pat<(i32 (sext_inreg (Hexagon_ARGEXTEND (i32 IntRegs:$src1)), i16)),
       (COPY (i32 IntRegs:$src1))>;
-
-def SDHexagonBR_JT: SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
-def HexagonBR_JT: SDNode<"HexagonISD::BR_JT", SDHexagonBR_JT, [SDNPHasChain]>;
-
-let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1 in
-def BR_JT : JRInst<(outs), (ins IntRegs:$src),
-                   "jumpr $src",
-                   [(HexagonBR_JT (i32 IntRegs:$src))]>;
-
-let isBranch=1, isIndirectBranch=1, isTerminator=1 in
-def BRIND : JRInst<(outs), (ins IntRegs:$src),
-                   "jumpr $src",
-                   [(brind (i32 IntRegs:$src))]>;
 
 def HexagonWrapperJT: SDNode<"HexagonISD::WrapperJT", SDTIntUnaryOp>;
 

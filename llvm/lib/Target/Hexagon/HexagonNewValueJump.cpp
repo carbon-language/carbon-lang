@@ -373,12 +373,12 @@ bool HexagonNewValueJump::runOnMachineFunction(MachineFunction &MF) {
       DEBUG(dbgs() << "Instr: "; MI->dump(); dbgs() << "\n");
 
       if (!foundJump &&
-         (MI->getOpcode() == Hexagon::JMP_c ||
-          MI->getOpcode() == Hexagon::JMP_cNot ||
-          MI->getOpcode() == Hexagon::JMP_cdnPt ||
-          MI->getOpcode() == Hexagon::JMP_cdnPnt ||
-          MI->getOpcode() == Hexagon::JMP_cdnNotPt ||
-          MI->getOpcode() == Hexagon::JMP_cdnNotPnt)) {
+         (MI->getOpcode() == Hexagon::JMP_t ||
+          MI->getOpcode() == Hexagon::JMP_f ||
+          MI->getOpcode() == Hexagon::JMP_tnew_t ||
+          MI->getOpcode() == Hexagon::JMP_tnew_nt ||
+          MI->getOpcode() == Hexagon::JMP_fnew_t ||
+          MI->getOpcode() == Hexagon::JMP_fnew_nt)) {
         // This is where you would insert your compare and
         // instr that feeds compare
         jmpPos = MII;
@@ -414,9 +414,9 @@ bool HexagonNewValueJump::runOnMachineFunction(MachineFunction &MF) {
 
         jmpTarget = MI->getOperand(1).getMBB();
         foundJump = true;
-        if (MI->getOpcode() == Hexagon::JMP_cNot ||
-            MI->getOpcode() == Hexagon::JMP_cdnNotPt ||
-            MI->getOpcode() == Hexagon::JMP_cdnNotPnt) {
+        if (MI->getOpcode() == Hexagon::JMP_f ||
+            MI->getOpcode() == Hexagon::JMP_fnew_t ||
+            MI->getOpcode() == Hexagon::JMP_fnew_nt) {
           invertPredicate = true;
         }
         continue;

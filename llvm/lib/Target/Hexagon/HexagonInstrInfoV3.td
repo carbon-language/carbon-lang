@@ -11,6 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+def callv3 : SDNode<"HexagonISD::CALLv3", SDT_SPCall,
+           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
+
+def callv3nr : SDNode<"HexagonISD::CALLv3nr", SDT_SPCall,
+           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
 
 //===----------------------------------------------------------------------===//
 // J +
@@ -39,41 +44,6 @@ let isCall = 1, neverHasSideEffects = 1,
               "callr $dst",
               []>, Requires<[HasV3TOnly]>;
  }
-
-
-// Jump to address from register
-// if(p?.new) jumpr:t r?
-let isReturn = 1, isTerminator = 1, isBarrier = 1,
-  Defs = [PC], Uses = [R31] in {
-  def JMPR_cdnPt_V3: JRInst<(outs), (ins PredRegs:$src1, IntRegs:$src2),
-                       "if ($src1.new) jumpr:t $src2",
-                       []>, Requires<[HasV3T]>;
-}
-
-// if (!p?.new) jumpr:t r?
-let isReturn = 1, isTerminator = 1, isBarrier = 1,
-  Defs = [PC], Uses = [R31] in {
-  def JMPR_cdnNotPt_V3: JRInst<(outs), (ins PredRegs:$src1, IntRegs:$src2),
-                       "if (!$src1.new) jumpr:t $src2",
-                       []>, Requires<[HasV3T]>;
-}
-
-// Not taken.
-// if(p?.new) jumpr:nt r?
-let isReturn = 1, isTerminator = 1, isBarrier = 1,
-  Defs = [PC], Uses = [R31] in {
-  def JMPR_cdnPnt: JRInst<(outs), (ins PredRegs:$src1, IntRegs:$src2),
-                       "if ($src1.new) jumpr:nt $src2",
-                       []>, Requires<[HasV3T]>;
-}
-
-// if (!p?.new) jumpr:nt r?
-let isReturn = 1, isTerminator = 1, isBarrier = 1,
-  Defs = [PC], Uses = [R31] in {
-  def JMPR_cdnNotPnt: JRInst<(outs), (ins PredRegs:$src1, IntRegs:$src2),
-                       "if (!$src1.new) jumpr:nt $src2",
-                       []>, Requires<[HasV3T]>;
-}
 
 //===----------------------------------------------------------------------===//
 // JR -

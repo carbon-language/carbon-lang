@@ -189,7 +189,7 @@ void HexagonFrameLowering::emitEpilogue(MachineFunction &MF,
 
     // Replace 'jumpr r31' instruction with dealloc_return for V4 and higher
     // versions.
-    if (STI.hasV4TOps() && MBBI->getOpcode() == Hexagon::JMPR
+    if (STI.hasV4TOps() && MBBI->getOpcode() == Hexagon::JMPret
                         && !DisableDeallocRet) {
       // Remove jumpr node.
       MBB.erase(MBBI);

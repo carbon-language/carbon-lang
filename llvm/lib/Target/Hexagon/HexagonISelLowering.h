@@ -62,7 +62,8 @@ namespace llvm {
       WrapperShuffEH,
       WrapperShuffOB,
       WrapperShuffOH,
-      TC_RETURN
+      TC_RETURN,
+      EH_RETURN
     };
   }
 
@@ -101,6 +102,7 @@ namespace llvm {
     SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerINLINEASM(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerEH_LABEL(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFormalArguments(SDValue Chain,
                                  CallingConv::ID CallConv, bool isVarArg,
                                  const SmallVectorImpl<ISD::InputArg> &Ins,

@@ -89,7 +89,7 @@ def getPredOpcode : InstrMapping {
 //
 def getPredNewOpcode : InstrMapping {
   let FilterClass = "PredNewRel";
-  let RowFields = ["BaseOpcode", "PredSense", "isNVStore"];
+  let RowFields = ["BaseOpcode", "PredSense", "isNVStore", "isBrTaken"];
   let ColFields = ["PNewValue"];
   let KeyCol = [""];
   let ValueCols = [["new"]];

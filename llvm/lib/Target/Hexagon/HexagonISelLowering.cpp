@@ -1353,7 +1353,6 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
 
     }
 
-    setOperationAction(ISD::BRIND, MVT::Other, Expand);
     if (EmitJumpTables) {
       setOperationAction(ISD::BR_JT, MVT::Other, Custom);
     } else {
@@ -1435,7 +1434,7 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
     setOperationAction(ISD::EXCEPTIONADDR, MVT::i32, Expand);
     setOperationAction(ISD::EHSELECTION,   MVT::i32, Expand);
 
-    setOperationAction(ISD::EH_RETURN,     MVT::Other, Expand);
+    setOperationAction(ISD::EH_RETURN,     MVT::Other, Custom);
 
     if (TM.getSubtargetImpl()->isSubtargetV2()) {
       setExceptionPointerRegister(Hexagon::R20);
@@ -1490,6 +1489,7 @@ HexagonTargetLowering::getTargetNodeName(unsigned Opcode) const {
     case HexagonISD::RET_FLAG:    return "HexagonISD::RET_FLAG";
     case HexagonISD::BR_JT:       return "HexagonISD::BR_JT";
     case HexagonISD::TC_RETURN:   return "HexagonISD::TC_RETURN";
+  case HexagonISD::EH_RETURN: return "HexagonISD::EH_RETURN";
   }
 }
 
@@ -1511,10 +1511,38 @@ bool HexagonTargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
 }
 
 SDValue
+HexagonTargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
+  SDValue Chain     = Op.getOperand(0);
+  SDValue Offset    = Op.getOperand(1);
+  SDValue Handler   = Op.getOperand(2);
+  DebugLoc dl       = Op.getDebugLoc();
+
+  // Mark function as containing a call to EH_RETURN.
+  HexagonMachineFunctionInfo *FuncInfo =
+    DAG.getMachineFunction().getInfo<HexagonMachineFunctionInfo>();
+  FuncInfo->setHasEHReturn();
+
+  unsigned OffsetReg = Hexagon::R28;
+
+  SDValue StoreAddr = DAG.getNode(ISD::ADD, dl, getPointerTy(),
+                                  DAG.getRegister(Hexagon::R30, getPointerTy()),
+                                  DAG.getIntPtrConstant(4));
+  Chain = DAG.getStore(Chain, dl, Handler, StoreAddr, MachinePointerInfo(),
+                       false, false, 0);
+  Chain = DAG.getCopyToReg(Chain, dl, OffsetReg, Offset);
+
+  // Not needed we already use it as explict input to EH_RETURN.
+  // MF.getRegInfo().addLiveOut(OffsetReg);
+
+  return DAG.getNode(HexagonISD::EH_RETURN, dl, MVT::Other, Chain);
+}
+
+SDValue
 HexagonTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
     default: llvm_unreachable("Should not custom lower this!");
     case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
+    case ISD::EH_RETURN:          return LowerEH_RETURN(Op, DAG);
       // Frame & Return address.  Currently unimplemented.
     case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
     case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);

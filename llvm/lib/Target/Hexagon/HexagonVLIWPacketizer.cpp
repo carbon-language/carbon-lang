@@ -857,17 +857,17 @@ static int GetDotNewPredOp(const int opc) {
     return Hexagon::STw_GP_cdnNotPt_V4;
 
   // Condtional Jumps
-  case Hexagon::JMP_c:
-    return Hexagon::JMP_cdnPt;
+  case Hexagon::JMP_t:
+    return Hexagon::JMP_f;
 
-  case Hexagon::JMP_cNot:
-    return Hexagon::JMP_cdnNotPt;
+  case Hexagon::JMP_f:
+    return Hexagon::JMP_fnew_t;
 
-  case Hexagon::JMPR_cPt:
-    return Hexagon::JMPR_cdnPt_V3;
+  case Hexagon::JMPR_t:
+    return Hexagon::JMPR_tnew_tV3;
 
-  case Hexagon::JMPR_cNotPt:
-    return Hexagon::JMPR_cdnNotPt_V3;
+  case Hexagon::JMPR_f:
+    return Hexagon::JMPR_fnew_tV3;
 
   // Conditional Transfers
   case Hexagon::TFR_cPt:
@@ -1306,17 +1306,17 @@ static int GetDotOldOp(const int opc) {
   case Hexagon::TFRI_cdnNotPt:
     return Hexagon::TFRI_cNotPt;
 
-  case Hexagon::JMP_cdnPt:
-    return Hexagon::JMP_c;
+  case Hexagon::JMP_tnew_t:
+    return Hexagon::JMP_t;
 
-  case Hexagon::JMP_cdnNotPt:
-    return Hexagon::JMP_cNot;
+  case Hexagon::JMP_fnew_t:
+    return Hexagon::JMP_f;
 
-  case Hexagon::JMPR_cdnPt_V3:
-    return Hexagon::JMPR_cPt;
+  case Hexagon::JMPR_tnew_tV3:
+    return Hexagon::JMPR_t;
 
-  case Hexagon::JMPR_cdnNotPt_V3:
-    return Hexagon::JMPR_cNotPt;
+  case Hexagon::JMPR_fnew_tV3:
+    return Hexagon::JMPR_f;
 
   // Load double word
 
@@ -1912,7 +1912,7 @@ static bool GetPredicateSense(MachineInstr* MI,
   case Hexagon::STrih_imm_cdnPt_V4 :
   case Hexagon::STriw_imm_cPt_V4 :
   case Hexagon::STriw_imm_cdnPt_V4 :
-  case Hexagon::JMP_cdnPt :
+  case Hexagon::JMP_tnew_t :
   case Hexagon::LDrid_cPt :
   case Hexagon::LDrid_cdnPt :
   case Hexagon::LDrid_indexed_cPt :
@@ -2051,7 +2051,7 @@ static bool GetPredicateSense(MachineInstr* MI,
   case Hexagon::STrih_imm_cdnNotPt_V4 :
   case Hexagon::STriw_imm_cNotPt_V4 :
   case Hexagon::STriw_imm_cdnNotPt_V4 :
-  case Hexagon::JMP_cdnNotPt :
+  case Hexagon::JMP_fnew_t :
   case Hexagon::LDrid_cNotPt :
   case Hexagon::LDrid_cdnNotPt :
   case Hexagon::LDrid_indexed_cNotPt :
