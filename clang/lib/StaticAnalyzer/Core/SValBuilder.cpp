@@ -224,6 +224,63 @@ loc::MemRegionVal SValBuilder::getCXXThis(const CXXRecordDecl *D,
   return loc::MemRegionVal(getRegionManager().getCXXThisRegion(PT, SFC));
 }
 
+Optional<SVal> SValBuilder::getConstantVal(const Expr *E) {
+  E = E->IgnoreParens();
+
+  switch (E->getStmtClass()) {
+  // Handle expressions that we treat differently from the AST's constant
+  // evaluator.
+  case Stmt::AddrLabelExprClass:
+    return makeLoc(cast<AddrLabelExpr>(E));
+
+  case Stmt::CXXScalarValueInitExprClass:
+  case Stmt::ImplicitValueInitExprClass:
+    return makeZeroVal(E->getType());
+
+  case Stmt::ObjCStringLiteralClass: {
+    const ObjCStringLiteral *SL = cast<ObjCStringLiteral>(E);
+    return makeLoc(getRegionManager().getObjCStringRegion(SL));
+  }
+
+  case Stmt::StringLiteralClass: {
+    const StringLiteral *SL = cast<StringLiteral>(E);
+    return makeLoc(getRegionManager().getStringRegion(SL));
+  }
+
+  // Fast-path some expressions to avoid the overhead of going through the AST's
+  // constant evaluator
+  case Stmt::CharacterLiteralClass: {
+    const CharacterLiteral *C = cast<CharacterLiteral>(E);
+    return makeIntVal(C->getValue(), C->getType());
+  }
+
+  case Stmt::CXXBoolLiteralExprClass:
+    return makeBoolVal(cast<CXXBoolLiteralExpr>(E));
+
+  case Stmt::IntegerLiteralClass:
+    return makeIntVal(cast<IntegerLiteral>(E));
+
+  case Stmt::ObjCBoolLiteralExprClass:
+    return makeBoolVal(cast<ObjCBoolLiteralExpr>(E));
+
+  case Stmt::CXXNullPtrLiteralExprClass:
+    return makeNull();
+
+  // If we don't have a special case, fall back to the AST's constant evaluator.
+  default: {
+    ASTContext &Ctx = getContext();
+    llvm::APSInt Result;
+    if (E->EvaluateAsInt(Result, Ctx))
+      return makeIntVal(Result);
+
+    if (E->isNullPointerConstant(Ctx, Expr::NPC_ValueDependentIsNotNull))
+      return makeNull();
+
+    return None;
+  }
+  }
+}
+
 //===----------------------------------------------------------------------===//
 
 SVal SValBuilder::makeSymExprValNN(ProgramStateRef State,

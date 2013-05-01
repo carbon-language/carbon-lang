@@ -1755,26 +1755,6 @@ SVal RegionStoreManager::getBindingForObjCIvar(RegionBindingsConstRef B,
   return getBindingForLazySymbol(R);
 }
 
-static Optional<SVal> getConstValue(SValBuilder &SVB, const VarDecl *VD) {
-  ASTContext &Ctx = SVB.getContext();
-  if (!VD->getType().isConstQualified())
-    return None;
-
-  const Expr *Init = VD->getInit();
-  if (!Init)
-    return None;
-
-  llvm::APSInt Result;
-  if (!Init->isGLValue() && Init->EvaluateAsInt(Result, Ctx))
-    return SVB.makeIntVal(Result);
-
-  if (Init->isNullPointerConstant(Ctx, Expr::NPC_ValueDependentIsNotNull))
-    return SVB.makeNull();
-
-  // FIXME: Handle other possible constant expressions.
-  return None;
-}
-
 SVal RegionStoreManager::getBindingForVar(RegionBindingsConstRef B,
                                           const VarRegion *R) {
 
@@ -1791,8 +1771,10 @@ SVal RegionStoreManager::getBindingForVar(RegionBindingsConstRef B,
     return svalBuilder.getRegionValueSymbolVal(R);
 
   // Is 'VD' declared constant?  If so, retrieve the constant value.
-  if (Optional<SVal> V = getConstValue(svalBuilder, VD))
-    return *V;
+  if (VD->getType().isConstQualified())
+    if (const Expr *Init = VD->getInit())
+      if (Optional<SVal> V = svalBuilder.getConstantVal(Init))
+        return *V;
 
   // This must come after the check for constants because closure-captured
   // constant variables may appear in UnknownSpaceRegion.

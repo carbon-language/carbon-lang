@@ -24,11 +24,17 @@ Foo aFunction() {
 // they are defined in system headers and take the const pointer to the
 // allocated memory. (radar://11160612)
 // Test default parameter.
-int const_ptr_and_callback_def_param(int, const char*, int n, void(*)(void*) = 0);
+int const_ptr_and_callback_def_param(int, const char*, int n, void(*)(void*) = free);
 void r11160612_3() {
   char *x = (char*)malloc(12);
   const_ptr_and_callback_def_param(0, x, 12);
 }
+
+int const_ptr_and_callback_def_param_null(int, const char*, int n, void(*)(void*) = 0);
+void r11160612_no_callback() {
+  char *x = (char*)malloc(12);
+  const_ptr_and_callback_def_param_null(0, x, 12);
+} // expected-warning{{leak}}
 
 // Test member function pointer.
 struct CanFreeMemory {
