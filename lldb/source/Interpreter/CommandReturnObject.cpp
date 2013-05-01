@@ -106,7 +106,7 @@ CommandReturnObject::AppendWarningWithFormat (const char *format, ...)
 void
 CommandReturnObject::AppendMessage (const char *in_string)
 {
-    if (!in_string || *in_string == '\0')
+    if (!in_string)
         return;
     GetOutputStream().Printf("%s\n", in_string);
 }
