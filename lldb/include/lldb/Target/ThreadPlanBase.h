@@ -37,7 +37,6 @@ public:
     virtual bool ValidatePlan (Stream *error);
     virtual bool PlanExplainsStop (Event *event_ptr);
     virtual bool ShouldStop (Event *event_ptr);
-    virtual Vote ShouldReportStop (Event *event_ptr);
     virtual bool StopOthers ();
     virtual lldb::StateType GetPlanRunState ();
     virtual bool WillStop ();
