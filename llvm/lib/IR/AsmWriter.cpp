@@ -1608,7 +1608,22 @@ void AssemblyWriter::printFunction(const Function *F) {
   const AttributeSet &Attrs = F->getAttributes();
   if (Attrs.hasAttributes(AttributeSet::FunctionIndex)) {
     AttributeSet AS = Attrs.getFnAttributes();
-    std::string AttrStr = AS.getAsString(AttributeSet::FunctionIndex, false);
+    std::string AttrStr;
+
+    unsigned Idx = 0;
+    for (unsigned E = AS.getNumSlots(); Idx != E; ++Idx)
+      if (AS.getSlotIndex(Idx) == AttributeSet::FunctionIndex)
+        break;
+
+    for (AttributeSet::iterator I = AS.begin(Idx), E = AS.end(Idx);
+         I != E; ++I) {
+      Attribute Attr = *I;
+      if (!Attr.isStringAttribute()) {
+        if (!AttrStr.empty()) AttrStr += ' ';
+        AttrStr += Attr.getAsString();
+      }
+    }
+
     if (!AttrStr.empty())
       Out << "; Function Attrs: " << AttrStr << '\n';
   }
@@ -2142,8 +2157,7 @@ void AssemblyWriter::writeAllAttributeGroups() {
   for (std::vector<std::pair<AttributeSet, unsigned> >::iterator
          I = asVec.begin(), E = asVec.end(); I != E; ++I)
     Out << "attributes #" << I->second << " = { "
-        << I->first.getAsString(AttributeSet::FunctionIndex, true, true)
-        << " }\n";
+        << I->first.getAsString(AttributeSet::FunctionIndex, true) << " }\n";
 }
 
 //===----------------------------------------------------------------------===//
