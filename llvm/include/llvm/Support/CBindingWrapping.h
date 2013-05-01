@@ -1,4 +1,4 @@
-//===- llvm/Wrap.h - C++ Type Wrapping for the C Interface  -----*- C++ -*-===//
+//===- llvm/Support/CBindingWrapph.h - C Interface Wrapping -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
