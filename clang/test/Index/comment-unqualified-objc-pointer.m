@@ -1,6 +1,6 @@
 // RUN: rm -rf %t
 // RUN: mkdir %t
-// RUN: c-index-test -test-load-source all -comments-xml-schema=%S/../../bindings/xml/comment-xml-schema.rng -fobjc-arc %s > %t/out
+// RUN: c-index-test -test-load-source all -comments-xml-schema=%S/../../bindings/xml/comment-xml-schema.rng -fobjc-default-synthesize-properties -fobjc-arc %s > %t/out
 // RUN: FileCheck %s < %t/out
 // rdar://13757500
 
