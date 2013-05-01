@@ -486,7 +486,6 @@ namespace llvm {
                             unsigned uid) const;
     void EmitLLVMUsedList(const ConstantArray *InitList);
     void EmitXXStructorList(const Constant *List, bool isCtor);
-    void EmitTLSInitFuncs(const ConstantArray *InitList);
     GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
   };
 }
