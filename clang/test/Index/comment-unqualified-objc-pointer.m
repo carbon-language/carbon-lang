@@ -14,8 +14,8 @@
   NSString *Name;
 }
 //! This is WithLabel comment.
-- (NSString *)WithLabel:(NSString *)label;
-// CHECK: <Declaration>- (NSString *)WithLabel:(NSString *)label;</Declaration> 
+- (NSString *)WithLabel:(NSString * const)label;
+// CHECK: <Declaration>- (NSString *)WithLabel:(NSString *const)label;</Declaration> 
 
 //! This is a property to get the Name.
 @property (copy) NSString *Name;
@@ -29,7 +29,7 @@
 // CHECK: <Declaration>NSString *NickName</Declaration>
 }
 
-- (NSString *)WithLabel:(NSString *)label {
+- (NSString *)WithLabel:(NSString * const)label {
     return 0;
 }
 @synthesize Name = Name;

@@ -853,10 +853,6 @@ public:
     return *this;
   }
 
-  /// getUnqualifiedObjCPointerType - Returns the unqualified version if
-  /// Objective-C pointer type; otherwise, returns type as is.
-  inline QualType getUnqualifiedObjCPointerType() const;
-  
   /// operator==/!= - Indicate whether the specified types and qualifiers are
   /// identical.
   friend bool operator==(const QualType &LHS, const QualType &RHS) {
@@ -4650,11 +4646,6 @@ inline QualType QualType::getUnqualifiedType() const {
     return QualType(getTypePtr(), 0);
 
   return QualType(getSplitUnqualifiedTypeImpl(*this).Ty, 0);
-}
-
-inline QualType QualType::getUnqualifiedObjCPointerType() const {
-  return getTypePtr()->isObjCObjectPointerType() ?
-                            getUnqualifiedType() : *this;
 }
   
 inline SplitQualType QualType::getSplitUnqualifiedType() const {

@@ -617,7 +617,7 @@ void DeclPrinter::VisitFieldDecl(FieldDecl *D) {
   if (!Policy.SuppressSpecifiers && D->isModulePrivate())
     Out << "__module_private__ ";
 
-  Out << D->getType().getUnqualifiedObjCPointerType().
+  Out << D->getASTContext().getUnqualifiedObjCPointerType(D->getType()).
             stream(Policy, D->getName());
 
   if (D->isBitField()) {
@@ -662,7 +662,7 @@ void DeclPrinter::VisitVarDecl(VarDecl *D) {
       Out << "__module_private__ ";
   }
 
-  QualType T = D->getType().getUnqualifiedObjCPointerType();
+  QualType T = D->getASTContext().getUnqualifiedObjCPointerType(D->getType());
   if (ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D))
     T = Parm->getOriginalType();
   T.print(Out, Policy, D->getName());
@@ -911,7 +911,7 @@ void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
   else
     Out << "+ ";
   if (!OMD->getResultType().isNull())
-    Out << '(' << OMD->getResultType().getUnqualifiedObjCPointerType().
+    Out << '(' << OMD->getASTContext().getUnqualifiedObjCPointerType(OMD->getResultType()).
                     getAsString(Policy) << ")";
 
   std::string name = OMD->getSelector().getAsString();
@@ -921,7 +921,7 @@ void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
     // FIXME: selector is missing here!
     pos = name.find_first_of(':', lastPos);
     Out << " " << name.substr(lastPos, pos - lastPos);
-    Out << ":(" << (*PI)->getType().getUnqualifiedObjCPointerType().
+    Out << ":(" << (*PI)->getASTContext().getUnqualifiedObjCPointerType((*PI)->getType()).
                       getAsString(Policy) << ')' << **PI;
     lastPos = pos + 1;
   }
@@ -955,7 +955,7 @@ void DeclPrinter::VisitObjCImplementationDecl(ObjCImplementationDecl *OID) {
     Indentation += Policy.Indentation;
     for (ObjCImplementationDecl::ivar_iterator I = OID->ivar_begin(),
          E = OID->ivar_end(); I != E; ++I) {
-      Indent() << I->getType().getUnqualifiedObjCPointerType().
+      Indent() << I->getASTContext().getUnqualifiedObjCPointerType(I->getType()).
                     getAsString(Policy) << ' ' << **I << ";\n";
     }
     Indentation -= Policy.Indentation;
@@ -994,7 +994,7 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
     Indentation += Policy.Indentation;
     for (ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
          E = OID->ivar_end(); I != E; ++I) {
-      Indent() << I->getType().getUnqualifiedObjCPointerType().
+      Indent() << I->getASTContext().getUnqualifiedObjCPointerType(I->getType()).
                     getAsString(Policy) << ' ' << **I << ";\n";
     }
     Indentation -= Policy.Indentation;
@@ -1046,7 +1046,7 @@ void DeclPrinter::VisitObjCCategoryDecl(ObjCCategoryDecl *PID) {
     Indentation += Policy.Indentation;
     for (ObjCCategoryDecl::ivar_iterator I = PID->ivar_begin(),
          E = PID->ivar_end(); I != E; ++I) {
-      Indent() << I->getType().getUnqualifiedObjCPointerType().
+      Indent() << I->getASTContext().getUnqualifiedObjCPointerType(I->getType()).
                     getAsString(Policy) << ' ' << **I << ";\n";
     }
     Indentation -= Policy.Indentation;
@@ -1133,7 +1133,7 @@ void DeclPrinter::VisitObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
     (void) first; // Silence dead store warning due to idiomatic code.
     Out << " )";
   }
-  Out << ' ' << PDecl->getType().getUnqualifiedObjCPointerType().
+  Out << ' ' << PDecl->getASTContext().getUnqualifiedObjCPointerType(PDecl->getType()).
                   getAsString(Policy) << ' ' << *PDecl;
   if (Policy.PolishForDeclaration)
     Out << ';';
