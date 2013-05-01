@@ -91,12 +91,12 @@ public:
         E->getSelector() == zoneSel &&
         Pass.TA.hasDiagnostic(diag::err_unavailable,
                               diag::err_unavailable_message,
-                              E->getInstanceReceiver()->getExprLoc())) {
+                              E->getSelectorLoc(0))) {
       // Calling -zone is meaningless in ARC, change it to nil.
       Transaction Trans(Pass.TA);
       Pass.TA.clearDiagnostic(diag::err_unavailable,
                               diag::err_unavailable_message,
-                              E->getInstanceReceiver()->getExprLoc());
+                              E->getSelectorLoc(0));
       Pass.TA.replace(E->getSourceRange(), getNilString(Pass.Ctx));
     }
     return true;

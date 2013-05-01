@@ -26,7 +26,7 @@ void test(id p) {
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>10</integer>
-// CHECK:    <key>col</key><integer>4</integer>
+// CHECK:    <key>col</key><integer>6</integer>
 // CHECK:    <key>file</key><integer>0</integer>
 // CHECK:   </dict>
 // CHECK:    <key>ranges</key>
@@ -34,12 +34,12 @@ void test(id p) {
 // CHECK:     <array>
 // CHECK:      <dict>
 // CHECK:       <key>line</key><integer>10</integer>
-// CHECK:       <key>col</key><integer>6</integer>
+// CHECK:       <key>col</key><integer>4</integer>
 // CHECK:       <key>file</key><integer>0</integer>
 // CHECK:      </dict>
 // CHECK:      <dict>
 // CHECK:       <key>line</key><integer>10</integer>
-// CHECK:       <key>col</key><integer>12</integer>
+// CHECK:       <key>col</key><integer>4</integer>
 // CHECK:       <key>file</key><integer>0</integer>
 // CHECK:      </dict>
 // CHECK:     </array>

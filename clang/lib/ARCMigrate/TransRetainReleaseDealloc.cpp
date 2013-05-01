@@ -118,7 +118,7 @@ public:
       return true;
     case ObjCMessageExpr::SuperInstance: {
       Transaction Trans(Pass.TA);
-      clearDiagnostics(E->getSuperLoc());
+      clearDiagnostics(E->getSelectorLoc(0));
       if (tryRemoving(E))
         return true;
       Pass.TA.replace(E->getSourceRange(), "self");
@@ -132,7 +132,7 @@ public:
     if (!rec) return true;
 
     Transaction Trans(Pass.TA);
-    clearDiagnostics(rec->getExprLoc());
+    clearDiagnostics(E->getSelectorLoc(0));
 
     ObjCMessageExpr *Msg = E;
     Expr *RecContainer = Msg;

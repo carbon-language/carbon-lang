@@ -43,13 +43,13 @@ void test1(A *a, struct UnsafeS *unsafeS) {
 // CHECK-NEXT: Number FIXITs = 0
 // CHECK-NEXT: {{.*}}check-with-serialized-diag.m:34:4: error: [rewriter] it is not safe to remove 'retain' message on a global variable
 // CHECK-NEXT: Number FIXITs = 0
-// CHECK-NEXT: {{.*}}check-with-serialized-diag.m:32:4: error: ARC forbids explicit message send of 'retain'
-// CHECK-NEXT: Range: {{.*}}check-with-serialized-diag.m:32:23 {{.*}}check-with-serialized-diag.m:32:29
+// CHECK-NEXT: {{.*}}check-with-serialized-diag.m:32:23: error: ARC forbids explicit message send of 'retain'
+// CHECK-NEXT: Range: {{.*}}check-with-serialized-diag.m:32:4 {{.*}}check-with-serialized-diag.m:32:22
 // CHECK-NEXT: Number FIXITs = 0
-// CHECK-NEXT: {{.*}}check-with-serialized-diag.m:34:4: error: ARC forbids explicit message send of 'retain'
-// CHECK-NEXT: Range: {{.*}}check-with-serialized-diag.m:34:15 {{.*}}check-with-serialized-diag.m:34:21
+// CHECK-NEXT: {{.*}}check-with-serialized-diag.m:34:15: error: ARC forbids explicit message send of 'retain'
+// CHECK-NEXT: Range: {{.*}}check-with-serialized-diag.m:34:4 {{.*}}check-with-serialized-diag.m:34:14
 // CHECK-NEXT: Number FIXITs = 0
-// CHECK-NEXT: {{.*}}check-with-serialized-diag.m:35:4: error: ARC forbids explicit message send of 'retainCount'
-// CHECK-NEXT: Range: {{.*}}check-with-serialized-diag.m:35:6 {{.*}}check-with-serialized-diag.m:35:17
+// CHECK-NEXT: {{.*}}check-with-serialized-diag.m:35:6: error: ARC forbids explicit message send of 'retainCount'
+// CHECK-NEXT: Range: {{.*}}check-with-serialized-diag.m:35:4 {{.*}}check-with-serialized-diag.m:35:5
 // CHECK-NEXT: Number FIXITs = 0
 

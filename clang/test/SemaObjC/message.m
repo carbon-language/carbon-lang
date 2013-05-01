@@ -106,3 +106,15 @@ void foo5(id p) {
                  // expected-note {{to match this '['}} \
                  // expected-warning {{instance method '-bar' not found}}
 }
+
+@interface I1
+-(void)unavail_meth  __attribute__((unavailable)); // expected-note {{marked unavailable here}}
+@end
+
+// rdar://13620447
+void foo6(I1 *p) {
+  [p
+    bar]; // expected-warning {{instance method '-bar' not found}}
+  [p
+    unavail_meth]; // expected-error {{unavailable}}
+}
