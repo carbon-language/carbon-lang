@@ -1811,10 +1811,14 @@ PredicateInstruction(MachineInstr *MI,
   // It is better to have an assert here to check this. But I don't know how
   // to write this assert because findFirstPredOperandIdx() would return -1
   if (oper < -1) oper = -1;
+
   MI->getOperand(oper+1).ChangeToRegister(PredMO.getReg(), PredMO.isDef(),
-                                          PredMO.isImplicit(), PredMO.isKill(),
+                                          PredMO.isImplicit(), false,
                                           PredMO.isDead(), PredMO.isUndef(),
                                           PredMO.isDebug());
+
+  MachineRegisterInfo &RegInfo = MI->getParent()->getParent()->getRegInfo();
+  RegInfo.clearKillFlags(PredMO.getReg());
 
   if (hasGAOpnd)
   {
