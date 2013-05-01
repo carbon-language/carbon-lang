@@ -314,7 +314,7 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
     } else {
       Ctx.emitError(ErrMsg);
     }
-    report_fatal_error("Cannot handle scalar-to-vector conversion!");
+    return DAG.getUNDEF(ValueVT);
   }
 
   if (ValueVT.getVectorNumElements() == 1 &&
