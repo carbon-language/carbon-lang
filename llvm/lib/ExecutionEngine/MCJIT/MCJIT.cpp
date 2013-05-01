@@ -52,7 +52,8 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
 
 MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM,
              bool AllocateGVsWithCode)
-  : ExecutionEngine(m), TM(tm), Ctx(0), MemMgr(MM), Dyld(MM),
+  : ExecutionEngine(m), TM(tm), Ctx(0),
+    MemMgr(MM ? MM : new SectionMemoryManager()), Dyld(MemMgr),
     IsLoaded(false), M(m), ObjCache(0)  {
 
   setDataLayout(TM->getDataLayout());

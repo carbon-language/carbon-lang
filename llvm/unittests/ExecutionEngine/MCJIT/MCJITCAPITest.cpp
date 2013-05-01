@@ -64,7 +64,7 @@ TEST_F(MCJITCAPITest, simple_function) {
   LLVMDisposeBuilder(builder);
   
   LLVMMCJITCompilerOptions options;
-  memset(&options, 0, sizeof(options));
+  LLVMInitializeMCJITCompilerOptions(&options, sizeof(options));
   options.OptLevel = 2;
   
   // Just ensure that this field still exists.
