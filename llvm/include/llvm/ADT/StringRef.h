@@ -390,14 +390,14 @@ namespace llvm {
 
     /// Return a StringRef equal to 'this' but with the first \p N elements
     /// dropped.
-    StringRef drop_front(unsigned N = 1) const {
+    StringRef drop_front(size_t N = 1) const {
       assert(size() >= N && "Dropping more elements than exist");
       return substr(N);
     }
 
     /// Return a StringRef equal to 'this' but with the last \p N elements
     /// dropped.
-    StringRef drop_back(unsigned N = 1) const {
+    StringRef drop_back(size_t N = 1) const {
       assert(size() >= N && "Dropping more elements than exist");
       return substr(0, size()-N);
     }
