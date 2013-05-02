@@ -744,7 +744,7 @@ protected:
 OptionDefinition
 CommandObjectPlatformProcessList::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1            , true , "pid"        , 'p', required_argument, NULL, 0, eArgTypePid              , "List the process info for a specific process ID." },
+{ LLDB_OPT_SET_1            , false, "pid"        , 'p', required_argument, NULL, 0, eArgTypePid              , "List the process info for a specific process ID." },
 { LLDB_OPT_SET_2            , true , "name"       , 'n', required_argument, NULL, 0, eArgTypeProcessName      , "Find processes with executable basenames that match a string." },
 { LLDB_OPT_SET_3            , true , "ends-with"  , 'e', required_argument, NULL, 0, eArgTypeProcessName      , "Find processes with executable basenames that end with a string." },
 { LLDB_OPT_SET_4            , true , "starts-with", 's', required_argument, NULL, 0, eArgTypeProcessName      , "Find processes with executable basenames that start with a string." },
