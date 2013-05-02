@@ -1526,7 +1526,6 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
   BasicBlock *LoadBB = LI->getParent();
   BasicBlock *TmpBB = LoadBB;
 
-  bool allSingleSucc = true;
   while (TmpBB->getSinglePredecessor()) {
     TmpBB = TmpBB->getSinglePredecessor();
     if (TmpBB == LoadBB) // Infinite (unreachable) loop.
@@ -1615,37 +1614,14 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
     // pointer if it is not available.
     PHITransAddr Address(LI->getPointerOperand(), TD);
     Value *LoadPtr = 0;
-    if (allSingleSucc) {
-      LoadPtr = Address.PHITranslateWithInsertion(LoadBB, UnavailablePred,
-                                                  *DT, NewInsts);
-    } else {
-      Address.PHITranslateValue(LoadBB, UnavailablePred, DT);
-      LoadPtr = Address.getAddr();
-    }
+    LoadPtr = Address.PHITranslateWithInsertion(LoadBB, UnavailablePred,
+                                                *DT, NewInsts);
 
     // If we couldn't find or insert a computation of this phi translated value,
     // we fail PRE.
     if (LoadPtr == 0) {
       DEBUG(dbgs() << "COULDN'T INSERT PHI TRANSLATED VALUE OF: "
             << *LI->getPointerOperand() << "\n");
-      CanDoPRE = false;
-      break;
-    }
-
-    // Make sure it is valid to move this load here.  We have to watch out for:
-    //  @1 = getelementptr (i8* p, ...
-    //  test p and branch if == 0
-    //  load @1
-    // It is valid to have the getelementptr before the test, even if p can
-    // be 0, as getelementptr only does address arithmetic.
-    // If we are not pushing the value through any multiple-successor blocks
-    // we do not have this case.  Otherwise, check that the load is safe to
-    // put anywhere; this can be improved, but should be conservatively safe.
-    if (!allSingleSucc &&
-        // FIXME: REEVALUTE THIS.
-        !isSafeToLoadUnconditionally(LoadPtr,
-                                     UnavailablePred->getTerminator(),
-                                     LI->getAlignment(), TD)) {
       CanDoPRE = false;
       break;
     }
