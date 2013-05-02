@@ -1,7 +1,10 @@
-; RUN: llvm-as < %s > %t1
-; RUN: not llc -march=x86-64 -mattr=-sse < %t1 2> %t2
-; RUN: grep "SSE register return with SSE disabled" %t2
-; RUN: llc -march=x86-64 < %t1 | grep xmm
+; RUN: llc < %s -march=x86-64 -mattr=-sse 2>&1 | FileCheck --check-prefix NOSSE %s
+; RUN: llc < %s -march=x86-64 | FileCheck %s
+
+; NOSSE: {{SSE register return with SSE disabled}}
+
+; CHECK: xmm
+
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
 target triple = "x86_64-unknown-linux-gnu"
 @f = external global float		; <float*> [#uses=4]
