@@ -242,3 +242,13 @@ void example() {
   for (int &x : array)
     x *= 2;
 }
+
+namespace rdar13712739 {
+  template<typename T>
+  void foo(const T& t) {
+    auto &x = t.get(); // expected-error{{member reference base type 'const int' is not a structure or union}}
+    for (auto &blah : x) { }
+  }
+
+  template void foo(const int&); // expected-note{{in instantiation of function template specialization}}
+}
