@@ -22,3 +22,8 @@ include $(CLANG_LEVEL)/Makefile
 MAKEFILE_UNITTEST_NO_INCLUDE_COMMON := 1
 CPP.Flags += -I$(PROJ_SRC_DIR)/../../cpp11-migrate
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
+
+$(PROJ_OBJ_DIR)/lit.local.cfg: $(PROJ_SRC_DIR)/lit.local.cfg
+	@cp $< $@
+
+all:: $(PROJ_OBJ_DIR)/lit.local.cfg

@@ -54,12 +54,20 @@ SummaryMode("summary", cl::desc("Print transform summary"),
 // options are implemented in the tool.
 static cl::opt<std::string>
 IncludePaths("include", cl::Hidden,
-             cl::desc("Comma seperated list of filepaths to consider to be "
+             cl::desc("Comma seperated list of paths to consider to be "
                       "transformed"));
 static cl::opt<std::string>
 ExcludePaths("exclude", cl::Hidden,
-             cl::desc("Comma seperated list of filepaths that can not "
+             cl::desc("Comma seperated list of paths that can not "
                       "be transformed"));
+static cl::opt<std::string>
+IncludeFromFile("include-from", cl::Hidden, cl::value_desc("filename"),
+                cl::desc("File containing a list of paths to consider to "
+                         "be transformed"));
+static cl::opt<std::string>
+ExcludeFromFile("exclude-from", cl::Hidden, cl::value_desc("filename"),
+                cl::desc("File containing a list of paths that can not be "
+                         "transforms"));
 
 class EndSyntaxArgumentsAdjuster : public ArgumentsAdjuster {
   CommandLineArguments Adjust(const CommandLineArguments &Args) {

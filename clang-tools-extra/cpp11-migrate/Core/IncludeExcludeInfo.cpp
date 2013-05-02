@@ -16,7 +16,9 @@
 #include "IncludeExcludeInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -46,25 +48,59 @@ bool fileHasPathPrefix(StringRef File, StringRef Path) {
   return true;
 }
 
-/// \brief Helper function to parse a string of comma seperated paths into
+/// \brief Helper function to tokenize a string of paths and populate
 /// the vector.
-void parseCLInput(StringRef Line, std::vector<std::string> &List) {
+error_code parseCLInput(StringRef Line, std::vector<std::string> &List,
+                        StringRef Separator) {
   SmallVector<StringRef, 32> Tokens;
-  Line.split(Tokens, ",", /*MaxSplit=*/-1, /*KeepEmpty=*/false);
+  Line.split(Tokens, Separator, /*MaxSplit=*/ -1, /*KeepEmpty=*/ false);
   for (SmallVectorImpl<StringRef>::iterator I = Tokens.begin(),
                                             E = Tokens.end();
        I != E; ++I) {
     // Convert each path to its absolute path.
-    SmallString<64> AbsolutePath = *I;
-    sys::fs::make_absolute(AbsolutePath);
+    SmallString<64> AbsolutePath = I->rtrim();
+    if (error_code Err = sys::fs::make_absolute(AbsolutePath))
+      return Err;
     List.push_back(std::string(AbsolutePath.str()));
   }
+  return error_code::success();
 }
 } // end anonymous namespace
 
-IncludeExcludeInfo::IncludeExcludeInfo(StringRef Include, StringRef Exclude) {
-  parseCLInput(Include, IncludeList);
-  parseCLInput(Exclude, ExcludeList);
+error_code IncludeExcludeInfo::readListFromString(StringRef IncludeString,
+                                                  StringRef ExcludeString) {
+  if (error_code Err = parseCLInput(IncludeString, IncludeList,
+                                    /*Separator=*/ ","))
+    return Err;
+  if (error_code Err = parseCLInput(ExcludeString, ExcludeList,
+                                    /*Separator=*/ ","))
+    return Err;
+  return error_code::success();
+}
+
+error_code IncludeExcludeInfo::readListFromFile(StringRef IncludeListFile,
+                                                StringRef ExcludeListFile) {
+  if (!IncludeListFile.empty()) {
+    OwningPtr<MemoryBuffer> FileBuf;
+    if (error_code Err = MemoryBuffer::getFile(IncludeListFile, FileBuf)) {
+      errs() << "Unable to read from include file.\n";
+      return Err;
+    }
+    if (error_code Err = parseCLInput(FileBuf->getBuffer(), IncludeList,
+                                      /*Separator=*/ "\n"))
+      return Err;
+  }
+  if (!ExcludeListFile.empty()) {
+    OwningPtr<MemoryBuffer> FileBuf;
+    if (error_code Err = MemoryBuffer::getFile(ExcludeListFile, FileBuf)) {
+      errs() << "Unable to read from exclude file.\n";
+      return Err;
+    }
+    if (error_code Err = parseCLInput(FileBuf->getBuffer(), ExcludeList,
+                                      /*Separator=*/ "\n"))
+      return Err;
+  }
+  return error_code::success();
 }
 
 bool IncludeExcludeInfo::isFileIncluded(StringRef FilePath) {
