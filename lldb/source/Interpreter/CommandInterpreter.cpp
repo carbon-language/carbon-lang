@@ -1504,7 +1504,6 @@ CommandInterpreter::HandleCommand (const char *command_line,
     if (!no_context_switching)
         UpdateExecutionContext (override_context);
     
-    // <rdar://problem/11328896>
     bool add_to_history;
     if (lazy_add_to_history == eLazyBoolCalculate)
         add_to_history = (m_command_source_depth == 0);
@@ -2513,10 +2512,17 @@ CommandInterpreter::HandleCommands (const StringList &commands,
         CommandReturnObject tmp_result;
         // If override_context is not NULL, pass no_context_switching = true for
         // HandleCommand() since we updated our context already.
+        
+        // We might call into a regex or alias command, in which case the add_to_history will get lost.  This
+        // m_command_source_depth dingus is the way we turn off adding to the history in that case, so set it up here.
+        if (!add_to_history)
+            m_command_source_depth++;
         bool success = HandleCommand(cmd, add_to_history, tmp_result,
                                      NULL, /* override_context */
                                      true, /* repeat_on_empty_command */
                                      override_context != NULL /* no_context_switching */);
+        if (!add_to_history)
+            m_command_source_depth--;
         
         if (print_results)
         {
