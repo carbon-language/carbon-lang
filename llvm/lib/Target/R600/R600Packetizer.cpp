@@ -73,24 +73,56 @@ private:
     return TRI.getHWRegChan(MI->getOperand(0).getReg());
   }
 
-  std::vector<unsigned> getPreviousVector(MachineBasicBlock::iterator I) const {
-    std::vector<unsigned> Result;
+  /// \returns register to PV chan mapping for bundle/single instructions that
+  /// immediatly precedes I.
+  DenseMap<unsigned, unsigned> getPreviousVector(MachineBasicBlock::iterator I)
+      const {
+    DenseMap<unsigned, unsigned> Result;
     I--;
     if (!TII->isALUInstr(I->getOpcode()) && !I->isBundle())
       return Result;
     MachineBasicBlock::instr_iterator BI = I.getInstrIterator();
     if (I->isBundle())
       BI++;
-    while (BI->isBundledWithPred() && !TII->isPredicated(BI)) {
+    do {
+      if (TII->isPredicated(BI))
+        continue;
+      if (TII->isTransOnly(BI))
+        continue;
       int OperandIdx = TII->getOperandIdx(BI->getOpcode(), R600Operands::WRITE);
-      if (OperandIdx > -1 && BI->getOperand(OperandIdx).getImm())
-        Result.push_back(BI->getOperand(0).getReg());
-      BI++;
-    }
+      if (OperandIdx < 0)
+        continue;
+      if (BI->getOperand(OperandIdx).getImm() == 0)
+        continue;
+      unsigned Dst = BI->getOperand(0).getReg();
+      if (BI->getOpcode() == AMDGPU::DOT4_r600_real) {
+        Result[Dst] = AMDGPU::PV_X;
+        continue;
+      }
+      unsigned PVReg = 0;
+      switch (TRI.getHWRegChan(Dst)) {
+      case 0:
+        PVReg = AMDGPU::PV_X;
+        break;
+      case 1:
+        PVReg = AMDGPU::PV_Y;
+        break;
+      case 2:
+        PVReg = AMDGPU::PV_Z;
+        break;
+      case 3:
+        PVReg = AMDGPU::PV_W;
+        break;
+      default:
+        llvm_unreachable("Invalid Chan");
+      }
+      Result[Dst] = PVReg;
+    } while ((++BI)->isBundledWithPred());
     return Result;
   }
 
-  void substitutePV(MachineInstr *MI, const std::vector<unsigned> &PV) const {
+  void substitutePV(MachineInstr *MI, const DenseMap<unsigned, unsigned> &PVs)
+      const {
     R600Operands::Ops Ops[] = {
       R600Operands::SRC0,
       R600Operands::SRC1,
@@ -101,30 +133,9 @@ private:
       if (OperandIdx < 0)
         continue;
       unsigned Src = MI->getOperand(OperandIdx).getReg();
-      for (unsigned j = 0, e = PV.size(); j < e; j++) {
-        if (Src == PV[j]) {
-          unsigned Chan = TRI.getHWRegChan(Src);
-          unsigned PVReg;
-          switch (Chan) {
-          case 0:
-            PVReg = AMDGPU::PV_X;
-            break;
-          case 1:
-            PVReg = AMDGPU::PV_Y;
-            break;
-          case 2:
-            PVReg = AMDGPU::PV_Z;
-            break;
-          case 3:
-            PVReg = AMDGPU::PV_W;
-            break;
-          default:
-            llvm_unreachable("Invalid Chan");
-          }
-          MI->getOperand(OperandIdx).setReg(PVReg);
-          break;
-        }
-      }
+      const DenseMap<unsigned, unsigned>::const_iterator It = PVs.find(Src);
+      if (It != PVs.end())
+        MI->getOperand(OperandIdx).setReg(It->second);
     }
   }
 public:
@@ -209,7 +220,8 @@ public:
         }
         dbgs() << "because of Consts read limitations\n";
       });
-    const std::vector<unsigned> &PV = getPreviousVector(MI);
+    const DenseMap<unsigned, unsigned> &PV =
+        getPreviousVector(CurrentPacketMIs.front());
     bool FitsReadPortLimits = fitsReadPortLimitation(CurrentPacketMIs, PV);
     DEBUG(
       if (!FitsReadPortLimits) {
@@ -236,7 +248,8 @@ public:
   }
 private:
   std::vector<std::pair<int, unsigned> >
-  ExtractSrcs(const MachineInstr *MI, const std::vector<unsigned> &PV) const {
+  ExtractSrcs(const MachineInstr *MI, const DenseMap<unsigned, unsigned> &PV)
+      const {
     R600Operands::Ops Ops[] = {
       R600Operands::SRC0,
       R600Operands::SRC1,
@@ -250,7 +263,7 @@ private:
         continue;
       }
       unsigned Src = MI->getOperand(OperandIdx).getReg();
-      if (std::find(PV.begin(), PV.end(), Src) != PV.end()) {
+      if (PV.find(Src) != PV.end()) {
         Result.push_back(std::pair<int, unsigned>(-1,0));
         continue;
       }
@@ -294,7 +307,7 @@ private:
 
   bool isLegal(const std::vector<MachineInstr *> &IG,
       const std::vector<BankSwizzle> &Swz,
-      const std::vector<unsigned> &PV) const {
+      const DenseMap<unsigned, unsigned> &PV) const {
     assert (Swz.size() == IG.size());
     int Vector[4][3];
     memset(Vector, -1, sizeof(Vector));
@@ -316,7 +329,7 @@ private:
 
   bool recursiveFitsFPLimitation(
   std::vector<MachineInstr *> IG,
-  const std::vector<unsigned> &PV,
+  const DenseMap<unsigned, unsigned> &PV,
   std::vector<BankSwizzle> &SwzCandidate,
   std::vector<MachineInstr *> CurrentlyChecked)
       const {
@@ -345,7 +358,7 @@ private:
 
   bool fitsReadPortLimitation(
   std::vector<MachineInstr *> IG,
-  const std::vector<unsigned> &PV)
+  const DenseMap<unsigned, unsigned> &PV)
       const {
     //Todo : support shared src0 - src1 operand
     std::vector<BankSwizzle> SwzCandidate;
