@@ -58,6 +58,9 @@ typedef __SIZE_TYPE__ rsize_t;
 #if !defined(_WCHAR_T) || __has_feature(modules)
 #if !__has_feature(modules)
 #define _WCHAR_T
+#if defined(_MSC_EXTENSIONS)
+#define _WCHAR_T_DEFINED
+#endif
 #endif
 typedef __WCHAR_TYPE__ wchar_t;
 #endif

@@ -88,10 +88,24 @@
 // C94:#define __STDC_VERSION__ 199409L
 //
 // 
-// RUN: %clang_cc1 -fms-extensions -triple i686-pc-win32 -fobjc-runtime=gcc -E -dM < /dev/null | FileCheck -check-prefix MSEXT %s
+// RUN: %clang_cc1 -fms-extensions -triple i686-pc-win32 -E -dM < /dev/null | FileCheck -check-prefix MSEXT %s
 //
 // MSEXT-NOT:#define __STDC__
 // MSEXT:#define _INTEGRAL_MAX_BITS 64
+// MSEXT-NOT:#define _NATIVE_WCHAR_T_DEFINED 1
+// MSEXT-NOT:#define _WCHAR_T_DEFINED 1
+//
+//
+// RUN: %clang_cc1 -x c++ -fms-extensions -triple i686-pc-win32 -E -dM < /dev/null | FileCheck -check-prefix MSEXT-CXX %s
+//
+// MSEXT-CXX:#define _NATIVE_WCHAR_T_DEFINED 1
+// MSEXT-CXX:#define _WCHAR_T_DEFINED 1
+//
+//
+// RUN: %clang_cc1 -x c++ -fno-wchar -fms-extensions -triple i686-pc-win32 -E -dM < /dev/null | FileCheck -check-prefix MSEXT-CXX-NOWCHAR %s
+//
+// MSEXT-CXX-NOWCHAR-NOT:#define _NATIVE_WCHAR_T_DEFINED 1
+// MSEXT-CXX-NOWCHAR-NOT:#define _WCHAR_T_DEFINED 1
 //
 // 
 // RUN: %clang_cc1 -x objective-c -E -dM < /dev/null | FileCheck -check-prefix OBJC %s
