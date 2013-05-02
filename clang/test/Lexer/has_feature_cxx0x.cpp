@@ -1,5 +1,6 @@
-// RUN: %clang_cc1 -E -std=c++11 %s -o - | FileCheck --check-prefix=CHECK-0X %s
-// RUN: %clang_cc1 -E %s -o - | FileCheck --check-prefix=CHECK-NO-0X %s
+// RUN: %clang_cc1 -E -triple x86_64-linux-gnu -std=c++11 %s -o - | FileCheck --check-prefix=CHECK-0X %s
+// RUN: %clang_cc1 -E -triple armv7-apple-darwin -std=c++11 %s -o - | FileCheck --check-prefix=CHECK-NO-TLS %s
+// RUN: %clang_cc1 -E -triple x86_64-linux-gnu %s -o - | FileCheck --check-prefix=CHECK-NO-0X %s
 
 #if __has_feature(cxx_atomic)
 int has_atomic();
@@ -290,3 +291,4 @@ int no_thread_local();
 
 // CHECK-0X: has_thread_local
 // CHECK-NO-0X: no_thread_local
+// CHECK-NO-TLS: no_thread_local

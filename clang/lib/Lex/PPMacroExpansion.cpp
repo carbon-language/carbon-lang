@@ -751,7 +751,8 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("c_atomic", LangOpts.C11)
            .Case("c_generic_selections", LangOpts.C11)
            .Case("c_static_assert", LangOpts.C11)
-           .Case("c_thread_local", LangOpts.C11)
+           .Case("c_thread_local", 
+                 LangOpts.C11 && PP.getTargetInfo().isTLSSupported())
            // C++11 features
            .Case("cxx_access_control_sfinae", LangOpts.CPlusPlus11)
            .Case("cxx_alias_templates", LangOpts.CPlusPlus11)
@@ -783,7 +784,8 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_rvalue_references", LangOpts.CPlusPlus11)
            .Case("cxx_strong_enums", LangOpts.CPlusPlus11)
            .Case("cxx_static_assert", LangOpts.CPlusPlus11)
-           .Case("cxx_thread_local", LangOpts.CPlusPlus11)
+           .Case("cxx_thread_local", 
+                 LangOpts.CPlusPlus11 && PP.getTargetInfo().isTLSSupported())
            .Case("cxx_trailing_return", LangOpts.CPlusPlus11)
            .Case("cxx_unicode_literals", LangOpts.CPlusPlus11)
            .Case("cxx_unrestricted_unions", LangOpts.CPlusPlus11)
