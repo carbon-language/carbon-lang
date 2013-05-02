@@ -2594,42 +2594,47 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
     {
         FileSpec target_file(pathname, true);
         
-        // TODO: would we want to reject any other value?
-        if (target_file.GetFileType() == FileSpec::eFileTypeInvalid ||
-            target_file.GetFileType() == FileSpec::eFileTypeUnknown)
-        {
-            error.SetErrorString("invalid pathname");
-            return false;
-        }
-        
-        const char* directory = target_file.GetDirectory().GetCString();
-        std::string basename(target_file.GetFilename().GetCString());
+        std::string basename;
+        StreamString command_stream;
 
         // Before executing Pyton code, lock the GIL.
         Locker py_lock (this,
                         Locker::AcquireLock      | (init_session ? Locker::InitSession     : 0),
                         Locker::FreeAcquiredLock | (init_session ? Locker::TearDownSession : 0));
         
-        // now make sure that Python has "directory" in the search path
-        StreamString command_stream;
-        command_stream.Printf("if not (sys.path.__contains__('%s')):\n    sys.path.insert(1,'%s');\n\n",
-                              directory,
-                              directory);
-        bool syspath_retval = ExecuteMultipleLines(command_stream.GetData(), ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false).SetSetLLDBGlobals(false));
-        if (!syspath_retval)
+        if (target_file.GetFileType() == FileSpec::eFileTypeInvalid ||
+            target_file.GetFileType() == FileSpec::eFileTypeUnknown ||
+            target_file.GetFileType() == FileSpec::eFileTypeDirectory )
         {
-            error.SetErrorString("Python sys.path handling failed");
-            return false;
+            // if not a filename, try to just plain import
+            basename = pathname;
         }
-        
-        // strip .py or .pyc extension
-        ConstString extension = target_file.GetFileNameExtension();
-        if (extension)
+        else
         {
-            if (::strcmp(extension.GetCString(), "py") == 0)
-                basename.resize(basename.length()-3);
-            else if(::strcmp(extension.GetCString(), "pyc") == 0)
-                basename.resize(basename.length()-4);
+            const char* directory = target_file.GetDirectory().GetCString();
+            std::string basename(target_file.GetFilename().GetCString());
+            
+            // now make sure that Python has "directory" in the search path
+            StreamString command_stream;
+            command_stream.Printf("if not (sys.path.__contains__('%s')):\n    sys.path.insert(1,'%s');\n\n",
+                                  directory,
+                                  directory);
+            bool syspath_retval = ExecuteMultipleLines(command_stream.GetData(), ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false).SetSetLLDBGlobals(false));
+            if (!syspath_retval)
+            {
+                error.SetErrorString("Python sys.path handling failed");
+                return false;
+            }
+            
+            // strip .py or .pyc extension
+            ConstString extension = target_file.GetFileNameExtension();
+            if (extension)
+            {
+                if (::strcmp(extension.GetCString(), "py") == 0)
+                    basename.resize(basename.length()-3);
+                else if(::strcmp(extension.GetCString(), "pyc") == 0)
+                    basename.resize(basename.length()-4);
+            }
         }
         
         // check if the module is already import-ed
