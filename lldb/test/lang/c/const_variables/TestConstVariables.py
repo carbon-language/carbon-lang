@@ -11,6 +11,7 @@ class ConstVariableTestCase(TestBase):
     mydir = os.path.join("lang", "c", "const_variables")
 
     @dsym_test
+    @unittest2.expectedFailure(13314878)
     def test_with_dsym_and_run_command(self):
         """Test interpreted and JITted expressions on constant values."""
         self.buildDsym()
@@ -18,6 +19,7 @@ class ConstVariableTestCase(TestBase):
 
     @skipOnLinux # This test works with gcc, but fails with newer version of clang on Linux due to a clang issue.  Bug number TDB.
     @dwarf_test
+    @unittest2.expectedFailure(13314878)
     def test_with_dwarf_and_run_command(self):
         """Test interpreted and JITted expressions on constant values."""
         self.buildDwarf()
