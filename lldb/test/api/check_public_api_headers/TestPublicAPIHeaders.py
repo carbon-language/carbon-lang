@@ -17,6 +17,7 @@ class SBDirCheckerCase(TestBase):
         self.lib_dir = os.environ["LLDB_LIB_DIR"]
         self.template = 'main.cpp.template'
         self.source = 'main.cpp'
+        self.exe_name = 'a.out'
 
     def test_sb_api_directory(self):
         """Test the SB API directory and make sure there's no unwanted stuff."""
@@ -24,15 +25,9 @@ class SBDirCheckerCase(TestBase):
         if self.getArchitecture() == "i386":
             self.skipTest("LLDB is 64-bit and cannot be linked to 32-bit test program.")
 
-        # Call the program generator to produce main.cpp.
+        # Generate main.cpp, build it, and execute.
         self.generate_main_cpp()
-
-        if sys.platform.startswith("darwin"):
-            d = {'FRAMEWORK_INCLUDES' : "-F%s" % self.lib_dir}
-        if sys.platform.startswith("linux") or os.environ.get('LLDB_BUILD_TYPE') == 'Makefile':
-            d = {'FRAMEWORK_INCLUDES' : "-I%s" % os.path.join(os.environ["LLDB_SRC"], "include")}
-        self.buildDefault(dictionary=d)
-        self.exe_name = 'a.out'
+        self.buildDriver(self.source, self.exe_name)
         self.sanity_check_executable(self.exe_name)
 
     def generate_main_cpp(self):
@@ -69,10 +64,7 @@ class SBDirCheckerCase(TestBase):
 
         self.line_to_break = line_number(self.source, '// Set breakpoint here.')
 
-        existing_library_path = os.environ[self.dylibPath] if self.dylibPath in os.environ else None
-
-        env_val = self.lib_dir if not existing_library_path else "%s:%s" % (existing_library_path, self.lib_dir)
-        env_cmd = "settings set target.env-vars %s=%s" %(self.dylibPath, env_val)
+        env_cmd = "settings set target.env-vars %s=%s" %(self.dylibPath, self.getLLDBLibraryEnvVal())
         if self.TraceOn():
             print "Set environment to: ", env_cmd
         self.runCmd(env_cmd)

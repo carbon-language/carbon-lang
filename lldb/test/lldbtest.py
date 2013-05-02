@@ -594,6 +594,21 @@ def skipIfIcc(func):
             func(*args, **kwargs)
     return wrapper
 
+def skipIfi386(func):
+    """Decorate the item to skip tests that should be skipped if building 32-bit."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@skipIfi386 can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        from unittest2 import case
+        self = args[0]
+        if "i386" == self.getArchitecture():
+            self.skipTest("skipping because i386 is not a supported architecture")
+        else:
+            func(*args, **kwargs)
+    return wrapper
+
+
 class Base(unittest2.TestCase):
     """
     Abstract base for performing lldb (see TestBase) or other generic tests (see
@@ -1097,6 +1112,39 @@ class Base(unittest2.TestCase):
     # Build methods supported through a plugin interface
     # ==================================================
 
+    def buildDriver(self, sources, exe_name):
+        """ Platform-specific way to build a program that links with LLDB (via the liblldb.so
+            or LLDB.framework).
+        """
+        if "gcc" in self.getCompiler() and "4.6" in self.getCompilerVersion():
+          stdflag = "std=c++0x"
+        else:
+          stdflag = "-std=c++11"
+
+        if sys.platform.startswith("darwin"):
+            dsym = os.path.join(self.lib_dir, 'LLDB.framework', 'LLDB')
+            d = {'CXX_SOURCES' : sources,
+                 'EXE' : exe_name,
+                 'CFLAGS_EXTRAS' : "%s -stdlib=libc++" % stdflag,
+                 'FRAMEWORK_INCLUDES' : "-F%s" % self.lib_dir,
+                 'LD_EXTRAS' : dsym,
+                }
+        elif sys.platform.startswith("linux") or os.environ.get('LLDB_BUILD_TYPE') == 'Makefile':
+            d = {'CXX_SOURCES' : sources, 
+                 'EXE' : exe_name,
+                 'CFLAGS_EXTRAS' : "%s -I%s" % (stdflag, os.path.join(os.environ["LLDB_SRC"], "include")),
+                 'LD_EXTRAS' : "-L%s -llldb" % self.lib_dir}
+        if self.TraceOn():
+            print "Building LLDB Driver (%s) from sources %s" % (exe_name, sources)
+
+        self.buildDefault(dictionary=d)
+
+    def buildProgram(self, sources, exe_name):
+        """ Platform specific way to build an executable from C/C++ sources. """
+        d = {'CXX_SOURCES' : sources,
+             'EXE' : exe_name}
+        self.buildDefault(dictionary=d)
+
     def buildDefault(self, architecture=None, compiler=None, dictionary=None, clean=True):
         """Platform specific way to build the default binaries."""
         if lldb.skip_build_and_cleanup:
@@ -1129,6 +1177,19 @@ class Base(unittest2.TestCase):
         if not module.cleanup(self, dictionary):
             raise Exception("Don't know how to do cleanup with dictionary: "+dictionary)
 
+    def getLLDBLibraryEnvVal(self):
+        """ Returns the path that the OS-specific library search environment variable
+            (self.dylibPath) should be set to in order for a program to find the LLDB
+            library. If an environment variable named self.dylibPath is already set,
+            the new path is appended to it and returned.
+        """
+        existing_library_path = os.environ[self.dylibPath] if self.dylibPath in os.environ else None
+        if existing_library_path:
+            return "%s:%s" % (existing_library_path, self.lib_dir)
+        elif sys.platform.startswith("darwin"):
+            return os.path.join(self.lib_dir, 'LLDB.framework')
+        else:
+            return self.lib_dir
 
 class TestBase(Base):
     """
