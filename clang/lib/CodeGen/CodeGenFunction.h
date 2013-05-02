@@ -1206,6 +1206,15 @@ private:
   /// lazily by getUnreachableBlock().
   llvm::BasicBlock *UnreachableBlock;
 
+  /// Counts of the number of distinct breakpoint locations in this function.
+  unsigned NumStopPoints;
+
+  /// Count the number of simple (constant) return expressions in the function.
+  unsigned NumSimpleReturnExprs;
+
+  /// The first debug location (breakpoint) in the function.
+  SourceLocation FirstStopPoint;
+
 public:
   /// A scope within which we are constructing the fields of an object which
   /// might use a CXXDefaultInitExpr. This stashes away a 'this' value to use
@@ -1563,7 +1572,7 @@ public:
 
   /// EmitFunctionEpilog - Emit the target specific LLVM code to return the
   /// given temporary.
-  void EmitFunctionEpilog(const CGFunctionInfo &FI);
+  void EmitFunctionEpilog(const CGFunctionInfo &FI, bool EmitRetDbgLoc);
 
   /// EmitStartEHSpec - Emit the start of the exception spec.
   void EmitStartEHSpec(const Decl *D);

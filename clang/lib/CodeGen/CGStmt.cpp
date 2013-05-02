@@ -37,6 +37,9 @@ void CodeGenFunction::EmitStopPoint(const Stmt *S) {
     else
       Loc = S->getLocStart();
     DI->EmitLocation(Builder, Loc);
+
+    if (++NumStopPoints == 1)
+      FirstStopPoint = Loc;
   }
 }
 
@@ -838,6 +841,9 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
     }
     }
   }
+
+  if (RV == 0 || RV->isEvaluatable(getContext()))
+    ++NumSimpleReturnExprs;
 
   cleanupScope.ForceCleanup();
   EmitBranchThroughCleanup(ReturnBlock);
