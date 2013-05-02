@@ -1206,7 +1206,11 @@ static void emitGlobalDtorWithCXAAtExit(CodeGenFunction &CGF,
                                         llvm::Constant *dtor,
                                         llvm::Constant *addr,
                                         bool TLS) {
-  const char *Name = TLS ? "__cxa_thread_atexit" : "__cxa_atexit";
+  const char *Name = "__cxa_atexit";
+  if (TLS) {
+    const llvm::Triple &T = CGF.getTarget().getTriple();
+    Name = T.isMacOSX() ?  "_tlv_atexit" : "__cxa_thread_atexit";
+  }
 
   // We're assuming that the destructor function is something we can
   // reasonably call with the default CC.  Go ahead and cast it to the
