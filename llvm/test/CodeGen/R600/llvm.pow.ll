@@ -1,8 +1,8 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
-;CHECK: LOG_IEEE T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;CHECK-NEXT: MUL NON-IEEE T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;CHECK-NEXT: EXP_IEEE T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;CHECK: LOG_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;CHECK-NEXT: MUL NON-IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;CHECK-NEXT: EXP_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 define void @test() {
    %r0 = call float @llvm.R600.load.input(i32 0)

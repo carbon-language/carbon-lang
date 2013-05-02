@@ -1,10 +1,10 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
 ; CHECK: @fp_to_sint_v4i32
-; CHECK: FLT_TO_INT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-; CHECK: FLT_TO_INT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-; CHECK: FLT_TO_INT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-; CHECK: FLT_TO_INT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; CHECK: FLT_TO_INT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; CHECK: FLT_TO_INT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; CHECK: FLT_TO_INT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; CHECK: FLT_TO_INT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 define void @fp_to_sint_v4i32(<4 x i32> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {
   %value = load <4 x float> addrspace(1) * %in

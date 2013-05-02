@@ -2,7 +2,7 @@
 
 ;Not checking arguments 2 and 3 to CNDE, because they may change between
 ;registers and literal.x depending on what the optimizer does.
-;CHECK: CNDE T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;CHECK: CNDE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 define void @test(i32 addrspace(1)* %out, float addrspace(1)* %in) {
 entry:

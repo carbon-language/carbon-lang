@@ -17,6 +17,7 @@ using namespace llvm;
 
 void AMDGPUInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
                              StringRef Annot) {
+  OS.flush();
   printInstruction(MI, OS);
 
   printAnnotation(OS, Annot);
@@ -67,11 +68,14 @@ void AMDGPUInstPrinter::printMemOperand(const MCInst *MI, unsigned OpNo,
 }
 
 void AMDGPUInstPrinter::printIfSet(const MCInst *MI, unsigned OpNo,
-                                    raw_ostream &O, StringRef Asm) {
+                                   raw_ostream &O, StringRef Asm,
+                                   StringRef Default) {
   const MCOperand &Op = MI->getOperand(OpNo);
   assert(Op.isImm());
   if (Op.getImm() == 1) {
     O << Asm;
+  } else {
+    O << Default;
   }
 }
 
@@ -98,7 +102,7 @@ void AMDGPUInstPrinter::printLiteral(const MCInst *MI, unsigned OpNo,
 
 void AMDGPUInstPrinter::printLast(const MCInst *MI, unsigned OpNo,
                                   raw_ostream &O) {
-  printIfSet(MI, OpNo, O, " *");
+  printIfSet(MI, OpNo, O.indent(20 - O.GetNumBytesInBuffer()), "*", " ");
 }
 
 void AMDGPUInstPrinter::printNeg(const MCInst *MI, unsigned OpNo,
@@ -167,6 +171,31 @@ void AMDGPUInstPrinter::printSel(const MCInst *MI, unsigned OpNo,
 
   if (sel >= 0)
     O << "." << chans[chan];
+}
+
+void AMDGPUInstPrinter::printBankSwizzle(const MCInst *MI, unsigned OpNo,
+                                         raw_ostream &O) {
+  int BankSwizzle = MI->getOperand(OpNo).getImm();
+  switch (BankSwizzle) {
+  case 1:
+    O << "BS:VEC_021";
+    break;
+  case 2:
+    O << "BS:VEC_120";
+    break;
+  case 3:
+    O << "BS:VEC_102";
+    break;
+  case 4:
+    O << "BS:VEC_201";
+    break;
+  case 5:
+    O << "BS:VEC_210";
+    break;
+  default:
+    break;
+  }
+  return;
 }
 
 #include "AMDGPUGenAsmWriter.inc"

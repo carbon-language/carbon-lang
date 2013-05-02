@@ -5,7 +5,8 @@
 ; SET*DX10 instructions.
 
 ; CHECK: @fcmp_une_select_fptosi
-; CHECK: SETNE_DX10 T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x, 1084227584(5.000000e+00)
+; CHECK: SETNE_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_une_select_fptosi(i32 addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp une float %in, 5.0
@@ -17,7 +18,8 @@ entry:
 }
 
 ; CHECK: @fcmp_une_select_i32
-; CHECK: SETNE_DX10 T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x, 1084227584(5.000000e+00)
+; CHECK: SETNE_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_une_select_i32(i32 addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp une float %in, 5.0
@@ -27,7 +29,8 @@ entry:
 }
 
 ; CHECK: @fcmp_ueq_select_fptosi
-; CHECK: SETE_DX10 T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x, 1084227584(5.000000e+00)
+; CHECK: SETE_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ueq_select_fptosi(i32 addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp ueq float %in, 5.0
@@ -39,7 +42,8 @@ entry:
 }
 
 ; CHECK: @fcmp_ueq_select_i32
-; CHECK: SETE_DX10 T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x, 1084227584(5.000000e+00)
+; CHECK: SETE_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ueq_select_i32(i32 addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp ueq float %in, 5.0
@@ -49,7 +53,8 @@ entry:
 }
 
 ; CHECK: @fcmp_ugt_select_fptosi
-; CHECK: SETGT_DX10 T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x, 1084227584(5.000000e+00)
+; CHECK: SETGT_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ugt_select_fptosi(i32 addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp ugt float %in, 5.0
@@ -61,7 +66,8 @@ entry:
 }
 
 ; CHECK: @fcmp_ugt_select_i32
-; CHECK: SETGT_DX10 T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x, 1084227584(5.000000e+00)
+; CHECK: SETGT_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ugt_select_i32(i32 addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp ugt float %in, 5.0
@@ -71,7 +77,8 @@ entry:
 }
 
 ; CHECK: @fcmp_uge_select_fptosi
-; CHECK: SETGE_DX10 T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x, 1084227584(5.000000e+00)
+; CHECK: SETGE_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_uge_select_fptosi(i32 addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp uge float %in, 5.0
@@ -83,7 +90,8 @@ entry:
 }
 
 ; CHECK: @fcmp_uge_select_i32
-; CHECK: SETGE_DX10 T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x, 1084227584(5.000000e+00)
+; CHECK: SETGE_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_uge_select_i32(i32 addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp uge float %in, 5.0
@@ -93,7 +101,8 @@ entry:
 }
 
 ; CHECK: @fcmp_ule_select_fptosi
-; CHECK: SETGE_DX10 T{{[0-9]+\.[XYZW]}}, literal.x, T{{[0-9]+\.[XYZW]}}, 1084227584(5.000000e+00)
+; CHECK: SETGE_DX10 * T{{[0-9]+\.[XYZW]}}, literal.x, T{{[0-9]+\.[XYZW]}},
+; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ule_select_fptosi(i32 addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp ule float %in, 5.0
@@ -105,7 +114,8 @@ entry:
 }
 
 ; CHECK: @fcmp_ule_select_i32
-; CHECK: SETGE_DX10 T{{[0-9]+\.[XYZW]}}, literal.x, T{{[0-9]+\.[XYZW]}}, 1084227584(5.000000e+00)
+; CHECK: SETGE_DX10 * T{{[0-9]+\.[XYZW]}}, literal.x, T{{[0-9]+\.[XYZW]}},
+; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ule_select_i32(i32 addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp ule float %in, 5.0
@@ -115,7 +125,8 @@ entry:
 }
 
 ; CHECK: @fcmp_ult_select_fptosi
-; CHECK: SETGT_DX10 T{{[0-9]+\.[XYZW]}}, literal.x, T{{[0-9]+\.[XYZW]}}, 1084227584(5.000000e+00)
+; CHECK: SETGT_DX10 * T{{[0-9]+\.[XYZW]}}, literal.x, T{{[0-9]+\.[XYZW]}},
+; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ult_select_fptosi(i32 addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp ult float %in, 5.0
@@ -127,7 +138,8 @@ entry:
 }
 
 ; CHECK: @fcmp_ult_select_i32
-; CHECK: SETGT_DX10 T{{[0-9]+\.[XYZW]}}, literal.x, T{{[0-9]+\.[XYZW]}}, 1084227584(5.000000e+00)
+; CHECK: SETGT_DX10 * T{{[0-9]+\.[XYZW]}}, literal.x, T{{[0-9]+\.[XYZW]}},
+; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ult_select_i32(i32 addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp ult float %in, 5.0

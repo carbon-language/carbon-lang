@@ -1,6 +1,6 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
-;CHECK: UINT_TO_FLT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;CHECK: UINT_TO_FLT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 define void @test(float addrspace(1)* %out, i8 addrspace(1)* %in) {
   %1 = load i8 addrspace(1)* %in

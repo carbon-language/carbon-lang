@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
 ; CHECK: @fcmp_sext
-; CHECK: SETE_DX10 T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; CHECK: SETE_DX10 * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 define void @fcmp_sext(i32 addrspace(1)* %out, float addrspace(1)* %in) {
 entry:
@@ -19,7 +19,8 @@ entry:
 ; SET* + FP_TO_SINT
 
 ; CHECK: @fcmp_br
-; CHECK: SET{{[N]*}}E_DX10 T{{[0-9]+\.[XYZW], [a-zA-Z0-9, .]+}}(5.0
+; CHECK: SET{{[N]*}}E_DX10 * T{{[0-9]+\.[XYZW],}}
+; CHECK-NEXT {{[0-9]+(5.0}}
 
 define void @fcmp_br(i32 addrspace(1)* %out, float %in) {
 entry:

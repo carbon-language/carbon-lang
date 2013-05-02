@@ -2,7 +2,8 @@
 
 ; Note additional optimizations may cause this SGT to be replaced with a
 ; CND* instruction.
-; CHECK: SETGT_INT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], literal.x, -1}}
+; CHECK: SETGT_INT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}, literal.x,
+; CHECK-NEXT: -1
 ; Test a selectcc with i32 LHS/RHS and float True/False
 
 define void @test(float addrspace(1)* %out, i32 addrspace(1)* %in) {
