@@ -62,7 +62,8 @@ STATISTIC(NumReSchedDowns,     "Number of instructions re-scheduled down");
 // Temporary flag to disable rescheduling.
 static cl::opt<bool>
 EnableRescheduling("twoaddr-reschedule",
-                   cl::desc("Coalesce copies by rescheduling (default=true)"), cl::init(true), cl::Hidden);
+                   cl::desc("Coalesce copies by rescheduling (default=true)"),
+                   cl::init(true), cl::Hidden);
 
 namespace {
 class TwoAddressInstructionPass : public MachineFunctionPass {
@@ -432,10 +433,7 @@ static bool isKilled(MachineInstr &MI, unsigned Reg,
 /// isTwoAddrUse - Return true if the specified MI uses the specified register
 /// as a two-address use. If so, return the destination register by reference.
 static bool isTwoAddrUse(MachineInstr &MI, unsigned Reg, unsigned &DstReg) {
-  const MCInstrDesc &MCID = MI.getDesc();
-  unsigned NumOps = MI.isInlineAsm()
-    ? MI.getNumOperands() : MCID.getNumOperands();
-  for (unsigned i = 0; i != NumOps; ++i) {
+  for (unsigned i = 0, NumOps = MI.getNumOperands(); i != NumOps; ++i) {
     const MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || !MO.isUse() || MO.getReg() != Reg)
       continue;
