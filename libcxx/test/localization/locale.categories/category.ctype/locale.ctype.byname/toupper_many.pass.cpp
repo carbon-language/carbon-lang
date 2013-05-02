@@ -29,7 +29,7 @@ int main()
             std::string in("\xFA A\x07.a1");
 
             assert(f.toupper(&in[0], in.data() + in.size()) == in.data() + in.size());
-            assert(in[0] == '\xFA');
+            assert(in[0] == '\xDA');
             assert(in[1] == ' ');
             assert(in[2] == 'A');
             assert(in[3] == '\x07');

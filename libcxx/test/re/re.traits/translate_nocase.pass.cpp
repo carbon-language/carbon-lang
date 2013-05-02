@@ -38,7 +38,7 @@ int main()
         assert(t.translate_nocase('.') == '.');
         assert(t.translate_nocase('a') == 'a');
         assert(t.translate_nocase('1') == '1');
-        assert(t.translate_nocase('\xDA') == '\xDA');
+        assert(t.translate_nocase('\xDA') == '\xFA');
         assert(t.translate_nocase('\xFA') == '\xFA');
     }
     {

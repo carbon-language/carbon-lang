@@ -32,7 +32,7 @@ int main()
             assert(f.tolower('.') == '.');
             assert(f.tolower('a') == 'a');
             assert(f.tolower('1') == '1');
-            assert(f.tolower('\xDA') == '\xDA');
+            assert(f.tolower('\xDA') == '\xFA');
             assert(f.tolower('\xFA') == '\xFA');
         }
     }

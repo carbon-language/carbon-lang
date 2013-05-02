@@ -33,7 +33,7 @@ int main()
             assert(f.toupper('a') == 'A');
             assert(f.toupper('1') == '1');
             assert(f.toupper('\xDA') == '\xDA');
-            assert(f.toupper('\xFA') == '\xFA');
+            assert(f.toupper('\xFA') == '\xDA');
         }
     }
     {

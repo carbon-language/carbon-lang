@@ -1068,28 +1068,28 @@ ctype_byname<char>::~ctype_byname()
 char
 ctype_byname<char>::do_toupper(char_type c) const
 {
-    return static_cast<char>(toupper_l(c, __l));
+    return static_cast<char>(toupper_l(static_cast<unsigned char>(c), __l));
 }
 
 const char*
 ctype_byname<char>::do_toupper(char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
-        *low = static_cast<char>(toupper_l(*low, __l));
+        *low = static_cast<char>(toupper_l(static_cast<unsigned char>(*low), __l));
     return low;
 }
 
 char
 ctype_byname<char>::do_tolower(char_type c) const
 {
-    return static_cast<char>(tolower_l(c, __l));
+    return static_cast<char>(tolower_l(static_cast<unsigned char>(c), __l));
 }
 
 const char*
 ctype_byname<char>::do_tolower(char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
-        *low = static_cast<char>(tolower_l(*low, __l));
+        *low = static_cast<char>(tolower_l(static_cast<unsigned char>(*low), __l));
     return low;
 }
 
