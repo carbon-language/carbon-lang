@@ -73,6 +73,10 @@ static cl::opt<bool> DisableOptSZExt("disable-hexagon-optszext",
     cl::Hidden, cl::ZeroOrMore, cl::init(false),
     cl::desc("Disable Optimization of Sign/Zero Extends"));
 
+static cl::opt<bool> DisableOptExtTo64("disable-hexagon-opt-ext-to-64",
+    cl::Hidden, cl::ZeroOrMore, cl::init(false),
+    cl::desc("Disable Optimization of extensions to i64."));
+
 namespace {
   struct HexagonPeephole : public MachineFunctionPass {
     const HexagonInstrInfo    *QII;
@@ -140,6 +144,21 @@ bool HexagonPeephole::runOnMachineFunction(MachineFunction &MF) {
           // PeepholeMap[170] = vreg166
           PeepholeMap[DstReg] = SrcReg;
         }
+      }
+
+      // Look for  %vreg170<def> = COMBINE_ir_V4 (0, %vreg169)
+      // %vreg170:DoublRegs, %vreg169:IntRegs
+      if (!DisableOptExtTo64 &&
+          MI->getOpcode () == Hexagon::COMBINE_Ir_V4) {
+        assert (MI->getNumOperands() == 3);
+        MachineOperand &Dst = MI->getOperand(0);
+        MachineOperand &Src1 = MI->getOperand(1);
+        MachineOperand &Src2 = MI->getOperand(2);
+        if (Src1.getImm() != 0)
+          continue;
+        unsigned DstReg = Dst.getReg();
+        unsigned SrcReg = Src2.getReg();
+        PeepholeMap[DstReg] = SrcReg;
       }
 
       // Look for this sequence below

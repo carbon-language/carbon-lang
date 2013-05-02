@@ -2550,6 +2550,27 @@ def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
         (i64 (COMBINE_rr (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
                         IntRegs:$srcLow))>;
 
+let AddedComplexity = 100 in
+def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
+                           (i32 32))),
+               (i64 (zextloadi32 (i32 (add IntRegs:$src2,
+                                         s11_2ExtPred:$offset2)))))),
+        (i64 (COMBINE_rr (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
+                        (LDriw_indexed IntRegs:$src2,
+                                       s11_2ExtPred:$offset2)))>;
+
+def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
+                           (i32 32))),
+               (i64 (zextloadi32 ADDRriS11_2:$srcLow)))),
+        (i64 (COMBINE_rr (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
+                        (LDriw ADDRriS11_2:$srcLow)))>;
+
+def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
+                           (i32 32))),
+               (i64 (zext (i32 IntRegs:$srcLow))))),
+        (i64 (COMBINE_rr (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
+                        IntRegs:$srcLow))>;
+
 // Any extended 64-bit load.
 // anyext i32 -> i64
 def:  Pat <(i64 (extloadi32 ADDRriS11_2:$src1)),
