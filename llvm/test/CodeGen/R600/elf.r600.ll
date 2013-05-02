@@ -7,6 +7,7 @@
 ; CONFIG-CHECK: .section .AMDGPU.config
 ; CONFIG-CHECK-NEXT: .long   2
 ; CONFIG-CHECK-NEXT: .long   1
+; CONFIG-CHECK-NEXT: .long   0
 define void @test(float addrspace(1)* %out, i32 %p) {
    %i = add i32 %p, 2
    %r = bitcast i32 %i to float
