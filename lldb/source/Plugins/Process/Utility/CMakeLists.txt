@@ -15,6 +15,7 @@ add_lldb_library(lldbPluginProcessUtility
   RegisterContextMach_x86_64.cpp
   RegisterContextMacOSXFrameBackchain.cpp
   RegisterContextMemory.cpp
+  RegisterContextThreadMemory.cpp
   StopInfoMachException.cpp
   ThreadMemory.cpp
   UnwindLLDB.cpp

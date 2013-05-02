@@ -10,6 +10,8 @@ add_lldb_library(lldbPluginProcessPOSIX
   ProcessMessage.cpp
   ProcessPOSIX.cpp
   ProcessPOSIXLog.cpp
+  RegisterContextFreeBSD_x86_64.cpp
   RegisterContext_i386.cpp
+  RegisterContextLinux_x86_64.cpp
   RegisterContext_x86_64.cpp
   )
