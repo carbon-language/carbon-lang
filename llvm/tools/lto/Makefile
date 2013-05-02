@@ -54,6 +54,6 @@ ifeq ($(HOST_OS),Darwin)
     ifeq ($(RC_XBS),YES)
        TempFile        := $(shell mkdir -p ${OBJROOT}/dSYMs ; mktemp ${OBJROOT}/dSYMs/llvm-lto.XXXXXX)
        LLVMLibsOptions := $(LLVMLibsOptions) \
-                          -Wl,-object_path_lto -Wl,$(TempFile)
+                          -Wl,-object_path_lto -Wl,$(TempFile) -Wl,-mllvm,-disable-fp-elim
     endif
 endif
