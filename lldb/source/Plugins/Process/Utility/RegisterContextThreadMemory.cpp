@@ -50,16 +50,17 @@ RegisterContextThreadMemory::UpdateRegisterContext ()
             }
             if (!m_reg_ctx_sp)
             {
-                OperatingSystem *os = process_sp->GetOperatingSystem ();
-                if (os->IsOperatingSystemPluginThread (thread_sp))
-                    m_reg_ctx_sp = os->CreateRegisterContextForThread (thread_sp.get(), LLDB_INVALID_ADDRESS);
+                ThreadSP backing_thread_sp (thread_sp->GetBackingThread());
+                if (backing_thread_sp)
+                {
+                    m_reg_ctx_sp = backing_thread_sp->GetRegisterContext();
+                }
                 else
                 {
-
-                    ThreadSP backing_thread_sp (thread_sp->GetBackingThread());
-                    if (backing_thread_sp)
-                        m_reg_ctx_sp = backing_thread_sp->GetRegisterContext();
-                }
+                    OperatingSystem *os = process_sp->GetOperatingSystem ();
+                    if (os->IsOperatingSystemPluginThread (thread_sp))
+                        m_reg_ctx_sp = os->CreateRegisterContextForThread (thread_sp.get(), LLDB_INVALID_ADDRESS);
+                }                
             }
         }
     }
