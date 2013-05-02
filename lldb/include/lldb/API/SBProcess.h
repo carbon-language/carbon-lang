@@ -205,6 +205,9 @@ public:
     Detach ();
 
     lldb::SBError
+    Detach (bool keep_stopped);
+
+    lldb::SBError
     Signal (int signal);
 
     void

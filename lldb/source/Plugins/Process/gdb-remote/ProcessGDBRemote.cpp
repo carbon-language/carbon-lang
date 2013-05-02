@@ -1696,25 +1696,29 @@ ProcessGDBRemote::DoHalt (bool &caused_stop)
 }
 
 Error
-ProcessGDBRemote::DoDetach()
+ProcessGDBRemote::DoDetach(bool keep_stopped)
 {
     Error error;
     Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
     if (log)
-        log->Printf ("ProcessGDBRemote::DoDetach()");
-
+        log->Printf ("ProcessGDBRemote::DoDetach(keep_stopped: %i)", keep_stopped);
+ 
     DisableAllBreakpointSites ();
 
     m_thread_list.DiscardThreadPlans();
 
-    bool success = m_gdb_comm.Detach ();
+    error = m_gdb_comm.Detach (keep_stopped);
     if (log)
     {
-        if (success)
+        if (error.Success())
             log->PutCString ("ProcessGDBRemote::DoDetach() detach packet sent successfully");
         else
-            log->PutCString ("ProcessGDBRemote::DoDetach() detach packet send failed");
+            log->Printf ("ProcessGDBRemote::DoDetach() detach packet send failed: %s", error.AsCString() ? error.AsCString() : "<unknown error>");
     }
+    
+    if (!error.Success())
+        return error;
+
     // Sleep for one second to let the process get all detached...
     StopAsyncThread ();
 

@@ -199,8 +199,8 @@ public:
     bool
     DeallocateMemory (lldb::addr_t addr);
 
-    bool
-    Detach ();
+    lldb_private::Error
+    Detach (bool keep_stopped);
 
     lldb_private::Error
     GetMemoryRegionInfo (lldb::addr_t addr, 
@@ -381,6 +381,7 @@ protected:
     lldb_private::LazyBool m_supports_alloc_dealloc_memory;
     lldb_private::LazyBool m_supports_memory_region_info;
     lldb_private::LazyBool m_supports_watchpoint_support_info;
+    lldb_private::LazyBool m_supports_detach_stay_stopped;
     lldb_private::LazyBool m_watchpoints_trigger_after_instruction;
     lldb_private::LazyBool m_attach_or_wait_reply;
     lldb_private::LazyBool m_prepare_for_reg_writing_reply;

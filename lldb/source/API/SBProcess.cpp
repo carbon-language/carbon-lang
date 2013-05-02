@@ -786,12 +786,20 @@ SBProcess::Kill ()
 SBError
 SBProcess::Detach ()
 {
+    // FIXME: This should come from a process default.
+    bool keep_stopped = false;
+    return Detach (keep_stopped);
+}
+
+SBError
+SBProcess::Detach (bool keep_stopped)
+{
     SBError sb_error;
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
         Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        sb_error.SetError (process_sp->Detach());
+        sb_error.SetError (process_sp->Detach(keep_stopped));
     }
     else
         sb_error.SetErrorString ("SBProcess is invalid");    
