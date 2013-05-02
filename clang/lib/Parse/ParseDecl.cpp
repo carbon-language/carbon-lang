@@ -178,12 +178,6 @@ void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
   }
 }
 
-/// \brief Determine whether the given attribute has all expression arguments.
-static bool attributeHasExprArgs(const IdentifierInfo &II) {
-  return llvm::StringSwitch<bool>(II.getName())
-#include "clang/Parse/AttrExprArgs.inc"
-           .Default(false);
-}
 
 /// Parse the arguments to a parameterized GNU attribute or
 /// a C++11 attribute in "gnu" namespace.
@@ -253,10 +247,6 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
       TypeParsed = true;
       break;
     }
-    // If the attribute has all expression arguments, and not a "parameter",
-    // break out to handle it below.
-    if (attributeHasExprArgs(*AttrName))
-      break;
     ParmName = Tok.getIdentifierInfo();
     ParmLoc = ConsumeToken();
     break;

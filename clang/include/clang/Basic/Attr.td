@@ -152,7 +152,7 @@ def AddressSpace : Attr {
 
 def Alias : InheritableAttr {
   let Spellings = [GNU<"alias">, CXX11<"gnu", "alias">];
-  let Args = [IdentifierArgument<"Aliasee">];
+  let Args = [StringArgument<"Aliasee">];
 }
 
 def Aligned : InheritableAttr {
@@ -184,7 +184,7 @@ def AlwaysInline : InheritableAttr {
 def TLSModel : InheritableAttr {
   let Spellings = [GNU<"tls_model">, CXX11<"gnu", "tls_model">];
   let Subjects = [Var];
-  let Args = [IdentifierArgument<"Model">];
+  let Args = [StringArgument<"Model">];
 }
 
 def AnalyzerNoReturn : InheritableAttr {
@@ -373,7 +373,7 @@ def MinSize : InheritableAttr {
 
 def Format : InheritableAttr {
   let Spellings = [GNU<"format">, CXX11<"gnu", "format">];
-  let Args = [IdentifierArgument<"Type">, IntArgument<"FormatIdx">,
+  let Args = [StringArgument<"Type">, IntArgument<"FormatIdx">,
               IntArgument<"FirstArg">];
 }
 
