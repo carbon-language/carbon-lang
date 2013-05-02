@@ -30,6 +30,7 @@ void EmitClangASTNodes(RecordKeeper &RK, raw_ostream &OS,
                        const std::string &N, const std::string &S);
 
 void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS);
+void EmitClangAttrExprArgsList(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrImpl(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrList(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrPCHRead(RecordKeeper &Records, raw_ostream &OS);

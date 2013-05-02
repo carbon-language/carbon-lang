@@ -17,6 +17,7 @@ add_clang_library(clangParse
 
 add_dependencies(clangParse
   ClangAttrClasses
+  ClangAttrExprArgs
   ClangAttrLateParsed
   ClangAttrList
   ClangAttrParsedAttrList

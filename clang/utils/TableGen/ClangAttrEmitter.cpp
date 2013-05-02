@@ -971,6 +971,49 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
   OS << "#endif\n";
 }
 
+// Emits the LateParsed property for attributes.
+void EmitClangAttrExprArgsList(RecordKeeper &Records, raw_ostream &OS) {
+  emitSourceFileHeader("llvm::StringSwitch code to match attributes with "
+                       "expression arguments", OS);
+
+  std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr");
+
+  for (std::vector<Record*>::iterator I = Attrs.begin(), E = Attrs.end();
+       I != E; ++I) {
+    Record &Attr = **I;
+
+    // Determine whether the first argument is something that is always
+    // an expression.
+    std::vector<Record *> Args = Attr.getValueAsListOfDefs("Args");
+    if (Args.empty() || Args[0]->getSuperClasses().empty())
+      continue;
+
+    // Check whether this is one of the argument kinds that implies an
+    // expression.
+    // FIXME: Aligned is weird.
+    if (!llvm::StringSwitch<bool>(Args[0]->getSuperClasses().back()->getName())
+          .Case("AlignedArgument", true)
+          .Case("BoolArgument", true)
+          .Case("DefaultIntArgument", true)
+          .Case("IntArgument", true)
+          .Case("StringArgument", true)
+          .Case("ExprArgument", true)
+          .Case("UnsignedArgument", true)
+          .Case("VariadicUnsignedArgument", true)
+          .Case("VariadicExprArgument", true)
+          .Default(false))
+      continue;
+
+    std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
+
+    for (std::vector<Record*>::const_iterator I = Spellings.begin(),
+         E = Spellings.end(); I != E; ++I) {
+      OS << ".Case(\"" << (*I)->getValueAsString("Name") << "\", "
+         << "true" << ")\n";
+    }
+  }
+}
+
 // Emits the class method definitions for attributes.
 void EmitClangAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
   emitSourceFileHeader("Attribute classes' member function definitions", OS);

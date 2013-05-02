@@ -24,6 +24,7 @@ using namespace clang;
 
 enum ActionType {
   GenClangAttrClasses,
+  GenClangAttrExprArgsList,
   GenClangAttrImpl,
   GenClangAttrList,
   GenClangAttrPCHRead,
@@ -62,6 +63,10 @@ namespace {
                                "Generate option parser implementation"),
                     clEnumValN(GenClangAttrClasses, "gen-clang-attr-classes",
                                "Generate clang attribute clases"),
+                    clEnumValN(GenClangAttrExprArgsList,
+                               "gen-clang-attr-expr-args-list",
+                               "Generate a clang attribute expression "
+                               "arguments list"),
                     clEnumValN(GenClangAttrImpl, "gen-clang-attr-impl",
                                "Generate clang attribute implementations"),
                     clEnumValN(GenClangAttrList, "gen-clang-attr-list",
@@ -142,6 +147,9 @@ bool ClangTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
   switch (Action) {
   case GenClangAttrClasses:
     EmitClangAttrClass(Records, OS);
+    break;
+  case GenClangAttrExprArgsList:
+    EmitClangAttrExprArgsList(Records, OS);
     break;
   case GenClangAttrImpl:
     EmitClangAttrImpl(Records, OS);
