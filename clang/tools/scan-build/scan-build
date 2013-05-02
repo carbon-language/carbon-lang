@@ -1562,8 +1562,16 @@ if ($ForceDisplayHelp || $RequestDisplayHelp) {
 }
 
 $ClangCXX = $Clang;
-$ClangCXX =~ s/\-\d+\.\d+$//;
-$ClangCXX .= "++";
+# Determine operating system under which this copy of Perl was built.
+my $IsWinBuild = ($^O =~/msys|cygwin|MSWin32/);
+if($IsWinBuild) {
+  $ClangCXX =~ s/.exe$/++.exe/;
+}
+else {
+  $ClangCXX =~ s/\-\d+\.\d+$//;
+  $ClangCXX .= "++";
+}
+
 # Make sure to use "" to handle paths with spaces.
 $ClangVersion = HtmlEscape(`"$Clang" --version`);
 
