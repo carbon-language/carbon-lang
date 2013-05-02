@@ -11052,21 +11052,23 @@ SDValue X86TargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
   SDValue Handler   = Op.getOperand(2);
   DebugLoc dl       = Op.getDebugLoc();
 
-  SDValue Frame = DAG.getCopyFromReg(DAG.getEntryNode(), dl,
-                                     Subtarget->is64Bit() ? X86::RBP : X86::EBP,
-                                     getPointerTy());
-  unsigned StoreAddrReg = (Subtarget->is64Bit() ? X86::RCX : X86::ECX);
+  EVT PtrVT = getPointerTy();
+  unsigned FrameReg = RegInfo->getFrameRegister(DAG.getMachineFunction());
+  assert(((FrameReg == X86::RBP && PtrVT == MVT::i64) ||
+          (FrameReg == X86::EBP && PtrVT == MVT::i32)) &&
+         "Invalid Frame Register!");
+  SDValue Frame = DAG.getCopyFromReg(DAG.getEntryNode(), dl, FrameReg, PtrVT);
+  unsigned StoreAddrReg = (PtrVT == MVT::i64) ? X86::RCX : X86::ECX;
 
-  SDValue StoreAddr = DAG.getNode(ISD::ADD, dl, getPointerTy(), Frame,
+  SDValue StoreAddr = DAG.getNode(ISD::ADD, dl, PtrVT, Frame,
                                   DAG.getIntPtrConstant(RegInfo->getSlotSize()));
-  StoreAddr = DAG.getNode(ISD::ADD, dl, getPointerTy(), StoreAddr, Offset);
+  StoreAddr = DAG.getNode(ISD::ADD, dl, PtrVT, StoreAddr, Offset);
   Chain = DAG.getStore(Chain, dl, Handler, StoreAddr, MachinePointerInfo(),
                        false, false, 0);
   Chain = DAG.getCopyToReg(Chain, dl, StoreAddrReg, StoreAddr);
 
-  return DAG.getNode(X86ISD::EH_RETURN, dl,
-                     MVT::Other,
-                     Chain, DAG.getRegister(StoreAddrReg, getPointerTy()));
+  return DAG.getNode(X86ISD::EH_RETURN, dl, MVT::Other, Chain,
+                     DAG.getRegister(StoreAddrReg, PtrVT));
 }
 
 SDValue X86TargetLowering::lowerEH_SJLJ_SETJMP(SDValue Op,
