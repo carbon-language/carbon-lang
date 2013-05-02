@@ -1026,17 +1026,10 @@ def S_MAX_U32 : SOP2_32 <0x00000009, "S_MAX_U32", []>;
 def S_CSELECT_B32 : SOP2 <
   0x0000000a, (outs SReg_32:$dst),
   (ins SReg_32:$src0, SReg_32:$src1, SCCReg:$scc), "S_CSELECT_B32",
-  [(set (i32 SReg_32:$dst), (select (i1 SCCReg:$scc),
-                                     SReg_32:$src0, SReg_32:$src1))]
+  []
 >;
 
 def S_CSELECT_B64 : SOP2_64 <0x0000000b, "S_CSELECT_B64", []>;
-
-// f32 pattern for S_CSELECT_B32
-def : Pat <
-  (f32 (select (i1 SCCReg:$scc), SReg_32:$src0, SReg_32:$src1)),
-  (S_CSELECT_B32 SReg_32:$src0, SReg_32:$src1, SCCReg:$scc)
->;
 
 def S_AND_B32 : SOP2_32 <0x0000000e, "S_AND_B32", []>;
 
