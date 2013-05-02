@@ -198,4 +198,16 @@ void AMDGPUInstPrinter::printBankSwizzle(const MCInst *MI, unsigned OpNo,
   return;
 }
 
+void AMDGPUInstPrinter::printKCache(const MCInst *MI, unsigned OpNo,
+                                    raw_ostream &O) {
+  int KCacheMode = MI->getOperand(OpNo).getImm();
+  if (KCacheMode > 0) {
+    int KCacheBank = MI->getOperand(OpNo - 2).getImm();
+    O << "CB" << KCacheBank <<":";
+    int KCacheAddr = MI->getOperand(OpNo + 2).getImm();
+    int LineSize = (KCacheMode == 1)?16:32;
+    O << KCacheAddr * 16 << "-" << KCacheAddr * 16 + LineSize;
+  }
+}
+
 #include "AMDGPUGenAsmWriter.inc"
