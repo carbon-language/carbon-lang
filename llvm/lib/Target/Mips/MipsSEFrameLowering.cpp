@@ -40,6 +40,8 @@ public:
 
 private:
   bool expandInstr(MachineBasicBlock &MBB, Iter I);
+  void expandLoadCCond(MachineBasicBlock &MBB, Iter I);
+  void expandStoreCCond(MachineBasicBlock &MBB, Iter I);
   void expandLoadACC(MachineBasicBlock &MBB, Iter I, unsigned RegSize);
   void expandStoreACC(MachineBasicBlock &MBB, Iter I, unsigned RegSize);
   bool expandCopy(MachineBasicBlock &MBB, Iter I);
@@ -71,6 +73,14 @@ bool ExpandPseudo::expand() {
 
 bool ExpandPseudo::expandInstr(MachineBasicBlock &MBB, Iter I) {
   switch(I->getOpcode()) {
+  case Mips::LOAD_CCOND_DSP:
+  case Mips::LOAD_CCOND_DSP_P8:
+    expandLoadCCond(MBB, I);
+    break;
+  case Mips::STORE_CCOND_DSP:
+  case Mips::STORE_CCOND_DSP_P8:
+    expandStoreCCond(MBB, I);
+    break;
   case Mips::LOAD_AC64:
   case Mips::LOAD_AC64_P8:
   case Mips::LOAD_AC_DSP:
@@ -101,6 +111,36 @@ bool ExpandPseudo::expandInstr(MachineBasicBlock &MBB, Iter I) {
 
   MBB.erase(I);
   return true;
+}
+
+void ExpandPseudo::expandLoadCCond(MachineBasicBlock &MBB, Iter I) {
+  //  load $vr, FI
+  //  copy ccond, $vr
+
+  assert(I->getOperand(0).isReg() && I->getOperand(1).isFI());
+
+  const TargetRegisterClass *RC = RegInfo.intRegClass(4);
+  unsigned VR = MRI.createVirtualRegister(RC);
+  unsigned Dst = I->getOperand(0).getReg(), FI = I->getOperand(1).getIndex();
+
+  TII.loadRegFromStack(MBB, I, VR, FI, RC, &RegInfo, 0);
+  BuildMI(MBB, I, I->getDebugLoc(), TII.get(TargetOpcode::COPY), Dst)
+    .addReg(VR, RegState::Kill);
+}
+
+void ExpandPseudo::expandStoreCCond(MachineBasicBlock &MBB, Iter I) {
+  //  copy $vr, ccond
+  //  store $vr, FI
+
+  assert(I->getOperand(0).isReg() && I->getOperand(1).isFI());
+
+  const TargetRegisterClass *RC = RegInfo.intRegClass(4);
+  unsigned VR = MRI.createVirtualRegister(RC);
+  unsigned Src = I->getOperand(0).getReg(), FI = I->getOperand(1).getIndex();
+
+  BuildMI(MBB, I, I->getDebugLoc(), TII.get(TargetOpcode::COPY), VR)
+    .addReg(Src, getKillRegState(I->getOperand(0).isKill()));
+  TII.storeRegToStack(MBB, I, VR, true, FI, RC, &RegInfo, 0);
 }
 
 void ExpandPseudo::expandLoadACC(MachineBasicBlock &MBB, Iter I,

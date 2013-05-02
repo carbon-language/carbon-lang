@@ -19,3 +19,23 @@ entry:
 declare i64 @llvm.mips.maddu(i64, i32, i32)
 
 declare void @foo1()
+
+@g4 = common global <2 x i16> zeroinitializer, align 4
+@g5 = common global <2 x i16> zeroinitializer, align 4
+@g6 = common global <2 x i16> zeroinitializer, align 4
+
+define { i32 } @test_ccond_spill(i32 %a.coerce, i32 %b.coerce) {
+entry:
+  %0 = bitcast i32 %a.coerce to <2 x i16>
+  %1 = bitcast i32 %b.coerce to <2 x i16>
+  %cmp3 = icmp slt <2 x i16> %0, %1
+  %sext = sext <2 x i1> %cmp3 to <2 x i16>
+  store <2 x i16> %sext, <2 x i16>* @g4, align 4
+  tail call void @foo1()
+  %2 = load <2 x i16>* @g5, align 4
+  %3 = load <2 x i16>* @g6, align 4
+  %or = select <2 x i1> %cmp3, <2 x i16> %2, <2 x i16> %3
+  %4 = bitcast <2 x i16> %or to i32
+  %.fca.0.insert = insertvalue { i32 } undef, i32 %4, 0
+  ret { i32 } %.fca.0.insert
+}

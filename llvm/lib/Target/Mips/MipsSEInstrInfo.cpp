@@ -103,6 +103,11 @@ void MipsSEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       Opc = Mips::MFHI_DSP;
     else if (Mips::LORegsDSPRegClass.contains(SrcReg))
       Opc = Mips::MFLO_DSP;
+    else if (Mips::DSPCCRegClass.contains(SrcReg)) {
+      BuildMI(MBB, I, DL, get(Mips::RDDSP), DestReg).addImm(1 << 4)
+        .addReg(SrcReg, RegState::Implicit | getKillRegState(KillSrc));
+      return;
+    }
   }
   else if (Mips::CPURegsRegClass.contains(SrcReg)) { // Copy from CPU Reg.
     if (Mips::CCRRegClass.contains(DestReg))
@@ -117,6 +122,12 @@ void MipsSEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       Opc = Mips::MTHI_DSP;
     else if (Mips::LORegsDSPRegClass.contains(DestReg))
       Opc = Mips::MTLO_DSP;
+    else if (Mips::DSPCCRegClass.contains(DestReg)) {
+      BuildMI(MBB, I, DL, get(Mips::WRDSP))
+        .addReg(SrcReg, getKillRegState(KillSrc)).addImm(1 << 4)
+        .addReg(DestReg, RegState::ImplicitDefine);
+      return;
+    }
   }
   else if (Mips::FGR32RegClass.contains(DestReg, SrcReg))
     Opc = Mips::FMOV_S;
@@ -180,6 +191,8 @@ storeRegToStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     Opc = IsN64 ? Mips::STORE_AC_DSP_P8 : Mips::STORE_AC_DSP;
   else if (Mips::ACRegs128RegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::STORE_AC128_P8 : Mips::STORE_AC128;
+  else if (Mips::DSPCCRegClass.hasSubClassEq(RC))
+    Opc = IsN64 ? Mips::STORE_CCOND_DSP_P8 : Mips::STORE_CCOND_DSP;
   else if (Mips::FGR32RegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::SWC1_P8 : Mips::SWC1;
   else if (Mips::AFGR64RegClass.hasSubClassEq(RC))
@@ -211,6 +224,8 @@ loadRegFromStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     Opc = IsN64 ? Mips::LOAD_AC_DSP_P8 : Mips::LOAD_AC_DSP;
   else if (Mips::ACRegs128RegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::LOAD_AC128_P8 : Mips::LOAD_AC128;
+  else if (Mips::DSPCCRegClass.hasSubClassEq(RC))
+    Opc = IsN64 ? Mips::LOAD_CCOND_DSP_P8 : Mips::LOAD_CCOND_DSP;
   else if (Mips::FGR32RegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::LWC1_P8 : Mips::LWC1;
   else if (Mips::AFGR64RegClass.hasSubClassEq(RC))

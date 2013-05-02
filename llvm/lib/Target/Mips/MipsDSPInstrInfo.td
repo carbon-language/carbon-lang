@@ -1231,10 +1231,14 @@ def PREPEND : PREPEND_ENC, PREPEND_DESC;
 }
 
 // Pseudos.
-/// Pseudo instructions for loading and storing accumulator registers.
 let isPseudo = 1 in {
+  // Pseudo instructions for loading and storing accumulator registers.
   defm LOAD_AC_DSP  : LoadM<"load_ac_dsp", ACRegsDSP>;
   defm STORE_AC_DSP : StoreM<"store_ac_dsp", ACRegsDSP>;
+
+  // Pseudos for loading and storing ccond field of DSP control register.
+  defm LOAD_CCOND_DSP  : LoadM<"load_ccond_dsp", DSPCC>;
+  defm STORE_CCOND_DSP : StoreM<"store_ccond_dsp", DSPCC>;
 }
 
 // Pseudo CMP and PICK instructions.
