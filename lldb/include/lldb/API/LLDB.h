@@ -41,6 +41,7 @@
 #include "lldb/API/SBModule.h"
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBSourceManager.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/API/SBStringList.h"
 #include "lldb/API/SBSymbol.h"
 #include "lldb/API/SBSymbolContext.h"
