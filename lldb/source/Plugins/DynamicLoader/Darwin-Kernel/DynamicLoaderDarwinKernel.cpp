@@ -434,6 +434,11 @@ DynamicLoaderDarwinKernel::CheckForKernelImageAtAddress (lldb::addr_t addr, Proc
 
         if (exe_objfile->GetType() == ObjectFile::eTypeExecutable && exe_objfile->GetStrata() == ObjectFile::eStrataKernel)
         {
+            ArchSpec kernel_arch (eArchTypeMachO, header.cputype, header.cpusubtype);
+            if (!process->GetTarget().GetArchitecture().IsCompatibleMatch(kernel_arch))
+            {
+                process->GetTarget().SetArchitecture (kernel_arch);
+            }
             return memory_module_sp->GetUUID();
         }
     }
