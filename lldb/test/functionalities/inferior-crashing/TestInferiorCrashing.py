@@ -115,8 +115,8 @@ class CrashingInferiorTestCase(TestBase):
             stop_reason = 'stop reason = invalid address'
 
         # lldb should be able to read from registers from the inferior after crashing.
-        self.expect("register read rax",
-            substrs = ['rax = 0x'])
+        self.expect("register read eax",
+            substrs = ['eax = 0x'])
 
     def inferior_crashing_expr(self):
         """Test that the lldb expression interpreter can read symbols after crashing."""
