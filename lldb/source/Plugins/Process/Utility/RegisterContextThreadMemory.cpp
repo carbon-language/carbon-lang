@@ -63,6 +63,10 @@ RegisterContextThreadMemory::UpdateRegisterContext ()
                 }                
             }
         }
+        else
+        {
+            m_reg_ctx_sp.reset();
+        }
     }
     else
     {
