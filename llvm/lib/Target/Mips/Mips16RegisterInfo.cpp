@@ -1,5 +1,4 @@
-
-//===-- Mips16RegisterInfo.cpp - MIPS16 Register Information -== ----------===//
+//===-- Mips16RegisterInfo.cpp - MIPS16 Register Information --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
