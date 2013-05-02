@@ -81,6 +81,21 @@ This binds the function `clang-format-region` to C-M-tab, which then formats the
 current line or selected region.
 
 
+BBEdit Integration
+==================
+
+:program:`clang-format` cannot be used as a text filter with BBEdit, but works
+well via a script. The AppleScript to do this integration can be found at
+`clang/tools/clang-format/clang-format-bbedit.applescript`; place a copy in
+`~/Library/Application Support/BBEdit/Scripts`, and edit the path within it to
+point to your local copy of :program:`clang-format`.
+
+With this integration you can select the script from the Script menu and
+:program:`clang-format` will format the selection. Note that you can rename the
+menu item by renaming the script, and can assign the menu item a keyboard
+shortcut in the BBEdit preferences, under Menus & Shortcuts.
+
+
 Script for patch reformatting
 =============================
 
