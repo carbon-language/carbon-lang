@@ -915,6 +915,19 @@ define i32 @select_icmp_eq_and_4096_0_or_4096(i32 %x, i32 %y) {
   ret i32 %select
 }
 
+; CHECK: @select_icmp_eq_0_and_1_or_1
+; CHECK-NEXT: [[AND:%[a-z0-9]+]] = and i64 %x, 1
+; CHECK-NEXT: [[ZEXT:%[a-z0-9]+]] = trunc i64 [[AND]] to i32
+; CHECK-NEXT: [[OR:%[a-z0-9]+]] = or i32 [[XOR]], %y
+; CHECK-NEXT: ret i32 [[OR]]
+define i32 @select_icmp_eq_0_and_1_or_1(i64 %x, i32 %y) {
+  %and = and i64 %x, 1
+  %cmp = icmp eq i64 %and, 0
+  %or = or i32 %y, 1
+  %select = select i1 %cmp, i32 %y, i32 %or
+  ret i32 %select
+}
+
 ; CHECK: @select_icmp_ne_0_and_4096_or_32
 ; CHECK-NEXT: [[LSHR:%[a-z0-9]+]] = lshr i32 %x, 7
 ; CHECK-NEXT: [[AND:%[a-z0-9]+]] = and i32 [[LSHR]], 32
