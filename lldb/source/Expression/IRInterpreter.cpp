@@ -409,6 +409,7 @@ public:
 };
 
 static const char *unsupported_opcode_error         = "Interpreter doesn't handle one of the expression's opcodes";
+static const char *unsupported_operand_error        = "Interpreter doesn't handle one of the expression's operands";
 //static const char *interpreter_initialization_error = "Interpreter couldn't be initialized";
 static const char *interpreter_internal_error       = "Interpreter encountered an internal error";
 static const char *bad_value_error                  = "Interpreter couldn't resolve a value during execution";
@@ -505,7 +506,29 @@ IRInterpreter::CanInterpret (llvm::Module &module,
             case Instruction::ZExt:
                 break;
             }
+            
+            for (int oi = 0, oe = ii->getNumOperands();
+                 oi != oe;
+                 ++oi)
+            {
+                Value *operand = ii->getOperand(oi);
+                Type *operand_type = operand->getType();
+                
+                switch (operand_type->getTypeID())
+                {
+                default:
+                    break;
+                case Type::VectorTyID:
+                    {
+                        if (log)
+                            log->Printf("Unsupported operand type: %s", PrintType(operand_type).c_str());
+                        error.SetErrorString(unsupported_operand_error);
+                        return false;
+                    }
+                }
+            }
         }
+        
     }
     
     return true;}
