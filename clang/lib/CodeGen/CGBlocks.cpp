@@ -1169,11 +1169,9 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
     Alloca->setAlignment(Align);
     // Set the DebugLocation to empty, so the store is recognized as a
     // frame setup instruction by llvm::DwarfDebug::beginFunction().
-    llvm::DebugLoc Empty;
-    llvm::DebugLoc Loc = Builder.getCurrentDebugLocation();
-    Builder.SetCurrentDebugLocation(Empty);
+    Builder.DisableDebugLocations();
     Builder.CreateAlignedStore(BlockPointer, Alloca, Align);
-    Builder.SetCurrentDebugLocation(Loc);
+    Builder.EnableDebugLocations();
     BlockPointerDbgLoc = Alloca;
   }
 
