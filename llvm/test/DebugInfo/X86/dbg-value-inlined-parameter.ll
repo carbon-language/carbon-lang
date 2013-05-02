@@ -22,10 +22,10 @@ entry:
   tail call void @llvm.dbg.value(metadata !{%struct.S1* %sp}, i64 0, metadata !9), !dbg !20
   tail call void @llvm.dbg.value(metadata !{i32 %nums}, i64 0, metadata !18), !dbg !21
   %tmp2 = getelementptr inbounds %struct.S1* %sp, i64 0, i32 1, !dbg !22
-  store i32 %nums, i32* %tmp2, align 4, !dbg !22, !tbaa !24
+  store i32 %nums, i32* %tmp2, align 4, !dbg !22
   %call = tail call float* @bar(i32 %nums) nounwind optsize, !dbg !27
   %tmp5 = getelementptr inbounds %struct.S1* %sp, i64 0, i32 0, !dbg !27
-  store float* %call, float** %tmp5, align 8, !dbg !27, !tbaa !28
+  store float* %call, float** %tmp5, align 8, !dbg !27
   %cmp = icmp ne float* %call, null, !dbg !29
   %cond = zext i1 %cmp to i32, !dbg !29
   ret i32 %cond, !dbg !29
@@ -37,9 +37,9 @@ define void @foobar() nounwind optsize ssp {
 entry:
   tail call void @llvm.dbg.value(metadata !30, i64 0, metadata !9) nounwind, !dbg !31
   tail call void @llvm.dbg.value(metadata !34, i64 0, metadata !18) nounwind, !dbg !35
-  store i32 1, i32* getelementptr inbounds (%struct.S1* @p, i64 0, i32 1), align 8, !dbg !36, !tbaa !24
+  store i32 1, i32* getelementptr inbounds (%struct.S1* @p, i64 0, i32 1), align 8, !dbg !36
   %call.i = tail call float* @bar(i32 1) nounwind optsize, !dbg !37
-  store float* %call.i, float** getelementptr inbounds (%struct.S1* @p, i64 0, i32 0), align 8, !dbg !37, !tbaa !28
+  store float* %call.i, float** getelementptr inbounds (%struct.S1* @p, i64 0, i32 0), align 8, !dbg !37
   ret void, !dbg !38
 }
 
@@ -71,11 +71,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !21 = metadata !{i32 7, i32 21, metadata !0, null}
 !22 = metadata !{i32 9, i32 3, metadata !23, null}
 !23 = metadata !{i32 786443, metadata !1, metadata !0, i32 8, i32 1, i32 0} ; [ DW_TAG_lexical_block ]
-!24 = metadata !{metadata !"int", metadata !25}
-!25 = metadata !{metadata !"omnipotent char", metadata !26}
-!26 = metadata !{metadata !"Simple C/C++ TBAA", null}
 !27 = metadata !{i32 10, i32 3, metadata !23, null}
-!28 = metadata !{metadata !"any pointer", metadata !25}
 !29 = metadata !{i32 11, i32 3, metadata !23, null}
 !30 = metadata !{%struct.S1* @p}
 !31 = metadata !{i32 7, i32 13, metadata !0, metadata !32}

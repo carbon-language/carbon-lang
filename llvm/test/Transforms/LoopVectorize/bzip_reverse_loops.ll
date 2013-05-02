@@ -17,7 +17,7 @@ do.body:                                          ; preds = %cond.end, %entry
   %n.addr.0 = phi i32 [ %n, %entry ], [ %dec, %cond.end ]
   %p.addr.0 = phi i16* [ %p, %entry ], [ %incdec.ptr, %cond.end ]
   %incdec.ptr = getelementptr inbounds i16* %p.addr.0, i64 -1
-  %0 = load i16* %incdec.ptr, align 2, !tbaa !0
+  %0 = load i16* %incdec.ptr, align 2
   %conv = zext i16 %0 to i32
   %cmp = icmp ult i32 %conv, %size
   br i1 %cmp, label %cond.end, label %cond.true
@@ -29,7 +29,7 @@ cond.true:                                        ; preds = %do.body
 
 cond.end:                                         ; preds = %do.body, %cond.true
   %cond = phi i16 [ %phitmp, %cond.true ], [ 0, %do.body ]
-  store i16 %cond, i16* %incdec.ptr, align 2, !tbaa !0
+  store i16 %cond, i16* %incdec.ptr, align 2
   %dec = add i32 %n.addr.0, -1
   %tobool = icmp eq i32 %dec, 0
   br i1 %tobool, label %do.end, label %do.body
@@ -52,11 +52,11 @@ do.body:                                          ; preds = %do.body, %entry
   %n.addr.0 = phi i32 [ %n, %entry ], [ %dec, %do.body ]
   %p.0 = phi i32* [ %a, %entry ], [ %incdec.ptr, %do.body ]
   %incdec.ptr = getelementptr inbounds i32* %p.0, i64 -1
-  %0 = load i32* %incdec.ptr, align 4, !tbaa !3
+  %0 = load i32* %incdec.ptr, align 4
   %cmp = icmp slt i32 %0, %wsize
   %sub = sub nsw i32 %0, %wsize
   %cond = select i1 %cmp, i32 0, i32 %sub
-  store i32 %cond, i32* %incdec.ptr, align 4, !tbaa !3
+  store i32 %cond, i32* %incdec.ptr, align 4
   %dec = add nsw i32 %n.addr.0, -1
   %tobool = icmp eq i32 %dec, 0
   br i1 %tobool, label %do.end, label %do.body
@@ -64,8 +64,3 @@ do.body:                                          ; preds = %do.body, %entry
 do.end:                                           ; preds = %do.body
   ret void
 }
-
-!0 = metadata !{metadata !"short", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
-!3 = metadata !{metadata !"int", metadata !1}

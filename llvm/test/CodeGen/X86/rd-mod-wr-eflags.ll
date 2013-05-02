@@ -8,9 +8,9 @@ entry:
 ; CHECK: decq	(%{{rdi|rcx}})
 ; CHECK-NEXT: je
   %refcnt = getelementptr inbounds %struct.obj* %o, i64 0, i32 0
-  %0 = load i64* %refcnt, align 8, !tbaa !0
+  %0 = load i64* %refcnt, align 8
   %dec = add i64 %0, -1
-  store i64 %dec, i64* %refcnt, align 8, !tbaa !0
+  store i64 %dec, i64* %refcnt, align 8
   %tobool = icmp eq i64 %dec, 0
   br i1 %tobool, label %if.end, label %return
 
@@ -33,12 +33,12 @@ define i32 @test() nounwind uwtable ssp {
 entry:
 ; CHECK: decq
 ; CHECK-NOT: decq
-%0 = load i64* @c, align 8, !tbaa !0
+%0 = load i64* @c, align 8
 %dec.i = add nsw i64 %0, -1
-store i64 %dec.i, i64* @c, align 8, !tbaa !0
+store i64 %dec.i, i64* @c, align 8
 %tobool.i = icmp ne i64 %dec.i, 0
 %lor.ext.i = zext i1 %tobool.i to i32
-store i32 %lor.ext.i, i32* @a, align 4, !tbaa !3
+store i32 %lor.ext.i, i32* @a, align 4
 %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8]* @.str, i64 0, i64 0), i64 %dec.i) nounwind
 ret i32 0
 }
@@ -47,12 +47,12 @@ ret i32 0
 define i32 @test2() nounwind uwtable ssp {
 entry:
 ; CHECK-NOT: decq ({{.*}})
-%0 = load i64* @c, align 8, !tbaa !0
+%0 = load i64* @c, align 8
 %dec.i = add nsw i64 %0, -1
-store i64 %dec.i, i64* @c, align 8, !tbaa !0
+store i64 %dec.i, i64* @c, align 8
 %tobool.i = icmp ne i64 %0, 0
 %lor.ext.i = zext i1 %tobool.i to i32
-store i32 %lor.ext.i, i32* @a, align 4, !tbaa !3
+store i32 %lor.ext.i, i32* @a, align 4
 %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8]* @.str, i64 0, i64 0), i64 %dec.i) nounwind
 ret i32 0
 }
@@ -60,11 +60,6 @@ ret i32 0
 declare i32 @printf(i8* nocapture, ...) nounwind
 
 declare void @free(i8* nocapture) nounwind
-
-!0 = metadata !{metadata !"long", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA", null}
-!3 = metadata !{metadata !"int", metadata !1}
 
 %struct.obj2 = type { i64, i32, i16, i8 }
 

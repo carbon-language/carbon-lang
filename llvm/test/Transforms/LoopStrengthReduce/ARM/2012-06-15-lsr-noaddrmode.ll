@@ -50,7 +50,7 @@ declare %s* @getstruct() nounwind
 ; CHECK: ldr{{.*}}lsl #2
 define i32 @main() nounwind ssp {
 entry:
-  %v0 = load i32* @ncol, align 4, !tbaa !0
+  %v0 = load i32* @ncol, align 4
   %v1 = tail call i32* @getptr() nounwind
   %cmp10.i = icmp eq i32 %v0, 0
   br label %while.cond.outer
@@ -64,12 +64,12 @@ while.cond:
   br label %while.body
 
 while.body:
-  %v3 = load i32* @ncol, align 4, !tbaa !0
+  %v3 = load i32* @ncol, align 4
   br label %end_of_chain
 
 end_of_chain:
   %state.i = getelementptr inbounds %s* %call18, i32 0, i32 0
-  %v4 = load i32** %state.i, align 4, !tbaa !3
+  %v4 = load i32** %state.i, align 4
   br label %while.cond.i.i
 
 while.cond.i.i:
@@ -80,9 +80,9 @@ while.cond.i.i:
 
 land.rhs.i.i:
   %arrayidx.i.i = getelementptr inbounds i32* %v4, i32 %dec.i.i
-  %v5 = load i32* %arrayidx.i.i, align 4, !tbaa !0
+  %v5 = load i32* %arrayidx.i.i, align 4
   %arrayidx1.i.i = getelementptr inbounds i32* %v1, i32 %dec.i.i
-  %v6 = load i32* %arrayidx1.i.i, align 4, !tbaa !0
+  %v6 = load i32* %arrayidx1.i.i, align 4
   %cmp.i.i = icmp eq i32 %v5, %v6
   br i1 %cmp.i.i, label %while.cond.i.i, label %equal_data.exit.i
 
@@ -95,8 +95,3 @@ where.exit:
 while.end.i:
   ret i32 %v3
 }
-
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
-!3 = metadata !{metadata !"any pointer", metadata !1}

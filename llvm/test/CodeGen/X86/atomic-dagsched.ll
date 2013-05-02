@@ -18,8 +18,8 @@ loop.cond:                                        ; preds = %test.exit, %entry
   br i1 %3, label %return, label %loop
 
 loop:                                             ; preds = %loop.cond
-  %4 = load i64* addrspace(256)* inttoptr (i64 264 to i64* addrspace(256)*), align 8, !tbaa !0
-  %5 = load i64* %4, align 8, !tbaa !3
+  %4 = load i64* addrspace(256)* inttoptr (i64 264 to i64* addrspace(256)*), align 8
+  %5 = load i64* %4, align 8
   %vector.size.i = ashr i64 %5, 3
   %num.vector.wi.i = shl i64 %vector.size.i, 3
   %6 = icmp eq i64 %vector.size.i, 0
@@ -65,8 +65,8 @@ scalarIf.i:                                       ; preds = %vector_kernel_entry
   br i1 %18, label %test.exit, label %dim_0_pre_head.i
 
 dim_0_pre_head.i:                                 ; preds = %scalarIf.i
-  %19 = load i64* addrspace(256)* inttoptr (i64 264 to i64* addrspace(256)*), align 8, !tbaa !0
-  %20 = load i64* %19, align 8, !tbaa !3
+  %19 = load i64* addrspace(256)* inttoptr (i64 264 to i64* addrspace(256)*), align 8
+  %20 = load i64* %19, align 8
   %21 = trunc i64 %20 to i32
   %22 = mul i64 %vector.size.i, 8
   br label %scalar_kernel_entry.i
@@ -76,10 +76,10 @@ scalar_kernel_entry.i:                            ; preds = %scalar_kernel_entry
   %23 = bitcast i8* %asr.iv6 to i32 addrspace(1)*
   %24 = bitcast i8* %ptrtoarg4 to i32 addrspace(1)*
   %scevgep16 = getelementptr i32 addrspace(1)* %23, i64 %asr.iv12
-  %25 = load i32 addrspace(1)* %scevgep16, align 4, !tbaa !4
+  %25 = load i32 addrspace(1)* %scevgep16, align 4
   %26 = atomicrmw min i32 addrspace(1)* %24, i32 %25 seq_cst
   %scevgep15 = getelementptr i32 addrspace(1)* %23, i64 %asr.iv12
-  store i32 %21, i32 addrspace(1)* %scevgep15, align 4, !tbaa !4
+  store i32 %21, i32 addrspace(1)* %scevgep15, align 4
   %asr.iv.next13 = add i64 %asr.iv12, 1
   %dim_0_cmp.to.max.i = icmp eq i64 %5, %asr.iv.next13
   br i1 %dim_0_cmp.to.max.i, label %test.exit, label %scalar_kernel_entry.i
@@ -96,12 +96,6 @@ return:                                           ; preds = %loop.cond
   store i64 %0, i64* %b, align 8
   ret void
 }
-
-!0 = metadata !{metadata !"any pointer", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
-!3 = metadata !{metadata !"long", metadata !1}
-!4 = metadata !{metadata !"int", metadata !1}
 
 ; CHECK: test
 ; CHECK: decq

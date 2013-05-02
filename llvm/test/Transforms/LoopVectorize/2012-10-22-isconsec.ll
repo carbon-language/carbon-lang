@@ -24,7 +24,7 @@ entry:
   %3 = shl nsw i64 %indvars.iv, 2
   %4 = getelementptr inbounds i8* %1, i64 %3
   %5 = bitcast i8* %4 to float*
-  store float %value, float* %5, align 4, !tbaa !0
+  store float %value, float* %5, align 4
   %indvars.iv.next = add i64 %indvars.iv, %2
   %6 = trunc i64 %indvars.iv.next to i32
   %7 = icmp slt i32 %6, %_n
@@ -43,7 +43,7 @@ entry:
   %0 = shl nsw i64 %indvars.iv, 2
   %1 = getelementptr inbounds i8* bitcast (float* getelementptr inbounds ([32000 x float]* @b, i64 0, i64 16000) to i8*), i64 %0
   %2 = bitcast i8* %1 to float*
-  store float -1.000000e+00, float* %2, align 4, !tbaa !0
+  store float -1.000000e+00, float* %2, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
   %exitcond = icmp eq i32 %lftr.wideiv, 16000
@@ -52,6 +52,3 @@ entry:
 "5":                                              ; preds = %"3"
   ret i32 0
 }
-
-!0 = metadata !{metadata !"alias set 7: float", metadata !1}
-!1 = metadata !{metadata !1}
