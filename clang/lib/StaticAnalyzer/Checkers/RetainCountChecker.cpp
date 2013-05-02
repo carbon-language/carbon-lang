@@ -1116,12 +1116,14 @@ RetainSummaryManager::getFunctionSummary(const FunctionDecl *FD) {
       // correctly.
       ScratchArgs = AF.add(ScratchArgs, 12, StopTracking);
       S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
-    } else if (FName == "dispatch_set_context") {
+    } else if (FName == "dispatch_set_context" ||
+               FName == "xpc_connection_set_context") {
       // <rdar://problem/11059275> - The analyzer currently doesn't have
       // a good way to reason about the finalizer function for libdispatch.
       // If we pass a context object that is memory managed, stop tracking it.
+      // <rdar://problem/13783514> - Same problem, but for XPC.
       // FIXME: this hack should possibly go away once we can handle
-      // libdispatch finalizers.
+      // libdispatch and XPC finalizers.
       ScratchArgs = AF.add(ScratchArgs, 1, StopTracking);
       S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
     } else if (FName.startswith("NSLog")) {

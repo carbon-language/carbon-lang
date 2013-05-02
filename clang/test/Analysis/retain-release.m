@@ -2003,6 +2003,26 @@ static int Cond;
   [x release]; 
 }
 @end
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/13783514> xpc_connection_set_finalizer_f
+//===----------------------------------------------------------------------===//
+
+typedef xpc_object_t xpc_connection_t;
+typedef void (*xpc_finalizer_t)(void *value);
+void xpc_connection_set_context(xpc_connection_t connection, void *ctx);
+void xpc_connection_set_finalizer_f(xpc_connection_t connection,
+                                    xpc_finalizer_t finalizer);
+void releaseAfterXPC(void *context) {
+  [(NSArray *)context release];
+}
+
+void rdar13783514(xpc_connection_t connection) {
+  xpc_connection_set_context(connection, [[NSMutableArray alloc] init]);
+  xpc_connection_set_finalizer_f(connection, releaseAfterXPC);
+} // no-warning
+
+
 // CHECK:  <key>diagnostics</key>
 // CHECK-NEXT:  <array>
 // CHECK-NEXT:   <dict>
