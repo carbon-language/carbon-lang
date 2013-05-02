@@ -24,10 +24,10 @@ void
 test()
 {
     typedef std::atomic<T> A;
-    const A ct;
-    bool b1 = std::atomic_is_lock_free(&ct);
-    const volatile A cvt;
-    bool b2 = std::atomic_is_lock_free(&cvt);
+    A t;
+    bool b1 = std::atomic_is_lock_free(static_cast<const A*>(&t));
+    volatile A vt;
+    bool b2 = std::atomic_is_lock_free(static_cast<const volatile A*>(&vt));
 }
 
 struct A

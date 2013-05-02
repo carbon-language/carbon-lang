@@ -216,7 +216,9 @@ typedef __char32_t char32_t;
 #  define _LIBCPP_NORETURN __attribute__ ((noreturn))
 #endif
 
+#if !(__has_feature(cxx_defaulted_functions))
 #define _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#endif  // !(__has_feature(cxx_defaulted_functions))
 
 #if !(__has_feature(cxx_deleted_functions))
 #define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
@@ -420,6 +422,12 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_CONSTEXPR
 #else
 #define _LIBCPP_CONSTEXPR constexpr
+#endif
+
+#ifdef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+#define _LIBCPP_DEFAULT {}
+#else
+#define _LIBCPP_DEFAULT = default;
 #endif
 
 #ifdef __GNUC__

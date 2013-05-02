@@ -66,6 +66,7 @@
 // };
 
 #include <atomic>
+#include <new>
 #include <type_traits>
 #include <cassert>
 
@@ -112,6 +113,13 @@ do_test()
     assert(obj == T(5*sizeof(X)));
     assert((obj -= std::ptrdiff_t(3)) == T(2*sizeof(X)));
     assert(obj == T(2*sizeof(X)));
+
+    {
+        _ALIGNAS_TYPE(A) char storage[sizeof(A)] = {23};
+        A& zero = *new (storage) A();    
+        assert(zero == 0);
+        zero.~A();
+    }
 }
 
 template <class A, class T>

@@ -50,6 +50,7 @@
 // typedef atomic<bool> atomic_bool;
 
 #include <atomic>
+#include <new>
 #include <cassert>
 
 int main()
@@ -218,5 +219,12 @@ int main()
         assert(obj == false);
         assert((obj = true) == true);
         assert(obj == true);
+    }
+    {
+        typedef std::atomic<bool> A;
+        _ALIGNAS_TYPE(A) char storage[sizeof(A)] = {1};
+        A& zero = *new (storage) A();    
+        assert(zero == false);
+        zero.~A();
     }
 }

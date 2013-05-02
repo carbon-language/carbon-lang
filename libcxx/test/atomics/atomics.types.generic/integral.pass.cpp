@@ -85,6 +85,7 @@
 // };
 
 #include <atomic>
+#include <new>
 #include <cassert>
 
 template <class A, class T>
@@ -143,6 +144,13 @@ do_test()
     assert(obj == T(7));
     assert((obj ^= T(0xF)) == T(8));
     assert(obj == T(8));
+
+    {
+        _ALIGNAS_TYPE(A) char storage[sizeof(A)] = {23};
+        A& zero = *new (storage) A();    
+        assert(zero == 0);
+        zero.~A();
+    }
 }
 
 template <class A, class T>
