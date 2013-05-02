@@ -113,6 +113,7 @@ public:
 
   unsigned createVR(MachineFunction* MF, MVT VT) const;
 
+  virtual bool isBranch(const MachineInstr *MI) const;
   virtual bool isPredicable(MachineInstr *MI) const;
   virtual bool
   PredicateInstruction(MachineInstr *MI,
@@ -129,7 +130,11 @@ public:
                                    const BranchProbability &Probability) const;
 
   virtual bool isPredicated(const MachineInstr *MI) const;
+  virtual bool isPredicated(unsigned Opcode) const;
+  virtual bool isPredicatedTrue(const MachineInstr *MI) const;
+  virtual bool isPredicatedTrue(unsigned Opcode) const;
   virtual bool isPredicatedNew(const MachineInstr *MI) const;
+  virtual bool isPredicatedNew(unsigned Opcode) const;
   virtual bool DefinesPredicate(MachineInstr *MI,
                                 std::vector<MachineOperand> &Pred) const;
   virtual bool
@@ -178,6 +183,7 @@ public:
   bool isConditionalLoad (const MachineInstr* MI) const;
   bool isConditionalStore(const MachineInstr* MI) const;
   bool isNewValueInst(const MachineInstr* MI) const;
+  bool isNewValue(const MachineInstr* MI) const;
   bool isDotNewInst(const MachineInstr* MI) const;
   bool isDeallocRet(const MachineInstr *MI) const;
   unsigned getInvertedPredicatedOpcode(const int Opc) const;

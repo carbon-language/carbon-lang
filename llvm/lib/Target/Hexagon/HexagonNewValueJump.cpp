@@ -22,29 +22,31 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "hexagon-nvj"
-#include "Hexagon.h"
-#include "HexagonInstrInfo.h"
-#include "HexagonMachineFunctionInfo.h"
-#include "HexagonRegisterInfo.h"
-#include "HexagonSubtarget.h"
-#include "HexagonTargetMachine.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/CodeGen/LiveVariables.h"
-#include "llvm/CodeGen/MachineFunctionAnalysis.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/PassSupport.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/ScheduleDAGInstrs.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/LiveVariables.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "Hexagon.h"
+#include "HexagonTargetMachine.h"
+#include "HexagonRegisterInfo.h"
+#include "HexagonSubtarget.h"
+#include "HexagonInstrInfo.h"
+#include "HexagonMachineFunctionInfo.h"
+
 #include <map>
+
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
 STATISTIC(NumNVJGenerated, "Number of New Value Jump Instructions created");
@@ -57,6 +59,11 @@ static cl::opt<bool> DisableNewValueJumps("disable-nvjump", cl::Hidden,
     cl::ZeroOrMore, cl::init(false),
     cl::desc("Disable New Value Jumps"));
 
+namespace llvm {
+  void initializeHexagonNewValueJumpPass(PassRegistry&);
+}
+
+
 namespace {
   struct HexagonNewValueJump : public MachineFunctionPass {
     const HexagonInstrInfo    *QII;
@@ -65,7 +72,9 @@ namespace {
   public:
     static char ID;
 
-    HexagonNewValueJump() : MachineFunctionPass(ID) { }
+    HexagonNewValueJump() : MachineFunctionPass(ID) {
+      initializeHexagonNewValueJumpPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<MachineBranchProbabilityInfo>();
@@ -87,6 +96,13 @@ namespace {
 } // end of anonymous namespace
 
 char HexagonNewValueJump::ID = 0;
+
+INITIALIZE_PASS_BEGIN(HexagonNewValueJump, "hexagon-nvj",
+                      "Hexagon NewValueJump", false, false)
+INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
+INITIALIZE_PASS_END(HexagonNewValueJump, "hexagon-nvj",
+                    "Hexagon NewValueJump", false, false)
+
 
 // We have identified this II could be feeder to NVJ,
 // verify that it can be.
@@ -219,7 +235,7 @@ static bool canCompareBeNewValueJump(const HexagonInstrInfo *QII,
       return false;
   }
 
-  unsigned cmpReg1, cmpOp2;
+  unsigned cmpReg1, cmpOp2 = 0; // cmpOp2 assignment silences compiler warning.
   cmpReg1 = MI->getOperand(1).getReg();
 
   if (secondReg) {
@@ -285,43 +301,48 @@ static unsigned getNewValueJumpOpcode(MachineInstr *MI, int reg,
 
   switch (MI->getOpcode()) {
     case Hexagon::CMPEQrr:
-      return taken ? Hexagon::JMP_EQrrPt_nv_V4 : Hexagon::JMP_EQrrPnt_nv_V4;
+      return taken ? Hexagon::CMPEQrr_t_Jumpnv_t_V4
+                   : Hexagon::CMPEQrr_t_Jumpnv_nt_V4;
 
     case Hexagon::CMPEQri: {
       if (reg >= 0)
-        return taken ? Hexagon::JMP_EQriPt_nv_V4 : Hexagon::JMP_EQriPnt_nv_V4;
+        return taken ? Hexagon::CMPEQri_t_Jumpnv_t_V4
+                     : Hexagon::CMPEQri_t_Jumpnv_nt_V4;
       else
-        return taken ? Hexagon::JMP_EQriPtneg_nv_V4
-                     : Hexagon::JMP_EQriPntneg_nv_V4;
+        return taken ? Hexagon::CMPEQn1_t_Jumpnv_t_V4
+                     : Hexagon::CMPEQn1_t_Jumpnv_nt_V4;
     }
 
     case Hexagon::CMPGTrr: {
       if (secondRegNewified)
-        return taken ? Hexagon::JMP_GTrrdnPt_nv_V4
-                     : Hexagon::JMP_GTrrdnPnt_nv_V4;
+        return taken ? Hexagon::CMPLTrr_t_Jumpnv_t_V4
+                     : Hexagon::CMPLTrr_t_Jumpnv_nt_V4;
       else
-        return taken ? Hexagon::JMP_GTrrPt_nv_V4
-                     : Hexagon::JMP_GTrrPnt_nv_V4;
+        return taken ? Hexagon::CMPGTrr_t_Jumpnv_t_V4
+                     : Hexagon::CMPGTrr_t_Jumpnv_nt_V4;
     }
 
     case Hexagon::CMPGTri: {
       if (reg >= 0)
-        return taken ? Hexagon::JMP_GTriPt_nv_V4 : Hexagon::JMP_GTriPnt_nv_V4;
+        return taken ? Hexagon::CMPGTri_t_Jumpnv_t_V4
+                     : Hexagon::CMPGTri_t_Jumpnv_nt_V4;
       else
-        return taken ? Hexagon::JMP_GTriPtneg_nv_V4
-                     : Hexagon::JMP_GTriPntneg_nv_V4;
+        return taken ? Hexagon::CMPGTn1_t_Jumpnv_t_V4
+                     : Hexagon::CMPGTn1_t_Jumpnv_nt_V4;
     }
 
     case Hexagon::CMPGTUrr: {
       if (secondRegNewified)
-        return taken ? Hexagon::JMP_GTUrrdnPt_nv_V4
-                     : Hexagon::JMP_GTUrrdnPnt_nv_V4;
+        return taken ? Hexagon::CMPLTUrr_t_Jumpnv_t_V4
+                     : Hexagon::CMPLTUrr_t_Jumpnv_nt_V4;
       else
-        return taken ? Hexagon::JMP_GTUrrPt_nv_V4 : Hexagon::JMP_GTUrrPnt_nv_V4;
+        return taken ? Hexagon::CMPGTUrr_t_Jumpnv_t_V4
+                     : Hexagon::CMPGTUrr_t_Jumpnv_nt_V4;
     }
 
     case Hexagon::CMPGTUri:
-      return taken ? Hexagon::JMP_GTUriPt_nv_V4 : Hexagon::JMP_GTUriPnt_nv_V4;
+      return taken ? Hexagon::CMPGTUri_t_Jumpnv_t_V4
+                   : Hexagon::CMPGTUri_t_Jumpnv_nt_V4;
 
     default:
        llvm_unreachable("Could not find matching New Value Jump instruction.");
