@@ -170,6 +170,9 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type, bool all
     case clang::Type::Elaborated:
         return GetCompleteQualType (ast, cast<ElaboratedType>(qual_type)->getNamedType(), allow_completion);
 
+    case clang::Type::Paren:
+        return GetCompleteQualType (ast, cast<ParenType>(qual_type)->desugar(), allow_completion);
+
     default:
         break;
     }
@@ -1453,6 +1456,9 @@ ClangASTContext::SetHasExternalStorage (clang_type_t clang_type, bool has_extern
     
     case clang::Type::Elaborated:
         return ClangASTContext::SetHasExternalStorage (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(), has_extern);
+
+    case clang::Type::Paren:
+        return ClangASTContext::SetHasExternalStorage (cast<ParenType>(qual_type)->desugar().getAsOpaquePtr(), has_extern);
 
     default:
         break;
@@ -2865,6 +2871,9 @@ ClangASTContext::GetNumTemplateArguments (clang::ASTContext *ast, clang_type_t c
             case clang::Type::Elaborated:
                 return ClangASTContext::GetNumTemplateArguments (ast, cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
 
+            case clang::Type::Paren:
+                return ClangASTContext::GetNumTemplateArguments(ast, cast<ParenType>(qual_type)->desugar().getAsOpaquePtr());
+                
             default:
                 break;
         }
@@ -2941,6 +2950,9 @@ ClangASTContext::GetTemplateArgument (clang::ASTContext *ast, clang_type_t clang
 
             case clang::Type::Elaborated:
                 return ClangASTContext::GetTemplateArgument (ast, cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(), arg_idx, kind);
+               
+            case clang::Type::Paren:
+                return ClangASTContext::GetTemplateArgument(ast, cast<ParenType>(qual_type)->desugar().getAsOpaquePtr(), arg_idx, kind);
                 
             default:
                 break;
@@ -3065,6 +3077,12 @@ ClangASTContext::GetTypeInfo
         return ClangASTContext::GetTypeInfo (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
                                              ast, 
                                              pointee_or_element_clang_type);
+
+    case clang::Type::Paren:
+        return ClangASTContext::GetTypeInfo(llvm::cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr(),
+                                            ast,
+                                            pointee_or_element_clang_type);
+
     case clang::Type::FunctionProto:                    return eTypeIsFuncPrototype | eTypeHasValue;
     case clang::Type::FunctionNoProto:                  return eTypeIsFuncPrototype | eTypeHasValue;
     case clang::Type::InjectedClassName:                return 0;
@@ -3155,7 +3173,8 @@ ClangASTContext::IsAggregateType (clang_type_t clang_type)
         return ClangASTContext::IsAggregateType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
     case clang::Type::Typedef:
         return ClangASTContext::IsAggregateType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
-
+    case clang::Type::Paren:
+        return ClangASTContext::IsAggregateType (cast<ParenType>(qual_type)->desugar().getAsOpaquePtr());
     default:
         break;
     }
@@ -3333,6 +3352,12 @@ ClangASTContext::GetNumChildren (clang::ASTContext *ast, clang_type_t clang_type
                                                         omit_empty_base_classes);
         break;
 
+    case clang::Type::Paren:
+        num_children = ClangASTContext::GetNumChildren(ast,
+                                                       llvm::cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr(),
+                                                       omit_empty_base_classes);
+
+        break;
     default:
         break;
     }
@@ -3383,6 +3408,9 @@ ClangASTContext::GetNumDirectBaseClasses (clang::ASTContext *ast, clang_type_t c
             count = ClangASTContext::GetNumDirectBaseClasses (ast, cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
             break;
             
+        case clang::Type::Paren:
+            return ClangASTContext::GetNumDirectBaseClasses(ast, cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr());
+            
         default:
             break;
     }
@@ -3418,6 +3446,10 @@ ClangASTContext::GetNumVirtualBaseClasses (clang::ASTContext *ast,
             count = ClangASTContext::GetNumVirtualBaseClasses (ast, cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
             break;
             
+        case clang::Type::Paren:
+            count = ClangASTContext::GetNumVirtualBaseClasses(ast, cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr());
+            break;
+
         default:
             break;
     }
@@ -3460,6 +3492,10 @@ ClangASTContext::GetNumFields (clang::ASTContext *ast, clang_type_t clang_type)
             
         case clang::Type::Elaborated:
             count = ClangASTContext::GetNumFields (ast, cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
+            break;
+            
+        case clang::Type::Paren:
+            count = ClangASTContext::GetNumFields(ast, cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr());
             break;
             
         case clang::Type::ObjCObject:
@@ -3562,6 +3598,12 @@ ClangASTContext::GetDirectBaseClassAtIndex (clang::ASTContext *ast,
                                                                 idx,
                                                                 bit_offset_ptr);
             
+        case clang::Type::Paren:
+            return  ClangASTContext::GetDirectBaseClassAtIndex (ast,
+                                                                cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr(),
+                                                                idx,
+                                                                bit_offset_ptr);
+            
         default:
             break;
     }
@@ -3621,6 +3663,12 @@ ClangASTContext::GetVirtualBaseClassAtIndex (clang::ASTContext *ast,
                                                                  idx,
                                                                  bit_offset_ptr);
             
+        case clang::Type::Paren:
+            return  ClangASTContext::GetVirtualBaseClassAtIndex (ast,
+                                                                 cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr(),
+                                                                 idx,
+                                                                 bit_offset_ptr);
+
         default:
             break;
     }
@@ -3765,6 +3813,15 @@ ClangASTContext::GetFieldAtIndex (clang::ASTContext *ast,
         case clang::Type::Elaborated:
             return  ClangASTContext::GetFieldAtIndex (ast, 
                                                       cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
+                                                      idx,
+                                                      name,
+                                                      bit_offset_ptr,
+                                                      bitfield_bit_size_ptr,
+                                                      is_bitfield_ptr);
+            
+        case clang::Type::Paren:
+            return  ClangASTContext::GetFieldAtIndex (ast,
+                                                      cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr(),
                                                       idx,
                                                       name,
                                                       bit_offset_ptr,
@@ -3950,7 +4007,7 @@ ClangASTContext::GetNumPointeeChildren (clang_type_t clang_type)
     case clang::Type::FunctionProto:            return 0;   // When we function pointers, they have no children...
     case clang::Type::FunctionNoProto:          return 0;   // When we function pointers, they have no children...
     case clang::Type::UnresolvedUsing:          return 0;
-    case clang::Type::Paren:                    return 0;
+    case clang::Type::Paren:                    return ClangASTContext::GetNumPointeeChildren (cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr());
     case clang::Type::Typedef:                  return ClangASTContext::GetNumPointeeChildren (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
     case clang::Type::Elaborated:               return ClangASTContext::GetNumPointeeChildren (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
     case clang::Type::TypeOfExpr:               return 0;
@@ -4494,7 +4551,25 @@ ClangASTContext::GetChildClangTypeAtIndex
                                          child_bitfield_bit_size,
                                          child_bitfield_bit_offset,
                                          child_is_base_class,
-                                         child_is_deref_of_parent); 
+                                         child_is_deref_of_parent);
+            
+    case clang::Type::Paren:
+        return GetChildClangTypeAtIndex (exe_ctx,
+                                         ast,
+                                         parent_name,
+                                         llvm::cast<clang::ParenType>(parent_qual_type)->desugar().getAsOpaquePtr(),
+                                         idx,
+                                         transparent_pointers,
+                                         omit_empty_base_classes,
+                                         ignore_array_bounds,
+                                         child_name,
+                                         child_byte_size,
+                                         child_byte_offset,
+                                         child_bitfield_bit_size,
+                                         child_bitfield_bit_offset,
+                                         child_is_base_class,
+                                         child_is_deref_of_parent);
+
 
     default:
         break;
@@ -4945,6 +5020,13 @@ ClangASTContext::GetIndexOfChildMemberWithName
                                                   name,
                                                   omit_empty_base_classes,
                                                   child_indexes);
+                
+        case clang::Type::Paren:
+            return GetIndexOfChildMemberWithName (ast,
+                                                  cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr(),
+                                                  name,
+                                                  omit_empty_base_classes,
+                                                  child_indexes);
 
         default:
             break;
@@ -5159,6 +5241,12 @@ ClangASTContext::GetIndexOfChildWithName
                                             name,
                                             omit_empty_base_classes);
 
+        case clang::Type::Paren:
+            return GetIndexOfChildWithName (ast,
+                                            cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr(),
+                                            name,
+                                            omit_empty_base_classes);
+
         case clang::Type::Typedef:
             return GetIndexOfChildWithName (ast,
                                             cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
@@ -5235,6 +5323,7 @@ ClangASTContext::GetDeclContextForType (clang_type_t clang_type)
     case clang::Type::Enum:                     return cast<EnumType>(qual_type)->getDecl();
     case clang::Type::Typedef:                  return ClangASTContext::GetDeclContextForType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
     case clang::Type::Elaborated:               return ClangASTContext::GetDeclContextForType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
+    case clang::Type::Paren:                    return ClangASTContext::GetDeclContextForType (cast<ParenType>(qual_type)->desugar().getAsOpaquePtr());
     case clang::Type::TypeOfExpr:               break;
     case clang::Type::TypeOf:                   break;
     case clang::Type::Decltype:                 break;
@@ -5246,7 +5335,6 @@ ClangASTContext::GetDeclContextForType (clang_type_t clang_type)
     case clang::Type::SubstTemplateTypeParmPack:break;
     case clang::Type::PackExpansion:            break;
     case clang::Type::UnresolvedUsing:          break;
-    case clang::Type::Paren:                    break;
     case clang::Type::Attributed:               break;
     case clang::Type::Auto:                     break;
     case clang::Type::InjectedClassName:        break;
@@ -5827,7 +5915,13 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast,
                                                                dynamic_pointee_type,
                                                                check_cplusplus,
                                                                check_objc);
-            
+
+            case clang::Type::Paren:
+                return ClangASTContext::IsPossibleDynamicType (ast,
+                                                               cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr(),
+                                                               dynamic_pointee_type,
+                                                               check_cplusplus,
+                                                               check_objc);
             default:
                 break;
         }
@@ -5983,6 +6077,9 @@ ClangASTContext::IsReferenceType (clang_type_t clang_type, clang_type_t *target_
         return ClangASTContext::IsReferenceType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
     case clang::Type::Elaborated:
         return ClangASTContext::IsReferenceType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
+    case clang::Type::Paren:
+        return ClangASTContext::IsReferenceType (cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr());
+
     default:
         break;
     }
@@ -6038,6 +6135,8 @@ ClangASTContext::IsPointerOrReferenceType (clang_type_t clang_type, clang_type_t
         return ClangASTContext::IsPointerOrReferenceType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
     case clang::Type::Elaborated:
         return ClangASTContext::IsPointerOrReferenceType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
+    case clang::Type::Paren:
+        return ClangASTContext::IsPointerOrReferenceType (cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr());
     default:
         break;
     }
@@ -6107,6 +6206,8 @@ ClangASTContext::IsPointerType (clang_type_t clang_type, clang_type_t *target_ty
             return ClangASTContext::IsPointerType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), target_type);
         case clang::Type::Elaborated:
             return ClangASTContext::IsPointerType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(), target_type);
+        case clang::Type::Paren:
+            return ClangASTContext::IsPointerType (cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr(), target_type);
         default:
             break;
         }
@@ -6354,6 +6455,8 @@ ClangASTContext::IsFunctionPointerType (clang_type_t clang_type)
             return ClangASTContext::IsFunctionPointerType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
         case clang::Type::Elaborated:
             return ClangASTContext::IsFunctionPointerType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
+        case clang::Type::Paren:
+            return ClangASTContext::IsFunctionPointerType (cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr());
 
         case clang::Type::LValueReference:
         case clang::Type::RValueReference:
@@ -6390,6 +6493,9 @@ ClangASTContext::GetArraySize (clang_type_t clang_type)
             
         case clang::Type::Elaborated:
             return ClangASTContext::GetArraySize(cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
+
+        case clang::Type::Paren:
+            return ClangASTContext::GetArraySize(cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr());
                 
         default:
             break;
@@ -6452,6 +6558,11 @@ ClangASTContext::GetAsArrayType (clang_type_t clang_type, clang_type_t*member_ty
     
     case clang::Type::Elaborated:
         return ClangASTContext::GetAsArrayType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
+                                                member_type,
+                                                size,
+                                                is_incomplete);
+    case clang::Type::Paren:
+        return ClangASTContext::GetAsArrayType (cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr(),
                                                 member_type,
                                                 size,
                                                 is_incomplete);
