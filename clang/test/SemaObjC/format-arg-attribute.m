@@ -14,7 +14,7 @@ union u1 { int i; } __attribute__((format_arg(1)));  // expected-warning {{'form
 enum e1 { E1V0 } __attribute__((format_arg(1))); // expected-warning {{'format_arg' attribute only applies to functions}}
 
 extern NSString *ff3 (const NSString *) __attribute__((format_arg(3-2)));
-extern NSString *ff4 (const NSString *) __attribute__((format_arg(foo))); // expected-error {{attribute takes one argument}}
+extern NSString *ff4 (const NSString *) __attribute__((format_arg(foo))); // expected-error {{use of undeclared identifier 'foo'}}
 
 /* format_arg formats must take and return a string.  */
 extern NSString *fi0 (int) __attribute__((format_arg(1)));  // expected-error {{format argument not a string type}}
