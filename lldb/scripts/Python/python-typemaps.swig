@@ -442,3 +442,26 @@
 #endif
    $result = PyFile_FromFile($1, const_cast<char*>(""), mode, fclose);
 }
+
+%typemap(in) (const char* string, int len) {
+    if ($input == Py_None)
+    {
+        $1 = NULL;
+        $2 = 0;
+    }
+    else if (PyUnicode_Check($input))
+    {
+        $1 = PyString_AsString(PyUnicode_AsUTF8String($input));
+        $2 = strlen($1);
+    }
+    else if (PyString_Check($input))
+    {
+        $1 = PyString_AsString($input);
+        $2 = PyString_Size($input);
+    }
+    else
+    {
+        PyErr_SetString(PyExc_TypeError,"not a string-like object");
+        return NULL;
+    }
+}

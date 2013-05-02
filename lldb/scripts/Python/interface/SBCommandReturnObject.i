@@ -84,7 +84,7 @@ public:
     SetImmediateErrorFile (FILE *fh);
 
 	void
-	PutCString(const char* string, int len = -1);
+	PutCString(const char* string, int len);
 
     // wrapping the variadic Printf() with a plain Print()
     // because it is hard to support varargs in SWIG bridgings

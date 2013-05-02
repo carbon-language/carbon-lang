@@ -281,7 +281,7 @@ SBCommandReturnObject::PutCString(const char* string, int len)
 {
     if (m_opaque_ap.get())
     {
-        if (len == 0)
+        if (len == 0 || string == NULL || *string == 0)
         {
             return;
         }
