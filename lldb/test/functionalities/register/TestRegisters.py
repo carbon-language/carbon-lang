@@ -74,9 +74,12 @@ class RegisterCommandsTestCase(TestBase):
         self.expect("register read -s 3",
             substrs = ['invalid register set index: 3'], error = True)
 
-    def write_and_restore(self, frame, register):
+    def write_and_restore(self, frame, register, must_exist = True):
         value = frame.FindValue(register, lldb.eValueTypeRegister)
-        self.assertTrue(value.IsValid(), "finding a value for register " + register)
+        if must_exist:
+            self.assertTrue(value.IsValid(), "finding a value for register " + register)
+        elif not value.IsValid():
+            return # If register doesn't exist, skip this test
 
         error = lldb.SBError()
         register_value = value.GetValueAsUnsigned(error, 0)
@@ -90,9 +93,12 @@ class RegisterCommandsTestCase(TestBase):
         self.expect("register read " + register,
             substrs = [register + ' = 0x'])
 
-    def vector_write_and_read(self, frame, register, new_value):
+    def vector_write_and_read(self, frame, register, new_value, must_exist = True):
         value = frame.FindValue(register, lldb.eValueTypeRegister)
-        self.assertTrue(value.IsValid(), "finding a value for register " + register)
+        if must_exist:
+            self.assertTrue(value.IsValid(), "finding a value for register " + register)
+        elif not value.IsValid():
+            return # If register doesn't exist, skip this test
 
         self.runCmd("register write " + register + " \'" + new_value + "\'")
         self.expect("register read " + register,
@@ -120,13 +126,13 @@ class RegisterCommandsTestCase(TestBase):
         currentFrame = thread.GetFrameAtIndex(0)
         self.assertTrue(currentFrame.IsValid(), "current frame is valid")
 
-        self.write_and_restore(currentFrame, "fcw")
-        self.write_and_restore(currentFrame, "fsw")
-        self.write_and_restore(currentFrame, "ftw")
-        self.write_and_restore(currentFrame, "ip")
-        self.write_and_restore(currentFrame, "dp")
-        self.write_and_restore(currentFrame, "mxcsr")
-        self.write_and_restore(currentFrame, "mxcsrmask")
+        self.write_and_restore(currentFrame, "fcw", False)
+        self.write_and_restore(currentFrame, "fsw", False)
+        self.write_and_restore(currentFrame, "ftw", False)
+        self.write_and_restore(currentFrame, "ip", False)
+        self.write_and_restore(currentFrame, "dp", False)
+        self.write_and_restore(currentFrame, "mxcsr", False)
+        self.write_and_restore(currentFrame, "mxcsrmask", False)
 
         new_value = "{0x01 0x02 0x03 0x00 0x00 0x00 0x00 0x00 0x00 0x00}"
         self.vector_write_and_read(currentFrame, "stmm0", new_value)
@@ -136,7 +142,7 @@ class RegisterCommandsTestCase(TestBase):
         new_value = "{0x01 0x02 0x03 0x00 0x00 0x00 0x00 0x00 0x09 0x0a 0x2f 0x2f 0x2f 0x2f 0x2f 0x2f}"
         self.vector_write_and_read(currentFrame, "xmm0", new_value)
         new_value = "{0x01 0x02 0x03 0x00 0x00 0x00 0x00 0x00 0x09 0x0a 0x2f 0x2f 0x2f 0x2f 0x0e 0x0f}"
-        self.vector_write_and_read(currentFrame, "xmm15", new_value)
+        self.vector_write_and_read(currentFrame, "xmm15", new_value, False)
 
         has_avx = False 
         registerSets = currentFrame.GetRegisters() # Returns an SBValueList.
