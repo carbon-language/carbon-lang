@@ -40,17 +40,17 @@ public:
         m_rwlock()
     {
         int err = ::pthread_rwlock_init(&m_rwlock, NULL); (void)err;
-#if LLDB_CONFIGURATION_DEBUG
-        assert(err == 0);
-#endif
+//#if LLDB_CONFIGURATION_DEBUG
+//        assert(err == 0);
+//#endif
     }
 
     ~ReadWriteLock ()
     {
         int err = ::pthread_rwlock_destroy (&m_rwlock); (void)err;
-#if LLDB_CONFIGURATION_DEBUG
-        assert(err == 0);
-#endif
+//#if LLDB_CONFIGURATION_DEBUG
+//        assert(err == 0);
+//#endif
     }
 
     bool
