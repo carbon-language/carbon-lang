@@ -279,15 +279,15 @@ public:
                 m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"[selectionIndexes description]");
                 m_run_expr_measurement(m_thread.GetFrameAtIndex(0),"(BOOL)NSIntersectsRect(rect, graphicDrawingBounds)");
             }
+            next_action.CallNext();
             break;
         case 9:
-            {
-                if (++launch < 10)
-                    next_action.Relaunch(GetLaunchInfo());
-                else
-                    next_action.Kill();
-                break;
-            }
+            if (++launch < 10)
+                next_action.Relaunch(GetLaunchInfo());
+            else
+                next_action.Kill();
+            break;
+        
                 
         default:
             {
