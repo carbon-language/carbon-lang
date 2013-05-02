@@ -983,58 +983,42 @@ def MIN : R600_2OP_Helper <0x4, "MIN", AMDGPUfmin>;
 // XXX: Use the defs in TargetSelectionDAG.td instead of intrinsics.
 def SETE : R600_2OP <
   0x08, "SETE",
-  [(set R600_Reg32:$dst,
-   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO,
-             COND_EQ))]
+  [(set f32:$dst, (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_EQ))]
 >;
 
 def SGT : R600_2OP <
   0x09, "SETGT",
-  [(set R600_Reg32:$dst,
-   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO,
-              COND_GT))]
+  [(set f32:$dst, (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_GT))]
 >;
 
 def SGE : R600_2OP <
   0xA, "SETGE",
-  [(set R600_Reg32:$dst,
-   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO,
-              COND_GE))]
+  [(set f32:$dst, (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_GE))]
 >;
 
 def SNE : R600_2OP <
   0xB, "SETNE",
-  [(set R600_Reg32:$dst,
-   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO,
-    COND_NE))]
+  [(set f32:$dst, (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_NE))]
 >;
 
 def SETE_DX10 : R600_2OP <
   0xC, "SETE_DX10",
-  [(set R600_Reg32:$dst,
-   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, (i32 -1), (i32 0),
-    COND_EQ))]
+  [(set i32:$dst, (selectcc f32:$src0, f32:$src1, -1, 0, COND_EQ))]
 >;
 
 def SETGT_DX10 : R600_2OP <
   0xD, "SETGT_DX10",
-  [(set R600_Reg32:$dst,
-   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, (i32 -1), (i32 0),
-    COND_GT))]
+  [(set i32:$dst, (selectcc f32:$src0, f32:$src1, -1, 0, COND_GT))]
 >;
 
 def SETGE_DX10 : R600_2OP <
   0xE, "SETGE_DX10",
-  [(set R600_Reg32:$dst,
-   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, (i32 -1), (i32 0),
-    COND_GE))]
+  [(set i32:$dst, (selectcc f32:$src0, f32:$src1, -1, 0, COND_GE))]
 >;
 
 def SETNE_DX10 : R600_2OP <
   0xF, "SETNE_DX10",
-  [(set R600_Reg32:$dst,
-    (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, (i32 -1), (i32 0),
-     COND_NE))]
+  [(set i32:$dst, (selectcc f32:$src0, f32:$src1, -1, 0, COND_NE))]
 >;
 
 def FRACT : R600_1OP_Helper <0x10, "FRACT", AMDGPUfract>;
@@ -1092,38 +1076,32 @@ def MIN_UINT : R600_2OP_Helper <0x39, "MIN_UINT", AMDGPUumin>;
 
 def SETE_INT : R600_2OP <
   0x3A, "SETE_INT",
-  [(set (i32 R600_Reg32:$dst),
-   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETEQ))]
+  [(set i32:$dst, (selectcc i32:$src0, i32:$src1, -1, 0, SETEQ))]
 >;
 
 def SETGT_INT : R600_2OP <
   0x3B, "SETGT_INT",
-  [(set (i32 R600_Reg32:$dst),
-   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETGT))]
+  [(set i32:$dst, (selectcc i32:$src0, i32:$src1, -1, 0, SETGT))]
 >;
 
 def SETGE_INT : R600_2OP <
   0x3C, "SETGE_INT",
-  [(set (i32 R600_Reg32:$dst),
-   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETGE))]
+  [(set i32:$dst, (selectcc i32:$src0, i32:$src1, -1, 0, SETGE))]
 >;
 
 def SETNE_INT : R600_2OP <
   0x3D, "SETNE_INT",
-  [(set (i32 R600_Reg32:$dst),
-   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETNE))]
+  [(set i32:$dst, (selectcc i32:$src0, i32:$src1, -1, 0, SETNE))]
 >;
 
 def SETGT_UINT : R600_2OP <
   0x3E, "SETGT_UINT",
-  [(set (i32 R600_Reg32:$dst),
-   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETUGT))]
+  [(set i32:$dst, (selectcc i32:$src0, i32:$src1, -1, 0, SETUGT))]
 >;
 
 def SETGE_UINT : R600_2OP <
   0x3F, "SETGE_UINT",
-  [(set (i32 R600_Reg32:$dst),
-    (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETUGE))]
+  [(set i32:$dst, (selectcc i32:$src0, i32:$src1, -1, 0, SETUGE))]
 >;
 
 def PRED_SETE_INT : R600_2OP <0x42, "PRED_SETE_INT", []>;
@@ -1133,26 +1111,17 @@ def PRED_SETNE_INT : R600_2OP <0x45, "PRED_SETNE_INT", []>;
 
 def CNDE_INT : R600_3OP <
   0x1C, "CNDE_INT",
-  [(set (i32 R600_Reg32:$dst),
-   (selectcc (i32 R600_Reg32:$src0), 0,
-       (i32 R600_Reg32:$src1), (i32 R600_Reg32:$src2),
-       COND_EQ))]
+  [(set i32:$dst, (selectcc i32:$src0, 0, i32:$src1, i32:$src2, COND_EQ))]
 >;
 
 def CNDGE_INT : R600_3OP <
   0x1E, "CNDGE_INT",
-  [(set (i32 R600_Reg32:$dst),
-   (selectcc (i32 R600_Reg32:$src0), 0,
-       (i32 R600_Reg32:$src1), (i32 R600_Reg32:$src2),
-       COND_GE))]
+  [(set i32:$dst, (selectcc i32:$src0, 0, i32:$src1, i32:$src2, COND_GE))]
 >;
 
 def CNDGT_INT : R600_3OP <
   0x1D, "CNDGT_INT",
-  [(set (i32 R600_Reg32:$dst),
-   (selectcc (i32 R600_Reg32:$src0), 0,
-       (i32 R600_Reg32:$src1), (i32 R600_Reg32:$src2),
-       COND_GT))]
+  [(set i32:$dst, (selectcc i32:$src0, 0, i32:$src1, i32:$src2, COND_GT))]
 >;
 
 //===----------------------------------------------------------------------===//
@@ -1161,7 +1130,7 @@ def CNDGT_INT : R600_3OP <
 
 def TEX_LD : R600_TEX <
   0x03, "TEX_LD",
-  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_txf R600_Reg128:$SRC_GPR,
+  [(set v4f32:$DST_GPR, (int_AMDGPU_txf v4f32:$SRC_GPR,
       imm:$OFFSET_X, imm:$OFFSET_Y, imm:$OFFSET_Z, imm:$RESOURCE_ID,
       imm:$SAMPLER_ID, imm:$textureTarget))]
 > {
@@ -1174,19 +1143,19 @@ let InOperandList = (ins R600_Reg128:$SRC_GPR, i32imm:$OFFSET_X,
 
 def TEX_GET_TEXTURE_RESINFO : R600_TEX <
   0x04, "TEX_GET_TEXTURE_RESINFO",
-  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_txq R600_Reg128:$SRC_GPR,
+  [(set v4f32:$DST_GPR, (int_AMDGPU_txq v4f32:$SRC_GPR,
       imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
 >;
 
 def TEX_GET_GRADIENTS_H : R600_TEX <
   0x07, "TEX_GET_GRADIENTS_H",
-  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_ddx R600_Reg128:$SRC_GPR,
+  [(set v4f32:$DST_GPR, (int_AMDGPU_ddx v4f32:$SRC_GPR,
       imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
 >;
 
 def TEX_GET_GRADIENTS_V : R600_TEX <
   0x08, "TEX_GET_GRADIENTS_V",
-  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_ddy R600_Reg128:$SRC_GPR,
+  [(set v4f32:$DST_GPR, (int_AMDGPU_ddy v4f32:$SRC_GPR,
       imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
 >;
 
@@ -1202,37 +1171,37 @@ def TEX_SET_GRADIENTS_V : R600_TEX <
 
 def TEX_SAMPLE : R600_TEX <
   0x10, "TEX_SAMPLE",
-  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_tex R600_Reg128:$SRC_GPR,
+  [(set v4f32:$DST_GPR, (int_AMDGPU_tex v4f32:$SRC_GPR,
       imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
 >;
 
 def TEX_SAMPLE_C : R600_TEX <
   0x18, "TEX_SAMPLE_C",
-  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_tex R600_Reg128:$SRC_GPR,
+  [(set v4f32:$DST_GPR, (int_AMDGPU_tex v4f32:$SRC_GPR,
       imm:$RESOURCE_ID, imm:$SAMPLER_ID, TEX_SHADOW:$textureTarget))]
 >;
 
 def TEX_SAMPLE_L : R600_TEX <
   0x11, "TEX_SAMPLE_L",
-  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_txl R600_Reg128:$SRC_GPR,
+  [(set v4f32:$DST_GPR, (int_AMDGPU_txl v4f32:$SRC_GPR,
       imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
 >;
 
 def TEX_SAMPLE_C_L : R600_TEX <
   0x19, "TEX_SAMPLE_C_L",
-  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_txl R600_Reg128:$SRC_GPR,
+  [(set v4f32:$DST_GPR, (int_AMDGPU_txl v4f32:$SRC_GPR,
       imm:$RESOURCE_ID, imm:$SAMPLER_ID, TEX_SHADOW:$textureTarget))]
 >;
 
 def TEX_SAMPLE_LB : R600_TEX <
   0x12, "TEX_SAMPLE_LB",
-  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_txb R600_Reg128:$SRC_GPR,
+  [(set v4f32:$DST_GPR, (int_AMDGPU_txb v4f32:$SRC_GPR,
       imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
 >;
 
 def TEX_SAMPLE_C_LB : R600_TEX <
   0x1A, "TEX_SAMPLE_C_LB",
-  [(set R600_Reg128:$DST_GPR, (int_AMDGPU_txb R600_Reg128:$SRC_GPR,
+  [(set v4f32:$DST_GPR, (int_AMDGPU_txb v4f32:$SRC_GPR,
       imm:$RESOURCE_ID, imm:$SAMPLER_ID, TEX_SHADOW:$textureTarget))]
 >;
 
@@ -1262,32 +1231,22 @@ class MULADD_Common <bits<5> inst> : R600_3OP <
 
 class MULADD_IEEE_Common <bits<5> inst> : R600_3OP <
   inst, "MULADD_IEEE",
-  [(set (f32 R600_Reg32:$dst),
-   (fadd (fmul R600_Reg32:$src0, R600_Reg32:$src1), R600_Reg32:$src2))]
+  [(set f32:$dst, (fadd (fmul f32:$src0, f32:$src1), f32:$src2))]
 >;
 
 class CNDE_Common <bits<5> inst> : R600_3OP <
   inst, "CNDE",
-  [(set R600_Reg32:$dst,
-   (selectcc (f32 R600_Reg32:$src0), FP_ZERO,
-       (f32 R600_Reg32:$src1), (f32 R600_Reg32:$src2),
-       COND_EQ))]
+  [(set f32:$dst, (selectcc f32:$src0, FP_ZERO, f32:$src1, f32:$src2, COND_EQ))]
 >;
 
 class CNDGT_Common <bits<5> inst> : R600_3OP <
   inst, "CNDGT",
-  [(set R600_Reg32:$dst,
-   (selectcc (f32 R600_Reg32:$src0), FP_ZERO,
-       (f32 R600_Reg32:$src1), (f32 R600_Reg32:$src2),
-       COND_GT))]
+  [(set f32:$dst, (selectcc f32:$src0, FP_ZERO, f32:$src1, f32:$src2, COND_GT))]
 >;
 
 class CNDGE_Common <bits<5> inst> : R600_3OP <
   inst, "CNDGE",
-  [(set R600_Reg32:$dst,
-   (selectcc (f32 R600_Reg32:$src0), FP_ZERO,
-       (f32 R600_Reg32:$src1), (f32 R600_Reg32:$src2),
-       COND_GE))]
+  [(set f32:$dst, (selectcc f32:$src0, FP_ZERO, f32:$src1, f32:$src2, COND_GE))]
 >;
 
 multiclass DOT4_Common <bits<11> inst> {
@@ -1295,7 +1254,7 @@ multiclass DOT4_Common <bits<11> inst> {
   def _pseudo : R600_REDUCTION <inst,
     (ins R600_Reg128:$src0, R600_Reg128:$src1),
     "DOT4 $dst $src0, $src1",
-    [(set R600_Reg32:$dst, (int_AMDGPU_dp4 R600_Reg128:$src0, R600_Reg128:$src1))]
+    [(set f32:$dst, (int_AMDGPU_dp4 v4f32:$src0, v4f32:$src1))]
   >;
 
   def _real : R600_2OP <inst, "DOT4", []>;
@@ -1308,7 +1267,7 @@ multiclass CUBE_Common <bits<11> inst> {
     (outs R600_Reg128:$dst),
     (ins R600_Reg128:$src),
     "CUBE $dst $src",
-    [(set R600_Reg128:$dst, (int_AMDGPU_cube R600_Reg128:$src))],
+    [(set v4f32:$dst, (int_AMDGPU_cube v4f32:$src))],
     VecALU
   > {
     let isPseudo = 1;
@@ -1398,7 +1357,7 @@ class RECIP_CLAMPED_Common <bits<11> inst> : R600_1OP <
 }
 
 class RECIP_IEEE_Common <bits<11> inst> : R600_1OP <
-  inst, "RECIP_IEEE", [(set R600_Reg32:$dst, (fdiv FP_ONE, R600_Reg32:$src0))]
+  inst, "RECIP_IEEE", [(set f32:$dst, (fdiv FP_ONE, f32:$src0))]
 > {
   let TransOnly = 1;
   let Itinerary = TransALU;
@@ -1445,19 +1404,20 @@ class COS_Common <bits<11> inst> : R600_1OP <
 
 multiclass DIV_Common <InstR600 recip_ieee> {
 def : Pat<
-  (int_AMDGPU_div R600_Reg32:$src0, R600_Reg32:$src1),
-  (MUL_IEEE R600_Reg32:$src0, (recip_ieee R600_Reg32:$src1))
+  (int_AMDGPU_div f32:$src0, f32:$src1),
+  (MUL_IEEE $src0, (recip_ieee $src1))
 >;
 
 def : Pat<
-  (fdiv R600_Reg32:$src0, R600_Reg32:$src1),
-  (MUL_IEEE R600_Reg32:$src0, (recip_ieee R600_Reg32:$src1))
+  (fdiv f32:$src0, f32:$src1),
+  (MUL_IEEE $src0, (recip_ieee $src1))
 >;
 }
 
-class TGSI_LIT_Z_Common <InstR600 mul_lit, InstR600 log_clamped, InstR600 exp_ieee> : Pat <
-  (int_TGSI_lit_z R600_Reg32:$src_x, R600_Reg32:$src_y, R600_Reg32:$src_w),
-  (exp_ieee (mul_lit (log_clamped (MAX R600_Reg32:$src_y, (f32 ZERO))), R600_Reg32:$src_w, R600_Reg32:$src_x))
+class TGSI_LIT_Z_Common <InstR600 mul_lit, InstR600 log_clamped, InstR600 exp_ieee>
+  : Pat <
+  (int_TGSI_lit_z f32:$src_x, f32:$src_y, f32:$src_w),
+  (exp_ieee (mul_lit (log_clamped (MAX $src_y, (f32 ZERO))), $src_w, $src_x))
 >;
 
 //===----------------------------------------------------------------------===//
@@ -1497,11 +1457,10 @@ let Predicates = [isR600] in {
   def RECIP_UINT_r600 : RECIP_UINT_Common <0x78>;
 
   defm DIV_r600 : DIV_Common<RECIP_IEEE_r600>;
-  def : POW_Common <LOG_IEEE_r600, EXP_IEEE_r600, MUL, R600_Reg32>;
+  def : POW_Common <LOG_IEEE_r600, EXP_IEEE_r600, MUL>;
   def TGSI_LIT_Z_r600 : TGSI_LIT_Z_Common<MUL_LIT_r600, LOG_CLAMPED_r600, EXP_IEEE_r600>;
 
-  def : Pat<(fsqrt R600_Reg32:$src),
-    (MUL R600_Reg32:$src, (RECIPSQRT_CLAMPED_r600 R600_Reg32:$src))>;
+  def : Pat<(fsqrt f32:$src), (MUL $src, (RECIPSQRT_CLAMPED_r600 $src))>;
 
   def R600_ExportSwz : ExportSwzInst {
     let Word1{20-17} = 0; // BURST_COUNT
@@ -1577,13 +1536,13 @@ let Predicates = [isR600] in {
 // Helper pattern for normalizing inputs to triginomic instructions for R700+
 // cards.
 class COS_PAT <InstR600 trig> : Pat<
-  (fcos R600_Reg32:$src),
-  (trig (MUL_IEEE (MOV_IMM_I32 CONST.TWO_PI_INV), R600_Reg32:$src))
+  (fcos f32:$src),
+  (trig (MUL_IEEE (MOV_IMM_I32 CONST.TWO_PI_INV), $src))
 >;
 
 class SIN_PAT <InstR600 trig> : Pat<
-  (fsin R600_Reg32:$src),
-  (trig (MUL_IEEE (MOV_IMM_I32 CONST.TWO_PI_INV), R600_Reg32:$src))
+  (fsin f32:$src),
+  (trig (MUL_IEEE (MOV_IMM_I32 CONST.TWO_PI_INV), $src))
 >;
 
 //===----------------------------------------------------------------------===//
@@ -1621,11 +1580,10 @@ def RECIPSQRT_IEEE_eg : RECIPSQRT_IEEE_Common<0x89>;
 def SIN_eg : SIN_Common<0x8D>;
 def COS_eg : COS_Common<0x8E>;
 
-def : POW_Common <LOG_IEEE_eg, EXP_IEEE_eg, MUL, R600_Reg32>;
+def : POW_Common <LOG_IEEE_eg, EXP_IEEE_eg, MUL>;
 def : SIN_PAT <SIN_eg>;
 def : COS_PAT <COS_eg>;
-def : Pat<(fsqrt R600_Reg32:$src),
-  (MUL R600_Reg32:$src, (RECIPSQRT_CLAMPED_eg R600_Reg32:$src))>;
+def : Pat<(fsqrt f32:$src), (MUL $src, (RECIPSQRT_CLAMPED_eg $src))>;
 } // End Predicates = [isEG]
 
 //===----------------------------------------------------------------------===//
@@ -1649,9 +1607,8 @@ let Predicates = [isEGorCayman] in {
   // (16,8)           = (Input <<  8) >> 24  = (Input &  0xffffff)   >> 16
   // (24,8)           = (Input <<  0) >> 24  = (Input &  0xffffffff) >> 24
   def BFE_UINT_eg : R600_3OP <0x4, "BFE_UINT",
-    [(set R600_Reg32:$dst, (int_AMDIL_bit_extract_u32 R600_Reg32:$src0,
-                                                      R600_Reg32:$src1,
-                                                      R600_Reg32:$src2))],
+    [(set i32:$dst, (int_AMDIL_bit_extract_u32 i32:$src0, i32:$src1,
+                                               i32:$src2))],
     VecALU
   >;
 
@@ -1659,8 +1616,7 @@ let Predicates = [isEGorCayman] in {
   defm : BFIPatterns <BFI_INT_eg>;
 
   def BIT_ALIGN_INT_eg : R600_3OP <0xC, "BIT_ALIGN_INT",
-    [(set R600_Reg32:$dst, (AMDGPUbitalign R600_Reg32:$src0, R600_Reg32:$src1,
-                                          R600_Reg32:$src2))],
+    [(set i32:$dst, (AMDGPUbitalign i32:$src0, i32:$src1, i32:$src2))],
     VecALU
   >;
 
@@ -1705,11 +1661,9 @@ let hasSideEffects = 1 in {
   // XXX: Lowering SELECT_CC will sometimes generate fp_to_[su]int nodes,
   // which do not need to be truncated since the fp values are 0.0f or 1.0f.
   // We should look into handling these cases separately.
-  def : Pat<(fp_to_sint R600_Reg32:$src0),
-    (FLT_TO_INT_eg (TRUNC R600_Reg32:$src0))>;
+  def : Pat<(fp_to_sint f32:$src0), (FLT_TO_INT_eg (TRUNC $src0))>;
 
-  def : Pat<(fp_to_uint R600_Reg32:$src0),
-    (FLT_TO_UINT_eg (TRUNC R600_Reg32:$src0))>;
+  def : Pat<(fp_to_uint f32:$src0), (FLT_TO_UINT_eg (TRUNC $src0))>;
 
   def EG_ExportSwz : ExportSwzInst {
     let Word1{19-16} = 0; // BURST_COUNT
@@ -1811,14 +1765,14 @@ class RAT_WRITE_CACHELESS_eg <dag ins, bits<4> comp_mask, string name,
 def RAT_WRITE_CACHELESS_32_eg : RAT_WRITE_CACHELESS_eg <
   (ins R600_TReg32_X:$rw_gpr, R600_TReg32_X:$index_gpr, InstFlag:$eop),
   0x1, "RAT_WRITE_CACHELESS_32_eg",
-  [(global_store (i32 R600_TReg32_X:$rw_gpr), R600_TReg32_X:$index_gpr)]
+  [(global_store i32:$rw_gpr, i32:$index_gpr)]
 >;
 
 //128-bit store
 def RAT_WRITE_CACHELESS_128_eg : RAT_WRITE_CACHELESS_eg <
   (ins R600_Reg128:$rw_gpr, R600_TReg32_X:$index_gpr, InstFlag:$eop),
   0xf, "RAT_WRITE_CACHELESS_128",
-  [(global_store (v4i32 R600_Reg128:$rw_gpr), R600_TReg32_X:$index_gpr)]
+  [(global_store v4i32:$rw_gpr, i32:$index_gpr)]
 >;
 
 class VTX_READ_eg <string name, bits<8> buffer_id, dag outs, list<dag> pattern>
@@ -1943,19 +1897,19 @@ class VTX_READ_128_eg <bits<8> buffer_id, list<dag> pattern>
 //===----------------------------------------------------------------------===//
 
 def VTX_READ_PARAM_8_eg : VTX_READ_8_eg <0,
-  [(set (i32 R600_TReg32_X:$dst), (load_param_zexti8 ADDRVTX_READ:$ptr))]
+  [(set i32:$dst, (load_param_zexti8 ADDRVTX_READ:$ptr))]
 >;
 
 def VTX_READ_PARAM_16_eg : VTX_READ_16_eg <0,
-  [(set (i32 R600_TReg32_X:$dst), (load_param_zexti16 ADDRVTX_READ:$ptr))]
+  [(set i32:$dst, (load_param_zexti16 ADDRVTX_READ:$ptr))]
 >;
 
 def VTX_READ_PARAM_32_eg : VTX_READ_32_eg <0,
-  [(set (i32 R600_TReg32_X:$dst), (load_param ADDRVTX_READ:$ptr))]
+  [(set i32:$dst, (load_param ADDRVTX_READ:$ptr))]
 >;
 
 def VTX_READ_PARAM_128_eg : VTX_READ_128_eg <0,
-  [(set (v4i32 R600_Reg128:$dst), (load_param ADDRVTX_READ:$ptr))]
+  [(set v4i32:$dst, (load_param ADDRVTX_READ:$ptr))]
 >;
 
 //===----------------------------------------------------------------------===//
@@ -1964,17 +1918,17 @@ def VTX_READ_PARAM_128_eg : VTX_READ_128_eg <0,
 
 // 8-bit reads
 def VTX_READ_GLOBAL_8_eg : VTX_READ_8_eg <1,
-  [(set (i32 R600_TReg32_X:$dst), (zextloadi8_global ADDRVTX_READ:$ptr))]
+  [(set i32:$dst, (zextloadi8_global ADDRVTX_READ:$ptr))]
 >;
 
 // 32-bit reads
 def VTX_READ_GLOBAL_32_eg : VTX_READ_32_eg <1,
-  [(set (i32 R600_TReg32_X:$dst), (global_load ADDRVTX_READ:$ptr))]
+  [(set i32:$dst, (global_load ADDRVTX_READ:$ptr))]
 >;
 
 // 128-bit reads
 def VTX_READ_GLOBAL_128_eg : VTX_READ_128_eg <1,
-  [(set (v4i32 R600_Reg128:$dst), (global_load ADDRVTX_READ:$ptr))]
+  [(set v4i32:$dst, (global_load ADDRVTX_READ:$ptr))]
 >;
 
 //===----------------------------------------------------------------------===//
@@ -1983,7 +1937,7 @@ def VTX_READ_GLOBAL_128_eg : VTX_READ_128_eg <1,
 //===----------------------------------------------------------------------===//
 
 def CONSTANT_LOAD_eg : VTX_READ_32_eg <1,
-  [(set (i32 R600_TReg32_X:$dst), (constant_load ADDRVTX_READ:$ptr))]
+  [(set i32:$dst, (constant_load ADDRVTX_READ:$ptr))]
 >;
 
 }
@@ -2013,7 +1967,7 @@ def SIN_cm : SIN_Common<0x8D>;
 def COS_cm : COS_Common<0x8E>;
 } // End isVector = 1
 
-def : POW_Common <LOG_IEEE_cm, EXP_IEEE_cm, MUL, R600_Reg32>;
+def : POW_Common <LOG_IEEE_cm, EXP_IEEE_cm, MUL>;
 def : SIN_PAT <SIN_cm>;
 def : COS_PAT <COS_cm>;
 
@@ -2022,8 +1976,8 @@ defm DIV_cm : DIV_Common<RECIP_IEEE_cm>;
 // RECIP_UINT emulation for Cayman
 // The multiplication scales from [0,1] to the unsigned integer range
 def : Pat <
-  (AMDGPUurecip R600_Reg32:$src0),
-  (FLT_TO_UINT_eg (MUL_IEEE (RECIP_IEEE_cm (UINT_TO_FLT_eg R600_Reg32:$src0)),
+  (AMDGPUurecip i32:$src0),
+  (FLT_TO_UINT_eg (MUL_IEEE (RECIP_IEEE_cm (UINT_TO_FLT_eg $src0)),
                             (MOV_IMM_I32 CONST.FP_UINT_MAX_PLUS_1)))
 >;
 
@@ -2033,8 +1987,7 @@ def : Pat <
     let COUNT = 0;
   }
 
-def : Pat<(fsqrt R600_Reg32:$src),
-  (MUL R600_Reg32:$src, (RECIPSQRT_CLAMPED_cm R600_Reg32:$src))>;
+def : Pat<(fsqrt f32:$src), (MUL R600_Reg32:$src, (RECIPSQRT_CLAMPED_cm $src))>;
 
 } // End isCayman
 
@@ -2099,17 +2052,23 @@ def MASK_WRITE : AMDGPUShaderInst <
 
 def TXD: InstR600 <
   (outs R600_Reg128:$dst),
-  (ins R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, i32imm:$resourceId, i32imm:$samplerId, i32imm:$textureTarget),
+  (ins R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2,
+       i32imm:$resourceId, i32imm:$samplerId, i32imm:$textureTarget),
   "TXD $dst, $src0, $src1, $src2, $resourceId, $samplerId, $textureTarget",
-  [(set R600_Reg128:$dst, (int_AMDGPU_txd R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, imm:$resourceId, imm:$samplerId, imm:$textureTarget))], NullALU> {
+  [(set v4f32:$dst, (int_AMDGPU_txd v4f32:$src0, v4f32:$src1, v4f32:$src2,
+                     imm:$resourceId, imm:$samplerId, imm:$textureTarget))],
+  NullALU > {
   let TEXInst = 1;
 }
 
 def TXD_SHADOW: InstR600 <
   (outs R600_Reg128:$dst),
-  (ins R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, i32imm:$resourceId, i32imm:$samplerId, i32imm:$textureTarget),
+  (ins R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2,
+       i32imm:$resourceId, i32imm:$samplerId, i32imm:$textureTarget),
   "TXD_SHADOW $dst, $src0, $src1, $src2, $resourceId, $samplerId, $textureTarget",
-  [(set R600_Reg128:$dst, (int_AMDGPU_txd R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, imm:$resourceId, imm:$samplerId, TEX_SHADOW:$textureTarget))], NullALU
+  [(set v4f32:$dst, (int_AMDGPU_txd v4f32:$src0, v4f32:$src1, v4f32:$src2,
+        imm:$resourceId, imm:$samplerId, TEX_SHADOW:$textureTarget))],
+   NullALU
 > {
   let TEXInst = 1;
 }
@@ -2149,7 +2108,7 @@ def CONST_COPY : Instruction {
 
 def TEX_VTX_CONSTBUF :
   InstR600ISA <(outs R600_Reg128:$dst), (ins MEMxi:$ptr, i32imm:$BUFFER_ID), "VTX_READ_eg $dst, $ptr",
-      [(set R600_Reg128:$dst, (CONST_ADDRESS ADDRGA_VAR_OFFSET:$ptr, (i32 imm:$BUFFER_ID)))]>,
+      [(set v4i32:$dst, (CONST_ADDRESS ADDRGA_VAR_OFFSET:$ptr, (i32 imm:$BUFFER_ID)))]>,
   VTX_WORD1_GPR, VTX_WORD0 {
 
   let VC_INST = 0;
@@ -2203,7 +2162,7 @@ def TEX_VTX_CONSTBUF :
 
 def TEX_VTX_TEXBUF:
   InstR600ISA <(outs R600_Reg128:$dst), (ins MEMxi:$ptr, i32imm:$BUFFER_ID), "TEX_VTX_EXPLICIT_READ $dst, $ptr",
-      [(set R600_Reg128:$dst, (int_R600_load_texbuf ADDRGA_VAR_OFFSET:$ptr, imm:$BUFFER_ID))]>,
+      [(set v4f32:$dst, (int_R600_load_texbuf ADDRGA_VAR_OFFSET:$ptr, imm:$BUFFER_ID))]>,
 VTX_WORD1_GPR, VTX_WORD0 {
 
 let VC_INST = 0;
@@ -2329,9 +2288,8 @@ let isTerminator=1 in {
 // CND*_INT Pattterns for f32 True / False values
 
 class CND_INT_f32 <InstR600 cnd, CondCode cc> : Pat <
-  (selectcc (i32 R600_Reg32:$src0), 0, (f32 R600_Reg32:$src1),
-                                            R600_Reg32:$src2, cc),
-  (cnd R600_Reg32:$src0, R600_Reg32:$src1, R600_Reg32:$src2)
+  (selectcc i32:$src0, 0, f32:$src1, f32:$src2, cc),
+  (cnd $src0, $src1, $src2)
 >;
 
 def : CND_INT_f32 <CNDE_INT,  SETEQ>;
@@ -2340,9 +2298,8 @@ def : CND_INT_f32 <CNDGE_INT, SETGE>;
 
 //CNDGE_INT extra pattern
 def : Pat <
-  (selectcc (i32 R600_Reg32:$src0), -1, (i32 R600_Reg32:$src1),
-                                        (i32 R600_Reg32:$src2), COND_GT),
-  (CNDGE_INT R600_Reg32:$src0, R600_Reg32:$src1, R600_Reg32:$src2)
+  (selectcc i32:$src0, -1, i32:$src1, i32:$src2, COND_GT),
+  (CNDGE_INT $src0, $src1, $src2)
 >;
 
 // KIL Patterns
@@ -2352,56 +2309,56 @@ def KILP : Pat <
 >;
 
 def KIL : Pat <
-  (int_AMDGPU_kill R600_Reg32:$src0),
-  (MASK_WRITE (KILLGT (f32 ZERO), (f32 R600_Reg32:$src0)))
+  (int_AMDGPU_kill f32:$src0),
+  (MASK_WRITE (KILLGT (f32 ZERO), $src0))
 >;
 
 // SGT Reverse args
 def : Pat <
-  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO, COND_LT),
-  (SGT R600_Reg32:$src1, R600_Reg32:$src0)
+  (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_LT),
+  (SGT $src1, $src0)
 >;
 
 // SGE Reverse args
 def : Pat <
-  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO, COND_LE),
-  (SGE R600_Reg32:$src1, R600_Reg32:$src0)
+  (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, COND_LE),
+  (SGE $src1, $src0)
 >;
 
 // SETGT_DX10 reverse args
 def : Pat <
-  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, COND_LT),
-  (SETGT_DX10 R600_Reg32:$src1, R600_Reg32:$src0)
+  (selectcc f32:$src0, f32:$src1, -1, 0, COND_LT),
+  (SETGT_DX10 $src1, $src0)
 >;
 
 // SETGE_DX10 reverse args
 def : Pat <
-  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, COND_LE),
-  (SETGE_DX10 R600_Reg32:$src1, R600_Reg32:$src0)
+  (selectcc f32:$src0, f32:$src1, -1, 0, COND_LE),
+  (SETGE_DX10 $src1, $src0)
 >;
 
 // SETGT_INT reverse args
 def : Pat <
-  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETLT),
-  (SETGT_INT R600_Reg32:$src1, R600_Reg32:$src0)
+  (selectcc i32:$src0, i32:$src1, -1, 0, SETLT),
+  (SETGT_INT $src1, $src0)
 >;
 
 // SETGE_INT reverse args
 def : Pat <
-  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETLE),
-  (SETGE_INT R600_Reg32:$src1, R600_Reg32:$src0)
+  (selectcc i32:$src0, i32:$src1, -1, 0, SETLE),
+  (SETGE_INT $src1, $src0)
 >;
 
 // SETGT_UINT reverse args
 def : Pat <
-  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETULT),
-  (SETGT_UINT R600_Reg32:$src1, R600_Reg32:$src0)
+  (selectcc i32:$src0, i32:$src1, -1, 0, SETULT),
+  (SETGT_UINT $src1, $src0)
 >;
 
 // SETGE_UINT reverse args
 def : Pat <
-  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETULE),
-  (SETGE_UINT R600_Reg32:$src1, R600_Reg32:$src0)
+  (selectcc i32:$src0, i32:$src1, -1, 0, SETULE),
+  (SETGE_UINT $src1, $src0)
 >;
 
 // The next two patterns are special cases for handling 'true if ordered' and
@@ -2414,50 +2371,50 @@ def : Pat <
 
 //SETE - 'true if ordered'
 def : Pat <
-  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO, SETO),
-  (SETE R600_Reg32:$src0, R600_Reg32:$src1)
+  (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, SETO),
+  (SETE $src0, $src1)
 >;
 
 //SETE_DX10 - 'true if ordered'
 def : Pat <
-  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETO),
-  (SETE_DX10 R600_Reg32:$src0, R600_Reg32:$src1)
+  (selectcc f32:$src0, f32:$src1, -1, 0, SETO),
+  (SETE_DX10 $src0, $src1)
 >;
 
 //SNE - 'true if unordered'
 def : Pat <
-  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO, SETUO),
-  (SNE R600_Reg32:$src0, R600_Reg32:$src1)
+  (selectcc f32:$src0, f32:$src1, FP_ONE, FP_ZERO, SETUO),
+  (SNE $src0, $src1)
 >;
 
 //SETNE_DX10 - 'true if ordered'
 def : Pat <
-  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETUO),
-  (SETNE_DX10 R600_Reg32:$src0, R600_Reg32:$src1)
+  (selectcc f32:$src0, f32:$src1, -1, 0, SETUO),
+  (SETNE_DX10 $src0, $src1)
 >;
 
-def : Extract_Element <f32, v4f32, R600_Reg128, 0, sub0>;
-def : Extract_Element <f32, v4f32, R600_Reg128, 1, sub1>;
-def : Extract_Element <f32, v4f32, R600_Reg128, 2, sub2>;
-def : Extract_Element <f32, v4f32, R600_Reg128, 3, sub3>;
+def : Extract_Element <f32, v4f32, 0, sub0>;
+def : Extract_Element <f32, v4f32, 1, sub1>;
+def : Extract_Element <f32, v4f32, 2, sub2>;
+def : Extract_Element <f32, v4f32, 3, sub3>;
 
-def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 0, sub0>;
-def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 1, sub1>;
-def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 2, sub2>;
-def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 3, sub3>;
+def : Insert_Element <f32, v4f32, 0, sub0>;
+def : Insert_Element <f32, v4f32, 1, sub1>;
+def : Insert_Element <f32, v4f32, 2, sub2>;
+def : Insert_Element <f32, v4f32, 3, sub3>;
 
-def : Extract_Element <i32, v4i32, R600_Reg128, 0, sub0>;
-def : Extract_Element <i32, v4i32, R600_Reg128, 1, sub1>;
-def : Extract_Element <i32, v4i32, R600_Reg128, 2, sub2>;
-def : Extract_Element <i32, v4i32, R600_Reg128, 3, sub3>;
+def : Extract_Element <i32, v4i32, 0, sub0>;
+def : Extract_Element <i32, v4i32, 1, sub1>;
+def : Extract_Element <i32, v4i32, 2, sub2>;
+def : Extract_Element <i32, v4i32, 3, sub3>;
 
-def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 0, sub0>;
-def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 1, sub1>;
-def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 2, sub2>;
-def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 3, sub3>;
+def : Insert_Element <i32, v4i32, 0, sub0>;
+def : Insert_Element <i32, v4i32, 1, sub1>;
+def : Insert_Element <i32, v4i32, 2, sub2>;
+def : Insert_Element <i32, v4i32, 3, sub3>;
 
-def : Vector4_Build <v4f32, R600_Reg128, f32, R600_Reg32>;
-def : Vector4_Build <v4i32, R600_Reg128, i32, R600_Reg32>;
+def : Vector4_Build <v4f32, f32>;
+def : Vector4_Build <v4i32, i32>;
 
 // bitconvert patterns
 

@@ -116,21 +116,21 @@ class CLAMP <RegisterClass rc> : AMDGPUShaderInst <
   (outs rc:$dst),
   (ins rc:$src0),
   "CLAMP $dst, $src0",
-  [(set rc:$dst, (int_AMDIL_clamp rc:$src0, (f32 FP_ZERO), (f32 FP_ONE)))]
+  [(set f32:$dst, (int_AMDIL_clamp f32:$src0, (f32 FP_ZERO), (f32 FP_ONE)))]
 >;
 
 class FABS <RegisterClass rc> : AMDGPUShaderInst <
   (outs rc:$dst),
   (ins rc:$src0),
   "FABS $dst, $src0",
-  [(set rc:$dst, (fabs rc:$src0))]
+  [(set f32:$dst, (fabs f32:$src0))]
 >;
 
 class FNEG <RegisterClass rc> : AMDGPUShaderInst <
   (outs rc:$dst),
   (ins rc:$src0),
   "FNEG $dst, $src0",
-  [(set rc:$dst, (fneg rc:$src0))]
+  [(set f32:$dst, (fneg f32:$src0))]
 >;
 
 } // usesCustomInserter = 1
@@ -141,8 +141,7 @@ multiclass RegisterLoadStore <RegisterClass dstClass, Operand addrClass,
     (outs dstClass:$dst),
     (ins addrClass:$addr, i32imm:$chan),
     "RegisterLoad $dst, $addr",
-    [(set (i32 dstClass:$dst), (AMDGPUregister_load addrPat:$addr,
-                                                    (i32 timm:$chan)))]
+    [(set i32:$dst, (AMDGPUregister_load addrPat:$addr, (i32 timm:$chan)))]
   > {
     let isRegisterLoad = 1;
   }
@@ -151,7 +150,7 @@ multiclass RegisterLoadStore <RegisterClass dstClass, Operand addrClass,
     (outs),
     (ins dstClass:$val, addrClass:$addr, i32imm:$chan),
     "RegisterStore $val, $addr",
-    [(AMDGPUregister_store (i32 dstClass:$val), addrPat:$addr, (i32 timm:$chan))]
+    [(AMDGPUregister_store i32:$val, addrPat:$addr, (i32 timm:$chan))]
   > {
     let isRegisterStore = 1;
   }
@@ -162,100 +161,96 @@ multiclass RegisterLoadStore <RegisterClass dstClass, Operand addrClass,
 /* Generic helper patterns for intrinsics */
 /* -------------------------------------- */
 
-class POW_Common <AMDGPUInst log_ieee, AMDGPUInst exp_ieee, AMDGPUInst mul,
-                  RegisterClass rc> : Pat <
-  (fpow rc:$src0, rc:$src1),
-  (exp_ieee (mul rc:$src1, (log_ieee rc:$src0)))
+class POW_Common <AMDGPUInst log_ieee, AMDGPUInst exp_ieee, AMDGPUInst mul>
+  : Pat <
+  (fpow f32:$src0, f32:$src1),
+  (exp_ieee (mul f32:$src1, (log_ieee f32:$src0)))
 >;
 
 /* Other helper patterns */
 /* --------------------- */
 
 /* Extract element pattern */
-class Extract_Element <ValueType sub_type, ValueType vec_type,
-                     RegisterClass vec_class, int sub_idx, 
-                     SubRegIndex sub_reg>: Pat<
-  (sub_type (vector_extract (vec_type vec_class:$src), sub_idx)),
-  (EXTRACT_SUBREG vec_class:$src, sub_reg)
+class Extract_Element <ValueType sub_type, ValueType vec_type, int sub_idx, 
+                       SubRegIndex sub_reg>
+  : Pat<
+  (sub_type (vector_extract vec_type:$src, sub_idx)),
+  (EXTRACT_SUBREG $src, sub_reg)
 >;
 
 /* Insert element pattern */
 class Insert_Element <ValueType elem_type, ValueType vec_type,
-                      RegisterClass elem_class, RegisterClass vec_class,
-                      int sub_idx, SubRegIndex sub_reg> : Pat <
-
-  (vec_type (vector_insert (vec_type vec_class:$vec),
-                           (elem_type elem_class:$elem), sub_idx)),
-  (INSERT_SUBREG vec_class:$vec, elem_class:$elem, sub_reg)
+                      int sub_idx, SubRegIndex sub_reg>
+  : Pat <
+  (vector_insert vec_type:$vec, elem_type:$elem, sub_idx),
+  (INSERT_SUBREG $vec, $elem, sub_reg)
 >;
 
 // Vector Build pattern
-class Vector1_Build <ValueType vecType, RegisterClass vectorClass,
-                     ValueType elemType, RegisterClass elemClass> : Pat <
-  (vecType (build_vector (elemType elemClass:$src))),
-  (vecType elemClass:$src)
+class Vector1_Build <ValueType vecType, ValueType elemType,
+                     RegisterClass rc> : Pat <
+  (vecType (build_vector elemType:$src)),
+  (vecType (COPY_TO_REGCLASS $src, rc))
 >;
 
-class Vector2_Build <ValueType vecType, RegisterClass vectorClass,
-                     ValueType elemType, RegisterClass elemClass> : Pat <
-  (vecType (build_vector (elemType elemClass:$sub0), (elemType elemClass:$sub1))),
+class Vector2_Build <ValueType vecType, ValueType elemType> : Pat <
+  (vecType (build_vector elemType:$sub0, elemType:$sub1)),
   (INSERT_SUBREG (INSERT_SUBREG
-  (vecType (IMPLICIT_DEF)), elemClass:$sub0, sub0), elemClass:$sub1, sub1)
+    (vecType (IMPLICIT_DEF)), $sub0, sub0), $sub1, sub1)
 >;
 
-class Vector4_Build <ValueType vecType, RegisterClass vectorClass,
-                     ValueType elemType, RegisterClass elemClass> : Pat <
-  (vecType (build_vector (elemType elemClass:$x), (elemType elemClass:$y),
-                         (elemType elemClass:$z), (elemType elemClass:$w))),
+class Vector4_Build <ValueType vecType, ValueType elemType> : Pat <
+  (vecType (build_vector elemType:$x, elemType:$y, elemType:$z, elemType:$w)),
   (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
-  (vecType (IMPLICIT_DEF)), elemClass:$x, sub0), elemClass:$y, sub1),
-                            elemClass:$z, sub2), elemClass:$w, sub3)
+    (vecType (IMPLICIT_DEF)), $x, sub0), $y, sub1), $z, sub2), $w, sub3)
 >;
 
-class Vector8_Build <ValueType vecType, RegisterClass vectorClass,
-                     ValueType elemType, RegisterClass elemClass> : Pat <
-  (vecType (build_vector (elemType elemClass:$sub0), (elemType elemClass:$sub1),
-                         (elemType elemClass:$sub2), (elemType elemClass:$sub3),
-                         (elemType elemClass:$sub4), (elemType elemClass:$sub5),
-                         (elemType elemClass:$sub6), (elemType elemClass:$sub7))),
+class Vector8_Build <ValueType vecType, ValueType elemType> : Pat <
+  (vecType (build_vector elemType:$sub0, elemType:$sub1,
+                         elemType:$sub2, elemType:$sub3,
+                         elemType:$sub4, elemType:$sub5,
+                         elemType:$sub6, elemType:$sub7)),
   (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
-  (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
-  (vecType (IMPLICIT_DEF)), elemClass:$sub0, sub0), elemClass:$sub1, sub1),
-                            elemClass:$sub2, sub2), elemClass:$sub3, sub3),
-                            elemClass:$sub4, sub4), elemClass:$sub5, sub5),
-                            elemClass:$sub6, sub6), elemClass:$sub7, sub7)
+    (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
+    (vecType (IMPLICIT_DEF)), $sub0, sub0), $sub1, sub1),
+                              $sub2, sub2), $sub3, sub3),
+                              $sub4, sub4), $sub5, sub5),
+                              $sub6, sub6), $sub7, sub7)
 >;
 
-class Vector16_Build <ValueType vecType, RegisterClass vectorClass,
-                      ValueType elemType, RegisterClass elemClass> : Pat <
-  (vecType (build_vector (elemType elemClass:$sub0), (elemType elemClass:$sub1),
-                         (elemType elemClass:$sub2), (elemType elemClass:$sub3),
-                         (elemType elemClass:$sub4), (elemType elemClass:$sub5),
-                         (elemType elemClass:$sub6), (elemType elemClass:$sub7),
-                         (elemType elemClass:$sub8), (elemType elemClass:$sub9),
-                         (elemType elemClass:$sub10), (elemType elemClass:$sub11),
-                         (elemType elemClass:$sub12), (elemType elemClass:$sub13),
-                         (elemType elemClass:$sub14), (elemType elemClass:$sub15))),
+class Vector16_Build <ValueType vecType, ValueType elemType> : Pat <
+  (vecType (build_vector elemType:$sub0, elemType:$sub1,
+                         elemType:$sub2, elemType:$sub3,
+                         elemType:$sub4, elemType:$sub5,
+                         elemType:$sub6, elemType:$sub7,
+                         elemType:$sub8, elemType:$sub9,
+                         elemType:$sub10, elemType:$sub11,
+                         elemType:$sub12, elemType:$sub13,
+                         elemType:$sub14, elemType:$sub15)),
   (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
-  (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
-  (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
-  (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
-  (vecType (IMPLICIT_DEF)), elemClass:$sub0, sub0), elemClass:$sub1, sub1),
-                            elemClass:$sub2, sub2), elemClass:$sub3, sub3),
-                            elemClass:$sub4, sub4), elemClass:$sub5, sub5),
-                            elemClass:$sub6, sub6), elemClass:$sub7, sub7),
-                            elemClass:$sub8, sub8), elemClass:$sub9, sub9),
-                            elemClass:$sub10, sub10), elemClass:$sub11, sub11),
-                            elemClass:$sub12, sub12), elemClass:$sub13, sub13),
-                            elemClass:$sub14, sub14), elemClass:$sub15, sub15)
+    (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
+    (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
+    (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
+    (vecType (IMPLICIT_DEF)), $sub0, sub0), $sub1, sub1),
+                            $sub2, sub2), $sub3, sub3),
+                            $sub4, sub4), $sub5, sub5),
+                            $sub6, sub6), $sub7, sub7),
+                            $sub8, sub8), $sub9, sub9),
+                            $sub10, sub10), $sub11, sub11),
+                            $sub12, sub12), $sub13, sub13),
+                            $sub14, sub14), $sub15, sub15)
 >;
 
+// XXX: Convert to new syntax and use COPY_TO_REG, once the DFAPacketizer
+// can handle COPY instructions.
 // bitconvert pattern
 class BitConvert <ValueType dt, ValueType st, RegisterClass rc> : Pat <
   (dt (bitconvert (st rc:$src0))),
   (dt rc:$src0)
 >;
 
+// XXX: Convert to new syntax and use COPY_TO_REG, once the DFAPacketizer
+// can handle COPY instructions.
 class DwordAddrPat<ValueType vt, RegisterClass rc> : Pat <
   (vt (AMDGPUdwordaddr (vt rc:$addr))),
   (vt rc:$addr)
