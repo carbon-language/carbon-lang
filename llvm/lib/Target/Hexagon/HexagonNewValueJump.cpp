@@ -68,6 +68,7 @@ namespace {
     HexagonNewValueJump() : MachineFunctionPass(ID) { }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<MachineBranchProbabilityInfo>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 
@@ -78,6 +79,8 @@ namespace {
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 
   private:
+    /// \brief A handle to the branch probability pass.
+    const MachineBranchProbabilityInfo *MBPI;
 
   };
 
@@ -267,42 +270,58 @@ static bool canCompareBeNewValueJump(const HexagonInstrInfo *QII,
 // Given a compare operator, return a matching New Value Jump
 // compare operator. Make sure that MI here is included in
 // HexagonInstrInfo.cpp::isNewValueJumpCandidate
-static unsigned getNewValueJumpOpcode(const MachineInstr *MI, int reg,
-                                      bool secondRegNewified) {
+static unsigned getNewValueJumpOpcode(MachineInstr *MI, int reg,
+                                      bool secondRegNewified,
+                                      MachineBasicBlock *jmpTarget,
+                                      const MachineBranchProbabilityInfo
+                                      *MBPI) {
+  bool taken = false;
+  MachineBasicBlock *Src = MI->getParent();
+  const BranchProbability Prediction =
+    MBPI->getEdgeProbability(Src, jmpTarget);
+
+  if (Prediction >= BranchProbability(1,2))
+    taken = true;
+
   switch (MI->getOpcode()) {
     case Hexagon::CMPEQrr:
-      return Hexagon::JMP_EQrrPt_nv_V4;
+      return taken ? Hexagon::JMP_EQrrPt_nv_V4 : Hexagon::JMP_EQrrPnt_nv_V4;
 
     case Hexagon::CMPEQri: {
       if (reg >= 0)
-        return Hexagon::JMP_EQriPt_nv_V4;
+        return taken ? Hexagon::JMP_EQriPt_nv_V4 : Hexagon::JMP_EQriPnt_nv_V4;
       else
-        return Hexagon::JMP_EQriPtneg_nv_V4;
+        return taken ? Hexagon::JMP_EQriPtneg_nv_V4
+                     : Hexagon::JMP_EQriPntneg_nv_V4;
     }
 
     case Hexagon::CMPGTrr: {
       if (secondRegNewified)
-        return Hexagon::JMP_GTrrdnPt_nv_V4;
+        return taken ? Hexagon::JMP_GTrrdnPt_nv_V4
+                     : Hexagon::JMP_GTrrdnPnt_nv_V4;
       else
-        return Hexagon::JMP_GTrrPt_nv_V4;
+        return taken ? Hexagon::JMP_GTrrPt_nv_V4
+                     : Hexagon::JMP_GTrrPnt_nv_V4;
     }
 
     case Hexagon::CMPGTri: {
       if (reg >= 0)
-        return Hexagon::JMP_GTriPt_nv_V4;
+        return taken ? Hexagon::JMP_GTriPt_nv_V4 : Hexagon::JMP_GTriPnt_nv_V4;
       else
-        return Hexagon::JMP_GTriPtneg_nv_V4;
+        return taken ? Hexagon::JMP_GTriPtneg_nv_V4
+                     : Hexagon::JMP_GTriPntneg_nv_V4;
     }
 
     case Hexagon::CMPGTUrr: {
       if (secondRegNewified)
-        return Hexagon::JMP_GTUrrdnPt_nv_V4;
+        return taken ? Hexagon::JMP_GTUrrdnPt_nv_V4
+                     : Hexagon::JMP_GTUrrdnPnt_nv_V4;
       else
-        return Hexagon::JMP_GTUrrPt_nv_V4;
+        return taken ? Hexagon::JMP_GTUrrPt_nv_V4 : Hexagon::JMP_GTUrrPnt_nv_V4;
     }
 
     case Hexagon::CMPGTUri:
-      return Hexagon::JMP_GTUriPt_nv_V4;
+      return taken ? Hexagon::JMP_GTUriPt_nv_V4 : Hexagon::JMP_GTUriPnt_nv_V4;
 
     default:
        llvm_unreachable("Could not find matching New Value Jump instruction.");
@@ -326,6 +345,7 @@ bool HexagonNewValueJump::runOnMachineFunction(MachineFunction &MF) {
   QII = static_cast<const HexagonInstrInfo *>(MF.getTarget().getInstrInfo());
   QRI =
     static_cast<const HexagonRegisterInfo *>(MF.getTarget().getRegisterInfo());
+  MBPI = &getAnalysis<MachineBranchProbabilityInfo>();
 
   if (!QRI->Subtarget.hasV4TOps() ||
       DisableNewValueJumps) {
@@ -560,7 +580,8 @@ bool HexagonNewValueJump::runOnMachineFunction(MachineFunction &MF) {
            assert((QII->isNewValueJumpCandidate(cmpInstr)) &&
                       "This compare is not a New Value Jump candidate.");
           unsigned opc = getNewValueJumpOpcode(cmpInstr, cmpOp2,
-                                               isSecondOpNewified);
+                                               isSecondOpNewified,
+                                               jmpTarget, MBPI);
           if (invertPredicate)
             opc = QII->getInvertedPredicatedOpcode(opc);
 

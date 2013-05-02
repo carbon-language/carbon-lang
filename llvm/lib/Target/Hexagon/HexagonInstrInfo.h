@@ -18,8 +18,7 @@
 #include "MCTargetDesc/HexagonBaseInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetFrameLowering.h"
-#include "llvm/Target/TargetInstrInfo.h"
-
+#include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 
 #define GET_INSTRINFO_HEADER
 #include "HexagonGenInstrInfo.inc"
@@ -192,6 +191,8 @@ public:
 
   void immediateExtend(MachineInstr *MI) const;
   bool isConstExtended(MachineInstr *MI) const;
+  int getDotNewPredJumpOp(MachineInstr *MI,
+                      const MachineBranchProbabilityInfo *MBPI) const;
   unsigned getAddrMode(const MachineInstr* MI) const;
   bool isOperandExtended(const MachineInstr *MI,
                          unsigned short OperandNum) const;

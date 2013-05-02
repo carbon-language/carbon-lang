@@ -48,19 +48,35 @@
 #include "HexagonMachineFunctionInfo.h"
 
 #include <map>
+#include <vector>
 
 using namespace llvm;
+
+static cl::opt<bool> PacketizeVolatiles("hexagon-packetize-volatiles",
+      cl::ZeroOrMore, cl::Hidden, cl::init(true),
+      cl::desc("Allow non-solo packetization of volatile memory references"));
+
+extern cl::opt<bool> ScheduleInlineAsm;
+extern cl::opt<bool> CountDeadOutput;
+
+namespace llvm {
+  void initializeHexagonPacketizerPass(PassRegistry&);
+}
+
 
 namespace {
   class HexagonPacketizer : public MachineFunctionPass {
 
   public:
     static char ID;
-    HexagonPacketizer() : MachineFunctionPass(ID) {}
+    HexagonPacketizer() : MachineFunctionPass(ID) {
+      initializeHexagonPacketizerPass(*PassRegistry::getPassRegistry());
+    }
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       AU.addRequired<MachineDominatorTree>();
+      AU.addRequired<MachineBranchProbabilityInfo>();
       AU.addPreserved<MachineDominatorTree>();
       AU.addRequired<MachineLoopInfo>();
       AU.addPreserved<MachineLoopInfo>();
@@ -96,10 +112,17 @@ namespace {
     // schedule this instruction.
     bool FoundSequentialDependence;
 
+    /// \brief A handle to the branch probability pass.
+   const MachineBranchProbabilityInfo *MBPI;
+
+   // Track MIs with ignored dependece.
+   std::vector<MachineInstr*> IgnoreDepMIs;
+
   public:
     // Ctor.
     HexagonPacketizerList(MachineFunction &MF, MachineLoopInfo &MLI,
-                          MachineDominatorTree &MDT);
+                          MachineDominatorTree &MDT,
+                          const MachineBranchProbabilityInfo *MBPI);
 
     // initPacketizerState - initialize some internal flags.
     void initPacketizerState();
@@ -123,20 +146,20 @@ namespace {
   private:
     bool IsCallDependent(MachineInstr* MI, SDep::Kind DepType, unsigned DepReg);
     bool PromoteToDotNew(MachineInstr* MI, SDep::Kind DepType,
-                    MachineBasicBlock::iterator &MII,
-                    const TargetRegisterClass* RC);
+                         MachineBasicBlock::iterator &MII,
+                         const TargetRegisterClass* RC);
     bool CanPromoteToDotNew(MachineInstr* MI, SUnit* PacketSU,
-                    unsigned DepReg,
-                    std::map <MachineInstr*, SUnit*> MIToSUnit,
-                    MachineBasicBlock::iterator &MII,
-                    const TargetRegisterClass* RC);
+                            unsigned DepReg,
+                            std::map <MachineInstr*, SUnit*> MIToSUnit,
+                            MachineBasicBlock::iterator &MII,
+                            const TargetRegisterClass* RC);
     bool CanPromoteToNewValue(MachineInstr* MI, SUnit* PacketSU,
-                    unsigned DepReg,
-                    std::map <MachineInstr*, SUnit*> MIToSUnit,
-                    MachineBasicBlock::iterator &MII);
+                              unsigned DepReg,
+                              std::map <MachineInstr*, SUnit*> MIToSUnit,
+                              MachineBasicBlock::iterator &MII);
     bool CanPromoteToNewValueStore(MachineInstr* MI, MachineInstr* PacketMI,
-                    unsigned DepReg,
-                    std::map <MachineInstr*, SUnit*> MIToSUnit);
+                                   unsigned DepReg,
+                                   std::map <MachineInstr*, SUnit*> MIToSUnit);
     bool DemoteToDotOld(MachineInstr* MI);
     bool ArePredicatesComplements(MachineInstr* MI1, MachineInstr* MI2,
                     std::map <MachineInstr*, SUnit*> MIToSUnit);
@@ -152,19 +175,31 @@ namespace {
   };
 }
 
+INITIALIZE_PASS_BEGIN(HexagonPacketizer, "packets", "Hexagon Packetizer",
+                      false, false)
+INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
+INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
+INITIALIZE_PASS_END(HexagonPacketizer, "packets", "Hexagon Packetizer",
+                    false, false)
+
+
 // HexagonPacketizerList Ctor.
 HexagonPacketizerList::HexagonPacketizerList(
-  MachineFunction &MF, MachineLoopInfo &MLI,MachineDominatorTree &MDT)
+  MachineFunction &MF, MachineLoopInfo &MLI,MachineDominatorTree &MDT,
+  const MachineBranchProbabilityInfo *MBPI)
   : VLIWPacketizerList(MF, MLI, MDT, true){
+  this->MBPI = MBPI;
 }
 
 bool HexagonPacketizer::runOnMachineFunction(MachineFunction &Fn) {
   const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
   MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
-
+  const MachineBranchProbabilityInfo *MBPI =
+    &getAnalysis<MachineBranchProbabilityInfo>();
   // Instantiate the packetizer.
-  HexagonPacketizerList Packetizer(Fn, MLI, MDT);
+  HexagonPacketizerList Packetizer(Fn, MLI, MDT, MBPI);
 
   // DFA state table should not be empty.
   assert(Packetizer.getResourceTracker() && "Empty DFA table!");
@@ -710,8 +745,10 @@ static int GetDotNewOp(const int opc) {
 }
 
 // Return .new predicate version for an instruction
-static int GetDotNewPredOp(const int opc) {
-  switch (opc) {
+static int GetDotNewPredOp(MachineInstr *MI,
+                           const MachineBranchProbabilityInfo *MBPI,
+                           const HexagonInstrInfo *QII) {
+  switch (MI->getOpcode()) {
   default: llvm_unreachable("Unknown .new type");
   // Conditional stores
   // Store byte conditionally
@@ -858,10 +895,8 @@ static int GetDotNewPredOp(const int opc) {
 
   // Condtional Jumps
   case Hexagon::JMP_t:
-    return Hexagon::JMP_f;
-
   case Hexagon::JMP_f:
-    return Hexagon::JMP_fnew_t;
+    return QII->getDotNewPredJumpOp(MI, MBPI);
 
   case Hexagon::JMPR_t:
     return Hexagon::JMPR_tnew_tV3;
@@ -1261,7 +1296,7 @@ bool HexagonPacketizerList::PromoteToDotNew(MachineInstr* MI,
 
   int NewOpcode;
   if (RC == &Hexagon::PredRegsRegClass)
-    NewOpcode = GetDotNewPredOp(MI->getOpcode());
+    NewOpcode = GetDotNewPredOp(MI, MBPI, QII);
   else
     NewOpcode = GetDotNewOp(MI->getOpcode());
   MI->setDesc(QII->get(NewOpcode));

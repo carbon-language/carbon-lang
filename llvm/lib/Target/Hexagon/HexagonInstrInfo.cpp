@@ -2472,6 +2472,34 @@ bool HexagonInstrInfo::isConstExtended(MachineInstr *MI) const {
   return (ImmValue < MinValue || ImmValue > MaxValue);
 }
 
+// Returns the opcode to use when converting MI, which is a conditional jump,
+// into a conditional instruction which uses the .new value of the predicate.
+// We also use branch probabilities to add a hint to the jump.
+int
+HexagonInstrInfo::getDotNewPredJumpOp(MachineInstr *MI,
+                                  const
+                                  MachineBranchProbabilityInfo *MBPI) const {
+
+  // We assume that block can have at most two successors.
+  bool taken = false;
+  MachineBasicBlock *Src = MI->getParent();
+  MachineOperand *BrTarget = &MI->getOperand(1);
+  MachineBasicBlock *Dst = BrTarget->getMBB();
+
+  const BranchProbability Prediction = MBPI->getEdgeProbability(Src, Dst);
+  if (Prediction >= BranchProbability(1,2))
+    taken = true;
+
+  switch (MI->getOpcode()) {
+  case Hexagon::JMP_t:
+    return taken ? Hexagon::JMP_tnew_t : Hexagon::JMP_tnew_nt;
+  case Hexagon::JMP_f:
+    return taken ? Hexagon::JMP_fnew_t : Hexagon::JMP_fnew_nt;
+
+  default:
+    llvm_unreachable("Unexpected jump instruction.");
+  }
+}
 // Returns true if a particular operand is extendable for an instruction.
 bool HexagonInstrInfo::isOperandExtended(const MachineInstr *MI,
                                          unsigned short OperandNum) const {
