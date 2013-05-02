@@ -165,7 +165,7 @@ private:
     return ClauseFile(MIb, ClauseContent);
   }
 
-  void getLiteral(MachineInstr *MI, std::vector<unsigned> &Lits) const {
+  void getLiteral(MachineInstr *MI, std::vector<int64_t> &Lits) const {
     unsigned LiteralRegs[] = {
       AMDGPU::ALU_LITERAL_X,
       AMDGPU::ALU_LITERAL_Y,
@@ -180,7 +180,7 @@ private:
         continue;
       unsigned ImmIdx = TII->getOperandIdx(MI->getOpcode(), R600Operands::IMM);
       int64_t Imm = MI->getOperand(ImmIdx).getImm();
-      std::vector<unsigned>::iterator It =
+      std::vector<int64_t>::iterator It =
           std::find(Lits.begin(), Lits.end(), Imm);
       if (It != Lits.end()) {
         unsigned Index = It - Lits.begin();
@@ -221,7 +221,7 @@ private:
       }
       if (!I->isBundle() && !TII->isALUInstr(I->getOpcode()))
         break;
-      std::vector<unsigned> Literals;
+      std::vector<int64_t> Literals;
       if (I->isBundle()) {
         MachineInstr *DeleteMI = I;
         MachineBasicBlock::instr_iterator BI = I.getInstrIterator();
