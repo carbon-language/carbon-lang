@@ -741,6 +741,13 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       const CXXDefaultArgExpr *DefaultE = cast<CXXDefaultArgExpr>(S);
       const Expr *ArgE = DefaultE->getExpr();
 
+      bool IsTemporary = false;
+      if (const MaterializeTemporaryExpr *MTE =
+            dyn_cast<MaterializeTemporaryExpr>(ArgE)) {
+        ArgE = MTE->GetTemporaryExpr();
+        IsTemporary = true;
+      }
+
       Optional<SVal> ConstantVal = svalBuilder.getConstantVal(ArgE);
       if (!ConstantVal)
         ConstantVal = UnknownVal();
@@ -749,7 +756,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
            I != E; ++I) {
         ProgramStateRef State = (*I)->getState();
         State = State->BindExpr(DefaultE, LCtx, *ConstantVal);
-        if (DefaultE->isGLValue())
+        if (IsTemporary)
           State = createTemporaryRegionIfNeeded(State, LCtx, DefaultE,
                                                 DefaultE);
         Bldr2.generateNode(S, *I, State);

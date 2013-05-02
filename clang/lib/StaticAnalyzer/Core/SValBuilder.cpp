@@ -268,13 +268,18 @@ Optional<SVal> SValBuilder::getConstantVal(const Expr *E) {
 
   // If we don't have a special case, fall back to the AST's constant evaluator.
   default: {
+    // Don't try to come up with a value for materialized temporaries.
+    if (E->isGLValue())
+      return None;
+
     ASTContext &Ctx = getContext();
     llvm::APSInt Result;
     if (E->EvaluateAsInt(Result, Ctx))
       return makeIntVal(Result);
 
-    if (E->isNullPointerConstant(Ctx, Expr::NPC_ValueDependentIsNotNull))
-      return makeNull();
+    if (Loc::isLocType(E->getType()))
+      if (E->isNullPointerConstant(Ctx, Expr::NPC_ValueDependentIsNotNull))
+        return makeNull();
 
     return None;
   }

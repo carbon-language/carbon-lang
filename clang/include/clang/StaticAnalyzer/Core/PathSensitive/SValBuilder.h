@@ -206,9 +206,6 @@ public:
   /// manner.
   ///
   /// If \p E is not a constant or cannot be modeled, returns \c None.
-  ///
-  /// Note that this function always treats \p E as a prvalue. Callers should
-  /// check to see if \p E is a glvalue and modify their behavior accordingly.
   Optional<SVal> getConstantVal(const Expr *E);
 
   NonLoc makeCompoundVal(QualType type, llvm::ImmutableList<SVal> vals) {
