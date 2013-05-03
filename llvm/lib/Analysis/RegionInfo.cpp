@@ -114,7 +114,8 @@ void Region::replaceExitRecursive(BasicBlock *NewExit) {
 bool Region::contains(const BasicBlock *B) const {
   BasicBlock *BB = const_cast<BasicBlock*>(B);
 
-  assert(DT->getNode(BB) && "BB not part of the dominance tree");
+  if (!DT->getNode(BB))
+    return false;
 
   BasicBlock *entry = getEntry(), *exit = getExit();
 
