@@ -971,7 +971,7 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
   OS << "#endif\n";
 }
 
-// Emits the LateParsed property for attributes.
+// Emits the all-arguments-are-expressions property for attributes.
 void EmitClangAttrExprArgsList(RecordKeeper &Records, raw_ostream &OS) {
   emitSourceFileHeader("llvm::StringSwitch code to match attributes with "
                        "expression arguments", OS);
