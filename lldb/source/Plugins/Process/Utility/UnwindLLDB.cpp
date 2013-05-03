@@ -121,6 +121,22 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
                                                               cursor_sp->sctx, 
                                                               cur_idx, 
                                                               *this));
+
+    // We want to detect an unwind that cycles erronously and stop backtracing.
+    // Don't want this maximum unwind limit to be too low -- if you have a backtrace
+    // with an "infinitely recursing" bug, it will crash when the stack blows out
+    // and the first 35,000 frames are uninteresting - it's the top most 5 frames that
+    // you actually care about.  So you can't just cap the unwind at 10,000 or something.
+    // Realistically anything over around 200,000 is going to blow out the stack space.
+    // If we're still unwinding at that point, we're probably never going to finish.
+    if (cur_idx > 300000)
+    {
+        if (log)
+            log->Printf ("%*sFrame %d unwound too many frames, assuming unwind has gone astray, stopping.", 
+                         cur_idx < 100 ? cur_idx : 100, "", cur_idx);
+        goto unwind_done;
+    }
+
     if (reg_ctx_sp.get() == NULL)
         goto unwind_done;
 
