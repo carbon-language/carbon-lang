@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #define GET_INSTRINFO_CTOR
 #define GET_INSTRMAP_INFO
 #include "HexagonGenInstrInfo.inc"
