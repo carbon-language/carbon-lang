@@ -1982,18 +1982,33 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
         // We know that all PHIs in non header blocks are converted into
         // selects, so we don't have to worry about the insertion order and we
         // can just use the builder.
-
         // At this point we generate the predication tree. There may be
         // duplications since this is a simple recursive scan, but future
         // optimizations will clean it up.
-        VectorParts Cond = createEdgeMask(P->getIncomingBlock(0),
-                                               P->getParent());
 
-        for (unsigned part = 0; part < UF; ++part) {
-        VectorParts &In0 = getVectorValue(P->getIncomingValue(0));
-        VectorParts &In1 = getVectorValue(P->getIncomingValue(1));
-          Entry[part] = Builder.CreateSelect(Cond[part], In0[part], In1[part],
-                                             "predphi");
+        unsigned NumIncoming = P->getNumIncomingValues();
+        assert(NumIncoming > 1 && "Invalid PHI");
+
+        // Generate a sequence of selects of the form:
+        // SELECT(Mask3, In3,
+        //      SELECT(Mask2, In2,
+        //                   ( ...)))
+        for (unsigned In = 0; In < NumIncoming; In++) {
+          VectorParts Cond = createEdgeMask(P->getIncomingBlock(In),
+                                            P->getParent());
+          VectorParts &In0 = getVectorValue(P->getIncomingValue(In));
+
+          for (unsigned part = 0; part < UF; ++part) {
+            // We don't need to 'select' the first PHI operand because it is
+            // the default value if all of the other masks don't match.
+            if (In == 0)
+              Entry[part] = In0[part];
+            else
+              // Select between the current value and the previous incoming edge
+              // based on the incoming mask.
+              Entry[part] = Builder.CreateSelect(Cond[part], In0[part],
+                                                 Entry[part], "predphi");
+          }
         }
         continue;
       }
@@ -2273,12 +2288,6 @@ bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
     if (!isa<BranchInst>(BB->getTerminator()))
       return false;
 
-    // We must have at most two predecessors because we need to convert
-    // all PHIs to selects.
-    unsigned Preds = std::distance(pred_begin(BB), pred_end(BB));
-    if (Preds > 2)
-      return false;
-
     // We must be able to predicate all blocks that need to be predicated.
     if (blockNeedsPredication(BB) && !blockCanBePredicated(BB))
       return false;
@@ -2376,12 +2385,6 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
          ++it) {
 
       if (PHINode *Phi = dyn_cast<PHINode>(it)) {
-        // This should not happen because the loop should be normalized.
-        if (Phi->getNumIncomingValues() != 2) {
-          DEBUG(dbgs() << "LV: Found an invalid PHI.\n");
-          return false;
-        }
-
         // Check that this PHI type is allowed.
         if (!Phi->getType()->isIntegerTy() &&
             !Phi->getType()->isFloatingPointTy() &&
@@ -2395,6 +2398,12 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
         // the PHIs in this block are induction or reduction variables.
         if (*bb != Header)
           continue;
+
+        // We only allow if-converted PHIs with more than two incoming values.
+        if (Phi->getNumIncomingValues() != 2) {
+          DEBUG(dbgs() << "LV: Found an invalid PHI.\n");
+          return false;
+        }
 
         // This is the value coming from the preheader.
         Value *StartValue = Phi->getIncomingValueForBlock(PreHeader);
