@@ -38,6 +38,5 @@ extern size_t fwrite(const void * restrict, size_t, size_t, FILE * restrict);
 extern size_t fread(void * restrict, size_t, size_t, FILE * restrict);
 extern long ftell(FILE *);
 extern int fseek(FILE *, long, int);
-extern void setbuf(FILE * restrict, char * restrict);
 
 #endif /* __STDIO_H__ */

@@ -194,9 +194,6 @@ void llvm_gcda_start_file(const char *orig_filename, const char version[4]) {
     }
   }
 
-  /* Make the file I/O unbuffered. */
-  setbuf(output_file, (char*)NULL);
-
   /* gcda file, version, stamp LLVM. */
   fwrite("adcg", 4, 1, output_file);
   fwrite(version, 4, 1, output_file);

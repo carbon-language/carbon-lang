@@ -74,7 +74,6 @@ size_t fwrite(const void * __restrict, size_t, size_t, FILE * __restrict)
 size_t fread(void * __restrict, size_t, size_t, FILE * __restrict);
 long ftell(FILE *);
 int fseek(FILE *, long, int);
-void setbuf(FILE * __restrict, char * __restrict);
 
 int snprintf(char * __restrict, size_t, const char * __restrict, ...);
 
