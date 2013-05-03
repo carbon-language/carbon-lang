@@ -4178,7 +4178,7 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
         }
 
         
-        if (m_process_sp->GetPrivateState() != eStateRunning)
+        if (!GetRestarted())
         {
             if (!still_should_stop && does_anybody_have_an_opinion)
             {
