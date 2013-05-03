@@ -2922,8 +2922,8 @@ StmtResult Sema::ActOnMSDependentExistsStmt(SourceLocation KeywordLoc,
 }
 
 RecordDecl*
-Sema::CreateCapturedStmtRecordDecl(CapturedDecl *&CD, SourceLocation Loc)
-{
+Sema::CreateCapturedStmtRecordDecl(CapturedDecl *&CD, SourceLocation Loc,
+                                   unsigned NumParams) {
   DeclContext *DC = CurContext;
   while (!(DC->isFunctionOrMethod() || DC->isRecord() || DC->isFileContext()))
     DC = DC->getParent();
@@ -2938,8 +2938,19 @@ Sema::CreateCapturedStmtRecordDecl(CapturedDecl *&CD, SourceLocation Loc)
   RD->setImplicit();
   RD->startDefinition();
 
-  CD = CapturedDecl::Create(Context, CurContext);
+  CD = CapturedDecl::Create(Context, CurContext, NumParams);
   DC->addDecl(CD);
+
+  // Build the context parameter
+  assert(NumParams > 0 && "CapturedStmt requires context parameter");
+  DC = CapturedDecl::castToDeclContext(CD);
+  IdentifierInfo *VarName = &Context.Idents.get("__context");
+  QualType ParamType = Context.getPointerType(Context.getTagDeclType(RD));
+  ImplicitParamDecl *Param
+    = ImplicitParamDecl::Create(Context, DC, Loc, VarName, ParamType);
+  DC->addDecl(Param);
+
+  CD->setContextParam(Param);
 
   return RD;
 }
@@ -2970,9 +2981,9 @@ static void buildCapturedStmtCaptureList(
 }
 
 void Sema::ActOnCapturedRegionStart(SourceLocation Loc, Scope *CurScope,
-                                    CapturedRegionKind Kind) {
+                                    CapturedRegionKind Kind, unsigned NumParams) {
   CapturedDecl *CD = 0;
-  RecordDecl *RD = CreateCapturedStmtRecordDecl(CD, Loc);
+  RecordDecl *RD = CreateCapturedStmtRecordDecl(CD, Loc, NumParams);
 
   // Enter the capturing scope for this captured region.
   PushCapturedRegionScope(CurScope, CD, RD, Kind);

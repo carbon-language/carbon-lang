@@ -29,6 +29,7 @@ class CapturedDecl;
 class CXXMethodDecl;
 class ObjCPropertyDecl;
 class IdentifierInfo;
+class ImplicitParamDecl;
 class LabelDecl;
 class ReturnStmt;
 class Scope;
@@ -506,13 +507,17 @@ public:
   RecordDecl *TheRecordDecl;
   /// \brief This is the enclosing scope of the captured region.
   Scope *TheScope;
+  /// \brief The implicit parameter for the captured variables.
+  ImplicitParamDecl *ContextParam;
   /// \brief The kind of captured region.
   CapturedRegionKind CapRegionKind;
 
   CapturedRegionScopeInfo(DiagnosticsEngine &Diag, Scope *S, CapturedDecl *CD,
-                          RecordDecl *RD, CapturedRegionKind K)
+                          RecordDecl *RD, ImplicitParamDecl *Context,
+                          CapturedRegionKind K)
     : CapturingScopeInfo(Diag, ImpCap_CapturedRegion),
-      TheCapturedDecl(CD), TheRecordDecl(RD), TheScope(S), CapRegionKind(K)
+      TheCapturedDecl(CD), TheRecordDecl(RD), TheScope(S),
+      ContextParam(Context), CapRegionKind(K)
   {
     Kind = SK_CapturedRegion;
   }
