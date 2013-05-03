@@ -87,7 +87,6 @@ ifeq ($(HOST_OS),Darwin)
               lldbPluginDynamicLoaderDarwinKernel.a \
               lldbPluginObjectContainerUniversalMachO.a \
               lldbPluginObjectFileMachO.a \
-              lldbPluginOperatingSystemDarwinKernel.a \
               lldbPluginSymbolVendorMacOSX.a \
               lldbPluginProcessDarwin.a \
               lldbPluginProcessMachCore.a
@@ -98,8 +97,7 @@ ifeq ($(HOST_OS),Linux)
               lldbPluginProcessLinux.a \
               lldbPluginProcessPOSIX.a \
               lldbPluginDynamicLoaderMacOSX.a \
-              lldbPluginDynamicLoaderDarwinKernel.a \
-              lldbPluginOperatingSystemDarwinKernel.a
+              lldbPluginDynamicLoaderDarwinKernel.a
 
 endif
 
