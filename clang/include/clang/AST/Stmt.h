@@ -1387,7 +1387,6 @@ protected:
   unsigned NumInputs;
   unsigned NumClobbers;
 
-  IdentifierInfo **Names;
   Stmt **Exprs;
 
   AsmStmt(StmtClass SC, SourceLocation asmloc, bool issimple, bool isvolatile,
@@ -1395,10 +1394,12 @@ protected:
     Stmt (SC), AsmLoc(asmloc), IsSimple(issimple), IsVolatile(isvolatile),
     NumOutputs(numoutputs), NumInputs(numinputs), NumClobbers(numclobbers) { }
 
+  friend class ASTStmtReader;
+
 public:
   /// \brief Build an empty inline-assembly statement.
   explicit AsmStmt(StmtClass SC, EmptyShell Empty) :
-    Stmt(SC, Empty), Names(0), Exprs(0) { }
+    Stmt(SC, Empty), Exprs(0) { }
 
   SourceLocation getAsmLoc() const { return AsmLoc; }
   void setAsmLoc(SourceLocation L) { AsmLoc = L; }
@@ -1421,17 +1422,6 @@ public:
 
   unsigned getNumOutputs() const { return NumOutputs; }
 
-  IdentifierInfo *getOutputIdentifier(unsigned i) const {
-    return Names[i];
-  }
-
-  StringRef getOutputName(unsigned i) const {
-    if (IdentifierInfo *II = getOutputIdentifier(i))
-      return II->getName();
-
-    return StringRef();
-  }
-
   /// getOutputConstraint - Return the constraint string for the specified
   /// output operand.  All output constraints are known to be non-empty (either
   /// '=' or '+').
@@ -1453,17 +1443,6 @@ public:
   //===--- Input operands ---===//
 
   unsigned getNumInputs() const { return NumInputs; }
-
-  IdentifierInfo *getInputIdentifier(unsigned i) const {
-    return Names[i + NumOutputs];
-  }
-
-  StringRef getInputName(unsigned i) const {
-    if (IdentifierInfo *II = getInputIdentifier(i))
-      return II->getName();
-
-    return StringRef();
-  }
 
   /// getInputConstraint - Return the specified input constraint.  Unlike output
   /// constraints, these can be empty.
@@ -1535,6 +1514,9 @@ class GCCAsmStmt : public AsmStmt {
   // FIXME: If we wanted to, we could allocate all of these in one big array.
   StringLiteral **Constraints;
   StringLiteral **Clobbers;
+  IdentifierInfo **Names;
+
+  friend class ASTStmtReader;
 
 public:
   GCCAsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
@@ -1545,7 +1527,7 @@ public:
 
   /// \brief Build an empty inline-assembly statement.
   explicit GCCAsmStmt(EmptyShell Empty) : AsmStmt(GCCAsmStmtClass, Empty),
-    Constraints(0), Clobbers(0) { }
+    Constraints(0), Clobbers(0), Names(0) { }
 
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
@@ -1610,6 +1592,17 @@ public:
 
   //===--- Output operands ---===//
 
+  IdentifierInfo *getOutputIdentifier(unsigned i) const {
+    return Names[i];
+  }
+
+  StringRef getOutputName(unsigned i) const {
+    if (IdentifierInfo *II = getOutputIdentifier(i))
+      return II->getName();
+
+    return StringRef();
+  }
+
   StringRef getOutputConstraint(unsigned i) const;
 
   const StringLiteral *getOutputConstraintLiteral(unsigned i) const {
@@ -1627,6 +1620,17 @@ public:
 
   //===--- Input operands ---===//
 
+  IdentifierInfo *getInputIdentifier(unsigned i) const {
+    return Names[i + NumOutputs];
+  }
+
+  StringRef getInputName(unsigned i) const {
+    if (IdentifierInfo *II = getInputIdentifier(i))
+      return II->getName();
+
+    return StringRef();
+  }
+
   StringRef getInputConstraint(unsigned i) const;
 
   const StringLiteral *getInputConstraintLiteral(unsigned i) const {
@@ -1643,6 +1647,7 @@ public:
     return const_cast<GCCAsmStmt*>(this)->getInputExpr(i);
   }
 
+private:
   void setOutputsAndInputsAndClobbers(ASTContext &C,
                                       IdentifierInfo **Names,
                                       StringLiteral **Constraints,
@@ -1651,6 +1656,7 @@ public:
                                       unsigned NumInputs,
                                       StringLiteral **Clobbers,
                                       unsigned NumClobbers);
+public:
 
   //===--- Other ---===//
 
@@ -1677,7 +1683,7 @@ public:
 ///
 class MSAsmStmt : public AsmStmt {
   SourceLocation LBraceLoc, EndLoc;
-  std::string AsmStr;
+  StringRef AsmStr;
 
   unsigned NumAsmToks;
 
@@ -1685,11 +1691,13 @@ class MSAsmStmt : public AsmStmt {
   StringRef *Constraints;
   StringRef *Clobbers;
 
+  friend class ASTStmtReader;
+
 public:
   MSAsmStmt(ASTContext &C, SourceLocation asmloc, SourceLocation lbraceloc,
             bool issimple, bool isvolatile, ArrayRef<Token> asmtoks,
             unsigned numoutputs, unsigned numinputs,
-            ArrayRef<IdentifierInfo*> names, ArrayRef<StringRef> constraints,
+            ArrayRef<StringRef> constraints,
             ArrayRef<Expr*> exprs, StringRef asmstr,
             ArrayRef<StringRef> clobbers, SourceLocation endloc);
 
@@ -1708,10 +1716,7 @@ public:
   Token *getAsmToks() { return AsmToks; }
 
   //===--- Asm String Analysis ---===//
-
-  const std::string *getAsmString() const { return &AsmStr; }
-  std::string *getAsmString() { return &AsmStr; }
-  void setAsmString(StringRef &E) { AsmStr = E.str(); }
+  StringRef getAsmString() const { return AsmStr; }
 
   /// Assemble final IR asm string.
   std::string generateAsmString(ASTContext &C) const;
@@ -1719,6 +1724,7 @@ public:
   //===--- Output operands ---===//
 
   StringRef getOutputConstraint(unsigned i) const {
+    assert(i < NumOutputs);
     return Constraints[i];
   }
 
@@ -1731,6 +1737,7 @@ public:
   //===--- Input operands ---===//
 
   StringRef getInputConstraint(unsigned i) const {
+    assert(i < NumInputs);
     return Constraints[i + NumOutputs];
   }
 
@@ -1743,7 +1750,27 @@ public:
 
   //===--- Other ---===//
 
-  StringRef getClobber(unsigned i) const { return Clobbers[i]; }
+  ArrayRef<StringRef> getAllConstraints() const {
+    return ArrayRef<StringRef>(Constraints, NumInputs + NumOutputs);
+  }
+  ArrayRef<StringRef> getClobbers() const {
+    return ArrayRef<StringRef>(Clobbers, NumClobbers);
+  }
+  ArrayRef<Expr*> getAllExprs() const {
+    return ArrayRef<Expr*>(reinterpret_cast<Expr**>(Exprs),
+                           NumInputs + NumOutputs);
+  }
+
+  StringRef getClobber(unsigned i) const { return getClobbers()[i]; }
+
+private:
+  void initialize(ASTContext &C,
+                  StringRef AsmString,
+                  ArrayRef<Token> AsmToks,
+                  ArrayRef<StringRef> Constraints,
+                  ArrayRef<Expr*> Exprs,
+                  ArrayRef<StringRef> Clobbers);
+public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return AsmLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return EndLoc; }

@@ -11718,8 +11718,7 @@ void Sema::MarkVTableUsed(SourceLocation Loc, CXXRecordDecl *Class,
   // Ignore any vtable uses in unevaluated operands or for classes that do
   // not have a vtable.
   if (!Class->isDynamicClass() || Class->isDependentContext() ||
-      CurContext->isDependentContext() ||
-      ExprEvalContexts.back().Context == Unevaluated)
+      CurContext->isDependentContext() || isUnevaluatedContext())
     return;
 
   // Try to insert this class into the map.

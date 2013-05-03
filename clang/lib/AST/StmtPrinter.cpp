@@ -445,7 +445,7 @@ void StmtPrinter::VisitMSAsmStmt(MSAsmStmt *Node) {
   Indent() << "__asm ";
   if (Node->hasBraces())
     OS << "{\n";
-  OS << *(Node->getAsmString()) << "\n";
+  OS << Node->getAsmString() << "\n";
   if (Node->hasBraces())
     Indent() << "}\n";
 }

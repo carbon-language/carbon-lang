@@ -1103,6 +1103,19 @@ bool ASTReader::ReadBlockAbbrevs(BitstreamCursor &Cursor, unsigned BlockID) {
   }
 }
 
+Token ASTReader::ReadToken(ModuleFile &F, const RecordData &Record,
+                           unsigned &Idx) {
+  Token Tok;
+  Tok.startToken();
+  Tok.setLocation(ReadSourceLocation(F, Record, Idx));
+  Tok.setLength(Record[Idx++]);
+  if (IdentifierInfo *II = getLocalIdentifier(F, Record[Idx++]))
+    Tok.setIdentifierInfo(II);
+  Tok.setKind((tok::TokenKind)Record[Idx++]);
+  Tok.setFlag((Token::TokenFlags)Record[Idx++]);
+  return Tok;
+}
+
 MacroInfo *ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
   BitstreamCursor &Stream = F.MacroCursor;
 
@@ -1203,14 +1216,8 @@ MacroInfo *ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
       // erroneous, just pretend we didn't see this.
       if (Macro == 0) break;
 
-      Token Tok;
-      Tok.startToken();
-      Tok.setLocation(ReadSourceLocation(F, Record[0]));
-      Tok.setLength(Record[1]);
-      if (IdentifierInfo *II = getLocalIdentifier(F, Record[2]))
-        Tok.setIdentifierInfo(II);
-      Tok.setKind((tok::TokenKind)Record[3]);
-      Tok.setFlag((Token::TokenFlags)Record[4]);
+      unsigned Idx = 0;
+      Token Tok = ReadToken(F, Record, Idx);
       Macro->AddTokenToBody(Tok);
       break;
     }

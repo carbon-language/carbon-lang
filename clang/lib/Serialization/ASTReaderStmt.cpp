@@ -17,6 +17,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Lex/Token.h"
 #include "llvm/ADT/SmallString.h"
 using namespace clang;
 using namespace clang::serialization;
@@ -32,14 +33,22 @@ namespace clang {
     const ASTReader::RecordData &Record;
     unsigned &Idx;
 
+    Token ReadToken(const RecordData &R, unsigned &I) {
+      return Reader.ReadToken(F, R, I);
+    }
+
     SourceLocation ReadSourceLocation(const RecordData &R, unsigned &I) {
       return Reader.ReadSourceLocation(F, R, I);
     }
-    
+
     SourceRange ReadSourceRange(const RecordData &R, unsigned &I) {
       return Reader.ReadSourceRange(F, R, I);
     }
-    
+
+    std::string ReadString(const RecordData &R, unsigned &I) {
+      return Reader.ReadString(R, I);
+    }
+        
     TypeSourceInfo *GetTypeSourceInfo(const RecordData &R, unsigned &I) {
       return Reader.GetTypeSourceInfo(F, R, I);
     }
@@ -286,17 +295,24 @@ void ASTStmtReader::VisitDeclStmt(DeclStmt *S) {
   }
 }
 
-void ASTStmtReader::VisitGCCAsmStmt(GCCAsmStmt *S) {
+void ASTStmtReader::VisitAsmStmt(AsmStmt *S) {
   VisitStmt(S);
-  unsigned NumOutputs = Record[Idx++];
-  unsigned NumInputs = Record[Idx++];
-  unsigned NumClobbers = Record[Idx++];
+  S->NumOutputs = Record[Idx++];
+  S->NumInputs = Record[Idx++];
+  S->NumClobbers = Record[Idx++];
   S->setAsmLoc(ReadSourceLocation(Record, Idx));
-  S->setRParenLoc(ReadSourceLocation(Record, Idx));
   S->setVolatile(Record[Idx++]);
   S->setSimple(Record[Idx++]);
+}
 
+void ASTStmtReader::VisitGCCAsmStmt(GCCAsmStmt *S) {
+  VisitAsmStmt(S);
+  S->setRParenLoc(ReadSourceLocation(Record, Idx));
   S->setAsmString(cast_or_null<StringLiteral>(Reader.ReadSubStmt()));
+
+  unsigned NumOutputs = S->getNumOutputs();
+  unsigned NumInputs = S->getNumInputs();
+  unsigned NumClobbers = S->getNumClobbers();
 
   // Outputs and inputs
   SmallVector<IdentifierInfo *, 16> Names;
@@ -320,8 +336,48 @@ void ASTStmtReader::VisitGCCAsmStmt(GCCAsmStmt *S) {
 }
 
 void ASTStmtReader::VisitMSAsmStmt(MSAsmStmt *S) {
-  // FIXME: Statement reader not yet implemented for MS style inline asm.
-  VisitStmt(S);
+  VisitAsmStmt(S);
+  S->LBraceLoc = ReadSourceLocation(Record, Idx);
+  S->EndLoc = ReadSourceLocation(Record, Idx);
+  S->NumAsmToks = Record[Idx++];
+  std::string AsmStr = ReadString(Record, Idx);
+
+  // Read the tokens.
+  SmallVector<Token, 16> AsmToks;
+  AsmToks.reserve(S->NumAsmToks);
+  for (unsigned i = 0, e = S->NumAsmToks; i != e; ++i) {
+    AsmToks.push_back(ReadToken(Record, Idx));
+  }
+
+  // The calls to reserve() for the FooData vectors are mandatory to
+  // prevent dead StringRefs in the Foo vectors.
+
+  // Read the clobbers.
+  SmallVector<std::string, 16> ClobbersData;
+  SmallVector<StringRef, 16> Clobbers;
+  ClobbersData.reserve(S->NumClobbers);
+  Clobbers.reserve(S->NumClobbers);
+  for (unsigned i = 0, e = S->NumClobbers; i != e; ++i) {
+    ClobbersData.push_back(ReadString(Record, Idx));
+    Clobbers.push_back(ClobbersData.back());
+  }
+
+  // Read the operands.
+  unsigned NumOperands = S->NumOutputs + S->NumInputs;
+  SmallVector<Expr*, 16> Exprs;
+  SmallVector<std::string, 16> ConstraintsData;
+  SmallVector<StringRef, 16> Constraints;
+  Exprs.reserve(NumOperands);
+  ConstraintsData.reserve(NumOperands);
+  Constraints.reserve(NumOperands);
+  for (unsigned i = 0; i != NumOperands; ++i) {
+    Exprs.push_back(cast<Expr>(Reader.ReadSubStmt()));
+    ConstraintsData.push_back(ReadString(Record, Idx));
+    Constraints.push_back(ConstraintsData.back());
+  }
+
+  S->initialize(Reader.getContext(), AsmStr, AsmToks,
+                Constraints, Exprs, Clobbers);
 }
 
 void ASTStmtReader::VisitCapturedStmt(CapturedStmt *S) {

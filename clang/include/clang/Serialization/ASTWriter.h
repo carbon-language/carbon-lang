@@ -63,6 +63,7 @@ class Sema;
 class SourceManager;
 class SwitchCase;
 class TargetInfo;
+class Token;
 class VersionTuple;
 class ASTUnresolvedSet;
 
@@ -497,6 +498,9 @@ public:
                 const std::string &OutputFile,
                 Module *WritingModule, StringRef isysroot,
                 bool hasErrors = false);
+
+  /// \brief Emit a token.
+  void AddToken(const Token &Tok, RecordDataImpl &Record);
 
   /// \brief Emit a source location.
   void AddSourceLocation(SourceLocation Loc, RecordDataImpl &Record);

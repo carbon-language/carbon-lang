@@ -1221,6 +1221,11 @@ public:
   // Expr that doesn't include commas.
   ExprResult ParseAssignmentExpression(TypeCastState isTypeCast = NotTypeCast);
 
+  ExprResult ParseMSAsmIdentifier(llvm::SmallVectorImpl<Token> &LineToks,
+                                  unsigned &NumLineToksConsumed,
+                                  void *Info,
+                                  bool IsUnevaluated);
+
 private:
   ExprResult ParseExpressionWithLeadingAt(SourceLocation AtLoc);
 

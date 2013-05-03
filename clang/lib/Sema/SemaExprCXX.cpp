@@ -742,7 +742,7 @@ static Expr *captureThis(ASTContext &Context, RecordDecl *RD,
 
 void Sema::CheckCXXThisCapture(SourceLocation Loc, bool Explicit) {
   // We don't need to capture this in an unevaluated context.
-  if (ExprEvalContexts.back().Context == Unevaluated && !Explicit)
+  if (isUnevaluatedContext() && !Explicit)
     return;
 
   // Otherwise, check that we can capture 'this'.

@@ -22,18 +22,6 @@
 #include "clang/Sema/ScopeInfo.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/MC/MCAsmInfo.h"
-#include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCObjectFileInfo.h"
-#include "llvm/MC/MCParser/MCAsmParser.h"
-#include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/MC/MCTargetAsmParser.h"
-#include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/TargetRegistry.h"
-#include "llvm/Support/TargetSelect.h"
 using namespace clang;
 using namespace sema;
 
@@ -381,180 +369,60 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
   return Owned(NS);
 }
 
-// getSpelling - Get the spelling of the AsmTok token.
-static StringRef getSpelling(Sema &SemaRef, Token AsmTok) {
-  StringRef Asm;
-  SmallString<512> TokenBuf;
-  TokenBuf.resize(512);
-  bool StringInvalid = false;
-  Asm = SemaRef.PP.getSpelling(AsmTok, TokenBuf, &StringInvalid);
-  assert (!StringInvalid && "Expected valid string!");
-  return Asm;
-}
-
-// Build the inline assembly string.  Returns true on error.
-static bool buildMSAsmString(Sema &SemaRef,
-                             SourceLocation AsmLoc,
-                             ArrayRef<Token> AsmToks,
-                             SmallVectorImpl<unsigned> &TokOffsets,
-                             std::string &AsmString) {
-  assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
-
-  SmallString<512> Asm;
-  for (unsigned i = 0, e = AsmToks.size(); i < e; ++i) {
-    bool isNewAsm = ((i == 0) ||
-                     AsmToks[i].isAtStartOfLine() ||
-                     AsmToks[i].is(tok::kw_asm));
-    if (isNewAsm) {
-      if (i != 0)
-        Asm += "\n\t";
-
-      if (AsmToks[i].is(tok::kw_asm)) {
-        i++; // Skip __asm
-        if (i == e) {
-          SemaRef.Diag(AsmLoc, diag::err_asm_empty);
-          return true;
-        }
-
-      }
-    }
-
-    if (i && AsmToks[i].hasLeadingSpace() && !isNewAsm)
-      Asm += ' ';
-
-    StringRef Spelling = getSpelling(SemaRef, AsmToks[i]);
-    Asm += Spelling;
-    TokOffsets.push_back(Asm.size());
-  }
-  AsmString = Asm.str();
-  return false;
-}
-
-namespace {
-
-class MCAsmParserSemaCallbackImpl : public llvm::MCAsmParserSemaCallback {
-  Sema &SemaRef;
-  SourceLocation AsmLoc;
-  ArrayRef<Token> AsmToks;
-  ArrayRef<unsigned> TokOffsets;
-
-public:
-  MCAsmParserSemaCallbackImpl(Sema &Ref, SourceLocation Loc,
-                              ArrayRef<Token> Toks,
-                              ArrayRef<unsigned> Offsets)
-    : SemaRef(Ref), AsmLoc(Loc), AsmToks(Toks), TokOffsets(Offsets) { }
-  ~MCAsmParserSemaCallbackImpl() {}
-
-  void *LookupInlineAsmIdentifier(StringRef &LineBuf,
-                                  InlineAsmIdentifierInfo &Info) {
-    SourceLocation Loc = SourceLocation::getFromPtrEncoding(LineBuf.data());
-    NamedDecl *OpDecl = SemaRef.LookupInlineAsmIdentifier(LineBuf, Loc, Info);
-    Info.OpDecl = static_cast<void *>(OpDecl);
-    return static_cast<void *>(OpDecl);
-  }
-
-  bool LookupInlineAsmField(StringRef Base, StringRef Member,
-                            unsigned &Offset) {
-    return SemaRef.LookupInlineAsmField(Base, Member, Offset, AsmLoc);
-  }
-
-  static void MSAsmDiagHandlerCallback(const llvm::SMDiagnostic &D,
-                                       void *Context) {
-    ((MCAsmParserSemaCallbackImpl*)Context)->MSAsmDiagHandler(D);
-  }
-  void MSAsmDiagHandler(const llvm::SMDiagnostic &D) {
-    // Compute an offset into the inline asm buffer.
-    // FIXME: This isn't right if .macro is involved (but hopefully, no
-    // real-world code does that).
-    const llvm::SourceMgr &LSM = *D.getSourceMgr();
-    const llvm::MemoryBuffer *LBuf =
-    LSM.getMemoryBuffer(LSM.FindBufferContainingLoc(D.getLoc()));
-    unsigned Offset = D.getLoc().getPointer()  - LBuf->getBufferStart();
-
-    // Figure out which token that offset points into.
-    const unsigned *OffsetPtr =
-        std::lower_bound(TokOffsets.begin(), TokOffsets.end(), Offset);
-    unsigned TokIndex = OffsetPtr - TokOffsets.begin();
-
-    // If we come up with an answer which seems sane, use it; otherwise,
-    // just point at the __asm keyword.
-    // FIXME: Assert the answer is sane once we handle .macro correctly.
-    SourceLocation Loc = AsmLoc;
-    if (TokIndex < AsmToks.size()) {
-      const Token *Tok = &AsmToks[TokIndex];
-      Loc = Tok->getLocation();
-      Loc = Loc.getLocWithOffset(Offset - (*OffsetPtr - Tok->getLength()));
-    }
-    SemaRef.Diag(Loc, diag::err_inline_ms_asm_parsing) << D.getMessage();
-  }
-};
-
-}
-
-// FIXME: Temporary hack until the frontend parser is hooked up to parse 
-// variables.
-static bool isIdentifierChar(char c) {
-  return isalnum(c) || c == '_' || c == '$' || c == '.' || c == '@';
-}
-
-static void lexIdentifier(const char *&CurPtr) {
-  while (isIdentifierChar(*CurPtr))
-    ++CurPtr;
-}
-
-static StringRef parseIdentifier(StringRef Identifier) {
-  const char *StartPtr = Identifier.data(), *EndPtr, *CurPtr;
-  EndPtr = StartPtr + Identifier.size();
-  CurPtr = StartPtr;
-  while(CurPtr <= EndPtr) {
-    if (isIdentifierChar(*CurPtr))
-      lexIdentifier(CurPtr);
-    else if (CurPtr[0] == ':' && CurPtr[1] == ':')
-      CurPtr += 2;
-    else
-      break;
-  }
-  return StringRef(StartPtr, CurPtr - StartPtr);
-}
-
-NamedDecl *Sema::LookupInlineAsmIdentifier(StringRef &LineBuf, SourceLocation Loc,
-                                           InlineAsmIdentifierInfo &Info) {
+ExprResult Sema::LookupInlineAsmIdentifier(CXXScopeSpec &SS,
+                                           SourceLocation TemplateKWLoc,
+                                           UnqualifiedId &Id,
+                                           InlineAsmIdentifierInfo &Info,
+                                           bool IsUnevaluatedContext) {
   Info.clear();
-  // FIXME: Temporary hack until the frontend parser is hooked up to parse 
-  // variables.
-  LineBuf = parseIdentifier(LineBuf);
-  LookupResult Result(*this, &Context.Idents.get(LineBuf), Loc,
-                      Sema::LookupOrdinaryName);
 
-  if (!LookupName(Result, getCurScope())) {
-    // If we don't find anything, return null; the AsmParser will assume
-    // it is a label of some sort.
-    return 0;
+  if (IsUnevaluatedContext)
+    PushExpressionEvaluationContext(UnevaluatedAbstract,
+                                    ReuseLambdaContextDecl);
+
+  ExprResult Result = ActOnIdExpression(getCurScope(), SS, TemplateKWLoc, Id,
+                                        /*trailing lparen*/ false,
+                                        /*is & operand*/ false);
+
+  if (IsUnevaluatedContext)
+    PopExpressionEvaluationContext();
+
+  if (!Result.isUsable()) return Result;
+
+  Result = CheckPlaceholderExpr(Result.take());
+  if (!Result.isUsable()) return Result;
+
+  QualType T = Result.get()->getType();
+
+  // For now, reject dependent types.
+  if (T->isDependentType()) {
+    Diag(Id.getLocStart(), diag::err_asm_incomplete_type) << T;
+    return ExprError();
   }
 
-  if (!Result.isSingleResult()) {
-    // FIXME: Diagnose result.
-    return 0;
+  // Any sort of function type is fine.
+  if (T->isFunctionType()) {
+    return Result;
   }
 
-  NamedDecl *FoundDecl = Result.getFoundDecl();
-  if (isa<FunctionDecl>(FoundDecl))
-    return FoundDecl;
-  if (VarDecl *Var = dyn_cast<VarDecl>(FoundDecl)) {
-    QualType Ty = Var->getType();
-    Info.Type = Info.Size = Context.getTypeSizeInChars(Ty).getQuantity();
-    if (Ty->isArrayType()) {
-      const ArrayType *ATy = Context.getAsArrayType(Ty);
-      Info.Type = Context.getTypeSizeInChars(ATy->getElementType()).getQuantity();
-      Info.Length = Info.Size / Info.Type;
-    }
+  // Otherwise, it needs to be a complete type.
+  if (RequireCompleteExprType(Result.get(), diag::err_asm_incomplete_type)) {
+    return ExprError();
+  }
+
+  // Compute the type size (and array length if applicable?).
+  Info.Type = Info.Size = Context.getTypeSizeInChars(T).getQuantity();
+  if (T->isArrayType()) {
+    const ArrayType *ATy = Context.getAsArrayType(T);
+    Info.Type = Context.getTypeSizeInChars(ATy->getElementType()).getQuantity();
+    Info.Length = Info.Size / Info.Type;
+  }
+
+  // We can work with the expression as long as it's not an r-value.
+  if (!Result.get()->isRValue())
     Info.IsVarDecl = true;
-    return FoundDecl;
-  }
 
-  // FIXME: Handle other kinds of results? (FieldDecl, etc.)
-  // FIXME: Diagnose if we find something we can't handle, like a typedef.
-  return 0;
+  return Result;
 }
 
 bool Sema::LookupInlineAsmField(StringRef Base, StringRef Member,
@@ -601,124 +469,18 @@ bool Sema::LookupInlineAsmField(StringRef Base, StringRef Member,
 }
 
 StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
-                                ArrayRef<Token> AsmToks,SourceLocation EndLoc) {
-  SmallVector<IdentifierInfo*, 4> Names;
-  SmallVector<StringRef, 4> ConstraintRefs;
-  SmallVector<Expr*, 4> Exprs;
-  SmallVector<StringRef, 4> ClobberRefs;
-
-  llvm::Triple TheTriple = Context.getTargetInfo().getTriple();
-  llvm::Triple::ArchType ArchTy = TheTriple.getArch();
-  bool UnsupportedArch = ArchTy != llvm::Triple::x86 &&
-    ArchTy != llvm::Triple::x86_64;
-  if (UnsupportedArch)
-    Diag(AsmLoc, diag::err_msasm_unsupported_arch) << TheTriple.getArchName();
-    
-  // Empty asm statements don't need to instantiate the AsmParser, etc.
-  if (UnsupportedArch || AsmToks.empty()) {
-    StringRef EmptyAsmStr;
-    MSAsmStmt *NS =
-      new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, /*IsSimple*/ true,
-                              /*IsVolatile*/ true, AsmToks, /*NumOutputs*/ 0,
-                              /*NumInputs*/ 0, Names, ConstraintRefs, Exprs,
-                              EmptyAsmStr, ClobberRefs, EndLoc);
-    return Owned(NS);
-  }
-
-  std::string AsmString;
-  SmallVector<unsigned, 8> TokOffsets;
-  if (buildMSAsmString(*this, AsmLoc, AsmToks, TokOffsets, AsmString))
-    return StmtError();
-
-  // Get the target specific parser.
-  std::string Error;
-  const std::string &TT = TheTriple.getTriple();
-  const llvm::Target *TheTarget(llvm::TargetRegistry::lookupTarget(TT, Error));
-
-  OwningPtr<llvm::MCAsmInfo> MAI(TheTarget->createMCAsmInfo(TT));
-  OwningPtr<llvm::MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TT));
-  OwningPtr<llvm::MCObjectFileInfo> MOFI(new llvm::MCObjectFileInfo());
-  OwningPtr<llvm::MCSubtargetInfo>
-    STI(TheTarget->createMCSubtargetInfo(TT, "", ""));
-
-  llvm::SourceMgr SrcMgr;
-  llvm::MCContext Ctx(*MAI, *MRI, MOFI.get(), &SrcMgr);
-  llvm::MemoryBuffer *Buffer =
-    llvm::MemoryBuffer::getMemBuffer(AsmString, "<MS inline asm>");
-
-  // Tell SrcMgr about this buffer, which is what the parser will pick up.
-  SrcMgr.AddNewSourceBuffer(Buffer, llvm::SMLoc());
-
-  OwningPtr<llvm::MCStreamer> Str(createNullStreamer(Ctx));
-  OwningPtr<llvm::MCAsmParser>
-    Parser(createMCAsmParser(SrcMgr, Ctx, *Str.get(), *MAI));
-  OwningPtr<llvm::MCTargetAsmParser>
-    TargetParser(TheTarget->createMCAsmParser(*STI, *Parser));
-
-  // Get the instruction descriptor.
-  const llvm::MCInstrInfo *MII = TheTarget->createMCInstrInfo(); 
-  llvm::MCInstPrinter *IP =
-    TheTarget->createMCInstPrinter(1, *MAI, *MII, *MRI, *STI);
-
-  // Change to the Intel dialect.
-  Parser->setAssemblerDialect(1);
-  Parser->setTargetParser(*TargetParser.get());
-  Parser->setParsingInlineAsm(true);
-  TargetParser->setParsingInlineAsm(true);
-
-  MCAsmParserSemaCallbackImpl MCAPSI(*this, AsmLoc, AsmToks, TokOffsets);
-  TargetParser->setSemaCallback(&MCAPSI);
-  SrcMgr.setDiagHandler(MCAsmParserSemaCallbackImpl::MSAsmDiagHandlerCallback,
-                        &MCAPSI);
-
-  unsigned NumOutputs;
-  unsigned NumInputs;
-  std::string AsmStringIR;
-  SmallVector<std::pair<void *, bool>, 4> OpDecls;
-  SmallVector<std::string, 4> Constraints;
-  SmallVector<std::string, 4> Clobbers;
-  if (Parser->parseMSInlineAsm(AsmLoc.getPtrEncoding(), AsmStringIR,
-                               NumOutputs, NumInputs, OpDecls, Constraints,
-                               Clobbers, MII, IP, MCAPSI))
-    return StmtError();
-
-  // Build the vector of clobber StringRefs.
-  unsigned NumClobbers = Clobbers.size();
-  ClobberRefs.resize(NumClobbers);
-  for (unsigned i = 0; i != NumClobbers; ++i)
-    ClobberRefs[i] = StringRef(Clobbers[i]);
-
-  // Recast the void pointers and build the vector of constraint StringRefs.
-  unsigned NumExprs = NumOutputs + NumInputs;
-  Names.resize(NumExprs);
-  ConstraintRefs.resize(NumExprs);
-  Exprs.resize(NumExprs);
-  for (unsigned i = 0, e = NumExprs; i != e; ++i) {
-    NamedDecl *OpDecl = static_cast<NamedDecl *>(OpDecls[i].first);
-    if (!OpDecl)
-      return StmtError();
-
-    DeclarationNameInfo NameInfo(OpDecl->getDeclName(), AsmLoc);
-    ExprResult OpExpr = BuildDeclarationNameExpr(CXXScopeSpec(), NameInfo,
-                                                 OpDecl);
-    if (OpExpr.isInvalid())
-      return StmtError();
-
-    // Need address of variable.
-    if (OpDecls[i].second)
-      OpExpr = BuildUnaryOp(getCurScope(), AsmLoc, clang::UO_AddrOf,
-                            OpExpr.take());
-
-    Names[i] = OpDecl->getIdentifier();
-    ConstraintRefs[i] = StringRef(Constraints[i]);
-    Exprs[i] = OpExpr.take();
-  }
-
-  bool IsSimple = NumExprs > 0;
+                                ArrayRef<Token> AsmToks,
+                                StringRef AsmString,
+                                unsigned NumOutputs, unsigned NumInputs,
+                                ArrayRef<StringRef> Constraints,
+                                ArrayRef<StringRef> Clobbers,
+                                ArrayRef<Expr*> Exprs,
+                                SourceLocation EndLoc) {
+  bool IsSimple = (NumOutputs != 0 || NumInputs != 0);
   MSAsmStmt *NS =
     new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, IsSimple,
                             /*IsVolatile*/ true, AsmToks, NumOutputs, NumInputs,
-                            Names, ConstraintRefs, Exprs, AsmStringIR,
-                            ClobberRefs, EndLoc);
+                            Constraints, Exprs, AsmString,
+                            Clobbers, EndLoc);
   return Owned(NS);
 }

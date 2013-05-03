@@ -17,6 +17,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Lex/Token.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 using namespace clang;
 
@@ -216,15 +217,19 @@ void ASTStmtWriter::VisitDeclStmt(DeclStmt *S) {
   Code = serialization::STMT_DECL;
 }
 
-void ASTStmtWriter::VisitGCCAsmStmt(GCCAsmStmt *S) {
+void ASTStmtWriter::VisitAsmStmt(AsmStmt *S) {
   VisitStmt(S);
   Record.push_back(S->getNumOutputs());
   Record.push_back(S->getNumInputs());
   Record.push_back(S->getNumClobbers());
   Writer.AddSourceLocation(S->getAsmLoc(), Record);
-  Writer.AddSourceLocation(S->getRParenLoc(), Record);
   Record.push_back(S->isVolatile());
   Record.push_back(S->isSimple());
+}
+
+void ASTStmtWriter::VisitGCCAsmStmt(GCCAsmStmt *S) {
+  VisitAsmStmt(S);
+  Writer.AddSourceLocation(S->getRParenLoc(), Record);
   Writer.AddStmt(S->getAsmString());
 
   // Outputs
@@ -249,8 +254,33 @@ void ASTStmtWriter::VisitGCCAsmStmt(GCCAsmStmt *S) {
 }
 
 void ASTStmtWriter::VisitMSAsmStmt(MSAsmStmt *S) {
-  // FIXME: Statement writer not yet implemented for MS style inline asm.
-  VisitStmt(S);
+  VisitAsmStmt(S);
+  Writer.AddSourceLocation(S->getLBraceLoc(), Record);
+  Writer.AddSourceLocation(S->getEndLoc(), Record);
+  Record.push_back(S->getNumAsmToks());
+  Writer.AddString(S->getAsmString(), Record);
+
+  // Tokens
+  for (unsigned I = 0, N = S->getNumAsmToks(); I != N; ++I) {
+    Writer.AddToken(S->getAsmToks()[I], Record);
+  }
+
+  // Clobbers
+  for (unsigned I = 0, N = S->getNumClobbers(); I != N; ++I) {
+    Writer.AddString(S->getClobber(I), Record);
+  }
+
+  // Outputs
+  for (unsigned I = 0, N = S->getNumOutputs(); I != N; ++I) {      
+    Writer.AddStmt(S->getOutputExpr(I));
+    Writer.AddString(S->getOutputConstraint(I), Record);
+  }
+
+  // Inputs
+  for (unsigned I = 0, N = S->getNumInputs(); I != N; ++I) {
+    Writer.AddStmt(S->getInputExpr(I));
+    Writer.AddString(S->getInputConstraint(I), Record);
+  }
 
   Code = serialization::STMT_MSASM;
 }

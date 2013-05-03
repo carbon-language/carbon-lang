@@ -2012,18 +2012,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
       // tokens in it because they are created by the parser, and thus can't
       // be in a macro definition.
       const Token &Tok = MI->getReplacementToken(TokNo);
-
-      Record.push_back(Tok.getLocation().getRawEncoding());
-      Record.push_back(Tok.getLength());
-
-      // FIXME: When reading literal tokens, reconstruct the literal pointer
-      // if it is needed.
-      AddIdentifierRef(Tok.getIdentifierInfo(), Record);
-      // FIXME: Should translate token kind to a stable encoding.
-      Record.push_back(Tok.getKind());
-      // FIXME: Should translate token flags to a stable encoding.
-      Record.push_back(Tok.getFlags());
-
+      AddToken(Tok, Record);
       Stream.EmitRecord(PP_TOKEN, Record);
       Record.clear();
     }
@@ -3659,6 +3648,19 @@ void ASTWriter::WriteAttributes(ArrayRef<const Attr*> Attrs,
 #include "clang/Serialization/AttrPCHWrite.inc"
 
   }
+}
+
+void ASTWriter::AddToken(const Token &Tok, RecordDataImpl &Record) {
+  AddSourceLocation(Tok.getLocation(), Record);
+  Record.push_back(Tok.getLength());
+
+  // FIXME: When reading literal tokens, reconstruct the literal pointer
+  // if it is needed.
+  AddIdentifierRef(Tok.getIdentifierInfo(), Record);
+  // FIXME: Should translate token kind to a stable encoding.
+  Record.push_back(Tok.getKind());
+  // FIXME: Should translate token flags to a stable encoding.
+  Record.push_back(Tok.getFlags());
 }
 
 void ASTWriter::AddString(StringRef Str, RecordDataImpl &Record) {

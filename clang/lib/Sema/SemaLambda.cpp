@@ -950,6 +950,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
   if (!CurContext->isDependentContext()) {
     switch (ExprEvalContexts.back().Context) {
     case Unevaluated:
+    case UnevaluatedAbstract:
       // We don't actually diagnose this case immediately, because we
       // could be within a context where we might find out later that
       // the expression is potentially evaluated (e.g., for typeid).

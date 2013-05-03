@@ -60,6 +60,9 @@ enum IMAKind {
   /// The reference may be to an unresolved using declaration.
   IMA_Unresolved,
 
+  /// The reference is a contextually-permitted abstract member reference.
+  IMA_Abstract,
+
   /// The reference may be to an unresolved using declaration and the
   /// context is not an instance method.
   IMA_Unresolved_StaticContext,
@@ -120,19 +123,32 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
   // member reference.
   if (Classes.empty())
     return IMA_Static;
+  
+  // C++11 [expr.prim.general]p12:
+  //   An id-expression that denotes a non-static data member or non-static
+  //   member function of a class can only be used:
+  //   (...)
+  //   - if that id-expression denotes a non-static data member and it
+  //     appears in an unevaluated operand.
+  //
+  // This rule is specific to C++11.  However, we also permit this form
+  // in unevaluated inline assembly operands, like the operand to a SIZE.
+  IMAKind AbstractInstanceResult = IMA_Static; // happens to be 'false'
+  assert(!AbstractInstanceResult);
+  switch (SemaRef.ExprEvalContexts.back().Context) {
+  case Sema::Unevaluated:
+    if (isField && SemaRef.getLangOpts().CPlusPlus11)
+      AbstractInstanceResult = IMA_Field_Uneval_Context;
+    break;
 
-  bool IsCXX11UnevaluatedField = false;
-  if (SemaRef.getLangOpts().CPlusPlus11 && isField) {
-    // C++11 [expr.prim.general]p12:
-    //   An id-expression that denotes a non-static data member or non-static
-    //   member function of a class can only be used:
-    //   (...)
-    //   - if that id-expression denotes a non-static data member and it
-    //     appears in an unevaluated operand.
-    const Sema::ExpressionEvaluationContextRecord& record
-      = SemaRef.ExprEvalContexts.back();
-    if (record.Context == Sema::Unevaluated)
-      IsCXX11UnevaluatedField = true;
+  case Sema::UnevaluatedAbstract:
+    AbstractInstanceResult = IMA_Abstract;
+    break;
+
+  case Sema::ConstantEvaluated:
+  case Sema::PotentiallyEvaluated:
+  case Sema::PotentiallyEvaluatedIfUsed:
+    break;
   }
 
   // If the current context is not an instance method, it can't be
@@ -141,8 +157,8 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
     if (hasNonInstance)
       return IMA_Mixed_StaticContext;
 
-    return IsCXX11UnevaluatedField ? IMA_Field_Uneval_Context
-                                   : IMA_Error_StaticContext;
+    return AbstractInstanceResult ? AbstractInstanceResult
+                                  : IMA_Error_StaticContext;
   }
 
   CXXRecordDecl *contextClass;
@@ -172,8 +188,8 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
   // which case it's an error if any of those members are selected).
   if (isProvablyNotDerivedFrom(SemaRef, contextClass, Classes))
     return hasNonInstance ? IMA_Mixed_Unrelated :
-           IsCXX11UnevaluatedField ? IMA_Field_Uneval_Context :
-                                     IMA_Error_Unrelated;
+           AbstractInstanceResult ? AbstractInstanceResult :
+                                    IMA_Error_Unrelated;
 
   return (hasNonInstance ? IMA_Mixed : IMA_Instance);
 }
@@ -233,6 +249,7 @@ Sema::BuildPossibleImplicitMemberExpr(const CXXScopeSpec &SS,
       << R.getLookupNameInfo().getName();
     // Fall through.
   case IMA_Static:
+  case IMA_Abstract:
   case IMA_Mixed_StaticContext:
   case IMA_Unresolved_StaticContext:
     if (TemplateArgs || TemplateKWLoc.isValid())
