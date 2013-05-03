@@ -111,8 +111,13 @@ void VerifyDiagnosticConsumer::EndSourceFile() {
 
 void VerifyDiagnosticConsumer::HandleDiagnostic(
       DiagnosticsEngine::Level DiagLevel, const Diagnostic &Info) {
-  if (Info.hasSourceManager())
+  if (Info.hasSourceManager()) {
+    // If this diagnostic is for a different source manager, ignore it.
+    if (SrcManager && &Info.getSourceManager() != SrcManager)
+      return;
+
     setSourceManager(Info.getSourceManager());
+  }
 
 #ifndef NDEBUG
   // Debug build tracks unparsed files for possible
@@ -476,6 +481,11 @@ static bool ParseDirective(StringRef S, ExpectedData *ED, SourceManager &SM,
 bool VerifyDiagnosticConsumer::HandleComment(Preprocessor &PP,
                                              SourceRange Comment) {
   SourceManager &SM = PP.getSourceManager();
+
+  // If this comment is for a different source manager, ignore it.
+  if (SrcManager && &SM != SrcManager)
+    return false;
+
   SourceLocation CommentBegin = Comment.getBegin();
 
   const char *CommentRaw = SM.getCharacterData(CommentBegin);

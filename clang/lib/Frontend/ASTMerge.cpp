@@ -34,7 +34,7 @@ bool ASTMergeAction::BeginSourceFileAction(CompilerInstance &CI,
 void ASTMergeAction::ExecuteAction() {
   CompilerInstance &CI = getCompilerInstance();
   CI.getDiagnostics().getClient()->BeginSourceFile(
-                                         CI.getASTContext().getLangOpts());
+                                             CI.getASTContext().getLangOpts());
   CI.getDiagnostics().SetArgToStringFn(&FormatASTNodeDiagnosticArgument,
                                        &CI.getASTContext());
   IntrusiveRefCntPtr<DiagnosticIDs>
@@ -42,8 +42,9 @@ void ASTMergeAction::ExecuteAction() {
   for (unsigned I = 0, N = ASTFiles.size(); I != N; ++I) {
     IntrusiveRefCntPtr<DiagnosticsEngine>
         Diags(new DiagnosticsEngine(DiagIDs, &CI.getDiagnosticOpts(),
-                                    CI.getDiagnostics().getClient(),
-                                    /*ShouldOwnClient=*/false));
+                                    new ForwardingDiagnosticConsumer(
+                                          *CI.getDiagnostics().getClient()),
+                                    /*ShouldOwnClient=*/true));
     ASTUnit *Unit = ASTUnit::LoadFromASTFile(ASTFiles[I], Diags,
                                              CI.getFileSystemOpts(), false);
     if (!Unit)

@@ -1319,6 +1319,26 @@ class IgnoringDiagConsumer : public DiagnosticConsumer {
   }
 };
 
+/// \brief Diagnostic consumer that forwards diagnostics along to an
+/// existing, already-initialized diagnostic consumer.
+///
+class ForwardingDiagnosticConsumer : public DiagnosticConsumer {
+  DiagnosticConsumer &Target;
+
+public:
+  ForwardingDiagnosticConsumer(DiagnosticConsumer &Target) : Target(Target) {}
+
+  virtual ~ForwardingDiagnosticConsumer();
+
+  virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
+                                const Diagnostic &Info);
+  virtual void clear();
+
+  virtual bool IncludeInDiagnosticCounts() const;
+
+  virtual DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const;
+};
+
 // Struct used for sending info about how a type should be printed.
 struct TemplateDiffTypes {
   intptr_t FromType;

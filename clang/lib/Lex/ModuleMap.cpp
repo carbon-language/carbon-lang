@@ -83,7 +83,7 @@ Module *ModuleMap::resolveModuleId(const ModuleId &Id, Module *Mod,
   return Context;
 }
 
-ModuleMap::ModuleMap(FileManager &FileMgr, const DiagnosticConsumer &DC,
+ModuleMap::ModuleMap(FileManager &FileMgr, DiagnosticConsumer &DC,
                      const LangOptions &LangOpts, const TargetInfo *Target,
                      HeaderSearch &HeaderInfo)
   : LangOpts(LangOpts), Target(Target), HeaderInfo(HeaderInfo),
@@ -92,7 +92,8 @@ ModuleMap::ModuleMap(FileManager &FileMgr, const DiagnosticConsumer &DC,
   IntrusiveRefCntPtr<DiagnosticIDs> DiagIDs(new DiagnosticIDs);
   Diags = IntrusiveRefCntPtr<DiagnosticsEngine>(
             new DiagnosticsEngine(DiagIDs, new DiagnosticOptions));
-  Diags->setClient(DC.clone(*Diags), /*ShouldOwnClient=*/true);
+  Diags->setClient(new ForwardingDiagnosticConsumer(DC),
+                   /*ShouldOwnClient=*/true);
   SourceMgr = new SourceManager(*Diags, FileMgr);
 }
 

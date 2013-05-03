@@ -868,9 +868,11 @@ static void compileModule(CompilerInstance &ImportingInstance,
   // module.
   CompilerInstance Instance;
   Instance.setInvocation(&*Invocation);
-  Instance.createDiagnostics(&ImportingInstance.getDiagnosticClient(),
+
+  Instance.createDiagnostics(new ForwardingDiagnosticConsumer(
+                                   ImportingInstance.getDiagnosticClient()),
                              /*ShouldOwnClient=*/true,
-                             /*ShouldCloneClient=*/true);
+                             /*ShouldCloneClient=*/false);
 
   // Note that this module is part of the module build stack, so that we
   // can detect cycles in the module graph.
@@ -892,6 +894,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
   llvm::CrashRecoveryContext CRC;
   CompileModuleMapData Data = { Instance, CreateModuleAction };
   CRC.RunSafelyOnThread(&doCompileMapModule, &Data, ThreadStackSize);
+
   
   // Delete the temporary module map file.
   // FIXME: Even though we're executing under crash protection, it would still

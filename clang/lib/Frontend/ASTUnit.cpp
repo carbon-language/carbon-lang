@@ -236,6 +236,11 @@ ASTUnit::ASTUnit(bool _MainFileIsAST)
 }
 
 ASTUnit::~ASTUnit() {
+  // If we loaded from an AST file, balance out the BeginSourceFile call.
+  if (MainFileIsAST && getDiagnostics().getClient()) {
+    getDiagnostics().getClient()->EndSourceFile();
+  }
+
   clearFileLevelDecls();
 
   // Clean up the temporary files and the preamble file.
@@ -581,14 +586,22 @@ private:
   }
 };
 
+  /// \brief Diagnostic consumer that saves each diagnostic it is given.
 class StoredDiagnosticConsumer : public DiagnosticConsumer {
   SmallVectorImpl<StoredDiagnostic> &StoredDiags;
-  
+  SourceManager *SourceMgr;
+
 public:
   explicit StoredDiagnosticConsumer(
                           SmallVectorImpl<StoredDiagnostic> &StoredDiags)
-    : StoredDiags(StoredDiags) { }
-  
+    : StoredDiags(StoredDiags), SourceMgr(0) { }
+
+  virtual void BeginSourceFile(const LangOptions &LangOpts,
+                               const Preprocessor *PP = 0) {
+    if (PP)
+      SourceMgr = &PP->getSourceManager();
+  }
+
   virtual void HandleDiagnostic(DiagnosticsEngine::Level Level,
                                 const Diagnostic &Info);
   
@@ -635,7 +648,11 @@ void StoredDiagnosticConsumer::HandleDiagnostic(DiagnosticsEngine::Level Level,
   // Default implementation (Warnings/errors count).
   DiagnosticConsumer::HandleDiagnostic(Level, Info);
 
-  StoredDiags.push_back(StoredDiagnostic(Level, Info));
+  // Only record the diagnostic if it's part of the source manager we know
+  // about. This effectively drops diagnostics from modules we're building.
+  // FIXME: In the long run, ee don't want to drop source managers from modules.
+  if (!Info.hasSourceManager() || &Info.getSourceManager() == SourceMgr)
+    StoredDiags.push_back(StoredDiagnostic(Level, Info));
 }
 
 ASTDeserializationListener *ASTUnit::getDeserializationListener() {
@@ -834,6 +851,9 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   AST->TheSema->Initialize();
   ReaderPtr->InitializeSema(*AST->TheSema);
   AST->Reader = ReaderPtr;
+
+  // Tell the diagnostic client that we have started a source file.
+  AST->getDiagnostics().getClient()->BeginSourceFile(Context.getLangOpts(),&PP);
 
   return AST.take();
 }
