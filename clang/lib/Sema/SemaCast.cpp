@@ -333,7 +333,7 @@ static bool tryDiagnoseOverloadedCast(Sema &S, CastType CT,
     : (CT == CT_Functional)? InitializationKind::CreateFunctionalCast(range,
                                                              listInitialization)
     : InitializationKind::CreateCast(/*type range?*/ range);
-  InitializationSequence sequence(S, entity, initKind, &src, 1);
+  InitializationSequence sequence(S, entity, initKind, src);
 
   assert(sequence.Failed() && "initialization succeeded on second try?");
   switch (sequence.getFailureKind()) {
@@ -1418,7 +1418,7 @@ TryStaticImplicitCast(Sema &Self, ExprResult &SrcExpr, QualType DestType,
         ? InitializationKind::CreateFunctionalCast(OpRange, ListInitialization)
     : InitializationKind::CreateCast(OpRange);
   Expr *SrcExprRaw = SrcExpr.get();
-  InitializationSequence InitSeq(Self, Entity, InitKind, &SrcExprRaw, 1);
+  InitializationSequence InitSeq(Self, Entity, InitKind, SrcExprRaw);
 
   // At this point of CheckStaticCast, if the destination is a reference,
   // or the expression is an overload expression this has to work. 

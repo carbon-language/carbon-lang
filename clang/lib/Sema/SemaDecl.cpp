@@ -7476,15 +7476,13 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
                    : InitializationKind::CreateCopy(VDecl->getLocation(),
                                                     Init->getLocStart());
 
-    Expr **Args = &Init;
-    unsigned NumArgs = 1;
-    if (CXXDirectInit) {
-      Args = CXXDirectInit->getExprs();
-      NumArgs = CXXDirectInit->getNumExprs();
-    }
-    InitializationSequence InitSeq(*this, Entity, Kind, Args, NumArgs);
-    ExprResult Result = InitSeq.Perform(*this, Entity, Kind,
-                                        MultiExprArg(Args, NumArgs), &DclT);
+    MultiExprArg Args = Init;
+    if (CXXDirectInit)
+      Args = MultiExprArg(CXXDirectInit->getExprs(),
+                          CXXDirectInit->getNumExprs());
+
+    InitializationSequence InitSeq(*this, Entity, Kind, Args);
+    ExprResult Result = InitSeq.Perform(*this, Entity, Kind, Args, &DclT);
     if (Result.isInvalid()) {
       VDecl->setInvalidDecl();
       return;
@@ -7934,7 +7932,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
     InitializationKind Kind
       = InitializationKind::CreateDefault(Var->getLocation());
     
-    InitializationSequence InitSeq(*this, Entity, Kind, 0, 0);
+    InitializationSequence InitSeq(*this, Entity, Kind, MultiExprArg());
     ExprResult Init = InitSeq.Perform(*this, Entity, Kind, MultiExprArg());
     if (Init.isInvalid())
       Var->setInvalidDecl();

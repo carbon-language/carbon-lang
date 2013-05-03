@@ -343,7 +343,7 @@ static ExprResult CheckObjCCollectionLiteralElement(Sema &S, Expr *Element,
     InitializationKind Kind
       = InitializationKind::CreateCopy(Element->getLocStart(),
                                        SourceLocation());
-    InitializationSequence Seq(S, Entity, Kind, &Element, 1);
+    InitializationSequence Seq(S, Entity, Kind, Element);
     if (!Seq.Failed())
       return Seq.Perform(S, Entity, Kind, Element);
   }

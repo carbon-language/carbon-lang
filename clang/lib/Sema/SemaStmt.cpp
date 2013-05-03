@@ -2309,7 +2309,7 @@ Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
     InitializationKind Kind
       = InitializationKind::CreateCopy(Value->getLocStart(),
                                        Value->getLocStart());
-    InitializationSequence Seq(*this, Entity, Kind, &InitExpr, 1);
+    InitializationSequence Seq(*this, Entity, Kind, InitExpr);
 
     //   [...] If overload resolution fails, or if the type of the first
     //   parameter of the selected constructor is not an rvalue reference
@@ -2342,7 +2342,7 @@ Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
 
         // Complete type-checking the initialization of the return type
         // using the constructor we found.
-        Res = Seq.Perform(*this, Entity, Kind, MultiExprArg(&Value, 1));
+        Res = Seq.Perform(*this, Entity, Kind, Value);
       }
     }
   }

@@ -779,13 +779,10 @@ public:
   /// \param Kind the kind of initialization being performed.
   ///
   /// \param Args the argument(s) provided for initialization.
-  ///
-  /// \param NumArgs the number of arguments provided for initialization.
   InitializationSequence(Sema &S, 
                          const InitializedEntity &Entity,
                          const InitializationKind &Kind,
-                         Expr **Args,
-                         unsigned NumArgs);
+                         MultiExprArg Args);
   
   ~InitializationSequence();
   
@@ -823,7 +820,7 @@ public:
   bool Diagnose(Sema &S, 
                 const InitializedEntity &Entity,
                 const InitializationKind &Kind,
-                Expr **Args, unsigned NumArgs);
+                ArrayRef<Expr *> Args);
   
   /// \brief Determine the kind of initialization sequence computed.
   enum SequenceKind getKind() const { return SequenceKind; }

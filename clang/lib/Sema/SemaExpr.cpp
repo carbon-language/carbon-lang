@@ -2766,8 +2766,7 @@ ExprResult Sema::ActOnCharacterConstant(const Token &Tok, Scope *UDLScope) {
   // C++11 [lex.ext]p6: The literal L is treated as a call of the form
   //   operator "" X (ch)
   return BuildCookedLiteralOperatorCall(*this, UDLScope, UDSuffix, UDSuffixLoc,
-                                        llvm::makeArrayRef(&Lit, 1),
-                                        Tok.getLocation());
+                                        Lit, Tok.getLocation());
 }
 
 ExprResult Sema::ActOnIntegerConstant(SourceLocation Loc, uint64_t Val) {
@@ -2864,7 +2863,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
     // Perform literal operator lookup to determine if we're building a raw
     // literal or a cooked one.
     LookupResult R(*this, OpName, UDSuffixLoc, LookupOrdinaryName);
-    switch (LookupLiteralOperator(UDLScope, R, llvm::makeArrayRef(&CookedTy, 1),
+    switch (LookupLiteralOperator(UDLScope, R, CookedTy,
                                   /*AllowRawAndTemplate*/true)) {
     case LOLR_Error:
       return ExprError();
@@ -2880,8 +2879,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
         Lit = IntegerLiteral::Create(Context, ResultVal, CookedTy,
                                      Tok.getLocation());
       }
-      return BuildLiteralOperatorCall(R, OpNameInfo,
-                                      llvm::makeArrayRef(&Lit, 1),
+      return BuildLiteralOperatorCall(R, OpNameInfo, Lit,
                                       Tok.getLocation());
     }
 
@@ -2897,8 +2895,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
       Expr *Lit = StringLiteral::Create(
           Context, StringRef(TokSpelling.data(), Length), StringLiteral::Ascii,
           /*Pascal*/false, StrTy, &TokLoc, 1);
-      return BuildLiteralOperatorCall(R, OpNameInfo,
-                                      llvm::makeArrayRef(&Lit, 1), TokLoc);
+      return BuildLiteralOperatorCall(R, OpNameInfo, Lit, TokLoc);
     }
 
     case LOLR_Template:
@@ -3703,7 +3700,7 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
              /*FIXME:EqualLoc*/UninstExpr->getLocStart());
     Expr *ResultE = Result.takeAs<Expr>();
 
-    InitializationSequence InitSeq(*this, Entity, Kind, &ResultE, 1);
+    InitializationSequence InitSeq(*this, Entity, Kind, ResultE);
     Result = InitSeq.Perform(*this, Entity, Kind, ResultE);
     if (Result.isInvalid())
       return ExprError();
@@ -4473,7 +4470,7 @@ Sema::BuildCompoundLiteralExpr(SourceLocation LParenLoc, TypeSourceInfo *TInfo,
     = InitializationKind::CreateCStyleCast(LParenLoc, 
                                            SourceRange(LParenLoc, RParenLoc),
                                            /*InitList=*/true);
-  InitializationSequence InitSeq(*this, Entity, Kind, &LiteralExpr, 1);
+  InitializationSequence InitSeq(*this, Entity, Kind, LiteralExpr);
   ExprResult Result = InitSeq.Perform(*this, Entity, Kind, LiteralExpr,
                                       &literalType);
   if (Result.isInvalid())
@@ -8611,7 +8608,7 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
         InitializationKind::CreateDirectList(RHSExpr->getLocStart());
     InitializedEntity Entity =
         InitializedEntity::InitializeTemporary(LHSExpr->getType());
-    InitializationSequence InitSeq(*this, Entity, Kind, &RHSExpr, 1);
+    InitializationSequence InitSeq(*this, Entity, Kind, RHSExpr);
     ExprResult Init = InitSeq.Perform(*this, Entity, Kind, RHSExpr);
     if (Init.isInvalid())
       return Init;
@@ -11053,9 +11050,9 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
 
   InitializationKind InitKind
     = InitializationKind::CreateDirect(Loc, Loc, Loc);
-  InitializationSequence Init(S, Entities.back(), InitKind, &Ref, 1);
+  InitializationSequence Init(S, Entities.back(), InitKind, Ref);
   ExprResult Result(true);
-  if (!Init.Diagnose(S, Entities.back(), InitKind, &Ref, 1))
+  if (!Init.Diagnose(S, Entities.back(), InitKind, Ref))
     Result = Init.Perform(S, Entities.back(), InitKind, Ref);
 
   // If this initialization requires any cleanups (e.g., due to a

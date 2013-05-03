@@ -709,7 +709,7 @@ static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D,
 
   // Check that all arguments are lockable objects.
   checkAttrArgsAreLockableObjs(S, D, Attr, Args);
-  if (Args.size() == 0)
+  if (Args.empty())
     return false;
 
   return true;
@@ -858,7 +858,7 @@ static bool checkLocksRequiredCommon(Sema &S, Decl *D,
 
   // check that all arguments are lockable objects
   checkAttrArgsAreLockableObjs(S, D, Attr, Args);
-  if (Args.size() == 0)
+  if (Args.empty())
     return false;
 
   return true;
