@@ -64,6 +64,12 @@ public:
     }
     
     bool
+    error ()
+    {
+        return m_entry_sp->GetError().Fail();
+    }
+    
+    bool
     null()
     {
         return (value() == 0);
@@ -95,10 +101,10 @@ class MapIterator
 {
 public:
     MapIterator () {}
-    MapIterator (MapEntry entry, size_t depth = 0) : m_entry(entry), m_max_depth(depth) {}
-    MapIterator (ValueObjectSP entry, size_t depth = 0) : m_entry(entry), m_max_depth(depth) {}
-    MapIterator (const MapIterator& rhs) : m_entry(rhs.m_entry),m_max_depth(rhs.m_max_depth) {}
-    MapIterator (ValueObject* entry, size_t depth = 0) : m_entry(entry), m_max_depth(depth) {}
+    MapIterator (MapEntry entry, size_t depth = 0) : m_entry(entry), m_max_depth(depth), m_error(false) {}
+    MapIterator (ValueObjectSP entry, size_t depth = 0) : m_entry(entry), m_max_depth(depth), m_error(false) {}
+    MapIterator (const MapIterator& rhs) : m_entry(rhs.m_entry),m_max_depth(rhs.m_max_depth), m_error(false) {}
+    MapIterator (ValueObject* entry, size_t depth = 0) : m_entry(entry), m_max_depth(depth), m_error(false) {}
     
     ValueObjectSP
     value ()
@@ -109,6 +115,8 @@ public:
     ValueObjectSP
     advance (size_t count)
     {
+        if (m_error)
+            return lldb::ValueObjectSP();
         if (count == 0)
             return m_entry.GetEntry();
         if (count == 1)
@@ -119,6 +127,8 @@ public:
         size_t steps = 0;
         while (count > 0)
         {
+            if (m_error)
+                return lldb::ValueObjectSP();
             next ();
             count--;
             if (m_entry.null())
@@ -147,6 +157,11 @@ private:
         size_t steps = 0;
         while (left.null() == false)
         {
+            if (left.error())
+            {
+                m_error = true;
+                return lldb::ValueObjectSP();
+            }
             x.SetEntry(left.GetEntry());
             left.SetEntry(x.left());
             steps++;
@@ -166,6 +181,8 @@ private:
         size_t steps = 0;
         while (right.null() == false)
         {
+            if (right.error())
+                return lldb::ValueObjectSP();
             x.SetEntry(right.GetEntry());
             right.SetEntry(x.right());
             steps++;
@@ -198,6 +215,11 @@ private:
         size_t steps = 0;
         while (!is_left_child(node.GetEntry()))
         {
+            if (node.error())
+            {
+                m_error = true;
+                return lldb::ValueObjectSP();
+            }
             node.SetEntry(node.parent());
             steps++;
             if (steps > m_max_depth)
@@ -208,6 +230,7 @@ private:
         
     MapEntry m_entry;
     size_t m_max_depth;
+    bool m_error;
 };
 
 lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::LibcxxStdMapSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
