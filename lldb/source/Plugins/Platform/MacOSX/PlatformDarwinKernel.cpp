@@ -606,7 +606,7 @@ PlatformDarwinKernel::GetSharedModule (const ModuleSpec &module_spec,
             {
                 if (it->first == kext_bundle_cs)
                 {
-                    error = ExamineKextForMatchingUUID (it->second, module_spec.GetUUID(), module_sp);
+                    error = ExamineKextForMatchingUUID (it->second, module_spec.GetUUID(), module_spec.GetArchitecture(), module_sp);
                     if (module_sp.get())
                     {
                         return error;
@@ -620,7 +620,7 @@ PlatformDarwinKernel::GetSharedModule (const ModuleSpec &module_spec,
 }
 
 Error
-PlatformDarwinKernel::ExamineKextForMatchingUUID (const FileSpec &kext_bundle_path, const lldb_private::UUID &uuid, ModuleSP &exe_module_sp)
+PlatformDarwinKernel::ExamineKextForMatchingUUID (const FileSpec &kext_bundle_path, const lldb_private::UUID &uuid, const ArchSpec &arch, ModuleSP &exe_module_sp)
 {
     Error error;
     FileSpec exe_file = kext_bundle_path;
@@ -629,6 +629,7 @@ PlatformDarwinKernel::ExamineKextForMatchingUUID (const FileSpec &kext_bundle_pa
     {
         ModuleSpec exe_spec (exe_file);
         exe_spec.GetUUID() = uuid;
+        exe_spec.GetArchitecture() = arch;
         error = ModuleList::GetSharedModule (exe_spec, exe_module_sp, NULL, NULL, NULL);
         if (exe_module_sp && exe_module_sp->GetObjectFile())
         {

@@ -166,7 +166,7 @@ protected:
     IndexKextsInDirectories (std::vector<lldb_private::FileSpec> kext_dirs);
 
     lldb_private::Error
-    ExamineKextForMatchingUUID (const lldb_private::FileSpec &kext_bundle_path, const lldb_private::UUID &uuid, lldb::ModuleSP &exe_module_sp);
+    ExamineKextForMatchingUUID (const lldb_private::FileSpec &kext_bundle_path, const lldb_private::UUID &uuid, const lldb_private::ArchSpec &arch, lldb::ModuleSP &exe_module_sp);
 
 private:
 
