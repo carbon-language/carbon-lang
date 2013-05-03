@@ -249,12 +249,18 @@ void MipsAsmPrinter::EmitFunctionEntryLabel() {
 void MipsAsmPrinter::EmitFunctionBodyStart() {
   MCInstLowering.Initialize(Mang, &MF->getContext());
 
-  emitFrameDirective();
+  bool IsNakedFunction =
+    MF->getFunction()->
+      getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                   Attribute::Naked);
+  if (!IsNakedFunction)
+    emitFrameDirective();
 
   if (OutStreamer.hasRawTextSupport()) {
     SmallString<128> Str;
     raw_svector_ostream OS(Str);
-    printSavedRegsBitmask(OS);
+    if (!IsNakedFunction)
+      printSavedRegsBitmask(OS);
     OutStreamer.EmitRawText(OS.str());
     if (!Subtarget->inMips16Mode()) {
       OutStreamer.EmitRawText(StringRef("\t.set\tnoreorder"));
