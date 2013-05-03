@@ -1,13 +1,9 @@
-//===-- Processors.td - TODO: Add brief description -------===//
+//===-- Processors.td - R600 Processor definitions ------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// AMDIL processors supported.
 //
 //===----------------------------------------------------------------------===//
 
