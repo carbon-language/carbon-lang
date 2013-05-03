@@ -1094,6 +1094,52 @@
 // CHECK_BTVER1_M64: #define __tune_btver1__ 1
 // CHECK_BTVER1_M64: #define __x86_64 1
 // CHECK_BTVER1_M64: #define __x86_64__ 1
+// RUN: %clang -march=btver2 -m32 -E -dM %s -o - 2>&1 \
+// RUN:     -target i386-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_BTVER2_M32
+// CHECK_BTVER2_M32-NOT: #define __3dNOW_A__ 1
+// CHECK_BTVER2_M32-NOT: #define __3dNOW__ 1
+// CHECK_BTVER2_M32: #define __AES__ 1
+// CHECK_BTVER2_M32: #define __AVX__ 1
+// CHECK_BTVER2_M32: #define __LZCNT__ 1
+// CHECK_BTVER2_M32: #define __MMX__ 1
+// CHECK_BTVER2_M32: #define __POPCNT__ 1
+// CHECK_BTVER2_M32: #define __SSE2_MATH__ 1
+// CHECK_BTVER2_M32: #define __SSE2__ 1
+// CHECK_BTVER2_M32: #define __SSE3__ 1
+// CHECK_BTVER2_M32: #define __SSE4A__ 1
+// CHECK_BTVER2_M32: #define __SSE_MATH__ 1
+// CHECK_BTVER2_M32: #define __SSE__ 1
+// CHECK_BTVER2_M32: #define __SSSE3__ 1
+// CHECK_BTVER2_M32: #define __btver2 1
+// CHECK_BTVER2_M32: #define __btver2__ 1
+// CHECK_BTVER2_M32: #define __i386 1
+// CHECK_BTVER2_M32: #define __i386__ 1
+// CHECK_BTVER2_M32: #define __tune_btver2__ 1
+// RUN: %clang -march=btver2 -m64 -E -dM %s -o - 2>&1 \
+// RUN:     -target i386-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_BTVER2_M64
+// CHECK_BTVER2_M64-NOT: #define __3dNOW_A__ 1
+// CHECK_BTVER2_M64-NOT: #define __3dNOW__ 1
+// CHECK_BTVER2_M64: #define __AES__ 1
+// CHECK_BTVER2_M64: #define __AVX__ 1
+// CHECK_BTVER2_M64: #define __LZCNT__ 1
+// CHECK_BTVER2_M64: #define __MMX__ 1
+// CHECK_BTVER2_M64: #define __POPCNT__ 1
+// CHECK_BTVER2_M64: #define __SSE2_MATH__ 1
+// CHECK_BTVER2_M64: #define __SSE2__ 1
+// CHECK_BTVER2_M64: #define __SSE3__ 1
+// CHECK_BTVER2_M64: #define __SSE4A__ 1
+// CHECK_BTVER2_M64: #define __SSE_MATH__ 1
+// CHECK_BTVER2_M64: #define __SSE__ 1
+// CHECK_BTVER2_M64: #define __SSSE3__ 1
+// CHECK_BTVER2_M64: #define __amd64 1
+// CHECK_BTVER2_M64: #define __amd64__ 1
+// CHECK_BTVER2_M64: #define __btver2 1
+// CHECK_BTVER2_M64: #define __btver2__ 1
+// CHECK_BTVER2_M64: #define __tune_btver2__ 1
+// CHECK_BTVER2_M64: #define __x86_64 1
+// CHECK_BTVER2_M64: #define __x86_64__ 1
 // RUN: %clang -march=bdver1 -m32 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_BDVER1_M32
