@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_COMMENT_LEXER_H
 
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -227,6 +228,8 @@ private:
   /// computed (for example, resolved decimal character references).
   llvm::BumpPtrAllocator &Allocator;
 
+  DiagnosticsEngine &Diags;
+  
   const CommandTraits &Traits;
 
   const char *const BufferStart;
@@ -316,6 +319,10 @@ private:
     return FileLoc.getLocWithOffset(CharNo);
   }
 
+  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
+    return Diags.Report(Loc, DiagID);
+  }
+
   /// Eat string matching regexp \code \s*\* \endcode.
   void skipLineStartingDecorations();
 
@@ -346,7 +353,8 @@ private:
   void lexHTMLEndTag(Token &T);
 
 public:
-  Lexer(llvm::BumpPtrAllocator &Allocator, const CommandTraits &Traits,
+  Lexer(llvm::BumpPtrAllocator &Allocator, DiagnosticsEngine &Diags,
+        const CommandTraits &Traits,
         SourceLocation FileLoc,
         const char *BufferStart, const char *BufferEnd);
 

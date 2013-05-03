@@ -58,7 +58,7 @@ FullComment *CommentParserTest::parseString(const char *Source) {
   FileID File = SourceMgr.createFileIDForMemBuffer(Buf);
   SourceLocation Begin = SourceMgr.getLocForStartOfFile(File);
 
-  Lexer L(Allocator, Traits, Begin, Source, Source + strlen(Source));
+  Lexer L(Allocator, Diags, Traits, Begin, Source, Source + strlen(Source));
 
   Sema S(Allocator, SourceMgr, Diags, Traits, /*PP=*/ NULL);
   Parser P(L, S, Allocator, SourceMgr, Diags, Traits);

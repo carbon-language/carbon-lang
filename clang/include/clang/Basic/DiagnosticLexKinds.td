@@ -27,6 +27,10 @@ def backslash_newline_space : Warning<
   "backslash and newline separated by space">,
   InGroup<DiagGroup<"backslash-newline-escape">>;
 
+// comment parsing
+def warn_unknown_comment_command_name : Warning<
+  "unknown command tag name">, InGroup<DiagGroup<"comment-command-tag">>;
+
 // Digraphs.
 def warn_cxx98_compat_less_colon_colon : Warning<
   "'<::' is treated as digraph '<:' (aka '[') followed by ':' in C++98">,

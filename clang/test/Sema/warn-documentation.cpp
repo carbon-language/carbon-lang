@@ -892,9 +892,9 @@ typedef const struct test_nocrash7 * test_nocrash8;
 
 // We used to crash on this.
 
+// expected-warning@+1 {{unknown command tag name}}
 /// aaa \unknown aaa \unknown aaa
 int test_nocrash9;
-
 
 // We used to crash on this.  PR15068
 

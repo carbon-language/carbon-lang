@@ -64,7 +64,7 @@ void CommentLexerTest::lexString(const char *Source,
   FileID File = SourceMgr.createFileIDForMemBuffer(Buf);
   SourceLocation Begin = SourceMgr.getLocForStartOfFile(File);
 
-  Lexer L(Allocator, Traits, Begin, Source, Source + strlen(Source));
+  Lexer L(Allocator, Diags, Traits, Begin, Source, Source + strlen(Source));
 
   while (1) {
     Token Tok;

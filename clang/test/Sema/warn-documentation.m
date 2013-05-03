@@ -149,6 +149,7 @@ struct S;
 @class NSArray;
 @interface NSArray @end
 
+// expected-warning@+3 {{unknown command tag name}}
 /*!
 @interface NSMutableArray 
 @super NSArray
