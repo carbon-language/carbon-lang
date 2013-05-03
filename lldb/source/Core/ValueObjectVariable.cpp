@@ -326,8 +326,11 @@ ValueObjectVariable::GetDeclaration (Declaration &decl)
 const char *
 ValueObjectVariable::GetLocationAsCString ()
 {
-    return GetLocationAsCStringImpl(m_resolved_value,
-                                    m_data);
+    if (m_resolved_value.GetContextType() == Value::eContextTypeRegisterInfo)
+        return GetLocationAsCStringImpl(m_resolved_value,
+                                        m_data);
+    else
+        return ValueObject::GetLocationAsCString();
 }
 
 bool
