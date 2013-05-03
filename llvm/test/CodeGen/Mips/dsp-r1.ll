@@ -772,6 +772,7 @@ entry:
 
   %0 = bitcast i32 %a0.coerce to <4 x i8>
   %1 = bitcast i32 %a1.coerce to <4 x i8>
+  tail call void @llvm.mips.wrdsp(i32 %i0, i32 16)
   %2 = tail call <4 x i8> @llvm.mips.pick.qb(<4 x i8> %0, <4 x i8> %1)
   %3 = bitcast <4 x i8> %2 to i32
   %.fca.0.insert = insertvalue { i32 } undef, i32 %3, 0
@@ -786,6 +787,7 @@ entry:
 
   %0 = bitcast i32 %a0.coerce to <2 x i16>
   %1 = bitcast i32 %a1.coerce to <2 x i16>
+  tail call void @llvm.mips.wrdsp(i32 %i0, i32 16)
   %2 = tail call <2 x i16> @llvm.mips.pick.ph(<2 x i16> %0, <2 x i16> %1)
   %3 = bitcast <2 x i16> %2 to i32
   %.fca.0.insert = insertvalue { i32 } undef, i32 %3, 0
@@ -807,14 +809,6 @@ entry:
 }
 
 declare <2 x i16> @llvm.mips.packrl.ph(<2 x i16>, <2 x i16>) nounwind readnone
-
-define i32 @test__builtin_mips_rddsp1(i32 %i0) nounwind readonly {
-entry:
-; CHECK: rddsp ${{[0-9]+}}
-
-  %0 = tail call i32 @llvm.mips.rddsp(i32 31)
-  ret i32 %0
-}
 
 define { i32 } @test__builtin_mips_shll_qb1(i32 %i0, i32 %a0.coerce) nounwind {
 entry:
@@ -1232,6 +1226,7 @@ declare i32 @llvm.mips.lwx(i8*, i32) nounwind readonly
 define i32 @test__builtin_mips_wrdsp1(i32 %i0, i32 %a0) nounwind {
 entry:
 ; CHECK: wrdsp ${{[0-9]+}}
+; CHECK: rddsp ${{[0-9]+}}
 
   tail call void @llvm.mips.wrdsp(i32 %a0, i32 31)
   %0 = tail call i32 @llvm.mips.rddsp(i32 31)

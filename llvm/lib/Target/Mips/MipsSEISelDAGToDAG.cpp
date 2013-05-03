@@ -41,6 +41,31 @@ bool MipsSEDAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
   return MipsDAGToDAGISel::runOnMachineFunction(MF);
 }
 
+void MipsSEDAGToDAGISel::addDSPCtrlRegOperands(bool IsDef, MachineInstr &MI,
+                                               MachineFunction &MF) {
+  MachineInstrBuilder MIB(MF, &MI);
+  unsigned Mask = MI.getOperand(1).getImm();
+  unsigned Flag = IsDef ? RegState::ImplicitDefine : RegState::Implicit;
+
+  if (Mask & 1)
+    MIB.addReg(Mips::DSPPos, Flag);
+
+  if (Mask & 2)
+    MIB.addReg(Mips::DSPSCount, Flag);
+
+  if (Mask & 4)
+    MIB.addReg(Mips::DSPCarry, Flag);
+
+  if (Mask & 8)
+    MIB.addReg(Mips::DSPOutFlag, Flag);
+
+  if (Mask & 16)
+    MIB.addReg(Mips::DSPCCond, Flag);
+
+  if (Mask & 32)
+    MIB.addReg(Mips::DSPEFI, Flag);
+}
+
 bool MipsSEDAGToDAGISel::replaceUsesWithZeroReg(MachineRegisterInfo *MRI,
                                                 const MachineInstr& MI) {
   unsigned DstReg = 0, ZeroReg = 0;
@@ -178,8 +203,14 @@ void MipsSEDAGToDAGISel::processFunctionAfterISel(MachineFunction &MF) {
 
   for (MachineFunction::iterator MFI = MF.begin(), MFE = MF.end(); MFI != MFE;
        ++MFI)
-    for (MachineBasicBlock::iterator I = MFI->begin(); I != MFI->end(); ++I)
-      replaceUsesWithZeroReg(MRI, *I);
+    for (MachineBasicBlock::iterator I = MFI->begin(); I != MFI->end(); ++I) {
+      if (I->getOpcode() == Mips::RDDSP)
+        addDSPCtrlRegOperands(false, *I, MF);
+      else if (I->getOpcode() == Mips::WRDSP)
+        addDSPCtrlRegOperands(true, *I, MF);
+      else
+        replaceUsesWithZeroReg(MRI, *I);
+    }
 }
 
 SDNode *MipsSEDAGToDAGISel::selectAddESubE(unsigned MOp, SDValue InFlag,

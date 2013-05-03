@@ -16,6 +16,11 @@ def sub_fpodd  : SubRegIndex;
 def sub_32     : SubRegIndex;
 def sub_lo     : SubRegIndex;
 def sub_hi     : SubRegIndex;
+def sub_dsp16_19 : SubRegIndex;
+def sub_dsp20    : SubRegIndex;
+def sub_dsp21    : SubRegIndex;
+def sub_dsp22    : SubRegIndex;
+def sub_dsp23    : SubRegIndex;
 }
 
 class Unallocatable {
@@ -264,8 +269,23 @@ let Namespace = "Mips" in {
 
   def AC0_64 : ACC<0, "ac0", [LO64, HI64]>;
 
-  def DSPCtrl : Register<"dspctrl">;
+  // DSP-ASE control register fields.
+  def DSPPos : Register<"">;
+  def DSPSCount : Register<"">;
+  def DSPCarry : Register<"">;
+  def DSPEFI : Register<"">;
+  def DSPOutFlag16_19 : Register<"">;
+  def DSPOutFlag20 : Register<"">;
+  def DSPOutFlag21 : Register<"">;
+  def DSPOutFlag22 : Register<"">;
+  def DSPOutFlag23 : Register<"">;
   def DSPCCond : Register<"">;
+
+  let SubRegIndices = [sub_dsp16_19, sub_dsp20, sub_dsp21, sub_dsp22,
+                       sub_dsp23] in
+  def DSPOutFlag : RegisterWithSubRegs<"", [DSPOutFlag16_19, DSPOutFlag20,
+                                            DSPOutFlag21, DSPOutFlag22,
+                                            DSPOutFlag23]>;
 }
 
 //===----------------------------------------------------------------------===//
