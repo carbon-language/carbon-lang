@@ -171,8 +171,3 @@ void LogDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   Entries.push_back(DE);
 }
 
-DiagnosticConsumer *
-LogDiagnosticPrinter::clone(DiagnosticsEngine &Diags) const {
-  return new LogDiagnosticPrinter(OS, &*DiagOpts, /*OwnsOutputStream=*/false);
-}
-

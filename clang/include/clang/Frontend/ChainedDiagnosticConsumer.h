@@ -60,12 +60,6 @@ public:
     Primary->HandleDiagnostic(DiagLevel, Info);
     Secondary->HandleDiagnostic(DiagLevel, Info);
   }
-  
-  DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const {
-    return new ChainedDiagnosticConsumer(Primary->clone(Diags), 
-                                         Secondary->clone(Diags));
-  }
-
 };
 
 } // end namspace clang

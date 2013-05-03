@@ -45,8 +45,6 @@ public:
   /// FlushDiagnostics - Flush the buffered diagnostics to an given
   /// diagnostic engine.
   void FlushDiagnostics(DiagnosticsEngine &Diags) const;
-  
-  virtual DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const;
 };
 
 } // end namspace clang

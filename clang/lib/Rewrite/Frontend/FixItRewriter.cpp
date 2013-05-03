@@ -197,9 +197,4 @@ void FixItRewriter::Diag(SourceLocation Loc, unsigned DiagID) {
   Diags.setClient(this);
 }
 
-DiagnosticConsumer *FixItRewriter::clone(DiagnosticsEngine &Diags) const {
-  return new FixItRewriter(Diags, Diags.getSourceManager(), 
-                           Rewrite.getLangOpts(), FixItOpts);
-}
-
 FixItOptions::~FixItOptions() {}

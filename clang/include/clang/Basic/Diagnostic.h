@@ -1301,10 +1301,6 @@ public:
   /// warnings and errors.
   virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                 const Diagnostic &Info);
-  
-  /// \brief Clone the diagnostic consumer, producing an equivalent consumer
-  /// that can be used in a different context.
-  virtual DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const = 0;
 };
 
 /// \brief A diagnostic client that ignores all diagnostics.
@@ -1313,9 +1309,6 @@ class IgnoringDiagConsumer : public DiagnosticConsumer {
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                         const Diagnostic &Info) {
     // Just ignore it.
-  }
-  DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const {
-    return new IgnoringDiagConsumer();
   }
 };
 
@@ -1335,8 +1328,6 @@ public:
   virtual void clear();
 
   virtual bool IncludeInDiagnosticCounts() const;
-
-  virtual DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const;
 };
 
 // Struct used for sending info about how a type should be printed.

@@ -75,6 +75,3 @@ void TextDiagnosticBuffer::FlushDiagnostics(DiagnosticsEngine &Diags) const {
                                        escapeDiag(it->second, Buf)));
 }
 
-DiagnosticConsumer *TextDiagnosticBuffer::clone(DiagnosticsEngine &) const {
-  return new TextDiagnosticBuffer();
-}

@@ -989,11 +989,6 @@ bool ForwardingDiagnosticConsumer::IncludeInDiagnosticCounts() const {
   return Target.IncludeInDiagnosticCounts();
 }
 
-DiagnosticConsumer *
-ForwardingDiagnosticConsumer::clone(DiagnosticsEngine &Diags) const {
-  return new ForwardingDiagnosticConsumer(Target);
-}
-
 PartialDiagnostic::StorageAllocator::StorageAllocator() {
   for (unsigned I = 0; I != NumCached; ++I)
     FreeList[I] = Cached + I;

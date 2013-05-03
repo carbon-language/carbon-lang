@@ -155,8 +155,3 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
 
   OS.flush();
 }
-
-DiagnosticConsumer *
-TextDiagnosticPrinter::clone(DiagnosticsEngine &Diags) const {
-  return new TextDiagnosticPrinter(OS, &*DiagOpts, /*OwnsOutputStream=*/false);
-}

@@ -140,12 +140,6 @@ public:
     // Non-ARC warnings are ignored.
     Diags.setLastDiagnosticIgnored();
   }
-  
-  DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const {
-    // Just drop any diagnostics that come from cloned consumers; they'll
-    // have different source managers anyway.
-    return new IgnoringDiagConsumer();
-  }
 };
 
 } // end anonymous namespace

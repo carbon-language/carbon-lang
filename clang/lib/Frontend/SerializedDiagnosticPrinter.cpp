@@ -114,10 +114,6 @@ public:
 
   virtual void finish();
 
-  DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const {
-    return new SDiagsWriter(State);
-  }
-
 private:
   /// \brief Emit the preamble for the serialized diagnostics.
   void EmitPreamble();

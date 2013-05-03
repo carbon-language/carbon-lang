@@ -398,10 +398,6 @@ public:
     if (level >= DiagnosticsEngine::Error)
       Errors.push_back(StoredDiagnostic(level, Info));
   }
-
-  DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const {
-    return new IgnoringDiagConsumer();
-  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -549,8 +545,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   IntrusiveRefCntPtr<DiagnosticsEngine>
     Diags(CompilerInstance::createDiagnostics(new DiagnosticOptions,
                                               CaptureDiag,
-                                              /*ShouldOwnClient=*/true,
-                                              /*ShouldCloneClient=*/false));
+                                              /*ShouldOwnClient=*/true));
 
   // Recover resources if we crash before exiting this function.
   llvm::CrashRecoveryContextCleanupRegistrar<DiagnosticsEngine,

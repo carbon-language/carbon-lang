@@ -820,14 +820,6 @@ void VerifyDiagnosticConsumer::CheckDiagnostics() {
   ED.Notes.clear();
 }
 
-DiagnosticConsumer *
-VerifyDiagnosticConsumer::clone(DiagnosticsEngine &Diags) const {
-  if (!Diags.getClient())
-    Diags.setClient(PrimaryClient->clone(Diags));
-  
-  return new VerifyDiagnosticConsumer(Diags);
-}
-
 Directive *Directive::create(bool RegexKind, SourceLocation DirectiveLoc,
                              SourceLocation DiagnosticLoc, StringRef Text,
                              unsigned Min, unsigned Max) {
