@@ -712,8 +712,8 @@ static Decl::Kind getKind(const DeclContext *DC) { return DC->getDeclKind(); }
 template <class T> static Decl *getNonClosureContext(T *D) {
   if (getKind(D) == Decl::CXXMethod) {
     CXXMethodDecl *MD = cast<CXXMethodDecl>(D);
-    if (MD->getParent()->isLambda() &&
-        MD->getOverloadedOperator() == OO_Call)
+    if (MD->getOverloadedOperator() == OO_Call &&
+        MD->getParent()->isLambda())
       return getNonClosureContext(MD->getParent()->getParent());
     return MD;
   } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
