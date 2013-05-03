@@ -83,7 +83,6 @@
 		260E07C8136FAB9200CF21D3 /* OptionGroupFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C7136FAB9200CF21D3 /* OptionGroupFile.cpp */; };
 		261744781168585B005ADD65 /* SBType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261744771168585B005ADD65 /* SBType.cpp */; };
 		2617447A11685869005ADD65 /* SBType.h in Headers */ = {isa = PBXBuildFile; fileRef = 2617447911685869005ADD65 /* SBType.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		26274FA214030EEF006BA130 /* OperatingSystemDarwinKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26274FA014030EEF006BA130 /* OperatingSystemDarwinKernel.cpp */; };
 		26274FA714030F79006BA130 /* DynamicLoaderDarwinKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26274FA514030F79006BA130 /* DynamicLoaderDarwinKernel.cpp */; };
 		2628A4D513D4977900F5487A /* ThreadKDP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2628A4D313D4977900F5487A /* ThreadKDP.cpp */; };
 		262CFC7711A4510000946C6C /* debugserver in Resources */ = {isa = PBXBuildFile; fileRef = 26CE05A0115C31E50022F371 /* debugserver */; };
@@ -908,8 +907,6 @@
 		26217932133BCB850083B112 /* lldb-private-enumerations.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-private-enumerations.h"; path = "include/lldb/lldb-private-enumerations.h"; sourceTree = "<group>"; };
 		2623096E13D0EFFB006381D9 /* StreamBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = StreamBuffer.h; path = include/lldb/Core/StreamBuffer.h; sourceTree = "<group>"; };
 		2626B6AD143E1BEA00EF935C /* RangeMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RangeMap.h; path = include/lldb/Core/RangeMap.h; sourceTree = "<group>"; };
-		26274FA014030EEF006BA130 /* OperatingSystemDarwinKernel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OperatingSystemDarwinKernel.cpp; sourceTree = "<group>"; };
-		26274FA114030EEF006BA130 /* OperatingSystemDarwinKernel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OperatingSystemDarwinKernel.h; sourceTree = "<group>"; };
 		26274FA514030F79006BA130 /* DynamicLoaderDarwinKernel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLoaderDarwinKernel.cpp; sourceTree = "<group>"; };
 		26274FA614030F79006BA130 /* DynamicLoaderDarwinKernel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DynamicLoaderDarwinKernel.h; sourceTree = "<group>"; };
 		2628A4D313D4977900F5487A /* ThreadKDP.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadKDP.cpp; sourceTree = "<group>"; };
@@ -2145,15 +2142,6 @@
 			path = scripts/Python/interface;
 			sourceTree = SOURCE_ROOT;
 		};
-		26274F9F14030EEF006BA130 /* Darwin-Kernel */ = {
-			isa = PBXGroup;
-			children = (
-				26274FA014030EEF006BA130 /* OperatingSystemDarwinKernel.cpp */,
-				26274FA114030EEF006BA130 /* OperatingSystemDarwinKernel.h */,
-			);
-			path = "Darwin-Kernel";
-			sourceTree = "<group>";
-		};
 		26274FA414030F79006BA130 /* Darwin-Kernel */ = {
 			isa = PBXGroup;
 			children = (
@@ -2382,7 +2370,6 @@
 		266DFE9013FD64D200D0C574 /* OperatingSystem */ = {
 			isa = PBXGroup;
 			children = (
-				26274F9F14030EEF006BA130 /* Darwin-Kernel */,
 				2698699715E6CBD0002415FF /* Python */,
 			);
 			path = OperatingSystem;
@@ -4294,7 +4281,6 @@
 				26F4A21C13FBA31A0064B613 /* ThreadMemory.cpp in Sources */,
 				266DFE9713FD656E00D0C574 /* OperatingSystem.cpp in Sources */,
 				26954EBE1401EE8B00294D09 /* DynamicRegisterInfo.cpp in Sources */,
-				26274FA214030EEF006BA130 /* OperatingSystemDarwinKernel.cpp in Sources */,
 				26274FA714030F79006BA130 /* DynamicLoaderDarwinKernel.cpp in Sources */,
 				94FA3DE01405D50400833217 /* ValueObjectConstResultChild.cpp in Sources */,
 				949ADF031406F648004833E1 /* ValueObjectConstResultImpl.cpp in Sources */,
