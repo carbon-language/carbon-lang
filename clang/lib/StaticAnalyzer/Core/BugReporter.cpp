@@ -143,16 +143,10 @@ static void removeRedundantMsgs(PathPieces &path) {
   }
 }
 
-/// A map from PathDiagnosticPiece to the LocationContext of the inlined
-/// function call it represents.
-typedef llvm::DenseMap<const PathDiagnosticCallPiece*, const LocationContext*>
-        LocationContextMap;
-
 /// Recursively scan through a path and prune out calls and macros pieces
 /// that aren't needed.  Return true if afterwards the path contains
 /// "interesting stuff" which means it shouldn't be pruned from the parent path.
-static bool removeUnneededCalls(PathPieces &pieces, BugReport *R,
-                                LocationContextMap &LCM) {
+bool BugReporter::RemoveUnneededCalls(PathPieces &pieces, BugReport *R) {
   bool containsSomethingInteresting = false;
   const unsigned N = pieces.size();
   
@@ -173,13 +167,13 @@ static bool removeUnneededCalls(PathPieces &pieces, BugReport *R,
       case PathDiagnosticPiece::Call: {
         PathDiagnosticCallPiece *call = cast<PathDiagnosticCallPiece>(piece);
         // Check if the location context is interesting.
-        assert(LCM.count(call));
-        if (R->isInteresting(LCM[call])) {
+        assert(LocationContextMap.count(call));
+        if (R->isInteresting(LocationContextMap[call])) {
           containsSomethingInteresting = true;
           break;
         }
 
-        if (!removeUnneededCalls(call->path, R, LCM))
+        if (!RemoveUnneededCalls(call->path, R))
           continue;
         
         containsSomethingInteresting = true;
@@ -187,7 +181,7 @@ static bool removeUnneededCalls(PathPieces &pieces, BugReport *R,
       }
       case PathDiagnosticPiece::Macro: {
         PathDiagnosticMacroPiece *macro = cast<PathDiagnosticMacroPiece>(piece);
-        if (!removeUnneededCalls(macro->subPieces, R, LCM))
+        if (!RemoveUnneededCalls(macro->subPieces, R))
           continue;
         containsSomethingInteresting = true;
         break;
@@ -517,7 +511,6 @@ static void CompactPathDiagnostic(PathPieces &path, const SourceManager& SM);
 static bool GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
                                           PathDiagnosticBuilder &PDB,
                                           const ExplodedNode *N,
-                                          LocationContextMap &LCM,
                                       ArrayRef<BugReporterVisitor *> visitors) {
 
   SourceManager& SMgr = PDB.getSourceManager();
@@ -538,8 +531,8 @@ static bool GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
       if (Optional<CallExitEnd> CE = P.getAs<CallExitEnd>()) {
         PathDiagnosticCallPiece *C =
             PathDiagnosticCallPiece::construct(N, *CE, SMgr);
-        // Record the mapping from call piece to LocationContext.
-        LCM[C] = CE->getCalleeContext();
+        GRBugReporter& BR = PDB.getBugReporter();
+        BR.addCallPieceLocationContextPair(C, CE->getCalleeContext());
         PD.getActivePath().push_front(C);
         PD.pushActivePath(&C->path);
         CallStack.push_back(StackDiagPair(C, N));
@@ -562,8 +555,8 @@ static bool GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
         } else {
           const Decl *Caller = CE->getLocationContext()->getDecl();
           C = PathDiagnosticCallPiece::construct(PD.getActivePath(), Caller);
-          // Record the mapping from call piece to LocationContext.
-          LCM[C] = CE->getCalleeContext();
+          GRBugReporter& BR = PDB.getBugReporter();
+          BR.addCallPieceLocationContextPair(C, CE->getCalleeContext());
         }
 
         C->setCallee(*CE, SMgr);
@@ -1331,7 +1324,6 @@ static bool isInLoopBody(ParentMap &PM, const Stmt *S, const Stmt *Term) {
 static bool GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
                                             PathDiagnosticBuilder &PDB,
                                             const ExplodedNode *N,
-                                            LocationContextMap &LCM,
                                       ArrayRef<BugReporterVisitor *> visitors) {
   EdgeBuilder EB(PD, PDB);
   const SourceManager& SM = PDB.getSourceManager();
@@ -1362,7 +1354,8 @@ static bool GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         
         PathDiagnosticCallPiece *C =
           PathDiagnosticCallPiece::construct(N, *CE, SM);
-        LCM[C] = CE->getCalleeContext();
+        GRBugReporter& BR = PDB.getBugReporter();
+        BR.addCallPieceLocationContextPair(C, CE->getCalleeContext());
 
         EB.addEdge(C->callReturn, /*AlwaysAdd=*/true, /*IsPostJump=*/true);
         EB.flushLocations();
@@ -1399,7 +1392,8 @@ static bool GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         } else {
           const Decl *Caller = CE->getLocationContext()->getDecl();
           C = PathDiagnosticCallPiece::construct(PD.getActivePath(), Caller);
-          LCM[C] = CE->getCalleeContext();
+          GRBugReporter& BR = PDB.getBugReporter();
+          BR.addCallPieceLocationContextPair(C, CE->getCalleeContext());
         }
 
         C->setCallee(*CE, SM);
@@ -2126,7 +2120,6 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
 
     BugReport::VisitorList visitors;
     unsigned origReportConfigToken, finalReportConfigToken;
-    LocationContextMap LCM;
 
     // While generating diagnostics, it's possible the visitors will decide
     // new symbols and regions are interesting, or add other visitors based on
@@ -2163,10 +2156,10 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
 
       switch (ActiveScheme) {
       case PathDiagnosticConsumer::Extensive:
-        GenerateExtensivePathDiagnostic(PD, PDB, N, LCM, visitors);
+        GenerateExtensivePathDiagnostic(PD, PDB, N, visitors);
         break;
       case PathDiagnosticConsumer::Minimal:
-        GenerateMinimalPathDiagnostic(PD, PDB, N, LCM, visitors);
+        GenerateMinimalPathDiagnostic(PD, PDB, N, visitors);
         break;
       case PathDiagnosticConsumer::None:
         GenerateVisitorsOnlyPathDiagnostic(PD, PDB, N, visitors);
@@ -2190,7 +2183,7 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
 
       if (R->shouldPrunePath() &&
           getEngine().getAnalysisManager().options.shouldPrunePaths()) {
-        bool stillHasNotes = removeUnneededCalls(PD.getMutablePieces(), R, LCM);
+        bool stillHasNotes = RemoveUnneededCalls(PD.getMutablePieces(), R);
         assert(stillHasNotes);
         (void)stillHasNotes;
       }
@@ -2294,10 +2287,6 @@ FindReportInEquivalenceClass(BugReportEquivClass& EQ,
         exampleReport = I;
       continue;
     }
-
-      // Make sure we get a clean location context map so we don't
-      // hold onto old mappings.
-      LCM.clear();
 
     // At this point we know that 'N' is not a sink and it has at least one
     // successor.  Use a DFS worklist to find a non-sink end-of-path node.    

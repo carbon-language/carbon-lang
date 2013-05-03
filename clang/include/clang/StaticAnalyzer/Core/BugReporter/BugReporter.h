@@ -406,6 +406,11 @@ private:
   /// A vector of BugReports for tracking the allocated pointers and cleanup.
   std::vector<BugReportEquivClass *> EQClassesVector;
 
+  /// A map from PathDiagnosticPiece to the LocationContext of the inlined
+  /// function call it represents.
+  llvm::DenseMap<const PathDiagnosticCallPiece*,
+                 const LocationContext*> LocationContextMap;
+
 protected:
   BugReporter(BugReporterData& d, Kind k) : BugTypes(F.getEmptySet()), kind(k),
                                             D(d) {}
@@ -477,6 +482,10 @@ public:
     EmitBasicReport(DeclWithIssue, BugName, Category, BugStr, Loc, &R, 1);
   }
 
+  void addCallPieceLocationContextPair(const PathDiagnosticCallPiece *C,
+                                       const LocationContext *LC) {
+    LocationContextMap[C] = LC;
+  }
 private:
   llvm::StringMap<BugType *> StrBugTypes;
 
