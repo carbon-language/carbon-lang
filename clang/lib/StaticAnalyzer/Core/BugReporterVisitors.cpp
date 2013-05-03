@@ -884,7 +884,7 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
       Inner = Ex;
   }
 
-  if (IsArg) {
+  if (IsArg && !Inner) {
     assert(N->getLocation().getAs<CallEnter>() && "Tracking arg but not at call");
   } else {
     // Walk through nodes until we get one that matches the statement exactly.
@@ -913,7 +913,7 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
   // At this point in the path, the receiver should be live since we are at the
   // message send expr. If it is nil, start tracking it.
   if (const Expr *Receiver = NilReceiverBRVisitor::getNilReceiver(S, N))
-    trackNullOrUndefValue(N, Receiver, report, IsArg, EnableNullFPSuppression);
+    trackNullOrUndefValue(N, Receiver, report, false, EnableNullFPSuppression);
 
 
   // See if the expression we're interested refers to a variable.
