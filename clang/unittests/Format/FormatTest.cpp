@@ -302,6 +302,7 @@ TEST_F(FormatTest, FormatsForLoop) {
   verifyFormat("for (;;) {\n"
                "  f();\n"
                "}");
+  verifyFormat("for (int i = 0; (i < 10); ++i) {\n}");
 
   verifyFormat(
       "for (std::vector<UnwrappedLine>::iterator I = UnwrappedLines.begin(),\n"
