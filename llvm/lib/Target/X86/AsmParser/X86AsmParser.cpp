@@ -500,7 +500,8 @@ private:
   X86Operand *ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
                                        int64_t ImmDisp, unsigned Size);
   X86Operand *ParseIntelIdentifier(const MCExpr *&Val, StringRef &Identifier,
-                                   InlineAsmIdentifierInfo &Info, SMLoc &End);
+                                   InlineAsmIdentifierInfo &Info,
+                                   bool IsUnevaluatedOperand, SMLoc &End);
 
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
 
@@ -1267,7 +1268,8 @@ X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
             return ErrorOperand(Tok.getLoc(), "Unexpected identifier!");
         } else {
           InlineAsmIdentifierInfo &Info = SM.getIdentifierInfo();
-          if (X86Operand *Err = ParseIntelIdentifier(Val, Identifier, Info, End))
+          if (X86Operand *Err = ParseIntelIdentifier(Val, Identifier, Info,
+                                                     /*Unevaluated*/ false, End))
             return Err;
         }
         SM.onIdentifierExpr(Val, Identifier);
@@ -1367,27 +1369,26 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
 X86Operand *X86AsmParser::ParseIntelIdentifier(const MCExpr *&Val,
                                                StringRef &Identifier,
                                                InlineAsmIdentifierInfo &Info,
+                                               bool IsUnevaluatedOperand,
                                                SMLoc &End) {
   assert (isParsingInlineAsm() && "Expected to be parsing inline assembly.");
   Val = 0;
 
   StringRef LineBuf(Identifier.data());
-  SemaCallback->LookupInlineAsmIdentifier(LineBuf, Info);
-  unsigned BufLen = LineBuf.size();
-  assert (BufLen && "Expected a non-zero length identifier.");
+  SemaCallback->LookupInlineAsmIdentifier(LineBuf, Info, IsUnevaluatedOperand);
 
-  // Advance the token stream based on what the frontend parsed.
   const AsmToken &Tok = Parser.getTok();
-  AsmToken IdentEnd = Tok;
-  while (BufLen > 0) {
-    IdentEnd = Tok;
-    BufLen -= Tok.getString().size();
-    getLexer().Lex(); // Consume the token.
+
+  // Advance the token stream until the end of the current token is
+  // after the end of what the frontend claimed.
+  const char *EndPtr = Tok.getLoc().getPointer() + LineBuf.size();
+  while (true) {
+    End = Tok.getEndLoc();
+    getLexer().Lex();
+
+    assert(End.getPointer() <= EndPtr && "frontend claimed part of a token?");
+    if (End.getPointer() == EndPtr) break;
   }
-  if (BufLen != 0)
-    return ErrorOperand(IdentEnd.getLoc(),
-                        "Frontend parser mismatch with asm lexer!");
-  End = IdentEnd.getEndLoc();
 
   // Create the symbol reference.
   Identifier = LineBuf;
@@ -1447,7 +1448,8 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg,
 
   InlineAsmIdentifierInfo Info;
   StringRef Identifier = Tok.getString();
-  if (X86Operand *Err = ParseIntelIdentifier(Val, Identifier, Info, End))
+  if (X86Operand *Err = ParseIntelIdentifier(Val, Identifier, Info,
+                                             /*Unevaluated*/ false, End))
     return Err;
   return CreateMemForInlineAsm(/*SegReg=*/0, Val, /*BaseReg=*/0,/*IndexReg=*/0,
                                /*Scale=*/1, Start, End, Size, Identifier, Info);
@@ -1506,7 +1508,8 @@ X86Operand *X86AsmParser::ParseIntelOffsetOfOperator() {
   InlineAsmIdentifierInfo Info;
   SMLoc Start = Tok.getLoc(), End;
   StringRef Identifier = Tok.getString();
-  if (X86Operand *Err = ParseIntelIdentifier(Val, Identifier, Info, End))
+  if (X86Operand *Err = ParseIntelIdentifier(Val, Identifier, Info,
+                                             /*Unevaluated*/ false, End))
     return Err;
 
   // Don't emit the offset operator.
@@ -1541,7 +1544,8 @@ X86Operand *X86AsmParser::ParseIntelOperator(unsigned OpKind) {
   InlineAsmIdentifierInfo Info;
   SMLoc Start = Tok.getLoc(), End;
   StringRef Identifier = Tok.getString();
-  if (X86Operand *Err = ParseIntelIdentifier(Val, Identifier, Info, End))
+  if (X86Operand *Err = ParseIntelIdentifier(Val, Identifier, Info,
+                                             /*Unevaluated*/ true, End))
     return Err;
 
   unsigned CVal = 0;

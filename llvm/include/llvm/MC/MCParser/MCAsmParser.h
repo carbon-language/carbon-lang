@@ -49,7 +49,8 @@ public:
 
   virtual ~MCAsmParserSemaCallback(); 
   virtual void *LookupInlineAsmIdentifier(StringRef &LineBuf,
-                                          InlineAsmIdentifierInfo &Info) = 0;
+                                          InlineAsmIdentifierInfo &Info,
+                                          bool IsUnevaluatedContext) = 0;
 
   virtual bool LookupInlineAsmField(StringRef Base, StringRef Member,
                                     unsigned &Offset) = 0;
