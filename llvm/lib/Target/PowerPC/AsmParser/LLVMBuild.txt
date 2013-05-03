@@ -1,4 +1,4 @@
-;===- ./lib/Target/PowerPC/LLVMBuild.txt -----------------------*- Conf -*--===;
+;===- ./lib/Target/PowerPC/AsmParser/LLVMBuild.txt --------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,19 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = AsmParser InstPrinter MCTargetDesc TargetInfo
-
 [component_0]
-type = TargetGroup
-name = PowerPC
-parent = Target
-has_asmprinter = 1
-has_jit = 1
-
-[component_1]
 type = Library
-name = PowerPCCodeGen
+name = PowerPCAsmParser
 parent = PowerPC
-required_libraries = Analysis AsmPrinter CodeGen Core MC PowerPCAsmPrinter PowerPCDesc PowerPCInfo SelectionDAG Support Target
+required_libraries = PowerPCInfo MC MCParser Support
 add_to_library_groups = PowerPC

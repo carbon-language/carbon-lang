@@ -17,17 +17,21 @@
 //
 def s16imm64 : Operand<i64> {
   let PrintMethod = "printS16ImmOperand";
+  let ParserMatchClass = PPCS16ImmAsmOperand;
 }
 def u16imm64 : Operand<i64> {
   let PrintMethod = "printU16ImmOperand";
+  let ParserMatchClass = PPCU16ImmAsmOperand;
 }
 def symbolHi64 : Operand<i64> {
   let PrintMethod = "printSymbolHi";
   let EncoderMethod = "getHA16Encoding";
+  let ParserMatchClass = PPCS16ImmAsmOperand;
 }
 def symbolLo64 : Operand<i64> {
   let PrintMethod = "printSymbolLo";
   let EncoderMethod = "getLO16Encoding";
+  let ParserMatchClass = PPCS16ImmAsmOperand;
 }
 def tocentry : Operand<iPTR> {
   let MIOperandInfo = (ops i64imm:$imm);

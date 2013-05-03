@@ -268,9 +268,14 @@ def PPCAsmWriter : AsmWriter {
   bit isMCAsmWriter = 1;
 }
 
+def PPCAsmParser : AsmParser {
+  let ShouldEmitMatchRegisterName = 0;
+}
+
 def PPC : Target {
   // Information about the instructions.
   let InstructionSet = PPCInstrInfo;
   
   let AssemblyWriters = [PPCAsmWriter];
+  let AssemblyParsers = [PPCAsmParser];
 }

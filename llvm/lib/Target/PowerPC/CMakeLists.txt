@@ -1,6 +1,7 @@
 set(LLVM_TARGET_DEFINITIONS PPC.td)
 
 tablegen(LLVM PPCGenAsmWriter.inc -gen-asm-writer)
+tablegen(LLVM PPCGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM PPCGenCodeEmitter.inc -gen-emitter)
 tablegen(LLVM PPCGenMCCodeEmitter.inc -gen-emitter -mc-emitter)
 tablegen(LLVM PPCGenRegisterInfo.inc -gen-register-info)
@@ -32,6 +33,7 @@ add_llvm_target(PowerPCCodeGen
 
 add_dependencies(LLVMPowerPCCodeGen intrinsics_gen)
 
+add_subdirectory(AsmParser)
 add_subdirectory(InstPrinter)
 add_subdirectory(TargetInfo)
 add_subdirectory(MCTargetDesc)
