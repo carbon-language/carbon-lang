@@ -1854,11 +1854,11 @@ double, and there are three forms of long double. The 80-bit format used
 by x86 is represented as ``0xK`` followed by 20 hexadecimal digits. The
 128-bit format used by PowerPC (two adjacent doubles) is represented by
 ``0xM`` followed by 32 hexadecimal digits. The IEEE 128-bit format is
-represented by ``0xL`` followed by 32 hexadecimal digits; no currently
-supported target uses this format. Long doubles will only work if they
-match the long double format on your target. The IEEE 16-bit format
-(half precision) is represented by ``0xH`` followed by 4 hexadecimal
-digits. All hexadecimal formats are big-endian (sign bit at the left).
+represented by ``0xL`` followed by 32 hexadecimal digits. Long doubles
+will only work if they match the long double format on your target.
+The IEEE 16-bit format (half precision) is represented by ``0xH``
+followed by 4 hexadecimal digits. All hexadecimal formats are big-endian
+(sign bit at the left).
 
 There are no constants of type x86mmx.
 
