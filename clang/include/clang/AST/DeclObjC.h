@@ -1907,7 +1907,7 @@ public:
 
   const ObjCInterfaceDecl *getSuperClass() const { return SuperClass; }
   ObjCInterfaceDecl *getSuperClass() { return SuperClass; }
-  SourceLocation getSuperLoc() const { return SuperLoc; }
+  SourceLocation getSuperClassLoc() const { return SuperLoc; }
 
   void setSuperClass(ObjCInterfaceDecl * superCls) { SuperClass = superCls; }
 

@@ -3650,7 +3650,7 @@ Decl *ASTNodeImporter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
                                           Iface, Super,
                                           Importer.Import(D->getLocation()),
                                           Importer.Import(D->getAtStartLoc()),
-                                          Importer.Import(D->getSuperLoc()),
+                                          Importer.Import(D->getSuperClassLoc()),
                                           Importer.Import(D->getIvarLBraceLoc()),
                                           Importer.Import(D->getIvarRBraceLoc()));
     
